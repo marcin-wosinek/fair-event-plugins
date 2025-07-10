@@ -1,6 +1,6 @@
 <?php
 /**
- * WP Plugin Scaffold
+ * Fair Payment
  *
  * TODO: The description for the plugin scaffolded by this file.
  *
@@ -14,7 +14,7 @@
  * @since    TODO: Date
  *
  * @wordpress-plugin
- * Plugin Name: WP Plugin Scaffold
+ * Plugin Name: Fair Payment
  * Plugin URI:  https://github.com/marcin-wosinek/fair-payment
  * Description: The description for the plugin scaffolded by this file.
  * Author:      Marcin Wosinek <marcin.wosinek@gmail.com>

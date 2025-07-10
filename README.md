@@ -1,6 +1,7 @@
-# WP Plugin Scaffold
+# Fair Payment
 
-The description for the plugin scaffolded by this repository.
+First plugin form Fair Event Plugins set—all you need for running event page,
+fairy priced.
 
 ## Development
 
