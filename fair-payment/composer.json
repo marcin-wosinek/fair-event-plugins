@@ -1,9 +1,9 @@
 {
-    "name": "tommcfarlin/wp-plugin-scaffold",
+    "name": "tommcfarlin/fair-payment",
     "description": "TODO The description for the plugin scaffolded by this repository.",
     "type": "wordpress-plugin",
     "license": "GPL-3.0-or-later",
-    "homepage": "https://github.com/tommcfarlin/wp-plugin-scaffold/",
+    "homepage": "https://github.com/tommcfarlin/fair-payment/",
     "authors": [
       {
         "name": "Tom McFarlin",
@@ -12,7 +12,7 @@
       }
     ],
     "support": {
-      "issues": "https://github.com/tommcfarlin/wp-plugin-scaffold/issues"
+      "issues": "https://github.com/tommcfarlin/fair-payment/issues"
     },
     "config": {
       "preferred-install": "dist",
