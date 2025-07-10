@@ -1,0 +1,45 @@
+name: PHP CI
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v3
+
+    - name: Setup PHP
+      uses: shivammathur/setup-php@v2
+      with:
+        php-version: '8.2'
+        extensions: mbstring, intl, zip
+        coverage: none
+
+    - name: Validate composer.json and composer.lock
+      working-directory: ./wp-plugin-scaffold
+      run: composer validate --strict
+
+    - name: Cache Composer packages
+      id: composer-cache
+      uses: actions/cache@v3
+      with:
+        path: ./plugin-scaffold/vendor
+        key: ${{ runner.os }}-php-${{ hashFiles('**/composer.lock') }}
+        restore-keys: |
+          ${{ runner.os }}-php-
+
+    - name: Install dependencies
+      working-directory: ./wp-plugin-scaffold
+      run: composer install --prefer-dist --no-progress
+
+    - name: Upload artifact
+      uses: actions/upload-artifact@v4
+      with:
+        name: wp-plugin-scaffold
+        path: ./wp-plugin-scaffold
+        retention-days: 7
