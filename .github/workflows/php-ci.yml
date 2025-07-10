@@ -33,9 +33,24 @@ jobs:
         restore-keys: |
           ${{ runner.os }}-php-
 
-    - name: Install dependencies
+    - name: Install PHP dependencies
       working-directory: ./fair-payment
       run: composer install --prefer-dist --no-progress
+
+    - name: Setup Node.js
+      uses: actions/setup-node@v3
+      with:
+        node-version: '18'
+        cache: 'npm'
+        cache-dependency-path: './fair-payment/package-lock.json'
+
+    - name: Install npm dependencies
+      working-directory: ./fair-payment
+      run: npm ci
+
+    - name: Build JavaScript
+      working-directory: ./fair-payment
+      run: npm run build
 
     - name: Upload artifact
       uses: actions/upload-artifact@v4
