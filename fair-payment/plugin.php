@@ -25,6 +25,7 @@ namespace FairPayment;
 
 defined('WPINC') || die;
 require_once __DIR__ . '/vendor/autoload.php';
+require_once __DIR__ . '/src/blocks/simple-payment/render.php';
 
 /**
  * Register the Simple Payment block
@@ -64,20 +65,3 @@ function register_simple_payment_block() {
     ));
 }
 add_action('init', 'FairPayment\register_simple_payment_block');
-
-/**
- * Render the Simple Payment block
- *
- * @param array $attributes Block attributes.
- * @return string Block HTML.
- */
-function render_simple_payment_block($attributes) {
-    $amount = isset($attributes['amount']) ? $attributes['amount'] : '10';
-    $currency = isset($attributes['currency']) ? $attributes['currency'] : 'EUR';
-
-    $output = '<div class="simple-payment-block">';
-    $output .= '<p class="simple-payment-text">Fair Payment: ' . esc_html($amount) . ' ' . esc_html($currency) . '</p>';
-    $output .= '</div>';
-
-    return $output;
-}
