@@ -1,0 +1,32 @@
+/**
+ * Simple Payment Block styles
+ */
+
+.simple-payment-block {
+    padding: 20px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    background-color: #f9f9f9;
+    margin-bottom: 20px;
+}
+
+.simple-payment-text {
+    font-size: 18px;
+    font-weight: 500;
+    color: #333;
+    display: flex;
+    align-items: center;
+}
+
+/* Editor styles */
+.simple-payment-editor {
+    margin-bottom: 20px;
+    padding-bottom: 15px;
+    border-bottom: 1px solid #eee;
+}
+
+.simple-payment-preview {
+    padding: 15px;
+    background-color: #f0f0f0;
+    border-radius: 4px;
+}

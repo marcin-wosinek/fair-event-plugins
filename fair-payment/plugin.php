@@ -2,7 +2,7 @@
 /**
  * Fair Payment
  *
- * Simple payment plugint, with fair pricing model.
+ * Simple payment plugin, with fair pricing model.
  *
  * PHP version 8.2
  *
@@ -21,7 +21,63 @@
  * Version:     1.0.0
  */
 
-namespace WPPluginScaffold;
+namespace FairPayment;
 
 defined('WPINC') || die;
 require_once __DIR__ . '/vendor/autoload.php';
+
+/**
+ * Register the Simple Payment block
+ */
+function register_simple_payment_block() {
+    // Register block script
+    wp_register_script(
+        'simple-payment-block-editor',
+        plugins_url('build/index.js', __FILE__),
+        array('wp-blocks', 'wp-element', 'wp-editor', 'wp-components', 'wp-i18n'),
+        filemtime(plugin_dir_path(__FILE__) . 'build/index.js')
+    );
+
+    // Register block styles
+    wp_register_style(
+        'simple-payment-block-style',
+        plugins_url('src/blocks/simple-payment/style.css', __FILE__),
+        array(),
+        filemtime(plugin_dir_path(__FILE__) . 'src/blocks/simple-payment/style.css')
+    );
+
+    // Register the block
+    register_block_type('fair-payment/simple-payment-block', array(
+        'editor_script' => 'simple-payment-block-editor',
+        'style' => 'simple-payment-block-style',
+        'attributes' => array(
+            'amount' => array(
+                'type' => 'string',
+                'default' => '10',
+            ),
+            'currency' => array(
+                'type' => 'string',
+                'default' => 'EUR',
+            ),
+        ),
+        'render_callback' => 'FairPayment\render_simple_payment_block',
+    ));
+}
+add_action('init', 'FairPayment\register_simple_payment_block');
+
+/**
+ * Render the Simple Payment block
+ *
+ * @param array $attributes Block attributes.
+ * @return string Block HTML.
+ */
+function render_simple_payment_block($attributes) {
+    $amount = isset($attributes['amount']) ? $attributes['amount'] : '10';
+    $currency = isset($attributes['currency']) ? $attributes['currency'] : 'EUR';
+
+    $output = '<div class="simple-payment-block">';
+    $output .= '<p class="simple-payment-text">Fair Payment: ' . esc_html($amount) . ' ' . esc_html($currency) . '</p>';
+    $output .= '</div>';
+
+    return $output;
+}
