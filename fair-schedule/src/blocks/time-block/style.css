@@ -56,3 +56,45 @@
 .event-title a:hover {
     text-decoration: underline;
 }
+
+/* Editor-specific styles for drag and drop */
+.editor-styles-wrapper .wp-block-fair-schedule-time-block {
+    position: relative;
+}
+
+.editor-styles-wrapper .time-block {
+    margin: 1rem 0;
+    padding: 1rem;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    background-color: #f9f9f9;
+}
+
+.editor-styles-wrapper .time-slot {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+
+.editor-styles-wrapper .time-range {
+    font-weight: bold;
+    color: #666;
+    font-size: 0.9rem;
+    min-width: 100px;
+}
+
+.editor-styles-wrapper .event-title {
+    margin: 0;
+    font-size: 1rem;
+    font-weight: 600;
+    color: #333;
+}
+
+/* Ensure drag preview maintains visibility */
+.wp-block-fair-schedule-time-block.is-dragging {
+    opacity: 0.8;
+}
+
+.wp-block-fair-schedule-time-block .block-editor-block-drag-handle {
+    opacity: 1;
+}

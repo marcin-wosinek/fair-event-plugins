@@ -6,7 +6,11 @@
 
 import { registerBlockType } from "@wordpress/blocks";
 import { TextControl, PanelBody } from "@wordpress/components";
-import { useBlockProps, InspectorControls, RichText } from "@wordpress/block-editor";
+import {
+  useBlockProps,
+  InspectorControls,
+  RichText,
+} from "@wordpress/block-editor";
 import { __ } from "@wordpress/i18n";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faClock } from "@fortawesome/free-solid-svg-icons";
@@ -109,4 +113,3 @@ registerBlockType("fair-schedule/time-block", {
     );
   },
 });
-

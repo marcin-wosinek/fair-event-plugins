@@ -46,10 +46,19 @@ function register_time_block() {
         filemtime(plugin_dir_path(__FILE__) . 'src/blocks/time-block/style.css')
     );
 
+    // Register editor styles
+    wp_register_style(
+        'time-block-editor-style',
+        plugins_url('src/blocks/time-block/style.css', __FILE__),
+        array('wp-edit-blocks'),
+        filemtime(plugin_dir_path(__FILE__) . 'src/blocks/time-block/style.css')
+    );
+
     // Register the block
     register_block_type('fair-schedule/time-block', array(
         'editor_script' => 'time-block-editor',
         'style' => 'time-block-style',
+        'editor_style' => 'time-block-editor-style',
         'attributes' => array(
             'title' => array(
                 'type' => 'string',
