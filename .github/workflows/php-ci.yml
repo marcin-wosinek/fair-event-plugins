@@ -42,10 +42,9 @@ jobs:
       with:
         node-version: '18'
         cache: 'npm'
-        cache-dependency-path: './fair-payment/package-lock.json'
+        cache-dependency-path: './package-lock.json'
 
     - name: Install npm dependencies
-      working-directory: ./fair-payment
       run: npm ci
 
     - name: Build JavaScript
