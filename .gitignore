@@ -4,3 +4,9 @@
 !.vscode/launch.json
 !.vscode/settings.json
 .vscode
+.claude
+
+# Plugin dependencies and build artifacts
+*/vendor/*
+*/node_modules/*
+*/build/*
