@@ -19,27 +19,7 @@ import { faClock } from "@fortawesome/free-solid-svg-icons";
  * Register the block
  */
 registerBlockType("fair-schedule/time-block", {
-  title: __("Time Block", "fair-schedule"),
-  description: __("Display a scheduled event time slot", "fair-schedule"),
-  category: "widgets",
   icon: <FontAwesomeIcon icon={faClock} />,
-  supports: {
-    html: false,
-  },
-  attributes: {
-    title: {
-      type: "string",
-      default: "",
-    },
-    startHour: {
-      type: "string",
-      default: "09:00",
-    },
-    endHour: {
-      type: "string",
-      default: "10:00",
-    },
-  },
 
   /**
    * Block edit function
