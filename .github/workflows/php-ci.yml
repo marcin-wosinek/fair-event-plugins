@@ -1,4 +1,4 @@
-name: PHP CI
+name: Continuous integration
 
 on:
   push:
@@ -48,7 +48,6 @@ jobs:
       run: npm ci
 
     - name: Build JavaScript
-      working-directory: ./fair-payment
       run: npm run build
 
     - name: Upload artifact
