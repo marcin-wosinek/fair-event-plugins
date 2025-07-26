@@ -34,7 +34,7 @@ function register_time_block() {
     wp_register_script(
         'time-block-editor',
         plugins_url('build/time-block.js', __FILE__),
-        array('wp-blocks', 'wp-element', 'wp-editor', 'wp-components', 'wp-i18n'),
+        array('wp-blocks', 'wp-element', 'wp-block-editor', 'wp-components', 'wp-i18n', 'wp-rich-text'),
         filemtime(plugin_dir_path(__FILE__) . 'build/time-block.js')
     );
 

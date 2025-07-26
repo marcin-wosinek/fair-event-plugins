@@ -49,7 +49,7 @@ registerBlockType("fair-schedule/time-block", {
       className: "time-block",
     });
 
-    const { title, startHour, endHour } = attributes;
+    const { title = "", startHour = "09:00", endHour = "10:00" } = attributes;
 
     return (
       <>
@@ -95,7 +95,7 @@ registerBlockType("fair-schedule/time-block", {
       className: "time-block",
     });
 
-    const { title, startHour, endHour } = attributes;
+    const { title = "", startHour = "09:00", endHour = "10:00" } = attributes;
 
     return (
       <div {...blockProps}>
