@@ -27,10 +27,6 @@ registerBlockType("fair-schedule/time-block", {
       type: "string",
       default: "",
     },
-    link: {
-      type: "string",
-      default: "",
-    },
     startHour: {
       type: "string",
       default: "09:00",
@@ -49,19 +45,12 @@ registerBlockType("fair-schedule/time-block", {
       className: "time-block",
     });
 
-    const { title, link, startHour, endHour } = attributes;
+    const { title, startHour, endHour } = attributes;
 
     return (
       <>
         <InspectorControls>
           <PanelBody title={__("Time Block Settings", "fair-schedule")}>
-            <TextControl
-              label={__("Link", "fair-schedule")}
-              value={link}
-              onChange={(value) => setAttributes({ link: value })}
-              placeholder={__("https://example.com", "fair-schedule")}
-              type="url"
-            />
             <TextControl
               label={__("Start Hour", "fair-schedule")}
               value={startHour}
@@ -102,7 +91,7 @@ registerBlockType("fair-schedule/time-block", {
       className: "time-block",
     });
 
-    const { title, link, startHour, endHour } = attributes;
+    const { title, startHour, endHour } = attributes;
 
     return (
       <div {...blockProps}>
@@ -112,13 +101,7 @@ registerBlockType("fair-schedule/time-block", {
           </span>
           {title && (
             <h5 className="event-title">
-              {link ? (
-                <a href={link} target="_blank" rel="noopener noreferrer">
-                  <RichText.Content value={title} />
-                </a>
-              ) : (
-                <RichText.Content value={title} />
-              )}
+              <RichText.Content value={title} />
             </h5>
           )}
         </div>

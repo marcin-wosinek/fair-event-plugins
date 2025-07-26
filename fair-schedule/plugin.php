@@ -25,7 +25,6 @@ namespace FairSchedule;
 
 defined('WPINC') || die;
 require_once __DIR__ . '/vendor/autoload.php';
-require_once __DIR__ . '/src/blocks/time-block/render.php';
 
 /**
  * Register the Time Block
@@ -56,10 +55,6 @@ function register_time_block() {
                 'type' => 'string',
                 'default' => '',
             ),
-            'link' => array(
-                'type' => 'string',
-                'default' => '',
-            ),
             'startHour' => array(
                 'type' => 'string',
                 'default' => '09:00',
@@ -69,7 +64,6 @@ function register_time_block() {
                 'default' => '10:00',
             ),
         ),
-        'render_callback' => 'FairSchedule\render_time_block',
     ));
 }
 
