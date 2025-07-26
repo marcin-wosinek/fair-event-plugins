@@ -6,7 +6,7 @@
 
 import { registerBlockType } from "@wordpress/blocks";
 import { TextControl, PanelBody } from "@wordpress/components";
-import { useBlockProps, InspectorControls } from "@wordpress/block-editor";
+import { useBlockProps, InspectorControls, RichText } from "@wordpress/block-editor";
 import { __ } from "@wordpress/i18n";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faClock } from "@fortawesome/free-solid-svg-icons";
@@ -77,31 +77,17 @@ registerBlockType("fair-schedule/time-block", {
           </PanelBody>
         </InspectorControls>
         <div {...blockProps}>
-          <div className="time-block-editor">
-            <TextControl
-              label={__("Title", "fair-schedule")}
+          <div className="time-slot">
+            <span className="time-range">
+              {startHour} - {endHour}
+            </span>
+            <RichText
+              tagName="h5"
+              className="event-title"
               value={title}
               onChange={(value) => setAttributes({ title: value })}
               placeholder={__("Event title", "fair-schedule")}
             />
-          </div>
-          <div className="time-block-preview">
-            <div className="time-slot">
-              <span className="time-range">
-                {startHour} - {endHour}
-              </span>
-              {title && (
-                <h5 className="event-title">
-                  {link ? (
-                    <a href={link} target="_blank" rel="noopener noreferrer">
-                      {title}
-                    </a>
-                  ) : (
-                    title
-                  )}
-                </h5>
-              )}
-            </div>
           </div>
         </div>
       </>
@@ -128,10 +114,10 @@ registerBlockType("fair-schedule/time-block", {
             <h5 className="event-title">
               {link ? (
                 <a href={link} target="_blank" rel="noopener noreferrer">
-                  {title}
+                  <RichText.Content value={title} />
                 </a>
               ) : (
-                title
+                <RichText.Content value={title} />
               )}
             </h5>
           )}
