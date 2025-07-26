@@ -4,7 +4,7 @@
   "description": "Fair Payment WordPress plugin",
   "license": "GPL-3.0-or-later",
   "author": "Marcin Wosinek",
-  "type": "commonjs",
+  "type": "module",
   "main": "build/index.js",
   "scripts": {
     "build": "wp-scripts build src/blocks/simple-payment/index.js --output-path=build",
