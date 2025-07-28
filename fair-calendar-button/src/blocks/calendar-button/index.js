@@ -5,7 +5,12 @@
  */
 
 import { registerBlockType } from '@wordpress/blocks';
-import { TextControl, PanelBody } from '@wordpress/components';
+import {
+	TextControl,
+	PanelBody,
+	ToggleControl,
+	TextareaControl,
+} from '@wordpress/components';
 import { useBlockProps, InspectorControls } from '@wordpress/block-editor';
 import { __ } from '@wordpress/i18n';
 
@@ -46,7 +51,8 @@ function EditComponent({ attributes, setAttributes }) {
 		className: 'calendar-button',
 	});
 
-	const { buttonText, eventTitle, eventDate, eventTime } = attributes;
+	const { buttonText, start, end, allDay, description, location } =
+		attributes;
 
 	return (
 		<>
@@ -65,27 +71,33 @@ function EditComponent({ attributes, setAttributes }) {
 						}
 					/>
 					<TextControl
-						label={__('Event Title', 'fair-calendar-button')}
-						value={eventTitle}
+						label={__('Start Date/Time', 'fair-calendar-button')}
+						value={start}
+						onChange={(value) => setAttributes({ start: value })}
+						type="datetime-local"
+					/>
+					<TextControl
+						label={__('End Date/Time', 'fair-calendar-button')}
+						value={end}
+						onChange={(value) => setAttributes({ end: value })}
+						type="datetime-local"
+					/>
+					<ToggleControl
+						label={__('All Day Event', 'fair-calendar-button')}
+						checked={allDay}
+						onChange={(value) => setAttributes({ allDay: value })}
+					/>
+					<TextareaControl
+						label={__('Description', 'fair-calendar-button')}
+						value={description}
 						onChange={(value) =>
-							setAttributes({ eventTitle: value })
+							setAttributes({ description: value })
 						}
 					/>
 					<TextControl
-						label={__('Event Date', 'fair-calendar-button')}
-						value={eventDate}
-						onChange={(value) =>
-							setAttributes({ eventDate: value })
-						}
-						type="date"
-					/>
-					<TextControl
-						label={__('Event Time', 'fair-calendar-button')}
-						value={eventTime}
-						onChange={(value) =>
-							setAttributes({ eventTime: value })
-						}
-						type="time"
+						label={__('Location', 'fair-calendar-button')}
+						value={location}
+						onChange={(value) => setAttributes({ location: value })}
 					/>
 				</PanelBody>
 			</InspectorControls>
@@ -94,11 +106,25 @@ function EditComponent({ attributes, setAttributes }) {
 					{buttonText ||
 						__('Add to Calendar', 'fair-calendar-button')}
 				</button>
-				{eventTitle && (
+				{(start || end || location || allDay) && (
 					<div className="event-details">
-						<strong>{eventTitle}</strong>
-						{eventDate && <div>{eventDate}</div>}
-						{eventTime && <div>{eventTime}</div>}
+						{start && <div>{start}</div>}
+						{end && (
+							<div>
+								{__('Until:', 'fair-calendar-button')} {end}
+							</div>
+						)}
+						{location && (
+							<div>
+								{__('Location:', 'fair-calendar-button')}{' '}
+								{location}
+							</div>
+						)}
+						{allDay && (
+							<div>
+								{__('All Day Event', 'fair-calendar-button')}
+							</div>
+						)}
 					</div>
 				)}
 			</div>
@@ -118,18 +144,30 @@ function SaveComponent({ attributes }) {
 		className: 'calendar-button',
 	});
 
-	const { buttonText, eventTitle, eventDate, eventTime } = attributes;
+	const { buttonText, start, end, allDay, description, location } =
+		attributes;
 
 	return (
 		<div {...blockProps}>
 			<button className="calendar-button-btn">
 				{buttonText || __('Add to Calendar', 'fair-calendar-button')}
 			</button>
-			{eventTitle && (
+			{(start || end || location || allDay) && (
 				<div className="event-details">
-					<strong>{eventTitle}</strong>
-					{eventDate && <div>{eventDate}</div>}
-					{eventTime && <div>{eventTime}</div>}
+					{start && <div>{start}</div>}
+					{end && (
+						<div>
+							{__('Until:', 'fair-calendar-button')} {end}
+						</div>
+					)}
+					{location && (
+						<div>
+							{__('Location:', 'fair-calendar-button')} {location}
+						</div>
+					)}
+					{allDay && (
+						<div>{__('All Day Event', 'fair-calendar-button')}</div>
+					)}
 				</div>
 			)}
 		</div>

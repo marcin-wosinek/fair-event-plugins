@@ -17,15 +17,23 @@
 			"type": "string",
 			"default": "Add to Calendar"
 		},
-		"eventTitle": {
+		"start": {
 			"type": "string",
 			"default": ""
 		},
-		"eventDate": {
+		"end": {
 			"type": "string",
 			"default": ""
 		},
-		"eventTime": {
+		"allDay": {
+			"type": "boolean",
+			"default": false
+		},
+		"description": {
+			"type": "string",
+			"default": ""
+		},
+		"location": {
 			"type": "string",
 			"default": ""
 		}
