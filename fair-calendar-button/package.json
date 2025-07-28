@@ -7,9 +7,10 @@
 	"type": "module",
 	"main": "build/index.js",
 	"scripts": {
-		"build": "echo 'No blocks to build yet'",
-		"start": "echo 'No blocks to start yet'",
-		"composer": "composer install"
+		"build": "wp-scripts build src/blocks/calendar-button/index.js --output-path=build --output-filename=calendar-button.js && cp src/blocks/calendar-button/style.css build/blocks/calendar-button/",
+		"start": "wp-scripts start src/blocks/calendar-button/index.js --output-path=build --output-filename=calendar-button.js",
+		"composer": "composer install",
+		"format": "wp-scripts format"
 	},
 	"dependencies": {
 		"@wordpress/block-editor": "^11.0.0",

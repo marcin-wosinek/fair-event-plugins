@@ -27,12 +27,23 @@ defined('WPINC') || die;
 require_once __DIR__ . '/vendor/autoload.php';
 
 /**
+ * Register the Calendar Button block
+ *
+ * @return void
+ */
+function Register_Calendar_Button_block()
+{
+    // Register the block using block.json
+    register_block_type(__DIR__ . '/build/blocks/calendar-button');
+}
+
+/**
  * Initialize plugin when ready
  *
  * @return void
  */
 function Init_plugin()
 {
-    // Plugin initialization code will go here
+    Register_Calendar_Button_block();
 }
 add_action('init', 'FairCalendarButton\Init_plugin');

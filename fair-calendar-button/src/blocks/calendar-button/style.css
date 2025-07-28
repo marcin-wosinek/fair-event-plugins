@@ -1,0 +1,45 @@
+/**
+ * Calendar Button Block Styles
+ */
+
+.wp-block-fair-calendar-button-calendar-button {
+	margin: 1em 0;
+}
+
+.calendar-button-btn,
+.calendar-button-preview {
+	background-color: #0073aa;
+	color: white;
+	border: none;
+	padding: 10px 20px;
+	border-radius: 4px;
+	cursor: pointer;
+	font-size: 16px;
+	text-decoration: none;
+	display: inline-block;
+	transition: background-color 0.3s ease;
+}
+
+.calendar-button-btn:hover,
+.calendar-button-preview:hover {
+	background-color: #005a87;
+}
+
+.event-details {
+	margin-top: 10px;
+	padding: 10px;
+	background-color: #f9f9f9;
+	border-left: 4px solid #0073aa;
+	font-size: 14px;
+}
+
+.event-details strong {
+	display: block;
+	margin-bottom: 5px;
+	color: #333;
+}
+
+.event-details div {
+	margin: 2px 0;
+	color: #666;
+}

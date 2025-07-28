@@ -1,0 +1,36 @@
+{
+	"$schema": "https://schemas.wp.org/trunk/block.json",
+	"apiVersion": 3,
+	"name": "fair-calendar-button/calendar-button",
+	"version": "1.0.0",
+	"title": "Calendar Button",
+	"category": "widgets",
+	"icon": "calendar-alt",
+	"description": "Add a calendar button for event scheduling with fair pricing.",
+	"keywords": ["calendar", "button", "event", "schedule"],
+	"textdomain": "fair-calendar-button",
+	"supports": {
+		"html": false
+	},
+	"attributes": {
+		"buttonText": {
+			"type": "string",
+			"default": "Add to Calendar"
+		},
+		"eventTitle": {
+			"type": "string",
+			"default": ""
+		},
+		"eventDate": {
+			"type": "string",
+			"default": ""
+		},
+		"eventTime": {
+			"type": "string",
+			"default": ""
+		}
+	},
+	"editorScript": "file:../../calendar-button.js",
+	"style": "file:./style.css",
+	"editorStyle": "file:./style.css"
+}
