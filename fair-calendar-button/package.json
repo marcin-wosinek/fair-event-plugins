@@ -1,24 +1,24 @@
 {
-  "name": "fair-calendar-button",
-  "version": "1.0.0",
-  "description": "Fair Calendar Button WordPress plugin",
-  "license": "GPL-3.0-or-later",
-  "author": "Marcin Wosinek",
-  "type": "module",
-  "main": "build/index.js",
-  "scripts": {
-    "build": "echo 'No blocks to build yet'",
-    "start": "echo 'No blocks to start yet'",
-    "composer": "composer install"
-  },
-  "dependencies": {
-    "@wordpress/block-editor": "^11.0.0",
-    "@wordpress/blocks": "^12.0.0",
-    "@wordpress/components": "^23.0.0",
-    "@wordpress/i18n": "^4.0.0",
-    "@wordpress/icons": "^9.0.0"
-  },
-  "devDependencies": {
-    "@wordpress/scripts": "^30.20.0"
-  }
+	"name": "fair-calendar-button",
+	"version": "1.0.0",
+	"description": "Fair Calendar Button WordPress plugin",
+	"license": "GPL-3.0-or-later",
+	"author": "Marcin Wosinek",
+	"type": "module",
+	"main": "build/index.js",
+	"scripts": {
+		"build": "echo 'No blocks to build yet'",
+		"start": "echo 'No blocks to start yet'",
+		"composer": "composer install"
+	},
+	"dependencies": {
+		"@wordpress/block-editor": "^11.0.0",
+		"@wordpress/blocks": "^12.0.0",
+		"@wordpress/components": "^23.0.0",
+		"@wordpress/i18n": "^4.0.0",
+		"@wordpress/icons": "^9.0.0"
+	},
+	"devDependencies": {
+		"@wordpress/scripts": "^30.20.0"
+	}
 }
