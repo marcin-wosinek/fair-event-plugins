@@ -14,6 +14,7 @@ services:
       - wordpress:/var/www/html
       - ./fair-payment:/var/www/html/wp-content/plugins/fair-payment
       - ./fair-schedule:/var/www/html/wp-content/plugins/fair-schedule
+      - ./fair-calendar-button:/var/www/html/wp-content/plugins/fair-calendar-button
 
   db:
     image: mysql:8.0

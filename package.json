@@ -924,6 +924,7 @@
   "devDependencies": {},
   "workspaces": [
     "fair-schedule",
-    "fair-payment"
+    "fair-payment",
+    "fair-calendar-button"
   ]
 }
