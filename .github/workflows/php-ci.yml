@@ -33,10 +33,6 @@ jobs:
         restore-keys: |
           ${{ runner.os }}-php-
 
-    - name: Install PHP dependencies
-      working-directory: ./fair-payment
-      run: composer install --prefer-dist --no-progress
-
     - name: Setup Node.js
       uses: actions/setup-node@v3
       with:
@@ -46,6 +42,9 @@ jobs:
 
     - name: Install npm dependencies
       run: npm ci
+
+    - name: Install PHP dependencies in all plugins
+      run: npm run composer
 
     - name: Build JavaScript
       run: npm run build

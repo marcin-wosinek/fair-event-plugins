@@ -8,7 +8,8 @@
   "main": "build/index.js",
   "scripts": {
     "build": "echo 'No blocks to build yet'",
-    "start": "echo 'No blocks to start yet'"
+    "start": "echo 'No blocks to start yet'",
+    "composer": "composer install"
   },
   "dependencies": {
     "@wordpress/block-editor": "^11.0.0",

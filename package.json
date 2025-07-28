@@ -16,7 +16,8 @@
   "main": "index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "build": "npm run build --workspaces"
+    "build": "npm run build --workspaces",
+    "composer": "npm run composer --workspaces"
   },
   "dependencies": {
     "abab": "^2.0.6",

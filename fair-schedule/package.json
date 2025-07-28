@@ -8,7 +8,8 @@
   "main": "build/index.js",
   "scripts": {
     "build": "wp-scripts build src/blocks/time-block/index.js --output-path=build --output-filename=time-block.js",
-    "start": "wp-scripts start src/blocks/time-block/index.js --output-path=build --output-filename=time-block.js"
+    "start": "wp-scripts start src/blocks/time-block/index.js --output-path=build --output-filename=time-block.js",
+    "composer": "composer install"
   },
   "dependencies": {
     "@fortawesome/fontawesome-free": "^7.0.0",
