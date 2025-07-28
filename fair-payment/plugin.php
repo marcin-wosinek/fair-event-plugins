@@ -33,8 +33,11 @@ add_action('admin_menu', 'FairPayment\Admin\register_admin_menu');
 
 /**
  * Register the Simple Payment block
+ *
+ * @return void
  */
-function register_simple_payment_block() {
+function Register_Simple_Payment_block()
+{
     // Register block script
     wp_register_script(
         'simple-payment-block-editor',
@@ -52,7 +55,8 @@ function register_simple_payment_block() {
     );
 
     // Register the block
-    register_block_type('fair-payment/simple-payment-block', array(
+    register_block_type(
+        'fair-payment/simple-payment-block', array(
         'editor_script' => 'simple-payment-block-editor',
         'style' => 'simple-payment-block-style',
         'attributes' => array(
@@ -66,6 +70,7 @@ function register_simple_payment_block() {
             ),
         ),
         'render_callback' => 'FairPayment\render_simple_payment_block',
-    ));
+        )
+    );
 }
-add_action('init', 'FairPayment\register_simple_payment_block');
+add_action('init', 'FairPayment\Register_Simple_Payment_block');

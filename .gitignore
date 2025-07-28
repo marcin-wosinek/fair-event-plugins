@@ -5,6 +5,7 @@
 !.vscode/settings.json
 .vscode
 .claude
+vendor/
 
 # Plugin dependencies and build artifacts
 */vendor/*

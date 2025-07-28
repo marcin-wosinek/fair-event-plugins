@@ -28,8 +28,11 @@ require_once __DIR__ . '/vendor/autoload.php';
 
 /**
  * Initialize plugin when ready
+ *
+ * @return void
  */
-function init_plugin() {
+function Init_plugin()
+{
     // Plugin initialization code will go here
 }
-add_action('init', 'FairCalendarButton\init_plugin');
+add_action('init', 'FairCalendarButton\Init_plugin');

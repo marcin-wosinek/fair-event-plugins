@@ -1,0 +1,9 @@
+{
+    "name": "fair-event-plugins/monorepo",
+    "description": "Monorepo for Fair Event Plugins collection",
+    "type": "project",
+    "license": "GPL-3.0-or-later",
+    "require-dev": {
+        "squizlabs/php_codesniffer": "^3.13"
+    }
+}

@@ -28,8 +28,11 @@ require_once __DIR__ . '/vendor/autoload.php';
 
 /**
  * Register the Time Block
+ *
+ * @return void
  */
-function register_time_block() {
+function Register_Time_block()
+{
     // Register block script
     wp_register_script(
         'time-block-editor',
@@ -55,7 +58,8 @@ function register_time_block() {
     );
 
     // Register the block
-    register_block_type('fair-schedule/time-block', array(
+    register_block_type(
+        'fair-schedule/time-block', array(
         'editor_script' => 'time-block-editor',
         'style' => 'time-block-style',
         'editor_style' => 'time-block-editor-style',
@@ -73,13 +77,17 @@ function register_time_block() {
                 'default' => '10:00',
             ),
         ),
-    ));
+        )
+    );
 }
 
 /**
  * Initialize blocks when ready
+ *
+ * @return void
  */
-function init_blocks() {
-    register_time_block();
+function Init_blocks()
+{
+    Register_Time_block();
 }
-add_action('init', 'FairSchedule\init_blocks');
+add_action('init', 'FairSchedule\Init_blocks');
