@@ -2,15 +2,13 @@
   "name": "fair-payment",
   "version": "1.0.0",
   "description": "Fair Payment WordPress plugin",
+  "license": "GPL-3.0-or-later",
+  "author": "Marcin Wosinek",
+  "type": "module",
   "main": "build/index.js",
   "scripts": {
     "build": "wp-scripts build src/blocks/simple-payment/index.js --output-path=build",
     "start": "wp-scripts start src/blocks/simple-payment/index.js --output-path=build"
-  },
-  "author": "Marcin Wosinek",
-  "license": "GPL-3.0-or-later",
-  "devDependencies": {
-    "@wordpress/scripts": "^25.0.0"
   },
   "dependencies": {
     "@wordpress/block-editor": "^11.0.0",
@@ -18,5 +16,8 @@
     "@wordpress/components": "^23.0.0",
     "@wordpress/i18n": "^4.0.0",
     "@wordpress/icons": "^9.0.0"
+  },
+  "devDependencies": {
+    "@wordpress/scripts": "^25.0.0"
   }
 }
