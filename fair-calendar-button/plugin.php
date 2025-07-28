@@ -33,6 +33,7 @@ require_once __DIR__ . '/vendor/autoload.php';
  */
 function Register_Calendar_Button_block()
 {
+    error_log('Register_Calendar_Button_block() called');
     // Register the block using block.json
     register_block_type(__DIR__ . '/build/blocks/calendar-button');
 }

@@ -38,7 +38,9 @@
 			"default": ""
 		}
 	},
-	"editorScript": "file:../../calendar-button.js",
+	"editorScript": "file:../../index.js",
+	"script": "file:../../frontend.js",
+	"render": "file:./render.php",
 	"style": "file:./style.css",
 	"editorStyle": "file:./style.css"
 }
