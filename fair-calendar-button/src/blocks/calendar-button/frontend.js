@@ -22,11 +22,12 @@ document.addEventListener('DOMContentLoaded', function () {
 				title: this.dataset.title,
 				recurring: this.dataset.recurring === 'true',
 				rRule: this.dataset.rrule || '',
+				url: this.dataset.url || '',
 			};
 
 			// Create calendar event data and handle click
 			const eventData = createEventData(attributes);
-			handleCalendarClick(eventData);
+			handleCalendarClick(eventData, this);
 		});
 	});
 });

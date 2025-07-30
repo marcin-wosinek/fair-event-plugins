@@ -27,3 +27,105 @@
 	margin: 2px 0;
 	color: #666;
 }
+
+/* Calendar Dropdown Styles */
+.calendar-dropdown {
+	background: #ffffff;
+	border: 1px solid #e1e5e9;
+	border-radius: 12px;
+	box-shadow: 0 8px 32px rgba(0, 0, 0, 0.12), 0 2px 6px rgba(0, 0, 0, 0.08);
+	min-width: 280px;
+	overflow: hidden;
+	font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+	font-size: 15px;
+	backdrop-filter: blur(10px);
+	position: relative;
+}
+
+.calendar-dropdown::before {
+	content: '';
+	position: absolute;
+	top: 0;
+	left: 0;
+	right: 0;
+	height: 1px;
+	background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.8), transparent);
+}
+
+.calendar-dropdown-option {
+	display: flex;
+	align-items: center;
+	width: 100%;
+	padding: 16px 20px;
+	background: none;
+	border: none;
+	text-align: left;
+	cursor: pointer;
+	transition: all 0.2s ease;
+	color: #2c3e50;
+	font-size: 15px;
+	font-family: inherit;
+	font-weight: 500;
+	position: relative;
+}
+
+.calendar-dropdown-option:hover {
+	background-color: #f8f9fa;
+	transform: translateX(2px);
+}
+
+.calendar-dropdown-option:focus {
+	background-color: #e3f2fd;
+	outline: none;
+}
+
+.calendar-dropdown-option:active {
+	background-color: #bbdefb;
+	transform: translateX(0);
+}
+
+.calendar-dropdown-option:not(:last-child) {
+	border-bottom: 1px solid #f0f2f5;
+}
+
+.calendar-dropdown-option:first-child {
+	border-top-left-radius: 12px;
+	border-top-right-radius: 12px;
+}
+
+.calendar-dropdown-option:last-child {
+	border-bottom-left-radius: 12px;
+	border-bottom-right-radius: 12px;
+}
+
+/* SVG icon styling */
+.calendar-icon {
+	display: inline-block;
+	flex-shrink: 0;
+	margin-right: 12px;
+	width: 18px !important;
+	height: 18px !important;
+	opacity: 0.9;
+	transition: opacity 0.2s ease;
+}
+
+.calendar-dropdown-option:hover .calendar-icon {
+	opacity: 1;
+}
+
+/* Add subtle hover effects for each provider */
+.calendar-dropdown-option[data-provider="google"]:hover {
+	background: linear-gradient(135deg, rgba(66, 133, 244, 0.05), rgba(66, 133, 244, 0.02));
+}
+
+.calendar-dropdown-option[data-provider="outlook"]:hover {
+	background: linear-gradient(135deg, rgba(0, 120, 212, 0.05), rgba(0, 120, 212, 0.02));
+}
+
+.calendar-dropdown-option[data-provider="yahoo"]:hover {
+	background: linear-gradient(135deg, rgba(114, 14, 158, 0.05), rgba(114, 14, 158, 0.02));
+}
+
+.calendar-dropdown-option[data-provider="ics"]:hover {
+	background: linear-gradient(135deg, rgba(102, 102, 102, 0.05), rgba(102, 102, 102, 0.02));
+}

@@ -21,9 +21,9 @@ $rrule = $attributes['rRule'] ?? '';
 $current_url = get_permalink();
 $current_title = get_the_title();
 
-// Build data attributes for JavaScript (excluding URL functionality)
+// Build data attributes for JavaScript (including URL functionality)
 $data_attributes = sprintf(
-    'data-start="%s" data-end="%s" data-all-day="%s" data-description="%s" data-location="%s" data-title="%s" data-recurring="%s" data-rrule="%s"',
+    'data-start="%s" data-end="%s" data-all-day="%s" data-description="%s" data-location="%s" data-title="%s" data-recurring="%s" data-rrule="%s" data-url="%s"',
     esc_attr($start),
     esc_attr($end),
     $all_day ? 'true' : 'false',
@@ -31,7 +31,8 @@ $data_attributes = sprintf(
     esc_attr($location),
     esc_attr($current_title),
     $recurring ? 'true' : 'false',
-    esc_attr($rrule)
+    esc_attr($rrule),
+    esc_attr($current_url)
 );
 
 // Add data attributes to the button within the content
