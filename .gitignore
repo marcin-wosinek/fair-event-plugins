@@ -12,3 +12,14 @@ vendor/
 */node_modules/*
 */build/*
 node_modules
+
+# Playwright test results and reports
+*/playwright-report/
+*/test-results/
+*/tests/screenshots/*.png
+*/.env
+
+# Temporary files
+*.tmp
+*.log
+*.cache
