@@ -20,15 +20,21 @@ jobs:
                   extensions: mbstring, intl, zip
                   coverage: none
 
-            - name: Validate composer.json and composer.lock
-              working-directory: ./fair-payment
-              run: composer validate --strict
+            - name: Validate composer.json for all plugins
+              run: |
+                  composer validate --strict --working-dir=./fair-payment
+                  composer validate --strict --working-dir=./fair-schedule
+                  composer validate --strict --working-dir=./fair-calendar-button
 
             - name: Cache Composer packages
               id: composer-cache
               uses: actions/cache@v3
               with:
-                  path: ./plugin-scaffold/vendor
+                  path: |
+                      ./fair-payment/vendor
+                      ./fair-schedule/vendor
+                      ./fair-calendar-button/vendor
+                      ./vendor
                   key: ${{ runner.os }}-php-${{ hashFiles('**/composer.lock') }}
                   restore-keys: |
                       ${{ runner.os }}-php-
@@ -46,12 +52,66 @@ jobs:
             - name: Install PHP dependencies in all plugins
               run: npm run composer
 
-            - name: Build JavaScript
+            - name: Build JavaScript for all plugins
               run: npm run build
 
-            - name: Upload artifact
+            - name: Create plugin ZIP files
+              run: |
+                  mkdir -p dist
+
+                  # Create Fair Payment plugin zip
+                  cd fair-payment
+                  zip -r ../dist/fair-payment.zip . \
+                    -x "node_modules/*" \
+                    -x "src/*" \
+                    -x "package*.json" \
+                    -x "webpack.config.js" \
+                    -x "composer.json" \
+                    -x "composer.lock" \
+                    -x "vendor/composer/installers/*" \
+                    -x ".*"
+                  cd ..
+
+                  # Create Fair Schedule plugin zip
+                  cd fair-schedule
+                  zip -r ../dist/fair-schedule.zip . \
+                    -x "node_modules/*" \
+                    -x "src/*" \
+                    -x "package*.json" \
+                    -x "webpack.config.js" \
+                    -x "composer.json" \
+                    -x "composer.lock" \
+                    -x "vendor/composer/installers/*" \
+                    -x ".*"
+                  cd ..
+
+                  # Create Fair Calendar Button plugin zip (WordPress.org ready)
+                  cd fair-calendar-button
+                  zip -r ../dist/fair-calendar-button.zip . \
+                    -x "node_modules/*" \
+                    -x "src/*" \
+                    -x "package*.json" \
+                    -x "webpack.config.js" \
+                    -x "composer.json" \
+                    -x "composer.lock" \
+                    -x "vendor/composer/installers/*" \
+                    -x "tests/*" \
+                    -x "test-results/*" \
+                    -x "playwright-report/*" \
+                    -x "playwright.config.js" \
+                    -x ".env*" \
+                    -x "scripts/*" \
+                    -x ".*"
+                  cd ..
+
+            - name: List created ZIP files
+              run: |
+                  echo "Created plugin ZIP files:"
+                  ls -la dist/
+
+            - name: Upload Fair Payment plugins
               uses: actions/upload-artifact@v4
               with:
-                  name: fair-payment
-                  path: ./fair-payment
+                  name: plugins
+                  path: ./dist/
                   retention-days: 7
