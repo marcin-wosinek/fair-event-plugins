@@ -11,7 +11,15 @@ import { google } from 'calendar-link';
  */
 export function handleCalendarClick(eventData) {
 	try {
-		const googleCalendarUrl = google(eventData);
+		const modifiedEventData = { ...eventData };
+
+		if (modifiedEventData.url) {
+			const currentDescription = modifiedEventData.description || '';
+			modifiedEventData.description =
+				currentDescription + '\n\n' + modifiedEventData.url;
+		}
+
+		const googleCalendarUrl = google(modifiedEventData);
 		window.open(googleCalendarUrl, '_blank');
 	} catch (error) {
 		console.error('Error creating calendar link:', error);
