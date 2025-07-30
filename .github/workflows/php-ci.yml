@@ -92,12 +92,16 @@ jobs:
                     -x "webpack.config.js" \
                     -x "composer.lock" \
                     -x "vendor/composer/installers/*" \
+                    -x "vendor/bin/*" \
+                    -x "vendor/spatie/ray/bin/*" \
+                    -x "vendor/*/bin/*" \
                     -x "tests/*" \
                     -x "test-results/*" \
                     -x "playwright-report/*" \
                     -x "playwright.config.js" \
                     -x ".env*" \
                     -x "scripts/*" \
+                    -x "*.sh" \
                     -x ".*"
                   cd ..
 
