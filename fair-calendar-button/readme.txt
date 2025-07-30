@@ -1,6 +1,6 @@
 === Fair Calendar Button ===
 Contributors: marcinwosinek
-Tags: calendar, events, gutenberg, block, google-calendar, outlook, yahoo, ics
+Tags: calendar, events, gutenberg, block
 Requires at least: 5.8
 Tested up to: 6.4
 Requires PHP: 8.0
