@@ -43,6 +43,6 @@ $content_with_attributes = preg_replace(
 );
 ?>
 
-<div <?php echo get_block_wrapper_attributes(); ?>>
-    <?php echo $content_with_attributes; ?>
+<div <?php echo wp_kses_data( get_block_wrapper_attributes() ); ?>>
+    <?php echo wp_kses_post( $content_with_attributes ); ?>
 </div>
