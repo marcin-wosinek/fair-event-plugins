@@ -25,7 +25,16 @@ export function handleCalendarClick(eventData) {
  * @return {Object} Event data for calendar-link
  */
 export function createEventData(attributes) {
-	const { start, end, allDay, description, location, title } = attributes;
+	const {
+		start,
+		end,
+		allDay,
+		description,
+		location,
+		title,
+		recurring,
+		rRule,
+	} = attributes;
 	const eventData = {};
 
 	if (start) eventData.start = new Date(start);
@@ -34,6 +43,11 @@ export function createEventData(attributes) {
 	if (description) eventData.description = description;
 	if (location) eventData.location = location;
 	if (title) eventData.title = title;
+
+	// Include rRule if recurring is enabled and rRule is provided
+	if (recurring && rRule) {
+		eventData.rRule = rRule;
+	}
 
 	return eventData;
 }

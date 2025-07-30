@@ -18,7 +18,8 @@
 		"@wordpress/components": "^23.0.0",
 		"@wordpress/i18n": "^4.0.0",
 		"@wordpress/icons": "^9.0.0",
-		"calendar-link": "^2.11.0"
+		"calendar-link": "^2.11.0",
+		"date-fns": "^2.30.0"
 	},
 	"devDependencies": {
 		"@wordpress/scripts": "^30.20.0"

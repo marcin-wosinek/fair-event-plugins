@@ -48,6 +48,26 @@
 		"location": {
 			"type": "string",
 			"default": ""
+		},
+		"recurring": {
+			"type": "boolean",
+			"default": false
+		},
+		"rRule": {
+			"type": "string",
+			"default": ""
+		},
+		"frequency": {
+			"type": "string",
+			"default": "WEEKLY"
+		},
+		"repeatCount": {
+			"type": "number",
+			"default": null
+		},
+		"untilDate": {
+			"type": "string",
+			"default": ""
 		}
 	},
 	"editorScript": "file:../../index.js",

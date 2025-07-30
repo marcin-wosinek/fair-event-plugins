@@ -14,6 +14,8 @@ $end = $attributes['end'] ?? '';
 $all_day = $attributes['allDay'] ?? false;
 $description = $attributes['description'] ?? '';
 $location = $attributes['location'] ?? '';
+$recurring = $attributes['recurring'] ?? false;
+$rrule = $attributes['rRule'] ?? '';
 
 // Get current page/post data
 $current_url = get_permalink();
@@ -21,13 +23,15 @@ $current_title = get_the_title();
 
 // Build data attributes for JavaScript (excluding URL functionality)
 $data_attributes = sprintf(
-    'data-start="%s" data-end="%s" data-all-day="%s" data-description="%s" data-location="%s" data-title="%s"',
+    'data-start="%s" data-end="%s" data-all-day="%s" data-description="%s" data-location="%s" data-title="%s" data-recurring="%s" data-rrule="%s"',
     esc_attr($start),
     esc_attr($end),
     $all_day ? 'true' : 'false',
     esc_attr($description),
     esc_attr($location),
-    esc_attr($current_title)
+    esc_attr($current_title),
+    $recurring ? 'true' : 'false',
+    esc_attr($rrule)
 );
 
 // Add data attributes to the button within the content

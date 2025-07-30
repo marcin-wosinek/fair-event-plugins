@@ -20,6 +20,8 @@ document.addEventListener('DOMContentLoaded', function () {
 				location: this.dataset.location || '',
 				allDay: this.dataset.allDay === 'true',
 				title: this.dataset.title,
+				recurring: this.dataset.recurring === 'true',
+				rRule: this.dataset.rrule || '',
 			};
 
 			// Create calendar event data and handle click
