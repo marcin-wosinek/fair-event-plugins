@@ -66,7 +66,6 @@ jobs:
                     -x "src/*" \
                     -x "package*.json" \
                     -x "webpack.config.js" \
-                    -x "composer.json" \
                     -x "composer.lock" \
                     -x "vendor/composer/installers/*" \
                     -x ".*"
@@ -79,7 +78,6 @@ jobs:
                     -x "src/*" \
                     -x "package*.json" \
                     -x "webpack.config.js" \
-                    -x "composer.json" \
                     -x "composer.lock" \
                     -x "vendor/composer/installers/*" \
                     -x ".*"
@@ -92,7 +90,6 @@ jobs:
                     -x "src/*" \
                     -x "package*.json" \
                     -x "webpack.config.js" \
-                    -x "composer.json" \
                     -x "composer.lock" \
                     -x "vendor/composer/installers/*" \
                     -x "tests/*" \
