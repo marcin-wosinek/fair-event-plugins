@@ -7,8 +7,12 @@
 	"type": "module",
 	"main": "build/index.js",
 	"scripts": {
-		"build": "wp-scripts build src/blocks/calendar-button/index.js src/blocks/calendar-button/frontend.js --output-path=build --output-filename=[name].js && cp src/blocks/calendar-button/style.css build/blocks/calendar-button/",
+		"build": "wp-scripts build src/blocks/calendar-button/index.js src/blocks/calendar-button/frontend.js --output-path=build --output-filename=[name].js && cp src/blocks/calendar-button/style.css build/blocks/calendar-button/ && npm run build:i18n",
+		"build:i18n": "cp -r languages build/ && npm run compile-po",
 		"start": "wp-scripts start src/blocks/calendar-button/index.js src/blocks/calendar-button/frontend.js --output-path=build --output-filename=[name].js",
+		"makepot": "wp i18n make-pot . languages/fair-calendar-button.pot --exclude=build,node_modules,vendor",
+		"compile-po": "cd languages && for file in *.po; do msgfmt \"$file\" -o \"${file%.po}.mo\"; done",
+		"update-translations": "npm run makepot && npm run compile-po",
 		"composer": "composer install",
 		"format": "wp-scripts format"
 	},

@@ -1,0 +1,142 @@
+# SOME DESCRIPTIVE TITLE.
+# Copyright (C) YEAR THE PACKAGE'S COPYRIGHT HOLDER
+# This file is distributed under the same license as the PACKAGE package.
+# FIRST AUTHOR <EMAIL@ADDRESS>, YEAR.
+#
+#, fuzzy
+msgid ""
+msgstr ""
+"Project-Id-Version: Fair Calendar Button 1.0.0\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2024-07-30 12:00+0000\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language-Team: LANGUAGE <LL@li.org>\n"
+"Language: \n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+
+# Plugin metadata
+msgid "Fair Calendar Button"
+msgstr ""
+
+msgid "Calendar integration plugin with fair pricing model."
+msgstr ""
+
+# Block metadata
+msgid "Calendar Button"
+msgstr ""
+
+msgid "Add a calendar button for event scheduling with fair pricing."
+msgstr ""
+
+# Block keywords
+msgid "calendar"
+msgstr ""
+
+msgid "button"
+msgstr ""
+
+msgid "event"
+msgstr ""
+
+msgid "schedule"
+msgstr ""
+
+# UI Labels
+msgid "Calendar Button Settings"
+msgstr ""
+
+msgid "Start Date"
+msgstr ""
+
+msgid "Start Date/Time"
+msgstr ""
+
+msgid "End Date"
+msgstr ""
+
+msgid "End Date/Time"
+msgstr ""
+
+msgid "All Day Event"
+msgstr ""
+
+msgid "Event Length"
+msgstr ""
+
+msgid "Recurring Event"
+msgstr ""
+
+msgid "Frequency"
+msgstr ""
+
+msgid "Number of Repetitions"
+msgstr ""
+
+msgid "Until Date"
+msgstr ""
+
+msgid "Description"
+msgstr ""
+
+msgid "Location"
+msgstr ""
+
+msgid "Add to Calendar"
+msgstr ""
+
+msgid "Generated RRULE:"
+msgstr ""
+
+# Duration options
+msgid "Other"
+msgstr ""
+
+msgid "30 minutes"
+msgstr ""
+
+msgid "1 hour"
+msgstr ""
+
+msgid "1 hour 30 minutes"
+msgstr ""
+
+msgid "2 hours"
+msgstr ""
+
+msgid "2 hours 30 minutes"
+msgstr ""
+
+msgid "3 hours"
+msgstr ""
+
+msgid "4 hours"
+msgstr ""
+
+msgid "6 hours"
+msgstr ""
+
+msgid "8 hours"
+msgstr ""
+
+# Frequency options
+msgid "Daily"
+msgstr ""
+
+msgid "Weekly"
+msgstr ""
+
+# Help text
+msgid "Enable this to set up a recurring event with an iCal recurrence rule."
+msgstr ""
+
+msgid "How often the event repeats."
+msgstr ""
+
+msgid "Leave empty for unlimited repetitions, or set \"Until Date\" below."
+msgstr ""
+
+msgid "Leave empty for unlimited repetitions, or set \"Number of Repetitions\" above."
+msgstr ""
