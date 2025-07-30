@@ -3,27 +3,11 @@
  */
 
 .wp-block-fair-calendar-button-calendar-button {
-	margin: 1em 0;
+	/* Remove flex display that interferes with button width settings */
 }
 
-.calendar-button-btn,
-.calendar-button-preview {
-	background-color: #0073aa;
-	color: white;
-	border: none;
-	padding: 10px 20px;
-	border-radius: 4px;
-	cursor: pointer;
-	font-size: 16px;
-	text-decoration: none;
-	display: inline-block;
-	transition: background-color 0.3s ease;
-}
-
-.calendar-button-btn:hover,
-.calendar-button-preview:hover {
-	background-color: #005a87;
-}
+/* Remove custom button styles that conflict with WordPress button block styling */
+/* The inner wp-block-button will handle all button styling and width settings */
 
 .event-details {
 	margin-top: 10px;

@@ -8,7 +8,11 @@ import {
 	ToggleControl,
 	TextareaControl,
 } from '@wordpress/components';
-import { useBlockProps, InspectorControls } from '@wordpress/block-editor';
+import {
+	useBlockProps,
+	InspectorControls,
+	useInnerBlocksProps,
+} from '@wordpress/block-editor';
 import { __ } from '@wordpress/i18n';
 
 /**
@@ -20,12 +24,32 @@ import { __ } from '@wordpress/i18n';
  * @return {JSX.Element} The edit component
  */
 export default function EditComponent({ attributes, setAttributes }) {
-	const blockProps = useBlockProps({
-		className: 'calendar-button',
-	});
+	const blockProps = useBlockProps();
 
-	const { buttonText, start, end, allDay, description, location } =
-		attributes;
+	const { start, end, allDay, description, location } = attributes;
+
+	const TEMPLATE = [
+		[
+			'core/button',
+			{
+				text: __('Add to Calendar', 'fair-calendar-button'),
+				url: '',
+			},
+		],
+	];
+
+	// Add wp-block-buttons class to support button width settings
+	const innerBlocksProps = useInnerBlocksProps(
+		{
+			...blockProps,
+			className: `${blockProps.className || ''} wp-block-buttons`.trim(),
+		},
+		{
+			template: TEMPLATE,
+			templateLock: false,
+			allowedBlocks: ['core/button'],
+		}
+	);
 
 	return (
 		<>
@@ -36,13 +60,6 @@ export default function EditComponent({ attributes, setAttributes }) {
 						'fair-calendar-button'
 					)}
 				>
-					<TextControl
-						label={__('Button Text', 'fair-calendar-button')}
-						value={buttonText}
-						onChange={(value) =>
-							setAttributes({ buttonText: value })
-						}
-					/>
 					<TextControl
 						label={__('Start Date/Time', 'fair-calendar-button')}
 						value={start}
@@ -74,12 +91,7 @@ export default function EditComponent({ attributes, setAttributes }) {
 					/>
 				</PanelBody>
 			</InspectorControls>
-			<div {...blockProps}>
-				<button className="calendar-button-preview">
-					{buttonText ||
-						__('Add to Calendar', 'fair-calendar-button')}
-				</button>
-			</div>
+			<div {...innerBlocksProps} />
 		</>
 	);
 }

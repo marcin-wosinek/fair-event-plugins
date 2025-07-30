@@ -5,7 +5,7 @@ import {
 
 document.addEventListener('DOMContentLoaded', function () {
 	const calendarButtons = document.querySelectorAll(
-		'.wp-block-fair-calendar-button-calendar-button button'
+		'.wp-block-fair-calendar-button-calendar-button .wp-block-button__link'
 	);
 
 	calendarButtons.forEach((button) => {
@@ -19,7 +19,6 @@ document.addEventListener('DOMContentLoaded', function () {
 				description: this.dataset.description || '',
 				location: this.dataset.location || '',
 				allDay: this.dataset.allDay === 'true',
-				url: this.dataset.url,
 				title: this.dataset.title,
 			};
 

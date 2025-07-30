@@ -1,7 +1,7 @@
 /**
  * Save component for the Calendar Button Block
  */
-import { useBlockProps } from '@wordpress/block-editor';
+import { useBlockProps, useInnerBlocksProps } from '@wordpress/block-editor';
 import { __ } from '@wordpress/i18n';
 
 /**
@@ -12,17 +12,13 @@ import { __ } from '@wordpress/i18n';
  * @return {JSX.Element} The save component
  */
 export default function SaveComponent({ attributes }) {
-	const blockProps = useBlockProps.save({
-		className: 'calendar-button',
+	const blockProps = useBlockProps.save();
+
+	// Add wp-block-buttons class to support button width settings
+	const innerBlocksProps = useInnerBlocksProps.save({
+		...blockProps,
+		className: `${blockProps.className || ''} wp-block-buttons`.trim(),
 	});
 
-	const { buttonText } = attributes;
-
-	return (
-		<div {...blockProps}>
-			<button className="calendar-button-btn">
-				{buttonText || __('Add to Calendar', 'fair-calendar-button')}
-			</button>
-		</div>
-	);
+	return <div {...innerBlocksProps} />;
 }

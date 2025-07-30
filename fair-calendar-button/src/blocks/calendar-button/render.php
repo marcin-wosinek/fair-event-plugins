@@ -9,7 +9,6 @@
  */
 
 // Extract attributes with defaults
-$button_text = $attributes['buttonText'] ?? 'Add to Calendar';
 $start = $attributes['start'] ?? '';
 $end = $attributes['end'] ?? '';
 $all_day = $attributes['allDay'] ?? false;
@@ -20,21 +19,25 @@ $location = $attributes['location'] ?? '';
 $current_url = get_permalink();
 $current_title = get_the_title();
 
-// Build data attributes for JavaScript
+// Build data attributes for JavaScript (excluding URL functionality)
 $data_attributes = sprintf(
-    'data-start="%s" data-end="%s" data-all-day="%s" data-description="%s" data-location="%s" data-url="%s" data-title="%s"',
+    'data-start="%s" data-end="%s" data-all-day="%s" data-description="%s" data-location="%s" data-title="%s"',
     esc_attr($start),
     esc_attr($end),
     $all_day ? 'true' : 'false',
     esc_attr($description),
     esc_attr($location),
-    esc_attr($current_url),
     esc_attr($current_title)
+);
+
+// Add data attributes to the button within the content
+$content_with_attributes = preg_replace(
+    '/(<a[^>]*class="[^"]*wp-block-button__link[^"]*"[^>]*)(>)/',
+    '$1 ' . $data_attributes . '$2',
+    $content
 );
 ?>
 
 <div <?php echo get_block_wrapper_attributes(); ?>>
-    <button <?php echo $data_attributes; ?>>
-        <?php echo esc_html($button_text); ?>
-    </button>
+    <?php echo $content_with_attributes; ?>
 </div>

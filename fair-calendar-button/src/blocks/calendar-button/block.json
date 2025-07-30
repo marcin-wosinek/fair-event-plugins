@@ -10,13 +10,25 @@
 	"keywords": ["calendar", "button", "event", "schedule"],
 	"textdomain": "fair-calendar-button",
 	"supports": {
-		"html": false
+		"html": false,
+		"layout": {
+			"default": {
+				"type": "flex",
+				"justifyContent": "center"
+			},
+			"allowSwitching": false,
+			"allowInheriting": false,
+			"allowJustification": true,
+			"allowVerticalAlignment": true,
+			"allowOrientation": false
+		},
+		"align": ["wide", "full"],
+		"spacing": {
+			"padding": true,
+			"margin": ["top", "bottom"]
+		}
 	},
 	"attributes": {
-		"buttonText": {
-			"type": "string",
-			"default": "Add to Calendar"
-		},
 		"start": {
 			"type": "string",
 			"default": ""

@@ -25,8 +25,7 @@ export function handleCalendarClick(eventData) {
  * @return {Object} Event data for calendar-link
  */
 export function createEventData(attributes) {
-	const { start, end, allDay, description, location, title, url } =
-		attributes;
+	const { start, end, allDay, description, location, title } = attributes;
 	const eventData = {};
 
 	if (start) eventData.start = new Date(start);
@@ -35,7 +34,6 @@ export function createEventData(attributes) {
 	if (description) eventData.description = description;
 	if (location) eventData.location = location;
 	if (title) eventData.title = title;
-	if (url) eventData.url = url;
 
 	return eventData;
 }
