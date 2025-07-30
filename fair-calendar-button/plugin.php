@@ -11,8 +11,6 @@
  * License: GPLv3 or later
  * License URI: https://www.gnu.org/licenses/gpl-3.0.html
  * Text Domain: fair-calendar-button
- * Domain Path: /languages
- * Network: false
  *
  * Fair Calendar Button is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -44,7 +42,6 @@ require_once __DIR__ . '/vendor/autoload.php';
  */
 function Register_Calendar_Button_block()
 {
-    error_log('Register_Calendar_Button_block() called');
     // Register the block using block.json
     register_block_type(__DIR__ . '/build/blocks/calendar-button');
 }
