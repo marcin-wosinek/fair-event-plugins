@@ -27,6 +27,21 @@ defined('WPINC') || die;
 require_once __DIR__ . '/vendor/autoload.php';
 
 /**
+ * Load plugin textdomain for translations
+ *
+ * @return void
+ */
+function load_fair_calendar_button_textdomain()
+{
+    load_plugin_textdomain(
+        'fair-calendar-button',
+        false,
+        dirname(plugin_basename(__FILE__)) . '/build/languages/'
+    );
+}
+add_action('plugins_loaded', __NAMESPACE__ . '\\load_fair_calendar_button_textdomain');
+
+/**
  * Register the Calendar Button block
  *
  * @return void

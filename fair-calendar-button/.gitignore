@@ -1,0 +1,26 @@
+# Build output
+build/
+
+# Dependencies
+node_modules/
+vendor/
+
+# Environment files
+.env
+.env.local
+
+# IDE files
+.vscode/
+.idea/
+*.sublime-*
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Generated files
+*.mo
+
+# Keep source translation files
+!languages/*.po
+!languages/*.pot
