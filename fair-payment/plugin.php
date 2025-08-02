@@ -27,9 +27,13 @@ defined('WPINC') || die;
 require_once __DIR__ . '/vendor/autoload.php';
 require_once __DIR__ . '/src/blocks/simple-payment/render.php';
 require_once __DIR__ . '/src/admin/admin-page.php';
+require_once __DIR__ . '/src/routing.php';
 
 // Initialize admin page
 add_action('admin_menu', 'FairPayment\Admin\register_admin_menu');
+
+// Initialize routing
+\FairPayment\Routing\init_routing();
 
 /**
  * Register the Simple Payment block
