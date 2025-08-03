@@ -22,6 +22,12 @@ jobs:
       - name: Install PHP dependencies in all plugins
         run: npm run composer --working-dir=./fair-event-plugins.com
 
+      - name: Create .env file
+        run: |
+          cd ./fair-event-plugins.com
+          echo "STRIPE_SECRET_KEY=${{ secrets.STRIPE_SECRET_KEY }}" > .env
+          echo "STRIPE_PUBLISHABLE_KEY=${{ secrets.STRIPE_PUBLISHABLE_KEY }}" >> .env
+
       - name: Deploy via FTP
         uses: SamKirkland/FTP-Deploy-Action@v4.3.5
         with:
@@ -29,4 +35,3 @@ jobs:
           username: ${{ secrets.FTP_USERNAME }}
           password: ${{ secrets.FTP_PASSWORD }}
           local-dir: "./fair-event-plugins.com/"
-          server-dir: "./public_html/"
