@@ -1,118 +1,118 @@
 name: Continuous integration
 
 on:
-    push:
-        branches: [main]
-    pull_request:
-        branches: [main]
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
 
 jobs:
-    build:
-        runs-on: ubuntu-latest
+  build:
+    runs-on: ubuntu-latest
 
-        steps:
-            - uses: actions/checkout@v3
+    steps:
+      - uses: actions/checkout@v3
 
-            - name: Setup PHP
-              uses: shivammathur/setup-php@v2
-              with:
-                  php-version: '8.2'
-                  extensions: mbstring, intl, zip
-                  coverage: none
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: "8.2"
+          extensions: mbstring, intl, zip
+          coverage: none
 
-            - name: Validate composer.json for all plugins
-              run: |
-                  composer validate --strict --working-dir=./fair-payment
-                  composer validate --strict --working-dir=./fair-schedule
-                  composer validate --strict --working-dir=./fair-calendar-button
+      - name: Validate composer.json for all plugins
+        run: |
+          composer validate --strict --working-dir=./fair-payment
+          composer validate --strict --working-dir=./fair-schedule
+          composer validate --strict --working-dir=./fair-calendar-button
 
-            - name: Cache Composer packages
-              id: composer-cache
-              uses: actions/cache@v3
-              with:
-                  path: |
-                      ./fair-payment/vendor
-                      ./fair-schedule/vendor
-                      ./fair-calendar-button/vendor
-                      ./vendor
-                  key: ${{ runner.os }}-php-${{ hashFiles('**/composer.lock') }}
-                  restore-keys: |
-                      ${{ runner.os }}-php-
+      - name: Cache Composer packages
+        id: composer-cache
+        uses: actions/cache@v3
+        with:
+          path: |
+            ./fair-payment/vendor
+            ./fair-schedule/vendor
+            ./fair-calendar-button/vendor
+            ./vendor
+          key: ${{ runner.os }}-php-${{ hashFiles('**/composer.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-php-
 
-            - name: Setup Node.js
-              uses: actions/setup-node@v3
-              with:
-                  node-version: '18'
-                  cache: 'npm'
-                  cache-dependency-path: './package-lock.json'
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: "18"
+          cache: "npm"
+          cache-dependency-path: "./package-lock.json"
 
-            - name: Install npm dependencies
-              run: npm ci
+      - name: Install npm dependencies
+        run: npm ci
 
-            - name: Install PHP dependencies in all plugins
-              run: npm run composer
+      - name: Install PHP dependencies in all plugins
+        run: npm run composer
 
-            - name: Build JavaScript for all plugins
-              run: npm run build
+      - name: Build JavaScript for all plugins
+        run: npm run build
 
-            - name: Create plugin ZIP files
-              run: |
-                  mkdir -p dist
+      - name: Create plugin ZIP files
+        run: |
+          mkdir -p dist
 
-                  # Create Fair Payment plugin zip
-                  cd fair-payment
-                  zip -r ../dist/fair-payment.zip . \
-                    -x "node_modules/*" \
-                    -x "src/*" \
-                    -x "package*.json" \
-                    -x "webpack.config.js" \
-                    -x "composer.lock" \
-                    -x "vendor/composer/installers/*" \
-                    -x ".*"
-                  cd ..
+          # Create Fair Payment plugin zip
+          cd fair-payment
+          zip -r ../dist/fair-payment.zip . \
+            -x "node_modules/*" \
+            -x "src/*" \
+            -x "package*.json" \
+            -x "webpack.config.js" \
+            -x "composer.lock" \
+            -x "vendor/composer/installers/*" \
+            -x ".*"
+          cd ..
 
-                  # Create Fair Schedule plugin zip
-                  cd fair-schedule
-                  zip -r ../dist/fair-schedule.zip . \
-                    -x "node_modules/*" \
-                    -x "src/*" \
-                    -x "package*.json" \
-                    -x "webpack.config.js" \
-                    -x "composer.lock" \
-                    -x "vendor/composer/installers/*" \
-                    -x ".*"
-                  cd ..
+          # Create Fair Schedule plugin zip
+          cd fair-schedule
+          zip -r ../dist/fair-schedule.zip . \
+            -x "node_modules/*" \
+            -x "src/*" \
+            -x "package*.json" \
+            -x "webpack.config.js" \
+            -x "composer.lock" \
+            -x "vendor/composer/installers/*" \
+            -x ".*"
+          cd ..
 
-                  # Create Fair Calendar Button plugin zip (WordPress.org ready)
-                  cd fair-calendar-button
-                  zip -r ../dist/fair-calendar-button.zip . \
-                    -x "node_modules/*" \
-                    -x "src/*" \
-                    -x "package*.json" \
-                    -x "webpack.config.js" \
-                    -x "composer.lock" \
-                    -x "vendor/composer/installers/*" \
-                    -x "vendor/bin/*" \
-                    -x "vendor/spatie/ray/bin/*" \
-                    -x "vendor/*/bin/*" \
-                    -x "tests/*" \
-                    -x "test-results/*" \
-                    -x "playwright-report/*" \
-                    -x "playwright.config.js" \
-                    -x ".env*" \
-                    -x "scripts/*" \
-                    -x "*.sh" \
-                    -x ".*"
-                  cd ..
+          # Create Fair Calendar Button plugin zip (WordPress.org ready)
+          cd fair-calendar-button
+          zip -r ../dist/fair-calendar-button.zip . \
+            -x "node_modules/*" \
+            -x "src/*" \
+            -x "package*.json" \
+            -x "webpack.config.js" \
+            -x "composer.lock" \
+            -x "vendor/composer/installers/*" \
+            -x "vendor/bin/*" \
+            -x "vendor/spatie/ray/bin/*" \
+            -x "vendor/*/bin/*" \
+            -x "tests/*" \
+            -x "test-results/*" \
+            -x "playwright-report/*" \
+            -x "playwright.config.js" \
+            -x ".env*" \
+            -x "scripts/*" \
+            -x "*.sh" \
+            -x ".*"
+          cd ..
 
-            - name: List created ZIP files
-              run: |
-                  echo "Created plugin ZIP files:"
-                  ls -la dist/
+      - name: List created ZIP files
+        run: |
+          echo "Created plugin ZIP files:"
+          ls -la dist/
 
-            - name: Upload Fair Payment plugins
-              uses: actions/upload-artifact@v4
-              with:
-                  name: plugins
-                  path: ./dist/
-                  retention-days: 7
+      - name: Upload Fair Payment plugins
+        uses: actions/upload-artifact@v4
+        with:
+          name: plugins
+          path: ./dist/
+          retention-days: 7
