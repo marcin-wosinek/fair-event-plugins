@@ -19,8 +19,10 @@ jobs:
           php-version: "8.2"
           coverage: none
 
-      - name: Install PHP dependencies in all plugins
-        run: npm run composer --working-dir=./fair-event-plugins.com
+      - name: Install PHP dependencies
+        run: |
+          cd ./fair-event-plugins.com
+          composer install --no-dev --optimize-autoloader
 
       - name: Create .env file
         run: |
