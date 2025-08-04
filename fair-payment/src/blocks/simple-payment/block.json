@@ -1,0 +1,42 @@
+{
+	"$schema": "https://schemas.wp.org/trunk/block-editor/block.json",
+	"apiVersion": 3,
+	"name": "fair-payment/simple-payment",
+	"version": "1.0.0",
+	"title": "Simple Payment",
+	"category": "widgets",
+	"icon": "money-alt",
+	"description": "A simple payment block for accepting payments.",
+	"keywords": ["payment", "stripe", "checkout"],
+	"textdomain": "fair-payment",
+	"supports": {
+		"html": false,
+		"layout": {
+			"default": {
+				"type": "flex",
+				"justifyContent": "center"
+			},
+			"allowSwitching": false,
+			"allowInheriting": false,
+			"allowJustification": true,
+			"allowVerticalAlignment": true,
+			"allowOrientation": false
+		},
+		"align": ["wide", "full"],
+		"spacing": {
+			"padding": true,
+			"margin": ["top", "bottom"]
+		}
+	},
+	"attributes": {
+		"amount": {
+			"type": "string",
+			"default": "15.99"
+		},
+		"blockId": {
+			"type": "string",
+			"default": "---"
+		}
+	},
+	"render": "file:./render.php"
+}

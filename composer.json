@@ -1,20 +1,20 @@
 {
-  "name": "marcinwosinek/fair-event-plugins",
-  "description": "Event plugins for WordPress with fair pricing model",
-  "type": "project",
-  "require": {
-    "squizlabs/php_codesniffer": "^3.13",
-    "wp-coding-standards/wpcs": "^3.2"
-  },
-  "authors": [
-    {
-      "name": "Marcin Wosinek",
-      "email": "marcin.wosinek@gmail.com"
-    }
-  ],
-  "config": {
-    "allow-plugins": {
-      "dealerdirect/phpcodesniffer-composer-installer": true
-    }
-  }
+	"name": "marcinwosinek/fair-event-plugins",
+	"description": "Event plugins for WordPress with fair pricing model",
+	"type": "project",
+	"require": {
+		"squizlabs/php_codesniffer": "^3.13",
+		"wp-coding-standards/wpcs": "^3.2"
+	},
+	"authors": [
+		{
+			"name": "Marcin Wosinek",
+			"email": "marcin.wosinek@gmail.com"
+		}
+	],
+	"config": {
+		"allow-plugins": {
+			"dealerdirect/phpcodesniffer-composer-installer": true
+		}
+	}
 }

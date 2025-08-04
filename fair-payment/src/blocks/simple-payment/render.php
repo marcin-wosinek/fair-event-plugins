@@ -14,11 +14,10 @@ namespace FairPayment;
  * @return string Block HTML.
  */
 function render_simple_payment_block( $attributes ) {
-	$amount   = isset( $attributes['amount'] ) ? $attributes['amount'] : '10';
-	$currency = isset( $attributes['currency'] ) ? $attributes['currency'] : 'EUR';
+	$amount = isset( $attributes['amount'] ) ? $attributes['amount'] : '10';
 
 	$output  = '<div class="simple-payment-block">';
-	$output .= '<p class="simple-payment-text">Fair Payment: ' . esc_html( $amount ) . ' ' . esc_html( $currency ) . '</p>';
+	$output .= '<p class="simple-payment-text">Fair Payment: ' . esc_html( $amount ) . '</p>';
 	$output .= '</div>';
 
 	return $output;
