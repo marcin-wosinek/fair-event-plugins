@@ -53,12 +53,12 @@ services:
       - db
       - wordpress
 
-    fair-event-plugins.com:
-        image: php:8.2-apache
-        ports:
-            - '8083:80'
-        volumes:
-            - ./fair-event-plugins.com:/var/www/html
+  fair-event-plugins.com:
+    image: php:8.2-apache
+    ports:
+      - "8082:80"
+    volumes:
+      - ./fair-event-plugins.com:/var/www/html
 
 volumes:
   wordpress:
