@@ -16,5 +16,8 @@
   <exclude-pattern>/build/</exclude-pattern>
 
   <!-- Use WordPress standards -->
-  <rule ref="WordPress"/>
+  <rule ref="WordPress">
+    <!-- Exclude filename rules to allow PSR-4 naming -->
+    <exclude name="WordPress.Files.FileName"/>
+  </rule>
 </ruleset>
