@@ -70,6 +70,9 @@
 			"default": ""
 		}
 	},
+	"providesContext": {
+		"fair-calendar-button/eventData": "attributes"
+	},
 	"editorScript": "file:../../index.js",
 	"script": "file:../../frontend.js",
 	"render": "file:./render.php",

@@ -8,6 +8,9 @@ import { registerBlockType } from '@wordpress/blocks';
 import EditComponent from './components/EditComponent.js';
 import SaveComponent from './components/SaveComponent.js';
 
+// Import filters to customize inner blocks
+import './filters/buttonFilter.js';
+
 /**
  * Register the block
  */
