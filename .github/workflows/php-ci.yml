@@ -85,12 +85,12 @@ jobs:
           cd fair-calendar-button
           zip -r ../dist/fair-calendar-button.zip . \
             -x "node_modules/*" \
+            -x "assets/*" \
             -x "package*.json" \
             -x "webpack.config.js" \
             -x "composer.lock" \
             -x "vendor/composer/installers/*" \
             -x "vendor/bin/*" \
-            -x "vendor/spatie/ray/bin/*" \
             -x "vendor/*/bin/*" \
             -x "tests/*" \
             -x "test-results/*" \
