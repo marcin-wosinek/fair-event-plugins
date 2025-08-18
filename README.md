@@ -36,6 +36,6 @@ Use docker compose with:
 This specific repository assumes you're running PHP 8.0.  At the time of this writing, WordPress is not fully compatible with PHP 8.0; however, if you change the references to PHP 7.4.28 in
 
 * `composer.json`
-* `plugin.php`
+* `fair-calendar-button.php`
 
 Then you should be okay. If you still experience problems, make sure you're not running Composer 2. If that still doesn't work, don't hesitate to open an [issue](https://github.com/tommcfarlin/fair-payment/issues).

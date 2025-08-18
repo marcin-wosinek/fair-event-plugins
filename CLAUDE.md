@@ -32,7 +32,7 @@ vendor/bin/phpcs        # Run PHP code sniffer (if configured)
 
 ### Plugin Structure
 - **fair-payment/**: Main WordPress plugin directory
-  - **plugin.php**: Main plugin file with block registration and initialization
+  - **fair-calendar-button.php**: Main plugin file with block registration and initialization
   - **src/blocks/simple-payment/**: WordPress Gutenberg block implementation
     - **index.js**: Block editor JavaScript (React components)
     - **render.php**: Server-side block rendering
@@ -59,7 +59,7 @@ vendor/bin/phpcs        # Run PHP code sniffer (if configured)
 
 ## Key Integration Points
 
-- Block registration happens in `plugin.php:register_simple_payment_block()`
+- Block registration happens in `fair-calendar-button.php:register_simple_payment_block()`
 - Admin page registered via `FairPayment\Admin\register_admin_menu()`
 - Frontend rendering handled by `FairPayment\render_simple_payment_block()`
 - Block editor scripts built from `src/blocks/simple-payment/index.js` to `build/index.js`
