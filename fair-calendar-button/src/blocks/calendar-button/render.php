@@ -1,4 +1,9 @@
 <?php
+
+namespace FairCalendarButton\Core;
+
+defined( 'WPINC' ) || die;
+
 /**
  * Render callback for the calendar button block
  *
