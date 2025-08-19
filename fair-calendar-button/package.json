@@ -11,6 +11,7 @@
 		"start": "wp-scripts start src/blocks/calendar-button/index.js src/blocks/calendar-button/frontend.js --output-path=build --output-filename=[name].js",
 		"composer": "composer install",
 		"format": "wp-scripts format",
+		"test": "jest",
 		"test:screenshots": "playwright test",
 		"screenshots": "playwright test --headed"
 	},
@@ -27,8 +28,12 @@
 		"date-fns": "^2.30.0"
 	},
 	"devDependencies": {
+		"@babel/core": "^7.28.3",
+		"@babel/preset-env": "^7.28.3",
 		"@playwright/test": "^1.40.0",
 		"@wordpress/scripts": "^30.20.0",
-		"dotenv": "^16.3.1"
+		"babel-jest": "^30.0.5",
+		"dotenv": "^16.3.1",
+		"jest": "^30.0.0"
 	}
 }

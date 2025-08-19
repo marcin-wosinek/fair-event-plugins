@@ -55,6 +55,11 @@ jobs:
       - name: Build JavaScript for all plugins
         run: npm run build
 
+      - name: Run unit tests
+        run: |
+          cd fair-calendar-button
+          npm test
+
       - name: Create plugin ZIP files
         run: |
           mkdir -p dist
