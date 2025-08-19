@@ -158,7 +158,13 @@ export default function EditComponent({ attributes, setAttributes }) {
 	const buildRRule = (freq, count, until) => {
 		if (!freq) return '';
 
-		let rrule = `FREQ=${freq}`;
+		let rrule;
+		if (freq === 'BIWEEKLY') {
+			// Convert BIWEEKLY to proper RRULE format: FREQ=WEEKLY;INTERVAL=2
+			rrule = 'FREQ=WEEKLY;INTERVAL=2';
+		} else {
+			rrule = `FREQ=${freq}`;
+		}
 
 		if (count && count > 0) {
 			rrule += `;COUNT=${count}`;
@@ -349,6 +355,13 @@ export default function EditComponent({ attributes, setAttributes }) {
 											'fair-calendar-button'
 										),
 										value: 'WEEKLY',
+									},
+									{
+										label: __(
+											'Biweekly',
+											'fair-calendar-button'
+										),
+										value: 'BIWEEKLY',
 									},
 								]}
 								onChange={handleFrequencyChange}
