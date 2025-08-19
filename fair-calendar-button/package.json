@@ -7,7 +7,7 @@
 	"type": "module",
 	"main": "build/index.js",
 	"scripts": {
-		"build": "wp-scripts build src/blocks/calendar-button/index.js src/blocks/calendar-button/frontend.js --output-path=build --output-filename=[name].js && cp src/blocks/calendar-button/style.css build/blocks/calendar-button/",
+		"build": "wp-scripts build src/blocks/calendar-button/index.js src/blocks/calendar-button/frontend.js --output-path=build --output-filename=[name].js && cp src/blocks/calendar-button/*.css build/blocks/calendar-button/",
 		"start": "wp-scripts start src/blocks/calendar-button/index.js src/blocks/calendar-button/frontend.js --output-path=build --output-filename=[name].js",
 		"composer": "composer install",
 		"format": "wp-scripts format",

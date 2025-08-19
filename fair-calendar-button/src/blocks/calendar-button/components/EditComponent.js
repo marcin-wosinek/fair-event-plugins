@@ -23,6 +23,7 @@ import {
 	isValid,
 	differenceInMinutes,
 } from 'date-fns';
+import EventCalendar from './EventCalendar.js';
 
 /**
  * Edit component for the Calendar Button Block
@@ -394,14 +395,13 @@ export default function EditComponent({ attributes, setAttributes }) {
 									'fair-calendar-button'
 								)}
 							/>
-							{rRule && (
-								<p className="components-base-control__help">
-									{__(
-										'Generated RRULE:',
-										'fair-calendar-button'
-									)}{' '}
-									<code>{rRule}</code>
-								</p>
+							{start && recurring && frequency && (
+								<EventCalendar
+									startDate={start}
+									frequency={frequency}
+									count={repeatCount}
+									untilDate={untilDate}
+								/>
 							)}
 						</>
 					)}
