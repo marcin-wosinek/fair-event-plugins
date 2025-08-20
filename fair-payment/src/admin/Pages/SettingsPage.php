@@ -83,9 +83,17 @@ class SettingsPage {
 
 		// Add fields to API section
 		add_settings_field(
-			'api_key',
-			__( 'API Key', 'fair-payment' ),
-			array( $this, 'render_api_key_field' ),
+			'stripe_secret_key',
+			__( 'Stripe Secret Key', 'fair-payment' ),
+			array( $this, 'render_stripe_secret_key_field' ),
+			self::PAGE_SLUG,
+			'fair_payment_api'
+		);
+
+		add_settings_field(
+			'stripe_publishable_key',
+			__( 'Stripe Publishable Key', 'fair-payment' ),
+			array( $this, 'render_stripe_publishable_key_field' ),
 			self::PAGE_SLUG,
 			'fair_payment_api'
 		);
@@ -109,9 +117,10 @@ class SettingsPage {
 	 */
 	private function get_default_settings() {
 		return array(
-			'default_currency' => 'EUR',
-			'api_key'          => '',
-			'test_mode'        => true,
+			'default_currency'           => 'EUR',
+			'stripe_secret_key'          => '',
+			'stripe_publishable_key'     => '',
+			'test_mode'                  => true,
 		);
 	}
 
@@ -130,8 +139,9 @@ class SettingsPage {
 			? $input['default_currency'] 
 			: 'EUR';
 
-		// Sanitize API key
-		$sanitized['api_key'] = sanitize_text_field( $input['api_key'] ?? '' );
+		// Sanitize Stripe API keys
+		$sanitized['stripe_secret_key'] = sanitize_text_field( $input['stripe_secret_key'] ?? '' );
+		$sanitized['stripe_publishable_key'] = sanitize_text_field( $input['stripe_publishable_key'] ?? '' );
 
 		// Sanitize test mode boolean
 		$sanitized['test_mode'] = ! empty( $input['test_mode'] );
@@ -212,7 +222,7 @@ class SettingsPage {
 	public function render_api_section() {
 		?>
 		<p class="section-description">
-			<?php esc_html_e( 'Configure API credentials for your payment provider.', 'fair-payment' ); ?>
+			<?php esc_html_e( 'Configure your Stripe API credentials for payment processing.', 'fair-payment' ); ?>
 		</p>
 		<?php
 	}
@@ -258,27 +268,38 @@ class SettingsPage {
 
 
 	/**
-	 * Render API key field
+	 * Render Stripe secret key field
 	 *
 	 * @return void
 	 */
-	public function render_api_key_field() {
+	public function render_stripe_secret_key_field() {
 		$options = get_option( 'fair_payment_options', $this->get_default_settings() );
 		?>
-		<input type="password" name="fair_payment_options[api_key]" 
-			   id="api_key" value="<?php echo esc_attr( $options['api_key'] ); ?>" 
-			   class="regular-text" autocomplete="off" />
+		<input type="password" name="fair_payment_options[stripe_secret_key]" 
+			   id="stripe_secret_key" value="<?php echo esc_attr( $options['stripe_secret_key'] ); ?>" 
+			   class="regular-text" autocomplete="off" placeholder="sk_test_... or sk_live_..." />
 		<button type="button" class="button button-secondary" onclick="this.previousElementSibling.type = this.previousElementSibling.type === 'password' ? 'text' : 'password';">
 			<?php esc_html_e( 'Show/Hide', 'fair-payment' ); ?>
 		</button>
-		<div class="fair-payment-api-test">
-			<button type="button" class="button button-secondary" id="test-api-connection">
-				<?php esc_html_e( 'Test Connection', 'fair-payment' ); ?>
-			</button>
-			<span id="api-test-result"></span>
-		</div>
 		<p class="description">
-			<?php esc_html_e( 'Your payment provider API key. Keep this secure and never share it publicly.', 'fair-payment' ); ?>
+			<?php esc_html_e( 'Your Stripe secret key (starts with sk_). Keep this secure and never share it publicly.', 'fair-payment' ); ?>
+		</p>
+		<?php
+	}
+
+	/**
+	 * Render Stripe publishable key field
+	 *
+	 * @return void
+	 */
+	public function render_stripe_publishable_key_field() {
+		$options = get_option( 'fair_payment_options', $this->get_default_settings() );
+		?>
+		<input type="text" name="fair_payment_options[stripe_publishable_key]" 
+			   id="stripe_publishable_key" value="<?php echo esc_attr( $options['stripe_publishable_key'] ); ?>" 
+			   class="regular-text" placeholder="pk_test_... or pk_live_..." />
+		<p class="description">
+			<?php esc_html_e( 'Your Stripe publishable key (starts with pk_). This is safe to include in client-side code.', 'fair-payment' ); ?>
 		</p>
 		<?php
 	}
