@@ -1,34 +1,33 @@
 {
-  "$schema": "https://schemas.wp.org/trunk/block.json",
-  "apiVersion": 3,
-  "name": "fair-payment/simple-payment-block",
-  "version": "1.0.0",
-  "title": "Simple Payment",
-  "category": "widgets",
-  "icon": "money-alt",
-  "description": "A Gutenberg block for payment integration",
-  "keywords": ["payment", "money", "pricing", "fair"],
-  "textdomain": "fair-payment",
-  "supports": {
-    "html": false,
-    "align": ["wide", "full"],
-    "spacing": {
-      "padding": true,
-      "margin": ["top", "bottom"]
-    }
-  },
-  "attributes": {
-    "amount": {
-      "type": "string",
-      "default": "10"
-    },
-    "currency": {
-      "type": "string",
-      "default": "EUR"
-    }
-  },
-  "editorScript": "file:../../index.js",
-  "render": "file:./render.php",
-  "style": "file:./style.css"
+	"$schema": "https://schemas.wp.org/trunk/block.json",
+	"apiVersion": 3,
+	"name": "fair-payment/simple-payment-block",
+	"version": "1.0.0",
+	"title": "Simple Payment",
+	"category": "widgets",
+	"icon": "money-alt",
+	"description": "A Gutenberg block for payment integration",
+	"keywords": ["payment", "money", "pricing", "fair"],
+	"textdomain": "fair-payment",
+	"supports": {
+		"html": false,
+		"align": ["wide", "full"],
+		"spacing": {
+			"padding": true,
+			"margin": ["top", "bottom"]
+		}
+	},
+	"attributes": {
+		"amount": {
+			"type": "string",
+			"default": "10"
+		},
+		"currency": {
+			"type": "string",
+			"default": "EUR"
+		}
+	},
+	"editorScript": "file:../../index.js",
+	"render": "file:./render.php",
+	"style": "file:./style.css"
 }
-
