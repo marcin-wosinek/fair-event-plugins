@@ -8,6 +8,7 @@
 namespace FairPayment\Hooks;
 
 use FairPayment\Admin\Controllers\AdminController;
+use FairPayment\Admin\Pages\SettingsPage;
 
 defined( 'WPINC' ) || die;
 
@@ -28,6 +29,10 @@ class AdminHooks {
 	 */
 	public function __construct() {
 		$this->admin_controller = new AdminController();
+		
+		// Initialize settings page (registers its own hooks)
+		new SettingsPage();
+		
 		add_action( 'admin_menu', array( $this, 'register_admin_menu' ) );
 	}
 

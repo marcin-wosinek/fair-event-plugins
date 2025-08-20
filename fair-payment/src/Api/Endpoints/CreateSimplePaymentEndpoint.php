@@ -86,9 +86,8 @@ class CreateSimplePaymentEndpoint extends ApiController {
 		$payment_id = $this->generate_payment_id( 'simple' );
 		$transaction_id = $this->generate_payment_id( 'txn' );
 
-		// Calculate fees (2.5% + 0.30)
-		$processing_fee = round( ( $amount * 0.025 ) + 0.30, 2 );
-		$total_amount = $amount + $processing_fee;
+		// No processing fees - use original amount
+		$total_amount = $amount;
 
 		// Create payment data
 		$payment_data = array(
@@ -97,7 +96,6 @@ class CreateSimplePaymentEndpoint extends ApiController {
 			'type'            => 'simple_payment',
 			'amount'          => $amount,
 			'currency'        => $currency,
-			'processing_fee'  => $processing_fee,
 			'total_amount'    => $total_amount,
 			'customer_email'  => $customer_email,
 			'customer_name'   => $customer_name,
@@ -123,8 +121,6 @@ class CreateSimplePaymentEndpoint extends ApiController {
 			'transaction_id' => $transaction_id,
 			'status'         => $payment_data['status'],
 			'amount'         => array(
-				'subtotal'        => $amount,
-				'processing_fee'  => $processing_fee,
 				'total'           => $total_amount,
 				'currency'        => $currency,
 			),

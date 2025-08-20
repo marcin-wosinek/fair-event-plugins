@@ -75,9 +75,8 @@ class CreateCheckoutEndpoint extends ApiController {
 		$payment_id = $this->generate_payment_id( 'checkout' );
 		$session_id = $this->generate_payment_id( 'session' );
 
-		// Calculate fees (2.5% + 0.30)
-		$processing_fee = round( ( $amount * 0.025 ) + 0.30, 2 );
-		$total_amount = $amount + $processing_fee;
+		// No processing fees - use original amount
+		$total_amount = $amount;
 
 		// Create checkout data
 		$checkout_data = array(
@@ -85,7 +84,6 @@ class CreateCheckoutEndpoint extends ApiController {
 			'session_id'      => $session_id,
 			'amount'          => $amount,
 			'currency'        => $currency,
-			'processing_fee'  => $processing_fee,
 			'total_amount'    => $total_amount,
 			'description'     => $description,
 			'status'          => 'pending',
@@ -104,8 +102,6 @@ class CreateCheckoutEndpoint extends ApiController {
 			'session_id'     => $session_id,
 			'checkout_url'   => $checkout_data['checkout_url'],
 			'amount'         => array(
-				'subtotal'        => $amount,
-				'processing_fee'  => $processing_fee,
 				'total'           => $total_amount,
 				'currency'        => $currency,
 			),
