@@ -50,5 +50,6 @@ class Plugin {
 		new \FairPayment\Hooks\AdminHooks();
 		new \FairPayment\Hooks\BlockHooks();
 		new \FairPayment\Hooks\RoutesHooks();
+		new \FairPayment\Hooks\ApiHooks();
 	}
 }
