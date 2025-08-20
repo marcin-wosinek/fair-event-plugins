@@ -27,7 +27,7 @@ class AdminHooks {
 	 * @return void
 	 */
 	public function register_admin_menu() {
-		require_once plugin_dir_path( dirname( dirname( __FILE__ ) ) ) . '/src/admin/admin-page.php';
+		require_once __DIR__ . '/../../src/admin/admin-page.php';
 		\FairPayment\Admin\register_admin_menu();
 	}
 }

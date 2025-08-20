@@ -27,6 +27,6 @@ class BlockHooks {
 	 * @return void
 	 */
 	public function register_blocks() {
-		register_block_type( dirname( dirname( dirname( __FILE__ ) ) ) . '/build/blocks/simple-payment' );
+		register_block_type( __DIR__ . '/../../build/blocks/simple-payment' );
 	}
 }
