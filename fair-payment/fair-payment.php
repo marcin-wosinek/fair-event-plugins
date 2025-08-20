@@ -34,17 +34,7 @@ namespace FairPayment;
 
 defined( 'WPINC' ) || die;
 require_once __DIR__ . '/vendor/autoload.php';
-require_once __DIR__ . '/src/admin/admin-page.php';
 
-// Initialize admin page
-add_action( 'admin_menu', 'FairPayment\Admin\register_admin_menu' );
+use FairPayment\Core\Plugin;
 
-/**
- * Register the Simple Payment block
- *
- * @return void
- */
-function Register_Simple_Payment_block() {
-	register_block_type( __DIR__ . '/build/blocks/simple-payment' );
-}
-add_action( 'init', 'FairPayment\Register_Simple_Payment_block' );
+Plugin::instance()->init();

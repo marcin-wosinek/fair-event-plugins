@@ -48,5 +48,6 @@ class Plugin {
 	 */
 	private function load_hooks() {
 		new \FairPayment\Hooks\AdminHooks();
+		new \FairPayment\Hooks\BlockHooks();
 	}
 }
