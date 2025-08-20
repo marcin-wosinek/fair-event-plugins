@@ -47,19 +47,19 @@ class SettingsPage {
 			)
 		);
 
+		// API Settings Section (first)
+		add_settings_section(
+			'fair_payment_api',
+			__( 'API Settings', 'fair-payment' ),
+			array( $this, 'render_api_section' ),
+			self::PAGE_SLUG
+		);
+
 		// Payment Configuration Section
 		add_settings_section(
 			'fair_payment_general',
 			__( 'Payment Configuration', 'fair-payment' ),
 			array( $this, 'render_general_section' ),
-			self::PAGE_SLUG
-		);
-
-		// API Settings Section
-		add_settings_section(
-			'fair_payment_api',
-			__( 'API Settings', 'fair-payment' ),
-			array( $this, 'render_api_section' ),
 			self::PAGE_SLUG
 		);
 
@@ -71,17 +71,7 @@ class SettingsPage {
 			self::PAGE_SLUG
 		);
 
-		// Add fields to General section
-		add_settings_field(
-			'default_currency',
-			__( 'Default Currency', 'fair-payment' ),
-			array( $this, 'render_currency_field' ),
-			self::PAGE_SLUG,
-			'fair_payment_general'
-		);
-
-
-		// Add fields to API section
+		// Add fields to API section (first)
 		add_settings_field(
 			'stripe_secret_key',
 			__( 'Stripe Secret Key', 'fair-payment' ),
@@ -96,6 +86,15 @@ class SettingsPage {
 			array( $this, 'render_stripe_publishable_key_field' ),
 			self::PAGE_SLUG,
 			'fair_payment_api'
+		);
+
+		// Add fields to General section
+		add_settings_field(
+			'default_currency',
+			__( 'Default Currency', 'fair-payment' ),
+			array( $this, 'render_currency_field' ),
+			self::PAGE_SLUG,
+			'fair_payment_general'
 		);
 
 
