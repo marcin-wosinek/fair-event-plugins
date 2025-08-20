@@ -10,27 +10,13 @@ import { useBlockProps } from '@wordpress/block-editor';
 import { __ } from '@wordpress/i18n';
 import { Icon, payment } from '@wordpress/icons';
 
+import blockMetadata from './block.json';
+
 /**
  * Register the block
  */
-registerBlockType('fair-payment/simple-payment-block', {
-	title: __('Simple Payment', 'fair-payment'),
-	description: __('Display simple payment information', 'fair-payment'),
-	category: 'widgets',
+registerBlockType(blockMetadata, {
 	icon: <Icon icon={payment} />,
-	supports: {
-		html: false,
-	},
-	attributes: {
-		amount: {
-			type: 'string',
-			default: '10',
-		},
-		currency: {
-			type: 'string',
-			default: 'EUR',
-		},
-	},
 
 	/**
 	 * Block edit function

@@ -1,25 +1,37 @@
 <?php
+
+namespace FairPayment\Core;
+
+defined( 'WPINC' ) || die;
+
 /**
- * Render functions for the Simple Payment block
+ * Render callback for the simple payment block
  *
  * @package FairPayment
+ * @param  array $attributes Block attributes
+ * @param  string $content Block content
+ * @param  WP_Block $block Block instance
+ * @return string Rendered block HTML
  */
 
-namespace FairPayment;
+// Extract attributes with defaults.
+$amount   = $attributes['amount'] ?? '10';
+$currency = $attributes['currency'] ?? 'EUR';
 
-/**
- * Render the Simple Payment block
- *
- * @param array $attributes Block attributes.
- * @return string Block HTML.
- */
-function render_simple_payment_block( $attributes ) {
-	$amount   = isset( $attributes['amount'] ) ? $attributes['amount'] : '10';
-	$currency = isset( $attributes['currency'] ) ? $attributes['currency'] : 'EUR';
+// Currency symbols mapping.
+$currency_symbols = array(
+	'USD' => '$',
+	'EUR' => '€',
+	'GBP' => '£',
+);
 
-	$output  = '<div class="simple-payment-block">';
-	$output .= '<p class="simple-payment-text">Fair Payment: ' . esc_html( $amount ) . ' ' . esc_html( $currency ) . '</p>';
-	$output .= '</div>';
+$currency_symbol = $currency_symbols[ $currency ] ?? $currency;
+?>
 
-	return $output;
-}
+<div <?php echo wp_kses_data( get_block_wrapper_attributes( array( 'class' => 'simple-payment-block' ) ) ); ?>>
+	<p class="simple-payment-text">
+		<?php echo esc_html__( 'Fair Payment:', 'fair-payment' ); ?>
+		<?php echo esc_html( $amount ); ?>
+		<?php echo esc_html( $currency_symbol ); ?>
+	</p>
+</div>
