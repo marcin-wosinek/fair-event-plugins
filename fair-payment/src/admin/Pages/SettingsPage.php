@@ -91,9 +91,9 @@ class SettingsPage {
 
 		// Add fields to General section
 		add_settings_field(
-			'default_currency',
-			__( 'Default Currency', 'fair-payment' ),
-			array( $this, 'render_currency_field' ),
+			'allowed_currencies',
+			__( 'Allowed Currencies', 'fair-payment' ),
+			array( $this, 'render_allowed_currencies_field' ),
 			self::PAGE_SLUG,
 			'fair_payment_general'
 		);
@@ -117,7 +117,7 @@ class SettingsPage {
 	 */
 	private function get_default_settings() {
 		return array(
-			'default_currency'           => 'EUR',
+			'allowed_currencies'         => array( 'EUR', 'USD', 'GBP' ),
 			'stripe_secret_key'          => '',
 			'stripe_publishable_key'     => '',
 			'test_mode'                  => true,
@@ -133,11 +133,25 @@ class SettingsPage {
 	public function sanitize_settings( $input ) {
 		$sanitized = array();
 
-		// Sanitize currency
-		$allowed_currencies = array( 'USD', 'EUR', 'GBP' );
-		$sanitized['default_currency'] = in_array( $input['default_currency'] ?? '', $allowed_currencies, true ) 
-			? $input['default_currency'] 
-			: 'EUR';
+		// Sanitize allowed currencies
+		$available_currencies = $this->get_available_currencies();
+		$allowed_currencies = array();
+		
+		if ( isset( $input['allowed_currencies'] ) && is_array( $input['allowed_currencies'] ) ) {
+			foreach ( $input['allowed_currencies'] as $currency ) {
+				$currency = strtoupper( sanitize_text_field( $currency ) );
+				if ( isset( $available_currencies[ $currency ] ) ) {
+					$allowed_currencies[] = $currency;
+				}
+			}
+		}
+		
+		// Ensure at least one currency is selected
+		if ( empty( $allowed_currencies ) ) {
+			$allowed_currencies = array( 'EUR' );
+		}
+		
+		$sanitized['allowed_currencies'] = array_unique( $allowed_currencies );
 
 		// Sanitize Stripe API keys
 		$sanitized['stripe_secret_key'] = sanitize_text_field( $input['stripe_secret_key'] ?? '' );
@@ -176,7 +190,7 @@ class SettingsPage {
 		wp_enqueue_script(
 			'fair-payment-admin',
 			plugins_url( 'build/admin/admin.js', $plugin_path ),
-			array( 'wp-api' ),
+			array( 'wp-api', 'jquery-ui-sortable' ),
 			'1.0.0',
 			true
 		);
@@ -219,6 +233,10 @@ class SettingsPage {
 					'hide'                   => __( 'Hide', 'fair-payment' ),
 					'showPassword'           => __( 'Show password', 'fair-payment' ),
 					'hidePassword'           => __( 'Hide password', 'fair-payment' ),
+					'dragToReorder'          => __( 'Drag to reorder', 'fair-payment' ),
+					'addCurrency'            => __( 'Add currency', 'fair-payment' ),
+					'removeCurrency'         => __( 'Remove currency', 'fair-payment' ),
+					'lastCurrencyWarning'    => __( 'At least one currency must be selected.', 'fair-payment' ),
 				),
 			)
 		);
@@ -323,27 +341,76 @@ class SettingsPage {
 	}
 
 	/**
-	 * Render currency field
+	 * Get available currencies
 	 *
-	 * @return void
+	 * @return array Available currencies with their labels.
 	 */
-	public function render_currency_field() {
-		$options = get_option( 'fair_payment_options', $this->get_default_settings() );
-		$currencies = array(
+	private function get_available_currencies() {
+		return array(
 			'USD' => __( 'US Dollar ($)', 'fair-payment' ),
 			'EUR' => __( 'Euro (€)', 'fair-payment' ),
 			'GBP' => __( 'British Pound (£)', 'fair-payment' ),
+			'CAD' => __( 'Canadian Dollar (C$)', 'fair-payment' ),
+			'AUD' => __( 'Australian Dollar (A$)', 'fair-payment' ),
+			'JPY' => __( 'Japanese Yen (¥)', 'fair-payment' ),
+			'CHF' => __( 'Swiss Franc (CHF)', 'fair-payment' ),
+			'SEK' => __( 'Swedish Krona (kr)', 'fair-payment' ),
+			'NOK' => __( 'Norwegian Krone (kr)', 'fair-payment' ),
+			'DKK' => __( 'Danish Krone (kr)', 'fair-payment' ),
+			'PLN' => __( 'Polish Złoty (zł)', 'fair-payment' ),
 		);
+	}
+
+	/**
+	 * Render allowed currencies field
+	 *
+	 * @return void
+	 */
+	public function render_allowed_currencies_field() {
+		$options = get_option( 'fair_payment_options', $this->get_default_settings() );
+		$available_currencies = $this->get_available_currencies();
+		$allowed_currencies = $options['allowed_currencies'] ?? array( 'EUR' );
 		?>
-		<select name="fair_payment_options[default_currency]" id="default_currency">
-			<?php foreach ( $currencies as $code => $label ) : ?>
-				<option value="<?php echo esc_attr( $code ); ?>" <?php selected( $options['default_currency'], $code ); ?>>
-					<?php echo esc_html( $label ); ?>
-				</option>
-			<?php endforeach; ?>
-		</select>
+		<div class="fair-payment-currency-selector">
+			<div class="fair-payment-currency-available">
+				<h4><?php esc_html_e( 'Available Currencies', 'fair-payment' ); ?></h4>
+				<div class="fair-payment-currency-list" id="available-currencies">
+					<?php foreach ( $available_currencies as $code => $label ) : ?>
+						<?php if ( ! in_array( $code, $allowed_currencies, true ) ) : ?>
+							<div class="fair-payment-currency-item" data-currency="<?php echo esc_attr( $code ); ?>">
+								<span class="currency-code"><?php echo esc_html( $code ); ?></span>
+								<span class="currency-label"><?php echo esc_html( $label ); ?></span>
+								<button type="button" class="button button-small add-currency" aria-label="<?php esc_attr_e( 'Add currency', 'fair-payment' ); ?>">
+									<span class="dashicons dashicons-plus-alt"></span>
+								</button>
+							</div>
+						<?php endif; ?>
+					<?php endforeach; ?>
+				</div>
+			</div>
+			
+			<div class="fair-payment-currency-allowed">
+				<h4><?php esc_html_e( 'Allowed Currencies', 'fair-payment' ); ?> <small><?php esc_html_e( '(drag to reorder)', 'fair-payment' ); ?></small></h4>
+				<div class="fair-payment-currency-list fair-payment-sortable" id="allowed-currencies">
+					<?php foreach ( $allowed_currencies as $index => $code ) : ?>
+						<?php if ( isset( $available_currencies[ $code ] ) ) : ?>
+							<div class="fair-payment-currency-item" data-currency="<?php echo esc_attr( $code ); ?>">
+								<span class="dashicons dashicons-menu drag-handle" aria-label="<?php esc_attr_e( 'Drag to reorder', 'fair-payment' ); ?>"></span>
+								<span class="currency-code"><?php echo esc_html( $code ); ?></span>
+								<span class="currency-label"><?php echo esc_html( $available_currencies[ $code ] ); ?></span>
+								<button type="button" class="button button-small remove-currency" aria-label="<?php esc_attr_e( 'Remove currency', 'fair-payment' ); ?>">
+									<span class="dashicons dashicons-minus"></span>
+								</button>
+								<input type="hidden" name="fair_payment_options[allowed_currencies][]" value="<?php echo esc_attr( $code ); ?>" />
+							</div>
+						<?php endif; ?>
+					<?php endforeach; ?>
+				</div>
+			</div>
+		</div>
+		
 		<p class="description">
-			<?php esc_html_e( 'Default currency for new payment blocks and transactions.', 'fair-payment' ); ?>
+			<?php esc_html_e( 'Select and order the currencies that will be available for payments. The first currency will be used as the default. Drag items to reorder.', 'fair-payment' ); ?>
 		</p>
 		<?php
 	}

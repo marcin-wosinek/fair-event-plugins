@@ -137,9 +137,11 @@ class ApiHooks {
 			'currency' => array(
 				'required'          => true,
 				'type'              => 'string',
-				'description'       => __( 'Payment currency (USD, EUR, GBP)', 'fair-payment' ),
+				'description'       => __( 'Payment currency', 'fair-payment' ),
 				'validate_callback' => function( $param ) {
-					return in_array( $param, array( 'USD', 'EUR', 'GBP' ), true );
+					$options = get_option( 'fair_payment_options', array() );
+					$allowed_currencies = $options['allowed_currencies'] ?? array( 'EUR', 'USD', 'GBP' );
+					return in_array( strtoupper( $param ), $allowed_currencies, true );
 				},
 			),
 			'description' => array(
@@ -178,9 +180,11 @@ class ApiHooks {
 			'currency' => array(
 				'required'          => true,
 				'type'              => 'string',
-				'description'       => __( 'Payment currency (USD, EUR, GBP)', 'fair-payment' ),
+				'description'       => __( 'Payment currency', 'fair-payment' ),
 				'validate_callback' => function( $param ) {
-					return in_array( $param, array( 'USD', 'EUR', 'GBP' ), true );
+					$options = get_option( 'fair_payment_options', array() );
+					$allowed_currencies = $options['allowed_currencies'] ?? array( 'EUR', 'USD', 'GBP' );
+					return in_array( strtoupper( $param ), $allowed_currencies, true );
 				},
 			),
 			'customer_email' => array(
