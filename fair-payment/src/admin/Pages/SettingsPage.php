@@ -300,6 +300,18 @@ class SettingsPage {
 		<p class="description">
 			<?php esc_html_e( 'Your Stripe publishable key (starts with pk_). This is safe to include in client-side code.', 'fair-payment' ); ?>
 		</p>
+		
+		<div class="fair-payment-comprehensive-test" style="margin-top: 15px; padding: 15px; background: #f9f9f9; border: 1px solid #ddd; border-radius: 4px;">
+			<h4 style="margin-top: 0;"><?php esc_html_e( 'Test Stripe Configuration', 'fair-payment' ); ?></h4>
+			<p class="description" style="margin-bottom: 10px;">
+				<?php esc_html_e( 'Test your complete Stripe setup including both API keys, balance access, and mode consistency.', 'fair-payment' ); ?>
+			</p>
+			<button type="button" class="button button-primary" id="test-comprehensive-stripe-connection">
+				<span class="dashicons dashicons-cloud" style="margin-right: 5px;"></span>
+				<?php esc_html_e( 'Test Full Configuration', 'fair-payment' ); ?>
+			</button>
+			<div id="comprehensive-stripe-test-results" style="margin-top: 15px;"></div>
+		</div>
 		<?php
 	}
 
@@ -322,6 +334,137 @@ class SettingsPage {
 				<?php esc_html_e( 'When enabled, no real payments will be processed. Use this for testing your payment flow.', 'fair-payment' ); ?>
 			</p>
 		</fieldset>
+		<script>
+		document.addEventListener('DOMContentLoaded', function() {
+			const testButton = document.getElementById('test-comprehensive-stripe-connection');
+			if (testButton) {
+				testButton.addEventListener('click', function() {
+					const secretKey = document.getElementById('stripe_secret_key').value;
+					const publishableKey = document.getElementById('stripe_publishable_key').value;
+					const resultsDiv = document.getElementById('comprehensive-stripe-test-results');
+					const button = this;
+					const originalContent = button.innerHTML;
+					
+					if (!secretKey.trim()) {
+						resultsDiv.innerHTML = '<div class="notice notice-error"><p><?php esc_html_e( 'Please enter a Stripe secret key', 'fair-payment' ); ?></p></div>';
+						return;
+					}
+					
+					button.disabled = true;
+					button.innerHTML = '<span class="dashicons dashicons-update-alt" style="margin-right: 5px; animation: spin 1s linear infinite;"></span><?php esc_html_e( 'Testing...', 'fair-payment' ); ?>';
+					resultsDiv.innerHTML = '<div class="notice notice-info"><p><?php esc_html_e( 'Testing Stripe configuration...', 'fair-payment' ); ?></p></div>';
+					
+					// Call the REST API endpoint
+					fetch('<?php echo esc_url( rest_url( 'fair-payment/v1/test-stripe-connection' ) ); ?>', {
+						method: 'POST',
+						headers: {
+							'Content-Type': 'application/json',
+							'X-WP-Nonce': '<?php echo wp_create_nonce( 'wp_rest' ); ?>'
+						},
+						body: JSON.stringify({
+							secret_key: secretKey,
+							publishable_key: publishableKey,
+							_wpnonce: '<?php echo wp_create_nonce( 'wp_rest' ); ?>'
+						})
+					})
+					.then(response => response.json())
+					.then(data => {
+						if (data.success) {
+							resultsDiv.innerHTML = buildSuccessResults(data.data);
+						} else {
+							resultsDiv.innerHTML = buildErrorResults(data.data || { message: data.message || 'Unknown error' });
+						}
+					})
+					.catch(error => {
+						resultsDiv.innerHTML = '<div class="notice notice-error"><p><?php esc_html_e( 'Failed to connect to test endpoint', 'fair-payment' ); ?>: ' + error.message + '</p></div>';
+					})
+					.finally(() => {
+						button.disabled = false;
+						button.innerHTML = originalContent;
+					});
+				});
+			}
+			
+			function buildSuccessResults(data) {
+				let html = '<div class="notice notice-success"><p><strong><?php esc_html_e( '✓ Stripe Configuration Test Successful!', 'fair-payment' ); ?></strong></p></div>';
+				
+				html += '<div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-top: 15px;">';
+				
+				// Secret Key Results
+				html += '<div style="background: white; padding: 12px; border-left: 4px solid #46b450; border-radius: 0 4px 4px 0;">';
+				html += '<h4 style="margin-top: 0; color: #23282d;"><?php esc_html_e( 'Secret Key', 'fair-payment' ); ?></h4>';
+				if (data.secret_key && data.secret_key.valid) {
+					html += '<p style="color: #46b450; margin: 5px 0;"><span class="dashicons dashicons-yes-alt"></span> <?php esc_html_e( 'Valid', 'fair-payment' ); ?></p>';
+					html += '<p style="margin: 5px 0;"><strong><?php esc_html_e( 'Mode:', 'fair-payment' ); ?></strong> ' + (data.secret_key.mode || 'unknown') + '</p>';
+				}
+				html += '</div>';
+				
+				// Publishable Key Results
+				html += '<div style="background: white; padding: 12px; border-left: 4px solid ' + (data.publishable_key ? '#46b450' : '#ffb900') + '; border-radius: 0 4px 4px 0;">';
+				html += '<h4 style="margin-top: 0; color: #23282d;"><?php esc_html_e( 'Publishable Key', 'fair-payment' ); ?></h4>';
+				if (data.publishable_key) {
+					if (data.publishable_key.valid) {
+						html += '<p style="color: #46b450; margin: 5px 0;"><span class="dashicons dashicons-yes-alt"></span> <?php esc_html_e( 'Valid', 'fair-payment' ); ?></p>';
+						html += '<p style="margin: 5px 0;"><strong><?php esc_html_e( 'Mode:', 'fair-payment' ); ?></strong> ' + (data.publishable_key.mode || 'unknown') + '</p>';
+					} else {
+						html += '<p style="color: #d63638; margin: 5px 0;"><span class="dashicons dashicons-dismiss"></span> <?php esc_html_e( 'Invalid', 'fair-payment' ); ?></p>';
+						html += '<p style="margin: 5px 0; color: #d63638;">' + (data.publishable_key.error || '<?php esc_html_e( 'Unknown error', 'fair-payment' ); ?>') + '</p>';
+					}
+				} else {
+					html += '<p style="color: #ffb900; margin: 5px 0;"><span class="dashicons dashicons-warning"></span> <?php esc_html_e( 'Not tested', 'fair-payment' ); ?></p>';
+					html += '<p style="margin: 5px 0; font-style: italic;"><?php esc_html_e( 'No publishable key provided', 'fair-payment' ); ?></p>';
+				}
+				html += '</div>';
+				
+				html += '</div>';
+				
+				// Balance & Connection Info
+				if (data.balance || data.connection) {
+					html += '<div style="background: white; padding: 12px; margin-top: 15px; border-radius: 4px; border: 1px solid #ccd0d4;">';
+					html += '<h4 style="margin-top: 0; color: #23282d;"><?php esc_html_e( 'Connection Details', 'fair-payment' ); ?></h4>';
+					
+					if (data.connection && data.connection.response_time) {
+						html += '<p style="margin: 5px 0;"><strong><?php esc_html_e( 'Response Time:', 'fair-payment' ); ?></strong> ' + data.connection.response_time + 'ms</p>';
+					}
+					
+					if (data.balance && data.balance.currencies && data.balance.currencies.length > 0) {
+						html += '<p style="margin: 5px 0;"><strong><?php esc_html_e( 'Available Currencies:', 'fair-payment' ); ?></strong> ' + data.balance.currencies.join(', ').toUpperCase() + '</p>';
+					}
+					
+					if (data.connection && data.connection.api_version) {
+						html += '<p style="margin: 5px 0;"><strong><?php esc_html_e( 'API Version:', 'fair-payment' ); ?></strong> ' + data.connection.api_version + '</p>';
+					}
+					
+					html += '</div>';
+				}
+				
+				return html;
+			}
+			
+			function buildErrorResults(data) {
+				let html = '<div class="notice notice-error"><p><strong><?php esc_html_e( '✗ Stripe Configuration Test Failed', 'fair-payment' ); ?></strong></p>';
+				html += '<p>' + (data.message || '<?php esc_html_e( 'Unknown error occurred', 'fair-payment' ); ?>') + '</p></div>';
+				
+				return html;
+			}
+		});
+		
+		// Add CSS for spinning animation
+		if (!document.getElementById('fair-payment-admin-styles')) {
+			const style = document.createElement('style');
+			style.id = 'fair-payment-admin-styles';
+			style.textContent = `
+				@keyframes spin {
+					from { transform: rotate(0deg); }
+					to { transform: rotate(360deg); }
+				}
+				.fair-payment-comprehensive-test .notice {
+					margin: 0;
+				}
+			`;
+			document.head.appendChild(style);
+		}
+		</script>
 		<?php
 	}
 }
