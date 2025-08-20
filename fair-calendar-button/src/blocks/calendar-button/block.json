@@ -6,7 +6,7 @@
 	"title": "Calendar Button",
 	"category": "widgets",
 	"icon": "calendar-alt",
-	"description": "Add a calendar button for event scheduling with fair pricing.",
+	"description": "A Gutenberg block for calendar integration",
 	"keywords": ["calendar", "button", "event", "schedule"],
 	"textdomain": "fair-calendar-button",
 	"supports": {

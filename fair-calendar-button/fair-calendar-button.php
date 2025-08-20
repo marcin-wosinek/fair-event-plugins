@@ -2,7 +2,7 @@
 /**
  * Plugin Name: Fair Calendar Button
  * Plugin URI: https://wordpress.org/plugins/fair-calendar-button/
- * Description: A Gutenberg block that adds calendar integration with support for Google Calendar, Outlook, Yahoo Calendar, and ICS downloads. Features a modern dropdown interface with Font Awesome icons.
+ * Description: A Gutenberg block for calendar integration. The block displays a button with a calendar integration with support for Google Calendar, Outlook, Yahoo Calendar, and ICS downloads.
  * Version: 1.0.0
  * Requires at least: 5.8
  * Requires PHP: 8.0

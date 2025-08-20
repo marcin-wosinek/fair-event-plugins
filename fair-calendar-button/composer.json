@@ -1,6 +1,6 @@
 {
 	"name": "marcin-wosinek/fair-calendar-button",
-	"description": "Calendar integration plugin with fair pricing model.",
+	"description": "A Gutenberg block for calendar integration",
 	"type": "wordpress-plugin",
 	"license": "GPL-3.0-or-later",
 	"homepage": "https://github.com/marcin-wosinek/fair-event-plugins/",

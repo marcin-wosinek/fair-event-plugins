@@ -8,11 +8,11 @@ Stable tag: 1.0.0
 License: GPLv3 or later
 License URI: https://www.gnu.org/licenses/gpl-3.0.html
 
-A Gutenberg block that adds calendar integration with support for Google Calendar, Outlook, Yahoo Calendar, and ICS downloads.
+A Gutenberg block for calendar integration.
 
 == Description ==
 
-Fair Calendar Button is a modern WordPress Gutenberg block that makes it easy to add calendar events directly from your website. With a clean, professional dropdown interface, visitors can add events to their preferred calendar application.
+A Gutenberg block for calendar integration. The block displays a button with a calendar integration with support for Google Calendar, Outlook, Yahoo Calendar, and ICS downloads. With a clean, professional dropdown interface, visitors can add events to their preferred calendar application.
 
 **Key Features:**
 
