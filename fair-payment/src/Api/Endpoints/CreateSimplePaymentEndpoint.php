@@ -268,6 +268,7 @@ Fair Payment Team', 'fair-payment' ),
 	 * @return bool True if test mode is enabled.
 	 */
 	private function is_test_mode() {
-		return (bool) get_option( 'fair_payment_test_mode', true );
+		$options = get_option( 'fair_payment_options', array() );
+		return (bool) ( $options['test_mode'] ?? true );
 	}
 }

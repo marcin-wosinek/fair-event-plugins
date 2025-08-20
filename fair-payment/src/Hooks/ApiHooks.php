@@ -9,6 +9,7 @@ namespace FairPayment\Hooks;
 
 use FairPayment\Api\Endpoints\CreateCheckoutEndpoint;
 use FairPayment\Api\Endpoints\CreateSimplePaymentEndpoint;
+use FairPayment\Api\Endpoints\TestStripeConnectionEndpoint;
 
 defined( 'WPINC' ) || die;
 
@@ -57,6 +58,18 @@ class ApiHooks {
 				'callback'            => array( new CreateSimplePaymentEndpoint(), 'handle' ),
 				'permission_callback' => array( $this, 'check_api_permissions' ),
 				'args'                => $this->get_create_simple_payment_args(),
+			)
+		);
+
+		// Test Stripe connection endpoint
+		register_rest_route(
+			self::NAMESPACE,
+			'/test-stripe-connection',
+			array(
+				'methods'             => 'POST',
+				'callback'            => array( new TestStripeConnectionEndpoint(), 'handle' ),
+				'permission_callback' => array( $this, 'check_api_permissions' ),
+				'args'                => $this->get_test_stripe_connection_args(),
 			)
 		);
 
@@ -192,6 +205,37 @@ class ApiHooks {
 	}
 
 	/**
+	 * Get arguments for test-stripe-connection endpoint
+	 *
+	 * @return array Endpoint arguments.
+	 */
+	private function get_test_stripe_connection_args() {
+		return array(
+			'secret_key' => array(
+				'required'          => true,
+				'type'              => 'string',
+				'description'       => __( 'Stripe secret key to test', 'fair-payment' ),
+				'validate_callback' => function( $param ) {
+					return ! empty( $param ) && is_string( $param );
+				},
+			),
+			'publishable_key' => array(
+				'required'          => false,
+				'type'              => 'string',
+				'description'       => __( 'Stripe publishable key to validate (optional)', 'fair-payment' ),
+				'validate_callback' => function( $param ) {
+					return empty( $param ) || is_string( $param );
+				},
+			),
+			'_wpnonce' => array(
+				'required'    => true,
+				'type'        => 'string',
+				'description' => __( 'WordPress nonce for security', 'fair-payment' ),
+			),
+		);
+	}
+
+	/**
 	 * Get payment status endpoint handler
 	 *
 	 * @param WP_REST_Request $request Request object.
@@ -267,9 +311,10 @@ class ApiHooks {
 					'root'      => esc_url_raw( rest_url( self::NAMESPACE ) ),
 					'nonce'     => wp_create_nonce( 'wp_rest' ),
 					'endpoints' => array(
-						'createCheckout'      => '/create-checkout',
-						'createSimplePayment' => '/create-simple-payment',
-						'paymentStatus'       => '/payment-status',
+						'createCheckout'        => '/create-checkout',
+						'createSimplePayment'   => '/create-simple-payment',
+						'testStripeConnection'  => '/test-stripe-connection',
+						'paymentStatus'         => '/payment-status',
 					),
 				)
 			);
