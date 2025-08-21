@@ -10,6 +10,11 @@ export default {
 			'src/blocks/simple-payment',
 			'index.js'
 		),
+		'blocks/simple-payment/frontend': path.resolve(
+			process.cwd(),
+			'src/blocks/simple-payment',
+			'frontend.js'
+		),
 
 		// Admin entries
 		'admin/admin': path.resolve(process.cwd(), 'src/admin/js', 'admin.js'),

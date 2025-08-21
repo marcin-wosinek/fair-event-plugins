@@ -1,83 +1,36 @@
 /**
  * Simple Payment Block
  *
- * Block for displaying simple payment information.
+ * Block for displaying simple payment buttons.
  */
 
 import { registerBlockType } from '@wordpress/blocks';
-import { TextControl, SelectControl } from '@wordpress/components';
-import { useBlockProps } from '@wordpress/block-editor';
-import { __ } from '@wordpress/i18n';
 import { Icon, payment } from '@wordpress/icons';
-import { useSelect } from '@wordpress/data';
-
-import blockMetadata from './block.json';
+import EditComponent from './components/EditComponent.js';
+import SaveComponent from './components/SaveComponent.js';
 
 /**
  * Register the block
  */
-registerBlockType(blockMetadata, {
+registerBlockType('fair-payment/simple-payment-block', {
 	icon: <Icon icon={payment} />,
 
 	/**
 	 * Block edit function
+	 *
+	 * @param {Object}   props               - Block props
+	 * @param {Object}   props.attributes    - Block attributes
+	 * @param {Function} props.setAttributes - Function to set attributes
+	 * @return {JSX.Element} The edit component
 	 */
-	edit: ({ attributes, setAttributes }) => {
-		const blockProps = useBlockProps({
-			className: 'simple-payment-block',
-		});
-
-		const { amount, currency } = attributes;
-
-		return (
-			<div {...blockProps}>
-				<div className="simple-payment-editor">
-					<h4>{__('Simple Payment Settings', 'fair-payment')}</h4>
-					<TextControl
-						label={__('Amount', 'fair-payment')}
-						value={amount}
-						onChange={(value) => setAttributes({ amount: value })}
-						type="number"
-					/>
-					<SelectControl
-						label={__('Currency', 'fair-payment')}
-						value={currency}
-						options={
-							window.fairPaymentAdmin?.allowedCurrencies || [
-								{ label: 'USD ($)', value: 'USD' },
-								{ label: 'EUR (€)', value: 'EUR' },
-								{ label: 'GBP (£)', value: 'GBP' },
-							]
-						}
-						onChange={(value) => setAttributes({ currency: value })}
-					/>
-				</div>
-				<div className="simple-payment-preview">
-					<p>
-						{__('Fair Payment:', 'fair-payment')} {amount}{' '}
-						{currency}
-					</p>
-				</div>
-			</div>
-		);
-	},
+	edit: EditComponent,
 
 	/**
 	 * Block save function
+	 *
+	 * @param {Object} props            - Block props
+	 * @param {Object} props.attributes - Block attributes
+	 * @return {JSX.Element} The save component
 	 */
-	save: ({ attributes }) => {
-		const blockProps = useBlockProps.save({
-			className: 'simple-payment-block',
-		});
-
-		const { amount, currency } = attributes;
-
-		return (
-			<div {...blockProps}>
-				<p className="simple-payment-text">
-					{__('Fair Payment:', 'fair-payment')} {amount} {currency}
-				</p>
-			</div>
-		);
-	},
+	save: SaveComponent,
 });

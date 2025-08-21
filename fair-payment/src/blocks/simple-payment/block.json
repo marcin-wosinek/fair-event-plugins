@@ -11,6 +11,17 @@
 	"textdomain": "fair-payment",
 	"supports": {
 		"html": false,
+		"layout": {
+			"default": {
+				"type": "flex",
+				"justifyContent": "center"
+			},
+			"allowSwitching": false,
+			"allowInheriting": false,
+			"allowJustification": true,
+			"allowVerticalAlignment": true,
+			"allowOrientation": false
+		},
 		"align": ["wide", "full"],
 		"spacing": {
 			"padding": true,
@@ -27,7 +38,8 @@
 			"default": "EUR"
 		}
 	},
-	"editorScript": "file:./index.js",
+	"editorScript": "file:../../../build/blocks/simple-payment/index.js",
+	"script": "file:../../../build/blocks/simple-payment/frontend.js",
 	"render": "file:./render.php",
 	"style": "file:./style.css"
 }
