@@ -1,48 +1,40 @@
 <?php
 /**
- * Fair Schedule
- *
- * Event schedule management plugin, with fair pricing model.
- *
- * PHP version 8.2
- *
- * @category WordPress_Plugin
- * @package  TODO
- * @author   Marcin Wosinek <marcin.wosinek@gmail.com>
- * @license  GPLv3 <https://www.gnu.org/licenses/gpl-3.0.en.html>
- * @link     https://github.com/marcin-wosinek/fair-event-plugins
- * @since    TODO: Date
- *
- * @wordpress-plugin
  * Plugin Name: Fair Schedule
- * Plugin URI:  https://github.com/marcin-wosinek/fair-event-plugins
+ * Plugin URI: https://github.com/marcin-wosinek/fair-event-plugins
  * Description: Schedule management plugin for events, with fair pricing model.
- * Author:      Marcin Wosinek <marcin.wosinek@gmail.com>
- * Version:     1.0.0
+ * Version: 1.0.0
+ * Requires at least: 5.8
+ * Requires PHP: 8.0
+ * Author: Marcin Wosinek
+ * Author URI: https://github.com/marcin-wosinek
+ * License: GPLv3 or later
+ * License URI: https://www.gnu.org/licenses/gpl-3.0.html
+ * Text Domain: fair-schedule
+ *
+ * Fair Schedule is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * any later version.
+ *
+ * Fair Schedule is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with Fair Schedule. If not, see https://www.gnu.org/licenses/gpl-3.0.html.
+ *
+ * @package FairSchedule
+ * @author Marcin Wosinek
+ * @since 1.0.0
  */
 
 namespace FairSchedule;
 
-defined('WPINC') || die;
+defined( 'WPINC' ) || die;
 require_once __DIR__ . '/vendor/autoload.php';
 
-/**
- * Register the Time Block
- *
- * @return void
- */
-function Register_Time_block()
-{
-    register_block_type(__DIR__ . '/src/blocks/time-block');
-}
+use FairSchedule\Core\Plugin;
 
-/**
- * Initialize blocks when ready
- *
- * @return void
- */
-function Init_blocks()
-{
-    Register_Time_block();
-}
-add_action('init', 'FairSchedule\Init_blocks');
+Plugin::instance()->init();

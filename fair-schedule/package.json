@@ -9,6 +9,7 @@
 	"scripts": {
 		"build": "wp-scripts build",
 		"start": "wp-scripts start",
+		"format": "wp-scripts format",
 		"composer": "composer install"
 	},
 	"dependencies": {
