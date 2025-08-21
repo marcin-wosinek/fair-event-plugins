@@ -20,6 +20,7 @@ import {
 	differenceInMinutes,
 } from 'date-fns';
 import { useEffect, useRef } from '@wordpress/element';
+import { store as noticesStore } from '@wordpress/notices';
 
 /**
  * Edit component for the Schedule Column Block
@@ -46,7 +47,9 @@ export default function EditComponent({ attributes, setAttributes, clientId }) {
 		[clientId]
 	);
 
-	const { updateBlockAttributes } = useDispatch(blockEditorStore);
+	const { updateBlockAttributes, moveBlocksToPosition } =
+		useDispatch(blockEditorStore);
+	const { createNotice } = useDispatch(noticesStore);
 
 	// Keep track of previous block order for reordering detection
 	const previousBlockOrderRef = useRef([]);
@@ -149,8 +152,20 @@ export default function EditComponent({ attributes, setAttributes, clientId }) {
 					proposedStartDate
 				);
 				if (maxDuration < MINIMUM_DURATION) {
-					alert(
-						`Cannot fit time block in last position!\n\nTime until column end: ${maxDuration} minutes\nMinimum required: ${MINIMUM_DURATION} minutes`
+					createNotice(
+						'error',
+						`Cannot fit time block in last position! Available: ${maxDuration} minutes, Required: ${MINIMUM_DURATION} minutes`,
+						{
+							isDismissible: true,
+							type: 'snackbar',
+						}
+					);
+					// Revert block to original position
+					moveBlocksToPosition(
+						[movedBlockId],
+						clientId,
+						clientId,
+						oldPosition
 					);
 					return;
 				}
@@ -187,9 +202,21 @@ export default function EditComponent({ attributes, setAttributes, clientId }) {
 				// Fits with squeezed duration
 				newStartTime = availableStart;
 			} else {
-				// Even minimum doesn't fit - show alert and don't update
-				alert(
-					`Cannot fit time block in available slot!\n\nAvailable: ${availableSlotDuration} minutes\nMinimum required: ${MINIMUM_DURATION} minutes`
+				// Even minimum doesn't fit - show notice and revert position
+				createNotice(
+					'error',
+					`Cannot fit time block in available slot! Available: ${availableSlotDuration} minutes, Required: ${MINIMUM_DURATION} minutes`,
+					{
+						isDismissible: true,
+						type: 'snackbar',
+					}
+				);
+				// Revert block to original position
+				moveBlocksToPosition(
+					[movedBlockId],
+					clientId,
+					clientId,
+					oldPosition
 				);
 				return;
 			}
