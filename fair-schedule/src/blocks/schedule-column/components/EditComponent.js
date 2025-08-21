@@ -129,6 +129,32 @@ export default function EditComponent({ attributes, setAttributes, clientId }) {
 				currentTimeBlocks[newPosition - 1].attributes.endHour ||
 				startHour;
 			availableEnd = endHour;
+
+			// Additional check: ensure block doesn't exceed column end time
+			const proposedStartDate = parse(
+				availableStart,
+				'HH:mm',
+				new Date()
+			);
+			const proposedEndDate = addMinutes(
+				proposedStartDate,
+				originalDuration
+			);
+			const columnEndDate = parse(endHour, 'HH:mm', new Date());
+
+			if (proposedEndDate > columnEndDate) {
+				// Block would exceed column end - adjust to fit within column
+				const maxDuration = differenceInMinutes(
+					columnEndDate,
+					proposedStartDate
+				);
+				if (maxDuration < MINIMUM_DURATION) {
+					alert(
+						`Cannot fit time block in last position!\n\nTime until column end: ${maxDuration} minutes\nMinimum required: ${MINIMUM_DURATION} minutes`
+					);
+					return;
+				}
+			}
 		} else {
 			// Middle position - between two blocks
 			availableStart =
