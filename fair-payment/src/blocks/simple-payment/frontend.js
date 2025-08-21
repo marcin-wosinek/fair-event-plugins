@@ -63,12 +63,52 @@ function initializePaymentBlock(block) {
  * @param {string} originalText - Original button text
  */
 async function processPayment(amount, currency, button, originalText) {
-	// Reset button state
-	button.textContent = originalText;
-	button.disabled = false;
+	try {
+		// Call the Stripe checkout endpoint
+		const apiUrl = window.fairPaymentApi?.root 
+			? window.fairPaymentApi.root + '/create-stripe-checkout'
+			: '/wp-json/fair-payment/v1/create-stripe-checkout';
+			
+		const response = await fetch(apiUrl,
+			{
+				method: 'POST',
+				headers: {
+					'Content-Type': 'application/json',
+					'X-WP-Nonce':
+						window.fairPaymentApi?.nonce ||
+						window.wpApiSettings?.nonce ||
+						'',
+				},
+				body: JSON.stringify({
+					amount,
+					currency,
+					description: `Payment of ${amount} ${currency}`,
+					_wpnonce:
+						window.fairPaymentApi?.nonce ||
+						window.wpApiSettings?.nonce ||
+						'',
+				}),
+			}
+		);
 
-	// Show alert with payment information
-	alert(`Payment initiated!\nAmount: ${amount} ${currency}`);
+		const data = await response.json();
 
-	console.log('Payment details:', { amount, currency });
+		if (response.ok && data.success && data.data?.checkout_url) {
+			// Redirect to Stripe checkout
+			window.location.href = data.data.checkout_url;
+		} else {
+			throw new Error(
+				data.message || 'Failed to create checkout session'
+			);
+		}
+	} catch (error) {
+		console.error('Payment error:', error);
+
+		// Reset button state
+		button.textContent = originalText;
+		button.disabled = false;
+
+		// Show error message
+		alert(`Payment failed: ${error.message || 'Unknown error'}`);
+	}
 }

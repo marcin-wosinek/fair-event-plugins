@@ -9,6 +9,7 @@ namespace FairPayment\Hooks;
 
 use FairPayment\Api\Endpoints\CreateCheckoutEndpoint;
 use FairPayment\Api\Endpoints\CreateSimplePaymentEndpoint;
+use FairPayment\Api\Endpoints\CreateStripeCheckoutEndpoint;
 use FairPayment\Api\Endpoints\TestStripeConnectionEndpoint;
 
 defined( 'WPINC' ) || die;
@@ -58,6 +59,18 @@ class ApiHooks {
 				'callback'            => array( new CreateSimplePaymentEndpoint(), 'handle' ),
 				'permission_callback' => array( $this, 'check_api_permissions' ),
 				'args'                => $this->get_create_simple_payment_args(),
+			)
+		);
+
+		// Create Stripe checkout endpoint
+		register_rest_route(
+			self::NAMESPACE,
+			'/create-stripe-checkout',
+			array(
+				'methods'             => 'POST',
+				'callback'            => array( new CreateStripeCheckoutEndpoint(), 'handle' ),
+				'permission_callback' => array( $this, 'check_api_permissions' ),
+				'args'                => $this->get_create_stripe_checkout_args(),
 			)
 		);
 
@@ -209,6 +222,44 @@ class ApiHooks {
 	}
 
 	/**
+	 * Get arguments for create-stripe-checkout endpoint
+	 *
+	 * @return array Endpoint arguments.
+	 */
+	private function get_create_stripe_checkout_args() {
+		return array(
+			'amount' => array(
+				'required'          => true,
+				'type'              => 'string',
+				'description'       => __( 'Payment amount', 'fair-payment' ),
+				'validate_callback' => function( $param ) {
+					return is_numeric( $param ) && $param > 0;
+				},
+			),
+			'currency' => array(
+				'required'          => true,
+				'type'              => 'string',
+				'description'       => __( 'Payment currency', 'fair-payment' ),
+				'validate_callback' => function( $param ) {
+					$options = get_option( 'fair_payment_options', array() );
+					$allowed_currencies = $options['allowed_currencies'] ?? array( 'EUR', 'USD', 'GBP' );
+					return in_array( strtoupper( $param ), $allowed_currencies, true );
+				},
+			),
+			'description' => array(
+				'required'    => false,
+				'type'        => 'string',
+				'description' => __( 'Payment description', 'fair-payment' ),
+			),
+			'_wpnonce' => array(
+				'required'    => true,
+				'type'        => 'string',
+				'description' => __( 'WordPress nonce for security', 'fair-payment' ),
+			),
+		);
+	}
+
+	/**
 	 * Get arguments for test-stripe-connection endpoint
 	 *
 	 * @return array Endpoint arguments.
@@ -307,21 +358,33 @@ class ApiHooks {
 	 */
 	public function localize_api_data() {
 		// Only on pages that might use the API
-		if ( is_admin() || is_page() || is_single() ) {
-			wp_localize_script(
-				'wp-api',
-				'fairPaymentApi',
-				array(
-					'root'      => esc_url_raw( rest_url( self::NAMESPACE ) ),
-					'nonce'     => wp_create_nonce( 'wp_rest' ),
-					'endpoints' => array(
-						'createCheckout'        => '/create-checkout',
-						'createSimplePayment'   => '/create-simple-payment',
-						'testStripeConnection'  => '/test-stripe-connection',
-						'paymentStatus'         => '/payment-status',
-					),
-				)
-			);
+		if ( ! is_admin() && ( is_page() || is_single() || is_home() || is_front_page() ) ) {
+			add_action( 'wp_footer', array( $this, 'output_api_data' ), 5 );
 		}
+	}
+
+	/**
+	 * Output API data as inline script
+	 *
+	 * @return void
+	 */
+	public function output_api_data() {
+		$api_data = array(
+			'root'      => esc_url_raw( rest_url( self::NAMESPACE ) ),
+			'nonce'     => wp_create_nonce( 'wp_rest' ),
+			'endpoints' => array(
+				'createCheckout'        => '/create-checkout',
+				'createSimplePayment'   => '/create-simple-payment',
+				'createStripeCheckout'  => '/create-stripe-checkout',
+				'testStripeConnection'  => '/test-stripe-connection',
+				'paymentStatus'         => '/payment-status',
+			),
+		);
+
+		?>
+		<script type="text/javascript">
+			window.fairPaymentApi = <?php echo wp_json_encode( $api_data ); ?>;
+		</script>
+		<?php
 	}
 }
