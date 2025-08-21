@@ -7,7 +7,9 @@ import {
 	useBlockProps,
 	InspectorControls,
 	useInnerBlocksProps,
+	store as blockEditorStore,
 } from '@wordpress/block-editor';
+import { useSelect } from '@wordpress/data';
 import { __ } from '@wordpress/i18n';
 
 /**
@@ -16,14 +18,48 @@ import { __ } from '@wordpress/i18n';
  * @param {Object}   props               - Block props
  * @param {Object}   props.attributes    - Block attributes
  * @param {Function} props.setAttributes - Function to set attributes
+ * @param {string}   props.clientId      - Block client ID
  * @return {JSX.Element} The edit component
  */
-export default function EditComponent({ attributes, setAttributes }) {
+export default function EditComponent({ attributes, setAttributes, clientId }) {
 	const blockProps = useBlockProps({
 		className: 'schedule-column',
 	});
 
 	const { columnTitle, columnType } = attributes;
+
+	// Get inner blocks to calculate next start time
+	const innerBlocks = useSelect(
+		(select) => {
+			return select(blockEditorStore).getBlocks(clientId);
+		},
+		[clientId]
+	);
+
+	// Calculate the next start time based on the last time-block's end time
+	const getNextStartTime = () => {
+		if (innerBlocks.length === 0) {
+			return '09:00'; // Default start time for first block
+		}
+
+		const lastBlock = innerBlocks[innerBlocks.length - 1];
+		if (
+			lastBlock.name === 'fair-schedule/time-block' &&
+			lastBlock.attributes.endHour
+		) {
+			return lastBlock.attributes.endHour;
+		}
+
+		return '09:00';
+	};
+
+	// Calculate end time (1 hour after start time)
+	const getNextEndTime = () => {
+		const startTime = getNextStartTime();
+		const [hours, minutes] = startTime.split(':').map(Number);
+		const endHours = (hours + 1).toString().padStart(2, '0');
+		return `${endHours}:${minutes.toString().padStart(2, '0')}`;
+	};
 
 	// Template for allowed inner blocks
 	const allowedBlocks = ['fair-schedule/time-block'];
@@ -48,6 +84,15 @@ export default function EditComponent({ attributes, setAttributes }) {
 			allowedBlocks,
 			template,
 			templateLock: false,
+			__experimentalDefaultBlock: {
+				name: 'fair-schedule/time-block',
+				attributes: {
+					title: 'New Event',
+					startHour: getNextStartTime(),
+					endHour: getNextEndTime(),
+				},
+			},
+			__experimentalDirectInsert: true,
 		}
 	);
 
