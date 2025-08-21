@@ -23,6 +23,14 @@ $currency_symbols = array(
 	'USD' => '$',
 	'EUR' => '€',
 	'GBP' => '£',
+	'CAD' => 'C$',
+	'AUD' => 'A$',
+	'JPY' => '¥',
+	'CHF' => 'CHF',
+	'SEK' => 'kr',
+	'NOK' => 'kr',
+	'DKK' => 'kr',
+	'PLN' => 'zł',
 );
 
 $currency_symbol = $currency_symbols[ $currency ] ?? $currency;

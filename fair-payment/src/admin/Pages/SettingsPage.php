@@ -203,14 +203,31 @@ class SettingsPage {
 			'1.0.0'
 		);
 
+		// Get allowed currencies for admin
+		$options = get_option( 'fair_payment_options', array() );
+		$allowed_currencies = $options['allowed_currencies'] ?? array( 'EUR', 'USD', 'GBP' );
+		$available_currencies = $this->get_available_currencies();
+		
+		// Filter to only include allowed currencies
+		$admin_currencies = array();
+		foreach ( $allowed_currencies as $currency_code ) {
+			if ( isset( $available_currencies[ $currency_code ] ) ) {
+				$admin_currencies[] = array(
+					'label' => $available_currencies[ $currency_code ],
+					'value' => $currency_code,
+				);
+			}
+		}
+
 		// Localize script with data
 		wp_localize_script(
 			'fair-payment-admin',
 			'fairPaymentAdmin',
 			array(
-				'apiUrl'  => rest_url( 'fair-payment/v1/test-stripe-connection' ),
-				'nonce'   => wp_create_nonce( 'wp_rest' ),
-				'strings' => array(
+				'apiUrl'            => rest_url( 'fair-payment/v1/test-stripe-connection' ),
+				'nonce'             => wp_create_nonce( 'wp_rest' ),
+				'allowedCurrencies' => $admin_currencies,
+				'strings'           => array(
 					'enterSecretKey'         => __( 'Please enter a Stripe secret key', 'fair-payment' ),
 					'testingConfiguration'   => __( 'Testing Stripe configuration...', 'fair-payment' ),
 					'testing'                => __( 'Testing...', 'fair-payment' ),

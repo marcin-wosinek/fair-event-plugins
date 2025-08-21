@@ -47,8 +47,8 @@ class Plugin {
 	 * @return void
 	 */
 	private function load_hooks() {
-		new \FairPayment\Hooks\AdminHooks();
 		new \FairPayment\Hooks\BlockHooks();
+		new \FairPayment\Hooks\AdminHooks();
 		new \FairPayment\Hooks\RoutesHooks();
 		new \FairPayment\Hooks\ApiHooks();
 	}
