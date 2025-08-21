@@ -12,6 +12,7 @@ import {
 import { useSelect } from '@wordpress/data';
 import { __ } from '@wordpress/i18n';
 import { addHours, format, parse, differenceInHours } from 'date-fns';
+import { useEffect, useRef } from '@wordpress/element';
 
 /**
  * Edit component for the Schedule Column Block
@@ -37,6 +38,9 @@ export default function EditComponent({ attributes, setAttributes, clientId }) {
 		},
 		[clientId]
 	);
+
+	// Keep track of previous block order for reordering detection
+	const previousBlockOrderRef = useRef([]);
 
 	// Calculate the next start time based on the last time-block's end time
 	const getNextStartTime = () => {
@@ -70,6 +74,76 @@ export default function EditComponent({ attributes, setAttributes, clientId }) {
 		const hours = differenceInHours(endDate, startDate);
 		return hours * hourHeight;
 	};
+
+	// Simple alert when time-block is dropped/reordered
+	useEffect(() => {
+		const currentBlockOrder = innerBlocks
+			.filter((block) => block.name === 'fair-schedule/time-block')
+			.map((block) => block.clientId);
+
+		const previousOrder = previousBlockOrderRef.current;
+
+		if (
+			previousOrder.length > 0 &&
+			currentBlockOrder.length === previousOrder.length
+		) {
+			// Check if order changed
+			const orderChanged = !currentBlockOrder.every(
+				(id, index) => id === previousOrder[index]
+			);
+
+			if (orderChanged) {
+				// Find which block actually moved by comparing arrays more carefully
+				let movedBlockId = null;
+				let newPosition = -1;
+				let oldPosition = -1;
+
+				// Find blocks that are in different positions
+				for (let i = 0; i < currentBlockOrder.length; i++) {
+					const blockId = currentBlockOrder[i];
+					const previousIndex = previousOrder.indexOf(blockId);
+
+					// If this block moved to a new position
+					if (previousIndex !== i) {
+						// Check if this is likely the dragged block (moved the furthest)
+						const distance = Math.abs(previousIndex - i);
+						if (
+							movedBlockId === null ||
+							distance > Math.abs(oldPosition - newPosition)
+						) {
+							movedBlockId = blockId;
+							newPosition = i;
+							oldPosition = previousIndex;
+						}
+					}
+				}
+
+				if (movedBlockId) {
+					const movedBlock = innerBlocks.find(
+						(block) => block.clientId === movedBlockId
+					);
+
+					if (movedBlock) {
+						const blockData = {
+							title:
+								movedBlock.attributes.title || 'Untitled Event',
+							startHour: movedBlock.attributes.startHour || 'N/A',
+							endHour: movedBlock.attributes.endHour || 'N/A',
+							oldPosition: oldPosition + 1,
+							newPosition: newPosition + 1,
+							totalBlocks: currentBlockOrder.length,
+						};
+
+						alert(
+							`Time-block moved!\n\nTitle: ${blockData.title}\nTime: ${blockData.startHour} - ${blockData.endHour}\nMoved from position ${blockData.oldPosition} to ${blockData.newPosition} (of ${blockData.totalBlocks})`
+						);
+					}
+				}
+			}
+		}
+
+		previousBlockOrderRef.current = currentBlockOrder;
+	}, [innerBlocks]);
 
 	// Template for allowed inner blocks
 	const allowedBlocks = ['fair-schedule/time-block'];
