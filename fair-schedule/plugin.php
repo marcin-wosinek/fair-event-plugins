@@ -33,52 +33,7 @@ require_once __DIR__ . '/vendor/autoload.php';
  */
 function Register_Time_block()
 {
-    // Register block script
-    wp_register_script(
-        'time-block-editor',
-        plugins_url('build/time-block.js', __FILE__),
-        array('wp-blocks', 'wp-element', 'wp-editor', 'wp-components', 'wp-i18n'),
-        filemtime(plugin_dir_path(__FILE__) . 'build/time-block.js')
-    );
-
-    // Register block styles
-    wp_register_style(
-        'time-block-style',
-        plugins_url('src/blocks/time-block/style.css', __FILE__),
-        array(),
-        filemtime(plugin_dir_path(__FILE__) . 'src/blocks/time-block/style.css')
-    );
-
-    // Register editor styles
-    wp_register_style(
-        'time-block-editor-style',
-        plugins_url('src/blocks/time-block/style.css', __FILE__),
-        array('wp-edit-blocks'),
-        filemtime(plugin_dir_path(__FILE__) . 'src/blocks/time-block/style.css')
-    );
-
-    // Register the block
-    register_block_type(
-        'fair-schedule/time-block', array(
-        'editor_script' => 'time-block-editor',
-        'style' => 'time-block-style',
-        'editor_style' => 'time-block-editor-style',
-        'attributes' => array(
-            'title' => array(
-                'type' => 'string',
-                'default' => '',
-            ),
-            'startHour' => array(
-                'type' => 'string',
-                'default' => '09:00',
-            ),
-            'endHour' => array(
-                'type' => 'string',
-                'default' => '10:00',
-            ),
-        ),
-        )
-    );
+    register_block_type(__DIR__ . '/src/blocks/time-block');
 }
 
 /**
