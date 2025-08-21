@@ -34,13 +34,18 @@
 		"endHour": {
 			"type": "string",
 			"default": "18:00"
+		},
+		"hourHeight": {
+			"type": "number",
+			"default": 2.5
 		}
 	},
 	"providesContext": {
 		"fair-schedule/columnTitle": "columnTitle",
 		"fair-schedule/columnType": "columnType",
 		"fair-schedule/startHour": "startHour",
-		"fair-schedule/endHour": "endHour"
+		"fair-schedule/endHour": "endHour",
+		"fair-schedule/hourHeight": "hourHeight"
 	},
 	"usesContext": [],
 	"editorScript": "file:../../../build/blocks/schedule-column/index.js",

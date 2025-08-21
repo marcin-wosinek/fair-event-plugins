@@ -65,31 +65,29 @@ function initializePaymentBlock(block) {
 async function processPayment(amount, currency, button, originalText) {
 	try {
 		// Call the Stripe checkout endpoint
-		const apiUrl = window.fairPaymentApi?.root 
+		const apiUrl = window.fairPaymentApi?.root
 			? window.fairPaymentApi.root + '/create-stripe-checkout'
 			: '/wp-json/fair-payment/v1/create-stripe-checkout';
-			
-		const response = await fetch(apiUrl,
-			{
-				method: 'POST',
-				headers: {
-					'Content-Type': 'application/json',
-					'X-WP-Nonce':
-						window.fairPaymentApi?.nonce ||
-						window.wpApiSettings?.nonce ||
-						'',
-				},
-				body: JSON.stringify({
-					amount,
-					currency,
-					description: `Payment of ${amount} ${currency}`,
-					_wpnonce:
-						window.fairPaymentApi?.nonce ||
-						window.wpApiSettings?.nonce ||
-						'',
-				}),
-			}
-		);
+
+		const response = await fetch(apiUrl, {
+			method: 'POST',
+			headers: {
+				'Content-Type': 'application/json',
+				'X-WP-Nonce':
+					window.fairPaymentApi?.nonce ||
+					window.wpApiSettings?.nonce ||
+					'',
+			},
+			body: JSON.stringify({
+				amount,
+				currency,
+				description: `Payment of ${amount} ${currency}`,
+				_wpnonce:
+					window.fairPaymentApi?.nonce ||
+					window.wpApiSettings?.nonce ||
+					'',
+			}),
+		});
 
 		const data = await response.json();
 

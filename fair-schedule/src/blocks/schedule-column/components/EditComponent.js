@@ -27,7 +27,8 @@ export default function EditComponent({ attributes, setAttributes, clientId }) {
 		className: 'schedule-column',
 	});
 
-	const { columnTitle, columnType, startHour, endHour } = attributes;
+	const { columnTitle, columnType, startHour, endHour, hourHeight } =
+		attributes;
 
 	// Get inner blocks to calculate next start time
 	const innerBlocks = useSelect(
@@ -154,6 +155,31 @@ export default function EditComponent({ attributes, setAttributes, clientId }) {
 						placeholder="18:00"
 						help={__(
 							'Column end time in HH:MM format',
+							'fair-schedule'
+						)}
+					/>
+					<SelectControl
+						label={__('Hour Height', 'fair-schedule')}
+						value={hourHeight}
+						options={[
+							{
+								label: __('Small', 'fair-schedule'),
+								value: 1.5,
+							},
+							{
+								label: __('Medium', 'fair-schedule'),
+								value: 2.5,
+							},
+							{
+								label: __('Big', 'fair-schedule'),
+								value: 3.5,
+							},
+						]}
+						onChange={(value) =>
+							setAttributes({ hourHeight: parseFloat(value) })
+						}
+						help={__(
+							'Visual height multiplier for each hour in the schedule',
 							'fair-schedule'
 						)}
 					/>

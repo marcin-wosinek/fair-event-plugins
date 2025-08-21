@@ -16,7 +16,8 @@ export default function SaveComponent({ attributes }) {
 		className: 'schedule-column',
 	});
 
-	const { columnTitle, columnType, startHour, endHour } = attributes;
+	const { columnTitle, columnType, startHour, endHour, hourHeight } =
+		attributes;
 
 	const innerBlocksProps = useInnerBlocksProps.save({
 		className: 'schedule-column-content',
@@ -27,6 +28,7 @@ export default function SaveComponent({ attributes }) {
 			{...blockProps}
 			data-start-hour={startHour}
 			data-end-hour={endHour}
+			data-hour-height={hourHeight}
 		>
 			{columnTitle && (
 				<div className="schedule-column-header">
