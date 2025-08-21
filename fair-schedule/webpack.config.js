@@ -10,6 +10,11 @@ export default {
 			'src/blocks/time-block',
 			'index.js'
 		),
+		'blocks/schedule-column/index': path.resolve(
+			process.cwd(),
+			'src/blocks/schedule-column',
+			'index.js'
+		),
 	},
 	output: {
 		...defaultConfig.output,

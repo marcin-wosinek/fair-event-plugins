@@ -22,11 +22,12 @@ class BlockHooks {
 	}
 
 	/**
-	 * Register time block type
+	 * Register all block types
 	 *
 	 * @return void
 	 */
 	public function register_blocks() {
 		register_block_type( __DIR__ . '/../blocks/time-block' );
+		register_block_type( __DIR__ . '/../blocks/schedule-column' );
 	}
 }
