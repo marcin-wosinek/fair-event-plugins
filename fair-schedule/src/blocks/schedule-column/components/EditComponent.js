@@ -9,9 +9,16 @@ import {
 	useInnerBlocksProps,
 	store as blockEditorStore,
 } from '@wordpress/block-editor';
-import { useSelect } from '@wordpress/data';
+import { useSelect, useDispatch } from '@wordpress/data';
 import { __ } from '@wordpress/i18n';
-import { addHours, format, parse, differenceInHours } from 'date-fns';
+import {
+	addHours,
+	addMinutes,
+	format,
+	parse,
+	differenceInHours,
+	differenceInMinutes,
+} from 'date-fns';
 import { useEffect, useRef } from '@wordpress/element';
 
 /**
@@ -38,6 +45,8 @@ export default function EditComponent({ attributes, setAttributes, clientId }) {
 		},
 		[clientId]
 	);
+
+	const { updateBlockAttributes } = useDispatch(blockEditorStore);
 
 	// Keep track of previous block order for reordering detection
 	const previousBlockOrderRef = useRef([]);
@@ -73,6 +82,103 @@ export default function EditComponent({ attributes, setAttributes, clientId }) {
 		const endDate = parse(endHour, 'HH:mm', new Date());
 		const hours = differenceInHours(endDate, startDate);
 		return hours * hourHeight;
+	};
+
+	// Calculate duration of a time block in minutes
+	const getBlockDuration = (block) => {
+		if (!block.attributes.startHour || !block.attributes.endHour) return 60;
+		const startDate = parse(
+			block.attributes.startHour,
+			'HH:mm',
+			new Date()
+		);
+		const endDate = parse(block.attributes.endHour, 'HH:mm', new Date());
+		return differenceInMinutes(endDate, startDate);
+	};
+
+	// Update block times when dropped in new position
+	const updateBlockTimes = (movedBlockId, newPosition, oldPosition) => {
+		const timeBlocks = innerBlocks.filter(
+			(block) => block.name === 'fair-schedule/time-block'
+		);
+		const movedBlock = timeBlocks.find(
+			(block) => block.clientId === movedBlockId
+		);
+
+		if (!movedBlock) return;
+
+		const originalDuration = getBlockDuration(movedBlock);
+		const MINIMUM_DURATION = 15; // minutes
+
+		// Calculate available time slot based on new position
+		let availableStart, availableEnd;
+
+		// Get the current block order (after the move)
+		const currentTimeBlocks = timeBlocks.slice(); // copy array
+
+		if (newPosition === 0) {
+			// First position - use column start
+			availableStart = startHour;
+			availableEnd =
+				currentTimeBlocks.length > 1 && currentTimeBlocks[1]
+					? currentTimeBlocks[1].attributes.startHour
+					: endHour;
+		} else if (newPosition === currentTimeBlocks.length - 1) {
+			// Last position - use column end
+			availableStart =
+				currentTimeBlocks[newPosition - 1].attributes.endHour ||
+				startHour;
+			availableEnd = endHour;
+		} else {
+			// Middle position - between two blocks
+			availableStart =
+				currentTimeBlocks[newPosition - 1].attributes.endHour ||
+				startHour;
+			availableEnd =
+				currentTimeBlocks[newPosition + 1].attributes.startHour ||
+				endHour;
+		}
+
+		// Parse times to calculate available slot duration
+		const availableStartDate = parse(availableStart, 'HH:mm', new Date());
+		const availableEndDate = parse(availableEnd, 'HH:mm', new Date());
+		const availableSlotDuration = differenceInMinutes(
+			availableEndDate,
+			availableStartDate
+		);
+
+		let newStartTime, newEndTime, finalDuration;
+
+		if (originalDuration <= availableSlotDuration) {
+			// Block fits with original duration - don't extend to fill space
+			newStartTime = availableStart;
+			finalDuration = originalDuration;
+		} else {
+			// Block doesn't fit - squeeze to available space, minimum 15 minutes
+			finalDuration = Math.max(availableSlotDuration, MINIMUM_DURATION);
+
+			if (finalDuration <= availableSlotDuration) {
+				// Fits with squeezed duration
+				newStartTime = availableStart;
+			} else {
+				// Even minimum doesn't fit - show alert and don't update
+				alert(
+					`Cannot fit time block in available slot!\n\nAvailable: ${availableSlotDuration} minutes\nMinimum required: ${MINIMUM_DURATION} minutes`
+				);
+				return;
+			}
+		}
+
+		// Calculate new end time
+		const newStartDate = parse(newStartTime, 'HH:mm', new Date());
+		const newEndDate = addMinutes(newStartDate, finalDuration);
+		newEndTime = format(newEndDate, 'HH:mm');
+
+		// Update the block attributes
+		updateBlockAttributes(movedBlockId, {
+			startHour: newStartTime,
+			endHour: newEndTime,
+		});
 	};
 
 	// Simple alert when time-block is dropped/reordered
@@ -119,25 +225,8 @@ export default function EditComponent({ attributes, setAttributes, clientId }) {
 				}
 
 				if (movedBlockId) {
-					const movedBlock = innerBlocks.find(
-						(block) => block.clientId === movedBlockId
-					);
-
-					if (movedBlock) {
-						const blockData = {
-							title:
-								movedBlock.attributes.title || 'Untitled Event',
-							startHour: movedBlock.attributes.startHour || 'N/A',
-							endHour: movedBlock.attributes.endHour || 'N/A',
-							oldPosition: oldPosition + 1,
-							newPosition: newPosition + 1,
-							totalBlocks: currentBlockOrder.length,
-						};
-
-						alert(
-							`Time-block moved!\n\nTitle: ${blockData.title}\nTime: ${blockData.startHour} - ${blockData.endHour}\nMoved from position ${blockData.oldPosition} to ${blockData.newPosition} (of ${blockData.totalBlocks})`
-						);
-					}
+					// Update the block times based on new position
+					updateBlockTimes(movedBlockId, newPosition, oldPosition);
 				}
 			}
 		}
