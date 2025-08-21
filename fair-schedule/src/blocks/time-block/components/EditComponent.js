@@ -9,6 +9,7 @@ import {
 	RichText,
 } from '@wordpress/block-editor';
 import { __ } from '@wordpress/i18n';
+import { differenceInMinutes, parse } from 'date-fns';
 
 /**
  * Edit component for the Time Block
@@ -16,14 +17,31 @@ import { __ } from '@wordpress/i18n';
  * @param {Object}   props               - Block props
  * @param {Object}   props.attributes    - Block attributes
  * @param {Function} props.setAttributes - Function to set attributes
+ * @param {Object}   props.context       - Block context from parent
  * @return {JSX.Element} The edit component
  */
-export default function EditComponent({ attributes, setAttributes }) {
+export default function EditComponent({ attributes, setAttributes, context }) {
+	const { title, startHour, endHour } = attributes;
+	const hourHeight = context?.['fair-schedule/hourHeight'] || 2.5; // Default to medium
+
+	// Calculate block height based on duration
+	const calculateBlockHeight = () => {
+		if (!startHour || !endHour) return `${hourHeight}em`; // Default 1 hour
+
+		const startDate = parse(startHour, 'HH:mm', new Date());
+		const endDate = parse(endHour, 'HH:mm', new Date());
+		const durationInMinutes = differenceInMinutes(endDate, startDate);
+		const durationInHours = durationInMinutes / 60;
+
+		return `${durationInHours * hourHeight}em`;
+	};
+
 	const blockProps = useBlockProps({
 		className: 'time-block',
+		style: {
+			height: calculateBlockHeight(),
+		},
 	});
-
-	const { title, startHour, endHour } = attributes;
 
 	return (
 		<>

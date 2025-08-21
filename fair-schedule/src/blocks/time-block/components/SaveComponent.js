@@ -3,20 +3,38 @@
  */
 
 import { useBlockProps, RichText } from '@wordpress/block-editor';
+import { differenceInMinutes, parse } from 'date-fns';
 
 /**
  * Save component for the Time Block
  *
  * @param {Object} props            - Block props
  * @param {Object} props.attributes - Block attributes
+ * @param {Object} props.context    - Block context from parent
  * @return {JSX.Element} The save component
  */
-export default function SaveComponent({ attributes }) {
+export default function SaveComponent({ attributes, context }) {
+	const { title, startHour, endHour } = attributes;
+	const hourHeight = context?.['fair-schedule/hourHeight'] || 2.5; // Default to medium
+
+	// Calculate block height based on duration
+	const calculateBlockHeight = () => {
+		if (!startHour || !endHour) return `${hourHeight}em`; // Default 1 hour
+
+		const startDate = parse(startHour, 'HH:mm', new Date());
+		const endDate = parse(endHour, 'HH:mm', new Date());
+		const durationInMinutes = differenceInMinutes(endDate, startDate);
+		const durationInHours = durationInMinutes / 60;
+
+		return `${durationInHours * hourHeight}em`;
+	};
+
 	const blockProps = useBlockProps.save({
 		className: 'time-block',
+		style: {
+			height: calculateBlockHeight(),
+		},
 	});
-
-	const { title, startHour, endHour } = attributes;
 
 	return (
 		<div {...blockProps}>
