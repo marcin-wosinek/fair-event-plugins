@@ -19,16 +19,10 @@ defined( 'WPINC' ) || die;
 // Extract attributes with defaults.
 $amount   = $attributes['amount'] ?? '10';
 $currency = $attributes['currency'] ?? 'EUR';
-
-// Get currency symbol using CurrencyService.
-$currency_service = new CurrencyService();
-$currency_symbol = $currency_service->get_currency_symbol( $currency );
 ?>
 
-<div <?php echo wp_kses_data( get_block_wrapper_attributes( array( 'class' => 'simple-payment-block' ) ) ); ?>>
-	<p class="simple-payment-text">
-		<?php echo esc_html__( 'Fair Payment:', 'fair-payment' ); ?>
-		<?php echo esc_html( $amount ); ?>
-		<?php echo esc_html( $currency_symbol ); ?>
-	</p>
+<div <?php echo wp_kses_data( get_block_wrapper_attributes() ); ?>>
+	<div class="simple-payment-button-wrapper" data-amount="<?php echo esc_attr( $amount ); ?>" data-currency="<?php echo esc_attr( $currency ); ?>">
+		<?php echo $content; ?>
+	</div>
 </div>

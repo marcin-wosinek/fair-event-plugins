@@ -2,17 +2,24 @@
  * Frontend JavaScript for Simple Payment Block
  */
 
-/**
- * Initialize payment functionality when DOM is loaded
- */
-document.addEventListener('DOMContentLoaded', function () {
-	// Find all simple payment blocks
-	const paymentBlocks = document.querySelectorAll('.simple-payment-block');
+// Prevent multiple initializations
+if (!window.fairPaymentInitialized) {
+	window.fairPaymentInitialized = true;
 
-	paymentBlocks.forEach((block) => {
-		initializePaymentBlock(block);
+	/**
+	 * Initialize payment functionality when DOM is loaded
+	 */
+	document.addEventListener('DOMContentLoaded', function () {
+		// Find all simple payment blocks
+		const paymentBlocks = document.querySelectorAll(
+			'.simple-payment-block'
+		);
+
+		paymentBlocks.forEach((block) => {
+			initializePaymentBlock(block);
+		});
 	});
-});
+}
 
 /**
  * Initialize payment functionality for a single block
@@ -21,7 +28,9 @@ document.addEventListener('DOMContentLoaded', function () {
  */
 function initializePaymentBlock(block) {
 	const buttonWrapper = block.querySelector('.simple-payment-button-wrapper');
-	const button = block.querySelector('.simple-payment-button');
+	const button = block.querySelector(
+		'.simple-payment-button .wp-element-button'
+	);
 
 	if (!buttonWrapper || !button) {
 		return;
@@ -54,58 +63,12 @@ function initializePaymentBlock(block) {
  * @param {string} originalText - Original button text
  */
 async function processPayment(amount, currency, button, originalText) {
-	try {
-		// Here you would integrate with your payment API
-		// For now, we'll simulate the payment process
+	// Reset button state
+	button.textContent = originalText;
+	button.disabled = false;
 
-		console.log('Processing payment:', { amount, currency });
+	// Show alert with payment information
+	alert(`Payment initiated!\nAmount: ${amount} ${currency}`);
 
-		// Simulate API call delay
-		await new Promise((resolve) => setTimeout(resolve, 2000));
-
-		// Example API call (replace with actual payment integration)
-		const response = await fetch(
-			'/wp-json/fair-payment/v1/create-payment',
-			{
-				method: 'POST',
-				headers: {
-					'Content-Type': 'application/json',
-					'X-WP-Nonce': window.wpApiSettings?.nonce || '',
-				},
-				body: JSON.stringify({
-					amount,
-					currency,
-				}),
-			}
-		);
-
-		if (response.ok) {
-			const data = await response.json();
-
-			// Handle successful payment response
-			if (data.checkout_url) {
-				// Redirect to payment checkout
-				window.location.href = data.checkout_url;
-			} else {
-				// Show success message
-				button.textContent = 'Payment Successful!';
-				button.style.backgroundColor = '#28a745';
-			}
-		} else {
-			throw new Error('Payment processing failed');
-		}
-	} catch (error) {
-		console.error('Payment error:', error);
-
-		// Show error state
-		button.textContent = 'Payment Failed - Try Again';
-		button.style.backgroundColor = '#dc3545';
-
-		// Reset button after 3 seconds
-		setTimeout(() => {
-			button.textContent = originalText;
-			button.style.backgroundColor = '';
-			button.disabled = false;
-		}, 3000);
-	}
+	console.log('Payment details:', { amount, currency });
 }
