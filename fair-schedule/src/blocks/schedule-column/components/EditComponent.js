@@ -11,6 +11,7 @@ import {
 } from '@wordpress/block-editor';
 import { useSelect } from '@wordpress/data';
 import { __ } from '@wordpress/i18n';
+import { addHours, format, parse } from 'date-fns';
 
 /**
  * Edit component for the Schedule Column Block
@@ -53,12 +54,12 @@ export default function EditComponent({ attributes, setAttributes, clientId }) {
 		return '09:00';
 	};
 
-	// Calculate end time (1 hour after start time)
+	// Calculate end time (1 hour after start time) using date-fns
 	const getNextEndTime = () => {
 		const startTime = getNextStartTime();
-		const [hours, minutes] = startTime.split(':').map(Number);
-		const endHours = (hours + 1).toString().padStart(2, '0');
-		return `${endHours}:${minutes.toString().padStart(2, '0')}`;
+		const startDate = parse(startTime, 'HH:mm', new Date());
+		const endDate = addHours(startDate, 1);
+		return format(endDate, 'HH:mm');
 	};
 
 	// Template for allowed inner blocks
