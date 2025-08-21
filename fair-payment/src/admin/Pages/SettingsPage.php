@@ -7,12 +7,21 @@
 
 namespace FairPayment\Admin\Pages;
 
+use FairPayment\Services\CurrencyService;
+
 defined( 'WPINC' ) || die;
 
 /**
  * Settings page class using WordPress Settings API
  */
 class SettingsPage {
+
+	/**
+	 * Currency service instance
+	 *
+	 * @var CurrencyService
+	 */
+	private $currency_service;
 
 	/**
 	 * Settings group name
@@ -28,6 +37,7 @@ class SettingsPage {
 	 * Constructor
 	 */
 	public function __construct() {
+		$this->currency_service = new CurrencyService();
 		add_action( 'admin_init', array( $this, 'register_settings' ) );
 		add_action( 'admin_enqueue_scripts', array( $this, 'enqueue_admin_assets' ) );
 	}
@@ -134,24 +144,9 @@ class SettingsPage {
 		$sanitized = array();
 
 		// Sanitize allowed currencies
-		$available_currencies = $this->get_available_currencies();
-		$allowed_currencies = array();
-		
-		if ( isset( $input['allowed_currencies'] ) && is_array( $input['allowed_currencies'] ) ) {
-			foreach ( $input['allowed_currencies'] as $currency ) {
-				$currency = strtoupper( sanitize_text_field( $currency ) );
-				if ( isset( $available_currencies[ $currency ] ) ) {
-					$allowed_currencies[] = $currency;
-				}
-			}
-		}
-		
-		// Ensure at least one currency is selected
-		if ( empty( $allowed_currencies ) ) {
-			$allowed_currencies = array( 'EUR' );
-		}
-		
-		$sanitized['allowed_currencies'] = array_unique( $allowed_currencies );
+		$sanitized['allowed_currencies'] = $this->currency_service->sanitize_currency_codes( 
+			$input['allowed_currencies'] ?? array() 
+		);
 
 		// Sanitize Stripe API keys
 		$sanitized['stripe_secret_key'] = sanitize_text_field( $input['stripe_secret_key'] ?? '' );
@@ -204,20 +199,7 @@ class SettingsPage {
 		);
 
 		// Get allowed currencies for admin
-		$options = get_option( 'fair_payment_options', array() );
-		$allowed_currencies = $options['allowed_currencies'] ?? array( 'EUR', 'USD', 'GBP' );
-		$available_currencies = $this->get_available_currencies();
-		
-		// Filter to only include allowed currencies
-		$admin_currencies = array();
-		foreach ( $allowed_currencies as $currency_code ) {
-			if ( isset( $available_currencies[ $currency_code ] ) ) {
-				$admin_currencies[] = array(
-					'label' => $available_currencies[ $currency_code ],
-					'value' => $currency_code,
-				);
-			}
-		}
+		$admin_currencies = $this->currency_service->get_allowed_currencies_for_ui();
 
 		// Localize script with data
 		wp_localize_script(
@@ -357,26 +339,6 @@ class SettingsPage {
 		<?php
 	}
 
-	/**
-	 * Get available currencies
-	 *
-	 * @return array Available currencies with their labels.
-	 */
-	private function get_available_currencies() {
-		return array(
-			'USD' => __( 'US Dollar ($)', 'fair-payment' ),
-			'EUR' => __( 'Euro (€)', 'fair-payment' ),
-			'GBP' => __( 'British Pound (£)', 'fair-payment' ),
-			'CAD' => __( 'Canadian Dollar (C$)', 'fair-payment' ),
-			'AUD' => __( 'Australian Dollar (A$)', 'fair-payment' ),
-			'JPY' => __( 'Japanese Yen (¥)', 'fair-payment' ),
-			'CHF' => __( 'Swiss Franc (CHF)', 'fair-payment' ),
-			'SEK' => __( 'Swedish Krona (kr)', 'fair-payment' ),
-			'NOK' => __( 'Norwegian Krone (kr)', 'fair-payment' ),
-			'DKK' => __( 'Danish Krone (kr)', 'fair-payment' ),
-			'PLN' => __( 'Polish Złoty (zł)', 'fair-payment' ),
-		);
-	}
 
 	/**
 	 * Render allowed currencies field
@@ -385,8 +347,8 @@ class SettingsPage {
 	 */
 	public function render_allowed_currencies_field() {
 		$options = get_option( 'fair_payment_options', $this->get_default_settings() );
-		$available_currencies = $this->get_available_currencies();
-		$allowed_currencies = $options['allowed_currencies'] ?? array( 'EUR' );
+		$available_currencies = $this->currency_service->get_available_currencies();
+		$allowed_currencies = $this->currency_service->get_allowed_currencies();
 		?>
 		<div class="fair-payment-currency-selector">
 			<div class="fair-payment-currency-available">

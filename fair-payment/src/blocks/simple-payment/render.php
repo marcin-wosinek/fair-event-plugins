@@ -2,6 +2,8 @@
 
 namespace FairPayment\Core;
 
+use FairPayment\Services\CurrencyService;
+
 defined( 'WPINC' ) || die;
 
 /**
@@ -18,22 +20,9 @@ defined( 'WPINC' ) || die;
 $amount   = $attributes['amount'] ?? '10';
 $currency = $attributes['currency'] ?? 'EUR';
 
-// Currency symbols mapping.
-$currency_symbols = array(
-	'USD' => '$',
-	'EUR' => '€',
-	'GBP' => '£',
-	'CAD' => 'C$',
-	'AUD' => 'A$',
-	'JPY' => '¥',
-	'CHF' => 'CHF',
-	'SEK' => 'kr',
-	'NOK' => 'kr',
-	'DKK' => 'kr',
-	'PLN' => 'zł',
-);
-
-$currency_symbol = $currency_symbols[ $currency ] ?? $currency;
+// Get currency symbol using CurrencyService.
+$currency_service = new CurrencyService();
+$currency_symbol = $currency_service->get_currency_symbol( $currency );
 ?>
 
 <div <?php echo wp_kses_data( get_block_wrapper_attributes( array( 'class' => 'simple-payment-block' ) ) ); ?>>

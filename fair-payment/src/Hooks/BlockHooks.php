@@ -7,6 +7,8 @@
 
 namespace FairPayment\Hooks;
 
+use FairPayment\Services\CurrencyService;
+
 defined( 'WPINC' ) || die;
 
 /**
@@ -15,9 +17,17 @@ defined( 'WPINC' ) || die;
 class BlockHooks {
 
 	/**
+	 * Currency service instance
+	 *
+	 * @var CurrencyService
+	 */
+	private $currency_service;
+
+	/**
 	 * Constructor - registers WordPress hooks
 	 */
 	public function __construct() {
+		$this->currency_service = new CurrencyService();
 		add_action( 'init', array( $this, 'register_blocks' ) );
 	}
 
