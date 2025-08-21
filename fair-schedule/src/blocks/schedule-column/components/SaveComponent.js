@@ -3,6 +3,7 @@
  */
 
 import { useBlockProps, useInnerBlocksProps } from '@wordpress/block-editor';
+import { parse, differenceInHours } from 'date-fns';
 
 /**
  * Save component for the Schedule Column Block
@@ -19,8 +20,19 @@ export default function SaveComponent({ attributes }) {
 	const { columnTitle, columnType, startHour, endHour, hourHeight } =
 		attributes;
 
+	// Calculate the height of the schedule column content area
+	const getContentHeight = () => {
+		const startDate = parse(startHour, 'HH:mm', new Date());
+		const endDate = parse(endHour, 'HH:mm', new Date());
+		const hours = differenceInHours(endDate, startDate);
+		return hours * hourHeight;
+	};
+
 	const innerBlocksProps = useInnerBlocksProps.save({
 		className: 'schedule-column-content',
+		style: {
+			height: `${getContentHeight()}em`,
+		},
 	});
 
 	return (

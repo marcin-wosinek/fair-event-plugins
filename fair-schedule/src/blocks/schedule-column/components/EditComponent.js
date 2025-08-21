@@ -11,7 +11,7 @@ import {
 } from '@wordpress/block-editor';
 import { useSelect } from '@wordpress/data';
 import { __ } from '@wordpress/i18n';
-import { addHours, format, parse } from 'date-fns';
+import { addHours, format, parse, differenceInHours } from 'date-fns';
 
 /**
  * Edit component for the Schedule Column Block
@@ -63,6 +63,14 @@ export default function EditComponent({ attributes, setAttributes, clientId }) {
 		return format(endDate, 'HH:mm');
 	};
 
+	// Calculate the height of the schedule column content area
+	const getContentHeight = () => {
+		const startDate = parse(startHour, 'HH:mm', new Date());
+		const endDate = parse(endHour, 'HH:mm', new Date());
+		const hours = differenceInHours(endDate, startDate);
+		return hours * hourHeight;
+	};
+
 	// Template for allowed inner blocks
 	const allowedBlocks = ['fair-schedule/time-block'];
 
@@ -81,6 +89,9 @@ export default function EditComponent({ attributes, setAttributes, clientId }) {
 	const innerBlocksProps = useInnerBlocksProps(
 		{
 			className: 'schedule-column-content',
+			style: {
+				height: `${getContentHeight()}em`,
+			},
 		},
 		{
 			allowedBlocks,
