@@ -10,9 +10,10 @@ This is a WordPress plugin collection called "Fair Event Plugins" for event orga
 
 ### Frontend Development (WordPress Blocks)
 ```bash
-cd fair-payment
+cd fair-payment  # or fair-calendar-button or fair-schedule
 npm run start    # Start development server with hot reload
 npm run build    # Build production assets for blocks
+npm run format   # Format code (ALWAYS run after making changes)
 ```
 
 ### WordPress Development Environment
@@ -23,10 +24,13 @@ docker compose --profile cli run wpcli wp --help    # Run WP-CLI commands
 
 ### PHP Code Quality
 ```bash
-cd fair-payment
+cd fair-payment  # or fair-calendar-button or fair-schedule
 composer install         # Install PHP dependencies
 vendor/bin/phpcs        # Run PHP code sniffer (if configured)
 ```
+
+### Code Quality Reminder
+**IMPORTANT**: Always run `npm run format` after making any code changes to ensure consistent formatting across the codebase.
 
 ## Architecture
 
