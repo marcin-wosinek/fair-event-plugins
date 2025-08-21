@@ -26,11 +26,21 @@
 			"type": "string",
 			"default": "day",
 			"enum": ["day", "place"]
+		},
+		"startHour": {
+			"type": "string",
+			"default": "09:00"
+		},
+		"endHour": {
+			"type": "string",
+			"default": "18:00"
 		}
 	},
 	"providesContext": {
 		"fair-schedule/columnTitle": "columnTitle",
-		"fair-schedule/columnType": "columnType"
+		"fair-schedule/columnType": "columnType",
+		"fair-schedule/startHour": "startHour",
+		"fair-schedule/endHour": "endHour"
 	},
 	"usesContext": [],
 	"editorScript": "file:../../../build/blocks/schedule-column/index.js",

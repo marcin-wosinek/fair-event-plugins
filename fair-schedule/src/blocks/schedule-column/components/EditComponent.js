@@ -27,7 +27,7 @@ export default function EditComponent({ attributes, setAttributes, clientId }) {
 		className: 'schedule-column',
 	});
 
-	const { columnTitle, columnType } = attributes;
+	const { columnTitle, columnType, startHour, endHour } = attributes;
 
 	// Get inner blocks to calculate next start time
 	const innerBlocks = useSelect(
@@ -130,6 +130,30 @@ export default function EditComponent({ attributes, setAttributes, clientId }) {
 						}
 						help={__(
 							'Choose how this column represents your schedule organization',
+							'fair-schedule'
+						)}
+					/>
+				</PanelBody>
+				<PanelBody title={__('Time Settings', 'fair-schedule')}>
+					<TextControl
+						label={__('Start Hour', 'fair-schedule')}
+						value={startHour}
+						onChange={(value) =>
+							setAttributes({ startHour: value })
+						}
+						placeholder="09:00"
+						help={__(
+							'Column start time in HH:MM format',
+							'fair-schedule'
+						)}
+					/>
+					<TextControl
+						label={__('End Hour', 'fair-schedule')}
+						value={endHour}
+						onChange={(value) => setAttributes({ endHour: value })}
+						placeholder="18:00"
+						help={__(
+							'Column end time in HH:MM format',
 							'fair-schedule'
 						)}
 					/>
