@@ -441,6 +441,10 @@ class SettingsPage {
 			</button>
 			<div id="comprehensive-stripe-test-results" style="margin-top: 15px;"></div>
 		</div>
+
+		<div style="margin-top: 20px;">
+			<?php submit_button( null, 'primary', 'submit', true, array( 'id' => 'submit-stripe-settings' ) ); ?>
+		</div>
 		<?php
 	}
 
