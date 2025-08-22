@@ -42,10 +42,13 @@ export default function EditComponent({ attributes, setAttributes }) {
 		location,
 		recurring,
 		rRule,
-		frequency,
-		repeatCount,
-		untilDate,
+		recurrence,
 	} = attributes;
+
+	// Extract recurrence values with defaults
+	const frequency = recurrence?.frequency || 'WEEKLY';
+	const repeatCount = recurrence?.count || null;
+	const untilDate = recurrence?.until || '';
 
 	// State to preserve datetime values when switching between all-day and timed events
 	const [preservedStartTime, setPreservedStartTime] = useState('');
@@ -114,60 +117,42 @@ export default function EditComponent({ attributes, setAttributes }) {
 	};
 
 	// Update RRULE when components change
-	const updateRRule = () => {
-		const uiState = {
-			frequency,
-			count: repeatCount,
-			until: untilDate,
-		};
-		const newRRule = rruleManager.toRRule(uiState);
+	const updateRRule = (newRecurrence = recurrence) => {
+		const newRRule = rruleManager.toRRule(newRecurrence);
 		setAttributes({ rRule: newRRule });
 	};
 
 	// Handle frequency change
 	const handleFrequencyChange = (newFrequency) => {
-		setAttributes({ frequency: newFrequency });
-		// Update RRULE with new frequency
-		const uiState = {
+		const newRecurrence = {
+			...recurrence,
 			frequency: newFrequency,
-			count: repeatCount,
-			until: untilDate,
 		};
-		const newRRule = rruleManager.toRRule(uiState);
-		setAttributes({ rRule: newRRule });
+		setAttributes({ recurrence: newRecurrence });
+		updateRRule(newRecurrence);
 	};
 
 	// Handle repeat count change
 	const handleRepeatCountChange = (newCount) => {
 		const count = newCount ? parseInt(newCount) : null;
-		setAttributes({
-			repeatCount: count,
-			untilDate: '', // Clear until date when count is set
-		});
-		// Update RRULE
-		const uiState = {
-			frequency,
+		const newRecurrence = {
+			...recurrence,
 			count,
-			until: '',
+			until: '', // Clear until date when count is set
 		};
-		const newRRule = rruleManager.toRRule(uiState);
-		setAttributes({ rRule: newRRule });
+		setAttributes({ recurrence: newRecurrence });
+		updateRRule(newRecurrence);
 	};
 
 	// Handle until date change
 	const handleUntilDateChange = (newUntilDate) => {
-		setAttributes({
-			untilDate: newUntilDate,
-			repeatCount: null, // Clear repeat count when until is set
-		});
-		// Update RRULE
-		const uiState = {
-			frequency,
-			count: null,
+		const newRecurrence = {
+			...recurrence,
 			until: newUntilDate,
+			count: null, // Clear repeat count when until is set
 		};
-		const newRRule = rruleManager.toRRule(uiState);
-		setAttributes({ rRule: newRRule });
+		setAttributes({ recurrence: newRecurrence });
+		updateRRule(newRecurrence);
 	};
 
 	// Handle allDay toggle while preserving datetime values

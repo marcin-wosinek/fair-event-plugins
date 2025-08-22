@@ -53,19 +53,15 @@
 			"type": "boolean",
 			"default": false
 		},
+		"recurrence": {
+			"type": "object",
+			"default": {
+				"frequency": "WEEKLY",
+				"count": null,
+				"until": ""
+			}
+		},
 		"rRule": {
-			"type": "string",
-			"default": ""
-		},
-		"frequency": {
-			"type": "string",
-			"default": "WEEKLY"
-		},
-		"repeatCount": {
-			"type": "number",
-			"default": null
-		},
-		"untilDate": {
 			"type": "string",
 			"default": ""
 		}
