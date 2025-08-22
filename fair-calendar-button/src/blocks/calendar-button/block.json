@@ -74,7 +74,7 @@
 		"fair-calendar-button/eventData": "attributes"
 	},
 	"editorScript": "file:../../../build/blocks/calendar-button/index.js",
-	"script": "file:../../../build/blocks/calendar-button/frontend.js",
+	"viewScript": "file:../../../build/blocks/calendar-button/frontend.js",
 	"render": "file:./render.php",
 	"style": "file:./style.css",
 	"editorStyle": "file:./style.css"
