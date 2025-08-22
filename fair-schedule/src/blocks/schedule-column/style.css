@@ -45,6 +45,15 @@
 	position: relative;
 }
 
+.schedule-column-content .wp-block-fair-schedule-time-block {
+	margin: 0;
+}
+
+.schedule-column-content .time-block {
+	margin: 0;
+	box-sizing: border-box;
+}
+
 /* Editor specific styles */
 .editor-styles-wrapper .schedule-column-header {
 	position: relative;
