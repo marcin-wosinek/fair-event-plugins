@@ -137,11 +137,7 @@ class CreateStripeCheckoutEndpoint extends ApiController {
 	 */
 	private function get_stripe_secret_key() {
 		$options = get_option( 'fair_payment_options', array() );
-		$test_mode = (bool) ( $options['test_mode'] ?? true );
-
-		$secret_key = $test_mode 
-			? ( $options['stripe_test_secret_key'] ?? '' )
-			: ( $options['stripe_live_secret_key'] ?? '' );
+		$secret_key = $options['stripe_secret_key'] ?? '';
 
 		if ( empty( $secret_key ) ) {
 			return new \WP_Error(
@@ -150,16 +146,11 @@ class CreateStripeCheckoutEndpoint extends ApiController {
 			);
 		}
 
-		// Validate key format
-		$expected_prefix = $test_mode ? 'sk_test_' : 'sk_live_';
-		if ( strpos( $secret_key, $expected_prefix ) !== 0 ) {
+		// Validate key format (both test and live keys are acceptable)
+		if ( strpos( $secret_key, 'sk_test_' ) !== 0 && strpos( $secret_key, 'sk_live_' ) !== 0 ) {
 			return new \WP_Error(
 				'invalid_stripe_key',
-				sprintf(
-					/* translators: %s: expected key prefix */
-					__( 'Invalid Stripe key format. Expected key starting with %s', 'fair-payment' ),
-					$expected_prefix
-				)
+				__( 'Invalid Stripe key format. Expected key starting with sk_test_ or sk_live_', 'fair-payment' )
 			);
 		}
 
