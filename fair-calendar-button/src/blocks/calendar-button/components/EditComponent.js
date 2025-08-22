@@ -288,6 +288,11 @@ export default function EditComponent({ attributes, setAttributes }) {
 						'fair-calendar-button'
 					)}
 				>
+					<ToggleControl
+						label={__('All Day Event', 'fair-calendar-button')}
+						checked={allDay}
+						onChange={handleAllDayToggle}
+					/>
 					<TextControl
 						label={
 							allDay
@@ -320,10 +325,17 @@ export default function EditComponent({ attributes, setAttributes }) {
 						onChange={(value) => setAttributes({ end: value })}
 						type={allDay ? 'date' : 'datetime-local'}
 					/>
-					<ToggleControl
-						label={__('All Day Event', 'fair-calendar-button')}
-						checked={allDay}
-						onChange={handleAllDayToggle}
+					<TextareaControl
+						label={__('Description', 'fair-calendar-button')}
+						value={description}
+						onChange={(value) =>
+							setAttributes({ description: value })
+						}
+					/>
+					<TextControl
+						label={__('Location', 'fair-calendar-button')}
+						value={location}
+						onChange={(value) => setAttributes({ location: value })}
 					/>
 					<ToggleControl
 						label={__('Recurring Event', 'fair-calendar-button')}
@@ -405,18 +417,6 @@ export default function EditComponent({ attributes, setAttributes }) {
 							)}
 						</>
 					)}
-					<TextareaControl
-						label={__('Description', 'fair-calendar-button')}
-						value={description}
-						onChange={(value) =>
-							setAttributes({ description: value })
-						}
-					/>
-					<TextControl
-						label={__('Location', 'fair-calendar-button')}
-						value={location}
-						onChange={(value) => setAttributes({ location: value })}
-					/>
 				</PanelBody>
 			</InspectorControls>
 			<div {...innerBlocksProps} />
