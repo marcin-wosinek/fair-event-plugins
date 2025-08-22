@@ -10,6 +10,7 @@ namespace FairPayment\Hooks;
 use FairPayment\Api\Endpoints\CreateCheckoutEndpoint;
 use FairPayment\Api\Endpoints\CreateSimplePaymentEndpoint;
 use FairPayment\Api\Endpoints\CreateStripeCheckoutEndpoint;
+use FairPayment\Api\Endpoints\StripeBalanceEndpoint;
 use FairPayment\Api\Endpoints\TestStripeConnectionEndpoint;
 
 defined( 'WPINC' ) || die;
@@ -83,6 +84,17 @@ class ApiHooks {
 				'callback'            => array( new TestStripeConnectionEndpoint(), 'handle' ),
 				'permission_callback' => array( $this, 'check_api_permissions' ),
 				'args'                => $this->get_test_stripe_connection_args(),
+			)
+		);
+
+		// Get Stripe balance endpoint
+		register_rest_route(
+			self::NAMESPACE,
+			'/stripe-balance',
+			array(
+				'methods'             => 'GET',
+				'callback'            => array( new StripeBalanceEndpoint(), 'handle' ),
+				'permission_callback' => array( $this, 'check_api_permissions' ),
 			)
 		);
 

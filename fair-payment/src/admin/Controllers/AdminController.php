@@ -8,6 +8,7 @@
 namespace FairPayment\Admin\Controllers;
 
 use FairPayment\Admin\Pages\SettingsPage;
+use FairPayment\Admin\Pages\StripeInfoPage;
 use FairPayment\Admin\Pages\TransactionListPage;
 
 defined( 'WPINC' ) || die;
@@ -24,6 +25,16 @@ class AdminController {
 	 */
 	public function settings() {
 		$page = new SettingsPage();
+		$page->render();
+	}
+
+	/**
+	 * Handle Stripe info page
+	 *
+	 * @return void
+	 */
+	public function stripe_info() {
+		$page = new StripeInfoPage();
 		$page->render();
 	}
 

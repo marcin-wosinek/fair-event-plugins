@@ -63,6 +63,16 @@ class AdminHooks {
 			array( $this->admin_controller, 'settings' )
 		);
 
+		// Stripe Info submenu
+		add_submenu_page(
+			'fair-payment',
+			__( 'Stripe Info', 'fair-payment' ),
+			__( 'Stripe Info', 'fair-payment' ),
+			'manage_options',
+			'fair-payment-stripe-info',
+			array( $this->admin_controller, 'stripe_info' )
+		);
+
 		// Transactions submenu
 		add_submenu_page(
 			'fair-payment',
