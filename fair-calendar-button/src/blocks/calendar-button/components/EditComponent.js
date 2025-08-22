@@ -20,8 +20,8 @@ import {
 	calculateDuration,
 	calculateEndTime,
 	convertToDateOnly,
-} from '../utils/dateTimeUtils.js';
-import { buildRRule } from '../utils/recurrenceUtils.js';
+} from '../utils/dateTime.js';
+import { buildRRule } from '../utils/recurrence.js';
 
 /**
  * Edit component for the Calendar Button Block
