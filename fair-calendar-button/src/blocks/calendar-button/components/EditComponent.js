@@ -17,12 +17,11 @@ import {
 import { __ } from '@wordpress/i18n';
 import { useState } from '@wordpress/element';
 import {
-	addMinutes,
-	parseISO,
-	format,
-	isValid,
-	differenceInMinutes,
-} from 'date-fns';
+	calculateDuration,
+	calculateEndTime,
+	convertToDateOnly,
+} from '../utils/dateTimeUtils.js';
+import { buildRRule } from '../utils/recurrenceUtils.js';
 
 /**
  * Edit component for the Calendar Button Block
@@ -71,47 +70,7 @@ export default function EditComponent({ attributes, setAttributes }) {
 
 	// Function to calculate current event duration in minutes
 	const calculateCurrentDuration = (startTime, endTime) => {
-		if (!startTime || !endTime) {
-			return null;
-		}
-
-		try {
-			const startDate = parseISO(startTime);
-			const endDate = parseISO(endTime);
-
-			if (!isValid(startDate) || !isValid(endDate)) {
-				return null;
-			}
-
-			return differenceInMinutes(endDate, startDate);
-		} catch (error) {
-			return null;
-		}
-	};
-
-	// Function to calculate end time based on start time and duration using date-fns
-	const calculateEndTime = (startTime, durationMinutes) => {
-		if (!startTime || !durationMinutes || durationMinutes === 'other') {
-			return '';
-		}
-
-		try {
-			// Parse the datetime-local input value
-			const startDate = parseISO(startTime);
-
-			// Validate the parsed date
-			if (!isValid(startDate)) {
-				return '';
-			}
-
-			// Add the duration minutes to get end time
-			const endDate = addMinutes(startDate, parseInt(durationMinutes));
-
-			// Format for datetime-local input (YYYY-MM-DDTHH:mm)
-			return format(endDate, "yyyy-MM-dd'T'HH:mm");
-		} catch (error) {
-			return '';
-		}
+		return calculateDuration(startTime, endTime);
 	};
 
 	// Handle start time change while maintaining constant duration
@@ -152,29 +111,6 @@ export default function EditComponent({ attributes, setAttributes }) {
 		);
 
 		return matchingOption ? matchingOption.value : 'other';
-	};
-
-	// Function to build RRULE string from components
-	const buildRRule = (freq, count, until) => {
-		if (!freq) return '';
-
-		let rrule;
-		if (freq === 'BIWEEKLY') {
-			// Convert BIWEEKLY to proper RRULE format: FREQ=WEEKLY;INTERVAL=2
-			rrule = 'FREQ=WEEKLY;INTERVAL=2';
-		} else {
-			rrule = `FREQ=${freq}`;
-		}
-
-		if (count && count > 0) {
-			rrule += `;COUNT=${count}`;
-		} else if (until) {
-			// Convert date to YYYYMMDD format for RRULE
-			const untilFormatted = until.replace(/-/g, '');
-			rrule += `;UNTIL=${untilFormatted}`;
-		}
-
-		return rrule;
 	};
 
 	// Update RRULE when components change
@@ -220,15 +156,11 @@ export default function EditComponent({ attributes, setAttributes }) {
 			// Switching to all-day: preserve datetime values and convert to date format
 			if (start) {
 				setPreservedStartTime(start);
-				// Convert datetime-local to date format (YYYY-MM-DD)
-				const dateOnly = start.split('T')[0];
-				setAttributes({ start: dateOnly });
+				setAttributes({ start: convertToDateOnly(start) });
 			}
 			if (end) {
 				setPreservedEndTime(end);
-				// Convert datetime-local to date format (YYYY-MM-DD)
-				const dateOnly = end.split('T')[0];
-				setAttributes({ end: dateOnly });
+				setAttributes({ end: convertToDateOnly(end) });
 			}
 		} else {
 			// Switching to timed event: restore preserved datetime values if available
