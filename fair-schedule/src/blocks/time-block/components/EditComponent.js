@@ -72,6 +72,23 @@ export default function EditComponent({
 		return `${durationInHours * hourHeight}em`;
 	};
 
+	// Calculate top position based on hour offset from column start
+	const calculateTopPosition = () => {
+		const columnStartHour = context?.['fair-schedule/startHour'] || '09:00';
+
+		if (!startHour || !columnStartHour) return '0em';
+
+		const columnStartDate = parse(columnStartHour, 'HH:mm', new Date());
+		const blockStartDate = parse(startHour, 'HH:mm', new Date());
+		const offsetInMinutes = differenceInMinutes(
+			blockStartDate,
+			columnStartDate
+		);
+		const offsetInHours = offsetInMinutes / 60;
+
+		return `${offsetInHours * hourHeight}em`;
+	};
+
 	// Find correct position for time-block based on start time
 	const findCorrectPosition = (newStartHour) => {
 		const newStartTime = parse(newStartHour, 'HH:mm', new Date());
@@ -137,6 +154,10 @@ export default function EditComponent({
 	const blockProps = useBlockProps({
 		className: 'time-block',
 		style: {
+			position: 'absolute',
+			top: calculateTopPosition(),
+			left: '0',
+			right: '0',
 			height: calculateBlockHeight(),
 		},
 	});

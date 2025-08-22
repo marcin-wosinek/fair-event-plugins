@@ -47,6 +47,9 @@
 
 .schedule-column-content .wp-block-fair-schedule-time-block {
 	margin: 0;
+	position: absolute;
+	left: 0;
+	right: 0;
 }
 
 .schedule-column-content .time-block {
