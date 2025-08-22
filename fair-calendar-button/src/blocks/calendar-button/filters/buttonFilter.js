@@ -7,10 +7,9 @@
 import { addFilter } from '@wordpress/hooks';
 import { createHigherOrderComponent } from '@wordpress/compose';
 import { InspectorControls } from '@wordpress/block-editor';
-import { PanelBody, Notice, Button } from '@wordpress/components';
+import { PanelBody, Button } from '@wordpress/components';
 import { __ } from '@wordpress/i18n';
 import { useSelect, useDispatch } from '@wordpress/data';
-import { useParentEventData } from '../utils/useParentEventData.js';
 
 /**
  * Higher-order component to customize core/button when inside calendar-button
@@ -25,16 +24,22 @@ const withCalendarButtonCustomization = createHigherOrderComponent(
 				return <BlockEdit {...props} />;
 			}
 
-			// Get parent calendar-button event data
-			const eventData = useParentEventData(clientId);
-
-			// Get parent block ID and dispatch function
-			const { parentBlockId } = useSelect(
+			// Get parent block info
+			const { parentBlockId, isInsideCalendarButton } = useSelect(
 				(select) => {
-					const { getBlockParents } = select('core/block-editor');
+					const { getBlockParents, getBlock } =
+						select('core/block-editor');
 					const parents = getBlockParents(clientId);
+					const immediateParentId = parents[parents.length - 1];
+					const parentBlock = immediateParentId
+						? getBlock(immediateParentId)
+						: null;
+
 					return {
-						parentBlockId: parents[parents.length - 1], // Immediate parent
+						parentBlockId: immediateParentId,
+						isInsideCalendarButton:
+							parentBlock?.name ===
+							'fair-calendar-button/calendar-button',
 					};
 				},
 				[clientId]
@@ -50,9 +55,6 @@ const withCalendarButtonCustomization = createHigherOrderComponent(
 			};
 
 			// Only customize if this button is inside a calendar-button
-			const isInsideCalendarButton =
-				eventData && Object.keys(eventData).length > 0;
-
 			if (!isInsideCalendarButton) {
 				return <BlockEdit {...props} />;
 			}
