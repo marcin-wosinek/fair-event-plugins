@@ -29,7 +29,7 @@ export default function EditComponent({
 	clientId,
 }) {
 	const { title, startHour, endHour } = attributes;
-	const hourHeight = context?.['fair-schedule/hourHeight'] || 2.5; // Default to medium
+	const hourHeight = context['fair-schedule/hourHeight'] || 2.5; // Default to medium
 
 	const { moveBlocksToPosition } = useDispatch(blockEditorStore);
 
@@ -74,7 +74,7 @@ export default function EditComponent({
 
 	// Calculate top position based on hour offset from column start
 	const calculateTopPosition = () => {
-		const columnStartHour = context?.['fair-schedule/startHour'] || '09:00';
+		const columnStartHour = context['fair-schedule/startHour'];
 
 		if (!startHour || !columnStartHour) return '0em';
 

@@ -31,7 +31,7 @@
 			"default": "10:00"
 		}
 	},
-	"usesContext": ["fair-schedule/hourHeight"],
+	"usesContext": ["fair-schedule/hourHeight", "fair-schedule/startHour"],
 	"editorScript": "file:../../../build/blocks/time-block/index.js",
 	"style": "file:./style.css",
 	"editorStyle": "file:./style.css"
