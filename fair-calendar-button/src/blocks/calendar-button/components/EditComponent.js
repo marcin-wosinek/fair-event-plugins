@@ -21,7 +21,7 @@ import {
 	calculateEndTime,
 	convertToDateOnly,
 } from '../utils/dateTime.js';
-import { buildRRule } from '../utils/recurrence.js';
+import { rruleManager } from '../utils/rruleManager.js';
 
 /**
  * Edit component for the Calendar Button Block
@@ -115,7 +115,12 @@ export default function EditComponent({ attributes, setAttributes }) {
 
 	// Update RRULE when components change
 	const updateRRule = () => {
-		const newRRule = buildRRule(frequency, repeatCount, untilDate);
+		const uiState = {
+			frequency,
+			count: repeatCount,
+			until: untilDate,
+		};
+		const newRRule = rruleManager.toRRule(uiState);
 		setAttributes({ rRule: newRRule });
 	};
 
@@ -123,7 +128,12 @@ export default function EditComponent({ attributes, setAttributes }) {
 	const handleFrequencyChange = (newFrequency) => {
 		setAttributes({ frequency: newFrequency });
 		// Update RRULE with new frequency
-		const newRRule = buildRRule(newFrequency, repeatCount, untilDate);
+		const uiState = {
+			frequency: newFrequency,
+			count: repeatCount,
+			until: untilDate,
+		};
+		const newRRule = rruleManager.toRRule(uiState);
 		setAttributes({ rRule: newRRule });
 	};
 
@@ -135,7 +145,12 @@ export default function EditComponent({ attributes, setAttributes }) {
 			untilDate: '', // Clear until date when count is set
 		});
 		// Update RRULE
-		const newRRule = buildRRule(frequency, count, '');
+		const uiState = {
+			frequency,
+			count,
+			until: '',
+		};
+		const newRRule = rruleManager.toRRule(uiState);
 		setAttributes({ rRule: newRRule });
 	};
 
@@ -146,7 +161,12 @@ export default function EditComponent({ attributes, setAttributes }) {
 			repeatCount: null, // Clear repeat count when until is set
 		});
 		// Update RRULE
-		const newRRule = buildRRule(frequency, null, newUntilDate);
+		const uiState = {
+			frequency,
+			count: null,
+			until: newUntilDate,
+		};
+		const newRRule = rruleManager.toRRule(uiState);
 		setAttributes({ rRule: newRRule });
 	};
 
