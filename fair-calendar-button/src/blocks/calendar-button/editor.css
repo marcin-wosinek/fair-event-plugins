@@ -1,3 +1,128 @@
 /**
  * Calendar Button Block editor styles (editor only)
  */
+
+/* Recurring Events Calendar Styles */
+.recurring-events-calendar {
+	margin-top: 20px;
+	max-width: 300px;
+}
+
+.calendar-header {
+	display: flex;
+	justify-content: center;
+	align-items: center;
+	margin-bottom: 16px;
+	padding-bottom: 12px;
+	border-bottom: 1px solid #f0f2f5;
+	width: 100%;
+}
+
+.calendar-header h4 {
+	margin: 0;
+	font-size: 16px;
+	font-weight: 600;
+	color: #2c3e50;
+}
+
+.calendar-navigation {
+	display: flex;
+	align-items: center;
+	gap: 12px;
+}
+
+.calendar-nav-button {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	width: 32px;
+	height: 32px;
+	border: 1px solid #e1e5e9;
+	border-radius: 6px;
+	background: #ffffff;
+	color: #666666;
+	cursor: pointer;
+	font-size: 18px;
+	font-weight: bold;
+	transition: all 0.2s ease;
+}
+
+.calendar-nav-button:hover {
+	background: #f8f9fa;
+	border-color: #c5c9cd;
+	color: #333333;
+}
+
+.calendar-nav-button:focus {
+	outline: 2px solid #0073aa;
+	outline-offset: 1px;
+}
+
+.calendar-month {
+	min-width: 120px;
+	text-align: center;
+	font-weight: 500;
+	color: #2c3e50;
+	font-size: 15px;
+}
+
+.calendar-grid {
+	width: 100%;
+}
+
+.calendar-weekdays {
+	display: grid;
+	grid-template-columns: repeat(7, 1fr);
+	gap: 1px;
+	margin-bottom: 8px;
+}
+
+.calendar-weekday {
+	padding: 8px 4px;
+	text-align: center;
+	font-size: 12px;
+	font-weight: 600;
+	color: #666666;
+	text-transform: uppercase;
+	letter-spacing: 0.5px;
+}
+
+.calendar-days {
+	display: grid;
+	grid-template-columns: repeat(7, 1fr);
+	gap: 1px;
+	background: #f0f2f5;
+	border: 1px solid #e1e5e9;
+	border-radius: 6px;
+	overflow: hidden;
+}
+
+.calendar-day,
+.calendar-day-padding {
+	aspect-ratio: 1;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	background: #ffffff;
+	font-size: 14px;
+	color: #333333;
+	position: relative;
+}
+
+.calendar-day.has-event {
+	background: #0073aa;
+	color: #ffffff;
+	font-weight: 600;
+}
+
+.calendar-events-summary {
+	margin-top: 12px;
+	padding-top: 12px;
+	border-top: 1px solid #f0f2f5;
+}
+
+.calendar-events-summary p {
+	margin: 0;
+	text-align: center;
+	font-style: italic;
+}

@@ -22,6 +22,7 @@ import {
 	convertToDateOnly,
 } from '../utils/dateTime.js';
 import { rruleManager } from '../utils/rruleManager.js';
+import RecurringEventsCalendar from './RecurringEventsCalendar.js';
 
 /**
  * Edit component for the Calendar Button Block
@@ -352,6 +353,10 @@ export default function EditComponent({ attributes, setAttributes }) {
 									<code>{rRule}</code>
 								</p>
 							)}
+							<RecurringEventsCalendar
+								startDate={start}
+								recurrence={recurrence}
+							/>
 						</>
 					)}
 				</PanelBody>
