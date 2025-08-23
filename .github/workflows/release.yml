@@ -26,14 +26,13 @@ jobs:
       - name: Install Dependencies
         run: npm ci
 
-      - name: Create Release Pull Request or Publish to npm
+      - name: Create Release Pull Request or Create Tags
         id: changesets
         uses: changesets/action@v1
         with:
-          # This expects you to have a script called release which does a build for your packages and calls changeset publish
+          # This expects you to have a script called release which does a build for your packages and calls changeset tag
           publish: npm run release
           title: "🎉 Release"
           commit: "chore: release packages"
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          NPM_TOKEN: ${{ secrets.NPM_TOKEN }}

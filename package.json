@@ -29,10 +29,10 @@
 		"changeset:status": "changeset status",
 		"version-packages": "changeset version && npm run sync-wp-versions",
 		"sync-wp-versions": "node scripts/sync-wp-versions.js",
-		"release": "npm run build && changeset publish",
-		"release:fair-payment": "npm run build --workspace=fair-payment && changeset publish",
-		"release:fair-calendar-button": "npm run build --workspace=fair-calendar-button && changeset publish",
-		"release:fair-schedule": "npm run build --workspace=fair-schedule && changeset publish"
+		"release": "npm run build && changeset tag",
+		"release:fair-payment": "npm run build --workspace=fair-payment && changeset tag",
+		"release:fair-calendar-button": "npm run build --workspace=fair-calendar-button && changeset tag",
+		"release:fair-schedule": "npm run build --workspace=fair-schedule && changeset tag"
 	},
 	"dependencies": {
 		"@wordpress/scripts": "^30.20.0",
