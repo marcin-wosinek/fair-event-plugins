@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.1.0
+
+### Minor Changes
+
+- 99a2038: Change format of recurrence description in block attributes.
+
 All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
@@ -8,6 +14,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [1.0.0] - 2025-01-30
 
 ### Added
+
 - Initial release of Fair Calendar Button
 - Gutenberg block for calendar event integration
 - Support for multiple calendar providers:
@@ -23,6 +30,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - PHP 8.0+ requirement
 
 ### Features
+
 - Clean, professional dropdown interface
 - Brand-specific hover effects for each calendar provider
 - Smooth animations and transitions
@@ -31,6 +39,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - GDPR compliant (no data collection)
 
 ### Technical
+
 - Built with modern WordPress block development practices
 - Uses block.json for block registration
 - Font Awesome SVG icons (tree-shaken for performance)
