@@ -27,7 +27,7 @@ class BlockHooks {
 	 * @return void
 	 */
 	public function register_blocks() {
-		register_block_type( __DIR__ . '/../blocks/time-block' );
-		register_block_type( __DIR__ . '/../blocks/schedule-column' );
+		register_block_type( __DIR__ . '/../../build/blocks/time-block' );
+		register_block_type( __DIR__ . '/../../build/blocks/schedule-column' );
 	}
 }

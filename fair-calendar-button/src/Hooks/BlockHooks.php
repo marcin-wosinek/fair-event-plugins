@@ -27,6 +27,6 @@ class BlockHooks {
 	 * @return void
 	 */
 	public function register_blocks() {
-		register_block_type( __DIR__ . '/../blocks/calendar-button' );
+		register_block_type( __DIR__ . '/../../build/blocks/calendar-button' );
 	}
 }
