@@ -22,7 +22,8 @@
 		"start": "npm run start --workspace=fair-schedule & npm run start --workspace=fair-payment & npm run start --workspace=fair-calendar-button & wait",
 		"format": "npm-run-all format:*",
 		"format:wp": "wp-scripts format",
-		"format:yml": "prettier --write '**/*.yml'"
+		"format:yml": "prettier --write '**/*.yml'",
+		"prepare": "husky"
 	},
 	"dependencies": {
 		"@wordpress/scripts": "^30.20.0",
@@ -364,6 +365,7 @@
 		"http-proxy-middleware": "^2.0.9",
 		"https-proxy-agent": "^5.0.1",
 		"human-signals": "^2.1.0",
+		"husky": "^9.1.7",
 		"iconv-lite": "^0.6.3",
 		"icss-utils": "^5.1.0",
 		"ieee754": "^1.2.1",
