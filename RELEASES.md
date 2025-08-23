@@ -6,7 +6,7 @@ This project uses [Changesets](https://github.com/changesets/changesets) for ind
 
 Each plugin is versioned independently using semantic versioning:
 - `fair-payment@1.2.3`
-- `fair-calendar-button@2.0.1` 
+- `fair-calendar-button@2.0.1`
 - `fair-schedule@1.1.0`
 
 Changes are tracked per-plugin and releases can be made for individual plugins or multiple plugins simultaneously.
@@ -20,7 +20,7 @@ When you make changes to any plugin:
 ```bash
 # After making your changes, add a changeset
 npm run changeset:add
-# or 
+# or
 npx changeset add
 ```
 
@@ -45,7 +45,7 @@ Push to `main` branch and the GitHub Action will:
 
 #### Option B: Manual Release
 ```bash
-# Update versions and generate changelogs
+# Update versions and generate changelogs (also syncs WordPress plugin headers)
 npm run version-packages
 
 # Create git tags and publish (if configured)
@@ -67,19 +67,45 @@ This allows you to easily track releases for each plugin individually.
 |---------|-------------|
 | `npm run changeset:add` | Add a new changeset for your changes |
 | `npm run changeset:status` | Check status of pending changes |
-| `npm run version-packages` | Update package versions based on changesets |
+| `npm run version-packages` | Update package versions based on changesets & sync WordPress headers |
+| `npm run sync-wp-versions` | Manually sync WordPress plugin header versions |
 | `npm run release` | Publish packages (creates git tags) |
 
 ## 🔄 Example Workflow
 
 1. **Make changes** to `fair-calendar-button`
 2. **Add changeset**: `npm run changeset:add`
-   - Select `fair-calendar-button` 
+   - Select `fair-calendar-button`
    - Choose `minor` (new feature)
    - Write: "Add exception dates support for recurring events"
 3. **Commit and push** to `main`
 4. **GitHub Action** creates release PR
 5. **Merge PR** → Automatic tag creation: `fair-calendar-button@1.1.0`
+
+## ⚙️ WordPress Plugin Header Sync
+
+The `sync-wp-versions` script automatically updates WordPress plugin headers:
+
+```php
+// Before sync
+/*
+Plugin Name: Fair Calendar Button
+Version: 1.0.0
+*/
+
+// After sync (when package.json shows 1.2.0)
+/*
+Plugin Name: Fair Calendar Button
+Version: 1.2.0  // ← Automatically updated!
+*/
+```
+
+### Files Updated:
+- `fair-payment/fair-payment.php`
+- `fair-calendar-button/fair-calendar-button.php`
+- `fair-schedule/plugin.php`
+
+The sync runs automatically when you use `npm run version-packages`.
 
 ## ⚙️ Configuration
 
@@ -87,6 +113,7 @@ Changesets is configured in `.changeset/config.json`:
 - **Independent versioning**: Each plugin versions separately
 - **Automatic tagging**: Git tags created on release
 - **Changelog generation**: Automatic changelog per plugin
+- **WordPress sync**: Automatic plugin header version updates
 
 ## 🎉 Benefits
 
