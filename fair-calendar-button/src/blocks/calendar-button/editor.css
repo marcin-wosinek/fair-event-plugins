@@ -122,6 +122,32 @@
 	border: 2px solid #8c1214;
 }
 
+.calendar-day.is-exception-date {
+	background: #f0f0f0;
+	color: #666666;
+	font-weight: 400;
+	text-decoration: line-through;
+	position: relative;
+}
+
+.calendar-day.is-clickable {
+	transition: all 0.2s ease;
+}
+
+.calendar-day.is-clickable:hover {
+	transform: scale(1.1);
+	box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+	z-index: 1;
+}
+
+.calendar-day.has-event.is-clickable:hover {
+	background: #005a87;
+}
+
+.calendar-day.is-exception-date.is-clickable:hover {
+	background: #e8e8e8;
+}
+
 .calendar-events-summary {
 	margin-top: 12px;
 	padding-top: 12px;

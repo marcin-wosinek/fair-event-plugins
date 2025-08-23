@@ -15,6 +15,7 @@ describe('RRuleManager', () => {
 				'INTERVAL',
 				'COUNT',
 				'UNTIL',
+				'EXDATE',
 			]);
 		});
 	});
@@ -240,6 +241,97 @@ describe('RRuleManager', () => {
 			expect(manager.formatUntilDate('2024')).toBe('');
 			expect(manager.formatUntilDate('2024-12')).toBe('');
 			expect(manager.formatUntilDate('2024-1-1')).toBe(''); // Single digit month/day
+		});
+	});
+
+	describe('generateExdateString', () => {
+		it('should return empty string for invalid inputs', () => {
+			expect(manager.generateExdateString(null)).toBe('');
+			expect(manager.generateExdateString(undefined)).toBe('');
+			expect(manager.generateExdateString([])).toBe('');
+			expect(manager.generateExdateString('not-array')).toBe('');
+			expect(manager.generateExdateString(123)).toBe('');
+			expect(manager.generateExdateString({})).toBe('');
+		});
+
+		it('should return empty string for empty array', () => {
+			expect(manager.generateExdateString([])).toBe('');
+		});
+
+		it('should handle single exception date', () => {
+			const exceptionDates = ['2024-01-15'];
+			expect(manager.generateExdateString(exceptionDates)).toBe(
+				'EXDATE:20240115'
+			);
+		});
+
+		it('should handle multiple exception dates', () => {
+			const exceptionDates = ['2024-01-15', '2024-01-22', '2024-02-05'];
+			expect(manager.generateExdateString(exceptionDates)).toBe(
+				'EXDATE:20240115,20240122,20240205'
+			);
+		});
+
+		it('should filter out invalid date strings', () => {
+			const exceptionDates = [
+				'2024-01-15',
+				'invalid-date',
+				'2024-01-22',
+				'',
+				null,
+				undefined,
+			];
+			expect(manager.generateExdateString(exceptionDates)).toBe(
+				'EXDATE:20240115,20240122'
+			);
+		});
+
+		it('should filter out non-string values', () => {
+			const exceptionDates = [
+				'2024-01-15',
+				123,
+				new Date(),
+				{},
+				[],
+				'2024-01-22',
+			];
+			expect(manager.generateExdateString(exceptionDates)).toBe(
+				'EXDATE:20240115,20240122'
+			);
+		});
+
+		it('should return empty string when all dates are invalid', () => {
+			const exceptionDates = [
+				'invalid-date',
+				'',
+				null,
+				undefined,
+				123,
+				{},
+			];
+			expect(manager.generateExdateString(exceptionDates)).toBe('');
+		});
+
+		it('should handle dates with different formats that become valid after processing', () => {
+			// Note: Current implementation uses formatUntilDate which only accepts YYYY-MM-DD format
+			const exceptionDates = ['2024-01-15', '2024-1-22']; // Second date has invalid format
+			expect(manager.generateExdateString(exceptionDates)).toBe(
+				'EXDATE:20240115'
+			);
+		});
+
+		it('should preserve order of dates', () => {
+			const exceptionDates = ['2024-02-05', '2024-01-15', '2024-01-22'];
+			expect(manager.generateExdateString(exceptionDates)).toBe(
+				'EXDATE:20240205,20240115,20240122'
+			);
+		});
+
+		it('should handle duplicate dates', () => {
+			const exceptionDates = ['2024-01-15', '2024-01-22', '2024-01-15'];
+			expect(manager.generateExdateString(exceptionDates)).toBe(
+				'EXDATE:20240115,20240122,20240115'
+			);
 		});
 	});
 
@@ -531,6 +623,192 @@ describe('RRuleManager', () => {
 			});
 		});
 
+		describe('exception dates handling', () => {
+			it('should filter out single exception date', () => {
+				const uiState = { frequency: 'WEEKLY' };
+				const exceptionDates = ['2024-01-08'];
+				const events = manager.generateEvents(
+					uiState,
+					'2024-01-01',
+					4,
+					exceptionDates
+				);
+
+				expect(events).toHaveLength(3);
+				expect(events[0]).toEqual(parseISO('2024-01-01'));
+				expect(events[1]).toEqual(parseISO('2024-01-15'));
+				expect(events[2]).toEqual(parseISO('2024-01-22'));
+			});
+
+			it('should filter out multiple exception dates', () => {
+				const uiState = { frequency: 'WEEKLY' };
+				const exceptionDates = ['2024-01-08', '2024-01-22'];
+				const events = manager.generateEvents(
+					uiState,
+					'2024-01-01',
+					5,
+					exceptionDates
+				);
+
+				expect(events).toHaveLength(3);
+				expect(events[0]).toEqual(parseISO('2024-01-01'));
+				expect(events[1]).toEqual(parseISO('2024-01-15'));
+				expect(events[2]).toEqual(parseISO('2024-01-29'));
+			});
+
+			it('should handle exception date that matches start date', () => {
+				const uiState = { frequency: 'WEEKLY' };
+				const exceptionDates = ['2024-01-01'];
+				const events = manager.generateEvents(
+					uiState,
+					'2024-01-01',
+					4,
+					exceptionDates
+				);
+
+				expect(events).toHaveLength(3);
+				expect(events[0]).toEqual(parseISO('2024-01-08'));
+				expect(events[1]).toEqual(parseISO('2024-01-15'));
+				expect(events[2]).toEqual(parseISO('2024-01-22'));
+			});
+
+			it('should handle exception dates with datetime start', () => {
+				const uiState = { frequency: 'DAILY' };
+				const exceptionDates = ['2024-01-02', '2024-01-04'];
+				const events = manager.generateEvents(
+					uiState,
+					'2024-01-01T10:00:00',
+					5,
+					exceptionDates
+				);
+
+				expect(events).toHaveLength(3);
+				expect(events[0]).toEqual(parseISO('2024-01-01T10:00:00'));
+				expect(events[1]).toEqual(parseISO('2024-01-03T10:00:00'));
+				expect(events[2]).toEqual(parseISO('2024-01-05T10:00:00'));
+			});
+
+			it('should handle empty exception dates array', () => {
+				const uiState = { frequency: 'WEEKLY' };
+				const events = manager.generateEvents(
+					uiState,
+					'2024-01-01',
+					3,
+					[]
+				);
+
+				expect(events).toHaveLength(3);
+				expect(events[0]).toEqual(parseISO('2024-01-01'));
+				expect(events[1]).toEqual(parseISO('2024-01-08'));
+				expect(events[2]).toEqual(parseISO('2024-01-15'));
+			});
+
+			it('should handle null/undefined exception dates', () => {
+				const uiState = { frequency: 'WEEKLY' };
+				const events1 = manager.generateEvents(
+					uiState,
+					'2024-01-01',
+					3,
+					null
+				);
+				const events2 = manager.generateEvents(
+					uiState,
+					'2024-01-01',
+					3,
+					undefined
+				);
+
+				expect(events1).toHaveLength(3);
+				expect(events2).toHaveLength(3);
+				expect(events1).toEqual(events2);
+			});
+
+			it('should handle invalid exception dates', () => {
+				const uiState = { frequency: 'WEEKLY' };
+				const exceptionDates = [
+					'invalid-date',
+					'2024-01-08',
+					'',
+					null,
+					'2024-01-22',
+				];
+				const events = manager.generateEvents(
+					uiState,
+					'2024-01-01',
+					5,
+					exceptionDates
+				);
+
+				expect(events).toHaveLength(3);
+				expect(events[0]).toEqual(parseISO('2024-01-01'));
+				expect(events[1]).toEqual(parseISO('2024-01-15'));
+				expect(events[2]).toEqual(parseISO('2024-01-29'));
+			});
+
+			it('should work with BIWEEKLY frequency and exceptions', () => {
+				const uiState = { frequency: 'BIWEEKLY' };
+				const exceptionDates = ['2024-01-15', '2024-02-12'];
+				const events = manager.generateEvents(
+					uiState,
+					'2024-01-01',
+					5,
+					exceptionDates
+				);
+
+				expect(events).toHaveLength(3);
+				expect(events[0]).toEqual(parseISO('2024-01-01'));
+				expect(events[1]).toEqual(parseISO('2024-01-29'));
+				expect(events[2]).toEqual(parseISO('2024-02-26'));
+			});
+
+			it('should work with custom intervals and exceptions', () => {
+				const uiState = { frequency: 'WEEKLY', interval: 2 };
+				const exceptionDates = ['2024-01-15'];
+				const events = manager.generateEvents(
+					uiState,
+					'2024-01-01',
+					4,
+					exceptionDates
+				);
+
+				expect(events).toHaveLength(3);
+				expect(events[0]).toEqual(parseISO('2024-01-01'));
+				expect(events[1]).toEqual(parseISO('2024-01-29'));
+				expect(events[2]).toEqual(parseISO('2024-02-12'));
+			});
+
+			it('should work with count limit and exceptions', () => {
+				const uiState = { frequency: 'DAILY', count: 3 };
+				const exceptionDates = ['2024-01-02'];
+				const events = manager.generateEvents(
+					uiState,
+					'2024-01-01',
+					10,
+					exceptionDates
+				);
+
+				// Should generate 3 events total, but exclude 2024-01-02
+				expect(events).toHaveLength(2);
+				expect(events[0]).toEqual(parseISO('2024-01-01'));
+				expect(events[1]).toEqual(parseISO('2024-01-03'));
+			});
+
+			it('should work with until date and exceptions', () => {
+				const uiState = { frequency: 'WEEKLY', until: '2024-01-20' };
+				const exceptionDates = ['2024-01-08'];
+				const events = manager.generateEvents(
+					uiState,
+					'2024-01-01',
+					10,
+					exceptionDates
+				);
+
+				expect(events).toHaveLength(2);
+				expect(events[0]).toEqual(parseISO('2024-01-01'));
+				expect(events[1]).toEqual(parseISO('2024-01-15'));
+			});
+		});
+
 		describe('edge cases', () => {
 			it('should handle single event when count is 1', () => {
 				const uiState = { frequency: 'WEEKLY', count: 1 };
@@ -538,6 +816,39 @@ describe('RRuleManager', () => {
 
 				expect(events).toHaveLength(1);
 				expect(events[0]).toEqual(parseISO('2024-01-01'));
+			});
+
+			it('should handle all events being excluded by exceptions', () => {
+				const uiState = { frequency: 'DAILY', count: 3 };
+				const exceptionDates = [
+					'2024-01-01',
+					'2024-01-02',
+					'2024-01-03',
+				];
+				const events = manager.generateEvents(
+					uiState,
+					'2024-01-01',
+					10,
+					exceptionDates
+				);
+
+				expect(events).toHaveLength(0);
+			});
+
+			it('should handle exception dates that do not match any generated events', () => {
+				const uiState = { frequency: 'WEEKLY' };
+				const exceptionDates = ['2024-01-02', '2024-01-03']; // These don't match weekly pattern
+				const events = manager.generateEvents(
+					uiState,
+					'2024-01-01',
+					3,
+					exceptionDates
+				);
+
+				expect(events).toHaveLength(3);
+				expect(events[0]).toEqual(parseISO('2024-01-01'));
+				expect(events[1]).toEqual(parseISO('2024-01-08'));
+				expect(events[2]).toEqual(parseISO('2024-01-15'));
 			});
 		});
 	});

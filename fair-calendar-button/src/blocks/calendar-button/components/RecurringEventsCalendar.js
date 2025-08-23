@@ -24,13 +24,20 @@ import { rruleManager } from '../utils/rruleManager.js';
  * @param {Object} props Component props
  * @param {string} props.startDate Start date of the event
  * @param {Object} props.recurrence Recurrence configuration
+ * @param {Array<string>} props.exceptionDates Array of exception dates to exclude
+ * @param {Function} props.onDateClick Function to handle date clicks for toggling exceptions
  * @return {JSX.Element} Calendar component
  */
-export default function RecurringEventsCalendar({ startDate, recurrence }) {
+export default function RecurringEventsCalendar({
+	startDate,
+	recurrence,
+	exceptionDates,
+	onDateClick,
+}) {
 	const [currentMonth, setCurrentMonth] = useState(new Date());
 	const [eventDates, setEventDates] = useState([]);
 
-	// Generate event dates whenever startDate or recurrence changes
+	// Generate event dates whenever startDate, recurrence, or exceptionDates changes
 	useEffect(() => {
 		if (!startDate || !recurrence?.frequency) {
 			setEventDates([]);
@@ -38,9 +45,14 @@ export default function RecurringEventsCalendar({ startDate, recurrence }) {
 		}
 
 		// Generate up to 50 events to show more instances in the calendar
-		const events = rruleManager.generateEvents(recurrence, startDate, 50);
+		const events = rruleManager.generateEvents(
+			recurrence,
+			startDate,
+			50,
+			exceptionDates
+		);
 		setEventDates(events);
-	}, [startDate, recurrence]);
+	}, [startDate, recurrence, exceptionDates]);
 
 	// Get the start and end of the current month
 	const monthStart = startOfMonth(currentMonth);
@@ -71,6 +83,25 @@ export default function RecurringEventsCalendar({ startDate, recurrence }) {
 	// Check if a given day is the end date
 	const isEndDate = (day) => {
 		return recurrence?.until && isSameDay(new Date(recurrence.until), day);
+	};
+
+	// Check if a given day is an exception date
+	const isExceptionDate = (day) => {
+		return (
+			exceptionDates &&
+			Array.isArray(exceptionDates) &&
+			exceptionDates.some((exceptionDate) =>
+				isSameDay(new Date(exceptionDate), day)
+			)
+		);
+	};
+
+	// Handle clicking on a calendar date
+	const handleDateClick = (day) => {
+		if (onDateClick && (hasEvent(day) || isExceptionDate(day))) {
+			const dateString = format(day, 'yyyy-MM-dd');
+			onDateClick(dateString);
+		}
 	};
 
 	// Get event dates for the current month
@@ -141,13 +172,15 @@ export default function RecurringEventsCalendar({ startDate, recurrence }) {
 					{monthDays.map((day) => {
 						const hasEventDay = hasEvent(day);
 						const isEndDay = isEndDate(day);
+						const isExceptionDay = isExceptionDate(day);
+						const isClickable = hasEventDay || isExceptionDay;
 						let className = 'calendar-day';
 						let title = '';
 
 						if (hasEventDay) {
 							className += ' has-event';
 							title = __(
-								'Event occurs on this day',
+								'Event occurs on this day - click to exclude',
 								'fair-calendar-button'
 							);
 						}
@@ -155,7 +188,7 @@ export default function RecurringEventsCalendar({ startDate, recurrence }) {
 							className += ' is-end-date';
 							title = hasEventDay
 								? __(
-										'Event occurs on this day (last occurrence)',
+										'Event occurs on this day (last occurrence) - click to exclude',
 										'fair-calendar-button'
 									)
 								: __(
@@ -163,12 +196,26 @@ export default function RecurringEventsCalendar({ startDate, recurrence }) {
 										'fair-calendar-button'
 									);
 						}
+						if (isExceptionDay) {
+							className += ' is-exception-date';
+							title = __(
+								'Event excluded on this day - click to include',
+								'fair-calendar-button'
+							);
+						}
+						if (isClickable) {
+							className += ' is-clickable';
+						}
 
 						return (
 							<div
 								key={day.toISOString()}
 								className={className}
 								title={title}
+								onClick={() => handleDateClick(day)}
+								style={{
+									cursor: isClickable ? 'pointer' : 'default',
+								}}
 							>
 								{format(day, 'd')}
 							</div>

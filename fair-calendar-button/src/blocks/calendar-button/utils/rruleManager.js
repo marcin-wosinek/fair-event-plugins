@@ -3,14 +3,21 @@
  * Handles bidirectional conversion between UI state and RRULE strings
  */
 
-import { addDays, addWeeks, parseISO, isValid, isAfter } from 'date-fns';
+import {
+	addDays,
+	addWeeks,
+	parseISO,
+	isValid,
+	isAfter,
+	isSameDay,
+} from 'date-fns';
 
 /**
  * RRuleManager class for managing RRULE parsing and generation
  */
 export class RRuleManager {
 	constructor() {
-		this.supportedFields = ['FREQ', 'INTERVAL', 'COUNT', 'UNTIL'];
+		this.supportedFields = ['FREQ', 'INTERVAL', 'COUNT', 'UNTIL', 'EXDATE'];
 	}
 
 	/**
@@ -51,6 +58,33 @@ export class RRuleManager {
 	}
 
 	/**
+	 * Generate EXDATE string from exception dates array
+	 *
+	 * @param {Array<string>} exceptionDates Array of date strings in YYYY-MM-DD format
+	 * @return {string} EXDATE string or empty string if no exceptions
+	 */
+	generateExdateString(exceptionDates) {
+		if (
+			!exceptionDates ||
+			!Array.isArray(exceptionDates) ||
+			exceptionDates.length === 0
+		) {
+			return '';
+		}
+
+		const formattedDates = exceptionDates
+			.filter((date) => date && typeof date === 'string')
+			.map((date) => this.formatUntilDate(date))
+			.filter((date) => date);
+
+		if (formattedDates.length === 0) {
+			return '';
+		}
+
+		return `EXDATE:${formattedDates.join(',')}`;
+	}
+
+	/**
 	 * Format date for UNTIL clause (YYYYMMDD format)
 	 *
 	 * @param {string} dateString Date string in YYYY-MM-DD format
@@ -73,12 +107,13 @@ export class RRuleManager {
 	/**
 	 * Generate array of event dates based on recurrence rule
 	 *
-	 * @param {Object} uiState UI state object with frequency, count, until, and interval
+	 * @param {Object} uiState UI state object with frequency, count, until, interval, and exceptionDates
 	 * @param {string} startDate Start date string (YYYY-MM-DD or datetime format)
 	 * @param {number} maxInstances Maximum number of instances to generate (default: 10)
+	 * @param {Array<string>} exceptionDates Array of exception date strings to exclude
 	 * @return {Array<Date>} Array of Date objects representing event occurrences
 	 */
-	generateEvents(uiState, startDate, maxInstances = 10) {
+	generateEvents(uiState, startDate, maxInstances = 10, exceptionDates = []) {
 		if (!uiState || !uiState.frequency || !startDate) {
 			return [];
 		}
@@ -128,6 +163,23 @@ export class RRuleManager {
 			}
 
 			events.push(currentDate);
+		}
+
+		// Filter out exception dates if provided
+		if (
+			exceptionDates &&
+			Array.isArray(exceptionDates) &&
+			exceptionDates.length > 0
+		) {
+			const exceptionDateObjects = exceptionDates
+				.map((dateString) => parseISO(dateString))
+				.filter((date) => isValid(date));
+
+			return events.filter((eventDate) => {
+				return !exceptionDateObjects.some((exceptionDate) =>
+					isSameDay(eventDate, exceptionDate)
+				);
+			});
 		}
 
 		return events;
