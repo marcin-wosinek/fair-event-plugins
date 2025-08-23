@@ -23,7 +23,15 @@
 		"format": "npm-run-all format:*",
 		"format:wp": "wp-scripts format",
 		"format:yml": "prettier --write '**/*.yml'",
-		"prepare": "husky"
+		"prepare": "husky",
+		"changeset": "changeset",
+		"changeset:add": "changeset add",
+		"changeset:status": "changeset status",
+		"version-packages": "changeset version",
+		"release": "npm run build && changeset publish",
+		"release:fair-payment": "npm run build --workspace=fair-payment && changeset publish",
+		"release:fair-calendar-button": "npm run build --workspace=fair-calendar-button && changeset publish",
+		"release:fair-schedule": "npm run build --workspace=fair-schedule && changeset publish"
 	},
 	"dependencies": {
 		"@wordpress/scripts": "^30.20.0",
@@ -935,5 +943,8 @@
 		"fair-schedule",
 		"fair-payment",
 		"fair-calendar-button"
-	]
+	],
+	"devDependencies": {
+		"@changesets/cli": "^2.29.6"
+	}
 }
