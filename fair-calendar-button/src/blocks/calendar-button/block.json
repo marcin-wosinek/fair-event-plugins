@@ -64,6 +64,10 @@
 		"rRule": {
 			"type": "string",
 			"default": ""
+		},
+		"exceptionDates": {
+			"type": "array",
+			"default": []
 		}
 	},
 	"providesContext": {

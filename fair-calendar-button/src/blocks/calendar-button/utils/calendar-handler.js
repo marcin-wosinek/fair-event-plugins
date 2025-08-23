@@ -197,6 +197,8 @@ export function createEventData(attributes) {
 		title,
 		recurring,
 		rRule,
+		exdate,
+		exceptionDates,
 		url,
 	} = attributes;
 	const eventData = {};
@@ -212,6 +214,20 @@ export function createEventData(attributes) {
 	// Include rRule if recurring is enabled and rRule is provided
 	if (recurring && rRule) {
 		eventData.rRule = rRule;
+
+		// Include EXDATE if there are exception dates
+		if (exdate) {
+			eventData.exdate = exdate;
+		}
+
+		// Also include raw exception dates for potential future use
+		if (
+			exceptionDates &&
+			Array.isArray(exceptionDates) &&
+			exceptionDates.length > 0
+		) {
+			eventData.exceptionDates = exceptionDates;
+		}
 	}
 
 	return eventData;

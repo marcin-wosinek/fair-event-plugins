@@ -8,6 +8,7 @@ import {
 	ToggleControl,
 	TextareaControl,
 	SelectControl,
+	Button,
 } from '@wordpress/components';
 import {
 	useBlockProps,
@@ -35,8 +36,17 @@ import RecurringEventsCalendar from './RecurringEventsCalendar.js';
 export default function EditComponent({ attributes, setAttributes }) {
 	const blockProps = useBlockProps();
 
-	const { start, end, allDay, description, location, recurring, recurrence } =
-		attributes;
+	const {
+		start,
+		end,
+		allDay,
+		description,
+		location,
+		recurring,
+		recurrence,
+		exceptionDates,
+		rRule,
+	} = attributes;
 
 	// Extract recurrence values with defaults
 	const frequency = recurrence?.frequency || 'WEEKLY';
@@ -183,6 +193,24 @@ export default function EditComponent({ attributes, setAttributes }) {
 		const newEndTime = calculateEndTime(start, duration);
 		if (newEndTime) {
 			setAttributes({ end: newEndTime });
+		}
+	};
+
+	// Handle toggling exception date
+	const handleToggleExceptionDate = (dateString) => {
+		const currentExceptions = exceptionDates || [];
+		if (currentExceptions.includes(dateString)) {
+			// Remove from exceptions
+			setAttributes({
+				exceptionDates: currentExceptions.filter(
+					(date) => date !== dateString
+				),
+			});
+		} else {
+			// Add to exceptions
+			setAttributes({
+				exceptionDates: [...currentExceptions, dateString],
+			});
 		}
 	};
 
@@ -337,10 +365,121 @@ export default function EditComponent({ attributes, setAttributes }) {
 								)}
 							/>
 
+							{/* Calendar Section */}
 							<RecurringEventsCalendar
 								startDate={start}
 								recurrence={recurrence}
+								exceptionDates={exceptionDates}
+								onDateClick={handleToggleExceptionDate}
 							/>
+
+							{/* Exception Dates Section */}
+							{exceptionDates && exceptionDates.length > 0 && (
+								<div
+									style={{
+										marginTop: '15px',
+										marginBottom: '15px',
+									}}
+								>
+									<h4
+										style={{
+											marginBottom: '10px',
+										}}
+									>
+										{__(
+											'Exception Dates',
+											'fair-calendar-button'
+										)}
+									</h4>
+									<p className="components-base-control__help">
+										{__(
+											'Currently excluded dates:',
+											'fair-calendar-button'
+										)}
+									</p>
+									<div
+										style={{
+											display: 'flex',
+											flexWrap: 'wrap',
+											gap: '5px',
+											marginTop: '8px',
+										}}
+									>
+										{exceptionDates.map((date, index) => (
+											<Button
+												key={index}
+												variant="secondary"
+												isSmall
+												onClick={() =>
+													handleToggleExceptionDate(
+														date
+													)
+												}
+												style={{ fontSize: '12px' }}
+											>
+												{date} ×
+											</Button>
+										))}
+									</div>
+								</div>
+							)}
+
+							{/* RRULE Preview */}
+							{rRule && (
+								<div style={{ marginTop: '15px' }}>
+									<h4
+										style={{
+											marginBottom: '10px',
+										}}
+									>
+										{__(
+											'Recurrence Rule',
+											'fair-calendar-button'
+										)}
+									</h4>
+									<p className="components-base-control__help">
+										{__(
+											'Generated RRULE for calendar applications:',
+											'fair-calendar-button'
+										)}
+									</p>
+									<code
+										style={{
+											display: 'block',
+											padding: '8px',
+											background: '#f6f7f7',
+											border: '1px solid #ddd',
+											borderRadius: '4px',
+											fontSize: '12px',
+											fontFamily: 'monospace',
+											wordBreak: 'break-all',
+											marginTop: '8px',
+										}}
+									>
+										{rRule}
+									</code>
+									{exceptionDates &&
+										exceptionDates.length > 0 && (
+											<code
+												style={{
+													display: 'block',
+													padding: '8px',
+													background: '#f6f7f7',
+													border: '1px solid #ddd',
+													borderRadius: '4px',
+													fontSize: '12px',
+													fontFamily: 'monospace',
+													wordBreak: 'break-all',
+													marginTop: '4px',
+												}}
+											>
+												{rruleManager.generateExdateString(
+													exceptionDates
+												)}
+											</code>
+										)}
+								</div>
+							)}
 						</>
 					)}
 				</PanelBody>
