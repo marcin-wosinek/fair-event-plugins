@@ -32,6 +32,7 @@
 		}
 	},
 	"usesContext": ["fair-schedule/hourHeight", "fair-schedule/startHour"],
-	"editorScript": "file:../../../build/blocks/time-block/index.js",
-	"style": "file:../../../build/blocks/time-block/style-style.css"
+	"script": "file:./index.js",
+	"editorScript": "file:./editor.js",
+	"style": "file:./style-index.css"
 }

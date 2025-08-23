@@ -38,8 +38,9 @@
 			"default": "EUR"
 		}
 	},
-	"editorScript": "file:../../../build/blocks/simple-payment/index.js",
-	"viewScript": "file:../../../build/blocks/simple-payment/frontend.js",
+	"script": "file:./index.js",
+	"editorScript": "file:./editor.js",
+	"viewScript": "file:./frontend.js",
 	"render": "file:./render.php",
-	"style": "file:../../../build/blocks/simple-payment/style-style.css"
+	"style": "file:./style-index.css"
 }

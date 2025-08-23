@@ -48,6 +48,7 @@
 		"fair-schedule/hourHeight": "hourHeight"
 	},
 	"usesContext": [],
-	"editorScript": "file:../../../build/blocks/schedule-column/index.js",
-	"style": "file:../../../build/blocks/schedule-column/style-style.css"
+	"script": "file:./index.js",
+	"editorScript": "file:./editor.js",
+	"style": "file:./style-index.css"
 }

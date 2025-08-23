@@ -1,20 +1,21 @@
 /**
- * Calendar Button Block
+ * Schedule Column Block
  *
- * Block for adding calendar buttons to posts and pages.
+ * Block for organizing time blocks in columns by track, day, or category.
  */
 
 import { registerBlockType } from '@wordpress/blocks';
+import { __ } from '@wordpress/i18n';
+import { columns as icon } from '@wordpress/icons';
 import EditComponent from './components/EditComponent.js';
 import SaveComponent from './components/SaveComponent.js';
-
-// Import filters to customize inner blocks
-import './filters/buttonFilter.js';
 
 /**
  * Register the block
  */
-registerBlockType('fair-calendar-button/calendar-button', {
+registerBlockType('fair-schedule/schedule-column', {
+	icon,
+
 	/**
 	 * Block edit function
 	 *

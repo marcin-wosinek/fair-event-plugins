@@ -3,6 +3,9 @@ import {
 	handleCalendarClick,
 } from './utils/calendar-handler.js';
 
+// Import styles
+import './view.css';
+
 document.addEventListener('DOMContentLoaded', function () {
 	const calendarButtons = document.querySelectorAll(
 		'.wp-block-fair-calendar-button-calendar-button .wp-block-button__link'

@@ -69,9 +69,9 @@
 	"providesContext": {
 		"fair-calendar-button/eventData": "attributes"
 	},
-	"editorScript": "file:./index.js",
+	"editorScript": "file:./editor.js",
 	"viewScript": "file:./frontend.js",
 	"render": "file:./render.php",
-	"viewStyle": "file:./view.css",
+	"viewStyle": "file:./frontend.css",
 	"editorStyle": "file:./editor.css"
 }
