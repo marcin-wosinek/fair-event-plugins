@@ -12,7 +12,8 @@
 		"prebuild": "npm run clean",
 		"start": "wp-scripts start",
 		"format": "wp-scripts format",
-		"composer": "composer install"
+		"composer": "composer install",
+		"test": "jest"
 	},
 	"dependencies": {
 		"@fortawesome/fontawesome-free": "^7.0.0",
@@ -27,6 +28,10 @@
 		"date-fns": "^2.30.0"
 	},
 	"devDependencies": {
-		"@wordpress/scripts": "^30.20.0"
+		"@babel/core": "^7.28.3",
+		"@babel/preset-env": "^7.28.3",
+		"@wordpress/scripts": "^30.20.0",
+		"babel-jest": "^30.0.5",
+		"jest": "^30.0.0"
 	}
 }

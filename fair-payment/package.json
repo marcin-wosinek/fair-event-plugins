@@ -11,7 +11,9 @@
 		"clean": "rm -rf build",
 		"prebuild": "npm run clean",
 		"start": "wp-scripts start",
-		"composer": "composer install"
+		"composer": "composer install",
+		"format": "wp-scripts format",
+		"test": "jest"
 	},
 	"dependencies": {
 		"@wordpress/block-editor": "^11.0.0",
@@ -21,6 +23,10 @@
 		"@wordpress/icons": "^9.0.0"
 	},
 	"devDependencies": {
-		"@wordpress/scripts": "^30.20.0"
+		"@babel/core": "^7.28.3",
+		"@babel/preset-env": "^7.28.3",
+		"@wordpress/scripts": "^30.20.0",
+		"babel-jest": "^30.0.5",
+		"jest": "^30.0.0"
 	}
 }

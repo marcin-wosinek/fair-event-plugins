@@ -33,6 +33,24 @@ class Plugin {
 	}
 
 	/**
+	 * Private constructor to prevent direct instantiation
+	 */
+	private function __construct() {
+	}
+
+	/**
+	 * Private clone method to prevent cloning
+	 */
+	private function __clone() {
+	}
+
+	/**
+	 * Public wakeup method to prevent unserialization
+	 */
+	public function __wakeup() {
+	}
+
+	/**
 	 * Initialize the plugin
 	 *
 	 * @return void
