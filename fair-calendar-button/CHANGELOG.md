@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.1.1
+
+### Patch Changes
+
+- Update dependencies to the newest version
+
 ## 1.1.0
 
 ### Minor Changes
