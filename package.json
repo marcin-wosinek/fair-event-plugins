@@ -17,6 +17,7 @@
 	"scripts": {
 		"test": "echo \"Error: no test specified\" && exit 1",
 		"build": "npm run build --workspaces",
+		"cleanup": "npm run cleanup --workspaces",
 		"composer": "npm run composer --workspaces",
 		"start": "npm run start --workspace=fair-schedule & npm run start --workspace=fair-payment & npm run start --workspace=fair-calendar-button & wait",
 		"format": "npm-run-all format:*",

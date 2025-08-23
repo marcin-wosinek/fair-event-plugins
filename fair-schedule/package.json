@@ -8,6 +8,8 @@
 	"main": "build/index.js",
 	"scripts": {
 		"build": "wp-scripts build",
+		"clean": "rm -rf build",
+		"prebuild": "npm run clean",
 		"start": "wp-scripts start",
 		"format": "wp-scripts format",
 		"composer": "composer install"
