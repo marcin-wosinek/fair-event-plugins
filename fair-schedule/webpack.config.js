@@ -10,10 +10,20 @@ export default {
 			'src/blocks/time-block',
 			'index.js'
 		),
+		'blocks/time-block/style': path.resolve(
+			process.cwd(),
+			'src/blocks/time-block',
+			'style.css'
+		),
 		'blocks/schedule-column/index': path.resolve(
 			process.cwd(),
 			'src/blocks/schedule-column',
 			'index.js'
+		),
+		'blocks/schedule-column/style': path.resolve(
+			process.cwd(),
+			'src/blocks/schedule-column',
+			'style.css'
 		),
 	},
 	output: {

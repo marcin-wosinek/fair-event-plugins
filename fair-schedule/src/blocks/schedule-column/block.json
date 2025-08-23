@@ -49,6 +49,5 @@
 	},
 	"usesContext": [],
 	"editorScript": "file:../../../build/blocks/schedule-column/index.js",
-	"style": "file:./style.css",
-	"editorStyle": "file:./style.css"
+	"style": "file:../../../build/blocks/schedule-column/style-style.css"
 }

@@ -41,5 +41,5 @@
 	"editorScript": "file:../../../build/blocks/simple-payment/index.js",
 	"viewScript": "file:../../../build/blocks/simple-payment/frontend.js",
 	"render": "file:./render.php",
-	"style": "file:./style.css"
+	"style": "file:../../../build/blocks/simple-payment/style-style.css"
 }

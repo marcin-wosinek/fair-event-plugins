@@ -72,6 +72,6 @@
 	"editorScript": "file:../../../build/blocks/calendar-button/index.js",
 	"viewScript": "file:../../../build/blocks/calendar-button/frontend.js",
 	"render": "file:./render.php",
-	"style": "file:./style.css",
-	"editorStyle": "file:./style.css"
+	"viewStyle": "file:../../../build/blocks/calendar-button/view.css",
+	"editorStyle": "file:../../../build/blocks/calendar-button/editor.css"
 }

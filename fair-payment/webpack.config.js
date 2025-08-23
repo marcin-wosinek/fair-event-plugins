@@ -15,6 +15,11 @@ export default {
 			'src/blocks/simple-payment',
 			'frontend.js'
 		),
+		'blocks/simple-payment/style': path.resolve(
+			process.cwd(),
+			'src/blocks/simple-payment',
+			'style.css'
+		),
 
 		// Admin entries
 		'admin/admin': path.resolve(process.cwd(), 'src/admin/js', 'admin.js'),

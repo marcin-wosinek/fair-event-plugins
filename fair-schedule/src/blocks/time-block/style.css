@@ -6,28 +6,6 @@
     background-color: #f9f9f9;
 }
 
-.time-block-editor {
-    margin-bottom: 1rem;
-    padding: 1rem;
-    border: 1px solid #ccc;
-    border-radius: 4px;
-    background-color: #fff;
-}
-
-.time-block-editor h4 {
-    margin-top: 0;
-    margin-bottom: 1rem;
-    color: #333;
-}
-
-.time-block-preview {
-    margin-top: 1rem;
-    padding: 0.5rem;
-    border: 1px dashed #ccc;
-    border-radius: 4px;
-    background-color: #f5f5f5;
-}
-
 .time-slot {
     display: flex;
     align-items: center;
@@ -93,8 +71,4 @@
 /* Ensure drag preview maintains visibility */
 .wp-block-fair-schedule-time-block.is-dragging {
     opacity: 0.8;
-}
-
-.wp-block-fair-schedule-time-block .block-editor-block-drag-handle {
-    opacity: 1;
 }
