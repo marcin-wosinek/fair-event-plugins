@@ -6,7 +6,8 @@
 
 import { registerBlockType } from '@wordpress/blocks';
 import { __ } from '@wordpress/i18n';
-import { columns as icon } from '@wordpress/icons';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { faColumns } from '@fortawesome/free-solid-svg-icons';
 import EditComponent from './components/EditComponent.js';
 import SaveComponent from './components/SaveComponent.js';
 
@@ -14,7 +15,7 @@ import SaveComponent from './components/SaveComponent.js';
  * Register the block
  */
 registerBlockType('fair-schedule/schedule-column', {
-	icon,
+	icon: <FontAwesomeIcon icon={faColumns} />,
 
 	/**
 	 * Block edit function

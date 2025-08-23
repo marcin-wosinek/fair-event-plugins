@@ -5,7 +5,8 @@
  */
 
 import { registerBlockType } from '@wordpress/blocks';
-import { Icon, payment } from '@wordpress/icons';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { faCreditCard } from '@fortawesome/free-solid-svg-icons';
 import EditComponent from './components/EditComponent.js';
 import SaveComponent from './components/SaveComponent.js';
 
@@ -13,7 +14,7 @@ import SaveComponent from './components/SaveComponent.js';
  * Register the block
  */
 registerBlockType('fair-payment/simple-payment-block', {
-	icon: <Icon icon={payment} />,
+	icon: <FontAwesomeIcon icon={faCreditCard} />,
 
 	/**
 	 * Block edit function
