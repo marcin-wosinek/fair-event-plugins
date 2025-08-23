@@ -68,6 +68,11 @@ export default function RecurringEventsCalendar({ startDate, recurrence }) {
 		return eventDates.some((eventDate) => isSameDay(eventDate, date));
 	};
 
+	// Check if a given day is the end date
+	const isEndDate = (day) => {
+		return recurrence?.until && isSameDay(new Date(recurrence.until), day);
+	};
+
 	// Get event dates for the current month
 	const currentMonthEvents = eventDates.filter((eventDate) =>
 		isSameMonth(eventDate, currentMonth)
@@ -133,22 +138,42 @@ export default function RecurringEventsCalendar({ startDate, recurrence }) {
 						></div>
 					))}
 
-					{monthDays.map((day) => (
-						<div
-							key={day.toISOString()}
-							className={`calendar-day ${hasEvent(day) ? 'has-event' : ''}`}
-							title={
-								hasEvent(day)
-									? __(
-											'Event occurs on this day',
-											'fair-calendar-button'
-										)
-									: ''
-							}
-						>
-							{format(day, 'd')}
-						</div>
-					))}
+					{monthDays.map((day) => {
+						const hasEventDay = hasEvent(day);
+						const isEndDay = isEndDate(day);
+						let className = 'calendar-day';
+						let title = '';
+
+						if (hasEventDay) {
+							className += ' has-event';
+							title = __(
+								'Event occurs on this day',
+								'fair-calendar-button'
+							);
+						}
+						if (isEndDay) {
+							className += ' is-end-date';
+							title = hasEventDay
+								? __(
+										'Event occurs on this day (last occurrence)',
+										'fair-calendar-button'
+									)
+								: __(
+										'Last occurrence date',
+										'fair-calendar-button'
+									);
+						}
+
+						return (
+							<div
+								key={day.toISOString()}
+								className={className}
+								title={title}
+							>
+								{format(day, 'd')}
+							</div>
+						);
+					})}
 				</div>
 			</div>
 

@@ -35,16 +35,8 @@ import RecurringEventsCalendar from './RecurringEventsCalendar.js';
 export default function EditComponent({ attributes, setAttributes }) {
 	const blockProps = useBlockProps();
 
-	const {
-		start,
-		end,
-		allDay,
-		description,
-		location,
-		recurring,
-		rRule,
-		recurrence,
-	} = attributes;
+	const { start, end, allDay, description, location, recurring, recurrence } =
+		attributes;
 
 	// Extract recurrence values with defaults
 	const frequency = recurrence?.frequency || 'WEEKLY';
@@ -344,15 +336,7 @@ export default function EditComponent({ attributes, setAttributes }) {
 									'fair-calendar-button'
 								)}
 							/>
-							{rRule && (
-								<p className="components-base-control__help">
-									{__(
-										'Generated RRULE:',
-										'fair-calendar-button'
-									)}{' '}
-									<code>{rRule}</code>
-								</p>
-							)}
+
 							<RecurringEventsCalendar
 								startDate={start}
 								recurrence={recurrence}
