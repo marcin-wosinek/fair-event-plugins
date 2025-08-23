@@ -15,7 +15,7 @@
 	"type": "module",
 	"main": "index.js",
 	"scripts": {
-		"test": "echo \"Error: no test specified\" && exit 1",
+		"test": "npm run test --workspaces",
 		"build": "npm run build --workspaces",
 		"cleanup": "npm run cleanup --workspaces",
 		"composer": "npm run composer --workspaces",
