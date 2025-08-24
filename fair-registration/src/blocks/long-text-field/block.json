@@ -41,5 +41,6 @@
 		}
 	},
 	"usesContext": ["fair-registration/formId"],
-	"editorScript": "file:./editor.js"
+	"editorScript": "file:./editor.js",
+	"render": "file:./render.php"
 }
