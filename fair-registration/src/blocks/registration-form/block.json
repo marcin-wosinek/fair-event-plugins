@@ -49,7 +49,11 @@
 		"fair-registration/long-text-field",
 		"fair-registration/phone-number-field",
 		"fair-registration/checkbox-field",
-		"fair-registration/select-field"
+		"fair-registration/select-field",
+		"core/button",
+		"core/buttons",
+		"core/paragraph",
+		"core/heading"
 	],
 	"editorScript": "file:./editor.js",
 	"viewScript": "file:./frontend.js",

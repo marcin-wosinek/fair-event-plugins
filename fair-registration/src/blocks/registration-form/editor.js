@@ -16,6 +16,10 @@ const ALLOWED_BLOCKS = [
 	'fair-registration/phone-number-field',
 	'fair-registration/checkbox-field',
 	'fair-registration/select-field',
+	'core/button',
+	'core/buttons',
+	'core/paragraph',
+	'core/heading',
 ];
 
 const TEMPLATE = [['fair-registration/email-field', {}]];
