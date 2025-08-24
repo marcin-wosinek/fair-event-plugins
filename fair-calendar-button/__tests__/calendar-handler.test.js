@@ -1,4 +1,7 @@
-import { createEventData } from '../src/blocks/calendar-button/utils/calendar-handler.js';
+import {
+	createEventData,
+	formatEventDescription,
+} from '../src/blocks/calendar-button/utils/calendar-handler.js';
 
 describe('calendar-handler', () => {
 	describe('createEventData', () => {
@@ -138,6 +141,122 @@ describe('calendar-handler', () => {
 				expect(result.end).toEqual(new Date('2024-12-22T00:00:00Z'));
 				expect(result.allDay).toBe(true);
 			});
+		});
+	});
+
+	describe('formatEventDescription', () => {
+		it('should append URL with double newlines when description exists', () => {
+			const description = 'This is a test event';
+			const url = 'https://example.com';
+
+			const result = formatEventDescription(description, url);
+
+			expect(result).toBe('This is a test event\n\nhttps://example.com');
+		});
+
+		it('should return only URL when description is empty', () => {
+			const description = '';
+			const url = 'https://example.com';
+
+			const result = formatEventDescription(description, url);
+
+			expect(result).toBe('https://example.com');
+		});
+
+		it('should return only URL when description is null', () => {
+			const description = null;
+			const url = 'https://example.com';
+
+			const result = formatEventDescription(description, url);
+
+			expect(result).toBe('https://example.com');
+		});
+
+		it('should return only URL when description is undefined', () => {
+			const description = undefined;
+			const url = 'https://example.com';
+
+			const result = formatEventDescription(description, url);
+
+			expect(result).toBe('https://example.com');
+		});
+
+		it('should return only URL when description is whitespace only', () => {
+			const description = '   ';
+			const url = 'https://example.com';
+
+			const result = formatEventDescription(description, url);
+
+			expect(result).toBe('   \n\nhttps://example.com');
+		});
+
+		it('should return original description when URL is empty', () => {
+			const description = 'This is a test event';
+			const url = '';
+
+			const result = formatEventDescription(description, url);
+
+			expect(result).toBe('This is a test event');
+		});
+
+		it('should return empty string when both description and URL are empty', () => {
+			const description = '';
+			const url = '';
+
+			const result = formatEventDescription(description, url);
+
+			expect(result).toBe('');
+		});
+
+		it('should return empty string when URL is null', () => {
+			const description = 'This is a test event';
+			const url = null;
+
+			const result = formatEventDescription(description, url);
+
+			expect(result).toBe('This is a test event');
+		});
+
+		it('should return empty string when URL is undefined', () => {
+			const description = 'This is a test event';
+			const url = undefined;
+
+			const result = formatEventDescription(description, url);
+
+			expect(result).toBe('This is a test event');
+		});
+
+		it('should handle multi-line descriptions correctly', () => {
+			const description = 'Line 1\nLine 2\nLine 3';
+			const url = 'https://example.com';
+
+			const result = formatEventDescription(description, url);
+
+			expect(result).toBe(
+				'Line 1\nLine 2\nLine 3\n\nhttps://example.com'
+			);
+		});
+
+		it('should handle descriptions that already end with newlines', () => {
+			const description = 'This is a test event\n';
+			const url = 'https://example.com';
+
+			const result = formatEventDescription(description, url);
+
+			expect(result).toBe(
+				'This is a test event\n\n\nhttps://example.com'
+			);
+		});
+
+		it('should handle complex URLs with query parameters', () => {
+			const description = 'Event details';
+			const url = 'https://example.com/event?id=123&category=tech';
+
+			const result = formatEventDescription(description, url);
+
+			expect(result).toBe(
+				'Event details\n\nhttps://example.com/event?id=123&category=tech'
+			);
 		});
 	});
 });

@@ -107,10 +107,10 @@ function createCalendarDropdown(eventData, buttonElement) {
 				const modifiedEventData = { ...eventData };
 
 				if (modifiedEventData.url) {
-					const currentDescription =
-						modifiedEventData.description || '';
-					modifiedEventData.description =
-						currentDescription + '\n\n' + modifiedEventData.url;
+					modifiedEventData.description = formatEventDescription(
+						modifiedEventData.description,
+						modifiedEventData.url
+					);
 				}
 
 				const calendarUrl = provider.generator(modifiedEventData);
@@ -179,6 +179,20 @@ function positionDropdown(dropdown, buttonElement) {
 	dropdown.style.top = `${buttonRect.bottom + scrollTop + 5}px`;
 	dropdown.style.left = `${buttonRect.left + scrollLeft}px`;
 	dropdown.style.zIndex = '9999';
+}
+
+/**
+ * Format event description by appending URL if present
+ *
+ * @param {string} description - Original description
+ * @param {string} url - URL to append
+ * @return {string} Formatted description
+ */
+export function formatEventDescription(description, url) {
+	if (!url) return description || '';
+
+	const currentDescription = description || '';
+	return currentDescription ? currentDescription + '\n\n' + url : url;
 }
 
 /**
