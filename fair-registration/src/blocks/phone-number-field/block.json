@@ -1,0 +1,41 @@
+{
+	"$schema": "https://schemas.wp.org/trunk/block.json",
+	"apiVersion": 3,
+	"name": "fair-registration/phone-number-field",
+	"version": "1.0.0",
+	"title": "Phone Number Field",
+	"category": "widgets",
+	"icon": "phone",
+	"description": "Phone number input field for registration forms",
+	"keywords": ["phone", "field", "input", "registration"],
+	"textdomain": "fair-registration",
+	"parent": ["fair-registration/form"],
+	"supports": {
+		"html": false,
+		"reusable": false
+	},
+	"attributes": {
+		"label": {
+			"type": "string",
+			"default": "Phone Number"
+		},
+		"placeholder": {
+			"type": "string",
+			"default": "Enter your phone number"
+		},
+		"required": {
+			"type": "boolean",
+			"default": false
+		},
+		"fieldId": {
+			"type": "string",
+			"default": ""
+		},
+		"pattern": {
+			"type": "string",
+			"default": ""
+		}
+	},
+	"usesContext": ["fair-registration/formId"],
+	"editorScript": "file:./editor.js"
+}

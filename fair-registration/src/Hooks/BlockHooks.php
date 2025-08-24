@@ -26,6 +26,15 @@ class BlockHooks {
 	 * @return void
 	 */
 	public function register_blocks() {
-		// Block registration will be added here when blocks are created
+		// Register main form block
+		register_block_type( __DIR__ . '/../../build/blocks/registration-form' );
+		
+		// Register field blocks
+		register_block_type( __DIR__ . '/../../build/blocks/email-field' );
+		register_block_type( __DIR__ . '/../../build/blocks/short-text-field' );
+		register_block_type( __DIR__ . '/../../build/blocks/long-text-field' );
+		register_block_type( __DIR__ . '/../../build/blocks/phone-number-field' );
+		register_block_type( __DIR__ . '/../../build/blocks/checkbox-field' );
+		register_block_type( __DIR__ . '/../../build/blocks/select-field' );
 	}
 }

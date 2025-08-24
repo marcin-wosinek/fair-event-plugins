@@ -1,0 +1,37 @@
+{
+	"$schema": "https://schemas.wp.org/trunk/block.json",
+	"apiVersion": 3,
+	"name": "fair-registration/email-field",
+	"version": "1.0.0",
+	"title": "Email Field",
+	"category": "widgets",
+	"icon": "email-alt",
+	"description": "Email input field for registration forms",
+	"keywords": ["email", "field", "input", "registration"],
+	"textdomain": "fair-registration",
+	"parent": ["fair-registration/form"],
+	"supports": {
+		"html": false,
+		"reusable": false
+	},
+	"attributes": {
+		"label": {
+			"type": "string",
+			"default": "Email Address"
+		},
+		"placeholder": {
+			"type": "string",
+			"default": "Enter your email"
+		},
+		"required": {
+			"type": "boolean",
+			"default": true
+		},
+		"fieldId": {
+			"type": "string",
+			"default": ""
+		}
+	},
+	"usesContext": ["fair-registration/formId"],
+	"editorScript": "file:./editor.js"
+}

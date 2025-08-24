@@ -1,0 +1,44 @@
+{
+	"$schema": "https://schemas.wp.org/trunk/block.json",
+	"apiVersion": 3,
+	"name": "fair-registration/select-field",
+	"version": "1.0.0",
+	"title": "Select Field",
+	"category": "widgets",
+	"icon": "arrow-down-alt2",
+	"description": "Dropdown select field for registration forms",
+	"keywords": ["select", "dropdown", "field", "registration"],
+	"textdomain": "fair-registration",
+	"parent": ["fair-registration/form"],
+	"supports": {
+		"html": false,
+		"reusable": false
+	},
+	"attributes": {
+		"label": {
+			"type": "string",
+			"default": "Select Option"
+		},
+		"required": {
+			"type": "boolean",
+			"default": false
+		},
+		"fieldId": {
+			"type": "string",
+			"default": ""
+		},
+		"options": {
+			"type": "array",
+			"default": [
+				{ "label": "Option 1", "value": "option1" },
+				{ "label": "Option 2", "value": "option2" }
+			]
+		},
+		"placeholder": {
+			"type": "string",
+			"default": "Choose an option"
+		}
+	},
+	"usesContext": ["fair-registration/formId"],
+	"editorScript": "file:./editor.js"
+}
