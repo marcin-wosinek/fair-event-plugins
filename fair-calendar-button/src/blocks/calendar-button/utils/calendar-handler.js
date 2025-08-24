@@ -202,8 +202,16 @@ export function createEventData(attributes) {
 	const eventData = {};
 
 	if (start) eventData.start = new Date(start);
-	if (end) eventData.end = new Date(end);
-	if (allDay) eventData.allDay = true;
+	if (end) {
+		const endDate = new Date(end);
+		// For all-day events, make the end date inclusive by adding one day
+		// This ensures multi-day all-day events include the end date
+		if (allDay && start && end !== start) {
+			endDate.setDate(endDate.getDate() + 1);
+		}
+		eventData.end = endDate;
+	}
+	if (allDay !== undefined) eventData.allDay = allDay;
 	if (description) eventData.description = description;
 	if (location) eventData.location = location;
 	if (title) eventData.title = title;
