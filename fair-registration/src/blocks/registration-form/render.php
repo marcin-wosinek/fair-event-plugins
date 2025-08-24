@@ -18,21 +18,11 @@ if (!empty($form_id)) {
 <div class="<?php echo esc_attr($form_classes); ?>">
 	<form 
 		id="<?php echo esc_attr($form_id ?: 'fair-registration-form-' . uniqid()); ?>" 
-		class="wp-block-group fair-registration-form-element"
+		class="wp-block-group"
 		method="post"
 		action=""
 	>
-		<div class="wp-block-columns fair-registration-form-fields">
-			<?php echo $inner_blocks; ?>
-		</div>
-		
-		<div class="wp-block-buttons fair-registration-form-actions">
-			<div class="wp-block-button">
-				<button type="submit" class="wp-block-button__link fair-registration-submit-btn">
-					<?php _e('Submit Registration', 'fair-registration'); ?>
-				</button>
-			</div>
-		</div>
+    <?php echo $inner_blocks; ?>
 		
 		<?php wp_nonce_field('fair_registration_submit', 'fair_registration_nonce'); ?>
 	</form>
