@@ -68,6 +68,7 @@ jobs:
           cd fair-payment
           zip -r ../dist/fair-payment.zip . \
             -x "node_modules/*" \
+            -x "__tests__/*" \
             -x "package*.json" \
             -x "webpack.config.js" \
             -x "composer.lock" \
@@ -79,6 +80,7 @@ jobs:
           cd fair-schedule
           zip -r ../dist/fair-schedule.zip . \
             -x "node_modules/*" \
+            -x "__tests__/*" \
             -x "package*.json" \
             -x "webpack.config.js" \
             -x "composer.lock" \
@@ -90,6 +92,7 @@ jobs:
           cd fair-calendar-button
           zip -r ../dist/fair-calendar-button.zip . \
             -x "node_modules/*" \
+            -x "__tests__/*" \
             -x "assets/*" \
             -x "package*.json" \
             -x "webpack.config.js" \
