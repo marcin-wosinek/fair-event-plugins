@@ -1,4 +1,4 @@
-import { createEventData } from '../utils/calendar-handler.js';
+import { createEventData } from '../src/blocks/calendar-button/utils/calendar-handler.js';
 
 describe('calendar-handler', () => {
 	describe('createEventData', () => {

@@ -1,4 +1,4 @@
-import { RRuleManager, rruleManager } from '../utils/rruleManager.js';
+import { RRuleManager, rruleManager } from '../src/blocks/calendar-button/utils/rruleManager.js';
 import { parseISO } from 'date-fns';
 
 describe('RRuleManager', () => {
