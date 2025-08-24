@@ -22,6 +22,8 @@ import {
 	convertToDateOnly,
 	calculateDaysInclusive,
 	calculateEndDate,
+	validateDateTimeOrder,
+	getDateTimeValidationError,
 } from '../utils/dateTime.js';
 import { rruleManager } from '../utils/rruleManager.js';
 import RecurringEventsCalendar from './RecurringEventsCalendar.js';
@@ -82,6 +84,12 @@ export default function EditComponent({ attributes, setAttributes }) {
 	// Function to calculate current all-day event length in days
 	const calculateCurrentAllDayLength = (startDate, endDate) => {
 		return calculateDaysInclusive(startDate, endDate);
+	};
+
+	// Get validation status and error message
+	const dateTimeValidation = {
+		isValid: validateDateTimeOrder(start, end),
+		errorMessage: getDateTimeValidationError(start, end, allDay),
 	};
 
 	// Handle start time change while maintaining constant duration
@@ -326,6 +334,16 @@ export default function EditComponent({ attributes, setAttributes }) {
 						value={end}
 						onChange={(value) => setAttributes({ end: value })}
 						type={allDay ? 'date' : 'datetime-local'}
+						className={
+							!dateTimeValidation.isValid
+								? 'has-error'
+								: undefined
+						}
+						help={
+							!dateTimeValidation.isValid
+								? dateTimeValidation.errorMessage
+								: undefined
+						}
 					/>
 					<TextareaControl
 						label={__('Description', 'fair-calendar-button')}

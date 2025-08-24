@@ -10,6 +10,7 @@ import {
 	isValid,
 	differenceInMinutes,
 	differenceInDays,
+	isBefore,
 } from 'date-fns';
 
 /**
@@ -202,4 +203,57 @@ export const calculateEndDate = (startDate, days) => {
 	} catch (error) {
 		return '';
 	}
+};
+
+/**
+ * Validate that end date/time is not before start date/time
+ *
+ * @param {string} startDateTime Start date or datetime string
+ * @param {string} endDateTime   End date or datetime string
+ * @return {boolean} True if valid (end is after or equal to start), false if invalid
+ */
+export const validateDateTimeOrder = (startDateTime, endDateTime) => {
+	if (!startDateTime || !endDateTime) {
+		return true; // Consider empty dates as valid (no validation error)
+	}
+
+	try {
+		const start = parseISO(startDateTime);
+		const end = parseISO(endDateTime);
+
+		if (!isValid(start) || !isValid(end)) {
+			return true; // Invalid dates are handled elsewhere
+		}
+
+		// End should not be before start
+		return !isBefore(end, start);
+	} catch (error) {
+		return true; // Consider parsing errors as valid (handled elsewhere)
+	}
+};
+
+/**
+ * Get validation error message for invalid date/time order
+ *
+ * @param {string} startDateTime Start date or datetime string
+ * @param {string} endDateTime   End date or datetime string
+ * @param {boolean} isAllDay     Whether this is an all-day event
+ * @return {string|null} Error message if invalid, null if valid
+ */
+export const getDateTimeValidationError = (
+	startDateTime,
+	endDateTime,
+	isAllDay = false
+) => {
+	if (!startDateTime || !endDateTime) {
+		return null;
+	}
+
+	if (!validateDateTimeOrder(startDateTime, endDateTime)) {
+		return isAllDay
+			? 'End date cannot be before start date'
+			: 'End date/time cannot be before start date/time';
+	}
+
+	return null;
 };

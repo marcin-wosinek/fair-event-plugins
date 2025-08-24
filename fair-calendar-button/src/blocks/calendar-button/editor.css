@@ -133,3 +133,15 @@
 	text-align: center;
 	font-style: italic;
 }
+
+/* Validation Error Styles */
+.components-text-control__input.has-error,
+.components-text-control__input:invalid {
+	border-color: #dc3232 !important;
+	box-shadow: 0 0 0 1px #dc3232 !important;
+}
+
+.components-base-control.has-error .components-base-control__help {
+	color: #dc3232;
+	font-weight: 500;
+}
