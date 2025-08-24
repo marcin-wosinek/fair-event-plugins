@@ -58,13 +58,6 @@ registerBlockType('fair-registration/form', {
 				</InspectorControls>
 
 				<div className="fair-registration-form">
-					<div className="fair-registration-form-header">
-						<h3>
-							{name ||
-								__('Registration Form', 'fair-registration')}
-						</h3>
-					</div>
-
 					<InnerBlocks
 						allowedBlocks={ALLOWED_BLOCKS}
 						template={TEMPLATE}
