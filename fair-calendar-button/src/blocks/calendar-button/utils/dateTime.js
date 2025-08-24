@@ -4,10 +4,12 @@
 
 import {
 	addMinutes,
+	addDays,
 	parseISO,
 	format,
 	isValid,
 	differenceInMinutes,
+	differenceInDays,
 } from 'date-fns';
 
 /**
@@ -145,4 +147,59 @@ export const combineDateAndTime = (dateString, timeString) => {
 	}
 
 	return `${dateString}T${timeString}`;
+};
+
+/**
+ * Calculate duration between two date strings in days
+ *
+ * @param {string} startDate Start date string (YYYY-MM-DD)
+ * @param {string} endDate   End date string (YYYY-MM-DD)
+ * @return {number|null} Duration in days (inclusive), or null if invalid
+ */
+export const calculateDaysInclusive = (startDate, endDate) => {
+	if (!startDate || !endDate) {
+		return null;
+	}
+
+	try {
+		const start = parseISO(startDate);
+		const end = parseISO(endDate);
+
+		if (!isValid(start) || !isValid(end)) {
+			return null;
+		}
+
+		// Calculate inclusive days (add 1 because the end date is included)
+		return differenceInDays(end, start) + 1;
+	} catch (error) {
+		return null;
+	}
+};
+
+/**
+ * Calculate end date based on start date and number of days
+ *
+ * @param {string} startDate Start date string (YYYY-MM-DD)
+ * @param {number|string} days Number of days (inclusive)
+ * @return {string} End date string (YYYY-MM-DD), or empty string if invalid
+ */
+export const calculateEndDate = (startDate, days) => {
+	if (!startDate || !days || days === 'other') {
+		return '';
+	}
+
+	try {
+		const start = parseISO(startDate);
+
+		if (!isValid(start)) {
+			return '';
+		}
+
+		// For inclusive days, subtract 1 (e.g., 2 days means start + 1 day)
+		const endDate = addDays(start, parseInt(days) - 1);
+
+		return format(endDate, 'yyyy-MM-dd');
+	} catch (error) {
+		return '';
+	}
 };

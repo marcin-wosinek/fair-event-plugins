@@ -20,6 +20,8 @@ import {
 	calculateDuration,
 	calculateEndTime,
 	convertToDateOnly,
+	calculateDaysInclusive,
+	calculateEndDate,
 } from '../utils/dateTime.js';
 import { rruleManager } from '../utils/rruleManager.js';
 import RecurringEventsCalendar from './RecurringEventsCalendar.js';
@@ -47,7 +49,7 @@ export default function EditComponent({ attributes, setAttributes }) {
 	const [preservedStartTime, setPreservedStartTime] = useState('');
 	const [preservedEndTime, setPreservedEndTime] = useState('');
 
-	// Duration options for the dropdown
+	// Duration options for timed events (in minutes)
 	const durationOptions = [
 		{ label: __('Other', 'fair-calendar-button'), value: 'other' },
 		{ label: __('30 minutes', 'fair-calendar-button'), value: '30' },
@@ -64,31 +66,59 @@ export default function EditComponent({ attributes, setAttributes }) {
 		{ label: __('8 hours', 'fair-calendar-button'), value: '480' },
 	];
 
+	// Length options for all-day events (in days)
+	const allDayLengthOptions = [
+		{ label: __('Other', 'fair-calendar-button'), value: 'other' },
+		{ label: __('1 day', 'fair-calendar-button'), value: '1' },
+		{ label: __('2 days', 'fair-calendar-button'), value: '2' },
+		{ label: __('3 days', 'fair-calendar-button'), value: '3' },
+	];
+
 	// Function to calculate current event duration in minutes
 	const calculateCurrentDuration = (startTime, endTime) => {
 		return calculateDuration(startTime, endTime);
+	};
+
+	// Function to calculate current all-day event length in days
+	const calculateCurrentAllDayLength = (startDate, endDate) => {
+		return calculateDaysInclusive(startDate, endDate);
 	};
 
 	// Handle start time change while maintaining constant duration
 	const handleStartTimeChange = (newStartTime) => {
 		setAttributes({ start: newStartTime });
 
-		// Only adjust end time if we're not in all-day mode and both start and end times exist
-		if (!allDay && end && newStartTime) {
-			const currentDuration = calculateCurrentDuration(start, end);
-			if (currentDuration !== null && currentDuration > 0) {
-				const newEndTime = calculateEndTime(
-					newStartTime,
-					currentDuration.toString()
-				);
-				if (newEndTime) {
-					setAttributes({ end: newEndTime });
+		// Only adjust end time if both start and end times exist
+		if (end && newStartTime) {
+			if (allDay) {
+				// For all-day events, maintain the same number of days
+				const currentLength = calculateCurrentAllDayLength(start, end);
+				if (currentLength !== null && currentLength > 0) {
+					const newEndDate = calculateEndDate(
+						newStartTime,
+						currentLength.toString()
+					);
+					if (newEndDate) {
+						setAttributes({ end: newEndDate });
+					}
+				}
+			} else {
+				// For timed events, maintain the same duration in minutes
+				const currentDuration = calculateCurrentDuration(start, end);
+				if (currentDuration !== null && currentDuration > 0) {
+					const newEndTime = calculateEndTime(
+						newStartTime,
+						currentDuration.toString()
+					);
+					if (newEndTime) {
+						setAttributes({ end: newEndTime });
+					}
 				}
 			}
 		}
 	};
 
-	// Get current duration selection value for the dropdown
+	// Get current duration selection value for timed events
 	const getCurrentDurationSelection = () => {
 		if (!start || !end || allDay) {
 			return 'other';
@@ -104,6 +134,27 @@ export default function EditComponent({ attributes, setAttributes }) {
 			(option) =>
 				option.value !== 'other' &&
 				parseInt(option.value) === currentDuration
+		);
+
+		return matchingOption ? matchingOption.value : 'other';
+	};
+
+	// Get current length selection value for all-day events
+	const getCurrentAllDayLengthSelection = () => {
+		if (!start || !end || !allDay) {
+			return 'other';
+		}
+
+		const currentLength = calculateCurrentAllDayLength(start, end);
+		if (currentLength === null) {
+			return 'other';
+		}
+
+		// Check if current length matches any of the predefined options
+		const matchingOption = allDayLengthOptions.find(
+			(option) =>
+				option.value !== 'other' &&
+				parseInt(option.value) === currentLength
 		);
 
 		return matchingOption ? matchingOption.value : 'other';
@@ -173,7 +224,7 @@ export default function EditComponent({ attributes, setAttributes }) {
 		setAttributes({ allDay: newAllDayValue });
 	};
 
-	// Handle duration change
+	// Handle duration change for timed events
 	const handleDurationChange = (duration) => {
 		if (duration === 'other') {
 			// Don't change the end time, let user set it manually
@@ -183,6 +234,19 @@ export default function EditComponent({ attributes, setAttributes }) {
 		const newEndTime = calculateEndTime(start, duration);
 		if (newEndTime) {
 			setAttributes({ end: newEndTime });
+		}
+	};
+
+	// Handle length change for all-day events
+	const handleAllDayLengthChange = (length) => {
+		if (length === 'other') {
+			// Don't change the end date, let user set it manually
+			return;
+		}
+
+		const newEndDate = calculateEndDate(start, length);
+		if (newEndDate) {
+			setAttributes({ end: newEndDate });
 		}
 	};
 
@@ -232,11 +296,19 @@ export default function EditComponent({ attributes, setAttributes }) {
 						value={start}
 						onChange={
 							allDay
-								? (value) => setAttributes({ start: value })
+								? handleStartTimeChange
 								: handleStartTimeChange
 						}
 						type={allDay ? 'date' : 'datetime-local'}
 					/>
+					{allDay && (
+						<SelectControl
+							label={__('Event Length', 'fair-calendar-button')}
+							value={getCurrentAllDayLengthSelection()}
+							options={allDayLengthOptions}
+							onChange={handleAllDayLengthChange}
+						/>
+					)}
 					{!allDay && (
 						<SelectControl
 							label={__('Event Length', 'fair-calendar-button')}
