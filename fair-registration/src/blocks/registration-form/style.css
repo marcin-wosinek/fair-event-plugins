@@ -1,4 +1,5 @@
-.fair-registration-form {
+/* WordPress-compatible form styling */
+.wp-block-group.fair-registration-form {
 	max-width: 100%;
 	margin: 0 auto;
 }
@@ -25,12 +26,24 @@
 	border: 1px solid #ddd;
 }
 
-.fair-registration-form-actions {
-	margin-top: 20px;
-	text-align: center;
+.fair-registration-form-fields.wp-block-columns {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 1rem;
 }
 
-.fair-registration-submit-btn {
+.fair-registration-form-fields .wp-block-column {
+	flex: 1;
+	min-width: 250px;
+}
+
+.fair-registration-form-actions.wp-block-buttons {
+	margin-top: 20px;
+	text-align: center;
+	justify-content: center;
+}
+
+.wp-block-button .fair-registration-submit-btn {
 	background: #0073aa;
 	color: white;
 	border: none;
@@ -38,8 +51,9 @@
 	border-radius: 3px;
 	cursor: pointer;
 	font-size: 16px;
+	text-decoration: none;
 }
 
-.fair-registration-submit-btn:hover {
+.wp-block-button .fair-registration-submit-btn:hover {
 	background: #005a87;
 }
