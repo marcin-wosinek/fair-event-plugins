@@ -1,29 +1,42 @@
 <?php
+
+namespace FairRegistration\Core;
+
+defined( 'WPINC' ) || die;
+
 /**
- * Server-side rendering for Registration Form block
+ * Render callback for the registration form block
  *
  * @package FairRegistration
+ * @param  array $attributes Block attributes
+ * @param  string $content Block content
+ * @param  WP_Block $block Block instance
+ * @return string Rendered block HTML
  */
 
+// Extract attributes with defaults
 $form_name = $attributes['name'] ?? '';
 $form_id = $attributes['id'] ?? '';
-$inner_blocks = $content ?? '';
 
-$form_classes = 'wp-block-group fair-registration-form';
-if (!empty($form_id)) {
-	$form_classes .= ' fair-registration-form-' . esc_attr($form_id);
-}
+// Generate unique form ID if none provided
+$unique_form_id = !empty($form_id) ? $form_id : 'fair-registration-form-' . uniqid();
+
+// Prepare wrapper attributes
+$wrapper_attributes = get_block_wrapper_attributes([
+	'class' => 'fair-registration-form'
+]);
 ?>
 
-<div class="<?php echo esc_attr($form_classes); ?>">
+<div <?php echo wp_kses_data( $wrapper_attributes ); ?>>
 	<form 
-		id="<?php echo esc_attr($form_id ?: 'fair-registration-form-' . uniqid()); ?>" 
-		class="wp-block-group"
+		id="<?php echo esc_attr( $unique_form_id ); ?>" 
+		class="wp-block-group fair-registration-form-element"
 		method="post"
 		action=""
+		data-form-name="<?php echo esc_attr( $form_name ); ?>"
 	>
-    <?php echo $inner_blocks; ?>
+		<?php echo $content; ?>
 		
-		<?php wp_nonce_field('fair_registration_submit', 'fair_registration_nonce'); ?>
+		<?php wp_nonce_field( 'fair_registration_submit_' . $unique_form_id, 'fair_registration_nonce' ); ?>
 	</form>
 </div>

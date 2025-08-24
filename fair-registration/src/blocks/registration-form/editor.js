@@ -1,50 +1,56 @@
-import { registerBlockType } from "@wordpress/blocks";
+import { registerBlockType } from '@wordpress/blocks';
 import {
-  InnerBlocks,
-  InspectorControls,
-  useBlockProps,
-} from "@wordpress/block-editor";
-import { PanelBody, TextControl } from "@wordpress/components";
-import { __ } from "@wordpress/i18n";
-import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faClipboard } from "@fortawesome/free-solid-svg-icons";
+	InnerBlocks,
+	InspectorControls,
+	useBlockProps,
+} from '@wordpress/block-editor';
+import { PanelBody, TextControl } from '@wordpress/components';
+import { __ } from '@wordpress/i18n';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { faClipboard } from '@fortawesome/free-solid-svg-icons';
 
-const TEMPLATE = [["fair-registration/email-field", {}]];
+const TEMPLATE = [['fair-registration/email-field', {}]];
 
-registerBlockType("fair-registration/form", {
-  icon: <FontAwesomeIcon icon={faClipboard} />,
-  edit: ({ attributes, setAttributes }) => {
-    const { name, id } = attributes;
-    const blockProps = useBlockProps({
-      className: "fair-registration-form-editor",
-    });
+registerBlockType('fair-registration/form', {
+	icon: <FontAwesomeIcon icon={faClipboard} />,
+	edit: ({ attributes, setAttributes }) => {
+		const { name, id } = attributes;
+		const blockProps = useBlockProps({
+			className: 'fair-registration-form-editor',
+		});
 
-    return (
-      <div {...blockProps}>
-        <InspectorControls>
-          <PanelBody title={__("Form Settings", "fair-registration")}>
-            <TextControl
-              label={__("Form Name", "fair-registration")}
-              value={name}
-              onChange={(value) => setAttributes({ name: value })}
-              help={__("Internal name for the form", "fair-registration")}
-            />
-            <TextControl
-              label={__("Form ID", "fair-registration")}
-              value={id}
-              onChange={(value) => setAttributes({ id: value })}
-              help={__("Unique identifier for the form", "fair-registration")}
-            />
-          </PanelBody>
-        </InspectorControls>
+		return (
+			<div {...blockProps}>
+				<InspectorControls>
+					<PanelBody title={__('Form Settings', 'fair-registration')}>
+						<TextControl
+							label={__('Form Name', 'fair-registration')}
+							value={name}
+							onChange={(value) => setAttributes({ name: value })}
+							help={__(
+								'Internal name for the form',
+								'fair-registration'
+							)}
+						/>
+						<TextControl
+							label={__('Form ID', 'fair-registration')}
+							value={id}
+							onChange={(value) => setAttributes({ id: value })}
+							help={__(
+								'Unique identifier for the form',
+								'fair-registration'
+							)}
+						/>
+					</PanelBody>
+				</InspectorControls>
 
-        <div className="fair-registration-form">
-          <InnerBlocks template={TEMPLATE} templateLock={false} />
-        </div>
-      </div>
-    );
-  },
-  save: () => {
-    return <InnerBlocks.Content />;
-  },
+				<div className="fair-registration-form">
+					<InnerBlocks template={TEMPLATE} templateLock={false} />
+				</div>
+			</div>
+		);
+	},
+	save: () => {
+		return <InnerBlocks.Content />;
+	},
 });
