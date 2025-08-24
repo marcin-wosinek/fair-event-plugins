@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.2.0
+
+### Minor Changes
+
+- Fix multiple UX issues in block
+
 ## 1.1.1
 
 ### Patch Changes

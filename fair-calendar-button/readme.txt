@@ -79,6 +79,12 @@ Yes, the plugin doesn't collect, store, or transmit any personal data. Event det
 
 == Changelog ==
 
+## 1.2.0
+* Fix multiple UX issues in block
+
+## 1.1.1
+* Update dependencies to the newest version
+
 = 1.0.0 =
 * Initial release
 * Support for Google Calendar, Outlook, Yahoo Calendar, and ICS downloads
