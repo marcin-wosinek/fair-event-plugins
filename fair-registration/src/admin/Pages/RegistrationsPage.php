@@ -111,9 +111,6 @@ class RegistrationsPage {
 								<th scope="col" class="manage-column column-date">
 									<?php echo esc_html__( 'Date', 'fair-registration' ); ?>
 								</th>
-								<th scope="col" class="manage-column column-status">
-									<?php echo esc_html__( 'Status', 'fair-registration' ); ?>
-								</th>
 								<th scope="col" class="manage-column column-actions">
 									<?php echo esc_html__( 'Actions', 'fair-registration' ); ?>
 								</th>
@@ -143,11 +140,6 @@ class RegistrationsPage {
 									<td class="column-date">
 										<?php echo esc_html( $registration['date'] ); ?>
 									</td>
-									<td class="column-status">
-										<span class="status-<?php echo esc_attr( $registration['status'] ); ?>">
-											<?php echo esc_html( ucfirst( $registration['status'] ) ); ?>
-										</span>
-									</td>
 									<td class="column-actions">
 										<button type="button" class="button button-small" onclick="viewRegistrationDetails(<?php echo esc_attr( $registration['id'] ); ?>)">
 											<?php echo esc_html__( 'View Details', 'fair-registration' ); ?>
@@ -168,11 +160,6 @@ class RegistrationsPage {
 		}
 		</script>
 
-		<style>
-		.status-pending { color: #f56e28; }
-		.status-confirmed { color: #00a32a; }
-		.status-cancelled { color: #d63638; }
-		</style>
 		<?php
 	}
 
@@ -201,8 +188,7 @@ class RegistrationsPage {
 				'name' => $reg_data['name'] ?? 'N/A',
 				'email' => $reg_data['email'] ?? 'N/A',
 				'form_id' => $registration['form_id'],
-				'date' => $registration['created'],
-				'status' => $registration['status'] ?? 'pending'
+				'date' => $registration['created']
 			);
 		}
 

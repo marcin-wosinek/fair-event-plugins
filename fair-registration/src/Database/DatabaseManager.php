@@ -184,16 +184,6 @@ class DatabaseManager {
 		// Total registrations
 		$stats['total'] = $this->count_total_registrations();
 		
-		// Registrations by status
-		$sql = "SELECT status, COUNT(*) as count 
-				FROM {$table_name} 
-				GROUP BY status";
-		$status_counts = $wpdb->get_results( $sql, ARRAY_A );
-		$stats['by_status'] = array();
-		foreach ( $status_counts as $row ) {
-			$stats['by_status'][ $row['status'] ] = $row['count'];
-		}
-		
 		// Recent registrations (last 30 days)
 		$sql = $wpdb->prepare(
 			"SELECT COUNT(*) as count 

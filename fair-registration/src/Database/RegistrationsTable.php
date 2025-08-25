@@ -26,7 +26,7 @@ class RegistrationsTable {
 	 *
 	 * @var string
 	 */
-	private $db_version = '1.0.1';
+	private $db_version = '1.0.2';
 
 	/**
 	 * Constructor
@@ -57,20 +57,16 @@ class RegistrationsTable {
 
 		$sql = "CREATE TABLE {$this->table_name} (
 			id bigint(20) NOT NULL AUTO_INCREMENT,
-			time datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
 			user_id bigint(20) NULL DEFAULT NULL,
 			created datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
 			modified datetime NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
 			url text NOT NULL,
 			form_id bigint(20) NOT NULL,
 			registration_data longtext NOT NULL,
-			status varchar(20) NOT NULL DEFAULT 'pending',
 			PRIMARY KEY (id),
 			KEY form_id (form_id),
 			KEY user_id (user_id),
-			KEY status (status),
-			KEY created (created),
-			KEY time (time)
+			KEY created (created)
 		) $charset_collate;";
 
 		require_once( ABSPATH . 'wp-admin/includes/upgrade.php' );
@@ -111,14 +107,12 @@ class RegistrationsTable {
 		global $wpdb;
 
 		$defaults = array(
-			'time' => current_time( 'mysql' ),
 			'user_id' => get_current_user_id() ?: null,
 			'created' => current_time( 'mysql' ),
 			'modified' => current_time( 'mysql' ),
 			'url' => '',
 			'form_id' => 0,
-			'registration_data' => '',
-			'status' => 'pending'
+			'registration_data' => ''
 		);
 
 		$data = wp_parse_args( $data, $defaults );
@@ -132,14 +126,12 @@ class RegistrationsTable {
 			$this->table_name,
 			$data,
 			array(
-				'%s', // time
 				'%d', // user_id
 				'%s', // created
 				'%s', // modified
 				'%s', // url
 				'%d', // form_id
-				'%s', // registration_data
-				'%s'  // status
+				'%s'  // registration_data
 			)
 		);
 
