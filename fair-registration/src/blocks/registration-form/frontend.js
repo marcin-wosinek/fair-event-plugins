@@ -58,13 +58,6 @@ import apiFetch from '@wordpress/api-fetch';
 					});
 					break;
 
-				case 'cancel':
-					button.addEventListener('click', function (e) {
-						e.preventDefault();
-						cancelForm(form);
-					});
-					break;
-
 				default:
 					// Custom buttons - no default behavior
 					break;
@@ -184,22 +177,6 @@ import apiFetch from '@wordpress/api-fetch';
 	function resetForm(form) {
 		form.reset();
 		showInfo('Form has been reset');
-	}
-
-	/**
-	 * Cancel form (could redirect or just reset)
-	 * @param {HTMLElement} form The form element
-	 */
-	function cancelForm(form) {
-		if (
-			confirm(
-				'Are you sure you want to cancel? All entered data will be lost.'
-			)
-		) {
-			form.reset();
-			// Could redirect to another page if needed
-			// window.location.href = '/';
-		}
 	}
 
 	/**

@@ -119,13 +119,6 @@ const withRegistrationButtonCustomization = createHigherOrderComponent(
 									},
 									{
 										label: __(
-											'Cancel',
-											'fair-registration'
-										),
-										value: 'cancel',
-									},
-									{
-										label: __(
 											'Custom',
 											'fair-registration'
 										),
