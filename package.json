@@ -17,7 +17,7 @@
 	"scripts": {
 		"test": "npm run test --workspaces",
 		"build": "npm run build --workspaces",
-		"cleanup": "npm run cleanup --workspaces",
+		"clean": "npm run clean --workspaces",
 		"composer": "npm run composer --workspaces",
 		"start": "npm run start --workspace=fair-schedule & npm run start --workspace=fair-payment & npm run start --workspace=fair-calendar-button & npm run start --workspace=fair-registration & wait",
 		"format": "npm-run-all format:*",

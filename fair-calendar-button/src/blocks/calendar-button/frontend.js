@@ -4,7 +4,7 @@ import {
 } from './utils/calendar-handler.js';
 
 // Import styles
-import './view.css';
+import './frontend.css';
 
 document.addEventListener('DOMContentLoaded', function () {
 	const calendarButtons = document.querySelectorAll(

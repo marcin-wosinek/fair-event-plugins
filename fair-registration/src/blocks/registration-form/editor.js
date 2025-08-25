@@ -1,3 +1,5 @@
+import './editor.css';
+
 import { registerBlockType } from '@wordpress/blocks';
 import {
 	InnerBlocks,

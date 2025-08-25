@@ -1,3 +1,5 @@
+import './editor.css';
+
 import { registerBlockType } from '@wordpress/blocks';
 import { InspectorControls, useBlockProps } from '@wordpress/block-editor';
 import {

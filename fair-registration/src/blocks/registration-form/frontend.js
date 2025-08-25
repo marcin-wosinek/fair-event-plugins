@@ -1,3 +1,5 @@
+import './frontend.css';
+
 // Frontend functionality for registration form
 document.addEventListener('DOMContentLoaded', function () {
 	const forms = document.querySelectorAll('.fair-registration-form-element');
