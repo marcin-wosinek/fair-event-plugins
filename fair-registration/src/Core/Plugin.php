@@ -66,5 +66,10 @@ class Plugin {
 	 */
 	private function load_hooks() {
 		new \FairRegistration\Hooks\BlockHooks();
+		
+		// Initialize admin hooks
+		if ( is_admin() ) {
+			new \FairRegistration\Hooks\AdminHooks();
+		}
 	}
 }
