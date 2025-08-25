@@ -13,9 +13,8 @@ $options = $attributes['options'] ?? [
 	['label' => 'Option 2', 'value' => 'option2']
 ];
 $placeholder = $attributes['placeholder'] ?? 'Choose an option';
-$form_id = $block->context['fair-registration/formId'] ?? '';
-
-$field_name = $form_id ? $form_id . '_' . $field_id : $field_id;
+// Use field ID directly as field name
+$field_name = $field_id;
 ?>
 
 <div class="wp-block-column fair-registration-field fair-registration-select-field">

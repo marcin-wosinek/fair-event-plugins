@@ -10,9 +10,8 @@ $placeholder = $attributes['placeholder'] ?? 'Enter text';
 $required = $attributes['required'] ?? false;
 $field_id = $attributes['fieldId'] ?? 'text_' . uniqid();
 $max_length = $attributes['maxLength'] ?? 255;
-$form_id = $block->context['fair-registration/formId'] ?? '';
-
-$field_name = $form_id ? $form_id . '_' . $field_id : $field_id;
+// Use field ID directly as field name
+$field_name = $field_id;
 ?>
 
 <div class="wp-block-column fair-registration-field fair-registration-short-text-field">

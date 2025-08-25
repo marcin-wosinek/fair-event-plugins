@@ -20,9 +20,8 @@ $placeholder = $attributes['placeholder'] ?? 'Enter your email';
 $required = $attributes['required'] ?? true;
 $field_id = $attributes['fieldId'] ?? 'email_' . uniqid();
 
-// Get form context
-$form_id = $block->context['fair-registration/formId'] ?? '';
-$field_name = $form_id ? $form_id . '_' . $field_id : $field_id;
+// Use field ID directly as field name
+$field_name = $field_id;
 
 // Prepare wrapper attributes
 $wrapper_attributes = get_block_wrapper_attributes([

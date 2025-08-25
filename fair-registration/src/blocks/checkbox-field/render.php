@@ -10,9 +10,8 @@ $required = $attributes['required'] ?? false;
 $field_id = $attributes['fieldId'] ?? 'checkbox_' . uniqid();
 $checked = $attributes['checked'] ?? false;
 $value = $attributes['value'] ?? '1';
-$form_id = $block->context['fair-registration/formId'] ?? '';
-
-$field_name = $form_id ? $form_id . '_' . $field_id : $field_id;
+// Use field ID directly as field name
+$field_name = $field_id;
 ?>
 
 <div class="wp-block-column fair-registration-field fair-registration-checkbox-field">

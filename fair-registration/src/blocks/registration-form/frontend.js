@@ -98,8 +98,10 @@ import apiFetch from '@wordpress/api-fetch';
 			getButtonTextElement(button).textContent = 'Submitting...';
 		}
 
-		// Basic form validation
-		const requiredFields = form.querySelectorAll('[required]');
+		// Basic form validation - only validate fair-registration fields
+		const requiredFields = form.querySelectorAll(
+			'.fair-registration-field-input[required]'
+		);
 		let isValid = true;
 
 		requiredFields.forEach(function (field) {
@@ -120,19 +122,25 @@ import apiFetch from '@wordpress/api-fetch';
 			return;
 		}
 
-		// Get form data
-		const formData = new FormData(form);
+		// Get form data from fair-registration fields only
+		const registrationFields = form.querySelectorAll(
+			'.fair-registration-field-input'
+		);
 		const registrationData = [];
 
-		// Convert FormData to API format
-		for (const [name, value] of formData.entries()) {
-			if (name !== 'fair_registration_nonce') {
+		// Collect data from fair-registration fields
+		registrationFields.forEach(function (field) {
+			const fieldName =
+				field.getAttribute('name') || field.getAttribute('id') || '';
+			const fieldValue = field.value || '';
+
+			if (fieldName) {
 				registrationData.push({
-					name: name,
-					value: value,
+					name: fieldName,
+					value: fieldValue,
 				});
 			}
-		}
+		});
 
 		// Get form ID and post URL from form's data attributes
 		const formId = form.getAttribute('data-form-id');
