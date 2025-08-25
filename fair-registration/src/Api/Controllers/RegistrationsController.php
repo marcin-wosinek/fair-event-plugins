@@ -100,17 +100,17 @@ class RegistrationsController extends WP_REST_Controller {
 
 		// Prepare registration data
 		$registration_data = array(
-			'form_id'           => (int) $request->get_param( 'form_id' ),
+			'form_id'           => $request->get_param( 'form_id' ),
 			'url'               => sanitize_url( $request->get_param( 'url' ) ),
 			'user_id'           => get_current_user_id() ?: null,
 			'registration_data' => $request->get_param( 'registration_data' ),
 		);
 
 		// Validate form exists
-		if ( ! $this->form_exists( $registration_data['form_id'] ) ) {
+		if ( ! $this->form_exists( $registration_data['url'], $registration_data['form_id'] ) ) {
 			return new WP_Error(
 				'invalid_form_id',
-				__( 'The specified form ID does not exist or does not contain a registration form.', 'fair-registration' ),
+				__( 'The specified form ID does not exist on the provided URL or the page does not contain a registration form.', 'fair-registration' ),
 				array( 'status' => 400 )
 			);
 		}
@@ -261,9 +261,8 @@ class RegistrationsController extends WP_REST_Controller {
 		return array(
 			'form_id' => array(
 				'description' => __( 'The ID of the post/page containing the registration form.', 'fair-registration' ),
-				'type'        => 'integer',
+				'type'        => 'string',
 				'required'    => true,
-				'minimum'     => 1,
 			),
 			'url' => array(
 				'description' => __( 'The URL where the registration was submitted.', 'fair-registration' ),
@@ -322,19 +321,61 @@ class RegistrationsController extends WP_REST_Controller {
 	}
 
 	/**
-	 * Check if a form exists and contains registration blocks
+	 * Check if a form exists on the provided URL with the specified form ID
 	 *
-	 * @param int $form_id Post/page ID.
-	 * @return bool True if form exists and contains registration blocks.
+	 * @param string $url The URL where the form should exist.
+	 * @param string $form_id The form ID to validate.
+	 * @return bool True if form exists on the URL with the specified ID.
 	 */
-	private function form_exists( $form_id ) {
-		$post = get_post( $form_id );
+	private function form_exists( $url, $form_id ) {
+		// Get post ID from URL
+		$post_id = url_to_postid( $url );
+		
+		if ( ! $post_id ) {
+			return false;
+		}
+
+		$post = get_post( $post_id );
 
 		if ( ! $post || $post->post_status !== 'publish' ) {
 			return false;
 		}
 
 		// Check if post contains registration form blocks
-		return has_block( 'fair-registration/form', $post );
+		if ( ! has_block( 'fair-registration/form', $post ) ) {
+			return false;
+		}
+
+		// Parse blocks to find the specific form with the provided ID
+		$blocks = parse_blocks( $post->post_content );
+		return $this->find_form_with_id( $blocks, $form_id );
+	}
+
+	/**
+	 * Recursively search for a registration form with the specified ID
+	 *
+	 * @param array  $blocks The blocks to search through.
+	 * @param string $form_id The form ID to find.
+	 * @return bool True if form with ID is found.
+	 */
+	private function find_form_with_id( $blocks, $form_id ) {
+		foreach ( $blocks as $block ) {
+			// Check if this is a registration form block with matching ID
+			if ( $block['blockName'] === 'fair-registration/form' ) {
+				$block_form_id = $block['attrs']['id'] ?? '';
+				if ( $block_form_id === $form_id ) {
+					return true;
+				}
+			}
+
+			// Recursively check inner blocks
+			if ( ! empty( $block['innerBlocks'] ) ) {
+				if ( $this->find_form_with_id( $block['innerBlocks'], $form_id ) ) {
+					return true;
+				}
+			}
+		}
+
+		return false;
 	}
 }

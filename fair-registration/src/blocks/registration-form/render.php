@@ -21,6 +21,9 @@ $form_id = $attributes['id'] ?? '';
 // Generate unique form ID if none provided
 $unique_form_id = !empty($form_id) ? $form_id : 'fair-registration-form-' . uniqid();
 
+// Get the current post's URL
+$post_url = get_permalink();
+
 // Prepare wrapper attributes
 $wrapper_attributes = get_block_wrapper_attributes([
 	'class' => 'fair-registration-form'
@@ -34,6 +37,8 @@ $wrapper_attributes = get_block_wrapper_attributes([
 		method="post"
 		action=""
 		data-form-name="<?php echo esc_attr( $form_name ); ?>"
+		data-form-id="<?php echo esc_attr( $form_id ); ?>"
+		data-post-url="<?php echo esc_url( $post_url ); ?>"
 	>
 		<?php echo $content; ?>
 		

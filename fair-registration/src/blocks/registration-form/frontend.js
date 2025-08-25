@@ -123,25 +123,18 @@ import apiFetch from '@wordpress/api-fetch';
 			}
 		}
 
-		// Get form ID from form's data attribute or from URL
-		const formId = form.getAttribute('data-form-id') || getPostId();
-
-		if (!formId) {
-			showError('Unable to determine form ID');
-			if (button) {
-				button.disabled = false;
-				button.textContent = 'Submit';
-			}
-			return;
-		}
+		// Get form ID and post URL from form's data attributes
+		const formId = form.getAttribute('data-form-id');
+		const postUrl =
+			form.getAttribute('data-post-url') || window.location.href;
 
 		// Submit to API using WordPress apiFetch
 		apiFetch({
 			path: 'fair-registration/v1/registrations',
 			method: 'POST',
 			data: {
-				form_id: parseInt(formId),
-				url: window.location.href,
+				form_id: formId,
+				url: postUrl,
 				registration_data: registrationData,
 			},
 		})
