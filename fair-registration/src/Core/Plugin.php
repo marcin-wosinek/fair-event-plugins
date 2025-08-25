@@ -7,6 +7,8 @@
 
 namespace FairRegistration\Core;
 
+use FairRegistration\Database\DatabaseManager;
+
 defined( 'WPINC' ) || die;
 
 /**
@@ -19,6 +21,13 @@ class Plugin {
 	 * @var Plugin|null
 	 */
 	private static $instance = null;
+
+	/**
+	 * Database manager instance
+	 *
+	 * @var DatabaseManager
+	 */
+	private $db_manager;
 
 	/**
 	 * Get singleton instance of the plugin
@@ -56,7 +65,18 @@ class Plugin {
 	 * @return void
 	 */
 	public function init() {
+		$this->init_database();
 		$this->load_hooks();
+	}
+
+	/**
+	 * Initialize database manager
+	 *
+	 * @return void
+	 */
+	private function init_database() {
+		$this->db_manager = new DatabaseManager();
+		$this->db_manager->init();
 	}
 
 	/**
@@ -71,5 +91,14 @@ class Plugin {
 		if ( is_admin() ) {
 			new \FairRegistration\Hooks\AdminHooks();
 		}
+	}
+
+	/**
+	 * Get database manager instance
+	 *
+	 * @return DatabaseManager
+	 */
+	public function get_db_manager() {
+		return $this->db_manager;
 	}
 }

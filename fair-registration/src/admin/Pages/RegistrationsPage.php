@@ -7,6 +7,8 @@
 
 namespace FairRegistration\Admin\Pages;
 
+use FairRegistration\Core\Plugin;
+
 defined( 'WPINC' ) || die;
 
 /**
@@ -181,42 +183,30 @@ class RegistrationsPage {
 	 * @return array Array of registration data
 	 */
 	private function get_registrations( $form_id = null ) {
-		// Mock data for now - replace with actual database queries later
-		$mock_registrations = array(
-			array(
-				'id' => 1,
-				'name' => 'John Doe',
-				'email' => 'john.doe@example.com',
-				'form_id' => 123,
-				'date' => '2024-01-15 10:30:00',
-				'status' => 'confirmed'
-			),
-			array(
-				'id' => 2,
-				'name' => 'Jane Smith',
-				'email' => 'jane.smith@example.com',
-				'form_id' => 123,
-				'date' => '2024-01-14 14:22:00',
-				'status' => 'pending'
-			),
-			array(
-				'id' => 3,
-				'name' => 'Bob Wilson',
-				'email' => 'bob.wilson@example.com',
-				'form_id' => 456,
-				'date' => '2024-01-13 09:15:00',
-				'status' => 'confirmed'
-			)
-		);
-
-		// Filter by form_id if provided
+		$db_manager = Plugin::instance()->get_db_manager();
+		
 		if ( $form_id ) {
-			$mock_registrations = array_filter( $mock_registrations, function( $registration ) use ( $form_id ) {
-				return $registration['form_id'] == $form_id;
-			});
+			$registrations = $db_manager->get_registrations_by_form( $form_id );
+		} else {
+			$registrations = $db_manager->get_all_registrations();
 		}
 
-		return $mock_registrations;
+		// Format the data for display
+		$formatted_registrations = array();
+		foreach ( $registrations as $registration ) {
+			$reg_data = $registration['registration_data'] ?? array();
+			
+			$formatted_registrations[] = array(
+				'id' => $registration['id'],
+				'name' => $reg_data['name'] ?? 'N/A',
+				'email' => $reg_data['email'] ?? 'N/A',
+				'form_id' => $registration['form_id'],
+				'date' => $registration['created'],
+				'status' => $registration['status'] ?? 'pending'
+			);
+		}
+
+		return $formatted_registrations;
 	}
 
 	/**
@@ -225,12 +215,17 @@ class RegistrationsPage {
 	 * @return array Array of post objects
 	 */
 	private function get_forms_with_registrations() {
-		// For now, return mock data - implement actual query later
-		$mock_forms = array(
-			(object) array( 'ID' => 123 ),
-			(object) array( 'ID' => 456 )
-		);
+		$db_manager = Plugin::instance()->get_db_manager();
+		$forms_data = $db_manager->get_forms_with_registrations();
+		
+		$forms = array();
+		foreach ( $forms_data as $form_data ) {
+			$post = get_post( $form_data['form_id'] );
+			if ( $post ) {
+				$forms[] = $post;
+			}
+		}
 
-		return $mock_forms;
+		return $forms;
 	}
 }

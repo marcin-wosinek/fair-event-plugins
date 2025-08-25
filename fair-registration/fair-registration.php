@@ -33,8 +33,21 @@
 namespace FairRegistration;
 
 defined( 'WPINC' ) || die;
+
+// Define plugin constants
+define( 'FAIR_REGISTRATION_VERSION', '1.0.0' );
+define( 'FAIR_REGISTRATION_PLUGIN_FILE', __FILE__ );
+define( 'FAIR_REGISTRATION_PLUGIN_DIR', plugin_dir_path( __FILE__ ) );
+define( 'FAIR_REGISTRATION_PLUGIN_URL', plugin_dir_url( __FILE__ ) );
+
 require_once __DIR__ . '/vendor/autoload.php';
 
 use FairRegistration\Core\Plugin;
+use FairRegistration\Hooks\ActivationHooks;
 
+// Register activation/deactivation hooks
+$activation_hooks = new ActivationHooks();
+$activation_hooks->register_hooks( __FILE__ );
+
+// Initialize plugin
 Plugin::instance()->init();

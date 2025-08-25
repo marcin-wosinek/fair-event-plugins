@@ -7,6 +7,8 @@
 
 namespace FairRegistration\Admin\Pages;
 
+use FairRegistration\Core\Plugin;
+
 defined( 'WPINC' ) || die;
 
 /**
@@ -169,8 +171,7 @@ class FormsListPage {
 	 * @return int Registration count
 	 */
 	private function get_registration_count( $form_id ) {
-		// For now return 0, will implement actual counting later
-		// This would typically query a custom table or post meta
-		return 0;
+		$db_manager = Plugin::instance()->get_db_manager();
+		return $db_manager->count_registrations_by_form( $form_id );
 	}
 }
