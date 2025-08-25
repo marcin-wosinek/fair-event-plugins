@@ -9,7 +9,16 @@ import { __ } from '@wordpress/i18n';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faClipboard } from '@fortawesome/free-solid-svg-icons';
 
-const TEMPLATE = [['fair-registration/email-field', {}]];
+const TEMPLATE = [
+	['core/heading', { level: 2, content: 'Registration' }],
+	['fair-registration/short-text-field', { label: 'Name' }],
+	['fair-registration/email-field', {}],
+	[
+		'core/buttons',
+		{},
+		[['core/button', { text: 'Submit', className: 'registration-submit' }]],
+	],
+];
 
 registerBlockType('fair-registration/form', {
 	icon: <FontAwesomeIcon icon={faClipboard} />,
