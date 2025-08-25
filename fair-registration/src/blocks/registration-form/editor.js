@@ -1,4 +1,5 @@
 import './editor.css';
+import './filters/buttonFilter.js';
 
 import { registerBlockType } from '@wordpress/blocks';
 import {
