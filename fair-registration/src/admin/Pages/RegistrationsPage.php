@@ -183,10 +183,26 @@ class RegistrationsPage {
 		foreach ( $registrations as $registration ) {
 			$reg_data = $registration['registration_data'] ?? array();
 			
+			// Extract name and email from field array format
+			$name = 'N/A';
+			$email = 'N/A';
+			
+			if ( is_array( $reg_data ) ) {
+				foreach ( $reg_data as $field ) {
+					if ( is_array( $field ) && isset( $field['name'], $field['value'] ) ) {
+						if ( $field['name'] === 'name' ) {
+							$name = $field['value'];
+						} elseif ( $field['name'] === 'email' ) {
+							$email = $field['value'];
+						}
+					}
+				}
+			}
+			
 			$formatted_registrations[] = array(
 				'id' => $registration['id'],
-				'name' => $reg_data['name'] ?? 'N/A',
-				'email' => $reg_data['email'] ?? 'N/A',
+				'name' => $name,
+				'email' => $email,
 				'form_id' => $registration['form_id'],
 				'date' => $registration['created']
 			);

@@ -14,12 +14,24 @@ Creates a new registration entry.
 {
   "form_id": 123,
   "url": "https://example.com/event-registration",
-  "registration_data": {
-    "name": "John Doe",
-    "email": "john.doe@example.com",
-    "phone": "+1234567890",
-    "custom_field": "custom_value"
-  }
+  "registration_data": [
+    {
+      "name": "name",
+      "value": "John Doe"
+    },
+    {
+      "name": "email",
+      "value": "john.doe@example.com"
+    },
+    {
+      "name": "phone",
+      "value": "+1234567890"
+    },
+    {
+      "name": "custom_field",
+      "value": "custom_value"
+    }
+  ]
 }
 ```
 
@@ -30,12 +42,24 @@ Creates a new registration entry.
   "form_id": 123,
   "user_id": null,
   "url": "https://example.com/event-registration",
-  "registration_data": {
-    "name": "John Doe",
-    "email": "john.doe@example.com",
-    "phone": "+1234567890",
-    "custom_field": "custom_value"
-  },
+  "registration_data": [
+    {
+      "name": "name",
+      "value": "John Doe"
+    },
+    {
+      "name": "email",
+      "value": "john.doe@example.com"
+    },
+    {
+      "name": "phone",
+      "value": "+1234567890"
+    },
+    {
+      "name": "custom_field",
+      "value": "custom_value"
+    }
+  ],
   "created": "2024-01-15 10:30:00",
   "modified": "2024-01-15 10:30:00"
 }
@@ -89,12 +113,27 @@ async function submitRegistration(formId, formData) {
   }
 }
 
+// Helper function to convert form data to API format
+function formatFormData(formElement) {
+  const formData = new FormData(formElement);
+  const registrationData = [];
+  
+  for (const [name, value] of formData.entries()) {
+    registrationData.push({
+      name: name,
+      value: value
+    });
+  }
+  
+  return registrationData;
+}
+
 // Example usage
-const registrationData = {
-  name: 'Jane Smith',
-  email: 'jane.smith@example.com',
-  phone: '+1987654321'
-};
+const registrationData = [
+  { name: 'name', value: 'Jane Smith' },
+  { name: 'email', value: 'jane.smith@example.com' },
+  { name: 'phone', value: '+1987654321' }
+];
 
 submitRegistration(123, registrationData)
   .then(registration => {
@@ -114,10 +153,16 @@ curl -X POST "https://yoursite.com/wp-json/fair-registration/v1/registrations" \
   -d '{
     "form_id": 123,
     "url": "https://yoursite.com/event-registration",
-    "registration_data": {
-      "name": "John Doe",
-      "email": "john.doe@example.com"
-    }
+    "registration_data": [
+      {
+        "name": "name",
+        "value": "John Doe"
+      },
+      {
+        "name": "email",
+        "value": "john.doe@example.com"
+      }
+    ]
   }'
 ```
 

@@ -272,18 +272,22 @@ class RegistrationsController extends WP_REST_Controller {
 				'required'    => true,
 			),
 			'registration_data' => array(
-				'description' => __( 'The registration form data.', 'fair-registration' ),
-				'type'        => 'object',
+				'description' => __( 'The registration form data as an array of field objects.', 'fair-registration' ),
+				'type'        => 'array',
 				'required'    => true,
-				'properties'  => array(
-					'name' => array(
-						'type'        => 'string',
-						'description' => __( 'Registrant name', 'fair-registration' ),
-					),
-					'email' => array(
-						'type'        => 'string',
-						'format'      => 'email',
-						'description' => __( 'Registrant email', 'fair-registration' ),
+				'items'       => array(
+					'type'       => 'object',
+					'properties' => array(
+						'name' => array(
+							'type'        => 'string',
+							'description' => __( 'Field name/identifier', 'fair-registration' ),
+							'required'    => true,
+						),
+						'value' => array(
+							'type'        => 'string',
+							'description' => __( 'Field value', 'fair-registration' ),
+							'required'    => true,
+						),
 					),
 				),
 			),
