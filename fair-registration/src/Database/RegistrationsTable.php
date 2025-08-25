@@ -26,7 +26,7 @@ class RegistrationsTable {
 	 *
 	 * @var string
 	 */
-	private $db_version = '1.0.0';
+	private $db_version = '1.0.1';
 
 	/**
 	 * Constructor
@@ -65,8 +65,6 @@ class RegistrationsTable {
 			form_id bigint(20) NOT NULL,
 			registration_data longtext NOT NULL,
 			status varchar(20) NOT NULL DEFAULT 'pending',
-			user_agent text NULL,
-			ip_address varchar(45) NULL,
 			PRIMARY KEY (id),
 			KEY form_id (form_id),
 			KEY user_id (user_id),
@@ -120,9 +118,7 @@ class RegistrationsTable {
 			'url' => '',
 			'form_id' => 0,
 			'registration_data' => '',
-			'status' => 'pending',
-			'user_agent' => $_SERVER['HTTP_USER_AGENT'] ?? '',
-			'ip_address' => $this->get_client_ip()
+			'status' => 'pending'
 		);
 
 		$data = wp_parse_args( $data, $defaults );
@@ -143,9 +139,7 @@ class RegistrationsTable {
 				'%s', // url
 				'%d', // form_id
 				'%s', // registration_data
-				'%s', // status
-				'%s', // user_agent
-				'%s'  // ip_address
+				'%s'  // status
 			)
 		);
 
@@ -315,27 +309,4 @@ class RegistrationsTable {
 		return (int) $wpdb->get_var( $sql );
 	}
 
-	/**
-	 * Get client IP address
-	 *
-	 * @return string IP address
-	 */
-	private function get_client_ip() {
-		$ip_keys = array( 'HTTP_CLIENT_IP', 'HTTP_X_FORWARDED_FOR', 'REMOTE_ADDR' );
-		
-		foreach ( $ip_keys as $key ) {
-			if ( array_key_exists( $key, $_SERVER ) === true ) {
-				$ip = $_SERVER[ $key ];
-				if ( strpos( $ip, ',' ) !== false ) {
-					$ip = explode( ',', $ip )[0];
-				}
-				$ip = trim( $ip );
-				if ( filter_var( $ip, FILTER_VALIDATE_IP, FILTER_FLAG_NO_PRIV_RANGE | FILTER_FLAG_NO_RES_RANGE ) ) {
-					return $ip;
-				}
-			}
-		}
-
-		return $_SERVER['REMOTE_ADDR'] ?? '0.0.0.0';
-	}
 }
