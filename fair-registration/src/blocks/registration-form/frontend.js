@@ -77,6 +77,17 @@ import apiFetch from '@wordpress/api-fetch';
 	}
 
 	/**
+	 * Get the text element for a button (handles WordPress core/button structure)
+	 * @param {HTMLElement} button The button element
+	 * @returns {HTMLElement} The element to modify text content on
+	 */
+	function getButtonTextElement(button) {
+		// WordPress core/button blocks have an <a> tag inside the button wrapper
+		const buttonLink = button.querySelector('a');
+		return buttonLink || button;
+	}
+
+	/**
 	 * Submit a registration form
 	 * @param {HTMLElement} form The form element
 	 * @param {HTMLElement} button The button that triggered submission
@@ -84,7 +95,7 @@ import apiFetch from '@wordpress/api-fetch';
 	function submitForm(form, button = null) {
 		if (button) {
 			button.disabled = true;
-			button.textContent = 'Submitting...';
+			getButtonTextElement(button).textContent = 'Submitting...';
 		}
 
 		// Basic form validation
@@ -104,7 +115,7 @@ import apiFetch from '@wordpress/api-fetch';
 			showError('Please fill in all required fields');
 			if (button) {
 				button.disabled = false;
-				button.textContent = 'Submit';
+				getButtonTextElement(button).textContent = 'Submit';
 			}
 			return;
 		}
@@ -158,7 +169,7 @@ import apiFetch from '@wordpress/api-fetch';
 			.finally(function () {
 				if (button) {
 					button.disabled = false;
-					button.textContent = 'Submit';
+					getButtonTextElement(button).textContent = 'Submit';
 				}
 			});
 	}
