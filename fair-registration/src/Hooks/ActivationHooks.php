@@ -76,6 +76,8 @@ class ActivationHooks {
 		// Remove plugin options
 		delete_option( 'fair_registration_version' );
 		delete_option( 'fair_registration_db_version' );
+		delete_option( 'fair_registration_forms_db_version' );
+		delete_option( 'fair_registration_form_versions_db_version' );
 		delete_option( 'fair_registration_activated_time' );
 		delete_option( 'fair_registration_deactivated_time' );
 
