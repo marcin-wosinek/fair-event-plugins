@@ -1,4 +1,5 @@
 import './frontend.css';
+import apiFetch from '@wordpress/api-fetch';
 
 /**
  * Frontend JavaScript for Fair Registration forms
@@ -34,7 +35,7 @@ import './frontend.css';
 	 */
 	function setupFormButtons(form) {
 		const buttons = form.querySelectorAll(
-			'button[data-registration-button-type], a[data-registration-button-type]'
+			'[data-registration-button-type]'
 		);
 
 		buttons.forEach(function (button) {
@@ -141,31 +142,32 @@ import './frontend.css';
 			return;
 		}
 
-		// Submit to API
-		fetch('/wp-json/fair-registration/v1/registrations', {
+		// Submit to API using WordPress apiFetch
+		apiFetch({
+			path: 'fair-registration/v1/registrations',
 			method: 'POST',
-			headers: {
-				'Content-Type': 'application/json',
-			},
-			body: JSON.stringify({
+			data: {
 				form_id: parseInt(formId),
 				url: window.location.href,
 				registration_data: registrationData,
-			}),
+			},
 		})
-			.then(function (response) {
-				if (response.ok) {
-					return response.json();
-				}
-				throw new Error('Registration failed');
-			})
 			.then(function (data) {
 				showSuccess('Registration submitted successfully!');
 				form.reset();
 			})
 			.catch(function (error) {
 				console.error('Registration error:', error);
-				showError('Registration failed. Please try again.');
+				let errorMessage = 'Registration failed. Please try again.';
+
+				// Try to get more specific error message
+				if (error.message) {
+					errorMessage = error.message;
+				} else if (error.data && error.data.message) {
+					errorMessage = error.data.message;
+				}
+
+				showError(errorMessage);
 			})
 			.finally(function () {
 				if (button) {
