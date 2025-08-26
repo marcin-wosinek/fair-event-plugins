@@ -135,12 +135,105 @@ export default function EditComponent({
 		return differenceInMinutes(endDate, startDate);
 	};
 
+	// API function to get time boundaries for drop position
+	const getDropTimeBoundaries = (targetPosition, excludeBlockId = null) => {
+		const timeBlocks = innerBlocks
+			.filter((block) => block.name === 'fair-timetable/time-slot')
+			.filter((block) => block.clientId !== excludeBlockId); // Exclude the dragged block
+
+		const boundaries = {
+			columnStartTime: effectiveStartHour,
+			columnEndTime: effectiveEndHour,
+			previousBlockEndTime: null,
+			nextBlockStartTime: null,
+			availableStartTime: null,
+			availableEndTime: null,
+		};
+
+		// Get previous block (block before the drop position)
+		if (targetPosition > 0 && timeBlocks[targetPosition - 1]) {
+			boundaries.previousBlockEndTime =
+				timeBlocks[targetPosition - 1].attributes.endHour;
+			boundaries.availableStartTime = boundaries.previousBlockEndTime;
+		} else {
+			// First position - use column start
+			boundaries.availableStartTime = effectiveStartHour;
+		}
+
+		// Get next block (block after the drop position)
+		if (targetPosition < timeBlocks.length && timeBlocks[targetPosition]) {
+			boundaries.nextBlockStartTime =
+				timeBlocks[targetPosition].attributes.startHour;
+			boundaries.availableEndTime = boundaries.nextBlockStartTime;
+		} else {
+			// Last position - use column end
+			boundaries.availableEndTime = effectiveEndHour;
+		}
+
+		return boundaries;
+	};
+
+	// Helper function to validate if a block can be dropped at a position
+	const canDropAtPosition = (
+		targetPosition,
+		blockDuration,
+		excludeBlockId = null
+	) => {
+		const boundaries = getDropTimeBoundaries(
+			targetPosition,
+			excludeBlockId
+		);
+		const availableStartDate = parse(
+			boundaries.availableStartTime,
+			'HH:mm',
+			new Date()
+		);
+		const availableEndDate = parse(
+			boundaries.availableEndTime,
+			'HH:mm',
+			new Date()
+		);
+		const availableSlotDuration = differenceInMinutes(
+			availableEndDate,
+			availableStartDate
+		);
+
+		return {
+			canFit: blockDuration <= availableSlotDuration,
+			availableDuration: availableSlotDuration,
+			boundaries,
+		};
+	};
+
+	// Helper function to get all valid drop positions for a block
+	const getValidDropPositions = (blockDuration, excludeBlockId = null) => {
+		const timeBlocks = innerBlocks
+			.filter((block) => block.name === 'fair-timetable/time-slot')
+			.filter((block) => block.clientId !== excludeBlockId);
+
+		const validPositions = [];
+
+		// Check each possible position
+		for (let i = 0; i <= timeBlocks.length; i++) {
+			const validation = canDropAtPosition(
+				i,
+				blockDuration,
+				excludeBlockId
+			);
+			if (validation.canFit) {
+				validPositions.push({
+					position: i,
+					...validation,
+				});
+			}
+		}
+
+		return validPositions;
+	};
+
 	// Update block times when dropped in new position
 	const updateBlockTimes = (movedBlockId, newPosition, oldPosition) => {
-		const timeBlocks = innerBlocks.filter(
-			(block) => block.name === 'fair-timetable/time-slot'
-		);
-		const movedBlock = timeBlocks.find(
+		const movedBlock = innerBlocks.find(
 			(block) => block.clientId === movedBlockId
 		);
 
@@ -149,76 +242,29 @@ export default function EditComponent({
 		const originalDuration = getBlockDuration(movedBlock);
 		const MINIMUM_DURATION = 15; // minutes
 
-		// Calculate available time slot based on new position
-		let availableStart, availableEnd;
+		// Use the new API to get time boundaries
+		const boundaries = getDropTimeBoundaries(newPosition, movedBlockId);
+		const { availableStartTime, availableEndTime } = boundaries;
 
-		// Get the current block order (after the move)
-		const currentTimeBlocks = timeBlocks.slice(); // copy array
-
-		if (newPosition === 0) {
-			// First position - use column start
-			availableStart = effectiveStartHour;
-			availableEnd =
-				currentTimeBlocks.length > 1 && currentTimeBlocks[1]
-					? currentTimeBlocks[1].attributes.startHour
-					: effectiveEndHour;
-		} else if (newPosition === currentTimeBlocks.length - 1) {
-			// Last position - use column end
-			availableStart =
-				currentTimeBlocks[newPosition - 1].attributes.endHour ||
-				effectiveStartHour;
-			availableEnd = effectiveEndHour;
-
-			// Additional check: ensure block doesn't exceed column end time
-			const proposedStartDate = parse(
-				availableStart,
-				'HH:mm',
-				new Date()
-			);
-			const proposedEndDate = addMinutes(
-				proposedStartDate,
-				originalDuration
-			);
-			const columnEndDate = parse(effectiveEndHour, 'HH:mm', new Date());
-
-			if (proposedEndDate > columnEndDate) {
-				// Block would exceed column end - adjust to fit within column
-				const maxDuration = differenceInMinutes(
-					columnEndDate,
-					proposedStartDate
-				);
-				if (maxDuration < MINIMUM_DURATION) {
-					createNotice(
-						'error',
-						`Cannot fit time block in last position! Available: ${maxDuration} minutes, Required: ${MINIMUM_DURATION} minutes`,
-						{
-							isDismissible: true,
-							type: 'snackbar',
-						}
-					);
-					// Revert block to original position
-					moveBlocksToPosition(
-						[movedBlockId],
-						clientId,
-						clientId,
-						oldPosition
-					);
-					return;
-				}
-			}
-		} else {
-			// Middle position - between two blocks
-			availableStart =
-				currentTimeBlocks[newPosition - 1].attributes.endHour ||
-				effectiveStartHour;
-			availableEnd =
-				currentTimeBlocks[newPosition + 1].attributes.startHour ||
-				effectiveEndHour;
-		}
+		// Example: Log the complete API data for debugging
+		console.log('Drop Time Boundaries API:', {
+			targetPosition: newPosition,
+			draggedBlockId: movedBlockId,
+			columnStartTime: boundaries.columnStartTime,
+			columnEndTime: boundaries.columnEndTime,
+			previousBlockEndTime: boundaries.previousBlockEndTime,
+			nextBlockStartTime: boundaries.nextBlockStartTime,
+			availableStartTime: boundaries.availableStartTime,
+			availableEndTime: boundaries.availableEndTime,
+		});
 
 		// Parse times to calculate available slot duration
-		const availableStartDate = parse(availableStart, 'HH:mm', new Date());
-		const availableEndDate = parse(availableEnd, 'HH:mm', new Date());
+		const availableStartDate = parse(
+			availableStartTime,
+			'HH:mm',
+			new Date()
+		);
+		const availableEndDate = parse(availableEndTime, 'HH:mm', new Date());
 		const availableSlotDuration = differenceInMinutes(
 			availableEndDate,
 			availableStartDate
@@ -228,7 +274,7 @@ export default function EditComponent({
 
 		if (originalDuration <= availableSlotDuration) {
 			// Block fits with original duration - don't extend to fill space
-			newStartTime = availableStart;
+			newStartTime = availableStartTime;
 			finalDuration = originalDuration;
 		} else {
 			// Block doesn't fit - squeeze to available space, minimum 15 minutes
@@ -236,7 +282,7 @@ export default function EditComponent({
 
 			if (finalDuration <= availableSlotDuration) {
 				// Fits with squeezed duration
-				newStartTime = availableStart;
+				newStartTime = availableStartTime;
 			} else {
 				// Even minimum doesn't fit - show notice and revert position
 				createNotice(
