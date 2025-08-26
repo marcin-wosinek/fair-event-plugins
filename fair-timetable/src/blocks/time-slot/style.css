@@ -4,6 +4,7 @@
     border: 1px solid #ddd;
     border-radius: 4px;
     background-color: #f9f9f9;
+    container-type: inline-size;
 }
 
 .time-slot {
@@ -17,6 +18,32 @@
     color: #666;
     font-size: 0.9rem;
     min-width: 100px;
+}
+
+/* Hide time-range when container is narrower than 320px */
+@container (max-width: 319px) {
+    .time-range {
+        display: none;
+    }
+    
+    .time-slot {
+        justify-content: center;
+        text-align: center;
+    }
+}
+
+/* Fallback for browsers without container query support */
+@supports not (container-type: inline-size) {
+    @media (max-width: 319px) {
+        .time-range {
+            display: none;
+        }
+        
+        .time-slot {
+            justify-content: center;
+            text-align: center;
+        }
+    }
 }
 
 .event-title {
@@ -46,6 +73,7 @@
     border: 1px solid #ddd;
     border-radius: 4px;
     background-color: #f9f9f9;
+    container-type: inline-size;
 }
 
 .editor-styles-wrapper .time-slot {
@@ -59,6 +87,36 @@
     color: #666;
     font-size: 0.9rem;
     min-width: 100px;
+}
+
+/* Editor: Hide time-range when container is narrower than 320px */
+.editor-styles-wrapper {
+    @container (max-width: 319px) {
+        .time-range {
+            display: none;
+        }
+        
+        .time-slot {
+            justify-content: center;
+            text-align: center;
+        }
+    }
+}
+
+/* Editor fallback for browsers without container query support */
+.editor-styles-wrapper {
+    @supports not (container-type: inline-size) {
+        @media (max-width: 319px) {
+            .time-range {
+                display: none;
+            }
+            
+            .time-slot {
+                justify-content: center;
+                text-align: center;
+            }
+        }
+    }
 }
 
 .editor-styles-wrapper .event-title {
