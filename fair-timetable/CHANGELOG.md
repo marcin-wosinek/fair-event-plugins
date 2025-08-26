@@ -8,6 +8,7 @@
 - Updated all internal references, CSS classes, and block names
 - Changed namespace from FairSchedule to FairTimetable
 - Renamed time-block to time-slot for better semantic clarity
+- Removed header and columnTitle from timetable-column block for cleaner layout
 
 ## 1.0.1
 

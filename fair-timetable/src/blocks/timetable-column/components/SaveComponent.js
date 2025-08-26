@@ -17,8 +17,7 @@ export default function SaveComponent({ attributes }) {
 		className: 'timetable-column',
 	});
 
-	const { columnTitle, columnType, startHour, endHour, hourHeight } =
-		attributes;
+	const { columnType, startHour, endHour, hourHeight } = attributes;
 
 	// Calculate the height of the schedule column content area
 	const getContentHeight = () => {
@@ -42,17 +41,6 @@ export default function SaveComponent({ attributes }) {
 			data-end-hour={endHour}
 			data-hour-height={hourHeight}
 		>
-			{columnTitle && (
-				<div className="timetable-column-header">
-					<h3 className="timetable-column-title">{columnTitle}</h3>
-					<span
-						className="timetable-column-type"
-						data-type={columnType}
-					>
-						{columnType}
-					</span>
-				</div>
-			)}
 			<div {...innerBlocksProps} />
 		</div>
 	);

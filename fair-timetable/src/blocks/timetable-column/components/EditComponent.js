@@ -36,8 +36,7 @@ export default function EditComponent({ attributes, setAttributes, clientId }) {
 		className: 'timetable-column',
 	});
 
-	const { columnTitle, columnType, startHour, endHour, hourHeight } =
-		attributes;
+	const { columnType, startHour, endHour, hourHeight } = attributes;
 
 	// Get inner blocks to calculate next start time
 	const innerBlocks = useSelect(
@@ -329,17 +328,6 @@ export default function EditComponent({ attributes, setAttributes, clientId }) {
 		<>
 			<InspectorControls>
 				<PanelBody title={__('Column Settings', 'fair-timetable')}>
-					<TextControl
-						label={__('Column Title', 'fair-timetable')}
-						value={columnTitle}
-						onChange={(value) =>
-							setAttributes({ columnTitle: value })
-						}
-						placeholder={__(
-							'e.g. Main Stage, Day 1, Room A',
-							'fair-timetable'
-						)}
-					/>
 					<SelectControl
 						label={__('Column Type', 'fair-timetable')}
 						value={columnType}
@@ -414,17 +402,6 @@ export default function EditComponent({ attributes, setAttributes, clientId }) {
 			</InspectorControls>
 
 			<div {...blockProps}>
-				<div className="timetable-column-header">
-					{columnTitle ? (
-						<h3 className="timetable-column-title">
-							{columnTitle}
-						</h3>
-					) : (
-						<h3 className="timetable-column-title placeholder">
-							{__('Column Title', 'fair-timetable')}
-						</h3>
-					)}
-				</div>
 				<div {...innerBlocksProps} />
 			</div>
 		</>
