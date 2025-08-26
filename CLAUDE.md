@@ -10,7 +10,7 @@ This is a WordPress plugin collection called "Fair Event Plugins" for event orga
 
 ### Frontend Development (WordPress Blocks)
 ```bash
-cd fair-payment  # or fair-calendar-button or fair-schedule
+cd fair-payment  # or fair-calendar-button or fair-timetable
 npm run start    # Start development server with hot reload
 npm run build    # Build production assets for blocks
 npm run format   # Format code (ALWAYS run after making changes)

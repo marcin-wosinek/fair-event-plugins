@@ -19,19 +19,24 @@ const rootDir = join(__dirname, '..');
 // Plugin configurations
 const plugins = [
 	{
-		name: 'fair-payment',
-		packagePath: 'fair-payment/package.json',
-		phpFiles: ['fair-payment/fair-payment.php'],
-	},
-	{
 		name: 'fair-calendar-button',
 		packagePath: 'fair-calendar-button/package.json',
 		phpFiles: ['fair-calendar-button/fair-calendar-button.php'],
 	},
 	{
-		name: 'fair-schedule',
-		packagePath: 'fair-schedule/package.json',
-		phpFiles: ['fair-schedule/fair-schedule.php'],
+		name: 'fair-payment',
+		packagePath: 'fair-payment/package.json',
+		phpFiles: ['fair-payment/fair-payment.php'],
+	},
+	{
+		name: 'fair-registration',
+		packagePath: 'fair-registration/package.json',
+		phpFiles: ['fair-registration/fair-registration.php'],
+	},
+	{
+		name: 'fair-timetable',
+		packagePath: 'fair-timetable/package.json',
+		phpFiles: ['fair-timetable/fair-timetable.php'],
 	},
 ];
 

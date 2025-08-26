@@ -1,13 +1,13 @@
 # Release Management with Changesets
 
-This project uses [Changesets](https://github.com/changesets/changesets) for independent versioning and releasing of each plugin (fair-payment, fair-calendar-button, fair-schedule).
+This project uses [Changesets](https://github.com/changesets/changesets) for independent versioning and releasing of each plugin (fair-payment, fair-calendar-button, fair-timetable).
 
 ## 🎯 Overview
 
 Each plugin is versioned independently using semantic versioning:
 - `fair-payment@1.2.3`
 - `fair-calendar-button@2.0.1`
-- `fair-schedule@1.1.0`
+- `fair-timetable@1.1.0`
 
 Changes are tracked per-plugin and releases can be made for individual plugins or multiple plugins simultaneously.
 
@@ -57,7 +57,7 @@ npm run release
 Tags are automatically created in the format:
 - `fair-payment@1.2.3`
 - `fair-calendar-button@2.0.1`
-- `fair-schedule@1.1.0`
+- `fair-timetable@1.1.0`
 
 This allows you to easily track releases for each plugin individually.
 
@@ -103,7 +103,7 @@ Version: 1.2.0  // ← Automatically updated!
 ### Files Updated:
 - `fair-payment/fair-payment.php`
 - `fair-calendar-button/fair-calendar-button.php`
-- `fair-schedule/plugin.php`
+- `fair-timetable/fair-timetable.php`
 
 The sync runs automatically when you use `npm run version-packages`.
 
