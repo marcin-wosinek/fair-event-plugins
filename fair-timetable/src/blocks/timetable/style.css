@@ -46,6 +46,7 @@
 	
 	.timetable-container .wp-block-fair-timetable-timetable-column {
 		flex: none;
+		width: 100%;
 	}
 }
 

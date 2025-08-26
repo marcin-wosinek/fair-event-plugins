@@ -4,6 +4,7 @@
 
 .wp-block-fair-timetable-timetable-column {
 	margin-bottom: 1rem;
+	box-sizing: border-box;
 }
 
 .timetable-column-content {
@@ -24,4 +25,16 @@
 .timetable-column-content .time-slot-block {
 	margin: 0;
 	box-sizing: border-box;
+}
+
+/* Responsive behavior for timetable columns */
+@media (max-width: 768px) {
+	.wp-block-fair-timetable-timetable-column {
+		width: 100%;
+		margin-bottom: 1rem;
+	}
+	
+	.timetable-column-content {
+		width: 100%;
+	}
 }
