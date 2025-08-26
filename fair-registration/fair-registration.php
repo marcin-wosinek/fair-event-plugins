@@ -3,7 +3,7 @@
  * Plugin Name: Fair Registration
  * Plugin URI: https://github.com/marcin-wosinek/fair-event-plugins
  * Description: A Gutenberg block plugin for registration management. The plugin provides multiple blocks for event registration with fair pricing model.
- * Version: 1.0.0
+ * Version: 0.2.0
  * Requires at least: 5.8
  * Requires PHP: 8.0
  * Author: Marcin Wosinek
