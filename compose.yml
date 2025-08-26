@@ -11,10 +11,10 @@ services:
       WORDPRESS_DB_NAME: exampledb
     volumes:
       - wordpress:/var/www/html
-      - ./fair-payment:/var/www/html/wp-content/plugins/fair-payment
-      - ./fair-schedule:/var/www/html/wp-content/plugins/fair-schedule
       - ./fair-calendar-button:/var/www/html/wp-content/plugins/fair-calendar-button
+      - ./fair-payment:/var/www/html/wp-content/plugins/fair-payment
       - ./fair-registration:/var/www/html/wp-content/plugins/fair-registration
+      - ./fair-timetable:/var/www/html/wp-content/plugins/fair-timetable
 
   db:
     image: mysql:8.0

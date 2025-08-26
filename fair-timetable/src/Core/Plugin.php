@@ -1,11 +1,11 @@
 <?php
 /**
- * Plugin core class for Fair Schedule
+ * Plugin core class for Fair Timetable
  *
- * @package FairSchedule
+ * @package FairTimetable
  */
 
-namespace FairSchedule\Core;
+namespace FairTimetable\Core;
 
 defined( 'WPINC' ) || die;
 
@@ -47,7 +47,7 @@ class Plugin {
 	 * @return void
 	 */
 	private function load_hooks() {
-		new \FairSchedule\Hooks\BlockHooks();
+		new \FairTimetable\Hooks\BlockHooks();
 	}
 
 	/**

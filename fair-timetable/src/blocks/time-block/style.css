@@ -36,7 +36,7 @@
 }
 
 /* Editor-specific styles for drag and drop */
-.editor-styles-wrapper .wp-block-fair-schedule-time-block {
+.editor-styles-wrapper .wp-block-fair-timetable-time-block {
     position: relative;
 }
 
@@ -69,6 +69,6 @@
 }
 
 /* Ensure drag preview maintains visibility */
-.wp-block-fair-schedule-time-block.is-dragging {
+.wp-block-fair-timetable-time-block.is-dragging {
     opacity: 0.8;
 }

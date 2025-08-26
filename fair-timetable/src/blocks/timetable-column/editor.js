@@ -1,23 +1,21 @@
 /**
- * Time Block
+ * Timetable Column Block
  *
- * Block for displaying scheduled event time slots.
+ * Block for organizing time blocks in columns by track, day, or category.
  */
 
 import { registerBlockType } from '@wordpress/blocks';
+import { __ } from '@wordpress/i18n';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faClock } from '@fortawesome/free-solid-svg-icons';
+import { faColumns } from '@fortawesome/free-solid-svg-icons';
 import EditComponent from './components/EditComponent.js';
 import SaveComponent from './components/SaveComponent.js';
-
-// Import styles
-import './style.css';
 
 /**
  * Register the block
  */
-registerBlockType('fair-schedule/time-block', {
-	icon: <FontAwesomeIcon icon={faClock} />,
+registerBlockType('fair-timetable/timetable-column', {
+	icon: <FontAwesomeIcon icon={faColumns} />,
 
 	/**
 	 * Block edit function

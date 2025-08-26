@@ -1,12 +1,12 @@
 /**
- * Schedule Column Block Styles
+ * Timetable Column Block Styles
  */
 
-.wp-block-fair-schedule-schedule-column {
+.wp-block-fair-timetable-timetable-column {
 	margin-bottom: 1rem;
 }
 
-.schedule-column-header {
+.timetable-column-header {
 	background: #f8f9fa;
 	padding: 0.75rem 1rem;
 	margin-bottom: 0.5rem;
@@ -14,19 +14,19 @@
 	border-radius: 4px;
 }
 
-.schedule-column-title {
+.timetable-column-title {
 	margin: 0;
 	font-size: 1.25rem;
 	font-weight: 600;
 	color: #333;
 }
 
-.schedule-column-title.placeholder {
+.timetable-column-title.placeholder {
 	color: #999;
 	font-style: italic;
 }
 
-.schedule-column-type {
+.timetable-column-type {
 	font-size: 0.875rem;
 	color: #666;
 	text-transform: capitalize;
@@ -37,7 +37,7 @@
 	margin-top: 0.25rem;
 }
 
-.schedule-column-content {
+.timetable-column-content {
 	border: 1px solid #e0e0e0;
 	border-radius: 4px;
 	padding: 0;
@@ -45,26 +45,26 @@
 	position: relative;
 }
 
-.schedule-column-content .wp-block-fair-schedule-time-block {
+.timetable-column-content .wp-block-fair-timetable-time-block {
 	margin: 0;
 	position: absolute;
 	left: 0;
 	right: 0;
 }
 
-.schedule-column-content .time-block {
+.timetable-column-content .time-block {
 	margin: 0;
 	box-sizing: border-box;
 }
 
 /* Editor specific styles */
-.editor-styles-wrapper .schedule-column-header {
+.editor-styles-wrapper .timetable-column-header {
 	position: relative;
 	background: #f0f6ff;
 	border-color: #b3d9ff;
 }
 
-.editor-styles-wrapper .schedule-column-type {
+.editor-styles-wrapper .timetable-column-type {
 	background: #e3f2fd;
 	border: 1px solid #2196f3;
 	color: #1976d2;

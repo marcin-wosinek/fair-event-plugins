@@ -1,5 +1,5 @@
 /**
- * Edit component for the Schedule Column Block
+ * Edit component for the Timetable Column Block
  */
 
 import { TextControl, PanelBody, SelectControl } from '@wordpress/components';
@@ -23,7 +23,7 @@ import { useEffect, useRef } from '@wordpress/element';
 import { store as noticesStore } from '@wordpress/notices';
 
 /**
- * Edit component for the Schedule Column Block
+ * Edit component for the Timetable Column Block
  *
  * @param {Object}   props               - Block props
  * @param {Object}   props.attributes    - Block attributes
@@ -33,7 +33,7 @@ import { store as noticesStore } from '@wordpress/notices';
  */
 export default function EditComponent({ attributes, setAttributes, clientId }) {
 	const blockProps = useBlockProps({
-		className: 'schedule-column',
+		className: 'timetable-column',
 	});
 
 	const { columnTitle, columnType, startHour, endHour, hourHeight } =
@@ -62,7 +62,7 @@ export default function EditComponent({ attributes, setAttributes, clientId }) {
 
 		const lastBlock = innerBlocks[innerBlocks.length - 1];
 		if (
-			lastBlock.name === 'fair-schedule/time-block' &&
+			lastBlock.name === 'fair-timetable/time-block' &&
 			lastBlock.attributes.endHour
 		) {
 			return lastBlock.attributes.endHour;
@@ -102,7 +102,7 @@ export default function EditComponent({ attributes, setAttributes, clientId }) {
 	// Update block times when dropped in new position
 	const updateBlockTimes = (movedBlockId, newPosition, oldPosition) => {
 		const timeBlocks = innerBlocks.filter(
-			(block) => block.name === 'fair-schedule/time-block'
+			(block) => block.name === 'fair-timetable/time-block'
 		);
 		const movedBlock = timeBlocks.find(
 			(block) => block.clientId === movedBlockId
@@ -237,7 +237,7 @@ export default function EditComponent({ attributes, setAttributes, clientId }) {
 	// Simple alert when time-block is dropped/reordered
 	useEffect(() => {
 		const currentBlockOrder = innerBlocks
-			.filter((block) => block.name === 'fair-schedule/time-block')
+			.filter((block) => block.name === 'fair-timetable/time-block')
 			.map((block) => block.clientId);
 
 		const previousOrder = previousBlockOrderRef.current;
@@ -288,12 +288,12 @@ export default function EditComponent({ attributes, setAttributes, clientId }) {
 	}, [innerBlocks]);
 
 	// Template for allowed inner blocks
-	const allowedBlocks = ['fair-schedule/time-block'];
+	const allowedBlocks = ['fair-timetable/time-block'];
 
 	// Default template with a sample time block
 	const template = [
 		[
-			'fair-schedule/time-block',
+			'fair-timetable/time-block',
 			{
 				title: 'Sample Event',
 				startHour: '09:00',
@@ -304,7 +304,7 @@ export default function EditComponent({ attributes, setAttributes, clientId }) {
 
 	const innerBlocksProps = useInnerBlocksProps(
 		{
-			className: 'schedule-column-content',
+			className: 'timetable-column-content',
 			style: {
 				height: `${getContentHeight()}em`,
 			},
@@ -314,7 +314,7 @@ export default function EditComponent({ attributes, setAttributes, clientId }) {
 			template,
 			templateLock: false,
 			__experimentalDefaultBlock: {
-				name: 'fair-schedule/time-block',
+				name: 'fair-timetable/time-block',
 				attributes: {
 					title: 'New Event',
 					startHour: getNextStartTime(),
@@ -328,28 +328,28 @@ export default function EditComponent({ attributes, setAttributes, clientId }) {
 	return (
 		<>
 			<InspectorControls>
-				<PanelBody title={__('Column Settings', 'fair-schedule')}>
+				<PanelBody title={__('Column Settings', 'fair-timetable')}>
 					<TextControl
-						label={__('Column Title', 'fair-schedule')}
+						label={__('Column Title', 'fair-timetable')}
 						value={columnTitle}
 						onChange={(value) =>
 							setAttributes({ columnTitle: value })
 						}
 						placeholder={__(
 							'e.g. Main Stage, Day 1, Room A',
-							'fair-schedule'
+							'fair-timetable'
 						)}
 					/>
 					<SelectControl
-						label={__('Column Type', 'fair-schedule')}
+						label={__('Column Type', 'fair-timetable')}
 						value={columnType}
 						options={[
 							{
-								label: __('Day', 'fair-schedule'),
+								label: __('Day', 'fair-timetable'),
 								value: 'day',
 							},
 							{
-								label: __('Place', 'fair-schedule'),
+								label: __('Place', 'fair-timetable'),
 								value: 'place',
 							},
 						]}
@@ -358,13 +358,13 @@ export default function EditComponent({ attributes, setAttributes, clientId }) {
 						}
 						help={__(
 							'Choose how this column represents your schedule organization',
-							'fair-schedule'
+							'fair-timetable'
 						)}
 					/>
 				</PanelBody>
-				<PanelBody title={__('Time Settings', 'fair-schedule')}>
+				<PanelBody title={__('Time Settings', 'fair-timetable')}>
 					<TextControl
-						label={__('Start Hour', 'fair-schedule')}
+						label={__('Start Hour', 'fair-timetable')}
 						value={startHour}
 						onChange={(value) =>
 							setAttributes({ startHour: value })
@@ -372,33 +372,33 @@ export default function EditComponent({ attributes, setAttributes, clientId }) {
 						placeholder="09:00"
 						help={__(
 							'Column start time in HH:MM format',
-							'fair-schedule'
+							'fair-timetable'
 						)}
 					/>
 					<TextControl
-						label={__('End Hour', 'fair-schedule')}
+						label={__('End Hour', 'fair-timetable')}
 						value={endHour}
 						onChange={(value) => setAttributes({ endHour: value })}
 						placeholder="18:00"
 						help={__(
 							'Column end time in HH:MM format',
-							'fair-schedule'
+							'fair-timetable'
 						)}
 					/>
 					<SelectControl
-						label={__('Hour Height', 'fair-schedule')}
+						label={__('Hour Height', 'fair-timetable')}
 						value={hourHeight}
 						options={[
 							{
-								label: __('Small', 'fair-schedule'),
+								label: __('Small', 'fair-timetable'),
 								value: 1.5,
 							},
 							{
-								label: __('Medium', 'fair-schedule'),
+								label: __('Medium', 'fair-timetable'),
 								value: 2.5,
 							},
 							{
-								label: __('Big', 'fair-schedule'),
+								label: __('Big', 'fair-timetable'),
 								value: 3.5,
 							},
 						]}
@@ -407,19 +407,21 @@ export default function EditComponent({ attributes, setAttributes, clientId }) {
 						}
 						help={__(
 							'Visual height multiplier for each hour in the schedule',
-							'fair-schedule'
+							'fair-timetable'
 						)}
 					/>
 				</PanelBody>
 			</InspectorControls>
 
 			<div {...blockProps}>
-				<div className="schedule-column-header">
+				<div className="timetable-column-header">
 					{columnTitle ? (
-						<h3 className="schedule-column-title">{columnTitle}</h3>
+						<h3 className="timetable-column-title">
+							{columnTitle}
+						</h3>
 					) : (
-						<h3 className="schedule-column-title placeholder">
-							{__('Column Title', 'fair-schedule')}
+						<h3 className="timetable-column-title placeholder">
+							{__('Column Title', 'fair-timetable')}
 						</h3>
 					)}
 				</div>

@@ -1,14 +1,14 @@
 {
 	"$schema": "https://schemas.wp.org/trunk/block.json",
 	"apiVersion": 3,
-	"name": "fair-schedule/time-block",
+	"name": "fair-timetable/time-block",
 	"version": "1.0.0",
 	"title": "Time Block",
 	"category": "widgets",
 	"icon": "clock",
 	"description": "Display a scheduled event time slot",
-	"keywords": ["schedule", "time", "event", "slot"],
-	"textdomain": "fair-schedule",
+	"keywords": ["timetable", "time", "event", "slot"],
+	"textdomain": "fair-timetable",
 	"supports": {
 		"html": false,
 		"align": ["wide", "full"],
@@ -31,7 +31,7 @@
 			"default": "10:00"
 		}
 	},
-	"usesContext": ["fair-schedule/hourHeight", "fair-schedule/startHour"],
+	"usesContext": ["fair-timetable/hourHeight", "fair-timetable/startHour"],
 	"script": "file:./index.js",
 	"editorScript": "file:./editor.js",
 	"style": "file:./style-index.css"

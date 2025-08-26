@@ -19,7 +19,7 @@
 		"build": "npm run build --workspaces",
 		"clean": "npm run clean --workspaces",
 		"composer": "npm run composer --workspaces",
-		"start": "npm run start --workspace=fair-schedule & npm run start --workspace=fair-payment & npm run start --workspace=fair-calendar-button & npm run start --workspace=fair-registration & wait",
+		"start": "npm run start --workspace=fair-timetable & npm run start --workspace=fair-payment & npm run start --workspace=fair-calendar-button & npm run start --workspace=fair-registration & wait",
 		"format": "npm-run-all format:*",
 		"format:wp": "wp-scripts format",
 		"format:yml": "prettier --write '**/*.yml'",
@@ -32,8 +32,8 @@
 		"release": "npm run build && changeset tag",
 		"release:fair-payment": "npm run build --workspace=fair-payment && changeset tag",
 		"release:fair-calendar-button": "npm run build --workspace=fair-calendar-button && changeset tag",
-		"release:fair-schedule": "npm run build --workspace=fair-schedule && changeset tag",
-		"release:registration": "npm run build --workspace=fair-schedule && changeset tag"
+		"release:fair-timetable": "npm run build --workspace=fair-timetable && changeset tag",
+		"release:registration": "npm run build --workspace=fair-registration && changeset tag"
 	},
 	"dependencies": {
 		"@wordpress/scripts": "^30.20.0",
@@ -942,10 +942,10 @@
 		"zod": "^3.23.8"
 	},
 	"workspaces": [
-		"fair-schedule",
-		"fair-payment",
 		"fair-calendar-button",
-		"fair-registration"
+		"fair-payment",
+		"fair-registration",
+		"fair-timetable"
 	],
 	"devDependencies": {
 		"@changesets/cli": "^2.29.6"

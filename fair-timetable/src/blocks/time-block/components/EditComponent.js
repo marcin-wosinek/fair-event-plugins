@@ -29,7 +29,7 @@ export default function EditComponent({
 	clientId,
 }) {
 	const { title, startHour, endHour } = attributes;
-	const hourHeight = context['fair-schedule/hourHeight'] || 2.5; // Default to medium
+	const hourHeight = context['fair-timetable/hourHeight'] || 2.5; // Default to medium
 
 	const { moveBlocksToPosition } = useDispatch(blockEditorStore);
 
@@ -44,7 +44,7 @@ export default function EditComponent({
 			return {
 				parentClientId: parentId,
 				siblingBlocks: siblings.filter(
-					(block) => block.name === 'fair-schedule/time-block'
+					(block) => block.name === 'fair-timetable/time-block'
 				),
 			};
 		},
@@ -74,7 +74,7 @@ export default function EditComponent({
 
 	// Calculate top position based on hour offset from column start
 	const calculateTopPosition = () => {
-		const columnStartHour = context['fair-schedule/startHour'];
+		const columnStartHour = context['fair-timetable/startHour'];
 
 		if (!startHour || !columnStartHour) return '0em';
 
@@ -165,15 +165,15 @@ export default function EditComponent({
 	return (
 		<>
 			<InspectorControls>
-				<PanelBody title={__('Time Block Settings', 'fair-schedule')}>
+				<PanelBody title={__('Time Block Settings', 'fair-timetable')}>
 					<TextControl
-						label={__('Start Hour', 'fair-schedule')}
+						label={__('Start Hour', 'fair-timetable')}
 						value={startHour}
 						onChange={handleStartHourChange}
 						type="time"
 					/>
 					<TextControl
-						label={__('End Hour', 'fair-schedule')}
+						label={__('End Hour', 'fair-timetable')}
 						value={endHour}
 						onChange={(value) => setAttributes({ endHour: value })}
 						type="time"
@@ -190,7 +190,7 @@ export default function EditComponent({
 						className="event-title"
 						value={title}
 						onChange={(value) => setAttributes({ title: value })}
-						placeholder={__('Event title', 'fair-schedule')}
+						placeholder={__('Event title', 'fair-timetable')}
 					/>
 				</div>
 			</div>

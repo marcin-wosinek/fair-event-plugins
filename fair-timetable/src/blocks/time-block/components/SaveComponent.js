@@ -15,7 +15,7 @@ import { differenceInMinutes, parse } from 'date-fns';
  */
 export default function SaveComponent({ attributes, context }) {
 	const { title, startHour, endHour } = attributes;
-	const hourHeight = context?.['fair-schedule/hourHeight'] || 2.5; // Default to medium
+	const hourHeight = context?.['fair-timetable/hourHeight'] || 2.5; // Default to medium
 
 	// Calculate block height based on duration
 	const calculateBlockHeight = () => {

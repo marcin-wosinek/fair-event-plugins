@@ -1,14 +1,14 @@
 /**
- * Test suite for schedule-column utilities
+ * Test suite for timetable-column utilities
  */
 
-describe('Schedule Column Utils', () => {
+describe('Timetable Column Utils', () => {
 	test('should have correct block names', () => {
-		const timeBlockName = 'fair-schedule/time-block';
-		const columnBlockName = 'fair-schedule/schedule-column';
+		const timeSlotName = 'fair-timetable/time-slot';
+		const columnBlockName = 'fair-timetable/timetable-column';
 
-		expect(timeBlockName).toBe('fair-schedule/time-block');
-		expect(columnBlockName).toBe('fair-schedule/schedule-column');
+		expect(timeSlotName).toBe('fair-timetable/time-slot');
+		expect(columnBlockName).toBe('fair-timetable/timetable-column');
 	});
 
 	test('should validate column title', () => {
@@ -23,7 +23,7 @@ describe('Schedule Column Utils', () => {
 		expect(validateTitle(null)).toBe(false);
 	});
 
-	test('should sort schedule items by time', () => {
+	test('should sort timetable items by time', () => {
 		const sortByTime = (items) => {
 			return items.sort((a, b) => {
 				const timeA = a.time || '00:00';

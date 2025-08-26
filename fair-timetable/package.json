@@ -1,7 +1,7 @@
 {
-	"name": "fair-schedule",
-	"version": "1.0.1",
-	"description": "Fair Schedule WordPress plugin",
+	"name": "fair-timetable",
+	"version": "0.0.0",
+	"description": "Fair Timetable WordPress plugin",
 	"license": "GPL-3.0-or-later",
 	"author": "Marcin Wosinek",
 	"type": "module",

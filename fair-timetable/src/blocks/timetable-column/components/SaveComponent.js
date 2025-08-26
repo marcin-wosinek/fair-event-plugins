@@ -1,12 +1,12 @@
 /**
- * Save component for the Schedule Column Block
+ * Save component for the Timetable Column Block
  */
 
 import { useBlockProps, useInnerBlocksProps } from '@wordpress/block-editor';
 import { parse, differenceInHours } from 'date-fns';
 
 /**
- * Save component for the Schedule Column Block
+ * Save component for the Timetable Column Block
  *
  * @param {Object} props            - Block props
  * @param {Object} props.attributes - Block attributes
@@ -14,7 +14,7 @@ import { parse, differenceInHours } from 'date-fns';
  */
 export default function SaveComponent({ attributes }) {
 	const blockProps = useBlockProps.save({
-		className: 'schedule-column',
+		className: 'timetable-column',
 	});
 
 	const { columnTitle, columnType, startHour, endHour, hourHeight } =
@@ -29,7 +29,7 @@ export default function SaveComponent({ attributes }) {
 	};
 
 	const innerBlocksProps = useInnerBlocksProps.save({
-		className: 'schedule-column-content',
+		className: 'timetable-column-content',
 		style: {
 			height: `${getContentHeight()}em`,
 		},
@@ -43,10 +43,10 @@ export default function SaveComponent({ attributes }) {
 			data-hour-height={hourHeight}
 		>
 			{columnTitle && (
-				<div className="schedule-column-header">
-					<h3 className="schedule-column-title">{columnTitle}</h3>
+				<div className="timetable-column-header">
+					<h3 className="timetable-column-title">{columnTitle}</h3>
 					<span
-						className="schedule-column-type"
+						className="timetable-column-type"
 						data-type={columnType}
 					>
 						{columnType}

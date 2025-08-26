@@ -1,14 +1,14 @@
 {
 	"$schema": "https://schemas.wp.org/trunk/block.json",
 	"apiVersion": 3,
-	"name": "fair-schedule/schedule-column",
+	"name": "fair-timetable/timetable-column",
 	"version": "1.0.0",
-	"title": "Schedule Column",
+	"title": "Timetable Column",
 	"category": "widgets",
 	"icon": "columns",
 	"description": "A column container for organizing time blocks by day or place",
-	"keywords": ["schedule", "column", "day", "place", "container"],
-	"textdomain": "fair-schedule",
+	"keywords": ["timetable", "column", "day", "place", "container"],
+	"textdomain": "fair-timetable",
 	"supports": {
 		"html": false,
 		"align": ["wide", "full"],
@@ -41,11 +41,11 @@
 		}
 	},
 	"providesContext": {
-		"fair-schedule/columnTitle": "columnTitle",
-		"fair-schedule/columnType": "columnType",
-		"fair-schedule/startHour": "startHour",
-		"fair-schedule/endHour": "endHour",
-		"fair-schedule/hourHeight": "hourHeight"
+		"fair-timetable/columnTitle": "columnTitle",
+		"fair-timetable/columnType": "columnType",
+		"fair-timetable/startHour": "startHour",
+		"fair-timetable/endHour": "endHour",
+		"fair-timetable/hourHeight": "hourHeight"
 	},
 	"usesContext": [],
 	"script": "file:./index.js",

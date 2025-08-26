@@ -1,6 +1,6 @@
 {
-	"name": "marcin-wosinek/fair-schedule",
-	"description": "Schedule management plugin for events.",
+	"name": "marcin-wosinek/fair-timetable",
+	"description": "Timetable management plugin for events.",
 	"type": "wordpress-plugin",
 	"license": "GPL-3.0-or-later",
 	"homepage": "https://github.com/marcin-wosinek/fair-event-plugins/",
@@ -35,7 +35,7 @@
 	},
 	"autoload": {
 		"psr-4": {
-			"FairSchedule\\": "src/"
+			"FairTimetable\\": "src/"
 		}
 	},
 	"minimum-stability": "stable"

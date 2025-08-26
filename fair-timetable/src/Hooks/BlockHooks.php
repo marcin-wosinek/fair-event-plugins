@@ -1,11 +1,11 @@
 <?php
 /**
- * Block registration hooks for Fair Schedule
+ * Block registration hooks for Fair Timetable
  *
- * @package FairSchedule
+ * @package FairTimetable
  */
 
-namespace FairSchedule\Hooks;
+namespace FairTimetable\Hooks;
 
 defined( 'WPINC' ) || die;
 
@@ -28,6 +28,6 @@ class BlockHooks {
 	 */
 	public function register_blocks() {
 		register_block_type( __DIR__ . '/../../build/blocks/time-block' );
-		register_block_type( __DIR__ . '/../../build/blocks/schedule-column' );
+		register_block_type( __DIR__ . '/../../build/blocks/timetable-column' );
 	}
 }
