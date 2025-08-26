@@ -42,7 +42,11 @@
 		"fair-timetable/endHour": "endHour",
 		"fair-timetable/hourHeight": "hourHeight"
 	},
-	"usesContext": [],
+	"usesContext": [
+		"fair-timetable/startHour",
+		"fair-timetable/endHour",
+		"fair-timetable/hourHeight"
+	],
 	"script": "file:./index.js",
 	"editorScript": "file:./editor.js",
 	"style": "file:./style-index.css"

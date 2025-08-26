@@ -24,9 +24,25 @@
 	"attributes": {
 		"verticalAlignment": {
 			"type": "string"
+		},
+		"startHour": {
+			"type": "string",
+			"default": "09:00"
+		},
+		"endHour": {
+			"type": "string",
+			"default": "18:00"
+		},
+		"hourHeight": {
+			"type": "number",
+			"default": 2.5
 		}
 	},
-	"providesContext": {},
+	"providesContext": {
+		"fair-timetable/startHour": "startHour",
+		"fair-timetable/endHour": "endHour",
+		"fair-timetable/hourHeight": "hourHeight"
+	},
 	"usesContext": [],
 	"allowedBlocks": ["fair-timetable/timetable-column"],
 	"script": "file:./index.js",

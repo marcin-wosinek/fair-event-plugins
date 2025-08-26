@@ -2,7 +2,13 @@
  * Edit component for the Timetable Column Block
  */
 
-import { TextControl, PanelBody, SelectControl } from '@wordpress/components';
+import {
+	TextControl,
+	PanelBody,
+	SelectControl,
+	Button,
+	Notice,
+} from '@wordpress/components';
 import {
 	useBlockProps,
 	InspectorControls,
@@ -31,24 +37,55 @@ import { store as noticesStore } from '@wordpress/notices';
  * @param {string}   props.clientId      - Block client ID
  * @return {JSX.Element} The edit component
  */
-export default function EditComponent({ attributes, setAttributes, clientId }) {
+export default function EditComponent({
+	attributes,
+	setAttributes,
+	clientId,
+	context,
+}) {
 	const blockProps = useBlockProps({
 		className: 'timetable-column',
 	});
 
 	const { columnType, startHour, endHour, hourHeight } = attributes;
 
-	// Get inner blocks to calculate next start time
-	const innerBlocks = useSelect(
+	// Get context from parent timetable (if any)
+	const parentStartHour = context['fair-timetable/startHour'];
+	const parentEndHour = context['fair-timetable/endHour'];
+	const parentHourHeight = context['fair-timetable/hourHeight'];
+
+	// Use parent context values if available, otherwise use own attributes
+	const effectiveStartHour = parentStartHour || startHour;
+	const effectiveEndHour = parentEndHour || endHour;
+	const effectiveHourHeight = parentHourHeight || hourHeight;
+
+	// Check if this column is inside a timetable block
+	const isInsideTimetable = Boolean(parentStartHour);
+
+	// Get inner blocks to calculate next start time and parent timetable info
+	const { innerBlocks, parentClientId } = useSelect(
 		(select) => {
-			return select(blockEditorStore).getBlocks(clientId);
+			const parentBlocks =
+				select(blockEditorStore).getBlockParents(clientId);
+			const parentId = parentBlocks[0];
+			return {
+				innerBlocks: select(blockEditorStore).getBlocks(clientId),
+				parentClientId: parentId,
+			};
 		},
 		[clientId]
 	);
 
-	const { updateBlockAttributes, moveBlocksToPosition } =
+	const { updateBlockAttributes, moveBlocksToPosition, selectBlock } =
 		useDispatch(blockEditorStore);
 	const { createNotice } = useDispatch(noticesStore);
+
+	// Function to select parent timetable block
+	const selectParentTimetable = () => {
+		if (parentClientId) {
+			selectBlock(parentClientId);
+		}
+	};
 
 	// Keep track of previous block order for reordering detection
 	const previousBlockOrderRef = useRef([]);
@@ -80,10 +117,10 @@ export default function EditComponent({ attributes, setAttributes, clientId }) {
 
 	// Calculate the height of the schedule column content area
 	const getContentHeight = () => {
-		const startDate = parse(startHour, 'HH:mm', new Date());
-		const endDate = parse(endHour, 'HH:mm', new Date());
+		const startDate = parse(effectiveStartHour, 'HH:mm', new Date());
+		const endDate = parse(effectiveEndHour, 'HH:mm', new Date());
 		const hours = differenceInHours(endDate, startDate);
-		return hours * hourHeight;
+		return hours * effectiveHourHeight;
 	};
 
 	// Calculate duration of a time block in minutes
@@ -120,17 +157,17 @@ export default function EditComponent({ attributes, setAttributes, clientId }) {
 
 		if (newPosition === 0) {
 			// First position - use column start
-			availableStart = startHour;
+			availableStart = effectiveStartHour;
 			availableEnd =
 				currentTimeBlocks.length > 1 && currentTimeBlocks[1]
 					? currentTimeBlocks[1].attributes.startHour
-					: endHour;
+					: effectiveEndHour;
 		} else if (newPosition === currentTimeBlocks.length - 1) {
 			// Last position - use column end
 			availableStart =
 				currentTimeBlocks[newPosition - 1].attributes.endHour ||
-				startHour;
-			availableEnd = endHour;
+				effectiveStartHour;
+			availableEnd = effectiveEndHour;
 
 			// Additional check: ensure block doesn't exceed column end time
 			const proposedStartDate = parse(
@@ -142,7 +179,7 @@ export default function EditComponent({ attributes, setAttributes, clientId }) {
 				proposedStartDate,
 				originalDuration
 			);
-			const columnEndDate = parse(endHour, 'HH:mm', new Date());
+			const columnEndDate = parse(effectiveEndHour, 'HH:mm', new Date());
 
 			if (proposedEndDate > columnEndDate) {
 				// Block would exceed column end - adjust to fit within column
@@ -173,10 +210,10 @@ export default function EditComponent({ attributes, setAttributes, clientId }) {
 			// Middle position - between two blocks
 			availableStart =
 				currentTimeBlocks[newPosition - 1].attributes.endHour ||
-				startHour;
+				effectiveStartHour;
 			availableEnd =
 				currentTimeBlocks[newPosition + 1].attributes.startHour ||
-				endHour;
+				effectiveEndHour;
 		}
 
 		// Parse times to calculate available slot duration
@@ -350,55 +387,92 @@ export default function EditComponent({ attributes, setAttributes, clientId }) {
 						)}
 					/>
 				</PanelBody>
-				<PanelBody title={__('Time Settings', 'fair-timetable')}>
-					<TextControl
-						label={__('Start Hour', 'fair-timetable')}
-						value={startHour}
-						onChange={(value) =>
-							setAttributes({ startHour: value })
-						}
-						placeholder="09:00"
-						help={__(
-							'Column start time in HH:MM format',
-							'fair-timetable'
-						)}
-					/>
-					<TextControl
-						label={__('End Hour', 'fair-timetable')}
-						value={endHour}
-						onChange={(value) => setAttributes({ endHour: value })}
-						placeholder="18:00"
-						help={__(
-							'Column end time in HH:MM format',
-							'fair-timetable'
-						)}
-					/>
-					<SelectControl
-						label={__('Hour Height', 'fair-timetable')}
-						value={hourHeight}
-						options={[
-							{
-								label: __('Small', 'fair-timetable'),
-								value: 1.5,
-							},
-							{
-								label: __('Medium', 'fair-timetable'),
-								value: 2.5,
-							},
-							{
-								label: __('Big', 'fair-timetable'),
-								value: 3.5,
-							},
-						]}
-						onChange={(value) =>
-							setAttributes({ hourHeight: parseFloat(value) })
-						}
-						help={__(
-							'Visual height multiplier for each hour in the schedule',
-							'fair-timetable'
-						)}
-					/>
-				</PanelBody>
+
+				{isInsideTimetable ? (
+					<PanelBody title={__('Time Settings', 'fair-timetable')}>
+						<Notice status="info" isDismissible={false}>
+							{__(
+								'Time settings are controlled by the parent Timetable block.',
+								'fair-timetable'
+							)}
+						</Notice>
+						<p>
+							<strong>
+								{__('Start Hour:', 'fair-timetable')}
+							</strong>{' '}
+							{effectiveStartHour}
+							<br />
+							<strong>
+								{__('End Hour:', 'fair-timetable')}
+							</strong>{' '}
+							{effectiveEndHour}
+							<br />
+							<strong>
+								{__('Hour Height:', 'fair-timetable')}
+							</strong>{' '}
+							{effectiveHourHeight}em
+						</p>
+						<Button
+							variant="secondary"
+							onClick={selectParentTimetable}
+							style={{ marginTop: '10px' }}
+						>
+							{__('Edit in Timetable', 'fair-timetable')}
+						</Button>
+					</PanelBody>
+				) : (
+					<PanelBody title={__('Time Settings', 'fair-timetable')}>
+						<TextControl
+							label={__('Start Hour', 'fair-timetable')}
+							value={startHour}
+							onChange={(value) =>
+								setAttributes({ startHour: value })
+							}
+							placeholder="09:00"
+							help={__(
+								'Column start time in HH:MM format',
+								'fair-timetable'
+							)}
+						/>
+						<TextControl
+							label={__('End Hour', 'fair-timetable')}
+							value={endHour}
+							onChange={(value) =>
+								setAttributes({ endHour: value })
+							}
+							placeholder="18:00"
+							help={__(
+								'Column end time in HH:MM format',
+								'fair-timetable'
+							)}
+						/>
+						<SelectControl
+							label={__('Hour Height', 'fair-timetable')}
+							value={hourHeight}
+							options={[
+								{
+									label: __('Small', 'fair-timetable'),
+									value: 1.5,
+								},
+								{
+									label: __('Medium', 'fair-timetable'),
+									value: 2.5,
+								},
+								{
+									label: __('Big', 'fair-timetable'),
+									value: 3.5,
+								},
+							]}
+							onChange={(value) =>
+								setAttributes({ hourHeight: parseFloat(value) })
+							}
+							help={__(
+								'Visual height multiplier for each hour in the schedule',
+								'fair-timetable'
+							)}
+						/>
+					</PanelBody>
+				)}
 			</InspectorControls>
 
 			<div {...blockProps}>

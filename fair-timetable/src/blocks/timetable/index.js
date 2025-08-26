@@ -1,4 +1,4 @@
 /**
  * Timetable block registration
  */
-import "./style.css";
+import './style.css';

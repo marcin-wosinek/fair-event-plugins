@@ -10,7 +10,7 @@ import {
 	BlockControls,
 	BlockVerticalAlignmentToolbar,
 } from '@wordpress/block-editor';
-import { PanelBody, RangeControl } from '@wordpress/components';
+import { PanelBody, TextControl, SelectControl } from '@wordpress/components';
 import { useSelect } from '@wordpress/data';
 
 /**
@@ -23,7 +23,7 @@ import { useSelect } from '@wordpress/data';
  * @return {JSX.Element} The edit component
  */
 export default function EditComponent({ attributes, setAttributes, clientId }) {
-	const { verticalAlignment } = attributes;
+	const { verticalAlignment, startHour, endHour, hourHeight } = attributes;
 
 	// Get inner blocks count
 	const { innerBlockCount } = useSelect(
@@ -44,18 +44,12 @@ export default function EditComponent({ attributes, setAttributes, clientId }) {
 			'fair-timetable/timetable-column',
 			{
 				columnType: 'day',
-				startHour: '09:00',
-				endHour: '18:00',
-				hourHeight: 2.5,
 			},
 		],
 		[
 			'fair-timetable/timetable-column',
 			{
 				columnType: 'day',
-				startHour: '09:00',
-				endHour: '18:00',
-				hourHeight: 2.5,
 			},
 		],
 	];
@@ -94,6 +88,55 @@ export default function EditComponent({ attributes, setAttributes, clientId }) {
 							'fair-timetable'
 						)}
 					</p>
+				</PanelBody>
+				<PanelBody title={__('Time Settings', 'fair-timetable')}>
+					<TextControl
+						label={__('Start Hour', 'fair-timetable')}
+						value={startHour}
+						onChange={(value) =>
+							setAttributes({ startHour: value })
+						}
+						type="time"
+						help={__(
+							'Start time for all columns in this timetable',
+							'fair-timetable'
+						)}
+					/>
+					<TextControl
+						label={__('End Hour', 'fair-timetable')}
+						value={endHour}
+						onChange={(value) => setAttributes({ endHour: value })}
+						type="time"
+						help={__(
+							'End time for all columns in this timetable',
+							'fair-timetable'
+						)}
+					/>
+					<SelectControl
+						label={__('Hour Height', 'fair-timetable')}
+						value={hourHeight}
+						options={[
+							{
+								label: __('Small', 'fair-timetable'),
+								value: 1.5,
+							},
+							{
+								label: __('Medium', 'fair-timetable'),
+								value: 2.5,
+							},
+							{
+								label: __('Large', 'fair-timetable'),
+								value: 3.5,
+							},
+						]}
+						onChange={(value) =>
+							setAttributes({ hourHeight: parseFloat(value) })
+						}
+						help={__(
+							'Visual height multiplier for each hour in all columns',
+							'fair-timetable'
+						)}
+					/>
 				</PanelBody>
 			</InspectorControls>
 
