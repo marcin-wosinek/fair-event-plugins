@@ -58,7 +58,6 @@ jobs:
 
       - name: Run unit tests
         run: |
-          cd fair-calendar-button
           npm test
 
       - name: Create plugin ZIP files
@@ -77,9 +76,9 @@ jobs:
             -x ".*"
           cd ..
 
-          # Create Fair Schedule plugin zip
-          cd fair-schedule
-          zip -r ../dist/fair-schedule.zip . \
+          # Create Fair Timetable plugin zip
+          cd fair-timetable
+          zip -r ../dist/fair-timetable.zip . \
             -x "node_modules/*" \
             -x "__tests__/*" \
             -x "package*.json" \
