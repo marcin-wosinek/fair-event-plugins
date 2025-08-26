@@ -1,4 +1,4 @@
-.time-block {
+.time-slot-block {
     margin: 1rem 0;
     padding: 1rem;
     border: 1px solid #ddd;
@@ -36,11 +36,11 @@
 }
 
 /* Editor-specific styles for drag and drop */
-.editor-styles-wrapper .wp-block-fair-timetable-time-block {
+.editor-styles-wrapper .wp-block-fair-timetable-time-slot {
     position: relative;
 }
 
-.editor-styles-wrapper .time-block {
+.editor-styles-wrapper .time-slot-block {
     margin: 1rem 0;
     padding: 1rem;
     border: 1px solid #ddd;
@@ -69,6 +69,6 @@
 }
 
 /* Ensure drag preview maintains visibility */
-.wp-block-fair-timetable-time-block.is-dragging {
+.wp-block-fair-timetable-time-slot.is-dragging {
     opacity: 0.8;
 }

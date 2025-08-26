@@ -54,7 +54,7 @@ export default function EditComponent({ attributes, setAttributes, clientId }) {
 	// Keep track of previous block order for reordering detection
 	const previousBlockOrderRef = useRef([]);
 
-	// Calculate the next start time based on the last time-block's end time
+	// Calculate the next start time based on the last time-slot's end time
 	const getNextStartTime = () => {
 		if (innerBlocks.length === 0) {
 			return '09:00'; // Default start time for first block
@@ -62,7 +62,7 @@ export default function EditComponent({ attributes, setAttributes, clientId }) {
 
 		const lastBlock = innerBlocks[innerBlocks.length - 1];
 		if (
-			lastBlock.name === 'fair-timetable/time-block' &&
+			lastBlock.name === 'fair-timetable/time-slot' &&
 			lastBlock.attributes.endHour
 		) {
 			return lastBlock.attributes.endHour;
@@ -102,7 +102,7 @@ export default function EditComponent({ attributes, setAttributes, clientId }) {
 	// Update block times when dropped in new position
 	const updateBlockTimes = (movedBlockId, newPosition, oldPosition) => {
 		const timeBlocks = innerBlocks.filter(
-			(block) => block.name === 'fair-timetable/time-block'
+			(block) => block.name === 'fair-timetable/time-slot'
 		);
 		const movedBlock = timeBlocks.find(
 			(block) => block.clientId === movedBlockId
@@ -234,10 +234,10 @@ export default function EditComponent({ attributes, setAttributes, clientId }) {
 		});
 	};
 
-	// Simple alert when time-block is dropped/reordered
+	// Simple alert when time-slot is dropped/reordered
 	useEffect(() => {
 		const currentBlockOrder = innerBlocks
-			.filter((block) => block.name === 'fair-timetable/time-block')
+			.filter((block) => block.name === 'fair-timetable/time-slot')
 			.map((block) => block.clientId);
 
 		const previousOrder = previousBlockOrderRef.current;
@@ -288,12 +288,12 @@ export default function EditComponent({ attributes, setAttributes, clientId }) {
 	}, [innerBlocks]);
 
 	// Template for allowed inner blocks
-	const allowedBlocks = ['fair-timetable/time-block'];
+	const allowedBlocks = ['fair-timetable/time-slot'];
 
 	// Default template with a sample time block
 	const template = [
 		[
-			'fair-timetable/time-block',
+			'fair-timetable/time-slot',
 			{
 				title: 'Sample Event',
 				startHour: '09:00',
@@ -314,7 +314,7 @@ export default function EditComponent({ attributes, setAttributes, clientId }) {
 			template,
 			templateLock: false,
 			__experimentalDefaultBlock: {
-				name: 'fair-timetable/time-block',
+				name: 'fair-timetable/time-slot',
 				attributes: {
 					title: 'New Event',
 					startHour: getNextStartTime(),

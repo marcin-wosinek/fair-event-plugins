@@ -45,14 +45,14 @@
 	position: relative;
 }
 
-.timetable-column-content .wp-block-fair-timetable-time-block {
+.timetable-column-content .wp-block-fair-timetable-time-slot {
 	margin: 0;
 	position: absolute;
 	left: 0;
 	right: 0;
 }
 
-.timetable-column-content .time-block {
+.timetable-column-content .time-slot-block {
 	margin: 0;
 	box-sizing: border-box;
 }

@@ -1,12 +1,12 @@
 /**
- * Save component for the Time Block
+ * Save component for the Time Slot
  */
 
 import { useBlockProps, RichText } from '@wordpress/block-editor';
 import { differenceInMinutes, parse } from 'date-fns';
 
 /**
- * Save component for the Time Block
+ * Save component for the Time Slot
  *
  * @param {Object} props            - Block props
  * @param {Object} props.attributes - Block attributes
@@ -30,7 +30,7 @@ export default function SaveComponent({ attributes, context }) {
 	};
 
 	const blockProps = useBlockProps.save({
-		className: 'time-block',
+		className: 'time-slot-block',
 		style: {
 			height: calculateBlockHeight(),
 		},

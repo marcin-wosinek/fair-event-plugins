@@ -1,9 +1,9 @@
 {
 	"$schema": "https://schemas.wp.org/trunk/block.json",
 	"apiVersion": 3,
-	"name": "fair-timetable/time-block",
+	"name": "fair-timetable/time-slot",
 	"version": "1.0.0",
-	"title": "Time Block",
+	"title": "Time Slot",
 	"category": "widgets",
 	"icon": "clock",
 	"description": "Display a scheduled event time slot",

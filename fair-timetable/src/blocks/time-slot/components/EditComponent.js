@@ -1,5 +1,5 @@
 /**
- * Edit component for the Time Block
+ * Edit component for the Time Slot
  */
 
 import { TextControl, PanelBody } from '@wordpress/components';
@@ -14,7 +14,7 @@ import { __ } from '@wordpress/i18n';
 import { differenceInMinutes, parse, addMinutes, format } from 'date-fns';
 
 /**
- * Edit component for the Time Block
+ * Edit component for the Time Slot
  *
  * @param {Object}   props               - Block props
  * @param {Object}   props.attributes    - Block attributes
@@ -44,7 +44,7 @@ export default function EditComponent({
 			return {
 				parentClientId: parentId,
 				siblingBlocks: siblings.filter(
-					(block) => block.name === 'fair-timetable/time-block'
+					(block) => block.name === 'fair-timetable/time-slot'
 				),
 			};
 		},
@@ -89,7 +89,7 @@ export default function EditComponent({
 		return `${offsetInHours * hourHeight}em`;
 	};
 
-	// Find correct position for time-block based on start time
+	// Find correct position for time-slot based on start time
 	const findCorrectPosition = (newStartHour) => {
 		const newStartTime = parse(newStartHour, 'HH:mm', new Date());
 
@@ -152,7 +152,7 @@ export default function EditComponent({
 	};
 
 	const blockProps = useBlockProps({
-		className: 'time-block',
+		className: 'time-slot-block',
 		style: {
 			position: 'absolute',
 			top: calculateTopPosition(),

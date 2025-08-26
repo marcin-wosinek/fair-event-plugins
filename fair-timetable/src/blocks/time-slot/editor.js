@@ -1,5 +1,5 @@
 /**
- * Time Block
+ * Time Slot
  *
  * Block for displaying scheduled event time slots.
  */
@@ -16,7 +16,7 @@ import './style.css';
 /**
  * Register the block
  */
-registerBlockType('fair-timetable/time-block', {
+registerBlockType('fair-timetable/time-slot', {
 	icon: <FontAwesomeIcon icon={faClock} />,
 
 	/**
