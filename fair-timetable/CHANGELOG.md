@@ -11,6 +11,7 @@
 - Removed header and columnTitle from timetable-column block for cleaner layout
 - Added server-side render function for time-slot block with calculated hour offset parameter
 - Added responsive design: time-range only shows when time-slot is wider than 320px
+- Added timetable container block for organizing multiple timetable-columns horizontally
 
 ## 1.0.1
 

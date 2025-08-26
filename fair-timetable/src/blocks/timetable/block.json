@@ -1,0 +1,35 @@
+{
+	"$schema": "https://schemas.wp.org/trunk/block.json",
+	"apiVersion": 3,
+	"name": "fair-timetable/timetable",
+	"version": "1.0.0",
+	"title": "Timetable",
+	"category": "widgets",
+	"icon": "calendar-alt",
+	"description": "A container for organizing timetable columns horizontally",
+	"keywords": ["timetable", "schedule", "columns", "container"],
+	"textdomain": "fair-timetable",
+	"supports": {
+		"html": false,
+		"align": ["wide", "full"],
+		"spacing": {
+			"padding": true,
+			"margin": ["top", "bottom"]
+		},
+		"color": {
+			"gradients": true,
+			"background": true
+		}
+	},
+	"attributes": {
+		"verticalAlignment": {
+			"type": "string"
+		}
+	},
+	"providesContext": {},
+	"usesContext": [],
+	"allowedBlocks": ["fair-timetable/timetable-column"],
+	"script": "file:./index.js",
+	"editorScript": "file:./editor.js",
+	"style": "file:./style-index.css"
+}

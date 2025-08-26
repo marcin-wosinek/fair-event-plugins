@@ -29,5 +29,6 @@ class BlockHooks {
 	public function register_blocks() {
 		register_block_type( __DIR__ . '/../../build/blocks/time-slot' );
 		register_block_type( __DIR__ . '/../../build/blocks/timetable-column' );
+		register_block_type( __DIR__ . '/../../build/blocks/timetable' );
 	}
 }

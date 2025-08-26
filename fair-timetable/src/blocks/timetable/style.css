@@ -1,0 +1,82 @@
+/**
+ * Timetable Block Styles
+ */
+
+.wp-block-fair-timetable-timetable {
+	display: flex;
+	flex-wrap: nowrap;
+	gap: 1rem;
+	align-items: flex-start;
+}
+
+
+.timetable-container {
+	display: flex;
+	flex-wrap: nowrap;
+	gap: 1rem;
+	align-items: flex-start;
+}
+
+/* Vertical alignment options */
+.timetable-container.is-vertically-aligned-top {
+	align-items: flex-start;
+}
+
+.timetable-container.is-vertically-aligned-center {
+	align-items: center;
+}
+
+.timetable-container.is-vertically-aligned-bottom {
+	align-items: flex-end;
+}
+
+/* Ensure timetable columns take equal width */
+.timetable-container .wp-block-fair-timetable-timetable-column {
+	flex: 1;
+	min-width: 0; /* Prevent flex items from overflowing */
+}
+
+/* Responsive behavior */
+@media (max-width: 768px) {
+	.wp-block-fair-timetable-timetable,
+	.timetable-container {
+		flex-direction: column;
+		gap: 0.5rem;
+	}
+	
+	.timetable-container .wp-block-fair-timetable-timetable-column {
+		flex: none;
+	}
+}
+
+/* Editor-specific styles */
+.editor-styles-wrapper .timetable-container {
+	display: flex;
+	flex-wrap: nowrap;
+	gap: 1rem;
+	align-items: flex-start;
+	min-height: 300px; /* Minimum height for easier editing */
+}
+
+.editor-styles-wrapper .timetable-container.is-vertically-aligned-top {
+	align-items: flex-start;
+}
+
+.editor-styles-wrapper .timetable-container.is-vertically-aligned-center {
+	align-items: center;
+}
+
+.editor-styles-wrapper .timetable-container.is-vertically-aligned-bottom {
+	align-items: flex-end;
+}
+
+/* Empty timetable placeholder */
+.editor-styles-wrapper .timetable-container:empty::before {
+	content: '';
+	display: block;
+	width: 100%;
+	height: 300px;
+	border: 2px dashed #ddd;
+	border-radius: 4px;
+	background: #f9f9f9;
+}
