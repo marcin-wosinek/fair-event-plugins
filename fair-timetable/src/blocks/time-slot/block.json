@@ -34,5 +34,6 @@
 	"usesContext": ["fair-timetable/hourHeight", "fair-timetable/startHour"],
 	"script": "file:./index.js",
 	"editorScript": "file:./editor.js",
-	"style": "file:./style-index.css"
+	"style": "file:./style-index.css",
+	"render": "file:./render.php"
 }
