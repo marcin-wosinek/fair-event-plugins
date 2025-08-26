@@ -2,4 +2,4 @@
 "fair-timetable": minor
 ---
 
-Initial development version of the plugin
+Initial version of the plugin

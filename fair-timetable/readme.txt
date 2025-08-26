@@ -1,10 +1,10 @@
 === Fair Timetable ===
 Contributors: marcinwosinek
-Tags: timetable, schedule, events, gutenberg, block, calendar
+Tags: timetable, schedule, events, gutenberg, calendar
 Requires at least: 5.8
 Tested up to: 6.8
 Requires PHP: 8.0
-Stable tag: 1.0.2
+Stable tag: 0.1.0
 License: GPLv3 or later
 License URI: https://www.gnu.org/licenses/gpl-3.0.html
 
@@ -62,10 +62,6 @@ Time settings are defined once in the timetable container block and automaticall
 
 When columns are placed inside a timetable container, they inherit the parent's time settings for consistency. For different time ranges, use separate timetable containers or standalone timetable columns.
 
-= How does the responsive design work? =
-
-Time ranges in time slots automatically hide when the slot is narrower than 320px, ensuring clean display on mobile devices. The layout uses CSS container queries for optimal responsive behavior.
-
 = Can I customize the visual appearance? =
 
 Yes! The plugin provides three hour height options (Small, Medium, Large) for visual scaling, and all blocks follow WordPress styling standards for theme compatibility.
@@ -81,48 +77,14 @@ Time slots calculate their position automatically based on the timetable's start
 == Screenshots ==
 
 1. Timetable container block with multiple columns in the editor
-2. Time slot configuration with responsive time display
-3. Global time settings in timetable container
-4. Frontend display of multi-column timetable
-5. Mobile responsive view with hidden time ranges
-6. Block hierarchy showing context inheritance
+2. Frontend display of multi-column timetable
 
 == Changelog ==
 
-= 1.0.2 =
+= 0.1.0 =
 
-* Renamed plugin from fair-schedule to fair-timetable
-* Updated all internal references, CSS classes, and block names
-* Changed namespace from FairSchedule to FairTimetable
-* Renamed time-block to time-slot for better semantic clarity
-* Removed header and columnTitle from timetable-column block for cleaner layout
-* Added server-side render function for time-slot block with calculated hour offset parameter
-* Added responsive design: time-range only shows when time-slot is wider than 320px
-* Added timetable container block for organizing multiple timetable-columns horizontally
-* Added context inheritance: timetable block provides time settings to all its columns
-* Added smart UI: timetable-columns show read-only time settings when inside a timetable with 'Edit in Timetable' button
-
-= 1.0.1 =
-
-* Update dependencies to the newest version
-
-== Upgrade Notice ==
-
-= 1.0.2 =
-Major update with new timetable container system, context inheritance, and responsive improvements. The plugin has been renamed from fair-schedule to fair-timetable with enhanced functionality.
+Initial version of the plugin.
 
 == Developer Notes ==
-
-This plugin is built with modern WordPress development practices:
-
-* Uses WordPress's block.json for block registration
-* Server-side rendering with render.php for time slots
-* CSS container queries for responsive design
-* WordPress block context system for data inheritance
-* Font Awesome SVG icons (not CSS) for better performance
-* ES6+ JavaScript with webpack compilation
-* Follows WordPress PHP and JavaScript coding standards
-
-The plugin demonstrates advanced block relationships with parent-child context inheritance and sophisticated responsive design patterns.
 
 The plugin is open source and contributions are welcome on GitHub: https://github.com/marcin-wosinek/fair-event-plugins
