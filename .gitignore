@@ -12,6 +12,7 @@ vendor/
 */node_modules/*
 */build/*
 node_modules
+dist
 
 # Playwright test results and reports
 */playwright-report/
