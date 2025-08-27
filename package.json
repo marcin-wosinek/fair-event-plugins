@@ -52,6 +52,7 @@
 		"adm-zip": "^0.5.16",
 		"agent-base": "^6.0.2",
 		"ajv": "^6.12.6",
+		"ajv-cli": "^5.0.0",
 		"ajv-errors": "^1.0.1",
 		"ajv-formats": "^2.1.1",
 		"ajv-keywords": "^3.5.2",
