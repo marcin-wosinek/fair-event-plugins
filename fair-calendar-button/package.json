@@ -7,12 +7,16 @@
 	"type": "module",
 	"main": "build/index.js",
 	"scripts": {
-		"build": "wp-scripts build",
+		"build": "wp-scripts build; npm run makejson",
 		"clean": "rm -rf build",
 		"prebuild": "npm run clean",
 		"start": "wp-scripts start",
 		"composer": "composer install",
 		"format": "wp-scripts format",
+		"makepot": "wp i18n make-pot . languages/fair-calendar-button.pot --exclude=node_modules,vendor,tests",
+		"makejson": "wp i18n make-json languages ./build/languages --pretty-print --no-purge",
+		"makemo": "wp i18n make-mo languages/",
+		"updatepo": "wp i18n update-po languages/fair-calendar-button.pot languages/",
 		"test": "jest",
 		"test:screenshots": "playwright test",
 		"screenshots": "playwright test --headed"

@@ -1,0 +1,329 @@
+msgid ""
+msgstr ""
+"Project-Id-Version: Fair Calendar Button 1.2.0\n"
+"Report-Msgid-Bugs-To: https://wordpress.org/support/plugin/fair-calendar-button\n"
+"Last-Translator: Marcin Wosinek <marcin@wosinek.net>\n"
+"Language-Team: German\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"POT-Creation-Date: 2025-08-27T20:29:38+00:00\n"
+"PO-Revision-Date: 2025-08-27 22:30+0000\n"
+"Language: de_DE\n"
+"X-Generator: WP-CLI 2.12.0\n"
+"X-Domain: fair-calendar-button\n"
+
+#. Plugin Name of the plugin
+#: fair-calendar-button.php
+msgid "Fair Calendar Button"
+msgstr "Kalender-Button"
+
+#. Plugin URI of the plugin
+#: fair-calendar-button.php
+msgid "https://wordpress.org/plugins/fair-calendar-button/"
+msgstr ""
+
+#. Description of the plugin
+#: fair-calendar-button.php
+msgid "A Gutenberg block for calendar integration. The block displays a button with a calendar integration with support for Google Calendar, Outlook, Yahoo Calendar, and ICS downloads."
+msgstr "Ein Gutenberg-Block für die Kalender-Integration. Der Block zeigt einen Button mit Kalender-Integration für Google Calendar, Outlook, Yahoo Calendar und ICS-Downloads."
+
+#. Author of the plugin
+#: fair-calendar-button.php
+msgid "Marcin Wosinek"
+msgstr ""
+
+#. Author URI of the plugin
+#: fair-calendar-button.php
+msgid "https://github.com/marcin-wosinek"
+msgstr ""
+
+#: build/blocks/calendar-button/block.json
+#: src/blocks/calendar-button/block.json
+msgctxt "block keyword"
+msgid "calendar"
+msgstr "kalender"
+
+#: build/blocks/calendar-button/block.json
+#: src/blocks/calendar-button/block.json
+msgctxt "block keyword"
+msgid "button"
+msgstr "button"
+
+#: build/blocks/calendar-button/block.json
+#: src/blocks/calendar-button/block.json
+msgctxt "block keyword"
+msgid "event"
+msgstr "ereignis"
+
+#: build/blocks/calendar-button/block.json
+#: src/blocks/calendar-button/block.json
+msgctxt "block keyword"
+msgid "schedule"
+msgstr "zeitplan"
+
+#: build/blocks/calendar-button/block.json
+#: src/blocks/calendar-button/block.json
+msgctxt "block title"
+msgid "Calendar Button"
+msgstr "Kalender-Button"
+
+#: build/blocks/calendar-button/block.json
+#: src/blocks/calendar-button/block.json
+msgctxt "block description"
+msgid "A Gutenberg block for calendar integration"
+msgstr "Ein Gutenberg-Block für die Kalender-Integration"
+
+#: build/blocks/calendar-button/editor.js:2
+#: src/blocks/calendar-button/components/EditComponent.js:56
+#: src/blocks/calendar-button/components/EditComponent.js:73
+msgid "Other"
+msgstr "Andere"
+
+#: build/blocks/calendar-button/editor.js:2
+#: src/blocks/calendar-button/components/EditComponent.js:57
+msgid "30 minutes"
+msgstr "30 Minuten"
+
+#: build/blocks/calendar-button/editor.js:2
+#: src/blocks/calendar-button/components/EditComponent.js:58
+msgid "1 hour"
+msgstr "1 Stunde"
+
+#: build/blocks/calendar-button/editor.js:2
+#: src/blocks/calendar-button/components/EditComponent.js:59
+msgid "1 hour 30 minutes"
+msgstr "1 Stunde 30 Minuten"
+
+#: build/blocks/calendar-button/editor.js:2
+#: src/blocks/calendar-button/components/EditComponent.js:60
+msgid "2 hours"
+msgstr "2 Stunden"
+
+#: build/blocks/calendar-button/editor.js:2
+#: src/blocks/calendar-button/components/EditComponent.js:62
+msgid "2 hours 30 minutes"
+msgstr "2 Stunden 30 Minuten"
+
+#: build/blocks/calendar-button/editor.js:2
+#: src/blocks/calendar-button/components/EditComponent.js:65
+msgid "3 hours"
+msgstr "3 Stunden"
+
+#: build/blocks/calendar-button/editor.js:2
+#: src/blocks/calendar-button/components/EditComponent.js:66
+msgid "4 hours"
+msgstr "4 Stunden"
+
+#: build/blocks/calendar-button/editor.js:2
+#: src/blocks/calendar-button/components/EditComponent.js:67
+msgid "6 hours"
+msgstr "6 Stunden"
+
+#: build/blocks/calendar-button/editor.js:2
+#: src/blocks/calendar-button/components/EditComponent.js:68
+msgid "8 hours"
+msgstr "8 Stunden"
+
+#: build/blocks/calendar-button/editor.js:2
+#: src/blocks/calendar-button/components/EditComponent.js:74
+msgid "1 day"
+msgstr "1 Tag"
+
+#: build/blocks/calendar-button/editor.js:2
+#: src/blocks/calendar-button/components/EditComponent.js:75
+msgid "2 days"
+msgstr "2 Tage"
+
+#: build/blocks/calendar-button/editor.js:2
+#: src/blocks/calendar-button/components/EditComponent.js:76
+msgid "3 days"
+msgstr "3 Tage"
+
+#: build/blocks/calendar-button/editor.js:2
+#: src/blocks/calendar-button/components/EditComponent.js:265
+msgid "Add to Calendar"
+msgstr "Zum Kalender hinzufügen"
+
+#: build/blocks/calendar-button/editor.js:2
+#: src/blocks/calendar-button/components/EditComponent.js:288
+msgid "Calendar Button Settings"
+msgstr "Kalender-Button Einstellungen"
+
+#: build/blocks/calendar-button/editor.js:2
+#: src/blocks/calendar-button/components/EditComponent.js:294
+msgid "All Day Event"
+msgstr "Ganztägiges Ereignis"
+
+#: build/blocks/calendar-button/editor.js:2
+#: src/blocks/calendar-button/components/EditComponent.js:301
+msgid "Start Date"
+msgstr "Startdatum"
+
+#: build/blocks/calendar-button/editor.js:2
+#: src/blocks/calendar-button/components/EditComponent.js:302
+msgid "Start Date/Time"
+msgstr "Startdatum/Uhrzeit"
+
+#: build/blocks/calendar-button/editor.js:2
+#: src/blocks/calendar-button/components/EditComponent.js:314
+#: src/blocks/calendar-button/components/EditComponent.js:322
+msgid "Event Length"
+msgstr "Ereignisdauer"
+
+#: build/blocks/calendar-button/editor.js:2
+#: src/blocks/calendar-button/components/EditComponent.js:331
+msgid "End Date"
+msgstr "Enddatum"
+
+#: build/blocks/calendar-button/editor.js:2
+#: src/blocks/calendar-button/components/EditComponent.js:332
+msgid "End Date/Time"
+msgstr "Enddatum/Uhrzeit"
+
+#: build/blocks/calendar-button/editor.js:2
+#: src/blocks/calendar-button/components/EditComponent.js:349
+msgid "Description"
+msgstr "Beschreibung"
+
+#: build/blocks/calendar-button/editor.js:2
+#: src/blocks/calendar-button/components/EditComponent.js:356
+msgid "Location"
+msgstr "Ort"
+
+#: build/blocks/calendar-button/editor.js:2
+#: src/blocks/calendar-button/components/EditComponent.js:361
+msgid "Recurring Event"
+msgstr "Wiederkehrendes Ereignis"
+
+#: build/blocks/calendar-button/editor.js:2
+#: src/blocks/calendar-button/components/EditComponent.js:366
+msgid "Enable this to set up a recurring event with an iCal recurrence rule."
+msgstr "Aktivieren Sie diese Option, um ein wiederkehrendes Ereignis mit einer iCal-Wiederholungsregel einzurichten."
+
+#: build/blocks/calendar-button/editor.js:2
+#: src/blocks/calendar-button/components/EditComponent.js:374
+msgid "Frequency"
+msgstr "Häufigkeit"
+
+#: build/blocks/calendar-button/editor.js:2
+#: src/blocks/calendar-button/components/EditComponent.js:378
+msgid "Daily"
+msgstr "Täglich"
+
+#: build/blocks/calendar-button/editor.js:2
+#: src/blocks/calendar-button/components/EditComponent.js:385
+msgid "Weekly"
+msgstr "Wöchentlich"
+
+#: build/blocks/calendar-button/editor.js:2
+#: src/blocks/calendar-button/components/EditComponent.js:392
+msgid "Biweekly"
+msgstr "Zweiwöchentlich"
+
+#: build/blocks/calendar-button/editor.js:2
+#: src/blocks/calendar-button/components/EditComponent.js:400
+msgid "How often the event repeats."
+msgstr "Wie oft das Ereignis wiederholt wird."
+
+#: build/blocks/calendar-button/editor.js:2
+#: src/blocks/calendar-button/components/EditComponent.js:406
+msgid "Number of Repetitions"
+msgstr "Anzahl der Wiederholungen"
+
+#: build/blocks/calendar-button/editor.js:2
+#: src/blocks/calendar-button/components/EditComponent.js:413
+msgid "Leave empty for unlimited repetitions, or set \"Until Date\" below."
+msgstr "Leer lassen für unbegrenzte Wiederholungen oder \"Bis Datum\" unten festlegen."
+
+#: build/blocks/calendar-button/editor.js:2
+#: src/blocks/calendar-button/components/EditComponent.js:420
+msgid "Until Date"
+msgstr "Bis Datum"
+
+#: build/blocks/calendar-button/editor.js:2
+#: src/blocks/calendar-button/components/EditComponent.js:424
+msgid "Leave empty for unlimited repetitions, or set \"Number of Repetitions\" above."
+msgstr "Leer lassen für unbegrenzte Wiederholungen oder \"Anzahl der Wiederholungen\" oben festlegen."
+
+#: build/blocks/calendar-button/editor.js:1
+#: src/blocks/calendar-button/components/RecurringEventsCalendar.js:82
+msgid "Sun"
+msgstr "So"
+
+#: build/blocks/calendar-button/editor.js:1
+#: src/blocks/calendar-button/components/RecurringEventsCalendar.js:83
+msgid "Mon"
+msgstr "Mo"
+
+#: build/blocks/calendar-button/editor.js:1
+#: src/blocks/calendar-button/components/RecurringEventsCalendar.js:84
+msgid "Tue"
+msgstr "Di"
+
+#: build/blocks/calendar-button/editor.js:1
+#: src/blocks/calendar-button/components/RecurringEventsCalendar.js:85
+msgid "Wed"
+msgstr "Mi"
+
+#: build/blocks/calendar-button/editor.js:1
+#: src/blocks/calendar-button/components/RecurringEventsCalendar.js:86
+msgid "Thu"
+msgstr "Do"
+
+#: build/blocks/calendar-button/editor.js:1
+#: src/blocks/calendar-button/components/RecurringEventsCalendar.js:87
+msgid "Fri"
+msgstr "Fr"
+
+#: build/blocks/calendar-button/editor.js:1
+#: src/blocks/calendar-button/components/RecurringEventsCalendar.js:88
+msgid "Sat"
+msgstr "Sa"
+
+#: build/blocks/calendar-button/editor.js:1
+#: src/blocks/calendar-button/components/RecurringEventsCalendar.js:103
+msgid "Previous month"
+msgstr "Vorheriger Monat"
+
+#: build/blocks/calendar-button/editor.js:1
+#: src/blocks/calendar-button/components/RecurringEventsCalendar.js:117
+msgid "Next month"
+msgstr "Nächster Monat"
+
+#: build/blocks/calendar-button/editor.js:1
+#: src/blocks/calendar-button/components/RecurringEventsCalendar.js:149
+msgid "Event occurs on this day"
+msgstr "Ereignis findet an diesem Tag statt"
+
+#: build/blocks/calendar-button/editor.js:1
+#: src/blocks/calendar-button/components/RecurringEventsCalendar.js:157
+msgid "Event occurs on this day (last occurrence)"
+msgstr "Ereignis findet an diesem Tag statt (letztes Vorkommen)"
+
+#: build/blocks/calendar-button/editor.js:1
+#: src/blocks/calendar-button/components/RecurringEventsCalendar.js:161
+msgid "Last occurrence date"
+msgstr "Datum des letzten Vorkommens"
+
+#: build/blocks/calendar-button/editor.js:1
+#: src/blocks/calendar-button/components/RecurringEventsCalendar.js:184
+msgid "1 event occurrence in this month"
+msgstr "1 Ereignisvorkommen in diesem Monat"
+
+#. translators: %d: number of event occurrences
+#: build/blocks/calendar-button/editor.js:2
+#: src/blocks/calendar-button/components/RecurringEventsCalendar.js:189
+#, js-format
+msgid "%d event occurrences in this month"
+msgstr "%d Ereignisvorkommen in diesem Monat"
+
+#: build/blocks/calendar-button/editor.js:2
+#: src/blocks/calendar-button/filters/buttonFilter.js:70
+msgid "Calendar Event Details"
+msgstr "Kalender-Ereignis Details"
+
+#: build/blocks/calendar-button/editor.js:2
+#: src/blocks/calendar-button/filters/buttonFilter.js:82
+msgid "Edit Calendar Event"
+msgstr "Kalender-Ereignis bearbeiten"

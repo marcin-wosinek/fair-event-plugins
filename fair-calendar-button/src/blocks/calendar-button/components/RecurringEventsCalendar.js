@@ -185,7 +185,8 @@ export default function RecurringEventsCalendar({ startDate, recurrence }) {
 									'1 event occurrence in this month',
 									'fair-calendar-button'
 								)
-							: __(
+							: /* translators: %d: number of event occurrences */
+								__(
 									'%d event occurrences in this month',
 									'fair-calendar-button'
 								).replace('%d', currentMonthEvents.length)}
