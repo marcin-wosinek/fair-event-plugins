@@ -72,51 +72,9 @@ jobs:
         run: |
           wp package install wp-cli/dist-archive-command:@stable
 
-      - name: Create plugin ZIP files
+      - name: Create plugin ZIP files using wp dist-archive
         run: |
-          mkdir -p dist
-
-          # Create Fair Payment plugin zip
-          cd fair-payment
-          zip -r ../dist/fair-payment.zip . \
-            -x "node_modules/*" \
-            -x "__tests__/*" \
-            -x "package*.json" \
-            -x "webpack.config.js" \
-            -x "composer.lock" \
-            -x "vendor/composer/installers/*" \
-            -x ".*"
-          cd ..
-
-          # Create Fair Timetable plugin zip using wp dist-archive
-          wp dist-archive fair-timetable dist/fair-timetable.zip
-
-          # Create Fair Calendar Button plugin zip (WordPress.org ready)
-          cd fair-calendar-button
-          zip -r ../dist/fair-calendar-button.zip . \
-            -x "node_modules/*" \
-            -x "__tests__/*" \
-            -x "assets/*" \
-            -x "package*.json" \
-            -x "webpack.config.js" \
-            -x "composer.lock" \
-            -x "vendor/composer/installers/*" \
-            -x "vendor/bin/*" \
-            -x "vendor/*/bin/*" \
-            -x "tests/*" \
-            -x "test-results/*" \
-            -x "playwright-report/*" \
-            -x "playwright.config.js" \
-            -x ".env*" \
-            -x "scripts/*" \
-            -x "*.sh" \
-            -x ".*"
-          cd ..
-
-      - name: List created ZIP files
-        run: |
-          echo "Created plugin ZIP files:"
-          ls -la dist/
+          npm run dist-archive
 
       - name: Upload Fair Payment plugins
         uses: actions/upload-artifact@v4

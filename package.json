@@ -34,7 +34,10 @@
 		"release:fair-calendar-button": "npm run build --workspace=fair-calendar-button && changeset tag",
 		"release:fair-timetable": "npm run build --workspace=fair-timetable && changeset tag",
 		"release:fair-registration": "npm run build --workspace=fair-registration && changeset tag",
-		"dist-archive:fair-timetable": "wp dist-archive fair-timetable dist --create-target-dir"
+		"dist-archive": "npm-run-all dist-archive:*",
+		"dist-archive:fair-timetable": "wp dist-archive fair-timetable dist --create-target-dir",
+		"dist-archive:fair-payment": "wp dist-archive fair-payment dist --create-target-dir",
+		"dist-archive:fair-calendar-button": "wp dist-archive fair-calendar-button dist --create-target-dir"
 	},
 	"dependencies": {
 		"@wordpress/scripts": "^30.20.0",
