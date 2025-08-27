@@ -2,9 +2,7 @@
 
 ## 0.2.0
 
-### Minor Changes
-
-- 0dc7363: Initial version of the plugin
+Minor fixes
 
 ## 0.1.0
 
