@@ -2,7 +2,7 @@
  * Edit component for the Time Slot
  */
 
-import { TextControl, PanelBody } from '@wordpress/components';
+import { TextControl, PanelBody, SelectControl } from '@wordpress/components';
 import {
 	useBlockProps,
 	InspectorControls,
@@ -51,6 +51,18 @@ export default function EditComponent({
 		[clientId]
 	);
 
+	// Duration options (in minutes)
+	const durationOptions = [
+		{ label: __('30 minutes', 'fair-timetable'), value: 30 },
+		{ label: __('45 minutes', 'fair-timetable'), value: 45 },
+		{ label: __('1 hour', 'fair-timetable'), value: 60 },
+		{ label: __('1.5 hours', 'fair-timetable'), value: 90 },
+		{ label: __('2 hours', 'fair-timetable'), value: 120 },
+		{ label: __('3 hours', 'fair-timetable'), value: 180 },
+		{ label: __('4 hours', 'fair-timetable'), value: 240 },
+		{ label: __('Custom', 'fair-timetable'), value: 'custom' },
+	];
+
 	// Calculate current duration in minutes
 	const getCurrentDuration = () => {
 		if (!startHour || !endHour) return 60; // Default 1 hour in minutes
@@ -58,6 +70,15 @@ export default function EditComponent({
 		const startDate = parse(startHour, 'HH:mm', new Date());
 		const endDate = parse(endHour, 'HH:mm', new Date());
 		return differenceInMinutes(endDate, startDate);
+	};
+
+	// Get selected duration option or 'custom'
+	const getSelectedDuration = () => {
+		const currentDuration = getCurrentDuration();
+		const matchingOption = durationOptions.find(
+			(option) => option.value === currentDuration
+		);
+		return matchingOption ? currentDuration : 'custom';
 	};
 
 	// Calculate block height based on duration
@@ -151,6 +172,22 @@ export default function EditComponent({
 		}
 	};
 
+	// Handle end hour change - updates duration based on time difference
+	const handleEndHourChange = (newEndHour) => {
+		setAttributes({ endHour: newEndHour });
+	};
+
+	// Handle duration selection change
+	const handleDurationChange = (selectedDuration) => {
+		if (selectedDuration === 'custom' || !startHour) return;
+
+		const startDate = parse(startHour, 'HH:mm', new Date());
+		const newEndDate = addMinutes(startDate, selectedDuration);
+		const newEndHour = format(newEndDate, 'HH:mm');
+
+		setAttributes({ endHour: newEndHour });
+	};
+
 	const blockProps = useBlockProps({
 		className: 'time-slot-block',
 		style: {
@@ -171,12 +208,30 @@ export default function EditComponent({
 						value={startHour}
 						onChange={handleStartHourChange}
 						type="time"
+						help={__(
+							'Changing start time maintains duration',
+							'fair-timetable'
+						)}
+					/>
+					<SelectControl
+						label={__('Duration', 'fair-timetable')}
+						value={getSelectedDuration()}
+						options={durationOptions}
+						onChange={handleDurationChange}
+						help={__(
+							'Select preset duration or use custom end time',
+							'fair-timetable'
+						)}
 					/>
 					<TextControl
 						label={__('End Hour', 'fair-timetable')}
 						value={endHour}
-						onChange={(value) => setAttributes({ endHour: value })}
+						onChange={handleEndHourChange}
 						type="time"
+						help={__(
+							'Manual end time (sets duration to Custom)',
+							'fair-timetable'
+						)}
 					/>
 				</PanelBody>
 			</InspectorControls>
