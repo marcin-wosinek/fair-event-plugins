@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.3.0
+
+### Minor Changes
+
+- Add translations to PL, DE, ES and FR
+
 ## 1.2.0
 
 ### Minor Changes
