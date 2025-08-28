@@ -10,6 +10,7 @@ import {
 } from '@fortawesome/free-brands-svg-icons';
 import { faDownload } from '@fortawesome/free-solid-svg-icons';
 import { icon } from '@fortawesome/fontawesome-svg-core';
+import { __ } from '@wordpress/i18n';
 
 /**
  * Handle calendar button click - now shows dropdown with options
@@ -75,7 +76,7 @@ function createCalendarDropdown(eventData, buttonElement) {
 			color: '#720e9e',
 		},
 		{
-			name: 'Download ICS',
+			name: __('Download ICS', 'fair-calendar-button'),
 			key: 'ics',
 			generator: ics,
 			iconDef: faDownload,
