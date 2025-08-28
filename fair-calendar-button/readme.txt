@@ -4,7 +4,7 @@ Tags: calendar, events, gutenberg, block
 Requires at least: 5.8
 Tested up to: 6.8
 Requires PHP: 8.0
-Stable tag: 1.3.0
+Stable tag: 1.3.1
 License: GPLv3 or later
 License URI: https://www.gnu.org/licenses/gpl-3.0.html
 Text Domain: fair-calendar-button
@@ -81,6 +81,9 @@ Yes, the plugin doesn't collect, store, or transmit any personal data. Event det
 5. Block settings panel in the editor
 
 == Changelog ==
+
+## 1.3.1
+* Add missing translation
 
 ## 1.3.0
 * Add translations to PL, DE, ES and FR
