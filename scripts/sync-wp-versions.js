@@ -22,21 +22,25 @@ const plugins = [
 		name: 'fair-calendar-button',
 		packagePath: 'fair-calendar-button/package.json',
 		phpFiles: ['fair-calendar-button/fair-calendar-button.php'],
+		readmeFiles: ['fair-calendar-button/readme.txt'],
 	},
 	{
 		name: 'fair-payment',
 		packagePath: 'fair-payment/package.json',
 		phpFiles: ['fair-payment/fair-payment.php'],
+		readmeFiles: [],
 	},
 	{
 		name: 'fair-registration',
 		packagePath: 'fair-registration/package.json',
 		phpFiles: ['fair-registration/fair-registration.php'],
+		readmeFiles: [],
 	},
 	{
 		name: 'fair-timetable',
 		packagePath: 'fair-timetable/package.json',
 		phpFiles: ['fair-timetable/fair-timetable.php'],
+		readmeFiles: ['fair-timetable/readme.txt'],
 	},
 ];
 
@@ -53,7 +57,14 @@ function updatePluginVersion(content, newVersion) {
 	// * Version: 1.0.0
 	const versionRegex = /(\*?\s*Version:\s*)([0-9]+\.[0-9]+\.[0-9]+)/gi;
 
-	return content.replace(versionRegex, `$1${newVersion}`);
+	// Match WordPress plugin header stable tag patterns:
+	// Stable tag: 1.0.0
+	const stableTagRegex = /(Stable tag:\s*)([0-9]+\.[0-9]+\.[0-9]+)/gi;
+
+	let updatedContent = content.replace(versionRegex, `$1${newVersion}`);
+	updatedContent = updatedContent.replace(stableTagRegex, `$1${newVersion}`);
+
+	return updatedContent;
 }
 
 /**
@@ -100,6 +111,39 @@ function syncVersions() {
 				} catch (error) {
 					console.error(
 						`   ❌ Error updating ${phpFile}:`,
+						error.message
+					);
+				}
+			}
+
+			// Update each readme file
+			for (const readmeFile of plugin.readmeFiles) {
+				const readmeFilePath = join(rootDir, readmeFile);
+
+				try {
+					// Read current content
+					const originalContent = readFileSync(
+						readmeFilePath,
+						'utf8'
+					);
+
+					// Update version
+					const updatedContent = updatePluginVersion(
+						originalContent,
+						version
+					);
+
+					// Only write if content changed
+					if (originalContent !== updatedContent) {
+						writeFileSync(readmeFilePath, updatedContent, 'utf8');
+						console.log(`   ✅ Updated ${readmeFile}`);
+						updatedCount++;
+					} else {
+						console.log(`   ⏭️  ${readmeFile} already up to date`);
+					}
+				} catch (error) {
+					console.error(
+						`   ❌ Error updating ${readmeFile}:`,
 						error.message
 					);
 				}
