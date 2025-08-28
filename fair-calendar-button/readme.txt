@@ -7,6 +7,8 @@ Requires PHP: 8.0
 Stable tag: 1.3.0
 License: GPLv3 or later
 License URI: https://www.gnu.org/licenses/gpl-3.0.html
+Text Domain: fair-calendar-button
+Domain Path: /languages
 
 A Gutenberg block for calendar integration.
 
@@ -21,6 +23,7 @@ A Gutenberg block for calendar integration. The block displays a button with a c
 * **Server-side Rendering:** SEO-friendly with proper WordPress block architecture
 * **Automatic URL Inclusion:** Event descriptions automatically include the page URL for reference
 * **Responsive Design:** Works beautifully on desktop and mobile devices
+* **Multilingual Support:** Available in English, Polish, German, Spanish, and French
 * **Fair Pricing Model:** No premium tiers or hidden features - everything is included
 
 **Supported Calendar Providers:**
