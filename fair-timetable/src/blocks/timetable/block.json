@@ -2,50 +2,45 @@
 	"$schema": "https://schemas.wp.org/trunk/block.json",
 	"apiVersion": 3,
 	"name": "fair-timetable/timetable",
-	"version": "1.0.0",
+	"version": "0.1.0",
 	"title": "Timetable",
 	"category": "widgets",
 	"icon": "calendar-alt",
-	"description": "A container for organizing timetable columns horizontally",
-	"keywords": ["timetable", "schedule", "columns", "container"],
-	"textdomain": "fair-timetable",
+	"description": "A timetable block for displaying scheduled events",
+	"example": {},
 	"supports": {
 		"html": false,
-		"align": ["wide", "full"],
-		"spacing": {
-			"padding": true,
-			"margin": ["top", "bottom"]
-		},
-		"color": {
-			"gradients": true,
-			"background": true
-		}
+		"anchor": true,
+		"align": true
 	},
 	"attributes": {
-		"verticalAlignment": {
-			"type": "string"
-		},
 		"startHour": {
 			"type": "string",
 			"default": "09:00"
 		},
 		"endHour": {
 			"type": "string",
-			"default": "18:00"
+			"default": "17:00"
+		},
+		"length": {
+			"type": "number",
+			"default": 8
 		},
 		"hourHeight": {
 			"type": "number",
-			"default": 2.5
+			"default": 4
 		}
 	},
 	"providesContext": {
 		"fair-timetable/startHour": "startHour",
 		"fair-timetable/endHour": "endHour",
+		"fair-timetable/length": "length",
 		"fair-timetable/hourHeight": "hourHeight"
 	},
-	"usesContext": [],
-	"allowedBlocks": ["fair-timetable/timetable-column"],
-	"script": "file:./index.js",
+	"textdomain": "fair-timetable",
 	"editorScript": "file:./editor.js",
-	"style": "file:./style-index.css"
+	"viewScript": "file:./view.js",
+	"editorStyle": "file:./editor.css",
+	"style": "file:./view.css",
+	"render": "file:./render.php"
 }

@@ -1,84 +1,60 @@
 <?php
-
-namespace FairTimetable\Core;
+/**
+ * Server-side rendering for Time Slot block
+ *
+ * @package FairTimetable
+ */
 
 defined( 'WPINC' ) || die;
 
-/**
- * Render callback for the time slot block
- *
- * @package FairTimetable
- * @param  array $attributes Block attributes
- * @param  string $content Block content  
- * @param  WP_Block $block Block instance
- * @return string Rendered block HTML
- */
-
-// Extract attributes with defaults
-$title = $attributes['title'] ?? '';
+// Get block attributes
 $start_hour = $attributes['startHour'] ?? '09:00';
 $end_hour = $attributes['endHour'] ?? '10:00';
+$length = $attributes['length'] ?? 1;
 
-// Get context from parent timetable column
-$column_start_hour = $block->context['fair-timetable/startHour'] ?? '09:00';
-$hour_height = $block->context['fair-timetable/hourHeight'] ?? 2.5;
-
-// Calculate hour offset between column start and time-slot start
-$hour_offset = 0;
-if ($start_hour && $column_start_hour) {
-    $column_start_time = \DateTime::createFromFormat('H:i', $column_start_hour);
-    $slot_start_time = \DateTime::createFromFormat('H:i', $start_hour);
-    
-    if ($column_start_time && $slot_start_time) {
-        $interval = $column_start_time->diff($slot_start_time);
-        $hour_offset = $interval->h + ($interval->i / 60);
-        
-        // Handle negative offset if slot starts before column
-        if ($slot_start_time < $column_start_time) {
-            $hour_offset = -$hour_offset;
-        }
-    }
-}
+// Get timetable context for offset calculation
+$timetable_start_hour = $block->context['fair-timetable/startHour'] ?? '09:00';
 
 // Calculate slot duration in hours
-$slot_duration = 1; // default 1 hour
-if ($start_hour && $end_hour) {
-    $slot_start_time = \DateTime::createFromFormat('H:i', $start_hour);
-    $slot_end_time = \DateTime::createFromFormat('H:i', $end_hour);
-    
-    if ($slot_start_time && $slot_end_time) {
-        $duration_interval = $slot_start_time->diff($slot_end_time);
-        $slot_duration = $duration_interval->h + ($duration_interval->i / 60);
-    }
+$start_time = DateTime::createFromFormat('H:i', $start_hour);
+$end_time = DateTime::createFromFormat('H:i', $end_hour);
+
+// If end time is before start time, assume next day
+if ($end_time <= $start_time) {
+    $end_time->add(new DateInterval('P1D'));
 }
 
-// Calculate positioning and sizing
-$top_position = $hour_offset * $hour_height;
-$block_height = $slot_duration * $hour_height;
+$interval = $start_time->diff($end_time);
+$slot_hours = ($interval->days * 24) + $interval->h + ($interval->i / 60);
 
-// Prepare wrapper attributes
+// Calculate offset from timetable start
+$timetable_start_time = DateTime::createFromFormat('H:i', $timetable_start_hour);
+$slot_start_time = DateTime::createFromFormat('H:i', $start_hour);
+
+$offset_interval = $timetable_start_time->diff($slot_start_time);
+$offset_hours = (($offset_interval->h * 60) + $offset_interval->i) / 60;
+
+// If slot start is before timetable start, add 24 hours (next day)
+if ($offset_hours < 0) {
+    $offset_hours += 24;
+}
+
+// Build CSS custom properties
+$css_vars = sprintf(
+    '--slot-duration: %s; --slot-length: %s; --time-slot-length: %s; --time-slot-offset: %s;',
+    esc_attr($slot_hours),
+    esc_attr($length),
+    esc_attr($length),
+    esc_attr($offset_hours)
+);
+
+// Get wrapper attributes
 $wrapper_attributes = get_block_wrapper_attributes([
-    'class' => 'time-slot-block',
-    'style' => sprintf(
-        'position: absolute; top: %sem; left: 0; right: 0; height: %sem;',
-        esc_attr($top_position),
-        esc_attr($block_height)
-    ),
-    'data-start-hour' => esc_attr($start_hour),
-    'data-end-hour' => esc_attr($end_hour),
-    'data-hour-offset' => esc_attr($hour_offset)
+    'class' => 'time-slot-container',
+    'style' => $css_vars,
 ]);
 ?>
 
-<div <?php echo wp_kses_data( $wrapper_attributes ); ?>>
-    <div class="time-slot">
-        <span class="time-range">
-            <?php echo esc_html($start_hour); ?> - <?php echo esc_html($end_hour); ?>
-        </span>
-        <?php if (!empty($title)): ?>
-            <h5 class="event-title">
-                <?php echo wp_kses_post($title); ?>
-            </h5>
-        <?php endif; ?>
-    </div>
+<div <?php echo $wrapper_attributes; ?>>
+    <?php echo $content; ?>
 </div>

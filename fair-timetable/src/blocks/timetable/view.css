@@ -1,0 +1,11 @@
+/**
+ * Timetable Block Styles
+ */
+.timetable-content {
+	display: flex;
+	align-items: flex-start;
+	height: 100%;
+  gap: 0.5rem;
+  overflow: hidden;
+  flex-wrap: wrap;
+}
