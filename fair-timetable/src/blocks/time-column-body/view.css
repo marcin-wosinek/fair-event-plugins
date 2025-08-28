@@ -1,0 +1,11 @@
+/**
+ * Time Column Body Block Styles
+ */
+.time-column-body-container {
+  border: 1px solid #e0e0e0;
+  border-radius: 0;
+  box-sizing: border-box;
+	height: calc(var(--hour-height) * var(--column-length) * 1rem);
+  overflow: hidden;
+  position: relative;
+}

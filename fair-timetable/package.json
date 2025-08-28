@@ -16,7 +16,6 @@
 		"composer:update": "composer update",
 		"composer:validate": "composer validate --strict",
 		"test": "jest",
-		"test:screenshots": "playwright test",
 		"screenshots": "playwright test --headed",
 		"playwright:run": "playwright test --headed",
 		"playwright:up": "playwright open",
