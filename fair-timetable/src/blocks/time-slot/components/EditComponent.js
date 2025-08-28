@@ -188,8 +188,20 @@ export default function EditComponent({
 		setAttributes({ endHour: newEndHour });
 	};
 
+	// Add class for short duration blocks
+	const getBlockClasses = () => {
+		const currentDuration = getCurrentDuration();
+		let classes = 'time-slot-block';
+
+		if (currentDuration < 60) {
+			classes += ' time-slot-short';
+		}
+
+		return classes;
+	};
+
 	const blockProps = useBlockProps({
-		className: 'time-slot-block',
+		className: getBlockClasses(),
 		style: {
 			position: 'absolute',
 			top: calculateTopPosition(),
