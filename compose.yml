@@ -97,8 +97,82 @@ services:
     volumes:
       - db-php74:/var/lib/mysql
 
+  wordpress-wp63:
+    image: wordpress:6.3.2-php8.2
+    platform: linux/amd64
+    restart: always
+    profiles: ["wp63"]
+    ports:
+      - 8084:80
+    environment:
+      WORDPRESS_DB_HOST: db-wp63
+      WORDPRESS_DB_USER: exampleuser
+      WORDPRESS_DB_PASSWORD: examplepass
+      WORDPRESS_DB_NAME: exampledb
+    volumes:
+      - wordpress-wp63:/var/www/html
+      - ./fair-calendar-button:/var/www/html/wp-content/plugins/fair-calendar-button
+      - ./fair-payment:/var/www/html/wp-content/plugins/fair-payment
+      - ./fair-registration:/var/www/html/wp-content/plugins/fair-registration
+      - ./fair-timetable:/var/www/html/wp-content/plugins/fair-timetable
+    depends_on:
+      - db-wp63
+
+  db-wp63:
+    image: mysql:8.0
+    restart: always
+    profiles: ["wp63"]
+    ports:
+      - 3308:3306
+    environment:
+      MYSQL_DATABASE: exampledb
+      MYSQL_USER: exampleuser
+      MYSQL_PASSWORD: examplepass
+      MYSQL_RANDOM_ROOT_PASSWORD: "1"
+    volumes:
+      - db-wp63:/var/lib/mysql
+
+  wordpress-wp67:
+    image: wordpress:6.7-php8.3
+    platform: linux/amd64
+    restart: always
+    profiles: ["wp67"]
+    ports:
+      - 8085:80
+    environment:
+      WORDPRESS_DB_HOST: db-wp67
+      WORDPRESS_DB_USER: exampleuser
+      WORDPRESS_DB_PASSWORD: examplepass
+      WORDPRESS_DB_NAME: exampledb
+    volumes:
+      - wordpress-wp67:/var/www/html
+      - ./fair-calendar-button:/var/www/html/wp-content/plugins/fair-calendar-button
+      - ./fair-payment:/var/www/html/wp-content/plugins/fair-payment
+      - ./fair-registration:/var/www/html/wp-content/plugins/fair-registration
+      - ./fair-timetable:/var/www/html/wp-content/plugins/fair-timetable
+    depends_on:
+      - db-wp67
+
+  db-wp67:
+    image: mysql:8.0
+    restart: always
+    profiles: ["wp67"]
+    ports:
+      - 3309:3306
+    environment:
+      MYSQL_DATABASE: exampledb
+      MYSQL_USER: exampleuser
+      MYSQL_PASSWORD: examplepass
+      MYSQL_RANDOM_ROOT_PASSWORD: "1"
+    volumes:
+      - db-wp67:/var/lib/mysql
+
 volumes:
   wordpress:
   db:
   wordpress-php74:
   db-php74:
+  wordpress-wp63:
+  db-wp63:
+  wordpress-wp67:
+  db-wp67:
