@@ -59,7 +59,7 @@ jobs:
           wp --info
 
       - name: Install PHP dependencies in all plugins
-        run: npm run composer
+        run: npm run composer:install
 
       - name: Build JavaScript for all plugins
         run: npm run build
