@@ -23,7 +23,7 @@
 		"playwright:run": "playwright test --headed",
 		"playwright:up": "playwright open",
 		"svn:checkout": "svn co https://plugins.svn.wordpress.org/fair-calendar-button svn",
-		"svn:copy": "cp -r readme.txt src package* composer* languages CHANGELOG.md svn/trunk; cp assets/* svn/assets"
+		"svn:copy": "cp -r readme.txt fair-calendar-button.php src package* composer* languages CHANGELOG.md svn/trunk; cp assets/* svn/assets"
 	},
 	"dependencies": {
 		"@fortawesome/fontawesome-svg-core": "^7.0.0",

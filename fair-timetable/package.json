@@ -21,7 +21,7 @@
 		"playwright:run": "playwright test --headed",
 		"playwright:up": "playwright open",
 		"svn:checkout": "svn co https://plugins.svn.wordpress.org/fair-timetable svn",
-		"svn:copy": "cp -r readme.txt src package* composer* CHANGELOG.md svn/trunk; cp assets/* svn/assets"
+		"svn:copy": "cp -r readme.txt fair-timetable.php src package* composer* CHANGELOG.md svn/trunk; cp assets/* svn/assets"
 	},
 	"dependencies": {
 		"@fortawesome/fontawesome-free": "^7.0.0",
