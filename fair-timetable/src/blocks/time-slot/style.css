@@ -130,3 +130,28 @@
 .wp-block-fair-timetable-time-slot.is-dragging {
     opacity: 0.8;
 }
+
+/* Short duration blocks (< 1 hour) - compact styling for editor */
+.editor-styles-wrapper .wp-block-fair-timetable-time-slot.is-selected .time-slot-block.time-slot-short {
+    padding: 0;
+}
+
+.editor-styles-wrapper .wp-block-fair-timetable-time-slot.is-selected .time-slot-block.time-slot-short .time-slot {
+    height: 100%;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+}
+
+.editor-styles-wrapper .time-slot-block.time-slot-short {
+    display: flex;
+    align-items: center;
+    padding: 0 1em;
+}
+
+.editor-styles-wrapper .time-slot-block.time-slot-short .time-slot {
+    height: 100%;
+    width: 100%;
+    align-items: center;
+    padding: 0;
+}
