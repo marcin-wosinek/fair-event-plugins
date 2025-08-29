@@ -20,8 +20,8 @@
 		"makemo": "wp i18n make-mo languages/",
 		"updatepo": "wp i18n update-po languages/fair-calendar-button.pot languages/",
 		"test": "jest",
-		"test:screenshots": "playwright test",
-		"screenshots": "playwright test --headed"
+		"playwright:run": "playwright test --headed",
+		"playwright:up": "playwright open"
 	},
 	"dependencies": {
 		"@fortawesome/fontawesome-svg-core": "^7.0.0",
