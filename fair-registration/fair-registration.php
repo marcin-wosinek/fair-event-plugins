@@ -5,7 +5,7 @@
  * Description: A Gutenberg block plugin for registration management. The plugin provides multiple blocks for event registration with fair pricing model.
  * Version: 0.2.0
  * Requires at least: 6.7
- * Requires PHP: 8.0
+ * Requires PHP: 7.4
  * Author: Marcin Wosinek
  * Author URI: https://github.com/marcin-wosinek
  * License: GPLv3 or later

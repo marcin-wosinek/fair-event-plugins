@@ -5,7 +5,7 @@
  * Description: A Gutenberg block for payment integration. The block displays a simple payment form with fair pricing model.
  * Version: 1.0.1
  * Requires at least: 6.7
- * Requires PHP: 8.0
+ * Requires PHP: 7.4
  * Author: Marcin Wosinek
  * Author URI: https://github.com/marcin-wosinek
  * License: GPLv3 or later

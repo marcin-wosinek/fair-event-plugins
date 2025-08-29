@@ -5,7 +5,7 @@
  * Description: A Gutenberg block for calendar integration. The block displays a button with a calendar integration with support for Google Calendar, Outlook, Yahoo Calendar, and ICS downloads.
  * Version: 1.3.1
  * Requires at least: 6.7
- * Requires PHP: 8.0
+ * Requires PHP: 7.4
  * Author: Marcin Wosinek
  * Author URI: https://github.com/marcin-wosinek
  * License: GPLv3 or later
