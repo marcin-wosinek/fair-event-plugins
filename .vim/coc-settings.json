@@ -1,0 +1,8 @@
+{
+	"coc.preferences.formatOnSave": false,
+	"coc.preferences.formatOnType": false,
+	"prettier.enable": false,
+	"javascript.format.enable": false,
+	"typescript.format.enable": false,
+	"json.format.enable": false
+}

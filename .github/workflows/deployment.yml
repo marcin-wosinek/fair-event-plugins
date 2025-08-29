@@ -1,40 +1,40 @@
 name: Deployment
 
 on:
-  push:
-    branches: [main]
-  workflow_dispatch:
+    push:
+        branches: [main]
+    workflow_dispatch:
 
 jobs:
-  deploy:
-    runs-on: ubuntu-latest
-    environment: fair-event-plugins.com
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v3
+    deploy:
+        runs-on: ubuntu-latest
+        environment: fair-event-plugins.com
+        steps:
+            - name: Checkout code
+              uses: actions/checkout@v3
 
-      - name: Setup PHP
-        uses: shivammathur/setup-php@v2
-        with:
-          php-version: "8.2"
-          coverage: none
+            - name: Setup PHP
+              uses: shivammathur/setup-php@v2
+              with:
+                  php-version: '8.2'
+                  coverage: none
 
-      - name: Install PHP dependencies
-        run: |
-          cd ./fair-event-plugins.com
-          composer install --no-dev --optimize-autoloader
+            - name: Install PHP dependencies
+              run: |
+                  cd ./fair-event-plugins.com
+                  composer install --no-dev --optimize-autoloader
 
-      - name: Create .env file
-        run: |
-          cd ./fair-event-plugins.com
-          echo "STRIPE_SECRET_KEY=${{ secrets.STRIPE_SECRET_KEY }}" > .env
-          echo "STRIPE_PUBLISHABLE_KEY=${{ secrets.STRIPE_PUBLISHABLE_KEY }}" >> .env
+            - name: Create .env file
+              run: |
+                  cd ./fair-event-plugins.com
+                  echo "STRIPE_SECRET_KEY=${{ secrets.STRIPE_SECRET_KEY }}" > .env
+                  echo "STRIPE_PUBLISHABLE_KEY=${{ secrets.STRIPE_PUBLISHABLE_KEY }}" >> .env
 
-      - name: Deploy via FTP
-        uses: SamKirkland/FTP-Deploy-Action@v4.3.5
-        with:
-          server: ${{ secrets.FTP_HOST }}
-          username: ${{ secrets.FTP_USERNAME }}
-          password: ${{ secrets.FTP_PASSWORD }}
-          local-dir: "./fair-event-plugins.com/"
-          server-dir: ${{ vars.SERVER_DIR }}
+            - name: Deploy via FTP
+              uses: SamKirkland/FTP-Deploy-Action@v4.3.5
+              with:
+                  server: ${{ secrets.FTP_HOST }}
+                  username: ${{ secrets.FTP_USERNAME }}
+                  password: ${{ secrets.FTP_PASSWORD }}
+                  local-dir: './fair-event-plugins.com/'
+                  server-dir: ${{ vars.SERVER_DIR }}

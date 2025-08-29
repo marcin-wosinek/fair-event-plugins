@@ -24,7 +24,6 @@
 		"start": "npm run start --workspace=fair-timetable & npm run start --workspace=fair-payment & npm run start --workspace=fair-calendar-button & npm run start --workspace=fair-registration & wait",
 		"format": "npm-run-all format:*",
 		"format:wp": "wp-scripts format",
-		"format:yml": "prettier --write '**/*.yml'",
 		"prepare": "husky",
 		"changeset": "changeset",
 		"changeset:add": "changeset add",

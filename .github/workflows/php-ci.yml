@@ -1,81 +1,81 @@
 name: Continuous integration
 
 on:
-  push:
-    branches: [main]
-  pull_request:
-    branches: [main]
+    push:
+        branches: [main]
+    pull_request:
+        branches: [main]
 
 jobs:
-  build:
-    runs-on: ubuntu-latest
+    build:
+        runs-on: ubuntu-latest
 
-    steps:
-      - uses: actions/checkout@v3
+        steps:
+            - uses: actions/checkout@v3
 
-      - name: Setup PHP
-        uses: shivammathur/setup-php@v2
-        with:
-          php-version: "8.2"
-          extensions: mbstring, intl, zip
-          coverage: none
+            - name: Setup PHP
+              uses: shivammathur/setup-php@v2
+              with:
+                  php-version: '8.2'
+                  extensions: mbstring, intl, zip
+                  coverage: none
 
-      - name: Validate composer.json for all plugins
-        run: |
-          npm run composer:validate
+            - name: Validate composer.json for all plugins
+              run: |
+                  npm run composer:validate
 
-      - name: Cache Composer packages
-        id: composer-cache
-        uses: actions/cache@v3
-        with:
-          path: |
-            ./fair-calendar-button/vendor
-            ./fair-payment/vendor
-            ./fair-registration/vendor
-            ./fair-timetable/vendor
-            ./vendor
-          key: ${{ runner.os }}-php-${{ hashFiles('**/composer.lock') }}
-          restore-keys: |
-            ${{ runner.os }}-php-
+            - name: Cache Composer packages
+              id: composer-cache
+              uses: actions/cache@v3
+              with:
+                  path: |
+                      ./fair-calendar-button/vendor
+                      ./fair-payment/vendor
+                      ./fair-registration/vendor
+                      ./fair-timetable/vendor
+                      ./vendor
+                  key: ${{ runner.os }}-php-${{ hashFiles('**/composer.lock') }}
+                  restore-keys: |
+                      ${{ runner.os }}-php-
 
-      - name: Setup Node.js
-        uses: actions/setup-node@v3
-        with:
-          node-version: "24"
-          cache: "npm"
-          cache-dependency-path: "./package-lock.json"
+            - name: Setup Node.js
+              uses: actions/setup-node@v3
+              with:
+                  node-version: '24'
+                  cache: 'npm'
+                  cache-dependency-path: './package-lock.json'
 
-      - name: Install npm dependencies
-        run: npm ci
+            - name: Install npm dependencies
+              run: npm ci
 
-      - name: Install WP-CLI
-        run: |
-          curl -L -o wp-cli.phar https://github.com/wp-cli/wp-cli/releases/download/v2.12.0/wp-cli-2.12.0.phar
-          chmod +x wp-cli.phar
-          sudo mv wp-cli.phar /usr/local/bin/wp
-          wp --info
+            - name: Install WP-CLI
+              run: |
+                  curl -L -o wp-cli.phar https://github.com/wp-cli/wp-cli/releases/download/v2.12.0/wp-cli-2.12.0.phar
+                  chmod +x wp-cli.phar
+                  sudo mv wp-cli.phar /usr/local/bin/wp
+                  wp --info
 
-      - name: Install PHP dependencies in all plugins
-        run: npm run composer:install
+            - name: Install PHP dependencies in all plugins
+              run: npm run composer:install
 
-      - name: Build JavaScript for all plugins
-        run: npm run build
+            - name: Build JavaScript for all plugins
+              run: npm run build
 
-      - name: Run unit tests
-        run: |
-          npm test
+            - name: Run unit tests
+              run: |
+                  npm test
 
-      - name: Install WP-CLI dist-archive command
-        run: |
-          wp package install wp-cli/dist-archive-command:@stable
+            - name: Install WP-CLI dist-archive command
+              run: |
+                  wp package install wp-cli/dist-archive-command:@stable
 
-      - name: Create plugin ZIP files using wp dist-archive
-        run: |
-          npm run dist-archive
+            - name: Create plugin ZIP files using wp dist-archive
+              run: |
+                  npm run dist-archive
 
-      - name: Upload Fair Payment plugins
-        uses: actions/upload-artifact@v4
-        with:
-          name: plugins
-          path: ./dist/
-          retention-days: 7
+            - name: Upload Fair Payment plugins
+              uses: actions/upload-artifact@v4
+              with:
+                  name: plugins
+                  path: ./dist/
+                  retention-days: 7
