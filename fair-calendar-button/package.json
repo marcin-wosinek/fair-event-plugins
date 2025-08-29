@@ -13,6 +13,7 @@
 		"start": "wp-scripts start",
 		"composer:install": "composer install",
 		"composer:update": "composer update",
+		"composer:validate": "composer validate --strict",
 		"format": "wp-scripts format",
 		"makepot": "wp i18n make-pot . languages/fair-calendar-button.pot --exclude=node_modules,vendor,tests,svn",
 		"makejson": "wp i18n make-json languages ./build/languages --pretty-print --no-purge",

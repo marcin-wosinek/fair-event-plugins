@@ -22,10 +22,7 @@ jobs:
 
       - name: Validate composer.json for all plugins
         run: |
-          composer validate --strict --working-dir=./fair-calendar-button
-          composer validate --strict --working-dir=./fair-payment
-          composer validate --strict --working-dir=./fair-registration
-          composer validate --strict --working-dir=./fair-timetable
+          npm run composer:validate
 
       - name: Cache Composer packages
         id: composer-cache

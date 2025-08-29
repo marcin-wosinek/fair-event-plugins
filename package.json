@@ -20,6 +20,7 @@
 		"clean": "npm run clean --workspaces",
 		"composer:install": "npm run composer:install --workspaces",
 		"composer:update": "npm run composer:update --workspaces",
+		"composer:validate": "npm run composer:validate --workspaces",
 		"start": "npm run start --workspace=fair-timetable & npm run start --workspace=fair-payment & npm run start --workspace=fair-calendar-button & npm run start --workspace=fair-registration & wait",
 		"format": "npm-run-all format:*",
 		"format:wp": "wp-scripts format",
