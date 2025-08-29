@@ -4,7 +4,7 @@
  * Plugin URI: https://github.com/marcin-wosinek/fair-event-plugins
  * Description: A Gutenberg block for payment integration. The block displays a simple payment form with fair pricing model.
  * Version: 1.0.1
- * Requires at least: 5.8
+ * Requires at least: 6.7
  * Requires PHP: 8.0
  * Author: Marcin Wosinek
  * Author URI: https://github.com/marcin-wosinek

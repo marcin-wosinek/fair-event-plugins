@@ -1,7 +1,7 @@
 === Fair Calendar Button ===
 Contributors: marcinwosinek
 Tags: calendar, events, gutenberg, block
-Requires at least: 5.8
+Requires at least: 6.7
 Tested up to: 6.8
 Requires PHP: 8.0
 Stable tag: 1.3.1

@@ -4,7 +4,7 @@
  * Plugin URI: https://github.com/marcin-wosinek/fair-event-plugins
  * Description: Timetable management plugin for events, with fair pricing model.
  * Version: 0.2.0
- * Requires at least: 5.8
+ * Requires at least: 6.7
  * Requires PHP: 8.0
  * Author: Marcin Wosinek
  * Author URI: https://github.com/marcin-wosinek
