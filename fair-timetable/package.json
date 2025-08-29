@@ -15,7 +15,11 @@
 		"composer:install": "composer install",
 		"composer:update": "composer update",
 		"composer:validate": "composer validate --strict",
-		"test": "jest"
+		"test": "jest",
+		"test:screenshots": "playwright test",
+		"screenshots": "playwright test --headed",
+		"playwright:run": "playwright test --headed",
+		"playwright:up": "playwright open"
 	},
 	"dependencies": {
 		"@fortawesome/fontawesome-free": "^7.0.0",
@@ -33,6 +37,8 @@
 		"@babel/preset-env": "^7.28.3",
 		"@wordpress/scripts": "^30.20.0",
 		"babel-jest": "^30.0.5",
-		"jest": "^30.0.0"
+		"jest": "^30.0.0",
+		"@playwright/test": "^1.40.0",
+		"dotenv": "^16.3.1"
 	}
 }
