@@ -11,7 +11,8 @@
 		"clean": "rm -rf build",
 		"prebuild": "npm run clean",
 		"start": "wp-scripts start",
-		"composer": "composer install",
+		"composer:install": "composer install",
+		"composer:update": "composer update",
 		"format": "wp-scripts format",
 		"test": "jest"
 	},
