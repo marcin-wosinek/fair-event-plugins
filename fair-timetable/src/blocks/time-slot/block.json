@@ -2,26 +2,22 @@
 	"$schema": "https://schemas.wp.org/trunk/block.json",
 	"apiVersion": 3,
 	"name": "fair-timetable/time-slot",
-	"version": "1.0.0",
+	"version": "0.1.0",
 	"title": "Time Slot",
 	"category": "widgets",
 	"icon": "clock",
-	"description": "Display a scheduled event time slot",
-	"keywords": ["timetable", "time", "event", "slot"],
-	"textdomain": "fair-timetable",
+	"description": "A time slot block for timetable events",
+	"parent": ["fair-timetable/time-column-body"],
+	"example": {},
 	"supports": {
 		"html": false,
-		"align": ["wide", "full"],
-		"spacing": {
-			"padding": true,
-			"margin": ["top", "bottom"]
+		"anchor": true,
+		"color": {
+			"background": true,
+			"text": true
 		}
 	},
 	"attributes": {
-		"title": {
-			"type": "string",
-			"default": ""
-		},
 		"startHour": {
 			"type": "string",
 			"default": "09:00"
@@ -29,11 +25,22 @@
 		"endHour": {
 			"type": "string",
 			"default": "10:00"
+		},
+		"length": {
+			"type": "number",
+			"default": 1
 		}
 	},
-	"usesContext": ["fair-timetable/hourHeight", "fair-timetable/startHour"],
-	"script": "file:./index.js",
+	"usesContext": [
+		"fair-timetable/startHour",
+		"fair-timetable/endHour",
+		"fair-timetable/length",
+		"fair-timetable/hourHeight"
+	],
+	"textdomain": "fair-timetable",
 	"editorScript": "file:./editor.js",
-	"style": "file:./style-index.css",
+	"viewScript": "file:./view.js",
+	"editorStyle": "file:./editor.css",
+	"style": "file:./view.css",
 	"render": "file:./render.php"
 }

@@ -1,6 +1,6 @@
 {
 	"name": "fair-timetable",
-	"version": "0.2.0",
+	"version": "0.3.0",
 	"description": "Fair Timetable WordPress plugin",
 	"license": "GPL-3.0-or-later",
 	"author": "Marcin Wosinek",
@@ -16,7 +16,6 @@
 		"composer:update": "composer update",
 		"composer:validate": "composer validate --strict",
 		"test": "jest",
-		"test:screenshots": "playwright test",
 		"screenshots": "playwright test --headed",
 		"playwright:run": "playwright test --headed",
 		"playwright:up": "playwright open",

@@ -1,0 +1,14 @@
+/**
+ * Time Slot Block Styles
+ */
+.time-slot-container {
+  border: 1px solid #e0e0e0;
+  border-radius: 0;
+  box-sizing: border-box;
+  padding: 0.5rem;
+	height: calc(var(--hour-height) * var(--time-slot-length) * 1rem);
+  overflow: hidden;
+  position: absolute;
+  top: calc(var(--time-slot-offset, 0) * var(--hour-height, 4) * 1rem);
+  width: 100%;
+}
