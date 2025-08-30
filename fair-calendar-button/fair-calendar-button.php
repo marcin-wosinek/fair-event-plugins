@@ -11,6 +11,8 @@
  * License: GPLv3 or later
  * License URI: https://www.gnu.org/licenses/gpl-3.0.html
  * Text Domain: fair-calendar-button
+ * Domain Path: /languages
+ * Tested up to: 6.8
  *
  * Fair Calendar Button is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
