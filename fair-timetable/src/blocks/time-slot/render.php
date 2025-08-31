@@ -49,5 +49,6 @@ $wrapper_attributes = get_block_wrapper_attributes(
 ?>
 
 <div <?php echo $wrapper_attributes; ?>>
+	<h4 class="time-annotation"><?php echo esc_html( $start_hour . '-' . $end_hour ); ?></h4>
 	<?php echo $content; ?>
 </div>

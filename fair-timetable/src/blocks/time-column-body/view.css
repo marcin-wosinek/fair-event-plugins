@@ -2,7 +2,7 @@
  * Time Column Body Block Styles
  */
 .time-column-body-container {
-  border: 1px solid #e0e0e0;
+  border: 1px solid color-mix(in srgb, var(--wp--preset--color--contrast) 15%, transparent);
   border-radius: 0;
   box-sizing: border-box;
 	height: calc(var(--hour-height) * var(--column-length) * 1rem);

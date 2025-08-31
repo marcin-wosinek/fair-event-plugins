@@ -230,6 +230,9 @@ export default function EditComponent({ attributes, setAttributes, context }) {
 			</InspectorControls>
 
 			<div {...blockProps}>
+				<h4 className="time-annotation">
+					{startHour}-{endHour}
+				</h4>
 				<div {...innerBlocksProps} />
 			</div>
 		</>
