@@ -28,7 +28,7 @@ class RoutesHooks {
 	 */
 	public function __construct() {
 		$this->payment_controller = new PaymentController();
-		
+
 		add_action( 'init', array( $this, 'register_routes' ) );
 		add_action( 'template_redirect', array( $this, 'handle_custom_routes' ) );
 		add_filter( 'query_vars', array( $this, 'add_query_vars' ) );
@@ -89,7 +89,7 @@ class RoutesHooks {
 	 * @return void
 	 */
 	public function handle_custom_routes() {
-		$page = get_query_var( 'fair_payment_page' );
+		$page       = get_query_var( 'fair_payment_page' );
 		$payment_id = get_query_var( 'payment_id' );
 
 		if ( ! $page ) {
@@ -123,8 +123,8 @@ class RoutesHooks {
 	 */
 	private function routes_exist() {
 		$rules = get_option( 'rewrite_rules' );
-		
+
 		return isset( $rules['^fair-payment/checkout/?$'] ) &&
-			   isset( $rules['^fair-payment/result/?$'] );
+				isset( $rules['^fair-payment/result/?$'] );
 	}
 }

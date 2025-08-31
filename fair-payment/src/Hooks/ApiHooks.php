@@ -126,11 +126,11 @@ class ApiHooks {
 	public function check_api_permissions( $request ) {
 		// For now, allow public access with nonce verification
 		$nonce = $request->get_header( 'X-WP-Nonce' );
-		
+
 		if ( ! $nonce ) {
 			// Check for nonce in request body
 			$params = $request->get_json_params();
-			$nonce = $params['_wpnonce'] ?? '';
+			$nonce  = $params['_wpnonce'] ?? '';
 		}
 
 		if ( ! wp_verify_nonce( $nonce, 'wp_rest' ) ) {
@@ -151,19 +151,19 @@ class ApiHooks {
 	 */
 	private function get_create_checkout_args() {
 		return array(
-			'amount' => array(
+			'amount'      => array(
 				'required'          => true,
 				'type'              => 'string',
 				'description'       => __( 'Payment amount', 'fair-payment' ),
-				'validate_callback' => function( $param ) {
+				'validate_callback' => function ( $param ) {
 					return is_numeric( $param ) && $param > 0;
 				},
 			),
-			'currency' => array(
+			'currency'    => array(
 				'required'          => true,
 				'type'              => 'string',
 				'description'       => __( 'Payment currency', 'fair-payment' ),
-				'validate_callback' => function( $param ) {
+				'validate_callback' => function ( $param ) {
 					$options = get_option( 'fair_payment_options', array() );
 					$allowed_currencies = $options['allowed_currencies'] ?? array( 'EUR', 'USD', 'GBP' );
 					return in_array( strtoupper( $param ), $allowed_currencies, true );
@@ -174,12 +174,12 @@ class ApiHooks {
 				'type'        => 'string',
 				'description' => __( 'Payment description', 'fair-payment' ),
 			),
-			'metadata' => array(
+			'metadata'    => array(
 				'required'    => false,
 				'type'        => 'object',
 				'description' => __( 'Additional metadata', 'fair-payment' ),
 			),
-			'_wpnonce' => array(
+			'_wpnonce'    => array(
 				'required'    => true,
 				'type'        => 'string',
 				'description' => __( 'WordPress nonce for security', 'fair-payment' ),
@@ -194,19 +194,19 @@ class ApiHooks {
 	 */
 	private function get_create_simple_payment_args() {
 		return array(
-			'amount' => array(
+			'amount'         => array(
 				'required'          => true,
 				'type'              => 'string',
 				'description'       => __( 'Payment amount', 'fair-payment' ),
-				'validate_callback' => function( $param ) {
+				'validate_callback' => function ( $param ) {
 					return is_numeric( $param ) && $param > 0;
 				},
 			),
-			'currency' => array(
+			'currency'       => array(
 				'required'          => true,
 				'type'              => 'string',
 				'description'       => __( 'Payment currency', 'fair-payment' ),
-				'validate_callback' => function( $param ) {
+				'validate_callback' => function ( $param ) {
 					$options = get_option( 'fair_payment_options', array() );
 					$allowed_currencies = $options['allowed_currencies'] ?? array( 'EUR', 'USD', 'GBP' );
 					return in_array( strtoupper( $param ), $allowed_currencies, true );
@@ -216,16 +216,16 @@ class ApiHooks {
 				'required'          => true,
 				'type'              => 'string',
 				'description'       => __( 'Customer email address', 'fair-payment' ),
-				'validate_callback' => function( $param ) {
+				'validate_callback' => function ( $param ) {
 					return is_email( $param );
 				},
 			),
-			'customer_name' => array(
+			'customer_name'  => array(
 				'required'    => false,
 				'type'        => 'string',
 				'description' => __( 'Customer name', 'fair-payment' ),
 			),
-			'_wpnonce' => array(
+			'_wpnonce'       => array(
 				'required'    => true,
 				'type'        => 'string',
 				'description' => __( 'WordPress nonce for security', 'fair-payment' ),
@@ -240,19 +240,19 @@ class ApiHooks {
 	 */
 	private function get_create_stripe_checkout_args() {
 		return array(
-			'amount' => array(
+			'amount'      => array(
 				'required'          => true,
 				'type'              => 'string',
 				'description'       => __( 'Payment amount', 'fair-payment' ),
-				'validate_callback' => function( $param ) {
+				'validate_callback' => function ( $param ) {
 					return is_numeric( $param ) && $param > 0;
 				},
 			),
-			'currency' => array(
+			'currency'    => array(
 				'required'          => true,
 				'type'              => 'string',
 				'description'       => __( 'Payment currency', 'fair-payment' ),
-				'validate_callback' => function( $param ) {
+				'validate_callback' => function ( $param ) {
 					$options = get_option( 'fair_payment_options', array() );
 					$allowed_currencies = $options['allowed_currencies'] ?? array( 'EUR', 'USD', 'GBP' );
 					return in_array( strtoupper( $param ), $allowed_currencies, true );
@@ -263,7 +263,7 @@ class ApiHooks {
 				'type'        => 'string',
 				'description' => __( 'Payment description', 'fair-payment' ),
 			),
-			'_wpnonce' => array(
+			'_wpnonce'    => array(
 				'required'    => true,
 				'type'        => 'string',
 				'description' => __( 'WordPress nonce for security', 'fair-payment' ),
@@ -278,11 +278,11 @@ class ApiHooks {
 	 */
 	private function get_test_stripe_connection_args() {
 		return array(
-			'secret_key' => array(
+			'secret_key'      => array(
 				'required'          => true,
 				'type'              => 'string',
 				'description'       => __( 'Stripe secret key to test', 'fair-payment' ),
-				'validate_callback' => function( $param ) {
+				'validate_callback' => function ( $param ) {
 					return ! empty( $param ) && is_string( $param );
 				},
 			),
@@ -290,11 +290,11 @@ class ApiHooks {
 				'required'          => false,
 				'type'              => 'string',
 				'description'       => __( 'Stripe publishable key to validate (optional)', 'fair-payment' ),
-				'validate_callback' => function( $param ) {
+				'validate_callback' => function ( $param ) {
 					return empty( $param ) || is_string( $param );
 				},
 			),
-			'_wpnonce' => array(
+			'_wpnonce'        => array(
 				'required'    => true,
 				'type'        => 'string',
 				'description' => __( 'WordPress nonce for security', 'fair-payment' ),
@@ -334,7 +334,7 @@ class ApiHooks {
 	 */
 	private function mock_payment_status( $payment_id ) {
 		$last_digit = substr( $payment_id, -1 );
-		
+
 		if ( in_array( $last_digit, array( '1', '2', '3', '4', '5', '6', '7' ), true ) ) {
 			return 'completed';
 		} elseif ( in_array( $last_digit, array( '8', '9' ), true ) ) {
@@ -385,11 +385,11 @@ class ApiHooks {
 			'root'      => esc_url_raw( rest_url( self::NAMESPACE ) ),
 			'nonce'     => wp_create_nonce( 'wp_rest' ),
 			'endpoints' => array(
-				'createCheckout'        => '/create-checkout',
-				'createSimplePayment'   => '/create-simple-payment',
-				'createStripeCheckout'  => '/create-stripe-checkout',
-				'testStripeConnection'  => '/test-stripe-connection',
-				'paymentStatus'         => '/payment-status',
+				'createCheckout'       => '/create-checkout',
+				'createSimplePayment'  => '/create-simple-payment',
+				'createStripeCheckout' => '/create-stripe-checkout',
+				'testStripeConnection' => '/test-stripe-connection',
+				'paymentStatus'        => '/payment-status',
 			),
 		);
 

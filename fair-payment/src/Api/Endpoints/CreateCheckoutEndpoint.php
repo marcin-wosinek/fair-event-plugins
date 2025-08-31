@@ -49,10 +49,10 @@ class CreateCheckoutEndpoint extends ApiController {
 		}
 
 		// Sanitize input
-		$amount = $this->sanitize_amount( $params['amount'] );
-		$currency = $this->sanitize_currency( $params['currency'] );
+		$amount      = $this->sanitize_amount( $params['amount'] );
+		$currency    = $this->sanitize_currency( $params['currency'] );
 		$description = isset( $params['description'] ) ? sanitize_text_field( $params['description'] ) : '';
-		$metadata = isset( $params['metadata'] ) && is_array( $params['metadata'] ) ? $params['metadata'] : array();
+		$metadata    = isset( $params['metadata'] ) && is_array( $params['metadata'] ) ? $params['metadata'] : array();
 
 		// Validate amount
 		if ( $amount <= 0 ) {
@@ -80,17 +80,17 @@ class CreateCheckoutEndpoint extends ApiController {
 
 		// Create checkout data
 		$checkout_data = array(
-			'payment_id'      => $payment_id,
-			'session_id'      => $session_id,
-			'amount'          => $amount,
-			'currency'        => $currency,
-			'total_amount'    => $total_amount,
-			'description'     => $description,
-			'status'          => 'pending',
-			'checkout_url'    => site_url( '/fair-payment/checkout/' . $payment_id ),
-			'expires_at'      => gmdate( 'Y-m-d H:i:s', time() + 3600 ), // 1 hour expiry
-			'metadata'        => $metadata,
-			'created_at'      => current_time( 'mysql' ),
+			'payment_id'   => $payment_id,
+			'session_id'   => $session_id,
+			'amount'       => $amount,
+			'currency'     => $currency,
+			'total_amount' => $total_amount,
+			'description'  => $description,
+			'status'       => 'pending',
+			'checkout_url' => site_url( '/fair-payment/checkout/' . $payment_id ),
+			'expires_at'   => gmdate( 'Y-m-d H:i:s', time() + 3600 ), // 1 hour expiry
+			'metadata'     => $metadata,
+			'created_at'   => current_time( 'mysql' ),
 		);
 
 		// Store checkout session (in a real implementation, this would go to database)
@@ -98,15 +98,15 @@ class CreateCheckoutEndpoint extends ApiController {
 
 		// Prepare response
 		$response_data = array(
-			'payment_id'     => $payment_id,
-			'session_id'     => $session_id,
-			'checkout_url'   => $checkout_data['checkout_url'],
-			'amount'         => array(
-				'total'           => $total_amount,
-				'currency'        => $currency,
+			'payment_id'   => $payment_id,
+			'session_id'   => $session_id,
+			'checkout_url' => $checkout_data['checkout_url'],
+			'amount'       => array(
+				'total'    => $total_amount,
+				'currency' => $currency,
 			),
-			'expires_at'     => $checkout_data['expires_at'],
-			'test_mode'      => $this->is_test_mode(),
+			'expires_at'   => $checkout_data['expires_at'],
+			'test_mode'    => $this->is_test_mode(),
 		);
 
 		// Log activity
@@ -152,7 +152,7 @@ class CreateCheckoutEndpoint extends ApiController {
 	 */
 	private function send_webhook( $payment_id, $data ) {
 		$webhook_url = get_option( 'fair_payment_webhook_url', '' );
-		
+
 		if ( empty( $webhook_url ) ) {
 			return;
 		}

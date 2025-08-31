@@ -33,7 +33,7 @@ class StripeBalanceEndpoint extends ApiController {
 		}
 
 		// Get saved Stripe configuration
-		$options = get_option( 'fair_payment_options', array() );
+		$options    = get_option( 'fair_payment_options', array() );
 		$secret_key = $options['stripe_secret_key'] ?? '';
 
 		if ( empty( $secret_key ) ) {
@@ -56,7 +56,7 @@ class StripeBalanceEndpoint extends ApiController {
 
 		try {
 			$balance = $this->get_stripe_balance( $secret_key );
-			
+
 			return $this->success_response(
 				$balance,
 				__( 'Balance retrieved successfully', 'fair-payment' )
@@ -83,14 +83,17 @@ class StripeBalanceEndpoint extends ApiController {
 	 */
 	private function get_stripe_balance( $secret_key ) {
 		$url = 'https://api.stripe.com/v1/balance';
-		
-		$response = wp_remote_get( $url, array(
-			'headers' => array(
-				'Authorization' => 'Bearer ' . $secret_key,
-				'Stripe-Version' => '2023-10-16',
-			),
-			'timeout' => 30,
-		) );
+
+		$response = wp_remote_get(
+			$url,
+			array(
+				'headers' => array(
+					'Authorization'  => 'Bearer ' . $secret_key,
+					'Stripe-Version' => '2023-10-16',
+				),
+				'timeout' => 30,
+			)
+		);
 
 		if ( is_wp_error( $response ) ) {
 			throw new \Exception( 'Failed to connect to Stripe API: ' . $response->get_error_message() );
@@ -100,22 +103,22 @@ class StripeBalanceEndpoint extends ApiController {
 		$response_body = wp_remote_retrieve_body( $response );
 
 		if ( $response_code !== 200 ) {
-			$error_data = json_decode( $response_body, true );
+			$error_data    = json_decode( $response_body, true );
 			$error_message = $error_data['error']['message'] ?? 'Unknown error occurred';
 			throw new \Exception( $error_message );
 		}
 
 		$balance_data = json_decode( $response_body, true );
-		
+
 		if ( ! $balance_data || ! isset( $balance_data['available'] ) ) {
 			throw new \Exception( 'Invalid response from Stripe API' );
 		}
 
 		return array(
-			'available' => $balance_data['available'] ?? array(),
-			'pending' => $balance_data['pending'] ?? array(),
-			'reserved' => $balance_data['reserved'] ?? array(),
-			'livemode' => $balance_data['livemode'] ?? false,
+			'available'    => $balance_data['available'] ?? array(),
+			'pending'      => $balance_data['pending'] ?? array(),
+			'reserved'     => $balance_data['reserved'] ?? array(),
+			'livemode'     => $balance_data['livemode'] ?? false,
 			'retrieved_at' => current_time( 'mysql' ),
 		);
 	}

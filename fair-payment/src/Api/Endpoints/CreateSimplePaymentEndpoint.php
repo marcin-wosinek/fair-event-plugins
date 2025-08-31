@@ -39,9 +39,9 @@ class CreateSimplePaymentEndpoint extends ApiController {
 			$params = $request->get_body_params();
 		}
 
-		$validation = $this->validate_required_params( 
-			$params, 
-			array( 'amount', 'currency', 'customer_email' ) 
+		$validation = $this->validate_required_params(
+			$params,
+			array( 'amount', 'currency', 'customer_email' )
 		);
 		if ( is_wp_error( $validation ) ) {
 			return $this->error_response(
@@ -52,10 +52,10 @@ class CreateSimplePaymentEndpoint extends ApiController {
 		}
 
 		// Sanitize input
-		$amount = $this->sanitize_amount( $params['amount'] );
-		$currency = $this->sanitize_currency( $params['currency'] );
+		$amount         = $this->sanitize_amount( $params['amount'] );
+		$currency       = $this->sanitize_currency( $params['currency'] );
 		$customer_email = sanitize_email( $params['customer_email'] );
-		$customer_name = isset( $params['customer_name'] ) ? sanitize_text_field( $params['customer_name'] ) : '';
+		$customer_name  = isset( $params['customer_name'] ) ? sanitize_text_field( $params['customer_name'] ) : '';
 
 		// Validate input
 		if ( $amount <= 0 ) {
@@ -83,7 +83,7 @@ class CreateSimplePaymentEndpoint extends ApiController {
 		}
 
 		// Generate payment ID and transaction data
-		$payment_id = $this->generate_payment_id( 'simple' );
+		$payment_id     = $this->generate_payment_id( 'simple' );
 		$transaction_id = $this->generate_payment_id( 'txn' );
 
 		// No processing fees - use original amount
@@ -91,20 +91,20 @@ class CreateSimplePaymentEndpoint extends ApiController {
 
 		// Create payment data
 		$payment_data = array(
-			'payment_id'      => $payment_id,
-			'transaction_id'  => $transaction_id,
-			'type'            => 'simple_payment',
-			'amount'          => $amount,
-			'currency'        => $currency,
-			'total_amount'    => $total_amount,
-			'customer_email'  => $customer_email,
-			'customer_name'   => $customer_name,
-			'status'          => $this->simulate_payment_status(),
-			'payment_url'     => site_url( '/fair-payment/result/' . $payment_id ),
-			'created_at'      => current_time( 'mysql' ),
-			'processed_at'    => current_time( 'mysql' ),
-			'client_ip'       => $client_ip,
-			'user_agent'      => isset( $_SERVER['HTTP_USER_AGENT'] ) ? sanitize_text_field( wp_unslash( $_SERVER['HTTP_USER_AGENT'] ) ) : '',
+			'payment_id'     => $payment_id,
+			'transaction_id' => $transaction_id,
+			'type'           => 'simple_payment',
+			'amount'         => $amount,
+			'currency'       => $currency,
+			'total_amount'   => $total_amount,
+			'customer_email' => $customer_email,
+			'customer_name'  => $customer_name,
+			'status'         => $this->simulate_payment_status(),
+			'payment_url'    => site_url( '/fair-payment/result/' . $payment_id ),
+			'created_at'     => current_time( 'mysql' ),
+			'processed_at'   => current_time( 'mysql' ),
+			'client_ip'      => $client_ip,
+			'user_agent'     => isset( $_SERVER['HTTP_USER_AGENT'] ) ? sanitize_text_field( wp_unslash( $_SERVER['HTTP_USER_AGENT'] ) ) : '',
 		);
 
 		// Store payment data
@@ -121,8 +121,8 @@ class CreateSimplePaymentEndpoint extends ApiController {
 			'transaction_id' => $transaction_id,
 			'status'         => $payment_data['status'],
 			'amount'         => array(
-				'total'           => $total_amount,
-				'currency'        => $currency,
+				'total'    => $total_amount,
+				'currency' => $currency,
 			),
 			'customer'       => array(
 				'email' => $customer_email,
@@ -160,7 +160,7 @@ class CreateSimplePaymentEndpoint extends ApiController {
 		set_transient( $transient_key, $data, DAY_IN_SECONDS );
 
 		// Also store in a list for admin panel
-		$payments_list = get_option( 'fair_payment_simple_payments', array() );
+		$payments_list                = get_option( 'fair_payment_simple_payments', array() );
 		$payments_list[ $payment_id ] = array(
 			'payment_id'     => $payment_id,
 			'amount'         => $data['total_amount'],
@@ -186,7 +186,7 @@ class CreateSimplePaymentEndpoint extends ApiController {
 	private function simulate_payment_status() {
 		// 80% success rate for demo
 		$random = wp_rand( 1, 10 );
-		
+
 		if ( $random <= 8 ) {
 			return 'completed';
 		} elseif ( $random === 9 ) {
@@ -222,16 +222,17 @@ class CreateSimplePaymentEndpoint extends ApiController {
 	 * @return void
 	 */
 	private function send_payment_confirmation( $payment_data ) {
-		$to = $payment_data['customer_email'];
+		$to      = $payment_data['customer_email'];
 		$subject = sprintf(
 			/* translators: %s: payment ID */
 			__( 'Payment Confirmation - %s', 'fair-payment' ),
 			$payment_data['payment_id']
 		);
-		
+
 		$message = sprintf(
 			/* translators: 1: customer name, 2: amount, 3: currency, 4: payment ID */
-			__( 'Dear %1$s,
+			__(
+				'Dear %1$s,
 
 Thank you for your payment of %2$s %3$s.
 
@@ -244,7 +245,9 @@ Payment Details:
 You can view your receipt at: %6$s
 
 Best regards,
-Fair Payment Team', 'fair-payment' ),
+Fair Payment Team',
+				'fair-payment'
+			),
 			$payment_data['customer_name'] ?: __( 'Customer', 'fair-payment' ),
 			$payment_data['total_amount'],
 			$payment_data['currency'],
@@ -255,7 +258,7 @@ Fair Payment Team', 'fair-payment' ),
 
 		// In a real implementation, send actual email
 		// wp_mail( $to, $subject, $message );
-		
+
 		// Log email sending for debugging
 		if ( defined( 'WP_DEBUG' ) && WP_DEBUG ) {
 			error_log( "Fair Payment: Would send confirmation email to {$to}" );

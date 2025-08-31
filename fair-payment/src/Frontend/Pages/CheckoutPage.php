@@ -203,11 +203,11 @@ class CheckoutPage {
 
 			<div class="fair-payment-footer">
 				<p>
-					<?php 
-					printf( 
+					<?php
+					printf(
 						esc_html__( 'Powered by %s', 'fair-payment' ),
 						'<strong>' . esc_html__( 'Fair Payment', 'fair-payment' ) . '</strong>'
-					); 
+					);
 					?>
 				</p>
 			</div>

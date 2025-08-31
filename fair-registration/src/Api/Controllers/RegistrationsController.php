@@ -259,13 +259,13 @@ class RegistrationsController extends WP_REST_Controller {
 	 */
 	public function get_registration_schema() {
 		return array(
-			'form_id' => array(
+			'form_id'           => array(
 				'description' => __( 'The ID of the post/page containing the registration form.', 'fair-registration' ),
 				'type'        => 'integer',
 				'required'    => true,
 				'minimum'     => 1,
 			),
-			'url' => array(
+			'url'               => array(
 				'description' => __( 'The URL where the registration was submitted.', 'fair-registration' ),
 				'type'        => 'string',
 				'format'      => 'uri',
@@ -278,7 +278,7 @@ class RegistrationsController extends WP_REST_Controller {
 				'items'       => array(
 					'type'       => 'object',
 					'properties' => array(
-						'name' => array(
+						'name'  => array(
 							'type'        => 'string',
 							'description' => __( 'Field name/identifier', 'fair-registration' ),
 							'required'    => true,
@@ -301,11 +301,11 @@ class RegistrationsController extends WP_REST_Controller {
 	 */
 	public function get_collection_params() {
 		return array(
-			'form_id' => array(
+			'form_id'  => array(
 				'description' => __( 'Filter registrations by form ID.', 'fair-registration' ),
 				'type'        => 'integer',
 			),
-			'page' => array(
+			'page'     => array(
 				'description' => __( 'Current page of the collection.', 'fair-registration' ),
 				'type'        => 'integer',
 				'default'     => 1,

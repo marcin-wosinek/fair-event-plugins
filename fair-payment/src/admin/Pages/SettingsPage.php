@@ -108,7 +108,6 @@ class SettingsPage {
 			'fair_payment_general'
 		);
 
-
 		// Add fields to Developer section
 		add_settings_field(
 			'test_mode',
@@ -117,7 +116,6 @@ class SettingsPage {
 			self::PAGE_SLUG,
 			'fair_payment_developer'
 		);
-
 	}
 
 	/**
@@ -127,10 +125,10 @@ class SettingsPage {
 	 */
 	private function get_default_settings() {
 		return array(
-			'allowed_currencies'         => array( 'EUR', 'USD', 'GBP' ),
-			'stripe_secret_key'          => '',
-			'stripe_publishable_key'     => '',
-			'test_mode'                  => true,
+			'allowed_currencies'     => array( 'EUR', 'USD', 'GBP' ),
+			'stripe_secret_key'      => '',
+			'stripe_publishable_key' => '',
+			'test_mode'              => true,
 		);
 	}
 
@@ -144,12 +142,12 @@ class SettingsPage {
 		$sanitized = array();
 
 		// Sanitize allowed currencies
-		$sanitized['allowed_currencies'] = $this->currency_service->sanitize_currency_codes( 
-			$input['allowed_currencies'] ?? array() 
+		$sanitized['allowed_currencies'] = $this->currency_service->sanitize_currency_codes(
+			$input['allowed_currencies'] ?? array()
 		);
 
 		// Sanitize Stripe API keys
-		$sanitized['stripe_secret_key'] = sanitize_text_field( $input['stripe_secret_key'] ?? '' );
+		$sanitized['stripe_secret_key']      = sanitize_text_field( $input['stripe_secret_key'] ?? '' );
 		$sanitized['stripe_publishable_key'] = sanitize_text_field( $input['stripe_publishable_key'] ?? '' );
 
 		// Sanitize test mode boolean
@@ -175,11 +173,11 @@ class SettingsPage {
 	public function enqueue_admin_assets( $hook_suffix ) {
 		// Only load on Fair Payment admin pages
 		if ( ! $this->is_fair_payment_admin_page( $hook_suffix ) ) {
-			//return;
+			// return;
 		}
 
-    $plugin_path = __DIR__ . '/../../../fair-payment.php';
-    $asset_file = include( plugin_dir_path( $plugin_path ) . 'build/admin/admin.asset.php' );
+		$plugin_path = __DIR__ . '/../../../fair-payment.php';
+		$asset_file  = include plugin_dir_path( $plugin_path ) . 'build/admin/admin.asset.php';
 
 		// Enqueue admin JavaScript
 		wp_enqueue_script(
@@ -210,32 +208,32 @@ class SettingsPage {
 				'nonce'             => wp_create_nonce( 'wp_rest' ),
 				'allowedCurrencies' => $admin_currencies,
 				'strings'           => array(
-					'enterSecretKey'         => __( 'Please enter a Stripe secret key', 'fair-payment' ),
-					'testingConfiguration'   => __( 'Testing Stripe configuration...', 'fair-payment' ),
-					'testing'                => __( 'Testing...', 'fair-payment' ),
-					'testSuccessful'         => __( '✓ Stripe Configuration Test Successful!', 'fair-payment' ),
-					'testFailed'             => __( '✗ Stripe Configuration Test Failed', 'fair-payment' ),
-					'connectionFailed'       => __( 'Failed to connect to test endpoint', 'fair-payment' ),
-					'unknownError'           => __( 'Unknown error occurred', 'fair-payment' ),
-					'secretKey'              => __( 'Secret Key', 'fair-payment' ),
-					'publishableKey'         => __( 'Publishable Key', 'fair-payment' ),
-					'valid'                  => __( 'Valid', 'fair-payment' ),
-					'invalid'                => __( 'Invalid', 'fair-payment' ),
-					'notTested'              => __( 'Not tested', 'fair-payment' ),
-					'mode'                   => __( 'Mode', 'fair-payment' ),
-					'connectionDetails'      => __( 'Connection Details', 'fair-payment' ),
-					'responseTime'           => __( 'Response Time', 'fair-payment' ),
-					'availableCurrencies'    => __( 'Available Currencies', 'fair-payment' ),
-					'apiVersion'             => __( 'API Version', 'fair-payment' ),
-					'noPublishableKey'       => __( 'No publishable key provided', 'fair-payment' ),
-					'show'                   => __( 'Show', 'fair-payment' ),
-					'hide'                   => __( 'Hide', 'fair-payment' ),
-					'showPassword'           => __( 'Show password', 'fair-payment' ),
-					'hidePassword'           => __( 'Hide password', 'fair-payment' ),
-					'dragToReorder'          => __( 'Drag to reorder', 'fair-payment' ),
-					'addCurrency'            => __( 'Add currency', 'fair-payment' ),
-					'removeCurrency'         => __( 'Remove currency', 'fair-payment' ),
-					'lastCurrencyWarning'    => __( 'At least one currency must be selected.', 'fair-payment' ),
+					'enterSecretKey'       => __( 'Please enter a Stripe secret key', 'fair-payment' ),
+					'testingConfiguration' => __( 'Testing Stripe configuration...', 'fair-payment' ),
+					'testing'              => __( 'Testing...', 'fair-payment' ),
+					'testSuccessful'       => __( '✓ Stripe Configuration Test Successful!', 'fair-payment' ),
+					'testFailed'           => __( '✗ Stripe Configuration Test Failed', 'fair-payment' ),
+					'connectionFailed'     => __( 'Failed to connect to test endpoint', 'fair-payment' ),
+					'unknownError'         => __( 'Unknown error occurred', 'fair-payment' ),
+					'secretKey'            => __( 'Secret Key', 'fair-payment' ),
+					'publishableKey'       => __( 'Publishable Key', 'fair-payment' ),
+					'valid'                => __( 'Valid', 'fair-payment' ),
+					'invalid'              => __( 'Invalid', 'fair-payment' ),
+					'notTested'            => __( 'Not tested', 'fair-payment' ),
+					'mode'                 => __( 'Mode', 'fair-payment' ),
+					'connectionDetails'    => __( 'Connection Details', 'fair-payment' ),
+					'responseTime'         => __( 'Response Time', 'fair-payment' ),
+					'availableCurrencies'  => __( 'Available Currencies', 'fair-payment' ),
+					'apiVersion'           => __( 'API Version', 'fair-payment' ),
+					'noPublishableKey'     => __( 'No publishable key provided', 'fair-payment' ),
+					'show'                 => __( 'Show', 'fair-payment' ),
+					'hide'                 => __( 'Hide', 'fair-payment' ),
+					'showPassword'         => __( 'Show password', 'fair-payment' ),
+					'hidePassword'         => __( 'Hide password', 'fair-payment' ),
+					'dragToReorder'        => __( 'Drag to reorder', 'fair-payment' ),
+					'addCurrency'          => __( 'Add currency', 'fair-payment' ),
+					'removeCurrency'       => __( 'Remove currency', 'fair-payment' ),
+					'lastCurrencyWarning'  => __( 'At least one currency must be selected.', 'fair-payment' ),
 				),
 			)
 		);
@@ -273,7 +271,7 @@ class SettingsPage {
 			<h1>
 				<?php echo esc_html( get_admin_page_title() ); ?>
 				<span class="fair-payment-status-indicator <?php echo $options['test_mode'] ? 'inactive' : 'active'; ?>" 
-					  title="<?php echo $options['test_mode'] ? esc_attr__( 'Test Mode Active', 'fair-payment' ) : esc_attr__( 'Live Mode', 'fair-payment' ); ?>"></span>
+						title="<?php echo $options['test_mode'] ? esc_attr__( 'Test Mode Active', 'fair-payment' ) : esc_attr__( 'Live Mode', 'fair-payment' ); ?>"></span>
 			</h1>
 
 			<?php
@@ -346,9 +344,9 @@ class SettingsPage {
 	 * @return void
 	 */
 	public function render_allowed_currencies_field() {
-		$options = get_option( 'fair_payment_options', $this->get_default_settings() );
+		$options              = get_option( 'fair_payment_options', $this->get_default_settings() );
 		$available_currencies = $this->currency_service->get_available_currencies();
-		$allowed_currencies = $this->currency_service->get_allowed_currencies();
+		$allowed_currencies   = $this->currency_service->get_allowed_currencies();
 		?>
 		<div class="fair-payment-currency-selector">
 			<div class="fair-payment-currency-available">
@@ -404,8 +402,8 @@ class SettingsPage {
 		$options = get_option( 'fair_payment_options', $this->get_default_settings() );
 		?>
 		<input type="password" name="fair_payment_options[stripe_secret_key]" 
-			   id="stripe_secret_key" value="<?php echo esc_attr( $options['stripe_secret_key'] ); ?>" 
-			   class="regular-text" autocomplete="off" placeholder="sk_test_... or sk_live_..." />
+				id="stripe_secret_key" value="<?php echo esc_attr( $options['stripe_secret_key'] ); ?>" 
+				class="regular-text" autocomplete="off" placeholder="sk_test_... or sk_live_..." />
 		<button type="button" class="button button-secondary fair-payment-password-toggle" aria-label="<?php esc_attr_e( 'Show password', 'fair-payment' ); ?>">
 			<?php esc_html_e( 'Show', 'fair-payment' ); ?>
 		</button>
@@ -424,8 +422,8 @@ class SettingsPage {
 		$options = get_option( 'fair_payment_options', $this->get_default_settings() );
 		?>
 		<input type="text" name="fair_payment_options[stripe_publishable_key]" 
-			   id="stripe_publishable_key" value="<?php echo esc_attr( $options['stripe_publishable_key'] ); ?>" 
-			   class="regular-text" placeholder="pk_test_... or pk_live_..." />
+				id="stripe_publishable_key" value="<?php echo esc_attr( $options['stripe_publishable_key'] ); ?>" 
+				class="regular-text" placeholder="pk_test_... or pk_live_..." />
 		<p class="description">
 			<?php esc_html_e( 'Your Stripe publishable key (starts with pk_). This is safe to include in client-side code.', 'fair-payment' ); ?>
 		</p>
@@ -460,7 +458,7 @@ class SettingsPage {
 		<fieldset>
 			<label for="test_mode">
 				<input type="checkbox" name="fair_payment_options[test_mode]" 
-					   id="test_mode" value="1" <?php checked( $options['test_mode'] ); ?> />
+						id="test_mode" value="1" <?php checked( $options['test_mode'] ); ?> />
 				<?php esc_html_e( 'Enable test mode', 'fair-payment' ); ?>
 			</label>
 			<p class="description">

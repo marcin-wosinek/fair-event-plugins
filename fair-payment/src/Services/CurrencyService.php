@@ -72,9 +72,9 @@ class CurrencyService {
 	 * @return array Array of currency objects with 'label' and 'value' keys.
 	 */
 	public function get_allowed_currencies_for_ui() {
-		$allowed_currencies = $this->get_allowed_currencies();
+		$allowed_currencies   = $this->get_allowed_currencies();
 		$available_currencies = $this->get_available_currencies();
-		
+
 		$ui_currencies = array();
 		foreach ( $allowed_currencies as $currency_code ) {
 			if ( isset( $available_currencies[ $currency_code ] ) ) {
@@ -84,7 +84,7 @@ class CurrencyService {
 				);
 			}
 		}
-		
+
 		return $ui_currencies;
 	}
 
@@ -118,8 +118,8 @@ class CurrencyService {
 	 */
 	public function sanitize_currency_codes( $currency_codes ) {
 		$available_currencies = $this->get_available_currencies();
-		$sanitized = array();
-		
+		$sanitized            = array();
+
 		if ( is_array( $currency_codes ) ) {
 			foreach ( $currency_codes as $currency ) {
 				$currency = strtoupper( sanitize_text_field( $currency ) );
@@ -128,12 +128,12 @@ class CurrencyService {
 				}
 			}
 		}
-		
+
 		// Ensure at least one currency is present
 		if ( empty( $sanitized ) ) {
 			$sanitized = array( 'EUR' );
 		}
-		
+
 		return array_unique( $sanitized );
 	}
 }

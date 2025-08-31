@@ -49,8 +49,8 @@ class CreateStripeCheckoutEndpoint extends ApiController {
 		}
 
 		// Sanitize input
-		$amount = $this->sanitize_amount( $params['amount'] );
-		$currency = $this->sanitize_currency( $params['currency'] );
+		$amount      = $this->sanitize_amount( $params['amount'] );
+		$currency    = $this->sanitize_currency( $params['currency'] );
 		$description = isset( $params['description'] ) ? sanitize_text_field( $params['description'] ) : 'Fair Payment';
 
 		// Validate amount
@@ -109,15 +109,15 @@ class CreateStripeCheckoutEndpoint extends ApiController {
 
 		// Prepare response
 		$response_data = array(
-			'payment_id'     => $payment_id,
-			'checkout_url'   => $checkout_session['url'],
-			'session_id'     => $checkout_session['id'],
-			'amount'         => array(
+			'payment_id'   => $payment_id,
+			'checkout_url' => $checkout_session['url'],
+			'session_id'   => $checkout_session['id'],
+			'amount'       => array(
 				'total'    => $amount,
 				'currency' => $currency,
 			),
-			'expires_at'     => $session_data['expires_at'],
-			'test_mode'      => $this->is_test_mode(),
+			'expires_at'   => $session_data['expires_at'],
+			'test_mode'    => $this->is_test_mode(),
 		);
 
 		// Log activity
@@ -136,7 +136,7 @@ class CreateStripeCheckoutEndpoint extends ApiController {
 	 * @return string|WP_Error Stripe secret key or error.
 	 */
 	private function get_stripe_secret_key() {
-		$options = get_option( 'fair_payment_options', array() );
+		$options    = get_option( 'fair_payment_options', array() );
 		$secret_key = $options['stripe_secret_key'] ?? '';
 
 		if ( empty( $secret_key ) ) {
@@ -172,7 +172,7 @@ class CreateStripeCheckoutEndpoint extends ApiController {
 
 		$session_data = array(
 			'payment_method_types' => array( 'card' ),
-			'line_items'          => array(
+			'line_items'           => array(
 				array(
 					'price_data' => array(
 						'currency'     => strtolower( $currency ),
@@ -190,29 +190,32 @@ class CreateStripeCheckoutEndpoint extends ApiController {
 					'quantity'   => 1,
 				),
 			),
-			'mode'                => 'payment',
-			'success_url'         => site_url( '/fair-payment/success?session_id={CHECKOUT_SESSION_ID}' ),
-			'cancel_url'          => site_url( '/fair-payment/cancel' ),
-			'expires_at'          => time() + 1800, // 30 minutes
-			'metadata'            => array(
-				'plugin'      => 'fair-payment',
-				'site_url'    => site_url(),
-				'amount'      => $amount,
-				'currency'    => $currency,
+			'mode'                 => 'payment',
+			'success_url'          => site_url( '/fair-payment/success?session_id={CHECKOUT_SESSION_ID}' ),
+			'cancel_url'           => site_url( '/fair-payment/cancel' ),
+			'expires_at'           => time() + 1800, // 30 minutes
+			'metadata'             => array(
+				'plugin'   => 'fair-payment',
+				'site_url' => site_url(),
+				'amount'   => $amount,
+				'currency' => $currency,
 			),
 		);
 
-		$response = wp_remote_post( 'https://api.stripe.com/v1/checkout/sessions', array(
-			'headers' => array(
-				'Authorization'  => 'Bearer ' . $secret_key,
-				'Content-Type'   => 'application/x-www-form-urlencoded',
-				'Stripe-Version' => '2023-10-16',
-				'User-Agent'     => 'Fair Payment WordPress Plugin/1.0.0',
-			),
-			'body'    => $this->build_stripe_form_data( $session_data ),
-			'timeout' => 30,
-			'sslverify' => true,
-		) );
+		$response = wp_remote_post(
+			'https://api.stripe.com/v1/checkout/sessions',
+			array(
+				'headers'   => array(
+					'Authorization'  => 'Bearer ' . $secret_key,
+					'Content-Type'   => 'application/x-www-form-urlencoded',
+					'Stripe-Version' => '2023-10-16',
+					'User-Agent'     => 'Fair Payment WordPress Plugin/1.0.0',
+				),
+				'body'      => $this->build_stripe_form_data( $session_data ),
+				'timeout'   => 30,
+				'sslverify' => true,
+			)
+		);
 
 		if ( is_wp_error( $response ) ) {
 			return new \WP_Error(
@@ -231,11 +234,11 @@ class CreateStripeCheckoutEndpoint extends ApiController {
 
 		if ( $code !== 200 ) {
 			$error_message = __( 'Failed to create checkout session', 'fair-payment' );
-			
+
 			if ( isset( $data['error']['message'] ) ) {
 				$error_message = sanitize_text_field( $data['error']['message'] );
 			}
-			
+
 			return new \WP_Error( 'stripe_checkout_failed', $error_message );
 		}
 
@@ -256,7 +259,7 @@ class CreateStripeCheckoutEndpoint extends ApiController {
 	private function convert_to_minor_units( $amount, $currency ) {
 		// Zero-decimal currencies (amounts in smallest unit)
 		$zero_decimal = array( 'BIF', 'CLP', 'DJF', 'GNF', 'JPY', 'KMF', 'KRW', 'MGA', 'PYG', 'RWF', 'UGX', 'VND', 'VUV', 'XAF', 'XOF', 'XPF' );
-		
+
 		if ( in_array( strtoupper( $currency ), $zero_decimal, true ) ) {
 			return intval( $amount );
 		}
@@ -268,7 +271,7 @@ class CreateStripeCheckoutEndpoint extends ApiController {
 	/**
 	 * Build form data for Stripe API
 	 *
-	 * @param array $data Data array.
+	 * @param array  $data Data array.
 	 * @param string $prefix Key prefix for nested arrays.
 	 * @return string Form-encoded data.
 	 */

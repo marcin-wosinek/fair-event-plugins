@@ -16,15 +16,17 @@ defined( 'WPINC' ) || die;
 
 // Extract attributes with defaults
 $form_name = $attributes['name'] ?? '';
-$form_id = $attributes['id'] ?? '';
+$form_id   = $attributes['id'] ?? '';
 
 // Generate unique form ID if none provided
-$unique_form_id = !empty($form_id) ? $form_id : 'fair-registration-form-' . uniqid();
+$unique_form_id = ! empty( $form_id ) ? $form_id : 'fair-registration-form-' . uniqid();
 
 // Prepare wrapper attributes
-$wrapper_attributes = get_block_wrapper_attributes([
-	'class' => 'fair-registration-form'
-]);
+$wrapper_attributes = get_block_wrapper_attributes(
+	array(
+		'class' => 'fair-registration-form',
+	)
+);
 ?>
 
 <div <?php echo wp_kses_data( $wrapper_attributes ); ?>>

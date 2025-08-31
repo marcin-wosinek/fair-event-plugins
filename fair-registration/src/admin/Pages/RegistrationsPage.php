@@ -29,15 +29,17 @@ class RegistrationsPage {
 		}
 
 		$registrations = $this->get_registrations( $form_id );
-		$form_title = $form_id ? get_the_title( $form_id ) : '';
+		$form_title    = $form_id ? get_the_title( $form_id ) : '';
 		?>
 		<div class="wrap">
 			<?php if ( $form_id ) : ?>
 				<h1>
-					<?php printf( 
-						esc_html__( 'Registrations: %s', 'fair-registration' ), 
-						esc_html( $form_title ) 
-					); ?>
+					<?php
+					printf(
+						esc_html__( 'Registrations: %s', 'fair-registration' ),
+						esc_html( $form_title )
+					);
+					?>
 					<a href="<?php echo esc_url( admin_url( 'admin.php?page=fair-registration' ) ); ?>" class="page-title-action">
 						<?php echo esc_html__( '← Back to Forms', 'fair-registration' ); ?>
 					</a>
@@ -58,9 +60,10 @@ class RegistrationsPage {
 						<?php if ( ! $form_id ) : ?>
 							<select name="form_filter" id="form-filter">
 								<option value=""><?php echo esc_html__( 'All Forms', 'fair-registration' ); ?></option>
-								<?php 
+								<?php
 								$forms = $this->get_forms_with_registrations();
-								foreach ( $forms as $form ) : ?>
+								foreach ( $forms as $form ) :
+									?>
 									<option value="<?php echo esc_attr( $form->ID ); ?>">
 										<?php echo esc_html( get_the_title( $form->ID ) ); ?>
 									</option>
@@ -171,7 +174,7 @@ class RegistrationsPage {
 	 */
 	private function get_registrations( $form_id = null ) {
 		$db_manager = Plugin::instance()->get_db_manager();
-		
+
 		if ( $form_id ) {
 			$registrations = $db_manager->get_registrations_by_form( $form_id );
 		} else {
@@ -182,11 +185,11 @@ class RegistrationsPage {
 		$formatted_registrations = array();
 		foreach ( $registrations as $registration ) {
 			$reg_data = $registration['registration_data'] ?? array();
-			
+
 			// Extract name and email from field array format
-			$name = 'N/A';
+			$name  = 'N/A';
 			$email = 'N/A';
-			
+
 			if ( is_array( $reg_data ) ) {
 				foreach ( $reg_data as $field ) {
 					if ( is_array( $field ) && isset( $field['name'], $field['value'] ) ) {
@@ -198,13 +201,13 @@ class RegistrationsPage {
 					}
 				}
 			}
-			
+
 			$formatted_registrations[] = array(
-				'id' => $registration['id'],
-				'name' => $name,
-				'email' => $email,
+				'id'      => $registration['id'],
+				'name'    => $name,
+				'email'   => $email,
 				'form_id' => $registration['form_id'],
-				'date' => $registration['created']
+				'date'    => $registration['created'],
 			);
 		}
 
@@ -219,7 +222,7 @@ class RegistrationsPage {
 	private function get_forms_with_registrations() {
 		$db_manager = Plugin::instance()->get_db_manager();
 		$forms_data = $db_manager->get_forms_with_registrations();
-		
+
 		$forms = array();
 		foreach ( $forms_data as $form_data ) {
 			$post = get_post( $form_data['form_id'] );

@@ -50,7 +50,7 @@ class TestStripeConnectionEndpoint extends ApiController {
 		}
 
 		// Sanitize input
-		$secret_key = sanitize_text_field( $params['secret_key'] );
+		$secret_key      = sanitize_text_field( $params['secret_key'] );
 		$publishable_key = isset( $params['publishable_key'] ) ? sanitize_text_field( $params['publishable_key'] ) : '';
 
 		// Test the Stripe connection
@@ -103,18 +103,18 @@ class TestStripeConnectionEndpoint extends ApiController {
 		// Prepare response
 		$response = array(
 			'secret_key' => array(
-				'valid'      => true,
-				'mode'       => $balance_result['mode'],
-				'format'     => 'valid',
+				'valid'  => true,
+				'mode'   => $balance_result['mode'],
+				'format' => 'valid',
 			),
-			'balance' => array(
-				'available'     => $balance_result['balance']['available'] ?? array(),
-				'pending'       => $balance_result['balance']['pending'] ?? array(),
-				'currencies'    => $balance_result['currencies'] ?? array(),
+			'balance'    => array(
+				'available'  => $balance_result['balance']['available'] ?? array(),
+				'pending'    => $balance_result['balance']['pending'] ?? array(),
+				'currencies' => $balance_result['currencies'] ?? array(),
 			),
-			'account' => array(
-				'mode'          => $balance_result['mode'],
-				'country'       => $balance_result['balance']['object'] ?? null,
+			'account'    => array(
+				'mode'    => $balance_result['mode'],
+				'country' => $balance_result['balance']['object'] ?? null,
 			),
 			'connection' => array(
 				'status'        => 'success',
@@ -155,9 +155,9 @@ class TestStripeConnectionEndpoint extends ApiController {
 		}
 
 		if ( ! $this->validate_key_format( $secret_key, 'sk' ) ) {
-			return new WP_Error( 
-				'invalid_secret_key_format', 
-				__( 'Invalid secret key format. Must start with sk_test_ or sk_live_', 'fair-payment' ) 
+			return new WP_Error(
+				'invalid_secret_key_format',
+				__( 'Invalid secret key format. Must start with sk_test_ or sk_live_', 'fair-payment' )
 			);
 		}
 
@@ -173,21 +173,24 @@ class TestStripeConnectionEndpoint extends ApiController {
 	private function test_balance_endpoint( $secret_key ) {
 		$start_time = microtime( true );
 
-		$response = wp_remote_get( 'https://api.stripe.com/v1/balance', array(
-			'headers' => array(
-				'Authorization' => 'Bearer ' . $secret_key,
-				'Stripe-Version' => '2023-10-16',
-				'User-Agent' => 'Fair Payment WordPress Plugin/1.0.0',
-			),
-			'timeout' => 15,
-			'sslverify' => true,
-		) );
+		$response = wp_remote_get(
+			'https://api.stripe.com/v1/balance',
+			array(
+				'headers'   => array(
+					'Authorization'  => 'Bearer ' . $secret_key,
+					'Stripe-Version' => '2023-10-16',
+					'User-Agent'     => 'Fair Payment WordPress Plugin/1.0.0',
+				),
+				'timeout'   => 15,
+				'sslverify' => true,
+			)
+		);
 
 		$response_time = round( ( microtime( true ) - $start_time ) * 1000, 2 );
 
 		if ( is_wp_error( $response ) ) {
-			return new WP_Error( 
-				'stripe_connection_failed', 
+			return new WP_Error(
+				'stripe_connection_failed',
 				sprintf(
 					/* translators: %s: error message */
 					__( 'Unable to connect to Stripe API: %s', 'fair-payment' ),
@@ -202,11 +205,11 @@ class TestStripeConnectionEndpoint extends ApiController {
 
 		if ( $code !== 200 ) {
 			$error_message = __( 'Invalid API credentials', 'fair-payment' );
-			
+
 			if ( isset( $data['error']['message'] ) ) {
 				$error_message = sanitize_text_field( $data['error']['message'] );
 			}
-			
+
 			return new WP_Error( 'stripe_api_error', $error_message );
 		}
 
@@ -215,7 +218,7 @@ class TestStripeConnectionEndpoint extends ApiController {
 		}
 
 		$mode = strpos( $secret_key, 'sk_test_' ) === 0 ? 'test' : 'live';
-		
+
 		return array(
 			'valid'         => true,
 			'mode'          => $mode,
@@ -238,18 +241,18 @@ class TestStripeConnectionEndpoint extends ApiController {
 		}
 
 		if ( ! $this->validate_key_format( $publishable_key, 'pk' ) ) {
-			return new WP_Error( 
-				'invalid_publishable_key_format', 
-				__( 'Invalid publishable key format. Must start with pk_test_ or pk_live_', 'fair-payment' ) 
+			return new WP_Error(
+				'invalid_publishable_key_format',
+				__( 'Invalid publishable key format. Must start with pk_test_ or pk_live_', 'fair-payment' )
 			);
 		}
 
 		// Check mode consistency
 		$publishable_mode = strpos( $publishable_key, 'pk_test_' ) === 0 ? 'test' : 'live';
-		
+
 		if ( $publishable_mode !== $secret_key_mode ) {
-			return new WP_Error( 
-				'key_mode_mismatch', 
+			return new WP_Error(
+				'key_mode_mismatch',
 				sprintf(
 					/* translators: 1: secret key mode, 2: publishable key mode */
 					__( 'Key mode mismatch: secret key is %1$s mode but publishable key is %2$s mode', 'fair-payment' ),

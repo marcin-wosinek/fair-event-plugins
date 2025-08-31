@@ -79,7 +79,7 @@ class FormsListPage {
 										<?php echo esc_html( get_the_date( 'Y/m/d', $form->ID ) ); ?>
 									</td>
 									<td class="column-registrations">
-										<?php 
+										<?php
 										$registration_count = $this->get_registration_count( $form->ID );
 										echo esc_html( $registration_count );
 										?>
@@ -117,19 +117,19 @@ class FormsListPage {
 				array(
 					'key'     => '_has_registration_form',
 					'value'   => '1',
-					'compare' => '='
-				)
-			)
+					'compare' => '=',
+				),
+			),
 		);
 
-		$query = new \WP_Query( $args );
+		$query            = new \WP_Query( $args );
 		$posts_with_forms = array();
 
 		if ( $query->have_posts() ) {
 			while ( $query->have_posts() ) {
 				$query->the_post();
 				$post = get_post();
-				
+
 				// Double check if post actually contains registration form block
 				if ( has_block( 'fair-registration/form', $post ) ) {
 					$posts_with_forms[] = $post;
@@ -144,7 +144,7 @@ class FormsListPage {
 				'post_type'      => array( 'post', 'page' ),
 				'post_status'    => 'publish',
 				'posts_per_page' => -1,
-				's'              => 'wp:fair-registration/form'
+				's'              => 'wp:fair-registration/form',
 			);
 
 			$query = new \WP_Query( $args );
@@ -152,7 +152,7 @@ class FormsListPage {
 				while ( $query->have_posts() ) {
 					$query->the_post();
 					$post = get_post();
-					
+
 					if ( has_block( 'fair-registration/form', $post ) ) {
 						$posts_with_forms[] = $post;
 					}

@@ -17,7 +17,7 @@ class BlockHooks {
 	 * Constructor - registers WordPress hooks
 	 */
 	public function __construct() {
-		add_action( 'init', [ $this, 'register_blocks' ] );
+		add_action( 'init', array( $this, 'register_blocks' ) );
 	}
 
 	/**
@@ -28,7 +28,7 @@ class BlockHooks {
 	public function register_blocks() {
 		// Register main form block
 		register_block_type( __DIR__ . '/../../build/blocks/registration-form' );
-		
+
 		// Register field blocks
 		register_block_type( __DIR__ . '/../../build/blocks/email-field' );
 		register_block_type( __DIR__ . '/../../build/blocks/short-text-field' );

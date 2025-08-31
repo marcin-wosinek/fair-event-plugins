@@ -66,13 +66,16 @@ class Plugin {
 	 * @return void
 	 */
 	private function load_textdomain() {
-		add_action( 'init', function() {
-			load_plugin_textdomain(
-				'fair-calendar-button',
-				false,
-				dirname( plugin_basename( __DIR__ . '/../../fair-calendar-button.php' ) ) . '/languages'
-			);
-		} );
+		add_action(
+			'init',
+			function () {
+				load_plugin_textdomain(
+					'fair-calendar-button',
+					false,
+					dirname( plugin_basename( __DIR__ . '/../../fair-calendar-button.php' ) ) . '/languages'
+				);
+			}
+		);
 	}
 
 	/**

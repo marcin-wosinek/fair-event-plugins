@@ -107,7 +107,7 @@ class TransactionListPage {
 		</div>
 		<?php
 	}
-	
+
 	/**
 	 * Render sample transactions for demonstration
 	 *
@@ -116,25 +116,25 @@ class TransactionListPage {
 	private function render_sample_transactions() {
 		$sample_transactions = array(
 			array(
-				'id' => '12345',
+				'id'     => '12345',
 				'amount' => '€50.00',
 				'status' => 'completed',
-				'date' => '2024-08-20 10:30:00'
+				'date'   => '2024-08-20 10:30:00',
 			),
 			array(
-				'id' => '12346',
+				'id'     => '12346',
 				'amount' => '$25.00',
 				'status' => 'pending',
-				'date' => '2024-08-20 09:15:00'
+				'date'   => '2024-08-20 09:15:00',
 			),
 			array(
-				'id' => '12347',
+				'id'     => '12347',
 				'amount' => '£75.00',
 				'status' => 'failed',
-				'date' => '2024-08-19 16:45:00'
-			)
+				'date'   => '2024-08-19 16:45:00',
+			),
 		);
-		
+
 		if ( empty( $sample_transactions ) ) {
 			?>
 			<tr class="no-items">
@@ -145,7 +145,7 @@ class TransactionListPage {
 			<?php
 			return;
 		}
-		
+
 		foreach ( $sample_transactions as $transaction ) {
 			$status_class = 'status-' . $transaction['status'];
 			?>

@@ -25,16 +25,19 @@ class PaymentController {
 	 */
 	public function checkout( $payment_id = null ) {
 		// Set page title
-		add_filter( 'wp_title', function( $title ) {
-			return esc_html__( 'Checkout', 'fair-payment' ) . ' | ' . get_bloginfo( 'name' );
-		} );
+		add_filter(
+			'wp_title',
+			function ( $title ) {
+				return esc_html__( 'Checkout', 'fair-payment' ) . ' | ' . get_bloginfo( 'name' );
+			}
+		);
 
 		// Enqueue frontend styles if needed
 		$this->enqueue_frontend_assets();
 
 		$page = new CheckoutPage( $payment_id );
 		$page->render();
-		
+
 		// Prevent WordPress from loading other templates
 		exit;
 	}
@@ -47,16 +50,19 @@ class PaymentController {
 	 */
 	public function result( $payment_id = null ) {
 		// Set page title
-		add_filter( 'wp_title', function( $title ) {
-			return esc_html__( 'Payment Result', 'fair-payment' ) . ' | ' . get_bloginfo( 'name' );
-		} );
+		add_filter(
+			'wp_title',
+			function ( $title ) {
+				return esc_html__( 'Payment Result', 'fair-payment' ) . ' | ' . get_bloginfo( 'name' );
+			}
+		);
 
 		// Enqueue frontend styles if needed
 		$this->enqueue_frontend_assets();
 
 		$page = new ResultPage( $payment_id );
 		$page->render();
-		
+
 		// Prevent WordPress from loading other templates
 		exit;
 	}
@@ -69,9 +75,9 @@ class PaymentController {
 	private function enqueue_frontend_assets() {
 		// Enqueue WordPress default styles for consistent appearance
 		wp_enqueue_style( 'wp-admin' );
-		
+
 		// Add custom styles for payment pages
-		$custom_css = "
+		$custom_css = '
 		.fair-payment-container {
 			max-width: 800px;
 			margin: 2rem auto;
@@ -129,8 +135,8 @@ class PaymentController {
 			color: #721c24;
 			border: 1px solid #f5c6cb;
 		}
-		";
-		
+		';
+
 		wp_add_inline_style( 'wp-admin', $custom_css );
 	}
 }

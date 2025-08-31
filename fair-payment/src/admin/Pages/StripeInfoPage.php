@@ -32,14 +32,14 @@ class StripeInfoPage {
 			wp_die( esc_html__( 'You do not have sufficient permissions to access this page.', 'fair-payment' ) );
 		}
 
-		$options = get_option( 'fair_payment_options', array() );
+		$options        = get_option( 'fair_payment_options', array() );
 		$has_secret_key = ! empty( $options['stripe_secret_key'] );
 		?>
 		<div class="wrap fair-payment-stripe-info">
 			<h1>
 				<?php echo esc_html( get_admin_page_title() ); ?>
 				<span class="fair-payment-status-indicator <?php echo $options['test_mode'] ? 'inactive' : 'active'; ?>" 
-					  title="<?php echo $options['test_mode'] ? esc_attr__( 'Test Mode Active', 'fair-payment' ) : esc_attr__( 'Live Mode', 'fair-payment' ); ?>"></span>
+						title="<?php echo $options['test_mode'] ? esc_attr__( 'Test Mode Active', 'fair-payment' ) : esc_attr__( 'Live Mode', 'fair-payment' ); ?>"></span>
 			</h1>
 
 			<?php

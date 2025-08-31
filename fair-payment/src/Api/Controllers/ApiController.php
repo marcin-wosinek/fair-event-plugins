@@ -26,16 +26,16 @@ class ApiController {
 			if ( ! isset( $params[ $param ] ) || empty( $params[ $param ] ) ) {
 				return new \WP_Error(
 					'missing_parameter',
-					sprintf( 
+					sprintf(
 						/* translators: %s: parameter name */
-						__( 'Missing required parameter: %s', 'fair-payment' ), 
-						$param 
+						__( 'Missing required parameter: %s', 'fair-payment' ),
+						$param
 					),
 					array( 'status' => 400 )
 				);
 			}
 		}
-		
+
 		return true;
 	}
 
@@ -101,8 +101,8 @@ class ApiController {
 	 */
 	protected function sanitize_currency( $currency ) {
 		$allowed_currencies = array( 'USD', 'EUR', 'GBP' );
-		$currency = strtoupper( sanitize_text_field( $currency ) );
-		
+		$currency           = strtoupper( sanitize_text_field( $currency ) );
+
 		return in_array( $currency, $allowed_currencies, true ) ? $currency : 'EUR';
 	}
 
@@ -144,21 +144,21 @@ class ApiController {
 	 */
 	protected function get_client_ip() {
 		$ip_keys = array( 'HTTP_CLIENT_IP', 'HTTP_X_FORWARDED_FOR', 'REMOTE_ADDR' );
-		
+
 		foreach ( $ip_keys as $key ) {
 			if ( array_key_exists( $key, $_SERVER ) === true ) {
 				$ip = sanitize_text_field( wp_unslash( $_SERVER[ $key ] ) );
-				
+
 				foreach ( explode( ',', $ip ) as $ip_part ) {
 					$ip_part = trim( $ip_part );
-					
+
 					if ( filter_var( $ip_part, FILTER_VALIDATE_IP, FILTER_FLAG_NO_PRIV_RANGE | FILTER_FLAG_NO_RES_RANGE ) !== false ) {
 						return $ip_part;
 					}
 				}
 			}
 		}
-		
+
 		return '127.0.0.1';
 	}
 
@@ -173,16 +173,16 @@ class ApiController {
 	protected function check_rate_limit( $identifier, $limit = 60, $window = 3600 ) {
 		$transient_key = 'fair_payment_rate_limit_' . md5( $identifier );
 		$current_count = get_transient( $transient_key );
-		
+
 		if ( false === $current_count ) {
 			set_transient( $transient_key, 1, $window );
 			return true;
 		}
-		
+
 		if ( $current_count >= $limit ) {
 			return false;
 		}
-		
+
 		set_transient( $transient_key, $current_count + 1, $window );
 		return true;
 	}

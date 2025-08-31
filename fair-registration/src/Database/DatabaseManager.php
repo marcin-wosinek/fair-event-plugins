@@ -158,14 +158,14 @@ class DatabaseManager {
 	 */
 	public function get_forms_with_registrations() {
 		global $wpdb;
-		
+
 		$table_name = $this->registrations_table->get_table_name();
-		
+
 		$sql = "SELECT form_id, COUNT(*) as count 
 				FROM {$table_name} 
 				GROUP BY form_id 
 				ORDER BY count DESC";
-		
+
 		return $wpdb->get_results( $sql, ARRAY_A );
 	}
 
@@ -176,25 +176,25 @@ class DatabaseManager {
 	 */
 	public function get_statistics() {
 		global $wpdb;
-		
+
 		$table_name = $this->registrations_table->get_table_name();
-		
+
 		$stats = array();
-		
+
 		// Total registrations
 		$stats['total'] = $this->count_total_registrations();
-		
+
 		// Recent registrations (last 30 days)
-		$sql = $wpdb->prepare(
+		$sql             = $wpdb->prepare(
 			"SELECT COUNT(*) as count 
 			FROM {$table_name} 
 			WHERE created >= DATE_SUB(NOW(), INTERVAL 30 DAY)"
 		);
 		$stats['recent'] = (int) $wpdb->get_var( $sql );
-		
+
 		// Registrations per form
 		$stats['by_form'] = $this->get_forms_with_registrations();
-		
+
 		return $stats;
 	}
 }

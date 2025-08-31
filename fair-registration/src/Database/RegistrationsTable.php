@@ -69,7 +69,7 @@ class RegistrationsTable {
 			KEY created (created)
 		) $charset_collate;";
 
-		require_once( ABSPATH . 'wp-admin/includes/upgrade.php' );
+		require_once ABSPATH . 'wp-admin/includes/upgrade.php';
 		dbDelta( $sql );
 
 		// Store the database version
@@ -107,12 +107,12 @@ class RegistrationsTable {
 		global $wpdb;
 
 		$defaults = array(
-			'user_id' => get_current_user_id() ?: null,
-			'created' => current_time( 'mysql' ),
-			'modified' => current_time( 'mysql' ),
-			'url' => '',
-			'form_id' => 0,
-			'registration_data' => ''
+			'user_id'           => get_current_user_id() ?: null,
+			'created'           => current_time( 'mysql' ),
+			'modified'          => current_time( 'mysql' ),
+			'url'               => '',
+			'form_id'           => 0,
+			'registration_data' => '',
 		);
 
 		$data = wp_parse_args( $data, $defaults );
@@ -131,7 +131,7 @@ class RegistrationsTable {
 				'%s', // modified
 				'%s', // url
 				'%d', // form_id
-				'%s'  // registration_data
+				'%s',  // registration_data
 			)
 		);
 
@@ -300,5 +300,4 @@ class RegistrationsTable {
 
 		return (int) $wpdb->get_var( $sql );
 	}
-
 }

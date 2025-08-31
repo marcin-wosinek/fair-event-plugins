@@ -28,7 +28,7 @@ class AdminHooks {
 	 */
 	public function __construct() {
 		$this->admin_controller = new AdminController();
-		
+
 		add_action( 'admin_menu', array( $this, 'register_admin_menu' ) );
 	}
 

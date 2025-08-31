@@ -8,11 +8,13 @@
 defined( 'WPINC' ) || die;
 
 // Get wrapper attributes
-$wrapper_attributes = get_block_wrapper_attributes([
-    'class' => 'time-column-body-container',
-]);
+$wrapper_attributes = get_block_wrapper_attributes(
+	array(
+		'class' => 'time-column-body-container',
+	)
+);
 ?>
 
 <div <?php echo $wrapper_attributes; ?>>
-    <?php echo $content; ?>
+	<?php echo $content; ?>
 </div>
