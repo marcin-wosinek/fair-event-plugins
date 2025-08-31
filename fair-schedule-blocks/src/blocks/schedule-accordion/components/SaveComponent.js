@@ -11,16 +11,9 @@ import { useBlockProps, useInnerBlocksProps } from '@wordpress/block-editor';
  */
 export default function SaveComponent() {
 	const blockProps = useBlockProps.save({
-		className: 'schedule-accordion-container',
-	});
-
-	const innerBlocksProps = useInnerBlocksProps.save({
 		className: 'schedule-accordion-content',
 	});
+	const innerBlocksProps = useInnerBlocksProps.save(blockProps);
 
-	return (
-		<div {...blockProps}>
-			<div {...innerBlocksProps} />
-		</div>
-	);
+	return <div {...innerBlocksProps}></div>;
 }

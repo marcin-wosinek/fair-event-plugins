@@ -2,13 +2,14 @@
  * Edit component for the Schedule Accordion Block
  */
 
-import { PanelBody, RangeControl } from '@wordpress/components';
+import { PanelBody, DateTimePicker } from '@wordpress/components';
 import {
 	useBlockProps,
 	InspectorControls,
 	useInnerBlocksProps,
 } from '@wordpress/block-editor';
 import { __ } from '@wordpress/i18n';
+import { dateI18n, getSettings } from '@wordpress/date';
 
 /**
  * Edit component for the Schedule Accordion Block
@@ -20,6 +21,9 @@ import { __ } from '@wordpress/i18n';
  */
 export default function EditComponent({ attributes, setAttributes }) {
 	const { autoCollapsedAfter } = attributes;
+
+	// Get WordPress timezone settings
+	const dateSettings = getSettings();
 
 	const blockProps = useBlockProps({
 		className: 'schedule-accordion-container',
@@ -37,38 +41,19 @@ export default function EditComponent({ attributes, setAttributes }) {
 	// Default template with some example content
 	const template = [
 		[
-			'core/details',
+			'core/heading',
 			{
-				summary: __('Schedule Item 1', 'fair-schedule-blocks'),
+				level: 2,
+				content: __('Schedule', 'fair-schedule-blocks'),
 			},
-			[
-				[
-					'core/paragraph',
-					{
-						content: __(
-							'Schedule details go here...',
-							'fair-schedule-blocks'
-						),
-					},
-				],
-			],
 		],
 		[
-			'core/details',
+			'core/paragraph',
 			{
-				summary: __('Schedule Item 2', 'fair-schedule-blocks'),
+				content: __(
+					'Replace this value with content you want to hide after some date'
+				),
 			},
-			[
-				[
-					'core/paragraph',
-					{
-						content: __(
-							'More schedule details...',
-							'fair-schedule-blocks'
-						),
-					},
-				],
-			],
 		],
 	];
 
@@ -89,23 +74,41 @@ export default function EditComponent({ attributes, setAttributes }) {
 				<PanelBody
 					title={__('Accordion Settings', 'fair-schedule-blocks')}
 				>
-					<RangeControl
-						label={__(
-							'Auto-collapse after',
-							'fair-schedule-blocks'
-						)}
-						value={autoCollapsedAfter}
-						onChange={(value) =>
-							setAttributes({ autoCollapsedAfter: value })
-						}
-						min={1}
-						max={10}
-						step={1}
-						help={__(
-							'Number of items to show expanded by default. Items beyond this number will be collapsed.',
-							'fair-schedule-blocks'
-						)}
-					/>
+					<div style={{ marginBottom: '16px' }}>
+						<label
+							style={{
+								display: 'block',
+								marginBottom: '8px',
+								fontWeight: 'bold',
+							}}
+						>
+							{__('Auto-collapse after', 'fair-schedule-blocks')}
+						</label>
+						<DateTimePicker
+							currentDate={autoCollapsedAfter || null}
+							onChange={(date) => {
+								// Format according to WordPress settings
+								const formatted = date
+									? dateI18n('c', date)
+									: '';
+								setAttributes({
+									autoCollapsedAfter: formatted,
+								});
+							}}
+						/>
+						<p
+							style={{
+								fontSize: '12px',
+								color: '#757575',
+								marginTop: '8px',
+							}}
+						>
+							{__(
+								'Hide content after this date and time.',
+								'fair-schedule-blocks'
+							)}
+						</p>
+					</div>
 				</PanelBody>
 			</InspectorControls>
 

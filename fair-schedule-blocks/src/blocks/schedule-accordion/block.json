@@ -15,8 +15,8 @@
 	},
 	"attributes": {
 		"autoCollapsedAfter": {
-			"type": "number",
-			"default": 3
+			"type": "string",
+			"default": ""
 		}
 	},
 	"textdomain": "fair-schedule-blocks",
