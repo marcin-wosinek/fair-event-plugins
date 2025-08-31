@@ -3,7 +3,6 @@
  */
 .time-column-container {
 	flex: 1 1 300px;
-	min-width: 300px;
 }
 
 .time-column-content > .wp-block-heading {
