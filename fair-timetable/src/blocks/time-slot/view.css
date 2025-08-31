@@ -14,17 +14,18 @@
 }
 
 .time-slot-container .time-annotation {
-  position: absolute;
+  background-color: var(--wp--preset--color--base);
   border-bottom: 1px solid color-mix(in srgb, var(--wp--preset--color--contrast) 50%, transparent);
   border-left: 1px solid color-mix(in srgb, var(--wp--preset--color--contrast) 50%, transparent);
-  padding: 8px;
   border-radius: 0 0 0 8px;
-  top: 0;
-  right: 0;
   font-size: var(--wp--preset--font-size--small);
-  margin: 0;
   line-height: 1;
+  margin: 0;
   opacity: 0.8;
+  padding: 8px;
+  position: absolute;
+  right: 0;
+  top: 0;
 }
 
 .time-slot-content .wp-block-heading:first-child {
