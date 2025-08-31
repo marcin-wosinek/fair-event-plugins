@@ -27,8 +27,6 @@ class BlockHooks {
 	 * @return void
 	 */
 	public function register_blocks() {
-		// Blocks will be registered here when created
-		// Example:
-		// register_block_type( __DIR__ . '/../../build/blocks/schedule-item' );
+		register_block_type( __DIR__ . '/../../build/blocks/schedule-accordion' );
 	}
 }

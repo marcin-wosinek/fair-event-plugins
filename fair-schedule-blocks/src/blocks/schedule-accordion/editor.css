@@ -1,0 +1,12 @@
+/**
+ * Schedule Accordion Block Editor Styles
+ */
+.block-editor-block-list__layout .schedule-accordion-container {
+  border: 2px dashed var(--wp--preset--color--contrast, #e0e0e0);
+  padding: 1rem;
+  border-radius: 0.5rem;
+}
+
+.block-editor-block-list__layout .schedule-accordion-container .schedule-accordion-content {
+  min-height: 100px;
+}
