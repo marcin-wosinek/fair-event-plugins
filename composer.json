@@ -16,5 +16,9 @@
 		"allow-plugins": {
 			"dealerdirect/phpcodesniffer-composer-installer": true
 		}
+	},
+	"require-dev": {
+		"phpcsstandards/phpcsutils": "^1.1",
+		"phpcsstandards/phpcsextra": "^1.4"
 	}
 }
