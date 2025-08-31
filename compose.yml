@@ -14,6 +14,7 @@ services:
             - ./fair-calendar-button:/var/www/html/wp-content/plugins/fair-calendar-button
             - ./fair-payment:/var/www/html/wp-content/plugins/fair-payment
             - ./fair-registration:/var/www/html/wp-content/plugins/fair-registration
+            - ./fair-schedule-blocks:/var/www/html/wp-content/plugins/fair-schedule-blocks
             - ./fair-timetable:/var/www/html/wp-content/plugins/fair-timetable
 
     db:
@@ -78,6 +79,7 @@ services:
             - ./fair-calendar-button:/var/www/html/wp-content/plugins/fair-calendar-button
             - ./fair-payment:/var/www/html/wp-content/plugins/fair-payment
             - ./fair-registration:/var/www/html/wp-content/plugins/fair-registration
+            - ./fair-schedule-blocks:/var/www/html/wp-content/plugins/fair-schedule-blocks
             - ./fair-timetable:/var/www/html/wp-content/plugins/fair-timetable
         depends_on:
             - db-php74
@@ -114,6 +116,7 @@ services:
             - ./fair-calendar-button:/var/www/html/wp-content/plugins/fair-calendar-button
             - ./fair-payment:/var/www/html/wp-content/plugins/fair-payment
             - ./fair-registration:/var/www/html/wp-content/plugins/fair-registration
+            - ./fair-schedule-blocks:/var/www/html/wp-content/plugins/fair-schedule-blocks
             - ./fair-timetable:/var/www/html/wp-content/plugins/fair-timetable
         depends_on:
             - db-wp63
@@ -149,6 +152,7 @@ services:
             - ./fair-calendar-button:/var/www/html/wp-content/plugins/fair-calendar-button
             - ./fair-payment:/var/www/html/wp-content/plugins/fair-payment
             - ./fair-registration:/var/www/html/wp-content/plugins/fair-registration
+            - ./fair-schedule-blocks:/var/www/html/wp-content/plugins/fair-schedule-blocks
             - ./fair-timetable:/var/www/html/wp-content/plugins/fair-timetable
         depends_on:
             - db-wp67

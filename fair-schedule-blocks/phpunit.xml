@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<phpunit
+    bootstrap="vendor/autoload.php"
+    colors="true"
+    verbose="true"
+    stopOnFailure="false"
+    stopOnError="false"
+    beStrictAboutTestsThatDoNotTestAnything="true"
+    beStrictAboutOutputDuringTests="true"
+    beStrictAboutTodoAnnotatedTests="true"
+    beStrictAboutResourceUsageDuringSmallTests="true"
+    enforceTimeLimit="true"
+    defaultTimeLimit="5"
+    timeoutForSmallTests="2"
+    timeoutForMediumTests="10"
+    timeoutForLargeTests="60"
+>
+    <testsuites>
+        <testsuite name="Fair Schedule Blocks Tests">
+            <directory>__tests__</directory>
+        </testsuite>
+    </testsuites>
+    
+    <coverage>
+        <include>
+            <directory suffix=".php">src</directory>
+        </include>
+        <exclude>
+            <directory>vendor</directory>
+            <directory>__tests__</directory>
+            <directory>build</directory>
+        </exclude>
+    </coverage>
+    
+    <php>
+        <const name="PHPUNIT_COMPOSER_INSTALL" value="vendor/autoload.php"/>
+        <!-- WordPress constants -->
+        <const name="WPINC" value="wp-includes"/>
+        <const name="WP_DEBUG" value="true"/>
+    </php>
+</phpunit>
