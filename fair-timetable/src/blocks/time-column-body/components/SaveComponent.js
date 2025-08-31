@@ -12,9 +12,7 @@ import { useBlockProps, useInnerBlocksProps } from '@wordpress/block-editor';
  * @return {JSX.Element} The save component
  */
 export default function SaveComponent() {
-	const blockProps = useBlockProps.save({
-		className: 'time-column-body-container',
-	});
+	const blockProps = useBlockProps.save();
 
 	const innerBlocksProps = useInnerBlocksProps.save({
 		className: 'time-column-body-content',
