@@ -15,7 +15,9 @@
 	"type": "module",
 	"main": "index.js",
 	"scripts": {
-		"test": "npm run test --workspaces",
+		"test": "npm-run-all test:*",
+		"test:js": "npm run test --workspaces",
+		"test:php": "npm run test:php --workspace=fair-timetable",
 		"build": "npm run build --workspaces",
 		"clean": "npm run clean --workspaces",
 		"composer:install": "npm run composer:install --workspaces",
