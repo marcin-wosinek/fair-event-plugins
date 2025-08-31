@@ -20,10 +20,16 @@ $rrule       = $attributes['rRule'] ?? '';
 $current_url   = get_permalink();
 $current_title = get_the_title();
 
+$classes = 'calendar-button-container';
+
+if ( is_plugin_active( 'plausible-analytics/plausible-analytics.php' ) ) {
+	$classes .= ' plausible-event-name=Fair+calendar+button';
+}
+
 // Get wrapper attributes
 $wrapper_attributes = get_block_wrapper_attributes(
 	array(
-		'class'            => 'calendar-button-container',
+		'class'            => esc_attr( $classes ),
 		'data-start'       => esc_attr( $start ),
 		'data-end'         => esc_attr( $end ),
 		'data-all-day'     => $all_day ? 'true' : 'false',
