@@ -69,7 +69,7 @@
 }
 
 /* Responsive adjustments for half-width display modes */
-@media (max-width: 600px) {
+@media (max-width: 700px) {
   .time-slot-container.display-left-half,
   .time-slot-container.display-right-half {
     width: 100%;
