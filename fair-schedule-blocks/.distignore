@@ -5,7 +5,16 @@ package*.json
 webpack.config.js
 composer.lock
 vendor/composer/installers
+vendor/bin
+vendor/*/bin
+tests
+test-results
+playwright-report
+playwright.config.js
+.env*
+scripts
+*.sh
 .*
 babel.config.cjs
-jest.config.cjs
 phpunit.xml
+jest.config.cjs

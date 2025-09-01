@@ -14,6 +14,7 @@
 		"format": "wp-scripts format",
 		"format:php": "vendor/bin/phpcbf --standard=WordPress --extensions=php,html src/ __tests__/",
 		"composer:install": "composer install",
+		"composer:install:prod": "composer install --no-dev",
 		"composer:update": "composer update",
 		"composer:validate": "composer validate --strict",
 		"test": "npm-run-all test:*",

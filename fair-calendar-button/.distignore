@@ -15,3 +15,7 @@ playwright.config.js
 scripts
 *.sh
 .*
+phpunit.xml
+jest.config.cjs
+babel.config.cjs
+blueprint.json

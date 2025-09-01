@@ -13,6 +13,7 @@
 		"start": "wp-scripts start",
 		"format": "wp-scripts format",
 		"composer:install": "composer install",
+		"composer:install:prod": "composer install --no-dev",
 		"composer:update": "composer update",
 		"composer:validate": "composer validate --strict",
 		"test": "npm-run-all test:*",

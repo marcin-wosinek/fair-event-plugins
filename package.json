@@ -21,6 +21,7 @@
 		"build": "npm run build --workspaces",
 		"clean": "npm run clean --workspaces",
 		"composer:install": "npm run composer:install --workspaces",
+		"composer:install:prod": "npm run composer:install:prod --workspaces",
 		"composer:update": "npm run composer:update --workspaces",
 		"composer:validate": "npm run composer:validate --workspaces",
 		"start": "npm run start --workspace=fair-timetable & npm run start --workspace=fair-payment & npm run start --workspace=fair-calendar-button & npm run start --workspace=fair-registration & npm run start --workspace=fair-schedule-blocks & wait",
@@ -38,10 +39,12 @@
 		"release:fair-calendar-button": "npm run build --workspace=fair-calendar-button && changeset tag",
 		"release:fair-timetable": "npm run build --workspace=fair-timetable && changeset tag",
 		"release:fair-registration": "npm run build --workspace=fair-registration && changeset tag",
+		"release:fair-schedule-blocks": "npm run build --workspace=fair-schedule-blocks && changeset tag",
 		"dist-archive": "npm-run-all dist-archive:*",
-		"dist-archive:fair-timetable": "wp dist-archive fair-timetable dist --create-target-dir",
+		"dist-archive:fair-calendar-button": "wp dist-archive fair-calendar-button dist --create-target-dir",
 		"dist-archive:fair-payment": "wp dist-archive fair-payment dist --create-target-dir",
-		"dist-archive:fair-calendar-button": "wp dist-archive fair-calendar-button dist --create-target-dir"
+		"dist-archive:fair-schedule-blocks": "wp dist-archive fair-schedule-blocks dist --create-target-dir",
+		"dist-archive:fair-timetable": "wp dist-archive fair-timetable dist --create-target-dir"
 	},
 	"dependencies": {
 		"@wordpress/scripts": "^30.20.0",

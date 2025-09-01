@@ -32,6 +32,7 @@ jobs:
                       ./fair-calendar-button/vendor
                       ./fair-payment/vendor
                       ./fair-registration/vendor
+                      ./fair-schedule-blocks/vendor
                       ./fair-timetable/vendor
                       ./vendor
                   key: ${{ runner.os }}-php-${{ hashFiles('**/composer.lock') }}
@@ -55,23 +56,26 @@ jobs:
                   sudo mv wp-cli.phar /usr/local/bin/wp
                   wp --info
 
-            - name: Install PHP dependencies in all plugins
-              run: npm run composer:install
-
-            - name: Build JavaScript for all plugins
-              run: npm run build
-
-            - name: Run unit tests
-              run: |
-                  npm test
-
             - name: Install WP-CLI dist-archive command
               run: |
                   wp package install wp-cli/dist-archive-command:@stable
 
+            - name: Install regular PHP dependencies in all plugins
+              run: npm run composer:install:prod
+
+            - name: Build JavaScript for all plugins
+              run: npm run build
+
             - name: Create plugin ZIP files using wp dist-archive
               run: |
                   npm run dist-archive
+
+            - name: Install dev PHP dependencies in all plugins
+              run: npm run composer:install
+
+            - name: Run unit tests
+              run: |
+                  npm test
 
             - name: Upload Fair Payment plugins
               uses: actions/upload-artifact@v4

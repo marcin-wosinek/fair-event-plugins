@@ -12,6 +12,7 @@
 		"prebuild": "npm run clean",
 		"start": "wp-scripts start",
 		"composer:install": "composer install",
+		"composer:install:prod": "composer install --no-dev",
 		"composer:update": "composer update",
 		"composer:validate": "composer validate --strict",
 		"format": "wp-scripts format",
