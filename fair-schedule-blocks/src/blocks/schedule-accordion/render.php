@@ -22,9 +22,6 @@ if ( ! empty( $auto_collapsed_after ) ) {
 		if ( $current_time > $collapse_time ) {
 			$classes[] = 'collapsed';
 		}
-	} catch ( Exception $e ) {
-		// Invalid datetime format, skip collapse logic
-		error_log( 'Invalid datetime in schedule-accordion: ' . $auto_collapsed_after );
 	}
 }
 
