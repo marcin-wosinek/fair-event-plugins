@@ -48,7 +48,7 @@ $wrapper_attributes = get_block_wrapper_attributes(
 );
 ?>
 
-<div <?php echo $wrapper_attributes; ?>>
+<div <?php echo wp_kses_data( $wrapper_attributes ); ?>>
 	<h4 class="time-annotation"><?php echo esc_html( $start_hour . '-' . $end_hour ); ?></h4>
-	<?php echo $content; ?>
+	<?php echo wp_kses_post( $content ); ?>
 </div>
