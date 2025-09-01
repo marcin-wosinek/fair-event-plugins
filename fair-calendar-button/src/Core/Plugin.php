@@ -56,26 +56,7 @@ class Plugin {
 	 * @return void
 	 */
 	public function init() {
-		$this->load_textdomain();
 		$this->load_hooks();
-	}
-
-	/**
-	 * Load plugin text domain for translations
-	 *
-	 * @return void
-	 */
-	private function load_textdomain() {
-		add_action(
-			'init',
-			function () {
-				load_plugin_textdomain(
-					'fair-calendar-button',
-					false,
-					dirname( plugin_basename( __DIR__ . '/../../fair-calendar-button.php' ) ) . '/languages'
-				);
-			}
-		);
 	}
 
 	/**
