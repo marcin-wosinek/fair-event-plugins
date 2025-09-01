@@ -29,6 +29,15 @@
 		"length": {
 			"type": "number",
 			"default": 1
+		},
+		"hideHours": {
+			"type": "boolean",
+			"default": false
+		},
+		"displayMode": {
+			"type": "string",
+			"default": "full",
+			"enum": ["full", "left-half", "right-half"]
 		}
 	},
 	"usesContext": [

@@ -46,3 +46,33 @@
   margin-top: 0;
   margin-right: 5rem;
 }
+
+/* Hide hours when hideHours is true */
+.time-slot-container.hide-hours .time-slot-content .wp-block-heading:first-child {
+  margin-right: 0;
+}
+
+/* Display mode variations */
+.time-slot-container.display-left-half {
+  width: 50%;
+  left: 0;
+}
+
+.time-slot-container.display-right-half {
+  width: 50%;
+  left: 50%;
+}
+
+.time-slot-container.display-full {
+  width: 100%;
+  left: 0;
+}
+
+/* Responsive adjustments for half-width display modes */
+@media (max-width: 600px) {
+  .time-slot-container.display-left-half,
+  .time-slot-container.display-right-half {
+    width: 100%;
+    left: 0;
+  }
+}
