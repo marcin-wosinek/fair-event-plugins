@@ -2,7 +2,12 @@
  * Edit component for the Time Slot Block
  */
 
-import { TextControl, PanelBody, SelectControl } from '@wordpress/components';
+import {
+	TextControl,
+	PanelBody,
+	SelectControl,
+	ToggleControl,
+} from '@wordpress/components';
 import {
 	useBlockProps,
 	InspectorControls,
@@ -29,7 +34,7 @@ import {
  * @return {JSX.Element} The edit component
  */
 export default function EditComponent({ attributes, setAttributes, context }) {
-	const { startHour, endHour, length } = attributes;
+	const { startHour, endHour, length, hideHours, displayMode } = attributes;
 	const { 'fair-timetable/startHour': timetableStartHour } = context || {};
 
 	// Calculate offset from timetable start in hours
@@ -55,7 +60,7 @@ export default function EditComponent({ attributes, setAttributes, context }) {
 	const timeSlotOffset = calculateOffset(timetableStartHour, startHour);
 
 	const blockProps = useBlockProps({
-		className: 'time-slot-container',
+		className: `time-slot-container${hideHours ? ' hide-hours' : ''} display-${displayMode}`,
 		style: {
 			'--time-slot-length': length,
 			'--time-slot-offset': timeSlotOffset,
@@ -227,12 +232,52 @@ export default function EditComponent({ attributes, setAttributes, context }) {
 						pattern="^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$"
 					/>
 				</PanelBody>
+				<PanelBody title={__('Display Options', 'fair-timetable')}>
+					<ToggleControl
+						label={__('Hide Hours', 'fair-timetable')}
+						checked={hideHours}
+						onChange={(value) =>
+							setAttributes({ hideHours: value })
+						}
+						help={__(
+							'Hide the time display (start-end hours) from the time slot',
+							'fair-timetable'
+						)}
+					/>
+					<SelectControl
+						label={__('Display Mode', 'fair-timetable')}
+						value={displayMode}
+						options={[
+							{
+								label: __('Full Column', 'fair-timetable'),
+								value: 'full',
+							},
+							{
+								label: __('Left Half', 'fair-timetable'),
+								value: 'left-half',
+							},
+							{
+								label: __('Right Half', 'fair-timetable'),
+								value: 'right-half',
+							},
+						]}
+						onChange={(value) =>
+							setAttributes({ displayMode: value })
+						}
+						help={__(
+							'Choose how much of the column width this time slot should occupy',
+							'fair-timetable'
+						)}
+					/>
+				</PanelBody>
 			</InspectorControls>
 
 			<div {...blockProps}>
-				<h4 className="time-annotation">
-					{startHour}-{endHour}
-				</h4>
+				{!hideHours && (
+					<h4 className="time-annotation">
+						{startHour}-{endHour}
+					</h4>
+				)}
 				<div {...innerBlocksProps} />
 			</div>
 		</>

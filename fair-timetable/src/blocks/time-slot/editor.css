@@ -11,3 +11,8 @@
     top: 0;
   }
 }
+
+/* Hide hours adjustments in editor */
+.block-editor-block-list__layout .block-editor-block-list__block.time-slot-container.hide-hours .time-slot-content .wp-block-heading:first-child {
+  margin-right: 0;
+}

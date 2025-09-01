@@ -11,9 +11,11 @@ defined( 'WPINC' ) || die;
 use FairTimetable\TimeSlot;
 
 // Get block attributes
-$start_hour = $attributes['startHour'] ?? '09:00';
-$end_hour   = $attributes['endHour'] ?? '10:00';
-$length     = $attributes['length'] ?? 1;
+$start_hour   = $attributes['startHour'] ?? '09:00';
+$end_hour     = $attributes['endHour'] ?? '10:00';
+$length       = $attributes['length'] ?? 1;
+$hide_hours   = $attributes['hideHours'] ?? false;
+$display_mode = $attributes['displayMode'] ?? 'full';
 
 // Get timetable context for offset calculation
 $timetable_start_hour = $block->context['fair-timetable/startHour'] ?? '09:00';
@@ -39,16 +41,25 @@ $css_vars = sprintf(
 	esc_attr( $offset_hours )
 );
 
+// Build CSS classes
+$classes = array( 'time-slot-container' );
+if ( $hide_hours ) {
+	$classes[] = 'hide-hours';
+}
+$classes[] = 'display-' . esc_attr( $display_mode );
+
 // Get wrapper attributes
 $wrapper_attributes = get_block_wrapper_attributes(
 	array(
-		'class' => 'time-slot-container',
+		'class' => implode( ' ', $classes ),
 		'style' => $css_vars,
 	)
 );
 ?>
 
 <div <?php echo $wrapper_attributes; ?>>
-	<h4 class="time-annotation"><?php echo esc_html( $start_hour . '-' . $end_hour ); ?></h4>
+	<?php if ( ! $hide_hours ) : ?>
+		<h4 class="time-annotation"><?php echo esc_html( $start_hour . '-' . $end_hour ); ?></h4>
+	<?php endif; ?>
 	<?php echo $content; ?>
 </div>
