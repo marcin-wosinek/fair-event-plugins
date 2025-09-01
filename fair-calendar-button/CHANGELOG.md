@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.4.0
+
+### Minor Changes
+
+- f901aa2: Add support to Plausible integration
+
 ## 1.3.2
 
 ### Patch Changes

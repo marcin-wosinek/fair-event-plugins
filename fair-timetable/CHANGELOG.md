@@ -1,5 +1,11 @@
 # fair-timetable
 
+## 0.4.0
+
+### Minor Changes
+
+- 094cb00: Improve the block styling
+
 ## 0.3.0
 
 ### Minor Changes
