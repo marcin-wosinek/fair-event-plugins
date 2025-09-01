@@ -7,30 +7,34 @@ import {
 import './frontend.css';
 
 document.addEventListener('DOMContentLoaded', function () {
-	const calendarButtons = document.querySelectorAll(
-		'.wp-block-fair-calendar-button-calendar-button .wp-block-button__link'
+	const calendarContainers = document.querySelectorAll(
+		'.calendar-button-container'
 	);
 
-	calendarButtons.forEach((button) => {
-		button.addEventListener('click', function (e) {
-			e.preventDefault();
+	calendarContainers.forEach((container) => {
+		const button = container.querySelector('.wp-block-button__link');
 
-			// Get event data from button data attributes
-			const attributes = {
-				start: this.dataset.start,
-				end: this.dataset.end,
-				description: this.dataset.description || '',
-				location: this.dataset.location || '',
-				allDay: this.dataset.allDay === 'true',
-				title: this.dataset.title,
-				recurring: this.dataset.recurring === 'true',
-				rRule: this.dataset.rrule || '',
-				url: this.dataset.url || '',
-			};
+		if (button) {
+			button.addEventListener('click', function (e) {
+				e.preventDefault();
 
-			// Create calendar event data and handle click
-			const eventData = createEventData(attributes);
-			handleCalendarClick(eventData, this);
-		});
+				// Get event data from container data attributes
+				const attributes = {
+					start: container.dataset.start,
+					end: container.dataset.end,
+					description: container.dataset.description || '',
+					location: container.dataset.location || '',
+					allDay: container.dataset.allDay === 'true',
+					title: container.dataset.title,
+					recurring: container.dataset.recurring === 'true',
+					rRule: container.dataset.rrule || '',
+					url: container.dataset.url || '',
+				};
+
+				// Create calendar event data and handle click
+				const eventData = createEventData(attributes);
+				handleCalendarClick(eventData, this);
+			});
+		}
 	});
 });
