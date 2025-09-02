@@ -8,6 +8,7 @@ import {
 	InspectorControls,
 	useInnerBlocksProps,
 } from '@wordpress/block-editor';
+import { useSelect } from '@wordpress/data';
 import { __ } from '@wordpress/i18n';
 import {
 	parse,
@@ -31,14 +32,47 @@ import { formatLengthLabel } from '@utils/lengths.js';
  * @param {Object}   props.context       - Block context from parent
  * @return {JSX.Element} The edit component
  */
-export default function EditComponent({ attributes, setAttributes, context }) {
+export default function EditComponent({
+	attributes,
+	setAttributes,
+	context,
+	clientId,
+}) {
 	const { startHour, endHour, length } = attributes;
 	const { 'fair-timetable/startHour': timetableStartHour } = context || {};
 
+	// Get sibling time-slot blocks from the same parent
+	const { allTimeSlots, parentBlock } = useSelect(
+		(select) => {
+			const { getBlockParents, getBlocks, getBlock } =
+				select('core/block-editor');
+
+			if (!clientId) {
+				return { allTimeSlots: [], parentBlock: null };
+			}
+
+			const parentIds = getBlockParents(clientId);
+			const parentId = parentIds[parentIds.length - 1];
+
+			if (!parentId) {
+				return { allTimeSlots: [], parentBlock: null };
+			}
+
+			const parentBlock = getBlock(parentId);
+			const allTimeSlots = getBlocks(parentId).filter(
+				(block) => block.name === 'fair-timetable/time-slot'
+			);
+
+			return {
+				allTimeSlots,
+				parentBlock,
+			};
+		},
+		[clientId]
+	);
+
 	// Calculate offset from timetable start in hours
 	const calculateOffset = (timetableStart, slotStart) => {
-		console.log(timetableStart, slotStart);
-
 		if (!timetableStart || !slotStart) return 0;
 
 		var now = new Date();
@@ -58,7 +92,7 @@ export default function EditComponent({ attributes, setAttributes, context }) {
 	const timeSlotOffset = calculateOffset(timetableStartHour, startHour);
 
 	const blockProps = useBlockProps({
-		className: 'time-slot-container',
+		className: `time-slot-container`,
 		style: {
 			'--time-slot-length': length,
 			'--time-slot-offset': timeSlotOffset,
@@ -95,9 +129,6 @@ export default function EditComponent({ attributes, setAttributes, context }) {
 
 	// Calculate current length from start/end hours
 	const currentCalculatedLength = calculateCurrentLength(startHour, endHour);
-
-	console.log('calculateCurrentLength', currentCalculatedLength);
-	console.log('timeSlotOffset', timeSlotOffset);
 
 	// Check if current length matches any base option
 	const hasMatchingOption = baseLengthOptions.some(
