@@ -17,10 +17,10 @@ import {
 	differenceInMinutes,
 	addDays,
 	isAfter,
-	isSameDay,
-	formatDuration,
-	intervalToDuration,
 } from 'date-fns';
+
+// Import utilities
+import { formatLengthLabel } from '@utils/lengths.js';
 
 /**
  * Edit component for the Timetable Block
@@ -75,18 +75,6 @@ export default function EditComponent({ attributes, setAttributes }) {
 			differenceInHours(endDate, startDate) +
 			(differenceInMinutes(endDate, startDate) % 60) / 60
 		);
-	};
-
-	// Function to format duration for display
-	const formatLengthLabel = (lengthInHours) => {
-		const hours = Math.floor(lengthInHours);
-		const minutes = Math.round((lengthInHours - hours) * 60);
-
-		if (minutes === 0) {
-			return __(`${hours} hours`, 'fair-timetable');
-		} else {
-			return __(`${hours} hours, ${minutes} minutes`, 'fair-timetable');
-		}
 	};
 
 	// Generate base length options (4h to 16h)

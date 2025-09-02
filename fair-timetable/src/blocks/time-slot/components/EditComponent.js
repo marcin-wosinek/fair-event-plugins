@@ -19,6 +19,9 @@ import {
 	isAfter,
 } from 'date-fns';
 
+// Import utilities
+import { formatLengthLabel } from '@utils/lengths.js';
+
 /**
  * Edit component for the Time Slot Block
  *
@@ -76,20 +79,6 @@ export default function EditComponent({ attributes, setAttributes, context }) {
 			differenceInHours(endDate, startDate) +
 			(differenceInMinutes(endDate, startDate) % 60) / 60
 		);
-	};
-
-	// Function to format duration for display
-	const formatLengthLabel = (lengthInHours) => {
-		const hours = Math.floor(lengthInHours);
-		const minutes = Math.round((lengthInHours - hours) * 60);
-
-		if (minutes === 0) {
-			return __(`${hours} hours`, 'fair-timetable');
-		} else if (hours === 0) {
-			return __(`${minutes} minutes`, 'fair-timetable');
-		} else {
-			return __(`${hours} hours, ${minutes} minutes`, 'fair-timetable');
-		}
 	};
 
 	// Generate base length options (0.5h to 4h)
