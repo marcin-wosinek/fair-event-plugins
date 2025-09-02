@@ -2,12 +2,13 @@
  * Time Slot Block Styles
  */
 .time-slot-container {
-  border: 1px solid color-mix(in srgb, var(--wp--preset--color--contrast) 25%, transparent);
-  border-radius: 0;
-  box-sizing: border-box;
-  padding: 0.5rem;
 	height: calc(var(--hour-height) * var(--time-slot-length) * 1rem);
+  background-color: var(--wp--preset--color--base);
+  border-radius: 0;
+  border: 1px solid color-mix(in srgb, var(--wp--preset--color--contrast) 25%, transparent);
+  box-sizing: border-box;
   overflow: hidden;
+  padding: 0.5rem;
   position: absolute;
   top: calc(var(--time-slot-offset, 0) * var(--hour-height, 4) * 1rem);
   width: 100%;
