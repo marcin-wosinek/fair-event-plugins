@@ -21,6 +21,7 @@ import {
 
 // Import utilities
 import { formatLengthLabel } from '@utils/lengths.js';
+import { TimeObject } from '@utils/time-object.js';
 
 /**
  * Edit component for the Time Slot Block
@@ -34,6 +35,7 @@ import { formatLengthLabel } from '@utils/lengths.js';
 export default function EditComponent({ attributes, setAttributes, context }) {
 	const { startHour, endHour, length } = attributes;
 	const { 'fair-timetable/startHour': timetableStartHour } = context || {};
+  const timeObject = new TimeObject(attributes);
 
 	// Calculate offset from timetable start in hours
 	const calculateOffset = (timetableStart, slotStart) => {
@@ -220,7 +222,7 @@ export default function EditComponent({ attributes, setAttributes, context }) {
 
 			<div {...blockProps}>
 				<h4 className="time-annotation">
-					{startHour}-{endHour}
+					{timeObject.getRange()}
 				</h4>
 				<div {...innerBlocksProps} />
 			</div>

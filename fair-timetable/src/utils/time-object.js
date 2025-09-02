@@ -118,7 +118,7 @@ export class TimeObject {
 	 *
 	 * @return {string} Time range in "HH:mm - HH:mm" format
 	 */
-	getTimeRangeString() {
+	getRange() {
 		return `${formatTime(this.startHour)}—${formatTime(this.endHour)}`;
 	}
 
@@ -151,7 +151,7 @@ export class TimeObject {
 	 */
 	getDebugInfo() {
 		return {
-			timeRange: this.getTimeRangeString(),
+			range: this.getRange(),
 			startHour: this.startHour,
 			endHour: this.endHour,
 			duration: this.duration,
