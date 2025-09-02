@@ -33,14 +33,12 @@ import { TimeObject } from '@utils/time-object.js';
  * @return {JSX.Element} The edit component
  */
 export default function EditComponent({ attributes, setAttributes, context }) {
-	const { startHour, endHour, length } = attributes;
+	const { startHour, endHour } = attributes;
 	const { 'fair-timetable/startHour': timetableStartHour } = context || {};
-  const timeObject = new TimeObject(attributes);
+	const timeObject = new TimeObject(attributes);
 
 	// Calculate offset from timetable start in hours
 	const calculateOffset = (timetableStart, slotStart) => {
-		console.log(timetableStart, slotStart);
-
 		if (!timetableStart || !slotStart) return 0;
 
 		var now = new Date();
@@ -62,7 +60,7 @@ export default function EditComponent({ attributes, setAttributes, context }) {
 	const blockProps = useBlockProps({
 		className: 'time-slot-container',
 		style: {
-			'--time-slot-length': length,
+			'--time-slot-length': timeObject.duration,
 			'--time-slot-offset': timeSlotOffset,
 		},
 	});
@@ -95,23 +93,17 @@ export default function EditComponent({ attributes, setAttributes, context }) {
 		{ label: __('4 hours', 'fair-timetable'), value: 4 },
 	];
 
-	// Calculate current length from start/end hours
-	const currentCalculatedLength = calculateCurrentLength(startHour, endHour);
-
-	console.log('calculateCurrentLength', currentCalculatedLength);
-	console.log('timeSlotOffset', timeSlotOffset);
-
 	// Check if current length matches any base option
 	const hasMatchingOption = baseLengthOptions.some(
-		(option) => Math.abs(option.value - currentCalculatedLength) < 0.01
+		(option) => Math.abs(option.value - timeObject.duration) < 0.01
 	);
 
 	// Generate complete length options including custom value if needed
 	const lengthOptions = [...baseLengthOptions];
-	if (!hasMatchingOption && currentCalculatedLength > 0) {
+	if (!hasMatchingOption && timeObject.duration > 0) {
 		lengthOptions.push({
-			label: formatLengthLabel(currentCalculatedLength),
-			value: currentCalculatedLength,
+			label: formatLengthLabel(timeObject.duration),
+			value: timeObject.duration,
 		});
 		// Sort options by value
 		lengthOptions.sort((a, b) => a.value - b.value);
@@ -126,10 +118,7 @@ export default function EditComponent({ attributes, setAttributes, context }) {
 
 	// Handle start hour change while maintaining constant length
 	const handleStartHourChange = (newStartHour) => {
-		const newEndHour = calculateEndHour(
-			newStartHour,
-			currentCalculatedLength
-		);
+		const newEndHour = calculateEndHour(newStartHour, timeObject.duration);
 		setAttributes({
 			startHour: newStartHour,
 			endHour: newEndHour,
@@ -145,12 +134,10 @@ export default function EditComponent({ attributes, setAttributes, context }) {
 		});
 	};
 
-	// Handle end hour change and recalculate length
+	// Handle end hour change
 	const handleEndHourChange = (newEndHour) => {
-		const newLength = calculateCurrentLength(startHour, newEndHour);
 		setAttributes({
 			endHour: newEndHour,
-			length: newLength,
 		});
 	};
 
@@ -201,7 +188,7 @@ export default function EditComponent({ attributes, setAttributes, context }) {
 					/>
 					<SelectControl
 						label={__('Length', 'fair-timetable')}
-						value={currentCalculatedLength}
+						value={timeObject.duration}
 						options={lengthOptions}
 						onChange={handleLengthChange}
 						help={__('Duration of the time slot', 'fair-timetable')}
@@ -221,9 +208,7 @@ export default function EditComponent({ attributes, setAttributes, context }) {
 			</InspectorControls>
 
 			<div {...blockProps}>
-				<h4 className="time-annotation">
-					{timeObject.getRange()}
-				</h4>
+				<h4 className="time-annotation">{timeObject.getRange()}</h4>
 				<div {...innerBlocksProps} />
 			</div>
 		</>

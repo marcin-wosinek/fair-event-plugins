@@ -176,4 +176,142 @@ class TimeSlotTest extends TestCase {
 		$timeSlot2 = new TimeSlot( array( 'endHour' => '16:45' ) );
 		$this->assertInstanceOf( TimeSlot::class, $timeSlot2 );
 	}
+
+	public function test_calculateDuration_whole_hours() {
+		// Test 1 hour duration
+		$timeSlot = new TimeSlot(
+			array(
+				'startHour' => '09:00',
+				'endHour'   => '10:00',
+			)
+		);
+		$this->assertEquals( 1.0, $timeSlot->calculateDuration() );
+
+		// Test 8 hour duration
+		$timeSlot = new TimeSlot(
+			array(
+				'startHour' => '09:00',
+				'endHour'   => '17:00',
+			)
+		);
+		$this->assertEquals( 8.0, $timeSlot->calculateDuration() );
+
+		// Test 0 hour duration (same start and end)
+		$timeSlot = new TimeSlot(
+			array(
+				'startHour' => '12:00',
+				'endHour'   => '12:00',
+			)
+		);
+		$this->assertEquals( 0.0, $timeSlot->calculateDuration() );
+	}
+
+	public function test_calculateDuration_with_minutes() {
+		// Test 1.5 hour duration
+		$timeSlot = new TimeSlot(
+			array(
+				'startHour' => '09:00',
+				'endHour'   => '10:30',
+			)
+		);
+		$this->assertEquals( 1.5, $timeSlot->calculateDuration() );
+
+		// Test 2.75 hour duration
+		$timeSlot = new TimeSlot(
+			array(
+				'startHour' => '14:15',
+				'endHour'   => '17:00',
+			)
+		);
+		$this->assertEquals( 2.75, $timeSlot->calculateDuration() );
+
+		// Test 45 minute duration
+		$timeSlot = new TimeSlot(
+			array(
+				'startHour' => '10:15',
+				'endHour'   => '11:00',
+			)
+		);
+		$this->assertEquals( 0.75, $timeSlot->calculateDuration() );
+	}
+
+	public function test_calculateDuration_next_day_scenario() {
+		// End time is before start time (next day)
+		$timeSlot = new TimeSlot(
+			array(
+				'startHour' => '23:00',
+				'endHour'   => '01:00',
+			)
+		);
+		// 1 - 23 + 24 = 2 hours
+		$this->assertEquals( 2.0, $timeSlot->calculateDuration() );
+
+		// Late evening to early morning
+		$timeSlot = new TimeSlot(
+			array(
+				'startHour' => '22:30',
+				'endHour'   => '06:15',
+			)
+		);
+		// 6.25 - 22.5 + 24 = 7.75 hours
+		$this->assertEquals( 7.75, $timeSlot->calculateDuration() );
+
+		// Midnight crossing
+		$timeSlot = new TimeSlot(
+			array(
+				'startHour' => '23:45',
+				'endHour'   => '00:15',
+			)
+		);
+		// 0.25 - 23.75 + 24 = 0.5 hours (30 minutes)
+		$this->assertEquals( 0.5, $timeSlot->calculateDuration() );
+	}
+
+	public function test_calculateDuration_edge_cases() {
+		// Full day duration
+		$timeSlot = new TimeSlot(
+			array(
+				'startHour' => '00:00',
+				'endHour'   => '00:00',
+			)
+		);
+		$this->assertEquals( 0.0, $timeSlot->calculateDuration() );
+
+		// Almost full day
+		$timeSlot = new TimeSlot(
+			array(
+				'startHour' => '00:01',
+				'endHour'   => '00:00',
+			)
+		);
+		// 0 - 0.017 + 24 = 23.983 hours
+		$this->assertEqualsWithDelta( 23.983, $timeSlot->calculateDuration(), 0.01 );
+
+		// Exact 12 hours
+		$timeSlot = new TimeSlot(
+			array(
+				'startHour' => '06:00',
+				'endHour'   => '18:00',
+			)
+		);
+		$this->assertEquals( 12.0, $timeSlot->calculateDuration() );
+	}
+
+	public function test_calculateDuration_uses_default_values() {
+		// Test with default constructor values (09:00 to 10:00)
+		$timeSlot = new TimeSlot();
+		$this->assertEquals( 1.0, $timeSlot->calculateDuration() );
+	}
+
+	public function test_calculateDuration_with_invalid_times() {
+		// Constructor should handle invalid times with fallback to defaults
+		$timeSlot = new TimeSlot(
+			array(
+				'startHour' => 'invalid',
+				'endHour'   => 'also-invalid',
+			)
+		);
+		// Both should fall back to 9.0, so duration = 9.0 - 9.0 = 0.0
+		$this->assertEquals( 0.0, $timeSlot->calculateDuration() );
+	}
 }

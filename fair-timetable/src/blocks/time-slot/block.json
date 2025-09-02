@@ -25,10 +25,6 @@
 		"endHour": {
 			"type": "string",
 			"default": "10:00"
-		},
-		"length": {
-			"type": "number",
-			"default": 1
 		}
 	},
 	"usesContext": [

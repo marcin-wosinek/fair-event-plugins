@@ -211,14 +211,14 @@ describe('TimeObject', () => {
 		});
 	});
 
-	describe('getTimeRangeString', () => {
+	describe('getRange', () => {
 		test('should format time range string correctly', () => {
 			const timeObj = new TimeObject({
 				startHour: '09:30',
 				endHour: '11:15',
 			});
 
-			expect(timeObj.getTimeRangeString()).toBe('09:30—11:15');
+			expect(timeObj.getRange()).toBe('09:30—11:15');
 		});
 
 		test('should handle midnight times', () => {
@@ -227,7 +227,7 @@ describe('TimeObject', () => {
 				endHour: '01:30',
 			});
 
-			expect(timeObj.getTimeRangeString()).toBe('00:00—01:30');
+			expect(timeObj.getRange()).toBe('00:00—01:30');
 		});
 
 		test('should handle cross-midnight scenario', () => {
@@ -236,7 +236,7 @@ describe('TimeObject', () => {
 				endHour: '01:00',
 			});
 
-			expect(timeObj.getTimeRangeString()).toBe('23:30—01:00');
+			expect(timeObj.getRange()).toBe('23:30—01:00');
 		});
 	});
 
@@ -287,7 +287,7 @@ describe('TimeObject', () => {
 			const debugInfo = timeObj.getDebugInfo();
 
 			expect(debugInfo).toEqual({
-				timeRange: '09:30—11:15',
+				range: '09:30—11:15',
 				startHour: 9.5,
 				endHour: 11.25,
 				duration: 1.75,
