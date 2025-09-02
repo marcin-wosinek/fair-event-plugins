@@ -22,6 +22,7 @@ import {
 
 // Import utilities
 import { formatLengthLabel } from '@utils/lengths.js';
+import { TimeColumn } from '@utils/time-column.js';
 
 /**
  * Edit component for the Time Slot Block
@@ -41,30 +42,27 @@ export default function EditComponent({
 	const { startHour, endHour, length } = attributes;
 	const { 'fair-timetable/startHour': timetableStartHour } = context || {};
 
-	// Get sibling time-slot blocks from the same parent
-	const { allTimeSlots, parentBlock } = useSelect(
+	// Get parent ID and create TimeColumn instance
+	const { timeColumn, parentBlock } = useSelect(
 		(select) => {
-			const { getBlockParents, getBlocks, getBlock } =
-				select('core/block-editor');
+			const { getBlockParents, getBlock } = select('core/block-editor');
 
 			if (!clientId) {
-				return { allTimeSlots: [], parentBlock: null };
+				return { timeColumn: null, parentBlock: null };
 			}
 
 			const parentIds = getBlockParents(clientId);
 			const parentId = parentIds[parentIds.length - 1];
 
 			if (!parentId) {
-				return { allTimeSlots: [], parentBlock: null };
+				return { timeColumn: null, parentBlock: null };
 			}
 
 			const parentBlock = getBlock(parentId);
-			const allTimeSlots = getBlocks(parentId).filter(
-				(block) => block.name === 'fair-timetable/time-slot'
-			);
+			const timeColumn = new TimeColumn(parentId);
 
 			return {
-				allTimeSlots,
+				timeColumn,
 				parentBlock,
 			};
 		},
@@ -92,7 +90,7 @@ export default function EditComponent({
 	const timeSlotOffset = calculateOffset(timetableStartHour, startHour);
 
 	const blockProps = useBlockProps({
-		className: `time-slot-container`,
+		className: 'time-slot-container',
 		style: {
 			'--time-slot-length': length,
 			'--time-slot-offset': timeSlotOffset,
@@ -145,6 +143,15 @@ export default function EditComponent({
 		// Sort options by value
 		lengthOptions.sort((a, b) => a.value - b.value);
 	}
+
+	// Use TimeColumn for sibling data if available
+	const conflictingSlots = timeColumn
+		? timeColumn.getConflictingSlots(startHour, endHour, clientId)
+		: [];
+	const occupiedTimeRanges = timeColumn
+		? timeColumn.getOccupiedTimeRanges(clientId)
+		: [];
+	const siblingCount = timeColumn ? timeColumn.getTimeSlotCount() - 1 : 0; // Subtract 1 for current slot
 
 	// Function to calculate end hour from start hour and length
 	const calculateEndHour = (startTime, lengthHours) => {
@@ -217,6 +224,37 @@ export default function EditComponent({
 		<>
 			<InspectorControls>
 				<PanelBody title={__('Time Slot Settings', 'fair-timetable')}>
+					{siblingCount > 0 && (
+						<div
+							style={{
+								padding: '12px',
+								backgroundColor: '#f7f7f7',
+								border: '1px solid #ccc',
+								borderRadius: '4px',
+								marginBottom: '16px',
+								fontSize: '12px',
+							}}
+						>
+							<strong>
+								{__('Other Time Slots:', 'fair-timetable')} (
+								{siblingCount})
+							</strong>
+							<ul
+								style={{
+									margin: '4px 0 0 0',
+									paddingLeft: '16px',
+								}}
+							>
+								{occupiedTimeRanges.map((slot, index) => (
+									<li key={slot.clientId || index}>
+										{slot.startHour} - {slot.endHour} (
+										{formatLengthLabel(slot.length)})
+									</li>
+								))}
+							</ul>
+						</div>
+					)}
+
 					<TextControl
 						label={__('Start Hour', 'fair-timetable')}
 						value={startHour}
