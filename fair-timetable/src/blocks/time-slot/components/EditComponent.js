@@ -8,6 +8,7 @@ import {
 	InspectorControls,
 	useInnerBlocksProps,
 } from '@wordpress/block-editor';
+import { useSelect } from '@wordpress/data';
 import { __ } from '@wordpress/i18n';
 import {
 	parse,
@@ -21,6 +22,7 @@ import {
 
 // Import utilities
 import { formatLengthLabel } from '@utils/lengths.js';
+import { TimeColumn } from '@utils/time-column.js';
 
 /**
  * Edit component for the Time Slot Block
@@ -31,14 +33,44 @@ import { formatLengthLabel } from '@utils/lengths.js';
  * @param {Object}   props.context       - Block context from parent
  * @return {JSX.Element} The edit component
  */
-export default function EditComponent({ attributes, setAttributes, context }) {
+export default function EditComponent({
+	attributes,
+	setAttributes,
+	context,
+	clientId,
+}) {
 	const { startHour, endHour, length } = attributes;
 	const { 'fair-timetable/startHour': timetableStartHour } = context || {};
 
+	// Get parent ID and create TimeColumn instance
+	const { timeColumn, parentBlock } = useSelect(
+		(select) => {
+			const { getBlockParents, getBlock } = select('core/block-editor');
+
+			if (!clientId) {
+				return { timeColumn: null, parentBlock: null };
+			}
+
+			const parentIds = getBlockParents(clientId);
+			const parentId = parentIds[parentIds.length - 1];
+
+			if (!parentId) {
+				return { timeColumn: null, parentBlock: null };
+			}
+
+			const parentBlock = getBlock(parentId);
+			const timeColumn = new TimeColumn(parentId);
+
+			return {
+				timeColumn,
+				parentBlock,
+			};
+		},
+		[clientId]
+	);
+
 	// Calculate offset from timetable start in hours
 	const calculateOffset = (timetableStart, slotStart) => {
-		console.log(timetableStart, slotStart);
-
 		if (!timetableStart || !slotStart) return 0;
 
 		var now = new Date();
@@ -96,9 +128,6 @@ export default function EditComponent({ attributes, setAttributes, context }) {
 	// Calculate current length from start/end hours
 	const currentCalculatedLength = calculateCurrentLength(startHour, endHour);
 
-	console.log('calculateCurrentLength', currentCalculatedLength);
-	console.log('timeSlotOffset', timeSlotOffset);
-
 	// Check if current length matches any base option
 	const hasMatchingOption = baseLengthOptions.some(
 		(option) => Math.abs(option.value - currentCalculatedLength) < 0.01
@@ -114,6 +143,15 @@ export default function EditComponent({ attributes, setAttributes, context }) {
 		// Sort options by value
 		lengthOptions.sort((a, b) => a.value - b.value);
 	}
+
+	// Use TimeColumn for sibling data if available
+	const conflictingSlots = timeColumn
+		? timeColumn.getConflictingSlots(startHour, endHour, clientId)
+		: [];
+	const occupiedTimeRanges = timeColumn
+		? timeColumn.getOccupiedTimeRanges(clientId)
+		: [];
+	const siblingCount = timeColumn ? timeColumn.getTimeSlotCount() - 1 : 0; // Subtract 1 for current slot
 
 	// Function to calculate end hour from start hour and length
 	const calculateEndHour = (startTime, lengthHours) => {
@@ -186,6 +224,37 @@ export default function EditComponent({ attributes, setAttributes, context }) {
 		<>
 			<InspectorControls>
 				<PanelBody title={__('Time Slot Settings', 'fair-timetable')}>
+					{siblingCount > 0 && (
+						<div
+							style={{
+								padding: '12px',
+								backgroundColor: '#f7f7f7',
+								border: '1px solid #ccc',
+								borderRadius: '4px',
+								marginBottom: '16px',
+								fontSize: '12px',
+							}}
+						>
+							<strong>
+								{__('Other Time Slots:', 'fair-timetable')} (
+								{siblingCount})
+							</strong>
+							<ul
+								style={{
+									margin: '4px 0 0 0',
+									paddingLeft: '16px',
+								}}
+							>
+								{occupiedTimeRanges.map((slot, index) => (
+									<li key={slot.clientId || index}>
+										{slot.startHour} - {slot.endHour} (
+										{formatLengthLabel(slot.length)})
+									</li>
+								))}
+							</ul>
+						</div>
+					)}
+
 					<TextControl
 						label={__('Start Hour', 'fair-timetable')}
 						value={startHour}
