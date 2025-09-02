@@ -22,6 +22,8 @@ if ( ! empty( $auto_collapsed_after ) ) {
 		if ( $current_time > $collapse_time ) {
 			$classes[] = 'collapsed';
 		}
+	} catch ( Exception $e ) {
+		// fail quietly
 	}
 }
 
