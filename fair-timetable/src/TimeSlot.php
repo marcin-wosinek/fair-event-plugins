@@ -18,25 +18,25 @@ defined( 'WPINC' ) || die;
 class TimeSlot {
 
 	/**
-	 * Start time as decimal number (e.g., 9.5 for 09:30)
+	 * Start hour as decimal number (e.g., 9.5 for 09:30)
 	 *
 	 * @var float
 	 */
-	private $startTime;
+	private $startHour;
 
 	/**
-	 * End time as decimal number (e.g., 17.25 for 17:15)
+	 * End hour as decimal number (e.g., 17.25 for 17:15)
 	 *
 	 * @var float
 	 */
-	private $endTime;
+	private $endHour;
 
 	/**
-	 * Timetable start time as decimal number
+	 * Timetable start hour as decimal number
 	 *
 	 * @var float
 	 */
-	private $timetableStartTime;
+	private $timetableStartHour;
 
 	/**
 	 * Constructor
@@ -45,9 +45,9 @@ class TimeSlot {
 	 * @param array $context Block context from parent
 	 */
 	public function __construct( array $attributes = array(), array $context = array() ) {
-		$this->startTime          = $this->parseHourString( $attributes['startTime'] ?? '09:00' );
-		$this->endTime            = $this->parseHourString( $attributes['endTime'] ?? '10:00' );
-		$this->timetableStartTime = $this->parseHourString( $context['fair-timetable/startTime'] ?? '09:00' );
+		$this->startHour          = $this->parseHourString( $attributes['startTime'] ?? '09:00' );
+		$this->endHour            = $this->parseHourString( $attributes['endTime'] ?? '10:00' );
+		$this->timetableStartHour = $this->parseHourString( $context['fair-timetable/startTime'] ?? '09:00' );
 	}
 
 	/**
@@ -79,7 +79,7 @@ class TimeSlot {
 	 * @return float Offset in hours
 	 */
 	public function calculateOffset(): float {
-		$offsetHours = $this->startTime - $this->timetableStartTime;
+		$offsetHours = $this->startHour - $this->timetableStartHour;
 
 		// If slot start is before timetable start, add 24 hours (next day)
 		if ( $offsetHours < 0 ) {

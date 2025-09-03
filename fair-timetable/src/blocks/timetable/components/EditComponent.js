@@ -106,7 +106,7 @@ export default function EditComponent({ attributes, setAttributes }) {
 	}
 
 	// Function to calculate end hour from start hour and length
-	const calculateEndHour = (startTime, lengthHours) => {
+	const calculateEndTime = (startTime, lengthHours) => {
 		const startDate = parse(startTime, 'HH:mm', new Date());
 		const endDate = addHours(startDate, lengthHours);
 		return format(endDate, 'HH:mm');
@@ -114,7 +114,7 @@ export default function EditComponent({ attributes, setAttributes }) {
 
 	// Handle start time change while maintaining constant length
 	const handleStartTimeChange = (newStartTime) => {
-		const newEndTime = calculateEndHour(newStartTime, length);
+		const newEndTime = calculateEndTime(newStartTime, length);
 		setAttributes({
 			startTime: newStartTime,
 			endTime: newEndTime,
@@ -123,7 +123,7 @@ export default function EditComponent({ attributes, setAttributes }) {
 
 	// Handle length change while keeping start time constant
 	const handleLengthChange = (newLength) => {
-		const newEndTime = calculateEndHour(startTime, newLength);
+		const newEndTime = calculateEndTime(startTime, newLength);
 		setAttributes({
 			length: parseFloat(newLength),
 			endTime: newEndTime,
