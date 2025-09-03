@@ -18,11 +18,11 @@
 		}
 	},
 	"attributes": {
-		"startHour": {
+		"startTime": {
 			"type": "string",
 			"default": "09:00"
 		},
-		"endHour": {
+		"endTime": {
 			"type": "string",
 			"default": "10:00"
 		},
@@ -32,8 +32,8 @@
 		}
 	},
 	"usesContext": [
-		"fair-timetable/startHour",
-		"fair-timetable/endHour",
+		"fair-timetable/startTime",
+		"fair-timetable/endTime",
 		"fair-timetable/length",
 		"fair-timetable/hourHeight"
 	],

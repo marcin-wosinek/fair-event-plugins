@@ -32,8 +32,8 @@ import { formatLengthLabel } from '@utils/lengths.js';
  * @return {JSX.Element} The edit component
  */
 export default function EditComponent({ attributes, setAttributes, context }) {
-	const { startHour, endHour, length } = attributes;
-	const { 'fair-timetable/startHour': timetableStartHour } = context || {};
+	const { startTime, endTime, length } = attributes;
+	const { 'fair-timetable/startTime': timetableStartTime } = context || {};
 
 	// Calculate offset from timetable start in hours
 	const calculateOffset = (timetableStart, slotStart) => {
@@ -55,7 +55,7 @@ export default function EditComponent({ attributes, setAttributes, context }) {
 		return hourDiffence;
 	};
 
-	const timeSlotOffset = calculateOffset(timetableStartHour, startHour);
+	const timeSlotOffset = calculateOffset(timetableStartTime, startTime);
 
 	const blockProps = useBlockProps({
 		className: 'time-slot-container',
@@ -93,8 +93,8 @@ export default function EditComponent({ attributes, setAttributes, context }) {
 		{ label: __('4 hours', 'fair-timetable'), value: 4 },
 	];
 
-	// Calculate current length from start/end hours
-	const currentCalculatedLength = calculateCurrentLength(startHour, endHour);
+	// Calculate current length from start/end times
+	const currentCalculatedLength = calculateCurrentLength(startTime, endTime);
 
 	console.log('calculateCurrentLength', currentCalculatedLength);
 	console.log('timeSlotOffset', timeSlotOffset);
@@ -122,32 +122,32 @@ export default function EditComponent({ attributes, setAttributes, context }) {
 		return format(endDate, 'HH:mm');
 	};
 
-	// Handle start hour change while maintaining constant length
-	const handleStartHourChange = (newStartHour) => {
+	// Handle start time change while maintaining constant length
+	const handleStartTimeChange = (newStartTime) => {
 		const newEndHour = calculateEndHour(
 			newStartHour,
 			currentCalculatedLength
 		);
 		setAttributes({
-			startHour: newStartHour,
-			endHour: newEndHour,
+			startTime: newStartTime,
+			endTime: newEndTime,
 		});
 	};
 
-	// Handle length change while keeping start hour constant
+	// Handle length change while keeping start time constant
 	const handleLengthChange = (newLength) => {
-		const newEndHour = calculateEndHour(startHour, newLength);
+		const newEndTime = calculateEndHour(startTime, newLength);
 		setAttributes({
 			length: parseFloat(newLength),
-			endHour: newEndHour,
+			endTime: newEndTime,
 		});
 	};
 
-	// Handle end hour change and recalculate length
-	const handleEndHourChange = (newEndHour) => {
-		const newLength = calculateCurrentLength(startHour, newEndHour);
+	// Handle end time change and recalculate length
+	const handleEndTimeChange = (newEndTime) => {
+		const newLength = calculateCurrentLength(startTime, newEndTime);
 		setAttributes({
-			endHour: newEndHour,
+			endTime: newEndTime,
 			length: newLength,
 		});
 	};
@@ -187,9 +187,9 @@ export default function EditComponent({ attributes, setAttributes, context }) {
 			<InspectorControls>
 				<PanelBody title={__('Time Slot Settings', 'fair-timetable')}>
 					<TextControl
-						label={__('Start Hour', 'fair-timetable')}
-						value={startHour}
-						onChange={handleStartHourChange}
+						label={__('Start Time', 'fair-timetable')}
+						value={startTime}
+						onChange={handleStartTimeChange}
 						placeholder="09:00"
 						help={__(
 							'Start time in HH:MM format (24-hour)',
@@ -205,9 +205,9 @@ export default function EditComponent({ attributes, setAttributes, context }) {
 						help={__('Duration of the time slot', 'fair-timetable')}
 					/>
 					<TextControl
-						label={__('End Hour', 'fair-timetable')}
-						value={endHour}
-						onChange={handleEndHourChange}
+						label={__('End Time', 'fair-timetable')}
+						value={endTime}
+						onChange={handleEndTimeChange}
 						placeholder="10:00"
 						help={__(
 							'End time in HH:MM format. If before start time, assumes next day.',
@@ -220,7 +220,7 @@ export default function EditComponent({ attributes, setAttributes, context }) {
 
 			<div {...blockProps}>
 				<h4 className="time-annotation">
-					{startHour}-{endHour}
+					{startTime}-{endTime}
 				</h4>
 				<div {...innerBlocksProps} />
 			</div>

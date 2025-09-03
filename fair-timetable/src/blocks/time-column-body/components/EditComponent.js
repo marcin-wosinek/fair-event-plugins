@@ -16,20 +16,20 @@ import { parse, differenceInHours, addDays, isAfter } from 'date-fns';
  * @return {JSX.Element} The edit component
  */
 export default function EditComponent({ attributes, setAttributes, context }) {
-	const { startHour, endHour } = attributes;
+	const { startTime, endTime } = attributes;
 
 	// Get context from parent timetable and use as defaults
-	const contextStartHour = context['fair-timetable/startHour'] || '09:00';
-	const contextEndHour = context['fair-timetable/endHour'] || '17:00';
+	const contextStartTime = context['fair-timetable/startTime'] || '09:00';
+	const contextEndTime = context['fair-timetable/endTime'] || '17:00';
 
 	// Use context values if attributes are empty
-	const effectiveStartHour = startHour || contextStartHour;
+	const effectiveStartTime = startTime || contextStartTime;
 
 	// Set attributes to context values if they're empty
-	if (!startHour || !endHour) {
+	if (!startTime || !endTime) {
 		setAttributes({
-			startHour: contextStartHour,
-			endHour: contextEndHour,
+			startTime: contextStartTime,
+			endTime: contextEndTime,
 		});
 	}
 
@@ -45,9 +45,9 @@ export default function EditComponent({ attributes, setAttributes, context }) {
 		[
 			'fair-timetable/time-slot',
 			{
-				startHour: effectiveStartHour,
-				endHour:
-					parse(effectiveStartHour, 'HH:mm', new Date()).getHours() +
+				startTime: effectiveStartTime,
+				endTime:
+					parse(effectiveStartTime, 'HH:mm', new Date()).getHours() +
 					1 +
 					':00',
 			},

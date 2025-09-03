@@ -11,21 +11,21 @@ defined( 'WPINC' ) || die;
 use FairTimetable\TimeSlot;
 
 // Get block attributes
-$start_hour = $attributes['startHour'] ?? '09:00';
-$end_hour   = $attributes['endHour'] ?? '10:00';
+$start_time = $attributes['startTime'] ?? '09:00';
+$end_time   = $attributes['endTime'] ?? '10:00';
 $length     = $attributes['length'] ?? 1;
 
 // Get timetable context for offset calculation
-$timetable_start_hour = $block->context['fair-timetable/startHour'] ?? '09:00';
+$timetable_start_time = $block->context['fair-timetable/startTime'] ?? '09:00';
 
 // Initialize TimeSlot object
 $time_slot = new TimeSlot(
 	array(
-		'startHour' => $start_hour,
-		'endHour'   => $end_hour,
+		'startTime' => $start_time,
+		'endTime'   => $end_time,
 	),
 	array(
-		'fair-timetable/startHour' => $timetable_start_hour,
+		'fair-timetable/startTime' => $timetable_start_time,
 	)
 );
 
@@ -49,6 +49,6 @@ $wrapper_attributes = get_block_wrapper_attributes(
 ?>
 
 <div <?php echo wp_kses_data( $wrapper_attributes ); ?>>
-	<h4 class="time-annotation"><?php echo esc_html( $start_hour . '-' . $end_hour ); ?></h4>
+	<h4 class="time-annotation"><?php echo esc_html( $start_time . '-' . $end_time ); ?></h4>
 	<?php echo wp_kses_post( $content ); ?>
 </div>

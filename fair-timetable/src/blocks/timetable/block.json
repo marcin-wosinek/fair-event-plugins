@@ -14,11 +14,11 @@
 		"align": true
 	},
 	"attributes": {
-		"startHour": {
+		"startTime": {
 			"type": "string",
 			"default": "09:00"
 		},
-		"endHour": {
+		"endTime": {
 			"type": "string",
 			"default": "17:00"
 		},
@@ -32,8 +32,8 @@
 		}
 	},
 	"providesContext": {
-		"fair-timetable/startHour": "startHour",
-		"fair-timetable/endHour": "endHour",
+		"fair-timetable/startTime": "startTime",
+		"fair-timetable/endTime": "endTime",
 		"fair-timetable/length": "length",
 		"fair-timetable/hourHeight": "hourHeight"
 	},

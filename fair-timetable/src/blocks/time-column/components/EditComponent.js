@@ -14,8 +14,8 @@ import { __ } from '@wordpress/i18n';
  */
 export default function EditComponent({ context }) {
 	// Get context from parent timetable
-	const contextStartHour = context['fair-timetable/startHour'] || '09:00';
-	const contextEndHour = context['fair-timetable/endHour'] || '17:00';
+	const contextStartTime = context['fair-timetable/startTime'] || '09:00';
+	const contextEndTime = context['fair-timetable/endTime'] || '17:00';
 	const contextHourHeight = context['fair-timetable/hourHeight'] || 4;
 
 	const blockProps = useBlockProps({

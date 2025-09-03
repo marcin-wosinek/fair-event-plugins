@@ -32,7 +32,7 @@ import { formatLengthLabel } from '@utils/lengths.js';
  * @return {JSX.Element} The edit component
  */
 export default function EditComponent({ attributes, setAttributes }) {
-	const { startHour, endHour, length, hourHeight } = attributes;
+	const { startTime, endTime, length, hourHeight } = attributes;
 
 	const blockProps = useBlockProps({
 		className: 'timetable-container',
@@ -40,8 +40,8 @@ export default function EditComponent({ attributes, setAttributes }) {
 
 	// Calculate column height based on time range and hour height
 	const getColumnHeight = () => {
-		const startDate = parse(startHour, 'HH:mm', new Date());
-		let endDate = parse(endHour, 'HH:mm', new Date());
+		const startDate = parse(startTime, 'HH:mm', new Date());
+		let endDate = parse(endTime, 'HH:mm', new Date());
 
 		// If end time is before start time, assume next day
 		if (!isAfter(endDate, startDate)) {
@@ -87,7 +87,7 @@ export default function EditComponent({ attributes, setAttributes }) {
 	}
 
 	// Calculate current length from start/end hours
-	const currentCalculatedLength = calculateCurrentLength(startHour, endHour);
+	const currentCalculatedLength = calculateCurrentLength(startTime, endTime);
 
 	// Check if current length matches any base option
 	const hasMatchingOption = baseLengthOptions.some(
@@ -112,29 +112,29 @@ export default function EditComponent({ attributes, setAttributes }) {
 		return format(endDate, 'HH:mm');
 	};
 
-	// Handle start hour change while maintaining constant length
-	const handleStartHourChange = (newStartHour) => {
-		const newEndHour = calculateEndHour(newStartHour, length);
+	// Handle start time change while maintaining constant length
+	const handleStartTimeChange = (newStartTime) => {
+		const newEndTime = calculateEndHour(newStartTime, length);
 		setAttributes({
-			startHour: newStartHour,
-			endHour: newEndHour,
+			startTime: newStartTime,
+			endTime: newEndTime,
 		});
 	};
 
-	// Handle length change while keeping start hour constant
+	// Handle length change while keeping start time constant
 	const handleLengthChange = (newLength) => {
-		const newEndHour = calculateEndHour(startHour, newLength);
+		const newEndTime = calculateEndHour(startTime, newLength);
 		setAttributes({
 			length: parseFloat(newLength),
-			endHour: newEndHour,
+			endTime: newEndTime,
 		});
 	};
 
-	// Handle end hour change and recalculate length
-	const handleEndHourChange = (newEndHour) => {
-		const newLength = calculateCurrentLength(startHour, newEndHour);
+	// Handle end time change and recalculate length
+	const handleEndTimeChange = (newEndTime) => {
+		const newLength = calculateCurrentLength(startTime, newEndTime);
 		setAttributes({
-			endHour: newEndHour,
+			endTime: newEndTime,
 			length: newLength,
 		});
 	};
@@ -171,9 +171,9 @@ export default function EditComponent({ attributes, setAttributes }) {
 			<InspectorControls>
 				<PanelBody title={__('Timetable Settings', 'fair-timetable')}>
 					<TextControl
-						label={__('Start Hour', 'fair-timetable')}
-						value={startHour}
-						onChange={handleStartHourChange}
+						label={__('Start Time', 'fair-timetable')}
+						value={startTime}
+						onChange={handleStartTimeChange}
 						placeholder="09:00"
 						help={__(
 							'Start time in HH:MM format (24-hour)',
@@ -192,9 +192,9 @@ export default function EditComponent({ attributes, setAttributes }) {
 						)}
 					/>
 					<TextControl
-						label={__('End Hour', 'fair-timetable')}
-						value={endHour}
-						onChange={handleEndHourChange}
+						label={__('End Time', 'fair-timetable')}
+						value={endTime}
+						onChange={handleEndTimeChange}
 						placeholder="17:00"
 						help={__(
 							'End time in HH:MM format. If before start time, assumes next day.',

@@ -25,8 +25,8 @@ class TimeSlotTest extends TestCase {
 
 	public function test_constructor_with_custom_attributes() {
 		$attributes = array(
-			'startHour' => '10:30',
-			'endHour'   => '15:45',
+			'startTime' => '10:30',
+			'endTime'   => '15:45',
 		);
 
 		$timeSlot = new TimeSlot( $attributes );
@@ -91,8 +91,8 @@ class TimeSlotTest extends TestCase {
 	public function test_calculateOffset_same_start_time() {
 		// When slot starts at same time as timetable
 		$timeSlot = new TimeSlot(
-			array( 'startHour' => '09:00' ),
-			array( 'fair-timetable/startHour' => '09:00' )
+			array( 'startTime' => '09:00' ),
+			array( 'fair-timetable/startTime' => '09:00' )
 		);
 
 		$this->assertEquals( 0.0, $timeSlot->calculateOffset() );
@@ -101,8 +101,8 @@ class TimeSlotTest extends TestCase {
 	public function test_calculateOffset_slot_after_timetable_start() {
 		// When slot starts 2.5 hours after timetable start
 		$timeSlot = new TimeSlot(
-			array( 'startHour' => '11:30' ),
-			array( 'fair-timetable/startHour' => '09:00' )
+			array( 'startTime' => '11:30' ),
+			array( 'fair-timetable/startTime' => '09:00' )
 		);
 
 		$this->assertEquals( 2.5, $timeSlot->calculateOffset() );
@@ -111,8 +111,8 @@ class TimeSlotTest extends TestCase {
 	public function test_calculateOffset_slot_before_timetable_start() {
 		// When slot starts before timetable start (next day)
 		$timeSlot = new TimeSlot(
-			array( 'startHour' => '08:00' ),
-			array( 'fair-timetable/startHour' => '09:00' )
+			array( 'startTime' => '08:00' ),
+			array( 'fair-timetable/startTime' => '09:00' )
 		);
 
 		// Should add 24 hours: 8 - 9 + 24 = 23 hours
@@ -122,8 +122,8 @@ class TimeSlotTest extends TestCase {
 	public function test_calculateOffset_with_minutes() {
 		// Test with minutes in both times
 		$timeSlot = new TimeSlot(
-			array( 'startHour' => '14:45' ),
-			array( 'fair-timetable/startHour' => '09:15' )
+			array( 'startTime' => '14:45' ),
+			array( 'fair-timetable/startTime' => '09:15' )
 		);
 
 		// 14.75 - 9.25 = 5.5 hours
@@ -133,8 +133,8 @@ class TimeSlotTest extends TestCase {
 	public function test_calculateOffset_cross_day_boundary() {
 		// When slot is very late and timetable starts early next day
 		$timeSlot = new TimeSlot(
-			array( 'startHour' => '23:30' ),
-			array( 'fair-timetable/startHour' => '08:00' )
+			array( 'startTime' => '23:30' ),
+			array( 'fair-timetable/startTime' => '08:00' )
 		);
 
 		// 23.5 - 8 = 15.5 hours
@@ -143,7 +143,7 @@ class TimeSlotTest extends TestCase {
 
 	public function test_calculateOffset_uses_default_timetable_start() {
 		// When no timetable start provided, should use default 09:00
-		$timeSlot = new TimeSlot( array( 'startHour' => '10:30' ) );
+		$timeSlot = new TimeSlot( array( 'startTime' => '10:30' ) );
 
 		// 10.5 - 9 = 1.5 hours
 		$this->assertEquals( 1.5, $timeSlot->calculateOffset() );
@@ -152,8 +152,8 @@ class TimeSlotTest extends TestCase {
 	public function test_calculateOffset_early_morning_slot() {
 		// Timetable starts at 10:00, slot at 0:30 (next day)
 		$timeSlot = new TimeSlot(
-			array( 'startHour' => '00:30' ),
-			array( 'fair-timetable/startHour' => '10:00' )
+			array( 'startTime' => '00:30' ),
+			array( 'fair-timetable/startTime' => '10:00' )
 		);
 
 		// 0.5 - 10 + 24 = 14.5 hours
@@ -168,12 +168,12 @@ class TimeSlotTest extends TestCase {
 	}
 
 	public function test_constructor_handles_partial_attributes() {
-		// Only startHour provided
-		$timeSlot1 = new TimeSlot( array( 'startHour' => '14:30' ) );
+		// Only startTime provided
+		$timeSlot1 = new TimeSlot( array( 'startTime' => '14:30' ) );
 		$this->assertInstanceOf( TimeSlot::class, $timeSlot1 );
 
-		// Only endHour provided
-		$timeSlot2 = new TimeSlot( array( 'endHour' => '16:45' ) );
+		// Only endTime provided
+		$timeSlot2 = new TimeSlot( array( 'endTime' => '16:45' ) );
 		$this->assertInstanceOf( TimeSlot::class, $timeSlot2 );
 	}
 }
