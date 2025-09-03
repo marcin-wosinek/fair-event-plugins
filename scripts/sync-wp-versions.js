@@ -42,6 +42,12 @@ const plugins = [
 		phpFiles: ['fair-timetable/fair-timetable.php'],
 		readmeFiles: ['fair-timetable/readme.txt'],
 	},
+	{
+		name: 'fair-schedule-blocks',
+		packagePath: 'fair-schedule-blocks/package.json',
+		phpFiles: ['fair-schedule-blocks/fair-schedule-blocks.php'],
+		readmeFiles: ['fair-schedule-blocks/readme.txt'],
+	},
 ];
 
 /**
