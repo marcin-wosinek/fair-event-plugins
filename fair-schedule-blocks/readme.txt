@@ -52,6 +52,12 @@ Yes, users can click on collapsed content to reveal it again.
 
 == Changelog ==
 
+## 0.1.1
+
+### Patch Changes
+
+- Fix the syntax issue
+
 = 0.1.0 =
 * Initial release
 * Schedule Accordion block with auto-collapse functionality
