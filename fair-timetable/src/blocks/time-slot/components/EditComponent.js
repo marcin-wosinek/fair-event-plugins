@@ -21,6 +21,7 @@ import {
 
 // Import utilities
 import { formatLengthLabel } from '@utils/lengths.js';
+import { HourlyRange } from '@utils/hourly-range.js';
 
 /**
  * Edit component for the Time Slot Block
@@ -32,13 +33,14 @@ import { formatLengthLabel } from '@utils/lengths.js';
  * @return {JSX.Element} The edit component
  */
 export default function EditComponent({ attributes, setAttributes, context }) {
-	const { startTime, endTime, length } = attributes;
+	const { startTime, endTime } = attributes;
 	const { 'fair-timetable/startTime': timetableStartTime } = context || {};
+
+	// Create HourlyRange object from attributes for later use
+	const timeSlotRange = new HourlyRange({ startTime, endTime });
 
 	// Calculate offset from timetable start in hours
 	const calculateOffset = (timetableStart, slotStart) => {
-		console.log(timetableStart, slotStart);
-
 		if (!timetableStart || !slotStart) return 0;
 
 		var now = new Date();
@@ -60,7 +62,7 @@ export default function EditComponent({ attributes, setAttributes, context }) {
 	const blockProps = useBlockProps({
 		className: 'time-slot-container',
 		style: {
-			'--time-slot-length': length,
+			'--time-slot-length': timeSlotRange.getDuration(),
 			'--time-slot-offset': timeSlotOffset,
 		},
 	});
@@ -94,10 +96,7 @@ export default function EditComponent({ attributes, setAttributes, context }) {
 	];
 
 	// Calculate current length from start/end times
-	const currentCalculatedLength = calculateCurrentLength(startTime, endTime);
-
-	console.log('calculateCurrentLength', currentCalculatedLength);
-	console.log('timeSlotOffset', timeSlotOffset);
+	const currentCalculatedLength = timeSlotRange.getDuration();
 
 	// Check if current length matches any base option
 	const hasMatchingOption = baseLengthOptions.some(

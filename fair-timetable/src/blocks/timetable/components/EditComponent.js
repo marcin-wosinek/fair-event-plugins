@@ -21,6 +21,7 @@ import {
 
 // Import utilities
 import { formatLengthLabel } from '@utils/lengths.js';
+import { HourlyRange } from '@utils/hourly-range.js';
 
 /**
  * Edit component for the Timetable Block
@@ -32,7 +33,10 @@ import { formatLengthLabel } from '@utils/lengths.js';
  * @return {JSX.Element} The edit component
  */
 export default function EditComponent({ attributes, setAttributes }) {
-	const { startTime, endTime, length, hourHeight } = attributes;
+	const { startTime, endTime, hourHeight } = attributes;
+
+	// Create HourlyRange object from attributes for later use
+	const timetableRange = new HourlyRange({ startTime, endTime });
 
 	const blockProps = useBlockProps({
 		className: 'timetable-container',
@@ -87,7 +91,7 @@ export default function EditComponent({ attributes, setAttributes }) {
 	}
 
 	// Calculate current length from start/end hours
-	const currentCalculatedLength = calculateCurrentLength(startTime, endTime);
+	const currentCalculatedLength = timetableRange.getDuration();
 
 	// Check if current length matches any base option
 	const hasMatchingOption = baseLengthOptions.some(
@@ -114,7 +118,10 @@ export default function EditComponent({ attributes, setAttributes }) {
 
 	// Handle start time change while maintaining constant length
 	const handleStartTimeChange = (newStartTime) => {
-		const newEndTime = calculateEndTime(newStartTime, length);
+		const newEndTime = calculateEndTime(
+			newStartTime,
+			currentCalculatedLength
+		);
 		setAttributes({
 			startTime: newStartTime,
 			endTime: newEndTime,
