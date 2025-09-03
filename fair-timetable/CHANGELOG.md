@@ -1,5 +1,11 @@
 # fair-timetable
 
+## 0.5.0
+
+### Minor Changes
+
+- 29d5b69: Rename the block attributes (Hour->Time)
+
 ## 0.4.0
 
 ### Minor Changes
