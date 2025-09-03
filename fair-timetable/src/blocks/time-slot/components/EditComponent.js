@@ -60,7 +60,7 @@ export default function EditComponent({ attributes, setAttributes, context }) {
 	const blockProps = useBlockProps({
 		className: 'time-slot-container',
 		style: {
-			'--time-slot-length': timeObject.duration,
+			'--time-slot-length': timeObject.getDuration(),
 			'--time-slot-offset': timeSlotOffset,
 		},
 	});
@@ -94,16 +94,17 @@ export default function EditComponent({ attributes, setAttributes, context }) {
 	];
 
 	// Check if current length matches any base option
+	const currentDuration = timeObject.getDuration();
 	const hasMatchingOption = baseLengthOptions.some(
-		(option) => Math.abs(option.value - timeObject.duration) < 0.01
+		(option) => Math.abs(option.value - currentDuration) < 0.01
 	);
 
 	// Generate complete length options including custom value if needed
 	const lengthOptions = [...baseLengthOptions];
-	if (!hasMatchingOption && timeObject.duration > 0) {
+	if (!hasMatchingOption && currentDuration > 0) {
 		lengthOptions.push({
-			label: formatLengthLabel(timeObject.duration),
-			value: timeObject.duration,
+			label: formatLengthLabel(currentDuration),
+			value: currentDuration,
 		});
 		// Sort options by value
 		lengthOptions.sort((a, b) => a.value - b.value);
@@ -118,7 +119,7 @@ export default function EditComponent({ attributes, setAttributes, context }) {
 
 	// Handle start hour change while maintaining constant length
 	const handleStartHourChange = (newStartHour) => {
-		const newEndHour = calculateEndHour(newStartHour, timeObject.duration);
+		const newEndHour = calculateEndHour(newStartHour, currentDuration);
 		setAttributes({
 			startHour: newStartHour,
 			endHour: newEndHour,
@@ -188,7 +189,7 @@ export default function EditComponent({ attributes, setAttributes, context }) {
 					/>
 					<SelectControl
 						label={__('Length', 'fair-timetable')}
-						value={timeObject.duration}
+						value={currentDuration}
 						options={lengthOptions}
 						onChange={handleLengthChange}
 						help={__('Duration of the time slot', 'fair-timetable')}

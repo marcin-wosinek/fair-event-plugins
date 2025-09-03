@@ -67,14 +67,6 @@ export class TimeObject {
 		// Parse to decimal hours
 		this.startHour = parseTime(startHour);
 		this.endHour = parseTime(endHour);
-
-		// Calculate duration
-		this.duration = this.endHour - this.startHour;
-
-		// Handle negative duration (next day scenario)
-		if (this.duration < 0) {
-			this.duration += 24;
-		}
 	}
 
 	/**
@@ -128,7 +120,14 @@ export class TimeObject {
 	 * @return {number} Duration in decimal hours
 	 */
 	getDuration() {
-		return this.duration;
+		let duration = this.endHour - this.startHour;
+
+		// Handle negative duration (next day scenario)
+		if (duration < 0) {
+			duration += 24;
+		}
+
+		return duration;
 	}
 
 	/**
@@ -140,7 +139,7 @@ export class TimeObject {
 		return {
 			startHour: this.startHour,
 			endHour: this.endHour,
-			duration: this.duration,
+			duration: this.getDuration(),
 		};
 	}
 
@@ -154,7 +153,7 @@ export class TimeObject {
 			range: this.getRange(),
 			startHour: this.startHour,
 			endHour: this.endHour,
-			duration: this.duration,
+			duration: this.getDuration(),
 		};
 	}
 }

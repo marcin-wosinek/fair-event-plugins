@@ -13,7 +13,7 @@ describe('TimeObject', () => {
 
 			expect(timeObj.startHour).toBe(9.5);
 			expect(timeObj.endHour).toBe(11);
-			expect(timeObj.duration).toBe(1.5);
+			expect(timeObj.getDuration()).toBe(1.5);
 		});
 
 		test('should handle midnight times', () => {
@@ -24,7 +24,7 @@ describe('TimeObject', () => {
 
 			expect(timeObj.startHour).toBe(0);
 			expect(timeObj.endHour).toBe(1.5);
-			expect(timeObj.duration).toBe(1.5);
+			expect(timeObj.getDuration()).toBe(1.5);
 		});
 
 		test('should handle cross-midnight scenarios', () => {
@@ -35,7 +35,7 @@ describe('TimeObject', () => {
 
 			expect(timeObj.startHour).toBe(23);
 			expect(timeObj.endHour).toBe(1);
-			expect(timeObj.duration).toBe(2); // 23:00 to 01:00 = 2 hours
+			expect(timeObj.getDuration()).toBe(2); // 23:00 to 01:00 = 2 hours
 		});
 
 		test('should throw error for missing startHour', () => {
@@ -302,7 +302,7 @@ describe('TimeObject', () => {
 				endHour: '23:59',
 			});
 
-			expect(timeObj.duration).toBeCloseTo(23.966666666666665, 5);
+			expect(timeObj.getDuration()).toBeCloseTo(23.966666666666665, 5);
 		});
 
 		test('should handle same start and end time', () => {
@@ -311,7 +311,7 @@ describe('TimeObject', () => {
 				endHour: '12:00',
 			});
 
-			expect(timeObj.duration).toBe(0);
+			expect(timeObj.getDuration()).toBe(0);
 		});
 
 		test('should handle fractional minutes correctly', () => {
@@ -325,8 +325,8 @@ describe('TimeObject', () => {
 				endHour: '09:59',
 			});
 
-			expect(timeObj1.duration).toBeCloseTo(0.016666666666666666, 5);
-			expect(timeObj2.duration).toBeCloseTo(0.9833333333333333, 5);
+			expect(timeObj1.getDuration()).toBeCloseTo(0.016666666666666666, 5);
+			expect(timeObj2.getDuration()).toBeCloseTo(0.9833333333333333, 5);
 		});
 	});
 });
