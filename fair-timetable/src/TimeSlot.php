@@ -88,4 +88,20 @@ class TimeSlot {
 
 		return $offsetHours;
 	}
+
+	/**
+	 * Calculate duration from hours
+	 *
+	 * @return float Duration in hours
+	 */
+	public function calculateDuration(): float {
+		$duration = $this->endHour - $this->startHour;
+
+		// Handle negative duration (next day scenario)
+		if ( $duration < 0 ) {
+			$duration += 24;
+		}
+
+		return $duration;
+	}
 }

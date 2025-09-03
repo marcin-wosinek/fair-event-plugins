@@ -13,14 +13,11 @@ import {
 	addHours,
 	format,
 	parse,
-	differenceInHours,
-	differenceInMinutes,
-	addDays,
-	isAfter,
 } from 'date-fns';
 
 // Import utilities
 import { formatLengthLabel } from '@utils/lengths.js';
+import { TimeObject } from '@utils/time-object.js';
 
 /**
  * Edit component for the Timetable Block
@@ -34,22 +31,15 @@ import { formatLengthLabel } from '@utils/lengths.js';
 export default function EditComponent({ attributes, setAttributes }) {
 	const { startHour, endHour, length, hourHeight } = attributes;
 
+	const timeObject = new TimeObject(attributes);
+
 	const blockProps = useBlockProps({
 		className: 'timetable-container',
 	});
 
 	// Calculate column height based on time range and hour height
 	const getColumnHeight = () => {
-		const startDate = parse(startHour, 'HH:mm', new Date());
-		let endDate = parse(endHour, 'HH:mm', new Date());
-
-		// If end time is before start time, assume next day
-		if (!isAfter(endDate, startDate)) {
-			endDate = addDays(endDate, 1);
-		}
-
-		const hours = differenceInHours(endDate, startDate);
-		return hours * hourHeight;
+		return timeObject.getDuration() * hourHeight;
 	};
 
 	// Generate hour height options
@@ -63,18 +53,10 @@ export default function EditComponent({ attributes, setAttributes }) {
 
 	// Function to calculate current length in hours from start/end times
 	const calculateCurrentLength = (startTime, endTime) => {
-		const startDate = parse(startTime, 'HH:mm', new Date());
-		let endDate = parse(endTime, 'HH:mm', new Date());
-
-		// If end time is before start time, assume next day
-		if (!isAfter(endDate, startDate)) {
-			endDate = addDays(endDate, 1);
-		}
-
-		return (
-			differenceInHours(endDate, startDate) +
-			(differenceInMinutes(endDate, startDate) % 60) / 60
-		);
+		return new TimeObject({
+			startHour: startTime,
+			endHour: endTime,
+		}).getDuration();
 	};
 
 	// Generate base length options (4h to 16h)

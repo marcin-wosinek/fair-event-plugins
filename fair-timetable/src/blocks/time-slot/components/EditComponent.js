@@ -9,18 +9,10 @@ import {
 	useInnerBlocksProps,
 } from '@wordpress/block-editor';
 import { __ } from '@wordpress/i18n';
-import {
-	parse,
-	addHours,
-	format,
-	differenceInHours,
-	differenceInMinutes,
-	addDays,
-	isAfter,
-} from 'date-fns';
 
 // Import utilities
 import { formatLengthLabel } from '@utils/lengths.js';
+import { TimeObject, parseTime, formatTime } from '@utils/time-object.js';
 
 /**
  * Edit component for the Time Slot Block
@@ -32,27 +24,24 @@ import { formatLengthLabel } from '@utils/lengths.js';
  * @return {JSX.Element} The edit component
  */
 export default function EditComponent({ attributes, setAttributes, context }) {
-	const { startHour, endHour, length } = attributes;
+	const { startHour, endHour } = attributes;
 	const { 'fair-timetable/startHour': timetableStartHour } = context || {};
+	const timeObject = new TimeObject(attributes);
 
 	// Calculate offset from timetable start in hours
 	const calculateOffset = (timetableStart, slotStart) => {
-		console.log(timetableStart, slotStart);
-
 		if (!timetableStart || !slotStart) return 0;
 
-		var now = new Date();
-		const timetableStartDate = parse(timetableStart, 'HH:mm', now);
-		const slotStartDate = parse(slotStart, 'HH:mm', now);
+		const timetableStartHours = parseTime(timetableStart);
+		const slotStartHours = parseTime(slotStart);
 
 		// If slot start is before timetable start, assume next day
-		let hourDiffence =
-			differenceInMinutes(slotStartDate, timetableStartDate) / 60;
-		if (hourDiffence < 0) {
-			hourDiffence += 24;
+		let offsetHours = slotStartHours - timetableStartHours;
+		if (offsetHours < 0) {
+			offsetHours += 24;
 		}
 
-		return hourDiffence;
+		return offsetHours;
 	};
 
 	const timeSlotOffset = calculateOffset(timetableStartHour, startHour);
@@ -60,26 +49,10 @@ export default function EditComponent({ attributes, setAttributes, context }) {
 	const blockProps = useBlockProps({
 		className: 'time-slot-container',
 		style: {
-			'--time-slot-length': length,
+			'--time-slot-length': timeObject.getDuration(),
 			'--time-slot-offset': timeSlotOffset,
 		},
 	});
-
-	// Function to calculate current length in hours from start/end times
-	const calculateCurrentLength = (startTime, endTime) => {
-		const startDate = parse(startTime, 'HH:mm', new Date());
-		let endDate = parse(endTime, 'HH:mm', new Date());
-
-		// If end time is before start time, assume next day
-		if (!isAfter(endDate, startDate)) {
-			endDate = addDays(endDate, 1);
-		}
-
-		return (
-			differenceInHours(endDate, startDate) +
-			(differenceInMinutes(endDate, startDate) % 60) / 60
-		);
-	};
 
 	// Generate base length options (0.5h to 4h)
 	const baseLengthOptions = [
@@ -93,23 +66,18 @@ export default function EditComponent({ attributes, setAttributes, context }) {
 		{ label: __('4 hours', 'fair-timetable'), value: 4 },
 	];
 
-	// Calculate current length from start/end hours
-	const currentCalculatedLength = calculateCurrentLength(startHour, endHour);
-
-	console.log('calculateCurrentLength', currentCalculatedLength);
-	console.log('timeSlotOffset', timeSlotOffset);
-
 	// Check if current length matches any base option
+	const currentDuration = timeObject.getDuration();
 	const hasMatchingOption = baseLengthOptions.some(
-		(option) => Math.abs(option.value - currentCalculatedLength) < 0.01
+		(option) => Math.abs(option.value - currentDuration) < 0.01
 	);
 
 	// Generate complete length options including custom value if needed
 	const lengthOptions = [...baseLengthOptions];
-	if (!hasMatchingOption && currentCalculatedLength > 0) {
+	if (!hasMatchingOption && currentDuration > 0) {
 		lengthOptions.push({
-			label: formatLengthLabel(currentCalculatedLength),
-			value: currentCalculatedLength,
+			label: formatLengthLabel(currentDuration),
+			value: currentDuration,
 		});
 		// Sort options by value
 		lengthOptions.sort((a, b) => a.value - b.value);
@@ -117,17 +85,14 @@ export default function EditComponent({ attributes, setAttributes, context }) {
 
 	// Function to calculate end hour from start hour and length
 	const calculateEndHour = (startTime, lengthHours) => {
-		const startDate = parse(startTime, 'HH:mm', new Date());
-		const endDate = addHours(startDate, lengthHours);
-		return format(endDate, 'HH:mm');
+		const startHours = parseTime(startTime);
+		const endHours = startHours + lengthHours;
+		return formatTime(endHours);
 	};
 
 	// Handle start hour change while maintaining constant length
 	const handleStartHourChange = (newStartHour) => {
-		const newEndHour = calculateEndHour(
-			newStartHour,
-			currentCalculatedLength
-		);
+		const newEndHour = calculateEndHour(newStartHour, currentDuration);
 		setAttributes({
 			startHour: newStartHour,
 			endHour: newEndHour,
@@ -143,12 +108,10 @@ export default function EditComponent({ attributes, setAttributes, context }) {
 		});
 	};
 
-	// Handle end hour change and recalculate length
+	// Handle end hour change
 	const handleEndHourChange = (newEndHour) => {
-		const newLength = calculateCurrentLength(startHour, newEndHour);
 		setAttributes({
 			endHour: newEndHour,
-			length: newLength,
 		});
 	};
 
@@ -199,7 +162,7 @@ export default function EditComponent({ attributes, setAttributes, context }) {
 					/>
 					<SelectControl
 						label={__('Length', 'fair-timetable')}
-						value={currentCalculatedLength}
+						value={currentDuration}
 						options={lengthOptions}
 						onChange={handleLengthChange}
 						help={__('Duration of the time slot', 'fair-timetable')}
@@ -219,9 +182,7 @@ export default function EditComponent({ attributes, setAttributes, context }) {
 			</InspectorControls>
 
 			<div {...blockProps}>
-				<h4 className="time-annotation">
-					{startHour}-{endHour}
-				</h4>
+				<h4 className="time-annotation">{timeObject.getRange()}</h4>
 				<div {...innerBlocksProps} />
 			</div>
 		</>

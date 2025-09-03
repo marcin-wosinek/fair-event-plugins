@@ -12,12 +12,7 @@ import { __ } from '@wordpress/i18n';
  * @param {Object}   props.context       - Block context from parent
  * @return {JSX.Element} The edit component
  */
-export default function EditComponent({ context }) {
-	// Get context from parent timetable
-	const contextStartHour = context['fair-timetable/startHour'] || '09:00';
-	const contextEndHour = context['fair-timetable/endHour'] || '17:00';
-	const contextHourHeight = context['fair-timetable/hourHeight'] || 4;
-
+export default function EditComponent() {
 	const blockProps = useBlockProps({
 		className: 'time-column-container',
 	});
