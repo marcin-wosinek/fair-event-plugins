@@ -34,58 +34,120 @@ class TimeSlotTest extends TestCase {
 		$this->assertInstanceOf( TimeSlot::class, $timeSlot );
 	}
 
-	public function test_parseHourString_whole_hours() {
-		// Use reflection to test private method
-		$timeSlot    = new TimeSlot();
-		$reflection  = new ReflectionClass( $timeSlot );
-		$parseMethod = $reflection->getMethod( 'parseHourString' );
-		$parseMethod->setAccessible( true );
+	public function test_getStartHour_whole_hours() {
+		// Test whole hours via TimeSlot constructor and getStartHour()
+		$timeSlot1 = new TimeSlot(
+			array(
+				'startTime' => '09:00',
+				'endTime'   => '10:00',
+			)
+		);
+		$this->assertEquals( 9.0, $timeSlot1->getStartHour() );
 
-		// Test whole hours
-		$this->assertEquals( 9.0, $parseMethod->invoke( $timeSlot, '09:00' ) );
-		$this->assertEquals( 17.0, $parseMethod->invoke( $timeSlot, '17:00' ) );
-		$this->assertEquals( 0.0, $parseMethod->invoke( $timeSlot, '00:00' ) );
-		$this->assertEquals( 23.0, $parseMethod->invoke( $timeSlot, '23:00' ) );
+		$timeSlot2 = new TimeSlot(
+			array(
+				'startTime' => '17:00',
+				'endTime'   => '18:00',
+			)
+		);
+		$this->assertEquals( 17.0, $timeSlot2->getStartHour() );
+
+		$timeSlot3 = new TimeSlot(
+			array(
+				'startTime' => '00:00',
+				'endTime'   => '01:00',
+			)
+		);
+		$this->assertEquals( 0.0, $timeSlot3->getStartHour() );
+
+		$timeSlot4 = new TimeSlot(
+			array(
+				'startTime' => '23:00',
+				'endTime'   => '23:30',
+			)
+		);
+		$this->assertEquals( 23.0, $timeSlot4->getStartHour() );
 	}
 
-	public function test_parseHourString_with_minutes() {
-		$timeSlot    = new TimeSlot();
-		$reflection  = new ReflectionClass( $timeSlot );
-		$parseMethod = $reflection->getMethod( 'parseHourString' );
-		$parseMethod->setAccessible( true );
+	public function test_getStartHour_with_minutes() {
+		// Test hours with minutes via TimeSlot constructor and getStartHour()
+		$timeSlot1 = new TimeSlot(
+			array(
+				'startTime' => '09:30',
+				'endTime'   => '10:30',
+			)
+		);
+		$this->assertEquals( 9.5, $timeSlot1->getStartHour() );
 
-		// Test hours with minutes
-		$this->assertEquals( 9.5, $parseMethod->invoke( $timeSlot, '09:30' ) );
-		$this->assertEquals( 10.25, $parseMethod->invoke( $timeSlot, '10:15' ) );
-		$this->assertEquals( 17.75, $parseMethod->invoke( $timeSlot, '17:45' ) );
-		$this->assertEqualsWithDelta( 12.833, $parseMethod->invoke( $timeSlot, '12:50' ), 0.01 );
+		$timeSlot2 = new TimeSlot(
+			array(
+				'startTime' => '10:15',
+				'endTime'   => '11:15',
+			)
+		);
+		$this->assertEquals( 10.25, $timeSlot2->getStartHour() );
+
+		$timeSlot3 = new TimeSlot(
+			array(
+				'startTime' => '17:45',
+				'endTime'   => '18:45',
+			)
+		);
+		$this->assertEquals( 17.75, $timeSlot3->getStartHour() );
+
+		$timeSlot4 = new TimeSlot(
+			array(
+				'startTime' => '12:50',
+				'endTime'   => '13:50',
+			)
+		);
+		$this->assertEqualsWithDelta( 12.833, $timeSlot4->getStartHour(), 0.01 );
 	}
 
-	public function test_parseHourString_invalid_format() {
-		$timeSlot    = new TimeSlot();
-		$reflection  = new ReflectionClass( $timeSlot );
-		$parseMethod = $reflection->getMethod( 'parseHourString' );
-		$parseMethod->setAccessible( true );
-
-		// Test invalid formats - should return default 9.0
-		$this->assertEquals( 9.0, $parseMethod->invoke( $timeSlot, 'invalid' ) );
-		$this->assertEquals( 9.0, $parseMethod->invoke( $timeSlot, '25:00' ) );
-		$this->assertEquals( 9.0, $parseMethod->invoke( $timeSlot, '' ) );
-		$this->assertEquals( 9.0, $parseMethod->invoke( $timeSlot, '12' ) );
-		$this->assertEquals( 9.0, $parseMethod->invoke( $timeSlot, '12:30:00' ) );
+	public function test_invalid_time_format_throws_exception() {
+		// Test that invalid time formats throw exceptions (handled by HourlyRange)
+		$this->expectException( InvalidArgumentException::class );
+		new TimeSlot(
+			array(
+				'startTime' => 'invalid',
+				'endTime'   => '10:00',
+			)
+		);
 	}
 
-	public function test_parseHourString_edge_cases() {
-		$timeSlot    = new TimeSlot();
-		$reflection  = new ReflectionClass( $timeSlot );
-		$parseMethod = $reflection->getMethod( 'parseHourString' );
-		$parseMethod->setAccessible( true );
+	public function test_edge_case_time_formats() {
+		// Test edge cases with valid times
+		$timeSlot1 = new TimeSlot(
+			array(
+				'startTime' => '00:00',
+				'endTime'   => '01:00',
+			)
+		);
+		$this->assertEquals( 0.0, $timeSlot1->getStartHour() );
 
-		// Test edge cases
-		$this->assertEquals( 0.0, $parseMethod->invoke( $timeSlot, '00:00' ) );
-		$this->assertEquals( 23.983, round( $parseMethod->invoke( $timeSlot, '23:59' ), 3 ) );
-		$this->assertEquals( 12.0, $parseMethod->invoke( $timeSlot, '12:00' ) );
-		$this->assertEquals( 0.017, round( $parseMethod->invoke( $timeSlot, '00:01' ), 3 ) );
+		$timeSlot2 = new TimeSlot(
+			array(
+				'startTime' => '23:59',
+				'endTime'   => '23:59',
+			)
+		);
+		$this->assertEquals( 23.983, round( $timeSlot2->getStartHour(), 3 ) );
+
+		$timeSlot3 = new TimeSlot(
+			array(
+				'startTime' => '12:00',
+				'endTime'   => '13:00',
+			)
+		);
+		$this->assertEquals( 12.0, $timeSlot3->getStartHour() );
+
+		$timeSlot4 = new TimeSlot(
+			array(
+				'startTime' => '00:01',
+				'endTime'   => '01:01',
+			)
+		);
+		$this->assertEquals( 0.017, round( $timeSlot4->getStartHour(), 3 ) );
 	}
 
 	public function test_calculateOffset_same_start_time() {
@@ -175,5 +237,47 @@ class TimeSlotTest extends TestCase {
 		// Only endTime provided
 		$timeSlot2 = new TimeSlot( array( 'endTime' => '16:45' ) );
 		$this->assertInstanceOf( TimeSlot::class, $timeSlot2 );
+	}
+
+	public function test_new_hourly_range_methods() {
+		$timeSlot = new TimeSlot(
+			array(
+				'startTime' => '09:30',
+				'endTime'   => '11:15',
+			),
+			array( 'fair-timetable/startTime' => '09:00' )
+		);
+
+		// Test new methods that delegate to HourlyRange
+		$this->assertEquals( 1.75, $timeSlot->getDuration() );
+		$this->assertEquals( 9.5, $timeSlot->getStartHour() );
+		$this->assertEquals( 11.25, $timeSlot->getEndHour() );
+		$this->assertEquals( '09:30—11:15', $timeSlot->getTimeRangeString() );
+	}
+
+	public function test_overlaps_with_method() {
+		$timeSlot1 = new TimeSlot(
+			array(
+				'startTime' => '09:00',
+				'endTime'   => '11:00',
+			)
+		);
+		$timeSlot2 = new TimeSlot(
+			array(
+				'startTime' => '10:00',
+				'endTime'   => '12:00',
+			)
+		);
+		$timeSlot3 = new TimeSlot(
+			array(
+				'startTime' => '12:00',
+				'endTime'   => '13:00',
+			)
+		);
+
+		// Test overlap detection
+		$this->assertTrue( $timeSlot1->overlapsWith( $timeSlot2 ) );
+		$this->assertFalse( $timeSlot1->overlapsWith( $timeSlot3 ) );
+		$this->assertFalse( $timeSlot2->overlapsWith( $timeSlot3 ) );
 	}
 }

@@ -12,24 +12,16 @@ defined( 'WPINC' ) || die;
 /**
  * TimeSlot class
  *
- * Placeholder class for time slot functionality.
- * Logic will be added later.
+ * Handles time slot functionality using HourlyRange for robust time calculations.
  */
 class TimeSlot {
 
 	/**
-	 * Start hour as decimal number (e.g., 9.5 for 09:30)
+	 * Time slot range using HourlyRange
 	 *
-	 * @var float
+	 * @var HourlyRange
 	 */
-	private $startHour;
-
-	/**
-	 * End hour as decimal number (e.g., 17.25 for 17:15)
-	 *
-	 * @var float
-	 */
-	private $endHour;
+	private $timeRange;
 
 	/**
 	 * Timetable start hour as decimal number
@@ -45,32 +37,68 @@ class TimeSlot {
 	 * @param array $context Block context from parent
 	 */
 	public function __construct( array $attributes = array(), array $context = array() ) {
-		$this->startHour          = $this->parseHourString( $attributes['startTime'] ?? '09:00' );
-		$this->endHour            = $this->parseHourString( $attributes['endTime'] ?? '10:00' );
-		$this->timetableStartHour = $this->parseHourString( $context['fair-timetable/startTime'] ?? '09:00' );
+		// Create HourlyRange for the time slot
+		$this->timeRange = new HourlyRange(
+			array(
+				'startTime' => $attributes['startTime'] ?? '09:00',
+				'endTime'   => $attributes['endTime'] ?? '10:00',
+			)
+		);
+
+		// Parse timetable start time using HourlyRange's parsing logic
+		$timetableRange           = new HourlyRange(
+			array(
+				'startTime' => $context['fair-timetable/startTime'] ?? '09:00',
+				'endTime'   => '09:01', // Dummy end time for parsing start time
+			)
+		);
+		$this->timetableStartHour = $timetableRange->get_start_hour();
 	}
 
 	/**
-	 * Parse hour string (HH:mm) to decimal hour
+	 * Get duration of the time slot
 	 *
-	 * @param string $hourString Time in HH:mm format
-	 * @return float Decimal hour (e.g., 9.5 for 09:30)
+	 * @return float Duration in decimal hours
 	 */
-	private function parseHourString( string $hourString ): float {
-		$parts = explode( ':', $hourString );
-		if ( count( $parts ) !== 2 ) {
-			return 9.0; // Default fallback
-		}
+	public function getDuration(): float {
+		return $this->timeRange->get_duration();
+	}
 
-		$hours   = (int) $parts[0];
-		$minutes = (int) $parts[1];
+	/**
+	 * Get start hour as decimal
+	 *
+	 * @return float Start hour in decimal format
+	 */
+	public function getStartHour(): float {
+		return $this->timeRange->get_start_hour();
+	}
 
-		// Validate hour and minute ranges
-		if ( $hours < 0 || $hours > 23 || $minutes < 0 || $minutes > 59 ) {
-			return 9.0; // Default fallback for invalid values
-		}
+	/**
+	 * Get end hour as decimal
+	 *
+	 * @return float End hour in decimal format
+	 */
+	public function getEndHour(): float {
+		return $this->timeRange->get_end_hour();
+	}
 
-		return $hours + ( $minutes / 60 );
+	/**
+	 * Get formatted time range string
+	 *
+	 * @return string Time range in "HH:mm—HH:mm" format
+	 */
+	public function getTimeRangeString(): string {
+		return $this->timeRange->get_time_range_string();
+	}
+
+	/**
+	 * Check if this time slot overlaps with another
+	 *
+	 * @param TimeSlot $other Another TimeSlot instance
+	 * @return bool True if time slots overlap
+	 */
+	public function overlapsWith( TimeSlot $other ): bool {
+		return $this->timeRange->overlaps_with( $other->timeRange );
 	}
 
 	/**
@@ -79,7 +107,7 @@ class TimeSlot {
 	 * @return float Offset in hours
 	 */
 	public function calculateOffset(): float {
-		$offsetHours = $this->startHour - $this->timetableStartHour;
+		$offsetHours = $this->timeRange->get_start_hour() - $this->timetableStartHour;
 
 		// If slot start is before timetable start, add 24 hours (next day)
 		if ( $offsetHours < 0 ) {
