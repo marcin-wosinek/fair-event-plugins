@@ -9,19 +9,10 @@ import {
 	useInnerBlocksProps,
 } from '@wordpress/block-editor';
 import { __ } from '@wordpress/i18n';
-import {
-	parse,
-	addHours,
-	format,
-	differenceInHours,
-	differenceInMinutes,
-	addDays,
-	isAfter,
-} from 'date-fns';
 
 // Import utilities
 import { formatLengthLabel } from '@utils/lengths.js';
-import { TimeObject } from '@utils/time-object.js';
+import { TimeObject, parseTime, formatTime } from '@utils/time-object.js';
 
 /**
  * Edit component for the Time Slot Block
@@ -41,18 +32,16 @@ export default function EditComponent({ attributes, setAttributes, context }) {
 	const calculateOffset = (timetableStart, slotStart) => {
 		if (!timetableStart || !slotStart) return 0;
 
-		var now = new Date();
-		const timetableStartDate = parse(timetableStart, 'HH:mm', now);
-		const slotStartDate = parse(slotStart, 'HH:mm', now);
+		const timetableStartHours = parseTime(timetableStart);
+		const slotStartHours = parseTime(slotStart);
 
 		// If slot start is before timetable start, assume next day
-		let hourDiffence =
-			differenceInMinutes(slotStartDate, timetableStartDate) / 60;
-		if (hourDiffence < 0) {
-			hourDiffence += 24;
+		let offsetHours = slotStartHours - timetableStartHours;
+		if (offsetHours < 0) {
+			offsetHours += 24;
 		}
 
-		return hourDiffence;
+		return offsetHours;
 	};
 
 	const timeSlotOffset = calculateOffset(timetableStartHour, startHour);
@@ -64,22 +53,6 @@ export default function EditComponent({ attributes, setAttributes, context }) {
 			'--time-slot-offset': timeSlotOffset,
 		},
 	});
-
-	// Function to calculate current length in hours from start/end times
-	const calculateCurrentLength = (startTime, endTime) => {
-		const startDate = parse(startTime, 'HH:mm', new Date());
-		let endDate = parse(endTime, 'HH:mm', new Date());
-
-		// If end time is before start time, assume next day
-		if (!isAfter(endDate, startDate)) {
-			endDate = addDays(endDate, 1);
-		}
-
-		return (
-			differenceInHours(endDate, startDate) +
-			(differenceInMinutes(endDate, startDate) % 60) / 60
-		);
-	};
 
 	// Generate base length options (0.5h to 4h)
 	const baseLengthOptions = [
@@ -112,9 +85,9 @@ export default function EditComponent({ attributes, setAttributes, context }) {
 
 	// Function to calculate end hour from start hour and length
 	const calculateEndHour = (startTime, lengthHours) => {
-		const startDate = parse(startTime, 'HH:mm', new Date());
-		const endDate = addHours(startDate, lengthHours);
-		return format(endDate, 'HH:mm');
+		const startHours = parseTime(startTime);
+		const endHours = startHours + lengthHours;
+		return formatTime(endHours);
 	};
 
 	// Handle start hour change while maintaining constant length

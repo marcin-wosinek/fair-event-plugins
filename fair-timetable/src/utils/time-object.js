@@ -10,7 +10,7 @@ import { parse, isValid } from 'date-fns';
  * @param {string} timeString - Time in HH:mm format
  * @return {number} Time as decimal hours (e.g., "09:30" becomes 9.5)
  */
-function parseTime(timeString) {
+export function parseTime(timeString) {
 	if (!timeString || typeof timeString !== 'string') {
 		return 0;
 	}
@@ -37,13 +37,19 @@ function parseTime(timeString) {
  * @param {number} decimalHours - Hours in decimal format (e.g., 9.5)
  * @return {string} Time in HH:mm format (e.g., "09:30")
  */
-function formatTime(decimalHours) {
+export function formatTime(decimalHours) {
 	if (typeof decimalHours !== 'number' || decimalHours < 0) {
 		return '00:00';
 	}
 
-	const hours = Math.floor(decimalHours) % 24; // Handle overflow past 24h
-	const minutes = Math.round((decimalHours - Math.floor(decimalHours)) * 60);
+	let hours = Math.floor(decimalHours) % 24; // Handle overflow past 24h
+	let minutes = Math.round((decimalHours - Math.floor(decimalHours)) * 60);
+
+	// Handle minute overflow (when rounding causes minutes >= 60)
+	if (minutes >= 60) {
+		hours = (hours + 1) % 24;
+		minutes = 0;
+	}
 
 	return `${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}`;
 }
