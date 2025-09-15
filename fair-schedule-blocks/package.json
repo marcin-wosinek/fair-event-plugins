@@ -22,7 +22,9 @@
 		"test:php": "vendor/bin/phpunit",
 		"screenshots": "playwright test --headed",
 		"playwright:run": "playwright test --headed",
-		"playwright:up": "playwright open"
+		"playwright:up": "playwright open",
+		"svn:checkout": "svn co https://plugins.svn.wordpress.org/fair-schedule-blocks svn",
+		"svn:copy": "cp -r readme.txt fair-schedule-blocks.php src package* composer* CHANGELOG.md svn/trunk; cp assets/* svn/assets"
 	},
 	"dependencies": {
 		"@fortawesome/fontawesome-free": "^7.0.0",
