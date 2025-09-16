@@ -329,4 +329,38 @@ describe('HourlyRange', () => {
 			expect(hourlyRange2.duration).toBeCloseTo(0.9833333333333333, 5);
 		});
 	});
+
+	describe('Static calculateEndTime method', () => {
+		test('should calculate end time from start time and duration', () => {
+			expect(HourlyRange.calculateEndTime('09:00', 2.5)).toBe('11:30');
+			expect(HourlyRange.calculateEndTime('14:15', 1.75)).toBe('16:00');
+			expect(HourlyRange.calculateEndTime('23:30', 1.5)).toBe('01:00');
+		});
+
+		test('should handle midnight crossover', () => {
+			expect(HourlyRange.calculateEndTime('23:00', 3)).toBe('02:00');
+			expect(HourlyRange.calculateEndTime('22:45', 2.5)).toBe('01:15');
+		});
+
+		test('should handle edge cases', () => {
+			expect(HourlyRange.calculateEndTime('00:00', 24)).toBe('00:00');
+			expect(HourlyRange.calculateEndTime('12:00', 0)).toBe('12:00');
+			expect(HourlyRange.calculateEndTime('09:30', 0.5)).toBe('10:00');
+		});
+
+		test('should handle invalid inputs', () => {
+			expect(HourlyRange.calculateEndTime('', 2)).toBe('00:00');
+			expect(HourlyRange.calculateEndTime(null, 2)).toBe('00:00');
+			expect(HourlyRange.calculateEndTime('09:00', -1)).toBe('09:00');
+			expect(HourlyRange.calculateEndTime('09:00', 'invalid')).toBe(
+				'09:00'
+			);
+		});
+
+		test('should handle fractional hours precisely', () => {
+			expect(HourlyRange.calculateEndTime('09:00', 1.25)).toBe('10:15');
+			expect(HourlyRange.calculateEndTime('15:30', 0.75)).toBe('16:15');
+			expect(HourlyRange.calculateEndTime('08:45', 2.25)).toBe('11:00');
+		});
+	});
 });

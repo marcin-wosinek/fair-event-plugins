@@ -9,7 +9,6 @@ import {
 	useInnerBlocksProps,
 } from '@wordpress/block-editor';
 import { __ } from '@wordpress/i18n';
-import { addHours, format, parse } from 'date-fns';
 
 // Import utilities
 import { formatLengthLabel } from '@utils/lengths.js';
@@ -87,9 +86,8 @@ export default function EditComponent({ attributes, setAttributes }) {
 
 	// Function to calculate end hour from start hour and length
 	const calculateEndTime = (startTime, lengthHours) => {
-		const startDate = parse(startTime, 'HH:mm', new Date());
-		const endDate = addHours(startDate, lengthHours);
-		return format(endDate, 'HH:mm');
+		// Use HourlyRange static method for consistent time arithmetic
+		return HourlyRange.calculateEndTime(startTime, lengthHours);
 	};
 
 	// Handle start time change while maintaining constant length

@@ -11,8 +11,6 @@ import {
 import { __ } from '@wordpress/i18n';
 import {
 	parse,
-	addHours,
-	format,
 	differenceInHours,
 	differenceInMinutes,
 	addDays,
@@ -116,9 +114,8 @@ export default function EditComponent({ attributes, setAttributes, context }) {
 
 	// Function to calculate end hour from start hour and length
 	const calculateEndTime = (startTime, lengthHours) => {
-		const startDate = parse(startTime, 'HH:mm', new Date());
-		const endDate = addHours(startDate, lengthHours);
-		return format(endDate, 'HH:mm');
+		// Use HourlyRange static method for consistent time arithmetic
+		return HourlyRange.calculateEndTime(startTime, lengthHours);
 	};
 
 	// Handle start time change while maintaining constant length
