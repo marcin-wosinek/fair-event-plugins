@@ -9,15 +9,7 @@ import {
 	useInnerBlocksProps,
 } from '@wordpress/block-editor';
 import { __ } from '@wordpress/i18n';
-import {
-	addHours,
-	format,
-	parse,
-	differenceInHours,
-	differenceInMinutes,
-	addDays,
-	isAfter,
-} from 'date-fns';
+import { addHours, format, parse } from 'date-fns';
 
 // Import utilities
 import { formatLengthLabel } from '@utils/lengths.js';
@@ -44,15 +36,8 @@ export default function EditComponent({ attributes, setAttributes }) {
 
 	// Calculate column height based on time range and hour height
 	const getColumnHeight = () => {
-		const startDate = parse(startTime, 'HH:mm', new Date());
-		let endDate = parse(endTime, 'HH:mm', new Date());
-
-		// If end time is before start time, assume next day
-		if (!isAfter(endDate, startDate)) {
-			endDate = addDays(endDate, 1);
-		}
-
-		const hours = differenceInHours(endDate, startDate);
+		// Use HourlyRange for duration calculation (handles cross-midnight automatically)
+		const hours = timetableRange.getDuration();
 		return hours * hourHeight;
 	};
 
@@ -67,18 +52,9 @@ export default function EditComponent({ attributes, setAttributes }) {
 
 	// Function to calculate current length in hours from start/end times
 	const calculateCurrentLength = (startTime, endTime) => {
-		const startDate = parse(startTime, 'HH:mm', new Date());
-		let endDate = parse(endTime, 'HH:mm', new Date());
-
-		// If end time is before start time, assume next day
-		if (!isAfter(endDate, startDate)) {
-			endDate = addDays(endDate, 1);
-		}
-
-		return (
-			differenceInHours(endDate, startDate) +
-			(differenceInMinutes(endDate, startDate) % 60) / 60
-		);
+		// Use HourlyRange for duration calculation (handles cross-midnight automatically)
+		const range = new HourlyRange({ startTime, endTime });
+		return range.getDuration();
 	};
 
 	// Generate base length options (4h to 16h)
