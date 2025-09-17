@@ -70,42 +70,6 @@ export class HourlyRange {
 	}
 
 	/**
-	 * Check if this time object overlaps with another
-	 *
-	 * @param {HourlyRange} other - Another HourlyRange instance
-	 * @return {boolean} True if time ranges overlap
-	 */
-	overlapsWith(other) {
-		if (!(other instanceof HourlyRange)) return false;
-
-		return this.startHour < other.endHour && this.endHour > other.startHour;
-	}
-
-	/**
-	 * Check if this time object is before another
-	 *
-	 * @param {HourlyRange} other - Another HourlyRange instance
-	 * @return {boolean} True if this starts before the other
-	 */
-	isBefore(other) {
-		if (!(other instanceof HourlyRange)) return false;
-
-		return this.startHour < other.startHour;
-	}
-
-	/**
-	 * Check if this time object is after another
-	 *
-	 * @param {HourlyRange} other - Another HourlyRange instance
-	 * @return {boolean} True if this starts after the other
-	 */
-	isAfter(other) {
-		if (!(other instanceof HourlyRange)) return false;
-
-		return this.startHour > other.startHour;
-	}
-
-	/**
 	 * Get formatted time range string
 	 *
 	 * @return {string} Time range in "HH:mm - HH:mm" format
@@ -128,33 +92,6 @@ export class HourlyRange {
 		}
 
 		return duration;
-	}
-
-	/**
-	 * Convert to plain object
-	 *
-	 * @return {Object} Plain object representation
-	 */
-	toObject() {
-		return {
-			startHour: this.startHour,
-			endHour: this.endHour,
-			duration: this.getDuration(),
-		};
-	}
-
-	/**
-	 * Get debug information
-	 *
-	 * @return {Object} Debug information
-	 */
-	getDebugInfo() {
-		return {
-			timeRange: this.getTimeRangeString(),
-			startHour: this.startHour,
-			endHour: this.endHour,
-			duration: this.getDuration(),
-		};
 	}
 
 	/**
