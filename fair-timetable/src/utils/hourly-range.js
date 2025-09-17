@@ -137,30 +137,4 @@ export class HourlyRange {
 		// Update end hour based on start hour and new duration
 		this.endHour = this.startHour + newDuration;
 	}
-
-	/**
-	 * Calculate end time from start time and duration (static method)
-	 *
-	 * @param {string} startTime - Start time in HH:mm format
-	 * @param {number} durationHours - Duration in decimal hours
-	 * @return {string} End time in HH:mm format
-	 */
-	static calculateEndTime(startTime, durationHours) {
-		if (!startTime || typeof startTime !== 'string') {
-			return '00:00';
-		}
-
-		if (typeof durationHours !== 'number' || durationHours < 0) {
-			return startTime; // Return start time if invalid duration
-		}
-
-		// Parse start time to decimal hours
-		const startHours = parseTime(startTime);
-
-		// Add duration
-		const endHours = startHours + durationHours;
-
-		// Format back to HH:mm
-		return formatTime(endHours);
-	}
 }
