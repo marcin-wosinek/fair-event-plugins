@@ -65,22 +65,6 @@ export default function EditComponent({ attributes, setAttributes, context }) {
 		},
 	});
 
-	// Function to calculate current length in hours from start/end times
-	const calculateCurrentLength = (startTime, endTime) => {
-		const startDate = parse(startTime, 'HH:mm', new Date());
-		let endDate = parse(endTime, 'HH:mm', new Date());
-
-		// If end time is before start time, assume next day
-		if (!isAfter(endDate, startDate)) {
-			endDate = addDays(endDate, 1);
-		}
-
-		return (
-			differenceInHours(endDate, startDate) +
-			(differenceInMinutes(endDate, startDate) % 60) / 60
-		);
-	};
-
 	// Generate base length options (0.5h to 4h)
 	const baseLengthOptions = [
 		{ label: __('30 minutes', 'fair-timetable'), value: 0.5 },
@@ -112,39 +96,30 @@ export default function EditComponent({ attributes, setAttributes, context }) {
 		lengthOptions.sort((a, b) => a.value - b.value);
 	}
 
-	// Function to calculate end hour from start hour and length
-	const calculateEndTime = (startTime, lengthHours) => {
-		// Use HourlyRange static method for consistent time arithmetic
-		return HourlyRange.calculateEndTime(startTime, lengthHours);
-	};
-
 	// Handle start time change while maintaining constant length
 	const handleStartTimeChange = (newStartTime) => {
-		const newEndTime = calculateEndTime(
-			newStartTime,
-			currentCalculatedLength
-		);
+		timeSlotRange.setStartTime(newStartTime);
 		setAttributes({
 			startTime: newStartTime,
-			endTime: newEndTime,
+			endTime: timeSlotRange.getEndTime(),
 		});
 	};
 
 	// Handle length change while keeping start time constant
 	const handleLengthChange = (newLength) => {
-		const newEndTime = calculateEndTime(startTime, newLength);
+		timeSlotRange.setDuration(parseFloat(newLength));
 		setAttributes({
 			length: parseFloat(newLength),
-			endTime: newEndTime,
+			endTime: timeSlotRange.getEndTime(),
 		});
 	};
 
 	// Handle end time change and recalculate length
 	const handleEndTimeChange = (newEndTime) => {
-		const newLength = calculateCurrentLength(startTime, newEndTime);
+		const newRange = new HourlyRange({ startTime, endTime: newEndTime });
 		setAttributes({
 			endTime: newEndTime,
-			length: newLength,
+			length: newRange.getDuration(),
 		});
 	};
 
