@@ -49,13 +49,6 @@ export default function EditComponent({ attributes, setAttributes }) {
 		});
 	}
 
-	// Function to calculate current length in hours from start/end times
-	const calculateCurrentLength = (startTime, endTime) => {
-		// Use HourlyRange for duration calculation (handles cross-midnight automatically)
-		const range = new HourlyRange({ startTime, endTime });
-		return range.getDuration();
-	};
-
 	// Generate base length options (4h to 16h)
 	const baseLengthOptions = [];
 	for (let i = 4; i <= 16; i++) {
@@ -84,39 +77,30 @@ export default function EditComponent({ attributes, setAttributes }) {
 		lengthOptions.sort((a, b) => a.value - b.value);
 	}
 
-	// Function to calculate end hour from start hour and length
-	const calculateEndTime = (startTime, lengthHours) => {
-		// Use HourlyRange static method for consistent time arithmetic
-		return HourlyRange.calculateEndTime(startTime, lengthHours);
-	};
-
 	// Handle start time change while maintaining constant length
 	const handleStartTimeChange = (newStartTime) => {
-		const newEndTime = calculateEndTime(
-			newStartTime,
-			currentCalculatedLength
-		);
+		timetableRange.setStartTime(newStartTime);
 		setAttributes({
 			startTime: newStartTime,
-			endTime: newEndTime,
+			endTime: timetableRange.getEndTime(),
 		});
 	};
 
 	// Handle length change while keeping start time constant
 	const handleLengthChange = (newLength) => {
-		const newEndTime = calculateEndTime(startTime, newLength);
+		timetableRange.setDuration(parseFloat(newLength));
 		setAttributes({
 			length: parseFloat(newLength),
-			endTime: newEndTime,
+			endTime: timetableRange.getEndTime(),
 		});
 	};
 
 	// Handle end time change and recalculate length
 	const handleEndTimeChange = (newEndTime) => {
-		const newLength = calculateCurrentLength(startTime, newEndTime);
+		const newRange = new HourlyRange({ startTime, endTime: newEndTime });
 		setAttributes({
 			endTime: newEndTime,
-			length: newLength,
+			length: newRange.getDuration(),
 		});
 	};
 

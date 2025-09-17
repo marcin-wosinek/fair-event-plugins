@@ -51,11 +51,13 @@ test.describe('Timetable Length E2E Tests', () => {
 		}
 
 		// Get initial column height
-		const timetableContent = editorFrame.locator('.timetable-content');
-		await timetableContent.waitFor();
+		const timeColumnBody = editorFrame
+			.locator('.time-column-body-container')
+			.first();
+		await timeColumnBody.waitFor();
 
-		const initialHeight = await timetableContent.evaluate((el) => {
-			return window.getComputedStyle(el).minHeight;
+		const initialHeight = await timeColumnBody.evaluate((el) => {
+			return window.getComputedStyle(el).height;
 		});
 
 		// Find and change the length select control
@@ -76,13 +78,26 @@ test.describe('Timetable Length E2E Tests', () => {
 		await page.waitForTimeout(1000);
 
 		// Get new column height
-		const newHeight = await timetableContent.evaluate((el) => {
-			return window.getComputedStyle(el).minHeight;
+		const newHeight = await timeColumnBody.evaluate((el) => {
+			return window.getComputedStyle(el).height;
 		});
 
 		// Parse heights to numbers for comparison
 		const initialHeightNum = parseFloat(initialHeight);
 		const newHeightNum = parseFloat(newHeight);
+
+		// Debug: log the height values to understand what's happening
+		console.log(
+			'Initial height:',
+			initialHeight,
+			'Parsed:',
+			initialHeightNum
+		);
+		console.log('New height:', newHeight, 'Parsed:', newHeightNum);
+
+		// Verify heights are valid numbers
+		expect(initialHeightNum).not.toBeNaN();
+		expect(newHeightNum).not.toBeNaN();
 
 		// Verify that the height changed
 		expect(newHeightNum).not.toBe(initialHeightNum);
@@ -100,10 +115,10 @@ test.describe('Timetable Length E2E Tests', () => {
 		// hourHeight default is 4em, so expected height = length * hourHeight
 		const hourHeight = 4; // Default from timetable block
 		const expectedHeight = parseInt(newLength) * hourHeight;
-		expect(newHeightNum).toBe(expectedHeight);
+		expect(newHeightNum).toBe(expectedHeight * 16);
 
 		// Also verify that the CSS custom property is updated
-		const columnHeightProperty = await timetableContent.evaluate((el) => {
+		const columnHeightProperty = await timeColumnBody.evaluate((el) => {
 			return window
 				.getComputedStyle(el)
 				.getPropertyValue('--column-height');
