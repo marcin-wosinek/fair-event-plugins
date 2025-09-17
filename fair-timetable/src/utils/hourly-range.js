@@ -67,14 +67,6 @@ export class HourlyRange {
 		// Parse to decimal hours
 		this.startHour = parseTime(startTime);
 		this.endHour = parseTime(endTime);
-
-		// Calculate duration
-		this.duration = this.endHour - this.startHour;
-
-		// Handle negative duration (next day scenario)
-		if (this.duration < 0) {
-			this.duration += 24;
-		}
 	}
 
 	/**
@@ -147,7 +139,7 @@ export class HourlyRange {
 		return {
 			startHour: this.startHour,
 			endHour: this.endHour,
-			duration: this.duration,
+			duration: this.getDuration(),
 		};
 	}
 
@@ -161,7 +153,7 @@ export class HourlyRange {
 			timeRange: this.getTimeRangeString(),
 			startHour: this.startHour,
 			endHour: this.endHour,
-			duration: this.duration,
+			duration: this.getDuration(),
 		};
 	}
 

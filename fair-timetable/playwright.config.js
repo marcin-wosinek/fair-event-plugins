@@ -5,7 +5,9 @@ import dotenv from 'dotenv';
 dotenv.config();
 
 /**
- * Playwright configuration for taking WordPress.org screenshots
+ * Playwright configuration for WordPress e2e tests and screenshots
+ * In CI: Tests run against external WordPress instance (WP_BASE_URL env var)
+ * Locally: Tests start Docker WordPress instance automatically
  * @see https://playwright.dev/docs/test-configuration
  */
 export default defineConfig({
@@ -19,7 +21,7 @@ export default defineConfig({
 	/* Opt out of parallel tests on CI. */
 	workers: 1,
 	/* Reporter to use. See https://playwright.dev/docs/test-reporters */
-	reporter: 'html',
+	reporter: process.env.CI ? 'github' : 'html',
 	/* Shared settings for all the projects below. See https://playwright.dev/docs/api/class-testoptions. */
 	use: {
 		/* Base URL to use in actions like `await page.goto('/')`. */

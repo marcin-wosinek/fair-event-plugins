@@ -13,7 +13,7 @@ describe('HourlyRange', () => {
 
 			expect(hourlyRange.startHour).toBe(9.5);
 			expect(hourlyRange.endHour).toBe(11);
-			expect(hourlyRange.duration).toBe(1.5);
+			expect(hourlyRange.getDuration()).toBe(1.5);
 		});
 
 		test('should handle midnight times', () => {
@@ -24,7 +24,7 @@ describe('HourlyRange', () => {
 
 			expect(hourlyRange.startHour).toBe(0);
 			expect(hourlyRange.endHour).toBe(1.5);
-			expect(hourlyRange.duration).toBe(1.5);
+			expect(hourlyRange.getDuration()).toBe(1.5);
 		});
 
 		test('should handle cross-midnight scenarios', () => {
@@ -35,7 +35,7 @@ describe('HourlyRange', () => {
 
 			expect(hourlyRange.startHour).toBe(23);
 			expect(hourlyRange.endHour).toBe(1);
-			expect(hourlyRange.duration).toBe(2); // 23:00 to 01:00 = 2 hours
+			expect(hourlyRange.getDuration()).toBe(2); // 23:00 to 01:00 = 2 hours
 		});
 
 		test('should throw error for missing startHour', () => {
@@ -302,7 +302,10 @@ describe('HourlyRange', () => {
 				endTime: '23:59',
 			});
 
-			expect(hourlyRange.duration).toBeCloseTo(23.966666666666665, 5);
+			expect(hourlyRange.getDuration()).toBeCloseTo(
+				23.966666666666665,
+				5
+			);
 		});
 
 		test('should handle same start and end time', () => {
@@ -311,7 +314,7 @@ describe('HourlyRange', () => {
 				endTime: '12:00',
 			});
 
-			expect(hourlyRange.duration).toBe(0);
+			expect(hourlyRange.getDuration()).toBe(0);
 		});
 
 		test('should handle fractional minutes correctly', () => {
@@ -325,8 +328,14 @@ describe('HourlyRange', () => {
 				endTime: '09:59',
 			});
 
-			expect(hourlyRange1.duration).toBeCloseTo(0.016666666666666666, 5);
-			expect(hourlyRange2.duration).toBeCloseTo(0.9833333333333333, 5);
+			expect(hourlyRange1.getDuration()).toBeCloseTo(
+				0.016666666666666666,
+				5
+			);
+			expect(hourlyRange2.getDuration()).toBeCloseTo(
+				0.9833333333333333,
+				5
+			);
 		});
 	});
 
