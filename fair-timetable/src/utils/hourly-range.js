@@ -116,6 +116,20 @@ export class HourlyRange {
 	}
 
 	/**
+	 * Set new duration while keeping start time constant
+	 *
+	 * @param {number} newDuration - New duration in decimal hours
+	 */
+	setDuration(newDuration) {
+		if (typeof newDuration !== 'number' || newDuration < 0) {
+			return;
+		}
+
+		// Update end hour based on start hour and new duration
+		this.endHour = this.startHour + newDuration;
+	}
+
+	/**
 	 * Calculate end time from start time and duration (static method)
 	 *
 	 * @param {string} startTime - Start time in HH:mm format
