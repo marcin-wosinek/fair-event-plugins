@@ -95,6 +95,27 @@ export class HourlyRange {
 	}
 
 	/**
+	 * Set new start time while keeping duration constant
+	 *
+	 * @param {string} newStartTime - New start time in HH:mm format
+	 */
+	setStartTime(newStartTime) {
+		if (!newStartTime || typeof newStartTime !== 'string') {
+			return;
+		}
+
+		// Calculate current duration
+		const currentDuration = this.getDuration();
+
+		// Parse new start time
+		const newStartHour = parseTime(newStartTime);
+
+		// Update start hour and calculate new end hour
+		this.startHour = newStartHour;
+		this.endHour = newStartHour + currentDuration;
+	}
+
+	/**
 	 * Calculate end time from start time and duration (static method)
 	 *
 	 * @param {string} startTime - Start time in HH:mm format

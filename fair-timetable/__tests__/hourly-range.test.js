@@ -183,6 +183,99 @@ describe('HourlyRange', () => {
 		});
 	});
 
+	describe('setStartTime method', () => {
+		test('should update start time while keeping duration constant', () => {
+			const hourlyRange = new HourlyRange({
+				startTime: '09:00',
+				endTime: '11:30',
+			});
+
+			hourlyRange.setStartTime('10:15');
+
+			expect(hourlyRange.startHour).toBe(10.25);
+			expect(hourlyRange.endHour).toBe(12.75);
+			expect(hourlyRange.getDuration()).toBe(2.5);
+			expect(hourlyRange.getTimeRangeString()).toBe('10:15—12:45');
+		});
+
+		test('should handle midnight crossover scenarios', () => {
+			const hourlyRange = new HourlyRange({
+				startTime: '22:00',
+				endTime: '01:00',
+			});
+
+			hourlyRange.setStartTime('23:30');
+
+			expect(hourlyRange.startHour).toBe(23.5);
+			expect(hourlyRange.endHour).toBe(26.5);
+			expect(hourlyRange.getDuration()).toBe(3);
+			expect(hourlyRange.getTimeRangeString()).toBe('23:30—02:30');
+		});
+
+		test('should handle setting start time to midnight', () => {
+			const hourlyRange = new HourlyRange({
+				startTime: '14:00',
+				endTime: '16:30',
+			});
+
+			hourlyRange.setStartTime('00:00');
+
+			expect(hourlyRange.startHour).toBe(0);
+			expect(hourlyRange.endHour).toBe(2.5);
+			expect(hourlyRange.getDuration()).toBe(2.5);
+			expect(hourlyRange.getTimeRangeString()).toBe('00:00—02:30');
+		});
+
+		test('should handle fractional start times', () => {
+			const hourlyRange = new HourlyRange({
+				startTime: '09:00',
+				endTime: '10:45',
+			});
+
+			hourlyRange.setStartTime('14:15');
+
+			expect(hourlyRange.startHour).toBe(14.25);
+			expect(hourlyRange.endHour).toBe(16);
+			expect(hourlyRange.getDuration()).toBe(1.75);
+			expect(hourlyRange.getTimeRangeString()).toBe('14:15—16:00');
+		});
+
+		test('should handle invalid start time inputs gracefully', () => {
+			const hourlyRange = new HourlyRange({
+				startTime: '09:00',
+				endTime: '11:00',
+			});
+			const originalDuration = hourlyRange.getDuration();
+
+			hourlyRange.setStartTime('');
+			expect(hourlyRange.getDuration()).toBe(originalDuration);
+
+			hourlyRange.setStartTime(null);
+			expect(hourlyRange.getDuration()).toBe(originalDuration);
+
+			hourlyRange.setStartTime('invalid');
+			expect(hourlyRange.startHour).toBe(0);
+			expect(hourlyRange.endHour).toBe(originalDuration);
+		});
+
+		test('should preserve duration across multiple setStartTime calls', () => {
+			const hourlyRange = new HourlyRange({
+				startTime: '08:30',
+				endTime: '12:00',
+			});
+			const originalDuration = hourlyRange.getDuration();
+
+			hourlyRange.setStartTime('10:00');
+			expect(hourlyRange.getDuration()).toBe(originalDuration);
+
+			hourlyRange.setStartTime('15:45');
+			expect(hourlyRange.getDuration()).toBe(originalDuration);
+
+			hourlyRange.setStartTime('23:15');
+			expect(hourlyRange.getDuration()).toBe(originalDuration);
+		});
+	});
+
 	describe('Static calculateEndTime method', () => {
 		test('should calculate end time from start time and duration', () => {
 			expect(HourlyRange.calculateEndTime('09:00', 2.5)).toBe('11:30');
