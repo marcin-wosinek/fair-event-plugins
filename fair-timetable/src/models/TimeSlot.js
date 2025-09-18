@@ -3,36 +3,7 @@
  */
 
 import { HourlyRange } from './HourlyRange.js';
-
-/**
- * Parse time string to decimal hours
- *
- * @param {string} timeString - Time in HH:mm format
- * @return {number} Time as decimal hours (e.g., "09:30" becomes 9.5)
- */
-function parseTime(timeString) {
-	if (!timeString || typeof timeString !== 'string') {
-		return 0;
-	}
-
-	try {
-		const [hours, minutes] = timeString.split(':').map(Number);
-		if (
-			isNaN(hours) ||
-			isNaN(minutes) ||
-			hours < 0 ||
-			hours > 23 ||
-			minutes < 0 ||
-			minutes > 59
-		) {
-			return 0;
-		}
-		return hours + minutes / 60;
-	} catch (error) {
-		console.warn('Failed to parse time string:', timeString, error);
-		return 0;
-	}
-}
+import { parseTime } from '@utils/timeUtils.js';
 
 /**
  * TimeSlot class for managing time slots with timetable context
