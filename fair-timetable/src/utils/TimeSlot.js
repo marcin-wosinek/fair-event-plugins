@@ -17,7 +17,14 @@ function parseTime(timeString) {
 
 	try {
 		const [hours, minutes] = timeString.split(':').map(Number);
-		if (isNaN(hours) || isNaN(minutes) || hours < 0 || hours > 23 || minutes < 0 || minutes > 59) {
+		if (
+			isNaN(hours) ||
+			isNaN(minutes) ||
+			hours < 0 ||
+			hours > 23 ||
+			minutes < 0 ||
+			minutes > 59
+		) {
 			return 0;
 		}
 		return hours + minutes / 60;

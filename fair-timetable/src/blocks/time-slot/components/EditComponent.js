@@ -9,11 +9,10 @@ import {
 	useInnerBlocksProps,
 } from '@wordpress/block-editor';
 import { __ } from '@wordpress/i18n';
-import { parse, differenceInMinutes } from 'date-fns';
 
 // Import utilities
 import { formatLengthLabel } from '@utils/lengths.js';
-import { HourlyRange } from '@utils/hourly-range.js';
+import { TimeSlot } from '@utils/TimeSlot.js';
 
 /**
  * Edit component for the Time Slot Block
@@ -28,36 +27,16 @@ export default function EditComponent({ attributes, setAttributes, context }) {
 	const { startTime, endTime } = attributes;
 	const { 'fair-timetable/startTime': timetableStartTime } = context || {};
 
-	// Create HourlyRange object from attributes for later use
-	const timeSlotRange = new HourlyRange({ startTime, endTime });
+	// Create TimeSlot object from attributes for later use
+	const timeSlot = new TimeSlot({ startTime, endTime }, timetableStartTime);
 
-	// Calculate time from timetable start in hours
-	const calculateTimeFromStart = (timetableStart, slotStart) => {
-		if (!timetableStart || !slotStart) return 0;
-
-		var now = new Date();
-		const timetableStartDate = parse(timetableStart, 'HH:mm', now);
-		const slotStartDate = parse(slotStart, 'HH:mm', now);
-
-		// If slot start is before timetable start, assume next day
-		let hourDiffence =
-			differenceInMinutes(slotStartDate, timetableStartDate) / 60;
-		if (hourDiffence < 0) {
-			hourDiffence += 24;
-		}
-
-		return hourDiffence;
-	};
-
-	const timeSlotTimeFromStart = calculateTimeFromStart(
-		timetableStartTime,
-		startTime
-	);
+	// Calculate time from timetable start using TimeSlot class
+	const timeSlotTimeFromStart = timeSlot.getTimeFromTimetableStart();
 
 	const blockProps = useBlockProps({
 		className: 'time-slot-container',
 		style: {
-			'--time-slot-length': timeSlotRange.getDuration(),
+			'--time-slot-length': timeSlot.getDuration(),
 			'--time-slot-time-from-start': timeSlotTimeFromStart,
 		},
 	});
@@ -75,7 +54,7 @@ export default function EditComponent({ attributes, setAttributes, context }) {
 	];
 
 	// Calculate current length from start/end times
-	const currentCalculatedLength = timeSlotRange.getDuration();
+	const currentCalculatedLength = timeSlot.getDuration();
 
 	// Check if current length matches any base option
 	const hasMatchingOption = baseLengthOptions.some(
@@ -95,24 +74,24 @@ export default function EditComponent({ attributes, setAttributes, context }) {
 
 	// Handle start time change while maintaining constant length
 	const handleStartTimeChange = (newStartTime) => {
-		timeSlotRange.setStartTime(newStartTime);
+		timeSlot.setStartTime(newStartTime);
 		setAttributes({
 			startTime: newStartTime,
-			endTime: timeSlotRange.getEndTime(),
+			endTime: timeSlot.getEndTime(),
 		});
 	};
 
 	// Handle length change while keeping start time constant
 	const handleLengthChange = (newLength) => {
-		timeSlotRange.setDuration(parseFloat(newLength));
+		timeSlot.setDuration(parseFloat(newLength));
 		setAttributes({
-			endTime: timeSlotRange.getEndTime(),
+			endTime: timeSlot.getEndTime(),
 		});
 	};
 
 	// Handle end time change and recalculate length
 	const handleEndTimeChange = (newEndTime) => {
-		timeSlotRange.setEndTime(newEndTime);
+		timeSlot.setEndTime(newEndTime);
 		setAttributes({
 			endTime: newEndTime,
 		});
