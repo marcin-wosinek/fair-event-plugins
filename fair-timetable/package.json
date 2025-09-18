@@ -21,7 +21,7 @@
 		"test:php": "vendor/bin/phpunit",
 		"screenshots": "playwright test --headed",
 		"playwright:run": "playwright test --headed",
-		"playwright:up": "playwright open",
+		"playwright:up": "playwright test --headed --ui",
 		"svn:checkout": "svn co https://plugins.svn.wordpress.org/fair-timetable svn",
 		"svn:copy": "cp -r readme.txt fair-timetable.php src package* composer* CHANGELOG.md svn/trunk; cp assets/* svn/assets"
 	},

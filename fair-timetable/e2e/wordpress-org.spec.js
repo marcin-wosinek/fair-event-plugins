@@ -39,7 +39,7 @@ test.describe('WordPress.org Screenshot for Fair Timetable', () => {
 			.locator('.wp-block-fair-timetable-timetable')
 			.waitFor();
 
-		// Close the block inserter popup before taking screenshot-1
+		// Close the block inserter popup before editing time-slots
 		const closeInserterButton = page.getByRole('button', {
 			name: 'Close Block Inserter',
 		});
@@ -47,6 +47,38 @@ test.describe('WordPress.org Screenshot for Fair Timetable', () => {
 			await closeInserterButton.click();
 			await page.waitForTimeout(500);
 		}
+
+		// Edit the first time-slot to start at 10:15
+		// Click on the first time-slot block within the timetable container
+		const firstTimeSlot = editorFrame
+			.locator('.wp-block-fair-timetable-time-slot')
+			.first();
+
+		await firstTimeSlot.waitFor();
+		await firstTimeSlot.click();
+
+		// Wait for the time-slot to be selected and block inspector to update
+		await page.waitForTimeout(1000);
+
+		// Click on the Time Slot parent selector button in the toolbar
+		await page.click(
+			'button.block-editor-block-parent-selector__button[aria-label="Select parent block: Time Slot"]'
+		);
+		await page.waitForTimeout(500);
+
+		// Look for the "Start Time" input using its specific attributes
+		const startTimeInput = page.locator(
+			'input.components-text-control__input[placeholder="09:00"]'
+		);
+
+		// Clear and set the start time to 10:15
+		await startTimeInput.click();
+		await startTimeInput.selectAll();
+		await startTimeInput.fill('10:15');
+
+		// Press Tab to confirm the change and trigger onChange
+		await startTimeInput.press('Tab');
+		await page.waitForTimeout(1500); // Allow time for re-render
 
 		// Take screenshot-1 of the editor with timetable blocks (full viewport)
 		await page.screenshot({
