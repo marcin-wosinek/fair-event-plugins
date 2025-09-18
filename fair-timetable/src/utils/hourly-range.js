@@ -137,4 +137,21 @@ export class HourlyRange {
 		// Update end hour based on start hour and new duration
 		this.endHour = this.startHour + newDuration;
 	}
+
+	/**
+	 * Set new end time while keeping start time constant
+	 *
+	 * @param {string} newEndTime - New end time in HH:mm format
+	 */
+	setEndTime(newEndTime) {
+		if (!newEndTime || typeof newEndTime !== 'string') {
+			return;
+		}
+
+		// Parse new end time
+		const newEndHour = parseTime(newEndTime);
+
+		// Update end hour
+		this.endHour = newEndHour;
+	}
 }

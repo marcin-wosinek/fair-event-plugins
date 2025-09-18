@@ -96,6 +96,7 @@ export default function EditComponent({ attributes, setAttributes }) {
 
 	// Handle end time change and recalculate length
 	const handleEndTimeChange = (newEndTime) => {
+		timetableRange.setEndTime(newEndTime);
 		setAttributes({
 			endTime: newEndTime,
 		});

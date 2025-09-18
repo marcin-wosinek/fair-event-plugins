@@ -109,6 +109,7 @@ export default function EditComponent({ attributes, setAttributes, context }) {
 
 	// Handle end time change and recalculate length
 	const handleEndTimeChange = (newEndTime) => {
+		timeSlotRange.setEndTime(newEndTime);
 		setAttributes({
 			endTime: newEndTime,
 		});
