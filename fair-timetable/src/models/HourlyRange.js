@@ -2,24 +2,7 @@
  * HourlyRange class for managing time ranges
  */
 
-import { parseTime } from '@utils/timeUtils.js';
-
-/**
- * Format decimal hours to time string
- *
- * @param {number} decimalHours - Hours in decimal format (e.g., 9.5)
- * @return {string} Time in HH:mm format (e.g., "09:30")
- */
-function formatTime(decimalHours) {
-	if (typeof decimalHours !== 'number' || decimalHours < 0) {
-		return '00:00';
-	}
-
-	const hours = Math.floor(decimalHours) % 24; // Handle overflow past 24h
-	const minutes = Math.round((decimalHours - Math.floor(decimalHours)) * 60);
-
-	return `${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}`;
-}
+import { parseTime, formatTime } from '@utils/timeUtils.js';
 
 /**
  * HourlyRange class for managing time ranges with string input and numeric output

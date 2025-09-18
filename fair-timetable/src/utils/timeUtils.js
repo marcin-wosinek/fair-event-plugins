@@ -30,3 +30,26 @@ export function parseTime(timeString) {
 		return 0;
 	}
 }
+
+/**
+ * Format decimal hours to time string
+ *
+ * @param {number} decimalHours - Hours in decimal format (e.g., 9.5)
+ * @return {string} Time in HH:mm format (e.g., "09:30")
+ */
+export function formatTime(decimalHours) {
+	if (typeof decimalHours !== 'number' || decimalHours < 0) {
+		return '00:00';
+	}
+
+	let hours = Math.floor(decimalHours) % 24; // Handle overflow past 24h
+	let minutes = Math.round((decimalHours - Math.floor(decimalHours)) * 60);
+
+	// Handle minute overflow (e.g., 60 minutes should become 1 hour, 0 minutes)
+	if (minutes >= 60) {
+		hours = (hours + 1) % 24;
+		minutes = 0;
+	}
+
+	return `${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}`;
+}

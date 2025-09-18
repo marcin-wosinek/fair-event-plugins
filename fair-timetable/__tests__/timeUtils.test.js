@@ -1,7 +1,7 @@
 /**
  * Test suite for timeUtils functions
  */
-import { parseTime } from '../src/utils/timeUtils.js';
+import { parseTime, formatTime } from '../src/utils/timeUtils.js';
 
 describe('timeUtils', () => {
 	describe('parseTime', () => {
@@ -117,6 +117,105 @@ describe('timeUtils', () => {
 			expect(parseTime('01:30')).toBe(1.5);
 			expect(parseTime('01:45')).toBe(1.75);
 			expect(parseTime('01:15')).toBe(1.25);
+		});
+	});
+
+	describe('formatTime', () => {
+		test('should format valid decimal hours correctly', () => {
+			const testCases = [
+				{ input: 0, expected: '00:00' },
+				{ input: 0.25, expected: '00:15' },
+				{ input: 0.5, expected: '00:30' },
+				{ input: 0.75, expected: '00:45' },
+				{ input: 1, expected: '01:00' },
+				{ input: 9.5, expected: '09:30' },
+				{ input: 12.25, expected: '12:15' },
+				{ input: 23.983333333333334, expected: '23:59' },
+			];
+
+			testCases.forEach(({ input, expected }) => {
+				expect(formatTime(input)).toBe(expected);
+			});
+		});
+
+		test('should handle midnight correctly', () => {
+			expect(formatTime(0)).toBe('00:00');
+			expect(formatTime(24)).toBe('00:00'); // Overflow to next day
+		});
+
+		test('should handle 24-hour overflow', () => {
+			expect(formatTime(25.5)).toBe('01:30'); // 25.5 hours = 1:30 next day
+			expect(formatTime(48)).toBe('00:00'); // 48 hours = midnight 2 days later
+			expect(formatTime(30.75)).toBe('06:45'); // 30.75 hours = 6:45 next day
+		});
+
+		test('should return 00:00 for invalid inputs', () => {
+			const invalidInputs = [
+				null,
+				undefined,
+				'invalid',
+				{},
+				[],
+				true,
+				-1,
+				-5.5,
+			];
+
+			invalidInputs.forEach((invalidInput) => {
+				expect(formatTime(invalidInput)).toBe('00:00');
+			});
+		});
+
+		test('should handle edge cases with minutes', () => {
+			expect(formatTime(12.016666666666667)).toBe('12:01');
+			expect(formatTime(12.983333333333334)).toBe('12:59');
+		});
+
+		test('should round minutes correctly', () => {
+			// Test cases that verify minute rounding
+			expect(formatTime(1 + 1 / 60)).toBe('01:01'); // 1.016666... should round to 01
+			expect(formatTime(1.5)).toBe('01:30');
+			expect(formatTime(1.75)).toBe('01:45');
+			expect(formatTime(1.25)).toBe('01:15');
+		});
+
+		test('should handle fractional seconds by rounding', () => {
+			// When decimal hours result in fractional seconds, should round to nearest minute
+			expect(formatTime(1.0083333)).toBe('01:00'); // ~30 seconds, rounds down to 0 minutes
+			expect(formatTime(1.0166666)).toBe('01:01'); // Exactly 1 minute
+		});
+
+		test('should be consistent with parseTime (round-trip)', () => {
+			const timeStrings = [
+				'00:00',
+				'00:15',
+				'00:30',
+				'00:45',
+				'01:00',
+				'09:30',
+				'12:15',
+				'23:59',
+			];
+
+			timeStrings.forEach((timeString) => {
+				const parsed = parseTime(timeString);
+				const formatted = formatTime(parsed);
+				expect(formatted).toBe(timeString);
+			});
+		});
+
+		test('should handle boundary values', () => {
+			expect(formatTime(0)).toBe('00:00');
+			expect(formatTime(23.999)).toBe('00:00'); // Very close to 24, rounds to 60 minutes -> next day
+			expect(formatTime(23.99)).toBe('23:59'); // Should stay within the day
+		});
+
+		test('should maintain precision for common time values', () => {
+			// Test common decimal hour values used in scheduling
+			expect(formatTime(8.5)).toBe('08:30');
+			expect(formatTime(9.25)).toBe('09:15');
+			expect(formatTime(10.75)).toBe('10:45');
+			expect(formatTime(17.5)).toBe('17:30');
 		});
 	});
 });
