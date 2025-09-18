@@ -52,7 +52,7 @@ class TimeSlot {
 				'endTime'   => '09:01', // Dummy end time for parsing start time
 			)
 		);
-		$this->timetableStartHour = $timetableRange->get_start_hour();
+		$this->timetableStartHour = $timetableRange->start_hour;
 	}
 
 	/**
@@ -70,7 +70,7 @@ class TimeSlot {
 	 * @return float Start hour in decimal format
 	 */
 	public function getStartHour(): float {
-		return $this->timeRange->get_start_hour();
+		return $this->timeRange->start_hour;
 	}
 
 	/**
@@ -79,7 +79,7 @@ class TimeSlot {
 	 * @return float End hour in decimal format
 	 */
 	public function getEndHour(): float {
-		return $this->timeRange->get_end_hour();
+		return $this->timeRange->end_hour;
 	}
 
 	/**
@@ -91,15 +91,6 @@ class TimeSlot {
 		return $this->timeRange->get_time_range_string();
 	}
 
-	/**
-	 * Check if this time slot overlaps with another
-	 *
-	 * @param TimeSlot $other Another TimeSlot instance
-	 * @return bool True if time slots overlap
-	 */
-	public function overlapsWith( TimeSlot $other ): bool {
-		return $this->timeRange->overlaps_with( $other->timeRange );
-	}
 
 	/**
 	 * Calculate offset from timetable start in hours
@@ -107,7 +98,7 @@ class TimeSlot {
 	 * @return float Offset in hours
 	 */
 	public function calculateOffset(): float {
-		$offsetHours = $this->timeRange->get_start_hour() - $this->timetableStartHour;
+		$offsetHours = $this->timeRange->start_hour - $this->timetableStartHour;
 
 		// If slot start is before timetable start, add 24 hours (next day)
 		if ( $offsetHours < 0 ) {

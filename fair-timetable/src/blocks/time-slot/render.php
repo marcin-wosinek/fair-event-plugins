@@ -13,7 +13,6 @@ use FairTimetable\TimeSlot;
 // Get block attributes
 $start_time = $attributes['startTime'] ?? '09:00';
 $end_time   = $attributes['endTime'] ?? '10:00';
-$length     = $attributes['length'] ?? 1;
 
 // Get timetable context for offset calculation
 $timetable_start_time = $block->context['fair-timetable/startTime'] ?? '09:00';
@@ -29,13 +28,14 @@ $time_slot = new TimeSlot(
 	)
 );
 
-// Calculate offset from TimeSlot class
+// Calculate offset and duration from TimeSlot class
 $offset_hours = $time_slot->calculateOffset();
+$duration     = $time_slot->getDuration();
 
 // Build CSS custom properties
 $css_vars = sprintf(
 	'--time-slot-length: %s; --time-slot-offset: %s;',
-	esc_attr( $length ),
+	esc_attr( $duration ),
 	esc_attr( $offset_hours )
 );
 
