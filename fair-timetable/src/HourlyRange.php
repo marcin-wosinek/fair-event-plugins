@@ -20,21 +20,14 @@ class HourlyRange {
 	 *
 	 * @var float
 	 */
-	private float $start_hour;
+	public float $start_hour;
 
 	/**
 	 * End hour as decimal number (e.g., 12.5 for 12:30)
 	 *
 	 * @var float
 	 */
-	private float $end_hour;
-
-	/**
-	 * Duration in decimal hours
-	 *
-	 * @var float
-	 */
-	private float $duration;
+	public float $end_hour;
 
 	/**
 	 * Constructor
@@ -60,14 +53,6 @@ class HourlyRange {
 		// Parse to decimal hours
 		$this->start_hour = $this->parse_time( $start_time );
 		$this->end_hour   = $this->parse_time( $end_time );
-
-		// Calculate duration
-		$this->duration = $this->end_hour - $this->start_hour;
-
-		// Handle negative duration (next day scenario)
-		if ( $this->duration < 0 ) {
-			$this->duration += 24;
-		}
 	}
 
 	/**
@@ -114,59 +99,17 @@ class HourlyRange {
 	 * @return float Duration in decimal hours
 	 */
 	public function get_duration(): float {
-		return $this->duration;
+		$duration = $this->end_hour - $this->start_hour;
+
+		// Handle negative duration (next day scenario)
+		if ( $duration < 0 ) {
+			$duration += 24;
+		}
+
+		return $duration;
 	}
 
-	/**
-	 * Get start hour as decimal
-	 *
-	 * @return float Start hour in decimal format
-	 */
-	public function get_start_hour(): float {
-		return $this->start_hour;
-	}
 
-	/**
-	 * Get end hour as decimal
-	 *
-	 * @return float End hour in decimal format
-	 */
-	public function get_end_hour(): float {
-		return $this->end_hour;
-	}
-
-	/**
-	 * Check if this time range overlaps with another
-	 *
-	 * @param HourlyRange $other Another HourlyRange instance
-	 *
-	 * @return bool True if time ranges overlap
-	 */
-	public function overlaps_with( HourlyRange $other ): bool {
-		return $this->start_hour < $other->end_hour && $this->end_hour > $other->start_hour;
-	}
-
-	/**
-	 * Check if this time range is before another
-	 *
-	 * @param HourlyRange $other Another HourlyRange instance
-	 *
-	 * @return bool True if this starts before the other
-	 */
-	public function is_before( HourlyRange $other ): bool {
-		return $this->start_hour < $other->start_hour;
-	}
-
-	/**
-	 * Check if this time range is after another
-	 *
-	 * @param HourlyRange $other Another HourlyRange instance
-	 *
-	 * @return bool True if this starts after the other
-	 */
-	public function is_after( HourlyRange $other ): bool {
-		return $this->start_hour > $other->start_hour;
-	}
 
 	/**
 	 * Get formatted time range string
@@ -175,32 +118,5 @@ class HourlyRange {
 	 */
 	public function get_time_range_string(): string {
 		return $this->format_time( $this->start_hour ) . '—' . $this->format_time( $this->end_hour );
-	}
-
-	/**
-	 * Convert to associative array
-	 *
-	 * @return array Associative array representation
-	 */
-	public function to_array(): array {
-		return array(
-			'startHour' => $this->start_hour,
-			'endHour'   => $this->end_hour,
-			'duration'  => $this->duration,
-		);
-	}
-
-	/**
-	 * Get debug information
-	 *
-	 * @return array Debug information as associative array
-	 */
-	public function get_debug_info(): array {
-		return array(
-			'timeRange' => $this->get_time_range_string(),
-			'startHour' => $this->start_hour,
-			'endHour'   => $this->end_hour,
-			'duration'  => $this->duration,
-		);
 	}
 }

@@ -22,8 +22,8 @@ class HourlyRangeTest extends TestCase {
 			)
 		);
 
-		$this->assertEquals( 11.5, $range->get_start_hour() );
-		$this->assertEquals( 12.5, $range->get_end_hour() );
+		$this->assertEquals( 11.5, $range->start_hour );
+		$this->assertEquals( 12.5, $range->end_hour );
 		$this->assertEquals( 1.0, $range->get_duration() );
 	}
 
@@ -38,8 +38,8 @@ class HourlyRangeTest extends TestCase {
 			)
 		);
 
-		$this->assertEquals( 11.5, $range->get_start_hour(), 'startHour should be 11.5' );
-		$this->assertEquals( 12.5, $range->get_end_hour(), 'endHour should be 12.5' );
+		$this->assertEquals( 11.5, $range->start_hour, 'startHour should be 11.5' );
+		$this->assertEquals( 12.5, $range->end_hour, 'endHour should be 12.5' );
 		$this->assertEquals( 1.0, $range->get_duration(), 'getDuration() should return 1' );
 	}
 
@@ -54,8 +54,8 @@ class HourlyRangeTest extends TestCase {
 			)
 		);
 
-		$this->assertEquals( 0.0, $range->get_start_hour() );
-		$this->assertEquals( 1.5, $range->get_end_hour() );
+		$this->assertEquals( 0.0, $range->start_hour );
+		$this->assertEquals( 1.5, $range->end_hour );
 		$this->assertEquals( 1.5, $range->get_duration() );
 	}
 
@@ -70,8 +70,8 @@ class HourlyRangeTest extends TestCase {
 			)
 		);
 
-		$this->assertEquals( 23.0, $range->get_start_hour() );
-		$this->assertEquals( 1.0, $range->get_end_hour() );
+		$this->assertEquals( 23.0, $range->start_hour );
+		$this->assertEquals( 1.0, $range->end_hour );
 		$this->assertEquals( 2.0, $range->get_duration() ); // 23:00 to 01:00 = 2 hours
 	}
 
@@ -183,8 +183,8 @@ class HourlyRangeTest extends TestCase {
 				)
 			);
 
-			$this->assertEqualsWithDelta( $case['expected_start'], $range->get_start_hour(), 0.00001, "Failed for startTime: {$case['startTime']}" );
-			$this->assertEqualsWithDelta( $case['expected_end'], $range->get_end_hour(), 0.00001, "Failed for endTime: {$case['endTime']}" );
+			$this->assertEqualsWithDelta( $case['expected_start'], $range->start_hour, 0.00001, "Failed for startTime: {$case['startTime']}" );
+			$this->assertEqualsWithDelta( $case['expected_end'], $range->end_hour, 0.00001, "Failed for endTime: {$case['endTime']}" );
 		}
 	}
 
@@ -218,115 +218,10 @@ class HourlyRangeTest extends TestCase {
 		}
 	}
 
-	/**
-	 * Test overlaps_with method
-	 */
-	public function test_overlaps_with() {
-		$range1 = new HourlyRange(
-			array(
-				'startTime' => '09:00',
-				'endTime'   => '11:00',
-			)
-		);
 
-		$range2 = new HourlyRange(
-			array(
-				'startTime' => '10:00',
-				'endTime'   => '12:00',
-			)
-		);
 
-		$this->assertTrue( $range1->overlaps_with( $range2 ) );
-		$this->assertTrue( $range2->overlaps_with( $range1 ) );
-	}
 
-	/**
-	 * Test non-overlapping ranges
-	 */
-	public function test_non_overlapping_ranges() {
-		$range1 = new HourlyRange(
-			array(
-				'startTime' => '09:00',
-				'endTime'   => '10:00',
-			)
-		);
 
-		$range2 = new HourlyRange(
-			array(
-				'startTime' => '11:00',
-				'endTime'   => '12:00',
-			)
-		);
-
-		$this->assertFalse( $range1->overlaps_with( $range2 ) );
-		$this->assertFalse( $range2->overlaps_with( $range1 ) );
-	}
-
-	/**
-	 * Test touching ranges (should not overlap)
-	 */
-	public function test_touching_ranges() {
-		$range1 = new HourlyRange(
-			array(
-				'startTime' => '09:00',
-				'endTime'   => '10:00',
-			)
-		);
-
-		$range2 = new HourlyRange(
-			array(
-				'startTime' => '10:00',
-				'endTime'   => '11:00',
-			)
-		);
-
-		$this->assertFalse( $range1->overlaps_with( $range2 ) );
-		$this->assertFalse( $range2->overlaps_with( $range1 ) );
-	}
-
-	/**
-	 * Test is_before method
-	 */
-	public function test_is_before() {
-		$range1 = new HourlyRange(
-			array(
-				'startTime' => '09:00',
-				'endTime'   => '10:00',
-			)
-		);
-
-		$range2 = new HourlyRange(
-			array(
-				'startTime' => '11:00',
-				'endTime'   => '12:00',
-			)
-		);
-
-		$this->assertTrue( $range1->is_before( $range2 ) );
-		$this->assertFalse( $range2->is_before( $range1 ) );
-	}
-
-	/**
-	 * Test is_after method
-	 */
-	public function test_is_after() {
-		$range1 = new HourlyRange(
-			array(
-				'startTime' => '09:00',
-				'endTime'   => '10:00',
-			)
-		);
-
-		$range2 = new HourlyRange(
-			array(
-				'startTime' => '11:00',
-				'endTime'   => '12:00',
-			)
-		);
-
-		$this->assertFalse( $range1->is_after( $range2 ) );
-		$this->assertTrue( $range2->is_after( $range1 ) );
-	}
 
 	/**
 	 * Test get_time_range_string method
@@ -402,50 +297,7 @@ class HourlyRangeTest extends TestCase {
 		$this->assertEquals( 0.0, $range3->get_duration() );
 	}
 
-	/**
-	 * Test to_array method
-	 */
-	public function test_to_array() {
-		$range = new HourlyRange(
-			array(
-				'startTime' => '09:30',
-				'endTime'   => '11:00',
-			)
-		);
 
-		$array = $range->to_array();
-
-		$expected = array(
-			'startHour' => 9.5,
-			'endHour'   => 11.0,
-			'duration'  => 1.5,
-		);
-
-		$this->assertEquals( $expected, $array );
-	}
-
-	/**
-	 * Test get_debug_info method
-	 */
-	public function test_get_debug_info() {
-		$range = new HourlyRange(
-			array(
-				'startTime' => '09:30',
-				'endTime'   => '11:15',
-			)
-		);
-
-		$debug_info = $range->get_debug_info();
-
-		$expected = array(
-			'timeRange' => '09:30—11:15',
-			'startHour' => 9.5,
-			'endHour'   => 11.25,
-			'duration'  => 1.75,
-		);
-
-		$this->assertEquals( $expected, $debug_info );
-	}
 
 	/**
 	 * Test edge cases with 24-hour format

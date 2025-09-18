@@ -254,30 +254,4 @@ class TimeSlotTest extends TestCase {
 		$this->assertEquals( 11.25, $timeSlot->getEndHour() );
 		$this->assertEquals( '09:30—11:15', $timeSlot->getTimeRangeString() );
 	}
-
-	public function test_overlaps_with_method() {
-		$timeSlot1 = new TimeSlot(
-			array(
-				'startTime' => '09:00',
-				'endTime'   => '11:00',
-			)
-		);
-		$timeSlot2 = new TimeSlot(
-			array(
-				'startTime' => '10:00',
-				'endTime'   => '12:00',
-			)
-		);
-		$timeSlot3 = new TimeSlot(
-			array(
-				'startTime' => '12:00',
-				'endTime'   => '13:00',
-			)
-		);
-
-		// Test overlap detection
-		$this->assertTrue( $timeSlot1->overlapsWith( $timeSlot2 ) );
-		$this->assertFalse( $timeSlot1->overlapsWith( $timeSlot3 ) );
-		$this->assertFalse( $timeSlot2->overlapsWith( $timeSlot3 ) );
-	}
 }
