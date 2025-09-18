@@ -2,7 +2,7 @@
  * TimeSlot class for managing time slots within a timetable
  */
 
-import { HourlyRange } from './hourly-range.js';
+import { HourlyRange } from './HourlyRange.js';
 
 /**
  * Parse time string to decimal hours

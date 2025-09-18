@@ -1,7 +1,7 @@
 /**
  * Test suite for HourlyRange class
  */
-import { HourlyRange } from '../src/utils/hourly-range.js';
+import { HourlyRange } from '../src/models/HourlyRange.js';
 
 describe('HourlyRange', () => {
 	describe('Constructor', () => {

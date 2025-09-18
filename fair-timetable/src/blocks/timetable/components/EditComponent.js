@@ -12,7 +12,7 @@ import { __ } from '@wordpress/i18n';
 
 // Import utilities
 import { formatLengthLabel } from '@utils/lengths.js';
-import { HourlyRange } from '@utils/hourly-range.js';
+import { HourlyRange } from '@models/HourlyRange.js';
 
 /**
  * Edit component for the Timetable Block

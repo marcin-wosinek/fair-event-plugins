@@ -1,7 +1,7 @@
 /**
  * Test suite for TimeSlot class
  */
-import { TimeSlot } from '../src/utils/TimeSlot.js';
+import { TimeSlot } from '../src/models/TimeSlot.js';
 
 describe('TimeSlot', () => {
 	describe('Constructor', () => {

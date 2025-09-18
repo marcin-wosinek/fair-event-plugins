@@ -12,7 +12,7 @@ import { __ } from '@wordpress/i18n';
 
 // Import utilities
 import { formatLengthLabel } from '@utils/lengths.js';
-import { TimeSlot } from '@utils/TimeSlot.js';
+import { TimeSlot } from '@models/TimeSlot.js';
 
 /**
  * Edit component for the Time Slot Block
