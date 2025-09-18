@@ -9,13 +9,7 @@ import {
 	useInnerBlocksProps,
 } from '@wordpress/block-editor';
 import { __ } from '@wordpress/i18n';
-import {
-	parse,
-	differenceInHours,
-	differenceInMinutes,
-	addDays,
-	isAfter,
-} from 'date-fns';
+import { parse, differenceInMinutes } from 'date-fns';
 
 // Import utilities
 import { formatLengthLabel } from '@utils/lengths.js';
@@ -109,17 +103,14 @@ export default function EditComponent({ attributes, setAttributes, context }) {
 	const handleLengthChange = (newLength) => {
 		timeSlotRange.setDuration(parseFloat(newLength));
 		setAttributes({
-			length: parseFloat(newLength),
 			endTime: timeSlotRange.getEndTime(),
 		});
 	};
 
 	// Handle end time change and recalculate length
 	const handleEndTimeChange = (newEndTime) => {
-		const newRange = new HourlyRange({ startTime, endTime: newEndTime });
 		setAttributes({
 			endTime: newEndTime,
-			length: newRange.getDuration(),
 		});
 	};
 

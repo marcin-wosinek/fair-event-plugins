@@ -22,10 +22,6 @@
 			"type": "string",
 			"default": "17:00"
 		},
-		"length": {
-			"type": "number",
-			"default": 8
-		},
 		"hourHeight": {
 			"type": "number",
 			"default": 4
@@ -34,7 +30,6 @@
 	"providesContext": {
 		"fair-timetable/startTime": "startTime",
 		"fair-timetable/endTime": "endTime",
-		"fair-timetable/length": "length",
 		"fair-timetable/hourHeight": "hourHeight"
 	},
 	"textdomain": "fair-timetable",

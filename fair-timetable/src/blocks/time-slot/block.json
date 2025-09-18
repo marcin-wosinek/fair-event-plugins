@@ -25,16 +25,11 @@
 		"endTime": {
 			"type": "string",
 			"default": "10:00"
-		},
-		"length": {
-			"type": "number",
-			"default": 1
 		}
 	},
 	"usesContext": [
 		"fair-timetable/startTime",
 		"fair-timetable/endTime",
-		"fair-timetable/length",
 		"fair-timetable/hourHeight"
 	],
 	"textdomain": "fair-timetable",

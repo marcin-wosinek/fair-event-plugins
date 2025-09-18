@@ -90,17 +90,14 @@ export default function EditComponent({ attributes, setAttributes }) {
 	const handleLengthChange = (newLength) => {
 		timetableRange.setDuration(parseFloat(newLength));
 		setAttributes({
-			length: parseFloat(newLength),
 			endTime: timetableRange.getEndTime(),
 		});
 	};
 
 	// Handle end time change and recalculate length
 	const handleEndTimeChange = (newEndTime) => {
-		const newRange = new HourlyRange({ startTime, endTime: newEndTime });
 		setAttributes({
 			endTime: newEndTime,
-			length: newRange.getDuration(),
 		});
 	};
 
