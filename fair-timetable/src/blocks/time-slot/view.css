@@ -10,7 +10,7 @@
   overflow: hidden;
   padding: 0.5rem;
   position: absolute;
-  top: calc(var(--time-slot-offset, 0) * var(--hour-height, 4) * 1rem);
+  top: calc(var(--time-slot-time-from-start, 0) * var(--hour-height, 4) * 1rem);
   width: 100%;
 }
 

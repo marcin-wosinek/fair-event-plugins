@@ -93,18 +93,18 @@ class TimeSlot {
 
 
 	/**
-	 * Calculate offset from timetable start in hours
+	 * Calculate time from timetable start in hours
 	 *
-	 * @return float Offset in hours
+	 * @return float Time from start in hours
 	 */
-	public function calculateOffset(): float {
-		$offsetHours = $this->timeRange->start_hour - $this->timetableStartHour;
+	public function calculateTimeFromStart(): float {
+		$timeFromStart = $this->timeRange->start_hour - $this->timetableStartHour;
 
 		// If slot start is before timetable start, add 24 hours (next day)
-		if ( $offsetHours < 0 ) {
-			$offsetHours += 24;
+		if ( $timeFromStart < 0 ) {
+			$timeFromStart += 24;
 		}
 
-		return $offsetHours;
+		return $timeFromStart;
 	}
 }

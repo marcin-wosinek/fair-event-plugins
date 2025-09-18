@@ -31,8 +31,8 @@ export default function EditComponent({ attributes, setAttributes, context }) {
 	// Create HourlyRange object from attributes for later use
 	const timeSlotRange = new HourlyRange({ startTime, endTime });
 
-	// Calculate offset from timetable start in hours
-	const calculateOffset = (timetableStart, slotStart) => {
+	// Calculate time from timetable start in hours
+	const calculateTimeFromStart = (timetableStart, slotStart) => {
 		if (!timetableStart || !slotStart) return 0;
 
 		var now = new Date();
@@ -49,13 +49,16 @@ export default function EditComponent({ attributes, setAttributes, context }) {
 		return hourDiffence;
 	};
 
-	const timeSlotOffset = calculateOffset(timetableStartTime, startTime);
+	const timeSlotTimeFromStart = calculateTimeFromStart(
+		timetableStartTime,
+		startTime
+	);
 
 	const blockProps = useBlockProps({
 		className: 'time-slot-container',
 		style: {
 			'--time-slot-length': timeSlotRange.getDuration(),
-			'--time-slot-offset': timeSlotOffset,
+			'--time-slot-time-from-start': timeSlotTimeFromStart,
 		},
 	});
 

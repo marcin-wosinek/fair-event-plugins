@@ -28,15 +28,15 @@ $time_slot = new TimeSlot(
 	)
 );
 
-// Calculate offset and duration from TimeSlot class
-$offset_hours = $time_slot->calculateOffset();
-$duration     = $time_slot->getDuration();
+// Calculate time from start and duration from TimeSlot class
+$time_from_start_hours = $time_slot->calculateTimeFromStart();
+$duration              = $time_slot->getDuration();
 
 // Build CSS custom properties
 $css_vars = sprintf(
-	'--time-slot-length: %s; --time-slot-offset: %s;',
+	'--time-slot-length: %s; --time-slot-time-from-start: %s;',
 	esc_attr( $duration ),
-	esc_attr( $offset_hours )
+	esc_attr( $time_from_start_hours )
 );
 
 // Get wrapper attributes
