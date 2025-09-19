@@ -41,29 +41,18 @@ export default function EditComponent({ attributes, setAttributes, context }) {
 		},
 	});
 
-	// Generate base length options (0.5h to 4h)
+	// Generate length options (0.5h to 4h) with current duration
 	const baseLengthValues = [0.5, 1, 1.5, 2, 2.5, 3, 3.5, 4];
 	const lengthOptionsGenerator = new LengthOptions(baseLengthValues);
-	const baseLengthOptions = lengthOptionsGenerator.getLengthOptions();
 
 	// Calculate current length from start/end times
 	const currentCalculatedLength = timeSlot.getDuration();
 
-	// Check if current length matches any base option
-	const hasMatchingOption = baseLengthOptions.some(
-		(option) => Math.abs(option.value - currentCalculatedLength) < 0.01
-	);
+	// Set current value (handles rounding and custom values automatically)
+	lengthOptionsGenerator.setValue(currentCalculatedLength);
 
-	// Generate complete length options including custom value if needed
-	const lengthOptions = [...baseLengthOptions];
-	if (!hasMatchingOption && currentCalculatedLength > 0) {
-		lengthOptions.push({
-			label: LengthOptions.formatLengthLabel(currentCalculatedLength),
-			value: currentCalculatedLength,
-		});
-		// Sort options by value
-		lengthOptions.sort((a, b) => a.value - b.value);
-	}
+	// Get all options including custom value if needed
+	const lengthOptions = lengthOptionsGenerator.getLengthOptions();
 
 	// Handle start time change while maintaining constant length
 	const handleStartTimeChange = (newStartTime) => {

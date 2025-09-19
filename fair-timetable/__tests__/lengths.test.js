@@ -232,10 +232,13 @@ describe('LengthOptions', () => {
 			const result = lengthOptions.getLengthOptions();
 
 			expect(result).toHaveLength(4);
-			expect(result[3]).toEqual({ label: '2 hours, 15 minutes', value: 2.25 });
+			expect(result[3]).toEqual({
+				label: '2 hours, 15 minutes',
+				value: 2.25,
+			});
 
 			// Should be sorted by value
-			expect(result.map(opt => opt.value)).toEqual([0.5, 1, 1.5, 2.25]);
+			expect(result.map((opt) => opt.value)).toEqual([0.5, 1, 1.5, 2.25]);
 		});
 
 		test('should not add duplicate when value exists in predefined list', () => {
@@ -247,7 +250,7 @@ describe('LengthOptions', () => {
 			const result = lengthOptions.getLengthOptions();
 
 			expect(result).toHaveLength(3);
-			expect(result.map(opt => opt.value)).toEqual([0.5, 1, 1.5]);
+			expect(result.map((opt) => opt.value)).toEqual([0.5, 1, 1.5]);
 		});
 
 		test('should handle 0.01 tolerance for floating point comparison', () => {
@@ -283,32 +286,64 @@ describe('LengthOptions', () => {
 			lengthOptions.setValue(2.5);
 			const result = lengthOptions.getLengthOptions();
 
-			expect(result.map(opt => opt.value)).toEqual([1, 2.5, 3, 4]);
+			expect(result.map((opt) => opt.value)).toEqual([1, 2.5, 3, 4]);
 		});
 	});
 
-	describe('hasMatchingValue', () => {
-		test('should return false when no value is selected', () => {
+	describe('getMatchingValue', () => {
+		test('should return undefined when no value is selected', () => {
 			const values = [0.5, 1, 1.5];
 			const lengthOptions = new LengthOptions(values);
 
-			expect(lengthOptions.hasMatchingValue()).toBe(false);
+			expect(lengthOptions.getMatchingValue()).toBe(undefined);
 		});
 
-		test('should return true when selected value matches predefined value within tolerance', () => {
+		test('should return matching predefined value when within tolerance', () => {
 			const values = [0.5, 1, 1.5];
 			const lengthOptions = new LengthOptions(values);
 
 			lengthOptions.setValue(1.005); // Within 0.01 tolerance of 1
-			expect(lengthOptions.hasMatchingValue()).toBe(true);
+			expect(lengthOptions.getMatchingValue()).toBe(1);
 		});
 
-		test('should return false when selected value is outside tolerance', () => {
+		test('should return undefined when value is outside tolerance', () => {
 			const values = [0.5, 1, 1.5];
 			const lengthOptions = new LengthOptions(values);
 
 			lengthOptions.setValue(1.02); // Outside 0.01 tolerance
-			expect(lengthOptions.hasMatchingValue()).toBe(false);
+			expect(lengthOptions.getMatchingValue()).toBe(undefined);
+		});
+
+		test('should work with custom value parameter', () => {
+			const values = [0.5, 1, 1.5];
+			const lengthOptions = new LengthOptions(values);
+
+			expect(lengthOptions.getMatchingValue(0.505)).toBe(0.5);
+			expect(lengthOptions.getMatchingValue(2.25)).toBe(undefined);
+		});
+	});
+
+	describe('setValue rounding behavior', () => {
+		test('should round to predefined value when within tolerance', () => {
+			const values = [0.5, 1, 1.5];
+			const lengthOptions = new LengthOptions(values);
+
+			lengthOptions.setValue(0.50001);
+			expect(lengthOptions.selectedValue).toBe(0.5);
+
+			lengthOptions.setValue(1.005);
+			expect(lengthOptions.selectedValue).toBe(1);
+		});
+
+		test('should keep exact value when outside tolerance', () => {
+			const values = [0.5, 1, 1.5];
+			const lengthOptions = new LengthOptions(values);
+
+			lengthOptions.setValue(0.52);
+			expect(lengthOptions.selectedValue).toBe(0.52);
+
+			lengthOptions.setValue(2.25);
+			expect(lengthOptions.selectedValue).toBe(2.25);
 		});
 	});
 });

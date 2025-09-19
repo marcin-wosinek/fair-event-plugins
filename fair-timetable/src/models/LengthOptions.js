@@ -20,11 +20,14 @@ export class LengthOptions {
 
 	/**
 	 * Set the selected value (from predefined list or custom)
+	 * If the value is within 0.01 tolerance of a predefined value, it will be rounded to that value
 	 *
 	 * @param {number} value - Selected value in decimal hours
 	 */
 	setValue(value) {
-		this.selectedValue = value;
+		const matchingValue = this.getMatchingValue(value);
+		this.selectedValue =
+			matchingValue !== undefined ? matchingValue : value;
 	}
 
 	/**
@@ -47,18 +50,19 @@ export class LengthOptions {
 	}
 
 	/**
-	 * Check if the selected value exists in the predefined values
+	 * Get matching predefined value
 	 * Uses 0.01 tolerance for floating point comparison
 	 *
-	 * @return {boolean} True if the selected value matches a predefined value
+	 * @param {number|null} value - Value to check (defaults to selectedValue)
+	 * @return {number|undefined} Matching predefined value or undefined if no match
 	 */
-	hasMatchingValue() {
-		if (this.selectedValue === null) {
-			return false;
+	getMatchingValue(value = this.selectedValue) {
+		if (value === null) {
+			return undefined;
 		}
 
-		return this.values.some((value) =>
-			Math.abs(value - this.selectedValue) < 0.01
+		return this.values.find(
+			(predefinedValue) => Math.abs(predefinedValue - value) < 0.01
 		);
 	}
 
@@ -75,7 +79,11 @@ export class LengthOptions {
 		}));
 
 		// If selectedValue is set and not in the predefined list, add it temporarily
-		if (this.selectedValue !== null && !this.hasMatchingValue() && this.selectedValue > 0) {
+		if (
+			this.selectedValue !== null &&
+			this.getMatchingValue() === undefined &&
+			this.selectedValue > 0
+		) {
 			options.push({
 				label: LengthOptions.formatLengthLabel(this.selectedValue),
 				value: this.selectedValue,

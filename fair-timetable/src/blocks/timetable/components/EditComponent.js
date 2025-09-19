@@ -49,32 +49,21 @@ export default function EditComponent({ attributes, setAttributes }) {
 		});
 	}
 
-	// Generate base length options (4h to 16h)
+	// Generate length options (4h to 16h) with current duration
 	const baseLengthValues = [];
 	for (let i = 4; i <= 16; i++) {
 		baseLengthValues.push(i);
 	}
 	const lengthOptionsGenerator = new LengthOptions(baseLengthValues);
-	const baseLengthOptions = lengthOptionsGenerator.getLengthOptions();
 
 	// Calculate current length from start/end hours
 	const currentCalculatedLength = timetableRange.getDuration();
 
-	// Check if current length matches any base option
-	const hasMatchingOption = baseLengthOptions.some(
-		(option) => option.value === currentCalculatedLength
-	);
+	// Set current value (handles rounding and custom values automatically)
+	lengthOptionsGenerator.setValue(currentCalculatedLength);
 
-	// Generate complete length options including custom value if needed
-	const lengthOptions = [...baseLengthOptions];
-	if (!hasMatchingOption && currentCalculatedLength > 0) {
-		lengthOptions.push({
-			label: LengthOptions.formatLengthLabel(currentCalculatedLength),
-			value: currentCalculatedLength,
-		});
-		// Sort options by value
-		lengthOptions.sort((a, b) => a.value - b.value);
-	}
+	// Get all options including custom value if needed
+	const lengthOptions = lengthOptionsGenerator.getLengthOptions();
 
 	// Handle start time change while maintaining constant length
 	const handleStartTimeChange = (newStartTime) => {
