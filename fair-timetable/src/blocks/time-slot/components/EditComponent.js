@@ -11,7 +11,7 @@ import {
 import { __ } from '@wordpress/i18n';
 
 // Import utilities
-import { formatLengthLabel, generateLengthOptions } from '@utils/lengths.js';
+import { LengthOptions } from '@models/LengthOptions.js';
 import { TimeSlot } from '@models/TimeSlot.js';
 
 /**
@@ -43,7 +43,8 @@ export default function EditComponent({ attributes, setAttributes, context }) {
 
 	// Generate base length options (0.5h to 4h)
 	const baseLengthValues = [0.5, 1, 1.5, 2, 2.5, 3, 3.5, 4];
-	const baseLengthOptions = generateLengthOptions(baseLengthValues);
+	const lengthOptionsGenerator = new LengthOptions(baseLengthValues);
+	const baseLengthOptions = lengthOptionsGenerator.getLengthOptions();
 
 	// Calculate current length from start/end times
 	const currentCalculatedLength = timeSlot.getDuration();
@@ -57,7 +58,7 @@ export default function EditComponent({ attributes, setAttributes, context }) {
 	const lengthOptions = [...baseLengthOptions];
 	if (!hasMatchingOption && currentCalculatedLength > 0) {
 		lengthOptions.push({
-			label: formatLengthLabel(currentCalculatedLength),
+			label: LengthOptions.formatLengthLabel(currentCalculatedLength),
 			value: currentCalculatedLength,
 		});
 		// Sort options by value

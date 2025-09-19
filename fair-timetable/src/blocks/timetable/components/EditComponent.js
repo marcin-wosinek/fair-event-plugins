@@ -11,7 +11,7 @@ import {
 import { __ } from '@wordpress/i18n';
 
 // Import utilities
-import { formatLengthLabel, generateLengthOptions } from '@utils/lengths.js';
+import { LengthOptions } from '@models/LengthOptions.js';
 import { HourlyRange } from '@models/HourlyRange.js';
 
 /**
@@ -54,7 +54,8 @@ export default function EditComponent({ attributes, setAttributes }) {
 	for (let i = 4; i <= 16; i++) {
 		baseLengthValues.push(i);
 	}
-	const baseLengthOptions = generateLengthOptions(baseLengthValues);
+	const lengthOptionsGenerator = new LengthOptions(baseLengthValues);
+	const baseLengthOptions = lengthOptionsGenerator.getLengthOptions();
 
 	// Calculate current length from start/end hours
 	const currentCalculatedLength = timetableRange.getDuration();
@@ -68,7 +69,7 @@ export default function EditComponent({ attributes, setAttributes }) {
 	const lengthOptions = [...baseLengthOptions];
 	if (!hasMatchingOption && currentCalculatedLength > 0) {
 		lengthOptions.push({
-			label: formatLengthLabel(currentCalculatedLength),
+			label: LengthOptions.formatLengthLabel(currentCalculatedLength),
 			value: currentCalculatedLength,
 		});
 		// Sort options by value
