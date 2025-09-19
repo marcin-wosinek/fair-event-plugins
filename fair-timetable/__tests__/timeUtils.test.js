@@ -37,7 +37,6 @@ describe('timeUtils', () => {
 				'invalid',
 				'25:00', // Invalid hour
 				'12:60', // Invalid minute
-				'12',
 				'12:',
 				':30',
 				'24:00', // Invalid hour
@@ -109,6 +108,39 @@ describe('timeUtils', () => {
 			// date-fns accepts these formats, though they're not strictly HH:mm
 			expect(parseTime('1:30')).toBe(1.5); // Parsed as 01:30
 			expect(parseTime('12:5')).toBeCloseTo(12.083333333333334, 5); // Parsed as 12:05
+		});
+
+		test('should handle single digit hour parsing', () => {
+			// Single digits that are parsed as hours (except 1 and 2)
+			expect(parseTime('0')).toBe(0); // 00:00
+			expect(parseTime('3')).toBe(3); // 03:00
+			expect(parseTime('4')).toBe(4); // 04:00
+			expect(parseTime('5')).toBe(5); // 05:00
+			expect(parseTime('6')).toBe(6); // 06:00
+			expect(parseTime('7')).toBe(7); // 07:00
+			expect(parseTime('8')).toBe(8); // 08:00
+			expect(parseTime('9')).toBe(9); // 09:00
+
+			// Single digits 1 and 2 should return 0 (could be decimal)
+			expect(parseTime('1')).toBe(0); // Could be 1.5, 1.25, etc.
+			expect(parseTime('2')).toBe(0); // Could be 2.5, 2.75, etc.
+		});
+
+		test('should handle 2-digit hour parsing', () => {
+			// 2-digit numbers should be parsed as hours (up to 24)
+			expect(parseTime('00')).toBe(0); // 00:00
+			expect(parseTime('01')).toBe(1); // 01:00
+			expect(parseTime('10')).toBe(10); // 10:00
+			expect(parseTime('11')).toBe(11); // 11:00
+			expect(parseTime('12')).toBe(12); // 12:00
+			expect(parseTime('15')).toBe(15); // 15:00
+			expect(parseTime('20')).toBe(20); // 20:00
+			expect(parseTime('23')).toBe(23); // 23:00
+			expect(parseTime('24')).toBe(24); // 24:00 (will be normalized to 00:00 in formatTime)
+
+			// Invalid 2-digit hours should fall back to date-fns parsing
+			expect(parseTime('25')).toBe(0); // Invalid hour, should return 0
+			expect(parseTime('99')).toBe(0); // Invalid hour, should return 0
 		});
 
 		test('should maintain precision for fractional minutes', () => {

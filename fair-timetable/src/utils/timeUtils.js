@@ -15,6 +15,25 @@ export function parseTime(timeString) {
 		return 0;
 	}
 
+	// Handle single digit hours (except 1 and 2 which could be decimal numbers)
+	if (/^\d$/.test(timeString)) {
+		const digit = parseInt(timeString);
+		if (digit === 1 || digit === 2) {
+			return 0; // Could be decimal, don't parse
+		}
+		if (digit >= 0 && digit <= 9) {
+			return digit; // Parse as hour with 0 minutes
+		}
+	}
+
+	// Handle 2-digit hours up to 24
+	if (/^\d{2}$/.test(timeString)) {
+		const hours = parseInt(timeString);
+		if (hours >= 0 && hours <= 24) {
+			return hours; // Parse as hour with 0 minutes
+		}
+	}
+
 	try {
 		const timeDate = parse(timeString, 'HH:mm', new Date());
 		if (!isValid(timeDate)) {

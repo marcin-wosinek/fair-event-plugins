@@ -139,6 +139,33 @@ describe('HourlyRange', () => {
 		});
 	});
 
+	describe('getStartTime', () => {
+		test('should return formatted start time', () => {
+			const hourlyRange = new HourlyRange({
+				startTime: '09:30',
+				endTime: '12:00',
+			});
+			expect(hourlyRange.getStartTime()).toBe('09:30');
+		});
+
+		test('should handle midnight start time', () => {
+			const hourlyRange = new HourlyRange({
+				startTime: '00:00',
+				endTime: '08:00',
+			});
+			expect(hourlyRange.getStartTime()).toBe('00:00');
+		});
+
+		test('should handle fractional start times', () => {
+			const hourlyRange = new HourlyRange({
+				startTime: '09:00',
+				endTime: '10:00',
+			});
+			hourlyRange.startHour = 9.25; // 09:15
+			expect(hourlyRange.getStartTime()).toBe('09:15');
+		});
+	});
+
 	describe('getEndTime', () => {
 		test('should return formatted end time', () => {
 			const hourlyRange = new HourlyRange({

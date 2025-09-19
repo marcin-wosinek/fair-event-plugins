@@ -9,7 +9,8 @@ import {
 	useInnerBlocksProps,
 } from '@wordpress/block-editor';
 import { __ } from '@wordpress/i18n';
-import { useRef } from '@wordpress/element';
+import { useRef, useEffect } from '@wordpress/element';
+import { useSelect } from '@wordpress/data';
 
 // Import utilities
 import { LengthOptions } from '@models/LengthOptions.js';
@@ -24,7 +25,7 @@ import { HourlyRange } from '@models/HourlyRange.js';
  * @param {string}   props.clientId      - Block client ID
  * @return {JSX.Element} The edit component
  */
-export default function EditComponent({ attributes, setAttributes }) {
+export default function EditComponent({ attributes, setAttributes, clientId }) {
 	const { startTime, endTime, hourHeight } = attributes;
 
 	// Store HourlyRange instance between renders to handle invalid intermediate values
@@ -48,6 +49,39 @@ export default function EditComponent({ attributes, setAttributes }) {
 	}
 
 	const timetableRange = timetableRangeRef.current;
+
+	// Monitor block selection state
+	const isSelected = useSelect(
+		(select) => {
+			return select('core/block-editor').isBlockSelected(clientId);
+		},
+		[clientId]
+	);
+
+	const wasSelected = useRef(false);
+
+	// Handle block losing focus
+	useEffect(() => {
+		if (wasSelected.current && !isSelected) {
+			// Block lost focus - canonicalize all time values
+			const canonicalStartTime = timetableRange.getStartTime();
+			const canonicalEndTime = timetableRange.getEndTime();
+
+			const updates = {};
+			if (canonicalStartTime !== startTime) {
+				updates.startTime = canonicalStartTime;
+			}
+			if (canonicalEndTime !== endTime) {
+				updates.endTime = canonicalEndTime;
+			}
+
+			if (Object.keys(updates).length > 0) {
+				setAttributes(updates);
+			}
+		}
+
+		wasSelected.current = isSelected;
+	}, [isSelected, startTime, endTime, timetableRange, setAttributes]);
 
 	const blockProps = useBlockProps({
 		className: 'timetable-container',
@@ -145,12 +179,20 @@ export default function EditComponent({ attributes, setAttributes }) {
 						label={__('Start Time', 'fair-timetable')}
 						value={startTime}
 						onChange={handleStartTimeChange}
-						placeholder="09:00"
+						onBlur={() => {
+							const canonicalStartTime =
+								timetableRange.getStartTime();
+							if (canonicalStartTime !== startTime) {
+								setAttributes({
+									startTime: canonicalStartTime,
+								});
+							}
+						}}
+						placeholder={timetableRange.getStartTime()}
 						help={__(
 							'Start time in HH:MM format (24-hour)',
 							'fair-timetable'
 						)}
-						pattern="^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$"
 					/>
 					<SelectControl
 						label={__('Length', 'fair-timetable')}
@@ -166,12 +208,18 @@ export default function EditComponent({ attributes, setAttributes }) {
 						label={__('End Time', 'fair-timetable')}
 						value={endTime}
 						onChange={handleEndTimeChange}
-						placeholder="17:00"
+						onBlur={() => {
+							const canonicalEndTime =
+								timetableRange.getEndTime();
+							if (canonicalEndTime !== endTime) {
+								setAttributes({ endTime: canonicalEndTime });
+							}
+						}}
+						placeholder={timetableRange.getEndTime()}
 						help={__(
 							'End time in HH:MM format. If before start time, assumes next day.',
 							'fair-timetable'
 						)}
-						pattern="^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$"
 					/>
 					<SelectControl
 						label={__('Hour Height', 'fair-timetable')}

@@ -63,6 +63,15 @@ export class TimeSlot {
 	}
 
 	/**
+	 * Get formatted start time
+	 *
+	 * @return {string} Start time in HH:mm format
+	 */
+	getStartTime() {
+		return this.timeRange.getStartTime();
+	}
+
+	/**
 	 * Get formatted end time
 	 *
 	 * @return {string} End time in HH:mm format

@@ -64,6 +64,15 @@ describe('TimeSlot', () => {
 			expect(timeSlot.getTimeRangeString()).toBe('09:30—11:15');
 		});
 
+		test('should delegate getStartTime to HourlyRange', () => {
+			const timeSlot = new TimeSlot({
+				startTime: '09:30',
+				endTime: '12:00',
+			});
+
+			expect(timeSlot.getStartTime()).toBe('09:30');
+		});
+
 		test('should delegate getEndTime to HourlyRange', () => {
 			const timeSlot = new TimeSlot({
 				startTime: '09:00',

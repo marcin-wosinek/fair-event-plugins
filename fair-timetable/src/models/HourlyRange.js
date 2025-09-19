@@ -51,6 +51,15 @@ export class HourlyRange {
 	}
 
 	/**
+	 * Get formatted start time
+	 *
+	 * @return {string} Start time in HH:mm format
+	 */
+	getStartTime() {
+		return formatTime(this.startHour);
+	}
+
+	/**
 	 * Get formatted end time
 	 *
 	 * @return {string} End time in HH:mm format
