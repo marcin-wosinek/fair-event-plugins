@@ -22,3 +22,16 @@ export function formatLengthLabel(lengthInHours) {
 		return __(`${hours} hours, ${minutes} minutes`, 'fair-timetable');
 	}
 }
+
+/**
+ * Generate length options from an array of numeric values
+ *
+ * @param {number[]} values - Array of length values in decimal hours
+ * @return {Object[]} Array of option objects with label and value properties
+ */
+export function generateLengthOptions(values) {
+	return values.map((value) => ({
+		label: formatLengthLabel(value),
+		value: value,
+	}));
+}

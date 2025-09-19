@@ -11,7 +11,7 @@ import {
 import { __ } from '@wordpress/i18n';
 
 // Import utilities
-import { formatLengthLabel } from '@utils/lengths.js';
+import { formatLengthLabel, generateLengthOptions } from '@utils/lengths.js';
 import { TimeSlot } from '@models/TimeSlot.js';
 
 /**
@@ -42,16 +42,8 @@ export default function EditComponent({ attributes, setAttributes, context }) {
 	});
 
 	// Generate base length options (0.5h to 4h)
-	const baseLengthOptions = [
-		{ label: __('30 minutes', 'fair-timetable'), value: 0.5 },
-		{ label: __('1 hour', 'fair-timetable'), value: 1 },
-		{ label: __('1 hour, 30 minutes', 'fair-timetable'), value: 1.5 },
-		{ label: __('2 hours', 'fair-timetable'), value: 2 },
-		{ label: __('2 hours, 30 minutes', 'fair-timetable'), value: 2.5 },
-		{ label: __('3 hours', 'fair-timetable'), value: 3 },
-		{ label: __('3 hours, 30 minutes', 'fair-timetable'), value: 3.5 },
-		{ label: __('4 hours', 'fair-timetable'), value: 4 },
-	];
+	const baseLengthValues = [0.5, 1, 1.5, 2, 2.5, 3, 3.5, 4];
+	const baseLengthOptions = generateLengthOptions(baseLengthValues);
 
 	// Calculate current length from start/end times
 	const currentCalculatedLength = timeSlot.getDuration();

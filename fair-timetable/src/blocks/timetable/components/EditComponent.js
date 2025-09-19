@@ -11,7 +11,7 @@ import {
 import { __ } from '@wordpress/i18n';
 
 // Import utilities
-import { formatLengthLabel } from '@utils/lengths.js';
+import { formatLengthLabel, generateLengthOptions } from '@utils/lengths.js';
 import { HourlyRange } from '@models/HourlyRange.js';
 
 /**
@@ -50,13 +50,11 @@ export default function EditComponent({ attributes, setAttributes }) {
 	}
 
 	// Generate base length options (4h to 16h)
-	const baseLengthOptions = [];
+	const baseLengthValues = [];
 	for (let i = 4; i <= 16; i++) {
-		baseLengthOptions.push({
-			label: __(`${i} hours`, 'fair-timetable'),
-			value: i,
-		});
+		baseLengthValues.push(i);
 	}
+	const baseLengthOptions = generateLengthOptions(baseLengthValues);
 
 	// Calculate current length from start/end hours
 	const currentCalculatedLength = timetableRange.getDuration();
