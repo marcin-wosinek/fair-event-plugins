@@ -9,6 +9,7 @@ import {
 	useInnerBlocksProps,
 } from '@wordpress/block-editor';
 import { __ } from '@wordpress/i18n';
+import { useRef } from '@wordpress/element';
 
 // Import utilities
 import { LengthOptions } from '@models/LengthOptions.js';
@@ -26,8 +27,27 @@ import { HourlyRange } from '@models/HourlyRange.js';
 export default function EditComponent({ attributes, setAttributes }) {
 	const { startTime, endTime, hourHeight } = attributes;
 
-	// Create HourlyRange object from attributes for later use
-	const timetableRange = new HourlyRange({ startTime, endTime });
+	// Store HourlyRange instance between renders to handle invalid intermediate values
+	const timetableRangeRef = useRef(null);
+
+	// Create or update HourlyRange object, falling back to previous valid instance if needed
+	try {
+		if (startTime && endTime) {
+			timetableRangeRef.current = new HourlyRange({ startTime, endTime });
+		}
+	} catch (error) {
+		// Keep previous valid instance if new values are invalid
+	}
+
+	// Fallback to default if no valid instance exists
+	if (!timetableRangeRef.current) {
+		timetableRangeRef.current = new HourlyRange({
+			startTime: '09:00',
+			endTime: '17:00',
+		});
+	}
+
+	const timetableRange = timetableRangeRef.current;
 
 	const blockProps = useBlockProps({
 		className: 'timetable-container',

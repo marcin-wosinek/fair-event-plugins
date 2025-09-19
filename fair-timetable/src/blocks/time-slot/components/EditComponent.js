@@ -9,6 +9,7 @@ import {
 	useInnerBlocksProps,
 } from '@wordpress/block-editor';
 import { __ } from '@wordpress/i18n';
+import { useRef } from '@wordpress/element';
 
 // Import utilities
 import { LengthOptions } from '@models/LengthOptions.js';
@@ -27,8 +28,30 @@ export default function EditComponent({ attributes, setAttributes, context }) {
 	const { startTime, endTime } = attributes;
 	const { 'fair-timetable/startTime': timetableStartTime } = context || {};
 
-	// Create TimeSlot object from attributes for later use
-	const timeSlot = new TimeSlot({ startTime, endTime }, timetableStartTime);
+	// Store TimeSlot instance between renders to handle invalid intermediate values
+	const timeSlotRef = useRef(null);
+
+	// Create or update TimeSlot object, falling back to previous valid instance if needed
+	try {
+		if (startTime && endTime) {
+			timeSlotRef.current = new TimeSlot(
+				{ startTime, endTime },
+				timetableStartTime
+			);
+		}
+	} catch (error) {
+		// Keep previous valid instance if new values are invalid
+	}
+
+	// Fallback to default if no valid instance exists
+	if (!timeSlotRef.current) {
+		timeSlotRef.current = new TimeSlot(
+			{ startTime: '09:00', endTime: '10:00' },
+			timetableStartTime || '09:00'
+		);
+	}
+
+	const timeSlot = timeSlotRef.current;
 
 	// Calculate time from timetable start using TimeSlot class
 	const timeSlotTimeFromStart = timeSlot.getTimeFromTimetableStart();
