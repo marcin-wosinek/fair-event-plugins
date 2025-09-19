@@ -72,13 +72,16 @@ test.describe('WordPress.org Screenshot for Fair Timetable', () => {
 		);
 
 		// Clear and set the start time to 10:15
-		await startTimeInput.click();
-		await startTimeInput.selectAll();
+		await startTimeInput.clear();
 		await startTimeInput.fill('10:15');
 
-		// Press Tab to confirm the change and trigger onChange
-		await startTimeInput.press('Tab');
-		await page.waitForTimeout(1500); // Allow time for re-render
+		// Select the dropdown by its select element
+		await page.selectOption(
+			'select.components-select-control__input',
+			'1.5'
+		);
+
+		await page.waitForTimeout(500); // Allow time for re-render
 
 		// Take screenshot-1 of the editor with timetable blocks (full viewport)
 		await page.screenshot({
