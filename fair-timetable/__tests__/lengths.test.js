@@ -221,4 +221,94 @@ describe('LengthOptions', () => {
 			expect(result1).toEqual(result2);
 		});
 	});
+
+	describe('setValue and custom value handling', () => {
+		test('should add custom value when not in predefined list', () => {
+			const values = [0.5, 1, 1.5];
+			const lengthOptions = new LengthOptions(values);
+
+			// Set a custom value not in the list
+			lengthOptions.setValue(2.25);
+			const result = lengthOptions.getLengthOptions();
+
+			expect(result).toHaveLength(4);
+			expect(result[3]).toEqual({ label: '2 hours, 15 minutes', value: 2.25 });
+
+			// Should be sorted by value
+			expect(result.map(opt => opt.value)).toEqual([0.5, 1, 1.5, 2.25]);
+		});
+
+		test('should not add duplicate when value exists in predefined list', () => {
+			const values = [0.5, 1, 1.5];
+			const lengthOptions = new LengthOptions(values);
+
+			// Set a value that exists in the list
+			lengthOptions.setValue(1);
+			const result = lengthOptions.getLengthOptions();
+
+			expect(result).toHaveLength(3);
+			expect(result.map(opt => opt.value)).toEqual([0.5, 1, 1.5]);
+		});
+
+		test('should handle 0.01 tolerance for floating point comparison', () => {
+			const values = [0.5, 1, 1.5];
+			const lengthOptions = new LengthOptions(values);
+
+			// Set a value very close to an existing one (within 0.01 tolerance)
+			lengthOptions.setValue(1.005);
+			const result = lengthOptions.getLengthOptions();
+
+			// Should not add duplicate due to 0.01 tolerance
+			expect(result).toHaveLength(3);
+		});
+
+		test('should not add custom value if it is zero or negative', () => {
+			const values = [0.5, 1, 1.5];
+			const lengthOptions = new LengthOptions(values);
+
+			lengthOptions.setValue(0);
+			let result = lengthOptions.getLengthOptions();
+			expect(result).toHaveLength(3);
+
+			lengthOptions.setValue(-1);
+			result = lengthOptions.getLengthOptions();
+			expect(result).toHaveLength(3);
+		});
+
+		test('should maintain sorted order when adding custom values', () => {
+			const values = [1, 3, 4];
+			const lengthOptions = new LengthOptions(values);
+
+			// Add a custom value in the middle
+			lengthOptions.setValue(2.5);
+			const result = lengthOptions.getLengthOptions();
+
+			expect(result.map(opt => opt.value)).toEqual([1, 2.5, 3, 4]);
+		});
+	});
+
+	describe('hasMatchingValue', () => {
+		test('should return false when no value is selected', () => {
+			const values = [0.5, 1, 1.5];
+			const lengthOptions = new LengthOptions(values);
+
+			expect(lengthOptions.hasMatchingValue()).toBe(false);
+		});
+
+		test('should return true when selected value matches predefined value within tolerance', () => {
+			const values = [0.5, 1, 1.5];
+			const lengthOptions = new LengthOptions(values);
+
+			lengthOptions.setValue(1.005); // Within 0.01 tolerance of 1
+			expect(lengthOptions.hasMatchingValue()).toBe(true);
+		});
+
+		test('should return false when selected value is outside tolerance', () => {
+			const values = [0.5, 1, 1.5];
+			const lengthOptions = new LengthOptions(values);
+
+			lengthOptions.setValue(1.02); // Outside 0.01 tolerance
+			expect(lengthOptions.hasMatchingValue()).toBe(false);
+		});
+	});
 });

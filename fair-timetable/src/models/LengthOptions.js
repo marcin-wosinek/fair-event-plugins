@@ -15,6 +15,16 @@ export class LengthOptions {
 	 */
 	constructor(values) {
 		this.values = values;
+		this.selectedValue = null;
+	}
+
+	/**
+	 * Set the selected value (from predefined list or custom)
+	 *
+	 * @param {number} value - Selected value in decimal hours
+	 */
+	setValue(value) {
+		this.selectedValue = value;
 	}
 
 	/**
@@ -37,14 +47,44 @@ export class LengthOptions {
 	}
 
 	/**
+	 * Check if the selected value exists in the predefined values
+	 * Uses 0.01 tolerance for floating point comparison
+	 *
+	 * @return {boolean} True if the selected value matches a predefined value
+	 */
+	hasMatchingValue() {
+		if (this.selectedValue === null) {
+			return false;
+		}
+
+		return this.values.some((value) =>
+			Math.abs(value - this.selectedValue) < 0.01
+		);
+	}
+
+	/**
 	 * Get length options as formatted option objects
+	 * If a custom selectedValue is set and not in the predefined list, it's temporarily added
 	 *
 	 * @return {Object[]} Array of option objects with label and value properties
 	 */
 	getLengthOptions() {
-		return this.values.map((value) => ({
+		let options = this.values.map((value) => ({
 			label: LengthOptions.formatLengthLabel(value),
 			value: value,
 		}));
+
+		// If selectedValue is set and not in the predefined list, add it temporarily
+		if (this.selectedValue !== null && !this.hasMatchingValue() && this.selectedValue > 0) {
+			options.push({
+				label: LengthOptions.formatLengthLabel(this.selectedValue),
+				value: this.selectedValue,
+			});
+
+			// Sort options by value
+			options.sort((a, b) => a.value - b.value);
+		}
+
+		return options;
 	}
 }
