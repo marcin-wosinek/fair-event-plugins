@@ -4,6 +4,7 @@
 
 import EditComponent from './components/EditComponent.js';
 import SaveComponent from './components/SaveComponent.js';
+import deprecations from './deprecations.js';
 import './view.css';
 import './editor.css';
 
@@ -11,4 +12,5 @@ import './editor.css';
 wp.blocks.registerBlockType('fair-timetable/time-column-body', {
 	edit: EditComponent,
 	save: SaveComponent,
+	deprecated: deprecations,
 });
