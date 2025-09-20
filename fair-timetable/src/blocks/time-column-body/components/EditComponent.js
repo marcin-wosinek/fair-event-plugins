@@ -2,9 +2,12 @@
  * Edit component for the Time Column Body Block
  */
 
-import { useBlockProps, useInnerBlocksProps } from '@wordpress/block-editor';
+import { useBlockProps, useInnerBlocksProps, ButtonBlockAppender } from '@wordpress/block-editor';
 import { __ } from '@wordpress/i18n';
-import { parse, differenceInHours, addDays, isAfter } from 'date-fns';
+import { useSelect, useDispatch } from '@wordpress/data';
+import { createBlock } from '@wordpress/blocks';
+import { TimeColumn } from '@models/TimeColumn.js';
+import { formatTime } from '@utils/timeUtils.js';
 
 /**
  * Edit component for the Time Column Body Block
@@ -15,23 +18,35 @@ import { parse, differenceInHours, addDays, isAfter } from 'date-fns';
  * @param {Object}   props.context       - Block context from parent
  * @return {JSX.Element} The edit component
  */
-export default function EditComponent({ attributes, setAttributes, context }) {
-	const { startTime, endTime } = attributes;
+export default function EditComponent({ context, clientId }) {
+	const { insertBlock } = useDispatch('core/block-editor');
 
 	// Get context from parent timetable and use as defaults
 	const contextStartTime = context['fair-timetable/startTime'] || '09:00';
 	const contextEndTime = context['fair-timetable/endTime'] || '17:00';
 
-	// Use context values if attributes are empty
-	const effectiveStartTime = startTime || contextStartTime;
+	// Get inner blocks (time slots) data
+	const innerBlocks = useSelect(
+		(select) => {
+			return select('core/block-editor').getBlocks(clientId);
+		},
+		[clientId]
+	);
 
-	// Set attributes to context values if they're empty
-	if (!startTime || !endTime) {
-		setAttributes({
-			startTime: contextStartTime,
-			endTime: contextEndTime,
-		});
-	}
+	// Extract time slot data from inner blocks
+	const timeSlots = innerBlocks
+		.filter(block => block.name === 'fair-timetable/time-slot')
+		.map(block => ({
+			startTime: block.attributes.startTime,
+			endTime: block.attributes.endTime,
+			...block.attributes
+		}));
+
+	// Initialize TimeColumn with effective time range and time slots
+	const timeColumn = new TimeColumn({
+		startTime: contextStartTime,
+		endTime: contextEndTime
+	}, timeSlots);
 
 	const blockProps = useBlockProps({
 		className: 'time-column-body-container',
@@ -40,19 +55,30 @@ export default function EditComponent({ attributes, setAttributes, context }) {
 	// Template for allowed inner blocks (only time-slot blocks)
 	const allowedBlocks = ['fair-timetable/time-slot'];
 
-	// Default template with a sample time slot
-	const template = [
+	// Custom appender function that uses first available hour
+	const customAppender = () => {
+		console.log('Adding new time slot at first available hour');
+		const firstAvailableHour = timeColumn.getFirstAvailableHour();
+		const nextHour = firstAvailableHour + 1;
+
+		const newBlock = createBlock('fair-timetable/time-slot', {
+			startTime: formatTime(firstAvailableHour),
+			endTime: formatTime(nextHour),
+		});
+
+		insertBlock(newBlock, undefined, clientId);
+	};
+
+	// Initial template - only shows if no blocks exist
+	const template = timeSlots.length === 0 ? [
 		[
 			'fair-timetable/time-slot',
 			{
-				startTime: effectiveStartTime,
-				endTime:
-					parse(effectiveStartTime, 'HH:mm', new Date()).getHours() +
-					1 +
-					':00',
+				startTime: formatTime(timeColumn.getFirstAvailableHour()),
+				endTime: formatTime(timeColumn.getFirstAvailableHour() + 1),
 			},
 		],
-	];
+	] : [];
 
 	const innerBlocksProps = useInnerBlocksProps(
 		{
@@ -62,6 +88,13 @@ export default function EditComponent({ attributes, setAttributes, context }) {
 			allowedBlocks,
 			template,
 			templateLock: false,
+			renderAppender: () => (
+				<ButtonBlockAppender
+					rootClientId={clientId}
+					onSelect={customAppender}
+					className="block-list-appender__toggle"
+				/>
+			),
 		}
 	);
 
