@@ -2,7 +2,11 @@
  * Edit component for the Time Column Body Block
  */
 
-import { useBlockProps, useInnerBlocksProps, ButtonBlockAppender } from '@wordpress/block-editor';
+import {
+	useBlockProps,
+	useInnerBlocksProps,
+	ButtonBlockAppender,
+} from '@wordpress/block-editor';
 import { __ } from '@wordpress/i18n';
 import { useSelect, useDispatch } from '@wordpress/data';
 import { createBlock } from '@wordpress/blocks';
@@ -35,18 +39,21 @@ export default function EditComponent({ context, clientId }) {
 
 	// Extract time slot data from inner blocks
 	const timeSlots = innerBlocks
-		.filter(block => block.name === 'fair-timetable/time-slot')
-		.map(block => ({
+		.filter((block) => block.name === 'fair-timetable/time-slot')
+		.map((block) => ({
 			startTime: block.attributes.startTime,
 			endTime: block.attributes.endTime,
-			...block.attributes
+			...block.attributes,
 		}));
 
 	// Initialize TimeColumn with effective time range and time slots
-	const timeColumn = new TimeColumn({
-		startTime: contextStartTime,
-		endTime: contextEndTime
-	}, timeSlots);
+	const timeColumn = new TimeColumn(
+		{
+			startTime: contextStartTime,
+			endTime: contextEndTime,
+		},
+		timeSlots
+	);
 
 	const blockProps = useBlockProps({
 		className: 'time-column-body-container',
@@ -59,26 +66,46 @@ export default function EditComponent({ context, clientId }) {
 	const customAppender = () => {
 		console.log('Adding new time slot at first available hour');
 		const firstAvailableHour = timeColumn.getFirstAvailableHour();
-		const nextHour = firstAvailableHour + 1;
 
 		const newBlock = createBlock('fair-timetable/time-slot', {
 			startTime: formatTime(firstAvailableHour),
-			endTime: formatTime(nextHour),
+			endTime: formatTime(
+				Math.min(
+					timeColumn.getFirstAvailableHour() + 1,
+					timeColumn.getEndHour()
+				)
+			),
 		});
 
 		insertBlock(newBlock, undefined, clientId);
 	};
 
 	// Initial template - only shows if no blocks exist
-	const template = timeSlots.length === 0 ? [
-		[
-			'fair-timetable/time-slot',
-			{
-				startTime: formatTime(timeColumn.getFirstAvailableHour()),
-				endTime: formatTime(timeColumn.getFirstAvailableHour() + 1),
-			},
-		],
-	] : [];
+	const template =
+		timeSlots.length === 0
+			? [
+					[
+						'fair-timetable/time-slot',
+						{
+							startTime: formatTime(
+								timeColumn.getFirstAvailableHour()
+							),
+							endTime: formatTime(
+								Math.min(
+									timeColumn.getFirstAvailableHour() + 1,
+									timeColumn.getEndHour()
+								)
+							),
+						},
+					],
+				]
+			: [];
+
+	// Check if there's enough time for another slot (at least 0.5h)
+	const firstAvailableHour = timeColumn.getFirstAvailableHour();
+	const columnEndHour = timeColumn.getEndHour();
+	const remainingTime = columnEndHour - firstAvailableHour;
+	const hasSpaceForNewSlot = remainingTime >= 0.5;
 
 	const innerBlocksProps = useInnerBlocksProps(
 		{
@@ -88,13 +115,15 @@ export default function EditComponent({ context, clientId }) {
 			allowedBlocks,
 			template,
 			templateLock: false,
-			renderAppender: () => (
-				<ButtonBlockAppender
-					rootClientId={clientId}
-					onSelect={customAppender}
-					className="block-list-appender__toggle"
-				/>
-			),
+			renderAppender: hasSpaceForNewSlot
+				? () => (
+						<ButtonBlockAppender
+							rootClientId={clientId}
+							onSelect={customAppender}
+							className="block-list-appender__toggle"
+						/>
+					)
+				: false,
 		}
 	);
 
