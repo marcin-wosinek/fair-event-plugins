@@ -29,14 +29,8 @@ export default function EditComponent({ attributes, setAttributes }) {
 		className: 'schedule-accordion-container',
 	});
 
-	// Template for allowed inner blocks
-	const allowedBlocks = [
-		'core/heading',
-		'core/paragraph',
-		'core/list',
-		'core/group',
-		'core/details',
-	];
+	// Allow any blocks that can be used at the top level of content
+	const allowedBlocks = undefined; // undefined means all blocks are allowed
 
 	// Default template with some example content
 	const template = [
