@@ -3,7 +3,7 @@
  * Plugin Name: Fair Schedule Blocks
  * Plugin URI: https://github.com/marcin-wosinek/fair-event-plugins
  * Description: Schedule management blocks for events, with fair pricing model.
- * Version: 0.1.1
+ * Version: 0.1.2
  * Requires at least: 6.7
  * Requires PHP: 7.4
  * Author: Marcin Wosinek

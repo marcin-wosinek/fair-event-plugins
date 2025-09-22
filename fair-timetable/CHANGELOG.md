@@ -1,5 +1,11 @@
 # fair-timetable
 
+## 0.6.0
+
+### Minor Changes
+
+- 769be6b: Add automated hour as adding new time-slots
+
 ## 0.5.0
 
 ### Minor Changes
