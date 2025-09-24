@@ -48,6 +48,12 @@ const plugins = [
 		phpFiles: ['fair-schedule-blocks/fair-schedule-blocks.php'],
 		readmeFiles: ['fair-schedule-blocks/readme.txt'],
 	},
+	{
+		name: 'fair-membership',
+		packagePath: 'fair-membership/package.json',
+		phpFiles: ['fair-membership/fair-membership.php'],
+		readmeFiles: ['fair-membership/readme.txt'],
+	},
 ];
 
 /**
