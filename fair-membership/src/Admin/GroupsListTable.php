@@ -38,7 +38,6 @@ class GroupsListTable extends \WP_List_Table {
 	 */
 	public function get_columns() {
 		return array(
-			'cb'             => '<input type="checkbox" />',
 			'name'           => __( 'Name', 'fair-membership' ),
 			'description'    => __( 'Description', 'fair-membership' ),
 			'access_control' => __( 'Access', 'fair-membership' ),
@@ -66,9 +65,7 @@ class GroupsListTable extends \WP_List_Table {
 	 * @return array
 	 */
 	public function get_bulk_actions() {
-		return array(
-			'delete' => __( 'Delete', 'fair-membership' ),
-		);
+		return array();
 	}
 
 	/**
@@ -120,18 +117,6 @@ class GroupsListTable extends \WP_List_Table {
 		}
 	}
 
-	/**
-	 * Checkbox column
-	 *
-	 * @param object $item Item data.
-	 * @return string
-	 */
-	public function column_cb( $item ) {
-		return sprintf(
-			'<input type="checkbox" name="group[]" value="%s" />',
-			$item['id']
-		);
-	}
 
 	/**
 	 * Name column with row actions
@@ -226,15 +211,7 @@ class GroupsListTable extends \WP_List_Table {
 	 * @return void
 	 */
 	protected function extra_tablenav( $which ) {
-		if ( 'top' === $which ) {
-			?>
-			<div class="alignleft actions">
-				<a href="<?php echo esc_url( admin_url( 'admin.php?page=fair-membership-group-view&action=add' ) ); ?>" class="button">
-					<?php esc_html_e( 'Add New Group', 'fair-membership' ); ?>
-				</a>
-			</div>
-			<?php
-		}
+		// No extra controls needed
 	}
 
 	/**
