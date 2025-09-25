@@ -48,6 +48,10 @@ class Plugin {
 	 */
 	private function load_hooks() {
 		new \FairMembership\Hooks\BlockHooks();
+
+		if ( is_admin() ) {
+			new \FairMembership\Admin\AdminHooks();
+		}
 	}
 
 	/**
