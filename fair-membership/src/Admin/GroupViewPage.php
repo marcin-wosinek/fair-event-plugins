@@ -168,6 +168,12 @@ class GroupViewPage {
 							<td><?php echo esc_html( $group['description'] ?: __( 'No description provided.', 'fair-membership' ) ); ?></td>
 						</tr>
 						<tr>
+							<th scope="row"><?php esc_html_e( 'Access Control', 'fair-membership' ); ?></th>
+							<td>
+								<?php echo $this->format_access_control_display( $group['access_control'] ); ?>
+							</td>
+						</tr>
+						<tr>
 							<th scope="row"><?php esc_html_e( 'Members', 'fair-membership' ); ?></th>
 							<td>
 								<strong><?php echo esc_html( number_format_i18n( $group['members'] ) ); ?></strong>
@@ -309,6 +315,36 @@ class GroupViewPage {
 	}
 
 	/**
+	 * Format access control for display
+	 *
+	 * @param string $access_control Access control value.
+	 * @return string
+	 */
+	private function format_access_control_display( $access_control ) {
+		$labels = array(
+			'open'    => array(
+				'label'       => __( 'Open', 'fair-membership' ),
+				'description' => __( 'Users can join this group themselves', 'fair-membership' ),
+			),
+			'managed' => array(
+				'label'       => __( 'Managed', 'fair-membership' ),
+				'description' => __( 'Only administrators can add or remove members', 'fair-membership' ),
+			),
+		);
+
+		$config = isset( $labels[ $access_control ] ) ? $labels[ $access_control ] : array(
+			'label'       => ucfirst( $access_control ),
+			'description' => '',
+		);
+
+		return sprintf(
+			'<strong>%s</strong><br><span class="description">%s</span>',
+			esc_html( $config['label'] ),
+			esc_html( $config['description'] )
+		);
+	}
+
+	/**
 	 * Get sample group data (placeholder until database tables are added)
 	 *
 	 * @param int $group_id Group ID.
@@ -317,25 +353,44 @@ class GroupViewPage {
 	private function get_sample_group( $group_id ) {
 		$groups = array(
 			1 => array(
-				'id'          => 1,
-				'name'        => 'Premium Members',
-				'description' => 'Members with premium access to all features',
-				'members'     => 25,
-				'created'     => '2024-01-15',
+				'id'             => 1,
+				'name'           => 'Premium Members',
+				'description'    => 'Members with premium access to all features',
+				'members'        => 25,
+				'access_control' => 'managed',
+				'created'        => '2024-01-15',
 			),
 			2 => array(
-				'id'          => 2,
-				'name'        => 'Event Organizers',
-				'description' => 'Users who can create and manage events',
-				'members'     => 12,
-				'created'     => '2024-02-01',
+				'id'             => 2,
+				'name'           => 'Event Organizers',
+				'description'    => 'Users who can create and manage events',
+				'members'        => 12,
+				'access_control' => 'managed',
+				'created'        => '2024-02-01',
 			),
 			3 => array(
-				'id'          => 3,
-				'name'        => 'VIP Access',
-				'description' => 'Special access group for VIP members',
-				'members'     => 8,
-				'created'     => '2024-02-20',
+				'id'             => 3,
+				'name'           => 'VIP Access',
+				'description'    => 'Special access group for VIP members',
+				'members'        => 8,
+				'access_control' => 'managed',
+				'created'        => '2024-02-20',
+			),
+			4 => array(
+				'id'             => 4,
+				'name'           => 'Basic Users',
+				'description'    => 'Standard user access level',
+				'members'        => 150,
+				'access_control' => 'open',
+				'created'        => '2024-01-01',
+			),
+			5 => array(
+				'id'             => 5,
+				'name'           => 'Beta Testers',
+				'description'    => 'Users testing new features',
+				'members'        => 45,
+				'access_control' => 'open',
+				'created'        => '2024-03-01',
 			),
 		);
 

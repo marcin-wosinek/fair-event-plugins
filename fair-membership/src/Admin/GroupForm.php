@@ -38,10 +38,10 @@ class GroupForm {
 		$this->group_data = wp_parse_args(
 			$group_data,
 			array(
-				'id'          => 0,
-				'name'        => '',
-				'description' => '',
-				'permissions' => array(),
+				'id'             => 0,
+				'name'           => '',
+				'description'    => '',
+				'access_control' => 'open',
 			)
 		);
 		$this->mode       = $mode;
@@ -68,10 +68,10 @@ class GroupForm {
 				<tbody>
 					<?php $this->render_name_field(); ?>
 					<?php $this->render_description_field(); ?>
+					<?php $this->render_access_control_field(); ?>
 					<?php if ( 'edit' === $this->mode ) : ?>
 						<?php $this->render_member_count_field(); ?>
 					<?php endif; ?>
-					<?php $this->render_permissions_field(); ?>
 				</tbody>
 			</table>
 
@@ -165,43 +165,56 @@ class GroupForm {
 	}
 
 	/**
-	 * Render permissions field
+	 * Render access control field
 	 *
 	 * @return void
 	 */
-	private function render_permissions_field() {
-		$available_permissions = $this->get_available_permissions();
-		$current_permissions   = (array) $this->group_data['permissions'];
+	private function render_access_control_field() {
 		?>
 		<tr>
 			<th scope="row">
-				<?php esc_html_e( 'Permissions', 'fair-membership' ); ?>
+				<label for="access_control"><?php esc_html_e( 'Access Control', 'fair-membership' ); ?></label>
 			</th>
 			<td>
 				<fieldset>
 					<legend class="screen-reader-text">
-						<?php esc_html_e( 'Group Permissions', 'fair-membership' ); ?>
+						<?php esc_html_e( 'Group Access Control', 'fair-membership' ); ?>
 					</legend>
-					<?php foreach ( $available_permissions as $permission => $label ) : ?>
-						<label for="permission_<?php echo esc_attr( $permission ); ?>">
-							<input
-								type="checkbox"
-								name="permissions[]"
-								id="permission_<?php echo esc_attr( $permission ); ?>"
-								value="<?php echo esc_attr( $permission ); ?>"
-								<?php checked( in_array( $permission, $current_permissions, true ) ); ?>
-							/>
-							<?php echo esc_html( $label ); ?>
-						</label><br />
-					<?php endforeach; ?>
-					<p class="description">
-						<?php esc_html_e( 'Select the permissions that members of this group should have.', 'fair-membership' ); ?>
+					<label for="access_control_open">
+						<input
+							type="radio"
+							name="access_control"
+							id="access_control_open"
+							value="open"
+							<?php checked( $this->group_data['access_control'], 'open' ); ?>
+							aria-describedby="access-control-open-description"
+						/>
+						<?php esc_html_e( 'Open', 'fair-membership' ); ?>
+					</label>
+					<p class="description" id="access-control-open-description">
+						<?php esc_html_e( 'Users can join this group themselves.', 'fair-membership' ); ?>
+					</p>
+
+					<label for="access_control_managed">
+						<input
+							type="radio"
+							name="access_control"
+							id="access_control_managed"
+							value="managed"
+							<?php checked( $this->group_data['access_control'], 'managed' ); ?>
+							aria-describedby="access-control-managed-description"
+						/>
+						<?php esc_html_e( 'Managed', 'fair-membership' ); ?>
+					</label>
+					<p class="description" id="access-control-managed-description">
+						<?php esc_html_e( 'Only administrators can add or remove members.', 'fair-membership' ); ?>
 					</p>
 				</fieldset>
 			</td>
 		</tr>
 		<?php
 	}
+
 
 	/**
 	 * Process form submission
@@ -252,14 +265,12 @@ class GroupForm {
 		// Description is optional
 		$description = isset( $_POST['group_description'] ) ? sanitize_textarea_field( $_POST['group_description'] ) : '';
 
-		// Permissions
-		$permissions = isset( $_POST['permissions'] ) && is_array( $_POST['permissions'] )
-			? array_map( 'sanitize_text_field', $_POST['permissions'] )
-			: array();
-
-		// Validate permissions against allowed ones
-		$valid_permissions = array_keys( $this->get_available_permissions() );
-		$permissions       = array_intersect( $permissions, $valid_permissions );
+		// Access control
+		$access_control        = isset( $_POST['access_control'] ) ? sanitize_text_field( $_POST['access_control'] ) : 'open';
+		$valid_access_controls = array( 'open', 'managed' );
+		if ( ! in_array( $access_control, $valid_access_controls, true ) ) {
+			$access_control = 'open'; // Default fallback
+		}
 
 		if ( ! empty( $errors ) ) {
 			// Store errors for display
@@ -268,9 +279,9 @@ class GroupForm {
 		}
 
 		$data = array(
-			'name'        => $name,
-			'description' => $description,
-			'permissions' => $permissions,
+			'name'           => $name,
+			'description'    => $description,
+			'access_control' => $access_control,
 		);
 
 		if ( 'edit' === $this->mode && isset( $_POST['group_id'] ) ) {
@@ -314,21 +325,6 @@ class GroupForm {
 		);
 	}
 
-	/**
-	 * Get available permissions
-	 *
-	 * @return array Available permissions.
-	 */
-	private function get_available_permissions() {
-		return array(
-			'create_events'    => __( 'Create Events', 'fair-membership' ),
-			'manage_members'   => __( 'Manage Members', 'fair-membership' ),
-			'premium_access'   => __( 'Premium Access', 'fair-membership' ),
-			'vip_features'     => __( 'VIP Features', 'fair-membership' ),
-			'moderate_content' => __( 'Moderate Content', 'fair-membership' ),
-			'view_analytics'   => __( 'View Analytics', 'fair-membership' ),
-		);
-	}
 
 	/**
 	 * Display form errors if any

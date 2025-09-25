@@ -38,11 +38,12 @@ class GroupsListTable extends \WP_List_Table {
 	 */
 	public function get_columns() {
 		return array(
-			'cb'          => '<input type="checkbox" />',
-			'name'        => __( 'Name', 'fair-membership' ),
-			'description' => __( 'Description', 'fair-membership' ),
-			'members'     => __( 'Members', 'fair-membership' ),
-			'created'     => __( 'Created', 'fair-membership' ),
+			'cb'             => '<input type="checkbox" />',
+			'name'           => __( 'Name', 'fair-membership' ),
+			'description'    => __( 'Description', 'fair-membership' ),
+			'access_control' => __( 'Access', 'fair-membership' ),
+			'members'        => __( 'Members', 'fair-membership' ),
+			'created'        => __( 'Created', 'fair-membership' ),
 		);
 	}
 
@@ -112,6 +113,8 @@ class GroupsListTable extends \WP_List_Table {
 			case 'members':
 			case 'created':
 				return $item[ $column_name ];
+			case 'access_control':
+				return $this->format_access_control( $item[ $column_name ] );
 			default:
 				return print_r( $item, true );
 		}
@@ -187,6 +190,27 @@ class GroupsListTable extends \WP_List_Table {
 	}
 
 	/**
+	 * Format access control value for display
+	 *
+	 * @param string $access_control Access control value.
+	 * @return string
+	 */
+	private function format_access_control( $access_control ) {
+		$labels = array(
+			'open'    => __( 'Open', 'fair-membership' ),
+			'managed' => __( 'Managed', 'fair-membership' ),
+		);
+
+		$label = isset( $labels[ $access_control ] ) ? $labels[ $access_control ] : $access_control;
+
+		return sprintf(
+			'<span class="access-control-badge access-control-%s">%s</span>',
+			esc_attr( $access_control ),
+			esc_html( $label )
+		);
+	}
+
+	/**
 	 * Display when no items found
 	 *
 	 * @return void
@@ -221,39 +245,44 @@ class GroupsListTable extends \WP_List_Table {
 	private function get_sample_data() {
 		return array(
 			array(
-				'id'          => 1,
-				'name'        => 'Premium Members',
-				'description' => 'Members with premium access to all features',
-				'members'     => 25,
-				'created'     => '2024-01-15',
+				'id'             => 1,
+				'name'           => 'Premium Members',
+				'description'    => 'Members with premium access to all features',
+				'members'        => 25,
+				'access_control' => 'managed',
+				'created'        => '2024-01-15',
 			),
 			array(
-				'id'          => 2,
-				'name'        => 'Event Organizers',
-				'description' => 'Users who can create and manage events',
-				'members'     => 12,
-				'created'     => '2024-02-01',
+				'id'             => 2,
+				'name'           => 'Event Organizers',
+				'description'    => 'Users who can create and manage events',
+				'members'        => 12,
+				'access_control' => 'managed',
+				'created'        => '2024-02-01',
 			),
 			array(
-				'id'          => 3,
-				'name'        => 'VIP Access',
-				'description' => 'Special access group for VIP members',
-				'members'     => 8,
-				'created'     => '2024-02-20',
+				'id'             => 3,
+				'name'           => 'VIP Access',
+				'description'    => 'Special access group for VIP members',
+				'members'        => 8,
+				'access_control' => 'managed',
+				'created'        => '2024-02-20',
 			),
 			array(
-				'id'          => 4,
-				'name'        => 'Basic Users',
-				'description' => 'Standard user access level',
-				'members'     => 150,
-				'created'     => '2024-01-01',
+				'id'             => 4,
+				'name'           => 'Basic Users',
+				'description'    => 'Standard user access level',
+				'members'        => 150,
+				'access_control' => 'open',
+				'created'        => '2024-01-01',
 			),
 			array(
-				'id'          => 5,
-				'name'        => 'Beta Testers',
-				'description' => 'Users testing new features',
-				'members'     => 45,
-				'created'     => '2024-03-01',
+				'id'             => 5,
+				'name'           => 'Beta Testers',
+				'description'    => 'Users testing new features',
+				'members'        => 45,
+				'access_control' => 'open',
+				'created'        => '2024-03-01',
 			),
 		);
 	}
