@@ -7,6 +7,8 @@
 
 namespace FairMembership\Admin;
 
+use FairMembership\Models\Group;
+
 defined( 'WPINC' ) || die;
 
 /**
@@ -33,6 +35,8 @@ class GroupViewPage {
 			$this->render_add_group_page();
 		} elseif ( $group_id && 'edit' === $action ) {
 			$this->render_edit_group_page( $group_id );
+		} elseif ( $group_id && 'delete' === $action ) {
+			$this->render_delete_confirmation_page( $group_id );
 		} elseif ( $group_id ) {
 			$this->render_view_group_page( $group_id );
 		} else {
@@ -48,6 +52,12 @@ class GroupViewPage {
 	 * @return void
 	 */
 	private function handle_form_submission( $group_id, $action ) {
+		// Handle delete confirmation
+		if ( isset( $_POST['confirm_delete'] ) && $_POST['confirm_delete'] === '1' ) {
+			$this->handle_delete_confirmation( $group_id );
+			return;
+		}
+
 		$mode = ( 'add' === $action ) ? 'add' : 'edit';
 		$form = new GroupForm( array(), $mode );
 
@@ -63,6 +73,41 @@ class GroupViewPage {
 			$this->render_add_group_page();
 		} else {
 			$this->render_edit_group_page( $group_id );
+		}
+	}
+
+	/**
+	 * Handle delete confirmation
+	 *
+	 * @param int $group_id Group ID to delete.
+	 * @return void
+	 */
+	private function handle_delete_confirmation( $group_id ) {
+		// Verify nonce
+		if ( ! isset( $_POST['fair_membership_delete_nonce'] ) || ! wp_verify_nonce( $_POST['fair_membership_delete_nonce'], 'fair_membership_delete_group_confirm' ) ) {
+			wp_die( esc_html__( 'Security check failed. Please try again.', 'fair-membership' ) );
+		}
+
+		// Verify group_id matches
+		if ( ! isset( $_POST['group_id'] ) || absint( $_POST['group_id'] ) !== $group_id ) {
+			wp_die( esc_html__( 'Invalid group ID.', 'fair-membership' ) );
+		}
+
+		// Get the group to delete
+		$group = Group::get_by_id( $group_id );
+		if ( ! $group ) {
+			wp_die( esc_html__( 'Group not found.', 'fair-membership' ) );
+		}
+
+		// Delete the group
+		$result = $group->delete();
+
+		if ( $result ) {
+			// Redirect to group view with success message
+			wp_redirect( admin_url( 'admin.php?page=fair-membership&deleted=1' ) );
+			exit;
+		} else {
+			wp_die( esc_html__( 'Failed to delete group. Please try again.', 'fair-membership' ) );
 		}
 	}
 
@@ -100,16 +145,18 @@ class GroupViewPage {
 	 * @return void
 	 */
 	private function render_edit_group_page( $group_id ) {
-		$group = $this->get_sample_group( $group_id );
+		$group_model = Group::get_by_id( $group_id );
 
-		if ( ! $group ) {
+		if ( ! $group_model ) {
 			$this->render_group_not_found();
 			return;
 		}
+
+		$group = $group_model->to_array();
 		?>
 		<div class="wrap">
 			<h1 class="wp-heading-inline">
-				<?php echo esc_html( sprintf( __( 'Edit Group: %s', 'fair-membership' ), $group['name'] ) ); ?>
+				<?php echo esc_html( sprintf( __( 'Edit Group: %s', 'fair-membership' ), $group_model->name ) ); ?>
 			</h1>
 			<hr class="wp-header-end">
 
@@ -137,16 +184,16 @@ class GroupViewPage {
 	 * @return void
 	 */
 	private function render_view_group_page( $group_id ) {
-		$group = $this->get_sample_group( $group_id );
+		$group_model = Group::get_by_id( $group_id );
 
-		if ( ! $group ) {
+		if ( ! $group_model ) {
 			$this->render_group_not_found();
 			return;
 		}
 		?>
 		<div class="wrap">
 			<h1 class="wp-heading-inline">
-				<?php echo esc_html( $group['name'] ); ?>
+				<?php echo esc_html( $group_model->name ); ?>
 			</h1>
 			<a href="<?php echo esc_url( admin_url( 'admin.php?page=fair-membership-group-view&id=' . $group_id . '&action=edit' ) ); ?>" class="page-title-action">
 				<?php esc_html_e( 'Edit Group', 'fair-membership' ); ?>
@@ -161,28 +208,51 @@ class GroupViewPage {
 					<tbody>
 						<tr>
 							<th scope="row"><?php esc_html_e( 'Name', 'fair-membership' ); ?></th>
-							<td><strong><?php echo esc_html( $group['name'] ); ?></strong></td>
+							<td><strong><?php echo esc_html( $group_model->name ); ?></strong></td>
+						</tr>
+						<tr>
+							<th scope="row"><?php esc_html_e( 'Slug', 'fair-membership' ); ?></th>
+							<td><code><?php echo esc_html( $group_model->slug ); ?></code></td>
 						</tr>
 						<tr>
 							<th scope="row"><?php esc_html_e( 'Description', 'fair-membership' ); ?></th>
-							<td><?php echo esc_html( $group['description'] ?: __( 'No description provided.', 'fair-membership' ) ); ?></td>
+							<td><?php echo esc_html( $group_model->description ?: __( 'No description provided.', 'fair-membership' ) ); ?></td>
+						</tr>
+						<tr>
+							<th scope="row"><?php esc_html_e( 'Access Control', 'fair-membership' ); ?></th>
+							<td>
+								<?php echo $this->format_access_control_display( $group_model->access_control ); ?>
+							</td>
+						</tr>
+						<tr>
+							<th scope="row"><?php esc_html_e( 'Status', 'fair-membership' ); ?></th>
+							<td>
+								<span class="status-badge status-<?php echo esc_attr( strtolower( $group_model->status ) ); ?>">
+									<?php echo esc_html( ucfirst( $group_model->status ) ); ?>
+								</span>
+							</td>
 						</tr>
 						<tr>
 							<th scope="row"><?php esc_html_e( 'Members', 'fair-membership' ); ?></th>
 							<td>
-								<strong><?php echo esc_html( number_format_i18n( $group['members'] ) ); ?></strong>
-								<?php echo esc_html( _n( 'member', 'members', $group['members'], 'fair-membership' ) ); ?>
+								<strong><?php echo esc_html( number_format_i18n( 0 ) ); ?></strong>
+								<?php echo esc_html( _n( 'member', 'members', 0, 'fair-membership' ) ); ?>
+								<p class="description"><?php esc_html_e( 'Member functionality will be available once membership tables are implemented.', 'fair-membership' ); ?></p>
 							</td>
 						</tr>
 						<tr>
 							<th scope="row"><?php esc_html_e( 'Created', 'fair-membership' ); ?></th>
-							<td><?php echo esc_html( date_i18n( get_option( 'date_format' ), strtotime( $group['created'] ) ) ); ?></td>
+							<td><?php echo esc_html( mysql2date( get_option( 'date_format' ) . ' ' . get_option( 'time_format' ), $group_model->created_at ) ); ?></td>
+						</tr>
+						<tr>
+							<th scope="row"><?php esc_html_e( 'Last Updated', 'fair-membership' ); ?></th>
+							<td><?php echo esc_html( mysql2date( get_option( 'date_format' ) . ' ' . get_option( 'time_format' ), $group_model->updated_at ) ); ?></td>
 						</tr>
 					</tbody>
 				</table>
 			</div>
 
-			<?php if ( $group['members'] > 0 ) : ?>
+			<?php if ( false ) : // Disable members section until membership table exists ?>
 				<div class="card">
 					<h2><?php esc_html_e( 'Members', 'fair-membership' ); ?></h2>
 					<?php $this->render_members_table( $group_id ); ?>
@@ -194,6 +264,75 @@ class GroupViewPage {
 					&larr; <?php esc_html_e( 'Back to Groups', 'fair-membership' ); ?>
 				</a>
 			</p>
+		</div>
+		<?php
+	}
+
+	/**
+	 * Render delete confirmation page
+	 *
+	 * @param int $group_id Group ID to delete.
+	 * @return void
+	 */
+	private function render_delete_confirmation_page( $group_id ) {
+		// Verify nonce
+		if ( ! isset( $_GET['_wpnonce'] ) || ! wp_verify_nonce( $_GET['_wpnonce'], 'fair_membership_delete_group' ) ) {
+			wp_die( esc_html__( 'Security check failed. Please try again.', 'fair-membership' ) );
+		}
+
+		$group_model = Group::get_by_id( $group_id );
+
+		if ( ! $group_model ) {
+			$this->render_group_not_found();
+			return;
+		}
+
+		?>
+		<div class="wrap">
+			<h1 class="wp-heading-inline">
+				<?php esc_html_e( 'Delete Group', 'fair-membership' ); ?>
+			</h1>
+			<hr class="wp-header-end">
+
+			<div class="notice notice-warning">
+				<p>
+					<strong><?php esc_html_e( 'Warning:', 'fair-membership' ); ?></strong>
+					<?php esc_html_e( 'You are about to permanently delete this group. This action cannot be undone.', 'fair-membership' ); ?>
+				</p>
+			</div>
+
+			<div class="card">
+				<h2><?php esc_html_e( 'Group to be deleted:', 'fair-membership' ); ?></h2>
+				<table class="form-table" role="presentation">
+					<tbody>
+						<tr>
+							<th scope="row"><?php esc_html_e( 'Name', 'fair-membership' ); ?></th>
+							<td><strong><?php echo esc_html( $group_model->name ); ?></strong></td>
+						</tr>
+						<tr>
+							<th scope="row"><?php esc_html_e( 'Description', 'fair-membership' ); ?></th>
+							<td><?php echo esc_html( $group_model->description ?: __( 'No description provided.', 'fair-membership' ) ); ?></td>
+						</tr>
+						<tr>
+							<th scope="row"><?php esc_html_e( 'Access Control', 'fair-membership' ); ?></th>
+							<td><?php echo esc_html( ucfirst( $group_model->access_control ) ); ?></td>
+						</tr>
+					</tbody>
+				</table>
+			</div>
+
+			<p><?php esc_html_e( 'Are you sure you want to delete this group?', 'fair-membership' ); ?></p>
+
+			<form method="post" action="" style="display: inline;">
+				<?php wp_nonce_field( 'fair_membership_delete_group_confirm', 'fair_membership_delete_nonce' ); ?>
+				<input type="hidden" name="group_id" value="<?php echo absint( $group_id ); ?>" />
+				<input type="hidden" name="confirm_delete" value="1" />
+				<?php submit_button( __( 'Yes, Delete Group', 'fair-membership' ), 'delete', 'submit', false ); ?>
+			</form>
+
+			<a href="<?php echo esc_url( admin_url( 'admin.php?page=fair-membership-group-view&id=' . $group_id ) ); ?>" class="button" style="margin-left: 10px;">
+				<?php esc_html_e( 'No, Cancel', 'fair-membership' ); ?>
+			</a>
 		</div>
 		<?php
 	}
@@ -309,97 +448,32 @@ class GroupViewPage {
 	}
 
 	/**
-	 * Get sample group data (placeholder until database tables are added)
+	 * Format access control for display
 	 *
-	 * @param int $group_id Group ID.
-	 * @return array|null
+	 * @param string $access_control Access control value.
+	 * @return string
 	 */
-	private function get_sample_group( $group_id ) {
-		$groups = array(
-			1 => array(
-				'id'          => 1,
-				'name'        => 'Premium Members',
-				'description' => 'Members with premium access to all features',
-				'members'     => 25,
-				'created'     => '2024-01-15',
+	private function format_access_control_display( $access_control ) {
+		$labels = array(
+			'open'    => array(
+				'label'       => __( 'Open', 'fair-membership' ),
+				'description' => __( 'Users can join this group themselves', 'fair-membership' ),
 			),
-			2 => array(
-				'id'          => 2,
-				'name'        => 'Event Organizers',
-				'description' => 'Users who can create and manage events',
-				'members'     => 12,
-				'created'     => '2024-02-01',
-			),
-			3 => array(
-				'id'          => 3,
-				'name'        => 'VIP Access',
-				'description' => 'Special access group for VIP members',
-				'members'     => 8,
-				'created'     => '2024-02-20',
+			'managed' => array(
+				'label'       => __( 'Managed', 'fair-membership' ),
+				'description' => __( 'Only administrators can add or remove members', 'fair-membership' ),
 			),
 		);
 
-		return isset( $groups[ $group_id ] ) ? $groups[ $group_id ] : null;
-	}
-
-	/**
-	 * Get sample members data for a group
-	 *
-	 * @param int $group_id Group ID.
-	 * @return array
-	 */
-	private function get_sample_members( $group_id ) {
-		$all_members = array(
-			1 => array(
-				array(
-					'id'     => 1,
-					'name'   => 'John Doe',
-					'email'  => 'john@example.com',
-					'joined' => '2024-01-20',
-					'status' => 'Active',
-				),
-				array(
-					'id'     => 2,
-					'name'   => 'Jane Smith',
-					'email'  => 'jane@example.com',
-					'joined' => '2024-01-25',
-					'status' => 'Active',
-				),
-				array(
-					'id'     => 3,
-					'name'   => 'Bob Wilson',
-					'email'  => 'bob@example.com',
-					'joined' => '2024-02-01',
-					'status' => 'Pending',
-				),
-			),
-			2 => array(
-				array(
-					'id'     => 4,
-					'name'   => 'Alice Johnson',
-					'email'  => 'alice@example.com',
-					'joined' => '2024-02-05',
-					'status' => 'Active',
-				),
-				array(
-					'id'     => 5,
-					'name'   => 'Charlie Brown',
-					'email'  => 'charlie@example.com',
-					'joined' => '2024-02-10',
-					'status' => 'Active',
-				),
-			),
-			3 => array(
-				array(
-					'id'     => 6,
-					'name'   => 'Diana Prince',
-					'email'  => 'diana@example.com',
-					'joined' => '2024-02-22',
-					'status' => 'Active',
-				),
-			),
+		$config = isset( $labels[ $access_control ] ) ? $labels[ $access_control ] : array(
+			'label'       => ucfirst( $access_control ),
+			'description' => '',
 		);
 
-		return isset( $all_members[ $group_id ] ) ? $all_members[ $group_id ] : array();
+		return sprintf(
+			'<strong>%s</strong><br><span class="description">%s</span>',
+			esc_html( $config['label'] ),
+			esc_html( $config['description'] )
+		);
 	}
 }

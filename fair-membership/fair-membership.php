@@ -36,5 +36,17 @@ defined( 'WPINC' ) || die;
 require_once __DIR__ . '/vendor/autoload.php';
 
 use FairMembership\Core\Plugin;
+use FairMembership\Database\Installer;
+
+// Plugin activation hook
+register_activation_hook( __FILE__, array( Installer::class, 'install' ) );
+
+// Plugin deactivation hook
+register_deactivation_hook( __FILE__, function() {
+	// Currently no deactivation tasks needed
+	error_log( 'Fair Membership: Plugin deactivated' );
+} );
+
+// Plugin uninstall is handled by uninstall.php
 
 Plugin::instance()->init();

@@ -7,6 +7,8 @@
 
 namespace FairMembership\Admin;
 
+use FairMembership\Models\Group;
+
 defined( 'WPINC' ) || die;
 
 if ( ! class_exists( 'WP_List_Table' ) ) {
@@ -38,11 +40,11 @@ class GroupsListTable extends \WP_List_Table {
 	 */
 	public function get_columns() {
 		return array(
-			'cb'          => '<input type="checkbox" />',
-			'name'        => __( 'Name', 'fair-membership' ),
-			'description' => __( 'Description', 'fair-membership' ),
-			'members'     => __( 'Members', 'fair-membership' ),
-			'created'     => __( 'Created', 'fair-membership' ),
+			'name'           => __( 'Name', 'fair-membership' ),
+			'description'    => __( 'Description', 'fair-membership' ),
+			'access_control' => __( 'Access', 'fair-membership' ),
+			'members'        => __( 'Members', 'fair-membership' ),
+			'created'        => __( 'Created', 'fair-membership' ),
 		);
 	}
 
@@ -54,7 +56,6 @@ class GroupsListTable extends \WP_List_Table {
 	public function get_sortable_columns() {
 		return array(
 			'name'    => array( 'name', true ),
-			'members' => array( 'members', false ),
 			'created' => array( 'created', false ),
 		);
 	}
@@ -65,9 +66,7 @@ class GroupsListTable extends \WP_List_Table {
 	 * @return array
 	 */
 	public function get_bulk_actions() {
-		return array(
-			'delete' => __( 'Delete', 'fair-membership' ),
-		);
+		return array();
 	}
 
 	/**
@@ -84,7 +83,7 @@ class GroupsListTable extends \WP_List_Table {
 
 		$per_page     = 20;
 		$current_page = $this->get_pagenum();
-		$total_items  = count( $this->get_sample_data() );
+		$total_items  = Group::count();
 
 		$this->set_pagination_args(
 			array(
@@ -93,47 +92,63 @@ class GroupsListTable extends \WP_List_Table {
 			)
 		);
 
-		$data = $this->get_sample_data();
-		$data = array_slice( $data, ( ( $current_page - 1 ) * $per_page ), $per_page );
+		// Get sorting parameters
+		$orderby = ! empty( $_REQUEST['orderby'] ) ? sanitize_text_field( $_REQUEST['orderby'] ) : 'name';
+		$order   = ! empty( $_REQUEST['order'] ) && 'desc' === strtolower( $_REQUEST['order'] ) ? 'DESC' : 'ASC';
 
-		$this->items = $data;
+		// Map column names to database fields
+		$orderby_map = array(
+			'name'    => 'name',
+			'created' => 'created_at',
+		);
+
+		$orderby = isset( $orderby_map[ $orderby ] ) ? $orderby_map[ $orderby ] : 'name';
+
+		$groups = Group::get_all(
+			array(
+				'orderby' => $orderby,
+				'order'   => $order,
+				'limit'   => $per_page,
+				'offset'  => ( $current_page - 1 ) * $per_page,
+			)
+		);
+
+		// Convert Group objects to array format for table display
+		$items = array();
+		foreach ( $groups as $group ) {
+			$items[] = $this->prepare_group_item( $group );
+		}
+
+		$this->items = $items;
 	}
 
 	/**
 	 * Default column display
 	 *
-	 * @param object $item Item data.
+	 * @param array  $item Item data.
 	 * @param string $column_name Column name.
 	 * @return string
 	 */
 	public function column_default( $item, $column_name ) {
 		switch ( $column_name ) {
 			case 'description':
+				return ! empty( $item['description'] ) ? esc_html( $item['description'] ) : '<em>' . __( 'No description', 'fair-membership' ) . '</em>';
 			case 'members':
+				return $item['members'];
 			case 'created':
-				return $item[ $column_name ];
+				return $item['created'];
+			case 'access_control':
+				return $this->format_access_control( $item['access_control'] );
 			default:
 				return print_r( $item, true );
 		}
 	}
 
-	/**
-	 * Checkbox column
-	 *
-	 * @param object $item Item data.
-	 * @return string
-	 */
-	public function column_cb( $item ) {
-		return sprintf(
-			'<input type="checkbox" name="group[]" value="%s" />',
-			$item['id']
-		);
-	}
 
 	/**
 	 * Name column with row actions
 	 *
-	 * @param object $item Item data.
+	 * @param array $item Item data.
 	 * @return string
 	 */
 	public function column_name( $item ) {
@@ -154,12 +169,11 @@ class GroupsListTable extends \WP_List_Table {
 				__( 'Edit', 'fair-membership' )
 			),
 			'delete' => sprintf(
-				'<a href="?page=%s&action=%s&group=%s&_wpnonce=%s" onclick="return confirm(\'%s\')">%s</a>',
-				esc_attr( $_REQUEST['page'] ),
+				'<a href="?page=%s&action=%s&id=%s&_wpnonce=%s">%s</a>',
+				'fair-membership-group-view',
 				'delete',
 				absint( $item['id'] ),
 				$delete_nonce,
-				__( 'Are you sure you want to delete this group?', 'fair-membership' ),
 				__( 'Delete', 'fair-membership' )
 			),
 		);
@@ -176,13 +190,34 @@ class GroupsListTable extends \WP_List_Table {
 	/**
 	 * Members column with formatting
 	 *
-	 * @param object $item Item data.
+	 * @param array $item Item data.
 	 * @return string
 	 */
 	public function column_members( $item ) {
 		return sprintf(
 			'<strong>%d</strong>',
 			$item['members']
+		);
+	}
+
+	/**
+	 * Format access control value for display
+	 *
+	 * @param string $access_control Access control value.
+	 * @return string
+	 */
+	private function format_access_control( $access_control ) {
+		$labels = array(
+			'open'    => __( 'Open', 'fair-membership' ),
+			'managed' => __( 'Managed', 'fair-membership' ),
+		);
+
+		$label = isset( $labels[ $access_control ] ) ? $labels[ $access_control ] : $access_control;
+
+		return sprintf(
+			'<span class="access-control-badge access-control-%s">%s</span>',
+			esc_attr( $access_control ),
+			esc_html( $label )
 		);
 	}
 
@@ -202,59 +237,23 @@ class GroupsListTable extends \WP_List_Table {
 	 * @return void
 	 */
 	protected function extra_tablenav( $which ) {
-		if ( 'top' === $which ) {
-			?>
-			<div class="alignleft actions">
-				<a href="<?php echo esc_url( admin_url( 'admin.php?page=fair-membership-group-view&action=add' ) ); ?>" class="button">
-					<?php esc_html_e( 'Add New Group', 'fair-membership' ); ?>
-				</a>
-			</div>
-			<?php
-		}
+		// No extra controls needed
 	}
 
 	/**
-	 * Get sample data (placeholder until database tables are added)
+	 * Prepare a Group model for table display
 	 *
+	 * @param Group $group Group model instance.
 	 * @return array
 	 */
-	private function get_sample_data() {
+	private function prepare_group_item( $group ) {
 		return array(
-			array(
-				'id'          => 1,
-				'name'        => 'Premium Members',
-				'description' => 'Members with premium access to all features',
-				'members'     => 25,
-				'created'     => '2024-01-15',
-			),
-			array(
-				'id'          => 2,
-				'name'        => 'Event Organizers',
-				'description' => 'Users who can create and manage events',
-				'members'     => 12,
-				'created'     => '2024-02-01',
-			),
-			array(
-				'id'          => 3,
-				'name'        => 'VIP Access',
-				'description' => 'Special access group for VIP members',
-				'members'     => 8,
-				'created'     => '2024-02-20',
-			),
-			array(
-				'id'          => 4,
-				'name'        => 'Basic Users',
-				'description' => 'Standard user access level',
-				'members'     => 150,
-				'created'     => '2024-01-01',
-			),
-			array(
-				'id'          => 5,
-				'name'        => 'Beta Testers',
-				'description' => 'Users testing new features',
-				'members'     => 45,
-				'created'     => '2024-03-01',
-			),
+			'id'             => $group->id,
+			'name'           => $group->name,
+			'description'    => $group->description,
+			'access_control' => $group->access_control,
+			'members'        => 0, // TODO: Implement member count when membership table exists
+			'created'        => mysql2date( get_option( 'date_format' ), $group->created_at ),
 		);
 	}
 }

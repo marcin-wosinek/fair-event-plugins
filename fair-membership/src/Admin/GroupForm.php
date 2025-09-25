@@ -7,6 +7,8 @@
 
 namespace FairMembership\Admin;
 
+use FairMembership\Models\Group;
+
 defined( 'WPINC' ) || die;
 
 /**
@@ -38,10 +40,10 @@ class GroupForm {
 		$this->group_data = wp_parse_args(
 			$group_data,
 			array(
-				'id'          => 0,
-				'name'        => '',
-				'description' => '',
-				'permissions' => array(),
+				'id'             => 0,
+				'name'           => '',
+				'description'    => '',
+				'access_control' => 'open',
 			)
 		);
 		$this->mode       = $mode;
@@ -68,10 +70,10 @@ class GroupForm {
 				<tbody>
 					<?php $this->render_name_field(); ?>
 					<?php $this->render_description_field(); ?>
+					<?php $this->render_access_control_field(); ?>
 					<?php if ( 'edit' === $this->mode ) : ?>
 						<?php $this->render_member_count_field(); ?>
 					<?php endif; ?>
-					<?php $this->render_permissions_field(); ?>
 				</tbody>
 			</table>
 
@@ -165,43 +167,56 @@ class GroupForm {
 	}
 
 	/**
-	 * Render permissions field
+	 * Render access control field
 	 *
 	 * @return void
 	 */
-	private function render_permissions_field() {
-		$available_permissions = $this->get_available_permissions();
-		$current_permissions   = (array) $this->group_data['permissions'];
+	private function render_access_control_field() {
 		?>
 		<tr>
 			<th scope="row">
-				<?php esc_html_e( 'Permissions', 'fair-membership' ); ?>
+				<label for="access_control"><?php esc_html_e( 'Access Control', 'fair-membership' ); ?></label>
 			</th>
 			<td>
 				<fieldset>
 					<legend class="screen-reader-text">
-						<?php esc_html_e( 'Group Permissions', 'fair-membership' ); ?>
+						<?php esc_html_e( 'Group Access Control', 'fair-membership' ); ?>
 					</legend>
-					<?php foreach ( $available_permissions as $permission => $label ) : ?>
-						<label for="permission_<?php echo esc_attr( $permission ); ?>">
-							<input
-								type="checkbox"
-								name="permissions[]"
-								id="permission_<?php echo esc_attr( $permission ); ?>"
-								value="<?php echo esc_attr( $permission ); ?>"
-								<?php checked( in_array( $permission, $current_permissions, true ) ); ?>
-							/>
-							<?php echo esc_html( $label ); ?>
-						</label><br />
-					<?php endforeach; ?>
-					<p class="description">
-						<?php esc_html_e( 'Select the permissions that members of this group should have.', 'fair-membership' ); ?>
+					<label for="access_control_open">
+						<input
+							type="radio"
+							name="access_control"
+							id="access_control_open"
+							value="open"
+							<?php checked( $this->group_data['access_control'], 'open' ); ?>
+							aria-describedby="access-control-open-description"
+						/>
+						<?php esc_html_e( 'Open', 'fair-membership' ); ?>
+					</label>
+					<p class="description" id="access-control-open-description">
+						<?php esc_html_e( 'Users can join this group themselves.', 'fair-membership' ); ?>
+					</p>
+
+					<label for="access_control_managed">
+						<input
+							type="radio"
+							name="access_control"
+							id="access_control_managed"
+							value="managed"
+							<?php checked( $this->group_data['access_control'], 'managed' ); ?>
+							aria-describedby="access-control-managed-description"
+						/>
+						<?php esc_html_e( 'Managed', 'fair-membership' ); ?>
+					</label>
+					<p class="description" id="access-control-managed-description">
+						<?php esc_html_e( 'Only administrators can add or remove members.', 'fair-membership' ); ?>
 					</p>
 				</fieldset>
 			</td>
 		</tr>
 		<?php
 	}
+
 
 	/**
 	 * Process form submission
@@ -252,14 +267,12 @@ class GroupForm {
 		// Description is optional
 		$description = isset( $_POST['group_description'] ) ? sanitize_textarea_field( $_POST['group_description'] ) : '';
 
-		// Permissions
-		$permissions = isset( $_POST['permissions'] ) && is_array( $_POST['permissions'] )
-			? array_map( 'sanitize_text_field', $_POST['permissions'] )
-			: array();
-
-		// Validate permissions against allowed ones
-		$valid_permissions = array_keys( $this->get_available_permissions() );
-		$permissions       = array_intersect( $permissions, $valid_permissions );
+		// Access control
+		$access_control        = isset( $_POST['access_control'] ) ? sanitize_text_field( $_POST['access_control'] ) : 'open';
+		$valid_access_controls = array( 'open', 'managed' );
+		if ( ! in_array( $access_control, $valid_access_controls, true ) ) {
+			$access_control = 'open'; // Default fallback
+		}
 
 		if ( ! empty( $errors ) ) {
 			// Store errors for display
@@ -268,9 +281,9 @@ class GroupForm {
 		}
 
 		$data = array(
-			'name'        => $name,
-			'description' => $description,
-			'permissions' => $permissions,
+			'name'           => $name,
+			'description'    => $description,
+			'access_control' => $access_control,
 		);
 
 		if ( 'edit' === $this->mode && isset( $_POST['group_id'] ) ) {
@@ -281,53 +294,112 @@ class GroupForm {
 	}
 
 	/**
-	 * Add new group (placeholder)
+	 * Add new group
 	 *
 	 * @param array $group_data Group data.
 	 * @return array Success result.
 	 */
 	private function add_group( $group_data ) {
-		// Placeholder: In real implementation, save to database
-		// $group_id = insert_group_into_database( $group_data );
+		// Create Group model instance
+		$group                 = new Group();
+		$group->name           = $group_data['name'];
+		$group->description    = $group_data['description'];
+		$group->access_control = $group_data['access_control'];
+		$group->status         = 'active';
+		$group->created_by     = get_current_user_id();
 
-		return array(
-			'success'  => true,
-			'message'  => __( 'Group added successfully.', 'fair-membership' ),
-			'redirect' => admin_url( 'admin.php?page=fair-membership&added=1' ),
-		);
+		// Generate slug from name
+		$group->slug = $this->generate_slug( $group->name );
+
+		// Validate data
+		$validation_errors = $group->validate();
+		if ( ! empty( $validation_errors ) ) {
+			set_transient( 'fair_membership_form_errors', $validation_errors, 300 );
+			return false;
+		}
+
+		// Save to database
+		$result = $group->save();
+
+		if ( $result ) {
+			return array(
+				'success'  => true,
+				'message'  => __( 'Group added successfully.', 'fair-membership' ),
+				'redirect' => admin_url( 'admin.php?page=fair-membership&added=1' ),
+			);
+		} else {
+			set_transient( 'fair_membership_form_errors', array( __( 'Failed to save group. Please try again.', 'fair-membership' ) ), 300 );
+			return false;
+		}
 	}
 
 	/**
-	 * Update existing group (placeholder)
+	 * Update existing group
 	 *
 	 * @param array $group_data Group data.
 	 * @return array Success result.
 	 */
 	private function update_group( $group_data ) {
-		// Placeholder: In real implementation, update database
-		// update_group_in_database( $group_data['id'], $group_data );
+		// Get existing group
+		$group = Group::get_by_id( $group_data['id'] );
 
-		return array(
-			'success'  => true,
-			'message'  => __( 'Group updated successfully.', 'fair-membership' ),
-			'redirect' => admin_url( 'admin.php?page=fair-membership-group-view&id=' . $group_data['id'] . '&updated=1' ),
-		);
+		if ( ! $group ) {
+			set_transient( 'fair_membership_form_errors', array( __( 'Group not found.', 'fair-membership' ) ), 300 );
+			return false;
+		}
+
+		// Update properties
+		$group->name           = $group_data['name'];
+		$group->description    = $group_data['description'];
+		$group->access_control = $group_data['access_control'];
+
+		// Update slug if name changed
+		if ( $this->generate_slug( $group->name ) !== $group->slug ) {
+			$group->slug = $this->generate_slug( $group->name );
+		}
+
+		// Validate data
+		$validation_errors = $group->validate();
+		if ( ! empty( $validation_errors ) ) {
+			set_transient( 'fair_membership_form_errors', $validation_errors, 300 );
+			return false;
+		}
+
+		// Save to database
+		$result = $group->save();
+
+		if ( $result ) {
+			return array(
+				'success'  => true,
+				'message'  => __( 'Group updated successfully.', 'fair-membership' ),
+				'redirect' => admin_url( 'admin.php?page=fair-membership-group-view&id=' . $group_data['id'] . '&updated=1' ),
+			);
+		} else {
+			set_transient( 'fair_membership_form_errors', array( __( 'Failed to update group. Please try again.', 'fair-membership' ) ), 300 );
+			return false;
+		}
 	}
 
+
 	/**
-	 * Get available permissions
+	 * Generate a unique slug from group name
 	 *
-	 * @return array Available permissions.
+	 * @param string $name Group name.
+	 * @return string Unique slug.
 	 */
-	private function get_available_permissions() {
-		return array(
-			'create_events'    => __( 'Create Events', 'fair-membership' ),
-			'manage_members'   => __( 'Manage Members', 'fair-membership' ),
-			'premium_access'   => __( 'Premium Access', 'fair-membership' ),
-			'vip_features'     => __( 'VIP Features', 'fair-membership' ),
-			'moderate_content' => __( 'Moderate Content', 'fair-membership' ),
-			'view_analytics'   => __( 'View Analytics', 'fair-membership' ),
-		);
+	private function generate_slug( $name ) {
+		$slug = sanitize_title( $name );
+
+		// Ensure uniqueness
+		$original_slug = $slug;
+		$counter       = 1;
+
+		while ( Group::get_by_slug( $slug ) ) {
+			$slug = $original_slug . '-' . $counter;
+			++$counter;
+		}
+
+		return $slug;
 	}
 
 	/**

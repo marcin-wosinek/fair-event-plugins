@@ -34,8 +34,6 @@ class GroupsListPage {
 	 * @return void
 	 */
 	public function render() {
-		$this->process_bulk_actions();
-
 		?>
 		<div class="wrap">
 			<h1 class="wp-heading-inline">
@@ -52,7 +50,6 @@ class GroupsListPage {
 				<input type="hidden" name="page" value="<?php echo esc_attr( $_REQUEST['page'] ); ?>" />
 				<?php
 				$this->groups_table->prepare_items();
-				$this->groups_table->search_box( __( 'Search Groups', 'fair-membership' ), 'group' );
 				$this->groups_table->display();
 				?>
 			</form>
@@ -60,49 +57,6 @@ class GroupsListPage {
 		<?php
 	}
 
-	/**
-	 * Process bulk actions
-	 *
-	 * @return void
-	 */
-	private function process_bulk_actions() {
-		$action = $this->groups_table->current_action();
-
-		if ( ! $action ) {
-			return;
-		}
-
-		// Verify nonce for security
-		if ( ! isset( $_REQUEST['_wpnonce'] ) || ! wp_verify_nonce( $_REQUEST['_wpnonce'], 'fair_membership_delete_group' ) ) {
-			return;
-		}
-
-		switch ( $action ) {
-			case 'delete':
-				if ( isset( $_REQUEST['group'] ) ) {
-					$group_ids = is_array( $_REQUEST['group'] ) ? $_REQUEST['group'] : array( $_REQUEST['group'] );
-					$this->delete_groups( $group_ids );
-				}
-				break;
-		}
-
-		// Redirect to avoid resubmission
-		wp_redirect( admin_url( 'admin.php?page=fair-membership&deleted=' . count( $group_ids ) ) );
-		exit;
-	}
-
-	/**
-	 * Delete groups (placeholder for actual deletion)
-	 *
-	 * @param array $group_ids Group IDs to delete.
-	 * @return void
-	 */
-	private function delete_groups( $group_ids ) {
-		// Placeholder: In real implementation, delete from database
-		foreach ( $group_ids as $group_id ) {
-			// delete_group_from_database( $group_id );
-		}
-	}
 
 	/**
 	 * Display admin notices
