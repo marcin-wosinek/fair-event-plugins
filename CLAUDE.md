@@ -97,3 +97,34 @@ When reviewing CSS for unused classes:
 2. Search codebase with: `git grep -r "class-name" --include="*.js" --include="*.php" --include="*.html"`
 3. Consider that some classes may be added by third-party libraries or WordPress core
 4. When in doubt, keep the class and document it here
+
+## Adding New Plugins to the Monorepo
+
+When creating a new plugin (e.g., `fair-new-plugin`), update these files outside the plugin directory:
+
+### Root package.json
+1. **Line ~27**: Add to start script: `& npm run start --workspace=fair-new-plugin`
+2. **Line ~30**: Add to format:php script: `fair-new-plugin/src/ fair-new-plugin/__tests__/`
+3. **Line ~42**: Add dist-archive script: `"dist-archive:fair-new-plugin": "wp dist-archive fair-new-plugin dist --create-target-dir"`
+4. **Lines ~951-957**: Add to workspaces array: `"fair-new-plugin"`
+
+### GitHub CI (.github/workflows/php-ci.yml)
+- **Lines ~32-37**: Add vendor cache path: `./fair-new-plugin/vendor`
+
+### Docker Compose (compose.yml)
+Add plugin mount to all WordPress services:
+- **Line ~14**: Main WordPress: `- ./fair-new-plugin:/var/www/html/wp-content/plugins/fair-new-plugin`
+- **Line ~79**: PHP 7.4 service
+- **Line ~116**: WP 6.3 service
+- **Line ~152**: WP 6.7 service
+
+### Scripts (scripts/sync-wp-versions.js)
+**Lines ~20-51**: Add plugin configuration:
+```javascript
+{
+    name: 'fair-new-plugin',
+    packagePath: 'fair-new-plugin/package.json',
+    phpFiles: ['fair-new-plugin/fair-new-plugin.php'],
+    readmeFiles: ['fair-new-plugin/readme.txt'],
+}
+```
