@@ -7,36 +7,35 @@
 export default {
 	preset: '@wordpress/jest-preset-default',
 	testEnvironment: 'jsdom',
-	testMatch: [
-		'**/__tests__/**/*.js',
-		'**/?(*.)+(spec|test).js'
-	],
+	testMatch: ['**/__tests__/**/*.js', '**/?(*.)+(spec|test).js'],
 	collectCoverageFrom: [
 		'src/**/*.js',
 		'!src/**/index.js',
 		'!**/node_modules/**',
 		'!**/build/**',
-		'!**/vendor/**'
+		'!**/vendor/**',
 	],
 	coverageDirectory: 'coverage',
-	coverageReporters: [
-		'text',
-		'lcov',
-		'html'
-	],
+	coverageReporters: ['text', 'lcov', 'html'],
 	setupFilesAfterEnv: [],
 	transform: {
-		'^.+\\.[jt]sx?$': ['babel-jest', {
-			presets: [
-				['@babel/preset-env', {
-					targets: {
-						node: 'current'
-					}
-				}]
-			]
-		}]
+		'^.+\\.[jt]sx?$': [
+			'babel-jest',
+			{
+				presets: [
+					[
+						'@babel/preset-env',
+						{
+							targets: {
+								node: 'current',
+							},
+						},
+					],
+				],
+			},
+		],
 	},
 	moduleNameMapper: {
-		'^@/(.*)$': '<rootDir>/src/$1'
-	}
+		'^@/(.*)$': '<rootDir>/src/$1',
+	},
 };
