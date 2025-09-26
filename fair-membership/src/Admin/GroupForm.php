@@ -7,6 +7,8 @@
 
 namespace FairMembership\Admin;
 
+use FairMembership\Models\Group;
+
 defined( 'WPINC' ) || die;
 
 /**
@@ -292,39 +294,113 @@ class GroupForm {
 	}
 
 	/**
-	 * Add new group (placeholder)
+	 * Add new group
 	 *
 	 * @param array $group_data Group data.
 	 * @return array Success result.
 	 */
 	private function add_group( $group_data ) {
-		// Placeholder: In real implementation, save to database
-		// $group_id = insert_group_into_database( $group_data );
+		// Create Group model instance
+		$group                 = new Group();
+		$group->name           = $group_data['name'];
+		$group->description    = $group_data['description'];
+		$group->access_control = $group_data['access_control'];
+		$group->status         = 'active';
+		$group->created_by     = get_current_user_id();
 
-		return array(
-			'success'  => true,
-			'message'  => __( 'Group added successfully.', 'fair-membership' ),
-			'redirect' => admin_url( 'admin.php?page=fair-membership&added=1' ),
-		);
+		// Generate slug from name
+		$group->slug = $this->generate_slug( $group->name );
+
+		// Validate data
+		$validation_errors = $group->validate();
+		if ( ! empty( $validation_errors ) ) {
+			set_transient( 'fair_membership_form_errors', $validation_errors, 300 );
+			return false;
+		}
+
+		// Save to database
+		$result = $group->save();
+
+		if ( $result ) {
+			return array(
+				'success'  => true,
+				'message'  => __( 'Group added successfully.', 'fair-membership' ),
+				'redirect' => admin_url( 'admin.php?page=fair-membership&added=1' ),
+			);
+		} else {
+			set_transient( 'fair_membership_form_errors', array( __( 'Failed to save group. Please try again.', 'fair-membership' ) ), 300 );
+			return false;
+		}
 	}
 
 	/**
-	 * Update existing group (placeholder)
+	 * Update existing group
 	 *
 	 * @param array $group_data Group data.
 	 * @return array Success result.
 	 */
 	private function update_group( $group_data ) {
-		// Placeholder: In real implementation, update database
-		// update_group_in_database( $group_data['id'], $group_data );
+		// Get existing group
+		$group = Group::get_by_id( $group_data['id'] );
 
-		return array(
-			'success'  => true,
-			'message'  => __( 'Group updated successfully.', 'fair-membership' ),
-			'redirect' => admin_url( 'admin.php?page=fair-membership-group-view&id=' . $group_data['id'] . '&updated=1' ),
-		);
+		if ( ! $group ) {
+			set_transient( 'fair_membership_form_errors', array( __( 'Group not found.', 'fair-membership' ) ), 300 );
+			return false;
+		}
+
+		// Update properties
+		$group->name           = $group_data['name'];
+		$group->description    = $group_data['description'];
+		$group->access_control = $group_data['access_control'];
+
+		// Update slug if name changed
+		if ( $this->generate_slug( $group->name ) !== $group->slug ) {
+			$group->slug = $this->generate_slug( $group->name );
+		}
+
+		// Validate data
+		$validation_errors = $group->validate();
+		if ( ! empty( $validation_errors ) ) {
+			set_transient( 'fair_membership_form_errors', $validation_errors, 300 );
+			return false;
+		}
+
+		// Save to database
+		$result = $group->save();
+
+		if ( $result ) {
+			return array(
+				'success'  => true,
+				'message'  => __( 'Group updated successfully.', 'fair-membership' ),
+				'redirect' => admin_url( 'admin.php?page=fair-membership-group-view&id=' . $group_data['id'] . '&updated=1' ),
+			);
+		} else {
+			set_transient( 'fair_membership_form_errors', array( __( 'Failed to update group. Please try again.', 'fair-membership' ) ), 300 );
+			return false;
+		}
 	}
 
+
+	/**
+	 * Generate a unique slug from group name
+	 *
+	 * @param string $name Group name.
+	 * @return string Unique slug.
+	 */
+	private function generate_slug( $name ) {
+		$slug = sanitize_title( $name );
+
+		// Ensure uniqueness
+		$original_slug = $slug;
+		$counter       = 1;
+
+		while ( Group::get_by_slug( $slug ) ) {
+			$slug = $original_slug . '-' . $counter;
+			++$counter;
+		}
+
+		return $slug;
+	}
 
 	/**
 	 * Display form errors if any

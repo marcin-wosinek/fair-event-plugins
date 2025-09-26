@@ -7,6 +7,8 @@
 
 namespace FairMembership\Admin;
 
+use FairMembership\Models\Group;
+
 defined( 'WPINC' ) || die;
 
 /**
@@ -100,16 +102,18 @@ class GroupViewPage {
 	 * @return void
 	 */
 	private function render_edit_group_page( $group_id ) {
-		$group = $this->get_sample_group( $group_id );
+		$group_model = Group::get_by_id( $group_id );
 
-		if ( ! $group ) {
+		if ( ! $group_model ) {
 			$this->render_group_not_found();
 			return;
 		}
+
+		$group = $group_model->to_array();
 		?>
 		<div class="wrap">
 			<h1 class="wp-heading-inline">
-				<?php echo esc_html( sprintf( __( 'Edit Group: %s', 'fair-membership' ), $group['name'] ) ); ?>
+				<?php echo esc_html( sprintf( __( 'Edit Group: %s', 'fair-membership' ), $group_model->name ) ); ?>
 			</h1>
 			<hr class="wp-header-end">
 
@@ -137,16 +141,16 @@ class GroupViewPage {
 	 * @return void
 	 */
 	private function render_view_group_page( $group_id ) {
-		$group = $this->get_sample_group( $group_id );
+		$group_model = Group::get_by_id( $group_id );
 
-		if ( ! $group ) {
+		if ( ! $group_model ) {
 			$this->render_group_not_found();
 			return;
 		}
 		?>
 		<div class="wrap">
 			<h1 class="wp-heading-inline">
-				<?php echo esc_html( $group['name'] ); ?>
+				<?php echo esc_html( $group_model->name ); ?>
 			</h1>
 			<a href="<?php echo esc_url( admin_url( 'admin.php?page=fair-membership-group-view&id=' . $group_id . '&action=edit' ) ); ?>" class="page-title-action">
 				<?php esc_html_e( 'Edit Group', 'fair-membership' ); ?>
@@ -161,34 +165,51 @@ class GroupViewPage {
 					<tbody>
 						<tr>
 							<th scope="row"><?php esc_html_e( 'Name', 'fair-membership' ); ?></th>
-							<td><strong><?php echo esc_html( $group['name'] ); ?></strong></td>
+							<td><strong><?php echo esc_html( $group_model->name ); ?></strong></td>
+						</tr>
+						<tr>
+							<th scope="row"><?php esc_html_e( 'Slug', 'fair-membership' ); ?></th>
+							<td><code><?php echo esc_html( $group_model->slug ); ?></code></td>
 						</tr>
 						<tr>
 							<th scope="row"><?php esc_html_e( 'Description', 'fair-membership' ); ?></th>
-							<td><?php echo esc_html( $group['description'] ?: __( 'No description provided.', 'fair-membership' ) ); ?></td>
+							<td><?php echo esc_html( $group_model->description ?: __( 'No description provided.', 'fair-membership' ) ); ?></td>
 						</tr>
 						<tr>
 							<th scope="row"><?php esc_html_e( 'Access Control', 'fair-membership' ); ?></th>
 							<td>
-								<?php echo $this->format_access_control_display( $group['access_control'] ); ?>
+								<?php echo $this->format_access_control_display( $group_model->access_control ); ?>
+							</td>
+						</tr>
+						<tr>
+							<th scope="row"><?php esc_html_e( 'Status', 'fair-membership' ); ?></th>
+							<td>
+								<span class="status-badge status-<?php echo esc_attr( strtolower( $group_model->status ) ); ?>">
+									<?php echo esc_html( ucfirst( $group_model->status ) ); ?>
+								</span>
 							</td>
 						</tr>
 						<tr>
 							<th scope="row"><?php esc_html_e( 'Members', 'fair-membership' ); ?></th>
 							<td>
-								<strong><?php echo esc_html( number_format_i18n( $group['members'] ) ); ?></strong>
-								<?php echo esc_html( _n( 'member', 'members', $group['members'], 'fair-membership' ) ); ?>
+								<strong><?php echo esc_html( number_format_i18n( 0 ) ); ?></strong>
+								<?php echo esc_html( _n( 'member', 'members', 0, 'fair-membership' ) ); ?>
+								<p class="description"><?php esc_html_e( 'Member functionality will be available once membership tables are implemented.', 'fair-membership' ); ?></p>
 							</td>
 						</tr>
 						<tr>
 							<th scope="row"><?php esc_html_e( 'Created', 'fair-membership' ); ?></th>
-							<td><?php echo esc_html( date_i18n( get_option( 'date_format' ), strtotime( $group['created'] ) ) ); ?></td>
+							<td><?php echo esc_html( mysql2date( get_option( 'date_format' ) . ' ' . get_option( 'time_format' ), $group_model->created_at ) ); ?></td>
+						</tr>
+						<tr>
+							<th scope="row"><?php esc_html_e( 'Last Updated', 'fair-membership' ); ?></th>
+							<td><?php echo esc_html( mysql2date( get_option( 'date_format' ) . ' ' . get_option( 'time_format' ), $group_model->updated_at ) ); ?></td>
 						</tr>
 					</tbody>
 				</table>
 			</div>
 
-			<?php if ( $group['members'] > 0 ) : ?>
+			<?php if ( false ) : // Disable members section until membership table exists ?>
 				<div class="card">
 					<h2><?php esc_html_e( 'Members', 'fair-membership' ); ?></h2>
 					<?php $this->render_members_table( $group_id ); ?>
@@ -342,119 +363,5 @@ class GroupViewPage {
 			esc_html( $config['label'] ),
 			esc_html( $config['description'] )
 		);
-	}
-
-	/**
-	 * Get sample group data (placeholder until database tables are added)
-	 *
-	 * @param int $group_id Group ID.
-	 * @return array|null
-	 */
-	private function get_sample_group( $group_id ) {
-		$groups = array(
-			1 => array(
-				'id'             => 1,
-				'name'           => 'Premium Members',
-				'description'    => 'Members with premium access to all features',
-				'members'        => 25,
-				'access_control' => 'managed',
-				'created'        => '2024-01-15',
-			),
-			2 => array(
-				'id'             => 2,
-				'name'           => 'Event Organizers',
-				'description'    => 'Users who can create and manage events',
-				'members'        => 12,
-				'access_control' => 'managed',
-				'created'        => '2024-02-01',
-			),
-			3 => array(
-				'id'             => 3,
-				'name'           => 'VIP Access',
-				'description'    => 'Special access group for VIP members',
-				'members'        => 8,
-				'access_control' => 'managed',
-				'created'        => '2024-02-20',
-			),
-			4 => array(
-				'id'             => 4,
-				'name'           => 'Basic Users',
-				'description'    => 'Standard user access level',
-				'members'        => 150,
-				'access_control' => 'open',
-				'created'        => '2024-01-01',
-			),
-			5 => array(
-				'id'             => 5,
-				'name'           => 'Beta Testers',
-				'description'    => 'Users testing new features',
-				'members'        => 45,
-				'access_control' => 'open',
-				'created'        => '2024-03-01',
-			),
-		);
-
-		return isset( $groups[ $group_id ] ) ? $groups[ $group_id ] : null;
-	}
-
-	/**
-	 * Get sample members data for a group
-	 *
-	 * @param int $group_id Group ID.
-	 * @return array
-	 */
-	private function get_sample_members( $group_id ) {
-		$all_members = array(
-			1 => array(
-				array(
-					'id'     => 1,
-					'name'   => 'John Doe',
-					'email'  => 'john@example.com',
-					'joined' => '2024-01-20',
-					'status' => 'Active',
-				),
-				array(
-					'id'     => 2,
-					'name'   => 'Jane Smith',
-					'email'  => 'jane@example.com',
-					'joined' => '2024-01-25',
-					'status' => 'Active',
-				),
-				array(
-					'id'     => 3,
-					'name'   => 'Bob Wilson',
-					'email'  => 'bob@example.com',
-					'joined' => '2024-02-01',
-					'status' => 'Pending',
-				),
-			),
-			2 => array(
-				array(
-					'id'     => 4,
-					'name'   => 'Alice Johnson',
-					'email'  => 'alice@example.com',
-					'joined' => '2024-02-05',
-					'status' => 'Active',
-				),
-				array(
-					'id'     => 5,
-					'name'   => 'Charlie Brown',
-					'email'  => 'charlie@example.com',
-					'joined' => '2024-02-10',
-					'status' => 'Active',
-				),
-			),
-			3 => array(
-				array(
-					'id'     => 6,
-					'name'   => 'Diana Prince',
-					'email'  => 'diana@example.com',
-					'joined' => '2024-02-22',
-					'status' => 'Active',
-				),
-			),
-		);
-
-		return isset( $all_members[ $group_id ] ) ? $all_members[ $group_id ] : array();
 	}
 }
