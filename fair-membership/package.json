@@ -16,9 +16,12 @@
 		"composer:install:prod": "composer install --no-dev",
 		"composer:update": "composer update",
 		"composer:validate": "composer validate --strict",
-		"test": "npm-run-all test:*",
+		"test": "npm-run-all test:js test:php",
 		"test:js": "jest",
-		"test:php": "vendor/bin/phpunit"
+		"test:php": "vendor/bin/phpunit",
+		"test:e2e": "playwright test",
+		"playwright:run": "playwright test --headed",
+		"playwright:up": "playwright test --headed --ui"
 	},
 	"dependencies": {
 		"@wordpress/block-editor": "^15.2.0",
@@ -31,6 +34,8 @@
 		"@babel/preset-env": "^7.28.3",
 		"@wordpress/scripts": "^30.20.0",
 		"babel-jest": "^30.0.5",
-		"jest": "^30.0.0"
+		"jest": "^30.0.0",
+		"@playwright/test": "^1.40.0",
+		"dotenv": "^16.3.1"
 	}
 }
