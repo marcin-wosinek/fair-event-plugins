@@ -49,13 +49,53 @@ class Schema {
 	}
 
 	/**
+	 * Get the SQL for creating the fair_memberships table
+	 *
+	 * @return string SQL statement for creating the table.
+	 */
+	public static function get_memberships_table_sql() {
+		global $wpdb;
+
+		$table_name      = $wpdb->prefix . 'fair_memberships';
+		$groups_table    = $wpdb->prefix . 'fair_groups';
+		$charset_collate = $wpdb->get_charset_collate();
+
+		return "CREATE TABLE {$table_name} (
+			id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
+			user_id BIGINT UNSIGNED NOT NULL,
+			group_id BIGINT UNSIGNED NOT NULL,
+			status ENUM('active', 'inactive') NOT NULL DEFAULT 'active',
+			started_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+			ended_at DATETIME DEFAULT NULL,
+			created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+			updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+
+			PRIMARY KEY (id),
+			UNIQUE KEY unique_user_group (user_id, group_id),
+			KEY idx_user_id (user_id),
+			KEY idx_group_id (group_id),
+			KEY idx_status (status),
+			KEY idx_started_at (started_at),
+			KEY idx_ended_at (ended_at),
+
+			CONSTRAINT fk_memberships_user_id
+				FOREIGN KEY (user_id) REFERENCES {$wpdb->users}(ID)
+				ON DELETE CASCADE,
+			CONSTRAINT fk_memberships_group_id
+				FOREIGN KEY (group_id) REFERENCES {$groups_table}(id)
+				ON DELETE CASCADE
+		) ENGINE=InnoDB {$charset_collate};";
+	}
+
+	/**
 	 * Get all table creation SQL statements
 	 *
 	 * @return array Array of SQL statements.
 	 */
 	public static function get_all_table_sql() {
 		return array(
-			'fair_groups' => self::get_groups_table_sql(),
+			'fair_groups'      => self::get_groups_table_sql(),
+			'fair_memberships' => self::get_memberships_table_sql(),
 		);
 	}
 
@@ -68,7 +108,8 @@ class Schema {
 		global $wpdb;
 
 		return array(
-			'fair_groups' => $wpdb->prefix . 'fair_groups',
+			'fair_groups'      => $wpdb->prefix . 'fair_groups',
+			'fair_memberships' => $wpdb->prefix . 'fair_memberships',
 		);
 	}
 

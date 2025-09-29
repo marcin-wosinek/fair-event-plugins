@@ -38,7 +38,19 @@ class Plugin {
 	 * @return void
 	 */
 	public function init() {
+		// Check for database upgrades
+		$this->maybe_upgrade_database();
+
 		$this->load_hooks();
+	}
+
+	/**
+	 * Check and perform database upgrades if needed
+	 *
+	 * @return void
+	 */
+	private function maybe_upgrade_database() {
+		\FairMembership\Database\Installer::maybe_upgrade();
 	}
 
 	/**

@@ -17,7 +17,7 @@ class Installer {
 	/**
 	 * Plugin version for database schema
 	 */
-	const DB_VERSION = '1.0.0';
+	const DB_VERSION = '1.1.0';
 
 	/**
 	 * Install database tables
