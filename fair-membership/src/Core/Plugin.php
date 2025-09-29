@@ -63,6 +63,7 @@ class Plugin {
 
 		if ( is_admin() ) {
 			new \FairMembership\Admin\AdminHooks();
+			new \FairMembership\Hooks\UserHooks();
 		}
 	}
 
