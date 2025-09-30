@@ -34,6 +34,7 @@
 		"changeset:status": "changeset status",
 		"version-packages": "changeset version && npm run sync-wp-versions",
 		"sync-wp-versions": "node scripts/sync-wp-versions.js",
+		"svn:rm": "rm -fr fair-calendar-button/svn fair-membership/svn fair-timetable/svn fair-payment/svn fair-schedule-blocks/svn",
 		"release": "changeset tag",
 		"dist-archive": "npm-run-all dist-archive:*",
 		"dist-archive:fair-calendar-button": "wp dist-archive fair-calendar-button dist --create-target-dir",
