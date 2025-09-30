@@ -38,7 +38,16 @@ class Plugin {
 	 * @return void
 	 */
 	public function init() {
-		// Plugin initialization will go here.
+		add_action( 'init', array( $this, 'register_post_types' ) );
+	}
+
+	/**
+	 * Register custom post types
+	 *
+	 * @return void
+	 */
+	public function register_post_types() {
+		\FairEvents\PostTypes\Event::register();
 	}
 
 	/**
