@@ -54,6 +54,12 @@ const plugins = [
 		phpFiles: ['fair-membership/fair-membership.php'],
 		readmeFiles: ['fair-membership/readme.txt'],
 	},
+	{
+		name: 'fair-events',
+		packagePath: 'fair-events/package.json',
+		phpFiles: ['fair-events/fair-events.php'],
+		readmeFiles: ['fair-events/readme.txt'],
+	},
 ];
 
 /**

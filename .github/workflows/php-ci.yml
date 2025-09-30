@@ -35,6 +35,7 @@ jobs:
                       ./fair-schedule-blocks/vendor
                       ./fair-timetable/vendor
                       ./fair-membership/vendor
+                      ./fair-events/vendor
                       ./vendor
                   key: ${{ runner.os }}-php-${{ hashFiles('**/composer.lock') }}
                   restore-keys: |

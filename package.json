@@ -24,10 +24,10 @@
 		"composer:install:prod": "npm run composer:install:prod --workspaces",
 		"composer:update": "npm run composer:update --workspaces",
 		"composer:validate": "npm run composer:validate --workspaces",
-		"start": "npm run start --workspace=fair-timetable & npm run start --workspace=fair-payment & npm run start --workspace=fair-calendar-button & npm run start --workspace=fair-registration & npm run start --workspace=fair-schedule-blocks & npm run start --workspace=fair-membership & wait",
+		"start": "npm run start --workspace=fair-timetable & npm run start --workspace=fair-payment & npm run start --workspace=fair-calendar-button & npm run start --workspace=fair-registration & npm run start --workspace=fair-schedule-blocks & npm run start --workspace=fair-membership & npm run start --workspace=fair-events & wait",
 		"format": "npm-run-all format:*",
 		"format:js": "wp-scripts format",
-		"format:php": "vendor/bin/phpcbf --standard=WordPress --extensions=php fair-calendar-button/src/ fair-payment/src/ fair-registration/src/ fair-schedule-blocks/src/ fair-schedule-blocks/__tests__/ fair-timetable/src/ fair-timetable/__tests__/ fair-membership/src/ fair-membership/__tests__/",
+		"format:php": "vendor/bin/phpcbf --standard=WordPress --extensions=php fair-calendar-button/src/ fair-payment/src/ fair-registration/src/ fair-schedule-blocks/src/ fair-schedule-blocks/__tests__/ fair-timetable/src/ fair-timetable/__tests__/ fair-membership/src/ fair-membership/__tests__/ fair-events/src/ fair-events/__tests__/",
 		"prepare": "husky",
 		"changeset": "changeset",
 		"changeset:add": "changeset add",
@@ -41,7 +41,8 @@
 		"dist-archive:fair-payment": "wp dist-archive fair-payment dist --create-target-dir",
 		"dist-archive:fair-schedule-blocks": "wp dist-archive fair-schedule-blocks dist --create-target-dir",
 		"dist-archive:fair-timetable": "wp dist-archive fair-timetable dist --create-target-dir",
-		"dist-archive:fair-membership": "wp dist-archive fair-membership dist --create-target-dir"
+		"dist-archive:fair-membership": "wp dist-archive fair-membership dist --create-target-dir",
+		"dist-archive:fair-events": "wp dist-archive fair-events dist --create-target-dir"
 	},
 	"dependencies": {
 		"@wordpress/scripts": "^30.20.0",
@@ -956,7 +957,8 @@
 		"fair-registration",
 		"fair-schedule-blocks",
 		"fair-timetable",
-		"fair-membership"
+		"fair-membership",
+		"fair-events"
 	],
 	"devDependencies": {
 		"@changesets/cli": "^2.29.6"

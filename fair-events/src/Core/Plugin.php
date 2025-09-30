@@ -1,0 +1,68 @@
+<?php
+/**
+ * Plugin core class for Fair Events
+ *
+ * @package FairEvents
+ */
+
+namespace FairEvents\Core;
+
+defined( 'WPINC' ) || die;
+
+/**
+ * Main plugin class implementing singleton pattern
+ */
+class Plugin {
+	/**
+	 * Single instance of the plugin
+	 *
+	 * @var Plugin|null
+	 */
+	private static $instance = null;
+
+	/**
+	 * Get singleton instance of the plugin
+	 *
+	 * @return Plugin Plugin instance
+	 */
+	public static function instance() {
+		if ( null === self::$instance ) {
+			self::$instance = new self();
+		}
+		return self::$instance;
+	}
+
+	/**
+	 * Initialize the plugin
+	 *
+	 * @return void
+	 */
+	public function init() {
+		// Plugin initialization will go here.
+	}
+
+	/**
+	 * Private constructor to prevent instantiation
+	 */
+	private function __construct() {
+		// Prevent instantiation.
+	}
+
+	/**
+	 * Prevent cloning
+	 *
+	 * @return void
+	 */
+	private function __clone() {
+		// Prevent cloning.
+	}
+
+	/**
+	 * Prevent unserialization
+	 *
+	 * @return void
+	 */
+	public function __wakeup() {
+		// Prevent unserialization.
+	}
+}
