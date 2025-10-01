@@ -38,4 +38,29 @@ require_once __DIR__ . '/vendor/autoload.php';
 
 use FairEvents\Core\Plugin;
 
+// Initialize plugin
 Plugin::instance()->init();
+
+/**
+ * Plugin activation hook
+ *
+ * @return void
+ */
+function fair_events_activate() {
+	// Trigger post type registration.
+	\FairEvents\PostTypes\Event::register();
+	// Clear the permalinks after the post type has been registered.
+	flush_rewrite_rules();
+}
+register_activation_hook( __FILE__, __NAMESPACE__ . '\fair_events_activate' );
+
+/**
+ * Plugin deactivation hook
+ *
+ * @return void
+ */
+function fair_events_deactivate() {
+	// Clear the permalinks to remove our post type's rules from the database.
+	flush_rewrite_rules();
+}
+register_deactivation_hook( __FILE__, __NAMESPACE__ . '\fair_events_deactivate' );
