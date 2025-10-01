@@ -71,5 +71,50 @@ class Event {
 		);
 
 		register_post_type( self::POST_TYPE, $args );
+
+		self::register_meta();
+	}
+
+	/**
+	 * Register custom meta fields for Event post type
+	 *
+	 * @return void
+	 */
+	public static function register_meta() {
+		register_post_meta(
+			self::POST_TYPE,
+			'event_start',
+			array(
+				'type'              => 'string',
+				'description'       => __( 'Event start date and time', 'fair-events' ),
+				'single'            => true,
+				'show_in_rest'      => true,
+				'sanitize_callback' => 'sanitize_text_field',
+			)
+		);
+
+		register_post_meta(
+			self::POST_TYPE,
+			'event_end',
+			array(
+				'type'              => 'string',
+				'description'       => __( 'Event end date and time', 'fair-events' ),
+				'single'            => true,
+				'show_in_rest'      => true,
+				'sanitize_callback' => 'sanitize_text_field',
+			)
+		);
+
+		register_post_meta(
+			self::POST_TYPE,
+			'event_all_day',
+			array(
+				'type'         => 'boolean',
+				'description'  => __( 'Whether the event is an all-day event', 'fair-events' ),
+				'single'       => true,
+				'show_in_rest' => true,
+				'default'      => false,
+			)
+		);
 	}
 }
