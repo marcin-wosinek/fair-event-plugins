@@ -211,7 +211,7 @@ class Event {
 		}
 
 		// Verify nonce.
-		if ( ! wp_verify_nonce( $_POST['fair_event_meta_box_nonce'], 'fair_event_meta_box' ) ) {
+		if ( ! wp_verify_nonce( sanitize_text_field( wp_unslash( $_POST['fair_event_meta_box_nonce'] ) ), 'fair_event_meta_box' ) ) {
 			return;
 		}
 
@@ -232,12 +232,12 @@ class Event {
 
 		// Save event_start.
 		if ( isset( $_POST['event_start'] ) ) {
-			update_post_meta( $post_id, 'event_start', sanitize_text_field( $_POST['event_start'] ) );
+			update_post_meta( $post_id, 'event_start', sanitize_text_field( wp_unslash( $_POST['event_start'] ) ) );
 		}
 
 		// Save event_end.
 		if ( isset( $_POST['event_end'] ) ) {
-			update_post_meta( $post_id, 'event_end', sanitize_text_field( $_POST['event_end'] ) );
+			update_post_meta( $post_id, 'event_end', sanitize_text_field( wp_unslash( $_POST['event_end'] ) ) );
 		}
 
 		// Save event_all_day.
