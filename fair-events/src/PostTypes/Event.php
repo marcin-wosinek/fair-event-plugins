@@ -66,8 +66,9 @@ class Event {
 			'hierarchical'       => false,
 			'menu_position'      => 20,
 			'menu_icon'          => 'dashicons-calendar-alt',
-			'supports'           => array( 'title', 'editor', 'thumbnail', 'excerpt', 'custom-fields' ),
+			'supports'           => array( 'title', 'editor', 'author', 'thumbnail', 'excerpt', 'custom-fields' ),
 			'show_in_rest'       => true,
+			'taxonomies'         => array( 'category', 'post_tag' ),
 		);
 
 		register_post_type( self::POST_TYPE, $args );
