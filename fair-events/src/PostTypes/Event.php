@@ -73,6 +73,7 @@ class Event {
 		register_post_type( self::POST_TYPE, $args );
 
 		self::register_meta();
+		self::register_meta_box();
 	}
 
 	/**
@@ -116,5 +117,130 @@ class Event {
 				'default'      => false,
 			)
 		);
+	}
+
+	/**
+	 * Register meta box for event details
+	 *
+	 * @return void
+	 */
+	public static function register_meta_box() {
+		add_action( 'add_meta_boxes', array( __CLASS__, 'add_meta_box' ) );
+		add_action( 'save_post', array( __CLASS__, 'save_meta_box' ) );
+	}
+
+	/**
+	 * Add meta box for event details
+	 *
+	 * @return void
+	 */
+	public static function add_meta_box() {
+		add_meta_box(
+			'fair_event_details',
+			__( 'Event Details', 'fair-events' ),
+			array( __CLASS__, 'render_meta_box' ),
+			self::POST_TYPE,
+			'side',
+			'default'
+		);
+	}
+
+	/**
+	 * Render meta box content
+	 *
+	 * @param \WP_Post $post The post object.
+	 * @return void
+	 */
+	public static function render_meta_box( $post ) {
+		wp_nonce_field( 'fair_event_meta_box', 'fair_event_meta_box_nonce' );
+
+		$event_start   = get_post_meta( $post->ID, 'event_start', true );
+		$event_end     = get_post_meta( $post->ID, 'event_end', true );
+		$event_all_day = get_post_meta( $post->ID, 'event_all_day', true );
+		?>
+		<p>
+			<label for="event_start">
+				<?php esc_html_e( 'Start Date & Time', 'fair-events' ); ?>
+			</label>
+			<input
+				type="datetime-local"
+				id="event_start"
+				name="event_start"
+				value="<?php echo esc_attr( $event_start ); ?>"
+				style="width: 100%;"
+			/>
+		</p>
+		<p>
+			<label for="event_end">
+				<?php esc_html_e( 'End Date & Time', 'fair-events' ); ?>
+			</label>
+			<input
+				type="datetime-local"
+				id="event_end"
+				name="event_end"
+				value="<?php echo esc_attr( $event_end ); ?>"
+				style="width: 100%;"
+			/>
+		</p>
+		<p>
+			<label for="event_all_day">
+				<input
+					type="checkbox"
+					id="event_all_day"
+					name="event_all_day"
+					value="1"
+					<?php checked( $event_all_day, true ); ?>
+				/>
+				<?php esc_html_e( 'All Day Event', 'fair-events' ); ?>
+			</label>
+		</p>
+		<?php
+	}
+
+	/**
+	 * Save meta box data
+	 *
+	 * @param int $post_id The post ID.
+	 * @return void
+	 */
+	public static function save_meta_box( $post_id ) {
+		// Check if nonce is set.
+		if ( ! isset( $_POST['fair_event_meta_box_nonce'] ) ) {
+			return;
+		}
+
+		// Verify nonce.
+		if ( ! wp_verify_nonce( $_POST['fair_event_meta_box_nonce'], 'fair_event_meta_box' ) ) {
+			return;
+		}
+
+		// Check if this is an autosave.
+		if ( defined( 'DOING_AUTOSAVE' ) && DOING_AUTOSAVE ) {
+			return;
+		}
+
+		// Check user permissions.
+		if ( ! current_user_can( 'edit_post', $post_id ) ) {
+			return;
+		}
+
+		// Check if this is our post type.
+		if ( self::POST_TYPE !== get_post_type( $post_id ) ) {
+			return;
+		}
+
+		// Save event_start.
+		if ( isset( $_POST['event_start'] ) ) {
+			update_post_meta( $post_id, 'event_start', sanitize_text_field( $_POST['event_start'] ) );
+		}
+
+		// Save event_end.
+		if ( isset( $_POST['event_end'] ) ) {
+			update_post_meta( $post_id, 'event_end', sanitize_text_field( $_POST['event_end'] ) );
+		}
+
+		// Save event_all_day.
+		$event_all_day = isset( $_POST['event_all_day'] ) ? true : false;
+		update_post_meta( $post_id, 'event_all_day', $event_all_day );
 	}
 }
