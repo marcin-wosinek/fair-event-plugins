@@ -40,6 +40,16 @@ class Plugin {
 	public function init() {
 		add_action( 'init', array( $this, 'register_post_types' ) );
 		add_action( 'init', array( $this, 'register_block_templates' ) );
+		$this->load_hooks();
+	}
+
+	/**
+	 * Load all plugin hooks and functionality
+	 *
+	 * @return void
+	 */
+	private function load_hooks() {
+		new \FairEvents\Hooks\BlockHooks();
 	}
 
 	/**

@@ -1,0 +1,32 @@
+{
+	"$schema": "https://schemas.wp.org/trunk/block.json",
+	"apiVersion": 3,
+	"name": "fair-events/events-list",
+	"version": "0.1.0",
+	"title": "Events List",
+	"category": "widgets",
+	"icon": "calendar-alt",
+	"description": "Display a list of events with filtering options.",
+	"keywords": ["events", "calendar", "list", "schedule"],
+	"textDomain": "fair-events",
+	"attributes": {
+		"timeFilter": {
+			"type": "string",
+			"enum": ["all", "upcoming", "past", "ongoing"],
+			"default": "upcoming"
+		},
+		"categories": {
+			"type": "array",
+			"default": [],
+			"items": {
+				"type": "number"
+			}
+		}
+	},
+	"supports": {
+		"html": false,
+		"align": true
+	},
+	"editorScript": "file:./index.js",
+	"render": "file:./render.php"
+}
