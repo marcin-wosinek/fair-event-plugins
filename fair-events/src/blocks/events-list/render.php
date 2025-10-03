@@ -169,7 +169,7 @@ if ( strpos( $display_pattern, 'wp_block:' ) === 0 ) {
 					if ( $block_post && 'wp_block' === $block_post->post_type ) {
 						?>
 				<li class="event-item event-item-user-pattern">
-							<?php echo do_blocks( $block_post->post_content ); ?>
+							<?php echo wp_kses_post( do_blocks( $block_post->post_content ) ); ?>
 				</li>
 						<?php
 						wp_reset_postdata();
@@ -247,7 +247,7 @@ if ( strpos( $display_pattern, 'wp_block:' ) === 0 ) {
 		}
 		?>
 
-<div <?php echo get_block_wrapper_attributes(); ?>>
+<div <?php echo wp_kses_post( get_block_wrapper_attributes() ); ?>>
 	<?php if ( $is_query_loop_pattern ) : ?>
 		<?php
 		// For Query Loop patterns, render the pattern with query context
@@ -256,7 +256,7 @@ if ( strpos( $display_pattern, 'wp_block:' ) === 0 ) {
 
 		// Render the blocks - the filter will apply query modifications
 		foreach ( $parsed_blocks as $parsed_block ) {
-			echo render_block( $parsed_block );
+			echo wp_kses_post( render_block( $parsed_block ) );
 		}
 
 		// Disable the filter after rendering

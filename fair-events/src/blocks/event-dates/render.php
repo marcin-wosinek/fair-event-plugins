@@ -57,7 +57,7 @@ if ( ! function_exists( 'fair_events_format_datetime' ) ) {
 }
 ?>
 
-<div <?php echo get_block_wrapper_attributes( array( 'class' => 'event-dates' ) ); ?>>
+<div <?php echo wp_kses_post( get_block_wrapper_attributes( array( 'class' => 'event-dates' ) ) ); ?>>
 	<?php if ( $event_start ) : ?>
 		<div class="event-date event-start">
 			<strong><?php esc_html_e( 'Start:', 'fair-events' ); ?></strong>
