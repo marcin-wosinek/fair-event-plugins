@@ -31,13 +31,40 @@ export default function EditComponent({ attributes, setAttributes }) {
 		return cats || [];
 	}, []);
 
-	// Get all block patterns from Fair Events category
+	// Get all block patterns from Fair Events category (PHP-registered)
 	const fairEventsPatterns = useSelect((select) => {
 		const patterns = select('core').getBlockPatterns?.() || [];
 		return patterns.filter((pattern) =>
 			pattern.categories?.includes('fair-events')
 		);
 	}, []);
+
+	// Get user-created patterns (reusable blocks / synced patterns)
+	const userPatterns = useSelect((select) => {
+		const patterns = select('core').getEntityRecords(
+			'postType',
+			'wp_block',
+			{
+				per_page: -1,
+			}
+		);
+		return patterns || [];
+	}, []);
+
+	// Combine all patterns for the dropdown
+	const allPatterns = [
+		...fairEventsPatterns.map((pattern) => ({
+			label: pattern.title,
+			value: pattern.name,
+		})),
+		...userPatterns.map((pattern) => ({
+			label:
+				(pattern.title?.rendered ||
+					pattern.title?.raw ||
+					__('Untitled Pattern', 'fair-events')) + ' (User Pattern)',
+			value: 'wp_block:' + pattern.id,
+		})),
+	];
 
 	// Filter out "Uncategorized" and check if there are meaningful categories
 	const meaningfulCategories = allCategories.filter(
@@ -88,10 +115,7 @@ export default function EditComponent({ attributes, setAttributes }) {
 								label: __('Default', 'fair-events'),
 								value: 'default',
 							},
-							...fairEventsPatterns.map((pattern) => ({
-								label: pattern.title,
-								value: pattern.name,
-							})),
+							...allPatterns,
 						]}
 						onChange={(value) =>
 							setAttributes({ displayPattern: value })

@@ -94,6 +94,22 @@ if ( ! function_exists( 'fair_events_render_event_with_pattern' ) ) {
 	function fair_events_render_event_with_pattern( $post, $pattern ) {
 		setup_postdata( $post );
 
+		// Check if pattern is a user-created pattern (reusable block)
+		if ( strpos( $pattern, 'wp_block:' ) === 0 ) {
+			$block_id   = str_replace( 'wp_block:', '', $pattern );
+			$block_post = get_post( $block_id );
+
+			if ( $block_post && 'wp_block' === $block_post->post_type ) {
+				?>
+				<li class="event-item event-item-user-pattern">
+					<?php echo do_blocks( $block_post->post_content ); ?>
+				</li>
+				<?php
+				wp_reset_postdata();
+				return;
+			}
+		}
+
 		// If pattern is 'default' or pattern doesn't exist, use default rendering
 		if ( 'default' === $pattern ) {
 			?>
