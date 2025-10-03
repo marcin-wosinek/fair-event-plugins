@@ -21,16 +21,9 @@ import { __ } from '@wordpress/i18n';
  * @return {JSX.Element} The edit component
  */
 export default function EditComponent({ attributes, setAttributes, clientId }) {
-	const { timeFilter, categories, displayPattern, queryId } = attributes;
+	const { timeFilter, categories, displayPattern } = attributes;
 
 	const blockProps = useBlockProps();
-
-	// Set queryId on mount if not already set
-	useEffect(() => {
-		if (!queryId) {
-			setAttributes({ queryId: parseInt(clientId, 16) });
-		}
-	}, [queryId, clientId, setAttributes]);
 
 	// Get all categories
 	const allCategories = useSelect((select) => {

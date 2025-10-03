@@ -25,18 +25,7 @@
 		"displayPattern": {
 			"type": "string",
 			"default": "default"
-		},
-		"query": {
-			"type": "object",
-			"default": {}
-		},
-		"queryId": {
-			"type": "number"
 		}
-	},
-	"providesContext": {
-		"query": "query",
-		"queryId": "queryId"
 	},
 	"supports": {
 		"html": false,

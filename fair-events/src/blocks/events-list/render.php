@@ -16,11 +16,6 @@ $time_filter     = $attributes['timeFilter'] ?? 'upcoming';
 $categories      = $attributes['categories'] ?? array();
 $display_pattern = $attributes['displayPattern'] ?? 'default';
 
-// Generate unique query ID
-if ( ! isset( $attributes['queryId'] ) ) {
-	$attributes['queryId'] = wp_unique_id( 'fair-events-query-' );
-}
-
 // Build query arguments
 $query_args = array(
 	'post_type'      => 'fair_event',
@@ -128,9 +123,6 @@ add_filter(
 	10,
 	2
 );
-
-// Store query in attributes for context
-$attributes['query'] = $query_args;
 
 // Check if pattern uses Query Loop (contains wp:query or wp:post-template)
 $is_query_loop_pattern = false;
@@ -259,18 +251,12 @@ if ( strpos( $display_pattern, 'wp_block:' ) === 0 ) {
 	<?php if ( $is_query_loop_pattern ) : ?>
 		<?php
 		// For Query Loop patterns, render the pattern with query context
-		// Parse and render blocks with our query context
+		// Parse and render blocks
 		$parsed_blocks = parse_blocks( $pattern_content );
 
-		// Set up the block context with our query
-		$block_context = array(
-			'query'   => $query_args,
-			'queryId' => $attributes['queryId'],
-		);
-
-		// Render the blocks with context
+		// Render the blocks - the filter will apply query modifications
 		foreach ( $parsed_blocks as $parsed_block ) {
-			echo render_block( $parsed_block, $block_context );
+			echo render_block( $parsed_block );
 		}
 
 		// Disable the filter after rendering
