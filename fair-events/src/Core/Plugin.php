@@ -41,6 +41,7 @@ class Plugin {
 		add_action( 'init', array( $this, 'register_post_types' ) );
 		add_action( 'init', array( $this, 'register_block_templates' ) );
 		$this->load_hooks();
+		$this->load_patterns();
 	}
 
 	/**
@@ -50,6 +51,16 @@ class Plugin {
 	 */
 	private function load_hooks() {
 		new \FairEvents\Hooks\BlockHooks();
+	}
+
+	/**
+	 * Load and initialize block patterns
+	 *
+	 * @return void
+	 */
+	private function load_patterns() {
+		$patterns = new \FairEvents\Patterns\Patterns();
+		$patterns->init();
 	}
 
 	/**
