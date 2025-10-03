@@ -41,17 +41,19 @@ $time_format = get_option( 'time_format' );
  * @param string $time_fmt Time format.
  * @return string Formatted datetime.
  */
-function fair_events_format_datetime( $datetime, $date_fmt, $time_fmt ) {
-	if ( empty( $datetime ) ) {
-		return '';
-	}
+if ( ! function_exists( 'fair_events_format_datetime' ) ) {
+	function fair_events_format_datetime( $datetime, $date_fmt, $time_fmt ) {
+		if ( empty( $datetime ) ) {
+			return '';
+		}
 
-	$timestamp = strtotime( $datetime );
-	if ( false === $timestamp ) {
-		return $datetime;
-	}
+		$timestamp = strtotime( $datetime );
+		if ( false === $timestamp ) {
+			return $datetime;
+		}
 
-	return wp_date( $date_fmt . ' ' . $time_fmt, $timestamp );
+		return wp_date( $date_fmt . ' ' . $time_fmt, $timestamp );
+	}
 }
 ?>
 
