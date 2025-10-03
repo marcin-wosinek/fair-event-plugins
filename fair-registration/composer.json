@@ -1,6 +1,6 @@
 {
 	"name": "marcin-wosinek/fair-registration",
-	"description": "WordPress plugin for registration management with fair pricing model.",
+	"description": "WordPress plugin for registration management.",
 	"type": "wordpress-plugin",
 	"license": "GPL-3.0-or-later",
 	"homepage": "https://github.com/marcin-wosinek/fair-event-plugins/",

@@ -8,11 +8,11 @@ Stable tag: 0.1.2
 License: GPLv3 or later
 License URI: https://www.gnu.org/licenses/gpl-3.0.html
 
-Schedule management blocks for events with fair pricing model.
+Schedule  blocks for Gutenberg.
 
 == Description ==
 
-Fair Schedule Blocks provides WordPress Gutenberg blocks for creating and managing event schedules. Built with accessibility and user experience in mind, following fair pricing principles.
+Fair Schedule Blocks provides WordPress Gutenberg blocks with time-dependent display. 
 
 **Schedule Accordion Block Features:**
 

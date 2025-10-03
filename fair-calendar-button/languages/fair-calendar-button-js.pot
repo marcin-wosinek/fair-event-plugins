@@ -93,7 +93,7 @@ msgstr ""
 
 #: svn/tags/1.0.0/src/blocks/calendar-button/block.json
 msgctxt "block description"
-msgid "Add a calendar button for event scheduling with fair pricing."
+msgid "Add a calendar button."
 msgstr ""
 
 #: svn/tags/1.1.0/src/blocks/calendar-button/block.json

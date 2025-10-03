@@ -1,6 +1,6 @@
 {
 	"name": "marcinwosinek/fair-event-plugins",
-	"description": "Event plugins for WordPress with fair pricing model",
+	"description": "Event plugins for WordPress",
 	"type": "project",
 	"require": {
 		"squizlabs/php_codesniffer": "^3.13",

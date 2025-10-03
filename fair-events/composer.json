@@ -1,6 +1,6 @@
 {
 	"name": "marcin-wosinek/fair-events",
-	"description": "Event management plugin with fair pricing model.",
+	"description": "Event management plugin.",
 	"type": "wordpress-plugin",
 	"license": "GPL-3.0-or-later",
 	"homepage": "https://github.com/marcin-wosinek/fair-event-plugins/",

@@ -2,7 +2,9 @@
 /**
  * Plugin Name: Fair Payment
  * Plugin URI: https://github.com/marcin-wosinek/fair-event-plugins
- * Description: A Gutenberg block for payment integration. The block displays a simple payment form with fair pricing model.
+ * Description: WordPress plugin for payment integration, with fair payment
+ * model: you play only percentage on transactions, and the amount is capped on
+ * monthly basis.
  * Version: 1.0.1
  * Requires at least: 6.7
  * Requires PHP: 7.4
