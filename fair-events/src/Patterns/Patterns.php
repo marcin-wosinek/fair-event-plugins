@@ -43,30 +43,82 @@ class Patterns {
 	 * @return void
 	 */
 	public function register_patterns() {
-		// Single event with title and excerpt
+		// Event list with title and excerpt using Query Loop
 		register_block_pattern(
-			'fair-events/single-event',
+			'fair-events/event-list-simple',
 			array(
-				'title'       => __( 'Featured Event', 'fair-events' ),
-				'description' => __( 'Display a single event with title (as link) and excerpt', 'fair-events' ),
+				'title'       => __( 'Event List - Simple', 'fair-events' ),
+				'description' => __( 'Display events with title (as link) and excerpt using Query Loop', 'fair-events' ),
 				'categories'  => array( 'fair-events' ),
-				'keywords'    => array( 'event', 'single', 'featured', 'excerpt' ),
-				'content'     => '<!-- wp:post-title {"isLink":true} /-->
-		<!-- wp:post-excerpt /-->',
+				'keywords'    => array( 'event', 'list', 'query', 'excerpt' ),
+				'content'     => '<!-- wp:query {"query":{"perPage":10,"pages":0,"offset":0,"postType":"fair_event","order":"asc","orderBy":"date","author":"","search":"","exclude":[],"sticky":"","inherit":false}} -->
+<div class="wp-block-query">
+	<!-- wp:post-template -->
+		<!-- wp:post-title {"isLink":true} /-->
+		<!-- wp:post-excerpt /-->
+	<!-- /wp:post-template -->
+</div>
+<!-- /wp:query -->',
 			)
 		);
 
-		// Single event with featured image, title, and excerpt
+		// Event list with featured image, title, and excerpt using Query Loop
 		register_block_pattern(
-			'fair-events/single-event-with-image',
+			'fair-events/event-list-with-image',
 			array(
-				'title'       => __( 'Featured Event with Image', 'fair-events' ),
-				'description' => __( 'Display a single event with featured image, title (as link), and excerpt', 'fair-events' ),
+				'title'       => __( 'Event List - With Images', 'fair-events' ),
+				'description' => __( 'Display events with featured image, title (as link), and excerpt using Query Loop', 'fair-events' ),
 				'categories'  => array( 'fair-events' ),
-				'keywords'    => array( 'event', 'single', 'featured', 'image', 'excerpt' ),
-				'content'     => '<!-- wp:post-featured-image {"isLink":true} /-->
+				'keywords'    => array( 'event', 'list', 'query', 'image', 'excerpt' ),
+				'content'     => '<!-- wp:query {"query":{"perPage":10,"pages":0,"offset":0,"postType":"fair_event","order":"asc","orderBy":"date","author":"","search":"","exclude":[],"sticky":"","inherit":false}} -->
+<div class="wp-block-query">
+	<!-- wp:post-template -->
+		<!-- wp:post-featured-image {"isLink":true} /-->
 		<!-- wp:post-title {"isLink":true} /-->
-		<!-- wp:post-excerpt /-->',
+		<!-- wp:post-excerpt /-->
+	<!-- /wp:post-template -->
+</div>
+<!-- /wp:query -->',
+			)
+		);
+
+		// Event list with dates using Query Loop
+		register_block_pattern(
+			'fair-events/event-list-with-dates',
+			array(
+				'title'       => __( 'Event List - With Dates', 'fair-events' ),
+				'description' => __( 'Display events with title, dates, and excerpt using Query Loop', 'fair-events' ),
+				'categories'  => array( 'fair-events' ),
+				'keywords'    => array( 'event', 'list', 'query', 'date', 'excerpt' ),
+				'content'     => '<!-- wp:query {"query":{"perPage":10,"pages":0,"offset":0,"postType":"fair_event","order":"asc","orderBy":"date","author":"","search":"","exclude":[],"sticky":"","inherit":false}} -->
+<div class="wp-block-query">
+	<!-- wp:post-template -->
+		<!-- wp:post-title {"isLink":true} /-->
+		<!-- wp:fair-events/event-dates /-->
+		<!-- wp:post-excerpt /-->
+	<!-- /wp:post-template -->
+</div>
+<!-- /wp:query -->',
+			)
+		);
+
+		// Event grid with images using Query Loop
+		register_block_pattern(
+			'fair-events/event-grid',
+			array(
+				'title'       => __( 'Event Grid', 'fair-events' ),
+				'description' => __( 'Display events in a grid layout with images using Query Loop', 'fair-events' ),
+				'categories'  => array( 'fair-events' ),
+				'keywords'    => array( 'event', 'grid', 'query', 'image' ),
+				'content'     => '<!-- wp:query {"query":{"perPage":6,"pages":0,"offset":0,"postType":"fair_event","order":"asc","orderBy":"date","author":"","search":"","exclude":[],"sticky":"","inherit":false}} -->
+<div class="wp-block-query">
+	<!-- wp:post-template {"layout":{"type":"grid","columnCount":3}} -->
+		<!-- wp:post-featured-image {"isLink":true} /-->
+		<!-- wp:post-title {"isLink":true} /-->
+		<!-- wp:fair-events/event-dates /-->
+	<!-- /wp:post-template -->
+</div>
+<!-- /wp:query -->',
 			)
 		);
 	}

@@ -16,6 +16,11 @@ $time_filter     = $attributes['timeFilter'] ?? 'upcoming';
 $categories      = $attributes['categories'] ?? array();
 $display_pattern = $attributes['displayPattern'] ?? 'default';
 
+// Generate unique query ID
+if ( ! isset( $attributes['queryId'] ) ) {
+	$attributes['queryId'] = wp_unique_id( 'fair-events-query-' );
+}
+
 // Build query arguments
 $query_args = array(
 	'post_type'      => 'fair_event',
@@ -84,104 +89,170 @@ switch ( $time_filter ) {
 // Execute the query
 $events_query = new WP_Query( $query_args );
 
-/**
- * Render event based on selected pattern
- *
- * @param WP_Post $post Event post object.
- * @param string  $pattern Pattern name.
- */
-if ( ! function_exists( 'fair_events_render_event_with_pattern' ) ) {
-	function fair_events_render_event_with_pattern( $post, $pattern ) {
-		setup_postdata( $post );
+// Ensure query always includes fair_event post type (for Query Loop patterns)
+// This filter will be applied to any nested Query blocks
+add_filter(
+	'query_loop_block_query_vars',
+	function ( $query, $block ) use ( $attributes, $query_args ) {
+		// Only apply to queries within this block's context
+		if ( isset( $block->context['queryId'] ) && $block->context['queryId'] === $attributes['queryId'] ) {
+			// Force post_type to fair_event
+			$query['post_type'] = 'fair_event';
 
-		// Check if pattern is a user-created pattern (reusable block)
-		if ( strpos( $pattern, 'wp_block:' ) === 0 ) {
-			$block_id   = str_replace( 'wp_block:', '', $pattern );
-			$block_post = get_post( $block_id );
-
-			if ( $block_post && 'wp_block' === $block_post->post_type ) {
-				?>
-				<li class="event-item event-item-user-pattern">
-					<?php echo do_blocks( $block_post->post_content ); ?>
-				</li>
-				<?php
-				wp_reset_postdata();
-				return;
-			}
+			// Merge our query args with the Query Loop's args
+			$query = array_merge( $query_args, $query );
 		}
+		return $query;
+	},
+	10,
+	2
+);
 
-		// If pattern is 'default' or pattern doesn't exist, use default rendering
-		if ( 'default' === $pattern ) {
-			?>
+// Store query in attributes for context
+$attributes['query'] = $query_args;
+
+// Check if pattern uses Query Loop (contains wp:query or wp:post-template)
+$is_query_loop_pattern = false;
+$pattern_content       = '';
+
+if ( strpos( $display_pattern, 'wp_block:' ) === 0 ) {
+	// User-created pattern (reusable block)
+	$block_id   = str_replace( 'wp_block:', '', $display_pattern );
+	$block_post = get_post( $block_id );
+	if ( $block_post && 'wp_block' === $block_post->post_type ) {
+		$pattern_content = $block_post->post_content;
+	}
+} else {
+	// PHP-registered pattern
+	$all_patterns = WP_Block_Patterns_Registry::get_instance()->get_all_registered();
+
+	// Find the pattern by name
+	foreach ( $all_patterns as $pattern ) {
+		if ( isset( $pattern['name'] ) && $pattern['name'] === $display_pattern ) {
+			$pattern_content = $pattern['content'];
+			break;
+		}
+	}
+}
+
+		$is_query_loop_pattern = ( strpos( $pattern_content, '<!-- wp:query' ) !== false ||
+									strpos( $pattern_content, '<!-- wp:post-template' ) !== false );
+
+		/**
+		 * Render event based on selected pattern
+		 *
+		 * @param WP_Post $post Event post object.
+		 * @param string  $pattern Pattern name.
+		 */
+		if ( ! function_exists( 'fair_events_render_event_with_pattern' ) ) {
+			function fair_events_render_event_with_pattern( $post, $pattern ) {
+				setup_postdata( $post );
+
+				// Check if pattern is a user-created pattern (reusable block)
+				if ( strpos( $pattern, 'wp_block:' ) === 0 ) {
+					$block_id   = str_replace( 'wp_block:', '', $pattern );
+					$block_post = get_post( $block_id );
+
+					if ( $block_post && 'wp_block' === $block_post->post_type ) {
+						?>
+				<li class="event-item event-item-user-pattern">
+							<?php echo do_blocks( $block_post->post_content ); ?>
+				</li>
+						<?php
+						wp_reset_postdata();
+						return;
+					}
+				}
+
+				// If pattern is 'default' or pattern doesn't exist, use default rendering
+				if ( 'default' === $pattern ) {
+					?>
 			<li class="event-item">
 				<h3 class="event-title">
 					<a href="<?php the_permalink(); ?>">
 						<?php the_title(); ?>
 					</a>
 				</h3>
-				<?php if ( has_excerpt() ) : ?>
+					<?php if ( has_excerpt() ) : ?>
 					<div class="event-excerpt">
 						<?php the_excerpt(); ?>
 					</div>
 				<?php endif; ?>
 			</li>
-			<?php
-		} elseif ( 'fair-events/single-event' === $pattern ) {
-			// Pattern: Title as link + excerpt
-			?>
+					<?php
+				} elseif ( 'fair-events/single-event' === $pattern ) {
+					// Pattern: Title as link + excerpt
+					?>
 			<li class="event-item event-item-simple">
-				<?php the_title( '<h3 class="event-title"><a href="' . esc_url( get_permalink() ) . '">', '</a></h3>' ); ?>
-				<?php if ( has_excerpt() ) : ?>
+						<?php the_title( '<h3 class="event-title"><a href="' . esc_url( get_permalink() ) . '">', '</a></h3>' ); ?>
+					<?php if ( has_excerpt() ) : ?>
 					<div class="event-excerpt">
 						<?php the_excerpt(); ?>
 					</div>
 				<?php endif; ?>
 			</li>
-			<?php
-		} elseif ( 'fair-events/single-event-with-image' === $pattern ) {
-			// Pattern: Featured image + title as link + excerpt
-			?>
+					<?php
+				} elseif ( 'fair-events/single-event-with-image' === $pattern ) {
+					// Pattern: Featured image + title as link + excerpt
+					?>
 			<li class="event-item event-item-with-image">
-				<?php if ( has_post_thumbnail() ) : ?>
+						<?php if ( has_post_thumbnail() ) : ?>
 					<div class="event-image">
 						<a href="<?php the_permalink(); ?>">
 							<?php the_post_thumbnail( 'medium' ); ?>
 						</a>
 					</div>
 				<?php endif; ?>
-				<?php the_title( '<h3 class="event-title"><a href="' . esc_url( get_permalink() ) . '">', '</a></h3>' ); ?>
-				<?php if ( has_excerpt() ) : ?>
+					<?php the_title( '<h3 class="event-title"><a href="' . esc_url( get_permalink() ) . '">', '</a></h3>' ); ?>
+					<?php if ( has_excerpt() ) : ?>
 					<div class="event-excerpt">
 						<?php the_excerpt(); ?>
 					</div>
 				<?php endif; ?>
 			</li>
-			<?php
-		} else {
-			// Fallback to default for unknown patterns
-			?>
+					<?php
+				} else {
+					// Fallback to default for unknown patterns
+					?>
 			<li class="event-item">
 				<h3 class="event-title">
 					<a href="<?php the_permalink(); ?>">
 						<?php the_title(); ?>
 					</a>
 				</h3>
-				<?php if ( has_excerpt() ) : ?>
+					<?php if ( has_excerpt() ) : ?>
 					<div class="event-excerpt">
 						<?php the_excerpt(); ?>
 					</div>
 				<?php endif; ?>
 			</li>
-			<?php
-		}
+					<?php
+				}
 
-		wp_reset_postdata();
-	}
-}
-?>
+				wp_reset_postdata();
+			}
+		}
+		?>
 
 <div <?php echo get_block_wrapper_attributes(); ?>>
-	<?php if ( $events_query->have_posts() ) : ?>
+	<?php if ( $is_query_loop_pattern ) : ?>
+		<?php
+		// For Query Loop patterns, render the pattern with query context
+				// Parse and render blocks with our query context
+				$parsed_blocks = parse_blocks( $pattern_content );
+
+				// Set up the block context with our query
+				$block_context = array(
+					'query'   => $query_args,
+					'queryId' => $attributes['queryId'],
+				);
+
+				// Render the blocks with context
+				foreach ( $parsed_blocks as $parsed_block ) {
+					echo render_block( $parsed_block, $block_context );
+				}
+				?>
+	<?php elseif ( $events_query->have_posts() ) : ?>
 		<ul class="wp-block-fair-events-events-list wp-block-fair-events-events-list--<?php echo esc_attr( str_replace( '/', '-', $display_pattern ) ); ?>">
 			<?php
 			while ( $events_query->have_posts() ) :

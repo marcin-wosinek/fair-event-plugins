@@ -8,6 +8,7 @@ import {
 	CheckboxControl,
 } from '@wordpress/components';
 import { useSelect } from '@wordpress/data';
+import { useEffect } from '@wordpress/element';
 import { __ } from '@wordpress/i18n';
 
 /**
@@ -16,12 +17,20 @@ import { __ } from '@wordpress/i18n';
  * @param {Object}   props               - Component props
  * @param {Object}   props.attributes    - Block attributes
  * @param {Function} props.setAttributes - Function to set attributes
+ * @param {string}   props.clientId      - Block client ID
  * @return {JSX.Element} The edit component
  */
-export default function EditComponent({ attributes, setAttributes }) {
-	const { timeFilter, categories, displayPattern } = attributes;
+export default function EditComponent({ attributes, setAttributes, clientId }) {
+	const { timeFilter, categories, displayPattern, queryId } = attributes;
 
 	const blockProps = useBlockProps();
+
+	// Set queryId on mount if not already set
+	useEffect(() => {
+		if (!queryId) {
+			setAttributes({ queryId: parseInt(clientId, 16) });
+		}
+	}, [queryId, clientId, setAttributes]);
 
 	// Get all categories
 	const allCategories = useSelect((select) => {
