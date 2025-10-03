@@ -12,8 +12,9 @@
 defined( 'WPINC' ) || die;
 
 // Get block attributes
-$time_filter = $attributes['timeFilter'] ?? 'upcoming';
-$categories  = $attributes['categories'] ?? array();
+$time_filter     = $attributes['timeFilter'] ?? 'upcoming';
+$categories      = $attributes['categories'] ?? array();
+$display_pattern = $attributes['displayPattern'] ?? 'default';
 
 // Build query arguments
 $query_args = array(
@@ -83,69 +84,95 @@ switch ( $time_filter ) {
 // Execute the query
 $events_query = new WP_Query( $query_args );
 
-// Get WordPress date and time formats
-$date_format = get_option( 'date_format' );
-$time_format = get_option( 'time_format' );
+/**
+ * Render event based on selected pattern
+ *
+ * @param WP_Post $post Event post object.
+ * @param string  $pattern Pattern name.
+ */
+if ( ! function_exists( 'fair_events_render_event_with_pattern' ) ) {
+	function fair_events_render_event_with_pattern( $post, $pattern ) {
+		setup_postdata( $post );
+
+		// If pattern is 'default' or pattern doesn't exist, use default rendering
+		if ( 'default' === $pattern ) {
+			?>
+			<li class="event-item">
+				<h3 class="event-title">
+					<a href="<?php the_permalink(); ?>">
+						<?php the_title(); ?>
+					</a>
+				</h3>
+				<?php if ( has_excerpt() ) : ?>
+					<div class="event-excerpt">
+						<?php the_excerpt(); ?>
+					</div>
+				<?php endif; ?>
+			</li>
+			<?php
+		} elseif ( 'fair-events/single-event' === $pattern ) {
+			// Pattern: Title as link + excerpt
+			?>
+			<li class="event-item event-item-simple">
+				<?php the_title( '<h3 class="event-title"><a href="' . esc_url( get_permalink() ) . '">', '</a></h3>' ); ?>
+				<?php if ( has_excerpt() ) : ?>
+					<div class="event-excerpt">
+						<?php the_excerpt(); ?>
+					</div>
+				<?php endif; ?>
+			</li>
+			<?php
+		} elseif ( 'fair-events/single-event-with-image' === $pattern ) {
+			// Pattern: Featured image + title as link + excerpt
+			?>
+			<li class="event-item event-item-with-image">
+				<?php if ( has_post_thumbnail() ) : ?>
+					<div class="event-image">
+						<a href="<?php the_permalink(); ?>">
+							<?php the_post_thumbnail( 'medium' ); ?>
+						</a>
+					</div>
+				<?php endif; ?>
+				<?php the_title( '<h3 class="event-title"><a href="' . esc_url( get_permalink() ) . '">', '</a></h3>' ); ?>
+				<?php if ( has_excerpt() ) : ?>
+					<div class="event-excerpt">
+						<?php the_excerpt(); ?>
+					</div>
+				<?php endif; ?>
+			</li>
+			<?php
+		} else {
+			// Fallback to default for unknown patterns
+			?>
+			<li class="event-item">
+				<h3 class="event-title">
+					<a href="<?php the_permalink(); ?>">
+						<?php the_title(); ?>
+					</a>
+				</h3>
+				<?php if ( has_excerpt() ) : ?>
+					<div class="event-excerpt">
+						<?php the_excerpt(); ?>
+					</div>
+				<?php endif; ?>
+			</li>
+			<?php
+		}
+
+		wp_reset_postdata();
+	}
+}
 ?>
 
 <div <?php echo get_block_wrapper_attributes(); ?>>
 	<?php if ( $events_query->have_posts() ) : ?>
-		<ul class="wp-block-fair-events-events-list">
+		<ul class="wp-block-fair-events-events-list wp-block-fair-events-events-list--<?php echo esc_attr( str_replace( '/', '-', $display_pattern ) ); ?>">
 			<?php
 			while ( $events_query->have_posts() ) :
 				$events_query->the_post();
-				$event_start   = get_post_meta( get_the_ID(), 'event_start', true );
-				$event_end     = get_post_meta( get_the_ID(), 'event_end', true );
-				$event_all_day = get_post_meta( get_the_ID(), 'event_all_day', true );
-				?>
-				<li class="event-item">
-					<h3 class="event-title">
-						<a href="<?php the_permalink(); ?>">
-							<?php the_title(); ?>
-						</a>
-					</h3>
-
-					<?php if ( $event_start || $event_end ) : ?>
-						<div class="event-meta">
-							<?php if ( $event_start ) : ?>
-								<div class="event-start">
-									<strong><?php esc_html_e( 'Start:', 'fair-events' ); ?></strong>
-									<?php
-									$start_timestamp = strtotime( $event_start );
-									if ( $start_timestamp ) {
-										echo esc_html( wp_date( $date_format . ' ' . $time_format, $start_timestamp ) );
-									}
-									?>
-								</div>
-							<?php endif; ?>
-
-							<?php if ( $event_end ) : ?>
-								<div class="event-end">
-									<strong><?php esc_html_e( 'End:', 'fair-events' ); ?></strong>
-									<?php
-									$end_timestamp = strtotime( $event_end );
-									if ( $end_timestamp ) {
-										echo esc_html( wp_date( $date_format . ' ' . $time_format, $end_timestamp ) );
-									}
-									?>
-								</div>
-							<?php endif; ?>
-
-							<?php if ( $event_all_day ) : ?>
-								<div class="event-all-day">
-									<strong><?php esc_html_e( 'All Day Event', 'fair-events' ); ?></strong>
-								</div>
-							<?php endif; ?>
-						</div>
-					<?php endif; ?>
-
-					<?php if ( has_excerpt() ) : ?>
-						<div class="event-excerpt">
-							<?php the_excerpt(); ?>
-						</div>
-					<?php endif; ?>
-				</li>
-			<?php endwhile; ?>
+				fair_events_render_event_with_pattern( get_post(), $display_pattern );
+			endwhile;
+			?>
 		</ul>
 	<?php else : ?>
 		<p class="no-events">

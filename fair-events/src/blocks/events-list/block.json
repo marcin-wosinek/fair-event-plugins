@@ -21,6 +21,10 @@
 			"items": {
 				"type": "number"
 			}
+		},
+		"displayPattern": {
+			"type": "string",
+			"default": "default"
 		}
 	},
 	"supports": {

@@ -128,3 +128,4 @@ Add plugin mount to all WordPress services:
     readmeFiles: ['fair-new-plugin/readme.txt'],
 }
 ```
+- Don't use php templates.

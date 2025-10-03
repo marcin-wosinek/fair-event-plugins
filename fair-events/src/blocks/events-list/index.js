@@ -20,7 +20,7 @@ import metadata from './block.json';
  * Block edit function
  */
 function Edit({ attributes, setAttributes }) {
-	const { timeFilter, categories } = attributes;
+	const { timeFilter, categories, displayPattern } = attributes;
 
 	const blockProps = useBlockProps();
 
@@ -30,6 +30,14 @@ function Edit({ attributes, setAttributes }) {
 			per_page: -1,
 		});
 		return cats || [];
+	}, []);
+
+	// Get all block patterns from Fair Events category
+	const fairEventsPatterns = useSelect((select) => {
+		const patterns = select('core').getBlockPatterns?.() || [];
+		return patterns.filter((pattern) =>
+			pattern.categories?.includes('fair-events')
+		);
 	}, []);
 
 	// Filter out "Uncategorized" and check if there are meaningful categories
@@ -73,6 +81,27 @@ function Edit({ attributes, setAttributes }) {
 		<>
 			<InspectorControls>
 				<PanelBody title={__('Events List Settings', 'fair-events')}>
+					<SelectControl
+						label={__('Display Pattern', 'fair-events')}
+						value={displayPattern}
+						options={[
+							{
+								label: __('Default', 'fair-events'),
+								value: 'default',
+							},
+							...fairEventsPatterns.map((pattern) => ({
+								label: pattern.title,
+								value: pattern.name,
+							})),
+						]}
+						onChange={(value) =>
+							setAttributes({ displayPattern: value })
+						}
+						help={__(
+							'Choose a pattern for displaying events',
+							'fair-events'
+						)}
+					/>
 					<SelectControl
 						label={__('Time Filter', 'fair-events')}
 						value={timeFilter}
@@ -150,6 +179,10 @@ function Edit({ attributes, setAttributes }) {
 				<div className="events-list-placeholder">
 					<p>
 						<strong>{__('Events List', 'fair-events')}</strong>
+					</p>
+					<p>
+						{__('Display Pattern:', 'fair-events')}{' '}
+						<code>{displayPattern}</code>
 					</p>
 					<p>
 						{__('Time Filter:', 'fair-events')}{' '}
