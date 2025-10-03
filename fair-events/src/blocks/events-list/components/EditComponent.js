@@ -1,7 +1,6 @@
 /**
  * WordPress dependencies
  */
-import { registerBlockType } from '@wordpress/blocks';
 import { useBlockProps, InspectorControls } from '@wordpress/block-editor';
 import {
 	PanelBody,
@@ -12,14 +11,14 @@ import { useSelect } from '@wordpress/data';
 import { __ } from '@wordpress/i18n';
 
 /**
- * Block metadata
+ * Edit component for Events List block
+ *
+ * @param {Object}   props               - Component props
+ * @param {Object}   props.attributes    - Block attributes
+ * @param {Function} props.setAttributes - Function to set attributes
+ * @return {JSX.Element} The edit component
  */
-import metadata from './block.json';
-
-/**
- * Block edit function
- */
-function Edit({ attributes, setAttributes }) {
+export default function EditComponent({ attributes, setAttributes }) {
 	const { timeFilter, categories, displayPattern } = attributes;
 
 	const blockProps = useBlockProps();
@@ -209,10 +208,3 @@ function Edit({ attributes, setAttributes }) {
 		</>
 	);
 }
-
-/**
- * Register block
- */
-registerBlockType(metadata.name, {
-	edit: Edit,
-});
