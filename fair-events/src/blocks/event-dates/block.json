@@ -1,0 +1,20 @@
+{
+	"$schema": "https://schemas.wp.org/trunk/block.json",
+	"apiVersion": 3,
+	"name": "fair-events/event-dates",
+	"version": "0.1.0",
+	"title": "Event Dates",
+	"category": "widgets",
+	"icon": "clock",
+	"description": "Display event start and end dates using WordPress date/time formats.",
+	"keywords": ["event", "date", "time", "schedule"],
+	"textdomain": "fair-events",
+	"usesContext": ["postId", "postType"],
+	"supports": {
+		"html": false,
+		"anchor": true,
+		"align": true
+	},
+	"editorScript": "file:./editor.js",
+	"render": "file:./render.php"
+}

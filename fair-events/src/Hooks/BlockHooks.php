@@ -28,5 +28,6 @@ class BlockHooks {
 	 */
 	public function register_blocks() {
 		register_block_type( __DIR__ . '/../../build/blocks/events-list' );
+		register_block_type( __DIR__ . '/../../build/blocks/event-dates' );
 	}
 }
