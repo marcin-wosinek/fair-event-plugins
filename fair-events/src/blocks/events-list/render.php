@@ -91,17 +91,38 @@ $events_query = new WP_Query( $query_args );
 
 // Ensure query always includes fair_event post type (for Query Loop patterns)
 // This filter will be applied to any nested Query blocks
+// We need to use a flag to only apply this during our block's rendering
+$fair_events_apply_filter = true;
+
 add_filter(
 	'query_loop_block_query_vars',
-	function ( $query, $block ) use ( $attributes, $query_args ) {
-		// Only apply to queries within this block's context
-		if ( isset( $block->context['queryId'] ) && $block->context['queryId'] === $attributes['queryId'] ) {
-			// Force post_type to fair_event
-			$query['post_type'] = 'fair_event';
-
-			// Merge our query args with the Query Loop's args
-			$query = array_merge( $query_args, $query );
+	function ( $query, $block ) use ( $query_args, &$fair_events_apply_filter ) {
+		// Only apply if we're rendering a fair-events pattern
+		if ( ! $fair_events_apply_filter ) {
+			return $query;
 		}
+
+		// Check if this is a fair_event query or if post_type is not set
+		if ( isset( $query['post_type'] ) && $query['post_type'] === 'fair_event' ) {
+			// Merge our custom query args (time filters, categories, meta queries)
+			// Keep the Query Loop's own settings but add our filters
+			if ( isset( $query_args['meta_query'] ) ) {
+				$query['meta_query'] = $query_args['meta_query'];
+			}
+			if ( isset( $query_args['category__in'] ) ) {
+				$query['category__in'] = $query_args['category__in'];
+			}
+			if ( isset( $query_args['meta_key'] ) ) {
+				$query['meta_key'] = $query_args['meta_key'];
+			}
+			if ( isset( $query_args['orderby'] ) ) {
+				$query['orderby'] = $query_args['orderby'];
+			}
+			if ( isset( $query_args['order'] ) ) {
+				$query['order'] = $query_args['order'];
+			}
+		}
+
 		return $query;
 	},
 	10,
@@ -238,21 +259,28 @@ if ( strpos( $display_pattern, 'wp_block:' ) === 0 ) {
 	<?php if ( $is_query_loop_pattern ) : ?>
 		<?php
 		// For Query Loop patterns, render the pattern with query context
-				// Parse and render blocks with our query context
-				$parsed_blocks = parse_blocks( $pattern_content );
+		// Parse and render blocks with our query context
+		$parsed_blocks = parse_blocks( $pattern_content );
 
-				// Set up the block context with our query
-				$block_context = array(
-					'query'   => $query_args,
-					'queryId' => $attributes['queryId'],
-				);
+		// Set up the block context with our query
+		$block_context = array(
+			'query'   => $query_args,
+			'queryId' => $attributes['queryId'],
+		);
 
-				// Render the blocks with context
-				foreach ( $parsed_blocks as $parsed_block ) {
-					echo render_block( $parsed_block, $block_context );
-				}
-				?>
+		// Render the blocks with context
+		foreach ( $parsed_blocks as $parsed_block ) {
+			echo render_block( $parsed_block, $block_context );
+		}
+
+		// Disable the filter after rendering
+		$fair_events_apply_filter = false;
+		?>
 	<?php elseif ( $events_query->have_posts() ) : ?>
+		<?php
+		// Disable filter for non-query-loop patterns
+		$fair_events_apply_filter = false;
+		?>
 		<ul class="wp-block-fair-events-events-list wp-block-fair-events-events-list--<?php echo esc_attr( str_replace( '/', '-', $display_pattern ) ); ?>">
 			<?php
 			while ( $events_query->have_posts() ) :
