@@ -60,7 +60,7 @@ class Event {
 			'show_ui'            => true,
 			'show_in_menu'       => true,
 			'query_var'          => true,
-			'rewrite'            => array( 'slug' => 'events' ),
+			'rewrite'            => array( 'slug' => 'fair-events' ),
 			'capability_type'    => 'post',
 			'has_archive'        => true,
 			'hierarchical'       => false,
