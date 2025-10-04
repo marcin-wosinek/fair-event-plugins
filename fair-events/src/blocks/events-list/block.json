@@ -24,7 +24,7 @@
 		},
 		"displayPattern": {
 			"type": "string",
-			"default": "default"
+			"default": "fair-events/event-list-simple"
 		}
 	},
 	"supports": {

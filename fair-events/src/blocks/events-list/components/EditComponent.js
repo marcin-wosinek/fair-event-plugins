@@ -112,13 +112,7 @@ export default function EditComponent({ attributes, setAttributes, clientId }) {
 					<SelectControl
 						label={__('Display Pattern', 'fair-events')}
 						value={displayPattern}
-						options={[
-							{
-								label: __('Default', 'fair-events'),
-								value: 'default',
-							},
-							...allPatterns,
-						]}
+						options={allPatterns}
 						onChange={(value) =>
 							setAttributes({ displayPattern: value })
 						}

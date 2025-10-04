@@ -43,48 +43,9 @@ class Patterns {
 	 * @return void
 	 */
 	public function register_patterns() {
-		// Event list with title and excerpt using Query Loop
-		register_block_pattern(
-			'fair-events/event-list-simple',
-			array(
-				'title'       => __( 'Event List - Simple', 'fair-events' ),
-				'description' => __( 'Display events with title (as link) and excerpt using Query Loop', 'fair-events' ),
-				'categories'  => array( 'fair-events' ),
-				'keywords'    => array( 'event', 'list', 'query', 'excerpt' ),
-				'content'     => '<!-- wp:query {"query":{"perPage":10,"pages":0,"offset":0,"postType":"fair_event","order":"asc","orderBy":"date","author":"","search":"","exclude":[],"sticky":"","inherit":false}} -->
-<div class="wp-block-query">
-	<!-- wp:post-template -->
-		<!-- wp:post-title {"isLink":true} /-->
-		<!-- wp:post-excerpt /-->
-	<!-- /wp:post-template -->
-</div>
-<!-- /wp:query -->',
-			)
-		);
-
-		// Event list with featured image, title, and excerpt using Query Loop
-		register_block_pattern(
-			'fair-events/event-list-with-image',
-			array(
-				'title'       => __( 'Event List - With Images', 'fair-events' ),
-				'description' => __( 'Display events with featured image, title (as link), and excerpt using Query Loop', 'fair-events' ),
-				'categories'  => array( 'fair-events' ),
-				'keywords'    => array( 'event', 'list', 'query', 'image', 'excerpt' ),
-				'content'     => '<!-- wp:query {"query":{"perPage":10,"pages":0,"offset":0,"postType":"fair_event","order":"asc","orderBy":"date","author":"","search":"","exclude":[],"sticky":"","inherit":false}} -->
-<div class="wp-block-query">
-	<!-- wp:post-template -->
-		<!-- wp:post-featured-image {"isLink":true} /-->
-		<!-- wp:post-title {"isLink":true} /-->
-		<!-- wp:post-excerpt /-->
-	<!-- /wp:post-template -->
-</div>
-<!-- /wp:query -->',
-			)
-		);
-
 		// Event list with dates using Query Loop
 		register_block_pattern(
-			'fair-events/event-list-with-dates',
+			'fair-events/event-list',
 			array(
 				'title'       => __( 'Event List - With Dates', 'fair-events' ),
 				'description' => __( 'Display events with title, dates, and excerpt using Query Loop', 'fair-events' ),

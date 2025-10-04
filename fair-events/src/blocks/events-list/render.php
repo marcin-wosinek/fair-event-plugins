@@ -150,105 +150,10 @@ if ( strpos( $display_pattern, 'wp_block:' ) === 0 ) {
 
 		$is_query_loop_pattern = ( strpos( $pattern_content, '<!-- wp:query' ) !== false ||
 									strpos( $pattern_content, '<!-- wp:post-template' ) !== false );
-
-		/**
-		 * Render event based on selected pattern
-		 *
-		 * @param WP_Post $post Event post object.
-		 * @param string  $pattern Pattern name.
-		 */
-		if ( ! function_exists( 'fair_events_render_event_with_pattern' ) ) {
-			function fair_events_render_event_with_pattern( $post, $pattern ) {
-				setup_postdata( $post );
-
-				// Check if pattern is a user-created pattern (reusable block)
-				if ( strpos( $pattern, 'wp_block:' ) === 0 ) {
-					$block_id   = str_replace( 'wp_block:', '', $pattern );
-					$block_post = get_post( $block_id );
-
-					if ( $block_post && 'wp_block' === $block_post->post_type ) {
-						?>
-				<li class="event-item event-item-user-pattern">
-							<?php echo wp_kses_post( do_blocks( $block_post->post_content ) ); ?>
-				</li>
-						<?php
-						wp_reset_postdata();
-						return;
-					}
-				}
-
-				// If pattern is 'default' or pattern doesn't exist, use default rendering
-				if ( 'default' === $pattern ) {
-					?>
-			<li class="event-item">
-				<h3 class="event-title">
-					<a href="<?php the_permalink(); ?>">
-						<?php the_title(); ?>
-					</a>
-				</h3>
-					<?php if ( has_excerpt() ) : ?>
-					<div class="event-excerpt">
-						<?php the_excerpt(); ?>
-					</div>
-				<?php endif; ?>
-			</li>
-					<?php
-				} elseif ( 'fair-events/single-event' === $pattern ) {
-					// Pattern: Title as link + excerpt
-					?>
-			<li class="event-item event-item-simple">
-						<?php the_title( '<h3 class="event-title"><a href="' . esc_url( get_permalink() ) . '">', '</a></h3>' ); ?>
-					<?php if ( has_excerpt() ) : ?>
-					<div class="event-excerpt">
-						<?php the_excerpt(); ?>
-					</div>
-				<?php endif; ?>
-			</li>
-					<?php
-				} elseif ( 'fair-events/single-event-with-image' === $pattern ) {
-					// Pattern: Featured image + title as link + excerpt
-					?>
-			<li class="event-item event-item-with-image">
-						<?php if ( has_post_thumbnail() ) : ?>
-					<div class="event-image">
-						<a href="<?php the_permalink(); ?>">
-							<?php the_post_thumbnail( 'medium' ); ?>
-						</a>
-					</div>
-				<?php endif; ?>
-					<?php the_title( '<h3 class="event-title"><a href="' . esc_url( get_permalink() ) . '">', '</a></h3>' ); ?>
-					<?php if ( has_excerpt() ) : ?>
-					<div class="event-excerpt">
-						<?php the_excerpt(); ?>
-					</div>
-				<?php endif; ?>
-			</li>
-					<?php
-				} else {
-					// Fallback to default for unknown patterns
-					?>
-			<li class="event-item">
-				<h3 class="event-title">
-					<a href="<?php the_permalink(); ?>">
-						<?php the_title(); ?>
-					</a>
-				</h3>
-					<?php if ( has_excerpt() ) : ?>
-					<div class="event-excerpt">
-						<?php the_excerpt(); ?>
-					</div>
-				<?php endif; ?>
-			</li>
-					<?php
-				}
-
-				wp_reset_postdata();
-			}
-		}
 		?>
 
 <div <?php echo wp_kses_post( get_block_wrapper_attributes() ); ?>>
-	<?php if ( $is_query_loop_pattern ) : ?>
+	<?php if ( $is_query_loop_pattern && $pattern_content ) : ?>
 		<?php
 		// For Query Loop patterns, render the pattern with query context
 		// Parse and render blocks
@@ -262,22 +167,9 @@ if ( strpos( $display_pattern, 'wp_block:' ) === 0 ) {
 		// Disable the filter after rendering
 		$fair_events_apply_filter = false;
 		?>
-	<?php elseif ( $events_query->have_posts() ) : ?>
-		<?php
-		// Disable filter for non-query-loop patterns
-		$fair_events_apply_filter = false;
-		?>
-		<ul class="wp-block-fair-events-events-list wp-block-fair-events-events-list--<?php echo esc_attr( str_replace( '/', '-', $display_pattern ) ); ?>">
-			<?php
-			while ( $events_query->have_posts() ) :
-				$events_query->the_post();
-				fair_events_render_event_with_pattern( get_post(), $display_pattern );
-			endwhile;
-			?>
-		</ul>
 	<?php else : ?>
 		<p class="no-events">
-			<?php esc_html_e( 'No events found matching the criteria.', 'fair-events' ); ?>
+			<?php esc_html_e( 'No events found. Please select a valid display pattern.', 'fair-events' ); ?>
 		</p>
 	<?php endif; ?>
 </div>
