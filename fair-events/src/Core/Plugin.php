@@ -41,6 +41,7 @@ class Plugin {
 		add_action( 'init', array( $this, 'register_post_types' ) );
 		$this->load_hooks();
 		$this->load_patterns();
+		$this->load_admin();
 	}
 
 	/**
@@ -60,6 +61,18 @@ class Plugin {
 	private function load_patterns() {
 		$patterns = new \FairEvents\Patterns\Patterns();
 		$patterns->init();
+	}
+
+	/**
+	 * Load and initialize admin pages
+	 *
+	 * @return void
+	 */
+	private function load_admin() {
+		if ( is_admin() ) {
+			$admin = new \FairEvents\Admin\AdminPages();
+			$admin->init();
+		}
 	}
 
 	/**
