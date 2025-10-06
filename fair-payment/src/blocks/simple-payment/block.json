@@ -1,33 +1,15 @@
 {
 	"$schema": "https://schemas.wp.org/trunk/block.json",
 	"apiVersion": 3,
-	"name": "fair-payment/simple-payment-block",
-	"version": "1.0.0",
+	"name": "fair-payment/simple-payment",
+	"version": "0.1.0",
 	"title": "Simple Payment",
 	"category": "widgets",
 	"icon": "money-alt",
-	"description": "A Gutenberg block for payment integration",
-	"keywords": ["payment", "money", "pricing", "fair"],
+	"description": "Simple payment block for WordPress",
 	"textdomain": "fair-payment",
-	"supports": {
-		"html": false,
-		"layout": {
-			"default": {
-				"type": "flex",
-				"justifyContent": "center"
-			},
-			"allowSwitching": false,
-			"allowInheriting": false,
-			"allowJustification": true,
-			"allowVerticalAlignment": true,
-			"allowOrientation": false
-		},
-		"align": ["wide", "full"],
-		"spacing": {
-			"padding": true,
-			"margin": ["top", "bottom"]
-		}
-	},
+	"editorScript": "file:./index.js",
+	"render": "file:./render.php",
 	"attributes": {
 		"amount": {
 			"type": "string",
@@ -37,10 +19,5 @@
 			"type": "string",
 			"default": "EUR"
 		}
-	},
-	"script": "file:./index.js",
-	"editorScript": "file:./editor.js",
-	"viewScript": "file:./frontend.js",
-	"render": "file:./render.php",
-	"style": "file:./style-index.css"
+	}
 }

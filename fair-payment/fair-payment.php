@@ -1,42 +1,39 @@
 <?php
 /**
  * Plugin Name: Fair Payment
- * Plugin URI: https://github.com/marcin-wosinek/fair-event-plugins
- * Description: WordPress plugin for payment integration, with fair payment
- * model: you play only percentage on transactions, and the amount is capped on
- * monthly basis.
- * Version: 1.0.1
- * Requires at least: 6.7
- * Requires PHP: 7.4
- * Author: Marcin Wosinek
- * Author URI: https://github.com/marcin-wosinek
- * License: GPLv3 or later
- * License URI: https://www.gnu.org/licenses/gpl-3.0.html
+ * Plugin URI: https://fair-event-plugins.com
+ * Description: Simple payment block for WordPress
+ * Version: 0.1.0
+ * Author: Fair Event Plugins
+ * Author URI: https://fair-event-plugins.com
+ * License: GPL-2.0-or-later
  * Text Domain: fair-payment
  *
- * Fair Payment is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * any later version.
- *
- * Fair Payment is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with Fair Payment. If not, see https://www.gnu.org/licenses/gpl-3.0.html.
- *
  * @package FairPayment
- * @author Marcin Wosinek
- * @since 1.0.0
  */
 
-namespace FairPayment;
-
 defined( 'WPINC' ) || die;
-require_once __DIR__ . '/vendor/autoload.php';
 
-use FairPayment\Core\Plugin;
+// Define plugin constants.
+define( 'FAIR_PAYMENT_VERSION', '0.1.0' );
+define( 'FAIR_PAYMENT_PLUGIN_DIR', plugin_dir_path( __FILE__ ) );
+define( 'FAIR_PAYMENT_PLUGIN_URL', plugin_dir_url( __FILE__ ) );
 
-Plugin::instance()->init();
+// Require Composer autoloader if it exists.
+if ( file_exists( FAIR_PAYMENT_PLUGIN_DIR . 'vendor/autoload.php' ) ) {
+	require_once FAIR_PAYMENT_PLUGIN_DIR . 'vendor/autoload.php';
+}
+
+// Initialize the plugin.
+add_action( 'plugins_loaded', 'fair_payment_init' );
+
+/**
+ * Initialize Fair Payment plugin
+ *
+ * @return void
+ */
+function fair_payment_init() {
+	if ( class_exists( 'FairPayment\Core\Plugin' ) ) {
+		FairPayment\Core\Plugin::instance()->init();
+	}
+}

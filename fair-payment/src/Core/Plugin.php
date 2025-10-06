@@ -33,41 +33,61 @@ class Plugin {
 	}
 
 	/**
-	 * Private constructor to prevent direct instantiation
-	 */
-	private function __construct() {
-	}
-
-	/**
-	 * Private clone method to prevent cloning
-	 */
-	private function __clone() {
-	}
-
-	/**
-	 * Public wakeup method to prevent unserialization
-	 */
-	public function __wakeup() {
-	}
-
-	/**
 	 * Initialize the plugin
 	 *
 	 * @return void
 	 */
 	public function init() {
-		$this->load_hooks();
+		add_action( 'init', array( $this, 'register_blocks' ) );
+		$this->load_admin();
 	}
 
 	/**
-	 * Load all plugin hooks and functionality
+	 * Register blocks
 	 *
 	 * @return void
 	 */
-	private function load_hooks() {
-		new \FairPayment\Hooks\BlockHooks();
-		new \FairPayment\Hooks\AdminHooks();
-		new \FairPayment\Hooks\RoutesHooks();
-		new \FairPayment\Hooks\ApiHooks();
+	public function register_blocks() {
+		// Register simple-payment block placeholder
+		register_block_type(
+			FAIR_PAYMENT_PLUGIN_DIR . 'src/blocks/simple-payment'
+		);
+	}
+
+	/**
+	 * Load and initialize admin pages
+	 *
+	 * @return void
+	 */
+	private function load_admin() {
+		if ( is_admin() ) {
+			$admin = new \FairPayment\Admin\AdminPages();
+			$admin->init();
+		}
+	}
+
+	/**
+	 * Private constructor to prevent instantiation
+	 */
+	private function __construct() {
+		// Prevent instantiation.
+	}
+
+	/**
+	 * Prevent cloning
+	 *
+	 * @return void
+	 */
+	private function __clone() {
+		// Prevent cloning.
+	}
+
+	/**
+	 * Prevent unserialization
+	 *
+	 * @return void
+	 */
+	public function __wakeup() {
+		// Prevent unserialization.
 	}
 }

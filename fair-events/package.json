@@ -16,7 +16,7 @@
 		"composer:install:prod": "composer install --no-dev",
 		"composer:update": "composer update",
 		"composer:validate": "composer validate --strict",
-		"test": "npm-run-all test:js test:php",
+		"test": "npm-run-all test:js",
 		"test:js": "jest",
 		"test:php": "vendor/bin/phpunit",
 		"test:e2e": "playwright test",

@@ -1,37 +1,36 @@
 {
 	"name": "fair-payment",
-	"version": "1.0.1",
-	"description": "Fair Payment WordPress plugin",
-	"license": "GPL-3.0-or-later",
-	"author": "Marcin Wosinek",
-	"type": "module",
+	"version": "0.1.0",
+	"description": "Simple payment block for WordPress",
 	"main": "build/index.js",
 	"scripts": {
-		"build": "wp-scripts build",
-		"clean": "rm -rf build",
-		"prebuild": "npm run clean",
-		"start": "wp-scripts start",
 		"composer:install": "composer install",
 		"composer:install:prod": "composer install --no-dev",
 		"composer:update": "composer update",
 		"composer:validate": "composer validate --strict",
+		"build": "wp-scripts build",
+		"start": "wp-scripts start",
 		"format": "wp-scripts format",
-		"test": "jest"
+		"test": "npm-run-all test:js",
+		"test:js": "jest",
+		"test:php": "vendor/bin/phpunit"
+	},
+	"keywords": [
+		"wordpress",
+		"gutenberg",
+		"block",
+		"payment"
+	],
+	"author": "Fair Event Plugins",
+	"license": "GPL-2.0-or-later",
+	"devDependencies": {
+		"@wordpress/scripts": "^28.3.0"
 	},
 	"dependencies": {
-		"@fortawesome/fontawesome-svg-core": "^7.0.0",
-		"@fortawesome/free-solid-svg-icons": "^7.0.0",
-		"@fortawesome/react-fontawesome": "^0.2.3",
 		"@wordpress/block-editor": "^15.2.0",
 		"@wordpress/blocks": "^15.2.0",
 		"@wordpress/components": "^30.2.0",
+		"@wordpress/element": "^6.2.0",
 		"@wordpress/i18n": "^6.2.0"
-	},
-	"devDependencies": {
-		"@babel/core": "^7.28.3",
-		"@babel/preset-env": "^7.28.3",
-		"@wordpress/scripts": "^30.20.0",
-		"babel-jest": "^30.0.5",
-		"jest": "^30.0.0"
 	}
 }
