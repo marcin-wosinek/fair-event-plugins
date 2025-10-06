@@ -46,6 +46,11 @@ export default function SettingsApp() {
 			},
 		})
 			.then(() => {
+				// Reload settings after save
+				return apiFetch({ path: '/wp/v2/settings' });
+			})
+			.then((settings) => {
+				setSlug(settings.fair_events_slug || 'fair-events');
 				setNotice({
 					status: 'success',
 					message: __('Settings saved successfully.', 'fair-events'),
