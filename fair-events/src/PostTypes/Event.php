@@ -131,6 +131,35 @@ class Event {
 	public static function register_meta_box() {
 		add_action( 'add_meta_boxes', array( __CLASS__, 'add_meta_box' ) );
 		add_action( 'save_post', array( __CLASS__, 'save_meta_box' ) );
+		add_action( 'admin_enqueue_scripts', array( __CLASS__, 'enqueue_meta_box_scripts' ) );
+	}
+
+	/**
+	 * Enqueue meta box scripts
+	 *
+	 * @param string $hook Current admin page hook.
+	 * @return void
+	 */
+	public static function enqueue_meta_box_scripts( $hook ) {
+		// Only load on post edit screens for fair_event post type.
+		if ( ! in_array( $hook, array( 'post.php', 'post-new.php' ), true ) ) {
+			return;
+		}
+
+		$screen = get_current_screen();
+		if ( ! $screen || self::POST_TYPE !== $screen->post_type ) {
+			return;
+		}
+
+		$asset_file = include FAIR_EVENTS_PLUGIN_DIR . 'build/admin/event-meta/index.asset.php';
+
+		wp_enqueue_script(
+			'fair-events-event-meta',
+			FAIR_EVENTS_PLUGIN_URL . 'build/admin/event-meta/index.js',
+			$asset_file['dependencies'],
+			$asset_file['version'],
+			true
+		);
 	}
 
 	/**
