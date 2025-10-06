@@ -40,6 +40,7 @@ class Plugin {
 	public function init() {
 		add_action( 'init', array( $this, 'register_blocks' ) );
 		$this->load_admin();
+		$this->load_settings();
 	}
 
 	/**
@@ -89,6 +90,16 @@ class Plugin {
 			$admin = new \FairPayment\Admin\AdminPages();
 			$admin->init();
 		}
+	}
+
+	/**
+	 * Load and initialize settings
+	 *
+	 * @return void
+	 */
+	private function load_settings() {
+		$settings = new \FairPayment\Settings\Settings();
+		$settings->init();
 	}
 
 	/**

@@ -12,7 +12,7 @@ const blockEntries = {
 
 // Admin entries
 const adminEntries = {
-	'admin/settings/index': 'src/admin/settings/index.js',
+	'admin/settings/index': 'src/Admin/settings/index.js',
 };
 
 // Combine all potential entries
