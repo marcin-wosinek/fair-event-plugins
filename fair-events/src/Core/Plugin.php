@@ -42,6 +42,7 @@ class Plugin {
 		$this->load_hooks();
 		$this->load_patterns();
 		$this->load_admin();
+		$this->load_settings();
 	}
 
 	/**
@@ -73,6 +74,16 @@ class Plugin {
 			$admin = new \FairEvents\Admin\AdminPages();
 			$admin->init();
 		}
+	}
+
+	/**
+	 * Load and initialize settings
+	 *
+	 * @return void
+	 */
+	private function load_settings() {
+		$settings = new \FairEvents\Settings\Settings();
+		$settings->init();
 	}
 
 	/**
