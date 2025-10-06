@@ -48,10 +48,35 @@ class Plugin {
 	 * @return void
 	 */
 	public function register_blocks() {
-		// Register simple-payment block placeholder
+		$asset_file_path = FAIR_PAYMENT_PLUGIN_DIR . 'build/blocks/simple-payment/index.asset.php';
+
+		// Register simple-payment block
 		register_block_type(
-			FAIR_PAYMENT_PLUGIN_DIR . 'src/blocks/simple-payment'
+			FAIR_PAYMENT_PLUGIN_DIR . 'src/blocks/simple-payment',
+			array(
+				'editor_script_handles' => array(),
+			)
 		);
+
+		if ( file_exists( $asset_file_path ) ) {
+			$asset_file = include $asset_file_path;
+
+			wp_register_script(
+				'fair-payment-simple-payment-editor',
+				FAIR_PAYMENT_PLUGIN_URL . 'build/blocks/simple-payment/index.js',
+				$asset_file['dependencies'],
+				$asset_file['version'],
+				true
+			);
+
+			// Enqueue block editor script
+			add_action(
+				'enqueue_block_editor_assets',
+				function () {
+					wp_enqueue_script( 'fair-payment-simple-payment-editor' );
+				}
+			);
+		}
 	}
 
 	/**

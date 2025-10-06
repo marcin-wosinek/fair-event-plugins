@@ -8,8 +8,10 @@
 		"composer:install:prod": "composer install --no-dev",
 		"composer:update": "composer update",
 		"composer:validate": "composer validate --strict",
-		"build": "wp-scripts build",
-		"start": "wp-scripts start",
+		"prebuild": "npm run clean",
+		"build": "webpack --mode=production --config webpack.config.cjs",
+		"clean": "rm -rf build",
+		"start": "webpack --mode=development --watch --config webpack.config.cjs",
 		"format": "wp-scripts format",
 		"test": "npm-run-all test:js",
 		"test:js": "jest",
@@ -30,6 +32,7 @@
 		"@wordpress/block-editor": "^15.2.0",
 		"@wordpress/blocks": "^15.2.0",
 		"@wordpress/components": "^30.2.0",
+		"@wordpress/dom-ready": "^4.2.0",
 		"@wordpress/element": "^6.2.0",
 		"@wordpress/i18n": "^6.2.0"
 	}
