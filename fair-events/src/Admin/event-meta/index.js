@@ -24,32 +24,53 @@ domReady(() => {
 		const isAllDay = allDayCheckbox.checked;
 
 		if (isAllDay) {
-			// Store current values
-			startInput.dataset.timeValue = startInput.value;
-			endInput.dataset.timeValue = endInput.value;
+			// Store current full datetime values before switching
+			if (startInput.type === 'datetime-local' && startInput.value) {
+				startInput.dataset.datetimeValue = startInput.value;
+			}
+			if (endInput.type === 'datetime-local' && endInput.value) {
+				endInput.dataset.datetimeValue = endInput.value;
+			}
 
-			// Remove time portion (keep only date)
-			if (startInput.value) {
-				startInput.value = startInput.value.split('T')[0];
-			}
-			if (endInput.value) {
-				endInput.value = endInput.value.split('T')[0];
-			}
+			// Get current values (date portion only)
+			const startDate = startInput.value
+				? startInput.value.split('T')[0]
+				: '';
+			const endDate = endInput.value ? endInput.value.split('T')[0] : '';
 
 			// Change input type to date
 			startInput.type = 'date';
 			endInput.type = 'date';
+
+			// Set date-only values
+			startInput.value = startDate;
+			endInput.value = endDate;
 		} else {
-			// Restore to datetime-local
+			// Store current date values before switching
+			if (startInput.type === 'date' && startInput.value) {
+				startInput.dataset.dateValue = startInput.value;
+			}
+			if (endInput.type === 'date' && endInput.value) {
+				endInput.dataset.dateValue = endInput.value;
+			}
+
+			// Change input type to datetime-local
 			startInput.type = 'datetime-local';
 			endInput.type = 'datetime-local';
 
-			// Restore previous values if they exist
-			if (startInput.dataset.timeValue) {
-				startInput.value = startInput.dataset.timeValue;
+			// Restore previous datetime values if they exist
+			if (startInput.dataset.datetimeValue) {
+				startInput.value = startInput.dataset.datetimeValue;
+			} else if (startInput.dataset.dateValue) {
+				// Add default time (00:00) if only date exists
+				startInput.value = startInput.dataset.dateValue + 'T00:00';
 			}
-			if (endInput.dataset.timeValue) {
-				endInput.value = endInput.dataset.timeValue;
+
+			if (endInput.dataset.datetimeValue) {
+				endInput.value = endInput.dataset.datetimeValue;
+			} else if (endInput.dataset.dateValue) {
+				// Add default time (23:59) for end date
+				endInput.value = endInput.dataset.dateValue + 'T23:59';
 			}
 		}
 	}

@@ -190,13 +190,26 @@ class Event {
 		$event_start   = get_post_meta( $post->ID, 'event_start', true );
 		$event_end     = get_post_meta( $post->ID, 'event_end', true );
 		$event_all_day = get_post_meta( $post->ID, 'event_all_day', true );
+
+		// Determine input type based on all-day setting
+		$input_type = $event_all_day ? 'date' : 'datetime-local';
+
+		// Extract date portion if all-day event
+		if ( $event_all_day ) {
+			if ( $event_start && strpos( $event_start, 'T' ) !== false ) {
+				$event_start = substr( $event_start, 0, strpos( $event_start, 'T' ) );
+			}
+			if ( $event_end && strpos( $event_end, 'T' ) !== false ) {
+				$event_end = substr( $event_end, 0, strpos( $event_end, 'T' ) );
+			}
+		}
 		?>
 		<p>
 			<label for="event_start">
 				<?php esc_html_e( 'Start Date & Time', 'fair-events' ); ?>
 			</label>
 			<input
-				type="datetime-local"
+				type="<?php echo esc_attr( $input_type ); ?>"
 				id="event_start"
 				name="event_start"
 				value="<?php echo esc_attr( $event_start ); ?>"
@@ -208,7 +221,7 @@ class Event {
 				<?php esc_html_e( 'End Date & Time', 'fair-events' ); ?>
 			</label>
 			<input
-				type="datetime-local"
+				type="<?php echo esc_attr( $input_type ); ?>"
 				id="event_end"
 				name="event_end"
 				value="<?php echo esc_attr( $event_end ); ?>"
