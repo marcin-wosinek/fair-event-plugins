@@ -22,6 +22,7 @@ class Settings {
 		add_action( 'init', array( $this, 'register_settings' ) );
 		add_action( 'update_option_fair_events_slug', array( $this, 'flush_rewrite_rules_on_slug_change' ), 10, 2 );
 		add_action( 'delete_option_fair_events_slug', array( $this, 'flush_rewrite_rules_on_slug_delete' ) );
+		add_filter( 'rest_pre_update_setting', array( $this, 'handle_empty_slug_via_rest' ), 10, 3 );
 	}
 
 	/**
@@ -53,13 +54,32 @@ class Settings {
 	public function sanitize_slug( $value ) {
 		$sanitized = sanitize_title( $value );
 
-		// If empty string, delete the option and return default
-		if ( empty( $sanitized ) ) {
+		// Return empty string if sanitized is empty
+		// The REST API filter will handle deletion
+		return $sanitized;
+	}
+
+	/**
+	 * Handle empty slug via REST API
+	 *
+	 * @param mixed  $result  Result to return instead of the value.
+	 * @param string $name    Setting name.
+	 * @param mixed  $value   Value to save.
+	 * @return mixed Modified result or original value.
+	 */
+	public function handle_empty_slug_via_rest( $result, $name, $value ) {
+		if ( 'fair_events_slug' !== $name ) {
+			return $result;
+		}
+
+		// If empty value, delete the option and return default
+		if ( empty( $value ) ) {
 			delete_option( 'fair_events_slug' );
+			// Return the default value
 			return 'fair-events';
 		}
 
-		return $sanitized;
+		return $result;
 	}
 
 	/**
@@ -72,10 +92,8 @@ class Settings {
 	public function flush_rewrite_rules_on_slug_change( $old_value, $new_value ) {
 		// Only flush if the value actually changed
 		if ( $old_value !== $new_value ) {
-			// Re-register post type with new slug
-			\FairEvents\PostTypes\Event::register();
-			// Flush rewrite rules
-			flush_rewrite_rules();
+			// Schedule flush on shutdown to ensure all hooks are processed
+			add_action( 'shutdown', array( $this, 'do_flush_rewrite_rules' ) );
 		}
 	}
 
@@ -85,7 +103,17 @@ class Settings {
 	 * @return void
 	 */
 	public function flush_rewrite_rules_on_slug_delete() {
-		// Re-register post type with default slug
+		// Schedule flush on shutdown to ensure all hooks are processed
+		add_action( 'shutdown', array( $this, 'do_flush_rewrite_rules' ) );
+	}
+
+	/**
+	 * Actually perform the rewrite rules flush
+	 *
+	 * @return void
+	 */
+	public function do_flush_rewrite_rules() {
+		// Re-register post type with current slug
 		\FairEvents\PostTypes\Event::register();
 		// Flush rewrite rules
 		flush_rewrite_rules();
