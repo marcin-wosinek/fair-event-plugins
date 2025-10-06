@@ -34,6 +34,10 @@ namespace FairEvents;
 
 defined( 'WPINC' ) || die;
 
+// Define plugin constants.
+define( 'FAIR_EVENTS_PLUGIN_DIR', plugin_dir_path( __FILE__ ) );
+define( 'FAIR_EVENTS_PLUGIN_URL', plugin_dir_url( __FILE__ ) );
+
 require_once __DIR__ . '/vendor/autoload.php';
 
 use FairEvents\Core\Plugin;

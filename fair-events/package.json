@@ -7,10 +7,10 @@
 	"type": "module",
 	"main": "build/index.js",
 	"scripts": {
-		"build": "wp-scripts build",
+		"build": "webpack --mode=production --config webpack.config.cjs",
 		"clean": "rm -rf build",
 		"prebuild": "npm run clean",
-		"start": "wp-scripts start",
+		"start": "webpack --mode=development --watch --config webpack.config.cjs",
 		"format": "wp-scripts format",
 		"composer:install": "composer install",
 		"composer:install:prod": "composer install --no-dev",
@@ -27,6 +27,8 @@
 		"@wordpress/block-editor": "^15.2.0",
 		"@wordpress/blocks": "^15.2.0",
 		"@wordpress/components": "^30.2.0",
+		"@wordpress/dom-ready": "^4.2.0",
+		"@wordpress/element": "^6.2.0",
 		"@wordpress/i18n": "^6.2.0"
 	},
 	"devDependencies": {
