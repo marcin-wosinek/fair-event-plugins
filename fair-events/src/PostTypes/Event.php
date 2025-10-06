@@ -53,6 +53,9 @@ class Event {
 			'items_list'            => _x( 'Events list', 'Screen reader text for the items list', 'fair-events' ),
 		);
 
+		// Get slug from settings, fallback to default
+		$slug = get_option( 'fair_events_slug', 'fair-events' );
+
 		$args = array(
 			'labels'             => $labels,
 			'public'             => true,
@@ -60,7 +63,7 @@ class Event {
 			'show_ui'            => true,
 			'show_in_menu'       => true,
 			'query_var'          => true,
-			'rewrite'            => array( 'slug' => 'fair-events' ),
+			'rewrite'            => array( 'slug' => $slug ),
 			'capability_type'    => 'post',
 			'has_archive'        => true,
 			'hierarchical'       => false,
