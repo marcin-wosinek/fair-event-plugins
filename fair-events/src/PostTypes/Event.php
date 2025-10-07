@@ -78,6 +78,7 @@ class Event {
 
 		self::register_meta();
 		self::register_meta_box();
+		self::register_clone_support();
 	}
 
 	/**
@@ -241,6 +242,57 @@ class Event {
 			</label>
 		</p>
 		<?php
+	}
+
+	/**
+	 * Register support for copy-delete-posts plugin
+	 *
+	 * @return void
+	 */
+	public static function register_clone_support() {
+		// Support copy-delete-posts plugin by ensuring event meta is copied
+		// Hook very late after metadata has been set
+		add_action( 'added_post_meta', array( __CLASS__, 'copy_event_meta_on_cdp_origin' ), 10, 4 );
+	}
+
+	/**
+	 * Copy event metadata when _cdp_origin is set (indicates cloning)
+	 *
+	 * @param int    $meta_id    ID of metadata entry.
+	 * @param int    $post_id    Post ID.
+	 * @param string $meta_key   Meta key.
+	 * @param mixed  $meta_value Meta value.
+	 * @return void
+	 */
+	public static function copy_event_meta_on_cdp_origin( $meta_id, $post_id, $meta_key, $meta_value ) {
+		// Only act when _cdp_origin is set (copy-delete-posts marker)
+		if ( $meta_key !== '_cdp_origin' ) {
+			return;
+		}
+
+		// Check if this is a fair_event post
+		$post = get_post( $post_id );
+		if ( ! $post || self::POST_TYPE !== $post->post_type ) {
+			return;
+		}
+
+		// $meta_value contains the original post ID
+		$origin_id = $meta_value;
+
+		// Copy event metadata from original post
+		$event_start   = get_post_meta( $origin_id, 'event_start', true );
+		$event_end     = get_post_meta( $origin_id, 'event_end', true );
+		$event_all_day = get_post_meta( $origin_id, 'event_all_day', true );
+
+		if ( $event_start ) {
+			update_post_meta( $post_id, 'event_start', $event_start );
+		}
+		if ( $event_end ) {
+			update_post_meta( $post_id, 'event_end', $event_end );
+		}
+		if ( $event_all_day !== '' ) {
+			update_post_meta( $post_id, 'event_all_day', $event_all_day );
+		}
 	}
 
 	/**
