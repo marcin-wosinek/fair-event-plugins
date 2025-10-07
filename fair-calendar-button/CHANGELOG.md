@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.5.0
+
+### Minor Changes
+
+- 13fb665: Integrate button with Fair Events content type
+
 ## 1.4.0
 
 ### Minor Changes
