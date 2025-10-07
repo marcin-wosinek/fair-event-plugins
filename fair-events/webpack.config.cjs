@@ -13,8 +13,8 @@ const blockEntries = {
 
 // Admin pages
 const adminEntries = {
-	'admin/settings/index': 'src/admin/settings/index.js',
-	'admin/event-meta/index': 'src/admin/event-meta/index.js',
+	'admin/settings/index': 'src/Admin/settings/index.js',
+	'admin/event-meta/index': 'src/Admin/event-meta/index.js',
 };
 
 // Combine all potential entries
