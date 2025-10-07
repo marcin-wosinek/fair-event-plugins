@@ -55,22 +55,34 @@ export default function EditComponent({ attributes, setAttributes }) {
 	const [metaUpdateCounter, setMetaUpdateCounter] = useState(0);
 
 	// Detect if we're on a fair_event post type
-	const { postType, eventMeta } = useSelect((select) => {
-		const { getCurrentPostType } = select('core/editor');
-		const { getEditedPostAttribute } = select('core/editor');
+	const { postType, eventMeta } = useSelect(
+		(select) => {
+			const { getCurrentPostType } = select('core/editor');
+			const { getEditedPostAttribute } = select('core/editor');
 
-		return {
-			postType: getCurrentPostType(),
-			eventMeta: {
-				event_start: getEditedPostAttribute('meta')?.event_start || '',
-				event_end: getEditedPostAttribute('meta')?.event_end || '',
-				event_all_day:
-					getEditedPostAttribute('meta')?.event_all_day || false,
-			},
-		};
-	}, [metaUpdateCounter]);
+			return {
+				postType: getCurrentPostType(),
+				eventMeta: {
+					event_start:
+						getEditedPostAttribute('meta')?.event_start || '',
+					event_end: getEditedPostAttribute('meta')?.event_end || '',
+					event_all_day:
+						getEditedPostAttribute('meta')?.event_all_day || false,
+				},
+			};
+		},
+		[metaUpdateCounter]
+	);
 
 	const isOnFairEvent = postType === 'fair_event';
+
+	// Auto-enable sync when block is first added to a fair_event post
+	useEffect(() => {
+		if (isOnFairEvent && !syncWithEvent && !start && !end) {
+			// Only enable sync if this appears to be a new block (no dates set yet)
+			setAttributes({ syncWithEvent: true });
+		}
+	}, [isOnFairEvent]);
 
 	// Subscribe to metadata changes when sync is enabled
 	useEffect(() => {
