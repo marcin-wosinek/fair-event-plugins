@@ -15,7 +15,8 @@ import {
 	useInnerBlocksProps,
 } from '@wordpress/block-editor';
 import { __ } from '@wordpress/i18n';
-import { useState } from '@wordpress/element';
+import { useState, useEffect } from '@wordpress/element';
+import { useSelect } from '@wordpress/data';
 import {
 	calculateDuration,
 	calculateEndTime,
@@ -39,8 +40,51 @@ import RecurringEventsCalendar from './RecurringEventsCalendar.js';
 export default function EditComponent({ attributes, setAttributes }) {
 	const blockProps = useBlockProps();
 
-	const { start, end, allDay, description, location, recurring, recurrence } =
-		attributes;
+	const {
+		start,
+		end,
+		allDay,
+		description,
+		location,
+		recurring,
+		recurrence,
+		syncWithEvent,
+	} = attributes;
+
+	// Detect if we're on a fair_event post type
+	const { postType, eventMeta } = useSelect((select) => {
+		const { getCurrentPostType } = select('core/editor');
+		const { getEditedPostAttribute } = select('core/editor');
+
+		return {
+			postType: getCurrentPostType(),
+			eventMeta: {
+				event_start: getEditedPostAttribute('meta')?.event_start || '',
+				event_end: getEditedPostAttribute('meta')?.event_end || '',
+				event_all_day:
+					getEditedPostAttribute('meta')?.event_all_day || false,
+			},
+		};
+	}, []);
+
+	const isOnFairEvent = postType === 'fair_event';
+
+	// Sync with event data when toggle is enabled
+	useEffect(() => {
+		if (syncWithEvent && isOnFairEvent && eventMeta.event_start) {
+			setAttributes({
+				start: eventMeta.event_start,
+				end: eventMeta.event_end,
+				allDay: eventMeta.event_all_day,
+			});
+		}
+	}, [
+		syncWithEvent,
+		isOnFairEvent,
+		eventMeta.event_start,
+		eventMeta.event_end,
+		eventMeta.event_all_day,
+	]);
 
 	// Extract recurrence values with defaults
 	const frequency = recurrence?.frequency || 'WEEKLY';
@@ -290,10 +334,27 @@ export default function EditComponent({ attributes, setAttributes }) {
 						'fair-calendar-button'
 					)}
 				>
+					{isOnFairEvent && (
+						<ToggleControl
+							label={__(
+								'Keep in sync with event data',
+								'fair-calendar-button'
+							)}
+							checked={syncWithEvent}
+							onChange={(value) =>
+								setAttributes({ syncWithEvent: value })
+							}
+							help={__(
+								'Automatically use start date, end date, and all-day setting from the event.',
+								'fair-calendar-button'
+							)}
+						/>
+					)}
 					<ToggleControl
 						label={__('All Day Event', 'fair-calendar-button')}
 						checked={allDay}
 						onChange={handleAllDayToggle}
+						disabled={syncWithEvent && isOnFairEvent}
 					/>
 					<TextControl
 						label={
@@ -308,6 +369,7 @@ export default function EditComponent({ attributes, setAttributes }) {
 								: handleStartTimeChange
 						}
 						type={allDay ? 'date' : 'datetime-local'}
+						disabled={syncWithEvent && isOnFairEvent}
 					/>
 					{allDay && (
 						<SelectControl
@@ -315,6 +377,7 @@ export default function EditComponent({ attributes, setAttributes }) {
 							value={getCurrentAllDayLengthSelection()}
 							options={allDayLengthOptions}
 							onChange={handleAllDayLengthChange}
+							disabled={syncWithEvent && isOnFairEvent}
 						/>
 					)}
 					{!allDay && (
@@ -323,6 +386,7 @@ export default function EditComponent({ attributes, setAttributes }) {
 							value={getCurrentDurationSelection()}
 							options={durationOptions}
 							onChange={handleDurationChange}
+							disabled={syncWithEvent && isOnFairEvent}
 						/>
 					)}
 					<TextControl
@@ -334,6 +398,7 @@ export default function EditComponent({ attributes, setAttributes }) {
 						value={end}
 						onChange={(value) => setAttributes({ end: value })}
 						type={allDay ? 'date' : 'datetime-local'}
+						disabled={syncWithEvent && isOnFairEvent}
 						className={
 							!dateTimeValidation.isValid
 								? 'has-error'

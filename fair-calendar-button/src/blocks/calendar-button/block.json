@@ -64,6 +64,10 @@
 		"rRule": {
 			"type": "string",
 			"default": ""
+		},
+		"syncWithEvent": {
+			"type": "boolean",
+			"default": false
 		}
 	},
 	"providesContext": {
