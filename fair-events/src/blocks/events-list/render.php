@@ -27,7 +27,13 @@ $query_args = array(
 
 // Add category filter if categories are selected
 if ( ! empty( $categories ) ) {
-	$query_args['category__in'] = $categories;
+	$query_args['tax_query'] = array(
+		array(
+			'taxonomy' => 'category',
+			'field'    => 'term_id',
+			'terms'    => $categories,
+		),
+	);
 }
 
 // Add time-based meta query
@@ -104,8 +110,8 @@ add_filter(
 			if ( isset( $query_args['meta_query'] ) ) {
 				$query['meta_query'] = $query_args['meta_query'];
 			}
-			if ( isset( $query_args['category__in'] ) ) {
-				$query['category__in'] = $query_args['category__in'];
+			if ( isset( $query_args['tax_query'] ) ) {
+				$query['tax_query'] = $query_args['tax_query'];
 			}
 			if ( isset( $query_args['meta_key'] ) ) {
 				$query['meta_key'] = $query_args['meta_key'];
@@ -148,9 +154,9 @@ if ( strpos( $display_pattern, 'wp_block:' ) === 0 ) {
 	}
 }
 
-		$is_query_loop_pattern = ( strpos( $pattern_content, '<!-- wp:query' ) !== false ||
-									strpos( $pattern_content, '<!-- wp:post-template' ) !== false );
-		?>
+$is_query_loop_pattern = ( strpos( $pattern_content, '<!-- wp:query' ) !== false ||
+							strpos( $pattern_content, '<!-- wp:post-template' ) !== false );
+?>
 
 <div <?php echo wp_kses_post( get_block_wrapper_attributes() ); ?>>
 	<?php if ( $is_query_loop_pattern && $pattern_content ) : ?>
