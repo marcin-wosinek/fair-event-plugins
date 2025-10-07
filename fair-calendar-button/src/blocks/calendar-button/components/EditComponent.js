@@ -16,7 +16,7 @@ import {
 } from '@wordpress/block-editor';
 import { __ } from '@wordpress/i18n';
 import { useState, useEffect } from '@wordpress/element';
-import { useSelect } from '@wordpress/data';
+import { useSelect, useDispatch } from '@wordpress/data';
 import {
 	calculateDuration,
 	calculateEndTime,
@@ -51,6 +51,9 @@ export default function EditComponent({ attributes, setAttributes }) {
 		syncWithEvent,
 	} = attributes;
 
+	// State to track metadata updates
+	const [metaUpdateCounter, setMetaUpdateCounter] = useState(0);
+
 	// Detect if we're on a fair_event post type
 	const { postType, eventMeta } = useSelect((select) => {
 		const { getCurrentPostType } = select('core/editor');
@@ -65,9 +68,43 @@ export default function EditComponent({ attributes, setAttributes }) {
 					getEditedPostAttribute('meta')?.event_all_day || false,
 			},
 		};
-	}, []);
+	}, [metaUpdateCounter]);
 
 	const isOnFairEvent = postType === 'fair_event';
+
+	// Subscribe to metadata changes when sync is enabled
+	useEffect(() => {
+		if (!syncWithEvent || !isOnFairEvent) {
+			return;
+		}
+
+		const { subscribe } = wp.data;
+		let previousMeta = { ...eventMeta };
+
+		// Subscribe to store changes
+		const unsubscribe = subscribe(() => {
+			const editor = wp.data.select('core/editor');
+			const currentMeta = editor.getEditedPostAttribute('meta');
+
+			// Check if metadata has changed
+			if (
+				currentMeta?.event_start !== previousMeta.event_start ||
+				currentMeta?.event_end !== previousMeta.event_end ||
+				currentMeta?.event_all_day !== previousMeta.event_all_day
+			) {
+				previousMeta = {
+					event_start: currentMeta?.event_start || '',
+					event_end: currentMeta?.event_end || '',
+					event_all_day: currentMeta?.event_all_day || false,
+				};
+
+				// Trigger a re-render by updating the counter
+				setMetaUpdateCounter((prev) => prev + 1);
+			}
+		});
+
+		return unsubscribe;
+	}, [syncWithEvent, isOnFairEvent]);
 
 	// Sync with event data when toggle is enabled
 	useEffect(() => {

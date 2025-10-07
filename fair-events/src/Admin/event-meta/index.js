@@ -96,10 +96,35 @@ domReady(() => {
 	// Initialize state based on checkbox
 	toggleTimeInputs();
 
+	/**
+	 * Update the WordPress editor store with new meta values
+	 */
+	function updateEditorMeta() {
+		if (typeof wp !== 'undefined' && wp.data && wp.data.dispatch) {
+			const { editPost } = wp.data.dispatch('core/editor');
+			editPost({
+				meta: {
+					event_start: startInput.value,
+					event_end: endInput.value,
+					event_all_day: allDayCheckbox.checked,
+				},
+			});
+		}
+	}
+
 	// Listen for checkbox changes
-	allDayCheckbox.addEventListener('change', toggleTimeInputs);
+	allDayCheckbox.addEventListener('change', () => {
+		toggleTimeInputs();
+		updateEditorMeta();
+	});
 
 	// Validate dates on input
-	startInput.addEventListener('change', validateDates);
-	endInput.addEventListener('change', validateDates);
+	startInput.addEventListener('change', () => {
+		validateDates();
+		updateEditorMeta();
+	});
+	endInput.addEventListener('change', () => {
+		validateDates();
+		updateEditorMeta();
+	});
 });
