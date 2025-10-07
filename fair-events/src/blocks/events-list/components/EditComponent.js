@@ -68,26 +68,13 @@ export default function EditComponent({ attributes, setAttributes, clientId }) {
 		})),
 	];
 
-	// Filter out "Uncategorized" and check if there are meaningful categories
+	// Check if there are multiple categories (more than just "Uncategorized")
 	const meaningfulCategories = allCategories.filter(
 		(cat) => cat.slug !== 'uncategorized'
 	);
-	const hasCategories =
-		meaningfulCategories.length > 0 ||
-		(allCategories.length === 1 &&
-			allCategories[0]?.slug !== 'uncategorized');
+	const hasCategories = meaningfulCategories.length > 0;
 
-	// Check if all categories are selected (empty array means "all")
-	const isAllSelected = categories.length === 0;
-
-	// Handle "All" checkbox toggle
-	const handleAllToggle = (checked) => {
-		if (checked) {
-			setAttributes({ categories: [] });
-		}
-	};
-
-	// Handle individual category checkbox toggle
+	// Handle category checkbox toggle
 	const handleCategoryToggle = (categoryId, checked) => {
 		let newCategories;
 		if (checked) {
@@ -166,20 +153,11 @@ export default function EditComponent({ attributes, setAttributes, clientId }) {
 							</p>
 						) : (
 							<>
-								<CheckboxControl
-									label={__('All Categories', 'fair-events')}
-									checked={isAllSelected}
-									onChange={handleAllToggle}
-								/>
 								{allCategories.map((cat) => (
 									<CheckboxControl
 										key={cat.id}
 										label={cat.name}
-										checked={
-											isAllSelected ||
-											categories.includes(cat.id)
-										}
-										disabled={isAllSelected}
+										checked={categories.includes(cat.id)}
 										onChange={(checked) =>
 											handleCategoryToggle(
 												cat.id,
@@ -209,7 +187,7 @@ export default function EditComponent({ attributes, setAttributes, clientId }) {
 					</p>
 					<p>
 						{__('Categories:', 'fair-events')}{' '}
-						{isAllSelected ? (
+						{categories.length === 0 ? (
 							<code>{__('All', 'fair-events')}</code>
 						) : (
 							<code>{selectedCategoryNames.join(', ')}</code>
