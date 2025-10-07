@@ -20,8 +20,9 @@ class Settings {
 	 */
 	public function init() {
 		add_action( 'init', array( $this, 'register_settings' ) );
+		add_action( 'add_option_fair_events_slug', array( $this, 'flush_rewrite_rules_on_slug_change' ), 10, 2 );
 		add_action( 'update_option_fair_events_slug', array( $this, 'flush_rewrite_rules_on_slug_change' ), 10, 2 );
-		add_action( 'delete_option_fair_events_slug', array( $this, 'flush_rewrite_rules_on_slug_delete' ) );
+		add_action( 'delete_option_fair_events_slug', array( $this, 'flush_rewrite_rules_on_slug_change' ) );
 		add_filter( 'rest_pre_update_setting', array( $this, 'handle_empty_slug_via_rest' ), 10, 3 );
 	}
 
@@ -89,20 +90,7 @@ class Settings {
 	 * @param string $new_value New slug value.
 	 * @return void
 	 */
-	public function flush_rewrite_rules_on_slug_change( $old_value, $new_value ) {
-		// Only flush if the value actually changed
-		if ( $old_value !== $new_value ) {
-			// Schedule flush on shutdown to ensure all hooks are processed
-			add_action( 'shutdown', array( $this, 'do_flush_rewrite_rules' ) );
-		}
-	}
-
-	/**
-	 * Flush rewrite rules when event slug is deleted (reset to default)
-	 *
-	 * @return void
-	 */
-	public function flush_rewrite_rules_on_slug_delete() {
+	public function flush_rewrite_rules_on_slug_change() {
 		// Schedule flush on shutdown to ensure all hooks are processed
 		add_action( 'shutdown', array( $this, 'do_flush_rewrite_rules' ) );
 	}
