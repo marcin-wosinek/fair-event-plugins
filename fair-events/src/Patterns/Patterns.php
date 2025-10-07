@@ -56,7 +56,6 @@ class Patterns {
 	<!-- wp:post-template -->
 		<!-- wp:post-title {"isLink":true} /-->
 		<!-- wp:fair-events/event-dates /-->
-		<!-- wp:post-excerpt /-->
 	<!-- /wp:post-template -->
 </div>
 <!-- /wp:query -->',
