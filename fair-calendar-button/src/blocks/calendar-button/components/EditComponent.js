@@ -17,8 +17,8 @@ import {
 import { __ } from '@wordpress/i18n';
 import { useState, useEffect } from '@wordpress/element';
 import { useSelect, useDispatch } from '@wordpress/data';
+import { calculateDuration } from 'fair-events-shared';
 import {
-	calculateDuration,
 	calculateEndTime,
 	convertToDateOnly,
 	calculateDaysInclusive,

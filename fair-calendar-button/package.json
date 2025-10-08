@@ -35,7 +35,8 @@
 		"@wordpress/components": "^30.2.0",
 		"@wordpress/i18n": "^6.2.0",
 		"calendar-link": "^2.11.0",
-		"date-fns": "^4.1.0"
+		"date-fns": "^4.1.0",
+		"fair-events-shared": "*"
 	},
 	"devDependencies": {
 		"@babel/core": "^7.28.3",
