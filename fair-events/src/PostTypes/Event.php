@@ -79,6 +79,7 @@ class Event {
 		self::register_meta();
 		self::register_meta_box();
 		self::register_clone_support();
+		self::register_admin_columns();
 	}
 
 	/**
@@ -292,6 +293,128 @@ class Event {
 		}
 		if ( $event_all_day !== '' ) {
 			update_post_meta( $post_id, 'event_all_day', $event_all_day );
+		}
+	}
+
+	/**
+	 * Register admin columns
+	 *
+	 * @return void
+	 */
+	public static function register_admin_columns() {
+		add_filter( 'manage_' . self::POST_TYPE . '_posts_columns', array( __CLASS__, 'add_admin_columns' ) );
+		add_action( 'manage_' . self::POST_TYPE . '_posts_custom_column', array( __CLASS__, 'render_admin_column' ), 10, 2 );
+		add_filter( 'manage_edit-' . self::POST_TYPE . '_sortable_columns', array( __CLASS__, 'add_sortable_columns' ) );
+		add_action( 'pre_get_posts', array( __CLASS__, 'handle_column_sorting' ) );
+	}
+
+	/**
+	 * Add custom columns to admin list
+	 *
+	 * @param array $columns Existing columns.
+	 * @return array Modified columns.
+	 */
+	public static function add_admin_columns( $columns ) {
+		// Insert event columns after title
+		$new_columns = array();
+		foreach ( $columns as $key => $value ) {
+			$new_columns[ $key ] = $value;
+			if ( $key === 'title' ) {
+				$new_columns['event_start']   = __( 'Event Start', 'fair-events' );
+				$new_columns['event_end']     = __( 'Event End', 'fair-events' );
+				$new_columns['event_all_day'] = __( 'All Day', 'fair-events' );
+			}
+		}
+		return $new_columns;
+	}
+
+	/**
+	 * Render custom column content
+	 *
+	 * @param string $column  Column name.
+	 * @param int    $post_id Post ID.
+	 * @return void
+	 */
+	public static function render_admin_column( $column, $post_id ) {
+		switch ( $column ) {
+			case 'event_start':
+			case 'event_end':
+				$value = get_post_meta( $post_id, $column, true );
+				if ( $value ) {
+					$all_day = get_post_meta( $post_id, 'event_all_day', true );
+					echo esc_html( self::format_event_datetime( $value, $all_day ) );
+				} else {
+					echo '—';
+				}
+				break;
+
+			case 'event_all_day':
+				$all_day = get_post_meta( $post_id, 'event_all_day', true );
+				echo $all_day ? esc_html__( 'Yes', 'fair-events' ) : '';
+				break;
+		}
+	}
+
+	/**
+	 * Format event datetime for display
+	 *
+	 * @param string $datetime Datetime string.
+	 * @param bool   $all_day  Whether event is all-day.
+	 * @return string Formatted datetime.
+	 */
+	private static function format_event_datetime( $datetime, $all_day = false ) {
+		if ( empty( $datetime ) ) {
+			return '';
+		}
+
+		$timestamp = strtotime( $datetime );
+		if ( false === $timestamp ) {
+			return $datetime;
+		}
+
+		$date_format = get_option( 'date_format' );
+
+		if ( $all_day ) {
+			// All-day events: show date only
+			return wp_date( $date_format, $timestamp );
+		} else {
+			// Timed events: show date and time
+			$time_format = get_option( 'time_format' );
+			return wp_date( $date_format . ' ' . $time_format, $timestamp );
+		}
+	}
+
+	/**
+	 * Make event columns sortable
+	 *
+	 * @param array $columns Sortable columns.
+	 * @return array Modified sortable columns.
+	 */
+	public static function add_sortable_columns( $columns ) {
+		$columns['event_start'] = 'event_start';
+		$columns['event_end']   = 'event_end';
+		return $columns;
+	}
+
+	/**
+	 * Handle sorting by event meta fields
+	 *
+	 * @param \WP_Query $query The query object.
+	 * @return void
+	 */
+	public static function handle_column_sorting( $query ) {
+		if ( ! is_admin() || ! $query->is_main_query() ) {
+			return;
+		}
+
+		$orderby = $query->get( 'orderby' );
+
+		if ( 'event_start' === $orderby ) {
+			$query->set( 'meta_key', 'event_start' );
+			$query->set( 'orderby', 'meta_value' );
+		} elseif ( 'event_end' === $orderby ) {
+			$query->set( 'meta_key', 'event_end' );
+			$query->set( 'orderby', 'meta_value' );
 		}
 	}
 
