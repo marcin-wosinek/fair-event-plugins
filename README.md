@@ -31,6 +31,52 @@ Use docker compose with:
 1. Navigate to the `plugins` directory of your WordPress installation.
 2. From the terminal, run `$ git clone git@github.com:tommcfarlin/fair-payment.git`
 
+## Translation
+
+All plugins in this repository support internationalization (i18n). To create or update translations:
+
+### Generate Translation Template
+
+For any plugin (e.g., fair-events, fair-calendar-button):
+
+```bash
+cd fair-events
+npm run makepot
+```
+
+This generates a `.pot` file in the `languages/` directory containing all translatable strings.
+
+### Create a New Translation
+
+1. Copy the `.pot` file and rename it with your locale (e.g., `fair-events-pl_PL.po` for Polish)
+2. Use a translation editor like [Poedit](https://poedit.net/) to translate the strings
+3. Generate `.mo` file:
+
+```bash
+npm run makemo
+```
+
+### Update Existing Translations
+
+After adding new translatable strings to the code:
+
+```bash
+npm run makepot      # Update template
+npm run updatepo     # Update all .po files with new strings
+```
+
+Then translate the new strings in your `.po` files and run `npm run makemo`.
+
+### Build with Translations
+
+The build process automatically generates JSON translation files for JavaScript:
+
+```bash
+npm run build
+```
+
+JSON files are created in `build/languages/` and are required for block editor translations.
+
 ## Notes
 
 This specific repository assumes you're running PHP 8.0.  At the time of this writing, WordPress is not fully compatible with PHP 8.0; however, if you change the references to PHP 7.4.28 in

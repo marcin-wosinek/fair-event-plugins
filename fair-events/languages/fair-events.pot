@@ -1,0 +1,412 @@
+# Copyright (C) 2025 Marcin Wosinek
+# This file is distributed under the GPLv3 or later.
+msgid ""
+msgstr ""
+"Project-Id-Version: Fair Events 0.3.2\n"
+"Report-Msgid-Bugs-To: https://wordpress.org/support/plugin/fair-events\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language-Team: LANGUAGE <LL@li.org>\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"POT-Creation-Date: 2025-10-08T07:48:59+00:00\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"X-Generator: WP-CLI 2.12.0\n"
+"X-Domain: fair-events\n"
+
+#. Plugin Name of the plugin
+#: fair-events.php
+#: src/Patterns/Patterns.php:35
+msgid "Fair Events"
+msgstr ""
+
+#. Plugin URI of the plugin
+#: fair-events.php
+msgid "https://github.com/marcin-wosinek/fair-event-plugins"
+msgstr ""
+
+#. Description of the plugin
+#: fair-events.php
+msgid "Event management plugin."
+msgstr ""
+
+#. Author of the plugin
+#: fair-events.php
+msgid "Marcin Wosinek"
+msgstr ""
+
+#. Author URI of the plugin
+#: fair-events.php
+msgid "https://github.com/marcin-wosinek"
+msgstr ""
+
+#: src/Admin/AdminPages.php:35
+#: src/Admin/settings/SettingsApp.js:72
+#: src/Admin/settings/SettingsApp.js:80
+msgid "Fair Events Settings"
+msgstr ""
+
+#: src/Admin/AdminPages.php:36
+msgid "Settings"
+msgstr ""
+
+#: src/Admin/AdminPages.php:45
+msgid "Import Events"
+msgstr ""
+
+#: src/Admin/AdminPages.php:46
+msgid "Import"
+msgstr ""
+
+#: src/blocks/events-list/render.php:178
+msgid "No events found. Please select a valid display pattern."
+msgstr ""
+
+#: src/Patterns/Patterns.php:50
+msgid "Event List - With Dates"
+msgstr ""
+
+#: src/Patterns/Patterns.php:51
+msgid "Display events with title, dates, and excerpt using Query Loop"
+msgstr ""
+
+#: src/Patterns/Patterns.php:69
+msgid "Event Grid"
+msgstr ""
+
+#: src/Patterns/Patterns.php:70
+msgid "Display events in a grid layout with images using Query Loop"
+msgstr ""
+
+#: src/PostTypes/Event.php:30
+msgctxt "Post type general name"
+msgid "Events"
+msgstr ""
+
+#: src/PostTypes/Event.php:31
+msgctxt "Post type singular name"
+msgid "Event"
+msgstr ""
+
+#: src/PostTypes/Event.php:32
+msgctxt "Admin Menu text"
+msgid "Events"
+msgstr ""
+
+#: src/PostTypes/Event.php:33
+msgctxt "Add New on Toolbar"
+msgid "Event"
+msgstr ""
+
+#: src/PostTypes/Event.php:34
+msgid "Add New"
+msgstr ""
+
+#: src/PostTypes/Event.php:35
+msgid "Add New Event"
+msgstr ""
+
+#: src/PostTypes/Event.php:36
+msgid "New Event"
+msgstr ""
+
+#: src/PostTypes/Event.php:37
+msgid "Edit Event"
+msgstr ""
+
+#: src/PostTypes/Event.php:38
+msgid "View Event"
+msgstr ""
+
+#: src/PostTypes/Event.php:39
+#: src/blocks/events-list/components/EditComponent.js:116
+msgid "All Events"
+msgstr ""
+
+#: src/PostTypes/Event.php:40
+msgid "Search Events"
+msgstr ""
+
+#: src/PostTypes/Event.php:41
+msgid "Parent Events:"
+msgstr ""
+
+#: src/PostTypes/Event.php:42
+msgid "No events found."
+msgstr ""
+
+#: src/PostTypes/Event.php:43
+msgid "No events found in Trash."
+msgstr ""
+
+#: src/PostTypes/Event.php:44
+msgctxt "Overrides the \"Featured Image\" phrase"
+msgid "Event Image"
+msgstr ""
+
+#: src/PostTypes/Event.php:45
+msgctxt "Overrides the \"Set featured image\" phrase"
+msgid "Set event image"
+msgstr ""
+
+#: src/PostTypes/Event.php:46
+msgctxt "Overrides the \"Remove featured image\" phrase"
+msgid "Remove event image"
+msgstr ""
+
+#: src/PostTypes/Event.php:47
+msgctxt "Overrides the \"Use as featured image\" phrase"
+msgid "Use as event image"
+msgstr ""
+
+#: src/PostTypes/Event.php:48
+msgctxt "The post type archive label"
+msgid "Event archives"
+msgstr ""
+
+#: src/PostTypes/Event.php:49
+msgctxt "Overrides the \"Insert into post\" phrase"
+msgid "Insert into event"
+msgstr ""
+
+#: src/PostTypes/Event.php:50
+msgctxt "Overrides the \"Uploaded to this post\" phrase"
+msgid "Uploaded to this event"
+msgstr ""
+
+#: src/PostTypes/Event.php:51
+msgctxt "Screen reader text for the filter links"
+msgid "Filter events list"
+msgstr ""
+
+#: src/PostTypes/Event.php:52
+msgctxt "Screen reader text for the pagination"
+msgid "Events list navigation"
+msgstr ""
+
+#: src/PostTypes/Event.php:53
+msgctxt "Screen reader text for the items list"
+msgid "Events list"
+msgstr ""
+
+#: src/PostTypes/Event.php:96
+msgid "Event start date and time"
+msgstr ""
+
+#: src/PostTypes/Event.php:108
+msgid "Event end date and time"
+msgstr ""
+
+#: src/PostTypes/Event.php:120
+msgid "Whether the event is an all-day event"
+msgstr ""
+
+#: src/PostTypes/Event.php:132
+#: src/PostTypes/Event.php:269
+msgid "Event location"
+msgstr ""
+
+#: src/PostTypes/Event.php:188
+msgid "Event Details"
+msgstr ""
+
+#: src/PostTypes/Event.php:225
+msgid "Start Date & Time"
+msgstr ""
+
+#: src/PostTypes/Event.php:237
+msgid "End Date & Time"
+msgstr ""
+
+#: src/PostTypes/Event.php:256
+msgid "All Day Event"
+msgstr ""
+
+#: src/PostTypes/Event.php:261
+#: src/PostTypes/Event.php:357
+msgid "Location"
+msgstr ""
+
+#: src/PostTypes/Event.php:354
+msgid "Event Start"
+msgstr ""
+
+#: src/PostTypes/Event.php:355
+msgid "Event End"
+msgstr ""
+
+#: src/PostTypes/Event.php:356
+msgid "All Day"
+msgstr ""
+
+#: src/PostTypes/Event.php:385
+msgid "Yes"
+msgstr ""
+
+#: src/Settings/Settings.php:41
+msgid "URL slug for events"
+msgstr ""
+
+#: src/Admin/settings/SettingsApp.js:30
+msgid "Failed to load settings."
+msgstr ""
+
+#: src/Admin/settings/SettingsApp.js:56
+msgid "Settings saved successfully."
+msgstr ""
+
+#: src/Admin/settings/SettingsApp.js:63
+msgid "Failed to save settings."
+msgstr ""
+
+#: src/Admin/settings/SettingsApp.js:73
+msgid "Loading..."
+msgstr ""
+
+#: src/Admin/settings/SettingsApp.js:99
+msgid "Event URL Slug"
+msgstr ""
+
+#: src/Admin/settings/SettingsApp.js:100
+msgid "The URL slug used for event permalinks (e.g., /fair-events/event-name)"
+msgstr ""
+
+#: src/Admin/settings/SettingsApp.js:116
+msgid "Saving..."
+msgstr ""
+
+#: src/Admin/settings/SettingsApp.js:117
+msgid "Save Settings"
+msgstr ""
+
+#: src/blocks/event-dates/components/EditComponent.js:185
+msgid "No event dates set. Add dates in the Event Details panel."
+msgstr ""
+
+#: src/blocks/event-dates/components/EditComponent.js:194
+msgid "Event Dates block: Only displays in event post context."
+msgstr ""
+
+#: src/blocks/events-list/components/EditComponent.js:66
+msgid "Untitled Pattern"
+msgstr ""
+
+#: src/blocks/events-list/components/EditComponent.js:98
+msgid "Events List Settings"
+msgstr ""
+
+#: src/blocks/events-list/components/EditComponent.js:100
+msgid "Display Pattern"
+msgstr ""
+
+#: src/blocks/events-list/components/EditComponent.js:106
+msgid "Choose a pattern for displaying events"
+msgstr ""
+
+#: src/blocks/events-list/components/EditComponent.js:112
+msgid "Time Filter"
+msgstr ""
+
+#: src/blocks/events-list/components/EditComponent.js:120
+msgid "Upcoming Events"
+msgstr ""
+
+#: src/blocks/events-list/components/EditComponent.js:124
+msgid "Past Events"
+msgstr ""
+
+#: src/blocks/events-list/components/EditComponent.js:128
+msgid "Ongoing Events"
+msgstr ""
+
+#: src/blocks/events-list/components/EditComponent.js:135
+msgid "Filter events by time relative to now"
+msgstr ""
+
+#: src/blocks/events-list/components/EditComponent.js:141
+msgid "Categories"
+msgstr ""
+
+#: src/blocks/events-list/components/EditComponent.js:149
+msgid "Define more categories if you want to use category filtering"
+msgstr ""
+
+#: src/blocks/events-list/components/EditComponent.js:178
+msgid "Events List"
+msgstr ""
+
+#: src/blocks/events-list/components/EditComponent.js:181
+msgid "Display Pattern:"
+msgstr ""
+
+#: src/blocks/events-list/components/EditComponent.js:185
+msgid "Time Filter:"
+msgstr ""
+
+#: src/blocks/events-list/components/EditComponent.js:189
+msgid "Categories:"
+msgstr ""
+
+#: src/blocks/events-list/components/EditComponent.js:191
+msgid "All"
+msgstr ""
+
+#: src/blocks/events-list/components/EditComponent.js:198
+msgid "Event list will appear here on the frontend."
+msgstr ""
+
+#: src/blocks/event-dates/block.json
+msgctxt "block title"
+msgid "Event Dates"
+msgstr ""
+
+#: src/blocks/event-dates/block.json
+msgctxt "block description"
+msgid "Display event start and end dates using WordPress date/time formats."
+msgstr ""
+
+#: src/blocks/event-dates/block.json
+msgctxt "block keyword"
+msgid "event"
+msgstr ""
+
+#: src/blocks/event-dates/block.json
+msgctxt "block keyword"
+msgid "date"
+msgstr ""
+
+#: src/blocks/event-dates/block.json
+msgctxt "block keyword"
+msgid "time"
+msgstr ""
+
+#: src/blocks/event-dates/block.json
+#: src/blocks/events-list/block.json
+msgctxt "block keyword"
+msgid "schedule"
+msgstr ""
+
+#: src/blocks/events-list/block.json
+msgctxt "block title"
+msgid "Events List"
+msgstr ""
+
+#: src/blocks/events-list/block.json
+msgctxt "block description"
+msgid "Display a list of events with filtering options."
+msgstr ""
+
+#: src/blocks/events-list/block.json
+msgctxt "block keyword"
+msgid "events"
+msgstr ""
+
+#: src/blocks/events-list/block.json
+msgctxt "block keyword"
+msgid "calendar"
+msgstr ""
+
+#: src/blocks/events-list/block.json
+msgctxt "block keyword"
+msgid "list"
+msgstr ""
