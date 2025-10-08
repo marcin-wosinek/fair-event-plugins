@@ -1,5 +1,13 @@
 # fair-events
 
+## 0.3.3
+
+### Patch Changes
+
+- 4ed3721: Add location to fair-events
+- ee8bef8: Simplify showing the dates in event-dates block
+- 2e270f0: Add translations for PL, DE & ES
+
 ## 0.3.2
 
 ### Patch Changes

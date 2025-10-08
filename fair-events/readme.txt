@@ -4,7 +4,7 @@ Tags: events, calendar, custom post type, gutenberg
 Requires at least: 6.7
 Tested up to: 6.8
 Requires PHP: 7.4
-Stable tag: 0.3.2
+Stable tag: 0.3.3
 License: GPLv3 or later
 License URI: https://www.gnu.org/licenses/gpl-3.0.html
 Text Domain: fair-events
@@ -90,6 +90,21 @@ Yes! Events are fully compatible with the Gutenberg block editor and the REST AP
 3. Single event display on frontend
 
 == Changelog ==
+
+## 0.3.3
+
+### Patch Changes
+
+- 4ed3721: Add location to fair-events
+- ee8bef8: Simplify showing the dates in event-dates block
+- 2e270f0: Add translations for PL, DE & ES
+
+## 0.3.2
+
+### Patch Changes
+
+- 8c3c2fe: Fix the category search in event-list block
+- 46fbaaf: Fix the filtering in event-list block
 
 ## 0.3.1
 

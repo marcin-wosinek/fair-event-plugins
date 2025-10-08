@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.5.1
+
+### Patch Changes
+
+- 4ed3721: Add location to fair-events
+
 ## 1.5.0
 
 ### Minor Changes
