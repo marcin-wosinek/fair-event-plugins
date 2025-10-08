@@ -1,16 +1,15 @@
-# Copyright (C) 2025 Marcin Wosinek
-# This file is distributed under the GPLv3 or later.
 msgid ""
 msgstr ""
 "Project-Id-Version: Fair Events 0.3.2\n"
 "Report-Msgid-Bugs-To: https://wordpress.org/support/plugin/fair-events\n"
-"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
-"Language-Team: LANGUAGE <LL@li.org>\n"
+"Last-Translator: Marcin Wosinek <marcin@wosinek.net>\n"
+"Language-Team: Polish\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "POT-Creation-Date: 2025-10-08T07:54:03+00:00\n"
-"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"PO-Revision-Date: 2025-10-08 08:00+0000\n"
+"Language: pl_PL\n"
 "X-Generator: WP-CLI 2.12.0\n"
 "X-Domain: fair-events\n"
 
@@ -18,7 +17,7 @@ msgstr ""
 #: fair-events.php
 #: src/Patterns/Patterns.php:35
 msgid "Fair Events"
-msgstr ""
+msgstr "Fair Events"
 
 #. Plugin URI of the plugin
 #: fair-events.php
@@ -28,7 +27,7 @@ msgstr ""
 #. Description of the plugin
 #: fair-events.php
 msgid "Event management plugin."
-msgstr ""
+msgstr "Wtyczka do zarządzania wydarzeniami."
 
 #. Author of the plugin
 #: fair-events.php
@@ -44,369 +43,369 @@ msgstr ""
 #: src/Admin/settings/SettingsApp.js:72
 #: src/Admin/settings/SettingsApp.js:80
 msgid "Fair Events Settings"
-msgstr ""
+msgstr "Ustawienia Fair Events"
 
 #: src/Admin/AdminPages.php:36
 msgid "Settings"
-msgstr ""
+msgstr "Ustawienia"
 
 #: src/Admin/AdminPages.php:45
 msgid "Import Events"
-msgstr ""
+msgstr "Importuj wydarzenia"
 
 #: src/Admin/AdminPages.php:46
 msgid "Import"
-msgstr ""
+msgstr "Import"
 
 #: src/blocks/events-list/render.php:178
 msgid "No events found. Please select a valid display pattern."
-msgstr ""
+msgstr "Nie znaleziono wydarzeń. Wybierz prawidłowy wzorzec wyświetlania."
 
 #: src/Patterns/Patterns.php:50
 msgid "Event List - With Dates"
-msgstr ""
+msgstr "Lista wydarzeń - z datami"
 
 #: src/Patterns/Patterns.php:51
 msgid "Display events with title, dates, and excerpt using Query Loop"
-msgstr ""
+msgstr "Wyświetl wydarzenia z tytułem, datami i fragmentem używając pętli zapytania"
 
 #: src/Patterns/Patterns.php:69
 msgid "Event Grid"
-msgstr ""
+msgstr "Siatka wydarzeń"
 
 #: src/Patterns/Patterns.php:70
 msgid "Display events in a grid layout with images using Query Loop"
-msgstr ""
+msgstr "Wyświetl wydarzenia w układzie siatki ze zdjęciami używając pętli zapytania"
 
 #: src/PostTypes/Event.php:30
 msgctxt "Post type general name"
 msgid "Events"
-msgstr ""
+msgstr "Wydarzenia"
 
 #: src/PostTypes/Event.php:31
 msgctxt "Post type singular name"
 msgid "Event"
-msgstr ""
+msgstr "Wydarzenie"
 
 #: src/PostTypes/Event.php:32
 msgctxt "Admin Menu text"
 msgid "Events"
-msgstr ""
+msgstr "Wydarzenia"
 
 #: src/PostTypes/Event.php:33
 msgctxt "Add New on Toolbar"
 msgid "Event"
-msgstr ""
+msgstr "Wydarzenie"
 
 #: src/PostTypes/Event.php:34
 msgid "Add New"
-msgstr ""
+msgstr "Dodaj nowe"
 
 #: src/PostTypes/Event.php:35
 msgid "Add New Event"
-msgstr ""
+msgstr "Dodaj nowe wydarzenie"
 
 #: src/PostTypes/Event.php:36
 msgid "New Event"
-msgstr ""
+msgstr "Nowe wydarzenie"
 
 #: src/PostTypes/Event.php:37
 msgid "Edit Event"
-msgstr ""
+msgstr "Edytuj wydarzenie"
 
 #: src/PostTypes/Event.php:38
 msgid "View Event"
-msgstr ""
+msgstr "Zobacz wydarzenie"
 
 #: src/PostTypes/Event.php:39
 #: src/blocks/events-list/components/EditComponent.js:116
 msgid "All Events"
-msgstr ""
+msgstr "Wszystkie wydarzenia"
 
 #: src/PostTypes/Event.php:40
 msgid "Search Events"
-msgstr ""
+msgstr "Szukaj wydarzeń"
 
 #: src/PostTypes/Event.php:41
 msgid "Parent Events:"
-msgstr ""
+msgstr "Wydarzenie nadrzędne:"
 
 #: src/PostTypes/Event.php:42
 msgid "No events found."
-msgstr ""
+msgstr "Nie znaleziono wydarzeń."
 
 #: src/PostTypes/Event.php:43
 msgid "No events found in Trash."
-msgstr ""
+msgstr "Nie znaleziono wydarzeń w koszu."
 
 #: src/PostTypes/Event.php:44
 msgctxt "Overrides the \"Featured Image\" phrase"
 msgid "Event Image"
-msgstr ""
+msgstr "Zdjęcie wydarzenia"
 
 #: src/PostTypes/Event.php:45
 msgctxt "Overrides the \"Set featured image\" phrase"
 msgid "Set event image"
-msgstr ""
+msgstr "Ustaw zdjęcie wydarzenia"
 
 #: src/PostTypes/Event.php:46
 msgctxt "Overrides the \"Remove featured image\" phrase"
 msgid "Remove event image"
-msgstr ""
+msgstr "Usuń zdjęcie wydarzenia"
 
 #: src/PostTypes/Event.php:47
 msgctxt "Overrides the \"Use as featured image\" phrase"
 msgid "Use as event image"
-msgstr ""
+msgstr "Użyj jako zdjęcie wydarzenia"
 
 #: src/PostTypes/Event.php:48
 msgctxt "The post type archive label"
 msgid "Event archives"
-msgstr ""
+msgstr "Archiwum wydarzeń"
 
 #: src/PostTypes/Event.php:49
 msgctxt "Overrides the \"Insert into post\" phrase"
 msgid "Insert into event"
-msgstr ""
+msgstr "Wstaw do wydarzenia"
 
 #: src/PostTypes/Event.php:50
 msgctxt "Overrides the \"Uploaded to this post\" phrase"
 msgid "Uploaded to this event"
-msgstr ""
+msgstr "Przesłano do tego wydarzenia"
 
 #: src/PostTypes/Event.php:51
 msgctxt "Screen reader text for the filter links"
 msgid "Filter events list"
-msgstr ""
+msgstr "Filtruj listę wydarzeń"
 
 #: src/PostTypes/Event.php:52
 msgctxt "Screen reader text for the pagination"
 msgid "Events list navigation"
-msgstr ""
+msgstr "Nawigacja listy wydarzeń"
 
 #: src/PostTypes/Event.php:53
 msgctxt "Screen reader text for the items list"
 msgid "Events list"
-msgstr ""
+msgstr "Lista wydarzeń"
 
 #: src/PostTypes/Event.php:96
 msgid "Event start date and time"
-msgstr ""
+msgstr "Data i godzina rozpoczęcia wydarzenia"
 
 #: src/PostTypes/Event.php:108
 msgid "Event end date and time"
-msgstr ""
+msgstr "Data i godzina zakończenia wydarzenia"
 
 #: src/PostTypes/Event.php:120
 msgid "Whether the event is an all-day event"
-msgstr ""
+msgstr "Czy wydarzenie trwa cały dzień"
 
 #: src/PostTypes/Event.php:132
 #: src/PostTypes/Event.php:269
 msgid "Event location"
-msgstr ""
+msgstr "Miejsce wydarzenia"
 
 #: src/PostTypes/Event.php:188
 msgid "Event Details"
-msgstr ""
+msgstr "Szczegóły wydarzenia"
 
 #: src/PostTypes/Event.php:225
 msgid "Start Date & Time"
-msgstr ""
+msgstr "Data i godzina rozpoczęcia"
 
 #: src/PostTypes/Event.php:237
 msgid "End Date & Time"
-msgstr ""
+msgstr "Data i godzina zakończenia"
 
 #: src/PostTypes/Event.php:256
 msgid "All Day Event"
-msgstr ""
+msgstr "Wydarzenie całodniowe"
 
 #: src/PostTypes/Event.php:261
 #: src/PostTypes/Event.php:357
 msgid "Location"
-msgstr ""
+msgstr "Miejsce"
 
 #: src/PostTypes/Event.php:354
 msgid "Event Start"
-msgstr ""
+msgstr "Rozpoczęcie"
 
 #: src/PostTypes/Event.php:355
 msgid "Event End"
-msgstr ""
+msgstr "Zakończenie"
 
 #: src/PostTypes/Event.php:356
 msgid "All Day"
-msgstr ""
+msgstr "Cały dzień"
 
 #: src/PostTypes/Event.php:385
 msgid "Yes"
-msgstr ""
+msgstr "Tak"
 
 #: src/Settings/Settings.php:41
 msgid "URL slug for events"
-msgstr ""
+msgstr "Slug URL dla wydarzeń"
 
 #: src/Admin/settings/SettingsApp.js:30
 msgid "Failed to load settings."
-msgstr ""
+msgstr "Nie udało się załadować ustawień."
 
 #: src/Admin/settings/SettingsApp.js:56
 msgid "Settings saved successfully."
-msgstr ""
+msgstr "Ustawienia zapisane pomyślnie."
 
 #: src/Admin/settings/SettingsApp.js:63
 msgid "Failed to save settings."
-msgstr ""
+msgstr "Nie udało się zapisać ustawień."
 
 #: src/Admin/settings/SettingsApp.js:73
 msgid "Loading..."
-msgstr ""
+msgstr "Ładowanie..."
 
 #: src/Admin/settings/SettingsApp.js:99
 msgid "Event URL Slug"
-msgstr ""
+msgstr "Slug URL wydarzenia"
 
 #: src/Admin/settings/SettingsApp.js:100
 msgid "The URL slug used for event permalinks (e.g., /fair-events/event-name)"
-msgstr ""
+msgstr "Slug URL używany w permalinkach wydarzeń (np. /fair-events/nazwa-wydarzenia)"
 
 #: src/Admin/settings/SettingsApp.js:116
 msgid "Saving..."
-msgstr ""
+msgstr "Zapisywanie..."
 
 #: src/Admin/settings/SettingsApp.js:117
 msgid "Save Settings"
-msgstr ""
+msgstr "Zapisz ustawienia"
 
 #: src/blocks/event-dates/components/EditComponent.js:185
 msgid "No event dates set. Add dates in the Event Details panel."
-msgstr ""
+msgstr "Nie ustawiono dat wydarzenia. Dodaj daty w panelu Szczegóły wydarzenia."
 
 #: src/blocks/event-dates/components/EditComponent.js:194
 msgid "Event Dates block: Only displays in event post context."
-msgstr ""
+msgstr "Blok Daty wydarzenia: Wyświetla się tylko w kontekście wpisu wydarzenia."
 
 #: src/blocks/events-list/components/EditComponent.js:66
 msgid "Untitled Pattern"
-msgstr ""
+msgstr "Wzorzec bez nazwy"
 
 #: src/blocks/events-list/components/EditComponent.js:98
 msgid "Events List Settings"
-msgstr ""
+msgstr "Ustawienia listy wydarzeń"
 
 #: src/blocks/events-list/components/EditComponent.js:100
 msgid "Display Pattern"
-msgstr ""
+msgstr "Wzorzec wyświetlania"
 
 #: src/blocks/events-list/components/EditComponent.js:106
 msgid "Choose a pattern for displaying events"
-msgstr ""
+msgstr "Wybierz wzorzec do wyświetlania wydarzeń"
 
 #: src/blocks/events-list/components/EditComponent.js:112
 msgid "Time Filter"
-msgstr ""
+msgstr "Filtr czasu"
 
 #: src/blocks/events-list/components/EditComponent.js:120
 msgid "Upcoming Events"
-msgstr ""
+msgstr "Nadchodzące wydarzenia"
 
 #: src/blocks/events-list/components/EditComponent.js:124
 msgid "Past Events"
-msgstr ""
+msgstr "Minione wydarzenia"
 
 #: src/blocks/events-list/components/EditComponent.js:128
 msgid "Ongoing Events"
-msgstr ""
+msgstr "Trwające wydarzenia"
 
 #: src/blocks/events-list/components/EditComponent.js:135
 msgid "Filter events by time relative to now"
-msgstr ""
+msgstr "Filtruj wydarzenia według czasu względem teraźniejszości"
 
 #: src/blocks/events-list/components/EditComponent.js:141
 msgid "Categories"
-msgstr ""
+msgstr "Kategorie"
 
 #: src/blocks/events-list/components/EditComponent.js:149
 msgid "Define more categories if you want to use category filtering"
-msgstr ""
+msgstr "Zdefiniuj więcej kategorii, jeśli chcesz używać filtrowania po kategoriach"
 
 #: src/blocks/events-list/components/EditComponent.js:178
 msgid "Events List"
-msgstr ""
+msgstr "Lista wydarzeń"
 
 #: src/blocks/events-list/components/EditComponent.js:181
 msgid "Display Pattern:"
-msgstr ""
+msgstr "Wzorzec wyświetlania:"
 
 #: src/blocks/events-list/components/EditComponent.js:185
 msgid "Time Filter:"
-msgstr ""
+msgstr "Filtr czasu:"
 
 #: src/blocks/events-list/components/EditComponent.js:189
 msgid "Categories:"
-msgstr ""
+msgstr "Kategorie:"
 
 #: src/blocks/events-list/components/EditComponent.js:191
 msgid "All"
-msgstr ""
+msgstr "Wszystkie"
 
 #: src/blocks/events-list/components/EditComponent.js:198
 msgid "Event list will appear here on the frontend."
-msgstr ""
+msgstr "Lista wydarzeń pojawi się tutaj na stronie."
 
 #: src/blocks/event-dates/block.json
 msgctxt "block title"
 msgid "Event Dates"
-msgstr ""
+msgstr "Daty wydarzenia"
 
 #: src/blocks/event-dates/block.json
 msgctxt "block description"
 msgid "Display event start and end dates using WordPress date/time formats."
-msgstr ""
+msgstr "Wyświetl daty rozpoczęcia i zakończenia wydarzenia używając formatów daty/czasu WordPressa."
 
 #: src/blocks/event-dates/block.json
 msgctxt "block keyword"
 msgid "event"
-msgstr ""
+msgstr "wydarzenie"
 
 #: src/blocks/event-dates/block.json
 msgctxt "block keyword"
 msgid "date"
-msgstr ""
+msgstr "data"
 
 #: src/blocks/event-dates/block.json
 msgctxt "block keyword"
 msgid "time"
-msgstr ""
+msgstr "czas"
 
 #: src/blocks/event-dates/block.json
 #: src/blocks/events-list/block.json
 msgctxt "block keyword"
 msgid "schedule"
-msgstr ""
+msgstr "harmonogram"
 
 #: src/blocks/events-list/block.json
 msgctxt "block title"
 msgid "Events List"
-msgstr ""
+msgstr "Lista wydarzeń"
 
 #: src/blocks/events-list/block.json
 msgctxt "block description"
 msgid "Display a list of events with filtering options."
-msgstr ""
+msgstr "Wyświetl listę wydarzeń z opcjami filtrowania."
 
 #: src/blocks/events-list/block.json
 msgctxt "block keyword"
 msgid "events"
-msgstr ""
+msgstr "wydarzenia"
 
 #: src/blocks/events-list/block.json
 msgctxt "block keyword"
 msgid "calendar"
-msgstr ""
+msgstr "kalendarz"
 
 #: src/blocks/events-list/block.json
 msgctxt "block keyword"
 msgid "list"
-msgstr ""
+msgstr "lista"
