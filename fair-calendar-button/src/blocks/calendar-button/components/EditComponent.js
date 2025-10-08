@@ -68,6 +68,8 @@ export default function EditComponent({ attributes, setAttributes }) {
 					event_end: getEditedPostAttribute('meta')?.event_end || '',
 					event_all_day:
 						getEditedPostAttribute('meta')?.event_all_day || false,
+					event_location:
+						getEditedPostAttribute('meta')?.event_location || '',
 				},
 			};
 		},
@@ -102,12 +104,14 @@ export default function EditComponent({ attributes, setAttributes }) {
 			if (
 				currentMeta?.event_start !== previousMeta.event_start ||
 				currentMeta?.event_end !== previousMeta.event_end ||
-				currentMeta?.event_all_day !== previousMeta.event_all_day
+				currentMeta?.event_all_day !== previousMeta.event_all_day ||
+				currentMeta?.event_location !== previousMeta.event_location
 			) {
 				previousMeta = {
 					event_start: currentMeta?.event_start || '',
 					event_end: currentMeta?.event_end || '',
 					event_all_day: currentMeta?.event_all_day || false,
+					event_location: currentMeta?.event_location || '',
 				};
 
 				// Trigger a re-render by updating the counter
@@ -125,6 +129,7 @@ export default function EditComponent({ attributes, setAttributes }) {
 				start: eventMeta.event_start,
 				end: eventMeta.event_end,
 				allDay: eventMeta.event_all_day,
+				location: eventMeta.event_location,
 			});
 		}
 	}, [
@@ -133,6 +138,7 @@ export default function EditComponent({ attributes, setAttributes }) {
 		eventMeta.event_start,
 		eventMeta.event_end,
 		eventMeta.event_all_day,
+		eventMeta.event_location,
 	]);
 
 	// Extract recurrence values with defaults
@@ -459,17 +465,18 @@ export default function EditComponent({ attributes, setAttributes }) {
 								: undefined
 						}
 					/>
+					<TextControl
+						label={__('Location', 'fair-calendar-button')}
+						value={location}
+						onChange={(value) => setAttributes({ location: value })}
+						disabled={syncWithEvent && isOnFairEvent}
+					/>
 					<TextareaControl
 						label={__('Description', 'fair-calendar-button')}
 						value={description}
 						onChange={(value) =>
 							setAttributes({ description: value })
 						}
-					/>
-					<TextControl
-						label={__('Location', 'fair-calendar-button')}
-						value={location}
-						onChange={(value) => setAttributes({ location: value })}
 					/>
 					<ToggleControl
 						label={__('Recurring Event', 'fair-calendar-button')}

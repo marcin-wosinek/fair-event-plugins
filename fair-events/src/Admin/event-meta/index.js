@@ -12,8 +12,9 @@ domReady(() => {
 	const allDayCheckbox = document.getElementById('event_all_day');
 	const startInput = document.getElementById('event_start');
 	const endInput = document.getElementById('event_end');
+	const locationInput = document.getElementById('event_location');
 
-	if (!allDayCheckbox || !startInput || !endInput) {
+	if (!allDayCheckbox || !startInput || !endInput || !locationInput) {
 		return;
 	}
 
@@ -107,6 +108,7 @@ domReady(() => {
 					event_start: startInput.value,
 					event_end: endInput.value,
 					event_all_day: allDayCheckbox.checked,
+					event_location: locationInput.value,
 				},
 			});
 		}
@@ -125,6 +127,11 @@ domReady(() => {
 	});
 	endInput.addEventListener('change', () => {
 		validateDates();
+		updateEditorMeta();
+	});
+
+	// Update location changes to editor store
+	locationInput.addEventListener('change', () => {
 		updateEditorMeta();
 	});
 });
