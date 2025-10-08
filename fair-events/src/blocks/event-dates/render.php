@@ -25,56 +25,110 @@ $event_end     = get_post_meta( $post_id, 'event_end', true );
 $event_all_day = get_post_meta( $post_id, 'event_all_day', true );
 
 // Don't render if no event data
-if ( ! $event_start && ! $event_end && ! $event_all_day ) {
+if ( ! $event_start && ! $event_end ) {
 	return '';
 }
 
-// Get WordPress date and time formats
-$date_format = get_option( 'date_format' );
-$time_format = get_option( 'time_format' );
-
 /**
- * Format event datetime
+ * Format event date range
  *
- * @param string $datetime Datetime string.
- * @param string $date_fmt Date format.
- * @param string $time_fmt Time format.
- * @return string Formatted datetime.
+ * @param string $start_datetime Start datetime string.
+ * @param string $end_datetime   End datetime string.
+ * @param bool   $all_day        Whether event is all-day.
+ * @return string Formatted date range.
  */
-if ( ! function_exists( 'fair_events_format_datetime' ) ) {
-	function fair_events_format_datetime( $datetime, $date_fmt, $time_fmt ) {
-		if ( empty( $datetime ) ) {
+if ( ! function_exists( 'fair_events_format_date_range' ) ) {
+	function fair_events_format_date_range( $start_datetime, $end_datetime, $all_day ) {
+		if ( empty( $start_datetime ) ) {
 			return '';
 		}
 
-		$timestamp = strtotime( $datetime );
-		if ( false === $timestamp ) {
-			return $datetime;
+		$start_timestamp = strtotime( $start_datetime );
+		if ( false === $start_timestamp ) {
+			return $start_datetime;
 		}
 
-		return wp_date( $date_fmt . ' ' . $time_fmt, $timestamp );
+		$end_timestamp = $end_datetime ? strtotime( $end_datetime ) : null;
+
+		if ( $all_day ) {
+			// All-day events: "1-4 October" or "31 October—2 November"
+			$start_day   = wp_date( 'j', $start_timestamp );
+			$start_month = wp_date( 'F', $start_timestamp );
+			$start_year  = wp_date( 'Y', $start_timestamp );
+
+			if ( $end_timestamp ) {
+				$end_day   = wp_date( 'j', $end_timestamp );
+				$end_month = wp_date( 'F', $end_timestamp );
+				$end_year  = wp_date( 'Y', $end_timestamp );
+
+				// Same month and year
+				if ( $start_month === $end_month && $start_year === $end_year ) {
+					if ( $start_day === $end_day ) {
+						// Single day: "15 October"
+						return $start_day . ' ' . $start_month;
+					} else {
+						// Same month: "1-4 October"
+						return $start_day . '–' . $end_day . ' ' . $start_month;
+					}
+				} elseif ( $start_year === $end_year ) {
+					// Different months, same year: "31 October—2 November"
+					return $start_day . ' ' . $start_month . '—' . $end_day . ' ' . $end_month;
+				} else {
+					// Different years: "31 December 2024—2 January 2025"
+					return $start_day . ' ' . $start_month . ' ' . $start_year . '—' . $end_day . ' ' . $end_month . ' ' . $end_year;
+				}
+			} else {
+				// Only start date: "15 October"
+				return $start_day . ' ' . $start_month;
+			}
+		} else {
+			// Timed events: "19:30—21:30, 15th October" or "22:00 15th November—03:00 16 November"
+			$start_time  = wp_date( 'H:i', $start_timestamp );
+			$start_day   = wp_date( 'jS', $start_timestamp );
+			$start_month = wp_date( 'F', $start_timestamp );
+			$start_year  = wp_date( 'Y', $start_timestamp );
+
+			if ( $end_timestamp ) {
+				$end_time  = wp_date( 'H:i', $end_timestamp );
+				$end_day   = wp_date( 'jS', $end_timestamp );
+				$end_month = wp_date( 'F', $end_timestamp );
+				$end_year  = wp_date( 'Y', $end_timestamp );
+
+				$start_date_str = $start_day . ' ' . $start_month;
+				$end_date_str   = $end_day . ' ' . $end_month;
+
+				// Add year if different from current year
+				$current_year = wp_date( 'Y' );
+				if ( $start_year !== $current_year ) {
+					$start_date_str .= ' ' . $start_year;
+				}
+				if ( $end_year !== $current_year ) {
+					$end_date_str .= ' ' . $end_year;
+				}
+
+				// Check if same day
+				if ( wp_date( 'Y-m-d', $start_timestamp ) === wp_date( 'Y-m-d', $end_timestamp ) ) {
+					// Same day: "19:30—21:30, 15th October"
+					return $start_time . '—' . $end_time . ', ' . $start_date_str;
+				} else {
+					// Different days: "22:00 15th November—03:00 16 November"
+					return $start_time . ' ' . $start_date_str . '—' . $end_time . ' ' . $end_date_str;
+				}
+			} else {
+				// Only start time: "19:30, 15th October"
+				$start_date_str = $start_day . ' ' . $start_month;
+				if ( $start_year !== wp_date( 'Y' ) ) {
+					$start_date_str .= ' ' . $start_year;
+				}
+				return $start_time . ', ' . $start_date_str;
+			}
+		}
 	}
 }
+
+$formatted_date = fair_events_format_date_range( $event_start, $event_end, $event_all_day );
 ?>
 
 <div <?php echo wp_kses_post( get_block_wrapper_attributes( array( 'class' => 'event-dates' ) ) ); ?>>
-	<?php if ( $event_start ) : ?>
-		<div class="event-date event-start">
-			<strong><?php esc_html_e( 'Start:', 'fair-events' ); ?></strong>
-			<?php echo esc_html( fair_events_format_datetime( $event_start, $date_format, $time_format ) ); ?>
-		</div>
-	<?php endif; ?>
-
-	<?php if ( $event_end ) : ?>
-		<div class="event-date event-end">
-			<strong><?php esc_html_e( 'End:', 'fair-events' ); ?></strong>
-			<?php echo esc_html( fair_events_format_datetime( $event_end, $date_format, $time_format ) ); ?>
-		</div>
-	<?php endif; ?>
-
-	<?php if ( $event_all_day ) : ?>
-		<div class="event-all-day">
-			<strong><?php esc_html_e( 'All Day Event', 'fair-events' ); ?></strong>
-		</div>
-	<?php endif; ?>
+	<?php echo esc_html( $formatted_date ); ?>
 </div>
