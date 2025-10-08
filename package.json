@@ -18,12 +18,12 @@
 		"test": "npm-run-all test:*",
 		"test:js": "npm run test --workspaces",
 		"test:php": "npm run test:php --workspace=fair-timetable",
-		"build": "npm run build --workspaces",
-		"clean": "npm run clean --workspaces",
-		"composer:install": "npm run composer:install --workspaces",
-		"composer:install:prod": "npm run composer:install:prod --workspaces",
-		"composer:update": "npm run composer:update --workspaces",
-		"composer:validate": "npm run composer:validate --workspaces",
+		"build": "npm run build --workspaces --if-present",
+		"clean": "npm run clean --workspaces --if-present",
+		"composer:install": "npm run composer:install --workspaces --if-present",
+		"composer:install:prod": "npm run composer:install:prod --workspaces --if-present",
+		"composer:update": "npm run composer:update --workspaces --if-present",
+		"composer:validate": "npm run composer:validate --workspaces --if-present",
 		"start": "npm run start --workspace=fair-timetable & npm run start --workspace=fair-payment & npm run start --workspace=fair-calendar-button & npm run start --workspace=fair-registration & npm run start --workspace=fair-schedule-blocks & npm run start --workspace=fair-membership & npm run start --workspace=fair-events & wait",
 		"format": "npm-run-all format:*",
 		"format:js": "wp-scripts format",
@@ -958,7 +958,8 @@
 		"fair-schedule-blocks",
 		"fair-timetable",
 		"fair-membership",
-		"fair-events"
+		"fair-events",
+		"fair-events-shared"
 	],
 	"devDependencies": {
 		"@changesets/cli": "^2.29.6"

@@ -128,4 +128,28 @@ Add plugin mount to all WordPress services:
     readmeFiles: ['fair-new-plugin/readme.txt'],
 }
 ```
+
+## Shared Code Package
+
+### fair-events-shared
+A workspace package containing shared JavaScript utilities used across multiple Fair Event plugins:
+- **fair-events**: Event post type and blocks
+- **fair-calendar-button**: Calendar button block
+- **fair-timetable**: Event timetable functionality
+
+**Location**: `fair-events-shared/`
+**Type**: Private workspace package (not published)
+**Usage**: Add `"fair-events-shared": "*"` to plugin's `dependencies` in package.json
+
+**Structure**:
+- `src/index.js` - Main entry point
+- `__tests__/` - Jest test files
+- Uses ES modules (`"type": "module"`)
+- Configured with Jest + Babel for testing
+
+**Adding utilities**:
+1. Create utility file in `src/`
+2. Export from `src/index.js`
+3. Import in consuming plugins: `import { utility } from 'fair-events-shared'`
+
 - Don't use php templates.

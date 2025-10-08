@@ -1,0 +1,21 @@
+{
+	"name": "fair-events-shared",
+	"version": "0.1.0",
+	"description": "Shared utilities for Fair Event plugins",
+	"type": "module",
+	"main": "src/index.js",
+	"private": true,
+	"scripts": {
+		"test": "jest"
+	},
+	"keywords": [
+		"wordpress",
+		"events",
+		"utilities"
+	],
+	"author": "",
+	"license": "GPL-2.0-or-later",
+	"dependencies": {
+		"date-fns": "^2.30.0"
+	}
+}
