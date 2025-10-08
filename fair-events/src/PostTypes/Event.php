@@ -123,6 +123,19 @@ class Event {
 				'default'      => false,
 			)
 		);
+
+		register_post_meta(
+			self::POST_TYPE,
+			'event_location',
+			array(
+				'type'              => 'string',
+				'description'       => __( 'Event location', 'fair-events' ),
+				'single'            => true,
+				'show_in_rest'      => true,
+				'sanitize_callback' => 'sanitize_text_field',
+				'default'           => '',
+			)
+		);
 	}
 
 	/**
@@ -189,9 +202,10 @@ class Event {
 	public static function render_meta_box( $post ) {
 		wp_nonce_field( 'fair_event_meta_box', 'fair_event_meta_box_nonce' );
 
-		$event_start   = get_post_meta( $post->ID, 'event_start', true );
-		$event_end     = get_post_meta( $post->ID, 'event_end', true );
-		$event_all_day = get_post_meta( $post->ID, 'event_all_day', true );
+		$event_start    = get_post_meta( $post->ID, 'event_start', true );
+		$event_end      = get_post_meta( $post->ID, 'event_end', true );
+		$event_all_day  = get_post_meta( $post->ID, 'event_all_day', true );
+		$event_location = get_post_meta( $post->ID, 'event_location', true );
 
 		// Determine input type based on all-day setting
 		$input_type = $event_all_day ? 'date' : 'datetime-local';
@@ -242,6 +256,19 @@ class Event {
 				<?php esc_html_e( 'All Day Event', 'fair-events' ); ?>
 			</label>
 		</p>
+		<p>
+			<label for="event_location">
+				<?php esc_html_e( 'Location', 'fair-events' ); ?>
+			</label>
+			<input
+				type="text"
+				id="event_location"
+				name="event_location"
+				value="<?php echo esc_attr( $event_location ); ?>"
+				style="width: 100%;"
+				placeholder="<?php esc_attr_e( 'Event location', 'fair-events' ); ?>"
+			/>
+		</p>
 		<?php
 	}
 
@@ -281,9 +308,10 @@ class Event {
 		$origin_id = $meta_value;
 
 		// Copy event metadata from original post
-		$event_start   = get_post_meta( $origin_id, 'event_start', true );
-		$event_end     = get_post_meta( $origin_id, 'event_end', true );
-		$event_all_day = get_post_meta( $origin_id, 'event_all_day', true );
+		$event_start    = get_post_meta( $origin_id, 'event_start', true );
+		$event_end      = get_post_meta( $origin_id, 'event_end', true );
+		$event_all_day  = get_post_meta( $origin_id, 'event_all_day', true );
+		$event_location = get_post_meta( $origin_id, 'event_location', true );
 
 		if ( $event_start ) {
 			update_post_meta( $post_id, 'event_start', $event_start );
@@ -293,6 +321,9 @@ class Event {
 		}
 		if ( $event_all_day !== '' ) {
 			update_post_meta( $post_id, 'event_all_day', $event_all_day );
+		}
+		if ( $event_location ) {
+			update_post_meta( $post_id, 'event_location', $event_location );
 		}
 	}
 
@@ -320,9 +351,10 @@ class Event {
 		foreach ( $columns as $key => $value ) {
 			$new_columns[ $key ] = $value;
 			if ( $key === 'title' ) {
-				$new_columns['event_start']   = __( 'Event Start', 'fair-events' );
-				$new_columns['event_end']     = __( 'Event End', 'fair-events' );
-				$new_columns['event_all_day'] = __( 'All Day', 'fair-events' );
+				$new_columns['event_start']    = __( 'Event Start', 'fair-events' );
+				$new_columns['event_end']      = __( 'Event End', 'fair-events' );
+				$new_columns['event_all_day']  = __( 'All Day', 'fair-events' );
+				$new_columns['event_location'] = __( 'Location', 'fair-events' );
 			}
 		}
 		return $new_columns;
@@ -351,6 +383,11 @@ class Event {
 			case 'event_all_day':
 				$all_day = get_post_meta( $post_id, 'event_all_day', true );
 				echo $all_day ? esc_html__( 'Yes', 'fair-events' ) : '';
+				break;
+
+			case 'event_location':
+				$location = get_post_meta( $post_id, 'event_location', true );
+				echo $location ? esc_html( $location ) : '—';
 				break;
 		}
 	}
@@ -463,5 +500,10 @@ class Event {
 		// Save event_all_day.
 		$event_all_day = isset( $_POST['event_all_day'] ) ? true : false;
 		update_post_meta( $post_id, 'event_all_day', $event_all_day );
+
+		// Save event_location.
+		if ( isset( $_POST['event_location'] ) ) {
+			update_post_meta( $post_id, 'event_location', sanitize_text_field( wp_unslash( $_POST['event_location'] ) ) );
+		}
 	}
 }
