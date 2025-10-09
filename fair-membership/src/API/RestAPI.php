@@ -173,33 +173,52 @@ class RestAPI {
 		$group_id = $request->get_param( 'group_id' );
 		$status   = $request->get_param( 'status' );
 
-		// Check if membership exists
-		$membership = Membership::get_by_user_and_group( $user_id, $group_id );
-
 		if ( 'active' === $status ) {
-			// Create or activate membership
-			if ( ! $membership ) {
-				$membership           = new Membership();
-				$membership->user_id  = $user_id;
-				$membership->group_id = $group_id;
-				$membership->status   = 'active';
-			} else {
-				$membership->status   = 'active';
-				$membership->ended_at = null;
+			// Check if there's already an active membership
+			$active_membership = Membership::get_active_by_user_and_group( $user_id, $group_id );
+
+			if ( $active_membership ) {
+				// Already active, nothing to do
+				return rest_ensure_response(
+					array(
+						'success' => true,
+						'message' => __( 'Membership is already active.', 'fair-membership' ),
+					)
+				);
 			}
+
+			// Create new active membership (keeps history)
+			$membership             = new Membership();
+			$membership->user_id    = $user_id;
+			$membership->group_id   = $group_id;
+			$membership->status     = 'active';
+			$membership->started_at = current_time( 'mysql' );
 		} else {
 			// Deactivate membership
-			if ( $membership ) {
-				$membership->end();
-			} else {
+			$active_membership = Membership::get_active_by_user_and_group( $user_id, $group_id );
+
+			if ( ! $active_membership ) {
 				// Nothing to deactivate
 				return rest_ensure_response(
 					array(
 						'success' => true,
-						'message' => __( 'No membership to deactivate.', 'fair-membership' ),
+						'message' => __( 'No active membership to deactivate.', 'fair-membership' ),
 					)
 				);
 			}
+
+			$membership = $active_membership;
+			$membership->end();
+		}
+
+		// Validate before saving
+		$validation_errors = $membership->validate();
+		if ( ! empty( $validation_errors ) ) {
+			return new \WP_Error(
+				'membership_validation_failed',
+				implode( ' ', $validation_errors ),
+				array( 'status' => 400 )
+			);
 		}
 
 		$result = $membership->save();

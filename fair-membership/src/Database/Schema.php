@@ -71,9 +71,9 @@ class Schema {
 			updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
 
 			PRIMARY KEY (id),
-			UNIQUE KEY unique_user_group (user_id, group_id),
 			KEY idx_user_id (user_id),
 			KEY idx_group_id (group_id),
+			KEY idx_user_group (user_id, group_id),
 			KEY idx_status (status),
 			KEY idx_started_at (started_at),
 			KEY idx_ended_at (ended_at),

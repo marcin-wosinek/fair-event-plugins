@@ -265,7 +265,31 @@ class Membership {
 
 		$result = $wpdb->get_row(
 			$wpdb->prepare(
-				"SELECT * FROM {$table_name} WHERE user_id = %d AND group_id = %d",
+				"SELECT * FROM {$table_name} WHERE user_id = %d AND group_id = %d ORDER BY created_at DESC LIMIT 1",
+				$user_id,
+				$group_id
+			),
+			ARRAY_A
+		);
+
+		return $result ? new self( $result ) : null;
+	}
+
+	/**
+	 * Get active membership by user and group
+	 *
+	 * @param int $user_id User ID.
+	 * @param int $group_id Group ID.
+	 * @return Membership|null Active membership object or null if not found.
+	 */
+	public static function get_active_by_user_and_group( $user_id, $group_id ) {
+		global $wpdb;
+
+		$table_name = $wpdb->prefix . 'fair_memberships';
+
+		$result = $wpdb->get_row(
+			$wpdb->prepare(
+				"SELECT * FROM {$table_name} WHERE user_id = %d AND group_id = %d AND status = 'active' ORDER BY created_at DESC LIMIT 1",
 				$user_id,
 				$group_id
 			),

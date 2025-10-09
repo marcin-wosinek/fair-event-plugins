@@ -17,7 +17,7 @@ class Installer {
 	/**
 	 * Plugin version for database schema
 	 */
-	const DB_VERSION = '1.1.0';
+	const DB_VERSION = '1.2.0';
 
 	/**
 	 * Install database tables
@@ -73,8 +73,34 @@ class Installer {
 	 */
 	public static function maybe_upgrade() {
 		if ( self::needs_upgrade() ) {
+			$current_version = Schema::get_db_version();
+
+			// Run specific migrations based on version
+			if ( version_compare( $current_version, '1.2.0', '<' ) ) {
+				self::migrate_to_1_2_0();
+			}
+
 			self::install();
 		}
+	}
+
+	/**
+	 * Migration to version 1.2.0 - Remove unique constraint on memberships
+	 *
+	 * @return void
+	 */
+	private static function migrate_to_1_2_0() {
+		global $wpdb;
+
+		$table_name = $wpdb->prefix . 'fair_memberships';
+
+		// Drop the unique constraint
+		$wpdb->query( "ALTER TABLE {$table_name} DROP INDEX unique_user_group" );
+
+		// Add regular index instead
+		$wpdb->query( "ALTER TABLE {$table_name} ADD INDEX idx_user_group (user_id, group_id)" );
+
+		error_log( 'Fair Membership: Migrated to version 1.2.0 - Removed unique constraint on memberships' );
 	}
 
 	/**
