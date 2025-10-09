@@ -60,6 +60,7 @@ class Plugin {
 	 */
 	private function load_hooks() {
 		new \FairMembership\Hooks\BlockHooks();
+		new \FairMembership\API\RestAPI();
 
 		if ( is_admin() ) {
 			new \FairMembership\Admin\AdminHooks();

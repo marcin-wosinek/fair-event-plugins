@@ -12,14 +12,16 @@ import apiFetch from '@wordpress/api-fetch';
  */
 export default function UsersApp() {
 	const [users, setUsers] = useState([]);
+	const [groups, setGroups] = useState([]);
 	const [isLoading, setIsLoading] = useState(true);
 	const [error, setError] = useState(null);
 
-	// Load users on mount
+	// Load users and groups on mount
 	useEffect(() => {
-		apiFetch({ path: '/wp/v2/users' })
-			.then((fetchedUsers) => {
-				setUsers(fetchedUsers);
+		apiFetch({ path: '/fair-membership/v1/users-with-memberships' })
+			.then((data) => {
+				setUsers(data.users);
+				setGroups(data.groups);
 				setIsLoading(false);
 			})
 			.catch((err) => {
@@ -75,12 +77,15 @@ export default function UsersApp() {
 						<th scope="col" className="manage-column column-name">
 							{__('Name', 'fair-membership')}
 						</th>
-						<th scope="col" className="manage-column column-email">
-							{__('Email', 'fair-membership')}
-						</th>
-						<th scope="col" className="manage-column column-role">
-							{__('Role', 'fair-membership')}
-						</th>
+						{groups.map((group) => (
+							<th
+								key={group.id}
+								scope="col"
+								className="manage-column"
+							>
+								{group.name}
+							</th>
+						))}
 					</tr>
 				</thead>
 				<tbody>
@@ -91,14 +96,11 @@ export default function UsersApp() {
 								<strong>{user.slug}</strong>
 							</td>
 							<td className="column-name">{user.name}</td>
-							<td className="column-email">
-								<a href={`mailto:${user.email}`}>
-									{user.email}
-								</a>
-							</td>
-							<td className="column-role">
-								{user.roles ? user.roles.join(', ') : ''}
-							</td>
+							{groups.map((group) => (
+								<td key={group.id} className="column-center">
+									{user.memberships[group.id] ? '✓' : ''}
+								</td>
+							))}
 						</tr>
 					))}
 				</tbody>
