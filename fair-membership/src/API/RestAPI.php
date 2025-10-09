@@ -56,6 +56,40 @@ class RestAPI {
 				'permission_callback' => array( $this, 'check_permission' ),
 			)
 		);
+
+		// Update membership
+		register_rest_route(
+			self::NAMESPACE,
+			'/membership',
+			array(
+				'methods'             => 'POST',
+				'callback'            => array( $this, 'update_membership' ),
+				'permission_callback' => array( $this, 'check_permission' ),
+				'args'                => array(
+					'user_id'  => array(
+						'required'          => true,
+						'type'              => 'integer',
+						'validate_callback' => function ( $param ) {
+							return is_numeric( $param );
+						},
+					),
+					'group_id' => array(
+						'required'          => true,
+						'type'              => 'integer',
+						'validate_callback' => function ( $param ) {
+							return is_numeric( $param );
+						},
+					),
+					'status'   => array(
+						'required'          => true,
+						'type'              => 'string',
+						'validate_callback' => function ( $param ) {
+							return in_array( $param, array( 'active', 'inactive' ), true );
+						},
+					),
+				),
+			)
+		);
 	}
 
 	/**
@@ -126,5 +160,63 @@ class RestAPI {
 				),
 			)
 		);
+	}
+
+	/**
+	 * Update or create membership
+	 *
+	 * @param \WP_REST_Request $request Request object.
+	 * @return \WP_REST_Response
+	 */
+	public function update_membership( $request ) {
+		$user_id  = $request->get_param( 'user_id' );
+		$group_id = $request->get_param( 'group_id' );
+		$status   = $request->get_param( 'status' );
+
+		// Check if membership exists
+		$membership = Membership::get_by_user_and_group( $user_id, $group_id );
+
+		if ( 'active' === $status ) {
+			// Create or activate membership
+			if ( ! $membership ) {
+				$membership           = new Membership();
+				$membership->user_id  = $user_id;
+				$membership->group_id = $group_id;
+				$membership->status   = 'active';
+			} else {
+				$membership->status   = 'active';
+				$membership->ended_at = null;
+			}
+		} else {
+			// Deactivate membership
+			if ( $membership ) {
+				$membership->end();
+			} else {
+				// Nothing to deactivate
+				return rest_ensure_response(
+					array(
+						'success' => true,
+						'message' => __( 'No membership to deactivate.', 'fair-membership' ),
+					)
+				);
+			}
+		}
+
+		$result = $membership->save();
+
+		if ( $result ) {
+			return rest_ensure_response(
+				array(
+					'success' => true,
+					'message' => __( 'Membership updated successfully.', 'fair-membership' ),
+				)
+			);
+		} else {
+			return new \WP_Error(
+				'membership_save_failed',
+				__( 'Failed to save membership.', 'fair-membership' ),
+				array( 'status' => 500 )
+			);
+		}
 	}
 }

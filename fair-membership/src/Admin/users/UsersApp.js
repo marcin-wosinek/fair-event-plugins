@@ -15,6 +15,7 @@ export default function UsersApp() {
 	const [groups, setGroups] = useState([]);
 	const [isLoading, setIsLoading] = useState(true);
 	const [error, setError] = useState(null);
+	const [savingStates, setSavingStates] = useState({});
 
 	// Load users and groups on mount
 	useEffect(() => {
@@ -29,6 +30,61 @@ export default function UsersApp() {
 				setIsLoading(false);
 			});
 	}, []);
+
+	/**
+	 * Toggle membership for a user and group
+	 *
+	 * @param {number} userId    User ID
+	 * @param {number} groupId   Group ID
+	 * @param {boolean} isActive Current membership status
+	 */
+	const toggleMembership = (userId, groupId, isActive) => {
+		const key = `${userId}-${groupId}`;
+		setSavingStates((prev) => ({ ...prev, [key]: true }));
+
+		apiFetch({
+			path: '/fair-membership/v1/membership',
+			method: 'POST',
+			data: {
+				user_id: userId,
+				group_id: groupId,
+				status: isActive ? 'inactive' : 'active',
+			},
+		})
+			.then(() => {
+				// Update local state
+				setUsers((prevUsers) =>
+					prevUsers.map((user) => {
+						if (user.id === userId) {
+							return {
+								...user,
+								memberships: {
+									...user.memberships,
+									[groupId]: !isActive,
+								},
+							};
+						}
+						return user;
+					})
+				);
+				setSavingStates((prev) => {
+					const newState = { ...prev };
+					delete newState[key];
+					return newState;
+				});
+			})
+			.catch((err) => {
+				alert(
+					__('Failed to update membership: ', 'fair-membership') +
+						err.message
+				);
+				setSavingStates((prev) => {
+					const newState = { ...prev };
+					delete newState[key];
+					return newState;
+				});
+			});
+	};
 
 	if (isLoading) {
 		return (
@@ -96,11 +152,31 @@ export default function UsersApp() {
 								<strong>{user.slug}</strong>
 							</td>
 							<td className="column-name">{user.name}</td>
-							{groups.map((group) => (
-								<td key={group.id} className="column-center">
-									{user.memberships[group.id] ? '✓' : ''}
-								</td>
-							))}
+							{groups.map((group) => {
+								const key = `${user.id}-${group.id}`;
+								const isChecked = user.memberships[group.id];
+								const isSaving = savingStates[key];
+
+								return (
+									<td
+										key={group.id}
+										className="column-center"
+									>
+										<input
+											type="checkbox"
+											checked={isChecked}
+											disabled={isSaving}
+											onChange={() =>
+												toggleMembership(
+													user.id,
+													group.id,
+													isChecked
+												)
+											}
+										/>
+									</td>
+								);
+							})}
 						</tr>
 					))}
 				</tbody>
