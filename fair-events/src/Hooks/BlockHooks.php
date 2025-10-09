@@ -55,12 +55,5 @@ class BlockHooks {
 			'fair-events',
 			$plugin_dir . 'build/languages'
 		);
-
-		// Settings page script
-		wp_set_script_translations(
-			'fair-events-settings',
-			'fair-events',
-			$plugin_dir . 'build/languages'
-		);
 	}
 }

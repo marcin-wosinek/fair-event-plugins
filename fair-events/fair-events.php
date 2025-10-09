@@ -43,6 +43,18 @@ require_once __DIR__ . '/vendor/autoload.php';
 
 use FairEvents\Core\Plugin;
 
+// Load plugin text domain for translations
+add_action(
+	'init',
+	function () {
+		load_plugin_textdomain(
+			'fair-events',
+			false,
+			dirname( plugin_basename( __FILE__ ) ) . '/languages'
+		);
+	}
+);
+
 // Initialize plugin
 Plugin::instance()->init();
 

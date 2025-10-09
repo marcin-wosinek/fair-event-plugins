@@ -73,6 +73,12 @@ class AdminPages {
 				true
 			);
 
+			wp_set_script_translations(
+				'fair-events-settings',
+				'fair-events',
+				FAIR_EVENTS_PLUGIN_DIR . 'build/languages'
+			);
+
 			wp_enqueue_style( 'wp-components' );
 		}
 	}
