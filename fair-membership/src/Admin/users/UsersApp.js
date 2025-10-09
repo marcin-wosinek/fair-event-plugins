@@ -56,22 +56,53 @@ export default function UsersApp() {
 			<h1>{__('All Users', 'fair-membership')}</h1>
 
 			<p>
-				{__(
-					'This is a placeholder page. User management functionality will be implemented here.',
-					'fair-membership'
-				)}
+				{users.length}{' '}
+				{__(users.length === 1 ? 'user' : 'users', 'fair-membership')}
 			</p>
 
-			<div className="card">
-				<h2>{__('User Count', 'fair-membership')}</h2>
-				<p>
-					{users.length}{' '}
-					{__(
-						users.length === 1 ? 'user' : 'users',
-						'fair-membership'
-					)}
-				</p>
-			</div>
+			<table className="wp-list-table widefat fixed striped">
+				<thead>
+					<tr>
+						<th scope="col" className="manage-column column-id">
+							{__('ID', 'fair-membership')}
+						</th>
+						<th
+							scope="col"
+							className="manage-column column-username column-primary"
+						>
+							{__('Username', 'fair-membership')}
+						</th>
+						<th scope="col" className="manage-column column-name">
+							{__('Name', 'fair-membership')}
+						</th>
+						<th scope="col" className="manage-column column-email">
+							{__('Email', 'fair-membership')}
+						</th>
+						<th scope="col" className="manage-column column-role">
+							{__('Role', 'fair-membership')}
+						</th>
+					</tr>
+				</thead>
+				<tbody>
+					{users.map((user) => (
+						<tr key={user.id}>
+							<td className="column-id">{user.id}</td>
+							<td className="column-username column-primary">
+								<strong>{user.slug}</strong>
+							</td>
+							<td className="column-name">{user.name}</td>
+							<td className="column-email">
+								<a href={`mailto:${user.email}`}>
+									{user.email}
+								</a>
+							</td>
+							<td className="column-role">
+								{user.roles ? user.roles.join(', ') : ''}
+							</td>
+						</tr>
+					))}
+				</tbody>
+			</table>
 		</div>
 	);
 }
