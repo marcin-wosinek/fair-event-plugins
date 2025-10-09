@@ -19,6 +19,7 @@ class AdminHooks {
 	 */
 	public function __construct() {
 		add_action( 'admin_menu', array( $this, 'register_admin_menu' ) );
+		add_action( 'admin_enqueue_scripts', array( $this, 'enqueue_admin_scripts' ) );
 	}
 
 	/**
@@ -54,6 +55,15 @@ class AdminHooks {
 			'fair-membership-group-view',
 			array( $this, 'group_view_page' )
 		);
+
+		add_submenu_page(
+			'fair-membership',
+			__( 'All Users', 'fair-membership' ),
+			__( 'All Users', 'fair-membership' ),
+			'manage_options',
+			'fair-membership-users',
+			array( $this, 'users_page' )
+		);
 	}
 
 	/**
@@ -74,5 +84,47 @@ class AdminHooks {
 	public function group_view_page() {
 		$group_page = new GroupViewPage();
 		$group_page->render();
+	}
+
+	/**
+	 * Display users page
+	 *
+	 * @return void
+	 */
+	public function users_page() {
+		$users_page = new UsersPage();
+		$users_page->render();
+	}
+
+	/**
+	 * Enqueue admin scripts
+	 *
+	 * @param string $hook Current admin page hook.
+	 * @return void
+	 */
+	public function enqueue_admin_scripts( $hook ) {
+		// Only load on Fair Membership users page
+		if ( 'fair-membership_page_fair-membership-users' !== $hook ) {
+			return;
+		}
+
+		$plugin_dir = plugin_dir_path( dirname( __DIR__ ) );
+		$asset_file = $plugin_dir . 'build/admin/users/index.asset.php';
+
+		if ( ! file_exists( $asset_file ) ) {
+			return;
+		}
+
+		$asset_data = include $asset_file;
+
+		wp_enqueue_script(
+			'fair-membership-users',
+			plugin_dir_url( dirname( __DIR__ ) ) . 'build/admin/users/index.js',
+			$asset_data['dependencies'],
+			$asset_data['version'],
+			true
+		);
+
+		wp_enqueue_style( 'wp-components' );
 	}
 }

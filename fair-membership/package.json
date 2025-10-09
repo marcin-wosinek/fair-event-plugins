@@ -7,7 +7,7 @@
 	"type": "module",
 	"main": "build/index.js",
 	"scripts": {
-		"build": "wp-scripts build",
+		"build": "wp-scripts build --config webpack.config.cjs",
 		"clean": "rm -rf build",
 		"prebuild": "npm run clean",
 		"start": "wp-scripts start",
@@ -24,9 +24,12 @@
 		"playwright:up": "playwright test --headed --ui"
 	},
 	"dependencies": {
+		"@wordpress/api-fetch": "^7.2.0",
 		"@wordpress/block-editor": "^15.2.0",
 		"@wordpress/blocks": "^15.2.0",
 		"@wordpress/components": "^30.2.0",
+		"@wordpress/dom-ready": "^4.2.0",
+		"@wordpress/element": "^6.2.0",
 		"@wordpress/i18n": "^6.2.0"
 	},
 	"devDependencies": {
