@@ -90,6 +90,17 @@ class RestAPI {
 				),
 			)
 		);
+
+		// Upload CSV for import
+		register_rest_route(
+			self::NAMESPACE,
+			'/import-users/upload',
+			array(
+				'methods'             => 'POST',
+				'callback'            => array( $this, 'upload_import_csv' ),
+				'permission_callback' => array( $this, 'check_permission' ),
+			)
+		);
 	}
 
 	/**
@@ -237,5 +248,150 @@ class RestAPI {
 				array( 'status' => 500 )
 			);
 		}
+	}
+
+	/**
+	 * Upload and parse CSV file for import
+	 *
+	 * @param \WP_REST_Request $request Request object.
+	 * @return \WP_REST_Response
+	 */
+	public function upload_import_csv( $request ) {
+		$files = $request->get_file_params();
+
+		if ( empty( $files['file'] ) ) {
+			return new \WP_Error(
+				'no_file',
+				__( 'No file uploaded.', 'fair-membership' ),
+				array( 'status' => 400 )
+			);
+		}
+
+		$file = $files['file'];
+
+		// Validate file type
+		$file_type = wp_check_filetype( $file['name'] );
+		if ( 'csv' !== $file_type['ext'] && 'text/csv' !== $file['type'] ) {
+			return new \WP_Error(
+				'invalid_file_type',
+				__( 'Please upload a CSV file.', 'fair-membership' ),
+				array( 'status' => 400 )
+			);
+		}
+
+		// Validate file size (10MB max)
+		$max_size = 10 * 1024 * 1024;
+		if ( $file['size'] > $max_size ) {
+			return new \WP_Error(
+				'file_too_large',
+				__( 'File size must be less than 10MB.', 'fair-membership' ),
+				array( 'status' => 400 )
+			);
+		}
+
+		// Parse CSV
+		$csv_data = $this->parse_csv( $file['tmp_name'] );
+
+		if ( is_wp_error( $csv_data ) ) {
+			return $csv_data;
+		}
+
+		// Validate row count (500 max)
+		if ( count( $csv_data ) > 500 ) {
+			return new \WP_Error(
+				'too_many_rows',
+				__( 'CSV file contains too many rows. Maximum is 500 rows.', 'fair-membership' ),
+				array( 'status' => 400 )
+			);
+		}
+
+		// Get columns from first row
+		$columns = ! empty( $csv_data ) ? array_keys( $csv_data[0] ) : array();
+
+		// Get preview (first 5 rows)
+		$preview_rows = array_slice( $csv_data, 0, 5 );
+
+		return rest_ensure_response(
+			array(
+				'success' => true,
+				'data'    => array(
+					'rows'    => $csv_data,
+					'columns' => $columns,
+					'preview' => array(
+						'columns' => $columns,
+						'rows'    => $preview_rows,
+						'total'   => count( $csv_data ),
+					),
+				),
+			)
+		);
+	}
+
+	/**
+	 * Parse CSV file into array
+	 *
+	 * @param string $file_path Path to CSV file.
+	 * @return array|\WP_Error Array of rows or error.
+	 */
+	private function parse_csv( $file_path ) {
+		// phpcs:ignore WordPress.WP.AlternativeFunctions.file_get_contents_file_get_contents
+		$content = file_get_contents( $file_path );
+
+		if ( false === $content ) {
+			return new \WP_Error(
+				'read_error',
+				__( 'Failed to read CSV file.', 'fair-membership' ),
+				array( 'status' => 500 )
+			);
+		}
+
+		$lines = str_getcsv( $content, "\n" );
+		if ( empty( $lines ) ) {
+			return new \WP_Error(
+				'empty_file',
+				__( 'CSV file is empty.', 'fair-membership' ),
+				array( 'status' => 400 )
+			);
+		}
+
+		// Get headers from first line
+		$headers = str_getcsv( array_shift( $lines ) );
+		$headers = array_map( 'trim', $headers );
+
+		if ( empty( $headers ) ) {
+			return new \WP_Error(
+				'no_headers',
+				__( 'CSV file has no headers.', 'fair-membership' ),
+				array( 'status' => 400 )
+			);
+		}
+
+		// Parse data rows
+		$data = array();
+		foreach ( $lines as $line ) {
+			if ( empty( trim( $line ) ) ) {
+				continue;
+			}
+
+			$row = str_getcsv( $line );
+			$row = array_map( 'trim', $row );
+
+			// Ensure row has same number of columns as headers
+			if ( count( $row ) !== count( $headers ) ) {
+				continue;
+			}
+
+			$data[] = array_combine( $headers, $row );
+		}
+
+		if ( empty( $data ) ) {
+			return new \WP_Error(
+				'no_data',
+				__( 'CSV file contains no valid data rows.', 'fair-membership' ),
+				array( 'status' => 400 )
+			);
+		}
+
+		return $data;
 	}
 }
