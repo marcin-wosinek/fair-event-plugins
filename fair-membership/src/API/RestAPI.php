@@ -101,6 +101,23 @@ class RestAPI {
 				'permission_callback' => array( $this, 'check_permission' ),
 			)
 		);
+
+		// Validate users for import
+		register_rest_route(
+			self::NAMESPACE,
+			'/import-users/validate',
+			array(
+				'methods'             => 'POST',
+				'callback'            => array( $this, 'validate_import_users' ),
+				'permission_callback' => array( $this, 'check_permission' ),
+				'args'                => array(
+					'users' => array(
+						'required' => true,
+						'type'     => 'array',
+					),
+				),
+			)
+		);
 	}
 
 	/**
@@ -393,5 +410,120 @@ class RestAPI {
 		}
 
 		return $data;
+	}
+
+	/**
+	 * Validate users for import
+	 *
+	 * @param \WP_REST_Request $request Request object.
+	 * @return \WP_REST_Response
+	 */
+	public function validate_import_users( $request ) {
+		$users = $request->get_param( 'users' );
+
+		$validation_errors = array();
+		$existing_users    = array();
+
+		foreach ( $users as $index => $user ) {
+			$errors = array();
+
+			// Validate required fields
+			if ( empty( $user['user_login'] ) ) {
+				$errors[] = __( 'Username is required', 'fair-membership' );
+			}
+
+			if ( empty( $user['user_email'] ) ) {
+				$errors[] = __( 'Email is required', 'fair-membership' );
+			}
+
+			// Validate username format
+			if ( ! empty( $user['user_login'] ) ) {
+				// Use WordPress's sanitize_user to check if username is valid
+				$sanitized = sanitize_user( $user['user_login'], true );
+				if ( $sanitized !== $user['user_login'] ) {
+					$errors[] = __( 'Username contains invalid characters', 'fair-membership' );
+				}
+
+				// Check username length (WordPress allows 3-60 characters)
+				$username_length = strlen( $user['user_login'] );
+				if ( $username_length < 3 || $username_length > 60 ) {
+					$errors[] = __( 'Username must be between 3 and 60 characters', 'fair-membership' );
+				}
+
+				// Check if username exists
+				$existing_user = get_user_by( 'login', $user['user_login'] );
+				if ( $existing_user ) {
+					$existing_users[ $index ] = $existing_user->ID;
+				}
+			}
+
+			// Validate email format
+			if ( ! empty( $user['user_email'] ) ) {
+				if ( ! is_email( $user['user_email'] ) ) {
+					$errors[] = __( 'Invalid email format', 'fair-membership' );
+				}
+
+				// Check if email exists
+				if ( ! isset( $existing_users[ $index ] ) ) {
+					$existing_by_email = get_user_by( 'email', $user['user_email'] );
+					if ( $existing_by_email ) {
+						$existing_users[ $index ] = $existing_by_email->ID;
+					}
+				}
+			}
+
+			// Validate URL if provided
+			if ( ! empty( $user['user_url'] ) && ! filter_var( $user['user_url'], FILTER_VALIDATE_URL ) ) {
+				$errors[] = __( 'Invalid website URL', 'fair-membership' );
+			}
+
+			if ( ! empty( $errors ) ) {
+				$validation_errors[ $index ] = $errors;
+			}
+		}
+
+		// Check for duplicate usernames within the CSV
+		$usernames       = array_column( $users, 'user_login' );
+		$username_counts = array_count_values( array_filter( $usernames ) );
+		foreach ( $username_counts as $username => $count ) {
+			if ( $count > 1 ) {
+				// Find all rows with this username
+				foreach ( $users as $index => $user ) {
+					if ( $user['user_login'] === $username ) {
+						if ( ! isset( $validation_errors[ $index ] ) ) {
+							$validation_errors[ $index ] = array();
+						}
+						$validation_errors[ $index ][] = __( 'Duplicate username in CSV', 'fair-membership' );
+					}
+				}
+			}
+		}
+
+		// Check for duplicate emails within the CSV
+		$emails       = array_column( $users, 'user_email' );
+		$email_counts = array_count_values( array_filter( $emails ) );
+		foreach ( $email_counts as $email => $count ) {
+			if ( $count > 1 ) {
+				// Find all rows with this email
+				foreach ( $users as $index => $user ) {
+					if ( $user['user_email'] === $email ) {
+						if ( ! isset( $validation_errors[ $index ] ) ) {
+							$validation_errors[ $index ] = array();
+						}
+						$validation_errors[ $index ][] = __( 'Duplicate email in CSV', 'fair-membership' );
+					}
+				}
+			}
+		}
+
+		return rest_ensure_response(
+			array(
+				'success' => true,
+				'data'    => array(
+					'validation'     => $validation_errors,
+					'existing_users' => $existing_users,
+				),
+			)
+		);
 	}
 }

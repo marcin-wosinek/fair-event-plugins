@@ -8,6 +8,8 @@ import { useState, useEffect } from '@wordpress/element';
  * Internal dependencies
  */
 import UploadStep from './components/UploadStep.js';
+import MappingStep from './components/MappingStep.js';
+import PreviewStep from './components/PreviewStep.js';
 
 const STEPS = {
 	UPLOAD: 0,
@@ -118,6 +120,12 @@ export default function ImportUsers() {
 		sessionStorage.removeItem('fair-membership-import-state');
 	};
 
+	const handleGoBack = () => {
+		if (currentStep > STEPS.UPLOAD) {
+			setCurrentStep(currentStep - 1);
+		}
+	};
+
 	return (
 		<div className="wrap">
 			<h1>{__('Import Users', 'fair-membership')}</h1>
@@ -165,24 +173,22 @@ export default function ImportUsers() {
 					<UploadStep onComplete={handleUploadComplete} />
 				)}
 				{currentStep === STEPS.MAPPING && (
-					<div>
-						<p>
-							{__(
-								'Mapping step - Coming in Phase 2',
-								'fair-membership'
-							)}
-						</p>
-					</div>
+					<MappingStep
+						csvData={csvData}
+						initialMapping={fieldMapping}
+						onComplete={handleMappingComplete}
+						onBack={handleGoBack}
+					/>
 				)}
 				{currentStep === STEPS.PREVIEW && (
-					<div>
-						<p>
-							{__(
-								'Preview step - Coming in Phase 2',
-								'fair-membership'
-							)}
-						</p>
-					</div>
+					<PreviewStep
+						csvData={csvData}
+						fieldMapping={fieldMapping}
+						initialUserData={userData}
+						initialActions={userActions}
+						onComplete={handlePreviewComplete}
+						onBack={handleGoBack}
+					/>
 				)}
 				{currentStep === STEPS.GROUPS && (
 					<div>
