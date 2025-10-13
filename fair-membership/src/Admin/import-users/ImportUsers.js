@@ -3,6 +3,7 @@
  */
 import { __ } from '@wordpress/i18n';
 import { useState, useEffect } from '@wordpress/element';
+import apiFetch from '@wordpress/api-fetch';
 
 /**
  * Internal dependencies
@@ -10,6 +11,8 @@ import { useState, useEffect } from '@wordpress/element';
 import UploadStep from './components/UploadStep.js';
 import MappingStep from './components/MappingStep.js';
 import PreviewStep from './components/PreviewStep.js';
+import GroupsStep from './components/GroupsStep.js';
+import ConfirmStep from './components/ConfirmStep.js';
 
 const STEPS = {
 	UPLOAD: 0,
@@ -34,6 +37,7 @@ export default function ImportUsers() {
 	const [selectedGroups, setSelectedGroups] = useState([]);
 	const [validationErrors, setValidationErrors] = useState({});
 	const [importResult, setImportResult] = useState(null);
+	const [groups, setGroups] = useState([]);
 
 	// Load state from session storage on mount
 	useEffect(() => {
@@ -78,6 +82,20 @@ export default function ImportUsers() {
 		userActions,
 		selectedGroups,
 	]);
+
+	// Load groups when reaching groups step
+	useEffect(() => {
+		if (currentStep >= STEPS.GROUPS && groups.length === 0) {
+			apiFetch({ path: '/fair-membership/v1/groups' })
+				.then((data) => {
+					setGroups(data);
+				})
+				.catch((err) => {
+					// eslint-disable-next-line no-console
+					console.error('Failed to load groups:', err);
+				});
+		}
+	}, [currentStep, groups.length]);
 
 	const handleUploadComplete = (file, data) => {
 		setCsvFile(file);
@@ -191,24 +209,21 @@ export default function ImportUsers() {
 					/>
 				)}
 				{currentStep === STEPS.GROUPS && (
-					<div>
-						<p>
-							{__(
-								'Groups step - Coming in Phase 3',
-								'fair-membership'
-							)}
-						</p>
-					</div>
+					<GroupsStep
+						initialGroups={selectedGroups}
+						onComplete={handleGroupsComplete}
+						onBack={handleGoBack}
+					/>
 				)}
 				{currentStep === STEPS.CONFIRM && (
-					<div>
-						<p>
-							{__(
-								'Confirm step - Coming in Phase 3',
-								'fair-membership'
-							)}
-						</p>
-					</div>
+					<ConfirmStep
+						userData={userData}
+						userActions={userActions}
+						selectedGroups={selectedGroups}
+						groups={groups}
+						onComplete={handleImportComplete}
+						onBack={handleGoBack}
+					/>
 				)}
 			</div>
 

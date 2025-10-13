@@ -118,6 +118,28 @@ class RestAPI {
 				),
 			)
 		);
+
+		// Execute user import
+		register_rest_route(
+			self::NAMESPACE,
+			'/import-users/execute',
+			array(
+				'methods'             => 'POST',
+				'callback'            => array( $this, 'execute_import_users' ),
+				'permission_callback' => array( $this, 'check_permission' ),
+				'args'                => array(
+					'users'     => array(
+						'required' => true,
+						'type'     => 'array',
+					),
+					'group_ids' => array(
+						'required' => false,
+						'type'     => 'array',
+						'default'  => array(),
+					),
+				),
+			)
+		);
 	}
 
 	/**
@@ -525,5 +547,172 @@ class RestAPI {
 				),
 			)
 		);
+	}
+
+	/**
+	 * Execute user import
+	 *
+	 * @param \WP_REST_Request $request Request object.
+	 * @return \WP_REST_Response
+	 */
+	public function execute_import_users( $request ) {
+		$users     = $request->get_param( 'users' );
+		$group_ids = $request->get_param( 'group_ids' );
+
+		$results = array(
+			'created' => 0,
+			'updated' => 0,
+			'skipped' => 0,
+			'errors'  => array(),
+		);
+
+		foreach ( $users as $index => $user ) {
+			$action = isset( $user['action'] ) ? $user['action'] : 'skip';
+
+			if ( 'skip' === $action ) {
+				++$results['skipped'];
+				continue;
+			}
+
+			try {
+				if ( 'create' === $action ) {
+					// Create new user
+					$user_data = array(
+						'user_login' => $user['user_login'],
+						'user_email' => $user['user_email'],
+						'user_pass'  => wp_generate_password(),
+					);
+
+					// Add optional fields
+					if ( ! empty( $user['display_name'] ) ) {
+						$user_data['display_name'] = $user['display_name'];
+					}
+					if ( ! empty( $user['first_name'] ) ) {
+						$user_data['first_name'] = $user['first_name'];
+					}
+					if ( ! empty( $user['last_name'] ) ) {
+						$user_data['last_name'] = $user['last_name'];
+					}
+					if ( ! empty( $user['user_url'] ) ) {
+						$user_data['user_url'] = $user['user_url'];
+					}
+					if ( ! empty( $user['description'] ) ) {
+						$user_data['description'] = $user['description'];
+					}
+
+					$user_id = wp_insert_user( $user_data );
+
+					if ( is_wp_error( $user_id ) ) {
+						$results['errors'][] = array(
+							'row'     => $index + 1,
+							'message' => $user_id->get_error_message(),
+						);
+						continue;
+					}
+
+					++$results['created'];
+
+					// Assign groups
+					if ( ! empty( $group_ids ) ) {
+						$this->assign_user_groups( $user_id, $group_ids );
+					}
+				} elseif ( 'update' === $action ) {
+					// Update existing user
+					$existing_user = get_user_by( 'login', $user['user_login'] );
+					if ( ! $existing_user ) {
+						$existing_user = get_user_by( 'email', $user['user_email'] );
+					}
+
+					if ( ! $existing_user ) {
+						$results['errors'][] = array(
+							'row'     => $index + 1,
+							'message' => __( 'User not found for update', 'fair-membership' ),
+						);
+						continue;
+					}
+
+					$user_data = array(
+						'ID' => $existing_user->ID,
+					);
+
+					// Update fields
+					if ( ! empty( $user['user_email'] ) && $user['user_email'] !== $existing_user->user_email ) {
+						$user_data['user_email'] = $user['user_email'];
+					}
+					if ( ! empty( $user['display_name'] ) ) {
+						$user_data['display_name'] = $user['display_name'];
+					}
+					if ( ! empty( $user['first_name'] ) ) {
+						$user_data['first_name'] = $user['first_name'];
+					}
+					if ( ! empty( $user['last_name'] ) ) {
+						$user_data['last_name'] = $user['last_name'];
+					}
+					if ( ! empty( $user['user_url'] ) ) {
+						$user_data['user_url'] = $user['user_url'];
+					}
+					if ( ! empty( $user['description'] ) ) {
+						$user_data['description'] = $user['description'];
+					}
+
+					$user_id = wp_update_user( $user_data );
+
+					if ( is_wp_error( $user_id ) ) {
+						$results['errors'][] = array(
+							'row'     => $index + 1,
+							'message' => $user_id->get_error_message(),
+						);
+						continue;
+					}
+
+					++$results['updated'];
+
+					// Assign groups
+					if ( ! empty( $group_ids ) ) {
+						$this->assign_user_groups( $existing_user->ID, $group_ids );
+					}
+				}
+			} catch ( \Exception $e ) {
+				$results['errors'][] = array(
+					'row'     => $index + 1,
+					'message' => $e->getMessage(),
+				);
+			}
+		}
+
+		return rest_ensure_response(
+			array(
+				'success' => true,
+				'data'    => array(
+					'results' => $results,
+				),
+			)
+		);
+	}
+
+	/**
+	 * Assign groups to a user
+	 *
+	 * @param int   $user_id User ID.
+	 * @param array $group_ids Array of group IDs.
+	 * @return void
+	 */
+	private function assign_user_groups( $user_id, $group_ids ) {
+		foreach ( $group_ids as $group_id ) {
+			// Check if active membership already exists
+			$existing_membership = Membership::get_active_by_user_and_group( $user_id, $group_id );
+
+			if ( $existing_membership ) {
+				continue;
+			}
+
+			// Create new membership
+			$membership             = new Membership();
+			$membership->user_id    = $user_id;
+			$membership->group_id   = $group_id;
+			$membership->status     = 'active';
+			$membership->started_at = current_time( 'mysql' );
+			$membership->save();
+		}
 	}
 }
