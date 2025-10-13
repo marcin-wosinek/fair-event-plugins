@@ -61,8 +61,8 @@ class AdminHooks {
 			__( 'All Users', 'fair-membership' ),
 			__( 'All Users', 'fair-membership' ),
 			'manage_options',
-			'fair-membership-users',
-			array( $this, 'users_page' )
+			'fair-membership-matrix',
+			array( $this, 'membership_matrix_page' )
 		);
 	}
 
@@ -87,13 +87,13 @@ class AdminHooks {
 	}
 
 	/**
-	 * Display users page
+	 * Display membership matrix page
 	 *
 	 * @return void
 	 */
-	public function users_page() {
-		$users_page = new UsersPage();
-		$users_page->render();
+	public function membership_matrix_page() {
+		$matrix_page = new MembershipMatrixPage();
+		$matrix_page->render();
 	}
 
 	/**
@@ -103,8 +103,8 @@ class AdminHooks {
 	 * @return void
 	 */
 	public function enqueue_admin_scripts( $hook ) {
-		// Only load on Fair Membership users page
-		if ( 'fair-membership_page_fair-membership-users' !== $hook ) {
+		// Only load on Fair Membership matrix page
+		if ( 'fair-membership_page_fair-membership-matrix' !== $hook ) {
 			return;
 		}
 
@@ -118,7 +118,7 @@ class AdminHooks {
 		$asset_data = include $asset_file;
 
 		wp_enqueue_script(
-			'fair-membership-users',
+			'fair-membership-matrix',
 			plugin_dir_url( dirname( __DIR__ ) ) . 'build/admin/users/index.js',
 			$asset_data['dependencies'],
 			$asset_data['version'],

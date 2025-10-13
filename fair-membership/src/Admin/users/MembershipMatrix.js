@@ -6,11 +6,11 @@ import { useState, useEffect } from '@wordpress/element';
 import apiFetch from '@wordpress/api-fetch';
 
 /**
- * Users App Component - Placeholder for All Users page
+ * Membership Matrix Component - Manage user memberships in groups
  *
- * @return {JSX.Element} The Users app component
+ * @return {JSX.Element} The Membership Matrix component
  */
-export default function UsersApp() {
+export default function MembershipMatrix() {
 	const [users, setUsers] = useState([]);
 	const [groups, setGroups] = useState([]);
 	const [isLoading, setIsLoading] = useState(true);
