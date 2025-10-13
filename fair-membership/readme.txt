@@ -4,7 +4,7 @@ Tags: membership, events
 Requires at least: 6.7
 Tested up to: 6.7
 Requires PHP: 7.4
-Stable tag: 0.1.0
+Stable tag: 0.2.0
 License: GPLv3 or later
 License URI: https://www.gnu.org/licenses/gpl-3.0.html
 
@@ -20,6 +20,12 @@ Fair Membership is a WordPress plugin designed for managing group memberships.
 2. Activate the plugin through the 'Plugins' screen in WordPress.
 
 == Changelog ==
+
+## 0.2.0
+
+### Minor Changes
+
+- b7e1578: Add user-import workflow
 
 = 0.1.0 =
 * Initial release
