@@ -39,20 +39,10 @@ class Plugin {
 	 */
 	public function init() {
 		add_action( 'init', array( $this, 'register_post_types' ) );
-		add_action( 'plugins_loaded', array( $this, 'check_database_upgrade' ) );
 		$this->load_hooks();
 		$this->load_patterns();
 		$this->load_admin();
 		$this->load_settings();
-	}
-
-	/**
-	 * Check for database upgrades
-	 *
-	 * @return void
-	 */
-	public function check_database_upgrade() {
-		\FairEvents\Database\Installer::maybe_upgrade();
 	}
 
 	/**

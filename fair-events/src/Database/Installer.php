@@ -22,8 +22,15 @@ class Installer {
 	public static function install() {
 		require_once ABSPATH . 'wp-admin/includes/upgrade.php';
 
+		$current_version = Schema::get_db_version();
+
 		$sql = Schema::get_event_dates_table_sql();
 		dbDelta( $sql );
+
+		// Run migration if upgrading from pre-1.0.0
+		if ( version_compare( $current_version, '1.0.0', '<' ) ) {
+			self::migrate_to_1_0_0();
+		}
 
 		// Update database version
 		Schema::update_db_version( Schema::DB_VERSION );
@@ -156,9 +163,8 @@ class Installer {
 				'start_datetime' => $start,
 				'end_datetime'   => $end,
 				'all_day'        => $all_day ? 1 : 0,
-				'is_recurring'   => 0,
 			),
-			array( '%d', '%s', '%s', '%d', '%d' )
+			array( '%d', '%s', '%s', '%d' )
 		);
 	}
 }
