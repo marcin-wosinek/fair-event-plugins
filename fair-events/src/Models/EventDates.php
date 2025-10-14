@@ -11,6 +11,8 @@ defined( 'WPINC' ) || die;
 
 /**
  * EventDates model class
+ *
+ * phpcs:disable WordPress.DB.DirectDatabaseQuery
  */
 class EventDates {
 
@@ -61,6 +63,7 @@ class EventDates {
 		$table_name = $wpdb->prefix . 'fair_event_dates';
 
 		$result = $wpdb->get_row(
+      // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
 			$wpdb->prepare(
 				"SELECT * FROM {$table_name} WHERE event_id = %d LIMIT 1",
 				$event_id
@@ -109,6 +112,7 @@ class EventDates {
 
 		if ( $existing ) {
 			// Update existing record
+			// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
 			$result = $wpdb->update(
 				$table_name,
 				$data,
@@ -118,6 +122,7 @@ class EventDates {
 			);
 		} else {
 			// Insert new record
+			// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
 			$result = $wpdb->insert( $table_name, $data, $format );
 		}
 
@@ -138,6 +143,7 @@ class EventDates {
 
 		$table_name = $wpdb->prefix . 'fair_event_dates';
 
+		// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
 		$result = $wpdb->delete(
 			$table_name,
 			array( 'event_id' => $event_id ),

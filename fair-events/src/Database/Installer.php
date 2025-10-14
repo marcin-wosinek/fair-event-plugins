@@ -34,8 +34,6 @@ class Installer {
 
 		// Update database version
 		Schema::update_db_version( Schema::DB_VERSION );
-
-		error_log( 'Fair Events: Database tables installed successfully' );
 	}
 
 	/**
@@ -73,11 +71,7 @@ class Installer {
 	 * @return void
 	 */
 	private static function migrate_to_1_0_0() {
-		error_log( 'Fair Events: Starting migration to 1.0.0...' );
-
 		self::migrate_from_postmeta();
-
-		error_log( 'Fair Events: Migration to 1.0.0 completed' );
 	}
 
 	/**
@@ -117,8 +111,6 @@ class Installer {
 				++$migrated;
 			}
 		}
-
-		error_log( "Fair Events: Migrated {$migrated} events to custom table, skipped {$skipped} already migrated" );
 	}
 
 	/**
@@ -133,6 +125,7 @@ class Installer {
 		$table_name = $wpdb->prefix . 'fair_event_dates';
 
 		$count = $wpdb->get_var(
+      // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
 			$wpdb->prepare(
 				"SELECT COUNT(*) FROM {$table_name} WHERE event_id = %d",
 				$event_id

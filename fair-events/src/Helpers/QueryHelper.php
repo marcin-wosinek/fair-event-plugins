@@ -53,18 +53,22 @@ class QueryHelper {
 		$dates_table = $wpdb->prefix . 'fair_event_dates';
 
 		if ( isset( $date_query['start_after'] ) ) {
+      // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
 			$where .= $wpdb->prepare( " AND {$dates_table}.start_datetime >= %s", $date_query['start_after'] );
 		}
 
 		if ( isset( $date_query['end_before'] ) ) {
+      // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
 			$where .= $wpdb->prepare( " AND {$dates_table}.end_datetime < %s", $date_query['end_before'] );
 		}
 
 		if ( isset( $date_query['start_before'] ) ) {
+      // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
 			$where .= $wpdb->prepare( " AND {$dates_table}.start_datetime <= %s", $date_query['start_before'] );
 		}
 
 		if ( isset( $date_query['end_after'] ) ) {
+      // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
 			$where .= $wpdb->prepare( " AND {$dates_table}.end_datetime >= %s", $date_query['end_after'] );
 		}
 
