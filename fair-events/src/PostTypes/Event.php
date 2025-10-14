@@ -308,19 +308,16 @@ class Event {
 		$origin_id = $meta_value;
 
 		// Copy event metadata from original post
-		$event_start    = get_post_meta( $origin_id, 'event_start', true );
-		$event_end      = get_post_meta( $origin_id, 'event_end', true );
-		$event_all_day  = get_post_meta( $origin_id, 'event_all_day', true );
+		$event_dates    = \FairEvents\Models\EventDates::get_by_event_id( $origin_id );
 		$event_location = get_post_meta( $origin_id, 'event_location', true );
 
-		if ( $event_start ) {
-			update_post_meta( $post_id, 'event_start', $event_start );
-		}
-		if ( $event_end ) {
-			update_post_meta( $post_id, 'event_end', $event_end );
-		}
-		if ( $event_all_day !== '' ) {
-			update_post_meta( $post_id, 'event_all_day', $event_all_day );
+		if ( $event_dates ) {
+			\FairEvents\Models\EventDates::save(
+				$post_id,
+				$event_dates->start_datetime,
+				$event_dates->end_datetime,
+				$event_dates->all_day
+			);
 		}
 		if ( $event_location ) {
 			update_post_meta( $post_id, 'event_location', $event_location );
@@ -371,18 +368,22 @@ class Event {
 		switch ( $column ) {
 			case 'event_start':
 			case 'event_end':
-				$value = get_post_meta( $post_id, $column, true );
-				if ( $value ) {
-					$all_day = get_post_meta( $post_id, 'event_all_day', true );
-					echo esc_html( self::format_event_datetime( $value, $all_day ) );
+				$event_dates = \FairEvents\Models\EventDates::get_by_event_id( $post_id );
+				if ( $event_dates ) {
+					$value = ( 'event_start' === $column ) ? $event_dates->start_datetime : $event_dates->end_datetime;
+					if ( $value ) {
+						echo esc_html( self::format_event_datetime( $value, $event_dates->all_day ) );
+					} else {
+						echo '—';
+					}
 				} else {
 					echo '—';
 				}
 				break;
 
 			case 'event_all_day':
-				$all_day = get_post_meta( $post_id, 'event_all_day', true );
-				echo $all_day ? esc_html__( 'Yes', 'fair-events' ) : '';
+				$event_dates = \FairEvents\Models\EventDates::get_by_event_id( $post_id );
+				echo ( $event_dates && $event_dates->all_day ) ? esc_html__( 'Yes', 'fair-events' ) : '';
 				break;
 
 			case 'event_location':
@@ -487,21 +488,15 @@ class Event {
 			return;
 		}
 
-		// Save event_start.
-		if ( isset( $_POST['event_start'] ) ) {
-			update_post_meta( $post_id, 'event_start', sanitize_text_field( wp_unslash( $_POST['event_start'] ) ) );
-		}
-
-		// Save event_end.
-		if ( isset( $_POST['event_end'] ) ) {
-			update_post_meta( $post_id, 'event_end', sanitize_text_field( wp_unslash( $_POST['event_end'] ) ) );
-		}
-
-		// Save event_all_day.
+		// Get event data
+		$event_start   = isset( $_POST['event_start'] ) ? sanitize_text_field( wp_unslash( $_POST['event_start'] ) ) : '';
+		$event_end     = isset( $_POST['event_end'] ) ? sanitize_text_field( wp_unslash( $_POST['event_end'] ) ) : '';
 		$event_all_day = isset( $_POST['event_all_day'] ) ? true : false;
-		update_post_meta( $post_id, 'event_all_day', $event_all_day );
 
-		// Save event_location.
+		// Save to custom table (also updates postmeta automatically for compatibility)
+		\FairEvents\Models\EventDates::save( $post_id, $event_start, $event_end, $event_all_day );
+
+		// Save event_location separately (not in dates table)
 		if ( isset( $_POST['event_location'] ) ) {
 			update_post_meta( $post_id, 'event_location', sanitize_text_field( wp_unslash( $_POST['event_location'] ) ) );
 		}

@@ -64,6 +64,8 @@ Plugin::instance()->init();
  * @return void
  */
 function fair_events_activate() {
+	// Install database tables.
+	\FairEvents\Database\Installer::install();
 	// Trigger post type registration.
 	\FairEvents\PostTypes\Event::register();
 	// Clear the permalinks after the post type has been registered.

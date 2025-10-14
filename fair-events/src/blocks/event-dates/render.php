@@ -19,15 +19,17 @@ if ( ! $post_id ) {
 	return '';
 }
 
-// Get event metadata
-$event_start   = get_post_meta( $post_id, 'event_start', true );
-$event_end     = get_post_meta( $post_id, 'event_end', true );
-$event_all_day = get_post_meta( $post_id, 'event_all_day', true );
+// Get event data from custom table
+$event_dates = \FairEvents\Models\EventDates::get_by_event_id( $post_id );
 
 // Don't render if no event data
-if ( ! $event_start && ! $event_end ) {
+if ( ! $event_dates ) {
 	return '';
 }
+
+$event_start   = $event_dates->start_datetime;
+$event_end     = $event_dates->end_datetime;
+$event_all_day = $event_dates->all_day;
 
 /**
  * Format event date range

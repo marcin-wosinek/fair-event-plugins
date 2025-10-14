@@ -39,10 +39,20 @@ class Plugin {
 	 */
 	public function init() {
 		add_action( 'init', array( $this, 'register_post_types' ) );
+		$this->load_database();
 		$this->load_hooks();
 		$this->load_patterns();
 		$this->load_admin();
 		$this->load_settings();
+	}
+
+	/**
+	 * Load and initialize database
+	 *
+	 * @return void
+	 */
+	private function load_database() {
+		\FairEvents\Database\Installer::maybe_upgrade();
 	}
 
 	/**

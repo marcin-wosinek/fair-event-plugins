@@ -16,13 +16,12 @@ $time_filter     = $attributes['timeFilter'] ?? 'upcoming';
 $categories      = $attributes['categories'] ?? array();
 $display_pattern = $attributes['displayPattern'] ?? 'default';
 
-// Build query arguments
+// Build query arguments using custom table
 $query_args = array(
-	'post_type'      => 'fair_event',
-	'posts_per_page' => -1,
-	'orderby'        => 'meta_value',
-	'meta_key'       => 'event_start',
-	'order'          => 'ASC',
+	'post_type'              => 'fair_event',
+	'posts_per_page'         => -1,
+	'fair_events_date_query' => true,
+	'fair_events_order'      => 'ASC',
 );
 
 // Add category filter if categories are selected
@@ -36,56 +35,40 @@ if ( ! empty( $categories ) ) {
 	);
 }
 
-// Add time-based meta query
-$current_time = current_time( 'Y-m-d\TH:i' );
+// Add time-based query using custom table
+$current_time = current_time( 'Y-m-d H:i:s' );
 
 switch ( $time_filter ) {
 	case 'upcoming':
-		$query_args['meta_query'] = array(
-			array(
-				'key'     => 'event_start',
-				'value'   => $current_time,
-				'compare' => '>=',
-				'type'    => 'DATETIME',
-			),
+		$query_args['fair_events_date_query'] = array(
+			'start_after' => $current_time,
 		);
 		break;
 
 	case 'past':
-		$query_args['meta_query'] = array(
-			array(
-				'key'     => 'event_end',
-				'value'   => $current_time,
-				'compare' => '<',
-				'type'    => 'DATETIME',
-			),
+		$query_args['fair_events_date_query'] = array(
+			'end_before' => $current_time,
 		);
-		$query_args['order']      = 'DESC';
+		$query_args['fair_events_order']      = 'DESC';
 		break;
 
 	case 'ongoing':
-		$query_args['meta_query'] = array(
-			'relation' => 'AND',
-			array(
-				'key'     => 'event_start',
-				'value'   => $current_time,
-				'compare' => '<=',
-				'type'    => 'DATETIME',
-			),
-			array(
-				'key'     => 'event_end',
-				'value'   => $current_time,
-				'compare' => '>=',
-				'type'    => 'DATETIME',
-			),
+		$query_args['fair_events_date_query'] = array(
+			'start_before' => $current_time,
+			'end_after'    => $current_time,
 		);
 		break;
 
 	case 'all':
 	default:
-		// No time filter
+		// No time filter, but still use custom table for ordering
 		break;
 }
+
+// Hook in the QueryHelper filters
+add_filter( 'posts_join', array( 'FairEvents\\Helpers\\QueryHelper', 'join_dates_table' ), 10, 2 );
+add_filter( 'posts_where', array( 'FairEvents\\Helpers\\QueryHelper', 'filter_by_dates' ), 10, 2 );
+add_filter( 'posts_orderby', array( 'FairEvents\\Helpers\\QueryHelper', 'order_by_dates' ), 10, 2 );
 
 // Execute the query
 $events_query = new WP_Query( $query_args );
@@ -105,22 +88,16 @@ add_filter(
 
 		// Check if this is a fair_event query or if post_type is not set
 		if ( isset( $query['post_type'] ) && $query['post_type'] === 'fair_event' ) {
-			// Merge our custom query args (time filters, categories, meta queries)
+			// Merge our custom query args (time filters, categories, custom table queries)
 			// Keep the Query Loop's own settings but add our filters
-			if ( isset( $query_args['meta_query'] ) ) {
-				$query['meta_query'] = $query_args['meta_query'];
+			if ( isset( $query_args['fair_events_date_query'] ) ) {
+				$query['fair_events_date_query'] = $query_args['fair_events_date_query'];
+			}
+			if ( isset( $query_args['fair_events_order'] ) ) {
+				$query['fair_events_order'] = $query_args['fair_events_order'];
 			}
 			if ( isset( $query_args['tax_query'] ) ) {
 				$query['tax_query'] = $query_args['tax_query'];
-			}
-			if ( isset( $query_args['meta_key'] ) ) {
-				$query['meta_key'] = $query_args['meta_key'];
-			}
-			if ( isset( $query_args['orderby'] ) ) {
-				$query['orderby'] = $query_args['orderby'];
-			}
-			if ( isset( $query_args['order'] ) ) {
-				$query['order'] = $query_args['order'];
 			}
 		}
 
@@ -181,4 +158,9 @@ $is_query_loop_pattern = ( strpos( $pattern_content, '<!-- wp:query' ) !== false
 </div>
 
 <?php
+// Remove the filters after the query is complete
+remove_filter( 'posts_join', array( 'FairEvents\\Helpers\\QueryHelper', 'join_dates_table' ), 10 );
+remove_filter( 'posts_where', array( 'FairEvents\\Helpers\\QueryHelper', 'filter_by_dates' ), 10 );
+remove_filter( 'posts_orderby', array( 'FairEvents\\Helpers\\QueryHelper', 'order_by_dates' ), 10 );
+
 wp_reset_postdata();
