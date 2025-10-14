@@ -26,11 +26,13 @@ $query_args = array(
 
 // Add category filter if categories are selected
 if ( ! empty( $categories ) ) {
+	// phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_tax_query
 	$query_args['tax_query'] = array(
 		array(
-			'taxonomy' => 'category',
-			'field'    => 'term_id',
-			'terms'    => $categories,
+			'taxonomy'         => 'category',
+			'field'            => 'term_id',
+			'terms'            => $categories,
+			'include_children' => false,
 		),
 	);
 }
@@ -97,6 +99,7 @@ add_filter(
 				$query['fair_events_order'] = $query_args['fair_events_order'];
 			}
 			if ( isset( $query_args['tax_query'] ) ) {
+				// phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_tax_query
 				$query['tax_query'] = $query_args['tax_query'];
 			}
 		}
