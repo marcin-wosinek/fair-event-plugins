@@ -451,7 +451,7 @@ class GroupViewPage {
 	 * Format access control for display
 	 *
 	 * @param string $access_control Access control value.
-	 * @return string
+	 * @return string Safe HTML output.
 	 */
 	private function format_access_control_display( $access_control ) {
 		$labels = array(
@@ -470,10 +470,19 @@ class GroupViewPage {
 			'description' => '',
 		);
 
-		return sprintf(
+		$html = sprintf(
 			'<strong>%s</strong><br><span class="description">%s</span>',
 			esc_html( $config['label'] ),
 			esc_html( $config['description'] )
+		);
+
+		return wp_kses(
+			$html,
+			array(
+				'strong' => array(),
+				'br'     => array(),
+				'span'   => array( 'class' => array() ),
+			)
 		);
 	}
 }
