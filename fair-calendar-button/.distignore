@@ -19,3 +19,7 @@ phpunit.xml
 jest.config.cjs
 babel.config.cjs
 blueprint.json
+.DS_Store
+.distignore
+.env.example
+assets/.DS_Store
