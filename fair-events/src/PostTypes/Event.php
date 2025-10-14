@@ -307,6 +307,12 @@ class Event {
 		// $meta_value contains the original post ID
 		$origin_id = $meta_value;
 
+		// Check if origin post exists
+		$origin_post = get_post( $origin_id );
+		if ( ! $origin_post ) {
+			return;
+		}
+
 		// Copy event metadata from original post
 		$event_dates    = \FairEvents\Models\EventDates::get_by_event_id( $origin_id );
 		$event_location = get_post_meta( $origin_id, 'event_location', true );
