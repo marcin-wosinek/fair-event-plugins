@@ -1,5 +1,11 @@
 # fair-events
 
+## 0.4.0
+
+### Minor Changes
+
+- 8f0db61: Move start & end dates to separate table
+
 ## 0.3.3
 
 ### Patch Changes
