@@ -30,7 +30,7 @@ class QueryHelper {
 		}
 
 		$dates_table = $wpdb->prefix . 'fair_event_dates';
-		$join       .= " LEFT JOIN {$dates_table} ON {$wpdb->posts}.ID = {$dates_table}.event_id AND {$dates_table}.instance_id IS NULL";
+		$join       .= " LEFT JOIN {$dates_table} ON {$wpdb->posts}.ID = {$dates_table}.event_id";
 
 		return $join;
 	}

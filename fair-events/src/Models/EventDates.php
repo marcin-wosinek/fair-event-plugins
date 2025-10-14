@@ -29,13 +29,6 @@ class EventDates {
 	public $event_id;
 
 	/**
-	 * Instance ID (for recurring events)
-	 *
-	 * @var int|null
-	 */
-	public $instance_id;
-
-	/**
 	 * Start datetime
 	 *
 	 * @var string
@@ -57,20 +50,6 @@ class EventDates {
 	public $all_day;
 
 	/**
-	 * Is recurring flag
-	 *
-	 * @var bool
-	 */
-	public $is_recurring;
-
-	/**
-	 * Recurrence parent ID
-	 *
-	 * @var int|null
-	 */
-	public $recurrence_parent_id;
-
-	/**
 	 * Get event dates by event ID
 	 *
 	 * @param int $event_id Event post ID.
@@ -83,7 +62,7 @@ class EventDates {
 
 		$result = $wpdb->get_row(
 			$wpdb->prepare(
-				"SELECT * FROM {$table_name} WHERE event_id = %d AND instance_id IS NULL LIMIT 1",
+				"SELECT * FROM {$table_name} WHERE event_id = %d LIMIT 1",
 				$event_id
 			)
 		);
@@ -92,15 +71,12 @@ class EventDates {
 			return null;
 		}
 
-		$event_dates                       = new self();
-		$event_dates->id                   = (int) $result->id;
-		$event_dates->event_id             = (int) $result->event_id;
-		$event_dates->instance_id          = $result->instance_id ? (int) $result->instance_id : null;
-		$event_dates->start_datetime       = $result->start_datetime;
-		$event_dates->end_datetime         = $result->end_datetime;
-		$event_dates->all_day              = (bool) $result->all_day;
-		$event_dates->is_recurring         = (bool) $result->is_recurring;
-		$event_dates->recurrence_parent_id = $result->recurrence_parent_id ? (int) $result->recurrence_parent_id : null;
+		$event_dates                 = new self();
+		$event_dates->id             = (int) $result->id;
+		$event_dates->event_id       = (int) $result->event_id;
+		$event_dates->start_datetime = $result->start_datetime;
+		$event_dates->end_datetime   = $result->end_datetime;
+		$event_dates->all_day        = (bool) $result->all_day;
 
 		return $event_dates;
 	}
@@ -127,10 +103,9 @@ class EventDates {
 			'start_datetime' => $start,
 			'end_datetime'   => $end,
 			'all_day'        => $all_day ? 1 : 0,
-			'is_recurring'   => 0,
 		);
 
-		$format = array( '%d', '%s', '%s', '%d', '%d' );
+		$format = array( '%d', '%s', '%s', '%d' );
 
 		if ( $existing ) {
 			// Update existing record
