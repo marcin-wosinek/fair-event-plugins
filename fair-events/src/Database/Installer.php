@@ -11,6 +11,8 @@ defined( 'WPINC' ) || die;
 
 /**
  * Handles database installation and migrations
+ *
+ * phpcs:disable WordPress.DB.DirectDatabaseQuery
  */
 class Installer {
 
@@ -125,8 +127,8 @@ class Installer {
 		$table_name = $wpdb->prefix . 'fair_event_dates';
 
 		$count = $wpdb->get_var(
-      // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
 			$wpdb->prepare(
+				// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
 				"SELECT COUNT(*) FROM {$table_name} WHERE event_id = %d",
 				$event_id
 			)

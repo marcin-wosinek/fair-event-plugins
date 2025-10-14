@@ -63,8 +63,8 @@ class EventDates {
 		$table_name = $wpdb->prefix . 'fair_event_dates';
 
 		$result = $wpdb->get_row(
-      // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
 			$wpdb->prepare(
+				// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
 				"SELECT * FROM {$table_name} WHERE event_id = %d LIMIT 1",
 				$event_id
 			)
@@ -98,7 +98,7 @@ class EventDates {
 
 		$table_name = $wpdb->prefix . 'fair_event_dates';
 
-		// Check if record exists
+		// Check if record exists.
 		$existing = self::get_by_event_id( $event_id );
 
 		$data = array(
@@ -111,7 +111,7 @@ class EventDates {
 		$format = array( '%d', '%s', '%s', '%d' );
 
 		if ( $existing ) {
-			// Update existing record
+			// Update existing record.
 			// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
 			$result = $wpdb->update(
 				$table_name,
@@ -121,19 +121,19 @@ class EventDates {
 				array( '%d' )
 			);
 		} else {
-			// Insert new record
+			// Insert new record.
 			// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
 			$result = $wpdb->insert( $table_name, $data, $format );
 		}
 
-		// Always sync to postmeta for compatibility
+		// Always sync to postmeta for compatibility.
 		self::sync_to_postmeta( $event_id, $start, $end, $all_day );
 
 		return $result !== false;
 	}
 
 	/**
-	 * Delete event dates by event ID
+	 * Delete event dates by event ID.
 	 *
 	 * @param int $event_id Event post ID.
 	 * @return bool True on success, false on failure.
