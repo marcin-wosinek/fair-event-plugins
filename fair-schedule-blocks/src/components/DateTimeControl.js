@@ -2,8 +2,9 @@
  * Shared DateTimeControl component
  */
 
-import { DateTimePicker } from '@wordpress/components';
+import { DateTimePicker, Button } from '@wordpress/components';
 import { dateI18n } from '@wordpress/date';
+import { __ } from '@wordpress/i18n';
 
 /**
  * A reusable date/time picker control component
@@ -16,6 +17,12 @@ import { dateI18n } from '@wordpress/date';
  * @return {JSX.Element} The DateTimeControl component
  */
 export default function DateTimeControl({ value, onChange, label, help }) {
+	const handleTodayClick = () => {
+		const today = new Date();
+		const formatted = dateI18n('c', today);
+		onChange(formatted);
+	};
+
 	return (
 		<div style={{ marginBottom: '16px' }}>
 			<label
@@ -34,6 +41,13 @@ export default function DateTimeControl({ value, onChange, label, help }) {
 					onChange(formatted);
 				}}
 			/>
+			<Button
+				variant="secondary"
+				onClick={handleTodayClick}
+				style={{ marginTop: '8px' }}
+			>
+				{__('Today', 'fair-schedule-blocks')}
+			</Button>
 			{help && (
 				<p
 					style={{

@@ -14,15 +14,23 @@ jest.mock('@wordpress/date', () => ({
 
 // Mock WordPress components
 const mockDateTimePicker = jest.fn((props) => null);
+const mockButton = jest.fn((props) => null);
 jest.mock('@wordpress/components', () => ({
 	DateTimePicker: mockDateTimePicker,
+	Button: mockButton,
 }));
 
 import DateTimeControl from '../src/components/DateTimeControl.js';
 
+// Mock WordPress i18n
+jest.mock('@wordpress/i18n', () => ({
+	__: (text) => text,
+}));
+
 describe('DateTimeControl', () => {
 	beforeEach(() => {
 		mockDateTimePicker.mockClear();
+		mockButton.mockClear();
 		mockDateI18n.mockClear();
 	});
 
@@ -96,5 +104,19 @@ describe('DateTimeControl', () => {
 		const resultString = JSON.stringify(result);
 		// Check that there's no paragraph with the help text styling
 		expect(resultString).toBeDefined();
+	});
+
+	test('component renders with Today button', () => {
+		const mockOnChange = jest.fn();
+
+		const result = DateTimeControl({
+			value: '',
+			onChange: mockOnChange,
+			label: 'Test',
+		});
+
+		// Check that the result contains the Today button text
+		const resultString = JSON.stringify(result);
+		expect(resultString).toContain('Today');
 	});
 });
