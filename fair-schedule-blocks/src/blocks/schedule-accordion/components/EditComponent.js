@@ -2,14 +2,14 @@
  * Edit component for the Schedule Accordion Block
  */
 
-import { PanelBody, DateTimePicker } from '@wordpress/components';
+import { PanelBody } from '@wordpress/components';
 import {
 	useBlockProps,
 	InspectorControls,
 	useInnerBlocksProps,
 } from '@wordpress/block-editor';
 import { __ } from '@wordpress/i18n';
-import { dateI18n, getSettings } from '@wordpress/date';
+import DateTimeControl from '../../../components/DateTimeControl.js';
 
 /**
  * Edit component for the Schedule Accordion Block
@@ -21,9 +21,6 @@ import { dateI18n, getSettings } from '@wordpress/date';
  */
 export default function EditComponent({ attributes, setAttributes }) {
 	const { autoCollapsedAfter } = attributes;
-
-	// Get WordPress timezone settings
-	const dateSettings = getSettings();
 
 	const blockProps = useBlockProps({
 		className: 'schedule-accordion-container',
@@ -68,41 +65,20 @@ export default function EditComponent({ attributes, setAttributes }) {
 				<PanelBody
 					title={__('Accordion Settings', 'fair-schedule-blocks')}
 				>
-					<div style={{ marginBottom: '16px' }}>
-						<label
-							style={{
-								display: 'block',
-								marginBottom: '8px',
-								fontWeight: 'bold',
-							}}
-						>
-							{__('Auto-collapse after', 'fair-schedule-blocks')}
-						</label>
-						<DateTimePicker
-							currentDate={autoCollapsedAfter || null}
-							onChange={(date) => {
-								// Format according to WordPress settings
-								const formatted = date
-									? dateI18n('c', date)
-									: '';
-								setAttributes({
-									autoCollapsedAfter: formatted,
-								});
-							}}
-						/>
-						<p
-							style={{
-								fontSize: '12px',
-								color: '#757575',
-								marginTop: '8px',
-							}}
-						>
-							{__(
-								'Hide content after this date and time.',
-								'fair-schedule-blocks'
-							)}
-						</p>
-					</div>
+					<DateTimeControl
+						value={autoCollapsedAfter}
+						onChange={(formatted) =>
+							setAttributes({ autoCollapsedAfter: formatted })
+						}
+						label={__(
+							'Auto-collapse after',
+							'fair-schedule-blocks'
+						)}
+						help={__(
+							'Hide content after this date and time.',
+							'fair-schedule-blocks'
+						)}
+					/>
 				</PanelBody>
 			</InspectorControls>
 
