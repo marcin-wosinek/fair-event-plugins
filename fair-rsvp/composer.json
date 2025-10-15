@@ -1,0 +1,45 @@
+{
+	"name": "marcin-wosinek/fair-rsvp",
+	"description": "RSVP management for events - let users sign up for events.",
+	"type": "wordpress-plugin",
+	"license": "GPL-3.0-or-later",
+	"homepage": "https://github.com/marcin-wosinek/fair-event-plugins/",
+	"authors": [
+		{
+			"name": "Marcin Wosinek",
+			"email": "marcin.wosinek@gmail.com",
+			"homepage": "https://how-to.dev"
+		}
+	],
+	"support": {
+		"issues": "https://github.com/marcin-wosinek/fair-event-plugins/issues"
+	},
+	"config": {
+		"preferred-install": "dist",
+		"platform": {
+			"php": "7.4"
+		},
+		"allow-plugins": {
+			"composer/installers": true
+		}
+	},
+	"repositories": [
+		{
+			"type": "composer",
+			"url": "https://wpackagist.org"
+		}
+	],
+	"require": {
+		"php": ">=7.4 <9.0",
+		"composer/installers": "^2.3"
+	},
+	"autoload": {
+		"psr-4": {
+			"FairRsvp\\": "src/"
+		}
+	},
+	"minimum-stability": "stable",
+	"require-dev": {
+		"phpunit/phpunit": "^9.6"
+	}
+}

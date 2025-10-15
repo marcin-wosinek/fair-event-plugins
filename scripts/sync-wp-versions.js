@@ -60,6 +60,12 @@ const plugins = [
 		phpFiles: ['fair-events/fair-events.php'],
 		readmeFiles: ['fair-events/readme.txt'],
 	},
+	{
+		name: 'fair-rsvp',
+		packagePath: 'fair-rsvp/package.json',
+		phpFiles: ['fair-rsvp/fair-rsvp.php'],
+		readmeFiles: ['fair-rsvp/readme.txt'],
+	},
 ];
 
 /**

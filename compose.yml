@@ -18,6 +18,7 @@ services:
             - ./fair-timetable:/var/www/html/wp-content/plugins/fair-timetable
             - ./fair-membership:/var/www/html/wp-content/plugins/fair-membership
             - ./fair-events:/var/www/html/wp-content/plugins/fair-events
+            - ./fair-rsvp:/var/www/html/wp-content/plugins/fair-rsvp
 
     db:
         image: mysql:8.0
@@ -85,6 +86,7 @@ services:
             - ./fair-timetable:/var/www/html/wp-content/plugins/fair-timetable
             - ./fair-membership:/var/www/html/wp-content/plugins/fair-membership
             - ./fair-events:/var/www/html/wp-content/plugins/fair-events
+            - ./fair-rsvp:/var/www/html/wp-content/plugins/fair-rsvp
         depends_on:
             - db-php74
 
@@ -124,6 +126,7 @@ services:
             - ./fair-timetable:/var/www/html/wp-content/plugins/fair-timetable
             - ./fair-membership:/var/www/html/wp-content/plugins/fair-membership
             - ./fair-events:/var/www/html/wp-content/plugins/fair-events
+            - ./fair-rsvp:/var/www/html/wp-content/plugins/fair-rsvp
         depends_on:
             - db-wp63
 
@@ -162,6 +165,7 @@ services:
             - ./fair-timetable:/var/www/html/wp-content/plugins/fair-timetable
             - ./fair-membership:/var/www/html/wp-content/plugins/fair-membership
             - ./fair-events:/var/www/html/wp-content/plugins/fair-events
+            - ./fair-rsvp:/var/www/html/wp-content/plugins/fair-rsvp
         depends_on:
             - db-wp67
 
