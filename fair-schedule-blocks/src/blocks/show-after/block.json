@@ -1,0 +1,27 @@
+{
+	"$schema": "https://schemas.wp.org/trunk/block.json",
+	"apiVersion": 3,
+	"name": "fair-schedule-blocks/show-after",
+	"version": "0.1.0",
+	"title": "Show After",
+	"category": "widgets",
+	"icon": "visibility",
+	"description": "Hides content until a specific date and time, then shows it",
+	"example": {},
+	"supports": {
+		"html": false,
+		"anchor": true,
+		"align": true
+	},
+	"attributes": {
+		"showAfter": {
+			"type": "string",
+			"default": ""
+		}
+	},
+	"textdomain": "fair-schedule-blocks",
+	"editorScript": "file:./editor.js",
+	"editorStyle": "file:./editor.css",
+	"style": "file:./view.css",
+	"render": "file:./render.php"
+}

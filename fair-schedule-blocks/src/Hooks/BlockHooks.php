@@ -28,5 +28,7 @@ class BlockHooks {
 	 */
 	public function register_blocks() {
 		register_block_type( __DIR__ . '/../../build/blocks/schedule-accordion' );
+		register_block_type( __DIR__ . '/../../build/blocks/show-until' );
+		register_block_type( __DIR__ . '/../../build/blocks/show-after' );
 	}
 }
