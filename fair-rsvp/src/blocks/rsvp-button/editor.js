@@ -30,7 +30,11 @@ registerBlockType('fair-rsvp/rsvp-button', {
 							<span>{__('No', 'fair-rsvp')}</span>
 						</label>
 					</div>
-					<button type="button" className="fair-rsvp-preview-button" disabled>
+					<button
+						type="button"
+						className="fair-rsvp-preview-button"
+						disabled
+					>
 						{__('Update RSVP', 'fair-rsvp')}
 					</button>
 					<p className="fair-rsvp-preview-note">

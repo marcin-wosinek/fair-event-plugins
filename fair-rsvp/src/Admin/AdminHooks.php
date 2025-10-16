@@ -19,6 +19,7 @@ class AdminHooks {
 	 */
 	public function __construct() {
 		add_action( 'admin_menu', array( $this, 'register_admin_menu' ) );
+		add_action( 'admin_enqueue_scripts', array( $this, 'enqueue_admin_scripts' ) );
 	}
 
 	/**
@@ -45,11 +46,37 @@ class AdminHooks {
 	 * @return void
 	 */
 	public function render_admin_page() {
-		?>
-		<div class="wrap">
-			<h1><?php echo esc_html( get_admin_page_title() ); ?></h1>
-			<p><?php esc_html_e( 'RSVP management coming soon.', 'fair-rsvp' ); ?></p>
-		</div>
-		<?php
+		$events_page = new EventsListPage();
+		$events_page->render();
+	}
+
+	/**
+	 * Enqueue admin scripts
+	 *
+	 * @param string $hook Current admin page hook.
+	 * @return void
+	 */
+	public function enqueue_admin_scripts( $hook ) {
+		// Only load on Fair RSVP admin page.
+		if ( 'toplevel_page_fair-rsvp' !== $hook ) {
+			return;
+		}
+
+		$plugin_dir = plugin_dir_path( dirname( __DIR__ ) );
+		$asset_file = $plugin_dir . 'build/admin/events/index.asset.php';
+
+		if ( file_exists( $asset_file ) ) {
+			$asset_data = include $asset_file;
+
+			wp_enqueue_script(
+				'fair-rsvp-events',
+				plugin_dir_url( dirname( __DIR__ ) ) . 'build/admin/events/index.js',
+				$asset_data['dependencies'],
+				$asset_data['version'],
+				true
+			);
+
+			wp_enqueue_style( 'wp-components' );
+		}
 	}
 }

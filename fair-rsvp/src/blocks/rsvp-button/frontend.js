@@ -46,13 +46,21 @@ import apiFetch from '@wordpress/api-fetch';
 		const eventId = container.getAttribute('data-event-id');
 		const submitButton = form.querySelector('.fair-rsvp-submit-button');
 		const messageContainer = form.querySelector('.fair-rsvp-message');
-		const statusDisplay = container.querySelector('.fair-rsvp-current-status');
+		const statusDisplay = container.querySelector(
+			'.fair-rsvp-current-status'
+		);
 
 		// Get selected RSVP status
-		const selectedRadio = form.querySelector('input[name="rsvp_status"]:checked');
+		const selectedRadio = form.querySelector(
+			'input[name="rsvp_status"]:checked'
+		);
 
 		if (!selectedRadio) {
-			showMessage(messageContainer, 'Please select an RSVP option.', 'error');
+			showMessage(
+				messageContainer,
+				'Please select an RSVP option.',
+				'error'
+			);
 			return;
 		}
 
@@ -144,7 +152,8 @@ import apiFetch from '@wordpress/api-fetch';
 	 */
 	function showNotification(message, type) {
 		const notification = document.createElement('div');
-		notification.className = 'fair-rsvp-notification fair-rsvp-notification-' + type;
+		notification.className =
+			'fair-rsvp-notification fair-rsvp-notification-' + type;
 		notification.textContent = message;
 
 		notification.style.cssText =
