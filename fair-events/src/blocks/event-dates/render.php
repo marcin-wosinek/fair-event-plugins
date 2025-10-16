@@ -84,15 +84,15 @@ if ( ! function_exists( 'fair_events_format_date_range' ) ) {
 				return $start_day . ' ' . $start_month;
 			}
 		} else {
-			// Timed events: "19:30—21:30, 15th October" or "22:00 15th November—03:00 16 November"
+			// Timed events: "19:30—21:30, 15 October" or "22:00 15 November—03:00 16 November"
 			$start_time  = wp_date( 'H:i', $start_timestamp );
-			$start_day   = wp_date( 'jS', $start_timestamp );
+			$start_day   = wp_date( 'j', $start_timestamp );
 			$start_month = wp_date( 'F', $start_timestamp );
 			$start_year  = wp_date( 'Y', $start_timestamp );
 
 			if ( $end_timestamp ) {
 				$end_time  = wp_date( 'H:i', $end_timestamp );
-				$end_day   = wp_date( 'jS', $end_timestamp );
+				$end_day   = wp_date( 'j', $end_timestamp );
 				$end_month = wp_date( 'F', $end_timestamp );
 				$end_year  = wp_date( 'Y', $end_timestamp );
 
@@ -110,14 +110,14 @@ if ( ! function_exists( 'fair_events_format_date_range' ) ) {
 
 				// Check if same day
 				if ( wp_date( 'Y-m-d', $start_timestamp ) === wp_date( 'Y-m-d', $end_timestamp ) ) {
-					// Same day: "19:30—21:30, 15th October"
+					// Same day: "19:30—21:30, 15 October"
 					return $start_time . '—' . $end_time . ', ' . $start_date_str;
 				} else {
-					// Different days: "22:00 15th November—03:00 16 November"
+					// Different days: "22:00 15 November—03:00 16 November"
 					return $start_time . ' ' . $start_date_str . '—' . $end_time . ' ' . $end_date_str;
 				}
 			} else {
-				// Only start time: "19:30, 15th October"
+				// Only start time: "19:30, 15 October"
 				$start_date_str = $start_day . ' ' . $start_month;
 				if ( $start_year !== wp_date( 'Y' ) ) {
 					$start_date_str .= ' ' . $start_year;
