@@ -1,0 +1,238 @@
+# Copyright (C) 2025 Marcin Wosinek
+# This file is distributed under the GPLv3 or later.
+msgid ""
+msgstr ""
+"Project-Id-Version: Fair RSVP 0.1.0\n"
+"Report-Msgid-Bugs-To: https://wordpress.org/support/plugin/fair-rsvp\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language-Team: Spanish\n"
+"Language: es_ES\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"POT-Creation-Date: 2025-10-16T07:47:27+00:00\n"
+"PO-Revision-Date: 2025-10-16 07:47+0000\n"
+"X-Generator: WP-CLI 2.12.0\n"
+"X-Domain: fair-rsvp\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+
+#. Plugin Name of the plugin
+#: fair-rsvp.php
+#: src/Admin/AdminHooks.php:33
+#: src/Admin/AdminHooks.php:34
+msgid "Fair RSVP"
+msgstr "Fair RSVP"
+
+#. Plugin URI of the plugin
+#: fair-rsvp.php
+msgid "https://github.com/marcin-wosinek/fair-event-plugins"
+msgstr "https://github.com/marcin-wosinek/fair-event-plugins"
+
+#. Description of the plugin
+#: fair-rsvp.php
+msgid "RSVP management for events - let users sign up for events."
+msgstr "Gestión de confirmaciones para eventos - permite a los usuarios inscribirse en eventos."
+
+#. Author of the plugin
+#: fair-rsvp.php
+msgid "Marcin Wosinek"
+msgstr "Marcin Wosinek"
+
+#. Author URI of the plugin
+#: fair-rsvp.php
+msgid "https://github.com/marcin-wosinek"
+msgstr "https://github.com/marcin-wosinek"
+
+#: src/blocks/rsvp-button/render.php:55
+msgid "Please log in to RSVP for this event."
+msgstr "Por favor, inicia sesión para confirmar tu asistencia a este evento."
+
+#: src/blocks/rsvp-button/render.php:57
+msgid "Log In"
+msgstr "Iniciar sesión"
+
+#: src/blocks/rsvp-button/render.php:72
+#: src/Admin/events/EventsList.js:82
+#: src/blocks/rsvp-button/editor.js:22
+msgid "Yes"
+msgstr "Sí"
+
+#: src/blocks/rsvp-button/render.php:82
+#: src/Admin/events/EventsList.js:85
+#: src/blocks/rsvp-button/editor.js:26
+msgid "Maybe"
+msgstr "Quizás"
+
+#: src/blocks/rsvp-button/render.php:92
+#: src/Admin/events/EventsList.js:88
+#: src/blocks/rsvp-button/editor.js:30
+msgid "No"
+msgstr "No"
+
+#: src/blocks/rsvp-button/render.php:97
+#: src/blocks/rsvp-button/editor.js:38
+msgid "Update RSVP"
+msgstr "Actualizar confirmación"
+
+#. translators: %s: RSVP status
+#: src/blocks/rsvp-button/render.php:108
+#, php-format
+msgid "Your current RSVP: %s"
+msgstr "Tu confirmación actual: %s"
+
+#: src/REST/RsvpController.php:76
+msgid "Event ID to get RSVP for."
+msgstr "ID del evento para obtener la confirmación."
+
+#: src/REST/RsvpController.php:96
+msgid "RSVP ID."
+msgstr "ID de confirmación."
+
+#: src/REST/RsvpController.php:101
+msgid "Attendance status."
+msgstr "Estado de asistencia."
+
+#: src/REST/RsvpController.php:136
+msgid "Post status filter."
+msgstr "Filtro de estado de publicación."
+
+#: src/REST/RsvpController.php:141
+msgid "Order by field."
+msgstr "Ordenar por campo."
+
+#: src/REST/RsvpController.php:147
+msgid "Order direction."
+msgstr "Dirección de orden."
+
+#: src/REST/RsvpController.php:174
+msgid "The specified event does not exist or is not published."
+msgstr "El evento especificado no existe o no está publicado."
+
+#: src/REST/RsvpController.php:185
+msgid "Failed to create or update RSVP."
+msgstr "Error al crear o actualizar la confirmación."
+
+#: src/REST/RsvpController.php:196
+msgid "RSVP was created but could not be retrieved."
+msgstr "La confirmación fue creada pero no se pudo recuperar."
+
+#: src/REST/RsvpController.php:222
+msgid "RSVP not found for this event."
+msgstr "No se encontró confirmación para este evento."
+
+#: src/REST/RsvpController.php:245
+msgid "RSVP not found."
+msgstr "Confirmación no encontrada."
+
+#: src/REST/RsvpController.php:256
+msgid "Failed to update attendance status."
+msgstr "Error al actualizar el estado de asistencia."
+
+#: src/REST/RsvpController.php:322
+msgid "You must be logged in to RSVP."
+msgstr "Debes iniciar sesión para confirmar tu asistencia."
+
+#: src/REST/RsvpController.php:339
+msgid "You must be logged in to view RSVPs."
+msgstr "Debes iniciar sesión para ver las confirmaciones."
+
+#: src/REST/RsvpController.php:406
+msgid "Event/post ID to RSVP for."
+msgstr "ID del evento/entrada para confirmar asistencia."
+
+#: src/REST/RsvpController.php:411
+msgid "RSVP status."
+msgstr "Estado de confirmación."
+
+#: src/REST/RsvpController.php:427
+msgid "Event ID to get RSVPs for."
+msgstr "ID del evento para obtener confirmaciones."
+
+#: src/REST/RsvpController.php:432
+msgid "Filter by RSVP status."
+msgstr "Filtrar por estado de confirmación."
+
+#: src/REST/RsvpController.php:437
+msgid "Filter by attendance status."
+msgstr "Filtrar por estado de asistencia."
+
+#: src/REST/RsvpController.php:442
+msgid "Current page of the collection."
+msgstr "Página actual de la colección."
+
+#: src/REST/RsvpController.php:448
+msgid "Maximum number of items to return per page."
+msgstr "Número máximo de elementos a devolver por página."
+
+#: src/Admin/events/EventsList.js:34
+#: src/Admin/events/EventsList.js:43
+#: src/Admin/events/EventsList.js:57
+#: src/Admin/events/EventsList.js:65
+msgid "Events with RSVPs"
+msgstr "Eventos con confirmaciones"
+
+#: src/Admin/events/EventsList.js:35
+msgid "Loading..."
+msgstr "Cargando..."
+
+#: src/Admin/events/EventsList.js:46
+msgid "Error loading events: "
+msgstr "Error al cargar eventos: "
+
+#: src/Admin/events/EventsList.js:58
+msgid "No events with RSVPs found."
+msgstr "No se encontraron eventos con confirmaciones."
+
+#: src/Admin/events/EventsList.js:79
+msgid "Event"
+msgstr "Evento"
+
+#: src/Admin/events/EventsList.js:91
+msgid "Pending"
+msgstr "Pendiente"
+
+#: src/Admin/events/EventsList.js:94
+msgid "Cancelled"
+msgstr "Cancelado"
+
+#: src/Admin/events/EventsList.js:97
+msgid "Total RSVPs"
+msgstr "Total de confirmaciones"
+
+#: src/blocks/rsvp-button/editor.js:17
+msgid "RSVP Form Preview"
+msgstr "Vista previa del formulario de confirmación"
+
+#: src/blocks/rsvp-button/editor.js:41
+msgid "Users will see their current RSVP status and can update it."
+msgstr "Los usuarios verán su estado de confirmación actual y podrán actualizarlo."
+
+#: src/blocks/rsvp-button/block.json
+msgctxt "block title"
+msgid "RSVP Button"
+msgstr "Botón de confirmación"
+
+#: src/blocks/rsvp-button/block.json
+msgctxt "block description"
+msgid "Allow users to RSVP to events"
+msgstr "Permitir a los usuarios confirmar asistencia a eventos"
+
+#: src/blocks/rsvp-button/block.json
+msgctxt "block keyword"
+msgid "rsvp"
+msgstr "rsvp"
+
+#: src/blocks/rsvp-button/block.json
+msgctxt "block keyword"
+msgid "event"
+msgstr "evento"
+
+#: src/blocks/rsvp-button/block.json
+msgctxt "block keyword"
+msgid "registration"
+msgstr "registro"
+
+#: src/blocks/rsvp-button/block.json
+msgctxt "block keyword"
+msgid "signup"
+msgstr "inscripción"

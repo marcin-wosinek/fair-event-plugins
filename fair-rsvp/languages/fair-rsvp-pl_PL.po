@@ -1,0 +1,238 @@
+# Copyright (C) 2025 Marcin Wosinek
+# This file is distributed under the GPLv3 or later.
+msgid ""
+msgstr ""
+"Project-Id-Version: Fair RSVP 0.1.0\n"
+"Report-Msgid-Bugs-To: https://wordpress.org/support/plugin/fair-rsvp\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language-Team: Polish\n"
+"Language: pl_PL\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"POT-Creation-Date: 2025-10-16T07:47:27+00:00\n"
+"PO-Revision-Date: 2025-10-16 07:47+0000\n"
+"X-Generator: WP-CLI 2.12.0\n"
+"X-Domain: fair-rsvp\n"
+"Plural-Forms: nplurals=3; plural=(n==1 ? 0 : n%10>=2 && n%10<=4 && (n%100<10 || n%100>=20) ? 1 : 2);\n"
+
+#. Plugin Name of the plugin
+#: fair-rsvp.php
+#: src/Admin/AdminHooks.php:33
+#: src/Admin/AdminHooks.php:34
+msgid "Fair RSVP"
+msgstr "Fair RSVP"
+
+#. Plugin URI of the plugin
+#: fair-rsvp.php
+msgid "https://github.com/marcin-wosinek/fair-event-plugins"
+msgstr "https://github.com/marcin-wosinek/fair-event-plugins"
+
+#. Description of the plugin
+#: fair-rsvp.php
+msgid "RSVP management for events - let users sign up for events."
+msgstr "Zarządzanie potwierdzeniami obecności na wydarzeniach - pozwól użytkownikom zapisywać się na wydarzenia."
+
+#. Author of the plugin
+#: fair-rsvp.php
+msgid "Marcin Wosinek"
+msgstr "Marcin Wosinek"
+
+#. Author URI of the plugin
+#: fair-rsvp.php
+msgid "https://github.com/marcin-wosinek"
+msgstr "https://github.com/marcin-wosinek"
+
+#: src/blocks/rsvp-button/render.php:55
+msgid "Please log in to RSVP for this event."
+msgstr "Zaloguj się, aby potwierdzić obecność na tym wydarzeniu."
+
+#: src/blocks/rsvp-button/render.php:57
+msgid "Log In"
+msgstr "Zaloguj się"
+
+#: src/blocks/rsvp-button/render.php:72
+#: src/Admin/events/EventsList.js:82
+#: src/blocks/rsvp-button/editor.js:22
+msgid "Yes"
+msgstr "Tak"
+
+#: src/blocks/rsvp-button/render.php:82
+#: src/Admin/events/EventsList.js:85
+#: src/blocks/rsvp-button/editor.js:26
+msgid "Maybe"
+msgstr "Może"
+
+#: src/blocks/rsvp-button/render.php:92
+#: src/Admin/events/EventsList.js:88
+#: src/blocks/rsvp-button/editor.js:30
+msgid "No"
+msgstr "Nie"
+
+#: src/blocks/rsvp-button/render.php:97
+#: src/blocks/rsvp-button/editor.js:38
+msgid "Update RSVP"
+msgstr "Zaktualizuj potwierdzenie"
+
+#. translators: %s: RSVP status
+#: src/blocks/rsvp-button/render.php:108
+#, php-format
+msgid "Your current RSVP: %s"
+msgstr "Twoje aktualne potwierdzenie: %s"
+
+#: src/REST/RsvpController.php:76
+msgid "Event ID to get RSVP for."
+msgstr "ID wydarzenia, dla którego pobrać potwierdzenie."
+
+#: src/REST/RsvpController.php:96
+msgid "RSVP ID."
+msgstr "ID potwierdzenia."
+
+#: src/REST/RsvpController.php:101
+msgid "Attendance status."
+msgstr "Status obecności."
+
+#: src/REST/RsvpController.php:136
+msgid "Post status filter."
+msgstr "Filtr statusu wpisu."
+
+#: src/REST/RsvpController.php:141
+msgid "Order by field."
+msgstr "Sortuj według pola."
+
+#: src/REST/RsvpController.php:147
+msgid "Order direction."
+msgstr "Kierunek sortowania."
+
+#: src/REST/RsvpController.php:174
+msgid "The specified event does not exist or is not published."
+msgstr "Określone wydarzenie nie istnieje lub nie zostało opublikowane."
+
+#: src/REST/RsvpController.php:185
+msgid "Failed to create or update RSVP."
+msgstr "Nie udało się utworzyć lub zaktualizować potwierdzenia."
+
+#: src/REST/RsvpController.php:196
+msgid "RSVP was created but could not be retrieved."
+msgstr "Potwierdzenie zostało utworzone, ale nie można go pobrać."
+
+#: src/REST/RsvpController.php:222
+msgid "RSVP not found for this event."
+msgstr "Nie znaleziono potwierdzenia dla tego wydarzenia."
+
+#: src/REST/RsvpController.php:245
+msgid "RSVP not found."
+msgstr "Nie znaleziono potwierdzenia."
+
+#: src/REST/RsvpController.php:256
+msgid "Failed to update attendance status."
+msgstr "Nie udało się zaktualizować statusu obecności."
+
+#: src/REST/RsvpController.php:322
+msgid "You must be logged in to RSVP."
+msgstr "Musisz być zalogowany, aby potwierdzić obecność."
+
+#: src/REST/RsvpController.php:339
+msgid "You must be logged in to view RSVPs."
+msgstr "Musisz być zalogowany, aby wyświetlić potwierdzenia."
+
+#: src/REST/RsvpController.php:406
+msgid "Event/post ID to RSVP for."
+msgstr "ID wydarzenia/wpisu, dla którego potwierdzić obecność."
+
+#: src/REST/RsvpController.php:411
+msgid "RSVP status."
+msgstr "Status potwierdzenia."
+
+#: src/REST/RsvpController.php:427
+msgid "Event ID to get RSVPs for."
+msgstr "ID wydarzenia, dla którego pobrać potwierdzenia."
+
+#: src/REST/RsvpController.php:432
+msgid "Filter by RSVP status."
+msgstr "Filtruj według statusu potwierdzenia."
+
+#: src/REST/RsvpController.php:437
+msgid "Filter by attendance status."
+msgstr "Filtruj według statusu obecności."
+
+#: src/REST/RsvpController.php:442
+msgid "Current page of the collection."
+msgstr "Bieżąca strona kolekcji."
+
+#: src/REST/RsvpController.php:448
+msgid "Maximum number of items to return per page."
+msgstr "Maksymalna liczba elementów do zwrócenia na stronę."
+
+#: src/Admin/events/EventsList.js:34
+#: src/Admin/events/EventsList.js:43
+#: src/Admin/events/EventsList.js:57
+#: src/Admin/events/EventsList.js:65
+msgid "Events with RSVPs"
+msgstr "Wydarzenia z potwierdzeniami"
+
+#: src/Admin/events/EventsList.js:35
+msgid "Loading..."
+msgstr "Ładowanie..."
+
+#: src/Admin/events/EventsList.js:46
+msgid "Error loading events: "
+msgstr "Błąd ładowania wydarzeń: "
+
+#: src/Admin/events/EventsList.js:58
+msgid "No events with RSVPs found."
+msgstr "Nie znaleziono wydarzeń z potwierdzeniami."
+
+#: src/Admin/events/EventsList.js:79
+msgid "Event"
+msgstr "Wydarzenie"
+
+#: src/Admin/events/EventsList.js:91
+msgid "Pending"
+msgstr "Oczekujące"
+
+#: src/Admin/events/EventsList.js:94
+msgid "Cancelled"
+msgstr "Anulowane"
+
+#: src/Admin/events/EventsList.js:97
+msgid "Total RSVPs"
+msgstr "Łącznie potwierdzeń"
+
+#: src/blocks/rsvp-button/editor.js:17
+msgid "RSVP Form Preview"
+msgstr "Podgląd formularza potwierdzenia"
+
+#: src/blocks/rsvp-button/editor.js:41
+msgid "Users will see their current RSVP status and can update it."
+msgstr "Użytkownicy zobaczą swój aktualny status potwierdzenia i będą mogli go zaktualizować."
+
+#: src/blocks/rsvp-button/block.json
+msgctxt "block title"
+msgid "RSVP Button"
+msgstr "Przycisk potwierdzenia"
+
+#: src/blocks/rsvp-button/block.json
+msgctxt "block description"
+msgid "Allow users to RSVP to events"
+msgstr "Pozwól użytkownikom potwierdzać obecność na wydarzeniach"
+
+#: src/blocks/rsvp-button/block.json
+msgctxt "block keyword"
+msgid "rsvp"
+msgstr "rsvp"
+
+#: src/blocks/rsvp-button/block.json
+msgctxt "block keyword"
+msgid "event"
+msgstr "wydarzenie"
+
+#: src/blocks/rsvp-button/block.json
+msgctxt "block keyword"
+msgid "registration"
+msgstr "rejestracja"
+
+#: src/blocks/rsvp-button/block.json
+msgctxt "block keyword"
+msgid "signup"
+msgstr "zapisy"
