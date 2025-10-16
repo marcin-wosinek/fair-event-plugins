@@ -27,16 +27,7 @@ class RestHooks {
 	 * @return void
 	 */
 	public function register_routes() {
-		// Placeholder for REST route registration
-		// Example:
-		// register_rest_route(
-		// 'fair-rsvp/v1',
-		// '/rsvp',
-		// array(
-		// 'methods'  => 'POST',
-		// 'callback' => array( $this, 'create_rsvp' ),
-		// 'permission_callback' => array( $this, 'check_permission' ),
-		// )
-		// );
+		$rsvp_controller = new \FairRsvp\REST\RsvpController();
+		$rsvp_controller->register_routes();
 	}
 }
