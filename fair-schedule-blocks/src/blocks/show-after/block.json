@@ -8,6 +8,7 @@
 	"icon": "visibility",
 	"description": "Hides content until a specific date and time, then shows it",
 	"example": {},
+	"usesContext": ["postId", "postType"],
 	"supports": {
 		"html": false,
 		"anchor": true,

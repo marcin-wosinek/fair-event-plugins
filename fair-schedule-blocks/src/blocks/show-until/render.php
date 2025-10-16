@@ -7,8 +7,14 @@
 
 defined( 'WPINC' ) || die;
 
-// Get block attributes
+// Get block attributes and context
 $hide_after = $attributes['hideAfter'] ?? '';
+$post_id    = $block->context['postId'] ?? get_the_ID();
+
+// Resolve event-specific dates if fair-events plugin is active
+if ( ! empty( $hide_after ) && function_exists( 'fair_events_resolve_date' ) ) {
+	$hide_after = fair_events_resolve_date( $hide_after, $post_id );
+}
 
 // If no date is set or the current time is after the hide date, don't render
 if ( ! empty( $hide_after ) ) {

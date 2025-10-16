@@ -7,8 +7,14 @@
 
 defined( 'WPINC' ) || die;
 
-// Get block attributes
+// Get block attributes and context
 $show_after = $attributes['showAfter'] ?? '';
+$post_id    = $block->context['postId'] ?? get_the_ID();
+
+// Resolve event-specific dates if fair-events plugin is active
+if ( ! empty( $show_after ) && function_exists( 'fair_events_resolve_date' ) ) {
+	$show_after = fair_events_resolve_date( $show_after, $post_id );
+}
 
 // If no date is set or the current time is before the show date, don't render
 if ( ! empty( $show_after ) ) {

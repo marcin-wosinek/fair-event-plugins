@@ -31,43 +31,81 @@
  * @since 1.0.0
  */
 
-namespace FairEvents;
+namespace FairEvents {
 
-defined( 'WPINC' ) || die;
+	defined( 'WPINC' ) || die;
 
-// Define plugin constants.
-define( 'FAIR_EVENTS_PLUGIN_DIR', plugin_dir_path( __FILE__ ) );
-define( 'FAIR_EVENTS_PLUGIN_URL', plugin_dir_url( __FILE__ ) );
+	// Define plugin constants.
+	define( 'FAIR_EVENTS_PLUGIN_DIR', plugin_dir_path( __FILE__ ) );
+	define( 'FAIR_EVENTS_PLUGIN_URL', plugin_dir_url( __FILE__ ) );
 
-require_once __DIR__ . '/vendor/autoload.php';
+	require_once __DIR__ . '/vendor/autoload.php';
 
-use FairEvents\Core\Plugin;
+	use FairEvents\Core\Plugin;
 
-// Initialize plugin
-Plugin::instance()->init();
+	// Initialize plugin
+	Plugin::instance()->init();
 
-/**
- * Plugin activation hook
- *
- * @return void
- */
-function fair_events_activate() {
-	// Install database tables.
-	\FairEvents\Database\Installer::install();
-	// Trigger post type registration.
-	\FairEvents\PostTypes\Event::register();
-	// Clear the permalinks after the post type has been registered.
-	flush_rewrite_rules();
+	/**
+	 * Plugin activation hook
+	 *
+	 * @return void
+	 */
+	function fair_events_activate() {
+		// Install database tables.
+		\FairEvents\Database\Installer::install();
+		// Trigger post type registration.
+		\FairEvents\PostTypes\Event::register();
+		// Clear the permalinks after the post type has been registered.
+		flush_rewrite_rules();
+	}
+	register_activation_hook( __FILE__, __NAMESPACE__ . '\fair_events_activate' );
+
+	/**
+	 * Plugin deactivation hook
+	 *
+	 * @return void
+	 */
+	function fair_events_deactivate() {
+		// Clear the permalinks to remove our post type's rules from the database.
+		flush_rewrite_rules();
+	}
+	register_deactivation_hook( __FILE__, __NAMESPACE__ . '\fair_events_deactivate' );
 }
-register_activation_hook( __FILE__, __NAMESPACE__ . '\fair_events_activate' );
 
-/**
- * Plugin deactivation hook
- *
- * @return void
- */
-function fair_events_deactivate() {
-	// Clear the permalinks to remove our post type's rules from the database.
-	flush_rewrite_rules();
+// Define date resolver in global namespace for cross-plugin use
+namespace {
+	/**
+	 * Resolve special event date strings to actual datetime values
+	 *
+	 * This function allows other plugins to reference event dates using special strings:
+	 * - 'fair-event:start' - resolves to event start datetime
+	 * - 'fair-event:end' - resolves to event end datetime
+	 *
+	 * @param string $date_string Date string to resolve (ISO datetime or special format).
+	 * @param int    $post_id     Post ID to get event dates from.
+	 * @return string Resolved datetime string or original value if not a special format.
+	 */
+	function fair_events_resolve_date( $date_string, $post_id ) {
+		// If not a special format, return as-is
+		if ( ! is_string( $date_string ) || strpos( $date_string, 'fair-event:' ) !== 0 ) {
+			return $date_string;
+		}
+
+		// Get event dates
+		$event_dates = \FairEvents\Models\EventDates::get_by_event_id( $post_id );
+		if ( ! $event_dates ) {
+			return $date_string;
+		}
+
+		// Resolve based on format
+		switch ( $date_string ) {
+			case 'fair-event:start':
+				return $event_dates->start_datetime ?? $date_string;
+			case 'fair-event:end':
+				return $event_dates->end_datetime ?? $date_string;
+			default:
+				return $date_string;
+		}
+	}
 }
-register_deactivation_hook( __FILE__, __NAMESPACE__ . '\fair_events_deactivate' );

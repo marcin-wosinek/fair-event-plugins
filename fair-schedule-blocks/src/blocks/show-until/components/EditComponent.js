@@ -4,11 +4,36 @@ import {
 	InspectorControls,
 	useInnerBlocksProps,
 } from '@wordpress/block-editor';
+import { useSelect } from '@wordpress/data';
 import { __ } from '@wordpress/i18n';
 import DateTimeControl from '../../../components/DateTimeControl.js';
 
-export default function EditComponent({ attributes, setAttributes }) {
+export default function EditComponent({ attributes, setAttributes, context }) {
 	const { hideAfter } = attributes;
+	const { postId, postType } = context || {};
+
+	// Get event metadata if available
+	const { eventStart, eventEnd, eventAllDay } = useSelect(
+		(select) => {
+			if (postType !== 'fair_event' || !postId) {
+				return {
+					eventStart: null,
+					eventEnd: null,
+					eventAllDay: false,
+				};
+			}
+
+			const { getEditedPostAttribute } = select('core/editor');
+			const meta = getEditedPostAttribute('meta') || {};
+
+			return {
+				eventStart: meta.event_start || '',
+				eventEnd: meta.event_end || '',
+				eventAllDay: meta.event_all_day || false,
+			};
+		},
+		[postType, postId]
+	);
 
 	const blockProps = useBlockProps({
 		className: 'show-until-container',
@@ -58,6 +83,9 @@ export default function EditComponent({ attributes, setAttributes }) {
 							'Content will be hidden after this date and time.',
 							'fair-schedule-blocks'
 						)}
+						eventStart={eventStart}
+						eventEnd={eventEnd}
+						eventAllDay={eventAllDay}
 					/>
 				</PanelBody>
 			</InspectorControls>
