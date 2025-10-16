@@ -1,0 +1,26 @@
+{
+	"$schema": "https://schemas.wp.org/trunk/block.json",
+	"apiVersion": 3,
+	"name": "fair-rsvp/rsvp-button",
+	"version": "1.0.0",
+	"title": "RSVP Button",
+	"category": "widgets",
+	"icon": "calendar-alt",
+	"description": "Allow users to RSVP to events",
+	"keywords": ["rsvp", "event", "registration", "signup"],
+	"textdomain": "fair-rsvp",
+	"supports": {
+		"html": false,
+		"align": ["wide", "full"],
+		"spacing": {
+			"padding": true,
+			"margin": ["top", "bottom"]
+		}
+	},
+	"attributes": {},
+	"editorScript": "file:./editor.js",
+	"viewScript": "file:./frontend.js",
+	"render": "file:./render.php",
+	"viewStyle": "file:./frontend.css",
+	"editorStyle": "file:./editor.css"
+}

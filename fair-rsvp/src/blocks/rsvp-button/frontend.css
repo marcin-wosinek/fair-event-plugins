@@ -1,0 +1,140 @@
+/**
+ * Frontend styles for RSVP button block
+ */
+
+.fair-rsvp-button {
+	margin: 2rem 0;
+}
+
+/* Login message */
+.fair-rsvp-login-message {
+	text-align: center;
+	padding: 2rem;
+	background-color: #f0f0f1;
+	border-radius: 4px;
+}
+
+.fair-rsvp-login-message p {
+	margin: 0 0 1rem 0;
+	font-size: 1rem;
+}
+
+.fair-rsvp-login-button {
+	display: inline-block;
+	padding: 0.75rem 1.5rem;
+	background-color: #2271b1;
+	color: white;
+	text-decoration: none;
+	border-radius: 4px;
+	font-weight: 500;
+	transition: background-color 0.2s;
+}
+
+.fair-rsvp-login-button:hover {
+	background-color: #135e96;
+	color: white;
+}
+
+/* RSVP Form */
+.fair-rsvp-form-container {
+	padding: 1.5rem;
+	background-color: #ffffff;
+	border: 1px solid #ddd;
+	border-radius: 4px;
+}
+
+.fair-rsvp-form {
+	margin: 0;
+}
+
+.fair-rsvp-options {
+	display: flex;
+	gap: 1rem;
+	margin-bottom: 1rem;
+	flex-wrap: wrap;
+}
+
+.fair-rsvp-option {
+	display: flex;
+	align-items: center;
+	gap: 0.5rem;
+	padding: 0.75rem 1rem;
+	background-color: #f0f0f1;
+	border: 2px solid transparent;
+	border-radius: 4px;
+	cursor: pointer;
+	transition: all 0.2s;
+	user-select: none;
+}
+
+.fair-rsvp-option:hover {
+	background-color: #e0e0e1;
+}
+
+.fair-rsvp-option input[type="radio"] {
+	margin: 0;
+	cursor: pointer;
+}
+
+.fair-rsvp-option input[type="radio"]:checked + span {
+	font-weight: 600;
+}
+
+.fair-rsvp-option:has(input:checked) {
+	background-color: #2271b1;
+	color: white;
+	border-color: #135e96;
+}
+
+.fair-rsvp-submit-button {
+	display: inline-block;
+	padding: 0.75rem 1.5rem;
+	background-color: #2271b1;
+	color: white;
+	border: none;
+	border-radius: 4px;
+	font-weight: 500;
+	font-size: 1rem;
+	cursor: pointer;
+	transition: background-color 0.2s;
+}
+
+.fair-rsvp-submit-button:hover:not(:disabled) {
+	background-color: #135e96;
+}
+
+.fair-rsvp-submit-button:disabled {
+	opacity: 0.6;
+	cursor: not-allowed;
+}
+
+.fair-rsvp-message {
+	margin-top: 1rem;
+	padding: 0.75rem 1rem;
+	border-radius: 4px;
+	font-weight: 500;
+}
+
+.fair-rsvp-message-success {
+	background-color: #d7f8e0;
+	color: #00632d;
+	border: 1px solid #00a32a;
+}
+
+.fair-rsvp-message-error {
+	background-color: #fcf0f1;
+	color: #8b1a1d;
+	border: 1px solid #d63638;
+}
+
+.fair-rsvp-current-status {
+	margin-top: 1rem;
+	padding: 0.75rem 1rem;
+	background-color: #f0f6fc;
+	border-left: 3px solid #2271b1;
+	font-size: 0.9rem;
+}
+
+.fair-rsvp-current-status strong {
+	color: #2271b1;
+}

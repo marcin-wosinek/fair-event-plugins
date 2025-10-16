@@ -27,8 +27,6 @@ class BlockHooks {
 	 * @return void
 	 */
 	public function register_blocks() {
-		// Placeholder for block registration
-		// register_block_type( __DIR__ . '/../../build/blocks/rsvp-button' );
-		// register_block_type( __DIR__ . '/../../build/blocks/rsvp-list' );
+		register_block_type( __DIR__ . '/../../build/blocks/rsvp-button' );
 	}
 }
