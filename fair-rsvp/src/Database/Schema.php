@@ -17,7 +17,7 @@ class Schema {
 	/**
 	 * Database version
 	 */
-	const DB_VERSION = '1.0.0';
+	const DB_VERSION = '1.1.0';
 
 	/**
 	 * Get the SQL for creating the fair_rsvp table
@@ -35,14 +35,17 @@ class Schema {
 			id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
 			event_id BIGINT UNSIGNED NOT NULL,
 			user_id BIGINT UNSIGNED NOT NULL,
-			status VARCHAR(20) NOT NULL DEFAULT 'pending',
+			rsvp_status VARCHAR(20) NOT NULL DEFAULT 'pending',
+			attendance_status VARCHAR(20) NOT NULL DEFAULT 'not_applicable',
+			rsvp_at DATETIME NULL DEFAULT NULL,
 			created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
 			updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
 
 			PRIMARY KEY (id),
 			KEY idx_event_id (event_id),
 			KEY idx_user_id (user_id),
-			KEY idx_status (status),
+			KEY idx_rsvp_status (rsvp_status),
+			KEY idx_attendance_status (attendance_status),
 			UNIQUE KEY idx_event_user (event_id, user_id),
 
 			CONSTRAINT fk_rsvp_event
