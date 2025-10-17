@@ -9,7 +9,7 @@ msgstr ""
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"POT-Creation-Date: 2025-10-16T07:47:27+00:00\n"
+"POT-Creation-Date: 2025-10-17T07:34:19+00:00\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "X-Generator: WP-CLI 2.12.0\n"
 "X-Domain: fair-rsvp\n"
@@ -41,6 +41,26 @@ msgstr ""
 msgid "https://github.com/marcin-wosinek"
 msgstr ""
 
+#: src/blocks/participants-list/render.php:33
+msgid "No one has signed up yet."
+msgstr ""
+
+#. translators: %d: Number of participants
+#: src/blocks/participants-list/render.php:40
+#, php-format
+msgid "%d person signed up"
+msgid_plural "%d people signed up"
+msgstr[0] ""
+msgstr[1] ""
+
+#. translators: %d: Number of participants
+#: src/blocks/participants-list/render.php:49
+#, php-format
+msgid "Attendee (%d)"
+msgid_plural "Attendees (%d)"
+msgstr[0] ""
+msgstr[1] ""
+
 #: src/blocks/rsvp-button/render.php:55
 msgid "Please log in to RSVP for this event."
 msgstr ""
@@ -51,18 +71,24 @@ msgstr ""
 
 #: src/blocks/rsvp-button/render.php:72
 #: src/Admin/events/EventsList.js:82
+#: src/blocks/participants-list/editor.js:66
+#: src/blocks/participants-list/editor.js:120
 #: src/blocks/rsvp-button/editor.js:22
 msgid "Yes"
 msgstr ""
 
 #: src/blocks/rsvp-button/render.php:82
 #: src/Admin/events/EventsList.js:85
+#: src/blocks/participants-list/editor.js:68
+#: src/blocks/participants-list/editor.js:122
 #: src/blocks/rsvp-button/editor.js:26
 msgid "Maybe"
 msgstr ""
 
 #: src/blocks/rsvp-button/render.php:92
 #: src/Admin/events/EventsList.js:88
+#: src/blocks/participants-list/editor.js:71
+#: src/blocks/participants-list/editor.js:124
 #: src/blocks/rsvp-button/editor.js:30
 msgid "No"
 msgstr ""
@@ -102,63 +128,71 @@ msgstr ""
 msgid "Order direction."
 msgstr ""
 
-#: src/REST/RsvpController.php:174
+#: src/REST/RsvpController.php:168
+msgid "Event ID to get participants for."
+msgstr ""
+
+#: src/REST/RsvpController.php:173
+msgid "RSVP status to filter by."
+msgstr ""
+
+#: src/REST/RsvpController.php:200
 msgid "The specified event does not exist or is not published."
 msgstr ""
 
-#: src/REST/RsvpController.php:185
+#: src/REST/RsvpController.php:211
 msgid "Failed to create or update RSVP."
 msgstr ""
 
-#: src/REST/RsvpController.php:196
+#: src/REST/RsvpController.php:222
 msgid "RSVP was created but could not be retrieved."
 msgstr ""
 
-#: src/REST/RsvpController.php:222
+#: src/REST/RsvpController.php:248
 msgid "RSVP not found for this event."
 msgstr ""
 
-#: src/REST/RsvpController.php:245
+#: src/REST/RsvpController.php:271
 msgid "RSVP not found."
 msgstr ""
 
-#: src/REST/RsvpController.php:256
+#: src/REST/RsvpController.php:282
 msgid "Failed to update attendance status."
 msgstr ""
 
-#: src/REST/RsvpController.php:322
+#: src/REST/RsvpController.php:381
 msgid "You must be logged in to RSVP."
 msgstr ""
 
-#: src/REST/RsvpController.php:339
+#: src/REST/RsvpController.php:398
 msgid "You must be logged in to view RSVPs."
 msgstr ""
 
-#: src/REST/RsvpController.php:406
+#: src/REST/RsvpController.php:465
 msgid "Event/post ID to RSVP for."
 msgstr ""
 
-#: src/REST/RsvpController.php:411
+#: src/REST/RsvpController.php:470
 msgid "RSVP status."
 msgstr ""
 
-#: src/REST/RsvpController.php:427
+#: src/REST/RsvpController.php:486
 msgid "Event ID to get RSVPs for."
 msgstr ""
 
-#: src/REST/RsvpController.php:432
+#: src/REST/RsvpController.php:491
 msgid "Filter by RSVP status."
 msgstr ""
 
-#: src/REST/RsvpController.php:437
+#: src/REST/RsvpController.php:496
 msgid "Filter by attendance status."
 msgstr ""
 
-#: src/REST/RsvpController.php:442
+#: src/REST/RsvpController.php:501
 msgid "Current page of the collection."
 msgstr ""
 
-#: src/REST/RsvpController.php:448
+#: src/REST/RsvpController.php:507
 msgid "Maximum number of items to return per page."
 msgstr ""
 
@@ -197,12 +231,67 @@ msgstr ""
 msgid "Total RSVPs"
 msgstr ""
 
+#: src/blocks/participants-list/editor.js:56
+msgid "Participant Settings"
+msgstr ""
+
+#: src/blocks/participants-list/editor.js:60
+msgid "Show participants with status"
+msgstr ""
+
+#: src/blocks/participants-list/editor.js:76
+msgid "Choose which RSVP status to display in the participant list."
+msgstr ""
+
+#: src/blocks/participants-list/editor.js:96
+msgid "RSVP Participants List"
+msgstr ""
+
+#: src/blocks/participants-list/editor.js:105
+msgid "Preview available on frontend only"
+msgstr ""
+
+#: src/blocks/participants-list/editor.js:117
+msgid "Showing:"
+msgstr ""
+
 #: src/blocks/rsvp-button/editor.js:17
 msgid "RSVP Form Preview"
 msgstr ""
 
 #: src/blocks/rsvp-button/editor.js:41
 msgid "Users will see their current RSVP status and can update it."
+msgstr ""
+
+#: src/blocks/participants-list/block.json
+msgctxt "block title"
+msgid "RSVP Participants"
+msgstr ""
+
+#: src/blocks/participants-list/block.json
+msgctxt "block description"
+msgid "Display list of event participants who RSVPed"
+msgstr ""
+
+#: src/blocks/participants-list/block.json
+#: src/blocks/rsvp-button/block.json
+msgctxt "block keyword"
+msgid "rsvp"
+msgstr ""
+
+#: src/blocks/participants-list/block.json
+msgctxt "block keyword"
+msgid "participants"
+msgstr ""
+
+#: src/blocks/participants-list/block.json
+msgctxt "block keyword"
+msgid "attendees"
+msgstr ""
+
+#: src/blocks/participants-list/block.json
+msgctxt "block keyword"
+msgid "list"
 msgstr ""
 
 #: src/blocks/rsvp-button/block.json
@@ -213,11 +302,6 @@ msgstr ""
 #: src/blocks/rsvp-button/block.json
 msgctxt "block description"
 msgid "Allow users to RSVP to events"
-msgstr ""
-
-#: src/blocks/rsvp-button/block.json
-msgctxt "block keyword"
-msgid "rsvp"
 msgstr ""
 
 #: src/blocks/rsvp-button/block.json

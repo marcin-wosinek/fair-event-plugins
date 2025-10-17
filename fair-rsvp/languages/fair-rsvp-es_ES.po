@@ -1,17 +1,15 @@
-# Copyright (C) 2025 Marcin Wosinek
-# This file is distributed under the GPLv3 or later.
 msgid ""
 msgstr ""
 "Project-Id-Version: Fair RSVP 0.1.0\n"
 "Report-Msgid-Bugs-To: https://wordpress.org/support/plugin/fair-rsvp\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: Spanish\n"
-"Language: es_ES\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "POT-Creation-Date: 2025-10-16T07:47:27+00:00\n"
 "PO-Revision-Date: 2025-10-16 07:47+0000\n"
+"Language: es_ES\n"
 "X-Generator: WP-CLI 2.12.0\n"
 "X-Domain: fair-rsvp\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
@@ -53,18 +51,24 @@ msgstr "Iniciar sesión"
 
 #: src/blocks/rsvp-button/render.php:72
 #: src/Admin/events/EventsList.js:82
+#: src/blocks/participants-list/editor.js:66
+#: src/blocks/participants-list/editor.js:120
 #: src/blocks/rsvp-button/editor.js:22
 msgid "Yes"
 msgstr "Sí"
 
 #: src/blocks/rsvp-button/render.php:82
 #: src/Admin/events/EventsList.js:85
+#: src/blocks/participants-list/editor.js:68
+#: src/blocks/participants-list/editor.js:122
 #: src/blocks/rsvp-button/editor.js:26
 msgid "Maybe"
 msgstr "Quizás"
 
 #: src/blocks/rsvp-button/render.php:92
 #: src/Admin/events/EventsList.js:88
+#: src/blocks/participants-list/editor.js:71
+#: src/blocks/participants-list/editor.js:124
 #: src/blocks/rsvp-button/editor.js:30
 msgid "No"
 msgstr "No"
@@ -104,63 +108,63 @@ msgstr "Ordenar por campo."
 msgid "Order direction."
 msgstr "Dirección de orden."
 
-#: src/REST/RsvpController.php:174
+#: src/REST/RsvpController.php:200
 msgid "The specified event does not exist or is not published."
 msgstr "El evento especificado no existe o no está publicado."
 
-#: src/REST/RsvpController.php:185
+#: src/REST/RsvpController.php:211
 msgid "Failed to create or update RSVP."
 msgstr "Error al crear o actualizar la confirmación."
 
-#: src/REST/RsvpController.php:196
+#: src/REST/RsvpController.php:222
 msgid "RSVP was created but could not be retrieved."
 msgstr "La confirmación fue creada pero no se pudo recuperar."
 
-#: src/REST/RsvpController.php:222
+#: src/REST/RsvpController.php:248
 msgid "RSVP not found for this event."
 msgstr "No se encontró confirmación para este evento."
 
-#: src/REST/RsvpController.php:245
+#: src/REST/RsvpController.php:271
 msgid "RSVP not found."
 msgstr "Confirmación no encontrada."
 
-#: src/REST/RsvpController.php:256
+#: src/REST/RsvpController.php:282
 msgid "Failed to update attendance status."
 msgstr "Error al actualizar el estado de asistencia."
 
-#: src/REST/RsvpController.php:322
+#: src/REST/RsvpController.php:381
 msgid "You must be logged in to RSVP."
 msgstr "Debes iniciar sesión para confirmar tu asistencia."
 
-#: src/REST/RsvpController.php:339
+#: src/REST/RsvpController.php:398
 msgid "You must be logged in to view RSVPs."
 msgstr "Debes iniciar sesión para ver las confirmaciones."
 
-#: src/REST/RsvpController.php:406
+#: src/REST/RsvpController.php:465
 msgid "Event/post ID to RSVP for."
 msgstr "ID del evento/entrada para confirmar asistencia."
 
-#: src/REST/RsvpController.php:411
+#: src/REST/RsvpController.php:470
 msgid "RSVP status."
 msgstr "Estado de confirmación."
 
-#: src/REST/RsvpController.php:427
+#: src/REST/RsvpController.php:486
 msgid "Event ID to get RSVPs for."
 msgstr "ID del evento para obtener confirmaciones."
 
-#: src/REST/RsvpController.php:432
+#: src/REST/RsvpController.php:491
 msgid "Filter by RSVP status."
 msgstr "Filtrar por estado de confirmación."
 
-#: src/REST/RsvpController.php:437
+#: src/REST/RsvpController.php:496
 msgid "Filter by attendance status."
 msgstr "Filtrar por estado de asistencia."
 
-#: src/REST/RsvpController.php:442
+#: src/REST/RsvpController.php:501
 msgid "Current page of the collection."
 msgstr "Página actual de la colección."
 
-#: src/REST/RsvpController.php:448
+#: src/REST/RsvpController.php:507
 msgid "Maximum number of items to return per page."
 msgstr "Número máximo de elementos a devolver por página."
 
@@ -217,6 +221,7 @@ msgctxt "block description"
 msgid "Allow users to RSVP to events"
 msgstr "Permitir a los usuarios confirmar asistencia a eventos"
 
+#: src/blocks/participants-list/block.json
 #: src/blocks/rsvp-button/block.json
 msgctxt "block keyword"
 msgid "rsvp"
@@ -236,3 +241,80 @@ msgstr "registro"
 msgctxt "block keyword"
 msgid "signup"
 msgstr "inscripción"
+
+#: src/blocks/participants-list/render.php:33
+msgid "No one has signed up yet."
+msgstr "Nadie se ha inscrito todavía."
+
+#. translators: %d: Number of participants
+#: src/blocks/participants-list/render.php:40
+#, php-format
+msgid "%d person signed up"
+msgid_plural "%d people signed up"
+msgstr[0] "%d persona se inscribió"
+msgstr[1] "%d personas se inscribieron"
+
+#. translators: %d: Number of participants
+#: src/blocks/participants-list/render.php:49
+#, php-format
+msgid "Attendee (%d)"
+msgid_plural "Attendees (%d)"
+msgstr[0] "Asistente (%d)"
+msgstr[1] "Asistentes (%d)"
+
+#: src/REST/RsvpController.php:168
+msgid "Event ID to get participants for."
+msgstr "ID del evento para obtener participantes."
+
+#: src/REST/RsvpController.php:173
+msgid "RSVP status to filter by."
+msgstr "Estado de confirmación para filtrar."
+
+#: src/blocks/participants-list/editor.js:56
+msgid "Participant Settings"
+msgstr "Configuración de participantes"
+
+#: src/blocks/participants-list/editor.js:60
+msgid "Show participants with status"
+msgstr "Mostrar participantes con estado"
+
+#: src/blocks/participants-list/editor.js:76
+msgid "Choose which RSVP status to display in the participant list."
+msgstr "Elige qué estado de confirmación mostrar en la lista de participantes."
+
+#: src/blocks/participants-list/editor.js:96
+msgid "RSVP Participants List"
+msgstr "Lista de participantes confirmados"
+
+#: src/blocks/participants-list/editor.js:105
+msgid "Preview available on frontend only"
+msgstr "Vista previa disponible solo en el frontend"
+
+#: src/blocks/participants-list/editor.js:117
+msgid "Showing:"
+msgstr "Mostrando:"
+
+#: src/blocks/participants-list/block.json
+msgctxt "block title"
+msgid "RSVP Participants"
+msgstr "Participantes confirmados"
+
+#: src/blocks/participants-list/block.json
+msgctxt "block description"
+msgid "Display list of event participants who RSVPed"
+msgstr "Mostrar lista de participantes del evento que confirmaron asistencia"
+
+#: src/blocks/participants-list/block.json
+msgctxt "block keyword"
+msgid "participants"
+msgstr "participantes"
+
+#: src/blocks/participants-list/block.json
+msgctxt "block keyword"
+msgid "attendees"
+msgstr "asistentes"
+
+#: src/blocks/participants-list/block.json
+msgctxt "block keyword"
+msgid "list"
+msgstr "lista"
