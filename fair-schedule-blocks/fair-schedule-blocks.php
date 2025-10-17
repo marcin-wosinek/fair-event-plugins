@@ -3,7 +3,7 @@
  * Plugin Name: Fair Schedule Blocks
  * Plugin URI: https://github.com/marcin-wosinek/fair-event-plugins
  * Description: Fair Schedule Blocks provides WordPress Gutenberg blocks with time-dependent display. 
- * Version: 0.1.2
+ * Version: 0.2.0
  * Requires at least: 6.7
  * Requires PHP: 7.4
  * Author: Marcin Wosinek

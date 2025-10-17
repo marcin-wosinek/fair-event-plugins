@@ -1,5 +1,12 @@
 # fair-events
 
+## 0.4.1
+
+### Patch Changes
+
+- 2ee1396: Integrate event & schedule blocks—reference event dates in block
+- 1bfddd0: Fix data formating in translated date
+
 ## 0.4.0
 
 ### Minor Changes

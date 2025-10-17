@@ -1,5 +1,12 @@
 # fair-schedule-blocks
 
+## 0.2.0
+
+### Minor Changes
+
+- 4158206: Add show-until & show-after blocks
+- 2ee1396: Integrate event & schedule blocks—reference event dates in block
+
 ## 0.1.2
 
 ### Patch Changes

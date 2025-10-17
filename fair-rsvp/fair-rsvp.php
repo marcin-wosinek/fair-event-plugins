@@ -3,7 +3,7 @@
  * Plugin Name: Fair RSVP
  * Plugin URI: https://github.com/marcin-wosinek/fair-event-plugins
  * Description: RSVP management for events - let users sign up for events.
- * Version: 0.1.0
+ * Version: 0.2.0
  * Requires at least: 6.7
  * Requires PHP: 7.4
  * Author: Marcin Wosinek

@@ -4,7 +4,7 @@ Tags: blocks, schedule, events, gutenberg, accordion
 Requires at least: 6.7
 Tested up to: 6.8
 Requires PHP: 7.4
-Stable tag: 0.1.2
+Stable tag: 0.2.0
 License: GPLv3 or later
 License URI: https://www.gnu.org/licenses/gpl-3.0.html
 
@@ -51,6 +51,13 @@ Yes, users can click on collapsed content to reveal it again.
 3. Collapsed schedule item on the frontend
 
 == Changelog ==
+
+## 0.2.0
+
+### Minor Changes
+
+- 4158206: Add show-until & show-after blocks
+- 2ee1396: Integrate event & schedule blocks—reference event dates in block
 
 ## 0.1.2
 
