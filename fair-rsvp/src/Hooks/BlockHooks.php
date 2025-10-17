@@ -28,5 +28,6 @@ class BlockHooks {
 	 */
 	public function register_blocks() {
 		register_block_type( __DIR__ . '/../../build/blocks/rsvp-button' );
+		register_block_type( __DIR__ . '/../../build/blocks/participants-list' );
 	}
 }

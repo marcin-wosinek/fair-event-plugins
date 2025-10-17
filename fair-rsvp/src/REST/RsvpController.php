@@ -153,6 +153,32 @@ class RsvpController extends WP_REST_Controller {
 				),
 			)
 		);
+
+		// GET /fair-rsvp/v1/participants?event_id={id} - Public endpoint for participant list.
+		register_rest_route(
+			$this->namespace,
+			'/participants',
+			array(
+				array(
+					'methods'             => WP_REST_Server::READABLE,
+					'callback'            => array( $this, 'get_participants' ),
+					'permission_callback' => '__return_true', // Open to all.
+					'args'                => array(
+						'event_id' => array(
+							'description' => __( 'Event ID to get participants for.', 'fair-rsvp' ),
+							'type'        => 'integer',
+							'required'    => true,
+						),
+						'status'   => array(
+							'description' => __( 'RSVP status to filter by.', 'fair-rsvp' ),
+							'type'        => 'string',
+							'default'     => 'yes',
+							'enum'        => array( 'yes', 'maybe', 'no' ),
+						),
+					),
+				),
+			)
+		);
 	}
 
 	/**
@@ -307,6 +333,39 @@ class RsvpController extends WP_REST_Controller {
 		$events = $this->repository->get_events_with_rsvp_counts( $post_status, $orderby, $order );
 
 		return rest_ensure_response( $events );
+	}
+
+	/**
+	 * Get participants for an event (public endpoint)
+	 *
+	 * @param WP_REST_Request $request Full data about the request.
+	 * @return WP_REST_Response Response object.
+	 */
+	public function get_participants( $request ) {
+		$event_id    = (int) $request->get_param( 'event_id' );
+		$rsvp_status = sanitize_text_field( $request->get_param( 'status' ) );
+
+		$participants = $this->repository->get_participants_with_user_data( $event_id, $rsvp_status );
+		$count        = count( $participants );
+
+		// Return different data based on login status.
+		if ( is_user_logged_in() ) {
+			// Logged-in users get full participant list.
+			return rest_ensure_response(
+				array(
+					'count'        => $count,
+					'participants' => $participants,
+				)
+			);
+		} else {
+			// Anonymous users only get count.
+			return rest_ensure_response(
+				array(
+					'count'        => $count,
+					'participants' => null,
+				)
+			);
+		}
 	}
 
 	/**

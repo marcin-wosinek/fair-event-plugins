@@ -1,0 +1,61 @@
+/**
+ * RSVP Participants List Block - Frontend Styles
+ */
+
+.rsvp-participants {
+	margin: 1.5em 0;
+}
+
+.rsvp-participants__empty {
+	color: #666;
+	font-style: italic;
+	margin: 0;
+}
+
+.rsvp-participants__count {
+	font-size: 1.1em;
+	margin: 0;
+}
+
+.rsvp-participants__header {
+	margin-bottom: 1em;
+}
+
+.rsvp-participants__title {
+	font-size: 1.2em;
+	font-weight: 600;
+	margin: 0;
+}
+
+.rsvp-participants__list {
+	list-style: none;
+	margin: 0;
+	padding: 0;
+	display: grid;
+	grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+	gap: 1em;
+}
+
+.rsvp-participants__item {
+	display: flex;
+	align-items: center;
+	gap: 0.75em;
+	padding: 0.75em;
+	background: #f9f9f9;
+	border-radius: 4px;
+	transition: background 0.2s;
+}
+
+.rsvp-participants__item:hover {
+	background: #f0f0f0;
+}
+
+.rsvp-participants__avatar {
+	border-radius: 50%;
+	flex-shrink: 0;
+}
+
+.rsvp-participants__name {
+	font-weight: 500;
+	word-break: break-word;
+}

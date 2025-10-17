@@ -1,0 +1,30 @@
+{
+	"$schema": "https://schemas.wp.org/trunk/block.json",
+	"apiVersion": 3,
+	"name": "fair-rsvp/participants-list",
+	"version": "1.0.0",
+	"title": "RSVP Participants",
+	"category": "widgets",
+	"icon": "groups",
+	"description": "Display list of event participants who RSVPed",
+	"keywords": ["rsvp", "participants", "attendees", "list"],
+	"textdomain": "fair-rsvp",
+	"supports": {
+		"html": false,
+		"align": ["wide", "full"],
+		"spacing": {
+			"padding": true,
+			"margin": ["top", "bottom"]
+		}
+	},
+	"attributes": {
+		"showStatus": {
+			"type": "string",
+			"default": "yes"
+		}
+	},
+	"editorScript": "file:./editor.js",
+	"render": "file:./render.php",
+	"viewStyle": "file:./frontend.css",
+	"editorStyle": "file:./editor.css"
+}

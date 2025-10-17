@@ -249,4 +249,47 @@ class RsvpRepository {
 
 		return $results;
 	}
+
+	/**
+	 * Get participants for an event with user information
+	 *
+	 * @param int    $event_id    Event ID.
+	 * @param string $rsvp_status Optional. Filter by RSVP status (default: 'yes').
+	 * @return array Array of participants with user data.
+	 */
+	public function get_participants_with_user_data( $event_id, $rsvp_status = 'yes' ) {
+		global $wpdb;
+
+		$table_name  = $this->get_table_name();
+		$users_table = $wpdb->users;
+
+		$sql = $wpdb->prepare(
+			// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+			"SELECT
+				r.user_id,
+				u.display_name,
+				u.user_email,
+				r.rsvp_status,
+				r.rsvp_at
+			FROM {$table_name} r
+			INNER JOIN {$users_table} u ON r.user_id = u.ID
+			WHERE r.event_id = %d AND r.rsvp_status = %s
+			ORDER BY r.rsvp_at ASC",
+			$event_id,
+			$rsvp_status
+		);
+
+		// phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared
+		$results = $wpdb->get_results( $sql, ARRAY_A );
+
+		// Add avatar URL to each result.
+		foreach ( $results as &$result ) {
+			$result['user_id']    = (int) $result['user_id'];
+			$result['avatar_url'] = get_avatar_url( $result['user_id'], array( 'size' => 48 ) );
+			// Remove email for privacy (will be used only for gravatar).
+			unset( $result['user_email'] );
+		}
+
+		return $results;
+	}
 }
