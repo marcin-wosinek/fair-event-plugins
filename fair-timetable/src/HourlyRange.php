@@ -66,7 +66,8 @@ class HourlyRange {
 	 */
 	private function parse_time( string $time_string ): float {
 		if ( ! preg_match( '/^([0-1]?[0-9]|2[0-3]):([0-5][0-9])$/', $time_string, $matches ) ) {
-			throw new \InvalidArgumentException( "Invalid time format: {$time_string}. Expected HH:mm format." );
+			$safe_time = function_exists( 'esc_html' ) ? esc_html( $time_string ) : htmlspecialchars( $time_string, ENT_QUOTES, 'UTF-8' );
+			throw new \InvalidArgumentException( 'Invalid time format: ' . $safe_time . '. Expected HH:mm format.' );
 		}
 
 		$hours   = (int) $matches[1];
