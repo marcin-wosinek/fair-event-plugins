@@ -27,6 +27,8 @@ class BlockHooks {
 	 * @return void
 	 */
 	public function register_blocks() {
-		// Blocks will be registered here when created
+		register_block_type( __DIR__ . '/../../build/blocks/membership-switch' );
+		register_block_type( __DIR__ . '/../../build/blocks/member-content' );
+		register_block_type( __DIR__ . '/../../build/blocks/non-member-content' );
 	}
 }

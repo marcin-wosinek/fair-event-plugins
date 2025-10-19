@@ -1,0 +1,11 @@
+.membership-switch-container {
+	border: 2px dashed #ccc;
+	padding: 1em;
+	border-radius: 4px;
+}
+
+.membership-switch-content {
+	display: flex;
+	flex-direction: column;
+	gap: 1em;
+}
