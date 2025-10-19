@@ -156,7 +156,10 @@ class GroupViewPage {
 		?>
 		<div class="wrap">
 			<h1 class="wp-heading-inline">
-				<?php echo esc_html( sprintf( __( 'Edit Group: %s', 'fair-membership' ), $group_model->name ) ); ?>
+				<?php
+				/* translators: %s: group name */
+				echo esc_html( sprintf( __( 'Edit Group: %s', 'fair-membership' ), $group_model->name ) );
+				?>
 			</h1>
 			<hr class="wp-header-end">
 

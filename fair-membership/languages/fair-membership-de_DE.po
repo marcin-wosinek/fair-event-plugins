@@ -1,0 +1,995 @@
+# Copyright (C) 2025 Marcin Wosinek
+# This file is distributed under the GPLv3 or later.
+msgid ""
+msgstr ""
+"Project-Id-Version: Fair Membership 0.2.0\n"
+"Report-Msgid-Bugs-To: https://wordpress.org/support/plugin/fair-membership\n"
+"Last-Translator: Marcin Wosinek <marcin@wosinek.net>\n"
+"Language-Team: German\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"POT-Creation-Date: 2025-10-19T09:07:34+00:00\n"
+"PO-Revision-Date: 2025-10-19 11:00+0000\n"
+"Language: de_DE\n"
+"X-Generator: WP-CLI 2.12.0\n"
+"X-Domain: fair-membership\n"
+
+#. Plugin Name of the plugin
+#: fair-membership.php
+#: src/Admin/AdminHooks.php:32
+#: src/Admin/AdminHooks.php:33
+msgid "Fair Membership"
+msgstr "Fair-Mitgliedschaft"
+
+#. Plugin URI of the plugin
+#: fair-membership.php
+msgid "https://github.com/marcin-wosinek/fair-event-plugins"
+msgstr "https://github.com/marcin-wosinek/fair-event-plugins"
+
+#. Description of the plugin
+#: fair-membership.php
+msgid "Membership management plugin."
+msgstr "Plugin zur Mitgliedschaftsverwaltung."
+
+#. Author of the plugin
+#: fair-membership.php
+msgid "Marcin Wosinek"
+msgstr "Marcin Wosinek"
+
+#. Author URI of the plugin
+#: fair-membership.php
+msgid "https://github.com/marcin-wosinek"
+msgstr "https://github.com/marcin-wosinek"
+
+#: src/Admin/AdminHooks.php:43
+#: src/Admin/AdminHooks.php:44
+#: src/Admin/GroupsListPage.php:40
+msgid "Groups"
+msgstr "Gruppen"
+
+#: src/Admin/AdminHooks.php:52
+msgid "View Group"
+msgstr "Gruppe anzeigen"
+
+#: src/Admin/AdminHooks.php:61
+#: src/Admin/AdminHooks.php:62
+#: src/Admin/users/MembershipMatrix.js:92
+#: src/Admin/users/MembershipMatrix.js:101
+#: src/Admin/users/MembershipMatrix.js:114
+msgid "All Users"
+msgstr "Alle Benutzer"
+
+#: src/Admin/AdminHooks.php:70
+#: src/Admin/AdminHooks.php:71
+#: src/Admin/import-users/components/ConfirmStep.js:282
+#: src/Admin/import-users/ImportUsers.js:149
+msgid "Import Users"
+msgstr "Benutzer importieren"
+
+#: src/Admin/GroupForm.php:58
+msgid "Add Group"
+msgstr "Gruppe hinzufügen"
+
+#: src/Admin/GroupForm.php:58
+msgid "Update Group"
+msgstr "Gruppe aktualisieren"
+
+#: src/Admin/GroupForm.php:94
+msgid "Group Name"
+msgstr "Gruppenname"
+
+#: src/Admin/GroupForm.php:107
+msgid "Enter a unique name for this group."
+msgstr "Geben Sie einen eindeutigen Namen für diese Gruppe ein."
+
+#: src/Admin/GroupForm.php:123
+#: src/Admin/GroupsListTable.php:44
+#: src/Admin/GroupViewPage.php:218
+#: src/Admin/GroupViewPage.php:313
+msgid "Description"
+msgstr "Beschreibung"
+
+#: src/Admin/GroupForm.php:135
+msgid "Provide a description for this group (optional)."
+msgstr "Geben Sie eine Beschreibung für diese Gruppe an (optional)."
+
+#: src/Admin/GroupForm.php:154
+#: src/Admin/GroupsListTable.php:46
+#: src/Admin/GroupViewPage.php:236
+#: src/Admin/GroupViewPage.php:257
+msgid "Members"
+msgstr "Mitglieder"
+
+#: src/Admin/GroupForm.php:158
+msgid "members"
+msgstr "mitglieder"
+
+#: src/Admin/GroupForm.php:161
+msgid "Manage members"
+msgstr "Mitglieder verwalten"
+
+#: src/Admin/GroupForm.php:178
+#: src/Admin/GroupViewPage.php:222
+#: src/Admin/GroupViewPage.php:317
+msgid "Access Control"
+msgstr "Zugriffskontrolle"
+
+#: src/Admin/GroupForm.php:183
+msgid "Group Access Control"
+msgstr "Gruppenzugriffskontrolle"
+
+#: src/Admin/GroupForm.php:194
+#: src/Admin/GroupsListTable.php:211
+#: src/Admin/GroupViewPage.php:459
+msgid "Open"
+msgstr "Offen"
+
+#: src/Admin/GroupForm.php:197
+msgid "Users can join this group themselves."
+msgstr "Benutzer können dieser Gruppe selbst beitreten."
+
+#: src/Admin/GroupForm.php:209
+#: src/Admin/GroupsListTable.php:212
+#: src/Admin/GroupViewPage.php:463
+msgid "Managed"
+msgstr "Verwaltet"
+
+#: src/Admin/GroupForm.php:212
+msgid "Only administrators can add or remove members."
+msgstr "Nur Administratoren können Mitglieder hinzufügen oder entfernen."
+
+#: src/Admin/GroupForm.php:235
+#: src/Admin/GroupViewPage.php:88
+#: src/Admin/GroupViewPage.php:280
+msgid "Security check failed. Please try again."
+msgstr "Sicherheitsüberprüfung fehlgeschlagen. Bitte versuchen Sie es erneut."
+
+#: src/Admin/GroupForm.php:264
+#: src/Models/Group.php:313
+msgid "Group name is required."
+msgstr "Gruppenname ist erforderlich."
+
+#: src/Admin/GroupForm.php:327
+#: src/Admin/GroupsListPage.php:94
+msgid "Group added successfully."
+msgstr "Gruppe erfolgreich hinzugefügt."
+
+#: src/Admin/GroupForm.php:331
+msgid "Failed to save group. Please try again."
+msgstr "Gruppe konnte nicht gespeichert werden. Bitte versuchen Sie es erneut."
+
+#: src/Admin/GroupForm.php:347
+#: src/Admin/GroupViewPage.php:99
+msgid "Group not found."
+msgstr "Gruppe nicht gefunden."
+
+#: src/Admin/GroupForm.php:374
+#: src/Admin/GroupsListPage.php:102
+#: src/Admin/GroupViewPage.php:444
+msgid "Group updated successfully."
+msgstr "Gruppe erfolgreich aktualisiert."
+
+#: src/Admin/GroupForm.php:378
+msgid "Failed to update group. Please try again."
+msgstr "Gruppe konnte nicht aktualisiert werden. Bitte versuchen Sie es erneut."
+
+#: src/Admin/GroupForm.php:416
+msgid "Please correct the following errors:"
+msgstr "Bitte korrigieren Sie die folgenden Fehler:"
+
+#: src/Admin/GroupsListPage.php:43
+msgid "Add New"
+msgstr "Neu hinzufügen"
+
+#. translators: %d is the number of groups deleted.
+#: src/Admin/GroupsListPage.php:76
+#, php-format
+msgid "%d group deleted successfully."
+msgid_plural "%d groups deleted successfully."
+msgstr[0] "%d Gruppe erfolgreich gelöscht."
+msgstr[1] "%d Gruppen erfolgreich gelöscht."
+
+#: src/Admin/GroupsListTable.php:43
+#: src/Admin/GroupViewPage.php:210
+#: src/Admin/GroupViewPage.php:309
+#: src/Admin/users/MembershipMatrix.js:134
+msgid "Name"
+msgstr "Name"
+
+#: src/Admin/GroupsListTable.php:45
+msgid "Access"
+msgstr "Zugriff"
+
+#: src/Admin/GroupsListTable.php:47
+#: src/Admin/GroupViewPage.php:244
+msgid "Created"
+msgstr "Erstellt"
+
+#: src/Admin/GroupsListTable.php:135
+msgid "No description"
+msgstr "Keine Beschreibung"
+
+#: src/Admin/GroupsListTable.php:162
+msgid "View"
+msgstr "Anzeigen"
+
+#: src/Admin/GroupsListTable.php:169
+msgid "Edit"
+msgstr "Bearbeiten"
+
+#: src/Admin/GroupsListTable.php:177
+msgid "Delete"
+msgstr "Löschen"
+
+#: src/Admin/GroupsListTable.php:230
+msgid "No groups found."
+msgstr "Keine Gruppen gefunden."
+
+#: src/Admin/GroupViewPage.php:93
+msgid "Invalid group ID."
+msgstr "Ungültige Gruppen-ID."
+
+#: src/Admin/GroupViewPage.php:110
+msgid "Failed to delete group. Please try again."
+msgstr "Gruppe konnte nicht gelöscht werden. Bitte versuchen Sie es erneut."
+
+#: src/Admin/GroupViewPage.php:122
+msgid "Add New Group"
+msgstr "Neue Gruppe hinzufügen"
+
+#: src/Admin/GroupViewPage.php:134
+#: src/Admin/GroupViewPage.php:264
+#: src/Admin/GroupViewPage.php:352
+msgid "Back to Groups"
+msgstr "Zurück zu Gruppen"
+
+#: src/Admin/GroupViewPage.php:159
+#, php-format
+msgid "Edit Group: %s"
+msgstr "Gruppe bearbeiten: %s"
+
+#: src/Admin/GroupViewPage.php:173
+msgid "Back to Group View"
+msgstr "Zurück zur Gruppenansicht"
+
+#: src/Admin/GroupViewPage.php:199
+msgid "Edit Group"
+msgstr "Gruppe bearbeiten"
+
+#: src/Admin/GroupViewPage.php:206
+msgid "Group Details"
+msgstr "Gruppendetails"
+
+#: src/Admin/GroupViewPage.php:214
+msgid "Slug"
+msgstr "Slug"
+
+#: src/Admin/GroupViewPage.php:219
+#: src/Admin/GroupViewPage.php:314
+msgid "No description provided."
+msgstr "Keine Beschreibung angegeben."
+
+#: src/Admin/GroupViewPage.php:228
+#: src/Admin/GroupViewPage.php:374
+msgid "Status"
+msgstr "Status"
+
+#: src/Admin/GroupViewPage.php:239
+msgid "member"
+msgid_plural "members"
+msgstr[0] "mitglied"
+msgstr[1] "mitglieder"
+
+#: src/Admin/GroupViewPage.php:240
+msgid "Member functionality will be available once membership tables are implemented."
+msgstr "Mitgliederfunktionen werden verfügbar sein, sobald Mitgliedertabellen implementiert sind."
+
+#: src/Admin/GroupViewPage.php:248
+msgid "Last Updated"
+msgstr "Zuletzt aktualisiert"
+
+#: src/Admin/GroupViewPage.php:293
+msgid "Delete Group"
+msgstr "Gruppe löschen"
+
+#: src/Admin/GroupViewPage.php:299
+msgid "Warning:"
+msgstr "Warnung:"
+
+#: src/Admin/GroupViewPage.php:300
+msgid "You are about to permanently delete this group. This action cannot be undone."
+msgstr "Sie sind dabei, diese Gruppe dauerhaft zu löschen. Diese Aktion kann nicht rückgängig gemacht werden."
+
+#: src/Admin/GroupViewPage.php:305
+msgid "Group to be deleted:"
+msgstr "Zu löschende Gruppe:"
+
+#: src/Admin/GroupViewPage.php:324
+msgid "Are you sure you want to delete this group?"
+msgstr "Sind Sie sicher, dass Sie diese Gruppe löschen möchten?"
+
+#: src/Admin/GroupViewPage.php:330
+msgid "Yes, Delete Group"
+msgstr "Ja, Gruppe löschen"
+
+#: src/Admin/GroupViewPage.php:334
+msgid "No, Cancel"
+msgstr "Nein, Abbrechen"
+
+#: src/Admin/GroupViewPage.php:348
+msgid "Group Not Found"
+msgstr "Gruppe nicht gefunden"
+
+#: src/Admin/GroupViewPage.php:349
+msgid "The requested group could not be found."
+msgstr "Die angeforderte Gruppe konnte nicht gefunden werden."
+
+#: src/Admin/GroupViewPage.php:371
+msgid "User"
+msgstr "Benutzer"
+
+#: src/Admin/GroupViewPage.php:372
+#: src/Admin/import-users/components/PreviewStep.js:155
+msgid "Email"
+msgstr "E-Mail"
+
+#: src/Admin/GroupViewPage.php:373
+msgid "Joined"
+msgstr "Beigetreten"
+
+#: src/Admin/GroupViewPage.php:375
+msgid "Actions"
+msgstr "Aktionen"
+
+#: src/Admin/GroupViewPage.php:382
+msgid "No members in this group yet."
+msgstr "Noch keine Mitglieder in dieser Gruppe."
+
+#: src/Admin/GroupViewPage.php:385
+msgid "Add Members"
+msgstr "Mitglieder hinzufügen"
+
+#: src/Admin/GroupViewPage.php:407
+msgid "Edit User"
+msgstr "Benutzer bearbeiten"
+
+#: src/Admin/GroupViewPage.php:419
+msgid "Add More Members"
+msgstr "Weitere Mitglieder hinzufügen"
+
+#: src/Admin/GroupViewPage.php:460
+msgid "Users can join this group themselves"
+msgstr "Benutzer können dieser Gruppe selbst beitreten"
+
+#: src/Admin/GroupViewPage.php:464
+msgid "Only administrators can add or remove members"
+msgstr "Nur Administratoren können Mitglieder hinzufügen oder entfernen"
+
+#: src/API/RestAPI.php:235
+msgid "Membership is already active."
+msgstr "Mitgliedschaft ist bereits aktiv."
+
+#: src/API/RestAPI.php:255
+msgid "No active membership to deactivate."
+msgstr "Keine aktive Mitgliedschaft zum Deaktivieren."
+
+#: src/API/RestAPI.php:280
+msgid "Membership updated successfully."
+msgstr "Mitgliedschaft erfolgreich aktualisiert."
+
+#: src/API/RestAPI.php:286
+msgid "Failed to save membership."
+msgstr "Mitgliedschaft konnte nicht gespeichert werden."
+
+#: src/API/RestAPI.php:304
+msgid "No file uploaded."
+msgstr "Keine Datei hochgeladen."
+
+#: src/API/RestAPI.php:316
+msgid "Please upload a CSV file."
+msgstr "Bitte laden Sie eine CSV-Datei hoch."
+
+#: src/API/RestAPI.php:326
+msgid "File size must be less than 10MB."
+msgstr "Dateigröße muss kleiner als 10 MB sein."
+
+#: src/API/RestAPI.php:342
+msgid "CSV file contains too many rows. Maximum is 500 rows."
+msgstr "CSV-Datei enthält zu viele Zeilen. Maximum sind 500 Zeilen."
+
+#: src/API/RestAPI.php:382
+msgid "Failed to read CSV file."
+msgstr "CSV-Datei konnte nicht gelesen werden."
+
+#: src/API/RestAPI.php:391
+msgid "CSV file is empty."
+msgstr "CSV-Datei ist leer."
+
+#: src/API/RestAPI.php:403
+msgid "CSV file has no headers."
+msgstr "CSV-Datei hat keine Kopfzeilen."
+
+#: src/API/RestAPI.php:429
+msgid "CSV file contains no valid data rows."
+msgstr "CSV-Datei enthält keine gültigen Datenzeilen."
+
+#: src/API/RestAPI.php:454
+msgid "Username is required"
+msgstr "Benutzername ist erforderlich"
+
+#: src/API/RestAPI.php:458
+msgid "Email is required"
+msgstr "E-Mail ist erforderlich"
+
+#: src/API/RestAPI.php:466
+msgid "Username contains invalid characters"
+msgstr "Benutzername enthält ungültige Zeichen"
+
+#: src/API/RestAPI.php:472
+msgid "Username must be between 3 and 60 characters"
+msgstr "Benutzername muss zwischen 3 und 60 Zeichen lang sein"
+
+#: src/API/RestAPI.php:485
+msgid "Invalid email format"
+msgstr "Ungültiges E-Mail-Format"
+
+#: src/API/RestAPI.php:499
+msgid "Invalid website URL"
+msgstr "Ungültige Website-URL"
+
+#: src/API/RestAPI.php:518
+msgid "Duplicate username in CSV"
+msgstr "Doppelter Benutzername in CSV"
+
+#: src/API/RestAPI.php:535
+msgid "Duplicate email in CSV"
+msgstr "Doppelte E-Mail in CSV"
+
+#: src/API/RestAPI.php:629
+msgid "User not found for update"
+msgstr "Benutzer für Aktualisierung nicht gefunden"
+
+#: src/Hooks/UserHooks.php:54
+#: src/Hooks/UserHooks.php:115
+msgid "Fair Membership Groups"
+msgstr "Fair-Mitgliedschaftsgruppen"
+
+#: src/Hooks/UserHooks.php:58
+msgid "Assign to Groups"
+msgstr "Gruppen zuweisen"
+
+#: src/Hooks/UserHooks.php:63
+#: src/Hooks/UserHooks.php:124
+msgid "Select groups for this user"
+msgstr "Gruppen für diesen Benutzer auswählen"
+
+#: src/Hooks/UserHooks.php:81
+msgid "Select which groups this user should be added to upon creation."
+msgstr "Wählen Sie aus, welchen Gruppen dieser Benutzer bei der Erstellung hinzugefügt werden soll."
+
+#: src/Hooks/UserHooks.php:119
+msgid "Group Memberships"
+msgstr "Gruppenmitgliedschaften"
+
+#: src/Hooks/UserHooks.php:144
+msgid "since"
+msgstr "seit"
+
+#: src/Hooks/UserHooks.php:156
+msgid "Check groups to add the user as a member, uncheck to remove membership."
+msgstr "Aktivieren Sie Gruppen, um den Benutzer als Mitglied hinzuzufügen, deaktivieren Sie sie, um die Mitgliedschaft zu entfernen."
+
+#: src/Models/Group.php:317
+msgid "Group slug is required."
+msgstr "Gruppen-Slug ist erforderlich."
+
+#: src/Models/Group.php:319
+msgid "Group slug can only contain lowercase letters, numbers, and hyphens."
+msgstr "Gruppen-Slug darf nur Kleinbuchstaben, Zahlen und Bindestriche enthalten."
+
+#: src/Models/Group.php:323
+msgid "Invalid access control type."
+msgstr "Ungültiger Zugriffskontrolltyp."
+
+#: src/Models/Group.php:327
+msgid "Invalid status."
+msgstr "Ungültiger Status."
+
+#: src/Models/Group.php:333
+msgid "A group with this slug already exists."
+msgstr "Eine Gruppe mit diesem Slug existiert bereits."
+
+#: src/Models/Membership.php:205
+msgid "User ID is required."
+msgstr "Benutzer-ID ist erforderlich."
+
+#: src/Models/Membership.php:209
+msgid "Group ID is required."
+msgstr "Gruppen-ID ist erforderlich."
+
+#: src/Models/Membership.php:213
+msgid "Status must be either \"active\" or \"inactive\"."
+msgstr ""
+
+#: src/Models/Membership.php:218
+msgid "User does not exist."
+msgstr "Benutzer existiert nicht."
+
+#: src/Models/Membership.php:225
+msgid "Group does not exist."
+msgstr "Gruppe existiert nicht."
+
+#: src/Admin/import-users/components/ConfirmStep.js:51
+msgid "Are you sure you want to import these users? This action cannot be undone."
+msgstr "Sind Sie sicher, dass Sie diese Benutzer importieren möchten? Diese Aktion kann nicht rückgängig gemacht werden."
+
+#: src/Admin/import-users/components/ConfirmStep.js:84
+#: src/Admin/import-users/components/ConfirmStep.js:88
+msgid "Import failed"
+msgstr "Import fehlgeschlagen"
+
+#: src/Admin/import-users/components/ConfirmStep.js:98
+msgid "Import Complete!"
+msgstr "Import abgeschlossen!"
+
+#: src/Admin/import-users/components/ConfirmStep.js:102
+msgid "Import Results"
+msgstr "Importergebnisse"
+
+#: src/Admin/import-users/components/ConfirmStep.js:107
+msgid "Users Created"
+msgstr "Benutzer erstellt"
+
+#: src/Admin/import-users/components/ConfirmStep.js:115
+msgid "Users Updated"
+msgstr "Benutzer aktualisiert"
+
+#: src/Admin/import-users/components/ConfirmStep.js:123
+msgid "Users Skipped"
+msgstr "Benutzer übersprungen"
+
+#: src/Admin/import-users/components/ConfirmStep.js:133
+msgid "Errors"
+msgstr "Fehler"
+
+#: src/Admin/import-users/components/ConfirmStep.js:147
+msgid "Import Errors:"
+msgstr "Importfehler:"
+
+#: src/Admin/import-users/components/ConfirmStep.js:151
+#: src/Admin/import-users/components/PreviewStep.js:339
+msgid "Row"
+msgstr "Zeile"
+
+#: src/Admin/import-users/components/ConfirmStep.js:165
+msgid "View All Users"
+msgstr "Alle Benutzer anzeigen"
+
+#: src/Admin/import-users/components/ConfirmStep.js:173
+msgid "Import More Users"
+msgstr "Weitere Benutzer importieren"
+
+#: src/Admin/import-users/components/ConfirmStep.js:183
+msgid "Review the import summary below. Click \"Import Users\" to proceed."
+msgstr ""
+
+#: src/Admin/import-users/components/ConfirmStep.js:196
+#: src/Admin/import-users/components/PreviewStep.js:352
+msgid "Import Summary"
+msgstr "Importzusammenfassung"
+
+#: src/Admin/import-users/components/ConfirmStep.js:201
+msgid "Users to Create"
+msgstr "Zu erstellende Benutzer"
+
+#: src/Admin/import-users/components/ConfirmStep.js:207
+msgid "Users to Update"
+msgstr "Zu aktualisierende Benutzer"
+
+#: src/Admin/import-users/components/ConfirmStep.js:213
+msgid "Users to Skip"
+msgstr "Zu überspringende Benutzer"
+
+#: src/Admin/import-users/components/ConfirmStep.js:217
+msgid "Total Users"
+msgstr "Benutzer insgesamt"
+
+#: src/Admin/import-users/components/ConfirmStep.js:226
+msgid "Group Assignments"
+msgstr "Gruppenzuweisungen"
+
+#: src/Admin/import-users/components/ConfirmStep.js:230
+msgid "No groups will be assigned to imported users."
+msgstr "Importierten Benutzern werden keine Gruppen zugewiesen."
+
+#: src/Admin/import-users/components/ConfirmStep.js:238
+msgid "The following groups will be assigned to all imported users:"
+msgstr "Die folgenden Gruppen werden allen importierten Benutzern zugewiesen:"
+
+#: src/Admin/import-users/components/ConfirmStep.js:255
+msgid "Important:"
+msgstr "Wichtig:"
+
+#: src/Admin/import-users/components/ConfirmStep.js:256
+msgid "This action will create/update users in your WordPress site. Make sure you have reviewed the data carefully."
+msgstr "Diese Aktion erstellt/aktualisiert Benutzer auf Ihrer WordPress-Website. Stellen Sie sicher, dass Sie die Daten sorgfältig überprüft haben."
+
+#: src/Admin/import-users/components/ConfirmStep.js:272
+msgid "← Back to Groups"
+msgstr "← Zurück zu Gruppen"
+
+#: src/Admin/import-users/components/ConfirmStep.js:281
+msgid "Importing..."
+msgstr "Importiere..."
+
+#: src/Admin/import-users/components/GroupsStep.js:60
+msgid "Loading groups..."
+msgstr "Lade Gruppen..."
+
+#: src/Admin/import-users/components/GroupsStep.js:70
+msgid "Error loading groups: "
+msgstr "Fehler beim Laden der Gruppen: "
+
+#: src/Admin/import-users/components/GroupsStep.js:81
+msgid "Select which Fair Membership groups to assign to the imported users. You can skip this step if you don't want to assign any groups."
+msgstr "Wählen Sie aus, welchen Fair-Mitgliedschaftsgruppen die importierten Benutzer zugewiesen werden sollen. Sie können diesen Schritt überspringen, wenn Sie keine Gruppen zuweisen möchten."
+
+#: src/Admin/import-users/components/GroupsStep.js:90
+msgid "No groups available. You can create groups in the Groups page."
+msgstr "Keine Gruppen verfügbar. Sie können Gruppen auf der Gruppenseite erstellen."
+
+#: src/Admin/import-users/components/GroupsStep.js:105
+msgid "Select All"
+msgstr "Alle auswählen"
+
+#: src/Admin/import-users/components/GroupsStep.js:114
+msgid "Deselect All"
+msgstr "Alle abwählen"
+
+#: src/Admin/import-users/components/GroupsStep.js:142
+msgid "Selected groups:"
+msgstr "Ausgewählte Gruppen:"
+
+#: src/Admin/import-users/components/GroupsStep.js:155
+msgid "None (users will be created without group assignments)"
+msgstr "Keine (Benutzer werden ohne Gruppenzuweisungen erstellt)"
+
+#: src/Admin/import-users/components/GroupsStep.js:172
+msgid "← Back to Preview"
+msgstr "← Zurück zur Vorschau"
+
+#: src/Admin/import-users/components/GroupsStep.js:179
+msgid "Continue to Confirmation"
+msgstr "Weiter zur Bestätigung"
+
+#: src/Admin/import-users/components/MappingStep.js:104
+msgid "— Skip this column —"
+msgstr "— Diese Spalte überspringen —"
+
+#: src/Admin/import-users/components/MappingStep.js:107
+msgid "Username (required)"
+msgstr "Benutzername (erforderlich)"
+
+#: src/Admin/import-users/components/MappingStep.js:111
+msgid "Email (required)"
+msgstr "E-Mail (erforderlich)"
+
+#: src/Admin/import-users/components/MappingStep.js:113
+#: src/Admin/import-users/components/PreviewStep.js:156
+msgid "Display Name"
+msgstr "Anzeigename"
+
+#: src/Admin/import-users/components/MappingStep.js:114
+#: src/Admin/import-users/components/PreviewStep.js:157
+msgid "First Name"
+msgstr "Vorname"
+
+#: src/Admin/import-users/components/MappingStep.js:115
+#: src/Admin/import-users/components/PreviewStep.js:158
+msgid "Last Name"
+msgstr "Nachname"
+
+#: src/Admin/import-users/components/MappingStep.js:116
+msgid "Website URL"
+msgstr "Website-URL"
+
+#: src/Admin/import-users/components/MappingStep.js:117
+msgid "Biography"
+msgstr "Biografie"
+
+#: src/Admin/import-users/components/MappingStep.js:151
+msgid "Username field is required. Please map a column to Username."
+msgstr "Benutzernamenfeld ist erforderlich. Bitte ordnen Sie eine Spalte dem Benutzernamen zu."
+
+#: src/Admin/import-users/components/MappingStep.js:162
+msgid "Email field is required. Please map a column to Email."
+msgstr "E-Mail-Feld ist erforderlich. Bitte ordnen Sie eine Spalte der E-Mail zu."
+
+#: src/Admin/import-users/components/MappingStep.js:176
+msgid "Each field can only be mapped once. Please check for duplicate mappings."
+msgstr "Jedes Feld kann nur einmal zugeordnet werden. Bitte überprüfen Sie auf doppelte Zuordnungen."
+
+#: src/Admin/import-users/components/MappingStep.js:204
+msgid "Map CSV columns to WordPress user fields. Required fields are Username and Email."
+msgstr "Ordnen Sie CSV-Spalten WordPress-Benutzerfeldern zu. Erforderliche Felder sind Benutzername und E-Mail."
+
+#: src/Admin/import-users/components/MappingStep.js:224
+msgid "CSV Column"
+msgstr "CSV-Spalte"
+
+#: src/Admin/import-users/components/MappingStep.js:227
+msgid "Sample Data"
+msgstr "Beispieldaten"
+
+#: src/Admin/import-users/components/MappingStep.js:230
+msgid "Maps to WordPress Field"
+msgstr "Zuordnung zu WordPress-Feld"
+
+#: src/Admin/import-users/components/MappingStep.js:270
+msgid "Mapping Summary"
+msgstr "Zuordnungszusammenfassung"
+
+#: src/Admin/import-users/components/MappingStep.js:274
+msgid "Total columns:"
+msgstr "Spalten insgesamt:"
+
+#: src/Admin/import-users/components/MappingStep.js:279
+msgid "Mapped:"
+msgstr "Zugeordnet:"
+
+#: src/Admin/import-users/components/MappingStep.js:287
+msgid "Skipped:"
+msgstr "Übersprungen:"
+
+#: src/Admin/import-users/components/MappingStep.js:304
+msgid "← Back"
+msgstr "← Zurück"
+
+#: src/Admin/import-users/components/MappingStep.js:311
+msgid "Continue to Preview"
+msgstr "Weiter zur Vorschau"
+
+#: src/Admin/import-users/components/PreviewStep.js:132
+msgid "Please select at least one user to import."
+msgstr "Bitte wählen Sie mindestens einen Benutzer zum Importieren aus."
+
+#: src/Admin/import-users/components/PreviewStep.js:154
+#: src/Admin/users/MembershipMatrix.js:131
+msgid "Username"
+msgstr "Benutzername"
+
+#: src/Admin/import-users/components/PreviewStep.js:159
+msgid "Website"
+msgstr "Website"
+
+#: src/Admin/import-users/components/PreviewStep.js:160
+msgid "Bio"
+msgstr "Biografie"
+
+#: src/Admin/import-users/components/PreviewStep.js:171
+msgid "Create"
+msgstr "Erstellen"
+
+#: src/Admin/import-users/components/PreviewStep.js:176
+msgid "Update"
+msgstr "Aktualisieren"
+
+#: src/Admin/import-users/components/PreviewStep.js:179
+msgid "Skip"
+msgstr "Überspringen"
+
+#: src/Admin/import-users/components/PreviewStep.js:186
+msgid "Review and edit user data. Choose an action for each user: Create (new user), Update (existing user), or Skip."
+msgstr "Überprüfen und bearbeiten Sie Benutzerdaten. Wählen Sie eine Aktion für jeden Benutzer: Erstellen (neuer Benutzer), Aktualisieren (vorhandener Benutzer) oder Überspringen."
+
+#: src/Admin/import-users/components/PreviewStep.js:194
+msgid "Validating users..."
+msgstr "Validiere Benutzer..."
+
+#: src/Admin/import-users/components/PreviewStep.js:205
+msgid "Show only rows with errors"
+msgstr "Nur Zeilen mit Fehlern anzeigen"
+
+#: src/Admin/import-users/components/PreviewStep.js:208
+msgid "Showing:"
+msgstr "Anzeige:"
+
+#: src/Admin/import-users/components/PreviewStep.js:210
+msgid "users"
+msgstr "benutzer"
+
+#: src/Admin/import-users/components/PreviewStep.js:219
+msgid "#"
+msgstr "#"
+
+#: src/Admin/import-users/components/PreviewStep.js:225
+msgid "Action"
+msgstr "Aktion"
+
+#: src/Admin/import-users/components/PreviewStep.js:282
+msgid "Double-click to edit"
+msgstr "Doppelklicken zum Bearbeiten"
+
+#: src/Admin/import-users/components/PreviewStep.js:332
+msgid "Validation Issues:"
+msgstr "Validierungsprobleme:"
+
+#: src/Admin/import-users/components/PreviewStep.js:355
+msgid "To Create:"
+msgstr "Zu erstellen:"
+
+#: src/Admin/import-users/components/PreviewStep.js:363
+msgid "To Update:"
+msgstr "Zu aktualisieren:"
+
+#: src/Admin/import-users/components/PreviewStep.js:371
+msgid "To Skip:"
+msgstr "Zu überspringen:"
+
+#: src/Admin/import-users/components/PreviewStep.js:388
+msgid "← Back to Mapping"
+msgstr "← Zurück zur Zuordnung"
+
+#: src/Admin/import-users/components/PreviewStep.js:396
+msgid "Continue to Groups"
+msgstr "Weiter zu Gruppen"
+
+#: src/Admin/import-users/components/UploadStep.js:28
+msgid "Please upload a CSV file (.csv)"
+msgstr "Bitte laden Sie eine CSV-Datei (.csv) hoch"
+
+#: src/Admin/import-users/components/UploadStep.js:34
+msgid "File size must be less than 10MB"
+msgstr "Dateigröße muss kleiner als 10 MB sein"
+
+#: src/Admin/import-users/components/UploadStep.js:105
+#: src/Admin/import-users/components/UploadStep.js:110
+msgid "Failed to upload file"
+msgstr "Datei konnte nicht hochgeladen werden"
+
+#: src/Admin/import-users/components/UploadStep.js:126
+msgid "Upload a CSV file containing user data. The file should have column headers in the first row."
+msgstr "Laden Sie eine CSV-Datei mit Benutzerdaten hoch. Die Datei sollte Spaltenüberschriften in der ersten Zeile haben."
+
+#: src/Admin/import-users/components/UploadStep.js:143
+msgid "Drag and drop a CSV file here, or click to select"
+msgstr "Ziehen Sie eine CSV-Datei hierher oder klicken Sie zum Auswählen"
+
+#: src/Admin/import-users/components/UploadStep.js:170
+msgid "Selected file:"
+msgstr "Ausgewählte Datei:"
+
+#: src/Admin/import-users/components/UploadStep.js:185
+msgid "Preview (first 5 rows)"
+msgstr "Vorschau (erste 5 Zeilen)"
+
+#: src/Admin/import-users/components/UploadStep.js:205
+msgid "Total rows:"
+msgstr "Zeilen insgesamt:"
+
+#: src/Admin/import-users/components/UploadStep.js:219
+msgid "Uploading..."
+msgstr "Lade hoch..."
+
+#: src/Admin/import-users/components/UploadStep.js:220
+msgid "Upload & Parse CSV"
+msgstr "CSV hochladen & analysieren"
+
+#: src/Admin/import-users/components/UploadStep.js:228
+msgid "Continue to Field Mapping"
+msgstr "Weiter zur Feldzuordnung"
+
+#: src/Admin/import-users/ImportUsers.js:157
+msgid "Upload CSV"
+msgstr "CSV hochladen"
+
+#: src/Admin/import-users/ImportUsers.js:164
+msgid "Map Fields"
+msgstr "Felder zuordnen"
+
+#: src/Admin/import-users/ImportUsers.js:171
+msgid "Preview & Edit"
+msgstr "Vorschau & Bearbeiten"
+
+#: src/Admin/import-users/ImportUsers.js:176
+msgid "Assign Groups"
+msgstr "Gruppen zuweisen"
+
+#: src/Admin/import-users/ImportUsers.js:183
+msgid "Confirm Import"
+msgstr "Import bestätigen"
+
+#: src/Admin/import-users/ImportUsers.js:238
+msgid "Reset & Start Over"
+msgstr "Zurücksetzen & neu beginnen"
+
+#: src/Admin/users/MembershipMatrix.js:78
+msgid "Failed to update membership: "
+msgstr "Mitgliedschaft konnte nicht aktualisiert werden: "
+
+#: src/Admin/users/MembershipMatrix.js:93
+msgid "Loading..."
+msgstr "Lade..."
+
+#: src/Admin/users/MembershipMatrix.js:104
+msgid "Error loading users: "
+msgstr "Fehler beim Laden der Benutzer: "
+
+#: src/Admin/users/MembershipMatrix.js:125
+msgid "ID"
+msgstr "ID"
+
+#: src/blocks/member-content/components/EditComponent.js:22
+msgid "This content will be shown to members of the selected groups."
+msgstr "Dieser Inhalt wird Mitgliedern der ausgewählten Gruppen angezeigt."
+
+#: src/blocks/member-content/components/EditComponent.js:44
+msgid "Member Content"
+msgstr "Mitgliederinhalt"
+
+#: src/blocks/member-content/components/EditComponent.js:46
+msgid "This content will be displayed to users who are members of the selected groups."
+msgstr "Dieser Inhalt wird Benutzern angezeigt, die Mitglieder der ausgewählten Gruppen sind."
+
+#: src/blocks/member-content/components/EditComponent.js:56
+msgid "👥 Member Content"
+msgstr "👥 Mitgliederinhalt"
+
+#: src/blocks/membership-switch/components/EditComponent.js:68
+msgid "Membership Settings"
+msgstr "Mitgliedschaftseinstellungen"
+
+#: src/blocks/membership-switch/components/EditComponent.js:70
+msgid "Select which membership groups should see the member content:"
+msgstr "Wählen Sie aus, welche Mitgliedschaftsgruppen den Mitgliederinhalt sehen sollen:"
+
+#: src/blocks/membership-switch/components/EditComponent.js:78
+msgid "No membership groups found. Create groups first."
+msgstr "Keine Mitgliedschaftsgruppen gefunden. Erstellen Sie zuerst Gruppen."
+
+#: src/blocks/non-member-content/components/EditComponent.js:22
+msgid "This content will be shown to non-members and logged-out users."
+msgstr "Dieser Inhalt wird Nicht-Mitgliedern und abgemeldeten Benutzern angezeigt."
+
+#: src/blocks/non-member-content/components/EditComponent.js:44
+msgid "Non-Member Content"
+msgstr "Nicht-Mitgliederinhalt"
+
+#: src/blocks/non-member-content/components/EditComponent.js:46
+msgid "This content will be displayed to users who are not members and logged-out users."
+msgstr "Dieser Inhalt wird Benutzern angezeigt, die keine Mitglieder sind, und abgemeldeten Benutzern."
+
+#: src/blocks/non-member-content/components/EditComponent.js:56
+msgid "🔒 Non-Member Content"
+msgstr "🔒 Nicht-Mitgliederinhalt"
+
+#: src/blocks/member-content/block.json
+msgctxt "block title"
+msgid "Member Content"
+msgstr "Mitgliederinhalt"
+
+#: src/blocks/member-content/block.json
+msgctxt "block description"
+msgid "Content shown to members of selected groups"
+msgstr "Inhalt, der Mitgliedern ausgewählter Gruppen angezeigt wird"
+
+#: src/blocks/membership-switch/block.json
+msgctxt "block title"
+msgid "Membership Switch"
+msgstr "Mitgliedschaftsumschalter"
+
+#: src/blocks/membership-switch/block.json
+msgctxt "block description"
+msgid "Shows different content based on membership group status"
+msgstr "Zeigt unterschiedliche Inhalte basierend auf dem Mitgliedschaftsgruppenstatus an"
+
+#: src/blocks/non-member-content/block.json
+msgctxt "block title"
+msgid "Non-Member Content"
+msgstr "Nicht-Mitgliederinhalt"
+
+#: src/blocks/non-member-content/block.json
+msgctxt "block description"
+msgid "Content shown to non-members and logged-out users"
+msgstr "Inhalt, der Nicht-Mitgliedern und abgemeldeten Benutzern angezeigt wird"

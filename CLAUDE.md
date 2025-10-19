@@ -102,4 +102,71 @@ A workspace package containing shared JavaScript utilities used across multiple 
 2. Export from `src/index.js`
 3. Import in consuming plugins: `import { utility } from 'fair-events-shared'`
 
+## Translation (i18n) Setup
+
+### The Problem
+WordPress generates translation JSON files with MD5 hashes based on source file paths (`src/blocks/*/editor.js`), but loads them based on build file paths (`build/blocks/*/editor.js`). This causes hash mismatch and translations fail to load.
+
+### Solution: Official WordPress --use-map Approach
+
+**Reference**: [WP-CLI i18n make-json documentation](https://developer.wordpress.org/cli/commands/i18n/make-json/)
+
+#### 1. Install webpack-bundle-output Plugin
+```bash
+npm install --save-dev webpack-bundle-output
+```
+
+#### 2. Update webpack.config.cjs
+```javascript
+const BundleOutputPlugin = require('webpack-bundle-output');
+
+module.exports = {
+  ...defaultConfig,
+  plugins: [
+    ...defaultConfig.plugins,
+    new BundleOutputPlugin({
+      cwd: process.cwd(),
+      output: 'map.json',
+    }),
+  ],
+};
+```
+
+This generates `build/map.json` mapping source files to build files.
+
+#### 3. Update package.json Scripts
+```json
+{
+  "makepot": "wp i18n make-pot . languages/plugin-name.pot --exclude=node_modules,vendor,tests,build",
+  "makejson": "wp i18n make-json languages ./build/languages --domain=plugin-name --pretty-print --no-purge --use-map=build/map.json",
+  "makemo": "wp i18n make-mo languages/",
+  "updatepo": "wp i18n update-po languages/plugin-name.pot languages/"
+}
+```
+
+Key change: Add `--use-map=build/map.json` to makejson script.
+
+#### 4. Set Translation Paths in PHP
+```php
+// In BlockHooks.php or similar
+wp_set_script_translations(
+    'plugin-name-block-name-editor-script',
+    'plugin-name',
+    dirname( __DIR__, 2 ) . '/build/languages'  // Note: build/languages for JSON
+);
+```
+
+**Important**:
+- PHP `.mo` files: `languages/`
+- JavaScript `.json` files: `build/languages/`
+
+#### Translation Workflow
+```bash
+npm run makepot     # Generate .pot from source
+npm run updatepo    # Update .po files from .pot
+# Translate .po files (manually or with tools)
+npm run makemo      # Generate .mo files (PHP)
+npm run build       # Builds JS and runs makejson (generates JSON with correct hashes)
+```
+
 - Don't use php templates.

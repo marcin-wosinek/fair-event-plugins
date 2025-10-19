@@ -1,0 +1,995 @@
+# Copyright (C) 2025 Marcin Wosinek
+# This file is distributed under the GPLv3 or later.
+msgid ""
+msgstr ""
+"Project-Id-Version: Fair Membership 0.2.0\n"
+"Report-Msgid-Bugs-To: https://wordpress.org/support/plugin/fair-membership\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language-Team: LANGUAGE <LL@li.org>\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"POT-Creation-Date: 2025-10-19T09:14:49+00:00\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"X-Generator: WP-CLI 2.12.0\n"
+"X-Domain: fair-membership\n"
+
+#. Plugin Name of the plugin
+#: fair-membership.php
+#: src/Admin/AdminHooks.php:32
+#: src/Admin/AdminHooks.php:33
+msgid "Fair Membership"
+msgstr ""
+
+#. Plugin URI of the plugin
+#: fair-membership.php
+msgid "https://github.com/marcin-wosinek/fair-event-plugins"
+msgstr ""
+
+#. Description of the plugin
+#: fair-membership.php
+msgid "Membership management plugin."
+msgstr ""
+
+#. Author of the plugin
+#: fair-membership.php
+msgid "Marcin Wosinek"
+msgstr ""
+
+#. Author URI of the plugin
+#: fair-membership.php
+msgid "https://github.com/marcin-wosinek"
+msgstr ""
+
+#: src/Admin/AdminHooks.php:43
+#: src/Admin/AdminHooks.php:44
+#: src/Admin/GroupsListPage.php:40
+msgid "Groups"
+msgstr ""
+
+#: src/Admin/AdminHooks.php:52
+msgid "View Group"
+msgstr ""
+
+#: src/Admin/AdminHooks.php:61
+#: src/Admin/AdminHooks.php:62
+#: src/Admin/users/MembershipMatrix.js:92
+#: src/Admin/users/MembershipMatrix.js:101
+#: src/Admin/users/MembershipMatrix.js:114
+msgid "All Users"
+msgstr ""
+
+#: src/Admin/AdminHooks.php:70
+#: src/Admin/AdminHooks.php:71
+#: src/Admin/import-users/components/ConfirmStep.js:282
+#: src/Admin/import-users/ImportUsers.js:149
+msgid "Import Users"
+msgstr ""
+
+#: src/Admin/GroupForm.php:58
+msgid "Add Group"
+msgstr ""
+
+#: src/Admin/GroupForm.php:58
+msgid "Update Group"
+msgstr ""
+
+#: src/Admin/GroupForm.php:94
+msgid "Group Name"
+msgstr ""
+
+#: src/Admin/GroupForm.php:107
+msgid "Enter a unique name for this group."
+msgstr ""
+
+#: src/Admin/GroupForm.php:123
+#: src/Admin/GroupsListTable.php:44
+#: src/Admin/GroupViewPage.php:221
+#: src/Admin/GroupViewPage.php:316
+msgid "Description"
+msgstr ""
+
+#: src/Admin/GroupForm.php:135
+msgid "Provide a description for this group (optional)."
+msgstr ""
+
+#: src/Admin/GroupForm.php:154
+#: src/Admin/GroupsListTable.php:46
+#: src/Admin/GroupViewPage.php:239
+#: src/Admin/GroupViewPage.php:260
+msgid "Members"
+msgstr ""
+
+#: src/Admin/GroupForm.php:158
+msgid "members"
+msgstr ""
+
+#: src/Admin/GroupForm.php:161
+msgid "Manage members"
+msgstr ""
+
+#: src/Admin/GroupForm.php:178
+#: src/Admin/GroupViewPage.php:225
+#: src/Admin/GroupViewPage.php:320
+msgid "Access Control"
+msgstr ""
+
+#: src/Admin/GroupForm.php:183
+msgid "Group Access Control"
+msgstr ""
+
+#: src/Admin/GroupForm.php:194
+#: src/Admin/GroupsListTable.php:211
+#: src/Admin/GroupViewPage.php:462
+msgid "Open"
+msgstr ""
+
+#: src/Admin/GroupForm.php:197
+msgid "Users can join this group themselves."
+msgstr ""
+
+#: src/Admin/GroupForm.php:209
+#: src/Admin/GroupsListTable.php:212
+#: src/Admin/GroupViewPage.php:466
+msgid "Managed"
+msgstr ""
+
+#: src/Admin/GroupForm.php:212
+msgid "Only administrators can add or remove members."
+msgstr ""
+
+#: src/Admin/GroupForm.php:235
+#: src/Admin/GroupViewPage.php:88
+#: src/Admin/GroupViewPage.php:283
+msgid "Security check failed. Please try again."
+msgstr ""
+
+#: src/Admin/GroupForm.php:264
+#: src/Models/Group.php:313
+msgid "Group name is required."
+msgstr ""
+
+#: src/Admin/GroupForm.php:327
+#: src/Admin/GroupsListPage.php:94
+msgid "Group added successfully."
+msgstr ""
+
+#: src/Admin/GroupForm.php:331
+msgid "Failed to save group. Please try again."
+msgstr ""
+
+#: src/Admin/GroupForm.php:347
+#: src/Admin/GroupViewPage.php:99
+msgid "Group not found."
+msgstr ""
+
+#: src/Admin/GroupForm.php:374
+#: src/Admin/GroupsListPage.php:102
+#: src/Admin/GroupViewPage.php:447
+msgid "Group updated successfully."
+msgstr ""
+
+#: src/Admin/GroupForm.php:378
+msgid "Failed to update group. Please try again."
+msgstr ""
+
+#: src/Admin/GroupForm.php:416
+msgid "Please correct the following errors:"
+msgstr ""
+
+#: src/Admin/GroupsListPage.php:43
+msgid "Add New"
+msgstr ""
+
+#. translators: %d is the number of groups deleted.
+#: src/Admin/GroupsListPage.php:76
+#, php-format
+msgid "%d group deleted successfully."
+msgid_plural "%d groups deleted successfully."
+msgstr[0] ""
+msgstr[1] ""
+
+#: src/Admin/GroupsListTable.php:43
+#: src/Admin/GroupViewPage.php:213
+#: src/Admin/GroupViewPage.php:312
+#: src/Admin/users/MembershipMatrix.js:134
+msgid "Name"
+msgstr ""
+
+#: src/Admin/GroupsListTable.php:45
+msgid "Access"
+msgstr ""
+
+#: src/Admin/GroupsListTable.php:47
+#: src/Admin/GroupViewPage.php:247
+msgid "Created"
+msgstr ""
+
+#: src/Admin/GroupsListTable.php:135
+msgid "No description"
+msgstr ""
+
+#: src/Admin/GroupsListTable.php:162
+msgid "View"
+msgstr ""
+
+#: src/Admin/GroupsListTable.php:169
+msgid "Edit"
+msgstr ""
+
+#: src/Admin/GroupsListTable.php:177
+msgid "Delete"
+msgstr ""
+
+#: src/Admin/GroupsListTable.php:230
+msgid "No groups found."
+msgstr ""
+
+#: src/Admin/GroupViewPage.php:93
+msgid "Invalid group ID."
+msgstr ""
+
+#: src/Admin/GroupViewPage.php:110
+msgid "Failed to delete group. Please try again."
+msgstr ""
+
+#: src/Admin/GroupViewPage.php:122
+msgid "Add New Group"
+msgstr ""
+
+#: src/Admin/GroupViewPage.php:134
+#: src/Admin/GroupViewPage.php:267
+#: src/Admin/GroupViewPage.php:355
+msgid "Back to Groups"
+msgstr ""
+
+#. translators: %s: group name
+#: src/Admin/GroupViewPage.php:161
+#, php-format
+msgid "Edit Group: %s"
+msgstr ""
+
+#: src/Admin/GroupViewPage.php:176
+msgid "Back to Group View"
+msgstr ""
+
+#: src/Admin/GroupViewPage.php:202
+msgid "Edit Group"
+msgstr ""
+
+#: src/Admin/GroupViewPage.php:209
+msgid "Group Details"
+msgstr ""
+
+#: src/Admin/GroupViewPage.php:217
+msgid "Slug"
+msgstr ""
+
+#: src/Admin/GroupViewPage.php:222
+#: src/Admin/GroupViewPage.php:317
+msgid "No description provided."
+msgstr ""
+
+#: src/Admin/GroupViewPage.php:231
+#: src/Admin/GroupViewPage.php:377
+msgid "Status"
+msgstr ""
+
+#: src/Admin/GroupViewPage.php:242
+msgid "member"
+msgid_plural "members"
+msgstr[0] ""
+msgstr[1] ""
+
+#: src/Admin/GroupViewPage.php:243
+msgid "Member functionality will be available once membership tables are implemented."
+msgstr ""
+
+#: src/Admin/GroupViewPage.php:251
+msgid "Last Updated"
+msgstr ""
+
+#: src/Admin/GroupViewPage.php:296
+msgid "Delete Group"
+msgstr ""
+
+#: src/Admin/GroupViewPage.php:302
+msgid "Warning:"
+msgstr ""
+
+#: src/Admin/GroupViewPage.php:303
+msgid "You are about to permanently delete this group. This action cannot be undone."
+msgstr ""
+
+#: src/Admin/GroupViewPage.php:308
+msgid "Group to be deleted:"
+msgstr ""
+
+#: src/Admin/GroupViewPage.php:327
+msgid "Are you sure you want to delete this group?"
+msgstr ""
+
+#: src/Admin/GroupViewPage.php:333
+msgid "Yes, Delete Group"
+msgstr ""
+
+#: src/Admin/GroupViewPage.php:337
+msgid "No, Cancel"
+msgstr ""
+
+#: src/Admin/GroupViewPage.php:351
+msgid "Group Not Found"
+msgstr ""
+
+#: src/Admin/GroupViewPage.php:352
+msgid "The requested group could not be found."
+msgstr ""
+
+#: src/Admin/GroupViewPage.php:374
+msgid "User"
+msgstr ""
+
+#: src/Admin/GroupViewPage.php:375
+#: src/Admin/import-users/components/PreviewStep.js:155
+msgid "Email"
+msgstr ""
+
+#: src/Admin/GroupViewPage.php:376
+msgid "Joined"
+msgstr ""
+
+#: src/Admin/GroupViewPage.php:378
+msgid "Actions"
+msgstr ""
+
+#: src/Admin/GroupViewPage.php:385
+msgid "No members in this group yet."
+msgstr ""
+
+#: src/Admin/GroupViewPage.php:388
+msgid "Add Members"
+msgstr ""
+
+#: src/Admin/GroupViewPage.php:410
+msgid "Edit User"
+msgstr ""
+
+#: src/Admin/GroupViewPage.php:422
+msgid "Add More Members"
+msgstr ""
+
+#: src/Admin/GroupViewPage.php:463
+msgid "Users can join this group themselves"
+msgstr ""
+
+#: src/Admin/GroupViewPage.php:467
+msgid "Only administrators can add or remove members"
+msgstr ""
+
+#: src/API/RestAPI.php:235
+msgid "Membership is already active."
+msgstr ""
+
+#: src/API/RestAPI.php:255
+msgid "No active membership to deactivate."
+msgstr ""
+
+#: src/API/RestAPI.php:280
+msgid "Membership updated successfully."
+msgstr ""
+
+#: src/API/RestAPI.php:286
+msgid "Failed to save membership."
+msgstr ""
+
+#: src/API/RestAPI.php:304
+msgid "No file uploaded."
+msgstr ""
+
+#: src/API/RestAPI.php:316
+msgid "Please upload a CSV file."
+msgstr ""
+
+#: src/API/RestAPI.php:326
+msgid "File size must be less than 10MB."
+msgstr ""
+
+#: src/API/RestAPI.php:342
+msgid "CSV file contains too many rows. Maximum is 500 rows."
+msgstr ""
+
+#: src/API/RestAPI.php:382
+msgid "Failed to read CSV file."
+msgstr ""
+
+#: src/API/RestAPI.php:391
+msgid "CSV file is empty."
+msgstr ""
+
+#: src/API/RestAPI.php:403
+msgid "CSV file has no headers."
+msgstr ""
+
+#: src/API/RestAPI.php:429
+msgid "CSV file contains no valid data rows."
+msgstr ""
+
+#: src/API/RestAPI.php:454
+msgid "Username is required"
+msgstr ""
+
+#: src/API/RestAPI.php:458
+msgid "Email is required"
+msgstr ""
+
+#: src/API/RestAPI.php:466
+msgid "Username contains invalid characters"
+msgstr ""
+
+#: src/API/RestAPI.php:472
+msgid "Username must be between 3 and 60 characters"
+msgstr ""
+
+#: src/API/RestAPI.php:485
+msgid "Invalid email format"
+msgstr ""
+
+#: src/API/RestAPI.php:499
+msgid "Invalid website URL"
+msgstr ""
+
+#: src/API/RestAPI.php:518
+msgid "Duplicate username in CSV"
+msgstr ""
+
+#: src/API/RestAPI.php:535
+msgid "Duplicate email in CSV"
+msgstr ""
+
+#: src/API/RestAPI.php:629
+msgid "User not found for update"
+msgstr ""
+
+#: src/Hooks/UserHooks.php:54
+#: src/Hooks/UserHooks.php:115
+msgid "Fair Membership Groups"
+msgstr ""
+
+#: src/Hooks/UserHooks.php:58
+msgid "Assign to Groups"
+msgstr ""
+
+#: src/Hooks/UserHooks.php:63
+#: src/Hooks/UserHooks.php:124
+msgid "Select groups for this user"
+msgstr ""
+
+#: src/Hooks/UserHooks.php:81
+msgid "Select which groups this user should be added to upon creation."
+msgstr ""
+
+#: src/Hooks/UserHooks.php:119
+msgid "Group Memberships"
+msgstr ""
+
+#: src/Hooks/UserHooks.php:144
+msgid "since"
+msgstr ""
+
+#: src/Hooks/UserHooks.php:156
+msgid "Check groups to add the user as a member, uncheck to remove membership."
+msgstr ""
+
+#: src/Models/Group.php:317
+msgid "Group slug is required."
+msgstr ""
+
+#: src/Models/Group.php:319
+msgid "Group slug can only contain lowercase letters, numbers, and hyphens."
+msgstr ""
+
+#: src/Models/Group.php:323
+msgid "Invalid access control type."
+msgstr ""
+
+#: src/Models/Group.php:327
+msgid "Invalid status."
+msgstr ""
+
+#: src/Models/Group.php:333
+msgid "A group with this slug already exists."
+msgstr ""
+
+#: src/Models/Membership.php:205
+msgid "User ID is required."
+msgstr ""
+
+#: src/Models/Membership.php:209
+msgid "Group ID is required."
+msgstr ""
+
+#: src/Models/Membership.php:213
+msgid "Status must be either \"active\" or \"inactive\"."
+msgstr ""
+
+#: src/Models/Membership.php:218
+msgid "User does not exist."
+msgstr ""
+
+#: src/Models/Membership.php:225
+msgid "Group does not exist."
+msgstr ""
+
+#: src/Admin/import-users/components/ConfirmStep.js:51
+msgid "Are you sure you want to import these users? This action cannot be undone."
+msgstr ""
+
+#: src/Admin/import-users/components/ConfirmStep.js:84
+#: src/Admin/import-users/components/ConfirmStep.js:88
+msgid "Import failed"
+msgstr ""
+
+#: src/Admin/import-users/components/ConfirmStep.js:98
+msgid "Import Complete!"
+msgstr ""
+
+#: src/Admin/import-users/components/ConfirmStep.js:102
+msgid "Import Results"
+msgstr ""
+
+#: src/Admin/import-users/components/ConfirmStep.js:107
+msgid "Users Created"
+msgstr ""
+
+#: src/Admin/import-users/components/ConfirmStep.js:115
+msgid "Users Updated"
+msgstr ""
+
+#: src/Admin/import-users/components/ConfirmStep.js:123
+msgid "Users Skipped"
+msgstr ""
+
+#: src/Admin/import-users/components/ConfirmStep.js:133
+msgid "Errors"
+msgstr ""
+
+#: src/Admin/import-users/components/ConfirmStep.js:147
+msgid "Import Errors:"
+msgstr ""
+
+#: src/Admin/import-users/components/ConfirmStep.js:151
+#: src/Admin/import-users/components/PreviewStep.js:339
+msgid "Row"
+msgstr ""
+
+#: src/Admin/import-users/components/ConfirmStep.js:165
+msgid "View All Users"
+msgstr ""
+
+#: src/Admin/import-users/components/ConfirmStep.js:173
+msgid "Import More Users"
+msgstr ""
+
+#: src/Admin/import-users/components/ConfirmStep.js:183
+msgid "Review the import summary below. Click \"Import Users\" to proceed."
+msgstr ""
+
+#: src/Admin/import-users/components/ConfirmStep.js:196
+#: src/Admin/import-users/components/PreviewStep.js:352
+msgid "Import Summary"
+msgstr ""
+
+#: src/Admin/import-users/components/ConfirmStep.js:201
+msgid "Users to Create"
+msgstr ""
+
+#: src/Admin/import-users/components/ConfirmStep.js:207
+msgid "Users to Update"
+msgstr ""
+
+#: src/Admin/import-users/components/ConfirmStep.js:213
+msgid "Users to Skip"
+msgstr ""
+
+#: src/Admin/import-users/components/ConfirmStep.js:217
+msgid "Total Users"
+msgstr ""
+
+#: src/Admin/import-users/components/ConfirmStep.js:226
+msgid "Group Assignments"
+msgstr ""
+
+#: src/Admin/import-users/components/ConfirmStep.js:230
+msgid "No groups will be assigned to imported users."
+msgstr ""
+
+#: src/Admin/import-users/components/ConfirmStep.js:238
+msgid "The following groups will be assigned to all imported users:"
+msgstr ""
+
+#: src/Admin/import-users/components/ConfirmStep.js:255
+msgid "Important:"
+msgstr ""
+
+#: src/Admin/import-users/components/ConfirmStep.js:256
+msgid "This action will create/update users in your WordPress site. Make sure you have reviewed the data carefully."
+msgstr ""
+
+#: src/Admin/import-users/components/ConfirmStep.js:272
+msgid "← Back to Groups"
+msgstr ""
+
+#: src/Admin/import-users/components/ConfirmStep.js:281
+msgid "Importing..."
+msgstr ""
+
+#: src/Admin/import-users/components/GroupsStep.js:60
+msgid "Loading groups..."
+msgstr ""
+
+#: src/Admin/import-users/components/GroupsStep.js:70
+msgid "Error loading groups: "
+msgstr ""
+
+#: src/Admin/import-users/components/GroupsStep.js:81
+msgid "Select which Fair Membership groups to assign to the imported users. You can skip this step if you don't want to assign any groups."
+msgstr ""
+
+#: src/Admin/import-users/components/GroupsStep.js:90
+msgid "No groups available. You can create groups in the Groups page."
+msgstr ""
+
+#: src/Admin/import-users/components/GroupsStep.js:105
+msgid "Select All"
+msgstr ""
+
+#: src/Admin/import-users/components/GroupsStep.js:114
+msgid "Deselect All"
+msgstr ""
+
+#: src/Admin/import-users/components/GroupsStep.js:142
+msgid "Selected groups:"
+msgstr ""
+
+#: src/Admin/import-users/components/GroupsStep.js:155
+msgid "None (users will be created without group assignments)"
+msgstr ""
+
+#: src/Admin/import-users/components/GroupsStep.js:172
+msgid "← Back to Preview"
+msgstr ""
+
+#: src/Admin/import-users/components/GroupsStep.js:179
+msgid "Continue to Confirmation"
+msgstr ""
+
+#: src/Admin/import-users/components/MappingStep.js:104
+msgid "— Skip this column —"
+msgstr ""
+
+#: src/Admin/import-users/components/MappingStep.js:107
+msgid "Username (required)"
+msgstr ""
+
+#: src/Admin/import-users/components/MappingStep.js:111
+msgid "Email (required)"
+msgstr ""
+
+#: src/Admin/import-users/components/MappingStep.js:113
+#: src/Admin/import-users/components/PreviewStep.js:156
+msgid "Display Name"
+msgstr ""
+
+#: src/Admin/import-users/components/MappingStep.js:114
+#: src/Admin/import-users/components/PreviewStep.js:157
+msgid "First Name"
+msgstr ""
+
+#: src/Admin/import-users/components/MappingStep.js:115
+#: src/Admin/import-users/components/PreviewStep.js:158
+msgid "Last Name"
+msgstr ""
+
+#: src/Admin/import-users/components/MappingStep.js:116
+msgid "Website URL"
+msgstr ""
+
+#: src/Admin/import-users/components/MappingStep.js:117
+msgid "Biography"
+msgstr ""
+
+#: src/Admin/import-users/components/MappingStep.js:151
+msgid "Username field is required. Please map a column to Username."
+msgstr ""
+
+#: src/Admin/import-users/components/MappingStep.js:162
+msgid "Email field is required. Please map a column to Email."
+msgstr ""
+
+#: src/Admin/import-users/components/MappingStep.js:176
+msgid "Each field can only be mapped once. Please check for duplicate mappings."
+msgstr ""
+
+#: src/Admin/import-users/components/MappingStep.js:204
+msgid "Map CSV columns to WordPress user fields. Required fields are Username and Email."
+msgstr ""
+
+#: src/Admin/import-users/components/MappingStep.js:224
+msgid "CSV Column"
+msgstr ""
+
+#: src/Admin/import-users/components/MappingStep.js:227
+msgid "Sample Data"
+msgstr ""
+
+#: src/Admin/import-users/components/MappingStep.js:230
+msgid "Maps to WordPress Field"
+msgstr ""
+
+#: src/Admin/import-users/components/MappingStep.js:270
+msgid "Mapping Summary"
+msgstr ""
+
+#: src/Admin/import-users/components/MappingStep.js:274
+msgid "Total columns:"
+msgstr ""
+
+#: src/Admin/import-users/components/MappingStep.js:279
+msgid "Mapped:"
+msgstr ""
+
+#: src/Admin/import-users/components/MappingStep.js:287
+msgid "Skipped:"
+msgstr ""
+
+#: src/Admin/import-users/components/MappingStep.js:304
+msgid "← Back"
+msgstr ""
+
+#: src/Admin/import-users/components/MappingStep.js:311
+msgid "Continue to Preview"
+msgstr ""
+
+#: src/Admin/import-users/components/PreviewStep.js:132
+msgid "Please select at least one user to import."
+msgstr ""
+
+#: src/Admin/import-users/components/PreviewStep.js:154
+#: src/Admin/users/MembershipMatrix.js:131
+msgid "Username"
+msgstr ""
+
+#: src/Admin/import-users/components/PreviewStep.js:159
+msgid "Website"
+msgstr ""
+
+#: src/Admin/import-users/components/PreviewStep.js:160
+msgid "Bio"
+msgstr ""
+
+#: src/Admin/import-users/components/PreviewStep.js:171
+msgid "Create"
+msgstr ""
+
+#: src/Admin/import-users/components/PreviewStep.js:176
+msgid "Update"
+msgstr ""
+
+#: src/Admin/import-users/components/PreviewStep.js:179
+msgid "Skip"
+msgstr ""
+
+#: src/Admin/import-users/components/PreviewStep.js:186
+msgid "Review and edit user data. Choose an action for each user: Create (new user), Update (existing user), or Skip."
+msgstr ""
+
+#: src/Admin/import-users/components/PreviewStep.js:194
+msgid "Validating users..."
+msgstr ""
+
+#: src/Admin/import-users/components/PreviewStep.js:205
+msgid "Show only rows with errors"
+msgstr ""
+
+#: src/Admin/import-users/components/PreviewStep.js:208
+msgid "Showing:"
+msgstr ""
+
+#: src/Admin/import-users/components/PreviewStep.js:210
+msgid "users"
+msgstr ""
+
+#: src/Admin/import-users/components/PreviewStep.js:219
+msgid "#"
+msgstr ""
+
+#: src/Admin/import-users/components/PreviewStep.js:225
+msgid "Action"
+msgstr ""
+
+#: src/Admin/import-users/components/PreviewStep.js:282
+msgid "Double-click to edit"
+msgstr ""
+
+#: src/Admin/import-users/components/PreviewStep.js:332
+msgid "Validation Issues:"
+msgstr ""
+
+#: src/Admin/import-users/components/PreviewStep.js:355
+msgid "To Create:"
+msgstr ""
+
+#: src/Admin/import-users/components/PreviewStep.js:363
+msgid "To Update:"
+msgstr ""
+
+#: src/Admin/import-users/components/PreviewStep.js:371
+msgid "To Skip:"
+msgstr ""
+
+#: src/Admin/import-users/components/PreviewStep.js:388
+msgid "← Back to Mapping"
+msgstr ""
+
+#: src/Admin/import-users/components/PreviewStep.js:396
+msgid "Continue to Groups"
+msgstr ""
+
+#: src/Admin/import-users/components/UploadStep.js:28
+msgid "Please upload a CSV file (.csv)"
+msgstr ""
+
+#: src/Admin/import-users/components/UploadStep.js:34
+msgid "File size must be less than 10MB"
+msgstr ""
+
+#: src/Admin/import-users/components/UploadStep.js:105
+#: src/Admin/import-users/components/UploadStep.js:110
+msgid "Failed to upload file"
+msgstr ""
+
+#: src/Admin/import-users/components/UploadStep.js:126
+msgid "Upload a CSV file containing user data. The file should have column headers in the first row."
+msgstr ""
+
+#: src/Admin/import-users/components/UploadStep.js:143
+msgid "Drag and drop a CSV file here, or click to select"
+msgstr ""
+
+#: src/Admin/import-users/components/UploadStep.js:170
+msgid "Selected file:"
+msgstr ""
+
+#: src/Admin/import-users/components/UploadStep.js:185
+msgid "Preview (first 5 rows)"
+msgstr ""
+
+#: src/Admin/import-users/components/UploadStep.js:205
+msgid "Total rows:"
+msgstr ""
+
+#: src/Admin/import-users/components/UploadStep.js:219
+msgid "Uploading..."
+msgstr ""
+
+#: src/Admin/import-users/components/UploadStep.js:220
+msgid "Upload & Parse CSV"
+msgstr ""
+
+#: src/Admin/import-users/components/UploadStep.js:228
+msgid "Continue to Field Mapping"
+msgstr ""
+
+#: src/Admin/import-users/ImportUsers.js:157
+msgid "Upload CSV"
+msgstr ""
+
+#: src/Admin/import-users/ImportUsers.js:164
+msgid "Map Fields"
+msgstr ""
+
+#: src/Admin/import-users/ImportUsers.js:171
+msgid "Preview & Edit"
+msgstr ""
+
+#: src/Admin/import-users/ImportUsers.js:176
+msgid "Assign Groups"
+msgstr ""
+
+#: src/Admin/import-users/ImportUsers.js:183
+msgid "Confirm Import"
+msgstr ""
+
+#: src/Admin/import-users/ImportUsers.js:238
+msgid "Reset & Start Over"
+msgstr ""
+
+#: src/Admin/users/MembershipMatrix.js:78
+msgid "Failed to update membership: "
+msgstr ""
+
+#: src/Admin/users/MembershipMatrix.js:93
+msgid "Loading..."
+msgstr ""
+
+#: src/Admin/users/MembershipMatrix.js:104
+msgid "Error loading users: "
+msgstr ""
+
+#: src/Admin/users/MembershipMatrix.js:125
+msgid "ID"
+msgstr ""
+
+#: src/blocks/member-content/components/EditComponent.js:22
+msgid "This content will be shown to members of the selected groups."
+msgstr ""
+
+#: src/blocks/member-content/components/EditComponent.js:44
+msgid "Member Content"
+msgstr ""
+
+#: src/blocks/member-content/components/EditComponent.js:46
+msgid "This content will be displayed to users who are members of the selected groups."
+msgstr ""
+
+#: src/blocks/member-content/components/EditComponent.js:56
+msgid "👥 Member Content"
+msgstr ""
+
+#: src/blocks/membership-switch/components/EditComponent.js:68
+msgid "Membership Settings"
+msgstr ""
+
+#: src/blocks/membership-switch/components/EditComponent.js:70
+msgid "Select which membership groups should see the member content:"
+msgstr ""
+
+#: src/blocks/membership-switch/components/EditComponent.js:78
+msgid "No membership groups found. Create groups first."
+msgstr ""
+
+#: src/blocks/non-member-content/components/EditComponent.js:22
+msgid "This content will be shown to non-members and logged-out users."
+msgstr ""
+
+#: src/blocks/non-member-content/components/EditComponent.js:44
+msgid "Non-Member Content"
+msgstr ""
+
+#: src/blocks/non-member-content/components/EditComponent.js:46
+msgid "This content will be displayed to users who are not members and logged-out users."
+msgstr ""
+
+#: src/blocks/non-member-content/components/EditComponent.js:56
+msgid "🔒 Non-Member Content"
+msgstr ""
+
+#: src/blocks/member-content/block.json
+msgctxt "block title"
+msgid "Member Content"
+msgstr ""
+
+#: src/blocks/member-content/block.json
+msgctxt "block description"
+msgid "Content shown to members of selected groups"
+msgstr ""
+
+#: src/blocks/membership-switch/block.json
+msgctxt "block title"
+msgid "Membership Switch"
+msgstr ""
+
+#: src/blocks/membership-switch/block.json
+msgctxt "block description"
+msgid "Shows different content based on membership group status"
+msgstr ""
+
+#: src/blocks/non-member-content/block.json
+msgctxt "block title"
+msgid "Non-Member Content"
+msgstr ""
+
+#: src/blocks/non-member-content/block.json
+msgctxt "block description"
+msgid "Content shown to non-members and logged-out users"
+msgstr ""

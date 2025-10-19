@@ -30,5 +30,22 @@ class BlockHooks {
 		register_block_type( __DIR__ . '/../../build/blocks/membership-switch' );
 		register_block_type( __DIR__ . '/../../build/blocks/member-content' );
 		register_block_type( __DIR__ . '/../../build/blocks/non-member-content' );
+
+		// Set script translations for blocks
+		wp_set_script_translations(
+			'fair-membership-membership-switch-editor-script',
+			'fair-membership',
+			dirname( __DIR__, 2 ) . '/build/languages'
+		);
+		wp_set_script_translations(
+			'fair-membership-member-content-editor-script',
+			'fair-membership',
+			dirname( __DIR__, 2 ) . '/build/languages'
+		);
+		wp_set_script_translations(
+			'fair-membership-non-member-content-editor-script',
+			'fair-membership',
+			dirname( __DIR__, 2 ) . '/build/languages'
+		);
 	}
 }
