@@ -24,25 +24,25 @@ msgstr "Fair Events"
 msgid "Event management plugin."
 msgstr "Plugin de gestión de eventos."
 
-#: src/Admin/AdminPages.php:35
+#: src/Admin/AdminPages.php:46
 #: src/Admin/settings/SettingsApp.js:72
 #: src/Admin/settings/SettingsApp.js:80
 msgid "Fair Events Settings"
 msgstr "Configuración de Fair Events"
 
-#: src/Admin/AdminPages.php:36
+#: src/Admin/AdminPages.php:47
 msgid "Settings"
 msgstr "Configuración"
 
-#: src/Admin/AdminPages.php:45
+#: src/Admin/AdminPages.php:56
 msgid "Import Events"
 msgstr "Importar eventos"
 
-#: src/Admin/AdminPages.php:46
+#: src/Admin/AdminPages.php:57
 msgid "Import"
 msgstr "Importar"
 
-#: src/blocks/events-list/render.php:178
+#: src/blocks/events-list/render.php:158
 msgid "No events found. Please select a valid display pattern."
 msgstr "No se encontraron eventos. Por favor seleccione un patrón de visualización válido."
 
@@ -197,23 +197,23 @@ msgid "All Day Event"
 msgstr "Evento de todo el día"
 
 #: src/PostTypes/Event.php:261
-#: src/PostTypes/Event.php:357
+#: src/PostTypes/Event.php:360
 msgid "Location"
 msgstr "Ubicación"
 
-#: src/PostTypes/Event.php:354
+#: src/PostTypes/Event.php:357
 msgid "Event Start"
 msgstr "Inicio"
 
-#: src/PostTypes/Event.php:355
+#: src/PostTypes/Event.php:358
 msgid "Event End"
 msgstr "Finalización"
 
-#: src/PostTypes/Event.php:356
+#: src/PostTypes/Event.php:359
 msgid "All Day"
 msgstr "Todo el día"
 
-#: src/PostTypes/Event.php:385
+#: src/PostTypes/Event.php:392
 msgid "Yes"
 msgstr "Sí"
 
@@ -281,6 +281,7 @@ msgstr "Elija un patrón para mostrar eventos"
 msgid "Time Filter"
 msgstr "Filtro de tiempo"
 
+#: src/Admin/AdminPages.php:37
 #: src/blocks/events-list/components/EditComponent.js:120
 msgid "Upcoming Events"
 msgstr "Próximos eventos"
@@ -409,3 +410,7 @@ msgstr ""
 msgctxt "block description"
 msgid "Display a list of events with filtering options."
 msgstr ""
+
+#: src/Admin/AdminPages.php:38
+msgid "Upcoming"
+msgstr "Próximos"

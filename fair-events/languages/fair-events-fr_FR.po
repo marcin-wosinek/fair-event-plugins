@@ -1,5 +1,3 @@
-# Copyright (C) 2025 Marcin Wosinek
-# This file is distributed under the GPLv3 or later.
 msgid ""
 msgstr ""
 "Project-Id-Version: Fair Events 0.3.2\n"
@@ -41,25 +39,25 @@ msgstr ""
 msgid "https://github.com/marcin-wosinek"
 msgstr ""
 
-#: src/Admin/AdminPages.php:35
+#: src/Admin/AdminPages.php:46
 #: src/Admin/settings/SettingsApp.js:72
 #: src/Admin/settings/SettingsApp.js:80
 msgid "Fair Events Settings"
 msgstr "Paramètres Fair Events"
 
-#: src/Admin/AdminPages.php:36
+#: src/Admin/AdminPages.php:47
 msgid "Settings"
 msgstr "Paramètres"
 
-#: src/Admin/AdminPages.php:45
+#: src/Admin/AdminPages.php:56
 msgid "Import Events"
 msgstr "Importer des événements"
 
-#: src/Admin/AdminPages.php:46
+#: src/Admin/AdminPages.php:57
 msgid "Import"
 msgstr "Importer"
 
-#: src/blocks/events-list/render.php:178
+#: src/blocks/events-list/render.php:158
 msgid "No events found. Please select a valid display pattern."
 msgstr "Aucun événement trouvé. Veuillez sélectionner un modèle d'affichage valide."
 
@@ -224,23 +222,23 @@ msgid "All Day Event"
 msgstr "Événement toute la journée"
 
 #: src/PostTypes/Event.php:261
-#: src/PostTypes/Event.php:357
+#: src/PostTypes/Event.php:360
 msgid "Location"
 msgstr "Lieu"
 
-#: src/PostTypes/Event.php:354
+#: src/PostTypes/Event.php:357
 msgid "Event Start"
 msgstr "Début"
 
-#: src/PostTypes/Event.php:355
+#: src/PostTypes/Event.php:358
 msgid "Event End"
 msgstr "Fin"
 
-#: src/PostTypes/Event.php:356
+#: src/PostTypes/Event.php:359
 msgid "All Day"
 msgstr "Toute la journée"
 
-#: src/PostTypes/Event.php:385
+#: src/PostTypes/Event.php:392
 msgid "Yes"
 msgstr "Oui"
 
@@ -308,6 +306,7 @@ msgstr "Choisissez un modèle pour afficher les événements"
 msgid "Time Filter"
 msgstr "Filtre temporel"
 
+#: src/Admin/AdminPages.php:37
 #: src/blocks/events-list/components/EditComponent.js:120
 msgid "Upcoming Events"
 msgstr "Événements à venir"
@@ -411,3 +410,7 @@ msgstr "calendrier"
 msgctxt "block keyword"
 msgid "list"
 msgstr "liste"
+
+#: src/Admin/AdminPages.php:38
+msgid "Upcoming"
+msgstr "À venir"

@@ -39,25 +39,25 @@ msgstr ""
 msgid "https://github.com/marcin-wosinek"
 msgstr ""
 
-#: src/Admin/AdminPages.php:35
+#: src/Admin/AdminPages.php:46
 #: src/Admin/settings/SettingsApp.js:72
 #: src/Admin/settings/SettingsApp.js:80
 msgid "Fair Events Settings"
 msgstr "Fair Events Einstellungen"
 
-#: src/Admin/AdminPages.php:36
+#: src/Admin/AdminPages.php:47
 msgid "Settings"
 msgstr "Einstellungen"
 
-#: src/Admin/AdminPages.php:45
+#: src/Admin/AdminPages.php:56
 msgid "Import Events"
 msgstr "Veranstaltungen importieren"
 
-#: src/Admin/AdminPages.php:46
+#: src/Admin/AdminPages.php:57
 msgid "Import"
 msgstr "Importieren"
 
-#: src/blocks/events-list/render.php:178
+#: src/blocks/events-list/render.php:158
 msgid "No events found. Please select a valid display pattern."
 msgstr "Keine Veranstaltungen gefunden. Bitte wählen Sie ein gültiges Anzeigemuster."
 
@@ -222,23 +222,23 @@ msgid "All Day Event"
 msgstr "Ganztägige Veranstaltung"
 
 #: src/PostTypes/Event.php:261
-#: src/PostTypes/Event.php:357
+#: src/PostTypes/Event.php:360
 msgid "Location"
 msgstr "Ort"
 
-#: src/PostTypes/Event.php:354
+#: src/PostTypes/Event.php:357
 msgid "Event Start"
 msgstr "Beginn"
 
-#: src/PostTypes/Event.php:355
+#: src/PostTypes/Event.php:358
 msgid "Event End"
 msgstr "Ende"
 
-#: src/PostTypes/Event.php:356
+#: src/PostTypes/Event.php:359
 msgid "All Day"
 msgstr "Ganztägig"
 
-#: src/PostTypes/Event.php:385
+#: src/PostTypes/Event.php:392
 msgid "Yes"
 msgstr "Ja"
 
@@ -306,6 +306,7 @@ msgstr "Wählen Sie ein Muster zur Anzeige von Veranstaltungen"
 msgid "Time Filter"
 msgstr "Zeitfilter"
 
+#: src/Admin/AdminPages.php:37
 #: src/blocks/events-list/components/EditComponent.js:120
 msgid "Upcoming Events"
 msgstr "Kommende Veranstaltungen"
@@ -409,3 +410,7 @@ msgstr "kalender"
 msgctxt "block keyword"
 msgid "list"
 msgstr "liste"
+
+#: src/Admin/AdminPages.php:38
+msgid "Upcoming"
+msgstr "Bevorstehende"
