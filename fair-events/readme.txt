@@ -91,6 +91,12 @@ Yes! Events are fully compatible with the Gutenberg block editor and the REST AP
 
 == Changelog ==
 
+## 0.4.2
+
+### Patch Changes
+
+- ccb5d6a: Add list of upcomming events
+
 ## 0.4.1
 
 ### Patch Changes

@@ -1,5 +1,11 @@
 # fair-events
 
+## 0.4.2
+
+### Patch Changes
+
+- ccb5d6a: Add list of upcomming events
+
 ## 0.4.1
 
 ### Patch Changes
