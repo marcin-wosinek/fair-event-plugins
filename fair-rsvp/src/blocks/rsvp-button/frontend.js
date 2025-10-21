@@ -10,10 +10,12 @@ import apiFetch from '@wordpress/api-fetch';
 (function () {
 	'use strict';
 
-	// Initialize when DOM is ready
-	document.addEventListener('DOMContentLoaded', function () {
+	// Defensive: handle both scenarios (DOM loading or already loaded)
+	if (document.readyState === 'loading') {
+		document.addEventListener('DOMContentLoaded', initializeRsvpForms);
+	} else {
 		initializeRsvpForms();
-	});
+	}
 
 	/**
 	 * Initialize all RSVP forms on the page

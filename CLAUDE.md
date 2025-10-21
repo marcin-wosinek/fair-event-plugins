@@ -170,3 +170,39 @@ npm run build       # Builds JS and runs makejson (generates JSON with correct h
 ```
 
 - Don't use php templates.
+
+## Frontend JavaScript Best Practices
+
+### Defensive DOM Ready Pattern
+
+When using `viewScript` in block.json for frontend JavaScript, WordPress loads scripts after block markup is rendered. However, with caching plugins or deferred script loading, the DOM might already be ready when the script executes.
+
+**Problem**: Using only `DOMContentLoaded` event listener fails if the script loads after DOM is ready (the event has already fired).
+
+**Solution**: Use a defensive pattern that handles both scenarios:
+
+```javascript
+(function () {
+	'use strict';
+
+	// Defensive: handle both scenarios (DOM loading or already loaded)
+	if (document.readyState === 'loading') {
+		document.addEventListener('DOMContentLoaded', initializeFunction);
+	} else {
+		initializeFunction();
+	}
+
+	function initializeFunction() {
+		// Your initialization code here
+	}
+})();
+```
+
+**How it works**:
+- Checks `document.readyState` to determine if DOM is still loading
+- If loading: waits for `DOMContentLoaded` event
+- If already loaded ('interactive' or 'complete'): executes immediately
+
+**When to use**: All `viewScript` files that need to manipulate the DOM or attach event handlers to block elements.
+
+**Example**: See `fair-rsvp/src/blocks/rsvp-button/frontend.js`
