@@ -1,5 +1,6 @@
 import './frontend.css';
 import apiFetch from '@wordpress/api-fetch';
+import { __ } from '@wordpress/i18n';
 
 /**
  * Frontend JavaScript for Fair RSVP button
@@ -60,7 +61,7 @@ import apiFetch from '@wordpress/api-fetch';
 		if (!selectedRadio) {
 			showMessage(
 				messageContainer,
-				'Please select an RSVP option.',
+				__('Please select an RSVP option.', 'fair-rsvp'),
 				'error'
 			);
 			return;
@@ -70,7 +71,7 @@ import apiFetch from '@wordpress/api-fetch';
 
 		// Disable button and show loading state
 		submitButton.disabled = true;
-		submitButton.textContent = 'Submitting...';
+		submitButton.textContent = __('Submitting...', 'fair-rsvp');
 
 		// Submit to API
 		apiFetch({
@@ -85,34 +86,42 @@ import apiFetch from '@wordpress/api-fetch';
 				// Success!
 				showMessage(
 					messageContainer,
-					'Your RSVP has been updated successfully!',
+					__('Your RSVP has been updated successfully!', 'fair-rsvp'),
 					'success'
 				);
 
 				// Update status display
 				if (statusDisplay) {
 					statusDisplay.innerHTML =
-						'Your current RSVP: <strong>' +
-						capitalizeFirstLetter(rsvpStatus) +
+						__('Your current RSVP: ', 'fair-rsvp') +
+						'<strong>' +
+						translateStatus(rsvpStatus) +
 						'</strong>';
 				} else {
 					// Create status display if it doesn't exist
 					const newStatus = document.createElement('p');
 					newStatus.className = 'fair-rsvp-current-status';
 					newStatus.innerHTML =
-						'Your current RSVP: <strong>' +
-						capitalizeFirstLetter(rsvpStatus) +
+						__('Your current RSVP: ', 'fair-rsvp') +
+						'<strong>' +
+						translateStatus(rsvpStatus) +
 						'</strong>';
 					container.appendChild(newStatus);
 				}
 
 				// Show notification
-				showNotification('RSVP updated successfully!', 'success');
+				showNotification(
+					__('RSVP updated successfully!', 'fair-rsvp'),
+					'success'
+				);
 			})
 			.catch(function (error) {
 				console.error('RSVP error:', error);
 
-				let errorMessage = 'Failed to update RSVP. Please try again.';
+				let errorMessage = __(
+					'Failed to update RSVP. Please try again.',
+					'fair-rsvp'
+				);
 
 				if (error.message) {
 					errorMessage = error.message;
@@ -126,7 +135,7 @@ import apiFetch from '@wordpress/api-fetch';
 			.finally(function () {
 				// Re-enable button
 				submitButton.disabled = false;
-				submitButton.textContent = 'Update RSVP';
+				submitButton.textContent = __('Update RSVP', 'fair-rsvp');
 			});
 	}
 
@@ -177,11 +186,16 @@ import apiFetch from '@wordpress/api-fetch';
 	}
 
 	/**
-	 * Capitalize first letter of string
-	 * @param {string} str The string
-	 * @returns {string} Capitalized string
+	 * Translate RSVP status
+	 * @param {string} status The status (yes, no, maybe)
+	 * @returns {string} Translated status
 	 */
-	function capitalizeFirstLetter(str) {
-		return str.charAt(0).toUpperCase() + str.slice(1);
+	function translateStatus(status) {
+		const translations = {
+			yes: __('Yes', 'fair-rsvp'),
+			no: __('No', 'fair-rsvp'),
+			maybe: __('Maybe', 'fair-rsvp'),
+		};
+		return translations[status.toLowerCase()] || status;
 	}
 })();

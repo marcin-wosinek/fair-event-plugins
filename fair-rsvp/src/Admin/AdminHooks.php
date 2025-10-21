@@ -76,6 +76,13 @@ class AdminHooks {
 				true
 			);
 
+			// Set script translations
+			wp_set_script_translations(
+				'fair-rsvp-events',
+				'fair-rsvp',
+				$plugin_dir . 'build/languages'
+			);
+
 			wp_enqueue_style( 'wp-components' );
 		}
 	}

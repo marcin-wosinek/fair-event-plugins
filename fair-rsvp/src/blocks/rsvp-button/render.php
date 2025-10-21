@@ -103,11 +103,15 @@ $current_status = $current_rsvp ? $current_rsvp['rsvp_status'] : '';
 			<?php if ( $current_rsvp ) : ?>
 				<p class="fair-rsvp-current-status">
 					<?php
-					printf(
-						/* translators: %s: RSVP status */
-						esc_html__( 'Your current RSVP: %s', 'fair-rsvp' ),
-						'<strong>' . esc_html( ucfirst( $current_status ) ) . '</strong>'
+					// Translate the status value.
+					$status_translations = array(
+						'yes'   => __( 'Yes', 'fair-rsvp' ),
+						'no'    => __( 'No', 'fair-rsvp' ),
+						'maybe' => __( 'Maybe', 'fair-rsvp' ),
 					);
+					$translated_status   = isset( $status_translations[ $current_status ] ) ? $status_translations[ $current_status ] : ucfirst( $current_status );
+
+					echo esc_html__( 'Your current RSVP: ', 'fair-rsvp' ) . '<strong>' . esc_html( $translated_status ) . '</strong>';
 					?>
 				</p>
 			<?php endif; ?>

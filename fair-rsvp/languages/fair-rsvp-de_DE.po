@@ -50,39 +50,40 @@ msgid "Log In"
 msgstr "Anmelden"
 
 #: src/blocks/rsvp-button/render.php:72
+#: src/blocks/rsvp-button/render.php:108
 #: src/Admin/events/EventsList.js:82
 #: src/blocks/participants-list/editor.js:66
 #: src/blocks/participants-list/editor.js:120
 #: src/blocks/rsvp-button/editor.js:22
+#: src/blocks/rsvp-button/frontend.js:189
 msgid "Yes"
 msgstr "Ja"
 
 #: src/blocks/rsvp-button/render.php:82
+#: src/blocks/rsvp-button/render.php:110
 #: src/Admin/events/EventsList.js:85
 #: src/blocks/participants-list/editor.js:68
 #: src/blocks/participants-list/editor.js:122
 #: src/blocks/rsvp-button/editor.js:26
+#: src/blocks/rsvp-button/frontend.js:191
 msgid "Maybe"
 msgstr "Vielleicht"
 
 #: src/blocks/rsvp-button/render.php:92
+#: src/blocks/rsvp-button/render.php:109
 #: src/Admin/events/EventsList.js:88
 #: src/blocks/participants-list/editor.js:71
 #: src/blocks/participants-list/editor.js:124
 #: src/blocks/rsvp-button/editor.js:30
+#: src/blocks/rsvp-button/frontend.js:190
 msgid "No"
 msgstr "Nein"
 
 #: src/blocks/rsvp-button/render.php:97
 #: src/blocks/rsvp-button/editor.js:38
+#: src/blocks/rsvp-button/frontend.js:132
 msgid "Update RSVP"
 msgstr "RSVP aktualisieren"
-
-#. translators: %s: RSVP status
-#: src/blocks/rsvp-button/render.php:108
-#, php-format
-msgid "Your current RSVP: %s"
-msgstr "Ihre aktuelle Anmeldung: %s"
 
 #: src/REST/RsvpController.php:76
 msgid "Event ID to get RSVP for."
@@ -318,3 +319,29 @@ msgstr "teilnehmer"
 msgctxt "block keyword"
 msgid "list"
 msgstr "liste"
+
+#: src/blocks/rsvp-button/frontend.js:64
+msgid "Please select an RSVP option."
+msgstr "Bitte wählen Sie eine RSVP-Option."
+
+#: src/blocks/rsvp-button/frontend.js:74
+msgid "Submitting..."
+msgstr "Wird gesendet..."
+
+#: src/blocks/rsvp-button/frontend.js:89
+msgid "Your RSVP has been updated successfully!"
+msgstr "Ihre RSVP wurde erfolgreich aktualisiert!"
+
+#: src/blocks/rsvp-button/render.php:114
+#: src/blocks/rsvp-button/frontend.js:96
+#: src/blocks/rsvp-button/frontend.js:105
+msgid "Your current RSVP: "
+msgstr "Ihre aktuelle RSVP: "
+
+#: src/blocks/rsvp-button/frontend.js:113
+msgid "RSVP updated successfully!"
+msgstr "RSVP erfolgreich aktualisiert!"
+
+#: src/blocks/rsvp-button/frontend.js:118
+msgid "Failed to update RSVP. Please try again."
+msgstr "Fehler beim Aktualisieren der RSVP. Bitte versuchen Sie es erneut."
