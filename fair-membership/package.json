@@ -22,10 +22,12 @@
 		"test:e2e": "playwright test",
 		"playwright:run": "playwright test --headed",
 		"playwright:up": "playwright test --headed --ui",
-		"makepot": "wp i18n make-pot . languages/fair-membership.pot --exclude=node_modules,vendor,tests,build",
+		"makepot": "wp i18n make-pot . languages/fair-membership.pot --exclude=node_modules,vendor,tests,build,svn",
 		"makejson": "wp i18n make-json languages ./build/languages --domain=fair-membership --pretty-print --no-purge --use-map=build/map.json",
 		"makemo": "wp i18n make-mo languages/",
-		"updatepo": "wp i18n update-po languages/fair-membership.pot languages/"
+		"updatepo": "wp i18n update-po languages/fair-membership.pot languages/",
+		"svn:checkout": "svn co https://plugins.svn.wordpress.org/fair-membership svn",
+		"svn:copy": "cp -r readme.txt fair-membership.php src package* composer* languages CHANGELOG.md svn/trunk; cp assets/* svn/assets"
 	},
 	"dependencies": {
 		"@wordpress/api-fetch": "^7.2.0",
