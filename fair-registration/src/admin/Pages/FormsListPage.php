@@ -8,6 +8,7 @@
 namespace FairRegistration\Admin\Pages;
 
 use FairRegistration\Core\Plugin;
+use FairRegistration\Admin\Tools\BackfillTool;
 
 defined( 'WPINC' ) || die;
 
@@ -22,11 +23,31 @@ class FormsListPage {
 	 * @return void
 	 */
 	public function render() {
+		// Handle backfill action.
+		if ( isset( $_GET['action'] ) && 'backfill' === $_GET['action'] && isset( $_GET['_wpnonce'] ) && wp_verify_nonce( sanitize_text_field( wp_unslash( $_GET['_wpnonce'] ) ), 'backfill_registration_meta' ) ) {
+			$results = BackfillTool::backfill_registration_meta();
+			?>
+			<div class="notice notice-success is-dismissible">
+				<p>
+					<?php
+					printf(
+						/* translators: 1: found count, 2: updated count, 3: removed count */
+						esc_html__( 'Backfill complete! Found %1$d forms with registration blocks. Updated %2$d posts. Removed meta from %3$d posts.', 'fair-registration' ),
+						esc_html( $results['found'] ),
+						esc_html( $results['updated'] ),
+						esc_html( $results['removed'] )
+					);
+					?>
+				</p>
+			</div>
+			<?php
+		}
+
 		$forms = $this->get_published_forms();
 		?>
 		<div class="wrap">
 			<h1><?php echo esc_html__( 'Registration Forms', 'fair-registration' ); ?></h1>
-			
+
 			<div class="card">
 				<h2><?php echo esc_html__( 'Published Forms', 'fair-registration' ); ?></h2>
 				<p><?php echo esc_html__( 'Forms that contain registration blocks and are published on your website.', 'fair-registration' ); ?></p>
@@ -39,6 +60,18 @@ class FormsListPage {
 							<br>1. <?php echo esc_html__( 'Create a new page or post', 'fair-registration' ); ?>
 							<br>2. <?php echo esc_html__( 'Add a "Registration Form" block', 'fair-registration' ); ?>
 							<br>3. <?php echo esc_html__( 'Publish the page', 'fair-registration' ); ?>
+						</p>
+						<p>
+							<?php
+							echo esc_html__( 'If you already have forms with registration blocks, try scanning for them:', 'fair-registration' );
+							?>
+							<br>
+							<a
+								href="<?php echo esc_url( wp_nonce_url( admin_url( 'admin.php?page=fair-registration&action=backfill' ), 'backfill_registration_meta' ) ); ?>"
+								class="button button-primary"
+							>
+								<?php echo esc_html__( 'Scan for Existing Forms', 'fair-registration' ); ?>
+							</a>
 						</p>
 					</div>
 				<?php else : ?>
@@ -108,12 +141,14 @@ class FormsListPage {
 	 * @return array Array of post objects
 	 */
 	private function get_published_forms() {
+		$posts_with_forms = array();
+
+		// First try: Get posts with the meta flag (fastest)
 		$args = array(
 			'post_type'      => array( 'post', 'page' ),
 			'post_status'    => 'publish',
 			'posts_per_page' => -1,
 			'meta_query'     => array(
-				'relation' => 'OR',
 				array(
 					'key'     => '_has_registration_form',
 					'value'   => '1',
@@ -122,15 +157,14 @@ class FormsListPage {
 			),
 		);
 
-		$query            = new \WP_Query( $args );
-		$posts_with_forms = array();
+		$query = new \WP_Query( $args );
 
 		if ( $query->have_posts() ) {
 			while ( $query->have_posts() ) {
 				$query->the_post();
 				$post = get_post();
 
-				// Double check if post actually contains registration form block
+				// Double check if post actually contains registration form block.
 				if ( has_block( 'fair-registration/form', $post ) ) {
 					$posts_with_forms[] = $post;
 				}
@@ -138,13 +172,13 @@ class FormsListPage {
 			wp_reset_postdata();
 		}
 
-		// Also search by content if no meta found
+		// Second try: If no posts found via meta, scan all posts (fallback).
+		// This is slower but ensures we find forms even if meta is missing.
 		if ( empty( $posts_with_forms ) ) {
 			$args = array(
 				'post_type'      => array( 'post', 'page' ),
 				'post_status'    => 'publish',
 				'posts_per_page' => -1,
-				's'              => 'wp:fair-registration/form',
 			);
 
 			$query = new \WP_Query( $args );
