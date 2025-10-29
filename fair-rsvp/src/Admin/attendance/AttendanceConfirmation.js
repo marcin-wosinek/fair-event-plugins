@@ -1,7 +1,7 @@
 /**
  * WordPress dependencies
  */
-import { __ } from '@wordpress/i18n';
+import { __, sprintf } from '@wordpress/i18n';
 import { useState, useEffect } from '@wordpress/element';
 import {
 	Button,
@@ -26,6 +26,10 @@ export default function AttendanceConfirmation({ eventId }) {
 	const [error, setError] = useState(null);
 	const [success, setSuccess] = useState(null);
 	const [searchTerm, setSearchTerm] = useState('');
+
+	// Sorting state
+	const [sortBy, setSortBy] = useState('name');
+	const [sortOrder, setSortOrder] = useState('asc');
 
 	// All users for selection
 	const [allUsers, setAllUsers] = useState([]);
@@ -202,6 +206,75 @@ export default function AttendanceConfirmation({ eventId }) {
 			});
 	};
 
+	// Format relative time (e.g., "2 hours ago", "3 days ago")
+	const getRelativeTime = (dateString) => {
+		if (!dateString) return '';
+		const date = new Date(dateString);
+		const now = new Date();
+		const seconds = Math.floor((now - date) / 1000);
+
+		if (seconds < 60) return __('just now', 'fair-rsvp');
+		const minutes = Math.floor(seconds / 60);
+		if (minutes < 60) {
+			return minutes === 1
+				? __('1 minute ago', 'fair-rsvp')
+				: sprintf(__('%d minutes ago', 'fair-rsvp'), minutes);
+		}
+		const hours = Math.floor(minutes / 60);
+		if (hours < 24) {
+			return hours === 1
+				? __('1 hour ago', 'fair-rsvp')
+				: sprintf(__('%d hours ago', 'fair-rsvp'), hours);
+		}
+		const days = Math.floor(hours / 24);
+		if (days < 30) {
+			return days === 1
+				? __('1 day ago', 'fair-rsvp')
+				: sprintf(__('%d days ago', 'fair-rsvp'), days);
+		}
+		const months = Math.floor(days / 30);
+		if (months < 12) {
+			return months === 1
+				? __('1 month ago', 'fair-rsvp')
+				: sprintf(__('%d months ago', 'fair-rsvp'), months);
+		}
+		const years = Math.floor(days / 365);
+		return years === 1
+			? __('1 year ago', 'fair-rsvp')
+			: sprintf(__('%d years ago', 'fair-rsvp'), years);
+	};
+
+	// Sort RSVPs
+	const sortRsvps = (rsvpList) => {
+		return [...rsvpList].sort((a, b) => {
+			let comparison = 0;
+
+			if (sortBy === 'name') {
+				const nameA = (a.user?.display_name || '').toLowerCase();
+				const nameB = (b.user?.display_name || '').toLowerCase();
+				comparison = nameA.localeCompare(nameB);
+			} else if (sortBy === 'date') {
+				const dateA = new Date(a.rsvp_at || 0);
+				const dateB = new Date(b.rsvp_at || 0);
+				comparison = dateA - dateB;
+			}
+
+			return sortOrder === 'asc' ? comparison : -comparison;
+		});
+	};
+
+	// Handle column header click for sorting
+	const handleSort = (column) => {
+		if (sortBy === column) {
+			// Toggle order if clicking same column
+			setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc');
+		} else {
+			// Set new column and default to ascending
+			setSortBy(column);
+			setSortOrder('asc');
+		}
+	};
+
 	// Filter RSVPs based on search
 	const filteredRsvps = rsvps.filter((rsvp) => {
 		if (!searchTerm) return true;
@@ -283,25 +356,65 @@ export default function AttendanceConfirmation({ eventId }) {
 				{filteredRsvps.length === 0 ? (
 					<p>{__('No RSVPs found', 'fair-rsvp')}</p>
 				) : (
-					<div className="rsvp-checkboxes">
-						{filteredRsvps.map((rsvp) => {
-							const displayName =
-								rsvp.user?.display_name ||
-								`User #${rsvp.user_id}`;
-							const statusBadge =
-								rsvp.rsvp_status === 'maybe' ? ' (Maybe)' : '';
-							return (
-								<CheckboxControl
-									key={rsvp.id}
-									label={`${displayName}${statusBadge}`}
-									checked={rsvp.checked}
-									onChange={(checked) =>
-										handleCheckboxChange(rsvp.id, checked)
-									}
-								/>
-							);
-						})}
-					</div>
+					<table className="wp-list-table widefat fixed striped">
+						<thead>
+							<tr>
+								<th
+									className="sortable-column"
+									onClick={() => handleSort('name')}
+									style={{ cursor: 'pointer' }}
+								>
+									{__('Name', 'fair-rsvp')}{' '}
+									{sortBy === 'name' && (
+										<span className="sort-indicator">
+											{sortOrder === 'asc' ? '↑' : '↓'}
+										</span>
+									)}
+								</th>
+								<th>{__('RSVP Status', 'fair-rsvp')}</th>
+								<th>{__('Signed Up', 'fair-rsvp')}</th>
+								<th style={{ width: '100px' }}>
+									{__('Checked In', 'fair-rsvp')}
+								</th>
+							</tr>
+						</thead>
+						<tbody>
+							{sortRsvps(filteredRsvps).map((rsvp) => {
+								const displayName =
+									rsvp.user?.display_name ||
+									`User #${rsvp.user_id}`;
+								const statusLabel =
+									rsvp.rsvp_status === 'maybe'
+										? __('Maybe', 'fair-rsvp')
+										: __('Yes', 'fair-rsvp');
+								return (
+									<tr key={rsvp.id}>
+										<td>{displayName}</td>
+										<td>
+											<span
+												className={`status-badge status-${rsvp.rsvp_status}`}
+											>
+												{statusLabel}
+											</span>
+										</td>
+										<td>{getRelativeTime(rsvp.rsvp_at)}</td>
+										<td style={{ textAlign: 'center' }}>
+											<input
+												type="checkbox"
+												checked={rsvp.checked}
+												onChange={(e) =>
+													handleCheckboxChange(
+														rsvp.id,
+														e.target.checked
+													)
+												}
+											/>
+										</td>
+									</tr>
+								);
+							})}
+						</tbody>
+					</table>
 				)}
 			</div>
 
@@ -421,13 +534,44 @@ export default function AttendanceConfirmation({ eventId }) {
 			</div>
 
 			<style>{`
-				.rsvp-checkboxes {
-					display: grid;
-					grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-					gap: 10px;
-				}
 				.attendance-summary {
 					font-size: 16px;
+				}
+				.attendance-list table {
+					margin-top: 15px;
+				}
+				.attendance-list th.sortable-column {
+					user-select: none;
+				}
+				.attendance-list th.sortable-column:hover {
+					background-color: #f0f0f0;
+				}
+				.attendance-list .sort-indicator {
+					margin-left: 5px;
+					color: #2271b1;
+				}
+				.attendance-list .status-badge {
+					display: inline-block;
+					padding: 3px 8px;
+					border-radius: 3px;
+					font-size: 12px;
+					font-weight: 500;
+				}
+				.attendance-list .status-badge.status-yes {
+					background-color: #d4edda;
+					color: #155724;
+				}
+				.attendance-list .status-badge.status-maybe {
+					background-color: #fff3cd;
+					color: #856404;
+				}
+				.attendance-list tbody tr:hover {
+					background-color: #f6f7f7;
+				}
+				.attendance-list input[type="checkbox"] {
+					width: 18px;
+					height: 18px;
+					cursor: pointer;
 				}
 			`}</style>
 		</div>
