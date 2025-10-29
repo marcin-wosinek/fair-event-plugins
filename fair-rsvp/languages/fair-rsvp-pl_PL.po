@@ -51,21 +51,23 @@ msgstr "Zaloguj się"
 
 #: src/blocks/rsvp-button/render.php:72
 #: src/blocks/rsvp-button/render.php:108
+#: src/Admin/attendance/AttendanceConfirmation.js:403
 #: src/Admin/events/EventsList.js:82
 #: src/blocks/participants-list/editor.js:66
 #: src/blocks/participants-list/editor.js:120
 #: src/blocks/rsvp-button/editor.js:22
-#: src/blocks/rsvp-button/frontend.js:189
+#: src/blocks/rsvp-button/frontend.js:195
 msgid "Yes"
 msgstr "Tak"
 
 #: src/blocks/rsvp-button/render.php:82
 #: src/blocks/rsvp-button/render.php:110
+#: src/Admin/attendance/AttendanceConfirmation.js:402
 #: src/Admin/events/EventsList.js:85
 #: src/blocks/participants-list/editor.js:68
 #: src/blocks/participants-list/editor.js:122
 #: src/blocks/rsvp-button/editor.js:26
-#: src/blocks/rsvp-button/frontend.js:191
+#: src/blocks/rsvp-button/frontend.js:197
 msgid "Maybe"
 msgstr "Może"
 
@@ -75,13 +77,13 @@ msgstr "Może"
 #: src/blocks/participants-list/editor.js:71
 #: src/blocks/participants-list/editor.js:124
 #: src/blocks/rsvp-button/editor.js:30
-#: src/blocks/rsvp-button/frontend.js:190
+#: src/blocks/rsvp-button/frontend.js:196
 msgid "No"
 msgstr "Nie"
 
 #: src/blocks/rsvp-button/render.php:97
 #: src/blocks/rsvp-button/editor.js:38
-#: src/blocks/rsvp-button/frontend.js:132
+#: src/blocks/rsvp-button/frontend.js:138
 msgid "Update RSVP"
 msgstr "Zaktualizuj potwierdzenie"
 
@@ -109,63 +111,65 @@ msgstr "Sortuj według pola."
 msgid "Order direction."
 msgstr "Kierunek sortowania."
 
-#: src/REST/RsvpController.php:200
+#: src/REST/RsvpController.php:275
+#: src/REST/RsvpController.php:505
 msgid "The specified event does not exist or is not published."
 msgstr "Określone wydarzenie nie istnieje lub nie zostało opublikowane."
 
-#: src/REST/RsvpController.php:211
+#: src/REST/RsvpController.php:286
 msgid "Failed to create or update RSVP."
 msgstr "Nie udało się utworzyć lub zaktualizować potwierdzenia."
 
-#: src/REST/RsvpController.php:222
+#: src/REST/RsvpController.php:297
+#: src/REST/RsvpController.php:541
 msgid "RSVP was created but could not be retrieved."
 msgstr "Potwierdzenie zostało utworzone, ale nie można go pobrać."
 
-#: src/REST/RsvpController.php:248
+#: src/REST/RsvpController.php:323
 msgid "RSVP not found for this event."
 msgstr "Nie znaleziono potwierdzenia dla tego wydarzenia."
 
-#: src/REST/RsvpController.php:271
+#: src/REST/RsvpController.php:346
 msgid "RSVP not found."
 msgstr "Nie znaleziono potwierdzenia."
 
-#: src/REST/RsvpController.php:282
+#: src/REST/RsvpController.php:357
 msgid "Failed to update attendance status."
 msgstr "Nie udało się zaktualizować statusu obecności."
 
-#: src/REST/RsvpController.php:381
+#: src/REST/RsvpController.php:562
 msgid "You must be logged in to RSVP."
 msgstr "Musisz być zalogowany, aby potwierdzić obecność."
 
-#: src/REST/RsvpController.php:398
+#: src/REST/RsvpController.php:579
 msgid "You must be logged in to view RSVPs."
 msgstr "Musisz być zalogowany, aby wyświetlić potwierdzenia."
 
-#: src/REST/RsvpController.php:465
+#: src/REST/RsvpController.php:658
 msgid "Event/post ID to RSVP for."
 msgstr "ID wydarzenia/wpisu, dla którego potwierdzić obecność."
 
-#: src/REST/RsvpController.php:470
+#: src/REST/RsvpController.php:663
 msgid "RSVP status."
 msgstr "Status potwierdzenia."
 
-#: src/REST/RsvpController.php:486
+#: src/REST/RsvpController.php:679
 msgid "Event ID to get RSVPs for."
 msgstr "ID wydarzenia, dla którego pobrać potwierdzenia."
 
-#: src/REST/RsvpController.php:491
+#: src/REST/RsvpController.php:684
 msgid "Filter by RSVP status."
 msgstr "Filtruj według statusu potwierdzenia."
 
-#: src/REST/RsvpController.php:496
+#: src/REST/RsvpController.php:689
 msgid "Filter by attendance status."
 msgstr "Filtruj według statusu obecności."
 
-#: src/REST/RsvpController.php:501
+#: src/REST/RsvpController.php:694
 msgid "Current page of the collection."
 msgstr "Bieżąca strona kolekcji."
 
-#: src/REST/RsvpController.php:507
+#: src/REST/RsvpController.php:700
 msgid "Maximum number of items to return per page."
 msgstr "Maksymalna liczba elementów do zwrócenia na stronę."
 
@@ -340,10 +344,248 @@ msgstr "Twoje potwierdzenie zostało pomyślnie zaktualizowane!"
 msgid "Your current RSVP: "
 msgstr "Twoje obecne potwierdzenie: "
 
-#: src/blocks/rsvp-button/frontend.js:113
+#: src/blocks/rsvp-button/frontend.js:114
 msgid "RSVP updated successfully!"
 msgstr "Potwierdzenie zostało pomyślnie zaktualizowane!"
 
-#: src/blocks/rsvp-button/frontend.js:118
+#: src/blocks/rsvp-button/frontend.js:121
 msgid "Failed to update RSVP. Please try again."
 msgstr "Nie udało się zaktualizować potwierdzenia. Spróbuj ponownie."
+
+#: src/Admin/AdminHooks.php:45
+#: src/Admin/AdminHooks.php:46
+#: src/Admin/AttendanceConfirmationPage.php:29
+#: src/Admin/AttendanceConfirmationPage.php:43
+#: src/Admin/events/EventsList.js:135
+msgid "Confirm Attendance"
+msgstr ""
+
+#: src/Admin/AttendanceConfirmationPage.php:31
+msgid "No event ID specified."
+msgstr ""
+
+#: src/Admin/AttendanceConfirmationPage.php:45
+msgid "Event not found."
+msgstr ""
+
+#. translators: %s: event title
+#: src/Admin/AttendanceConfirmationPage.php:58
+#, php-format
+msgid "Confirm Attendance: %s"
+msgstr ""
+
+#: src/REST/RsvpController.php:207
+msgid "Array of RSVP updates with id and attendance_status."
+msgstr ""
+
+#: src/REST/RsvpController.php:239
+msgid "Event ID."
+msgstr ""
+
+#: src/REST/RsvpController.php:244
+msgid "Attendee name."
+msgstr ""
+
+#: src/REST/RsvpController.php:249
+msgid "Attendee email (optional)."
+msgstr ""
+
+#: src/REST/RsvpController.php:469
+msgid "Updates must be a non-empty array."
+msgstr ""
+
+#. translators: %d: number of successful updates
+#: src/REST/RsvpController.php:482
+#, php-format
+msgid "Successfully updated %d attendance records."
+msgstr ""
+
+#: src/REST/RsvpController.php:516
+msgid "Failed to create or find user for walk-in attendee."
+msgstr ""
+
+#: src/REST/RsvpController.php:527
+msgid "Failed to create RSVP for walk-in attendee."
+msgstr ""
+
+#: src/Admin/attendance/AttendanceConfirmation.js:89
+msgid "Failed to load RSVPs"
+msgstr ""
+
+#: src/Admin/attendance/AttendanceConfirmation.js:126
+msgid "Failed to save attendance"
+msgstr ""
+
+#: src/Admin/attendance/AttendanceConfirmation.js:134
+msgid "Please select a member"
+msgstr ""
+
+#: src/Admin/attendance/AttendanceConfirmation.js:155
+msgid "Member added and checked in successfully"
+msgstr ""
+
+#: src/Admin/attendance/AttendanceConfirmation.js:164
+msgid "Failed to add member"
+msgstr ""
+
+#: src/Admin/attendance/AttendanceConfirmation.js:173
+msgid "Please enter a name for the walk-in attendee"
+msgstr ""
+
+#: src/Admin/attendance/AttendanceConfirmation.js:193
+msgid "Walk-in attendee added successfully"
+msgstr ""
+
+#: src/Admin/attendance/AttendanceConfirmation.js:204
+msgid "Failed to add walk-in attendee"
+msgstr ""
+
+#: src/Admin/attendance/AttendanceConfirmation.js:222
+msgid "just now"
+msgstr "właśnie teraz"
+
+#: src/Admin/attendance/AttendanceConfirmation.js:226
+msgid "1 minute ago"
+msgstr "1 minutę temu"
+
+#: src/Admin/attendance/AttendanceConfirmation.js:227
+#, js-format
+msgid "%d minutes ago"
+msgstr "%d minut temu"
+
+#: src/Admin/attendance/AttendanceConfirmation.js:232
+msgid "1 hour ago"
+msgstr "1 godzinę temu"
+
+#: src/Admin/attendance/AttendanceConfirmation.js:233
+#, js-format
+msgid "%d hours ago"
+msgstr "%d godzin temu"
+
+#: src/Admin/attendance/AttendanceConfirmation.js:238
+msgid "1 day ago"
+msgstr "1 dzień temu"
+
+#: src/Admin/attendance/AttendanceConfirmation.js:239
+#, js-format
+msgid "%d days ago"
+msgstr "%d dni temu"
+
+#: src/Admin/attendance/AttendanceConfirmation.js:244
+msgid "1 month ago"
+msgstr "1 miesiąc temu"
+
+#: src/Admin/attendance/AttendanceConfirmation.js:245
+#, js-format
+msgid "%d months ago"
+msgstr "%d miesięcy temu"
+
+#: src/Admin/attendance/AttendanceConfirmation.js:249
+msgid "1 year ago"
+msgstr "1 rok temu"
+
+#: src/Admin/attendance/AttendanceConfirmation.js:250
+#, js-format
+msgid "%d years ago"
+msgstr "%d lat temu"
+
+#: src/Admin/attendance/AttendanceConfirmation.js:321
+msgid "Loading RSVPs..."
+msgstr ""
+
+#: src/Admin/attendance/AttendanceConfirmation.js:354
+msgid "attendees checked in"
+msgstr ""
+
+#: src/Admin/attendance/AttendanceConfirmation.js:360
+msgid "Search attendees"
+msgstr ""
+
+#: src/Admin/attendance/AttendanceConfirmation.js:363
+msgid "Search by name..."
+msgstr ""
+
+#: src/Admin/attendance/AttendanceConfirmation.js:369
+msgid "RSVP List"
+msgstr ""
+
+#: src/Admin/attendance/AttendanceConfirmation.js:371
+msgid "No RSVPs found"
+msgstr ""
+
+#: src/Admin/attendance/AttendanceConfirmation.js:381
+#: src/Admin/attendance/AttendanceConfirmation.js:521
+msgid "Name"
+msgstr "Imię i nazwisko"
+
+#: src/Admin/attendance/AttendanceConfirmation.js:388
+msgid "RSVP Status"
+msgstr "Status potwierdzenia"
+
+#: src/Admin/attendance/AttendanceConfirmation.js:389
+msgid "Signed Up"
+msgstr "Zarejestrowano"
+
+#: src/Admin/attendance/AttendanceConfirmation.js:391
+msgid "Checked In"
+msgstr "Uczestniczył"
+
+#: src/Admin/attendance/AttendanceConfirmation.js:463
+msgid "Quick Add Existing Member"
+msgstr ""
+
+#: src/Admin/attendance/AttendanceConfirmation.js:465
+msgid "Select a member who showed up but didn't RSVP"
+msgstr ""
+
+#: src/Admin/attendance/AttendanceConfirmation.js:473
+msgid "Search members"
+msgstr ""
+
+#: src/Admin/attendance/AttendanceConfirmation.js:477
+msgid "Type to search by name or email..."
+msgstr ""
+
+#: src/Admin/attendance/AttendanceConfirmation.js:483
+msgid "All members already have RSVPs for this event"
+msgstr ""
+
+#: src/Admin/attendance/AttendanceConfirmation.js:497
+msgid "Add & Check In"
+msgstr ""
+
+#: src/Admin/attendance/AttendanceConfirmation.js:512
+msgid "Add New Person (Not a Member)"
+msgstr ""
+
+#: src/Admin/attendance/AttendanceConfirmation.js:514
+msgid "Add someone who attended but is not a website member"
+msgstr ""
+
+#: src/Admin/attendance/AttendanceConfirmation.js:524
+msgid "Enter attendee name"
+msgstr ""
+
+#: src/Admin/attendance/AttendanceConfirmation.js:529
+msgid "Email (optional)"
+msgstr ""
+
+#: src/Admin/attendance/AttendanceConfirmation.js:533
+msgid "Enter email address"
+msgstr ""
+
+#: src/Admin/attendance/AttendanceConfirmation.js:543
+msgid "Add Walk-in"
+msgstr ""
+
+#: src/Admin/attendance/AttendanceConfirmation.js:555
+msgid "Save All Attendance"
+msgstr ""
+
+#: src/Admin/attendance/AttendanceConfirmation.js:563
+msgid "Back to Events"
+msgstr ""
+
+#: src/Admin/events/EventsList.js:100
+msgid "Actions"
+msgstr ""
