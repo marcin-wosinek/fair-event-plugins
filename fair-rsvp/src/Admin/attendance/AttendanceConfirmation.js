@@ -43,7 +43,13 @@ export default function AttendanceConfirmation({ eventId }) {
 		apiFetch({
 			path: `/fair-rsvp/v1/rsvps?event_id=${eventId}&per_page=500`,
 		})
-			.then((data) => {
+			.then((response) => {
+				// Extract data - response might be wrapped in data property
+				let data = Array.isArray(response) ? response : [response];
+
+				// Each item might also be wrapped in a data property
+				data = data.map((item) => item.data || item);
+
 				// Include yes and maybe RSVPs, add checked property
 				const rsvpsWithChecked = data
 					.filter((rsvp) =>
@@ -144,9 +150,14 @@ export default function AttendanceConfirmation({ eventId }) {
 	// Filter RSVPs based on search
 	const filteredRsvps = rsvps.filter((rsvp) => {
 		if (!searchTerm) return true;
-		// We need to fetch user data - for now just show all
-		// TODO: enhance with user data from API
-		return true;
+		const searchLower = searchTerm.toLowerCase();
+		const displayName = rsvp.user?.display_name || '';
+		const email = rsvp.user?.user_email || '';
+		return (
+			displayName.toLowerCase().includes(searchLower) ||
+			email.toLowerCase().includes(searchLower) ||
+			`${rsvp.user_id}`.includes(searchTerm)
+		);
 	});
 
 	const checkedCount = rsvps.filter((rsvp) => rsvp.checked).length;
@@ -206,16 +217,23 @@ export default function AttendanceConfirmation({ eventId }) {
 					<p>{__('No RSVPs found', 'fair-rsvp')}</p>
 				) : (
 					<div className="rsvp-checkboxes">
-						{filteredRsvps.map((rsvp) => (
-							<CheckboxControl
-								key={rsvp.id}
-								label={`RSVP #${rsvp.id} - User #${rsvp.user_id} (${rsvp.rsvp_status})`}
-								checked={rsvp.checked}
-								onChange={(checked) =>
-									handleCheckboxChange(rsvp.id, checked)
-								}
-							/>
-						))}
+						{filteredRsvps.map((rsvp) => {
+							const displayName =
+								rsvp.user?.display_name ||
+								`User #${rsvp.user_id}`;
+							const statusBadge =
+								rsvp.rsvp_status === 'maybe' ? ' (Maybe)' : '';
+							return (
+								<CheckboxControl
+									key={rsvp.id}
+									label={`${displayName}${statusBadge}`}
+									checked={rsvp.checked}
+									onChange={(checked) =>
+										handleCheckboxChange(rsvp.id, checked)
+									}
+								/>
+							);
+						})}
 					</div>
 				)}
 			</div>

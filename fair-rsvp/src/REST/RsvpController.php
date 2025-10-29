@@ -608,6 +608,18 @@ class RsvpController extends WP_REST_Controller {
 			'updated_at'        => $rsvp['updated_at'],
 		);
 
+		// Add user data if user exists and request is from admin.
+		if ( $rsvp['user_id'] && current_user_can( 'manage_options' ) ) {
+			$user = get_userdata( $rsvp['user_id'] );
+			if ( $user ) {
+				$data['user'] = array(
+					'display_name' => $user->display_name,
+					'user_email'   => $user->user_email,
+					'avatar_url'   => get_avatar_url( $user->ID, array( 'size' => 48 ) ),
+				);
+			}
+		}
+
 		return rest_ensure_response( $data );
 	}
 
