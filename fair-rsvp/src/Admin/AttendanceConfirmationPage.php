@@ -56,7 +56,11 @@ class AttendanceConfirmationPage {
 				printf(
 					/* translators: %s: event title */
 					esc_html__( 'Confirm Attendance: %s', 'fair-rsvp' ),
-					esc_html( $event->post_title )
+					sprintf(
+						'<a href="%s" target="_blank">%s</a>',
+						esc_url( get_permalink( $event_id ) ),
+						esc_html( $event->post_title )
+					)
 				);
 				?>
 			</h1>
