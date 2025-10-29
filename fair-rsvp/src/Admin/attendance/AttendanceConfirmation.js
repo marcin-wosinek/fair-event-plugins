@@ -2,6 +2,7 @@
  * WordPress dependencies
  */
 import { __, sprintf } from '@wordpress/i18n';
+import { dateI18n } from '@wordpress/date';
 import { useState, useEffect } from '@wordpress/element';
 import {
 	Button,
@@ -207,11 +208,16 @@ export default function AttendanceConfirmation({ eventId }) {
 	};
 
 	// Format relative time (e.g., "2 hours ago", "3 days ago")
+	// Returns null for dates 7+ days old (should show formatted date instead)
 	const getRelativeTime = (dateString) => {
 		if (!dateString) return '';
 		const date = new Date(dateString);
 		const now = new Date();
 		const seconds = Math.floor((now - date) / 1000);
+		const days = Math.floor(seconds / 86400); // 86400 seconds in a day
+
+		// If 7 or more days old, return null to signal formatted date should be used
+		if (days >= 7) return null;
 
 		if (seconds < 60) return __('just now', 'fair-rsvp');
 		const minutes = Math.floor(seconds / 60);
@@ -226,7 +232,7 @@ export default function AttendanceConfirmation({ eventId }) {
 				? __('1 hour ago', 'fair-rsvp')
 				: sprintf(__('%d hours ago', 'fair-rsvp'), hours);
 		}
-		const days = Math.floor(hours / 24);
+		// days already calculated at top of function
 		if (days < 30) {
 			return days === 1
 				? __('1 day ago', 'fair-rsvp')
@@ -242,6 +248,14 @@ export default function AttendanceConfirmation({ eventId }) {
 		return years === 1
 			? __('1 year ago', 'fair-rsvp')
 			: sprintf(__('%d years ago', 'fair-rsvp'), years);
+	};
+
+	// Format date using WordPress locale and settings
+	const getFormattedDate = (dateString) => {
+		if (!dateString) return '';
+		// Use WordPress date format with time
+		// 'F j, Y \a\t g:i A' = "January 15, 2025 at 2:30 PM"
+		return dateI18n('F j, Y \\a\\t g:i A', dateString);
 	};
 
 	// Sort RSVPs
@@ -387,6 +401,15 @@ export default function AttendanceConfirmation({ eventId }) {
 									rsvp.rsvp_status === 'maybe'
 										? __('Maybe', 'fair-rsvp')
 										: __('Yes', 'fair-rsvp');
+
+								// Date display logic
+								const relativeTime = getRelativeTime(
+									rsvp.rsvp_at
+								);
+								const formattedDate = getFormattedDate(
+									rsvp.rsvp_at
+								);
+
 								return (
 									<tr key={rsvp.id}>
 										<td>{displayName}</td>
@@ -397,7 +420,15 @@ export default function AttendanceConfirmation({ eventId }) {
 												{statusLabel}
 											</span>
 										</td>
-										<td>{getRelativeTime(rsvp.rsvp_at)}</td>
+										<td
+											title={
+												relativeTime
+													? formattedDate
+													: undefined
+											}
+										>
+											{relativeTime || formattedDate}
+										</td>
 										<td style={{ textAlign: 'center' }}>
 											<input
 												type="checkbox"
