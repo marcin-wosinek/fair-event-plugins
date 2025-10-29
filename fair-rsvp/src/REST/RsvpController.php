@@ -180,6 +180,19 @@ class RsvpController extends WP_REST_Controller {
 			)
 		);
 
+		// GET /fair-rsvp/v1/users - Admin gets all users for selection.
+		register_rest_route(
+			$this->namespace,
+			'/users',
+			array(
+				array(
+					'methods'             => WP_REST_Server::READABLE,
+					'callback'            => array( $this, 'get_users' ),
+					'permission_callback' => array( $this, 'update_attendance_permissions_check' ),
+				),
+			)
+		);
+
 		// POST /fair-rsvp/v1/rsvps/bulk-attendance - Admin bulk updates attendance.
 		register_rest_route(
 			$this->namespace,
@@ -428,6 +441,17 @@ class RsvpController extends WP_REST_Controller {
 				)
 			);
 		}
+	}
+
+	/**
+	 * Get all users for selection
+	 *
+	 * @param WP_REST_Request $request Full data about the request.
+	 * @return WP_REST_Response Response object.
+	 */
+	public function get_users( $request ) {
+		$users = $this->repository->get_all_users_for_selection();
+		return rest_ensure_response( $users );
 	}
 
 	/**

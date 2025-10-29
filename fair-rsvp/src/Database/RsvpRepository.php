@@ -337,6 +337,32 @@ class RsvpRepository {
 	}
 
 	/**
+	 * Get all users suitable for event attendance selection
+	 *
+	 * @return array Array of user data with id, display_name, user_email
+	 */
+	public function get_all_users_for_selection() {
+		$users = get_users(
+			array(
+				'orderby' => 'display_name',
+				'order'   => 'ASC',
+				'fields'  => array( 'ID', 'display_name', 'user_email' ),
+			)
+		);
+
+		$user_data = array();
+		foreach ( $users as $user ) {
+			$user_data[] = array(
+				'user_id'      => (int) $user->ID,
+				'display_name' => $user->display_name,
+				'user_email'   => $user->user_email,
+			);
+		}
+
+		return $user_data;
+	}
+
+	/**
 	 * Create or get user for walk-in attendee
 	 *
 	 * @param string $name  Attendee name.

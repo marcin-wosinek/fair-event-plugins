@@ -8,6 +8,7 @@ import {
 	TextControl,
 	CheckboxControl,
 	Notice,
+	ComboboxControl,
 } from '@wordpress/components';
 import apiFetch from '@wordpress/api-fetch';
 
@@ -26,15 +27,31 @@ export default function AttendanceConfirmation({ eventId }) {
 	const [success, setSuccess] = useState(null);
 	const [searchTerm, setSearchTerm] = useState('');
 
+	// All users for selection
+	const [allUsers, setAllUsers] = useState([]);
+	const [selectedUserId, setSelectedUserId] = useState(null);
+	const [isAddingMember, setIsAddingMember] = useState(false);
+
 	// Walk-in form state
 	const [walkInName, setWalkInName] = useState('');
 	const [walkInEmail, setWalkInEmail] = useState('');
 	const [isAddingWalkIn, setIsAddingWalkIn] = useState(false);
 
-	// Load RSVPs on mount
+	// Load RSVPs and users on mount
 	useEffect(() => {
 		loadRsvps();
+		loadUsers();
 	}, [eventId]);
+
+	const loadUsers = () => {
+		apiFetch({ path: '/fair-rsvp/v1/users' })
+			.then((users) => {
+				setAllUsers(users);
+			})
+			.catch((err) => {
+				console.error('Failed to load users:', err);
+			});
+	};
 
 	const loadRsvps = () => {
 		setIsLoading(true);
@@ -107,6 +124,44 @@ export default function AttendanceConfirmation({ eventId }) {
 			});
 	};
 
+	const handleAddMember = () => {
+		if (!selectedUserId) {
+			setError(__('Please select a member', 'fair-rsvp'));
+			return;
+		}
+
+		setIsAddingMember(true);
+		setError(null);
+		setSuccess(null);
+
+		const selectedUser = allUsers.find((u) => u.user_id === selectedUserId);
+
+		apiFetch({
+			path: '/fair-rsvp/v1/rsvps/walk-in',
+			method: 'POST',
+			data: {
+				event_id: eventId,
+				name: selectedUser.display_name,
+				email: selectedUser.user_email,
+			},
+		})
+			.then(() => {
+				setSuccess(
+					__('Member added and checked in successfully', 'fair-rsvp')
+				);
+				setSelectedUserId(null);
+				setIsAddingMember(false);
+				// Reload to show new attendee
+				loadRsvps();
+			})
+			.catch((err) => {
+				setError(
+					err.message || __('Failed to add member', 'fair-rsvp')
+				);
+				setIsAddingMember(false);
+			});
+	};
+
 	const handleAddWalkIn = () => {
 		if (!walkInName.trim()) {
 			setError(
@@ -162,6 +217,18 @@ export default function AttendanceConfirmation({ eventId }) {
 
 	const checkedCount = rsvps.filter((rsvp) => rsvp.checked).length;
 	const totalCount = rsvps.length;
+
+	// Filter out users who already have RSVPs
+	const userIdsWithRsvps = rsvps.map((rsvp) => rsvp.user_id);
+	const availableUsers = allUsers.filter(
+		(user) => !userIdsWithRsvps.includes(user.user_id)
+	);
+
+	// Format users for ComboboxControl
+	const userOptions = availableUsers.map((user) => ({
+		value: user.user_id,
+		label: `${user.display_name} (${user.user_email})`,
+	}));
 
 	if (isLoading) {
 		return <p>{__('Loading RSVPs...', 'fair-rsvp')}</p>;
@@ -238,6 +305,56 @@ export default function AttendanceConfirmation({ eventId }) {
 				)}
 			</div>
 
+			{/* Quick Add Member section */}
+			<div
+				className="quick-add-member-section"
+				style={{
+					marginBottom: '20px',
+					padding: '20px',
+					background: '#e7f5fe',
+					borderRadius: '4px',
+					border: '1px solid #0073aa',
+				}}
+			>
+				<h3>{__('Quick Add Existing Member', 'fair-rsvp')}</h3>
+				<p>
+					{__(
+						"Select a member who showed up but didn't RSVP",
+						'fair-rsvp'
+					)}
+				</p>
+
+				<div style={{ maxWidth: '500px' }}>
+					<ComboboxControl
+						label={__('Search members', 'fair-rsvp')}
+						value={selectedUserId}
+						onChange={setSelectedUserId}
+						options={userOptions}
+						placeholder={__(
+							'Type to search by name or email...',
+							'fair-rsvp'
+						)}
+						help={
+							availableUsers.length === 0
+								? __(
+										'All members already have RSVPs for this event',
+										'fair-rsvp'
+									)
+								: ''
+						}
+					/>
+					<Button
+						variant="primary"
+						onClick={handleAddMember}
+						isBusy={isAddingMember}
+						disabled={!selectedUserId || isAddingMember}
+						style={{ marginTop: '10px' }}
+					>
+						{__('Add & Check In', 'fair-rsvp')}
+					</Button>
+				</div>
+			</div>
+
 			{/* Walk-in section */}
 			<div
 				className="walk-in-section"
@@ -248,10 +365,10 @@ export default function AttendanceConfirmation({ eventId }) {
 					borderRadius: '4px',
 				}}
 			>
-				<h3>{__('Add Walk-in Attendee', 'fair-rsvp')}</h3>
+				<h3>{__('Add New Person (Not a Member)', 'fair-rsvp')}</h3>
 				<p>
 					{__(
-						"Add someone who attended but didn't sign up in advance",
+						'Add someone who attended but is not a website member',
 						'fair-rsvp'
 					)}
 				</p>
