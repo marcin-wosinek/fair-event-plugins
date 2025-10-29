@@ -16,6 +16,10 @@ const customConfig = {
 				process.cwd(),
 				'src/Admin/events/index.js'
 			),
+			'admin/attendance/index': path.resolve(
+				process.cwd(),
+				'src/Admin/attendance/index.js'
+			),
 		};
 	},
 	plugins: [

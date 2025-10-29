@@ -292,4 +292,113 @@ class RsvpRepository {
 
 		return $results;
 	}
+
+	/**
+	 * Bulk update attendance status for multiple RSVPs
+	 *
+	 * @param array $updates Array of arrays with 'id' and 'attendance_status' keys.
+	 * @return array Array with 'success' count and 'failed' IDs.
+	 */
+	public function bulk_update_attendance( $updates ) {
+		global $wpdb;
+
+		$table_name = $this->get_table_name();
+		$now        = current_time( 'mysql' );
+		$success    = 0;
+		$failed     = array();
+
+		foreach ( $updates as $update ) {
+			if ( ! isset( $update['id'] ) || ! isset( $update['attendance_status'] ) ) {
+				continue;
+			}
+
+			$result = $wpdb->update(
+				$table_name,
+				array(
+					'attendance_status' => $update['attendance_status'],
+					'updated_at'        => $now,
+				),
+				array( 'id' => $update['id'] ),
+				array( '%s', '%s' ),
+				array( '%d' )
+			);
+
+			if ( false === $result ) {
+				$failed[] = $update['id'];
+			} else {
+				++$success;
+			}
+		}
+
+		return array(
+			'success' => $success,
+			'failed'  => $failed,
+		);
+	}
+
+	/**
+	 * Create or get user for walk-in attendee
+	 *
+	 * @param string $name  Attendee name.
+	 * @param string $email Optional. Attendee email.
+	 * @return int|false User ID on success, false on failure.
+	 */
+	public function get_or_create_walk_in_user( $name, $email = '' ) {
+		// If email provided, check if user exists.
+		if ( ! empty( $email ) && is_email( $email ) ) {
+			$user = get_user_by( 'email', $email );
+			if ( $user ) {
+				return $user->ID;
+			}
+
+			// Create new user with email.
+			$username = sanitize_user( $email, true );
+			// Make username unique if needed.
+			if ( username_exists( $username ) ) {
+				$username = $username . '_' . wp_rand( 1000, 9999 );
+			}
+
+			$user_id = wp_create_user( $username, wp_generate_password(), $email );
+			if ( is_wp_error( $user_id ) ) {
+				return false;
+			}
+
+			// Update display name.
+			wp_update_user(
+				array(
+					'ID'           => $user_id,
+					'display_name' => sanitize_text_field( $name ),
+					'role'         => 'subscriber',
+				)
+			);
+
+			return $user_id;
+		}
+
+		// No email - create a guest user with username based on name.
+		$username = sanitize_user( strtolower( str_replace( ' ', '_', $name ) ), true );
+		// Make username unique.
+		$base_username = $username;
+		$counter       = 1;
+		while ( username_exists( $username ) ) {
+			$username = $base_username . '_' . $counter;
+			++$counter;
+		}
+
+		$user_id = wp_create_user( $username, wp_generate_password() );
+		if ( is_wp_error( $user_id ) ) {
+			return false;
+		}
+
+		// Update display name and set as subscriber.
+		wp_update_user(
+			array(
+				'ID'           => $user_id,
+				'display_name' => sanitize_text_field( $name ),
+				'role'         => 'subscriber',
+			)
+		);
+
+		return $user_id;
+	}
 }

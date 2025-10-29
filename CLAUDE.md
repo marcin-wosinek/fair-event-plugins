@@ -206,3 +206,4 @@ When using `viewScript` in block.json for frontend JavaScript, WordPress loads s
 **When to use**: All `viewScript` files that need to manipulate the DOM or attach event handlers to block elements.
 
 **Example**: See `fair-rsvp/src/blocks/rsvp-button/frontend.js`
+- Make sure to pay attention to case in file & folder names. I'm programming on MacOs (that is case insensitive), but I'm building at Linux (case sensitive system)

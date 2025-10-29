@@ -179,6 +179,68 @@ class RsvpController extends WP_REST_Controller {
 				),
 			)
 		);
+
+		// POST /fair-rsvp/v1/rsvps/bulk-attendance - Admin bulk updates attendance.
+		register_rest_route(
+			$this->namespace,
+			'/rsvps/bulk-attendance',
+			array(
+				array(
+					'methods'             => WP_REST_Server::CREATABLE,
+					'callback'            => array( $this, 'bulk_update_attendance' ),
+					'permission_callback' => array( $this, 'update_attendance_permissions_check' ),
+					'args'                => array(
+						'updates' => array(
+							'description' => __( 'Array of RSVP updates with id and attendance_status.', 'fair-rsvp' ),
+							'type'        => 'array',
+							'required'    => true,
+							'items'       => array(
+								'type'       => 'object',
+								'properties' => array(
+									'id'                => array(
+										'type' => 'integer',
+									),
+									'attendance_status' => array(
+										'type' => 'string',
+										'enum' => array( 'not_applicable', 'checked_in', 'no_show' ),
+									),
+								),
+							),
+						),
+					),
+				),
+			)
+		);
+
+		// POST /fair-rsvp/v1/rsvps/walk-in - Admin creates RSVP for walk-in attendee.
+		register_rest_route(
+			$this->namespace,
+			'/rsvps/walk-in',
+			array(
+				array(
+					'methods'             => WP_REST_Server::CREATABLE,
+					'callback'            => array( $this, 'create_walk_in_rsvp' ),
+					'permission_callback' => array( $this, 'update_attendance_permissions_check' ),
+					'args'                => array(
+						'event_id' => array(
+							'description' => __( 'Event ID.', 'fair-rsvp' ),
+							'type'        => 'integer',
+							'required'    => true,
+						),
+						'name'     => array(
+							'description' => __( 'Attendee name.', 'fair-rsvp' ),
+							'type'        => 'string',
+							'required'    => true,
+						),
+						'email'    => array(
+							'description' => __( 'Attendee email (optional).', 'fair-rsvp' ),
+							'type'        => 'string',
+							'format'      => 'email',
+						),
+					),
+				),
+			)
+		);
 	}
 
 	/**
@@ -366,6 +428,101 @@ class RsvpController extends WP_REST_Controller {
 				)
 			);
 		}
+	}
+
+	/**
+	 * Bulk update attendance status
+	 *
+	 * @param WP_REST_Request $request Full data about the request.
+	 * @return WP_REST_Response|WP_Error Response object on success, or WP_Error object on failure.
+	 */
+	public function bulk_update_attendance( $request ) {
+		$updates = $request->get_param( 'updates' );
+
+		if ( empty( $updates ) || ! is_array( $updates ) ) {
+			return new WP_Error(
+				'invalid_updates',
+				__( 'Updates must be a non-empty array.', 'fair-rsvp' ),
+				array( 'status' => 400 )
+			);
+		}
+
+		$result = $this->repository->bulk_update_attendance( $updates );
+
+		return rest_ensure_response(
+			array(
+				'success' => $result['success'],
+				'failed'  => $result['failed'],
+				'message' => sprintf(
+					/* translators: %d: number of successful updates */
+					__( 'Successfully updated %d attendance records.', 'fair-rsvp' ),
+					$result['success']
+				),
+			)
+		);
+	}
+
+	/**
+	 * Create RSVP for walk-in attendee
+	 *
+	 * @param WP_REST_Request $request Full data about the request.
+	 * @return WP_REST_Response|WP_Error Response object on success, or WP_Error object on failure.
+	 */
+	public function create_walk_in_rsvp( $request ) {
+		$event_id = (int) $request->get_param( 'event_id' );
+		$name     = sanitize_text_field( $request->get_param( 'name' ) );
+		$email    = sanitize_email( $request->get_param( 'email' ) );
+
+		// Validate event exists and is published.
+		$event = get_post( $event_id );
+		if ( ! $event || 'publish' !== $event->post_status ) {
+			return new WP_Error(
+				'invalid_event',
+				__( 'The specified event does not exist or is not published.', 'fair-rsvp' ),
+				array( 'status' => 400 )
+			);
+		}
+
+		// Get or create user for walk-in.
+		$user_id = $this->repository->get_or_create_walk_in_user( $name, $email );
+
+		if ( ! $user_id ) {
+			return new WP_Error(
+				'user_creation_failed',
+				__( 'Failed to create or find user for walk-in attendee.', 'fair-rsvp' ),
+				array( 'status' => 500 )
+			);
+		}
+
+		// Create RSVP with 'yes' status and 'checked_in' attendance.
+		$rsvp_id = $this->repository->upsert_rsvp( $event_id, $user_id, 'yes' );
+
+		if ( ! $rsvp_id ) {
+			return new WP_Error(
+				'rsvp_creation_failed',
+				__( 'Failed to create RSVP for walk-in attendee.', 'fair-rsvp' ),
+				array( 'status' => 500 )
+			);
+		}
+
+		// Update attendance status to checked_in.
+		$this->repository->update_attendance_status( $rsvp_id, 'checked_in' );
+
+		// Get the created RSVP.
+		$rsvp = $this->repository->get_rsvp_by_id( $rsvp_id );
+
+		if ( ! $rsvp ) {
+			return new WP_Error(
+				'rsvp_retrieval_failed',
+				__( 'RSVP was created but could not be retrieved.', 'fair-rsvp' ),
+				array( 'status' => 500 )
+			);
+		}
+
+		$response = $this->prepare_item_for_response( $rsvp, $request );
+		$response->set_status( 201 );
+
+		return $response;
 	}
 
 	/**

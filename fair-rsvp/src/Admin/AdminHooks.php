@@ -28,7 +28,7 @@ class AdminHooks {
 	 * @return void
 	 */
 	public function register_admin_menu() {
-		// Placeholder for admin menu registration
+		// Main menu page - Events list.
 		add_menu_page(
 			__( 'Fair RSVP', 'fair-rsvp' ),
 			__( 'Fair RSVP', 'fair-rsvp' ),
@@ -37,6 +37,16 @@ class AdminHooks {
 			array( $this, 'render_admin_page' ),
 			'dashicons-groups',
 			30
+		);
+
+		// Submenu page - Attendance confirmation (hidden from menu).
+		add_submenu_page(
+			null, // No parent = hidden from menu.
+			__( 'Confirm Attendance', 'fair-rsvp' ),
+			__( 'Confirm Attendance', 'fair-rsvp' ),
+			'manage_options',
+			'fair-rsvp-attendance',
+			array( $this, 'render_attendance_page' )
 		);
 	}
 
@@ -51,39 +61,74 @@ class AdminHooks {
 	}
 
 	/**
+	 * Render attendance confirmation page
+	 *
+	 * @return void
+	 */
+	public function render_attendance_page() {
+		$attendance_page = new AttendanceConfirmationPage();
+		$attendance_page->render();
+	}
+
+	/**
 	 * Enqueue admin scripts
 	 *
 	 * @param string $hook Current admin page hook.
 	 * @return void
 	 */
 	public function enqueue_admin_scripts( $hook ) {
-		// Only load on Fair RSVP admin page.
-		if ( 'toplevel_page_fair-rsvp' !== $hook ) {
-			return;
+		$plugin_dir = plugin_dir_path( dirname( __DIR__ ) );
+
+		// Load events list page scripts.
+		if ( 'toplevel_page_fair-rsvp' === $hook ) {
+			$asset_file = $plugin_dir . 'build/admin/events/index.asset.php';
+
+			if ( file_exists( $asset_file ) ) {
+				$asset_data = include $asset_file;
+
+				wp_enqueue_script(
+					'fair-rsvp-events',
+					plugin_dir_url( dirname( __DIR__ ) ) . 'build/admin/events/index.js',
+					$asset_data['dependencies'],
+					$asset_data['version'],
+					true
+				);
+
+				// Set script translations.
+				wp_set_script_translations(
+					'fair-rsvp-events',
+					'fair-rsvp',
+					$plugin_dir . 'build/languages'
+				);
+
+				wp_enqueue_style( 'wp-components' );
+			}
 		}
 
-		$plugin_dir = plugin_dir_path( dirname( __DIR__ ) );
-		$asset_file = $plugin_dir . 'build/admin/events/index.asset.php';
+		// Load attendance confirmation page scripts.
+		if ( 'admin_page_fair-rsvp-attendance' === $hook ) {
+			$asset_file = $plugin_dir . 'build/admin/attendance/index.asset.php';
 
-		if ( file_exists( $asset_file ) ) {
-			$asset_data = include $asset_file;
+			if ( file_exists( $asset_file ) ) {
+				$asset_data = include $asset_file;
 
-			wp_enqueue_script(
-				'fair-rsvp-events',
-				plugin_dir_url( dirname( __DIR__ ) ) . 'build/admin/events/index.js',
-				$asset_data['dependencies'],
-				$asset_data['version'],
-				true
-			);
+				wp_enqueue_script(
+					'fair-rsvp-attendance',
+					plugin_dir_url( dirname( __DIR__ ) ) . 'build/admin/attendance/index.js',
+					$asset_data['dependencies'],
+					$asset_data['version'],
+					true
+				);
 
-			// Set script translations
-			wp_set_script_translations(
-				'fair-rsvp-events',
-				'fair-rsvp',
-				$plugin_dir . 'build/languages'
-			);
+				// Set script translations.
+				wp_set_script_translations(
+					'fair-rsvp-attendance',
+					'fair-rsvp',
+					$plugin_dir . 'build/languages'
+				);
 
-			wp_enqueue_style( 'wp-components' );
+				wp_enqueue_style( 'wp-components' );
+			}
 		}
 	}
 }

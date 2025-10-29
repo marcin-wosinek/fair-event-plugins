@@ -96,6 +96,9 @@ export default function EventsList() {
 						<th scope="col" className="manage-column column-center">
 							{__('Total RSVPs', 'fair-rsvp')}
 						</th>
+						<th scope="col" className="manage-column">
+							{__('Actions', 'fair-rsvp')}
+						</th>
 					</tr>
 				</thead>
 				<tbody>
@@ -123,6 +126,14 @@ export default function EventsList() {
 							</td>
 							<td className="column-center">
 								<strong>{event.total_rsvps}</strong>
+							</td>
+							<td>
+								<a
+									href={`/wp-admin/admin.php?page=fair-rsvp-attendance&event_id=${event.event_id}`}
+									className="button button-small"
+								>
+									{__('Confirm Attendance', 'fair-rsvp')}
+								</a>
 							</td>
 						</tr>
 					))}
