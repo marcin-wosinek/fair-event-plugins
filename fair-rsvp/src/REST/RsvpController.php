@@ -614,6 +614,27 @@ class RsvpController extends WP_REST_Controller {
 	}
 
 	/**
+	 * Format datetime for REST API response with timezone
+	 *
+	 * @param string|null $datetime MySQL datetime string.
+	 * @return string|null ISO 8601 datetime with timezone.
+	 */
+	private function format_datetime_for_response( $datetime ) {
+		if ( empty( $datetime ) ) {
+			return null;
+		}
+
+		// Convert to timestamp using WordPress timezone.
+		$timestamp = strtotime( $datetime );
+		if ( false === $timestamp ) {
+			return null;
+		}
+
+		// Format as ISO 8601 with timezone offset (e.g., "2025-01-30T14:30:00+01:00").
+		return wp_date( 'c', $timestamp );
+	}
+
+	/**
 	 * Prepare RSVP for response
 	 *
 	 * @param array           $rsvp    RSVP data.
@@ -627,9 +648,9 @@ class RsvpController extends WP_REST_Controller {
 			'user_id'           => (int) $rsvp['user_id'],
 			'rsvp_status'       => $rsvp['rsvp_status'],
 			'attendance_status' => $rsvp['attendance_status'],
-			'rsvp_at'           => $rsvp['rsvp_at'],
-			'created_at'        => $rsvp['created_at'],
-			'updated_at'        => $rsvp['updated_at'],
+			'rsvp_at'           => $this->format_datetime_for_response( $rsvp['rsvp_at'] ),
+			'created_at'        => $this->format_datetime_for_response( $rsvp['created_at'] ),
+			'updated_at'        => $this->format_datetime_for_response( $rsvp['updated_at'] ),
 		);
 
 		// Add user data if user exists and request is from admin.
