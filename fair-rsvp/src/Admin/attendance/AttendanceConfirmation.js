@@ -314,7 +314,7 @@ export default function AttendanceConfirmation({ eventId }) {
 	// Format users for ComboboxControl
 	const userOptions = availableUsers.map((user) => ({
 		value: user.user_id,
-		label: `${user.display_name} (${user.user_email})`,
+		label: user.display_name,
 	}));
 
 	if (isLoading) {
