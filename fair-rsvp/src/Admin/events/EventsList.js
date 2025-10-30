@@ -18,6 +18,12 @@ function formatEventDateRange(eventDate) {
 	}
 
 	const startTimestamp = new Date(eventDate.start_datetime).getTime() / 1000;
+
+	// Check if start date is invalid
+	if (isNaN(startTimestamp)) {
+		return '';
+	}
+
 	const endTimestamp = eventDate.end_datetime
 		? new Date(eventDate.end_datetime).getTime() / 1000
 		: null;
