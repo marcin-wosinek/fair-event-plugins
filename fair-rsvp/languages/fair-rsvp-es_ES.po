@@ -342,21 +342,21 @@ msgstr "Error al actualizar la confirmación. Por favor, inténtalo de nuevo."
 #: src/Admin/events/EventsList.js:197
 #: src/Admin/events/EventsList.js:212
 msgid "Confirm Attendance"
-msgstr ""
+msgstr "Confirmar Asistencia"
 
 #: src/Admin/AttendanceConfirmationPage.php:31
 msgid "No event ID specified."
-msgstr ""
+msgstr "No se especificó ID del evento."
 
 #: src/Admin/AttendanceConfirmationPage.php:45
 msgid "Event not found."
-msgstr ""
+msgstr "Evento no encontrado."
 
 #. translators: %s: event title
 #: src/Admin/AttendanceConfirmationPage.php:58
 #, php-format
 msgid "Confirm Attendance: %s"
-msgstr ""
+msgstr "Confirmar Asistencia: %s"
 
 #: src/REST/RsvpController.php:207
 msgid "Array of RSVP updates with id and attendance_status."
@@ -394,35 +394,35 @@ msgstr ""
 
 #: src/Admin/attendance/AttendanceConfirmation.js:89
 msgid "Failed to load RSVPs"
-msgstr ""
+msgstr "Error al cargar las confirmaciones"
 
 #: src/Admin/attendance/AttendanceConfirmation.js:126
 msgid "Failed to save attendance"
-msgstr ""
+msgstr "Error al guardar la asistencia"
 
 #: src/Admin/attendance/AttendanceConfirmation.js:134
 msgid "Please select a member"
-msgstr ""
+msgstr "Por favor, selecciona un miembro"
 
 #: src/Admin/attendance/AttendanceConfirmation.js:155
 msgid "Member added and checked in successfully"
-msgstr ""
+msgstr "Miembro agregado y registrado exitosamente"
 
 #: src/Admin/attendance/AttendanceConfirmation.js:164
 msgid "Failed to add member"
-msgstr ""
+msgstr "Error al agregar miembro"
 
 #: src/Admin/attendance/AttendanceConfirmation.js:173
 msgid "Please enter a name for the walk-in attendee"
-msgstr ""
+msgstr "Por favor, ingresa un nombre para el asistente"
 
 #: src/Admin/attendance/AttendanceConfirmation.js:193
 msgid "Walk-in attendee added successfully"
-msgstr ""
+msgstr "Asistente agregado exitosamente"
 
 #: src/Admin/attendance/AttendanceConfirmation.js:204
 msgid "Failed to add walk-in attendee"
-msgstr ""
+msgstr "Error al agregar asistente"
 
 #: src/Admin/attendance/AttendanceConfirmation.js:222
 msgid "just now"
@@ -475,27 +475,27 @@ msgstr "hace %d años"
 
 #: src/Admin/attendance/AttendanceConfirmation.js:321
 msgid "Loading RSVPs..."
-msgstr ""
+msgstr "Cargando confirmaciones..."
 
 #: src/Admin/attendance/AttendanceConfirmation.js:354
 msgid "attendees checked in"
-msgstr ""
+msgstr "asistentes registrados"
 
 #: src/Admin/attendance/AttendanceConfirmation.js:360
 msgid "Search attendees"
-msgstr ""
+msgstr "Buscar asistentes"
 
 #: src/Admin/attendance/AttendanceConfirmation.js:363
 msgid "Search by name..."
-msgstr ""
+msgstr "Buscar por nombre..."
 
 #: src/Admin/attendance/AttendanceConfirmation.js:369
 msgid "RSVP List"
-msgstr ""
+msgstr "Lista de Confirmaciones"
 
 #: src/Admin/attendance/AttendanceConfirmation.js:371
 msgid "No RSVPs found"
-msgstr ""
+msgstr "No se encontraron confirmaciones"
 
 #: src/Admin/attendance/AttendanceConfirmation.js:381
 #: src/Admin/attendance/AttendanceConfirmation.js:521
@@ -516,59 +516,59 @@ msgstr "Asistió"
 
 #: src/Admin/attendance/AttendanceConfirmation.js:463
 msgid "Quick Add Existing Member"
-msgstr ""
+msgstr "Agregar Miembro Existente Rápidamente"
 
 #: src/Admin/attendance/AttendanceConfirmation.js:465
 msgid "Select a member who showed up but didn't RSVP"
-msgstr ""
+msgstr "Selecciona un miembro que asistió pero no confirmó"
 
 #: src/Admin/attendance/AttendanceConfirmation.js:473
 msgid "Search members"
-msgstr ""
+msgstr "Buscar miembros"
 
 #: src/Admin/attendance/AttendanceConfirmation.js:477
 msgid "Type to search by name or email..."
-msgstr ""
+msgstr "Escribe para buscar por nombre o email..."
 
 #: src/Admin/attendance/AttendanceConfirmation.js:483
 msgid "All members already have RSVPs for this event"
-msgstr ""
+msgstr "Todos los miembros ya tienen confirmaciones para este evento"
 
 #: src/Admin/attendance/AttendanceConfirmation.js:497
 msgid "Add & Check In"
-msgstr ""
+msgstr "Agregar y Registrar"
 
 #: src/Admin/attendance/AttendanceConfirmation.js:512
 msgid "Add New Person (Not a Member)"
-msgstr ""
+msgstr "Agregar Nueva Persona (No es Miembro)"
 
 #: src/Admin/attendance/AttendanceConfirmation.js:514
 msgid "Add someone who attended but is not a website member"
-msgstr ""
+msgstr "Agrega alguien que asistió pero no es miembro del sitio web"
 
 #: src/Admin/attendance/AttendanceConfirmation.js:524
 msgid "Enter attendee name"
-msgstr ""
+msgstr "Ingresa el nombre del asistente"
 
 #: src/Admin/attendance/AttendanceConfirmation.js:529
 msgid "Email (optional)"
-msgstr ""
+msgstr "Email (opcional)"
 
 #: src/Admin/attendance/AttendanceConfirmation.js:533
 msgid "Enter email address"
-msgstr ""
+msgstr "Ingresa la dirección de email"
 
 #: src/Admin/attendance/AttendanceConfirmation.js:543
 msgid "Add Walk-in"
-msgstr ""
+msgstr "Agregar Asistente"
 
 #: src/Admin/attendance/AttendanceConfirmation.js:555
 msgid "Save All Attendance"
-msgstr ""
+msgstr "Guardar Toda la Asistencia"
 
 #: src/Admin/attendance/AttendanceConfirmation.js:563
 msgid "Back to Events"
-msgstr ""
+msgstr "Volver a Eventos"
 
 #: src/Admin/events/EventsList.js:182
 msgid "Actions"

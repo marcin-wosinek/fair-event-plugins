@@ -342,7 +342,7 @@ msgstr "Échec de la mise à jour de la confirmation. Veuillez réessayer."
 #: src/Admin/events/EventsList.js:197
 #: src/Admin/events/EventsList.js:212
 msgid "Confirm Attendance"
-msgstr ""
+msgstr "Confirmer la Présence"
 
 #: src/Admin/AttendanceConfirmationPage.php:31
 msgid "No event ID specified."
@@ -394,7 +394,7 @@ msgstr ""
 
 #: src/Admin/attendance/AttendanceConfirmation.js:89
 msgid "Failed to load RSVPs"
-msgstr ""
+msgstr "Échec du chargement des confirmations"
 
 #: src/Admin/attendance/AttendanceConfirmation.js:126
 msgid "Failed to save attendance"
@@ -402,11 +402,11 @@ msgstr ""
 
 #: src/Admin/attendance/AttendanceConfirmation.js:134
 msgid "Please select a member"
-msgstr ""
+msgstr "Veuillez sélectionner un membre"
 
 #: src/Admin/attendance/AttendanceConfirmation.js:155
 msgid "Member added and checked in successfully"
-msgstr ""
+msgstr "Membre ajouté et enregistré avec succès"
 
 #: src/Admin/attendance/AttendanceConfirmation.js:164
 msgid "Failed to add member"
@@ -475,7 +475,7 @@ msgstr "il y a %d ans"
 
 #: src/Admin/attendance/AttendanceConfirmation.js:321
 msgid "Loading RSVPs..."
-msgstr ""
+msgstr "Chargement des confirmations..."
 
 #: src/Admin/attendance/AttendanceConfirmation.js:354
 msgid "attendees checked in"
@@ -516,15 +516,15 @@ msgstr "Présent"
 
 #: src/Admin/attendance/AttendanceConfirmation.js:463
 msgid "Quick Add Existing Member"
-msgstr ""
+msgstr "Ajouter Rapidement un Membre Existant"
 
 #: src/Admin/attendance/AttendanceConfirmation.js:465
 msgid "Select a member who showed up but didn't RSVP"
-msgstr ""
+msgstr "Nom"
 
 #: src/Admin/attendance/AttendanceConfirmation.js:473
 msgid "Search members"
-msgstr ""
+msgstr "Enregistré"
 
 #: src/Admin/attendance/AttendanceConfirmation.js:477
 msgid "Type to search by name or email..."
@@ -536,7 +536,7 @@ msgstr ""
 
 #: src/Admin/attendance/AttendanceConfirmation.js:497
 msgid "Add & Check In"
-msgstr ""
+msgstr "Ajouter & Enregistrer"
 
 #: src/Admin/attendance/AttendanceConfirmation.js:512
 msgid "Add New Person (Not a Member)"
@@ -564,11 +564,11 @@ msgstr ""
 
 #: src/Admin/attendance/AttendanceConfirmation.js:555
 msgid "Save All Attendance"
-msgstr ""
+msgstr "Enregistrer Toute la Présence"
 
 #: src/Admin/attendance/AttendanceConfirmation.js:563
 msgid "Back to Events"
-msgstr ""
+msgstr "Retour aux Événements"
 
 #: src/Admin/events/EventsList.js:182
 msgid "Actions"
