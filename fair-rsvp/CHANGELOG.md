@@ -1,5 +1,11 @@
 # fair-rsvp
 
+## 0.3.1
+
+### Patch Changes
+
+- 2ba10ce: Improve admin UI for RSVP confirmation
+
 ## 0.3.0
 
 ### Minor Changes
