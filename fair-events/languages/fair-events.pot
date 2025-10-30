@@ -2,14 +2,14 @@
 # This file is distributed under the GPLv3 or later.
 msgid ""
 msgstr ""
-"Project-Id-Version: Fair Events 0.4.1\n"
+"Project-Id-Version: Fair Events 0.4.2\n"
 "Report-Msgid-Bugs-To: https://wordpress.org/support/plugin/fair-events\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"POT-Creation-Date: 2025-10-21T07:10:30+00:00\n"
+"POT-Creation-Date: 2025-10-30T09:24:39+00:00\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "X-Generator: WP-CLI 2.12.0\n"
 "X-Domain: fair-events\n"
@@ -232,24 +232,28 @@ msgid "All Day Event"
 msgstr ""
 
 #: src/PostTypes/Event.php:261
-#: src/PostTypes/Event.php:360
+#: src/PostTypes/Event.php:361
 msgid "Location"
 msgstr ""
 
-#: src/PostTypes/Event.php:357
+#: src/PostTypes/Event.php:358
 msgid "Event Start"
 msgstr ""
 
-#: src/PostTypes/Event.php:358
+#: src/PostTypes/Event.php:359
 msgid "Event End"
 msgstr ""
 
-#: src/PostTypes/Event.php:359
+#: src/PostTypes/Event.php:360
 msgid "All Day"
 msgstr ""
 
-#: src/PostTypes/Event.php:392
+#: src/PostTypes/Event.php:393
 msgid "Yes"
+msgstr ""
+
+#: src/PostTypes/Event.php:489
+msgid "Confirm Attendance"
 msgstr ""
 
 #: src/Settings/Settings.php:41

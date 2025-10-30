@@ -222,23 +222,23 @@ msgid "All Day Event"
 msgstr "Wydarzenie całodniowe"
 
 #: src/PostTypes/Event.php:261
-#: src/PostTypes/Event.php:360
+#: src/PostTypes/Event.php:361
 msgid "Location"
 msgstr "Miejsce"
 
-#: src/PostTypes/Event.php:357
+#: src/PostTypes/Event.php:358
 msgid "Event Start"
 msgstr "Rozpoczęcie"
 
-#: src/PostTypes/Event.php:358
+#: src/PostTypes/Event.php:359
 msgid "Event End"
 msgstr "Zakończenie"
 
-#: src/PostTypes/Event.php:359
+#: src/PostTypes/Event.php:360
 msgid "All Day"
 msgstr "Cały dzień"
 
-#: src/PostTypes/Event.php:392
+#: src/PostTypes/Event.php:393
 msgid "Yes"
 msgstr "Tak"
 
@@ -414,3 +414,7 @@ msgstr "lista"
 #: src/Admin/AdminPages.php:38
 msgid "Upcoming"
 msgstr "Nadchodzące"
+
+#: src/PostTypes/Event.php:489
+msgid "Confirm Attendance"
+msgstr "Potwierdź Obecność"

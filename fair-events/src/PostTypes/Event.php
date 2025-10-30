@@ -340,6 +340,7 @@ class Event {
 		add_action( 'manage_' . self::POST_TYPE . '_posts_custom_column', array( __CLASS__, 'render_admin_column' ), 10, 2 );
 		add_filter( 'manage_edit-' . self::POST_TYPE . '_sortable_columns', array( __CLASS__, 'add_sortable_columns' ) );
 		add_action( 'pre_get_posts', array( __CLASS__, 'handle_column_sorting' ) );
+		add_filter( 'post_row_actions', array( __CLASS__, 'add_rsvp_row_action' ), 10, 2 );
 	}
 
 	/**
@@ -460,6 +461,35 @@ class Event {
 			$query->set( 'meta_key', 'event_end' );
 			$query->set( 'orderby', 'meta_value' );
 		}
+	}
+
+	/**
+	 * Add RSVP confirmation link to row actions
+	 *
+	 * @param array    $actions Existing row actions.
+	 * @param \WP_Post $post    The post object.
+	 * @return array Modified row actions.
+	 */
+	public static function add_rsvp_row_action( $actions, $post ) {
+		// Only add for fair_event post type
+		if ( self::POST_TYPE !== $post->post_type ) {
+			return $actions;
+		}
+
+		// Only add if fair-rsvp plugin is active
+		if ( ! defined( 'FAIR_RSVP_PLUGIN_DIR' ) ) {
+			return $actions;
+		}
+
+		// Add confirm attendance link
+		$url                           = admin_url( 'admin.php?page=fair-rsvp-attendance&event_id=' . $post->ID );
+		$actions['confirm_attendance'] = sprintf(
+			'<a href="%s">%s</a>',
+			esc_url( $url ),
+			esc_html__( 'Confirm Attendance', 'fair-events' )
+		);
+
+		return $actions;
 	}
 
 	/**
