@@ -190,8 +190,9 @@ class RsvpRepository {
 	public function get_events_with_rsvp_counts( $post_status = 'publish', $orderby = 'title', $order = 'ASC' ) {
 		global $wpdb;
 
-		$table_name  = $this->get_table_name();
-		$posts_table = $wpdb->posts;
+		$table_name        = $this->get_table_name();
+		$posts_table       = $wpdb->posts;
+		$event_dates_table = $wpdb->prefix . 'fair_event_dates';
 
 		// Sanitize orderby and order.
 		$allowed_orderby = array( 'title', 'total_rsvps', 'yes_count' );
@@ -219,11 +220,16 @@ class RsvpRepository {
 				SUM(CASE WHEN r.rsvp_status = 'maybe' THEN 1 ELSE 0 END) as maybe_count,
 				SUM(CASE WHEN r.rsvp_status = 'no' THEN 1 ELSE 0 END) as no_count,
 				SUM(CASE WHEN r.rsvp_status = 'pending' THEN 1 ELSE 0 END) as pending_count,
-				SUM(CASE WHEN r.rsvp_status = 'cancelled' THEN 1 ELSE 0 END) as cancelled_count
+				SUM(CASE WHEN r.rsvp_status = 'cancelled' THEN 1 ELSE 0 END) as cancelled_count,
+				SUM(CASE WHEN r.attendance_status = 'checked_in' THEN 1 ELSE 0 END) as checked_in_count,
+				ed.start_datetime,
+				ed.end_datetime,
+				ed.all_day
 			FROM {$posts_table} p
 			INNER JOIN {$table_name} r ON p.ID = r.event_id
+			LEFT JOIN {$event_dates_table} ed ON p.ID = ed.event_id
 			WHERE p.post_status = %s
-			GROUP BY p.ID, p.post_title
+			GROUP BY p.ID, p.post_title, ed.start_datetime, ed.end_datetime, ed.all_day
 			ORDER BY {$order_clause}",
 			$post_status
 		);
@@ -231,20 +237,27 @@ class RsvpRepository {
 		// phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared
 		$results = $wpdb->get_results( $sql, ARRAY_A );
 
-		// Add permalink to each result.
+		// Add permalink and format data for each result.
 		foreach ( $results as &$result ) {
-			$result['link']        = get_permalink( $result['event_id'] );
-			$result['event_id']    = (int) $result['event_id'];
-			$result['total_rsvps'] = (int) $result['total_rsvps'];
-			$result['rsvp_counts'] = array(
+			$result['link']             = get_permalink( $result['event_id'] );
+			$result['event_id']         = (int) $result['event_id'];
+			$result['total_rsvps']      = (int) $result['total_rsvps'];
+			$result['checked_in_count'] = (int) $result['checked_in_count'];
+			$result['rsvp_counts']      = array(
 				'yes'       => (int) $result['yes_count'],
 				'maybe'     => (int) $result['maybe_count'],
 				'no'        => (int) $result['no_count'],
 				'pending'   => (int) $result['pending_count'],
 				'cancelled' => (int) $result['cancelled_count'],
 			);
-			// Remove individual count fields.
-			unset( $result['yes_count'], $result['maybe_count'], $result['no_count'], $result['pending_count'], $result['cancelled_count'] );
+			// Keep date fields for frontend formatting.
+			$result['event_date'] = array(
+				'start_datetime' => $result['start_datetime'],
+				'end_datetime'   => $result['end_datetime'],
+				'all_day'        => (bool) $result['all_day'],
+			);
+			// Remove individual count fields and raw date fields.
+			unset( $result['yes_count'], $result['maybe_count'], $result['no_count'], $result['pending_count'], $result['cancelled_count'], $result['start_datetime'], $result['end_datetime'], $result['all_day'] );
 		}
 
 		return $results;

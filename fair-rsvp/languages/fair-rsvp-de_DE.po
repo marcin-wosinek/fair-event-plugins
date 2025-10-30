@@ -52,7 +52,6 @@ msgstr "Anmelden"
 #: src/blocks/rsvp-button/render.php:72
 #: src/blocks/rsvp-button/render.php:108
 #: src/Admin/attendance/AttendanceConfirmation.js:403
-#: src/Admin/events/EventsList.js:82
 #: src/blocks/participants-list/editor.js:66
 #: src/blocks/participants-list/editor.js:120
 #: src/blocks/rsvp-button/editor.js:22
@@ -63,7 +62,6 @@ msgstr "Ja"
 #: src/blocks/rsvp-button/render.php:82
 #: src/blocks/rsvp-button/render.php:110
 #: src/Admin/attendance/AttendanceConfirmation.js:402
-#: src/Admin/events/EventsList.js:85
 #: src/blocks/participants-list/editor.js:68
 #: src/blocks/participants-list/editor.js:122
 #: src/blocks/rsvp-button/editor.js:26
@@ -73,7 +71,6 @@ msgstr "Vielleicht"
 
 #: src/blocks/rsvp-button/render.php:92
 #: src/blocks/rsvp-button/render.php:109
-#: src/Admin/events/EventsList.js:88
 #: src/blocks/participants-list/editor.js:71
 #: src/blocks/participants-list/editor.js:124
 #: src/blocks/rsvp-button/editor.js:30
@@ -173,40 +170,28 @@ msgstr "Aktuelle Seite der Sammlung."
 msgid "Maximum number of items to return per page."
 msgstr "Maximale Anzahl der Elemente pro Seite."
 
-#: src/Admin/events/EventsList.js:34
-#: src/Admin/events/EventsList.js:43
-#: src/Admin/events/EventsList.js:57
-#: src/Admin/events/EventsList.js:65
+#: src/Admin/events/EventsList.js:125
+#: src/Admin/events/EventsList.js:134
+#: src/Admin/events/EventsList.js:148
+#: src/Admin/events/EventsList.js:156
 msgid "Events with RSVPs"
 msgstr "Veranstaltungen mit Anmeldungen"
 
-#: src/Admin/events/EventsList.js:35
+#: src/Admin/events/EventsList.js:126
 msgid "Loading..."
 msgstr "Laden..."
 
-#: src/Admin/events/EventsList.js:46
+#: src/Admin/events/EventsList.js:137
 msgid "Error loading events: "
 msgstr "Fehler beim Laden der Veranstaltungen: "
 
-#: src/Admin/events/EventsList.js:58
+#: src/Admin/events/EventsList.js:149
 msgid "No events with RSVPs found."
 msgstr "Keine Veranstaltungen mit Anmeldungen gefunden."
 
-#: src/Admin/events/EventsList.js:79
+#: src/Admin/events/EventsList.js:170
 msgid "Event"
 msgstr "Veranstaltung"
-
-#: src/Admin/events/EventsList.js:91
-msgid "Pending"
-msgstr "Ausstehend"
-
-#: src/Admin/events/EventsList.js:94
-msgid "Cancelled"
-msgstr "Storniert"
-
-#: src/Admin/events/EventsList.js:97
-msgid "Total RSVPs"
-msgstr "Anmeldungen gesamt"
 
 #: src/blocks/rsvp-button/editor.js:17
 msgid "RSVP Form Preview"
@@ -354,7 +339,8 @@ msgstr "Fehler beim Aktualisieren der RSVP. Bitte versuchen Sie es erneut."
 #: src/Admin/AdminHooks.php:46
 #: src/Admin/AttendanceConfirmationPage.php:29
 #: src/Admin/AttendanceConfirmationPage.php:43
-#: src/Admin/events/EventsList.js:135
+#: src/Admin/events/EventsList.js:197
+#: src/Admin/events/EventsList.js:212
 msgid "Confirm Attendance"
 msgstr ""
 
@@ -584,6 +570,18 @@ msgstr ""
 msgid "Back to Events"
 msgstr ""
 
-#: src/Admin/events/EventsList.js:100
+#: src/Admin/events/EventsList.js:182
 msgid "Actions"
 msgstr ""
+
+#: src/Admin/events/EventsList.js:173
+msgid "Date & Time"
+msgstr "Datum & Uhrzeit"
+
+#: src/Admin/events/EventsList.js:176
+msgid "Attendees"
+msgstr "Teilnehmer"
+
+#: src/Admin/events/EventsList.js:179
+msgid "Confirmed"
+msgstr "Bestätigt"
