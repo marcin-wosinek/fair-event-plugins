@@ -418,3 +418,7 @@ msgstr "Próximos"
 #: src/PostTypes/Event.php:489
 msgid "Confirm Attendance"
 msgstr "Confirmar Asistencia"
+
+#: src/Admin/event-meta/index.js:93
+msgid "End date must be after start date"
+msgstr "La fecha de fin debe ser posterior a la fecha de inicio"

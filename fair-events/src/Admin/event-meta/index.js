@@ -2,6 +2,7 @@
  * WordPress dependencies
  */
 import domReady from '@wordpress/dom-ready';
+import { __ } from '@wordpress/i18n';
 
 /**
  * Event Meta Box JavaScript
@@ -88,7 +89,9 @@ domReady(() => {
 		const end = new Date(endInput.value);
 
 		if (end < start) {
-			endInput.setCustomValidity('End date must be after start date');
+			endInput.setCustomValidity(
+				__('End date must be after start date', 'fair-events')
+			);
 		} else {
 			endInput.setCustomValidity('');
 		}

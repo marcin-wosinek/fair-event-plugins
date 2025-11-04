@@ -1,6 +1,7 @@
 const defaultConfig = require('@wordpress/scripts/config/webpack.config');
 const path = require('path');
 const fs = require('fs');
+const BundleOutputPlugin = require('webpack-bundle-output');
 
 // Build entry points dynamically, only including files that exist
 const entries = {};
@@ -31,4 +32,11 @@ Object.entries(allEntries).forEach(([key, filePath]) => {
 module.exports = {
 	...defaultConfig,
 	entry: entries,
+	plugins: [
+		...defaultConfig.plugins,
+		new BundleOutputPlugin({
+			cwd: process.cwd(),
+			output: 'map.json',
+		}),
+	],
 };

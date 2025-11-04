@@ -418,3 +418,7 @@ msgstr "Nadchodzące"
 #: src/PostTypes/Event.php:489
 msgid "Confirm Attendance"
 msgstr "Potwierdź Obecność"
+
+#: src/Admin/event-meta/index.js:93
+msgid "End date must be after start date"
+msgstr "Data zakończenia musi być późniejsza niż data rozpoczęcia"
