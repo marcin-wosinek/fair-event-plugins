@@ -53,6 +53,10 @@ Plugin::instance()->init();
 function fair_rsvp_activate() {
 	// Database installation will be handled here.
 	\FairRsvp\Database\Installer::install();
+
+	// Migrate existing events to set _has_rsvp_block meta.
+	\FairRsvp\Database\Installer::migrate_rsvp_block_meta();
+
 	flush_rewrite_rules();
 }
 register_activation_hook( __FILE__, __NAMESPACE__ . '\\fair_rsvp_activate' );

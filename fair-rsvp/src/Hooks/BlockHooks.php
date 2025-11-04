@@ -19,6 +19,7 @@ class BlockHooks {
 	 */
 	public function __construct() {
 		add_action( 'init', array( $this, 'register_blocks' ) );
+		add_action( 'save_post', array( $this, 'update_rsvp_block_meta' ), 10, 3 );
 	}
 
 	/**
@@ -48,5 +49,28 @@ class BlockHooks {
 			'fair-rsvp',
 			dirname( __DIR__, 2 ) . '/build/languages'
 		);
+	}
+
+	/**
+	 * Update post meta to track if post has RSVP block
+	 *
+	 * Works on any post type (events, posts, pages, etc.).
+	 *
+	 * @param int      $post_id Post ID.
+	 * @param \WP_Post $post    Post object.
+	 * @param bool     $update  Whether this is an existing post being updated.
+	 * @return void
+	 */
+	public function update_rsvp_block_meta( $post_id, $post, $update ) {
+		// Skip autosaves and revisions.
+		if ( wp_is_post_autosave( $post_id ) || wp_is_post_revision( $post_id ) ) {
+			return;
+		}
+
+		// Check if post has RSVP block.
+		$has_rsvp_block = has_block( 'fair-rsvp/rsvp-button', $post );
+
+		// Update post meta.
+		update_post_meta( $post_id, '_has_rsvp_block', $has_rsvp_block ? '1' : '0' );
 	}
 }

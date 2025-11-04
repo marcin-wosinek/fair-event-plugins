@@ -43,4 +43,43 @@ class Installer {
 		$current_version = Schema::get_db_version();
 		return version_compare( $current_version, Schema::DB_VERSION, '<' );
 	}
+
+	/**
+	 * Migrate existing posts to set _has_rsvp_block meta
+	 *
+	 * This should be run once to backfill the meta for all existing posts.
+	 * Works on any post type (events, posts, pages, etc.).
+	 *
+	 * @return array Results with counts of processed and updated posts.
+	 */
+	public static function migrate_rsvp_block_meta() {
+		$args = array(
+			'post_type'      => 'any',
+			'post_status'    => 'any',
+			'posts_per_page' => -1,
+			'fields'         => 'ids',
+		);
+
+		$post_ids  = get_posts( $args );
+		$processed = 0;
+		$updated   = 0;
+
+		foreach ( $post_ids as $post_id ) {
+			$post           = get_post( $post_id );
+			$has_rsvp_block = has_block( 'fair-rsvp/rsvp-button', $post );
+
+			// Update meta.
+			update_post_meta( $post_id, '_has_rsvp_block', $has_rsvp_block ? '1' : '0' );
+
+			++$processed;
+			if ( $has_rsvp_block ) {
+				++$updated;
+			}
+		}
+
+		return array(
+			'processed' => $processed,
+			'updated'   => $updated,
+		);
+	}
 }

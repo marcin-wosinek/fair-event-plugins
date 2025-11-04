@@ -180,18 +180,21 @@ class RsvpRepository {
 	}
 
 	/**
-	 * Get all events with RSVP counts
+	 * Get all posts with RSVP block and RSVP counts
+	 *
+	 * Returns posts of any type (events, posts, pages, etc.) that have the RSVP block.
 	 *
 	 * @param string $post_status Post status filter (default: 'publish').
 	 * @param string $orderby     Order by field (default: 'title').
 	 * @param string $order       Order direction (default: 'ASC').
-	 * @return array Array of events with RSVP counts.
+	 * @return array Array of posts with RSVP counts.
 	 */
 	public function get_events_with_rsvp_counts( $post_status = 'publish', $orderby = 'title', $order = 'ASC' ) {
 		global $wpdb;
 
 		$table_name        = $this->get_table_name();
 		$posts_table       = $wpdb->posts;
+		$postmeta_table    = $wpdb->postmeta;
 		$event_dates_table = $wpdb->prefix . 'fair_event_dates';
 
 		// Sanitize orderby and order.
@@ -226,14 +229,15 @@ class RsvpRepository {
 				ed.end_datetime,
 				ed.all_day
 			FROM {$posts_table} p
+			INNER JOIN {$postmeta_table} pm ON p.ID = pm.post_id
 			LEFT JOIN {$table_name} r ON p.ID = r.event_id
 			LEFT JOIN {$event_dates_table} ed ON p.ID = ed.event_id
 			WHERE p.post_status = %s
-				AND p.post_content LIKE %s
+				AND pm.meta_key = '_has_rsvp_block'
+				AND pm.meta_value = '1'
 			GROUP BY p.ID, p.post_title, ed.start_datetime, ed.end_datetime, ed.all_day
 			ORDER BY {$order_clause}",
-			$post_status,
-			'%<!-- wp:fair-rsvp/rsvp-button%'
+			$post_status
 		);
 
 		// phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared
