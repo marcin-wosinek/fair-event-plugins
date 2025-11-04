@@ -226,12 +226,14 @@ class RsvpRepository {
 				ed.end_datetime,
 				ed.all_day
 			FROM {$posts_table} p
-			INNER JOIN {$table_name} r ON p.ID = r.event_id
+			LEFT JOIN {$table_name} r ON p.ID = r.event_id
 			LEFT JOIN {$event_dates_table} ed ON p.ID = ed.event_id
 			WHERE p.post_status = %s
+				AND p.post_content LIKE %s
 			GROUP BY p.ID, p.post_title, ed.start_datetime, ed.end_datetime, ed.all_day
 			ORDER BY {$order_clause}",
-			$post_status
+			$post_status,
+			'%<!-- wp:fair-rsvp/rsvp-button%'
 		);
 
 		// phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared
