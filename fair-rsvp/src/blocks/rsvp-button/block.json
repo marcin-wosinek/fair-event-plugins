@@ -17,7 +17,12 @@
 			"margin": ["top", "bottom"]
 		}
 	},
-	"attributes": {},
+	"attributes": {
+		"respondBefore": {
+			"type": "string",
+			"default": ""
+		}
+	},
 	"editorScript": "file:./editor.js",
 	"viewScript": "file:./frontend.js",
 	"render": "file:./render.php",

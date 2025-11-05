@@ -41,45 +41,45 @@ msgstr "Marcin Wosinek"
 msgid "https://github.com/marcin-wosinek"
 msgstr "https://github.com/marcin-wosinek"
 
-#: src/blocks/rsvp-button/render.php:55
+#: src/blocks/rsvp-button/render.php:87
 msgid "Please log in to RSVP for this event."
 msgstr "Veuillez vous connecter pour confirmer votre présence à cet événement."
 
-#: src/blocks/rsvp-button/render.php:57
+#: src/blocks/rsvp-button/render.php:89
 msgid "Log In"
 msgstr "Se connecter"
 
-#: src/blocks/rsvp-button/render.php:72
-#: src/blocks/rsvp-button/render.php:108
+#: src/blocks/rsvp-button/render.php:104
+#: src/blocks/rsvp-button/render.php:140
 #: src/Admin/attendance/AttendanceConfirmation.js:403
 #: src/blocks/participants-list/editor.js:66
 #: src/blocks/participants-list/editor.js:120
-#: src/blocks/rsvp-button/editor.js:22
+#: src/blocks/rsvp-button/editor.js:74
 #: src/blocks/rsvp-button/frontend.js:195
 msgid "Yes"
 msgstr "Oui"
 
-#: src/blocks/rsvp-button/render.php:82
-#: src/blocks/rsvp-button/render.php:110
+#: src/blocks/rsvp-button/render.php:114
+#: src/blocks/rsvp-button/render.php:142
 #: src/Admin/attendance/AttendanceConfirmation.js:402
 #: src/blocks/participants-list/editor.js:68
 #: src/blocks/participants-list/editor.js:122
-#: src/blocks/rsvp-button/editor.js:26
+#: src/blocks/rsvp-button/editor.js:82
 #: src/blocks/rsvp-button/frontend.js:197
 msgid "Maybe"
 msgstr "Peut-être"
 
-#: src/blocks/rsvp-button/render.php:92
-#: src/blocks/rsvp-button/render.php:109
+#: src/blocks/rsvp-button/render.php:124
+#: src/blocks/rsvp-button/render.php:141
 #: src/blocks/participants-list/editor.js:71
 #: src/blocks/participants-list/editor.js:124
-#: src/blocks/rsvp-button/editor.js:30
+#: src/blocks/rsvp-button/editor.js:86
 #: src/blocks/rsvp-button/frontend.js:196
 msgid "No"
 msgstr "Non"
 
-#: src/blocks/rsvp-button/render.php:97
-#: src/blocks/rsvp-button/editor.js:38
+#: src/blocks/rsvp-button/render.php:129
+#: src/blocks/rsvp-button/editor.js:94
 #: src/blocks/rsvp-button/frontend.js:138
 msgid "Update RSVP"
 msgstr "Mettre à jour la confirmation"
@@ -142,62 +142,62 @@ msgstr "Vous devez être connecté pour confirmer votre présence."
 msgid "You must be logged in to view RSVPs."
 msgstr "Vous devez être connecté pour voir les confirmations."
 
-#: src/REST/RsvpController.php:658
+#: src/REST/RsvpController.php:679
 msgid "Event/post ID to RSVP for."
 msgstr "ID de l'événement/article pour lequel confirmer la présence."
 
-#: src/REST/RsvpController.php:663
+#: src/REST/RsvpController.php:684
 msgid "RSVP status."
 msgstr "Statut de confirmation."
 
-#: src/REST/RsvpController.php:679
+#: src/REST/RsvpController.php:700
 msgid "Event ID to get RSVPs for."
 msgstr "ID de l'événement pour lequel récupérer les confirmations."
 
-#: src/REST/RsvpController.php:684
+#: src/REST/RsvpController.php:705
 msgid "Filter by RSVP status."
 msgstr "Filtrer par statut de confirmation."
 
-#: src/REST/RsvpController.php:689
+#: src/REST/RsvpController.php:710
 msgid "Filter by attendance status."
 msgstr "Filtrer par statut de présence."
 
-#: src/REST/RsvpController.php:694
+#: src/REST/RsvpController.php:715
 msgid "Current page of the collection."
 msgstr "Page actuelle de la collection."
 
-#: src/REST/RsvpController.php:700
+#: src/REST/RsvpController.php:721
 msgid "Maximum number of items to return per page."
 msgstr "Nombre maximum d'éléments à retourner par page."
 
-#: src/Admin/events/EventsList.js:125
-#: src/Admin/events/EventsList.js:134
-#: src/Admin/events/EventsList.js:148
-#: src/Admin/events/EventsList.js:156
+#: src/Admin/events/EventsList.js:131
+#: src/Admin/events/EventsList.js:140
+#: src/Admin/events/EventsList.js:154
+#: src/Admin/events/EventsList.js:162
 msgid "Events with RSVPs"
 msgstr "Événements avec confirmations"
 
-#: src/Admin/events/EventsList.js:126
+#: src/Admin/events/EventsList.js:132
 msgid "Loading..."
 msgstr "Chargement..."
 
-#: src/Admin/events/EventsList.js:137
+#: src/Admin/events/EventsList.js:143
 msgid "Error loading events: "
 msgstr "Erreur lors du chargement des événements : "
 
-#: src/Admin/events/EventsList.js:149
+#: src/Admin/events/EventsList.js:155
 msgid "No events with RSVPs found."
 msgstr "Aucun événement avec confirmations trouvé."
 
-#: src/Admin/events/EventsList.js:170
+#: src/Admin/events/EventsList.js:176
 msgid "Event"
 msgstr "Événement"
 
-#: src/blocks/rsvp-button/editor.js:17
+#: src/blocks/rsvp-button/editor.js:69
 msgid "RSVP Form Preview"
 msgstr "Aperçu du formulaire de confirmation"
 
-#: src/blocks/rsvp-button/editor.js:41
+#: src/blocks/rsvp-button/editor.js:97
 msgid "Users will see their current RSVP status and can update it."
 msgstr "Les utilisateurs verront leur statut de confirmation actuel et pourront le mettre à jour."
 
@@ -321,7 +321,7 @@ msgstr "Envoi en cours..."
 msgid "Your RSVP has been updated successfully!"
 msgstr "Votre confirmation a été mise à jour avec succès !"
 
-#: src/blocks/rsvp-button/render.php:114
+#: src/blocks/rsvp-button/render.php:146
 #: src/blocks/rsvp-button/frontend.js:96
 #: src/blocks/rsvp-button/frontend.js:105
 msgid "Your current RSVP: "
@@ -339,8 +339,7 @@ msgstr "Échec de la mise à jour de la confirmation. Veuillez réessayer."
 #: src/Admin/AdminHooks.php:46
 #: src/Admin/AttendanceConfirmationPage.php:29
 #: src/Admin/AttendanceConfirmationPage.php:43
-#: src/Admin/events/EventsList.js:197
-#: src/Admin/events/EventsList.js:212
+#: src/Admin/events/EventsList.js:200
 msgid "Confirm Attendance"
 msgstr "Confirmer la Présence"
 
@@ -570,18 +569,30 @@ msgstr "Enregistrer Toute la Présence"
 msgid "Back to Events"
 msgstr "Retour aux Événements"
 
-#: src/Admin/events/EventsList.js:182
-msgid "Actions"
-msgstr ""
-
-#: src/Admin/events/EventsList.js:173
+#: src/Admin/events/EventsList.js:179
 msgid "Date & Time"
 msgstr "Date et Heure"
 
-#: src/Admin/events/EventsList.js:176
+#: src/Admin/events/EventsList.js:182
 msgid "Attendees"
 msgstr "Participants"
 
-#: src/Admin/events/EventsList.js:179
+#: src/Admin/events/EventsList.js:185
 msgid "Confirmed"
 msgstr "Confirmés"
+
+#: src/blocks/rsvp-button/render.php:82
+msgid "RSVPs for this event are now closed."
+msgstr ""
+
+#: src/blocks/rsvp-button/editor.js:48
+msgid "RSVP Settings"
+msgstr ""
+
+#: src/blocks/rsvp-button/editor.js:54
+msgid "RSVP Deadline"
+msgstr ""
+
+#: src/blocks/rsvp-button/editor.js:55
+msgid "Set a deadline for RSVPs. After this date, the RSVP form will be closed."
+msgstr ""

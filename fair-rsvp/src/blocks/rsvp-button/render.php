@@ -18,10 +18,37 @@ $event_id = get_the_ID();
 $is_logged_in = is_user_logged_in();
 $user_id      = get_current_user_id();
 
+// Get respond before deadline from attributes.
+$respond_before = $attributes['respondBefore'] ?? '';
+
+// Resolve dynamic dates if fair-events plugin is active.
+if ( ! empty( $respond_before ) && function_exists( 'fair_events_resolve_date' ) ) {
+	$respond_before = fair_events_resolve_date( $respond_before, $event_id );
+}
+
+// Check if deadline has passed.
+$deadline_passed = false;
+if ( ! empty( $respond_before ) ) {
+	try {
+		$deadline_time = new DateTime( $respond_before );
+		$deadline_time->setTimezone( wp_timezone() );
+		$current_time = current_datetime();
+
+		if ( $current_time >= $deadline_time ) {
+			$deadline_passed = true;
+		}
+	} catch ( Exception $e ) {
+		// If date parsing fails, assume no deadline.
+		$deadline_passed = false;
+	}
+}
+
 // Get wrapper attributes.
 $wrapper_attributes = get_block_wrapper_attributes(
 	array(
-		'class' => 'fair-rsvp-button',
+		'class'                => 'fair-rsvp-button',
+		'data-respond-before'  => esc_attr( $respond_before ),
+		'data-deadline-passed' => $deadline_passed ? 'true' : 'false',
 	)
 );
 
@@ -49,7 +76,12 @@ $current_status = $current_rsvp ? $current_rsvp['rsvp_status'] : '';
 ?>
 
 <div <?php echo wp_kses_data( $wrapper_attributes ); ?>>
-	<?php if ( ! $is_logged_in ) : ?>
+	<?php if ( $deadline_passed ) : ?>
+		<!-- Deadline has passed -->
+		<div class="fair-rsvp-closed-message">
+			<p><?php echo esc_html__( 'RSVPs for this event are now closed.', 'fair-rsvp' ); ?></p>
+		</div>
+	<?php elseif ( ! $is_logged_in ) : ?>
 		<!-- Not logged in -->
 		<div class="fair-rsvp-login-message">
 			<p><?php echo esc_html__( 'Please log in to RSVP for this event.', 'fair-rsvp' ); ?></p>
