@@ -76,36 +76,80 @@ namespace FairEvents {
 // Define date resolver in global namespace for cross-plugin use
 namespace {
 	/**
-	 * Resolve special event date strings to actual datetime values
+	 * Resolve special date strings to actual datetime values
 	 *
-	 * This function allows other plugins to reference event dates using special strings:
+	 * This function allows plugins to reference dynamic dates using special strings.
+	 * Plugins can register their own resolvers using the 'fair_events_date_resolve' filter.
+	 *
+	 * Example usage:
 	 * - 'fair-event:start' - resolves to event start datetime
 	 * - 'fair-event:end' - resolves to event end datetime
 	 *
 	 * @param string $date_string Date string to resolve (ISO datetime or special format).
-	 * @param int    $post_id     Post ID to get event dates from.
-	 * @return string Resolved datetime string or original value if not a special format.
+	 * @param int    $post_id     Post ID context for resolution.
+	 * @return string Resolved datetime string or original value if not resolved.
 	 */
 	function fair_events_resolve_date( $date_string, $post_id ) {
-		// If not a special format, return as-is
-		if ( ! is_string( $date_string ) || strpos( $date_string, 'fair-event:' ) !== 0 ) {
-			return $date_string;
-		}
-
-		// Get event dates
-		$event_dates = \FairEvents\Models\EventDates::get_by_event_id( $post_id );
-		if ( ! $event_dates ) {
-			return $date_string;
-		}
-
-		// Resolve based on format
-		switch ( $date_string ) {
-			case 'fair-event:start':
-				return $event_dates->start_datetime ?? $date_string;
-			case 'fair-event:end':
-				return $event_dates->end_datetime ?? $date_string;
-			default:
-				return $date_string;
-		}
+		/**
+		 * Filter to resolve dynamic date strings to actual datetime values.
+		 *
+		 * Plugins should check if the date_string matches their format,
+		 * resolve it, and return the resolved value. If not their format,
+		 * return the original $date_string unchanged.
+		 *
+		 * @param string $date_string Date string to resolve.
+		 * @param int    $post_id     Post ID context for resolution.
+		 * @return string Resolved datetime or original string.
+		 */
+		return apply_filters( 'fair_events_date_resolve', $date_string, $post_id );
 	}
+
+	/**
+	 * Register fair-events own date resolvers
+	 */
+	add_filter(
+		'fair_events_date_resolve',
+		function ( $date_string, $post_id ) {
+			// Only handle fair-event: format
+			if ( ! is_string( $date_string ) || strpos( $date_string, 'fair-event:' ) !== 0 ) {
+				return $date_string;
+			}
+
+			// Get event dates
+			$event_dates = \FairEvents\Models\EventDates::get_by_event_id( $post_id );
+			if ( ! $event_dates ) {
+				return $date_string;
+			}
+
+			// Resolve based on format
+			switch ( $date_string ) {
+				case 'fair-event:start':
+					return $event_dates->start_datetime ?? $date_string;
+				case 'fair-event:end':
+					return $event_dates->end_datetime ?? $date_string;
+				default:
+					return $date_string;
+			}
+		},
+		10,
+		2
+	);
+
+	/**
+	 * Register fair-events date options for UI
+	 */
+	add_filter(
+		'fair_events_date_options',
+		function ( $options ) {
+			$options[] = array(
+				'value' => 'fair-event:start',
+				'label' => __( 'Event Start', 'fair-events' ),
+			);
+			$options[] = array(
+				'value' => 'fair-event:end',
+				'label' => __( 'Event End', 'fair-events' ),
+			);
+			return $options;
+		}
+	);
 }

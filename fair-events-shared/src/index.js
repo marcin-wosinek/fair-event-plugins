@@ -8,3 +8,4 @@
 
 // Export shared utilities here
 export * from './dateTime.js';
+export * from './dynamicDateRegistry.js';

@@ -43,6 +43,7 @@ class Plugin {
 		$this->load_patterns();
 		$this->load_admin();
 		$this->load_settings();
+		$this->load_rest_api();
 	}
 
 	/**
@@ -84,6 +85,15 @@ class Plugin {
 	private function load_settings() {
 		$settings = new \FairEvents\Settings\Settings();
 		$settings->init();
+	}
+
+	/**
+	 * Load and initialize REST API endpoints
+	 *
+	 * @return void
+	 */
+	private function load_rest_api() {
+		new \FairEvents\REST\DateOptionsEndpoint();
 	}
 
 	/**

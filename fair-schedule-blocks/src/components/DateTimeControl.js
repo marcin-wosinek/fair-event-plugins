@@ -8,9 +8,11 @@ import {
 	Button,
 	RadioControl,
 	SelectControl,
+	Spinner,
 } from '@wordpress/components';
 import { dateI18n } from '@wordpress/date';
 import { __ } from '@wordpress/i18n';
+import { getDynamicDateOptions } from 'fair-events-shared';
 
 /**
  * Format a single datetime based on event type
@@ -66,17 +68,37 @@ export default function DateTimeControl({
 	eventEnd,
 	eventAllDay = false,
 }) {
-	// Detect if current value is an event reference
-	const isEventValue = (val) => {
-		return val === 'fair-event:start' || val === 'fair-event:end';
+	// State for dynamic date options
+	const [dateOptions, setDateOptions] = useState([]);
+	const [isLoading, setIsLoading] = useState(true);
+
+	// Detect if current value looks like a dynamic date format
+	// Uses simple pattern matching since options might not be loaded yet
+	const looksLikeDynamicDate = (val) => {
+		return typeof val === 'string' && /^[a-z0-9-]+:[a-z0-9-]+$/i.test(val);
 	};
 
-	// Initialize mode based on current value
-	const [mode, setMode] = useState(isEventValue(value) ? 'event' : 'custom');
+	// Initialize mode based on current value pattern
+	const [mode, setMode] = useState(
+		looksLikeDynamicDate(value) ? 'event' : 'custom'
+	);
+
+	// Fetch dynamic date options on mount
+	useEffect(() => {
+		getDynamicDateOptions()
+			.then((options) => {
+				setDateOptions(options);
+				setIsLoading(false);
+			})
+			.catch((error) => {
+				console.error('Error loading date options:', error);
+				setIsLoading(false);
+			});
+	}, []);
 
 	// Update mode if value changes externally
 	useEffect(() => {
-		setMode(isEventValue(value) ? 'event' : 'custom');
+		setMode(looksLikeDynamicDate(value) ? 'event' : 'custom');
 	}, [value]);
 
 	const handleTodayClick = () => {
@@ -88,8 +110,10 @@ export default function DateTimeControl({
 	const handleModeChange = (newMode) => {
 		setMode(newMode);
 		if (newMode === 'event') {
-			// Switch to event mode, default to event start
-			onChange('fair-event:start');
+			// Switch to event mode, default to first available option
+			if (dateOptions.length > 0) {
+				onChange(dateOptions[0].value);
+			}
 		} else {
 			// Switch to custom mode, clear value
 			onChange('');
@@ -142,60 +166,80 @@ export default function DateTimeControl({
 				</>
 			) : (
 				<>
-					<SelectControl
-						label={__('Event date', 'fair-schedule-blocks')}
-						value={value}
-						options={[
-							{
-								label: __(
-									'Event Start',
+					{isLoading ? (
+						<div style={{ padding: '16px', textAlign: 'center' }}>
+							<Spinner />
+							<p style={{ marginTop: '8px' }}>
+								{__(
+									'Loading date options...',
 									'fair-schedule-blocks'
-								),
-								value: 'fair-event:start',
-							},
-							{
-								label: __('Event End', 'fair-schedule-blocks'),
-								value: 'fair-event:end',
-							},
-						]}
-						onChange={onChange}
-					/>
-					{(() => {
-						const resolvedDate =
-							value === 'fair-event:start'
-								? eventStart
-								: value === 'fair-event:end'
-									? eventEnd
-									: null;
+								)}
+							</p>
+						</div>
+					) : dateOptions.length === 0 ? (
+						<p
+							style={{
+								padding: '12px',
+								backgroundColor: '#f0f0f1',
+								borderRadius: '2px',
+								color: '#757575',
+							}}
+						>
+							{__(
+								'No dynamic date options available.',
+								'fair-schedule-blocks'
+							)}
+						</p>
+					) : (
+						<>
+							<SelectControl
+								label={__('Event date', 'fair-schedule-blocks')}
+								value={value}
+								options={dateOptions}
+								onChange={onChange}
+							/>
+							{(() => {
+								// For backward compatibility: check if it's fair-event format
+								if (
+									value === 'fair-event:start' ||
+									value === 'fair-event:end'
+								) {
+									const resolvedDate =
+										value === 'fair-event:start'
+											? eventStart
+											: eventEnd;
 
-						if (resolvedDate) {
-							const formattedDate = formatEventDate(
-								resolvedDate,
-								eventAllDay
-							);
-							return (
-								<p
-									style={{
-										fontSize: '14px',
-										color: '#2c3338',
-										marginTop: '8px',
-										padding: '8px',
-										backgroundColor: '#f0f0f1',
-										borderRadius: '2px',
-									}}
-								>
-									<strong>
-										{__(
-											'Current value:',
-											'fair-schedule-blocks'
-										)}
-									</strong>{' '}
-									{formattedDate}
-								</p>
-							);
-						}
-						return null;
-					})()}
+									if (resolvedDate) {
+										const formattedDate = formatEventDate(
+											resolvedDate,
+											eventAllDay
+										);
+										return (
+											<p
+												style={{
+													fontSize: '14px',
+													color: '#2c3338',
+													marginTop: '8px',
+													padding: '8px',
+													backgroundColor: '#f0f0f1',
+													borderRadius: '2px',
+												}}
+											>
+												<strong>
+													{__(
+														'Current value:',
+														'fair-schedule-blocks'
+													)}
+												</strong>{' '}
+												{formattedDate}
+											</p>
+										);
+									}
+								}
+								return null;
+							})()}
+						</>
+					)}
 				</>
 			)}
 
