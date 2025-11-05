@@ -6,7 +6,6 @@ import { useState, useEffect } from '@wordpress/element';
 import {
 	DateTimePicker,
 	Button,
-	RadioControl,
 	SelectControl,
 	Spinner,
 } from '@wordpress/components';
@@ -71,17 +70,12 @@ export default function DateTimeControl({
 	// State for dynamic date options
 	const [dateOptions, setDateOptions] = useState([]);
 	const [isLoading, setIsLoading] = useState(true);
+	const [selectedOption, setSelectedOption] = useState('custom');
 
 	// Detect if current value looks like a dynamic date format
-	// Uses simple pattern matching since options might not be loaded yet
 	const looksLikeDynamicDate = (val) => {
 		return typeof val === 'string' && /^[a-z0-9-]+:[a-z0-9-]+$/i.test(val);
 	};
-
-	// Initialize mode based on current value pattern
-	const [mode, setMode] = useState(
-		looksLikeDynamicDate(value) ? 'event' : 'custom'
-	);
 
 	// Fetch dynamic date options on mount
 	useEffect(() => {
@@ -89,6 +83,13 @@ export default function DateTimeControl({
 			.then((options) => {
 				setDateOptions(options);
 				setIsLoading(false);
+
+				// Set initial selection based on current value
+				if (value && looksLikeDynamicDate(value)) {
+					setSelectedOption(value);
+				} else if (value) {
+					setSelectedOption('custom');
+				}
 			})
 			.catch((error) => {
 				console.error('Error loading date options:', error);
@@ -96,178 +97,162 @@ export default function DateTimeControl({
 			});
 	}, []);
 
-	// Update mode if value changes externally
+	// Update selected option if value changes externally
 	useEffect(() => {
-		setMode(looksLikeDynamicDate(value) ? 'event' : 'custom');
+		if (value && looksLikeDynamicDate(value)) {
+			setSelectedOption(value);
+		} else if (value) {
+			setSelectedOption('custom');
+		}
 	}, [value]);
 
 	const handleTodayClick = () => {
 		const today = new Date();
 		const formatted = dateI18n('c', today);
 		onChange(formatted);
+		setSelectedOption('custom');
 	};
 
-	const handleModeChange = (newMode) => {
-		setMode(newMode);
-		if (newMode === 'event') {
-			// Switch to event mode, default to first available option
-			if (dateOptions.length > 0) {
-				onChange(dateOptions[0].value);
+	const handleSelectChange = (newValue) => {
+		setSelectedOption(newValue);
+
+		if (newValue === 'custom') {
+			// If switching to custom, clear the value so DateTimePicker shows
+			if (looksLikeDynamicDate(value)) {
+				onChange('');
 			}
 		} else {
-			// Switch to custom mode, clear value
-			onChange('');
+			// It's a dynamic date option, set it directly
+			onChange(newValue);
 		}
+	};
+
+	// Build combined options for dropdown
+	const buildSelectOptions = () => {
+		const options = [
+			{
+				label: __('Custom date/time', 'fair-schedule-blocks'),
+				value: 'custom',
+			},
+		];
+
+		// Add dynamic date options from all plugins
+		if (dateOptions.length > 0) {
+			dateOptions.forEach((option) => {
+				options.push(option);
+			});
+		}
+
+		return options;
 	};
 
 	return (
 		<div style={{ marginBottom: '16px' }}>
-			<label
-				style={{
-					display: 'block',
-					marginBottom: '8px',
-					fontWeight: 'bold',
-				}}
-			>
-				{label}
-			</label>
-
-			<RadioControl
-				selected={mode}
-				options={[
-					{
-						label: __('Custom date/time', 'fair-schedule-blocks'),
-						value: 'custom',
-					},
-					{
-						label: __('Read date from', 'fair-schedule-blocks'),
-						value: 'event',
-					},
-				]}
-				onChange={handleModeChange}
-			/>
-
-			{mode === 'custom' ? (
+			{isLoading ? (
 				<>
-					<DateTimePicker
-						currentDate={value || null}
-						onChange={(date) => {
-							const formatted = date ? dateI18n('c', date) : '';
-							onChange(formatted);
+					<label
+						style={{
+							display: 'block',
+							marginBottom: '8px',
+							fontWeight: 'bold',
 						}}
-					/>
-					<Button
-						variant="secondary"
-						onClick={handleTodayClick}
-						style={{ marginTop: '8px' }}
 					>
-						{__('Today', 'fair-schedule-blocks')}
-					</Button>
-				</>
-			) : (
-				<>
-					{isLoading ? (
-						<div style={{ padding: '16px', textAlign: 'center' }}>
-							<Spinner />
-							<p style={{ marginTop: '8px' }}>
-								{__(
-									'Loading date options...',
-									'fair-schedule-blocks'
-								)}
-							</p>
-						</div>
-					) : dateOptions.length === 0 ? (
-						<p
-							style={{
-								padding: '12px',
-								backgroundColor: '#f0f0f1',
-								borderRadius: '2px',
-								color: '#757575',
-							}}
-						>
+						{label}
+					</label>
+					<div style={{ padding: '16px', textAlign: 'center' }}>
+						<Spinner />
+						<p style={{ marginTop: '8px' }}>
 							{__(
-								'No dynamic date options available.',
+								'Loading date options...',
 								'fair-schedule-blocks'
 							)}
 						</p>
-					) : (
-						<>
-							<SelectControl
-								label={__('Event date', 'fair-schedule-blocks')}
-								value={value}
-								options={dateOptions}
-								onChange={onChange}
-							/>
-							{(() => {
-								// For backward compatibility: check if it's fair-event format
-								if (
-									value === 'fair-event:start' ||
-									value === 'fair-event:end'
-								) {
-									const resolvedDate =
-										value === 'fair-event:start'
-											? eventStart
-											: eventEnd;
+					</div>
+				</>
+			) : (
+				<>
+					<SelectControl
+						label={label}
+						value={selectedOption}
+						options={buildSelectOptions()}
+						onChange={handleSelectChange}
+						help={
+							selectedOption !== 'custom'
+								? __(
+										'Using a dynamic date from plugin',
+										'fair-schedule-blocks'
+									)
+								: help
+						}
+					/>
 
-									if (resolvedDate) {
-										const formattedDate = formatEventDate(
-											resolvedDate,
-											eventAllDay
-										);
-										return (
-											<p
-												style={{
-													fontSize: '14px',
-													color: '#2c3338',
-													marginTop: '8px',
-													padding: '8px',
-													backgroundColor: '#f0f0f1',
-													borderRadius: '2px',
-												}}
-											>
-												<strong>
-													{__(
-														'Current value:',
-														'fair-schedule-blocks'
-													)}
-												</strong>{' '}
-												{formattedDate}
-											</p>
-										);
-									}
-								}
-								return null;
-							})()}
+					{selectedOption === 'custom' && (
+						<>
+							<DateTimePicker
+								currentDate={value || null}
+								onChange={(date) => {
+									const formatted = date
+										? dateI18n('c', date)
+										: '';
+									onChange(formatted);
+								}}
+							/>
+							<Button
+								variant="secondary"
+								onClick={handleTodayClick}
+								style={{ marginTop: '8px' }}
+							>
+								{__('Today', 'fair-schedule-blocks')}
+							</Button>
 						</>
 					)}
+
+					{selectedOption !== 'custom' &&
+						value === 'fair-event:start' &&
+						eventStart && (
+							<p
+								style={{
+									fontSize: '14px',
+									color: '#2c3338',
+									marginTop: '8px',
+									padding: '8px',
+									backgroundColor: '#f0f0f1',
+									borderRadius: '2px',
+								}}
+							>
+								<strong>
+									{__(
+										'Resolved value:',
+										'fair-schedule-blocks'
+									)}
+								</strong>{' '}
+								{formatEventDate(eventStart, eventAllDay)}
+							</p>
+						)}
+
+					{selectedOption !== 'custom' &&
+						value === 'fair-event:end' &&
+						eventEnd && (
+							<p
+								style={{
+									fontSize: '14px',
+									color: '#2c3338',
+									marginTop: '8px',
+									padding: '8px',
+									backgroundColor: '#f0f0f1',
+									borderRadius: '2px',
+								}}
+							>
+								<strong>
+									{__(
+										'Resolved value:',
+										'fair-schedule-blocks'
+									)}
+								</strong>{' '}
+								{formatEventDate(eventEnd, eventAllDay)}
+							</p>
+						)}
 				</>
-			)}
-
-			{help && mode === 'custom' && (
-				<p
-					style={{
-						fontSize: '12px',
-						color: '#757575',
-						marginTop: '8px',
-					}}
-				>
-					{help}
-				</p>
-			)}
-
-			{mode === 'event' && (
-				<p
-					style={{
-						fontSize: '12px',
-						color: '#757575',
-						marginTop: '8px',
-					}}
-				>
-					{__(
-						"Uses the event's start or end date automatically.",
-						'fair-schedule-blocks'
-					)}
-				</p>
 			)}
 		</div>
 	);

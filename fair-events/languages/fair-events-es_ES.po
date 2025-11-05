@@ -422,3 +422,11 @@ msgstr "Confirmar Asistencia"
 #: src/Admin/event-meta/index.js:93
 msgid "End date must be after start date"
 msgstr "La fecha de fin debe ser posterior a la fecha de inicio"
+
+#: fair-events.php:146
+msgid "Fair Event: Start Date"
+msgstr ""
+
+#: fair-events.php:150
+msgid "Fair Event: End Date"
+msgstr ""

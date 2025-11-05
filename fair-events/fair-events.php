@@ -143,11 +143,11 @@ namespace {
 		function ( $options ) {
 			$options[] = array(
 				'value' => 'fair-event:start',
-				'label' => __( 'Event Start', 'fair-events' ),
+				'label' => __( 'Fair Event: Start Date', 'fair-events' ),
 			);
 			$options[] = array(
 				'value' => 'fair-event:end',
-				'label' => __( 'Event End', 'fair-events' ),
+				'label' => __( 'Fair Event: End Date', 'fair-events' ),
 			);
 			return $options;
 		}

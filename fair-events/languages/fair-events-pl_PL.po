@@ -422,3 +422,11 @@ msgstr "Potwierdź Obecność"
 #: src/Admin/event-meta/index.js:93
 msgid "End date must be after start date"
 msgstr "Data zakończenia musi być późniejsza niż data rozpoczęcia"
+
+#: fair-events.php:146
+msgid "Fair Event: Start Date"
+msgstr ""
+
+#: fair-events.php:150
+msgid "Fair Event: End Date"
+msgstr ""
