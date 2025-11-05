@@ -2,7 +2,7 @@
  * Test suite for DateTimeControl component
  */
 
-import DateTimeControl from '../src/components/DateTimeControl.js';
+import DateTimeControl from '../src/DateTimeControl.js';
 
 describe('DateTimeControl', () => {
 	test('component is defined and is a function', () => {

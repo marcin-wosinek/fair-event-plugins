@@ -5,7 +5,7 @@ import { useBlockProps, InspectorControls } from '@wordpress/block-editor';
 import { PanelBody } from '@wordpress/components';
 import { useSelect } from '@wordpress/data';
 import { __ } from '@wordpress/i18n';
-import DateTimeControl from '../../components/DateTimeControl.js';
+import { DateTimeControl } from 'fair-events-shared';
 
 registerBlockType('fair-rsvp/rsvp-button', {
 	edit: ({ attributes, setAttributes, context }) => {

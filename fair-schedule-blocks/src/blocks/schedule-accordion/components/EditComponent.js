@@ -9,7 +9,7 @@ import {
 	useInnerBlocksProps,
 } from '@wordpress/block-editor';
 import { __ } from '@wordpress/i18n';
-import DateTimeControl from '../../../components/DateTimeControl.js';
+import { DateTimeControl } from 'fair-events-shared';
 
 /**
  * Edit component for the Schedule Accordion Block

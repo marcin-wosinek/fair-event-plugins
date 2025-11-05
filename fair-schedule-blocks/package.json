@@ -34,8 +34,12 @@
 		"@wordpress/block-editor": "^15.2.0",
 		"@wordpress/blocks": "^15.2.0",
 		"@wordpress/components": "^30.2.0",
+		"@wordpress/data": "^10.2.0",
+		"@wordpress/date": "^5.2.0",
+		"@wordpress/element": "^6.2.0",
 		"@wordpress/i18n": "^6.2.0",
-		"date-fns": "^4.1.0"
+		"date-fns": "^4.1.0",
+		"fair-events-shared": "*"
 	},
 	"devDependencies": {
 		"@babel/core": "^7.28.3",
