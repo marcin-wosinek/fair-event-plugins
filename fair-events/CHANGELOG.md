@@ -1,5 +1,11 @@
 # fair-events
 
+## 0.4.3
+
+### Patch Changes
+
+- 9b83592: Link to RSVP confirmation if plugin is available
+
 ## 0.4.2
 
 ### Patch Changes
