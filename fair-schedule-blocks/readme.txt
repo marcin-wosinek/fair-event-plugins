@@ -72,11 +72,12 @@ Yes, users can click on collapsed content to reveal it again.
 - Fix the syntax issue
 
 = 0.1.0 =
-* Initial release
-* Schedule Accordion block with auto-collapse functionality
-* Timezone-aware datetime handling
-* Click-to-reveal functionality
-* Responsive design
+
+- Initial release
+- Schedule Accordion block with auto-collapse functionality
+- Timezone-aware datetime handling
+- Click-to-reveal functionality
+- Responsive design
 
 == Upgrade Notice ==
 

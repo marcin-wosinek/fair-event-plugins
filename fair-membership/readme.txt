@@ -36,6 +36,3 @@ Fair Membership is a WordPress plugin designed for managing group memberships.
 ### Minor Changes
 
 - b7e1578: Add user-import workflow
-
-= 0.1.0 =
-* Initial release

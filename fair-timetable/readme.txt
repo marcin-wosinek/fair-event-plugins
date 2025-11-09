@@ -114,7 +114,7 @@ Time slots calculate their position automatically based on the timetable's start
 
 Minor fixes
 
-= 0.1.0 =
+## 0.1.0
 
 Initial version of the plugin.
 

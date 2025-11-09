@@ -129,13 +129,6 @@ Yes! Events are fully compatible with the Gutenberg block editor and the REST AP
 
 ### Patch Changes
 
-- 8c3c2fe: Fix the category search in event-list block
-- 46fbaaf: Fix the filtering in event-list block
-
-## 0.3.1
-
-### Patch Changes
-
 - c8f06d5: Fix slug setting page
 
 ## 0.3.0
@@ -150,17 +143,6 @@ Yes! Events are fully compatible with the Gutenberg block editor and the REST AP
 ### Minor Changes
 
 - f39c6fb: Add list view block with patterns support
-
-## 0.1.0
-* Initial release
-* Custom Event post type
-* Event metadata (start, end, all-day)
-* Admin meta box for event details
-* Author support
-* Category and tag support
-* REST API integration
-* Automatic date/time formatting
-* Theme integration via content filter
 
 == Upgrade Notice ==
 

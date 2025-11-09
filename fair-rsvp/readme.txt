@@ -56,10 +56,3 @@ Navigate to Fair RSVP in the WordPress admin menu to view and manage all RSVPs.
 ### Minor Changes
 
 - Add participant list block
-
-= 0.1.0 =
-* Initial release with basic scaffolding
-* Database table for RSVP storage
-* Admin page placeholder
-* REST API placeholder
-* Block registration system

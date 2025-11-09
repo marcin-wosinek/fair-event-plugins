@@ -33,7 +33,7 @@
 		"changeset:add": "changeset add",
 		"changeset:status": "changeset status",
 		"version-packages": "changeset version && npm run sync-wp-versions",
-		"sync-wp-versions": "node scripts/sync-wp-versions.js",
+		"sync-wp-versions": "node scripts/sync-wp-versions.js && node scripts/sync-changelog.js",
 		"svn:rm": "rm -fr fair-calendar-button/svn fair-membership/svn fair-timetable/svn fair-payment/svn fair-schedule-blocks/svn",
 		"release": "changeset tag",
 		"dist-archive": "npm-run-all dist-archive:*",
