@@ -201,7 +201,7 @@ msgid "Whether the event is an all-day event"
 msgstr "Ob die Veranstaltung ganztägig ist"
 
 #: src/PostTypes/Event.php:132
-#: src/PostTypes/Event.php:269
+#: src/PostTypes/Event.php:280
 msgid "Event location"
 msgstr "Veranstaltungsort"
 
@@ -213,32 +213,33 @@ msgstr "Veranstaltungsdetails"
 msgid "Start Date & Time"
 msgstr "Startdatum & -zeit"
 
-#: src/PostTypes/Event.php:237
+#: src/PostTypes/Event.php:248
 msgid "End Date & Time"
 msgstr "Enddatum & -zeit"
 
-#: src/PostTypes/Event.php:256
+#: src/PostTypes/Event.php:267
 msgid "All Day Event"
 msgstr "Ganztägige Veranstaltung"
 
-#: src/PostTypes/Event.php:261
-#: src/PostTypes/Event.php:361
+#: src/Admin/CopyEventPage.php:275
+#: src/PostTypes/Event.php:272
+#: src/PostTypes/Event.php:372
 msgid "Location"
 msgstr "Ort"
 
-#: src/PostTypes/Event.php:358
+#: src/PostTypes/Event.php:369
 msgid "Event Start"
 msgstr "Beginn"
 
-#: src/PostTypes/Event.php:359
+#: src/PostTypes/Event.php:370
 msgid "Event End"
 msgstr "Ende"
 
-#: src/PostTypes/Event.php:360
+#: src/PostTypes/Event.php:371
 msgid "All Day"
 msgstr "Ganztägig"
 
-#: src/PostTypes/Event.php:393
+#: src/PostTypes/Event.php:404
 msgid "Yes"
 msgstr "Ja"
 
@@ -415,11 +416,11 @@ msgstr "liste"
 msgid "Upcoming"
 msgstr "Bevorstehende"
 
-#: src/PostTypes/Event.php:489
+#: src/PostTypes/Event.php:508
 msgid "Confirm Attendance"
 msgstr "Anwesenheit Bestätigen"
 
-#: src/Admin/event-meta/index.js:93
+#: src/Admin/event-meta/index.js:244
 msgid "End date must be after start date"
 msgstr "Enddatum muss nach dem Startdatum liegen"
 
@@ -430,3 +431,120 @@ msgstr ""
 #: fair-events.php:150
 msgid "Fair Event: End Date"
 msgstr ""
+
+#: src/Admin/AdminPages.php:66
+#: src/Admin/AdminPages.php:67
+#: src/Admin/CopyEventPage.php:252
+msgid "Copy Event"
+msgstr "Veranstaltung kopieren"
+
+#: src/Admin/CopyEventPage.php:29
+msgid "You do not have permission to create events."
+msgstr "Sie haben keine Berechtigung, Veranstaltungen zu erstellen."
+
+#: src/Admin/CopyEventPage.php:34
+#: src/Admin/CopyEventPage.php:137
+msgid "Security check failed. Please try again."
+msgstr "Sicherheitsprüfung fehlgeschlagen. Bitte versuchen Sie es erneut."
+
+#: src/Admin/CopyEventPage.php:40
+#: src/Admin/CopyEventPage.php:132
+msgid "Invalid event ID."
+msgstr "Ungültige Veranstaltungs-ID."
+
+#: src/Admin/CopyEventPage.php:46
+#: src/Admin/CopyEventPage.php:143
+msgid "Event not found."
+msgstr "Veranstaltung nicht gefunden."
+
+#: src/Admin/CopyEventPage.php:56
+msgid "Event title is required."
+msgstr "Veranstaltungstitel ist erforderlich."
+
+#: src/Admin/CopyEventPage.php:62
+msgid "Could not retrieve event dates."
+msgstr "Veranstaltungsdaten konnten nicht abgerufen werden."
+
+#: src/Admin/CopyEventPage.php:81
+msgid "Failed to create new event."
+msgstr "Neue Veranstaltung konnte nicht erstellt werden."
+
+#: src/Admin/CopyEventPage.php:126
+msgid "You do not have permission to copy events."
+msgstr "Sie haben keine Berechtigung, Veranstaltungen zu kopieren."
+
+#: src/Admin/CopyEventPage.php:178
+msgid "Custom date is required."
+msgstr "Benutzerdefiniertes Datum ist erforderlich."
+
+#: src/Admin/CopyEventPage.php:196
+msgid "Invalid date option selected."
+msgstr "Ungültige Datumsoption ausgewählt."
+
+#: src/Admin/CopyEventPage.php:255
+msgid "Original Event"
+msgstr "Ursprüngliche Veranstaltung"
+
+#: src/Admin/CopyEventPage.php:258
+msgid "Title"
+msgstr "Titel"
+
+#: src/Admin/CopyEventPage.php:263
+msgid "Start"
+msgstr "Beginn"
+
+#: src/Admin/CopyEventPage.php:269
+msgid "End"
+msgstr "Ende"
+
+#: src/Admin/CopyEventPage.php:288
+msgid "New Event Title"
+msgstr "Neuer Veranstaltungstitel"
+
+#: src/Admin/CopyEventPage.php:295
+msgid "(Copy)"
+msgstr "(Kopie)"
+
+#: src/Admin/CopyEventPage.php:304
+msgid "Event Date"
+msgstr "Veranstaltungsdatum"
+
+#: src/Admin/CopyEventPage.php:310
+msgid "A week later"
+msgstr "Eine Woche später"
+
+#: src/Admin/CopyEventPage.php:314
+msgid "Custom date"
+msgstr "Benutzerdefiniertes Datum"
+
+#: src/Admin/CopyEventPage.php:327
+msgid "Select the new start date. The event duration and time will be preserved."
+msgstr "Wählen Sie das neue Startdatum. Die Veranstaltungsdauer und -zeit bleiben erhalten."
+
+#: src/Admin/CopyEventPage.php:335
+msgid "The new event will be created as a draft. All other event details (description, location, featured image, categories) will be copied from the original event."
+msgstr "Die neue Veranstaltung wird als Entwurf erstellt. Alle anderen Veranstaltungsdetails (Beschreibung, Ort, Beitragsbild, Kategorien) werden von der ursprünglichen Veranstaltung kopiert."
+
+#: src/Admin/CopyEventPage.php:344
+msgid "Create Copy"
+msgstr "Kopie erstellen"
+
+#: src/Admin/CopyEventPage.php:347
+msgid "Cancel"
+msgstr "Abbrechen"
+
+#: src/PostTypes/Event.php:237
+msgid "Event Length"
+msgstr "Veranstaltungsdauer"
+
+#: src/PostTypes/Event.php:240
+msgid "Other"
+msgstr "Andere"
+
+#: src/PostTypes/Event.php:243
+msgid "Select a duration to automatically set the end time"
+msgstr "Wählen Sie eine Dauer, um die Endzeit automatisch festzulegen"
+
+#: src/PostTypes/Event.php:498
+msgid "Copy"
+msgstr "Kopieren"

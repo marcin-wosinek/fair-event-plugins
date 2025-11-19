@@ -475,7 +475,7 @@ class Event {
 	}
 
 	/**
-	 * Add RSVP confirmation link to row actions
+	 * Add custom row actions (Copy, RSVP, etc.)
 	 *
 	 * @param array    $actions Existing row actions.
 	 * @param \WP_Post $post    The post object.
@@ -487,18 +487,27 @@ class Event {
 			return $actions;
 		}
 
-		// Only add if fair-rsvp plugin is active
-		if ( ! defined( 'FAIR_RSVP_PLUGIN_DIR' ) ) {
-			return $actions;
-		}
-
-		// Add confirm attendance link
-		$url                           = admin_url( 'admin.php?page=fair-rsvp-attendance&event_id=' . $post->ID );
-		$actions['confirm_attendance'] = sprintf(
-			'<a href="%s">%s</a>',
-			esc_url( $url ),
-			esc_html__( 'Confirm Attendance', 'fair-events' )
+		// Add copy event link
+		$copy_url        = wp_nonce_url(
+			admin_url( 'admin.php?page=fair-events-copy&event_id=' . $post->ID ),
+			'copy_fair_event_' . $post->ID
 		);
+		$actions['copy'] = sprintf(
+			'<a href="%s">%s</a>',
+			esc_url( $copy_url ),
+			esc_html__( 'Copy', 'fair-events' )
+		);
+
+		// Only add RSVP link if fair-rsvp plugin is active
+		if ( defined( 'FAIR_RSVP_PLUGIN_DIR' ) ) {
+			// Add confirm attendance link
+			$url                           = admin_url( 'admin.php?page=fair-rsvp-attendance&event_id=' . $post->ID );
+			$actions['confirm_attendance'] = sprintf(
+				'<a href="%s">%s</a>',
+				esc_url( $url ),
+				esc_html__( 'Confirm Attendance', 'fair-events' )
+			);
+		}
 
 		return $actions;
 	}

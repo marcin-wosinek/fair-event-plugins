@@ -59,6 +59,19 @@ class AdminPages {
 			'fair-events-import',
 			array( $this, 'render_import_page' )
 		);
+
+		// Copy Event page (hidden from menu, accessed via row action)
+		$copy_hookname = add_submenu_page(
+			null,
+			__( 'Copy Event', 'fair-events' ),
+			__( 'Copy Event', 'fair-events' ),
+			'edit_posts',
+			'fair-events-copy',
+			array( $this, 'render_copy_event_page' )
+		);
+
+		// Handle copy event form submission before page render
+		add_action( 'load-' . $copy_hookname, array( $this, 'handle_copy_event_submission' ) );
 	}
 
 	/**
@@ -116,6 +129,31 @@ class AdminPages {
 			<h1><?php echo esc_html( get_admin_page_title() ); ?></h1>
 		</div>
 		<?php
+	}
+
+	/**
+	 * Handle copy event form submission
+	 *
+	 * @return void
+	 */
+	public function handle_copy_event_submission() {
+		// Only process if form was submitted
+		if ( ! isset( $_POST['copy_event_submit'] ) ) {
+			return;
+		}
+
+		$copy_page = new CopyEventPage();
+		$copy_page->handle_submission();
+	}
+
+	/**
+	 * Render copy event page
+	 *
+	 * @return void
+	 */
+	public function render_copy_event_page() {
+		$copy_page = new CopyEventPage();
+		$copy_page->render();
 	}
 
 	/**

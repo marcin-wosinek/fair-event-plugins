@@ -2,14 +2,14 @@
 # This file is distributed under the GPLv3 or later.
 msgid ""
 msgstr ""
-"Project-Id-Version: Fair Events 0.4.2\n"
+"Project-Id-Version: Fair Events 0.4.3\n"
 "Report-Msgid-Bugs-To: https://wordpress.org/support/plugin/fair-events\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"POT-Creation-Date: 2025-11-05T22:54:35+00:00\n"
+"POT-Creation-Date: 2025-11-19T12:37:26+00:00\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "X-Generator: WP-CLI 2.12.0\n"
 "X-Domain: fair-events\n"
@@ -73,6 +73,113 @@ msgstr ""
 
 #: src/Admin/AdminPages.php:57
 msgid "Import"
+msgstr ""
+
+#: src/Admin/AdminPages.php:66
+#: src/Admin/AdminPages.php:67
+#: src/Admin/CopyEventPage.php:252
+msgid "Copy Event"
+msgstr ""
+
+#: src/Admin/CopyEventPage.php:29
+msgid "You do not have permission to create events."
+msgstr ""
+
+#: src/Admin/CopyEventPage.php:34
+#: src/Admin/CopyEventPage.php:137
+msgid "Security check failed. Please try again."
+msgstr ""
+
+#: src/Admin/CopyEventPage.php:40
+#: src/Admin/CopyEventPage.php:132
+msgid "Invalid event ID."
+msgstr ""
+
+#: src/Admin/CopyEventPage.php:46
+#: src/Admin/CopyEventPage.php:143
+msgid "Event not found."
+msgstr ""
+
+#: src/Admin/CopyEventPage.php:56
+msgid "Event title is required."
+msgstr ""
+
+#: src/Admin/CopyEventPage.php:62
+msgid "Could not retrieve event dates."
+msgstr ""
+
+#: src/Admin/CopyEventPage.php:81
+msgid "Failed to create new event."
+msgstr ""
+
+#: src/Admin/CopyEventPage.php:126
+msgid "You do not have permission to copy events."
+msgstr ""
+
+#: src/Admin/CopyEventPage.php:178
+msgid "Custom date is required."
+msgstr ""
+
+#: src/Admin/CopyEventPage.php:196
+msgid "Invalid date option selected."
+msgstr ""
+
+#: src/Admin/CopyEventPage.php:255
+msgid "Original Event"
+msgstr ""
+
+#: src/Admin/CopyEventPage.php:258
+msgid "Title"
+msgstr ""
+
+#: src/Admin/CopyEventPage.php:263
+msgid "Start"
+msgstr ""
+
+#: src/Admin/CopyEventPage.php:269
+msgid "End"
+msgstr ""
+
+#: src/Admin/CopyEventPage.php:275
+#: src/PostTypes/Event.php:272
+#: src/PostTypes/Event.php:372
+msgid "Location"
+msgstr ""
+
+#: src/Admin/CopyEventPage.php:288
+msgid "New Event Title"
+msgstr ""
+
+#: src/Admin/CopyEventPage.php:295
+msgid "(Copy)"
+msgstr ""
+
+#: src/Admin/CopyEventPage.php:304
+msgid "Event Date"
+msgstr ""
+
+#: src/Admin/CopyEventPage.php:310
+msgid "A week later"
+msgstr ""
+
+#: src/Admin/CopyEventPage.php:314
+msgid "Custom date"
+msgstr ""
+
+#: src/Admin/CopyEventPage.php:327
+msgid "Select the new start date. The event duration and time will be preserved."
+msgstr ""
+
+#: src/Admin/CopyEventPage.php:335
+msgid "The new event will be created as a draft. All other event details (description, location, featured image, categories) will be copied from the original event."
+msgstr ""
+
+#: src/Admin/CopyEventPage.php:344
+msgid "Create Copy"
+msgstr ""
+
+#: src/Admin/CopyEventPage.php:347
+msgid "Cancel"
 msgstr ""
 
 #: src/blocks/events-list/render.php:158
@@ -219,7 +326,7 @@ msgid "Whether the event is an all-day event"
 msgstr ""
 
 #: src/PostTypes/Event.php:132
-#: src/PostTypes/Event.php:269
+#: src/PostTypes/Event.php:280
 msgid "Event location"
 msgstr ""
 
@@ -232,35 +339,46 @@ msgid "Start Date & Time"
 msgstr ""
 
 #: src/PostTypes/Event.php:237
+msgid "Event Length"
+msgstr ""
+
+#: src/PostTypes/Event.php:240
+msgid "Other"
+msgstr ""
+
+#: src/PostTypes/Event.php:243
+msgid "Select a duration to automatically set the end time"
+msgstr ""
+
+#: src/PostTypes/Event.php:248
 msgid "End Date & Time"
 msgstr ""
 
-#: src/PostTypes/Event.php:256
+#: src/PostTypes/Event.php:267
 msgid "All Day Event"
 msgstr ""
 
-#: src/PostTypes/Event.php:261
-#: src/PostTypes/Event.php:361
-msgid "Location"
-msgstr ""
-
-#: src/PostTypes/Event.php:358
+#: src/PostTypes/Event.php:369
 msgid "Event Start"
 msgstr ""
 
-#: src/PostTypes/Event.php:359
+#: src/PostTypes/Event.php:370
 msgid "Event End"
 msgstr ""
 
-#: src/PostTypes/Event.php:360
+#: src/PostTypes/Event.php:371
 msgid "All Day"
 msgstr ""
 
-#: src/PostTypes/Event.php:393
+#: src/PostTypes/Event.php:404
 msgid "Yes"
 msgstr ""
 
-#: src/PostTypes/Event.php:489
+#: src/PostTypes/Event.php:498
+msgid "Copy"
+msgstr ""
+
+#: src/PostTypes/Event.php:508
 msgid "Confirm Attendance"
 msgstr ""
 
@@ -268,7 +386,7 @@ msgstr ""
 msgid "URL slug for events"
 msgstr ""
 
-#: src/Admin/event-meta/index.js:93
+#: src/Admin/event-meta/index.js:244
 msgid "End date must be after start date"
 msgstr ""
 
