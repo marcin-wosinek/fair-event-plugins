@@ -144,9 +144,8 @@ function syncChangelogs() {
 					changelogPath,
 					'utf8'
 				);
-				changelogContent = extractChangelogContent(
-					fullChangelogContent
-				);
+				changelogContent =
+					extractChangelogContent(fullChangelogContent);
 
 				if (!changelogContent) {
 					console.log(

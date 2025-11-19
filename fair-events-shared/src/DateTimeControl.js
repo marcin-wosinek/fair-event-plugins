@@ -11,7 +11,7 @@ import {
 } from '@wordpress/components';
 import { dateI18n } from '@wordpress/date';
 import { __ } from '@wordpress/i18n';
-import { getDynamicDateOptions } from 'fair-events-shared';
+import { getDynamicDateOptions } from './dynamicDateRegistry.js';
 
 /**
  * Format a single datetime based on event type
