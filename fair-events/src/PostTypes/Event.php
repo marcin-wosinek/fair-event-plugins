@@ -233,6 +233,17 @@ class Event {
 			/>
 		</p>
 		<p>
+			<label for="event_duration">
+				<?php esc_html_e( 'Event Length', 'fair-events' ); ?>
+			</label>
+			<select id="event_duration" name="event_duration" style="width: 100%; box-sizing: border-box;">
+				<option value="other"><?php esc_html_e( 'Other', 'fair-events' ); ?></option>
+			</select>
+			<small class="description">
+				<?php esc_html_e( 'Select a duration to automatically set the end time', 'fair-events' ); ?>
+			</small>
+		</p>
+		<p>
 			<label for="event_end">
 				<?php esc_html_e( 'End Date & Time', 'fair-events' ); ?>
 			</label>
