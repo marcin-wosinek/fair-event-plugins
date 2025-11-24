@@ -138,3 +138,58 @@
 .fair-rsvp-current-status strong {
 	color: #2271b1;
 }
+
+/* Invited banner */
+.fair-rsvp-invited-banner {
+	padding: 1rem 1.25rem;
+	margin-bottom: 1rem;
+	background-color: #e7f5ff;
+	border: 1px solid #4dabf7;
+	border-radius: 4px;
+	color: #1971c2;
+	font-weight: 500;
+}
+
+.fair-rsvp-invited-banner p {
+	margin: 0;
+	display: flex;
+	align-items: center;
+	gap: 0.5rem;
+}
+
+.fair-rsvp-invited-banner p::before {
+	content: '✨';
+	font-size: 1.2rem;
+}
+
+/* Not allowed message */
+.fair-rsvp-not-allowed-message {
+	padding: 2rem;
+	text-align: center;
+	background-color: #fff4e6;
+	border: 1px solid #fd7e14;
+	border-radius: 4px;
+	color: #d9480f;
+}
+
+.fair-rsvp-not-allowed-message p {
+	margin: 0;
+	font-size: 1rem;
+	font-weight: 500;
+}
+
+/* Closed message */
+.fair-rsvp-closed-message {
+	padding: 2rem;
+	text-align: center;
+	background-color: #f0f0f1;
+	border: 1px solid #c3c4c7;
+	border-radius: 4px;
+	color: #50575e;
+}
+
+.fair-rsvp-closed-message p {
+	margin: 0;
+	font-size: 1rem;
+	font-weight: 500;
+}

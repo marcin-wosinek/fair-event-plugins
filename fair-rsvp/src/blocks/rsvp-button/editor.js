@@ -6,10 +6,11 @@ import { PanelBody } from '@wordpress/components';
 import { useSelect } from '@wordpress/data';
 import { __ } from '@wordpress/i18n';
 import { DateTimeControl } from 'fair-events-shared';
+import AttendanceManager from './components/AttendanceManager.js';
 
 registerBlockType('fair-rsvp/rsvp-button', {
 	edit: ({ attributes, setAttributes, context }) => {
-		const { respondBefore } = attributes;
+		const { respondBefore, attendance } = attributes;
 		const { postId, postType } = context || {};
 
 		// Get event metadata if available
@@ -56,6 +57,18 @@ registerBlockType('fair-rsvp/rsvp-button', {
 							eventStart={eventStart}
 							eventEnd={eventEnd}
 							eventAllDay={eventAllDay}
+						/>
+					</PanelBody>
+
+					<PanelBody
+						title={__('Attendance Permissions', 'fair-rsvp')}
+						initialOpen={false}
+					>
+						<AttendanceManager
+							attendance={attendance || {}}
+							onChange={(newAttendance) =>
+								setAttributes({ attendance: newAttendance })
+							}
 						/>
 					</PanelBody>
 				</InspectorControls>

@@ -29,6 +29,12 @@ if ( ! empty( $respond_before ) && function_exists( 'fair_events_resolve_date' )
 	$respond_before = fair_events_resolve_date( $respond_before, $event_id );
 }
 
+// Get attendance permissions.
+$attendance  = $attributes['attendance'] ?? array();
+$permission  = \FairRsvp\Utils\AttendanceHelper::get_user_permission( $user_id, $is_logged_in, $attendance );
+$is_allowed  = \FairRsvp\Utils\AttendanceHelper::is_allowed( $permission );
+$is_expected = \FairRsvp\Utils\AttendanceHelper::is_expected( $permission );
+
 // Check if deadline has passed.
 $deadline_passed = false;
 if ( ! empty( $respond_before ) ) {
@@ -86,15 +92,25 @@ $current_status = $current_rsvp ? $current_rsvp['rsvp_status'] : '';
 			<p><?php echo esc_html__( 'RSVPs for this event are now closed.', 'fair-rsvp' ); ?></p>
 		</div>
 	<?php elseif ( ! $is_logged_in ) : ?>
-		<!-- Not logged in -->
+		<!-- Not logged in - show login prompt -->
 		<div class="fair-rsvp-login-message">
 			<p><?php echo esc_html__( 'Please log in to RSVP for this event.', 'fair-rsvp' ); ?></p>
 			<a href="<?php echo esc_url( wp_login_url( get_permalink() ) ); ?>" class="fair-rsvp-login-button">
 				<?php echo esc_html__( 'Log In', 'fair-rsvp' ); ?>
 			</a>
 		</div>
+	<?php elseif ( ! $is_allowed ) : ?>
+		<!-- Logged in but not allowed to RSVP -->
+		<div class="fair-rsvp-not-allowed-message">
+			<p><?php echo esc_html__( 'This event is invite-only.', 'fair-rsvp' ); ?></p>
+		</div>
 	<?php else : ?>
-		<!-- Logged in - show RSVP form -->
+		<!-- Allowed and logged in - show RSVP form -->
+		<?php if ( $is_expected ) : ?>
+			<div class="fair-rsvp-invited-banner">
+				<p><?php echo esc_html__( "You're invited to this event!", 'fair-rsvp' ); ?></p>
+			</div>
+		<?php endif; ?>
 		<div class="fair-rsvp-form-container" data-event-id="<?php echo esc_attr( $event_id ); ?>">
 			<form class="fair-rsvp-form">
 				<div class="fair-rsvp-options">

@@ -563,6 +563,43 @@ class RsvpController extends WP_REST_Controller {
 				array( 'status' => 401 )
 			);
 		}
+
+		// Get event and check attendance permissions.
+		$event_id = $request->get_param( 'event_id' );
+		$event    = get_post( $event_id );
+
+		if ( ! $event ) {
+			return new WP_Error(
+				'invalid_event',
+				__( 'Event not found.', 'fair-rsvp' ),
+				array( 'status' => 404 )
+			);
+		}
+
+		// Find RSVP block in event content.
+		$blocks     = parse_blocks( $event->post_content );
+		$rsvp_block = $this->find_rsvp_block( $blocks );
+
+		$attendance = array();
+		if ( $rsvp_block && isset( $rsvp_block['attrs']['attendance'] ) ) {
+			$attendance = $rsvp_block['attrs']['attendance'];
+		}
+
+		// Check user permission using AttendanceHelper.
+		$permission = \FairRsvp\Utils\AttendanceHelper::get_user_permission(
+			get_current_user_id(),
+			true,
+			$attendance
+		);
+
+		if ( ! \FairRsvp\Utils\AttendanceHelper::is_allowed( $permission ) ) {
+			return new WP_Error(
+				'not_allowed',
+				__( 'You are not allowed to RSVP to this event.', 'fair-rsvp' ),
+				array( 'status' => 403 )
+			);
+		}
+
 		return true;
 	}
 
@@ -725,5 +762,27 @@ class RsvpController extends WP_REST_Controller {
 				'maximum'     => 500,
 			),
 		);
+	}
+
+	/**
+	 * Find RSVP block in parsed blocks array
+	 *
+	 * @param array $blocks Parsed blocks from parse_blocks().
+	 * @return array|null RSVP block data or null if not found.
+	 */
+	private function find_rsvp_block( $blocks ) {
+		foreach ( $blocks as $block ) {
+			if ( 'fair-rsvp/rsvp-button' === $block['blockName'] ) {
+				return $block;
+			}
+			// Recursively search inner blocks.
+			if ( ! empty( $block['innerBlocks'] ) ) {
+				$found = $this->find_rsvp_block( $block['innerBlocks'] );
+				if ( $found ) {
+					return $found;
+				}
+			}
+		}
+		return null;
 	}
 }

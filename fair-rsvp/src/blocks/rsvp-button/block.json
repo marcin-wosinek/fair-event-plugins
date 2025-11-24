@@ -21,6 +21,10 @@
 		"respondBefore": {
 			"type": "string",
 			"default": ""
+		},
+		"attendance": {
+			"type": "object",
+			"default": {}
 		}
 	},
 	"editorScript": "file:./editor.js",

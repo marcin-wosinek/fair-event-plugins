@@ -2,14 +2,14 @@
 # This file is distributed under the GPLv3 or later.
 msgid ""
 msgstr ""
-"Project-Id-Version: Fair RSVP 0.3.0\n"
+"Project-Id-Version: Fair RSVP 0.3.1\n"
 "Report-Msgid-Bugs-To: https://wordpress.org/support/plugin/fair-rsvp\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"POT-Creation-Date: 2025-11-05T11:13:30+00:00\n"
+"POT-Creation-Date: 2025-11-24T20:28:38+00:00\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "X-Generator: WP-CLI 2.12.0\n"
 "X-Domain: fair-rsvp\n"
@@ -43,32 +43,33 @@ msgstr ""
 
 #: src/Admin/AdminHooks.php:45
 #: src/Admin/AdminHooks.php:46
-#: src/Admin/AttendanceConfirmationPage.php:29
-#: src/Admin/AttendanceConfirmationPage.php:43
+#: src/Admin/AttendanceConfirmationPage.php:30
+#: src/Admin/AttendanceConfirmationPage.php:44
 #: src/Admin/events/EventsList.js:200
 msgid "Confirm Attendance"
 msgstr ""
 
-#: src/Admin/AttendanceConfirmationPage.php:31
+#: src/Admin/AttendanceConfirmationPage.php:32
 msgid "No event ID specified."
 msgstr ""
 
-#: src/Admin/AttendanceConfirmationPage.php:45
+#: src/Admin/AttendanceConfirmationPage.php:46
+#: src/REST/RsvpController.php:574
 msgid "Event not found."
 msgstr ""
 
 #. translators: %s: event title
-#: src/Admin/AttendanceConfirmationPage.php:58
+#: src/Admin/AttendanceConfirmationPage.php:59
 #, php-format
 msgid "Confirm Attendance: %s"
 msgstr ""
 
-#: src/blocks/participants-list/render.php:33
+#: src/blocks/participants-list/render.php:35
 msgid "No one has signed up yet."
 msgstr ""
 
 #. translators: %d: Number of participants
-#: src/blocks/participants-list/render.php:40
+#: src/blocks/participants-list/render.php:42
 #, php-format
 msgid "%d person signed up"
 msgid_plural "%d people signed up"
@@ -76,61 +77,69 @@ msgstr[0] ""
 msgstr[1] ""
 
 #. translators: %d: Number of participants
-#: src/blocks/participants-list/render.php:49
+#: src/blocks/participants-list/render.php:51
 #, php-format
 msgid "Attendee (%d)"
 msgid_plural "Attendees (%d)"
 msgstr[0] ""
 msgstr[1] ""
 
-#: src/blocks/rsvp-button/render.php:82
+#: src/blocks/rsvp-button/render.php:92
 msgid "RSVPs for this event are now closed."
 msgstr ""
 
-#: src/blocks/rsvp-button/render.php:87
+#: src/blocks/rsvp-button/render.php:97
 msgid "Please log in to RSVP for this event."
 msgstr ""
 
-#: src/blocks/rsvp-button/render.php:89
+#: src/blocks/rsvp-button/render.php:99
 msgid "Log In"
 msgstr ""
 
-#: src/blocks/rsvp-button/render.php:104
-#: src/blocks/rsvp-button/render.php:140
+#: src/blocks/rsvp-button/render.php:105
+msgid "This event is invite-only."
+msgstr ""
+
+#: src/blocks/rsvp-button/render.php:111
+msgid "You're invited to this event!"
+msgstr ""
+
+#: src/blocks/rsvp-button/render.php:124
+#: src/blocks/rsvp-button/render.php:160
 #: src/Admin/attendance/AttendanceConfirmation.js:403
 #: src/blocks/participants-list/editor.js:66
 #: src/blocks/participants-list/editor.js:120
-#: src/blocks/rsvp-button/editor.js:74
+#: src/blocks/rsvp-button/editor.js:88
 #: src/blocks/rsvp-button/frontend.js:195
 msgid "Yes"
 msgstr ""
 
-#: src/blocks/rsvp-button/render.php:114
-#: src/blocks/rsvp-button/render.php:142
+#: src/blocks/rsvp-button/render.php:134
+#: src/blocks/rsvp-button/render.php:162
 #: src/Admin/attendance/AttendanceConfirmation.js:402
 #: src/blocks/participants-list/editor.js:68
 #: src/blocks/participants-list/editor.js:122
-#: src/blocks/rsvp-button/editor.js:82
+#: src/blocks/rsvp-button/editor.js:96
 #: src/blocks/rsvp-button/frontend.js:197
 msgid "Maybe"
 msgstr ""
 
-#: src/blocks/rsvp-button/render.php:124
-#: src/blocks/rsvp-button/render.php:141
+#: src/blocks/rsvp-button/render.php:144
+#: src/blocks/rsvp-button/render.php:161
 #: src/blocks/participants-list/editor.js:71
 #: src/blocks/participants-list/editor.js:124
-#: src/blocks/rsvp-button/editor.js:86
+#: src/blocks/rsvp-button/editor.js:100
 #: src/blocks/rsvp-button/frontend.js:196
 msgid "No"
 msgstr ""
 
-#: src/blocks/rsvp-button/render.php:129
-#: src/blocks/rsvp-button/editor.js:94
+#: src/blocks/rsvp-button/render.php:149
+#: src/blocks/rsvp-button/editor.js:108
 #: src/blocks/rsvp-button/frontend.js:138
 msgid "Update RSVP"
 msgstr ""
 
-#: src/blocks/rsvp-button/render.php:146
+#: src/blocks/rsvp-button/render.php:166
 #: src/blocks/rsvp-button/frontend.js:96
 #: src/blocks/rsvp-button/frontend.js:105
 msgid "Your current RSVP: "
@@ -232,35 +241,39 @@ msgstr ""
 msgid "You must be logged in to RSVP."
 msgstr ""
 
-#: src/REST/RsvpController.php:579
+#: src/REST/RsvpController.php:598
+msgid "You are not allowed to RSVP to this event."
+msgstr ""
+
+#: src/REST/RsvpController.php:616
 msgid "You must be logged in to view RSVPs."
 msgstr ""
 
-#: src/REST/RsvpController.php:679
+#: src/REST/RsvpController.php:716
 msgid "Event/post ID to RSVP for."
 msgstr ""
 
-#: src/REST/RsvpController.php:684
+#: src/REST/RsvpController.php:721
 msgid "RSVP status."
 msgstr ""
 
-#: src/REST/RsvpController.php:700
+#: src/REST/RsvpController.php:737
 msgid "Event ID to get RSVPs for."
 msgstr ""
 
-#: src/REST/RsvpController.php:705
+#: src/REST/RsvpController.php:742
 msgid "Filter by RSVP status."
 msgstr ""
 
-#: src/REST/RsvpController.php:710
+#: src/REST/RsvpController.php:747
 msgid "Filter by attendance status."
 msgstr ""
 
-#: src/REST/RsvpController.php:715
+#: src/REST/RsvpController.php:752
 msgid "Current page of the collection."
 msgstr ""
 
-#: src/REST/RsvpController.php:721
+#: src/REST/RsvpController.php:758
 msgid "Maximum number of items to return per page."
 msgstr ""
 
@@ -501,23 +514,126 @@ msgstr ""
 msgid "Showing:"
 msgstr ""
 
-#: src/blocks/rsvp-button/editor.js:48
+#: src/blocks/rsvp-button/components/AttendanceManager.js:18
+msgid "Administrator"
+msgstr ""
+
+#: src/blocks/rsvp-button/components/AttendanceManager.js:19
+msgid "Editor"
+msgstr ""
+
+#: src/blocks/rsvp-button/components/AttendanceManager.js:20
+msgid "Author"
+msgstr ""
+
+#: src/blocks/rsvp-button/components/AttendanceManager.js:21
+msgid "Contributor"
+msgstr ""
+
+#: src/blocks/rsvp-button/components/AttendanceManager.js:22
+msgid "Subscriber"
+msgstr ""
+
+#: src/blocks/rsvp-button/components/AttendanceManager.js:27
+msgid "Not Allowed (0)"
+msgstr ""
+
+#: src/blocks/rsvp-button/components/AttendanceManager.js:28
+msgid "Allowed (1)"
+msgstr ""
+
+#: src/blocks/rsvp-button/components/AttendanceManager.js:29
+msgid "Expected (2)"
+msgstr ""
+
+#: src/blocks/rsvp-button/components/AttendanceManager.js:35
+#: src/blocks/rsvp-button/components/AttendanceManager.js:93
+msgid "All Logged-in Users"
+msgstr ""
+
+#: src/blocks/rsvp-button/components/AttendanceManager.js:38
+#: src/blocks/rsvp-button/components/AttendanceManager.js:98
+msgid "Anonymous Users"
+msgstr ""
+
+#: src/blocks/rsvp-button/components/AttendanceManager.js:44
+#: src/blocks/rsvp-button/components/AttendanceManager.js:47
+msgid " (Role)"
+msgstr ""
+
+#: src/blocks/rsvp-button/components/AttendanceManager.js:91
+msgid "Select a rule to add..."
+msgstr ""
+
+#: src/blocks/rsvp-button/components/AttendanceManager.js:126
+msgid "No restrictions set. Everyone can RSVP (default behavior)."
+msgstr ""
+
+#: src/blocks/rsvp-button/components/AttendanceManager.js:136
+msgid "group expected."
+msgstr ""
+
+#: src/blocks/rsvp-button/components/AttendanceManager.js:137
+msgid "groups expected."
+msgstr ""
+
+#: src/blocks/rsvp-button/components/AttendanceManager.js:142
+msgid "group allowed."
+msgstr ""
+
+#: src/blocks/rsvp-button/components/AttendanceManager.js:143
+msgid "groups allowed."
+msgstr ""
+
+#: src/blocks/rsvp-button/components/AttendanceManager.js:148
+msgid "group blocked."
+msgstr ""
+
+#: src/blocks/rsvp-button/components/AttendanceManager.js:149
+msgid "groups blocked."
+msgstr ""
+
+#: src/blocks/rsvp-button/components/AttendanceManager.js:159
+msgid "Group"
+msgstr ""
+
+#: src/blocks/rsvp-button/components/AttendanceManager.js:160
+msgid "Permission"
+msgstr ""
+
+#: src/blocks/rsvp-button/components/AttendanceManager.js:161
+msgid "Action"
+msgstr ""
+
+#: src/blocks/rsvp-button/components/AttendanceManager.js:185
+msgid "Remove"
+msgstr ""
+
+#: src/blocks/rsvp-button/components/AttendanceManager.js:211
+msgid "Add Rule"
+msgstr ""
+
+#: src/blocks/rsvp-button/editor.js:46
 msgid "RSVP Settings"
 msgstr ""
 
-#: src/blocks/rsvp-button/editor.js:54
+#: src/blocks/rsvp-button/editor.js:52
 msgid "RSVP Deadline"
 msgstr ""
 
-#: src/blocks/rsvp-button/editor.js:55
+#: src/blocks/rsvp-button/editor.js:53
 msgid "Set a deadline for RSVPs. After this date, the RSVP form will be closed."
 msgstr ""
 
-#: src/blocks/rsvp-button/editor.js:69
+#: src/blocks/rsvp-button/editor.js:64
+msgid "Attendance Permissions"
+msgstr ""
+
+#: src/blocks/rsvp-button/editor.js:79
 msgid "RSVP Form Preview"
 msgstr ""
 
-#: src/blocks/rsvp-button/editor.js:97
+#: src/blocks/rsvp-button/editor.js:111
 msgid "Users will see their current RSVP status and can update it."
 msgstr ""
 
