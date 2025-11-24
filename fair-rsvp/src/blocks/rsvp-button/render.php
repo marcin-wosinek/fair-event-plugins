@@ -7,6 +7,9 @@
  * @param string   $content    Block content.
  * @param WP_Block $block      Block instance.
  * @return string Rendered block HTML.
+ *
+ * phpcs:disable WordPress.NamingConventions.PrefixAllGlobals.NonPrefixedVariableFound
+ * Variables in block render templates are scoped to the template and don't need prefixing.
  */
 
 defined( 'WPINC' ) || die;
@@ -60,10 +63,11 @@ if ( $is_logged_in && $event_id ) {
 	global $wpdb;
 	$table_name = $wpdb->prefix . 'fair_rsvp';
 
-	// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared,WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching
+	// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching
 	$current_rsvp = $wpdb->get_row(
 		$wpdb->prepare(
-			"SELECT * FROM {$table_name} WHERE event_id = %d AND user_id = %d",
+			'SELECT * FROM %i WHERE event_id = %d AND user_id = %d',
+			$table_name,
 			$event_id,
 			$user_id
 		),

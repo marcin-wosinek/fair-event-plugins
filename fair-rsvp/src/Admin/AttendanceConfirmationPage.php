@@ -21,6 +21,7 @@ class AttendanceConfirmationPage {
 	 */
 	public function render() {
 		// Get event_id from query string.
+		// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Reading URL parameter for display purposes only.
 		$event_id = isset( $_GET['event_id'] ) ? (int) $_GET['event_id'] : 0;
 
 		if ( ! $event_id ) {

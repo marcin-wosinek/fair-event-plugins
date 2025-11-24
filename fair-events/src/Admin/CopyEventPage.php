@@ -227,8 +227,8 @@ class CopyEventPage {
 		$location    = get_post_meta( $event_id, 'event_location', true );
 
 		// Format dates for display.
-		$start_date = '';
-		$end_date   = '';
+		$start_date          = '';
+		$end_date            = '';
 		$default_custom_date = '';
 		if ( $event_dates ) {
 			$start_dt = new \DateTime( $event_dates->start_datetime );

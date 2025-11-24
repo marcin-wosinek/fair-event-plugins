@@ -43,6 +43,7 @@ class RsvpRepository {
 
 		if ( $existing ) {
 			// Update existing RSVP.
+			// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching
 			$result = $wpdb->update(
 				$table_name,
 				array(
@@ -61,6 +62,7 @@ class RsvpRepository {
 			return $result !== false ? $existing['id'] : false;
 		} else {
 			// Insert new RSVP.
+			// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery
 			$result = $wpdb->insert(
 				$table_name,
 				array(
@@ -90,10 +92,9 @@ class RsvpRepository {
 
 		$table_name = $this->get_table_name();
 
-		// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
-		$sql = $wpdb->prepare( "SELECT * FROM {$table_name} WHERE id = %d", $id );
+		$sql = $wpdb->prepare( 'SELECT * FROM %i WHERE id = %d', $table_name, $id );
 
-		// phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching,WordPress.DB.PreparedSQL.NotPrepared
 		return $wpdb->get_row( $sql, ARRAY_A );
 	}
 
@@ -109,10 +110,9 @@ class RsvpRepository {
 
 		$table_name = $this->get_table_name();
 
-		// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
-		$sql = $wpdb->prepare( "SELECT * FROM {$table_name} WHERE event_id = %d AND user_id = %d", $event_id, $user_id );
+		$sql = $wpdb->prepare( 'SELECT * FROM %i WHERE event_id = %d AND user_id = %d', $table_name, $event_id, $user_id );
 
-		// phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching,WordPress.DB.PreparedSQL.NotPrepared
 		return $wpdb->get_row( $sql, ARRAY_A );
 	}
 
@@ -145,11 +145,12 @@ class RsvpRepository {
 			$args[] = $attendance_status;
 		}
 
+		// ORDER BY is hardcoded, LIMIT/OFFSET use placeholders - safe.
 		$sql   .= ' ORDER BY created_at DESC LIMIT %d OFFSET %d';
 		$args[] = $limit;
 		$args[] = $offset;
 
-		// phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching,WordPress.DB.PreparedSQL.NotPrepared,PluginCheck.Security.DirectDB.UnescapedDBParameter
 		return $wpdb->get_results( $wpdb->prepare( $sql, $args ), ARRAY_A );
 	}
 
@@ -165,6 +166,7 @@ class RsvpRepository {
 
 		$table_name = $this->get_table_name();
 
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching
 		$result = $wpdb->update(
 			$table_name,
 			array(
@@ -203,7 +205,7 @@ class RsvpRepository {
 
 		$order = strtoupper( $order ) === 'DESC' ? 'DESC' : 'ASC';
 
-		// Build ORDER BY clause.
+		// Build ORDER BY clause (validated above, safe to use directly).
 		$order_clause = '';
 		if ( 'title' === $orderby ) {
 			$order_clause = "p.post_title {$order}";
@@ -213,7 +215,6 @@ class RsvpRepository {
 			$order_clause = "yes_count {$order}";
 		}
 
-		// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
 		$sql = $wpdb->prepare(
 			"SELECT
 				p.ID as event_id,
@@ -228,19 +229,25 @@ class RsvpRepository {
 				ed.start_datetime,
 				ed.end_datetime,
 				ed.all_day
-			FROM {$posts_table} p
-			INNER JOIN {$postmeta_table} pm ON p.ID = pm.post_id
-			LEFT JOIN {$table_name} r ON p.ID = r.event_id
-			LEFT JOIN {$event_dates_table} ed ON p.ID = ed.event_id
+			FROM %i p
+			INNER JOIN %i pm ON p.ID = pm.post_id
+			LEFT JOIN %i r ON p.ID = r.event_id
+			LEFT JOIN %i ed ON p.ID = ed.event_id
 			WHERE p.post_status = %s
 				AND pm.meta_key = '_has_rsvp_block'
 				AND pm.meta_value = '1'
-			GROUP BY p.ID, p.post_title, ed.start_datetime, ed.end_datetime, ed.all_day
-			ORDER BY {$order_clause}",
+			GROUP BY p.ID, p.post_title, ed.start_datetime, ed.end_datetime, ed.all_day",
+			$posts_table,
+			$postmeta_table,
+			$table_name,
+			$event_dates_table,
 			$post_status
 		);
 
-		// phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared
+		// Append ORDER BY clause (validated above: $orderby from whitelist, $order validated to DESC/ASC only).
+		$sql .= " ORDER BY {$order_clause}";
+
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching,WordPress.DB.PreparedSQL.NotPrepared,PluginCheck.Security.DirectDB.UnescapedDBParameter
 		$results = $wpdb->get_results( $sql, ARRAY_A );
 
 		// Add permalink and format data for each result.
@@ -283,22 +290,23 @@ class RsvpRepository {
 		$users_table = $wpdb->users;
 
 		$sql = $wpdb->prepare(
-			// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
-			"SELECT
+			'SELECT
 				r.user_id,
 				u.display_name,
 				u.user_email,
 				r.rsvp_status,
 				r.rsvp_at
-			FROM {$table_name} r
-			INNER JOIN {$users_table} u ON r.user_id = u.ID
+			FROM %i r
+			INNER JOIN %i u ON r.user_id = u.ID
 			WHERE r.event_id = %d AND r.rsvp_status = %s
-			ORDER BY r.rsvp_at ASC",
+			ORDER BY r.rsvp_at ASC',
+			$table_name,
+			$users_table,
 			$event_id,
 			$rsvp_status
 		);
 
-		// phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching,WordPress.DB.PreparedSQL.NotPrepared
 		$results = $wpdb->get_results( $sql, ARRAY_A );
 
 		// Add avatar URL to each result.
@@ -331,6 +339,7 @@ class RsvpRepository {
 				continue;
 			}
 
+			// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching
 			$result = $wpdb->update(
 				$table_name,
 				array(
