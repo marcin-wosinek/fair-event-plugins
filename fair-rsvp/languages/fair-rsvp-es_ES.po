@@ -51,6 +51,7 @@ msgstr "Iniciar sesión"
 
 #: src/blocks/rsvp-button/render.php:124
 #: src/blocks/rsvp-button/render.php:160
+#: src/Admin/attendance-check/AttendanceCheck.js:285
 #: src/Admin/attendance/AttendanceConfirmation.js:403
 #: src/blocks/participants-list/editor.js:66
 #: src/blocks/participants-list/editor.js:120
@@ -61,6 +62,8 @@ msgstr "Sí"
 
 #: src/blocks/rsvp-button/render.php:134
 #: src/blocks/rsvp-button/render.php:162
+#: src/Admin/attendance-check/AttendanceCheck.js:168
+#: src/Admin/attendance-check/AttendanceCheck.js:287
 #: src/Admin/attendance/AttendanceConfirmation.js:402
 #: src/blocks/participants-list/editor.js:68
 #: src/blocks/participants-list/editor.js:122
@@ -108,65 +111,65 @@ msgstr "Ordenar por campo."
 msgid "Order direction."
 msgstr "Dirección de orden."
 
-#: src/REST/RsvpController.php:275
-#: src/REST/RsvpController.php:505
+#: src/REST/RsvpController.php:295
+#: src/REST/RsvpController.php:525
 msgid "The specified event does not exist or is not published."
 msgstr "El evento especificado no existe o no está publicado."
 
-#: src/REST/RsvpController.php:286
+#: src/REST/RsvpController.php:306
 msgid "Failed to create or update RSVP."
 msgstr "Error al crear o actualizar la confirmación."
 
-#: src/REST/RsvpController.php:297
-#: src/REST/RsvpController.php:541
+#: src/REST/RsvpController.php:317
+#: src/REST/RsvpController.php:561
 msgid "RSVP was created but could not be retrieved."
 msgstr "La confirmación fue creada pero no se pudo recuperar."
 
-#: src/REST/RsvpController.php:323
+#: src/REST/RsvpController.php:343
 msgid "RSVP not found for this event."
 msgstr "No se encontró confirmación para este evento."
 
-#: src/REST/RsvpController.php:346
+#: src/REST/RsvpController.php:366
 msgid "RSVP not found."
 msgstr "Confirmación no encontrada."
 
-#: src/REST/RsvpController.php:357
+#: src/REST/RsvpController.php:377
 msgid "Failed to update attendance status."
 msgstr "Error al actualizar el estado de asistencia."
 
-#: src/REST/RsvpController.php:562
+#: src/REST/RsvpController.php:582
 msgid "You must be logged in to RSVP."
 msgstr "Debes iniciar sesión para confirmar tu asistencia."
 
-#: src/REST/RsvpController.php:616
+#: src/REST/RsvpController.php:636
 msgid "You must be logged in to view RSVPs."
 msgstr "Debes iniciar sesión para ver las confirmaciones."
 
-#: src/REST/RsvpController.php:716
+#: src/REST/RsvpController.php:736
 msgid "Event/post ID to RSVP for."
 msgstr "ID del evento/entrada para confirmar asistencia."
 
-#: src/REST/RsvpController.php:721
+#: src/REST/RsvpController.php:741
 msgid "RSVP status."
 msgstr "Estado de confirmación."
 
-#: src/REST/RsvpController.php:737
+#: src/REST/RsvpController.php:757
 msgid "Event ID to get RSVPs for."
 msgstr "ID del evento para obtener confirmaciones."
 
-#: src/REST/RsvpController.php:742
+#: src/REST/RsvpController.php:762
 msgid "Filter by RSVP status."
 msgstr "Filtrar por estado de confirmación."
 
-#: src/REST/RsvpController.php:747
+#: src/REST/RsvpController.php:767
 msgid "Filter by attendance status."
 msgstr "Filtrar por estado de asistencia."
 
-#: src/REST/RsvpController.php:752
+#: src/REST/RsvpController.php:772
 msgid "Current page of the collection."
 msgstr "Página actual de la colección."
 
-#: src/REST/RsvpController.php:758
+#: src/REST/RsvpController.php:778
 msgid "Maximum number of items to return per page."
 msgstr "Número máximo de elementos a devolver por página."
 
@@ -348,7 +351,7 @@ msgid "No event ID specified."
 msgstr "No se especificó ID del evento."
 
 #: src/Admin/AttendanceConfirmationPage.php:46
-#: src/REST/RsvpController.php:574
+#: src/REST/RsvpController.php:594
 msgid "Event not found."
 msgstr "Evento no encontrado."
 
@@ -360,37 +363,37 @@ msgstr "Confirmar Asistencia: %s"
 
 #: src/REST/RsvpController.php:207
 msgid "Array of RSVP updates with id and attendance_status."
-msgstr ""
+msgstr "Array de actualizaciones de RSVP con id y attendance_status."
 
 #: src/REST/RsvpController.php:239
 msgid "Event ID."
-msgstr ""
+msgstr "ID del evento."
 
 #: src/REST/RsvpController.php:244
 msgid "Attendee name."
-msgstr ""
+msgstr "Nombre del asistente."
 
 #: src/REST/RsvpController.php:249
 msgid "Attendee email (optional)."
-msgstr ""
+msgstr "Email del asistente (opcional)."
 
-#: src/REST/RsvpController.php:469
+#: src/REST/RsvpController.php:489
 msgid "Updates must be a non-empty array."
-msgstr ""
+msgstr "Las actualizaciones deben ser un array no vacío."
 
 #. translators: %d: number of successful updates
-#: src/REST/RsvpController.php:482
+#: src/REST/RsvpController.php:502
 #, php-format
 msgid "Successfully updated %d attendance records."
-msgstr ""
+msgstr "Se actualizaron exitosamente %d registros de asistencia."
 
-#: src/REST/RsvpController.php:516
+#: src/REST/RsvpController.php:536
 msgid "Failed to create or find user for walk-in attendee."
-msgstr ""
+msgstr "Error al crear o encontrar usuario para asistente sin reserva."
 
-#: src/REST/RsvpController.php:527
+#: src/REST/RsvpController.php:547
 msgid "Failed to create RSVP for walk-in attendee."
-msgstr ""
+msgstr "Error al crear RSVP para asistente sin reserva."
 
 #: src/Admin/attendance/AttendanceConfirmation.js:89
 msgid "Failed to load RSVPs"
@@ -481,6 +484,7 @@ msgstr "Cargando confirmaciones..."
 msgid "attendees checked in"
 msgstr "asistentes registrados"
 
+#: src/Admin/attendance-check/AttendanceCheck.js:193
 #: src/Admin/attendance/AttendanceConfirmation.js:360
 msgid "Search attendees"
 msgstr "Buscar asistentes"
@@ -497,11 +501,13 @@ msgstr "Lista de Confirmaciones"
 msgid "No RSVPs found"
 msgstr "No se encontraron confirmaciones"
 
+#: src/Admin/attendance-check/AttendanceCheck.js:227
 #: src/Admin/attendance/AttendanceConfirmation.js:381
 #: src/Admin/attendance/AttendanceConfirmation.js:521
 msgid "Name"
 msgstr "Nombre"
 
+#: src/Admin/attendance-check/AttendanceCheck.js:230
 #: src/Admin/attendance/AttendanceConfirmation.js:388
 msgid "RSVP Status"
 msgstr "Estado de confirmación"
@@ -578,6 +584,7 @@ msgstr "Fecha y Hora"
 msgid "Attendees"
 msgstr "Asistentes"
 
+#: src/Admin/attendance-check/AttendanceCheck.js:164
 #: src/Admin/events/EventsList.js:185
 msgid "Confirmed"
 msgstr "Confirmados"
@@ -606,109 +613,209 @@ msgstr "Este evento es solo por invitación."
 msgid "You're invited to this event!"
 msgstr "¡Estás invitado a este evento!"
 
-#: src/REST/RsvpController.php:598
+#: src/REST/RsvpController.php:618
 msgid "You are not allowed to RSVP to this event."
 msgstr "No tienes permiso para confirmar asistencia a este evento."
 
-#: src/blocks/rsvp-button/components/AttendanceManager.js:18
+#: src/blocks/rsvp-button/components/AttendanceManager.js:21
 msgid "Administrator"
 msgstr "Administrador"
 
-#: src/blocks/rsvp-button/components/AttendanceManager.js:19
+#: src/blocks/rsvp-button/components/AttendanceManager.js:24
 msgid "Editor"
 msgstr "Editor"
 
-#: src/blocks/rsvp-button/components/AttendanceManager.js:20
+#: src/blocks/rsvp-button/components/AttendanceManager.js:25
 msgid "Author"
 msgstr "Autor"
 
-#: src/blocks/rsvp-button/components/AttendanceManager.js:21
+#: src/blocks/rsvp-button/components/AttendanceManager.js:26
 msgid "Contributor"
 msgstr "Colaborador"
 
-#: src/blocks/rsvp-button/components/AttendanceManager.js:22
+#: src/blocks/rsvp-button/components/AttendanceManager.js:27
 msgid "Subscriber"
 msgstr "Suscriptor"
 
-#: src/blocks/rsvp-button/components/AttendanceManager.js:27
+#: src/blocks/rsvp-button/components/AttendanceManager.js:32
 msgid "Not Allowed (0)"
 msgstr "No permitido (0)"
 
-#: src/blocks/rsvp-button/components/AttendanceManager.js:28
+#: src/blocks/rsvp-button/components/AttendanceManager.js:33
 msgid "Allowed (1)"
 msgstr "Permitido (1)"
 
-#: src/blocks/rsvp-button/components/AttendanceManager.js:29
+#: src/blocks/rsvp-button/components/AttendanceManager.js:34
 msgid "Expected (2)"
 msgstr "Esperado (2)"
 
-#: src/blocks/rsvp-button/components/AttendanceManager.js:35
-#: src/blocks/rsvp-button/components/AttendanceManager.js:93
+#: src/blocks/rsvp-button/components/AttendanceManager.js:54
+#: src/blocks/rsvp-button/components/AttendanceManager.js:117
 msgid "All Logged-in Users"
 msgstr "Todos los usuarios conectados"
 
-#: src/blocks/rsvp-button/components/AttendanceManager.js:38
-#: src/blocks/rsvp-button/components/AttendanceManager.js:98
+#: src/blocks/rsvp-button/components/AttendanceManager.js:57
+#: src/blocks/rsvp-button/components/AttendanceManager.js:122
 msgid "Anonymous Users"
 msgstr "Usuarios anónimos"
 
-#: src/blocks/rsvp-button/components/AttendanceManager.js:44
-#: src/blocks/rsvp-button/components/AttendanceManager.js:47
+#: src/blocks/rsvp-button/components/AttendanceManager.js:63
+#: src/blocks/rsvp-button/components/AttendanceManager.js:66
 msgid " (Role)"
 msgstr " (Rol)"
 
-#: src/blocks/rsvp-button/components/AttendanceManager.js:91
+#: src/blocks/rsvp-button/components/AttendanceManager.js:115
 msgid "Select a rule to add..."
 msgstr "Selecciona una regla para agregar..."
 
-#: src/blocks/rsvp-button/components/AttendanceManager.js:126
+#: src/blocks/rsvp-button/components/AttendanceManager.js:155
 msgid "No restrictions set. Everyone can RSVP (default behavior)."
 msgstr "Sin restricciones. Todos pueden confirmar asistencia (comportamiento predeterminado)."
 
-#: src/blocks/rsvp-button/components/AttendanceManager.js:136
+#: src/blocks/rsvp-button/components/AttendanceManager.js:165
 msgid "group expected."
 msgstr "grupo esperado."
 
-#: src/blocks/rsvp-button/components/AttendanceManager.js:137
+#: src/blocks/rsvp-button/components/AttendanceManager.js:166
 msgid "groups expected."
 msgstr "grupos esperados."
 
-#: src/blocks/rsvp-button/components/AttendanceManager.js:142
+#: src/blocks/rsvp-button/components/AttendanceManager.js:171
 msgid "group allowed."
 msgstr "grupo permitido."
 
-#: src/blocks/rsvp-button/components/AttendanceManager.js:143
+#: src/blocks/rsvp-button/components/AttendanceManager.js:172
 msgid "groups allowed."
 msgstr "grupos permitidos."
 
-#: src/blocks/rsvp-button/components/AttendanceManager.js:148
+#: src/blocks/rsvp-button/components/AttendanceManager.js:177
 msgid "group blocked."
 msgstr "grupo bloqueado."
 
-#: src/blocks/rsvp-button/components/AttendanceManager.js:149
+#: src/blocks/rsvp-button/components/AttendanceManager.js:178
 msgid "groups blocked."
 msgstr "grupos bloqueados."
 
-#: src/blocks/rsvp-button/components/AttendanceManager.js:159
+#: src/blocks/rsvp-button/components/AttendanceManager.js:188
 msgid "Group"
 msgstr "Grupo"
 
-#: src/blocks/rsvp-button/components/AttendanceManager.js:160
+#: src/blocks/rsvp-button/components/AttendanceManager.js:189
 msgid "Permission"
 msgstr "Permiso"
 
-#: src/blocks/rsvp-button/components/AttendanceManager.js:161
+#: src/blocks/rsvp-button/components/AttendanceManager.js:190
 msgid "Action"
 msgstr "Acción"
 
-#: src/blocks/rsvp-button/components/AttendanceManager.js:185
+#: src/blocks/rsvp-button/components/AttendanceManager.js:214
 msgid "Remove"
 msgstr "Eliminar"
 
-#: src/blocks/rsvp-button/components/AttendanceManager.js:211
+#: src/blocks/rsvp-button/components/AttendanceManager.js:242
 msgid "Add Rule"
 msgstr "Agregar regla"
 
 #: src/blocks/rsvp-button/editor.js:64
 msgid "Attendance Permissions"
 msgstr "Permisos de asistencia"
+
+#: src/blocks/rsvp-button/render.php:180
+msgid "📋 Check Attendance List"
+msgstr "📋 Ver Lista de Asistencia"
+
+#: src/blocks/rsvp-button/render.php:180
+msgid "📋 Attendance"
+msgstr "📋 Asistencia"
+
+#: src/Frontend/AttendanceCheckHooks.php:74
+#: src/Frontend/AttendanceCheckHooks.php:88
+msgid "Post not found."
+msgstr "Publicación no encontrada."
+
+#: src/Frontend/AttendanceCheckHooks.php:95
+#: src/REST/RsvpController.php:832
+msgid "This post does not have an RSVP block."
+msgstr "Esta publicación no tiene un bloque de RSVP."
+
+#: src/Frontend/AttendanceCheckPage.php:51
+msgid "You do not have permission to view this page."
+msgstr "No tienes permiso para ver esta página."
+
+#: src/Frontend/AttendanceCheckPage.php:52
+msgid "Permission Denied"
+msgstr "Permiso Denegado"
+
+#: src/Frontend/AttendanceCheckPage.php:64
+msgid "Loading attendance check..."
+msgstr "Cargando verificación de asistencia..."
+
+#: src/REST/RsvpController.php:269
+msgid "Event ID to get attendance check for."
+msgstr "ID del evento para obtener verificación de asistencia."
+
+#: src/REST/RsvpController.php:823
+msgid "The specified post does not exist."
+msgstr "La publicación especificada no existe."
+
+#: src/REST/RsvpController.php:980
+msgid "You do not have permission to view this attendance check."
+msgstr "No tienes permiso para ver esta verificación de asistencia."
+
+#: src/Admin/attendance-check/AttendanceCheck.js:63
+msgid "Failed to load attendance data."
+msgstr "Error al cargar datos de asistencia."
+
+#: src/Admin/attendance-check/AttendanceCheck.js:111
+msgid "Failed to save attendance data."
+msgstr "Error al guardar datos de asistencia."
+
+#: src/Admin/attendance-check/AttendanceCheck.js:140
+msgid "Loading attendance data..."
+msgstr "Cargando datos de asistencia..."
+
+#: src/Admin/attendance-check/AttendanceCheck.js:160
+msgid "Attendance Check"
+msgstr "Verificación de Asistencia"
+
+#: src/Admin/attendance-check/AttendanceCheck.js:172
+#: src/Admin/attendance-check/AttendanceCheck.js:289
+msgid "Expected"
+msgstr "Esperados"
+
+#: src/Admin/attendance-check/AttendanceCheck.js:176
+#: src/Admin/attendance-check/AttendanceCheck.js:223
+msgid "Present"
+msgstr "Presentes"
+
+#: src/Admin/attendance-check/AttendanceCheck.js:180
+msgid "Total"
+msgstr "Total"
+
+#: src/Admin/attendance-check/AttendanceCheck.js:187
+msgid "Attendance saved successfully!"
+msgstr "¡Asistencia guardada exitosamente!"
+
+#: src/Admin/attendance-check/AttendanceCheck.js:196
+msgid "Search by name or email..."
+msgstr "Buscar por nombre o email..."
+
+#: src/Admin/attendance-check/AttendanceCheck.js:202
+msgid "← Back to Post"
+msgstr "← Volver a la Publicación"
+
+#: src/Admin/attendance-check/AttendanceCheck.js:212
+msgid "Saving..."
+msgstr "Guardando..."
+
+#: src/Admin/attendance-check/AttendanceCheck.js:213
+msgid "Save Attendance"
+msgstr "Guardar Asistencia"
+
+#: src/Admin/attendance-check/AttendanceCheck.js:239
+msgid "No attendees match your search."
+msgstr "No hay asistentes que coincidan con tu búsqueda."
+
+#: src/Admin/attendance-check/AttendanceCheck.js:243
+msgid "No attendees yet."
+msgstr "Aún no hay asistentes."

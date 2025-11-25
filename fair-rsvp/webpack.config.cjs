@@ -20,6 +20,10 @@ const customConfig = {
 				process.cwd(),
 				'src/Admin/attendance/index.js'
 			),
+			'admin/attendance-check/index': path.resolve(
+				process.cwd(),
+				'src/Admin/attendance-check/index.js'
+			),
 		};
 	},
 	plugins: [

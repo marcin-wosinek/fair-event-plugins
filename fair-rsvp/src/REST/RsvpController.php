@@ -254,6 +254,26 @@ class RsvpController extends WP_REST_Controller {
 				),
 			)
 		);
+
+		// GET /fair-rsvp/v1/attendance-check?event_id={id} - Get attendance check data.
+		register_rest_route(
+			$this->namespace,
+			'/attendance-check',
+			array(
+				array(
+					'methods'             => WP_REST_Server::READABLE,
+					'callback'            => array( $this, 'get_attendance_check' ),
+					'permission_callback' => array( $this, 'get_attendance_check_permissions_check' ),
+					'args'                => array(
+						'event_id' => array(
+							'description' => __( 'Event ID to get attendance check for.', 'fair-rsvp' ),
+							'type'        => 'integer',
+							'required'    => true,
+						),
+					),
+				),
+			)
+		);
 	}
 
 	/**
@@ -784,5 +804,184 @@ class RsvpController extends WP_REST_Controller {
 			}
 		}
 		return null;
+	}
+
+	/**
+	 * Get attendance check data for event
+	 *
+	 * @param WP_REST_Request $request Full data about the request.
+	 * @return WP_REST_Response|WP_Error Response object on success, or WP_Error object on failure.
+	 */
+	public function get_attendance_check( $request ) {
+		$event_id = (int) $request->get_param( 'event_id' );
+
+		// Validate post exists.
+		$event = get_post( $event_id );
+		if ( ! $event ) {
+			return new WP_Error(
+				'invalid_post',
+				__( 'The specified post does not exist.', 'fair-rsvp' ),
+				array( 'status' => 404 )
+			);
+		}
+
+		// Check if post has RSVP block.
+		if ( ! has_block( 'fair-rsvp/rsvp-button', $event ) ) {
+			return new WP_Error(
+				'no_rsvp_block',
+				__( 'This post does not have an RSVP block.', 'fair-rsvp' ),
+				array( 'status' => 404 )
+			);
+		}
+
+		// Get participants with full user data (includes email for search).
+		$yes_users   = $this->repository->get_participants_for_attendance_check( $event_id, 'yes' );
+		$maybe_users = $this->repository->get_participants_for_attendance_check( $event_id, 'maybe' );
+
+		// Get expected users from attendance block.
+		$expected_users = $this->get_expected_users( $event, $yes_users, $maybe_users );
+
+		return new WP_REST_Response(
+			array(
+				'yes'       => $yes_users,
+				'maybe'     => $maybe_users,
+				'expected'  => $expected_users,
+				'post_url'  => get_permalink( $event ),
+				'post_type' => $event->post_type,
+			),
+			200
+		);
+	}
+
+	/**
+	 * Format users from RSVP records
+	 *
+	 * @param array $rsvps RSVP records.
+	 * @return array Formatted user data.
+	 */
+	private function format_users_from_rsvps( $rsvps ) {
+		$users = array();
+
+		foreach ( $rsvps as $rsvp ) {
+			if ( ! $rsvp['user_id'] ) {
+				continue; // Skip anonymous RSVPs.
+			}
+
+			$user = get_userdata( $rsvp['user_id'] );
+			if ( ! $user ) {
+				continue;
+			}
+
+			$users[] = array(
+				'id'         => $user->ID,
+				'name'       => $user->display_name,
+				'email'      => $user->user_email,
+				'avatar_url' => get_avatar_url( $user->ID ),
+			);
+		}
+
+		return $users;
+	}
+
+	/**
+	 * Get expected users who haven't RSVP'd yet
+	 *
+	 * @param \WP_Post $event Event post object.
+	 * @param array    $yes_users Formatted yes user data.
+	 * @param array    $maybe_users Formatted maybe user data.
+	 * @return array Expected user data.
+	 */
+	private function get_expected_users( $event, $yes_users, $maybe_users ) {
+		// Get attendance attribute from RSVP block.
+		$blocks     = parse_blocks( $event->post_content );
+		$rsvp_block = $this->find_rsvp_block( $blocks );
+		$attendance = isset( $rsvp_block['attrs']['attendance'] ) ? $rsvp_block['attrs']['attendance'] : array();
+
+		if ( empty( $attendance ) ) {
+			return array();
+		}
+
+		// Get user IDs who have already RSVP'd.
+		$rsvpd_user_ids = array();
+		foreach ( array_merge( $yes_users, $maybe_users ) as $user ) {
+			if ( isset( $user['id'] ) ) {
+				$rsvpd_user_ids[] = (int) $user['id'];
+			}
+		}
+
+		// Get all expected user IDs from attendance groups.
+		$expected_user_ids = $this->get_expected_user_ids( $attendance );
+
+		// Filter out users who already RSVP'd.
+		$expected_user_ids = array_diff( $expected_user_ids, $rsvpd_user_ids );
+
+		// Format user data.
+		$expected_users = array();
+		foreach ( $expected_user_ids as $user_id ) {
+			$user = get_userdata( $user_id );
+			if ( ! $user ) {
+				continue;
+			}
+
+			$expected_users[] = array(
+				'id'         => $user->ID,
+				'name'       => $user->display_name,
+				'email'      => $user->user_email,
+				'avatar_url' => get_avatar_url( $user->ID ),
+			);
+		}
+
+		return $expected_users;
+	}
+
+	/**
+	 * Get user IDs from attendance attribute (only expected groups)
+	 *
+	 * @param array $attendance Attendance attribute from block.
+	 * @return array User IDs who are expected (permission level 2).
+	 */
+	private function get_expected_user_ids( $attendance ) {
+		$expected_user_ids = array();
+
+		foreach ( $attendance as $key => $permission_level ) {
+			// Only process expected groups (level 2).
+			if ( 2 !== (int) $permission_level ) {
+				continue;
+			}
+
+			// Skip built-in keys.
+			if ( in_array( $key, array( 'users', 'anonymous' ), true ) || 0 === strpos( $key, 'role:' ) ) {
+				continue;
+			}
+
+			// This is a plugin-provided group - resolve it.
+			if ( function_exists( 'fair_events_user_group_resolve' ) ) {
+				$group_user_ids    = fair_events_user_group_resolve( $key, array() );
+				$expected_user_ids = array_merge( $expected_user_ids, $group_user_ids );
+			}
+		}
+
+		return array_unique( $expected_user_ids );
+	}
+
+	/**
+	 * Check permissions for attendance check
+	 *
+	 * @param WP_REST_Request $request Full data about the request.
+	 * @return bool|WP_Error True if the request has access, WP_Error object otherwise.
+	 */
+	public function get_attendance_check_permissions_check( $request ) {
+		$event_id = (int) $request->get_param( 'event_id' );
+
+		// User must be able to edit the event post.
+		if ( ! current_user_can( 'edit_post', $event_id ) ) {
+			return new WP_Error(
+				'rest_forbidden',
+				__( 'You do not have permission to view this attendance check.', 'fair-rsvp' ),
+				array( 'status' => 403 )
+			);
+		}
+
+		return true;
 	}
 }

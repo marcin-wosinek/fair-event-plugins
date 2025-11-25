@@ -391,6 +391,60 @@ class RsvpRepository {
 	}
 
 	/**
+	 * Get participants for attendance check with full user information
+	 *
+	 * Similar to get_participants_with_user_data but includes email for search.
+	 * Only use this method for privileged views (event editors).
+	 *
+	 * @param int    $event_id    Event ID.
+	 * @param string $rsvp_status Optional. Filter by RSVP status (default: 'yes').
+	 * @return array Array of participants with full user data including email.
+	 */
+	public function get_participants_for_attendance_check( $event_id, $rsvp_status = 'yes' ) {
+		global $wpdb;
+
+		$table_name  = $this->get_table_name();
+		$users_table = $wpdb->users;
+
+		$sql = $wpdb->prepare(
+			'SELECT
+				r.id as rsvp_id,
+				r.user_id,
+				u.display_name,
+				u.user_email,
+				r.rsvp_status,
+				r.attendance_status,
+				r.rsvp_at
+			FROM %i r
+			INNER JOIN %i u ON r.user_id = u.ID
+			WHERE r.event_id = %d AND r.rsvp_status = %s
+			ORDER BY r.rsvp_at ASC',
+			$table_name,
+			$users_table,
+			$event_id,
+			$rsvp_status
+		);
+
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching,WordPress.DB.PreparedSQL.NotPrepared
+		$results = $wpdb->get_results( $sql, ARRAY_A );
+
+		// Format results with avatar URL.
+		$formatted = array();
+		foreach ( $results as $result ) {
+			$formatted[] = array(
+				'rsvp_id'           => (int) $result['rsvp_id'],
+				'id'                => (int) $result['user_id'],
+				'name'              => $result['display_name'],
+				'email'             => $result['user_email'],
+				'avatar_url'        => get_avatar_url( $result['user_id'], array( 'size' => 48 ) ),
+				'attendance_status' => $result['attendance_status'],
+			);
+		}
+
+		return $formatted;
+	}
+
+	/**
 	 * Create or get user for walk-in attendee
 	 *
 	 * @param string $name  Attendee name.

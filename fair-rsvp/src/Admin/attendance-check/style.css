@@ -1,0 +1,281 @@
+/**
+ * Styles for attendance check page
+ */
+
+/* Page container */
+.fair-rsvp-attendance-check-page {
+	max-width: 1400px;
+	margin: 2rem auto;
+	padding: 0 1rem;
+}
+
+.fair-rsvp-attendance-check-container {
+	background: #ffffff;
+	border-radius: 8px;
+	box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+	padding: 2rem;
+}
+
+/* Loading state */
+.fair-rsvp-attendance-loading {
+	text-align: center;
+	padding: 3rem;
+}
+
+.fair-rsvp-attendance-loading p {
+	margin-top: 1rem;
+	color: #50575e;
+}
+
+/* Header */
+.fair-rsvp-attendance-header {
+	margin-bottom: 2rem;
+	padding-bottom: 1.5rem;
+	border-bottom: 2px solid #f0f0f1;
+}
+
+.fair-rsvp-attendance-header h1 {
+	margin: 0 0 1rem 0;
+	font-size: 2rem;
+	color: #1e1e1e;
+}
+
+.fair-rsvp-attendance-stats {
+	display: flex;
+	gap: 2rem;
+	flex-wrap: wrap;
+}
+
+.fair-rsvp-attendance-stats .stat {
+	display: flex;
+	flex-direction: column;
+	gap: 0.25rem;
+}
+
+.fair-rsvp-attendance-stats .stat strong {
+	font-size: 1.5rem;
+	font-weight: 700;
+}
+
+.fair-rsvp-attendance-stats .stat.yes strong {
+	color: #00a32a;
+}
+
+.fair-rsvp-attendance-stats .stat.maybe strong {
+	color: #f59e0b;
+}
+
+.fair-rsvp-attendance-stats .stat.expected strong {
+	color: #2271b1;
+}
+
+.fair-rsvp-attendance-stats .stat.checked-in strong {
+	color: #8c4bff;
+}
+
+.fair-rsvp-attendance-stats .stat.total strong {
+	color: #1e1e1e;
+}
+
+/* Controls */
+.fair-rsvp-attendance-controls {
+	display: flex;
+	gap: 1rem;
+	align-items: flex-end;
+	margin-bottom: 2rem;
+	flex-wrap: wrap;
+}
+
+.fair-rsvp-attendance-controls .components-text-control__input {
+	flex: 1;
+	min-width: 250px;
+}
+
+.fair-rsvp-attendance-buttons {
+	display: flex;
+	gap: 0.5rem;
+	flex-wrap: wrap;
+}
+
+/* Table - WordPress Admin Style */
+.fair-rsvp-attendance-table-wrapper {
+	overflow-x: auto;
+}
+
+.fair-rsvp-attendance-table {
+	width: 100%;
+	border-spacing: 0;
+	background: #fff;
+	border: 1px solid #c3c4c7;
+	box-shadow: 0 1px 1px rgba(0, 0, 0, 0.04);
+}
+
+.fair-rsvp-attendance-table thead th {
+	background: #fff;
+	border-bottom: 1px solid #c3c4c7;
+	font-weight: 600;
+	padding: 8px 10px;
+	text-align: left;
+	vertical-align: middle;
+}
+
+.fair-rsvp-attendance-table th.col-checkbox {
+	width: 2.2em;
+	text-align: center;
+	padding: 8px 0;
+}
+
+.fair-rsvp-attendance-table th.col-avatar {
+	width: 50px;
+	min-width: 50px;
+	max-width: 50px;
+}
+
+.fair-rsvp-attendance-table th.col-name {
+	width: auto;
+}
+
+.fair-rsvp-attendance-table th.col-status {
+	width: 120px;
+}
+
+.fair-rsvp-attendance-table tbody tr {
+	background: #fff;
+}
+
+.fair-rsvp-attendance-table tbody tr:nth-child(odd) {
+	background: #f6f7f7;
+}
+
+.fair-rsvp-attendance-table tbody tr:hover {
+	background-color: #f0f0f1;
+}
+
+.fair-rsvp-attendance-table tbody tr.checked-in {
+	background-color: #d5f2e3;
+}
+
+.fair-rsvp-attendance-table tbody tr.checked-in:hover {
+	background-color: #c5e9d6;
+}
+
+.fair-rsvp-attendance-table td {
+	padding: 8px 10px;
+	border-top: 1px solid #c3c4c7;
+	vertical-align: middle;
+}
+
+.fair-rsvp-attendance-table td.col-checkbox {
+	text-align: center;
+	padding: 8px 0;
+}
+
+.fair-rsvp-attendance-table td.col-avatar {
+	width: 50px;
+	min-width: 50px;
+	max-width: 50px;
+	padding: 8px;
+	text-align: center;
+}
+
+.fair-rsvp-attendance-table td.col-checkbox input[type='checkbox'] {
+	margin: 0;
+	cursor: pointer;
+}
+
+.fair-rsvp-attendance-table td.col-checkbox input[type='checkbox']:disabled {
+	cursor: not-allowed;
+	opacity: 0.5;
+}
+
+.fair-rsvp-attendance-table .attendee-avatar {
+	width: 32px;
+	height: 32px;
+	min-width: 32px;
+	min-height: 32px;
+	max-width: 32px;
+	max-height: 32px;
+	border-radius: 50%;
+	display: block;
+	object-fit: cover;
+}
+
+.fair-rsvp-attendance-table td.col-name {
+	font-weight: 400;
+	color: #2c3338;
+}
+
+.fair-rsvp-attendance-table td.no-results {
+	text-align: center;
+	padding: 2rem;
+	color: #646970;
+	font-style: italic;
+}
+
+/* Status badges */
+.status-badge {
+	display: inline-block;
+	padding: 0.25rem 0.75rem;
+	border-radius: 12px;
+	font-size: 0.85rem;
+	font-weight: 500;
+	text-align: center;
+}
+
+.status-badge.status-yes {
+	background-color: #d5f2e3;
+	color: #00a32a;
+}
+
+.status-badge.status-maybe {
+	background-color: #fcf0cc;
+	color: #bd8600;
+}
+
+.status-badge.status-expected {
+	background-color: #cce5f7;
+	color: #2271b1;
+}
+
+/* Success notice */
+.components-notice.is-success {
+	margin: 0 0 1.5rem 0;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+	.fair-rsvp-attendance-check-container {
+		padding: 1rem;
+	}
+
+	.fair-rsvp-attendance-header h1 {
+		font-size: 1.5rem;
+	}
+
+	.fair-rsvp-attendance-stats {
+		gap: 1rem;
+	}
+
+	.fair-rsvp-attendance-stats .stat strong {
+		font-size: 1.25rem;
+	}
+
+	.fair-rsvp-attendance-controls {
+		flex-direction: column;
+		align-items: stretch;
+	}
+
+	.fair-rsvp-attendance-controls .components-text-control__input {
+		width: 100%;
+	}
+
+	.fair-rsvp-attendance-table th,
+	.fair-rsvp-attendance-table td {
+		padding: 0.75rem 0.5rem;
+	}
+
+	.fair-rsvp-attendance-table th.col-email,
+	.fair-rsvp-attendance-table td.col-email {
+		display: none;
+	}
+}

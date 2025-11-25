@@ -55,5 +55,8 @@ class Plugin {
 
 		// Initialize REST API hooks.
 		new \FairRsvp\REST\RestHooks();
+
+		// Initialize frontend hooks.
+		new \FairRsvp\Frontend\AttendanceCheckHooks();
 	}
 }

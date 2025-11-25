@@ -51,6 +51,7 @@ msgstr "Anmelden"
 
 #: src/blocks/rsvp-button/render.php:124
 #: src/blocks/rsvp-button/render.php:160
+#: src/Admin/attendance-check/AttendanceCheck.js:285
 #: src/Admin/attendance/AttendanceConfirmation.js:403
 #: src/blocks/participants-list/editor.js:66
 #: src/blocks/participants-list/editor.js:120
@@ -61,6 +62,8 @@ msgstr "Ja"
 
 #: src/blocks/rsvp-button/render.php:134
 #: src/blocks/rsvp-button/render.php:162
+#: src/Admin/attendance-check/AttendanceCheck.js:168
+#: src/Admin/attendance-check/AttendanceCheck.js:287
 #: src/Admin/attendance/AttendanceConfirmation.js:402
 #: src/blocks/participants-list/editor.js:68
 #: src/blocks/participants-list/editor.js:122
@@ -108,65 +111,65 @@ msgstr "Sortieren nach Feld."
 msgid "Order direction."
 msgstr "Sortierrichtung."
 
-#: src/REST/RsvpController.php:275
-#: src/REST/RsvpController.php:505
+#: src/REST/RsvpController.php:295
+#: src/REST/RsvpController.php:525
 msgid "The specified event does not exist or is not published."
 msgstr "Die angegebene Veranstaltung existiert nicht oder ist nicht veröffentlicht."
 
-#: src/REST/RsvpController.php:286
+#: src/REST/RsvpController.php:306
 msgid "Failed to create or update RSVP."
 msgstr "Fehler beim Erstellen oder Aktualisieren der Anmeldung."
 
-#: src/REST/RsvpController.php:297
-#: src/REST/RsvpController.php:541
+#: src/REST/RsvpController.php:317
+#: src/REST/RsvpController.php:561
 msgid "RSVP was created but could not be retrieved."
 msgstr "Die Anmeldung wurde erstellt, konnte aber nicht abgerufen werden."
 
-#: src/REST/RsvpController.php:323
+#: src/REST/RsvpController.php:343
 msgid "RSVP not found for this event."
 msgstr "Keine Anmeldung für diese Veranstaltung gefunden."
 
-#: src/REST/RsvpController.php:346
+#: src/REST/RsvpController.php:366
 msgid "RSVP not found."
 msgstr "Anmeldung nicht gefunden."
 
-#: src/REST/RsvpController.php:357
+#: src/REST/RsvpController.php:377
 msgid "Failed to update attendance status."
 msgstr "Fehler beim Aktualisieren des Anwesenheitsstatus."
 
-#: src/REST/RsvpController.php:562
+#: src/REST/RsvpController.php:582
 msgid "You must be logged in to RSVP."
 msgstr "Sie müssen angemeldet sein, um sich anzumelden."
 
-#: src/REST/RsvpController.php:616
+#: src/REST/RsvpController.php:636
 msgid "You must be logged in to view RSVPs."
 msgstr "Sie müssen angemeldet sein, um Anmeldungen anzuzeigen."
 
-#: src/REST/RsvpController.php:716
+#: src/REST/RsvpController.php:736
 msgid "Event/post ID to RSVP for."
 msgstr "Veranstaltungs-/Beitrags-ID, für die die Anmeldung erfolgen soll."
 
-#: src/REST/RsvpController.php:721
+#: src/REST/RsvpController.php:741
 msgid "RSVP status."
 msgstr "RSVP-Status."
 
-#: src/REST/RsvpController.php:737
+#: src/REST/RsvpController.php:757
 msgid "Event ID to get RSVPs for."
 msgstr "Veranstaltungs-ID, für die Anmeldungen abgerufen werden sollen."
 
-#: src/REST/RsvpController.php:742
+#: src/REST/RsvpController.php:762
 msgid "Filter by RSVP status."
 msgstr "Nach RSVP-Status filtern."
 
-#: src/REST/RsvpController.php:747
+#: src/REST/RsvpController.php:767
 msgid "Filter by attendance status."
 msgstr "Nach Anwesenheitsstatus filtern."
 
-#: src/REST/RsvpController.php:752
+#: src/REST/RsvpController.php:772
 msgid "Current page of the collection."
 msgstr "Aktuelle Seite der Sammlung."
 
-#: src/REST/RsvpController.php:758
+#: src/REST/RsvpController.php:778
 msgid "Maximum number of items to return per page."
 msgstr "Maximale Anzahl der Elemente pro Seite."
 
@@ -348,7 +351,7 @@ msgid "No event ID specified."
 msgstr "Keine Event-ID angegeben."
 
 #: src/Admin/AttendanceConfirmationPage.php:46
-#: src/REST/RsvpController.php:574
+#: src/REST/RsvpController.php:594
 msgid "Event not found."
 msgstr "Ereignis nicht gefunden."
 
@@ -374,21 +377,21 @@ msgstr ""
 msgid "Attendee email (optional)."
 msgstr ""
 
-#: src/REST/RsvpController.php:469
+#: src/REST/RsvpController.php:489
 msgid "Updates must be a non-empty array."
 msgstr ""
 
 #. translators: %d: number of successful updates
-#: src/REST/RsvpController.php:482
+#: src/REST/RsvpController.php:502
 #, php-format
 msgid "Successfully updated %d attendance records."
 msgstr ""
 
-#: src/REST/RsvpController.php:516
+#: src/REST/RsvpController.php:536
 msgid "Failed to create or find user for walk-in attendee."
 msgstr ""
 
-#: src/REST/RsvpController.php:527
+#: src/REST/RsvpController.php:547
 msgid "Failed to create RSVP for walk-in attendee."
 msgstr ""
 
@@ -481,6 +484,7 @@ msgstr "Bestätigungen werden geladen..."
 msgid "attendees checked in"
 msgstr "Teilnehmer eingecheckt"
 
+#: src/Admin/attendance-check/AttendanceCheck.js:193
 #: src/Admin/attendance/AttendanceConfirmation.js:360
 msgid "Search attendees"
 msgstr "Teilnehmer suchen"
@@ -497,11 +501,13 @@ msgstr "Bestätigungsliste"
 msgid "No RSVPs found"
 msgstr "Keine Bestätigungen gefunden"
 
+#: src/Admin/attendance-check/AttendanceCheck.js:227
 #: src/Admin/attendance/AttendanceConfirmation.js:381
 #: src/Admin/attendance/AttendanceConfirmation.js:521
 msgid "Name"
 msgstr "Name"
 
+#: src/Admin/attendance-check/AttendanceCheck.js:230
 #: src/Admin/attendance/AttendanceConfirmation.js:388
 msgid "RSVP Status"
 msgstr "Bestätigungsstatus"
@@ -578,6 +584,7 @@ msgstr "Datum & Uhrzeit"
 msgid "Attendees"
 msgstr "Teilnehmer"
 
+#: src/Admin/attendance-check/AttendanceCheck.js:164
 #: src/Admin/events/EventsList.js:185
 msgid "Confirmed"
 msgstr "Bestätigt"
@@ -606,109 +613,209 @@ msgstr "Diese Veranstaltung ist nur auf Einladung."
 msgid "You're invited to this event!"
 msgstr "Sie sind zu dieser Veranstaltung eingeladen!"
 
-#: src/REST/RsvpController.php:598
+#: src/REST/RsvpController.php:618
 msgid "You are not allowed to RSVP to this event."
 msgstr "Sie sind nicht berechtigt, sich für diese Veranstaltung anzumelden."
 
-#: src/blocks/rsvp-button/components/AttendanceManager.js:18
+#: src/blocks/rsvp-button/components/AttendanceManager.js:21
 msgid "Administrator"
 msgstr "Administrator"
 
-#: src/blocks/rsvp-button/components/AttendanceManager.js:19
+#: src/blocks/rsvp-button/components/AttendanceManager.js:24
 msgid "Editor"
 msgstr "Redakteur"
 
-#: src/blocks/rsvp-button/components/AttendanceManager.js:20
+#: src/blocks/rsvp-button/components/AttendanceManager.js:25
 msgid "Author"
 msgstr "Autor"
 
-#: src/blocks/rsvp-button/components/AttendanceManager.js:21
+#: src/blocks/rsvp-button/components/AttendanceManager.js:26
 msgid "Contributor"
 msgstr "Mitarbeiter"
 
-#: src/blocks/rsvp-button/components/AttendanceManager.js:22
+#: src/blocks/rsvp-button/components/AttendanceManager.js:27
 msgid "Subscriber"
 msgstr "Abonnent"
 
-#: src/blocks/rsvp-button/components/AttendanceManager.js:27
+#: src/blocks/rsvp-button/components/AttendanceManager.js:32
 msgid "Not Allowed (0)"
 msgstr "Nicht erlaubt (0)"
 
-#: src/blocks/rsvp-button/components/AttendanceManager.js:28
+#: src/blocks/rsvp-button/components/AttendanceManager.js:33
 msgid "Allowed (1)"
 msgstr "Erlaubt (1)"
 
-#: src/blocks/rsvp-button/components/AttendanceManager.js:29
+#: src/blocks/rsvp-button/components/AttendanceManager.js:34
 msgid "Expected (2)"
 msgstr "Erwartet (2)"
 
-#: src/blocks/rsvp-button/components/AttendanceManager.js:35
-#: src/blocks/rsvp-button/components/AttendanceManager.js:93
+#: src/blocks/rsvp-button/components/AttendanceManager.js:54
+#: src/blocks/rsvp-button/components/AttendanceManager.js:117
 msgid "All Logged-in Users"
 msgstr "Alle angemeldeten Benutzer"
 
-#: src/blocks/rsvp-button/components/AttendanceManager.js:38
-#: src/blocks/rsvp-button/components/AttendanceManager.js:98
+#: src/blocks/rsvp-button/components/AttendanceManager.js:57
+#: src/blocks/rsvp-button/components/AttendanceManager.js:122
 msgid "Anonymous Users"
 msgstr "Anonyme Benutzer"
 
-#: src/blocks/rsvp-button/components/AttendanceManager.js:44
-#: src/blocks/rsvp-button/components/AttendanceManager.js:47
+#: src/blocks/rsvp-button/components/AttendanceManager.js:63
+#: src/blocks/rsvp-button/components/AttendanceManager.js:66
 msgid " (Role)"
 msgstr " (Rolle)"
 
-#: src/blocks/rsvp-button/components/AttendanceManager.js:91
+#: src/blocks/rsvp-button/components/AttendanceManager.js:115
 msgid "Select a rule to add..."
 msgstr "Wählen Sie eine Regel zum Hinzufügen..."
 
-#: src/blocks/rsvp-button/components/AttendanceManager.js:126
+#: src/blocks/rsvp-button/components/AttendanceManager.js:155
 msgid "No restrictions set. Everyone can RSVP (default behavior)."
 msgstr "Keine Einschränkungen festgelegt. Jeder kann sich anmelden (Standardverhalten)."
 
-#: src/blocks/rsvp-button/components/AttendanceManager.js:136
+#: src/blocks/rsvp-button/components/AttendanceManager.js:165
 msgid "group expected."
 msgstr "Gruppe erwartet."
 
-#: src/blocks/rsvp-button/components/AttendanceManager.js:137
+#: src/blocks/rsvp-button/components/AttendanceManager.js:166
 msgid "groups expected."
 msgstr "Gruppen erwartet."
 
-#: src/blocks/rsvp-button/components/AttendanceManager.js:142
+#: src/blocks/rsvp-button/components/AttendanceManager.js:171
 msgid "group allowed."
 msgstr "Gruppe erlaubt."
 
-#: src/blocks/rsvp-button/components/AttendanceManager.js:143
+#: src/blocks/rsvp-button/components/AttendanceManager.js:172
 msgid "groups allowed."
 msgstr "Gruppen erlaubt."
 
-#: src/blocks/rsvp-button/components/AttendanceManager.js:148
+#: src/blocks/rsvp-button/components/AttendanceManager.js:177
 msgid "group blocked."
 msgstr "Gruppe blockiert."
 
-#: src/blocks/rsvp-button/components/AttendanceManager.js:149
+#: src/blocks/rsvp-button/components/AttendanceManager.js:178
 msgid "groups blocked."
 msgstr "Gruppen blockiert."
 
-#: src/blocks/rsvp-button/components/AttendanceManager.js:159
+#: src/blocks/rsvp-button/components/AttendanceManager.js:188
 msgid "Group"
 msgstr "Gruppe"
 
-#: src/blocks/rsvp-button/components/AttendanceManager.js:160
+#: src/blocks/rsvp-button/components/AttendanceManager.js:189
 msgid "Permission"
 msgstr "Berechtigung"
 
-#: src/blocks/rsvp-button/components/AttendanceManager.js:161
+#: src/blocks/rsvp-button/components/AttendanceManager.js:190
 msgid "Action"
 msgstr "Aktion"
 
-#: src/blocks/rsvp-button/components/AttendanceManager.js:185
+#: src/blocks/rsvp-button/components/AttendanceManager.js:214
 msgid "Remove"
 msgstr "Entfernen"
 
-#: src/blocks/rsvp-button/components/AttendanceManager.js:211
+#: src/blocks/rsvp-button/components/AttendanceManager.js:242
 msgid "Add Rule"
 msgstr "Regel hinzufügen"
 
 #: src/blocks/rsvp-button/editor.js:64
 msgid "Attendance Permissions"
 msgstr "Teilnahmeberechtigungen"
+
+#: src/blocks/rsvp-button/render.php:180
+msgid "📋 Check Attendance List"
+msgstr ""
+
+#: src/blocks/rsvp-button/render.php:180
+msgid "📋 Attendance"
+msgstr ""
+
+#: src/Frontend/AttendanceCheckHooks.php:74
+#: src/Frontend/AttendanceCheckHooks.php:88
+msgid "Post not found."
+msgstr ""
+
+#: src/Frontend/AttendanceCheckHooks.php:95
+#: src/REST/RsvpController.php:832
+msgid "This post does not have an RSVP block."
+msgstr ""
+
+#: src/Frontend/AttendanceCheckPage.php:51
+msgid "You do not have permission to view this page."
+msgstr ""
+
+#: src/Frontend/AttendanceCheckPage.php:52
+msgid "Permission Denied"
+msgstr ""
+
+#: src/Frontend/AttendanceCheckPage.php:64
+msgid "Loading attendance check..."
+msgstr ""
+
+#: src/REST/RsvpController.php:269
+msgid "Event ID to get attendance check for."
+msgstr ""
+
+#: src/REST/RsvpController.php:823
+msgid "The specified post does not exist."
+msgstr ""
+
+#: src/REST/RsvpController.php:980
+msgid "You do not have permission to view this attendance check."
+msgstr ""
+
+#: src/Admin/attendance-check/AttendanceCheck.js:63
+msgid "Failed to load attendance data."
+msgstr ""
+
+#: src/Admin/attendance-check/AttendanceCheck.js:111
+msgid "Failed to save attendance data."
+msgstr ""
+
+#: src/Admin/attendance-check/AttendanceCheck.js:140
+msgid "Loading attendance data..."
+msgstr ""
+
+#: src/Admin/attendance-check/AttendanceCheck.js:160
+msgid "Attendance Check"
+msgstr ""
+
+#: src/Admin/attendance-check/AttendanceCheck.js:172
+#: src/Admin/attendance-check/AttendanceCheck.js:289
+msgid "Expected"
+msgstr ""
+
+#: src/Admin/attendance-check/AttendanceCheck.js:176
+#: src/Admin/attendance-check/AttendanceCheck.js:223
+msgid "Present"
+msgstr ""
+
+#: src/Admin/attendance-check/AttendanceCheck.js:180
+msgid "Total"
+msgstr ""
+
+#: src/Admin/attendance-check/AttendanceCheck.js:187
+msgid "Attendance saved successfully!"
+msgstr ""
+
+#: src/Admin/attendance-check/AttendanceCheck.js:196
+msgid "Search by name or email..."
+msgstr ""
+
+#: src/Admin/attendance-check/AttendanceCheck.js:202
+msgid "← Back to Post"
+msgstr ""
+
+#: src/Admin/attendance-check/AttendanceCheck.js:212
+msgid "Saving..."
+msgstr ""
+
+#: src/Admin/attendance-check/AttendanceCheck.js:213
+msgid "Save Attendance"
+msgstr ""
+
+#: src/Admin/attendance-check/AttendanceCheck.js:239
+msgid "No attendees match your search."
+msgstr ""
+
+#: src/Admin/attendance-check/AttendanceCheck.js:243
+msgid "No attendees yet."
+msgstr ""

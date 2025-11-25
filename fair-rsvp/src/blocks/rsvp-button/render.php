@@ -169,4 +169,16 @@ $current_status = $current_rsvp ? $current_rsvp['rsvp_status'] : '';
 			<?php endif; ?>
 		</div>
 	<?php endif; ?>
+
+	<?php if ( current_user_can( 'edit_post', $event_id ) ) : ?>
+		<!-- Attendance check link for editors -->
+		<div class="fair-rsvp-attendance-link-wrapper <?php echo $deadline_passed ? 'deadline-passed' : ''; ?>">
+			<a
+				href="<?php echo esc_url( get_permalink( $event_id ) . 'attendance/' ); ?>"
+				class="fair-rsvp-attendance-link <?php echo $deadline_passed ? 'attendance-link-prominent' : 'attendance-link-small'; ?>"
+			>
+				<?php echo $deadline_passed ? esc_html__( '📋 Check Attendance List', 'fair-rsvp' ) : esc_html__( '📋 Attendance', 'fair-rsvp' ); ?>
+			</a>
+		</div>
+	<?php endif; ?>
 </div>
