@@ -94,6 +94,7 @@ class Plugin {
 	 */
 	private function load_rest_api() {
 		new \FairEvents\REST\DateOptionsEndpoint();
+		new \FairEvents\REST\UserGroupOptionsEndpoint();
 	}
 
 	/**

@@ -42,15 +42,30 @@ class AttendanceHelper {
 				}
 			}
 
+			// Check plugin-provided user groups (medium specificity).
+			// Only check if the global function exists (defensive pattern).
+			if ( function_exists( 'fair_events_user_group_resolve' ) ) {
+				foreach ( $attendance as $key => $permission_level ) {
+					// Skip built-in keys.
+					if ( 'users' === $key || 'anonymous' === $key || strpos( $key, 'role:' ) === 0 ) {
+						continue;
+					}
+
+					// This is a plugin-provided group - resolve it.
+					$group_user_ids = fair_events_user_group_resolve( $key, array() );
+					if ( is_array( $group_user_ids ) && in_array( $user_id, $group_user_ids, true ) ) {
+						$max_permission = max( $max_permission, (int) $permission_level );
+					}
+				}
+			}
+
 			// Check "users" (all logged-in users).
 			if ( isset( $attendance['users'] ) ) {
 				$max_permission = max( $max_permission, (int) $attendance['users'] );
 			}
-		} else {
+		} elseif ( isset( $attendance['anonymous'] ) ) {
 			// Check "anonymous" (not logged in).
-			if ( isset( $attendance['anonymous'] ) ) {
-				$max_permission = max( $max_permission, (int) $attendance['anonymous'] );
-			}
+			$max_permission = max( $max_permission, (int) $attendance['anonymous'] );
 		}
 
 		// No match found = not allowed.

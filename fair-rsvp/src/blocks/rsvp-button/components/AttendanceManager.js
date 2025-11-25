@@ -1,6 +1,7 @@
 import { __ } from '@wordpress/i18n';
 import { Button, SelectControl, Notice } from '@wordpress/components';
-import { useState } from '@wordpress/element';
+import { useState, useEffect } from '@wordpress/element';
+import apiFetch from '@wordpress/api-fetch';
 
 /**
  * AttendanceManager Component
@@ -12,6 +13,7 @@ import { useState } from '@wordpress/element';
  */
 export default function AttendanceManager({ attendance, onChange }) {
 	const [selectedRule, setSelectedRule] = useState('');
+	const [pluginGroups, setPluginGroups] = useState([]);
 
 	// Get available WordPress roles
 	const availableRoles = [
@@ -32,6 +34,20 @@ export default function AttendanceManager({ attendance, onChange }) {
 		{ label: __('Expected (2)', 'fair-rsvp'), value: 2 },
 	];
 
+	// Fetch plugin-provided user groups on mount
+	useEffect(() => {
+		apiFetch({ path: '/fair-events/v1/user-group-options' })
+			.then((response) => {
+				if (response.success && Array.isArray(response.options)) {
+					setPluginGroups(response.options);
+				}
+			})
+			.catch((error) => {
+				// Silently fail - plugin groups are optional
+				console.error('Failed to load user group options:', error);
+			});
+	}, []);
+
 	// Get display label for a key
 	const getDisplayLabel = (key) => {
 		if (key === 'users') {
@@ -48,6 +64,11 @@ export default function AttendanceManager({ attendance, onChange }) {
 				: roleName.charAt(0).toUpperCase() +
 						roleName.slice(1) +
 						__(' (Role)', 'fair-rsvp');
+		}
+		// Check if it's a plugin-provided group
+		const pluginGroup = pluginGroups.find((g) => g.value === key);
+		if (pluginGroup) {
+			return pluginGroup.label;
 		}
 		return key;
 	};
@@ -105,6 +126,11 @@ export default function AttendanceManager({ attendance, onChange }) {
 			...availableRoles.map((role) => ({
 				...role,
 				disabled: attendance[role.value] !== undefined,
+			})),
+			...pluginGroups.map((group) => ({
+				label: group.label,
+				value: group.value,
+				disabled: attendance[group.value] !== undefined,
 			})),
 		];
 		return options;
