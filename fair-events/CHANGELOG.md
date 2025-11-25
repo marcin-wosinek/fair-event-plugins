@@ -1,5 +1,16 @@
 # fair-events
 
+## 0.5.0
+
+### Minor Changes
+
+- 83743d6: Add a workflow to copy the event
+
+### Patch Changes
+
+- 3a60309: Add lenght dropdown to the event content type.
+- 97fd67d: Add support for user groups.
+
 ## 0.4.3
 
 ### Patch Changes

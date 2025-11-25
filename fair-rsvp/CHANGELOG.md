@@ -1,5 +1,12 @@
 # fair-rsvp
 
+## 0.4.0
+
+### Minor Changes
+
+- be617e1: Add invitation modes to RSVP block
+- 97fd67d: Add frontend attendance confirmation
+
 ## 0.3.1
 
 ### Patch Changes
