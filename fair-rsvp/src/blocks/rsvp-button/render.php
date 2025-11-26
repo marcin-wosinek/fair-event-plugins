@@ -92,13 +92,96 @@ $current_status = $current_rsvp ? $current_rsvp['rsvp_status'] : '';
 			<p><?php echo esc_html__( 'RSVPs for this event are now closed.', 'fair-rsvp' ); ?></p>
 		</div>
 	<?php elseif ( ! $is_logged_in ) : ?>
-		<!-- Not logged in - show login prompt -->
-		<div class="fair-rsvp-login-message">
-			<p><?php echo esc_html__( 'Please log in to RSVP for this event.', 'fair-rsvp' ); ?></p>
-			<a href="<?php echo esc_url( wp_login_url( get_permalink() ) ); ?>" class="fair-rsvp-login-button">
-				<?php echo esc_html__( 'Log In', 'fair-rsvp' ); ?>
-			</a>
-		</div>
+		<?php
+		// Check if anonymous users are allowed to RSVP.
+		$anonymous_permission = isset( $attendance['anonymous'] ) ? (int) $attendance['anonymous'] : 0;
+		$allow_anonymous      = $anonymous_permission >= 1;
+		?>
+
+		<?php if ( $allow_anonymous ) : ?>
+			<!-- Not logged in but anonymous allowed - show name/email form -->
+			<?php if ( $is_expected ) : ?>
+				<div class="fair-rsvp-invited-banner">
+					<p><?php echo esc_html__( "You're invited to this event!", 'fair-rsvp' ); ?></p>
+				</div>
+			<?php endif; ?>
+			<div class="fair-rsvp-form-container fair-rsvp-anonymous-form" data-event-id="<?php echo esc_attr( $event_id ); ?>" data-anonymous="true">
+				<form class="fair-rsvp-form">
+					<div class="fair-rsvp-user-info">
+						<div class="fair-rsvp-field">
+							<label for="fair-rsvp-name-<?php echo esc_attr( $event_id ); ?>">
+								<?php echo esc_html__( 'Your Name', 'fair-rsvp' ); ?> <span class="required">*</span>
+							</label>
+							<input
+								type="text"
+								id="fair-rsvp-name-<?php echo esc_attr( $event_id ); ?>"
+								name="rsvp_name"
+								class="fair-rsvp-input"
+								required
+								placeholder="<?php echo esc_attr__( 'Enter your name', 'fair-rsvp' ); ?>"
+							/>
+						</div>
+						<div class="fair-rsvp-field">
+							<label for="fair-rsvp-email-<?php echo esc_attr( $event_id ); ?>">
+								<?php echo esc_html__( 'Your Email', 'fair-rsvp' ); ?> <span class="required">*</span>
+							</label>
+							<input
+								type="email"
+								id="fair-rsvp-email-<?php echo esc_attr( $event_id ); ?>"
+								name="rsvp_email"
+								class="fair-rsvp-input"
+								required
+								placeholder="<?php echo esc_attr__( 'Enter your email', 'fair-rsvp' ); ?>"
+							/>
+						</div>
+					</div>
+
+					<div class="fair-rsvp-options">
+						<label class="fair-rsvp-option">
+							<input
+								type="radio"
+								name="rsvp_status"
+								value="yes"
+								required
+							/>
+							<span><?php echo esc_html__( 'Yes', 'fair-rsvp' ); ?></span>
+						</label>
+
+						<label class="fair-rsvp-option">
+							<input
+								type="radio"
+								name="rsvp_status"
+								value="maybe"
+							/>
+							<span><?php echo esc_html__( 'Maybe', 'fair-rsvp' ); ?></span>
+						</label>
+
+						<label class="fair-rsvp-option">
+							<input
+								type="radio"
+								name="rsvp_status"
+								value="no"
+							/>
+							<span><?php echo esc_html__( 'No', 'fair-rsvp' ); ?></span>
+						</label>
+					</div>
+
+					<button type="submit" class="fair-rsvp-submit-button">
+						<?php echo esc_html__( 'Submit RSVP', 'fair-rsvp' ); ?>
+					</button>
+
+					<div class="fair-rsvp-message" style="display: none;"></div>
+				</form>
+			</div>
+		<?php else : ?>
+			<!-- Not logged in and anonymous not allowed - show login prompt -->
+			<div class="fair-rsvp-login-message">
+				<p><?php echo esc_html__( 'Please log in to RSVP for this event.', 'fair-rsvp' ); ?></p>
+				<a href="<?php echo esc_url( wp_login_url( get_permalink() ) ); ?>" class="fair-rsvp-login-button">
+					<?php echo esc_html__( 'Log In', 'fair-rsvp' ); ?>
+				</a>
+			</div>
+		<?php endif; ?>
 	<?php elseif ( ! $is_allowed ) : ?>
 		<!-- Logged in but not allowed to RSVP -->
 		<div class="fair-rsvp-not-allowed-message">

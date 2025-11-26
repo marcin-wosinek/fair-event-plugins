@@ -285,7 +285,8 @@ class RsvpController extends WP_REST_Controller {
 	public function create_or_update_rsvp( $request ) {
 		$event_id    = (int) $request->get_param( 'event_id' );
 		$rsvp_status = sanitize_text_field( $request->get_param( 'rsvp_status' ) );
-		$user_id     = get_current_user_id();
+		$name        = $request->get_param( 'name' );
+		$email       = $request->get_param( 'email' );
 
 		// Validate event exists and is published.
 		$event = get_post( $event_id );
@@ -294,6 +295,27 @@ class RsvpController extends WP_REST_Controller {
 				'invalid_event',
 				__( 'The specified event does not exist or is not published.', 'fair-rsvp' ),
 				array( 'status' => 400 )
+			);
+		}
+
+		// Determine user_id.
+		$user_id = get_current_user_id();
+
+		// If name and email are provided, this is an anonymous RSVP - create or get user.
+		if ( ! empty( $name ) && ! empty( $email ) ) {
+			$user_id = $this->get_or_create_user_from_anonymous_rsvp( $name, $email );
+
+			if ( is_wp_error( $user_id ) ) {
+				return $user_id;
+			}
+		}
+
+		// At this point we must have a user_id (either from login or from anonymous user creation).
+		if ( ! $user_id ) {
+			return new WP_Error(
+				'no_user',
+				__( 'Unable to determine user for RSVP.', 'fair-rsvp' ),
+				array( 'status' => 500 )
 			);
 		}
 
@@ -323,6 +345,113 @@ class RsvpController extends WP_REST_Controller {
 		$response->set_status( 201 );
 
 		return $response;
+	}
+
+	/**
+	 * Get or create user from anonymous RSVP
+	 *
+	 * @param string $name User's name.
+	 * @param string $email User's email.
+	 * @return int|WP_Error User ID on success, WP_Error on failure.
+	 */
+	private function get_or_create_user_from_anonymous_rsvp( $name, $email ) {
+		// Sanitize inputs.
+		$name  = sanitize_text_field( $name );
+		$email = sanitize_email( $email );
+
+		// Check if user with this email already exists.
+		$existing_user = get_user_by( 'email', $email );
+		if ( $existing_user ) {
+			return $existing_user->ID;
+		}
+
+		// Generate username from email.
+		$username = sanitize_user( $email, true );
+
+		// If username exists, append number until we find a unique one.
+		if ( username_exists( $username ) ) {
+			$counter = 1;
+			while ( username_exists( $username . $counter ) ) {
+				++$counter;
+			}
+			$username = $username . $counter;
+		}
+
+		// Generate random password.
+		$password = wp_generate_password( 24, true, true );
+
+		// Create user.
+		$user_id = wp_create_user( $username, $password, $email );
+
+		if ( is_wp_error( $user_id ) ) {
+			return new WP_Error(
+				'user_creation_failed',
+				__( 'Failed to create user account.', 'fair-rsvp' ),
+				array( 'status' => 500 )
+			);
+		}
+
+		// Update user display name.
+		wp_update_user(
+			array(
+				'ID'           => $user_id,
+				'display_name' => $name,
+				'role'         => 'subscriber',
+			)
+		);
+
+		// Send welcome email with password reset link.
+		$this->send_welcome_email( $user_id, $email );
+
+		return $user_id;
+	}
+
+	/**
+	 * Send welcome email to newly created user
+	 *
+	 * @param int    $user_id User ID.
+	 * @param string $email User's email address.
+	 * @return void
+	 */
+	private function send_welcome_email( $user_id, $email ) {
+		// Generate password reset link.
+		$reset_key = get_password_reset_key( get_userdata( $user_id ) );
+
+		if ( is_wp_error( $reset_key ) ) {
+			// If we can't generate reset key, just return - don't fail the RSVP.
+			return;
+		}
+
+		$reset_url = network_site_url( "wp-login.php?action=rp&key=$reset_key&login=" . rawurlencode( get_userdata( $user_id )->user_login ), 'login' );
+
+		// Prepare email.
+		$site_name = wp_specialchars_decode( get_option( 'blogname' ), ENT_QUOTES );
+		/* translators: %s: Site name */
+		$subject = sprintf( __( 'Welcome to %s', 'fair-rsvp' ), $site_name );
+
+		/* translators: 1: User display name, 2: Site name, 3: Password reset URL */
+		$message = sprintf(
+			__(
+				'Hi %1$s,
+
+Thank you for your RSVP! An account has been created for you on %2$s.
+
+To set your password and access your account, please visit:
+%3$s
+
+If you did not make this RSVP, you can safely ignore this email.
+
+Best regards,
+The %2$s Team',
+				'fair-rsvp'
+			),
+			get_userdata( $user_id )->display_name,
+			$site_name,
+			$reset_url
+		);
+
+		// Send email.
+		wp_mail( $email, $subject, $message );
 	}
 
 	/**
@@ -576,13 +705,8 @@ class RsvpController extends WP_REST_Controller {
 	 * @return bool|WP_Error True if the request has access, WP_Error object otherwise.
 	 */
 	public function create_rsvp_permissions_check( $request ) {
-		if ( ! is_user_logged_in() ) {
-			return new WP_Error(
-				'rest_forbidden',
-				__( 'You must be logged in to RSVP.', 'fair-rsvp' ),
-				array( 'status' => 401 )
-			);
-		}
+		$is_logged_in = is_user_logged_in();
+		$user_id      = get_current_user_id();
 
 		// Get event and check attendance permissions.
 		$event_id = $request->get_param( 'event_id' );
@@ -605,9 +729,48 @@ class RsvpController extends WP_REST_Controller {
 			$attendance = $rsvp_block['attrs']['attendance'];
 		}
 
-		// Check user permission using AttendanceHelper.
+		// Check if anonymous users are allowed.
+		$anonymous_permission = isset( $attendance['anonymous'] ) ? (int) $attendance['anonymous'] : 0;
+		$allow_anonymous      = $anonymous_permission >= 1;
+
+		// If not logged in, check if anonymous RSVP is allowed.
+		if ( ! $is_logged_in ) {
+			if ( ! $allow_anonymous ) {
+				return new WP_Error(
+					'rest_forbidden',
+					__( 'You must be logged in to RSVP.', 'fair-rsvp' ),
+					array( 'status' => 401 )
+				);
+			}
+
+			// For anonymous users, require name and email.
+			$name  = $request->get_param( 'name' );
+			$email = $request->get_param( 'email' );
+
+			if ( empty( $name ) || empty( $email ) ) {
+				return new WP_Error(
+					'missing_anonymous_fields',
+					__( 'Name and email are required for anonymous RSVP.', 'fair-rsvp' ),
+					array( 'status' => 400 )
+				);
+			}
+
+			// Validate email format.
+			if ( ! is_email( $email ) ) {
+				return new WP_Error(
+					'invalid_email',
+					__( 'Please provide a valid email address.', 'fair-rsvp' ),
+					array( 'status' => 400 )
+				);
+			}
+
+			// Anonymous users are allowed if they provided name and email.
+			return true;
+		}
+
+		// For logged-in users, check user permission using AttendanceHelper.
 		$permission = \FairRsvp\Utils\AttendanceHelper::get_user_permission(
-			get_current_user_id(),
+			$user_id,
 			true,
 			$attendance
 		);
@@ -742,6 +905,15 @@ class RsvpController extends WP_REST_Controller {
 				'type'        => 'string',
 				'required'    => true,
 				'enum'        => array( 'yes', 'maybe', 'no', 'cancelled' ),
+			),
+			'name'        => array(
+				'description' => __( 'Name for anonymous RSVP (optional, required if not logged in).', 'fair-rsvp' ),
+				'type'        => 'string',
+			),
+			'email'       => array(
+				'description' => __( 'Email for anonymous RSVP (optional, required if not logged in).', 'fair-rsvp' ),
+				'type'        => 'string',
+				'format'      => 'email',
 			),
 		);
 	}

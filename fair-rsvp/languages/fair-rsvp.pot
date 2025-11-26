@@ -2,14 +2,14 @@
 # This file is distributed under the GPLv3 or later.
 msgid ""
 msgstr ""
-"Project-Id-Version: Fair RSVP 0.3.1\n"
+"Project-Id-Version: Fair RSVP 0.4.0\n"
 "Report-Msgid-Bugs-To: https://wordpress.org/support/plugin/fair-rsvp\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"POT-Creation-Date: 2025-11-25T12:22:01+00:00\n"
+"POT-Creation-Date: 2025-11-26T00:09:59+00:00\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "X-Generator: WP-CLI 2.12.0\n"
 "X-Domain: fair-rsvp\n"
@@ -54,7 +54,7 @@ msgid "No event ID specified."
 msgstr ""
 
 #: src/Admin/AttendanceConfirmationPage.php:46
-#: src/REST/RsvpController.php:594
+#: src/REST/RsvpController.php:718
 msgid "Event not found."
 msgstr ""
 
@@ -88,71 +88,96 @@ msgstr[1] ""
 msgid "RSVPs for this event are now closed."
 msgstr ""
 
-#: src/blocks/rsvp-button/render.php:97
-msgid "Please log in to RSVP for this event."
-msgstr ""
-
-#: src/blocks/rsvp-button/render.php:99
-msgid "Log In"
-msgstr ""
-
 #: src/blocks/rsvp-button/render.php:105
-msgid "This event is invite-only."
-msgstr ""
-
-#: src/blocks/rsvp-button/render.php:111
+#: src/blocks/rsvp-button/render.php:194
 msgid "You're invited to this event!"
 msgstr ""
 
-#: src/blocks/rsvp-button/render.php:124
-#: src/blocks/rsvp-button/render.php:160
+#: src/blocks/rsvp-button/render.php:113
+msgid "Your Name"
+msgstr ""
+
+#: src/blocks/rsvp-button/render.php:121
+msgid "Enter your name"
+msgstr ""
+
+#: src/blocks/rsvp-button/render.php:126
+msgid "Your Email"
+msgstr ""
+
+#: src/blocks/rsvp-button/render.php:134
+msgid "Enter your email"
+msgstr ""
+
+#: src/blocks/rsvp-button/render.php:147
+#: src/blocks/rsvp-button/render.php:207
+#: src/blocks/rsvp-button/render.php:243
 #: src/Admin/attendance-check/AttendanceCheck.js:285
 #: src/Admin/attendance/AttendanceConfirmation.js:403
 #: src/blocks/participants-list/editor.js:66
 #: src/blocks/participants-list/editor.js:120
 #: src/blocks/rsvp-button/editor.js:88
-#: src/blocks/rsvp-button/frontend.js:195
+#: src/blocks/rsvp-button/frontend.js:246
 msgid "Yes"
 msgstr ""
 
-#: src/blocks/rsvp-button/render.php:134
-#: src/blocks/rsvp-button/render.php:162
+#: src/blocks/rsvp-button/render.php:156
+#: src/blocks/rsvp-button/render.php:217
+#: src/blocks/rsvp-button/render.php:245
 #: src/Admin/attendance-check/AttendanceCheck.js:168
 #: src/Admin/attendance-check/AttendanceCheck.js:287
 #: src/Admin/attendance/AttendanceConfirmation.js:402
 #: src/blocks/participants-list/editor.js:68
 #: src/blocks/participants-list/editor.js:122
 #: src/blocks/rsvp-button/editor.js:96
-#: src/blocks/rsvp-button/frontend.js:197
+#: src/blocks/rsvp-button/frontend.js:248
 msgid "Maybe"
 msgstr ""
 
-#: src/blocks/rsvp-button/render.php:144
-#: src/blocks/rsvp-button/render.php:161
+#: src/blocks/rsvp-button/render.php:165
+#: src/blocks/rsvp-button/render.php:227
+#: src/blocks/rsvp-button/render.php:244
 #: src/blocks/participants-list/editor.js:71
 #: src/blocks/participants-list/editor.js:124
 #: src/blocks/rsvp-button/editor.js:100
-#: src/blocks/rsvp-button/frontend.js:196
+#: src/blocks/rsvp-button/frontend.js:247
 msgid "No"
 msgstr ""
 
-#: src/blocks/rsvp-button/render.php:149
+#: src/blocks/rsvp-button/render.php:170
+#: src/blocks/rsvp-button/frontend.js:188
+msgid "Submit RSVP"
+msgstr ""
+
+#: src/blocks/rsvp-button/render.php:179
+msgid "Please log in to RSVP for this event."
+msgstr ""
+
+#: src/blocks/rsvp-button/render.php:181
+msgid "Log In"
+msgstr ""
+
+#: src/blocks/rsvp-button/render.php:188
+msgid "This event is invite-only."
+msgstr ""
+
+#: src/blocks/rsvp-button/render.php:232
 #: src/blocks/rsvp-button/editor.js:108
-#: src/blocks/rsvp-button/frontend.js:138
+#: src/blocks/rsvp-button/frontend.js:189
 msgid "Update RSVP"
 msgstr ""
 
-#: src/blocks/rsvp-button/render.php:166
-#: src/blocks/rsvp-button/frontend.js:96
-#: src/blocks/rsvp-button/frontend.js:105
+#: src/blocks/rsvp-button/render.php:249
+#: src/blocks/rsvp-button/frontend.js:137
+#: src/blocks/rsvp-button/frontend.js:146
 msgid "Your current RSVP: "
 msgstr ""
 
-#: src/blocks/rsvp-button/render.php:180
+#: src/blocks/rsvp-button/render.php:263
 msgid "📋 Check Attendance List"
 msgstr ""
 
-#: src/blocks/rsvp-button/render.php:180
+#: src/blocks/rsvp-button/render.php:263
 msgid "📋 Attendance"
 msgstr ""
 
@@ -162,7 +187,7 @@ msgid "Post not found."
 msgstr ""
 
 #: src/Frontend/AttendanceCheckHooks.php:95
-#: src/REST/RsvpController.php:832
+#: src/REST/RsvpController.php:1004
 msgid "This post does not have an RSVP block."
 msgstr ""
 
@@ -230,95 +255,141 @@ msgstr ""
 msgid "Event ID to get attendance check for."
 msgstr ""
 
-#: src/REST/RsvpController.php:295
-#: src/REST/RsvpController.php:525
+#: src/REST/RsvpController.php:296
+#: src/REST/RsvpController.php:654
 msgid "The specified event does not exist or is not published."
 msgstr ""
 
-#: src/REST/RsvpController.php:306
+#: src/REST/RsvpController.php:317
+msgid "Unable to determine user for RSVP."
+msgstr ""
+
+#: src/REST/RsvpController.php:328
 msgid "Failed to create or update RSVP."
 msgstr ""
 
-#: src/REST/RsvpController.php:317
-#: src/REST/RsvpController.php:561
+#: src/REST/RsvpController.php:339
+#: src/REST/RsvpController.php:690
 msgid "RSVP was created but could not be retrieved."
 msgstr ""
 
-#: src/REST/RsvpController.php:343
+#: src/REST/RsvpController.php:389
+msgid "Failed to create user account."
+msgstr ""
+
+#. translators: %s: Site name
+#: src/REST/RsvpController.php:430
+#, php-format
+msgid "Welcome to %s"
+msgstr ""
+
+#: src/REST/RsvpController.php:434
+#, php-format
+msgid ""
+"Hi %1$s,\n"
+"\n"
+"Thank you for your RSVP! An account has been created for you on %2$s.\n"
+"\n"
+"To set your password and access your account, please visit:\n"
+"%3$s\n"
+"\n"
+"If you did not make this RSVP, you can safely ignore this email.\n"
+"\n"
+"Best regards,\n"
+"The %2$s Team"
+msgstr ""
+
+#: src/REST/RsvpController.php:472
 msgid "RSVP not found for this event."
 msgstr ""
 
-#: src/REST/RsvpController.php:366
+#: src/REST/RsvpController.php:495
 msgid "RSVP not found."
 msgstr ""
 
-#: src/REST/RsvpController.php:377
+#: src/REST/RsvpController.php:506
 msgid "Failed to update attendance status."
 msgstr ""
 
-#: src/REST/RsvpController.php:489
+#: src/REST/RsvpController.php:618
 msgid "Updates must be a non-empty array."
 msgstr ""
 
 #. translators: %d: number of successful updates
-#: src/REST/RsvpController.php:502
+#: src/REST/RsvpController.php:631
 #, php-format
 msgid "Successfully updated %d attendance records."
 msgstr ""
 
-#: src/REST/RsvpController.php:536
+#: src/REST/RsvpController.php:665
 msgid "Failed to create or find user for walk-in attendee."
 msgstr ""
 
-#: src/REST/RsvpController.php:547
+#: src/REST/RsvpController.php:676
 msgid "Failed to create RSVP for walk-in attendee."
 msgstr ""
 
-#: src/REST/RsvpController.php:582
+#: src/REST/RsvpController.php:741
 msgid "You must be logged in to RSVP."
 msgstr ""
 
-#: src/REST/RsvpController.php:618
-msgid "You are not allowed to RSVP to this event."
-msgstr ""
-
-#: src/REST/RsvpController.php:636
-msgid "You must be logged in to view RSVPs."
-msgstr ""
-
-#: src/REST/RsvpController.php:736
-msgid "Event/post ID to RSVP for."
-msgstr ""
-
-#: src/REST/RsvpController.php:741
-msgid "RSVP status."
-msgstr ""
-
-#: src/REST/RsvpController.php:757
-msgid "Event ID to get RSVPs for."
+#: src/REST/RsvpController.php:753
+msgid "Name and email are required for anonymous RSVP."
 msgstr ""
 
 #: src/REST/RsvpController.php:762
+msgid "Please provide a valid email address."
+msgstr ""
+
+#: src/REST/RsvpController.php:781
+msgid "You are not allowed to RSVP to this event."
+msgstr ""
+
+#: src/REST/RsvpController.php:799
+msgid "You must be logged in to view RSVPs."
+msgstr ""
+
+#: src/REST/RsvpController.php:899
+msgid "Event/post ID to RSVP for."
+msgstr ""
+
+#: src/REST/RsvpController.php:904
+msgid "RSVP status."
+msgstr ""
+
+#: src/REST/RsvpController.php:910
+msgid "Name for anonymous RSVP (optional, required if not logged in)."
+msgstr ""
+
+#: src/REST/RsvpController.php:914
+msgid "Email for anonymous RSVP (optional, required if not logged in)."
+msgstr ""
+
+#: src/REST/RsvpController.php:929
+msgid "Event ID to get RSVPs for."
+msgstr ""
+
+#: src/REST/RsvpController.php:934
 msgid "Filter by RSVP status."
 msgstr ""
 
-#: src/REST/RsvpController.php:767
+#: src/REST/RsvpController.php:939
 msgid "Filter by attendance status."
 msgstr ""
 
-#: src/REST/RsvpController.php:772
+#: src/REST/RsvpController.php:944
 msgid "Current page of the collection."
 msgstr ""
 
-#: src/REST/RsvpController.php:778
+#: src/REST/RsvpController.php:950
 msgid "Maximum number of items to return per page."
 msgstr ""
 
-#: src/REST/RsvpController.php:823
+#: src/REST/RsvpController.php:995
 msgid "The specified post does not exist."
 msgstr ""
 
-#: src/REST/RsvpController.php:980
+#: src/REST/RsvpController.php:1152
 msgid "You do not have permission to view this attendance check."
 msgstr ""
 
@@ -744,23 +815,39 @@ msgstr ""
 msgid "Users will see their current RSVP status and can update it."
 msgstr ""
 
-#: src/blocks/rsvp-button/frontend.js:64
+#: src/blocks/rsvp-button/frontend.js:65
 msgid "Please select an RSVP option."
 msgstr ""
 
-#: src/blocks/rsvp-button/frontend.js:74
+#: src/blocks/rsvp-button/frontend.js:87
+msgid "Please enter your name."
+msgstr ""
+
+#: src/blocks/rsvp-button/frontend.js:96
+msgid "Please enter your email."
+msgstr ""
+
+#: src/blocks/rsvp-button/frontend.js:108
 msgid "Submitting..."
 msgstr ""
 
-#: src/blocks/rsvp-button/frontend.js:89
+#: src/blocks/rsvp-button/frontend.js:120
+msgid "Your RSVP has been submitted successfully! A welcome email with login instructions has been sent to your email address."
+msgstr ""
+
+#: src/blocks/rsvp-button/frontend.js:125
 msgid "Your RSVP has been updated successfully!"
 msgstr ""
 
-#: src/blocks/rsvp-button/frontend.js:114
+#: src/blocks/rsvp-button/frontend.js:155
 msgid "RSVP updated successfully!"
 msgstr ""
 
-#: src/blocks/rsvp-button/frontend.js:121
+#: src/blocks/rsvp-button/frontend.js:161
+msgid "RSVP submitted successfully!"
+msgstr ""
+
+#: src/blocks/rsvp-button/frontend.js:170
 msgid "Failed to update RSVP. Please try again."
 msgstr ""
 

@@ -47,6 +47,7 @@ import { __ } from '@wordpress/i18n';
 	function submitRsvp(form) {
 		const container = form.closest('.fair-rsvp-form-container');
 		const eventId = container.getAttribute('data-event-id');
+		const isAnonymous = container.getAttribute('data-anonymous') === 'true';
 		const submitButton = form.querySelector('.fair-rsvp-submit-button');
 		const messageContainer = form.querySelector('.fair-rsvp-message');
 		const statusDisplay = container.querySelector(
@@ -69,6 +70,39 @@ import { __ } from '@wordpress/i18n';
 
 		const rsvpStatus = selectedRadio.value;
 
+		// Build request data
+		const requestData = {
+			event_id: parseInt(eventId),
+			rsvp_status: rsvpStatus,
+		};
+
+		// For anonymous users, add name and email
+		if (isAnonymous) {
+			const nameInput = form.querySelector('input[name="rsvp_name"]');
+			const emailInput = form.querySelector('input[name="rsvp_email"]');
+
+			if (!nameInput || !nameInput.value.trim()) {
+				showMessage(
+					messageContainer,
+					__('Please enter your name.', 'fair-rsvp'),
+					'error'
+				);
+				return;
+			}
+
+			if (!emailInput || !emailInput.value.trim()) {
+				showMessage(
+					messageContainer,
+					__('Please enter your email.', 'fair-rsvp'),
+					'error'
+				);
+				return;
+			}
+
+			requestData.name = nameInput.value.trim();
+			requestData.email = emailInput.value.trim();
+		}
+
 		// Disable button and show loading state
 		submitButton.disabled = true;
 		submitButton.textContent = __('Submitting...', 'fair-rsvp');
@@ -77,43 +111,58 @@ import { __ } from '@wordpress/i18n';
 		apiFetch({
 			path: '/fair-rsvp/v1/rsvp',
 			method: 'POST',
-			data: {
-				event_id: parseInt(eventId),
-				rsvp_status: rsvpStatus,
-			},
+			data: requestData,
 		})
 			.then(function (response) {
-				// Success!
-				showMessage(
-					messageContainer,
-					__('Your RSVP has been updated successfully!', 'fair-rsvp'),
-					'success'
-				);
-
-				// Update status display
-				if (statusDisplay) {
-					statusDisplay.innerHTML =
-						__('Your current RSVP: ', 'fair-rsvp') +
-						'<strong>' +
-						translateStatus(rsvpStatus) +
-						'</strong>';
+				// Success message
+				let successMessage;
+				if (isAnonymous) {
+					successMessage = __(
+						'Your RSVP has been submitted successfully! A welcome email with login instructions has been sent to your email address.',
+						'fair-rsvp'
+					);
 				} else {
-					// Create status display if it doesn't exist
-					const newStatus = document.createElement('p');
-					newStatus.className = 'fair-rsvp-current-status';
-					newStatus.innerHTML =
-						__('Your current RSVP: ', 'fair-rsvp') +
-						'<strong>' +
-						translateStatus(rsvpStatus) +
-						'</strong>';
-					container.appendChild(newStatus);
+					successMessage = __(
+						'Your RSVP has been updated successfully!',
+						'fair-rsvp'
+					);
 				}
 
-				// Show notification
-				showNotification(
-					__('RSVP updated successfully!', 'fair-rsvp'),
-					'success'
-				);
+				showMessage(messageContainer, successMessage, 'success');
+
+				// Update status display for logged-in users
+				if (!isAnonymous) {
+					if (statusDisplay) {
+						statusDisplay.innerHTML =
+							__('Your current RSVP: ', 'fair-rsvp') +
+							'<strong>' +
+							translateStatus(rsvpStatus) +
+							'</strong>';
+					} else {
+						// Create status display if it doesn't exist
+						const newStatus = document.createElement('p');
+						newStatus.className = 'fair-rsvp-current-status';
+						newStatus.innerHTML =
+							__('Your current RSVP: ', 'fair-rsvp') +
+							'<strong>' +
+							translateStatus(rsvpStatus) +
+							'</strong>';
+						container.appendChild(newStatus);
+					}
+
+					// Show notification
+					showNotification(
+						__('RSVP updated successfully!', 'fair-rsvp'),
+						'success'
+					);
+				} else {
+					// For anonymous users, show notification and optionally clear form
+					showNotification(
+						__('RSVP submitted successfully!', 'fair-rsvp'),
+						'success'
+					);
+					form.reset();
+				}
 			})
 			.catch(function (error) {
 				console.error('RSVP error:', error);
@@ -135,7 +184,9 @@ import { __ } from '@wordpress/i18n';
 			.finally(function () {
 				// Re-enable button
 				submitButton.disabled = false;
-				submitButton.textContent = __('Update RSVP', 'fair-rsvp');
+				submitButton.textContent = isAnonymous
+					? __('Submit RSVP', 'fair-rsvp')
+					: __('Update RSVP', 'fair-rsvp');
 			});
 	}
 
