@@ -128,11 +128,6 @@ export default function AttendanceCheck({ eventId }) {
 			)
 		: attendees;
 
-	// Count checked in users
-	const checkedInCount = attendees.filter(
-		(a) => a.attendance_status === 'checked_in'
-	).length;
-
 	if (loading) {
 		return (
 			<div className="fair-rsvp-attendance-loading">
@@ -158,28 +153,6 @@ export default function AttendanceCheck({ eventId }) {
 		<div className="fair-rsvp-attendance-check">
 			<header className="fair-rsvp-attendance-header">
 				<h1>{__('Attendance Check', 'fair-rsvp')}</h1>
-				<div className="fair-rsvp-attendance-stats">
-					<span className="stat yes">
-						<strong>{data.yes?.length || 0}</strong>{' '}
-						{__('Confirmed', 'fair-rsvp')}
-					</span>
-					<span className="stat maybe">
-						<strong>{data.maybe?.length || 0}</strong>{' '}
-						{__('Maybe', 'fair-rsvp')}
-					</span>
-					<span className="stat expected">
-						<strong>{data.expected?.length || 0}</strong>{' '}
-						{__('Expected', 'fair-rsvp')}
-					</span>
-					<span className="stat checked-in">
-						<strong>{checkedInCount}</strong>{' '}
-						{__('Present', 'fair-rsvp')}
-					</span>
-					<span className="stat total">
-						<strong>{attendees.length}</strong>{' '}
-						{__('Total', 'fair-rsvp')}
-					</span>
-				</div>
 			</header>
 
 			{saveSuccess && (
