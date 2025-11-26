@@ -16,6 +16,10 @@ const customConfig = {
 				process.cwd(),
 				'src/Admin/events/index.js'
 			),
+			'admin/invitations/index': path.resolve(
+				process.cwd(),
+				'src/Admin/invitations/index.js'
+			),
 			'admin/attendance/index': path.resolve(
 				process.cwd(),
 				'src/Admin/attendance/index.js'

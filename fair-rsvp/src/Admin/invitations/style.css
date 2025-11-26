@@ -1,0 +1,86 @@
+/**
+ * Styles for Invitations admin page
+ */
+
+.fair-rsvp-invitations-page {
+	max-width: 1400px;
+	margin: 20px auto;
+}
+
+.loading-container {
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	justify-content: center;
+	padding: 3rem;
+}
+
+.loading-container p {
+	margin-top: 1rem;
+	color: #757575;
+}
+
+.invitations-table-wrapper {
+	overflow-x: auto;
+	margin: 1rem 0;
+}
+
+.invitations-table-wrapper table {
+	width: 100%;
+	border-collapse: collapse;
+}
+
+.invitations-table-wrapper th {
+	font-weight: 600;
+	text-align: left;
+	padding: 12px;
+	background-color: #f0f0f1;
+}
+
+.invitations-table-wrapper td {
+	padding: 12px;
+	vertical-align: top;
+}
+
+.small-text {
+	font-size: 0.85em;
+	color: #757575;
+	margin-top: 4px;
+}
+
+.invitation-status-badge {
+	display: inline-block;
+	padding: 4px 12px;
+	border-radius: 12px;
+	font-size: 0.85em;
+	font-weight: 500;
+	white-space: nowrap;
+}
+
+.status-pending {
+	background-color: #fcf0b1;
+	color: #7e6b00;
+}
+
+.status-accepted {
+	background-color: #d7f8e0;
+	color: #00632d;
+}
+
+.status-expired {
+	background-color: #f0f0f1;
+	color: #50575e;
+}
+
+/* Responsive table */
+@media (max-width: 782px) {
+	.invitations-table-wrapper {
+		overflow-x: auto;
+	}
+
+	.invitations-table-wrapper th,
+	.invitations-table-wrapper td {
+		padding: 8px;
+		font-size: 14px;
+	}
+}

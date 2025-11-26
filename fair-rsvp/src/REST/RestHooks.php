@@ -29,5 +29,8 @@ class RestHooks {
 	public function register_routes() {
 		$rsvp_controller = new \FairRsvp\REST\RsvpController();
 		$rsvp_controller->register_routes();
+
+		$invitation_controller = new \FairRsvp\REST\InvitationController();
+		$invitation_controller->register_routes();
 	}
 }

@@ -20,9 +20,10 @@ class AttendanceHelper {
 	 * @param int   $user_id      User ID (0 for anonymous).
 	 * @param bool  $is_logged_in Whether user is logged in.
 	 * @param array $attendance   Attendance object from block attributes.
+	 * @param int   $event_id     Event/post ID (optional, for invitation checking).
 	 * @return int Permission level: 0=not allowed, 1=allowed, 2=expected.
 	 */
-	public static function get_user_permission( $user_id, $is_logged_in, $attendance ) {
+	public static function get_user_permission( $user_id, $is_logged_in, $attendance, $event_id = null ) {
 		// Empty attendance = everyone allowed (backward compatible).
 		if ( empty( $attendance ) || ! is_array( $attendance ) ) {
 			return 1;
@@ -56,6 +57,16 @@ class AttendanceHelper {
 					if ( is_array( $group_user_ids ) && in_array( $user_id, $group_user_ids, true ) ) {
 						$max_permission = max( $max_permission, (int) $permission_level );
 					}
+				}
+			}
+
+			// Check if user was invited (highest priority for logged-in users).
+			if ( $event_id ) {
+				$invitation_repo = new \FairRsvp\Database\InvitationRepository();
+				$invitation      = $invitation_repo->get_user_invitation_for_event( $event_id, $user_id );
+				if ( $invitation ) {
+					// Invited users are always "expected" (level 2).
+					$max_permission = max( $max_permission, 2 );
 				}
 			}
 

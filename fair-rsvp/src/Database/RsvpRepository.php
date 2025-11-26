@@ -27,12 +27,14 @@ class RsvpRepository {
 	/**
 	 * Upsert RSVP (insert or update if exists)
 	 *
-	 * @param int    $event_id     Event/post ID.
-	 * @param int    $user_id      User ID.
-	 * @param string $rsvp_status  RSVP status (yes, maybe, no, cancelled).
+	 * @param int      $event_id           Event/post ID.
+	 * @param int      $user_id            User ID.
+	 * @param string   $rsvp_status        RSVP status (yes, maybe, no, cancelled).
+	 * @param int|null $invited_by_user_id User ID who invited this person (optional).
+	 * @param int|null $invitation_id      Invitation ID that led to this RSVP (optional).
 	 * @return int|false RSVP ID on success, false on failure.
 	 */
-	public function upsert_rsvp( $event_id, $user_id, $rsvp_status ) {
+	public function upsert_rsvp( $event_id, $user_id, $rsvp_status, $invited_by_user_id = null, $invitation_id = null ) {
 		global $wpdb;
 
 		$table_name = $this->get_table_name();
@@ -62,20 +64,30 @@ class RsvpRepository {
 			return $result !== false ? $existing['id'] : false;
 		} else {
 			// Insert new RSVP.
-			// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery
-			$result = $wpdb->insert(
-				$table_name,
-				array(
-					'event_id'          => $event_id,
-					'user_id'           => $user_id,
-					'rsvp_status'       => $rsvp_status,
-					'attendance_status' => 'not_applicable',
-					'rsvp_at'           => $now,
-					'created_at'        => $now,
-					'updated_at'        => $now,
-				),
-				array( '%d', '%d', '%s', '%s', '%s', '%s', '%s' )
+			$data   = array(
+				'event_id'          => $event_id,
+				'user_id'           => $user_id,
+				'rsvp_status'       => $rsvp_status,
+				'attendance_status' => 'not_applicable',
+				'rsvp_at'           => $now,
+				'created_at'        => $now,
+				'updated_at'        => $now,
 			);
+			$format = array( '%d', '%d', '%s', '%s', '%s', '%s', '%s' );
+
+			// Add invitation tracking if provided.
+			if ( null !== $invited_by_user_id ) {
+				$data['invited_by_user_id'] = $invited_by_user_id;
+				$format[]                   = '%d';
+			}
+
+			if ( null !== $invitation_id ) {
+				$data['invitation_id'] = $invitation_id;
+				$format[]              = '%d';
+			}
+
+			// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery
+			$result = $wpdb->insert( $table_name, $data, $format );
 
 			return $result ? $wpdb->insert_id : false;
 		}

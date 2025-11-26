@@ -39,6 +39,16 @@ class AdminHooks {
 			30
 		);
 
+		// Submenu page - Invitations.
+		add_submenu_page(
+			'fair-rsvp',
+			__( 'Invitations', 'fair-rsvp' ),
+			__( 'Invitations', 'fair-rsvp' ),
+			'manage_options',
+			'fair-rsvp-invitations',
+			array( $this, 'render_invitations_page' )
+		);
+
 		// Submenu page - Attendance confirmation (hidden from menu).
 		add_submenu_page(
 			null, // No parent = hidden from menu.
@@ -58,6 +68,16 @@ class AdminHooks {
 	public function render_admin_page() {
 		$events_page = new EventsListPage();
 		$events_page->render();
+	}
+
+	/**
+	 * Render invitations list page
+	 *
+	 * @return void
+	 */
+	public function render_invitations_page() {
+		$invitations_page = new InvitationsListPage();
+		$invitations_page->render();
 	}
 
 	/**
@@ -97,6 +117,32 @@ class AdminHooks {
 				// Set script translations.
 				wp_set_script_translations(
 					'fair-rsvp-events',
+					'fair-rsvp',
+					$plugin_dir . 'build/languages'
+				);
+
+				wp_enqueue_style( 'wp-components' );
+			}
+		}
+
+		// Load invitations list page scripts.
+		if ( 'fair-rsvp_page_fair-rsvp-invitations' === $hook ) {
+			$asset_file = $plugin_dir . 'build/admin/invitations/index.asset.php';
+
+			if ( file_exists( $asset_file ) ) {
+				$asset_data = include $asset_file;
+
+				wp_enqueue_script(
+					'fair-rsvp-invitations',
+					plugin_dir_url( dirname( __DIR__ ) ) . 'build/admin/invitations/index.js',
+					$asset_data['dependencies'],
+					$asset_data['version'],
+					true
+				);
+
+				// Set script translations.
+				wp_set_script_translations(
+					'fair-rsvp-invitations',
 					'fair-rsvp',
 					$plugin_dir . 'build/languages'
 				);

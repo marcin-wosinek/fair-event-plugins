@@ -31,7 +31,7 @@ if ( ! empty( $respond_before ) && function_exists( 'fair_events_resolve_date' )
 
 // Get attendance permissions.
 $attendance  = $attributes['attendance'] ?? array();
-$permission  = \FairRsvp\Utils\AttendanceHelper::get_user_permission( $user_id, $is_logged_in, $attendance );
+$permission  = \FairRsvp\Utils\AttendanceHelper::get_user_permission( $user_id, $is_logged_in, $attendance, $event_id );
 $is_allowed  = \FairRsvp\Utils\AttendanceHelper::is_allowed( $permission );
 $is_expected = \FairRsvp\Utils\AttendanceHelper::is_expected( $permission );
 
@@ -249,6 +249,15 @@ $current_status = $current_rsvp ? $current_rsvp['rsvp_status'] : '';
 					echo esc_html__( 'Your current RSVP: ', 'fair-rsvp' ) . '<strong>' . esc_html( $translated_status ) . '</strong>';
 					?>
 				</p>
+			<?php endif; ?>
+
+			<?php if ( $is_expected && ! $deadline_passed ) : ?>
+				<!-- Invite a Friend button for expected users -->
+				<div class="fair-rsvp-invite-section">
+					<button type="button" class="fair-rsvp-invite-button" data-event-id="<?php echo esc_attr( $event_id ); ?>">
+						<?php echo esc_html__( 'Invite a Friend', 'fair-rsvp' ); ?>
+					</button>
+				</div>
 			<?php endif; ?>
 		</div>
 	<?php endif; ?>
