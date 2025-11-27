@@ -89,7 +89,7 @@ export default function AttendanceCheck({ eventId }) {
 		setError(null);
 
 		try {
-			// Only include users with rsvp_id (not expected users without RSVP)
+			// Users with RSVP records - update their attendance
 			const updates = attendees
 				.filter((attendee) => attendee.rsvp_id)
 				.map((attendee) => ({
@@ -97,11 +97,34 @@ export default function AttendanceCheck({ eventId }) {
 					attendance_status: attendee.attendance_status,
 				}));
 
-			await apiFetch({
-				path: '/fair-rsvp/v1/rsvps/bulk-attendance',
-				method: 'POST',
-				data: { updates },
-			});
+			// Expected users who are checked in - create walk-in RSVPs
+			const expectedCheckedIn = attendees.filter(
+				(attendee) =>
+					!attendee.rsvp_id &&
+					attendee.attendance_status === 'checked_in'
+			);
+
+			// Update existing RSVPs
+			if (updates.length > 0) {
+				await apiFetch({
+					path: '/fair-rsvp/v1/rsvps/bulk-attendance',
+					method: 'POST',
+					data: { updates },
+				});
+			}
+
+			// Create walk-in RSVPs for expected users who checked in
+			for (const attendee of expectedCheckedIn) {
+				await apiFetch({
+					path: '/fair-rsvp/v1/rsvps/walk-in',
+					method: 'POST',
+					data: {
+						event_id: eventId,
+						name: attendee.name,
+						email: attendee.email,
+					},
+				});
+			}
 
 			setSaveSuccess(true);
 			setTimeout(() => setSaveSuccess(false), 3000);
@@ -237,7 +260,6 @@ export default function AttendanceCheck({ eventId }) {
 											onChange={() =>
 												toggleAttendance(attendee.id)
 											}
-											disabled={!attendee.rsvp_id}
 										/>
 									</td>
 									<td className="col-avatar">
