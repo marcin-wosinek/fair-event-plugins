@@ -251,16 +251,20 @@ export default function AttendanceCheck({ eventId }) {
 									}
 								>
 									<td className="col-checkbox">
-										<input
-											type="checkbox"
-											checked={
-												attendee.attendance_status ===
-												'checked_in'
-											}
-											onChange={() =>
-												toggleAttendance(attendee.id)
-											}
-										/>
+										<label className="checkbox-label">
+											<input
+												type="checkbox"
+												checked={
+													attendee.attendance_status ===
+													'checked_in'
+												}
+												onChange={() =>
+													toggleAttendance(
+														attendee.id
+													)
+												}
+											/>
+										</label>
 									</td>
 									<td className="col-avatar">
 										<img

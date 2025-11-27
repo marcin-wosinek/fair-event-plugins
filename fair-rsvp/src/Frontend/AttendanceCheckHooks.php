@@ -130,6 +130,14 @@ class AttendanceCheckHooks {
 			true
 		);
 
+		// Enqueue styles.
+		wp_enqueue_style(
+			'fair-rsvp-attendance-check',
+			plugins_url( 'build/admin/attendance-check/style-index.css', dirname( __DIR__, 1 ) ),
+			array( 'wp-components' ),
+			$asset['version']
+		);
+
 		// Set script translations.
 		wp_set_script_translations(
 			'fair-rsvp-attendance-check',

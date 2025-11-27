@@ -52,11 +52,11 @@ msgstr "Anmelden"
 #: src/blocks/rsvp-button/render.php:152
 #: src/blocks/rsvp-button/render.php:215
 #: src/blocks/rsvp-button/render.php:251
-#: src/Admin/attendance-check/AttendanceCheck.js:258
+#: src/Admin/attendance-check/AttendanceCheck.js:294
 #: src/Admin/attendance/AttendanceConfirmation.js:403
 #: src/blocks/participants-list/editor.js:66
 #: src/blocks/participants-list/editor.js:120
-#: src/blocks/rsvp-button/editor.js:103
+#: src/blocks/rsvp-button/editor.js:100
 #: src/blocks/rsvp-button/frontend.js:269
 #: src/blocks/rsvp-button/frontend.js:704
 msgid "Yes"
@@ -65,11 +65,11 @@ msgstr "Ja"
 #: src/blocks/rsvp-button/render.php:161
 #: src/blocks/rsvp-button/render.php:225
 #: src/blocks/rsvp-button/render.php:253
-#: src/Admin/attendance-check/AttendanceCheck.js:260
+#: src/Admin/attendance-check/AttendanceCheck.js:296
 #: src/Admin/attendance/AttendanceConfirmation.js:402
 #: src/blocks/participants-list/editor.js:68
 #: src/blocks/participants-list/editor.js:122
-#: src/blocks/rsvp-button/editor.js:111
+#: src/blocks/rsvp-button/editor.js:108
 #: src/blocks/rsvp-button/frontend.js:271
 #: src/blocks/rsvp-button/frontend.js:713
 msgid "Maybe"
@@ -80,14 +80,14 @@ msgstr "Vielleicht"
 #: src/blocks/rsvp-button/render.php:252
 #: src/blocks/participants-list/editor.js:71
 #: src/blocks/participants-list/editor.js:124
-#: src/blocks/rsvp-button/editor.js:115
+#: src/blocks/rsvp-button/editor.js:112
 #: src/blocks/rsvp-button/frontend.js:270
 #: src/blocks/rsvp-button/frontend.js:722
 msgid "No"
 msgstr "Nein"
 
 #: src/blocks/rsvp-button/render.php:240
-#: src/blocks/rsvp-button/editor.js:123
+#: src/blocks/rsvp-button/editor.js:120
 #: src/blocks/rsvp-button/frontend.js:212
 msgid "Update RSVP"
 msgstr "RSVP aktualisieren"
@@ -202,11 +202,11 @@ msgstr "Keine Veranstaltungen mit Anmeldungen gefunden."
 msgid "Event"
 msgstr "Veranstaltung"
 
-#: src/blocks/rsvp-button/editor.js:94
+#: src/blocks/rsvp-button/editor.js:91
 msgid "RSVP Form Preview"
 msgstr "RSVP-Formular Vorschau"
 
-#: src/blocks/rsvp-button/editor.js:126
+#: src/blocks/rsvp-button/editor.js:123
 msgid "Users will see their current RSVP status and can update it."
 msgstr "Benutzer sehen ihren aktuellen RSVP-Status und können ihn aktualisieren."
 
@@ -493,7 +493,7 @@ msgstr "Bestätigungen werden geladen..."
 msgid "attendees checked in"
 msgstr "Teilnehmer eingecheckt"
 
-#: src/Admin/attendance-check/AttendanceCheck.js:166
+#: src/Admin/attendance-check/AttendanceCheck.js:189
 #: src/Admin/attendance/AttendanceConfirmation.js:360
 msgid "Search attendees"
 msgstr "Teilnehmer suchen"
@@ -510,13 +510,13 @@ msgstr "Bestätigungsliste"
 msgid "No RSVPs found"
 msgstr "Keine Bestätigungen gefunden"
 
-#: src/Admin/attendance-check/AttendanceCheck.js:200
+#: src/Admin/attendance-check/AttendanceCheck.js:223
 #: src/Admin/attendance/AttendanceConfirmation.js:381
 #: src/Admin/attendance/AttendanceConfirmation.js:521
 msgid "Name"
 msgstr "Name"
 
-#: src/Admin/attendance-check/AttendanceCheck.js:203
+#: src/Admin/attendance-check/AttendanceCheck.js:226
 #: src/Admin/attendance/AttendanceConfirmation.js:388
 msgid "RSVP Status"
 msgstr "Bestätigungsstatus"
@@ -605,11 +605,11 @@ msgstr ""
 msgid "RSVP Settings"
 msgstr ""
 
-#: src/blocks/rsvp-button/editor.js:67
+#: src/blocks/rsvp-button/editor.js:64
 msgid "RSVP Deadline"
 msgstr ""
 
-#: src/blocks/rsvp-button/editor.js:68
+#: src/blocks/rsvp-button/editor.js:65
 msgid "Set a deadline for RSVPs. After this date, the RSVP form will be closed."
 msgstr ""
 
@@ -727,7 +727,7 @@ msgstr "Entfernen"
 msgid "Add Rule"
 msgstr "Regel hinzufügen"
 
-#: src/blocks/rsvp-button/editor.js:79
+#: src/blocks/rsvp-button/editor.js:76
 msgid "Attendance Permissions"
 msgstr "Teilnahmeberechtigungen"
 
@@ -777,51 +777,51 @@ msgstr ""
 msgid "Failed to load attendance data."
 msgstr ""
 
-#: src/Admin/attendance-check/AttendanceCheck.js:111
+#: src/Admin/attendance-check/AttendanceCheck.js:134
 msgid "Failed to save attendance data."
 msgstr ""
 
-#: src/Admin/attendance-check/AttendanceCheck.js:135
+#: src/Admin/attendance-check/AttendanceCheck.js:158
 msgid "Loading attendance data..."
 msgstr ""
 
-#: src/Admin/attendance-check/AttendanceCheck.js:155
+#: src/Admin/attendance-check/AttendanceCheck.js:178
 msgid "Attendance Check"
 msgstr ""
 
-#: src/Admin/attendance-check/AttendanceCheck.js:262
+#: src/Admin/attendance-check/AttendanceCheck.js:298
 msgid "Expected"
 msgstr ""
 
-#: src/Admin/attendance-check/AttendanceCheck.js:196
+#: src/Admin/attendance-check/AttendanceCheck.js:219
 msgid "Present"
 msgstr ""
 
-#: src/Admin/attendance-check/AttendanceCheck.js:160
+#: src/Admin/attendance-check/AttendanceCheck.js:183
 msgid "Attendance saved successfully!"
 msgstr ""
 
-#: src/Admin/attendance-check/AttendanceCheck.js:169
+#: src/Admin/attendance-check/AttendanceCheck.js:192
 msgid "Search by name or email..."
 msgstr ""
 
-#: src/Admin/attendance-check/AttendanceCheck.js:175
+#: src/Admin/attendance-check/AttendanceCheck.js:198
 msgid "← Back to Post"
 msgstr ""
 
-#: src/Admin/attendance-check/AttendanceCheck.js:185
+#: src/Admin/attendance-check/AttendanceCheck.js:208
 msgid "Saving..."
 msgstr ""
 
-#: src/Admin/attendance-check/AttendanceCheck.js:186
+#: src/Admin/attendance-check/AttendanceCheck.js:209
 msgid "Save Attendance"
 msgstr ""
 
-#: src/Admin/attendance-check/AttendanceCheck.js:212
+#: src/Admin/attendance-check/AttendanceCheck.js:235
 msgid "No attendees match your search."
 msgstr ""
 
-#: src/Admin/attendance-check/AttendanceCheck.js:216
+#: src/Admin/attendance-check/AttendanceCheck.js:239
 msgid "No attendees yet."
 msgstr ""
 
@@ -1265,6 +1265,14 @@ msgstr "RSVP-Frage"
 msgid "Will you attend?"
 msgstr "Werden Sie teilnehmen?"
 
-#: src/blocks/rsvp-button/editor.js:57
+#: src/blocks/rsvp-button/editor.js:54
 msgid "The question shown to users above the RSVP form."
 msgstr "Die Frage, die Benutzern über dem RSVP-Formular angezeigt wird."
+
+#: src/Admin/attendance-check/AttendanceCheck.js:268
+msgid "Mark as not present"
+msgstr "Als abwesend markieren"
+
+#: src/Admin/attendance-check/AttendanceCheck.js:272
+msgid "Mark as present"
+msgstr "Als anwesend markieren"
