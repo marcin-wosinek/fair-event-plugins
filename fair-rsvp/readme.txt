@@ -4,7 +4,7 @@ Tags: events, rsvp, registration, sign-up, gutenberg
 Requires at least: 6.7
 Tested up to: 6.8
 Requires PHP: 7.4
-Stable tag: 0.4.0
+Stable tag: 0.5.0
 License: GPLv3 or later
 License URI: https://www.gnu.org/licenses/gpl-3.0.html
 
@@ -40,6 +40,13 @@ Currently, only logged-in users can RSVP. Guest RSVP support is planned for futu
 Navigate to Fair RSVP in the WordPress admin menu to view and manage all RSVPs.
 
 == Changelog ==
+
+## 0.5.0
+
+### Minor Changes
+
+- abf66b3: Add invitation workflow.
+- e770b62: Add RSVP for anonymous users.
 
 ## 0.4.0
 

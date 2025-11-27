@@ -1,5 +1,12 @@
 # fair-rsvp
 
+## 0.5.0
+
+### Minor Changes
+
+- abf66b3: Add invitation workflow.
+- e770b62: Add RSVP for anonymous users.
+
 ## 0.4.0
 
 ### Minor Changes
