@@ -1099,7 +1099,7 @@ The %2$s Team',
 				'id'         => $user->ID,
 				'name'       => $user->display_name,
 				'email'      => $user->user_email,
-				'avatar_url' => get_avatar_url( $user->ID ),
+				'avatar_url' => get_avatar_url( $user->ID, array( 'size' => 48 ) ),
 			);
 		}
 
