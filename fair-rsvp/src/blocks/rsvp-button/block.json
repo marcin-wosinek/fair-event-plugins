@@ -18,6 +18,10 @@
 		}
 	},
 	"attributes": {
+		"rsvpQuestion": {
+			"type": "string",
+			"default": ""
+		},
 		"respondBefore": {
 			"type": "string",
 			"default": ""

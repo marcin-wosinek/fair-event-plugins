@@ -2,7 +2,7 @@ import './editor.css';
 
 import { registerBlockType } from '@wordpress/blocks';
 import { useBlockProps, InspectorControls } from '@wordpress/block-editor';
-import { PanelBody } from '@wordpress/components';
+import { PanelBody, TextControl } from '@wordpress/components';
 import { useSelect } from '@wordpress/data';
 import { __ } from '@wordpress/i18n';
 import { DateTimeControl } from 'fair-events-shared';
@@ -10,7 +10,7 @@ import AttendanceManager from './components/AttendanceManager.js';
 
 registerBlockType('fair-rsvp/rsvp-button', {
 	edit: ({ attributes, setAttributes, context }) => {
-		const { respondBefore, attendance } = attributes;
+		const { rsvpQuestion, respondBefore, attendance } = attributes;
 		const { postId, postType } = context || {};
 
 		// Get event metadata if available
@@ -44,6 +44,18 @@ registerBlockType('fair-rsvp/rsvp-button', {
 			<>
 				<InspectorControls>
 					<PanelBody title={__('RSVP Settings', 'fair-rsvp')}>
+						<TextControl
+							label={__('RSVP Question', 'fair-rsvp')}
+							value={rsvpQuestion}
+							onChange={(value) =>
+								setAttributes({ rsvpQuestion: value })
+							}
+							placeholder={__('Will you attend?', 'fair-rsvp')}
+							help={__(
+								'The question shown to users above the RSVP form.',
+								'fair-rsvp'
+							)}
+						/>
 						<DateTimeControl
 							value={respondBefore}
 							onChange={(formatted) =>

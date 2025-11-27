@@ -654,10 +654,14 @@ import { __ } from '@wordpress/i18n';
 		const rsvpButton = document.querySelector('.fair-rsvp-button');
 		if (!rsvpButton) return;
 
+		// Get RSVP question from block data attribute
+		const rsvpQuestion = rsvpButton.dataset.rsvpQuestion || '';
+
 		const formHTML = `
 			<div class="fair-rsvp-invited-banner">
 				<p>${__("You're invited to this event!", 'fair-rsvp')}</p>
 			</div>
+			${rsvpQuestion ? `<h2 class="fair-rsvp-question">${rsvpQuestion}</h2>` : ''}
 			<div class="fair-rsvp-form-container fair-rsvp-invitation-form" data-invitation-token="${token}">
 				<form class="fair-rsvp-form">
 					<div class="fair-rsvp-user-info">

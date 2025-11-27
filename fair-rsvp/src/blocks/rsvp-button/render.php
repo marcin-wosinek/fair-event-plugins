@@ -21,7 +21,8 @@ $event_id = get_the_ID();
 $is_logged_in = is_user_logged_in();
 $user_id      = get_current_user_id();
 
-// Get respond before deadline from attributes.
+// Get RSVP question and respond before deadline from attributes.
+$rsvp_question  = $attributes['rsvpQuestion'] ?? '';
 $respond_before = $attributes['respondBefore'] ?? '';
 
 // Resolve dynamic dates if fair-events plugin is active.
@@ -56,6 +57,7 @@ if ( ! empty( $respond_before ) ) {
 $wrapper_attributes = get_block_wrapper_attributes(
 	array(
 		'class'                => 'fair-rsvp-button',
+		'data-rsvp-question'   => esc_attr( $rsvp_question ),
 		'data-respond-before'  => esc_attr( $respond_before ),
 		'data-deadline-passed' => $deadline_passed ? 'true' : 'false',
 	)
@@ -104,6 +106,9 @@ $current_status = $current_rsvp ? $current_rsvp['rsvp_status'] : '';
 				<div class="fair-rsvp-invited-banner">
 					<p><?php echo esc_html__( "You're invited to this event!", 'fair-rsvp' ); ?></p>
 				</div>
+			<?php endif; ?>
+			<?php if ( ! empty( $rsvp_question ) ) : ?>
+				<h2 class="fair-rsvp-question"><?php echo esc_html( $rsvp_question ); ?></h2>
 			<?php endif; ?>
 			<div class="fair-rsvp-form-container fair-rsvp-anonymous-form" data-event-id="<?php echo esc_attr( $event_id ); ?>" data-anonymous="true">
 				<form class="fair-rsvp-form">
@@ -193,6 +198,9 @@ $current_status = $current_rsvp ? $current_rsvp['rsvp_status'] : '';
 			<div class="fair-rsvp-invited-banner">
 				<p><?php echo esc_html__( "You're invited to this event!", 'fair-rsvp' ); ?></p>
 			</div>
+		<?php endif; ?>
+		<?php if ( ! empty( $rsvp_question ) ) : ?>
+			<h2 class="fair-rsvp-question"><?php echo esc_html( $rsvp_question ); ?></h2>
 		<?php endif; ?>
 		<div class="fair-rsvp-form-container" data-event-id="<?php echo esc_attr( $event_id ); ?>">
 			<form class="fair-rsvp-form">
