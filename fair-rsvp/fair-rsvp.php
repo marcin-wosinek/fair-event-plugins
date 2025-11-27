@@ -65,6 +65,10 @@ function fair_rsvp_activate() {
 	// Migrate existing events to set _has_rsvp_block meta.
 	\FairRsvp\Database\Installer::migrate_rsvp_block_meta();
 
+	// Register rewrite rules before flushing.
+	$attendance_hooks = new \FairRsvp\Frontend\AttendanceCheckHooks();
+	$attendance_hooks->register_rewrite_rules();
+
 	flush_rewrite_rules();
 }
 register_activation_hook( __FILE__, __NAMESPACE__ . '\\fair_rsvp_activate' );
