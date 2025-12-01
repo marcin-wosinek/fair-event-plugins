@@ -11,6 +11,7 @@
  * License: GPLv3 or later
  * License URI: https://www.gnu.org/licenses/gpl-3.0.html
  * Text Domain: fair-timetable
+ * Tested up to: 6.9
  *
  * Fair Timetable is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
