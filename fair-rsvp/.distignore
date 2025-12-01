@@ -18,3 +18,4 @@ scripts
 .DS_Store
 .distignore
 .phpunit.result.cache
+svn

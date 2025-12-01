@@ -14,3 +14,4 @@ scripts
 .distignore
 .env.example
 assets/.DS_Store
+svn
