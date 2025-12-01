@@ -56,19 +56,35 @@ const zipFile = path.join(distDir, `${pluginName}.${version}.zip`);
 const tagDir = path.join(svnDir, 'tags', version);
 
 try {
-	// 1. Create dist archive if it doesn't exist
-	if (!fs.existsSync(zipFile)) {
-		console.log('Creating dist archive...');
-		execSync(
-			`wp dist-archive ${pluginName} dist --create-target-dir`,
-			{
-				cwd: path.join(__dirname, '..'),
-				stdio: 'inherit',
-			}
+	// 1. Install production-only dependencies
+	const composerJsonPath = path.join(pluginDir, 'composer.json');
+	if (fs.existsSync(composerJsonPath)) {
+		console.log(
+			'Installing production dependencies (--no-dev) in plugin...'
 		);
-	} else {
-		console.log('Dist archive already exists, skipping creation...');
+		try {
+			execSync('composer install --no-dev --optimize-autoloader', {
+				cwd: pluginDir,
+				stdio: 'inherit',
+			});
+		} catch (error) {
+			console.warn(
+				'Warning: composer install failed, continuing anyway...'
+			);
+		}
 	}
+
+	// 2. Always rebuild dist archive to ensure .distignore is respected
+	if (fs.existsSync(zipFile)) {
+		console.log('Removing old dist archive to ensure fresh build...');
+		fs.unlinkSync(zipFile);
+	}
+
+	console.log('Creating dist archive...');
+	execSync(`wp dist-archive ${pluginName} dist --create-target-dir`, {
+		cwd: path.join(__dirname, '..'),
+		stdio: 'inherit',
+	});
 
 	// 2. Create tags directory if it doesn't exist
 	if (!fs.existsSync(tagDir)) {
@@ -102,12 +118,42 @@ try {
 		console.log('Moved files to tag root');
 	}
 
-	console.log(`✓ Successfully created SVN tag ${version} for ${pluginName}`);
+	// 5. Restore dev dependencies for local development
+	if (fs.existsSync(composerJsonPath)) {
+		console.log('\nRestoring dev dependencies for local development...');
+		try {
+			execSync('composer install', {
+				cwd: pluginDir,
+				stdio: 'inherit',
+			});
+		} catch (error) {
+			console.warn(
+				'Warning: Failed to restore dev dependencies. Run "composer install" manually in the plugin directory.'
+			);
+		}
+	}
+
+	console.log(`\n✓ Successfully created SVN tag ${version} for ${pluginName}`);
 	console.log(`  Location: ${tagDir}`);
 	console.log(
 		`\nNext steps:\n  cd ${pluginName}/svn\n  svn add tags/${version}\n  svn ci -m "Tagging version ${version}"`
 	);
 } catch (error) {
 	console.error('Error:', error.message);
+
+	// Try to restore dev dependencies even on error
+	const composerJsonPath = path.join(pluginDir, 'composer.json');
+	if (fs.existsSync(composerJsonPath)) {
+		console.log('\nRestoring dev dependencies...');
+		try {
+			execSync('composer install', {
+				cwd: pluginDir,
+				stdio: 'pipe',
+			});
+		} catch (e) {
+			// Ignore errors during cleanup
+		}
+	}
+
 	process.exit(1);
 }
