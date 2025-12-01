@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.5.2
+
+### Patch Changes
+
+- 7e7ea9c: Update version tested up to version to 6.9.
+
 ## 1.5.1
 
 ### Patch Changes

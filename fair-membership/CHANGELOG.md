@@ -1,5 +1,11 @@
 # fair-membership
 
+## 0.3.1
+
+### Patch Changes
+
+- 7e7ea9c: Update version tested up to version to 6.9.
+
 ## 0.3.0
 
 ### Minor Changes

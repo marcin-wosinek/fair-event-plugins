@@ -1,5 +1,11 @@
 # fair-rsvp
 
+## 0.5.1
+
+### Patch Changes
+
+- 7e7ea9c: Update version tested up to version to 6.9.
+
 ## 0.5.0
 
 ### Minor Changes
