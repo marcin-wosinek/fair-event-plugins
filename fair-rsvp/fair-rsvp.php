@@ -49,14 +49,6 @@ use FairRsvp\Core\Plugin;
 Plugin::instance()->init();
 
 /**
- * Load plugin text domain for translations
- */
-function fair_rsvp_load_textdomain() {
-	load_plugin_textdomain( 'fair-rsvp', false, dirname( plugin_basename( __FILE__ ) ) . '/languages' );
-}
-add_action( 'plugins_loaded', __NAMESPACE__ . '\\fair_rsvp_load_textdomain' );
-
-/**
  * Plugin activation hook
  */
 function fair_rsvp_activate() {
