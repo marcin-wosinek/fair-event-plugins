@@ -348,113 +348,6 @@ class RsvpController extends WP_REST_Controller {
 	}
 
 	/**
-	 * Get or create user from anonymous RSVP
-	 *
-	 * @param string $name User's name.
-	 * @param string $email User's email.
-	 * @return int|WP_Error User ID on success, WP_Error on failure.
-	 */
-	private function get_or_create_user_from_anonymous_rsvp( $name, $email ) {
-		// Sanitize inputs.
-		$name  = sanitize_text_field( $name );
-		$email = sanitize_email( $email );
-
-		// Check if user with this email already exists.
-		$existing_user = get_user_by( 'email', $email );
-		if ( $existing_user ) {
-			return $existing_user->ID;
-		}
-
-		// Generate username from email.
-		$username = sanitize_user( $email, true );
-
-		// If username exists, append number until we find a unique one.
-		if ( username_exists( $username ) ) {
-			$counter = 1;
-			while ( username_exists( $username . $counter ) ) {
-				++$counter;
-			}
-			$username = $username . $counter;
-		}
-
-		// Generate random password.
-		$password = wp_generate_password( 24, true, true );
-
-		// Create user.
-		$user_id = wp_create_user( $username, $password, $email );
-
-		if ( is_wp_error( $user_id ) ) {
-			return new WP_Error(
-				'user_creation_failed',
-				__( 'Failed to create user account.', 'fair-rsvp' ),
-				array( 'status' => 500 )
-			);
-		}
-
-		// Update user display name.
-		wp_update_user(
-			array(
-				'ID'           => $user_id,
-				'display_name' => $name,
-				'role'         => 'subscriber',
-			)
-		);
-
-		// Send welcome email with password reset link.
-		$this->send_welcome_email( $user_id, $email );
-
-		return $user_id;
-	}
-
-	/**
-	 * Send welcome email to newly created user
-	 *
-	 * @param int    $user_id User ID.
-	 * @param string $email User's email address.
-	 * @return void
-	 */
-	private function send_welcome_email( $user_id, $email ) {
-		// Generate password reset link.
-		$reset_key = get_password_reset_key( get_userdata( $user_id ) );
-
-		if ( is_wp_error( $reset_key ) ) {
-			// If we can't generate reset key, just return - don't fail the RSVP.
-			return;
-		}
-
-		$reset_url = network_site_url( "wp-login.php?action=rp&key=$reset_key&login=" . rawurlencode( get_userdata( $user_id )->user_login ), 'login' );
-
-		// Prepare email.
-		$site_name = wp_specialchars_decode( get_option( 'blogname' ), ENT_QUOTES );
-		/* translators: %s: Site name */
-		$subject = sprintf( __( 'Welcome to %s', 'fair-rsvp' ), $site_name );
-
-		/* translators: 1: User display name, 2: Site name, 3: Password reset URL */
-		$message = sprintf(
-			__(
-				'Hi %1$s,
-
-Thank you for your RSVP! An account has been created for you on %2$s.
-
-To set your password and access your account, please visit:
-%3$s
-
-If you did not make this RSVP, you can safely ignore this email.
-
-Best regards,
-The %2$s Team',
-				'fair-rsvp'
-			),
-			get_userdata( $user_id )->display_name,
-			$site_name,
-			$reset_url
-		);
-
-		// Send email.
-		wp_mail( $email, $subject, $message );
-	}
-
-	/**
 	 * Get user's RSVP for an event
 	 *
 	 * @param WP_REST_Request $request Full data about the request.
@@ -656,19 +549,23 @@ The %2$s Team',
 			);
 		}
 
-		// Get or create user for walk-in.
-		$user_id = $this->repository->get_or_create_walk_in_user( $name, $email );
-
-		if ( ! $user_id ) {
-			return new WP_Error(
-				'user_creation_failed',
-				__( 'Failed to create or find user for walk-in attendee.', 'fair-rsvp' ),
-				array( 'status' => 500 )
-			);
+		// Check if there's an existing WordPress user with this email.
+		$user_id = null;
+		if ( ! empty( $email ) ) {
+			$user = get_user_by( 'email', $email );
+			if ( $user ) {
+				$user_id = $user->ID;
+			}
 		}
 
-		// Create RSVP with 'yes' status and 'checked_in' attendance.
-		$rsvp_id = $this->repository->upsert_rsvp( $event_id, $user_id, 'yes' );
+		// Create RSVP (either with user_id or as guest).
+		if ( $user_id ) {
+			// Create RSVP for registered user.
+			$rsvp_id = $this->repository->upsert_rsvp( $event_id, $user_id, 'yes' );
+		} else {
+			// Create guest RSVP.
+			$rsvp_id = $this->repository->create_guest_rsvp( $event_id, $name, $email, 'yes' );
+		}
 
 		if ( ! $rsvp_id ) {
 			return new WP_Error(
@@ -865,7 +762,7 @@ The %2$s Team',
 		$data = array(
 			'id'                => (int) $rsvp['id'],
 			'event_id'          => (int) $rsvp['event_id'],
-			'user_id'           => (int) $rsvp['user_id'],
+			'user_id'           => ! empty( $rsvp['user_id'] ) ? (int) $rsvp['user_id'] : null,
 			'rsvp_status'       => $rsvp['rsvp_status'],
 			'attendance_status' => $rsvp['attendance_status'],
 			'rsvp_at'           => $this->format_datetime_for_response( $rsvp['rsvp_at'] ),
@@ -873,14 +770,24 @@ The %2$s Team',
 			'updated_at'        => $this->format_datetime_for_response( $rsvp['updated_at'] ),
 		);
 
-		// Add user data if user exists and request is from admin.
-		if ( $rsvp['user_id'] && current_user_can( 'manage_options' ) ) {
-			$user = get_userdata( $rsvp['user_id'] );
-			if ( $user ) {
+		// Add user/guest data if request is from admin.
+		if ( current_user_can( 'manage_options' ) ) {
+			if ( ! empty( $rsvp['user_id'] ) ) {
+				// Registered user RSVP.
+				$user = get_userdata( $rsvp['user_id'] );
+				if ( $user ) {
+					$data['user'] = array(
+						'display_name' => $user->display_name,
+						'user_email'   => $user->user_email,
+						'avatar_url'   => get_avatar_url( $user->ID, array( 'size' => 48 ) ),
+					);
+				}
+			} else {
+				// Guest RSVP.
 				$data['user'] = array(
-					'display_name' => $user->display_name,
-					'user_email'   => $user->user_email,
-					'avatar_url'   => get_avatar_url( $user->ID, array( 'size' => 48 ) ),
+					'display_name' => ! empty( $rsvp['guest_name'] ) ? $rsvp['guest_name'] : __( 'Guest', 'fair-rsvp' ),
+					'user_email'   => ! empty( $rsvp['guest_email'] ) ? $rsvp['guest_email'] : '',
+					'avatar_url'   => get_avatar_url( 0, array( 'size' => 48 ) ), // Default avatar for guests.
 				);
 			}
 		}

@@ -39,6 +39,10 @@ class Installer {
 			self::migrate_to_1_2_0();
 		}
 
+		if ( version_compare( $current_version, '1.3.0', '<' ) ) {
+			self::migrate_to_1_3_0();
+		}
+
 		// Update database version.
 		Schema::update_db_version( Schema::DB_VERSION );
 	}
@@ -101,6 +105,105 @@ class Installer {
 				)
 			);
 		}
+	}
+
+	/**
+	 * Migrate to version 1.3.0 - Add guest RSVP support
+	 *
+	 * @return void
+	 */
+	public static function migrate_to_1_3_0() {
+		global $wpdb;
+
+		$table_name = $wpdb->prefix . 'fair_rsvp';
+
+		// Check if columns already exist.
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching
+		$columns = $wpdb->get_col(
+			$wpdb->prepare(
+				'SHOW COLUMNS FROM %i',
+				$table_name
+			)
+		);
+
+		// Add guest_name column if it doesn't exist.
+		if ( ! in_array( 'guest_name', $columns, true ) ) {
+			// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching,WordPress.DB.DirectDatabaseQuery.SchemaChange
+			$wpdb->query(
+				$wpdb->prepare(
+					'ALTER TABLE %i ADD COLUMN guest_name VARCHAR(255) NULL DEFAULT NULL AFTER user_id',
+					$table_name
+				)
+			);
+		}
+
+		// Add guest_email column if it doesn't exist.
+		if ( ! in_array( 'guest_email', $columns, true ) ) {
+			// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching,WordPress.DB.DirectDatabaseQuery.SchemaChange
+			$wpdb->query(
+				$wpdb->prepare(
+					'ALTER TABLE %i ADD COLUMN guest_email VARCHAR(255) NULL DEFAULT NULL AFTER guest_name',
+					$table_name
+				)
+			);
+
+			// Add index for guest_email.
+			// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching,WordPress.DB.DirectDatabaseQuery.SchemaChange
+			$wpdb->query(
+				$wpdb->prepare(
+					'ALTER TABLE %i ADD INDEX idx_guest_email (guest_email)',
+					$table_name
+				)
+			);
+		}
+
+		// Make user_id nullable by dropping and recreating the foreign key.
+		// First, drop the foreign key constraint.
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching,WordPress.DB.DirectDatabaseQuery.SchemaChange
+		$wpdb->query(
+			$wpdb->prepare(
+				'ALTER TABLE %i DROP FOREIGN KEY fk_rsvp_user',
+				$table_name
+			)
+		);
+
+		// Modify user_id to be nullable.
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching,WordPress.DB.DirectDatabaseQuery.SchemaChange
+		$wpdb->query(
+			$wpdb->prepare(
+				'ALTER TABLE %i MODIFY COLUMN user_id BIGINT UNSIGNED NULL DEFAULT NULL',
+				$table_name
+			)
+		);
+
+		// Recreate the foreign key constraint.
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching,WordPress.DB.DirectDatabaseQuery.SchemaChange
+		$wpdb->query(
+			$wpdb->prepare(
+				'ALTER TABLE %i ADD CONSTRAINT fk_rsvp_user FOREIGN KEY (user_id) REFERENCES %i(ID) ON DELETE CASCADE',
+				$table_name,
+				$wpdb->users
+			)
+		);
+
+		// Drop the old unique constraint on (event_id, user_id) since user_id can now be NULL.
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching,WordPress.DB.DirectDatabaseQuery.SchemaChange
+		$wpdb->query(
+			$wpdb->prepare(
+				'ALTER TABLE %i DROP INDEX idx_event_user',
+				$table_name
+			)
+		);
+
+		// Add new unique constraint that only applies when user_id is NOT NULL.
+		// Note: In MySQL, NULL values are considered distinct, so this works as intended.
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching,WordPress.DB.DirectDatabaseQuery.SchemaChange
+		$wpdb->query(
+			$wpdb->prepare(
+				'ALTER TABLE %i ADD UNIQUE KEY idx_event_user (event_id, user_id)',
+				$table_name
+			)
+		);
 	}
 
 	/**

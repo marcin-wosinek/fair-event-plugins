@@ -94,6 +94,54 @@ class RsvpRepository {
 	}
 
 	/**
+	 * Create guest RSVP (without WordPress user account)
+	 *
+	 * @param int      $event_id           Event/post ID.
+	 * @param string   $guest_name         Guest's name.
+	 * @param string   $guest_email        Guest's email.
+	 * @param string   $rsvp_status        RSVP status (yes, maybe, no, cancelled).
+	 * @param int|null $invited_by_user_id User ID who invited this person (optional).
+	 * @param int|null $invitation_id      Invitation ID that led to this RSVP (optional).
+	 * @return int|false RSVP ID on success, false on failure.
+	 */
+	public function create_guest_rsvp( $event_id, $guest_name, $guest_email, $rsvp_status, $invited_by_user_id = null, $invitation_id = null ) {
+		global $wpdb;
+
+		$table_name = $this->get_table_name();
+		$now        = current_time( 'mysql' );
+
+		// Insert new guest RSVP.
+		$data   = array(
+			'event_id'          => $event_id,
+			'user_id'           => null,
+			'guest_name'        => sanitize_text_field( $guest_name ),
+			'guest_email'       => sanitize_email( $guest_email ),
+			'rsvp_status'       => $rsvp_status,
+			'attendance_status' => 'not_applicable',
+			'rsvp_at'           => $now,
+			'created_at'        => $now,
+			'updated_at'        => $now,
+		);
+		$format = array( '%d', '%d', '%s', '%s', '%s', '%s', '%s', '%s', '%s' );
+
+		// Add invitation tracking if provided.
+		if ( null !== $invited_by_user_id ) {
+			$data['invited_by_user_id'] = $invited_by_user_id;
+			$format[]                   = '%d';
+		}
+
+		if ( null !== $invitation_id ) {
+			$data['invitation_id'] = $invitation_id;
+			$format[]              = '%d';
+		}
+
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery
+		$result = $wpdb->insert( $table_name, $data, $format );
+
+		return $result ? $wpdb->insert_id : false;
+	}
+
+	/**
 	 * Get RSVP by ID
 	 *
 	 * @param int $id RSVP ID.
@@ -291,6 +339,9 @@ class RsvpRepository {
 	/**
 	 * Get participants for an event with user information
 	 *
+	 * Supports both registered users and guest RSVPs.
+	 * Email is excluded for privacy (only used for avatar).
+	 *
 	 * @param int    $event_id    Event ID.
 	 * @param string $rsvp_status Optional. Filter by RSVP status (default: 'yes').
 	 * @return array Array of participants with user data.
@@ -304,12 +355,13 @@ class RsvpRepository {
 		$sql = $wpdb->prepare(
 			'SELECT
 				r.user_id,
-				u.display_name,
-				u.user_email,
+				r.guest_name,
+				COALESCE(u.display_name, r.guest_name) as display_name,
+				COALESCE(u.user_email, r.guest_email) as user_email,
 				r.rsvp_status,
 				r.rsvp_at
 			FROM %i r
-			INNER JOIN %i u ON r.user_id = u.ID
+			LEFT JOIN %i u ON r.user_id = u.ID
 			WHERE r.event_id = %d AND r.rsvp_status = %s
 			ORDER BY r.rsvp_at ASC',
 			$table_name,
@@ -323,10 +375,12 @@ class RsvpRepository {
 
 		// Add avatar URL to each result.
 		foreach ( $results as &$result ) {
-			$result['user_id']    = (int) $result['user_id'];
-			$result['avatar_url'] = get_avatar_url( $result['user_id'], array( 'size' => 48 ) );
+			// For guests, user_id will be NULL, use 0 for avatar.
+			$avatar_user_id       = ! empty( $result['user_id'] ) ? (int) $result['user_id'] : 0;
+			$result['user_id']    = ! empty( $result['user_id'] ) ? (int) $result['user_id'] : null;
+			$result['avatar_url'] = get_avatar_url( $avatar_user_id, array( 'size' => 48 ) );
 			// Remove email for privacy (will be used only for gravatar).
-			unset( $result['user_email'] );
+			unset( $result['user_email'], $result['guest_name'] );
 		}
 
 		return $results;
@@ -407,6 +461,7 @@ class RsvpRepository {
 	 *
 	 * Similar to get_participants_with_user_data but includes email for search.
 	 * Only use this method for privileged views (event editors).
+	 * Supports both registered users and guest RSVPs.
 	 *
 	 * @param int    $event_id    Event ID.
 	 * @param string $rsvp_status Optional. Filter by RSVP status (default: 'yes').
@@ -422,13 +477,15 @@ class RsvpRepository {
 			'SELECT
 				r.id as rsvp_id,
 				r.user_id,
-				u.display_name,
-				u.user_email,
+				r.guest_name,
+				r.guest_email,
+				COALESCE(u.display_name, r.guest_name) as display_name,
+				COALESCE(u.user_email, r.guest_email) as email,
 				r.rsvp_status,
 				r.attendance_status,
 				r.rsvp_at
 			FROM %i r
-			INNER JOIN %i u ON r.user_id = u.ID
+			LEFT JOIN %i u ON r.user_id = u.ID
 			WHERE r.event_id = %d AND r.rsvp_status = %s
 			ORDER BY r.rsvp_at ASC',
 			$table_name,
@@ -443,82 +500,19 @@ class RsvpRepository {
 		// Format results with avatar URL.
 		$formatted = array();
 		foreach ( $results as $result ) {
+			// For guests, user_id will be NULL, use 0 for avatar.
+			$avatar_user_id = ! empty( $result['user_id'] ) ? (int) $result['user_id'] : 0;
+
 			$formatted[] = array(
 				'rsvp_id'           => (int) $result['rsvp_id'],
-				'id'                => (int) $result['user_id'],
+				'id'                => ! empty( $result['user_id'] ) ? (int) $result['user_id'] : null,
 				'name'              => $result['display_name'],
-				'email'             => $result['user_email'],
-				'avatar_url'        => get_avatar_url( $result['user_id'], array( 'size' => 48 ) ),
+				'email'             => $result['email'],
+				'avatar_url'        => get_avatar_url( $avatar_user_id, array( 'size' => 48 ) ),
 				'attendance_status' => $result['attendance_status'],
 			);
 		}
 
 		return $formatted;
-	}
-
-	/**
-	 * Create or get user for walk-in attendee
-	 *
-	 * @param string $name  Attendee name.
-	 * @param string $email Optional. Attendee email.
-	 * @return int|false User ID on success, false on failure.
-	 */
-	public function get_or_create_walk_in_user( $name, $email = '' ) {
-		// If email provided, check if user exists.
-		if ( ! empty( $email ) && is_email( $email ) ) {
-			$user = get_user_by( 'email', $email );
-			if ( $user ) {
-				return $user->ID;
-			}
-
-			// Create new user with email.
-			$username = sanitize_user( $email, true );
-			// Make username unique if needed.
-			if ( username_exists( $username ) ) {
-				$username = $username . '_' . wp_rand( 1000, 9999 );
-			}
-
-			$user_id = wp_create_user( $username, wp_generate_password(), $email );
-			if ( is_wp_error( $user_id ) ) {
-				return false;
-			}
-
-			// Update display name.
-			wp_update_user(
-				array(
-					'ID'           => $user_id,
-					'display_name' => sanitize_text_field( $name ),
-					'role'         => 'subscriber',
-				)
-			);
-
-			return $user_id;
-		}
-
-		// No email - create a guest user with username based on name.
-		$username = sanitize_user( strtolower( str_replace( ' ', '_', $name ) ), true );
-		// Make username unique.
-		$base_username = $username;
-		$counter       = 1;
-		while ( username_exists( $username ) ) {
-			$username = $base_username . '_' . $counter;
-			++$counter;
-		}
-
-		$user_id = wp_create_user( $username, wp_generate_password() );
-		if ( is_wp_error( $user_id ) ) {
-			return false;
-		}
-
-		// Update display name and set as subscriber.
-		wp_update_user(
-			array(
-				'ID'           => $user_id,
-				'display_name' => sanitize_text_field( $name ),
-				'role'         => 'subscriber',
-			)
-		);
-
-		return $user_id;
 	}
 }

@@ -399,11 +399,11 @@ class InvitationController {
 			);
 		}
 
-		// Determine user ID (logged in or create new account).
+		// Determine user ID (logged in or check existing user).
 		$user_id = get_current_user_id();
 
 		if ( ! $user_id ) {
-			// Not logged in - create account if name/email provided.
+			// Not logged in - require name/email for guest RSVP.
 			if ( empty( $name ) || empty( $email ) ) {
 				return new WP_Error(
 					'missing_user_info',
@@ -412,24 +412,37 @@ class InvitationController {
 				);
 			}
 
-			$user_id = $this->get_or_create_user_from_invitation( $name, $email );
-
-			if ( is_wp_error( $user_id ) ) {
-				return $user_id;
+			// Check if there's an existing user with this email.
+			$existing_user = get_user_by( 'email', sanitize_email( $email ) );
+			if ( $existing_user ) {
+				$user_id = $existing_user->ID;
 			}
 		}
 
-		// Mark invitation as accepted.
+		// Mark invitation as accepted (pass user_id if available, null if guest).
 		$this->invitation_repository->mark_invitation_accepted( $invitation['id'], $user_id );
 
-		// Create RSVP with invitation tracking.
-		$rsvp_id = $this->rsvp_repository->upsert_rsvp(
-			$invitation['event_id'],
-			$user_id,
-			$rsvp_status,
-			$invitation['inviter_user_id'],
-			$invitation['id']
-		);
+		// Create RSVP (either with user_id or as guest).
+		if ( $user_id ) {
+			// Create RSVP for registered user with invitation tracking.
+			$rsvp_id = $this->rsvp_repository->upsert_rsvp(
+				$invitation['event_id'],
+				$user_id,
+				$rsvp_status,
+				$invitation['inviter_user_id'],
+				$invitation['id']
+			);
+		} else {
+			// Create guest RSVP with invitation tracking.
+			$rsvp_id = $this->rsvp_repository->create_guest_rsvp(
+				$invitation['event_id'],
+				sanitize_text_field( $name ),
+				sanitize_email( $email ),
+				$rsvp_status,
+				$invitation['inviter_user_id'],
+				$invitation['id']
+			);
+		}
 
 		if ( ! $rsvp_id ) {
 			return new WP_Error(
@@ -494,104 +507,6 @@ class InvitationController {
 			),
 			200
 		);
-	}
-
-	/**
-	 * Get or create user from invitation acceptance
-	 *
-	 * @param string $name User's name.
-	 * @param string $email User's email.
-	 * @return int|WP_Error User ID on success, WP_Error on failure.
-	 */
-	private function get_or_create_user_from_invitation( $name, $email ) {
-		$name  = sanitize_text_field( $name );
-		$email = sanitize_email( $email );
-
-		// Check if user exists.
-		$existing_user = get_user_by( 'email', $email );
-		if ( $existing_user ) {
-			return $existing_user->ID;
-		}
-
-		// Generate username.
-		$username = sanitize_user( $email, true );
-		if ( username_exists( $username ) ) {
-			$counter = 1;
-			while ( username_exists( $username . $counter ) ) {
-				++$counter;
-			}
-			$username = $username . $counter;
-		}
-
-		// Generate password.
-		$password = wp_generate_password( 24, true, true );
-
-		// Create user.
-		$user_id = wp_create_user( $username, $password, $email );
-
-		if ( is_wp_error( $user_id ) ) {
-			return new WP_Error(
-				'user_creation_failed',
-				__( 'Failed to create user account.', 'fair-rsvp' ),
-				array( 'status' => 500 )
-			);
-		}
-
-		// Update user details.
-		wp_update_user(
-			array(
-				'ID'           => $user_id,
-				'display_name' => $name,
-				'role'         => 'subscriber',
-			)
-		);
-
-		// Send welcome email.
-		$this->send_welcome_email( $user_id, $email );
-
-		return $user_id;
-	}
-
-	/**
-	 * Send welcome email to newly created user
-	 *
-	 * @param int    $user_id User ID.
-	 * @param string $email User's email address.
-	 * @return void
-	 */
-	private function send_welcome_email( $user_id, $email ) {
-		$reset_key = get_password_reset_key( get_userdata( $user_id ) );
-
-		if ( is_wp_error( $reset_key ) ) {
-			return;
-		}
-
-		$reset_url = network_site_url( "wp-login.php?action=rp&key=$reset_key&login=" . rawurlencode( get_userdata( $user_id )->user_login ), 'login' );
-
-		$site_name = wp_specialchars_decode( get_option( 'blogname' ), ENT_QUOTES );
-		/* translators: %s: Site name */
-		$subject = sprintf( __( 'Welcome to %s', 'fair-rsvp' ), $site_name );
-
-		/* translators: 1: User display name, 2: Site name, 3: Password reset URL */
-		$message = sprintf(
-			__(
-				'Hi %1$s,
-
-You\'ve been invited to an event! An account has been created for you on %2$s.
-
-To set your password and access your account, please visit:
-%3$s
-
-Best regards,
-The %2$s Team',
-				'fair-rsvp'
-			),
-			get_userdata( $user_id )->display_name,
-			$site_name,
-			$reset_url
-		);
-
-		wp_mail( $email, $subject, $message );
 	}
 
 	/**
