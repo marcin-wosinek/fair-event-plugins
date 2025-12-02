@@ -63,7 +63,7 @@ export default function PreviewStep({
 
 		try {
 			const response = await apiFetch({
-				path: '/fair-membership/v1/import-users/validate',
+				path: '/fair-user-import/v1/import-users/validate',
 				method: 'POST',
 				data: {
 					users: userData,
@@ -131,7 +131,7 @@ export default function PreviewStep({
 			alert(
 				__(
 					'Please select at least one user to import.',
-					'fair-membership'
+					'fair-user-import'
 				)
 			);
 			return;
@@ -151,13 +151,13 @@ export default function PreviewStep({
 
 	const getFieldLabel = (field) => {
 		const labels = {
-			user_login: __('Username', 'fair-membership'),
-			user_email: __('Email', 'fair-membership'),
-			display_name: __('Display Name', 'fair-membership'),
-			first_name: __('First Name', 'fair-membership'),
-			last_name: __('Last Name', 'fair-membership'),
-			user_url: __('Website', 'fair-membership'),
-			description: __('Bio', 'fair-membership'),
+			user_login: __('Username', 'fair-user-import'),
+			user_email: __('Email', 'fair-user-import'),
+			display_name: __('Display Name', 'fair-user-import'),
+			first_name: __('First Name', 'fair-user-import'),
+			last_name: __('Last Name', 'fair-user-import'),
+			user_url: __('Website', 'fair-user-import'),
+			description: __('Bio', 'fair-user-import'),
 		};
 		return labels[field] || field;
 	};
@@ -168,15 +168,15 @@ export default function PreviewStep({
 		return [
 			{
 				value: 'create',
-				label: __('Create', 'fair-membership'),
+				label: __('Create', 'fair-user-import'),
 				disabled: hasErrors,
 			},
 			{
 				value: 'update',
-				label: __('Update', 'fair-membership'),
+				label: __('Update', 'fair-user-import'),
 				disabled: hasErrors,
 			},
-			{ value: 'skip', label: __('Skip', 'fair-membership') },
+			{ value: 'skip', label: __('Skip', 'fair-user-import') },
 		];
 	};
 
@@ -185,13 +185,13 @@ export default function PreviewStep({
 			<p>
 				{__(
 					'Review and edit user data. Choose an action for each user: Create (new user), Update (existing user), or Skip.',
-					'fair-membership'
+					'fair-user-import'
 				)}
 			</p>
 
 			{isValidating && (
 				<div className="notice notice-info">
-					<p>{__('Validating users...', 'fair-membership')}</p>
+					<p>{__('Validating users...', 'fair-user-import')}</p>
 				</div>
 			)}
 
@@ -202,12 +202,12 @@ export default function PreviewStep({
 						checked={filterErrors}
 						onChange={(e) => setFilterErrors(e.target.checked)}
 					/>
-					{__('Show only rows with errors', 'fair-membership')}
+					{__('Show only rows with errors', 'fair-user-import')}
 				</label>
 				<span style={{ marginLeft: '20px' }}>
-					<strong>{__('Showing:', 'fair-membership')}</strong>{' '}
+					<strong>{__('Showing:', 'fair-user-import')}</strong>{' '}
 					{displayedUsers.length} / {userData.length}{' '}
-					{__('users', 'fair-membership')}
+					{__('users', 'fair-user-import')}
 				</span>
 			</div>
 
@@ -216,13 +216,13 @@ export default function PreviewStep({
 					<thead>
 						<tr>
 							<th style={{ width: '50px' }}>
-								{__('#', 'fair-membership')}
+								{__('#', 'fair-user-import')}
 							</th>
 							{displayFields.map((field) => (
 								<th key={field}>{getFieldLabel(field)}</th>
 							))}
 							<th style={{ width: '120px' }}>
-								{__('Action', 'fair-membership')}
+								{__('Action', 'fair-user-import')}
 							</th>
 						</tr>
 					</thead>
@@ -281,7 +281,7 @@ export default function PreviewStep({
 													}}
 													title={__(
 														'Double-click to edit',
-														'fair-membership'
+														'fair-user-import'
 													)}
 												>
 													{user[field] || '—'}
@@ -329,14 +329,14 @@ export default function PreviewStep({
 				<div className="notice notice-warning">
 					<p>
 						<strong>
-							{__('Validation Issues:', 'fair-membership')}
+							{__('Validation Issues:', 'fair-user-import')}
 						</strong>
 					</p>
 					<ul>
 						{Object.entries(validationErrors).map(
 							([rowIndex, errors]) => (
 								<li key={rowIndex}>
-									{__('Row', 'fair-membership')}{' '}
+									{__('Row', 'fair-user-import')}{' '}
 									{Number(rowIndex) + 1}:{' '}
 									{Array.isArray(errors)
 										? errors.join(', ')
@@ -349,10 +349,10 @@ export default function PreviewStep({
 			)}
 
 			<div className="fair-membership-preview-summary">
-				<h3>{__('Import Summary', 'fair-membership')}</h3>
+				<h3>{__('Import Summary', 'fair-user-import')}</h3>
 				<ul>
 					<li>
-						<strong>{__('To Create:', 'fair-membership')}</strong>{' '}
+						<strong>{__('To Create:', 'fair-user-import')}</strong>{' '}
 						{
 							Object.values(userActions).filter(
 								(action) => action === 'create'
@@ -360,7 +360,7 @@ export default function PreviewStep({
 						}
 					</li>
 					<li>
-						<strong>{__('To Update:', 'fair-membership')}</strong>{' '}
+						<strong>{__('To Update:', 'fair-user-import')}</strong>{' '}
 						{
 							Object.values(userActions).filter(
 								(action) => action === 'update'
@@ -368,7 +368,7 @@ export default function PreviewStep({
 						}
 					</li>
 					<li>
-						<strong>{__('To Skip:', 'fair-membership')}</strong>{' '}
+						<strong>{__('To Skip:', 'fair-user-import')}</strong>{' '}
 						{
 							Object.values(userActions).filter(
 								(action) => action === 'skip'
@@ -385,7 +385,7 @@ export default function PreviewStep({
 					onClick={onBack}
 					style={{ marginRight: '10px' }}
 				>
-					{__('← Back to Mapping', 'fair-membership')}
+					{__('← Back to Mapping', 'fair-user-import')}
 				</button>
 				<button
 					type="button"
@@ -393,7 +393,7 @@ export default function PreviewStep({
 					onClick={handleContinue}
 					disabled={isValidating}
 				>
-					{__('Continue to Groups', 'fair-membership')}
+					{__('Continue to Groups', 'fair-user-import')}
 				</button>
 			</div>
 

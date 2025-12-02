@@ -25,13 +25,13 @@ export default function UploadStep({ onComplete }) {
 			selectedFile.type !== 'text/csv' &&
 			!selectedFile.name.endsWith('.csv')
 		) {
-			return __('Please upload a CSV file (.csv)', 'fair-membership');
+			return __('Please upload a CSV file (.csv)', 'fair-user-import');
 		}
 
 		// Check file size (max 10MB)
 		const maxSize = 10 * 1024 * 1024;
 		if (selectedFile.size > maxSize) {
-			return __('File size must be less than 10MB', 'fair-membership');
+			return __('File size must be less than 10MB', 'fair-user-import');
 		}
 
 		return null;
@@ -88,7 +88,7 @@ export default function UploadStep({ onComplete }) {
 			formData.append('file', file);
 
 			const response = await apiFetch({
-				path: '/fair-membership/v1/import-users/upload',
+				path: '/fair-user-import/v1/import-users/upload',
 				method: 'POST',
 				body: formData,
 			});
@@ -102,12 +102,12 @@ export default function UploadStep({ onComplete }) {
 			} else {
 				setError(
 					response.message ||
-						__('Failed to upload file', 'fair-membership')
+						__('Failed to upload file', 'fair-user-import')
 				);
 			}
 		} catch (err) {
 			setError(
-				err.message || __('Failed to upload file', 'fair-membership')
+				err.message || __('Failed to upload file', 'fair-user-import')
 			);
 		} finally {
 			setIsUploading(false);
@@ -125,7 +125,7 @@ export default function UploadStep({ onComplete }) {
 			<p>
 				{__(
 					'Upload a CSV file containing user data. The file should have column headers in the first row.',
-					'fair-membership'
+					'fair-user-import'
 				)}
 			</p>
 
@@ -142,7 +142,7 @@ export default function UploadStep({ onComplete }) {
 					<p>
 						{__(
 							'Drag and drop a CSV file here, or click to select',
-							'fair-membership'
+							'fair-user-import'
 						)}
 					</p>
 					<input
@@ -167,7 +167,7 @@ export default function UploadStep({ onComplete }) {
 				<div className="fair-membership-file-info">
 					<p>
 						<strong>
-							{__('Selected file:', 'fair-membership')}
+							{__('Selected file:', 'fair-user-import')}
 						</strong>{' '}
 						{file.name} ({Math.round(file.size / 1024)} KB)
 					</p>
@@ -182,7 +182,7 @@ export default function UploadStep({ onComplete }) {
 
 			{preview && (
 				<div className="fair-membership-upload-preview">
-					<h3>{__('Preview (first 5 rows)', 'fair-membership')}</h3>
+					<h3>{__('Preview (first 5 rows)', 'fair-user-import')}</h3>
 					<table className="wp-list-table widefat fixed striped">
 						<thead>
 							<tr>
@@ -202,7 +202,7 @@ export default function UploadStep({ onComplete }) {
 						</tbody>
 					</table>
 					<p>
-						{__('Total rows:', 'fair-membership')} {preview.total}
+						{__('Total rows:', 'fair-user-import')} {preview.total}
 					</p>
 				</div>
 			)}
@@ -216,8 +216,8 @@ export default function UploadStep({ onComplete }) {
 						disabled={!file || isUploading}
 					>
 						{isUploading
-							? __('Uploading...', 'fair-membership')
-							: __('Upload & Parse CSV', 'fair-membership')}
+							? __('Uploading...', 'fair-user-import')
+							: __('Upload & Parse CSV', 'fair-user-import')}
 					</button>
 				) : (
 					<button
@@ -225,7 +225,7 @@ export default function UploadStep({ onComplete }) {
 						className="button button-primary"
 						onClick={handleContinue}
 					>
-						{__('Continue to Field Mapping', 'fair-membership')}
+						{__('Continue to Field Mapping', 'fair-user-import')}
 					</button>
 				)}
 			</div>

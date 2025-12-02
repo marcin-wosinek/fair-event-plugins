@@ -57,7 +57,7 @@ export default function GroupsStep({ initialGroups, onComplete, onBack }) {
 	if (isLoading) {
 		return (
 			<div className="fair-membership-groups-step">
-				<p>{__('Loading groups...', 'fair-membership')}</p>
+				<p>{__('Loading groups...', 'fair-user-import')}</p>
 			</div>
 		);
 	}
@@ -67,7 +67,7 @@ export default function GroupsStep({ initialGroups, onComplete, onBack }) {
 			<div className="fair-membership-groups-step">
 				<div className="notice notice-error">
 					<p>
-						{__('Error loading groups: ', 'fair-membership')}
+						{__('Error loading groups: ', 'fair-user-import')}
 						{error}
 					</p>
 				</div>
@@ -80,7 +80,7 @@ export default function GroupsStep({ initialGroups, onComplete, onBack }) {
 			<p>
 				{__(
 					"Select which Fair Membership groups to assign to the imported users. You can skip this step if you don't want to assign any groups.",
-					'fair-membership'
+					'fair-user-import'
 				)}
 			</p>
 
@@ -89,7 +89,7 @@ export default function GroupsStep({ initialGroups, onComplete, onBack }) {
 					<p>
 						{__(
 							'No groups available. You can create groups in the Groups page.',
-							'fair-membership'
+							'fair-user-import'
 						)}
 					</p>
 				</div>
@@ -102,7 +102,7 @@ export default function GroupsStep({ initialGroups, onComplete, onBack }) {
 							onClick={handleSelectAll}
 							disabled={selectedGroups.length === groups.length}
 						>
-							{__('Select All', 'fair-membership')}
+							{__('Select All', 'fair-user-import')}
 						</button>
 						<button
 							type="button"
@@ -111,7 +111,7 @@ export default function GroupsStep({ initialGroups, onComplete, onBack }) {
 							disabled={selectedGroups.length === 0}
 							style={{ marginLeft: '10px' }}
 						>
-							{__('Deselect All', 'fair-membership')}
+							{__('Deselect All', 'fair-user-import')}
 						</button>
 					</div>
 
@@ -139,7 +139,7 @@ export default function GroupsStep({ initialGroups, onComplete, onBack }) {
 					<div className="fair-membership-groups-summary">
 						<p>
 							<strong>
-								{__('Selected groups:', 'fair-membership')}
+								{__('Selected groups:', 'fair-user-import')}
 							</strong>{' '}
 							{selectedGroups.length > 0 ? (
 								<>
@@ -148,13 +148,13 @@ export default function GroupsStep({ initialGroups, onComplete, onBack }) {
 										selectedGroups.length === 1
 											? 'group'
 											: 'groups',
-										'fair-membership'
+										'fair-user-import'
 									)}
 								</>
 							) : (
 								__(
 									'None (users will be created without group assignments)',
-									'fair-membership'
+									'fair-user-import'
 								)
 							)}
 						</p>
@@ -169,14 +169,14 @@ export default function GroupsStep({ initialGroups, onComplete, onBack }) {
 					onClick={onBack}
 					style={{ marginRight: '10px' }}
 				>
-					{__('← Back to Preview', 'fair-membership')}
+					{__('← Back to Preview', 'fair-user-import')}
 				</button>
 				<button
 					type="button"
 					className="button button-primary"
 					onClick={handleContinue}
 				>
-					{__('Continue to Confirmation', 'fair-membership')}
+					{__('Continue to Confirmation', 'fair-user-import')}
 				</button>
 			</div>
 

@@ -1,11 +1,11 @@
 <?php
 /**
- * Import Users page for Fair Membership
+ * Import Users page for Fair User Import
  *
- * @package FairMembership
+ * @package FairUserImport
  */
 
-namespace FairMembership\Admin;
+namespace FairUserImport\Admin;
 
 defined( 'WPINC' ) || die;
 
@@ -21,7 +21,7 @@ class ImportUsersPage {
 	 */
 	public function render() {
 		?>
-		<div id="fair-membership-import-users-root"></div>
+		<div id="fair-user-import-root"></div>
 		<?php
 	}
 }

@@ -101,20 +101,23 @@ export default function MappingStep({
 
 	// Available WordPress user fields
 	const userFields = [
-		{ value: '', label: __('— Skip this column —', 'fair-membership') },
+		{ value: '', label: __('— Skip this column —', 'fair-user-import') },
 		{
 			value: 'user_login',
-			label: __('Username (required)', 'fair-membership'),
+			label: __('Username (required)', 'fair-user-import'),
 		},
 		{
 			value: 'user_email',
-			label: __('Email (required)', 'fair-membership'),
+			label: __('Email (required)', 'fair-user-import'),
 		},
-		{ value: 'display_name', label: __('Display Name', 'fair-membership') },
-		{ value: 'first_name', label: __('First Name', 'fair-membership') },
-		{ value: 'last_name', label: __('Last Name', 'fair-membership') },
-		{ value: 'user_url', label: __('Website URL', 'fair-membership') },
-		{ value: 'description', label: __('Biography', 'fair-membership') },
+		{
+			value: 'display_name',
+			label: __('Display Name', 'fair-user-import'),
+		},
+		{ value: 'first_name', label: __('First Name', 'fair-user-import') },
+		{ value: 'last_name', label: __('Last Name', 'fair-user-import') },
+		{ value: 'user_url', label: __('Website URL', 'fair-user-import') },
+		{ value: 'description', label: __('Biography', 'fair-user-import') },
 	];
 
 	// Get CSV columns from first row
@@ -150,7 +153,7 @@ export default function MappingStep({
 			validationErrors.push(
 				__(
 					'Username field is required. Please map a column to Username.',
-					'fair-membership'
+					'fair-user-import'
 				)
 			);
 		}
@@ -161,7 +164,7 @@ export default function MappingStep({
 			validationErrors.push(
 				__(
 					'Email field is required. Please map a column to Email.',
-					'fair-membership'
+					'fair-user-import'
 				)
 			);
 		}
@@ -175,7 +178,7 @@ export default function MappingStep({
 			validationErrors.push(
 				__(
 					'Each field can only be mapped once. Please check for duplicate mappings.',
-					'fair-membership'
+					'fair-user-import'
 				)
 			);
 		}
@@ -203,7 +206,7 @@ export default function MappingStep({
 			<p>
 				{__(
 					'Map CSV columns to WordPress user fields. Required fields are Username and Email.',
-					'fair-membership'
+					'fair-user-import'
 				)}
 			</p>
 
@@ -221,13 +224,13 @@ export default function MappingStep({
 				<thead>
 					<tr>
 						<th style={{ width: '30%' }}>
-							{__('CSV Column', 'fair-membership')}
+							{__('CSV Column', 'fair-user-import')}
 						</th>
 						<th style={{ width: '30%' }}>
-							{__('Sample Data', 'fair-membership')}
+							{__('Sample Data', 'fair-user-import')}
 						</th>
 						<th style={{ width: '40%' }}>
-							{__('Maps to WordPress Field', 'fair-membership')}
+							{__('Maps to WordPress Field', 'fair-user-import')}
 						</th>
 					</tr>
 				</thead>
@@ -267,16 +270,16 @@ export default function MappingStep({
 			</table>
 
 			<div className="fair-membership-mapping-summary">
-				<h3>{__('Mapping Summary', 'fair-membership')}</h3>
+				<h3>{__('Mapping Summary', 'fair-user-import')}</h3>
 				<ul>
 					<li>
 						<strong>
-							{__('Total columns:', 'fair-membership')}
+							{__('Total columns:', 'fair-user-import')}
 						</strong>{' '}
 						{columns.length}
 					</li>
 					<li>
-						<strong>{__('Mapped:', 'fair-membership')}</strong>{' '}
+						<strong>{__('Mapped:', 'fair-user-import')}</strong>{' '}
 						{
 							Object.values(mapping).filter(
 								(field) => field !== ''
@@ -284,7 +287,7 @@ export default function MappingStep({
 						}
 					</li>
 					<li>
-						<strong>{__('Skipped:', 'fair-membership')}</strong>{' '}
+						<strong>{__('Skipped:', 'fair-user-import')}</strong>{' '}
 						{
 							columns.filter(
 								(col) => !mapping[col] || mapping[col] === ''
@@ -301,14 +304,14 @@ export default function MappingStep({
 					onClick={onBack}
 					style={{ marginRight: '10px' }}
 				>
-					{__('← Back', 'fair-membership')}
+					{__('← Back', 'fair-user-import')}
 				</button>
 				<button
 					type="button"
 					className="button button-primary"
 					onClick={handleContinue}
 				>
-					{__('Continue to Preview', 'fair-membership')}
+					{__('Continue to Preview', 'fair-user-import')}
 				</button>
 			</div>
 

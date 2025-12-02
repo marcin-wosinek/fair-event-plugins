@@ -28,6 +28,10 @@ const STEPS = {
  * @return {JSX.Element} The Import Users wizard component
  */
 export default function ImportUsers() {
+	// Check if Fair Membership is available
+	const hasFairMembership =
+		window.fairUserImportData?.hasFairMembership || false;
+
 	const [currentStep, setCurrentStep] = useState(STEPS.UPLOAD);
 	const [csvFile, setCsvFile] = useState(null);
 	const [csvData, setCsvData] = useState([]);
@@ -41,9 +45,7 @@ export default function ImportUsers() {
 
 	// Load state from session storage on mount
 	useEffect(() => {
-		const savedState = sessionStorage.getItem(
-			'fair-membership-import-state'
-		);
+		const savedState = sessionStorage.getItem('fair-user-import-state');
 		if (savedState) {
 			try {
 				const state = JSON.parse(savedState);
@@ -70,10 +72,7 @@ export default function ImportUsers() {
 			userActions,
 			selectedGroups,
 		};
-		sessionStorage.setItem(
-			'fair-membership-import-state',
-			JSON.stringify(state)
-		);
+		sessionStorage.setItem('fair-user-import-state', JSON.stringify(state));
 	}, [
 		currentStep,
 		csvData,
@@ -83,9 +82,13 @@ export default function ImportUsers() {
 		selectedGroups,
 	]);
 
-	// Load groups when reaching groups step
+	// Load groups when reaching groups step (only if Fair Membership is available)
 	useEffect(() => {
-		if (currentStep >= STEPS.GROUPS && groups.length === 0) {
+		if (
+			hasFairMembership &&
+			currentStep >= STEPS.GROUPS &&
+			groups.length === 0
+		) {
 			apiFetch({ path: '/fair-membership/v1/groups' })
 				.then((data) => {
 					setGroups(data);
@@ -95,7 +98,7 @@ export default function ImportUsers() {
 					console.error('Failed to load groups:', err);
 				});
 		}
-	}, [currentStep, groups.length]);
+	}, [hasFairMembership, currentStep, groups.length]);
 
 	const handleUploadComplete = (file, data) => {
 		setCsvFile(file);
@@ -111,7 +114,8 @@ export default function ImportUsers() {
 	const handlePreviewComplete = (users, actions) => {
 		setUserData(users);
 		setUserActions(actions);
-		setCurrentStep(STEPS.GROUPS);
+		// Skip groups step if Fair Membership is not available
+		setCurrentStep(hasFairMembership ? STEPS.GROUPS : STEPS.CONFIRM);
 	};
 
 	const handleGroupsComplete = (groups) => {
@@ -122,7 +126,7 @@ export default function ImportUsers() {
 	const handleImportComplete = (result) => {
 		setImportResult(result);
 		// Clear session storage after successful import
-		sessionStorage.removeItem('fair-membership-import-state');
+		sessionStorage.removeItem('fair-user-import-state');
 	};
 
 	const handleReset = () => {
@@ -135,58 +139,71 @@ export default function ImportUsers() {
 		setSelectedGroups([]);
 		setValidationErrors({});
 		setImportResult(null);
-		sessionStorage.removeItem('fair-membership-import-state');
+		sessionStorage.removeItem('fair-user-import-state');
 	};
 
 	const handleGoBack = () => {
 		if (currentStep > STEPS.UPLOAD) {
-			setCurrentStep(currentStep - 1);
+			// Skip groups step when going back if Fair Membership is not available
+			if (
+				!hasFairMembership &&
+				currentStep === STEPS.CONFIRM &&
+				currentStep - 1 === STEPS.GROUPS
+			) {
+				setCurrentStep(STEPS.PREVIEW);
+			} else {
+				setCurrentStep(currentStep - 1);
+			}
 		}
 	};
 
 	return (
 		<div className="wrap">
-			<h1>{__('Import Users', 'fair-membership')}</h1>
+			<h1>{__('Import Users', 'fair-user-import')}</h1>
 
 			{/* Step indicator */}
-			<div className="fair-membership-import-steps">
+			<div className="fair-user-import-steps">
 				<ol>
 					<li
 						className={currentStep === STEPS.UPLOAD ? 'active' : ''}
 					>
-						{__('Upload CSV', 'fair-membership')}
+						{__('Upload CSV', 'fair-user-import')}
 					</li>
 					<li
 						className={
 							currentStep === STEPS.MAPPING ? 'active' : ''
 						}
 					>
-						{__('Map Fields', 'fair-membership')}
+						{__('Map Fields', 'fair-user-import')}
 					</li>
 					<li
 						className={
 							currentStep === STEPS.PREVIEW ? 'active' : ''
 						}
 					>
-						{__('Preview & Edit', 'fair-membership')}
+						{__('Preview & Edit', 'fair-user-import')}
 					</li>
-					<li
-						className={currentStep === STEPS.GROUPS ? 'active' : ''}
-					>
-						{__('Assign Groups', 'fair-membership')}
-					</li>
+					{hasFairMembership && (
+						<li
+							className={
+								currentStep === STEPS.GROUPS ? 'active' : ''
+							}
+						>
+							{__('Assign Groups', 'fair-user-import')}
+						</li>
+					)}
 					<li
 						className={
 							currentStep === STEPS.CONFIRM ? 'active' : ''
 						}
 					>
-						{__('Confirm Import', 'fair-membership')}
+						{__('Confirm Import', 'fair-user-import')}
 					</li>
 				</ol>
 			</div>
 
 			{/* Step content */}
-			<div className="fair-membership-import-content">
+			<div className="fair-user-import-content">
 				{currentStep === STEPS.UPLOAD && (
 					<UploadStep onComplete={handleUploadComplete} />
 				)}
@@ -208,7 +225,7 @@ export default function ImportUsers() {
 						onBack={handleGoBack}
 					/>
 				)}
-				{currentStep === STEPS.GROUPS && (
+				{hasFairMembership && currentStep === STEPS.GROUPS && (
 					<GroupsStep
 						initialGroups={selectedGroups}
 						onComplete={handleGroupsComplete}
@@ -221,6 +238,7 @@ export default function ImportUsers() {
 						userActions={userActions}
 						selectedGroups={selectedGroups}
 						groups={groups}
+						hasFairMembership={hasFairMembership}
 						onComplete={handleImportComplete}
 						onBack={handleGoBack}
 					/>
@@ -235,7 +253,7 @@ export default function ImportUsers() {
 					onClick={handleReset}
 					style={{ marginTop: '20px' }}
 				>
-					{__('Reset & Start Over', 'fair-membership')}
+					{__('Reset & Start Over', 'fair-user-import')}
 				</button>
 			)}
 		</div>

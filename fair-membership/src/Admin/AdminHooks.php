@@ -64,15 +64,6 @@ class AdminHooks {
 			'fair-membership-matrix',
 			array( $this, 'membership_matrix_page' )
 		);
-
-		add_submenu_page(
-			'fair-membership',
-			__( 'Import Users', 'fair-membership' ),
-			__( 'Import Users', 'fair-membership' ),
-			'manage_options',
-			'fair-membership-import-users',
-			array( $this, 'import_users_page' )
-		);
 	}
 
 	/**
@@ -106,16 +97,6 @@ class AdminHooks {
 	}
 
 	/**
-	 * Display import users page
-	 *
-	 * @return void
-	 */
-	public function import_users_page() {
-		$import_page = new ImportUsersPage();
-		$import_page->render();
-	}
-
-	/**
 	 * Enqueue admin scripts
 	 *
 	 * @param string $hook Current admin page hook.
@@ -134,25 +115,6 @@ class AdminHooks {
 				wp_enqueue_script(
 					'fair-membership-matrix',
 					plugin_dir_url( dirname( __DIR__ ) ) . 'build/admin/users/index.js',
-					$asset_data['dependencies'],
-					$asset_data['version'],
-					true
-				);
-
-				wp_enqueue_style( 'wp-components' );
-			}
-		}
-
-		// Load scripts for Import Users page
-		if ( 'fair-membership_page_fair-membership-import-users' === $hook ) {
-			$asset_file = $plugin_dir . 'build/admin/import-users/index.asset.php';
-
-			if ( file_exists( $asset_file ) ) {
-				$asset_data = include $asset_file;
-
-				wp_enqueue_script(
-					'fair-membership-import-users',
-					plugin_dir_url( dirname( __DIR__ ) ) . 'build/admin/import-users/index.js',
 					$asset_data['dependencies'],
 					$asset_data['version'],
 					true

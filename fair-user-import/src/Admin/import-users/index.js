@@ -11,9 +11,7 @@ import ImportUsers from './ImportUsers.js';
 
 // Render the app when DOM is ready
 domReady(() => {
-	const rootElement = document.getElementById(
-		'fair-membership-import-users-root'
-	);
+	const rootElement = document.getElementById('fair-user-import-root');
 	if (rootElement) {
 		render(<ImportUsers />, rootElement);
 	}

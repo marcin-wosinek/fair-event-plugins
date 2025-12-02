@@ -9,10 +9,6 @@ module.exports = {
 			process.cwd(),
 			'src/Admin/users/index.js'
 		),
-		'admin/import-users/index': path.resolve(
-			process.cwd(),
-			'src/Admin/import-users/index.js'
-		),
 		'blocks/membership-switch/editor': path.resolve(
 			process.cwd(),
 			'src/blocks/membership-switch/editor.js'

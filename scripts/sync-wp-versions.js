@@ -66,6 +66,12 @@ const plugins = [
 		phpFiles: ['fair-rsvp/fair-rsvp.php'],
 		readmeFiles: ['fair-rsvp/readme.txt'],
 	},
+	{
+		name: 'fair-user-import',
+		packagePath: 'fair-user-import/package.json',
+		phpFiles: ['fair-user-import/fair-user-import.php'],
+		readmeFiles: ['fair-user-import/readme.txt'],
+	},
 ];
 
 /**

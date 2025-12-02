@@ -1,0 +1,503 @@
+# Copyright (C) 2025 Marcin Wosinek
+# This file is distributed under the GPLv3 or later.
+msgid ""
+msgstr ""
+"Project-Id-Version: Fair User Import 0.1.0\n"
+"Report-Msgid-Bugs-To: https://wordpress.org/support/plugin/fair-user-import\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language-Team: LANGUAGE <LL@li.org>\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"POT-Creation-Date: 2025-12-03T06:24:12+00:00\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"X-Generator: WP-CLI 2.12.0\n"
+"X-Domain: fair-user-import\n"
+
+#. Plugin Name of the plugin
+#: fair-user-import.php
+msgid "Fair User Import"
+msgstr ""
+
+#. Plugin URI of the plugin
+#: fair-user-import.php
+msgid "https://github.com/marcin-wosinek/fair-event-plugins"
+msgstr ""
+
+#. Description of the plugin
+#: fair-user-import.php
+msgid "Import users from CSV files with optional group assignment."
+msgstr ""
+
+#. Author of the plugin
+#: fair-user-import.php
+msgid "Marcin Wosinek"
+msgstr ""
+
+#. Author URI of the plugin
+#: fair-user-import.php
+msgid "https://github.com/marcin-wosinek"
+msgstr ""
+
+#: src/Admin/AdminHooks.php:33
+#: src/Admin/AdminHooks.php:34
+#: src/Admin/import-users/components/ConfirmStep.js:293
+#: src/Admin/import-users/ImportUsers.js:162
+msgid "Import Users"
+msgstr ""
+
+#: src/API/RestAPI.php:107
+msgid "No file uploaded."
+msgstr ""
+
+#: src/API/RestAPI.php:119
+msgid "Please upload a CSV file."
+msgstr ""
+
+#: src/API/RestAPI.php:129
+msgid "File size must be less than 10MB."
+msgstr ""
+
+#: src/API/RestAPI.php:145
+msgid "CSV file contains too many rows. Maximum is 500 rows."
+msgstr ""
+
+#: src/API/RestAPI.php:185
+msgid "Failed to read CSV file."
+msgstr ""
+
+#: src/API/RestAPI.php:194
+msgid "CSV file is empty."
+msgstr ""
+
+#: src/API/RestAPI.php:206
+msgid "CSV file has no headers."
+msgstr ""
+
+#: src/API/RestAPI.php:232
+msgid "CSV file contains no valid data rows."
+msgstr ""
+
+#: src/API/RestAPI.php:257
+msgid "Username is required"
+msgstr ""
+
+#: src/API/RestAPI.php:261
+msgid "Email is required"
+msgstr ""
+
+#: src/API/RestAPI.php:269
+msgid "Username contains invalid characters"
+msgstr ""
+
+#: src/API/RestAPI.php:275
+msgid "Username must be between 3 and 60 characters"
+msgstr ""
+
+#: src/API/RestAPI.php:288
+msgid "Invalid email format"
+msgstr ""
+
+#: src/API/RestAPI.php:302
+msgid "Invalid website URL"
+msgstr ""
+
+#: src/API/RestAPI.php:321
+msgid "Duplicate username in CSV"
+msgstr ""
+
+#: src/API/RestAPI.php:338
+msgid "Duplicate email in CSV"
+msgstr ""
+
+#: src/API/RestAPI.php:432
+msgid "User not found for update"
+msgstr ""
+
+#: src/Admin/import-users/components/ConfirmStep.js:52
+msgid "Are you sure you want to import these users? This action cannot be undone."
+msgstr ""
+
+#: src/Admin/import-users/components/ConfirmStep.js:85
+#: src/Admin/import-users/components/ConfirmStep.js:89
+msgid "Import failed"
+msgstr ""
+
+#: src/Admin/import-users/components/ConfirmStep.js:99
+msgid "Import Complete!"
+msgstr ""
+
+#: src/Admin/import-users/components/ConfirmStep.js:103
+msgid "Import Results"
+msgstr ""
+
+#: src/Admin/import-users/components/ConfirmStep.js:108
+msgid "Users Created"
+msgstr ""
+
+#: src/Admin/import-users/components/ConfirmStep.js:116
+msgid "Users Updated"
+msgstr ""
+
+#: src/Admin/import-users/components/ConfirmStep.js:124
+msgid "Users Skipped"
+msgstr ""
+
+#: src/Admin/import-users/components/ConfirmStep.js:134
+msgid "Errors"
+msgstr ""
+
+#: src/Admin/import-users/components/ConfirmStep.js:148
+msgid "Import Errors:"
+msgstr ""
+
+#: src/Admin/import-users/components/ConfirmStep.js:152
+#: src/Admin/import-users/components/PreviewStep.js:339
+msgid "Row"
+msgstr ""
+
+#: src/Admin/import-users/components/ConfirmStep.js:170
+msgid "View All Users"
+msgstr ""
+
+#: src/Admin/import-users/components/ConfirmStep.js:178
+msgid "Import More Users"
+msgstr ""
+
+#: src/Admin/import-users/components/ConfirmStep.js:188
+msgid "Review the import summary below. Click \"Import Users\" to proceed."
+msgstr ""
+
+#: src/Admin/import-users/components/ConfirmStep.js:201
+#: src/Admin/import-users/components/PreviewStep.js:352
+msgid "Import Summary"
+msgstr ""
+
+#: src/Admin/import-users/components/ConfirmStep.js:206
+msgid "Users to Create"
+msgstr ""
+
+#: src/Admin/import-users/components/ConfirmStep.js:212
+msgid "Users to Update"
+msgstr ""
+
+#: src/Admin/import-users/components/ConfirmStep.js:218
+msgid "Users to Skip"
+msgstr ""
+
+#: src/Admin/import-users/components/ConfirmStep.js:222
+msgid "Total Users"
+msgstr ""
+
+#: src/Admin/import-users/components/ConfirmStep.js:233
+msgid "Group Assignments"
+msgstr ""
+
+#: src/Admin/import-users/components/ConfirmStep.js:237
+msgid "No groups will be assigned to imported users."
+msgstr ""
+
+#: src/Admin/import-users/components/ConfirmStep.js:245
+msgid "The following groups will be assigned to all imported users:"
+msgstr ""
+
+#: src/Admin/import-users/components/ConfirmStep.js:264
+msgid "Important:"
+msgstr ""
+
+#: src/Admin/import-users/components/ConfirmStep.js:265
+msgid "This action will create/update users in your WordPress site. Make sure you have reviewed the data carefully."
+msgstr ""
+
+#: src/Admin/import-users/components/ConfirmStep.js:282
+msgid "← Back to Groups"
+msgstr ""
+
+#: src/Admin/import-users/components/ConfirmStep.js:283
+#: src/Admin/import-users/components/GroupsStep.js:172
+msgid "← Back to Preview"
+msgstr ""
+
+#: src/Admin/import-users/components/ConfirmStep.js:292
+msgid "Importing..."
+msgstr ""
+
+#: src/Admin/import-users/components/GroupsStep.js:60
+msgid "Loading groups..."
+msgstr ""
+
+#: src/Admin/import-users/components/GroupsStep.js:70
+msgid "Error loading groups: "
+msgstr ""
+
+#: src/Admin/import-users/components/GroupsStep.js:81
+msgid "Select which Fair Membership groups to assign to the imported users. You can skip this step if you don't want to assign any groups."
+msgstr ""
+
+#: src/Admin/import-users/components/GroupsStep.js:90
+msgid "No groups available. You can create groups in the Groups page."
+msgstr ""
+
+#: src/Admin/import-users/components/GroupsStep.js:105
+msgid "Select All"
+msgstr ""
+
+#: src/Admin/import-users/components/GroupsStep.js:114
+msgid "Deselect All"
+msgstr ""
+
+#: src/Admin/import-users/components/GroupsStep.js:142
+msgid "Selected groups:"
+msgstr ""
+
+#: src/Admin/import-users/components/GroupsStep.js:155
+msgid "None (users will be created without group assignments)"
+msgstr ""
+
+#: src/Admin/import-users/components/GroupsStep.js:179
+msgid "Continue to Confirmation"
+msgstr ""
+
+#: src/Admin/import-users/components/MappingStep.js:104
+msgid "— Skip this column —"
+msgstr ""
+
+#: src/Admin/import-users/components/MappingStep.js:107
+msgid "Username (required)"
+msgstr ""
+
+#: src/Admin/import-users/components/MappingStep.js:111
+msgid "Email (required)"
+msgstr ""
+
+#: src/Admin/import-users/components/MappingStep.js:115
+#: src/Admin/import-users/components/PreviewStep.js:156
+msgid "Display Name"
+msgstr ""
+
+#: src/Admin/import-users/components/MappingStep.js:117
+#: src/Admin/import-users/components/PreviewStep.js:157
+msgid "First Name"
+msgstr ""
+
+#: src/Admin/import-users/components/MappingStep.js:118
+#: src/Admin/import-users/components/PreviewStep.js:158
+msgid "Last Name"
+msgstr ""
+
+#: src/Admin/import-users/components/MappingStep.js:119
+msgid "Website URL"
+msgstr ""
+
+#: src/Admin/import-users/components/MappingStep.js:120
+msgid "Biography"
+msgstr ""
+
+#: src/Admin/import-users/components/MappingStep.js:154
+msgid "Username field is required. Please map a column to Username."
+msgstr ""
+
+#: src/Admin/import-users/components/MappingStep.js:165
+msgid "Email field is required. Please map a column to Email."
+msgstr ""
+
+#: src/Admin/import-users/components/MappingStep.js:179
+msgid "Each field can only be mapped once. Please check for duplicate mappings."
+msgstr ""
+
+#: src/Admin/import-users/components/MappingStep.js:207
+msgid "Map CSV columns to WordPress user fields. Required fields are Username and Email."
+msgstr ""
+
+#: src/Admin/import-users/components/MappingStep.js:227
+msgid "CSV Column"
+msgstr ""
+
+#: src/Admin/import-users/components/MappingStep.js:230
+msgid "Sample Data"
+msgstr ""
+
+#: src/Admin/import-users/components/MappingStep.js:233
+msgid "Maps to WordPress Field"
+msgstr ""
+
+#: src/Admin/import-users/components/MappingStep.js:273
+msgid "Mapping Summary"
+msgstr ""
+
+#: src/Admin/import-users/components/MappingStep.js:277
+msgid "Total columns:"
+msgstr ""
+
+#: src/Admin/import-users/components/MappingStep.js:282
+msgid "Mapped:"
+msgstr ""
+
+#: src/Admin/import-users/components/MappingStep.js:290
+msgid "Skipped:"
+msgstr ""
+
+#: src/Admin/import-users/components/MappingStep.js:307
+msgid "← Back"
+msgstr ""
+
+#: src/Admin/import-users/components/MappingStep.js:314
+msgid "Continue to Preview"
+msgstr ""
+
+#: src/Admin/import-users/components/PreviewStep.js:132
+msgid "Please select at least one user to import."
+msgstr ""
+
+#: src/Admin/import-users/components/PreviewStep.js:154
+msgid "Username"
+msgstr ""
+
+#: src/Admin/import-users/components/PreviewStep.js:155
+msgid "Email"
+msgstr ""
+
+#: src/Admin/import-users/components/PreviewStep.js:159
+msgid "Website"
+msgstr ""
+
+#: src/Admin/import-users/components/PreviewStep.js:160
+msgid "Bio"
+msgstr ""
+
+#: src/Admin/import-users/components/PreviewStep.js:171
+msgid "Create"
+msgstr ""
+
+#: src/Admin/import-users/components/PreviewStep.js:176
+msgid "Update"
+msgstr ""
+
+#: src/Admin/import-users/components/PreviewStep.js:179
+msgid "Skip"
+msgstr ""
+
+#: src/Admin/import-users/components/PreviewStep.js:186
+msgid "Review and edit user data. Choose an action for each user: Create (new user), Update (existing user), or Skip."
+msgstr ""
+
+#: src/Admin/import-users/components/PreviewStep.js:194
+msgid "Validating users..."
+msgstr ""
+
+#: src/Admin/import-users/components/PreviewStep.js:205
+msgid "Show only rows with errors"
+msgstr ""
+
+#: src/Admin/import-users/components/PreviewStep.js:208
+msgid "Showing:"
+msgstr ""
+
+#: src/Admin/import-users/components/PreviewStep.js:210
+msgid "users"
+msgstr ""
+
+#: src/Admin/import-users/components/PreviewStep.js:219
+msgid "#"
+msgstr ""
+
+#: src/Admin/import-users/components/PreviewStep.js:225
+msgid "Action"
+msgstr ""
+
+#: src/Admin/import-users/components/PreviewStep.js:282
+msgid "Double-click to edit"
+msgstr ""
+
+#: src/Admin/import-users/components/PreviewStep.js:332
+msgid "Validation Issues:"
+msgstr ""
+
+#: src/Admin/import-users/components/PreviewStep.js:355
+msgid "To Create:"
+msgstr ""
+
+#: src/Admin/import-users/components/PreviewStep.js:363
+msgid "To Update:"
+msgstr ""
+
+#: src/Admin/import-users/components/PreviewStep.js:371
+msgid "To Skip:"
+msgstr ""
+
+#: src/Admin/import-users/components/PreviewStep.js:388
+msgid "← Back to Mapping"
+msgstr ""
+
+#: src/Admin/import-users/components/PreviewStep.js:396
+msgid "Continue to Groups"
+msgstr ""
+
+#: src/Admin/import-users/components/UploadStep.js:28
+msgid "Please upload a CSV file (.csv)"
+msgstr ""
+
+#: src/Admin/import-users/components/UploadStep.js:34
+msgid "File size must be less than 10MB"
+msgstr ""
+
+#: src/Admin/import-users/components/UploadStep.js:105
+#: src/Admin/import-users/components/UploadStep.js:110
+msgid "Failed to upload file"
+msgstr ""
+
+#: src/Admin/import-users/components/UploadStep.js:126
+msgid "Upload a CSV file containing user data. The file should have column headers in the first row."
+msgstr ""
+
+#: src/Admin/import-users/components/UploadStep.js:143
+msgid "Drag and drop a CSV file here, or click to select"
+msgstr ""
+
+#: src/Admin/import-users/components/UploadStep.js:170
+msgid "Selected file:"
+msgstr ""
+
+#: src/Admin/import-users/components/UploadStep.js:185
+msgid "Preview (first 5 rows)"
+msgstr ""
+
+#: src/Admin/import-users/components/UploadStep.js:205
+msgid "Total rows:"
+msgstr ""
+
+#: src/Admin/import-users/components/UploadStep.js:219
+msgid "Uploading..."
+msgstr ""
+
+#: src/Admin/import-users/components/UploadStep.js:220
+msgid "Upload & Parse CSV"
+msgstr ""
+
+#: src/Admin/import-users/components/UploadStep.js:228
+msgid "Continue to Field Mapping"
+msgstr ""
+
+#: src/Admin/import-users/ImportUsers.js:170
+msgid "Upload CSV"
+msgstr ""
+
+#: src/Admin/import-users/ImportUsers.js:177
+msgid "Map Fields"
+msgstr ""
+
+#: src/Admin/import-users/ImportUsers.js:184
+msgid "Preview & Edit"
+msgstr ""
+
+#: src/Admin/import-users/ImportUsers.js:192
+msgid "Assign Groups"
+msgstr ""
+
+#: src/Admin/import-users/ImportUsers.js:200
+msgid "Confirm Import"
+msgstr ""
+
+#: src/Admin/import-users/ImportUsers.js:256
+msgid "Reset & Start Over"
+msgstr ""

@@ -19,6 +19,7 @@ services:
             - ./fair-membership:/var/www/html/wp-content/plugins/fair-membership
             - ./fair-events:/var/www/html/wp-content/plugins/fair-events
             - ./fair-rsvp:/var/www/html/wp-content/plugins/fair-rsvp
+            - ./fair-user-import:/var/www/html/wp-content/plugins/fair-user-import
 
     db:
         image: mysql:8.0

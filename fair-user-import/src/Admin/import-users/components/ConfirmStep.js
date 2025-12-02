@@ -22,6 +22,7 @@ export default function ConfirmStep({
 	userActions,
 	selectedGroups,
 	groups,
+	hasFairMembership,
 	onComplete,
 	onBack,
 }) {
@@ -50,7 +51,7 @@ export default function ConfirmStep({
 			!window.confirm(
 				__(
 					'Are you sure you want to import these users? This action cannot be undone.',
-					'fair-membership'
+					'fair-user-import'
 				)
 			)
 		) {
@@ -68,7 +69,7 @@ export default function ConfirmStep({
 			}));
 
 			const response = await apiFetch({
-				path: '/fair-membership/v1/import-users/execute',
+				path: '/fair-user-import/v1/import-users/execute',
 				method: 'POST',
 				data: {
 					users: usersToImport,
@@ -81,11 +82,11 @@ export default function ConfirmStep({
 				onComplete(response.data.results);
 			} else {
 				setError(
-					response.message || __('Import failed', 'fair-membership')
+					response.message || __('Import failed', 'fair-user-import')
 				);
 			}
 		} catch (err) {
-			setError(err.message || __('Import failed', 'fair-membership'));
+			setError(err.message || __('Import failed', 'fair-user-import'));
 		} finally {
 			setIsImporting(false);
 		}
@@ -95,16 +96,16 @@ export default function ConfirmStep({
 		return (
 			<div className="fair-membership-confirm-step">
 				<div className="notice notice-success">
-					<h2>{__('Import Complete!', 'fair-membership')}</h2>
+					<h2>{__('Import Complete!', 'fair-user-import')}</h2>
 				</div>
 
 				<div className="fair-membership-import-results">
-					<h3>{__('Import Results', 'fair-membership')}</h3>
+					<h3>{__('Import Results', 'fair-user-import')}</h3>
 					<table className="wp-list-table widefat fixed striped">
 						<tbody>
 							<tr>
 								<th>
-									{__('Users Created', 'fair-membership')}
+									{__('Users Created', 'fair-user-import')}
 								</th>
 								<td>
 									<strong>{importResult.created}</strong>
@@ -112,7 +113,7 @@ export default function ConfirmStep({
 							</tr>
 							<tr>
 								<th>
-									{__('Users Updated', 'fair-membership')}
+									{__('Users Updated', 'fair-user-import')}
 								</th>
 								<td>
 									<strong>{importResult.updated}</strong>
@@ -120,7 +121,7 @@ export default function ConfirmStep({
 							</tr>
 							<tr>
 								<th>
-									{__('Users Skipped', 'fair-membership')}
+									{__('Users Skipped', 'fair-user-import')}
 								</th>
 								<td>
 									<strong>{importResult.skipped}</strong>
@@ -130,7 +131,7 @@ export default function ConfirmStep({
 								importResult.errors.length > 0 && (
 									<tr>
 										<th>
-											{__('Errors', 'fair-membership')}
+											{__('Errors', 'fair-user-import')}
 										</th>
 										<td>
 											<strong className="error-text">
@@ -144,11 +145,11 @@ export default function ConfirmStep({
 
 					{importResult.errors && importResult.errors.length > 0 && (
 						<div className="notice notice-warning">
-							<h4>{__('Import Errors:', 'fair-membership')}</h4>
+							<h4>{__('Import Errors:', 'fair-user-import')}</h4>
 							<ul>
 								{importResult.errors.map((error, idx) => (
 									<li key={idx}>
-										{__('Row', 'fair-membership')}{' '}
+										{__('Row', 'fair-user-import')}{' '}
 										{error.row}: {error.message}
 									</li>
 								))}
@@ -159,10 +160,14 @@ export default function ConfirmStep({
 
 				<div className="fair-membership-confirm-actions">
 					<a
-						href="admin.php?page=fair-membership-matrix"
+						href={
+							hasFairMembership
+								? 'admin.php?page=fair-membership-matrix'
+								: 'users.php'
+						}
 						className="button button-primary"
 					>
-						{__('View All Users', 'fair-membership')}
+						{__('View All Users', 'fair-user-import')}
 					</a>
 					<button
 						type="button"
@@ -170,7 +175,7 @@ export default function ConfirmStep({
 						onClick={() => window.location.reload()}
 						style={{ marginLeft: '10px' }}
 					>
-						{__('Import More Users', 'fair-membership')}
+						{__('Import More Users', 'fair-user-import')}
 					</button>
 				</div>
 			</div>
@@ -182,7 +187,7 @@ export default function ConfirmStep({
 			<p>
 				{__(
 					'Review the import summary below. Click "Import Users" to proceed.',
-					'fair-membership'
+					'fair-user-import'
 				)}
 			</p>
 
@@ -193,28 +198,28 @@ export default function ConfirmStep({
 			)}
 
 			<div className="fair-membership-import-summary">
-				<h3>{__('Import Summary', 'fair-membership')}</h3>
+				<h3>{__('Import Summary', 'fair-user-import')}</h3>
 
 				<table className="wp-list-table widefat fixed striped">
 					<tbody>
 						<tr>
-							<th>{__('Users to Create', 'fair-membership')}</th>
+							<th>{__('Users to Create', 'fair-user-import')}</th>
 							<td>
 								<strong>{toCreate}</strong>
 							</td>
 						</tr>
 						<tr>
-							<th>{__('Users to Update', 'fair-membership')}</th>
+							<th>{__('Users to Update', 'fair-user-import')}</th>
 							<td>
 								<strong>{toUpdate}</strong>
 							</td>
 						</tr>
 						<tr>
-							<th>{__('Users to Skip', 'fair-membership')}</th>
+							<th>{__('Users to Skip', 'fair-user-import')}</th>
 							<td>{toSkip}</td>
 						</tr>
 						<tr>
-							<th>{__('Total Users', 'fair-membership')}</th>
+							<th>{__('Total Users', 'fair-user-import')}</th>
 							<td>
 								<strong>{userData.length}</strong>
 							</td>
@@ -222,29 +227,33 @@ export default function ConfirmStep({
 					</tbody>
 				</table>
 
-				<h3 style={{ marginTop: '30px' }}>
-					{__('Group Assignments', 'fair-membership')}
-				</h3>
-				{selectedGroups.length === 0 ? (
-					<p>
-						{__(
-							'No groups will be assigned to imported users.',
-							'fair-membership'
-						)}
-					</p>
-				) : (
+				{hasFairMembership && (
 					<>
-						<p>
-							{__(
-								'The following groups will be assigned to all imported users:',
-								'fair-membership'
-							)}
-						</p>
-						<ul className="group-list">
-							{selectedGroupNames.map((name, idx) => (
-								<li key={idx}>{name}</li>
-							))}
-						</ul>
+						<h3 style={{ marginTop: '30px' }}>
+							{__('Group Assignments', 'fair-user-import')}
+						</h3>
+						{selectedGroups.length === 0 ? (
+							<p>
+								{__(
+									'No groups will be assigned to imported users.',
+									'fair-user-import'
+								)}
+							</p>
+						) : (
+							<>
+								<p>
+									{__(
+										'The following groups will be assigned to all imported users:',
+										'fair-user-import'
+									)}
+								</p>
+								<ul className="group-list">
+									{selectedGroupNames.map((name, idx) => (
+										<li key={idx}>{name}</li>
+									))}
+								</ul>
+							</>
+						)}
 					</>
 				)}
 			</div>
@@ -252,10 +261,10 @@ export default function ConfirmStep({
 			{(toCreate > 0 || toUpdate > 0) && (
 				<div className="notice notice-info">
 					<p>
-						<strong>{__('Important:', 'fair-membership')}</strong>{' '}
+						<strong>{__('Important:', 'fair-user-import')}</strong>{' '}
 						{__(
 							'This action will create/update users in your WordPress site. Make sure you have reviewed the data carefully.',
-							'fair-membership'
+							'fair-user-import'
 						)}
 					</p>
 				</div>
@@ -269,7 +278,9 @@ export default function ConfirmStep({
 					disabled={isImporting}
 					style={{ marginRight: '10px' }}
 				>
-					{__('← Back to Groups', 'fair-membership')}
+					{hasFairMembership
+						? __('← Back to Groups', 'fair-user-import')
+						: __('← Back to Preview', 'fair-user-import')}
 				</button>
 				<button
 					type="button"
@@ -278,8 +289,8 @@ export default function ConfirmStep({
 					disabled={isImporting || (toCreate === 0 && toUpdate === 0)}
 				>
 					{isImporting
-						? __('Importing...', 'fair-membership')
-						: __('Import Users', 'fair-membership')}
+						? __('Importing...', 'fair-user-import')
+						: __('Import Users', 'fair-user-import')}
 				</button>
 			</div>
 
