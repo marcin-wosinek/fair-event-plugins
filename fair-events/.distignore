@@ -9,6 +9,7 @@ vendor/composer/installers
 babel.config.cjs
 jest.config.cjs
 phpunit.xml
+test-results
 scripts
 .DS_Store
 .distignore

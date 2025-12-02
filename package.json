@@ -43,7 +43,7 @@
 		"svn:tag:fair-rsvp": "node scripts/svn-tag.cjs fair-rsvp",
 		"svn:tag:fair-schedule-blocks": "node scripts/svn-tag.cjs fair-schedule-blocks",
 		"svn:tag:fair-timetable": "node scripts/svn-tag.cjs fair-timetable",
-		"svn:rm": "rm -fr fair-calendar-button/svn fair-membership/svn fair-timetable/svn fair-payment/svn fair-schedule-blocks/svn",
+		"svn:rm": "rm -fr fair-calendar-button/svn fair-events/svn fair-membership/svn fair-timetable/svn fair-payment/svn fair-schedule-blocks/svn",
 		"release": "changeset tag",
 		"dist-archive": "npm-run-all dist-archive:*",
 		"dist-archive:fair-calendar-button": "wp dist-archive fair-calendar-button dist --create-target-dir",
