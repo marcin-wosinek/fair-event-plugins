@@ -30,6 +30,12 @@ Perfect for event organizers, conference planners, and anyone managing time-sens
 2. Activate the plugin through the 'Plugins' screen in WordPress
 3. Add blocks through the Gutenberg block editor in the "Widgets" category
 
+== Development ==
+
+* GitHub Repository: https://github.com/marcin-wosinek/fair-event-plugins
+* Report Issues: https://github.com/marcin-wosinek/fair-event-plugins/issues
+* Contribute: https://github.com/marcin-wosinek/fair-event-plugins/pulls
+
 == Frequently Asked Questions ==
 
 = What blocks are included? =

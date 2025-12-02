@@ -29,6 +29,12 @@ Perfect for event organizers managing attendee sign-ups.
 2. Activate the plugin through the 'Plugins' screen in WordPress
 3. Navigate to the Fair RSVP menu in WordPress admin to manage RSVPs
 
+== Development ==
+
+* GitHub Repository: https://github.com/marcin-wosinek/fair-event-plugins
+* Report Issues: https://github.com/marcin-wosinek/fair-event-plugins/issues
+* Contribute: https://github.com/marcin-wosinek/fair-event-plugins/pulls
+
 == Frequently Asked Questions ==
 
 = Can guests (non-logged-in users) RSVP? =

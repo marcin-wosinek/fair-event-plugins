@@ -50,6 +50,12 @@ The plugin uses server-side rendering for better performance and SEO, while prov
 4. Add the block to your post or page and configure your event details.
 5. Customize the button text and styling using WordPress core button block options.
 
+== Development ==
+
+* GitHub Repository: https://github.com/marcin-wosinek/fair-event-plugins
+* Report Issues: https://github.com/marcin-wosinek/fair-event-plugins/issues
+* Contribute: https://github.com/marcin-wosinek/fair-event-plugins/pulls
+
 == Frequently Asked Questions ==
 
 = What calendar applications are supported? =

@@ -57,6 +57,12 @@ The plugin integrates seamlessly with WordPress's native features, using the blo
 4. Fill in the event details including start time, end time, and content.
 5. Publish your event and it will appear on your site.
 
+== Development ==
+
+* GitHub Repository: https://github.com/marcin-wosinek/fair-event-plugins
+* Report Issues: https://github.com/marcin-wosinek/fair-event-plugins/issues
+* Contribute: https://github.com/marcin-wosinek/fair-event-plugins/pulls
+
 == Frequently Asked Questions ==
 
 = How do I create an event? =

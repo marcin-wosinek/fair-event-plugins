@@ -48,9 +48,16 @@ The plugin uses advanced CSS container queries for responsive design and WordPre
 2. Activate the plugin through the 'Plugins' screen in WordPress.
 3. In the Gutenberg editor, find the "Timetable" block in the design category.
 4. Add the timetable container block to your post or page.
+
 5. Add timetable columns within the container.
 6. Add time slots within each column and configure your events.
 7. Set global time settings (start time, end time, hour height) in the timetable container.
+
+== Development ==
+
+* GitHub Repository: https://github.com/marcin-wosinek/fair-event-plugins
+* Report Issues: https://github.com/marcin-wosinek/fair-event-plugins/issues
+* Contribute: https://github.com/marcin-wosinek/fair-event-plugins/pulls
 
 == Frequently Asked Questions ==
 
