@@ -973,6 +973,7 @@
 		"fair-rsvp"
 	],
 	"devDependencies": {
-		"@changesets/cli": "^2.29.6"
+		"@changesets/cli": "^2.29.6",
+		"baseline-browser-mapping": "^2.8.32"
 	}
 }
