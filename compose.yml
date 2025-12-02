@@ -184,6 +184,45 @@ services:
         volumes:
             - db-wp67:/var/lib/mysql
 
+    wordpress-wp69:
+        image: wordpress:6.9-php8.3
+        platform: linux/amd64
+        restart: always
+        profiles: ['wp69']
+        ports:
+            - 8086:80
+        environment:
+            WORDPRESS_DB_HOST: db-wp69
+            WORDPRESS_DB_USER: exampleuser
+            WORDPRESS_DB_PASSWORD: examplepass
+            WORDPRESS_DB_NAME: exampledb
+        volumes:
+            - wordpress-wp69:/var/www/html
+            - ./fair-calendar-button:/var/www/html/wp-content/plugins/fair-calendar-button
+            - ./fair-payment:/var/www/html/wp-content/plugins/fair-payment
+            - ./fair-registration:/var/www/html/wp-content/plugins/fair-registration
+            - ./fair-schedule-blocks:/var/www/html/wp-content/plugins/fair-schedule-blocks
+            - ./fair-timetable:/var/www/html/wp-content/plugins/fair-timetable
+            - ./fair-membership:/var/www/html/wp-content/plugins/fair-membership
+            - ./fair-events:/var/www/html/wp-content/plugins/fair-events
+            - ./fair-rsvp:/var/www/html/wp-content/plugins/fair-rsvp
+        depends_on:
+            - db-wp69
+
+    db-wp69:
+        image: mysql:8.0
+        restart: always
+        profiles: ['wp69']
+        ports:
+            - 3310:3306
+        environment:
+            MYSQL_DATABASE: exampledb
+            MYSQL_USER: exampleuser
+            MYSQL_PASSWORD: examplepass
+            MYSQL_RANDOM_ROOT_PASSWORD: '1'
+        volumes:
+            - db-wp69:/var/lib/mysql
+
 volumes:
     wordpress:
     db:
@@ -193,3 +232,5 @@ volumes:
     db-wp63:
     wordpress-wp67:
     db-wp67:
+    wordpress-wp69:
+    db-wp69:
