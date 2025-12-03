@@ -236,13 +236,14 @@ class InvitationRepository {
 		$where_sql = ! empty( $where_clauses ) ? 'WHERE ' . implode( ' AND ', $where_clauses ) : '';
 
 		// Build full query.
-		$sql = "SELECT * FROM %i {$where_sql} ORDER BY created_at DESC LIMIT %d OFFSET %d";
+		$sql = 'SELECT * FROM %i ' . $where_sql . ' ORDER BY created_at DESC LIMIT %d OFFSET %d';
 
 		// Prepare values array.
 		$prepare_values = array_merge( array( $table_name ), $where_values, array( $limit, $offset ) );
-		$prepared_sql   = $wpdb->prepare( $sql, ...$prepare_values );
+		// phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared
+		$prepared_sql = $wpdb->prepare( $sql, ...$prepare_values );
 
-		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching,WordPress.DB.PreparedSQL.NotPrepared
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching,WordPress.DB.PreparedSQL.NotPrepared,PluginCheck.Security.DirectDB.UnescapedDBParameter
 		$invitations = $wpdb->get_results( $prepared_sql, ARRAY_A );
 
 		// Enrich with user and event data.
@@ -312,13 +313,14 @@ class InvitationRepository {
 		$where_sql = ! empty( $where_clauses ) ? 'WHERE ' . implode( ' AND ', $where_clauses ) : '';
 
 		// Build query.
-		$sql = "SELECT COUNT(*) FROM %i {$where_sql}";
+		$sql = 'SELECT COUNT(*) FROM %i ' . $where_sql;
 
 		// Prepare values.
 		$prepare_values = array_merge( array( $table_name ), $where_values );
-		$prepared_sql   = $wpdb->prepare( $sql, ...$prepare_values );
+		// phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared
+		$prepared_sql = $wpdb->prepare( $sql, ...$prepare_values );
 
-		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching,WordPress.DB.PreparedSQL.NotPrepared
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching,WordPress.DB.PreparedSQL.NotPrepared,PluginCheck.Security.DirectDB.UnescapedDBParameter
 		return (int) $wpdb->get_var( $prepared_sql );
 	}
 }
