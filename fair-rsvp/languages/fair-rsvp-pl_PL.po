@@ -52,7 +52,7 @@ msgstr "Zaloguj się"
 #: src/blocks/rsvp-button/render.php:152
 #: src/blocks/rsvp-button/render.php:215
 #: src/blocks/rsvp-button/render.php:251
-#: src/Admin/attendance-check/AttendanceCheck.js:294
+#: src/Admin/attendance-check/AttendanceCheck.js:284
 #: src/Admin/attendance/AttendanceConfirmation.js:403
 #: src/blocks/participants-list/editor.js:66
 #: src/blocks/participants-list/editor.js:120
@@ -65,7 +65,7 @@ msgstr "Tak"
 #: src/blocks/rsvp-button/render.php:161
 #: src/blocks/rsvp-button/render.php:225
 #: src/blocks/rsvp-button/render.php:253
-#: src/Admin/attendance-check/AttendanceCheck.js:296
+#: src/Admin/attendance-check/AttendanceCheck.js:286
 #: src/Admin/attendance/AttendanceConfirmation.js:402
 #: src/blocks/participants-list/editor.js:68
 #: src/blocks/participants-list/editor.js:122
@@ -117,64 +117,64 @@ msgid "Order direction."
 msgstr "Kierunek sortowania."
 
 #: src/REST/RsvpController.php:296
-#: src/REST/RsvpController.php:654
+#: src/REST/RsvpController.php:553
 msgid "The specified event does not exist or is not published."
 msgstr "Określone wydarzenie nie istnieje lub nie zostało opublikowane."
 
-#: src/REST/RsvpController.php:328
+#: src/REST/RsvpController.php:334
 msgid "Failed to create or update RSVP."
 msgstr "Nie udało się utworzyć lub zaktualizować potwierdzenia."
 
-#: src/REST/RsvpController.php:339
-#: src/REST/RsvpController.php:690
+#: src/REST/RsvpController.php:345
+#: src/REST/RsvpController.php:593
 msgid "RSVP was created but could not be retrieved."
 msgstr "Potwierdzenie zostało utworzone, ale nie można go pobrać."
 
-#: src/REST/RsvpController.php:472
+#: src/REST/RsvpController.php:371
 msgid "RSVP not found for this event."
 msgstr "Nie znaleziono potwierdzenia dla tego wydarzenia."
 
-#: src/REST/RsvpController.php:495
+#: src/REST/RsvpController.php:394
 msgid "RSVP not found."
 msgstr "Nie znaleziono potwierdzenia."
 
-#: src/REST/RsvpController.php:506
+#: src/REST/RsvpController.php:405
 msgid "Failed to update attendance status."
 msgstr "Nie udało się zaktualizować statusu obecności."
 
-#: src/REST/RsvpController.php:741
+#: src/REST/RsvpController.php:644
 msgid "You must be logged in to RSVP."
 msgstr "Musisz być zalogowany, aby potwierdzić obecność."
 
-#: src/REST/RsvpController.php:799
+#: src/REST/RsvpController.php:702
 msgid "You must be logged in to view RSVPs."
 msgstr "Musisz być zalogowany, aby wyświetlić potwierdzenia."
 
-#: src/REST/RsvpController.php:899
+#: src/REST/RsvpController.php:812
 msgid "Event/post ID to RSVP for."
 msgstr "ID wydarzenia/wpisu, dla którego potwierdzić obecność."
 
-#: src/REST/RsvpController.php:904
+#: src/REST/RsvpController.php:817
 msgid "RSVP status."
 msgstr "Status potwierdzenia."
 
-#: src/REST/RsvpController.php:929
+#: src/REST/RsvpController.php:842
 msgid "Event ID to get RSVPs for."
 msgstr "ID wydarzenia, dla którego pobrać potwierdzenia."
 
-#: src/REST/RsvpController.php:934
+#: src/REST/RsvpController.php:847
 msgid "Filter by RSVP status."
 msgstr "Filtruj według statusu potwierdzenia."
 
-#: src/REST/RsvpController.php:939
+#: src/REST/RsvpController.php:852
 msgid "Filter by attendance status."
 msgstr "Filtruj według statusu obecności."
 
-#: src/REST/RsvpController.php:944
+#: src/REST/RsvpController.php:857
 msgid "Current page of the collection."
 msgstr "Bieżąca strona kolekcji."
 
-#: src/REST/RsvpController.php:950
+#: src/REST/RsvpController.php:863
 msgid "Maximum number of items to return per page."
 msgstr "Maksymalna liczba elementów do zwrócenia na stronę."
 
@@ -361,8 +361,8 @@ msgstr "Nie określono ID wydarzenia."
 
 #: src/Admin/AttendanceConfirmationPage.php:46
 #: src/REST/InvitationController.php:341
-#: src/REST/InvitationController.php:667
-#: src/REST/RsvpController.php:718
+#: src/REST/InvitationController.php:582
+#: src/REST/RsvpController.php:621
 msgid "Event not found."
 msgstr "Wydarzenie nie znalezione."
 
@@ -388,21 +388,17 @@ msgstr "Imię i nazwisko uczestnika."
 msgid "Attendee email (optional)."
 msgstr "Email uczestnika (opcjonalny)."
 
-#: src/REST/RsvpController.php:618
+#: src/REST/RsvpController.php:517
 msgid "Updates must be a non-empty array."
 msgstr "Aktualizacje muszą być niepustą tablicą."
 
 #. translators: %d: number of successful updates
-#: src/REST/RsvpController.php:631
+#: src/REST/RsvpController.php:530
 #, php-format
 msgid "Successfully updated %d attendance records."
 msgstr "Pomyślnie zaktualizowano %d rekordów obecności."
 
-#: src/REST/RsvpController.php:665
-msgid "Failed to create or find user for walk-in attendee."
-msgstr "Nie udało się utworzyć lub znaleźć użytkownika dla uczestnika bez rezerwacji."
-
-#: src/REST/RsvpController.php:676
+#: src/REST/RsvpController.php:579
 msgid "Failed to create RSVP for walk-in attendee."
 msgstr "Nie udało się utworzyć RSVP dla uczestnika bez rezerwacji."
 
@@ -626,7 +622,7 @@ msgstr "To wydarzenie jest tylko na zaproszenie."
 msgid "You're invited to this event!"
 msgstr "Jesteś zaproszony na to wydarzenie!"
 
-#: src/REST/RsvpController.php:781
+#: src/REST/RsvpController.php:684
 msgid "You are not allowed to RSVP to this event."
 msgstr "Nie masz uprawnień do potwierdzenia uczestnictwa w tym wydarzeniu."
 
@@ -747,7 +743,7 @@ msgid "Post not found."
 msgstr "Wpis nie został znaleziony."
 
 #: src/Frontend/AttendanceCheckHooks.php:95
-#: src/REST/RsvpController.php:1004
+#: src/REST/RsvpController.php:917
 msgid "This post does not have an RSVP block."
 msgstr "Ten wpis nie ma bloku RSVP."
 
@@ -767,11 +763,11 @@ msgstr "Ładowanie listy obecności..."
 msgid "Event ID to get attendance check for."
 msgstr "ID wydarzenia do sprawdzenia obecności."
 
-#: src/REST/RsvpController.php:995
+#: src/REST/RsvpController.php:908
 msgid "The specified post does not exist."
 msgstr "Określony wpis nie istnieje."
 
-#: src/REST/RsvpController.php:1152
+#: src/REST/RsvpController.php:1065
 msgid "You do not have permission to view this attendance check."
 msgstr "Nie masz uprawnień do wyświetlenia tej listy obecności."
 
@@ -791,7 +787,7 @@ msgstr "Ładowanie danych obecności..."
 msgid "Attendance Check"
 msgstr "Sprawdzanie Obecności"
 
-#: src/Admin/attendance-check/AttendanceCheck.js:298
+#: src/Admin/attendance-check/AttendanceCheck.js:288
 msgid "Expected"
 msgstr "Oczekiwani"
 
@@ -852,51 +848,23 @@ msgstr "Wprowadź swój email"
 msgid "Submit RSVP"
 msgstr "Wyślij Potwierdzenie"
 
-#: src/REST/RsvpController.php:317
+#: src/REST/RsvpController.php:326
 msgid "Unable to determine user for RSVP."
 msgstr "Nie można określić użytkownika do potwierdzenia."
 
-#: src/REST/InvitationController.php:535
-#: src/REST/RsvpController.php:389
-msgid "Failed to create user account."
-msgstr "Nie udało się utworzyć konta użytkownika."
-
-#. translators: %s: Site name
-#: src/REST/InvitationController.php:573
-#: src/REST/RsvpController.php:430
-#, php-format
-msgid "Welcome to %s"
-msgstr "Witamy w %s"
-
-#: src/REST/RsvpController.php:434
-#, php-format
-msgid ""
-"Hi %1$s,\n"
-"\n"
-"Thank you for your RSVP! An account has been created for you on %2$s.\n"
-"\n"
-"To set your password and access your account, please visit:\n"
-"%3$s\n"
-"\n"
-"If you did not make this RSVP, you can safely ignore this email.\n"
-"\n"
-"Best regards,\n"
-"The %2$s Team"
-msgstr ""
-
-#: src/REST/RsvpController.php:753
+#: src/REST/RsvpController.php:656
 msgid "Name and email are required for anonymous RSVP."
 msgstr "Imię i email są wymagane dla anonimowego potwierdzenia."
 
-#: src/REST/RsvpController.php:762
+#: src/REST/RsvpController.php:665
 msgid "Please provide a valid email address."
 msgstr "Proszę podać prawidłowy adres email."
 
-#: src/REST/RsvpController.php:910
+#: src/REST/RsvpController.php:823
 msgid "Name for anonymous RSVP (optional, required if not logged in)."
 msgstr "Imię dla anonimowego potwierdzenia (opcjonalne, wymagane jeśli nie jesteś zalogowany)."
 
-#: src/REST/RsvpController.php:914
+#: src/REST/RsvpController.php:827
 msgid "Email for anonymous RSVP (optional, required if not logged in)."
 msgstr "Email dla anonimowego potwierdzenia (opcjonalne, wymagane jeśli nie jesteś zalogowany)."
 
@@ -907,10 +875,6 @@ msgstr "Proszę wprowadzić swoje imię."
 #: src/blocks/rsvp-button/frontend.js:96
 msgid "Please enter your email."
 msgstr "Proszę wprowadzić swój email."
-
-#: src/blocks/rsvp-button/frontend.js:142
-msgid "Your RSVP has been submitted successfully! A welcome email with login instructions has been sent to your email address."
-msgstr "Twoje potwierdzenie zostało pomyślnie wysłane! Email powitalny z instrukcjami logowania został wysłany na Twój adres email."
 
 #: src/blocks/rsvp-button/frontend.js:184
 msgid "RSVP submitted successfully!"
@@ -944,14 +908,6 @@ msgstr "Token zaproszenia do walidacji."
 #: src/REST/InvitationController.php:140
 msgid "Invitation token."
 msgstr "Token zaproszenia."
-
-#: src/REST/InvitationController.php:145
-msgid "Name for new account (required if not logged in)."
-msgstr "Imię dla nowego konta (wymagane, jeśli niezalogowany)."
-
-#: src/REST/InvitationController.php:149
-msgid "Email for new account (required if not logged in)."
-msgstr "Email dla nowego konta (wymagane, jeśli niezalogowany)."
 
 #: src/REST/InvitationController.php:154
 msgid "RSVP status (yes, maybe, no)."
@@ -989,7 +945,7 @@ msgstr "To zaproszenie wygasło."
 msgid "This invitation has already been used."
 msgstr "To zaproszenie zostało już wykorzystane."
 
-#: src/Database/InvitationRepository.php:256
+#: src/Database/InvitationRepository.php:257
 #: src/REST/InvitationController.php:355
 msgid "Unknown"
 msgstr "Nieznany"
@@ -998,36 +954,22 @@ msgstr "Nieznany"
 msgid "Name and email are required to accept invitation."
 msgstr "Imię i email są wymagane do zaakceptowania zaproszenia."
 
-#: src/REST/InvitationController.php:437
+#: src/REST/InvitationController.php:450
 msgid "Failed to create RSVP."
 msgstr "Nie udało się utworzyć potwierdzenia."
 
-#: src/REST/InvitationController.php:448
+#: src/REST/InvitationController.php:461
 msgid "Invitation accepted successfully!"
 msgstr "Zaproszenie zaakceptowane pomyślnie!"
 
-#: src/REST/InvitationController.php:577
-#, php-format
-msgid ""
-"Hi %1$s,\n"
-"\n"
-"You've been invited to an event! An account has been created for you on %2$s.\n"
-"\n"
-"To set your password and access your account, please visit:\n"
-"%3$s\n"
-"\n"
-"Best regards,\n"
-"The %2$s Team"
-msgstr ""
-
 #. translators: 1: Inviter name, 2: Event title
-#: src/REST/InvitationController.php:617
+#: src/REST/InvitationController.php:532
 #, php-format
 msgid "%1$s invited you to %2$s"
 msgstr "%1$s zaprosił Cię do %2$s"
 
 #. translators: 1: Inviter name, 2: Event title, 3: Personal message, 4: Invitation URL, 5: Site name
-#: src/REST/InvitationController.php:621
+#: src/REST/InvitationController.php:536
 #, php-format
 msgid ""
 "Hi,\n"
@@ -1041,11 +983,11 @@ msgid ""
 "The %5$s Team"
 msgstr ""
 
-#: src/REST/InvitationController.php:653
+#: src/REST/InvitationController.php:568
 msgid "You must be logged in to send invitations."
 msgstr "Musisz być zalogowany, aby wysyłać zaproszenia."
 
-#: src/REST/InvitationController.php:720
+#: src/REST/InvitationController.php:635
 msgid "You must be logged in to view invitations."
 msgstr "Musisz być zalogowany, aby przeglądać zaproszenia."
 
@@ -1128,7 +1070,7 @@ msgstr "Zostałeś zaproszony na to wydarzenie!"
 msgid "Invalid invitation link."
 msgstr ""
 
-#: src/REST/InvitationController.php:692
+#: src/REST/InvitationController.php:607
 msgid "Only expected users can send invitations."
 msgstr "Tylko oczekiwani użytkownicy mogą wysyłać zaproszenia."
 
@@ -1138,7 +1080,7 @@ msgstr "Tylko oczekiwani użytkownicy mogą wysyłać zaproszenia."
 msgid "Invitations"
 msgstr ""
 
-#: src/Database/InvitationRepository.php:278
+#: src/Database/InvitationRepository.php:279
 msgid "Deleted Event"
 msgstr ""
 
@@ -1237,11 +1179,6 @@ msgstr ""
 msgid "Next"
 msgstr ""
 
-#: src/blocks/rsvp-button/frontend.js:137
-#: src/blocks/rsvp-button/frontend.js:791
-msgid "Thank you! Your invitation has been accepted. An account has been created for you."
-msgstr ""
-
 #: src/blocks/rsvp-button/frontend.js:644
 msgid "Please fill out the form below to accept your invitation."
 msgstr "Wypełnij poniższy formularz, aby zaakceptować zaproszenie."
@@ -1271,10 +1208,23 @@ msgstr "Czy weźmiesz udział?"
 msgid "The question shown to users above the RSVP form."
 msgstr "Pytanie wyświetlane użytkownikom nad formularzem RSVP."
 
-#: src/Admin/attendance-check/AttendanceCheck.js:268
-msgid "Mark as not present"
-msgstr "Oznacz jako nieobecny"
+#: src/REST/InvitationController.php:145
+msgid "Name for RSVP (required if not logged in)."
+msgstr "Imię dla RSVP (wymagane, jeśli niezalogowany)."
 
-#: src/Admin/attendance-check/AttendanceCheck.js:272
-msgid "Mark as present"
-msgstr "Oznacz jako obecny"
+#: src/REST/InvitationController.php:149
+msgid "Email for RSVP (required if not logged in)."
+msgstr "E-mail dla RSVP (wymagany, jeśli niezalogowany)."
+
+#: src/REST/RsvpController.php:794
+msgid "Guest"
+msgstr "Gość"
+
+#: src/blocks/rsvp-button/frontend.js:137
+#: src/blocks/rsvp-button/frontend.js:791
+msgid "Thank you! Your invitation has been accepted."
+msgstr "Dziękujemy! Twoje zaproszenie zostało przyjęte."
+
+#: src/blocks/rsvp-button/frontend.js:142
+msgid "Your RSVP has been submitted successfully!"
+msgstr "Twoje RSVP zostało pomyślnie przesłane!"

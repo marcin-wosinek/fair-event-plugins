@@ -135,12 +135,12 @@ import { __ } from '@wordpress/i18n';
 				if (isAnonymous) {
 					if (invitationToken) {
 						successMessage = __(
-							'Thank you! Your invitation has been accepted. An account has been created for you.',
+							'Thank you! Your invitation has been accepted.',
 							'fair-rsvp'
 						);
 					} else {
 						successMessage = __(
-							'Your RSVP has been submitted successfully! A welcome email with login instructions has been sent to your email address.',
+							'Your RSVP has been submitted successfully!',
 							'fair-rsvp'
 						);
 					}
@@ -789,7 +789,7 @@ import { __ } from '@wordpress/i18n';
 		})
 			.then(function (response) {
 				messageContainer.textContent = __(
-					'Thank you! Your invitation has been accepted. An account has been created for you.',
+					'Thank you! Your invitation has been accepted.',
 					'fair-rsvp'
 				);
 				messageContainer.className =

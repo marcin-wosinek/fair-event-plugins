@@ -142,11 +142,11 @@ class InvitationController {
 							'required'    => true,
 						),
 						'name'        => array(
-							'description' => __( 'Name for new account (required if not logged in).', 'fair-rsvp' ),
+							'description' => __( 'Name for RSVP (required if not logged in).', 'fair-rsvp' ),
 							'type'        => 'string',
 						),
 						'email'       => array(
-							'description' => __( 'Email for new account (required if not logged in).', 'fair-rsvp' ),
+							'description' => __( 'Email for RSVP (required if not logged in).', 'fair-rsvp' ),
 							'type'        => 'string',
 							'format'      => 'email',
 						),
@@ -360,7 +360,7 @@ class InvitationController {
 	}
 
 	/**
-	 * Accept invitation and create account/RSVP
+	 * Accept invitation and create RSVP
 	 *
 	 * @param WP_REST_Request $request Full data about the request.
 	 * @return WP_REST_Response|WP_Error Response object on success, or WP_Error object on failure.

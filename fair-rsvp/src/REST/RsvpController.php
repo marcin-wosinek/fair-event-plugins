@@ -301,26 +301,32 @@ class RsvpController extends WP_REST_Controller {
 		// Determine user_id.
 		$user_id = get_current_user_id();
 
-		// If name and email are provided, this is an anonymous RSVP - create or get user.
-		if ( ! empty( $name ) && ! empty( $email ) ) {
-			$user_id = $this->get_or_create_user_from_anonymous_rsvp( $name, $email );
+		// Check if this is an anonymous RSVP (name and email provided).
+		$is_anonymous = ! empty( $name ) && ! empty( $email );
 
-			if ( is_wp_error( $user_id ) ) {
-				return $user_id;
+		if ( $is_anonymous ) {
+			// Check if there's an existing WordPress user with this email.
+			$user = get_user_by( 'email', sanitize_email( $email ) );
+			if ( $user ) {
+				$user_id = $user->ID;
 			}
 		}
 
-		// At this point we must have a user_id (either from login or from anonymous user creation).
-		if ( ! $user_id ) {
+		// Create RSVP (either with user_id or as guest).
+		if ( $user_id ) {
+			// Create/update RSVP for registered user.
+			$rsvp_id = $this->repository->upsert_rsvp( $event_id, $user_id, $rsvp_status );
+		} elseif ( $is_anonymous ) {
+			// Create guest RSVP.
+			$rsvp_id = $this->repository->create_guest_rsvp( $event_id, $name, $email, $rsvp_status );
+		} else {
+			// No user and no anonymous data - error.
 			return new WP_Error(
 				'no_user',
 				__( 'Unable to determine user for RSVP.', 'fair-rsvp' ),
 				array( 'status' => 500 )
 			);
 		}
-
-		// Upsert RSVP.
-		$rsvp_id = $this->repository->upsert_rsvp( $event_id, $user_id, $rsvp_status );
 
 		if ( ! $rsvp_id ) {
 			return new WP_Error(
