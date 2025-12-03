@@ -1,5 +1,11 @@
 # fair-rsvp
 
+## 0.6.0
+
+### Minor Changes
+
+- 67f1819: Add anonymous RSVP without user creation.
+
 ## 0.5.1
 
 ### Patch Changes

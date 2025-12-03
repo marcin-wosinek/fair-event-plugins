@@ -3,7 +3,7 @@
  * Plugin Name: Fair Membership
  * Plugin URI: https://github.com/marcin-wosinek/fair-event-plugins
  * Description: Membership management plugin.
- * Version: 0.3.1
+ * Version: 0.4.0
  * Requires at least: 6.7
  * Requires PHP: 7.4
  * Author: Marcin Wosinek

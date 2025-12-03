@@ -1,5 +1,11 @@
 # fair-membership
 
+## 0.4.0
+
+### Minor Changes
+
+- 22a0352: Remove user import flow from plugin.
+
 ## 0.3.1
 
 ### Patch Changes
