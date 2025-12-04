@@ -226,13 +226,30 @@ class CopyEventPage {
 		$event_dates = EventDates::get_by_event_id( $event_id );
 		$location    = get_post_meta( $event_id, 'event_location', true );
 
+		// Get featured image.
+		$thumbnail_id  = get_post_thumbnail_id( $event_id );
+		$thumbnail_url = $thumbnail_id ? get_the_post_thumbnail_url( $event_id, 'thumbnail' ) : '';
+		$thumbnail_alt = $thumbnail_id ? get_post_meta( $thumbnail_id, '_wp_attachment_image_alt', true ) : '';
+
+		// Get categories and tags.
+		$categories      = wp_get_post_terms( $event_id, 'category', array( 'fields' => 'names' ) );
+		$tags            = wp_get_post_terms( $event_id, 'post_tag', array( 'fields' => 'names' ) );
+		$categories_list = ! is_wp_error( $categories ) && ! empty( $categories ) ? implode( ', ', $categories ) : '';
+		$tags_list       = ! is_wp_error( $tags ) && ! empty( $tags ) ? implode( ', ', $tags ) : '';
+
 		// Format dates for display.
 		$start_date          = '';
 		$end_date            = '';
 		$default_custom_date = '';
+		$duration_seconds    = 0;
 		if ( $event_dates ) {
 			$start_dt = new \DateTime( $event_dates->start_datetime );
 			$end_dt   = $event_dates->end_datetime ? new \DateTime( $event_dates->end_datetime ) : null;
+
+			// Calculate duration.
+			if ( $end_dt ) {
+				$duration_seconds = $end_dt->getTimestamp() - $start_dt->getTimestamp();
+			}
 
 			// Calculate default custom date (2 weeks from original start)
 			$two_weeks_later = clone $start_dt;
@@ -249,35 +266,8 @@ class CopyEventPage {
 		}
 		?>
 		<div class="wrap">
-			<h1><?php esc_html_e( 'Copy Event', 'fair-events' ); ?></h1>
-
-			<div style="background: #fff; border: 1px solid #ccd0d4; padding: 20px; margin: 20px 0; max-width: 800px;">
-				<h2><?php esc_html_e( 'Original Event', 'fair-events' ); ?></h2>
-				<table class="form-table">
-					<tr>
-						<th scope="row"><?php esc_html_e( 'Title', 'fair-events' ); ?></th>
-						<td><strong><?php echo esc_html( $original_post->post_title ); ?></strong></td>
-					</tr>
-					<?php if ( $start_date ) : ?>
-					<tr>
-						<th scope="row"><?php esc_html_e( 'Start', 'fair-events' ); ?></th>
-						<td><?php echo esc_html( $start_date ); ?></td>
-					</tr>
-					<?php endif; ?>
-					<?php if ( $end_date ) : ?>
-					<tr>
-						<th scope="row"><?php esc_html_e( 'End', 'fair-events' ); ?></th>
-						<td><?php echo esc_html( $end_date ); ?></td>
-					</tr>
-					<?php endif; ?>
-					<?php if ( $location ) : ?>
-					<tr>
-						<th scope="row"><?php esc_html_e( 'Location', 'fair-events' ); ?></th>
-						<td><?php echo esc_html( $location ); ?></td>
-					</tr>
-					<?php endif; ?>
-				</table>
-			</div>
+		<h1><?php esc_html_e( 'Copy Event', 'fair-events' ); ?>: <a href="<?php echo esc_url( admin_url( 'post.php?post=' . $event_id . '&action=edit' ) ); ?>"><?php echo esc_html( $original_post->post_title ); ?></a>
+</h1>
 
 			<form method="post" action="">
 				<?php wp_nonce_field( 'copy_fair_event_submit', 'copy_event_nonce' ); ?>
@@ -331,9 +321,51 @@ class CopyEventPage {
 					</tr>
 				</table>
 
-				<p class="description">
-					<?php esc_html_e( 'The new event will be created as a draft. All other event details (description, location, featured image, categories) will be copied from the original event.', 'fair-events' ); ?>
-				</p>
+				<!-- Section 3: Summary Preview -->
+					<h2><?php esc_html_e( 'What Will Be Created', 'fair-events' ); ?></h2>
+					<table class="form-table">
+						<tr>
+							<th scope="row"><?php esc_html_e( 'Title', 'fair-events' ); ?></th>
+							<td><strong id="summary-title"><?php echo esc_html( $original_post->post_title . ' ' . __( '(Copy)', 'fair-events' ) ); ?></strong></td>
+						</tr>
+						<tr>
+							<th scope="row"><?php esc_html_e( 'Start Date', 'fair-events' ); ?></th>
+							<td id="summary-start-date"><?php echo esc_html( $start_date ); ?></td>
+						</tr>
+						<?php if ( $duration_seconds > 0 ) : ?>
+						<tr>
+							<th scope="row"><?php esc_html_e( 'Duration', 'fair-events' ); ?></th>
+							<td id="summary-duration"></td>
+						</tr>
+						<?php endif; ?>
+						<?php if ( $location ) : ?>
+						<tr>
+							<th scope="row"><?php esc_html_e( 'Location', 'fair-events' ); ?></th>
+							<td><?php echo esc_html( $location ); ?></td>
+						</tr>
+						<?php endif; ?>
+						<?php if ( $thumbnail_url ) : ?>
+						<tr>
+							<th scope="row"><?php esc_html_e( 'Featured Image', 'fair-events' ); ?></th>
+							<td><img src="<?php echo esc_url( $thumbnail_url ); ?>" alt="<?php echo esc_attr( $thumbnail_alt ); ?>" style="max-width: 150px; height: auto;" /></td>
+						</tr>
+						<?php endif; ?>
+						<?php if ( $categories_list ) : ?>
+						<tr>
+							<th scope="row"><?php esc_html_e( 'Categories', 'fair-events' ); ?></th>
+							<td><?php echo esc_html( $categories_list ); ?></td>
+						</tr>
+						<?php endif; ?>
+						<?php if ( $tags_list ) : ?>
+						<tr>
+							<th scope="row"><?php esc_html_e( 'Tags', 'fair-events' ); ?></th>
+							<td><?php echo esc_html( $tags_list ); ?></td>
+						</tr>
+						<?php endif; ?>
+					</table>
+					<p class="description">
+						<?php esc_html_e( 'The new event will be created as a draft. All event details will be copied from the original event.', 'fair-events' ); ?>
+					</p>
 
 				<p class="submit">
 					<input
@@ -351,31 +383,154 @@ class CopyEventPage {
 
 			<script>
 			(function() {
+				// Configuration from PHP
+				const config = {
+					originalStartDate: <?php echo wp_json_encode( $event_dates ? $event_dates->start_datetime : '' ); ?>,
+					originalEndDate: <?php echo wp_json_encode( $event_dates && $event_dates->end_datetime ? $event_dates->end_datetime : '' ); ?>,
+					durationSeconds: <?php echo absint( $duration_seconds ); ?>,
+					isAllDay: <?php echo $event_dates && $event_dates->all_day ? 'true' : 'false'; ?>,
+					defaultCustomDate: <?php echo wp_json_encode( $default_custom_date ); ?>
+				};
+
+				// DOM elements
+				const titleInput = document.getElementById('event_title');
 				const customRadio = document.getElementById('date_option_custom');
 				const customField = document.getElementById('custom_date_field');
 				const customInput = document.getElementById('custom_date');
 				const allRadios = document.querySelectorAll('input[name="date_option"]');
-				const defaultDate = customInput.getAttribute('data-default-date');
+				const summaryTitle = document.getElementById('summary-title');
+				const summaryStartDate = document.getElementById('summary-start-date');
+				const summaryEndDate = document.getElementById('summary-end-date');
+				const summaryDuration = document.getElementById('summary-duration');
+
+				// Utility functions
+				function formatDuration(seconds) {
+					if (seconds === 0) return '';
+
+					const hours = Math.floor(seconds / 3600);
+					const days = Math.floor(hours / 24);
+					const weeks = Math.floor(days / 7);
+
+					if (weeks > 0 && days % 7 === 0) {
+						return weeks === 1 ? '1 week' : weeks + ' weeks';
+					}
+					if (days > 0 && hours % 24 === 0) {
+						return days === 1 ? '1 day' : days + ' days';
+					}
+					if (hours > 0 && seconds % 3600 === 0) {
+						return hours === 1 ? '1 hour' : hours + ' hours';
+					}
+
+					const minutes = Math.floor(seconds / 60);
+					if (minutes > 0) {
+						if (hours > 0) {
+							return hours + 'h ' + (minutes % 60) + 'm';
+						}
+						return minutes === 1 ? '1 minute' : minutes + ' minutes';
+					}
+
+					return seconds + ' seconds';
+				}
+
+				function formatDate(dateStr, isAllDay) {
+					if (!dateStr) return '';
+					const date = new Date(dateStr);
+
+					const options = isAllDay
+						? { year: 'numeric', month: 'long', day: 'numeric' }
+						: { year: 'numeric', month: 'long', day: 'numeric', hour: 'numeric', minute: '2-digit', hour12: true };
+
+					return date.toLocaleString('en-US', options);
+				}
+
+				function calculateNewDates() {
+					if (!config.originalStartDate) return null;
+
+					const originalStart = new Date(config.originalStartDate);
+					let newStart = new Date(originalStart);
+
+					// Apply date offset based on selected radio
+					const selectedOption = document.querySelector('input[name="date_option"]:checked').value;
+
+					if (selectedOption === 'week') {
+						newStart.setDate(newStart.getDate() + 7);
+					} else if (selectedOption === 'custom' && customInput.value) {
+						const customDate = new Date(customInput.value);
+						if (config.isAllDay) {
+							newStart = new Date(customDate);
+						} else {
+							// Preserve time of day
+							newStart = new Date(customDate);
+							newStart.setHours(originalStart.getHours());
+							newStart.setMinutes(originalStart.getMinutes());
+							newStart.setSeconds(originalStart.getSeconds());
+						}
+					}
+
+					// Calculate new end date
+					let newEnd = null;
+					if (config.originalEndDate && config.durationSeconds > 0) {
+						newEnd = new Date(newStart.getTime() + (config.durationSeconds * 1000));
+					}
+
+					return { start: newStart, end: newEnd };
+				}
+
+				// Update summary dynamically
+				function updateSummary() {
+					// Update title
+					if (summaryTitle && titleInput) {
+						summaryTitle.textContent = titleInput.value;
+					}
+
+					// Update dates
+					const newDates = calculateNewDates();
+					if (newDates) {
+						if (summaryStartDate) {
+							summaryStartDate.textContent = formatDate(newDates.start, config.isAllDay);
+						}
+						if (summaryEndDate && newDates.end) {
+							summaryEndDate.textContent = formatDate(newDates.end, config.isAllDay);
+						}
+					}
+
+					// Update duration
+					if (summaryDuration && config.durationSeconds > 0) {
+						summaryDuration.textContent = formatDuration(config.durationSeconds);
+					}
+				}
 
 				function toggleCustomField() {
 					if (customRadio.checked) {
 						customField.style.display = 'block';
 						customInput.required = true;
 						// Set default date (2 weeks later) if input is empty
-						if (!customInput.value && defaultDate) {
-							customInput.value = defaultDate;
+						if (!customInput.value && config.defaultCustomDate) {
+							customInput.value = config.defaultCustomDate;
 						}
 					} else {
 						customField.style.display = 'none';
 						customInput.required = false;
 					}
+					updateSummary();
+				}
+
+				// Event listeners
+				if (titleInput) {
+					titleInput.addEventListener('input', updateSummary);
 				}
 
 				allRadios.forEach(function(radio) {
 					radio.addEventListener('change', toggleCustomField);
 				});
 
+				if (customInput) {
+					customInput.addEventListener('change', updateSummary);
+				}
+
+				// Initialize
 				toggleCustomField();
+				updateSummary();
 			})();
 			</script>
 		</div>
