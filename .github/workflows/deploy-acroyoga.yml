@@ -1,0 +1,140 @@
+name: Deploy to Acroyoga-Club.es
+
+on:
+    push:
+        branches: [main]
+    workflow_dispatch:
+        inputs:
+            plugins:
+                description: 'Plugins to deploy (comma-separated, or "all")'
+                required: false
+                default: 'all'
+
+jobs:
+    build-and-deploy:
+        runs-on: ubuntu-latest
+        environment: acroyoga-club.es
+
+        steps:
+            - name: Checkout code
+              uses: actions/checkout@v4
+
+            - name: Setup Node.js
+              uses: actions/setup-node@v4
+              with:
+                  node-version: '20'
+                  cache: 'npm'
+
+            - name: Setup PHP
+              uses: shivammathur/setup-php@v2
+              with:
+                  php-version: '8.0'
+                  tools: composer
+                  coverage: none
+
+            - name: Install dependencies
+              run: |
+                  npm ci
+
+            - name: Build all plugins
+              run: |
+                  # Build each plugin workspace
+                  echo "Building fair-rsvp..."
+                  npm run build --workspace=fair-rsvp
+
+                  echo "Building fair-events..."
+                  npm run build --workspace=fair-events
+
+                  echo "Building fair-payment..."
+                  npm run build --workspace=fair-payment
+
+                  echo "Building fair-calendar-button..."
+                  npm run build --workspace=fair-calendar-button
+
+                  echo "Building fair-schedule..."
+                  npm run build --workspace=fair-schedule
+
+                  echo "Building fair-timetable..."
+                  npm run build --workspace=fair-timetable
+
+                  echo "Building fair-registration..."
+                  npm run build --workspace=fair-registration
+
+                  echo "Building fair-membership..."
+                  npm run build --workspace=fair-membership
+
+                  echo "Building fair-user-import..."
+                  npm run build --workspace=fair-user-import
+
+            - name: Install PHP dependencies for each plugin
+              run: |
+                  for plugin in fair-rsvp fair-events fair-payment fair-calendar-button fair-schedule fair-timetable fair-registration fair-membership fair-user-import; do
+                    if [ -f "$plugin/composer.json" ]; then
+                      echo "Installing PHP dependencies for $plugin..."
+                      cd $plugin
+                      composer install --no-dev --optimize-autoloader --no-interaction
+                      cd ..
+                    fi
+                  done
+
+            - name: Setup SSH
+              uses: webfactory/ssh-agent@v0.9.0
+              with:
+                  ssh-private-key: ${{ secrets.SSH_PRIVATE_KEY }}
+
+            - name: Add SSH host key
+              run: |
+                  mkdir -p ~/.ssh
+                  ssh-keyscan -p ${{ secrets.SSH_PORT }} -H ${{ secrets.SSH_HOST }} >> ~/.ssh/known_hosts
+
+            - name: Deploy plugins via rsync
+              run: |
+                  # Define plugins to deploy
+                  PLUGINS_TO_DEPLOY="${{ github.event.inputs.plugins || 'all' }}"
+
+                  if [ "$PLUGINS_TO_DEPLOY" = "all" ]; then
+                    PLUGINS="fair-rsvp fair-events fair-payment fair-calendar-button fair-schedule fair-timetable fair-registration fair-membership fair-user-import"
+                  else
+                    PLUGINS="$PLUGINS_TO_DEPLOY"
+                  fi
+
+                  # Deploy each plugin
+                  for plugin in $PLUGINS; do
+                    if [ -d "$plugin" ]; then
+                      echo "Deploying $plugin..."
+                      rsync -avz --delete \
+                        -e "ssh -p ${{ secrets.SSH_PORT }}" \
+                        --exclude='node_modules' \
+                        --exclude='vendor/bin' \
+                        --exclude='vendor/*/tests' \
+                        --exclude='vendor/*/test' \
+                        --exclude='vendor/*/*/tests' \
+                        --exclude='vendor/*/*/test' \
+                        --exclude='.git' \
+                        --exclude='.github' \
+                        --exclude='tests' \
+                        --exclude='__tests__' \
+                        --exclude='.phpunit.cache' \
+                        --exclude='phpunit.xml' \
+                        --exclude='composer.lock' \
+                        --exclude='package-lock.json' \
+                        --exclude='src' \
+                        --exclude='tsconfig.json' \
+                        --exclude='webpack.config.cjs' \
+                        --exclude='.editorconfig' \
+                        --exclude='.eslintrc.js' \
+                        --exclude='.gitignore' \
+                        "$plugin/" \
+                        "${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }}:${{ secrets.WORDPRESS_PLUGINS_PATH }}/$plugin/"
+
+                      echo "✓ $plugin deployed successfully"
+                    else
+                      echo "⚠ $plugin directory not found, skipping..."
+                    fi
+                  done
+
+            - name: Post-deployment tasks
+              run: |
+                  echo "Deployment completed!"
+                  echo "Deployed plugins: ${{ github.event.inputs.plugins || 'all' }}"
+                  echo "Target: ${{ secrets.SSH_HOST }}"

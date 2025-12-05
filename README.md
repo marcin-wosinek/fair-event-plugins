@@ -77,6 +77,40 @@ npm run build
 
 JSON files are created in `build/languages/` and are required for block editor translations.
 
+## Deployment
+
+Automated deployment to production servers via GitHub Actions is available.
+
+### Quick Start
+
+1. Run the setup script to gather server information:
+   ```bash
+   ./scripts/setup-deployment.sh
+   ```
+
+2. Add the generated secrets to GitHub:
+   - Go to **Settings** → **Secrets and variables** → **Actions**
+   - Add: `SSH_PRIVATE_KEY`, `SSH_HOST`, `SSH_USER`, `WORDPRESS_PLUGINS_PATH`
+
+3. Push to main branch to deploy automatically:
+   ```bash
+   git push origin main
+   ```
+
+For detailed setup instructions, see [DEPLOYMENT.md](DEPLOYMENT.md).
+
+### Manual Deployment
+
+To trigger deployment manually or deploy specific plugins:
+
+```bash
+# Via GitHub CLI
+gh workflow run deploy-acroyoga.yml -f plugins="fair-rsvp,fair-events"
+
+# Via GitHub UI
+# Actions → Deploy to Acroyoga-Club.es → Run workflow
+```
+
 ## Notes
 
 This specific repository assumes you're running PHP 8.0.  At the time of this writing, WordPress is not fully compatible with PHP 8.0; however, if you change the references to PHP 7.4.28 in
