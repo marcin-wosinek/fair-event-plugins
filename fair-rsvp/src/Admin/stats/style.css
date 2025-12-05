@@ -1,0 +1,57 @@
+.fair-rsvp-stats-page {
+	max-width: 1200px;
+	margin: 20px;
+}
+
+.fair-rsvp-stats-loading {
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	justify-content: center;
+	padding: 40px;
+	gap: 16px;
+}
+
+.fair-rsvp-stats-table {
+	overflow-x: auto;
+}
+
+.fair-rsvp-stats-table table {
+	width: 100%;
+	border-collapse: collapse;
+}
+
+.fair-rsvp-stats-table th {
+	text-align: left;
+	padding: 12px 8px;
+	font-weight: 600;
+	background-color: #f0f0f1;
+}
+
+.fair-rsvp-stats-table td {
+	padding: 12px 8px;
+}
+
+.stats-number {
+	display: inline-block;
+	padding: 4px 12px;
+	border-radius: 4px;
+	font-weight: 600;
+	text-align: center;
+	min-width: 40px;
+}
+
+.stats-accepted {
+	background-color: #d5f5e3;
+	color: #1d8348;
+}
+
+.stats-pending {
+	background-color: #fff4e6;
+	color: #d68910;
+}
+
+.stats-expired {
+	background-color: #f9e4e4;
+	color: #a93226;
+}

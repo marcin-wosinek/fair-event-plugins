@@ -49,6 +49,16 @@ class AdminHooks {
 			array( $this, 'render_invitations_page' )
 		);
 
+		// Submenu page - Invitation Stats.
+		add_submenu_page(
+			'fair-rsvp',
+			__( 'Invitation Stats', 'fair-rsvp' ),
+			__( 'Invitation Stats', 'fair-rsvp' ),
+			'read', // Allow any logged-in user to view their own stats.
+			'fair-rsvp-stats',
+			array( $this, 'render_stats_page' )
+		);
+
 		// Submenu page - Attendance confirmation (hidden from menu).
 		add_submenu_page(
 			null, // No parent = hidden from menu.
@@ -78,6 +88,16 @@ class AdminHooks {
 	public function render_invitations_page() {
 		$invitations_page = new InvitationsListPage();
 		$invitations_page->render();
+	}
+
+	/**
+	 * Render invitation stats page
+	 *
+	 * @return void
+	 */
+	public function render_stats_page() {
+		$stats_page = new InvitationStatsPage();
+		$stats_page->render();
 	}
 
 	/**
@@ -143,6 +163,32 @@ class AdminHooks {
 				// Set script translations.
 				wp_set_script_translations(
 					'fair-rsvp-invitations',
+					'fair-rsvp',
+					$plugin_dir . 'build/languages'
+				);
+
+				wp_enqueue_style( 'wp-components' );
+			}
+		}
+
+		// Load invitation stats page scripts.
+		if ( 'fair-rsvp_page_fair-rsvp-stats' === $hook ) {
+			$asset_file = $plugin_dir . 'build/admin/stats/index.asset.php';
+
+			if ( file_exists( $asset_file ) ) {
+				$asset_data = include $asset_file;
+
+				wp_enqueue_script(
+					'fair-rsvp-stats',
+					plugin_dir_url( dirname( __DIR__ ) ) . 'build/admin/stats/index.js',
+					$asset_data['dependencies'],
+					$asset_data['version'],
+					true
+				);
+
+				// Set script translations.
+				wp_set_script_translations(
+					'fair-rsvp-stats',
 					'fair-rsvp',
 					$plugin_dir . 'build/languages'
 				);

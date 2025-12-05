@@ -323,4 +323,97 @@ class InvitationRepository {
 		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching,WordPress.DB.PreparedSQL.NotPrepared,PluginCheck.Security.DirectDB.UnescapedDBParameter
 		return (int) $wpdb->get_var( $prepared_sql );
 	}
+
+	/**
+	 * Get invitation statistics for a specific inviter
+	 *
+	 * @param int      $inviter_user_id User ID of the inviter.
+	 * @param int|null $event_id        Optional event ID to filter by.
+	 * @return array Array of stats per event: [event_id, event_title, total_sent, accepted, pending, expired].
+	 */
+	public function get_inviter_stats( $inviter_user_id, $event_id = null ) {
+		global $wpdb;
+
+		$invitations_table = $wpdb->prefix . 'fair_rsvp_invitations';
+
+		// Build query to count invitations grouped by event and status.
+		$sql = "
+			SELECT
+				i.event_id,
+				p.post_title as event_title,
+				COUNT(*) as total_sent,
+				SUM(CASE WHEN i.invitation_status = 'accepted' THEN 1 ELSE 0 END) as accepted,
+				SUM(CASE WHEN i.invitation_status = 'pending' THEN 1 ELSE 0 END) as pending,
+				SUM(CASE WHEN i.invitation_status = 'expired' THEN 1 ELSE 0 END) as expired
+			FROM %i i
+			LEFT JOIN {$wpdb->posts} p ON i.event_id = p.ID
+			WHERE i.inviter_user_id = %d
+		";
+
+		$prepare_values = array( $invitations_table, $inviter_user_id );
+
+		// Add event filter if provided.
+		if ( $event_id ) {
+			$sql             .= ' AND i.event_id = %d';
+			$prepare_values[] = $event_id;
+		}
+
+		$sql .= ' GROUP BY i.event_id, p.post_title ORDER BY i.event_id DESC';
+
+		// phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared
+		$prepared_sql = $wpdb->prepare( $sql, ...$prepare_values );
+
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching,WordPress.DB.PreparedSQL.NotPrepared
+		$results = $wpdb->get_results( $prepared_sql, ARRAY_A );
+
+		return $results ? $results : array();
+	}
+
+	/**
+	 * Get invitation statistics for all inviters
+	 *
+	 * @param int|null $event_id Optional event ID to filter by.
+	 * @return array Array of stats per inviter: [inviter_user_id, inviter_name, inviter_email, event_id, event_title, total_sent, accepted, pending, expired].
+	 */
+	public function get_all_inviters_stats( $event_id = null ) {
+		global $wpdb;
+
+		$invitations_table = $wpdb->prefix . 'fair_rsvp_invitations';
+
+		// Build query to count invitations grouped by inviter, event, and status.
+		$sql = "
+			SELECT
+				i.inviter_user_id,
+				u.display_name as inviter_name,
+				u.user_email as inviter_email,
+				i.event_id,
+				p.post_title as event_title,
+				COUNT(*) as total_sent,
+				SUM(CASE WHEN i.invitation_status = 'accepted' THEN 1 ELSE 0 END) as accepted,
+				SUM(CASE WHEN i.invitation_status = 'pending' THEN 1 ELSE 0 END) as pending,
+				SUM(CASE WHEN i.invitation_status = 'expired' THEN 1 ELSE 0 END) as expired
+			FROM %i i
+			LEFT JOIN {$wpdb->users} u ON i.inviter_user_id = u.ID
+			LEFT JOIN {$wpdb->posts} p ON i.event_id = p.ID
+			WHERE 1=1
+		";
+
+		$prepare_values = array( $invitations_table );
+
+		// Add event filter if provided.
+		if ( $event_id ) {
+			$sql             .= ' AND i.event_id = %d';
+			$prepare_values[] = $event_id;
+		}
+
+		$sql .= ' GROUP BY i.inviter_user_id, u.display_name, u.user_email, i.event_id, p.post_title ORDER BY i.inviter_user_id, i.event_id DESC';
+
+		// phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared
+		$prepared_sql = $wpdb->prepare( $sql, ...$prepare_values );
+
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching,WordPress.DB.PreparedSQL.NotPrepared
+		$results = $wpdb->get_results( $prepared_sql, ARRAY_A );
+
+		return $results ? $results : array();
+	}
 }

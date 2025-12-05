@@ -214,6 +214,48 @@ class InvitationController {
 				),
 			)
 		);
+
+		// GET /fair-rsvp/v1/invitations/my-stats - Get current user's invitation stats.
+		register_rest_route(
+			$this->namespace,
+			'/invitations/my-stats',
+			array(
+				array(
+					'methods'             => WP_REST_Server::READABLE,
+					'callback'            => array( $this, 'get_my_stats' ),
+					'permission_callback' => array( $this, 'logged_in_permissions_check' ),
+					'args'                => array(
+						'event_id' => array(
+							'description' => __( 'Filter by event ID.', 'fair-rsvp' ),
+							'type'        => 'integer',
+						),
+					),
+				),
+			)
+		);
+
+		// GET /fair-rsvp/v1/invitations/stats-by-user - Admin endpoint to get invitation stats by user.
+		register_rest_route(
+			$this->namespace,
+			'/invitations/stats-by-user',
+			array(
+				array(
+					'methods'             => WP_REST_Server::READABLE,
+					'callback'            => array( $this, 'get_stats_by_user' ),
+					'permission_callback' => array( $this, 'admin_permissions_check' ),
+					'args'                => array(
+						'event_id'   => array(
+							'description' => __( 'Filter by event ID.', 'fair-rsvp' ),
+							'type'        => 'integer',
+						),
+						'inviter_id' => array(
+							'description' => __( 'Filter by inviter user ID.', 'fair-rsvp' ),
+							'type'        => 'integer',
+						),
+					),
+				),
+			)
+		);
 	}
 
 	/**
@@ -637,6 +679,69 @@ The %5$s Team',
 			);
 		}
 
+		return true;
+	}
+
+	/**
+	 * Get invitation stats for current user
+	 *
+	 * @param WP_REST_Request $request Full data about the request.
+	 * @return WP_REST_Response|WP_Error Response object on success, or WP_Error object on failure.
+	 */
+	public function get_my_stats( $request ) {
+		$user_id  = get_current_user_id();
+		$event_id = $request->get_param( 'event_id' );
+
+		$stats = $this->invitation_repository->get_inviter_stats( $user_id, $event_id );
+
+		return new WP_REST_Response(
+			array(
+				'stats' => $stats,
+			),
+			200
+		);
+	}
+
+	/**
+	 * Get invitation stats by user (admin endpoint)
+	 *
+	 * @param WP_REST_Request $request Full data about the request.
+	 * @return WP_REST_Response|WP_Error Response object on success, or WP_Error object on failure.
+	 */
+	public function get_stats_by_user( $request ) {
+		$event_id   = $request->get_param( 'event_id' );
+		$inviter_id = $request->get_param( 'inviter_id' );
+
+		// If inviter_id is provided, get stats for that specific user.
+		if ( $inviter_id ) {
+			$stats = $this->invitation_repository->get_inviter_stats( $inviter_id, $event_id );
+		} else {
+			// Otherwise, get stats for all users.
+			$stats = $this->invitation_repository->get_all_inviters_stats( $event_id );
+		}
+
+		return new WP_REST_Response(
+			array(
+				'stats' => $stats,
+			),
+			200
+		);
+	}
+
+	/**
+	 * Check if user is logged in
+	 *
+	 * @param WP_REST_Request $request Full data about the request.
+	 * @return bool|WP_Error True if user is logged in, WP_Error otherwise.
+	 */
+	public function logged_in_permissions_check( $request ) {
+		if ( ! is_user_logged_in() ) {
+			return new WP_Error(
+				'rest_forbidden',
+				__( 'You must be logged in to view stats.', 'fair-rsvp' ),
+				array( 'status' => 401 )
+			);
+		}
 		return true;
 	}
 
