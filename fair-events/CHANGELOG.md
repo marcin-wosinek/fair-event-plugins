@@ -1,5 +1,11 @@
 # fair-events
 
+## 0.5.2
+
+### Patch Changes
+
+- fa15b85: Improve copy screen for events.
+
 ## 0.5.1
 
 ### Patch Changes

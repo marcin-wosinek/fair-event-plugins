@@ -1,5 +1,11 @@
 # fair-rsvp
 
+## 0.7.0
+
+### Minor Changes
+
+- fa15b85: Add stats tab to RSVP.
+
 ## 0.6.0
 
 ### Minor Changes
