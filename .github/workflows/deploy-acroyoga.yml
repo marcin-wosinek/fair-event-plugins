@@ -1,7 +1,10 @@
 name: Deploy to Acroyoga-Club.es
 
 on:
-    push:
+    workflow_run:
+        workflows: ['Continuous integration']
+        types:
+            - completed
         branches: [main]
     workflow_dispatch:
         inputs:
@@ -11,71 +14,59 @@ on:
                 default: 'all'
 
 jobs:
-    build-and-deploy:
+    deploy:
         runs-on: ubuntu-latest
         environment: acroyoga-club.es
+        if: ${{ github.event.workflow_run.conclusion == 'success' || github.event_name == 'workflow_dispatch' }}
 
         steps:
             - name: Checkout code
               uses: actions/checkout@v4
 
-            - name: Setup Node.js
-              uses: actions/setup-node@v4
+            - name: Download build artifacts from CI
+              if: github.event_name == 'workflow_run'
+              uses: actions/download-artifact@v4
               with:
-                  node-version: '20'
-                  cache: 'npm'
+                  name: plugins
+                  path: ./dist
+                  run-id: ${{ github.event.workflow_run.id }}
+                  github-token: ${{ secrets.GITHUB_TOKEN }}
 
-            - name: Setup PHP
-              uses: shivammathur/setup-php@v2
-              with:
-                  php-version: '8.0'
-                  tools: composer
-                  coverage: none
-
-            - name: Install dependencies
+            - name: Build plugins (manual dispatch only)
+              if: github.event_name == 'workflow_dispatch'
               run: |
+                  # Setup for manual deployment
                   npm ci
 
-            - name: Build all plugins
+                  # Install WP-CLI
+                  curl -L -o wp-cli.phar https://github.com/wp-cli/wp-cli/releases/download/v2.12.0/wp-cli-2.12.0.phar
+                  chmod +x wp-cli.phar
+                  sudo mv wp-cli.phar /usr/local/bin/wp
+
+                  # Install dist-archive command
+                  wp package install wp-cli/dist-archive-command:@stable
+
+                  # Install production PHP dependencies
+                  npm run composer:install:prod
+
+                  # Build JavaScript
+                  npm run build
+
+                  # Create distribution archives
+                  npm run dist-archive
+
+            - name: Extract plugin ZIPs
               run: |
-                  # Build each plugin workspace
-                  echo "Building fair-rsvp..."
-                  npm run build --workspace=fair-rsvp
-
-                  echo "Building fair-events..."
-                  npm run build --workspace=fair-events
-
-                  echo "Building fair-payment..."
-                  npm run build --workspace=fair-payment
-
-                  echo "Building fair-calendar-button..."
-                  npm run build --workspace=fair-calendar-button
-
-                  echo "Building fair-schedule..."
-                  npm run build --workspace=fair-schedule
-
-                  echo "Building fair-timetable..."
-                  npm run build --workspace=fair-timetable
-
-                  echo "Building fair-registration..."
-                  npm run build --workspace=fair-registration
-
-                  echo "Building fair-membership..."
-                  npm run build --workspace=fair-membership
-
-                  echo "Building fair-user-import..."
-                  npm run build --workspace=fair-user-import
-
-            - name: Install PHP dependencies for each plugin
-              run: |
-                  for plugin in fair-rsvp fair-events fair-payment fair-calendar-button fair-schedule fair-timetable fair-registration fair-membership fair-user-import; do
-                    if [ -f "$plugin/composer.json" ]; then
-                      echo "Installing PHP dependencies for $plugin..."
-                      cd $plugin
-                      composer install --no-dev --optimize-autoloader --no-interaction
-                      cd ..
+                  mkdir -p extracted-plugins
+                  cd dist
+                  for zip in *.zip; do
+                    if [ -f "$zip" ]; then
+                      echo "Extracting $zip..."
+                      unzip -q "$zip" -d ../extracted-plugins/
                     fi
                   done
+                  cd ..
+                  ls -la extracted-plugins/
 
             - name: Setup SSH
               uses: webfactory/ssh-agent@v0.9.0
@@ -98,38 +89,18 @@ jobs:
                     PLUGINS="$PLUGINS_TO_DEPLOY"
                   fi
 
-                  # Deploy each plugin
+                  # Deploy each plugin from extracted directory
                   for plugin in $PLUGINS; do
-                    if [ -d "$plugin" ]; then
+                    if [ -d "extracted-plugins/$plugin" ]; then
                       echo "Deploying $plugin..."
                       rsync -avz --delete \
                         -e "ssh -p ${{ secrets.SSH_PORT }}" \
-                        --exclude='node_modules' \
-                        --exclude='vendor/bin' \
-                        --exclude='vendor/*/tests' \
-                        --exclude='vendor/*/test' \
-                        --exclude='vendor/*/*/tests' \
-                        --exclude='vendor/*/*/test' \
-                        --exclude='.git' \
-                        --exclude='.github' \
-                        --exclude='tests' \
-                        --exclude='__tests__' \
-                        --exclude='.phpunit.cache' \
-                        --exclude='phpunit.xml' \
-                        --exclude='composer.lock' \
-                        --exclude='package-lock.json' \
-                        --exclude='src' \
-                        --exclude='tsconfig.json' \
-                        --exclude='webpack.config.cjs' \
-                        --exclude='.editorconfig' \
-                        --exclude='.eslintrc.js' \
-                        --exclude='.gitignore' \
-                        "$plugin/" \
+                        "extracted-plugins/$plugin/" \
                         "${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }}:${{ secrets.WORDPRESS_PLUGINS_PATH }}/$plugin/"
 
                       echo "✓ $plugin deployed successfully"
                     else
-                      echo "⚠ $plugin directory not found, skipping..."
+                      echo "⚠ $plugin directory not found in extracted-plugins/, skipping..."
                     fi
                   done
 
