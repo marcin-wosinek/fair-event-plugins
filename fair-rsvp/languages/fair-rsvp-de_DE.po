@@ -54,6 +54,8 @@ msgstr "Anmelden"
 #: src/blocks/rsvp-button/render.php:251
 #: src/Admin/attendance-check/AttendanceCheck.js:284
 #: src/Admin/attendance/AttendanceConfirmation.js:403
+#: src/Admin/stats/InvitationStats.js:144
+#: src/Admin/stats/InvitationStats.js:389
 #: src/blocks/participants-list/editor.js:66
 #: src/blocks/participants-list/editor.js:120
 #: src/blocks/rsvp-button/editor.js:100
@@ -67,6 +69,8 @@ msgstr "Ja"
 #: src/blocks/rsvp-button/render.php:253
 #: src/Admin/attendance-check/AttendanceCheck.js:286
 #: src/Admin/attendance/AttendanceConfirmation.js:402
+#: src/Admin/stats/InvitationStats.js:148
+#: src/Admin/stats/InvitationStats.js:390
 #: src/blocks/participants-list/editor.js:68
 #: src/blocks/participants-list/editor.js:122
 #: src/blocks/rsvp-button/editor.js:108
@@ -78,6 +82,8 @@ msgstr "Vielleicht"
 #: src/blocks/rsvp-button/render.php:170
 #: src/blocks/rsvp-button/render.php:235
 #: src/blocks/rsvp-button/render.php:252
+#: src/Admin/stats/InvitationStats.js:152
+#: src/Admin/stats/InvitationStats.js:391
 #: src/blocks/participants-list/editor.js:71
 #: src/blocks/participants-list/editor.js:124
 #: src/blocks/rsvp-button/editor.js:112
@@ -116,65 +122,65 @@ msgstr "Sortieren nach Feld."
 msgid "Order direction."
 msgstr "Sortierrichtung."
 
-#: src/REST/RsvpController.php:296
-#: src/REST/RsvpController.php:553
+#: src/REST/RsvpController.php:355
+#: src/REST/RsvpController.php:612
 msgid "The specified event does not exist or is not published."
 msgstr "Die angegebene Veranstaltung existiert nicht oder ist nicht veröffentlicht."
 
-#: src/REST/RsvpController.php:334
+#: src/REST/RsvpController.php:393
 msgid "Failed to create or update RSVP."
 msgstr "Fehler beim Erstellen oder Aktualisieren der Anmeldung."
 
-#: src/REST/RsvpController.php:345
-#: src/REST/RsvpController.php:593
+#: src/REST/RsvpController.php:404
+#: src/REST/RsvpController.php:652
 msgid "RSVP was created but could not be retrieved."
 msgstr "Die Anmeldung wurde erstellt, konnte aber nicht abgerufen werden."
 
-#: src/REST/RsvpController.php:371
+#: src/REST/RsvpController.php:430
 msgid "RSVP not found for this event."
 msgstr "Keine Anmeldung für diese Veranstaltung gefunden."
 
-#: src/REST/RsvpController.php:394
+#: src/REST/RsvpController.php:453
 msgid "RSVP not found."
 msgstr "Anmeldung nicht gefunden."
 
-#: src/REST/RsvpController.php:405
+#: src/REST/RsvpController.php:464
 msgid "Failed to update attendance status."
 msgstr "Fehler beim Aktualisieren des Anwesenheitsstatus."
 
-#: src/REST/RsvpController.php:644
+#: src/REST/RsvpController.php:703
 msgid "You must be logged in to RSVP."
 msgstr "Sie müssen angemeldet sein, um sich anzumelden."
 
-#: src/REST/RsvpController.php:702
+#: src/REST/RsvpController.php:761
 msgid "You must be logged in to view RSVPs."
 msgstr "Sie müssen angemeldet sein, um Anmeldungen anzuzeigen."
 
-#: src/REST/RsvpController.php:812
+#: src/REST/RsvpController.php:871
 msgid "Event/post ID to RSVP for."
 msgstr "Veranstaltungs-/Beitrags-ID, für die die Anmeldung erfolgen soll."
 
-#: src/REST/RsvpController.php:817
+#: src/REST/RsvpController.php:876
 msgid "RSVP status."
 msgstr "RSVP-Status."
 
-#: src/REST/RsvpController.php:842
+#: src/REST/RsvpController.php:901
 msgid "Event ID to get RSVPs for."
 msgstr "Veranstaltungs-ID, für die Anmeldungen abgerufen werden sollen."
 
-#: src/REST/RsvpController.php:847
+#: src/REST/RsvpController.php:906
 msgid "Filter by RSVP status."
 msgstr "Nach RSVP-Status filtern."
 
-#: src/REST/RsvpController.php:852
+#: src/REST/RsvpController.php:911
 msgid "Filter by attendance status."
 msgstr "Nach Anwesenheitsstatus filtern."
 
-#: src/REST/RsvpController.php:857
+#: src/REST/RsvpController.php:916
 msgid "Current page of the collection."
 msgstr "Aktuelle Seite der Sammlung."
 
-#: src/REST/RsvpController.php:863
+#: src/REST/RsvpController.php:922
 msgid "Maximum number of items to return per page."
 msgstr "Maximale Anzahl der Elemente pro Seite."
 
@@ -199,6 +205,8 @@ msgstr "Keine Veranstaltungen mit Anmeldungen gefunden."
 
 #: src/Admin/events/EventsList.js:176
 #: src/Admin/invitations/InvitationsList.js:149
+#: src/Admin/stats/InvitationStats.js:212
+#: src/Admin/stats/InvitationStats.js:358
 msgid "Event"
 msgstr "Veranstaltung"
 
@@ -345,8 +353,8 @@ msgstr "RSVP erfolgreich aktualisiert!"
 msgid "Failed to update RSVP. Please try again."
 msgstr "Fehler beim Aktualisieren der RSVP. Bitte versuchen Sie es erneut."
 
-#: src/Admin/AdminHooks.php:55
-#: src/Admin/AdminHooks.php:56
+#: src/Admin/AdminHooks.php:65
+#: src/Admin/AdminHooks.php:66
 #: src/Admin/AttendanceConfirmationPage.php:30
 #: src/Admin/AttendanceConfirmationPage.php:44
 #: src/Admin/events/EventsList.js:200
@@ -358,14 +366,14 @@ msgid "No event ID specified."
 msgstr "Keine Event-ID angegeben."
 
 #: src/Admin/AttendanceConfirmationPage.php:46
-#: src/REST/InvitationController.php:341
-#: src/REST/InvitationController.php:582
-#: src/REST/RsvpController.php:621
+#: src/REST/InvitationController.php:383
+#: src/REST/InvitationController.php:624
+#: src/REST/RsvpController.php:680
 msgid "Event not found."
 msgstr "Ereignis nicht gefunden."
 
 #. translators: %s: event title
-#: src/Admin/AttendanceConfirmationPage.php:59
+#: src/Admin/AttendanceConfirmationPage.php:71
 #, php-format
 msgid "Confirm Attendance: %s"
 msgstr "Anwesenheit Bestätigen: %s"
@@ -386,17 +394,17 @@ msgstr ""
 msgid "Attendee email (optional)."
 msgstr ""
 
-#: src/REST/RsvpController.php:517
+#: src/REST/RsvpController.php:576
 msgid "Updates must be a non-empty array."
 msgstr ""
 
 #. translators: %d: number of successful updates
-#: src/REST/RsvpController.php:530
+#: src/REST/RsvpController.php:589
 #, php-format
 msgid "Successfully updated %d attendance records."
 msgstr ""
 
-#: src/REST/RsvpController.php:579
+#: src/REST/RsvpController.php:638
 msgid "Failed to create RSVP for walk-in attendee."
 msgstr ""
 
@@ -514,6 +522,7 @@ msgstr "Name"
 
 #: src/Admin/attendance-check/AttendanceCheck.js:226
 #: src/Admin/attendance/AttendanceConfirmation.js:388
+#: src/Admin/stats/InvitationStats.js:213
 msgid "RSVP Status"
 msgstr "Bestätigungsstatus"
 
@@ -522,6 +531,7 @@ msgid "Signed Up"
 msgstr "Angemeldet"
 
 #: src/Admin/attendance/AttendanceConfirmation.js:391
+#: src/Admin/stats/InvitationStats.js:400
 msgid "Checked In"
 msgstr "Anwesend"
 
@@ -595,19 +605,19 @@ msgstr "Bestätigt"
 
 #: src/blocks/rsvp-button/render.php:94
 msgid "RSVPs for this event are now closed."
-msgstr ""
+msgstr "RSVPs für diese Veranstaltung sind jetzt geschlossen."
 
 #: src/blocks/rsvp-button/editor.js:46
 msgid "RSVP Settings"
-msgstr ""
+msgstr "RSVP-Einstellungen"
 
 #: src/blocks/rsvp-button/editor.js:64
 msgid "RSVP Deadline"
-msgstr ""
+msgstr "RSVP-Frist"
 
 #: src/blocks/rsvp-button/editor.js:65
 msgid "Set a deadline for RSVPs. After this date, the RSVP form will be closed."
-msgstr ""
+msgstr "Legen Sie eine Frist für RSVPs fest. Nach diesem Datum wird das RSVP-Formular geschlossen."
 
 #: src/blocks/rsvp-button/render.php:193
 msgid "This event is invite-only."
@@ -620,7 +630,7 @@ msgstr "Diese Veranstaltung ist nur auf Einladung."
 msgid "You're invited to this event!"
 msgstr "Sie sind zu dieser Veranstaltung eingeladen!"
 
-#: src/REST/RsvpController.php:684
+#: src/REST/RsvpController.php:743
 msgid "You are not allowed to RSVP to this event."
 msgstr "Sie sind nicht berechtigt, sich für diese Veranstaltung anzumelden."
 
@@ -741,7 +751,7 @@ msgid "Post not found."
 msgstr ""
 
 #: src/Frontend/AttendanceCheckHooks.php:95
-#: src/REST/RsvpController.php:917
+#: src/REST/RsvpController.php:976
 msgid "This post does not have an RSVP block."
 msgstr ""
 
@@ -761,11 +771,11 @@ msgstr ""
 msgid "Event ID to get attendance check for."
 msgstr ""
 
-#: src/REST/RsvpController.php:908
+#: src/REST/RsvpController.php:967
 msgid "The specified post does not exist."
 msgstr ""
 
-#: src/REST/RsvpController.php:1065
+#: src/REST/RsvpController.php:1124
 msgid "You do not have permission to view this attendance check."
 msgstr ""
 
@@ -846,23 +856,23 @@ msgstr ""
 msgid "Submit RSVP"
 msgstr ""
 
-#: src/REST/RsvpController.php:326
+#: src/REST/RsvpController.php:385
 msgid "Unable to determine user for RSVP."
 msgstr ""
 
-#: src/REST/RsvpController.php:656
+#: src/REST/RsvpController.php:715
 msgid "Name and email are required for anonymous RSVP."
 msgstr ""
 
-#: src/REST/RsvpController.php:665
+#: src/REST/RsvpController.php:724
 msgid "Please provide a valid email address."
 msgstr ""
 
-#: src/REST/RsvpController.php:823
+#: src/REST/RsvpController.php:882
 msgid "Name for anonymous RSVP (optional, required if not logged in)."
 msgstr ""
 
-#: src/REST/RsvpController.php:827
+#: src/REST/RsvpController.php:886
 msgid "Email for anonymous RSVP (optional, required if not logged in)."
 msgstr ""
 
@@ -915,59 +925,59 @@ msgstr "RSVP-Status (ja, vielleicht, nein)."
 msgid "Event ID to get invitations for."
 msgstr "Ereignis-ID, für die Einladungen abgerufen werden sollen."
 
-#: src/REST/InvitationController.php:240
+#: src/REST/InvitationController.php:282
 msgid "Failed to create invitation."
 msgstr "Einladung konnte nicht erstellt werden."
 
-#: src/REST/InvitationController.php:252
+#: src/REST/InvitationController.php:294
 #: src/blocks/rsvp-button/frontend.js:490
 msgid "Invitation sent successfully!"
 msgstr "Einladung erfolgreich gesendet!"
 
-#: src/REST/InvitationController.php:277
+#: src/REST/InvitationController.php:319
 msgid "Failed to create invitation link."
 msgstr "Einladungslink konnte nicht erstellt werden."
 
-#: src/REST/InvitationController.php:312
-#: src/REST/InvitationController.php:380
+#: src/REST/InvitationController.php:354
+#: src/REST/InvitationController.php:422
 msgid "Invalid invitation token."
 msgstr "Ungültiger Einladungstoken."
 
-#: src/REST/InvitationController.php:321
-#: src/REST/InvitationController.php:397
+#: src/REST/InvitationController.php:363
+#: src/REST/InvitationController.php:439
 msgid "This invitation has expired."
 msgstr "Diese Einladung ist abgelaufen."
 
-#: src/REST/InvitationController.php:330
-#: src/REST/InvitationController.php:389
+#: src/REST/InvitationController.php:372
+#: src/REST/InvitationController.php:431
 msgid "This invitation has already been used."
 msgstr "Diese Einladung wurde bereits verwendet."
 
 #: src/Database/InvitationRepository.php:257
-#: src/REST/InvitationController.php:355
+#: src/REST/InvitationController.php:397
 msgid "Unknown"
 msgstr "Unbekannt"
 
-#: src/REST/InvitationController.php:410
+#: src/REST/InvitationController.php:452
 msgid "Name and email are required to accept invitation."
 msgstr "Name und E-Mail sind erforderlich, um die Einladung anzunehmen."
 
-#: src/REST/InvitationController.php:450
+#: src/REST/InvitationController.php:492
 msgid "Failed to create RSVP."
 msgstr "RSVP konnte nicht erstellt werden."
 
-#: src/REST/InvitationController.php:461
+#: src/REST/InvitationController.php:503
 msgid "Invitation accepted successfully!"
 msgstr "Einladung erfolgreich angenommen!"
 
 #. translators: 1: Inviter name, 2: Event title
-#: src/REST/InvitationController.php:532
+#: src/REST/InvitationController.php:574
 #, php-format
 msgid "%1$s invited you to %2$s"
 msgstr "%1$s hat Sie zu %2$s eingeladen"
 
 #. translators: 1: Inviter name, 2: Event title, 3: Personal message, 4: Invitation URL, 5: Site name
-#: src/REST/InvitationController.php:536
+#: src/REST/InvitationController.php:578
 #, php-format
 msgid ""
 "Hi,\n"
@@ -981,11 +991,11 @@ msgid ""
 "The %5$s Team"
 msgstr ""
 
-#: src/REST/InvitationController.php:568
+#: src/REST/InvitationController.php:610
 msgid "You must be logged in to send invitations."
 msgstr "Sie müssen angemeldet sein, um Einladungen zu senden."
 
-#: src/REST/InvitationController.php:635
+#: src/REST/InvitationController.php:677
 msgid "You must be logged in to view invitations."
 msgstr "Sie müssen angemeldet sein, um Einladungen anzuzeigen."
 
@@ -1058,7 +1068,7 @@ msgstr "Link generiert! Teilen Sie ihn mit Ihren Freunden."
 
 #: src/blocks/rsvp-button/frontend.js:557
 msgid "Failed to generate link."
-msgstr ""
+msgstr "Fehler beim Generieren des Links."
 
 #: src/blocks/rsvp-button/frontend.js:587
 msgid "You have been invited to this event!"
@@ -1066,116 +1076,127 @@ msgstr "Sie wurden zu dieser Veranstaltung eingeladen!"
 
 #: src/blocks/rsvp-button/frontend.js:602
 msgid "Invalid invitation link."
-msgstr ""
+msgstr "Ungültiger Einladungslink."
 
-#: src/REST/InvitationController.php:607
+#: src/REST/InvitationController.php:649
 msgid "Only expected users can send invitations."
 msgstr "Nur erwartete Benutzer können Einladungen senden."
 
 #: src/Admin/AdminHooks.php:45
 #: src/Admin/AdminHooks.php:46
 #: src/Admin/invitations/InvitationsList.js:95
+#: src/Admin/stats/InvitationStats.js:445
 msgid "Invitations"
-msgstr ""
+msgstr "Einladungen"
 
 #: src/Database/InvitationRepository.php:279
 msgid "Deleted Event"
-msgstr ""
+msgstr "Gelöschte Veranstaltung"
 
 #: src/REST/InvitationController.php:195
+#: src/REST/InvitationController.php:229
+#: src/REST/InvitationController.php:248
 msgid "Filter by event ID."
-msgstr ""
+msgstr "Nach Veranstaltungs-ID filtern."
 
 #: src/REST/InvitationController.php:199
 msgid "Filter by status."
-msgstr ""
+msgstr "Nach Status filtern."
 
 #: src/REST/InvitationController.php:204
 msgid "Page number."
-msgstr ""
+msgstr "Seitennummer."
 
 #: src/REST/InvitationController.php:209
 msgid "Items per page."
-msgstr ""
+msgstr "Elemente pro Seite."
 
 #: src/Admin/invitations/InvitationsList.js:58
 msgid "Failed to load invitations."
-msgstr ""
+msgstr "Fehler beim Laden der Einladungen."
 
+#: src/Admin/AttendanceConfirmationPage.php:102
 #: src/Admin/invitations/InvitationsList.js:73
 #: src/Admin/invitations/InvitationsList.js:109
+#: src/Admin/stats/InvitationStats.js:156
+#: src/Admin/stats/InvitationStats.js:361
+#: src/Admin/stats/InvitationStats.js:392
 msgid "Pending"
-msgstr ""
+msgstr "Ausstehend"
 
+#: src/Admin/AttendanceConfirmationPage.php:101
 #: src/Admin/invitations/InvitationsList.js:74
 #: src/Admin/invitations/InvitationsList.js:113
+#: src/Admin/stats/InvitationStats.js:360
 msgid "Accepted"
-msgstr ""
+msgstr "Akzeptiert"
 
+#: src/Admin/AttendanceConfirmationPage.php:103
 #: src/Admin/invitations/InvitationsList.js:75
 #: src/Admin/invitations/InvitationsList.js:117
+#: src/Admin/stats/InvitationStats.js:362
 msgid "Expired"
-msgstr ""
+msgstr "Abgelaufen"
 
 #: src/Admin/invitations/InvitationsList.js:101
 msgid "Filter by Status"
-msgstr ""
+msgstr "Nach Status filtern"
 
 #: src/Admin/invitations/InvitationsList.js:105
 msgid "All Statuses"
-msgstr ""
+msgstr "Alle Status"
 
 #: src/Admin/invitations/InvitationsList.js:135
 msgid "Loading invitations..."
-msgstr ""
+msgstr "Lade Einladungen..."
 
 #: src/Admin/invitations/InvitationsList.js:140
 msgid "No invitations found."
-msgstr ""
+msgstr "Keine Einladungen gefunden."
 
 #: src/Admin/invitations/InvitationsList.js:152
 msgid "Sent By"
-msgstr ""
+msgstr "Gesendet von"
 
 #: src/Admin/invitations/InvitationsList.js:155
 msgid "Invited Email"
-msgstr ""
+msgstr "Eingeladene E-Mail"
 
 #: src/Admin/invitations/InvitationsList.js:161
 msgid "Invited User"
-msgstr ""
+msgstr "Eingeladener Benutzer"
 
 #: src/Admin/invitations/InvitationsList.js:167
 msgid "Status"
-msgstr ""
+msgstr "Status"
 
 #: src/Admin/invitations/InvitationsList.js:170
 msgid "Created"
-msgstr ""
+msgstr "Erstellt"
 
 #: src/Admin/invitations/InvitationsList.js:173
 msgid "Expires"
-msgstr ""
+msgstr "Läuft ab"
 
 #: src/Admin/invitations/InvitationsList.js:176
 msgid "Used"
-msgstr ""
+msgstr "Verwendet"
 
 #: src/Admin/invitations/InvitationsList.js:261
 msgid "Previous"
-msgstr ""
+msgstr "Vorherige"
 
 #: src/Admin/invitations/InvitationsList.js:264
 msgid "Page"
-msgstr ""
+msgstr "Seite"
 
 #: src/Admin/invitations/InvitationsList.js:265
 msgid "of"
-msgstr ""
+msgstr "von"
 
 #: src/Admin/invitations/InvitationsList.js:272
 msgid "Next"
-msgstr ""
+msgstr "Nächste"
 
 #: src/blocks/rsvp-button/frontend.js:644
 msgid "Please fill out the form below to accept your invitation."
@@ -1214,7 +1235,7 @@ msgstr "Name für RSVP (erforderlich, wenn nicht angemeldet)."
 msgid "Email for RSVP (required if not logged in)."
 msgstr "E-Mail für RSVP (erforderlich, wenn nicht angemeldet)."
 
-#: src/REST/RsvpController.php:794
+#: src/REST/RsvpController.php:853
 msgid "Guest"
 msgstr ""
 
@@ -1226,3 +1247,228 @@ msgstr "Vielen Dank! Ihre Einladung wurde angenommen."
 #: src/blocks/rsvp-button/frontend.js:142
 msgid "Your RSVP has been submitted successfully!"
 msgstr "Ihre RSVP wurde erfolgreich übermittelt!"
+
+#: src/Admin/AdminHooks.php:55
+#: src/Admin/AdminHooks.php:56
+msgid "Stats"
+msgstr "Statistiken"
+
+#: src/Admin/AttendanceConfirmationPage.php:87
+msgid "Invitation Stats for this Event"
+msgstr "Einladungsstatistiken für diese Veranstaltung"
+
+#: src/Admin/AttendanceConfirmationPage.php:88
+msgid "Your Invitation Stats for this Event"
+msgstr "Ihre Einladungsstatistiken für diese Veranstaltung"
+
+#: src/Admin/AttendanceConfirmationPage.php:97
+#: src/Admin/stats/InvitationStats.js:354
+msgid "Inviter"
+msgstr "Einlader"
+
+#: src/Admin/AttendanceConfirmationPage.php:98
+#: src/Admin/stats/InvitationStats.js:248
+#: src/Admin/stats/InvitationStats.js:355
+msgid "Email"
+msgstr "E-Mail"
+
+#: src/Admin/AttendanceConfirmationPage.php:100
+#: src/Admin/stats/InvitationStats.js:359
+msgid "Total Sent"
+msgstr "Gesamt gesendet"
+
+#: src/REST/InvitationController.php:252
+msgid "Filter by inviter user ID."
+msgstr "Nach Einlader-Benutzer-ID filtern."
+
+#: src/REST/InvitationController.php:741
+#: src/REST/RsvpController.php:1202
+msgid "You must be logged in to view stats."
+msgstr "Sie müssen angemeldet sein, um Statistiken anzuzeigen."
+
+#: src/REST/RsvpController.php:328
+msgid "Number of users per category."
+msgstr "Anzahl der Benutzer pro Kategorie."
+
+#: src/Admin/stats/InvitationStats.js:89
+msgid "Failed to load stats."
+msgstr "Fehler beim Laden der Statistiken."
+
+#: src/Admin/stats/InvitationStats.js:104
+msgid "No stats available yet."
+msgstr "Noch keine Statistiken verfügbar."
+
+#: src/Admin/stats/InvitationStats.js:116
+msgid "Events RSVPed"
+msgstr "Bestätigte Veranstaltungen"
+
+#: src/Admin/stats/InvitationStats.js:120
+#: src/Admin/stats/InvitationStats.js:250
+msgid "Yes RSVPs"
+msgstr "Ja-Bestätigungen"
+
+#: src/Admin/stats/InvitationStats.js:124
+#: src/Admin/stats/InvitationStats.js:291
+msgid "Events Attended"
+msgstr "Besuchte Veranstaltungen"
+
+#: src/Admin/stats/InvitationStats.js:128
+#: src/Admin/stats/InvitationStats.js:252
+msgid "Attendance Rate"
+msgstr "Teilnahmequote"
+
+#: src/Admin/stats/InvitationStats.js:132
+#: src/Admin/stats/InvitationStats.js:253
+msgid "Invitations Sent"
+msgstr ""
+
+#: src/Admin/stats/InvitationStats.js:136
+msgid "Invitation Acceptance Rate"
+msgstr "Einladungsannahmequote"
+
+#: src/Admin/stats/InvitationStats.js:140
+msgid "RSVP Breakdown"
+msgstr "RSVP-Aufschlüsselung"
+
+#: src/Admin/stats/InvitationStats.js:145
+#: src/Admin/stats/InvitationStats.js:149
+#: src/Admin/stats/InvitationStats.js:153
+#: src/Admin/stats/InvitationStats.js:157
+msgid "events"
+msgstr "Veranstaltungen"
+
+#: src/Admin/stats/InvitationStats.js:176
+msgid "Active Users"
+msgstr "Aktive Benutzer"
+
+#: src/Admin/stats/InvitationStats.js:180
+#: src/Admin/stats/InvitationStats.js:249
+msgid "Total RSVPs"
+msgstr "Gesamte Bestätigungen"
+
+#: src/Admin/stats/InvitationStats.js:184
+msgid "Total Attendances"
+msgstr "Gesamte Teilnahmen"
+
+#: src/Admin/stats/InvitationStats.js:188
+msgid "Total Invitations Sent"
+msgstr "Gesamte gesendete Einladungen"
+
+#: src/Admin/stats/InvitationStats.js:204
+msgid "No events yet."
+msgstr "Noch keine Veranstaltungen."
+
+#: src/Admin/stats/InvitationStats.js:214
+msgid "Attendance"
+msgstr "Teilnahme"
+
+#: src/Admin/stats/InvitationStats.js:215
+msgid "Type"
+msgstr "Typ"
+
+#: src/Admin/stats/InvitationStats.js:216
+msgid "Invited By"
+msgstr "Eingeladen von"
+
+#: src/Admin/stats/InvitationStats.js:217
+msgid "Date"
+msgstr "Datum"
+
+#: src/Admin/stats/InvitationStats.js:226
+msgid "Invited"
+msgstr "Eingeladen"
+
+#: src/Admin/stats/InvitationStats.js:226
+msgid "Direct"
+msgstr "Direkt"
+
+#: src/Admin/stats/InvitationStats.js:239
+msgid "No user stats available."
+msgstr "Keine Benutzerstatistiken verfügbar."
+
+#: src/Admin/stats/InvitationStats.js:247
+#: src/Admin/stats/InvitationStats.js:290
+#: src/Admin/stats/InvitationStats.js:316
+msgid "User"
+msgstr "Benutzer"
+
+#: src/Admin/stats/InvitationStats.js:251
+msgid "Attended"
+msgstr "Teilgenommen"
+
+#: src/Admin/stats/InvitationStats.js:254
+#: src/Admin/stats/InvitationStats.js:318
+msgid "Acceptance Rate"
+msgstr "Annahmequote"
+
+#: src/Admin/stats/InvitationStats.js:278
+msgid "Leaderboard available for admins only."
+msgstr "Bestenliste nur für Administratoren verfügbar."
+
+#: src/Admin/stats/InvitationStats.js:285
+msgid "Top Attendees"
+msgstr "Top-Teilnehmer"
+
+#: src/Admin/stats/InvitationStats.js:304
+msgid "No data available."
+msgstr "Keine Daten verfügbar."
+
+#: src/Admin/stats/InvitationStats.js:311
+msgid "Top Inviters"
+msgstr "Top-Einlader"
+
+#: src/Admin/stats/InvitationStats.js:317
+msgid "Invites Sent"
+msgstr "Gesendete Einladungen"
+
+#: src/Admin/stats/InvitationStats.js:332
+msgid "No data available. Minimum 5 invitations required."
+msgstr "Keine Daten verfügbar. Mindestens 5 Einladungen erforderlich."
+
+#: src/Admin/stats/InvitationStats.js:344
+msgid "No invitation stats available."
+msgstr "Keine Einladungsstatistiken verfügbar."
+
+#: src/Admin/stats/InvitationStats.js:374
+msgid "Unknown Event"
+msgstr "Unbekannte Veranstaltung"
+
+#: src/Admin/stats/InvitationStats.js:393
+msgid "Cancelled"
+msgstr "Abgesagt"
+
+#: src/Admin/stats/InvitationStats.js:401
+msgid "No Show"
+msgstr "Nicht erschienen"
+
+#: src/Admin/stats/InvitationStats.js:402
+msgid "N/A"
+msgstr "N/V"
+
+#: src/Admin/stats/InvitationStats.js:417
+msgid "Loading stats..."
+msgstr "Lade Statistiken..."
+
+#: src/Admin/stats/InvitationStats.js:425
+msgid "Overview"
+msgstr "Übersicht"
+
+#: src/Admin/stats/InvitationStats.js:430
+msgid "Users"
+msgstr "Benutzer"
+
+#: src/Admin/stats/InvitationStats.js:430
+msgid "My Events"
+msgstr "Meine Veranstaltungen"
+
+#: src/Admin/stats/InvitationStats.js:438
+msgid "Leaderboard"
+msgstr "Bestenliste"
+
+#: src/Admin/stats/InvitationStats.js:454
+msgid "RSVP & Invitation Stats"
+msgstr "RSVP- und Einladungsstatistiken"
+
+#: src/Admin/stats/InvitationStats.js:454
+msgid "My Stats"
+msgstr "Meine Statistiken"
