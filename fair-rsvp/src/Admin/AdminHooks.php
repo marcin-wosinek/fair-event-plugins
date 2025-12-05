@@ -49,11 +49,11 @@ class AdminHooks {
 			array( $this, 'render_invitations_page' )
 		);
 
-		// Submenu page - Invitation Stats.
+		// Submenu page - Stats.
 		add_submenu_page(
 			'fair-rsvp',
-			__( 'Invitation Stats', 'fair-rsvp' ),
-			__( 'Invitation Stats', 'fair-rsvp' ),
+			__( 'Stats', 'fair-rsvp' ),
+			__( 'Stats', 'fair-rsvp' ),
 			'read', // Allow any logged-in user to view their own stats.
 			'fair-rsvp-stats',
 			array( $this, 'render_stats_page' )

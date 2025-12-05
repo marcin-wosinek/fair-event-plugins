@@ -274,6 +274,65 @@ class RsvpController extends WP_REST_Controller {
 				),
 			)
 		);
+
+		// GET /fair-rsvp/v1/rsvps/my-stats - Get current user's RSVP statistics.
+		register_rest_route(
+			$this->namespace,
+			'/rsvps/my-stats',
+			array(
+				array(
+					'methods'             => WP_REST_Server::READABLE,
+					'callback'            => array( $this, 'get_my_rsvp_stats' ),
+					'permission_callback' => array( $this, 'logged_in_permissions_check' ),
+				),
+			)
+		);
+
+		// GET /fair-rsvp/v1/rsvps/my-events - Get current user's event history.
+		register_rest_route(
+			$this->namespace,
+			'/rsvps/my-events',
+			array(
+				array(
+					'methods'             => WP_REST_Server::READABLE,
+					'callback'            => array( $this, 'get_my_events' ),
+					'permission_callback' => array( $this, 'logged_in_permissions_check' ),
+				),
+			)
+		);
+
+		// GET /fair-rsvp/v1/rsvps/user-stats - Admin endpoint for all users' stats.
+		register_rest_route(
+			$this->namespace,
+			'/rsvps/user-stats',
+			array(
+				array(
+					'methods'             => WP_REST_Server::READABLE,
+					'callback'            => array( $this, 'get_user_stats' ),
+					'permission_callback' => array( $this, 'admin_permissions_check' ),
+				),
+			)
+		);
+
+		// GET /fair-rsvp/v1/rsvps/top-users - Admin endpoint for top users leaderboard.
+		register_rest_route(
+			$this->namespace,
+			'/rsvps/top-users',
+			array(
+				array(
+					'methods'             => WP_REST_Server::READABLE,
+					'callback'            => array( $this, 'get_top_users_leaderboard' ),
+					'permission_callback' => array( $this, 'admin_permissions_check' ),
+					'args'                => array(
+						'limit' => array(
+							'description' => __( 'Number of users per category.', 'fair-rsvp' ),
+							'type'        => 'integer',
+							'default'     => 10,
+						),
+					),
+				),
+			)
+		);
 	}
 
 	/**
@@ -1068,5 +1127,92 @@ class RsvpController extends WP_REST_Controller {
 		}
 
 		return true;
+	}
+
+	/**
+	 * Get current user's RSVP statistics
+	 *
+	 * @param WP_REST_Request $request Full data about the request.
+	 * @return WP_REST_Response|WP_Error Response object on success, or WP_Error object on failure.
+	 */
+	public function get_my_rsvp_stats( $request ) {
+		$user_id = get_current_user_id();
+		$stats   = $this->repository->get_user_rsvp_stats( $user_id );
+
+		return new WP_REST_Response(
+			array( 'stats' => $stats ),
+			200
+		);
+	}
+
+	/**
+	 * Get current user's event history
+	 *
+	 * @param WP_REST_Request $request Full data about the request.
+	 * @return WP_REST_Response|WP_Error Response object on success, or WP_Error object on failure.
+	 */
+	public function get_my_events( $request ) {
+		$user_id = get_current_user_id();
+		$events  = $this->repository->get_user_events_history( $user_id );
+
+		return new WP_REST_Response(
+			array( 'events' => $events ),
+			200
+		);
+	}
+
+	/**
+	 * Get all users' RSVP statistics (admin only)
+	 *
+	 * @param WP_REST_Request $request Full data about the request.
+	 * @return WP_REST_Response|WP_Error Response object on success, or WP_Error object on failure.
+	 */
+	public function get_user_stats( $request ) {
+		$stats = $this->repository->get_all_users_stats();
+
+		return new WP_REST_Response(
+			array( 'stats' => $stats ),
+			200
+		);
+	}
+
+	/**
+	 * Get top users leaderboard (admin only)
+	 *
+	 * @param WP_REST_Request $request Full data about the request.
+	 * @return WP_REST_Response|WP_Error Response object on success, or WP_Error object on failure.
+	 */
+	public function get_top_users_leaderboard( $request ) {
+		$limit = $request->get_param( 'limit' ) ?? 10;
+		$data  = $this->repository->get_top_users( $limit );
+
+		return new WP_REST_Response( $data, 200 );
+	}
+
+	/**
+	 * Check if user is logged in
+	 *
+	 * @param WP_REST_Request $request Full data about the request.
+	 * @return bool|WP_Error True if user is logged in, WP_Error otherwise.
+	 */
+	public function logged_in_permissions_check( $request ) {
+		if ( ! is_user_logged_in() ) {
+			return new WP_Error(
+				'rest_forbidden',
+				__( 'You must be logged in to view stats.', 'fair-rsvp' ),
+				array( 'status' => 401 )
+			);
+		}
+		return true;
+	}
+
+	/**
+	 * Check admin permissions
+	 *
+	 * @param WP_REST_Request $request Full data about the request.
+	 * @return bool True if user has admin permissions.
+	 */
+	public function admin_permissions_check( $request ) {
+		return current_user_can( 'manage_options' );
 	}
 }

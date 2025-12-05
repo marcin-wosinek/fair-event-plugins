@@ -515,4 +515,232 @@ class RsvpRepository {
 
 		return $formatted;
 	}
+
+	/**
+	 * Get RSVP statistics for a specific user
+	 *
+	 * @param int $user_id User ID to get stats for.
+	 * @return array Stats including total_rsvps, yes_count, maybe_count, no_count, checked_in_count, attendance_rate.
+	 */
+	public function get_user_rsvp_stats( $user_id ) {
+		global $wpdb;
+
+		$table_name = $this->get_table_name();
+
+		$sql = $wpdb->prepare(
+			"SELECT
+				COUNT(*) as total_rsvps,
+				SUM(CASE WHEN rsvp_status = 'yes' THEN 1 ELSE 0 END) as yes_count,
+				SUM(CASE WHEN rsvp_status = 'maybe' THEN 1 ELSE 0 END) as maybe_count,
+				SUM(CASE WHEN rsvp_status = 'no' THEN 1 ELSE 0 END) as no_count,
+				SUM(CASE WHEN rsvp_status = 'pending' THEN 1 ELSE 0 END) as pending_count,
+				SUM(CASE WHEN attendance_status = 'checked_in' THEN 1 ELSE 0 END) as checked_in_count
+			FROM %i
+			WHERE user_id = %d",
+			$table_name,
+			$user_id
+		);
+
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching,WordPress.DB.PreparedSQL.NotPrepared
+		$result = $wpdb->get_row( $sql, ARRAY_A );
+
+		if ( ! $result ) {
+			return array(
+				'total_rsvps'      => 0,
+				'yes_count'        => 0,
+				'maybe_count'      => 0,
+				'no_count'         => 0,
+				'pending_count'    => 0,
+				'checked_in_count' => 0,
+				'attendance_rate'  => 0,
+			);
+		}
+
+		// Calculate attendance rate.
+		$yes_count                 = (int) $result['yes_count'];
+		$checked_in_count          = (int) $result['checked_in_count'];
+		$result['attendance_rate'] = $yes_count > 0 ? round( ( $checked_in_count / $yes_count ) * 100, 1 ) : 0;
+
+		// Convert string numbers to integers.
+		$result['total_rsvps']      = (int) $result['total_rsvps'];
+		$result['yes_count']        = $yes_count;
+		$result['maybe_count']      = (int) $result['maybe_count'];
+		$result['no_count']         = (int) $result['no_count'];
+		$result['pending_count']    = (int) $result['pending_count'];
+		$result['checked_in_count'] = $checked_in_count;
+
+		return $result;
+	}
+
+	/**
+	 * Get event history for a specific user (RSVPs and invitations)
+	 *
+	 * @param int $user_id User ID to get history for.
+	 * @return array Event history with RSVP and invitation information.
+	 */
+	public function get_user_events_history( $user_id ) {
+		global $wpdb;
+
+		$table_name        = $this->get_table_name();
+		$invitations_table = $wpdb->prefix . 'fair_rsvp_invitations';
+
+		$sql = $wpdb->prepare(
+			"SELECT
+				r.event_id,
+				p.post_title as event_title,
+				r.rsvp_status,
+				r.attendance_status,
+				r.rsvp_at,
+				r.invited_by_user_id,
+				u.display_name as invited_by_name,
+				CASE WHEN i.id IS NOT NULL THEN 1 ELSE 0 END as was_invited
+			FROM %i r
+			LEFT JOIN {$wpdb->posts} p ON r.event_id = p.ID
+			LEFT JOIN {$wpdb->users} u ON r.invited_by_user_id = u.ID
+			LEFT JOIN %i i ON r.invitation_id = i.id
+			WHERE r.user_id = %d
+			ORDER BY r.rsvp_at DESC",
+			$table_name,
+			$invitations_table,
+			$user_id
+		);
+
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching,WordPress.DB.PreparedSQL.NotPrepared
+		$results = $wpdb->get_results( $sql, ARRAY_A );
+
+		return $results ? $results : array();
+	}
+
+	/**
+	 * Get RSVP statistics for all users (admin view)
+	 *
+	 * @return array Array of user stats with RSVP and invitation data.
+	 */
+	public function get_all_users_stats() {
+		global $wpdb;
+
+		$table_name        = $this->get_table_name();
+		$invitations_table = $wpdb->prefix . 'fair_rsvp_invitations';
+
+		$sql = "
+			SELECT
+				u.ID as user_id,
+				u.display_name as user_name,
+				u.user_email,
+				COUNT(DISTINCT r.id) as total_rsvps,
+				SUM(CASE WHEN r.rsvp_status = 'yes' THEN 1 ELSE 0 END) as yes_count,
+				SUM(CASE WHEN r.attendance_status = 'checked_in' THEN 1 ELSE 0 END) as checked_in_count,
+				COUNT(DISTINCT i.id) as invitations_sent,
+				SUM(CASE WHEN i.invitation_status = 'accepted' THEN 1 ELSE 0 END) as invitations_accepted
+			FROM {$wpdb->users} u
+			LEFT JOIN %i r ON u.ID = r.user_id
+			LEFT JOIN %i i ON u.ID = i.inviter_user_id
+			WHERE r.id IS NOT NULL OR i.id IS NOT NULL
+			GROUP BY u.ID, u.display_name, u.user_email
+			HAVING total_rsvps > 0 OR invitations_sent > 0
+			ORDER BY total_rsvps DESC, invitations_sent DESC
+		";
+
+		$prepare_values = array( $table_name, $invitations_table );
+
+		// phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared
+		$prepared_sql = $wpdb->prepare( $sql, ...$prepare_values );
+
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching,WordPress.DB.PreparedSQL.NotPrepared
+		$results = $wpdb->get_results( $prepared_sql, ARRAY_A );
+
+		// Calculate attendance and acceptance rates.
+		foreach ( $results as &$result ) {
+			$yes_count            = (int) $result['yes_count'];
+			$checked_in_count     = (int) $result['checked_in_count'];
+			$invitations_sent     = (int) $result['invitations_sent'];
+			$invitations_accepted = (int) $result['invitations_accepted'];
+
+			$result['attendance_rate'] = $yes_count > 0 ? round( ( $checked_in_count / $yes_count ) * 100, 1 ) : 0;
+			$result['acceptance_rate'] = $invitations_sent > 0 ? round( ( $invitations_accepted / $invitations_sent ) * 100, 1 ) : 0;
+
+			// Convert to integers.
+			$result['user_id']              = (int) $result['user_id'];
+			$result['total_rsvps']          = (int) $result['total_rsvps'];
+			$result['yes_count']            = $yes_count;
+			$result['checked_in_count']     = $checked_in_count;
+			$result['invitations_sent']     = $invitations_sent;
+			$result['invitations_accepted'] = $invitations_accepted;
+		}
+
+		return $results ? $results : array();
+	}
+
+	/**
+	 * Get top users leaderboard (best attendees and inviters)
+	 *
+	 * @param int $limit Number of users to return per category.
+	 * @return array Array with 'top_attendees' and 'top_inviters' keys.
+	 */
+	public function get_top_users( $limit = 10 ) {
+		global $wpdb;
+
+		$table_name        = $this->get_table_name();
+		$invitations_table = $wpdb->prefix . 'fair_rsvp_invitations';
+
+		// Top attendees (most checked-in).
+		$attendees_sql = $wpdb->prepare(
+			"SELECT
+				u.ID as user_id,
+				u.display_name as user_name,
+				u.user_email,
+				COUNT(*) as events_attended
+			FROM {$wpdb->users} u
+			INNER JOIN %i r ON u.ID = r.user_id
+			WHERE r.attendance_status = 'checked_in'
+			GROUP BY u.ID, u.display_name, u.user_email
+			ORDER BY events_attended DESC
+			LIMIT %d",
+			$table_name,
+			$limit
+		);
+
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching,WordPress.DB.PreparedSQL.NotPrepared
+		$top_attendees = $wpdb->get_results( $attendees_sql, ARRAY_A );
+
+		// Top inviters (highest acceptance rate, minimum 5 invitations).
+		$inviters_sql = $wpdb->prepare(
+			"SELECT
+				u.ID as user_id,
+				u.display_name as user_name,
+				u.user_email,
+				COUNT(*) as invitations_sent,
+				SUM(CASE WHEN i.invitation_status = 'accepted' THEN 1 ELSE 0 END) as invitations_accepted
+			FROM {$wpdb->users} u
+			INNER JOIN %i i ON u.ID = i.inviter_user_id
+			GROUP BY u.ID, u.display_name, u.user_email
+			HAVING invitations_sent >= 5
+			ORDER BY (invitations_accepted / invitations_sent) DESC, invitations_sent DESC
+			LIMIT %d",
+			$invitations_table,
+			$limit
+		);
+
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching,WordPress.DB.PreparedSQL.NotPrepared
+		$top_inviters = $wpdb->get_results( $inviters_sql, ARRAY_A );
+
+		// Calculate acceptance rate for inviters.
+		foreach ( $top_inviters as &$inviter ) {
+			$sent                       = (int) $inviter['invitations_sent'];
+			$accepted                   = (int) $inviter['invitations_accepted'];
+			$inviter['acceptance_rate'] = $sent > 0 ? round( ( $accepted / $sent ) * 100, 1 ) : 0;
+			$inviter['user_id']         = (int) $inviter['user_id'];
+		}
+
+		// Format attendees.
+		foreach ( $top_attendees as &$attendee ) {
+			$attendee['user_id']         = (int) $attendee['user_id'];
+			$attendee['events_attended'] = (int) $attendee['events_attended'];
+		}
+
+		return array(
+			'top_attendees' => $top_attendees ? $top_attendees : array(),
+			'top_inviters'  => $top_inviters ? $top_inviters : array(),
+		);
+	}
 }
