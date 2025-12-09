@@ -33,6 +33,7 @@
 		const currency = button.getAttribute('data-currency');
 		const description = button.getAttribute('data-description');
 		const postId = button.getAttribute('data-post-id');
+		const restUrl = button.getAttribute('data-rest-url');
 
 		// Hide error, show loading
 		if (errorEl) {
@@ -44,8 +45,8 @@
 		button.disabled = true;
 
 		try {
-			// Create payment via REST API
-			const response = await fetch('/wp-json/fair-payment/v1/payments', {
+			// Create payment via REST API using the provided REST URL
+			const response = await fetch(restUrl, {
 				method: 'POST',
 				headers: {
 					'Content-Type': 'application/json',

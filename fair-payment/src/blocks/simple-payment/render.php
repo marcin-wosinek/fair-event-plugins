@@ -45,6 +45,7 @@ $block_id = 'fair-payment-' . wp_unique_id();
 				data-currency="<?php echo esc_attr( $currency ); ?>"
 				data-description="<?php echo esc_attr( $description ); ?>"
 				data-post-id="<?php echo esc_attr( $post_id ); ?>"
+				data-rest-url="<?php echo esc_attr( rest_url( 'fair-payment/v1/payments' ) ); ?>"
 			>
 				<?php esc_html_e( 'Pay Now', 'fair-payment' ); ?>
 			</button>

@@ -45,7 +45,7 @@ The integration allows content authors to place payment blocks on pages/posts wh
 
 ### 2. User Initiates Payment
 - User visits the page and clicks "Pay Now" button
-- Frontend JavaScript calls REST API endpoint
+- Frontend JavaScript calls REST API endpoint using the URL from `rest_url()` (automatically handles both pretty permalinks and plain permalinks)
 - System creates transaction record in database
 - Mollie payment is created via API
 - User is redirected to Mollie checkout page
@@ -171,6 +171,17 @@ Then use the ngrok URL in your test environment.
 5. **Webhook Verification**: Payment status verified by fetching from Mollie API
 6. **SQL Injection**: All database queries use prepared statements
 
+## Technical Details
+
+### REST API URL Handling
+
+The plugin automatically detects the WordPress permalink structure and uses the appropriate REST API URL format:
+
+- **Pretty Permalinks**: `https://example.com/wp-json/fair-payment/v1/payments`
+- **Plain Permalinks**: `https://example.com/?rest_route=/fair-payment/v1/payments`
+
+The correct URL is embedded in the button's `data-rest-url` attribute using WordPress's `rest_url()` function, ensuring compatibility with any permalink configuration.
+
 ## Files Created
 
 - `src/Payment/MolliePaymentHandler.php` - Mollie API integration
@@ -178,7 +189,7 @@ Then use the ngrok URL in your test environment.
 - `src/API/WebhookEndpoint.php` - Webhook handler
 - `src/Models/Transaction.php` - Transaction database model
 - `src/Database/Schema.php` - Database schema management
-- `src/blocks/simple-payment/view.js` - Frontend payment button handler
+- `src/blocks/simple-payment/view.js` - Frontend payment button handler (automatically handles permalink formats)
 
 ## Dependencies
 
