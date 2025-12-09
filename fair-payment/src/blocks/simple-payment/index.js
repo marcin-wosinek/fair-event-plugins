@@ -25,7 +25,7 @@ registerBlockType(metadata.name, {
 	 */
 	edit: ({ attributes, setAttributes }) => {
 		const blockProps = useBlockProps();
-		const { amount, currency } = attributes;
+		const { amount, currency, description } = attributes;
 
 		return (
 			<div {...blockProps}>
@@ -35,15 +35,43 @@ registerBlockType(metadata.name, {
 						label={__('Amount', 'fair-payment')}
 						value={amount}
 						onChange={(value) => setAttributes({ amount: value })}
+						type="number"
+						min="0"
+						step="0.01"
 					/>
 					<TextControl
 						label={__('Currency', 'fair-payment')}
 						value={currency}
 						onChange={(value) => setAttributes({ currency: value })}
 					/>
-					<p>
-						{__('Payment:', 'fair-payment')} {amount} {currency}
-					</p>
+					<TextControl
+						label={__('Description (optional)', 'fair-payment')}
+						value={description}
+						onChange={(value) =>
+							setAttributes({ description: value })
+						}
+						help={__(
+							'Optional description for the payment',
+							'fair-payment'
+						)}
+					/>
+					<div
+						style={{
+							marginTop: '20px',
+							padding: '15px',
+							border: '1px solid #ddd',
+							borderRadius: '4px',
+							backgroundColor: '#f9f9f9',
+						}}
+					>
+						<strong>
+							{amount} {currency}
+						</strong>
+						{description && <p>{description}</p>}
+						<button className="wp-element-button" disabled>
+							{__('Pay Now', 'fair-payment')}
+						</button>
+					</div>
 				</div>
 			</div>
 		);

@@ -27,6 +27,9 @@ if ( file_exists( FAIR_PAYMENT_PLUGIN_DIR . 'vendor/autoload.php' ) ) {
 // Initialize the plugin.
 add_action( 'plugins_loaded', 'fair_payment_init' );
 
+// Activation hook.
+register_activation_hook( __FILE__, 'fair_payment_activate' );
+
 /**
  * Initialize Fair Payment plugin
  *
@@ -35,5 +38,16 @@ add_action( 'plugins_loaded', 'fair_payment_init' );
 function fair_payment_init() {
 	if ( class_exists( 'FairPayment\Core\Plugin' ) ) {
 		FairPayment\Core\Plugin::instance()->init();
+	}
+}
+
+/**
+ * Plugin activation callback
+ *
+ * @return void
+ */
+function fair_payment_activate() {
+	if ( class_exists( 'FairPayment\Database\Schema' ) ) {
+		FairPayment\Database\Schema::create_tables();
 	}
 }

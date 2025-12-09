@@ -9,6 +9,7 @@
 	"description": "Simple payment block for WordPress",
 	"textdomain": "fair-payment",
 	"render": "file:./render.php",
+	"viewScript": "file:./view.js",
 	"attributes": {
 		"amount": {
 			"type": "string",
@@ -17,6 +18,10 @@
 		"currency": {
 			"type": "string",
 			"default": "EUR"
+		},
+		"description": {
+			"type": "string",
+			"default": ""
 		}
 	}
 }
