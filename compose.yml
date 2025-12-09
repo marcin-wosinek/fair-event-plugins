@@ -50,6 +50,15 @@ services:
         command: tail -f /dev/null # Keeps container running
         volumes:
             - wordpress:/var/www/html
+            - ./fair-calendar-button:/var/www/html/wp-content/plugins/fair-calendar-button
+            - ./fair-payment:/var/www/html/wp-content/plugins/fair-payment
+            - ./fair-registration:/var/www/html/wp-content/plugins/fair-registration
+            - ./fair-schedule-blocks:/var/www/html/wp-content/plugins/fair-schedule-blocks
+            - ./fair-timetable:/var/www/html/wp-content/plugins/fair-timetable
+            - ./fair-membership:/var/www/html/wp-content/plugins/fair-membership
+            - ./fair-events:/var/www/html/wp-content/plugins/fair-events
+            - ./fair-rsvp:/var/www/html/wp-content/plugins/fair-rsvp
+            - ./fair-user-import:/var/www/html/wp-content/plugins/fair-user-import
         environment:
             WORDPRESS_DB_HOST: db
             WORDPRESS_DB_USER: exampleuser
