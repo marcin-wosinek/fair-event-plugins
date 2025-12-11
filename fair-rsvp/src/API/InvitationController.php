@@ -5,7 +5,7 @@
  * @package FairRsvp
  */
 
-namespace FairRsvp\REST;
+namespace FairRsvp\API;
 
 defined( 'WPINC' ) || die;
 

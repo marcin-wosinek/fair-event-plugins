@@ -7,7 +7,7 @@
 
 namespace FairRegistration\Hooks;
 
-use FairRegistration\Api\Controllers\RegistrationsController;
+use FairRegistration\API\RegistrationsController;
 
 defined( 'WPINC' ) || die;
 

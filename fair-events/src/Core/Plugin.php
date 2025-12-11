@@ -93,8 +93,8 @@ class Plugin {
 	 * @return void
 	 */
 	private function load_rest_api() {
-		new \FairEvents\REST\DateOptionsEndpoint();
-		new \FairEvents\REST\UserGroupOptionsEndpoint();
+		new \FairEvents\API\DateOptionsEndpoint();
+		new \FairEvents\API\UserGroupOptionsEndpoint();
 	}
 
 	/**

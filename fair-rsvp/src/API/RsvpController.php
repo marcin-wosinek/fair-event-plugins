@@ -5,7 +5,7 @@
  * @package FairRsvp
  */
 
-namespace FairRsvp\REST;
+namespace FairRsvp\API;
 
 use FairRsvp\Database\RsvpRepository;
 use WP_REST_Controller;

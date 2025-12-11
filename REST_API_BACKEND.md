@@ -23,6 +23,110 @@ This document defines security standards and best practices for implementing Wor
 
 ---
 
+## File Organization and Project Structure
+
+### Standard Directory Structure
+
+**ALL plugins MUST use this standardized structure:**
+
+```
+fair-plugin-name/
+├── src/
+│   └── API/                           # REST API directory (uppercase "API")
+│       ├── PluginNameController.php   # Main resource controller
+│       └── OtherController.php        # Additional controllers
+```
+
+### Registration Pattern
+
+REST API routes are registered in the plugin's main initialization (typically in `Plugin.php` or similar):
+
+```php
+<?php
+// fair-plugin-name/src/Core/Plugin.php
+
+namespace FairPluginName\Core;
+
+use FairPluginName\API\PluginNameController;
+
+class Plugin {
+    public function __construct() {
+        add_action( 'rest_api_init', array( $this, 'register_api_endpoints' ) );
+    }
+
+    public function register_api_endpoints() {
+        $controller = new PluginNameController();
+        $controller->register_routes();
+    }
+}
+```
+
+### Controller Template
+
+```php
+<?php
+// fair-plugin-name/src/API/PluginNameController.php
+
+namespace FairPluginName\API;
+
+use WP_REST_Controller;
+use WP_REST_Server;
+use WP_REST_Request;
+use WP_REST_Response;
+use WP_Error;
+
+defined( 'WPINC' ) || die;
+
+class PluginNameController extends WP_REST_Controller {
+
+    protected $namespace = 'fair-plugin-name/v1';
+    protected $rest_base = 'items';
+
+    public function register_routes() {
+        register_rest_route(
+            $this->namespace,
+            '/' . $this->rest_base,
+            array(
+                array(
+                    'methods'             => WP_REST_Server::CREATABLE,
+                    'callback'            => array( $this, 'create_item' ),
+                    'permission_callback' => array( $this, 'create_item_permissions_check' ),
+                    'args'                => $this->get_endpoint_args_for_item_schema( WP_REST_Server::CREATABLE ),
+                ),
+            )
+        );
+    }
+
+    public function create_item_permissions_check( $request ) {
+        return is_user_logged_in();
+    }
+
+    public function create_item( $request ) {
+        // Implementation
+    }
+}
+```
+
+### Why `src/API/` (uppercase)?
+
+1. **Case sensitivity**: Linux (production) is case-sensitive, macOS (development) is not. Uppercase "API" is a common acronym convention that avoids confusion
+2. **Consistency**: Matches other namespace patterns in WordPress ecosystem
+3. **PSR-4 Autoloading**: Clear mapping between namespace `PluginName\API` and directory `src/API/`
+4. **Existing adoption**: Already used by fair-payment, fair-membership, fair-user-import
+
+### Current Plugin Status
+
+| Plugin | Directory | Status |
+|--------|-----------|--------|
+| fair-payment | `src/API/` | ✅ Compliant |
+| fair-membership | `src/API/` | ✅ Compliant |
+| fair-user-import | `src/API/` | ✅ Compliant |
+| fair-registration | `src/API/` | ✅ Compliant |
+| fair-rsvp | `src/API/` | ✅ Compliant |
+| fair-events | `src/API/` | ✅ Compliant |
+
+---
+
 ## Required Standards for All REST API Endpoints
 
 ### 1. MUST Verify WordPress REST API Nonce

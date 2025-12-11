@@ -5,7 +5,7 @@
  * @package FairEvents
  */
 
-namespace FairEvents\REST;
+namespace FairEvents\API;
 
 defined( 'WPINC' ) || die;
 

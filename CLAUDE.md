@@ -272,12 +272,54 @@ const data = await apiFetch({
 
 See [REST_API_BACKEND.md](./REST_API_BACKEND.md) for complete security standards and templates.
 
+### Standard Directory Structure
+
+**ALL plugins MUST use `src/API/` (uppercase "API") for REST API controllers:**
+
+```
+fair-plugin-name/
+├── src/
+│   └── API/                           # REST API directory (uppercase "API")
+│       ├── PluginNameController.php   # Main resource controller
+│       └── OtherController.php        # Additional controllers
+```
+
+**Why uppercase "API"?**
+- Case sensitivity: Linux (production) is case-sensitive, macOS (development) is not
+- PSR-4 autoloading: Clear mapping between namespace `PluginName\API` and directory `src/API/`
+- Common convention: Uppercase acronyms in namespaces
+
+**Registration pattern:**
+
+```php
+<?php
+// In src/Core/Plugin.php
+
+namespace FairPluginName\Core;
+
+use FairPluginName\API\PluginNameController;
+
+class Plugin {
+    public function __construct() {
+        add_action( 'rest_api_init', array( $this, 'register_api_endpoints' ) );
+    }
+
+    public function register_api_endpoints() {
+        $controller = new PluginNameController();
+        $controller->register_routes();
+    }
+}
+```
+
+See [REST_API_BACKEND.md#file-organization-and-project-structure](./REST_API_BACKEND.md#file-organization-and-project-structure) for complete templates.
+
 ### Implementation Checklist
 
 When adding a new REST API integration:
 
 1. **Backend (PHP)** - See [REST_API_BACKEND.md](./REST_API_BACKEND.md):
-   - [ ] Create REST endpoint class extending `WP_REST_Controller`
+   - [ ] Create controller in `src/API/` directory (uppercase "API")
+   - [ ] Extend `WP_REST_Controller` base class
    - [ ] Register routes in `rest_api_init` hook
    - [ ] **CRITICAL**: Add proper permission callbacks (NEVER `__return_true` for authenticated endpoints)
    - [ ] Validate and sanitize all inputs
