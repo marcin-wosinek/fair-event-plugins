@@ -1,0 +1,18 @@
+# WordPress.org SVN repository directories
+# These are copies of released versions and should not be formatted
+**/svn/
+**/svn/**
+
+# Build directories
+**/build/
+**/dist/
+
+# Dependencies
+**/node_modules/
+**/vendor/
+
+# WordPress core
+**/wordpress/
+
+# Logs
+*.log

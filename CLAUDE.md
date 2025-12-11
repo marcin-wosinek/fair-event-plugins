@@ -29,6 +29,15 @@ vendor/bin/phpcs        # Run PHP code sniffer (if configured)
 ### Code Quality Reminder
 **IMPORTANT**: Always run `npm run format` after making any code changes to ensure consistent formatting across the codebase.
 
+### Code Formatter Ignore Patterns
+The following directories are automatically excluded from code formatting:
+- `**/svn/` - WordPress.org SVN repository copies (managed by `.prettierignore` and `phpcs.xml`)
+- `**/build/` - Built assets
+- `**/vendor/` - PHP dependencies
+- `**/node_modules/` - JavaScript dependencies
+
+These ignore patterns ensure that only source files are formatted, not generated files or SVN copies.
+
 ## Architecture
 
 ### PHP Architecture
