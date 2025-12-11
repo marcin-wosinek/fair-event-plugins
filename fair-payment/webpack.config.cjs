@@ -8,6 +8,7 @@ const entries = {};
 // Block entries
 const blockEntries = {
 	'blocks/simple-payment/index': 'src/blocks/simple-payment/index.js',
+	'blocks/simple-payment/view': 'src/blocks/simple-payment/view.js',
 };
 
 // Admin entries

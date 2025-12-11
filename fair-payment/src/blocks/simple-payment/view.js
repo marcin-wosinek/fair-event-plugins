@@ -4,6 +4,8 @@
  * @package FairPayment
  */
 
+import apiFetch from '@wordpress/api-fetch';
+
 (function () {
 	'use strict';
 
@@ -33,7 +35,6 @@
 		const currency = button.getAttribute('data-currency');
 		const description = button.getAttribute('data-description');
 		const postId = button.getAttribute('data-post-id');
-		const restUrl = button.getAttribute('data-rest-url');
 
 		// Hide error, show loading
 		if (errorEl) {
@@ -45,25 +46,17 @@
 		button.disabled = true;
 
 		try {
-			// Create payment via REST API using the provided REST URL
-			const response = await fetch(restUrl, {
+			// Create payment via REST API using WordPress apiFetch
+			const data = await apiFetch({
+				path: '/fair-payment/v1/payments',
 				method: 'POST',
-				headers: {
-					'Content-Type': 'application/json',
-				},
-				body: JSON.stringify({
+				data: {
 					amount: amount,
 					currency: currency,
 					description: description,
 					post_id: postId,
-				}),
+				},
 			});
-
-			const data = await response.json();
-
-			if (!response.ok || !data.success) {
-				throw new Error(data.message || 'Failed to create payment');
-			}
 
 			// Redirect to Mollie checkout
 			if (data.checkout_url) {
@@ -74,7 +67,12 @@
 		} catch (error) {
 			// Show error message
 			if (errorEl) {
-				errorEl.textContent = error.message;
+				// apiFetch errors may have a message property directly or nested in data
+				const errorMessage =
+					error.message ||
+					(error.data && error.data.message) ||
+					'Failed to create payment';
+				errorEl.textContent = errorMessage;
 				errorEl.style.display = 'block';
 			}
 			if (loadingEl) {

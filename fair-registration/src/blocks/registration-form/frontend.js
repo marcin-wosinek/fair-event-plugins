@@ -144,7 +144,7 @@ import apiFetch from '@wordpress/api-fetch';
 
 		// Submit to API using WordPress apiFetch
 		apiFetch({
-			path: 'fair-registration/v1/registrations',
+			path: '/fair-registration/v1/registrations',
 			method: 'POST',
 			data: {
 				form_id: parseInt(formId),

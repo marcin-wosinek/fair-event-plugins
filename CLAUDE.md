@@ -206,4 +206,66 @@ When using `viewScript` in block.json for frontend JavaScript, WordPress loads s
 **When to use**: All `viewScript` files that need to manipulate the DOM or attach event handlers to block elements.
 
 **Example**: See `fair-rsvp/src/blocks/rsvp-button/frontend.js`
+
+## WordPress REST API Integration
+
+**IMPORTANT**: When implementing WordPress REST API functionality, you MUST follow the guidelines documented in [REST_API_USAGE.md](./REST_API_USAGE.md).
+
+### Quick Reference
+
+**Always use `apiFetch()` for WordPress REST APIs:**
+
+```javascript
+import apiFetch from '@wordpress/api-fetch';
+
+// Use hardcoded paths - they are preferred
+const data = await apiFetch({
+    path: '/plugin-name/v1/endpoint',
+    method: 'POST',
+    data: { key: 'value' },
+});
+```
+
+**Key Requirements:**
+- ✅ Use `@wordpress/api-fetch` for all WordPress REST API calls
+- ✅ Use hardcoded paths (e.g., `/fair-payment/v1/payments`)
+- ✅ Always start paths with `/`
+- ✅ Add viewScript to webpack config entries
+- ✅ Register blocks from `build/` directory, not `src/`
+- ❌ Never use raw `fetch()` for WordPress REST APIs
+- ❌ Never use dynamic URL construction with `rest_url()`
+
+**Complete Documentation:**
+- Implementation patterns: See [REST_API_USAGE.md#best-practices](./REST_API_USAGE.md#best-practices-for-wordpress-rest-api-calls)
+- Testing strategy: See [REST_API_USAGE.md#testing-strategy](./REST_API_USAGE.md#testing-strategy-for-rest-api-calls)
+- Error handling: See [REST_API_USAGE.md#error-handling](./REST_API_USAGE.md#best-practices-for-wordpress-rest-api-calls)
+
+### Implementation Checklist
+
+When adding a new REST API integration:
+
+1. **Backend (PHP)**:
+   - [ ] Create REST endpoint class extending `WP_REST_Controller`
+   - [ ] Register routes in `rest_api_init` hook
+   - [ ] Add proper permission callbacks
+   - [ ] Validate and sanitize inputs
+
+2. **Frontend (JavaScript)**:
+   - [ ] Import `apiFetch` from `@wordpress/api-fetch`
+   - [ ] Use hardcoded path starting with `/`
+   - [ ] Add to webpack config if viewScript
+   - [ ] Handle errors with nested message extraction
+   - [ ] Show loading states during requests
+
+3. **Testing** (see REST_API_USAGE.md for details):
+   - [ ] PHP integration tests for endpoints
+   - [ ] Frontend unit tests for error handling
+   - [ ] E2E tests for critical flows (optional)
+
+**Why apiFetch()?**
+- Automatically handles pretty vs plain permalinks
+- Includes WordPress nonce authentication
+- Standardized error handling
+- No manual URL construction needed
+
 - Make sure to pay attention to case in file & folder names. I'm programming on MacOs (that is case insensitive), but I'm building at Linux (case sensitive system)
