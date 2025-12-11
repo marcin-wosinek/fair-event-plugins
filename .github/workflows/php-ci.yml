@@ -61,7 +61,7 @@ jobs:
 
             - name: Install WP-CLI dist-archive command
               run: |
-                  wp package install wp-cli/dist-archive-command:@stable
+                  wp package install git@github.com:wp-cli/dist-archive-command.git
 
             - name: Install regular PHP dependencies in all plugins
               run: npm run composer:install:prod

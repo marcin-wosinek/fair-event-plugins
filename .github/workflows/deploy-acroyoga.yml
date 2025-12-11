@@ -60,7 +60,7 @@ jobs:
                   sudo mv wp-cli.phar /usr/local/bin/wp
 
                   # Install dist-archive command
-                  wp package install wp-cli/dist-archive-command:@stable
+                  wp package install git@github.com:wp-cli/dist-archive-command.git
 
                   # Install production PHP dependencies
                   npm run composer:install:prod
