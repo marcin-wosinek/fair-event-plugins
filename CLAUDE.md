@@ -31,7 +31,7 @@ vendor/bin/phpcs        # Run PHP code sniffer (if configured)
 
 ### Code Formatter Ignore Patterns
 The following directories are automatically excluded from code formatting:
-- `**/svn/` - WordPress.org SVN repository copies (managed by `.prettierignore` and `phpcs.xml`)
+- `**/svn/` - WordPress.org SVN repository copies (excluded in `phpcs.xml`)
 - `**/build/` - Built assets
 - `**/vendor/` - PHP dependencies
 - `**/node_modules/` - JavaScript dependencies
