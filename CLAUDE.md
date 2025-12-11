@@ -218,9 +218,11 @@ When using `viewScript` in block.json for frontend JavaScript, WordPress loads s
 
 ## WordPress REST API Integration
 
-**IMPORTANT**: When implementing WordPress REST API functionality, you MUST follow the guidelines documented in [REST_API_USAGE.md](./REST_API_USAGE.md).
+**IMPORTANT**: When implementing WordPress REST API functionality, you MUST follow the guidelines documented in:
+- **Frontend**: [REST_API_USAGE.md](./REST_API_USAGE.md) - JavaScript/Frontend implementation
+- **Backend**: [REST_API_BACKEND.md](./REST_API_BACKEND.md) - PHP/Security standards ⚠️ **CRITICAL**
 
-### Quick Reference
+### Quick Reference - Frontend
 
 **Always use `apiFetch()` for WordPress REST APIs:**
 
@@ -249,17 +251,39 @@ const data = await apiFetch({
 - Testing strategy: See [REST_API_USAGE.md#testing-strategy](./REST_API_USAGE.md#testing-strategy-for-rest-api-calls)
 - Error handling: See [REST_API_USAGE.md#error-handling](./REST_API_USAGE.md#best-practices-for-wordpress-rest-api-calls)
 
+### Quick Reference - Backend (PHP)
+
+**NEVER use `__return_true` for authenticated endpoints:**
+
+```php
+// ❌ WRONG - Security vulnerability
+'permission_callback' => '__return_true'
+
+// ✅ CORRECT - Require logged in user
+'permission_callback' => 'is_user_logged_in'
+
+// ✅ CORRECT - Require admin capability
+'permission_callback' => function() {
+    return current_user_can( 'manage_options' );
+}
+```
+
+**Always extend `WP_REST_Controller`** and implement proper permission callbacks.
+
+See [REST_API_BACKEND.md](./REST_API_BACKEND.md) for complete security standards and templates.
+
 ### Implementation Checklist
 
 When adding a new REST API integration:
 
-1. **Backend (PHP)**:
+1. **Backend (PHP)** - See [REST_API_BACKEND.md](./REST_API_BACKEND.md):
    - [ ] Create REST endpoint class extending `WP_REST_Controller`
    - [ ] Register routes in `rest_api_init` hook
-   - [ ] Add proper permission callbacks
-   - [ ] Validate and sanitize inputs
+   - [ ] **CRITICAL**: Add proper permission callbacks (NEVER `__return_true` for authenticated endpoints)
+   - [ ] Validate and sanitize all inputs
+   - [ ] Return proper HTTP status codes (401, 403, 404, 500)
 
-2. **Frontend (JavaScript)**:
+2. **Frontend (JavaScript)** - See [REST_API_USAGE.md](./REST_API_USAGE.md):
    - [ ] Import `apiFetch` from `@wordpress/api-fetch`
    - [ ] Use hardcoded path starting with `/`
    - [ ] Add to webpack config if viewScript

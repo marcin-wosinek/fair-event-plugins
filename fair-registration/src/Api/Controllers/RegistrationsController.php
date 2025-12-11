@@ -202,8 +202,10 @@ class RegistrationsController extends WP_REST_Controller {
 	 * @return bool|WP_Error True if the request has access, WP_Error object otherwise.
 	 */
 	public function create_registration_permissions_check( $request ) {
-		// Allow anyone to create registrations (public endpoint)
-		// In production, you might want to add nonce verification or other security measures
+		// Public endpoint - allows anonymous registrations
+		// Nonce verification is automatically handled by WordPress REST API when using apiFetch()
+		// Frontend MUST use apiFetch() from @wordpress/api-fetch for nonce to be sent
+		// See: REST_API_BACKEND.md for security details
 		return true;
 	}
 
