@@ -11,6 +11,7 @@ defined( 'WPINC' ) || die;
 
 use FairRsvp\Database\InvitationRepository;
 use FairRsvp\Database\RsvpRepository;
+use WP_REST_Controller;
 use WP_REST_Server;
 use WP_REST_Request;
 use WP_REST_Response;
@@ -19,14 +20,14 @@ use WP_Error;
 /**
  * Handles invitation REST API endpoints
  */
-class InvitationController {
+class InvitationController extends WP_REST_Controller {
 
 	/**
-	 * Namespace for REST routes
+	 * Namespace for the REST API
 	 *
 	 * @var string
 	 */
-	private $namespace = 'fair-rsvp/v1';
+	protected $namespace = 'fair-rsvp/v1';
 
 	/**
 	 * Invitation repository instance

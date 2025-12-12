@@ -9,6 +9,8 @@ namespace FairPayment\API;
 
 use FairPayment\Payment\MolliePaymentHandler;
 use FairPayment\Models\Transaction;
+use WP_REST_Controller;
+use WP_REST_Server;
 use WP_REST_Request;
 use WP_REST_Response;
 use WP_Error;
@@ -18,7 +20,22 @@ defined( 'WPINC' ) || die;
 /**
  * Class for handling payment REST API endpoints
  */
-class PaymentEndpoint {
+class PaymentEndpoint extends WP_REST_Controller {
+
+	/**
+	 * Namespace for the REST API
+	 *
+	 * @var string
+	 */
+	protected $namespace = 'fair-payment/v1';
+
+	/**
+	 * Resource name
+	 *
+	 * @var string
+	 */
+	protected $rest_base = 'payments';
+
 	/**
 	 * Register REST API routes
 	 *
@@ -26,34 +43,36 @@ class PaymentEndpoint {
 	 */
 	public function register_routes() {
 		register_rest_route(
-			'fair-payment/v1',
-			'/payments',
+			$this->namespace,
+			'/' . $this->rest_base,
 			array(
-				'methods'             => 'POST',
-				'callback'            => array( $this, 'create_payment' ),
-				'permission_callback' => '__return_true',
-				'args'                => array(
-					'amount'      => array(
-						'required'          => true,
-						'type'              => 'string',
-						'sanitize_callback' => 'sanitize_text_field',
-					),
-					'currency'    => array(
-						'required'          => false,
-						'type'              => 'string',
-						'default'           => 'EUR',
-						'sanitize_callback' => 'sanitize_text_field',
-					),
-					'description' => array(
-						'required'          => false,
-						'type'              => 'string',
-						'default'           => '',
-						'sanitize_callback' => 'sanitize_text_field',
-					),
-					'post_id'     => array(
-						'required'          => false,
-						'type'              => 'integer',
-						'sanitize_callback' => 'absint',
+				array(
+					'methods'             => WP_REST_Server::CREATABLE,
+					'callback'            => array( $this, 'create_payment' ),
+					'permission_callback' => '__return_true',
+					'args'                => array(
+						'amount'      => array(
+							'required'          => true,
+							'type'              => 'string',
+							'sanitize_callback' => 'sanitize_text_field',
+						),
+						'currency'    => array(
+							'required'          => false,
+							'type'              => 'string',
+							'default'           => 'EUR',
+							'sanitize_callback' => 'sanitize_text_field',
+						),
+						'description' => array(
+							'required'          => false,
+							'type'              => 'string',
+							'default'           => '',
+							'sanitize_callback' => 'sanitize_text_field',
+						),
+						'post_id'     => array(
+							'required'          => false,
+							'type'              => 'integer',
+							'sanitize_callback' => 'absint',
+						),
 					),
 				),
 			)

@@ -7,17 +7,22 @@
 
 namespace FairUserImport\API;
 
+use WP_REST_Controller;
+use WP_REST_Server;
+
 defined( 'WPINC' ) || die;
 
 /**
  * REST API class
  */
-class RestAPI {
+class RestAPI extends WP_REST_Controller {
 
 	/**
-	 * API namespace
+	 * Namespace for the REST API
+	 *
+	 * @var string
 	 */
-	const NAMESPACE = 'fair-user-import/v1';
+	protected $namespace = 'fair-user-import/v1';
 
 	/**
 	 * Constructor - registers REST API routes
@@ -34,27 +39,31 @@ class RestAPI {
 	public function register_routes() {
 		// Upload CSV for import
 		register_rest_route(
-			self::NAMESPACE,
+			$this->namespace,
 			'/import-users/upload',
 			array(
-				'methods'             => 'POST',
-				'callback'            => array( $this, 'upload_import_csv' ),
-				'permission_callback' => array( $this, 'check_permission' ),
+				array(
+					'methods'             => WP_REST_Server::CREATABLE,
+					'callback'            => array( $this, 'upload_import_csv' ),
+					'permission_callback' => array( $this, 'check_permission' ),
+				),
 			)
 		);
 
 		// Validate users for import
 		register_rest_route(
-			self::NAMESPACE,
+			$this->namespace,
 			'/import-users/validate',
 			array(
-				'methods'             => 'POST',
-				'callback'            => array( $this, 'validate_import_users' ),
-				'permission_callback' => array( $this, 'check_permission' ),
-				'args'                => array(
-					'users' => array(
-						'required' => true,
-						'type'     => 'array',
+				array(
+					'methods'             => WP_REST_Server::CREATABLE,
+					'callback'            => array( $this, 'validate_import_users' ),
+					'permission_callback' => array( $this, 'check_permission' ),
+					'args'                => array(
+						'users' => array(
+							'required' => true,
+							'type'     => 'array',
+						),
 					),
 				),
 			)
@@ -62,21 +71,23 @@ class RestAPI {
 
 		// Execute user import
 		register_rest_route(
-			self::NAMESPACE,
+			$this->namespace,
 			'/import-users/execute',
 			array(
-				'methods'             => 'POST',
-				'callback'            => array( $this, 'execute_import_users' ),
-				'permission_callback' => array( $this, 'check_permission' ),
-				'args'                => array(
-					'users'     => array(
-						'required' => true,
-						'type'     => 'array',
-					),
-					'group_ids' => array(
-						'required' => false,
-						'type'     => 'array',
-						'default'  => array(),
+				array(
+					'methods'             => WP_REST_Server::CREATABLE,
+					'callback'            => array( $this, 'execute_import_users' ),
+					'permission_callback' => array( $this, 'check_permission' ),
+					'args'                => array(
+						'users'     => array(
+							'required' => true,
+							'type'     => 'array',
+						),
+						'group_ids' => array(
+							'required' => false,
+							'type'     => 'array',
+							'default'  => array(),
+						),
 					),
 				),
 			)

@@ -7,12 +7,29 @@
 
 namespace FairEvents\API;
 
+use WP_REST_Controller;
+use WP_REST_Server;
+
 defined( 'WPINC' ) || die;
 
 /**
  * Handles REST API endpoint for retrieving dynamic date options
  */
-class DateOptionsEndpoint {
+class DateOptionsEndpoint extends WP_REST_Controller {
+
+	/**
+	 * Namespace for the REST API
+	 *
+	 * @var string
+	 */
+	protected $namespace = 'fair-events/v1';
+
+	/**
+	 * Resource name
+	 *
+	 * @var string
+	 */
+	protected $rest_base = 'date-options';
 
 	/**
 	 * Constructor - registers REST routes
@@ -28,15 +45,17 @@ class DateOptionsEndpoint {
 	 */
 	public function register_routes() {
 		register_rest_route(
-			'fair-events/v1',
-			'/date-options',
+			$this->namespace,
+			'/' . $this->rest_base,
 			array(
-				'methods'             => 'GET',
-				'callback'            => array( $this, 'get_date_options' ),
-				'permission_callback' => function () {
-					// Allow any logged-in user with edit_posts capability to access this
-					return current_user_can( 'edit_posts' );
-				},
+				array(
+					'methods'             => WP_REST_Server::READABLE,
+					'callback'            => array( $this, 'get_date_options' ),
+					'permission_callback' => function () {
+						// Allow any logged-in user with edit_posts capability to access this
+						return current_user_can( 'edit_posts' );
+					},
+				),
 			)
 		);
 	}

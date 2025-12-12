@@ -7,12 +7,29 @@
 
 namespace FairEvents\API;
 
+use WP_REST_Controller;
+use WP_REST_Server;
+
 defined( 'WPINC' ) || die;
 
 /**
  * Handles REST API endpoint for retrieving dynamic user group options
  */
-class UserGroupOptionsEndpoint {
+class UserGroupOptionsEndpoint extends WP_REST_Controller {
+
+	/**
+	 * Namespace for the REST API
+	 *
+	 * @var string
+	 */
+	protected $namespace = 'fair-events/v1';
+
+	/**
+	 * Resource name
+	 *
+	 * @var string
+	 */
+	protected $rest_base = 'user-group-options';
 
 	/**
 	 * Constructor - registers REST routes
@@ -28,15 +45,17 @@ class UserGroupOptionsEndpoint {
 	 */
 	public function register_routes() {
 		register_rest_route(
-			'fair-events/v1',
-			'/user-group-options',
+			$this->namespace,
+			'/' . $this->rest_base,
 			array(
-				'methods'             => 'GET',
-				'callback'            => array( $this, 'get_user_group_options' ),
-				'permission_callback' => function () {
-					// Allow any logged-in user with edit_posts capability to access this.
-					return current_user_can( 'edit_posts' );
-				},
+				array(
+					'methods'             => WP_REST_Server::READABLE,
+					'callback'            => array( $this, 'get_user_group_options' ),
+					'permission_callback' => function () {
+						// Allow any logged-in user with edit_posts capability to access this.
+						return current_user_can( 'edit_posts' );
+					},
+				),
 			)
 		);
 	}

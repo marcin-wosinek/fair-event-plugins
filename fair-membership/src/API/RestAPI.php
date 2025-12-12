@@ -9,18 +9,22 @@ namespace FairMembership\API;
 
 use FairMembership\Models\Group;
 use FairMembership\Models\Membership;
+use WP_REST_Controller;
+use WP_REST_Server;
 
 defined( 'WPINC' ) || die;
 
 /**
  * REST API class
  */
-class RestAPI {
+class RestAPI extends WP_REST_Controller {
 
 	/**
-	 * API namespace
+	 * Namespace for the REST API
+	 *
+	 * @var string
 	 */
-	const NAMESPACE = 'fair-membership/v1';
+	protected $namespace = 'fair-membership/v1';
 
 	/**
 	 * Constructor - registers REST API routes
@@ -37,55 +41,61 @@ class RestAPI {
 	public function register_routes() {
 		// Get all groups
 		register_rest_route(
-			self::NAMESPACE,
+			$this->namespace,
 			'/groups',
 			array(
-				'methods'             => 'GET',
-				'callback'            => array( $this, 'get_groups' ),
-				'permission_callback' => array( $this, 'check_permission' ),
+				array(
+					'methods'             => WP_REST_Server::READABLE,
+					'callback'            => array( $this, 'get_groups' ),
+					'permission_callback' => array( $this, 'check_permission' ),
+				),
 			)
 		);
 
 		// Get users with memberships
 		register_rest_route(
-			self::NAMESPACE,
+			$this->namespace,
 			'/users-with-memberships',
 			array(
-				'methods'             => 'GET',
-				'callback'            => array( $this, 'get_users_with_memberships' ),
-				'permission_callback' => array( $this, 'check_permission' ),
+				array(
+					'methods'             => WP_REST_Server::READABLE,
+					'callback'            => array( $this, 'get_users_with_memberships' ),
+					'permission_callback' => array( $this, 'check_permission' ),
+				),
 			)
 		);
 
 		// Update membership
 		register_rest_route(
-			self::NAMESPACE,
+			$this->namespace,
 			'/membership',
 			array(
-				'methods'             => 'POST',
-				'callback'            => array( $this, 'update_membership' ),
-				'permission_callback' => array( $this, 'check_permission' ),
-				'args'                => array(
-					'user_id'  => array(
-						'required'          => true,
-						'type'              => 'integer',
-						'validate_callback' => function ( $param ) {
-							return is_numeric( $param );
-						},
-					),
-					'group_id' => array(
-						'required'          => true,
-						'type'              => 'integer',
-						'validate_callback' => function ( $param ) {
-							return is_numeric( $param );
-						},
-					),
-					'status'   => array(
-						'required'          => true,
-						'type'              => 'string',
-						'validate_callback' => function ( $param ) {
-							return in_array( $param, array( 'active', 'inactive' ), true );
-						},
+				array(
+					'methods'             => WP_REST_Server::CREATABLE,
+					'callback'            => array( $this, 'update_membership' ),
+					'permission_callback' => array( $this, 'check_permission' ),
+					'args'                => array(
+						'user_id'  => array(
+							'required'          => true,
+							'type'              => 'integer',
+							'validate_callback' => function ( $param ) {
+								return is_numeric( $param );
+							},
+						),
+						'group_id' => array(
+							'required'          => true,
+							'type'              => 'integer',
+							'validate_callback' => function ( $param ) {
+								return is_numeric( $param );
+							},
+						),
+						'status'   => array(
+							'required'          => true,
+							'type'              => 'string',
+							'validate_callback' => function ( $param ) {
+								return in_array( $param, array( 'active', 'inactive' ), true );
+							},
+						),
 					),
 				),
 			)

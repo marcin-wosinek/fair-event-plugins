@@ -15,11 +15,20 @@ This document defines security standards and best practices for implementing Wor
 | fair-registration | `/registrations` | `return true` - Open endpoint with TODO comment about nonce | 🟡 **TODO** |
 | **ALL plugins** | All endpoints | **Nonce verification handled automatically by WordPress when using `apiFetch()`** | ✅ **OK** |
 
+### WP_REST_Controller Compliance
+
+✅ **ALL plugins**: All REST API controllers now extend `WP_REST_Controller`
+✅ **ALL plugins**: Use `WP_REST_Server` constants (READABLE, CREATABLE, EDITABLE, DELETABLE)
+✅ **ALL plugins**: Use protected `$namespace` property instead of constants
+✅ **ALL plugins**: Follow WordPress REST API best practices
+
 ### Good Patterns Found
 
 ✅ **fair-rsvp**: Uses `WP_REST_Controller` base class with custom permission callbacks
 ✅ **fair-membership**: Consistent `check_permission()` method checking `manage_options`
 ✅ **fair-rsvp**: Checks `is_user_logged_in()` for user-specific endpoints
+✅ **fair-registration**: Full implementation of collection and resource patterns
+✅ **fair-payment**: Proper separation of Payment and Webhook endpoints
 
 ---
 

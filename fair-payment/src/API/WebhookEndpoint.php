@@ -9,6 +9,8 @@ namespace FairPayment\API;
 
 use FairPayment\Payment\MolliePaymentHandler;
 use FairPayment\Models\Transaction;
+use WP_REST_Controller;
+use WP_REST_Server;
 use WP_REST_Request;
 use WP_REST_Response;
 use WP_Error;
@@ -18,7 +20,22 @@ defined( 'WPINC' ) || die;
 /**
  * Class for handling webhook notifications from Mollie
  */
-class WebhookEndpoint {
+class WebhookEndpoint extends WP_REST_Controller {
+
+	/**
+	 * Namespace for the REST API
+	 *
+	 * @var string
+	 */
+	protected $namespace = 'fair-payment/v1';
+
+	/**
+	 * Resource name
+	 *
+	 * @var string
+	 */
+	protected $rest_base = 'webhook';
+
 	/**
 	 * Register REST API routes
 	 *
@@ -26,12 +43,14 @@ class WebhookEndpoint {
 	 */
 	public function register_routes() {
 		register_rest_route(
-			'fair-payment/v1',
-			'/webhook',
+			$this->namespace,
+			'/' . $this->rest_base,
 			array(
-				'methods'             => 'POST',
-				'callback'            => array( $this, 'handle_webhook' ),
-				'permission_callback' => '__return_true',
+				array(
+					'methods'             => WP_REST_Server::CREATABLE,
+					'callback'            => array( $this, 'handle_webhook' ),
+					'permission_callback' => '__return_true',
+				),
 			)
 		);
 	}
