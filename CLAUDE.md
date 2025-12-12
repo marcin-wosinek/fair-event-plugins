@@ -363,3 +363,30 @@ When adding a new REST API integration:
 - No manual URL construction needed
 
 - Make sure to pay attention to case in file & folder names. I'm programming on MacOs (that is case insensitive), but I'm building at Linux (case sensitive system)
+
+## Testing Architecture
+
+**IMPORTANT**: This project follows a unified testing architecture documented in [TESTING.md](./TESTING.md).
+
+### Quick Reference
+
+**Test Types and Locations**:
+- **Unit Tests**: `src/**/__tests__/*.test.js` - Jest for utilities and functions
+- **Component Tests**: `src/**/components/__tests__/*.test.jsx` - Jest + React Testing Library
+- **API Tests**: `src/API/__tests__/*.api.spec.js` - Playwright for REST endpoints
+- **E2E Tests**: `e2e/**/*.spec.js` - Playwright for user flows
+
+**Running Tests**:
+```bash
+npm test              # Run all tests
+npm run test:js       # Jest (unit + component)
+npm run test:api      # Playwright API tests
+npm run test:e2e      # Playwright E2E tests
+```
+
+**Complete Documentation**: See [TESTING.md](./TESTING.md) for:
+- Directory structure and naming conventions
+- Configuration templates (jest.config.js, playwright.config.js)
+- Test discovery rules and best practices
+- Migration guide for existing plugins
+- Rollout strategy
