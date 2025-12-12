@@ -4,15 +4,23 @@ This document defines security standards and best practices for implementing Wor
 
 ## Security Audit Summary
 
-**Status**: 🟡 **TODO Items for Enhancement**
+**Status**: ✅ **EXCELLENT** - See [NONCE_AUDIT.md](./NONCE_AUDIT.md) for comprehensive analysis
 
-### Issues Found
+### Nonce and Authentication Audit
 
-| Plugin | Endpoint | Issue | Severity |
-|--------|----------|-------|----------|
-| fair-payment | `/payments` | `permission_callback => __return_true` - Intentionally public but needs different handling for logged-in vs anonymous | 🟡 **TODO** |
-| fair-payment | `/webhook` | `permission_callback => __return_true` - Appropriate for webhooks but needs signature validation | 🟡 **MEDIUM** |
-| fair-registration | `/registrations` | `return true` - Open endpoint with TODO comment about nonce | 🟡 **TODO** |
+✅ **NO manual nonce verification** found (correct - WordPress handles this automatically)
+✅ **All endpoints have proper permission callbacks**
+✅ **Consistent security patterns** across all plugins
+✅ **Well-documented security decisions**
+
+**Full audit report**: [NONCE_AUDIT.md](./NONCE_AUDIT.md)
+
+### Enhancement TODOs
+
+| Plugin | Endpoint | Enhancement | Priority |
+|--------|----------|-------------|----------|
+| fair-payment | `/payments` | Differentiate logged-in vs anonymous user behavior | 🟡 **TODO** |
+| fair-payment | `/webhook` | Add Mollie webhook signature verification | 🟡 **MEDIUM** |
 | **ALL plugins** | All endpoints | **Nonce verification handled automatically by WordPress when using `apiFetch()`** | ✅ **OK** |
 
 ### WP_REST_Controller Compliance
@@ -160,6 +168,8 @@ WordPress automatically:
 3. Rejects requests with invalid/missing nonces (returns 401)
 
 **Your responsibility:** Set appropriate `permission_callback` to enforce authentication.
+
+**For a comprehensive explanation of how WordPress REST API automatic nonce verification works, see [WORDPRESS_REST_NONCE_EXPLAINED.md](./WORDPRESS_REST_NONCE_EXPLAINED.md).**
 
 ### 2. MUST Use Appropriate Permission Callbacks
 
@@ -698,7 +708,11 @@ See [REST_API_USAGE.md#testing-strategy](./REST_API_USAGE.md#testing-strategy-fo
 
 ---
 
-## Resources
+## Related Documentation
+
+- [REST_API_USAGE.md](./REST_API_USAGE.md) - Frontend implementation guide
+
+## External Resources
 
 - [WordPress REST API Handbook](https://developer.wordpress.org/rest-api/)
 - [WP_REST_Controller Reference](https://developer.wordpress.org/reference/classes/wp_rest_controller/)

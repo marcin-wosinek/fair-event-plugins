@@ -253,10 +253,26 @@ const data = await apiFetch({
 
 ### Quick Reference - Backend (PHP)
 
+**WordPress handles nonces AUTOMATICALLY - never verify manually:**
+
+```php
+// ❌ WRONG - Do NOT manually verify nonces
+public function create_item( $request ) {
+    if ( ! wp_verify_nonce( ... ) ) {  // ❌ NEVER DO THIS
+        return new WP_Error( ... );
+    }
+}
+
+// ✅ CORRECT - WordPress verifies nonce automatically, just check permissions
+public function create_item_permissions_check( $request ) {
+    return is_user_logged_in();  // ✅ This is enough
+}
+```
+
 **NEVER use `__return_true` for authenticated endpoints:**
 
 ```php
-// ❌ WRONG - Security vulnerability
+// ❌ WRONG - Security vulnerability for authenticated operations
 'permission_callback' => '__return_true'
 
 // ✅ CORRECT - Require logged in user
@@ -266,6 +282,9 @@ const data = await apiFetch({
 'permission_callback' => function() {
     return current_user_can( 'manage_options' );
 }
+
+// ✅ OK - For truly public endpoints (webhooks, anonymous forms)
+'permission_callback' => '__return_true'  // Must document why
 ```
 
 **Always extend `WP_REST_Controller`** and implement proper permission callbacks.
