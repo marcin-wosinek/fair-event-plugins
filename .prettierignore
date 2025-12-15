@@ -1,0 +1,26 @@
+# WordPress.org SVN repository copies (should not be formatted)
+**/svn/
+
+# Built assets (generated files)
+**/build/
+
+# Dependencies
+**/node_modules/
+**/vendor/
+
+# WordPress core files
+**/wordpress/
+
+# Lock files and package metadata
+package-lock.json
+composer.lock
+
+# Generated translation files
+**/*.mo
+**/*.pot
+
+# Logs
+*.log
+
+# OS files
+.DS_Store
