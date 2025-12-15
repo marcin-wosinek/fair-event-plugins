@@ -47,22 +47,25 @@ const GroupsList = ({ groups, onEdit, onDelete }) => {
 		<table className="wp-list-table widefat fixed striped">
 			<thead>
 				<tr>
-					<th scope="col" style={{ width: '25%' }}>
+					<th scope="col" style={{ width: '20%' }}>
 						{__('Name', 'fair-membership')}
 					</th>
-					<th scope="col" style={{ width: '20%' }}>
+					<th scope="col" style={{ width: '15%' }}>
 						{__('Slug', 'fair-membership')}
 					</th>
-					<th scope="col" style={{ width: '30%' }}>
+					<th scope="col" style={{ width: '25%' }}>
 						{__('Description', 'fair-membership')}
 					</th>
 					<th scope="col" style={{ width: '10%' }}>
 						{__('Access', 'fair-membership')}
 					</th>
 					<th scope="col" style={{ width: '10%' }}>
+						{__('Members', 'fair-membership')}
+					</th>
+					<th scope="col" style={{ width: '10%' }}>
 						{__('Status', 'fair-membership')}
 					</th>
-					<th scope="col" style={{ width: '15%' }}>
+					<th scope="col" style={{ width: '10%' }}>
 						{__('Actions', 'fair-membership')}
 					</th>
 				</tr>
@@ -94,6 +97,9 @@ const GroupsList = ({ groups, onEdit, onDelete }) => {
 									)}
 						</td>
 						<td>{formatAccessControl(group.access_control)}</td>
+						<td>
+							<strong>{group.member_count || 0}</strong>
+						</td>
 						<td>
 							<span
 								className={`status-badge status-${group.status}`}

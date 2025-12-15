@@ -160,7 +160,7 @@ class GroupController extends WP_REST_Controller {
 
 		$items = array_map(
 			function ( $group ) {
-				return $group->to_array();
+				return $group->to_array( true ); // Include member count
 			},
 			$groups
 		);
@@ -196,7 +196,7 @@ class GroupController extends WP_REST_Controller {
 			);
 		}
 
-		return new WP_REST_Response( $group->to_array(), 200 );
+		return new WP_REST_Response( $group->to_array( true ), 200 );
 	}
 
 	/**

@@ -109,10 +109,11 @@ class Group {
 	/**
 	 * Convert model to array
 	 *
+	 * @param bool $include_member_count Whether to include member count (default: false).
 	 * @return array
 	 */
-	public function to_array() {
-		return array(
+	public function to_array( $include_member_count = false ) {
+		$data = array(
 			'id'             => $this->id,
 			'name'           => $this->name,
 			'slug'           => $this->slug,
@@ -123,6 +124,25 @@ class Group {
 			'updated_at'     => $this->updated_at,
 			'created_by'     => $this->created_by,
 		);
+
+		if ( $include_member_count ) {
+			$data['member_count'] = $this->get_member_count();
+		}
+
+		return $data;
+	}
+
+	/**
+	 * Get the number of active members in this group
+	 *
+	 * @return int Number of active members.
+	 */
+	public function get_member_count() {
+		if ( ! $this->id ) {
+			return 0;
+		}
+
+		return Membership::count_active_by_group( $this->id );
 	}
 
 	/**

@@ -366,6 +366,27 @@ class Membership {
 	}
 
 	/**
+	 * Count active memberships for a group
+	 *
+	 * @param int $group_id Group ID.
+	 * @return int Number of active members.
+	 */
+	public static function count_active_by_group( $group_id ) {
+		global $wpdb;
+
+		$table_name = $wpdb->prefix . 'fair_memberships';
+
+		$count = $wpdb->get_var(
+			$wpdb->prepare(
+				"SELECT COUNT(*) FROM {$table_name} WHERE group_id = %d AND status = 'active'",
+				$group_id
+			)
+		);
+
+		return (int) $count;
+	}
+
+	/**
 	 * Create Membership instance from array
 	 *
 	 * @param array $data Array data.
