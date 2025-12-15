@@ -242,7 +242,8 @@ class Membership {
 
 		$result = $wpdb->get_row(
 			$wpdb->prepare(
-				"SELECT * FROM {$table_name} WHERE id = %d",
+				'SELECT * FROM %i WHERE id = %d',
+				$table_name,
 				$id
 			),
 			ARRAY_A
@@ -265,7 +266,8 @@ class Membership {
 
 		$result = $wpdb->get_row(
 			$wpdb->prepare(
-				"SELECT * FROM {$table_name} WHERE user_id = %d AND group_id = %d ORDER BY created_at DESC LIMIT 1",
+				'SELECT * FROM %i WHERE user_id = %d AND group_id = %d ORDER BY created_at DESC LIMIT 1',
+				$table_name,
 				$user_id,
 				$group_id
 			),
@@ -289,7 +291,8 @@ class Membership {
 
 		$result = $wpdb->get_row(
 			$wpdb->prepare(
-				"SELECT * FROM {$table_name} WHERE user_id = %d AND group_id = %d AND status = 'active' ORDER BY created_at DESC LIMIT 1",
+				"SELECT * FROM %i WHERE user_id = %d AND group_id = %d AND status = 'active' ORDER BY created_at DESC LIMIT 1",
+				$table_name,
 				$user_id,
 				$group_id
 			),
@@ -312,7 +315,8 @@ class Membership {
 
 		$results = $wpdb->get_results(
 			$wpdb->prepare(
-				"SELECT * FROM {$table_name} WHERE user_id = %d ORDER BY created_at DESC",
+				'SELECT * FROM %i WHERE user_id = %d ORDER BY created_at DESC',
+				$table_name,
 				$user_id
 			),
 			ARRAY_A
@@ -334,7 +338,8 @@ class Membership {
 
 		$results = $wpdb->get_results(
 			$wpdb->prepare(
-				"SELECT * FROM {$table_name} WHERE group_id = %d ORDER BY created_at DESC",
+				'SELECT * FROM %i WHERE group_id = %d ORDER BY created_at DESC',
+				$table_name,
 				$group_id
 			),
 			ARRAY_A
@@ -356,7 +361,8 @@ class Membership {
 
 		$results = $wpdb->get_results(
 			$wpdb->prepare(
-				"SELECT * FROM {$table_name} WHERE group_id = %d AND status = 'active' ORDER BY created_at DESC",
+				"SELECT * FROM %i WHERE group_id = %d AND status = 'active' ORDER BY created_at DESC",
+				$table_name,
 				$group_id
 			),
 			ARRAY_A
@@ -378,7 +384,8 @@ class Membership {
 
 		$count = $wpdb->get_var(
 			$wpdb->prepare(
-				"SELECT COUNT(*) FROM {$table_name} WHERE group_id = %d AND status = 'active'",
+				"SELECT COUNT(*) FROM %i WHERE group_id = %d AND status = 'active'",
+				$table_name,
 				$group_id
 			)
 		);

@@ -95,10 +95,20 @@ class Installer {
 		$table_name = $wpdb->prefix . 'fair_memberships';
 
 		// Drop the unique constraint
-		$wpdb->query( "ALTER TABLE {$table_name} DROP INDEX unique_user_group" );
+		$wpdb->query(
+			$wpdb->prepare(
+				'ALTER TABLE %i DROP INDEX unique_user_group',
+				$table_name
+			)
+		);
 
 		// Add regular index instead
-		$wpdb->query( "ALTER TABLE {$table_name} ADD INDEX idx_user_group (user_id, group_id)" );
+		$wpdb->query(
+			$wpdb->prepare(
+				'ALTER TABLE %i ADD INDEX idx_user_group (user_id, group_id)',
+				$table_name
+			)
+		);
 
 		error_log( 'Fair Membership: Migrated to version 1.2.0 - Removed unique constraint on memberships' );
 	}
@@ -116,7 +126,12 @@ class Installer {
 
 		// Drop tables (be careful with this!)
 		foreach ( $tables as $table_name ) {
-			$wpdb->query( "DROP TABLE IF EXISTS {$table_name}" );
+			$wpdb->query(
+				$wpdb->prepare(
+					'DROP TABLE IF EXISTS %i',
+					$table_name
+				)
+			);
 		}
 
 		// Remove options
@@ -161,7 +176,12 @@ class Installer {
 		$table_name = $wpdb->prefix . 'fair_groups';
 
 		// Only create if table is empty
-		$count = $wpdb->get_var( "SELECT COUNT(*) FROM {$table_name}" );
+		$count = $wpdb->get_var(
+			$wpdb->prepare(
+				'SELECT COUNT(*) FROM %i',
+				$table_name
+			)
+		);
 		if ( $count > 0 ) {
 			return;
 		}

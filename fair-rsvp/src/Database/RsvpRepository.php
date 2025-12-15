@@ -191,9 +191,8 @@ class RsvpRepository {
 
 		$table_name = $this->get_table_name();
 
-		// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
-		$sql  = "SELECT * FROM {$table_name} WHERE event_id = %d";
-		$args = array( $event_id );
+		$sql  = 'SELECT * FROM %i WHERE event_id = %d';
+		$args = array( $table_name, $event_id );
 
 		if ( $rsvp_status ) {
 			$sql   .= ' AND rsvp_status = %s';

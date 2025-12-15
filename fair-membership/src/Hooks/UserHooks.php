@@ -283,7 +283,11 @@ class UserHooks {
 		$table_name = $wpdb->prefix . 'fair_groups';
 
 		$results = $wpdb->get_results(
-			"SELECT * FROM {$table_name} WHERE status = 'active' ORDER BY name ASC",
+			$wpdb->prepare(
+				'SELECT * FROM %i WHERE status = %s ORDER BY name ASC',
+				$table_name,
+				'active'
+			),
 			ARRAY_A
 		);
 

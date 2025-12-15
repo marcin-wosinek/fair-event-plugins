@@ -128,8 +128,8 @@ class Installer {
 
 		$count = $wpdb->get_var(
 			$wpdb->prepare(
-				// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
-				"SELECT COUNT(*) FROM {$table_name} WHERE event_id = %d",
+				'SELECT COUNT(*) FROM %i WHERE event_id = %d',
+				$table_name,
 				$event_id
 			)
 		);

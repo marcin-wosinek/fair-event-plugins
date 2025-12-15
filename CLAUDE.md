@@ -54,6 +54,17 @@ These ignore patterns ensure that only source files are formatted, not generated
 - Plugin mounted directly into WordPress plugins directory
 - WP-CLI available via Docker profile for WordPress management
 
+### PHP Best Practices
+
+**IMPORTANT**: Follow secure PHP coding patterns documented in [PHP_PATTERNS.md](./PHP_PATTERNS.md).
+
+**Key patterns include:**
+- **Database queries**: Use `wpdb::prepare()` with `%i` for table/column names, `%s`/`%d`/`%f` for values
+- **Security**: Prevent direct file access, verify nonces, sanitize input, escape output
+- **PSR-4 autoloading**: Match namespace casing to directory structure (case-sensitive on Linux)
+
+See [PHP_PATTERNS.md](./PHP_PATTERNS.md) for complete examples and anti-patterns to avoid.
+
 ## Key Integration Points
 
 - Block registration happens in `fair-calendar-button.php:register_simple_payment_block()`

@@ -236,7 +236,8 @@ namespace {
 					// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching
 					$user_ids = $wpdb->get_col(
 						$wpdb->prepare(
-							"SELECT DISTINCT user_id FROM {$table_name} WHERE event_id = %d AND rsvp_status = %s", // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+							'SELECT DISTINCT user_id FROM %i WHERE event_id = %d AND rsvp_status = %s',
+							$table_name,
 							$event_id,
 							$rsvp_status
 						)

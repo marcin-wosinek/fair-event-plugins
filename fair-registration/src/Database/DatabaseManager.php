@@ -161,10 +161,13 @@ class DatabaseManager {
 
 		$table_name = $this->registrations_table->get_table_name();
 
-		$sql = "SELECT form_id, COUNT(*) as count 
-				FROM {$table_name} 
-				GROUP BY form_id 
-				ORDER BY count DESC";
+		$sql = $wpdb->prepare(
+			'SELECT form_id, COUNT(*) as count
+			FROM %i
+			GROUP BY form_id
+			ORDER BY count DESC',
+			$table_name
+		);
 
 		return $wpdb->get_results( $sql, ARRAY_A );
 	}
@@ -186,9 +189,10 @@ class DatabaseManager {
 
 		// Recent registrations (last 30 days)
 		$sql             = $wpdb->prepare(
-			"SELECT COUNT(*) as count 
-			FROM {$table_name} 
-			WHERE created >= DATE_SUB(NOW(), INTERVAL 30 DAY)"
+			'SELECT COUNT(*) as count
+			FROM %i
+			WHERE created >= DATE_SUB(NOW(), INTERVAL 30 DAY)',
+			$table_name
 		);
 		$stats['recent'] = (int) $wpdb->get_var( $sql );
 

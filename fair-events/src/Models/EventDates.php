@@ -64,8 +64,8 @@ class EventDates {
 
 		$result = $wpdb->get_row(
 			$wpdb->prepare(
-				// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
-				"SELECT * FROM {$table_name} WHERE event_id = %d LIMIT 1",
+				'SELECT * FROM %i WHERE event_id = %d LIMIT 1',
+				$table_name,
 				$event_id
 			)
 		);
