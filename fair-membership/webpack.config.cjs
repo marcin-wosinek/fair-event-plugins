@@ -5,6 +5,10 @@ const BundleOutputPlugin = require('webpack-bundle-output');
 module.exports = {
 	...defaultConfig,
 	entry: {
+		'admin/groups/index': path.resolve(
+			process.cwd(),
+			'src/Admin/groups/index.js'
+		),
 		'admin/users/index': path.resolve(
 			process.cwd(),
 			'src/Admin/users/index.js'

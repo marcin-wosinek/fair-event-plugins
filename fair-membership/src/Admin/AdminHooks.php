@@ -49,15 +49,6 @@ class AdminHooks {
 
 		add_submenu_page(
 			'fair-membership',
-			__( 'View Group', 'fair-membership' ),
-			null,
-			'manage_options',
-			'fair-membership-group-view',
-			array( $this, 'group_view_page' )
-		);
-
-		add_submenu_page(
-			'fair-membership',
 			__( 'All Users', 'fair-membership' ),
 			__( 'All Users', 'fair-membership' ),
 			'manage_options',
@@ -74,16 +65,6 @@ class AdminHooks {
 	public function groups_list_page() {
 		$groups_page = new GroupsListPage();
 		$groups_page->render();
-	}
-
-	/**
-	 * Display group view page
-	 *
-	 * @return void
-	 */
-	public function group_view_page() {
-		$group_page = new GroupViewPage();
-		$group_page->render();
 	}
 
 	/**
@@ -105,6 +86,31 @@ class AdminHooks {
 	public function enqueue_admin_scripts( $hook ) {
 		$plugin_dir = plugin_dir_path( dirname( __DIR__ ) );
 
+		// Load scripts for Groups page
+		if ( 'toplevel_page_fair-membership' === $hook ) {
+			$asset_file = $plugin_dir . 'build/admin/groups/index.asset.php';
+
+			if ( file_exists( $asset_file ) ) {
+				$asset_data = include $asset_file;
+
+				wp_enqueue_script(
+					'fair-membership-groups',
+					plugin_dir_url( dirname( __DIR__ ) ) . 'build/admin/groups/index.js',
+					$asset_data['dependencies'],
+					$asset_data['version'],
+					true
+				);
+
+				wp_set_script_translations(
+					'fair-membership-groups',
+					'fair-membership',
+					$plugin_dir . 'build/languages'
+				);
+
+				wp_enqueue_style( 'wp-components' );
+			}
+		}
+
 		// Load scripts for Membership Matrix page
 		if ( 'fair-membership_page_fair-membership-matrix' === $hook ) {
 			$asset_file = $plugin_dir . 'build/admin/users/index.asset.php';
@@ -118,6 +124,12 @@ class AdminHooks {
 					$asset_data['dependencies'],
 					$asset_data['version'],
 					true
+				);
+
+				wp_set_script_translations(
+					'fair-membership-matrix',
+					'fair-membership',
+					$plugin_dir . 'build/languages'
 				);
 
 				wp_enqueue_style( 'wp-components' );

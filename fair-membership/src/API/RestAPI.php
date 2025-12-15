@@ -39,18 +39,9 @@ class RestAPI extends WP_REST_Controller {
 	 * @return void
 	 */
 	public function register_routes() {
-		// Get all groups
-		register_rest_route(
-			$this->namespace,
-			'/groups',
-			array(
-				array(
-					'methods'             => WP_REST_Server::READABLE,
-					'callback'            => array( $this, 'get_groups' ),
-					'permission_callback' => array( $this, 'check_permission' ),
-				),
-			)
-		);
+		// Register Group CRUD controller
+		$group_controller = new GroupController();
+		$group_controller->register_routes();
 
 		// Get users with memberships
 		register_rest_route(
