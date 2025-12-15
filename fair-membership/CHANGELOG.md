@@ -1,5 +1,11 @@
 # fair-membership
 
+## 0.5.0
+
+### Minor Changes
+
+- df4488d: Add group member list to the admin page.
+
 ## 0.4.0
 
 ### Minor Changes
