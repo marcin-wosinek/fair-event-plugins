@@ -47,25 +47,25 @@ const GroupsList = ({ groups, onEdit, onDelete }) => {
 		<table className="wp-list-table widefat fixed striped">
 			<thead>
 				<tr>
-					<th scope="col" style={{ width: '20%' }}>
+					<th scope="col" style={{ width: '15%' }}>
 						{__('Name', 'fair-membership')}
 					</th>
 					<th scope="col" style={{ width: '15%' }}>
 						{__('Slug', 'fair-membership')}
 					</th>
-					<th scope="col" style={{ width: '25%' }}>
+					<th scope="col" style={{ width: '22%' }}>
 						{__('Description', 'fair-membership')}
 					</th>
 					<th scope="col" style={{ width: '10%' }}>
 						{__('Access', 'fair-membership')}
 					</th>
-					<th scope="col" style={{ width: '10%' }}>
+					<th scope="col" style={{ width: '8%' }}>
 						{__('Members', 'fair-membership')}
 					</th>
 					<th scope="col" style={{ width: '10%' }}>
 						{__('Status', 'fair-membership')}
 					</th>
-					<th scope="col" style={{ width: '10%' }}>
+					<th scope="col" style={{ width: '20%' }}>
 						{__('Actions', 'fair-membership')}
 					</th>
 				</tr>
@@ -122,6 +122,13 @@ const GroupsList = ({ groups, onEdit, onDelete }) => {
 							</span>
 						</td>
 						<td>
+							<a
+								href={`admin.php?page=fair-membership-group-members&group_id=${group.id}`}
+								className="button button-primary button-small"
+								style={{ marginRight: '5px' }}
+							>
+								{__('Members', 'fair-membership')}
+							</a>
 							<Button
 								variant="secondary"
 								isSmall

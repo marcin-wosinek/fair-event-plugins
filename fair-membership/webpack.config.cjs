@@ -13,6 +13,10 @@ module.exports = {
 			process.cwd(),
 			'src/Admin/users/index.js'
 		),
+		'admin/group-members/index': path.resolve(
+			process.cwd(),
+			'src/Admin/group-members/index.js'
+		),
 		'blocks/membership-switch/editor': path.resolve(
 			process.cwd(),
 			'src/blocks/membership-switch/editor.js'
