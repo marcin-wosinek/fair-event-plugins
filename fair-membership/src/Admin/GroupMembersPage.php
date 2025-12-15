@@ -20,14 +20,15 @@ class GroupMembersPage {
 	 * @return void
 	 */
 	public function render() {
-		// Get group ID from query parameter
+		// Get group ID from query parameter.
+		// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Reading URL parameter for display purposes only.
 		$group_id = isset( $_GET['group_id'] ) ? absint( $_GET['group_id'] ) : 0;
 
 		if ( ! $group_id ) {
 			wp_die( esc_html__( 'Invalid group ID.', 'fair-membership' ) );
 		}
 
-		// Verify group exists
+		// Verify group exists.
 		$group = \FairMembership\Models\Group::get_by_id( $group_id );
 		if ( ! $group ) {
 			wp_die( esc_html__( 'Group not found.', 'fair-membership' ) );

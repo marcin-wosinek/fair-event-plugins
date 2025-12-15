@@ -43,8 +43,8 @@ class Installer {
 			dbDelta( $sql );
 		}
 
-		// Log installation
-		error_log( 'Fair Membership: Database tables created/updated' );
+		// Log installation for debugging.
+		error_log( 'Fair Membership: Database tables created/updated' ); // phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log -- Useful for debugging installation issues.
 	}
 
 	/**
@@ -75,7 +75,7 @@ class Installer {
 		if ( self::needs_upgrade() ) {
 			$current_version = Schema::get_db_version();
 
-			// Run specific migrations based on version
+			// Run specific migrations based on version.
 			if ( version_compare( $current_version, '1.2.0', '<' ) ) {
 				self::migrate_to_1_2_0();
 			}
@@ -92,15 +92,17 @@ class Installer {
 	private static function migrate_to_1_2_0() {
 		global $wpdb;
 
-		$table_name = $wpdb->prefix . 'fair_memberships';
+		$table_name = esc_sql( $wpdb->prefix . 'fair_memberships' );
 
-		// Drop the unique constraint
-		$wpdb->query( "ALTER TABLE {$table_name} DROP INDEX unique_user_group" );
+		// Drop the unique constraint.
+		$sql = "ALTER TABLE {$table_name} DROP INDEX unique_user_group";
+		$wpdb->query( $sql ); // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared,WordPress.DB.PreparedSQL.InterpolatedNotPrepared
 
-		// Add regular index instead
-		$wpdb->query( "ALTER TABLE {$table_name} ADD INDEX idx_user_group (user_id, group_id)" );
+		// Add regular index instead.
+		$sql = "ALTER TABLE {$table_name} ADD INDEX idx_user_group (user_id, group_id)";
+		$wpdb->query( $sql ); // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared,WordPress.DB.PreparedSQL.InterpolatedNotPrepared
 
-		error_log( 'Fair Membership: Migrated to version 1.2.0 - Removed unique constraint on memberships' );
+		error_log( 'Fair Membership: Migrated to version 1.2.0 - Removed unique constraint on memberships' ); // phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log -- Useful for debugging migrations.
 	}
 
 	/**
@@ -111,19 +113,21 @@ class Installer {
 	public static function uninstall() {
 		global $wpdb;
 
-		// Get table names
+		// Get table names.
 		$tables = Schema::get_table_names();
 
-		// Drop tables (be careful with this!)
+		// Drop tables (be careful with this!).
 		foreach ( $tables as $table_name ) {
-			$wpdb->query( "DROP TABLE IF EXISTS {$table_name}" );
+			$table_name = esc_sql( $table_name );
+			$sql        = "DROP TABLE IF EXISTS {$table_name}";
+			$wpdb->query( $sql ); // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared,WordPress.DB.PreparedSQL.InterpolatedNotPrepared
 		}
 
-		// Remove options
+		// Remove options.
 		delete_option( 'fair_membership_db_version' );
 
-		// Log uninstallation
-		error_log( 'Fair Membership: Database tables removed' );
+		// Log uninstallation.
+		error_log( 'Fair Membership: Database tables removed' ); // phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log -- Useful for debugging uninstallation.
 	}
 
 	/**
@@ -160,8 +164,10 @@ class Installer {
 
 		$table_name = $wpdb->prefix . 'fair_groups';
 
-		// Only create if table is empty
-		$count = $wpdb->get_var( "SELECT COUNT(*) FROM {$table_name}" );
+		// Only create if table is empty.
+		$table_name_escaped = esc_sql( $table_name );
+		$sql                = "SELECT COUNT(*) FROM {$table_name_escaped}";
+		$count              = $wpdb->get_var( $sql ); // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared,WordPress.DB.PreparedSQL.InterpolatedNotPrepared
 		if ( $count > 0 ) {
 			return;
 		}
@@ -217,6 +223,6 @@ class Installer {
 			);
 		}
 
-		error_log( 'Fair Membership: Sample data created' );
+		error_log( 'Fair Membership: Sample data created' ); // phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log -- Useful for debugging sample data creation.
 	}
 }

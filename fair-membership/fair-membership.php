@@ -47,7 +47,7 @@ namespace FairMembership {
 		__FILE__,
 		function () {
 			// Currently no deactivation tasks needed.
-			error_log( 'Fair Membership: Plugin deactivated' );
+      flush_rewrite_rules();
 		}
 	);
 

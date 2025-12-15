@@ -122,12 +122,12 @@ class Schema {
 	public static function table_exists( $table_name ) {
 		global $wpdb;
 
-		$query = $wpdb->prepare(
-			'SHOW TABLES LIKE %s',
-			$table_name
-		);
-
-		return $wpdb->get_var( $query ) === $table_name;
+		return $wpdb->get_var(
+			$wpdb->prepare(
+				'SHOW TABLES LIKE %s',
+				$table_name
+			)
+		) === $table_name;
 	}
 
 	/**

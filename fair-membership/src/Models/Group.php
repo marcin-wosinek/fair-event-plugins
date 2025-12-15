@@ -154,7 +154,7 @@ class Group {
 	public static function get_all( $args = array() ) {
 		global $wpdb;
 
-		$table_name = $wpdb->prefix . 'fair_groups';
+		$table_name = esc_sql( $wpdb->prefix . 'fair_groups' );
 		$defaults   = array(
 			'status'  => null,
 			'orderby' => 'name',
@@ -182,17 +182,22 @@ class Group {
 		);
 
 		$limit_clause = '';
+		$limit_values = array();
 		if ( ! is_null( $args['limit'] ) ) {
-			$limit_clause = $wpdb->prepare( 'LIMIT %d OFFSET %d', $args['limit'], $args['offset'] );
+			$limit_clause = 'LIMIT %d OFFSET %d';
+			$limit_values = array( $args['limit'], $args['offset'] );
+			$where_values = array_merge( $where_values, $limit_values );
 		}
 
-		$query = "SELECT * FROM {$table_name} {$where_clause} {$order_clause} {$limit_clause}";
+		$sql = "SELECT * FROM {$table_name} {$where_clause} {$order_clause} {$limit_clause}";
 
 		if ( ! empty( $where_values ) ) {
-			$query = $wpdb->prepare( $query, $where_values );
+			// phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared
+			$results = $wpdb->get_results( $wpdb->prepare( $sql, $where_values ), ARRAY_A );
+		} else {
+			// phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared
+			$results = $wpdb->get_results( $sql, ARRAY_A );
 		}
-
-		$results = $wpdb->get_results( $query, ARRAY_A );
 
 		$groups = array();
 		if ( $results ) {
@@ -213,9 +218,12 @@ class Group {
 	public static function get_by_id( $id ) {
 		global $wpdb;
 
-		$table_name = $wpdb->prefix . 'fair_groups';
-		$query      = $wpdb->prepare( "SELECT * FROM {$table_name} WHERE id = %d", $id );
-		$result     = $wpdb->get_row( $query, ARRAY_A );
+		$table_name = esc_sql( $wpdb->prefix . 'fair_groups' );
+		$sql        = "SELECT * FROM {$table_name} WHERE id = %d";
+		$result     = $wpdb->get_row(
+			$wpdb->prepare( $sql, $id ), // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared,WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+			ARRAY_A
+		);
 
 		return $result ? new self( $result ) : null;
 	}
@@ -229,9 +237,12 @@ class Group {
 	public static function get_by_slug( $slug ) {
 		global $wpdb;
 
-		$table_name = $wpdb->prefix . 'fair_groups';
-		$query      = $wpdb->prepare( "SELECT * FROM {$table_name} WHERE slug = %s", $slug );
-		$result     = $wpdb->get_row( $query, ARRAY_A );
+		$table_name = esc_sql( $wpdb->prefix . 'fair_groups' );
+		$sql        = "SELECT * FROM {$table_name} WHERE slug = %s";
+		$result     = $wpdb->get_row(
+			$wpdb->prepare( $sql, $slug ), // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared,WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+			ARRAY_A
+		);
 
 		return $result ? new self( $result ) : null;
 	}
@@ -302,7 +313,7 @@ class Group {
 	public static function count( $args = array() ) {
 		global $wpdb;
 
-		$table_name       = $wpdb->prefix . 'fair_groups';
+		$table_name       = esc_sql( $wpdb->prefix . 'fair_groups' );
 		$where_conditions = array();
 		$where_values     = array();
 
@@ -312,13 +323,16 @@ class Group {
 		}
 
 		$where_clause = ! empty( $where_conditions ) ? 'WHERE ' . implode( ' AND ', $where_conditions ) : '';
-		$query        = "SELECT COUNT(*) FROM {$table_name} {$where_clause}";
+
+		$sql = "SELECT COUNT(*) FROM {$table_name} {$where_clause}";
 
 		if ( ! empty( $where_values ) ) {
-			$query = $wpdb->prepare( $query, $where_values );
+			// phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared
+			return (int) $wpdb->get_var( $wpdb->prepare( $sql, $where_values ) );
 		}
 
-		return (int) $wpdb->get_var( $query );
+		// phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared
+		return (int) $wpdb->get_var( $sql );
 	}
 
 	/**
