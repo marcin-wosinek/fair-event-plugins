@@ -366,6 +366,41 @@ When adding a new REST API integration:
 - Standardized error handling
 - No manual URL construction needed
 
+## React Admin Pages Pattern
+
+**IMPORTANT**: All admin pages should be built with React and use REST API for data management. Follow the guidelines documented in [REACT_ADMIN_PATTERN.md](./REACT_ADMIN_PATTERN.md).
+
+### Quick Reference
+
+**Standard Architecture**:
+1. **PHP**: Admin menu registration + page wrapper (renders `<div id="root">`)
+2. **React**: Admin component using `@wordpress/components`
+3. **REST API**: Backend controller extending `WP_REST_Controller`
+4. **Communication**: `apiFetch` for all API calls
+
+**Directory Structure**:
+```
+plugin-name/
+├── src/
+│   ├── Admin/
+│   │   ├── AdminHooks.php           # Menu + script enqueue
+│   │   ├── PageNamePage.php         # PHP wrapper
+│   │   └── page-name/
+│   │       ├── index.js             # React entry point
+│   │       └── PageName.js          # React component
+│   └── API/
+│       ├── RestHooks.php            # REST registration
+│       └── ResourceController.php   # REST controller
+└── build/admin/page-name/           # Built files
+```
+
+**Example Implementations**:
+- **fair-rsvp**: Events List, Invitations, Attendance (most complete)
+- **fair-membership**: Membership Matrix
+- **fair-payment**: Settings Page
+
+See [REACT_ADMIN_PATTERN.md](./REACT_ADMIN_PATTERN.md) for complete templates and best practices.
+
 - Make sure to pay attention to case in file & folder names. I'm programming on MacOs (that is case insensitive), but I'm building at Linux (case sensitive system)
 
 ## Testing Architecture
