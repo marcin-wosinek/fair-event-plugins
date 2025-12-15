@@ -7,6 +7,8 @@
 
 namespace FairMembership\Database;
 
+use FairMembership\Utils\DebugLogger;
+
 defined( 'WPINC' ) || die;
 
 /**
@@ -44,7 +46,7 @@ class Installer {
 		}
 
 		// Log installation
-		error_log( 'Fair Membership: Database tables created/updated' );
+		DebugLogger::info( 'Database tables created/updated' );
 	}
 
 	/**
@@ -110,7 +112,7 @@ class Installer {
 			)
 		);
 
-		error_log( 'Fair Membership: Migrated to version 1.2.0 - Removed unique constraint on memberships' );
+		DebugLogger::info( 'Migrated to version 1.2.0 - Removed unique constraint on memberships' );
 	}
 
 	/**
@@ -138,7 +140,7 @@ class Installer {
 		delete_option( 'fair_membership_db_version' );
 
 		// Log uninstallation
-		error_log( 'Fair Membership: Database tables removed' );
+		DebugLogger::info( 'Database tables removed' );
 	}
 
 	/**
@@ -237,6 +239,6 @@ class Installer {
 			);
 		}
 
-		error_log( 'Fair Membership: Sample data created' );
+		DebugLogger::info( 'Sample data created' );
 	}
 }

@@ -275,6 +275,130 @@ esc_html_e( 'Settings page', 'plugin-slug' );
 echo esc_html__( 'Settings page', 'plugin-slug' );
 ```
 
+### Debugging and Logging
+
+**IMPORTANT**: Always wrap `error_log()` calls in a `WP_DEBUG` check. Never leave debug logging active in production code.
+
+#### Safe Error Logging Pattern
+
+**Option 1: Inline with WP_DEBUG check and phpcs suppression**
+
+```php
+<?php
+// Simple message
+if ( defined( 'WP_DEBUG' ) && WP_DEBUG ) {
+    // phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
+    error_log( 'Debug message: Something happened' );
+}
+
+// Logging arrays or objects
+if ( defined( 'WP_DEBUG' ) && WP_DEBUG ) {
+    // phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
+    error_log( print_r( $my_array, true ) );
+}
+```
+
+**Option 2: Helper function with phpcs suppression**
+
+```php
+<?php
+// Helper function for consistent logging
+function my_plugin_debug_log( $message ) {
+    if ( defined( 'WP_DEBUG' ) && WP_DEBUG ) {
+        // phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
+        if ( is_array( $message ) || is_object( $message ) ) {
+            error_log( print_r( $message, true ) );
+        } else {
+            error_log( $message );
+        }
+    }
+}
+
+// Usage
+my_plugin_debug_log( 'User action performed' );
+my_plugin_debug_log( $user_data );
+```
+
+**Option 3: Recommended - Use DebugLogger utility class**
+
+For cleaner code and centralized phpcs suppression, use a dedicated utility class:
+
+```php
+<?php
+use FairMembership\Utils\DebugLogger;
+
+// Simple message
+DebugLogger::log( 'User action performed' );
+
+// Array or object (automatically formatted)
+DebugLogger::log( $user_data );
+
+// With custom prefix
+DebugLogger::log( 'Processing payment', 'PAYMENT' );
+
+// Using convenience methods
+DebugLogger::error( 'Payment failed: Invalid card' );
+DebugLogger::warning( 'Rate limit approaching' );
+DebugLogger::info( 'Cache cleared successfully' );
+
+// With context
+DebugLogger::log_with_context(
+    'Database migration failed',
+    array(
+        'table'   => 'fair_groups',
+        'version' => '1.2.0',
+        'error'   => $wpdb->last_error,
+    )
+);
+```
+
+**Benefits of DebugLogger utility:**
+- Single phpcs suppression in one place
+- Automatic WP_DEBUG check (no manual wrapping needed)
+- Consistent formatting for arrays/objects
+- Semantic methods (error, warning, info)
+- Zero production impact
+
+See `fair-membership/src/Utils/DebugLogger.php` for the implementation.
+
+#### What NOT to Use
+
+```php
+<?php
+// ❌ WRONG - Unconditional logging in production
+error_log( 'Debug message' );
+
+// ❌ WRONG - Modifying error reporting in plugin code
+error_reporting( E_ALL );
+ini_set( 'display_errors', 1 );
+```
+
+**Why?**
+
+- Unconditional `error_log()` calls run in production and can fill logs with debug messages
+- Modifying `error_reporting()` or `ini_set()` in plugins interferes with site-wide debugging configuration
+- Debug logs can contain sensitive information and should only be used in development
+
+#### Recommended wp-config.php Setup
+
+**Development/Staging:**
+```php
+define( 'WP_DEBUG', true );
+define( 'WP_DEBUG_LOG', true );      // Logs to wp-content/debug.log
+define( 'WP_DEBUG_DISPLAY', false ); // Don't show errors on screen
+define( 'SCRIPT_DEBUG', true );      // Use unminified JS/CSS
+```
+
+**Production:**
+```php
+define( 'WP_DEBUG', false );
+```
+
+#### References
+
+- [Debugging in WordPress – Advanced Administration Handbook](https://developer.wordpress.org/advanced-administration/debug/debug-wordpress/)
+- [WordPress Plugin Security: Common Issues](https://developer.wordpress.org/plugins/wordpress-org/common-issues/)
+
 ## Code Quality Standards
 
 ### Always Run After Changes
