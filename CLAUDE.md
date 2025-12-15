@@ -182,6 +182,28 @@ npm run makemo      # Generate .mo files (PHP)
 npm run build       # Builds JS and runs makejson (generates JSON with correct hashes)
 ```
 
+#### `load_plugin_textdomain()` Not Required for Modern Plugins
+
+**Important**: Since WordPress 4.6, `load_plugin_textdomain()` is **NOT REQUIRED** for plugins.
+
+**Why?**
+- WordPress automatically loads translations from translate.wordpress.org
+- Translations are loaded based on the plugin's text domain (which must match the plugin slug)
+- The `Text Domain` header in the main plugin file is optional but recommended
+
+**When to use `load_plugin_textdomain()`:**
+- Only if you want to override translate.wordpress.org translations with your own custom translations
+- For plugins that need to support WordPress < 4.6 (not applicable to this project)
+
+**For this project:**
+- All plugins require WordPress 6.7+ (far above 4.6)
+- Text domains match plugin slugs (e.g., `fair-membership`)
+- **Do NOT add `load_plugin_textdomain()` calls**
+- PHP `.mo` files are automatically loaded from the `languages/` directory
+- JavaScript translations use `wp_set_script_translations()` pointing to `build/languages/`
+
+**Reference**: [WordPress Plugin Internationalization Handbook](https://developer.wordpress.org/plugins/internationalization/how-to-internationalize-your-plugin/#loading-text-domain)
+
 - Don't use php templates.
 
 ## Frontend JavaScript Best Practices
