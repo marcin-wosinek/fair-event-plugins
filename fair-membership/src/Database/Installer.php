@@ -19,7 +19,7 @@ class Installer {
 	/**
 	 * Plugin version for database schema
 	 */
-	const DB_VERSION = '1.2.0';
+	const DB_VERSION = '1.3.0';
 
 	/**
 	 * Install database tables
@@ -82,6 +82,10 @@ class Installer {
 				self::migrate_to_1_2_0();
 			}
 
+			if ( version_compare( $current_version, '1.3.0', '<' ) ) {
+				self::migrate_to_1_3_0();
+			}
+
 			self::install();
 		}
 	}
@@ -113,6 +117,18 @@ class Installer {
 		);
 
 		DebugLogger::info( 'Migrated to version 1.2.0 - Removed unique constraint on memberships' );
+	}
+
+	/**
+	 * Migration to version 1.3.0 - Add fee tables
+	 *
+	 * @return void
+	 */
+	private static function migrate_to_1_3_0() {
+		// Tables will be created by install() via dbDelta
+		// This method is a placeholder for any data migrations needed
+
+		DebugLogger::info( 'Migrated to version 1.3.0 - Added fee management tables' );
 	}
 
 	/**
