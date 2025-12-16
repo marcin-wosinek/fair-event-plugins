@@ -198,6 +198,24 @@ class UserFeeController extends WP_REST_Controller {
 				'permission_callback' => array( $this, 'get_item_permissions_check' ),
 			)
 		);
+
+		// POST /fair-membership/v1/user-fees/{id}/create-payment - Create payment transaction
+		register_rest_route(
+			$this->namespace,
+			'/' . $this->rest_base . '/(?P<id>\d+)/create-payment',
+			array(
+				'methods'             => WP_REST_Server::CREATABLE,
+				'callback'            => array( $this, 'create_payment' ),
+				'permission_callback' => array( $this, 'create_payment_permissions_check' ),
+				'args'                => array(
+					'redirect_url' => array(
+						'type'              => 'string',
+						'sanitize_callback' => 'esc_url_raw',
+						'description'       => __( 'URL to redirect after payment.', 'fair-membership' ),
+					),
+				),
+			)
+		);
 	}
 
 	/**
@@ -262,6 +280,45 @@ class UserFeeController extends WP_REST_Controller {
 	 */
 	public function delete_item_permissions_check( $request ) {
 		return $this->create_item_permissions_check( $request );
+	}
+
+	/**
+	 * Check permissions for creating payment
+	 * Users can create payments for their own fees
+	 *
+	 * @param WP_REST_Request $request Request object.
+	 * @return bool|WP_Error
+	 */
+	public function create_payment_permissions_check( $request ) {
+		if ( ! is_user_logged_in() ) {
+			return new WP_Error(
+				'rest_forbidden',
+				__( 'You must be logged in to create payments.', 'fair-membership' ),
+				array( 'status' => 401 )
+			);
+		}
+
+		$fee_id   = $request->get_param( 'id' );
+		$user_fee = UserFee::get_by_id( $fee_id );
+
+		if ( ! $user_fee ) {
+			return new WP_Error(
+				'not_found',
+				__( 'User fee not found.', 'fair-membership' ),
+				array( 'status' => 404 )
+			);
+		}
+
+		// Users can only create payments for their own fees
+		if ( $user_fee->user_id !== get_current_user_id() ) {
+			return new WP_Error(
+				'rest_forbidden',
+				__( 'You can only create payments for your own fees.', 'fair-membership' ),
+				array( 'status' => 403 )
+			);
+		}
+
+		return true;
 	}
 
 	/**
@@ -566,5 +623,115 @@ class UserFeeController extends WP_REST_Controller {
 		$adjustments = UserFeeAdjustment::get_by_user_fee( $id );
 
 		return new WP_REST_Response( $adjustments );
+	}
+
+	/**
+	 * Create payment transaction for a user fee
+	 *
+	 * @param WP_REST_Request $request Request object.
+	 * @return WP_REST_Response|WP_Error
+	 */
+	public function create_payment( $request ) {
+		$id           = $request->get_param( 'id' );
+		$redirect_url = $request->get_param( 'redirect_url' );
+		$user_fee     = UserFee::get_by_id( $id );
+
+		if ( ! $user_fee ) {
+			return new WP_Error(
+				'not_found',
+				__( 'User fee not found.', 'fair-membership' ),
+				array( 'status' => 404 )
+			);
+		}
+
+		// Check if fee is payable (pending or overdue)
+		if ( ! in_array( $user_fee->status, array( 'pending', 'overdue' ), true ) ) {
+			return new WP_Error(
+				'invalid_status',
+				__( 'Only pending or overdue fees can be paid.', 'fair-membership' ),
+				array( 'status' => 400 )
+			);
+		}
+
+		// Check if fair-payment plugin is available
+		if ( ! function_exists( 'fair_payment_create_transaction' ) || ! function_exists( 'fair_payment_initiate_payment' ) ) {
+			return new WP_Error(
+				'payment_unavailable',
+				__( 'Payment system is not available.', 'fair-membership' ),
+				array( 'status' => 503 )
+			);
+		}
+
+		// Create transaction
+		$transaction_id = fair_payment_create_transaction(
+			array(
+				array(
+					'name'     => $user_fee->title,
+					'quantity' => 1,
+					'amount'   => $user_fee->amount,
+				),
+			),
+			array(
+				'currency'    => 'EUR',
+				'description' => sprintf(
+					/* translators: %s: fee title */
+					__( 'Payment for: %s', 'fair-membership' ),
+					$user_fee->title
+				),
+				'user_id'     => $user_fee->user_id,
+				'metadata'    => array(
+					'user_fee_id' => $user_fee->id,
+					'plugin'      => 'fair-membership',
+				),
+			)
+		);
+
+		if ( is_wp_error( $transaction_id ) ) {
+			return new WP_Error(
+				'transaction_failed',
+				sprintf(
+					/* translators: %s: error message */
+					__( 'Failed to create transaction: %s', 'fair-membership' ),
+					$transaction_id->get_error_message()
+				),
+				array( 'status' => 500 )
+			);
+		}
+
+		// Initiate payment
+		$payment_args = array();
+		if ( $redirect_url ) {
+			$payment_args['redirect_url'] = $redirect_url;
+		}
+
+		$payment = fair_payment_initiate_payment( $transaction_id, $payment_args );
+
+		if ( is_wp_error( $payment ) ) {
+			return new WP_Error(
+				'payment_initiation_failed',
+				sprintf(
+					/* translators: %s: error message */
+					__( 'Failed to initiate payment: %s', 'fair-membership' ),
+					$payment->get_error_message()
+				),
+				array( 'status' => 500 )
+			);
+		}
+
+		if ( ! isset( $payment['checkout_url'] ) ) {
+			return new WP_Error(
+				'invalid_payment_response',
+				__( 'Payment response does not contain checkout URL.', 'fair-membership' ),
+				array( 'status' => 500 )
+			);
+		}
+
+		return new WP_REST_Response(
+			array(
+				'transaction_id' => $transaction_id,
+				'checkout_url'   => $payment['checkout_url'],
+				'user_fee'       => $user_fee->to_array(),
+			)
+		);
 	}
 }

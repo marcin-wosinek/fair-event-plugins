@@ -15,6 +15,7 @@
 	"textdomain": "fair-membership",
 	"editorScript": "file:./editor.js",
 	"editorStyle": "file:./editor.css",
+	"viewScript": "file:./frontend.js",
 	"render": "file:./render.php",
 	"style": "file:./view.css"
 }

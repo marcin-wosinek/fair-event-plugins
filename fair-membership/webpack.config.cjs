@@ -41,6 +41,10 @@ module.exports = {
 			process.cwd(),
 			'src/blocks/my-fees/editor.js'
 		),
+		'blocks/my-fees/frontend': path.resolve(
+			process.cwd(),
+			'src/blocks/my-fees/frontend.js'
+		),
 	},
 	plugins: [
 		...defaultConfig.plugins,
