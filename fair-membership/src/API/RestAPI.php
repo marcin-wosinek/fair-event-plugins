@@ -43,6 +43,14 @@ class RestAPI extends WP_REST_Controller {
 		$group_controller = new GroupController();
 		$group_controller->register_routes();
 
+		// Register GroupFee CRUD controller
+		$group_fee_controller = new GroupFeeController();
+		$group_fee_controller->register_routes();
+
+		// Register UserFee CRUD controller
+		$user_fee_controller = new UserFeeController();
+		$user_fee_controller->register_routes();
+
 		// Get users with memberships
 		register_rest_route(
 			$this->namespace,
