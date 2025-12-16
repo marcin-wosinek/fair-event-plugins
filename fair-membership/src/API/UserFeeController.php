@@ -322,6 +322,27 @@ class UserFeeController extends WP_REST_Controller {
 	}
 
 	/**
+	 * Enrich user fee with user information
+	 *
+	 * @param UserFee $user_fee User fee object.
+	 * @return array Enriched user fee array.
+	 */
+	private function enrich_user_fee( $user_fee ) {
+		$fee_array = $user_fee->to_array();
+
+		// Add user information if user exists
+		if ( $user_fee->user_id ) {
+			$user = get_userdata( $user_fee->user_id );
+			if ( $user ) {
+				$fee_array['user_display_name'] = $user->display_name;
+				$fee_array['user_email']        = $user->user_email;
+			}
+		}
+
+		return $fee_array;
+	}
+
+	/**
 	 * Get user fees
 	 *
 	 * @param WP_REST_Request $request Request object.
@@ -348,18 +369,7 @@ class UserFeeController extends WP_REST_Controller {
 		// Enrich with user information
 		$enriched_fees = array();
 		foreach ( $user_fees as $user_fee ) {
-			$fee_array = $user_fee->to_array();
-
-			// Add user information if user exists
-			if ( $user_fee->user_id ) {
-				$user = get_userdata( $user_fee->user_id );
-				if ( $user ) {
-					$fee_array['user_display_name'] = $user->display_name;
-					$fee_array['user_email']        = $user->user_email;
-				}
-			}
-
-			$enriched_fees[] = $fee_array;
+			$enriched_fees[] = $this->enrich_user_fee( $user_fee );
 		}
 
 		$response = new WP_REST_Response( $enriched_fees );
@@ -401,7 +411,7 @@ class UserFeeController extends WP_REST_Controller {
 			);
 		}
 
-		return new WP_REST_Response( $user_fee->to_array(), 201 );
+		return new WP_REST_Response( $this->enrich_user_fee( $user_fee ), 201 );
 	}
 
 	/**
@@ -422,7 +432,7 @@ class UserFeeController extends WP_REST_Controller {
 			);
 		}
 
-		return new WP_REST_Response( $user_fee->to_array() );
+		return new WP_REST_Response( $this->enrich_user_fee( $user_fee ) );
 	}
 
 	/**
@@ -473,7 +483,7 @@ class UserFeeController extends WP_REST_Controller {
 			);
 		}
 
-		return new WP_REST_Response( $user_fee->to_array() );
+		return new WP_REST_Response( $this->enrich_user_fee( $user_fee ) );
 	}
 
 	/**
@@ -565,7 +575,7 @@ class UserFeeController extends WP_REST_Controller {
 
 		return new WP_REST_Response(
 			array(
-				'user_fee'      => $user_fee->to_array(),
+				'user_fee'      => $this->enrich_user_fee( $user_fee ),
 				'adjustment_id' => $adjustment_id,
 			)
 		);
@@ -599,7 +609,7 @@ class UserFeeController extends WP_REST_Controller {
 			);
 		}
 
-		return new WP_REST_Response( $user_fee->to_array() );
+		return new WP_REST_Response( $this->enrich_user_fee( $user_fee ) );
 	}
 
 	/**
