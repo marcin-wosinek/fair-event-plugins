@@ -119,11 +119,11 @@ const UserFeeForm = ({ userFee, onSave, onCancel }) => {
 										? __(
 												'User selected. Clear to search again.',
 												'fair-membership'
-										  )
+											)
 										: __(
 												'Search by name or email to select a user.',
 												'fair-membership'
-										  )
+											)
 								}
 							/>
 							{selectedUser && (

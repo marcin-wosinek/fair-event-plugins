@@ -1,0 +1,20 @@
+{
+	"$schema": "https://schemas.wp.org/trunk/block.json",
+	"apiVersion": 3,
+	"name": "fair-membership/my-fees",
+	"title": "My Fees",
+	"category": "widgets",
+	"icon": "money-alt",
+	"description": "Display current user's membership fees and payment information",
+	"keywords": ["fees", "payment", "membership", "billing"],
+	"supports": {
+		"html": false,
+		"align": true,
+		"anchor": true
+	},
+	"textdomain": "fair-membership",
+	"editorScript": "file:./editor.js",
+	"editorStyle": "file:./editor.css",
+	"render": "file:./render.php",
+	"style": "file:./view.css"
+}

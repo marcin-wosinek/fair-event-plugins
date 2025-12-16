@@ -37,6 +37,10 @@ module.exports = {
 			process.cwd(),
 			'src/blocks/non-member-content/editor.js'
 		),
+		'blocks/my-fees/editor': path.resolve(
+			process.cwd(),
+			'src/blocks/my-fees/editor.js'
+		),
 	},
 	plugins: [
 		...defaultConfig.plugins,
