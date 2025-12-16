@@ -243,7 +243,7 @@ class GroupFeeController extends WP_REST_Controller {
 		$group_fees = GroupFee::get_all( $args );
 		$total      = GroupFee::get_count( $args );
 
-		// Enrich with group information
+		// Enrich with group information and payment totals
 		$enriched_fees = array();
 		foreach ( $group_fees as $group_fee ) {
 			$fee_array = $group_fee->to_array();
@@ -255,6 +255,23 @@ class GroupFeeController extends WP_REST_Controller {
 					$fee_array['group_name'] = $group->name;
 				}
 			}
+
+			// Calculate payment totals from user fees
+			$user_fees = UserFee::get_all( array( 'group_fee_id' => $group_fee->id ) );
+
+			$total_paid      = 0;
+			$payment_pending = 0;
+
+			foreach ( $user_fees as $user_fee ) {
+				if ( 'paid' === $user_fee->status ) {
+					$total_paid += $user_fee->amount;
+				} elseif ( in_array( $user_fee->status, array( 'pending', 'overdue' ), true ) ) {
+					$payment_pending += $user_fee->amount;
+				}
+			}
+
+			$fee_array['total_paid']      = $total_paid;
+			$fee_array['payment_pending'] = $payment_pending;
 
 			$enriched_fees[] = $fee_array;
 		}

@@ -17,6 +17,8 @@ const GroupFeesList = ({ groupFees, onEdit, onDelete }) => {
 					<th>{__('Title', 'fair-membership')}</th>
 					<th>{__('Group', 'fair-membership')}</th>
 					<th>{__('Amount', 'fair-membership')}</th>
+					<th>{__('Total Paid', 'fair-membership')}</th>
+					<th>{__('Payment Pending', 'fair-membership')}</th>
 					<th>{__('Due Date', 'fair-membership')}</th>
 					<th>{__('Created', 'fair-membership')}</th>
 					<th>{__('Actions', 'fair-membership')}</th>
@@ -40,6 +42,26 @@ const GroupFeesList = ({ groupFees, onEdit, onDelete }) => {
 						</td>
 						<td>
 							${parseFloat(groupFee.default_amount).toFixed(2)}
+						</td>
+						<td>
+							<span
+								style={{ color: '#2c7a1f', fontWeight: '500' }}
+							>
+								$
+								{parseFloat(groupFee.total_paid || 0).toFixed(
+									2
+								)}
+							</span>
+						</td>
+						<td>
+							<span
+								style={{ color: '#d63638', fontWeight: '500' }}
+							>
+								$
+								{parseFloat(
+									groupFee.payment_pending || 0
+								).toFixed(2)}
+							</span>
 						</td>
 						<td>{groupFee.due_date}</td>
 						<td>
