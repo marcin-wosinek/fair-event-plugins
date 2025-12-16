@@ -24,6 +24,16 @@ class Schema {
 	}
 
 	/**
+	 * Get the table name for line items
+	 *
+	 * @return string Full table name with prefix.
+	 */
+	public static function get_line_items_table_name() {
+		global $wpdb;
+		return $wpdb->prefix . 'fair_payment_line_items';
+	}
+
+	/**
 	 * Create database tables
 	 *
 	 * @return void
@@ -41,7 +51,8 @@ class Schema {
 			user_id bigint(20) UNSIGNED DEFAULT NULL,
 			amount decimal(10,2) NOT NULL,
 			currency varchar(3) NOT NULL DEFAULT 'EUR',
-			status varchar(20) NOT NULL DEFAULT 'open',
+			status varchar(20) NOT NULL DEFAULT 'draft',
+			payment_initiated_at datetime DEFAULT NULL,
 			description text DEFAULT NULL,
 			redirect_url text DEFAULT NULL,
 			webhook_url text DEFAULT NULL,
@@ -59,8 +70,91 @@ class Schema {
 		require_once ABSPATH . 'wp-admin/includes/upgrade.php';
 		dbDelta( $sql );
 
+		// Create line items table.
+		self::create_line_items_table();
+
+		// Run migrations if needed.
+		self::migrate_to_v2();
+
 		// Store database version for future migrations.
-		update_option( 'fair_payment_db_version', '1.0' );
+		update_option( 'fair_payment_db_version', '2.0' );
+	}
+
+	/**
+	 * Create line items table
+	 *
+	 * @return void
+	 */
+	public static function create_line_items_table() {
+		global $wpdb;
+
+		$table_name      = self::get_line_items_table_name();
+		$charset_collate = $wpdb->get_charset_collate();
+
+		$sql = "CREATE TABLE $table_name (
+			id bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT,
+			transaction_id bigint(20) UNSIGNED NOT NULL,
+			name varchar(255) NOT NULL,
+			description text DEFAULT NULL,
+			quantity int(11) NOT NULL DEFAULT 1,
+			unit_amount decimal(10,2) NOT NULL,
+			total_amount decimal(10,2) NOT NULL,
+			sort_order int(11) NOT NULL DEFAULT 0,
+			created_at datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
+			PRIMARY KEY  (id),
+			KEY transaction_id (transaction_id),
+			KEY sort_order (sort_order)
+		) $charset_collate;";
+
+		require_once ABSPATH . 'wp-admin/includes/upgrade.php';
+		dbDelta( $sql );
+	}
+
+	/**
+	 * Migrate database from v1.0 to v2.0
+	 *
+	 * @return void
+	 */
+	public static function migrate_to_v2() {
+		global $wpdb;
+
+		$current_version = get_option( 'fair_payment_db_version', '1.0' );
+
+		if ( version_compare( $current_version, '2.0', '<' ) ) {
+			$table_name = self::get_payments_table_name();
+
+			// Check if payment_initiated_at column already exists.
+			// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+			$column_exists = $wpdb->get_results(
+				$wpdb->prepare(
+					'SHOW COLUMNS FROM %i LIKE %s',
+					$table_name,
+					'payment_initiated_at'
+				)
+			);
+
+			// Add payment_initiated_at column if it doesn't exist.
+			if ( empty( $column_exists ) ) {
+				// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.DirectDatabaseQuery.SchemaChange
+				$wpdb->query(
+					$wpdb->prepare(
+						'ALTER TABLE %i ADD COLUMN payment_initiated_at datetime DEFAULT NULL AFTER status',
+						$table_name
+					)
+				);
+			}
+
+			// Update existing transactions: if they have mollie_payment_id, set status to 'pending_payment'.
+			// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+			$wpdb->query(
+				$wpdb->prepare(
+					"UPDATE %i
+					SET status = 'pending_payment', payment_initiated_at = created_at
+					WHERE mollie_payment_id != '' AND status = 'open'",
+					$table_name
+				)
+			);
+		}
 	}
 
 	/**
@@ -70,8 +164,18 @@ class Schema {
 	 */
 	public static function drop_tables() {
 		global $wpdb;
-		$table_name = self::get_payments_table_name();
-		$wpdb->query( "DROP TABLE IF EXISTS $table_name" );
+
+		$line_items_table   = self::get_line_items_table_name();
+		$transactions_table = self::get_payments_table_name();
+
+		// Drop line items first (foreign key reference).
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.DirectDatabaseQuery.SchemaChange
+		$wpdb->query( $wpdb->prepare( 'DROP TABLE IF EXISTS %i', $line_items_table ) );
+
+		// Drop transactions table.
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.DirectDatabaseQuery.SchemaChange
+		$wpdb->query( $wpdb->prepare( 'DROP TABLE IF EXISTS %i', $transactions_table ) );
+
 		delete_option( 'fair_payment_db_version' );
 	}
 }

@@ -29,7 +29,7 @@ class Transaction {
 			'user_id'           => get_current_user_id(),
 			'amount'            => 0,
 			'currency'          => 'EUR',
-			'status'            => 'open',
+			'status'            => 'draft',
 			'description'       => '',
 			'redirect_url'      => '',
 			'webhook_url'       => '',
@@ -133,5 +133,98 @@ class Transaction {
 		);
 
 		return $wpdb->get_results( $query );
+	}
+
+	/**
+	 * Get transaction by ID
+	 *
+	 * @param int $transaction_id Transaction ID.
+	 * @return object|null Transaction object or null if not found.
+	 */
+	public static function get_by_id( $transaction_id ) {
+		global $wpdb;
+		$table_name = \FairPayment\Database\Schema::get_payments_table_name();
+
+		return $wpdb->get_row(
+			$wpdb->prepare(
+				'SELECT * FROM %i WHERE id = %d',
+				$table_name,
+				$transaction_id
+			)
+		);
+	}
+
+	/**
+	 * Mark transaction as payment initiated
+	 *
+	 * @param int    $transaction_id Transaction ID.
+	 * @param string $mollie_payment_id Mollie payment ID.
+	 * @param string $checkout_url Mollie checkout URL.
+	 * @return bool True on success, false on failure.
+	 */
+	public static function mark_payment_initiated( $transaction_id, $mollie_payment_id, $checkout_url ) {
+		global $wpdb;
+		$table_name = \FairPayment\Database\Schema::get_payments_table_name();
+
+		return (bool) $wpdb->update(
+			$table_name,
+			array(
+				'mollie_payment_id'    => $mollie_payment_id,
+				'checkout_url'         => $checkout_url,
+				'status'               => 'pending_payment',
+				'payment_initiated_at' => current_time( 'mysql' ),
+			),
+			array( 'id' => $transaction_id ),
+			array( '%s', '%s', '%s', '%s' ),
+			array( '%d' )
+		);
+	}
+
+	/**
+	 * Check if transaction can initiate payment
+	 *
+	 * @param int $transaction_id Transaction ID.
+	 * @return true|\WP_Error True if can initiate, WP_Error otherwise.
+	 */
+	public static function can_initiate_payment( $transaction_id ) {
+		global $wpdb;
+		$table_name = \FairPayment\Database\Schema::get_payments_table_name();
+
+		$transaction = $wpdb->get_row(
+			$wpdb->prepare(
+				'SELECT status, payment_initiated_at FROM %i WHERE id = %d',
+				$table_name,
+				$transaction_id
+			)
+		);
+
+		if ( ! $transaction ) {
+			return new \WP_Error(
+				'transaction_not_found',
+				__( 'Transaction not found.', 'fair-payment' )
+			);
+		}
+
+		// Check if already initiated.
+		if ( null !== $transaction->payment_initiated_at ) {
+			return new \WP_Error(
+				'payment_already_initiated',
+				__( 'Payment has already been initiated for this transaction. Create a new transaction to retry.', 'fair-payment' )
+			);
+		}
+
+		// Check status.
+		if ( 'draft' !== $transaction->status ) {
+			return new \WP_Error(
+				'invalid_transaction_status',
+				sprintf(
+					/* translators: %s: current transaction status */
+					__( 'Transaction status must be "draft" to initiate payment. Current status: %s', 'fair-payment' ),
+					$transaction->status
+				)
+			);
+		}
+
+		return true;
 	}
 }

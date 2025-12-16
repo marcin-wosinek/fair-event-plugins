@@ -114,77 +114,82 @@ class PaymentEndpoint extends WP_REST_Controller {
 			);
 		}
 
-		// Prepare payment data.
-		$payment_args = array(
-			'amount'       => $amount,
-			'currency'     => $currency,
-			'description'  => ! empty( $description ) ? $description : sprintf(
-				/* translators: %s: amount and currency */
-				__( 'Payment of %1$s %2$s', 'fair-payment' ),
-				$amount,
-				$currency
+		// Prepare description.
+		$final_description = ! empty( $description ) ? $description : sprintf(
+			/* translators: %s: amount and currency */
+			__( 'Payment of %1$s %2$s', 'fair-payment' ),
+			$amount,
+			$currency
+		);
+
+		// Prepare redirect URL.
+		$redirect_url = add_query_arg(
+			array(
+				'payment_redirect' => '1',
+				'post_id'          => $post_id,
 			),
-			'redirect_url' => add_query_arg(
-				array(
-					'payment_redirect' => '1',
-					'post_id'          => $post_id,
-				),
-				$post_id ? get_permalink( $post_id ) : home_url()
-			),
-			'webhook_url'  => rest_url( 'fair-payment/v1/webhook' ),
-			'metadata'     => array(
-				'post_id' => $post_id,
-				'user_id' => get_current_user_id(),
+			$post_id ? get_permalink( $post_id ) : home_url()
+		);
+
+		// Create transaction with single line item using new API.
+		$line_items = array(
+			array(
+				'name'     => $final_description,
+				'quantity' => 1,
+				'amount'   => (float) $amount,
 			),
 		);
 
-		try {
-			// Create payment with Mollie.
-			$handler        = new MolliePaymentHandler();
-			$mollie_payment = $handler->create_payment( $payment_args );
-
-			// Store transaction in database.
-			$transaction_id = Transaction::create(
-				array(
-					'mollie_payment_id' => $mollie_payment['mollie_payment_id'],
-					'post_id'           => $post_id,
-					'user_id'           => get_current_user_id(),
-					'amount'            => $amount,
-					'currency'          => $currency,
-					'status'            => $mollie_payment['status'],
-					'description'       => $payment_args['description'],
-					'redirect_url'      => $payment_args['redirect_url'],
-					'webhook_url'       => $payment_args['webhook_url'],
-					'checkout_url'      => $mollie_payment['checkout_url'],
-					'metadata'          => $payment_args['metadata'],
-				)
-			);
-
-			if ( ! $transaction_id ) {
-				return new WP_Error(
-					'transaction_creation_failed',
-					__( 'Failed to store transaction in database.', 'fair-payment' ),
-					array( 'status' => 500 )
-				);
-			}
-
-			return new WP_REST_Response(
-				array(
-					'success'           => true,
-					'transaction_id'    => $transaction_id,
-					'mollie_payment_id' => $mollie_payment['mollie_payment_id'],
-					'checkout_url'      => $mollie_payment['checkout_url'],
-					'status'            => $mollie_payment['status'],
+		$transaction_id = TransactionAPI::create_transaction(
+			$line_items,
+			array(
+				'currency'    => $currency,
+				'description' => $final_description,
+				'post_id'     => $post_id,
+				'user_id'     => get_current_user_id(),
+				'metadata'    => array(
+					'post_id'         => $post_id,
+					'user_id'         => get_current_user_id(),
+					'legacy_rest_api' => true,
 				),
-				201
-			);
+			)
+		);
 
-		} catch ( \Exception $e ) {
+		if ( is_wp_error( $transaction_id ) ) {
 			return new WP_Error(
-				'payment_creation_failed',
-				$e->getMessage(),
+				'transaction_creation_failed',
+				$transaction_id->get_error_message(),
 				array( 'status' => 500 )
 			);
 		}
+
+		// Initiate payment immediately.
+		$payment = TransactionAPI::initiate_payment(
+			$transaction_id,
+			array(
+				'redirect_url' => $redirect_url,
+				'webhook_url'  => rest_url( 'fair-payment/v1/webhook' ),
+			)
+		);
+
+		if ( is_wp_error( $payment ) ) {
+			return new WP_Error(
+				'payment_initiation_failed',
+				$payment->get_error_message(),
+				array( 'status' => 500 )
+			);
+		}
+
+		// Return same response structure for backward compatibility.
+		return new WP_REST_Response(
+			array(
+				'success'           => true,
+				'transaction_id'    => $transaction_id,
+				'mollie_payment_id' => $payment['mollie_payment_id'],
+				'checkout_url'      => $payment['checkout_url'],
+				'status'            => $payment['status'],
+			),
+			201
+		);
 	}
 }

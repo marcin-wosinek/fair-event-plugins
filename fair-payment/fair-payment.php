@@ -51,3 +51,79 @@ function fair_payment_activate() {
 		FairPayment\Database\Schema::create_tables();
 	}
 }
+
+/**
+ * Create a transaction with line items
+ *
+ * Example usage:
+ * $transaction_id = fair_payment_create_transaction(
+ *     [
+ *         ['name' => 'Event Ticket', 'quantity' => 2, 'amount' => 15.00],
+ *         ['name' => 'Processing Fee', 'quantity' => 1, 'amount' => 2.50],
+ *     ],
+ *     [
+ *         'currency' => 'EUR',
+ *         'description' => 'Event Registration',
+ *         'post_id' => 123,
+ *         'user_id' => get_current_user_id(),
+ *     ]
+ * );
+ *
+ * @param array $line_items Array of line items [['name' => '', 'quantity' => 1, 'amount' => 0.00], ...].
+ * @param array $args {
+ *     Optional transaction parameters.
+ *
+ *     @type string $currency Currency code (default: 'EUR').
+ *     @type string $description Transaction description.
+ *     @type int    $post_id Associated post ID.
+ *     @type int    $user_id User ID (default: current user).
+ *     @type array  $metadata Additional metadata.
+ * }
+ * @return int|WP_Error Transaction ID on success, WP_Error on failure.
+ */
+function fair_payment_create_transaction( $line_items, $args = array() ) {
+	return \FairPayment\API\TransactionAPI::create_transaction( $line_items, $args );
+}
+
+/**
+ * Initiate payment for a transaction
+ *
+ * Example usage:
+ * $result = fair_payment_initiate_payment(
+ *     123,
+ *     ['redirect_url' => get_permalink($post_id)]
+ * );
+ *
+ * if ( ! is_wp_error( $result ) ) {
+ *     wp_redirect( $result['checkout_url'] );
+ *     exit;
+ * }
+ *
+ * @param int   $transaction_id Transaction ID.
+ * @param array $args {
+ *     Payment parameters.
+ *
+ *     @type string $redirect_url URL to redirect after payment (required).
+ *     @type string $webhook_url Webhook URL (optional, defaults to plugin webhook).
+ * }
+ * @return array|WP_Error {
+ *     Payment data on success, WP_Error on failure.
+ *
+ *     @type string $checkout_url Mollie checkout URL.
+ *     @type string $mollie_payment_id Mollie payment ID.
+ *     @type string $status Payment status.
+ * }
+ */
+function fair_payment_initiate_payment( $transaction_id, $args = array() ) {
+	return \FairPayment\API\TransactionAPI::initiate_payment( $transaction_id, $args );
+}
+
+/**
+ * Get transaction with line items
+ *
+ * @param int $transaction_id Transaction ID.
+ * @return object|null Transaction object with line_items property, or null if not found.
+ */
+function fair_payment_get_transaction( $transaction_id ) {
+	return \FairPayment\API\TransactionAPI::get_transaction( $transaction_id );
+}
