@@ -71,6 +71,7 @@ const GroupMembersPage = ({ groupId }) => {
 		if (
 			!confirm(
 				sprintf(
+					/* translators: %s: member name */
 					__(
 						'Are you sure you want to remove %s from this group?',
 						'fair-membership'
@@ -151,7 +152,11 @@ const GroupMembersPage = ({ groupId }) => {
 	return (
 		<div className="wrap">
 			<h1 className="wp-heading-inline">
-				{sprintf(__('Members of %s', 'fair-membership'), group.name)}
+				{sprintf(
+					/* translators: %s: group name */
+					__('Members of %s', 'fair-membership'),
+					group.name
+				)}
 			</h1>
 			<a
 				href="admin.php?page=fair-membership"
@@ -202,6 +207,7 @@ const GroupMembersPage = ({ groupId }) => {
 						<h2>{__('Current Members', 'fair-membership')}</h2>
 						<span style={{ marginLeft: 'auto', color: '#757575' }}>
 							{sprintf(
+								/* translators: %d: number of members */
 								__('%d members', 'fair-membership'),
 								members.length
 							)}

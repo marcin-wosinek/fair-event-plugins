@@ -80,6 +80,7 @@ const GroupFeesPage = () => {
 		if (
 			!confirm(
 				sprintf(
+					/* translators: %s: group fee title */
 					__(
 						'Are you sure you want to delete the group fee "%s"? This will also delete all associated user fees.',
 						'fair-membership'
@@ -147,6 +148,7 @@ const GroupFeesPage = () => {
 
 				setSuccess(
 					sprintf(
+						/* translators: %d: number of user fees created */
 						__(
 							'Group fee created successfully. %d user fees were created for group members.',
 							'fair-membership'
@@ -220,7 +222,11 @@ const GroupFeesPage = () => {
 					<HStack>
 						<h2>{__('All Group Fees', 'fair-membership')}</h2>
 						<span style={{ marginLeft: 'auto', color: '#757575' }}>
-							{sprintf(__('%d total', 'fair-membership'), total)}
+							{sprintf(
+								/* translators: %d: total number of group fees */
+								__('%d total', 'fair-membership'),
+								total
+							)}
 						</span>
 					</HStack>
 				</CardHeader>
@@ -248,6 +254,7 @@ const GroupFeesPage = () => {
 							</Button>
 							<span>
 								{sprintf(
+									/* translators: 1: current page number, 2: total number of pages */
 									__('Page %1$d of %2$d', 'fair-membership'),
 									page,
 									totalPages

@@ -51,6 +51,7 @@ const SendEmailModal = ({ groupName, memberCount, onSend, onClose }) => {
 	return (
 		<Modal
 			title={sprintf(
+				/* translators: %s: group name */
 				__('Send Message to %s Members', 'fair-membership'),
 				groupName
 			)}
@@ -60,6 +61,7 @@ const SendEmailModal = ({ groupName, memberCount, onSend, onClose }) => {
 			<VStack spacing={4}>
 				<Notice status="info" isDismissible={false}>
 					{sprintf(
+						/* translators: %d: number of members */
 						__(
 							'This message will be sent to %d members of this group.',
 							'fair-membership'

@@ -78,6 +78,7 @@ const GroupsPage = () => {
 		if (
 			!confirm(
 				sprintf(
+					/* translators: %s: group name */
 					__(
 						'Are you sure you want to delete the group "%s"?',
 						'fair-membership'

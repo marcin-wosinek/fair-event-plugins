@@ -42,8 +42,8 @@ msgstr "https://github.com/marcin-wosinek"
 
 #: src/Admin/AdminHooks.php:43
 #: src/Admin/AdminHooks.php:44
-#: src/Admin/groups/GroupsPage.js:166
-#: src/Admin/groups/GroupsPage.js:175
+#: src/Admin/groups/GroupsPage.js:167
+#: src/Admin/groups/GroupsPage.js:176
 msgid "Groups"
 msgstr "Grupos"
 
@@ -59,6 +59,7 @@ msgstr "Todos los Usuarios"
 msgid "Update Group"
 msgstr "Actualizar Grupo"
 
+#: src/Admin/group-fees/GroupFeeForm.js:123
 #: src/Admin/groups/GroupForm.js:114
 #: src/Admin/groups/GroupsList.js:57
 msgid "Description"
@@ -81,28 +82,30 @@ msgstr "Abierto"
 msgid "Managed"
 msgstr "Gestionado"
 
-#: src/Models/Group.php:333
+#: src/Models/Group.php:341
 #: src/Admin/groups/GroupForm.js:62
 msgid "Group name is required."
 msgstr "El nombre del grupo es obligatorio."
 
-#: src/Admin/GroupMembersPage.php:33
-#: src/API/GroupController.php:282
-#: src/API/GroupController.php:360
-#: src/API/GroupController.php:428
-#: src/API/GroupController.php:467
-#: src/API/GroupController.php:515
-#: src/API/GroupController.php:589
-#: src/API/GroupController.php:641
+#: src/Admin/GroupMembersPage.php:34
+#: src/API/GroupController.php:283
+#: src/API/GroupController.php:361
+#: src/API/GroupController.php:429
+#: src/API/GroupController.php:468
+#: src/API/GroupController.php:516
+#: src/API/GroupController.php:590
+#: src/API/GroupController.php:642
 msgid "Group not found."
 msgstr "Grupo no encontrado."
 
-#: src/API/GroupController.php:400
-#: src/Admin/groups/GroupsPage.js:130
+#: src/API/GroupController.php:401
+#: src/Admin/groups/GroupsPage.js:131
 msgid "Group updated successfully."
 msgstr "Grupo actualizado exitosamente."
 
-#: src/Admin/groups/GroupsPage.js:182
+#: src/Admin/group-fees/GroupFeesPage.js:196
+#: src/Admin/groups/GroupsPage.js:183
+#: src/Admin/user-fees/UserFeesPage.js:273
 msgid "Add New"
 msgstr "Añadir Nuevo"
 
@@ -122,27 +125,32 @@ msgstr "Acceso"
 msgid "No description"
 msgstr "Sin descripción"
 
+#: src/Admin/group-fees/GroupFeesList.js:76
 #: src/Admin/groups/GroupsList.js:138
+#: src/Admin/user-fees/UserFeesList.js:107
 msgid "Edit"
 msgstr "Editar"
 
+#: src/Admin/group-fees/GroupFeesList.js:83
 #: src/Admin/groups/GroupsList.js:146
+#: src/Admin/user-fees/UserFeesList.js:114
 msgid "Delete"
 msgstr "Eliminar"
 
-#: src/Admin/GroupMembersPage.php:27
+#: src/Admin/GroupMembersPage.php:28
+#: src/Models/GroupFee.php:330
 msgid "Invalid group ID."
 msgstr "ID de grupo inválido."
 
-#: src/Admin/groups/GroupsPage.js:261
+#: src/Admin/groups/GroupsPage.js:262
 msgid "Add New Group"
 msgstr "Añadir Nuevo Grupo"
 
-#: src/Admin/group-members/GroupMembersPage.js:141
+#: src/Admin/group-members/GroupMembersPage.js:146
 msgid "Back to Groups"
 msgstr "Volver a Grupos"
 
-#: src/Admin/groups/GroupsPage.js:260
+#: src/Admin/groups/GroupsPage.js:261
 msgid "Edit Group"
 msgstr "Editar Grupo"
 
@@ -151,16 +159,21 @@ msgstr "Editar Grupo"
 msgid "Slug"
 msgstr "Slug"
 
+#: src/blocks/my-fees/render.php:53
+#: src/blocks/my-fees/render.php:93
 #: src/Admin/groups/GroupForm.js:151
 #: src/Admin/groups/GroupsList.js:66
+#: src/Admin/user-fees/UserFeesList.js:52
+#: src/Admin/user-fees/UserFeesPage.js:306
+#: src/blocks/my-fees/components/EditComponent.js:44
 msgid "Status"
 msgstr "Estado"
 
-#: src/Admin/group-members/GroupMembersPage.js:133
+#: src/Admin/group-members/GroupMembersPage.js:138
 msgid "Group Not Found"
 msgstr "Grupo No Encontrado"
 
-#: src/Admin/group-members/GroupMembersPage.js:135
+#: src/Admin/group-members/GroupMembersPage.js:140
 msgid "The requested group could not be found."
 msgstr "El grupo solicitado no se pudo encontrar."
 
@@ -173,9 +186,14 @@ msgstr "Correo Electrónico"
 msgid "Joined"
 msgstr "Unido"
 
+#: src/blocks/my-fees/render.php:54
+#: src/blocks/my-fees/render.php:111
+#: src/Admin/group-fees/GroupFeesList.js:24
 #: src/Admin/group-members/MembersList.js:30
 #: src/Admin/group-members/UserSearch.js:103
 #: src/Admin/groups/GroupsList.js:69
+#: src/Admin/user-fees/UserFeesList.js:53
+#: src/blocks/my-fees/components/EditComponent.js:45
 msgid "Actions"
 msgstr "Acciones"
 
@@ -183,23 +201,23 @@ msgstr "Acciones"
 msgid "No members in this group yet."
 msgstr "Aún no hay miembros en este grupo."
 
-#: src/Admin/group-members/GroupMembersPage.js:184
+#: src/Admin/group-members/GroupMembersPage.js:193
 msgid "Add Members"
 msgstr "Añadir Miembros"
 
-#: src/API/RestAPI.php:186
+#: src/API/RestAPI.php:194
 msgid "Membership is already active."
 msgstr "La membresía ya está activa."
 
-#: src/API/RestAPI.php:206
+#: src/API/RestAPI.php:214
 msgid "No active membership to deactivate."
 msgstr "No hay membresía activa para desactivar."
 
-#: src/API/RestAPI.php:231
+#: src/API/RestAPI.php:239
 msgid "Membership updated successfully."
 msgstr "Membresía actualizada exitosamente."
 
-#: src/API/RestAPI.php:237
+#: src/API/RestAPI.php:245
 msgid "Failed to save membership."
 msgstr "Error al guardar la membresía."
 
@@ -233,24 +251,25 @@ msgstr "desde"
 msgid "Check groups to add the user as a member, uncheck to remove membership."
 msgstr "Marque grupos para añadir al usuario como miembro, desmarque para eliminar la membresía."
 
-#: src/Models/Group.php:337
+#: src/Models/Group.php:345
 #: src/Admin/groups/GroupForm.js:68
 msgid "Group slug is required."
 msgstr "El slug del grupo es obligatorio."
 
-#: src/Models/Group.php:339
+#: src/Models/Group.php:347
 msgid "Group slug can only contain lowercase letters, numbers, and hyphens."
 msgstr "El slug del grupo solo puede contener letras minúsculas, números y guiones."
 
-#: src/Models/Group.php:343
+#: src/Models/Group.php:351
 msgid "Invalid access control type."
 msgstr "Tipo de control de acceso inválido."
 
-#: src/Models/Group.php:347
+#: src/Models/Group.php:355
+#: src/Models/UserFee.php:370
 msgid "Invalid status."
 msgstr "Estado inválido."
 
-#: src/Models/Group.php:353
+#: src/Models/Group.php:361
 msgid "A group with this slug already exists."
 msgstr "Ya existe un grupo con este slug."
 
@@ -258,6 +277,7 @@ msgstr "Ya existe un grupo con este slug."
 msgid "User ID is required."
 msgstr "El ID de usuario es obligatorio."
 
+#: src/Models/GroupFee.php:324
 #: src/Models/Membership.php:209
 msgid "Group ID is required."
 msgstr "El ID de grupo es obligatorio."
@@ -274,7 +294,7 @@ msgstr "El usuario no existe."
 msgid "Group does not exist."
 msgstr "El grupo no existe."
 
-#: src/Admin/group-members/GroupMembersPage.js:157
+#: src/Admin/group-members/GroupMembersPage.js:166
 msgid "← Back to Groups"
 msgstr "← Volver a Grupos"
 
@@ -375,182 +395,190 @@ msgid "Content shown to non-members and logged-out users"
 msgstr "Contenido mostrado a no miembros y usuarios no autenticados"
 
 #. translators: %s: Group name
-#: fair-membership.php:108
+#: fair-membership.php:107
 #, php-format
 msgid "%s (Membership)"
-msgstr ""
+msgstr "%s (Membresía)"
 
-#: fair-membership.php:111
+#: fair-membership.php:110
 msgid "Active members of this membership group"
-msgstr ""
+msgstr "Miembros activos de este grupo de membresía"
 
-#: src/Admin/AdminHooks.php:62
-#: src/Admin/AdminHooks.php:63
-#: src/Admin/group-members/GroupMembersPage.js:124
+#: src/Admin/AdminHooks.php:80
+#: src/Admin/AdminHooks.php:81
+#: src/Admin/group-members/GroupMembersPage.js:129
 msgid "Group Members"
 msgstr "Miembros del Grupo"
 
-#: src/API/GroupController.php:56
+#: src/API/GroupController.php:57
+#: src/API/UserFeeController.php:65
 msgid "Filter by status."
-msgstr ""
+msgstr "Filtrar por estado."
 
-#: src/API/GroupController.php:61
+#: src/API/GroupController.php:62
+#: src/API/GroupFeeController.php:63
+#: src/API/UserFeeController.php:70
 msgid "Page number."
-msgstr ""
+msgstr "Número de página."
 
-#: src/API/GroupController.php:66
+#: src/API/GroupController.php:67
+#: src/API/GroupFeeController.php:68
+#: src/API/UserFeeController.php:75
 msgid "Items per page."
-msgstr ""
+msgstr "Elementos por página."
 
-#: src/API/GroupController.php:71
+#: src/API/GroupController.php:72
 msgid "Order by field."
-msgstr ""
+msgstr "Ordenar por campo."
 
-#: src/API/GroupController.php:77
+#: src/API/GroupController.php:78
 msgid "Order direction."
-msgstr ""
+msgstr "Dirección de orden."
 
-#: src/API/GroupController.php:106
-#: src/API/GroupController.php:123
-#: src/API/GroupController.php:143
-#: src/API/GroupController.php:154
-#: src/API/GroupController.php:178
-#: src/API/GroupController.php:201
+#: src/API/GroupController.php:107
+#: src/API/GroupController.php:124
+#: src/API/GroupController.php:144
+#: src/API/GroupController.php:155
+#: src/API/GroupController.php:179
+#: src/API/GroupController.php:202
 msgid "Group ID."
-msgstr ""
+msgstr "ID del grupo."
 
-#: src/API/GroupController.php:158
+#: src/API/GroupController.php:159
 msgid "User ID to add to the group."
-msgstr ""
+msgstr "ID de usuario para agregar al grupo."
 
-#: src/API/GroupController.php:182
+#: src/API/GroupController.php:183
 msgid "User ID to remove from the group."
-msgstr ""
+msgstr "ID de usuario para eliminar del grupo."
 
-#: src/API/GroupController.php:205
+#: src/API/GroupController.php:206
 msgid "Email subject."
-msgstr ""
+msgstr "Asunto del correo electrónico."
 
-#: src/API/GroupController.php:210
+#: src/API/GroupController.php:211
 msgid "Email message body."
-msgstr ""
+msgstr "Cuerpo del mensaje de correo electrónico."
 
-#: src/API/GroupController.php:331
-#: src/Admin/groups/GroupsPage.js:144
+#: src/API/GroupController.php:332
+#: src/Admin/groups/GroupsPage.js:145
 msgid "Group created successfully."
-msgstr ""
+msgstr "Grupo creado exitosamente."
 
-#: src/API/GroupController.php:338
-#: src/Admin/groups/GroupsPage.js:153
+#: src/API/GroupController.php:339
+#: src/Admin/groups/GroupsPage.js:154
 msgid "Failed to save group."
-msgstr ""
+msgstr "Error al guardar el grupo."
 
-#: src/API/GroupController.php:407
+#: src/API/GroupController.php:408
 msgid "Failed to update group."
-msgstr ""
+msgstr "Error al actualizar el grupo."
 
-#: src/API/GroupController.php:440
-#: src/Admin/groups/GroupsPage.js:102
+#: src/API/GroupController.php:441
+#: src/Admin/groups/GroupsPage.js:103
 msgid "Group deleted successfully."
-msgstr ""
+msgstr "Grupo eliminado exitosamente."
 
-#: src/API/GroupController.php:447
-#: src/Admin/groups/GroupsPage.js:106
+#: src/API/GroupController.php:448
+#: src/Admin/groups/GroupsPage.js:107
 msgid "Failed to delete group."
-msgstr ""
+msgstr "Error al eliminar el grupo."
 
-#: src/API/GroupController.php:525
+#: src/API/GroupController.php:526
 msgid "User not found."
-msgstr ""
+msgstr "Usuario no encontrado."
 
-#: src/API/GroupController.php:535
+#: src/API/GroupController.php:536
 msgid "User is already a member of this group."
-msgstr ""
+msgstr "El usuario ya es miembro de este grupo."
 
-#: src/API/GroupController.php:553
+#: src/API/GroupController.php:554
 #: src/Admin/group-members/GroupMembersPage.js:61
 msgid "Member added successfully."
 msgstr "Miembro agregado exitosamente."
 
-#: src/API/GroupController.php:568
+#: src/API/GroupController.php:569
 #: src/Admin/group-members/GroupMembersPage.js:65
 #: src/Admin/group-members/UserSearch.js:60
 msgid "Failed to add member."
 msgstr "Error al agregar miembro."
 
-#: src/API/GroupController.php:599
+#: src/API/GroupController.php:600
 msgid "User is not a member of this group."
-msgstr ""
+msgstr "El usuario no es miembro de este grupo."
 
-#: src/API/GroupController.php:612
-#: src/Admin/group-members/GroupMembersPage.js:93
+#: src/API/GroupController.php:613
+#: src/Admin/group-members/GroupMembersPage.js:94
 msgid "Member removed successfully."
 msgstr "Miembro eliminado exitosamente."
 
-#: src/API/GroupController.php:619
-#: src/Admin/group-members/GroupMembersPage.js:97
+#: src/API/GroupController.php:620
+#: src/Admin/group-members/GroupMembersPage.js:98
 msgid "Failed to remove member."
 msgstr "Error al eliminar miembro."
 
-#: src/API/GroupController.php:652
+#: src/API/GroupController.php:653
 msgid "This group has no members."
-msgstr ""
+msgstr "Este grupo no tiene miembros."
 
 #. translators: %1$d is the number of emails sent, %2$d is the number that failed.
-#: src/API/GroupController.php:680
+#: src/API/GroupController.php:697
 #, php-format
 msgid "Sent %1$d emails. %2$d failed."
-msgstr ""
+msgstr "%1$d correos enviados. %2$d fallidos."
 
-#: src/API/GroupController.php:700
+#: src/API/GroupController.php:717
 msgid "Group name."
-msgstr ""
+msgstr "Nombre del grupo."
 
-#: src/API/GroupController.php:705
+#: src/API/GroupController.php:722
 msgid "Group slug (auto-generated from name if not provided)."
-msgstr ""
+msgstr "Slug del grupo (generado automáticamente del nombre si no se proporciona)."
 
-#: src/API/GroupController.php:710
+#: src/API/GroupController.php:727
 msgid "Group description."
-msgstr ""
+msgstr "Descripción del grupo."
 
-#: src/API/GroupController.php:715
+#: src/API/GroupController.php:732
 msgid "Access control type."
-msgstr ""
+msgstr "Tipo de control de acceso."
 
-#: src/API/GroupController.php:721
+#: src/API/GroupController.php:738
 msgid "Group status."
-msgstr ""
+msgstr "Estado del grupo."
 
 #: src/Admin/group-members/GroupMembersPage.js:44
 msgid "Failed to load group members."
 msgstr "Error al cargar miembros del grupo."
 
-#: src/Admin/group-members/GroupMembersPage.js:74
+#. translators: %s: member name
+#: src/Admin/group-members/GroupMembersPage.js:75
 #, js-format
 msgid "Are you sure you want to remove %s from this group?"
 msgstr "¿Está seguro de que desea eliminar a %s de este grupo?"
 
-#: src/Admin/group-members/GroupMembersPage.js:116
-#: src/Admin/group-members/SendEmailModal.js:41
+#: src/Admin/group-members/GroupMembersPage.js:118
+#: src/Admin/group-members/SendEmailModal.js:43
 msgid "Failed to send email."
 msgstr "Error al enviar correo."
 
-#: src/Admin/group-members/GroupMembersPage.js:150
+#. translators: %s: group name
+#: src/Admin/group-members/GroupMembersPage.js:157
 #, js-format
 msgid "Members of %s"
 msgstr "Miembros de %s"
 
-#: src/Admin/group-members/GroupMembersPage.js:198
+#: src/Admin/group-members/GroupMembersPage.js:207
 msgid "Current Members"
 msgstr "Miembros Actuales"
 
-#: src/Admin/group-members/GroupMembersPage.js:201
+#. translators: %d: number of members
+#: src/Admin/group-members/GroupMembersPage.js:211
 #, js-format
 msgid "%d members"
 msgstr "%d miembros"
 
-#: src/Admin/group-members/GroupMembersPage.js:210
+#: src/Admin/group-members/GroupMembersPage.js:220
 msgid "Send Message to Members"
 msgstr "Enviar Mensaje a Miembros"
 
@@ -558,50 +586,55 @@ msgstr "Enviar Mensaje a Miembros"
 msgid "Remove"
 msgstr "Eliminar"
 
-#: src/Admin/group-members/SendEmailModal.js:21
+#: src/Admin/group-members/SendEmailModal.js:23
 msgid "Please enter a subject."
 msgstr "Por favor ingrese un asunto."
 
-#: src/Admin/group-members/SendEmailModal.js:26
+#: src/Admin/group-members/SendEmailModal.js:28
 msgid "Please enter a message."
 msgstr "Por favor ingrese un mensaje."
 
-#: src/Admin/group-members/SendEmailModal.js:50
+#. translators: %s: group name
+#: src/Admin/group-members/SendEmailModal.js:55
 #, js-format
 msgid "Send Message to %s Members"
 msgstr "Enviar Mensaje a %s Miembros"
 
-#: src/Admin/group-members/SendEmailModal.js:59
+#. translators: %d: number of members
+#: src/Admin/group-members/SendEmailModal.js:65
 #, js-format
 msgid "This message will be sent to %d members of this group."
 msgstr "Este mensaje será enviado a %d miembros de este grupo."
 
-#: src/Admin/group-members/SendEmailModal.js:78
+#: src/Admin/group-members/SendEmailModal.js:143
 msgid "Subject"
 msgstr "Asunto"
 
-#: src/Admin/group-members/SendEmailModal.js:81
+#: src/Admin/group-members/SendEmailModal.js:146
 msgid "Enter email subject..."
 msgstr "Ingrese asunto del correo..."
 
-#: src/Admin/group-members/SendEmailModal.js:89
+#: src/Admin/group-members/SendEmailModal.js:154
 msgid "Message"
 msgstr "Mensaje"
 
-#: src/Admin/group-members/SendEmailModal.js:92
+#: src/Admin/group-members/SendEmailModal.js:157
 msgid "Enter your message..."
 msgstr "Ingrese su mensaje..."
 
-#: src/Admin/group-members/SendEmailModal.js:109
+#: src/Admin/group-fees/GroupFeeForm.js:156
+#: src/Admin/group-members/SendEmailModal.js:174
 #: src/Admin/groups/GroupForm.js:176
+#: src/Admin/user-fees/UserFeeForm.js:281
+#: src/Admin/user-fees/UserFeesPage.js:472
 msgid "Cancel"
 msgstr "Cancelar"
 
-#: src/Admin/group-members/SendEmailModal.js:118
+#: src/Admin/group-members/SendEmailModal.js:183
 msgid "Sending..."
 msgstr "Enviando..."
 
-#: src/Admin/group-members/SendEmailModal.js:119
+#: src/Admin/group-members/SendEmailModal.js:184
 msgid "Send Email"
 msgstr "Enviar Correo"
 
@@ -635,77 +668,629 @@ msgstr "Agregar"
 
 #: src/Admin/groups/GroupForm.js:96
 msgid "The name of the group as it will appear to users."
-msgstr ""
+msgstr "El nombre del grupo como aparecerá a los usuarios."
 
 #: src/Admin/groups/GroupForm.js:107
 msgid "Unique identifier for the group (lowercase letters, numbers, and hyphens only)."
-msgstr ""
+msgstr "Identificador único del grupo (solo letras minúsculas, números y guiones)."
 
 #: src/Admin/groups/GroupForm.js:117
 msgid "Optional description of what this group represents."
-msgstr ""
+msgstr "Descripción opcional de lo que representa este grupo."
 
 #: src/Admin/groups/GroupForm.js:130
 msgid "Open - Users can join themselves"
-msgstr ""
+msgstr "Abierto - Los usuarios pueden unirse por sí mismos"
 
 #: src/Admin/groups/GroupForm.js:137
 msgid "Managed - Only administrators can add members"
-msgstr ""
+msgstr "Administrado - Solo los administradores pueden agregar miembros"
 
 #: src/Admin/groups/GroupForm.js:144
 msgid "Determines who can add members to this group."
-msgstr ""
+msgstr "Determina quién puede agregar miembros a este grupo."
 
 #: src/Admin/groups/GroupForm.js:156
 #: src/Admin/groups/GroupsList.js:32
 msgid "Active"
-msgstr ""
+msgstr "Activo"
 
 #: src/Admin/groups/GroupForm.js:160
 #: src/Admin/groups/GroupsList.js:33
 msgid "Inactive"
-msgstr ""
+msgstr "Inactivo"
 
 #: src/Admin/groups/GroupForm.js:164
 msgid "Inactive groups are hidden from users."
-msgstr ""
+msgstr "Los grupos inactivos están ocultos para los usuarios."
 
 #: src/Admin/groups/GroupForm.js:186
 msgid "Create Group"
-msgstr ""
+msgstr "Crear Grupo"
 
 #: src/Admin/groups/GroupsList.js:14
 msgid "No groups found. Create your first group to get started."
-msgstr ""
+msgstr "No se encontraron grupos. Crea tu primer grupo para comenzar."
 
+#: src/Admin/group-fees/GroupFeeForm.js:44
 #: src/Admin/groups/GroupsPage.js:56
 msgid "Failed to load groups."
-msgstr ""
+msgstr "Error al cargar grupos."
 
-#: src/Admin/groups/GroupsPage.js:81
+#. translators: %s: group name
+#: src/Admin/groups/GroupsPage.js:82
 #, js-format
 msgid "Are you sure you want to delete the group \"%s\"?"
 msgstr ""
 
-#: src/Admin/groups/GroupsPage.js:209
+#: src/Admin/groups/GroupsPage.js:210
 msgid "All Groups"
-msgstr ""
+msgstr "Todos los Grupos"
 
-#: src/Admin/groups/GroupsPage.js:211
+#. translators: %d: total number of group fees
+#: src/Admin/group-fees/GroupFeesPage.js:227
+#: src/Admin/groups/GroupsPage.js:212
+#: src/Admin/user-fees/UserFeesPage.js:341
 #, js-format
 msgid "%d total"
 msgstr ""
 
-#: src/Admin/groups/GroupsPage.js:235
+#: src/Admin/group-fees/GroupFeesPage.js:253
+#: src/Admin/groups/GroupsPage.js:236
+#: src/Admin/user-fees/UserFeesPage.js:367
 msgid "Previous"
-msgstr ""
+msgstr "Anterior"
 
-#: src/Admin/groups/GroupsPage.js:239
+#. translators: 1: current page number, 2: total number of pages
+#: src/Admin/group-fees/GroupFeesPage.js:258
+#: src/Admin/groups/GroupsPage.js:240
+#: src/Admin/user-fees/UserFeesPage.js:371
 #, js-format
 msgid "Page %1$d of %2$d"
 msgstr ""
 
-#: src/Admin/groups/GroupsPage.js:249
+#: src/Admin/group-fees/GroupFeesPage.js:268
+#: src/Admin/groups/GroupsPage.js:250
+#: src/Admin/user-fees/UserFeesPage.js:381
 msgid "Next"
+msgstr "Siguiente"
+
+#: src/Admin/AdminHooks.php:61
+#: src/Admin/AdminHooks.php:62
+#: src/Admin/group-fees/GroupFeesPage.js:180
+#: src/Admin/group-fees/GroupFeesPage.js:189
+msgid "Group Fees"
+msgstr "Tarifas de Grupo"
+
+#: src/Admin/AdminHooks.php:70
+#: src/Admin/AdminHooks.php:71
+#: src/Admin/user-fees/UserFeesPage.js:257
+#: src/Admin/user-fees/UserFeesPage.js:266
+msgid "User Fees"
+msgstr "Tarifas de Usuario"
+
+#: src/API/GroupFeeController.php:59
+msgid "Filter by group ID."
+msgstr "Filtrar por ID de grupo."
+
+#: src/API/GroupFeeController.php:172
+msgid "You do not have permission to view group fees."
+msgstr "No tienes permiso para ver tarifas de grupo."
+
+#: src/API/GroupFeeController.php:189
+msgid "You do not have permission to create group fees."
+msgstr "No tienes permiso para crear tarifas de grupo."
+
+#: src/API/GroupFeeController.php:312
+#: src/Admin/group-fees/GroupFeeForm.js:73
+#: src/Admin/group-fees/GroupFeesPage.js:167
+msgid "Failed to save group fee."
+msgstr "Error al guardar la tarifa de grupo."
+
+#: src/API/GroupFeeController.php:357
+#: src/API/GroupFeeController.php:378
+#: src/API/GroupFeeController.php:429
+#: src/API/GroupFeeController.php:464
+msgid "Group fee not found."
+msgstr "Tarifa de grupo no encontrada."
+
+#: src/API/GroupFeeController.php:408
+msgid "Failed to update group fee."
+msgstr "Error al actualizar la tarifa de grupo."
+
+#: src/API/GroupFeeController.php:438
+#: src/Admin/group-fees/GroupFeesPage.js:112
+msgid "Failed to delete group fee."
+msgstr "Error al eliminar la tarifa de grupo."
+
+#: src/API/UserFeeController.php:57
+msgid "Filter by user ID."
+msgstr ""
+
+#: src/API/UserFeeController.php:61
+msgid "Filter by group fee ID."
+msgstr "Filtrar por ID de tarifa de grupo."
+
+#: src/API/UserFeeController.php:214
+msgid "URL to redirect after payment."
+msgstr ""
+
+#: src/API/UserFeeController.php:231
+msgid "You do not have permission to view user fees."
+msgstr "No tienes permiso para ver tarifas de usuario."
+
+#: src/API/UserFeeController.php:248
+msgid "You do not have permission to create user fees."
+msgstr "No tienes permiso para crear tarifas de usuario."
+
+#: src/API/UserFeeController.php:296
+msgid "You must be logged in to create payments."
+msgstr "Debes iniciar sesión para crear pagos."
+
+#: src/API/UserFeeController.php:307
+#: src/API/UserFeeController.php:430
+#: src/API/UserFeeController.php:451
+#: src/API/UserFeeController.php:502
+#: src/API/UserFeeController.php:540
+#: src/API/UserFeeController.php:597
+#: src/API/UserFeeController.php:628
+#: src/API/UserFeeController.php:652
+msgid "User fee not found."
+msgstr "Tarifa de usuario no encontrada."
+
+#: src/API/UserFeeController.php:316
+msgid "You can only create payments for your own fees."
+msgstr "Solo puedes crear pagos para tus propias tarifas."
+
+#: src/API/UserFeeController.php:409
+#: src/Admin/user-fees/UserFeeForm.js:89
+#: src/Admin/user-fees/UserFeesPage.js:244
+msgid "Failed to save user fee."
+msgstr "Error al guardar la tarifa de usuario."
+
+#: src/API/UserFeeController.php:481
+msgid "Failed to update user fee."
+msgstr "Error al actualizar la tarifa de usuario."
+
+#: src/API/UserFeeController.php:511
+#: src/Admin/user-fees/UserFeesPage.js:123
+msgid "Failed to delete user fee."
+msgstr "Error al eliminar la tarifa de usuario."
+
+#: src/API/UserFeeController.php:559
+msgid "Failed to create adjustment record."
+msgstr "Error al crear registro de ajuste."
+
+#: src/API/UserFeeController.php:571
+msgid "Failed to update user fee amount."
+msgstr "Error al actualizar el monto de la tarifa de usuario."
+
+#: src/API/UserFeeController.php:607
+#: src/Admin/user-fees/UserFeesPage.js:158
+msgid "Failed to mark fee as paid."
+msgstr "Error al marcar la tarifa como pagada."
+
+#: src/API/UserFeeController.php:661
+msgid "Only pending or overdue fees can be paid."
+msgstr "Solo se pueden pagar tarifas pendientes o vencidas."
+
+#: src/API/UserFeeController.php:670
+msgid "Payment system is not available."
+msgstr "El sistema de pagos no está disponible."
+
+#. translators: %s: fee title
+#: src/API/UserFeeController.php:688
+#, php-format
+msgid "Payment for: %s"
+msgstr "Pago por: %s"
+
+#. translators: %s: error message
+#: src/API/UserFeeController.php:704
+#, php-format
+msgid "Failed to create transaction: %s"
+msgstr "Error al crear transacción: %s"
+
+#. translators: %s: error message
+#: src/API/UserFeeController.php:724
+#, php-format
+msgid "Failed to initiate payment: %s"
+msgstr "Error al iniciar pago: %s"
+
+#: src/API/UserFeeController.php:734
+msgid "Payment response does not contain checkout URL."
+msgstr "La respuesta de pago no contiene URL de pago."
+
+#: src/blocks/my-fees/render.php:30
+msgid "Please log in to view your membership fees."
+msgstr ""
+
+#: src/blocks/my-fees/render.php:32
+msgid "Log In"
+msgstr ""
+
+#: src/blocks/my-fees/render.php:43
+msgid "You have no fees at this time."
+msgstr ""
+
+#: src/blocks/my-fees/render.php:50
+#: src/blocks/my-fees/render.php:79
+#: src/Admin/group-fees/GroupFeeForm.js:116
+#: src/Admin/group-fees/GroupFeesList.js:17
+#: src/Admin/user-fees/UserFeeForm.js:239
+#: src/Admin/user-fees/UserFeesList.js:49
+#: src/blocks/my-fees/components/EditComponent.js:41
+msgid "Title"
+msgstr "Título"
+
+#: src/blocks/my-fees/render.php:51
+#: src/blocks/my-fees/render.php:87
+#: src/Admin/group-fees/GroupFeesList.js:19
+#: src/Admin/user-fees/UserFeeForm.js:248
+#: src/Admin/user-fees/UserFeesList.js:50
+#: src/blocks/my-fees/components/EditComponent.js:42
+msgid "Amount"
+msgstr "Monto"
+
+#: src/blocks/my-fees/render.php:52
+#: src/blocks/my-fees/render.php:90
+#: src/Admin/group-fees/GroupFeeForm.js:140
+#: src/Admin/group-fees/GroupFeesList.js:22
+#: src/Admin/user-fees/UserFeeForm.js:258
+#: src/Admin/user-fees/UserFeesList.js:51
+#: src/blocks/my-fees/components/EditComponent.js:43
+msgid "Due Date"
+msgstr "Fecha de vencimiento"
+
+#: src/blocks/my-fees/render.php:68
+#: src/Admin/user-fees/UserFeesPage.js:316
+#: src/blocks/my-fees/components/EditComponent.js:60
+msgid "Pending"
+msgstr "Pendiente"
+
+#: src/blocks/my-fees/render.php:69
+#: src/Admin/user-fees/UserFeesPage.js:320
+#: src/blocks/my-fees/components/EditComponent.js:89
+msgid "Paid"
+msgstr "Pagado"
+
+#: src/blocks/my-fees/render.php:70
+#: src/Admin/user-fees/UserFeesPage.js:324
+#: src/blocks/my-fees/components/EditComponent.js:76
+msgid "Overdue"
+msgstr ""
+
+#: src/blocks/my-fees/render.php:71
+#: src/Admin/user-fees/UserFeesPage.js:328
+msgid "Cancelled"
+msgstr "Cancelado"
+
+#. translators: %s: paid date
+#: src/blocks/my-fees/render.php:103
+#, php-format
+msgid "Paid: %s"
+msgstr "Pagado: %s"
+
+#: src/blocks/my-fees/render.php:117
+msgid "Processing..."
+msgstr "Procesando..."
+
+#: src/blocks/my-fees/render.php:119
+#: src/blocks/my-fees/components/EditComponent.js:63
+#: src/blocks/my-fees/components/EditComponent.js:79
+msgid "Pay Now"
+msgstr "Pagar ahora"
+
+#: src/Models/GroupFee.php:312
+#: src/Models/UserFee.php:357
+msgid "Title is required."
+msgstr "El título es obligatorio."
+
+#: src/Models/GroupFee.php:316
+#: src/Models/UserFee.php:361
+msgid "Amount must be a positive number."
+msgstr "El monto debe ser un número positivo."
+
+#: src/Models/GroupFee.php:320
+#: src/Models/UserFee.php:365
+msgid "Due date is required."
+msgstr "La fecha de vencimiento es obligatoria."
+
+#: src/Models/UserFeeAdjustment.php:200
+msgid "User fee ID is required."
+msgstr "El ID de tarifa de usuario es obligatorio."
+
+#: src/Models/UserFeeAdjustment.php:204
+msgid "Previous amount must be a positive number."
+msgstr ""
+
+#: src/Models/UserFeeAdjustment.php:208
+msgid "New amount must be a positive number."
+msgstr ""
+
+#: src/Models/UserFeeAdjustment.php:212
+msgid "Reason is required for audit trail."
+msgstr ""
+
+#: src/Admin/group-fees/GroupFeeForm.js:85
+msgid "Select a group"
+msgstr ""
+
+#: src/Admin/group-fees/GroupFeeForm.js:103
+#: src/Admin/group-fees/GroupFeesList.js:18
+msgid "Group"
+msgstr "Grupo"
+
+#: src/Admin/group-fees/GroupFeeForm.js:108
+msgid "Select the group for this fee. Individual user fees will be created for all active members."
+msgstr ""
+
+#: src/Admin/group-fees/GroupFeeForm.js:130
+msgid "Default Amount"
+msgstr "Monto predeterminado"
+
+#: src/Admin/group-fees/GroupFeeForm.js:165
+#: src/Admin/user-fees/UserFeeForm.js:290
+msgid "Saving..."
+msgstr ""
+
+#: src/Admin/group-fees/GroupFeeForm.js:166
+#: src/Admin/user-fees/UserFeeForm.js:291
+msgid "Save"
+msgstr "Guardar"
+
+#: src/Admin/group-fees/GroupFeesList.js:8
+msgid "No group fees found."
+msgstr ""
+
+#: src/Admin/group-fees/GroupFeesList.js:20
+msgid "Total Paid"
+msgstr "Total pagado"
+
+#: src/Admin/group-fees/GroupFeesList.js:21
+msgid "Payment Pending"
+msgstr "Pago pendiente"
+
+#: src/Admin/group-fees/GroupFeesList.js:23
+msgid "Created"
+msgstr "Creado"
+
+#: src/Admin/group-fees/GroupFeesPage.js:58
+msgid "Failed to load group fees."
+msgstr ""
+
+#. translators: %s: group fee title
+#: src/Admin/group-fees/GroupFeesPage.js:84
+#, js-format
+msgid "Are you sure you want to delete the group fee \"%s\"? This will also delete all associated user fees."
+msgstr ""
+
+#: src/Admin/group-fees/GroupFeesPage.js:106
+msgid "Group fee deleted successfully."
+msgstr "Tarifa de grupo eliminada exitosamente."
+
+#: src/Admin/group-fees/GroupFeesPage.js:136
+msgid "Group fee updated successfully."
+msgstr "Tarifa de grupo actualizada exitosamente."
+
+#. translators: %d: number of user fees created
+#: src/Admin/group-fees/GroupFeesPage.js:152
+#, js-format
+msgid "Group fee created successfully. %d user fees were created for group members."
+msgstr ""
+
+#: src/Admin/group-fees/GroupFeesPage.js:223
+msgid "All Group Fees"
+msgstr "Todas las tarifas de grupo"
+
+#: src/Admin/group-fees/GroupFeesPage.js:279
+msgid "Edit Group Fee"
+msgstr "Editar tarifa de grupo"
+
+#: src/Admin/group-fees/GroupFeesPage.js:280
+msgid "Add New Group Fee"
+msgstr "Agregar nueva tarifa de grupo"
+
+#: src/Admin/group-members/SendEmailModal.js:99
+msgid "Hide details"
+msgstr ""
+
+#: src/Admin/group-members/SendEmailModal.js:103
+msgid "More info"
+msgstr ""
+
+#: src/Admin/user-fees/UserFeeForm.js:109
+msgid "Search User"
+msgstr "Buscar usuario"
+
+#: src/Admin/user-fees/UserFeeForm.js:113
+msgid "Type name or email to search..."
+msgstr ""
+
+#: src/Admin/user-fees/UserFeeForm.js:119
+msgid "User selected. Clear to search again."
+msgstr "Usuario seleccionado. Limpiar para buscar nuevamente."
+
+#: src/Admin/user-fees/UserFeeForm.js:123
+msgid "Search by name or email to select a user."
+msgstr ""
+
+#: src/Admin/user-fees/UserFeeForm.js:159
+msgid "Clear"
+msgstr "Limpiar"
+
+#: src/Admin/user-fees/UserFeeForm.js:171
+msgid "Searching..."
+msgstr ""
+
+#: src/Admin/user-fees/UserFeeForm.js:266
+msgid "Notes"
+msgstr "Notas"
+
+#: src/Admin/user-fees/UserFeesList.js:14
+msgid "No user fees found."
+msgstr ""
+
+#: src/Admin/user-fees/UserFeesList.js:48
+msgid "User"
+msgstr "Usuario"
+
+#: src/Admin/user-fees/UserFeesList.js:91
+msgid "Mark Paid"
+msgstr "Marcar como pagado"
+
+#: src/Admin/user-fees/UserFeesList.js:98
+#: src/Admin/user-fees/UserFeesPage.js:482
+msgid "Adjust"
+msgstr "Ajustar"
+
+#: src/Admin/user-fees/UserFeesPage.js:72
+msgid "Failed to load user fees."
+msgstr ""
+
+#. translators: %s: user fee title
+#: src/Admin/user-fees/UserFeesPage.js:98
+#, js-format
+msgid "Are you sure you want to delete the user fee \"%s\"?"
+msgstr ""
+
+#: src/Admin/user-fees/UserFeesPage.js:118
+msgid "User fee deleted successfully."
+msgstr "Tarifa de usuario eliminada exitosamente."
+
+#. translators: 1: fee title, 2: user name
+#: src/Admin/user-fees/UserFeesPage.js:134
+#, js-format
+msgid "Mark fee \"%1$s\" as paid for %2$s?"
+msgstr ""
+
+#: src/Admin/user-fees/UserFeesPage.js:153
+msgid "Fee marked as paid."
+msgstr "Tarifa marcada como pagada."
+
+#: src/Admin/user-fees/UserFeesPage.js:192
+msgid "Fee amount adjusted successfully."
+msgstr "Monto de tarifa ajustado exitosamente."
+
+#: src/Admin/user-fees/UserFeesPage.js:200
+msgid "Failed to adjust fee amount."
+msgstr ""
+
+#: src/Admin/user-fees/UserFeesPage.js:223
+msgid "User fee updated successfully."
+msgstr "Tarifa de usuario actualizada exitosamente."
+
+#: src/Admin/user-fees/UserFeesPage.js:235
+msgid "User fee created successfully."
+msgstr "Tarifa de usuario creada exitosamente."
+
+#: src/Admin/user-fees/UserFeesPage.js:300
+msgid "Filters"
+msgstr ""
+
+#: src/Admin/user-fees/UserFeesPage.js:312
+msgid "All"
+msgstr ""
+
+#: src/Admin/user-fees/UserFeesPage.js:339
+msgid "All User Fees"
+msgstr "Todas las tarifas de usuario"
+
+#: src/Admin/user-fees/UserFeesPage.js:392
+msgid "Edit User Fee"
+msgstr "Editar tarifa de usuario"
+
+#: src/Admin/user-fees/UserFeesPage.js:393
+msgid "Add New User Fee"
+msgstr "Agregar nueva tarifa de usuario"
+
+#: src/Admin/user-fees/UserFeesPage.js:408
+msgid "Adjust Fee Amount"
+msgstr ""
+
+#. translators: 1: fee title, 2: user name
+#: src/Admin/user-fees/UserFeesPage.js:417
+#, js-format
+msgid "Adjusting fee \"%1$s\" for %2$s"
+msgstr ""
+
+#: src/Admin/user-fees/UserFeesPage.js:429
+msgid "Current Amount:"
+msgstr "Monto actual:"
+
+#: src/Admin/user-fees/UserFeesPage.js:436
+msgid "New Amount"
+msgstr "Nuevo monto"
+
+#: src/Admin/user-fees/UserFeesPage.js:446
+msgid "Reason for Adjustment"
+msgstr ""
+
+#: src/Admin/user-fees/UserFeesPage.js:454
+msgid "This will be saved in the adjustment history."
+msgstr ""
+
+#: src/Admin/user-fees/UserFeesPage.js:481
+msgid "Adjusting..."
+msgstr ""
+
+#: src/blocks/my-fees/components/EditComponent.js:13
+msgid "Block Information"
+msgstr ""
+
+#: src/blocks/my-fees/components/EditComponent.js:15
+msgid "This block displays the current user's membership fees on the frontend."
+msgstr ""
+
+#: src/blocks/my-fees/components/EditComponent.js:21
+msgid "The content is dynamically generated based on the logged-in user."
+msgstr ""
+
+#: src/blocks/my-fees/components/EditComponent.js:30
+msgid "My Fees"
+msgstr ""
+
+#: src/blocks/my-fees/components/EditComponent.js:32
+msgid "Preview: This block displays the current user's membership fees."
+msgstr ""
+
+#: src/blocks/my-fees/components/EditComponent.js:51
+msgid "Membership Fee"
+msgstr ""
+
+#: src/blocks/my-fees/components/EditComponent.js:67
+msgid "Annual Renewal"
+msgstr ""
+
+#: src/blocks/my-fees/components/EditComponent.js:83
+msgid "Registration"
+msgstr ""
+
+#: src/blocks/my-fees/block.json
+msgctxt "block title"
+msgid "My Fees"
+msgstr ""
+
+#: src/blocks/my-fees/block.json
+msgctxt "block description"
+msgid "Display current user's membership fees and payment information"
+msgstr ""
+
+#: src/blocks/my-fees/block.json
+msgctxt "block keyword"
+msgid "fees"
+msgstr ""
+
+#: src/blocks/my-fees/block.json
+msgctxt "block keyword"
+msgid "payment"
+msgstr ""
+
+#: src/blocks/my-fees/block.json
+msgctxt "block keyword"
+msgid "membership"
+msgstr ""
+
+#: src/blocks/my-fees/block.json
+msgctxt "block keyword"
+msgid "billing"
 msgstr ""

@@ -94,6 +94,7 @@ const UserFeesPage = () => {
 		if (
 			!confirm(
 				sprintf(
+					/* translators: %s: user fee title */
 					__(
 						'Are you sure you want to delete the user fee "%s"?',
 						'fair-membership'
@@ -129,7 +130,8 @@ const UserFeesPage = () => {
 		if (
 			!confirm(
 				sprintf(
-					__('Mark fee "%s" as paid for %s?', 'fair-membership'),
+					/* translators: 1: fee title, 2: user name */
+					__('Mark fee "%1$s" as paid for %2$s?', 'fair-membership'),
 					userFee.title,
 					userFee.user_display_name || `User #${userFee.user_id}`
 				)
@@ -411,8 +413,9 @@ const UserFeesPage = () => {
 						<VStack spacing={4}>
 							<p>
 								{sprintf(
+									/* translators: 1: fee title, 2: user name */
 									__(
-										'Adjusting fee "%s" for %s',
+										'Adjusting fee "%1$s" for %2$s',
 										'fair-membership'
 									),
 									adjustingUserFee.title,
