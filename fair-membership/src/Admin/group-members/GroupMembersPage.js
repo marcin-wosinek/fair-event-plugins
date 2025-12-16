@@ -112,9 +112,13 @@ const GroupMembersPage = ({ groupId }) => {
 			setError(null);
 			setIsEmailModalOpen(false);
 		} catch (err) {
-			throw new Error(
+			// Create error object with full details
+			const error = new Error(
 				err.message || __('Failed to send email.', 'fair-membership')
 			);
+			// Attach full error data for detailed display
+			error.details = err;
+			throw error;
 		}
 	};
 

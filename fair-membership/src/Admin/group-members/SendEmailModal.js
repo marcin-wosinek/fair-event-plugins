@@ -14,6 +14,8 @@ const SendEmailModal = ({ groupName, memberCount, onSend, onClose }) => {
 	const [message, setMessage] = useState('');
 	const [sending, setSending] = useState(false);
 	const [error, setError] = useState(null);
+	const [errorDetails, setErrorDetails] = useState(null);
+	const [showDetails, setShowDetails] = useState(false);
 
 	const handleSend = async () => {
 		// Validate
@@ -40,6 +42,8 @@ const SendEmailModal = ({ groupName, memberCount, onSend, onClose }) => {
 			setError(
 				err.message || __('Failed to send email.', 'fair-membership')
 			);
+			// Store error details if available
+			setErrorDetails(err.details || null);
 			setSending(false);
 		}
 	};
@@ -68,9 +72,68 @@ const SendEmailModal = ({ groupName, memberCount, onSend, onClose }) => {
 					<Notice
 						status="error"
 						isDismissible
-						onRemove={() => setError(null)}
+						onRemove={() => {
+							setError(null);
+							setErrorDetails(null);
+							setShowDetails(false);
+						}}
 					>
-						{error}
+						<div>
+							<p style={{ margin: '0 0 8px 0' }}>{error}</p>
+							{errorDetails && (
+								<>
+									<Button
+										variant="link"
+										onClick={() =>
+											setShowDetails(!showDetails)
+										}
+										style={{
+											padding: 0,
+											height: 'auto',
+											fontSize: '13px',
+										}}
+									>
+										{showDetails
+											? __(
+													'Hide details',
+													'fair-membership'
+												)
+											: __(
+													'More info',
+													'fair-membership'
+												)}
+									</Button>
+									{showDetails && (
+										<div
+											style={{
+												marginTop: '8px',
+												padding: '8px',
+												background: '#f0f0f0',
+												borderRadius: '4px',
+												fontSize: '12px',
+												fontFamily: 'monospace',
+												maxHeight: '200px',
+												overflow: 'auto',
+											}}
+										>
+											<pre
+												style={{
+													margin: 0,
+													whiteSpace: 'pre-wrap',
+													wordBreak: 'break-word',
+												}}
+											>
+												{JSON.stringify(
+													errorDetails,
+													null,
+													2
+												)}
+											</pre>
+										</div>
+									)}
+								</>
+							)}
+						</div>
 					</Notice>
 				)}
 

@@ -8,6 +8,7 @@
 namespace FairMembership\API;
 
 use FairMembership\Models\Group;
+use FairMembership\Utils\DebugLogger;
 use WP_REST_Controller;
 use WP_REST_Server;
 use WP_REST_Request;
@@ -655,8 +656,9 @@ class GroupController extends WP_REST_Controller {
 		}
 
 		// Send emails
-		$sent_count   = 0;
-		$failed_count = 0;
+		$sent_count    = 0;
+		$failed_count  = 0;
+		$failed_emails = array();
 
 		foreach ( $memberships as $membership ) {
 			$user = $membership->get_user();
@@ -668,8 +670,23 @@ class GroupController extends WP_REST_Controller {
 					++$sent_count;
 				} else {
 					++$failed_count;
+					$failed_emails[] = $user->user_email;
 				}
 			}
+		}
+
+		// Log failed emails if any
+		if ( $failed_count > 0 ) {
+			DebugLogger::log_with_context(
+				sprintf( 'Failed to send %d group email(s)', $failed_count ),
+				array(
+					'group_id'      => $group_id,
+					'group_name'    => $group->name,
+					'failed_count'  => $failed_count,
+					'failed_emails' => $failed_emails,
+					'subject'       => $subject,
+				)
+			);
 		}
 
 		return new WP_REST_Response(
