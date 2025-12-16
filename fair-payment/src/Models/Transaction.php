@@ -97,7 +97,8 @@ class Transaction {
 
 		return $wpdb->get_row(
 			$wpdb->prepare(
-				"SELECT * FROM $table_name WHERE mollie_payment_id = %s",
+				'SELECT * FROM %i WHERE mollie_payment_id = %s',
+				$table_name,
 				$mollie_payment_id
 			)
 		);
@@ -126,13 +127,14 @@ class Transaction {
 			$where = $wpdb->prepare( ' WHERE status = %s', $args['status'] );
 		}
 
-		$query = $wpdb->prepare(
-			"SELECT * FROM $table_name{$where} ORDER BY created_at DESC LIMIT %d OFFSET %d",
-			$args['limit'],
-			$args['offset']
+		return $wpdb->get_results(
+			$wpdb->prepare(
+				"SELECT * FROM %i{$where} ORDER BY created_at DESC LIMIT %d OFFSET %d",
+				$table_name,
+				$args['limit'],
+				$args['offset']
+			)
 		);
-
-		return $wpdb->get_results( $query );
 	}
 
 	/**
