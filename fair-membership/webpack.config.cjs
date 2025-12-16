@@ -17,6 +17,14 @@ module.exports = {
 			process.cwd(),
 			'src/Admin/group-members/index.js'
 		),
+		'admin/group-fees/index': path.resolve(
+			process.cwd(),
+			'src/Admin/group-fees/index.js'
+		),
+		'admin/user-fees/index': path.resolve(
+			process.cwd(),
+			'src/Admin/user-fees/index.js'
+		),
 		'blocks/membership-switch/editor': path.resolve(
 			process.cwd(),
 			'src/blocks/membership-switch/editor.js'

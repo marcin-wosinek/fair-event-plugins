@@ -10,6 +10,7 @@ namespace FairMembership\API;
 use FairMembership\Models\GroupFee;
 use FairMembership\Models\UserFee;
 use FairMembership\Models\Membership;
+use FairMembership\Models\Group;
 use WP_REST_Controller;
 use WP_REST_Server;
 use WP_REST_Request;
@@ -242,7 +243,23 @@ class GroupFeeController extends WP_REST_Controller {
 		$group_fees = GroupFee::get_all( $args );
 		$total      = GroupFee::get_count( $args );
 
-		$response = new WP_REST_Response( $group_fees );
+		// Enrich with group information
+		$enriched_fees = array();
+		foreach ( $group_fees as $group_fee ) {
+			$fee_array = $group_fee->to_array();
+
+			// Add group name if group exists
+			if ( $group_fee->group_id ) {
+				$group = Group::get_by_id( $group_fee->group_id );
+				if ( $group ) {
+					$fee_array['group_name'] = $group->name;
+				}
+			}
+
+			$enriched_fees[] = $fee_array;
+		}
+
+		$response = new WP_REST_Response( $enriched_fees );
 		$response->header( 'X-WP-Total', $total );
 		$response->header( 'X-WP-TotalPages', ceil( $total / $per_page ) );
 

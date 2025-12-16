@@ -56,6 +56,24 @@ class AdminHooks {
 			array( $this, 'membership_matrix_page' )
 		);
 
+		add_submenu_page(
+			'fair-membership',
+			__( 'Group Fees', 'fair-membership' ),
+			__( 'Group Fees', 'fair-membership' ),
+			'manage_options',
+			'fair-membership-group-fees',
+			array( $this, 'group_fees_page' )
+		);
+
+		add_submenu_page(
+			'fair-membership',
+			__( 'User Fees', 'fair-membership' ),
+			__( 'User Fees', 'fair-membership' ),
+			'manage_options',
+			'fair-membership-user-fees',
+			array( $this, 'user_fees_page' )
+		);
+
 		// Hidden page for managing group members
 		add_submenu_page(
 			null, // Hidden from menu
@@ -95,6 +113,26 @@ class AdminHooks {
 	public function group_members_page() {
 		$members_page = new GroupMembersPage();
 		$members_page->render();
+	}
+
+	/**
+	 * Display group fees page
+	 *
+	 * @return void
+	 */
+	public function group_fees_page() {
+		$page = new GroupFeesPage();
+		$page->render();
+	}
+
+	/**
+	 * Display user fees page
+	 *
+	 * @return void
+	 */
+	public function user_fees_page() {
+		$page = new UserFeesPage();
+		$page->render();
 	}
 
 	/**
@@ -173,6 +211,56 @@ class AdminHooks {
 
 				wp_set_script_translations(
 					'fair-membership-group-members',
+					'fair-membership',
+					$plugin_dir . 'build/languages'
+				);
+
+				wp_enqueue_style( 'wp-components' );
+			}
+		}
+
+		// Load scripts for Group Fees page
+		if ( 'fair-membership_page_fair-membership-group-fees' === $hook ) {
+			$asset_file = $plugin_dir . 'build/admin/group-fees/index.asset.php';
+
+			if ( file_exists( $asset_file ) ) {
+				$asset_data = include $asset_file;
+
+				wp_enqueue_script(
+					'fair-membership-group-fees',
+					plugin_dir_url( dirname( __DIR__ ) ) . 'build/admin/group-fees/index.js',
+					$asset_data['dependencies'],
+					$asset_data['version'],
+					true
+				);
+
+				wp_set_script_translations(
+					'fair-membership-group-fees',
+					'fair-membership',
+					$plugin_dir . 'build/languages'
+				);
+
+				wp_enqueue_style( 'wp-components' );
+			}
+		}
+
+		// Load scripts for User Fees page
+		if ( 'fair-membership_page_fair-membership-user-fees' === $hook ) {
+			$asset_file = $plugin_dir . 'build/admin/user-fees/index.asset.php';
+
+			if ( file_exists( $asset_file ) ) {
+				$asset_data = include $asset_file;
+
+				wp_enqueue_script(
+					'fair-membership-user-fees',
+					plugin_dir_url( dirname( __DIR__ ) ) . 'build/admin/user-fees/index.js',
+					$asset_data['dependencies'],
+					$asset_data['version'],
+					true
+				);
+
+				wp_set_script_translations(
+					'fair-membership-user-fees',
 					'fair-membership',
 					$plugin_dir . 'build/languages'
 				);

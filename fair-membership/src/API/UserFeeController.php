@@ -288,7 +288,24 @@ class UserFeeController extends WP_REST_Controller {
 		$user_fees = UserFee::get_all( $args );
 		$total     = UserFee::get_count( $args );
 
-		$response = new WP_REST_Response( $user_fees );
+		// Enrich with user information
+		$enriched_fees = array();
+		foreach ( $user_fees as $user_fee ) {
+			$fee_array = $user_fee->to_array();
+
+			// Add user information if user exists
+			if ( $user_fee->user_id ) {
+				$user = get_userdata( $user_fee->user_id );
+				if ( $user ) {
+					$fee_array['user_display_name'] = $user->display_name;
+					$fee_array['user_email']        = $user->user_email;
+				}
+			}
+
+			$enriched_fees[] = $fee_array;
+		}
+
+		$response = new WP_REST_Response( $enriched_fees );
 		$response->header( 'X-WP-Total', $total );
 		$response->header( 'X-WP-TotalPages', ceil( $total / $per_page ) );
 
