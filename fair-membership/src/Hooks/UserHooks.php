@@ -174,14 +174,14 @@ class UserHooks {
 		}
 
 		// Verify nonce for security
-		if ( ! isset( $_POST['_wpnonce_create-user'] ) || ! wp_verify_nonce( $_POST['_wpnonce_create-user'], 'create-user' ) ) {
+		if ( ! isset( $_POST['_wpnonce_create-user'] ) || ! wp_verify_nonce( sanitize_text_field( wp_unslash( $_POST['_wpnonce_create-user'] ) ), 'create-user' ) ) {
 			return;
 		}
 
-		$selected_groups = isset( $_POST['fair_membership_groups'] ) ? (array) $_POST['fair_membership_groups'] : array();
+		$selected_groups = isset( $_POST['fair_membership_groups'] ) ? array_map( 'absint', wp_unslash( (array) $_POST['fair_membership_groups'] ) ) : array();
 
 		foreach ( $selected_groups as $group_id ) {
-			$this->add_user_to_group( $user_id, absint( $group_id ) );
+			$this->add_user_to_group( $user_id, $group_id );
 		}
 	}
 
