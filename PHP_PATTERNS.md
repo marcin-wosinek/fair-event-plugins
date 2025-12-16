@@ -401,11 +401,15 @@ define( 'WP_DEBUG', false );
 
 ## Code Quality Standards
 
-### Always Run After Changes
+### User Should Run After Changes
+
+**IMPORTANT**: After making code changes, users should run:
 
 ```bash
 npm run format    # Format all code (JavaScript, CSS, PHP)
 ```
+
+**For Claude Code**: Do NOT automatically run formatting tools. Prompt the user to run `npm run format` after completing code changes.
 
 ### PHP Coding Standards
 

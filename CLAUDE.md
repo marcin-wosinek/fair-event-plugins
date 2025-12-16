@@ -7,10 +7,10 @@ organization with fair pricing models.
 
 ### Frontend Development
 ```bash
-cd fair-payment 
+cd fair-payment
 npm run start    # Start development server with hot reload
 npm run build    # Build production assets for blocks
-npm run format   # Format code (ALWAYS run after making changes)
+npm run format   # Format code
 ```
 
 ### WordPress Development Environment
@@ -27,7 +27,9 @@ vendor/bin/phpcs        # Run PHP code sniffer (if configured)
 ```
 
 ### Code Quality Reminder
-**IMPORTANT**: Always run `npm run format` after making any code changes to ensure consistent formatting across the codebase.
+**IMPORTANT**: Claude Code will prompt you to run `npm run format` after making code changes. Please run this command when prompted to ensure consistent formatting across the codebase.
+
+**For Claude Code**: Do NOT automatically run formatting tools (npm run format, vendor/bin/phpcs, etc.). Instead, remind the user to run these commands themselves after code changes are complete.
 
 ### Code Formatter Ignore Patterns
 The following directories are automatically excluded from code formatting:
