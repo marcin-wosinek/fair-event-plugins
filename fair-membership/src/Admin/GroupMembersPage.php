@@ -20,7 +20,8 @@ class GroupMembersPage {
 	 * @return void
 	 */
 	public function render() {
-		// Get group ID from query parameter
+		// Get group ID from query parameter.
+		// phpcs:ignore WordPress.Security.NonceVerification.Recommended
 		$group_id = isset( $_GET['group_id'] ) ? absint( $_GET['group_id'] ) : 0;
 
 		if ( ! $group_id ) {
