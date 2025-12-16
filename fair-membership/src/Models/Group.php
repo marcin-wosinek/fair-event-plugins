@@ -186,12 +186,15 @@ class Group {
 			$limit_clause = $wpdb->prepare( 'LIMIT %d OFFSET %d', $args['limit'], $args['offset'] );
 		}
 
-		$query = "SELECT * FROM %i {$where_clause} {$order_clause} {$limit_clause}";
-
 		$prepare_values = array_merge( array( $table_name ), $where_values );
-		$query          = $wpdb->prepare( $query, $prepare_values );
 
-		$results = $wpdb->get_results( $query, ARRAY_A );
+		$results = $wpdb->get_results(
+			$wpdb->prepare(
+				"SELECT * FROM %i {$where_clause} {$order_clause} {$limit_clause}",
+				$prepare_values
+			),
+			ARRAY_A
+		);
 
 		$groups = array();
 		if ( $results ) {
@@ -213,8 +216,10 @@ class Group {
 		global $wpdb;
 
 		$table_name = $wpdb->prefix . 'fair_groups';
-		$query      = $wpdb->prepare( 'SELECT * FROM %i WHERE id = %d', $table_name, $id );
-		$result     = $wpdb->get_row( $query, ARRAY_A );
+		$result     = $wpdb->get_row(
+			$wpdb->prepare( 'SELECT * FROM %i WHERE id = %d', $table_name, $id ),
+			ARRAY_A
+		);
 
 		return $result ? new self( $result ) : null;
 	}
@@ -229,8 +234,10 @@ class Group {
 		global $wpdb;
 
 		$table_name = $wpdb->prefix . 'fair_groups';
-		$query      = $wpdb->prepare( 'SELECT * FROM %i WHERE slug = %s', $table_name, $slug );
-		$result     = $wpdb->get_row( $query, ARRAY_A );
+		$result     = $wpdb->get_row(
+			$wpdb->prepare( 'SELECT * FROM %i WHERE slug = %s', $table_name, $slug ),
+			ARRAY_A
+		);
 
 		return $result ? new self( $result ) : null;
 	}
@@ -311,12 +318,15 @@ class Group {
 		}
 
 		$where_clause = ! empty( $where_conditions ) ? 'WHERE ' . implode( ' AND ', $where_conditions ) : '';
-		$query        = "SELECT COUNT(*) FROM %i {$where_clause}";
 
 		$prepare_values = array_merge( array( $table_name ), $where_values );
-		$query          = $wpdb->prepare( $query, $prepare_values );
 
-		return (int) $wpdb->get_var( $query );
+		return (int) $wpdb->get_var(
+			$wpdb->prepare(
+				"SELECT COUNT(*) FROM %i {$where_clause}",
+				$prepare_values
+			)
+		);
 	}
 
 	/**

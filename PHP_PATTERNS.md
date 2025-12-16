@@ -73,6 +73,77 @@ $results = $wpdb->get_results(
 );
 ```
 
+#### **CRITICAL**: Always Call `prepare()` Directly Inside Query Methods
+
+**IMPORTANT**: To avoid PHP CodeSniffer lint errors (`WordPress.DB.PreparedSQL.NotPrepared`), always call `$wpdb->prepare()` **directly inside** the query method call. Never store the prepared query in a variable first.
+
+**Why?** The WordPress Coding Standards linter can only detect that a query is safe when it sees `$wpdb->prepare()` called directly. When you store the prepared query in a variable, the linter sees only the variable being passed and flags it as potentially unsafe.
+
+```php
+<?php
+global $wpdb;
+$table_name = $wpdb->prefix . 'fair_groups';
+
+// ❌ WRONG - Prepare in variable first (triggers lint error)
+$query = $wpdb->prepare(
+    'SHOW TABLES LIKE %s',
+    $table_name
+);
+$exists = $wpdb->get_var( $query ) === $table_name;
+
+// ✅ CORRECT - Prepare directly inside query method
+$exists = $wpdb->get_var(
+    $wpdb->prepare(
+        'SHOW TABLES LIKE %s',
+        $table_name
+    )
+) === $table_name;
+```
+
+**More Examples:**
+
+```php
+<?php
+// ❌ WRONG - Variable storage
+$query = $wpdb->prepare(
+    "SELECT * FROM %i WHERE status = %s",
+    $table_name,
+    'active'
+);
+$results = $wpdb->get_results( $query );
+
+// ✅ CORRECT - Inline prepare
+$results = $wpdb->get_results(
+    $wpdb->prepare(
+        "SELECT * FROM %i WHERE status = %s",
+        $table_name,
+        'active'
+    )
+);
+```
+
+```php
+<?php
+// ❌ WRONG - Variable storage
+$count_query = $wpdb->prepare(
+    "SELECT COUNT(*) FROM %i WHERE status = %s",
+    $table_name,
+    'pending'
+);
+$count = $wpdb->get_var( $count_query );
+
+// ✅ CORRECT - Inline prepare
+$count = $wpdb->get_var(
+    $wpdb->prepare(
+        "SELECT COUNT(*) FROM %i WHERE status = %s",
+        $table_name,
+        'pending'
+    )
+);
+```
+
+**Key Rule**: If you're calling `$wpdb->prepare()`, pass the result **directly** to the query method (`get_results()`, `get_var()`, `get_row()`, `query()`, etc.) in the same statement.
+
 #### JOIN Queries with Multiple Tables
 
 ```php
@@ -162,6 +233,30 @@ $results = $wpdb->get_results(
 ```
 
 ### What NOT to Use
+
+#### ❌ NEVER store prepared queries in variables before executing
+
+```php
+<?php
+// ❌ WRONG - Triggers phpcs lint error
+$query = $wpdb->prepare(
+    'SELECT * FROM %i WHERE id = %d',
+    $table_name,
+    $id
+);
+$result = $wpdb->get_row( $query );
+
+// ✅ CORRECT - Inline prepare call
+$result = $wpdb->get_row(
+    $wpdb->prepare(
+        'SELECT * FROM %i WHERE id = %d',
+        $table_name,
+        $id
+    )
+);
+```
+
+**Why?** PHP CodeSniffer cannot trace that the `$query` variable is safe. It only recognizes `$wpdb->prepare()` when called directly inside the query method.
 
 #### ❌ NEVER use `esc_sql()` for table/column names
 
