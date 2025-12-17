@@ -38,10 +38,26 @@ class Plugin {
 	 * @return void
 	 */
 	public function init() {
+		// Load text domain for translations
+		add_action( 'init', array( $this, 'load_textdomain' ) );
+
 		// Check for database upgrades
 		$this->maybe_upgrade_database();
 
 		$this->load_hooks();
+	}
+
+	/**
+	 * Load plugin textdomain for translations
+	 *
+	 * @return void
+	 */
+	public function load_textdomain() {
+		load_plugin_textdomain(
+			'fair-membership',
+			false,
+			basename( dirname( __DIR__, 2 ) ) . '/languages'
+		);
 	}
 
 	/**

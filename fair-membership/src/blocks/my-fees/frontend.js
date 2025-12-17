@@ -5,6 +5,7 @@
  */
 
 import apiFetch from '@wordpress/api-fetch';
+import { __ } from '@wordpress/i18n';
 
 (function () {
 	'use strict';
@@ -36,7 +37,9 @@ import apiFetch from '@wordpress/api-fetch';
 		// Disable button and show loading state
 		button.disabled = true;
 		const originalText = button.textContent;
-		button.textContent = button.dataset.loadingText || 'Processing...';
+		button.textContent =
+			button.dataset.loadingText ||
+			__('Processing...', 'fair-membership');
 
 		try {
 			const response = await apiFetch({
@@ -51,7 +54,9 @@ import apiFetch from '@wordpress/api-fetch';
 				// Redirect to checkout
 				window.location.href = response.checkout_url;
 			} else {
-				throw new Error('No checkout URL in response');
+				throw new Error(
+					__('No checkout URL in response', 'fair-membership')
+				);
 			}
 		} catch (error) {
 			// Re-enable button and restore text
@@ -60,7 +65,11 @@ import apiFetch from '@wordpress/api-fetch';
 
 			// Show error message
 			const errorMessage =
-				error.message || 'Failed to create payment. Please try again.';
+				error.message ||
+				__(
+					'Failed to create payment. Please try again.',
+					'fair-membership'
+				);
 			alert(errorMessage);
 			console.error('Payment creation failed:', error);
 		}

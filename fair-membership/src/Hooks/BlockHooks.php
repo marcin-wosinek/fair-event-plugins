@@ -53,5 +53,10 @@ class BlockHooks {
 			'fair-membership',
 			dirname( __DIR__, 2 ) . '/build/languages'
 		);
+		wp_set_script_translations(
+			'fair-membership-my-fees-view-script',
+			'fair-membership',
+			dirname( __DIR__, 2 ) . '/build/languages'
+		);
 	}
 }

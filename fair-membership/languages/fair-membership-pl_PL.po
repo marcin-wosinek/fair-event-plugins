@@ -396,12 +396,12 @@ msgid "Content shown to non-members and logged-out users"
 msgstr "Treść wyświetlana osobom niebędącym członkami i wylogowanym użytkownikom"
 
 #. translators: %s: Group name
-#: fair-membership.php:107
+#: fair-membership.php:108
 #, php-format
 msgid "%s (Membership)"
 msgstr "%s (Członkostwo)"
 
-#: fair-membership.php:110
+#: fair-membership.php:111
 msgid "Active members of this membership group"
 msgstr "Aktywni członkowie tej grupy członkowskiej"
 
@@ -972,6 +972,7 @@ msgid "Paid: %s"
 msgstr "Opłacono: %s"
 
 #: src/blocks/my-fees/render.php:117
+#: src/blocks/my-fees/frontend.js:42
 msgid "Processing..."
 msgstr "Przetwarzanie..."
 
@@ -1295,3 +1296,11 @@ msgstr ""
 msgctxt "block keyword"
 msgid "billing"
 msgstr ""
+
+#: src/blocks/my-fees/frontend.js:69
+msgid "Failed to create payment. Please try again."
+msgstr "Nie udało się utworzyć płatności. Spróbuj ponownie."
+
+#: src/blocks/my-fees/frontend.js:58
+msgid "No checkout URL in response"
+msgstr "Brak adresu URL płatności w odpowiedzi"
