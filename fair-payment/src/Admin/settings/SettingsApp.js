@@ -22,6 +22,7 @@ export default function SettingsApp() {
 	const [testApiKey, setTestApiKey] = useState('');
 	const [liveApiKey, setLiveApiKey] = useState('');
 	const [mode, setMode] = useState('test');
+	const [organizationId, setOrganizationId] = useState('');
 	const [isLoading, setIsLoading] = useState(true);
 	const [isSaving, setIsSaving] = useState(false);
 	const [notice, setNotice] = useState(null);
@@ -33,6 +34,7 @@ export default function SettingsApp() {
 				setTestApiKey(settings.fair_payment_test_api_key || '');
 				setLiveApiKey(settings.fair_payment_live_api_key || '');
 				setMode(settings.fair_payment_mode || 'test');
+				setOrganizationId(settings.fair_payment_organization_id || '');
 				setIsLoading(false);
 			})
 			.catch((error) => {
@@ -56,6 +58,7 @@ export default function SettingsApp() {
 				fair_payment_test_api_key: testApiKey,
 				fair_payment_live_api_key: liveApiKey,
 				fair_payment_mode: mode,
+				fair_payment_organization_id: organizationId,
 			},
 		})
 			.then(() => {
@@ -66,6 +69,7 @@ export default function SettingsApp() {
 				setTestApiKey(settings.fair_payment_test_api_key || '');
 				setLiveApiKey(settings.fair_payment_live_api_key || '');
 				setMode(settings.fair_payment_mode || 'test');
+				setOrganizationId(settings.fair_payment_organization_id || '');
 				setNotice({
 					status: 'success',
 					message: __('Settings saved successfully.', 'fair-payment'),
@@ -144,6 +148,18 @@ export default function SettingsApp() {
 						placeholder="live_..."
 						help={__(
 							'Get your Live API key from Mollie Dashboard → Developers → API keys',
+							'fair-payment'
+						)}
+					/>
+
+					<TextControl
+						label={__('Organization ID', 'fair-payment')}
+						value={organizationId}
+						onChange={(value) => setOrganizationId(value)}
+						disabled={isSaving}
+						placeholder="org_..."
+						help={__(
+							'Your Mollie Organization ID (e.g., org_12345678). Find it in your Mollie Dashboard URL.',
 							'fair-payment'
 						)}
 					/>

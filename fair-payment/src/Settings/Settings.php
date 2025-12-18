@@ -66,6 +66,19 @@ class Settings {
 				'default'           => 'test',
 			)
 		);
+
+		// Organization ID
+		register_setting(
+			'fair_payment_settings',
+			'fair_payment_organization_id',
+			array(
+				'type'              => 'string',
+				'description'       => __( 'Mollie Organization ID', 'fair-payment' ),
+				'sanitize_callback' => 'sanitize_text_field',
+				'show_in_rest'      => true,
+				'default'           => '',
+			)
+		);
 	}
 
 	/**

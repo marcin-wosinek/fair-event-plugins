@@ -112,10 +112,27 @@ class AdminPages {
 			wp_die( __( 'You do not have sufficient permissions to access this page.', 'fair-payment' ) );
 		}
 
-		$transactions = \FairPayment\Models\Transaction::get_all( array( 'limit' => 100 ) );
+		$transactions    = \FairPayment\Models\Transaction::get_all( array( 'limit' => 100 ) );
+		$organization_id = get_option( 'fair_payment_organization_id', '' );
 		?>
 		<div class="wrap">
 			<h1><?php esc_html_e( 'Payment Transactions', 'fair-payment' ); ?></h1>
+
+			<?php if ( empty( $organization_id ) ) : ?>
+				<div class="notice notice-warning">
+					<p>
+						<?php
+						echo wp_kses_post(
+							sprintf(
+								/* translators: %s: link to settings page */
+								__( 'To enable direct links to Mollie transactions, please configure your Organization ID in the <a href="%s">settings</a>.', 'fair-payment' ),
+								admin_url( 'admin.php?page=fair-payment-settings' )
+							)
+						);
+						?>
+					</p>
+				</div>
+			<?php endif; ?>
 
 			<?php if ( empty( $transactions ) ) : ?>
 				<p><?php esc_html_e( 'No transactions found.', 'fair-payment' ); ?></p>
@@ -137,7 +154,23 @@ class AdminPages {
 							<tr>
 								<td><?php echo esc_html( $transaction->id ); ?></td>
 								<td>
-									<code><?php echo esc_html( $transaction->mollie_payment_id ); ?></code>
+									<?php if ( ! empty( $transaction->mollie_payment_id ) ) : ?>
+										<?php
+										$mollie_url = ! empty( $organization_id )
+											? sprintf( 'https://my.mollie.com/dashboard/%s/payments/%s', $organization_id, $transaction->mollie_payment_id )
+											: sprintf( 'https://www.mollie.com/dashboard/payments/%s', $transaction->mollie_payment_id );
+										?>
+										<a
+											href="<?php echo esc_url( $mollie_url ); ?>"
+											target="_blank"
+											rel="noopener noreferrer"
+											title="<?php esc_attr_e( 'View in Mollie Dashboard', 'fair-payment' ); ?>"
+										>
+											<code><?php echo esc_html( $transaction->mollie_payment_id ); ?></code>
+										</a>
+									<?php else : ?>
+										<code>-</code>
+									<?php endif; ?>
 								</td>
 								<td>
 									<strong><?php echo esc_html( number_format( $transaction->amount, 2 ) ); ?></strong>
