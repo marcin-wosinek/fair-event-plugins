@@ -59,7 +59,7 @@ $wrapper_attributes = get_block_wrapper_attributes(
 							<?php
 							// Calculate effective status (check if overdue)
 							$effective_status = $user_fee->status;
-							if ( 'pending' === $user_fee->status && strtotime( $user_fee->due_date ) < time() ) {
+							if ( 'pending' === $user_fee->status && ! empty( $user_fee->due_date ) && strtotime( $user_fee->due_date ) < time() ) {
 								$effective_status = 'overdue';
 							}
 
@@ -90,7 +90,7 @@ $wrapper_attributes = get_block_wrapper_attributes(
 									<?php echo esc_html( '€' . number_format( $user_fee->amount, 2, '.', ',' ) ); ?>
 								</td>
 								<td data-label="<?php esc_attr_e( 'Due Date', 'fair-membership' ); ?>">
-									<?php echo esc_html( gmdate( 'Y-m-d', strtotime( $user_fee->due_date ) ) ); ?>
+									<?php echo $user_fee->due_date ? esc_html( gmdate( 'Y-m-d', strtotime( $user_fee->due_date ) ) ) : '-'; ?>
 								</td>
 								<td data-label="<?php esc_attr_e( 'Status', 'fair-membership' ); ?>">
 									<span class="fee-status-badge fee-status-<?php echo esc_attr( $effective_status ); ?>">

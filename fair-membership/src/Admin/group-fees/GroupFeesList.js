@@ -63,7 +63,7 @@ const GroupFeesList = ({ groupFees, onEdit, onDelete }) => {
 								).toFixed(2)}
 							</span>
 						</td>
-						<td>{groupFee.due_date}</td>
+						<td>{groupFee.due_date || '-'}</td>
 						<td>
 							{new Date(groupFee.created_at).toLocaleDateString()}
 						</td>

@@ -361,10 +361,6 @@ class UserFee {
 			return new \WP_Error( 'invalid_amount', __( 'Amount must be a positive number.', 'fair-membership' ) );
 		}
 
-		if ( empty( $this->due_date ) ) {
-			return new \WP_Error( 'missing_due_date', __( 'Due date is required.', 'fair-membership' ) );
-		}
-
 		$valid_statuses = array( 'pending', 'pending_payment', 'paid', 'cancelled', 'overdue' );
 		if ( ! in_array( $this->status, $valid_statuses, true ) ) {
 			return new \WP_Error( 'invalid_status', __( 'Invalid status.', 'fair-membership' ) );

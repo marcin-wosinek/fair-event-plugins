@@ -91,9 +91,8 @@ class GroupFeeController extends WP_REST_Controller {
 							'minimum'  => 0,
 						),
 						'due_date'       => array(
-							'required' => true,
-							'type'     => 'string',
-							'format'   => 'date',
+							'type'   => 'string',
+							'format' => 'date',
 						),
 						'group_id'       => array(
 							'required' => true,

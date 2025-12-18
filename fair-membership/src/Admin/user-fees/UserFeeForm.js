@@ -259,7 +259,6 @@ const UserFeeForm = ({ userFee, onSave, onCancel }) => {
 					type="date"
 					value={dueDate}
 					onChange={setDueDate}
-					required
 				/>
 
 				<TextareaControl

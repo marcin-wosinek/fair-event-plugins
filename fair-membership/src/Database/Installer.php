@@ -19,7 +19,7 @@ class Installer {
 	/**
 	 * Plugin version for database schema
 	 */
-	const DB_VERSION = '1.4.0';
+	const DB_VERSION = '1.5.0';
 
 	/**
 	 * Install database tables
@@ -90,6 +90,10 @@ class Installer {
 				self::migrate_to_1_4_0();
 			}
 
+			if ( version_compare( $current_version, '1.5.0', '<' ) ) {
+				self::migrate_to_1_5_0();
+			}
+
 			self::install();
 		}
 	}
@@ -155,6 +159,36 @@ class Installer {
 		);
 
 		DebugLogger::info( 'Migrated to version 1.4.0 - Added pending_payment status to user fees' );
+	}
+
+	/**
+	 * Migration to version 1.5.0 - Make due_date nullable
+	 *
+	 * @return void
+	 */
+	private static function migrate_to_1_5_0() {
+		global $wpdb;
+
+		$group_fees_table = $wpdb->prefix . 'fair_group_fees';
+		$user_fees_table  = $wpdb->prefix . 'fair_user_fees';
+
+		// Make due_date nullable in group_fees table
+		$wpdb->query(
+			$wpdb->prepare(
+				'ALTER TABLE %i MODIFY COLUMN due_date DATE DEFAULT NULL',
+				$group_fees_table
+			)
+		);
+
+		// Make due_date nullable in user_fees table
+		$wpdb->query(
+			$wpdb->prepare(
+				'ALTER TABLE %i MODIFY COLUMN due_date DATE DEFAULT NULL',
+				$user_fees_table
+			)
+		);
+
+		DebugLogger::info( 'Migrated to version 1.5.0 - Made due_date nullable in group_fees and user_fees tables' );
 	}
 
 	/**

@@ -141,7 +141,6 @@ const GroupFeeForm = ({ groupFee, onSave, onCancel }) => {
 					type="date"
 					value={dueDate}
 					onChange={setDueDate}
-					required
 				/>
 
 				<div

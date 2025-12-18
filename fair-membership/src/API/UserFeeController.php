@@ -98,9 +98,8 @@ class UserFeeController extends WP_REST_Controller {
 							'minimum'  => 0,
 						),
 						'due_date' => array(
-							'required' => true,
-							'type'     => 'string',
-							'format'   => 'date',
+							'type'   => 'string',
+							'format' => 'date',
 						),
 						'notes'    => array(
 							'type'              => 'string',

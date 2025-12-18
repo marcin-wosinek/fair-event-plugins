@@ -316,10 +316,6 @@ class GroupFee {
 			return new \WP_Error( 'invalid_amount', __( 'Amount must be a positive number.', 'fair-membership' ) );
 		}
 
-		if ( empty( $this->due_date ) ) {
-			return new \WP_Error( 'missing_due_date', __( 'Due date is required.', 'fair-membership' ) );
-		}
-
 		if ( empty( $this->group_id ) ) {
 			return new \WP_Error( 'missing_group_id', __( 'Group ID is required.', 'fair-membership' ) );
 		}
