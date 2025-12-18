@@ -127,13 +127,13 @@ msgstr "Aucune description"
 
 #: src/Admin/group-fees/GroupFeesList.js:76
 #: src/Admin/groups/GroupsList.js:138
-#: src/Admin/user-fees/UserFeesList.js:107
+#: src/Admin/user-fees/UserFeesList.js:128
 msgid "Edit"
 msgstr "Modifier"
 
 #: src/Admin/group-fees/GroupFeesList.js:83
 #: src/Admin/groups/GroupsList.js:146
-#: src/Admin/user-fees/UserFeesList.js:114
+#: src/Admin/user-fees/UserFeesList.js:135
 msgid "Delete"
 msgstr "Supprimer"
 
@@ -830,11 +830,11 @@ msgstr "Vous devez être connecté pour créer des paiements."
 #: src/API/UserFeeController.php:307
 #: src/API/UserFeeController.php:430
 #: src/API/UserFeeController.php:451
-#: src/API/UserFeeController.php:502
-#: src/API/UserFeeController.php:540
-#: src/API/UserFeeController.php:597
-#: src/API/UserFeeController.php:628
-#: src/API/UserFeeController.php:652
+#: src/API/UserFeeController.php:511
+#: src/API/UserFeeController.php:558
+#: src/API/UserFeeController.php:624
+#: src/API/UserFeeController.php:655
+#: src/API/UserFeeController.php:679
 msgid "User fee not found."
 msgstr "Frais utilisateur non trouvés."
 
@@ -848,55 +848,55 @@ msgstr "Vous ne pouvez créer des paiements que pour vos propres frais."
 msgid "Failed to save user fee."
 msgstr "Échec de l'enregistrement des frais utilisateur."
 
-#: src/API/UserFeeController.php:481
+#: src/API/UserFeeController.php:490
 msgid "Failed to update user fee."
 msgstr "Échec de la mise à jour des frais utilisateur."
 
-#: src/API/UserFeeController.php:511
+#: src/API/UserFeeController.php:529
 #: src/Admin/user-fees/UserFeesPage.js:123
 msgid "Failed to delete user fee."
 msgstr "Échec de la suppression des frais utilisateur."
 
-#: src/API/UserFeeController.php:559
+#: src/API/UserFeeController.php:586
 msgid "Failed to create adjustment record."
 msgstr "Échec de la création de l'enregistrement d'ajustement."
 
-#: src/API/UserFeeController.php:571
+#: src/API/UserFeeController.php:598
 msgid "Failed to update user fee amount."
 msgstr "Échec de la mise à jour du montant des frais utilisateur."
 
-#: src/API/UserFeeController.php:607
+#: src/API/UserFeeController.php:634
 #: src/Admin/user-fees/UserFeesPage.js:158
 msgid "Failed to mark fee as paid."
 msgstr "Échec du marquage des frais comme payés."
 
-#: src/API/UserFeeController.php:661
+#: src/API/UserFeeController.php:688
 msgid "Only pending or overdue fees can be paid."
 msgstr "Seuls les frais en attente ou en retard peuvent être payés."
 
-#: src/API/UserFeeController.php:670
+#: src/API/UserFeeController.php:697
 msgid "Payment system is not available."
 msgstr "Le système de paiement n'est pas disponible."
 
 #. translators: %s: fee title
-#: src/API/UserFeeController.php:688
+#: src/API/UserFeeController.php:715
 #, php-format
 msgid "Payment for: %s"
 msgstr "Paiement pour : %s"
 
 #. translators: %s: error message
-#: src/API/UserFeeController.php:704
+#: src/API/UserFeeController.php:731
 #, php-format
 msgid "Failed to create transaction: %s"
 msgstr "Échec de la création de la transaction : %s"
 
 #. translators: %s: error message
-#: src/API/UserFeeController.php:724
+#: src/API/UserFeeController.php:751
 #, php-format
 msgid "Failed to initiate payment: %s"
 msgstr "Échec de l'initiation du paiement : %s"
 
-#: src/API/UserFeeController.php:734
+#: src/API/UserFeeController.php:761
 msgid "Payment response does not contain checkout URL."
 msgstr "La réponse de paiement ne contient pas d'URL de paiement."
 
@@ -1135,11 +1135,11 @@ msgstr ""
 msgid "User"
 msgstr "Utilisateur"
 
-#: src/Admin/user-fees/UserFeesList.js:91
+#: src/Admin/user-fees/UserFeesList.js:109
 msgid "Mark Paid"
 msgstr "Marquer comme payé"
 
-#: src/Admin/user-fees/UserFeesList.js:98
+#: src/Admin/user-fees/UserFeesList.js:119
 #: src/Admin/user-fees/UserFeesPage.js:482
 msgid "Adjust"
 msgstr "Ajuster"
@@ -1303,3 +1303,23 @@ msgstr "Échec de la création du paiement. Veuillez réessayer."
 #: src/blocks/my-fees/frontend.js:58
 msgid "No checkout URL in response"
 msgstr "Aucune URL de paiement dans la réponse"
+
+#: src/API/UserFeeController.php:567
+msgid "Cannot adjust amount for paid fees."
+msgstr "Impossible d'ajuster le montant des cotisations payées."
+
+#: src/API/UserFeeController.php:460
+msgid "Cannot edit paid fees."
+msgstr "Impossible de modifier les cotisations payées."
+
+#: src/API/UserFeeController.php:520
+msgid "Cannot delete paid fees."
+msgstr "Impossible de supprimer les cotisations payées."
+
+#: src/Admin/user-fees/UserFeesList.js:91
+msgid "Cannot edit or delete paid fees"
+msgstr "Impossible de modifier ou supprimer les cotisations payées"
+
+#: src/Admin/user-fees/UserFeesList.js:96
+msgid "Already paid"
+msgstr "Déjà payée"

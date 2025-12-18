@@ -81,38 +81,61 @@ const UserFeesList = ({
 						<td>{userFee.due_date}</td>
 						<td>{getStatusBadge(userFee.status)}</td>
 						<td>
-							{userFee.status === 'pending' && (
+							{userFee.status === 'paid' ? (
+								<span
+									style={{
+										color: '#757575',
+										fontSize: '13px',
+										fontStyle: 'italic',
+									}}
+									title={__(
+										'Cannot edit or delete paid fees',
+										'fair-membership'
+									)}
+								>
+									{__('Already paid', 'fair-membership')}
+								</span>
+							) : (
 								<>
+									{userFee.status === 'pending' && (
+										<>
+											<Button
+												variant="link"
+												onClick={() =>
+													onMarkAsPaid(userFee)
+												}
+												style={{ marginRight: '8px' }}
+											>
+												{__(
+													'Mark Paid',
+													'fair-membership'
+												)}
+											</Button>
+											<Button
+												variant="link"
+												onClick={() => onAdjust(userFee)}
+												style={{ marginRight: '8px' }}
+											>
+												{__('Adjust', 'fair-membership')}
+											</Button>
+										</>
+									)}
 									<Button
 										variant="link"
-										onClick={() => onMarkAsPaid(userFee)}
+										onClick={() => onEdit(userFee)}
 										style={{ marginRight: '8px' }}
 									>
-										{__('Mark Paid', 'fair-membership')}
+										{__('Edit', 'fair-membership')}
 									</Button>
 									<Button
 										variant="link"
-										onClick={() => onAdjust(userFee)}
-										style={{ marginRight: '8px' }}
+										isDestructive
+										onClick={() => onDelete(userFee)}
 									>
-										{__('Adjust', 'fair-membership')}
+										{__('Delete', 'fair-membership')}
 									</Button>
 								</>
 							)}
-							<Button
-								variant="link"
-								onClick={() => onEdit(userFee)}
-								style={{ marginRight: '8px' }}
-							>
-								{__('Edit', 'fair-membership')}
-							</Button>
-							<Button
-								variant="link"
-								isDestructive
-								onClick={() => onDelete(userFee)}
-							>
-								{__('Delete', 'fair-membership')}
-							</Button>
 						</td>
 					</tr>
 				))}

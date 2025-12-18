@@ -9,7 +9,7 @@ msgstr ""
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"POT-Creation-Date: 2025-12-17T14:50:53+00:00\n"
+"POT-Creation-Date: 2025-12-18T14:01:51+00:00\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "X-Generator: WP-CLI 2.12.0\n"
 "X-Domain: fair-membership\n"
@@ -321,11 +321,11 @@ msgstr ""
 #: src/API/UserFeeController.php:307
 #: src/API/UserFeeController.php:430
 #: src/API/UserFeeController.php:451
-#: src/API/UserFeeController.php:502
-#: src/API/UserFeeController.php:540
-#: src/API/UserFeeController.php:597
-#: src/API/UserFeeController.php:628
-#: src/API/UserFeeController.php:652
+#: src/API/UserFeeController.php:511
+#: src/API/UserFeeController.php:558
+#: src/API/UserFeeController.php:624
+#: src/API/UserFeeController.php:655
+#: src/API/UserFeeController.php:679
 msgid "User fee not found."
 msgstr ""
 
@@ -339,55 +339,67 @@ msgstr ""
 msgid "Failed to save user fee."
 msgstr ""
 
-#: src/API/UserFeeController.php:481
+#: src/API/UserFeeController.php:460
+msgid "Cannot edit paid fees."
+msgstr ""
+
+#: src/API/UserFeeController.php:490
 msgid "Failed to update user fee."
 msgstr ""
 
-#: src/API/UserFeeController.php:511
+#: src/API/UserFeeController.php:520
+msgid "Cannot delete paid fees."
+msgstr ""
+
+#: src/API/UserFeeController.php:529
 #: src/Admin/user-fees/UserFeesPage.js:123
 msgid "Failed to delete user fee."
 msgstr ""
 
-#: src/API/UserFeeController.php:559
+#: src/API/UserFeeController.php:567
+msgid "Cannot adjust amount for paid fees."
+msgstr ""
+
+#: src/API/UserFeeController.php:586
 msgid "Failed to create adjustment record."
 msgstr ""
 
-#: src/API/UserFeeController.php:571
+#: src/API/UserFeeController.php:598
 msgid "Failed to update user fee amount."
 msgstr ""
 
-#: src/API/UserFeeController.php:607
+#: src/API/UserFeeController.php:634
 #: src/Admin/user-fees/UserFeesPage.js:158
 msgid "Failed to mark fee as paid."
 msgstr ""
 
-#: src/API/UserFeeController.php:661
+#: src/API/UserFeeController.php:688
 msgid "Only pending or overdue fees can be paid."
 msgstr ""
 
-#: src/API/UserFeeController.php:670
+#: src/API/UserFeeController.php:697
 msgid "Payment system is not available."
 msgstr ""
 
 #. translators: %s: fee title
-#: src/API/UserFeeController.php:688
+#: src/API/UserFeeController.php:715
 #, php-format
 msgid "Payment for: %s"
 msgstr ""
 
 #. translators: %s: error message
-#: src/API/UserFeeController.php:704
+#: src/API/UserFeeController.php:731
 #, php-format
 msgid "Failed to create transaction: %s"
 msgstr ""
 
 #. translators: %s: error message
-#: src/API/UserFeeController.php:724
+#: src/API/UserFeeController.php:751
 #, php-format
 msgid "Failed to initiate payment: %s"
 msgstr ""
 
-#: src/API/UserFeeController.php:734
+#: src/API/UserFeeController.php:761
 msgid "Payment response does not contain checkout URL."
 msgstr ""
 
@@ -666,13 +678,13 @@ msgstr ""
 
 #: src/Admin/group-fees/GroupFeesList.js:76
 #: src/Admin/groups/GroupsList.js:138
-#: src/Admin/user-fees/UserFeesList.js:107
+#: src/Admin/user-fees/UserFeesList.js:128
 msgid "Edit"
 msgstr ""
 
 #: src/Admin/group-fees/GroupFeesList.js:83
 #: src/Admin/groups/GroupsList.js:146
-#: src/Admin/user-fees/UserFeesList.js:114
+#: src/Admin/user-fees/UserFeesList.js:135
 msgid "Delete"
 msgstr ""
 
@@ -1047,10 +1059,18 @@ msgid "User"
 msgstr ""
 
 #: src/Admin/user-fees/UserFeesList.js:91
+msgid "Cannot edit or delete paid fees"
+msgstr ""
+
+#: src/Admin/user-fees/UserFeesList.js:96
+msgid "Already paid"
+msgstr ""
+
+#: src/Admin/user-fees/UserFeesList.js:109
 msgid "Mark Paid"
 msgstr ""
 
-#: src/Admin/user-fees/UserFeesList.js:98
+#: src/Admin/user-fees/UserFeesList.js:119
 #: src/Admin/user-fees/UserFeesPage.js:482
 msgid "Adjust"
 msgstr ""

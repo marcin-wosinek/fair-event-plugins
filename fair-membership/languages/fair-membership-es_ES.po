@@ -127,13 +127,13 @@ msgstr "Sin descripción"
 
 #: src/Admin/group-fees/GroupFeesList.js:76
 #: src/Admin/groups/GroupsList.js:138
-#: src/Admin/user-fees/UserFeesList.js:107
+#: src/Admin/user-fees/UserFeesList.js:128
 msgid "Edit"
 msgstr "Editar"
 
 #: src/Admin/group-fees/GroupFeesList.js:83
 #: src/Admin/groups/GroupsList.js:146
-#: src/Admin/user-fees/UserFeesList.js:114
+#: src/Admin/user-fees/UserFeesList.js:135
 msgid "Delete"
 msgstr "Eliminar"
 
@@ -830,11 +830,11 @@ msgstr "Debes iniciar sesión para crear pagos."
 #: src/API/UserFeeController.php:307
 #: src/API/UserFeeController.php:430
 #: src/API/UserFeeController.php:451
-#: src/API/UserFeeController.php:502
-#: src/API/UserFeeController.php:540
-#: src/API/UserFeeController.php:597
-#: src/API/UserFeeController.php:628
-#: src/API/UserFeeController.php:652
+#: src/API/UserFeeController.php:511
+#: src/API/UserFeeController.php:558
+#: src/API/UserFeeController.php:624
+#: src/API/UserFeeController.php:655
+#: src/API/UserFeeController.php:679
 msgid "User fee not found."
 msgstr "Cuota de usuario no encontrada."
 
@@ -848,55 +848,55 @@ msgstr "Solo puedes crear pagos para tus propias cuotas."
 msgid "Failed to save user fee."
 msgstr "Error al guardar la cuota de usuario."
 
-#: src/API/UserFeeController.php:481
+#: src/API/UserFeeController.php:490
 msgid "Failed to update user fee."
 msgstr "Error al actualizar la cuota de usuario."
 
-#: src/API/UserFeeController.php:511
+#: src/API/UserFeeController.php:529
 #: src/Admin/user-fees/UserFeesPage.js:123
 msgid "Failed to delete user fee."
 msgstr "Error al eliminar la cuota de usuario."
 
-#: src/API/UserFeeController.php:559
+#: src/API/UserFeeController.php:586
 msgid "Failed to create adjustment record."
 msgstr "Error al crear registro de ajuste."
 
-#: src/API/UserFeeController.php:571
+#: src/API/UserFeeController.php:598
 msgid "Failed to update user fee amount."
 msgstr "Error al actualizar el monto de la cuota de usuario."
 
-#: src/API/UserFeeController.php:607
+#: src/API/UserFeeController.php:634
 #: src/Admin/user-fees/UserFeesPage.js:158
 msgid "Failed to mark fee as paid."
 msgstr "Error al marcar la cuota como pagada."
 
-#: src/API/UserFeeController.php:661
+#: src/API/UserFeeController.php:688
 msgid "Only pending or overdue fees can be paid."
 msgstr "Solo se pueden pagar cuotas pendientes o vencidas."
 
-#: src/API/UserFeeController.php:670
+#: src/API/UserFeeController.php:697
 msgid "Payment system is not available."
 msgstr "El sistema de pagos no está disponible."
 
 #. translators: %s: fee title
-#: src/API/UserFeeController.php:688
+#: src/API/UserFeeController.php:715
 #, php-format
 msgid "Payment for: %s"
 msgstr "Pago por: %s"
 
 #. translators: %s: error message
-#: src/API/UserFeeController.php:704
+#: src/API/UserFeeController.php:731
 #, php-format
 msgid "Failed to create transaction: %s"
 msgstr "Error al crear transacción: %s"
 
 #. translators: %s: error message
-#: src/API/UserFeeController.php:724
+#: src/API/UserFeeController.php:751
 #, php-format
 msgid "Failed to initiate payment: %s"
 msgstr "Error al iniciar pago: %s"
 
-#: src/API/UserFeeController.php:734
+#: src/API/UserFeeController.php:761
 msgid "Payment response does not contain checkout URL."
 msgstr "La respuesta de pago no contiene URL de pago."
 
@@ -1135,11 +1135,11 @@ msgstr "No se encontraron cuotas de usuario."
 msgid "User"
 msgstr "Usuario"
 
-#: src/Admin/user-fees/UserFeesList.js:91
+#: src/Admin/user-fees/UserFeesList.js:109
 msgid "Mark Paid"
 msgstr "Marcar como pagado"
 
-#: src/Admin/user-fees/UserFeesList.js:98
+#: src/Admin/user-fees/UserFeesList.js:119
 #: src/Admin/user-fees/UserFeesPage.js:482
 msgid "Adjust"
 msgstr "Ajustar"
@@ -1303,3 +1303,23 @@ msgstr "Error al crear el pago. Por favor, inténtelo de nuevo."
 #: src/blocks/my-fees/frontend.js:58
 msgid "No checkout URL in response"
 msgstr "No hay URL de pago en la respuesta"
+
+#: src/API/UserFeeController.php:567
+msgid "Cannot adjust amount for paid fees."
+msgstr "No se puede ajustar el monto de cuotas pagadas."
+
+#: src/API/UserFeeController.php:460
+msgid "Cannot edit paid fees."
+msgstr "No se pueden editar cuotas pagadas."
+
+#: src/API/UserFeeController.php:520
+msgid "Cannot delete paid fees."
+msgstr "No se pueden eliminar cuotas pagadas."
+
+#: src/Admin/user-fees/UserFeesList.js:91
+msgid "Cannot edit or delete paid fees"
+msgstr "No se pueden editar ni eliminar cuotas pagadas"
+
+#: src/Admin/user-fees/UserFeesList.js:96
+msgid "Already paid"
+msgstr "Ya pagada"

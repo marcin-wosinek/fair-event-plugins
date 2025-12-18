@@ -453,6 +453,15 @@ class UserFeeController extends WP_REST_Controller {
 			);
 		}
 
+		// Check if fee is already paid
+		if ( 'paid' === $user_fee->status ) {
+			return new WP_Error(
+				'already_paid',
+				__( 'Cannot edit paid fees.', 'fair-membership' ),
+				array( 'status' => 400 )
+			);
+		}
+
 		// Update fields if provided
 		if ( $request->has_param( 'amount' ) ) {
 			$user_fee->amount = $request->get_param( 'amount' );
@@ -504,6 +513,15 @@ class UserFeeController extends WP_REST_Controller {
 			);
 		}
 
+		// Check if fee is already paid
+		if ( 'paid' === $user_fee->status ) {
+			return new WP_Error(
+				'already_paid',
+				__( 'Cannot delete paid fees.', 'fair-membership' ),
+				array( 'status' => 400 )
+			);
+		}
+
 		$result = $user_fee->delete();
 		if ( ! $result ) {
 			return new WP_Error(
@@ -539,6 +557,15 @@ class UserFeeController extends WP_REST_Controller {
 				'not_found',
 				__( 'User fee not found.', 'fair-membership' ),
 				array( 'status' => 404 )
+			);
+		}
+
+		// Check if fee is already paid
+		if ( 'paid' === $user_fee->status ) {
+			return new WP_Error(
+				'already_paid',
+				__( 'Cannot adjust amount for paid fees.', 'fair-membership' ),
+				array( 'status' => 400 )
 			);
 		}
 
