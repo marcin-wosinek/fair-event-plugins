@@ -760,14 +760,14 @@ msgstr "Siguiente"
 #: src/Admin/group-fees/GroupFeesPage.js:180
 #: src/Admin/group-fees/GroupFeesPage.js:189
 msgid "Group Fees"
-msgstr "Tarifas de Grupo"
+msgstr "Cuotas de grupo"
 
 #: src/Admin/AdminHooks.php:70
 #: src/Admin/AdminHooks.php:71
 #: src/Admin/user-fees/UserFeesPage.js:257
 #: src/Admin/user-fees/UserFeesPage.js:266
 msgid "User Fees"
-msgstr "Tarifas de Usuario"
+msgstr "Cuotas de usuario"
 
 #: src/API/GroupFeeController.php:59
 msgid "Filter by group ID."
@@ -775,33 +775,33 @@ msgstr "Filtrar por ID de grupo."
 
 #: src/API/GroupFeeController.php:172
 msgid "You do not have permission to view group fees."
-msgstr "No tienes permiso para ver tarifas de grupo."
+msgstr "No tienes permiso para ver cuotas de grupo."
 
 #: src/API/GroupFeeController.php:189
 msgid "You do not have permission to create group fees."
-msgstr "No tienes permiso para crear tarifas de grupo."
+msgstr "No tienes permiso para crear cuotas de grupo."
 
 #: src/API/GroupFeeController.php:312
 #: src/Admin/group-fees/GroupFeeForm.js:73
 #: src/Admin/group-fees/GroupFeesPage.js:167
 msgid "Failed to save group fee."
-msgstr "Error al guardar la tarifa de grupo."
+msgstr "Error al guardar la cuota de grupo."
 
 #: src/API/GroupFeeController.php:357
 #: src/API/GroupFeeController.php:378
 #: src/API/GroupFeeController.php:429
 #: src/API/GroupFeeController.php:464
 msgid "Group fee not found."
-msgstr "Tarifa de grupo no encontrada."
+msgstr "Cuota de grupo no encontrada."
 
 #: src/API/GroupFeeController.php:408
 msgid "Failed to update group fee."
-msgstr "Error al actualizar la tarifa de grupo."
+msgstr "Error al actualizar la cuota de grupo."
 
 #: src/API/GroupFeeController.php:438
 #: src/Admin/group-fees/GroupFeesPage.js:112
 msgid "Failed to delete group fee."
-msgstr "Error al eliminar la tarifa de grupo."
+msgstr "Error al eliminar la cuota de grupo."
 
 #: src/API/UserFeeController.php:57
 msgid "Filter by user ID."
@@ -809,7 +809,7 @@ msgstr "Filtrar por ID de usuario."
 
 #: src/API/UserFeeController.php:61
 msgid "Filter by group fee ID."
-msgstr "Filtrar por ID de tarifa de grupo."
+msgstr "Filtrar por ID de cuota de grupo."
 
 #: src/API/UserFeeController.php:214
 msgid "URL to redirect after payment."
@@ -817,11 +817,11 @@ msgstr "URL para redirigir después del pago."
 
 #: src/API/UserFeeController.php:231
 msgid "You do not have permission to view user fees."
-msgstr "No tienes permiso para ver tarifas de usuario."
+msgstr "No tienes permiso para ver cuotas de usuario."
 
 #: src/API/UserFeeController.php:248
 msgid "You do not have permission to create user fees."
-msgstr "No tienes permiso para crear tarifas de usuario."
+msgstr "No tienes permiso para crear cuotas de usuario."
 
 #: src/API/UserFeeController.php:296
 msgid "You must be logged in to create payments."
@@ -836,26 +836,26 @@ msgstr "Debes iniciar sesión para crear pagos."
 #: src/API/UserFeeController.php:628
 #: src/API/UserFeeController.php:652
 msgid "User fee not found."
-msgstr "Tarifa de usuario no encontrada."
+msgstr "Cuota de usuario no encontrada."
 
 #: src/API/UserFeeController.php:316
 msgid "You can only create payments for your own fees."
-msgstr "Solo puedes crear pagos para tus propias tarifas."
+msgstr "Solo puedes crear pagos para tus propias cuotas."
 
 #: src/API/UserFeeController.php:409
 #: src/Admin/user-fees/UserFeeForm.js:89
 #: src/Admin/user-fees/UserFeesPage.js:244
 msgid "Failed to save user fee."
-msgstr "Error al guardar la tarifa de usuario."
+msgstr "Error al guardar la cuota de usuario."
 
 #: src/API/UserFeeController.php:481
 msgid "Failed to update user fee."
-msgstr "Error al actualizar la tarifa de usuario."
+msgstr "Error al actualizar la cuota de usuario."
 
 #: src/API/UserFeeController.php:511
 #: src/Admin/user-fees/UserFeesPage.js:123
 msgid "Failed to delete user fee."
-msgstr "Error al eliminar la tarifa de usuario."
+msgstr "Error al eliminar la cuota de usuario."
 
 #: src/API/UserFeeController.php:559
 msgid "Failed to create adjustment record."
@@ -863,16 +863,16 @@ msgstr "Error al crear registro de ajuste."
 
 #: src/API/UserFeeController.php:571
 msgid "Failed to update user fee amount."
-msgstr "Error al actualizar el monto de la tarifa de usuario."
+msgstr "Error al actualizar el monto de la cuota de usuario."
 
 #: src/API/UserFeeController.php:607
 #: src/Admin/user-fees/UserFeesPage.js:158
 msgid "Failed to mark fee as paid."
-msgstr "Error al marcar la tarifa como pagada."
+msgstr "Error al marcar la cuota como pagada."
 
 #: src/API/UserFeeController.php:661
 msgid "Only pending or overdue fees can be paid."
-msgstr "Solo se pueden pagar tarifas pendientes o vencidas."
+msgstr "Solo se pueden pagar cuotas pendientes o vencidas."
 
 #: src/API/UserFeeController.php:670
 msgid "Payment system is not available."
@@ -902,7 +902,7 @@ msgstr "La respuesta de pago no contiene URL de pago."
 
 #: src/blocks/my-fees/render.php:30
 msgid "Please log in to view your membership fees."
-msgstr "Por favor, inicie sesión para ver sus tarifas de membresía."
+msgstr "Por favor, inicie sesión para ver sus cuotas de membresía."
 
 #: src/blocks/my-fees/render.php:32
 msgid "Log In"
@@ -910,7 +910,7 @@ msgstr "Iniciar Sesión"
 
 #: src/blocks/my-fees/render.php:43
 msgid "You have no fees at this time."
-msgstr "No tiene tarifas en este momento."
+msgstr "No tiene cuotas en este momento."
 
 #: src/blocks/my-fees/render.php:50
 #: src/blocks/my-fees/render.php:79
@@ -998,7 +998,7 @@ msgstr "La fecha de vencimiento es obligatoria."
 
 #: src/Models/UserFeeAdjustment.php:200
 msgid "User fee ID is required."
-msgstr "El ID de tarifa de usuario es obligatorio."
+msgstr "El ID de cuota de usuario es obligatorio."
 
 #: src/Models/UserFeeAdjustment.php:204
 msgid "Previous amount must be a positive number."
@@ -1023,7 +1023,7 @@ msgstr "Grupo"
 
 #: src/Admin/group-fees/GroupFeeForm.js:108
 msgid "Select the group for this fee. Individual user fees will be created for all active members."
-msgstr "Seleccione el grupo para esta tarifa. Se crearán tarifas de usuario individuales para todos los miembros activos."
+msgstr "Seleccione el grupo para esta cuota. Se crearán cuotas de usuario individuales para todos los miembros activos."
 
 #: src/Admin/group-fees/GroupFeeForm.js:130
 msgid "Default Amount"
@@ -1041,7 +1041,7 @@ msgstr "Guardar"
 
 #: src/Admin/group-fees/GroupFeesList.js:8
 msgid "No group fees found."
-msgstr "No se encontraron tarifas de grupo."
+msgstr "No se encontraron cuotas de grupo."
 
 #: src/Admin/group-fees/GroupFeesList.js:20
 msgid "Total Paid"
@@ -1057,39 +1057,39 @@ msgstr "Creado"
 
 #: src/Admin/group-fees/GroupFeesPage.js:58
 msgid "Failed to load group fees."
-msgstr "Error al cargar tarifas de grupo."
+msgstr "Error al cargar cuotas de grupo."
 
 #. translators: %s: group fee title
 #: src/Admin/group-fees/GroupFeesPage.js:84
 #, js-format
 msgid "Are you sure you want to delete the group fee \"%s\"? This will also delete all associated user fees."
-msgstr "¿Está seguro de que desea eliminar la tarifa de grupo \"%s\"? Esto también eliminará todas las tarifas de usuario asociadas."
+msgstr "¿Está seguro de que desea eliminar la cuota de grupo \"%s\"? Esto también eliminará todas las cuotas de usuario asociadas."
 
 #: src/Admin/group-fees/GroupFeesPage.js:106
 msgid "Group fee deleted successfully."
-msgstr "Tarifa de grupo eliminada exitosamente."
+msgstr "Cuota de grupo eliminada exitosamente."
 
 #: src/Admin/group-fees/GroupFeesPage.js:136
 msgid "Group fee updated successfully."
-msgstr "Tarifa de grupo actualizada exitosamente."
+msgstr "Cuota de grupo actualizada exitosamente."
 
 #. translators: %d: number of user fees created
 #: src/Admin/group-fees/GroupFeesPage.js:152
 #, js-format
 msgid "Group fee created successfully. %d user fees were created for group members."
-msgstr "Tarifa de grupo creada exitosamente. Se crearon %d tarifas de usuario para los miembros del grupo."
+msgstr "Cuota de grupo creada exitosamente. Se crearon %d cuotas de usuario para los miembros del grupo."
 
 #: src/Admin/group-fees/GroupFeesPage.js:223
 msgid "All Group Fees"
-msgstr "Todas las tarifas de grupo"
+msgstr "Todas las cuotas de grupo"
 
 #: src/Admin/group-fees/GroupFeesPage.js:279
 msgid "Edit Group Fee"
-msgstr "Editar tarifa de grupo"
+msgstr "Editar cuota de grupo"
 
 #: src/Admin/group-fees/GroupFeesPage.js:280
 msgid "Add New Group Fee"
-msgstr "Agregar nueva tarifa de grupo"
+msgstr "Agregar nueva cuota de grupo"
 
 #: src/Admin/group-members/SendEmailModal.js:99
 msgid "Hide details"
@@ -1129,7 +1129,7 @@ msgstr "Notas"
 
 #: src/Admin/user-fees/UserFeesList.js:14
 msgid "No user fees found."
-msgstr "No se encontraron tarifas de usuario."
+msgstr "No se encontraron cuotas de usuario."
 
 #: src/Admin/user-fees/UserFeesList.js:48
 msgid "User"
@@ -1146,43 +1146,43 @@ msgstr "Ajustar"
 
 #: src/Admin/user-fees/UserFeesPage.js:72
 msgid "Failed to load user fees."
-msgstr "Error al cargar tarifas de usuario."
+msgstr "Error al cargar cuotas de usuario."
 
 #. translators: %s: user fee title
 #: src/Admin/user-fees/UserFeesPage.js:98
 #, js-format
 msgid "Are you sure you want to delete the user fee \"%s\"?"
-msgstr "¿Está seguro de que desea eliminar la tarifa de usuario \"%s\"?"
+msgstr "¿Está seguro de que desea eliminar la cuota de usuario \"%s\"?"
 
 #: src/Admin/user-fees/UserFeesPage.js:118
 msgid "User fee deleted successfully."
-msgstr "Tarifa de usuario eliminada exitosamente."
+msgstr "Cuota de usuario eliminada exitosamente."
 
 #. translators: 1: fee title, 2: user name
 #: src/Admin/user-fees/UserFeesPage.js:134
 #, js-format
 msgid "Mark fee \"%1$s\" as paid for %2$s?"
-msgstr "¿Marcar tarifa \"%1$s\" como pagada para %2$s?"
+msgstr "¿Marcar cuota \"%1$s\" como pagada para %2$s?"
 
 #: src/Admin/user-fees/UserFeesPage.js:153
 msgid "Fee marked as paid."
-msgstr "Tarifa marcada como pagada."
+msgstr "Cuota marcada como pagada."
 
 #: src/Admin/user-fees/UserFeesPage.js:192
 msgid "Fee amount adjusted successfully."
-msgstr "Monto de tarifa ajustado exitosamente."
+msgstr "Monto de cuota ajustado exitosamente."
 
 #: src/Admin/user-fees/UserFeesPage.js:200
 msgid "Failed to adjust fee amount."
-msgstr "Error al ajustar el monto de la tarifa."
+msgstr "Error al ajustar el monto de la cuota."
 
 #: src/Admin/user-fees/UserFeesPage.js:223
 msgid "User fee updated successfully."
-msgstr "Tarifa de usuario actualizada exitosamente."
+msgstr "Cuota de usuario actualizada exitosamente."
 
 #: src/Admin/user-fees/UserFeesPage.js:235
 msgid "User fee created successfully."
-msgstr "Tarifa de usuario creada exitosamente."
+msgstr "Cuota de usuario creada exitosamente."
 
 #: src/Admin/user-fees/UserFeesPage.js:300
 msgid "Filters"
@@ -1194,25 +1194,25 @@ msgstr "Todos"
 
 #: src/Admin/user-fees/UserFeesPage.js:339
 msgid "All User Fees"
-msgstr "Todas las tarifas de usuario"
+msgstr "Todas las cuotas de usuario"
 
 #: src/Admin/user-fees/UserFeesPage.js:392
 msgid "Edit User Fee"
-msgstr "Editar tarifa de usuario"
+msgstr "Editar cuota de usuario"
 
 #: src/Admin/user-fees/UserFeesPage.js:393
 msgid "Add New User Fee"
-msgstr "Agregar nueva tarifa de usuario"
+msgstr "Agregar nueva cuota de usuario"
 
 #: src/Admin/user-fees/UserFeesPage.js:408
 msgid "Adjust Fee Amount"
-msgstr "Ajustar monto de tarifa"
+msgstr "Ajustar monto de cuota"
 
 #. translators: 1: fee title, 2: user name
 #: src/Admin/user-fees/UserFeesPage.js:417
 #, js-format
 msgid "Adjusting fee \"%1$s\" for %2$s"
-msgstr "Ajustando tarifa \"%1$s\" para %2$s"
+msgstr "Ajustando cuota \"%1$s\" para %2$s"
 
 #: src/Admin/user-fees/UserFeesPage.js:429
 msgid "Current Amount:"
@@ -1240,7 +1240,7 @@ msgstr "Información del bloque"
 
 #: src/blocks/my-fees/components/EditComponent.js:15
 msgid "This block displays the current user's membership fees on the frontend."
-msgstr "Este bloque muestra las tarifas de membresía del usuario actual en el frontend."
+msgstr "Este bloque muestra las cuotas de membresía del usuario actual en el frontend."
 
 #: src/blocks/my-fees/components/EditComponent.js:21
 msgid "The content is dynamically generated based on the logged-in user."
@@ -1248,15 +1248,15 @@ msgstr "El contenido se genera dinámicamente según el usuario autenticado."
 
 #: src/blocks/my-fees/components/EditComponent.js:30
 msgid "My Fees"
-msgstr "Mis tarifas"
+msgstr "Mis cuotas"
 
 #: src/blocks/my-fees/components/EditComponent.js:32
 msgid "Preview: This block displays the current user's membership fees."
-msgstr "Vista previa: Este bloque muestra las tarifas de membresía del usuario actual."
+msgstr "Vista previa: Este bloque muestra las cuotas de membresía del usuario actual."
 
 #: src/blocks/my-fees/components/EditComponent.js:51
 msgid "Membership Fee"
-msgstr "Tarifa de membresía"
+msgstr "Cuota de membresía"
 
 #: src/blocks/my-fees/components/EditComponent.js:67
 msgid "Annual Renewal"
@@ -1269,17 +1269,17 @@ msgstr "Registro"
 #: src/blocks/my-fees/block.json
 msgctxt "block title"
 msgid "My Fees"
-msgstr "Mis tarifas"
+msgstr "Mis cuotas"
 
 #: src/blocks/my-fees/block.json
 msgctxt "block description"
 msgid "Display current user's membership fees and payment information"
-msgstr "Muestra las tarifas de membresía del usuario actual e información de pago"
+msgstr "Muestra las cuotas de membresía del usuario actual e información de pago"
 
 #: src/blocks/my-fees/block.json
 msgctxt "block keyword"
 msgid "fees"
-msgstr "tarifas"
+msgstr "cuotas"
 
 #: src/blocks/my-fees/block.json
 msgctxt "block keyword"
