@@ -67,10 +67,10 @@ export default function AttendanceCheck({ eventId }) {
 	}, [eventId]);
 
 	// Toggle attendance status for a user
-	const toggleAttendance = (userId) => {
+	const toggleAttendance = (rsvpId) => {
 		setAttendees((prev) =>
 			prev.map((attendee) => {
-				if (attendee.id === userId) {
+				if (attendee.rsvp_id === rsvpId) {
 					const newStatus =
 						attendee.attendance_status === 'checked_in'
 							? 'not_applicable'
@@ -242,7 +242,7 @@ export default function AttendanceCheck({ eventId }) {
 						) : (
 							filteredAttendees.map((attendee) => (
 								<tr
-									key={`${attendee.section}-${attendee.id}`}
+									key={`${attendee.section}-${attendee.rsvp_id}`}
 									className={
 										attendee.attendance_status ===
 										'checked_in'
@@ -260,7 +260,7 @@ export default function AttendanceCheck({ eventId }) {
 												}
 												onChange={() =>
 													toggleAttendance(
-														attendee.id
+														attendee.rsvp_id
 													)
 												}
 											/>
