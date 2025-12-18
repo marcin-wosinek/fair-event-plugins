@@ -62,7 +62,7 @@ class UserFee {
 	/**
 	 * Payment status
 	 *
-	 * @var string Either 'pending', 'paid', 'cancelled', or 'overdue'
+	 * @var string Either 'pending', 'pending_payment', 'paid', 'cancelled', or 'overdue'
 	 */
 	public $status;
 
@@ -365,7 +365,7 @@ class UserFee {
 			return new \WP_Error( 'missing_due_date', __( 'Due date is required.', 'fair-membership' ) );
 		}
 
-		$valid_statuses = array( 'pending', 'paid', 'cancelled', 'overdue' );
+		$valid_statuses = array( 'pending', 'pending_payment', 'paid', 'cancelled', 'overdue' );
 		if ( ! in_array( $this->status, $valid_statuses, true ) ) {
 			return new \WP_Error( 'invalid_status', __( 'Invalid status.', 'fair-membership' ) );
 		}

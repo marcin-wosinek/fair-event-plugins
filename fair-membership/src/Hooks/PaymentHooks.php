@@ -122,7 +122,27 @@ class PaymentHooks {
 			)
 		);
 
-		// Note: We don't change the fee status - it remains 'pending' or 'overdue'
-		// User can try to pay again
+		// Reset status to pending if it was pending_payment
+		if ( 'pending_payment' === $user_fee->status ) {
+			try {
+				$user_fee->status = 'pending';
+				$user_fee->save();
+
+				error_log(
+					sprintf(
+						'Fair Membership: User fee #%d status reset to pending after payment failure',
+						$user_fee->id
+					)
+				);
+			} catch ( \Exception $e ) {
+				error_log(
+					sprintf(
+						'Fair Membership: Failed to reset user fee #%d status: %s',
+						$user_fee->id,
+						$e->getMessage()
+					)
+				);
+			}
+		}
 	}
 }

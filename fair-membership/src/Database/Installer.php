@@ -19,7 +19,7 @@ class Installer {
 	/**
 	 * Plugin version for database schema
 	 */
-	const DB_VERSION = '1.3.0';
+	const DB_VERSION = '1.4.0';
 
 	/**
 	 * Install database tables
@@ -86,6 +86,10 @@ class Installer {
 				self::migrate_to_1_3_0();
 			}
 
+			if ( version_compare( $current_version, '1.4.0', '<' ) ) {
+				self::migrate_to_1_4_0();
+			}
+
 			self::install();
 		}
 	}
@@ -129,6 +133,28 @@ class Installer {
 		// This method is a placeholder for any data migrations needed
 
 		DebugLogger::info( 'Migrated to version 1.3.0 - Added fee management tables' );
+	}
+
+	/**
+	 * Migration to version 1.4.0 - Add pending_payment status
+	 *
+	 * @return void
+	 */
+	private static function migrate_to_1_4_0() {
+		global $wpdb;
+
+		$table_name = $wpdb->prefix . 'fair_user_fees';
+
+		// Add 'pending_payment' to the status ENUM
+		// dbDelta doesn't handle ENUM changes, so we need to do this manually
+		$wpdb->query(
+			$wpdb->prepare(
+				"ALTER TABLE %i MODIFY COLUMN status ENUM('pending', 'pending_payment', 'paid', 'cancelled', 'overdue') NOT NULL DEFAULT 'pending'",
+				$table_name
+			)
+		);
+
+		DebugLogger::info( 'Migrated to version 1.4.0 - Added pending_payment status to user fees' );
 	}
 
 	/**

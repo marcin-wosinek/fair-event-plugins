@@ -316,6 +316,13 @@ const UserFeesPage = () => {
 									label: __('Pending', 'fair-membership'),
 								},
 								{
+									value: 'pending_payment',
+									label: __(
+										'Payment In Progress',
+										'fair-membership'
+									),
+								},
+								{
 									value: 'paid',
 									label: __('Paid', 'fair-membership'),
 								},

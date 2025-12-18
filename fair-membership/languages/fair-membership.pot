@@ -9,7 +9,7 @@ msgstr ""
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"POT-Creation-Date: 2025-12-18T14:01:51+00:00\n"
+"POT-Creation-Date: 2025-12-18T16:17:46+00:00\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "X-Generator: WP-CLI 2.12.0\n"
 "X-Domain: fair-membership\n"
@@ -374,32 +374,36 @@ msgid "Failed to mark fee as paid."
 msgstr ""
 
 #: src/API/UserFeeController.php:688
-msgid "Only pending or overdue fees can be paid."
+msgid "A payment for this fee is already in progress. Please complete or cancel the existing payment before creating a new one."
 msgstr ""
 
 #: src/API/UserFeeController.php:697
+msgid "Only pending or overdue fees can be paid."
+msgstr ""
+
+#: src/API/UserFeeController.php:706
 msgid "Payment system is not available."
 msgstr ""
 
 #. translators: %s: fee title
-#: src/API/UserFeeController.php:715
+#: src/API/UserFeeController.php:724
 #, php-format
 msgid "Payment for: %s"
 msgstr ""
 
 #. translators: %s: error message
-#: src/API/UserFeeController.php:731
+#: src/API/UserFeeController.php:740
 #, php-format
 msgid "Failed to create transaction: %s"
 msgstr ""
 
 #. translators: %s: error message
-#: src/API/UserFeeController.php:751
+#: src/API/UserFeeController.php:760
 #, php-format
 msgid "Failed to initiate payment: %s"
 msgstr ""
 
-#: src/API/UserFeeController.php:761
+#: src/API/UserFeeController.php:770
 msgid "Payment response does not contain checkout URL."
 msgstr ""
 
@@ -416,90 +420,100 @@ msgid "You have no fees at this time."
 msgstr ""
 
 #: src/blocks/my-fees/render.php:50
-#: src/blocks/my-fees/render.php:79
+#: src/blocks/my-fees/render.php:81
 #: src/Admin/group-fees/GroupFeeForm.js:116
 #: src/Admin/group-fees/GroupFeesList.js:17
 #: src/Admin/user-fees/UserFeeForm.js:239
-#: src/Admin/user-fees/UserFeesList.js:49
+#: src/Admin/user-fees/UserFeesList.js:59
 #: src/blocks/my-fees/components/EditComponent.js:41
 msgid "Title"
 msgstr ""
 
 #: src/blocks/my-fees/render.php:51
-#: src/blocks/my-fees/render.php:87
+#: src/blocks/my-fees/render.php:89
 #: src/Admin/group-fees/GroupFeesList.js:19
 #: src/Admin/user-fees/UserFeeForm.js:248
-#: src/Admin/user-fees/UserFeesList.js:50
+#: src/Admin/user-fees/UserFeesList.js:60
 #: src/blocks/my-fees/components/EditComponent.js:42
 msgid "Amount"
 msgstr ""
 
 #: src/blocks/my-fees/render.php:52
-#: src/blocks/my-fees/render.php:90
+#: src/blocks/my-fees/render.php:92
 #: src/Admin/group-fees/GroupFeeForm.js:140
 #: src/Admin/group-fees/GroupFeesList.js:22
 #: src/Admin/user-fees/UserFeeForm.js:258
-#: src/Admin/user-fees/UserFeesList.js:51
+#: src/Admin/user-fees/UserFeesList.js:61
 #: src/blocks/my-fees/components/EditComponent.js:43
 msgid "Due Date"
 msgstr ""
 
 #: src/blocks/my-fees/render.php:53
-#: src/blocks/my-fees/render.php:93
+#: src/blocks/my-fees/render.php:95
 #: src/Admin/groups/GroupForm.js:151
 #: src/Admin/groups/GroupsList.js:66
-#: src/Admin/user-fees/UserFeesList.js:52
+#: src/Admin/user-fees/UserFeesList.js:62
 #: src/Admin/user-fees/UserFeesPage.js:306
 #: src/blocks/my-fees/components/EditComponent.js:44
 msgid "Status"
 msgstr ""
 
 #: src/blocks/my-fees/render.php:54
-#: src/blocks/my-fees/render.php:111
+#: src/blocks/my-fees/render.php:113
 #: src/Admin/group-fees/GroupFeesList.js:24
 #: src/Admin/group-members/MembersList.js:30
 #: src/Admin/group-members/UserSearch.js:103
 #: src/Admin/groups/GroupsList.js:69
-#: src/Admin/user-fees/UserFeesList.js:53
+#: src/Admin/user-fees/UserFeesList.js:63
 #: src/blocks/my-fees/components/EditComponent.js:45
 msgid "Actions"
 msgstr ""
 
 #: src/blocks/my-fees/render.php:68
+#: src/Admin/user-fees/UserFeesList.js:29
 #: src/Admin/user-fees/UserFeesPage.js:316
 #: src/blocks/my-fees/components/EditComponent.js:60
 msgid "Pending"
 msgstr ""
 
 #: src/blocks/my-fees/render.php:69
+#: src/Admin/user-fees/UserFeesList.js:30
 #: src/Admin/user-fees/UserFeesPage.js:320
+msgid "Payment In Progress"
+msgstr ""
+
+#: src/blocks/my-fees/render.php:70
+#: src/Admin/user-fees/UserFeesList.js:31
+#: src/Admin/user-fees/UserFeesPage.js:327
 #: src/blocks/my-fees/components/EditComponent.js:89
 msgid "Paid"
 msgstr ""
 
-#: src/blocks/my-fees/render.php:70
-#: src/Admin/user-fees/UserFeesPage.js:324
+#: src/blocks/my-fees/render.php:71
+#: src/Admin/user-fees/UserFeesList.js:32
+#: src/Admin/user-fees/UserFeesPage.js:331
 #: src/blocks/my-fees/components/EditComponent.js:76
 msgid "Overdue"
 msgstr ""
 
-#: src/blocks/my-fees/render.php:71
-#: src/Admin/user-fees/UserFeesPage.js:328
+#: src/blocks/my-fees/render.php:72
+#: src/Admin/user-fees/UserFeesList.js:33
+#: src/Admin/user-fees/UserFeesPage.js:335
 msgid "Cancelled"
 msgstr ""
 
 #. translators: %s: paid date
-#: src/blocks/my-fees/render.php:103
+#: src/blocks/my-fees/render.php:105
 #, php-format
 msgid "Paid: %s"
 msgstr ""
 
-#: src/blocks/my-fees/render.php:117
+#: src/blocks/my-fees/render.php:119
 #: src/blocks/my-fees/frontend.js:42
 msgid "Processing..."
 msgstr ""
 
-#: src/blocks/my-fees/render.php:119
+#: src/blocks/my-fees/render.php:121
 #: src/blocks/my-fees/components/EditComponent.js:63
 #: src/blocks/my-fees/components/EditComponent.js:79
 msgid "Pay Now"
@@ -646,7 +660,7 @@ msgstr ""
 #: src/Admin/group-members/SendEmailModal.js:174
 #: src/Admin/groups/GroupForm.js:176
 #: src/Admin/user-fees/UserFeeForm.js:281
-#: src/Admin/user-fees/UserFeesPage.js:472
+#: src/Admin/user-fees/UserFeesPage.js:479
 msgid "Cancel"
 msgstr ""
 
@@ -678,13 +692,13 @@ msgstr ""
 
 #: src/Admin/group-fees/GroupFeesList.js:76
 #: src/Admin/groups/GroupsList.js:138
-#: src/Admin/user-fees/UserFeesList.js:128
+#: src/Admin/user-fees/UserFeesList.js:155
 msgid "Edit"
 msgstr ""
 
 #: src/Admin/group-fees/GroupFeesList.js:83
 #: src/Admin/groups/GroupsList.js:146
-#: src/Admin/user-fees/UserFeesList.js:135
+#: src/Admin/user-fees/UserFeesList.js:162
 msgid "Delete"
 msgstr ""
 
@@ -725,28 +739,28 @@ msgstr ""
 #. translators: %d: total number of group fees
 #: src/Admin/group-fees/GroupFeesPage.js:227
 #: src/Admin/groups/GroupsPage.js:212
-#: src/Admin/user-fees/UserFeesPage.js:341
+#: src/Admin/user-fees/UserFeesPage.js:348
 #, js-format
 msgid "%d total"
 msgstr ""
 
 #: src/Admin/group-fees/GroupFeesPage.js:253
 #: src/Admin/groups/GroupsPage.js:236
-#: src/Admin/user-fees/UserFeesPage.js:367
+#: src/Admin/user-fees/UserFeesPage.js:374
 msgid "Previous"
 msgstr ""
 
 #. translators: 1: current page number, 2: total number of pages
 #: src/Admin/group-fees/GroupFeesPage.js:258
 #: src/Admin/groups/GroupsPage.js:240
-#: src/Admin/user-fees/UserFeesPage.js:371
+#: src/Admin/user-fees/UserFeesPage.js:378
 #, js-format
 msgid "Page %1$d of %2$d"
 msgstr ""
 
 #: src/Admin/group-fees/GroupFeesPage.js:268
 #: src/Admin/groups/GroupsPage.js:250
-#: src/Admin/user-fees/UserFeesPage.js:381
+#: src/Admin/user-fees/UserFeesPage.js:388
 msgid "Next"
 msgstr ""
 
@@ -1054,24 +1068,32 @@ msgstr ""
 msgid "No user fees found."
 msgstr ""
 
-#: src/Admin/user-fees/UserFeesList.js:48
+#: src/Admin/user-fees/UserFeesList.js:58
 msgid "User"
 msgstr ""
 
-#: src/Admin/user-fees/UserFeesList.js:91
+#: src/Admin/user-fees/UserFeesList.js:101
 msgid "Cannot edit or delete paid fees"
 msgstr ""
 
-#: src/Admin/user-fees/UserFeesList.js:96
+#: src/Admin/user-fees/UserFeesList.js:106
 msgid "Already paid"
 msgstr ""
 
-#: src/Admin/user-fees/UserFeesList.js:109
+#: src/Admin/user-fees/UserFeesList.js:115
+msgid "Payment is being processed"
+msgstr ""
+
+#: src/Admin/user-fees/UserFeesList.js:120
+msgid "Payment in progress"
+msgstr ""
+
+#: src/Admin/user-fees/UserFeesList.js:136
 msgid "Mark Paid"
 msgstr ""
 
-#: src/Admin/user-fees/UserFeesList.js:119
-#: src/Admin/user-fees/UserFeesPage.js:482
+#: src/Admin/user-fees/UserFeesList.js:146
+#: src/Admin/user-fees/UserFeesPage.js:489
 msgid "Adjust"
 msgstr ""
 
@@ -1123,45 +1145,45 @@ msgstr ""
 msgid "All"
 msgstr ""
 
-#: src/Admin/user-fees/UserFeesPage.js:339
+#: src/Admin/user-fees/UserFeesPage.js:346
 msgid "All User Fees"
 msgstr ""
 
-#: src/Admin/user-fees/UserFeesPage.js:392
+#: src/Admin/user-fees/UserFeesPage.js:399
 msgid "Edit User Fee"
 msgstr ""
 
-#: src/Admin/user-fees/UserFeesPage.js:393
+#: src/Admin/user-fees/UserFeesPage.js:400
 msgid "Add New User Fee"
 msgstr ""
 
-#: src/Admin/user-fees/UserFeesPage.js:408
+#: src/Admin/user-fees/UserFeesPage.js:415
 msgid "Adjust Fee Amount"
 msgstr ""
 
 #. translators: 1: fee title, 2: user name
-#: src/Admin/user-fees/UserFeesPage.js:417
+#: src/Admin/user-fees/UserFeesPage.js:424
 #, js-format
 msgid "Adjusting fee \"%1$s\" for %2$s"
 msgstr ""
 
-#: src/Admin/user-fees/UserFeesPage.js:429
+#: src/Admin/user-fees/UserFeesPage.js:436
 msgid "Current Amount:"
 msgstr ""
 
-#: src/Admin/user-fees/UserFeesPage.js:436
+#: src/Admin/user-fees/UserFeesPage.js:443
 msgid "New Amount"
 msgstr ""
 
-#: src/Admin/user-fees/UserFeesPage.js:446
+#: src/Admin/user-fees/UserFeesPage.js:453
 msgid "Reason for Adjustment"
 msgstr ""
 
-#: src/Admin/user-fees/UserFeesPage.js:454
+#: src/Admin/user-fees/UserFeesPage.js:461
 msgid "This will be saved in the adjustment history."
 msgstr ""
 
-#: src/Admin/user-fees/UserFeesPage.js:481
+#: src/Admin/user-fees/UserFeesPage.js:488
 msgid "Adjusting..."
 msgstr ""
 

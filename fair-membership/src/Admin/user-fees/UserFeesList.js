@@ -19,12 +19,22 @@ const UserFeesList = ({
 	const getStatusBadge = (status) => {
 		const styles = {
 			pending: { backgroundColor: '#f0f0f1', color: '#2c3338' },
+			pending_payment: { backgroundColor: '#2271b1', color: '#fff' },
 			paid: { backgroundColor: '#00a32a', color: '#fff' },
 			overdue: { backgroundColor: '#d63638', color: '#fff' },
 			cancelled: { backgroundColor: '#dba617', color: '#fff' },
 		};
 
+		const labels = {
+			pending: __('Pending', 'fair-membership'),
+			pending_payment: __('Payment In Progress', 'fair-membership'),
+			paid: __('Paid', 'fair-membership'),
+			overdue: __('Overdue', 'fair-membership'),
+			cancelled: __('Cancelled', 'fair-membership'),
+		};
+
 		const style = styles[status] || styles.pending;
+		const label = labels[status] || status;
 
 		return (
 			<span
@@ -36,7 +46,7 @@ const UserFeesList = ({
 					fontWeight: '500',
 				}}
 			>
-				{status.charAt(0).toUpperCase() + status.slice(1)}
+				{label}
 			</span>
 		);
 	};
@@ -95,6 +105,23 @@ const UserFeesList = ({
 								>
 									{__('Already paid', 'fair-membership')}
 								</span>
+							) : userFee.status === 'pending_payment' ? (
+								<span
+									style={{
+										color: '#757575',
+										fontSize: '13px',
+										fontStyle: 'italic',
+									}}
+									title={__(
+										'Payment is being processed',
+										'fair-membership'
+									)}
+								>
+									{__(
+										'Payment in progress',
+										'fair-membership'
+									)}
+								</span>
 							) : (
 								<>
 									{userFee.status === 'pending' && (
@@ -113,10 +140,15 @@ const UserFeesList = ({
 											</Button>
 											<Button
 												variant="link"
-												onClick={() => onAdjust(userFee)}
+												onClick={() =>
+													onAdjust(userFee)
+												}
 												style={{ marginRight: '8px' }}
 											>
-												{__('Adjust', 'fair-membership')}
+												{__(
+													'Adjust',
+													'fair-membership'
+												)}
 											</Button>
 										</>
 									)}

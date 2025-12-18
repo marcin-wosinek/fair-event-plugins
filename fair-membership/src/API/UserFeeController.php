@@ -64,7 +64,7 @@ class UserFeeController extends WP_REST_Controller {
 						'status'       => array(
 							'description' => __( 'Filter by status.', 'fair-membership' ),
 							'type'        => 'string',
-							'enum'        => array( 'pending', 'paid', 'cancelled', 'overdue' ),
+							'enum'        => array( 'pending', 'pending_payment', 'paid', 'cancelled', 'overdue' ),
 						),
 						'page'         => array(
 							'description' => __( 'Page number.', 'fair-membership' ),
@@ -138,7 +138,7 @@ class UserFeeController extends WP_REST_Controller {
 						),
 						'status'   => array(
 							'type' => 'string',
-							'enum' => array( 'pending', 'paid', 'cancelled', 'overdue' ),
+							'enum' => array( 'pending', 'pending_payment', 'paid', 'cancelled', 'overdue' ),
 						),
 						'notes'    => array(
 							'type'              => 'string',
@@ -681,6 +681,15 @@ class UserFeeController extends WP_REST_Controller {
 			);
 		}
 
+		// Check if payment is already in progress
+		if ( 'pending_payment' === $user_fee->status ) {
+			return new WP_Error(
+				'payment_in_progress',
+				__( 'A payment for this fee is already in progress. Please complete or cancel the existing payment before creating a new one.', 'fair-membership' ),
+				array( 'status' => 400 )
+			);
+		}
+
 		// Check if fee is payable (pending or overdue)
 		if ( ! in_array( $user_fee->status, array( 'pending', 'overdue' ), true ) ) {
 			return new WP_Error(
@@ -761,6 +770,20 @@ class UserFeeController extends WP_REST_Controller {
 				__( 'Payment response does not contain checkout URL.', 'fair-membership' ),
 				array( 'status' => 500 )
 			);
+		}
+
+		// Mark fee as pending payment
+		$user_fee->status = 'pending_payment';
+		$result           = $user_fee->save();
+
+		if ( ! $result ) {
+			error_log(
+				sprintf(
+					'Fair Membership: Failed to update user fee #%d status to pending_payment',
+					$user_fee->id
+				)
+			);
+			// Continue anyway - the payment was created, webhook will handle completion
 		}
 
 		return new WP_REST_Response(

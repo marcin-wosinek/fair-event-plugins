@@ -72,6 +72,11 @@
 	color: white;
 }
 
+.fair-membership-my-fees-editor .fee-status-pending_payment {
+	background: #2271b1;
+	color: white;
+}
+
 .fair-membership-my-fees-editor .fee-status-paid {
 	background: #28a745;
 	color: white;

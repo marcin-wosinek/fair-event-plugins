@@ -144,7 +144,7 @@ class Schema {
 			title VARCHAR(255) NOT NULL,
 			amount DECIMAL(10,2) NOT NULL,
 			due_date DATE NOT NULL,
-			status ENUM('pending', 'paid', 'cancelled', 'overdue') NOT NULL DEFAULT 'pending',
+			status ENUM('pending', 'pending_payment', 'paid', 'cancelled', 'overdue') NOT NULL DEFAULT 'pending',
 			paid_at DATETIME DEFAULT NULL,
 			notes TEXT DEFAULT NULL,
 			created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,

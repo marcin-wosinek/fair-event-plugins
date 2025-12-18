@@ -65,15 +65,17 @@ $wrapper_attributes = get_block_wrapper_attributes(
 
 							// Translate status
 							$status_labels = array(
-								'pending'   => __( 'Pending', 'fair-membership' ),
-								'paid'      => __( 'Paid', 'fair-membership' ),
-								'overdue'   => __( 'Overdue', 'fair-membership' ),
-								'cancelled' => __( 'Cancelled', 'fair-membership' ),
+								'pending'         => __( 'Pending', 'fair-membership' ),
+								'pending_payment' => __( 'Payment In Progress', 'fair-membership' ),
+								'paid'            => __( 'Paid', 'fair-membership' ),
+								'overdue'         => __( 'Overdue', 'fair-membership' ),
+								'cancelled'       => __( 'Cancelled', 'fair-membership' ),
 							);
 							$status_label  = $status_labels[ $effective_status ] ?? $effective_status;
 
 							// Show payment button for unpaid fees (if fair-payment is available)
-							$show_payment_button = $fair_payment_available && in_array( $effective_status, array( 'pending', 'overdue' ), true );
+							// Don't show if payment is already in progress
+							$show_payment_button = $fair_payment_available && in_array( $effective_status, array( 'pending', 'overdue' ), true ) && 'pending_payment' !== $user_fee->status;
 							?>
 							<tr>
 								<td data-label="<?php esc_attr_e( 'Title', 'fair-membership' ); ?>">
