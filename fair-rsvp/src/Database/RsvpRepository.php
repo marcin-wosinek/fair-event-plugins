@@ -386,6 +386,76 @@ class RsvpRepository {
 	}
 
 	/**
+	 * Get participants who checked in to the event
+	 *
+	 * Returns only participants with attendance_status = 'checked_in'.
+	 * Used for displaying actual attendees after an event has ended.
+	 *
+	 * @param int $event_id Event ID.
+	 * @return array Array of participants who attended.
+	 */
+	public function get_checked_in_participants( $event_id ) {
+		global $wpdb;
+
+		$table_name  = $this->get_table_name();
+		$users_table = $wpdb->users;
+
+		$sql = $wpdb->prepare(
+			'SELECT
+				r.user_id,
+				r.guest_name,
+				COALESCE(u.display_name, r.guest_name) as display_name,
+				COALESCE(u.user_email, r.guest_email) as user_email,
+				r.attendance_status,
+				r.rsvp_at
+			FROM %i r
+			LEFT JOIN %i u ON r.user_id = u.ID
+			WHERE r.event_id = %d AND r.attendance_status = %s
+			ORDER BY r.rsvp_at ASC',
+			$table_name,
+			$users_table,
+			$event_id,
+			'checked_in'
+		);
+
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching,WordPress.DB.PreparedSQL.NotPrepared
+		$results = $wpdb->get_results( $sql, ARRAY_A );
+
+		// Add avatar URL to each result.
+		foreach ( $results as &$result ) {
+			// For guests, user_id will be NULL, use 0 for avatar.
+			$avatar_user_id       = ! empty( $result['user_id'] ) ? (int) $result['user_id'] : 0;
+			$result['user_id']    = ! empty( $result['user_id'] ) ? (int) $result['user_id'] : null;
+			$result['avatar_url'] = get_avatar_url( $avatar_user_id, array( 'size' => 48 ) );
+			// Remove email for privacy (will be used only for gravatar).
+			unset( $result['user_email'], $result['guest_name'] );
+		}
+
+		return $results;
+	}
+
+	/**
+	 * Get event end datetime
+	 *
+	 * @param int $event_id Event ID.
+	 * @return string|null Event end datetime in MySQL format, or null if not found.
+	 */
+	public function get_event_end_datetime( $event_id ) {
+		global $wpdb;
+
+		$event_dates_table = $wpdb->prefix . 'fair_event_dates';
+
+		$sql = $wpdb->prepare(
+			'SELECT end_datetime FROM %i WHERE event_id = %d',
+			$event_dates_table,
+			$event_id
+		);
+
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching,WordPress.DB.PreparedSQL.NotPrepared
+		return $wpdb->get_var( $sql );
+	}
+
+	/**
 	 * Bulk update attendance status for multiple RSVPs
 	 *
 	 * @param array $updates Array of arrays with 'id' and 'attendance_status' keys.
