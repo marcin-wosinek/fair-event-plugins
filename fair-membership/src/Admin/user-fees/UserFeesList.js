@@ -87,7 +87,7 @@ const UserFeesList = ({
 								</div>
 							)}
 						</td>
-						<td>${parseFloat(userFee.amount).toFixed(2)}</td>
+						<td>€{parseFloat(userFee.amount).toFixed(2)}</td>
 						<td>{userFee.due_date}</td>
 						<td>{getStatusBadge(userFee.status)}</td>
 						<td>

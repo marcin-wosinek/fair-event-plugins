@@ -41,13 +41,13 @@ const GroupFeesList = ({ groupFees, onEdit, onDelete }) => {
 							{groupFee.group_name || `#${groupFee.group_id}`}
 						</td>
 						<td>
-							${parseFloat(groupFee.default_amount).toFixed(2)}
+							€{parseFloat(groupFee.default_amount).toFixed(2)}
 						</td>
 						<td>
 							<span
 								style={{ color: '#2c7a1f', fontWeight: '500' }}
 							>
-								$
+								€
 								{parseFloat(groupFee.total_paid || 0).toFixed(
 									2
 								)}
@@ -57,7 +57,7 @@ const GroupFeesList = ({ groupFees, onEdit, onDelete }) => {
 							<span
 								style={{ color: '#d63638', fontWeight: '500' }}
 							>
-								$
+								€
 								{parseFloat(
 									groupFee.payment_pending || 0
 								).toFixed(2)}
