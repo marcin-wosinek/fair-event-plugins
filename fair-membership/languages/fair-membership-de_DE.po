@@ -18,7 +18,7 @@ msgstr ""
 #: src/Admin/AdminHooks.php:32
 #: src/Admin/AdminHooks.php:33
 msgid "Fair Membership"
-msgstr "Fair-Mitgliedschaft"
+msgstr "Fair Membership"
 
 #. Plugin URI of the plugin
 #: fair-membership.php
@@ -224,7 +224,7 @@ msgstr "Mitgliedschaft konnte nicht gespeichert werden."
 #: src/Hooks/UserHooks.php:54
 #: src/Hooks/UserHooks.php:115
 msgid "Fair Membership Groups"
-msgstr "Fair-Mitgliedschaftsgruppen"
+msgstr "Fair-Membership gruppen"
 
 #: src/Hooks/UserHooks.php:58
 msgid "Assign to Groups"

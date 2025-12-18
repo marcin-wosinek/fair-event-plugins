@@ -18,7 +18,7 @@ msgstr ""
 #: src/Admin/AdminHooks.php:32
 #: src/Admin/AdminHooks.php:33
 msgid "Fair Membership"
-msgstr "Membresía Justa"
+msgstr "Fair Membership"
 
 #. Plugin URI of the plugin
 #: fair-membership.php
@@ -224,7 +224,7 @@ msgstr "Error al guardar la membresía."
 #: src/Hooks/UserHooks.php:54
 #: src/Hooks/UserHooks.php:115
 msgid "Fair Membership Groups"
-msgstr "Grupos de Membresía Justa"
+msgstr "Grupos de Fair Membership"
 
 #: src/Hooks/UserHooks.php:58
 msgid "Assign to Groups"
@@ -284,7 +284,7 @@ msgstr "El ID de grupo es obligatorio."
 
 #: src/Models/Membership.php:213
 msgid "Status must be either \"active\" or \"inactive\"."
-msgstr ""
+msgstr "El estado debe ser \"active\" o \"inactive\"."
 
 #: src/Models/Membership.php:218
 msgid "User does not exist."
@@ -721,7 +721,7 @@ msgstr "Error al cargar grupos."
 #: src/Admin/groups/GroupsPage.js:82
 #, js-format
 msgid "Are you sure you want to delete the group \"%s\"?"
-msgstr ""
+msgstr "¿Está seguro de que desea eliminar el grupo \"%s\"?"
 
 #: src/Admin/groups/GroupsPage.js:210
 msgid "All Groups"
@@ -733,7 +733,7 @@ msgstr "Todos los Grupos"
 #: src/Admin/user-fees/UserFeesPage.js:341
 #, js-format
 msgid "%d total"
-msgstr ""
+msgstr "%d total"
 
 #: src/Admin/group-fees/GroupFeesPage.js:253
 #: src/Admin/groups/GroupsPage.js:236
@@ -747,7 +747,7 @@ msgstr "Anterior"
 #: src/Admin/user-fees/UserFeesPage.js:371
 #, js-format
 msgid "Page %1$d of %2$d"
-msgstr ""
+msgstr "Página %1$d de %2$d"
 
 #: src/Admin/group-fees/GroupFeesPage.js:268
 #: src/Admin/groups/GroupsPage.js:250
@@ -805,7 +805,7 @@ msgstr "Error al eliminar la tarifa de grupo."
 
 #: src/API/UserFeeController.php:57
 msgid "Filter by user ID."
-msgstr ""
+msgstr "Filtrar por ID de usuario."
 
 #: src/API/UserFeeController.php:61
 msgid "Filter by group fee ID."
@@ -813,7 +813,7 @@ msgstr "Filtrar por ID de tarifa de grupo."
 
 #: src/API/UserFeeController.php:214
 msgid "URL to redirect after payment."
-msgstr ""
+msgstr "URL para redirigir después del pago."
 
 #: src/API/UserFeeController.php:231
 msgid "You do not have permission to view user fees."
@@ -902,15 +902,15 @@ msgstr "La respuesta de pago no contiene URL de pago."
 
 #: src/blocks/my-fees/render.php:30
 msgid "Please log in to view your membership fees."
-msgstr ""
+msgstr "Por favor, inicie sesión para ver sus tarifas de membresía."
 
 #: src/blocks/my-fees/render.php:32
 msgid "Log In"
-msgstr ""
+msgstr "Iniciar Sesión"
 
 #: src/blocks/my-fees/render.php:43
 msgid "You have no fees at this time."
-msgstr ""
+msgstr "No tiene tarifas en este momento."
 
 #: src/blocks/my-fees/render.php:50
 #: src/blocks/my-fees/render.php:79
@@ -957,7 +957,7 @@ msgstr "Pagado"
 #: src/Admin/user-fees/UserFeesPage.js:324
 #: src/blocks/my-fees/components/EditComponent.js:76
 msgid "Overdue"
-msgstr ""
+msgstr "Vencido"
 
 #: src/blocks/my-fees/render.php:71
 #: src/Admin/user-fees/UserFeesPage.js:328
@@ -1002,19 +1002,19 @@ msgstr "El ID de tarifa de usuario es obligatorio."
 
 #: src/Models/UserFeeAdjustment.php:204
 msgid "Previous amount must be a positive number."
-msgstr ""
+msgstr "El monto anterior debe ser un número positivo."
 
 #: src/Models/UserFeeAdjustment.php:208
 msgid "New amount must be a positive number."
-msgstr ""
+msgstr "El nuevo monto debe ser un número positivo."
 
 #: src/Models/UserFeeAdjustment.php:212
 msgid "Reason is required for audit trail."
-msgstr ""
+msgstr "Se requiere un motivo para el registro de auditoría."
 
 #: src/Admin/group-fees/GroupFeeForm.js:85
 msgid "Select a group"
-msgstr ""
+msgstr "Seleccione un grupo"
 
 #: src/Admin/group-fees/GroupFeeForm.js:103
 #: src/Admin/group-fees/GroupFeesList.js:18
@@ -1023,7 +1023,7 @@ msgstr "Grupo"
 
 #: src/Admin/group-fees/GroupFeeForm.js:108
 msgid "Select the group for this fee. Individual user fees will be created for all active members."
-msgstr ""
+msgstr "Seleccione el grupo para esta tarifa. Se crearán tarifas de usuario individuales para todos los miembros activos."
 
 #: src/Admin/group-fees/GroupFeeForm.js:130
 msgid "Default Amount"
@@ -1032,7 +1032,7 @@ msgstr "Monto predeterminado"
 #: src/Admin/group-fees/GroupFeeForm.js:165
 #: src/Admin/user-fees/UserFeeForm.js:290
 msgid "Saving..."
-msgstr ""
+msgstr "Guardando..."
 
 #: src/Admin/group-fees/GroupFeeForm.js:166
 #: src/Admin/user-fees/UserFeeForm.js:291
@@ -1041,7 +1041,7 @@ msgstr "Guardar"
 
 #: src/Admin/group-fees/GroupFeesList.js:8
 msgid "No group fees found."
-msgstr ""
+msgstr "No se encontraron tarifas de grupo."
 
 #: src/Admin/group-fees/GroupFeesList.js:20
 msgid "Total Paid"
@@ -1057,13 +1057,13 @@ msgstr "Creado"
 
 #: src/Admin/group-fees/GroupFeesPage.js:58
 msgid "Failed to load group fees."
-msgstr ""
+msgstr "Error al cargar tarifas de grupo."
 
 #. translators: %s: group fee title
 #: src/Admin/group-fees/GroupFeesPage.js:84
 #, js-format
 msgid "Are you sure you want to delete the group fee \"%s\"? This will also delete all associated user fees."
-msgstr ""
+msgstr "¿Está seguro de que desea eliminar la tarifa de grupo \"%s\"? Esto también eliminará todas las tarifas de usuario asociadas."
 
 #: src/Admin/group-fees/GroupFeesPage.js:106
 msgid "Group fee deleted successfully."
@@ -1077,7 +1077,7 @@ msgstr "Tarifa de grupo actualizada exitosamente."
 #: src/Admin/group-fees/GroupFeesPage.js:152
 #, js-format
 msgid "Group fee created successfully. %d user fees were created for group members."
-msgstr ""
+msgstr "Tarifa de grupo creada exitosamente. Se crearon %d tarifas de usuario para los miembros del grupo."
 
 #: src/Admin/group-fees/GroupFeesPage.js:223
 msgid "All Group Fees"
@@ -1093,11 +1093,11 @@ msgstr "Agregar nueva tarifa de grupo"
 
 #: src/Admin/group-members/SendEmailModal.js:99
 msgid "Hide details"
-msgstr ""
+msgstr "Ocultar detalles"
 
 #: src/Admin/group-members/SendEmailModal.js:103
 msgid "More info"
-msgstr ""
+msgstr "Más información"
 
 #: src/Admin/user-fees/UserFeeForm.js:109
 msgid "Search User"
@@ -1105,7 +1105,7 @@ msgstr "Buscar usuario"
 
 #: src/Admin/user-fees/UserFeeForm.js:113
 msgid "Type name or email to search..."
-msgstr ""
+msgstr "Escriba nombre o correo para buscar..."
 
 #: src/Admin/user-fees/UserFeeForm.js:119
 msgid "User selected. Clear to search again."
@@ -1113,7 +1113,7 @@ msgstr "Usuario seleccionado. Limpiar para buscar nuevamente."
 
 #: src/Admin/user-fees/UserFeeForm.js:123
 msgid "Search by name or email to select a user."
-msgstr ""
+msgstr "Busque por nombre o correo para seleccionar un usuario."
 
 #: src/Admin/user-fees/UserFeeForm.js:159
 msgid "Clear"
@@ -1121,7 +1121,7 @@ msgstr "Limpiar"
 
 #: src/Admin/user-fees/UserFeeForm.js:171
 msgid "Searching..."
-msgstr ""
+msgstr "Buscando..."
 
 #: src/Admin/user-fees/UserFeeForm.js:266
 msgid "Notes"
@@ -1129,7 +1129,7 @@ msgstr "Notas"
 
 #: src/Admin/user-fees/UserFeesList.js:14
 msgid "No user fees found."
-msgstr ""
+msgstr "No se encontraron tarifas de usuario."
 
 #: src/Admin/user-fees/UserFeesList.js:48
 msgid "User"
@@ -1146,13 +1146,13 @@ msgstr "Ajustar"
 
 #: src/Admin/user-fees/UserFeesPage.js:72
 msgid "Failed to load user fees."
-msgstr ""
+msgstr "Error al cargar tarifas de usuario."
 
 #. translators: %s: user fee title
 #: src/Admin/user-fees/UserFeesPage.js:98
 #, js-format
 msgid "Are you sure you want to delete the user fee \"%s\"?"
-msgstr ""
+msgstr "¿Está seguro de que desea eliminar la tarifa de usuario \"%s\"?"
 
 #: src/Admin/user-fees/UserFeesPage.js:118
 msgid "User fee deleted successfully."
@@ -1162,7 +1162,7 @@ msgstr "Tarifa de usuario eliminada exitosamente."
 #: src/Admin/user-fees/UserFeesPage.js:134
 #, js-format
 msgid "Mark fee \"%1$s\" as paid for %2$s?"
-msgstr ""
+msgstr "¿Marcar tarifa \"%1$s\" como pagada para %2$s?"
 
 #: src/Admin/user-fees/UserFeesPage.js:153
 msgid "Fee marked as paid."
@@ -1174,7 +1174,7 @@ msgstr "Monto de tarifa ajustado exitosamente."
 
 #: src/Admin/user-fees/UserFeesPage.js:200
 msgid "Failed to adjust fee amount."
-msgstr ""
+msgstr "Error al ajustar el monto de la tarifa."
 
 #: src/Admin/user-fees/UserFeesPage.js:223
 msgid "User fee updated successfully."
@@ -1186,11 +1186,11 @@ msgstr "Tarifa de usuario creada exitosamente."
 
 #: src/Admin/user-fees/UserFeesPage.js:300
 msgid "Filters"
-msgstr ""
+msgstr "Filtros"
 
 #: src/Admin/user-fees/UserFeesPage.js:312
 msgid "All"
-msgstr ""
+msgstr "Todos"
 
 #: src/Admin/user-fees/UserFeesPage.js:339
 msgid "All User Fees"
@@ -1206,13 +1206,13 @@ msgstr "Agregar nueva tarifa de usuario"
 
 #: src/Admin/user-fees/UserFeesPage.js:408
 msgid "Adjust Fee Amount"
-msgstr ""
+msgstr "Ajustar monto de tarifa"
 
 #. translators: 1: fee title, 2: user name
 #: src/Admin/user-fees/UserFeesPage.js:417
 #, js-format
 msgid "Adjusting fee \"%1$s\" for %2$s"
-msgstr ""
+msgstr "Ajustando tarifa \"%1$s\" para %2$s"
 
 #: src/Admin/user-fees/UserFeesPage.js:429
 msgid "Current Amount:"
@@ -1224,77 +1224,77 @@ msgstr "Nuevo monto"
 
 #: src/Admin/user-fees/UserFeesPage.js:446
 msgid "Reason for Adjustment"
-msgstr ""
+msgstr "Motivo del ajuste"
 
 #: src/Admin/user-fees/UserFeesPage.js:454
 msgid "This will be saved in the adjustment history."
-msgstr ""
+msgstr "Esto se guardará en el historial de ajustes."
 
 #: src/Admin/user-fees/UserFeesPage.js:481
 msgid "Adjusting..."
-msgstr ""
+msgstr "Ajustando..."
 
 #: src/blocks/my-fees/components/EditComponent.js:13
 msgid "Block Information"
-msgstr ""
+msgstr "Información del bloque"
 
 #: src/blocks/my-fees/components/EditComponent.js:15
 msgid "This block displays the current user's membership fees on the frontend."
-msgstr ""
+msgstr "Este bloque muestra las tarifas de membresía del usuario actual en el frontend."
 
 #: src/blocks/my-fees/components/EditComponent.js:21
 msgid "The content is dynamically generated based on the logged-in user."
-msgstr ""
+msgstr "El contenido se genera dinámicamente según el usuario autenticado."
 
 #: src/blocks/my-fees/components/EditComponent.js:30
 msgid "My Fees"
-msgstr ""
+msgstr "Mis tarifas"
 
 #: src/blocks/my-fees/components/EditComponent.js:32
 msgid "Preview: This block displays the current user's membership fees."
-msgstr ""
+msgstr "Vista previa: Este bloque muestra las tarifas de membresía del usuario actual."
 
 #: src/blocks/my-fees/components/EditComponent.js:51
 msgid "Membership Fee"
-msgstr ""
+msgstr "Tarifa de membresía"
 
 #: src/blocks/my-fees/components/EditComponent.js:67
 msgid "Annual Renewal"
-msgstr ""
+msgstr "Renovación anual"
 
 #: src/blocks/my-fees/components/EditComponent.js:83
 msgid "Registration"
-msgstr ""
+msgstr "Registro"
 
 #: src/blocks/my-fees/block.json
 msgctxt "block title"
 msgid "My Fees"
-msgstr ""
+msgstr "Mis tarifas"
 
 #: src/blocks/my-fees/block.json
 msgctxt "block description"
 msgid "Display current user's membership fees and payment information"
-msgstr ""
+msgstr "Muestra las tarifas de membresía del usuario actual e información de pago"
 
 #: src/blocks/my-fees/block.json
 msgctxt "block keyword"
 msgid "fees"
-msgstr ""
+msgstr "tarifas"
 
 #: src/blocks/my-fees/block.json
 msgctxt "block keyword"
 msgid "payment"
-msgstr ""
+msgstr "pago"
 
 #: src/blocks/my-fees/block.json
 msgctxt "block keyword"
 msgid "membership"
-msgstr ""
+msgstr "membresía"
 
 #: src/blocks/my-fees/block.json
 msgctxt "block keyword"
 msgid "billing"
-msgstr ""
+msgstr "facturación"
 
 #: src/blocks/my-fees/frontend.js:69
 msgid "Failed to create payment. Please try again."
