@@ -17,6 +17,7 @@ import {
 } from '@wordpress/components';
 import UserFeesList from './UserFeesList.js';
 import UserFeeForm from './UserFeeForm.js';
+import TransactionsList from './TransactionsList.js';
 
 const UserFeesPage = () => {
 	const [userFees, setUserFees] = useState([]);
@@ -40,6 +41,11 @@ const UserFeesPage = () => {
 	const [newAmount, setNewAmount] = useState('');
 	const [adjustReason, setAdjustReason] = useState('');
 	const [adjusting, setAdjusting] = useState(false);
+
+	// Transactions modal state
+	const [isTransactionsModalOpen, setIsTransactionsModalOpen] =
+		useState(false);
+	const [viewingUserFee, setViewingUserFee] = useState(null);
 
 	// Load user fees on mount and when page or filters change
 	useEffect(() => {
@@ -166,6 +172,11 @@ const UserFeesPage = () => {
 		setNewAmount(userFee.amount.toString());
 		setAdjustReason('');
 		setIsAdjustModalOpen(true);
+	};
+
+	const handleViewTransactions = (userFee) => {
+		setViewingUserFee(userFee);
+		setIsTransactionsModalOpen(true);
 	};
 
 	const handleAdjustSubmit = async (e) => {
@@ -357,6 +368,7 @@ const UserFeesPage = () => {
 						onDelete={handleDelete}
 						onMarkAsPaid={handleMarkAsPaid}
 						onAdjust={handleAdjust}
+						onViewTransactions={handleViewTransactions}
 					/>
 
 					{totalPages > 1 && (
@@ -491,6 +503,20 @@ const UserFeesPage = () => {
 							</div>
 						</VStack>
 					</form>
+				</Modal>
+			)}
+
+			{isTransactionsModalOpen && viewingUserFee && (
+				<Modal
+					title={sprintf(
+						/* translators: %s: user fee title */
+						__('Payment Transactions for "%s"', 'fair-membership'),
+						viewingUserFee.title
+					)}
+					onRequestClose={() => setIsTransactionsModalOpen(false)}
+					style={{ maxWidth: '900px' }}
+				>
+					<TransactionsList userFeeId={viewingUserFee.id} />
 				</Modal>
 			)}
 		</div>

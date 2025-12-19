@@ -215,6 +215,17 @@ class UserFeeController extends WP_REST_Controller {
 				),
 			)
 		);
+
+		// GET /fair-membership/v1/user-fees/{id}/transactions - Get payment transactions
+		register_rest_route(
+			$this->namespace,
+			'/' . $this->rest_base . '/(?P<id>\d+)/transactions',
+			array(
+				'methods'             => WP_REST_Server::READABLE,
+				'callback'            => array( $this, 'get_transactions' ),
+				'permission_callback' => array( $this, 'get_item_permissions_check' ),
+			)
+		);
 	}
 
 	/**
@@ -792,5 +803,48 @@ class UserFeeController extends WP_REST_Controller {
 				'user_fee'       => $user_fee->to_array(),
 			)
 		);
+	}
+
+	/**
+	 * Get payment transactions for a user fee
+	 *
+	 * @param WP_REST_Request $request Request object.
+	 * @return WP_REST_Response|WP_Error
+	 */
+	public function get_transactions( $request ) {
+		$id       = $request->get_param( 'id' );
+		$user_fee = UserFee::get_by_id( $id );
+
+		if ( ! $user_fee ) {
+			return new WP_Error(
+				'not_found',
+				__( 'User fee not found.', 'fair-membership' ),
+				array( 'status' => 404 )
+			);
+		}
+
+		// Get all transactions where metadata contains this user_fee_id
+		global $wpdb;
+		$table_name = $wpdb->prefix . 'fair_payment_transactions';
+
+		$transactions = $wpdb->get_results(
+			$wpdb->prepare(
+				'SELECT * FROM %i
+				WHERE metadata LIKE %s
+				ORDER BY created_at DESC',
+				$table_name,
+				'%"user_fee_id":' . $id . '%'
+			)
+		);
+
+		// Enrich transaction data with parsed metadata
+		$enriched_transactions = array();
+		foreach ( $transactions as $transaction ) {
+			$transaction_data             = (array) $transaction;
+			$transaction_data['metadata'] = json_decode( $transaction->metadata, true );
+			$enriched_transactions[]      = $transaction_data;
+		}
+
+		return new WP_REST_Response( $enriched_transactions );
 	}
 }
