@@ -30,6 +30,7 @@ class BlockHooks {
 	public function register_blocks() {
 		register_block_type( __DIR__ . '/../../build/blocks/events-list' );
 		register_block_type( __DIR__ . '/../../build/blocks/event-dates' );
+		register_block_type( __DIR__ . '/../../build/blocks/events-calendar' );
 	}
 
 	/**
@@ -52,6 +53,13 @@ class BlockHooks {
 		// Event dates block editor script
 		wp_set_script_translations(
 			'fair-events-event-dates-editor-script',
+			'fair-events',
+			$plugin_dir . 'build/languages'
+		);
+
+		// Events calendar block editor script
+		wp_set_script_translations(
+			'fair-events-events-calendar-editor-script',
 			'fair-events',
 			$plugin_dir . 'build/languages'
 		);

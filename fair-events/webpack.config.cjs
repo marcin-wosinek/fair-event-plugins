@@ -10,6 +10,7 @@ const entries = {};
 const blockEntries = {
 	'blocks/event-dates/editor': 'src/blocks/event-dates/editor.js',
 	'blocks/events-list/editor': 'src/blocks/events-list/editor.js',
+	'blocks/events-calendar/editor': 'src/blocks/events-calendar/editor.js',
 };
 
 // Admin pages

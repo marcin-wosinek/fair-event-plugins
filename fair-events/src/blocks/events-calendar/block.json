@@ -1,0 +1,51 @@
+{
+	"$schema": "https://schemas.wp.org/trunk/block.json",
+	"apiVersion": 3,
+	"name": "fair-events/events-calendar",
+	"version": "0.1.0",
+	"title": "Events Calendar",
+	"category": "widgets",
+	"icon": "calendar",
+	"description": "Display events in a monthly calendar grid view.",
+	"keywords": ["events", "calendar", "month", "grid"],
+	"textdomain": "fair-events",
+	"attributes": {
+		"currentMonth": {
+			"type": "string",
+			"default": ""
+		},
+		"currentYear": {
+			"type": "string",
+			"default": ""
+		},
+		"categories": {
+			"type": "array",
+			"default": [],
+			"items": {
+				"type": "number"
+			}
+		},
+		"displayPattern": {
+			"type": "string",
+			"default": "fair-events/calendar-event-simple"
+		},
+		"startOfWeek": {
+			"type": "number",
+			"default": 1,
+			"enum": [0, 1]
+		},
+		"showNavigation": {
+			"type": "boolean",
+			"default": true
+		}
+	},
+	"supports": {
+		"html": false,
+		"anchor": true,
+		"align": ["wide", "full"]
+	},
+	"editorScript": "file:./editor.js",
+	"editorStyle": "file:./editor.scss",
+	"style": "file:./style.scss",
+	"render": "file:./render.php"
+}
