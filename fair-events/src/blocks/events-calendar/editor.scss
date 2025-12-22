@@ -1,0 +1,26 @@
+/**
+ * Events Calendar Block - Editor Styles
+ *
+ * @package FairEvents
+ */
+
+.fair-events-calendar-placeholder {
+	padding: 2rem;
+	background: #f9f9f9;
+	border: 2px dashed #ddd;
+	border-radius: 8px;
+	text-align: center;
+
+	h3 {
+		margin-top: 1rem;
+		margin-bottom: 0.5rem;
+		color: #1e1e1e;
+		font-size: 1.25rem;
+	}
+
+	p {
+		margin: 0;
+		color: #757575;
+		font-size: 0.875rem;
+	}
+}

@@ -45,7 +45,7 @@
 		"align": ["wide", "full"]
 	},
 	"editorScript": "file:./editor.js",
-	"editorStyle": "file:./editor.scss",
-	"style": "file:./style.scss",
+	"editorStyle": "file:./editor.css",
+	"style": "file:./style-editor.css",
 	"render": "file:./render.php"
 }

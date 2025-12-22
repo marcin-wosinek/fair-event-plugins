@@ -221,7 +221,7 @@ msgstr "Data i godzina zakończenia"
 msgid "All Day Event"
 msgstr "Wydarzenie całodniowe"
 
-#: src/Admin/CopyEventPage.php:275
+#: src/Admin/CopyEventPage.php:343
 #: src/PostTypes/Event.php:272
 #: src/PostTypes/Event.php:372
 msgid "Location"
@@ -324,10 +324,13 @@ msgstr "Trwające wydarzenia"
 msgid "Filter events by time relative to now"
 msgstr "Filtruj wydarzenia według czasu względem teraźniejszości"
 
+#: src/Admin/CopyEventPage.php:355
+#: src/blocks/events-calendar/components/EditComponent.js:127
 #: src/blocks/events-list/components/EditComponent.js:141
 msgid "Categories"
 msgstr "Kategorie"
 
+#: src/blocks/events-calendar/components/EditComponent.js:135
 #: src/blocks/events-list/components/EditComponent.js:149
 msgid "Define more categories if you want to use category filtering"
 msgstr "Zdefiniuj więcej kategorii, jeśli chcesz używać filtrowania po kategoriach"
@@ -344,6 +347,7 @@ msgstr "Wzorzec wyświetlania:"
 msgid "Time Filter:"
 msgstr "Filtr czasu:"
 
+#: src/blocks/events-calendar/components/EditComponent.js:186
 #: src/blocks/events-list/components/EditComponent.js:189
 msgid "Categories:"
 msgstr "Kategorie:"
@@ -397,11 +401,13 @@ msgctxt "block description"
 msgid "Display a list of events with filtering options."
 msgstr "Wyświetl listę wydarzeń z opcjami filtrowania."
 
+#: src/blocks/events-calendar/block.json
 #: src/blocks/events-list/block.json
 msgctxt "block keyword"
 msgid "events"
 msgstr "wydarzenia"
 
+#: src/blocks/events-calendar/block.json
 #: src/blocks/events-list/block.json
 msgctxt "block keyword"
 msgid "calendar"
@@ -424,17 +430,17 @@ msgstr "Potwierdź Obecność"
 msgid "End date must be after start date"
 msgstr "Data zakończenia musi być późniejsza niż data rozpoczęcia"
 
-#: fair-events.php:146
+#: fair-events.php:147
 msgid "Fair Event: Start Date"
 msgstr ""
 
-#: fair-events.php:150
+#: fair-events.php:151
 msgid "Fair Event: End Date"
 msgstr ""
 
 #: src/Admin/AdminPages.php:66
 #: src/Admin/AdminPages.php:67
-#: src/Admin/CopyEventPage.php:252
+#: src/Admin/CopyEventPage.php:269
 msgid "Copy Event"
 msgstr "Kopiuj wydarzenie"
 
@@ -481,55 +487,40 @@ msgstr "Niestandardowa data jest wymagana."
 msgid "Invalid date option selected."
 msgstr "Wybrano nieprawidłową opcję daty."
 
-#: src/Admin/CopyEventPage.php:255
-msgid "Original Event"
-msgstr "Oryginalne wydarzenie"
-
-#: src/Admin/CopyEventPage.php:258
+#: src/Admin/CopyEventPage.php:328
 msgid "Title"
 msgstr "Tytuł"
 
-#: src/Admin/CopyEventPage.php:263
-msgid "Start"
-msgstr "Początek"
-
-#: src/Admin/CopyEventPage.php:269
-msgid "End"
-msgstr "Koniec"
-
-#: src/Admin/CopyEventPage.php:288
+#: src/Admin/CopyEventPage.php:278
 msgid "New Event Title"
 msgstr "Tytuł nowego wydarzenia"
 
-#: src/Admin/CopyEventPage.php:295
+#: src/Admin/CopyEventPage.php:285
+#: src/Admin/CopyEventPage.php:329
 msgid "(Copy)"
 msgstr "(Kopia)"
 
-#: src/Admin/CopyEventPage.php:304
+#: src/Admin/CopyEventPage.php:294
 msgid "Event Date"
 msgstr "Data wydarzenia"
 
-#: src/Admin/CopyEventPage.php:310
+#: src/Admin/CopyEventPage.php:300
 msgid "A week later"
 msgstr "Tydzień później"
 
-#: src/Admin/CopyEventPage.php:314
+#: src/Admin/CopyEventPage.php:304
 msgid "Custom date"
 msgstr "Niestandardowa data"
 
-#: src/Admin/CopyEventPage.php:327
+#: src/Admin/CopyEventPage.php:317
 msgid "Select the new start date. The event duration and time will be preserved."
 msgstr "Wybierz nową datę rozpoczęcia. Czas trwania i godzina wydarzenia zostaną zachowane."
 
-#: src/Admin/CopyEventPage.php:335
-msgid "The new event will be created as a draft. All other event details (description, location, featured image, categories) will be copied from the original event."
-msgstr "Nowe wydarzenie zostanie utworzone jako wersja robocza. Wszystkie inne szczegóły wydarzenia (opis, lokalizacja, obraz wyróżniający, kategorie) zostaną skopiowane z oryginalnego wydarzenia."
-
-#: src/Admin/CopyEventPage.php:344
+#: src/Admin/CopyEventPage.php:376
 msgid "Create Copy"
 msgstr "Utwórz kopię"
 
-#: src/Admin/CopyEventPage.php:347
+#: src/Admin/CopyEventPage.php:379
 msgid "Cancel"
 msgstr "Anuluj"
 
@@ -548,3 +539,146 @@ msgstr "Wybierz czas trwania, aby automatycznie ustawić godzinę zakończenia"
 #: src/PostTypes/Event.php:498
 msgid "Copy"
 msgstr "Kopiuj"
+
+#: src/Admin/CopyEventPage.php:325
+msgid "What Will Be Created"
+msgstr ""
+
+#: src/Admin/CopyEventPage.php:332
+msgid "Start Date"
+msgstr ""
+
+#: src/Admin/CopyEventPage.php:337
+msgid "Duration"
+msgstr ""
+
+#: src/Admin/CopyEventPage.php:349
+msgid "Featured Image"
+msgstr ""
+
+#: src/Admin/CopyEventPage.php:361
+msgid "Tags"
+msgstr ""
+
+#: src/Admin/CopyEventPage.php:367
+msgid "The new event will be created as a draft. All event details will be copied from the original event."
+msgstr ""
+
+#: src/blocks/events-calendar/render.php:194
+#: src/blocks/events-calendar/render.php:204
+msgid "Mon"
+msgstr ""
+
+#: src/blocks/events-calendar/render.php:195
+#: src/blocks/events-calendar/render.php:205
+msgid "Tue"
+msgstr ""
+
+#: src/blocks/events-calendar/render.php:196
+#: src/blocks/events-calendar/render.php:206
+msgid "Wed"
+msgstr ""
+
+#: src/blocks/events-calendar/render.php:197
+#: src/blocks/events-calendar/render.php:207
+msgid "Thu"
+msgstr ""
+
+#: src/blocks/events-calendar/render.php:198
+#: src/blocks/events-calendar/render.php:208
+msgid "Fri"
+msgstr ""
+
+#: src/blocks/events-calendar/render.php:199
+#: src/blocks/events-calendar/render.php:209
+msgid "Sat"
+msgstr ""
+
+#: src/blocks/events-calendar/render.php:200
+#: src/blocks/events-calendar/render.php:203
+msgid "Sun"
+msgstr ""
+
+#: src/blocks/events-calendar/render.php:220
+msgid "Previous"
+msgstr "Poprzedni"
+
+#: src/blocks/events-calendar/render.php:226
+msgid "Next"
+msgstr "Następny"
+
+#: src/Patterns/Patterns.php:89
+msgid "Calendar Event - Simple"
+msgstr ""
+
+#: src/Patterns/Patterns.php:90
+msgid "Display event title only (compact for calendar cells)"
+msgstr ""
+
+#: src/Patterns/Patterns.php:101
+msgid "Calendar Event - With Time"
+msgstr ""
+
+#: src/Patterns/Patterns.php:102
+msgid "Display event with start time (compact for calendar cells)"
+msgstr ""
+
+#: src/blocks/events-calendar/components/EditComponent.js:80
+msgid "Calendar Settings"
+msgstr ""
+
+#: src/blocks/events-calendar/components/EditComponent.js:84
+msgid "Event Display Pattern"
+msgstr ""
+
+#: src/blocks/events-calendar/components/EditComponent.js:90
+msgid "Choose how events are displayed in calendar cells"
+msgstr ""
+
+#: src/blocks/events-calendar/components/EditComponent.js:97
+msgid "Start of Week"
+msgstr "Początek tygodnia"
+
+#: src/blocks/events-calendar/components/EditComponent.js:101
+msgid "Monday"
+msgstr "Poniedziałek"
+
+#: src/blocks/events-calendar/components/EditComponent.js:105
+msgid "Sunday"
+msgstr "Niedziela"
+
+#: src/blocks/events-calendar/components/EditComponent.js:115
+msgid "Show Navigation"
+msgstr ""
+
+#: src/blocks/events-calendar/components/EditComponent.js:120
+msgid "Display previous/next month navigation"
+msgstr ""
+
+#: src/blocks/events-calendar/components/EditComponent.js:176
+msgid "Events Calendar"
+msgstr "Kalendarz wydarzeń"
+
+#: src/blocks/events-calendar/components/EditComponent.js:179
+msgid "Calendar will be displayed on the frontend"
+msgstr ""
+
+#: src/blocks/events-calendar/block.json
+msgctxt "block title"
+msgid "Events Calendar"
+msgstr "Kalendarz wydarzeń"
+
+#: src/blocks/events-calendar/block.json
+msgctxt "block description"
+msgid "Display events in a monthly calendar grid view."
+msgstr ""
+
+#: src/blocks/events-calendar/block.json
+msgctxt "block keyword"
+msgid "month"
+msgstr "miesiąc"
+
+#: src/blocks/events-calendar/block.json
+msgctxt "block keyword"
+msgid "grid"
+msgstr ""

@@ -6,16 +6,72 @@
 
 import { __ } from '@wordpress/i18n';
 import { useBlockProps, InspectorControls } from '@wordpress/block-editor';
-import { PanelBody, ToggleControl, RadioControl } from '@wordpress/components';
+import {
+	PanelBody,
+	ToggleControl,
+	RadioControl,
+	CheckboxControl,
+	SelectControl,
+	Icon,
+} from '@wordpress/components';
+import { useSelect } from '@wordpress/data';
 import { calendar } from '@wordpress/icons';
-import { Icon } from '@wordpress/components';
 
 const EditComponent = ({ attributes, setAttributes }) => {
-	const { startOfWeek, showNavigation } = attributes;
+	const { startOfWeek, showNavigation, categories, displayPattern } =
+		attributes;
 
 	const blockProps = useBlockProps({
 		className: 'fair-events-calendar-placeholder',
 	});
+
+	// Get all categories
+	const allCategories = useSelect((select) => {
+		const cats = select('core').getEntityRecords('taxonomy', 'category', {
+			per_page: -1,
+		});
+		return cats || [];
+	}, []);
+
+	// Get calendar-specific patterns
+	const calendarPatterns = useSelect((select) => {
+		const patterns = select('core').getBlockPatterns?.() || [];
+		return patterns.filter(
+			(pattern) =>
+				pattern.categories?.includes('fair-events') &&
+				pattern.name?.includes('calendar-event')
+		);
+	}, []);
+
+	// Combine patterns for the dropdown
+	const patternOptions = calendarPatterns.map((pattern) => ({
+		label: pattern.title,
+		value: pattern.name,
+	}));
+
+	// Check if there are multiple categories (more than just "Uncategorized")
+	const meaningfulCategories = allCategories.filter(
+		(cat) => cat.slug !== 'uncategorized'
+	);
+	const hasCategories = meaningfulCategories.length > 0;
+
+	// Handle category checkbox toggle
+	const handleCategoryToggle = (categoryId, checked) => {
+		let newCategories;
+		if (checked) {
+			// Add category
+			newCategories = [...categories, categoryId];
+		} else {
+			// Remove category
+			newCategories = categories.filter((id) => id !== categoryId);
+		}
+		setAttributes({ categories: newCategories });
+	};
+
+	// Get selected category names for display
+	const selectedCategoryNames = allCategories
+		.filter((cat) => categories.includes(cat.id))
+		.map((cat) => cat.name);
 
 	return (
 		<>
@@ -24,6 +80,19 @@ const EditComponent = ({ attributes, setAttributes }) => {
 					title={__('Calendar Settings', 'fair-events')}
 					initialOpen={true}
 				>
+					<SelectControl
+						label={__('Event Display Pattern', 'fair-events')}
+						value={displayPattern}
+						options={patternOptions}
+						onChange={(value) =>
+							setAttributes({ displayPattern: value })
+						}
+						help={__(
+							'Choose how events are displayed in calendar cells',
+							'fair-events'
+						)}
+					/>
+
 					<RadioControl
 						label={__('Start of Week', 'fair-events')}
 						selected={startOfWeek}
@@ -53,6 +122,39 @@ const EditComponent = ({ attributes, setAttributes }) => {
 							'fair-events'
 						)}
 					/>
+
+					<div style={{ marginTop: '16px' }}>
+						<strong>{__('Categories', 'fair-events')}</strong>
+						{!hasCategories ? (
+							<p
+								style={{
+									fontStyle: 'italic',
+									color: '#757575',
+								}}
+							>
+								{__(
+									'Define more categories if you want to use category filtering',
+									'fair-events'
+								)}
+							</p>
+						) : (
+							<>
+								{allCategories.map((cat) => (
+									<CheckboxControl
+										key={cat.id}
+										label={cat.name}
+										checked={categories.includes(cat.id)}
+										onChange={(checked) =>
+											handleCategoryToggle(
+												cat.id,
+												checked
+											)
+										}
+									/>
+								))}
+							</>
+						)}
+					</div>
 				</PanelBody>
 			</InspectorControls>
 
@@ -79,6 +181,12 @@ const EditComponent = ({ attributes, setAttributes }) => {
 							'fair-events'
 						)}
 					</p>
+					{categories.length > 0 && (
+						<p style={{ color: '#666', marginTop: '8px' }}>
+							{__('Categories:', 'fair-events')}{' '}
+							<strong>{selectedCategoryNames.join(', ')}</strong>
+						</p>
+					)}
 				</div>
 			</div>
 		</>
