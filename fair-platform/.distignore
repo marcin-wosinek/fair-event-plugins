@@ -1,0 +1,25 @@
+# Development files
+.git/
+.gitignore
+.github/
+node_modules/
+tests/
+__tests__/
+e2e/
+svn/
+.distignore
+.editorconfig
+.eslintrc.js
+.prettierrc.js
+composer.lock
+package.json
+package-lock.json
+phpcs.xml
+*.md
+!CHANGELOG.md
+
+# Implementation documentation (keep private)
+IMPLEMENTATION.md
+
+# Build artifacts that should be included
+!/vendor/

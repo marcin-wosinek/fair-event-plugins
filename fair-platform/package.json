@@ -1,0 +1,31 @@
+{
+	"name": "fair-platform",
+	"version": "1.0.0",
+	"description": "Mollie OAuth integration platform for Fair Event Plugins",
+	"license": "proprietary",
+	"author": "Marcin Wosinek",
+	"type": "module",
+	"main": "build/index.js",
+	"scripts": {
+		"build": "echo 'No build needed - server-side only plugin'",
+		"clean": "rm -rf build",
+		"start": "echo 'No watch needed - server-side only plugin'",
+		"format": "wp-scripts format",
+		"composer:install": "composer install",
+		"composer:install:prod": "composer install --no-dev",
+		"composer:update": "composer update",
+		"composer:validate": "composer validate --strict",
+		"makepot": "wp i18n make-pot . languages/fair-platform.pot --exclude=node_modules,vendor,tests,build,svn",
+		"makejson": "echo 'No JavaScript translations needed'",
+		"makemo": "wp i18n make-mo languages/",
+		"updatepo": "wp i18n update-po languages/fair-platform.pot languages/",
+		"test": "echo 'No tests yet'",
+		"test:js": "echo 'No JavaScript tests'",
+		"test:php": "vendor/bin/phpunit",
+		"svn:checkout": "svn co https://plugins.svn.wordpress.org/fair-platform svn",
+		"svn:copy": "cp -r readme.txt fair-platform.php composer* languages CHANGELOG.md svn/trunk"
+	},
+	"devDependencies": {
+		"@wordpress/scripts": "^30.20.0"
+	}
+}

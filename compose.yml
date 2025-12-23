@@ -20,6 +20,7 @@ services:
             - ./fair-events:/var/www/html/wp-content/plugins/fair-events
             - ./fair-rsvp:/var/www/html/wp-content/plugins/fair-rsvp
             - ./fair-user-import:/var/www/html/wp-content/plugins/fair-user-import
+            - ./fair-platform:/var/www/html/wp-content/plugins/fair-platform
 
     db:
         image: mysql:8.0
@@ -58,6 +59,7 @@ services:
             - ./fair-events:/var/www/html/wp-content/plugins/fair-events
             - ./fair-rsvp:/var/www/html/wp-content/plugins/fair-rsvp
             - ./fair-user-import:/var/www/html/wp-content/plugins/fair-user-import
+            - ./fair-platform:/var/www/html/wp-content/plugins/fair-platform
         environment:
             WORDPRESS_DB_HOST: db
             WORDPRESS_DB_USER: exampleuser

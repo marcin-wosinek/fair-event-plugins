@@ -27,7 +27,7 @@
 		"start": "npm run start --workspace=fair-timetable & npm run start --workspace=fair-payment & npm run start --workspace=fair-calendar-button & npm run start --workspace=fair-registration & npm run start --workspace=fair-schedule-blocks & npm run start --workspace=fair-membership & npm run start --workspace=fair-events & npm run start --workspace=fair-rsvp & npm run start --workspace=fair-user-import & wait",
 		"format": "npm-run-all format:*",
 		"format:js": "wp-scripts format",
-		"format:php": "vendor/bin/phpcbf --standard=WordPress --extensions=php fair-calendar-button/src/ fair-payment/src/ fair-registration/src/ fair-schedule-blocks/src/ fair-schedule-blocks/__tests__/ fair-timetable/src/ fair-timetable/__tests__/ fair-membership/src/ fair-membership/__tests__/ fair-events/src/ fair-events/__tests__/ fair-rsvp/src/ fair-rsvp/__tests__/ fair-user-import/src/",
+		"format:php": "vendor/bin/phpcbf --standard=WordPress --extensions=php fair-calendar-button/src/ fair-payment/src/ fair-registration/src/ fair-schedule-blocks/src/ fair-schedule-blocks/__tests__/ fair-timetable/src/ fair-timetable/__tests__/ fair-membership/src/ fair-membership/__tests__/ fair-events/src/ fair-events/__tests__/ fair-rsvp/src/ fair-rsvp/__tests__/ fair-user-import/src/ fair-platform/src/",
 		"prepare": "husky",
 		"changeset": "changeset",
 		"changeset:add": "changeset add",
@@ -54,7 +54,8 @@
 		"dist-archive:fair-membership": "wp dist-archive fair-membership dist --create-target-dir",
 		"dist-archive:fair-events": "wp dist-archive fair-events dist --create-target-dir",
 		"dist-archive:fair-rsvp": "wp dist-archive fair-rsvp dist --create-target-dir",
-		"dist-archive:fair-user-import": "wp dist-archive fair-user-import dist --create-target-dir"
+		"dist-archive:fair-user-import": "wp dist-archive fair-user-import dist --create-target-dir",
+		"dist-archive:fair-platform": "wp dist-archive fair-platform dist --create-target-dir"
 	},
 	"dependencies": {
 		"@wordpress/scripts": "^30.20.0",
@@ -969,7 +970,8 @@
 		"fair-events",
 		"fair-events-shared",
 		"fair-rsvp",
-		"fair-user-import"
+		"fair-user-import",
+		"fair-platform"
 	],
 	"devDependencies": {
 		"@changesets/cli": "^2.29.6",

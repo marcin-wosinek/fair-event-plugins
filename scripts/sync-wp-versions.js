@@ -72,6 +72,12 @@ const plugins = [
 		phpFiles: ['fair-user-import/fair-user-import.php'],
 		readmeFiles: ['fair-user-import/readme.txt'],
 	},
+	{
+		name: 'fair-platform',
+		packagePath: 'fair-platform/package.json',
+		phpFiles: ['fair-platform/fair-platform.php'],
+		readmeFiles: ['fair-platform/readme.txt'],
+	},
 ];
 
 /**
