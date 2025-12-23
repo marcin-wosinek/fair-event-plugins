@@ -169,6 +169,19 @@ class Settings {
 				'default'           => false,
 			)
 		);
+
+		// Mollie Profile ID (cached for OAuth)
+		register_setting(
+			'fair_payment_settings',
+			'fair_payment_mollie_profile_id',
+			array(
+				'type'              => 'string',
+				'description'       => __( 'Mollie Profile ID (cached)', 'fair-payment' ),
+				'sanitize_callback' => 'sanitize_text_field',
+				'show_in_rest'      => false,
+				'default'           => '',
+			)
+		);
 	}
 
 	/**

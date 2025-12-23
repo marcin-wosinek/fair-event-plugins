@@ -143,6 +143,39 @@ class MolliePaymentHandler {
 	}
 
 	/**
+	 * Get Mollie profile ID
+	 *
+	 * Required for OAuth payments. Fetches and caches the current profile ID.
+	 *
+	 * @return string|false Profile ID or false if unavailable.
+	 */
+	private function get_profile_id() {
+		// Not needed for API key authentication
+		if ( ! get_option( 'fair_payment_mollie_connected', false ) ) {
+			return false;
+		}
+
+		// Check cached profile ID
+		$profile_id = get_option( 'fair_payment_mollie_profile_id' );
+		if ( ! empty( $profile_id ) ) {
+			return $profile_id;
+		}
+
+		// Fetch current profile from Mollie
+		try {
+			$profile = $this->mollie->profiles->get( 'me' );
+			if ( $profile && ! empty( $profile->id ) ) {
+				update_option( 'fair_payment_mollie_profile_id', $profile->id );
+				return $profile->id;
+			}
+		} catch ( \Exception $e ) {
+			error_log( 'Failed to fetch Mollie profile: ' . $e->getMessage() );
+		}
+
+		return false;
+	}
+
+	/**
 	 * Create a payment
 	 *
 	 * @param array $args Payment arguments.
@@ -162,18 +195,24 @@ class MolliePaymentHandler {
 		$args = wp_parse_args( $args, $defaults );
 
 		try {
-			$payment = $this->mollie->payments->create(
-				array(
-					'amount'      => array(
-						'currency' => $args['currency'],
-						'value'    => number_format( (float) $args['amount'], 2, '.', '' ),
-					),
-					'description' => $args['description'],
-					'redirectUrl' => $args['redirect_url'],
-					'webhookUrl'  => $args['webhook_url'],
-					'metadata'    => $args['metadata'],
-				)
+			$payment_data = array(
+				'amount'      => array(
+					'currency' => $args['currency'],
+					'value'    => number_format( (float) $args['amount'], 2, '.', '' ),
+				),
+				'description' => $args['description'],
+				'redirectUrl' => $args['redirect_url'],
+				'webhookUrl'  => $args['webhook_url'],
+				'metadata'    => $args['metadata'],
 			);
+
+			// Add profile ID for OAuth authentication
+			$profile_id = $this->get_profile_id();
+			if ( $profile_id ) {
+				$payment_data['profileId'] = $profile_id;
+			}
+
+			$payment = $this->mollie->payments->create( $payment_data );
 
 			return array(
 				'mollie_payment_id' => $payment->id,
