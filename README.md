@@ -1,121 +1,107 @@
-# Fair Payment
+# Fair Event Plugins
 
-First plugin form Fair Event Plugins set—all you need for running event page,
-fairy priced.
+A collection of WordPress plugins for running event websites with fair, transparent pricing. Built as a monorepo with shared development tools and standardized patterns.
+
+## Published Plugins
+
+All plugins are available on WordPress.org:
+
+- **[Fair Events](https://wordpress.org/plugins/fair-events/)** - Core event management with custom post types and blocks
+- **[Fair Calendar Button](https://wordpress.org/plugins/fair-calendar-button/)** - Add events to Google Calendar, Apple Calendar, etc.
+- **[Fair Timetable](https://wordpress.org/plugins/fair-timetable/)** - Display event schedules in an organized timetable format
+- **[Fair Schedule Blocks](https://wordpress.org/plugins/fair-schedule-blocks/)** - Gutenberg blocks for event schedules
+- **[Fair RSVP](https://wordpress.org/plugins/fair-rsvp/)** - Event registration and attendance management
+- **[Fair Membership](https://wordpress.org/plugins/fair-membership/)** - Membership management with fees and groups
+
+### Platform Plugin (Private)
+
+- **fair-platform** - OAuth proxy for Mollie Connect (deployed to fair-event-plugins.com only)
 
 ## Development
 
-Use docker compose with:
+### Quick Start
 
-* `docker compose up`. It spins up:
-  * localhost:8080 with the WordPress,
-  * localhost:8081 with phpMyAdmin
+Start the development environment with Docker:
 
-## Installation
+```bash
+docker compose up
+```
 
-### Using The WordPress Dashboard
+This provides:
+- **WordPress**: http://localhost:8080
+- **phpMyAdmin**: http://localhost:8081
 
-1. Navigate to the 'Add New' Plugin Dashboard.
-2. Select `fair-payment.zip` from your computer.
-3. Upload.
-4. Activate the plugin on the WordPress Plugin Dashboard.
+### Build Commands
 
-### Using FTP
+```bash
+# Start all plugins in watch mode
+npm start
 
-1. Extract `fair-payment.zip` to your computer.
-2. Upload the `fair-payment` directory to your `wp-content/plugins` directory.
-3. Activate the plugin on the WordPress Plugins Dashboard.
+# Build all plugins for production
+npm run build
 
-### Git
+# Format code (JavaScript, CSS, PHP)
+npm run format
 
-1. Navigate to the `plugins` directory of your WordPress installation.
-2. From the terminal, run `$ git clone git@github.com:tommcfarlin/fair-payment.git`
+# Run tests
+npm test
+```
+
+### Working with Plugins
+
+Each plugin is a workspace in the monorepo:
+
+```bash
+# Work in a specific plugin
+cd fair-events
+npm run start    # Watch mode for this plugin only
+npm run build    # Build this plugin only
+```
+
+## Documentation
+
+### For Developers
+
+- **[CLAUDE.md](./CLAUDE.md)** - Project overview, coding standards, and AI assistant instructions
+- **[ADDING_NEW_PLUGIN.md](./ADDING_NEW_PLUGIN.md)** - How to add new plugins to the monorepo
+- **[PHP_PATTERNS.md](./PHP_PATTERNS.md)** - PHP best practices and security patterns
+- **[REST_API_BACKEND.md](./REST_API_BACKEND.md)** - REST API security and implementation standards
+- **[REST_API_USAGE.md](./REST_API_USAGE.md)** - Frontend REST API patterns with apiFetch
+- **[REACT_ADMIN_PATTERN.md](./REACT_ADMIN_PATTERN.md)** - React admin pages architecture
+- **[TESTING.md](./TESTING.md)** - Testing strategy (Jest, Playwright)
+
+### Operations
+
+- **[DEPLOYMENT.md](./DEPLOYMENT.md)** - Automated deployment setup
+- **[RELEASES.md](./RELEASES.md)** - Release process and versioning
 
 ## Translation
 
-All plugins in this repository support internationalization (i18n). To create or update translations:
-
-### Generate Translation Template
-
-For any plugin (e.g., fair-events, fair-calendar-button):
+Generate and update translations:
 
 ```bash
-cd fair-events
-npm run makepot
+cd fair-events  # Or any plugin
+npm run makepot      # Generate .pot template
+npm run updatepo     # Update .po files
+npm run makemo       # Generate .mo files
+npm run build        # Build with translations
 ```
 
-This generates a `.pot` file in the `languages/` directory containing all translatable strings.
+Translation files:
+- PHP translations: `languages/*.po`, `languages/*.mo`
+- JavaScript translations: `build/languages/*.json` (auto-generated)
 
-### Create a New Translation
+## Requirements
 
-1. Copy the `.pot` file and rename it with your locale (e.g., `fair-events-pl_PL.po` for Polish)
-2. Use a translation editor like [Poedit](https://poedit.net/) to translate the strings
-3. Generate `.mo` file:
+- **WordPress**: 6.7+
+- **PHP**: 8.0+
+- **Node.js**: 18+
+- **Composer**: 2.0+
 
-```bash
-npm run makemo
-```
+## License
 
-### Update Existing Translations
+GPL v2 or later (unless specified otherwise in individual plugin)
 
-After adding new translatable strings to the code:
+## Support
 
-```bash
-npm run makepot      # Update template
-npm run updatepo     # Update all .po files with new strings
-```
-
-Then translate the new strings in your `.po` files and run `npm run makemo`.
-
-### Build with Translations
-
-The build process automatically generates JSON translation files for JavaScript:
-
-```bash
-npm run build
-```
-
-JSON files are created in `build/languages/` and are required for block editor translations.
-
-## Deployment
-
-Automated deployment to production servers via GitHub Actions is available.
-
-### Quick Start
-
-1. Run the setup script to gather server information:
-   ```bash
-   ./scripts/setup-deployment.sh
-   ```
-
-2. Add the generated secrets to GitHub:
-   - Go to **Settings** → **Secrets and variables** → **Actions**
-   - Add: `SSH_PRIVATE_KEY`, `SSH_HOST`, `SSH_USER`, `WORDPRESS_PLUGINS_PATH`
-
-3. Push to main branch to deploy automatically:
-   ```bash
-   git push origin main
-   ```
-
-For detailed setup instructions, see [DEPLOYMENT.md](DEPLOYMENT.md).
-
-### Manual Deployment
-
-To trigger deployment manually or deploy specific plugins:
-
-```bash
-# Via GitHub CLI
-gh workflow run deploy-acroyoga.yml -f plugins="fair-rsvp,fair-events"
-
-# Via GitHub UI
-# Actions → Deploy to Acroyoga-Club.es → Run workflow
-```
-
-## Notes
-
-This specific repository assumes you're running PHP 8.0.  At the time of this writing, WordPress is not fully compatible with PHP 8.0; however, if you change the references to PHP 7.4.28 in
-
-* `composer.json`
-* `fair-calendar-button.php`
-
-Then you should be okay. If you still experience problems, make sure you're not running Composer 2. If that still doesn't work, don't hesitate to open an [issue](https://github.com/tommcfarlin/fair-payment/issues).
+For plugin issues and questions, visit the support forums on WordPress.org or [open an issue](https://github.com/marcinwosinek/fair-event-plugins/issues).
