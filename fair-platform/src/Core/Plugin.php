@@ -212,7 +212,8 @@ class Plugin {
 
 		// Check for authorization error.
 		if ( ! empty( $error ) ) {
-			wp_die( 'Authorization failed: ' . esc_html( $error ) );
+			$error_description = sanitize_text_field( $_GET['error_description'] ?? 'Unknown error' );
+			$this->redirect_with_error( '', $error, $error_description );
 		}
 
 		if ( empty( $code ) || empty( $state ) ) {
@@ -225,12 +226,151 @@ class Plugin {
 			wp_die( 'Invalid or expired state token' );
 		}
 
-		// TODO: Exchange code for tokens.
-		// TODO: Get organization details.
-		// TODO: Redirect to return_url with tokens.
-		// TODO: Clean up state transient.
+		// Exchange authorization code for tokens.
+		$tokens = $this->exchange_code_for_tokens( $code );
+		if ( is_wp_error( $tokens ) ) {
+			$this->redirect_with_error(
+				$data['return_url'],
+				'token_exchange_failed',
+				$tokens->get_error_message()
+			);
+		}
 
-		wp_die( 'OAuth callback endpoint - implementation pending' );
+		// Get organization details using access token.
+		$organization = $this->get_organization_details( $tokens['access_token'] );
+
+		// Clean up state transient.
+		delete_transient( "mollie_oauth_{$state}" );
+
+		// Build redirect URL with tokens.
+		$redirect_url = add_query_arg(
+			array(
+				'mollie_access_token'    => $tokens['access_token'],
+				'mollie_refresh_token'   => $tokens['refresh_token'],
+				'mollie_expires_in'      => $tokens['expires_in'],
+				'mollie_organization_id' => $organization['id'] ?? '',
+				'mollie_test_mode'       => $organization['testmode'] ?? 0,
+			),
+			$data['return_url']
+		);
+
+		// Redirect back to WordPress site.
+		wp_redirect( $redirect_url );
+		exit;
+	}
+
+	/**
+	 * Exchange authorization code for tokens
+	 *
+	 * @param string $code Authorization code from Mollie.
+	 * @return array|\WP_Error Token data or error.
+	 */
+	private function exchange_code_for_tokens( $code ) {
+		// Build token exchange request.
+		$response = wp_remote_post(
+			'https://api.mollie.com/oauth2/tokens',
+			array(
+				'timeout' => 30,
+				'headers' => array(
+					'Content-Type' => 'application/x-www-form-urlencoded',
+				),
+				'body'    => array(
+					'grant_type'    => 'authorization_code',
+					'code'          => $code,
+					'redirect_uri'  => home_url( '/oauth/callback' ),
+					'client_id'     => MOLLIE_CLIENT_ID,
+					'client_secret' => MOLLIE_CLIENT_SECRET,
+				),
+			)
+		);
+
+		if ( is_wp_error( $response ) ) {
+			error_log( 'Mollie token exchange failed: ' . $response->get_error_message() );
+			return $response;
+		}
+
+		$status_code = wp_remote_retrieve_response_code( $response );
+		$body        = json_decode( wp_remote_retrieve_body( $response ), true );
+
+		if ( 200 !== $status_code ) {
+			$error_message = $body['error_description'] ?? $body['error'] ?? 'Unknown error';
+			error_log( "Mollie token exchange failed with status {$status_code}: {$error_message}" );
+			return new \WP_Error( 'token_exchange_failed', $error_message );
+		}
+
+		if ( empty( $body['access_token'] ) || empty( $body['refresh_token'] ) ) {
+			error_log( 'Mollie token exchange returned invalid data' );
+			return new \WP_Error( 'invalid_token_response', 'Invalid token response from Mollie' );
+		}
+
+		return array(
+			'access_token'  => $body['access_token'],
+			'refresh_token' => $body['refresh_token'],
+			'expires_in'    => $body['expires_in'] ?? 3600,
+			'scope'         => $body['scope'] ?? '',
+		);
+	}
+
+	/**
+	 * Get organization details using access token
+	 *
+	 * @param string $access_token Mollie access token.
+	 * @return array Organization details.
+	 */
+	private function get_organization_details( $access_token ) {
+		$response = wp_remote_get(
+			'https://api.mollie.com/v2/organizations/me',
+			array(
+				'timeout' => 30,
+				'headers' => array(
+					'Authorization' => 'Bearer ' . $access_token,
+				),
+			)
+		);
+
+		if ( is_wp_error( $response ) ) {
+			error_log( 'Failed to fetch organization details: ' . $response->get_error_message() );
+			return array();
+		}
+
+		$body = json_decode( wp_remote_retrieve_body( $response ), true );
+
+		return array(
+			'id'       => $body['id'] ?? '',
+			'name'     => $body['name'] ?? '',
+			'testmode' => ! empty( $body['_links']['dashboard']['href'] ) && strpos( $body['_links']['dashboard']['href'], 'test-mode' ) !== false ? 1 : 0,
+		);
+	}
+
+	/**
+	 * Redirect with error parameters
+	 *
+	 * @param string $return_url Return URL (empty if unavailable).
+	 * @param string $error Error code.
+	 * @param string $description Error description.
+	 * @return void
+	 */
+	private function redirect_with_error( $return_url, $error, $description ) {
+		if ( empty( $return_url ) ) {
+			wp_die(
+				sprintf(
+					'OAuth error: %s - %s',
+					esc_html( $error ),
+					esc_html( $description )
+				)
+			);
+		}
+
+		$redirect_url = add_query_arg(
+			array(
+				'error'             => $error,
+				'error_description' => $description,
+			),
+			$return_url
+		);
+
+		wp_redirect( $redirect_url );
+		exit;
 	}
 
 	/**
@@ -251,9 +391,60 @@ class Plugin {
 			wp_send_json_error( array( 'message' => 'Missing refresh_token' ), 400 );
 		}
 
-		// TODO: Exchange refresh token for new access token.
+		// Exchange refresh token for new access token.
+		$response = wp_remote_post(
+			'https://api.mollie.com/oauth2/tokens',
+			array(
+				'timeout' => 30,
+				'headers' => array(
+					'Content-Type' => 'application/x-www-form-urlencoded',
+				),
+				'body'    => array(
+					'grant_type'    => 'refresh_token',
+					'refresh_token' => $refresh_token,
+					'client_id'     => MOLLIE_CLIENT_ID,
+					'client_secret' => MOLLIE_CLIENT_SECRET,
+				),
+			)
+		);
 
-		wp_send_json_error( array( 'message' => 'Refresh endpoint - implementation pending' ), 501 );
+		if ( is_wp_error( $response ) ) {
+			error_log( 'Mollie token refresh failed: ' . $response->get_error_message() );
+			wp_send_json_error(
+				array( 'message' => 'Token refresh failed: ' . $response->get_error_message() ),
+				500
+			);
+		}
+
+		$status_code = wp_remote_retrieve_response_code( $response );
+		$body        = json_decode( wp_remote_retrieve_body( $response ), true );
+
+		if ( 200 !== $status_code ) {
+			$error_message = $body['error_description'] ?? $body['error'] ?? 'Unknown error';
+			error_log( "Mollie token refresh failed with status {$status_code}: {$error_message}" );
+			wp_send_json_error(
+				array( 'message' => $error_message ),
+				$status_code
+			);
+		}
+
+		if ( empty( $body['access_token'] ) ) {
+			error_log( 'Mollie token refresh returned invalid data' );
+			wp_send_json_error(
+				array( 'message' => 'Invalid token response from Mollie' ),
+				500
+			);
+		}
+
+		// Return new access token.
+		wp_send_json_success(
+			array(
+				'data' => array(
+					'access_token' => $body['access_token'],
+					'expires_in'   => $body['expires_in'] ?? 3600,
+				),
+			)
+		);
 	}
 
 	/**
