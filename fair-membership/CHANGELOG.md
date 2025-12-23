@@ -1,5 +1,16 @@
 # fair-membership
 
+## 0.6.0
+
+### Minor Changes
+
+- faa0c92: Add membership fee payment feature.
+
+### Patch Changes
+
+- d5d538f: Show mailing logs on error.
+- 21605ad: Add missing transalations.
+
 ## 0.5.0
 
 ### Minor Changes

@@ -4,7 +4,7 @@ Tags: membership, events
 Requires at least: 6.7
 Tested up to: 6.9
 Requires PHP: 7.4
-Stable tag: 0.5.0
+Stable tag: 0.6.0
 License: GPLv3 or later
 License URI: https://www.gnu.org/licenses/gpl-3.0.html
 
@@ -26,6 +26,17 @@ Fair Membership is a WordPress plugin designed for managing group memberships.
 * Contribute: https://github.com/marcin-wosinek/fair-event-plugins/pulls
 
 == Changelog ==
+
+## 0.6.0
+
+### Minor Changes
+
+- faa0c92: Add membership fee payment feature.
+
+### Patch Changes
+
+- d5d538f: Show mailing logs on error.
+- 21605ad: Add missing transalations.
 
 ## 0.5.0
 
