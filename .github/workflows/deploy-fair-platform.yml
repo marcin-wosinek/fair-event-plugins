@@ -96,15 +96,15 @@ jobs:
             - name: Add SSH host key
               run: |
                   mkdir -p ~/.ssh
-                  ssh-keyscan -p ${{ secrets.FAIR_PLATFORM_SSH_PORT }} -H ${{ secrets.FAIR_PLATFORM_SSH_HOST }} >> ~/.ssh/known_hosts
+                  ssh-keyscan -p ${{ vars.FAIR_PLATFORM_SSH_PORT }} -H ${{ vars.FAIR_PLATFORM_SSH_HOST }} >> ~/.ssh/known_hosts
 
             - name: Deploy fair-platform plugin via rsync
               run: |
                   echo "Deploying fair-platform to fair-event-plugins.com..."
                   rsync -avz --delete \
-                    -e "ssh -p ${{ secrets.FAIR_PLATFORM_SSH_PORT }}" \
+                    -e "ssh -p ${{ vars.FAIR_PLATFORM_SSH_PORT }}" \
                     "extracted-plugins/fair-platform/" \
-                    "${{ secrets.FAIR_PLATFORM_SSH_USER }}@${{ secrets.FAIR_PLATFORM_SSH_HOST }}:${{ secrets.FAIR_PLATFORM_PLUGINS_PATH }}/fair-platform/"
+                    "${{ vars.FAIR_PLATFORM_SSH_USER }}@${{ vars.FAIR_PLATFORM_SSH_HOST }}:${{ vars.FAIR_PLATFORM_PLUGINS_PATH }}/fair-platform/"
 
                   echo "✓ fair-platform deployed successfully"
 
@@ -112,7 +112,7 @@ jobs:
               run: |
                   echo "Deployment completed!"
                   echo "Plugin: fair-platform"
-                  echo "Target: ${{ secrets.FAIR_PLATFORM_SSH_HOST }}"
+                  echo "Target: ${{ vars.FAIR_PLATFORM_SSH_HOST }}"
 
             - name: Update deployment status - success
               if: success() && github.event_name == 'workflow_run'

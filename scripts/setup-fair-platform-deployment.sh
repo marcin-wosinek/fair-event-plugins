@@ -111,12 +111,13 @@ echo ""
 read -p "Press Enter after you've created the environment..."
 
 echo ""
-echo -e "${YELLOW}Step 5: GitHub Secrets Summary${NC}"
+echo -e "${YELLOW}Step 5: GitHub Configuration Summary${NC}"
 echo "----------------------------------------"
-echo "Add these secrets to your GitHub repository:"
-echo "(Settings → Secrets and variables → Actions → New repository secret)"
 echo ""
 
+echo -e "${BLUE}5a. Add SSH Key as Secret${NC}"
+echo "(Settings → Secrets and variables → Actions → Secrets → New repository secret)"
+echo ""
 echo -e "${GREEN}Secret name: FAIR_PLATFORM_SSH_KEY${NC}"
 echo "Copy everything below (including BEGIN/END lines):"
 echo "---"
@@ -124,22 +125,26 @@ cat "$SSH_KEY_PATH"
 echo "---"
 echo ""
 
-echo -e "${GREEN}Secret name: FAIR_PLATFORM_SSH_HOST${NC}"
+echo -e "${BLUE}5b. Add Configuration as Environment Variables${NC}"
+echo "(Settings → Environments → fair-event-plugins.com → Add environment variable)"
+echo ""
+
+echo -e "${GREEN}Variable name: FAIR_PLATFORM_SSH_HOST${NC}"
 echo "Value:"
 echo "$SSH_HOST"
 echo ""
 
-echo -e "${GREEN}Secret name: FAIR_PLATFORM_SSH_PORT${NC}"
+echo -e "${GREEN}Variable name: FAIR_PLATFORM_SSH_PORT${NC}"
 echo "Value:"
 echo "$SSH_PORT"
 echo ""
 
-echo -e "${GREEN}Secret name: FAIR_PLATFORM_SSH_USER${NC}"
+echo -e "${GREEN}Variable name: FAIR_PLATFORM_SSH_USER${NC}"
 echo "Value:"
 echo "$SSH_USER"
 echo ""
 
-echo -e "${GREEN}Secret name: FAIR_PLATFORM_PLUGINS_PATH${NC}"
+echo -e "${GREEN}Variable name: FAIR_PLATFORM_PLUGINS_PATH${NC}"
 echo "Value:"
 echo "$PLUGINS_PATH"
 echo ""
@@ -147,28 +152,36 @@ echo ""
 # Save to file for reference
 CONFIG_FILE="fair-platform-deployment-config.txt"
 cat > "$CONFIG_FILE" << EOF
-Fair Platform GitHub Secrets Configuration
+Fair Platform GitHub Configuration
 Generated: $(date)
 Target: fair-event-plugins.com
 
 ===========================================
-GitHub Secrets (copy these exactly)
+GitHub Secret (Sensitive - Repository Level)
 ===========================================
 
-Secret name: FAIR_PLATFORM_SSH_HOST
-Value: $SSH_HOST
-
-Secret name: FAIR_PLATFORM_SSH_PORT
-Value: $SSH_PORT
-
-Secret name: FAIR_PLATFORM_SSH_USER
-Value: $SSH_USER
-
-Secret name: FAIR_PLATFORM_PLUGINS_PATH
-Value: $PLUGINS_PATH
+Add at: Settings → Secrets and variables → Actions → Secrets
 
 Secret name: FAIR_PLATFORM_SSH_KEY
 Value: See $SSH_KEY_PATH
+
+===========================================
+GitHub Environment Variables (fair-event-plugins.com)
+===========================================
+
+Add at: Settings → Environments → fair-event-plugins.com → Add environment variable
+
+Variable name: FAIR_PLATFORM_SSH_HOST
+Value: $SSH_HOST
+
+Variable name: FAIR_PLATFORM_SSH_PORT
+Value: $SSH_PORT
+
+Variable name: FAIR_PLATFORM_SSH_USER
+Value: $SSH_USER
+
+Variable name: FAIR_PLATFORM_PLUGINS_PATH
+Value: $PLUGINS_PATH
 
 ===========================================
 Reference Information
