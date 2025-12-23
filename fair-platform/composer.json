@@ -1,0 +1,21 @@
+{
+	"name": "fair-event-plugins/fair-platform",
+	"description": "Mollie OAuth integration platform for Fair Event Plugins",
+	"type": "wordpress-plugin",
+	"license": "proprietary",
+	"require": {
+		"php": "^8.0",
+		"mollie/mollie-api-php": "^2.0"
+	},
+	"authors": [
+		{
+			"name": "Marcin Wosinek",
+			"email": "marcin.wosinek@gmail.com"
+		}
+	],
+	"autoload": {
+		"psr-4": {
+			"FairPlatform\\": "includes/"
+		}
+	}
+}
