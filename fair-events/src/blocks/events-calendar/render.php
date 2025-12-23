@@ -16,9 +16,16 @@ use FairEvents\Models\EventDates;
 /**
  * Render event using block pattern
  *
- * @param string $pattern_name Pattern name to render.
- * @param int    $event_id     Event post ID.
- * @return string Rendered pattern HTML.
+ * Takes a pattern name and event ID, sets up WordPress post data context,
+ * retrieves the pattern from the WordPress pattern registry, parses it,
+ * and renders the resulting blocks within the event's post context.
+ *
+ * This allows calendar events to be displayed using customizable block patterns
+ * while maintaining proper WordPress post template tags (like the_title, get_permalink).
+ *
+ * @param string $pattern_name Pattern name to render (e.g., 'fair-events/calendar-event-simple').
+ * @param int    $event_id     Event post ID to render.
+ * @return string Rendered pattern HTML output.
  */
 if ( ! function_exists( 'fair_events_render_calendar_pattern' ) ) {
 	function fair_events_render_calendar_pattern( $pattern_name, $event_id ) {
@@ -28,6 +35,7 @@ if ( ! function_exists( 'fair_events_render_calendar_pattern' ) ) {
 		}
 
 		// Set up post data for template tags to work
+		// This makes WordPress template tags (the_title, the_permalink, etc.) work in the pattern
 		// phpcs:ignore WordPress.WP.GlobalVariablesOverride.Prohibited
 		$GLOBALS['post'] = $event_post;
 		setup_postdata( $event_post );
@@ -48,6 +56,7 @@ if ( ! function_exists( 'fair_events_render_calendar_pattern' ) ) {
 		}
 
 		// Parse and render blocks
+		// Block parser converts pattern's block markup into block arrays
 		$parsed_blocks = parse_blocks( $pattern_content );
 		$output        = '';
 		foreach ( $parsed_blocks as $block ) {
@@ -59,6 +68,20 @@ if ( ! function_exists( 'fair_events_render_calendar_pattern' ) ) {
 	}
 }
 
+/*
+ * Calendar Rendering Logic
+ *
+ * This block uses a hybrid server-side rendering approach:
+ * 1. Reads month/year from URL parameters (for navigation) or block attributes
+ * 2. Validates and sanitizes date inputs
+ * 3. Queries events for the month using QueryHelper (efficient single query)
+ * 4. Groups events by date (handling multi-day events)
+ * 5. Calculates calendar grid structure (leading/trailing blank cells)
+ * 6. Renders events using customizable block patterns
+ * 7. Highlights current day, marks past days
+ * 8. Responsive: Desktop shows full grid, mobile shows only event days
+ */
+
 // Get block attributes
 $start_of_week   = $attributes['startOfWeek'] ?? 1;
 $show_navigation = $attributes['showNavigation'] ?? true;
@@ -66,6 +89,7 @@ $categories      = $attributes['categories'] ?? array();
 $display_pattern = $attributes['displayPattern'] ?? 'fair-events/calendar-event-simple';
 
 // Get month/year from URL parameters or block attributes
+// URL params take precedence (for navigation), then block attributes, then current date
 $url_month     = isset( $_GET['calendar_month'] ) ? sanitize_text_field( $_GET['calendar_month'] ) : '';
 $url_year      = isset( $_GET['calendar_year'] ) ? sanitize_text_field( $_GET['calendar_year'] ) : '';
 $current_month = $url_month ?: ( $attributes['currentMonth'] ?: current_time( 'm' ) );

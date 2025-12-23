@@ -9,7 +9,7 @@ msgstr ""
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"POT-Creation-Date: 2025-12-22T11:05:44+00:00\n"
+"POT-Creation-Date: 2025-12-23T11:59:01+00:00\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "X-Generator: WP-CLI 2.12.0\n"
 "X-Domain: fair-events\n"
@@ -176,7 +176,7 @@ msgid "Featured Image"
 msgstr ""
 
 #: src/Admin/CopyEventPage.php:355
-#: src/blocks/events-calendar/components/EditComponent.js:127
+#: src/blocks/events-calendar/components/EditComponent.js:134
 #: src/blocks/events-list/components/EditComponent.js:141
 msgid "Categories"
 msgstr ""
@@ -197,46 +197,46 @@ msgstr ""
 msgid "Cancel"
 msgstr ""
 
-#: src/blocks/events-calendar/render.php:194
-#: src/blocks/events-calendar/render.php:204
+#: src/blocks/events-calendar/render.php:218
+#: src/blocks/events-calendar/render.php:228
 msgid "Mon"
 msgstr ""
 
-#: src/blocks/events-calendar/render.php:195
-#: src/blocks/events-calendar/render.php:205
+#: src/blocks/events-calendar/render.php:219
+#: src/blocks/events-calendar/render.php:229
 msgid "Tue"
 msgstr ""
 
-#: src/blocks/events-calendar/render.php:196
-#: src/blocks/events-calendar/render.php:206
+#: src/blocks/events-calendar/render.php:220
+#: src/blocks/events-calendar/render.php:230
 msgid "Wed"
 msgstr ""
 
-#: src/blocks/events-calendar/render.php:197
-#: src/blocks/events-calendar/render.php:207
+#: src/blocks/events-calendar/render.php:221
+#: src/blocks/events-calendar/render.php:231
 msgid "Thu"
 msgstr ""
 
-#: src/blocks/events-calendar/render.php:198
-#: src/blocks/events-calendar/render.php:208
+#: src/blocks/events-calendar/render.php:222
+#: src/blocks/events-calendar/render.php:232
 msgid "Fri"
 msgstr ""
 
-#: src/blocks/events-calendar/render.php:199
-#: src/blocks/events-calendar/render.php:209
+#: src/blocks/events-calendar/render.php:223
+#: src/blocks/events-calendar/render.php:233
 msgid "Sat"
 msgstr ""
 
-#: src/blocks/events-calendar/render.php:200
-#: src/blocks/events-calendar/render.php:203
+#: src/blocks/events-calendar/render.php:224
+#: src/blocks/events-calendar/render.php:227
 msgid "Sun"
 msgstr ""
 
-#: src/blocks/events-calendar/render.php:220
+#: src/blocks/events-calendar/render.php:244
 msgid "Previous"
 msgstr ""
 
-#: src/blocks/events-calendar/render.php:226
+#: src/blocks/events-calendar/render.php:250
 msgid "Next"
 msgstr ""
 
@@ -260,19 +260,19 @@ msgstr ""
 msgid "Display events in a grid layout with images using Query Loop"
 msgstr ""
 
-#: src/Patterns/Patterns.php:89
+#: src/Patterns/Patterns.php:90
 msgid "Calendar Event - Simple"
 msgstr ""
 
-#: src/Patterns/Patterns.php:90
+#: src/Patterns/Patterns.php:91
 msgid "Display event title only (compact for calendar cells)"
 msgstr ""
 
-#: src/Patterns/Patterns.php:101
+#: src/Patterns/Patterns.php:104
 msgid "Calendar Event - With Time"
 msgstr ""
 
-#: src/Patterns/Patterns.php:102
+#: src/Patterns/Patterns.php:105
 msgid "Display event with start time (compact for calendar cells)"
 msgstr ""
 
@@ -504,52 +504,52 @@ msgstr ""
 msgid "Event Dates block: Only displays in event post context."
 msgstr ""
 
-#: src/blocks/events-calendar/components/EditComponent.js:80
+#: src/blocks/events-calendar/components/EditComponent.js:87
 msgid "Calendar Settings"
 msgstr ""
 
-#: src/blocks/events-calendar/components/EditComponent.js:84
+#: src/blocks/events-calendar/components/EditComponent.js:91
 msgid "Event Display Pattern"
 msgstr ""
 
-#: src/blocks/events-calendar/components/EditComponent.js:90
+#: src/blocks/events-calendar/components/EditComponent.js:97
 msgid "Choose how events are displayed in calendar cells"
 msgstr ""
 
-#: src/blocks/events-calendar/components/EditComponent.js:97
+#: src/blocks/events-calendar/components/EditComponent.js:104
 msgid "Start of Week"
 msgstr ""
 
-#: src/blocks/events-calendar/components/EditComponent.js:101
+#: src/blocks/events-calendar/components/EditComponent.js:108
 msgid "Monday"
 msgstr ""
 
-#: src/blocks/events-calendar/components/EditComponent.js:105
+#: src/blocks/events-calendar/components/EditComponent.js:112
 msgid "Sunday"
 msgstr ""
 
-#: src/blocks/events-calendar/components/EditComponent.js:115
+#: src/blocks/events-calendar/components/EditComponent.js:122
 msgid "Show Navigation"
 msgstr ""
 
-#: src/blocks/events-calendar/components/EditComponent.js:120
+#: src/blocks/events-calendar/components/EditComponent.js:127
 msgid "Display previous/next month navigation"
 msgstr ""
 
-#: src/blocks/events-calendar/components/EditComponent.js:135
+#: src/blocks/events-calendar/components/EditComponent.js:142
 #: src/blocks/events-list/components/EditComponent.js:149
 msgid "Define more categories if you want to use category filtering"
 msgstr ""
 
-#: src/blocks/events-calendar/components/EditComponent.js:176
+#: src/blocks/events-calendar/components/EditComponent.js:183
 msgid "Events Calendar"
 msgstr ""
 
-#: src/blocks/events-calendar/components/EditComponent.js:179
+#: src/blocks/events-calendar/components/EditComponent.js:186
 msgid "Calendar will be displayed on the frontend"
 msgstr ""
 
-#: src/blocks/events-calendar/components/EditComponent.js:186
+#: src/blocks/events-calendar/components/EditComponent.js:193
 #: src/blocks/events-list/components/EditComponent.js:189
 msgid "Categories:"
 msgstr ""

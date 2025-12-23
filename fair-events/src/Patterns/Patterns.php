@@ -83,6 +83,7 @@ class Patterns {
 		);
 
 		// Calendar Event - Simple (title only)
+		// Compact pattern designed for calendar cells - shows only event title as a link
 		register_block_pattern(
 			'fair-events/calendar-event-simple',
 			array(
@@ -95,6 +96,8 @@ class Patterns {
 		);
 
 		// Calendar Event - With Time (start time + title)
+		// Compact pattern for calendar cells - shows start time and event title
+		// Uses flex layout to keep time and title on same line when space allows
 		register_block_pattern(
 			'fair-events/calendar-event-with-time',
 			array(

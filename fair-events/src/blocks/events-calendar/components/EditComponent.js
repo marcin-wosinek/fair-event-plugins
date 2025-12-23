@@ -1,6 +1,13 @@
 /**
  * Events Calendar Block - Edit Component
  *
+ * Provides the block editor interface for the Events Calendar block.
+ * Allows users to configure:
+ * - Display pattern (how events appear in calendar cells)
+ * - Start of week (Monday or Sunday)
+ * - Show/hide navigation
+ * - Category filtering (editor-side only)
+ *
  * @package FairEvents
  */
 

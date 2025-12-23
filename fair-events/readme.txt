@@ -20,6 +20,8 @@ A comprehensive event management plugin that adds a custom "Event" post type to 
 
 * **Custom Event Post Type:** Dedicated content type for events with all standard post features
 * **Event Metadata:** Track event start time, end time, and all-day events
+* **Gutenberg Blocks:** Display events using calendar grid, event list, and event dates blocks
+* **Calendar View:** Month grid calendar with category filtering and mobile-responsive design
 * **Author Support:** Full author attribution and author archives
 * **Category & Tag Support:** Organize events using standard WordPress taxonomies
 * **REST API Enabled:** Full support for Gutenberg block editor and headless WordPress
@@ -27,6 +29,12 @@ A comprehensive event management plugin that adds a custom "Event" post type to 
 * **Automatic Formatting:** Event times displayed in your site's configured date/time format
 * **Theme Integration:** Events automatically use your theme's single post template
 * **Fair Pricing Model:** No premium tiers or hidden features - everything is included
+
+**Available Blocks:**
+
+* **Events Calendar** - Monthly calendar grid showing events with category filtering
+* **Events List** - Flexible list view with customizable patterns and time filtering
+* **Event Dates** - Display event start/end times with customizable formatting
 
 **Event Features:**
 
@@ -88,6 +96,18 @@ Event times are automatically formatted using your site's date and time format s
 = Does this support the block editor? =
 
 Yes! Events are fully compatible with the Gutenberg block editor and the REST API.
+
+= How do I display a calendar of events? =
+
+Use the "Events Calendar" block in the block editor. You can filter by categories, choose the start day of the week (Monday/Sunday), and select how events are displayed (simple title or with time). The calendar is responsive and shows only event days on mobile devices.
+
+= Can I filter events by category in the calendar? =
+
+Yes! The Events Calendar block allows you to select which categories to display. This filtering is configured in the block settings (editor sidebar) and applies to all visitors viewing the calendar.
+
+= How do I change how events appear in the calendar? =
+
+In the Events Calendar block settings, use the "Event Display Pattern" dropdown to choose between different display styles (simple title, or title with time). You can also create custom patterns for more advanced layouts.
 
 == Screenshots ==
 
