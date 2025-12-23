@@ -14,6 +14,32 @@ The plugin does NOT store customer tokens or payment data. It only facilitates t
 
 ## Installation
 
+**This plugin should ONLY be installed on fair-event-plugins.com.**
+
+### Automated Deployment (Recommended)
+
+This plugin uses GitHub Actions for automated deployment. To set up:
+
+```bash
+# Run the interactive setup script from the monorepo root
+./scripts/setup-fair-platform-deployment.sh
+```
+
+The script will:
+- Generate SSH keys for deployment
+- Test the connection to fair-event-plugins.com
+- Detect the WordPress plugins directory
+- Provide the exact GitHub secrets to configure
+- Save configuration for reference
+
+After setup, the plugin automatically deploys when:
+- Changes are pushed to the `main` branch (after CI passes)
+- Manual deployment is triggered via GitHub Actions
+
+See: `.github/workflows/deploy-fair-platform.yml`
+
+### Manual Installation
+
 1. Deploy this plugin to fair-event-plugins.com
 2. Configure Mollie OAuth credentials in `wp-config.php`:
 
