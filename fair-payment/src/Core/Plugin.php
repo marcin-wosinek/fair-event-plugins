@@ -42,6 +42,7 @@ class Plugin {
 		add_action( 'rest_api_init', array( $this, 'register_api_endpoints' ) );
 		$this->load_admin();
 		$this->load_settings();
+		$this->load_migration_notice();
 	}
 
 	/**
@@ -89,6 +90,18 @@ class Plugin {
 	private function load_settings() {
 		$settings = new \FairPayment\Settings\Settings();
 		$settings->init();
+	}
+
+	/**
+	 * Load and initialize migration notice
+	 *
+	 * @return void
+	 */
+	private function load_migration_notice() {
+		if ( is_admin() ) {
+			$migration_notice = new \FairPayment\Admin\MigrationNotice();
+			$migration_notice->init();
+		}
 	}
 
 	/**

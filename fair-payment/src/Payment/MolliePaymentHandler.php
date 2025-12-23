@@ -28,7 +28,13 @@ class MolliePaymentHandler {
 	 */
 	public function __construct() {
 		$this->mollie = new MollieApiClient();
-		$this->set_api_key();
+
+		// Prefer OAuth if connected, otherwise fall back to API keys
+		if ( get_option( 'fair_payment_mollie_connected', false ) ) {
+			$this->set_access_token();
+		} else {
+			$this->set_api_key();
+		}
 	}
 
 	/**
@@ -50,6 +56,90 @@ class MolliePaymentHandler {
 		}
 
 		$this->mollie->setApiKey( $api_key );
+	}
+
+	/**
+	 * Set OAuth access token
+	 *
+	 * Sets the Mollie API client to use OAuth access token authentication.
+	 * Automatically refreshes expired tokens before use.
+	 *
+	 * @return void
+	 * @throws \Exception If no valid access token is available.
+	 */
+	private function set_access_token() {
+		$access_token = $this->get_valid_access_token();
+
+		if ( empty( $access_token ) ) {
+			throw new \Exception( __( 'Mollie is not connected. Please connect your Mollie account in settings.', 'fair-payment' ) );
+		}
+
+		$this->mollie->setAccessToken( $access_token );
+	}
+
+	/**
+	 * Get valid access token
+	 *
+	 * Returns a valid access token, automatically refreshing if expired.
+	 *
+	 * @return string|false Valid access token or false if unavailable.
+	 */
+	private function get_valid_access_token() {
+		$token   = get_option( 'fair_payment_mollie_access_token' );
+		$expires = get_option( 'fair_payment_mollie_token_expires', 0 );
+
+		// Token valid if not expired (5 min buffer)
+		if ( $token && time() < ( $expires - 300 ) ) {
+			return $token;
+		}
+
+		// Expired - refresh it
+		return $this->refresh_access_token();
+	}
+
+	/**
+	 * Refresh OAuth access token
+	 *
+	 * Contacts fair-platform to exchange refresh token for new access token.
+	 *
+	 * @return string|false New access token or false if refresh failed.
+	 */
+	private function refresh_access_token() {
+		$refresh_token = get_option( 'fair_payment_mollie_refresh_token' );
+
+		if ( empty( $refresh_token ) ) {
+			update_option( 'fair_payment_mollie_connected', false );
+			return false;
+		}
+
+		$response = wp_remote_post(
+			'https://fair-event-plugins.com/oauth/refresh',
+			array(
+				'body'    => array( 'refresh_token' => $refresh_token ),
+				'timeout' => 15,
+			)
+		);
+
+		if ( is_wp_error( $response ) ) {
+			error_log( 'Mollie OAuth token refresh failed: ' . $response->get_error_message() );
+			return false;
+		}
+
+		$body = json_decode( wp_remote_retrieve_body( $response ), true );
+
+		if ( empty( $body['success'] ) ) {
+			update_option( 'fair_payment_mollie_connected', false );
+			error_log( 'Mollie OAuth token refresh failed: Invalid response from fair-platform' );
+			return false;
+		}
+
+		// Store new token
+		$new_token  = $body['data']['access_token'];
+		$expires_in = $body['data']['expires_in'];
+		update_option( 'fair_payment_mollie_access_token', $new_token );
+		update_option( 'fair_payment_mollie_token_expires', time() + $expires_in );
+
+		return $new_token;
 	}
 
 	/**
@@ -125,9 +215,18 @@ class MolliePaymentHandler {
 	/**
 	 * Check if API is configured
 	 *
-	 * @return bool True if API key is set.
+	 * Checks if either OAuth connection or API keys are configured.
+	 * OAuth is preferred, but API keys are still supported for backward compatibility.
+	 *
+	 * @return bool True if OAuth is connected or API key is set.
 	 */
 	public static function is_configured() {
+		// Check OAuth connection first
+		if ( get_option( 'fair_payment_mollie_connected', false ) ) {
+			return true;
+		}
+
+		// Fall back to API key check
 		$mode = get_option( 'fair_payment_mode', 'test' );
 
 		if ( 'live' === $mode ) {

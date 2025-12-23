@@ -4,12 +4,12 @@
 import { __, sprintf } from '@wordpress/i18n';
 import { useState, useEffect } from '@wordpress/element';
 import {
-	TextControl,
 	Button,
 	Notice,
 	RadioControl,
 	Card,
 	CardBody,
+	ButtonGroup,
 } from '@wordpress/components';
 import apiFetch from '@wordpress/api-fetch';
 
@@ -19,11 +19,12 @@ import apiFetch from '@wordpress/api-fetch';
  * @return {JSX.Element} The settings app
  */
 export default function SettingsApp() {
-	const [testApiKey, setTestApiKey] = useState('');
-	const [liveApiKey, setLiveApiKey] = useState('');
+	const [connected, setConnected] = useState(false);
 	const [mode, setMode] = useState('test');
 	const [organizationId, setOrganizationId] = useState('');
+	const [tokenExpires, setTokenExpires] = useState(null);
 	const [isLoading, setIsLoading] = useState(true);
+	const [isRefreshing, setIsRefreshing] = useState(false);
 	const [isSaving, setIsSaving] = useState(false);
 	const [notice, setNotice] = useState(null);
 
@@ -31,10 +32,12 @@ export default function SettingsApp() {
 	useEffect(() => {
 		apiFetch({ path: '/wp/v2/settings' })
 			.then((settings) => {
-				setTestApiKey(settings.fair_payment_test_api_key || '');
-				setLiveApiKey(settings.fair_payment_live_api_key || '');
+				setConnected(settings.fair_payment_mollie_connected || false);
 				setMode(settings.fair_payment_mode || 'test');
 				setOrganizationId(settings.fair_payment_organization_id || '');
+				setTokenExpires(
+					settings.fair_payment_mollie_token_expires || null
+				);
 				setIsLoading(false);
 			})
 			.catch((error) => {
@@ -46,8 +49,117 @@ export default function SettingsApp() {
 			});
 	}, []);
 
-	// Save settings
-	const handleSave = () => {
+	// Handle OAuth callback on mount
+	useEffect(() => {
+		const params = new URLSearchParams(window.location.search);
+		const accessToken = params.get('mollie_access_token');
+		const refreshToken = params.get('mollie_refresh_token');
+		const expiresIn = params.get('mollie_expires_in');
+		const orgId = params.get('mollie_organization_id');
+		const testMode = params.get('mollie_test_mode');
+		const error = params.get('error');
+
+		// Handle OAuth errors
+		if (error === 'access_denied') {
+			setNotice({
+				status: 'error',
+				message: __(
+					'Authorization cancelled. Please try again.',
+					'fair-payment'
+				),
+			});
+			// Clean URL
+			window.history.replaceState(
+				{},
+				'',
+				window.location.pathname + '?page=fair-payment-settings'
+			);
+			return;
+		}
+
+		// Handle successful OAuth callback
+		if (accessToken && refreshToken) {
+			setIsLoading(true);
+			apiFetch({
+				path: '/wp/v2/settings',
+				method: 'POST',
+				data: {
+					fair_payment_mollie_access_token: accessToken,
+					fair_payment_mollie_refresh_token: refreshToken,
+					fair_payment_mollie_token_expires:
+						Math.floor(Date.now() / 1000) + parseInt(expiresIn),
+					fair_payment_mollie_organization_id: orgId || '',
+					fair_payment_mollie_connected: true,
+					fair_payment_mode: testMode === '1' ? 'test' : 'live',
+				},
+			})
+				.then(() => {
+					// Clean URL (remove tokens from address bar)
+					window.history.replaceState(
+						{},
+						'',
+						window.location.pathname + '?page=fair-payment-settings'
+					);
+					setConnected(true);
+					setOrganizationId(orgId || '');
+					setMode(testMode === '1' ? 'test' : 'live');
+					setTokenExpires(
+						Math.floor(Date.now() / 1000) + parseInt(expiresIn)
+					);
+					setNotice({
+						status: 'success',
+						message: __(
+							'Successfully connected to Mollie!',
+							'fair-payment'
+						),
+					});
+					setIsLoading(false);
+				})
+				.catch((error) => {
+					setNotice({
+						status: 'error',
+						message: __(
+							'Failed to save OAuth tokens.',
+							'fair-payment'
+						),
+					});
+					setIsLoading(false);
+				});
+		}
+	}, []);
+
+	// Handle Connect button click
+	const handleConnect = () => {
+		const siteId = btoa(window.location.hostname);
+		const returnUrl =
+			window.location.href.split('?')[0] + '?page=fair-payment-settings';
+		const siteName = document.title;
+		const siteUrl = window.location.origin;
+
+		const authorizeUrl = new URL(
+			'https://fair-event-plugins.com/oauth/authorize'
+		);
+		authorizeUrl.searchParams.set('site_id', siteId);
+		authorizeUrl.searchParams.set('return_url', returnUrl);
+		authorizeUrl.searchParams.set('site_name', siteName);
+		authorizeUrl.searchParams.set('site_url', siteUrl);
+
+		window.location.href = authorizeUrl.toString();
+	};
+
+	// Handle Disconnect button click
+	const handleDisconnect = () => {
+		if (
+			!confirm(
+				__(
+					'Are you sure you want to disconnect from Mollie? You will need to reconnect to accept payments.',
+					'fair-payment'
+				)
+			)
+		) {
+			return;
+		}
+
 		setIsSaving(true);
 		setNotice(null);
 
@@ -55,33 +167,95 @@ export default function SettingsApp() {
 			path: '/wp/v2/settings',
 			method: 'POST',
 			data: {
-				fair_payment_test_api_key: testApiKey,
-				fair_payment_live_api_key: liveApiKey,
-				fair_payment_mode: mode,
-				fair_payment_organization_id: organizationId,
+				fair_payment_mollie_access_token: '',
+				fair_payment_mollie_refresh_token: '',
+				fair_payment_mollie_token_expires: 0,
+				fair_payment_mollie_connected: false,
 			},
 		})
 			.then(() => {
-				// Reload settings after save
-				return apiFetch({ path: '/wp/v2/settings' });
-			})
-			.then((settings) => {
-				setTestApiKey(settings.fair_payment_test_api_key || '');
-				setLiveApiKey(settings.fair_payment_live_api_key || '');
-				setMode(settings.fair_payment_mode || 'test');
-				setOrganizationId(settings.fair_payment_organization_id || '');
+				setConnected(false);
+				setTokenExpires(null);
 				setNotice({
 					status: 'success',
-					message: __('Settings saved successfully.', 'fair-payment'),
+					message: __('Disconnected from Mollie.', 'fair-payment'),
 				});
 				setIsSaving(false);
 			})
 			.catch((error) => {
 				setNotice({
 					status: 'error',
-					message: __('Failed to save settings.', 'fair-payment'),
+					message: __('Failed to disconnect.', 'fair-payment'),
 				});
 				setIsSaving(false);
+			});
+	};
+
+	// Handle mode change
+	const handleModeChange = (newMode) => {
+		setIsSaving(true);
+		setNotice(null);
+
+		apiFetch({
+			path: '/wp/v2/settings',
+			method: 'POST',
+			data: {
+				fair_payment_mode: newMode,
+			},
+		})
+			.then(() => {
+				setMode(newMode);
+				setNotice({
+					status: 'success',
+					message: sprintf(
+						/* translators: %s: mode name (Test or Live) */
+						__('Switched to %s mode.', 'fair-payment'),
+						newMode === 'test'
+							? __('Test', 'fair-payment')
+							: __('Live', 'fair-payment')
+					),
+				});
+				setIsSaving(false);
+			})
+			.catch((error) => {
+				setNotice({
+					status: 'error',
+					message: __('Failed to change mode.', 'fair-payment'),
+				});
+				setIsSaving(false);
+			});
+	};
+
+	// Handle manual token refresh
+	const handleRefreshToken = () => {
+		setIsRefreshing(true);
+		setNotice(null);
+
+		// Trigger a refresh by making a test API call
+		// The MolliePaymentHandler will automatically refresh the token
+		apiFetch({
+			path: '/fair-payment/v1/test-connection',
+			method: 'POST',
+		})
+			.then(() => {
+				setNotice({
+					status: 'success',
+					message: __(
+						'Connection refreshed successfully.',
+						'fair-payment'
+					),
+				});
+				setIsRefreshing(false);
+			})
+			.catch((error) => {
+				setNotice({
+					status: 'error',
+					message: __(
+						'Failed to refresh connection. Please try reconnecting.',
+						'fair-payment'
+					),
+				});
+				setIsRefreshing(false);
 			});
 	};
 
@@ -110,70 +284,116 @@ export default function SettingsApp() {
 
 			<Card>
 				<CardBody>
-					<h2>{__('Mollie API Configuration', 'fair-payment')}</h2>
+					<h2>{__('Mollie Connection', 'fair-payment')}</h2>
 
-					<RadioControl
-						label={__('Mode', 'fair-payment')}
-						selected={mode}
-						options={[
-							{
-								label: __('Test Mode', 'fair-payment'),
-								value: 'test',
-							},
-							{
-								label: __('Live Mode', 'fair-payment'),
-								value: 'live',
-							},
-						]}
-						onChange={(value) => setMode(value)}
-					/>
+					{!connected ? (
+						<>
+							<p>
+								{__(
+									'Connect your Mollie account to accept payments. This uses secure OAuth authentication.',
+									'fair-payment'
+								)}
+							</p>
+							<Button isPrimary onClick={handleConnect}>
+								{__('Connect with Mollie', 'fair-payment')}
+							</Button>
+						</>
+					) : (
+						<>
+							<Notice status="success" isDismissible={false}>
+								{__('Connected to Mollie', 'fair-payment')}
+							</Notice>
 
-					<TextControl
-						label={__('Test API Key', 'fair-payment')}
-						value={testApiKey}
-						onChange={(value) => setTestApiKey(value)}
-						disabled={isSaving}
-						placeholder="test_..."
-						help={__(
-							'Get your Test API key from Mollie Dashboard → Developers → API keys',
-							'fair-payment'
-						)}
-					/>
+							{organizationId && (
+								<div style={{ marginTop: '1rem' }}>
+									<p>
+										<strong>
+											{__(
+												'Organization ID:',
+												'fair-payment'
+											)}
+										</strong>{' '}
+										<code>{organizationId}</code>
+									</p>
+								</div>
+							)}
 
-					<TextControl
-						label={__('Live API Key', 'fair-payment')}
-						value={liveApiKey}
-						onChange={(value) => setLiveApiKey(value)}
-						disabled={isSaving}
-						placeholder="live_..."
-						help={__(
-							'Get your Live API key from Mollie Dashboard → Developers → API keys',
-							'fair-payment'
-						)}
-					/>
+							{tokenExpires && (
+								<div style={{ marginTop: '0.5rem' }}>
+									<p
+										style={{
+											fontSize: '0.9em',
+											color: '#666',
+										}}
+									>
+										{sprintf(
+											/* translators: %s: expiration date */
+											__(
+												'Token expires: %s',
+												'fair-payment'
+											),
+											new Date(
+												tokenExpires * 1000
+											).toLocaleString()
+										)}
+									</p>
+								</div>
+							)}
 
-					<TextControl
-						label={__('Organization ID', 'fair-payment')}
-						value={organizationId}
-						onChange={(value) => setOrganizationId(value)}
-						disabled={isSaving}
-						placeholder="org_..."
-						help={__(
-							'Your Mollie Organization ID (e.g., org_12345678). Find it in your Mollie Dashboard URL.',
-							'fair-payment'
-						)}
-					/>
+							<div style={{ marginTop: '1.5rem' }}>
+								<RadioControl
+									label={__('Mode', 'fair-payment')}
+									selected={mode}
+									options={[
+										{
+											label: __(
+												'Test Mode',
+												'fair-payment'
+											),
+											value: 'test',
+										},
+										{
+											label: __(
+												'Live Mode',
+												'fair-payment'
+											),
+											value: 'live',
+										},
+									]}
+									onChange={handleModeChange}
+									disabled={isSaving}
+								/>
+							</div>
 
-					<Button
-						isPrimary
-						onClick={handleSave}
-						isBusy={isSaving}
-						disabled={isSaving}
-					>
-						{isSaving
-							? __('Saving...', 'fair-payment')
-							: __('Save Settings', 'fair-payment')}
-					</Button>
+							<div style={{ marginTop: '1.5rem' }}>
+								<ButtonGroup>
+									<Button
+										isDestructive
+										onClick={handleDisconnect}
+										disabled={isSaving}
+									>
+										{__('Disconnect', 'fair-payment')}
+									</Button>
+									<Button
+										isSecondary
+										onClick={handleRefreshToken}
+										isBusy={isRefreshing}
+										disabled={isRefreshing}
+									>
+										{isRefreshing
+											? __(
+													'Refreshing...',
+													'fair-payment'
+												)
+											: __(
+													'Refresh Connection',
+													'fair-payment'
+												)}
+									</Button>
+								</ButtonGroup>
+							</div>
+						</>
+					)}
 				</CardBody>
 			</Card>
 		</div>
