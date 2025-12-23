@@ -69,14 +69,23 @@ jobs:
               run: |
                   mkdir -p extracted-plugins
                   cd dist
-                  if [ -f "fair-platform.zip" ]; then
-                    echo "Extracting fair-platform.zip..."
-                    unzip -q "fair-platform.zip" -d ../extracted-plugins/
+
+                  # Find fair-platform ZIP file (handles both fair-platform.zip and fair-platform.1.0.0.zip)
+                  PLUGIN_ZIP=$(ls fair-platform*.zip 2>/dev/null | head -n 1)
+
+                  if [ -n "$PLUGIN_ZIP" ]; then
+                    echo "Found: $PLUGIN_ZIP"
+                    echo "Extracting $PLUGIN_ZIP..."
+                    unzip -q "$PLUGIN_ZIP" -d ../extracted-plugins/
                   else
-                    echo "ERROR: fair-platform.zip not found!"
+                    echo "ERROR: fair-platform*.zip not found!"
+                    echo "Available files in dist/:"
+                    ls -la
                     exit 1
                   fi
+
                   cd ..
+                  echo "Extracted contents:"
                   ls -la extracted-plugins/
 
             - name: Setup SSH
