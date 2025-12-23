@@ -49,6 +49,8 @@
 
 	// Calendar Grid
 	.calendar-grid {
+		max-width: 900px; // 7 days × ~128px = ~900px
+		margin: 0 auto; // Center the calendar
 		border: 1px solid #ddd;
 		border-radius: 4px;
 		overflow: hidden;
@@ -56,7 +58,7 @@
 
 	.calendar-header {
 		display: grid;
-		grid-template-columns: repeat(7, 1fr);
+		grid-template-columns: repeat(7, minmax(100px, 1fr));
 		background: #f0f0f0;
 		border-bottom: 1px solid #ddd;
 	}
@@ -76,7 +78,7 @@
 
 	.calendar-body {
 		display: grid;
-		grid-template-columns: repeat(7, 1fr);
+		grid-template-columns: repeat(7, minmax(100px, 1fr));
 		background: #fff;
 	}
 
