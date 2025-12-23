@@ -76,34 +76,22 @@ See [PHP_PATTERNS.md](./PHP_PATTERNS.md) for complete examples and anti-patterns
 
 ## Adding New Plugins to the Monorepo
 
-When creating a new plugin (e.g., `fair-new-plugin`), update these files outside the plugin directory:
+**IMPORTANT**: For complete instructions on adding a new plugin to the monorepo, see [ADDING_NEW_PLUGIN.md](./ADDING_NEW_PLUGIN.md).
 
-### Root package.json
-1. **Line ~27**: Add to start script: `& npm run start --workspace=fair-new-plugin`
-2. **Line ~30**: Add to format:php script: `fair-new-plugin/src/ fair-new-plugin/__tests__/`
-3. **Line ~42**: Add dist-archive script: `"dist-archive:fair-new-plugin": "wp dist-archive fair-new-plugin dist --create-target-dir"`
-4. **Lines ~951-957**: Add to workspaces array: `"fair-new-plugin"`
+The guide covers:
+- Complete directory structure and required files
+- Configuration templates (package.json, composer.json, webpack, etc.)
+- Root monorepo updates (package.json, compose.yml, CI, sync script)
+- Translation setup with build/map.json
+- Testing configuration
+- Versioning and WordPress.org deployment workflow
+- Comprehensive checklist and common pitfalls
 
-### GitHub CI (.github/workflows/php-ci.yml)
-- **Lines ~32-37**: Add vendor cache path: `./fair-new-plugin/vendor`
-
-### Docker Compose (compose.yml)
-Add plugin mount to all WordPress services:
-- **Line ~14**: Main WordPress: `- ./fair-new-plugin:/var/www/html/wp-content/plugins/fair-new-plugin`
-- **Line ~79**: PHP 7.4 service
-- **Line ~116**: WP 6.3 service
-- **Line ~152**: WP 6.7 service
-
-### Scripts (scripts/sync-wp-versions.js)
-**Lines ~20-51**: Add plugin configuration:
-```javascript
-{
-    name: 'fair-new-plugin',
-    packagePath: 'fair-new-plugin/package.json',
-    phpFiles: ['fair-new-plugin/fair-new-plugin.php'],
-    readmeFiles: ['fair-new-plugin/readme.txt'],
-}
-```
+**Quick reference** - files to update in monorepo root:
+1. `/package.json` - Add to workspaces array and scripts
+2. `/.github/workflows/php-ci.yml` - Add vendor cache path
+3. `/compose.yml` - Add plugin volume mounts
+4. `/scripts/sync-wp-versions.js` - Add plugin configuration
 
 ## Shared Code Package
 
