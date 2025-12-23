@@ -178,7 +178,7 @@ class Settings {
 				'type'              => 'string',
 				'description'       => __( 'Mollie Profile ID (cached)', 'fair-payment' ),
 				'sanitize_callback' => 'sanitize_text_field',
-				'show_in_rest'      => false,
+				'show_in_rest'      => true,
 				'default'           => '',
 			)
 		);

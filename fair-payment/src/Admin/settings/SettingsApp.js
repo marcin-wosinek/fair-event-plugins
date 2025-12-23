@@ -22,6 +22,7 @@ export default function SettingsApp() {
 	const [connected, setConnected] = useState(false);
 	const [mode, setMode] = useState('test');
 	const [organizationId, setOrganizationId] = useState('');
+	const [profileId, setProfileId] = useState('');
 	const [tokenExpires, setTokenExpires] = useState(null);
 	const [isLoading, setIsLoading] = useState(true);
 	const [isRefreshing, setIsRefreshing] = useState(false);
@@ -35,6 +36,7 @@ export default function SettingsApp() {
 				setConnected(settings.fair_payment_mollie_connected || false);
 				setMode(settings.fair_payment_mode || 'test');
 				setOrganizationId(settings.fair_payment_organization_id || '');
+				setProfileId(settings.fair_payment_mollie_profile_id || '');
 				setTokenExpires(
 					settings.fair_payment_mollie_token_expires || null
 				);
@@ -56,6 +58,7 @@ export default function SettingsApp() {
 		const refreshToken = params.get('mollie_refresh_token');
 		const expiresIn = params.get('mollie_expires_in');
 		const orgId = params.get('mollie_organization_id');
+		const profileId = params.get('mollie_profile_id');
 		const testMode = params.get('mollie_test_mode');
 		const error = params.get('error');
 
@@ -89,6 +92,7 @@ export default function SettingsApp() {
 					fair_payment_mollie_token_expires:
 						Math.floor(Date.now() / 1000) + parseInt(expiresIn),
 					fair_payment_mollie_organization_id: orgId || '',
+					fair_payment_mollie_profile_id: profileId || '',
 					fair_payment_mollie_connected: true,
 					fair_payment_mode: testMode === '1' ? 'test' : 'live',
 				},
@@ -102,6 +106,7 @@ export default function SettingsApp() {
 					);
 					setConnected(true);
 					setOrganizationId(orgId || '');
+					setProfileId(profileId || '');
 					setMode(testMode === '1' ? 'test' : 'live');
 					setTokenExpires(
 						Math.floor(Date.now() / 1000) + parseInt(expiresIn)
@@ -317,6 +322,38 @@ export default function SettingsApp() {
 									</p>
 								</div>
 							)}
+
+							<div style={{ marginTop: '0.5rem' }}>
+								<p>
+									<strong>
+										{__('Profile ID:', 'fair-payment')}
+									</strong>{' '}
+									{profileId ? (
+										<code>{profileId}</code>
+									) : (
+										<span style={{ color: '#d63638' }}>
+											{__(
+												'Missing (required for payments)',
+												'fair-payment'
+											)}
+										</span>
+									)}
+								</p>
+								{!profileId && (
+									<p
+										style={{
+											fontSize: '0.9em',
+											color: '#d63638',
+											marginTop: '0.5rem',
+										}}
+									>
+										{__(
+											'Please reconnect to Mollie to fetch the profile ID.',
+											'fair-payment'
+										)}
+									</p>
+								)}
+							</div>
 
 							{tokenExpires && (
 								<div style={{ marginTop: '0.5rem' }}>

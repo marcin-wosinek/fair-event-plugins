@@ -249,6 +249,7 @@ class Plugin {
 				'mollie_refresh_token'   => $tokens['refresh_token'],
 				'mollie_expires_in'      => $tokens['expires_in'],
 				'mollie_organization_id' => $organization['id'] ?? '',
+				'mollie_profile_id'      => $organization['profile_id'] ?? '',
 				'mollie_test_mode'       => $organization['testmode'] ?? 0,
 			),
 			$data['return_url']
@@ -335,11 +336,48 @@ class Plugin {
 
 		$body = json_decode( wp_remote_retrieve_body( $response ), true );
 
+		// Also fetch profile ID (required for payments)
+		$profile_id = $this->get_profile_id( $access_token );
+
 		return array(
-			'id'       => $body['id'] ?? '',
-			'name'     => $body['name'] ?? '',
-			'testmode' => ! empty( $body['_links']['dashboard']['href'] ) && strpos( $body['_links']['dashboard']['href'], 'test-mode' ) !== false ? 1 : 0,
+			'id'         => $body['id'] ?? '',
+			'name'       => $body['name'] ?? '',
+			'testmode'   => ! empty( $body['_links']['dashboard']['href'] ) && strpos( $body['_links']['dashboard']['href'], 'test-mode' ) !== false ? 1 : 0,
+			'profile_id' => $profile_id,
 		);
+	}
+
+	/**
+	 * Get current profile ID using access token
+	 *
+	 * @param string $access_token Mollie access token.
+	 * @return string Profile ID or empty string.
+	 */
+	private function get_profile_id( $access_token ) {
+		$response = wp_remote_get(
+			'https://api.mollie.com/v2/profiles/me',
+			array(
+				'timeout' => 30,
+				'headers' => array(
+					'Authorization' => 'Bearer ' . $access_token,
+				),
+			)
+		);
+
+		if ( is_wp_error( $response ) ) {
+			error_log( 'Failed to fetch profile: ' . $response->get_error_message() );
+			return '';
+		}
+
+		$status_code = wp_remote_retrieve_response_code( $response );
+		if ( 200 !== $status_code ) {
+			error_log( "Failed to fetch profile with status {$status_code}" );
+			return '';
+		}
+
+		$body = json_decode( wp_remote_retrieve_body( $response ), true );
+
+		return $body['id'] ?? '';
 	}
 
 	/**
