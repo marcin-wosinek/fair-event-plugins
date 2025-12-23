@@ -94,24 +94,5 @@ class Patterns {
 				'content'     => '<!-- wp:post-title {"level":5,"isLink":true,"fontSize":"small"} /-->',
 			)
 		);
-
-		// Calendar Event - With Time (start time + title)
-		// Compact pattern for calendar cells - shows start time and event title
-		// Uses flex layout to keep time and title on same line when space allows
-		register_block_pattern(
-			'fair-events/calendar-event-with-time',
-			array(
-				'title'       => __( 'Calendar Event - With Time', 'fair-events' ),
-				'description' => __( 'Display event with start time (compact for calendar cells)', 'fair-events' ),
-				'categories'  => array( 'fair-events' ),
-				'keywords'    => array( 'calendar', 'event', 'time' ),
-				'content'     => '<!-- wp:group {"layout":{"type":"flex","flexWrap":"nowrap"},"style":{"spacing":{"blockGap":"0.25rem"}}} -->
-<div class="wp-block-group">
-	<!-- wp:fair-events/event-dates {"showEndDate":false,"showTime":true,"fontSize":"x-small"} /-->
-	<!-- wp:post-title {"level":6,"isLink":true,"fontSize":"small"} /-->
-</div>
-<!-- /wp:group -->',
-			)
-		);
 	}
 }
