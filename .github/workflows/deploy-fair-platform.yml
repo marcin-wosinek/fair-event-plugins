@@ -33,6 +33,18 @@ jobs:
 
             - name: Checkout code
               uses: actions/checkout@v4
+              with:
+                  # For workflow_run: use the ref from the triggering workflow
+                  # For workflow_dispatch: use the ref from which the workflow was triggered (allows feature branch deployments)
+                  ref: ${{ github.event_name == 'workflow_run' && github.event.workflow_run.head_branch || github.ref }}
+
+            - name: Show deployment info
+              run: |
+                  echo "Deployment Information:"
+                  echo "  Trigger: ${{ github.event_name }}"
+                  echo "  Branch: ${{ github.event_name == 'workflow_run' && github.event.workflow_run.head_branch || github.ref_name }}"
+                  echo "  Commit: ${{ github.event_name == 'workflow_run' && github.event.workflow_run.head_sha || github.sha }}"
+                  echo "  Actor: ${{ github.actor }}"
 
             - name: Download build artifacts from CI
               if: github.event_name == 'workflow_run'
@@ -56,6 +68,12 @@ jobs:
 
                   # Install dist-archive command
                   wp package install git@github.com:wp-cli/dist-archive-command.git
+
+                  # Build fair-platform React admin pages
+                  cd fair-platform
+                  npm install
+                  npm run build
+                  cd ..
 
                   # Install production PHP dependencies for fair-platform
                   cd fair-platform
@@ -110,9 +128,11 @@ jobs:
 
             - name: Post-deployment tasks
               run: |
-                  echo "Deployment completed!"
-                  echo "Plugin: fair-platform"
-                  echo "Target: ${{ vars.FAIR_PLATFORM_SSH_HOST }}"
+                  echo "✓ Deployment completed!"
+                  echo "  Plugin: fair-platform"
+                  echo "  Target: ${{ vars.FAIR_PLATFORM_SSH_HOST }}"
+                  echo "  Branch: ${{ github.event_name == 'workflow_run' && github.event.workflow_run.head_branch || github.ref_name }}"
+                  echo "  Commit: ${{ github.event_name == 'workflow_run' && github.event.workflow_run.head_sha || github.sha }}"
 
             - name: Update deployment status - success
               if: success() && github.event_name == 'workflow_run'
@@ -171,3 +191,22 @@ jobs:
                           body: `${emoji} **${message}**\n\n[View deployment logs](https://github.com/${context.repo.owner}/${context.repo.repo}/actions/runs/${context.runId})`
                         });
                       }
+
+            - name: Comment on commit (workflow_dispatch)
+              if: always() && github.event_name == 'workflow_dispatch'
+              uses: actions/github-script@v7
+              with:
+                  script: |
+                      const status = '${{ job.status }}';
+                      const emoji = status === 'success' ? '✅' : '❌';
+                      const branch = '${{ github.ref_name }}';
+                      const message = status === 'success'
+                        ? `Manually deployed fair-platform to fair-event-plugins.com from branch \`${branch}\``
+                        : `Manual deployment of fair-platform to fair-event-plugins.com failed (from branch \`${branch}\`)`;
+
+                      await github.rest.repos.createCommitComment({
+                        owner: context.repo.owner,
+                        repo: context.repo.repo,
+                        commit_sha: '${{ github.sha }}',
+                        body: `${emoji} **${message}**\n\nTriggered by: @${{ github.actor }}\n\n[View deployment logs](https://github.com/${context.repo.owner}/${context.repo.repo}/actions/runs/${context.runId})`
+                      });
