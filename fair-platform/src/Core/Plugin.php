@@ -199,7 +199,7 @@ class Plugin {
 			array(
 				'client_id'       => MOLLIE_CLIENT_ID,
 				'state'           => $state,
-				'scope'           => 'payments.read payments.write refunds.read refunds.write organizations.read profiles.read',
+				'scope'           => 'payments.read payments.write refunds.read refunds.write organizations.read profiles.read profiles.write',
 				'response_type'   => 'code',
 				'approval_prompt' => 'auto',
 				'redirect_uri'    => home_url( '/oauth/callback' ),
@@ -249,7 +249,7 @@ class Plugin {
 		}
 
 		// Get organization details using access token.
-		$organization = $this->get_organization_details( $tokens['access_token'] );
+		$organization = $this->get_organization_details( $tokens['access_token'], $data );
 
 		// Clean up state transient.
 		delete_transient( "mollie_oauth_{$state}" );
@@ -328,9 +328,10 @@ class Plugin {
 	 * Get organization details using access token
 	 *
 	 * @param string $access_token Mollie access token.
+	 * @param array  $site_data Site data from OAuth flow.
 	 * @return array Organization details.
 	 */
-	private function get_organization_details( $access_token ) {
+	private function get_organization_details( $access_token, $site_data = array() ) {
 		$response = wp_remote_get(
 			'https://api.mollie.com/v2/organizations/me',
 			array(
@@ -349,7 +350,7 @@ class Plugin {
 		$body = json_decode( wp_remote_retrieve_body( $response ), true );
 
 		// Also fetch profile ID (required for payments)
-		$profile_id = $this->get_profile_id( $access_token );
+		$profile_id = $this->get_profile_id( $access_token, $site_data );
 
 		return array(
 			'id'         => $body['id'] ?? '',
@@ -362,10 +363,14 @@ class Plugin {
 	/**
 	 * Get current profile ID using access token
 	 *
+	 * If no profile exists, automatically creates one for the customer.
+	 *
 	 * @param string $access_token Mollie access token.
+	 * @param array  $site_data Site data from OAuth flow.
 	 * @return string Profile ID or empty string.
 	 */
-	private function get_profile_id( $access_token ) {
+	private function get_profile_id( $access_token, $site_data = array() ) {
+		// Try to get existing profile.
 		$response = wp_remote_get(
 			'https://api.mollie.com/v2/profiles/me',
 			array(
@@ -378,18 +383,77 @@ class Plugin {
 
 		if ( is_wp_error( $response ) ) {
 			error_log( 'Failed to fetch profile: ' . $response->get_error_message() );
+			return $this->create_profile( $access_token, $site_data );
+		}
+
+		$status_code = wp_remote_retrieve_response_code( $response );
+		if ( 200 === $status_code ) {
+			$body = json_decode( wp_remote_retrieve_body( $response ), true );
+			return $body['id'] ?? '';
+		}
+
+		// No profile exists (404) - create one.
+		if ( 404 === $status_code ) {
+			error_log( 'No profile found for customer, creating one automatically' );
+			return $this->create_profile( $access_token, $site_data );
+		}
+
+		// Other error.
+		error_log( "Failed to fetch profile with status {$status_code}" );
+		return '';
+	}
+
+	/**
+	 * Create a website profile for customer
+	 *
+	 * @param string $access_token Mollie access token.
+	 * @param array  $site_data Site data from OAuth flow.
+	 * @return string Profile ID or empty string.
+	 */
+	private function create_profile( $access_token, $site_data ) {
+		$site_name = $site_data['site_name'] ?? 'Website';
+		$site_url  = $site_data['site_url'] ?? '';
+
+		// Build profile data.
+		$profile_data = array(
+			'name'    => $site_name,
+			'website' => $site_url,
+			'mode'    => 'live',
+		);
+
+		// Create profile.
+		$response = wp_remote_post(
+			'https://api.mollie.com/v2/profiles',
+			array(
+				'timeout' => 30,
+				'headers' => array(
+					'Authorization' => 'Bearer ' . $access_token,
+					'Content-Type'  => 'application/json',
+				),
+				'body'    => wp_json_encode( $profile_data ),
+			)
+		);
+
+		if ( is_wp_error( $response ) ) {
+			error_log( 'Failed to create profile: ' . $response->get_error_message() );
 			return '';
 		}
 
 		$status_code = wp_remote_retrieve_response_code( $response );
-		if ( 200 !== $status_code ) {
-			error_log( "Failed to fetch profile with status {$status_code}" );
+		if ( 201 !== $status_code ) {
+			$body = wp_remote_retrieve_body( $response );
+			error_log( "Failed to create profile with status {$status_code}: {$body}" );
 			return '';
 		}
 
-		$body = json_decode( wp_remote_retrieve_body( $response ), true );
+		$body       = json_decode( wp_remote_retrieve_body( $response ), true );
+		$profile_id = $body['id'] ?? '';
 
-		return $body['id'] ?? '';
+		if ( $profile_id ) {
+			error_log( "Successfully created profile {$profile_id} for {$site_name}" );
+		}
+
+		return $profile_id;
 	}
 
 	/**
