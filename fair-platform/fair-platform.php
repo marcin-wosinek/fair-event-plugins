@@ -36,8 +36,7 @@ Plugin::instance();
  * Activation hook.
  */
 function fair_platform_activate() {
-	Plugin::instance()->register_rewrite_rules();
-	flush_rewrite_rules();
+	Plugin::activate();
 }
 register_activation_hook( __FILE__, __NAMESPACE__ . '\\fair_platform_activate' );
 
@@ -45,6 +44,6 @@ register_activation_hook( __FILE__, __NAMESPACE__ . '\\fair_platform_activate' )
  * Deactivation hook.
  */
 function fair_platform_deactivate() {
-	flush_rewrite_rules();
+	Plugin::deactivate();
 }
 register_deactivation_hook( __FILE__, __NAMESPACE__ . '\\fair_platform_deactivate' );

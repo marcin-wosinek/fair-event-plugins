@@ -4,6 +4,12 @@ const BundleOutputPlugin = require("webpack-bundle-output");
 
 module.exports = {
   ...defaultConfig,
+  entry: {
+    "admin/connections/index": path.resolve(
+      process.cwd(),
+      "src/Admin/connections/index.js",
+    ),
+  },
   plugins: [
     ...defaultConfig.plugins,
     new BundleOutputPlugin({

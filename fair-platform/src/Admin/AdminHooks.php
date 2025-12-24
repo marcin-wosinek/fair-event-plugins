@@ -7,6 +7,8 @@
 
 namespace FairPlatform\Admin;
 
+use FairPlatform\Admin\ConnectionsPage;
+
 defined( 'WPINC' ) || die;
 
 /**
@@ -38,6 +40,15 @@ class AdminHooks {
 			'dashicons-admin-plugins',
 			90
 		);
+
+		add_submenu_page(
+			'fair-platform-settings',
+			__( 'Connection Logs', 'fair-platform' ),
+			__( 'Connections', 'fair-platform' ),
+			'manage_options',
+			'fair-platform-connections',
+			array( $this, 'render_connections_page' )
+		);
 	}
 
 	/**
@@ -47,16 +58,40 @@ class AdminHooks {
 	 * @return void
 	 */
 	public function enqueue_admin_styles( $hook ) {
-		if ( 'toplevel_page_fair-platform-settings' !== $hook ) {
+		if ( 'toplevel_page_fair-platform-settings' !== $hook && 'fair-platform_page_fair-platform-connections' !== $hook ) {
 			return;
 		}
 
 		wp_enqueue_style(
 			'fair-platform-admin',
-			FAIR_PLATFORM_URL . 'assets/admin.css',
+			\FAIR_PLATFORM_URL . 'assets/admin.css',
 			array(),
-			FAIR_PLATFORM_VERSION
+			\FAIR_PLATFORM_VERSION
 		);
+
+		// Enqueue React admin page scripts.
+		if ( 'fair-platform_page_fair-platform-connections' === $hook ) {
+			$asset_file = \FAIR_PLATFORM_DIR . 'build/admin/connections/index.asset.php';
+
+			if ( file_exists( $asset_file ) ) {
+				$asset = include $asset_file;
+
+				wp_enqueue_script(
+					'fair-platform-connections',
+					\FAIR_PLATFORM_URL . 'build/admin/connections/index.js',
+					$asset['dependencies'],
+					$asset['version'],
+					true
+				);
+
+				wp_enqueue_style(
+					'fair-platform-connections',
+					\FAIR_PLATFORM_URL . 'build/admin/connections/index.css',
+					array( 'wp-components' ),
+					$asset['version']
+				);
+			}
+		}
 	}
 
 	/**
@@ -85,5 +120,14 @@ class AdminHooks {
 		);
 
 		include __DIR__ . '/settings-page.php';
+	}
+
+	/**
+	 * Render connections page
+	 *
+	 * @return void
+	 */
+	public function render_connections_page() {
+		ConnectionsPage::render();
 	}
 }

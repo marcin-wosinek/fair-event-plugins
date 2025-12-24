@@ -7,6 +7,10 @@
 
 namespace FairPlatform\Core;
 
+use FairPlatform\Database\Schema;
+use FairPlatform\Database\ConnectionRepository;
+use FairPlatform\API\ConnectionsController;
+
 defined( 'ABSPATH' ) || die;
 
 /**
@@ -70,8 +74,21 @@ class Plugin {
 		add_filter( 'query_vars', array( $this, 'add_query_vars' ) );
 		add_action( 'template_redirect', array( $this, 'handle_oauth_endpoints' ) );
 
+		// Register REST API endpoints.
+		add_action( 'rest_api_init', array( $this, 'register_rest_api' ) );
+
 		// Initialize admin interface.
 		$this->init_admin();
+	}
+
+	/**
+	 * Register REST API endpoints
+	 *
+	 * @return void
+	 */
+	public function register_rest_api() {
+		$connections_controller = new ConnectionsController();
+		$connections_controller->register_routes();
 	}
 
 	/**
@@ -225,6 +242,16 @@ class Plugin {
 		// Check for authorization error.
 		if ( ! empty( $error ) ) {
 			$error_description = sanitize_text_field( $_GET['error_description'] ?? 'Unknown error' );
+
+			// Log failed connection.
+			$this->log_connection_attempt(
+				array(),
+				array(),
+				'failed',
+				$error,
+				$error_description
+			);
+
 			$this->redirect_with_error( '', $error, $error_description );
 		}
 
@@ -241,6 +268,15 @@ class Plugin {
 		// Exchange authorization code for tokens.
 		$tokens = $this->exchange_code_for_tokens( $code );
 		if ( is_wp_error( $tokens ) ) {
+			// Log failed connection.
+			$this->log_connection_attempt(
+				$data,
+				array(),
+				'failed',
+				'token_exchange_failed',
+				$tokens->get_error_message()
+			);
+
 			$this->redirect_with_error(
 				$data['return_url'],
 				'token_exchange_failed',
@@ -250,6 +286,19 @@ class Plugin {
 
 		// Get organization details using access token.
 		$organization = $this->get_organization_details( $tokens['access_token'], $data );
+
+		// Log successful connection.
+		$this->log_connection_attempt(
+			$data,
+			array(
+				'organization_id' => $organization['id'] ?? '',
+				'profile_id'      => $organization['profile_id'] ?? '',
+				'testmode'        => $organization['testmode'] ?? 0,
+				'scope'           => $tokens['scope'] ?? '',
+				'profile_created' => ! empty( $organization['profile_created'] ),
+			),
+			'connected'
+		);
 
 		// Clean up state transient.
 		delete_transient( "mollie_oauth_{$state}" );
@@ -349,14 +398,15 @@ class Plugin {
 
 		$body = json_decode( wp_remote_retrieve_body( $response ), true );
 
-		// Also fetch profile ID (required for payments)
-		$profile_id = $this->get_profile_id( $access_token, $site_data );
+		// Also fetch profile ID (required for payments).
+		$profile_result = $this->get_profile_id( $access_token, $site_data );
 
 		return array(
-			'id'         => $body['id'] ?? '',
-			'name'       => $body['name'] ?? '',
-			'testmode'   => ! empty( $body['_links']['dashboard']['href'] ) && strpos( $body['_links']['dashboard']['href'], 'test-mode' ) !== false ? 1 : 0,
-			'profile_id' => $profile_id,
+			'id'              => $body['id'] ?? '',
+			'name'            => $body['name'] ?? '',
+			'testmode'        => ! empty( $body['_links']['dashboard']['href'] ) && strpos( $body['_links']['dashboard']['href'], 'test-mode' ) !== false ? 1 : 0,
+			'profile_id'      => $profile_result['profile_id'] ?? '',
+			'profile_created' => $profile_result['created'] ?? false,
 		);
 	}
 
@@ -367,7 +417,7 @@ class Plugin {
 	 *
 	 * @param string $access_token Mollie access token.
 	 * @param array  $site_data Site data from OAuth flow.
-	 * @return string Profile ID or empty string.
+	 * @return array Array with 'profile_id' and 'created' flag.
 	 */
 	private function get_profile_id( $access_token, $site_data = array() ) {
 		// Try to get existing profile.
@@ -383,24 +433,38 @@ class Plugin {
 
 		if ( is_wp_error( $response ) ) {
 			error_log( 'Failed to fetch profile: ' . $response->get_error_message() );
-			return $this->create_profile( $access_token, $site_data );
+			$profile_id = $this->create_profile( $access_token, $site_data );
+			return array(
+				'profile_id' => $profile_id,
+				'created'    => ! empty( $profile_id ),
+			);
 		}
 
 		$status_code = wp_remote_retrieve_response_code( $response );
 		if ( 200 === $status_code ) {
 			$body = json_decode( wp_remote_retrieve_body( $response ), true );
-			return $body['id'] ?? '';
+			return array(
+				'profile_id' => $body['id'] ?? '',
+				'created'    => false,
+			);
 		}
 
 		// No profile exists (404) - create one.
 		if ( 404 === $status_code ) {
 			error_log( 'No profile found for customer, creating one automatically' );
-			return $this->create_profile( $access_token, $site_data );
+			$profile_id = $this->create_profile( $access_token, $site_data );
+			return array(
+				'profile_id' => $profile_id,
+				'created'    => ! empty( $profile_id ),
+			);
 		}
 
 		// Other error.
 		error_log( "Failed to fetch profile with status {$status_code}" );
-		return '';
+		return array(
+			'profile_id' => '',
+			'created'    => false,
+		);
 	}
 
 	/**
@@ -601,5 +665,57 @@ class Plugin {
 			</p>
 		</div>
 		<?php
+	}
+
+	/**
+	 * Log a connection attempt
+	 *
+	 * @param array  $site_data Site data from OAuth flow.
+	 * @param array  $mollie_data Mollie organization and profile data.
+	 * @param string $status Connection status (connected, failed, disconnected).
+	 * @param string $error_code Optional error code.
+	 * @param string $error_message Optional error message.
+	 * @return void
+	 */
+	private function log_connection_attempt( $site_data, $mollie_data, $status, $error_code = null, $error_message = null ) {
+		$repository = new ConnectionRepository();
+
+		$log_data = array(
+			'site_id'                => $site_data['site_id'] ?? '',
+			'site_name'              => $site_data['site_name'] ?? '',
+			'site_url'               => $site_data['site_url'] ?? '',
+			'mollie_organization_id' => $mollie_data['organization_id'] ?? '',
+			'mollie_profile_id'      => $mollie_data['profile_id'] ?? '',
+			'status'                 => $status,
+			'error_code'             => $error_code,
+			'error_message'          => $error_message,
+			'scope_granted'          => $mollie_data['scope'] ?? '',
+			'profile_created'        => $mollie_data['profile_created'] ?? false,
+		);
+
+		$repository->log_connection( $log_data );
+	}
+
+	/**
+	 * Plugin activation hook
+	 *
+	 * @return void
+	 */
+	public static function activate() {
+		// Create database tables.
+		Schema::create_tables();
+
+		// Flush rewrite rules.
+		flush_rewrite_rules();
+	}
+
+	/**
+	 * Plugin deactivation hook
+	 *
+	 * @return void
+	 */
+	public static function deactivate() {
+		// Flush rewrite rules.
+		flush_rewrite_rules();
 	}
 }
