@@ -1,0 +1,131 @@
+/**
+ * Fair Platform Admin Styles
+ */
+
+.fair-platform-settings {
+	max-width: 1200px;
+}
+
+.fair-platform-grid {
+	display: grid;
+	grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+	gap: 20px;
+	margin-top: 20px;
+}
+
+.fair-platform-card {
+	background: #fff;
+	border: 1px solid #c3c4c7;
+	box-shadow: 0 1px 1px rgba(0, 0, 0, 0.04);
+	padding: 20px;
+}
+
+.fair-platform-card.full-width {
+	grid-column: 1 / -1;
+}
+
+.fair-platform-card h2 {
+	margin-top: 0;
+	padding-bottom: 10px;
+	border-bottom: 1px solid #dcdcde;
+}
+
+.fair-platform-card h3 {
+	margin-top: 20px;
+	margin-bottom: 10px;
+	font-size: 14px;
+}
+
+.fair-platform-card table {
+	margin-top: 15px;
+}
+
+.fair-platform-card table td {
+	padding: 12px;
+	vertical-align: middle;
+}
+
+.fair-platform-card table td:first-child {
+	width: 30%;
+	font-weight: 500;
+}
+
+.status-indicator {
+	display: inline-block;
+	width: 20px;
+	height: 20px;
+	line-height: 20px;
+	text-align: center;
+	border-radius: 50%;
+	margin-right: 8px;
+	font-weight: bold;
+	font-size: 14px;
+}
+
+.status-indicator.status-success {
+	background: #00a32a;
+	color: #fff;
+}
+
+.status-indicator.status-error {
+	background: #d63638;
+	color: #fff;
+}
+
+.status-text {
+	color: #646970;
+}
+
+.endpoint-list {
+	display: flex;
+	flex-direction: column;
+	gap: 5px;
+}
+
+.endpoint-list code {
+	display: inline-block;
+	padding: 4px 8px;
+	background: #f6f7f7;
+	border: 1px solid #dcdcde;
+	border-radius: 3px;
+	font-size: 12px;
+}
+
+.fair-platform-card pre {
+	background: #f6f7f7;
+	border: 1px solid #dcdcde;
+	border-radius: 3px;
+	padding: 12px;
+	overflow-x: auto;
+	font-size: 13px;
+	line-height: 1.6;
+}
+
+.fair-platform-card .notice.inline {
+	margin: 15px 0 0 0;
+	padding: 12px;
+}
+
+.fair-platform-card ol {
+	margin-left: 20px;
+}
+
+.fair-platform-card ol li {
+	margin-bottom: 15px;
+}
+
+.fair-platform-card .description {
+	color: #646970;
+	font-style: italic;
+}
+
+/* Responsive adjustments */
+@media (max-width: 782px) {
+	.fair-platform-grid {
+		grid-template-columns: 1fr;
+	}
+
+	.fair-platform-card table td:first-child {
+		width: auto;
+	}
+}

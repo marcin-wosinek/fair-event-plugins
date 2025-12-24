@@ -70,8 +70,20 @@ class Plugin {
 		add_filter( 'query_vars', array( $this, 'add_query_vars' ) );
 		add_action( 'template_redirect', array( $this, 'handle_oauth_endpoints' ) );
 
-		// Admin hooks.
-		add_action( 'admin_menu', array( $this, 'register_admin_menu' ) );
+		// Initialize admin interface.
+		$this->init_admin();
+	}
+
+	/**
+	 * Initialize admin interface
+	 *
+	 * @return void
+	 */
+	private function init_admin() {
+		if ( is_admin() ) {
+			$admin_hooks = new \FairPlatform\Admin\AdminHooks();
+			$admin_hooks->init();
+		}
 	}
 
 	/**
@@ -187,7 +199,7 @@ class Plugin {
 			array(
 				'client_id'       => MOLLIE_CLIENT_ID,
 				'state'           => $state,
-				'scope'           => 'payments.read payments.write refunds.read refunds.write organizations.read',
+				'scope'           => 'payments.read payments.write refunds.read refunds.write organizations.read profiles.read',
 				'response_type'   => 'code',
 				'approval_prompt' => 'auto',
 				'redirect_uri'    => home_url( '/oauth/callback' ),
@@ -483,103 +495,6 @@ class Plugin {
 				),
 			)
 		);
-	}
-
-	/**
-	 * Register admin menu
-	 *
-	 * @return void
-	 */
-	public function register_admin_menu() {
-		add_menu_page(
-			__( 'Fair Platform', 'fair-platform' ),
-			__( 'Fair Platform', 'fair-platform' ),
-			'manage_options',
-			'fair-platform',
-			array( $this, 'render_admin_page' ),
-			'dashicons-admin-plugins'
-		);
-	}
-
-	/**
-	 * Render admin page
-	 *
-	 * @return void
-	 */
-	public function render_admin_page() {
-		?>
-		<div class="wrap">
-			<h1><?php esc_html_e( 'Fair Platform - Mollie OAuth Integration', 'fair-platform' ); ?></h1>
-
-			<div class="card">
-				<h2><?php esc_html_e( 'Configuration Status', 'fair-platform' ); ?></h2>
-
-				<table class="form-table">
-					<tr>
-						<th><?php esc_html_e( 'Mollie Client ID', 'fair-platform' ); ?></th>
-						<td>
-							<?php if ( defined( 'MOLLIE_CLIENT_ID' ) && MOLLIE_CLIENT_ID ) : ?>
-								<span class="dashicons dashicons-yes-alt" style="color: green;"></span>
-								<?php echo esc_html( substr( MOLLIE_CLIENT_ID, 0, 20 ) . '...' ); ?>
-							<?php else : ?>
-								<span class="dashicons dashicons-no-alt" style="color: red;"></span>
-								<?php esc_html_e( 'Not configured', 'fair-platform' ); ?>
-							<?php endif; ?>
-						</td>
-					</tr>
-					<tr>
-						<th><?php esc_html_e( 'Mollie Client Secret', 'fair-platform' ); ?></th>
-						<td>
-							<?php if ( defined( 'MOLLIE_CLIENT_SECRET' ) && MOLLIE_CLIENT_SECRET ) : ?>
-								<span class="dashicons dashicons-yes-alt" style="color: green;"></span>
-								<?php esc_html_e( 'Configured', 'fair-platform' ); ?>
-							<?php else : ?>
-								<span class="dashicons dashicons-no-alt" style="color: red;"></span>
-								<?php esc_html_e( 'Not configured', 'fair-platform' ); ?>
-							<?php endif; ?>
-						</td>
-					</tr>
-					<tr>
-						<th><?php esc_html_e( 'Mollie PHP Library', 'fair-platform' ); ?></th>
-						<td>
-							<?php if ( class_exists( '\Mollie\Api\MollieApiClient' ) ) : ?>
-								<span class="dashicons dashicons-yes-alt" style="color: green;"></span>
-								<?php esc_html_e( 'Installed', 'fair-platform' ); ?>
-							<?php else : ?>
-								<span class="dashicons dashicons-no-alt" style="color: red;"></span>
-								<?php esc_html_e( 'Not installed', 'fair-platform' ); ?>
-							<?php endif; ?>
-						</td>
-					</tr>
-				</table>
-			</div>
-
-			<div class="card">
-				<h2><?php esc_html_e( 'OAuth Endpoints', 'fair-platform' ); ?></h2>
-				<ul>
-					<li><code><?php echo esc_url( home_url( '/oauth/authorize' ) ); ?></code></li>
-					<li><code><?php echo esc_url( home_url( '/oauth/callback' ) ); ?></code></li>
-					<li><code><?php echo esc_url( home_url( '/oauth/refresh' ) ); ?></code></li>
-				</ul>
-				<p class="description">
-					<?php esc_html_e( 'These endpoints must be accessible via HTTPS.', 'fair-platform' ); ?>
-				</p>
-			</div>
-
-			<div class="card">
-				<h2><?php esc_html_e( 'Documentation', 'fair-platform' ); ?></h2>
-				<p>
-					<?php
-					printf(
-						/* translators: %s: IMPLEMENTATION.md link */
-						esc_html__( 'See %s for detailed implementation documentation.', 'fair-platform' ),
-						'<code>IMPLEMENTATION.md</code>'
-					);
-					?>
-				</p>
-			</div>
-		</div>
-		<?php
 	}
 
 	/**
