@@ -7,16 +7,16 @@
 	"type": "module",
 	"main": "build/index.js",
 	"scripts": {
-		"build": "echo 'No build needed - server-side only plugin'",
+		"build": "wp-scripts build --config webpack.config.cjs",
 		"clean": "rm -rf build",
-		"start": "echo 'No watch needed - server-side only plugin'",
+		"start": "wp-scripts start --config webpack.config.cjs",
 		"format": "wp-scripts format",
 		"composer:install": "composer install",
 		"composer:install:prod": "composer install --no-dev",
 		"composer:update": "composer update",
 		"composer:validate": "composer validate --strict",
 		"makepot": "wp i18n make-pot . languages/fair-platform.pot --exclude=node_modules,vendor,tests,build,svn",
-		"makejson": "echo 'No JavaScript translations needed'",
+		"makejson": "wp i18n make-json languages ./build/languages --domain=fair-platform --pretty-print --no-purge --use-map=build/map.json",
 		"makemo": "wp i18n make-mo languages/",
 		"updatepo": "wp i18n update-po languages/fair-platform.pot languages/",
 		"test": "echo 'No tests yet'",
@@ -26,6 +26,13 @@
 		"svn:copy": "cp -r readme.txt fair-platform.php composer* languages CHANGELOG.md svn/trunk"
 	},
 	"devDependencies": {
-		"@wordpress/scripts": "^30.20.0"
+		"@wordpress/scripts": "^30.20.0",
+		"webpack-bundle-output": "^1.1.0"
+	},
+	"dependencies": {
+		"@wordpress/api-fetch": "^7.12.0",
+		"@wordpress/components": "^29.6.0",
+		"@wordpress/element": "^6.12.0",
+		"@wordpress/i18n": "^5.12.0"
 	}
 }

@@ -1,33 +1,28 @@
-const defaultConfig = require('@wordpress/scripts/config/webpack.config');
-const path = require('path');
-const fs = require('fs');
-
-// Build entry points dynamically, only including files that exist
-const entries = {};
-
-// Block entries
-const blockEntries = {
-	'blocks/simple-payment/index': 'src/blocks/simple-payment/index.js',
-	'blocks/simple-payment/view': 'src/blocks/simple-payment/view.js',
-};
-
-// Admin entries
-const adminEntries = {
-	'admin/settings/index': 'src/Admin/settings/index.js',
-};
-
-// Combine all potential entries
-const allEntries = { ...blockEntries, ...adminEntries };
-
-// Only add entries for files that exist
-Object.entries(allEntries).forEach(([key, filePath]) => {
-	const fullPath = path.resolve(process.cwd(), filePath);
-	if (fs.existsSync(fullPath)) {
-		entries[key] = fullPath;
-	}
-});
+const defaultConfig = require("@wordpress/scripts/config/webpack.config");
+const path = require("path");
+const BundleOutputPlugin = require("webpack-bundle-output");
 
 module.exports = {
-	...defaultConfig,
-	entry: entries,
+  ...defaultConfig,
+  entry: {
+    "blocks/simple-payment/index": path.resolve(
+      process.cwd(),
+      "src/blocks/simple-payment/index.js",
+    ),
+    "blocks/simple-payment/view": path.resolve(
+      process.cwd(),
+      "src/blocks/simple-payment/view.js",
+    ),
+    "admin/settings/index": path.resolve(
+      process.cwd(),
+      "src/Admin/settings/index.js",
+    ),
+  },
+  plugins: [
+    ...defaultConfig.plugins,
+    new BundleOutputPlugin({
+      cwd: process.cwd(),
+      output: "map.json",
+    }),
+  ],
 };
