@@ -26,7 +26,7 @@
 	"author": "Fair Event Plugins",
 	"license": "GPL-2.0-or-later",
 	"devDependencies": {
-		"@wordpress/scripts": "^28.3.0",
+		"@wordpress/scripts": "^31.2.0",
 		"webpack-bundle-output": "^1.1.0"
 	},
 	"dependencies": {
