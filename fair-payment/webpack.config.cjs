@@ -17,6 +17,10 @@ module.exports = {
       process.cwd(),
       "src/Admin/settings/index.js",
     ),
+    "admin/transactions/index": path.resolve(
+      process.cwd(),
+      "src/Admin/transactions/index.js",
+    ),
   },
   plugins: [
     ...defaultConfig.plugins,
