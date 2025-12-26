@@ -29,34 +29,34 @@ class AdminPages {
 	 * @return void
 	 */
 	public function register_admin_pages() {
-		// Main settings page
+		// Main transactions page
 		add_menu_page(
 			__( 'Fair Payment', 'fair-payment' ),
 			__( 'Fair Payment', 'fair-payment' ),
 			'manage_options',
-			'fair-payment-settings',
-			array( $this, 'render_settings_page' ),
+			'fair-payment-transactions',
+			array( $this, 'render_transactions_page' ),
 			'dashicons-money-alt',
 			30
 		);
 
-		// Settings submenu (duplicate to rename main menu item)
+		// Transactions submenu (duplicate to rename main menu item)
 		add_submenu_page(
-			'fair-payment-settings',
-			__( 'Settings', 'fair-payment' ),
-			__( 'Settings', 'fair-payment' ),
+			'fair-payment-transactions',
+			__( 'Transactions', 'fair-payment' ),
+			__( 'Transactions', 'fair-payment' ),
 			'manage_options',
-			'fair-payment-settings'
+			'fair-payment-transactions'
 		);
 
-		// Transactions submenu
+		// Settings submenu
 		add_submenu_page(
-			'fair-payment-settings',
-			__( 'Transactions', 'fair-payment' ),
-			__( 'Transactions', 'fair-payment' ),
-			'manage_options',
 			'fair-payment-transactions',
-			array( $this, 'render_transactions_page' )
+			__( 'Settings', 'fair-payment' ),
+			__( 'Settings', 'fair-payment' ),
+			'manage_options',
+			'fair-payment-settings',
+			array( $this, 'render_settings_page' )
 		);
 	}
 
@@ -68,13 +68,14 @@ class AdminPages {
 	 */
 	public function enqueue_admin_scripts( $hook ) {
 		// Only load on Fair Payment settings page.
-		if ( 'toplevel_page_fair-payment-settings' !== $hook ) {
+		if ( false === strpos( $hook, 'fair-payment-settings' ) ) {
 			return;
 		}
 
 		$asset_file_path = FAIR_PAYMENT_PLUGIN_DIR . 'build/admin/settings/index.asset.php';
 
 		if ( ! file_exists( $asset_file_path ) ) {
+			error_log( 'Fair Payment: Asset file not found at ' . $asset_file_path );
 			return;
 		}
 
