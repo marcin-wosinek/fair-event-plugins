@@ -212,6 +212,10 @@ class MolliePaymentHandler {
 				$payment_data['profileId'] = $profile_id;
 			}
 
+			// Set test mode based on settings (required for OAuth)
+			$mode                     = get_option( 'fair_payment_mode', 'test' );
+			$payment_data['testmode'] = ( 'live' === $mode ) ? false : true;
+
 			$payment = $this->mollie->payments->create( $payment_data );
 
 			return array(
