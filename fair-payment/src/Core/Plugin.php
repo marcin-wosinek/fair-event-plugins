@@ -39,23 +39,13 @@ class Plugin {
 	 */
 	public function init() {
 		add_action( 'init', array( $this, 'register_blocks' ) );
-		add_action( 'rest_api_init', array( $this, 'register_api_endpoints' ) );
+
+		// Initialize REST API hooks.
+		new \FairPayment\API\RestHooks();
+
 		$this->load_admin();
 		$this->load_settings();
 		$this->load_migration_notice();
-	}
-
-	/**
-	 * Register REST API endpoints
-	 *
-	 * @return void
-	 */
-	public function register_api_endpoints() {
-		$payment_endpoint = new \FairPayment\API\PaymentEndpoint();
-		$payment_endpoint->register_routes();
-
-		$webhook_endpoint = new \FairPayment\API\WebhookEndpoint();
-		$webhook_endpoint->register_routes();
 	}
 
 	/**

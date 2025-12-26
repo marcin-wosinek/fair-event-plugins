@@ -27,8 +27,9 @@ if ( file_exists( FAIR_PAYMENT_PLUGIN_DIR . 'vendor/autoload.php' ) ) {
 // Initialize the plugin.
 add_action( 'plugins_loaded', 'fair_payment_init' );
 
-// Activation hook.
+// Activation and deactivation hooks.
 register_activation_hook( __FILE__, 'fair_payment_activate' );
+register_deactivation_hook( __FILE__, 'fair_payment_deactivate' );
 
 /**
  * Initialize Fair Payment plugin
@@ -50,6 +51,19 @@ function fair_payment_activate() {
 	if ( class_exists( 'FairPayment\Database\Schema' ) ) {
 		FairPayment\Database\Schema::create_tables();
 	}
+
+	// Flush rewrite rules to ensure REST API routes are available.
+	flush_rewrite_rules();
+}
+
+/**
+ * Plugin deactivation callback
+ *
+ * @return void
+ */
+function fair_payment_deactivate() {
+	// Flush rewrite rules to clean up REST API routes.
+	flush_rewrite_rules();
 }
 
 /**
