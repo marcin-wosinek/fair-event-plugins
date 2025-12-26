@@ -23,6 +23,10 @@ class Transaction {
 		global $wpdb;
 		$table_name = \FairPayment\Database\Schema::get_payments_table_name();
 
+		// Determine testmode from current settings.
+		$mode     = get_option( 'fair_payment_mode', 'test' );
+		$testmode = ( 'live' === $mode ) ? 0 : 1;
+
 		$defaults = array(
 			'mollie_payment_id' => '',
 			'post_id'           => null,
@@ -30,6 +34,7 @@ class Transaction {
 			'amount'            => 0,
 			'currency'          => 'EUR',
 			'status'            => 'draft',
+			'testmode'          => $testmode,
 			'description'       => '',
 			'redirect_url'      => '',
 			'webhook_url'       => '',
@@ -53,13 +58,14 @@ class Transaction {
 				'amount'            => $data['amount'],
 				'currency'          => $data['currency'],
 				'status'            => $data['status'],
+				'testmode'          => $data['testmode'],
 				'description'       => $data['description'],
 				'redirect_url'      => $data['redirect_url'],
 				'webhook_url'       => $data['webhook_url'],
 				'checkout_url'      => $data['checkout_url'],
 				'metadata'          => $data['metadata'],
 			),
-			array( '%s', '%d', '%d', '%f', '%s', '%s', '%s', '%s', '%s', '%s', '%s' )
+			array( '%s', '%d', '%d', '%f', '%s', '%s', '%d', '%s', '%s', '%s', '%s', '%s' )
 		);
 
 		return $inserted ? $wpdb->insert_id : false;

@@ -53,6 +53,7 @@ class Schema {
 			currency varchar(3) NOT NULL DEFAULT 'EUR',
 			status varchar(20) NOT NULL DEFAULT 'draft',
 			payment_initiated_at datetime DEFAULT NULL,
+			testmode tinyint(1) NOT NULL DEFAULT 1,
 			description text DEFAULT NULL,
 			redirect_url text DEFAULT NULL,
 			webhook_url text DEFAULT NULL,
@@ -75,9 +76,10 @@ class Schema {
 
 		// Run migrations if needed.
 		self::migrate_to_v2();
+		self::migrate_to_v3();
 
 		// Store database version for future migrations.
-		update_option( 'fair_payment_db_version', '2.0' );
+		update_option( 'fair_payment_db_version', '3.0' );
 	}
 
 	/**
@@ -154,6 +156,58 @@ class Schema {
 					$table_name
 				)
 			);
+		}
+	}
+
+	/**
+	 * Migrate database from v2.0 to v3.0
+	 *
+	 * Adds testmode column to store which mode (test/live) was used when creating the payment.
+	 *
+	 * @return void
+	 */
+	public static function migrate_to_v3() {
+		global $wpdb;
+
+		$current_version = get_option( 'fair_payment_db_version', '1.0' );
+
+		if ( version_compare( $current_version, '3.0', '<' ) ) {
+			$table_name = self::get_payments_table_name();
+
+			// Check if testmode column already exists.
+			// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+			$column_exists = $wpdb->get_results(
+				$wpdb->prepare(
+					'SHOW COLUMNS FROM %i LIKE %s',
+					$table_name,
+					'testmode'
+				)
+			);
+
+			// Add testmode column if it doesn't exist.
+			if ( empty( $column_exists ) ) {
+				// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.DirectDatabaseQuery.SchemaChange
+				$wpdb->query(
+					$wpdb->prepare(
+						'ALTER TABLE %i ADD COLUMN testmode tinyint(1) NOT NULL DEFAULT 1 AFTER payment_initiated_at',
+						$table_name
+					)
+				);
+
+				// Set testmode based on current mode setting for existing transactions.
+				$current_mode = get_option( 'fair_payment_mode', 'test' );
+				$testmode     = ( 'live' === $current_mode ) ? 0 : 1;
+
+				// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+				$wpdb->query(
+					$wpdb->prepare(
+						'UPDATE %i SET testmode = %d WHERE mollie_payment_id != %s',
+						$table_name,
+						$testmode,
+						''
+					)
+				);
+			}
 		}
 	}
 

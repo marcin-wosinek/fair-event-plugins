@@ -74,11 +74,7 @@ class WebhookEndpoint extends WP_REST_Controller {
 		}
 
 		try {
-			// Retrieve payment status from Mollie.
-			$handler = new MolliePaymentHandler();
-			$payment = $handler->get_payment( $mollie_payment_id );
-
-			// Get transaction from database.
+			// Get transaction from database first to determine testmode.
 			$transaction = Transaction::get_by_mollie_id( $mollie_payment_id );
 
 			if ( ! $transaction ) {
@@ -88,6 +84,13 @@ class WebhookEndpoint extends WP_REST_Controller {
 					array( 'status' => 404 )
 				);
 			}
+
+			// Retrieve payment status from Mollie using correct testmode.
+			$handler = new MolliePaymentHandler();
+			$options = array(
+				'testmode' => ! empty( $transaction->testmode ),
+			);
+			$payment = $handler->get_payment( $mollie_payment_id, $options );
 
 			// Update transaction status.
 			$updated = Transaction::update_status( $mollie_payment_id, $payment->status );

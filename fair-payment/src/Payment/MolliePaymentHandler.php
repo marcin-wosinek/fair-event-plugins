@@ -238,12 +238,13 @@ class MolliePaymentHandler {
 	 * Get payment status from Mollie
 	 *
 	 * @param string $mollie_payment_id Mollie payment ID.
+	 * @param array  $options Options for retrieving payment (e.g., testmode).
 	 * @return object Payment object from Mollie.
 	 * @throws ApiException If payment retrieval fails.
 	 */
-	public function get_payment( $mollie_payment_id ) {
+	public function get_payment( $mollie_payment_id, $options = array() ) {
 		try {
-			return $this->mollie->payments->get( $mollie_payment_id );
+			return $this->mollie->payments->get( $mollie_payment_id, $options );
 		} catch ( ApiException $e ) {
 			throw new \Exception(
 				sprintf(
