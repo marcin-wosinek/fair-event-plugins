@@ -175,13 +175,14 @@ class AdminPages {
 									<?php endif; ?>
 								</td>
 								<td>
-									<strong><?php echo esc_html( number_format( $transaction->amount, 2 ) ); ?></strong>
-									<?php echo esc_html( $transaction->currency ); ?>
+									<strong><?php echo esc_html( number_format( (float) ( $transaction->amount ?? 0 ), 2 ) ); ?></strong>
+									<?php echo esc_html( $transaction->currency ?? 'EUR' ); ?>
 								</td>
 								<td>
 									<?php
+									$status       = $transaction->status ?? 'unknown';
 									$status_class = '';
-									switch ( $transaction->status ) {
+									switch ( $status ) {
 										case 'paid':
 											$status_class = 'status-paid';
 											break;
@@ -197,7 +198,7 @@ class AdminPages {
 									}
 									?>
 									<span class="<?php echo esc_attr( $status_class ); ?>">
-										<?php echo esc_html( ucfirst( $transaction->status ) ); ?>
+										<?php echo esc_html( ucfirst( $status ) ); ?>
 									</span>
 								</td>
 								<td>
@@ -209,7 +210,7 @@ class AdminPages {
 										<?php echo esc_html( $mode_text ); ?>
 									</span>
 								</td>
-								<td><?php echo esc_html( $transaction->description ); ?></td>
+								<td><?php echo esc_html( $transaction->description ?? '' ); ?></td>
 								<td>
 									<?php
 									if ( $transaction->user_id ) {
@@ -220,7 +221,7 @@ class AdminPages {
 									}
 									?>
 								</td>
-								<td><?php echo esc_html( $transaction->created_at ); ?></td>
+								<td><?php echo esc_html( $transaction->created_at ?? '' ); ?></td>
 							</tr>
 						<?php endforeach; ?>
 					</tbody>
