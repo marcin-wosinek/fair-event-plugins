@@ -705,6 +705,25 @@ class Plugin {
 		// Create database tables.
 		Schema::create_tables();
 
+		// Register rewrite rules.
+		add_rewrite_rule(
+			'^oauth/authorize/?$',
+			'index.php?fair_oauth_endpoint=authorize',
+			'top'
+		);
+
+		add_rewrite_rule(
+			'^oauth/callback/?$',
+			'index.php?fair_oauth_endpoint=callback',
+			'top'
+		);
+
+		add_rewrite_rule(
+			'^oauth/refresh/?$',
+			'index.php?fair_oauth_endpoint=refresh',
+			'top'
+		);
+
 		// Flush rewrite rules.
 		flush_rewrite_rules();
 	}
