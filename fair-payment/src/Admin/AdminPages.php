@@ -145,6 +145,7 @@ class AdminPages {
 							<th><?php esc_html_e( 'Mollie ID', 'fair-payment' ); ?></th>
 							<th><?php esc_html_e( 'Amount', 'fair-payment' ); ?></th>
 							<th><?php esc_html_e( 'Status', 'fair-payment' ); ?></th>
+							<th><?php esc_html_e( 'Mode', 'fair-payment' ); ?></th>
 							<th><?php esc_html_e( 'Description', 'fair-payment' ); ?></th>
 							<th><?php esc_html_e( 'User', 'fair-payment' ); ?></th>
 							<th><?php esc_html_e( 'Date', 'fair-payment' ); ?></th>
@@ -199,6 +200,15 @@ class AdminPages {
 										<?php echo esc_html( ucfirst( $transaction->status ) ); ?>
 									</span>
 								</td>
+								<td>
+									<?php
+									$mode_class = ! empty( $transaction->testmode ) ? 'mode-test' : 'mode-live';
+									$mode_text  = ! empty( $transaction->testmode ) ? __( 'Test', 'fair-payment' ) : __( 'Live', 'fair-payment' );
+									?>
+									<span class="<?php echo esc_attr( $mode_class ); ?>">
+										<?php echo esc_html( $mode_text ); ?>
+									</span>
+								</td>
 								<td><?php echo esc_html( $transaction->description ); ?></td>
 								<td>
 									<?php
@@ -221,6 +231,8 @@ class AdminPages {
 			.status-paid { color: #007017; font-weight: bold; }
 			.status-failed { color: #d63638; font-weight: bold; }
 			.status-pending { color: #996800; font-weight: bold; }
+			.mode-test { color: #996800; font-weight: bold; }
+			.mode-live { color: #007017; font-weight: bold; }
 		</style>
 		<?php
 	}
