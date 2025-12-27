@@ -30,6 +30,8 @@ export default function SettingsApp() {
 	const [isSaving, setIsSaving] = useState(false);
 	const [notice, setNotice] = useState(null);
 	const [allSettings, setAllSettings] = useState({});
+	const [isLoadingAdvanced, setIsLoadingAdvanced] = useState(false);
+	const [advancedLoaded, setAdvancedLoaded] = useState(false);
 
 	// Load settings on mount
 	useEffect(() => {
@@ -42,7 +44,27 @@ export default function SettingsApp() {
 				setTokenExpires(
 					settings.fair_payment_mollie_token_expires || null
 				);
+				setIsLoading(false);
+			})
+			.catch((error) => {
+				setNotice({
+					status: 'error',
+					message: __('Failed to load settings.', 'fair-payment'),
+				});
+				setIsLoading(false);
+			});
+	}, []);
 
+	// Load advanced settings (only when Advanced tab is viewed)
+	const loadAdvancedSettings = () => {
+		if (advancedLoaded) {
+			return; // Already loaded, don't fetch again
+		}
+
+		setIsLoadingAdvanced(true);
+
+		apiFetch({ path: '/wp/v2/settings' })
+			.then((settings) => {
 				// Store all Mollie-related settings for Advanced tab
 				setAllSettings({
 					fair_payment_mollie_access_token:
@@ -65,17 +87,20 @@ export default function SettingsApp() {
 					fair_payment_organization_id:
 						settings.fair_payment_organization_id || '',
 				});
-
-				setIsLoading(false);
+				setAdvancedLoaded(true);
+				setIsLoadingAdvanced(false);
 			})
 			.catch((error) => {
 				setNotice({
 					status: 'error',
-					message: __('Failed to load settings.', 'fair-payment'),
+					message: __(
+						'Failed to load advanced settings.',
+						'fair-payment'
+					),
 				});
-				setIsLoading(false);
+				setIsLoadingAdvanced(false);
 			});
-	}, []);
+	};
 
 	// Handle OAuth callback on mount
 	useEffect(() => {
@@ -446,69 +471,78 @@ export default function SettingsApp() {
 					)}
 				</p>
 
-				<table
-					className="widefat fixed striped"
-					style={{ marginTop: '1rem' }}
-				>
-					<thead>
-						<tr>
-							<th style={{ width: '40%' }}>
-								{__('Setting Name', 'fair-payment')}
-							</th>
-							<th>{__('Value', 'fair-payment')}</th>
-						</tr>
-					</thead>
-					<tbody>
-						{Object.entries(allSettings).map(([key, value]) => {
-							// Mask sensitive values
-							const isSensitive =
-								key.includes('token') ||
-								key.includes('api_key');
-							let displayValue = value;
+				{isLoadingAdvanced ? (
+					<p>{__('Loading settings...', 'fair-payment')}</p>
+				) : (
+					<table
+						className="widefat fixed striped"
+						style={{ marginTop: '1rem' }}
+					>
+						<thead>
+							<tr>
+								<th style={{ width: '40%' }}>
+									{__('Setting Name', 'fair-payment')}
+								</th>
+								<th>{__('Value', 'fair-payment')}</th>
+							</tr>
+						</thead>
+						<tbody>
+							{Object.entries(allSettings).map(([key, value]) => {
+								// Mask sensitive values
+								const isSensitive =
+									key.includes('token') ||
+									key.includes('api_key');
+								let displayValue = value;
 
-							if (isSensitive && value) {
-								displayValue = '•'.repeat(
-									Math.min(value.length, 40)
-								);
-							} else if (value === null || value === '') {
-								displayValue = (
-									<em style={{ color: '#999' }}>
-										{__('(empty)', 'fair-payment')}
-									</em>
-								);
-							} else if (typeof value === 'boolean') {
-								displayValue = value
-									? __('true', 'fair-payment')
-									: __('false', 'fair-payment');
-							} else if (
-								key === 'fair_payment_mollie_token_expires' &&
-								value
-							) {
-								displayValue = `${value} (${new Date(value * 1000).toLocaleString()})`;
-							}
+								if (isSensitive && value) {
+									displayValue = '•'.repeat(
+										Math.min(value.length, 40)
+									);
+								} else if (value === null || value === '') {
+									displayValue = (
+										<em style={{ color: '#999' }}>
+											{__('(empty)', 'fair-payment')}
+										</em>
+									);
+								} else if (typeof value === 'boolean') {
+									displayValue = value
+										? __('true', 'fair-payment')
+										: __('false', 'fair-payment');
+								} else if (
+									key ===
+										'fair_payment_mollie_token_expires' &&
+									value
+								) {
+									displayValue = `${value} (${new Date(value * 1000).toLocaleString()})`;
+								}
 
-							return (
-								<tr key={key}>
-									<td>
-										<code style={{ fontSize: '0.9em' }}>
-											{key}
-										</code>
-									</td>
-									<td>
-										<code
-											style={{
-												fontSize: '0.9em',
-												wordBreak: 'break-all',
-											}}
-										>
-											{displayValue}
-										</code>
-									</td>
-								</tr>
-							);
-						})}
-					</tbody>
-				</table>
+								return (
+									<tr key={key}>
+										<td>
+											<code
+												style={{
+													fontSize: '0.9em',
+												}}
+											>
+												{key}
+											</code>
+										</td>
+										<td>
+											<code
+												style={{
+													fontSize: '0.9em',
+													wordBreak: 'break-all',
+												}}
+											>
+												{displayValue}
+											</code>
+										</td>
+									</tr>
+								);
+							})}
+						</tbody>
+					</table>
+				)}
 			</CardBody>
 		</Card>
 	);
@@ -540,6 +574,11 @@ export default function SettingsApp() {
 						title: __('Advanced', 'fair-payment'),
 					},
 				]}
+				onSelect={(tabName) => {
+					if (tabName === 'advanced') {
+						loadAdvancedSettings();
+					}
+				}}
 			>
 				{(tab) => (
 					<div style={{ marginTop: '1rem' }}>
