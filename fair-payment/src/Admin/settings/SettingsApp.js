@@ -113,6 +113,21 @@ export default function SettingsApp() {
 		const testMode = params.get('mollie_test_mode');
 		const error = params.get('error');
 
+		// Debug: Log received OAuth parameters
+		if (accessToken || refreshToken || error) {
+			console.log('[Fair Payment OAuth] Callback parameters:', {
+				hasAccessToken: !!accessToken,
+				accessTokenLength: accessToken ? accessToken.length : 0,
+				hasRefreshToken: !!refreshToken,
+				refreshTokenLength: refreshToken ? refreshToken.length : 0,
+				expiresIn,
+				orgId,
+				profileId,
+				testMode,
+				error,
+			});
+		}
+
 		// Handle OAuth errors
 		if (error === 'access_denied') {
 			setNotice({
@@ -133,22 +148,33 @@ export default function SettingsApp() {
 
 		// Handle successful OAuth callback
 		if (accessToken && refreshToken) {
+			const settingsData = {
+				fair_payment_mollie_access_token: accessToken,
+				fair_payment_mollie_refresh_token: refreshToken,
+				fair_payment_mollie_token_expires:
+					Math.floor(Date.now() / 1000) + parseInt(expiresIn),
+				fair_payment_mollie_organization_id: orgId || '',
+				fair_payment_mollie_profile_id: profileId || '',
+				fair_payment_mollie_connected: true,
+				fair_payment_mode: testMode === '1' ? 'test' : 'live',
+			};
+
+			// Debug: Log data being sent to API
+			console.log('[Fair Payment OAuth] Saving settings:', settingsData);
+
 			setIsLoading(true);
 			apiFetch({
 				path: '/wp/v2/settings',
 				method: 'POST',
-				data: {
-					fair_payment_mollie_access_token: accessToken,
-					fair_payment_mollie_refresh_token: refreshToken,
-					fair_payment_mollie_token_expires:
-						Math.floor(Date.now() / 1000) + parseInt(expiresIn),
-					fair_payment_mollie_organization_id: orgId || '',
-					fair_payment_mollie_profile_id: profileId || '',
-					fair_payment_mollie_connected: true,
-					fair_payment_mode: testMode === '1' ? 'test' : 'live',
-				},
+				data: settingsData,
 			})
-				.then(() => {
+				.then((response) => {
+					// Debug: Log successful save
+					console.log(
+						'[Fair Payment OAuth] Settings saved successfully:',
+						response
+					);
+
 					// Clean URL (remove tokens from address bar)
 					window.history.replaceState(
 						{},
@@ -172,15 +198,36 @@ export default function SettingsApp() {
 					setIsLoading(false);
 				})
 				.catch((error) => {
+					// Debug: Log API error
+					console.error('[Fair Payment OAuth] Save error:', error);
+					console.error(
+						'[Fair Payment OAuth] Error details:',
+						error.message,
+						error.data
+					);
+
 					setNotice({
 						status: 'error',
-						message: __(
-							'Failed to save OAuth tokens.',
-							'fair-payment'
-						),
+						message:
+							__(
+								'Failed to save OAuth tokens: ',
+								'fair-payment'
+							) + (error.message || 'Unknown error'),
 					});
 					setIsLoading(false);
 				});
+		} else if (accessToken && !refreshToken) {
+			// Debug: Access token received but no refresh token
+			console.warn(
+				'[Fair Payment OAuth] Access token received but refresh token is missing!'
+			);
+			setNotice({
+				status: 'warning',
+				message: __(
+					'OAuth callback incomplete: refresh token not received from authorization server.',
+					'fair-payment'
+				),
+			});
 		}
 	}, []);
 
