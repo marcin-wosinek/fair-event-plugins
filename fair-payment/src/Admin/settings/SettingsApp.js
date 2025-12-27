@@ -1,109 +1,33 @@
 /**
  * WordPress dependencies
  */
-import { __, sprintf } from '@wordpress/i18n';
+import { __ } from '@wordpress/i18n';
 import { useState, useEffect } from '@wordpress/element';
-import {
-	Button,
-	Notice,
-	RadioControl,
-	Card,
-	CardBody,
-	ButtonGroup,
-	TabPanel,
-} from '@wordpress/components';
-import apiFetch from '@wordpress/api-fetch';
+import { Notice, TabPanel } from '@wordpress/components';
+
+/**
+ * Internal dependencies
+ */
+import ConnectionTab from './ConnectionTab';
+import AdvancedTab from './AdvancedTab';
+import { saveSettings } from './settings-api';
 
 /**
  * Settings App Component
  *
+ * Main settings page with tabs for Connection and Advanced settings.
+ * Handles OAuth callback and notice display. Each tab manages its own loading state.
+ *
  * @return {JSX.Element} The settings app
  */
 export default function SettingsApp() {
-	const [connected, setConnected] = useState(false);
-	const [mode, setMode] = useState('test');
-	const [organizationId, setOrganizationId] = useState('');
-	const [profileId, setProfileId] = useState('');
-	const [tokenExpires, setTokenExpires] = useState(null);
-	const [isLoading, setIsLoading] = useState(true);
-	const [isRefreshing, setIsRefreshing] = useState(false);
-	const [isSaving, setIsSaving] = useState(false);
 	const [notice, setNotice] = useState(null);
-	const [allSettings, setAllSettings] = useState({});
-	const [isLoadingAdvanced, setIsLoadingAdvanced] = useState(false);
+	const [currentTab, setCurrentTab] = useState('connection');
+	const [shouldReloadConnection, setShouldReloadConnection] = useState(false);
 
-	// Load connection settings
-	const loadConnectionSettings = () => {
-		setIsLoading(true);
-
-		apiFetch({ path: '/wp/v2/settings' })
-			.then((settings) => {
-				setConnected(settings.fair_payment_mollie_connected || false);
-				setMode(settings.fair_payment_mode || 'test');
-				setOrganizationId(settings.fair_payment_organization_id || '');
-				setProfileId(settings.fair_payment_mollie_profile_id || '');
-				setTokenExpires(
-					settings.fair_payment_mollie_token_expires || null
-				);
-				setIsLoading(false);
-			})
-			.catch((error) => {
-				setNotice({
-					status: 'error',
-					message: __('Failed to load settings.', 'fair-payment'),
-				});
-				setIsLoading(false);
-			});
-	};
-
-	// Load advanced settings
-	const loadAdvancedSettings = () => {
-		setIsLoadingAdvanced(true);
-
-		apiFetch({ path: '/wp/v2/settings' })
-			.then((settings) => {
-				// Store all Mollie-related settings for Advanced tab
-				setAllSettings({
-					fair_payment_mollie_access_token:
-						settings.fair_payment_mollie_access_token || '',
-					fair_payment_mollie_refresh_token:
-						settings.fair_payment_mollie_refresh_token || '',
-					fair_payment_mollie_token_expires:
-						settings.fair_payment_mollie_token_expires || null,
-					fair_payment_mollie_site_id:
-						settings.fair_payment_mollie_site_id || '',
-					fair_payment_mollie_connected:
-						settings.fair_payment_mollie_connected || false,
-					fair_payment_mollie_profile_id:
-						settings.fair_payment_mollie_profile_id || '',
-					fair_payment_test_api_key:
-						settings.fair_payment_test_api_key || '',
-					fair_payment_live_api_key:
-						settings.fair_payment_live_api_key || '',
-					fair_payment_mode: settings.fair_payment_mode || 'test',
-					fair_payment_organization_id:
-						settings.fair_payment_organization_id || '',
-				});
-				setIsLoadingAdvanced(false);
-			})
-			.catch((error) => {
-				setNotice({
-					status: 'error',
-					message: __(
-						'Failed to load advanced settings.',
-						'fair-payment'
-					),
-				});
-				setIsLoadingAdvanced(false);
-			});
-	};
-
-	// Load settings on mount
-	useEffect(() => {
-		loadConnectionSettings();
-	}, []);
-
-	// Handle OAuth callback on mount
+	/**
+	 * Handle OAuth callback on mount
+	 */
 	useEffect(() => {
 		const params = new URLSearchParams(window.location.search);
 		const accessToken = params.get('mollie_access_token');
@@ -163,12 +87,7 @@ export default function SettingsApp() {
 			// Debug: Log data being sent to API
 			console.log('[Fair Payment OAuth] Saving settings:', settingsData);
 
-			setIsLoading(true);
-			apiFetch({
-				path: '/wp/v2/settings',
-				method: 'POST',
-				data: settingsData,
-			})
+			saveSettings(settingsData)
 				.then((response) => {
 					// Debug: Log successful save
 					console.log(
@@ -183,8 +102,8 @@ export default function SettingsApp() {
 						window.location.pathname + '?page=fair-payment-settings'
 					);
 
-					// Reload settings to reflect saved OAuth data
-					loadConnectionSettings();
+					// Trigger reload in ConnectionTab
+					setShouldReloadConnection(true);
 
 					setNotice({
 						status: 'success',
@@ -211,7 +130,6 @@ export default function SettingsApp() {
 								'fair-payment'
 							) + (error.message || 'Unknown error'),
 					});
-					setIsLoading(false);
 				});
 		} else if (accessToken && !refreshToken) {
 			// Debug: Access token received but no refresh token
@@ -228,374 +146,37 @@ export default function SettingsApp() {
 		}
 	}, []);
 
-	// Handle Connect button click
-	const handleConnect = () => {
-		const siteId = btoa(window.location.hostname);
-		const returnUrl =
-			window.location.href.split('?')[0] + '?page=fair-payment-settings';
-		const siteName = document.title;
-		const siteUrl = window.location.origin;
+	/**
+	 * Reset shouldReloadConnection flag after it's been used
+	 */
+	useEffect(() => {
+		if (shouldReloadConnection) {
+			setShouldReloadConnection(false);
+		}
+	}, [shouldReloadConnection]);
 
-		const authorizeUrl = new URL(
-			'https://fair-event-plugins.com/oauth/authorize'
+	/**
+	 * Handle tab selection
+	 *
+	 * @param {string} tabName Name of selected tab
+	 */
+	const handleTabSelect = (tabName) => {
+		console.log(
+			'[Fair Payment] Tab selected:',
+			tabName,
+			'(current:',
+			currentTab,
+			')'
 		);
-		authorizeUrl.searchParams.set('site_id', siteId);
-		authorizeUrl.searchParams.set('return_url', returnUrl);
-		authorizeUrl.searchParams.set('site_name', siteName);
-		authorizeUrl.searchParams.set('site_url', siteUrl);
 
-		window.location.href = authorizeUrl.toString();
-	};
-
-	// Handle Disconnect button click
-	const handleDisconnect = () => {
-		if (
-			!confirm(
-				__(
-					'Are you sure you want to disconnect from Mollie? You will need to reconnect to accept payments.',
-					'fair-payment'
-				)
-			)
-		) {
+		// Only update tab if switching to different tab
+		if (tabName === currentTab) {
+			console.log('[Fair Payment] Same tab, skipping');
 			return;
 		}
 
-		setIsSaving(true);
-		setNotice(null);
-
-		apiFetch({
-			path: '/wp/v2/settings',
-			method: 'POST',
-			data: {
-				fair_payment_mollie_access_token: '',
-				fair_payment_mollie_refresh_token: '',
-				fair_payment_mollie_token_expires: 0,
-				fair_payment_mollie_connected: false,
-			},
-		})
-			.then(() => {
-				// Reload settings to reflect disconnected state
-				loadConnectionSettings();
-
-				setNotice({
-					status: 'success',
-					message: __('Disconnected from Mollie.', 'fair-payment'),
-				});
-				setIsSaving(false);
-			})
-			.catch((error) => {
-				setNotice({
-					status: 'error',
-					message: __('Failed to disconnect.', 'fair-payment'),
-				});
-				setIsSaving(false);
-			});
+		setCurrentTab(tabName);
 	};
-
-	// Handle mode change
-	const handleModeChange = (newMode) => {
-		setIsSaving(true);
-		setNotice(null);
-
-		apiFetch({
-			path: '/wp/v2/settings',
-			method: 'POST',
-			data: {
-				fair_payment_mode: newMode,
-			},
-		})
-			.then(() => {
-				// Reload settings to reflect mode change
-				loadConnectionSettings();
-
-				setNotice({
-					status: 'success',
-					message: sprintf(
-						/* translators: %s: mode name (Test or Live) */
-						__('Switched to %s mode.', 'fair-payment'),
-						newMode === 'test'
-							? __('Test', 'fair-payment')
-							: __('Live', 'fair-payment')
-					),
-				});
-				setIsSaving(false);
-			})
-			.catch((error) => {
-				setNotice({
-					status: 'error',
-					message: __('Failed to change mode.', 'fair-payment'),
-				});
-				setIsSaving(false);
-			});
-	};
-
-	// Handle manual token refresh
-	const handleRefreshToken = () => {
-		setIsRefreshing(true);
-		setNotice(null);
-
-		// Trigger a refresh by making a test API call
-		// The MolliePaymentHandler will automatically refresh the token
-		apiFetch({
-			path: '/fair-payment/v1/test-connection',
-			method: 'POST',
-		})
-			.then(() => {
-				// Reload settings to show updated token expiration
-				loadConnectionSettings();
-
-				setNotice({
-					status: 'success',
-					message: __(
-						'Connection refreshed successfully.',
-						'fair-payment'
-					),
-				});
-				setIsRefreshing(false);
-			})
-			.catch((error) => {
-				setNotice({
-					status: 'error',
-					message: __(
-						'Failed to refresh connection. Please try reconnecting.',
-						'fair-payment'
-					),
-				});
-				setIsRefreshing(false);
-			});
-	};
-
-	if (isLoading) {
-		return (
-			<div className="wrap">
-				<h1>{__('Fair Payment Settings', 'fair-payment')}</h1>
-				<p>{__('Loading...', 'fair-payment')}</p>
-			</div>
-		);
-	}
-
-	// Render Connection tab content
-	const renderConnectionTab = () => (
-		<Card>
-			<CardBody>
-				<h2>{__('Mollie Connection', 'fair-payment')}</h2>
-
-				{!connected ? (
-					<>
-						<p>
-							{__(
-								'Connect your Mollie account to accept payments. This uses secure OAuth authentication.',
-								'fair-payment'
-							)}
-						</p>
-						<Button isPrimary onClick={handleConnect}>
-							{__('Connect with Mollie', 'fair-payment')}
-						</Button>
-					</>
-				) : (
-					<>
-						<Notice status="success" isDismissible={false}>
-							{__('Connected to Mollie', 'fair-payment')}
-						</Notice>
-
-						{organizationId && (
-							<div style={{ marginTop: '1rem' }}>
-								<p>
-									<strong>
-										{__('Organization ID:', 'fair-payment')}
-									</strong>{' '}
-									<code>{organizationId}</code>
-								</p>
-							</div>
-						)}
-
-						<div style={{ marginTop: '0.5rem' }}>
-							<p>
-								<strong>
-									{__('Profile ID:', 'fair-payment')}
-								</strong>{' '}
-								{profileId ? (
-									<code>{profileId}</code>
-								) : (
-									<span style={{ color: '#d63638' }}>
-										{__(
-											'Missing (required for payments)',
-											'fair-payment'
-										)}
-									</span>
-								)}
-							</p>
-							{!profileId && (
-								<p
-									style={{
-										fontSize: '0.9em',
-										color: '#d63638',
-										marginTop: '0.5rem',
-									}}
-								>
-									{__(
-										'Please reconnect to Mollie to fetch the profile ID.',
-										'fair-payment'
-									)}
-								</p>
-							)}
-						</div>
-
-						{tokenExpires && (
-							<div style={{ marginTop: '0.5rem' }}>
-								<p
-									style={{
-										fontSize: '0.9em',
-										color: '#666',
-									}}
-								>
-									{sprintf(
-										/* translators: %s: expiration date */
-										__('Token expires: %s', 'fair-payment'),
-										new Date(
-											tokenExpires * 1000
-										).toLocaleString()
-									)}
-								</p>
-							</div>
-						)}
-
-						<div style={{ marginTop: '1.5rem' }}>
-							<RadioControl
-								label={__('Mode', 'fair-payment')}
-								selected={mode}
-								options={[
-									{
-										label: __('Test Mode', 'fair-payment'),
-										value: 'test',
-									},
-									{
-										label: __('Live Mode', 'fair-payment'),
-										value: 'live',
-									},
-								]}
-								onChange={handleModeChange}
-								disabled={isSaving}
-							/>
-						</div>
-
-						<div style={{ marginTop: '1.5rem' }}>
-							<ButtonGroup>
-								<Button
-									isDestructive
-									onClick={handleDisconnect}
-									disabled={isSaving}
-								>
-									{__('Disconnect', 'fair-payment')}
-								</Button>
-								<Button
-									isSecondary
-									onClick={handleRefreshToken}
-									isBusy={isRefreshing}
-									disabled={isRefreshing}
-								>
-									{isRefreshing
-										? __('Refreshing...', 'fair-payment')
-										: __(
-												'Refresh Connection',
-												'fair-payment'
-											)}
-								</Button>
-							</ButtonGroup>
-						</div>
-					</>
-				)}
-			</CardBody>
-		</Card>
-	);
-
-	// Render Advanced tab content
-	const renderAdvancedTab = () => (
-		<Card>
-			<CardBody>
-				<h2>{__('Advanced Settings', 'fair-payment')}</h2>
-				<p style={{ color: '#666', marginBottom: '1.5rem' }}>
-					{__(
-						'All Mollie-related settings stored in the database. For troubleshooting purposes only.',
-						'fair-payment'
-					)}
-				</p>
-
-				{isLoadingAdvanced ? (
-					<p>{__('Loading settings...', 'fair-payment')}</p>
-				) : (
-					<table
-						className="widefat fixed striped"
-						style={{ marginTop: '1rem' }}
-					>
-						<thead>
-							<tr>
-								<th style={{ width: '40%' }}>
-									{__('Setting Name', 'fair-payment')}
-								</th>
-								<th>{__('Value', 'fair-payment')}</th>
-							</tr>
-						</thead>
-						<tbody>
-							{Object.entries(allSettings).map(([key, value]) => {
-								// Mask sensitive values
-								const isSensitive =
-									key.includes('token') ||
-									key.includes('api_key');
-								let displayValue = value;
-
-								if (isSensitive && value) {
-									displayValue = '•'.repeat(
-										Math.min(value.length, 40)
-									);
-								} else if (value === null || value === '') {
-									displayValue = (
-										<em style={{ color: '#999' }}>
-											{__('(empty)', 'fair-payment')}
-										</em>
-									);
-								} else if (typeof value === 'boolean') {
-									displayValue = value
-										? __('true', 'fair-payment')
-										: __('false', 'fair-payment');
-								} else if (
-									key ===
-										'fair_payment_mollie_token_expires' &&
-									value
-								) {
-									displayValue = `${value} (${new Date(value * 1000).toLocaleString()})`;
-								}
-
-								return (
-									<tr key={key}>
-										<td>
-											<code
-												style={{
-													fontSize: '0.9em',
-												}}
-											>
-												{key}
-											</code>
-										</td>
-										<td>
-											<code
-												style={{
-													fontSize: '0.9em',
-													wordBreak: 'break-all',
-												}}
-											>
-												{displayValue}
-											</code>
-										</td>
-									</tr>
-								);
-							})}
-						</tbody>
-					</table>
-				)}
-			</CardBody>
-		</Card>
-	);
 
 	return (
 		<div className="wrap">
@@ -624,19 +205,19 @@ export default function SettingsApp() {
 						title: __('Advanced', 'fair-payment'),
 					},
 				]}
-				onSelect={(tabName) => {
-					// Reload settings when switching tabs
-					if (tabName === 'connection') {
-						loadConnectionSettings();
-					} else if (tabName === 'advanced') {
-						loadAdvancedSettings();
-					}
-				}}
+				onSelect={handleTabSelect}
 			>
 				{(tab) => (
 					<div style={{ marginTop: '1rem' }}>
-						{tab.name === 'connection' && renderConnectionTab()}
-						{tab.name === 'advanced' && renderAdvancedTab()}
+						{tab.name === 'connection' && (
+							<ConnectionTab
+								onNotice={setNotice}
+								shouldReload={shouldReloadConnection}
+							/>
+						)}
+						{tab.name === 'advanced' && (
+							<AdvancedTab onNotice={setNotice} />
+						)}
 					</div>
 				)}
 			</TabPanel>

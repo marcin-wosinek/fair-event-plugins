@@ -105,12 +105,17 @@ class MolliePaymentHandler {
 	 * @return string|false New access token or false if refresh failed.
 	 */
 	private function refresh_access_token() {
+		error_log( '[Fair Payment] Token refresh started' );
+
 		$refresh_token = get_option( 'fair_payment_mollie_refresh_token' );
 
 		if ( empty( $refresh_token ) ) {
+			error_log( '[Fair Payment] Token refresh failed: No refresh token found in database' );
 			update_option( 'fair_payment_mollie_connected', false );
 			return false;
 		}
+
+		error_log( '[Fair Payment] Sending refresh request to fair-event-plugins.com with token: ' . substr( $refresh_token, 0, 15 ) . '...' );
 
 		$response = wp_remote_post(
 			'https://fair-event-plugins.com/oauth/refresh',
@@ -121,22 +126,39 @@ class MolliePaymentHandler {
 		);
 
 		if ( is_wp_error( $response ) ) {
-			error_log( 'Mollie OAuth token refresh failed: ' . $response->get_error_message() );
+			error_log( '[Fair Payment] Token refresh failed: HTTP error - ' . $response->get_error_message() );
+			error_log( '[Fair Payment] Error code: ' . $response->get_error_code() );
 			return false;
 		}
 
-		$body = json_decode( wp_remote_retrieve_body( $response ), true );
+		$http_code     = wp_remote_retrieve_response_code( $response );
+		$response_body = wp_remote_retrieve_body( $response );
+
+		error_log( '[Fair Payment] OAuth server responded with HTTP ' . $http_code );
+		error_log( '[Fair Payment] Response body: ' . $response_body );
+
+		$body = json_decode( $response_body, true );
+
+		if ( json_last_error() !== JSON_ERROR_NONE ) {
+			error_log( '[Fair Payment] Token refresh failed: Invalid JSON response - ' . json_last_error_msg() );
+			return false;
+		}
 
 		if ( empty( $body['success'] ) ) {
 			update_option( 'fair_payment_mollie_connected', false );
-			error_log( 'Mollie OAuth token refresh failed: Invalid response from fair-platform' );
+			$error_message = isset( $body['message'] ) ? $body['message'] : 'Unknown error';
+			error_log( '[Fair Payment] Token refresh failed: Server returned success=false - ' . $error_message );
+			error_log( '[Fair Payment] Full response: ' . wp_json_encode( $body ) );
 			return false;
 		}
 
 		// Verify required keys exist in response
 		if ( ! isset( $body['data']['access_token'] ) || ! isset( $body['data']['expires_in'] ) ) {
 			update_option( 'fair_payment_mollie_connected', false );
-			error_log( 'Mollie OAuth token refresh failed: Missing access_token or expires_in in response. Response: ' . wp_json_encode( $body ) );
+			error_log( '[Fair Payment] Token refresh failed: Missing required fields in response' );
+			error_log( '[Fair Payment] Has access_token: ' . ( isset( $body['data']['access_token'] ) ? 'yes' : 'no' ) );
+			error_log( '[Fair Payment] Has expires_in: ' . ( isset( $body['data']['expires_in'] ) ? 'yes' : 'no' ) );
+			error_log( '[Fair Payment] Full response: ' . wp_json_encode( $body ) );
 			return false;
 		}
 
@@ -145,6 +167,8 @@ class MolliePaymentHandler {
 		$expires_in = $body['data']['expires_in'];
 		update_option( 'fair_payment_mollie_access_token', $new_token );
 		update_option( 'fair_payment_mollie_token_expires', time() + $expires_in );
+
+		error_log( '[Fair Payment] Token refresh successful. New token: ' . substr( $new_token, 0, 15 ) . '... (expires in ' . $expires_in . ' seconds)' );
 
 		return $new_token;
 	}

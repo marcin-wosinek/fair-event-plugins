@@ -32,5 +32,8 @@ class RestHooks {
 
 		$webhook_endpoint = new \FairPayment\API\WebhookEndpoint();
 		$webhook_endpoint->register_routes();
+
+		$connection_controller = new \FairPayment\API\ConnectionController();
+		$connection_controller->register_routes();
 	}
 }
