@@ -62,7 +62,7 @@ class AdminPages {
 
 		// Copy Event page (hidden from menu, accessed via row action)
 		$copy_hookname = add_submenu_page(
-			null,
+			'', // Hidden from menu (empty string instead of null for PHP 8.1+ compatibility)
 			__( 'Copy Event', 'fair-events' ),
 			__( 'Copy Event', 'fair-events' ),
 			'edit_posts',

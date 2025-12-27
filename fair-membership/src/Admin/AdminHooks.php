@@ -76,7 +76,7 @@ class AdminHooks {
 
 		// Hidden page for managing group members
 		add_submenu_page(
-			null, // Hidden from menu
+			'', // Hidden from menu (empty string instead of null for PHP 8.1+ compatibility)
 			__( 'Group Members', 'fair-membership' ),
 			__( 'Group Members', 'fair-membership' ),
 			'manage_options',

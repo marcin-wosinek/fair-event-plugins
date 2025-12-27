@@ -61,7 +61,7 @@ class AdminHooks {
 
 		// Submenu page - Attendance confirmation (hidden from menu).
 		add_submenu_page(
-			null, // No parent = hidden from menu.
+			'', // Hidden from menu (empty string instead of null for PHP 8.1+ compatibility)
 			__( 'Confirm Attendance', 'fair-rsvp' ),
 			__( 'Confirm Attendance', 'fair-rsvp' ),
 			'manage_options',

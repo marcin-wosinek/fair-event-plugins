@@ -67,6 +67,34 @@ These ignore patterns ensure that only source files are formatted, not generated
 
 See [PHP_PATTERNS.md](./PHP_PATTERNS.md) for complete examples and anti-patterns to avoid.
 
+#### WordPress Admin Menus - PHP 8.1+ Compatibility
+
+**Hidden Menu Pages**: Use empty string `''` instead of `null` for the parent slug parameter:
+
+```php
+// ❌ WRONG - Causes PHP 8.1+ deprecation warnings
+add_submenu_page(
+    null,  // Triggers strpos(): Passing null to parameter #1 deprecation
+    __( 'Hidden Page', 'plugin-name' ),
+    __( 'Hidden Page', 'plugin-name' ),
+    'manage_options',
+    'plugin-name-hidden',
+    array( $this, 'render_page' )
+);
+
+// ✅ CORRECT - PHP 8.1+ compatible
+add_submenu_page(
+    '',  // Empty string hides page from menu without deprecation warnings
+    __( 'Hidden Page', 'plugin-name' ),
+    __( 'Hidden Page', 'plugin-name' ),
+    'manage_options',
+    'plugin-name-hidden',
+    array( $this, 'render_page' )
+);
+```
+
+**Why**: WordPress passes the parent slug through `wp_normalize_path()` which uses `strpos()` and `str_replace()`. In PHP 8.1+, these functions reject `null` values, causing deprecation warnings. Empty string achieves the same result (hidden page) without warnings.
+
 ## Key Integration Points
 
 - Block registration happens in `fair-calendar-button.php:register_simple_payment_block()`
