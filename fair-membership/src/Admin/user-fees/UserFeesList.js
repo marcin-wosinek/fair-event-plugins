@@ -1,5 +1,6 @@
 import { __ } from '@wordpress/i18n';
 import { Button } from '@wordpress/components';
+import { formatDateOrFallback } from 'fair-events-shared';
 
 const UserFeesList = ({
 	userFees,
@@ -89,7 +90,7 @@ const UserFeesList = ({
 							)}
 						</td>
 						<td>€{parseFloat(userFee.amount).toFixed(2)}</td>
-						<td>{userFee.due_date || '-'}</td>
+						<td>{formatDateOrFallback(userFee.due_date)}</td>
 						<td>{getStatusBadge(userFee.status)}</td>
 						<td>
 							<Button

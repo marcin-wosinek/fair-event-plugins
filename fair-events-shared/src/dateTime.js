@@ -29,3 +29,17 @@ export const calculateDuration = (startTime, endTime) => {
 		return null;
 	}
 };
+
+/**
+ * Format a date value with a fallback for empty values
+ *
+ * @param {string|null|undefined} dateValue Date value to display
+ * @param {string} fallback Fallback text to display if date is empty (default: '-')
+ * @return {string} Formatted date or fallback text
+ */
+export const formatDateOrFallback = (dateValue, fallback = '-') => {
+	if (!dateValue || dateValue === '') {
+		return fallback;
+	}
+	return dateValue;
+};

@@ -180,6 +180,14 @@ class Installer {
 			)
 		);
 
+		// Convert 0000-00-00 to NULL in group_fees table
+		$wpdb->query(
+			$wpdb->prepare(
+				"UPDATE %i SET due_date = NULL WHERE due_date = '0000-00-00'",
+				$group_fees_table
+			)
+		);
+
 		// Make due_date nullable in user_fees table
 		$wpdb->query(
 			$wpdb->prepare(
@@ -188,7 +196,15 @@ class Installer {
 			)
 		);
 
-		DebugLogger::info( 'Migrated to version 1.5.0 - Made due_date nullable in group_fees and user_fees tables' );
+		// Convert 0000-00-00 to NULL in user_fees table
+		$wpdb->query(
+			$wpdb->prepare(
+				"UPDATE %i SET due_date = NULL WHERE due_date = '0000-00-00'",
+				$user_fees_table
+			)
+		);
+
+		DebugLogger::info( 'Migrated to version 1.5.0 - Made due_date nullable and converted 0000-00-00 to NULL in group_fees and user_fees tables' );
 	}
 
 	/**

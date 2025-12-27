@@ -1,5 +1,6 @@
 import { __ } from '@wordpress/i18n';
 import { Button } from '@wordpress/components';
+import { formatDateOrFallback } from 'fair-events-shared';
 
 const GroupFeesList = ({ groupFees, onEdit, onDelete }) => {
 	if (!groupFees || groupFees.length === 0) {
@@ -63,7 +64,7 @@ const GroupFeesList = ({ groupFees, onEdit, onDelete }) => {
 								).toFixed(2)}
 							</span>
 						</td>
-						<td>{groupFee.due_date || '-'}</td>
+						<td>{formatDateOrFallback(groupFee.due_date)}</td>
 						<td>
 							{new Date(groupFee.created_at).toLocaleDateString()}
 						</td>

@@ -71,7 +71,20 @@ const GroupForm = ({ group, onSave, onCancel }) => {
 		}
 
 		try {
-			await onSave(formData);
+			// Build data object with only non-empty values
+			const data = {
+				name: formData.name,
+				slug: formData.slug,
+				access_control: formData.access_control,
+				status: formData.status,
+			};
+
+			// Only include description if not empty
+			if (formData.description && formData.description !== '') {
+				data.description = formData.description;
+			}
+
+			await onSave(data);
 			// Parent component will close the modal
 		} catch (err) {
 			setError(err.message);

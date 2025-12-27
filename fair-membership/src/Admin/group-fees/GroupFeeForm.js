@@ -56,10 +56,16 @@ const GroupFeeForm = ({ groupFee, onSave, onCancel }) => {
 		try {
 			const data = {
 				title,
-				description,
 				default_amount: parseFloat(defaultAmount),
-				due_date: dueDate,
 			};
+
+			// Only include non-empty values
+			if (description && description !== '') {
+				data.description = description;
+			}
+			if (dueDate && dueDate !== '') {
+				data.due_date = dueDate;
+			}
 
 			// Only include group_id for new fees
 			if (!groupFee) {

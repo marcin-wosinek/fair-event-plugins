@@ -73,9 +73,15 @@ const UserFeeForm = ({ userFee, onSave, onCancel }) => {
 		try {
 			const data = {
 				amount: parseFloat(amount),
-				due_date: dueDate,
-				notes,
 			};
+
+			// Only include non-empty values
+			if (dueDate && dueDate !== '') {
+				data.due_date = dueDate;
+			}
+			if (notes && notes !== '') {
+				data.notes = notes;
+			}
 
 			// Only include user_id and title for new fees
 			if (!userFee) {
