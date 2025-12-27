@@ -10,6 +10,7 @@ import {
 	Card,
 	CardBody,
 	ButtonGroup,
+	TabPanel,
 } from '@wordpress/components';
 import apiFetch from '@wordpress/api-fetch';
 
@@ -28,6 +29,7 @@ export default function SettingsApp() {
 	const [isRefreshing, setIsRefreshing] = useState(false);
 	const [isSaving, setIsSaving] = useState(false);
 	const [notice, setNotice] = useState(null);
+	const [allSettings, setAllSettings] = useState({});
 
 	// Load settings on mount
 	useEffect(() => {
@@ -40,6 +42,30 @@ export default function SettingsApp() {
 				setTokenExpires(
 					settings.fair_payment_mollie_token_expires || null
 				);
+
+				// Store all Mollie-related settings for Advanced tab
+				setAllSettings({
+					fair_payment_mollie_access_token:
+						settings.fair_payment_mollie_access_token || '',
+					fair_payment_mollie_refresh_token:
+						settings.fair_payment_mollie_refresh_token || '',
+					fair_payment_mollie_token_expires:
+						settings.fair_payment_mollie_token_expires || null,
+					fair_payment_mollie_site_id:
+						settings.fair_payment_mollie_site_id || '',
+					fair_payment_mollie_connected:
+						settings.fair_payment_mollie_connected || false,
+					fair_payment_mollie_profile_id:
+						settings.fair_payment_mollie_profile_id || '',
+					fair_payment_test_api_key:
+						settings.fair_payment_test_api_key || '',
+					fair_payment_live_api_key:
+						settings.fair_payment_live_api_key || '',
+					fair_payment_mode: settings.fair_payment_mode || 'test',
+					fair_payment_organization_id:
+						settings.fair_payment_organization_id || '',
+				});
+
 				setIsLoading(false);
 			})
 			.catch((error) => {
@@ -273,6 +299,220 @@ export default function SettingsApp() {
 		);
 	}
 
+	// Render Connection tab content
+	const renderConnectionTab = () => (
+		<Card>
+			<CardBody>
+				<h2>{__('Mollie Connection', 'fair-payment')}</h2>
+
+				{!connected ? (
+					<>
+						<p>
+							{__(
+								'Connect your Mollie account to accept payments. This uses secure OAuth authentication.',
+								'fair-payment'
+							)}
+						</p>
+						<Button isPrimary onClick={handleConnect}>
+							{__('Connect with Mollie', 'fair-payment')}
+						</Button>
+					</>
+				) : (
+					<>
+						<Notice status="success" isDismissible={false}>
+							{__('Connected to Mollie', 'fair-payment')}
+						</Notice>
+
+						{organizationId && (
+							<div style={{ marginTop: '1rem' }}>
+								<p>
+									<strong>
+										{__('Organization ID:', 'fair-payment')}
+									</strong>{' '}
+									<code>{organizationId}</code>
+								</p>
+							</div>
+						)}
+
+						<div style={{ marginTop: '0.5rem' }}>
+							<p>
+								<strong>
+									{__('Profile ID:', 'fair-payment')}
+								</strong>{' '}
+								{profileId ? (
+									<code>{profileId}</code>
+								) : (
+									<span style={{ color: '#d63638' }}>
+										{__(
+											'Missing (required for payments)',
+											'fair-payment'
+										)}
+									</span>
+								)}
+							</p>
+							{!profileId && (
+								<p
+									style={{
+										fontSize: '0.9em',
+										color: '#d63638',
+										marginTop: '0.5rem',
+									}}
+								>
+									{__(
+										'Please reconnect to Mollie to fetch the profile ID.',
+										'fair-payment'
+									)}
+								</p>
+							)}
+						</div>
+
+						{tokenExpires && (
+							<div style={{ marginTop: '0.5rem' }}>
+								<p
+									style={{
+										fontSize: '0.9em',
+										color: '#666',
+									}}
+								>
+									{sprintf(
+										/* translators: %s: expiration date */
+										__('Token expires: %s', 'fair-payment'),
+										new Date(
+											tokenExpires * 1000
+										).toLocaleString()
+									)}
+								</p>
+							</div>
+						)}
+
+						<div style={{ marginTop: '1.5rem' }}>
+							<RadioControl
+								label={__('Mode', 'fair-payment')}
+								selected={mode}
+								options={[
+									{
+										label: __('Test Mode', 'fair-payment'),
+										value: 'test',
+									},
+									{
+										label: __('Live Mode', 'fair-payment'),
+										value: 'live',
+									},
+								]}
+								onChange={handleModeChange}
+								disabled={isSaving}
+							/>
+						</div>
+
+						<div style={{ marginTop: '1.5rem' }}>
+							<ButtonGroup>
+								<Button
+									isDestructive
+									onClick={handleDisconnect}
+									disabled={isSaving}
+								>
+									{__('Disconnect', 'fair-payment')}
+								</Button>
+								<Button
+									isSecondary
+									onClick={handleRefreshToken}
+									isBusy={isRefreshing}
+									disabled={isRefreshing}
+								>
+									{isRefreshing
+										? __('Refreshing...', 'fair-payment')
+										: __(
+												'Refresh Connection',
+												'fair-payment'
+											)}
+								</Button>
+							</ButtonGroup>
+						</div>
+					</>
+				)}
+			</CardBody>
+		</Card>
+	);
+
+	// Render Advanced tab content
+	const renderAdvancedTab = () => (
+		<Card>
+			<CardBody>
+				<h2>{__('Advanced Settings', 'fair-payment')}</h2>
+				<p style={{ color: '#666', marginBottom: '1.5rem' }}>
+					{__(
+						'All Mollie-related settings stored in the database. For troubleshooting purposes only.',
+						'fair-payment'
+					)}
+				</p>
+
+				<table
+					className="widefat fixed striped"
+					style={{ marginTop: '1rem' }}
+				>
+					<thead>
+						<tr>
+							<th style={{ width: '40%' }}>
+								{__('Setting Name', 'fair-payment')}
+							</th>
+							<th>{__('Value', 'fair-payment')}</th>
+						</tr>
+					</thead>
+					<tbody>
+						{Object.entries(allSettings).map(([key, value]) => {
+							// Mask sensitive values
+							const isSensitive =
+								key.includes('token') ||
+								key.includes('api_key');
+							let displayValue = value;
+
+							if (isSensitive && value) {
+								displayValue = '•'.repeat(
+									Math.min(value.length, 40)
+								);
+							} else if (value === null || value === '') {
+								displayValue = (
+									<em style={{ color: '#999' }}>
+										{__('(empty)', 'fair-payment')}
+									</em>
+								);
+							} else if (typeof value === 'boolean') {
+								displayValue = value
+									? __('true', 'fair-payment')
+									: __('false', 'fair-payment');
+							} else if (
+								key === 'fair_payment_mollie_token_expires' &&
+								value
+							) {
+								displayValue = `${value} (${new Date(value * 1000).toLocaleString()})`;
+							}
+
+							return (
+								<tr key={key}>
+									<td>
+										<code style={{ fontSize: '0.9em' }}>
+											{key}
+										</code>
+									</td>
+									<td>
+										<code
+											style={{
+												fontSize: '0.9em',
+												wordBreak: 'break-all',
+											}}
+										>
+											{displayValue}
+										</code>
+									</td>
+								</tr>
+							);
+						})}
+					</tbody>
+				</table>
+			</CardBody>
+		</Card>
+	);
+
 	return (
 		<div className="wrap">
 			<h1>{__('Fair Payment Settings', 'fair-payment')}</h1>
@@ -287,152 +527,27 @@ export default function SettingsApp() {
 				</Notice>
 			)}
 
-			<Card>
-				<CardBody>
-					<h2>{__('Mollie Connection', 'fair-payment')}</h2>
-
-					{!connected ? (
-						<>
-							<p>
-								{__(
-									'Connect your Mollie account to accept payments. This uses secure OAuth authentication.',
-									'fair-payment'
-								)}
-							</p>
-							<Button isPrimary onClick={handleConnect}>
-								{__('Connect with Mollie', 'fair-payment')}
-							</Button>
-						</>
-					) : (
-						<>
-							<Notice status="success" isDismissible={false}>
-								{__('Connected to Mollie', 'fair-payment')}
-							</Notice>
-
-							{organizationId && (
-								<div style={{ marginTop: '1rem' }}>
-									<p>
-										<strong>
-											{__(
-												'Organization ID:',
-												'fair-payment'
-											)}
-										</strong>{' '}
-										<code>{organizationId}</code>
-									</p>
-								</div>
-							)}
-
-							<div style={{ marginTop: '0.5rem' }}>
-								<p>
-									<strong>
-										{__('Profile ID:', 'fair-payment')}
-									</strong>{' '}
-									{profileId ? (
-										<code>{profileId}</code>
-									) : (
-										<span style={{ color: '#d63638' }}>
-											{__(
-												'Missing (required for payments)',
-												'fair-payment'
-											)}
-										</span>
-									)}
-								</p>
-								{!profileId && (
-									<p
-										style={{
-											fontSize: '0.9em',
-											color: '#d63638',
-											marginTop: '0.5rem',
-										}}
-									>
-										{__(
-											'Please reconnect to Mollie to fetch the profile ID.',
-											'fair-payment'
-										)}
-									</p>
-								)}
-							</div>
-
-							{tokenExpires && (
-								<div style={{ marginTop: '0.5rem' }}>
-									<p
-										style={{
-											fontSize: '0.9em',
-											color: '#666',
-										}}
-									>
-										{sprintf(
-											/* translators: %s: expiration date */
-											__(
-												'Token expires: %s',
-												'fair-payment'
-											),
-											new Date(
-												tokenExpires * 1000
-											).toLocaleString()
-										)}
-									</p>
-								</div>
-							)}
-
-							<div style={{ marginTop: '1.5rem' }}>
-								<RadioControl
-									label={__('Mode', 'fair-payment')}
-									selected={mode}
-									options={[
-										{
-											label: __(
-												'Test Mode',
-												'fair-payment'
-											),
-											value: 'test',
-										},
-										{
-											label: __(
-												'Live Mode',
-												'fair-payment'
-											),
-											value: 'live',
-										},
-									]}
-									onChange={handleModeChange}
-									disabled={isSaving}
-								/>
-							</div>
-
-							<div style={{ marginTop: '1.5rem' }}>
-								<ButtonGroup>
-									<Button
-										isDestructive
-										onClick={handleDisconnect}
-										disabled={isSaving}
-									>
-										{__('Disconnect', 'fair-payment')}
-									</Button>
-									<Button
-										isSecondary
-										onClick={handleRefreshToken}
-										isBusy={isRefreshing}
-										disabled={isRefreshing}
-									>
-										{isRefreshing
-											? __(
-													'Refreshing...',
-													'fair-payment'
-												)
-											: __(
-													'Refresh Connection',
-													'fair-payment'
-												)}
-									</Button>
-								</ButtonGroup>
-							</div>
-						</>
-					)}
-				</CardBody>
-			</Card>
+			<TabPanel
+				className="fair-payment-settings-tabs"
+				activeClass="active-tab"
+				tabs={[
+					{
+						name: 'connection',
+						title: __('Connection', 'fair-payment'),
+					},
+					{
+						name: 'advanced',
+						title: __('Advanced', 'fair-payment'),
+					},
+				]}
+			>
+				{(tab) => (
+					<div style={{ marginTop: '1rem' }}>
+						{tab.name === 'connection' && renderConnectionTab()}
+						{tab.name === 'advanced' && renderAdvancedTab()}
+					</div>
+				)}
+			</TabPanel>
 		</div>
 	);
 }
