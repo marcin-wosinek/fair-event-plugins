@@ -31,10 +31,11 @@ export default function SettingsApp() {
 	const [notice, setNotice] = useState(null);
 	const [allSettings, setAllSettings] = useState({});
 	const [isLoadingAdvanced, setIsLoadingAdvanced] = useState(false);
-	const [advancedLoaded, setAdvancedLoaded] = useState(false);
 
-	// Load settings on mount
-	useEffect(() => {
+	// Load connection settings
+	const loadConnectionSettings = () => {
+		setIsLoading(true);
+
 		apiFetch({ path: '/wp/v2/settings' })
 			.then((settings) => {
 				setConnected(settings.fair_payment_mollie_connected || false);
@@ -53,14 +54,10 @@ export default function SettingsApp() {
 				});
 				setIsLoading(false);
 			});
-	}, []);
+	};
 
-	// Load advanced settings (only when Advanced tab is viewed)
+	// Load advanced settings
 	const loadAdvancedSettings = () => {
-		if (advancedLoaded) {
-			return; // Already loaded, don't fetch again
-		}
-
 		setIsLoadingAdvanced(true);
 
 		apiFetch({ path: '/wp/v2/settings' })
@@ -87,7 +84,6 @@ export default function SettingsApp() {
 					fair_payment_organization_id:
 						settings.fair_payment_organization_id || '',
 				});
-				setAdvancedLoaded(true);
 				setIsLoadingAdvanced(false);
 			})
 			.catch((error) => {
@@ -101,6 +97,11 @@ export default function SettingsApp() {
 				setIsLoadingAdvanced(false);
 			});
 	};
+
+	// Load settings on mount
+	useEffect(() => {
+		loadConnectionSettings();
+	}, []);
 
 	// Handle OAuth callback on mount
 	useEffect(() => {
@@ -181,13 +182,10 @@ export default function SettingsApp() {
 						'',
 						window.location.pathname + '?page=fair-payment-settings'
 					);
-					setConnected(true);
-					setOrganizationId(orgId || '');
-					setProfileId(profileId || '');
-					setMode(testMode === '1' ? 'test' : 'live');
-					setTokenExpires(
-						Math.floor(Date.now() / 1000) + parseInt(expiresIn)
-					);
+
+					// Reload settings to reflect saved OAuth data
+					loadConnectionSettings();
+
 					setNotice({
 						status: 'success',
 						message: __(
@@ -195,7 +193,6 @@ export default function SettingsApp() {
 							'fair-payment'
 						),
 					});
-					setIsLoading(false);
 				})
 				.catch((error) => {
 					// Debug: Log API error
@@ -277,8 +274,9 @@ export default function SettingsApp() {
 			},
 		})
 			.then(() => {
-				setConnected(false);
-				setTokenExpires(null);
+				// Reload settings to reflect disconnected state
+				loadConnectionSettings();
+
 				setNotice({
 					status: 'success',
 					message: __('Disconnected from Mollie.', 'fair-payment'),
@@ -307,7 +305,9 @@ export default function SettingsApp() {
 			},
 		})
 			.then(() => {
-				setMode(newMode);
+				// Reload settings to reflect mode change
+				loadConnectionSettings();
+
 				setNotice({
 					status: 'success',
 					message: sprintf(
@@ -341,6 +341,9 @@ export default function SettingsApp() {
 			method: 'POST',
 		})
 			.then(() => {
+				// Reload settings to show updated token expiration
+				loadConnectionSettings();
+
 				setNotice({
 					status: 'success',
 					message: __(
@@ -622,7 +625,10 @@ export default function SettingsApp() {
 					},
 				]}
 				onSelect={(tabName) => {
-					if (tabName === 'advanced') {
+					// Reload settings when switching tabs
+					if (tabName === 'connection') {
+						loadConnectionSettings();
+					} else if (tabName === 'advanced') {
 						loadAdvancedSettings();
 					}
 				}}

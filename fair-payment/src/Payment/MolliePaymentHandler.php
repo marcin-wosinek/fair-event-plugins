@@ -133,6 +133,13 @@ class MolliePaymentHandler {
 			return false;
 		}
 
+		// Verify required keys exist in response
+		if ( ! isset( $body['data']['access_token'] ) || ! isset( $body['data']['expires_in'] ) ) {
+			update_option( 'fair_payment_mollie_connected', false );
+			error_log( 'Mollie OAuth token refresh failed: Missing access_token or expires_in in response. Response: ' . wp_json_encode( $body ) );
+			return false;
+		}
+
 		// Store new token
 		$new_token  = $body['data']['access_token'];
 		$expires_in = $body['data']['expires_in'];
