@@ -8,6 +8,7 @@
 	"icon": "money-alt",
 	"description": "Simple payment block for WordPress",
 	"textdomain": "fair-payment",
+	"editorScript": "file:./index.js",
 	"render": "file:./render.php",
 	"viewScript": "file:./view.js",
 	"attributes": {
