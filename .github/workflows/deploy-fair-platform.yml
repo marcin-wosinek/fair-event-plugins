@@ -55,11 +55,35 @@ jobs:
                   run-id: ${{ github.event.workflow_run.id }}
                   github-token: ${{ secrets.GITHUB_TOKEN }}
 
+            - name: Setup Node.js (manual dispatch only)
+              if: github.event_name == 'workflow_dispatch'
+              uses: actions/setup-node@v3
+              with:
+                  node-version: '24'
+
+            - name: Cache root node_modules (manual dispatch only)
+              if: github.event_name == 'workflow_dispatch'
+              id: npm-cache-root
+              uses: actions/cache@v3
+              with:
+                  path: ./node_modules
+                  key: ${{ runner.os }}-node-root-${{ hashFiles('package-lock.json') }}
+
+            - name: Cache fair-platform node_modules (manual dispatch only)
+              if: github.event_name == 'workflow_dispatch'
+              id: npm-cache-platform
+              uses: actions/cache@v3
+              with:
+                  path: ./fair-platform/node_modules
+                  key: ${{ runner.os }}-node-platform-${{ hashFiles('fair-platform/package-lock.json') }}
+
             - name: Build fair-platform plugin (manual dispatch only)
               if: github.event_name == 'workflow_dispatch'
               run: |
                   # Setup for manual deployment
-                  npm ci
+                  if [ "${{ steps.npm-cache-root.outputs.cache-hit }}" != "true" ]; then
+                    npm ci --prefer-offline
+                  fi
 
                   # Install WP-CLI
                   curl -L -o wp-cli.phar https://github.com/wp-cli/wp-cli/releases/download/v2.12.0/wp-cli-2.12.0.phar
@@ -71,7 +95,9 @@ jobs:
 
                   # Build fair-platform React admin pages
                   cd fair-platform
-                  npm install
+                  if [ "${{ steps.npm-cache-platform.outputs.cache-hit }}" != "true" ]; then
+                    npm install --prefer-offline
+                  fi
                   npm run build
                   cd ..
 

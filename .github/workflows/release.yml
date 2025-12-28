@@ -20,8 +20,16 @@ jobs:
               with:
                   node-version: 20
 
+            - name: Cache node_modules
+              id: npm-cache
+              uses: actions/cache@v3
+              with:
+                  path: ./node_modules
+                  key: ${{ runner.os }}-node-${{ hashFiles('package-lock.json') }}
+
             - name: Install Dependencies
-              run: HUSKY=0 npm ci
+              if: steps.npm-cache.outputs.cache-hit != 'true'
+              run: HUSKY=0 npm ci --prefer-offline
 
             - name: Create Release Pull Request
               uses: changesets/action@v1
