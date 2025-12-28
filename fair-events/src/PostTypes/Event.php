@@ -531,6 +531,20 @@ class Event {
 		$event_end     = isset( $_POST['event_end'] ) ? sanitize_text_field( wp_unslash( $_POST['event_end'] ) ) : '';
 		$event_all_day = isset( $_POST['event_all_day'] ) ? true : false;
 
+		// Auto-set end time if not provided
+		if ( empty( $event_end ) && ! empty( $event_start ) ) {
+			$start_timestamp = strtotime( $event_start );
+			if ( false !== $start_timestamp ) {
+				if ( $event_all_day ) {
+					// All-day event: add 1 day
+					$event_end = gmdate( 'Y-m-d', $start_timestamp + DAY_IN_SECONDS );
+				} else {
+					// Timed event: add 1 hour
+					$event_end = gmdate( 'Y-m-d\TH:i', $start_timestamp + HOUR_IN_SECONDS );
+				}
+			}
+		}
+
 		// Save to custom table (also updates postmeta automatically for compatibility)
 		\FairEvents\Models\EventDates::save( $post_id, $event_start, $event_end, $event_all_day );
 
