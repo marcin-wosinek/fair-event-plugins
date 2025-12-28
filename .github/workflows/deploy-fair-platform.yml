@@ -2,7 +2,7 @@ name: Deploy Fair Platform to fair-event-plugins.com
 
 on:
     workflow_run:
-        workflows: ['Continuous integration']
+        workflows: ['Build Plugins']
         types:
             - completed
         branches: [main]
@@ -50,7 +50,7 @@ jobs:
               if: github.event_name == 'workflow_run'
               uses: actions/download-artifact@v4
               with:
-                  name: plugins
+                  name: plugins-${{ github.event.workflow_run.head_sha }}
                   path: ./dist
                   run-id: ${{ github.event.workflow_run.id }}
                   github-token: ${{ secrets.GITHUB_TOKEN }}

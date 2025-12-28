@@ -1,0 +1,99 @@
+name: Build Plugins
+
+on:
+    # Allow this workflow to be called by other workflows
+    workflow_call:
+        outputs:
+            artifact-name:
+                description: 'Name of the uploaded artifact'
+                value: ${{ jobs.build.outputs.artifact-name }}
+    # Also run on all branches when code is pushed
+    push:
+        branches:
+            - '**'
+    # Run on pull requests
+    pull_request:
+
+jobs:
+    build:
+        runs-on: ubuntu-latest
+        outputs:
+            artifact-name: plugins-${{ github.sha }}
+
+        steps:
+            - uses: actions/checkout@v3
+
+            - name: Setup PHP
+              uses: shivammathur/setup-php@v2
+              with:
+                  php-version: '8.2'
+                  extensions: mbstring, intl, zip
+                  coverage: none
+
+            - name: Validate composer.json for all plugins
+              run: |
+                  npm run composer:validate
+
+            - name: Cache Composer packages
+              id: composer-cache
+              uses: actions/cache@v3
+              with:
+                  path: |
+                      ./fair-calendar-button/vendor
+                      ./fair-payment/vendor
+                      ./fair-registration/vendor
+                      ./fair-schedule-blocks/vendor
+                      ./fair-timetable/vendor
+                      ./fair-membership/vendor
+                      ./fair-events/vendor
+                      ./fair-rsvp/vendor
+                      ./fair-platform/vendor
+                      ./fair-team/vendor
+                      ./vendor
+                  key: ${{ runner.os }}-php-${{ hashFiles('**/composer.lock') }}
+                  restore-keys: |
+                      ${{ runner.os }}-php-
+
+            - name: Setup Node.js
+              uses: actions/setup-node@v3
+              with:
+                  node-version: '24'
+
+            - name: Cache node_modules
+              id: npm-cache
+              uses: actions/cache@v3
+              with:
+                  path: ./node_modules
+                  key: ${{ runner.os }}-node-${{ hashFiles('package-lock.json') }}
+
+            - name: Install npm dependencies
+              if: steps.npm-cache.outputs.cache-hit != 'true'
+              run: npm ci --prefer-offline
+
+            - name: Install WP-CLI
+              run: |
+                  curl -L -o wp-cli.phar https://github.com/wp-cli/wp-cli/releases/download/v2.12.0/wp-cli-2.12.0.phar
+                  chmod +x wp-cli.phar
+                  sudo mv wp-cli.phar /usr/local/bin/wp
+                  wp --info
+
+            - name: Install WP-CLI dist-archive command
+              run: |
+                  wp package install git@github.com:wp-cli/dist-archive-command.git
+
+            - name: Install regular PHP dependencies in all plugins
+              run: npm run composer:install:prod
+
+            - name: Build JavaScript for all plugins
+              run: npm run build
+
+            - name: Create plugin ZIP files using wp dist-archive
+              run: |
+                  npm run dist-archive
+
+            - name: Upload plugin artifacts
+              uses: actions/upload-artifact@v4
+              with:
+                  name: plugins-${{ github.sha }}
+                  path: ./dist/
+                  retention-days: 30
