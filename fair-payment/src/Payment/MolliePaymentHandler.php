@@ -215,13 +215,13 @@ class MolliePaymentHandler {
 	 */
 	public function create_payment( $args ) {
 		$defaults = array(
-			'amount'              => '10.00',
-			'currency'            => 'EUR',
-			'platform_fee_amount' => null,
-			'description'         => __( 'Payment', 'fair-payment' ),
-			'redirect_url'        => home_url(),
-			'webhook_url'         => '',
-			'metadata'            => array(),
+			'amount'          => '10.00',
+			'currency'        => 'EUR',
+			'application_fee' => null,
+			'description'     => __( 'Payment', 'fair-payment' ),
+			'redirect_url'    => home_url(),
+			'webhook_url'     => '',
+			'metadata'        => array(),
 		);
 
 		$args = wp_parse_args( $args, $defaults );
@@ -238,14 +238,14 @@ class MolliePaymentHandler {
 				'metadata'    => $args['metadata'],
 			);
 
-			// Add platform fee if provided (for OAuth)
-			if ( ! empty( $args['platform_fee_amount'] ) && $args['platform_fee_amount'] > 0 ) {
+			// Add application fee if provided (for OAuth).
+			if ( ! empty( $args['application_fee'] ) && $args['application_fee'] > 0 ) {
 				$payment_data['applicationFee'] = array(
 					'amount'      => array(
 						'currency' => $args['currency'],
-						'value'    => number_format( (float) $args['platform_fee_amount'], 2, '.', '' ),
+						'value'    => number_format( (float) $args['application_fee'], 2, '.', '' ),
 					),
-					'description' => __( 'Platform fee', 'fair-payment' ),
+					'description' => __( 'Application fee', 'fair-payment' ),
 				);
 			}
 

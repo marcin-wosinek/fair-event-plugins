@@ -44,13 +44,13 @@ class Transaction {
 
 		$data = wp_parse_args( $data, $defaults );
 
-		// Calculate platform fee (2% of transaction amount).
-		$platform_fee_amount = null;
+		// Calculate application fee (2% of transaction amount).
+		$application_fee = null;
 		if ( $data['amount'] > 0 ) {
-			$platform_fee_amount = round( $data['amount'] * 0.02, 2 );
+			$application_fee = round( $data['amount'] * 0.02, 2 );
 		}
 
-		$data['platform_fee_amount'] = $platform_fee_amount;
+		$data['application_fee'] = $application_fee;
 
 		// Convert metadata array to JSON if needed.
 		if ( is_array( $data['metadata'] ) ) {
@@ -60,19 +60,19 @@ class Transaction {
 		$inserted = $wpdb->insert(
 			$table_name,
 			array(
-				'mollie_payment_id'   => $data['mollie_payment_id'],
-				'post_id'             => $data['post_id'],
-				'user_id'             => $data['user_id'],
-				'amount'              => $data['amount'],
-				'currency'            => $data['currency'],
-				'platform_fee_amount' => $data['platform_fee_amount'],
-				'status'              => $data['status'],
-				'testmode'            => $data['testmode'],
-				'description'         => $data['description'],
-				'redirect_url'        => $data['redirect_url'],
-				'webhook_url'         => $data['webhook_url'],
-				'checkout_url'        => $data['checkout_url'],
-				'metadata'            => $data['metadata'],
+				'mollie_payment_id' => $data['mollie_payment_id'],
+				'post_id'           => $data['post_id'],
+				'user_id'           => $data['user_id'],
+				'amount'            => $data['amount'],
+				'currency'          => $data['currency'],
+				'application_fee'   => $data['application_fee'],
+				'status'            => $data['status'],
+				'testmode'          => $data['testmode'],
+				'description'       => $data['description'],
+				'redirect_url'      => $data['redirect_url'],
+				'webhook_url'       => $data['webhook_url'],
+				'checkout_url'      => $data['checkout_url'],
+				'metadata'          => $data['metadata'],
 			),
 			array( '%s', '%d', '%d', '%f', '%s', '%f', '%s', '%d', '%s', '%s', '%s', '%s', '%s' )
 		);

@@ -134,21 +134,21 @@ class TransactionAPI {
 
 		// 4. Prepare payment arguments.
 		$payment_args = array(
-			'amount'              => $transaction->amount,
-			'currency'            => $transaction->currency,
-			'platform_fee_amount' => $transaction->platform_fee_amount,
-			'description'         => ! empty( $transaction->description )
+			'amount'          => $transaction->amount,
+			'currency'        => $transaction->currency,
+			'application_fee' => $transaction->application_fee,
+			'description'     => ! empty( $transaction->description )
 				? $transaction->description
 				: sprintf(
 					/* translators: %d: transaction ID */
 					__( 'Payment #%d', 'fair-payment' ),
 					$transaction_id
 				),
-			'redirect_url'        => $args['redirect_url'],
-			'webhook_url'         => isset( $args['webhook_url'] )
+			'redirect_url'    => $args['redirect_url'],
+			'webhook_url'     => isset( $args['webhook_url'] )
 				? $args['webhook_url']
 				: rest_url( 'fair-payment/v1/webhook' ),
-			'metadata'            => array_merge(
+			'metadata'        => array_merge(
 				! empty( $transaction->metadata ) ? json_decode( $transaction->metadata, true ) : array(),
 				array( 'transaction_id' => $transaction_id )
 			),

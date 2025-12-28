@@ -51,7 +51,7 @@ class Schema {
 			user_id bigint(20) UNSIGNED DEFAULT NULL,
 			amount decimal(10,2) NOT NULL,
 			currency varchar(3) NOT NULL DEFAULT 'EUR',
-			platform_fee_amount decimal(10,2) DEFAULT NULL,
+			application_fee decimal(10,2) DEFAULT NULL,
 			status varchar(20) NOT NULL DEFAULT 'draft',
 			payment_initiated_at datetime DEFAULT NULL,
 			testmode tinyint(1) NOT NULL DEFAULT 1,
@@ -79,9 +79,10 @@ class Schema {
 		self::migrate_to_v2();
 		self::migrate_to_v3();
 		self::migrate_to_v4();
+		self::migrate_to_v5();
 
 		// Store database version for future migrations.
-		update_option( 'fair_payment_db_version', '4.0' );
+		update_option( 'fair_payment_db_version', '5.0' );
 	}
 
 	/**
@@ -216,7 +217,7 @@ class Schema {
 	/**
 	 * Migrate database from v3.0 to v4.0
 	 *
-	 * Adds platform_fee_amount column to track platform fees (2%) for each transaction.
+	 * Adds application_fee column to track application fees (2%) for each transaction.
 	 *
 	 * @return void
 	 */
@@ -228,9 +229,47 @@ class Schema {
 		if ( version_compare( $current_version, '4.0', '<' ) ) {
 			$table_name = self::get_payments_table_name();
 
-			// Check if platform_fee_amount column already exists.
+			// Check if application_fee column already exists.
 			// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
 			$column_exists = $wpdb->get_results(
+				$wpdb->prepare(
+					'SHOW COLUMNS FROM %i LIKE %s',
+					$table_name,
+					'application_fee'
+				)
+			);
+
+			// Add application_fee column if it doesn't exist.
+			if ( empty( $column_exists ) ) {
+				// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.DirectDatabaseQuery.SchemaChange
+				$wpdb->query(
+					$wpdb->prepare(
+						'ALTER TABLE %i ADD COLUMN application_fee decimal(10,2) DEFAULT NULL AFTER currency',
+						$table_name
+					)
+				);
+			}
+		}
+	}
+
+	/**
+	 * Migrate database from v4.0 to v5.0
+	 *
+	 * Renames platform_fee_amount column to application_fee for consistency with Mollie API.
+	 *
+	 * @return void
+	 */
+	public static function migrate_to_v5() {
+		global $wpdb;
+
+		$current_version = get_option( 'fair_payment_db_version', '1.0' );
+
+		if ( version_compare( $current_version, '5.0', '<' ) ) {
+			$table_name = self::get_payments_table_name();
+
+			// Check if old platform_fee_amount column exists.
+			// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+			$old_column_exists = $wpdb->get_results(
 				$wpdb->prepare(
 					'SHOW COLUMNS FROM %i LIKE %s',
 					$table_name,
@@ -238,12 +277,22 @@ class Schema {
 				)
 			);
 
-			// Add platform_fee_amount column if it doesn't exist.
-			if ( empty( $column_exists ) ) {
+			// Check if new application_fee column already exists.
+			// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+			$new_column_exists = $wpdb->get_results(
+				$wpdb->prepare(
+					'SHOW COLUMNS FROM %i LIKE %s',
+					$table_name,
+					'application_fee'
+				)
+			);
+
+			// Rename column if old exists and new doesn't.
+			if ( ! empty( $old_column_exists ) && empty( $new_column_exists ) ) {
 				// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.DirectDatabaseQuery.SchemaChange
 				$wpdb->query(
 					$wpdb->prepare(
-						'ALTER TABLE %i ADD COLUMN platform_fee_amount decimal(10,2) DEFAULT NULL AFTER currency',
+						'ALTER TABLE %i CHANGE COLUMN platform_fee_amount application_fee decimal(10,2) DEFAULT NULL',
 						$table_name
 					)
 				);
