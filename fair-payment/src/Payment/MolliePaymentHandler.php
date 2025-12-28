@@ -152,19 +152,19 @@ class MolliePaymentHandler {
 			return false;
 		}
 
-		// Verify required keys exist in response
-		if ( ! isset( $body['data']['access_token'] ) || ! isset( $body['data']['expires_in'] ) ) {
+		// Verify required keys exist in response (nested under data.data)
+		if ( ! isset( $body['data']['data']['access_token'] ) || ! isset( $body['data']['data']['expires_in'] ) ) {
 			update_option( 'fair_payment_mollie_connected', false );
 			error_log( '[Fair Payment] Token refresh failed: Missing required fields in response' );
-			error_log( '[Fair Payment] Has access_token: ' . ( isset( $body['data']['access_token'] ) ? 'yes' : 'no' ) );
-			error_log( '[Fair Payment] Has expires_in: ' . ( isset( $body['data']['expires_in'] ) ? 'yes' : 'no' ) );
+			error_log( '[Fair Payment] Has data.data.access_token: ' . ( isset( $body['data']['data']['access_token'] ) ? 'yes' : 'no' ) );
+			error_log( '[Fair Payment] Has data.data.expires_in: ' . ( isset( $body['data']['data']['expires_in'] ) ? 'yes' : 'no' ) );
 			error_log( '[Fair Payment] Full response: ' . wp_json_encode( $body ) );
 			return false;
 		}
 
 		// Store new token
-		$new_token  = $body['data']['access_token'];
-		$expires_in = $body['data']['expires_in'];
+		$new_token  = $body['data']['data']['access_token'];
+		$expires_in = $body['data']['data']['expires_in'];
 		update_option( 'fair_payment_mollie_access_token', $new_token );
 		update_option( 'fair_payment_mollie_token_expires', time() + $expires_in );
 
