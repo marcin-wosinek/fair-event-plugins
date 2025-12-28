@@ -366,10 +366,7 @@ class Event {
 		foreach ( $columns as $key => $value ) {
 			$new_columns[ $key ] = $value;
 			if ( $key === 'title' ) {
-				$new_columns['event_start']    = __( 'Event Start', 'fair-events' );
-				$new_columns['event_end']      = __( 'Event End', 'fair-events' );
-				$new_columns['event_all_day']  = __( 'All Day', 'fair-events' );
-				$new_columns['event_location'] = __( 'Location', 'fair-events' );
+				$new_columns['event_datetime'] = __( 'Date & Time', 'fair-events' );
 			}
 		}
 		return $new_columns;
@@ -383,31 +380,20 @@ class Event {
 	 * @return void
 	 */
 	public static function render_admin_column( $column, $post_id ) {
-		switch ( $column ) {
-			case 'event_start':
-			case 'event_end':
-				$event_dates = \FairEvents\Models\EventDates::get_by_event_id( $post_id );
-				if ( $event_dates ) {
-					$value = ( 'event_start' === $column ) ? $event_dates->start_datetime : $event_dates->end_datetime;
-					if ( $value ) {
-						echo esc_html( self::format_event_datetime( $value, $event_dates->all_day ) );
-					} else {
-						echo '—';
-					}
+		if ( 'event_datetime' === $column ) {
+			$event_dates = \FairEvents\Models\EventDates::get_by_event_id( $post_id );
+			if ( $event_dates && $event_dates->start_datetime ) {
+				$start = self::format_event_datetime( $event_dates->start_datetime, $event_dates->all_day );
+				$end   = $event_dates->end_datetime ? self::format_event_datetime( $event_dates->end_datetime, $event_dates->all_day ) : '';
+
+				if ( $end && $end !== $start ) {
+					echo esc_html( $start . ' – ' . $end );
 				} else {
-					echo '—';
+					echo esc_html( $start );
 				}
-				break;
-
-			case 'event_all_day':
-				$event_dates = \FairEvents\Models\EventDates::get_by_event_id( $post_id );
-				echo ( $event_dates && $event_dates->all_day ) ? esc_html__( 'Yes', 'fair-events' ) : '';
-				break;
-
-			case 'event_location':
-				$location = get_post_meta( $post_id, 'event_location', true );
-				echo $location ? esc_html( $location ) : '—';
-				break;
+			} else {
+				echo '—';
+			}
 		}
 	}
 
@@ -447,8 +433,7 @@ class Event {
 	 * @return array Modified sortable columns.
 	 */
 	public static function add_sortable_columns( $columns ) {
-		$columns['event_start'] = 'event_start';
-		$columns['event_end']   = 'event_end';
+		$columns['event_datetime'] = 'event_datetime';
 		return $columns;
 	}
 
@@ -465,11 +450,8 @@ class Event {
 
 		$orderby = $query->get( 'orderby' );
 
-		if ( 'event_start' === $orderby ) {
+		if ( 'event_datetime' === $orderby ) {
 			$query->set( 'meta_key', 'event_start' );
-			$query->set( 'orderby', 'meta_value' );
-		} elseif ( 'event_end' === $orderby ) {
-			$query->set( 'meta_key', 'event_end' );
 			$query->set( 'orderby', 'meta_value' );
 		}
 	}
