@@ -23,6 +23,7 @@ class AdminPages {
 		add_action( 'admin_menu', array( $this, 'reorder_admin_menu' ), 999 );
 		add_action( 'admin_enqueue_scripts', array( $this, 'enqueue_admin_scripts' ) );
 		add_action( 'pre_get_posts', array( $this, 'filter_upcoming_events' ) );
+		add_action( 'admin_bar_menu', array( $this, 'add_copy_button_to_admin_bar' ), 100 );
 	}
 
 	/**
@@ -244,5 +245,63 @@ class AdminPages {
 		$query->set( 'meta_key', 'event_start' );
 		$query->set( 'orderby', 'meta_value' );
 		$query->set( 'order', 'ASC' );
+	}
+
+	/**
+	 * Add Copy button to admin bar on event edit pages
+	 *
+	 * @param \WP_Admin_Bar $wp_admin_bar The admin bar object.
+	 * @return void
+	 */
+	public function add_copy_button_to_admin_bar( $wp_admin_bar ) {
+		// Only show on event edit pages in admin
+		if ( ! is_admin() ) {
+			return;
+		}
+
+		$screen = get_current_screen();
+		if ( ! $screen || 'fair_event' !== $screen->post_type || 'post' !== $screen->base ) {
+			return;
+		}
+
+		// Get current post ID
+		// phpcs:ignore WordPress.Security.NonceVerification.Recommended
+		$post_id = isset( $_GET['post'] ) ? absint( $_GET['post'] ) : 0;
+		if ( ! $post_id ) {
+			return;
+		}
+
+		// Verify it's a fair_event post
+		$post = get_post( $post_id );
+		if ( ! $post || 'fair_event' !== $post->post_type ) {
+			return;
+		}
+
+		// Check user permissions
+		if ( ! current_user_can( 'edit_posts' ) ) {
+			return;
+		}
+
+		// Build copy URL with nonce
+		$copy_url = add_query_arg(
+			array(
+				'page'     => 'fair-events-copy',
+				'event_id' => $post_id,
+				'_wpnonce' => wp_create_nonce( 'copy_fair_event_' . $post_id ),
+			),
+			admin_url( 'admin.php' )
+		);
+
+		// Add the Copy button
+		$wp_admin_bar->add_node(
+			array(
+				'id'    => 'copy-event',
+				'title' => __( 'Copy', 'fair-events' ),
+				'href'  => $copy_url,
+				'meta'  => array(
+					'title' => __( 'Copy this event', 'fair-events' ),
+				),
+			)
+		);
 	}
 }
