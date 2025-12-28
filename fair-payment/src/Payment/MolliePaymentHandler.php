@@ -215,12 +215,13 @@ class MolliePaymentHandler {
 	 */
 	public function create_payment( $args ) {
 		$defaults = array(
-			'amount'       => '10.00',
-			'currency'     => 'EUR',
-			'description'  => __( 'Payment', 'fair-payment' ),
-			'redirect_url' => home_url(),
-			'webhook_url'  => '',
-			'metadata'     => array(),
+			'amount'              => '10.00',
+			'currency'            => 'EUR',
+			'platform_fee_amount' => null,
+			'description'         => __( 'Payment', 'fair-payment' ),
+			'redirect_url'        => home_url(),
+			'webhook_url'         => '',
+			'metadata'            => array(),
 		);
 
 		$args = wp_parse_args( $args, $defaults );
@@ -236,6 +237,17 @@ class MolliePaymentHandler {
 				'webhookUrl'  => $args['webhook_url'],
 				'metadata'    => $args['metadata'],
 			);
+
+			// Add platform fee if provided (for OAuth)
+			if ( ! empty( $args['platform_fee_amount'] ) && $args['platform_fee_amount'] > 0 ) {
+				$payment_data['applicationFee'] = array(
+					'amount'      => array(
+						'currency' => $args['currency'],
+						'value'    => number_format( (float) $args['platform_fee_amount'], 2, '.', '' ),
+					),
+					'description' => __( 'Platform fee', 'fair-payment' ),
+				);
+			}
 
 			// Add profile ID for OAuth authentication
 			$profile_id = $this->get_profile_id();
