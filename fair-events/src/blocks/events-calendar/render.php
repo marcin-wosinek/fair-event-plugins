@@ -216,26 +216,18 @@ $next_url = add_query_arg(
 	)
 );
 
-// Weekday labels
-$weekdays = ( 1 === $start_of_week )
-	? array(
-		__( 'Mon', 'fair-events' ),
-		__( 'Tue', 'fair-events' ),
-		__( 'Wed', 'fair-events' ),
-		__( 'Thu', 'fair-events' ),
-		__( 'Fri', 'fair-events' ),
-		__( 'Sat', 'fair-events' ),
-		__( 'Sun', 'fair-events' ),
-	)
-	: array(
-		__( 'Sun', 'fair-events' ),
-		__( 'Mon', 'fair-events' ),
-		__( 'Tue', 'fair-events' ),
-		__( 'Wed', 'fair-events' ),
-		__( 'Thu', 'fair-events' ),
-		__( 'Fri', 'fair-events' ),
-		__( 'Sat', 'fair-events' ),
-	);
+// Generate localized weekday labels using WordPress date formatting
+// Start from the configured start_of_week (0 = Sunday, 1 = Monday)
+$weekdays = array();
+for ( $i = 0; $i < 7; $i++ ) {
+	// Calculate day of week: 0 (Sun) through 6 (Sat)
+	$day_of_week = ( $start_of_week + $i ) % 7;
+	// Get a date that falls on this day of week (use a known week: 2024-01-07 is Sunday)
+	$base_sunday   = strtotime( '2024-01-07' ); // Sunday
+	$day_timestamp = $base_sunday + ( $day_of_week * DAY_IN_SECONDS );
+	// Format using WordPress localized date function (D = abbreviated weekday name)
+	$weekdays[] = wp_date( 'D', $day_timestamp );
+}
 
 // Get current date for today highlighting
 $today = current_time( 'Y-m-d' );
