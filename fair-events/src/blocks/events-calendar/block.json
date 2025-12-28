@@ -37,6 +37,18 @@
 		"showNavigation": {
 			"type": "boolean",
 			"default": true
+		},
+		"showDrafts": {
+			"type": "boolean",
+			"default": false
+		},
+		"backgroundColor": {
+			"type": "string",
+			"default": "primary"
+		},
+		"textColor": {
+			"type": "string",
+			"default": "#ffffff"
 		}
 	},
 	"supports": {

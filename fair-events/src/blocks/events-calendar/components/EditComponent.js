@@ -12,7 +12,11 @@
  */
 
 import { __ } from '@wordpress/i18n';
-import { useBlockProps, InspectorControls } from '@wordpress/block-editor';
+import {
+	useBlockProps,
+	InspectorControls,
+	PanelColorSettings,
+} from '@wordpress/block-editor';
 import {
 	PanelBody,
 	ToggleControl,
@@ -25,8 +29,15 @@ import { useSelect } from '@wordpress/data';
 import { calendar } from '@wordpress/icons';
 
 const EditComponent = ({ attributes, setAttributes }) => {
-	const { startOfWeek, showNavigation, categories, displayPattern } =
-		attributes;
+	const {
+		startOfWeek,
+		showNavigation,
+		categories,
+		displayPattern,
+		showDrafts,
+		backgroundColor,
+		textColor,
+	} = attributes;
 
 	const blockProps = useBlockProps({
 		className: 'fair-events-calendar-placeholder',
@@ -55,6 +66,12 @@ const EditComponent = ({ attributes, setAttributes }) => {
 		label: pattern.title,
 		value: pattern.name,
 	}));
+
+	// Get theme colors
+	const themeColors = useSelect((select) => {
+		const settings = select('core/block-editor').getSettings();
+		return settings?.colors || [];
+	}, []);
 
 	// Check if there are multiple categories (more than just "Uncategorized")
 	const meaningfulCategories = allCategories.filter(
@@ -130,6 +147,18 @@ const EditComponent = ({ attributes, setAttributes }) => {
 						)}
 					/>
 
+					<ToggleControl
+						label={__('Show Draft Events', 'fair-events')}
+						checked={showDrafts}
+						onChange={(value) =>
+							setAttributes({ showDrafts: value })
+						}
+						help={__(
+							'Display draft events in the calendar',
+							'fair-events'
+						)}
+					/>
+
 					<div style={{ marginTop: '16px' }}>
 						<strong>{__('Categories', 'fair-events')}</strong>
 						{!hasCategories ? (
@@ -163,6 +192,43 @@ const EditComponent = ({ attributes, setAttributes }) => {
 						)}
 					</div>
 				</PanelBody>
+
+				<PanelColorSettings
+					title={__('Colors', 'fair-events')}
+					colorSettings={[
+						{
+							value: backgroundColor,
+							onChange: (color) =>
+								setAttributes({
+									backgroundColor: color || 'primary',
+								}),
+							label: __('Background', 'fair-events'),
+						},
+						{
+							value: textColor,
+							onChange: (color) =>
+								setAttributes({
+									textColor: color || '#ffffff',
+								}),
+							label: __('Text', 'fair-events'),
+						},
+					]}
+				>
+					{showDrafts && (
+						<p
+							style={{
+								fontSize: '12px',
+								color: '#757575',
+								marginTop: '12px',
+							}}
+						>
+							{__(
+								'Draft events will appear as outlined buttons using these colors.',
+								'fair-events'
+							)}
+						</p>
+					)}
+				</PanelColorSettings>
 			</InspectorControls>
 
 			<div {...blockProps}>

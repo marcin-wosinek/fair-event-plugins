@@ -87,6 +87,9 @@ $start_of_week   = $attributes['startOfWeek'] ?? 1;
 $show_navigation = $attributes['showNavigation'] ?? true;
 $categories      = $attributes['categories'] ?? array();
 $display_pattern = $attributes['displayPattern'] ?? 'fair-events/calendar-event-simple';
+$show_drafts     = $attributes['showDrafts'] ?? false;
+$bg_color        = $attributes['backgroundColor'] ?? 'primary';
+$text_color      = $attributes['textColor'] ?? '#ffffff';
 
 // Get month/year from URL parameters or block attributes
 // URL params take precedence (for navigation), then block attributes, then current date
@@ -113,6 +116,7 @@ $month_end   = gmdate( 'Y-m-t 23:59:59', strtotime( $month_start ) );
 $query_args = array(
 	'post_type'              => 'fair_event',
 	'posts_per_page'         => -1,
+	'post_status'            => $show_drafts ? array( 'publish', 'draft' ) : 'publish',
 	'fair_events_date_query' => array(
 		'start_before' => $month_end,
 		'end_after'    => $month_start,
@@ -301,7 +305,33 @@ $today = current_time( 'Y-m-d' );
 				<?php if ( ! empty( $day_events ) ) : ?>
 				<div class="day-events">
 					<?php foreach ( $day_events as $event_data ) : ?>
-						<div class="event-item">
+						<?php
+						// Get event post to check status.
+						$event_post = get_post( $event_data['id'] );
+						$is_draft   = $event_post && 'draft' === $event_post->post_status;
+
+						// Convert color values (hex or preset name) to CSS values
+						// Background color
+						if ( preg_match( '/^#[0-9A-Fa-f]{3,6}$/', $bg_color ) ) {
+							$bg_color_value = $bg_color;
+						} else {
+							$bg_color_value = 'var(--wp--preset--color--' . esc_attr( $bg_color ) . ')';
+						}
+
+						// Text color
+						if ( preg_match( '/^#[0-9A-Fa-f]{3,6}$/', $text_color ) ) {
+							$text_color_value = $text_color;
+						} else {
+							$text_color_value = 'var(--wp--preset--color--' . esc_attr( $text_color ) . ')';
+						}
+
+						// Add draft class for styling
+						$item_classes = array( 'event-item' );
+						if ( $is_draft ) {
+							$item_classes[] = 'is-draft';
+						}
+						?>
+						<div class="<?php echo esc_attr( implode( ' ', $item_classes ) ); ?>" style="--event-bg-color: <?php echo esc_attr( $bg_color_value ); ?>; --event-text-color: <?php echo esc_attr( $text_color_value ); ?>">
 							<?php
 							// phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
 							echo fair_events_render_calendar_pattern( $display_pattern, $event_data['id'] );
