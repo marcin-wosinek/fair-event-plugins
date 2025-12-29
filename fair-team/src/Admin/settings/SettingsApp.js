@@ -9,8 +9,8 @@ import apiFetch from '@wordpress/api-fetch';
 /**
  * Settings App Component
  *
- * NOTE: This component follows the same pattern as fair-team/src/Admin/settings/SettingsApp.js
- * When updating this file, consider whether the changes should also be applied to the fair-team version.
+ * NOTE: This component follows the same pattern as fair-events/src/Admin/settings/SettingsApp.js
+ * When updating this file, consider whether the changes should also be applied to the fair-events version.
  *
  * @return {JSX.Element} The Settings app component
  */
@@ -24,13 +24,13 @@ export default function SettingsApp() {
 	useEffect(() => {
 		apiFetch({ path: '/wp/v2/settings' })
 			.then((settings) => {
-				setSlug(settings.fair_events_slug || 'fair-events');
+				setSlug(settings.fair_team_slug || 'team-member');
 				setIsLoading(false);
 			})
 			.catch((error) => {
 				setNotice({
 					status: 'error',
-					message: __('Failed to load settings.', 'fair-events'),
+					message: __('Failed to load settings.', 'fair-team'),
 				});
 				setIsLoading(false);
 			});
@@ -45,7 +45,7 @@ export default function SettingsApp() {
 			path: '/wp/v2/settings',
 			method: 'POST',
 			data: {
-				fair_events_slug: slug,
+				fair_team_slug: slug,
 			},
 		})
 			.then(() => {
@@ -53,17 +53,17 @@ export default function SettingsApp() {
 				return apiFetch({ path: '/wp/v2/settings' });
 			})
 			.then((settings) => {
-				setSlug(settings.fair_events_slug || 'fair-events');
+				setSlug(settings.fair_team_slug || 'team-member');
 				setNotice({
 					status: 'success',
-					message: __('Settings saved successfully.', 'fair-events'),
+					message: __('Settings saved successfully.', 'fair-team'),
 				});
 				setIsSaving(false);
 			})
 			.catch((error) => {
 				setNotice({
 					status: 'error',
-					message: __('Failed to save settings.', 'fair-events'),
+					message: __('Failed to save settings.', 'fair-team'),
 				});
 				setIsSaving(false);
 			});
@@ -72,15 +72,15 @@ export default function SettingsApp() {
 	if (isLoading) {
 		return (
 			<div className="wrap">
-				<h1>{__('Fair Events Settings', 'fair-events')}</h1>
-				<p>{__('Loading...', 'fair-events')}</p>
+				<h1>{__('Fair Team Settings', 'fair-team')}</h1>
+				<p>{__('Loading...', 'fair-team')}</p>
 			</div>
 		);
 	}
 
 	return (
 		<div className="wrap">
-			<h1>{__('Fair Events Settings', 'fair-events')}</h1>
+			<h1>{__('Fair Team Settings', 'fair-team')}</h1>
 
 			{notice && (
 				<Notice
@@ -99,10 +99,10 @@ export default function SettingsApp() {
 				}}
 			>
 				<TextControl
-					label={__('Event URL Slug', 'fair-events')}
+					label={__('Team Member URL Slug', 'fair-team')}
 					help={__(
-						'The URL slug used for event permalinks (e.g., /fair-events/event-name)',
-						'fair-events'
+						'The URL slug used for team member permalinks (e.g., /team-member/member-name)',
+						'fair-team'
 					)}
 					value={slug}
 					onChange={(value) => setSlug(value)}
@@ -116,8 +116,8 @@ export default function SettingsApp() {
 					disabled={isSaving}
 				>
 					{isSaving
-						? __('Saving...', 'fair-events')
-						: __('Save Settings', 'fair-events')}
+						? __('Saving...', 'fair-team')
+						: __('Save Settings', 'fair-team')}
 				</Button>
 			</form>
 		</div>

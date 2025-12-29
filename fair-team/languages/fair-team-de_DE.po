@@ -1,17 +1,15 @@
-# Copyright (C) 2025 Marcin Wosinek
-# This file is distributed under the GPL-3.0-or-later.
 msgid ""
 msgstr ""
 "Project-Id-Version: Fair Team 0.1.0\n"
 "Report-Msgid-Bugs-To: https://wordpress.org/support/plugin/fair-team\n"
 "Last-Translator: \n"
 "Language-Team: German\n"
-"Language: de_DE\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "POT-Creation-Date: 2025-12-29T10:52:06+00:00\n"
 "PO-Revision-Date: 2025-12-29 12:01+0000\n"
+"Language: de_DE\n"
 "X-Generator: WP-CLI 2.12.0\n"
 "X-Domain: fair-team\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
@@ -41,7 +39,7 @@ msgstr "Marcin Wosinek"
 msgid "https://github.com/marcin-wosinek"
 msgstr "https://github.com/marcin-wosinek"
 
-#: src/admin/team-admin.js:11
+#: src/Admin/team-admin.js:11
 msgid "Welcome to Team Management"
 msgstr "Willkommen zur Teamverwaltung"
 
@@ -151,34 +149,80 @@ msgctxt "Screen reader text for the items list"
 msgid "Team members list"
 msgstr "Teammitgliederliste"
 
-#: src/PostTypes/TeamMember.php:90
+#: src/PostTypes/TeamMember.php:93
 msgid "WordPress user ID linked to this team member"
 msgstr "WordPress-Benutzer-ID, die mit diesem Teammitglied verknüpft ist"
 
-#: src/PostTypes/TeamMember.php:103
+#: src/PostTypes/TeamMember.php:106
 msgid "Instagram account URL"
 msgstr "Instagram-Konto-URL"
 
-#: src/PostTypes/TeamMember.php:130
+#: src/PostTypes/TeamMember.php:133
 msgid "Team Member Details"
 msgstr "Teammitglied-Details"
 
-#: src/PostTypes/TeamMember.php:160
+#: src/PostTypes/TeamMember.php:163
 msgid "WordPress User"
 msgstr "WordPress-Benutzer"
 
-#: src/PostTypes/TeamMember.php:163
+#: src/PostTypes/TeamMember.php:166
 msgid "(None)"
 msgstr "(Keine)"
 
-#: src/PostTypes/TeamMember.php:173
+#: src/PostTypes/TeamMember.php:176
 msgid "Instagram URL"
 msgstr "Instagram-URL"
 
-#: src/PostTypes/TeamMember.php:263
+#: src/PostTypes/TeamMember.php:266
 msgid "Linked User"
 msgstr "Verknüpfter Benutzer"
 
-#: src/PostTypes/TeamMember.php:264
+#: src/PostTypes/TeamMember.php:267
 msgid "Instagram"
 msgstr "Instagram"
+
+#: src/Admin/AdminPages.php:35
+#: src/Admin/settings/SettingsApp.js:75
+#: src/Admin/settings/SettingsApp.js:83
+msgid "Fair Team Settings"
+msgstr "Fair Team Einstellungen"
+
+#: src/Admin/AdminPages.php:36
+msgid "Settings"
+msgstr "Einstellungen"
+
+#: src/Settings/Settings.php:41
+msgid "URL slug for team members"
+msgstr "URL-Slug für Teammitglieder"
+
+#: src/Admin/settings/SettingsApp.js:33
+msgid "Failed to load settings."
+msgstr "Einstellungen konnten nicht geladen werden."
+
+#: src/Admin/settings/SettingsApp.js:59
+msgid "Settings saved successfully."
+msgstr "Einstellungen erfolgreich gespeichert."
+
+#: src/Admin/settings/SettingsApp.js:66
+msgid "Failed to save settings."
+msgstr "Einstellungen konnten nicht gespeichert werden."
+
+#: src/Admin/settings/SettingsApp.js:76
+msgid "Loading..."
+msgstr "Laden..."
+
+#: src/Admin/settings/SettingsApp.js:102
+msgid "Team Member URL Slug"
+msgstr "Teammitglied URL-Slug"
+
+#: src/Admin/settings/SettingsApp.js:103
+msgid "The URL slug used for team member permalinks (e.g., /team-member/member-name)"
+msgstr "Der URL-Slug für Teammitglieder-Permalinks (z.B. /teammitglied/mitglied-name)"
+
+#: src/Admin/settings/SettingsApp.js:119
+msgid "Saving..."
+msgstr "Speichern..."
+
+#: src/Admin/settings/SettingsApp.js:120
+msgid "Save Settings"
+msgstr "Einstellungen speichern"

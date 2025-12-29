@@ -12,6 +12,10 @@ const customConfig = {
     ...defaultEntries,
     // Admin scripts
     "admin/team-admin": path.resolve(process.cwd(), "src/Admin/team-admin.js"),
+    "admin/settings/index": path.resolve(
+      process.cwd(),
+      "src/Admin/settings/index.js"
+    ),
   }),
   plugins: [
     ...defaultConfig.plugins,

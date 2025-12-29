@@ -46,6 +46,14 @@ class Plugin {
 		// Register hooks.
 		add_action( 'init', array( $this, 'register_post_types' ) );
 		add_action( 'init', array( $this, 'register_hooks' ) );
+
+		// Initialize settings
+		$settings = new \FairTeam\Settings\Settings();
+		$settings->init();
+
+		// Initialize admin pages
+		$admin_pages = new \FairTeam\Admin\AdminPages();
+		$admin_pages->init();
 	}
 
 	/**
