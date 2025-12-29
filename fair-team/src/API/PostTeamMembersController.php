@@ -139,11 +139,21 @@ class PostTeamMembersController extends WP_REST_Controller {
 
 		$items = array_map(
 			function ( $ptm ) {
-				$team_member = get_post( $ptm->team_member_id );
+				$team_member   = get_post( $ptm->team_member_id );
+				$instagram_url = get_post_meta( $ptm->team_member_id, 'team_member_instagram', true );
+
+				// Extract Instagram handle from URL
+				$instagram_handle = '';
+				if ( ! empty( $instagram_url ) && preg_match( '/instagram\.com\/([^\/\?]+)/', $instagram_url, $matches ) ) {
+					$instagram_handle = $matches[1];
+				}
+
 				return array(
 					'id'               => $ptm->id,
 					'team_member_id'   => $ptm->team_member_id,
 					'team_member_name' => $team_member ? $team_member->post_title : '',
+					'instagram_url'    => $instagram_url,
+					'instagram_handle' => $instagram_handle,
 				);
 			},
 			$team_members

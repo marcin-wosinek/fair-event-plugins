@@ -236,32 +236,33 @@ msgid "Team member post ID."
 msgstr ""
 
 #: src/API/PostTeamMembersController.php:133
-#: src/API/PostTeamMembersController.php:170
+#: src/API/PostTeamMembersController.php:180
 msgid "Post not found or invalid type."
 msgstr ""
 
-#: src/API/PostTeamMembersController.php:180
+#: src/API/PostTeamMembersController.php:190
 msgid "Team member not found."
 msgstr ""
 
-#: src/API/PostTeamMembersController.php:190
+#: src/API/PostTeamMembersController.php:200
 msgid "Failed to add team member. May already exist."
 msgstr ""
 
-#: src/API/PostTeamMembersController.php:198
+#: src/API/PostTeamMembersController.php:208
 msgid "Team member added successfully."
 msgstr ""
 
-#: src/API/PostTeamMembersController.php:218
+#: src/API/PostTeamMembersController.php:228
 #: src/Admin/post-team-members/PostTeamMembers.js:85
 msgid "Failed to remove team member."
 msgstr ""
 
-#: src/API/PostTeamMembersController.php:225
+#: src/API/PostTeamMembersController.php:235
 msgid "Team member removed successfully."
 msgstr ""
 
 #: src/Hooks/MetaBoxHooks.php:40
+#: src/blocks/team-members-list/editor.js:75
 msgid "Team Members"
 msgstr ""
 
@@ -277,22 +278,60 @@ msgstr ""
 msgid "Failed to add team member."
 msgstr ""
 
-#: src/Admin/post-team-members/PostTeamMembers.js:111
+#: src/Admin/post-team-members/PostTeamMembers.js:110
 msgid "No team members linked yet."
 msgstr ""
 
-#: src/Admin/post-team-members/PostTeamMembers.js:123
+#: src/Admin/post-team-members/PostTeamMembers.js:122
 msgid "Remove"
 msgstr ""
 
-#: src/Admin/post-team-members/PostTeamMembers.js:137
+#: src/Admin/post-team-members/PostTeamMembers.js:136
 msgid "Select team member..."
 msgstr ""
 
-#: src/Admin/post-team-members/PostTeamMembers.js:152
+#: src/Admin/post-team-members/PostTeamMembers.js:151
 msgid "Adding..."
 msgstr ""
 
-#: src/Admin/post-team-members/PostTeamMembers.js:153
+#: src/Admin/post-team-members/PostTeamMembers.js:152
 msgid "Add"
+msgstr ""
+
+#: src/blocks/team-members-list/editor.js:51
+msgid "Please save the post to see team members."
+msgstr ""
+
+#: src/blocks/team-members-list/editor.js:64
+msgid "No team members assigned to this post."
+msgstr ""
+
+#: src/blocks/team-members-list/block.json
+msgctxt "block title"
+msgid "Team Members List"
+msgstr ""
+
+#: src/blocks/team-members-list/block.json
+msgctxt "block description"
+msgid "Display team members associated with this post"
+msgstr ""
+
+#: src/blocks/team-members-list/block.json
+msgctxt "block keyword"
+msgid "team"
+msgstr ""
+
+#: src/blocks/team-members-list/block.json
+msgctxt "block keyword"
+msgid "members"
+msgstr ""
+
+#: src/blocks/team-members-list/block.json
+msgctxt "block keyword"
+msgid "staff"
+msgstr ""
+
+#: src/blocks/team-members-list/block.json
+msgctxt "block keyword"
+msgid "contributors"
 msgstr ""

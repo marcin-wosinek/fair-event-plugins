@@ -59,6 +59,9 @@ class Plugin {
 		// Initialize meta box hooks
 		$meta_box_hooks = new \FairTeam\Hooks\MetaBoxHooks();
 		$meta_box_hooks->init();
+
+		// Initialize blocks
+		new \FairTeam\Hooks\BlockHooks();
 	}
 
 	/**

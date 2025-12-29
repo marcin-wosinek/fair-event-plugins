@@ -1,0 +1,33 @@
+.wp-block-fair-team-team-members-list {
+	border: 1px solid #ddd;
+	padding: 1rem;
+	background: #f9f9f9;
+}
+
+.wp-block-fair-team-team-members-list h3 {
+	margin-top: 0;
+}
+
+.fair-team-members-list__items {
+	list-style: none;
+	padding: 0;
+	margin: 0;
+}
+
+.fair-team-members-list__item {
+	padding: 0.5rem 0;
+	border-bottom: 1px solid #eee;
+}
+
+.fair-team-members-list__item:last-child {
+	border-bottom: none;
+}
+
+.fair-team-members-list__instagram {
+	color: #e4405f; /* Instagram brand color */
+	text-decoration: none;
+}
+
+.fair-team-members-list__instagram:hover {
+	text-decoration: underline;
+}
