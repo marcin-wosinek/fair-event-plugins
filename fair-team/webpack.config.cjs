@@ -16,6 +16,10 @@ const customConfig = {
       process.cwd(),
       "src/Admin/settings/index.js"
     ),
+    "admin/post-team-members/index": path.resolve(
+      process.cwd(),
+      "src/Admin/post-team-members/index.js"
+    ),
   }),
   plugins: [
     ...defaultConfig.plugins,

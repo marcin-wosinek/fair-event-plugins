@@ -46,6 +46,7 @@ class Plugin {
 		// Register hooks.
 		add_action( 'init', array( $this, 'register_post_types' ) );
 		add_action( 'init', array( $this, 'register_hooks' ) );
+		add_action( 'rest_api_init', array( $this, 'register_api_endpoints' ) );
 
 		// Initialize settings
 		$settings = new \FairTeam\Settings\Settings();
@@ -54,6 +55,10 @@ class Plugin {
 		// Initialize admin pages
 		$admin_pages = new \FairTeam\Admin\AdminPages();
 		$admin_pages->init();
+
+		// Initialize meta box hooks
+		$meta_box_hooks = new \FairTeam\Hooks\MetaBoxHooks();
+		$meta_box_hooks->init();
 	}
 
 	/**
@@ -70,6 +75,13 @@ class Plugin {
 	 */
 	public function register_hooks() {
 		// Register blocks, post types, taxonomies, etc.
-		// TODO: Implement team member linking functionality.
+	}
+
+	/**
+	 * Register REST API endpoints
+	 */
+	public function register_api_endpoints() {
+		$controller = new \FairTeam\API\PostTeamMembersController();
+		$controller->register_routes();
 	}
 }

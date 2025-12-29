@@ -226,3 +226,73 @@ msgstr "Enregistrement..."
 #: src/Admin/settings/SettingsApp.js:120
 msgid "Save Settings"
 msgstr "Enregistrer les paramètres"
+
+#: src/API/PostTeamMembersController.php:70
+msgid "Post ID."
+msgstr ""
+
+#: src/API/PostTeamMembersController.php:86
+msgid "Team member post ID."
+msgstr ""
+
+#: src/API/PostTeamMembersController.php:133
+#: src/API/PostTeamMembersController.php:170
+msgid "Post not found or invalid type."
+msgstr ""
+
+#: src/API/PostTeamMembersController.php:180
+msgid "Team member not found."
+msgstr ""
+
+#: src/API/PostTeamMembersController.php:190
+msgid "Failed to add team member. May already exist."
+msgstr ""
+
+#: src/API/PostTeamMembersController.php:198
+msgid "Team member added successfully."
+msgstr ""
+
+#: src/API/PostTeamMembersController.php:218
+#: src/Admin/post-team-members/PostTeamMembers.js:85
+msgid "Failed to remove team member."
+msgstr ""
+
+#: src/API/PostTeamMembersController.php:225
+msgid "Team member removed successfully."
+msgstr ""
+
+#: src/Hooks/MetaBoxHooks.php:40
+msgid "Team Members"
+msgstr ""
+
+#: src/Hooks/MetaBoxHooks.php:59
+msgid "Add team members associated with this post."
+msgstr ""
+
+#: src/Admin/post-team-members/PostTeamMembers.js:43
+msgid "Failed to load team members."
+msgstr ""
+
+#: src/Admin/post-team-members/PostTeamMembers.js:67
+msgid "Failed to add team member."
+msgstr ""
+
+#: src/Admin/post-team-members/PostTeamMembers.js:111
+msgid "No team members linked yet."
+msgstr ""
+
+#: src/Admin/post-team-members/PostTeamMembers.js:123
+msgid "Remove"
+msgstr ""
+
+#: src/Admin/post-team-members/PostTeamMembers.js:137
+msgid "Select team member..."
+msgstr ""
+
+#: src/Admin/post-team-members/PostTeamMembers.js:152
+msgid "Adding..."
+msgstr ""
+
+#: src/Admin/post-team-members/PostTeamMembers.js:153
+msgid "Add"
+msgstr ""

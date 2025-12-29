@@ -39,10 +39,31 @@ function fair_team_activate() {
 	// Register post type before flushing rewrite rules.
 	\FairTeam\PostTypes\TeamMember::register();
 
+	// Create database tables.
+	require_once ABSPATH . 'wp-admin/includes/upgrade.php';
+	dbDelta( \FairTeam\Database\Schema::get_post_members_table_sql() );
+
 	// Flush rewrite rules to ensure permalinks work.
 	flush_rewrite_rules();
+
+	// Update database version.
+	update_option( 'fair_team_db_version', '1.1.0' );
 }
 register_activation_hook( __FILE__, __NAMESPACE__ . '\\fair_team_activate' );
+
+/**
+ * Check and upgrade database if needed.
+ */
+function fair_team_maybe_upgrade_db() {
+	$db_version = get_option( 'fair_team_db_version', '0' );
+
+	if ( version_compare( $db_version, '1.1.0', '<' ) ) {
+		require_once ABSPATH . 'wp-admin/includes/upgrade.php';
+		dbDelta( \FairTeam\Database\Schema::get_post_members_table_sql() );
+		update_option( 'fair_team_db_version', '1.1.0' );
+	}
+}
+add_action( 'plugins_loaded', __NAMESPACE__ . '\\fair_team_maybe_upgrade_db' );
 
 /**
  * Deactivation hook.

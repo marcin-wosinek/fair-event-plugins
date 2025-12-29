@@ -9,7 +9,7 @@ msgstr ""
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"POT-Creation-Date: 2025-12-29T20:42:45+00:00\n"
+"POT-Creation-Date: 2025-12-29T21:46:07+00:00\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "X-Generator: WP-CLI 2.12.0\n"
 "X-Domain: fair-team\n"
@@ -47,6 +47,48 @@ msgstr ""
 
 #: src/Admin/AdminPages.php:36
 msgid "Settings"
+msgstr ""
+
+#: src/API/PostTeamMembersController.php:70
+msgid "Post ID."
+msgstr ""
+
+#: src/API/PostTeamMembersController.php:86
+msgid "Team member post ID."
+msgstr ""
+
+#: src/API/PostTeamMembersController.php:133
+#: src/API/PostTeamMembersController.php:170
+msgid "Post not found or invalid type."
+msgstr ""
+
+#: src/API/PostTeamMembersController.php:180
+msgid "Team member not found."
+msgstr ""
+
+#: src/API/PostTeamMembersController.php:190
+msgid "Failed to add team member. May already exist."
+msgstr ""
+
+#: src/API/PostTeamMembersController.php:198
+msgid "Team member added successfully."
+msgstr ""
+
+#: src/API/PostTeamMembersController.php:218
+#: src/Admin/post-team-members/PostTeamMembers.js:85
+msgid "Failed to remove team member."
+msgstr ""
+
+#: src/API/PostTeamMembersController.php:225
+msgid "Team member removed successfully."
+msgstr ""
+
+#: src/Hooks/MetaBoxHooks.php:40
+msgid "Team Members"
+msgstr ""
+
+#: src/Hooks/MetaBoxHooks.php:59
+msgid "Add team members associated with this post."
 msgstr ""
 
 #: src/PostTypes/TeamMember.php:30
@@ -189,6 +231,34 @@ msgstr ""
 
 #: src/Settings/Settings.php:41
 msgid "URL slug for team members"
+msgstr ""
+
+#: src/Admin/post-team-members/PostTeamMembers.js:43
+msgid "Failed to load team members."
+msgstr ""
+
+#: src/Admin/post-team-members/PostTeamMembers.js:67
+msgid "Failed to add team member."
+msgstr ""
+
+#: src/Admin/post-team-members/PostTeamMembers.js:111
+msgid "No team members linked yet."
+msgstr ""
+
+#: src/Admin/post-team-members/PostTeamMembers.js:123
+msgid "Remove"
+msgstr ""
+
+#: src/Admin/post-team-members/PostTeamMembers.js:137
+msgid "Select team member..."
+msgstr ""
+
+#: src/Admin/post-team-members/PostTeamMembers.js:152
+msgid "Adding..."
+msgstr ""
+
+#: src/Admin/post-team-members/PostTeamMembers.js:153
+msgid "Add"
 msgstr ""
 
 #: src/Admin/settings/SettingsApp.js:33
