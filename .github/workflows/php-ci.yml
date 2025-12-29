@@ -5,6 +5,16 @@ on:
         branches: [main]
     pull_request:
         branches: [main]
+    workflow_dispatch:
+        inputs:
+            environment:
+                description: 'Environment to deploy to'
+                required: true
+                type: choice
+                options:
+                    - acroyoga-club.es
+                    - fair-event-plugins.com
+                    - both
 
 jobs:
     build:
@@ -126,3 +136,25 @@ jobs:
                   version: npm run version-packages
               env:
                   GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+    deploy-acroyoga:
+        name: Deploy to acroyoga-club.es
+        needs: [build]
+        if: |
+            (github.event_name == 'push' && github.ref == 'refs/heads/main') ||
+            (github.event_name == 'workflow_dispatch' && (github.event.inputs.environment == 'acroyoga-club.es' || github.event.inputs.environment == 'both'))
+        uses: ./.github/workflows/deploy-to-environment.yml
+        with:
+            environment: acroyoga-club.es
+        secrets: inherit
+
+    deploy-fair-event-plugins:
+        name: Deploy to fair-event-plugins.com
+        needs: [build]
+        if: |
+            (github.event_name == 'push' && github.ref == 'refs/heads/main') ||
+            (github.event_name == 'workflow_dispatch' && (github.event.inputs.environment == 'fair-event-plugins.com' || github.event.inputs.environment == 'both'))
+        uses: ./.github/workflows/deploy-to-environment.yml
+        with:
+            environment: fair-event-plugins.com
+        secrets: inherit
