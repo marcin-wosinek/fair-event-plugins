@@ -44,7 +44,17 @@ class Plugin {
 	 */
 	public function init() {
 		// Register hooks.
+		add_action( 'init', array( $this, 'register_post_types' ) );
 		add_action( 'init', array( $this, 'register_hooks' ) );
+	}
+
+	/**
+	 * Register custom post types
+	 *
+	 * @return void
+	 */
+	public function register_post_types() {
+		\FairTeam\PostTypes\TeamMember::register();
 	}
 
 	/**

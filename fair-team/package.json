@@ -7,7 +7,7 @@
 	"type": "module",
 	"main": "build/index.js",
 	"scripts": {
-		"build": "wp-scripts build --config webpack.config.cjs; npm run makejson",
+		"build": "wp-scripts build --config webpack.config.cjs; npm run makejson || true",
 		"clean": "rm -rf build",
 		"prebuild": "npm run clean",
 		"start": "wp-scripts start",

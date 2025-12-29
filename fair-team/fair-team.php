@@ -36,7 +36,11 @@ Plugin::instance()->init();
  * Activation hook.
  */
 function fair_team_activate() {
-	// Database setup, rewrite rules, default options, etc.
+	// Register post type before flushing rewrite rules.
+	\FairTeam\PostTypes\TeamMember::register();
+
+	// Flush rewrite rules to ensure permalinks work.
+	flush_rewrite_rules();
 }
 register_activation_hook( __FILE__, __NAMESPACE__ . '\\fair_team_activate' );
 
@@ -45,5 +49,6 @@ register_activation_hook( __FILE__, __NAMESPACE__ . '\\fair_team_activate' );
  */
 function fair_team_deactivate() {
 	// Cleanup (flush rewrite rules, clear scheduled events, etc.)
+	flush_rewrite_rules();
 }
 register_deactivation_hook( __FILE__, __NAMESPACE__ . '\\fair_team_deactivate' );
