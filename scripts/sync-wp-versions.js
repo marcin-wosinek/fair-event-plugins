@@ -78,6 +78,12 @@ const plugins = [
 		phpFiles: ['fair-platform/fair-platform.php'],
 		readmeFiles: ['fair-platform/readme.txt'],
 	},
+	{
+		name: 'fair-team',
+		packagePath: 'fair-team/package.json',
+		phpFiles: ['fair-team/fair-team.php'],
+		readmeFiles: ['fair-team/readme.txt'],
+	},
 ];
 
 /**

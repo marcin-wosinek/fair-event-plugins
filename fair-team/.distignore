@@ -1,0 +1,28 @@
+# Development files
+.git/
+.gitignore
+.github/
+node_modules/
+tests/
+__tests__/
+e2e/
+svn/
+src/
+.distignore
+.editorconfig
+.eslintrc.js
+.prettierrc.js
+composer.json
+composer.lock
+package.json
+package-lock.json
+phpcs.xml
+webpack.config.cjs
+jest.config.js
+playwright.config.js
+*.md
+!CHANGELOG.md
+
+# Build artifacts that should be included
+!/build/
+!/vendor/

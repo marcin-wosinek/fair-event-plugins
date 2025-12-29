@@ -116,7 +116,7 @@ jobs:
                   PLUGINS_TO_DEPLOY="${{ github.event.inputs.plugins || 'all' }}"
 
                   if [ "$PLUGINS_TO_DEPLOY" = "all" ]; then
-                    PLUGINS="fair-rsvp fair-events fair-payment fair-calendar-button fair-schedule fair-timetable fair-registration fair-membership fair-user-import"
+                    PLUGINS="fair-rsvp fair-events fair-payment fair-calendar-button fair-schedule fair-timetable fair-registration fair-membership fair-user-import fair-team"
                   else
                     PLUGINS="$PLUGINS_TO_DEPLOY"
                   fi

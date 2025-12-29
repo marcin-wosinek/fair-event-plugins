@@ -1,0 +1,25 @@
+# Build artifacts
+/build/
+/vendor/
+/node_modules/
+
+# WordPress.org SVN
+/svn/
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# IDE
+.vscode/
+.idea/
+*.sublime-project
+*.sublime-workspace
+
+# Testing
+/playwright-report/
+/test-results/
+
+# Logs
+*.log
+npm-debug.log*

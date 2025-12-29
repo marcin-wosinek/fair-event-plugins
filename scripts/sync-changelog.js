@@ -48,6 +48,11 @@ const plugins = [
 		changelogPath: 'fair-rsvp/CHANGELOG.md',
 		readmeFiles: ['fair-rsvp/readme.txt'],
 	},
+	{
+		name: 'fair-team',
+		changelogPath: 'fair-team/CHANGELOG.md',
+		readmeFiles: ['fair-team/readme.txt'],
+	},
 ];
 
 /**

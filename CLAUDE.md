@@ -116,10 +116,12 @@ The guide covers:
 - Comprehensive checklist and common pitfalls
 
 **Quick reference** - files to update in monorepo root:
-1. `/package.json` - Add to workspaces array and scripts
+1. `/package.json` - Add to workspaces, scripts (start, format:php, dist-archive, svn:tag, svn:rm)
 2. `/.github/workflows/php-ci.yml` - Add vendor cache path
-3. `/compose.yml` - Add plugin volume mounts
-4. `/scripts/sync-wp-versions.js` - Add plugin configuration
+3. `/.github/workflows/deploy-acroyoga.yml` - Add to deployment plugin list (if applicable)
+4. `/compose.yml` - Add plugin volume mounts (wordpress and wpcli services)
+5. `/scripts/sync-wp-versions.js` - Add plugin configuration
+6. `/scripts/sync-changelog.js` - Add plugin configuration
 
 ## Shared Code Package
 
