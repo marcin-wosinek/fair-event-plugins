@@ -94,3 +94,35 @@ jobs:
                   name: plugins
                   path: ./dist/
                   retention-days: 7
+
+    release:
+        name: Release
+        runs-on: ubuntu-latest
+        needs: [build]
+        if: github.ref == 'refs/heads/main'
+        steps:
+            - name: Checkout Repo
+              uses: actions/checkout@v3
+
+            - name: Setup Node.js
+              uses: actions/setup-node@v3
+              with:
+                  node-version: '24'
+
+            - name: Cache node_modules
+              id: npm-cache
+              uses: actions/cache@v3
+              with:
+                  path: ./node_modules
+                  key: ${{ runner.os }}-node-${{ hashFiles('package-lock.json') }}
+
+            - name: Install Dependencies
+              if: steps.npm-cache.outputs.cache-hit != 'true'
+              run: HUSKY=0 npm ci --prefer-offline
+
+            - name: Create Release Pull Request
+              uses: changesets/action@v1
+              with:
+                  version: npm run version-packages
+              env:
+                  GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
