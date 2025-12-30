@@ -3,7 +3,7 @@
  * Plugin Name: Fair Team
  * Plugin URI: https://fair-event-plugins.com
  * Description: Link events and posts to team members who collaborate on them
- * Version: 0.1.0
+ * Version: 0.2.0
  * Author: Marcin Wosinek
  * Author URI: https://github.com/marcin-wosinek
  * License: GPL-3.0-or-later

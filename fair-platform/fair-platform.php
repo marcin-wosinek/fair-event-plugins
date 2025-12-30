@@ -3,7 +3,7 @@
  * Plugin Name: Fair Platform - Mollie OAuth Integration
  * Plugin URI: https://fair-event-plugins.com
  * Description: Minimal OAuth proxy for Mollie Connect integration. Enables WordPress sites to connect Mollie accounts with platform fees.
- * Version: 1.0.0
+ * Version: 1.1.0
  * Author: Marcin Wosinek
  * Author URI: https://github.com/marcin-wosinek
  * License: Private

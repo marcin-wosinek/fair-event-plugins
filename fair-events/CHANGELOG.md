@@ -1,5 +1,11 @@
 # fair-events
 
+## 0.6.1
+
+### Patch Changes
+
+- eeaccd0: Add option to show draft events on a calendar.
+
 ## 0.6.0
 
 ### Minor Changes

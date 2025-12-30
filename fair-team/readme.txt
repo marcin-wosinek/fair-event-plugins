@@ -4,7 +4,7 @@ Tags: events, team, collaboration, team-members
 Requires at least: 6.7
 Tested up to: 6.8
 Requires PHP: 8.0
-Stable tag: 0.1.0
+Stable tag: 0.2.0
 License: GPLv3 or later
 License URI: https://www.gnu.org/licenses/gpl-3.0.html
 
@@ -39,10 +39,24 @@ No, Fair Team works standalone. However, it integrates seamlessly with other Fai
 
 == Changelog ==
 
-= 0.1.0 =
-* Initial release
-* Team member linking functionality
-* Basic team management
+## 0.2.0
+
+### Minor Changes
+
+- 8e7f6d3: Add workflow for data migration.
+
+All notable changes to Fair Team will be documented in this file.
+
+The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
+and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
+
+## [0.1.0] - Unreleased
+
+### Added
+
+- Initial plugin scaffolding
+- Team member linking functionality
+- Basic team management structure
 
 == Upgrade Notice ==
 

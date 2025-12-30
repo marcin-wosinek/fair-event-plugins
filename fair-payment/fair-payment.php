@@ -3,7 +3,7 @@
  * Plugin Name: Fair Payment
  * Plugin URI: https://fair-event-plugins.com
  * Description: Simple payment block for WordPress
- * Version: 0.1.0
+ * Version: 0.2.0
  * Author: Fair Event Plugins
  * Author URI: https://fair-event-plugins.com
  * License: GPL-2.0-or-later
