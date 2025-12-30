@@ -122,15 +122,6 @@ class PaymentEndpoint extends WP_REST_Controller {
 			$currency
 		);
 
-		// Prepare redirect URL.
-		$redirect_url = add_query_arg(
-			array(
-				'payment_redirect' => '1',
-				'post_id'          => $post_id,
-			),
-			$post_id ? get_permalink( $post_id ) : home_url()
-		);
-
 		// Create transaction with single line item using new API.
 		$line_items = array(
 			array(
@@ -153,6 +144,16 @@ class PaymentEndpoint extends WP_REST_Controller {
 					'legacy_rest_api' => true,
 				),
 			)
+		);
+
+		// Prepare redirect URL.
+		$redirect_url = add_query_arg(
+			array(
+				'fair_payment_callback' => 'true',
+				'transaction_id' => $transaction_id,
+				'post_id'        => $post_id,
+			),
+			$post_id ? get_permalink( $post_id ) : home_url()
 		);
 
 		if ( is_wp_error( $transaction_id ) ) {
