@@ -77,6 +77,25 @@ class PaymentEndpoint extends WP_REST_Controller {
 				),
 			)
 		);
+
+		register_rest_route(
+			$this->namespace,
+			'/' . $this->rest_base . '/(?P<transaction_id>\d+)/status',
+			array(
+				array(
+					'methods'             => WP_REST_Server::READABLE,
+					'callback'            => array( $this, 'get_transaction_status' ),
+					'permission_callback' => '__return_true',
+					'args'                => array(
+						'transaction_id' => array(
+							'required'          => true,
+							'type'              => 'integer',
+							'sanitize_callback' => 'absint',
+						),
+					),
+				),
+			)
+		);
 	}
 
 	/**
@@ -150,8 +169,8 @@ class PaymentEndpoint extends WP_REST_Controller {
 		$redirect_url = add_query_arg(
 			array(
 				'fair_payment_callback' => 'true',
-				'transaction_id' => $transaction_id,
-				'post_id'        => $post_id,
+				'transaction_id'        => $transaction_id,
+				'post_id'               => $post_id,
 			),
 			$post_id ? get_permalink( $post_id ) : home_url()
 		);
@@ -192,5 +211,39 @@ class PaymentEndpoint extends WP_REST_Controller {
 			),
 			201
 		);
+	}
+
+	/**
+	 * Get transaction status
+	 *
+	 * @param WP_REST_Request $request Request object.
+	 * @return WP_REST_Response|WP_Error Response object or error.
+	 */
+	public function get_transaction_status( WP_REST_Request $request ) {
+		$transaction_id = $request->get_param( 'transaction_id' );
+
+		// Get transaction from database.
+		$transaction = Transaction::get_by_id( $transaction_id );
+
+		if ( ! $transaction ) {
+			return new WP_Error(
+				'transaction_not_found',
+				__( 'Transaction not found.', 'fair-payment' ),
+				array( 'status' => 404 )
+			);
+		}
+
+		// Prepare response data.
+		$response_data = array(
+			'transaction_id'    => $transaction->id,
+			'status'            => $transaction->status,
+			'amount'            => $transaction->amount,
+			'currency'          => $transaction->currency,
+			'description'       => $transaction->description,
+			'mollie_payment_id' => $transaction->mollie_payment_id,
+			'testmode'          => (bool) $transaction->testmode,
+		);
+
+		return new WP_REST_Response( $response_data, 200 );
 	}
 }

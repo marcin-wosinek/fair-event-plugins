@@ -1,0 +1,106 @@
+/**
+ * Payment Callback Notification Styles
+ *
+ * @package FairPayment
+ */
+
+.fair-payment-notification {
+	position: fixed;
+	top: 32px; /* Account for WordPress admin bar */
+	left: 50%;
+	transform: translateX(-50%);
+	z-index: 999999;
+	max-width: 600px;
+	width: 90%;
+	padding: 1rem 3rem 1rem 1.5rem;
+	border-radius: 4px;
+	box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1), 0 2px 4px rgba(0, 0, 0, 0.06);
+	font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen-Sans, Ubuntu,
+		Cantarell, 'Helvetica Neue', sans-serif;
+	font-size: 14px;
+	line-height: 1.5;
+	animation: fair-payment-slide-in 0.3s ease-out;
+}
+
+/* Logged in - adjust for admin bar */
+body.admin-bar .fair-payment-notification {
+	top: 46px;
+}
+
+@media screen and (min-width: 783px) {
+	body.admin-bar .fair-payment-notification {
+		top: 32px;
+	}
+}
+
+.fair-payment-notification p {
+	margin: 0;
+	padding: 0;
+}
+
+/* Success notification */
+.fair-payment-notification--success {
+	background-color: #d1fae5;
+	border-left: 4px solid #10b981;
+	color: #065f46;
+}
+
+/* Error notification */
+.fair-payment-notification--error {
+	background-color: #fee2e2;
+	border-left: 4px solid #ef4444;
+	color: #991b1b;
+}
+
+/* Info notification */
+.fair-payment-notification--info {
+	background-color: #dbeafe;
+	border-left: 4px solid #3b82f6;
+	color: #1e40af;
+}
+
+/* Dismiss button */
+.fair-payment-notification__dismiss {
+	position: absolute;
+	top: 0.5rem;
+	right: 0.5rem;
+	background: transparent;
+	border: none;
+	font-size: 24px;
+	line-height: 1;
+	cursor: pointer;
+	padding: 0.25rem 0.5rem;
+	color: inherit;
+	opacity: 0.6;
+	transition: opacity 0.2s;
+}
+
+.fair-payment-notification__dismiss:hover,
+.fair-payment-notification__dismiss:focus {
+	opacity: 1;
+}
+
+/* Animations */
+@keyframes fair-payment-slide-in {
+	from {
+		opacity: 0;
+		transform: translate(-50%, -20px);
+	}
+	to {
+		opacity: 1;
+		transform: translate(-50%, 0);
+	}
+}
+
+.fair-payment-notification--fade-out {
+	animation: fair-payment-fade-out 0.5s ease-out forwards;
+}
+
+@keyframes fair-payment-fade-out {
+	from {
+		opacity: 1;
+	}
+	to {
+		opacity: 0;
+	}
+}

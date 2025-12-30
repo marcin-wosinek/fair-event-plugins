@@ -17,6 +17,10 @@ module.exports = {
       process.cwd(),
       "src/Admin/settings/index.js",
     ),
+    "payment-callback": path.resolve(
+      process.cwd(),
+      "src/payment-callback.js",
+    ),
   },
   plugins: [
     ...defaultConfig.plugins,

@@ -39,6 +39,7 @@ class Plugin {
 	 */
 	public function init() {
 		add_action( 'init', array( $this, 'register_blocks' ) );
+		add_action( 'wp_enqueue_scripts', array( $this, 'enqueue_callback_script' ) );
 
 		// Initialize REST API hooks.
 		new \FairPayment\API\RestHooks();
@@ -57,6 +58,42 @@ class Plugin {
 		// Register simple-payment block from build directory
 		register_block_type(
 			FAIR_PAYMENT_PLUGIN_DIR . 'build/blocks/simple-payment'
+		);
+	}
+
+	/**
+	 * Enqueue payment callback script when callback parameter is present
+	 *
+	 * @return void
+	 */
+	public function enqueue_callback_script() {
+		// Check if fair_payment_callback parameter is present in URL.
+		// phpcs:ignore WordPress.Security.NonceVerification.Recommended
+		if ( ! isset( $_GET['fair_payment_callback'] ) || 'true' !== $_GET['fair_payment_callback'] ) {
+			return;
+		}
+
+		$asset_file = FAIR_PAYMENT_PLUGIN_DIR . 'build/payment-callback.asset.php';
+
+		if ( ! file_exists( $asset_file ) ) {
+			return;
+		}
+
+		$asset = require $asset_file;
+
+		wp_enqueue_script(
+			'fair-payment-callback',
+			FAIR_PAYMENT_PLUGIN_URL . 'build/payment-callback.js',
+			$asset['dependencies'],
+			$asset['version'],
+			true
+		);
+
+		wp_enqueue_style(
+			'fair-payment-callback',
+			FAIR_PAYMENT_PLUGIN_URL . 'build/payment-callback.css',
+			array(),
+			$asset['version']
 		);
 	}
 
