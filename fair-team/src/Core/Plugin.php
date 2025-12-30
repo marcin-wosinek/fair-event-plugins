@@ -86,5 +86,8 @@ class Plugin {
 	public function register_api_endpoints() {
 		$controller = new \FairTeam\API\PostTeamMembersController();
 		$controller->register_routes();
+
+		$migration_controller = new \FairTeam\API\MigrationController();
+		$migration_controller->register_routes();
 	}
 }

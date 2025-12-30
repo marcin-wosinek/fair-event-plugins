@@ -20,6 +20,10 @@ const customConfig = {
       process.cwd(),
       "src/Admin/post-team-members/index.js"
     ),
+    "admin/migration/index": path.resolve(
+      process.cwd(),
+      "src/Admin/migration/index.js"
+    ),
   }),
   plugins: [
     ...defaultConfig.plugins,
