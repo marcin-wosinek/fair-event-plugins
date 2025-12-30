@@ -77,6 +77,7 @@ class TeamMember {
 		self::register_meta();
 		self::register_meta_box();
 		self::register_admin_columns();
+		self::register_title_filter();
 	}
 
 	/**
@@ -322,5 +323,46 @@ class TeamMember {
 			return $matches[1];
 		}
 		return $url;
+	}
+
+	/**
+	 * Register title filter
+	 *
+	 * @return void
+	 */
+	public static function register_title_filter() {
+		add_filter( 'the_title', array( __CLASS__, 'modify_title_with_instagram' ), 10, 2 );
+	}
+
+	/**
+	 * Modify title to include Instagram link if available
+	 *
+	 * @param string $title Post title.
+	 * @param int    $post_id Post ID.
+	 * @return string Modified title with Instagram link.
+	 */
+	public static function modify_title_with_instagram( $title, $post_id ) {
+		// Only modify if this is a team member post type
+		if ( self::POST_TYPE !== get_post_type( $post_id ) ) {
+			return $title;
+		}
+
+		// Get Instagram URL
+		$instagram = get_post_meta( $post_id, 'team_member_instagram', true );
+		if ( empty( $instagram ) ) {
+			return $title;
+		}
+
+		// Extract username
+		$username = self::extract_instagram_username( $instagram );
+
+		// Add Instagram link to title
+		$instagram_link = sprintf(
+			' <a href="%s" target="_blank" rel="noopener noreferrer">@%s</a>',
+			esc_url( $instagram ),
+			esc_html( $username )
+		);
+
+		return $title . $instagram_link;
 	}
 }
