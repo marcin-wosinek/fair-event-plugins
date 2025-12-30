@@ -29,16 +29,6 @@ class AdminPages {
 	 * @return void
 	 */
 	public function register_admin_pages() {
-		// Settings page
-		add_submenu_page(
-			'edit.php?post_type=fair_team_member',
-			__( 'Fair Team Settings', 'fair-team' ),
-			__( 'Settings', 'fair-team' ),
-			'manage_options',
-			'fair-team-settings',
-			array( $this, 'render_settings_page' )
-		);
-
 		// Migration page
 		add_submenu_page(
 			'edit.php?post_type=fair_team_member',
@@ -47,6 +37,16 @@ class AdminPages {
 			'manage_options',
 			'fair-team-migration',
 			array( $this, 'render_migration_page' )
+		);
+
+		// Settings page
+		add_submenu_page(
+			'edit.php?post_type=fair_team_member',
+			__( 'Fair Team Settings', 'fair-team' ),
+			__( 'Settings', 'fair-team' ),
+			'manage_options',
+			'fair-team-settings',
+			array( $this, 'render_settings_page' )
 		);
 	}
 
