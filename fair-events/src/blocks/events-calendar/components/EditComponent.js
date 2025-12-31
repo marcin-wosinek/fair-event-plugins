@@ -23,10 +23,12 @@ import {
 	RadioControl,
 	CheckboxControl,
 	SelectControl,
+	TextControl,
 	Icon,
+	Button,
 } from '@wordpress/components';
 import { useSelect } from '@wordpress/data';
-import { calendar } from '@wordpress/icons';
+import { calendar, trash, plus } from '@wordpress/icons';
 
 const EditComponent = ({ attributes, setAttributes }) => {
 	const {
@@ -37,6 +39,7 @@ const EditComponent = ({ attributes, setAttributes }) => {
 		showDrafts,
 		backgroundColor,
 		textColor,
+		eventSources,
 	} = attributes;
 
 	const blockProps = useBlockProps({
@@ -96,6 +99,29 @@ const EditComponent = ({ attributes, setAttributes }) => {
 	const selectedCategoryNames = allCategories
 		.filter((cat) => categories.includes(cat.id))
 		.map((cat) => cat.name);
+
+	// Event source handlers
+	const addEventSource = () => {
+		const newSource = {
+			icalFeed: '',
+			color: '#4caf50',
+		};
+		setAttributes({ eventSources: [...eventSources, newSource] });
+	};
+
+	const removeEventSource = (index) => {
+		const newSources = eventSources.filter((_, i) => i !== index);
+		setAttributes({ eventSources: newSources });
+	};
+
+	const updateEventSource = (index, field, value) => {
+		const newSources = [...eventSources];
+		newSources[index] = {
+			...newSources[index],
+			[field]: value,
+		};
+		setAttributes({ eventSources: newSources });
+	};
 
 	return (
 		<>
@@ -229,6 +255,99 @@ const EditComponent = ({ attributes, setAttributes }) => {
 						</p>
 					)}
 				</PanelColorSettings>
+
+				<PanelBody
+					title={__('Event Sources', 'fair-events')}
+					initialOpen={false}
+				>
+					<p style={{ marginBottom: '16px', color: '#666' }}>
+						{__(
+							'Add external iCal feeds to display events from other calendars.',
+							'fair-events'
+						)}
+					</p>
+
+					{eventSources.map((source, index) => (
+						<div
+							key={index}
+							style={{
+								marginBottom: '20px',
+								padding: '12px',
+								border: '1px solid #ddd',
+								borderRadius: '4px',
+								background: '#f9f9f9',
+							}}
+						>
+							<div
+								style={{
+									display: 'flex',
+									justifyContent: 'space-between',
+									alignItems: 'center',
+									marginBottom: '8px',
+								}}
+							>
+								<strong>
+									{__('Source', 'fair-events')} {index + 1}
+								</strong>
+								<Button
+									icon={trash}
+									isDestructive
+									isSmall
+									onClick={() => removeEventSource(index)}
+									label={__('Remove source', 'fair-events')}
+								/>
+							</div>
+
+							<TextControl
+								label={__('iCal Feed URL', 'fair-events')}
+								value={source.icalFeed}
+								onChange={(value) =>
+									updateEventSource(index, 'icalFeed', value)
+								}
+								placeholder="https://calendar.google.com/calendar/ical/..."
+								type="url"
+							/>
+
+							<PanelColorSettings
+								title={__('Event Color', 'fair-events')}
+								colorSettings={[
+									{
+										value: source.color,
+										onChange: (color) =>
+											updateEventSource(
+												index,
+												'color',
+												color || '#4caf50'
+											),
+										label: __('Background', 'fair-events'),
+									},
+								]}
+							>
+								<p
+									style={{
+										fontSize: '12px',
+										color: '#757575',
+										marginTop: '8px',
+									}}
+								>
+									{__(
+										'Events from this source will use this background color with white text.',
+										'fair-events'
+									)}
+								</p>
+							</PanelColorSettings>
+						</div>
+					))}
+
+					<Button
+						icon={plus}
+						variant="secondary"
+						onClick={addEventSource}
+						style={{ width: '100%' }}
+					>
+						{__('Add Event Source', 'fair-events')}
+					</Button>
+				</PanelBody>
 			</InspectorControls>
 
 			<div {...blockProps}>
@@ -258,6 +377,12 @@ const EditComponent = ({ attributes, setAttributes }) => {
 						<p style={{ color: '#666', marginTop: '8px' }}>
 							{__('Categories:', 'fair-events')}{' '}
 							<strong>{selectedCategoryNames.join(', ')}</strong>
+						</p>
+					)}
+					{eventSources.length > 0 && (
+						<p style={{ color: '#666', marginTop: '8px' }}>
+							{__('Event Sources:', 'fair-events')}{' '}
+							<strong>{eventSources.length}</strong>
 						</p>
 					)}
 				</div>

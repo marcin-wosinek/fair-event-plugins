@@ -173,6 +173,26 @@
 					opacity: 0.9;
 				}
 			}
+
+			// iCal events: non-clickable style
+			&.is-ical {
+				.ical-event-title {
+					display: block;
+					padding: 0.25rem 0.375rem;
+					background: var(--event-bg-color, #4caf50);
+					color: #ffffff;
+					border-radius: 3px;
+					overflow: hidden;
+					text-overflow: ellipsis;
+					white-space: nowrap;
+					min-width: 0;
+					cursor: help;
+
+					&:hover {
+						opacity: 0.8;
+					}
+				}
+			}
 		}
 	}
 

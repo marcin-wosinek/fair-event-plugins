@@ -12,6 +12,7 @@
 defined( 'WPINC' ) || die;
 
 use FairEvents\Models\EventDates;
+use FairEvents\Helpers\ICalParser;
 
 /**
  * Render event using block pattern
@@ -90,6 +91,7 @@ $display_pattern = $attributes['displayPattern'] ?? 'fair-events/calendar-event-
 $show_drafts     = $attributes['showDrafts'] ?? false;
 $bg_color        = $attributes['backgroundColor'] ?? 'primary';
 $text_color      = $attributes['textColor'] ?? '#ffffff';
+$event_sources   = $attributes['eventSources'] ?? array();
 
 // Get month/year from URL parameters or block attributes
 // URL params take precedence (for navigation), then block attributes, then current date
@@ -145,7 +147,30 @@ add_filter( 'posts_orderby', array( 'FairEvents\\Helpers\\QueryHelper', 'order_b
 // Execute the query
 $events_query = new WP_Query( $query_args );
 
-// Group events by date (handle multi-day events)
+// Remove the filters after the query is complete
+remove_filter( 'posts_join', array( 'FairEvents\\Helpers\\QueryHelper', 'join_dates_table' ), 10 );
+remove_filter( 'posts_where', array( 'FairEvents\\Helpers\\QueryHelper', 'filter_by_dates' ), 10 );
+remove_filter( 'posts_orderby', array( 'FairEvents\\Helpers\\QueryHelper', 'order_by_dates' ), 10 );
+
+// Fetch iCal events from all event sources
+$all_ical_events = array();
+foreach ( $event_sources as $source ) {
+	$ical_feed_url   = $source['icalFeed'] ?? '';
+	$ical_feed_color = $source['color'] ?? '#4caf50';
+
+	if ( ! empty( $ical_feed_url ) ) {
+		$fetched_events  = ICalParser::fetch_and_parse( $ical_feed_url );
+		$filtered_events = ICalParser::filter_events_for_month( $fetched_events, $month_start, $month_end );
+
+		// Add color to each event
+		foreach ( $filtered_events as $event ) {
+			$event['source_color'] = $ical_feed_color;
+			$all_ical_events[]     = $event;
+		}
+	}
+}
+
+// Group events by date (handle multi-day events for both local and iCal)
 $events_by_date = array();
 if ( $events_query->have_posts() ) {
 	while ( $events_query->have_posts() ) {
@@ -169,6 +194,9 @@ if ( $events_query->have_posts() ) {
 					'id'           => get_the_ID(),
 					'is_first_day' => $loop_date === $start_date,
 					'is_last_day'  => $loop_date === $end_date,
+					'is_ical'      => false,
+					'title'        => get_the_title(),
+					'permalink'    => get_permalink(),
 				);
 
 				$loop_date = gmdate( 'Y-m-d', strtotime( $loop_date . ' +1 day' ) );
@@ -177,12 +205,34 @@ if ( $events_query->have_posts() ) {
 	}
 }
 
-wp_reset_postdata();
+// Process iCal events
+foreach ( $all_ical_events as $ical_event ) {
+	$start_date = gmdate( 'Y-m-d', strtotime( $ical_event['start'] ) );
+	$end_date   = gmdate( 'Y-m-d', strtotime( $ical_event['end'] ) );
 
-// Remove the filters after the query is complete
-remove_filter( 'posts_join', array( 'FairEvents\\Helpers\\QueryHelper', 'join_dates_table' ), 10 );
-remove_filter( 'posts_where', array( 'FairEvents\\Helpers\\QueryHelper', 'filter_by_dates' ), 10 );
-remove_filter( 'posts_orderby', array( 'FairEvents\\Helpers\\QueryHelper', 'order_by_dates' ), 10 );
+	// Add event to all days it spans
+	$loop_date = $start_date;
+	while ( $loop_date <= $end_date ) {
+		if ( ! isset( $events_by_date[ $loop_date ] ) ) {
+			$events_by_date[ $loop_date ] = array();
+		}
+
+		$events_by_date[ $loop_date ][] = array(
+			'id'           => 'ical_' . md5( $ical_event['uid'] ),
+			'is_first_day' => $loop_date === $start_date,
+			'is_last_day'  => $loop_date === $end_date,
+			'is_ical'      => true,
+			'title'        => $ical_event['summary'],
+			'permalink'    => '',
+			'description'  => $ical_event['description'],
+			'color'        => $ical_event['source_color'],
+		);
+
+		$loop_date = gmdate( 'Y-m-d', strtotime( $loop_date . ' +1 day' ) );
+	}
+}
+
+wp_reset_postdata();
 
 // Calculate grid structure
 $first_day_of_month = strtotime( "{$current_year}-{$current_month}-01" );
@@ -298,37 +348,61 @@ $today = current_time( 'Y-m-d' );
 				<div class="day-events">
 					<?php foreach ( $day_events as $event_data ) : ?>
 						<?php
-						// Get event post to check status.
-						$event_post = get_post( $event_data['id'] );
-						$is_draft   = $event_post && 'draft' === $event_post->post_status;
+						$is_ical = $event_data['is_ical'] ?? false;
 
-						// Convert color values (hex or preset name) to CSS values
-						// Background color
-						if ( preg_match( '/^#[0-9A-Fa-f]{3,6}$/', $bg_color ) ) {
-							$bg_color_value = $bg_color;
-						} else {
-							$bg_color_value = 'var(--wp--preset--color--' . esc_attr( $bg_color ) . ')';
-						}
+						if ( $is_ical ) {
+							// iCal event rendering
+							$event_title = esc_html( $event_data['title'] );
+							$event_desc  = esc_attr( $event_data['description'] ?? '' );
+							$event_color = $event_data['color'] ?? '#4caf50';
 
-						// Text color
-						if ( preg_match( '/^#[0-9A-Fa-f]{3,6}$/', $text_color ) ) {
-							$text_color_value = $text_color;
-						} else {
-							$text_color_value = 'var(--wp--preset--color--' . esc_attr( $text_color ) . ')';
-						}
+							// Convert iCal feed color to CSS value
+							if ( preg_match( '/^#[0-9A-Fa-f]{3,6}$/', $event_color ) ) {
+								$bg_color_value = $event_color;
+							} else {
+								$bg_color_value = 'var(--wp--preset--color--' . esc_attr( $event_color ) . ')';
+							}
 
-						// Add draft class for styling
-						$item_classes = array( 'event-item' );
-						if ( $is_draft ) {
-							$item_classes[] = 'is-draft';
-						}
-						?>
-						<div class="<?php echo esc_attr( implode( ' ', $item_classes ) ); ?>" style="--event-bg-color: <?php echo esc_attr( $bg_color_value ); ?>; --event-text-color: <?php echo esc_attr( $text_color_value ); ?>">
-							<?php
-							// phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
-							echo fair_events_render_calendar_pattern( $display_pattern, $event_data['id'] );
+							$item_classes = array( 'event-item', 'is-ical' );
 							?>
-						</div>
+							<div class="<?php echo esc_attr( implode( ' ', $item_classes ) ); ?>"
+								style="--event-bg-color: <?php echo esc_attr( $bg_color_value ); ?>; --event-text-color: #ffffff">
+								<span class="ical-event-title" title="<?php echo $event_desc; ?>">
+									<?php echo $event_title; ?>
+								</span>
+							</div>
+						<?php } else { ?>
+							<?php
+							// Local WordPress event rendering
+							$event_post = get_post( $event_data['id'] );
+							$is_draft   = $event_post && 'draft' === $event_post->post_status;
+
+							// Convert color values (hex or preset name) to CSS values
+							if ( preg_match( '/^#[0-9A-Fa-f]{3,6}$/', $bg_color ) ) {
+								$bg_color_value = $bg_color;
+							} else {
+								$bg_color_value = 'var(--wp--preset--color--' . esc_attr( $bg_color ) . ')';
+							}
+
+							if ( preg_match( '/^#[0-9A-Fa-f]{3,6}$/', $text_color ) ) {
+								$text_color_value = $text_color;
+							} else {
+								$text_color_value = 'var(--wp--preset--color--' . esc_attr( $text_color ) . ')';
+							}
+
+							$item_classes = array( 'event-item' );
+							if ( $is_draft ) {
+								$item_classes[] = 'is-draft';
+							}
+							?>
+							<div class="<?php echo esc_attr( implode( ' ', $item_classes ) ); ?>"
+								style="--event-bg-color: <?php echo esc_attr( $bg_color_value ); ?>; --event-text-color: <?php echo esc_attr( $text_color_value ); ?>">
+								<?php
+								// phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
+								echo fair_events_render_calendar_pattern( $display_pattern, $event_data['id'] );
+								?>
+							</div>
+						<?php } ?>
 					<?php endforeach; ?>
 				</div>
 				<?php endif; ?>

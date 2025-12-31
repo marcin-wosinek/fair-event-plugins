@@ -49,6 +49,21 @@
 		"textColor": {
 			"type": "string",
 			"default": "#ffffff"
+		},
+		"eventSources": {
+			"type": "array",
+			"default": [],
+			"items": {
+				"type": "object",
+				"properties": {
+					"icalFeed": {
+						"type": "string"
+					},
+					"color": {
+						"type": "string"
+					}
+				}
+			}
 		}
 	},
 	"supports": {
