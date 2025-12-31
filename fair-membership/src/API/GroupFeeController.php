@@ -379,6 +379,10 @@ class GroupFeeController extends WP_REST_Controller {
 			);
 		}
 
+		// Track changes for propagation to user fees
+		$amount_changed   = false;
+		$due_date_changed = false;
+
 		// Update fields if provided
 		if ( $request->has_param( 'title' ) ) {
 			$group_fee->title = $request->get_param( 'title' );
@@ -387,10 +391,18 @@ class GroupFeeController extends WP_REST_Controller {
 			$group_fee->description = $request->get_param( 'description' );
 		}
 		if ( $request->has_param( 'default_amount' ) ) {
-			$group_fee->default_amount = $request->get_param( 'default_amount' );
+			$new_amount = $request->get_param( 'default_amount' );
+			if ( $group_fee->default_amount !== $new_amount ) {
+				$amount_changed            = true;
+				$group_fee->default_amount = $new_amount;
+			}
 		}
 		if ( $request->has_param( 'due_date' ) ) {
-			$group_fee->due_date = $request->get_param( 'due_date' );
+			$new_due_date = $request->get_param( 'due_date' );
+			if ( $group_fee->due_date !== $new_due_date ) {
+				$due_date_changed    = true;
+				$group_fee->due_date = $new_due_date;
+			}
 		}
 
 		// Validate
@@ -409,7 +421,61 @@ class GroupFeeController extends WP_REST_Controller {
 			);
 		}
 
-		return new WP_REST_Response( $group_fee->to_array() );
+		// Propagate changes to pending user fees
+		$updated_count = 0;
+		if ( $amount_changed || $due_date_changed ) {
+			$updated_count = $this->update_pending_user_fees( $group_fee->id, $amount_changed ? $group_fee->default_amount : null, $due_date_changed ? $group_fee->due_date : null );
+		}
+
+		$response_data = $group_fee->to_array();
+		if ( $amount_changed || $due_date_changed ) {
+			$response_data['user_fees_updated'] = $updated_count;
+		}
+
+		return new WP_REST_Response( $response_data );
+	}
+
+	/**
+	 * Update pending user fees when group fee amount or due date changes
+	 *
+	 * @param int         $group_fee_id Group fee ID.
+	 * @param float|null  $new_amount New amount (null if not changed).
+	 * @param string|null $new_due_date New due date (null if not changed).
+	 * @return int Number of user fees updated.
+	 */
+	private function update_pending_user_fees( $group_fee_id, $new_amount = null, $new_due_date = null ) {
+		// Get all pending user fees for this group fee
+		$user_fees = UserFee::get_all(
+			array(
+				'group_fee_id' => $group_fee_id,
+				'status'       => 'pending',
+			)
+		);
+
+		$updated_count = 0;
+
+		foreach ( $user_fees as $user_fee ) {
+			$changed = false;
+
+			// Update amount if provided
+			if ( null !== $new_amount ) {
+				$user_fee->amount = $new_amount;
+				$changed          = true;
+			}
+
+			// Update due date if provided
+			if ( null !== $new_due_date ) {
+				$user_fee->due_date = $new_due_date;
+				$changed            = true;
+			}
+
+			// Save if changed
+			if ( $changed && $user_fee->save() ) {
+				++$updated_count;
+			}
+		}
+
+		return $updated_count;
 	}
 
 	/**
