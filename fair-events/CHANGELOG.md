@@ -1,5 +1,11 @@
 # fair-events
 
+## 0.6.2
+
+### Patch Changes
+
+- c806c7c: Add iCal for calendar display.
+
 ## 0.6.1
 
 ### Patch Changes
