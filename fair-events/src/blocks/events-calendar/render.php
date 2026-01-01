@@ -223,7 +223,7 @@ foreach ( $all_ical_events as $ical_event ) {
 			'is_last_day'  => $loop_date === $end_date,
 			'is_ical'      => true,
 			'title'        => $ical_event['summary'],
-			'permalink'    => '',
+			'permalink'    => $ical_event['url'],
 			'description'  => $ical_event['description'],
 			'color'        => $ical_event['source_color'],
 		);
@@ -353,6 +353,7 @@ $today = current_time( 'Y-m-d' );
 						if ( $is_ical ) {
 							// iCal event rendering
 							$event_title = esc_html( $event_data['title'] );
+							$event_url   = $event_data['permalink'] ?? '';
 							$event_desc  = esc_attr( $event_data['description'] ?? '' );
 							$event_color = $event_data['color'] ?? '#4caf50';
 
@@ -367,15 +368,27 @@ $today = current_time( 'Y-m-d' );
 							?>
 							<div class="<?php echo esc_attr( implode( ' ', $item_classes ) ); ?>"
 								style="--event-bg-color: <?php echo esc_attr( $bg_color_value ); ?>; --event-text-color: #ffffff">
-								<span class="ical-event-title" title="<?php echo $event_desc; ?>">
-									<?php echo $event_title; ?>
-								</span>
+								<?php if ( ! empty( $event_url ) ) : ?>
+									<a href="<?php echo esc_url( $event_url ); ?>"
+										class="ical-event-title"
+										title="<?php echo $event_desc; ?>"
+										target="_blank"
+										rel="noopener noreferrer">
+										<?php echo $event_title; ?>
+									</a>
+								<?php else : ?>
+									<span class="ical-event-title" title="<?php echo $event_desc; ?>">
+										<?php echo $event_title; ?>
+									</span>
+								<?php endif; ?>
 							</div>
 						<?php } else { ?>
 							<?php
 							// Local WordPress event rendering
-							$event_post = get_post( $event_data['id'] );
-							$is_draft   = $event_post && 'draft' === $event_post->post_status;
+							$event_post  = get_post( $event_data['id'] );
+							$is_draft    = $event_post && 'draft' === $event_post->post_status;
+							$event_title = get_the_title( $event_data['id'] );
+							$event_url   = get_permalink( $event_data['id'] );
 
 							// Convert color values (hex or preset name) to CSS values
 							if ( preg_match( '/^#[0-9A-Fa-f]{3,6}$/', $bg_color ) ) {
@@ -397,10 +410,9 @@ $today = current_time( 'Y-m-d' );
 							?>
 							<div class="<?php echo esc_attr( implode( ' ', $item_classes ) ); ?>"
 								style="--event-bg-color: <?php echo esc_attr( $bg_color_value ); ?>; --event-text-color: <?php echo esc_attr( $text_color_value ); ?>">
-								<?php
-								// phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
-								echo fair_events_render_calendar_pattern( $display_pattern, $event_data['id'] );
-								?>
+								<a href="<?php echo esc_url( $event_url ); ?>" class="event-title">
+									<?php echo esc_html( $event_title ); ?>
+								</a>
 							</div>
 						<?php } ?>
 					<?php endforeach; ?>

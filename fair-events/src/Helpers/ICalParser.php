@@ -127,6 +127,7 @@ class ICalParser {
 			'uid'         => isset( $vevent->UID ) ? (string) $vevent->UID : md5( $start_datetime . (string) $vevent->SUMMARY ),
 			'summary'     => (string) $vevent->SUMMARY,
 			'description' => isset( $vevent->DESCRIPTION ) ? (string) $vevent->DESCRIPTION : '',
+			'url'         => isset( $vevent->URL ) ? (string) $vevent->URL : '',
 			'start'       => $start_datetime,
 			'end'         => $end_datetime,
 			'all_day'     => $all_day,

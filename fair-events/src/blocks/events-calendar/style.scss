@@ -174,7 +174,7 @@
 				}
 			}
 
-			// iCal events: non-clickable style
+			// iCal events: styled as colored blocks
 			&.is-ical {
 				.ical-event-title {
 					display: block;
@@ -186,10 +186,24 @@
 					text-overflow: ellipsis;
 					white-space: nowrap;
 					min-width: 0;
-					cursor: help;
+					text-decoration: none;
 
 					&:hover {
 						opacity: 0.8;
+					}
+
+					&:focus {
+						outline: 2px solid currentColor;
+						outline-offset: 2px;
+					}
+
+					// Links have pointer cursor, spans have help cursor
+					&[href] {
+						cursor: pointer;
+					}
+
+					&:not([href]) {
+						cursor: help;
 					}
 				}
 			}

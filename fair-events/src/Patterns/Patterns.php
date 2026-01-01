@@ -91,7 +91,7 @@ class Patterns {
 				'description' => __( 'Display event title only (compact for calendar cells)', 'fair-events' ),
 				'categories'  => array( 'fair-events' ),
 				'keywords'    => array( 'calendar', 'event', 'simple', 'title' ),
-				'content'     => '<!-- wp:post-title {"level":5,"isLink":true,"fontSize":"small"} /-->',
+				'content'     => '<!-- wp:post-title {"level":6,"isLink":true,"fontSize":"small"} /-->',
 			)
 		);
 	}
