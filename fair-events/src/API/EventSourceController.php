@@ -123,6 +123,25 @@ class EventSourceController extends WP_REST_Controller {
 				),
 			)
 		);
+
+		// GET /fair-events/v1/sources/{slug}/ical - Get iCal feed for source
+		register_rest_route(
+			$this->namespace,
+			'/sources/(?P<slug>[a-z0-9-]+)/ical',
+			array(
+				array(
+					'methods'             => WP_REST_Server::READABLE,
+					'callback'            => array( $this, 'get_ical_feed' ),
+					'permission_callback' => '__return_true', // Public endpoint
+					'args'                => array(
+						'slug' => array(
+							'description' => __( 'Unique slug identifier for the source.', 'fair-events' ),
+							'type'        => 'string',
+						),
+					),
+				),
+			)
+		);
 	}
 
 	/**
@@ -340,6 +359,129 @@ class EventSourceController extends WP_REST_Controller {
 		);
 
 		return new WP_REST_Response( $formatted, 200 );
+	}
+
+	/**
+	 * Get iCal feed for a source
+	 *
+	 * @param WP_REST_Request $request Full data about the request.
+	 * @return WP_REST_Response|WP_Error Response object on success, or WP_Error on failure.
+	 */
+	public function get_ical_feed( $request ) {
+		$slug   = $request->get_param( 'slug' );
+		$source = $this->repository->get_by_slug( $slug );
+
+		if ( ! $source ) {
+			return new WP_Error(
+				'rest_source_not_found',
+				__( 'Source not found.', 'fair-events' ),
+				array( 'status' => 404 )
+			);
+		}
+
+		if ( ! $source['enabled'] ) {
+			return new WP_Error(
+				'rest_source_disabled',
+				__( 'This source is disabled.', 'fair-events' ),
+				array( 'status' => 403 )
+			);
+		}
+
+		// Collect all category IDs from data sources
+		$category_ids = array();
+		foreach ( $source['data_sources'] as $data_source ) {
+			if ( 'categories' === $data_source['source_type'] && isset( $data_source['config']['category_ids'] ) ) {
+				$category_ids = array_merge( $category_ids, $data_source['config']['category_ids'] );
+			}
+		}
+
+		// Query events
+		$query_args = array(
+			'post_type'      => 'fair_event',
+			'posts_per_page' => -1,
+			'post_status'    => 'publish',
+			'orderby'        => 'meta_value',
+			'meta_key'       => '_fair_event_start_date',
+			'order'          => 'ASC',
+		);
+
+		// Add category filter if we have categories
+		if ( ! empty( $category_ids ) ) {
+			$query_args['category__in'] = array_unique( $category_ids );
+		}
+
+		$events = get_posts( $query_args );
+
+		// Generate iCal content
+		$ical = $this->generate_ical( $events, $source );
+
+		// Return with proper headers
+		$response = new WP_REST_Response( $ical, 200 );
+		$response->header( 'Content-Type', 'text/calendar; charset=utf-8' );
+		$response->header( 'Content-Disposition', 'attachment; filename="' . $slug . '.ics"' );
+
+		return $response;
+	}
+
+	/**
+	 * Generate iCal content from events
+	 *
+	 * @param array $events Array of WP_Post objects.
+	 * @param array $source Event source data.
+	 * @return string iCal formatted content.
+	 */
+	private function generate_ical( $events, $source ) {
+		$ical  = "BEGIN:VCALENDAR\r\n";
+		$ical .= "VERSION:2.0\r\n";
+		$ical .= 'PRODID:-//Fair Events//Event Source: ' . $source['name'] . "//EN\r\n";
+		$ical .= "CALSCALE:GREGORIAN\r\n";
+		$ical .= 'X-WR-CALNAME:' . $this->escape_ical( $source['name'] ) . "\r\n";
+		$ical .= "X-WR-TIMEZONE:UTC\r\n";
+
+		foreach ( $events as $event ) {
+			$start_date = get_post_meta( $event->ID, '_fair_event_start_date', true );
+			$end_date   = get_post_meta( $event->ID, '_fair_event_end_date', true );
+
+			if ( ! $start_date ) {
+				continue;
+			}
+
+			// Format dates for iCal (YYYYMMDDTHHMMSSZ)
+			$dtstart = gmdate( 'Ymd\THis\Z', strtotime( $start_date ) );
+			$dtend   = $end_date ? gmdate( 'Ymd\THis\Z', strtotime( $end_date ) ) : gmdate( 'Ymd\THis\Z', strtotime( $start_date ) + 3600 );
+
+			$ical .= "BEGIN:VEVENT\r\n";
+			$ical .= 'UID:' . $event->ID . '@' . get_site_url() . "\r\n";
+			$ical .= 'DTSTAMP:' . gmdate( 'Ymd\THis\Z' ) . "\r\n";
+			$ical .= 'DTSTART:' . $dtstart . "\r\n";
+			$ical .= 'DTEND:' . $dtend . "\r\n";
+			$ical .= 'SUMMARY:' . $this->escape_ical( $event->post_title ) . "\r\n";
+
+			if ( $event->post_content ) {
+				$description = wp_strip_all_tags( $event->post_content );
+				$ical       .= 'DESCRIPTION:' . $this->escape_ical( $description ) . "\r\n";
+			}
+
+			$ical .= 'URL:' . get_permalink( $event->ID ) . "\r\n";
+			$ical .= "STATUS:CONFIRMED\r\n";
+			$ical .= "END:VEVENT\r\n";
+		}
+
+		$ical .= "END:VCALENDAR\r\n";
+
+		return $ical;
+	}
+
+	/**
+	 * Escape text for iCal format
+	 *
+	 * @param string $text Text to escape.
+	 * @return string Escaped text.
+	 */
+	private function escape_ical( $text ) {
+		$text = str_replace( array( "\r\n", "\n", "\r" ), ' ', $text );
+		$text = str_replace( array( '\\', ',', ';' ), array( '\\\\', '\\,', '\\;' ), $text );
+		return $text;
 	}
 
 	/**

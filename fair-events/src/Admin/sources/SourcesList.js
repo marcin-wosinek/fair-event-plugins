@@ -12,9 +12,11 @@ import {
 	Spinner,
 	Notice,
 	Modal,
+	Tooltip,
 	__experimentalVStack as VStack,
 	__experimentalHStack as HStack,
 } from '@wordpress/components';
+import { copy } from '@wordpress/icons';
 
 /**
  * Internal dependencies
@@ -119,6 +121,27 @@ const SourcesList = () => {
 		);
 	};
 
+	const getIcalUrl = (slug) => {
+		const restUrl = window.wpApiSettings?.root || '/wp-json/';
+		return (
+			window.location.origin +
+			restUrl +
+			'fair-events/v1/sources/' +
+			slug +
+			'/ical'
+		);
+	};
+
+	const handleCopyIcalUrl = async (slug) => {
+		const url = getIcalUrl(slug);
+		try {
+			await navigator.clipboard.writeText(url);
+			setSuccess(__('iCal URL copied to clipboard!', 'fair-events'));
+		} catch (err) {
+			setError(__('Failed to copy URL to clipboard.', 'fair-events'));
+		}
+	};
+
 	return (
 		<div className="fair-events-sources-page">
 			<Card>
@@ -179,6 +202,9 @@ const SourcesList = () => {
 										<th>
 											{__('Data Sources', 'fair-events')}
 										</th>
+										<th>
+											{__('iCal Feed', 'fair-events')}
+										</th>
 										<th>{__('Status', 'fair-events')}</th>
 										<th>{__('Actions', 'fair-events')}</th>
 									</tr>
@@ -199,6 +225,30 @@ const SourcesList = () => {
 													'data source(s)',
 													'fair-events'
 												)}
+											</td>
+											<td>
+												<Tooltip
+													text={__(
+														'Copy iCal feed URL',
+														'fair-events'
+													)}
+												>
+													<Button
+														variant="secondary"
+														size="small"
+														icon={copy}
+														onClick={() =>
+															handleCopyIcalUrl(
+																source.slug
+															)
+														}
+													>
+														{__(
+															'Copy URL',
+															'fair-events'
+														)}
+													</Button>
+												</Tooltip>
 											</td>
 											<td>
 												{getStatusBadge(source.enabled)}
