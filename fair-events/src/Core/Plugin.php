@@ -95,6 +95,15 @@ class Plugin {
 	private function load_rest_api() {
 		new \FairEvents\API\DateOptionsEndpoint();
 		new \FairEvents\API\UserGroupOptionsEndpoint();
+
+		// Event Sources controller
+		add_action(
+			'rest_api_init',
+			function () {
+				$controller = new \FairEvents\API\EventSourceController();
+				$controller->register_routes();
+			}
+		);
 	}
 
 	/**

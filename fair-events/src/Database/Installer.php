@@ -29,6 +29,9 @@ class Installer {
 		$sql = Schema::get_event_dates_table_sql();
 		dbDelta( $sql );
 
+		$sql = Schema::get_event_sources_table_sql();
+		dbDelta( $sql );
+
 		// Run migration if upgrading from pre-1.0.0
 		if ( version_compare( $current_version, '1.0.0', '<' ) ) {
 			self::migrate_to_1_0_0();

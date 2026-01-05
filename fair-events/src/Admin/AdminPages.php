@@ -61,6 +61,16 @@ class AdminPages {
 			array( $this, 'render_import_page' )
 		);
 
+		// Event Sources page
+		add_submenu_page(
+			'edit.php?post_type=fair_event',
+			__( 'Event Sources', 'fair-events' ),
+			__( 'Event Sources', 'fair-events' ),
+			'manage_options',
+			'fair-events-sources',
+			array( $this, 'render_sources_page' )
+		);
+
 		// Copy Event page (hidden from menu, accessed via row action)
 		$copy_hookname = add_submenu_page(
 			'', // Hidden from menu (empty string instead of null for PHP 8.1+ compatibility)
@@ -82,6 +92,28 @@ class AdminPages {
 	 * @return void
 	 */
 	public function enqueue_admin_scripts( $hook ) {
+		// Event Sources page
+		if ( 'fair_event_page_fair-events-sources' === $hook ) {
+			$asset_file = include FAIR_EVENTS_PLUGIN_DIR . 'build/admin/sources/index.asset.php';
+
+			wp_enqueue_script(
+				'fair-events-sources',
+				FAIR_EVENTS_PLUGIN_URL . 'build/admin/sources/index.js',
+				$asset_file['dependencies'],
+				$asset_file['version'],
+				true
+			);
+
+			wp_set_script_translations(
+				'fair-events-sources',
+				'fair-events',
+				FAIR_EVENTS_PLUGIN_DIR . 'build/languages'
+			);
+
+			wp_enqueue_style( 'wp-components' );
+			return;
+		}
+
 		// Only load on Fair Events admin pages.
 		if ( 'fair_event_page_fair-events-settings' !== $hook && 'fair_event_page_fair-events-import' !== $hook ) {
 			return;
@@ -129,6 +161,17 @@ class AdminPages {
 		<div class="wrap">
 			<h1><?php echo esc_html( get_admin_page_title() ); ?></h1>
 		</div>
+		<?php
+	}
+
+	/**
+	 * Render event sources page
+	 *
+	 * @return void
+	 */
+	public function render_sources_page() {
+		?>
+		<div id="fair-events-sources-root"></div>
 		<?php
 	}
 

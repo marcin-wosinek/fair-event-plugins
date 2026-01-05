@@ -17,7 +17,7 @@ class Schema {
 	/**
 	 * Database version
 	 */
-	const DB_VERSION = '1.0.0';
+	const DB_VERSION = '1.1.0';
 
 	/**
 	 * Get the SQL for creating the fair_event_dates table
@@ -48,6 +48,34 @@ class Schema {
 			CONSTRAINT fk_event_dates_event
 				FOREIGN KEY (event_id) REFERENCES {$wpdb->posts}(ID)
 				ON DELETE CASCADE
+		) ENGINE=InnoDB {$charset_collate};";
+	}
+
+	/**
+	 * Get the SQL for creating the fair_event_sources table
+	 *
+	 * @return string SQL statement for creating the table.
+	 */
+	public static function get_event_sources_table_sql() {
+		global $wpdb;
+
+		$table_name      = $wpdb->prefix . 'fair_event_sources';
+		$charset_collate = $wpdb->get_charset_collate();
+
+		return "CREATE TABLE {$table_name} (
+			id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
+			name VARCHAR(255) NOT NULL,
+			source_type VARCHAR(50) NOT NULL,
+			config LONGTEXT NOT NULL,
+			color VARCHAR(7) DEFAULT '#000000',
+			enabled TINYINT(1) NOT NULL DEFAULT 1,
+			created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+			updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+
+			PRIMARY KEY (id),
+			KEY idx_source_type (source_type),
+			KEY idx_enabled (enabled),
+			KEY idx_created_at (created_at)
 		) ENGINE=InnoDB {$charset_collate};";
 	}
 

@@ -25,6 +25,10 @@ module.exports = {
       process.cwd(),
       "src/Admin/event-meta/index.js",
     ),
+    "admin/sources/index": path.resolve(
+      process.cwd(),
+      "src/Admin/sources/index.js",
+    ),
   },
   plugins: [
     ...defaultConfig.plugins,
