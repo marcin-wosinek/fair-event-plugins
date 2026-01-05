@@ -107,20 +107,6 @@ const SourcesList = () => {
 		setEditingSource(null);
 	};
 
-	const getSourceTypeBadge = (type) => {
-		const typeLabels = {
-			categories: __('Categories', 'fair-events'),
-			ical_url: __('iCal URL', 'fair-events'),
-			meetup_api: __('Meetup API', 'fair-events'),
-		};
-
-		return (
-			<span className={`source-type-badge source-type-${type}`}>
-				{typeLabels[type] || type}
-			</span>
-		);
-	};
-
 	const getStatusBadge = (enabled) => {
 		return enabled ? (
 			<span className="source-status-badge source-status-enabled">
@@ -188,11 +174,10 @@ const SourcesList = () => {
 							<table className="wp-list-table widefat fixed striped">
 								<thead>
 									<tr>
-										<th style={{ width: '30px' }}></th>
 										<th>{__('Name', 'fair-events')}</th>
-										<th>{__('Type', 'fair-events')}</th>
+										<th>{__('Slug', 'fair-events')}</th>
 										<th>
-											{__('Configuration', 'fair-events')}
+											{__('Data Sources', 'fair-events')}
 										</th>
 										<th>{__('Status', 'fair-events')}</th>
 										<th>{__('Actions', 'fair-events')}</th>
@@ -202,49 +187,17 @@ const SourcesList = () => {
 									{sources.map((source) => (
 										<tr key={source.id}>
 											<td>
-												<div
-													className="source-color-indicator"
-													style={{
-														backgroundColor:
-															source.color,
-													}}
-												/>
-											</td>
-											<td>
 												<strong>{source.name}</strong>
 											</td>
 											<td>
-												{getSourceTypeBadge(
-													source.source_type
-												)}
+												<code>{source.slug}</code>
 											</td>
 											<td>
-												{source.source_type ===
-													'categories' && (
-													<span>
-														{source.config
-															.category_ids
-															?.length || 0}{' '}
-														{__(
-															'categories',
-															'fair-events'
-														)}
-													</span>
-												)}
-												{source.source_type ===
-													'ical_url' && (
-													<code className="source-url">
-														{source.config.url}
-													</code>
-												)}
-												{source.source_type ===
-													'meetup_api' && (
-													<span>
-														{__(
-															'API configured',
-															'fair-events'
-														)}
-													</span>
+												{source.data_sources?.length ||
+													0}{' '}
+												{__(
+													'data source(s)',
+													'fair-events'
 												)}
 											</td>
 											<td>
@@ -298,7 +251,7 @@ const SourcesList = () => {
 							: __('Add New Event Source', 'fair-events')
 					}
 					onRequestClose={handleFormCancel}
-					style={{ maxWidth: '600px' }}
+					style={{ maxWidth: '800px' }}
 				>
 					<SourceForm
 						source={editingSource}

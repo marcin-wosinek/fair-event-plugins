@@ -30,13 +30,12 @@ class EventSourceRepository {
 	 * Create a new event source
 	 *
 	 * @param string $name Source name.
-	 * @param string $source_type Source type (categories, ical_url, meetup_api).
-	 * @param array  $config Configuration array.
-	 * @param string $color Hex color code.
+	 * @param string $slug Source slug.
+	 * @param array  $data_sources Array of data sources.
 	 * @param bool   $enabled Whether source is enabled.
 	 * @return int|false Source ID on success, false on failure.
 	 */
-	public function create( $name, $source_type, $config, $color = '#000000', $enabled = true ) {
+	public function create( $name, $slug, $data_sources, $enabled = true ) {
 		global $wpdb;
 
 		$table_name = $this->get_table_name();
@@ -44,13 +43,12 @@ class EventSourceRepository {
 		$result = $wpdb->insert(
 			$table_name,
 			array(
-				'name'        => $name,
-				'source_type' => $source_type,
-				'config'      => wp_json_encode( $config ),
-				'color'       => $color,
-				'enabled'     => $enabled ? 1 : 0,
+				'name'         => $name,
+				'slug'         => $slug,
+				'data_sources' => wp_json_encode( $data_sources ),
+				'enabled'      => $enabled ? 1 : 0,
 			),
-			array( '%s', '%s', '%s', '%s', '%d' )
+			array( '%s', '%s', '%s', '%d' )
 		);
 
 		return $result ? $wpdb->insert_id : false;
@@ -61,13 +59,12 @@ class EventSourceRepository {
 	 *
 	 * @param int    $id Source ID.
 	 * @param string $name Source name.
-	 * @param string $source_type Source type.
-	 * @param array  $config Configuration array.
-	 * @param string $color Hex color code.
+	 * @param string $slug Source slug.
+	 * @param array  $data_sources Array of data sources.
 	 * @param bool   $enabled Whether source is enabled.
 	 * @return bool True on success, false on failure.
 	 */
-	public function update( $id, $name, $source_type, $config, $color, $enabled ) {
+	public function update( $id, $name, $slug, $data_sources, $enabled ) {
 		global $wpdb;
 
 		$table_name = $this->get_table_name();
@@ -75,14 +72,13 @@ class EventSourceRepository {
 		$result = $wpdb->update(
 			$table_name,
 			array(
-				'name'        => $name,
-				'source_type' => $source_type,
-				'config'      => wp_json_encode( $config ),
-				'color'       => $color,
-				'enabled'     => $enabled ? 1 : 0,
+				'name'         => $name,
+				'slug'         => $slug,
+				'data_sources' => wp_json_encode( $data_sources ),
+				'enabled'      => $enabled ? 1 : 0,
 			),
 			array( 'id' => $id ),
-			array( '%s', '%s', '%s', '%s', '%d' ),
+			array( '%s', '%s', '%s', '%d' ),
 			array( '%d' )
 		);
 
@@ -113,7 +109,7 @@ class EventSourceRepository {
 	 * Get event source by ID
 	 *
 	 * @param int $id Source ID.
-	 * @return array|null Source data with decoded config, or null if not found.
+	 * @return array|null Source data with decoded data_sources, or null if not found.
 	 */
 	public function get_by_id( $id ) {
 		global $wpdb;
@@ -127,8 +123,8 @@ class EventSourceRepository {
 		);
 
 		if ( $source ) {
-			$source['config']  = json_decode( $source['config'], true );
-			$source['enabled'] = (bool) $source['enabled'];
+			$source['data_sources'] = json_decode( $source['data_sources'], true );
+			$source['enabled']      = (bool) $source['enabled'];
 		}
 
 		return $source;
@@ -138,7 +134,7 @@ class EventSourceRepository {
 	 * Get all event sources
 	 *
 	 * @param bool $enabled_only Whether to fetch only enabled sources.
-	 * @return array Array of sources with decoded config.
+	 * @return array Array of sources with decoded data_sources.
 	 */
 	public function get_all( $enabled_only = false ) {
 		global $wpdb;
@@ -160,53 +156,35 @@ class EventSourceRepository {
 		}
 
 		foreach ( $sources as &$source ) {
-			$source['config']  = json_decode( $source['config'], true );
-			$source['enabled'] = (bool) $source['enabled'];
+			$source['data_sources'] = json_decode( $source['data_sources'], true );
+			$source['enabled']      = (bool) $source['enabled'];
 		}
 
 		return $sources;
 	}
 
 	/**
-	 * Get sources by type
+	 * Get source by slug
 	 *
-	 * @param string $source_type Source type to filter by.
-	 * @param bool   $enabled_only Whether to fetch only enabled sources.
-	 * @return array Array of sources.
+	 * @param string $slug Source slug.
+	 * @return array|null Source data with decoded data_sources, or null if not found.
 	 */
-	public function get_by_type( $source_type, $enabled_only = false ) {
+	public function get_by_slug( $slug ) {
 		global $wpdb;
 
 		$table_name = $this->get_table_name();
 
-		if ( $enabled_only ) {
-			// phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared
-			$sources = $wpdb->get_results(
-				$wpdb->prepare(
-					'SELECT * FROM %i WHERE source_type = %s AND enabled = %d ORDER BY created_at DESC',
-					$table_name,
-					$source_type,
-					1
-				),
-				ARRAY_A
-			);
-		} else {
-			// phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared
-			$sources = $wpdb->get_results(
-				$wpdb->prepare(
-					'SELECT * FROM %i WHERE source_type = %s ORDER BY created_at DESC',
-					$table_name,
-					$source_type
-				),
-				ARRAY_A
-			);
+		// phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared
+		$source = $wpdb->get_row(
+			$wpdb->prepare( 'SELECT * FROM %i WHERE slug = %s', $table_name, $slug ),
+			ARRAY_A
+		);
+
+		if ( $source ) {
+			$source['data_sources'] = json_decode( $source['data_sources'], true );
+			$source['enabled']      = (bool) $source['enabled'];
 		}
 
-		foreach ( $sources as &$source ) {
-			$source['config']  = json_decode( $source['config'], true );
-			$source['enabled'] = (bool) $source['enabled'];
-		}
-
-		return $sources;
+		return $source;
 	}
 }

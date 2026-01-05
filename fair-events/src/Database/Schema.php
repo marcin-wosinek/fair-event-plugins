@@ -65,15 +65,14 @@ class Schema {
 		return "CREATE TABLE {$table_name} (
 			id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
 			name VARCHAR(255) NOT NULL,
-			source_type VARCHAR(50) NOT NULL,
-			config LONGTEXT NOT NULL,
-			color VARCHAR(7) DEFAULT '#000000',
+			slug VARCHAR(255) NOT NULL,
+			data_sources LONGTEXT NOT NULL,
 			enabled TINYINT(1) NOT NULL DEFAULT 1,
 			created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
 			updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
 
 			PRIMARY KEY (id),
-			KEY idx_source_type (source_type),
+			UNIQUE KEY idx_slug (slug),
 			KEY idx_enabled (enabled),
 			KEY idx_created_at (created_at)
 		) ENGINE=InnoDB {$charset_collate};";

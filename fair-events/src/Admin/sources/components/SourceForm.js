@@ -1,14 +1,12 @@
 /**
  * WordPress dependencies
  */
-import { useState } from '@wordpress/element';
+import { useState, useEffect } from '@wordpress/element';
 import { __ } from '@wordpress/i18n';
 import apiFetch from '@wordpress/api-fetch';
 import {
 	TextControl,
-	SelectControl,
 	ToggleControl,
-	ColorPicker,
 	Button,
 	Notice,
 	Spinner,
@@ -19,27 +17,28 @@ import {
 /**
  * Internal dependencies
  */
-import SourceTypeConfig from './SourceTypeConfig.js';
+import DataSourceItem from './DataSourceItem.js';
 
 const SourceForm = ({ source, onSuccess, onCancel }) => {
 	const [name, setName] = useState(source?.name || '');
-	const [sourceType, setSourceType] = useState(
-		source?.source_type || 'categories'
+	const [slug, setSlug] = useState(source?.slug || '');
+	const [dataSources, setDataSources] = useState(
+		source?.data_sources || [{ source_type: 'categories', config: {} }]
 	);
-	const [config, setConfig] = useState(source?.config || {});
-	const [color, setColor] = useState(source?.color || '#0073aa');
 	const [enabled, setEnabled] = useState(source?.enabled ?? true);
 	const [loading, setLoading] = useState(false);
 	const [error, setError] = useState(null);
 
-	const sourceTypeOptions = [
-		{ label: __('Event Categories', 'fair-events'), value: 'categories' },
-		{ label: __('iCal URL', 'fair-events'), value: 'ical_url' },
-		{
-			label: __('Meetup API (Coming Soon)', 'fair-events'),
-			value: 'meetup_api',
-		},
-	];
+	// Auto-generate slug from name if creating new source
+	useEffect(() => {
+		if (!source && name) {
+			const generatedSlug = name
+				.toLowerCase()
+				.replace(/[^a-z0-9]+/g, '-')
+				.replace(/^-|-$/g, '');
+			setSlug(generatedSlug);
+		}
+	}, [name, source]);
 
 	const handleSubmit = async (e) => {
 		e.preventDefault();
@@ -49,9 +48,8 @@ const SourceForm = ({ source, onSuccess, onCancel }) => {
 		try {
 			const data = {
 				name,
-				source_type: sourceType,
-				config,
-				color,
+				slug,
+				data_sources: dataSources,
 				enabled,
 			};
 
@@ -87,6 +85,25 @@ const SourceForm = ({ source, onSuccess, onCancel }) => {
 		}
 	};
 
+	const handleAddDataSource = () => {
+		setDataSources([
+			...dataSources,
+			{ source_type: 'categories', config: {} },
+		]);
+	};
+
+	const handleRemoveDataSource = (index) => {
+		if (dataSources.length > 1) {
+			setDataSources(dataSources.filter((_, i) => i !== index));
+		}
+	};
+
+	const handleDataSourceChange = (index, newDataSource) => {
+		const updated = [...dataSources];
+		updated[index] = newDataSource;
+		setDataSources(updated);
+	};
+
 	return (
 		<form onSubmit={handleSubmit}>
 			<VStack spacing={4}>
@@ -111,48 +128,57 @@ const SourceForm = ({ source, onSuccess, onCancel }) => {
 					)}
 				/>
 
-				<SelectControl
-					label={__('Source Type', 'fair-events')}
-					value={sourceType}
-					options={sourceTypeOptions}
-					onChange={setSourceType}
-					disabled={!!source}
+				<TextControl
+					label={__('Slug', 'fair-events')}
+					value={slug}
+					onChange={setSlug}
+					required
 					help={
 						source
 							? __(
-									'Source type cannot be changed after creation.',
+									'URL-friendly identifier for this source.',
 									'fair-events'
 								)
 							: __(
-									'Select the type of event source.',
+									'Auto-generated from name. Can be customized.',
 									'fair-events'
 								)
 					}
 				/>
 
-				<SourceTypeConfig
-					sourceType={sourceType}
-					config={config}
-					onChange={setConfig}
-				/>
-
 				<div>
-					<label
-						style={{
-							display: 'block',
-							marginBottom: '8px',
-							fontWeight: 500,
-						}}
-					>
-						{__('Color', 'fair-events')}
-					</label>
-					<ColorPicker color={color} onChange={setColor} />
-					<p className="description">
+					<HStack justify="space-between" alignment="center">
+						<label style={{ fontWeight: 500, margin: 0 }}>
+							{__('Data Sources', 'fair-events')}
+						</label>
+						<Button
+							variant="secondary"
+							size="small"
+							onClick={handleAddDataSource}
+						>
+							{__('Add Data Source', 'fair-events')}
+						</Button>
+					</HStack>
+					<p className="description" style={{ marginTop: '8px' }}>
 						{__(
-							'Choose a color to identify this source visually.',
+							'Configure one or more data sources to aggregate events from.',
 							'fair-events'
 						)}
 					</p>
+
+					<VStack spacing={3} style={{ marginTop: '12px' }}>
+						{dataSources.map((dataSource, index) => (
+							<DataSourceItem
+								key={index}
+								dataSource={dataSource}
+								index={index}
+								onChange={(newDataSource) =>
+									handleDataSourceChange(index, newDataSource)
+								}
+								onRemove={() => handleRemoveDataSource(index)}
+							/>
+						))}
+					</VStack>
 				</div>
 
 				<ToggleControl

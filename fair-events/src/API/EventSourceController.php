@@ -166,29 +166,35 @@ class EventSourceController extends WP_REST_Controller {
 	 * @return WP_REST_Response|WP_Error Response object on success, or WP_Error on failure.
 	 */
 	public function create_item( $request ) {
-		$name        = sanitize_text_field( $request->get_param( 'name' ) );
-		$source_type = sanitize_text_field( $request->get_param( 'source_type' ) );
-		$config      = $request->get_param( 'config' );
-		$color       = sanitize_hex_color( $request->get_param( 'color' ) ) ?? '#000000';
-		$enabled     = $request->get_param( 'enabled' ) ?? true;
+		$name         = sanitize_text_field( $request->get_param( 'name' ) );
+		$slug         = $request->get_param( 'slug' );
+		$data_sources = $request->get_param( 'data_sources' );
+		$enabled      = $request->get_param( 'enabled' ) ?? true;
 
-		// Validate source type
-		$valid_types = array( 'categories', 'ical_url', 'meetup_api' );
-		if ( ! in_array( $source_type, $valid_types, true ) ) {
+		// Generate slug from name if not provided
+		if ( empty( $slug ) ) {
+			$slug = sanitize_title( $name );
+		} else {
+			$slug = sanitize_title( $slug );
+		}
+
+		// Check if slug already exists
+		$existing = $this->repository->get_by_slug( $slug );
+		if ( $existing ) {
 			return new WP_Error(
-				'rest_invalid_source_type',
-				__( 'Invalid source type.', 'fair-events' ),
+				'rest_slug_exists',
+				__( 'A source with this slug already exists.', 'fair-events' ),
 				array( 'status' => 400 )
 			);
 		}
 
-		// Validate config based on type
-		$validation_error = $this->validate_config( $source_type, $config );
+		// Validate data_sources
+		$validation_error = $this->validate_data_sources( $data_sources );
 		if ( is_wp_error( $validation_error ) ) {
 			return $validation_error;
 		}
 
-		$source_id = $this->repository->create( $name, $source_type, $config, $color, $enabled );
+		$source_id = $this->repository->create( $name, $slug, $data_sources, $enabled );
 
 		if ( ! $source_id ) {
 			return new WP_Error(
@@ -210,12 +216,11 @@ class EventSourceController extends WP_REST_Controller {
 	 * @return WP_REST_Response|WP_Error Response object on success, or WP_Error on failure.
 	 */
 	public function update_item( $request ) {
-		$id          = (int) $request->get_param( 'id' );
-		$name        = sanitize_text_field( $request->get_param( 'name' ) );
-		$source_type = sanitize_text_field( $request->get_param( 'source_type' ) );
-		$config      = $request->get_param( 'config' );
-		$color       = sanitize_hex_color( $request->get_param( 'color' ) ) ?? '#000000';
-		$enabled     = $request->get_param( 'enabled' ) ?? true;
+		$id           = (int) $request->get_param( 'id' );
+		$name         = sanitize_text_field( $request->get_param( 'name' ) );
+		$slug         = $request->get_param( 'slug' );
+		$data_sources = $request->get_param( 'data_sources' );
+		$enabled      = $request->get_param( 'enabled' ) ?? true;
 
 		// Check if source exists
 		$existing = $this->repository->get_by_id( $id );
@@ -227,23 +232,30 @@ class EventSourceController extends WP_REST_Controller {
 			);
 		}
 
-		// Validate source type
-		$valid_types = array( 'categories', 'ical_url', 'meetup_api' );
-		if ( ! in_array( $source_type, $valid_types, true ) ) {
+		// Generate slug from name if not provided
+		if ( empty( $slug ) ) {
+			$slug = sanitize_title( $name );
+		} else {
+			$slug = sanitize_title( $slug );
+		}
+
+		// Check if slug exists (but allow current source to keep its slug)
+		$slug_check = $this->repository->get_by_slug( $slug );
+		if ( $slug_check && $slug_check['id'] !== $id ) {
 			return new WP_Error(
-				'rest_invalid_source_type',
-				__( 'Invalid source type.', 'fair-events' ),
+				'rest_slug_exists',
+				__( 'A source with this slug already exists.', 'fair-events' ),
 				array( 'status' => 400 )
 			);
 		}
 
-		// Validate config
-		$validation_error = $this->validate_config( $source_type, $config );
+		// Validate data_sources
+		$validation_error = $this->validate_data_sources( $data_sources );
 		if ( is_wp_error( $validation_error ) ) {
 			return $validation_error;
 		}
 
-		$success = $this->repository->update( $id, $name, $source_type, $config, $color, $enabled );
+		$success = $this->repository->update( $id, $name, $slug, $data_sources, $enabled );
 
 		if ( ! $success ) {
 			return new WP_Error(
@@ -331,17 +343,71 @@ class EventSourceController extends WP_REST_Controller {
 	}
 
 	/**
-	 * Validate configuration based on source type
+	 * Validate data sources array
+	 *
+	 * @param array $data_sources Data sources array.
+	 * @return true|WP_Error True if valid, WP_Error if invalid.
+	 */
+	private function validate_data_sources( $data_sources ) {
+		if ( ! is_array( $data_sources ) ) {
+			return new WP_Error(
+				'rest_invalid_data_sources',
+				__( 'Data sources must be an array.', 'fair-events' ),
+				array( 'status' => 400 )
+			);
+		}
+
+		if ( empty( $data_sources ) ) {
+			return new WP_Error(
+				'rest_empty_data_sources',
+				__( 'At least one data source is required.', 'fair-events' ),
+				array( 'status' => 400 )
+			);
+		}
+
+		foreach ( $data_sources as $index => $data_source ) {
+			if ( ! isset( $data_source['source_type'] ) || ! isset( $data_source['config'] ) ) {
+				return new WP_Error(
+					'rest_invalid_data_source',
+					/* translators: %d: Data source index */
+					sprintf( __( 'Data source at index %d is missing source_type or config.', 'fair-events' ), $index ),
+					array( 'status' => 400 )
+				);
+			}
+
+			$validation_error = $this->validate_single_data_source( $data_source['source_type'], $data_source['config'], $index );
+			if ( is_wp_error( $validation_error ) ) {
+				return $validation_error;
+			}
+		}
+
+		return true;
+	}
+
+	/**
+	 * Validate single data source configuration
 	 *
 	 * @param string $source_type Source type.
 	 * @param array  $config Configuration array.
+	 * @param int    $index Data source index for error messages.
 	 * @return true|WP_Error True if valid, WP_Error if invalid.
 	 */
-	private function validate_config( $source_type, $config ) {
+	private function validate_single_data_source( $source_type, $config, $index ) {
+		$valid_types = array( 'categories', 'ical_url', 'meetup_api' );
+		if ( ! in_array( $source_type, $valid_types, true ) ) {
+			return new WP_Error(
+				'rest_invalid_source_type',
+				/* translators: %d: Data source index */
+				sprintf( __( 'Invalid source type at index %d.', 'fair-events' ), $index ),
+				array( 'status' => 400 )
+			);
+		}
+
 		if ( ! is_array( $config ) ) {
 			return new WP_Error(
 				'rest_invalid_config',
-				__( 'Config must be an object.', 'fair-events' ),
+				/* translators: %d: Data source index */
+				sprintf( __( 'Config at index %d must be an object.', 'fair-events' ), $index ),
 				array( 'status' => 400 )
 			);
 		}
@@ -351,7 +417,8 @@ class EventSourceController extends WP_REST_Controller {
 				if ( ! isset( $config['category_ids'] ) || ! is_array( $config['category_ids'] ) ) {
 					return new WP_Error(
 						'rest_invalid_config',
-						__( 'Categories source requires category_ids array.', 'fair-events' ),
+						/* translators: %d: Data source index */
+						sprintf( __( 'Categories source at index %d requires category_ids array.', 'fair-events' ), $index ),
 						array( 'status' => 400 )
 					);
 				}
@@ -361,8 +428,8 @@ class EventSourceController extends WP_REST_Controller {
 					if ( ! term_exists( (int) $cat_id, 'category' ) ) {
 						return new WP_Error(
 							'rest_invalid_category',
-							/* translators: %d: Category ID */
-							sprintf( __( 'Category ID %d does not exist.', 'fair-events' ), $cat_id ),
+							/* translators: 1: Category ID, 2: Data source index */
+							sprintf( __( 'Category ID %1$d does not exist (data source index %2$d).', 'fair-events' ), $cat_id, $index ),
 							array( 'status' => 400 )
 						);
 					}
@@ -373,7 +440,8 @@ class EventSourceController extends WP_REST_Controller {
 				if ( ! isset( $config['url'] ) || empty( $config['url'] ) ) {
 					return new WP_Error(
 						'rest_invalid_config',
-						__( 'iCal source requires url field.', 'fair-events' ),
+						/* translators: %d: Data source index */
+						sprintf( __( 'iCal source at index %d requires url field.', 'fair-events' ), $index ),
 						array( 'status' => 400 )
 					);
 				}
@@ -382,7 +450,8 @@ class EventSourceController extends WP_REST_Controller {
 				if ( ! filter_var( $config['url'], FILTER_VALIDATE_URL ) ) {
 					return new WP_Error(
 						'rest_invalid_url',
-						__( 'Invalid URL format.', 'fair-events' ),
+						/* translators: %d: Data source index */
+						sprintf( __( 'Invalid URL format at index %d.', 'fair-events' ), $index ),
 						array( 'status' => 400 )
 					);
 				}
@@ -390,13 +459,13 @@ class EventSourceController extends WP_REST_Controller {
 
 			case 'meetup_api':
 				// Placeholder validation - no strict requirements yet
-				// Future: Validate api_key and group_id when implementing
 				break;
 
 			default:
 				return new WP_Error(
 					'rest_invalid_source_type',
-					__( 'Unknown source type.', 'fair-events' ),
+					/* translators: %d: Data source index */
+					sprintf( __( 'Unknown source type at index %d.', 'fair-events' ), $index ),
 					array( 'status' => 400 )
 				);
 		}
