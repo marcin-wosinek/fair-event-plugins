@@ -123,13 +123,14 @@ const SourcesList = () => {
 
 	const getIcalUrl = (slug) => {
 		const restUrl = window.wpApiSettings?.root || '/wp-json/';
-		return (
-			window.location.origin +
-			restUrl +
-			'fair-events/v1/sources/' +
-			slug +
-			'/ical'
-		);
+
+		// Check if restUrl is already a full URL (includes protocol)
+		const baseUrl =
+			restUrl.startsWith('http://') || restUrl.startsWith('https://')
+				? restUrl
+				: window.location.origin + restUrl;
+
+		return baseUrl + 'fair-events/v1/sources/' + slug + '/ical';
 	};
 
 	const handleCopyIcalUrl = async (slug) => {
