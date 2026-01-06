@@ -289,15 +289,15 @@ if ( ! empty( $event_source_slugs ) && is_array( $event_source_slugs ) ) {
 		// Render each event using the pattern
 		foreach ( $all_events as $event_data ) {
 			// Determine event type and color
-			$is_ical = 'ical' === $event_data['type'];
+			$is_ical       = 'ical' === $event_data['type'];
 			$event_classes = array( 'event-list-item' );
-			$event_style = '';
+			$event_style   = '';
 
 			if ( $is_ical ) {
 				// iCal event - get color from source
 				$event_classes[] = 'is-ical';
-				$ical_event  = $event_data['event'];
-				$event_color = $ical_event['source_color'] ?? '#4caf50';
+				$ical_event      = $event_data['event'];
+				$event_color     = $ical_event['source_color'] ?? '#4caf50';
 
 				// Convert color to CSS value
 				if ( preg_match( '/^#[0-9A-Fa-f]{3,6}$/', $event_color ) ) {

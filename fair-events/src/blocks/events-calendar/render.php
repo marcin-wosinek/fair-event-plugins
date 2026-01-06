@@ -15,6 +15,23 @@ use FairEvents\Models\EventDates;
 use FairEvents\Helpers\ICalParser;
 
 /**
+ * Convert color value to CSS value
+ *
+ * Converts either a hex color or a WordPress color preset name to a CSS value.
+ *
+ * @param string $color Color value (hex like '#4caf50' or preset name like 'primary').
+ * @return string CSS color value.
+ */
+if ( ! function_exists( 'fair_events_convert_color_to_css' ) ) {
+	function fair_events_convert_color_to_css( $color ) {
+		if ( preg_match( '/^#[0-9A-Fa-f]{3,6}$/', $color ) ) {
+			return $color;
+		}
+		return 'var(--wp--preset--color--' . esc_attr( $color ) . ')';
+	}
+}
+
+/**
  * Render event using block pattern
  *
  * Takes a pattern name and event ID, sets up WordPress post data context,
@@ -93,18 +110,9 @@ $bg_color        = $attributes['backgroundColor'] ?? 'primary';
 $text_color      = $attributes['textColor'] ?? '#ffffff';
 $event_sources   = $attributes['eventSources'] ?? array();
 
-// Convert color values (hex or preset name) to CSS values
-if ( preg_match( '/^#[0-9A-Fa-f]{3,6}$/', $bg_color ) ) {
-  $bg_color_value = $bg_color;
-} else {
-  $bg_color_value = 'var(--wp--preset--color--' . esc_attr( $bg_color ) . ')';
-}
-
-if ( preg_match( '/^#[0-9A-Fa-f]{3,6}$/', $text_color ) ) {
-  $text_color_value = $text_color;
-} else {
-  $text_color_value = 'var(--wp--preset--color--' . esc_attr( $text_color ) . ')';
-}
+// Convert WordPress event colors to CSS values (used for all WordPress events)
+$bg_color_value   = fair_events_convert_color_to_css( $bg_color );
+$text_color_value = fair_events_convert_color_to_css( $text_color );
 
 // Get month/year from URL parameters or block attributes
 // URL params take precedence (for navigation), then block attributes, then current date
