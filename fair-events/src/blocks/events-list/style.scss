@@ -1,0 +1,34 @@
+/**
+ * Events List Block - Frontend Styles
+ *
+ * @package FairEvents
+ */
+
+.wp-block-fair-events-events-list {
+	.event-list-item {
+		margin-bottom: 1rem;
+
+		// iCal events with color from data source
+		&.is-ical {
+			padding: 1rem;
+			background: var(--event-bg-color, #4caf50);
+			color: var(--event-text-color, #ffffff);
+			border-radius: 4px;
+
+			// Style links within iCal events
+			a {
+				color: inherit;
+				text-decoration: underline;
+
+				&:hover {
+					opacity: 0.8;
+				}
+			}
+
+			// Override any pattern styles that might conflict
+			* {
+				color: inherit;
+			}
+		}
+	}
+}

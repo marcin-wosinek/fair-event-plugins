@@ -54,15 +54,7 @@
 			"type": "array",
 			"default": [],
 			"items": {
-				"type": "object",
-				"properties": {
-					"icalFeed": {
-						"type": "string"
-					},
-					"color": {
-						"type": "string"
-					}
-				}
+				"type": "string"
 			}
 		}
 	},

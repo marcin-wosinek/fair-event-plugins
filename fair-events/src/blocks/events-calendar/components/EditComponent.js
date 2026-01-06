@@ -23,12 +23,12 @@ import {
 	RadioControl,
 	CheckboxControl,
 	SelectControl,
-	TextControl,
 	Icon,
-	Button,
+	Notice,
 } from '@wordpress/components';
 import { useSelect } from '@wordpress/data';
-import { calendar, trash, plus } from '@wordpress/icons';
+import { calendar } from '@wordpress/icons';
+import { EventSourceSelector } from 'fair-events-shared';
 
 const EditComponent = ({ attributes, setAttributes }) => {
 	const {
@@ -100,28 +100,11 @@ const EditComponent = ({ attributes, setAttributes }) => {
 		.filter((cat) => categories.includes(cat.id))
 		.map((cat) => cat.name);
 
-	// Event source handlers
-	const addEventSource = () => {
-		const newSource = {
-			icalFeed: '',
-			color: '#4caf50',
-		};
-		setAttributes({ eventSources: [...eventSources, newSource] });
-	};
-
-	const removeEventSource = (index) => {
-		const newSources = eventSources.filter((_, i) => i !== index);
-		setAttributes({ eventSources: newSources });
-	};
-
-	const updateEventSource = (index, field, value) => {
-		const newSources = [...eventSources];
-		newSources[index] = {
-			...newSources[index],
-			[field]: value,
-		};
-		setAttributes({ eventSources: newSources });
-	};
+	// Check for old eventSources format (migration notice)
+	const hasOldFormat =
+		eventSources.length > 0 &&
+		typeof eventSources[0] === 'object' &&
+		'icalFeed' in eventSources[0];
 
 	return (
 		<>
@@ -262,91 +245,27 @@ const EditComponent = ({ attributes, setAttributes }) => {
 				>
 					<p style={{ marginBottom: '16px', color: '#666' }}>
 						{__(
-							'Add external iCal feeds to display events from other calendars.',
+							'Select event sources to display in the calendar.',
 							'fair-events'
 						)}
 					</p>
 
-					{eventSources.map((source, index) => (
-						<div
-							key={index}
-							style={{
-								marginBottom: '20px',
-								padding: '12px',
-								border: '1px solid #ddd',
-								borderRadius: '4px',
-								background: '#f9f9f9',
-							}}
-						>
-							<div
-								style={{
-									display: 'flex',
-									justifyContent: 'space-between',
-									alignItems: 'center',
-									marginBottom: '8px',
-								}}
-							>
-								<strong>
-									{__('Source', 'fair-events')} {index + 1}
-								</strong>
-								<Button
-									icon={trash}
-									isDestructive
-									isSmall
-									onClick={() => removeEventSource(index)}
-									label={__('Remove source', 'fair-events')}
-								/>
-							</div>
+					{hasOldFormat && (
+						<Notice status="warning" isDismissible={false}>
+							{__(
+								'Event sources format has changed. Please re-select your event sources.',
+								'fair-events'
+							)}
+						</Notice>
+					)}
 
-							<TextControl
-								label={__('iCal Feed URL', 'fair-events')}
-								value={source.icalFeed}
-								onChange={(value) =>
-									updateEventSource(index, 'icalFeed', value)
-								}
-								placeholder="https://calendar.google.com/calendar/ical/..."
-								type="url"
-							/>
-
-							<PanelColorSettings
-								title={__('Event Color', 'fair-events')}
-								colorSettings={[
-									{
-										value: source.color,
-										onChange: (color) =>
-											updateEventSource(
-												index,
-												'color',
-												color || '#4caf50'
-											),
-										label: __('Background', 'fair-events'),
-									},
-								]}
-							>
-								<p
-									style={{
-										fontSize: '12px',
-										color: '#757575',
-										marginTop: '8px',
-									}}
-								>
-									{__(
-										'Events from this source will use this background color with white text.',
-										'fair-events'
-									)}
-								</p>
-							</PanelColorSettings>
-						</div>
-					))}
-
-					<Button
-						icon={plus}
-						variant="secondary"
-						onClick={addEventSource}
-						style={{ width: '100%' }}
-					>
-						{__('Add Event Source', 'fair-events')}
-					</Button>
+					<EventSourceSelector
+						selectedSources={eventSources}
+						onChange={(slugs) =>
+							setAttributes({ eventSources: slugs })
+						}
+						label=""
+					/>
 				</PanelBody>
 			</InspectorControls>
 

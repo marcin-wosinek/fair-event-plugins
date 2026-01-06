@@ -25,6 +25,13 @@
 		"displayPattern": {
 			"type": "string",
 			"default": "fair-events/event-list"
+		},
+		"eventSources": {
+			"type": "array",
+			"default": [],
+			"items": {
+				"type": "string"
+			}
 		}
 	},
 	"supports": {
@@ -33,5 +40,6 @@
 		"align": true
 	},
 	"editorScript": "file:./editor.js",
+	"style": "file:./style-editor.css",
 	"render": "file:./render.php"
 }

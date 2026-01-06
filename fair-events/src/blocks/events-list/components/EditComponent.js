@@ -10,6 +10,7 @@ import {
 import { useSelect } from '@wordpress/data';
 import { useEffect } from '@wordpress/element';
 import { __ } from '@wordpress/i18n';
+import { EventSourceSelector } from 'fair-events-shared';
 
 /**
  * Edit component for Events List block
@@ -21,7 +22,7 @@ import { __ } from '@wordpress/i18n';
  * @return {JSX.Element} The edit component
  */
 export default function EditComponent({ attributes, setAttributes, clientId }) {
-	const { timeFilter, categories, displayPattern } = attributes;
+	const { timeFilter, categories, displayPattern, eventSources } = attributes;
 
 	const blockProps = useBlockProps();
 
@@ -170,6 +171,26 @@ export default function EditComponent({ attributes, setAttributes, clientId }) {
 						)}
 					</div>
 				</PanelBody>
+
+				<PanelBody
+					title={__('Event Sources', 'fair-events')}
+					initialOpen={false}
+				>
+					<p style={{ marginBottom: '16px', color: '#666' }}>
+						{__(
+							'Select event sources to display in the list.',
+							'fair-events'
+						)}
+					</p>
+
+					<EventSourceSelector
+						selectedSources={eventSources}
+						onChange={(slugs) =>
+							setAttributes({ eventSources: slugs })
+						}
+						label=""
+					/>
+				</PanelBody>
 			</InspectorControls>
 
 			<div {...blockProps}>
@@ -193,6 +214,15 @@ export default function EditComponent({ attributes, setAttributes, clientId }) {
 							<code>{selectedCategoryNames.join(', ')}</code>
 						)}
 					</p>
+					{eventSources.length > 0 && (
+						<p>
+							{__('Event Sources:', 'fair-events')}{' '}
+							<code>
+								{eventSources.length}{' '}
+								{__('selected', 'fair-events')}
+							</code>
+						</p>
+					)}
 					<p>
 						<em>
 							{__(

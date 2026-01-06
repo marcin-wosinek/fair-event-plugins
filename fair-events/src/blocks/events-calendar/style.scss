@@ -180,8 +180,8 @@
 					display: block;
 					padding: 0.25rem 0.375rem;
 					background: var(--event-bg-color, #4caf50);
-					color: #ffffff;
-					border-radius: 3px;
+          color: var(--event-text-color, #fff);
+          border-radius: 3px;
 					overflow: hidden;
 					text-overflow: ellipsis;
 					white-space: nowrap;

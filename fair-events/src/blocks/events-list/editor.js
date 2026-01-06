@@ -6,6 +6,7 @@
 
 import { registerBlockType } from '@wordpress/blocks';
 import EditComponent from './components/EditComponent.js';
+import './style.scss';
 
 /**
  * Register the block

@@ -93,6 +93,19 @@ $bg_color        = $attributes['backgroundColor'] ?? 'primary';
 $text_color      = $attributes['textColor'] ?? '#ffffff';
 $event_sources   = $attributes['eventSources'] ?? array();
 
+// Convert color values (hex or preset name) to CSS values
+if ( preg_match( '/^#[0-9A-Fa-f]{3,6}$/', $bg_color ) ) {
+  $bg_color_value = $bg_color;
+} else {
+  $bg_color_value = 'var(--wp--preset--color--' . esc_attr( $bg_color ) . ')';
+}
+
+if ( preg_match( '/^#[0-9A-Fa-f]{3,6}$/', $text_color ) ) {
+  $text_color_value = $text_color;
+} else {
+  $text_color_value = 'var(--wp--preset--color--' . esc_attr( $text_color ) . ')';
+}
+
 // Get month/year from URL parameters or block attributes
 // URL params take precedence (for navigation), then block attributes, then current date
 $url_month     = isset( $_GET['calendar_month'] ) ? sanitize_text_field( $_GET['calendar_month'] ) : '';
@@ -152,20 +165,43 @@ remove_filter( 'posts_join', array( 'FairEvents\\Helpers\\QueryHelper', 'join_da
 remove_filter( 'posts_where', array( 'FairEvents\\Helpers\\QueryHelper', 'filter_by_dates' ), 10 );
 remove_filter( 'posts_orderby', array( 'FairEvents\\Helpers\\QueryHelper', 'order_by_dates' ), 10 );
 
-// Fetch iCal events from all event sources
-$all_ical_events = array();
-foreach ( $event_sources as $source ) {
-	$ical_feed_url   = $source['icalFeed'] ?? '';
-	$ical_feed_color = $source['color'] ?? '#4caf50';
+// Fetch iCal events from selected event sources
+$all_ical_events    = array();
+$event_source_slugs = $event_sources; // Now contains array of slugs
 
-	if ( ! empty( $ical_feed_url ) ) {
-		$fetched_events  = ICalParser::fetch_and_parse( $ical_feed_url );
-		$filtered_events = ICalParser::filter_events_for_month( $fetched_events, $month_start, $month_end );
+if ( ! empty( $event_source_slugs ) && is_array( $event_source_slugs ) ) {
+	$repository = new \FairEvents\Database\EventSourceRepository();
 
-		// Add color to each event
-		foreach ( $filtered_events as $event ) {
-			$event['source_color'] = $ical_feed_color;
-			$all_ical_events[]     = $event;
+	foreach ( $event_source_slugs as $slug ) {
+		// Skip if not a string (handles old format gracefully)
+		if ( ! is_string( $slug ) ) {
+			continue;
+		}
+
+		$source = $repository->get_by_slug( $slug );
+
+		// Skip disabled or non-existent sources
+		if ( ! $source || ! $source['enabled'] ) {
+			continue;
+		}
+
+		// Process each data source within the event source
+		foreach ( $source['data_sources'] as $data_source ) {
+			if ( 'ical_url' === $data_source['source_type'] ) {
+				$ical_feed_url   = $data_source['config']['url'] ?? '';
+				$ical_feed_color = $data_source['config']['color'] ?? '#4caf50';
+
+				if ( ! empty( $ical_feed_url ) ) {
+					$fetched_events  = ICalParser::fetch_and_parse( $ical_feed_url );
+					$filtered_events = ICalParser::filter_events_for_month( $fetched_events, $month_start, $month_end );
+
+					// Add color to each event
+					foreach ( $filtered_events as $event ) {
+						$event['source_color'] = $ical_feed_color;
+						$all_ical_events[]     = $event;
+					}
+				}
+			}
 		}
 	}
 }
@@ -355,19 +391,11 @@ $today = current_time( 'Y-m-d' );
 							$event_title = esc_html( $event_data['title'] );
 							$event_url   = $event_data['permalink'] ?? '';
 							$event_desc  = esc_attr( $event_data['description'] ?? '' );
-							$event_color = $event_data['color'] ?? '#4caf50';
-
-							// Convert iCal feed color to CSS value
-							if ( preg_match( '/^#[0-9A-Fa-f]{3,6}$/', $event_color ) ) {
-								$bg_color_value = $event_color;
-							} else {
-								$bg_color_value = 'var(--wp--preset--color--' . esc_attr( $event_color ) . ')';
-							}
 
 							$item_classes = array( 'event-item', 'is-ical' );
 							?>
 							<div class="<?php echo esc_attr( implode( ' ', $item_classes ) ); ?>"
-								style="--event-bg-color: <?php echo esc_attr( $bg_color_value ); ?>; --event-text-color: #ffffff">
+								style="--event-bg-color: <?php echo esc_attr( $bg_color_value ); ?>; --event-text-color: <?php echo esc_attr( $text_color_value ); ?>">
 								<?php if ( ! empty( $event_url ) ) : ?>
 									<a href="<?php echo esc_url( $event_url ); ?>"
 										class="ical-event-title"
@@ -389,19 +417,6 @@ $today = current_time( 'Y-m-d' );
 							$is_draft    = $event_post && 'draft' === $event_post->post_status;
 							$event_title = get_the_title( $event_data['id'] );
 							$event_url   = get_permalink( $event_data['id'] );
-
-							// Convert color values (hex or preset name) to CSS values
-							if ( preg_match( '/^#[0-9A-Fa-f]{3,6}$/', $bg_color ) ) {
-								$bg_color_value = $bg_color;
-							} else {
-								$bg_color_value = 'var(--wp--preset--color--' . esc_attr( $bg_color ) . ')';
-							}
-
-							if ( preg_match( '/^#[0-9A-Fa-f]{3,6}$/', $text_color ) ) {
-								$text_color_value = $text_color;
-							} else {
-								$text_color_value = 'var(--wp--preset--color--' . esc_attr( $text_color ) . ')';
-							}
 
 							$item_classes = array( 'event-item' );
 							if ( $is_draft ) {
