@@ -260,7 +260,7 @@ class EventSourceController extends WP_REST_Controller {
 
 		// Check if slug exists (but allow current source to keep its slug)
 		$slug_check = $this->repository->get_by_slug( $slug );
-		if ( $slug_check && $slug_check['id'] !== $id ) {
+		if ( $slug_check && (int) $slug_check['id'] !== $id ) {
 			return new WP_Error(
 				'rest_slug_exists',
 				__( 'A source with this slug already exists.', 'fair-events' ),
