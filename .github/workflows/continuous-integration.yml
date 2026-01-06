@@ -79,7 +79,9 @@ jobs:
 
             - name: Install WP-CLI dist-archive command
               run: |
-                  wp package install git@github.com:wp-cli/dist-archive-command.git
+                  wp package install wp-cli/dist-archive-command
+                  wp package list
+                  wp dist-archive --help
 
             - name: Install regular PHP dependencies in all plugins
               run: npm run composer:install:prod
@@ -90,6 +92,8 @@ jobs:
             - name: Create plugin ZIP files using wp dist-archive
               run: |
                   npm run dist-archive
+                  echo "Contents of dist directory:"
+                  ls -lah ./dist/ || echo "dist directory not found"
 
             - name: Install dev PHP dependencies in all plugins
               run: npm run composer:install
@@ -98,12 +102,13 @@ jobs:
               run: |
                   npm test
 
-            - name: Upload Fair Payment plugins
+            - name: Upload plugins
               uses: actions/upload-artifact@v4
               with:
                   name: plugins
-                  path: ./dist/
+                  path: ./dist/*.zip
                   retention-days: 7
+                  if-no-files-found: error
 
     release:
         name: Release
