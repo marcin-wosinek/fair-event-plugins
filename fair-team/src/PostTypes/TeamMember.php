@@ -347,6 +347,15 @@ class TeamMember {
 			return $title;
 		}
 
+		// Don't modify title on admin list page (but allow on edit page)
+		if ( is_admin() ) {
+			$screen = get_current_screen();
+			if ( $screen && 'edit' === $screen->base && self::POST_TYPE === $screen->post_type ) {
+				// This is the admin list page - don't add Instagram
+				return $title;
+			}
+		}
+
 		// Get Instagram URL
 		$instagram = get_post_meta( $post_id, 'team_member_instagram', true );
 		if ( empty( $instagram ) ) {

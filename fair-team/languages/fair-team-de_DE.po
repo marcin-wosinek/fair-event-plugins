@@ -229,109 +229,110 @@ msgstr "Einstellungen speichern"
 
 #: src/API/PostTeamMembersController.php:70
 msgid "Post ID."
-msgstr ""
+msgstr "Beitrags-ID."
 
 #: src/API/PostTeamMembersController.php:86
 msgid "Team member post ID."
-msgstr ""
+msgstr "Team-Mitglied Beitrags-ID."
 
 #: src/API/PostTeamMembersController.php:133
 #: src/API/PostTeamMembersController.php:180
 msgid "Post not found or invalid type."
-msgstr ""
+msgstr "Beitrag nicht gefunden oder ungültiger Typ."
 
 #: src/API/PostTeamMembersController.php:190
 msgid "Team member not found."
-msgstr ""
+msgstr "Team-Mitglied nicht gefunden."
 
 #: src/API/PostTeamMembersController.php:200
 msgid "Failed to add team member. May already exist."
-msgstr ""
+msgstr "Hinzufügen des Team-Mitglieds fehlgeschlagen. Möglicherweise bereits vorhanden."
 
 #: src/API/PostTeamMembersController.php:208
 msgid "Team member added successfully."
-msgstr ""
+msgstr "Team-Mitglied erfolgreich hinzugefügt."
 
 #: src/API/PostTeamMembersController.php:228
 #: src/Admin/post-team-members/PostTeamMembers.js:85
 msgid "Failed to remove team member."
-msgstr ""
+msgstr "Entfernen des Team-Mitglieds fehlgeschlagen."
 
 #: src/API/PostTeamMembersController.php:235
 msgid "Team member removed successfully."
-msgstr ""
+msgstr "Team-Mitglied erfolgreich entfernt."
 
 #: src/Hooks/MetaBoxHooks.php:40
 #: src/blocks/team-members-list/editor.js:75
 msgid "Team Members"
-msgstr ""
+msgstr "Team-Mitglieder"
 
 #: src/Hooks/MetaBoxHooks.php:59
 msgid "Add team members associated with this post."
-msgstr ""
+msgstr "Team-Mitglieder hinzufügen, die mit diesem Beitrag verbunden sind."
 
 #: src/Admin/post-team-members/PostTeamMembers.js:43
 msgid "Failed to load team members."
-msgstr ""
+msgstr "Laden der Team-Mitglieder fehlgeschlagen."
 
 #: src/Admin/post-team-members/PostTeamMembers.js:67
 msgid "Failed to add team member."
-msgstr ""
+msgstr "Hinzufügen des Team-Mitglieds fehlgeschlagen."
 
 #: src/Admin/post-team-members/PostTeamMembers.js:110
 msgid "No team members linked yet."
-msgstr ""
+msgstr "Noch keine Team-Mitglieder verknüpft."
 
 #: src/Admin/post-team-members/PostTeamMembers.js:122
 msgid "Remove"
-msgstr ""
+msgstr "Entfernen"
 
 #: src/Admin/post-team-members/PostTeamMembers.js:136
 msgid "Select team member..."
-msgstr ""
+msgstr "Team-Mitglied auswählen..."
 
 #: src/Admin/post-team-members/PostTeamMembers.js:151
 msgid "Adding..."
-msgstr ""
+msgstr "Wird hinzugefügt..."
 
 #: src/Admin/post-team-members/PostTeamMembers.js:152
 msgid "Add"
-msgstr ""
+msgstr "Hinzufügen"
 
 #: src/blocks/team-members-list/editor.js:51
 msgid "Please save the post to see team members."
-msgstr ""
+msgstr "Bitte speichern Sie den Beitrag, um Team-Mitglieder zu sehen."
 
 #: src/blocks/team-members-list/editor.js:64
 msgid "No team members assigned to this post."
-msgstr ""
+msgstr "Keine Team-Mitglieder für diesen Beitrag zugewiesen."
 
 #: src/blocks/team-members-list/block.json
 msgctxt "block title"
 msgid "Team Members List"
-msgstr ""
+msgstr "Team-Mitglieder-Liste"
 
 #: src/blocks/team-members-list/block.json
 msgctxt "block description"
 msgid "Display team members associated with this post"
-msgstr ""
+msgstr "Zeige Teammitglieder, die mit diesem Beitrag verbunden sind"
 
 #: src/blocks/team-members-list/block.json
 msgctxt "block keyword"
 msgid "team"
-msgstr ""
+msgstr "team"
 
 #: src/blocks/team-members-list/block.json
 msgctxt "block keyword"
 msgid "members"
-msgstr ""
+msgstr "mitglieder"
 
 #: src/blocks/team-members-list/block.json
 msgctxt "block keyword"
 msgid "staff"
-msgstr ""
+msgstr "mitarbeiter"
 
 #: src/blocks/team-members-list/block.json
 msgctxt "block keyword"
 msgid "contributors"
-msgstr ""
+msgstr "beitragende"
+
