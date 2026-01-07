@@ -528,103 +528,103 @@ msgstr "Kopieren"
 
 #: src/Admin/CopyEventPage.php:325
 msgid "What Will Be Created"
-msgstr ""
+msgstr "Was wird erstellt"
 
 #: src/Admin/CopyEventPage.php:332
 msgid "Start Date"
-msgstr ""
+msgstr "Startdatum"
 
 #: src/Admin/CopyEventPage.php:337
 msgid "Duration"
-msgstr ""
+msgstr "Dauer"
 
 #: src/Admin/CopyEventPage.php:349
 msgid "Featured Image"
-msgstr ""
+msgstr "Beitragsbild"
 
 #: src/Admin/CopyEventPage.php:361
 msgid "Tags"
-msgstr ""
+msgstr "Tags"
 
 #: src/Admin/CopyEventPage.php:367
 msgid "The new event will be created as a draft. All event details will be copied from the original event."
-msgstr ""
+msgstr "Der neue Termin wird als Entwurf erstellt. Alle Termindetails werden vom ursprünglichen Termin kopiert."
 
 #: src/blocks/events-calendar/render.php:313
 msgid "Previous"
-msgstr ""
+msgstr "Zurück"
 
 #: src/blocks/events-calendar/render.php:319
 msgid "Next"
-msgstr ""
+msgstr "Weiter"
 
 #: src/Patterns/Patterns.php:90
 msgid "Calendar Event - Simple"
-msgstr ""
+msgstr "Kalender-Termin - Einfach"
 
 #: src/Patterns/Patterns.php:91
 msgid "Display event title only (compact for calendar cells)"
-msgstr ""
+msgstr "Nur Termintitel anzeigen (kompakt für Kalenderzellen)"
 
 #: src/blocks/events-calendar/components/EditComponent.js:113
 msgid "Calendar Settings"
-msgstr ""
+msgstr "Kalender-Einstellungen"
 
 #: src/blocks/events-calendar/components/EditComponent.js:117
 msgid "Event Display Pattern"
-msgstr ""
+msgstr "Termin-Anzeigemuster"
 
 #: src/blocks/events-calendar/components/EditComponent.js:123
 msgid "Choose how events are displayed in calendar cells"
-msgstr ""
+msgstr "Wählen Sie, wie Termine in Kalenderzellen angezeigt werden"
 
 #: src/blocks/events-calendar/components/EditComponent.js:130
 msgid "Start of Week"
-msgstr ""
+msgstr "Wochenbeginn"
 
 #: src/blocks/events-calendar/components/EditComponent.js:134
 msgid "Monday"
-msgstr ""
+msgstr "Montag"
 
 #: src/blocks/events-calendar/components/EditComponent.js:138
 msgid "Sunday"
-msgstr ""
+msgstr "Sonntag"
 
 #: src/blocks/events-calendar/components/EditComponent.js:148
 msgid "Show Navigation"
-msgstr ""
+msgstr "Navigation anzeigen"
 
 #: src/blocks/events-calendar/components/EditComponent.js:153
 msgid "Display previous/next month navigation"
-msgstr ""
+msgstr "Vor-/Zurück-Navigation für Monate anzeigen"
 
 #: src/blocks/events-calendar/components/EditComponent.js:287
 msgid "Events Calendar"
-msgstr ""
+msgstr "Termine-Kalender"
 
 #: src/blocks/events-calendar/components/EditComponent.js:290
 msgid "Calendar will be displayed on the frontend"
-msgstr ""
+msgstr "Kalender wird auf der Webseite angezeigt"
 
 #: src/blocks/events-calendar/block.json
 msgctxt "block title"
 msgid "Events Calendar"
-msgstr ""
+msgstr "Ereigniskalender"
 
 #: src/blocks/events-calendar/block.json
 msgctxt "block description"
 msgid "Display events in a monthly calendar grid view."
-msgstr ""
+msgstr "Zeige Ereignisse in einer monatlichen Kalenderansicht."
 
 #: src/blocks/events-calendar/block.json
 msgctxt "block keyword"
 msgid "month"
-msgstr ""
+msgstr "Monat"
 
 #: src/blocks/events-calendar/block.json
 msgctxt "block keyword"
 msgid "grid"
-msgstr ""
+msgstr "Raster"
 
 #: src/Admin/AdminPages.php:67
 #: src/Admin/AdminPages.php:68
@@ -636,40 +636,40 @@ msgstr "Veranstaltungsquellen"
 
 #: src/Admin/AdminPages.php:345
 msgid "Copy this event"
-msgstr ""
+msgstr "Dieses Ereignis kopieren"
 
 #: src/API/EventSourceController.php:63
 msgid "Fetch only enabled sources."
-msgstr ""
+msgstr "Nur aktivierte Quellen abrufen."
 
 #: src/API/EventSourceController.php:90
 #: src/API/EventSourceController.php:106
 msgid "Unique identifier for the source."
-msgstr ""
+msgstr "Eindeutiger Bezeichner für die Quelle."
 
 #: src/API/EventSourceController.php:138
 msgid "Unique slug identifier for the source."
-msgstr ""
+msgstr "Eindeutiger Slug-Bezeichner für die Quelle."
 
 #: src/API/EventSourceController.php:173
 #: src/API/EventSourceController.php:249
 #: src/API/EventSourceController.php:306
 #: src/API/EventSourceController.php:377
 msgid "Source not found."
-msgstr ""
+msgstr "Quelle nicht gefunden."
 
 #: src/API/EventSourceController.php:205
 #: src/API/EventSourceController.php:266
 msgid "A source with this slug already exists."
-msgstr ""
+msgstr "Eine Quelle mit diesem Slug existiert bereits."
 
 #: src/API/EventSourceController.php:221
 msgid "Failed to create source."
-msgstr ""
+msgstr "Quelle konnte nicht erstellt werden."
 
 #: src/API/EventSourceController.php:282
 msgid "Failed to update source."
-msgstr ""
+msgstr "Quelle konnte nicht aktualisiert werden."
 
 #: src/API/EventSourceController.php:316
 #: src/Admin/sources/SourcesList.js:91
@@ -678,67 +678,67 @@ msgstr "Löschen der Quelle fehlgeschlagen."
 
 #: src/API/EventSourceController.php:385
 msgid "This source is disabled."
-msgstr ""
+msgstr "Diese Quelle ist deaktiviert."
 
 #: src/API/EventSourceController.php:497
 msgid "Data sources must be an array."
-msgstr ""
+msgstr "Datenquellen müssen ein Array sein."
 
 #: src/API/EventSourceController.php:505
 msgid "At least one data source is required."
-msgstr ""
+msgstr "Mindestens eine Datenquelle ist erforderlich."
 
 #. translators: %d: Data source index
 #: src/API/EventSourceController.php:515
 #, php-format
 msgid "Data source at index %d is missing source_type or config."
-msgstr ""
+msgstr "Datenquelle am Index %d fehlen source_type oder config."
 
 #. translators: %d: Data source index
 #: src/API/EventSourceController.php:543
 #, php-format
 msgid "Invalid source type at index %d."
-msgstr ""
+msgstr "Ungültiger Quellentyp am Index %d."
 
 #. translators: %d: Data source index
 #: src/API/EventSourceController.php:552
 #, php-format
 msgid "Config at index %d must be an object."
-msgstr ""
+msgstr "Config am Index %d muss ein Objekt sein."
 
 #. translators: %d: Data source index
 #: src/API/EventSourceController.php:563
 #, php-format
 msgid "Categories source at index %d requires category_ids array."
-msgstr ""
+msgstr "Kategorien-Quelle am Index %d erfordert category_ids-Array."
 
 #. translators: 1: Category ID, 2: Data source index
 #: src/API/EventSourceController.php:574
 #, php-format
 msgid "Category ID %1$d does not exist (data source index %2$d)."
-msgstr ""
+msgstr "Kategorie-ID %1$d existiert nicht (Datenquelle Index %2$d)."
 
 #. translators: %d: Data source index
 #: src/API/EventSourceController.php:586
 #, php-format
 msgid "iCal source at index %d requires url field."
-msgstr ""
+msgstr "iCal-Quelle mit Index %d erfordert URL-Feld."
 
 #. translators: %d: Data source index
 #: src/API/EventSourceController.php:596
 #, php-format
 msgid "Invalid URL format at index %d."
-msgstr ""
+msgstr "Ungültiges URL-Format bei Index %d."
 
 #. translators: %d: Data source index
 #: src/API/EventSourceController.php:610
 #, php-format
 msgid "Unknown source type at index %d."
-msgstr ""
+msgstr "Unbekannter Quellentyp bei Index %d."
 
 #: src/PostTypes/Event.php:369
 msgid "Date & Time"
-msgstr ""
+msgstr "Datum & Zeit"
 
 #: src/Admin/sources/components/DataSourceItem.js:43
 #: src/Admin/sources/components/SourceTypeConfig.js:37
@@ -747,15 +747,15 @@ msgstr "Kategorien konnten nicht geladen werden."
 
 #: src/Admin/sources/components/DataSourceItem.js:78
 msgid "Event Categories"
-msgstr ""
+msgstr "Ereigniskategorien"
 
 #: src/Admin/sources/components/DataSourceItem.js:79
 msgid "iCal URL"
-msgstr ""
+msgstr "iCal-URL"
 
 #: src/Admin/sources/components/DataSourceItem.js:81
 msgid "Meetup API (Coming Soon)"
-msgstr ""
+msgstr "Meetup API (Demnächst)"
 
 #: src/Admin/sources/components/DataSourceItem.js:91
 #: src/Admin/sources/components/SourceTypeConfig.js:61
@@ -798,15 +798,15 @@ msgstr "Datenquelle"
 
 #: src/Admin/sources/components/DataSourceItem.js:205
 msgid "Remove"
-msgstr ""
+msgstr "Entfernen"
 
 #: src/Admin/sources/components/DataSourceItem.js:210
 msgid "Source Type"
-msgstr ""
+msgstr "Quellentyp"
 
 #: src/Admin/sources/components/DataSourceItem.js:214
 msgid "Select the type of event source."
-msgstr ""
+msgstr "Wählen Sie den Typ der Ereignisquelle aus."
 
 #: src/Admin/sources/components/SourceForm.js:121
 msgid "Source Name"
@@ -860,7 +860,7 @@ msgstr "Quelle erstellen"
 
 #: src/Admin/sources/SourcesList.js:50
 msgid "Failed to load sources."
-msgstr ""
+msgstr "Quellen konnten nicht geladen werden."
 
 #: src/Admin/sources/SourcesList.js:70
 msgid "Are you sure you want to delete this source?"
@@ -880,11 +880,11 @@ msgstr "Quelle erfolgreich erstellt."
 
 #: src/Admin/sources/SourcesList.js:115
 msgid "Enabled"
-msgstr ""
+msgstr "Aktiviert"
 
 #: src/Admin/sources/SourcesList.js:119
 msgid "Disabled"
-msgstr ""
+msgstr "Deaktiviert"
 
 #: src/Admin/sources/SourcesList.js:139
 msgid "iCal URL copied to clipboard!"
@@ -908,7 +908,7 @@ msgstr "Keine Quellen gefunden. Erstellen Sie Ihre erste Quelle, um zu beginnen.
 
 #: src/Admin/sources/SourcesList.js:200
 msgid "Name"
-msgstr ""
+msgstr "Name"
 
 #: src/Admin/sources/SourcesList.js:206
 msgid "iCal Feed"
@@ -916,11 +916,11 @@ msgstr "iCal-Feed"
 
 #: src/Admin/sources/SourcesList.js:208
 msgid "Status"
-msgstr ""
+msgstr "Status"
 
 #: src/Admin/sources/SourcesList.js:209
 msgid "Actions"
-msgstr ""
+msgstr "Aktionen"
 
 #: src/Admin/sources/SourcesList.js:224
 msgid "data source(s)"
@@ -936,11 +936,11 @@ msgstr "URL kopieren"
 
 #: src/Admin/sources/SourcesList.js:265
 msgid "Edit"
-msgstr ""
+msgstr "Bearbeiten"
 
 #: src/Admin/sources/SourcesList.js:280
 msgid "Delete"
-msgstr ""
+msgstr "Löschen"
 
 #: src/Admin/sources/SourcesList.js:300
 msgid "Edit Event Source"
@@ -952,44 +952,44 @@ msgstr "Neue Veranstaltungsquelle hinzufügen"
 
 #: src/blocks/events-calendar/components/EditComponent.js:160
 msgid "Show Draft Events"
-msgstr ""
+msgstr "Entwurfsereignisse anzeigen"
 
 #: src/blocks/events-calendar/components/EditComponent.js:165
 msgid "Display draft events in the calendar"
-msgstr ""
+msgstr "Entwurfsereignisse im Kalender anzeigen"
 
 #: src/blocks/events-calendar/components/EditComponent.js:206
 msgid "Colors"
-msgstr ""
+msgstr "Farben"
 
 #: src/blocks/events-calendar/components/EditComponent.js:214
 msgid "Background"
-msgstr ""
+msgstr "Hintergrund"
 
 #: src/blocks/events-calendar/components/EditComponent.js:222
 msgid "Text"
-msgstr ""
+msgstr "Text"
 
 #: src/blocks/events-calendar/components/EditComponent.js:234
 msgid "Draft events will appear as outlined buttons using these colors."
-msgstr ""
+msgstr "Entwurfereignisse werden als umrandete Buttons in diesen Farben angezeigt."
 
 #: src/blocks/events-calendar/components/EditComponent.js:303
 #: src/blocks/events-list/components/EditComponent.js:219
 msgid "Event Sources:"
-msgstr ""
+msgstr "Ereignisquellen:"
 
 #: src/blocks/events-calendar/components/EditComponent.js:247
 msgid "Select event sources to display in the calendar."
-msgstr ""
+msgstr "Wählen Sie die Ereignisquellen aus, die im Kalender angezeigt werden sollen."
 
 #: src/blocks/events-calendar/components/EditComponent.js:255
 msgid "Event sources format has changed. Please re-select your event sources."
-msgstr ""
+msgstr "Das Format der Ereignisquellen hat sich geändert. Bitte wählen Sie Ihre Ereignisquellen erneut aus."
 
 #: src/blocks/events-list/components/EditComponent.js:180
 msgid "Select event sources to display in the list."
-msgstr ""
+msgstr "Wählen Sie die Ereignisquellen aus, die in der Liste angezeigt werden sollen."
 
 #: src/blocks/events-list/components/EditComponent.js:222
 msgid "selected"
@@ -998,3 +998,4 @@ msgstr "ausgewählt"
 #: ../fair-events-shared/src/EventSourceSelector.js:111
 msgid "Manage Event Sources"
 msgstr "Ereignisquellen verwalten"
+

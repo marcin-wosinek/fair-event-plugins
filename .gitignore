@@ -34,3 +34,4 @@ fair-rsvp/svn
 .vim/coc-settings.json
 deployment-config.txt
 fair-platform-deployment-config.txt
+.env

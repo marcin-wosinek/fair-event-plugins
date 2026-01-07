@@ -57,7 +57,11 @@
 		"dist-archive:fair-rsvp": "wp dist-archive fair-rsvp dist --create-target-dir",
 		"dist-archive:fair-user-import": "wp dist-archive fair-user-import dist --create-target-dir",
 		"dist-archive:fair-platform": "wp dist-archive fair-platform dist --create-target-dir",
-		"dist-archive:fair-team": "wp dist-archive fair-team dist --create-target-dir"
+		"dist-archive:fair-team": "wp dist-archive fair-team dist --create-target-dir",
+		"translation:untranslated": "node scripts/translation/get-untranslated.js",
+		"translation:coverage": "node scripts/translation/coverage-report.js",
+		"translation:validate": "node scripts/translation/validate-translations.js",
+		"translation:ai": "node scripts/translation/ai-translate.js"
 	},
 	"dependencies": {
 		"@wordpress/scripts": "^30.20.0",
@@ -976,6 +980,7 @@
 	],
 	"devDependencies": {
 		"@changesets/cli": "^2.29.6",
-		"baseline-browser-mapping": "^2.8.32"
+		"baseline-browser-mapping": "^2.8.32",
+		"dotenv": "^17.2.3"
 	}
 }

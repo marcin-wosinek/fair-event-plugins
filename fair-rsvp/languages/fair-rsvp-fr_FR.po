@@ -363,7 +363,7 @@ msgstr "Confirmer la Présence"
 
 #: src/Admin/AttendanceConfirmationPage.php:32
 msgid "No event ID specified."
-msgstr ""
+msgstr "Aucun identifiant d'événement spécifié."
 
 #: src/Admin/AttendanceConfirmationPage.php:46
 #: src/API/InvitationController.php:384
@@ -376,37 +376,37 @@ msgstr "Événement non trouvé."
 #: src/Admin/AttendanceConfirmationPage.php:71
 #, php-format
 msgid "Confirm Attendance: %s"
-msgstr ""
+msgstr "Confirmer la présence : %s"
 
 #: src/API/RsvpController.php:207
 msgid "Array of RSVP updates with id and attendance_status."
-msgstr ""
+msgstr "Tableau de mises à jour RSVP avec identifiant et statut de présence."
 
 #: src/API/RsvpController.php:239
 msgid "Event ID."
-msgstr ""
+msgstr "Identifiant de l'événement."
 
 #: src/API/RsvpController.php:244
 msgid "Attendee name."
-msgstr ""
+msgstr "Nom du participant."
 
 #: src/API/RsvpController.php:249
 msgid "Attendee email (optional)."
-msgstr ""
+msgstr "E-mail du participant (optionnel)."
 
 #: src/API/RsvpController.php:576
 msgid "Updates must be a non-empty array."
-msgstr ""
+msgstr "Les mises à jour doivent être un tableau non vide."
 
 #. translators: %d: number of successful updates
 #: src/API/RsvpController.php:589
 #, php-format
 msgid "Successfully updated %d attendance records."
-msgstr ""
+msgstr "Mise à jour réussie de %d enregistrements de présence."
 
 #: src/API/RsvpController.php:638
 msgid "Failed to create RSVP for walk-in attendee."
-msgstr ""
+msgstr "Échec de la création du RSVP pour le participant sur place."
 
 #: src/Admin/attendance/AttendanceConfirmation.js:89
 msgid "Failed to load RSVPs"
@@ -414,7 +414,7 @@ msgstr "Échec du chargement des confirmations"
 
 #: src/Admin/attendance/AttendanceConfirmation.js:126
 msgid "Failed to save attendance"
-msgstr ""
+msgstr "Échec de l'enregistrement de la présence"
 
 #: src/Admin/attendance/AttendanceConfirmation.js:134
 msgid "Please select a member"
@@ -426,19 +426,19 @@ msgstr "Membre ajouté et enregistré avec succès"
 
 #: src/Admin/attendance/AttendanceConfirmation.js:164
 msgid "Failed to add member"
-msgstr ""
+msgstr "Échec de l'ajout du membre"
 
 #: src/Admin/attendance/AttendanceConfirmation.js:173
 msgid "Please enter a name for the walk-in attendee"
-msgstr ""
+msgstr "Veuillez saisir un nom pour le participant sur place"
 
 #: src/Admin/attendance/AttendanceConfirmation.js:193
 msgid "Walk-in attendee added successfully"
-msgstr ""
+msgstr "Participant sur place ajouté avec succès"
 
 #: src/Admin/attendance/AttendanceConfirmation.js:204
 msgid "Failed to add walk-in attendee"
-msgstr ""
+msgstr "Échec de l'ajout du participant sur place"
 
 #: src/Admin/attendance/AttendanceConfirmation.js:222
 msgid "just now"
@@ -495,24 +495,24 @@ msgstr "Chargement des confirmations..."
 
 #: src/Admin/attendance/AttendanceConfirmation.js:354
 msgid "attendees checked in"
-msgstr ""
+msgstr "participants enregistrés"
 
 #: src/Admin/attendance-check/AttendanceCheck.js:189
 #: src/Admin/attendance/AttendanceConfirmation.js:360
 msgid "Search attendees"
-msgstr ""
+msgstr "Rechercher des participants"
 
 #: src/Admin/attendance/AttendanceConfirmation.js:363
 msgid "Search by name..."
-msgstr ""
+msgstr "Rechercher par nom..."
 
 #: src/Admin/attendance/AttendanceConfirmation.js:369
 msgid "RSVP List"
-msgstr ""
+msgstr "Liste des RSVP"
 
 #: src/Admin/attendance/AttendanceConfirmation.js:371
 msgid "No RSVPs found"
-msgstr ""
+msgstr "Aucun RSVP trouvé"
 
 #: src/Admin/attendance-check/AttendanceCheck.js:223
 #: src/Admin/attendance/AttendanceConfirmation.js:381
@@ -549,11 +549,11 @@ msgstr "Enregistré"
 
 #: src/Admin/attendance/AttendanceConfirmation.js:477
 msgid "Type to search by name or email..."
-msgstr ""
+msgstr "Tapez pour rechercher par nom ou e-mail..."
 
 #: src/Admin/attendance/AttendanceConfirmation.js:483
 msgid "All members already have RSVPs for this event"
-msgstr ""
+msgstr "Tous les membres ont déjà répondu à cet événement"
 
 #: src/Admin/attendance/AttendanceConfirmation.js:497
 msgid "Add & Check In"
@@ -561,27 +561,27 @@ msgstr "Ajouter & Enregistrer"
 
 #: src/Admin/attendance/AttendanceConfirmation.js:512
 msgid "Add New Person (Not a Member)"
-msgstr ""
+msgstr "Ajouter une nouvelle personne (Pas un membre)"
 
 #: src/Admin/attendance/AttendanceConfirmation.js:514
 msgid "Add someone who attended but is not a website member"
-msgstr ""
+msgstr "Ajouter quelqu'un qui a assisté mais qui n'est pas un membre du site"
 
 #: src/Admin/attendance/AttendanceConfirmation.js:524
 msgid "Enter attendee name"
-msgstr ""
+msgstr "Saisir le nom du participant"
 
 #: src/Admin/attendance/AttendanceConfirmation.js:529
 msgid "Email (optional)"
-msgstr ""
+msgstr "E-mail (facultatif)"
 
 #: src/Admin/attendance/AttendanceConfirmation.js:533
 msgid "Enter email address"
-msgstr ""
+msgstr "Saisir l'adresse e-mail"
 
 #: src/Admin/attendance/AttendanceConfirmation.js:543
 msgid "Add Walk-in"
-msgstr ""
+msgstr "Ajouter un participant spontané"
 
 #: src/Admin/attendance/AttendanceConfirmation.js:555
 msgid "Save All Attendance"
@@ -739,154 +739,154 @@ msgstr "Permissions de présence"
 
 #: src/blocks/rsvp-button/render.php:280
 msgid "📋 Check Attendance List"
-msgstr ""
+msgstr "📋 Vérifier la liste de présence"
 
 #: src/blocks/rsvp-button/render.php:280
 msgid "📋 Attendance"
-msgstr ""
+msgstr "📋 Présence"
 
 #: src/Frontend/AttendanceCheckHooks.php:74
 #: src/Frontend/AttendanceCheckHooks.php:88
 msgid "Post not found."
-msgstr ""
+msgstr "Publication non trouvée."
 
 #: src/API/RsvpController.php:976
 #: src/Frontend/AttendanceCheckHooks.php:95
 msgid "This post does not have an RSVP block."
-msgstr ""
+msgstr "Cette publication n'a pas de bloc de réponse à l'invitation (RSVP)."
 
 #: src/Frontend/AttendanceCheckPage.php:51
 msgid "You do not have permission to view this page."
-msgstr ""
+msgstr "Vous n'avez pas la permission de consulter cette page."
 
 #: src/Frontend/AttendanceCheckPage.php:52
 msgid "Permission Denied"
-msgstr ""
+msgstr "Autorisation refusée"
 
 #: src/Frontend/AttendanceCheckPage.php:64
 msgid "Loading attendance check..."
-msgstr ""
+msgstr "Chargement de la vérification de présence..."
 
 #: src/API/RsvpController.php:269
 msgid "Event ID to get attendance check for."
-msgstr ""
+msgstr "ID de l'événement pour obtenir la vérification de présence."
 
 #: src/API/RsvpController.php:967
 msgid "The specified post does not exist."
-msgstr ""
+msgstr "La publication spécifiée n'existe pas."
 
 #: src/API/RsvpController.php:1124
 msgid "You do not have permission to view this attendance check."
-msgstr ""
+msgstr "Vous n'avez pas la permission de consulter cette vérification de présence."
 
 #: src/Admin/attendance-check/AttendanceCheck.js:63
 msgid "Failed to load attendance data."
-msgstr ""
+msgstr "Échec du chargement des données de présence."
 
 #: src/Admin/attendance-check/AttendanceCheck.js:134
 msgid "Failed to save attendance data."
-msgstr ""
+msgstr "Échec de l'enregistrement des données de présence."
 
 #: src/Admin/attendance-check/AttendanceCheck.js:158
 msgid "Loading attendance data..."
-msgstr ""
+msgstr "Chargement des données de présence..."
 
 #: src/Admin/attendance-check/AttendanceCheck.js:178
 msgid "Attendance Check"
-msgstr ""
+msgstr "Vérification de présence"
 
 #: src/Admin/attendance-check/AttendanceCheck.js:288
 msgid "Expected"
-msgstr ""
+msgstr "Attendu"
 
 #: src/Admin/attendance-check/AttendanceCheck.js:219
 msgid "Present"
-msgstr ""
+msgstr "Présent"
 
 #: src/Admin/attendance-check/AttendanceCheck.js:183
 msgid "Attendance saved successfully!"
-msgstr ""
+msgstr "Présence enregistrée avec succès !"
 
 #: src/Admin/attendance-check/AttendanceCheck.js:192
 msgid "Search by name or email..."
-msgstr ""
+msgstr "Rechercher par nom ou email..."
 
 #: src/Admin/attendance-check/AttendanceCheck.js:198
 msgid "← Back to Post"
-msgstr ""
+msgstr "← Retour à la publication"
 
 #: src/Admin/attendance-check/AttendanceCheck.js:208
 msgid "Saving..."
-msgstr ""
+msgstr "Enregistrement..."
 
 #: src/Admin/attendance-check/AttendanceCheck.js:209
 msgid "Save Attendance"
-msgstr ""
+msgstr "Enregistrer la présence"
 
 #: src/Admin/attendance-check/AttendanceCheck.js:235
 msgid "No attendees match your search."
-msgstr ""
+msgstr "Aucun participant ne correspond à votre recherche."
 
 #: src/Admin/attendance-check/AttendanceCheck.js:239
 msgid "No attendees yet."
-msgstr ""
+msgstr "Pas encore de participants."
 
 #: src/blocks/rsvp-button/render.php:118
 #: src/blocks/rsvp-button/frontend.js:670
 msgid "Your Name"
-msgstr ""
+msgstr "Votre Nom"
 
 #: src/blocks/rsvp-button/render.php:126
 #: src/blocks/rsvp-button/frontend.js:678
 msgid "Enter your name"
-msgstr ""
+msgstr "Entrez votre nom"
 
 #: src/blocks/rsvp-button/render.php:131
 #: src/blocks/rsvp-button/frontend.js:683
 msgid "Your Email"
-msgstr ""
+msgstr "Votre Email"
 
 #: src/blocks/rsvp-button/render.php:139
 #: src/blocks/rsvp-button/frontend.js:691
 msgid "Enter your email"
-msgstr ""
+msgstr "Entrez votre email"
 
 #: src/blocks/rsvp-button/render.php:175
 #: src/blocks/rsvp-button/frontend.js:211
 msgid "Submit RSVP"
-msgstr ""
+msgstr "Soumettre la réservation"
 
 #: src/API/RsvpController.php:385
 msgid "Unable to determine user for RSVP."
-msgstr ""
+msgstr "Impossible de déterminer l'utilisateur pour la réservation."
 
 #: src/API/RsvpController.php:715
 msgid "Name and email are required for anonymous RSVP."
-msgstr ""
+msgstr "Le nom et l'email sont requis pour une réservation anonyme."
 
 #: src/API/RsvpController.php:724
 msgid "Please provide a valid email address."
-msgstr ""
+msgstr "Veuillez fournir une adresse email valide."
 
 #: src/API/RsvpController.php:882
 msgid "Name for anonymous RSVP (optional, required if not logged in)."
-msgstr ""
+msgstr "Nom pour réservation anonyme (optionnel, requis si non connecté)."
 
 #: src/API/RsvpController.php:886
 msgid "Email for anonymous RSVP (optional, required if not logged in)."
-msgstr ""
+msgstr "Email pour réservation anonyme (optionnel, requis si non connecté)."
 
 #: src/blocks/rsvp-button/frontend.js:87
 msgid "Please enter your name."
-msgstr ""
+msgstr "Veuillez saisir votre nom."
 
 #: src/blocks/rsvp-button/frontend.js:96
 msgid "Please enter your email."
-msgstr ""
+msgstr "Veuillez saisir votre adresse e-mail."
 
 #: src/blocks/rsvp-button/frontend.js:184
 msgid "RSVP submitted successfully!"
-msgstr ""
+msgstr "RSVP soumis avec succès !"
 
 #: src/blocks/rsvp-button/render.php:266
 #: src/blocks/rsvp-button/frontend.js:307
@@ -979,17 +979,8 @@ msgstr "%1$s vous a invité à %2$s"
 #. translators: 1: Inviter name, 2: Event title, 3: Personal message, 4: Invitation URL, 5: Site name
 #: src/API/InvitationController.php:579
 #, php-format
-msgid ""
-"Hi,\n"
-"\n"
-"%1$s has invited you to: %2$s\n"
-"%3$s\n"
-"To RSVP for this event, please click the link below:\n"
-"%4$s\n"
-"\n"
-"Best regards,\n"
-"The %5$s Team"
-msgstr ""
+msgid "Hi,\n\n%1$s has invited you to: %2$s\n%3$s\nTo RSVP for this event, please click the link below:\n%4$s\n\nBest regards,\nThe %5$s Team"
+msgstr "Bonjour,\n\n%1$s vous a invité(e) à : %2$s\n%3$s\nPour répondre à cette invitation, veuillez cliquer sur le lien ci-dessous :\n%4$s\n\nCordialement,\nL'équipe %5$s"
 
 #: src/API/InvitationController.php:611
 msgid "You must be logged in to send invitations."
@@ -1320,7 +1311,7 @@ msgstr "Taux de présence"
 #: src/Admin/stats/InvitationStats.js:172
 #: src/Admin/stats/InvitationStats.js:366
 msgid "Invitations Sent"
-msgstr ""
+msgstr "Invitations envoyées"
 
 #: src/Admin/stats/InvitationStats.js:178
 msgid "Invitation Acceptance Rate"
@@ -1492,3 +1483,4 @@ msgid "Participant (%d)"
 msgid_plural "Participants (%d)"
 msgstr[0] "Participant (%d)"
 msgstr[1] "Participants (%d)"
+
