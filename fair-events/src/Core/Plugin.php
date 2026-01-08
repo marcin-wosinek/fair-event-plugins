@@ -104,6 +104,15 @@ class Plugin {
 				$controller->register_routes();
 			}
 		);
+
+		// Event Proposal controller
+		add_action(
+			'rest_api_init',
+			function () {
+				$controller = new \FairEvents\API\EventProposalController();
+				$controller->register_routes();
+			}
+		);
 	}
 
 	/**

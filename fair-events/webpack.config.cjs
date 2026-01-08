@@ -21,6 +21,14 @@ module.exports = {
       process.cwd(),
       "src/blocks/weekly-schedule/editor.js",
     ),
+    "blocks/event-proposal/editor": path.resolve(
+      process.cwd(),
+      "src/blocks/event-proposal/editor.js",
+    ),
+    "blocks/event-proposal/frontend": path.resolve(
+      process.cwd(),
+      "src/blocks/event-proposal/frontend.js",
+    ),
     "admin/settings/index": path.resolve(
       process.cwd(),
       "src/Admin/settings/index.js",

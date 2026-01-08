@@ -57,7 +57,7 @@ msgstr "Importer des événements"
 msgid "Import"
 msgstr "Importer"
 
-#: src/blocks/events-list/render.php:326
+#: src/blocks/events-list/render.php:358
 msgid "No events found. Please select a valid display pattern."
 msgstr "Aucun événement trouvé. Veuillez sélectionner un modèle d'affichage valide."
 
@@ -200,6 +200,7 @@ msgstr "Date et heure de fin de l'événement"
 msgid "Whether the event is an all-day event"
 msgstr "Si l'événement dure toute la journée"
 
+#: src/API/EventProposalController.php:237
 #: src/PostTypes/Event.php:132
 #: src/PostTypes/Event.php:280
 msgid "Event location"
@@ -209,6 +210,7 @@ msgstr "Lieu de l'événement"
 msgid "Event Details"
 msgstr "Détails de l'événement"
 
+#: src/blocks/event-proposal/render.php:104
 #: src/PostTypes/Event.php:225
 msgid "Start Date & Time"
 msgstr "Date et heure de début"
@@ -222,6 +224,7 @@ msgid "All Day Event"
 msgstr "Événement toute la journée"
 
 #: src/Admin/CopyEventPage.php:343
+#: src/blocks/event-proposal/render.php:139
 #: src/PostTypes/Event.php:272
 msgid "Location"
 msgstr "Lieu"
@@ -309,13 +312,16 @@ msgid "Filter events by time relative to now"
 msgstr "Filtrer les événements par temps relatif à maintenant"
 
 #: src/Admin/CopyEventPage.php:355
+#: src/blocks/event-proposal/render.php:156
 #: src/blocks/events-calendar/components/EditComponent.js:172
 #: src/blocks/events-list/components/EditComponent.js:142
+#: src/blocks/weekly-schedule/components/EditComponent.js:172
 msgid "Categories"
 msgstr "Catégories"
 
 #: src/blocks/events-calendar/components/EditComponent.js:180
 #: src/blocks/events-list/components/EditComponent.js:150
+#: src/blocks/weekly-schedule/components/EditComponent.js:180
 msgid "Define more categories if you want to use category filtering"
 msgstr "Définissez plus de catégories si vous souhaitez utiliser le filtrage par catégorie"
 
@@ -371,6 +377,7 @@ msgstr "heure"
 
 #: src/blocks/event-dates/block.json
 #: src/blocks/events-list/block.json
+#: src/blocks/weekly-schedule/block.json
 msgctxt "block keyword"
 msgid "schedule"
 msgstr "planning"
@@ -387,12 +394,14 @@ msgstr "Afficher une liste d'événements avec options de filtrage."
 
 #: src/blocks/events-calendar/block.json
 #: src/blocks/events-list/block.json
+#: src/blocks/weekly-schedule/block.json
 msgctxt "block keyword"
 msgid "events"
 msgstr "événements"
 
 #: src/blocks/events-calendar/block.json
 #: src/blocks/events-list/block.json
+#: src/blocks/weekly-schedule/block.json
 msgctxt "block keyword"
 msgid "calendar"
 msgstr "calendrier"
@@ -509,6 +518,7 @@ msgstr "Créer une copie"
 msgid "Cancel"
 msgstr "Annuler"
 
+#: src/blocks/event-proposal/render.php:119
 #: src/PostTypes/Event.php:237
 msgid "Event Length"
 msgstr "Durée de l'événement"
@@ -550,11 +560,13 @@ msgstr "Étiquettes"
 msgid "The new event will be created as a draft. All event details will be copied from the original event."
 msgstr "Le nouvel événement sera créé en tant que brouillon. Tous les détails de l'événement seront copiés à partir de l'événement original."
 
-#: src/blocks/events-calendar/render.php:313
+#: src/blocks/events-calendar/render.php:334
+#: src/blocks/weekly-schedule/render.php:440
 msgid "Previous"
 msgstr "Précédent"
 
-#: src/blocks/events-calendar/render.php:319
+#: src/blocks/events-calendar/render.php:340
+#: src/blocks/weekly-schedule/render.php:449
 msgid "Next"
 msgstr "Suivant"
 
@@ -571,6 +583,7 @@ msgid "Calendar Settings"
 msgstr "Paramètres du calendrier"
 
 #: src/blocks/events-calendar/components/EditComponent.js:117
+#: src/blocks/weekly-schedule/components/EditComponent.js:117
 msgid "Event Display Pattern"
 msgstr "Modèle d'affichage de l'événement"
 
@@ -579,18 +592,22 @@ msgid "Choose how events are displayed in calendar cells"
 msgstr "Choisissez comment les événements sont affichés dans les cellules du calendrier"
 
 #: src/blocks/events-calendar/components/EditComponent.js:130
+#: src/blocks/weekly-schedule/components/EditComponent.js:130
 msgid "Start of Week"
 msgstr "Début de la semaine"
 
 #: src/blocks/events-calendar/components/EditComponent.js:134
+#: src/blocks/weekly-schedule/components/EditComponent.js:134
 msgid "Monday"
 msgstr "Lundi"
 
 #: src/blocks/events-calendar/components/EditComponent.js:138
+#: src/blocks/weekly-schedule/components/EditComponent.js:138
 msgid "Sunday"
 msgstr "Dimanche"
 
 #: src/blocks/events-calendar/components/EditComponent.js:148
+#: src/blocks/weekly-schedule/components/EditComponent.js:148
 msgid "Show Navigation"
 msgstr "Afficher la navigation"
 
@@ -628,9 +645,10 @@ msgstr "grille"
 
 #: src/Admin/AdminPages.php:67
 #: src/Admin/AdminPages.php:68
-#: src/Admin/sources/SourcesList.js:150
+#: src/Admin/sources/SourcesList.js:151
 #: src/blocks/events-calendar/components/EditComponent.js:243
 #: src/blocks/events-list/components/EditComponent.js:176
+#: src/blocks/weekly-schedule/components/EditComponent.js:243
 msgid "Event Sources"
 msgstr "Sources d'Événements"
 
@@ -817,7 +835,7 @@ msgid "A descriptive name for this event source."
 msgstr "Un nom descriptif pour cette source d'événements."
 
 #: src/Admin/sources/components/SourceForm.js:132
-#: src/Admin/sources/SourcesList.js:201
+#: src/Admin/sources/SourcesList.js:202
 msgid "Slug"
 msgstr "Identifiant"
 
@@ -830,7 +848,7 @@ msgid "Auto-generated from name. Can be customized."
 msgstr "Généré automatiquement à partir du nom. Peut être personnalisé."
 
 #: src/Admin/sources/components/SourceForm.js:152
-#: src/Admin/sources/SourcesList.js:203
+#: src/Admin/sources/SourcesList.js:204
 msgid "Data Sources"
 msgstr "Sources de Données"
 
@@ -886,71 +904,72 @@ msgstr "Activé"
 msgid "Disabled"
 msgstr "Désactivé"
 
-#: src/Admin/sources/SourcesList.js:139
+#: src/Admin/sources/SourcesList.js:140
 msgid "iCal URL copied to clipboard!"
 msgstr "URL iCal copiée dans le presse-papiers !"
 
-#: src/Admin/sources/SourcesList.js:141
+#: src/Admin/sources/SourcesList.js:142
 msgid "Failed to copy URL to clipboard."
 msgstr "Échec de la copie de l'URL dans le presse-papiers."
 
-#: src/Admin/sources/SourcesList.js:152
+#: src/Admin/sources/SourcesList.js:153
 msgid "Add New Source"
 msgstr "Ajouter une Nouvelle Source"
 
-#: src/Admin/sources/SourcesList.js:181
+#: src/Admin/sources/SourcesList.js:182
 msgid "Loading sources..."
 msgstr "Chargement des sources..."
 
-#: src/Admin/sources/SourcesList.js:188
+#: src/Admin/sources/SourcesList.js:189
 msgid "No sources found. Create your first source to get started."
 msgstr "Aucune source trouvée. Créez votre première source pour commencer."
 
-#: src/Admin/sources/SourcesList.js:200
+#: src/Admin/sources/SourcesList.js:201
 msgid "Name"
 msgstr "Nom"
 
-#: src/Admin/sources/SourcesList.js:206
+#: src/Admin/sources/SourcesList.js:207
 msgid "iCal Feed"
 msgstr "Flux iCal"
 
-#: src/Admin/sources/SourcesList.js:208
+#: src/Admin/sources/SourcesList.js:209
 msgid "Status"
 msgstr "Statut"
 
-#: src/Admin/sources/SourcesList.js:209
+#: src/Admin/sources/SourcesList.js:210
 msgid "Actions"
 msgstr "Actions"
 
-#: src/Admin/sources/SourcesList.js:224
+#: src/Admin/sources/SourcesList.js:225
 msgid "data source(s)"
 msgstr "source(s) de données"
 
-#: src/Admin/sources/SourcesList.js:231
+#: src/Admin/sources/SourcesList.js:232
 msgid "Copy iCal feed URL"
 msgstr "Copier l'URL du flux iCal"
 
-#: src/Admin/sources/SourcesList.js:246
+#: src/Admin/sources/SourcesList.js:247
 msgid "Copy URL"
 msgstr "Copier l'URL"
 
-#: src/Admin/sources/SourcesList.js:265
+#: src/Admin/sources/SourcesList.js:266
 msgid "Edit"
 msgstr "Modifier"
 
-#: src/Admin/sources/SourcesList.js:280
+#: src/Admin/sources/SourcesList.js:281
 msgid "Delete"
 msgstr "Supprimer"
 
-#: src/Admin/sources/SourcesList.js:300
+#: src/Admin/sources/SourcesList.js:301
 msgid "Edit Event Source"
 msgstr "Modifier la Source d'Événements"
 
-#: src/Admin/sources/SourcesList.js:301
+#: src/Admin/sources/SourcesList.js:302
 msgid "Add New Event Source"
 msgstr "Ajouter une Nouvelle Source d'Événements"
 
 #: src/blocks/events-calendar/components/EditComponent.js:160
+#: src/blocks/weekly-schedule/components/EditComponent.js:160
 msgid "Show Draft Events"
 msgstr "Afficher les événements brouillons"
 
@@ -959,18 +978,22 @@ msgid "Display draft events in the calendar"
 msgstr "Afficher les événements brouillons dans le calendrier"
 
 #: src/blocks/events-calendar/components/EditComponent.js:206
+#: src/blocks/weekly-schedule/components/EditComponent.js:206
 msgid "Colors"
 msgstr "Couleurs"
 
 #: src/blocks/events-calendar/components/EditComponent.js:214
+#: src/blocks/weekly-schedule/components/EditComponent.js:214
 msgid "Background"
 msgstr "Arrière-plan"
 
 #: src/blocks/events-calendar/components/EditComponent.js:222
+#: src/blocks/weekly-schedule/components/EditComponent.js:222
 msgid "Text"
 msgstr "Texte"
 
 #: src/blocks/events-calendar/components/EditComponent.js:234
+#: src/blocks/weekly-schedule/components/EditComponent.js:234
 msgid "Draft events will appear as outlined buttons using these colors."
 msgstr "Les événements en brouillon apparaîtront comme des boutons avec contour en utilisant ces couleurs."
 
@@ -984,6 +1007,7 @@ msgid "Select event sources to display in the calendar."
 msgstr "Sélectionnez les sources d'événements à afficher dans le calendrier."
 
 #: src/blocks/events-calendar/components/EditComponent.js:255
+#: src/blocks/weekly-schedule/components/EditComponent.js:255
 msgid "Event sources format has changed. Please re-select your event sources."
 msgstr "Le format des sources d'événements a changé. Veuillez resélectionner vos sources d'événements."
 
@@ -995,7 +1019,277 @@ msgstr "Sélectionnez les sources d'événements à afficher dans la liste."
 msgid "selected"
 msgstr "sélectionnés"
 
-#: ../fair-events-shared/src/EventSourceSelector.js:111
-msgid "Manage Event Sources"
-msgstr "Gérer les sources d'événements"
+#: src/API/EventProposalController.php:97
+msgid "Name and email are required for anonymous submissions."
+msgstr "Le nom et l'e-mail sont requis pour les soumissions anonymes."
+
+#: src/API/EventProposalController.php:106
+msgid "Please provide a valid email address."
+msgstr "Veuillez fournir une adresse e-mail valide."
+
+#: src/API/EventProposalController.php:117
+msgid "Event start date must be in the future."
+msgstr "La date de début de l'événement doit être dans le futur."
+
+#: src/API/EventProposalController.php:147
+msgid "Failed to create event proposal."
+msgstr "Échec de la création de la proposition d'événement."
+
+#: src/API/EventProposalController.php:185
+msgid "Event proposal submitted successfully."
+msgstr "Proposition d'événement soumise avec succès."
+
+#: src/API/EventProposalController.php:216
+msgid "Event title"
+msgstr "Titre de l'événement"
+
+#: src/API/EventProposalController.php:224
+msgid "Event start date and time in ISO 8601 format"
+msgstr "Date et heure de début de l'événement au format ISO 8601"
+
+#: src/API/EventProposalController.php:230
+msgid "Event duration in minutes"
+msgstr "Durée de l'événement en minutes"
+
+#: src/API/EventProposalController.php:245
+msgid "Array of category IDs"
+msgstr "Tableau d'identifiants de catégories"
+
+#: src/API/EventProposalController.php:253
+msgid "Event description"
+msgstr "Description de l'événement"
+
+#: src/API/EventProposalController.php:260
+msgid "Submitter name (required for anonymous users)"
+msgstr "Nom du demandeur (requis pour les utilisateurs anonymes)"
+
+#: src/API/EventProposalController.php:267
+msgid "Submitter email (required for anonymous users)"
+msgstr "E-mail du demandeur (requis pour les utilisateurs anonymes)"
+
+#: src/API/EventProposalController.php:273
+msgid "Honeypot field (must be empty)"
+msgstr "Champ piège à robots (doit être vide)"
+
+#: src/API/EventProposalController.php:293
+msgid "Your submission could not be processed. Please try again."
+msgstr "Votre soumission n'a pas pu être traitée. Veuillez réessayer."
+
+#. translators: %d is the number of seconds to wait
+#: src/API/EventProposalController.php:321
+#, php-format
+msgid "Please wait %d seconds before submitting another proposal."
+msgstr "Veuillez attendre %d secondes avant de soumettre une autre proposition."
+
+#: src/blocks/event-proposal/render.php:17
+msgid "Submit Event Proposal"
+msgstr "Soumettre une proposition d'événement"
+
+#: src/blocks/event-proposal/render.php:40
+msgid "30 minutes"
+msgstr "30 minutes"
+
+#: src/blocks/event-proposal/render.php:41
+msgid "1 hour"
+msgstr "1 heure"
+
+#: src/blocks/event-proposal/render.php:42
+msgid "1.5 hours"
+msgstr "1,5 heures"
+
+#: src/blocks/event-proposal/render.php:43
+msgid "2 hours"
+msgstr "2 heures"
+
+#: src/blocks/event-proposal/render.php:44
+msgid "3 hours"
+msgstr "3 heures"
+
+#: src/blocks/event-proposal/render.php:45
+msgid "4 hours"
+msgstr "4 heures"
+
+#: src/blocks/event-proposal/render.php:58
+msgid "Your Name"
+msgstr "Votre nom"
+
+#: src/blocks/event-proposal/render.php:73
+msgid "Your Email"
+msgstr "Votre e-mail"
+
+#: src/blocks/event-proposal/render.php:88
+msgid "Event Title"
+msgstr "Titre de l'événement"
+
+#: src/blocks/event-proposal/render.php:128
+msgid "Select duration..."
+msgstr "Sélectionner la durée..."
+
+#: src/blocks/event-proposal/render.php:178
+msgid "Event Description"
+msgstr "Description de l'événement"
+
+#. translators: %1$s is the week number, %2$s is the year
+#: src/blocks/weekly-schedule/render.php:445
+#, php-format
+msgid "Week %1$s, %2$s"
+msgstr "Semaine %1$s, %2$s"
+
+#: src/Patterns/Patterns.php:103
+msgid "Schedule Event - Simple"
+msgstr "Événement de programme - Simple"
+
+#: src/Patterns/Patterns.php:104
+msgid "Display event title only (no time)"
+msgstr "Afficher uniquement le titre de l'événement (sans heure)"
+
+#: src/Patterns/Patterns.php:118
+msgid "Schedule Event - With Time"
+msgstr "Événement de programme - Avec heure"
+
+#: src/Patterns/Patterns.php:119
+msgid "Display event with start time and title"
+msgstr "Afficher l'événement avec l'heure de début et le titre"
+
+#: src/Patterns/Patterns.php:140
+msgid "Schedule Event - With Time Range"
+msgstr "Événement de programme - Avec plage horaire"
+
+#: src/Patterns/Patterns.php:141
+msgid "Display event with time range and title"
+msgstr "Afficher l'événement avec la plage horaire et le titre"
+
+#: src/blocks/event-proposal/editor.js:21
+msgid "Form Settings"
+msgstr "Paramètres du formulaire"
+
+#: src/blocks/event-proposal/editor.js:23
+msgid "Enable Categories"
+msgstr "Activer les catégories"
+
+#: src/blocks/event-proposal/editor.js:28
+msgid "Allow users to select event categories"
+msgstr "Permettre aux utilisateurs de sélectionner des catégories d'événements"
+
+#: src/blocks/event-proposal/editor.js:34
+msgid "Enable Description"
+msgstr "Activer la description"
+
+#: src/blocks/event-proposal/editor.js:39
+msgid "Include a description field in the form"
+msgstr "Inclure un champ de description dans le formulaire"
+
+#: src/blocks/event-proposal/editor.js:45
+msgid "Enable Admin Notifications"
+msgstr "Activer les notifications administrateur"
+
+#: src/blocks/event-proposal/editor.js:53
+msgid "Send email when new proposals are submitted"
+msgstr "Envoyer un e-mail lors de la soumission de nouvelles propositions"
+
+#: src/blocks/event-proposal/editor.js:60
+msgid "Notification Email"
+msgstr "E-mail de notification"
+
+#: src/blocks/event-proposal/editor.js:66
+msgid "Email address for notifications"
+msgstr "Adresse e-mail pour les notifications"
+
+#: src/blocks/event-proposal/editor.js:73
+msgid "Submit Button Text"
+msgstr "Texte du bouton de soumission"
+
+#: src/blocks/event-proposal/editor.js:80
+msgid "Success Message"
+msgstr "Message de succès"
+
+#: src/blocks/event-proposal/editor.js:85
+msgid "Message shown after successful submission"
+msgstr "Message affiché après une soumission réussie"
+
+#: src/blocks/event-proposal/editor.js:95
+msgid "Event Proposal Form"
+msgstr "Formulaire de proposition d'événement"
+
+#: src/blocks/event-proposal/editor.js:97
+msgid "Form will be displayed on the frontend"
+msgstr "Le formulaire sera affiché sur le site"
+
+#: src/blocks/event-proposal/editor.js:105
+msgid "Categories enabled"
+msgstr "Catégories activées"
+
+#: src/blocks/event-proposal/editor.js:110
+msgid "Description enabled"
+msgstr "Description activée"
+
+#: src/blocks/event-proposal/editor.js:115
+msgid "Notifications enabled"
+msgstr "Notifications activées"
+
+#: src/blocks/weekly-schedule/components/EditComponent.js:113
+msgid "Schedule Settings"
+msgstr "Paramètres de planning"
+
+#: src/blocks/weekly-schedule/components/EditComponent.js:123
+msgid "Use \"With Time\" patterns to show event start times"
+msgstr "Utiliser les modèles \"Avec heure\" pour afficher les heures de début des événements"
+
+#: src/blocks/weekly-schedule/components/EditComponent.js:153
+msgid "Display previous/next week navigation"
+msgstr "Afficher la navigation semaine précédente/suivante"
+
+#: src/blocks/weekly-schedule/components/EditComponent.js:165
+msgid "Display draft events in the schedule"
+msgstr "Afficher les événements brouillons dans le planning"
+
+#: src/blocks/weekly-schedule/components/EditComponent.js:247
+msgid "Select event sources to display in the schedule."
+msgstr "Sélectionner les sources d'événements à afficher dans le planning."
+
+#: src/blocks/weekly-schedule/components/EditComponent.js:274
+msgid "Weekly Schedule"
+msgstr "Planning hebdomadaire"
+
+#: src/blocks/weekly-schedule/components/EditComponent.js:276
+msgid "Schedule will be displayed on the frontend"
+msgstr "Le planning sera affiché sur le site"
+
+#: src/blocks/weekly-schedule/components/EditComponent.js:284
+msgid "Filtered by categories:"
+msgstr "Filtré par catégories :"
+
+#: src/blocks/weekly-schedule/components/EditComponent.js:293
+msgid "event sources configured"
+msgstr "sources d'événements configurées"
+
+#: src/blocks/event-proposal/block.json
+msgctxt "block title"
+msgid "Event Proposal Form"
+msgstr "Formulaire de proposition d'événement"
+
+#: src/blocks/event-proposal/block.json
+msgctxt "block description"
+msgid "Allow users to submit event proposals for review"
+msgstr "Permettre aux utilisateurs de soumettre des propositions d'événements pour examen"
+
+#: src/blocks/weekly-schedule/block.json
+msgctxt "block title"
+msgid "Weekly Schedule"
+msgstr "Planning hebdomadaire"
+
+#: src/blocks/weekly-schedule/block.json
+msgctxt "block description"
+msgid "Display events in a 7-day weekly schedule view."
+msgstr "Afficher les événements dans une vue de planning hebdomadaire sur 7 jours."
+
+#: src/blocks/weekly-schedule/block.json
+msgctxt "block keyword"
+msgid "week"
+msgstr "semaine"
+
+#: src/blocks/weekly-schedule/block.json
+msgctxt "block keyword"
+msgid "weekly"
+msgstr "hebdomadaire"
 

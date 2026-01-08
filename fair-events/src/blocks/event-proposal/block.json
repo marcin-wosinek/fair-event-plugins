@@ -1,0 +1,40 @@
+{
+	"apiVersion": 3,
+	"name": "fair-events/event-proposal",
+	"title": "Event Proposal Form",
+	"category": "widgets",
+	"icon": "calendar-alt",
+	"description": "Allow users to submit event proposals for review",
+	"textdomain": "fair-events",
+	"attributes": {
+		"enableCategories": {
+			"type": "boolean",
+			"default": true
+		},
+		"enableDescription": {
+			"type": "boolean",
+			"default": true
+		},
+		"enableNotifications": {
+			"type": "boolean",
+			"default": false
+		},
+		"notificationEmail": {
+			"type": "string",
+			"default": ""
+		},
+		"submitButtonText": {
+			"type": "string",
+			"default": "Submit Event Proposal"
+		},
+		"successMessage": {
+			"type": "string",
+			"default": "Thank you! Your event proposal has been submitted and will be reviewed by our team."
+		}
+	},
+	"editorScript": "file:./editor.js",
+	"editorStyle": "file:./editor.css",
+	"viewScript": "file:./frontend.js",
+	"style": "file:./frontend.css",
+	"render": "file:./render.php"
+}

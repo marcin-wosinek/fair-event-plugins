@@ -1,0 +1,48 @@
+/**
+ * Event Proposal Form - Editor Styles
+ *
+ * @package FairEvents
+ */
+
+.fair-events-proposal-placeholder {
+	padding: 3rem 2rem;
+	text-align: center;
+	background: #f9f9f9;
+	border: 2px dashed #ddd;
+	border-radius: 4px;
+}
+
+.fair-events-proposal-placeholder .placeholder-icon {
+	font-size: 3rem;
+	margin-bottom: 1rem;
+}
+
+.fair-events-proposal-placeholder h3 {
+	margin: 0 0 0.5rem 0;
+	font-size: 1.25rem;
+	color: #1e1e1e;
+}
+
+.fair-events-proposal-placeholder p {
+	margin: 0 0 1rem 0;
+	color: #757575;
+	font-size: 0.9375rem;
+}
+
+.fair-events-proposal-placeholder .placeholder-info {
+	display: flex;
+	flex-wrap: wrap;
+	justify-content: center;
+	gap: 0.5rem;
+	margin-top: 1rem;
+}
+
+.fair-events-proposal-placeholder .info-tag {
+	display: inline-block;
+	padding: 0.25rem 0.75rem;
+	background: #2271b1;
+	color: #fff;
+	border-radius: 12px;
+	font-size: 0.8125rem;
+	font-weight: 500;
+}
