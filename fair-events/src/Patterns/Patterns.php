@@ -94,5 +94,62 @@ class Patterns {
 				'content'     => '<!-- wp:post-title {"level":6,"isLink":true,"fontSize":"small"} /-->',
 			)
 		);
+
+		// Schedule Event - Simple (title only)
+		// Compact pattern for weekly schedule - shows only event title
+		register_block_pattern(
+			'fair-events/schedule-event-simple',
+			array(
+				'title'       => __( 'Schedule Event - Simple', 'fair-events' ),
+				'description' => __( 'Display event title only (no time)', 'fair-events' ),
+				'categories'  => array( 'fair-events' ),
+				'keywords'    => array( 'schedule', 'event', 'simple', 'title' ),
+				'content'     => '<!-- wp:post-title {"level":6,"isLink":true,"fontSize":"small"} /-->',
+			)
+		);
+
+		// Schedule Event - With Time (start time + title)
+		// Pattern for weekly schedule with start time display
+		// Note: <time data-event-time="start"></time> is a placeholder
+		// that will be replaced with actual event start time during rendering
+		register_block_pattern(
+			'fair-events/schedule-event-with-time',
+			array(
+				'title'       => __( 'Schedule Event - With Time', 'fair-events' ),
+				'description' => __( 'Display event with start time and title', 'fair-events' ),
+				'categories'  => array( 'fair-events' ),
+				'keywords'    => array( 'schedule', 'event', 'time', 'start' ),
+				'content'     => '<!-- wp:group {"style":{"spacing":{"blockGap":"0.25rem"}},"layout":{"type":"flex","orientation":"vertical"}} -->
+<div class="wp-block-group">
+	<!-- wp:html -->
+	<time data-event-time="start"></time>
+	<!-- /wp:html -->
+	<!-- wp:post-title {"level":6,"isLink":true,"fontSize":"small"} /-->
+</div>
+<!-- /wp:group -->',
+			)
+		);
+
+		// Schedule Event - With Time Range (time range + title)
+		// Pattern for weekly schedule with full time range display
+		// Note: <time data-event-time="range"></time> is a placeholder
+		// that will be replaced with actual event time range during rendering
+		register_block_pattern(
+			'fair-events/schedule-event-with-time-range',
+			array(
+				'title'       => __( 'Schedule Event - With Time Range', 'fair-events' ),
+				'description' => __( 'Display event with time range and title', 'fair-events' ),
+				'categories'  => array( 'fair-events' ),
+				'keywords'    => array( 'schedule', 'event', 'time', 'range', 'duration' ),
+				'content'     => '<!-- wp:group {"style":{"spacing":{"blockGap":"0.25rem"}},"layout":{"type":"flex","orientation":"vertical"}} -->
+<div class="wp-block-group">
+	<!-- wp:html -->
+	<time data-event-time="range"></time>
+	<!-- /wp:html -->
+	<!-- wp:post-title {"level":6,"isLink":true,"fontSize":"small"} /-->
+</div>
+<!-- /wp:group -->',
+			)
+		);
 	}
 }

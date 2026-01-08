@@ -329,11 +329,11 @@ $today = current_time( 'Y-m-d' );
 ?>
 <div <?php echo wp_kses_post( get_block_wrapper_attributes( array( 'class' => 'wp-block-fair-events-events-calendar' ) ) ); ?>>
 	<?php if ( $show_navigation ) : ?>
-	<div class="calendar-navigation">
+	<div class="fair-events-navigation">
 		<a href="<?php echo esc_url( $prev_url ); ?>" class="nav-prev">
 			<?php esc_html_e( 'Previous', 'fair-events' ); ?>
 		</a>
-		<h2 class="current-month">
+		<h2 class="navigation-title">
 			<?php echo esc_html( date_i18n( 'F Y', $first_day_of_month ) ); ?>
 		</h2>
 		<a href="<?php echo esc_url( $next_url ); ?>" class="nav-next">

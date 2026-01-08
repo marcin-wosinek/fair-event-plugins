@@ -7,8 +7,8 @@
 .wp-block-fair-events-events-calendar {
 	max-width: 100%;
 
-	// Navigation
-	.calendar-navigation {
+	// Navigation (shared with weekly-schedule)
+	.fair-events-navigation {
 		display: flex;
 		justify-content: space-between;
 		align-items: center;
@@ -17,7 +17,7 @@
 		background: #f9f9f9;
 		border-radius: 4px;
 
-		.current-month {
+		.navigation-title {
 			margin: 0;
 			font-size: 1.25rem;
 			font-weight: 600;

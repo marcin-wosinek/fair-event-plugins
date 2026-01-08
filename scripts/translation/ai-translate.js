@@ -79,9 +79,8 @@ function validateArgs(options) {
 		);
 	}
 
-	if (!options.locale) {
-		errors.push('Missing required argument: --locale=LOCALE_CODE');
-	} else if (!config.locales.includes(options.locale)) {
+	// Locale is optional - if not provided, all locales will be processed
+	if (options.locale && !config.locales.includes(options.locale)) {
 		errors.push(`Invalid locale: ${options.locale}`);
 		errors.push(`Available locales: ${config.locales.join(', ')}`);
 	}
@@ -259,23 +258,61 @@ async function main() {
 		errors.forEach((err) => console.error(`   ${err}`));
 		console.error('\nUsage:');
 		console.error(
-			'  node scripts/translation/ai-translate.js --plugin=PLUGIN --locale=LOCALE --provider=PROVIDER'
+			'  node scripts/translation/ai-translate.js --plugin=PLUGIN [--locale=LOCALE] --provider=PROVIDER'
 		);
-		console.error('\nExample:');
+		console.error('\nExample (single locale):');
 		console.error('  export OPENAI_API_KEY=your_key_here');
 		console.error(
 			'  node scripts/translation/ai-translate.js --plugin=fair-events --locale=fr_FR --provider=openai'
 		);
+		console.error('\nExample (all locales):');
+		console.error(
+			'  node scripts/translation/ai-translate.js --plugin=fair-events --provider=openai'
+		);
 		console.error('\nOptions:');
+		console.error(
+			'  --locale=LOCALE_CODE        Optional. If not provided, all locales will be translated'
+		);
 		console.error(
 			'  --provider=openai|claude    AI provider to use (default: openai)'
 		);
-		console.error('\nNote: This script always updates the .po file after translation.');
+		console.error(
+			'\nNote: This script always updates the .po file after translation.'
+		);
 		process.exit(1);
 	}
 
 	try {
-		await aiTranslate(options);
+		// If no locale specified, process all locales
+		if (!options.locale) {
+			console.error(
+				`🌍 Processing all locales: ${config.locales.join(', ')}\n`
+			);
+
+			for (const locale of config.locales) {
+				const localeOptions = { ...options, locale };
+				console.error(`\n${'='.repeat(60)}`);
+				console.error(`📍 Starting translation for ${locale}`);
+				console.error(`${'='.repeat(60)}\n`);
+
+				try {
+					await aiTranslate(localeOptions);
+				} catch (error) {
+					console.error(
+						`\n❌ Error translating ${locale}: ${error.message}`
+					);
+					// Continue with next locale instead of stopping
+					continue;
+				}
+			}
+
+			console.error(`\n${'='.repeat(60)}`);
+			console.error('✅ All locales processed');
+			console.error(`${'='.repeat(60)}\n`);
+		} else {
+			// Process single locale
+			await aiTranslate(options);
+		}
 	} catch (error) {
 		console.error(`\n❌ Error: ${error.message}`);
 		if (error.stack) {

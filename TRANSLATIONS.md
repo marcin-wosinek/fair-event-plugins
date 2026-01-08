@@ -67,12 +67,17 @@ The script will automatically load keys from `.env` file. No need to export envi
 
 **2. Run AI translation:**
 ```bash
+# Single locale
 npm run translation:ai -- --plugin=fair-events --locale=fr_FR --provider=openai
-# or
+
+# All locales (de_DE, es_ES, fr_FR, pl_PL) - locale parameter is optional
+npm run translation:ai -- --plugin=fair-events --provider=openai
+
+# With Claude
 npm run translation:ai -- --plugin=fair-events --locale=fr_FR --provider=claude
 ```
 
-The script will show a cost estimate and ask for confirmation before proceeding. After translation, it automatically updates the .po file.
+The script will show a cost estimate and ask for confirmation before proceeding. After translation, it automatically updates the .po file. When run without `--locale`, it processes all 4 supported locales sequentially.
 
 **3. Compile translations:**
 ```bash
@@ -84,6 +89,7 @@ npm run build --workspace=fair-events
 - Cost estimation with confirmation before proceeding
 - Batch processing (20 strings at a time)
 - Automatically updates .po file after translation
+- Processes all locales when --locale is omitted (de_DE, es_ES, fr_FR, pl_PL)
 - Skips plural forms (need manual translation)
 - Skips intentionally untranslated (URLs, names)
 

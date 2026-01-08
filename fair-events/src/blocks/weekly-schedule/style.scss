@@ -1,0 +1,160 @@
+/**
+ * Weekly Schedule Block - Frontend Styles
+ *
+ * @package FairEvents
+ */
+
+.weekly-schedule {
+	// Navigation (shared with events-calendar)
+	.fair-events-navigation {
+		display: flex;
+		justify-content: space-between;
+		align-items: center;
+		margin-bottom: 1.5rem;
+		padding: 0.75rem 1rem;
+		background: #f9f9f9;
+		border-radius: 4px;
+
+		.navigation-title {
+			margin: 0;
+			font-size: 1.25rem;
+			font-weight: 600;
+			color: #1e1e1e;
+		}
+
+		.nav-prev,
+		.nav-next {
+			padding: 0.5rem 1rem;
+			background: #fff;
+			border: 1px solid #ddd;
+			border-radius: 4px;
+			text-decoration: none;
+			color: #1e1e1e;
+			transition: all 0.2s ease;
+
+			&:hover {
+				background: #2271b1;
+				color: #fff;
+				border-color: #2271b1;
+			}
+
+			&:focus {
+				outline: 2px solid #2271b1;
+				outline-offset: 2px;
+			}
+		}
+	}
+
+	// Desktop: 7-column grid
+	.schedule-grid {
+		display: grid;
+		grid-template-columns: repeat(7, 1fr);
+		gap: 1px;
+		background: #ddd;
+		border: 1px solid #ddd;
+
+		@media (max-width: 768px) {
+			// Tablet: keep grid but adjust spacing
+			gap: 0.5px;
+		}
+
+		@media (max-width: 480px) {
+			// Mobile: stack vertically
+			display: flex;
+			flex-direction: column;
+			gap: 1rem;
+			background: transparent;
+			border: none;
+		}
+	}
+
+	.schedule-header {
+		display: contents;
+
+		@media (max-width: 480px) {
+			display: none; // Hide header row on mobile
+		}
+	}
+
+	.day-header {
+		padding: 0.5rem;
+		background: #f9f9f9;
+		font-weight: bold;
+		text-align: center;
+		font-size: 0.875rem;
+	}
+
+	.schedule-body {
+		display: contents;
+	}
+
+	.day-column {
+		background: white;
+		padding: 0.5rem;
+		min-height: 400px;
+		display: flex;
+		flex-direction: column;
+
+		&.is-today {
+			background: #e7f5ff;
+			border: 2px solid #2271b1;
+		}
+
+		// Hide empty days on mobile
+		@media (max-width: 480px) {
+			min-height: auto;
+			box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+			border-radius: 4px;
+
+			&:not(:has(.day-events > *)) {
+				display: none;
+			}
+
+			&.is-today {
+				border: 2px solid #2271b1;
+			}
+		}
+	}
+
+	.day-number {
+		font-size: 0.875rem;
+		font-weight: bold;
+		margin-bottom: 0.5rem;
+		color: #757575;
+	}
+
+	.day-events {
+		display: flex;
+		flex-direction: column;
+		gap: 0.25rem;
+	}
+
+	.schedule-event {
+		display: block;
+		padding: 0.25rem 0.5rem;
+		background: var(--event-bg-color, var(--wp--preset--color--primary, #2271b1));
+		color: var(--event-text-color, #ffffff);
+		text-decoration: none;
+		border-radius: 3px;
+		font-size: 0.75rem;
+		transition: opacity 0.2s;
+
+		&:hover {
+			opacity: 0.8;
+		}
+
+		time {
+			display: block;
+			font-weight: bold;
+			font-size: 0.875rem;
+			margin-bottom: 0.125rem;
+		}
+
+		.event-title {
+			display: block;
+			overflow: hidden;
+			text-overflow: ellipsis;
+			white-space: nowrap;
+		}
+	}
+}
