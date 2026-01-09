@@ -9,6 +9,7 @@ namespace FairAudience\API;
 
 use FairAudience\Database\PollRepository;
 use FairAudience\Database\PollOptionRepository;
+use FairAudience\Database\PollAccessKeyRepository;
 use FairAudience\Models\Poll;
 use WP_REST_Controller;
 use WP_REST_Server;
@@ -52,11 +53,19 @@ class PollsController extends WP_REST_Controller {
 	private $option_repository;
 
 	/**
+	 * Poll access key repository instance.
+	 *
+	 * @var PollAccessKeyRepository
+	 */
+	private $access_key_repository;
+
+	/**
 	 * Constructor.
 	 */
 	public function __construct() {
-		$this->poll_repository   = new PollRepository();
-		$this->option_repository = new PollOptionRepository();
+		$this->poll_repository       = new PollRepository();
+		$this->option_repository     = new PollOptionRepository();
+		$this->access_key_repository = new PollAccessKeyRepository();
 	}
 
 	/**
@@ -280,6 +289,7 @@ class PollsController extends WP_REST_Controller {
 		}
 
 		$options = $this->option_repository->get_by_poll( $id );
+		$stats   = $this->access_key_repository->get_detailed_stats( $id );
 
 		$item = array(
 			'id'         => $poll->id,
@@ -299,6 +309,7 @@ class PollsController extends WP_REST_Controller {
 				},
 				$options
 			),
+			'stats'      => $stats,
 		);
 
 		return rest_ensure_response( $item );

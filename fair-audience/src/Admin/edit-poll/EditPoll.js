@@ -3,8 +3,6 @@ import { useState, useEffect } from '@wordpress/element';
 import apiFetch from '@wordpress/api-fetch';
 import {
 	Button,
-	Card,
-	CardBody,
 	TextControl,
 	TextareaControl,
 	SelectControl,
@@ -20,6 +18,7 @@ export default function EditPoll() {
 	const [sendResult, setSendResult] = useState(null);
 	const [events, setEvents] = useState([]);
 	const [pollId, setPollId] = useState(null);
+	const [pollStats, setPollStats] = useState(null);
 	const [formData, setFormData] = useState({
 		event_id: '',
 		title: '',
@@ -50,6 +49,7 @@ export default function EditPoll() {
 					path: `/fair-audience/v1/polls/${id}`,
 				});
 				setPollId(id);
+				setPollStats(pollResponse.stats);
 				setFormData({
 					event_id: pollResponse.event_id.toString(),
 					title: pollResponse.title,
@@ -208,6 +208,12 @@ export default function EditPoll() {
 				sent_count: response.sent_count,
 				failed: response.failed,
 			});
+
+			// Reload poll data to get updated statistics
+			const pollResponse = await apiFetch({
+				path: `/fair-audience/v1/polls/${pollId}`,
+			});
+			setPollStats(pollResponse.stats);
 		} catch (err) {
 			setError(err.message);
 		} finally {
@@ -274,6 +280,97 @@ export default function EditPoll() {
 				</Notice>
 			)}
 
+			{pollId && pollStats && (
+				<div
+					style={{
+						marginTop: '20px',
+						backgroundColor: '#ffffff',
+						border: '1px solid #ddd',
+						borderRadius: '4px',
+						padding: '20px',
+						boxShadow: '0 1px 3px rgba(0,0,0,0.1)',
+					}}
+				>
+					<h3 style={{ marginTop: 0 }}>
+						{__('Poll Statistics', 'fair-audience')}
+					</h3>
+					<div
+						style={{
+							display: 'grid',
+							gridTemplateColumns: 'repeat(3, 1fr)',
+							gap: '20px',
+						}}
+					>
+						<div
+							style={{
+								padding: '15px',
+								backgroundColor: '#f0f0f0',
+								borderRadius: '4px',
+								textAlign: 'center',
+							}}
+						>
+							<div
+								style={{
+									fontSize: '32px',
+									fontWeight: 'bold',
+									color: '#0073aa',
+								}}
+							>
+								{pollStats.responded}
+							</div>
+							<div style={{ fontSize: '14px', color: '#666' }}>
+								{__('Answered', 'fair-audience')}
+							</div>
+						</div>
+						<div
+							style={{
+								padding: '15px',
+								backgroundColor: '#f0f0f0',
+								borderRadius: '4px',
+								textAlign: 'center',
+							}}
+						>
+							<div
+								style={{
+									fontSize: '32px',
+									fontWeight: 'bold',
+									color: '#46b450',
+								}}
+							>
+								{pollStats.sent}
+							</div>
+							<div style={{ fontSize: '14px', color: '#666' }}>
+								{__('Received Email', 'fair-audience')}
+							</div>
+						</div>
+						<div
+							style={{
+								padding: '15px',
+								backgroundColor: '#f0f0f0',
+								borderRadius: '4px',
+								textAlign: 'center',
+							}}
+						>
+							<div
+								style={{
+									fontSize: '32px',
+									fontWeight: 'bold',
+									color: '#dc3232',
+								}}
+							>
+								{pollStats.not_sent}
+							</div>
+							<div style={{ fontSize: '14px', color: '#666' }}>
+								{__(
+									'Did Not Receive Email',
+									'fair-audience'
+								)}
+							</div>
+						</div>
+					</div>
+				</div>
+			)}
+
 			{pollId && (
 				<div style={{ marginTop: '20px' }}>
 					<Button
@@ -294,8 +391,16 @@ export default function EditPoll() {
 				</div>
 			)}
 
-			<Card style={{ marginTop: '20px' }}>
-				<CardBody>
+			<div
+				style={{
+					marginTop: '20px',
+					backgroundColor: '#ffffff',
+					border: '1px solid #ddd',
+					borderRadius: '4px',
+					padding: '20px',
+					boxShadow: '0 1px 3px rgba(0,0,0,0.1)',
+				}}
+			>
 					<SelectControl
 						label={__('Event', 'fair-audience')}
 						value={formData.event_id}
@@ -440,8 +545,7 @@ export default function EditPoll() {
 							)}
 						/>
 					</div>
-				</CardBody>
-			</Card>
+			</div>
 
 			<div style={{ marginTop: '20px' }}>
 				<Button isPrimary onClick={handleSubmit} disabled={isSaving}>

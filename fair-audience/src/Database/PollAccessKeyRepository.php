@@ -197,4 +197,54 @@ class PollAccessKeyRepository {
 
 		return $stats;
 	}
+
+	/**
+	 * Get detailed statistics for a poll including email sent status.
+	 *
+	 * @param int $poll_id Poll ID.
+	 * @return array Array with detailed statistics.
+	 */
+	public function get_detailed_stats( $poll_id ) {
+		global $wpdb;
+
+		$table_name = $this->get_table_name();
+
+		// Get total count.
+		$total = (int) $wpdb->get_var(
+			$wpdb->prepare(
+				'SELECT COUNT(*) FROM %i WHERE poll_id = %d',
+				$table_name,
+				$poll_id
+			)
+		);
+
+		// Get count of responded participants.
+		$responded = (int) $wpdb->get_var(
+			$wpdb->prepare(
+				'SELECT COUNT(*) FROM %i WHERE poll_id = %d AND status = %s',
+				$table_name,
+				$poll_id,
+				'responded'
+			)
+		);
+
+		// Get count of emails sent (sent_at IS NOT NULL).
+		$sent = (int) $wpdb->get_var(
+			$wpdb->prepare(
+				'SELECT COUNT(*) FROM %i WHERE poll_id = %d AND sent_at IS NOT NULL',
+				$table_name,
+				$poll_id
+			)
+		);
+
+		// Calculate not sent.
+		$not_sent = $total - $sent;
+
+		return array(
+			'total'     => $total,
+			'responded' => $responded,
+			'sent'      => $sent,
+			'not_sent'  => $not_sent,
+		);
+	}
 }
