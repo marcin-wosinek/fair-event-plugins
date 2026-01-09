@@ -49,6 +49,7 @@ function parseArgs() {
 		plugin: null,
 		locale: null,
 		provider: 'openai',
+		yes: false,
 	};
 
 	for (const arg of args) {
@@ -58,6 +59,8 @@ function parseArgs() {
 			options.locale = arg.substring('--locale='.length);
 		} else if (arg.startsWith('--provider=')) {
 			options.provider = arg.substring('--provider='.length);
+		} else if (arg === '--yes' || arg === '-y') {
+			options.yes = true;
 		}
 	}
 
@@ -123,6 +126,32 @@ function isIntentionallyUntranslated(msgid) {
 }
 
 /**
+ * Count untranslated strings for a plugin/locale pair
+ *
+ * @param {string} plugin - Plugin name
+ * @param {string} locale - Locale code
+ * @returns {Promise<number>} Number of untranslated strings
+ */
+async function countUntranslated(plugin, locale) {
+	const poFilePath = join(rootDir, config.paths.poFile(plugin, locale));
+
+	try {
+		const parsed = await parsePOFile(poFilePath);
+		const untranslated = parsed.translations.filter((entry) => {
+			if (entry.isHeader) return false;
+			if (!isUntranslated(entry)) return false;
+			if (entry.msgidPlural) return false;
+			if (isIntentionallyUntranslated(entry.msgid)) return false;
+			return true;
+		});
+
+		return untranslated.length;
+	} catch (error) {
+		return 0;
+	}
+}
+
+/**
  * Main translation function
  */
 async function aiTranslate(options) {
@@ -149,7 +178,7 @@ async function aiTranslate(options) {
 
 	if (untranslated.length === 0) {
 		console.error('✅ All strings are already translated!');
-		return;
+		return null;
 	}
 
 	console.error(`📝 Found ${untranslated.length} untranslated strings\n`);
@@ -179,14 +208,22 @@ async function aiTranslate(options) {
 	console.error(`💰 Estimated cost: $${estimatedCost.toFixed(4)}`);
 	console.error(`   (based on ~${avgTokensPerString} tokens per string)\n`);
 
-	const proceed = await confirm(
-		'Proceed with translation? This will update the .po file'
-	);
-	if (!proceed) {
-		console.error('❌ Aborted by user');
-		return;
+	// Skip confirmation if --yes flag is set OR if skipConfirmation is passed
+	// (skipConfirmation is used when processing multiple locales with one confirmation)
+	if (!options.yes && !options.skipConfirmation) {
+		const proceed = await confirm(
+			'Proceed with translation? This will update the .po file'
+		);
+		if (!proceed) {
+			console.error('❌ Aborted by user');
+			return;
+		}
+		console.error('');
+	} else if (options.yes) {
+		console.error('✓ Auto-confirming (--yes flag)\n');
+	} else if (options.skipConfirmation) {
+		console.error('✓ Proceeding (confirmed for all locales)\n');
 	}
-	console.error('');
 
 	// Process in batches
 	const batchSize = config.ai.batchSize;
@@ -223,9 +260,11 @@ async function aiTranslate(options) {
 		} catch (error) {
 			console.error(`   ❌ Error: ${error.message}`);
 
-			// Ask if should continue
-			const cont = await confirm('Continue with remaining batches?');
-			if (!cont) break;
+			// Ask if should continue (unless --yes flag is used)
+			if (!options.yes) {
+				const cont = await confirm('Continue with remaining batches?');
+				if (!cont) break;
+			}
 		}
 	}
 
@@ -244,6 +283,14 @@ async function aiTranslate(options) {
 	console.error('\n⚠️  Remember to run:');
 	console.error(`   npm run makemo --workspace=${options.plugin}`);
 	console.error(`   npm run build --workspace=${options.plugin}`);
+
+	// Return results for multi-locale processing
+	return {
+		locale: options.locale,
+		translatedCount: results.length,
+		totalCount: untranslated.length,
+		cost: totalCost,
+	};
 }
 
 /**
@@ -277,6 +324,9 @@ async function main() {
 			'  --provider=openai|claude    AI provider to use (default: openai)'
 		);
 		console.error(
+			'  --yes, -y                   Skip confirmation prompts (for automation)'
+		);
+		console.error(
 			'\nNote: This script always updates the .po file after translation.'
 		);
 		process.exit(1);
@@ -289,14 +339,103 @@ async function main() {
 				`🌍 Processing all locales: ${config.locales.join(', ')}\n`
 			);
 
+			// Calculate total cost for all locales upfront
+			console.error('📊 Calculating translation requirements...\n');
+
+			let provider;
+			try {
+				provider = getProvider(options.provider);
+			} catch (error) {
+				console.error(`❌ ${error.message}`);
+				process.exit(1);
+			}
+
+			const localeData = [];
+			let totalUntranslated = 0;
+
 			for (const locale of config.locales) {
-				const localeOptions = { ...options, locale };
+				const count = await countUntranslated(options.plugin, locale);
+				localeData.push({
+					locale,
+					count,
+				});
+				totalUntranslated += count;
+			}
+
+			if (totalUntranslated === 0) {
+				console.error('✅ All strings are already translated!');
+				return;
+			}
+
+			// Display breakdown
+			console.error('📝 Untranslated strings by locale:\n');
+			localeData.forEach((data) => {
+				if (data.count > 0) {
+					console.error(
+						`   ${data.locale} (${config.localeNames[data.locale]}): ${data.count} strings`
+					);
+				}
+			});
+			console.error(`\n   Total: ${totalUntranslated} strings\n`);
+
+			// Calculate total estimated cost
+			const avgTokensPerString = 50;
+			const estimatedInputTokens = totalUntranslated * avgTokensPerString;
+			const estimatedOutputTokens =
+				totalUntranslated * avgTokensPerString;
+			const estimatedTotalCost = provider.estimateCost(
+				estimatedInputTokens,
+				estimatedOutputTokens
+			);
+
+			console.error(
+				`🔧 Provider: ${options.provider} (${provider.config.model})`
+			);
+			console.error(
+				`💰 Estimated total cost: $${estimatedTotalCost.toFixed(4)}`
+			);
+			console.error(
+				`   (based on ~${avgTokensPerString} tokens per string)\n`
+			);
+
+			// Single confirmation for all locales (unless --yes flag)
+			if (!options.yes) {
+				const proceed = await confirm(
+					'Proceed with translation for all locales? This will update all .po files'
+				);
+				if (!proceed) {
+					console.error('❌ Aborted by user');
+					process.exit(0);
+				}
+				console.error('');
+			} else {
+				console.error('✓ Auto-confirming (--yes flag)\n');
+			}
+
+			// Process all locales with confirmation already given
+			const translationResults = [];
+			let actualTotalCost = 0;
+			let totalTranslated = 0;
+
+			for (const locale of config.locales) {
+				const localeOptions = {
+					...options,
+					locale,
+					skipConfirmation: true,
+				};
 				console.error(`\n${'='.repeat(60)}`);
-				console.error(`📍 Starting translation for ${locale}`);
+				console.error(
+					`📍 Starting translation for ${locale} (${config.localeNames[locale]})`
+				);
 				console.error(`${'='.repeat(60)}\n`);
 
 				try {
-					await aiTranslate(localeOptions);
+					const result = await aiTranslate(localeOptions);
+					if (result) {
+						translationResults.push(result);
+						actualTotalCost += result.cost;
+						totalTranslated += result.translatedCount;
+					}
 				} catch (error) {
 					console.error(
 						`\n❌ Error translating ${locale}: ${error.message}`
@@ -306,8 +445,22 @@ async function main() {
 				}
 			}
 
+			// Final summary
 			console.error(`\n${'='.repeat(60)}`);
 			console.error('✅ All locales processed');
+			console.error(`${'='.repeat(60)}`);
+			console.error('\n📊 Final Summary:\n');
+			translationResults.forEach((result) => {
+				console.error(
+					`   ${result.locale} (${config.localeNames[result.locale]}): ${result.translatedCount}/${result.totalCount} strings - $${result.cost.toFixed(4)}`
+				);
+			});
+			console.error(
+				`\n   💰 Total actual cost: $${actualTotalCost.toFixed(4)}`
+			);
+			console.error(
+				`   📝 Total translated: ${totalTranslated} strings\n`
+			);
 			console.error(`${'='.repeat(60)}\n`);
 		} else {
 			// Process single locale

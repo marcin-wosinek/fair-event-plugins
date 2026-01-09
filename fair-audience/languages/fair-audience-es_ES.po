@@ -67,6 +67,7 @@ msgstr "Importar"
 
 #: src/API/EventParticipantsController.php:175
 #: src/API/EventParticipantsController.php:217
+#: src/Services/EmailService.php:224
 msgid "Event not found."
 msgstr "Evento no encontrado."
 
@@ -74,6 +75,7 @@ msgstr "Evento no encontrado."
 #: src/API/ParticipantsController.php:154
 #: src/API/ParticipantsController.php:219
 #: src/API/ParticipantsController.php:277
+#: src/Services/EmailService.php:247
 msgid "Participant not found."
 msgstr "Participante no encontrado."
 
@@ -138,6 +140,7 @@ msgstr "Participante eliminado con éxito."
 #: src/Admin/event-participants/EventParticipants.js:116
 #: src/Admin/event-participants/EventParticipants.js:134
 #: src/Admin/events-list/EventsList.js:38
+#: src/Admin/polls-list/PollsList.js:48
 msgid "Error: "
 msgstr "Error: "
 
@@ -159,6 +162,7 @@ msgid "%d participants"
 msgstr "%d participantes"
 
 #: src/Admin/all-participants/AllParticipants.js:152
+#: src/Admin/edit-poll/EditPoll.js:248
 #: src/Admin/event-participants/EventParticipants.js:167
 msgid "Name"
 msgstr "Nombre"
@@ -180,14 +184,17 @@ msgstr "Perfil de correo electrónico"
 
 #: src/Admin/all-participants/AllParticipants.js:156
 #: src/Admin/event-participants/EventParticipants.js:171
+#: src/Admin/polls-list/PollsList.js:113
 msgid "Actions"
 msgstr "Acciones"
 
 #: src/Admin/all-participants/AllParticipants.js:185
+#: src/Admin/polls-list/PollsList.js:157
 msgid "Edit"
 msgstr "Editar"
 
 #: src/Admin/all-participants/AllParticipants.js:192
+#: src/Admin/polls-list/PollsList.js:167
 msgid "Delete"
 msgstr "Eliminar"
 
@@ -263,6 +270,7 @@ msgstr "Interesado"
 msgid "Signed Up"
 msgstr "Inscrito"
 
+#: src/Admin/edit-poll/EditPoll.js:602
 #: src/Admin/event-participants/EventParticipants.js:227
 msgid "Remove"
 msgstr "Eliminar"
@@ -290,6 +298,7 @@ msgstr "Eventos"
 msgid "No events found."
 msgstr "No se encontraron eventos."
 
+#: src/Admin/edit-poll/EditPoll.js:502
 #: src/Admin/events-list/EventsList.js:60
 msgid "Event"
 msgstr "Evento"
@@ -482,4 +491,379 @@ msgstr "Seleccione un evento para asociar los participantes importados. Déjelo 
 #: src/Admin/import/Import.js:204
 msgid "No event association"
 msgstr "Sin asociación de evento"
+
+#: src/Admin/AdminHooks.php:73
+#: src/Admin/AdminHooks.php:74
+#: src/Admin/polls-list/PollsList.js:67
+#: src/Admin/polls-list/PollsList.js:76
+#: src/Admin/polls-list/PollsList.js:87
+msgid "Polls"
+msgstr "Encuestas"
+
+#: src/Admin/AdminHooks.php:83
+#: src/Admin/AdminHooks.php:84
+#: src/Admin/edit-poll/EditPoll.js:320
+#: src/Admin/edit-poll/EditPoll.js:332
+msgid "Edit Poll"
+msgstr "Editar Encuesta"
+
+#: src/API/PollResponseController.php:227
+msgid "Too many submission attempts. Please try again later."
+msgstr "Demasiados intentos de envío. Por favor, inténtelo de nuevo más tarde."
+
+#: src/API/PollResponseController.php:242
+msgid "Invalid or expired access key."
+msgstr "Clave de acceso inválida o caducada."
+
+#: src/API/PollResponseController.php:251
+msgid "You have already responded to this poll."
+msgstr "Ya ha respondido a esta encuesta."
+
+#: src/API/PollResponseController.php:262
+#: src/API/PollsController.php:314
+#: src/API/PollsController.php:420
+#: src/API/PollsController.php:486
+#: src/API/PollsController.php:520
+#: src/API/PollsController.php:553
+#: src/Services/EmailService.php:213
+msgid "Poll not found."
+msgstr "Encuesta no encontrada."
+
+#: src/API/PollResponseController.php:271
+#: src/public/poll-response/PollResponse.js:55
+msgid "This poll is no longer accepting responses."
+msgstr "Esta encuesta ya no acepta respuestas."
+
+#: src/API/PollResponseController.php:280
+#: src/public/poll-response/PollResponse.js:86
+msgid "Please select at least one option."
+msgstr "Por favor, seleccione al menos una opción."
+
+#: src/API/PollResponseController.php:298
+msgid "Invalid option selected."
+msgstr "Opción seleccionada no válida."
+
+#: src/API/PollResponseController.php:308
+msgid "Failed to save your response. Please try again."
+msgstr "No se pudo guardar su respuesta. Por favor, inténtelo de nuevo."
+
+#: src/API/PollResponseController.php:322
+#: src/public/poll-response/PollResponse.js:163
+#: src/public/poll-response/PollResponse.js:200
+msgid "Thank you for your response!"
+msgstr "¡Gracias por su respuesta!"
+
+#: src/API/PollsController.php:364
+msgid "Invalid event ID."
+msgstr "ID de evento no válido."
+
+#: src/API/PollsController.php:383
+msgid "Failed to create poll."
+msgstr "No se pudo crear la encuesta."
+
+#: src/API/PollsController.php:393
+msgid "Failed to create poll options."
+msgstr "No se pudieron crear las opciones de la encuesta."
+
+#: src/API/PollsController.php:402
+msgid "Poll created successfully."
+msgstr "Encuesta creada con éxito."
+
+#: src/API/PollsController.php:443
+msgid "Failed to update poll."
+msgstr "No se pudo actualizar la encuesta."
+
+#: src/API/PollsController.php:459
+msgid "Failed to update poll options."
+msgstr "No se pudieron actualizar las opciones de la encuesta."
+
+#: src/API/PollsController.php:468
+msgid "Poll updated successfully."
+msgstr "Encuesta actualizada con éxito."
+
+#: src/API/PollsController.php:494
+msgid "Failed to delete poll."
+msgstr "No se pudo eliminar la encuesta."
+
+#: src/API/PollsController.php:502
+msgid "Poll deleted successfully."
+msgstr "Encuesta eliminada con éxito."
+
+#. translators: %s: event title
+#: src/Services/EmailService.php:79
+#, php-format
+msgid "Quick question about %s"
+msgstr "Pregunta rápida sobre %s"
+
+#. translators: %s: participant first name
+#: src/Services/EmailService.php:108
+#, php-format
+msgid "Hi %s,"
+msgstr "Hola %s,"
+
+#. translators: %s: event title
+#: src/Services/EmailService.php:116
+#, php-format
+msgid "We'd love to hear from you about %s!"
+msgstr "¡Nos encantaría saber tu opinión sobre %s!"
+
+#: src/Services/EmailService.php:130
+msgid "Please take a moment to answer our quick poll:"
+msgstr "Por favor, tómate un momento para responder nuestra breve encuesta:"
+
+#: src/Services/EmailService.php:135
+msgid "Answer Poll"
+msgstr "Responder Encuesta"
+
+#. translators: %s: site name
+#: src/Services/EmailService.php:142
+#, php-format
+msgid "Thanks,%1$sThe %2$s Team"
+msgstr "Gracias,%1$sEl equipo de %2$s"
+
+#: src/Services/EmailService.php:154
+msgid "If the button above doesn't work, copy and paste this link:"
+msgstr "Si el botón de arriba no funciona, copia y pega este enlace:"
+
+#: src/Services/EmailService.php:264
+msgid "wp_mail() failed to send."
+msgstr "wp_mail() no pudo enviar."
+
+#: src/Admin/edit-poll/EditPoll.js:131
+msgid "Please select an event."
+msgstr "Por favor, selecciona un evento."
+
+#: src/Admin/edit-poll/EditPoll.js:135
+msgid "Please enter a title."
+msgstr "Por favor, introduce un título."
+
+#: src/Admin/edit-poll/EditPoll.js:139
+msgid "Please enter a question."
+msgstr "Por favor, introduce una pregunta."
+
+#: src/Admin/edit-poll/EditPoll.js:143
+msgid "Please add at least one option."
+msgstr "Por favor, añade al menos una opción."
+
+#: src/Admin/edit-poll/EditPoll.js:150
+msgid "Please fill in all option texts or remove empty options."
+msgstr "Por favor, completa todos los textos de las opciones o elimina las opciones vacías."
+
+#: src/Admin/edit-poll/EditPoll.js:190
+msgid "Send poll invitations to all event participants who have not yet responded?"
+msgstr "¿Enviar invitaciones de la encuesta a todos los participantes del evento que aún no han respondido?"
+
+#: src/Admin/edit-poll/EditPoll.js:249
+msgid "Surname"
+msgstr "Apellido"
+
+#: src/Admin/edit-poll/EditPoll.js:258
+msgid "Comments"
+msgstr "Comentarios"
+
+#: src/Admin/edit-poll/EditPoll.js:269
+msgid "Yes"
+msgstr "Sí"
+
+#: src/Admin/edit-poll/EditPoll.js:321
+#: src/Admin/edit-poll/EditPoll.js:333
+msgid "Add New Poll"
+msgstr "Añadir Nueva Encuesta"
+
+#: src/Admin/edit-poll/EditPoll.js:351
+#, js-format
+msgid "Invitations sent to %d participants"
+msgstr "Invitaciones enviadas a %d participantes"
+
+#: src/Admin/edit-poll/EditPoll.js:361
+msgid "Failed to send to:"
+msgstr "Error al enviar a:"
+
+#: src/Admin/edit-poll/EditPoll.js:386
+msgid "Poll Statistics"
+msgstr "Estadísticas de la Encuesta"
+
+#: src/Admin/edit-poll/EditPoll.js:413
+msgid "Answered"
+msgstr "Respondido"
+
+#: src/Admin/edit-poll/EditPoll.js:434
+msgid "Received Email"
+msgstr "Correo Electrónico Recibido"
+
+#: src/Admin/edit-poll/EditPoll.js:455
+msgid "Did Not Receive Email"
+msgstr "Correo Electrónico No Recibido"
+
+#: src/Admin/edit-poll/EditPoll.js:470
+msgid "Sending..."
+msgstr "Enviando..."
+
+#: src/Admin/edit-poll/EditPoll.js:471
+msgid "Send Poll Invitations"
+msgstr "Enviar Invitaciones de Encuesta"
+
+#: src/Admin/edit-poll/EditPoll.js:479
+msgid "Generating PDF..."
+msgstr "Generando PDF..."
+
+#: src/Admin/edit-poll/EditPoll.js:480
+msgid "Download Results PDF"
+msgstr "Descargar PDF de Resultados"
+
+#: src/Admin/edit-poll/EditPoll.js:483
+msgid "Send this poll to all event participants who have not yet responded. Participants who have already answered will be skipped."
+msgstr "Envíe esta encuesta a todos los participantes del evento que aún no han respondido. Los participantes que ya han respondido serán omitidos."
+
+#: src/Admin/edit-poll/EditPoll.js:509
+msgid "Select an event..."
+msgstr "Seleccione un evento..."
+
+#: src/Admin/edit-poll/EditPoll.js:514
+#, js-format
+msgid "%s (%d participants)"
+msgstr "%s (%d participantes)"
+
+#: src/Admin/edit-poll/EditPoll.js:525
+msgid "Poll Title (Internal)"
+msgstr "Título de la Encuesta (Interno)"
+
+#: src/Admin/edit-poll/EditPoll.js:530
+msgid "Internal reference for this poll."
+msgstr "Referencia interna para esta encuesta."
+
+#: src/Admin/edit-poll/EditPoll.js:537
+#: src/Admin/polls-list/PollsList.js:110
+msgid "Question"
+msgstr "Pregunta"
+
+#: src/Admin/edit-poll/EditPoll.js:542
+msgid "The question shown to participants."
+msgstr "La pregunta mostrada a los participantes."
+
+#: src/Admin/edit-poll/EditPoll.js:549
+msgid "Options"
+msgstr "Opciones"
+
+#: src/Admin/edit-poll/EditPoll.js:551
+msgid "Add the multiple-choice options for participants to select from."
+msgstr "Agregue las opciones de opción múltiple para que los participantes seleccionen."
+
+#: src/Admin/edit-poll/EditPoll.js:574
+#, js-format
+msgid "Option %d"
+msgstr "Opción %d"
+
+#: src/Admin/edit-poll/EditPoll.js:590
+msgid "Move up"
+msgstr "Mover arriba"
+
+#: src/Admin/edit-poll/EditPoll.js:596
+msgid "Move down"
+msgstr "Mover abajo"
+
+#: src/Admin/edit-poll/EditPoll.js:610
+msgid "Add Option"
+msgstr "Agregar opción"
+
+#: src/Admin/edit-poll/EditPoll.js:615
+#: src/Admin/polls-list/PollsList.js:111
+msgid "Status"
+msgstr "Estado"
+
+#: src/Admin/edit-poll/EditPoll.js:622
+msgid "Draft"
+msgstr "Borrador"
+
+#: src/Admin/edit-poll/EditPoll.js:626
+msgid "Active"
+msgstr "Activo"
+
+#: src/Admin/edit-poll/EditPoll.js:630
+msgid "Closed"
+msgstr "Cerrado"
+
+#: src/Admin/edit-poll/EditPoll.js:634
+msgid "Active polls can receive responses. Closed polls do not accept new responses."
+msgstr "Las encuestas activas pueden recibir respuestas. Las encuestas cerradas no aceptan nuevas respuestas."
+
+#: src/Admin/edit-poll/EditPoll.js:645
+msgid "Saving..."
+msgstr "Guardando..."
+
+#: src/Admin/edit-poll/EditPoll.js:647
+msgid "Update Poll"
+msgstr "Actualizar encuesta"
+
+#: src/Admin/edit-poll/EditPoll.js:648
+msgid "Create Poll"
+msgstr "Crear encuesta"
+
+#: src/Admin/edit-poll/EditPoll.js:655
+msgid "Cancel"
+msgstr "Cancelar"
+
+#: src/Admin/polls-list/PollsList.js:31
+msgid "Are you sure you want to delete this poll?"
+msgstr "¿Está seguro de que desea eliminar esta encuesta?"
+
+#: src/Admin/polls-list/PollsList.js:93
+msgid "Add New"
+msgstr "Agregar nuevo"
+
+#: src/Admin/polls-list/PollsList.js:100
+msgid "No polls found. Create your first poll to get started."
+msgstr "No se encontraron encuestas. Cree su primera encuesta para comenzar."
+
+#: src/Admin/polls-list/PollsList.js:109
+msgid "Title"
+msgstr "Título"
+
+#: src/Admin/polls-list/PollsList.js:112
+msgid "Created"
+msgstr "Creado"
+
+#: src/public/poll-response/PollResponse.js:23
+msgid "Invalid poll link."
+msgstr "Enlace de encuesta no válido."
+
+#: src/public/poll-response/PollResponse.js:41
+msgid "Invalid or expired poll link."
+msgstr "Enlace de encuesta no válido o caducado."
+
+#: src/public/poll-response/PollResponse.js:69
+msgid "Failed to load poll."
+msgstr "No se pudo cargar la encuesta."
+
+#: src/public/poll-response/PollResponse.js:107
+msgid "Failed to submit your response. Please try again."
+msgstr "No se pudo enviar su respuesta. Inténtelo de nuevo."
+
+#: src/public/poll-response/PollResponse.js:144
+msgid "Error"
+msgstr "Error"
+
+#: src/public/poll-response/PollResponse.js:168
+msgid "you've already submitted your response to this poll."
+msgstr "Ya has enviado tu respuesta a esta encuesta."
+
+#: src/public/poll-response/PollResponse.js:176
+msgid "You've already submitted your response to this poll."
+msgstr "Ya has enviado tu respuesta a esta encuesta."
+
+#: src/public/poll-response/PollResponse.js:202
+msgid "Your response has been recorded successfully."
+msgstr "Tu respuesta ha sido registrada con éxito."
+
+#: src/public/poll-response/PollResponse.js:225
+msgid "Hi"
+msgstr "Hola"
+
+#: src/public/poll-response/PollResponse.js:256
+msgid "Submitting..."
+msgstr "Enviando..."
+
+#: src/public/poll-response/PollResponse.js:257
+msgid "Submit Response"
+msgstr "Enviar Respuesta"
 

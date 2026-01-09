@@ -60,6 +60,7 @@
 		"dist-archive:fair-platform": "wp dist-archive fair-platform dist --create-target-dir",
 		"dist-archive:fair-team": "wp dist-archive fair-team dist --create-target-dir",
 		"dist-archive:fair-audience": "wp dist-archive fair-audience dist --create-target-dir",
+		"translation:update": "node scripts/translation/update-translations.js",
 		"translation:untranslated": "node scripts/translation/get-untranslated.js",
 		"translation:coverage": "node scripts/translation/coverage-report.js",
 		"translation:validate": "node scripts/translation/validate-translations.js",
