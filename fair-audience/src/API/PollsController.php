@@ -10,6 +10,7 @@ namespace FairAudience\API;
 use FairAudience\Database\PollRepository;
 use FairAudience\Database\PollOptionRepository;
 use FairAudience\Database\PollAccessKeyRepository;
+use FairAudience\Database\PollResponseRepository;
 use FairAudience\Models\Poll;
 use WP_REST_Controller;
 use WP_REST_Server;
@@ -60,12 +61,20 @@ class PollsController extends WP_REST_Controller {
 	private $access_key_repository;
 
 	/**
+	 * Poll response repository instance.
+	 *
+	 * @var PollResponseRepository
+	 */
+	private $response_repository;
+
+	/**
 	 * Constructor.
 	 */
 	public function __construct() {
 		$this->poll_repository       = new PollRepository();
 		$this->option_repository     = new PollOptionRepository();
 		$this->access_key_repository = new PollAccessKeyRepository();
+		$this->response_repository   = new PollResponseRepository();
 	}
 
 	/**
@@ -233,6 +242,25 @@ class PollsController extends WP_REST_Controller {
 							'type'              => 'string',
 							'required'          => false,
 							'sanitize_callback' => 'sanitize_textarea_field',
+						),
+					),
+				),
+			)
+		);
+
+		// GET /fair-audience/v1/polls/{id}/results
+		register_rest_route(
+			$this->namespace,
+			'/' . $this->rest_base . '/(?P<id>\d+)/results',
+			array(
+				array(
+					'methods'             => WP_REST_Server::READABLE,
+					'callback'            => array( $this, 'get_results' ),
+					'permission_callback' => array( $this, 'get_results_permissions_check' ),
+					'args'                => array(
+						'id' => array(
+							'type'     => 'integer',
+							'required' => true,
 						),
 					),
 				),
@@ -510,6 +538,52 @@ class PollsController extends WP_REST_Controller {
 	}
 
 	/**
+	 * Get poll results with participant responses.
+	 *
+	 * @param WP_REST_Request $request Request object.
+	 * @return WP_REST_Response|WP_Error Response object or error.
+	 */
+	public function get_results( $request ) {
+		$id   = $request->get_param( 'id' );
+		$poll = $this->poll_repository->get_by_id( $id );
+
+		if ( ! $poll ) {
+			return new WP_Error(
+				'poll_not_found',
+				__( 'Poll not found.', 'fair-audience' ),
+				array( 'status' => 404 )
+			);
+		}
+
+		// Get poll options.
+		$options = $this->option_repository->get_by_poll( $id );
+
+		// Get responses with participant details.
+		$participants = $this->response_repository->get_responses_with_participants( $id );
+
+		$result = array(
+			'poll'         => array(
+				'id'       => $poll->id,
+				'title'    => $poll->title,
+				'question' => $poll->question,
+			),
+			'options'      => array_map(
+				function ( $option ) {
+					return array(
+						'id'    => $option->id,
+						'text'  => $option->option_text,
+						'order' => $option->display_order,
+					);
+				},
+				$options
+			),
+			'participants' => $participants,
+		);
+
+		return rest_ensure_response( $result );
+	}
+
+	/**
 	 * Permission callback for getting polls.
 	 *
 	 * @param WP_REST_Request $request Request object.
@@ -566,6 +640,16 @@ class PollsController extends WP_REST_Controller {
 	 * @return bool True if user has permission.
 	 */
 	public function send_invitations_permissions_check( $request ) {
+		return current_user_can( 'manage_options' );
+	}
+
+	/**
+	 * Permission callback for getting poll results.
+	 *
+	 * @param WP_REST_Request $request Request object.
+	 * @return bool True if user has permission.
+	 */
+	public function get_results_permissions_check( $request ) {
 		return current_user_can( 'manage_options' );
 	}
 }
