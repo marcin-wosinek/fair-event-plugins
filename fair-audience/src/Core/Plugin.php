@@ -59,5 +59,8 @@ class Plugin {
 
 		$event_participants_controller = new \FairAudience\API\EventParticipantsController();
 		$event_participants_controller->register_routes();
+
+		$import_controller = new \FairAudience\API\ImportController();
+		$import_controller->register_routes();
 	}
 }
