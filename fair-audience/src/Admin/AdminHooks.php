@@ -66,6 +66,26 @@ class AdminHooks {
 			'fair-audience-import',
 			array( $this, 'render_import_page' )
 		);
+
+		// Submenu page - Polls.
+		add_submenu_page(
+			'fair-audience',
+			__( 'Polls', 'fair-audience' ),
+			__( 'Polls', 'fair-audience' ),
+			'manage_options',
+			'fair-audience-polls',
+			array( $this, 'render_polls_list_page' )
+		);
+
+		// Hidden submenu page - Edit Poll.
+		add_submenu_page(
+			'', // Hidden from menu.
+			__( 'Edit Poll', 'fair-audience' ),
+			__( 'Edit Poll', 'fair-audience' ),
+			'manage_options',
+			'fair-audience-edit-poll',
+			array( $this, 'render_edit_poll_page' )
+		);
 	}
 
 	/**
@@ -101,6 +121,22 @@ class AdminHooks {
 	}
 
 	/**
+	 * Render Polls List page.
+	 */
+	public function render_polls_list_page() {
+		$page = new PollsListPage();
+		$page->render();
+	}
+
+	/**
+	 * Render Edit Poll page.
+	 */
+	public function render_edit_poll_page() {
+		$page = new EditPollPage();
+		$page->render();
+	}
+
+	/**
 	 * Enqueue admin scripts.
 	 *
 	 * @param string $hook Page hook.
@@ -126,6 +162,16 @@ class AdminHooks {
 		// Import page.
 		if ( 'fair-audience_page_fair-audience-import' === $hook ) {
 			$this->enqueue_page_script( 'import', $plugin_dir );
+		}
+
+		// Polls List page.
+		if ( 'fair-audience_page_fair-audience-polls' === $hook ) {
+			$this->enqueue_page_script( 'polls-list', $plugin_dir );
+		}
+
+		// Edit Poll page.
+		if ( 'admin_page_fair-audience-edit-poll' === $hook ) {
+			$this->enqueue_page_script( 'edit-poll', $plugin_dir );
 		}
 	}
 

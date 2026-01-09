@@ -30,6 +30,19 @@ const customConfig = {
 			process.cwd(),
 			'src/Admin/import/index.js',
 		),
+		'admin/polls-list/index': path.resolve(
+			process.cwd(),
+			'src/Admin/polls-list/index.js',
+		),
+		'admin/edit-poll/index': path.resolve(
+			process.cwd(),
+			'src/Admin/edit-poll/index.js',
+		),
+		// Public scripts
+		'public/poll-response/index': path.resolve(
+			process.cwd(),
+			'src/public/poll-response/index.js',
+		),
 	}),
 	plugins: [
 		...defaultConfig.plugins,
