@@ -67,6 +67,36 @@ class ImportController extends WP_REST_Controller {
 				),
 			)
 		);
+
+		// POST /fair-audience/v1/import/resolve-duplicates
+		register_rest_route(
+			$this->namespace,
+			'/' . $this->rest_base . '/resolve-duplicates',
+			array(
+				array(
+					'methods'             => WP_REST_Server::CREATABLE,
+					'callback'            => array( $this, 'resolve_duplicates' ),
+					'permission_callback' => array( $this, 'import_permissions_check' ),
+					'args'                => array(
+						'participants' => array(
+							'required'          => true,
+							'type'              => 'array',
+							'items'             => array(
+								'type'       => 'object',
+								'properties' => array(
+									'name'    => array( 'type' => 'string' ),
+									'surname' => array( 'type' => 'string' ),
+									'email'   => array( 'type' => 'string' ),
+								),
+							),
+							'validate_callback' => function ( $param ) {
+								return is_array( $param );
+							},
+						),
+					),
+				),
+			)
+		);
 	}
 
 	/**
@@ -151,13 +181,51 @@ class ImportController extends WP_REST_Controller {
 			}
 
 			$results = array(
-				'imported' => 0,
-				'skipped'  => 0,
-				'errors'   => array(),
+				'imported'   => 0,
+				'skipped'    => 0,
+				'errors'     => array(),
+				'duplicates' => array(),
 			);
 
-			// Process data rows (starting from row 2).
-			$row_count = count( $data );
+			// First pass: detect duplicate emails within the file.
+			$email_rows       = array();
+			$duplicate_emails = array();
+			$row_count        = count( $data );
+
+			for ( $i = 1; $i < $row_count; $i++ ) {
+				$row        = $data[ $i ];
+				$row_number = $i + 1;
+				$email      = isset( $row[ $email_col ] ) ? trim( (string) $row[ $email_col ] ) : '';
+
+				// Skip empty rows.
+				if ( empty( $email ) ) {
+					continue;
+				}
+
+				// Track which rows use each email.
+				if ( ! isset( $email_rows[ $email ] ) ) {
+					$email_rows[ $email ] = array();
+				}
+				$email_rows[ $email ][] = array(
+					'row'     => $row_number,
+					'name'    => isset( $row[ $name_col ] ) ? trim( (string) $row[ $name_col ] ) : '',
+					'surname' => isset( $row[ $surname_col ] ) ? trim( (string) $row[ $surname_col ] ) : '',
+				);
+			}
+
+			// Identify duplicates (emails used in more than one row).
+			foreach ( $email_rows as $email => $rows ) {
+				if ( count( $rows ) > 1 ) {
+					$duplicate_emails[]      = $email;
+					$results['duplicates'][] = array(
+						'email' => $email,
+						'rows'  => $rows,
+						'count' => count( $rows ),
+					);
+				}
+			}
+
+			// Second pass: Process non-duplicate rows.
 			for ( $i = 1; $i < $row_count; $i++ ) {
 				$row        = $data[ $i ];
 				$row_number = $i + 1;
@@ -169,6 +237,11 @@ class ImportController extends WP_REST_Controller {
 
 				// Skip empty rows.
 				if ( empty( $name ) && empty( $surname ) && empty( $email ) ) {
+					continue;
+				}
+
+				// Skip rows with duplicate emails (they'll be handled separately).
+				if ( in_array( $email, $duplicate_emails, true ) ) {
 					continue;
 				}
 
@@ -237,6 +310,89 @@ class ImportController extends WP_REST_Controller {
 				array( 'status' => 500 )
 			);
 		}
+	}
+
+	/**
+	 * Resolve duplicate participants by creating them with updated emails.
+	 *
+	 * @param WP_REST_Request $request Request object.
+	 * @return WP_REST_Response|WP_Error Response object or error.
+	 */
+	public function resolve_duplicates( $request ) {
+		$participants = $request->get_param( 'participants' );
+
+		if ( empty( $participants ) ) {
+			return new WP_Error(
+				'no_participants',
+				__( 'No participants provided.', 'fair-audience' ),
+				array( 'status' => 400 )
+			);
+		}
+
+		$results = array(
+			'imported' => 0,
+			'skipped'  => 0,
+			'errors'   => array(),
+		);
+
+		foreach ( $participants as $index => $participant_data ) {
+			// Validate required fields.
+			if ( empty( $participant_data['name'] ) || empty( $participant_data['surname'] ) || empty( $participant_data['email'] ) ) {
+				$results['errors'][] = sprintf(
+					/* translators: %d: participant index */
+					__( 'Participant %d: Missing required fields (name, surname, or email)', 'fair-audience' ),
+					$index + 1
+				);
+				continue;
+			}
+
+			$name    = sanitize_text_field( $participant_data['name'] );
+			$surname = sanitize_text_field( $participant_data['surname'] );
+			$email   = sanitize_email( $participant_data['email'] );
+
+			// Validate email format.
+			if ( ! is_email( $email ) ) {
+				$results['errors'][] = sprintf(
+					/* translators: 1: participant index, 2: email address */
+					__( 'Participant %1$d: Invalid email format: %2$s', 'fair-audience' ),
+					$index + 1,
+					$email
+				);
+				continue;
+			}
+
+			// Check if participant already exists.
+			$existing = $this->repository->get_by_email( $email );
+			if ( $existing ) {
+				++$results['skipped'];
+				continue;
+			}
+
+			// Create new participant.
+			$participant = new Participant();
+			$participant->populate(
+				array(
+					'name'          => $name,
+					'surname'       => $surname,
+					'email'         => $email,
+					'instagram'     => '',
+					'email_profile' => 'minimal',
+				)
+			);
+
+			if ( $participant->save() ) {
+				++$results['imported'];
+			} else {
+				$results['errors'][] = sprintf(
+					/* translators: 1: participant index, 2: name and surname */
+					__( 'Participant %1$d: Failed to save participant: %2$s', 'fair-audience' ),
+					$index + 1,
+					$name . ' ' . $surname
+				);
+			}
+		}
+
+		return rest_ensure_response( $results );
 	}
 
 	/**

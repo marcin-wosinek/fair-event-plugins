@@ -9,6 +9,7 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "POT-Creation-Date: 2026-01-09T08:10:48+00:00\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"Language: \n"
 "X-Generator: WP-CLI 2.12.0\n"
 "X-Domain: fair-audience\n"
 
@@ -39,29 +40,28 @@ msgstr ""
 msgid "https://github.com/marcin-wosinek"
 msgstr ""
 
-#: src/Admin/AdminHooks.php:43
-#: src/Admin/AdminHooks.php:44
 #: src/Admin/all-participants/AllParticipants.js:116
 #: src/Admin/all-participants/AllParticipants.js:125
 #: src/Admin/all-participants/AllParticipants.js:135
 msgid "All Participants"
 msgstr "Alle Teilnehmer"
 
-#: src/Admin/AdminHooks.php:53
-#: src/Admin/AdminHooks.php:54
+#: src/Admin/AdminHooks.php:43
+#: src/Admin/AdminHooks.php:44
 msgid "By Event"
 msgstr "Nach Veranstaltung"
 
-#: src/Admin/AdminHooks.php:63
-#: src/Admin/AdminHooks.php:64
+#: src/Admin/AdminHooks.php:53
+#: src/Admin/AdminHooks.php:54
 #: src/Admin/event-participants/EventParticipants.js:123
 #: src/Admin/event-participants/EventParticipants.js:132
 #: src/Admin/event-participants/EventParticipants.js:149
 msgid "Event Participants"
 msgstr "Veranstaltungsteilnehmer"
 
-#: src/Admin/AdminHooks.php:73
-#: src/Admin/AdminHooks.php:74
+#: src/Admin/AdminHooks.php:63
+#: src/Admin/AdminHooks.php:64
+#: src/Admin/import/Import.js:189
 msgid "Import"
 msgstr "Import"
 
@@ -302,11 +302,167 @@ msgstr "Datum"
 msgid "View Participants"
 msgstr "Teilnehmer anzeigen"
 
-#: src/Admin/import/Import.js:7
+#: src/Admin/import/Import.js:148
 msgid "Import Participants"
 msgstr "Teilnehmer importieren"
 
-#: src/Admin/import/Import.js:11
-msgid "Import functionality will be implemented in a future version."
-msgstr "Importfunktion wird in einer zukünftigen Version implementiert."
+#: src/API/ImportController.php:115
+msgid "No file uploaded."
+msgstr "Keine Datei hochgeladen."
+
+#: src/API/ImportController.php:126
+msgid "File upload failed."
+msgstr "Datei-Upload fehlgeschlagen."
+
+#: src/API/ImportController.php:140
+msgid "Invalid file type. Please upload an Excel file (.xlsx)."
+msgstr "Ungültiger Dateityp. Bitte laden Sie eine Excel-Datei (.xlsx) hoch."
+
+#: src/API/ImportController.php:156
+msgid "The uploaded file is empty."
+msgstr "Die hochgeladene Datei ist leer."
+
+#. translators: 1: found headers list
+#: src/API/ImportController.php:176
+#, php-format
+msgid "Invalid file format. Required columns: Nombre, Apellidos, Email. Found columns: %s"
+msgstr "Ungültiges Dateiformat. Erforderliche Spalten: Nombre, Apellidos, Email. Gefundene Spalten: %s"
+
+#. translators: %d: row number
+#: src/API/ImportController.php:252
+#, php-format
+msgid "Row %d: Missing required fields (name, surname, or email)"
+msgstr "Zeile %d: Erforderliche Felder fehlen (Name, Nachname oder E-Mail)"
+
+#. translators: 1: row number, 2: email address
+#: src/API/ImportController.php:262
+#, php-format
+msgid "Row %1$d: Invalid email format: %2$s"
+msgstr "Zeile %1$d: Ungültiges E-Mail-Format: %2$s"
+
+#. translators: 1: row number, 2: email address
+#: src/API/ImportController.php:293
+#, php-format
+msgid "Row %1$d: Failed to save participant: %2$s"
+msgstr "Zeile %1$d: Teilnehmer konnte nicht gespeichert werden: %2$s"
+
+#. translators: %s: error message
+#: src/API/ImportController.php:307
+#, php-format
+msgid "Import failed: %s"
+msgstr "Import fehlgeschlagen: %s"
+
+#: src/API/ImportController.php:327
+msgid "No participants provided."
+msgstr "Keine Teilnehmer bereitgestellt."
+
+#. translators: %d: participant index
+#: src/API/ImportController.php:343
+#, php-format
+msgid "Participant %d: Missing required fields (name, surname, or email)"
+msgstr "Teilnehmer %d: Erforderliche Felder fehlen (Name, Nachname oder E-Mail)"
+
+#. translators: 1: participant index, 2: email address
+#: src/API/ImportController.php:357
+#, php-format
+msgid "Participant %1$d: Invalid email format: %2$s"
+msgstr "Teilnehmer %1$d: Ungültiges E-Mail-Format: %2$s"
+
+#. translators: 1: participant index, 2: name and surname
+#: src/API/ImportController.php:388
+#, php-format
+msgid "Participant %1$d: Failed to save participant: %2$s"
+msgstr "Teilnehmer %1$d: Konnte Teilnehmer nicht speichern: %2$s"
+
+#: src/Admin/import/Import.js:25
+msgid "Please select a file to import."
+msgstr "Bitte wählen Sie eine Datei zum Importieren aus."
+
+#: src/Admin/import/Import.js:69
+msgid "Import failed. Please try again."
+msgstr "Import fehlgeschlagen. Bitte versuchen Sie es erneut."
+
+#: src/Admin/import/Import.js:111
+msgid "No participants to create. Please provide email addresses or select skip."
+msgstr "Keine Teilnehmer zu erstellen. Bitte geben Sie E-Mail-Adressen an oder wählen Sie Überspringen."
+
+#: src/Admin/import/Import.js:136
+msgid "Failed to resolve duplicates. Please try again."
+msgstr "Duplikate konnten nicht aufgelöst werden. Bitte versuchen Sie es erneut."
+
+#: src/Admin/import/Import.js:152
+msgid "Import from Entradium"
+msgstr "Import von Entradium"
+
+#: src/Admin/import/Import.js:154
+msgid "Upload an Entradium Excel file (.xlsx) to import participants. The file must contain columns: Nombre, Apellidos, and Email."
+msgstr "Laden Sie eine Entradium Excel-Datei (.xlsx) hoch, um Teilnehmer zu importieren. Die Datei muss die Spalten Nombre, Apellidos und Email enthalten."
+
+#: src/Admin/import/Import.js:174
+msgid "Selected file:"
+msgstr "Ausgewählte Datei:"
+
+#: src/Admin/import/Import.js:188
+msgid "Importing..."
+msgstr "Importiere..."
+
+#: src/Admin/import/Import.js:222
+msgid "Import Partially Complete"
+msgstr "Import teilweise abgeschlossen"
+
+#: src/Admin/import/Import.js:226
+msgid "Import Complete"
+msgstr "Import abgeschlossen"
+
+#: src/Admin/import/Import.js:234
+msgid "Imported:"
+msgstr "Importiert:"
+
+#: src/Admin/import/Import.js:238
+msgid "Skipped (already exists):"
+msgstr "Übersprungen (bereits vorhanden):"
+
+#: src/Admin/import/Import.js:247
+msgid "Duplicates requiring resolution:"
+msgstr "Duplikate, die Klärung erfordern:"
+
+#: src/Admin/import/Import.js:265
+msgid "Resolve Duplicate Emails"
+msgstr "Duplikate E-Mail-Adressen auflösen"
+
+#: src/Admin/import/Import.js:271
+msgid "The following people have duplicate email addresses. Please provide a unique email for each person or skip them."
+msgstr "Die folgenden Personen haben doppelte E-Mail-Adressen. Bitte geben Sie für jede Person eine eindeutige E-Mail-Adresse an oder überspringen Sie diese."
+
+#: src/Admin/import/Import.js:292
+msgid "Original Email:"
+msgstr "Ursprüngliche E-Mail:"
+
+#: src/Admin/import/Import.js:355
+msgid "New Email:"
+msgstr "Neue E-Mail:"
+
+#: src/Admin/import/Import.js:383
+msgid "Enter new email"
+msgstr "Neue E-Mail eingeben"
+
+#: src/Admin/import/Import.js:402
+msgid "Use Gmail Alias"
+msgstr "Gmail-Alias verwenden"
+
+#: src/Admin/import/Import.js:439
+msgid "Skip this person"
+msgstr "Diese Person überspringen"
+
+#: src/Admin/import/Import.js:462
+msgid "Resolving..."
+msgstr "Löse auf..."
+
+#: src/Admin/import/Import.js:466
+msgid "Create Participants"
+msgstr "Teilnehmer erstellen"
+
+#: src/Admin/import/Import.js:483
+msgid "Errors:"
+msgstr "Fehler:"
 

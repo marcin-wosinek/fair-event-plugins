@@ -8,6 +8,8 @@ export default function Import() {
 	const [isUploading, setIsUploading] = useState(false);
 	const [results, setResults] = useState(null);
 	const [error, setError] = useState(null);
+	const [duplicateResolutions, setDuplicateResolutions] = useState({});
+	const [isResolvingDuplicates, setIsResolvingDuplicates] = useState(false);
 
 	const handleFileChange = (event) => {
 		const selectedFile = event.target.files[0];
@@ -27,6 +29,7 @@ export default function Import() {
 		setIsUploading(true);
 		setError(null);
 		setResults(null);
+		setDuplicateResolutions({});
 
 		try {
 			const formData = new FormData();
@@ -42,6 +45,24 @@ export default function Import() {
 			setFile(null);
 			// Reset file input
 			document.getElementById('file-input').value = '';
+
+			// Initialize duplicate resolutions with default values
+			if (response.duplicates && response.duplicates.length > 0) {
+				const initialResolutions = {};
+				response.duplicates.forEach((dup) => {
+					dup.rows.forEach((row) => {
+						initialResolutions[`${dup.email}-${row.row}`] = {
+							email: '',
+							action: 'edit', // 'edit', 'skip', or 'alias'
+							originalEmail: dup.email,
+							row: row.row,
+							name: row.name,
+							surname: row.surname,
+						};
+					});
+				});
+				setDuplicateResolutions(initialResolutions);
+			}
 		} catch (err) {
 			setError(
 				err.message ||
@@ -49,6 +70,76 @@ export default function Import() {
 			);
 		} finally {
 			setIsUploading(false);
+		}
+	};
+
+	const handleResolutionChange = (key, field, value) => {
+		setDuplicateResolutions((prev) => ({
+			...prev,
+			[key]: {
+				...prev[key],
+				[field]: value,
+			},
+		}));
+	};
+
+	const handleUseGmailAlias = (key) => {
+		const resolution = duplicateResolutions[key];
+		const baseEmail = resolution.originalEmail.replace('@gmail.com', '');
+		const firstName = resolution.name.toLowerCase().replace(/\s+/g, '');
+		const aliasEmail = `${baseEmail}+${firstName}@gmail.com`;
+
+		handleResolutionChange(key, 'email', aliasEmail);
+		handleResolutionChange(key, 'action', 'alias');
+	};
+
+	const handleResolveDuplicates = async () => {
+		setIsResolvingDuplicates(true);
+		setError(null);
+
+		try {
+			const participantsToCreate = Object.values(duplicateResolutions)
+				.filter((res) => res.action !== 'skip' && res.email)
+				.map((res) => ({
+					name: res.name,
+					surname: res.surname,
+					email: res.email,
+				}));
+
+			if (participantsToCreate.length === 0) {
+				setError(
+					__(
+						'No participants to create. Please provide email addresses or select skip.',
+						'fair-audience'
+					)
+				);
+				setIsResolvingDuplicates(false);
+				return;
+			}
+
+			const response = await apiFetch({
+				path: '/fair-audience/v1/import/resolve-duplicates',
+				method: 'POST',
+				data: { participants: participantsToCreate },
+			});
+
+			// Update results to show the resolution
+			setResults((prev) => ({
+				...prev,
+				imported: prev.imported + response.imported,
+				duplicates: [],
+			}));
+			setDuplicateResolutions({});
+		} catch (err) {
+			setError(
+				err.message ||
+					__(
+						'Failed to resolve duplicates. Please try again.',
+						'fair-audience'
+					)
+			);
+		} finally {
+			setIsResolvingDuplicates(false);
 		}
 	};
 
@@ -115,10 +206,27 @@ export default function Import() {
 
 					{results && (
 						<div style={{ marginTop: '20px' }}>
-							<Notice status="success" isDismissible={false}>
+							<Notice
+								status={
+									results.duplicates &&
+									results.duplicates.length > 0
+										? 'warning'
+										: 'success'
+								}
+								isDismissible={false}
+							>
 								<p>
 									<strong>
-										{__('Import Complete', 'fair-audience')}
+										{results.duplicates &&
+										results.duplicates.length > 0
+											? __(
+													'Import Partially Complete',
+													'fair-audience'
+												)
+											: __(
+													'Import Complete',
+													'fair-audience'
+												)}
 									</strong>
 								</p>
 								<ul>
@@ -133,8 +241,236 @@ export default function Import() {
 										)}{' '}
 										{results.skipped}
 									</li>
+									{results.duplicates &&
+										results.duplicates.length > 0 && (
+											<li>
+												{__(
+													'Duplicates requiring resolution:',
+													'fair-audience'
+												)}{' '}
+												{results.duplicates.reduce(
+													(sum, dup) =>
+														sum + dup.count,
+													0
+												)}
+											</li>
+										)}
 								</ul>
 							</Notice>
+
+							{results.duplicates &&
+								results.duplicates.length > 0 && (
+									<div style={{ marginTop: '20px' }}>
+										<h3>
+											{__(
+												'Resolve Duplicate Emails',
+												'fair-audience'
+											)}
+										</h3>
+										<p>
+											{__(
+												'The following people have duplicate email addresses. Please provide a unique email for each person or skip them.',
+												'fair-audience'
+											)}
+										</p>
+
+										{results.duplicates.map(
+											(dup, dupIndex) => (
+												<div
+													key={dupIndex}
+													style={{
+														marginTop: '20px',
+														padding: '15px',
+														backgroundColor:
+															'#fff3cd',
+														border: '1px solid #ffc107',
+														borderRadius: '4px',
+													}}
+												>
+													<p>
+														<strong>
+															{__(
+																'Original Email:',
+																'fair-audience'
+															)}
+														</strong>{' '}
+														{dup.email}
+													</p>
+
+													{dup.rows.map(
+														(row, rowIndex) => {
+															const key = `${dup.email}-${row.row}`;
+															const resolution =
+																duplicateResolutions[
+																	key
+																];
+
+															return (
+																<div
+																	key={
+																		rowIndex
+																	}
+																	style={{
+																		marginTop:
+																			'15px',
+																		padding:
+																			'10px',
+																		backgroundColor:
+																			'#fff',
+																		border: '1px solid #ddd',
+																		borderRadius:
+																			'4px',
+																	}}
+																>
+																	<p>
+																		<strong>
+																			{
+																				row.name
+																			}{' '}
+																			{
+																				row.surname
+																			}
+																		</strong>{' '}
+																		(Row{' '}
+																		{
+																			row.row
+																		}
+																		)
+																	</p>
+
+																	<div
+																		style={{
+																			marginTop:
+																				'10px',
+																			display:
+																				'flex',
+																			gap: '10px',
+																			alignItems:
+																				'center',
+																			flexWrap:
+																				'wrap',
+																		}}
+																	>
+																		<label>
+																			{__(
+																				'New Email:',
+																				'fair-audience'
+																			)}
+																			<input
+																				type="email"
+																				value={
+																					resolution?.email ||
+																					''
+																				}
+																				onChange={(
+																					e
+																				) =>
+																					handleResolutionChange(
+																						key,
+																						'email',
+																						e
+																							.target
+																							.value
+																					)
+																				}
+																				style={{
+																					marginLeft:
+																						'10px',
+																					padding:
+																						'5px',
+																					width: '250px',
+																				}}
+																				placeholder={__(
+																					'Enter new email',
+																					'fair-audience'
+																				)}
+																			/>
+																		</label>
+
+																		{dup.email.includes(
+																			'@gmail.com'
+																		) && (
+																			<Button
+																				isSecondary
+																				isSmall
+																				onClick={() =>
+																					handleUseGmailAlias(
+																						key
+																					)
+																				}
+																			>
+																				{__(
+																					'Use Gmail Alias',
+																					'fair-audience'
+																				)}
+																			</Button>
+																		)}
+
+																		<label
+																			style={{
+																				marginLeft:
+																					'10px',
+																			}}
+																		>
+																			<input
+																				type="checkbox"
+																				checked={
+																					resolution?.action ===
+																					'skip'
+																				}
+																				onChange={(
+																					e
+																				) =>
+																					handleResolutionChange(
+																						key,
+																						'action',
+																						e
+																							.target
+																							.checked
+																							? 'skip'
+																							: 'edit'
+																					)
+																				}
+																				style={{
+																					marginRight:
+																						'5px',
+																				}}
+																			/>
+																			{__(
+																				'Skip this person',
+																				'fair-audience'
+																			)}
+																		</label>
+																	</div>
+																</div>
+															);
+														}
+													)}
+												</div>
+											)
+										)}
+
+										<div style={{ marginTop: '20px' }}>
+											<Button
+												isPrimary
+												onClick={
+													handleResolveDuplicates
+												}
+												disabled={isResolvingDuplicates}
+											>
+												{isResolvingDuplicates
+													? __(
+															'Resolving...',
+															'fair-audience'
+														)
+													: __(
+															'Create Participants',
+															'fair-audience'
+														)}
+											</Button>
+										</div>
+									</div>
+								)}
 
 							{results.errors && results.errors.length > 0 && (
 								<Notice
