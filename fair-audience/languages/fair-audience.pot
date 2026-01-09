@@ -1,0 +1,309 @@
+# Copyright (C) 2026 Marcin Wosinek
+# This file is distributed under the GPL-3.0-or-later.
+msgid ""
+msgstr ""
+"Project-Id-Version: Fair Audience 0.1.0\n"
+"Report-Msgid-Bugs-To: https://wordpress.org/support/plugin/fair-audience\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language-Team: LANGUAGE <LL@li.org>\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"POT-Creation-Date: 2026-01-09T07:36:12+00:00\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"X-Generator: WP-CLI 2.12.0\n"
+"X-Domain: fair-audience\n"
+
+#. Plugin Name of the plugin
+#: fair-audience.php
+#: src/Admin/AdminHooks.php:31
+#: src/Admin/AdminHooks.php:32
+msgid "Fair Audience"
+msgstr ""
+
+#. Plugin URI of the plugin
+#: fair-audience.php
+msgid "https://github.com/marcin-wosinek/fair-event-plugins"
+msgstr ""
+
+#. Description of the plugin
+#: fair-audience.php
+msgid "Manage event participants with custom profiles and many-to-many event relationships"
+msgstr ""
+
+#. Author of the plugin
+#: fair-audience.php
+msgid "Marcin Wosinek"
+msgstr ""
+
+#. Author URI of the plugin
+#: fair-audience.php
+msgid "https://github.com/marcin-wosinek"
+msgstr ""
+
+#: src/Admin/AdminHooks.php:43
+#: src/Admin/AdminHooks.php:44
+msgid "By Event"
+msgstr ""
+
+#: src/Admin/AdminHooks.php:53
+#: src/Admin/AdminHooks.php:54
+#: src/Admin/event-participants/EventParticipants.js:123
+#: src/Admin/event-participants/EventParticipants.js:132
+#: src/Admin/event-participants/EventParticipants.js:148
+msgid "Event Participants"
+msgstr ""
+
+#: src/Admin/AdminHooks.php:63
+#: src/Admin/AdminHooks.php:64
+msgid "Import"
+msgstr ""
+
+#: src/API/EventParticipantsController.php:175
+#: src/API/EventParticipantsController.php:217
+msgid "Event not found."
+msgstr ""
+
+#: src/API/EventParticipantsController.php:227
+#: src/API/ParticipantsController.php:154
+#: src/API/ParticipantsController.php:219
+#: src/API/ParticipantsController.php:277
+msgid "Participant not found."
+msgstr ""
+
+#: src/API/EventParticipantsController.php:237
+msgid "Failed to add participant. May already exist."
+msgstr ""
+
+#: src/API/EventParticipantsController.php:245
+msgid "Participant added successfully."
+msgstr ""
+
+#: src/API/EventParticipantsController.php:266
+msgid "Failed to update label."
+msgstr ""
+
+#: src/API/EventParticipantsController.php:273
+msgid "Label updated successfully."
+msgstr ""
+
+#: src/API/EventParticipantsController.php:293
+msgid "Failed to remove participant."
+msgstr ""
+
+#: src/API/EventParticipantsController.php:300
+msgid "Participant removed successfully."
+msgstr ""
+
+#: src/API/ParticipantsController.php:185
+#: src/API/ParticipantsController.php:231
+msgid "A participant with this email already exists."
+msgstr ""
+
+#: src/API/ParticipantsController.php:193
+msgid "Failed to create participant."
+msgstr ""
+
+#: src/API/ParticipantsController.php:201
+msgid "Participant created successfully."
+msgstr ""
+
+#: src/API/ParticipantsController.php:251
+msgid "Failed to update participant."
+msgstr ""
+
+#: src/API/ParticipantsController.php:259
+msgid "Participant updated successfully."
+msgstr ""
+
+#: src/API/ParticipantsController.php:285
+msgid "Failed to delete participant."
+msgstr ""
+
+#: src/API/ParticipantsController.php:292
+msgid "Participant deleted successfully."
+msgstr ""
+
+#: src/Admin/all-participants/AllParticipants.js:85
+#: src/Admin/all-participants/AllParticipants.js:109
+#: src/Admin/all-participants/AllParticipants.js:127
+#: src/Admin/event-participants/EventParticipants.js:81
+#: src/Admin/event-participants/EventParticipants.js:95
+#: src/Admin/event-participants/EventParticipants.js:116
+#: src/Admin/event-participants/EventParticipants.js:134
+#: src/Admin/events-list/EventsList.js:38
+msgid "Error: "
+msgstr ""
+
+#: src/Admin/all-participants/AllParticipants.js:92
+msgid "Are you sure you want to delete this participant?"
+msgstr ""
+
+#: src/Admin/all-participants/AllParticipants.js:116
+#: src/Admin/all-participants/AllParticipants.js:125
+#: src/Admin/all-participants/AllParticipants.js:135
+msgid "All Participants"
+msgstr ""
+
+#: src/Admin/all-participants/AllParticipants.js:138
+#: src/Admin/all-participants/AllParticipants.js:204
+#: src/Admin/event-participants/EventParticipants.js:152
+msgid "Add Participant"
+msgstr ""
+
+#: src/Admin/all-participants/AllParticipants.js:143
+#: src/Admin/event-participants/EventParticipants.js:157
+#, js-format
+msgid "%d participants"
+msgstr ""
+
+#: src/Admin/all-participants/AllParticipants.js:151
+#: src/Admin/event-participants/EventParticipants.js:165
+msgid "Name"
+msgstr ""
+
+#: src/Admin/all-participants/AllParticipants.js:152
+#: src/Admin/event-participants/EventParticipants.js:166
+msgid "Email"
+msgstr ""
+
+#: src/Admin/all-participants/AllParticipants.js:153
+#: src/Admin/event-participants/EventParticipants.js:167
+msgid "Instagram"
+msgstr ""
+
+#: src/Admin/all-participants/AllParticipants.js:154
+#: src/Admin/all-participants/AllParticipants.js:253
+msgid "Email Profile"
+msgstr ""
+
+#: src/Admin/all-participants/AllParticipants.js:155
+#: src/Admin/event-participants/EventParticipants.js:169
+msgid "Actions"
+msgstr ""
+
+#: src/Admin/all-participants/AllParticipants.js:184
+msgid "Edit"
+msgstr ""
+
+#: src/Admin/all-participants/AllParticipants.js:191
+msgid "Delete"
+msgstr ""
+
+#: src/Admin/all-participants/AllParticipants.js:203
+msgid "Edit Participant"
+msgstr ""
+
+#: src/Admin/all-participants/AllParticipants.js:211
+msgid "Name *"
+msgstr ""
+
+#: src/Admin/all-participants/AllParticipants.js:219
+msgid "Surname *"
+msgstr ""
+
+#: src/Admin/all-participants/AllParticipants.js:230
+msgid "Email *"
+msgstr ""
+
+#: src/Admin/all-participants/AllParticipants.js:239
+msgid "Instagram Handle"
+msgstr ""
+
+#: src/Admin/all-participants/AllParticipants.js:247
+msgid "Enter handle only (without @)"
+msgstr ""
+
+#: src/Admin/all-participants/AllParticipants.js:257
+msgid "Minimal"
+msgstr ""
+
+#: src/Admin/all-participants/AllParticipants.js:261
+msgid "In the Loop"
+msgstr ""
+
+#: src/Admin/all-participants/AllParticipants.js:277
+msgid "Update"
+msgstr ""
+
+#: src/Admin/all-participants/AllParticipants.js:278
+#: src/Admin/event-participants/EventParticipants.js:286
+msgid "Add"
+msgstr ""
+
+#: src/Admin/event-participants/EventParticipants.js:27
+msgid "No event ID provided"
+msgstr ""
+
+#: src/Admin/event-participants/EventParticipants.js:102
+msgid "Remove this participant from the event?"
+msgstr ""
+
+#: src/Admin/event-participants/EventParticipants.js:145
+#, js-format
+msgid "Participants for %s"
+msgstr ""
+
+#: src/Admin/event-participants/EventParticipants.js:168
+#: src/Admin/event-participants/EventParticipants.js:264
+msgid "Label"
+msgstr ""
+
+#: src/Admin/event-participants/EventParticipants.js:195
+#: src/Admin/event-participants/EventParticipants.js:268
+#: src/Admin/events-list/EventsList.js:62
+msgid "Interested"
+msgstr ""
+
+#: src/Admin/event-participants/EventParticipants.js:202
+#: src/Admin/event-participants/EventParticipants.js:275
+#: src/Admin/events-list/EventsList.js:63
+msgid "Signed Up"
+msgstr ""
+
+#: src/Admin/event-participants/EventParticipants.js:225
+msgid "Remove"
+msgstr ""
+
+#: src/Admin/event-participants/EventParticipants.js:235
+msgid "Add Participant to Event"
+msgstr ""
+
+#: src/Admin/event-participants/EventParticipants.js:241
+msgid "Select Participant"
+msgstr ""
+
+#: src/Admin/event-participants/EventParticipants.js:248
+msgid "— Select —"
+msgstr ""
+
+#: src/Admin/events-list/EventsList.js:27
+#: src/Admin/events-list/EventsList.js:36
+#: src/Admin/events-list/EventsList.js:47
+#: src/Admin/events-list/EventsList.js:55
+msgid "Events"
+msgstr ""
+
+#: src/Admin/events-list/EventsList.js:48
+msgid "No events found."
+msgstr ""
+
+#: src/Admin/events-list/EventsList.js:60
+msgid "Event"
+msgstr ""
+
+#: src/Admin/events-list/EventsList.js:61
+msgid "Date"
+msgstr ""
+
+#: src/Admin/events-list/EventsList.js:77
+msgid "View Participants"
+msgstr ""
+
+#: src/Admin/import/Import.js:7
+msgid "Import Participants"
+msgstr ""
+
+#: src/Admin/import/Import.js:11
+msgid "Import functionality will be implemented in a future version."
+msgstr ""

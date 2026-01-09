@@ -84,6 +84,12 @@ const plugins = [
 		phpFiles: ['fair-team/fair-team.php'],
 		readmeFiles: ['fair-team/readme.txt'],
 	},
+	{
+		name: 'fair-audience',
+		packagePath: 'fair-audience/package.json',
+		phpFiles: ['fair-audience/fair-audience.php'],
+		readmeFiles: ['fair-audience/readme.txt'],
+	},
 ];
 
 /**

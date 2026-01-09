@@ -49,6 +49,7 @@ jobs:
                       ./fair-rsvp/vendor
                       ./fair-platform/vendor
                       ./fair-team/vendor
+                      ./fair-audience/vendor
                       ./vendor
                   key: ${{ runner.os }}-php-${{ hashFiles('**/composer.lock') }}
                   restore-keys: |

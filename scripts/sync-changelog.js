@@ -53,6 +53,11 @@ const plugins = [
 		changelogPath: 'fair-team/CHANGELOG.md',
 		readmeFiles: ['fair-team/readme.txt'],
 	},
+	{
+		name: 'fair-audience',
+		changelogPath: 'fair-audience/CHANGELOG.md',
+		readmeFiles: ['fair-audience/readme.txt'],
+	},
 ];
 
 /**
