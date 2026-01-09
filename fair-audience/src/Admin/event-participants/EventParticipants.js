@@ -142,6 +142,7 @@ export default function EventParticipants() {
 			<h1>
 				{eventTitle
 					? sprintf(
+							/* translators: %s: event title */
 							__('Participants for %s', 'fair-audience'),
 							eventTitle
 						)
@@ -154,6 +155,7 @@ export default function EventParticipants() {
 
 			<p>
 				{sprintf(
+					/* translators: %d: number of participants */
 					__('%d participants', 'fair-audience'),
 					participants.length
 				)}

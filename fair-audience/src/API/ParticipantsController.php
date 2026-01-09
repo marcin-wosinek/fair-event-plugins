@@ -297,7 +297,7 @@ class ParticipantsController extends WP_REST_Controller {
 	/**
 	 * Prepare item for response.
 	 *
-	 * @param Participant         $participant Participant model.
+	 * @param Participant     $participant Participant model.
 	 * @param WP_REST_Request $request     Request object.
 	 * @return array Response data.
 	 */

@@ -7,6 +7,7 @@
 export const config = {
 	// Active plugins with translations
 	plugins: [
+		{ name: 'fair-audience', textDomain: 'fair-audience' },
 		{ name: 'fair-events', textDomain: 'fair-events' },
 		{ name: 'fair-calendar-button', textDomain: 'fair-calendar-button' },
 		{ name: 'fair-rsvp', textDomain: 'fair-rsvp' },

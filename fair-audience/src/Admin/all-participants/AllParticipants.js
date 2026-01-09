@@ -140,6 +140,7 @@ export default function AllParticipants() {
 
 			<p>
 				{sprintf(
+					/* translators: %d: number of participants */
 					__('%d participants', 'fair-audience'),
 					participants.length
 				)}
