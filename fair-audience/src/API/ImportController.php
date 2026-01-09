@@ -8,6 +8,7 @@
 namespace FairAudience\API;
 
 use FairAudience\Database\ParticipantRepository;
+use FairAudience\Database\EventParticipantRepository;
 use FairAudience\Models\Participant;
 use PhpOffice\PhpSpreadsheet\IOFactory;
 use WP_REST_Controller;
@@ -45,10 +46,18 @@ class ImportController extends WP_REST_Controller {
 	private $repository;
 
 	/**
+	 * Event participant repository instance.
+	 *
+	 * @var EventParticipantRepository
+	 */
+	private $event_participant_repository;
+
+	/**
 	 * Constructor.
 	 */
 	public function __construct() {
-		$this->repository = new ParticipantRepository();
+		$this->repository                   = new ParticipantRepository();
+		$this->event_participant_repository = new EventParticipantRepository();
 	}
 
 	/**
@@ -118,6 +127,23 @@ class ImportController extends WP_REST_Controller {
 		}
 
 		$file = $files['file'];
+
+		// Get optional event_id parameter.
+		$event_id = $request->get_param( 'event_id' );
+		if ( ! empty( $event_id ) ) {
+			$event_id = absint( $event_id );
+			// Validate that the event exists.
+			$event = get_post( $event_id );
+			if ( ! $event || 'fair_event' !== $event->post_type ) {
+				return new WP_Error(
+					'invalid_event',
+					__( 'Invalid event ID provided.', 'fair-audience' ),
+					array( 'status' => 400 )
+				);
+			}
+		} else {
+			$event_id = null;
+		}
 
 		// Check for upload errors.
 		if ( $file['error'] !== UPLOAD_ERR_OK ) {
@@ -287,6 +313,15 @@ class ImportController extends WP_REST_Controller {
 
 				if ( $participant->save() ) {
 					++$results['imported'];
+
+					// If event_id is provided, associate participant with event.
+					if ( $event_id ) {
+						$this->event_participant_repository->add_participant_to_event(
+							$event_id,
+							$participant->id,
+							'signed_up'
+						);
+					}
 				} else {
 					$results['errors'][] = sprintf(
 						/* translators: 1: row number, 2: email address */
@@ -327,6 +362,23 @@ class ImportController extends WP_REST_Controller {
 				__( 'No participants provided.', 'fair-audience' ),
 				array( 'status' => 400 )
 			);
+		}
+
+		// Get optional event_id parameter.
+		$event_id = $request->get_param( 'event_id' );
+		if ( ! empty( $event_id ) ) {
+			$event_id = absint( $event_id );
+			// Validate that the event exists.
+			$event = get_post( $event_id );
+			if ( ! $event || 'fair_event' !== $event->post_type ) {
+				return new WP_Error(
+					'invalid_event',
+					__( 'Invalid event ID provided.', 'fair-audience' ),
+					array( 'status' => 400 )
+				);
+			}
+		} else {
+			$event_id = null;
 		}
 
 		$results = array(
@@ -382,6 +434,15 @@ class ImportController extends WP_REST_Controller {
 
 			if ( $participant->save() ) {
 				++$results['imported'];
+
+				// If event_id is provided, associate participant with event.
+				if ( $event_id ) {
+					$this->event_participant_repository->add_participant_to_event(
+						$event_id,
+						$participant->id,
+						'signed_up'
+					);
+				}
 			} else {
 				$results['errors'][] = sprintf(
 					/* translators: 1: participant index, 2: name and surname */

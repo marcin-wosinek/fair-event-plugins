@@ -61,7 +61,7 @@ msgstr "Participantes del Evento"
 
 #: src/Admin/AdminHooks.php:63
 #: src/Admin/AdminHooks.php:64
-#: src/Admin/import/Import.js:189
+#: src/Admin/import/Import.js:246
 msgid "Import"
 msgstr "Importar"
 
@@ -302,167 +302,184 @@ msgstr "Fecha"
 msgid "View Participants"
 msgstr "Ver Participantes"
 
-#: src/Admin/import/Import.js:148
+#: src/Admin/import/Import.js:177
 msgid "Import Participants"
 msgstr "Importar Participantes"
 
-#: src/API/ImportController.php:115
+#: src/API/ImportController.php:124
 msgid "No file uploaded."
 msgstr "No se ha subido ningún archivo."
 
-#: src/API/ImportController.php:126
+#: src/API/ImportController.php:152
 msgid "File upload failed."
 msgstr "La carga del archivo ha fallado."
 
-#: src/API/ImportController.php:140
+#: src/API/ImportController.php:166
 msgid "Invalid file type. Please upload an Excel file (.xlsx)."
 msgstr "Tipo de archivo no válido. Por favor, suba un archivo de Excel (.xlsx)."
 
-#: src/API/ImportController.php:156
+#: src/API/ImportController.php:182
 msgid "The uploaded file is empty."
 msgstr "El archivo subido está vacío."
 
 #. translators: 1: found headers list
-#: src/API/ImportController.php:176
+#: src/API/ImportController.php:202
 #, php-format
 msgid "Invalid file format. Required columns: Nombre, Apellidos, Email. Found columns: %s"
 msgstr "Formato de archivo no válido. Columnas requeridas: Nombre, Apellidos, Email. Columnas encontradas: %s"
 
 #. translators: %d: row number
-#: src/API/ImportController.php:252
+#: src/API/ImportController.php:278
 #, php-format
 msgid "Row %d: Missing required fields (name, surname, or email)"
 msgstr "Fila %d: Faltan campos obligatorios (nombre, apellidos o correo electrónico)"
 
 #. translators: 1: row number, 2: email address
-#: src/API/ImportController.php:262
+#: src/API/ImportController.php:288
 #, php-format
 msgid "Row %1$d: Invalid email format: %2$s"
 msgstr "Fila %1$d: Formato de correo electrónico no válido: %2$s"
 
 #. translators: 1: row number, 2: email address
-#: src/API/ImportController.php:293
+#: src/API/ImportController.php:328
 #, php-format
 msgid "Row %1$d: Failed to save participant: %2$s"
 msgstr "Fila %1$d: Error al guardar el participante: %2$s"
 
 #. translators: %s: error message
-#: src/API/ImportController.php:307
+#: src/API/ImportController.php:342
 #, php-format
 msgid "Import failed: %s"
 msgstr "Importación fallida: %s"
 
-#: src/API/ImportController.php:327
+#: src/API/ImportController.php:362
 msgid "No participants provided."
 msgstr "No se han proporcionado participantes."
 
 #. translators: %d: participant index
-#: src/API/ImportController.php:343
+#: src/API/ImportController.php:395
 #, php-format
 msgid "Participant %d: Missing required fields (name, surname, or email)"
 msgstr "Participante %d: Faltan campos obligatorios (nombre, apellidos o correo electrónico)"
 
 #. translators: 1: participant index, 2: email address
-#: src/API/ImportController.php:357
+#: src/API/ImportController.php:409
 #, php-format
 msgid "Participant %1$d: Invalid email format: %2$s"
 msgstr "Participante %1$d: Formato de correo electrónico no válido: %2$s"
 
 #. translators: 1: participant index, 2: name and surname
-#: src/API/ImportController.php:388
+#: src/API/ImportController.php:449
 #, php-format
 msgid "Participant %1$d: Failed to save participant: %2$s"
 msgstr "Participante %1$d: Error al guardar el participante: %2$s"
 
-#: src/Admin/import/Import.js:25
+#: src/Admin/import/Import.js:46
 msgid "Please select a file to import."
 msgstr "Por favor, seleccione un archivo para importar."
 
-#: src/Admin/import/Import.js:69
+#: src/Admin/import/Import.js:93
 msgid "Import failed. Please try again."
 msgstr "Importación fallida. Inténtelo de nuevo."
 
-#: src/Admin/import/Import.js:111
+#: src/Admin/import/Import.js:135
 msgid "No participants to create. Please provide email addresses or select skip."
 msgstr "No hay participantes para crear. Por favor, proporcione direcciones de correo electrónico o seleccione omitir."
 
-#: src/Admin/import/Import.js:136
+#: src/Admin/import/Import.js:165
 msgid "Failed to resolve duplicates. Please try again."
 msgstr "Error al resolver duplicados. Inténtelo de nuevo."
 
-#: src/Admin/import/Import.js:152
+#: src/Admin/import/Import.js:181
 msgid "Import from Entradium"
 msgstr "Importar desde Entradium"
 
-#: src/Admin/import/Import.js:154
+#: src/Admin/import/Import.js:183
 msgid "Upload an Entradium Excel file (.xlsx) to import participants. The file must contain columns: Nombre, Apellidos, and Email."
 msgstr "Suba un archivo de Excel de Entradium (.xlsx) para importar participantes. El archivo debe contener las columnas: Nombre, Apellidos y Email."
 
-#: src/Admin/import/Import.js:174
+#: src/Admin/import/Import.js:231
 msgid "Selected file:"
 msgstr "Archivo seleccionado:"
 
-#: src/Admin/import/Import.js:188
+#: src/Admin/import/Import.js:245
 msgid "Importing..."
 msgstr "Importando..."
 
-#: src/Admin/import/Import.js:222
+#: src/Admin/import/Import.js:279
 msgid "Import Partially Complete"
 msgstr "Importación Parcialmente Completada"
 
-#: src/Admin/import/Import.js:226
+#: src/Admin/import/Import.js:283
 msgid "Import Complete"
 msgstr "Importación Completada"
 
-#: src/Admin/import/Import.js:234
+#: src/Admin/import/Import.js:291
 msgid "Imported:"
 msgstr "Importado:"
 
-#: src/Admin/import/Import.js:238
+#: src/Admin/import/Import.js:295
 msgid "Skipped (already exists):"
 msgstr "Omitido (ya existe):"
 
-#: src/Admin/import/Import.js:247
+#: src/Admin/import/Import.js:304
 msgid "Duplicates requiring resolution:"
 msgstr "Duplicados que requieren resolución:"
 
-#: src/Admin/import/Import.js:265
+#: src/Admin/import/Import.js:322
 msgid "Resolve Duplicate Emails"
 msgstr "Resolver Correos Electrónicos Duplicados"
 
-#: src/Admin/import/Import.js:271
+#: src/Admin/import/Import.js:328
 msgid "The following people have duplicate email addresses. Please provide a unique email for each person or skip them."
 msgstr "Las siguientes personas tienen direcciones de correo electrónico duplicadas. Por favor, proporcione un correo electrónico único para cada persona o omítalas."
 
-#: src/Admin/import/Import.js:292
+#: src/Admin/import/Import.js:349
 msgid "Original Email:"
 msgstr "Correo Electrónico Original:"
 
-#: src/Admin/import/Import.js:355
+#: src/Admin/import/Import.js:412
 msgid "New Email:"
 msgstr "Correo Electrónico Nuevo:"
 
-#: src/Admin/import/Import.js:383
+#: src/Admin/import/Import.js:440
 msgid "Enter new email"
 msgstr "Introduzca un nuevo correo electrónico"
 
-#: src/Admin/import/Import.js:402
+#: src/Admin/import/Import.js:459
 msgid "Use Gmail Alias"
 msgstr "Usar Alias de Gmail"
 
-#: src/Admin/import/Import.js:439
+#: src/Admin/import/Import.js:496
 msgid "Skip this person"
 msgstr "Omitir esta persona"
 
-#: src/Admin/import/Import.js:462
+#: src/Admin/import/Import.js:519
 msgid "Resolving..."
 msgstr "Resolviendo..."
 
-#: src/Admin/import/Import.js:466
+#: src/Admin/import/Import.js:523
 msgid "Create Participants"
 msgstr "Crear Participantes"
 
-#: src/Admin/import/Import.js:483
+#: src/Admin/import/Import.js:540
 msgid "Errors:"
 msgstr "Errores:"
+
+#: src/API/ImportController.php:140
+#: src/API/ImportController.php:376
+msgid "Invalid event ID provided."
+msgstr "ID de evento no válido proporcionado."
+
+#: src/Admin/import/Import.js:191
+msgid "Related Event (Optional)"
+msgstr "Evento Relacionado (Opcional)"
+
+#: src/Admin/import/Import.js:198
+msgid "Select an event to associate imported participants with it. Leave empty to import without event association."
+msgstr "Seleccione un evento para asociar los participantes importados. Déjelo vacío para importar sin asociación de evento."
+
+#: src/Admin/import/Import.js:204
+msgid "No event association"
+msgstr "Sin asociación de evento"
 

@@ -1,7 +1,14 @@
 import { __ } from '@wordpress/i18n';
-import { useState } from '@wordpress/element';
+import { useState, useEffect } from '@wordpress/element';
 import apiFetch from '@wordpress/api-fetch';
-import { Button, Card, CardBody, Notice, Spinner } from '@wordpress/components';
+import {
+	Button,
+	Card,
+	CardBody,
+	Notice,
+	Spinner,
+	SelectControl,
+} from '@wordpress/components';
 
 export default function Import() {
 	const [file, setFile] = useState(null);
@@ -10,6 +17,20 @@ export default function Import() {
 	const [error, setError] = useState(null);
 	const [duplicateResolutions, setDuplicateResolutions] = useState({});
 	const [isResolvingDuplicates, setIsResolvingDuplicates] = useState(false);
+	const [events, setEvents] = useState([]);
+	const [selectedEventId, setSelectedEventId] = useState('');
+	const [isLoadingEvents, setIsLoadingEvents] = useState(true);
+
+	useEffect(() => {
+		apiFetch({ path: '/fair-audience/v1/events' })
+			.then((data) => {
+				setEvents(data);
+				setIsLoadingEvents(false);
+			})
+			.catch(() => {
+				setIsLoadingEvents(false);
+			});
+	}, []);
 
 	const handleFileChange = (event) => {
 		const selectedFile = event.target.files[0];
@@ -34,6 +55,9 @@ export default function Import() {
 		try {
 			const formData = new FormData();
 			formData.append('file', file);
+			if (selectedEventId) {
+				formData.append('event_id', selectedEventId);
+			}
 
 			const response = await apiFetch({
 				path: '/fair-audience/v1/import/entradium',
@@ -117,10 +141,15 @@ export default function Import() {
 				return;
 			}
 
+			const requestData = { participants: participantsToCreate };
+			if (selectedEventId) {
+				requestData.event_id = parseInt(selectedEventId);
+			}
+
 			const response = await apiFetch({
 				path: '/fair-audience/v1/import/resolve-duplicates',
 				method: 'POST',
-				data: { participants: participantsToCreate },
+				data: requestData,
 			});
 
 			// Update results to show the resolution
@@ -156,6 +185,34 @@ export default function Import() {
 							'fair-audience'
 						)}
 					</p>
+
+					<div style={{ marginTop: '20px' }}>
+						<SelectControl
+							label={__(
+								'Related Event (Optional)',
+								'fair-audience'
+							)}
+							value={selectedEventId}
+							onChange={setSelectedEventId}
+							disabled={isLoadingEvents || isUploading}
+							help={__(
+								'Select an event to associate imported participants with it. Leave empty to import without event association.',
+								'fair-audience'
+							)}
+						>
+							<option value="">
+								{__('No event association', 'fair-audience')}
+							</option>
+							{events.map((event) => (
+								<option
+									key={event.event_id}
+									value={event.event_id}
+								>
+									{event.title}
+								</option>
+							))}
+						</SelectControl>
+					</div>
 
 					<div style={{ marginTop: '20px' }}>
 						<input
