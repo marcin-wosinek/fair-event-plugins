@@ -530,12 +530,12 @@ msgid "Poll not found."
 msgstr "Encuesta no encontrada."
 
 #: src/API/PollResponseController.php:271
-#: src/public/poll-response/PollResponse.js:55
+#: src/public/poll-response/PollResponse.js:56
 msgid "This poll is no longer accepting responses."
 msgstr "Esta encuesta ya no acepta respuestas."
 
 #: src/API/PollResponseController.php:280
-#: src/public/poll-response/PollResponse.js:86
+#: src/public/poll-response/PollResponse.js:87
 msgid "Please select at least one option."
 msgstr "Por favor, seleccione al menos una opción."
 
@@ -548,8 +548,8 @@ msgid "Failed to save your response. Please try again."
 msgstr "No se pudo guardar su respuesta. Por favor, inténtelo de nuevo."
 
 #: src/API/PollResponseController.php:322
-#: src/public/poll-response/PollResponse.js:163
-#: src/public/poll-response/PollResponse.js:200
+#: src/public/poll-response/PollResponse.js:156
+#: src/public/poll-response/PollResponse.js:191
 msgid "Thank you for your response!"
 msgstr "¡Gracias por su respuesta!"
 
@@ -823,47 +823,46 @@ msgstr "Título"
 msgid "Created"
 msgstr "Creado"
 
-#: src/public/poll-response/PollResponse.js:23
+#: src/public/poll-response/PollResponse.js:24
 msgid "Invalid poll link."
 msgstr "Enlace de encuesta no válido."
 
-#: src/public/poll-response/PollResponse.js:41
+#: src/public/poll-response/PollResponse.js:42
 msgid "Invalid or expired poll link."
 msgstr "Enlace de encuesta no válido o caducado."
 
-#: src/public/poll-response/PollResponse.js:69
+#: src/public/poll-response/PollResponse.js:70
 msgid "Failed to load poll."
 msgstr "No se pudo cargar la encuesta."
 
-#: src/public/poll-response/PollResponse.js:107
+#: src/public/poll-response/PollResponse.js:108
 msgid "Failed to submit your response. Please try again."
 msgstr "No se pudo enviar su respuesta. Inténtelo de nuevo."
 
-#: src/public/poll-response/PollResponse.js:144
+#: src/public/poll-response/PollResponse.js:139
 msgid "Error"
 msgstr "Error"
 
-#: src/public/poll-response/PollResponse.js:168
+#: src/public/poll-response/PollResponse.js:161
 msgid "you've already submitted your response to this poll."
 msgstr "Ya has enviado tu respuesta a esta encuesta."
 
-#: src/public/poll-response/PollResponse.js:176
+#: src/public/poll-response/PollResponse.js:169
 msgid "You've already submitted your response to this poll."
 msgstr "Ya has enviado tu respuesta a esta encuesta."
 
-#: src/public/poll-response/PollResponse.js:202
+#: src/public/poll-response/PollResponse.js:193
 msgid "Your response has been recorded successfully."
 msgstr "Tu respuesta ha sido registrada con éxito."
 
-#: src/public/poll-response/PollResponse.js:225
+#: src/public/poll-response/PollResponse.js:210
 msgid "Hi"
 msgstr "Hola"
 
-#: src/public/poll-response/PollResponse.js:256
+#: src/public/poll-response/PollResponse.js:248
 msgid "Submitting..."
 msgstr "Enviando..."
 
-#: src/public/poll-response/PollResponse.js:257
+#: src/public/poll-response/PollResponse.js:249
 msgid "Submit Response"
 msgstr "Enviar Respuesta"
-

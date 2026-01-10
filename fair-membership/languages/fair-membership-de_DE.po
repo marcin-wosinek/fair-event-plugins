@@ -55,12 +55,12 @@ msgstr "Gruppen"
 msgid "All Users"
 msgstr "Alle Benutzer"
 
-#: src/Admin/groups/GroupForm.js:185
+#: src/Admin/groups/GroupForm.js:198
 msgid "Update Group"
 msgstr "Gruppe aktualisieren"
 
-#: src/Admin/group-fees/GroupFeeForm.js:123
-#: src/Admin/groups/GroupForm.js:114
+#: src/Admin/group-fees/GroupFeeForm.js:129
+#: src/Admin/groups/GroupForm.js:127
 #: src/Admin/groups/GroupsList.js:57
 msgid "Description"
 msgstr "Beschreibung"
@@ -70,7 +70,7 @@ msgstr "Beschreibung"
 msgid "Members"
 msgstr "Mitglieder"
 
-#: src/Admin/groups/GroupForm.js:125
+#: src/Admin/groups/GroupForm.js:138
 msgid "Access Control"
 msgstr "Zugriffskontrolle"
 
@@ -105,13 +105,13 @@ msgstr "Gruppe erfolgreich aktualisiert."
 
 #: src/Admin/group-fees/GroupFeesPage.js:196
 #: src/Admin/groups/GroupsPage.js:183
-#: src/Admin/user-fees/UserFeesPage.js:273
+#: src/Admin/user-fees/UserFeesPage.js:284
 msgid "Add New"
 msgstr "Neu hinzufügen"
 
 #: src/Admin/group-members/MembersList.js:18
 #: src/Admin/group-members/UserSearch.js:100
-#: src/Admin/groups/GroupForm.js:92
+#: src/Admin/groups/GroupForm.js:105
 #: src/Admin/groups/GroupsList.js:51
 #: src/Admin/users/MembershipMatrix.js:134
 msgid "Name"
@@ -125,20 +125,20 @@ msgstr "Zugriff"
 msgid "No description"
 msgstr "Keine Beschreibung"
 
-#: src/Admin/group-fees/GroupFeesList.js:76
+#: src/Admin/group-fees/GroupFeesList.js:77
 #: src/Admin/groups/GroupsList.js:138
-#: src/Admin/user-fees/UserFeesList.js:155
+#: src/Admin/user-fees/UserFeesList.js:169
 msgid "Edit"
 msgstr "Bearbeiten"
 
-#: src/Admin/group-fees/GroupFeesList.js:83
+#: src/Admin/group-fees/GroupFeesList.js:84
 #: src/Admin/groups/GroupsList.js:146
-#: src/Admin/user-fees/UserFeesList.js:162
+#: src/Admin/user-fees/UserFeesList.js:176
 msgid "Delete"
 msgstr "Löschen"
 
 #: src/Admin/GroupMembersPage.php:28
-#: src/Models/GroupFee.php:330
+#: src/Models/GroupFee.php:326
 msgid "Invalid group ID."
 msgstr "Ungültige Gruppen-ID."
 
@@ -154,17 +154,18 @@ msgstr "Zurück zu Gruppen"
 msgid "Edit Group"
 msgstr "Gruppe bearbeiten"
 
-#: src/Admin/groups/GroupForm.js:103
+#: src/Admin/groups/GroupForm.js:116
 #: src/Admin/groups/GroupsList.js:54
 msgid "Slug"
 msgstr "Slug"
 
 #: src/blocks/my-fees/render.php:53
 #: src/blocks/my-fees/render.php:95
-#: src/Admin/groups/GroupForm.js:151
+#: src/Admin/groups/GroupForm.js:164
 #: src/Admin/groups/GroupsList.js:66
-#: src/Admin/user-fees/UserFeesList.js:62
-#: src/Admin/user-fees/UserFeesPage.js:306
+#: src/Admin/user-fees/TransactionsList.js:112
+#: src/Admin/user-fees/UserFeesList.js:64
+#: src/Admin/user-fees/UserFeesPage.js:317
 #: src/blocks/my-fees/components/EditComponent.js:44
 msgid "Status"
 msgstr "Status"
@@ -188,11 +189,11 @@ msgstr "Beigetreten"
 
 #: src/blocks/my-fees/render.php:54
 #: src/blocks/my-fees/render.php:113
-#: src/Admin/group-fees/GroupFeesList.js:24
+#: src/Admin/group-fees/GroupFeesList.js:25
 #: src/Admin/group-members/MembersList.js:30
 #: src/Admin/group-members/UserSearch.js:103
 #: src/Admin/groups/GroupsList.js:69
-#: src/Admin/user-fees/UserFeesList.js:63
+#: src/Admin/user-fees/UserFeesList.js:65
 #: src/blocks/my-fees/components/EditComponent.js:45
 msgid "Actions"
 msgstr "Aktionen"
@@ -265,7 +266,7 @@ msgid "Invalid access control type."
 msgstr "Ungültiger Zugriffskontrolltyp."
 
 #: src/Models/Group.php:355
-#: src/Models/UserFee.php:370
+#: src/Models/UserFee.php:366
 msgid "Invalid status."
 msgstr "Ungültiger Status."
 
@@ -277,7 +278,7 @@ msgstr "Eine Gruppe mit diesem Slug existiert bereits."
 msgid "User ID is required."
 msgstr "Benutzer-ID ist erforderlich."
 
-#: src/Models/GroupFee.php:324
+#: src/Models/GroupFee.php:320
 #: src/Models/Membership.php:209
 msgid "Group ID is required."
 msgstr "Gruppen-ID ist erforderlich."
@@ -316,6 +317,7 @@ msgstr "Lade..."
 msgid "Error loading users: "
 msgstr "Fehler beim Laden der Benutzer: "
 
+#: src/Admin/user-fees/TransactionsList.js:109
 #: src/Admin/users/MembershipMatrix.js:125
 msgid "ID"
 msgstr "ID"
@@ -622,11 +624,11 @@ msgstr "Nachricht"
 msgid "Enter your message..."
 msgstr "Ihre Nachricht eingeben..."
 
-#: src/Admin/group-fees/GroupFeeForm.js:156
+#: src/Admin/group-fees/GroupFeeForm.js:161
 #: src/Admin/group-members/SendEmailModal.js:174
-#: src/Admin/groups/GroupForm.js:176
-#: src/Admin/user-fees/UserFeeForm.js:281
-#: src/Admin/user-fees/UserFeesPage.js:479
+#: src/Admin/groups/GroupForm.js:189
+#: src/Admin/user-fees/UserFeeForm.js:286
+#: src/Admin/user-fees/UserFeesPage.js:491
 msgid "Cancel"
 msgstr "Abbrechen"
 
@@ -666,45 +668,45 @@ msgstr "Bereits Mitglied"
 msgid "Add"
 msgstr "Hinzufügen"
 
-#: src/Admin/groups/GroupForm.js:96
+#: src/Admin/groups/GroupForm.js:109
 msgid "The name of the group as it will appear to users."
 msgstr "Der Name der Gruppe, wie er Benutzern angezeigt wird."
 
-#: src/Admin/groups/GroupForm.js:107
+#: src/Admin/groups/GroupForm.js:120
 msgid "Unique identifier for the group (lowercase letters, numbers, and hyphens only)."
 msgstr "Eindeutige Kennung für die Gruppe (nur Kleinbuchstaben, Zahlen und Bindestriche)."
 
-#: src/Admin/groups/GroupForm.js:117
+#: src/Admin/groups/GroupForm.js:130
 msgid "Optional description of what this group represents."
 msgstr "Optionale Beschreibung, was diese Gruppe darstellt."
 
-#: src/Admin/groups/GroupForm.js:130
+#: src/Admin/groups/GroupForm.js:143
 msgid "Open - Users can join themselves"
 msgstr "Offen - Benutzer können selbst beitreten"
 
-#: src/Admin/groups/GroupForm.js:137
+#: src/Admin/groups/GroupForm.js:150
 msgid "Managed - Only administrators can add members"
 msgstr "Verwaltet - Nur Administratoren können Mitglieder hinzufügen"
 
-#: src/Admin/groups/GroupForm.js:144
+#: src/Admin/groups/GroupForm.js:157
 msgid "Determines who can add members to this group."
 msgstr "Bestimmt, wer Mitglieder zu dieser Gruppe hinzufügen kann."
 
-#: src/Admin/groups/GroupForm.js:156
+#: src/Admin/groups/GroupForm.js:169
 #: src/Admin/groups/GroupsList.js:32
 msgid "Active"
 msgstr "Aktiv"
 
-#: src/Admin/groups/GroupForm.js:160
+#: src/Admin/groups/GroupForm.js:173
 #: src/Admin/groups/GroupsList.js:33
 msgid "Inactive"
 msgstr "Inaktiv"
 
-#: src/Admin/groups/GroupForm.js:164
+#: src/Admin/groups/GroupForm.js:177
 msgid "Inactive groups are hidden from users."
 msgstr "Inaktive Gruppen sind für Benutzer ausgeblendet."
 
-#: src/Admin/groups/GroupForm.js:186
+#: src/Admin/groups/GroupForm.js:199
 msgid "Create Group"
 msgstr "Gruppe erstellen"
 
@@ -730,28 +732,28 @@ msgstr "Alle Gruppen"
 #. translators: %d: total number of group fees
 #: src/Admin/group-fees/GroupFeesPage.js:227
 #: src/Admin/groups/GroupsPage.js:212
-#: src/Admin/user-fees/UserFeesPage.js:348
+#: src/Admin/user-fees/UserFeesPage.js:359
 #, js-format
 msgid "%d total"
 msgstr ""
 
 #: src/Admin/group-fees/GroupFeesPage.js:253
 #: src/Admin/groups/GroupsPage.js:236
-#: src/Admin/user-fees/UserFeesPage.js:374
+#: src/Admin/user-fees/UserFeesPage.js:386
 msgid "Previous"
 msgstr "Zurück"
 
 #. translators: 1: current page number, 2: total number of pages
 #: src/Admin/group-fees/GroupFeesPage.js:258
 #: src/Admin/groups/GroupsPage.js:240
-#: src/Admin/user-fees/UserFeesPage.js:378
+#: src/Admin/user-fees/UserFeesPage.js:390
 #, js-format
 msgid "Page %1$d of %2$d"
 msgstr ""
 
 #: src/Admin/group-fees/GroupFeesPage.js:268
 #: src/Admin/groups/GroupsPage.js:250
-#: src/Admin/user-fees/UserFeesPage.js:388
+#: src/Admin/user-fees/UserFeesPage.js:400
 msgid "Next"
 msgstr "Weiter"
 
@@ -764,8 +766,8 @@ msgstr "Gruppengebühren"
 
 #: src/Admin/AdminHooks.php:70
 #: src/Admin/AdminHooks.php:71
-#: src/Admin/user-fees/UserFeesPage.js:257
-#: src/Admin/user-fees/UserFeesPage.js:266
+#: src/Admin/user-fees/UserFeesPage.js:268
+#: src/Admin/user-fees/UserFeesPage.js:277
 msgid "User Fees"
 msgstr "Benutzergebühren"
 
@@ -773,32 +775,32 @@ msgstr "Benutzergebühren"
 msgid "Filter by group ID."
 msgstr "Nach Gruppen-ID filtern."
 
-#: src/API/GroupFeeController.php:172
+#: src/API/GroupFeeController.php:171
 msgid "You do not have permission to view group fees."
 msgstr "Sie haben keine Berechtigung, Gruppengebühren anzuzeigen."
 
-#: src/API/GroupFeeController.php:189
+#: src/API/GroupFeeController.php:188
 msgid "You do not have permission to create group fees."
 msgstr "Sie haben keine Berechtigung, Gruppengebühren zu erstellen."
 
-#: src/API/GroupFeeController.php:312
-#: src/Admin/group-fees/GroupFeeForm.js:73
+#: src/API/GroupFeeController.php:311
+#: src/Admin/group-fees/GroupFeeForm.js:79
 #: src/Admin/group-fees/GroupFeesPage.js:167
 msgid "Failed to save group fee."
 msgstr "Gruppengebühr konnte nicht gespeichert werden."
 
-#: src/API/GroupFeeController.php:357
-#: src/API/GroupFeeController.php:378
-#: src/API/GroupFeeController.php:429
-#: src/API/GroupFeeController.php:464
+#: src/API/GroupFeeController.php:356
+#: src/API/GroupFeeController.php:377
+#: src/API/GroupFeeController.php:494
+#: src/API/GroupFeeController.php:529
 msgid "Group fee not found."
 msgstr "Gruppengebühr nicht gefunden."
 
-#: src/API/GroupFeeController.php:408
+#: src/API/GroupFeeController.php:419
 msgid "Failed to update group fee."
 msgstr "Gruppengebühr konnte nicht aktualisiert werden."
 
-#: src/API/GroupFeeController.php:438
+#: src/API/GroupFeeController.php:503
 #: src/Admin/group-fees/GroupFeesPage.js:112
 msgid "Failed to delete group fee."
 msgstr "Gruppengebühr konnte nicht gelöscht werden."
@@ -811,92 +813,93 @@ msgstr ""
 msgid "Filter by group fee ID."
 msgstr "Nach Gruppengebühren-ID filtern."
 
-#: src/API/UserFeeController.php:214
+#: src/API/UserFeeController.php:213
 msgid "URL to redirect after payment."
 msgstr ""
 
-#: src/API/UserFeeController.php:231
+#: src/API/UserFeeController.php:241
 msgid "You do not have permission to view user fees."
 msgstr "Sie haben keine Berechtigung, Benutzergebühren anzuzeigen."
 
-#: src/API/UserFeeController.php:248
+#: src/API/UserFeeController.php:258
 msgid "You do not have permission to create user fees."
 msgstr "Sie haben keine Berechtigung, Benutzergebühren zu erstellen."
 
-#: src/API/UserFeeController.php:296
+#: src/API/UserFeeController.php:306
 msgid "You must be logged in to create payments."
 msgstr "Sie müssen angemeldet sein, um Zahlungen zu erstellen."
 
-#: src/API/UserFeeController.php:307
-#: src/API/UserFeeController.php:430
-#: src/API/UserFeeController.php:451
-#: src/API/UserFeeController.php:511
-#: src/API/UserFeeController.php:558
-#: src/API/UserFeeController.php:624
-#: src/API/UserFeeController.php:655
-#: src/API/UserFeeController.php:679
+#: src/API/UserFeeController.php:317
+#: src/API/UserFeeController.php:440
+#: src/API/UserFeeController.php:461
+#: src/API/UserFeeController.php:521
+#: src/API/UserFeeController.php:568
+#: src/API/UserFeeController.php:634
+#: src/API/UserFeeController.php:665
+#: src/API/UserFeeController.php:689
+#: src/API/UserFeeController.php:821
 msgid "User fee not found."
 msgstr "Benutzergebühr nicht gefunden."
 
-#: src/API/UserFeeController.php:316
+#: src/API/UserFeeController.php:326
 msgid "You can only create payments for your own fees."
 msgstr "Sie können nur Zahlungen für Ihre eigenen Gebühren erstellen."
 
-#: src/API/UserFeeController.php:409
-#: src/Admin/user-fees/UserFeeForm.js:89
-#: src/Admin/user-fees/UserFeesPage.js:244
+#: src/API/UserFeeController.php:419
+#: src/Admin/user-fees/UserFeeForm.js:95
+#: src/Admin/user-fees/UserFeesPage.js:255
 msgid "Failed to save user fee."
 msgstr "Benutzergebühr konnte nicht gespeichert werden."
 
-#: src/API/UserFeeController.php:490
+#: src/API/UserFeeController.php:500
 msgid "Failed to update user fee."
 msgstr "Benutzergebühr konnte nicht aktualisiert werden."
 
-#: src/API/UserFeeController.php:529
-#: src/Admin/user-fees/UserFeesPage.js:123
+#: src/API/UserFeeController.php:539
+#: src/Admin/user-fees/UserFeesPage.js:129
 msgid "Failed to delete user fee."
 msgstr "Benutzergebühr konnte nicht gelöscht werden."
 
-#: src/API/UserFeeController.php:586
+#: src/API/UserFeeController.php:596
 msgid "Failed to create adjustment record."
 msgstr "Anpassungsdatensatz konnte nicht erstellt werden."
 
-#: src/API/UserFeeController.php:598
+#: src/API/UserFeeController.php:608
 msgid "Failed to update user fee amount."
 msgstr "Benutzergebührenbetrag konnte nicht aktualisiert werden."
 
-#: src/API/UserFeeController.php:634
-#: src/Admin/user-fees/UserFeesPage.js:158
+#: src/API/UserFeeController.php:644
+#: src/Admin/user-fees/UserFeesPage.js:164
 msgid "Failed to mark fee as paid."
 msgstr "Gebühr konnte nicht als bezahlt markiert werden."
 
-#: src/API/UserFeeController.php:697
+#: src/API/UserFeeController.php:707
 msgid "Only pending or overdue fees can be paid."
 msgstr "Nur ausstehende oder überfällige Gebühren können bezahlt werden."
 
-#: src/API/UserFeeController.php:706
+#: src/API/UserFeeController.php:716
 msgid "Payment system is not available."
 msgstr "Zahlungssystem ist nicht verfügbar."
 
 #. translators: %s: fee title
-#: src/API/UserFeeController.php:724
+#: src/API/UserFeeController.php:734
 #, php-format
 msgid "Payment for: %s"
 msgstr "Zahlung für: %s"
 
 #. translators: %s: error message
-#: src/API/UserFeeController.php:740
+#: src/API/UserFeeController.php:750
 #, php-format
 msgid "Failed to create transaction: %s"
 msgstr "Transaktion konnte nicht erstellt werden: %s"
 
 #. translators: %s: error message
-#: src/API/UserFeeController.php:760
+#: src/API/UserFeeController.php:770
 #, php-format
 msgid "Failed to initiate payment: %s"
 msgstr "Zahlung konnte nicht initiiert werden: %s"
 
-#: src/API/UserFeeController.php:770
+#: src/API/UserFeeController.php:780
 msgid "Payment response does not contain checkout URL."
 msgstr "Zahlungsantwort enthält keine Checkout-URL."
 
@@ -914,57 +917,59 @@ msgstr ""
 
 #: src/blocks/my-fees/render.php:50
 #: src/blocks/my-fees/render.php:81
-#: src/Admin/group-fees/GroupFeeForm.js:116
-#: src/Admin/group-fees/GroupFeesList.js:17
-#: src/Admin/user-fees/UserFeeForm.js:239
-#: src/Admin/user-fees/UserFeesList.js:59
+#: src/Admin/group-fees/GroupFeeForm.js:122
+#: src/Admin/group-fees/GroupFeesList.js:18
+#: src/Admin/user-fees/UserFeeForm.js:245
+#: src/Admin/user-fees/UserFeesList.js:61
 #: src/blocks/my-fees/components/EditComponent.js:41
 msgid "Title"
 msgstr "Titel"
 
 #: src/blocks/my-fees/render.php:51
 #: src/blocks/my-fees/render.php:89
-#: src/Admin/group-fees/GroupFeesList.js:19
-#: src/Admin/user-fees/UserFeeForm.js:248
-#: src/Admin/user-fees/UserFeesList.js:60
+#: src/Admin/group-fees/GroupFeesList.js:20
+#: src/Admin/user-fees/TransactionsList.js:111
+#: src/Admin/user-fees/UserFeeForm.js:254
+#: src/Admin/user-fees/UserFeesList.js:62
 #: src/blocks/my-fees/components/EditComponent.js:42
 msgid "Amount"
 msgstr "Betrag"
 
 #: src/blocks/my-fees/render.php:52
 #: src/blocks/my-fees/render.php:92
-#: src/Admin/group-fees/GroupFeeForm.js:140
-#: src/Admin/group-fees/GroupFeesList.js:22
-#: src/Admin/user-fees/UserFeeForm.js:258
-#: src/Admin/user-fees/UserFeesList.js:61
+#: src/Admin/group-fees/GroupFeeForm.js:146
+#: src/Admin/group-fees/GroupFeesList.js:23
+#: src/Admin/user-fees/UserFeeForm.js:264
+#: src/Admin/user-fees/UserFeesList.js:63
 #: src/blocks/my-fees/components/EditComponent.js:43
 msgid "Due Date"
 msgstr "Fälligkeitsdatum"
 
 #: src/blocks/my-fees/render.php:68
-#: src/Admin/user-fees/UserFeesList.js:29
-#: src/Admin/user-fees/UserFeesPage.js:316
+#: src/Admin/user-fees/UserFeesList.js:31
+#: src/Admin/user-fees/UserFeesPage.js:327
 #: src/blocks/my-fees/components/EditComponent.js:60
 msgid "Pending"
 msgstr "Ausstehend"
 
 #: src/blocks/my-fees/render.php:70
-#: src/Admin/user-fees/UserFeesList.js:31
-#: src/Admin/user-fees/UserFeesPage.js:327
+#: src/Admin/user-fees/TransactionsList.js:67
+#: src/Admin/user-fees/UserFeesList.js:33
+#: src/Admin/user-fees/UserFeesPage.js:338
 #: src/blocks/my-fees/components/EditComponent.js:89
 msgid "Paid"
 msgstr "Bezahlt"
 
 #: src/blocks/my-fees/render.php:71
-#: src/Admin/user-fees/UserFeesList.js:32
-#: src/Admin/user-fees/UserFeesPage.js:331
+#: src/Admin/user-fees/UserFeesList.js:34
+#: src/Admin/user-fees/UserFeesPage.js:342
 #: src/blocks/my-fees/components/EditComponent.js:76
 msgid "Overdue"
 msgstr ""
 
 #: src/blocks/my-fees/render.php:72
-#: src/Admin/user-fees/UserFeesList.js:33
-#: src/Admin/user-fees/UserFeesPage.js:335
+#: src/Admin/user-fees/UserFeesList.js:35
+#: src/Admin/user-fees/UserFeesPage.js:346
 msgid "Cancelled"
 msgstr "Storniert"
 
@@ -995,11 +1000,6 @@ msgstr "Titel ist erforderlich."
 msgid "Amount must be a positive number."
 msgstr "Betrag muss eine positive Zahl sein."
 
-#: src/Models/GroupFee.php:320
-#: src/Models/UserFee.php:365
-msgid "Due date is required."
-msgstr "Fälligkeitsdatum ist erforderlich."
-
 #: src/Models/UserFeeAdjustment.php:200
 msgid "User fee ID is required."
 msgstr "Benutzergebühren-ID ist erforderlich."
@@ -1016,46 +1016,47 @@ msgstr ""
 msgid "Reason is required for audit trail."
 msgstr ""
 
-#: src/Admin/group-fees/GroupFeeForm.js:85
+#: src/Admin/group-fees/GroupFeeForm.js:91
 msgid "Select a group"
 msgstr ""
 
-#: src/Admin/group-fees/GroupFeeForm.js:103
-#: src/Admin/group-fees/GroupFeesList.js:18
+#: src/Admin/group-fees/GroupFeeForm.js:109
+#: src/Admin/group-fees/GroupFeesList.js:19
 msgid "Group"
 msgstr "Gruppe"
 
-#: src/Admin/group-fees/GroupFeeForm.js:108
+#: src/Admin/group-fees/GroupFeeForm.js:114
 msgid "Select the group for this fee. Individual user fees will be created for all active members."
 msgstr ""
 
-#: src/Admin/group-fees/GroupFeeForm.js:130
+#: src/Admin/group-fees/GroupFeeForm.js:136
 msgid "Default Amount"
 msgstr "Standardbetrag"
 
-#: src/Admin/group-fees/GroupFeeForm.js:165
-#: src/Admin/user-fees/UserFeeForm.js:290
+#: src/Admin/group-fees/GroupFeeForm.js:170
+#: src/Admin/user-fees/UserFeeForm.js:295
 msgid "Saving..."
 msgstr ""
 
-#: src/Admin/group-fees/GroupFeeForm.js:166
-#: src/Admin/user-fees/UserFeeForm.js:291
+#: src/Admin/group-fees/GroupFeeForm.js:171
+#: src/Admin/user-fees/UserFeeForm.js:296
 msgid "Save"
 msgstr "Speichern"
 
-#: src/Admin/group-fees/GroupFeesList.js:8
+#: src/Admin/group-fees/GroupFeesList.js:9
 msgid "No group fees found."
 msgstr ""
 
-#: src/Admin/group-fees/GroupFeesList.js:20
+#: src/Admin/group-fees/GroupFeesList.js:21
 msgid "Total Paid"
 msgstr "Gesamt bezahlt"
 
-#: src/Admin/group-fees/GroupFeesList.js:21
+#: src/Admin/group-fees/GroupFeesList.js:22
 msgid "Payment Pending"
 msgstr "Zahlung ausstehend"
 
-#: src/Admin/group-fees/GroupFeesList.js:23
+#: src/Admin/group-fees/GroupFeesList.js:24
+#: src/Admin/user-fees/TransactionsList.js:113
 msgid "Created"
 msgstr "Erstellt"
 
@@ -1103,138 +1104,138 @@ msgstr ""
 msgid "More info"
 msgstr ""
 
-#: src/Admin/user-fees/UserFeeForm.js:109
+#: src/Admin/user-fees/UserFeeForm.js:115
 msgid "Search User"
 msgstr "Benutzer suchen"
 
-#: src/Admin/user-fees/UserFeeForm.js:113
+#: src/Admin/user-fees/UserFeeForm.js:119
 msgid "Type name or email to search..."
 msgstr ""
 
-#: src/Admin/user-fees/UserFeeForm.js:119
+#: src/Admin/user-fees/UserFeeForm.js:125
 msgid "User selected. Clear to search again."
 msgstr "Benutzer ausgewählt. Löschen, um erneut zu suchen."
 
-#: src/Admin/user-fees/UserFeeForm.js:123
+#: src/Admin/user-fees/UserFeeForm.js:129
 msgid "Search by name or email to select a user."
 msgstr ""
 
-#: src/Admin/user-fees/UserFeeForm.js:159
+#: src/Admin/user-fees/UserFeeForm.js:165
 msgid "Clear"
 msgstr "Löschen"
 
-#: src/Admin/user-fees/UserFeeForm.js:171
+#: src/Admin/user-fees/UserFeeForm.js:177
 msgid "Searching..."
 msgstr ""
 
-#: src/Admin/user-fees/UserFeeForm.js:266
+#: src/Admin/user-fees/UserFeeForm.js:271
 msgid "Notes"
 msgstr "Notizen"
 
-#: src/Admin/user-fees/UserFeesList.js:14
+#: src/Admin/user-fees/UserFeesList.js:16
 msgid "No user fees found."
 msgstr ""
 
-#: src/Admin/user-fees/UserFeesList.js:58
+#: src/Admin/user-fees/UserFeesList.js:60
 msgid "User"
 msgstr "Benutzer"
 
-#: src/Admin/user-fees/UserFeesList.js:136
+#: src/Admin/user-fees/UserFeesList.js:145
 msgid "Mark Paid"
 msgstr "Als bezahlt markieren"
 
-#: src/Admin/user-fees/UserFeesList.js:146
-#: src/Admin/user-fees/UserFeesPage.js:489
+#: src/Admin/user-fees/UserFeesList.js:157
+#: src/Admin/user-fees/UserFeesPage.js:501
 msgid "Adjust"
 msgstr "Anpassen"
 
-#: src/Admin/user-fees/UserFeesPage.js:72
+#: src/Admin/user-fees/UserFeesPage.js:78
 msgid "Failed to load user fees."
 msgstr ""
 
 #. translators: %s: user fee title
-#: src/Admin/user-fees/UserFeesPage.js:98
+#: src/Admin/user-fees/UserFeesPage.js:104
 #, js-format
 msgid "Are you sure you want to delete the user fee \"%s\"?"
 msgstr ""
 
-#: src/Admin/user-fees/UserFeesPage.js:118
+#: src/Admin/user-fees/UserFeesPage.js:124
 msgid "User fee deleted successfully."
 msgstr "Benutzergebühr erfolgreich gelöscht."
 
 #. translators: 1: fee title, 2: user name
-#: src/Admin/user-fees/UserFeesPage.js:134
+#: src/Admin/user-fees/UserFeesPage.js:140
 #, js-format
 msgid "Mark fee \"%1$s\" as paid for %2$s?"
 msgstr ""
 
-#: src/Admin/user-fees/UserFeesPage.js:153
+#: src/Admin/user-fees/UserFeesPage.js:159
 msgid "Fee marked as paid."
 msgstr "Gebühr als bezahlt markiert."
 
-#: src/Admin/user-fees/UserFeesPage.js:192
+#: src/Admin/user-fees/UserFeesPage.js:203
 msgid "Fee amount adjusted successfully."
 msgstr "Gebührenbetrag erfolgreich angepasst."
 
-#: src/Admin/user-fees/UserFeesPage.js:200
+#: src/Admin/user-fees/UserFeesPage.js:211
 msgid "Failed to adjust fee amount."
 msgstr ""
 
-#: src/Admin/user-fees/UserFeesPage.js:223
+#: src/Admin/user-fees/UserFeesPage.js:234
 msgid "User fee updated successfully."
 msgstr "Benutzergebühr erfolgreich aktualisiert."
 
-#: src/Admin/user-fees/UserFeesPage.js:235
+#: src/Admin/user-fees/UserFeesPage.js:246
 msgid "User fee created successfully."
 msgstr "Benutzergebühr erfolgreich erstellt."
 
-#: src/Admin/user-fees/UserFeesPage.js:300
+#: src/Admin/user-fees/UserFeesPage.js:311
 msgid "Filters"
 msgstr ""
 
-#: src/Admin/user-fees/UserFeesPage.js:312
+#: src/Admin/user-fees/UserFeesPage.js:323
 msgid "All"
 msgstr ""
 
-#: src/Admin/user-fees/UserFeesPage.js:346
+#: src/Admin/user-fees/UserFeesPage.js:357
 msgid "All User Fees"
 msgstr "Alle Benutzergebühren"
 
-#: src/Admin/user-fees/UserFeesPage.js:399
+#: src/Admin/user-fees/UserFeesPage.js:411
 msgid "Edit User Fee"
 msgstr "Benutzergebühr bearbeiten"
 
-#: src/Admin/user-fees/UserFeesPage.js:400
+#: src/Admin/user-fees/UserFeesPage.js:412
 msgid "Add New User Fee"
 msgstr "Neue Benutzergebühr hinzufügen"
 
-#: src/Admin/user-fees/UserFeesPage.js:415
+#: src/Admin/user-fees/UserFeesPage.js:427
 msgid "Adjust Fee Amount"
 msgstr ""
 
 #. translators: 1: fee title, 2: user name
-#: src/Admin/user-fees/UserFeesPage.js:424
+#: src/Admin/user-fees/UserFeesPage.js:436
 #, js-format
 msgid "Adjusting fee \"%1$s\" for %2$s"
 msgstr ""
 
-#: src/Admin/user-fees/UserFeesPage.js:436
+#: src/Admin/user-fees/UserFeesPage.js:448
 msgid "Current Amount:"
 msgstr "Aktueller Betrag:"
 
-#: src/Admin/user-fees/UserFeesPage.js:443
+#: src/Admin/user-fees/UserFeesPage.js:455
 msgid "New Amount"
 msgstr "Neuer Betrag"
 
-#: src/Admin/user-fees/UserFeesPage.js:453
+#: src/Admin/user-fees/UserFeesPage.js:465
 msgid "Reason for Adjustment"
 msgstr ""
 
-#: src/Admin/user-fees/UserFeesPage.js:461
+#: src/Admin/user-fees/UserFeesPage.js:473
 msgid "This will be saved in the adjustment history."
 msgstr ""
 
-#: src/Admin/user-fees/UserFeesPage.js:488
+#: src/Admin/user-fees/UserFeesPage.js:500
 msgid "Adjusting..."
 msgstr ""
 
@@ -1308,40 +1309,90 @@ msgstr "Zahlung konnte nicht erstellt werden. Bitte versuchen Sie es erneut."
 msgid "No checkout URL in response"
 msgstr "Keine Checkout-URL in der Antwort"
 
-#: src/API/UserFeeController.php:567
+#: src/API/UserFeeController.php:577
 msgid "Cannot adjust amount for paid fees."
 msgstr "Betrag für bezahlte Gebühren kann nicht angepasst werden."
 
-#: src/API/UserFeeController.php:460
+#: src/API/UserFeeController.php:470
 msgid "Cannot edit paid fees."
 msgstr "Bezahlte Gebühren können nicht bearbeitet werden."
 
-#: src/API/UserFeeController.php:520
+#: src/API/UserFeeController.php:530
 msgid "Cannot delete paid fees."
 msgstr "Bezahlte Gebühren können nicht gelöscht werden."
 
-#: src/Admin/user-fees/UserFeesList.js:101
+#: src/Admin/user-fees/UserFeesList.js:110
 msgid "Cannot edit or delete paid fees"
 msgstr "Bezahlte Gebühren können nicht bearbeitet oder gelöscht werden"
 
-#: src/Admin/user-fees/UserFeesList.js:106
+#: src/Admin/user-fees/UserFeesList.js:115
 msgid "Already paid"
 msgstr "Bereits bezahlt"
 
-#: src/API/UserFeeController.php:688
+#: src/API/UserFeeController.php:698
 msgid "A payment for this fee is already in progress. Please complete or cancel the existing payment before creating a new one."
 msgstr ""
 
 #: src/blocks/my-fees/render.php:69
-#: src/Admin/user-fees/UserFeesList.js:30
-#: src/Admin/user-fees/UserFeesPage.js:320
+#: src/Admin/user-fees/UserFeesList.js:32
+#: src/Admin/user-fees/UserFeesPage.js:331
 msgid "Payment In Progress"
 msgstr ""
 
-#: src/Admin/user-fees/UserFeesList.js:115
+#: src/Admin/user-fees/UserFeesList.js:124
 msgid "Payment is being processed"
 msgstr ""
 
-#: src/Admin/user-fees/UserFeesList.js:120
+#: src/Admin/user-fees/UserFeesList.js:129
 msgid "Payment in progress"
+msgstr ""
+
+#: src/Admin/user-fees/TransactionsList.js:34
+msgid "Failed to load transactions. Please try again."
+msgstr ""
+
+#: src/Admin/user-fees/TransactionsList.js:65
+msgid "Draft"
+msgstr ""
+
+#: src/Admin/user-fees/TransactionsList.js:66
+msgid "Pending Payment"
+msgstr ""
+
+#: src/Admin/user-fees/TransactionsList.js:68
+msgid "Failed"
+msgstr ""
+
+#: src/Admin/user-fees/TransactionsList.js:69
+msgid "Expired"
+msgstr ""
+
+#: src/Admin/user-fees/TransactionsList.js:70
+msgid "Canceled"
+msgstr ""
+
+#: src/Admin/user-fees/TransactionsList.js:95
+msgid "No payment transactions found for this fee."
+msgstr ""
+
+#: src/Admin/user-fees/TransactionsList.js:105
+msgid "Payment Transactions"
+msgstr ""
+
+#: src/Admin/user-fees/TransactionsList.js:110
+msgid "Mollie Payment ID"
+msgstr ""
+
+#: src/Admin/user-fees/TransactionsList.js:114
+msgid "Payment Initiated"
+msgstr ""
+
+#: src/Admin/user-fees/UserFeesList.js:101
+msgid "Transactions"
+msgstr ""
+
+#. translators: %s: user fee title
+#: src/Admin/user-fees/UserFeesPage.js:513
+#, js-format
+msgid "Payment Transactions for \"%s\""
 msgstr ""

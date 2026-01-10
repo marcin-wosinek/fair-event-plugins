@@ -9,7 +9,7 @@ msgstr ""
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"POT-Creation-Date: 2026-01-09T16:56:51+00:00\n"
+"POT-Creation-Date: 2026-01-10T09:57:59+00:00\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "X-Generator: WP-CLI 2.12.0\n"
 "X-Domain: fair-audience\n"
@@ -238,12 +238,12 @@ msgid "Poll not found."
 msgstr ""
 
 #: src/API/PollResponseController.php:271
-#: src/public/poll-response/PollResponse.js:55
+#: src/public/poll-response/PollResponse.js:56
 msgid "This poll is no longer accepting responses."
 msgstr ""
 
 #: src/API/PollResponseController.php:280
-#: src/public/poll-response/PollResponse.js:86
+#: src/public/poll-response/PollResponse.js:87
 msgid "Please select at least one option."
 msgstr ""
 
@@ -256,8 +256,8 @@ msgid "Failed to save your response. Please try again."
 msgstr ""
 
 #: src/API/PollResponseController.php:322
-#: src/public/poll-response/PollResponse.js:163
-#: src/public/poll-response/PollResponse.js:200
+#: src/public/poll-response/PollResponse.js:156
+#: src/public/poll-response/PollResponse.js:191
 msgid "Thank you for your response!"
 msgstr ""
 
@@ -824,46 +824,46 @@ msgstr ""
 msgid "Created"
 msgstr ""
 
-#: src/public/poll-response/PollResponse.js:23
+#: src/public/poll-response/PollResponse.js:24
 msgid "Invalid poll link."
 msgstr ""
 
-#: src/public/poll-response/PollResponse.js:41
+#: src/public/poll-response/PollResponse.js:42
 msgid "Invalid or expired poll link."
 msgstr ""
 
-#: src/public/poll-response/PollResponse.js:69
+#: src/public/poll-response/PollResponse.js:70
 msgid "Failed to load poll."
 msgstr ""
 
-#: src/public/poll-response/PollResponse.js:107
+#: src/public/poll-response/PollResponse.js:108
 msgid "Failed to submit your response. Please try again."
 msgstr ""
 
-#: src/public/poll-response/PollResponse.js:144
+#: src/public/poll-response/PollResponse.js:139
 msgid "Error"
 msgstr ""
 
-#: src/public/poll-response/PollResponse.js:168
+#: src/public/poll-response/PollResponse.js:161
 msgid "you've already submitted your response to this poll."
 msgstr ""
 
-#: src/public/poll-response/PollResponse.js:176
+#: src/public/poll-response/PollResponse.js:169
 msgid "You've already submitted your response to this poll."
 msgstr ""
 
-#: src/public/poll-response/PollResponse.js:202
+#: src/public/poll-response/PollResponse.js:193
 msgid "Your response has been recorded successfully."
 msgstr ""
 
-#: src/public/poll-response/PollResponse.js:225
+#: src/public/poll-response/PollResponse.js:210
 msgid "Hi"
 msgstr ""
 
-#: src/public/poll-response/PollResponse.js:256
+#: src/public/poll-response/PollResponse.js:248
 msgid "Submitting..."
 msgstr ""
 
-#: src/public/poll-response/PollResponse.js:257
+#: src/public/poll-response/PollResponse.js:249
 msgid "Submit Response"
 msgstr ""

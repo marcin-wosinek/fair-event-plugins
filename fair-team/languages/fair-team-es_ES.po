@@ -149,45 +149,45 @@ msgctxt "Screen reader text for the items list"
 msgid "Team members list"
 msgstr "Lista de miembros del equipo"
 
-#: src/PostTypes/TeamMember.php:93
+#: src/PostTypes/TeamMember.php:94
 msgid "WordPress user ID linked to this team member"
 msgstr "ID de usuario de WordPress vinculado a este miembro del equipo"
 
-#: src/PostTypes/TeamMember.php:106
+#: src/PostTypes/TeamMember.php:107
 msgid "Instagram account URL"
 msgstr "URL de cuenta de Instagram"
 
-#: src/PostTypes/TeamMember.php:133
+#: src/PostTypes/TeamMember.php:134
 msgid "Team Member Details"
 msgstr "Detalles del miembro del equipo"
 
-#: src/PostTypes/TeamMember.php:163
+#: src/PostTypes/TeamMember.php:164
 msgid "WordPress User"
 msgstr "Usuario de WordPress"
 
-#: src/PostTypes/TeamMember.php:166
+#: src/PostTypes/TeamMember.php:167
 msgid "(None)"
 msgstr "(Ninguno)"
 
-#: src/PostTypes/TeamMember.php:176
+#: src/PostTypes/TeamMember.php:177
 msgid "Instagram URL"
 msgstr "URL de Instagram"
 
-#: src/PostTypes/TeamMember.php:266
+#: src/PostTypes/TeamMember.php:267
 msgid "Linked User"
 msgstr "Usuario vinculado"
 
-#: src/PostTypes/TeamMember.php:267
+#: src/PostTypes/TeamMember.php:268
 msgid "Instagram"
 msgstr "Instagram"
 
-#: src/Admin/AdminPages.php:35
+#: src/Admin/AdminPages.php:45
 #: src/Admin/settings/SettingsApp.js:75
 #: src/Admin/settings/SettingsApp.js:83
 msgid "Fair Team Settings"
 msgstr "Configuración de Fair Team"
 
-#: src/Admin/AdminPages.php:36
+#: src/Admin/AdminPages.php:46
 msgid "Settings"
 msgstr "Configuración"
 
@@ -336,3 +336,100 @@ msgctxt "block keyword"
 msgid "contributors"
 msgstr "colaboradores"
 
+#: src/Admin/AdminPages.php:35
+#: src/Admin/migration/MigrationApp.js:162
+msgid "Migrate Posts to Team Members"
+msgstr ""
+
+#: src/Admin/AdminPages.php:36
+msgid "Migrate Posts"
+msgstr ""
+
+#: src/API/MigrationController.php:182
+#: src/Admin/migration/MigrationApp.js:41
+msgid "All Categories"
+msgstr ""
+
+#: src/API/MigrationController.php:310
+msgid "Post migrated successfully to team member."
+msgstr ""
+
+#: src/Services/PostMigrationService.php:32
+msgid "Source post not found."
+msgstr ""
+
+#: src/Services/PostMigrationService.php:41
+msgid "Post is already a team member."
+msgstr ""
+
+#: src/Services/PostMigrationService.php:50
+msgid "You do not have permission to edit this post."
+msgstr ""
+
+#: src/Services/PostMigrationService.php:70
+msgid "Failed to create team member post."
+msgstr ""
+
+#: src/Admin/migration/MigrationApp.js:57
+msgid "All Post Types"
+msgstr ""
+
+#: src/Admin/migration/MigrationApp.js:66
+msgid "Failed to load post types."
+msgstr ""
+
+#: src/Admin/migration/MigrationApp.js:109
+msgid "Failed to load posts."
+msgstr ""
+
+#: src/Admin/migration/MigrationApp.js:143
+msgid "Post migrated successfully!"
+msgstr ""
+
+#: src/Admin/migration/MigrationApp.js:153
+msgid "Failed to migrate post."
+msgstr ""
+
+#: src/Admin/migration/MigrationApp.js:181
+msgid "Post Type"
+msgstr ""
+
+#: src/Admin/migration/MigrationApp.js:191
+msgid "Category"
+msgstr ""
+
+#: src/Admin/migration/MigrationApp.js:207
+msgid "No posts found. Try changing the filters or create some posts first."
+msgstr ""
+
+#: src/Admin/migration/MigrationApp.js:217
+msgid "Title"
+msgstr ""
+
+#: src/Admin/migration/MigrationApp.js:220
+msgid "Type"
+msgstr ""
+
+#: src/Admin/migration/MigrationApp.js:223
+msgid "Author"
+msgstr ""
+
+#: src/Admin/migration/MigrationApp.js:226
+msgid "Date"
+msgstr ""
+
+#: src/Admin/migration/MigrationApp.js:229
+msgid "Actions"
+msgstr ""
+
+#: src/Admin/migration/MigrationApp.js:244
+msgid "(no title)"
+msgstr ""
+
+#: src/Admin/migration/MigrationApp.js:260
+msgid "Migrating..."
+msgstr ""
+
+#: src/Admin/migration/MigrationApp.js:261
+msgid "Migrate"
+msgstr ""

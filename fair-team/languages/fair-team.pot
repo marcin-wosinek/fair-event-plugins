@@ -1,15 +1,15 @@
-# Copyright (C) 2025 Marcin Wosinek
+# Copyright (C) 2026 Marcin Wosinek
 # This file is distributed under the GPL-3.0-or-later.
 msgid ""
 msgstr ""
-"Project-Id-Version: Fair Team 0.1.0\n"
+"Project-Id-Version: Fair Team 0.2.0\n"
 "Report-Msgid-Bugs-To: https://wordpress.org/support/plugin/fair-team\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"POT-Creation-Date: 2025-12-29T22:57:59+00:00\n"
+"POT-Creation-Date: 2026-01-10T09:58:05+00:00\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "X-Generator: WP-CLI 2.12.0\n"
 "X-Domain: fair-team\n"
@@ -40,13 +40,31 @@ msgid "https://github.com/marcin-wosinek"
 msgstr ""
 
 #: src/Admin/AdminPages.php:35
+#: src/Admin/migration/MigrationApp.js:162
+msgid "Migrate Posts to Team Members"
+msgstr ""
+
+#: src/Admin/AdminPages.php:36
+msgid "Migrate Posts"
+msgstr ""
+
+#: src/Admin/AdminPages.php:45
 #: src/Admin/settings/SettingsApp.js:75
 #: src/Admin/settings/SettingsApp.js:83
 msgid "Fair Team Settings"
 msgstr ""
 
-#: src/Admin/AdminPages.php:36
+#: src/Admin/AdminPages.php:46
 msgid "Settings"
+msgstr ""
+
+#: src/API/MigrationController.php:182
+#: src/Admin/migration/MigrationApp.js:41
+msgid "All Categories"
+msgstr ""
+
+#: src/API/MigrationController.php:310
+msgid "Post migrated successfully to team member."
 msgstr ""
 
 #: src/API/PostTeamMembersController.php:70
@@ -198,40 +216,120 @@ msgctxt "Screen reader text for the items list"
 msgid "Team members list"
 msgstr ""
 
-#: src/PostTypes/TeamMember.php:93
+#: src/PostTypes/TeamMember.php:94
 msgid "WordPress user ID linked to this team member"
 msgstr ""
 
-#: src/PostTypes/TeamMember.php:106
+#: src/PostTypes/TeamMember.php:107
 msgid "Instagram account URL"
 msgstr ""
 
-#: src/PostTypes/TeamMember.php:133
+#: src/PostTypes/TeamMember.php:134
 msgid "Team Member Details"
 msgstr ""
 
-#: src/PostTypes/TeamMember.php:163
+#: src/PostTypes/TeamMember.php:164
 msgid "WordPress User"
 msgstr ""
 
-#: src/PostTypes/TeamMember.php:166
+#: src/PostTypes/TeamMember.php:167
 msgid "(None)"
 msgstr ""
 
-#: src/PostTypes/TeamMember.php:176
+#: src/PostTypes/TeamMember.php:177
 msgid "Instagram URL"
 msgstr ""
 
-#: src/PostTypes/TeamMember.php:266
+#: src/PostTypes/TeamMember.php:267
 msgid "Linked User"
 msgstr ""
 
-#: src/PostTypes/TeamMember.php:267
+#: src/PostTypes/TeamMember.php:268
 msgid "Instagram"
+msgstr ""
+
+#: src/Services/PostMigrationService.php:32
+msgid "Source post not found."
+msgstr ""
+
+#: src/Services/PostMigrationService.php:41
+msgid "Post is already a team member."
+msgstr ""
+
+#: src/Services/PostMigrationService.php:50
+msgid "You do not have permission to edit this post."
+msgstr ""
+
+#: src/Services/PostMigrationService.php:70
+msgid "Failed to create team member post."
 msgstr ""
 
 #: src/Settings/Settings.php:41
 msgid "URL slug for team members"
+msgstr ""
+
+#: src/Admin/migration/MigrationApp.js:57
+msgid "All Post Types"
+msgstr ""
+
+#: src/Admin/migration/MigrationApp.js:66
+msgid "Failed to load post types."
+msgstr ""
+
+#: src/Admin/migration/MigrationApp.js:109
+msgid "Failed to load posts."
+msgstr ""
+
+#: src/Admin/migration/MigrationApp.js:143
+msgid "Post migrated successfully!"
+msgstr ""
+
+#: src/Admin/migration/MigrationApp.js:153
+msgid "Failed to migrate post."
+msgstr ""
+
+#: src/Admin/migration/MigrationApp.js:181
+msgid "Post Type"
+msgstr ""
+
+#: src/Admin/migration/MigrationApp.js:191
+msgid "Category"
+msgstr ""
+
+#: src/Admin/migration/MigrationApp.js:207
+msgid "No posts found. Try changing the filters or create some posts first."
+msgstr ""
+
+#: src/Admin/migration/MigrationApp.js:217
+msgid "Title"
+msgstr ""
+
+#: src/Admin/migration/MigrationApp.js:220
+msgid "Type"
+msgstr ""
+
+#: src/Admin/migration/MigrationApp.js:223
+msgid "Author"
+msgstr ""
+
+#: src/Admin/migration/MigrationApp.js:226
+msgid "Date"
+msgstr ""
+
+#: src/Admin/migration/MigrationApp.js:229
+msgid "Actions"
+msgstr ""
+
+#: src/Admin/migration/MigrationApp.js:244
+msgid "(no title)"
+msgstr ""
+
+#: src/Admin/migration/MigrationApp.js:260
+msgid "Migrating..."
+msgstr ""
+
+#: src/Admin/migration/MigrationApp.js:261
+msgid "Migrate"
 msgstr ""
 
 #: src/Admin/post-team-members/PostTeamMembers.js:43

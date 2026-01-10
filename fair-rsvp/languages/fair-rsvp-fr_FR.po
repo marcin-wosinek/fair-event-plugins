@@ -979,8 +979,26 @@ msgstr "%1$s vous a invité à %2$s"
 #. translators: 1: Inviter name, 2: Event title, 3: Personal message, 4: Invitation URL, 5: Site name
 #: src/API/InvitationController.php:579
 #, php-format
-msgid "Hi,\n\n%1$s has invited you to: %2$s\n%3$s\nTo RSVP for this event, please click the link below:\n%4$s\n\nBest regards,\nThe %5$s Team"
-msgstr "Bonjour,\n\n%1$s vous a invité(e) à : %2$s\n%3$s\nPour répondre à cette invitation, veuillez cliquer sur le lien ci-dessous :\n%4$s\n\nCordialement,\nL'équipe %5$s"
+msgid ""
+"Hi,\n"
+"\n"
+"%1$s has invited you to: %2$s\n"
+"%3$s\n"
+"To RSVP for this event, please click the link below:\n"
+"%4$s\n"
+"\n"
+"Best regards,\n"
+"The %5$s Team"
+msgstr ""
+"Bonjour,\n"
+"\n"
+"%1$s vous a invité(e) à : %2$s\n"
+"%3$s\n"
+"Pour répondre à cette invitation, veuillez cliquer sur le lien ci-dessous :\n"
+"%4$s\n"
+"\n"
+"Cordialement,\n"
+"L'équipe %5$s"
 
 #: src/API/InvitationController.php:611
 msgid "You must be logged in to send invitations."
@@ -1483,4 +1501,3 @@ msgid "Participant (%d)"
 msgid_plural "Participants (%d)"
 msgstr[0] "Participant (%d)"
 msgstr[1] "Participants (%d)"
-

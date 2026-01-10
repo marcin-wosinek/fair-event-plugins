@@ -75,174 +75,174 @@ msgid "A Gutenberg block for calendar integration"
 msgstr "Ein Gutenberg-Block für die Kalender-Integration"
 
 #: build/blocks/calendar-button/editor.js:2
-#: src/blocks/calendar-button/components/EditComponent.js:56
-#: src/blocks/calendar-button/components/EditComponent.js:73
+#: src/blocks/calendar-button/components/EditComponent.js:155
+#: src/blocks/calendar-button/components/EditComponent.js:172
 msgid "Other"
 msgstr "Andere"
 
 #: build/blocks/calendar-button/editor.js:2
-#: src/blocks/calendar-button/components/EditComponent.js:57
+#: src/blocks/calendar-button/components/EditComponent.js:156
 msgid "30 minutes"
 msgstr "30 Minuten"
 
 #: build/blocks/calendar-button/editor.js:2
-#: src/blocks/calendar-button/components/EditComponent.js:58
+#: src/blocks/calendar-button/components/EditComponent.js:157
 msgid "1 hour"
 msgstr "1 Stunde"
 
 #: build/blocks/calendar-button/editor.js:2
-#: src/blocks/calendar-button/components/EditComponent.js:59
+#: src/blocks/calendar-button/components/EditComponent.js:158
 msgid "1 hour 30 minutes"
 msgstr "1 Stunde 30 Minuten"
 
 #: build/blocks/calendar-button/editor.js:2
-#: src/blocks/calendar-button/components/EditComponent.js:60
+#: src/blocks/calendar-button/components/EditComponent.js:159
 msgid "2 hours"
 msgstr "2 Stunden"
 
 #: build/blocks/calendar-button/editor.js:2
-#: src/blocks/calendar-button/components/EditComponent.js:62
+#: src/blocks/calendar-button/components/EditComponent.js:161
 msgid "2 hours 30 minutes"
 msgstr "2 Stunden 30 Minuten"
 
 #: build/blocks/calendar-button/editor.js:2
-#: src/blocks/calendar-button/components/EditComponent.js:65
+#: src/blocks/calendar-button/components/EditComponent.js:164
 msgid "3 hours"
 msgstr "3 Stunden"
 
 #: build/blocks/calendar-button/editor.js:2
-#: src/blocks/calendar-button/components/EditComponent.js:66
+#: src/blocks/calendar-button/components/EditComponent.js:165
 msgid "4 hours"
 msgstr "4 Stunden"
 
 #: build/blocks/calendar-button/editor.js:2
-#: src/blocks/calendar-button/components/EditComponent.js:67
+#: src/blocks/calendar-button/components/EditComponent.js:166
 msgid "6 hours"
 msgstr "6 Stunden"
 
 #: build/blocks/calendar-button/editor.js:2
-#: src/blocks/calendar-button/components/EditComponent.js:68
+#: src/blocks/calendar-button/components/EditComponent.js:167
 msgid "8 hours"
 msgstr "8 Stunden"
 
 #: build/blocks/calendar-button/editor.js:2
-#: src/blocks/calendar-button/components/EditComponent.js:74
+#: src/blocks/calendar-button/components/EditComponent.js:173
 msgid "1 day"
 msgstr "1 Tag"
 
 #: build/blocks/calendar-button/editor.js:2
-#: src/blocks/calendar-button/components/EditComponent.js:75
+#: src/blocks/calendar-button/components/EditComponent.js:174
 msgid "2 days"
 msgstr "2 Tage"
 
 #: build/blocks/calendar-button/editor.js:2
-#: src/blocks/calendar-button/components/EditComponent.js:76
+#: src/blocks/calendar-button/components/EditComponent.js:175
 msgid "3 days"
 msgstr "3 Tage"
 
 #: build/blocks/calendar-button/editor.js:2
-#: src/blocks/calendar-button/components/EditComponent.js:265
+#: src/blocks/calendar-button/components/EditComponent.js:364
 msgid "Add to Calendar"
 msgstr "Zum Kalender hinzufügen"
 
 #: build/blocks/calendar-button/editor.js:2
-#: src/blocks/calendar-button/components/EditComponent.js:288
+#: src/blocks/calendar-button/components/EditComponent.js:387
 msgid "Calendar Button Settings"
 msgstr "Kalender-Button Einstellungen"
 
 #: build/blocks/calendar-button/editor.js:2
-#: src/blocks/calendar-button/components/EditComponent.js:294
+#: src/blocks/calendar-button/components/EditComponent.js:409
 msgid "All Day Event"
 msgstr "Ganztägiges Ereignis"
 
 #: build/blocks/calendar-button/editor.js:2
-#: src/blocks/calendar-button/components/EditComponent.js:301
+#: src/blocks/calendar-button/components/EditComponent.js:417
 msgid "Start Date"
 msgstr "Startdatum"
 
 #: build/blocks/calendar-button/editor.js:2
-#: src/blocks/calendar-button/components/EditComponent.js:302
+#: src/blocks/calendar-button/components/EditComponent.js:418
 msgid "Start Date/Time"
 msgstr "Startdatum/Uhrzeit"
 
 #: build/blocks/calendar-button/editor.js:2
-#: src/blocks/calendar-button/components/EditComponent.js:314
-#: src/blocks/calendar-button/components/EditComponent.js:322
+#: src/blocks/calendar-button/components/EditComponent.js:431
+#: src/blocks/calendar-button/components/EditComponent.js:440
 msgid "Event Length"
 msgstr "Ereignisdauer"
 
 #: build/blocks/calendar-button/editor.js:2
-#: src/blocks/calendar-button/components/EditComponent.js:331
+#: src/blocks/calendar-button/components/EditComponent.js:450
 msgid "End Date"
 msgstr "Enddatum"
 
 #: build/blocks/calendar-button/editor.js:2
-#: src/blocks/calendar-button/components/EditComponent.js:332
+#: src/blocks/calendar-button/components/EditComponent.js:451
 msgid "End Date/Time"
 msgstr "Enddatum/Uhrzeit"
 
 #: build/blocks/calendar-button/editor.js:2
-#: src/blocks/calendar-button/components/EditComponent.js:349
+#: src/blocks/calendar-button/components/EditComponent.js:475
 msgid "Description"
 msgstr "Beschreibung"
 
 #: build/blocks/calendar-button/editor.js:2
-#: src/blocks/calendar-button/components/EditComponent.js:356
+#: src/blocks/calendar-button/components/EditComponent.js:469
 msgid "Location"
 msgstr "Ort"
 
 #: build/blocks/calendar-button/editor.js:2
-#: src/blocks/calendar-button/components/EditComponent.js:361
+#: src/blocks/calendar-button/components/EditComponent.js:482
 msgid "Recurring Event"
 msgstr "Wiederkehrendes Ereignis"
 
 #: build/blocks/calendar-button/editor.js:2
-#: src/blocks/calendar-button/components/EditComponent.js:366
+#: src/blocks/calendar-button/components/EditComponent.js:487
 msgid "Enable this to set up a recurring event with an iCal recurrence rule."
 msgstr "Aktivieren Sie diese Option, um ein wiederkehrendes Ereignis mit einer iCal-Wiederholungsregel einzurichten."
 
 #: build/blocks/calendar-button/editor.js:2
-#: src/blocks/calendar-button/components/EditComponent.js:374
+#: src/blocks/calendar-button/components/EditComponent.js:495
 msgid "Frequency"
 msgstr "Häufigkeit"
 
 #: build/blocks/calendar-button/editor.js:2
-#: src/blocks/calendar-button/components/EditComponent.js:378
+#: src/blocks/calendar-button/components/EditComponent.js:499
 msgid "Daily"
 msgstr "Täglich"
 
 #: build/blocks/calendar-button/editor.js:2
-#: src/blocks/calendar-button/components/EditComponent.js:385
+#: src/blocks/calendar-button/components/EditComponent.js:506
 msgid "Weekly"
 msgstr "Wöchentlich"
 
 #: build/blocks/calendar-button/editor.js:2
-#: src/blocks/calendar-button/components/EditComponent.js:392
+#: src/blocks/calendar-button/components/EditComponent.js:513
 msgid "Biweekly"
 msgstr "Zweiwöchentlich"
 
 #: build/blocks/calendar-button/editor.js:2
-#: src/blocks/calendar-button/components/EditComponent.js:400
+#: src/blocks/calendar-button/components/EditComponent.js:521
 msgid "How often the event repeats."
 msgstr "Wie oft das Ereignis wiederholt wird."
 
 #: build/blocks/calendar-button/editor.js:2
-#: src/blocks/calendar-button/components/EditComponent.js:406
+#: src/blocks/calendar-button/components/EditComponent.js:527
 msgid "Number of Repetitions"
 msgstr "Anzahl der Wiederholungen"
 
 #: build/blocks/calendar-button/editor.js:2
-#: src/blocks/calendar-button/components/EditComponent.js:413
+#: src/blocks/calendar-button/components/EditComponent.js:534
 msgid "Leave empty for unlimited repetitions, or set \"Until Date\" below."
 msgstr "Leer lassen für unbegrenzte Wiederholungen oder \"Bis Datum\" unten festlegen."
 
 #: build/blocks/calendar-button/editor.js:2
-#: src/blocks/calendar-button/components/EditComponent.js:420
+#: src/blocks/calendar-button/components/EditComponent.js:541
 msgid "Until Date"
 msgstr "Bis Datum"
 
 #: build/blocks/calendar-button/editor.js:2
-#: src/blocks/calendar-button/components/EditComponent.js:424
+#: src/blocks/calendar-button/components/EditComponent.js:545
 msgid "Leave empty for unlimited repetitions, or set \"Number of Repetitions\" above."
 msgstr "Leer lassen für unbegrenzte Wiederholungen oder \"Anzahl der Wiederholungen\" oben festlegen."
 
@@ -332,3 +332,13 @@ msgstr "Kalender-Ereignis bearbeiten"
 #: src/blocks/calendar-button/utils/calendar-handler.js:79
 msgid "Download ICS"
 msgstr "ICS herunterladen"
+
+#: build/blocks/calendar-button/editor.js:2
+#: src/blocks/calendar-button/components/EditComponent.js:394
+msgid "Keep in sync with event data"
+msgstr ""
+
+#: build/blocks/calendar-button/editor.js:2
+#: src/blocks/calendar-button/components/EditComponent.js:402
+msgid "Automatically use start date, end date, and all-day setting from the event."
+msgstr ""

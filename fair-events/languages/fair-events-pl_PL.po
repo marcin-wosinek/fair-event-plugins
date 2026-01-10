@@ -1292,4 +1292,3 @@ msgstr "tydzień"
 msgctxt "block keyword"
 msgid "weekly"
 msgstr "tygodniowy"
-
