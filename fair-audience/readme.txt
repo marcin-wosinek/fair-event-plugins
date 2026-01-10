@@ -3,7 +3,7 @@ Contributors: marcinwosinek
 Tags: events, participants, audience, management
 Requires at least: 6.7
 Tested up to: 6.7
-Stable tag: 0.1.0
+Stable tag: 0.2.0
 Requires PHP: 8.0
 License: GPLv3 or later
 License URI: https://www.gnu.org/licenses/gpl-3.0.html
@@ -39,11 +39,34 @@ Yes, it integrates with the fair_event post type from the Fair Events plugin.
 
 == Changelog ==
 
-= 0.1.0 =
-* Initial release
-* Participant management
-* Event-participant relationships
-* Admin interface
+## 0.2.0
+
+### Minor Changes
+
+- 109ae1a: Add participant poll feature.
+- fe6b0c8: Add import from Entradium xlsx.
+
+All notable changes to this project will be documented in this file.
+
+The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
+and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
+
+## [0.1.0] - 2026-01-09
+
+### Added
+
+- Initial release
+- Participant management with name, surname, email, Instagram handle
+- Email preference settings (minimal or in-the-loop)
+- Many-to-many relationships between participants and events
+- Participant labels (interested or signed up)
+- Admin interface for managing participants
+- Events list with participant counts
+- Event participants view
+- REST API endpoints for participants and event-participant relationships
+- Database tables for participants and event-participant relationships
+
+[0.1.0]: https://github.com/marcin-wosinek/fair-event-plugins/releases/tag/fair-audience-0.1.0
 
 == Upgrade Notice ==
 

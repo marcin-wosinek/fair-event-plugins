@@ -1,5 +1,16 @@
 # fair-events
 
+## 0.7.0
+
+### Minor Changes
+
+- cf7f5de: Add weekly schedule block.
+- 27ff8bd: Add event sources & iCal feed.
+
+### Patch Changes
+
+- c806c7c: Add iCal for calendar display.
+
 ## 0.6.1
 
 ### Patch Changes
