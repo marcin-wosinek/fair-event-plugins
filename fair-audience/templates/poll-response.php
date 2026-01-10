@@ -13,7 +13,7 @@ get_header();
 <div id="fair-audience-poll-root" data-access-key="<?php echo esc_attr( $_GET['poll_key'] ); ?>"></div>
 
 <?php
-// Enqueue the poll response script.
+// Enqueue the poll response script and styles.
 $asset_file = include FAIR_AUDIENCE_PLUGIN_DIR . 'build/public/poll-response/index.asset.php';
 
 wp_enqueue_script(
@@ -22,6 +22,13 @@ wp_enqueue_script(
 	$asset_file['dependencies'],
 	$asset_file['version'],
 	true
+);
+
+wp_enqueue_style(
+	'fair-audience-poll-response',
+	FAIR_AUDIENCE_PLUGIN_URL . 'build/public/poll-response/style-index.css',
+	array(),
+	$asset_file['version']
 );
 
 get_footer();

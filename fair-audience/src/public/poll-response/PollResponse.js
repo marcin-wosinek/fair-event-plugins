@@ -2,6 +2,7 @@ import { __ } from '@wordpress/i18n';
 import { useState, useEffect } from '@wordpress/element';
 import apiFetch from '@wordpress/api-fetch';
 import { Button, CheckboxControl, Spinner } from '@wordpress/components';
+import './style.css';
 
 export default function PollResponse() {
 	const [isLoading, setIsLoading] = useState(true);
@@ -116,12 +117,8 @@ export default function PollResponse() {
 	if (isLoading) {
 		return (
 			<div
-				style={{
-					maxWidth: '600px',
-					margin: '40px auto',
-					padding: '20px',
-					textAlign: 'center',
-				}}
+				className="poll-response-container"
+				style={{ textAlign: 'center' }}
 			>
 				<Spinner />
 			</div>
@@ -131,10 +128,8 @@ export default function PollResponse() {
 	if (error) {
 		return (
 			<div
+				className="poll-response-container"
 				style={{
-					maxWidth: '600px',
-					margin: '40px auto',
-					padding: '20px',
 					backgroundColor: '#f8d7da',
 					border: '1px solid #f5c6cb',
 					borderRadius: '4px',
@@ -150,10 +145,8 @@ export default function PollResponse() {
 	if (alreadyResponded) {
 		return (
 			<div
+				className="poll-response-container"
 				style={{
-					maxWidth: '600px',
-					margin: '40px auto',
-					padding: '20px',
 					backgroundColor: '#d4edda',
 					border: '1px solid #c3e6cb',
 					borderRadius: '4px',
@@ -187,10 +180,8 @@ export default function PollResponse() {
 	if (submitted) {
 		return (
 			<div
+				className="poll-response-container"
 				style={{
-					maxWidth: '600px',
-					margin: '40px auto',
-					padding: '20px',
 					backgroundColor: '#d4edda',
 					border: '1px solid #c3e6cb',
 					borderRadius: '4px',
@@ -213,13 +204,7 @@ export default function PollResponse() {
 	}
 
 	return (
-		<div
-			style={{
-				maxWidth: '600px',
-				margin: '40px auto',
-				padding: '20px',
-			}}
-		>
+		<div className="poll-response-container">
 			{participantName && (
 				<p style={{ marginBottom: '20px' }}>
 					{__('Hi', 'fair-audience')} {participantName}!
@@ -232,20 +217,27 @@ export default function PollResponse() {
 				{poll.options.map((option) => (
 					<div
 						key={option.id}
-						style={{
-							marginBottom: '15px',
-							padding: '12px',
-							border: '1px solid #ddd',
-							borderRadius: '4px',
-							backgroundColor: selectedOptions.includes(option.id)
-								? '#f0f6ff'
-								: '#fff',
+						className={`poll-response-option ${
+							selectedOptions.includes(option.id)
+								? 'selected'
+								: ''
+						}`}
+						onClick={() => handleOptionToggle(option.id)}
+						role="button"
+						tabIndex={0}
+						onKeyDown={(e) => {
+							if (e.key === 'Enter' || e.key === ' ') {
+								e.preventDefault();
+								handleOptionToggle(option.id);
+							}
 						}}
 					>
 						<CheckboxControl
 							label={option.text}
 							checked={selectedOptions.includes(option.id)}
-							onChange={() => handleOptionToggle(option.id)}
+							onChange={() => {
+								/* Handled by parent div onClick */
+							}}
 						/>
 					</div>
 				))}
