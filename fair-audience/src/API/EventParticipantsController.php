@@ -146,6 +146,38 @@ class EventParticipantsController extends WP_REST_Controller {
 			)
 		);
 
+		// DELETE /fair-audience/v1/events/{event_id}/participants/batch
+		register_rest_route(
+			$this->namespace,
+			'/' . $this->rest_base . '/batch',
+			array(
+				array(
+					'methods'             => WP_REST_Server::DELETABLE,
+					'callback'            => array( $this, 'delete_batch_items' ),
+					'permission_callback' => array( $this, 'delete_item_permissions_check' ),
+					'args'                => array(
+						'event_id'        => array(
+							'type'              => 'integer',
+							'required'          => true,
+							'validate_callback' => function ( $param ) {
+								return is_numeric( $param );
+							},
+						),
+						'participant_ids' => array(
+							'type'              => 'array',
+							'required'          => true,
+							'items'             => array(
+								'type' => 'integer',
+							),
+							'validate_callback' => function ( $param ) {
+								return is_array( $param ) && ! empty( $param );
+							},
+						),
+					),
+				),
+			)
+		);
+
 		// GET /fair-audience/v1/events (list events with participant counts)
 		register_rest_route(
 			$this->namespace,
@@ -300,6 +332,55 @@ class EventParticipantsController extends WP_REST_Controller {
 				'message' => __( 'Participant removed successfully.', 'fair-audience' ),
 			)
 		);
+	}
+
+	/**
+	 * Delete multiple participants from an event.
+	 *
+	 * @param WP_REST_Request $request Request object.
+	 * @return WP_REST_Response|WP_Error Response object or error.
+	 */
+	public function delete_batch_items( $request ) {
+		$event_id        = (int) $request['event_id'];
+		$participant_ids = $request->get_param( 'participant_ids' );
+
+		// Validate event exists.
+		$event = get_post( $event_id );
+		if ( ! $event || 'fair_event' !== $event->post_type ) {
+			return new WP_Error(
+				'invalid_event',
+				__( 'Invalid event ID.', 'fair-audience' ),
+				array( 'status' => 404 )
+			);
+		}
+
+		$results = array(
+			'removed' => 0,
+			'failed'  => 0,
+			'errors'  => array(),
+		);
+
+		foreach ( $participant_ids as $participant_id ) {
+			$participant_id = (int) $participant_id;
+
+			$deleted = $this->event_participant_repo->remove_participant_from_event(
+				$event_id,
+				$participant_id
+			);
+
+			if ( $deleted ) {
+				++$results['removed'];
+			} else {
+				++$results['failed'];
+				$results['errors'][] = sprintf(
+					/* translators: %d: participant ID */
+					__( 'Failed to remove participant ID %d', 'fair-audience' ),
+					$participant_id
+				);
+			}
+		}
+
+		return rest_ensure_response( $results );
 	}
 
 	/**
