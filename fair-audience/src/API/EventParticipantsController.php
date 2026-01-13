@@ -94,7 +94,7 @@ class EventParticipantsController extends WP_REST_Controller {
 						),
 						'label'          => array(
 							'type'    => 'string',
-							'enum'    => array( 'interested', 'signed_up' ),
+							'enum'    => array( 'interested', 'signed_up', 'collaborator' ),
 							'default' => 'interested',
 						),
 					),
@@ -123,7 +123,7 @@ class EventParticipantsController extends WP_REST_Controller {
 						),
 						'label'          => array(
 							'type'     => 'string',
-							'enum'     => array( 'interested', 'signed_up' ),
+							'enum'     => array( 'interested', 'signed_up', 'collaborator' ),
 							'required' => true,
 						),
 					),

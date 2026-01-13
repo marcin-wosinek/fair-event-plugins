@@ -96,7 +96,7 @@ class EventParticipant {
 		}
 
 		// Validate label enum.
-		if ( ! in_array( $this->label, array( 'interested', 'signed_up' ), true ) ) {
+		if ( ! in_array( $this->label, array( 'interested', 'signed_up', 'collaborator' ), true ) ) {
 			$this->label = 'interested';
 		}
 

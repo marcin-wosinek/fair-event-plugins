@@ -2,14 +2,14 @@
 # This file is distributed under the GPL-3.0-or-later.
 msgid ""
 msgstr ""
-"Project-Id-Version: Fair Audience 0.1.0\n"
+"Project-Id-Version: Fair Audience 0.2.0\n"
 "Report-Msgid-Bugs-To: https://wordpress.org/support/plugin/fair-audience\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"POT-Creation-Date: 2026-01-10T09:57:59+00:00\n"
+"POT-Creation-Date: 2026-01-13T11:03:44+00:00\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "X-Generator: WP-CLI 2.12.0\n"
 "X-Domain: fair-audience\n"
@@ -446,7 +446,7 @@ msgid "Update"
 msgstr ""
 
 #: src/Admin/all-participants/AllParticipants.js:279
-#: src/Admin/event-participants/EventParticipants.js:288
+#: src/Admin/event-participants/EventParticipants.js:302
 msgid "Add"
 msgstr ""
 
@@ -589,7 +589,7 @@ msgid "Move down"
 msgstr ""
 
 #: src/Admin/edit-poll/EditPoll.js:602
-#: src/Admin/event-participants/EventParticipants.js:227
+#: src/Admin/event-participants/EventParticipants.js:234
 msgid "Remove"
 msgstr ""
 
@@ -649,31 +649,36 @@ msgid "Participants for %s"
 msgstr ""
 
 #: src/Admin/event-participants/EventParticipants.js:170
-#: src/Admin/event-participants/EventParticipants.js:266
+#: src/Admin/event-participants/EventParticipants.js:273
 msgid "Label"
 msgstr ""
 
 #: src/Admin/event-participants/EventParticipants.js:197
-#: src/Admin/event-participants/EventParticipants.js:270
+#: src/Admin/event-participants/EventParticipants.js:277
 #: src/Admin/events-list/EventsList.js:62
 msgid "Interested"
 msgstr ""
 
 #: src/Admin/event-participants/EventParticipants.js:204
-#: src/Admin/event-participants/EventParticipants.js:277
+#: src/Admin/event-participants/EventParticipants.js:284
 #: src/Admin/events-list/EventsList.js:63
 msgid "Signed Up"
 msgstr ""
 
-#: src/Admin/event-participants/EventParticipants.js:237
+#: src/Admin/event-participants/EventParticipants.js:211
+#: src/Admin/event-participants/EventParticipants.js:288
+msgid "Collaborator"
+msgstr ""
+
+#: src/Admin/event-participants/EventParticipants.js:244
 msgid "Add Participant to Event"
 msgstr ""
 
-#: src/Admin/event-participants/EventParticipants.js:243
+#: src/Admin/event-participants/EventParticipants.js:250
 msgid "Select Participant"
 msgstr ""
 
-#: src/Admin/event-participants/EventParticipants.js:250
+#: src/Admin/event-participants/EventParticipants.js:257
 msgid "— Select —"
 msgstr ""
 
@@ -692,7 +697,11 @@ msgstr ""
 msgid "Date"
 msgstr ""
 
-#: src/Admin/events-list/EventsList.js:77
+#: src/Admin/events-list/EventsList.js:64
+msgid "Collaborators"
+msgstr ""
+
+#: src/Admin/events-list/EventsList.js:78
 msgid "View Participants"
 msgstr ""
 

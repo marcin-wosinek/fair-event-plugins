@@ -235,7 +235,7 @@ msgid "Update"
 msgstr "Aktualisieren"
 
 #: src/Admin/all-participants/AllParticipants.js:279
-#: src/Admin/event-participants/EventParticipants.js:288
+#: src/Admin/event-participants/EventParticipants.js:302
 msgid "Add"
 msgstr "Hinzufügen"
 
@@ -254,36 +254,36 @@ msgid "Participants for %s"
 msgstr "Teilnehmer für %s"
 
 #: src/Admin/event-participants/EventParticipants.js:170
-#: src/Admin/event-participants/EventParticipants.js:266
+#: src/Admin/event-participants/EventParticipants.js:273
 msgid "Label"
 msgstr "Bezeichnung"
 
 #: src/Admin/event-participants/EventParticipants.js:197
-#: src/Admin/event-participants/EventParticipants.js:270
+#: src/Admin/event-participants/EventParticipants.js:277
 #: src/Admin/events-list/EventsList.js:62
 msgid "Interested"
 msgstr "Interessiert"
 
 #: src/Admin/event-participants/EventParticipants.js:204
-#: src/Admin/event-participants/EventParticipants.js:277
+#: src/Admin/event-participants/EventParticipants.js:284
 #: src/Admin/events-list/EventsList.js:63
 msgid "Signed Up"
 msgstr "Angemeldet"
 
 #: src/Admin/edit-poll/EditPoll.js:602
-#: src/Admin/event-participants/EventParticipants.js:227
+#: src/Admin/event-participants/EventParticipants.js:234
 msgid "Remove"
 msgstr "Entfernen"
 
-#: src/Admin/event-participants/EventParticipants.js:237
+#: src/Admin/event-participants/EventParticipants.js:244
 msgid "Add Participant to Event"
 msgstr "Teilnehmer zur Veranstaltung hinzufügen"
 
-#: src/Admin/event-participants/EventParticipants.js:243
+#: src/Admin/event-participants/EventParticipants.js:250
 msgid "Select Participant"
 msgstr "Teilnehmer auswählen"
 
-#: src/Admin/event-participants/EventParticipants.js:250
+#: src/Admin/event-participants/EventParticipants.js:257
 msgid "— Select —"
 msgstr "— Auswählen —"
 
@@ -307,7 +307,7 @@ msgstr "Veranstaltung"
 msgid "Date"
 msgstr "Datum"
 
-#: src/Admin/events-list/EventsList.js:77
+#: src/Admin/events-list/EventsList.js:78
 msgid "View Participants"
 msgstr "Teilnehmer anzeigen"
 
@@ -866,3 +866,12 @@ msgstr "Wird übermittelt..."
 #: src/public/poll-response/PollResponse.js:249
 msgid "Submit Response"
 msgstr "Antwort absenden"
+
+#: src/Admin/event-participants/EventParticipants.js:211
+#: src/Admin/event-participants/EventParticipants.js:288
+msgid "Collaborator"
+msgstr "Mitarbeiter"
+
+#: src/Admin/events-list/EventsList.js:64
+msgid "Collaborators"
+msgstr "Mitarbeiter"

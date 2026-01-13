@@ -191,8 +191,9 @@ class EventParticipantRepository {
 		);
 
 		$counts = array(
-			'interested' => 0,
-			'signed_up'  => 0,
+			'interested'   => 0,
+			'signed_up'    => 0,
+			'collaborator' => 0,
 		);
 
 		foreach ( $results as $row ) {

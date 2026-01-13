@@ -207,6 +207,13 @@ export default function EventParticipants() {
 											),
 											value: 'signed_up',
 										},
+										{
+											label: __(
+												'Collaborator',
+												'fair-audience'
+											),
+											value: 'collaborator',
+										},
 									]}
 									onChange={(value) =>
 										handleUpdateLabel(
@@ -276,6 +283,13 @@ export default function EventParticipants() {
 									{
 										label: __('Signed Up', 'fair-audience'),
 										value: 'signed_up',
+									},
+									{
+										label: __(
+											'Collaborator',
+											'fair-audience'
+										),
+										value: 'collaborator',
 									},
 								]}
 								onChange={(value) => setSelectedLabel(value)}

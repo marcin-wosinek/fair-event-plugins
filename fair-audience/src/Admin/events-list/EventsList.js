@@ -61,6 +61,7 @@ export default function EventsList() {
 						<th>{__('Date', 'fair-audience')}</th>
 						<th>{__('Interested', 'fair-audience')}</th>
 						<th>{__('Signed Up', 'fair-audience')}</th>
+						<th>{__('Collaborators', 'fair-audience')}</th>
 					</tr>
 				</thead>
 				<tbody>
@@ -84,6 +85,9 @@ export default function EventsList() {
 							</td>
 							<td>{event.participant_counts.interested || 0}</td>
 							<td>{event.participant_counts.signed_up || 0}</td>
+							<td>
+								{event.participant_counts.collaborator || 0}
+							</td>
 						</tr>
 					))}
 				</tbody>

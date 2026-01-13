@@ -56,7 +56,7 @@ class Schema {
 			id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
 			event_id BIGINT UNSIGNED NOT NULL,
 			participant_id BIGINT UNSIGNED NOT NULL,
-			label ENUM('interested', 'signed_up') NOT NULL DEFAULT 'interested',
+			label ENUM('interested', 'signed_up', 'collaborator') NOT NULL DEFAULT 'interested',
 			created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
 			updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
 			UNIQUE KEY idx_event_participant (event_id, participant_id),
