@@ -298,12 +298,15 @@ class ImportController extends WP_REST_Controller {
 				if ( $existing ) {
 					// Don't create new participant, but link existing to event.
 					if ( $event_id ) {
-						$this->event_participant_repository->add_participant_to_event(
+						$link_result = $this->event_participant_repository->add_participant_to_event(
 							$event_id,
 							$existing->id,
 							'signed_up'
 						);
-						++$results['existing_linked'];
+						// Only count if relationship was actually created.
+						if ( $link_result !== false ) {
+							++$results['existing_linked'];
+						}
 					} else {
 						++$results['skipped'];
 					}
@@ -327,11 +330,20 @@ class ImportController extends WP_REST_Controller {
 
 					// If event_id is provided, associate participant with event.
 					if ( $event_id ) {
-						$this->event_participant_repository->add_participant_to_event(
+						$link_result = $this->event_participant_repository->add_participant_to_event(
 							$event_id,
 							$participant->id,
 							'signed_up'
 						);
+						// Log error if linking fails for a newly created participant.
+						if ( ! $link_result ) {
+							$results['errors'][] = sprintf(
+								/* translators: 1: row number, 2: email address */
+								__( 'Row %1$d: Failed to link participant to event: %2$s', 'fair-audience' ),
+								$row_number,
+								$email
+							);
+						}
 					}
 				} else {
 					$results['errors'][] = sprintf(
@@ -430,12 +442,15 @@ class ImportController extends WP_REST_Controller {
 			if ( $existing ) {
 				// Don't create new participant, but link existing to event.
 				if ( $event_id ) {
-					$this->event_participant_repository->add_participant_to_event(
+					$link_result = $this->event_participant_repository->add_participant_to_event(
 						$event_id,
 						$existing->id,
 						'signed_up'
 					);
-					++$results['existing_linked'];
+					// Only count if relationship was actually created.
+					if ( $link_result !== false ) {
+						++$results['existing_linked'];
+					}
 				} else {
 					++$results['skipped'];
 				}
@@ -459,11 +474,20 @@ class ImportController extends WP_REST_Controller {
 
 				// If event_id is provided, associate participant with event.
 				if ( $event_id ) {
-					$this->event_participant_repository->add_participant_to_event(
+					$link_result = $this->event_participant_repository->add_participant_to_event(
 						$event_id,
 						$participant->id,
 						'signed_up'
 					);
+					// Log error if linking fails for a newly created participant.
+					if ( ! $link_result ) {
+						$results['errors'][] = sprintf(
+							/* translators: 1: participant index, 2: name and surname */
+							__( 'Participant %1$d: Failed to link to event: %2$s', 'fair-audience' ),
+							$index + 1,
+							$name . ' ' . $surname
+						);
+					}
 				}
 			} else {
 				$results['errors'][] = sprintf(
