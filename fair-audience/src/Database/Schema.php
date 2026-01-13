@@ -179,4 +179,36 @@ class Schema {
 			CONSTRAINT fk_response_option FOREIGN KEY (option_id) REFERENCES {$poll_options_table_name}(id) ON DELETE CASCADE
 		) ENGINE=InnoDB $charset_collate;";
 	}
+
+	/**
+	 * Get SQL for creating the import resolutions table.
+	 *
+	 * @return string SQL statement.
+	 */
+	public static function get_import_resolutions_table_sql() {
+		global $wpdb;
+
+		$table_name              = $wpdb->prefix . 'fair_audience_import_resolutions';
+		$participants_table_name = $wpdb->prefix . 'fair_audience_participants';
+		$charset_collate         = $wpdb->get_charset_collate();
+
+		return "CREATE TABLE $table_name (
+			id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+			filename VARCHAR(255) NOT NULL,
+			original_email VARCHAR(255) NOT NULL,
+			row_number INT NOT NULL,
+			resolved_name VARCHAR(255) NOT NULL,
+			resolved_surname VARCHAR(255) NOT NULL,
+			resolved_email VARCHAR(255) NOT NULL,
+			resolution_action ENUM('edit', 'skip', 'alias') NOT NULL DEFAULT 'edit',
+			participant_id BIGINT UNSIGNED DEFAULT NULL,
+			created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+			updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+			UNIQUE KEY idx_original_name_surname (original_email, resolved_name, resolved_surname),
+			KEY idx_filename (filename),
+			KEY idx_original_email (original_email),
+			KEY idx_participant_id (participant_id),
+			CONSTRAINT fk_resolution_participant FOREIGN KEY (participant_id) REFERENCES {$participants_table_name}(id) ON DELETE SET NULL
+		) ENGINE=InnoDB $charset_collate;";
+	}
 }
