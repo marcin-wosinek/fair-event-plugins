@@ -62,9 +62,7 @@ class Schema {
 			UNIQUE KEY idx_event_participant (event_id, participant_id),
 			KEY idx_event_id (event_id),
 			KEY idx_participant_id (participant_id),
-			KEY idx_label (label),
-			CONSTRAINT fk_audience_event FOREIGN KEY (event_id) REFERENCES {$wpdb->posts}(ID) ON DELETE CASCADE,
-			CONSTRAINT fk_audience_participant FOREIGN KEY (participant_id) REFERENCES {$participants_table_name}(id) ON DELETE CASCADE
+			KEY idx_label (label)
 		) ENGINE=InnoDB $charset_collate;";
 	}
 
@@ -88,8 +86,7 @@ class Schema {
 			created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
 			updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
 			KEY idx_event_id (event_id),
-			KEY idx_status (status),
-			CONSTRAINT fk_poll_event FOREIGN KEY (event_id) REFERENCES {$wpdb->posts}(ID) ON DELETE CASCADE
+			KEY idx_status (status)
 		) ENGINE=InnoDB $charset_collate;";
 	}
 
@@ -112,8 +109,7 @@ class Schema {
 			display_order INT NOT NULL DEFAULT 0,
 			created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
 			KEY idx_poll_id (poll_id),
-			KEY idx_display_order (display_order),
-			CONSTRAINT fk_option_poll FOREIGN KEY (poll_id) REFERENCES {$polls_table_name}(id) ON DELETE CASCADE
+			KEY idx_display_order (display_order)
 		) ENGINE=InnoDB $charset_collate;";
 	}
 
@@ -144,9 +140,7 @@ class Schema {
 			UNIQUE KEY idx_poll_participant (poll_id, participant_id),
 			KEY idx_token (token),
 			KEY idx_status (status),
-			KEY idx_participant_id (participant_id),
-			CONSTRAINT fk_access_key_poll FOREIGN KEY (poll_id) REFERENCES {$polls_table_name}(id) ON DELETE CASCADE,
-			CONSTRAINT fk_access_key_participant FOREIGN KEY (participant_id) REFERENCES {$participants_table_name}(id) ON DELETE CASCADE
+			KEY idx_participant_id (participant_id)
 		) ENGINE=InnoDB $charset_collate;";
 	}
 
@@ -173,10 +167,7 @@ class Schema {
 			UNIQUE KEY idx_poll_participant_option (poll_id, participant_id, option_id),
 			KEY idx_poll_id (poll_id),
 			KEY idx_participant_id (participant_id),
-			KEY idx_option_id (option_id),
-			CONSTRAINT fk_response_poll FOREIGN KEY (poll_id) REFERENCES {$polls_table_name}(id) ON DELETE CASCADE,
-			CONSTRAINT fk_response_participant FOREIGN KEY (participant_id) REFERENCES {$participants_table_name}(id) ON DELETE CASCADE,
-			CONSTRAINT fk_response_option FOREIGN KEY (option_id) REFERENCES {$poll_options_table_name}(id) ON DELETE CASCADE
+			KEY idx_option_id (option_id)
 		) ENGINE=InnoDB $charset_collate;";
 	}
 
@@ -196,7 +187,7 @@ class Schema {
 			id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
 			filename VARCHAR(255) NOT NULL,
 			original_email VARCHAR(255) NOT NULL,
-			row_number INT NOT NULL,
+			import_row_number INT NOT NULL,
 			resolved_name VARCHAR(255) NOT NULL,
 			resolved_surname VARCHAR(255) NOT NULL,
 			resolved_email VARCHAR(255) NOT NULL,
@@ -207,8 +198,7 @@ class Schema {
 			UNIQUE KEY idx_original_name_surname (original_email, resolved_name, resolved_surname),
 			KEY idx_filename (filename),
 			KEY idx_original_email (original_email),
-			KEY idx_participant_id (participant_id),
-			CONSTRAINT fk_resolution_participant FOREIGN KEY (participant_id) REFERENCES {$participants_table_name}(id) ON DELETE SET NULL
+			KEY idx_participant_id (participant_id)
 		) ENGINE=InnoDB $charset_collate;";
 	}
 }

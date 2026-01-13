@@ -40,7 +40,7 @@ class ImportResolution {
 	 *
 	 * @var int
 	 */
-	public $row_number;
+	public $import_row_number;
 
 	/**
 	 * Name from that row.
@@ -111,7 +111,7 @@ class ImportResolution {
 		$this->id                = isset( $data['id'] ) ? (int) $data['id'] : null;
 		$this->filename          = isset( $data['filename'] ) ? $data['filename'] : '';
 		$this->original_email    = isset( $data['original_email'] ) ? $data['original_email'] : '';
-		$this->row_number        = isset( $data['row_number'] ) ? (int) $data['row_number'] : 0;
+		$this->import_row_number = isset( $data['import_row_number'] ) ? (int) $data['import_row_number'] : 0;
 		$this->resolved_name     = isset( $data['resolved_name'] ) ? $data['resolved_name'] : '';
 		$this->resolved_surname  = isset( $data['resolved_surname'] ) ? $data['resolved_surname'] : '';
 		$this->resolved_email    = isset( $data['resolved_email'] ) ? $data['resolved_email'] : '';
@@ -139,7 +139,7 @@ class ImportResolution {
 		$data = array(
 			'filename'          => $this->filename,
 			'original_email'    => $this->original_email,
-			'row_number'        => $this->row_number,
+			'import_row_number' => $this->import_row_number,
 			'resolved_name'     => $this->resolved_name,
 			'resolved_surname'  => $this->resolved_surname,
 			'resolved_email'    => $this->resolved_email,
