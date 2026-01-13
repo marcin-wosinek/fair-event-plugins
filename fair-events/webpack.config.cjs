@@ -41,6 +41,10 @@ module.exports = {
       process.cwd(),
       "src/Admin/sources/index.js",
     ),
+    "admin/event-gallery": path.resolve(
+      process.cwd(),
+      "src/Admin/event-gallery.js",
+    ),
   },
   plugins: [
     ...defaultConfig.plugins,

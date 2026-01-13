@@ -39,6 +39,7 @@ class Plugin {
 	 */
 	public function init() {
 		add_action( 'init', array( $this, 'register_post_types' ) );
+		add_action( 'init', array( 'FairEvents\\Taxonomies\\EventGallery', 'register' ) );
 		$this->load_hooks();
 		$this->load_patterns();
 		$this->load_admin();
@@ -74,6 +75,9 @@ class Plugin {
 		if ( is_admin() ) {
 			$admin = new \FairEvents\Admin\AdminPages();
 			$admin->init();
+
+			\FairEvents\Admin\MediaLibraryHooks::init();
+			\FairEvents\Admin\EventGalleryMetaBox::init();
 		}
 	}
 
@@ -96,7 +100,7 @@ class Plugin {
 		new \FairEvents\API\DateOptionsEndpoint();
 		new \FairEvents\API\UserGroupOptionsEndpoint();
 
-		// Event Sources controller
+		// Event Sources controller.
 		add_action(
 			'rest_api_init',
 			function () {
@@ -105,12 +109,59 @@ class Plugin {
 			}
 		);
 
-		// Event Proposal controller
+		// Event Proposal controller.
 		add_action(
 			'rest_api_init',
 			function () {
 				$controller = new \FairEvents\API\EventProposalController();
 				$controller->register_routes();
+			}
+		);
+
+		// Event Gallery endpoint.
+		add_action(
+			'rest_api_init',
+			function () {
+				$controller = new \FairEvents\API\EventGalleryEndpoint();
+				$controller->register_routes();
+			}
+		);
+
+		// Add event relationship to attachment REST responses.
+		add_action(
+			'rest_api_init',
+			function () {
+				register_rest_field(
+					'attachment',
+					'fair_event',
+					array(
+						'get_callback' => function ( $object ) {
+							$terms = wp_get_object_terms( $object['id'], \FairEvents\Taxonomies\EventGallery::TAXONOMY );
+
+							if ( empty( $terms ) || is_wp_error( $terms ) ) {
+								return null;
+							}
+
+							$event_id = \FairEvents\Taxonomies\EventGallery::get_event_id_from_term( $terms[0]->term_id );
+
+							if ( ! $event_id ) {
+								return null;
+							}
+
+							$event = get_post( $event_id );
+
+							return $event ? array(
+								'id'    => $event->ID,
+								'title' => $event->post_title,
+								'link'  => get_permalink( $event->ID ),
+							) : null;
+						},
+						'schema'       => array(
+							'description' => __( 'Event associated with this image', 'fair-events' ),
+							'type'        => array( 'object', 'null' ),
+						),
+					)
+				);
 			}
 		);
 	}
