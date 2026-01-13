@@ -207,10 +207,11 @@ class ImportController extends WP_REST_Controller {
 			}
 
 			$results = array(
-				'imported'   => 0,
-				'skipped'    => 0,
-				'errors'     => array(),
-				'duplicates' => array(),
+				'imported'        => 0,
+				'existing_linked' => 0,
+				'skipped'         => 0,
+				'errors'          => array(),
+				'duplicates'      => array(),
 			);
 
 			// First pass: detect duplicate emails within the file.
@@ -295,7 +296,17 @@ class ImportController extends WP_REST_Controller {
 				// Check if participant already exists.
 				$existing = $this->repository->get_by_email( $email );
 				if ( $existing ) {
-					++$results['skipped'];
+					// Don't create new participant, but link existing to event.
+					if ( $event_id ) {
+						$this->event_participant_repository->add_participant_to_event(
+							$event_id,
+							$existing->id,
+							'signed_up'
+						);
+						++$results['existing_linked'];
+					} else {
+						++$results['skipped'];
+					}
 					continue;
 				}
 
@@ -382,9 +393,10 @@ class ImportController extends WP_REST_Controller {
 		}
 
 		$results = array(
-			'imported' => 0,
-			'skipped'  => 0,
-			'errors'   => array(),
+			'imported'        => 0,
+			'existing_linked' => 0,
+			'skipped'         => 0,
+			'errors'          => array(),
 		);
 
 		foreach ( $participants as $index => $participant_data ) {
@@ -416,7 +428,17 @@ class ImportController extends WP_REST_Controller {
 			// Check if participant already exists.
 			$existing = $this->repository->get_by_email( $email );
 			if ( $existing ) {
-				++$results['skipped'];
+				// Don't create new participant, but link existing to event.
+				if ( $event_id ) {
+					$this->event_participant_repository->add_participant_to_event(
+						$event_id,
+						$existing->id,
+						'signed_up'
+					);
+					++$results['existing_linked'];
+				} else {
+					++$results['skipped'];
+				}
 				continue;
 			}
 

@@ -156,6 +156,9 @@ export default function Import() {
 			setResults((prev) => ({
 				...prev,
 				imported: prev.imported + response.imported,
+				existing_linked:
+					(prev.existing_linked || 0) +
+					(response.existing_linked || 0),
 				duplicates: [],
 			}));
 			setDuplicateResolutions({});
@@ -291,6 +294,15 @@ export default function Import() {
 										{__('Imported:', 'fair-audience')}{' '}
 										{results.imported}
 									</li>
+									{results.existing_linked > 0 && (
+										<li>
+											{__(
+												'Existing linked to event:',
+												'fair-audience'
+											)}{' '}
+											{results.existing_linked}
+										</li>
+									)}
 									<li>
 										{__(
 											'Skipped (already exists):',
