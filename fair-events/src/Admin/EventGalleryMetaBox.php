@@ -62,7 +62,7 @@ class EventGalleryMetaBox {
 		<?php if ( 'publish' === $post->post_status && $photo_count > 0 ) : ?>
 			<p>
 				<a href="<?php echo esc_url( \FairEvents\Frontend\EventGalleryPage::get_gallery_url( $post->ID ) ); ?>" target="_blank" class="button">
-					<?php esc_html_e( 'View Public Gallery', 'fair-events' ); ?> ↗
+					<?php esc_html_e( "Review Event's Photos", 'fair-events' ); ?> ↗
 				</a>
 			</p>
 		<?php endif; ?>

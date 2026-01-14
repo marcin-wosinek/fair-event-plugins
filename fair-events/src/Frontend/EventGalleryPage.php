@@ -195,8 +195,8 @@ class EventGalleryPage {
 		$link_text   = sprintf(
 			/* translators: %d: number of photos */
 			_n(
-				'View Photo Gallery (%d photo)',
-				'View Photo Gallery (%d photos)',
+				"Review Event's Photos (%d photo)",
+				"Review Event's Photos (%d photos)",
 				$photo_count,
 				'fair-events'
 			),
