@@ -35,6 +35,9 @@ class Installer {
 		$sql = Schema::get_event_photos_table_sql();
 		dbDelta( $sql );
 
+		$sql = Schema::get_photo_likes_table_sql();
+		dbDelta( $sql );
+
 		// Run migration if upgrading from pre-1.0.0
 		if ( version_compare( $current_version, '1.0.0', '<' ) ) {
 			self::migrate_to_1_0_0();
@@ -44,6 +47,8 @@ class Installer {
 		if ( version_compare( $current_version, '1.2.0', '<' ) ) {
 			self::migrate_to_1_2_0();
 		}
+
+		// Version 1.3.0 - Photo likes table (no data migration needed, table created by dbDelta).
 
 		// Update database version
 		Schema::update_db_version( Schema::DB_VERSION );

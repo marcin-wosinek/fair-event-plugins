@@ -80,6 +80,14 @@ class EventGalleryMetaBox {
 				);
 				?>
 			</span>
+
+			<?php if ( 'publish' === $post->post_status && count( $attachment_ids ) > 0 ) : ?>
+				<p style="margin-top: 15px; padding-top: 15px; border-top: 1px solid #ddd;">
+					<a href="<?php echo esc_url( \FairEvents\Frontend\EventGalleryPage::get_gallery_url( $post->ID ) ); ?>" target="_blank" class="button">
+						<?php esc_html_e( 'View Public Gallery', 'fair-events' ); ?> ↗
+					</a>
+				</p>
+			<?php endif; ?>
 		</div>
 		<?php
 	}

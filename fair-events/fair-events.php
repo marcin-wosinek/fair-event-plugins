@@ -57,6 +57,8 @@ namespace FairEvents {
 		\FairEvents\Database\Installer::install();
 		// Trigger post type registration.
 		\FairEvents\PostTypes\Event::register();
+		// Register gallery page rewrite rules.
+		\FairEvents\Frontend\EventGalleryPage::add_rewrite_rules();
 		// Clear the permalinks after the post type has been registered.
 		flush_rewrite_rules();
 	}

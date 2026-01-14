@@ -44,6 +44,7 @@ class Plugin {
 		$this->load_admin();
 		$this->load_settings();
 		$this->load_rest_api();
+		$this->load_frontend();
 	}
 
 	/**
@@ -126,6 +127,15 @@ class Plugin {
 			}
 		);
 
+		// Photo Likes controller.
+		add_action(
+			'rest_api_init',
+			function () {
+				$controller = new \FairEvents\API\PhotoLikesController();
+				$controller->register_routes();
+			}
+		);
+
 		// Add event relationship to attachment REST responses.
 		add_action(
 			'rest_api_init',
@@ -158,6 +168,15 @@ class Plugin {
 				);
 			}
 		);
+	}
+
+	/**
+	 * Load frontend pages
+	 *
+	 * @return void
+	 */
+	private function load_frontend() {
+		\FairEvents\Frontend\EventGalleryPage::init();
 	}
 
 	/**

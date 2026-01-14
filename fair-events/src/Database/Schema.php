@@ -17,7 +17,7 @@ class Schema {
 	/**
 	 * Database version
 	 */
-	const DB_VERSION = '1.2.0';
+	const DB_VERSION = '1.3.0';
 
 	/**
 	 * Get the SQL for creating the fair_event_dates table
@@ -68,7 +68,6 @@ class Schema {
 			enabled TINYINT(1) NOT NULL DEFAULT 1,
 			created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
 			updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-
 			PRIMARY KEY (id),
 			UNIQUE KEY idx_slug (slug),
 			KEY idx_enabled (enabled),
@@ -92,10 +91,32 @@ class Schema {
 			event_id BIGINT UNSIGNED NOT NULL,
 			attachment_id BIGINT UNSIGNED NOT NULL,
 			created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
-
 			PRIMARY KEY (id),
 			UNIQUE KEY idx_attachment (attachment_id),
 			KEY idx_event_id (event_id)
+		) ENGINE=InnoDB {$charset_collate};";
+	}
+
+	/**
+	 * Get the SQL for creating the fair_events_photo_likes table
+	 *
+	 * @return string SQL statement for creating the table.
+	 */
+	public static function get_photo_likes_table_sql() {
+		global $wpdb;
+
+		$table_name      = $wpdb->prefix . 'fair_events_photo_likes';
+		$charset_collate = $wpdb->get_charset_collate();
+
+		return "CREATE TABLE {$table_name} (
+			id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
+			attachment_id BIGINT UNSIGNED NOT NULL,
+			user_id BIGINT UNSIGNED NOT NULL,
+			created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+			PRIMARY KEY (id),
+			UNIQUE KEY idx_attachment_user (attachment_id, user_id),
+			KEY idx_attachment_id (attachment_id),
+			KEY idx_user_id (user_id)
 		) ENGINE=InnoDB {$charset_collate};";
 	}
 

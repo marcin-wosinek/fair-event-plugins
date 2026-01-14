@@ -1,0 +1,230 @@
+/**
+ * Event Gallery Styles
+ *
+ * Mobile-first responsive design
+ */
+
+/* CSS Variables */
+:root {
+	--fe-gallery-gap: 8px;
+	--fe-gallery-padding: 16px;
+	--fe-gallery-bg: #fff;
+	--fe-gallery-text: #1e1e1e;
+	--fe-gallery-muted: #757575;
+	--fe-gallery-like-color: #e91e63;
+	--fe-gallery-like-bg: rgba(0, 0, 0, 0.5);
+}
+
+/* Page body reset */
+body.fair-events-gallery-page {
+	margin: 0;
+	padding: 0;
+	background: var(--fe-gallery-bg);
+	color: var(--fe-gallery-text);
+	font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen-Sans, Ubuntu, Cantarell, "Helvetica Neue", sans-serif;
+	-webkit-font-smoothing: antialiased;
+	-moz-osx-font-smoothing: grayscale;
+}
+
+/* Gallery container */
+.fe-gallery {
+	min-height: 100vh;
+}
+
+/* Header */
+.fe-gallery__header {
+	padding: var(--fe-gallery-padding);
+	border-bottom: 1px solid #ddd;
+	background: var(--fe-gallery-bg);
+	position: sticky;
+	top: 0;
+	z-index: 100;
+}
+
+.fe-gallery__title {
+	margin: 0;
+	font-size: 1.25rem;
+	font-weight: 600;
+	line-height: 1.3;
+}
+
+/* Grid layout */
+.fe-gallery__grid {
+	display: grid;
+	grid-template-columns: 1fr;
+	gap: var(--fe-gallery-gap);
+	padding: var(--fe-gallery-gap);
+}
+
+/* Tablet: 2 columns */
+@media (min-width: 480px) {
+	.fe-gallery__grid {
+		grid-template-columns: repeat(2, 1fr);
+	}
+}
+
+/* Desktop: 3 columns */
+@media (min-width: 768px) {
+	.fe-gallery__grid {
+		grid-template-columns: repeat(3, 1fr);
+		padding: var(--fe-gallery-padding);
+		gap: var(--fe-gallery-padding);
+	}
+
+	.fe-gallery__title {
+		font-size: 1.5rem;
+	}
+}
+
+/* Large desktop: 4 columns */
+@media (min-width: 1200px) {
+	.fe-gallery__grid {
+		grid-template-columns: repeat(4, 1fr);
+		max-width: 1400px;
+		margin: 0 auto;
+	}
+}
+
+/* Photo card */
+.fe-gallery-card {
+	position: relative;
+	overflow: hidden;
+	background: #f0f0f0;
+	border-radius: 4px;
+}
+
+.fe-gallery-card__image-wrapper {
+	position: relative;
+	padding-bottom: 100%; /* Square aspect ratio */
+	overflow: hidden;
+}
+
+.fe-gallery-card__image-wrapper img {
+	position: absolute;
+	top: 0;
+	left: 0;
+	width: 100%;
+	height: 100%;
+	object-fit: cover;
+	transition: transform 0.2s ease;
+}
+
+.fe-gallery-card:hover .fe-gallery-card__image-wrapper img {
+	transform: scale(1.02);
+}
+
+/* Like button */
+.fe-gallery-card__like-btn {
+	position: absolute;
+	bottom: 8px;
+	right: 8px;
+	display: flex;
+	align-items: center;
+	gap: 4px;
+	padding: 8px 12px;
+	background: var(--fe-gallery-like-bg);
+	border: none;
+	border-radius: 20px;
+	color: #fff;
+	font-size: 14px;
+	font-weight: 500;
+	cursor: pointer;
+	transition: background 0.2s ease, transform 0.1s ease;
+	min-width: 44px;
+	min-height: 44px;
+	justify-content: center;
+}
+
+.fe-gallery-card__like-btn:hover {
+	background: rgba(0, 0, 0, 0.7);
+}
+
+.fe-gallery-card__like-btn:active {
+	transform: scale(0.95);
+}
+
+.fe-gallery-card__like-btn:disabled {
+	opacity: 0.7;
+	cursor: not-allowed;
+}
+
+.fe-gallery-card__like-btn--liked {
+	color: var(--fe-gallery-like-color);
+}
+
+.fe-gallery-card__like-btn--liked svg {
+	animation: like-pop 0.3s ease;
+}
+
+@keyframes like-pop {
+	0% {
+		transform: scale(1);
+	}
+	50% {
+		transform: scale(1.3);
+	}
+	100% {
+		transform: scale(1);
+	}
+}
+
+.fe-gallery-card__like-btn svg {
+	flex-shrink: 0;
+}
+
+.fe-gallery-card__like-count {
+	font-variant-numeric: tabular-nums;
+}
+
+/* Loading state */
+.fe-gallery__loading {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	min-height: 200px;
+	color: var(--fe-gallery-muted);
+	font-size: 1rem;
+}
+
+/* Error state */
+.fe-gallery__error {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	min-height: 200px;
+	padding: var(--fe-gallery-padding);
+	color: #d32f2f;
+	font-size: 1rem;
+	text-align: center;
+}
+
+/* Empty state */
+.fe-gallery__empty {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	min-height: 200px;
+	padding: var(--fe-gallery-padding);
+	color: var(--fe-gallery-muted);
+	font-size: 1rem;
+	text-align: center;
+}
+
+/* Hide admin bar on gallery page */
+body.fair-events-gallery-page #wpadminbar {
+	display: none !important;
+}
+
+body.fair-events-gallery-page.admin-bar {
+	margin-top: 0 !important;
+}
+
+/* Focus styles for accessibility */
+.fe-gallery-card__like-btn:focus {
+	outline: 2px solid var(--fe-gallery-like-color);
+	outline-offset: 2px;
+}
+
+.fe-gallery-card__like-btn:focus:not(:focus-visible) {
+	outline: none;
+}

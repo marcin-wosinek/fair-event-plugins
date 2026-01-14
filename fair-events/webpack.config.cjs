@@ -49,6 +49,10 @@ module.exports = {
       process.cwd(),
       "src/Admin/media-library-filter.js",
     ),
+    "frontend/event-gallery": path.resolve(
+      process.cwd(),
+      "src/Frontend/event-gallery/index.js",
+    ),
   },
   plugins: [
     ...defaultConfig.plugins,
