@@ -38,6 +38,10 @@ const customConfig = {
 			process.cwd(),
 			'src/Admin/edit-poll/index.js',
 		),
+		'admin/media-library-filter': path.resolve(
+			process.cwd(),
+			'src/Admin/media-library-filter.js',
+		),
 		// Public scripts
 		'public/poll-response/index': path.resolve(
 			process.cwd(),

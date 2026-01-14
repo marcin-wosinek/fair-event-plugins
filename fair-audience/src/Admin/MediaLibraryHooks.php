@@ -38,6 +38,10 @@ class MediaLibraryHooks {
 		add_action( 'admin_enqueue_scripts', array( __CLASS__, 'enqueue_bulk_upload_scripts' ) );
 		add_action( 'add_attachment', array( __CLASS__, 'auto_assign_author_on_upload' ) );
 		add_action( 'wp_ajax_fair_audience_set_bulk_upload_author', array( __CLASS__, 'ajax_set_bulk_upload_author' ) );
+
+		// Media modal filter (JavaScript-based).
+		add_action( 'admin_enqueue_scripts', array( __CLASS__, 'enqueue_media_modal_scripts' ) );
+		add_filter( 'ajax_query_attachments_args', array( __CLASS__, 'filter_ajax_attachments_by_author' ) );
 	}
 
 	/**
@@ -337,5 +341,77 @@ class MediaLibraryHooks {
 		// Assign author.
 		$repository = new PhotoParticipantRepository();
 		$repository->set_author( $attachment_id, $author_id );
+	}
+
+	/**
+	 * Enqueue scripts for media modal filter.
+	 *
+	 * @param string $hook Hook suffix.
+	 */
+	public static function enqueue_media_modal_scripts( $hook ) {
+		// Only load on pages that use the media modal.
+		$allowed_hooks = array( 'upload.php', 'post.php', 'post-new.php' );
+		if ( ! in_array( $hook, $allowed_hooks, true ) ) {
+			return;
+		}
+
+		// Ensure media scripts are loaded.
+		wp_enqueue_media();
+
+		$asset_file = FAIR_AUDIENCE_PLUGIN_DIR . 'build/admin/media-library-filter.asset.php';
+		if ( ! file_exists( $asset_file ) ) {
+			return;
+		}
+
+		$asset = include $asset_file;
+
+		wp_enqueue_script(
+			'fair-audience-media-library-filter',
+			FAIR_AUDIENCE_PLUGIN_URL . 'build/admin/media-library-filter.js',
+			array_merge( $asset['dependencies'], array( 'media-views' ) ),
+			$asset['version'],
+			true
+		);
+
+		// Pass participant data to JavaScript.
+		wp_localize_script(
+			'fair-audience-media-library-filter',
+			'fairAudienceMedia',
+			array(
+				'allAuthors'   => __( 'All Authors', 'fair-audience' ),
+				'participants' => self::get_participants_for_dropdown(),
+			)
+		);
+	}
+
+	/**
+	 * Filter AJAX attachment query for media modal author filter.
+	 *
+	 * @param array $query Query arguments.
+	 * @return array Modified query arguments.
+	 */
+	public static function filter_ajax_attachments_by_author( $query ) {
+		// Check if our custom filter parameter is set.
+		// WordPress strips custom params, so we read directly from $_REQUEST.
+		if ( empty( $_REQUEST['query']['fair_photo_author'] ) ) {
+			return $query;
+		}
+
+		$participant_id = absint( $_REQUEST['query']['fair_photo_author'] );
+		if ( ! $participant_id ) {
+			return $query;
+		}
+
+		$repository     = new PhotoParticipantRepository();
+		$attachment_ids = $repository->get_attachment_ids_by_participant( $participant_id, 'author' );
+
+		if ( ! empty( $attachment_ids ) ) {
+			$query['post__in'] = $attachment_ids;
+		} else {
+			// No photos by this author, show empty results.
+			$query['post__in'] = array( 0 );
+		}
+
+		return $query;
 	}
 }
