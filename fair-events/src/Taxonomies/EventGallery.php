@@ -40,7 +40,7 @@ class EventGallery {
 				),
 				'hierarchical'       => false,
 				'public'             => false,
-				'show_ui'            => true,
+				'show_ui'            => false,
 				'show_admin_column'  => true,
 				'show_in_nav_menus'  => false,
 				'show_in_quick_edit' => false,

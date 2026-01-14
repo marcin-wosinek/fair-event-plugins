@@ -145,11 +145,14 @@ class EventGalleryMetaBox {
 		}
 
 		wp_enqueue_media();
+
+		$asset_file = include FAIR_EVENTS_PLUGIN_DIR . 'build/admin/event-gallery.asset.php';
+
 		wp_enqueue_script(
 			'fair-event-gallery',
 			FAIR_EVENTS_PLUGIN_URL . 'build/admin/event-gallery.js',
-			array( 'jquery' ),
-			FAIR_EVENTS_VERSION,
+			$asset_file['dependencies'],
+			$asset_file['version'],
 			true
 		);
 
