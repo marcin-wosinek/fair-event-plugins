@@ -37,6 +37,10 @@ class MediaLibraryHooks {
 		add_action( 'admin_enqueue_scripts', array( __CLASS__, 'enqueue_bulk_upload_scripts' ) );
 		add_action( 'add_attachment', array( __CLASS__, 'auto_assign_event_on_upload' ) );
 		add_action( 'wp_ajax_fair_events_set_bulk_upload_event', array( __CLASS__, 'ajax_set_bulk_upload_event' ) );
+
+		// Media modal filter (JavaScript-based).
+		add_action( 'admin_enqueue_scripts', array( __CLASS__, 'enqueue_media_modal_scripts' ) );
+		add_filter( 'ajax_query_attachments_args', array( __CLASS__, 'filter_ajax_attachments_by_event' ) );
 	}
 
 	/**
@@ -362,5 +366,98 @@ class MediaLibraryHooks {
 		// Assign to the selected event.
 		$repository = new EventPhotoRepository();
 		$repository->set_event( $attachment_id, $event_id );
+	}
+
+	/**
+	 * Enqueue scripts for media modal filter.
+	 *
+	 * @param string $hook Hook suffix.
+	 */
+	public static function enqueue_media_modal_scripts( $hook ) {
+		// Only load on pages that use the media modal.
+		$allowed_hooks = array( 'upload.php', 'post.php', 'post-new.php' );
+		if ( ! in_array( $hook, $allowed_hooks, true ) ) {
+			return;
+		}
+
+		// Ensure media scripts are loaded.
+		wp_enqueue_media();
+
+		$asset_file = FAIR_EVENTS_PLUGIN_DIR . 'build/admin/media-library-filter.asset.php';
+		if ( ! file_exists( $asset_file ) ) {
+			return;
+		}
+
+		$asset = include $asset_file;
+
+		wp_enqueue_script(
+			'fair-events-media-library-filter',
+			FAIR_EVENTS_PLUGIN_URL . 'build/admin/media-library-filter.js',
+			array_merge( $asset['dependencies'], array( 'media-views' ) ),
+			$asset['version'],
+			true
+		);
+
+		// Get all events for the filter dropdown.
+		$events = get_posts(
+			array(
+				'post_type'      => 'fair_event',
+				'posts_per_page' => -1,
+				'orderby'        => 'title',
+				'order'          => 'ASC',
+				'post_status'    => 'publish',
+			)
+		);
+
+		$events_data = array_map(
+			function ( $event ) {
+				return array(
+					'id'    => $event->ID,
+					'title' => $event->post_title,
+				);
+			},
+			$events
+		);
+
+		// Pass event data to JavaScript.
+		wp_localize_script(
+			'fair-events-media-library-filter',
+			'fairEventsMedia',
+			array(
+				'eventPrefix' => __( 'Event: ', 'fair-events' ),
+				'events'      => $events_data,
+			)
+		);
+	}
+
+	/**
+	 * Filter AJAX attachment query for media modal event filter.
+	 *
+	 * @param array $query Query arguments.
+	 * @return array Modified query arguments.
+	 */
+	public static function filter_ajax_attachments_by_event( $query ) {
+		// Check if our custom filter parameter is set.
+		// WordPress strips custom params, so we read directly from $_REQUEST.
+		if ( empty( $_REQUEST['query']['fair_event_filter'] ) ) {
+			return $query;
+		}
+
+		$event_id = absint( $_REQUEST['query']['fair_event_filter'] );
+		if ( ! $event_id ) {
+			return $query;
+		}
+
+		$repository     = new EventPhotoRepository();
+		$attachment_ids = $repository->get_attachment_ids_by_event( $event_id );
+
+		if ( ! empty( $attachment_ids ) ) {
+			$query['post__in'] = $attachment_ids;
+		} else {
+			// No photos for this event, show empty results.
+			$query['post__in'] = array( 0 );
+		}
+
+		return $query;
 	}
 }
