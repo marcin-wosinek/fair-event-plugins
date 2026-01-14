@@ -32,9 +32,17 @@ class Installer {
 		$sql = Schema::get_event_sources_table_sql();
 		dbDelta( $sql );
 
+		$sql = Schema::get_event_photos_table_sql();
+		dbDelta( $sql );
+
 		// Run migration if upgrading from pre-1.0.0
 		if ( version_compare( $current_version, '1.0.0', '<' ) ) {
 			self::migrate_to_1_0_0();
+		}
+
+		// Run migration if upgrading from pre-1.2.0 (taxonomy to table).
+		if ( version_compare( $current_version, '1.2.0', '<' ) ) {
+			self::migrate_to_1_2_0();
 		}
 
 		// Update database version
@@ -63,6 +71,10 @@ class Installer {
 			// Run migrations
 			if ( version_compare( $current_version, '1.0.0', '<' ) ) {
 				self::migrate_to_1_0_0();
+			}
+
+			if ( version_compare( $current_version, '1.2.0', '<' ) ) {
+				self::migrate_to_1_2_0();
 			}
 
 			// Install/update tables
@@ -164,5 +176,86 @@ class Installer {
 			),
 			array( '%d', '%s', '%s', '%d' )
 		);
+	}
+
+	/**
+	 * Migrate to version 1.2.0 - Move event gallery from taxonomy to table.
+	 *
+	 * @return void
+	 */
+	private static function migrate_to_1_2_0() {
+		self::migrate_from_taxonomy();
+	}
+
+	/**
+	 * Migrate event photos from taxonomy to custom table.
+	 *
+	 * @return void
+	 */
+	private static function migrate_from_taxonomy() {
+		global $wpdb;
+
+		$taxonomy   = 'fair_event_gallery';
+		$table_name = $wpdb->prefix . 'fair_events_event_photos';
+
+		// Get all terms in the event gallery taxonomy.
+		$terms = get_terms(
+			array(
+				'taxonomy'   => $taxonomy,
+				'hide_empty' => false,
+			)
+		);
+
+		if ( is_wp_error( $terms ) || empty( $terms ) ) {
+			return;
+		}
+
+		foreach ( $terms as $term ) {
+			// Get event ID from term meta.
+			$event_id = get_term_meta( $term->term_id, 'event_id', true );
+
+			if ( ! $event_id ) {
+				// Try to extract from slug (event-123).
+				if ( preg_match( '/^event-(\d+)$/', $term->slug, $matches ) ) {
+					$event_id = (int) $matches[1];
+				}
+			}
+
+			if ( ! $event_id ) {
+				continue;
+			}
+
+			// Get all attachments in this term.
+			$attachment_ids = get_objects_in_term( $term->term_id, $taxonomy );
+
+			if ( is_wp_error( $attachment_ids ) || empty( $attachment_ids ) ) {
+				continue;
+			}
+
+			foreach ( $attachment_ids as $attachment_id ) {
+				// Check if already migrated.
+				$existing = $wpdb->get_var(
+					$wpdb->prepare(
+						'SELECT COUNT(*) FROM %i WHERE attachment_id = %d',
+						$table_name,
+						$attachment_id
+					)
+				);
+
+				if ( $existing > 0 ) {
+					continue;
+				}
+
+				// Insert into new table.
+				$wpdb->insert(
+					$table_name,
+					array(
+						'event_id'      => $event_id,
+						'attachment_id' => $attachment_id,
+					),
+					array( '%d', '%d' )
+				);
+			}
+		}
 	}
 }

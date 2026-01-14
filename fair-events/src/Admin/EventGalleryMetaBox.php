@@ -7,7 +7,7 @@
 
 namespace FairEvents\Admin;
 
-use FairEvents\Taxonomies\EventGallery;
+use FairEvents\Database\EventPhotoRepository;
 
 defined( 'WPINC' ) || die;
 
@@ -47,26 +47,8 @@ class EventGalleryMetaBox {
 	public static function render_meta_box( $post ) {
 		wp_nonce_field( 'fair_event_gallery_meta_box', 'fair_event_gallery_nonce' );
 
-		$term           = EventGallery::get_term_for_event( $post->ID );
-		$attachment_ids = array();
-
-		if ( $term ) {
-			$attachments = get_posts(
-				array(
-					'post_type'      => 'attachment',
-					'posts_per_page' => -1,
-					'tax_query'      => array(
-						array(
-							'taxonomy' => EventGallery::TAXONOMY,
-							'field'    => 'term_id',
-							'terms'    => $term->term_id,
-						),
-					),
-				)
-			);
-
-			$attachment_ids = wp_list_pluck( $attachments, 'ID' );
-		}
+		$repository     = new EventPhotoRepository();
+		$attachment_ids = $repository->get_attachment_ids_by_event( $post->ID );
 
 		?>
 		<div id="fair-event-gallery-container">
@@ -195,10 +177,7 @@ class EventGalleryMetaBox {
 			return;
 		}
 
-		$term = EventGallery::get_term_for_event( $post_id );
-		if ( ! $term ) {
-			return; // Term should be created by EventGallery::sync_event_term.
-		}
+		$repository = new EventPhotoRepository();
 
 		// Get new gallery IDs.
 		$gallery_ids = array();
@@ -207,34 +186,19 @@ class EventGalleryMetaBox {
 		}
 
 		// Get currently assigned attachments.
-		$current_attachments = get_posts(
-			array(
-				'post_type'      => 'attachment',
-				'posts_per_page' => -1,
-				'fields'         => 'ids',
-				'tax_query'      => array(
-					array(
-						'taxonomy' => EventGallery::TAXONOMY,
-						'field'    => 'term_id',
-						'terms'    => $term->term_id,
-					),
-				),
-			)
-		);
+		$current_attachments = $repository->get_attachment_ids_by_event( $post_id );
 
 		// Remove attachments no longer in gallery.
 		$to_remove = array_diff( $current_attachments, $gallery_ids );
 		foreach ( $to_remove as $attachment_id ) {
-			wp_delete_object_term_relationships( $attachment_id, EventGallery::TAXONOMY );
+			$repository->remove_from_event( $attachment_id );
 		}
 
 		// Add new attachments.
 		$to_add = array_diff( $gallery_ids, $current_attachments );
 		foreach ( $to_add as $attachment_id ) {
-			// Remove from any other event (enforce 1-to-1).
-			wp_delete_object_term_relationships( $attachment_id, EventGallery::TAXONOMY );
-			// Assign to this event.
-			wp_set_object_terms( $attachment_id, $term->term_id, EventGallery::TAXONOMY, false );
+			// set_event removes from any other event (enforces 1-to-1) and assigns to this event.
+			$repository->set_event( $attachment_id, $post_id );
 		}
 	}
 }

@@ -7,7 +7,7 @@
 
 namespace FairEvents\API;
 
-use FairEvents\Taxonomies\EventGallery;
+use FairEvents\Database\EventPhotoRepository;
 use WP_REST_Controller;
 use WP_REST_Server;
 use WP_REST_Request;
@@ -78,9 +78,10 @@ class EventGalleryEndpoint extends WP_REST_Controller {
 			);
 		}
 
-		$term = EventGallery::get_term_for_event( $event_id );
+		$repository     = new EventPhotoRepository();
+		$attachment_ids = $repository->get_attachment_ids_by_event( $event_id );
 
-		if ( ! $term ) {
+		if ( empty( $attachment_ids ) ) {
 			return rest_ensure_response( array() );
 		}
 
@@ -89,13 +90,8 @@ class EventGalleryEndpoint extends WP_REST_Controller {
 				'post_type'      => 'attachment',
 				'posts_per_page' => -1,
 				'post_status'    => 'inherit',
-				'tax_query'      => array(
-					array(
-						'taxonomy' => EventGallery::TAXONOMY,
-						'field'    => 'term_id',
-						'terms'    => $term->term_id,
-					),
-				),
+				'post__in'       => $attachment_ids,
+				'orderby'        => 'post__in',
 			)
 		);
 

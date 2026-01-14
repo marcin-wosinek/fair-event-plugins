@@ -39,7 +39,6 @@ class Plugin {
 	 */
 	public function init() {
 		add_action( 'init', array( $this, 'register_post_types' ) );
-		add_action( 'init', array( 'FairEvents\\Taxonomies\\EventGallery', 'register' ) );
 		$this->load_hooks();
 		$this->load_patterns();
 		$this->load_admin();
@@ -136,19 +135,14 @@ class Plugin {
 					'fair_event',
 					array(
 						'get_callback' => function ( $object ) {
-							$terms = wp_get_object_terms( $object['id'], \FairEvents\Taxonomies\EventGallery::TAXONOMY );
+							$repository  = new \FairEvents\Database\EventPhotoRepository();
+							$event_photo = $repository->get_event_for_attachment( $object['id'] );
 
-							if ( empty( $terms ) || is_wp_error( $terms ) ) {
+							if ( ! $event_photo ) {
 								return null;
 							}
 
-							$event_id = \FairEvents\Taxonomies\EventGallery::get_event_id_from_term( $terms[0]->term_id );
-
-							if ( ! $event_id ) {
-								return null;
-							}
-
-							$event = get_post( $event_id );
+							$event = get_post( $event_photo->event_id );
 
 							return $event ? array(
 								'id'    => $event->ID,

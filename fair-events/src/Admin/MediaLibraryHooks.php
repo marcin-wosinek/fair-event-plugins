@@ -7,7 +7,7 @@
 
 namespace FairEvents\Admin;
 
-use FairEvents\Taxonomies\EventGallery;
+use FairEvents\Database\EventPhotoRepository;
 
 defined( 'WPINC' ) || die;
 
@@ -48,12 +48,9 @@ class MediaLibraryHooks {
 	 */
 	public static function add_event_field( $form_fields, $post ) {
 		// Get current event assignment.
-		$terms            = wp_get_object_terms( $post->ID, EventGallery::TAXONOMY );
-		$current_event_id = 0;
-
-		if ( ! empty( $terms ) && ! is_wp_error( $terms ) ) {
-			$current_event_id = EventGallery::get_event_id_from_term( $terms[0]->term_id );
-		}
+		$repository       = new EventPhotoRepository();
+		$event_photo      = $repository->get_event_for_attachment( $post->ID );
+		$current_event_id = $event_photo ? $event_photo->event_id : 0;
 
 		// Get all events for dropdown.
 		$events = get_posts(
@@ -104,18 +101,11 @@ class MediaLibraryHooks {
 			return $post;
 		}
 
-		$event_id = absint( $attachment['fair_event'] );
+		$event_id   = absint( $attachment['fair_event'] );
+		$repository = new EventPhotoRepository();
 
-		// Remove existing event assignments (enforce 1-to-1).
-		wp_delete_object_term_relationships( $post['ID'], EventGallery::TAXONOMY );
-
-		// Assign to new event if selected.
-		if ( $event_id > 0 ) {
-			$term = EventGallery::get_term_for_event( $event_id );
-			if ( $term ) {
-				wp_set_object_terms( $post['ID'], $term->term_id, EventGallery::TAXONOMY, false );
-			}
-		}
+		// set_event handles remove + assign (enforces 1-to-1).
+		$repository->set_event( $post['ID'], $event_id );
 
 		return $post;
 	}
@@ -171,20 +161,16 @@ class MediaLibraryHooks {
 			return;
 		}
 
-		$event_id = absint( $_GET['fair_event_filter'] );
-		$term     = EventGallery::get_term_for_event( $event_id );
+		$event_id   = absint( $_GET['fair_event_filter'] );
+		$repository = new EventPhotoRepository();
 
-		if ( $term ) {
-			$query->set(
-				'tax_query',
-				array(
-					array(
-						'taxonomy' => EventGallery::TAXONOMY,
-						'field'    => 'term_id',
-						'terms'    => $term->term_id,
-					),
-				)
-			);
+		$attachment_ids = $repository->get_attachment_ids_by_event( $event_id );
+
+		if ( ! empty( $attachment_ids ) ) {
+			$query->set( 'post__in', $attachment_ids );
+		} else {
+			// No photos for this event, show empty results.
+			$query->set( 'post__in', array( 0 ) );
 		}
 	}
 
@@ -210,28 +196,25 @@ class MediaLibraryHooks {
 			return;
 		}
 
-		$terms = wp_get_object_terms( $post_id, EventGallery::TAXONOMY );
+		$repository  = new EventPhotoRepository();
+		$event_photo = $repository->get_event_for_attachment( $post_id );
 
-		if ( empty( $terms ) || is_wp_error( $terms ) ) {
+		if ( ! $event_photo ) {
 			echo '—';
 			return;
 		}
 
-		$event_id = EventGallery::get_event_id_from_term( $terms[0]->term_id );
+		$event = get_post( $event_photo->event_id );
 
-		if ( $event_id ) {
-			$event = get_post( $event_id );
-			if ( $event ) {
-				printf(
-					'<a href="%s">%s</a>',
-					esc_url( get_edit_post_link( $event_id ) ),
-					esc_html( $event->post_title )
-				);
-				return;
-			}
+		if ( $event ) {
+			printf(
+				'<a href="%s">%s</a>',
+				esc_url( get_edit_post_link( $event_photo->event_id ) ),
+				esc_html( $event->post_title )
+			);
+		} else {
+			echo '—';
 		}
-
-		echo esc_html( $terms[0]->name );
 	}
 
 	/**
@@ -358,49 +341,26 @@ class MediaLibraryHooks {
 	 * @param int $attachment_id Attachment ID.
 	 */
 	public static function auto_assign_event_on_upload( $attachment_id ) {
-		error_log( 'Fair Events: auto_assign_event_on_upload called for attachment ' . $attachment_id );
-
 		// Check if this is an image.
 		if ( ! wp_attachment_is_image( $attachment_id ) ) {
-			error_log( 'Fair Events: Not an image, skipping' );
 			return;
 		}
 
 		// Get the selected event for bulk upload.
 		$event_id = get_user_meta( get_current_user_id(), 'fair_events_bulk_upload_event', true );
-		error_log( 'Fair Events: Retrieved event_id from user meta: ' . $event_id . ' for user ' . get_current_user_id() );
 
 		if ( ! $event_id ) {
-			error_log( 'Fair Events: No event selected, skipping auto-assignment' );
 			return;
 		}
 
 		// Verify event exists.
 		$event = get_post( $event_id );
 		if ( ! $event || 'fair_event' !== $event->post_type ) {
-			error_log( 'Fair Events: Event not found or wrong post type' );
 			return;
 		}
-
-		// Get the event term.
-		$term = EventGallery::get_term_for_event( $event_id );
-		if ( ! $term ) {
-			error_log( 'Fair Events: Term not found for event ' . $event_id );
-			return;
-		}
-
-		error_log( 'Fair Events: Assigning attachment ' . $attachment_id . ' to term ' . $term->term_id );
-
-		// Remove existing event assignments (enforce 1-to-1).
-		wp_delete_object_term_relationships( $attachment_id, EventGallery::TAXONOMY );
 
 		// Assign to the selected event.
-		$result = wp_set_object_terms( $attachment_id, $term->term_id, EventGallery::TAXONOMY, false );
-
-		if ( is_wp_error( $result ) ) {
-			error_log( 'Fair Events: Error assigning term: ' . $result->get_error_message() );
-		} else {
-			error_log( 'Fair Events: Successfully assigned attachment to event' );
-		}
+		$repository = new EventPhotoRepository();
+		$repository->set_event( $attachment_id, $event_id );
 	}
 }
