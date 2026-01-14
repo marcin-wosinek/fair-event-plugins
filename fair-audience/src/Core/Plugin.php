@@ -50,6 +50,9 @@ class Plugin {
 
 		// Initialize admin.
 		$admin_hooks = new \FairAudience\Admin\AdminHooks();
+
+		// Initialize media library integration.
+		\FairAudience\Admin\MediaLibraryHooks::init();
 	}
 
 	/**
