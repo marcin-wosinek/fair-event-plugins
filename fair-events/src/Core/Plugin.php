@@ -78,6 +78,7 @@ class Plugin {
 
 			\FairEvents\Admin\MediaLibraryHooks::init();
 			\FairEvents\Admin\EventGalleryMetaBox::init();
+			\FairEvents\Admin\MediaBatchActions::init();
 		}
 	}
 

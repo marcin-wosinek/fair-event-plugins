@@ -26,10 +26,10 @@ composer install         # Install PHP dependencies
 vendor/bin/phpcs        # Run PHP code sniffer (if configured)
 ```
 
-### Code Quality Reminder
-**IMPORTANT**: Claude Code will prompt you to run `npm run format` after making code changes. Please run this command when prompted to ensure consistent formatting across the codebase.
-
-**For Claude Code**: Do NOT automatically run formatting tools (npm run format, vendor/bin/phpcs, etc.). Instead, remind the user to run these commands themselves after code changes are complete.
+### Code Quality Automation
+**For Claude Code**: Automatically run formatting and building after making code changes:
+- Run `npm run format` after code changes to ensure consistent formatting
+- Run `npm run build` in the affected plugin directory after changes to JavaScript/CSS files
 
 ### Code Formatter Ignore Patterns
 The following directories are automatically excluded from code formatting:

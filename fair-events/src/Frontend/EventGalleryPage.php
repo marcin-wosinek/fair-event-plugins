@@ -182,7 +182,11 @@ class EventGalleryPage {
 		}
 
 		// Check if event has photos.
-		$event_id    = get_the_ID();
+		$event_id = get_the_ID();
+		if ( ! $event_id ) {
+			return $content;
+		}
+
 		$repository  = new \FairEvents\Database\EventPhotoRepository();
 		$photo_count = $repository->get_count_by_event( $event_id );
 

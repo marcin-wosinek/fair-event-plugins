@@ -53,6 +53,7 @@ class Plugin {
 
 		// Initialize media library integration.
 		\FairAudience\Admin\MediaLibraryHooks::init();
+		\FairAudience\Admin\MediaBatchActions::init();
 	}
 
 	/**
