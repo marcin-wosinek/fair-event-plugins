@@ -43,6 +43,7 @@ function fair_audience_activate() {
 	dbDelta( \FairAudience\Database\Schema::get_poll_options_table_sql() );
 	dbDelta( \FairAudience\Database\Schema::get_poll_access_keys_table_sql() );
 	dbDelta( \FairAudience\Database\Schema::get_poll_responses_table_sql() );
+	dbDelta( \FairAudience\Database\Schema::get_import_resolutions_table_sql() );
 	dbDelta( \FairAudience\Database\Schema::get_photo_participants_table_sql() );
 
 	// Flush rewrite rules for poll_key query var.
