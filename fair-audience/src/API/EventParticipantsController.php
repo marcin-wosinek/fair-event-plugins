@@ -146,7 +146,8 @@ class EventParticipantsController extends WP_REST_Controller {
 			)
 		);
 
-		// DELETE /fair-audience/v1/events/{event_id}/participants/batch
+		// DELETE /fair-audience/v1/events/{event_id}/participants/batch.
+		// POST /fair-audience/v1/events/{event_id}/participants/batch.
 		register_rest_route(
 			$this->namespace,
 			'/' . $this->rest_base . '/batch',
@@ -172,6 +173,35 @@ class EventParticipantsController extends WP_REST_Controller {
 							'validate_callback' => function ( $param ) {
 								return is_array( $param ) && ! empty( $param );
 							},
+						),
+					),
+				),
+				array(
+					'methods'             => WP_REST_Server::CREATABLE,
+					'callback'            => array( $this, 'create_batch_items' ),
+					'permission_callback' => array( $this, 'create_item_permissions_check' ),
+					'args'                => array(
+						'event_id'        => array(
+							'type'              => 'integer',
+							'required'          => true,
+							'validate_callback' => function ( $param ) {
+								return is_numeric( $param );
+							},
+						),
+						'participant_ids' => array(
+							'type'              => 'array',
+							'required'          => true,
+							'items'             => array(
+								'type' => 'integer',
+							),
+							'validate_callback' => function ( $param ) {
+								return is_array( $param ) && ! empty( $param );
+							},
+						),
+						'label'           => array(
+							'type'     => 'string',
+							'enum'     => array( 'interested', 'signed_up', 'collaborator' ),
+							'required' => true,
 						),
 					),
 				),
@@ -377,6 +407,66 @@ class EventParticipantsController extends WP_REST_Controller {
 					__( 'Failed to remove participant ID %d', 'fair-audience' ),
 					$participant_id
 				);
+			}
+		}
+
+		return rest_ensure_response( $results );
+	}
+
+	/**
+	 * Add multiple participants to an event with the same label.
+	 *
+	 * @param WP_REST_Request $request Request object.
+	 * @return WP_REST_Response|WP_Error Response object or error.
+	 */
+	public function create_batch_items( $request ) {
+		$event_id        = (int) $request['event_id'];
+		$participant_ids = $request->get_param( 'participant_ids' );
+		$label           = $request->get_param( 'label' );
+
+		// Validate event exists.
+		$event = get_post( $event_id );
+		if ( ! $event || 'fair_event' !== $event->post_type ) {
+			return new WP_Error(
+				'invalid_event',
+				__( 'Invalid event ID.', 'fair-audience' ),
+				array( 'status' => 404 )
+			);
+		}
+
+		$results = array(
+			'added'   => 0,
+			'skipped' => 0,
+			'failed'  => 0,
+			'errors'  => array(),
+		);
+
+		foreach ( $participant_ids as $participant_id ) {
+			$participant_id = (int) $participant_id;
+
+			// Verify participant exists.
+			$participant = $this->participant_repo->get_by_id( $participant_id );
+			if ( ! $participant ) {
+				++$results['failed'];
+				$results['errors'][] = sprintf(
+					/* translators: %d: participant ID */
+					__( 'Participant ID %d not found', 'fair-audience' ),
+					$participant_id
+				);
+				continue;
+			}
+
+			$id = $this->event_participant_repo->add_participant_to_event(
+				$event_id,
+				$participant_id,
+				$label
+			);
+
+			if ( false === $id ) {
+				// Already exists.
+				++$results['skipped'];
+			} else {
+				++$results['added'];
 			}
 		}
 

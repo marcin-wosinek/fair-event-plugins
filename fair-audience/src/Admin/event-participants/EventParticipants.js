@@ -1,13 +1,12 @@
 import { __, sprintf } from '@wordpress/i18n';
-import { useState, useEffect } from '@wordpress/element';
+import { useState, useEffect, useMemo } from '@wordpress/element';
 import apiFetch from '@wordpress/api-fetch';
 import {
 	Button,
 	Modal,
 	SelectControl,
 	Spinner,
-	Card,
-	CardBody,
+	CheckboxControl,
 } from '@wordpress/components';
 
 export default function EventParticipants() {
@@ -16,9 +15,9 @@ export default function EventParticipants() {
 	const [eventTitle, setEventTitle] = useState('');
 	const [isLoading, setIsLoading] = useState(true);
 	const [error, setError] = useState(null);
-	const [isAddModalOpen, setIsAddModalOpen] = useState(false);
-	const [selectedParticipantId, setSelectedParticipantId] = useState('');
-	const [selectedLabel, setSelectedLabel] = useState('interested');
+	const [addModalLabel, setAddModalLabel] = useState(null);
+	const [selectedToAdd, setSelectedToAdd] = useState(new Set());
+	const [isAdding, setIsAdding] = useState(false);
 	const [selectedParticipants, setSelectedParticipants] = useState(new Set());
 	const [isRemoving, setIsRemoving] = useState(false);
 
@@ -39,7 +38,7 @@ export default function EventParticipants() {
 		apiFetch({ path: `/fair-audience/v1/events/${eventId}/participants` })
 			.then((data) => {
 				setParticipants(data);
-				// Get event title
+				// Get event title.
 				apiFetch({ path: `/wp/v2/fair_event/${eventId}` })
 					.then((event) => {
 						setEventTitle(event.title.rendered);
@@ -61,27 +60,79 @@ export default function EventParticipants() {
 			.catch(() => {});
 	};
 
-	const handleAdd = () => {
-		if (!selectedParticipantId) {
+	// Get participants not already in this event.
+	const availableParticipants = useMemo(() => {
+		const existingIds = new Set(participants.map((p) => p.participant_id));
+		return allParticipants.filter((p) => !existingIds.has(p.id));
+	}, [allParticipants, participants]);
+
+	const handleOpenAddModal = (label) => {
+		setAddModalLabel(label);
+		setSelectedToAdd(new Set());
+	};
+
+	const handleCloseAddModal = () => {
+		setAddModalLabel(null);
+		setSelectedToAdd(new Set());
+	};
+
+	const handleToggleParticipantToAdd = (participantId) => {
+		const newSelected = new Set(selectedToAdd);
+		if (newSelected.has(participantId)) {
+			newSelected.delete(participantId);
+		} else {
+			newSelected.add(participantId);
+		}
+		setSelectedToAdd(newSelected);
+	};
+
+	const handleSelectAllToAdd = () => {
+		if (selectedToAdd.size === availableParticipants.length) {
+			setSelectedToAdd(new Set());
+		} else {
+			setSelectedToAdd(new Set(availableParticipants.map((p) => p.id)));
+		}
+	};
+
+	const handleBatchAdd = async () => {
+		if (selectedToAdd.size === 0 || !addModalLabel) {
 			return;
 		}
 
-		apiFetch({
-			path: `/fair-audience/v1/events/${eventId}/participants`,
-			method: 'POST',
-			data: {
-				participant_id: parseInt(selectedParticipantId),
-				label: selectedLabel,
-			},
-		})
-			.then(() => {
-				setIsAddModalOpen(false);
-				setSelectedParticipantId('');
-				loadParticipants();
-			})
-			.catch((err) => {
-				alert(__('Error: ', 'fair-audience') + err.message);
+		setIsAdding(true);
+
+		try {
+			const response = await apiFetch({
+				path: `/fair-audience/v1/events/${eventId}/participants/batch`,
+				method: 'POST',
+				data: {
+					participant_ids: Array.from(selectedToAdd),
+					label: addModalLabel,
+				},
 			});
+
+			if (response.added > 0) {
+				alert(
+					sprintf(
+						/* translators: %d: number of participants */
+						__(
+							'Successfully added %d participant(s)',
+							'fair-audience'
+						),
+						response.added
+					)
+				);
+			}
+
+			handleCloseAddModal();
+			loadParticipants();
+		} catch (err) {
+			alert(
+				__('Error adding participants: ', 'fair-audience') + err.message
+			);
+		} finally {
+			setIsAdding(false);
+		}
 	};
 
 	const handleUpdateLabel = (participantId, newLabel) => {
@@ -213,6 +264,19 @@ export default function EventParticipants() {
 		}
 	};
 
+	const getLabelTitle = (label) => {
+		switch (label) {
+			case 'collaborator':
+				return __('Add Collaborators', 'fair-audience');
+			case 'interested':
+				return __('Add Interested', 'fair-audience');
+			case 'signed_up':
+				return __('Add Participants', 'fair-audience');
+			default:
+				return __('Add', 'fair-audience');
+		}
+	};
+
 	if (isLoading) {
 		return (
 			<div className="wrap">
@@ -245,9 +309,26 @@ export default function EventParticipants() {
 					: __('Event Participants', 'fair-audience')}
 			</h1>
 
-			<Button isPrimary onClick={() => setIsAddModalOpen(true)}>
-				{__('Add Participant', 'fair-audience')}
-			</Button>
+			<div style={{ display: 'flex', gap: '10px', marginBottom: '15px' }}>
+				<Button
+					variant="secondary"
+					onClick={() => handleOpenAddModal('collaborator')}
+				>
+					{__('Add Collaborators', 'fair-audience')}
+				</Button>
+				<Button
+					variant="secondary"
+					onClick={() => handleOpenAddModal('interested')}
+				>
+					{__('Add Interested', 'fair-audience')}
+				</Button>
+				<Button
+					isPrimary
+					onClick={() => handleOpenAddModal('signed_up')}
+				>
+					{__('Add Participants', 'fair-audience')}
+				</Button>
+			</div>
 
 			<p>
 				{sprintf(
@@ -377,70 +458,131 @@ export default function EventParticipants() {
 				</tbody>
 			</table>
 
-			{isAddModalOpen && (
+			{addModalLabel && (
 				<Modal
-					title={__('Add Participant to Event', 'fair-audience')}
-					onRequestClose={() => setIsAddModalOpen(false)}
+					title={getLabelTitle(addModalLabel)}
+					onRequestClose={handleCloseAddModal}
+					style={{ maxWidth: '600px', width: '100%' }}
 				>
-					<Card>
-						<CardBody>
-							<SelectControl
-								label={__(
-									'Select Participant',
-									'fair-audience'
-								)}
-								value={selectedParticipantId}
-								options={[
-									{
-										label: __(
-											'— Select —',
-											'fair-audience'
-										),
-										value: '',
-									},
-									...allParticipants.map((p) => ({
-										label: `${p.name} ${p.surname} (${p.email})`,
-										value: p.id.toString(),
-									})),
-								]}
-								onChange={(value) =>
-									setSelectedParticipantId(value)
-								}
-							/>
-							<SelectControl
-								label={__('Label', 'fair-audience')}
-								value={selectedLabel}
-								options={[
-									{
-										label: __(
-											'Interested',
-											'fair-audience'
-										),
-										value: 'interested',
-									},
-									{
-										label: __('Signed Up', 'fair-audience'),
-										value: 'signed_up',
-									},
-									{
-										label: __(
-											'Collaborator',
-											'fair-audience'
-										),
-										value: 'collaborator',
-									},
-								]}
-								onChange={(value) => setSelectedLabel(value)}
-							/>
-							<Button
-								isPrimary
-								onClick={handleAdd}
-								disabled={!selectedParticipantId}
+					{availableParticipants.length === 0 ? (
+						<p>
+							{__(
+								'All participants are already added to this event.',
+								'fair-audience'
+							)}
+						</p>
+					) : (
+						<>
+							<div
+								style={{
+									marginBottom: '15px',
+									display: 'flex',
+									justifyContent: 'space-between',
+									alignItems: 'center',
+								}}
 							>
-								{__('Add', 'fair-audience')}
-							</Button>
-						</CardBody>
-					</Card>
+								<span>
+									{sprintf(
+										/* translators: %d: number of available participants */
+										__(
+											'%d participant(s) available',
+											'fair-audience'
+										),
+										availableParticipants.length
+									)}
+								</span>
+								<Button
+									variant="secondary"
+									isSmall
+									onClick={handleSelectAllToAdd}
+								>
+									{selectedToAdd.size ===
+									availableParticipants.length
+										? __('Deselect All', 'fair-audience')
+										: __('Select All', 'fair-audience')}
+								</Button>
+							</div>
+
+							<div
+								style={{
+									maxHeight: '400px',
+									overflowY: 'auto',
+									border: '1px solid #ddd',
+									borderRadius: '4px',
+								}}
+							>
+								{availableParticipants.map((p) => (
+									<div
+										key={p.id}
+										style={{
+											padding: '10px 15px',
+											borderBottom: '1px solid #eee',
+											display: 'flex',
+											alignItems: 'center',
+											gap: '10px',
+										}}
+									>
+										<CheckboxControl
+											checked={selectedToAdd.has(p.id)}
+											onChange={() =>
+												handleToggleParticipantToAdd(
+													p.id
+												)
+											}
+										/>
+										<div>
+											<strong>
+												{p.name} {p.surname}
+											</strong>
+											<br />
+											<span
+												style={{
+													color: '#666',
+													fontSize: '12px',
+												}}
+											>
+												{p.email}
+											</span>
+										</div>
+									</div>
+								))}
+							</div>
+
+							<div
+								style={{
+									marginTop: '20px',
+									display: 'flex',
+									justifyContent: 'flex-end',
+									gap: '10px',
+								}}
+							>
+								<Button
+									variant="secondary"
+									onClick={handleCloseAddModal}
+								>
+									{__('Cancel', 'fair-audience')}
+								</Button>
+								<Button
+									isPrimary
+									onClick={handleBatchAdd}
+									disabled={
+										selectedToAdd.size === 0 || isAdding
+									}
+								>
+									{isAdding
+										? __('Adding...', 'fair-audience')
+										: sprintf(
+												/* translators: %d: number of selected participants */
+												__(
+													'Add %d Selected',
+													'fair-audience'
+												),
+												selectedToAdd.size
+											)}
+								</Button>
+							</div>
+						</>
+					)}
 				</Modal>
 			)}
 		</div>
