@@ -56,6 +56,34 @@ class ImportResolutionRepository {
 	}
 
 	/**
+	 * Find existing resolution by original email and row number.
+	 *
+	 * Since Entradium exports have different filenames but same row order,
+	 * we can match by original_email and import_row_number.
+	 *
+	 * @param string $original_email Original conflicting email.
+	 * @param int    $row_number     Import row number.
+	 * @return ImportResolution|null Found resolution or null.
+	 */
+	public function find_by_email_and_row( $original_email, $row_number ) {
+		global $wpdb;
+
+		$table_name = $this->get_table_name();
+
+		$result = $wpdb->get_row(
+			$wpdb->prepare(
+				'SELECT * FROM %i WHERE original_email = %s AND import_row_number = %d ORDER BY created_at DESC LIMIT 1',
+				$table_name,
+				$original_email,
+				$row_number
+			),
+			ARRAY_A
+		);
+
+		return $result ? new ImportResolution( $result ) : null;
+	}
+
+	/**
 	 * Save a new resolution.
 	 *
 	 * @param array $data Resolution data.

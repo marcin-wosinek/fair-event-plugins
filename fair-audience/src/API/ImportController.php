@@ -9,6 +9,7 @@ namespace FairAudience\API;
 
 use FairAudience\Database\ParticipantRepository;
 use FairAudience\Database\EventParticipantRepository;
+use FairAudience\Database\ImportResolutionRepository;
 use FairAudience\Models\Participant;
 use PhpOffice\PhpSpreadsheet\IOFactory;
 use WP_REST_Controller;
@@ -64,7 +65,7 @@ class ImportController extends WP_REST_Controller {
 	 * Register REST API routes.
 	 */
 	public function register_routes() {
-		// POST /fair-audience/v1/import/entradium
+		// POST /fair-audience/v1/import/entradium.
 		register_rest_route(
 			$this->namespace,
 			'/' . $this->rest_base . '/entradium',
@@ -77,7 +78,7 @@ class ImportController extends WP_REST_Controller {
 			)
 		);
 
-		// POST /fair-audience/v1/import/resolve-duplicates
+		// POST /fair-audience/v1/import/resolve-duplicates.
 		register_rest_route(
 			$this->namespace,
 			'/' . $this->rest_base . '/resolve-duplicates',
@@ -146,7 +147,7 @@ class ImportController extends WP_REST_Controller {
 		}
 
 		// Check for upload errors.
-		if ( $file['error'] !== UPLOAD_ERR_OK ) {
+		if ( UPLOAD_ERR_OK !== $file['error'] ) {
 			return new WP_Error(
 				'upload_error',
 				__( 'File upload failed.', 'fair-audience' ),
@@ -210,9 +211,13 @@ class ImportController extends WP_REST_Controller {
 				'imported'        => 0,
 				'existing_linked' => 0,
 				'skipped'         => 0,
+				'auto_resolved'   => 0,
 				'errors'          => array(),
 				'duplicates'      => array(),
 			);
+
+			// Resolution repository for checking existing resolutions.
+			$resolution_repo = new ImportResolutionRepository();
 
 			// First pass: detect duplicate emails within the file.
 			$email_rows       = array();
@@ -241,14 +246,76 @@ class ImportController extends WP_REST_Controller {
 			}
 
 			// Identify duplicates (emails used in more than one row).
+			// Check for existing resolutions and auto-apply them.
 			foreach ( $email_rows as $email => $rows ) {
 				if ( count( $rows ) > 1 ) {
-					$duplicate_emails[]      = $email;
-					$results['duplicates'][] = array(
-						'email' => $email,
-						'rows'  => $rows,
-						'count' => count( $rows ),
-					);
+					$duplicate_emails[] = $email;
+
+					// Check each duplicate row for existing resolution.
+					$unresolved_rows = array();
+					foreach ( $rows as $row_data ) {
+						$existing_resolution = $resolution_repo->find_by_email_and_row( $email, $row_data['row'] );
+
+						if ( $existing_resolution && $existing_resolution->resolved_email ) {
+							// Auto-apply the existing resolution.
+							$resolved_email = $existing_resolution->resolved_email;
+
+							// Check if participant with resolved email already exists.
+							$existing_participant = $this->repository->get_by_email( $resolved_email );
+							if ( $existing_participant ) {
+								// Link existing participant to event if provided.
+								if ( $event_id ) {
+									$link_result = $this->event_participant_repository->add_participant_to_event(
+										$event_id,
+										$existing_participant->id,
+										'signed_up'
+									);
+									if ( false !== $link_result ) {
+										++$results['existing_linked'];
+									}
+								}
+								++$results['auto_resolved'];
+							} else {
+								// Create new participant with resolved email.
+								$participant = new Participant();
+								$participant->populate(
+									array(
+										'name'          => $row_data['name'],
+										'surname'       => $row_data['surname'],
+										'email'         => $resolved_email,
+										'instagram'     => '',
+										'email_profile' => 'minimal',
+									)
+								);
+
+								if ( $participant->save() ) {
+									++$results['imported'];
+									++$results['auto_resolved'];
+
+									// Link to event if provided.
+									if ( $event_id ) {
+										$this->event_participant_repository->add_participant_to_event(
+											$event_id,
+											$participant->id,
+											'signed_up'
+										);
+									}
+								}
+							}
+						} else {
+							// No existing resolution, add to unresolved.
+							$unresolved_rows[] = $row_data;
+						}
+					}
+
+					// Only add to duplicates if there are unresolved rows.
+					if ( ! empty( $unresolved_rows ) ) {
+						$results['duplicates'][] = array(
+							'email' => $email,
+							'rows'  => $unresolved_rows,
+							'count' => count( $unresolved_rows ),
+						);
+					}
 				}
 			}
 
@@ -304,7 +371,7 @@ class ImportController extends WP_REST_Controller {
 							'signed_up'
 						);
 						// Only count if relationship was actually created.
-						if ( $link_result !== false ) {
+						if ( false !== $link_result ) {
 							++$results['existing_linked'];
 						}
 					} else {
@@ -387,6 +454,12 @@ class ImportController extends WP_REST_Controller {
 			);
 		}
 
+		// Get filename for resolution records.
+		$filename = $request->get_param( 'filename' );
+		if ( empty( $filename ) ) {
+			$filename = 'unknown';
+		}
+
 		// Get optional event_id parameter.
 		$event_id = $request->get_param( 'event_id' );
 		if ( ! empty( $event_id ) ) {
@@ -411,6 +484,8 @@ class ImportController extends WP_REST_Controller {
 			'errors'          => array(),
 		);
 
+		$resolution_repo = new ImportResolutionRepository();
+
 		foreach ( $participants as $index => $participant_data ) {
 			// Validate required fields.
 			if ( empty( $participant_data['name'] ) || empty( $participant_data['surname'] ) || empty( $participant_data['email'] ) ) {
@@ -425,6 +500,11 @@ class ImportController extends WP_REST_Controller {
 			$name    = sanitize_text_field( $participant_data['name'] );
 			$surname = sanitize_text_field( $participant_data['surname'] );
 			$email   = sanitize_email( $participant_data['email'] );
+
+			// Extract resolution metadata from frontend.
+			$original_email    = isset( $participant_data['original_email'] ) ? sanitize_email( $participant_data['original_email'] ) : $email;
+			$row_number        = isset( $participant_data['row_number'] ) ? absint( $participant_data['row_number'] ) : 0;
+			$resolution_action = isset( $participant_data['resolution_action'] ) ? sanitize_text_field( $participant_data['resolution_action'] ) : 'edit';
 
 			// Validate email format.
 			if ( ! is_email( $email ) ) {
@@ -448,12 +528,27 @@ class ImportController extends WP_REST_Controller {
 						'signed_up'
 					);
 					// Only count if relationship was actually created.
-					if ( $link_result !== false ) {
+					if ( false !== $link_result ) {
 						++$results['existing_linked'];
 					}
 				} else {
 					++$results['skipped'];
 				}
+
+				// Save resolution record for existing participant.
+				$resolution_repo->create(
+					array(
+						'filename'          => $filename,
+						'original_email'    => $original_email,
+						'import_row_number' => $row_number,
+						'resolved_name'     => $name,
+						'resolved_surname'  => $surname,
+						'resolved_email'    => $email,
+						'resolution_action' => $resolution_action,
+						'participant_id'    => $existing->id,
+					)
+				);
+
 				continue;
 			}
 
@@ -489,6 +584,20 @@ class ImportController extends WP_REST_Controller {
 						);
 					}
 				}
+
+				// Save resolution record for new participant.
+				$resolution_repo->create(
+					array(
+						'filename'          => $filename,
+						'original_email'    => $original_email,
+						'import_row_number' => $row_number,
+						'resolved_name'     => $name,
+						'resolved_surname'  => $surname,
+						'resolved_email'    => $email,
+						'resolution_action' => $resolution_action,
+						'participant_id'    => $participant->id,
+					)
+				);
 			} else {
 				$results['errors'][] = sprintf(
 					/* translators: 1: participant index, 2: name and surname */

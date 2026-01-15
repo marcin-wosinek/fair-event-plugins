@@ -18,6 +18,7 @@ export default function Import() {
 	const [error, setError] = useState(null);
 	const [duplicateResolutions, setDuplicateResolutions] = useState({});
 	const [isResolvingDuplicates, setIsResolvingDuplicates] = useState(false);
+	const [importFilename, setImportFilename] = useState('');
 	const [events, setEvents] = useState([]);
 	const [selectedEventId, setSelectedEventId] = useState('');
 	const [isLoadingEvents, setIsLoadingEvents] = useState(true);
@@ -67,6 +68,7 @@ export default function Import() {
 			});
 
 			setResults(response);
+			setImportFilename(file.name);
 			setFile(null);
 			// Reset file input
 			document.getElementById('file-input').value = '';
@@ -129,6 +131,9 @@ export default function Import() {
 					name: res.name,
 					surname: res.surname,
 					email: res.email,
+					original_email: res.originalEmail,
+					row_number: res.row,
+					resolution_action: res.action,
 				}));
 
 			if (participantsToCreate.length === 0) {
@@ -142,7 +147,10 @@ export default function Import() {
 				return;
 			}
 
-			const requestData = { participants: participantsToCreate };
+			const requestData = {
+				participants: participantsToCreate,
+				filename: importFilename || 'unknown',
+			};
 			if (selectedEventId) {
 				requestData.event_id = parseInt(selectedEventId);
 			}
@@ -341,6 +349,18 @@ export default function Import() {
 															)}{' '}
 															{
 																results.existing_linked
+															}
+														</li>
+													)}
+													{results.auto_resolved >
+														0 && (
+														<li>
+															{__(
+																'Auto-resolved from previous imports:',
+																'fair-audience'
+															)}{' '}
+															{
+																results.auto_resolved
 															}
 														</li>
 													)}
