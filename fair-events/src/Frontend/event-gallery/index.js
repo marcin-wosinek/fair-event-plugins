@@ -4,7 +4,13 @@
  * @package FairEvents
  */
 
-import { render, useState, useEffect, useCallback } from '@wordpress/element';
+import {
+	render,
+	useState,
+	useEffect,
+	useCallback,
+	useRef,
+} from '@wordpress/element';
 import apiFetch from '@wordpress/api-fetch';
 import { __ } from '@wordpress/i18n';
 import './style.css';
@@ -45,6 +51,146 @@ function HeartIcon({ filled }) {
 }
 
 /**
+ * Close icon component
+ */
+function CloseIcon() {
+	return (
+		<svg
+			viewBox="0 0 24 24"
+			fill="none"
+			stroke="currentColor"
+			strokeWidth="2"
+			width="24"
+			height="24"
+			aria-hidden="true"
+		>
+			<path d="M18 6L6 18M6 6l12 12" />
+		</svg>
+	);
+}
+
+/**
+ * Arrow icon component
+ *
+ * @param {Object} props - Component props
+ * @param {string} props.direction - Arrow direction ('left' or 'right')
+ */
+function ArrowIcon({ direction }) {
+	return (
+		<svg
+			viewBox="0 0 24 24"
+			fill="none"
+			stroke="currentColor"
+			strokeWidth="2"
+			width="32"
+			height="32"
+			aria-hidden="true"
+		>
+			{direction === 'left' ? (
+				<path d="M15 18l-6-6 6-6" />
+			) : (
+				<path d="M9 18l6-6-6-6" />
+			)}
+		</svg>
+	);
+}
+
+/**
+ * Lightbox component for fullscreen photo view
+ *
+ * @param {Object} props - Component props
+ * @param {Object} props.photo - Photo data
+ * @param {Function} props.onClose - Close handler
+ * @param {Function} props.onPrev - Previous photo handler
+ * @param {Function} props.onNext - Next photo handler
+ * @param {boolean} props.hasPrev - Whether there is a previous photo
+ * @param {boolean} props.hasNext - Whether there is a next photo
+ */
+function Lightbox({ photo, onClose, onPrev, onNext, hasPrev, hasNext }) {
+	const lightboxRef = useRef(null);
+
+	// Handle keyboard navigation.
+	useEffect(() => {
+		const handleKeyDown = (e) => {
+			switch (e.key) {
+				case 'Escape':
+					onClose();
+					break;
+				case 'ArrowLeft':
+					if (hasPrev) onPrev();
+					break;
+				case 'ArrowRight':
+					if (hasNext) onNext();
+					break;
+			}
+		};
+
+		document.addEventListener('keydown', handleKeyDown);
+		// Prevent body scroll when lightbox is open.
+		document.body.style.overflow = 'hidden';
+
+		return () => {
+			document.removeEventListener('keydown', handleKeyDown);
+			document.body.style.overflow = '';
+		};
+	}, [onClose, onPrev, onNext, hasPrev, hasNext]);
+
+	// Close on backdrop click.
+	const handleBackdropClick = (e) => {
+		if (e.target === lightboxRef.current) {
+			onClose();
+		}
+	};
+
+	return (
+		<div
+			className="fe-lightbox"
+			ref={lightboxRef}
+			onClick={handleBackdropClick}
+			role="dialog"
+			aria-modal="true"
+			aria-label={__('Photo viewer', 'fair-events')}
+		>
+			<button
+				className="fe-lightbox__close"
+				onClick={onClose}
+				aria-label={__('Close', 'fair-events')}
+			>
+				<CloseIcon />
+			</button>
+
+			{hasPrev && (
+				<button
+					className="fe-lightbox__nav fe-lightbox__nav--prev"
+					onClick={onPrev}
+					aria-label={__('Previous photo', 'fair-events')}
+				>
+					<ArrowIcon direction="left" />
+				</button>
+			)}
+
+			<div className="fe-lightbox__content">
+				<img
+					src={photo.sizes?.full || photo.url}
+					alt={photo.alt_text || photo.title}
+					className="fe-lightbox__image"
+				/>
+			</div>
+
+			{hasNext && (
+				<button
+					className="fe-lightbox__nav fe-lightbox__nav--next"
+					onClick={onNext}
+					aria-label={__('Next photo', 'fair-events')}
+				>
+					<ArrowIcon direction="right" />
+				</button>
+			)}
+		</div>
+	);
+}
+
+/**
  * Photo card component
  *
  * @param {Object} props - Component props
@@ -52,8 +198,9 @@ function HeartIcon({ filled }) {
  * @param {number} props.likeCount - Like count
  * @param {boolean} props.userLiked - Whether user has liked
  * @param {Function} props.onLikeToggle - Like toggle handler
+ * @param {Function} props.onImageClick - Image click handler
  */
-function PhotoCard({ photo, likeCount, userLiked, onLikeToggle }) {
+function PhotoCard({ photo, likeCount, userLiked, onLikeToggle, onImageClick }) {
 	const [isToggling, setIsToggling] = useState(false);
 
 	const handleLikeClick = async () => {
@@ -66,13 +213,17 @@ function PhotoCard({ photo, likeCount, userLiked, onLikeToggle }) {
 
 	return (
 		<div className="fe-gallery-card">
-			<div className="fe-gallery-card__image-wrapper">
+			<button
+				className="fe-gallery-card__image-wrapper"
+				onClick={onImageClick}
+				aria-label={__('View photo fullscreen', 'fair-events')}
+			>
 				<img
 					src={photo.sizes?.large || photo.sizes?.medium || photo.url}
 					alt={photo.alt_text || photo.title}
 					loading="lazy"
 				/>
-			</div>
+			</button>
 			<button
 				className={`fe-gallery-card__like-btn ${userLiked ? 'fe-gallery-card__like-btn--liked' : ''}`}
 				onClick={handleLikeClick}
@@ -99,6 +250,7 @@ function Gallery() {
 	const [userLikes, setUserLikes] = useState({});
 	const [loading, setLoading] = useState(true);
 	const [error, setError] = useState(null);
+	const [lightboxIndex, setLightboxIndex] = useState(null);
 
 	// Get event info from the root element.
 	const root = document.getElementById('fair-events-gallery-root');
@@ -207,6 +359,25 @@ function Gallery() {
 		[userLikes]
 	);
 
+	// Lightbox handlers.
+	const openLightbox = useCallback((index) => {
+		setLightboxIndex(index);
+	}, []);
+
+	const closeLightbox = useCallback(() => {
+		setLightboxIndex(null);
+	}, []);
+
+	const goToPrevPhoto = useCallback(() => {
+		setLightboxIndex((prev) => (prev > 0 ? prev - 1 : prev));
+	}, []);
+
+	const goToNextPhoto = useCallback(() => {
+		setLightboxIndex((prev) =>
+			prev < photos.length - 1 ? prev + 1 : prev
+		);
+	}, [photos.length]);
+
 	if (loading) {
 		return (
 			<div className="fe-gallery">
@@ -250,16 +421,27 @@ function Gallery() {
 				<h1 className="fe-gallery__title">{eventTitle}</h1>
 			</header>
 			<div className="fe-gallery__grid">
-				{photos.map((photo) => (
+				{photos.map((photo, index) => (
 					<PhotoCard
 						key={photo.id}
 						photo={photo}
 						likeCount={likeCounts[photo.id] || 0}
 						userLiked={userLikes[photo.id] || false}
 						onLikeToggle={handleLikeToggle}
+						onImageClick={() => openLightbox(index)}
 					/>
 				))}
 			</div>
+			{lightboxIndex !== null && (
+				<Lightbox
+					photo={photos[lightboxIndex]}
+					onClose={closeLightbox}
+					onPrev={goToPrevPhoto}
+					onNext={goToNextPhoto}
+					hasPrev={lightboxIndex > 0}
+					hasNext={lightboxIndex < photos.length - 1}
+				/>
+			)}
 		</div>
 	);
 }
