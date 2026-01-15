@@ -105,9 +105,23 @@ function ArrowIcon({ direction }) {
  * @param {Function} props.onNext - Next photo handler
  * @param {boolean} props.hasPrev - Whether there is a previous photo
  * @param {boolean} props.hasNext - Whether there is a next photo
+ * @param {number} props.likeCount - Like count
+ * @param {boolean} props.userLiked - Whether user has liked
+ * @param {Function} props.onLikeToggle - Like toggle handler
  */
-function Lightbox({ photo, onClose, onPrev, onNext, hasPrev, hasNext }) {
+function Lightbox({
+	photo,
+	onClose,
+	onPrev,
+	onNext,
+	hasPrev,
+	hasNext,
+	likeCount,
+	userLiked,
+	onLikeToggle,
+}) {
 	const lightboxRef = useRef(null);
+	const [isToggling, setIsToggling] = useState(false);
 
 	// Handle keyboard navigation.
 	useEffect(() => {
@@ -140,6 +154,14 @@ function Lightbox({ photo, onClose, onPrev, onNext, hasPrev, hasNext }) {
 		if (e.target === lightboxRef.current) {
 			onClose();
 		}
+	};
+
+	const handleLikeClick = async () => {
+		if (isToggling) return;
+
+		setIsToggling(true);
+		await onLikeToggle(photo.id);
+		setIsToggling(false);
 	};
 
 	return (
@@ -186,6 +208,20 @@ function Lightbox({ photo, onClose, onPrev, onNext, hasPrev, hasNext }) {
 					<ArrowIcon direction="right" />
 				</button>
 			)}
+
+			<button
+				className={`fe-lightbox__like-btn ${userLiked ? 'fe-lightbox__like-btn--liked' : ''}`}
+				onClick={handleLikeClick}
+				disabled={isToggling}
+				aria-label={
+					userLiked
+						? __('Unlike this photo', 'fair-events')
+						: __('Like this photo', 'fair-events')
+				}
+			>
+				<HeartIcon filled={userLiked} />
+				<span className="fe-lightbox__like-count">{likeCount}</span>
+			</button>
 		</div>
 	);
 }
@@ -200,7 +236,13 @@ function Lightbox({ photo, onClose, onPrev, onNext, hasPrev, hasNext }) {
  * @param {Function} props.onLikeToggle - Like toggle handler
  * @param {Function} props.onImageClick - Image click handler
  */
-function PhotoCard({ photo, likeCount, userLiked, onLikeToggle, onImageClick }) {
+function PhotoCard({
+	photo,
+	likeCount,
+	userLiked,
+	onLikeToggle,
+	onImageClick,
+}) {
 	const [isToggling, setIsToggling] = useState(false);
 
 	const handleLikeClick = async () => {
@@ -440,6 +482,9 @@ function Gallery() {
 					onNext={goToNextPhoto}
 					hasPrev={lightboxIndex > 0}
 					hasNext={lightboxIndex < photos.length - 1}
+					likeCount={likeCounts[photos[lightboxIndex].id] || 0}
+					userLiked={userLikes[photos[lightboxIndex].id] || false}
+					onLikeToggle={handleLikeToggle}
 				/>
 			)}
 		</div>

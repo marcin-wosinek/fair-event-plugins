@@ -339,6 +339,60 @@ body.fair-events-gallery-page.admin-bar {
 	right: 16px;
 }
 
+/* Lightbox like button */
+.fe-lightbox__like-btn {
+	position: absolute;
+	bottom: 24px;
+	left: 50%;
+	transform: translateX(-50%);
+	display: flex;
+	align-items: center;
+	gap: 8px;
+	padding: 12px 20px;
+	background: rgba(255, 255, 255, 0.15);
+	border: none;
+	border-radius: 24px;
+	color: #fff;
+	font-size: 16px;
+	font-weight: 500;
+	cursor: pointer;
+	transition: background 0.2s ease, transform 0.1s ease;
+}
+
+.fe-lightbox__like-btn:hover {
+	background: rgba(255, 255, 255, 0.25);
+}
+
+.fe-lightbox__like-btn:active {
+	transform: translateX(-50%) scale(0.95);
+}
+
+.fe-lightbox__like-btn:disabled {
+	opacity: 0.7;
+	cursor: not-allowed;
+}
+
+.fe-lightbox__like-btn--liked {
+	color: var(--fe-gallery-like-color);
+}
+
+.fe-lightbox__like-btn--liked svg {
+	animation: like-pop 0.3s ease;
+}
+
+.fe-lightbox__like-btn:focus {
+	outline: 2px solid #fff;
+	outline-offset: 2px;
+}
+
+.fe-lightbox__like-btn:focus:not(:focus-visible) {
+	outline: none;
+}
+
+.fe-lightbox__like-count {
+	font-variant-numeric: tabular-nums;
+}
+
 /* Mobile adjustments for lightbox */
 @media (max-width: 768px) {
 	.fe-lightbox__content {
