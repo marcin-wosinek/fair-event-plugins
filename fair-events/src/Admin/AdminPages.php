@@ -51,14 +51,14 @@ class AdminPages {
 			array( $this, 'render_settings_page' )
 		);
 
-		// Import page
+		// Migration page
 		add_submenu_page(
 			'edit.php?post_type=fair_event',
-			__( 'Import Events', 'fair-events' ),
-			__( 'Import', 'fair-events' ),
+			__( 'Migrate Posts to Events', 'fair-events' ),
+			__( 'Migrate Posts', 'fair-events' ),
 			'manage_options',
-			'fair-events-import',
-			array( $this, 'render_import_page' )
+			'fair-events-migration',
+			array( $this, 'render_migration_page' )
 		);
 
 		// Event Sources page
@@ -114,8 +114,30 @@ class AdminPages {
 			return;
 		}
 
+		// Migration page
+		if ( 'fair_event_page_fair-events-migration' === $hook ) {
+			$asset_file = include FAIR_EVENTS_PLUGIN_DIR . 'build/admin/migration/index.asset.php';
+
+			wp_enqueue_script(
+				'fair-events-migration',
+				FAIR_EVENTS_PLUGIN_URL . 'build/admin/migration/index.js',
+				$asset_file['dependencies'],
+				$asset_file['version'],
+				true
+			);
+
+			wp_set_script_translations(
+				'fair-events-migration',
+				'fair-events',
+				FAIR_EVENTS_PLUGIN_DIR . 'build/languages'
+			);
+
+			wp_enqueue_style( 'wp-components' );
+			return;
+		}
+
 		// Only load on Fair Events admin pages.
-		if ( 'fair_event_page_fair-events-settings' !== $hook && 'fair_event_page_fair-events-import' !== $hook ) {
+		if ( 'fair_event_page_fair-events-settings' !== $hook ) {
 			return;
 		}
 
@@ -152,15 +174,13 @@ class AdminPages {
 	}
 
 	/**
-	 * Render import page
+	 * Render migration page
 	 *
 	 * @return void
 	 */
-	public function render_import_page() {
+	public function render_migration_page() {
 		?>
-		<div class="wrap">
-			<h1><?php echo esc_html( get_admin_page_title() ); ?></h1>
-		</div>
+		<div id="fair-events-migration-root"></div>
 		<?php
 	}
 

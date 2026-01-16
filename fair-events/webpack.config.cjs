@@ -41,6 +41,10 @@ module.exports = {
       process.cwd(),
       "src/Admin/sources/index.js",
     ),
+    "admin/migration/index": path.resolve(
+      process.cwd(),
+      "src/Admin/migration/index.js",
+    ),
     "admin/event-gallery": path.resolve(
       process.cwd(),
       "src/Admin/event-gallery.js",
