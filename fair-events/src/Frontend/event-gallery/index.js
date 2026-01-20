@@ -298,6 +298,7 @@ function Gallery() {
 	const root = document.getElementById('fair-events-gallery-root');
 	const eventId = root?.dataset?.eventId;
 	const eventTitle = root?.dataset?.eventTitle;
+	const eventUrl = root?.dataset?.eventUrl;
 	// Get participant ID if token-based access.
 	const participantId =
 		root?.dataset?.participantId || window.fairEventsGallery?.participantId;
@@ -437,7 +438,9 @@ function Gallery() {
 		return (
 			<div className="fe-gallery">
 				<header className="fe-gallery__header">
-					<h1 className="fe-gallery__title">{eventTitle}</h1>
+					<h1 className="fe-gallery__title">
+						<a href={eventUrl}>{eventTitle}</a>
+					</h1>
 				</header>
 				<div className="fe-gallery__loading">
 					{__('Loading...', 'fair-events')}
@@ -450,7 +453,9 @@ function Gallery() {
 		return (
 			<div className="fe-gallery">
 				<header className="fe-gallery__header">
-					<h1 className="fe-gallery__title">{eventTitle}</h1>
+					<h1 className="fe-gallery__title">
+						<a href={eventUrl}>{eventTitle}</a>
+					</h1>
 				</header>
 				<div className="fe-gallery__error">{error}</div>
 			</div>
@@ -461,7 +466,9 @@ function Gallery() {
 		return (
 			<div className="fe-gallery">
 				<header className="fe-gallery__header">
-					<h1 className="fe-gallery__title">{eventTitle}</h1>
+					<h1 className="fe-gallery__title">
+						<a href={eventUrl}>{eventTitle}</a>
+					</h1>
 				</header>
 				<div className="fe-gallery__empty">
 					{__('No photos available for this event.', 'fair-events')}
@@ -473,7 +480,9 @@ function Gallery() {
 	return (
 		<div className="fe-gallery">
 			<header className="fe-gallery__header">
-				<h1 className="fe-gallery__title">{eventTitle}</h1>
+				<h1 className="fe-gallery__title">
+					<a href={eventUrl}>{eventTitle}</a>
+				</h1>
 			</header>
 			<div className="fe-gallery__grid">
 				{photos.map((photo, index) => (

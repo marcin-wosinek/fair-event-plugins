@@ -171,6 +171,7 @@ class EventGalleryPage {
 			<div id="fair-events-gallery-root"
 				data-event-id="<?php echo esc_attr( $event->ID ); ?>"
 				data-event-title="<?php echo esc_attr( $event->post_title ); ?>"
+				data-event-url="<?php echo esc_url( get_permalink( $event->ID ) ); ?>"
 				<?php if ( $participant_id ) : ?>
 				data-participant-id="<?php echo esc_attr( $participant_id ); ?>"
 				<?php endif; ?>
@@ -216,6 +217,7 @@ class EventGalleryPage {
 		$script_data = array(
 			'eventId'    => $event->ID,
 			'eventTitle' => $event->post_title,
+			'eventUrl'   => get_permalink( $event->ID ),
 			'apiUrl'     => rest_url( 'fair-events/v1' ),
 			'nonce'      => wp_create_nonce( 'wp_rest' ),
 			'i18n'       => array(
