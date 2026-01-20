@@ -15,11 +15,109 @@ defined( 'WPINC' ) || die;
 class AdminHooks {
 
 	/**
+	 * Hidden submenu pages configuration.
+	 *
+	 * WordPress can't find hidden pages (empty parent slug) in the menu structure,
+	 * causing PHP 8.1+ deprecation warnings. This configuration is used to:
+	 * - Register the pages
+	 * - Set proper titles to prevent strip_tags() warnings
+	 * - Set parent_file/submenu_file to prevent null value warnings
+	 *
+	 * @var array<string, array{title: string, callback: string}>
+	 */
+	private const HIDDEN_PAGES = array(
+		'fair-audience-event-participants' => array(
+			'title'    => 'Event Participants',
+			'callback' => 'render_event_participants_page',
+		),
+		'fair-audience-edit-poll'          => array(
+			'title'    => 'Edit Poll',
+			'callback' => 'render_edit_poll_page',
+		),
+	);
+
+	/**
 	 * Constructor.
 	 */
 	public function __construct() {
 		add_action( 'admin_menu', array( $this, 'register_admin_menu' ) );
 		add_action( 'admin_enqueue_scripts', array( $this, 'enqueue_admin_scripts' ) );
+		add_action( 'current_screen', array( $this, 'set_title_for_hidden_pages' ) );
+		add_filter( 'parent_file', array( $this, 'fix_parent_file_for_hidden_pages' ) );
+		add_filter( 'submenu_file', array( $this, 'fix_submenu_file_for_hidden_pages' ), 10, 2 );
+	}
+
+	/**
+	 * Check if current page is a hidden page.
+	 *
+	 * @return bool True if current page is hidden.
+	 */
+	private function is_hidden_page(): bool {
+		global $plugin_page;
+		return isset( self::HIDDEN_PAGES[ $plugin_page ] );
+	}
+
+	/**
+	 * Fix parent_file for hidden submenu pages to prevent PHP 8.1+ deprecation warnings.
+	 *
+	 * @param string|null $parent_file The parent file.
+	 * @return string The parent file (never null).
+	 */
+	public function fix_parent_file_for_hidden_pages( $parent_file ) {
+		if ( $this->is_hidden_page() ) {
+			return 'fair-audience';
+		}
+		return $parent_file ?? '';
+	}
+
+	/**
+	 * Fix submenu_file for hidden submenu pages to prevent PHP 8.1+ deprecation warnings.
+	 *
+	 * @param string|null $submenu_file The submenu file.
+	 * @param string      $parent_file  The parent file.
+	 * @return string The submenu file (never null).
+	 */
+	public function fix_submenu_file_for_hidden_pages( $submenu_file, $parent_file ) {
+		global $plugin_page;
+
+		if ( $this->is_hidden_page() ) {
+			return $plugin_page;
+		}
+		return $submenu_file ?? '';
+	}
+
+	/**
+	 * Set the admin page title for hidden pages to prevent PHP 8.1+ deprecation warnings.
+	 */
+	public function set_title_for_hidden_pages() {
+		global $plugin_page, $title;
+
+		if ( isset( self::HIDDEN_PAGES[ $plugin_page ] ) && empty( $title ) ) {
+			$title = __( self::HIDDEN_PAGES[ $plugin_page ]['title'], 'fair-audience' );
+		}
+	}
+
+	/**
+	 * Register a hidden submenu page using the HIDDEN_PAGES configuration.
+	 *
+	 * @param string $menu_slug The menu slug for the hidden page.
+	 */
+	private function register_hidden_page( string $menu_slug ): void {
+		if ( ! isset( self::HIDDEN_PAGES[ $menu_slug ] ) ) {
+			return;
+		}
+
+		$config = self::HIDDEN_PAGES[ $menu_slug ];
+		$title  = __( $config['title'], 'fair-audience' );
+
+		add_submenu_page(
+			'', // Hidden from menu.
+			$title,
+			$title,
+			'manage_options',
+			$menu_slug,
+			array( $this, $config['callback'] )
+		);
 	}
 
 	/**
@@ -48,14 +146,7 @@ class AdminHooks {
 		);
 
 		// Hidden submenu page - Event Participants.
-		add_submenu_page(
-			'', // Hidden from menu.
-			__( 'Event Participants', 'fair-audience' ),
-			__( 'Event Participants', 'fair-audience' ),
-			'manage_options',
-			'fair-audience-event-participants',
-			array( $this, 'render_event_participants_page' )
-		);
+		$this->register_hidden_page( 'fair-audience-event-participants' );
 
 		// Submenu page - Import.
 		add_submenu_page(
@@ -78,14 +169,7 @@ class AdminHooks {
 		);
 
 		// Hidden submenu page - Edit Poll.
-		add_submenu_page(
-			'', // Hidden from menu.
-			__( 'Edit Poll', 'fair-audience' ),
-			__( 'Edit Poll', 'fair-audience' ),
-			'manage_options',
-			'fair-audience-edit-poll',
-			array( $this, 'render_edit_poll_page' )
-		);
+		$this->register_hidden_page( 'fair-audience-edit-poll' );
 	}
 
 	/**
