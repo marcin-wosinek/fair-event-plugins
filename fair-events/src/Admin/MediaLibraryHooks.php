@@ -345,8 +345,8 @@ class MediaLibraryHooks {
 	 * @param int $attachment_id Attachment ID.
 	 */
 	public static function auto_assign_event_on_upload( $attachment_id ) {
-		// Check if this is an image.
-		if ( ! wp_attachment_is_image( $attachment_id ) ) {
+		// Check if this is an image or video.
+		if ( ! wp_attachment_is( 'image', $attachment_id ) && ! wp_attachment_is( 'video', $attachment_id ) ) {
 			return;
 		}
 
