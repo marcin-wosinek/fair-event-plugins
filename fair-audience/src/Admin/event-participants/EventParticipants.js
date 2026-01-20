@@ -281,7 +281,12 @@ export default function EventParticipants() {
 	};
 
 	const handleSendGalleryLinks = async () => {
-		if (participants.length === 0) {
+		const targetCount =
+			selectedParticipants.size > 0
+				? selectedParticipants.size
+				: participants.length;
+
+		if (targetCount === 0) {
 			alert(
 				__('No participants to send gallery links to.', 'fair-audience')
 			);
@@ -295,7 +300,7 @@ export default function EventParticipants() {
 					'Send gallery links to %d participant(s)? They will receive an email with a unique link to view and like photos.',
 					'fair-audience'
 				),
-				participants.length
+				targetCount
 			)
 		);
 
@@ -306,10 +311,15 @@ export default function EventParticipants() {
 		setIsSendingGalleryLinks(true);
 
 		try {
+			const requestData =
+				selectedParticipants.size > 0
+					? { participant_ids: Array.from(selectedParticipants) }
+					: {};
+
 			const response = await apiFetch({
 				path: `/fair-audience/v1/events/${eventId}/gallery-invitations`,
 				method: 'POST',
-				data: {},
+				data: requestData,
 			});
 
 			if (response.sent_count > 0) {
@@ -340,6 +350,10 @@ export default function EventParticipants() {
 			}
 
 			loadGalleryStats();
+			// Clear selection after sending.
+			if (selectedParticipants.size > 0) {
+				setSelectedParticipants(new Set());
+			}
 		} catch (err) {
 			alert(
 				__('Error sending gallery links: ', 'fair-audience') +
@@ -423,7 +437,16 @@ export default function EventParticipants() {
 				>
 					{isSendingGalleryLinks
 						? __('Sending...', 'fair-audience')
-						: __('Send Gallery Links', 'fair-audience')}
+						: selectedParticipants.size > 0
+							? sprintf(
+									/* translators: %d: number of selected participants */
+									__(
+										'Send Gallery to %d Selected',
+										'fair-audience'
+									),
+									selectedParticipants.size
+								)
+							: __('Send Gallery Links', 'fair-audience')}
 				</Button>
 			</div>
 

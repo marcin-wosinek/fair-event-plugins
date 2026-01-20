@@ -101,15 +101,26 @@ class GalleryAccessController extends WP_REST_Controller {
 					'callback'            => array( $this, 'send_invitations' ),
 					'permission_callback' => array( $this, 'send_invitations_permissions_check' ),
 					'args'                => array(
-						'event_id' => array(
+						'event_id'        => array(
 							'type'     => 'integer',
 							'required' => true,
 						),
-						'message'  => array(
+						'message'         => array(
 							'type'              => 'string',
 							'required'          => false,
 							'default'           => '',
 							'sanitize_callback' => 'sanitize_textarea_field',
+						),
+						'participant_ids' => array(
+							'type'              => 'array',
+							'required'          => false,
+							'default'           => array(),
+							'items'             => array(
+								'type' => 'integer',
+							),
+							'sanitize_callback' => function ( $value ) {
+								return array_map( 'absint', (array) $value );
+							},
 						),
 					),
 				),
@@ -218,14 +229,15 @@ class GalleryAccessController extends WP_REST_Controller {
 	}
 
 	/**
-	 * Send gallery invitations to all event participants.
+	 * Send gallery invitations to event participants.
 	 *
 	 * @param WP_REST_Request $request Request object.
 	 * @return WP_REST_Response|WP_Error Response object or error.
 	 */
 	public function send_invitations( $request ) {
-		$event_id       = $request->get_param( 'event_id' );
-		$custom_message = $request->get_param( 'message' );
+		$event_id        = $request->get_param( 'event_id' );
+		$custom_message  = $request->get_param( 'message' );
+		$participant_ids = $request->get_param( 'participant_ids' );
 
 		// Validate event exists.
 		$event = get_post( $event_id );
@@ -237,8 +249,8 @@ class GalleryAccessController extends WP_REST_Controller {
 			);
 		}
 
-		// Send invitations.
-		$results = $this->email_service->send_bulk_gallery_invitations( $event_id, $custom_message );
+		// Send invitations (to selected participants or all if empty).
+		$results = $this->email_service->send_bulk_gallery_invitations( $event_id, $custom_message, $participant_ids );
 
 		return rest_ensure_response(
 			array(

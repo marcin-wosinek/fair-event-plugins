@@ -165,18 +165,24 @@ class GalleryAccessKeyRepository {
 	}
 
 	/**
-	 * Generate access keys for all participants of an event.
+	 * Generate access keys for participants of an event.
 	 *
-	 * @param int $event_id Event ID.
+	 * @param int   $event_id Event ID.
+	 * @param array $participant_ids Optional array of participant IDs. If empty, generates for all.
 	 * @return int Number of keys created.
 	 */
-	public function generate_keys_for_event_participants( $event_id ) {
+	public function generate_keys_for_event_participants( $event_id, $participant_ids = array() ) {
 		$event_participant_repo = new EventParticipantRepository();
 		$participants           = $event_participant_repo->get_by_event( $event_id );
 
 		$created_count = 0;
 
 		foreach ( $participants as $event_participant ) {
+			// Skip participants not in the filter list (if provided).
+			if ( ! empty( $participant_ids ) && ! in_array( $event_participant->participant_id, $participant_ids, true ) ) {
+				continue;
+			}
+
 			$access_key = $this->create_for_participant( $event_id, $event_participant->participant_id );
 			if ( $access_key ) {
 				++$created_count;

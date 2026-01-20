@@ -408,13 +408,14 @@ class EmailService {
 	}
 
 	/**
-	 * Send gallery invitations to all event participants (bulk).
+	 * Send gallery invitations to event participants (bulk).
 	 *
 	 * @param int    $event_id Event ID.
 	 * @param string $custom_message Optional custom message.
+	 * @param array  $participant_ids Optional array of participant IDs to send to. If empty, sends to all.
 	 * @return array Results array with 'sent' and 'failed' keys.
 	 */
-	public function send_bulk_gallery_invitations( $event_id, $custom_message = '' ) {
+	public function send_bulk_gallery_invitations( $event_id, $custom_message = '', $participant_ids = array() ) {
 		// Increase time limit for bulk sending.
 		set_time_limit( 300 ); // 5 minutes.
 
@@ -434,13 +435,17 @@ class EmailService {
 			return $results;
 		}
 
-		// Generate access keys for all event participants.
-		$this->gallery_access_key_repository->generate_keys_for_event_participants( $event_id );
+		// Generate access keys for all event participants (or just the selected ones).
+		$this->gallery_access_key_repository->generate_keys_for_event_participants( $event_id, $participant_ids );
 
 		// Get all access keys for this event.
 		$access_keys = $this->gallery_access_key_repository->get_by_event( $event_id );
 
 		foreach ( $access_keys as $access_key ) {
+			// Skip participants not in the filter list (if provided).
+			if ( ! empty( $participant_ids ) && ! in_array( $access_key->participant_id, $participant_ids, true ) ) {
+				continue;
+			}
 			// Get participant.
 			$participant = $this->participant_repository->get_by_id( $access_key->participant_id );
 
