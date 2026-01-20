@@ -88,6 +88,7 @@ class EventGalleryEndpoint extends WP_REST_Controller {
 		$attachments = get_posts(
 			array(
 				'post_type'      => 'attachment',
+				'post_mime_type' => 'image',
 				'posts_per_page' => -1,
 				'post_status'    => 'inherit',
 				'post__in'       => $attachment_ids,
