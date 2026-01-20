@@ -17,7 +17,7 @@ class Schema {
 	/**
 	 * Database version
 	 */
-	const DB_VERSION = '1.3.0';
+	const DB_VERSION = '1.4.0';
 
 	/**
 	 * Get the SQL for creating the fair_event_dates table
@@ -111,12 +111,14 @@ class Schema {
 		return "CREATE TABLE {$table_name} (
 			id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
 			attachment_id BIGINT UNSIGNED NOT NULL,
-			user_id BIGINT UNSIGNED NOT NULL,
+			user_id BIGINT UNSIGNED DEFAULT NULL,
+			participant_id BIGINT UNSIGNED DEFAULT NULL,
 			created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
 			PRIMARY KEY (id),
 			UNIQUE KEY idx_attachment_user (attachment_id, user_id),
 			KEY idx_attachment_id (attachment_id),
-			KEY idx_user_id (user_id)
+			KEY idx_user_id (user_id),
+			KEY idx_participant_id (participant_id)
 		) ENGINE=InnoDB {$charset_collate};";
 	}
 

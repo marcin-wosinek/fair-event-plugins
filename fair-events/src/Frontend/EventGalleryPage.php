@@ -43,6 +43,7 @@ class EventGalleryPage {
 	 */
 	public static function add_query_vars( $vars ) {
 		$vars[] = 'event_gallery_id';
+		$vars[] = 'gallery_key';
 		return $vars;
 	}
 
@@ -50,7 +51,14 @@ class EventGalleryPage {
 	 * Handle the gallery page template.
 	 */
 	public static function handle_template() {
-		$event_id = get_query_var( 'event_gallery_id' );
+		$event_id    = get_query_var( 'event_gallery_id' );
+		$gallery_key = get_query_var( 'gallery_key' );
+
+		// Handle gallery_key access (token-based).
+		if ( ! empty( $gallery_key ) ) {
+			self::handle_gallery_key_access( $gallery_key );
+			return;
+		}
 
 		if ( empty( $event_id ) ) {
 			return;
@@ -74,19 +82,80 @@ class EventGalleryPage {
 			exit;
 		}
 
-		// Render the gallery page.
+		// Render the gallery page (user-based access).
 		self::render_page( $event );
 		exit;
 	}
 
 	/**
+	 * Handle gallery access via token (gallery_key).
+	 *
+	 * @param string $gallery_key The gallery access token.
+	 */
+	private static function handle_gallery_key_access( $gallery_key ) {
+		// Validate the token via fair-audience repository.
+		$access_data = self::validate_gallery_token( $gallery_key );
+
+		if ( ! $access_data ) {
+			// Invalid token - show error page.
+			global $wp_query;
+			$wp_query->set_404();
+			status_header( 404 );
+			nocache_headers();
+			include get_query_template( '404' );
+			exit;
+		}
+
+		// Get the event.
+		$event = get_post( $access_data['event_id'] );
+		if ( ! $event || 'fair_event' !== $event->post_type ) {
+			global $wp_query;
+			$wp_query->set_404();
+			status_header( 404 );
+			nocache_headers();
+			include get_query_template( '404' );
+			exit;
+		}
+
+		// Render the gallery page with participant context.
+		self::render_page( $event, $access_data['participant_id'] );
+		exit;
+	}
+
+	/**
+	 * Validate gallery token using fair-audience repository.
+	 *
+	 * @param string $token The gallery access token.
+	 * @return array|null Array with event_id and participant_id if valid, null otherwise.
+	 */
+	private static function validate_gallery_token( $token ) {
+		// Check if fair-audience plugin is active.
+		if ( ! class_exists( '\FairAudience\Database\GalleryAccessKeyRepository' ) ) {
+			return null;
+		}
+
+		$repository = new \FairAudience\Database\GalleryAccessKeyRepository();
+		$access_key = $repository->get_by_token( $token );
+
+		if ( ! $access_key ) {
+			return null;
+		}
+
+		return array(
+			'event_id'       => $access_key->event_id,
+			'participant_id' => $access_key->participant_id,
+		);
+	}
+
+	/**
 	 * Render the gallery page.
 	 *
-	 * @param WP_Post $event Event post object.
+	 * @param WP_Post  $event          Event post object.
+	 * @param int|null $participant_id Optional participant ID for token-based access.
 	 */
-	private static function render_page( $event ) {
+	private static function render_page( $event, $participant_id = null ) {
 		// Enqueue scripts and styles.
-		self::enqueue_assets( $event );
+		self::enqueue_assets( $event, $participant_id );
 
 		// Render the page.
 		?>
@@ -101,7 +170,11 @@ class EventGalleryPage {
 		<body class="fair-events-gallery-page">
 			<div id="fair-events-gallery-root"
 				data-event-id="<?php echo esc_attr( $event->ID ); ?>"
-				data-event-title="<?php echo esc_attr( $event->post_title ); ?>">
+				data-event-title="<?php echo esc_attr( $event->post_title ); ?>"
+				<?php if ( $participant_id ) : ?>
+				data-participant-id="<?php echo esc_attr( $participant_id ); ?>"
+				<?php endif; ?>
+			>
 			</div>
 			<?php wp_footer(); ?>
 		</body>
@@ -112,9 +185,10 @@ class EventGalleryPage {
 	/**
 	 * Enqueue scripts and styles for the gallery page.
 	 *
-	 * @param WP_Post $event Event post object.
+	 * @param WP_Post  $event          Event post object.
+	 * @param int|null $participant_id Optional participant ID for token-based access.
 	 */
-	private static function enqueue_assets( $event ) {
+	private static function enqueue_assets( $event, $participant_id = null ) {
 		$asset_file = FAIR_EVENTS_PLUGIN_DIR . 'build/frontend/event-gallery.asset.php';
 
 		if ( ! file_exists( $asset_file ) ) {
@@ -138,23 +212,31 @@ class EventGalleryPage {
 			$asset['version']
 		);
 
+		// Build script data.
+		$script_data = array(
+			'eventId'    => $event->ID,
+			'eventTitle' => $event->post_title,
+			'apiUrl'     => rest_url( 'fair-events/v1' ),
+			'nonce'      => wp_create_nonce( 'wp_rest' ),
+			'i18n'       => array(
+				'loading'  => __( 'Loading...', 'fair-events' ),
+				'error'    => __( 'Failed to load photos.', 'fair-events' ),
+				'noPhotos' => __( 'No photos available for this event.', 'fair-events' ),
+				'like'     => __( 'Like', 'fair-events' ),
+				'unlike'   => __( 'Unlike', 'fair-events' ),
+			),
+		);
+
+		// Add participant ID if token-based access.
+		if ( $participant_id ) {
+			$script_data['participantId'] = $participant_id;
+		}
+
 		// Pass data to JavaScript.
 		wp_localize_script(
 			'fair-events-gallery',
 			'fairEventsGallery',
-			array(
-				'eventId'    => $event->ID,
-				'eventTitle' => $event->post_title,
-				'apiUrl'     => rest_url( 'fair-events/v1' ),
-				'nonce'      => wp_create_nonce( 'wp_rest' ),
-				'i18n'       => array(
-					'loading'  => __( 'Loading...', 'fair-events' ),
-					'error'    => __( 'Failed to load photos.', 'fair-events' ),
-					'noPhotos' => __( 'No photos available for this event.', 'fair-events' ),
-					'like'     => __( 'Like', 'fair-events' ),
-					'unlike'   => __( 'Unlike', 'fair-events' ),
-				),
-			)
+			$script_data
 		);
 
 		wp_set_script_translations(

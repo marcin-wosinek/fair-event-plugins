@@ -51,9 +51,13 @@ class PhotoLikesController extends WP_REST_Controller {
 					'callback'            => array( $this, 'get_items' ),
 					'permission_callback' => '__return_true', // Public endpoint.
 					'args'                => array(
-						'attachment_id' => array(
+						'attachment_id'  => array(
 							'type'     => 'integer',
 							'required' => true,
+						),
+						'participant_id' => array(
+							'type'     => 'integer',
+							'required' => false,
 						),
 					),
 				),
@@ -62,9 +66,13 @@ class PhotoLikesController extends WP_REST_Controller {
 					'callback'            => array( $this, 'create_item' ),
 					'permission_callback' => array( $this, 'create_item_permissions_check' ),
 					'args'                => array(
-						'attachment_id' => array(
+						'attachment_id'  => array(
 							'type'     => 'integer',
 							'required' => true,
+						),
+						'participant_id' => array(
+							'type'     => 'integer',
+							'required' => false,
 						),
 					),
 				),
@@ -73,9 +81,13 @@ class PhotoLikesController extends WP_REST_Controller {
 					'callback'            => array( $this, 'delete_item' ),
 					'permission_callback' => array( $this, 'delete_item_permissions_check' ),
 					'args'                => array(
-						'attachment_id' => array(
+						'attachment_id'  => array(
 							'type'     => 'integer',
 							'required' => true,
+						),
+						'participant_id' => array(
+							'type'     => 'integer',
+							'required' => false,
 						),
 					),
 				),
@@ -90,6 +102,14 @@ class PhotoLikesController extends WP_REST_Controller {
 	 * @return bool|WP_Error True if allowed, error otherwise.
 	 */
 	public function create_item_permissions_check( $request ) {
+		$participant_id = $request->get_param( 'participant_id' );
+
+		// Allow if participant_id is provided (token-based access).
+		if ( ! empty( $participant_id ) ) {
+			return true;
+		}
+
+		// Otherwise require login.
 		if ( ! is_user_logged_in() ) {
 			return new WP_Error(
 				'rest_forbidden',
@@ -108,6 +128,14 @@ class PhotoLikesController extends WP_REST_Controller {
 	 * @return bool|WP_Error True if allowed, error otherwise.
 	 */
 	public function delete_item_permissions_check( $request ) {
+		$participant_id = $request->get_param( 'participant_id' );
+
+		// Allow if participant_id is provided (token-based access).
+		if ( ! empty( $participant_id ) ) {
+			return true;
+		}
+
+		// Otherwise require login.
 		if ( ! is_user_logged_in() ) {
 			return new WP_Error(
 				'rest_forbidden',
@@ -126,7 +154,8 @@ class PhotoLikesController extends WP_REST_Controller {
 	 * @return WP_REST_Response|WP_Error Response object or error.
 	 */
 	public function get_items( $request ) {
-		$attachment_id = $request->get_param( 'attachment_id' );
+		$attachment_id  = $request->get_param( 'attachment_id' );
+		$participant_id = $request->get_param( 'participant_id' );
 
 		// Validate attachment exists.
 		$attachment = get_post( $attachment_id );
@@ -146,8 +175,12 @@ class PhotoLikesController extends WP_REST_Controller {
 			'count'         => $count,
 		);
 
-		// Include user's like status if logged in.
-		if ( is_user_logged_in() ) {
+		// Include like status based on access type.
+		if ( ! empty( $participant_id ) ) {
+			// Participant-based access.
+			$response['user_liked'] = $repository->has_participant_liked( $attachment_id, $participant_id );
+		} elseif ( is_user_logged_in() ) {
+			// User-based access.
 			$response['user_liked'] = $repository->has_liked( $attachment_id, get_current_user_id() );
 		}
 
@@ -161,8 +194,8 @@ class PhotoLikesController extends WP_REST_Controller {
 	 * @return WP_REST_Response|WP_Error Response object or error.
 	 */
 	public function create_item( $request ) {
-		$attachment_id = $request->get_param( 'attachment_id' );
-		$user_id       = get_current_user_id();
+		$attachment_id  = $request->get_param( 'attachment_id' );
+		$participant_id = $request->get_param( 'participant_id' );
 
 		// Validate attachment exists.
 		$attachment = get_post( $attachment_id );
@@ -175,7 +208,14 @@ class PhotoLikesController extends WP_REST_Controller {
 		}
 
 		$repository = new PhotoLikeRepository();
-		$like       = $repository->add_like( $attachment_id, $user_id );
+
+		// Handle participant-based or user-based like.
+		if ( ! empty( $participant_id ) ) {
+			$like = $repository->add_participant_like( $attachment_id, $participant_id );
+		} else {
+			$user_id = get_current_user_id();
+			$like    = $repository->add_like( $attachment_id, $user_id );
+		}
 
 		if ( ! $like ) {
 			return new WP_Error(
@@ -204,8 +244,8 @@ class PhotoLikesController extends WP_REST_Controller {
 	 * @return WP_REST_Response|WP_Error Response object or error.
 	 */
 	public function delete_item( $request ) {
-		$attachment_id = $request->get_param( 'attachment_id' );
-		$user_id       = get_current_user_id();
+		$attachment_id  = $request->get_param( 'attachment_id' );
+		$participant_id = $request->get_param( 'participant_id' );
 
 		// Validate attachment exists.
 		$attachment = get_post( $attachment_id );
@@ -218,7 +258,14 @@ class PhotoLikesController extends WP_REST_Controller {
 		}
 
 		$repository = new PhotoLikeRepository();
-		$repository->remove_like( $attachment_id, $user_id );
+
+		// Handle participant-based or user-based unlike.
+		if ( ! empty( $participant_id ) ) {
+			$repository->remove_participant_like( $attachment_id, $participant_id );
+		} else {
+			$user_id = get_current_user_id();
+			$repository->remove_like( $attachment_id, $user_id );
+		}
 
 		$count = $repository->get_count( $attachment_id );
 

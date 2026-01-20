@@ -20,6 +20,8 @@ export default function EventParticipants() {
 	const [isAdding, setIsAdding] = useState(false);
 	const [selectedParticipants, setSelectedParticipants] = useState(new Set());
 	const [isRemoving, setIsRemoving] = useState(false);
+	const [isSendingGalleryLinks, setIsSendingGalleryLinks] = useState(false);
+	const [galleryStats, setGalleryStats] = useState(null);
 
 	const eventId = new URLSearchParams(window.location.search).get('event_id');
 
@@ -32,7 +34,21 @@ export default function EventParticipants() {
 
 		loadParticipants();
 		loadAllParticipants();
+		loadGalleryStats();
 	}, [eventId]);
+
+	const loadGalleryStats = () => {
+		apiFetch({
+			path: `/fair-audience/v1/events/${eventId}/gallery-invitations/stats`,
+		})
+			.then((data) => {
+				setGalleryStats(data);
+			})
+			.catch(() => {
+				// Stats endpoint might not exist if no invitations sent yet.
+				setGalleryStats({ total: 0, sent: 0, not_sent: 0 });
+			});
+	};
 
 	const loadParticipants = () => {
 		apiFetch({ path: `/fair-audience/v1/events/${eventId}/participants` })
@@ -264,6 +280,76 @@ export default function EventParticipants() {
 		}
 	};
 
+	const handleSendGalleryLinks = async () => {
+		if (participants.length === 0) {
+			alert(
+				__('No participants to send gallery links to.', 'fair-audience')
+			);
+			return;
+		}
+
+		const confirmed = window.confirm(
+			sprintf(
+				/* translators: %d: number of participants */
+				__(
+					'Send gallery links to %d participant(s)? They will receive an email with a unique link to view and like photos.',
+					'fair-audience'
+				),
+				participants.length
+			)
+		);
+
+		if (!confirmed) {
+			return;
+		}
+
+		setIsSendingGalleryLinks(true);
+
+		try {
+			const response = await apiFetch({
+				path: `/fair-audience/v1/events/${eventId}/gallery-invitations`,
+				method: 'POST',
+				data: {},
+			});
+
+			if (response.sent_count > 0) {
+				alert(
+					sprintf(
+						/* translators: %d: number of emails sent */
+						__(
+							'Successfully sent gallery links to %d participant(s)!',
+							'fair-audience'
+						),
+						response.sent_count
+					)
+				);
+			}
+
+			if (response.failed && response.failed.length > 0) {
+				console.error('Failed to send to:', response.failed);
+				alert(
+					sprintf(
+						/* translators: %d: number of failed sends */
+						__(
+							'Failed to send to %d participant(s). Check console for details.',
+							'fair-audience'
+						),
+						response.failed.length
+					)
+				);
+			}
+
+			loadGalleryStats();
+		} catch (err) {
+			alert(
+				__('Error sending gallery links: ', 'fair-audience') +
+					err.message
+			);
+		} finally {
+			setIsSendingGalleryLinks(false);
+		}
+	};
+
 	const getLabelTitle = (label) => {
 		switch (label) {
 			case 'collaborator':
@@ -328,7 +414,31 @@ export default function EventParticipants() {
 				>
 					{__('Add Participants', 'fair-audience')}
 				</Button>
+				<Button
+					variant="secondary"
+					onClick={handleSendGalleryLinks}
+					disabled={
+						isSendingGalleryLinks || participants.length === 0
+					}
+				>
+					{isSendingGalleryLinks
+						? __('Sending...', 'fair-audience')
+						: __('Send Gallery Links', 'fair-audience')}
+				</Button>
 			</div>
+
+			{galleryStats && galleryStats.sent > 0 && (
+				<p style={{ color: '#666', fontStyle: 'italic' }}>
+					{sprintf(
+						/* translators: %d: number of gallery links sent */
+						__(
+							'Gallery links sent to %d participant(s)',
+							'fair-audience'
+						),
+						galleryStats.sent
+					)}
+				</p>
+			)}
 
 			<p>
 				{sprintf(

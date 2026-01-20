@@ -50,6 +50,11 @@ class Installer {
 
 		// Version 1.3.0 - Photo likes table (no data migration needed, table created by dbDelta).
 
+		// Run migration if upgrading from pre-1.4.0 (add participant_id to photo_likes).
+		if ( version_compare( $current_version, '1.4.0', '<' ) ) {
+			self::migrate_to_1_4_0();
+		}
+
 		// Update database version
 		Schema::update_db_version( Schema::DB_VERSION );
 	}
@@ -80,6 +85,10 @@ class Installer {
 
 			if ( version_compare( $current_version, '1.2.0', '<' ) ) {
 				self::migrate_to_1_2_0();
+			}
+
+			if ( version_compare( $current_version, '1.4.0', '<' ) ) {
+				self::migrate_to_1_4_0();
 			}
 
 			// Install/update tables
@@ -262,5 +271,50 @@ class Installer {
 				);
 			}
 		}
+	}
+
+	/**
+	 * Migrate to version 1.4.0 - Add participant_id column to photo_likes table.
+	 *
+	 * @return void
+	 */
+	private static function migrate_to_1_4_0() {
+		global $wpdb;
+
+		$table_name = $wpdb->prefix . 'fair_events_photo_likes';
+
+		// Check if column already exists.
+		$column_exists = $wpdb->get_results(
+			$wpdb->prepare(
+				"SHOW COLUMNS FROM %i LIKE 'participant_id'",
+				$table_name
+			)
+		);
+
+		if ( empty( $column_exists ) ) {
+			// Add participant_id column.
+			$wpdb->query(
+				$wpdb->prepare(
+					'ALTER TABLE %i ADD COLUMN participant_id BIGINT UNSIGNED DEFAULT NULL AFTER user_id',
+					$table_name
+				)
+			);
+
+			// Add index for participant_id.
+			$wpdb->query(
+				$wpdb->prepare(
+					'ALTER TABLE %i ADD KEY idx_participant_id (participant_id)',
+					$table_name
+				)
+			);
+		}
+
+		// Make user_id nullable for existing installations.
+		$wpdb->query(
+			$wpdb->prepare(
+				'ALTER TABLE %i MODIFY COLUMN user_id BIGINT UNSIGNED DEFAULT NULL',
+				$table_name
+			)
+		);
 	}
 }

@@ -10,7 +10,7 @@ namespace FairEvents\Models;
 defined( 'WPINC' ) || die;
 
 /**
- * PhotoLike model class for photo-user like relationships.
+ * PhotoLike model class for photo-user/participant like relationships.
  *
  * phpcs:disable WordPress.DB.DirectDatabaseQuery
  */
@@ -31,11 +31,18 @@ class PhotoLike {
 	public $attachment_id;
 
 	/**
-	 * WordPress user ID.
+	 * WordPress user ID (null if participant-based like).
 	 *
-	 * @var int
+	 * @var int|null
 	 */
 	public $user_id;
+
+	/**
+	 * Participant ID from fair-audience (null if user-based like).
+	 *
+	 * @var int|null
+	 */
+	public $participant_id;
 
 	/**
 	 * Created timestamp.
@@ -63,10 +70,11 @@ class PhotoLike {
 	public function populate( $data ) {
 		$data = (array) $data;
 
-		$this->id            = isset( $data['id'] ) ? (int) $data['id'] : null;
-		$this->attachment_id = isset( $data['attachment_id'] ) ? (int) $data['attachment_id'] : 0;
-		$this->user_id       = isset( $data['user_id'] ) ? (int) $data['user_id'] : 0;
-		$this->created_at    = isset( $data['created_at'] ) ? $data['created_at'] : '';
+		$this->id             = isset( $data['id'] ) ? (int) $data['id'] : null;
+		$this->attachment_id  = isset( $data['attachment_id'] ) ? (int) $data['attachment_id'] : 0;
+		$this->user_id        = isset( $data['user_id'] ) && $data['user_id'] ? (int) $data['user_id'] : null;
+		$this->participant_id = isset( $data['participant_id'] ) && $data['participant_id'] ? (int) $data['participant_id'] : null;
+		$this->created_at     = isset( $data['created_at'] ) ? $data['created_at'] : '';
 	}
 
 	/**
@@ -79,16 +87,22 @@ class PhotoLike {
 
 		$table_name = $wpdb->prefix . 'fair_events_photo_likes';
 
-		if ( empty( $this->attachment_id ) || empty( $this->user_id ) ) {
+		// Must have attachment_id and either user_id or participant_id.
+		if ( empty( $this->attachment_id ) ) {
+			return false;
+		}
+
+		if ( empty( $this->user_id ) && empty( $this->participant_id ) ) {
 			return false;
 		}
 
 		$data = array(
-			'attachment_id' => $this->attachment_id,
-			'user_id'       => $this->user_id,
+			'attachment_id'  => $this->attachment_id,
+			'user_id'        => $this->user_id,
+			'participant_id' => $this->participant_id,
 		);
 
-		$format = array( '%d', '%d' );
+		$format = array( '%d', '%d', '%d' );
 
 		if ( $this->id ) {
 			// Update existing.

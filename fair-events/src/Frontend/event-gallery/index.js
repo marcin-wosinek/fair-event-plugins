@@ -298,6 +298,9 @@ function Gallery() {
 	const root = document.getElementById('fair-events-gallery-root');
 	const eventId = root?.dataset?.eventId;
 	const eventTitle = root?.dataset?.eventTitle;
+	// Get participant ID if token-based access.
+	const participantId =
+		root?.dataset?.participantId || window.fairEventsGallery?.participantId;
 
 	// Fetch photos on mount.
 	useEffect(() => {
@@ -343,9 +346,12 @@ function Gallery() {
 		await Promise.all(
 			photoIds.map(async (id) => {
 				try {
-					const response = await apiFetch({
-						path: `/fair-events/v1/photos/${id}/likes`,
-					});
+					// Build path with participant_id if available.
+					let path = `/fair-events/v1/photos/${id}/likes`;
+					if (participantId) {
+						path += `?participant_id=${participantId}`;
+					}
+					const response = await apiFetch({ path });
 					counts[id] = response.count || 0;
 					likes[id] = response.user_liked || false;
 				} catch (err) {
@@ -374,15 +380,22 @@ function Gallery() {
 			}));
 
 			try {
+				// Build request data with participant_id if available.
+				const requestData = participantId
+					? { participant_id: parseInt(participantId, 10) }
+					: {};
+
 				if (currentlyLiked) {
 					await apiFetch({
 						path: `/fair-events/v1/photos/${photoId}/likes`,
 						method: 'DELETE',
+						data: requestData,
 					});
 				} else {
 					await apiFetch({
 						path: `/fair-events/v1/photos/${photoId}/likes`,
 						method: 'POST',
+						data: requestData,
 					});
 				}
 			} catch (err) {
@@ -398,7 +411,7 @@ function Gallery() {
 				}));
 			}
 		},
-		[userLikes]
+		[userLikes, participantId]
 	);
 
 	// Lightbox handlers.

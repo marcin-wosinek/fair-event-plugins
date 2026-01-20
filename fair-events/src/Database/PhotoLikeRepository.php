@@ -275,4 +275,162 @@ class PhotoLikeRepository {
 			array( '%d' )
 		) !== false;
 	}
+
+	/**
+	 * Add a participant like to a photo.
+	 *
+	 * @param int $attachment_id  Attachment ID.
+	 * @param int $participant_id Participant ID.
+	 * @return PhotoLike|null The like object or null on failure.
+	 */
+	public function add_participant_like( $attachment_id, $participant_id ) {
+		// Check if already liked.
+		$existing = $this->get_participant_like( $attachment_id, $participant_id );
+		if ( $existing ) {
+			return $existing;
+		}
+
+		$like = new PhotoLike(
+			array(
+				'attachment_id'  => $attachment_id,
+				'participant_id' => $participant_id,
+			)
+		);
+
+		return $like->save() ? $like : null;
+	}
+
+	/**
+	 * Remove a participant like from a photo.
+	 *
+	 * @param int $attachment_id  Attachment ID.
+	 * @param int $participant_id Participant ID.
+	 * @return bool Success.
+	 */
+	public function remove_participant_like( $attachment_id, $participant_id ) {
+		global $wpdb;
+
+		$table_name = $this->get_table_name();
+
+		return $wpdb->delete(
+			$table_name,
+			array(
+				'attachment_id'  => $attachment_id,
+				'participant_id' => $participant_id,
+			),
+			array( '%d', '%d' )
+		) !== false;
+	}
+
+	/**
+	 * Get a specific participant like record.
+	 *
+	 * @param int $attachment_id  Attachment ID.
+	 * @param int $participant_id Participant ID.
+	 * @return PhotoLike|null The like object or null if not found.
+	 */
+	public function get_participant_like( $attachment_id, $participant_id ) {
+		global $wpdb;
+
+		$table_name = $this->get_table_name();
+
+		$result = $wpdb->get_row(
+			$wpdb->prepare(
+				'SELECT * FROM %i WHERE attachment_id = %d AND participant_id = %d',
+				$table_name,
+				$attachment_id,
+				$participant_id
+			),
+			ARRAY_A
+		);
+
+		return $result ? new PhotoLike( $result ) : null;
+	}
+
+	/**
+	 * Check if a participant has liked a photo.
+	 *
+	 * @param int $attachment_id  Attachment ID.
+	 * @param int $participant_id Participant ID.
+	 * @return bool True if liked.
+	 */
+	public function has_participant_liked( $attachment_id, $participant_id ) {
+		return null !== $this->get_participant_like( $attachment_id, $participant_id );
+	}
+
+	/**
+	 * Get which photos a participant has liked from a list.
+	 *
+	 * @param int[] $attachment_ids Array of attachment IDs.
+	 * @param int   $participant_id Participant ID.
+	 * @return int[] Array of attachment IDs that the participant has liked.
+	 */
+	public function get_participant_likes_for_photos( $attachment_ids, $participant_id ) {
+		global $wpdb;
+
+		if ( empty( $attachment_ids ) || empty( $participant_id ) ) {
+			return array();
+		}
+
+		$table_name = $this->get_table_name();
+
+		// Build placeholders for IN clause.
+		$placeholders = implode( ',', array_fill( 0, count( $attachment_ids ), '%d' ) );
+
+		// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+		$results = $wpdb->get_col(
+			$wpdb->prepare(
+				"SELECT attachment_id FROM %i WHERE attachment_id IN ({$placeholders}) AND participant_id = %d",
+				array_merge( array( $table_name ), $attachment_ids, array( $participant_id ) )
+			)
+		);
+
+		return array_map( 'intval', $results );
+	}
+
+	/**
+	 * Get all photos liked by a participant.
+	 *
+	 * @param int $participant_id Participant ID.
+	 * @return PhotoLike[] Array of like objects.
+	 */
+	public function get_participant_likes( $participant_id ) {
+		global $wpdb;
+
+		$table_name = $this->get_table_name();
+
+		$results = $wpdb->get_results(
+			$wpdb->prepare(
+				'SELECT * FROM %i WHERE participant_id = %d ORDER BY created_at DESC',
+				$table_name,
+				$participant_id
+			),
+			ARRAY_A
+		);
+
+		return array_map(
+			function ( $row ) {
+				return new PhotoLike( $row );
+			},
+			$results
+		);
+	}
+
+	/**
+	 * Delete all likes by a participant.
+	 *
+	 * @param int $participant_id Participant ID.
+	 * @return bool Success.
+	 */
+	public function delete_by_participant( $participant_id ) {
+		global $wpdb;
+
+		$table_name = $this->get_table_name();
+
+		return $wpdb->delete(
+			$table_name,
+			array( 'participant_id' => $participant_id ),
+			array( '%d' )
+		) !== false;
+	}
 }

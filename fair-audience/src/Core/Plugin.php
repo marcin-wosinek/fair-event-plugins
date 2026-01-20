@@ -74,6 +74,9 @@ class Plugin {
 
 		$poll_response_controller = new \FairAudience\API\PollResponseController();
 		$poll_response_controller->register_routes();
+
+		$gallery_access_controller = new \FairAudience\API\GalleryAccessController();
+		$gallery_access_controller->register_routes();
 	}
 
 	/**
@@ -84,6 +87,7 @@ class Plugin {
 	 */
 	public function add_query_vars( $vars ) {
 		$vars[] = 'poll_key';
+		$vars[] = 'gallery_key';
 		return $vars;
 	}
 
