@@ -9,15 +9,15 @@ msgstr ""
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"POT-Creation-Date: 2026-01-13T11:03:44+00:00\n"
+"POT-Creation-Date: 2026-01-21T14:09:04+00:00\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "X-Generator: WP-CLI 2.12.0\n"
 "X-Domain: fair-audience\n"
 
 #. Plugin Name of the plugin
 #: fair-audience.php
-#: src/Admin/AdminHooks.php:31
-#: src/Admin/AdminHooks.php:32
+#: src/Admin/AdminHooks.php:129
+#: src/Admin/AdminHooks.php:130
 msgid "Fair Audience"
 msgstr ""
 
@@ -41,149 +41,348 @@ msgstr ""
 msgid "https://github.com/marcin-wosinek"
 msgstr ""
 
-#: src/Admin/AdminHooks.php:43
-#: src/Admin/AdminHooks.php:44
+#: src/Admin/AdminHooks.php:141
+#: src/Admin/AdminHooks.php:142
 msgid "By Event"
 msgstr ""
 
-#: src/Admin/AdminHooks.php:53
-#: src/Admin/AdminHooks.php:54
-#: src/Admin/event-participants/EventParticipants.js:123
-#: src/Admin/event-participants/EventParticipants.js:132
-#: src/Admin/event-participants/EventParticipants.js:149
-msgid "Event Participants"
-msgstr ""
-
-#: src/Admin/AdminHooks.php:63
-#: src/Admin/AdminHooks.php:64
-#: src/Admin/import/Import.js:246
+#: src/Admin/AdminHooks.php:154
+#: src/Admin/AdminHooks.php:155
+#: src/Admin/import/Import.js:287
 msgid "Import"
 msgstr ""
 
-#: src/Admin/AdminHooks.php:73
-#: src/Admin/AdminHooks.php:74
+#: src/Admin/AdminHooks.php:164
+#: src/Admin/AdminHooks.php:165
 #: src/Admin/polls-list/PollsList.js:67
 #: src/Admin/polls-list/PollsList.js:76
 #: src/Admin/polls-list/PollsList.js:87
 msgid "Polls"
 msgstr ""
 
-#: src/Admin/AdminHooks.php:83
-#: src/Admin/AdminHooks.php:84
-#: src/Admin/edit-poll/EditPoll.js:320
-#: src/Admin/edit-poll/EditPoll.js:332
-msgid "Edit Poll"
+#: src/Admin/MediaBatchActions.php:38
+#: src/Admin/MediaBatchActions.php:84
+#: src/Admin/MediaBatchActions.php:85
+#: src/Admin/MediaBatchActions.php:193
+msgid "Set Photo Author"
 msgstr ""
 
-#: src/API/EventParticipantsController.php:175
-#: src/API/EventParticipantsController.php:217
-#: src/Services/EmailService.php:224
-msgid "Event not found."
+#: src/Admin/MediaBatchActions.php:108
+#: src/Admin/MediaBatchActions.php:171
+msgid "Security check failed."
 msgstr ""
 
-#: src/API/EventParticipantsController.php:227
-#: src/API/ParticipantsController.php:154
-#: src/API/ParticipantsController.php:219
-#: src/API/ParticipantsController.php:277
-#: src/Services/EmailService.php:247
-msgid "Participant not found."
+#: src/Admin/MediaBatchActions.php:113
+#: src/Admin/MediaBatchActions.php:176
+msgid "You do not have permission to access this page."
+msgstr ""
+
+#: src/Admin/MediaBatchActions.php:120
+msgid "Please select an author."
+msgstr ""
+
+#: src/Admin/MediaBatchActions.php:127
+msgid "Invalid author selected."
+msgstr ""
+
+#: src/Admin/MediaBatchActions.php:135
+msgid "No photos to assign."
+msgstr ""
+
+#: src/Admin/MediaBatchActions.php:184
+msgid "No photos selected."
+msgstr ""
+
+#. translators: %d: number of photos
+#: src/Admin/MediaBatchActions.php:204
+#, php-format
+msgid "%d photo selected:"
+msgid_plural "%d photos selected:"
+msgstr[0] ""
+msgstr[1] ""
+
+#: src/Admin/MediaBatchActions.php:237
+msgid "Author"
+msgstr ""
+
+#: src/Admin/MediaBatchActions.php:241
+#: src/Admin/MediaLibraryHooks.php:81
+msgid "— Select Author —"
+msgstr ""
+
+#: src/Admin/MediaBatchActions.php:249
+msgid "All selected photos will be attributed to this author."
+msgstr ""
+
+#: src/Admin/MediaBatchActions.php:257
+#: src/Admin/edit-poll/EditPoll.js:655
+#: src/Admin/event-participants/EventParticipants.js:696
+msgid "Cancel"
+msgstr ""
+
+#: src/Admin/MediaBatchActions.php:260
+msgid "Set Author"
+msgstr ""
+
+#. translators: 1: number of photos, 2: author name
+#: src/Admin/MediaBatchActions.php:287
+#, php-format
+msgid "%1$d photo assigned to \"%2$s\"."
+msgid_plural "%1$d photos assigned to \"%2$s\"."
+msgstr[0] ""
+msgstr[1] ""
+
+#: src/Admin/MediaLibraryHooks.php:93
+#: src/Admin/MediaLibraryHooks.php:188
+#: src/Admin/MediaLibraryHooks.php:230
+msgid "Photo Author"
+msgstr ""
+
+#: src/Admin/MediaLibraryHooks.php:101
+msgid "Who took this photo"
+msgstr ""
+
+#: src/Admin/MediaLibraryHooks.php:141
+#: src/Admin/MediaLibraryHooks.php:381
+msgid "All Authors"
+msgstr ""
+
+#: src/Admin/MediaLibraryHooks.php:232
+msgid "Automatically assign an author to uploaded photos. Select an author below before uploading."
+msgstr ""
+
+#: src/Admin/MediaLibraryHooks.php:236
+msgid "Author:"
+msgstr ""
+
+#: src/Admin/MediaLibraryHooks.php:239
+msgid "— No Author (Manual Assignment) —"
+msgstr ""
+
+#: src/Admin/MediaLibraryHooks.php:272
+#: src/Admin/edit-poll/EditPoll.js:645
+msgid "Saving..."
+msgstr ""
+
+#: src/Admin/MediaLibraryHooks.php:281
+msgid "Selected. New uploads will be credited to this author."
+msgstr ""
+
+#: src/Admin/MediaLibraryHooks.php:286
+msgid "Error saving selection"
+msgstr ""
+
+#: src/Admin/MediaLibraryHooks.php:289
+msgid "Error:"
 msgstr ""
 
 #: src/API/EventParticipantsController.php:237
+#: src/API/EventParticipantsController.php:279
+#: src/API/GalleryAccessController.php:247
+#: src/API/GalleryAccessController.php:279
+#: src/Services/EmailService.php:234
+#: src/Services/EmailService.php:434
+msgid "Event not found."
+msgstr ""
+
+#: src/API/EventParticipantsController.php:289
+#: src/API/ParticipantsController.php:154
+#: src/API/ParticipantsController.php:219
+#: src/API/ParticipantsController.php:277
+#: src/Services/EmailService.php:257
+#: src/Services/EmailService.php:456
+msgid "Participant not found."
+msgstr ""
+
+#: src/API/EventParticipantsController.php:299
 msgid "Failed to add participant. May already exist."
 msgstr ""
 
-#: src/API/EventParticipantsController.php:245
+#: src/API/EventParticipantsController.php:307
 msgid "Participant added successfully."
 msgstr ""
 
-#: src/API/EventParticipantsController.php:266
+#: src/API/EventParticipantsController.php:328
 msgid "Failed to update label."
 msgstr ""
 
-#: src/API/EventParticipantsController.php:273
+#: src/API/EventParticipantsController.php:335
 msgid "Label updated successfully."
 msgstr ""
 
-#: src/API/EventParticipantsController.php:293
+#: src/API/EventParticipantsController.php:355
 msgid "Failed to remove participant."
 msgstr ""
 
-#: src/API/EventParticipantsController.php:300
+#: src/API/EventParticipantsController.php:362
 msgid "Participant removed successfully."
 msgstr ""
 
-#: src/API/ImportController.php:124
+#: src/API/EventParticipantsController.php:382
+#: src/API/EventParticipantsController.php:432
+#: src/API/PollsController.php:364
+msgid "Invalid event ID."
+msgstr ""
+
+#. translators: %d: participant ID
+#: src/API/EventParticipantsController.php:407
+#, php-format
+msgid "Failed to remove participant ID %d"
+msgstr ""
+
+#. translators: %d: participant ID
+#: src/API/EventParticipantsController.php:453
+#, php-format
+msgid "Participant ID %d not found"
+msgstr ""
+
+#: src/API/GalleryAccessController.php:160
+msgid "You do not have permission to send gallery invitations."
+msgstr ""
+
+#: src/API/GalleryAccessController.php:178
+msgid "You do not have permission to view gallery invitation stats."
+msgstr ""
+
+#: src/API/ImportController.php:125
 msgid "No file uploaded."
 msgstr ""
 
-#: src/API/ImportController.php:140
-#: src/API/ImportController.php:376
+#: src/API/ImportController.php:141
+#: src/API/ImportController.php:472
 msgid "Invalid event ID provided."
 msgstr ""
 
-#: src/API/ImportController.php:152
+#: src/API/ImportController.php:153
 msgid "File upload failed."
 msgstr ""
 
-#: src/API/ImportController.php:166
+#: src/API/ImportController.php:167
 msgid "Invalid file type. Please upload an Excel file (.xlsx)."
 msgstr ""
 
-#: src/API/ImportController.php:182
+#: src/API/ImportController.php:183
 msgid "The uploaded file is empty."
 msgstr ""
 
 #. translators: 1: found headers list
-#: src/API/ImportController.php:202
+#: src/API/ImportController.php:203
 #, php-format
 msgid "Invalid file format. Required columns: Nombre, Apellidos, Email. Found columns: %s"
 msgstr ""
 
 #. translators: %d: row number
-#: src/API/ImportController.php:278
+#: src/API/ImportController.php:346
 #, php-format
 msgid "Row %d: Missing required fields (name, surname, or email)"
 msgstr ""
 
 #. translators: 1: row number, 2: email address
-#: src/API/ImportController.php:288
+#: src/API/ImportController.php:356
 #, php-format
 msgid "Row %1$d: Invalid email format: %2$s"
 msgstr ""
 
 #. translators: 1: row number, 2: email address
-#: src/API/ImportController.php:328
+#: src/API/ImportController.php:409
+#, php-format
+msgid "Row %1$d: Failed to link participant to event: %2$s"
+msgstr ""
+
+#. translators: 1: row number, 2: email address
+#: src/API/ImportController.php:418
 #, php-format
 msgid "Row %1$d: Failed to save participant: %2$s"
 msgstr ""
 
 #. translators: %s: error message
-#: src/API/ImportController.php:342
+#: src/API/ImportController.php:432
 #, php-format
 msgid "Import failed: %s"
 msgstr ""
 
-#: src/API/ImportController.php:362
+#: src/API/ImportController.php:452
 msgid "No participants provided."
 msgstr ""
 
 #. translators: %d: participant index
-#: src/API/ImportController.php:395
+#: src/API/ImportController.php:494
 #, php-format
 msgid "Participant %d: Missing required fields (name, surname, or email)"
 msgstr ""
 
 #. translators: 1: participant index, 2: email address
-#: src/API/ImportController.php:409
+#: src/API/ImportController.php:513
 #, php-format
 msgid "Participant %1$d: Invalid email format: %2$s"
 msgstr ""
 
 #. translators: 1: participant index, 2: name and surname
-#: src/API/ImportController.php:449
+#: src/API/ImportController.php:581
+#, php-format
+msgid "Participant %1$d: Failed to link to event: %2$s"
+msgstr ""
+
+#. translators: 1: participant index, 2: name and surname
+#: src/API/ImportController.php:604
 #, php-format
 msgid "Participant %1$d: Failed to save participant: %2$s"
+msgstr ""
+
+#: src/API/MailingSignupController.php:154
+msgid "Please enter a valid email address."
+msgstr ""
+
+#: src/API/MailingSignupController.php:163
+msgid "Too many requests. Please try again later."
+msgstr ""
+
+#: src/API/MailingSignupController.php:181
+msgid "You're already subscribed!"
+msgstr ""
+
+#: src/API/MailingSignupController.php:196
+msgid "We sent you another confirmation email. Please check your inbox."
+msgstr ""
+
+#: src/API/MailingSignupController.php:217
+#: src/API/MailingSignupController.php:228
+#: src/blocks/mailing-signup/frontend.js:140
+msgid "Failed to process signup. Please try again."
+msgstr ""
+
+#: src/API/MailingSignupController.php:239
+msgid "Failed to send confirmation email. Please try again."
+msgstr ""
+
+#: src/API/MailingSignupController.php:247
+#: src/blocks/mailing-signup/render.php:19
+#: src/blocks/mailing-signup/editor.js:34
+#: src/blocks/mailing-signup/frontend.js:60
+msgid "Please check your email to confirm your subscription."
+msgstr ""
+
+#: src/API/MailingSignupController.php:268
+#: templates/email-confirmation.php:37
+msgid "Invalid or expired confirmation link. Please sign up again."
+msgstr ""
+
+#: src/API/MailingSignupController.php:280
+#: templates/email-confirmation.php:41
+msgid "This confirmation link has expired. Please sign up again."
+msgstr ""
+
+#: src/API/MailingSignupController.php:294
+#: templates/email-confirmation.php:49
+msgid "Invalid confirmation link. Please sign up again."
+msgstr ""
+
+#: src/API/MailingSignupController.php:306
+msgid "Failed to confirm subscription. Please try again."
+msgstr ""
+
+#: src/API/MailingSignupController.php:317
+msgid "Your email has been confirmed. Welcome!"
 msgstr ""
 
 #: src/API/ParticipantsController.php:185
@@ -233,7 +432,7 @@ msgstr ""
 #: src/API/PollsController.php:486
 #: src/API/PollsController.php:520
 #: src/API/PollsController.php:553
-#: src/Services/EmailService.php:213
+#: src/Services/EmailService.php:223
 msgid "Poll not found."
 msgstr ""
 
@@ -259,10 +458,6 @@ msgstr ""
 #: src/public/poll-response/PollResponse.js:156
 #: src/public/poll-response/PollResponse.js:191
 msgid "Thank you for your response!"
-msgstr ""
-
-#: src/API/PollsController.php:364
-msgid "Invalid event ID."
 msgstr ""
 
 #: src/API/PollsController.php:383
@@ -297,53 +492,171 @@ msgstr ""
 msgid "Poll deleted successfully."
 msgstr ""
 
+#: src/blocks/mailing-signup/render.php:18
+#: src/blocks/mailing-signup/editor.js:26
+#: src/blocks/mailing-signup/editor.js:98
+msgid "Subscribe"
+msgstr ""
+
+#: src/blocks/mailing-signup/render.php:37
+#: src/blocks/mailing-signup/editor.js:50
+msgid "First Name"
+msgstr ""
+
+#: src/blocks/mailing-signup/render.php:44
+#: src/blocks/mailing-signup/editor.js:55
+msgid "Enter your first name"
+msgstr ""
+
+#: src/blocks/mailing-signup/render.php:49
+#: src/blocks/mailing-signup/editor.js:64
+msgid "Last Name"
+msgstr ""
+
+#: src/blocks/mailing-signup/render.php:56
+#: src/blocks/mailing-signup/editor.js:69
+msgid "Enter your last name"
+msgstr ""
+
+#: src/blocks/mailing-signup/render.php:61
+#: src/Admin/all-participants/AllParticipants.js:153
+#: src/Admin/event-participants/EventParticipants.js:505
+#: src/blocks/mailing-signup/editor.js:78
+msgid "Email"
+msgstr ""
+
+#: src/blocks/mailing-signup/render.php:68
+#: src/blocks/mailing-signup/editor.js:83
+msgid "Enter your email"
+msgstr ""
+
 #. translators: %s: event title
-#: src/Services/EmailService.php:79
+#: src/Services/EmailService.php:89
 #, php-format
 msgid "Quick question about %s"
 msgstr ""
 
 #. translators: %s: participant first name
-#: src/Services/EmailService.php:108
+#: src/Services/EmailService.php:118
+#: src/Services/EmailService.php:329
+#: src/Services/EmailService.php:525
 #, php-format
 msgid "Hi %s,"
 msgstr ""
 
 #. translators: %s: event title
-#: src/Services/EmailService.php:116
+#: src/Services/EmailService.php:126
 #, php-format
 msgid "We'd love to hear from you about %s!"
 msgstr ""
 
-#: src/Services/EmailService.php:130
+#: src/Services/EmailService.php:140
 msgid "Please take a moment to answer our quick poll:"
 msgstr ""
 
-#: src/Services/EmailService.php:135
+#: src/Services/EmailService.php:145
 msgid "Answer Poll"
 msgstr ""
 
 #. translators: %s: site name
-#: src/Services/EmailService.php:142
+#: src/Services/EmailService.php:152
+#: src/Services/EmailService.php:363
+#: src/Services/EmailService.php:551
 #, php-format
 msgid "Thanks,%1$sThe %2$s Team"
 msgstr ""
 
-#: src/Services/EmailService.php:154
+#: src/Services/EmailService.php:164
+#: src/Services/EmailService.php:375
+#: src/Services/EmailService.php:563
 msgid "If the button above doesn't work, copy and paste this link:"
 msgstr ""
 
-#: src/Services/EmailService.php:264
+#: src/Services/EmailService.php:274
+#: src/Services/EmailService.php:472
 msgid "wp_mail() failed to send."
+msgstr ""
+
+#. translators: %s: event title
+#: src/Services/EmailService.php:300
+#, php-format
+msgid "Photos from %s are ready!"
+msgstr ""
+
+#. translators: %s: event title
+#: src/Services/EmailService.php:337
+#, php-format
+msgid "The photos from %s are now available for you to view and like!"
+msgstr ""
+
+#: src/Services/EmailService.php:351
+msgid "Click the button below to browse the gallery and let us know which photos you like best:"
+msgstr ""
+
+#: src/Services/EmailService.php:356
+msgid "View Gallery"
+msgstr ""
+
+#. translators: %s: site name
+#: src/Services/EmailService.php:496
+#, php-format
+msgid "Confirm your subscription to %s"
+msgstr ""
+
+#: src/Services/EmailService.php:531
+msgid "Thank you for signing up for our mailing list! Please confirm your email address by clicking the button below."
+msgstr ""
+
+#: src/Services/EmailService.php:536
+msgid "Confirm Email"
+msgstr ""
+
+#: src/Services/EmailService.php:541
+msgid "This link will expire in 48 hours."
+msgstr ""
+
+#: src/Services/EmailService.php:545
+msgid "If you didn't sign up for this mailing list, you can safely ignore this email."
+msgstr ""
+
+#: templates/email-confirmation.php:31
+msgid "Invalid confirmation link."
+msgstr ""
+
+#: templates/email-confirmation.php:54
+msgid "Your email is already confirmed!"
+msgstr ""
+
+#: templates/email-confirmation.php:66
+msgid "Your email has been confirmed. Welcome to our mailing list!"
+msgstr ""
+
+#: templates/email-confirmation.php:69
+msgid "Failed to confirm your email. Please try again."
+msgstr ""
+
+#: templates/email-confirmation.php:156
+msgid "Email Confirmed!"
+msgstr ""
+
+#: templates/email-confirmation.php:158
+msgid "Already Confirmed"
+msgstr ""
+
+#: templates/email-confirmation.php:160
+msgid "Confirmation Failed"
+msgstr ""
+
+#: templates/email-confirmation.php:170
+msgid "Return to Homepage"
 msgstr ""
 
 #: src/Admin/all-participants/AllParticipants.js:85
 #: src/Admin/all-participants/AllParticipants.js:109
 #: src/Admin/all-participants/AllParticipants.js:127
-#: src/Admin/event-participants/EventParticipants.js:81
-#: src/Admin/event-participants/EventParticipants.js:95
-#: src/Admin/event-participants/EventParticipants.js:116
-#: src/Admin/event-participants/EventParticipants.js:134
+#: src/Admin/event-participants/EventParticipants.js:164
+#: src/Admin/event-participants/EventParticipants.js:185
+#: src/Admin/event-participants/EventParticipants.js:394
 #: src/Admin/events-list/EventsList.js:38
 #: src/Admin/polls-list/PollsList.js:48
 msgid "Error: "
@@ -361,30 +674,24 @@ msgstr ""
 
 #: src/Admin/all-participants/AllParticipants.js:138
 #: src/Admin/all-participants/AllParticipants.js:205
-#: src/Admin/event-participants/EventParticipants.js:153
 msgid "Add Participant"
 msgstr ""
 
 #. translators: %d: number of participants
 #: src/Admin/all-participants/AllParticipants.js:144
-#: src/Admin/event-participants/EventParticipants.js:159
+#: src/Admin/event-participants/EventParticipants.js:469
 #, js-format
 msgid "%d participants"
 msgstr ""
 
 #: src/Admin/all-participants/AllParticipants.js:152
 #: src/Admin/edit-poll/EditPoll.js:248
-#: src/Admin/event-participants/EventParticipants.js:167
+#: src/Admin/event-participants/EventParticipants.js:504
 msgid "Name"
 msgstr ""
 
-#: src/Admin/all-participants/AllParticipants.js:153
-#: src/Admin/event-participants/EventParticipants.js:168
-msgid "Email"
-msgstr ""
-
 #: src/Admin/all-participants/AllParticipants.js:154
-#: src/Admin/event-participants/EventParticipants.js:169
+#: src/Admin/event-participants/EventParticipants.js:506
 msgid "Instagram"
 msgstr ""
 
@@ -394,7 +701,7 @@ msgid "Email Profile"
 msgstr ""
 
 #: src/Admin/all-participants/AllParticipants.js:156
-#: src/Admin/event-participants/EventParticipants.js:171
+#: src/Admin/event-participants/EventParticipants.js:508
 #: src/Admin/polls-list/PollsList.js:113
 msgid "Actions"
 msgstr ""
@@ -446,7 +753,7 @@ msgid "Update"
 msgstr ""
 
 #: src/Admin/all-participants/AllParticipants.js:279
-#: src/Admin/event-participants/EventParticipants.js:302
+#: src/Admin/event-participants/EventParticipants.js:376
 msgid "Add"
 msgstr ""
 
@@ -486,6 +793,11 @@ msgstr ""
 msgid "Yes"
 msgstr ""
 
+#: src/Admin/edit-poll/EditPoll.js:320
+#: src/Admin/edit-poll/EditPoll.js:332
+msgid "Edit Poll"
+msgstr ""
+
 #: src/Admin/edit-poll/EditPoll.js:321
 #: src/Admin/edit-poll/EditPoll.js:333
 msgid "Add New Poll"
@@ -517,6 +829,7 @@ msgid "Did Not Receive Email"
 msgstr ""
 
 #: src/Admin/edit-poll/EditPoll.js:470
+#: src/Admin/event-participants/EventParticipants.js:439
 msgid "Sending..."
 msgstr ""
 
@@ -589,7 +902,7 @@ msgid "Move down"
 msgstr ""
 
 #: src/Admin/edit-poll/EditPoll.js:602
-#: src/Admin/event-participants/EventParticipants.js:234
+#: src/Admin/event-participants/EventParticipants.js:586
 msgid "Remove"
 msgstr ""
 
@@ -618,10 +931,6 @@ msgstr ""
 msgid "Active polls can receive responses. Closed polls do not accept new responses."
 msgstr ""
 
-#: src/Admin/edit-poll/EditPoll.js:645
-msgid "Saving..."
-msgstr ""
-
 #: src/Admin/edit-poll/EditPoll.js:647
 msgid "Update Poll"
 msgstr ""
@@ -630,56 +939,169 @@ msgstr ""
 msgid "Create Poll"
 msgstr ""
 
-#: src/Admin/edit-poll/EditPoll.js:655
-msgid "Cancel"
-msgstr ""
-
-#: src/Admin/event-participants/EventParticipants.js:27
+#: src/Admin/event-participants/EventParticipants.js:30
 msgid "No event ID provided"
 msgstr ""
 
-#: src/Admin/event-participants/EventParticipants.js:102
+#. translators: %d: number of participants
+#: src/Admin/event-participants/EventParticipants.js:134
+#, js-format
+msgid "Successfully added %d participant(s)"
+msgstr ""
+
+#: src/Admin/event-participants/EventParticipants.js:147
+msgid "Error adding participants: "
+msgstr ""
+
+#: src/Admin/event-participants/EventParticipants.js:171
 msgid "Remove this participant from the event?"
 msgstr ""
 
+#. translators: %d: number of participants
+#: src/Admin/event-participants/EventParticipants.js:221
+#, js-format
+msgid "Are you sure you want to remove %d participant(s) from this event?"
+msgstr ""
+
+#. translators: %d: number of participants
+#: src/Admin/event-participants/EventParticipants.js:248
+#, js-format
+msgid "Successfully removed %d participant(s)"
+msgstr ""
+
+#. translators: %d: number of failed removals
+#: src/Admin/event-participants/EventParticipants.js:261
+#, js-format
+msgid "Failed to remove %d participant(s). See console for details."
+msgstr ""
+
+#: src/Admin/event-participants/EventParticipants.js:275
+msgid "Error removing participants: "
+msgstr ""
+
+#: src/Admin/event-participants/EventParticipants.js:291
+msgid "No participants to send gallery links to."
+msgstr ""
+
+#. translators: %d: number of participants
+#: src/Admin/event-participants/EventParticipants.js:299
+#, js-format
+msgid "Send gallery links to %d participant(s)? They will receive an email with a unique link to view and like photos."
+msgstr ""
+
+#. translators: %d: number of emails sent
+#: src/Admin/event-participants/EventParticipants.js:329
+#, js-format
+msgid "Successfully sent gallery links to %d participant(s)!"
+msgstr ""
+
+#. translators: %d: number of failed sends
+#: src/Admin/event-participants/EventParticipants.js:343
+#, js-format
+msgid "Failed to send to %d participant(s). Check console for details."
+msgstr ""
+
+#: src/Admin/event-participants/EventParticipants.js:359
+msgid "Error sending gallery links: "
+msgstr ""
+
+#: src/Admin/event-participants/EventParticipants.js:370
+#: src/Admin/event-participants/EventParticipants.js:417
+msgid "Add Collaborators"
+msgstr ""
+
+#: src/Admin/event-participants/EventParticipants.js:372
+#: src/Admin/event-participants/EventParticipants.js:423
+msgid "Add Interested"
+msgstr ""
+
+#: src/Admin/event-participants/EventParticipants.js:374
+#: src/Admin/event-participants/EventParticipants.js:429
+msgid "Add Participants"
+msgstr ""
+
+#: src/Admin/event-participants/EventParticipants.js:383
+#: src/Admin/event-participants/EventParticipants.js:392
+#: src/Admin/event-participants/EventParticipants.js:409
+msgid "Event Participants"
+msgstr ""
+
 #. translators: %s: event title
-#: src/Admin/event-participants/EventParticipants.js:146
+#: src/Admin/event-participants/EventParticipants.js:406
 #, js-format
 msgid "Participants for %s"
 msgstr ""
 
-#: src/Admin/event-participants/EventParticipants.js:170
-#: src/Admin/event-participants/EventParticipants.js:273
+#. translators: %d: number of selected participants
+#: src/Admin/event-participants/EventParticipants.js:443
+#, js-format
+msgid "Send Gallery to %d Selected"
+msgstr ""
+
+#: src/Admin/event-participants/EventParticipants.js:449
+msgid "Send Gallery Links"
+msgstr ""
+
+#. translators: %d: number of gallery links sent
+#: src/Admin/event-participants/EventParticipants.js:457
+#, js-format
+msgid "Gallery links sent to %d participant(s)"
+msgstr ""
+
+#: src/Admin/event-participants/EventParticipants.js:483
+msgid "Removing..."
+msgstr ""
+
+#. translators: %d: number of selected participants
+#: src/Admin/event-participants/EventParticipants.js:486
+#, js-format
+msgid "Remove %d Selected"
+msgstr ""
+
+#: src/Admin/event-participants/EventParticipants.js:507
 msgid "Label"
 msgstr ""
 
-#: src/Admin/event-participants/EventParticipants.js:197
-#: src/Admin/event-participants/EventParticipants.js:277
+#: src/Admin/event-participants/EventParticipants.js:548
 #: src/Admin/events-list/EventsList.js:62
 msgid "Interested"
 msgstr ""
 
-#: src/Admin/event-participants/EventParticipants.js:204
-#: src/Admin/event-participants/EventParticipants.js:284
+#: src/Admin/event-participants/EventParticipants.js:555
 #: src/Admin/events-list/EventsList.js:63
 msgid "Signed Up"
 msgstr ""
 
-#: src/Admin/event-participants/EventParticipants.js:211
-#: src/Admin/event-participants/EventParticipants.js:288
+#: src/Admin/event-participants/EventParticipants.js:562
 msgid "Collaborator"
 msgstr ""
 
-#: src/Admin/event-participants/EventParticipants.js:244
-msgid "Add Participant to Event"
+#: src/Admin/event-participants/EventParticipants.js:602
+msgid "All participants are already added to this event."
 msgstr ""
 
-#: src/Admin/event-participants/EventParticipants.js:250
-msgid "Select Participant"
+#. translators: %d: number of available participants
+#: src/Admin/event-participants/EventParticipants.js:620
+#, js-format
+msgid "%d participant(s) available"
 msgstr ""
 
-#: src/Admin/event-participants/EventParticipants.js:257
-msgid "— Select —"
+#: src/Admin/event-participants/EventParticipants.js:634
+msgid "Deselect All"
+msgstr ""
+
+#: src/Admin/event-participants/EventParticipants.js:635
+msgid "Select All"
+msgstr ""
+
+#: src/Admin/event-participants/EventParticipants.js:706
+msgid "Adding..."
+msgstr ""
+
+#. translators: %d: number of selected participants
+#: src/Admin/event-participants/EventParticipants.js:709
+#, js-format
+msgid "Add %d Selected"
 msgstr ""
 
 #: src/Admin/events-list/EventsList.js:27
@@ -705,111 +1127,123 @@ msgstr ""
 msgid "View Participants"
 msgstr ""
 
-#: src/Admin/import/Import.js:46
+#: src/Admin/import/Import.js:48
 msgid "Please select a file to import."
 msgstr ""
 
-#: src/Admin/import/Import.js:93
+#: src/Admin/import/Import.js:96
 msgid "Import failed. Please try again."
 msgstr ""
 
-#: src/Admin/import/Import.js:135
+#: src/Admin/import/Import.js:141
 msgid "No participants to create. Please provide email addresses or select skip."
 msgstr ""
 
-#: src/Admin/import/Import.js:165
+#: src/Admin/import/Import.js:177
 msgid "Failed to resolve duplicates. Please try again."
 msgstr ""
 
-#: src/Admin/import/Import.js:177
+#: src/Admin/import/Import.js:189
 msgid "Import Participants"
 msgstr ""
 
-#: src/Admin/import/Import.js:181
+#: src/Admin/import/Import.js:197
+msgid "Entradium"
+msgstr ""
+
+#: src/Admin/import/Import.js:207
 msgid "Import from Entradium"
 msgstr ""
 
-#: src/Admin/import/Import.js:183
+#: src/Admin/import/Import.js:213
 msgid "Upload an Entradium Excel file (.xlsx) to import participants. The file must contain columns: Nombre, Apellidos, and Email."
 msgstr ""
 
-#: src/Admin/import/Import.js:191
+#: src/Admin/import/Import.js:221
 msgid "Related Event (Optional)"
 msgstr ""
 
-#: src/Admin/import/Import.js:198
+#: src/Admin/import/Import.js:230
 msgid "Select an event to associate imported participants with it. Leave empty to import without event association."
 msgstr ""
 
-#: src/Admin/import/Import.js:204
+#: src/Admin/import/Import.js:236
 msgid "No event association"
 msgstr ""
 
-#: src/Admin/import/Import.js:231
+#: src/Admin/import/Import.js:266
 msgid "Selected file:"
 msgstr ""
 
-#: src/Admin/import/Import.js:245
+#: src/Admin/import/Import.js:283
 msgid "Importing..."
 msgstr ""
 
-#: src/Admin/import/Import.js:279
+#: src/Admin/import/Import.js:325
 msgid "Import Partially Complete"
 msgstr ""
 
-#: src/Admin/import/Import.js:283
+#: src/Admin/import/Import.js:329
 msgid "Import Complete"
 msgstr ""
 
-#: src/Admin/import/Import.js:291
+#: src/Admin/import/Import.js:337
 msgid "Imported:"
 msgstr ""
 
-#: src/Admin/import/Import.js:295
+#: src/Admin/import/Import.js:346
+msgid "Existing linked to event:"
+msgstr ""
+
+#: src/Admin/import/Import.js:358
+msgid "Auto-resolved from previous imports:"
+msgstr ""
+
+#: src/Admin/import/Import.js:368
 msgid "Skipped (already exists):"
 msgstr ""
 
-#: src/Admin/import/Import.js:304
+#: src/Admin/import/Import.js:378
 msgid "Duplicates requiring resolution:"
 msgstr ""
 
-#: src/Admin/import/Import.js:322
+#: src/Admin/import/Import.js:405
 msgid "Resolve Duplicate Emails"
 msgstr ""
 
-#: src/Admin/import/Import.js:328
+#: src/Admin/import/Import.js:411
 msgid "The following people have duplicate email addresses. Please provide a unique email for each person or skip them."
 msgstr ""
 
-#: src/Admin/import/Import.js:349
+#: src/Admin/import/Import.js:437
 msgid "Original Email:"
 msgstr ""
 
-#: src/Admin/import/Import.js:412
+#: src/Admin/import/Import.js:506
 msgid "New Email:"
 msgstr ""
 
-#: src/Admin/import/Import.js:440
+#: src/Admin/import/Import.js:534
 msgid "Enter new email"
 msgstr ""
 
-#: src/Admin/import/Import.js:459
+#: src/Admin/import/Import.js:553
 msgid "Use Gmail Alias"
 msgstr ""
 
-#: src/Admin/import/Import.js:496
+#: src/Admin/import/Import.js:590
 msgid "Skip this person"
 msgstr ""
 
-#: src/Admin/import/Import.js:519
+#: src/Admin/import/Import.js:620
 msgid "Resolving..."
 msgstr ""
 
-#: src/Admin/import/Import.js:523
+#: src/Admin/import/Import.js:624
 msgid "Create Participants"
 msgstr ""
 
-#: src/Admin/import/Import.js:540
+#: src/Admin/import/Import.js:644
 msgid "Errors:"
 msgstr ""
 
@@ -831,6 +1265,39 @@ msgstr ""
 
 #: src/Admin/polls-list/PollsList.js:112
 msgid "Created"
+msgstr ""
+
+#: src/blocks/mailing-signup/editor.js:19
+msgid "Form Settings"
+msgstr ""
+
+#: src/blocks/mailing-signup/editor.js:21
+msgid "Submit Button Text"
+msgstr ""
+
+#: src/blocks/mailing-signup/editor.js:29
+msgid "Success Message"
+msgstr ""
+
+#: src/blocks/mailing-signup/editor.js:38
+msgid "Message shown after successful signup."
+msgstr ""
+
+#: src/blocks/mailing-signup/frontend.js:76
+msgid "Please enter your first name."
+msgstr ""
+
+#: src/blocks/mailing-signup/frontend.js:85
+msgid "Please enter your last name."
+msgstr ""
+
+#: src/blocks/mailing-signup/frontend.js:94
+msgid "Please enter your email."
+msgstr ""
+
+#: src/blocks/mailing-signup/frontend.js:110
+#: src/public/poll-response/PollResponse.js:248
+msgid "Submitting..."
 msgstr ""
 
 #: src/public/poll-response/PollResponse.js:24
@@ -869,10 +1336,41 @@ msgstr ""
 msgid "Hi"
 msgstr ""
 
-#: src/public/poll-response/PollResponse.js:248
-msgid "Submitting..."
-msgstr ""
-
 #: src/public/poll-response/PollResponse.js:249
 msgid "Submit Response"
+msgstr ""
+
+#: src/blocks/mailing-signup/block.json
+msgctxt "block title"
+msgid "Mailing Signup"
+msgstr ""
+
+#: src/blocks/mailing-signup/block.json
+msgctxt "block description"
+msgid "A signup form for your mailing list with email confirmation"
+msgstr ""
+
+#: src/blocks/mailing-signup/block.json
+msgctxt "block keyword"
+msgid "email"
+msgstr ""
+
+#: src/blocks/mailing-signup/block.json
+msgctxt "block keyword"
+msgid "newsletter"
+msgstr ""
+
+#: src/blocks/mailing-signup/block.json
+msgctxt "block keyword"
+msgid "signup"
+msgstr ""
+
+#: src/blocks/mailing-signup/block.json
+msgctxt "block keyword"
+msgid "subscribe"
+msgstr ""
+
+#: src/blocks/mailing-signup/block.json
+msgctxt "block keyword"
+msgid "mailing"
 msgstr ""
