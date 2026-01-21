@@ -1,136 +1,51 @@
 /**
- * Mailing Signup Block - Frontend Styles
+ * Mailing Signup Block - Minimal styles
+ * Uses WordPress native styling for inputs and buttons
  */
 
 .fair-audience-mailing-signup {
-	max-width: 600px;
-	margin: 0 auto;
-	padding: 24px;
+	margin: 2rem 0;
 }
 
-.fair-audience-mailing-title {
-	font-size: 1.5em;
-	font-weight: 600;
-	margin: 0 0 12px 0;
-	color: #1e1e1e;
-}
-
-.fair-audience-mailing-description {
-	font-size: 1em;
-	color: #50575e;
-	margin: 0 0 24px 0;
-	line-height: 1.6;
-}
-
-.fair-audience-mailing-form {
-	display: flex;
-	flex-direction: column;
-	gap: 16px;
-}
-
-.fair-audience-mailing-fields {
-	display: grid;
-	grid-template-columns: 1fr 1fr;
-	gap: 16px;
-}
-
-.fair-audience-mailing-field {
-	display: flex;
-	flex-direction: column;
-	gap: 6px;
-}
-
-.fair-audience-mailing-field-email {
-	grid-column: 1 / -1;
-}
-
-.fair-audience-mailing-field label {
-	font-size: 0.875em;
-	font-weight: 500;
-	color: #1e1e1e;
-}
-
-.fair-audience-mailing-field label .required {
+.fair-audience-mailing-signup .required {
 	color: #d63638;
 }
 
-.fair-audience-mailing-input {
-	padding: 10px 14px;
-	font-size: 1em;
-	border: 1px solid #8c8f94;
-	border-radius: 4px;
-	background: #fff;
-	transition: border-color 0.2s, box-shadow 0.2s;
+.fair-audience-mailing-signup .fair-audience-mailing-form p {
+	display: flex;
+	flex-direction: column;
+	gap: 0.5rem;
 }
 
-.fair-audience-mailing-input:focus {
-	border-color: #0073aa;
-	box-shadow: 0 0 0 1px #0073aa;
-	outline: none;
-}
-
-.fair-audience-mailing-input::placeholder {
-	color: #a7aaad;
-}
-
-.fair-audience-mailing-submit-button {
-	padding: 12px 24px;
-	font-size: 1em;
-	font-weight: 500;
-	color: #fff;
-	background-color: #0073aa;
-	border: none;
-	border-radius: 4px;
-	cursor: pointer;
-	transition: background-color 0.2s;
-	align-self: flex-start;
-}
-
-.fair-audience-mailing-submit-button:hover {
-	background-color: #005a87;
+.fair-audience-mailing-signup .fair-audience-mailing-form input {
+	width: 100%;
 }
 
 .fair-audience-mailing-submit-button:disabled {
-	background-color: #a7aaad;
+	opacity: 0.6;
 	cursor: not-allowed;
 }
 
 .fair-audience-mailing-message {
-	padding: 12px 16px;
+	margin-top: 1rem;
+	padding: 0.75rem 1rem;
 	border-radius: 4px;
-	font-size: 0.9375em;
-	line-height: 1.5;
 }
 
 .fair-audience-mailing-message-success {
-	background-color: #edfaef;
-	color: #00450c;
+	background-color: #d7f8e0;
+	color: #00632d;
 	border: 1px solid #00a32a;
 }
 
 .fair-audience-mailing-message-error {
 	background-color: #fcf0f1;
-	color: #8a1c1c;
+	color: #8b1a1d;
 	border: 1px solid #d63638;
 }
 
 .fair-audience-mailing-message-info {
 	background-color: #f0f6fc;
-	color: #004b75;
-	border: 1px solid #0073aa;
-}
-
-/* Responsive */
-@media (max-width: 480px) {
-	.fair-audience-mailing-fields {
-		grid-template-columns: 1fr;
-	}
-
-	.fair-audience-mailing-field-email {
-		grid-column: 1;
-	}
-
-	.fair-audience-mailing-submit-button {
-		width: 100%;
-	}
+	color: #135e96;
+	border: 1px solid #2271b1;
 }

@@ -34,59 +34,56 @@ $wrapper_attributes = get_block_wrapper_attributes(
 
 <div <?php echo wp_kses_data( $wrapper_attributes ); ?>>
 	<?php if ( ! empty( $form_title ) ) : ?>
-		<h3 class="fair-audience-mailing-title"><?php echo esc_html( $form_title ); ?></h3>
+		<h3 class="wp-block-heading"><?php echo esc_html( $form_title ); ?></h3>
 	<?php endif; ?>
 
 	<?php if ( ! empty( $form_desc ) ) : ?>
-		<p class="fair-audience-mailing-description"><?php echo esc_html( $form_desc ); ?></p>
+		<p><?php echo esc_html( $form_desc ); ?></p>
 	<?php endif; ?>
 
 	<form class="fair-audience-mailing-form">
-		<div class="fair-audience-mailing-fields">
-			<div class="fair-audience-mailing-field">
-				<label for="<?php echo esc_attr( $form_id ); ?>-name">
-					<?php echo esc_html__( 'First Name', 'fair-audience' ); ?> <span class="required">*</span>
-				</label>
-				<input
-					type="text"
-					id="<?php echo esc_attr( $form_id ); ?>-name"
-					name="mailing_name"
-					class="fair-audience-mailing-input"
-					required
-					placeholder="<?php echo esc_attr__( 'Enter your first name', 'fair-audience' ); ?>"
-				/>
-			</div>
-			<div class="fair-audience-mailing-field">
-				<label for="<?php echo esc_attr( $form_id ); ?>-surname">
-					<?php echo esc_html__( 'Last Name', 'fair-audience' ); ?> <span class="required">*</span>
-				</label>
-				<input
-					type="text"
-					id="<?php echo esc_attr( $form_id ); ?>-surname"
-					name="mailing_surname"
-					class="fair-audience-mailing-input"
-					required
-					placeholder="<?php echo esc_attr__( 'Enter your last name', 'fair-audience' ); ?>"
-				/>
-			</div>
-			<div class="fair-audience-mailing-field fair-audience-mailing-field-email">
-				<label for="<?php echo esc_attr( $form_id ); ?>-email">
-					<?php echo esc_html__( 'Email', 'fair-audience' ); ?> <span class="required">*</span>
-				</label>
-				<input
-					type="email"
-					id="<?php echo esc_attr( $form_id ); ?>-email"
-					name="mailing_email"
-					class="fair-audience-mailing-input"
-					required
-					placeholder="<?php echo esc_attr__( 'Enter your email', 'fair-audience' ); ?>"
-				/>
-			</div>
-		</div>
+		<p>
+			<label for="<?php echo esc_attr( $form_id ); ?>-name">
+				<?php echo esc_html__( 'First Name', 'fair-audience' ); ?> <span class="required">*</span>
+			</label>
+			<input
+				type="text"
+				id="<?php echo esc_attr( $form_id ); ?>-name"
+				name="mailing_name"
+				required
+				placeholder="<?php echo esc_attr__( 'Enter your first name', 'fair-audience' ); ?>"
+			/>
+		</p>
+		<p>
+			<label for="<?php echo esc_attr( $form_id ); ?>-surname">
+				<?php echo esc_html__( 'Last Name', 'fair-audience' ); ?> <span class="required">*</span>
+			</label>
+			<input
+				type="text"
+				id="<?php echo esc_attr( $form_id ); ?>-surname"
+				name="mailing_surname"
+				required
+				placeholder="<?php echo esc_attr__( 'Enter your last name', 'fair-audience' ); ?>"
+			/>
+		</p>
+		<p>
+			<label for="<?php echo esc_attr( $form_id ); ?>-email">
+				<?php echo esc_html__( 'Email', 'fair-audience' ); ?> <span class="required">*</span>
+			</label>
+			<input
+				type="email"
+				id="<?php echo esc_attr( $form_id ); ?>-email"
+				name="mailing_email"
+				required
+				placeholder="<?php echo esc_attr__( 'Enter your email', 'fair-audience' ); ?>"
+			/>
+		</p>
 
-		<button type="submit" class="fair-audience-mailing-submit-button">
-			<?php echo esc_html( $submit_text ); ?>
-		</button>
+		<div class="wp-block-button">
+			<button type="submit" class="wp-block-button__link wp-element-button fair-audience-mailing-submit-button">
+				<?php echo esc_html( $submit_text ); ?>
+			</button>
+		</div>
 
 		<div class="fair-audience-mailing-message" style="display: none;"></div>
 	</form>

@@ -11,7 +11,7 @@ registerBlockType('fair-audience/mailing-signup', {
 			attributes;
 
 		const blockProps = useBlockProps({
-			className: 'fair-audience-mailing-signup-editor',
+			className: 'fair-audience-mailing-signup',
 		});
 
 		return (
@@ -75,75 +75,66 @@ registerBlockType('fair-audience/mailing-signup', {
 				</InspectorControls>
 
 				<div {...blockProps}>
-					<div className="fair-audience-mailing-signup-preview">
-						{title && (
-							<h3 className="fair-audience-mailing-signup-preview-title">
-								{title}
-							</h3>
-						)}
-						{description && (
-							<p className="fair-audience-mailing-signup-preview-description">
-								{description}
-							</p>
-						)}
-						<div className="fair-audience-mailing-signup-preview-form">
-							<div className="fair-audience-mailing-signup-preview-fields">
-								<div className="fair-audience-mailing-signup-preview-field">
-									<label>
-										{__('First Name', 'fair-audience')}
-									</label>
-									<input
-										type="text"
-										placeholder={__(
-											'Enter your first name',
-											'fair-audience'
-										)}
-										disabled
-									/>
-								</div>
-								<div className="fair-audience-mailing-signup-preview-field">
-									<label>
-										{__('Last Name', 'fair-audience')}
-									</label>
-									<input
-										type="text"
-										placeholder={__(
-											'Enter your last name',
-											'fair-audience'
-										)}
-										disabled
-									/>
-								</div>
-								<div className="fair-audience-mailing-signup-preview-field fair-audience-mailing-signup-preview-field-email">
-									<label>
-										{__('Email', 'fair-audience')}
-									</label>
-									<input
-										type="email"
-										placeholder={__(
-											'Enter your email',
-											'fair-audience'
-										)}
-										disabled
-									/>
-								</div>
-							</div>
+					{title && (
+						<h3 className="wp-block-heading">{title}</h3>
+					)}
+					{description && <p>{description}</p>}
+
+					<form className="fair-audience-mailing-form">
+						<p>
+							<label>
+								{__('First Name', 'fair-audience')}{' '}
+								<span className="required">*</span>
+							</label>
+							<input
+								type="text"
+								placeholder={__(
+									'Enter your first name',
+									'fair-audience'
+								)}
+								disabled
+							/>
+						</p>
+						<p>
+							<label>
+								{__('Last Name', 'fair-audience')}{' '}
+								<span className="required">*</span>
+							</label>
+							<input
+								type="text"
+								placeholder={__(
+									'Enter your last name',
+									'fair-audience'
+								)}
+								disabled
+							/>
+						</p>
+						<p>
+							<label>
+								{__('Email', 'fair-audience')}{' '}
+								<span className="required">*</span>
+							</label>
+							<input
+								type="email"
+								placeholder={__(
+									'Enter your email',
+									'fair-audience'
+								)}
+								disabled
+							/>
+						</p>
+
+						<div className="wp-block-button">
 							<button
 								type="button"
-								className="fair-audience-mailing-signup-preview-button"
+								className="wp-block-button__link wp-element-button"
 								disabled
 							>
 								{submitButtonText ||
 									__('Subscribe', 'fair-audience')}
 							</button>
 						</div>
-						<p className="fair-audience-mailing-signup-preview-note">
-							{__(
-								'Users will receive a confirmation email after signing up.',
-								'fair-audience'
-							)}
-						</p>
-					</div>
+					</form>
 				</div>
 			</>
 		);
