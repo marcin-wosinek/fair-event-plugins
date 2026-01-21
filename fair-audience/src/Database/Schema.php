@@ -32,11 +32,13 @@ class Schema {
 			email VARCHAR(255) NOT NULL,
 			instagram VARCHAR(255) DEFAULT '' COMMENT 'Instagram handle without @',
 			email_profile ENUM('minimal', 'in_the_loop') NOT NULL DEFAULT 'minimal',
+			status ENUM('pending', 'confirmed') NOT NULL DEFAULT 'confirmed',
 			created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
 			updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
 			UNIQUE KEY idx_email (email),
 			KEY idx_name (name, surname),
-			KEY idx_instagram (instagram)
+			KEY idx_instagram (instagram),
+			KEY idx_status (status)
 		) ENGINE=InnoDB $charset_collate;";
 	}
 
@@ -249,6 +251,28 @@ class Schema {
 			UNIQUE KEY idx_access_key (access_key),
 			UNIQUE KEY idx_token (token),
 			KEY idx_event_id (event_id)
+		) ENGINE=InnoDB $charset_collate;";
+	}
+
+	/**
+	 * Get SQL for creating the email confirmation tokens table.
+	 *
+	 * @return string SQL statement.
+	 */
+	public static function get_email_confirmation_tokens_table_sql() {
+		global $wpdb;
+
+		$table_name      = $wpdb->prefix . 'fair_audience_email_confirmation_tokens';
+		$charset_collate = $wpdb->get_charset_collate();
+
+		return "CREATE TABLE $table_name (
+			id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+			participant_id BIGINT UNSIGNED NOT NULL,
+			token CHAR(32) NOT NULL COMMENT 'Random token for email confirmation URL',
+			expires_at DATETIME NOT NULL,
+			created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+			UNIQUE KEY idx_token (token),
+			UNIQUE KEY idx_participant (participant_id)
 		) ENGINE=InnoDB $charset_collate;";
 	}
 }

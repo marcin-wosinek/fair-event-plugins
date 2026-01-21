@@ -47,6 +47,7 @@ class Plugin {
 		add_action( 'rest_api_init', array( $this, 'register_api_endpoints' ) );
 		add_filter( 'query_vars', array( $this, 'add_query_vars' ) );
 		add_action( 'template_redirect', array( $this, 'handle_poll_response' ) );
+		add_action( 'template_redirect', array( $this, 'handle_email_confirmation' ) );
 
 		// Initialize admin.
 		$admin_hooks = new \FairAudience\Admin\AdminHooks();
@@ -54,6 +55,9 @@ class Plugin {
 		// Initialize media library integration.
 		\FairAudience\Admin\MediaLibraryHooks::init();
 		\FairAudience\Admin\MediaBatchActions::init();
+
+		// Initialize blocks.
+		$block_hooks = new \FairAudience\Hooks\BlockHooks();
 	}
 
 	/**
@@ -77,6 +81,9 @@ class Plugin {
 
 		$gallery_access_controller = new \FairAudience\API\GalleryAccessController();
 		$gallery_access_controller->register_routes();
+
+		$mailing_signup_controller = new \FairAudience\API\MailingSignupController();
+		$mailing_signup_controller->register_routes();
 	}
 
 	/**
@@ -88,6 +95,7 @@ class Plugin {
 	public function add_query_vars( $vars ) {
 		$vars[] = 'poll_key';
 		$vars[] = 'gallery_key';
+		$vars[] = 'confirm_email_key';
 		return $vars;
 	}
 
@@ -103,6 +111,21 @@ class Plugin {
 
 		// Load poll template.
 		include FAIR_AUDIENCE_PLUGIN_DIR . 'templates/poll-response.php';
+		exit;
+	}
+
+	/**
+	 * Handle email confirmation page requests.
+	 */
+	public function handle_email_confirmation() {
+		$confirm_key = get_query_var( 'confirm_email_key' );
+
+		if ( empty( $confirm_key ) ) {
+			return;
+		}
+
+		// Load email confirmation template.
+		include FAIR_AUDIENCE_PLUGIN_DIR . 'templates/email-confirmation.php';
 		exit;
 	}
 }

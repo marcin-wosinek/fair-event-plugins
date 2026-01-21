@@ -1,0 +1,86 @@
+/**
+ * Mailing Signup Block - Editor Styles
+ */
+
+.fair-audience-mailing-signup-editor {
+	padding: 20px;
+	background: #f0f0f1;
+	border-radius: 8px;
+}
+
+.fair-audience-mailing-signup-preview {
+	background: #fff;
+	border: 1px solid #ddd;
+	border-radius: 4px;
+	padding: 24px;
+}
+
+.fair-audience-mailing-signup-preview-title {
+	font-size: 1.25em;
+	font-weight: 600;
+	margin: 0 0 8px 0;
+	color: #1e1e1e;
+}
+
+.fair-audience-mailing-signup-preview-description {
+	font-size: 0.9375em;
+	color: #50575e;
+	margin: 0 0 20px 0;
+}
+
+.fair-audience-mailing-signup-preview-form {
+	display: flex;
+	flex-direction: column;
+	gap: 16px;
+}
+
+.fair-audience-mailing-signup-preview-fields {
+	display: grid;
+	grid-template-columns: 1fr 1fr;
+	gap: 12px;
+}
+
+.fair-audience-mailing-signup-preview-field {
+	display: flex;
+	flex-direction: column;
+	gap: 4px;
+}
+
+.fair-audience-mailing-signup-preview-field-email {
+	grid-column: 1 / -1;
+}
+
+.fair-audience-mailing-signup-preview-field label {
+	font-size: 0.8125em;
+	font-weight: 500;
+	color: #1e1e1e;
+}
+
+.fair-audience-mailing-signup-preview-field input {
+	padding: 8px 12px;
+	font-size: 0.875em;
+	border: 1px solid #8c8f94;
+	border-radius: 4px;
+	background: #f6f7f7;
+}
+
+.fair-audience-mailing-signup-preview-button {
+	padding: 10px 20px;
+	font-size: 0.875em;
+	font-weight: 500;
+	color: #fff;
+	background-color: #0073aa;
+	border: none;
+	border-radius: 4px;
+	align-self: flex-start;
+	opacity: 0.7;
+}
+
+.fair-audience-mailing-signup-preview-note {
+	font-size: 0.75em;
+	color: #757575;
+	font-style: italic;
+	margin: 8px 0 0 0;
+	padding-top: 12px;
+	border-top: 1px solid #eee;
+}

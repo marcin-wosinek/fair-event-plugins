@@ -46,12 +46,13 @@ function fair_audience_activate() {
 	dbDelta( \FairAudience\Database\Schema::get_import_resolutions_table_sql() );
 	dbDelta( \FairAudience\Database\Schema::get_photo_participants_table_sql() );
 	dbDelta( \FairAudience\Database\Schema::get_gallery_access_keys_table_sql() );
+	dbDelta( \FairAudience\Database\Schema::get_email_confirmation_tokens_table_sql() );
 
-	// Flush rewrite rules for poll_key and gallery_key query vars.
+	// Flush rewrite rules for poll_key, gallery_key, and confirm_email_key query vars.
 	flush_rewrite_rules();
 
 	// Update database version.
-	update_option( 'fair_audience_db_version', '1.5.0' );
+	update_option( 'fair_audience_db_version', '1.6.0' );
 }
 register_activation_hook( __FILE__, __NAMESPACE__ . '\\fair_audience_activate' );
 
@@ -117,6 +118,27 @@ function fair_audience_maybe_upgrade_db() {
 		flush_rewrite_rules();
 
 		update_option( 'fair_audience_db_version', '1.5.0' );
+	}
+
+	if ( version_compare( $db_version, '1.6.0', '<' ) ) {
+		global $wpdb;
+		require_once ABSPATH . 'wp-admin/includes/upgrade.php';
+
+		// Add status column to participants table.
+		$participants_table = $wpdb->prefix . 'fair_audience_participants';
+		$wpdb->query(
+			"ALTER TABLE {$participants_table}
+			 ADD COLUMN IF NOT EXISTS status ENUM('pending', 'confirmed')
+			 NOT NULL DEFAULT 'confirmed' AFTER email_profile"
+		);
+
+		// Create email confirmation tokens table.
+		dbDelta( \FairAudience\Database\Schema::get_email_confirmation_tokens_table_sql() );
+
+		// Flush rewrite rules for confirm_email_key query var.
+		flush_rewrite_rules();
+
+		update_option( 'fair_audience_db_version', '1.6.0' );
 	}
 }
 add_action( 'plugins_loaded', __NAMESPACE__ . '\\fair_audience_maybe_upgrade_db' );

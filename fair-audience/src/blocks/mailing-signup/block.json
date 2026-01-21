@@ -1,0 +1,43 @@
+{
+	"$schema": "https://schemas.wp.org/trunk/block.json",
+	"apiVersion": 3,
+	"name": "fair-audience/mailing-signup",
+	"version": "1.0.0",
+	"title": "Mailing Signup",
+	"category": "widgets",
+	"icon": "email",
+	"description": "A signup form for your mailing list with email confirmation",
+	"keywords": ["email", "newsletter", "signup", "subscribe", "mailing"],
+	"textdomain": "fair-audience",
+	"supports": {
+		"html": false,
+		"align": ["wide", "full"],
+		"spacing": {
+			"padding": true,
+			"margin": ["top", "bottom"]
+		}
+	},
+	"attributes": {
+		"title": {
+			"type": "string",
+			"default": ""
+		},
+		"description": {
+			"type": "string",
+			"default": ""
+		},
+		"submitButtonText": {
+			"type": "string",
+			"default": "Subscribe"
+		},
+		"successMessage": {
+			"type": "string",
+			"default": "Please check your email to confirm your subscription."
+		}
+	},
+	"editorScript": "file:./editor.js",
+	"viewScript": "file:./frontend.js",
+	"render": "file:./render.php",
+	"viewStyle": "file:./style.css",
+	"editorStyle": "file:./editor.css"
+}

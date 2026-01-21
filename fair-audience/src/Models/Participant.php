@@ -57,6 +57,13 @@ class Participant {
 	public $email_profile;
 
 	/**
+	 * Subscription status (pending or confirmed).
+	 *
+	 * @var string
+	 */
+	public $status;
+
+	/**
 	 * Created timestamp.
 	 *
 	 * @var string
@@ -93,6 +100,7 @@ class Participant {
 		$this->email         = isset( $data['email'] ) ? sanitize_email( $data['email'] ) : '';
 		$this->instagram     = isset( $data['instagram'] ) ? sanitize_text_field( $data['instagram'] ) : '';
 		$this->email_profile = isset( $data['email_profile'] ) ? $data['email_profile'] : 'minimal';
+		$this->status        = isset( $data['status'] ) ? $data['status'] : 'confirmed';
 		$this->created_at    = isset( $data['created_at'] ) ? $data['created_at'] : '';
 		$this->updated_at    = isset( $data['updated_at'] ) ? $data['updated_at'] : '';
 	}
@@ -117,15 +125,21 @@ class Participant {
 			$this->email_profile = 'minimal';
 		}
 
+		// Validate status enum.
+		if ( ! in_array( $this->status, array( 'pending', 'confirmed' ), true ) ) {
+			$this->status = 'confirmed';
+		}
+
 		$data = array(
 			'name'          => $this->name,
 			'surname'       => $this->surname,
 			'email'         => $this->email,
 			'instagram'     => $this->instagram,
 			'email_profile' => $this->email_profile,
+			'status'        => $this->status,
 		);
 
-		$format = array( '%s', '%s', '%s', '%s', '%s' );
+		$format = array( '%s', '%s', '%s', '%s', '%s', '%s' );
 
 		if ( $this->id ) {
 			// Update existing.
