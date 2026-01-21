@@ -54,8 +54,9 @@ if ( empty( $token_string ) ) {
 			$result['message'] = __( 'Your email is already confirmed!', 'fair-audience' );
 			$result['type']    = 'info';
 		} else {
-			// Update participant status to confirmed.
-			$participant->status = 'confirmed';
+			// Update participant status to confirmed and set email profile to in_the_loop.
+			$participant->status        = 'confirmed';
+			$participant->email_profile = 'in_the_loop';
 
 			if ( $participant->save() ) {
 				// Delete the token (one-time use).
