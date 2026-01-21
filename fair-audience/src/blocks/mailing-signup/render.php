@@ -15,8 +15,6 @@
 defined( 'WPINC' ) || die;
 
 // Get block attributes.
-$form_title      = $attributes['title'] ?? '';
-$form_desc       = $attributes['description'] ?? '';
 $submit_text     = $attributes['submitButtonText'] ?? __( 'Subscribe', 'fair-audience' );
 $success_message = $attributes['successMessage'] ?? __( 'Please check your email to confirm your subscription.', 'fair-audience' );
 
@@ -33,14 +31,6 @@ $wrapper_attributes = get_block_wrapper_attributes(
 ?>
 
 <div <?php echo wp_kses_data( $wrapper_attributes ); ?>>
-	<?php if ( ! empty( $form_title ) ) : ?>
-		<h3 class="wp-block-heading"><?php echo esc_html( $form_title ); ?></h3>
-	<?php endif; ?>
-
-	<?php if ( ! empty( $form_desc ) ) : ?>
-		<p><?php echo esc_html( $form_desc ); ?></p>
-	<?php endif; ?>
-
 	<form class="fair-audience-mailing-form">
 		<p>
 			<label for="<?php echo esc_attr( $form_id ); ?>-name">

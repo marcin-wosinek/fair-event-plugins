@@ -7,8 +7,7 @@ import { __ } from '@wordpress/i18n';
 
 registerBlockType('fair-audience/mailing-signup', {
 	edit: ({ attributes, setAttributes }) => {
-		const { title, description, submitButtonText, successMessage } =
-			attributes;
+		const { submitButtonText, successMessage } = attributes;
 
 		const blockProps = useBlockProps({
 			className: 'fair-audience-mailing-signup',
@@ -18,36 +17,6 @@ registerBlockType('fair-audience/mailing-signup', {
 			<>
 				<InspectorControls>
 					<PanelBody title={__('Form Settings', 'fair-audience')}>
-						<TextControl
-							label={__('Title', 'fair-audience')}
-							value={title}
-							onChange={(value) =>
-								setAttributes({ title: value })
-							}
-							placeholder={__(
-								'Subscribe to our newsletter',
-								'fair-audience'
-							)}
-							help={__(
-								'Optional title displayed above the form.',
-								'fair-audience'
-							)}
-						/>
-						<TextareaControl
-							label={__('Description', 'fair-audience')}
-							value={description}
-							onChange={(value) =>
-								setAttributes({ description: value })
-							}
-							placeholder={__(
-								'Stay updated with our latest news and events.',
-								'fair-audience'
-							)}
-							help={__(
-								'Optional description displayed below the title.',
-								'fair-audience'
-							)}
-						/>
 						<TextControl
 							label={__('Submit Button Text', 'fair-audience')}
 							value={submitButtonText}
@@ -75,11 +44,6 @@ registerBlockType('fair-audience/mailing-signup', {
 				</InspectorControls>
 
 				<div {...blockProps}>
-					{title && (
-						<h3 className="wp-block-heading">{title}</h3>
-					)}
-					{description && <p>{description}</p>}
-
 					<form className="fair-audience-mailing-form">
 						<p>
 							<label>

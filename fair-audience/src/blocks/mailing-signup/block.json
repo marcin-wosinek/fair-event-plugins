@@ -18,14 +18,6 @@
 		}
 	},
 	"attributes": {
-		"title": {
-			"type": "string",
-			"default": ""
-		},
-		"description": {
-			"type": "string",
-			"default": ""
-		},
 		"submitButtonText": {
 			"type": "string",
 			"default": "Subscribe"
