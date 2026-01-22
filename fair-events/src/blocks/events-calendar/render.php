@@ -13,6 +13,7 @@ defined( 'WPINC' ) || die;
 
 use FairEvents\Models\EventDates;
 use FairEvents\Helpers\ICalParser;
+use FairEvents\Settings\Settings;
 
 /**
  * Convert color value to CSS value
@@ -137,7 +138,7 @@ $month_end   = gmdate( 'Y-m-t 23:59:59', strtotime( $month_start ) );
 
 // Build query arguments using QueryHelper
 $query_args = array(
-	'post_type'              => 'fair_event',
+	'post_type'              => Settings::get_enabled_post_types(),
 	'posts_per_page'         => -1,
 	'post_status'            => $show_drafts ? array( 'publish', 'draft' ) : 'publish',
 	'fair_events_date_query' => array(

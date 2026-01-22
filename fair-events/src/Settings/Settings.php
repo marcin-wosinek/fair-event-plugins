@@ -44,6 +44,55 @@ class Settings {
 				'default'           => 'fair-events',
 			)
 		);
+
+		// Register enabled post types setting
+		register_setting(
+			'fair_events_settings',
+			'fair_events_enabled_post_types',
+			array(
+				'type'              => 'array',
+				'description'       => __( 'Post types that can have event data', 'fair-events' ),
+				'sanitize_callback' => array( $this, 'sanitize_enabled_post_types' ),
+				'show_in_rest'      => array(
+					'schema' => array(
+						'type'  => 'array',
+						'items' => array( 'type' => 'string' ),
+					),
+				),
+				'default'           => array( 'fair_event' ),
+			)
+		);
+	}
+
+	/**
+	 * Get enabled post types for event data
+	 *
+	 * @return array Array of post type slugs.
+	 */
+	public static function get_enabled_post_types() {
+		return get_option( 'fair_events_enabled_post_types', array( 'fair_event' ) );
+	}
+
+	/**
+	 * Sanitize enabled post types setting
+	 *
+	 * @param mixed $value Value to sanitize.
+	 * @return array Sanitized array of post type slugs.
+	 */
+	public function sanitize_enabled_post_types( $value ) {
+		if ( ! is_array( $value ) ) {
+			return array( 'fair_event' );
+		}
+
+		// Sanitize each post type slug
+		$sanitized = array_map( 'sanitize_key', $value );
+
+		// Ensure fair_event is always included
+		if ( ! in_array( 'fair_event', $sanitized, true ) ) {
+			array_unshift( $sanitized, 'fair_event' );
+		}
+
+		return array_values( array_unique( $sanitized ) );
 	}
 
 	/**

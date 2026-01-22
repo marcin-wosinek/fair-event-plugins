@@ -7,6 +7,8 @@
 
 namespace FairEvents\PostTypes;
 
+use FairEvents\Settings\Settings;
+
 defined( 'WPINC' ) || die;
 
 /**
@@ -83,59 +85,63 @@ class Event {
 	}
 
 	/**
-	 * Register custom meta fields for Event post type
+	 * Register custom meta fields for all enabled post types
 	 *
 	 * @return void
 	 */
 	public static function register_meta() {
-		register_post_meta(
-			self::POST_TYPE,
-			'event_start',
-			array(
-				'type'              => 'string',
-				'description'       => __( 'Event start date and time', 'fair-events' ),
-				'single'            => true,
-				'show_in_rest'      => true,
-				'sanitize_callback' => 'sanitize_text_field',
-			)
-		);
+		$enabled_post_types = Settings::get_enabled_post_types();
 
-		register_post_meta(
-			self::POST_TYPE,
-			'event_end',
-			array(
-				'type'              => 'string',
-				'description'       => __( 'Event end date and time', 'fair-events' ),
-				'single'            => true,
-				'show_in_rest'      => true,
-				'sanitize_callback' => 'sanitize_text_field',
-			)
-		);
+		foreach ( $enabled_post_types as $post_type ) {
+			register_post_meta(
+				$post_type,
+				'event_start',
+				array(
+					'type'              => 'string',
+					'description'       => __( 'Event start date and time', 'fair-events' ),
+					'single'            => true,
+					'show_in_rest'      => true,
+					'sanitize_callback' => 'sanitize_text_field',
+				)
+			);
 
-		register_post_meta(
-			self::POST_TYPE,
-			'event_all_day',
-			array(
-				'type'         => 'boolean',
-				'description'  => __( 'Whether the event is an all-day event', 'fair-events' ),
-				'single'       => true,
-				'show_in_rest' => true,
-				'default'      => false,
-			)
-		);
+			register_post_meta(
+				$post_type,
+				'event_end',
+				array(
+					'type'              => 'string',
+					'description'       => __( 'Event end date and time', 'fair-events' ),
+					'single'            => true,
+					'show_in_rest'      => true,
+					'sanitize_callback' => 'sanitize_text_field',
+				)
+			);
 
-		register_post_meta(
-			self::POST_TYPE,
-			'event_location',
-			array(
-				'type'              => 'string',
-				'description'       => __( 'Event location', 'fair-events' ),
-				'single'            => true,
-				'show_in_rest'      => true,
-				'sanitize_callback' => 'sanitize_text_field',
-				'default'           => '',
-			)
-		);
+			register_post_meta(
+				$post_type,
+				'event_all_day',
+				array(
+					'type'         => 'boolean',
+					'description'  => __( 'Whether the event is an all-day event', 'fair-events' ),
+					'single'       => true,
+					'show_in_rest' => true,
+					'default'      => false,
+				)
+			);
+
+			register_post_meta(
+				$post_type,
+				'event_location',
+				array(
+					'type'              => 'string',
+					'description'       => __( 'Event location', 'fair-events' ),
+					'single'            => true,
+					'show_in_rest'      => true,
+					'sanitize_callback' => 'sanitize_text_field',
+					'default'           => '',
+				)
+			);
+		}
 	}
 
 	/**
@@ -156,13 +162,19 @@ class Event {
 	 * @return void
 	 */
 	public static function enqueue_meta_box_scripts( $hook ) {
-		// Only load on post edit screens for fair_event post type.
+		// Only load on post edit screens.
 		if ( ! in_array( $hook, array( 'post.php', 'post-new.php' ), true ) ) {
 			return;
 		}
 
 		$screen = get_current_screen();
-		if ( ! $screen || self::POST_TYPE !== $screen->post_type ) {
+		if ( ! $screen ) {
+			return;
+		}
+
+		// Check if current post type is in enabled post types.
+		$enabled_post_types = Settings::get_enabled_post_types();
+		if ( ! in_array( $screen->post_type, $enabled_post_types, true ) ) {
 			return;
 		}
 
@@ -178,19 +190,23 @@ class Event {
 	}
 
 	/**
-	 * Add meta box for event details
+	 * Add meta box for event details to all enabled post types
 	 *
 	 * @return void
 	 */
 	public static function add_meta_box() {
-		add_meta_box(
-			'fair_event_details',
-			__( 'Event Details', 'fair-events' ),
-			array( __CLASS__, 'render_meta_box' ),
-			self::POST_TYPE,
-			'side',
-			'default'
-		);
+		$enabled_post_types = Settings::get_enabled_post_types();
+
+		foreach ( $enabled_post_types as $post_type ) {
+			add_meta_box(
+				'fair_event_details',
+				__( 'Event Details', 'fair-events' ),
+				array( __CLASS__, 'render_meta_box' ),
+				$post_type,
+				'side',
+				'default'
+			);
+		}
 	}
 
 	/**
@@ -309,9 +325,14 @@ class Event {
 			return;
 		}
 
-		// Check if this is a fair_event post
+		// Check if this post type is enabled for events
 		$post = get_post( $post_id );
-		if ( ! $post || self::POST_TYPE !== $post->post_type ) {
+		if ( ! $post ) {
+			return;
+		}
+
+		$enabled_post_types = Settings::get_enabled_post_types();
+		if ( ! in_array( $post->post_type, $enabled_post_types, true ) ) {
 			return;
 		}
 
@@ -342,14 +363,19 @@ class Event {
 	}
 
 	/**
-	 * Register admin columns
+	 * Register admin columns for all enabled post types
 	 *
 	 * @return void
 	 */
 	public static function register_admin_columns() {
-		add_filter( 'manage_' . self::POST_TYPE . '_posts_columns', array( __CLASS__, 'add_admin_columns' ) );
-		add_action( 'manage_' . self::POST_TYPE . '_posts_custom_column', array( __CLASS__, 'render_admin_column' ), 10, 2 );
-		add_filter( 'manage_edit-' . self::POST_TYPE . '_sortable_columns', array( __CLASS__, 'add_sortable_columns' ) );
+		$enabled_post_types = Settings::get_enabled_post_types();
+
+		foreach ( $enabled_post_types as $post_type ) {
+			add_filter( 'manage_' . $post_type . '_posts_columns', array( __CLASS__, 'add_admin_columns' ) );
+			add_action( 'manage_' . $post_type . '_posts_custom_column', array( __CLASS__, 'render_admin_column' ), 10, 2 );
+			add_filter( 'manage_edit-' . $post_type . '_sortable_columns', array( __CLASS__, 'add_sortable_columns' ) );
+		}
+
 		add_action( 'pre_get_posts', array( __CLASS__, 'handle_column_sorting' ) );
 		add_filter( 'post_row_actions', array( __CLASS__, 'add_rsvp_row_action' ), 10, 2 );
 	}
@@ -464,21 +490,24 @@ class Event {
 	 * @return array Modified row actions.
 	 */
 	public static function add_rsvp_row_action( $actions, $post ) {
-		// Only add for fair_event post type
-		if ( self::POST_TYPE !== $post->post_type ) {
+		// Only add for enabled post types
+		$enabled_post_types = Settings::get_enabled_post_types();
+		if ( ! in_array( $post->post_type, $enabled_post_types, true ) ) {
 			return $actions;
 		}
 
-		// Add copy event link
-		$copy_url        = wp_nonce_url(
-			admin_url( 'admin.php?page=fair-events-copy&event_id=' . $post->ID ),
-			'copy_fair_event_' . $post->ID
-		);
-		$actions['copy'] = sprintf(
-			'<a href="%s">%s</a>',
-			esc_url( $copy_url ),
-			esc_html__( 'Copy', 'fair-events' )
-		);
+		// Only show Copy action for fair_event post type
+		if ( self::POST_TYPE === $post->post_type ) {
+			$copy_url        = wp_nonce_url(
+				admin_url( 'admin.php?page=fair-events-copy&event_id=' . $post->ID ),
+				'copy_fair_event_' . $post->ID
+			);
+			$actions['copy'] = sprintf(
+				'<a href="%s">%s</a>',
+				esc_url( $copy_url ),
+				esc_html__( 'Copy', 'fair-events' )
+			);
+		}
 
 		// Only add RSVP link if fair-rsvp plugin is active
 		if ( defined( 'FAIR_RSVP_PLUGIN_DIR' ) ) {
@@ -521,8 +550,10 @@ class Event {
 			return;
 		}
 
-		// Check if this is our post type.
-		if ( self::POST_TYPE !== get_post_type( $post_id ) ) {
+		// Check if this post type is enabled for events.
+		$post_type          = get_post_type( $post_id );
+		$enabled_post_types = Settings::get_enabled_post_types();
+		if ( ! in_array( $post_type, $enabled_post_types, true ) ) {
 			return;
 		}
 

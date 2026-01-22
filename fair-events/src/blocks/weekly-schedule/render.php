@@ -15,6 +15,7 @@ defined( 'WPINC' ) || die;
 
 use FairEvents\Models\EventDates;
 use FairEvents\Helpers\ICalParser;
+use FairEvents\Settings\Settings;
 
 /**
  * Parse ISO week string (e.g., "2025-W03")
@@ -274,7 +275,7 @@ $week_end   = $boundaries['end'] . ' 23:59:59';
 
 // Build query arguments
 $query_args = array(
-	'post_type'              => 'fair_event',
+	'post_type'              => Settings::get_enabled_post_types(),
 	'posts_per_page'         => -1,
 	'post_status'            => $show_drafts ? array( 'publish', 'draft' ) : 'publish',
 	'fair_events_date_query' => array(

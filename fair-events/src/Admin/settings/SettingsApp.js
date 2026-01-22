@@ -3,7 +3,13 @@
  */
 import { __ } from '@wordpress/i18n';
 import { useState, useEffect } from '@wordpress/element';
-import { Button, TextControl, Notice } from '@wordpress/components';
+import {
+	Button,
+	TextControl,
+	Notice,
+	CheckboxControl,
+	PanelBody,
+} from '@wordpress/components';
 import apiFetch from '@wordpress/api-fetch';
 
 /**
@@ -16,18 +22,45 @@ import apiFetch from '@wordpress/api-fetch';
  */
 export default function SettingsApp() {
 	const [slug, setSlug] = useState('');
+	const [enabledPostTypes, setEnabledPostTypes] = useState(['fair_event']);
+	const [availablePostTypes, setAvailablePostTypes] = useState([]);
 	const [isLoading, setIsLoading] = useState(true);
 	const [isSaving, setIsSaving] = useState(false);
 	const [notice, setNotice] = useState(null);
 
-	// Load settings on mount
+	// Load settings and post types on mount
 	useEffect(() => {
-		apiFetch({ path: '/wp/v2/settings' })
-			.then((settings) => {
+		Promise.all([
+			apiFetch({ path: '/wp/v2/settings' }),
+			apiFetch({ path: '/wp/v2/types' }),
+		])
+			.then(([settings, postTypes]) => {
 				setSlug(settings.fair_events_slug || 'fair-events');
+				setEnabledPostTypes(
+					settings.fair_events_enabled_post_types || ['fair_event']
+				);
+
+				// Filter to get content post types that make sense for events
+				// Exclude system types that shouldn't have event data
+				const excludedTypes = [
+					'attachment',
+					'nav_menu_item',
+					'wp_block',
+					'wp_template',
+					'wp_template_part',
+					'wp_navigation',
+					'wp_global_styles',
+					'wp_font_family',
+					'wp_font_face',
+					'fair_event', // Show fair_event separately as always enabled
+				];
+				const contentTypes = Object.values(postTypes).filter(
+					(type) => !excludedTypes.includes(type.slug)
+				);
+				setAvailablePostTypes(contentTypes);
 				setIsLoading(false);
 			})
-			.catch((error) => {
+			.catch(() => {
 				setNotice({
 					status: 'error',
 					message: __('Failed to load settings.', 'fair-events'),
@@ -35,6 +68,17 @@ export default function SettingsApp() {
 				setIsLoading(false);
 			});
 	}, []);
+
+	// Handle post type checkbox toggle
+	const handlePostTypeToggle = (postTypeSlug, isChecked) => {
+		if (isChecked) {
+			setEnabledPostTypes([...enabledPostTypes, postTypeSlug]);
+		} else {
+			setEnabledPostTypes(
+				enabledPostTypes.filter((slug) => slug !== postTypeSlug)
+			);
+		}
+	};
 
 	// Save settings
 	const handleSave = () => {
@@ -46,6 +90,7 @@ export default function SettingsApp() {
 			method: 'POST',
 			data: {
 				fair_events_slug: slug,
+				fair_events_enabled_post_types: enabledPostTypes,
 			},
 		})
 			.then(() => {
@@ -54,13 +99,16 @@ export default function SettingsApp() {
 			})
 			.then((settings) => {
 				setSlug(settings.fair_events_slug || 'fair-events');
+				setEnabledPostTypes(
+					settings.fair_events_enabled_post_types || ['fair_event']
+				);
 				setNotice({
 					status: 'success',
 					message: __('Settings saved successfully.', 'fair-events'),
 				});
 				setIsSaving(false);
 			})
-			.catch((error) => {
+			.catch(() => {
 				setNotice({
 					status: 'error',
 					message: __('Failed to save settings.', 'fair-events'),
@@ -108,6 +156,40 @@ export default function SettingsApp() {
 					onChange={(value) => setSlug(value)}
 					disabled={isSaving}
 				/>
+
+				<PanelBody
+					title={__('Enabled Post Types', 'fair-events')}
+					initialOpen={true}
+				>
+					<p className="description">
+						{__(
+							'Select which post types can have event data (dates, location). The Events post type is always enabled.',
+							'fair-events'
+						)}
+					</p>
+
+					<CheckboxControl
+						label={__('Events', 'fair-events')}
+						checked={true}
+						disabled={true}
+						help={__(
+							'The Events post type is always enabled.',
+							'fair-events'
+						)}
+					/>
+
+					{availablePostTypes.map((postType) => (
+						<CheckboxControl
+							key={postType.slug}
+							label={postType.name}
+							checked={enabledPostTypes.includes(postType.slug)}
+							onChange={(isChecked) =>
+								handlePostTypeToggle(postType.slug, isChecked)
+							}
+							disabled={isSaving}
+						/>
+					))}
+				</PanelBody>
 
 				<Button
 					isPrimary

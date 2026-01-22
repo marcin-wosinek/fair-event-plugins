@@ -11,6 +11,8 @@
 
 defined( 'WPINC' ) || die;
 
+use FairEvents\Settings\Settings;
+
 // Get block attributes
 $time_filter        = $attributes['timeFilter'] ?? 'upcoming';
 $categories         = $attributes['categories'] ?? array();
@@ -19,7 +21,7 @@ $event_source_slugs = $attributes['eventSources'] ?? array();
 
 // Build query arguments using custom table
 $query_args = array(
-	'post_type'              => 'fair_event',
+	'post_type'              => Settings::get_enabled_post_types(),
 	'posts_per_page'         => -1,
 	'fair_events_date_query' => true,
 	'fair_events_order'      => 'ASC',
@@ -89,8 +91,19 @@ add_filter(
 			return $query;
 		}
 
-		// Check if this is a fair_event query or if post_type is not set
-		if ( isset( $query['post_type'] ) && $query['post_type'] === 'fair_event' ) {
+		// Check if query post_type overlaps with enabled event post types
+		$enabled_post_types = Settings::get_enabled_post_types();
+		$query_post_type    = $query['post_type'] ?? '';
+
+		// Handle both string and array post types
+		$is_event_query = false;
+		if ( is_array( $query_post_type ) ) {
+			$is_event_query = ! empty( array_intersect( $query_post_type, $enabled_post_types ) );
+		} else {
+			$is_event_query = in_array( $query_post_type, $enabled_post_types, true );
+		}
+
+		if ( $is_event_query ) {
 			// Merge our custom query args (time filters, categories, custom table queries)
 			// Keep the Query Loop's own settings but add our filters
 			if ( isset( $query_args['fair_events_date_query'] ) ) {
