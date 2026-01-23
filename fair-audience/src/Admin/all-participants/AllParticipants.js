@@ -228,13 +228,12 @@ export default function AllParticipants() {
 								required
 							/>
 							<TextControl
-								label={__('Email *', 'fair-audience')}
+								label={__('Email', 'fair-audience')}
 								type="email"
 								value={formData.email}
 								onChange={(value) =>
 									setFormData({ ...formData, email: value })
 								}
-								required
 							/>
 							<TextControl
 								label={__('Instagram Handle', 'fair-audience')}

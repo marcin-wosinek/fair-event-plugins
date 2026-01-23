@@ -115,8 +115,8 @@ class Participant {
 
 		$table_name = $wpdb->prefix . 'fair_audience_participants';
 
-		// Validate required fields.
-		if ( empty( $this->name ) || empty( $this->surname ) || empty( $this->email ) ) {
+		// Validate required fields (email is optional).
+		if ( empty( $this->name ) || empty( $this->surname ) ) {
 			return false;
 		}
 
@@ -130,31 +130,75 @@ class Participant {
 			$this->status = 'confirmed';
 		}
 
-		$data = array(
-			'name'          => $this->name,
-			'surname'       => $this->surname,
-			'email'         => $this->email,
-			'instagram'     => $this->instagram,
-			'email_profile' => $this->email_profile,
-			'status'        => $this->status,
-		);
-
-		$format = array( '%s', '%s', '%s', '%s', '%s', '%s' );
+		// Convert empty email to null for database storage.
+		$email = ! empty( $this->email ) ? $this->email : null;
 
 		if ( $this->id ) {
-			// Update existing.
-			$result = $wpdb->update(
-				$table_name,
-				$data,
-				array( 'id' => $this->id ),
-				$format,
-				array( '%d' )
-			);
+			// Update existing - use raw query to properly handle NULL email.
+			if ( null === $email ) {
+				// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+				$result = $wpdb->query(
+					$wpdb->prepare(
+						"UPDATE {$table_name} SET name = %s, surname = %s, instagram = %s, email_profile = %s, status = %s, email = NULL WHERE id = %d",
+						$this->name,
+						$this->surname,
+						$this->instagram,
+						$this->email_profile,
+						$this->status,
+						$this->id
+					)
+				);
+			} else {
+				// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+				$result = $wpdb->update(
+					$table_name,
+					array(
+						'name'          => $this->name,
+						'surname'       => $this->surname,
+						'email'         => $email,
+						'instagram'     => $this->instagram,
+						'email_profile' => $this->email_profile,
+						'status'        => $this->status,
+					),
+					array( 'id' => $this->id ),
+					array( '%s', '%s', '%s', '%s', '%s', '%s' ),
+					array( '%d' )
+				);
+			}
 		} else {
-			// Insert new.
-			$result = $wpdb->insert( $table_name, $data, $format );
-			if ( $result ) {
-				$this->id = $wpdb->insert_id;
+			// Insert new - use raw query to properly handle NULL email.
+			if ( null === $email ) {
+				// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+				$result = $wpdb->query(
+					$wpdb->prepare(
+						"INSERT INTO {$table_name} (name, surname, instagram, email_profile, status, email) VALUES (%s, %s, %s, %s, %s, NULL)",
+						$this->name,
+						$this->surname,
+						$this->instagram,
+						$this->email_profile,
+						$this->status
+					)
+				);
+				if ( $result ) {
+					$this->id = $wpdb->insert_id;
+				}
+			} else {
+				// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+				$result = $wpdb->insert(
+					$table_name,
+					array(
+						'name'          => $this->name,
+						'surname'       => $this->surname,
+						'email'         => $email,
+						'instagram'     => $this->instagram,
+						'email_profile' => $this->email_profile,
+						'status'        => $this->status,
+					),
+					array( '%s', '%s', '%s', '%s', '%s', '%s' )
+				);
+				if ( $result ) {
+					$this->id = $wpdb->insert_id;
+				}
 			}
 		}
 

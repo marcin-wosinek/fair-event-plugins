@@ -29,7 +29,7 @@ class Schema {
 			id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
 			name VARCHAR(255) NOT NULL,
 			surname VARCHAR(255) NOT NULL,
-			email VARCHAR(255) NOT NULL,
+			email VARCHAR(255) DEFAULT NULL,
 			instagram VARCHAR(255) DEFAULT '' COMMENT 'Instagram handle without @',
 			email_profile ENUM('minimal', 'in_the_loop') NOT NULL DEFAULT 'minimal',
 			status ENUM('pending', 'confirmed') NOT NULL DEFAULT 'confirmed',

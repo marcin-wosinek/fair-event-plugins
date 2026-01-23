@@ -339,18 +339,18 @@ class ImportController extends WP_REST_Controller {
 					continue;
 				}
 
-				// Validate required fields.
-				if ( empty( $name ) || empty( $surname ) || empty( $email ) ) {
+				// Validate required fields (email is optional).
+				if ( empty( $name ) || empty( $surname ) ) {
 					$results['errors'][] = sprintf(
 						/* translators: %d: row number */
-						__( 'Row %d: Missing required fields (name, surname, or email)', 'fair-audience' ),
+						__( 'Row %d: Missing required fields (name or surname)', 'fair-audience' ),
 						$row_number
 					);
 					continue;
 				}
 
-				// Validate email format.
-				if ( ! is_email( $email ) ) {
+				// Validate email format if provided.
+				if ( ! empty( $email ) && ! is_email( $email ) ) {
 					$results['errors'][] = sprintf(
 						/* translators: 1: row number, 2: email address */
 						__( 'Row %1$d: Invalid email format: %2$s', 'fair-audience' ),
@@ -360,8 +360,8 @@ class ImportController extends WP_REST_Controller {
 					continue;
 				}
 
-				// Check if participant already exists.
-				$existing = $this->repository->get_by_email( $email );
+				// Check if participant already exists (only if email is provided).
+				$existing = ! empty( $email ) ? $this->repository->get_by_email( $email ) : null;
 				if ( $existing ) {
 					// Don't create new participant, but link existing to event.
 					if ( $event_id ) {
@@ -487,11 +487,11 @@ class ImportController extends WP_REST_Controller {
 		$resolution_repo = new ImportResolutionRepository();
 
 		foreach ( $participants as $index => $participant_data ) {
-			// Validate required fields.
-			if ( empty( $participant_data['name'] ) || empty( $participant_data['surname'] ) || empty( $participant_data['email'] ) ) {
+			// Validate required fields (email is optional).
+			if ( empty( $participant_data['name'] ) || empty( $participant_data['surname'] ) ) {
 				$results['errors'][] = sprintf(
 					/* translators: %d: participant index */
-					__( 'Participant %d: Missing required fields (name, surname, or email)', 'fair-audience' ),
+					__( 'Participant %d: Missing required fields (name or surname)', 'fair-audience' ),
 					$index + 1
 				);
 				continue;
@@ -499,15 +499,15 @@ class ImportController extends WP_REST_Controller {
 
 			$name    = sanitize_text_field( $participant_data['name'] );
 			$surname = sanitize_text_field( $participant_data['surname'] );
-			$email   = sanitize_email( $participant_data['email'] );
+			$email   = isset( $participant_data['email'] ) ? sanitize_email( $participant_data['email'] ) : '';
 
 			// Extract resolution metadata from frontend.
 			$original_email    = isset( $participant_data['original_email'] ) ? sanitize_email( $participant_data['original_email'] ) : $email;
 			$row_number        = isset( $participant_data['row_number'] ) ? absint( $participant_data['row_number'] ) : 0;
 			$resolution_action = isset( $participant_data['resolution_action'] ) ? sanitize_text_field( $participant_data['resolution_action'] ) : 'edit';
 
-			// Validate email format.
-			if ( ! is_email( $email ) ) {
+			// Validate email format if provided.
+			if ( ! empty( $email ) && ! is_email( $email ) ) {
 				$results['errors'][] = sprintf(
 					/* translators: 1: participant index, 2: email address */
 					__( 'Participant %1$d: Invalid email format: %2$s', 'fair-audience' ),
@@ -517,8 +517,8 @@ class ImportController extends WP_REST_Controller {
 				continue;
 			}
 
-			// Check if participant already exists.
-			$existing = $this->repository->get_by_email( $email );
+			// Check if participant already exists (only if email is provided).
+			$existing = ! empty( $email ) ? $this->repository->get_by_email( $email ) : null;
 			if ( $existing ) {
 				// Don't create new participant, but link existing to event.
 				if ( $event_id ) {

@@ -166,31 +166,51 @@ class ParticipantsController extends WP_REST_Controller {
 	 * @return WP_REST_Response|WP_Error Response object or error.
 	 */
 	public function create_item( $request ) {
+		global $wpdb;
+
+		// Normalize email: convert empty string to null.
+		$email = $this->normalize_email( $request->get_param( 'email' ) );
+
 		$participant = new Participant();
 		$participant->populate(
 			array(
 				'name'          => $request->get_param( 'name' ),
 				'surname'       => $request->get_param( 'surname' ),
-				'email'         => $request->get_param( 'email' ),
+				'email'         => $email,
 				'instagram'     => $request->get_param( 'instagram' ),
 				'email_profile' => $request->get_param( 'email_profile' ),
 			)
 		);
 
-		// Check if email already exists.
-		$existing = $this->repository->get_by_email( $participant->email );
-		if ( $existing ) {
-			return new WP_Error(
-				'email_exists',
-				__( 'A participant with this email already exists.', 'fair-audience' ),
-				array( 'status' => 400 )
-			);
+		// Check if email already exists (only if email is provided).
+		if ( ! empty( $participant->email ) ) {
+			$existing = $this->repository->get_by_email( $participant->email );
+			if ( $existing ) {
+				return new WP_Error(
+					'email_exists',
+					__( 'A participant with this email already exists.', 'fair-audience' ),
+					array( 'status' => 400 )
+				);
+			}
 		}
 
-		if ( ! $participant->save() ) {
+		// Suppress wpdb error output and capture any DB errors.
+		$wpdb->suppress_errors( true );
+		$last_error_before = $wpdb->last_error;
+
+		$result = $participant->save();
+
+		$wpdb->suppress_errors( false );
+		$db_error = $wpdb->last_error;
+
+		if ( ! $result ) {
+			$error_message = __( 'Failed to create participant.', 'fair-audience' );
+			if ( $db_error && $db_error !== $last_error_before ) {
+				$error_message .= ' ' . $db_error;
+			}
 			return new WP_Error(
 				'creation_failed',
-				__( 'Failed to create participant.', 'fair-audience' ),
+				$error_message,
 				array( 'status' => 500 )
 			);
 		}
@@ -210,6 +230,8 @@ class ParticipantsController extends WP_REST_Controller {
 	 * @return WP_REST_Response|WP_Error Response object or error.
 	 */
 	public function update_item( $request ) {
+		global $wpdb;
+
 		$id          = $request->get_param( 'id' );
 		$participant = $this->repository->get_by_id( $id );
 
@@ -221,9 +243,11 @@ class ParticipantsController extends WP_REST_Controller {
 			);
 		}
 
-		// Check email uniqueness if changed.
-		$new_email = $request->get_param( 'email' );
-		if ( $new_email && $new_email !== $participant->email ) {
+		// Normalize email: convert empty string to null.
+		$new_email = $this->normalize_email( $request->get_param( 'email' ) );
+
+		// Check email uniqueness if changed (only if new email is provided and not empty).
+		if ( ! empty( $new_email ) && $new_email !== $participant->email ) {
 			$existing = $this->repository->get_by_email( $new_email );
 			if ( $existing && $existing->id !== $participant->id ) {
 				return new WP_Error(
@@ -245,10 +269,23 @@ class ParticipantsController extends WP_REST_Controller {
 			)
 		);
 
-		if ( ! $participant->save() ) {
+		// Suppress wpdb error output and capture any DB errors.
+		$wpdb->suppress_errors( true );
+		$last_error_before = $wpdb->last_error;
+
+		$result = $participant->save();
+
+		$wpdb->suppress_errors( false );
+		$db_error = $wpdb->last_error;
+
+		if ( ! $result ) {
+			$error_message = __( 'Failed to update participant.', 'fair-audience' );
+			if ( $db_error && $db_error !== $last_error_before ) {
+				$error_message .= ' ' . $db_error;
+			}
 			return new WP_Error(
 				'update_failed',
-				__( 'Failed to update participant.', 'fair-audience' ),
+				$error_message,
 				array( 'status' => 500 )
 			);
 		}
@@ -312,6 +349,19 @@ class ParticipantsController extends WP_REST_Controller {
 			'created_at'    => $participant->created_at,
 			'updated_at'    => $participant->updated_at,
 		);
+	}
+
+	/**
+	 * Normalize email value: convert empty strings to null.
+	 *
+	 * @param string|null $email Email value from request.
+	 * @return string|null Normalized email or null if empty.
+	 */
+	private function normalize_email( $email ) {
+		if ( null === $email || '' === $email || '' === trim( $email ) ) {
+			return null;
+		}
+		return $email;
 	}
 
 	/**
