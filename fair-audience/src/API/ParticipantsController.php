@@ -54,8 +54,8 @@ class ParticipantsController extends WP_REST_Controller {
 	 * Register REST API routes.
 	 */
 	public function register_routes() {
-		// GET /fair-audience/v1/participants
-		// POST /fair-audience/v1/participants
+		// GET /fair-audience/v1/participants.
+		// POST /fair-audience/v1/participants.
 		register_rest_route(
 			$this->namespace,
 			'/' . $this->rest_base,
@@ -74,9 +74,9 @@ class ParticipantsController extends WP_REST_Controller {
 			)
 		);
 
-		// GET /fair-audience/v1/participants/{id}
-		// PUT /fair-audience/v1/participants/{id}
-		// DELETE /fair-audience/v1/participants/{id}
+		// GET /fair-audience/v1/participants/{id}.
+		// PUT /fair-audience/v1/participants/{id}.
+		// DELETE /fair-audience/v1/participants/{id}.
 		register_rest_route(
 			$this->namespace,
 			'/' . $this->rest_base . '/(?P<id>\d+)',
@@ -120,13 +120,21 @@ class ParticipantsController extends WP_REST_Controller {
 	 * @return WP_REST_Response|WP_Error Response object or error.
 	 */
 	public function get_items( $request ) {
-		$search = $request->get_param( 'search' );
+		$per_page = $request->get_param( 'per_page' );
+		$page     = $request->get_param( 'page' );
 
-		if ( $search ) {
-			$participants = $this->repository->search( $search );
-		} else {
-			$participants = $this->repository->get_all();
-		}
+		$args = array(
+			'search'        => $request->get_param( 'search' ) ?? '',
+			'email_profile' => $request->get_param( 'email_profile' ) ?? '',
+			'status'        => $request->get_param( 'status' ) ?? '',
+			'orderby'       => $request->get_param( 'orderby' ) ?? 'surname',
+			'order'         => $request->get_param( 'order' ) ?? 'ASC',
+			'per_page'      => $per_page ? (int) $per_page : 0,
+			'page'          => $page ? (int) $page : 1,
+		);
+
+		$participants = $this->repository->get_filtered( $args );
+		$total        = $this->repository->get_filtered_count( $args );
 
 		$items = array_map(
 			function ( $participant ) use ( $request ) {
@@ -135,7 +143,16 @@ class ParticipantsController extends WP_REST_Controller {
 			$participants
 		);
 
-		return rest_ensure_response( $items );
+		$response = rest_ensure_response( $items );
+
+		// Add pagination headers.
+		$response->header( 'X-WP-Total', $total );
+		if ( $args['per_page'] > 0 ) {
+			$total_pages = (int) ceil( $total / $args['per_page'] );
+			$response->header( 'X-WP-TotalPages', $total_pages );
+		}
+
+		return $response;
 	}
 
 	/**
@@ -346,6 +363,7 @@ class ParticipantsController extends WP_REST_Controller {
 			'email'         => $participant->email,
 			'instagram'     => $participant->instagram,
 			'email_profile' => $participant->email_profile,
+			'status'        => $participant->status,
 			'created_at'    => $participant->created_at,
 			'updated_at'    => $participant->updated_at,
 		);

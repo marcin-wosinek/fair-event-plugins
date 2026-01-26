@@ -40,9 +40,7 @@ msgstr ""
 msgid "https://github.com/marcin-wosinek"
 msgstr ""
 
-#: src/Admin/all-participants/AllParticipants.js:116
-#: src/Admin/all-participants/AllParticipants.js:125
-#: src/Admin/all-participants/AllParticipants.js:135
+#: src/Admin/all-participants/AllParticipants.js:309
 msgid "All Participants"
 msgstr "Wszyscy uczestnicy"
 
@@ -73,9 +71,9 @@ msgid "Event not found."
 msgstr "Nie znaleziono wydarzenia."
 
 #: src/API/EventParticipantsController.php:289
-#: src/API/ParticipantsController.php:154
-#: src/API/ParticipantsController.php:241
-#: src/API/ParticipantsController.php:314
+#: src/API/ParticipantsController.php:171
+#: src/API/ParticipantsController.php:258
+#: src/API/ParticipantsController.php:331
 #: src/Services/EmailService.php:257
 #: src/Services/EmailService.php:456
 msgid "Participant not found."
@@ -105,38 +103,37 @@ msgstr "Nie udało się usunąć uczestnika."
 msgid "Participant removed successfully."
 msgstr "Uczestnik został usunięty pomyślnie."
 
-#: src/API/ParticipantsController.php:191
-#: src/API/ParticipantsController.php:255
+#: src/API/ParticipantsController.php:208
+#: src/API/ParticipantsController.php:272
 msgid "A participant with this email already exists."
 msgstr "Uczestnik o tym adresie e-mail już istnieje."
 
-#: src/API/ParticipantsController.php:207
+#: src/API/ParticipantsController.php:224
 msgid "Failed to create participant."
 msgstr "Nie udało się utworzyć uczestnika."
 
-#: src/API/ParticipantsController.php:221
+#: src/API/ParticipantsController.php:238
 msgid "Participant created successfully."
 msgstr "Uczestnik został utworzony pomyślnie."
 
-#: src/API/ParticipantsController.php:282
+#: src/API/ParticipantsController.php:299
 msgid "Failed to update participant."
 msgstr "Nie udało się zaktualizować uczestnika."
 
-#: src/API/ParticipantsController.php:296
+#: src/API/ParticipantsController.php:313
 msgid "Participant updated successfully."
 msgstr "Uczestnik został zaktualizowany pomyślnie."
 
-#: src/API/ParticipantsController.php:322
+#: src/API/ParticipantsController.php:339
 msgid "Failed to delete participant."
 msgstr "Nie udało się usunąć uczestnika."
 
-#: src/API/ParticipantsController.php:329
+#: src/API/ParticipantsController.php:346
 msgid "Participant deleted successfully."
 msgstr "Uczestnik został usunięty pomyślnie."
 
-#: src/Admin/all-participants/AllParticipants.js:85
-#: src/Admin/all-participants/AllParticipants.js:109
-#: src/Admin/all-participants/AllParticipants.js:127
+#: src/Admin/all-participants/AllParticipants.js:239
+#: src/Admin/all-participants/AllParticipants.js:273
 #: src/Admin/event-participants/EventParticipants.js:164
 #: src/Admin/event-participants/EventParticipants.js:185
 #: src/Admin/event-participants/EventParticipants.js:394
@@ -145,95 +142,97 @@ msgstr "Uczestnik został usunięty pomyślnie."
 msgid "Error: "
 msgstr "Błąd: "
 
-#: src/Admin/all-participants/AllParticipants.js:92
+#: src/Admin/all-participants/AllParticipants.js:247
 msgid "Are you sure you want to delete this participant?"
 msgstr "Czy na pewno chcesz usunąć tego uczestnika?"
 
-#: src/Admin/all-participants/AllParticipants.js:138
-#: src/Admin/all-participants/AllParticipants.js:205
+#: src/Admin/all-participants/AllParticipants.js:313
+#: src/Admin/all-participants/AllParticipants.js:334
 msgid "Add Participant"
 msgstr "Dodaj Uczestnika"
 
 #. translators: %d: number of participants
-#: src/Admin/all-participants/AllParticipants.js:144
 #: src/Admin/event-participants/EventParticipants.js:469
 #, js-format
 msgid "%d participants"
 msgstr "%d uczestników"
 
-#: src/Admin/all-participants/AllParticipants.js:152
+#: src/Admin/all-participants/AllParticipants.js:53
 #: src/Admin/edit-poll/EditPoll.js:248
 #: src/Admin/event-participants/EventParticipants.js:504
 msgid "Name"
 msgstr "Imię"
 
 #: src/blocks/mailing-signup/render.php:61
-#: src/Admin/all-participants/AllParticipants.js:153
-#: src/Admin/all-participants/AllParticipants.js:231
+#: src/Admin/all-participants/AllParticipants.js:62
+#: src/Admin/all-participants/AllParticipants.js:360
 #: src/Admin/event-participants/EventParticipants.js:505
 #: src/blocks/mailing-signup/editor.js:78
 msgid "Email"
 msgstr "E-mail"
 
-#: src/Admin/all-participants/AllParticipants.js:154
+#: src/Admin/all-participants/AllParticipants.js:68
 #: src/Admin/event-participants/EventParticipants.js:506
 msgid "Instagram"
 msgstr "Instagram"
 
-#: src/Admin/all-participants/AllParticipants.js:155
-#: src/Admin/all-participants/AllParticipants.js:253
+#: src/Admin/all-participants/AllParticipants.js:85
+#: src/Admin/all-participants/AllParticipants.js:382
 msgid "Email Profile"
 msgstr "Profil E-mail"
 
-#: src/Admin/all-participants/AllParticipants.js:156
 #: src/Admin/event-participants/EventParticipants.js:508
 #: src/Admin/polls-list/PollsList.js:113
 msgid "Actions"
 msgstr "Akcje"
 
-#: src/Admin/all-participants/AllParticipants.js:185
+#: src/Admin/all-participants/AllParticipants.js:282
 #: src/Admin/polls-list/PollsList.js:157
 msgid "Edit"
 msgstr "Edytuj"
 
-#: src/Admin/all-participants/AllParticipants.js:192
+#: src/Admin/all-participants/AllParticipants.js:289
 #: src/Admin/polls-list/PollsList.js:167
 msgid "Delete"
 msgstr "Usuń"
 
-#: src/Admin/all-participants/AllParticipants.js:204
+#: src/Admin/all-participants/AllParticipants.js:333
 msgid "Edit Participant"
 msgstr "Edytuj Uczestnika"
 
-#: src/Admin/all-participants/AllParticipants.js:212
+#: src/Admin/all-participants/AllParticipants.js:341
 msgid "Name *"
 msgstr "Imię *"
 
-#: src/Admin/all-participants/AllParticipants.js:220
+#: src/Admin/all-participants/AllParticipants.js:349
 msgid "Surname *"
 msgstr "Nazwisko *"
 
-#: src/Admin/all-participants/AllParticipants.js:239
+#: src/Admin/all-participants/AllParticipants.js:368
 msgid "Instagram Handle"
 msgstr "Uchwyt Instagram"
 
-#: src/Admin/all-participants/AllParticipants.js:247
+#: src/Admin/all-participants/AllParticipants.js:376
 msgid "Enter handle only (without @)"
 msgstr "Wprowadź uchwyt (bez @)"
 
-#: src/Admin/all-participants/AllParticipants.js:257
+#: src/Admin/all-participants/AllParticipants.js:88
+#: src/Admin/all-participants/AllParticipants.js:94
+#: src/Admin/all-participants/AllParticipants.js:386
 msgid "Minimal"
 msgstr "Minimalny"
 
-#: src/Admin/all-participants/AllParticipants.js:261
+#: src/Admin/all-participants/AllParticipants.js:89
+#: src/Admin/all-participants/AllParticipants.js:97
+#: src/Admin/all-participants/AllParticipants.js:390
 msgid "In the Loop"
 msgstr "W obiegu"
 
-#: src/Admin/all-participants/AllParticipants.js:277
+#: src/Admin/all-participants/AllParticipants.js:406
 msgid "Update"
 msgstr "Aktualizuj"
 
-#: src/Admin/all-participants/AllParticipants.js:278
+#: src/Admin/all-participants/AllParticipants.js:407
 #: src/Admin/event-participants/EventParticipants.js:376
 msgid "Add"
 msgstr "Dodaj"
@@ -746,6 +745,7 @@ msgstr "Przesuń w dół"
 msgid "Add Option"
 msgstr "Dodaj opcję"
 
+#: src/Admin/all-participants/AllParticipants.js:107
 #: src/Admin/edit-poll/EditPoll.js:615
 #: src/Admin/polls-list/PollsList.js:111
 msgid "Status"
@@ -1376,3 +1376,17 @@ msgstr ""
 #: src/Admin/import/Import.js:575
 msgid "Use Original Email"
 msgstr "Użyj oryginalnego e-maila"
+
+#: src/Admin/all-participants/AllParticipants.js:110
+#: src/Admin/all-participants/AllParticipants.js:116
+msgid "Pending"
+msgstr ""
+
+#: src/Admin/all-participants/AllParticipants.js:111
+#: src/Admin/all-participants/AllParticipants.js:119
+msgid "Confirmed"
+msgstr ""
+
+#: src/Admin/all-participants/AllParticipants.js:251
+msgid "Are you sure you want to delete these participants?"
+msgstr ""

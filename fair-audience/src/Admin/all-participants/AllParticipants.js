@@ -1,5 +1,5 @@
-import { __, sprintf } from '@wordpress/i18n';
-import { useState, useEffect } from '@wordpress/element';
+import { __ } from '@wordpress/i18n';
+import { useState, useEffect, useCallback, useMemo } from '@wordpress/element';
 import apiFetch from '@wordpress/api-fetch';
 import {
 	Button,
@@ -8,13 +8,33 @@ import {
 	Modal,
 	TextControl,
 	SelectControl,
-	Spinner,
 } from '@wordpress/components';
+import { DataViews, filterSortAndPaginate } from '@wordpress/dataviews';
+
+const DEFAULT_VIEW = {
+	type: 'table',
+	perPage: 25,
+	page: 1,
+	sort: {
+		field: 'surname',
+		direction: 'asc',
+	},
+	search: '',
+	filters: [],
+	fields: ['name', 'email', 'instagram', 'email_profile', 'status'],
+};
+
+const DEFAULT_LAYOUTS = {
+	table: {},
+	grid: {},
+};
 
 export default function AllParticipants() {
 	const [participants, setParticipants] = useState([]);
+	const [totalItems, setTotalItems] = useState(0);
+	const [totalPages, setTotalPages] = useState(0);
 	const [isLoading, setIsLoading] = useState(true);
-	const [error, setError] = useState(null);
+	const [view, setView] = useState(DEFAULT_VIEW);
 	const [isModalOpen, setIsModalOpen] = useState(false);
 	const [editingParticipant, setEditingParticipant] = useState(null);
 	const [formData, setFormData] = useState({
@@ -25,22 +45,156 @@ export default function AllParticipants() {
 		email_profile: 'minimal',
 	});
 
-	useEffect(() => {
-		loadParticipants();
-	}, []);
+	// Define fields configuration for DataViews.
+	const fields = useMemo(
+		() => [
+			{
+				id: 'name',
+				label: __('Name', 'fair-audience'),
+				render: ({ item }) => `${item.name} ${item.surname}`,
+				enableSorting: true,
+				enableHiding: false,
+				getValue: ({ item }) =>
+					`${item.surname}, ${item.name}`.toLowerCase(),
+			},
+			{
+				id: 'email',
+				label: __('Email', 'fair-audience'),
+				render: ({ item }) => item.email || '—',
+				enableSorting: true,
+			},
+			{
+				id: 'instagram',
+				label: __('Instagram', 'fair-audience'),
+				render: ({ item }) =>
+					item.instagram ? (
+						<a
+							href={`https://instagram.com/${item.instagram}`}
+							target="_blank"
+							rel="noopener noreferrer"
+						>
+							@{item.instagram}
+						</a>
+					) : (
+						'—'
+					),
+				enableSorting: false,
+			},
+			{
+				id: 'email_profile',
+				label: __('Email Profile', 'fair-audience'),
+				render: ({ item }) => {
+					const labels = {
+						minimal: __('Minimal', 'fair-audience'),
+						in_the_loop: __('In the Loop', 'fair-audience'),
+					};
+					return labels[item.email_profile] || item.email_profile;
+				},
+				elements: [
+					{ value: 'minimal', label: __('Minimal', 'fair-audience') },
+					{
+						value: 'in_the_loop',
+						label: __('In the Loop', 'fair-audience'),
+					},
+				],
+				filterBy: {
+					operators: ['is'],
+				},
+				enableSorting: true,
+			},
+			{
+				id: 'status',
+				label: __('Status', 'fair-audience'),
+				render: ({ item }) => {
+					const labels = {
+						pending: __('Pending', 'fair-audience'),
+						confirmed: __('Confirmed', 'fair-audience'),
+					};
+					return labels[item.status] || item.status;
+				},
+				elements: [
+					{ value: 'pending', label: __('Pending', 'fair-audience') },
+					{
+						value: 'confirmed',
+						label: __('Confirmed', 'fair-audience'),
+					},
+				],
+				filterBy: {
+					operators: ['is'],
+				},
+				enableSorting: true,
+			},
+		],
+		[]
+	);
 
-	const loadParticipants = () => {
+	// Convert view state to API query params.
+	const queryArgs = useMemo(() => {
+		const params = new URLSearchParams();
+
+		if (view.search) {
+			params.append('search', view.search);
+		}
+
+		if (view.sort?.field) {
+			// Map 'name' field to 'surname' for backend sorting.
+			const orderby =
+				view.sort.field === 'name' ? 'surname' : view.sort.field;
+			params.append('orderby', orderby);
+			params.append('order', view.sort.direction || 'asc');
+		}
+
+		// Process filters.
+		view.filters?.forEach((filter) => {
+			if (filter.operator === 'is' && filter.value) {
+				params.append(filter.field, filter.value);
+			}
+		});
+
+		// Pagination.
+		if (view.perPage) {
+			params.append('per_page', view.perPage);
+		}
+		if (view.page) {
+			params.append('page', view.page);
+		}
+
+		return params.toString();
+	}, [view]);
+
+	const loadParticipants = useCallback(() => {
 		setIsLoading(true);
-		apiFetch({ path: '/fair-audience/v1/participants' })
+
+		const path = `/fair-audience/v1/participants${queryArgs ? '?' + queryArgs : ''}`;
+
+		apiFetch({ path, parse: false })
+			.then((response) => {
+				const total = parseInt(
+					response.headers.get('X-WP-Total') || '0',
+					10
+				);
+				const pages = parseInt(
+					response.headers.get('X-WP-TotalPages') || '1',
+					10
+				);
+				setTotalItems(total);
+				setTotalPages(pages);
+				return response.json();
+			})
 			.then((data) => {
 				setParticipants(data);
 				setIsLoading(false);
 			})
 			.catch((err) => {
-				setError(err.message);
+				// eslint-disable-next-line no-console
+				console.error('Error loading participants:', err);
 				setIsLoading(false);
 			});
-	};
+	}, [queryArgs]);
+
+	useEffect(() => {
+		loadParticipants();
+	}, [loadParticipants]);
 
 	const openAddModal = () => {
 		setEditingParticipant(null);
@@ -59,8 +213,8 @@ export default function AllParticipants() {
 		setFormData({
 			name: participant.name,
 			surname: participant.surname,
-			email: participant.email,
-			instagram: participant.instagram,
+			email: participant.email || '',
+			instagram: participant.instagram || '',
 			email_profile: participant.email_profile,
 		});
 		setIsModalOpen(true);
@@ -86,22 +240,32 @@ export default function AllParticipants() {
 			});
 	};
 
-	const handleDelete = (id) => {
-		if (
-			!confirm(
-				__(
-					'Are you sure you want to delete this participant?',
-					'fair-audience'
-				)
-			)
-		) {
+	const handleDelete = (items) => {
+		const count = items.length;
+		const message =
+			count === 1
+				? __(
+						'Are you sure you want to delete this participant?',
+						'fair-audience'
+					)
+				: __(
+						'Are you sure you want to delete these participants?',
+						'fair-audience'
+					);
+
+		if (!confirm(message)) {
 			return;
 		}
 
-		apiFetch({
-			path: `/fair-audience/v1/participants/${id}`,
-			method: 'DELETE',
-		})
+		// Delete all selected items.
+		Promise.all(
+			items.map((item) =>
+				apiFetch({
+					path: `/fair-audience/v1/participants/${item.id}`,
+					method: 'DELETE',
+				})
+			)
+		)
 			.then(() => {
 				loadParticipants();
 			})
@@ -110,92 +274,61 @@ export default function AllParticipants() {
 			});
 	};
 
-	if (isLoading) {
-		return (
-			<div className="wrap">
-				<h1>{__('All Participants', 'fair-audience')}</h1>
-				<Spinner />
-			</div>
-		);
-	}
+	// Define actions for DataViews.
+	const actions = useMemo(
+		() => [
+			{
+				id: 'edit',
+				label: __('Edit', 'fair-audience'),
+				icon: 'edit',
+				callback: ([item]) => openEditModal(item),
+				supportsBulk: false,
+			},
+			{
+				id: 'delete',
+				label: __('Delete', 'fair-audience'),
+				icon: 'trash',
+				isDestructive: true,
+				callback: handleDelete,
+				supportsBulk: true,
+			},
+		],
+		[loadParticipants]
+	);
 
-	if (error) {
-		return (
-			<div className="wrap">
-				<h1>{__('All Participants', 'fair-audience')}</h1>
-				<div className="notice notice-error">
-					<p>{__('Error: ', 'fair-audience') + error}</p>
-				</div>
-			</div>
-		);
-	}
+	const paginationInfo = useMemo(
+		() => ({
+			totalItems,
+			totalPages,
+		}),
+		[totalItems, totalPages]
+	);
 
 	return (
 		<div className="wrap">
 			<h1>{__('All Participants', 'fair-audience')}</h1>
 
-			<Button isPrimary onClick={openAddModal}>
-				{__('Add Participant', 'fair-audience')}
-			</Button>
+			<Card>
+				<CardBody>
+					<div style={{ marginBottom: '16px' }}>
+						<Button variant="primary" onClick={openAddModal}>
+							{__('Add Participant', 'fair-audience')}
+						</Button>
+					</div>
 
-			<p>
-				{sprintf(
-					/* translators: %d: number of participants */
-					__('%d participants', 'fair-audience'),
-					participants.length
-				)}
-			</p>
-
-			<table className="wp-list-table widefat fixed striped">
-				<thead>
-					<tr>
-						<th>{__('Name', 'fair-audience')}</th>
-						<th>{__('Email', 'fair-audience')}</th>
-						<th>{__('Instagram', 'fair-audience')}</th>
-						<th>{__('Email Profile', 'fair-audience')}</th>
-						<th>{__('Actions', 'fair-audience')}</th>
-					</tr>
-				</thead>
-				<tbody>
-					{participants.map((participant) => (
-						<tr key={participant.id}>
-							<td>
-								{participant.name} {participant.surname}
-							</td>
-							<td>{participant.email}</td>
-							<td>
-								{participant.instagram ? (
-									<a
-										href={`https://instagram.com/${participant.instagram}`}
-										target="_blank"
-										rel="noopener noreferrer"
-									>
-										@{participant.instagram}
-									</a>
-								) : (
-									'—'
-								)}
-							</td>
-							<td>{participant.email_profile}</td>
-							<td>
-								<Button
-									isSmall
-									onClick={() => openEditModal(participant)}
-								>
-									{__('Edit', 'fair-audience')}
-								</Button>{' '}
-								<Button
-									isSmall
-									isDestructive
-									onClick={() => handleDelete(participant.id)}
-								>
-									{__('Delete', 'fair-audience')}
-								</Button>
-							</td>
-						</tr>
-					))}
-				</tbody>
-			</table>
+					<DataViews
+						data={participants}
+						fields={fields}
+						view={view}
+						onChangeView={setView}
+						actions={actions}
+						paginationInfo={paginationInfo}
+						defaultLayouts={DEFAULT_LAYOUTS}
+						isLoading={isLoading}
+						getItemId={(item) => item.id}
+					/>
+				</CardBody>
+			</Card>
 
 			{isModalOpen && (
 				<Modal
@@ -272,7 +405,7 @@ export default function AllParticipants() {
 									})
 								}
 							/>
-							<Button isPrimary onClick={handleSubmit}>
+							<Button variant="primary" onClick={handleSubmit}>
 								{editingParticipant
 									? __('Update', 'fair-audience')
 									: __('Add', 'fair-audience')}
