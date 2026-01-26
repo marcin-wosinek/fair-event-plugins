@@ -120,6 +120,12 @@ export default function Import() {
 		handleResolutionChange(key, 'action', 'alias');
 	};
 
+	const handleUseOriginalEmail = (key) => {
+		const resolution = duplicateResolutions[key];
+		handleResolutionChange(key, 'email', resolution.originalEmail);
+		handleResolutionChange(key, 'action', 'edit');
+	};
+
 	const handleResolveDuplicates = async () => {
 		setIsResolvingDuplicates(true);
 		setError(null);
@@ -556,6 +562,21 @@ export default function Import() {
 																								)}
 																							</Button>
 																						)}
+
+																						<Button
+																							isSecondary
+																							isSmall
+																							onClick={() =>
+																								handleUseOriginalEmail(
+																									key
+																								)
+																							}
+																						>
+																							{__(
+																								'Use Original Email',
+																								'fair-audience'
+																							)}
+																						</Button>
 
 																						<label
 																							style={{

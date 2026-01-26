@@ -59,7 +59,7 @@ msgstr "Uczestnicy wydarzenia"
 
 #: src/Admin/AdminHooks.php:154
 #: src/Admin/AdminHooks.php:155
-#: src/Admin/import/Import.js:287
+#: src/Admin/import/Import.js:293
 msgid "Import"
 msgstr "Import"
 
@@ -74,8 +74,8 @@ msgstr "Nie znaleziono wydarzenia."
 
 #: src/API/EventParticipantsController.php:289
 #: src/API/ParticipantsController.php:154
-#: src/API/ParticipantsController.php:219
-#: src/API/ParticipantsController.php:277
+#: src/API/ParticipantsController.php:241
+#: src/API/ParticipantsController.php:314
 #: src/Services/EmailService.php:257
 #: src/Services/EmailService.php:456
 msgid "Participant not found."
@@ -105,32 +105,32 @@ msgstr "Nie udało się usunąć uczestnika."
 msgid "Participant removed successfully."
 msgstr "Uczestnik został usunięty pomyślnie."
 
-#: src/API/ParticipantsController.php:185
-#: src/API/ParticipantsController.php:231
+#: src/API/ParticipantsController.php:191
+#: src/API/ParticipantsController.php:255
 msgid "A participant with this email already exists."
 msgstr "Uczestnik o tym adresie e-mail już istnieje."
 
-#: src/API/ParticipantsController.php:193
+#: src/API/ParticipantsController.php:207
 msgid "Failed to create participant."
 msgstr "Nie udało się utworzyć uczestnika."
 
-#: src/API/ParticipantsController.php:201
+#: src/API/ParticipantsController.php:221
 msgid "Participant created successfully."
 msgstr "Uczestnik został utworzony pomyślnie."
 
-#: src/API/ParticipantsController.php:251
+#: src/API/ParticipantsController.php:282
 msgid "Failed to update participant."
 msgstr "Nie udało się zaktualizować uczestnika."
 
-#: src/API/ParticipantsController.php:259
+#: src/API/ParticipantsController.php:296
 msgid "Participant updated successfully."
 msgstr "Uczestnik został zaktualizowany pomyślnie."
 
-#: src/API/ParticipantsController.php:285
+#: src/API/ParticipantsController.php:322
 msgid "Failed to delete participant."
 msgstr "Nie udało się usunąć uczestnika."
 
-#: src/API/ParticipantsController.php:292
+#: src/API/ParticipantsController.php:329
 msgid "Participant deleted successfully."
 msgstr "Uczestnik został usunięty pomyślnie."
 
@@ -169,6 +169,7 @@ msgstr "Imię"
 
 #: src/blocks/mailing-signup/render.php:61
 #: src/Admin/all-participants/AllParticipants.js:153
+#: src/Admin/all-participants/AllParticipants.js:231
 #: src/Admin/event-participants/EventParticipants.js:505
 #: src/blocks/mailing-signup/editor.js:78
 msgid "Email"
@@ -180,7 +181,7 @@ msgid "Instagram"
 msgstr "Instagram"
 
 #: src/Admin/all-participants/AllParticipants.js:155
-#: src/Admin/all-participants/AllParticipants.js:254
+#: src/Admin/all-participants/AllParticipants.js:253
 msgid "Email Profile"
 msgstr "Profil E-mail"
 
@@ -212,31 +213,27 @@ msgstr "Imię *"
 msgid "Surname *"
 msgstr "Nazwisko *"
 
-#: src/Admin/all-participants/AllParticipants.js:231
-msgid "Email *"
-msgstr "E-mail *"
-
-#: src/Admin/all-participants/AllParticipants.js:240
+#: src/Admin/all-participants/AllParticipants.js:239
 msgid "Instagram Handle"
 msgstr "Uchwyt Instagram"
 
-#: src/Admin/all-participants/AllParticipants.js:248
+#: src/Admin/all-participants/AllParticipants.js:247
 msgid "Enter handle only (without @)"
 msgstr "Wprowadź uchwyt (bez @)"
 
-#: src/Admin/all-participants/AllParticipants.js:258
+#: src/Admin/all-participants/AllParticipants.js:257
 msgid "Minimal"
 msgstr "Minimalny"
 
-#: src/Admin/all-participants/AllParticipants.js:262
+#: src/Admin/all-participants/AllParticipants.js:261
 msgid "In the Loop"
 msgstr "W obiegu"
 
-#: src/Admin/all-participants/AllParticipants.js:278
+#: src/Admin/all-participants/AllParticipants.js:277
 msgid "Update"
 msgstr "Aktualizuj"
 
-#: src/Admin/all-participants/AllParticipants.js:279
+#: src/Admin/all-participants/AllParticipants.js:278
 #: src/Admin/event-participants/EventParticipants.js:376
 msgid "Add"
 msgstr "Dodaj"
@@ -298,7 +295,7 @@ msgstr "Data"
 msgid "View Participants"
 msgstr "Wyświetl Uczestników"
 
-#: src/Admin/import/Import.js:189
+#: src/Admin/import/Import.js:195
 msgid "Import Participants"
 msgstr "Importuj Uczestników"
 
@@ -324,12 +321,6 @@ msgstr "Przesłany plik jest pusty."
 msgid "Invalid file format. Required columns: Nombre, Apellidos, Email. Found columns: %s"
 msgstr "Nieprawidłowy format pliku. Wymagane kolumny: Nombre, Apellidos, Email. Znalezione kolumny: %s"
 
-#. translators: %d: row number
-#: src/API/ImportController.php:346
-#, php-format
-msgid "Row %d: Missing required fields (name, surname, or email)"
-msgstr "Wiersz %d: Brak wymaganych pól (imię, nazwisko lub adres e-mail)"
-
 #. translators: 1: row number, 2: email address
 #: src/API/ImportController.php:356
 #, php-format
@@ -352,12 +343,6 @@ msgstr "Import nie powiódł się: %s"
 msgid "No participants provided."
 msgstr "Nie podano uczestników."
 
-#. translators: %d: participant index
-#: src/API/ImportController.php:494
-#, php-format
-msgid "Participant %d: Missing required fields (name, surname, or email)"
-msgstr "Uczestnik %d: Brak wymaganych pól (imię, nazwisko lub adres e-mail)"
-
 #. translators: 1: participant index, 2: email address
 #: src/API/ImportController.php:513
 #, php-format
@@ -378,87 +363,87 @@ msgstr "Proszę wybrać plik do importu."
 msgid "Import failed. Please try again."
 msgstr "Import nie powiódł się. Proszę spróbować ponownie."
 
-#: src/Admin/import/Import.js:141
+#: src/Admin/import/Import.js:147
 msgid "No participants to create. Please provide email addresses or select skip."
 msgstr "Brak uczestników do utworzenia. Proszę podać adresy e-mail lub wybrać opcję pominięcia."
 
-#: src/Admin/import/Import.js:177
+#: src/Admin/import/Import.js:183
 msgid "Failed to resolve duplicates. Please try again."
 msgstr "Nie udało się rozwiązać duplikatów. Proszę spróbować ponownie."
 
-#: src/Admin/import/Import.js:207
+#: src/Admin/import/Import.js:213
 msgid "Import from Entradium"
 msgstr "Import z Entradium"
 
-#: src/Admin/import/Import.js:213
+#: src/Admin/import/Import.js:219
 msgid "Upload an Entradium Excel file (.xlsx) to import participants. The file must contain columns: Nombre, Apellidos, and Email."
 msgstr "Prześlij plik Excel Entradium (.xlsx), aby zaimportować uczestników. Plik musi zawierać kolumny: Nombre, Apellidos i Email."
 
-#: src/Admin/import/Import.js:266
+#: src/Admin/import/Import.js:272
 msgid "Selected file:"
 msgstr "Wybrany plik:"
 
-#: src/Admin/import/Import.js:283
+#: src/Admin/import/Import.js:289
 msgid "Importing..."
 msgstr "Importowanie..."
 
-#: src/Admin/import/Import.js:325
+#: src/Admin/import/Import.js:331
 msgid "Import Partially Complete"
 msgstr "Import Częściowo Zakończony"
 
-#: src/Admin/import/Import.js:329
+#: src/Admin/import/Import.js:335
 msgid "Import Complete"
 msgstr "Import Zakończony"
 
-#: src/Admin/import/Import.js:337
+#: src/Admin/import/Import.js:343
 msgid "Imported:"
 msgstr "Zaimportowano:"
 
-#: src/Admin/import/Import.js:368
+#: src/Admin/import/Import.js:374
 msgid "Skipped (already exists):"
 msgstr "Pominięto (już istnieje):"
 
-#: src/Admin/import/Import.js:378
+#: src/Admin/import/Import.js:384
 msgid "Duplicates requiring resolution:"
 msgstr "Duplikaty wymagające rozwiązania:"
 
-#: src/Admin/import/Import.js:405
+#: src/Admin/import/Import.js:411
 msgid "Resolve Duplicate Emails"
 msgstr "Rozwiąż Duplikaty Adresów E-mail"
 
-#: src/Admin/import/Import.js:411
+#: src/Admin/import/Import.js:417
 msgid "The following people have duplicate email addresses. Please provide a unique email for each person or skip them."
 msgstr "Następujące osoby mają zduplikowane adresy e-mail. Proszę podać unikalny adres e-mail dla każdej osoby lub je pominąć."
 
-#: src/Admin/import/Import.js:437
+#: src/Admin/import/Import.js:443
 msgid "Original Email:"
 msgstr "Oryginalny E-mail:"
 
-#: src/Admin/import/Import.js:506
+#: src/Admin/import/Import.js:512
 msgid "New Email:"
 msgstr "Nowy E-mail:"
 
-#: src/Admin/import/Import.js:534
+#: src/Admin/import/Import.js:540
 msgid "Enter new email"
 msgstr "Wprowadź nowy e-mail"
 
-#: src/Admin/import/Import.js:553
+#: src/Admin/import/Import.js:559
 msgid "Use Gmail Alias"
 msgstr "Użyj Aliasu Gmail"
 
-#: src/Admin/import/Import.js:590
+#: src/Admin/import/Import.js:611
 msgid "Skip this person"
 msgstr "Pomiń tę osobę"
 
-#: src/Admin/import/Import.js:620
+#: src/Admin/import/Import.js:641
 msgid "Resolving..."
 msgstr "Rozwiązywanie..."
 
-#: src/Admin/import/Import.js:624
+#: src/Admin/import/Import.js:645
 msgid "Create Participants"
 msgstr "Utwórz Uczestników"
 
-#: src/Admin/import/Import.js:644
+#: src/Admin/import/Import.js:665
 msgid "Errors:"
 msgstr "Błędy:"
 
@@ -467,15 +452,15 @@ msgstr "Błędy:"
 msgid "Invalid event ID provided."
 msgstr "Podano nieprawidłowy identyfikator wydarzenia."
 
-#: src/Admin/import/Import.js:221
+#: src/Admin/import/Import.js:227
 msgid "Related Event (Optional)"
 msgstr "Powiązane wydarzenie (opcjonalne)"
 
-#: src/Admin/import/Import.js:230
+#: src/Admin/import/Import.js:236
 msgid "Select an event to associate imported participants with it. Leave empty to import without event association."
 msgstr "Wybierz wydarzenie, z którym chcesz powiązać importowanych uczestników. Pozostaw puste, aby zaimportować bez powiązania z wydarzeniem."
 
-#: src/Admin/import/Import.js:236
+#: src/Admin/import/Import.js:242
 msgid "No event association"
 msgstr "Brak powiązania z wydarzeniem"
 
@@ -938,9 +923,9 @@ msgstr "Ustaw autora"
 #, php-format
 msgid "%1$d photo assigned to \"%2$s\"."
 msgid_plural "%1$d photos assigned to \"%2$s\"."
-msgstr[0] "%1$d zdjęcie przypisane do „%2$s"."
-msgstr[1] "%1$d zdjęcia przypisane do „%2$s"."
-msgstr[2] "%1$d zdjęć przypisanych do „%2$s"."
+msgstr[0] "%1$d zdjęcie przypisane do „%2$s\"."
+msgstr[1] "%1$d zdjęcia przypisane do „%2$s\"."
+msgstr[2] "%1$d zdjęć przypisanych do „%2$s\"."
 
 #: src/Admin/MediaLibraryHooks.php:93
 #: src/Admin/MediaLibraryHooks.php:188
@@ -1301,15 +1286,15 @@ msgstr "Dodawanie..."
 msgid "Add %d Selected"
 msgstr "Dodaj %d wybranych"
 
-#: src/Admin/import/Import.js:197
+#: src/Admin/import/Import.js:203
 msgid "Entradium"
 msgstr "Entradium"
 
-#: src/Admin/import/Import.js:346
+#: src/Admin/import/Import.js:352
 msgid "Existing linked to event:"
 msgstr "Istniejące powiązane z wydarzeniem:"
 
-#: src/Admin/import/Import.js:358
+#: src/Admin/import/Import.js:364
 msgid "Auto-resolved from previous imports:"
 msgstr "Automatycznie rozwiązane z poprzednich importów:"
 
@@ -1376,3 +1361,18 @@ msgctxt "block keyword"
 msgid "mailing"
 msgstr "mailing"
 
+#. translators: %d: row number
+#: src/API/ImportController.php:346
+#, php-format
+msgid "Row %d: Missing required fields (name or surname)"
+msgstr ""
+
+#. translators: %d: participant index
+#: src/API/ImportController.php:494
+#, php-format
+msgid "Participant %d: Missing required fields (name or surname)"
+msgstr ""
+
+#: src/Admin/import/Import.js:575
+msgid "Use Original Email"
+msgstr "Użyj oryginalnego e-maila"

@@ -9,7 +9,7 @@ msgstr ""
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"POT-Creation-Date: 2026-01-21T14:09:04+00:00\n"
+"POT-Creation-Date: 2026-01-26T19:52:07+00:00\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "X-Generator: WP-CLI 2.12.0\n"
 "X-Domain: fair-audience\n"
@@ -48,7 +48,7 @@ msgstr ""
 
 #: src/Admin/AdminHooks.php:154
 #: src/Admin/AdminHooks.php:155
-#: src/Admin/import/Import.js:287
+#: src/Admin/import/Import.js:293
 msgid "Import"
 msgstr ""
 
@@ -187,8 +187,8 @@ msgstr ""
 
 #: src/API/EventParticipantsController.php:289
 #: src/API/ParticipantsController.php:154
-#: src/API/ParticipantsController.php:219
-#: src/API/ParticipantsController.php:277
+#: src/API/ParticipantsController.php:241
+#: src/API/ParticipantsController.php:314
 #: src/Services/EmailService.php:257
 #: src/Services/EmailService.php:456
 msgid "Participant not found."
@@ -274,7 +274,7 @@ msgstr ""
 #. translators: %d: row number
 #: src/API/ImportController.php:346
 #, php-format
-msgid "Row %d: Missing required fields (name, surname, or email)"
+msgid "Row %d: Missing required fields (name or surname)"
 msgstr ""
 
 #. translators: 1: row number, 2: email address
@@ -308,7 +308,7 @@ msgstr ""
 #. translators: %d: participant index
 #: src/API/ImportController.php:494
 #, php-format
-msgid "Participant %d: Missing required fields (name, surname, or email)"
+msgid "Participant %d: Missing required fields (name or surname)"
 msgstr ""
 
 #. translators: 1: participant index, 2: email address
@@ -385,32 +385,32 @@ msgstr ""
 msgid "Your email has been confirmed. Welcome!"
 msgstr ""
 
-#: src/API/ParticipantsController.php:185
-#: src/API/ParticipantsController.php:231
+#: src/API/ParticipantsController.php:191
+#: src/API/ParticipantsController.php:255
 msgid "A participant with this email already exists."
 msgstr ""
 
-#: src/API/ParticipantsController.php:193
+#: src/API/ParticipantsController.php:207
 msgid "Failed to create participant."
 msgstr ""
 
-#: src/API/ParticipantsController.php:201
+#: src/API/ParticipantsController.php:221
 msgid "Participant created successfully."
 msgstr ""
 
-#: src/API/ParticipantsController.php:251
+#: src/API/ParticipantsController.php:282
 msgid "Failed to update participant."
 msgstr ""
 
-#: src/API/ParticipantsController.php:259
+#: src/API/ParticipantsController.php:296
 msgid "Participant updated successfully."
 msgstr ""
 
-#: src/API/ParticipantsController.php:285
+#: src/API/ParticipantsController.php:322
 msgid "Failed to delete participant."
 msgstr ""
 
-#: src/API/ParticipantsController.php:292
+#: src/API/ParticipantsController.php:329
 msgid "Participant deleted successfully."
 msgstr ""
 
@@ -520,6 +520,7 @@ msgstr ""
 
 #: src/blocks/mailing-signup/render.php:61
 #: src/Admin/all-participants/AllParticipants.js:153
+#: src/Admin/all-participants/AllParticipants.js:231
 #: src/Admin/event-participants/EventParticipants.js:505
 #: src/blocks/mailing-signup/editor.js:78
 msgid "Email"
@@ -696,7 +697,7 @@ msgid "Instagram"
 msgstr ""
 
 #: src/Admin/all-participants/AllParticipants.js:155
-#: src/Admin/all-participants/AllParticipants.js:254
+#: src/Admin/all-participants/AllParticipants.js:253
 msgid "Email Profile"
 msgstr ""
 
@@ -728,31 +729,27 @@ msgstr ""
 msgid "Surname *"
 msgstr ""
 
-#: src/Admin/all-participants/AllParticipants.js:231
-msgid "Email *"
-msgstr ""
-
-#: src/Admin/all-participants/AllParticipants.js:240
+#: src/Admin/all-participants/AllParticipants.js:239
 msgid "Instagram Handle"
 msgstr ""
 
-#: src/Admin/all-participants/AllParticipants.js:248
+#: src/Admin/all-participants/AllParticipants.js:247
 msgid "Enter handle only (without @)"
 msgstr ""
 
-#: src/Admin/all-participants/AllParticipants.js:258
+#: src/Admin/all-participants/AllParticipants.js:257
 msgid "Minimal"
 msgstr ""
 
-#: src/Admin/all-participants/AllParticipants.js:262
+#: src/Admin/all-participants/AllParticipants.js:261
 msgid "In the Loop"
 msgstr ""
 
-#: src/Admin/all-participants/AllParticipants.js:278
+#: src/Admin/all-participants/AllParticipants.js:277
 msgid "Update"
 msgstr ""
 
-#: src/Admin/all-participants/AllParticipants.js:279
+#: src/Admin/all-participants/AllParticipants.js:278
 #: src/Admin/event-participants/EventParticipants.js:376
 msgid "Add"
 msgstr ""
@@ -1135,115 +1132,119 @@ msgstr ""
 msgid "Import failed. Please try again."
 msgstr ""
 
-#: src/Admin/import/Import.js:141
+#: src/Admin/import/Import.js:147
 msgid "No participants to create. Please provide email addresses or select skip."
 msgstr ""
 
-#: src/Admin/import/Import.js:177
+#: src/Admin/import/Import.js:183
 msgid "Failed to resolve duplicates. Please try again."
 msgstr ""
 
-#: src/Admin/import/Import.js:189
+#: src/Admin/import/Import.js:195
 msgid "Import Participants"
 msgstr ""
 
-#: src/Admin/import/Import.js:197
+#: src/Admin/import/Import.js:203
 msgid "Entradium"
 msgstr ""
 
-#: src/Admin/import/Import.js:207
+#: src/Admin/import/Import.js:213
 msgid "Import from Entradium"
 msgstr ""
 
-#: src/Admin/import/Import.js:213
+#: src/Admin/import/Import.js:219
 msgid "Upload an Entradium Excel file (.xlsx) to import participants. The file must contain columns: Nombre, Apellidos, and Email."
 msgstr ""
 
-#: src/Admin/import/Import.js:221
+#: src/Admin/import/Import.js:227
 msgid "Related Event (Optional)"
 msgstr ""
 
-#: src/Admin/import/Import.js:230
+#: src/Admin/import/Import.js:236
 msgid "Select an event to associate imported participants with it. Leave empty to import without event association."
 msgstr ""
 
-#: src/Admin/import/Import.js:236
+#: src/Admin/import/Import.js:242
 msgid "No event association"
 msgstr ""
 
-#: src/Admin/import/Import.js:266
+#: src/Admin/import/Import.js:272
 msgid "Selected file:"
 msgstr ""
 
-#: src/Admin/import/Import.js:283
+#: src/Admin/import/Import.js:289
 msgid "Importing..."
 msgstr ""
 
-#: src/Admin/import/Import.js:325
+#: src/Admin/import/Import.js:331
 msgid "Import Partially Complete"
 msgstr ""
 
-#: src/Admin/import/Import.js:329
+#: src/Admin/import/Import.js:335
 msgid "Import Complete"
 msgstr ""
 
-#: src/Admin/import/Import.js:337
+#: src/Admin/import/Import.js:343
 msgid "Imported:"
 msgstr ""
 
-#: src/Admin/import/Import.js:346
+#: src/Admin/import/Import.js:352
 msgid "Existing linked to event:"
 msgstr ""
 
-#: src/Admin/import/Import.js:358
+#: src/Admin/import/Import.js:364
 msgid "Auto-resolved from previous imports:"
 msgstr ""
 
-#: src/Admin/import/Import.js:368
+#: src/Admin/import/Import.js:374
 msgid "Skipped (already exists):"
 msgstr ""
 
-#: src/Admin/import/Import.js:378
+#: src/Admin/import/Import.js:384
 msgid "Duplicates requiring resolution:"
 msgstr ""
 
-#: src/Admin/import/Import.js:405
+#: src/Admin/import/Import.js:411
 msgid "Resolve Duplicate Emails"
 msgstr ""
 
-#: src/Admin/import/Import.js:411
+#: src/Admin/import/Import.js:417
 msgid "The following people have duplicate email addresses. Please provide a unique email for each person or skip them."
 msgstr ""
 
-#: src/Admin/import/Import.js:437
+#: src/Admin/import/Import.js:443
 msgid "Original Email:"
 msgstr ""
 
-#: src/Admin/import/Import.js:506
+#: src/Admin/import/Import.js:512
 msgid "New Email:"
 msgstr ""
 
-#: src/Admin/import/Import.js:534
+#: src/Admin/import/Import.js:540
 msgid "Enter new email"
 msgstr ""
 
-#: src/Admin/import/Import.js:553
+#: src/Admin/import/Import.js:559
 msgid "Use Gmail Alias"
 msgstr ""
 
-#: src/Admin/import/Import.js:590
+#: src/Admin/import/Import.js:575
+msgid "Use Original Email"
+msgstr ""
+
+#: src/Admin/import/Import.js:611
 msgid "Skip this person"
 msgstr ""
 
-#: src/Admin/import/Import.js:620
+#: src/Admin/import/Import.js:641
 msgid "Resolving..."
 msgstr ""
 
-#: src/Admin/import/Import.js:624
+#: src/Admin/import/Import.js:645
 msgid "Create Participants"
 msgstr ""
 
-#: src/Admin/import/Import.js:644
+#: src/Admin/import/Import.js:665
 msgid "Errors:"
 msgstr ""
 
