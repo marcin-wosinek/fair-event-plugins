@@ -21,7 +21,15 @@ const DEFAULT_VIEW = {
 	},
 	search: '',
 	filters: [],
-	fields: ['name', 'email', 'instagram', 'email_profile', 'status'],
+	fields: [
+		'name',
+		'email',
+		'instagram',
+		'email_profile',
+		'status',
+		'events_signed_up',
+		'events_collaborated',
+	],
 };
 
 const DEFAULT_LAYOUTS = {
@@ -123,6 +131,20 @@ export default function AllParticipants() {
 					operators: ['is'],
 				},
 				enableSorting: true,
+			},
+			{
+				id: 'events_signed_up',
+				label: __('Events Signed Up', 'fair-audience'),
+				render: ({ item }) => item.events_signed_up || 0,
+				enableSorting: true,
+				getValue: ({ item }) => item.events_signed_up || 0,
+			},
+			{
+				id: 'events_collaborated',
+				label: __('Events Collaborated', 'fair-audience'),
+				render: ({ item }) => item.events_collaborated || 0,
+				enableSorting: true,
+				getValue: ({ item }) => item.events_collaborated || 0,
 			},
 		],
 		[]

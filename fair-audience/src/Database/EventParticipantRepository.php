@@ -202,4 +202,90 @@ class EventParticipantRepository {
 
 		return $counts;
 	}
+
+	/**
+	 * Get event counts by label for all participants.
+	 *
+	 * Returns an associative array keyed by participant_id, with each value
+	 * containing counts for each label type.
+	 *
+	 * @return array Associative array: participant_id => ['interested' => n, 'signed_up' => n, 'collaborator' => n].
+	 */
+	public function get_event_counts_for_all_participants() {
+		global $wpdb;
+
+		$table_name = $this->get_table_name();
+
+		$results = $wpdb->get_results(
+			$wpdb->prepare(
+				'SELECT participant_id, label, COUNT(*) as count FROM %i GROUP BY participant_id, label',
+				$table_name
+			),
+			ARRAY_A
+		);
+
+		$counts = array();
+
+		foreach ( $results as $row ) {
+			$participant_id = (int) $row['participant_id'];
+			if ( ! isset( $counts[ $participant_id ] ) ) {
+				$counts[ $participant_id ] = array(
+					'interested'   => 0,
+					'signed_up'    => 0,
+					'collaborator' => 0,
+				);
+			}
+			$counts[ $participant_id ][ $row['label'] ] = (int) $row['count'];
+		}
+
+		return $counts;
+	}
+
+	/**
+	 * Get event counts by label for specific participants.
+	 *
+	 * @param array $participant_ids Array of participant IDs.
+	 * @return array Associative array: participant_id => ['interested' => n, 'signed_up' => n, 'collaborator' => n].
+	 */
+	public function get_event_counts_for_participants( $participant_ids ) {
+		global $wpdb;
+
+		if ( empty( $participant_ids ) ) {
+			return array();
+		}
+
+		$table_name = $this->get_table_name();
+
+		// Build placeholders for IN clause.
+		$placeholders = implode( ',', array_fill( 0, count( $participant_ids ), '%d' ) );
+
+		// phpcs:disable WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.PreparedSQLPlaceholders.UnfinishedPrepare -- $placeholders is safely constructed.
+		$results = $wpdb->get_results(
+			$wpdb->prepare(
+				"SELECT participant_id, label, COUNT(*) as count FROM %i WHERE participant_id IN ($placeholders) GROUP BY participant_id, label",
+				array_merge( array( $table_name ), array_map( 'intval', $participant_ids ) )
+			),
+			ARRAY_A
+		);
+		// phpcs:enable WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.PreparedSQLPlaceholders.UnfinishedPrepare
+
+		$counts = array();
+
+		// Initialize all requested participants with zero counts.
+		foreach ( $participant_ids as $id ) {
+			$counts[ (int) $id ] = array(
+				'interested'   => 0,
+				'signed_up'    => 0,
+				'collaborator' => 0,
+			);
+		}
+
+		// Fill in actual counts.
+		foreach ( $results as $row ) {
+			$participant_id                             = (int) $row['participant_id'];
+			$counts[ $participant_id ][ $row['label'] ] = (int) $row['count'];
+		}
+
+		return $counts;
+	}
 }

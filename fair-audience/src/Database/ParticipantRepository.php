@@ -217,37 +217,85 @@ class ParticipantRepository {
 
 		$args = wp_parse_args( $args, $defaults );
 
-		$table_name = $this->get_table_name();
+		$table_name       = $this->get_table_name();
+		$event_table_name = $wpdb->prefix . 'fair_audience_event_participants';
 
-		// Validate orderby.
-		$allowed_orderby = array( 'id', 'name', 'surname', 'email', 'email_profile', 'status', 'created_at' );
-		$orderby         = in_array( $args['orderby'], $allowed_orderby, true ) ? $args['orderby'] : 'surname';
-		$order           = in_array( strtoupper( $args['order'] ), array( 'ASC', 'DESC' ), true ) ? strtoupper( $args['order'] ) : 'ASC';
+		// Validate orderby - includes event count columns.
+		$allowed_orderby      = array( 'id', 'name', 'surname', 'email', 'email_profile', 'status', 'created_at' );
+		$event_count_orderbys = array( 'events_signed_up', 'events_collaborated', 'events_interested' );
+		$is_event_count_order = in_array( $args['orderby'], $event_count_orderbys, true );
+		$orderby              = in_array( $args['orderby'], $allowed_orderby, true ) ? $args['orderby'] : ( $is_event_count_order ? $args['orderby'] : 'surname' );
+		$order                = in_array( strtoupper( $args['order'] ), array( 'ASC', 'DESC' ), true ) ? strtoupper( $args['order'] ) : 'ASC';
 
 		// Build WHERE clause.
-		$where_data     = $this->build_where_clause( $args );
-		$where_sql      = $where_data['where_sql'];
-		$prepare_args   = array_merge( array( $table_name ), $where_data['prepare_args'] );
-		$prepare_args[] = $orderby;
+		$where_data   = $this->build_where_clause( $args );
+		$where_sql    = $where_data['where_sql'];
+		$prepare_args = array_merge( array( $table_name ), $where_data['prepare_args'] );
 
 		// Build pagination.
 		$limit_sql = '';
 		if ( $args['per_page'] > 0 ) {
-			$offset         = ( max( 1, (int) $args['page'] ) - 1 ) * (int) $args['per_page'];
-			$limit_sql      = ' LIMIT %d OFFSET %d';
-			$prepare_args[] = (int) $args['per_page'];
-			$prepare_args[] = $offset;
+			$offset    = ( max( 1, (int) $args['page'] ) - 1 ) * (int) $args['per_page'];
+			$limit_sql = ' LIMIT %d OFFSET %d';
 		}
 
-		// phpcs:disable WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.PreparedSQLPlaceholders.ReplacementsWrongNumber -- $where_sql, $order, and $limit_sql are safely constructed with validated values.
-		$results = $wpdb->get_results(
-			$wpdb->prepare(
-				"SELECT * FROM %i $where_sql ORDER BY %i $order$limit_sql",
-				$prepare_args
-			),
-			ARRAY_A
-		);
-		// phpcs:enable WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.PreparedSQLPlaceholders.ReplacementsWrongNumber
+		// Use different query for event count sorting vs regular column sorting.
+		if ( $is_event_count_order ) {
+			// Map orderby to label value.
+			$label_map = array(
+				'events_signed_up'    => 'signed_up',
+				'events_collaborated' => 'collaborator',
+				'events_interested'   => 'interested',
+			);
+			$label     = $label_map[ $args['orderby'] ];
+
+			// Add event table and label to prepare args.
+			$prepare_args[] = $event_table_name;
+			$prepare_args[] = $label;
+
+			if ( $args['per_page'] > 0 ) {
+				$prepare_args[] = (int) $args['per_page'];
+				$prepare_args[] = $offset;
+			}
+
+			// phpcs:disable WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.PreparedSQLPlaceholders.ReplacementsWrongNumber -- $where_sql, $order, and $limit_sql are safely constructed with validated values.
+			$results = $wpdb->get_results(
+				$wpdb->prepare(
+					"SELECT p.*, COALESCE(event_counts.cnt, 0) as event_count
+					FROM %i p
+					LEFT JOIN (
+						SELECT participant_id, COUNT(*) as cnt
+						FROM %i
+						WHERE label = %s
+						GROUP BY participant_id
+					) event_counts ON p.id = event_counts.participant_id
+					$where_sql
+					ORDER BY event_count $order, p.surname ASC
+					$limit_sql",
+					$prepare_args
+				),
+				ARRAY_A
+			);
+			// phpcs:enable WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.PreparedSQLPlaceholders.ReplacementsWrongNumber
+		} else {
+			// Regular column sorting.
+			$prepare_args[] = $orderby;
+
+			if ( $args['per_page'] > 0 ) {
+				$prepare_args[] = (int) $args['per_page'];
+				$prepare_args[] = $offset;
+			}
+
+			// phpcs:disable WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.PreparedSQLPlaceholders.ReplacementsWrongNumber -- $where_sql, $order, and $limit_sql are safely constructed with validated values.
+			$results = $wpdb->get_results(
+				$wpdb->prepare(
+					"SELECT * FROM %i $where_sql ORDER BY %i $order$limit_sql",
+					$prepare_args
+				),
+				ARRAY_A
+			);
+			// phpcs:enable WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.PreparedSQLPlaceholders.ReplacementsWrongNumber
+		}
 
 		return array_map(
 			function ( $row ) {
