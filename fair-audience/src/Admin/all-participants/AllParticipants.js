@@ -135,14 +135,22 @@ export default function AllParticipants() {
 			{
 				id: 'events_signed_up',
 				label: __('Events Signed Up', 'fair-audience'),
-				render: ({ item }) => item.events_signed_up || 0,
+				render: ({ item }) => (
+					<div style={{ textAlign: 'right' }}>
+						{item.events_signed_up || 0}
+					</div>
+				),
 				enableSorting: true,
 				getValue: ({ item }) => item.events_signed_up || 0,
 			},
 			{
 				id: 'events_collaborated',
 				label: __('Events Collaborated', 'fair-audience'),
-				render: ({ item }) => item.events_collaborated || 0,
+				render: ({ item }) => (
+					<div style={{ textAlign: 'right' }}>
+						{item.events_collaborated || 0}
+					</div>
+				),
 				enableSorting: true,
 				getValue: ({ item }) => item.events_collaborated || 0,
 			},
