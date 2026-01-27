@@ -718,7 +718,7 @@ class EventParticipantsController extends WP_REST_Controller {
 				'link'          => get_permalink( $event_id ),
 				'event_date'    => $event_date,
 				'gallery_count' => $gallery_count,
-				'gallery_link'  => admin_url( "upload.php?event_id={$event_id}" ),
+				'gallery_link'  => admin_url( "upload.php?mode=list&fair_event_filter={$event_id}" ),
 				'signed_up'     => $signed_up,
 				'collaborators' => $collaborators,
 			)

@@ -75,7 +75,11 @@ export default function EventsList() {
 				label: __('Images', 'fair-audience'),
 				render: ({ item }) => (
 					<div style={{ textAlign: 'right' }}>
-						{item.gallery_count || 0}
+						<a
+							href={`upload.php?mode=list&fair_event_filter=${item.event_id}`}
+						>
+							{item.gallery_count || 0}
+						</a>
 					</div>
 				),
 				enableSorting: true,
