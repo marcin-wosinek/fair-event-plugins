@@ -9,7 +9,7 @@ msgstr ""
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"POT-Creation-Date: 2026-01-27T11:14:57+00:00\n"
+"POT-Creation-Date: 2026-01-27T12:06:55+00:00\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "X-Generator: WP-CLI 2.12.0\n"
 "X-Domain: fair-audience\n"
@@ -182,8 +182,8 @@ msgstr ""
 msgid "Error:"
 msgstr ""
 
-#: src/API/EventParticipantsController.php:237
-#: src/API/EventParticipantsController.php:279
+#: src/API/EventParticipantsController.php:264
+#: src/API/EventParticipantsController.php:306
 #: src/API/GalleryAccessController.php:247
 #: src/API/GalleryAccessController.php:279
 #: src/Services/EmailService.php:234
@@ -191,7 +191,7 @@ msgstr ""
 msgid "Event not found."
 msgstr ""
 
-#: src/API/EventParticipantsController.php:289
+#: src/API/EventParticipantsController.php:316
 #: src/API/ParticipantsController.php:201
 #: src/API/ParticipantsController.php:288
 #: src/API/ParticipantsController.php:361
@@ -200,44 +200,44 @@ msgstr ""
 msgid "Participant not found."
 msgstr ""
 
-#: src/API/EventParticipantsController.php:299
+#: src/API/EventParticipantsController.php:326
 msgid "Failed to add participant. May already exist."
 msgstr ""
 
-#: src/API/EventParticipantsController.php:307
+#: src/API/EventParticipantsController.php:334
 msgid "Participant added successfully."
 msgstr ""
 
-#: src/API/EventParticipantsController.php:328
+#: src/API/EventParticipantsController.php:355
 msgid "Failed to update label."
 msgstr ""
 
-#: src/API/EventParticipantsController.php:335
+#: src/API/EventParticipantsController.php:362
 msgid "Label updated successfully."
 msgstr ""
 
-#: src/API/EventParticipantsController.php:355
+#: src/API/EventParticipantsController.php:382
 msgid "Failed to remove participant."
 msgstr ""
 
-#: src/API/EventParticipantsController.php:362
+#: src/API/EventParticipantsController.php:389
 msgid "Participant removed successfully."
 msgstr ""
 
-#: src/API/EventParticipantsController.php:382
-#: src/API/EventParticipantsController.php:432
+#: src/API/EventParticipantsController.php:409
+#: src/API/EventParticipantsController.php:459
 #: src/API/PollsController.php:364
 msgid "Invalid event ID."
 msgstr ""
 
 #. translators: %d: participant ID
-#: src/API/EventParticipantsController.php:407
+#: src/API/EventParticipantsController.php:434
 #, php-format
 msgid "Failed to remove participant ID %d"
 msgstr ""
 
 #. translators: %d: participant ID
-#: src/API/EventParticipantsController.php:453
+#: src/API/EventParticipantsController.php:480
 #, php-format
 msgid "Participant ID %d not found"
 msgstr ""
@@ -715,7 +715,6 @@ msgstr ""
 #: src/Admin/event-participants/EventParticipants.js:164
 #: src/Admin/event-participants/EventParticipants.js:185
 #: src/Admin/event-participants/EventParticipants.js:394
-#: src/Admin/events-list/EventsList.js:38
 #: src/Admin/polls-list/PollsList.js:48
 msgid "Error: "
 msgstr ""
@@ -865,7 +864,7 @@ msgid "Send this poll to all event participants who have not yet responded. Part
 msgstr ""
 
 #: src/Admin/edit-poll/EditPoll.js:502
-#: src/Admin/events-list/EventsList.js:60
+#: src/Admin/events-list/EventsList.js:37
 msgid "Event"
 msgstr ""
 
@@ -1084,12 +1083,10 @@ msgid "Actions"
 msgstr ""
 
 #: src/Admin/event-participants/EventParticipants.js:548
-#: src/Admin/events-list/EventsList.js:62
 msgid "Interested"
 msgstr ""
 
 #: src/Admin/event-participants/EventParticipants.js:555
-#: src/Admin/events-list/EventsList.js:63
 msgid "Signed Up"
 msgstr ""
 
@@ -1125,27 +1122,32 @@ msgstr ""
 msgid "Add %d Selected"
 msgstr ""
 
-#: src/Admin/events-list/EventsList.js:27
-#: src/Admin/events-list/EventsList.js:36
-#: src/Admin/events-list/EventsList.js:47
-#: src/Admin/events-list/EventsList.js:55
-msgid "Events"
-msgstr ""
-
-#: src/Admin/events-list/EventsList.js:48
-msgid "No events found."
-msgstr ""
-
-#: src/Admin/events-list/EventsList.js:61
+#: src/Admin/events-list/EventsList.js:51
 msgid "Date"
 msgstr ""
 
-#: src/Admin/events-list/EventsList.js:64
-msgid "Collaborators"
+#: src/Admin/events-list/EventsList.js:61
+msgid "Participants"
 msgstr ""
 
-#: src/Admin/events-list/EventsList.js:78
-msgid "View Participants"
+#: src/Admin/events-list/EventsList.js:72
+msgid "Images"
+msgstr ""
+
+#: src/Admin/events-list/EventsList.js:83
+msgid "Likes"
+msgstr ""
+
+#: src/Admin/events-list/EventsList.js:101
+msgid "Edit Event"
+msgstr ""
+
+#: src/Admin/events-list/EventsList.js:108
+msgid "View Event"
+msgstr ""
+
+#: src/Admin/events-list/EventsList.js:185
+msgid "Events"
 msgstr ""
 
 #: src/Admin/import/Import.js:48

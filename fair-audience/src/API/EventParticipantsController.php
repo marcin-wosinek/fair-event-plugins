@@ -216,6 +216,33 @@ class EventParticipantsController extends WP_REST_Controller {
 				'methods'             => WP_REST_Server::READABLE,
 				'callback'            => array( $this, 'get_events' ),
 				'permission_callback' => 'is_user_logged_in',
+				'args'                => array(
+					'per_page' => array(
+						'type'    => 'integer',
+						'default' => 25,
+						'minimum' => 1,
+						'maximum' => 100,
+					),
+					'page'     => array(
+						'type'    => 'integer',
+						'default' => 1,
+						'minimum' => 1,
+					),
+					'orderby'  => array(
+						'type'    => 'string',
+						'default' => 'event_date',
+						'enum'    => array( 'title', 'event_date', 'participants', 'images', 'likes' ),
+					),
+					'order'    => array(
+						'type'    => 'string',
+						'default' => 'desc',
+						'enum'    => array( 'asc', 'desc' ),
+					),
+					'search'   => array(
+						'type'    => 'string',
+						'default' => '',
+					),
+				),
 			)
 		);
 	}
@@ -474,42 +501,131 @@ class EventParticipantsController extends WP_REST_Controller {
 	}
 
 	/**
-	 * Get all events with participant counts.
+	 * Get all events with participant counts, gallery count, and likes count.
 	 *
 	 * @param WP_REST_Request $request Request object.
 	 * @return WP_REST_Response Response object.
 	 */
 	public function get_events( $request ) {
-		// Get all fair_event posts.
-		$events = get_posts(
-			array(
-				'post_type'      => 'fair_event',
-				'posts_per_page' => -1,
-				'post_status'    => 'publish',
-				'orderby'        => 'date',
-				'order'          => 'DESC',
-			)
+		global $wpdb;
+
+		$per_page = $request->get_param( 'per_page' );
+		$page     = $request->get_param( 'page' );
+		$orderby  = $request->get_param( 'orderby' );
+		$order    = strtoupper( $request->get_param( 'order' ) );
+		$search   = $request->get_param( 'search' );
+
+		// Build base query args.
+		$query_args = array(
+			'post_type'      => 'fair_event',
+			'post_status'    => 'publish',
+			'posts_per_page' => $per_page,
+			'paged'          => $page,
 		);
 
-		$items = array_map(
-			function ( $event ) {
-				$counts = $this->event_participant_repo->get_label_counts_for_event( $event->ID );
+		// Handle search.
+		if ( ! empty( $search ) ) {
+			$query_args['s'] = $search;
+		}
 
-				// Get event date metadata (from fair-events plugin).
+		// Handle sorting for title only - other fields need PHP sorting.
+		if ( 'title' === $orderby ) {
+			$query_args['orderby'] = 'title';
+			$query_args['order']   = $order;
+		} else {
+			// For event_date, participants, images, likes - fetch all and sort in PHP.
+			// We can't use meta_key for event_date as it would exclude events without that meta.
+			$query_args['posts_per_page'] = -1;
+			$query_args['orderby']        = 'date';
+			$query_args['order']          = 'DESC';
+		}
+
+		// Execute query.
+		$query = new \WP_Query( $query_args );
+
+		$items = array();
+		foreach ( $query->posts as $event ) {
+			$counts = $this->event_participant_repo->get_label_counts_for_event( $event->ID );
+
+			// Get event date metadata (from fair-events plugin).
+			// Try event_start first, fall back to event_date for compatibility.
+			$event_date = get_post_meta( $event->ID, 'event_start', true );
+			if ( empty( $event_date ) ) {
 				$event_date = get_post_meta( $event->ID, 'event_date', true );
+			}
 
-				return array(
-					'event_id'           => $event->ID,
-					'title'              => $event->post_title,
-					'link'               => get_permalink( $event->ID ),
-					'event_date'         => $event_date,
-					'participant_counts' => $counts,
-				);
-			},
-			$events
-		);
+			// Get gallery image count from fair_events_event_photos table.
+			$gallery_count = (int) $wpdb->get_var(
+				$wpdb->prepare(
+					"SELECT COUNT(*) FROM {$wpdb->prefix}fair_events_event_photos WHERE event_id = %d",
+					$event->ID
+				)
+			);
 
-		return rest_ensure_response( $items );
+			// Get likes count for all photos in this event.
+			$likes_count = (int) $wpdb->get_var(
+				$wpdb->prepare(
+					"SELECT COUNT(*) FROM {$wpdb->prefix}fair_events_photo_likes pl
+					 INNER JOIN {$wpdb->prefix}fair_events_event_photos ep ON pl.attachment_id = ep.attachment_id
+					 WHERE ep.event_id = %d",
+					$event->ID
+				)
+			);
+
+			// Calculate total participants (signed_up + collaborator).
+			$participants = ( $counts['signed_up'] ?? 0 ) + ( $counts['collaborator'] ?? 0 );
+
+			$items[] = array(
+				'event_id'           => $event->ID,
+				'title'              => $event->post_title,
+				'link'               => get_permalink( $event->ID ),
+				'event_date'         => $event_date,
+				'participant_counts' => $counts,
+				'participants'       => $participants,
+				'gallery_count'      => $gallery_count,
+				'likes_count'        => $likes_count,
+			);
+		}
+
+		// Handle sorting by computed fields (all except title which uses WP_Query).
+		if ( 'title' !== $orderby ) {
+			$sort_key = $orderby;
+			if ( 'images' === $orderby ) {
+				$sort_key = 'gallery_count';
+			} elseif ( 'likes' === $orderby ) {
+				$sort_key = 'likes_count';
+			}
+
+			usort(
+				$items,
+				function ( $a, $b ) use ( $sort_key, $order ) {
+					if ( 'event_date' === $sort_key ) {
+						// Sort by date string (works for ISO format dates).
+						$val_a = $a['event_date'] ?? '';
+						$val_b = $b['event_date'] ?? '';
+						$diff  = strcmp( $val_a, $val_b );
+					} else {
+						$diff = ( $a[ $sort_key ] ?? 0 ) - ( $b[ $sort_key ] ?? 0 );
+					}
+					return 'DESC' === $order ? -$diff : $diff;
+				}
+			);
+
+			// Apply pagination manually.
+			$total_items = count( $items );
+			$total_pages = (int) ceil( $total_items / $per_page );
+			$offset      = ( $page - 1 ) * $per_page;
+			$items       = array_slice( $items, $offset, $per_page );
+		} else {
+			$total_items = $query->found_posts;
+			$total_pages = $query->max_num_pages;
+		}
+
+		$response = rest_ensure_response( $items );
+		$response->header( 'X-WP-Total', $total_items );
+		$response->header( 'X-WP-TotalPages', $total_pages );
+
+		return $response;
 	}
 
 	/**

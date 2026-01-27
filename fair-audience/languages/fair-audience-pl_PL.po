@@ -63,8 +63,8 @@ msgstr "Uczestnicy wydarzenia"
 msgid "Import"
 msgstr "Import"
 
-#: src/API/EventParticipantsController.php:237
-#: src/API/EventParticipantsController.php:279
+#: src/API/EventParticipantsController.php:264
+#: src/API/EventParticipantsController.php:306
 #: src/API/GalleryAccessController.php:247
 #: src/API/GalleryAccessController.php:279
 #: src/Services/EmailService.php:234
@@ -72,7 +72,7 @@ msgstr "Import"
 msgid "Event not found."
 msgstr "Nie znaleziono wydarzenia."
 
-#: src/API/EventParticipantsController.php:289
+#: src/API/EventParticipantsController.php:316
 #: src/API/ParticipantsController.php:201
 #: src/API/ParticipantsController.php:288
 #: src/API/ParticipantsController.php:361
@@ -81,27 +81,27 @@ msgstr "Nie znaleziono wydarzenia."
 msgid "Participant not found."
 msgstr "Nie znaleziono uczestnika."
 
-#: src/API/EventParticipantsController.php:299
+#: src/API/EventParticipantsController.php:326
 msgid "Failed to add participant. May already exist."
 msgstr "Nie udało się dodać uczestnika. Możliwe, że już istnieje."
 
-#: src/API/EventParticipantsController.php:307
+#: src/API/EventParticipantsController.php:334
 msgid "Participant added successfully."
 msgstr "Uczestnik został dodany pomyślnie."
 
-#: src/API/EventParticipantsController.php:328
+#: src/API/EventParticipantsController.php:355
 msgid "Failed to update label."
 msgstr "Nie udało się zaktualizować etykiety."
 
-#: src/API/EventParticipantsController.php:335
+#: src/API/EventParticipantsController.php:362
 msgid "Label updated successfully."
 msgstr "Etykieta została zaktualizowana pomyślnie."
 
-#: src/API/EventParticipantsController.php:355
+#: src/API/EventParticipantsController.php:382
 msgid "Failed to remove participant."
 msgstr "Nie udało się usunąć uczestnika."
 
-#: src/API/EventParticipantsController.php:362
+#: src/API/EventParticipantsController.php:389
 msgid "Participant removed successfully."
 msgstr "Uczestnik został usunięty pomyślnie."
 
@@ -139,7 +139,6 @@ msgstr "Uczestnik został usunięty pomyślnie."
 #: src/Admin/event-participants/EventParticipants.js:164
 #: src/Admin/event-participants/EventParticipants.js:185
 #: src/Admin/event-participants/EventParticipants.js:394
-#: src/Admin/events-list/EventsList.js:38
 #: src/Admin/polls-list/PollsList.js:48
 msgid "Error: "
 msgstr "Błąd: "
@@ -258,12 +257,10 @@ msgid "Label"
 msgstr "Etykieta"
 
 #: src/Admin/event-participants/EventParticipants.js:548
-#: src/Admin/events-list/EventsList.js:62
 msgid "Interested"
 msgstr "Zainteresowany"
 
 #: src/Admin/event-participants/EventParticipants.js:555
-#: src/Admin/events-list/EventsList.js:63
 msgid "Signed Up"
 msgstr "Zapisany"
 
@@ -272,29 +269,14 @@ msgstr "Zapisany"
 msgid "Remove"
 msgstr "Usuń"
 
-#: src/Admin/events-list/EventsList.js:27
-#: src/Admin/events-list/EventsList.js:36
-#: src/Admin/events-list/EventsList.js:47
-#: src/Admin/events-list/EventsList.js:55
+#: src/Admin/events-list/EventsList.js:185
 msgid "Events"
 msgstr "Wydarzenia"
 
-#: src/Admin/events-list/EventsList.js:48
-msgid "No events found."
-msgstr "Nie znaleziono wydarzeń."
-
 #: src/Admin/edit-poll/EditPoll.js:502
-#: src/Admin/events-list/EventsList.js:60
+#: src/Admin/events-list/EventsList.js:37
 msgid "Event"
 msgstr "Wydarzenie"
-
-#: src/Admin/events-list/EventsList.js:61
-msgid "Date"
-msgstr "Data"
-
-#: src/Admin/events-list/EventsList.js:78
-msgid "View Participants"
-msgstr "Wyświetl Uczestników"
 
 #: src/Admin/import/Import.js:195
 msgid "Import Participants"
@@ -524,8 +506,8 @@ msgstr "Nie udało się zapisać Twojej odpowiedzi. Proszę spróbować ponownie
 msgid "Thank you for your response!"
 msgstr "Dziękujemy za Twoją odpowiedź!"
 
-#: src/API/EventParticipantsController.php:382
-#: src/API/EventParticipantsController.php:432
+#: src/API/EventParticipantsController.php:409
+#: src/API/EventParticipantsController.php:459
 #: src/API/PollsController.php:364
 msgid "Invalid event ID."
 msgstr "Nieprawidłowy identyfikator zdarzenia."
@@ -857,10 +839,6 @@ msgstr "Wyślij odpowiedź"
 msgid "Collaborator"
 msgstr "Współpracownik"
 
-#: src/Admin/events-list/EventsList.js:64
-msgid "Collaborators"
-msgstr "Współpracownicy"
-
 #: src/Admin/MediaBatchActions.php:38
 #: src/Admin/MediaBatchActions.php:84
 #: src/Admin/MediaBatchActions.php:85
@@ -969,13 +947,13 @@ msgid "Error:"
 msgstr "Błąd:"
 
 #. translators: %d: participant ID
-#: src/API/EventParticipantsController.php:407
+#: src/API/EventParticipantsController.php:434
 #, php-format
 msgid "Failed to remove participant ID %d"
 msgstr "Nie udało się usunąć identyfikatora uczestnika %d"
 
 #. translators: %d: participant ID
-#: src/API/EventParticipantsController.php:453
+#: src/API/EventParticipantsController.php:480
 #, php-format
 msgid "Participant ID %d not found"
 msgstr "Nie znaleziono identyfikatora uczestnika %d"
@@ -1399,4 +1377,28 @@ msgstr ""
 
 #: src/Admin/all-participants/AllParticipants.js:148
 msgid "Events Collaborated"
+msgstr ""
+
+#: src/Admin/events-list/EventsList.js:61
+msgid "Participants"
+msgstr ""
+
+#: src/Admin/events-list/EventsList.js:72
+msgid "Images"
+msgstr ""
+
+#: src/Admin/events-list/EventsList.js:83
+msgid "Likes"
+msgstr ""
+
+#: src/Admin/events-list/EventsList.js:108
+msgid "View Event"
+msgstr ""
+
+#: src/Admin/events-list/EventsList.js:51
+msgid "Date"
+msgstr ""
+
+#: src/Admin/events-list/EventsList.js:101
+msgid "Edit Event"
 msgstr ""
