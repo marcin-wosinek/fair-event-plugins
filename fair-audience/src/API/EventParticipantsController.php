@@ -245,6 +245,23 @@ class EventParticipantsController extends WP_REST_Controller {
 				),
 			)
 		);
+
+		// GET /fair-audience/v1/events/{event_id} (single event info)
+		register_rest_route(
+			$this->namespace,
+			'/events/(?P<event_id>\d+)',
+			array(
+				'methods'             => WP_REST_Server::READABLE,
+				'callback'            => array( $this, 'get_event' ),
+				'permission_callback' => 'is_user_logged_in',
+				'args'                => array(
+					'event_id' => array(
+						'type'     => 'integer',
+						'required' => true,
+					),
+				),
+			)
+		);
 	}
 
 	/**
@@ -254,6 +271,8 @@ class EventParticipantsController extends WP_REST_Controller {
 	 * @return WP_REST_Response|WP_Error Response object or error.
 	 */
 	public function get_items( $request ) {
+		global $wpdb;
+
 		$event_id = $request->get_param( 'event_id' );
 
 		// Verify event exists.
@@ -268,17 +287,39 @@ class EventParticipantsController extends WP_REST_Controller {
 
 		$event_participants = $this->event_participant_repo->get_by_event( $event_id );
 
+		// Get likes received per participant (for photos they authored).
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+		$likes_data = $wpdb->get_results(
+			$wpdb->prepare(
+				"SELECT pp.participant_id, COUNT(pl.id) as likes_count
+				FROM {$wpdb->prefix}fair_audience_photo_participants pp
+				INNER JOIN {$wpdb->prefix}fair_events_event_photos ep
+					ON pp.attachment_id = ep.attachment_id AND ep.event_id = %d
+				LEFT JOIN {$wpdb->prefix}fair_events_photo_likes pl
+					ON pp.attachment_id = pl.attachment_id
+				WHERE pp.role = 'author'
+				GROUP BY pp.participant_id",
+				$event_id
+			),
+			OBJECT_K
+		);
+
 		$items = array_map(
-			function ( $ep ) {
+			function ( $ep ) use ( $likes_data ) {
 				$participant = $this->participant_repo->get_by_id( $ep->participant_id );
 				return array(
-					'id'                => $ep->id,
-					'participant_id'    => $ep->participant_id,
-					'participant_name'  => $participant ? $participant->name . ' ' . $participant->surname : '',
-					'participant_email' => $participant ? $participant->email : '',
-					'instagram'         => $participant ? $participant->instagram : '',
-					'label'             => $ep->label,
-					'created_at'        => $ep->created_at,
+					'id'                   => $ep->id,
+					'participant_id'       => $ep->participant_id,
+					'participant_name'     => $participant ? $participant->name . ' ' . $participant->surname : '',
+					'name'                 => $participant ? $participant->name : '',
+					'surname'              => $participant ? $participant->surname : '',
+					'participant_email'    => $participant ? $participant->email : '',
+					'instagram'            => $participant ? $participant->instagram : '',
+					'label'                => $ep->label,
+					'created_at'           => $ep->created_at,
+					'photo_likes_received' => isset( $likes_data[ $ep->participant_id ] )
+						? (int) $likes_data[ $ep->participant_id ]->likes_count
+						: 0,
 				);
 			},
 			$event_participants
@@ -626,6 +667,62 @@ class EventParticipantsController extends WP_REST_Controller {
 		$response->header( 'X-WP-TotalPages', $total_pages );
 
 		return $response;
+	}
+
+	/**
+	 * Get single event info for header display.
+	 *
+	 * @param WP_REST_Request $request Request object.
+	 * @return WP_REST_Response|WP_Error Response object or error.
+	 */
+	public function get_event( $request ) {
+		global $wpdb;
+
+		$event_id = $request->get_param( 'event_id' );
+
+		// Verify event exists.
+		$event = get_post( $event_id );
+		if ( ! $event || 'fair_event' !== $event->post_type ) {
+			return new WP_Error(
+				'invalid_event',
+				__( 'Event not found.', 'fair-audience' ),
+				array( 'status' => 404 )
+			);
+		}
+
+		// Get event date metadata.
+		$event_date = get_post_meta( $event_id, 'event_start', true );
+		if ( empty( $event_date ) ) {
+			$event_date = get_post_meta( $event_id, 'event_date', true );
+		}
+
+		// Get gallery image count.
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+		$gallery_count = (int) $wpdb->get_var(
+			$wpdb->prepare(
+				"SELECT COUNT(*) FROM {$wpdb->prefix}fair_events_event_photos WHERE event_id = %d",
+				$event_id
+			)
+		);
+
+		// Get participant counts by label.
+		$counts = $this->event_participant_repo->get_label_counts_for_event( $event_id );
+
+		$signed_up     = ( $counts['signed_up'] ?? 0 ) + ( $counts['interested'] ?? 0 );
+		$collaborators = $counts['collaborator'] ?? 0;
+
+		return rest_ensure_response(
+			array(
+				'event_id'      => $event_id,
+				'title'         => $event->post_title,
+				'link'          => get_permalink( $event_id ),
+				'event_date'    => $event_date,
+				'gallery_count' => $gallery_count,
+				'gallery_link'  => admin_url( "upload.php?event_id={$event_id}" ),
+				'signed_up'     => $signed_up,
+				'collaborators' => $collaborators,
+			)
+		);
 	}
 
 	/**

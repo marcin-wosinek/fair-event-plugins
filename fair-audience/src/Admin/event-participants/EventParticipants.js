@@ -7,21 +7,46 @@ import {
 	SelectControl,
 	Spinner,
 	CheckboxControl,
+	Card,
+	CardHeader,
+	CardBody,
 } from '@wordpress/components';
+import { DataViews } from '@wordpress/dataviews';
+import { dateI18n, getSettings } from '@wordpress/date';
+
+const DEFAULT_VIEW = {
+	type: 'table',
+	perPage: 25,
+	page: 1,
+	sort: {
+		field: 'participant_name',
+		direction: 'asc',
+	},
+	search: '',
+	filters: [],
+	fields: ['name', 'photo_likes'],
+};
+
+const DEFAULT_LAYOUTS = {
+	table: {},
+};
 
 export default function EventParticipants() {
 	const [participants, setParticipants] = useState([]);
 	const [allParticipants, setAllParticipants] = useState([]);
-	const [eventTitle, setEventTitle] = useState('');
+	const [eventInfo, setEventInfo] = useState(null);
 	const [isLoading, setIsLoading] = useState(true);
 	const [error, setError] = useState(null);
 	const [addModalLabel, setAddModalLabel] = useState(null);
 	const [selectedToAdd, setSelectedToAdd] = useState(new Set());
 	const [isAdding, setIsAdding] = useState(false);
-	const [selectedParticipants, setSelectedParticipants] = useState(new Set());
 	const [isRemoving, setIsRemoving] = useState(false);
 	const [isSendingGalleryLinks, setIsSendingGalleryLinks] = useState(false);
-	const [galleryStats, setGalleryStats] = useState(null);
+	const [view, setView] = useState(DEFAULT_VIEW);
+	const [selection, setSelection] = useState([]);
+	const [editModalOpen, setEditModalOpen] = useState(false);
+	const [editingParticipant, setEditingParticipant] = useState(null);
+	const [editLabel, setEditLabel] = useState('');
 
 	const eventId = new URLSearchParams(window.location.search).get('event_id');
 
@@ -32,21 +57,36 @@ export default function EventParticipants() {
 			return;
 		}
 
+		loadEventInfo();
 		loadParticipants();
 		loadAllParticipants();
-		loadGalleryStats();
 	}, [eventId]);
 
-	const loadGalleryStats = () => {
+	const loadEventInfo = () => {
 		apiFetch({
-			path: `/fair-audience/v1/events/${eventId}/gallery-invitations/stats`,
+			path: `/fair-audience/v1/events/${eventId}`,
 		})
 			.then((data) => {
-				setGalleryStats(data);
+				setEventInfo(data);
 			})
-			.catch(() => {
-				// Stats endpoint might not exist if no invitations sent yet.
-				setGalleryStats({ total: 0, sent: 0, not_sent: 0 });
+			.catch((err) => {
+				// Fallback: try to get event title from WP REST API.
+				apiFetch({ path: `/wp/v2/fair_event/${eventId}` })
+					.then((event) => {
+						setEventInfo({
+							event_id: eventId,
+							title: event.title.rendered,
+							event_date: null,
+							gallery_count: 0,
+							gallery_link: `upload.php?event_id=${eventId}`,
+							signed_up: 0,
+							collaborators: 0,
+						});
+					})
+					.catch(() => {
+						// eslint-disable-next-line no-console
+						console.error('Error loading event info:', err);
+					});
 			});
 	};
 
@@ -54,12 +94,6 @@ export default function EventParticipants() {
 		apiFetch({ path: `/fair-audience/v1/events/${eventId}/participants` })
 			.then((data) => {
 				setParticipants(data);
-				// Get event title.
-				apiFetch({ path: `/wp/v2/fair_event/${eventId}` })
-					.then((event) => {
-						setEventTitle(event.title.rendered);
-					})
-					.catch(() => {});
 				setIsLoading(false);
 			})
 			.catch((err) => {
@@ -142,6 +176,7 @@ export default function EventParticipants() {
 
 			handleCloseAddModal();
 			loadParticipants();
+			loadEventInfo();
 		} catch (err) {
 			alert(
 				__('Error adding participants: ', 'fair-audience') + err.message
@@ -151,78 +186,80 @@ export default function EventParticipants() {
 		}
 	};
 
-	const handleUpdateLabel = (participantId, newLabel) => {
-		apiFetch({
-			path: `/fair-audience/v1/events/${eventId}/participants/${participantId}`,
-			method: 'PUT',
-			data: { label: newLabel },
-		})
-			.then(() => {
-				loadParticipants();
-			})
-			.catch((err) => {
-				alert(__('Error: ', 'fair-audience') + err.message);
+	const handleUpdateLabel = async (participantId, newLabel) => {
+		try {
+			await apiFetch({
+				path: `/fair-audience/v1/events/${eventId}/participants/${participantId}`,
+				method: 'PUT',
+				data: { label: newLabel },
 			});
+			loadParticipants();
+			loadEventInfo();
+			setEditModalOpen(false);
+			setEditingParticipant(null);
+		} catch (err) {
+			alert(__('Error: ', 'fair-audience') + err.message);
+		}
 	};
 
-	const handleRemove = (participantId) => {
+	const handleRemove = async (items) => {
+		const participantIds = items.map((item) => item.participant_id);
+		const count = participantIds.length;
+
 		if (
 			!confirm(
-				__('Remove this participant from the event?', 'fair-audience')
+				sprintf(
+					/* translators: %d: number of participants */
+					__(
+						'Remove %d participant(s) from this event?',
+						'fair-audience'
+					),
+					count
+				)
 			)
 		) {
 			return;
 		}
 
-		apiFetch({
-			path: `/fair-audience/v1/events/${eventId}/participants/${participantId}`,
-			method: 'DELETE',
-		})
-			.then(() => {
-				loadParticipants();
-			})
-			.catch((err) => {
-				alert(__('Error: ', 'fair-audience') + err.message);
-			});
-	};
+		setIsRemoving(true);
 
-	const handleSelectParticipant = (participantId) => {
-		const newSelected = new Set(selectedParticipants);
-		if (newSelected.has(participantId)) {
-			newSelected.delete(participantId);
-		} else {
-			newSelected.add(participantId);
-		}
-		setSelectedParticipants(newSelected);
-	};
+		try {
+			if (count === 1) {
+				await apiFetch({
+					path: `/fair-audience/v1/events/${eventId}/participants/${participantIds[0]}`,
+					method: 'DELETE',
+				});
+			} else {
+				await apiFetch({
+					path: `/fair-audience/v1/events/${eventId}/participants/batch`,
+					method: 'DELETE',
+					data: {
+						participant_ids: participantIds,
+					},
+				});
+			}
 
-	const handleSelectAll = () => {
-		if (selectedParticipants.size === participants.length) {
-			setSelectedParticipants(new Set());
-		} else {
-			setSelectedParticipants(
-				new Set(participants.map((p) => p.participant_id))
-			);
+			loadParticipants();
+			loadEventInfo();
+		} catch (err) {
+			alert(__('Error: ', 'fair-audience') + err.message);
+		} finally {
+			setIsRemoving(false);
 		}
 	};
 
-	const allSelected =
-		participants.length > 0 &&
-		selectedParticipants.size === participants.length;
-
-	const handleBatchRemove = async () => {
-		if (selectedParticipants.size === 0) {
-			return;
-		}
+	const handleSendGalleryLink = async (items) => {
+		const participantIds = items.map((item) => item.participant_id);
+		const count = participantIds.length;
 
 		const confirmed = window.confirm(
 			sprintf(
 				/* translators: %d: number of participants */
 				__(
-					'Are you sure you want to remove %d participant(s) from this event?',
+					'Send gallery links to %d participant(s)? They will receive an email with a unique link to view and like photos.',
 					'fair-audience'
 				),
-				selectedParticipants.size
+				count
 			)
 		);
 
@@ -230,63 +267,62 @@ export default function EventParticipants() {
 			return;
 		}
 
-		setIsRemoving(true);
+		setIsSendingGalleryLinks(true);
 
 		try {
 			const response = await apiFetch({
-				path: `/fair-audience/v1/events/${eventId}/participants/batch`,
-				method: 'DELETE',
-				data: {
-					participant_ids: Array.from(selectedParticipants),
-				},
+				path: `/fair-audience/v1/events/${eventId}/gallery-invitations`,
+				method: 'POST',
+				data: { participant_ids: participantIds },
 			});
 
-			if (response.removed > 0) {
+			if (response.sent_count > 0) {
 				alert(
 					sprintf(
-						/* translators: %d: number of participants */
+						/* translators: %d: number of emails sent */
 						__(
-							'Successfully removed %d participant(s)',
+							'Successfully sent gallery links to %d participant(s)!',
 							'fair-audience'
 						),
-						response.removed
+						response.sent_count
 					)
 				);
 			}
 
-			if (response.failed > 0) {
+			if (response.failed && response.failed.length > 0) {
+				// eslint-disable-next-line no-console
+				console.error('Failed to send to:', response.failed);
 				alert(
 					sprintf(
-						/* translators: %d: number of failed removals */
+						/* translators: %d: number of failed sends */
 						__(
-							'Failed to remove %d participant(s). See console for details.',
+							'Failed to send to %d participant(s). Check console for details.',
 							'fair-audience'
 						),
-						response.failed
+						response.failed.length
 					)
 				);
-				console.error('Batch removal errors:', response.errors);
 			}
-
-			setSelectedParticipants(new Set());
-			loadParticipants();
 		} catch (err) {
 			alert(
-				__('Error removing participants: ', 'fair-audience') +
+				__('Error sending gallery links: ', 'fair-audience') +
 					err.message
 			);
 		} finally {
-			setIsRemoving(false);
+			setIsSendingGalleryLinks(false);
 		}
 	};
 
-	const handleSendGalleryLinks = async () => {
-		const targetCount =
-			selectedParticipants.size > 0
-				? selectedParticipants.size
-				: participants.length;
+	const handleSendGalleryLinkButton = async () => {
+		// If some participants are selected, send to them; otherwise send to all.
+		const targetParticipants =
+			selection.length > 0
+				? participants.filter((p) =>
+						selection.includes(p.participant_id)
+					)
+				: participants;
 
-		if (targetCount === 0) {
+		if (targetParticipants.length === 0) {
 			alert(
 				__('No participants to send gallery links to.', 'fair-audience')
 			);
@@ -300,7 +336,7 @@ export default function EventParticipants() {
 					'Send gallery links to %d participant(s)? They will receive an email with a unique link to view and like photos.',
 					'fair-audience'
 				),
-				targetCount
+				targetParticipants.length
 			)
 		);
 
@@ -312,8 +348,12 @@ export default function EventParticipants() {
 
 		try {
 			const requestData =
-				selectedParticipants.size > 0
-					? { participant_ids: Array.from(selectedParticipants) }
+				selection.length > 0
+					? {
+							participant_ids: targetParticipants.map(
+								(p) => p.participant_id
+							),
+						}
 					: {};
 
 			const response = await apiFetch({
@@ -336,6 +376,7 @@ export default function EventParticipants() {
 			}
 
 			if (response.failed && response.failed.length > 0) {
+				// eslint-disable-next-line no-console
 				console.error('Failed to send to:', response.failed);
 				alert(
 					sprintf(
@@ -349,11 +390,8 @@ export default function EventParticipants() {
 				);
 			}
 
-			loadGalleryStats();
 			// Clear selection after sending.
-			if (selectedParticipants.size > 0) {
-				setSelectedParticipants(new Set());
-			}
+			setSelection([]);
 		} catch (err) {
 			alert(
 				__('Error sending gallery links: ', 'fair-audience') +
@@ -361,6 +399,24 @@ export default function EventParticipants() {
 			);
 		} finally {
 			setIsSendingGalleryLinks(false);
+		}
+	};
+
+	const handleOpenEditModal = (item) => {
+		setEditingParticipant(item);
+		setEditLabel(item.label);
+		setEditModalOpen(true);
+	};
+
+	const handleCloseEditModal = () => {
+		setEditModalOpen(false);
+		setEditingParticipant(null);
+		setEditLabel('');
+	};
+
+	const handleSaveEdit = () => {
+		if (editingParticipant && editLabel) {
+			handleUpdateLabel(editingParticipant.participant_id, editLabel);
 		}
 	};
 
@@ -376,6 +432,70 @@ export default function EventParticipants() {
 				return __('Add', 'fair-audience');
 		}
 	};
+
+	// Define fields for DataViews.
+	const fields = useMemo(
+		() => [
+			{
+				id: 'name',
+				label: __('Name', 'fair-audience'),
+				render: ({ item }) => item.participant_name,
+				enableSorting: true,
+				enableHiding: false,
+				getValue: ({ item }) =>
+					item.participant_name?.toLowerCase() || '',
+			},
+			{
+				id: 'photo_likes',
+				label: __('Photo Likes', 'fair-audience'),
+				render: ({ item }) => (
+					<div style={{ textAlign: 'right' }}>
+						{item.photo_likes_received || 0}
+					</div>
+				),
+				enableSorting: true,
+				getValue: ({ item }) => item.photo_likes_received || 0,
+			},
+		],
+		[]
+	);
+
+	// Define actions for DataViews.
+	const actions = useMemo(
+		() => [
+			{
+				id: 'send_gallery',
+				label: __('Send Photo Link', 'fair-audience'),
+				callback: handleSendGalleryLink,
+				supportsBulk: true,
+			},
+			{
+				id: 'edit',
+				label: __('Edit', 'fair-audience'),
+				callback: ([item]) => handleOpenEditModal(item),
+			},
+			{
+				id: 'remove',
+				label: __('Remove', 'fair-audience'),
+				isDestructive: true,
+				callback: handleRemove,
+				supportsBulk: true,
+			},
+		],
+		[eventId]
+	);
+
+	// Pagination info for DataViews (client-side pagination).
+	const paginationInfo = useMemo(
+		() => ({
+			totalItems: participants.length,
+			totalPages: Math.ceil(participants.length / view.perPage) || 1,
+		}),
+		[participants.length, view.perPage]
+	);
+
+	// Get date format.
+	const { formats } = getSettings();
 
 	if (isLoading) {
 		return (
@@ -399,197 +519,140 @@ export default function EventParticipants() {
 
 	return (
 		<div className="wrap">
-			<h1>
-				{eventTitle
-					? sprintf(
-							/* translators: %s: event title */
-							__('Participants for %s', 'fair-audience'),
-							eventTitle
-						)
-					: __('Event Participants', 'fair-audience')}
-			</h1>
+			<h1>{__('Event Participants', 'fair-audience')}</h1>
 
-			<div style={{ display: 'flex', gap: '10px', marginBottom: '15px' }}>
-				<Button
-					variant="secondary"
-					onClick={() => handleOpenAddModal('collaborator')}
-				>
-					{__('Add Collaborators', 'fair-audience')}
-				</Button>
-				<Button
-					variant="secondary"
-					onClick={() => handleOpenAddModal('interested')}
-				>
-					{__('Add Interested', 'fair-audience')}
-				</Button>
-				<Button
-					isPrimary
-					onClick={() => handleOpenAddModal('signed_up')}
-				>
-					{__('Add Participants', 'fair-audience')}
-				</Button>
-				<Button
-					variant="secondary"
-					onClick={handleSendGalleryLinks}
-					disabled={
-						isSendingGalleryLinks || participants.length === 0
-					}
-				>
-					{isSendingGalleryLinks
-						? __('Sending...', 'fair-audience')
-						: selectedParticipants.size > 0
-							? sprintf(
-									/* translators: %d: number of selected participants */
-									__(
-										'Send Gallery to %d Selected',
-										'fair-audience'
-									),
-									selectedParticipants.size
-								)
-							: __('Send Gallery Links', 'fair-audience')}
-				</Button>
-			</div>
-
-			{galleryStats && galleryStats.sent > 0 && (
-				<p style={{ color: '#666', fontStyle: 'italic' }}>
-					{sprintf(
-						/* translators: %d: number of gallery links sent */
-						__(
-							'Gallery links sent to %d participant(s)',
-							'fair-audience'
-						),
-						galleryStats.sent
-					)}
-				</p>
-			)}
-
-			<p>
-				{sprintf(
-					/* translators: %d: number of participants */
-					__('%d participants', 'fair-audience'),
-					participants.length
-				)}
-			</p>
-
-			{selectedParticipants.size > 0 && (
-				<div style={{ marginBottom: '15px' }}>
-					<Button
-						variant="secondary"
-						isDestructive
-						onClick={handleBatchRemove}
-						disabled={isRemoving}
+			<Card>
+				<CardHeader>
+					<div
+						style={{
+							display: 'flex',
+							justifyContent: 'space-between',
+							alignItems: 'center',
+							width: '100%',
+							flexWrap: 'wrap',
+							gap: '10px',
+						}}
 					>
-						{isRemoving
-							? __('Removing...', 'fair-audience')
-							: sprintf(
-									/* translators: %d: number of selected participants */
-									__('Remove %d Selected', 'fair-audience'),
-									selectedParticipants.size
-								)}
-					</Button>
-				</div>
-			)}
-
-			<table className="wp-list-table widefat fixed striped">
-				<thead>
-					<tr>
-						<th style={{ width: '40px' }}>
-							<input
-								type="checkbox"
-								checked={allSelected}
-								onChange={handleSelectAll}
-								disabled={isLoading || isRemoving}
-							/>
-						</th>
-						<th>{__('Name', 'fair-audience')}</th>
-						<th>{__('Email', 'fair-audience')}</th>
-						<th>{__('Instagram', 'fair-audience')}</th>
-						<th>{__('Label', 'fair-audience')}</th>
-						<th>{__('Actions', 'fair-audience')}</th>
-					</tr>
-				</thead>
-				<tbody>
-					{participants.map((participant) => (
-						<tr key={participant.id}>
-							<td>
-								<input
-									type="checkbox"
-									checked={selectedParticipants.has(
-										participant.participant_id
-									)}
-									onChange={() =>
-										handleSelectParticipant(
-											participant.participant_id
-										)
-									}
-									disabled={isRemoving}
-								/>
-							</td>
-							<td>{participant.participant_name}</td>
-							<td>{participant.participant_email}</td>
-							<td>
-								{participant.instagram ? (
-									<a
-										href={`https://instagram.com/${participant.instagram}`}
-										target="_blank"
-										rel="noopener noreferrer"
-									>
-										@{participant.instagram}
+						<h2 style={{ margin: 0 }}>
+							{eventInfo?.title ||
+								__('Event Participants', 'fair-audience')}
+						</h2>
+						{eventInfo && (
+							<div
+								style={{
+									display: 'flex',
+									gap: '24px',
+									alignItems: 'center',
+									flexWrap: 'wrap',
+								}}
+							>
+								<span>
+									{__('Date:', 'fair-audience')}{' '}
+									{eventInfo.event_date
+										? dateI18n(
+												formats.datetime,
+												eventInfo.event_date
+											)
+										: '—'}
+								</span>
+								<span>
+									<a href={eventInfo.gallery_link}>
+										{sprintf(
+											/* translators: %d: number of photos */
+											__('%d Photos', 'fair-audience'),
+											eventInfo.gallery_count || 0
+										)}
 									</a>
-								) : (
-									'—'
-								)}
-							</td>
-							<td>
-								<SelectControl
-									value={participant.label}
-									options={[
-										{
-											label: __(
-												'Interested',
+								</span>
+								<span>
+									{sprintf(
+										/* translators: %d: number of signed up participants */
+										__('%d Signed Up', 'fair-audience'),
+										eventInfo.signed_up || 0
+									)}
+								</span>
+								<span>
+									{sprintf(
+										/* translators: %d: number of collaborators */
+										__('%d Collaborators', 'fair-audience'),
+										eventInfo.collaborators || 0
+									)}
+								</span>
+							</div>
+						)}
+					</div>
+				</CardHeader>
+				<CardBody>
+					<div
+						style={{
+							display: 'flex',
+							gap: '10px',
+							marginBottom: '15px',
+							flexWrap: 'wrap',
+						}}
+					>
+						<Button
+							isPrimary
+							onClick={() => handleOpenAddModal('signed_up')}
+						>
+							{__('Add Participants', 'fair-audience')}
+						</Button>
+						<Button
+							variant="secondary"
+							onClick={() => handleOpenAddModal('collaborator')}
+						>
+							{__('Add Collaborators', 'fair-audience')}
+						</Button>
+						<Button
+							variant="secondary"
+							onClick={() => handleOpenAddModal('interested')}
+						>
+							{__('Add Interested', 'fair-audience')}
+						</Button>
+					</div>
+
+					<DataViews
+						data={participants}
+						fields={fields}
+						view={view}
+						onChangeView={setView}
+						actions={actions}
+						paginationInfo={paginationInfo}
+						defaultLayouts={DEFAULT_LAYOUTS}
+						isLoading={isLoading || isRemoving}
+						getItemId={(item) => item.participant_id}
+						selection={selection}
+						onChangeSelection={setSelection}
+					/>
+
+					<div style={{ marginTop: '15px' }}>
+						<Button
+							variant="secondary"
+							onClick={handleSendGalleryLinkButton}
+							disabled={
+								isSendingGalleryLinks ||
+								participants.length === 0
+							}
+						>
+							{isSendingGalleryLinks
+								? __('Sending...', 'fair-audience')
+								: selection.length > 0
+									? sprintf(
+											/* translators: %d: number of selected participants */
+											__(
+												'Send Gallery Link to %d Selected',
 												'fair-audience'
 											),
-											value: 'interested',
-										},
-										{
-											label: __(
-												'Signed Up',
-												'fair-audience'
-											),
-											value: 'signed_up',
-										},
-										{
-											label: __(
-												'Collaborator',
-												'fair-audience'
-											),
-											value: 'collaborator',
-										},
-									]}
-									onChange={(value) =>
-										handleUpdateLabel(
-											participant.participant_id,
-											value
+											selection.length
 										)
-									}
-								/>
-							</td>
-							<td>
-								<Button
-									isSmall
-									isDestructive
-									onClick={() =>
-										handleRemove(participant.participant_id)
-									}
-									disabled={isRemoving}
-								>
-									{__('Remove', 'fair-audience')}
-								</Button>
-							</td>
-						</tr>
-					))}
-				</tbody>
-			</table>
+									: __(
+											'Send Gallery Link to All',
+											'fair-audience'
+										)}
+						</Button>
+					</div>
+				</CardBody>
+			</Card>
 
 			{addModalLabel && (
 				<Modal
@@ -716,6 +779,54 @@ export default function EventParticipants() {
 							</div>
 						</>
 					)}
+				</Modal>
+			)}
+
+			{editModalOpen && editingParticipant && (
+				<Modal
+					title={__('Edit Participant', 'fair-audience')}
+					onRequestClose={handleCloseEditModal}
+				>
+					<p>
+						<strong>{editingParticipant.participant_name}</strong>
+					</p>
+					<SelectControl
+						label={__('Label', 'fair-audience')}
+						value={editLabel}
+						options={[
+							{
+								label: __('Interested', 'fair-audience'),
+								value: 'interested',
+							},
+							{
+								label: __('Signed Up', 'fair-audience'),
+								value: 'signed_up',
+							},
+							{
+								label: __('Collaborator', 'fair-audience'),
+								value: 'collaborator',
+							},
+						]}
+						onChange={(value) => setEditLabel(value)}
+					/>
+					<div
+						style={{
+							marginTop: '20px',
+							display: 'flex',
+							justifyContent: 'flex-end',
+							gap: '10px',
+						}}
+					>
+						<Button
+							variant="secondary"
+							onClick={handleCloseEditModal}
+						>
+							{__('Cancel', 'fair-audience')}
+						</Button>
+						<Button isPrimary onClick={handleSaveEdit}>
+							{__('Save', 'fair-audience')}
+						</Button>
+					</div>
 				</Modal>
 			)}
 		</div>

@@ -51,9 +51,10 @@ msgstr "Wszyscy uczestnicy"
 msgid "By Event"
 msgstr "Według wydarzenia"
 
-#: src/Admin/event-participants/EventParticipants.js:383
-#: src/Admin/event-participants/EventParticipants.js:392
-#: src/Admin/event-participants/EventParticipants.js:409
+#: src/Admin/event-participants/EventParticipants.js:492
+#: src/Admin/event-participants/EventParticipants.js:501
+#: src/Admin/event-participants/EventParticipants.js:511
+#: src/Admin/event-participants/EventParticipants.js:527
 msgid "Event Participants"
 msgstr "Uczestnicy wydarzenia"
 
@@ -63,8 +64,9 @@ msgstr "Uczestnicy wydarzenia"
 msgid "Import"
 msgstr "Import"
 
-#: src/API/EventParticipantsController.php:264
-#: src/API/EventParticipantsController.php:306
+#: src/API/EventParticipantsController.php:283
+#: src/API/EventParticipantsController.php:347
+#: src/API/EventParticipantsController.php:688
 #: src/API/GalleryAccessController.php:247
 #: src/API/GalleryAccessController.php:279
 #: src/Services/EmailService.php:234
@@ -72,7 +74,7 @@ msgstr "Import"
 msgid "Event not found."
 msgstr "Nie znaleziono wydarzenia."
 
-#: src/API/EventParticipantsController.php:316
+#: src/API/EventParticipantsController.php:357
 #: src/API/ParticipantsController.php:201
 #: src/API/ParticipantsController.php:288
 #: src/API/ParticipantsController.php:361
@@ -81,27 +83,27 @@ msgstr "Nie znaleziono wydarzenia."
 msgid "Participant not found."
 msgstr "Nie znaleziono uczestnika."
 
-#: src/API/EventParticipantsController.php:326
+#: src/API/EventParticipantsController.php:367
 msgid "Failed to add participant. May already exist."
 msgstr "Nie udało się dodać uczestnika. Możliwe, że już istnieje."
 
-#: src/API/EventParticipantsController.php:334
+#: src/API/EventParticipantsController.php:375
 msgid "Participant added successfully."
 msgstr "Uczestnik został dodany pomyślnie."
 
-#: src/API/EventParticipantsController.php:355
+#: src/API/EventParticipantsController.php:396
 msgid "Failed to update label."
 msgstr "Nie udało się zaktualizować etykiety."
 
-#: src/API/EventParticipantsController.php:362
+#: src/API/EventParticipantsController.php:403
 msgid "Label updated successfully."
 msgstr "Etykieta została zaktualizowana pomyślnie."
 
-#: src/API/EventParticipantsController.php:382
+#: src/API/EventParticipantsController.php:423
 msgid "Failed to remove participant."
 msgstr "Nie udało się usunąć uczestnika."
 
-#: src/API/EventParticipantsController.php:389
+#: src/API/EventParticipantsController.php:430
 msgid "Participant removed successfully."
 msgstr "Uczestnik został usunięty pomyślnie."
 
@@ -136,9 +138,9 @@ msgstr "Uczestnik został usunięty pomyślnie."
 
 #: src/Admin/all-participants/AllParticipants.js:269
 #: src/Admin/all-participants/AllParticipants.js:303
-#: src/Admin/event-participants/EventParticipants.js:164
-#: src/Admin/event-participants/EventParticipants.js:185
-#: src/Admin/event-participants/EventParticipants.js:394
+#: src/Admin/event-participants/EventParticipants.js:215
+#: src/Admin/event-participants/EventParticipants.js:259
+#: src/Admin/event-participants/EventParticipants.js:503
 #: src/Admin/polls-list/PollsList.js:48
 msgid "Error: "
 msgstr "Błąd: "
@@ -152,28 +154,20 @@ msgstr "Czy na pewno chcesz usunąć tego uczestnika?"
 msgid "Add Participant"
 msgstr "Dodaj Uczestnika"
 
-#. translators: %d: number of participants
-#: src/Admin/event-participants/EventParticipants.js:469
-#, js-format
-msgid "%d participants"
-msgstr "%d uczestników"
-
 #: src/Admin/all-participants/AllParticipants.js:61
 #: src/Admin/edit-poll/EditPoll.js:248
-#: src/Admin/event-participants/EventParticipants.js:504
+#: src/Admin/event-participants/EventParticipants.js:439
 msgid "Name"
 msgstr "Imię"
 
 #: src/blocks/mailing-signup/render.php:61
 #: src/Admin/all-participants/AllParticipants.js:70
 #: src/Admin/all-participants/AllParticipants.js:394
-#: src/Admin/event-participants/EventParticipants.js:505
 #: src/blocks/mailing-signup/editor.js:78
 msgid "Email"
 msgstr "E-mail"
 
 #: src/Admin/all-participants/AllParticipants.js:76
-#: src/Admin/event-participants/EventParticipants.js:506
 msgid "Instagram"
 msgstr "Instagram"
 
@@ -182,12 +176,12 @@ msgstr "Instagram"
 msgid "Email Profile"
 msgstr "Profil E-mail"
 
-#: src/Admin/event-participants/EventParticipants.js:508
 #: src/Admin/polls-list/PollsList.js:113
 msgid "Actions"
 msgstr "Akcje"
 
 #: src/Admin/all-participants/AllParticipants.js:312
+#: src/Admin/event-participants/EventParticipants.js:472
 #: src/Admin/polls-list/PollsList.js:157
 msgid "Edit"
 msgstr "Edytuj"
@@ -198,6 +192,7 @@ msgid "Delete"
 msgstr "Usuń"
 
 #: src/Admin/all-participants/AllParticipants.js:367
+#: src/Admin/event-participants/EventParticipants.js:771
 msgid "Edit Participant"
 msgstr "Edytuj Uczestnika"
 
@@ -234,42 +229,32 @@ msgid "Update"
 msgstr "Aktualizuj"
 
 #: src/Admin/all-participants/AllParticipants.js:441
-#: src/Admin/event-participants/EventParticipants.js:376
+#: src/Admin/event-participants/EventParticipants.js:430
 msgid "Add"
 msgstr "Dodaj"
 
-#: src/Admin/event-participants/EventParticipants.js:30
+#: src/Admin/event-participants/EventParticipants.js:55
 msgid "No event ID provided"
 msgstr "Nie podano identyfikatora wydarzenia"
 
-#: src/Admin/event-participants/EventParticipants.js:171
-msgid "Remove this participant from the event?"
-msgstr "Usunąć tego uczestnika z wydarzenia?"
-
-#. translators: %s: event title
-#: src/Admin/event-participants/EventParticipants.js:406
-#, js-format
-msgid "Participants for %s"
-msgstr "Uczestnicy dla %s"
-
-#: src/Admin/event-participants/EventParticipants.js:507
+#: src/Admin/event-participants/EventParticipants.js:778
 msgid "Label"
 msgstr "Etykieta"
 
-#: src/Admin/event-participants/EventParticipants.js:548
+#: src/Admin/event-participants/EventParticipants.js:782
 msgid "Interested"
 msgstr "Zainteresowany"
 
-#: src/Admin/event-participants/EventParticipants.js:555
+#: src/Admin/event-participants/EventParticipants.js:786
 msgid "Signed Up"
 msgstr "Zapisany"
 
 #: src/Admin/edit-poll/EditPoll.js:602
-#: src/Admin/event-participants/EventParticipants.js:586
+#: src/Admin/event-participants/EventParticipants.js:477
 msgid "Remove"
 msgstr "Usuń"
 
-#: src/Admin/events-list/EventsList.js:185
+#: src/Admin/events-list/EventsList.js:188
 msgid "Events"
 msgstr "Wydarzenia"
 
@@ -506,8 +491,8 @@ msgstr "Nie udało się zapisać Twojej odpowiedzi. Proszę spróbować ponownie
 msgid "Thank you for your response!"
 msgstr "Dziękujemy za Twoją odpowiedź!"
 
-#: src/API/EventParticipantsController.php:409
-#: src/API/EventParticipantsController.php:459
+#: src/API/EventParticipantsController.php:450
+#: src/API/EventParticipantsController.php:500
 #: src/API/PollsController.php:364
 msgid "Invalid event ID."
 msgstr "Nieprawidłowy identyfikator zdarzenia."
@@ -658,7 +643,7 @@ msgid "Did Not Receive Email"
 msgstr "Nie otrzymano e-maila"
 
 #: src/Admin/edit-poll/EditPoll.js:470
-#: src/Admin/event-participants/EventParticipants.js:439
+#: src/Admin/event-participants/EventParticipants.js:610
 msgid "Sending..."
 msgstr "Wysyłanie..."
 
@@ -766,7 +751,8 @@ msgstr "Utwórz ankietę"
 
 #: src/Admin/MediaBatchActions.php:257
 #: src/Admin/edit-poll/EditPoll.js:655
-#: src/Admin/event-participants/EventParticipants.js:696
+#: src/Admin/event-participants/EventParticipants.js:743
+#: src/Admin/event-participants/EventParticipants.js:808
 msgid "Cancel"
 msgstr "Anuluj"
 
@@ -835,7 +821,7 @@ msgstr "Wysyłanie..."
 msgid "Submit Response"
 msgstr "Wyślij odpowiedź"
 
-#: src/Admin/event-participants/EventParticipants.js:562
+#: src/Admin/event-participants/EventParticipants.js:790
 msgid "Collaborator"
 msgstr "Współpracownik"
 
@@ -947,13 +933,13 @@ msgid "Error:"
 msgstr "Błąd:"
 
 #. translators: %d: participant ID
-#: src/API/EventParticipantsController.php:434
+#: src/API/EventParticipantsController.php:475
 #, php-format
 msgid "Failed to remove participant ID %d"
 msgstr "Nie udało się usunąć identyfikatora uczestnika %d"
 
 #. translators: %d: participant ID
-#: src/API/EventParticipantsController.php:480
+#: src/API/EventParticipantsController.php:521
 #, php-format
 msgid "Participant ID %d not found"
 msgstr "Nie znaleziono identyfikatora uczestnika %d"
@@ -1140,128 +1126,93 @@ msgid "Return to Homepage"
 msgstr "Powrót do strony głównej"
 
 #. translators: %d: number of participants
-#: src/Admin/event-participants/EventParticipants.js:134
+#: src/Admin/event-participants/EventParticipants.js:182
 #, js-format
 msgid "Successfully added %d participant(s)"
 msgstr "Pomyślnie dodano %d uczestnika/uczestników"
 
-#: src/Admin/event-participants/EventParticipants.js:147
+#: src/Admin/event-participants/EventParticipants.js:196
 msgid "Error adding participants: "
 msgstr "Błąd podczas dodawania uczestników: "
 
-#. translators: %d: number of participants
-#: src/Admin/event-participants/EventParticipants.js:221
-#, js-format
-msgid "Are you sure you want to remove %d participant(s) from this event?"
-msgstr "Czy na pewno chcesz usunąć %d uczestnika/uczestników z tego wydarzenia?"
-
-#. translators: %d: number of participants
-#: src/Admin/event-participants/EventParticipants.js:248
-#, js-format
-msgid "Successfully removed %d participant(s)"
-msgstr "Pomyślnie usunięto %d uczestnika/uczestników"
-
-#. translators: %d: number of failed removals
-#: src/Admin/event-participants/EventParticipants.js:261
-#, js-format
-msgid "Failed to remove %d participant(s). See console for details."
-msgstr "Nie udało się usunąć %d uczestnika/uczestników. Sprawdź konsolę, aby uzyskać szczegóły."
-
-#: src/Admin/event-participants/EventParticipants.js:275
-msgid "Error removing participants: "
-msgstr "Błąd podczas usuwania uczestników: "
-
-#: src/Admin/event-participants/EventParticipants.js:291
+#: src/Admin/event-participants/EventParticipants.js:335
 msgid "No participants to send gallery links to."
 msgstr "Brak uczestników do wysłania linków do galerii."
 
 #. translators: %d: number of participants
-#: src/Admin/event-participants/EventParticipants.js:299
+#: src/Admin/event-participants/EventParticipants.js:272
 #, js-format
 msgid "Send gallery links to %d participant(s)? They will receive an email with a unique link to view and like photos."
 msgstr "Wysłać linki do galerii do %d uczestnika/uczestników? Otrzymają oni wiadomość e-mail z unikalnym linkiem do przeglądania i polubienia zdjęć."
 
 #. translators: %d: number of emails sent
-#: src/Admin/event-participants/EventParticipants.js:329
+#: src/Admin/event-participants/EventParticipants.js:297
+#: src/Admin/event-participants/EventParticipants.js:368
 #, js-format
 msgid "Successfully sent gallery links to %d participant(s)!"
 msgstr "Pomyślnie wysłano linki do galerii do %d uczestnika/uczestników!"
 
 #. translators: %d: number of failed sends
-#: src/Admin/event-participants/EventParticipants.js:343
+#: src/Admin/event-participants/EventParticipants.js:312
+#: src/Admin/event-participants/EventParticipants.js:383
 #, js-format
 msgid "Failed to send to %d participant(s). Check console for details."
 msgstr "Nie udało się wysłać do %d uczestnika/uczestników. Sprawdź konsolę, aby uzyskać szczegóły."
 
-#: src/Admin/event-participants/EventParticipants.js:359
+#: src/Admin/event-participants/EventParticipants.js:324
+#: src/Admin/event-participants/EventParticipants.js:395
 msgid "Error sending gallery links: "
 msgstr "Błąd podczas wysyłania linków do galerii: "
 
-#: src/Admin/event-participants/EventParticipants.js:370
-#: src/Admin/event-participants/EventParticipants.js:417
+#: src/Admin/event-participants/EventParticipants.js:424
+#: src/Admin/event-participants/EventParticipants.js:587
 msgid "Add Collaborators"
 msgstr "Dodaj współpracowników"
 
-#: src/Admin/event-participants/EventParticipants.js:372
-#: src/Admin/event-participants/EventParticipants.js:423
+#: src/Admin/event-participants/EventParticipants.js:426
+#: src/Admin/event-participants/EventParticipants.js:593
 msgid "Add Interested"
 msgstr "Dodaj zainteresowanych"
 
-#: src/Admin/event-participants/EventParticipants.js:374
-#: src/Admin/event-participants/EventParticipants.js:429
+#: src/Admin/event-participants/EventParticipants.js:428
+#: src/Admin/event-participants/EventParticipants.js:599
 msgid "Add Participants"
 msgstr "Dodaj uczestników"
 
-#. translators: %d: number of selected participants
-#: src/Admin/event-participants/EventParticipants.js:443
-#, js-format
-msgid "Send Gallery to %d Selected"
-msgstr "Wyślij galerię do %d wybranych"
-
-#: src/Admin/event-participants/EventParticipants.js:449
+#: src/Admin/event-participants/EventParticipants.js:611
 msgid "Send Gallery Links"
 msgstr "Wyślij linki do galerii"
 
 #. translators: %d: number of gallery links sent
-#: src/Admin/event-participants/EventParticipants.js:457
+#: src/Admin/event-participants/EventParticipants.js:619
 #, js-format
 msgid "Gallery links sent to %d participant(s)"
 msgstr "Wysłano linki do galerii do %d uczestnika/uczestników"
 
-#: src/Admin/event-participants/EventParticipants.js:483
-msgid "Removing..."
-msgstr "Usuwanie..."
-
-#. translators: %d: number of selected participants
-#: src/Admin/event-participants/EventParticipants.js:486
-#, js-format
-msgid "Remove %d Selected"
-msgstr "Usuń %d wybranych"
-
-#: src/Admin/event-participants/EventParticipants.js:602
+#: src/Admin/event-participants/EventParticipants.js:649
 msgid "All participants are already added to this event."
 msgstr "Wszyscy uczestnicy są już dodani do tego wydarzenia."
 
 #. translators: %d: number of available participants
-#: src/Admin/event-participants/EventParticipants.js:620
+#: src/Admin/event-participants/EventParticipants.js:667
 #, js-format
 msgid "%d participant(s) available"
 msgstr "%d uczestnik(ów) dostępnych"
 
-#: src/Admin/event-participants/EventParticipants.js:634
+#: src/Admin/event-participants/EventParticipants.js:681
 msgid "Deselect All"
 msgstr "Odznacz wszystkie"
 
-#: src/Admin/event-participants/EventParticipants.js:635
+#: src/Admin/event-participants/EventParticipants.js:682
 msgid "Select All"
 msgstr "Zaznacz wszystkie"
 
-#: src/Admin/event-participants/EventParticipants.js:706
+#: src/Admin/event-participants/EventParticipants.js:753
 msgid "Adding..."
 msgstr "Dodawanie..."
 
 #. translators: %d: number of selected participants
-#: src/Admin/event-participants/EventParticipants.js:709
+#: src/Admin/event-participants/EventParticipants.js:756
 #, js-format
 msgid "Add %d Selected"
 msgstr "Dodaj %d wybranych"
@@ -1379,19 +1330,19 @@ msgstr ""
 msgid "Events Collaborated"
 msgstr ""
 
-#: src/Admin/events-list/EventsList.js:61
+#: src/Admin/events-list/EventsList.js:64
 msgid "Participants"
 msgstr ""
 
-#: src/Admin/events-list/EventsList.js:72
+#: src/Admin/events-list/EventsList.js:75
 msgid "Images"
 msgstr ""
 
-#: src/Admin/events-list/EventsList.js:83
+#: src/Admin/events-list/EventsList.js:86
 msgid "Likes"
 msgstr ""
 
-#: src/Admin/events-list/EventsList.js:108
+#: src/Admin/events-list/EventsList.js:111
 msgid "View Event"
 msgstr ""
 
@@ -1399,6 +1350,52 @@ msgstr ""
 msgid "Date"
 msgstr ""
 
-#: src/Admin/events-list/EventsList.js:101
+#: src/Admin/events-list/EventsList.js:104
 msgid "Edit Event"
+msgstr ""
+
+#. translators: %d: number of participants
+#: src/Admin/event-participants/EventParticipants.js:227
+#, js-format
+msgid "Remove %d participant(s) from this event?"
+msgstr ""
+
+#. translators: %d: number of participants
+#: src/Admin/event-participants/EventParticipants.js:343
+#, js-format
+msgid "Send gallery links to all %d participant(s)? They will receive an email with a unique link to view and like photos."
+msgstr ""
+
+#: src/Admin/event-participants/EventParticipants.js:448
+msgid "Photo Likes"
+msgstr ""
+
+#: src/Admin/event-participants/EventParticipants.js:466
+msgid "Send Photo Link"
+msgstr ""
+
+#: src/Admin/event-participants/EventParticipants.js:539
+msgid "Date:"
+msgstr ""
+
+#. translators: %d: number of photos
+#: src/Admin/event-participants/EventParticipants.js:551
+#, js-format
+msgid "%d Photos"
+msgstr ""
+
+#. translators: %d: number of signed up participants
+#: src/Admin/event-participants/EventParticipants.js:559
+#, js-format
+msgid "%d Signed Up"
+msgstr ""
+
+#. translators: %d: number of collaborators
+#: src/Admin/event-participants/EventParticipants.js:566
+#, js-format
+msgid "%d Collaborators"
+msgstr ""
+
+#: src/Admin/event-participants/EventParticipants.js:811
+msgid "Save"
 msgstr ""
