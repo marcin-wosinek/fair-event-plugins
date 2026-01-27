@@ -145,6 +145,16 @@ class AdminHooks {
 			array( $this, 'render_all_participants_page' )
 		);
 
+		// Submenu page - Collaborators.
+		add_submenu_page(
+			'fair-audience',
+			__( 'Collaborators', 'fair-audience' ),
+			__( 'Collaborators', 'fair-audience' ),
+			'manage_options',
+			'fair-audience-collaborators',
+			array( $this, 'render_collaborators_page' )
+		);
+
 		// Submenu page - By Event.
 		add_submenu_page(
 			'fair-audience',
@@ -187,6 +197,14 @@ class AdminHooks {
 	 */
 	public function render_all_participants_page() {
 		$page = new AllParticipantsPage();
+		$page->render();
+	}
+
+	/**
+	 * Render Collaborators page.
+	 */
+	public function render_collaborators_page() {
+		$page = new CollaboratorsPage();
 		$page->render();
 	}
 
@@ -241,6 +259,11 @@ class AdminHooks {
 		// All Participants page.
 		if ( 'toplevel_page_fair-audience' === $hook ) {
 			$this->enqueue_page_script( 'all-participants', $plugin_dir );
+		}
+
+		// Collaborators page.
+		if ( 'fair-audience_page_fair-audience-collaborators' === $hook ) {
+			$this->enqueue_page_script( 'collaborators', $plugin_dir );
 		}
 
 		// Events List page.

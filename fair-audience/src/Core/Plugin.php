@@ -84,6 +84,9 @@ class Plugin {
 
 		$mailing_signup_controller = new \FairAudience\API\MailingSignupController();
 		$mailing_signup_controller->register_routes();
+
+		$collaborators_controller = new \FairAudience\API\CollaboratorsController();
+		$collaborators_controller->register_routes();
 	}
 
 	/**
