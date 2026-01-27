@@ -135,6 +135,16 @@ class AdminHooks {
 			31
 		);
 
+		// Override first submenu item label (same slug as parent).
+		add_submenu_page(
+			'fair-audience',
+			__( 'All Participants', 'fair-audience' ),
+			__( 'All Participants', 'fair-audience' ),
+			'manage_options',
+			'fair-audience',
+			array( $this, 'render_all_participants_page' )
+		);
+
 		// Submenu page - By Event.
 		add_submenu_page(
 			'fair-audience',
