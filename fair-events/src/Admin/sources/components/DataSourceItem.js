@@ -78,6 +78,10 @@ const DataSourceItem = ({ dataSource, onChange, onRemove, index }) => {
 		{ label: __('Event Categories', 'fair-events'), value: 'categories' },
 		{ label: __('iCal URL', 'fair-events'), value: 'ical_url' },
 		{
+			label: __('Fair Events API', 'fair-events'),
+			value: 'fair_events_api',
+		},
+		{
 			label: __('Meetup API (Coming Soon)', 'fair-events'),
 			value: 'meetup_api',
 		},
@@ -161,6 +165,25 @@ const DataSourceItem = ({ dataSource, onChange, onRemove, index }) => {
 						placeholder="https://example.com/events.ics"
 						help={__(
 							'Enter the URL of the iCal feed to import events from.',
+							'fair-events'
+						)}
+					/>
+				</VStack>
+			);
+		}
+
+		if (sourceType === 'fair_events_api') {
+			return (
+				<VStack spacing={2}>
+					<TextControl
+						label={__('Fair Events API URL', 'fair-events')}
+						type="url"
+						value={config.url || ''}
+						onChange={handleUrlChange}
+						required
+						placeholder="https://example.com/wp-json/fair-events/v1/events"
+						help={__(
+							'Enter the JSON API URL from another Fair Events site. Use /wp-json/fair-events/v1/events for all events, or /wp-json/fair-events/v1/sources/{slug}/json for a specific source.',
 							'fair-events'
 						)}
 					/>

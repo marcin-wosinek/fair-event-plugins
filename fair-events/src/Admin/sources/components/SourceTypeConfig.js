@@ -135,6 +135,25 @@ const SourceTypeConfig = ({ sourceType, config, onChange }) => {
 		);
 	}
 
+	if (sourceType === 'fair_events_api') {
+		return (
+			<VStack spacing={2}>
+				<TextControl
+					label={__('Fair Events API URL', 'fair-events')}
+					type="url"
+					value={config.url || ''}
+					onChange={handleUrlChange}
+					required
+					placeholder="https://example.com/wp-json/fair-events/v1/events"
+					help={__(
+						'Enter the JSON API URL from another Fair Events site. Use /wp-json/fair-events/v1/events for all events, or /wp-json/fair-events/v1/sources/{slug}/json for a specific source.',
+						'fair-events'
+					)}
+				/>
+			</VStack>
+		);
+	}
+
 	if (sourceType === 'meetup_api') {
 		return (
 			<Notice status="info" isDismissible={false}>

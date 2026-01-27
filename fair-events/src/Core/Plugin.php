@@ -146,6 +146,15 @@ class Plugin {
 			}
 		);
 
+		// Public Events controller (JSON export for cross-site sharing).
+		add_action(
+			'rest_api_init',
+			function () {
+				$controller = new \FairEvents\API\PublicEventsController();
+				$controller->register_routes();
+			}
+		);
+
 		// Add event relationship to attachment REST responses.
 		add_action(
 			'rest_api_init',

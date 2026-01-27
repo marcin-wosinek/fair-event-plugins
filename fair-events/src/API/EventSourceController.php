@@ -535,7 +535,7 @@ class EventSourceController extends WP_REST_Controller {
 	 * @return true|WP_Error True if valid, WP_Error if invalid.
 	 */
 	private function validate_single_data_source( $source_type, $config, $index ) {
-		$valid_types = array( 'categories', 'ical_url', 'meetup_api' );
+		$valid_types = array( 'categories', 'ical_url', 'fair_events_api', 'meetup_api' );
 		if ( ! in_array( $source_type, $valid_types, true ) ) {
 			return new WP_Error(
 				'rest_invalid_source_type',
@@ -584,6 +584,27 @@ class EventSourceController extends WP_REST_Controller {
 						'rest_invalid_config',
 						/* translators: %d: Data source index */
 						sprintf( __( 'iCal source at index %d requires url field.', 'fair-events' ), $index ),
+						array( 'status' => 400 )
+					);
+				}
+
+				// Validate URL format
+				if ( ! filter_var( $config['url'], FILTER_VALIDATE_URL ) ) {
+					return new WP_Error(
+						'rest_invalid_url',
+						/* translators: %d: Data source index */
+						sprintf( __( 'Invalid URL format at index %d.', 'fair-events' ), $index ),
+						array( 'status' => 400 )
+					);
+				}
+				break;
+
+			case 'fair_events_api':
+				if ( ! isset( $config['url'] ) || empty( $config['url'] ) ) {
+					return new WP_Error(
+						'rest_invalid_config',
+						/* translators: %d: Data source index */
+						sprintf( __( 'Fair Events API source at index %d requires url field.', 'fair-events' ), $index ),
 						array( 'status' => 400 )
 					);
 				}

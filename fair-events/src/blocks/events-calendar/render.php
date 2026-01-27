@@ -13,6 +13,7 @@ defined( 'WPINC' ) || die;
 
 use FairEvents\Models\EventDates;
 use FairEvents\Helpers\ICalParser;
+use FairEvents\Helpers\FairEventsApiParser;
 use FairEvents\Settings\Settings;
 
 /**
@@ -226,6 +227,26 @@ if ( ! empty( $event_source_slugs ) && is_array( $event_source_slugs ) ) {
 					// Add color to each event
 					foreach ( $filtered_events as $event ) {
 						$event['source_color'] = $ical_feed_color;
+						$all_ical_events[]     = $event;
+					}
+				}
+			}
+
+			if ( 'fair_events_api' === $data_source['source_type'] ) {
+				$api_url   = $data_source['config']['url'] ?? '';
+				$api_color = $data_source['config']['color'] ?? '#4caf50';
+
+				if ( ! empty( $api_url ) ) {
+					// Extract date parts for API query
+					$api_start_date  = gmdate( 'Y-m-d', strtotime( $query_start ) );
+					$api_end_date    = gmdate( 'Y-m-d', strtotime( $query_end ) );
+					$fetched_events  = FairEventsApiParser::fetch_and_parse( $api_url, $api_start_date, $api_end_date );
+					$filtered_events = FairEventsApiParser::filter_events_for_month( $fetched_events, $query_start, $query_end );
+
+					// Add color and mark as external API event
+					foreach ( $filtered_events as $event ) {
+						$event['source_color'] = $api_color;
+						$event['is_fair_api']  = true;
 						$all_ical_events[]     = $event;
 					}
 				}
