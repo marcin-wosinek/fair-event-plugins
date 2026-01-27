@@ -132,18 +132,37 @@ if ( ! preg_match( '/^\d{4}$/', $current_year ) || $current_year < 1900 || $curr
 	$current_year = current_time( 'Y' );
 }
 
-// Calculate month boundaries
-$month_start = "{$current_year}-{$current_month}-01 00:00:00";
-$month_end   = gmdate( 'Y-m-t 23:59:59', strtotime( $month_start ) );
+// Calculate grid structure early (needed for query range)
+$first_day_of_month_ts = strtotime( "{$current_year}-{$current_month}-01" );
+$days_in_month         = (int) gmdate( 't', $first_day_of_month_ts );
+$first_weekday         = (int) gmdate( 'w', $first_day_of_month_ts ); // 0=Sunday, 6=Saturday
 
-// Build query arguments using QueryHelper
+// Adjust for Monday start (startOfWeek attribute)
+if ( 1 === $start_of_week ) {
+	$first_weekday = ( 0 === $first_weekday ) ? 6 : $first_weekday - 1;
+}
+
+$leading_blanks  = $first_weekday;
+$total_cells     = $leading_blanks + $days_in_month;
+$trailing_blanks = ( 0 === $total_cells % 7 ) ? 0 : 7 - ( $total_cells % 7 );
+
+// Calculate extended query range including adjacent month days
+$query_start          = gmdate( 'Y-m-d 00:00:00', strtotime( "-{$leading_blanks} days", $first_day_of_month_ts ) );
+$last_day_of_month_ts = strtotime( "{$current_year}-{$current_month}-{$days_in_month}" );
+$query_end            = gmdate( 'Y-m-d 23:59:59', strtotime( "+{$trailing_blanks} days", $last_day_of_month_ts ) );
+
+// Keep original month boundaries for display logic
+$month_start = "{$current_year}-{$current_month}-01";
+$month_end   = "{$current_year}-{$current_month}-{$days_in_month}";
+
+// Build query arguments using QueryHelper (use extended range to include adjacent month days)
 $query_args = array(
 	'post_type'              => Settings::get_enabled_post_types(),
 	'posts_per_page'         => -1,
 	'post_status'            => $show_drafts ? array( 'publish', 'draft' ) : 'publish',
 	'fair_events_date_query' => array(
-		'start_before' => $month_end,
-		'end_after'    => $month_start,
+		'start_before' => $query_end,
+		'end_after'    => $query_start,
 	),
 	'fair_events_order'      => 'ASC',
 );
@@ -202,7 +221,7 @@ if ( ! empty( $event_source_slugs ) && is_array( $event_source_slugs ) ) {
 
 				if ( ! empty( $ical_feed_url ) ) {
 					$fetched_events  = ICalParser::fetch_and_parse( $ical_feed_url );
-					$filtered_events = ICalParser::filter_events_for_month( $fetched_events, $month_start, $month_end );
+					$filtered_events = ICalParser::filter_events_for_month( $fetched_events, $query_start, $query_end );
 
 					// Add color to each event
 					foreach ( $filtered_events as $event ) {
@@ -279,23 +298,9 @@ foreach ( $all_ical_events as $ical_event ) {
 
 wp_reset_postdata();
 
-// Calculate grid structure
-$first_day_of_month = strtotime( "{$current_year}-{$current_month}-01" );
-$days_in_month      = (int) gmdate( 't', $first_day_of_month );
-$first_weekday      = (int) gmdate( 'w', $first_day_of_month ); // 0=Sunday, 6=Saturday
-
-// Adjust for Monday start (startOfWeek attribute)
-if ( 1 === $start_of_week ) {
-	$first_weekday = ( 0 === $first_weekday ) ? 6 : $first_weekday - 1;
-}
-
-$leading_blanks  = $first_weekday;
-$total_cells     = $leading_blanks + $days_in_month;
-$trailing_blanks = ( 0 === $total_cells % 7 ) ? 0 : 7 - ( $total_cells % 7 );
-
 // Calculate previous/next month URLs
-$prev_month_timestamp = strtotime( '-1 month', $first_day_of_month );
-$next_month_timestamp = strtotime( '+1 month', $first_day_of_month );
+$prev_month_timestamp = strtotime( '-1 month', $first_day_of_month_ts );
+$next_month_timestamp = strtotime( '+1 month', $first_day_of_month_ts );
 
 $prev_url = add_query_arg(
 	array(
@@ -335,7 +340,7 @@ $today = current_time( 'Y-m-d' );
 			<?php esc_html_e( 'Previous', 'fair-events' ); ?>
 		</a>
 		<h2 class="navigation-title">
-			<?php echo esc_html( date_i18n( 'F Y', $first_day_of_month ) ); ?>
+			<?php echo esc_html( date_i18n( 'F Y', $first_day_of_month_ts ) ); ?>
 		</h2>
 		<a href="<?php echo esc_url( $next_url ); ?>" class="nav-next">
 			<?php esc_html_e( 'Next', 'fair-events' ); ?>
@@ -343,7 +348,7 @@ $today = current_time( 'Y-m-d' );
 	</div>
 	<?php endif; ?>
 
-	<div class="calendar-grid" role="grid" aria-label="<?php echo esc_attr( date_i18n( 'F Y', $first_day_of_month ) ); ?>">
+	<div class="calendar-grid" role="grid" aria-label="<?php echo esc_attr( date_i18n( 'F Y', $first_day_of_month_ts ) ); ?>">
 		<!-- Weekday headers -->
 		<div class="calendar-header" role="row">
 			<?php foreach ( $weekdays as $weekday ) : ?>
@@ -356,10 +361,85 @@ $today = current_time( 'Y-m-d' );
 		<!-- Calendar body -->
 		<div class="calendar-body">
 			<?php
-			// Leading blank cells
+			// Leading days from previous month
 			for ( $i = 0; $i < $leading_blanks; $i++ ) :
+				$day_offset   = $leading_blanks - $i;
+				$date_ts      = strtotime( "-{$day_offset} days", $first_day_of_month_ts );
+				$current_date = gmdate( 'Y-m-d', $date_ts );
+				$day_num      = gmdate( 'j', $date_ts );
+				$day_events   = $events_by_date[ $current_date ] ?? array();
+				$is_past      = strtotime( $current_date ) < strtotime( $today );
+
+				$day_classes = array( 'calendar-day', 'other-month' );
+				if ( $is_past ) {
+					$day_classes[] = 'past';
+				}
+				if ( ! empty( $day_events ) ) {
+					$day_classes[] = 'has-events';
+				}
+
+				$month_name = date_i18n( 'F', $date_ts );
 				?>
-			<div class="calendar-day empty" role="gridcell"></div>
+			<div class="<?php echo esc_attr( implode( ' ', $day_classes ) ); ?>"
+				role="gridcell"
+				data-date="<?php echo esc_attr( $current_date ); ?>"
+				data-month-name="<?php echo esc_attr( $month_name ); ?>">
+				<div class="day-number"><?php echo esc_html( $day_num ); ?></div>
+
+				<?php if ( ! empty( $day_events ) ) : ?>
+				<div class="day-events">
+					<?php foreach ( $day_events as $event_data ) : ?>
+						<?php
+						$is_ical = $event_data['is_ical'] ?? false;
+
+						if ( $is_ical ) {
+							// iCal event rendering
+							$event_title = esc_html( $event_data['title'] );
+							$event_url   = $event_data['permalink'] ?? '';
+							$event_desc  = esc_attr( $event_data['description'] ?? '' );
+
+							$item_classes = array( 'event-item', 'is-ical' );
+							?>
+							<div class="<?php echo esc_attr( implode( ' ', $item_classes ) ); ?>"
+								style="--event-bg-color: <?php echo esc_attr( $bg_color_value ); ?>; --event-text-color: <?php echo esc_attr( $text_color_value ); ?>">
+								<?php if ( ! empty( $event_url ) ) : ?>
+									<a href="<?php echo esc_url( $event_url ); ?>"
+										class="ical-event-title"
+										title="<?php echo $event_desc; ?>"
+										target="_blank"
+										rel="noopener noreferrer">
+										<?php echo $event_title; ?>
+									</a>
+								<?php else : ?>
+									<span class="ical-event-title" title="<?php echo $event_desc; ?>">
+										<?php echo $event_title; ?>
+									</span>
+								<?php endif; ?>
+							</div>
+						<?php } else { ?>
+							<?php
+							// Local WordPress event rendering
+							$event_post  = get_post( $event_data['id'] );
+							$is_draft    = $event_post && 'draft' === $event_post->post_status;
+							$event_title = get_the_title( $event_data['id'] );
+							$event_url   = get_permalink( $event_data['id'] );
+
+							$item_classes = array( 'event-item' );
+							if ( $is_draft ) {
+								$item_classes[] = 'is-draft';
+							}
+							?>
+							<div class="<?php echo esc_attr( implode( ' ', $item_classes ) ); ?>"
+								style="--event-bg-color: <?php echo esc_attr( $bg_color_value ); ?>; --event-text-color: <?php echo esc_attr( $text_color_value ); ?>">
+								<a href="<?php echo esc_url( $event_url ); ?>" class="event-title">
+									<?php echo esc_html( $event_title ); ?>
+								</a>
+							</div>
+						<?php } ?>
+					<?php endforeach; ?>
+				</div>
+				<?php endif; ?>
+			</div>
 				<?php
 			endfor;
 
@@ -446,10 +526,85 @@ $today = current_time( 'Y-m-d' );
 				<?php
 			endfor;
 
-			// Trailing blank cells
+			// Trailing days from next month
 			for ( $i = 0; $i < $trailing_blanks; $i++ ) :
+				$day_offset   = $i + 1;
+				$date_ts      = strtotime( "+{$day_offset} days", $last_day_of_month_ts );
+				$current_date = gmdate( 'Y-m-d', $date_ts );
+				$day_num      = gmdate( 'j', $date_ts );
+				$day_events   = $events_by_date[ $current_date ] ?? array();
+				$is_past      = strtotime( $current_date ) < strtotime( $today );
+
+				$day_classes = array( 'calendar-day', 'other-month' );
+				if ( $is_past ) {
+					$day_classes[] = 'past';
+				}
+				if ( ! empty( $day_events ) ) {
+					$day_classes[] = 'has-events';
+				}
+
+				$month_name = date_i18n( 'F', $date_ts );
 				?>
-			<div class="calendar-day empty" role="gridcell"></div>
+			<div class="<?php echo esc_attr( implode( ' ', $day_classes ) ); ?>"
+				role="gridcell"
+				data-date="<?php echo esc_attr( $current_date ); ?>"
+				data-month-name="<?php echo esc_attr( $month_name ); ?>">
+				<div class="day-number"><?php echo esc_html( $day_num ); ?></div>
+
+				<?php if ( ! empty( $day_events ) ) : ?>
+				<div class="day-events">
+					<?php foreach ( $day_events as $event_data ) : ?>
+						<?php
+						$is_ical = $event_data['is_ical'] ?? false;
+
+						if ( $is_ical ) {
+							// iCal event rendering
+							$event_title = esc_html( $event_data['title'] );
+							$event_url   = $event_data['permalink'] ?? '';
+							$event_desc  = esc_attr( $event_data['description'] ?? '' );
+
+							$item_classes = array( 'event-item', 'is-ical' );
+							?>
+							<div class="<?php echo esc_attr( implode( ' ', $item_classes ) ); ?>"
+								style="--event-bg-color: <?php echo esc_attr( $bg_color_value ); ?>; --event-text-color: <?php echo esc_attr( $text_color_value ); ?>">
+								<?php if ( ! empty( $event_url ) ) : ?>
+									<a href="<?php echo esc_url( $event_url ); ?>"
+										class="ical-event-title"
+										title="<?php echo $event_desc; ?>"
+										target="_blank"
+										rel="noopener noreferrer">
+										<?php echo $event_title; ?>
+									</a>
+								<?php else : ?>
+									<span class="ical-event-title" title="<?php echo $event_desc; ?>">
+										<?php echo $event_title; ?>
+									</span>
+								<?php endif; ?>
+							</div>
+						<?php } else { ?>
+							<?php
+							// Local WordPress event rendering
+							$event_post  = get_post( $event_data['id'] );
+							$is_draft    = $event_post && 'draft' === $event_post->post_status;
+							$event_title = get_the_title( $event_data['id'] );
+							$event_url   = get_permalink( $event_data['id'] );
+
+							$item_classes = array( 'event-item' );
+							if ( $is_draft ) {
+								$item_classes[] = 'is-draft';
+							}
+							?>
+							<div class="<?php echo esc_attr( implode( ' ', $item_classes ) ); ?>"
+								style="--event-bg-color: <?php echo esc_attr( $bg_color_value ); ?>; --event-text-color: <?php echo esc_attr( $text_color_value ); ?>">
+								<a href="<?php echo esc_url( $event_url ); ?>" class="event-title">
+									<?php echo esc_html( $event_title ); ?>
+								</a>
+							</div>
+						<?php } ?>
+					<?php endforeach; ?>
+				</div>
+				<?php endif; ?>
+			</div>
 				<?php
 			endfor;
 			?>

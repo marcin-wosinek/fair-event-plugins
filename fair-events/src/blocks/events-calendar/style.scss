@@ -102,6 +102,20 @@
 			background: #f9f9f9;
 		}
 
+		// Days from adjacent months (previous/next)
+		&.other-month {
+			background: #f5f5f5;
+
+			.day-number {
+				color: #999;
+			}
+
+			.event-item a,
+			.event-item .ical-event-title {
+				opacity: 0.7;
+			}
+		}
+
 		// Past days
 		&.past {
 			opacity: 0.6;
@@ -263,9 +277,10 @@
 			padding: 0;
 			border: none;
 
-			// Hide all empty days and days without events
+			// Hide all empty days, days without events, and adjacent month days
 			&.empty,
-			&:not(.has-events) {
+			&:not(.has-events),
+			&.other-month {
 				display: none;
 			}
 
