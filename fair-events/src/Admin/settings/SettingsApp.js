@@ -9,6 +9,7 @@ import {
 	Notice,
 	CheckboxControl,
 	PanelBody,
+	ExternalLink,
 } from '@wordpress/components';
 import apiFetch from '@wordpress/api-fetch';
 
@@ -189,6 +190,41 @@ export default function SettingsApp() {
 							disabled={isSaving}
 						/>
 					))}
+				</PanelBody>
+
+				<PanelBody
+					title={__('Events API', 'fair-events')}
+					initialOpen={true}
+				>
+					<p className="description">
+						{__(
+							'Share your events with other Fair Events sites using the public JSON API.',
+							'fair-events'
+						)}
+					</p>
+
+					<p>
+						<strong>{__('Events API URL:', 'fair-events')}</strong>
+						<br />
+						<code>
+							{window.fairEventsSettingsData?.eventsApiUrl}
+						</code>
+					</p>
+
+					<p>
+						<ExternalLink
+							href={window.fairEventsSettingsData?.eventsApiUrl}
+						>
+							{__('Open Events API', 'fair-events')}
+						</ExternalLink>
+					</p>
+
+					<p className="description">
+						{__(
+							'Optional parameters: start_date, end_date (Y-m-d format), categories (comma-separated slugs), per_page, page.',
+							'fair-events'
+						)}
+					</p>
 				</PanelBody>
 
 				<Button

@@ -104,6 +104,15 @@ class AdminPages {
 				true
 			);
 
+			wp_localize_script(
+				'fair-events-sources',
+				'fairEventsSourcesData',
+				array(
+					'icalUrlTemplate' => rest_url( 'fair-events/v1/sources/{slug}/ical' ),
+					'jsonUrlTemplate' => rest_url( 'fair-events/v1/sources/{slug}/json' ),
+				)
+			);
+
 			wp_set_script_translations(
 				'fair-events-sources',
 				'fair-events',
@@ -150,6 +159,14 @@ class AdminPages {
 				$asset_file['dependencies'],
 				$asset_file['version'],
 				true
+			);
+
+			wp_localize_script(
+				'fair-events-settings',
+				'fairEventsSettingsData',
+				array(
+					'eventsApiUrl' => rest_url( 'fair-events/v1/events' ),
+				)
 			);
 
 			wp_set_script_translations(

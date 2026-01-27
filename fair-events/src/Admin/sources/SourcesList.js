@@ -122,15 +122,17 @@ const SourcesList = () => {
 	};
 
 	const getIcalUrl = (slug) => {
-		const restUrl = window.wpApiSettings?.root || '/wp-json/';
+		const template =
+			window.fairEventsSourcesData?.icalUrlTemplate ||
+			'/wp-json/fair-events/v1/sources/{slug}/ical';
+		return template.replace('{slug}', slug);
+	};
 
-		// Check if restUrl is already a full URL (includes protocol)
-		const baseUrl =
-			restUrl.startsWith('http://') || restUrl.startsWith('https://')
-				? restUrl
-				: window.location.origin + restUrl;
-
-		return baseUrl + 'fair-events/v1/sources/' + slug + '/ical';
+	const getJsonUrl = (slug) => {
+		const template =
+			window.fairEventsSourcesData?.jsonUrlTemplate ||
+			'/wp-json/fair-events/v1/sources/{slug}/json';
+		return template.replace('{slug}', slug);
 	};
 
 	const handleCopyIcalUrl = async (slug) => {
@@ -138,6 +140,16 @@ const SourcesList = () => {
 		try {
 			await navigator.clipboard.writeText(url);
 			setSuccess(__('iCal URL copied to clipboard!', 'fair-events'));
+		} catch (err) {
+			setError(__('Failed to copy URL to clipboard.', 'fair-events'));
+		}
+	};
+
+	const handleCopyJsonUrl = async (slug) => {
+		const url = getJsonUrl(slug);
+		try {
+			await navigator.clipboard.writeText(url);
+			setSuccess(__('JSON API URL copied to clipboard!', 'fair-events'));
 		} catch (err) {
 			setError(__('Failed to copy URL to clipboard.', 'fair-events'));
 		}
@@ -206,6 +218,7 @@ const SourcesList = () => {
 										<th>
 											{__('iCal Feed', 'fair-events')}
 										</th>
+										<th>{__('JSON API', 'fair-events')}</th>
 										<th>{__('Status', 'fair-events')}</th>
 										<th>{__('Actions', 'fair-events')}</th>
 									</tr>
@@ -240,6 +253,30 @@ const SourcesList = () => {
 														icon={copy}
 														onClick={() =>
 															handleCopyIcalUrl(
+																source.slug
+															)
+														}
+													>
+														{__(
+															'Copy URL',
+															'fair-events'
+														)}
+													</Button>
+												</Tooltip>
+											</td>
+											<td>
+												<Tooltip
+													text={__(
+														'Copy JSON API URL',
+														'fair-events'
+													)}
+												>
+													<Button
+														variant="secondary"
+														size="small"
+														icon={copy}
+														onClick={() =>
+															handleCopyJsonUrl(
 																source.slug
 															)
 														}
