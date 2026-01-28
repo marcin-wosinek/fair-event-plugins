@@ -141,6 +141,19 @@ class Event {
 					'default'           => '',
 				)
 			);
+
+			register_post_meta(
+				$post_type,
+				'event_recurrence',
+				array(
+					'type'              => 'string',
+					'description'       => __( 'Event recurrence rule (RRULE format)', 'fair-events' ),
+					'single'            => true,
+					'show_in_rest'      => true,
+					'sanitize_callback' => 'sanitize_text_field',
+					'default'           => '',
+				)
+			);
 		}
 	}
 
@@ -218,10 +231,11 @@ class Event {
 	public static function render_meta_box( $post ) {
 		wp_nonce_field( 'fair_event_meta_box', 'fair_event_meta_box_nonce' );
 
-		$event_start    = get_post_meta( $post->ID, 'event_start', true );
-		$event_end      = get_post_meta( $post->ID, 'event_end', true );
-		$event_all_day  = get_post_meta( $post->ID, 'event_all_day', true );
-		$event_location = get_post_meta( $post->ID, 'event_location', true );
+		$event_start      = get_post_meta( $post->ID, 'event_start', true );
+		$event_end        = get_post_meta( $post->ID, 'event_end', true );
+		$event_all_day    = get_post_meta( $post->ID, 'event_all_day', true );
+		$event_location   = get_post_meta( $post->ID, 'event_location', true );
+		$event_recurrence = get_post_meta( $post->ID, 'event_recurrence', true );
 
 		// Determine input type based on all-day setting
 		$input_type = $event_all_day ? 'date' : 'datetime-local';
@@ -234,6 +248,27 @@ class Event {
 			if ( $event_end && strpos( $event_end, 'T' ) !== false ) {
 				$event_end = substr( $event_end, 0, strpos( $event_end, 'T' ) );
 			}
+		}
+
+		// Parse recurrence settings.
+		$recurrence_enabled  = ! empty( $event_recurrence );
+		$parsed_rrule        = $recurrence_enabled ? \FairEvents\Services\RecurrenceService::parse_rrule( $event_recurrence ) : array();
+		$recurrence_freq     = $parsed_rrule['freq'] ?? '';
+		$recurrence_interval = $parsed_rrule['interval'] ?? 1;
+		$recurrence_count    = $parsed_rrule['count'] ?? '';
+		$recurrence_until    = ! empty( $parsed_rrule['until'] ) ? $parsed_rrule['until']->format( 'Y-m-d' ) : '';
+		$recurrence_end_type = $recurrence_count ? 'count' : ( $recurrence_until ? 'until' : 'count' );
+
+		// Map frequency + interval to simplified frequency.
+		$simple_frequency = '';
+		if ( 'DAILY' === $recurrence_freq ) {
+			$simple_frequency = 'daily';
+		} elseif ( 'WEEKLY' === $recurrence_freq && 1 === $recurrence_interval ) {
+			$simple_frequency = 'weekly';
+		} elseif ( 'WEEKLY' === $recurrence_freq && 2 === $recurrence_interval ) {
+			$simple_frequency = 'biweekly';
+		} elseif ( 'MONTHLY' === $recurrence_freq ) {
+			$simple_frequency = 'monthly';
 		}
 		?>
 		<p>
@@ -296,6 +331,81 @@ class Event {
 				placeholder="<?php esc_attr_e( 'Event location', 'fair-events' ); ?>"
 			/>
 		</p>
+
+		<hr style="margin: 15px 0;" />
+
+		<details id="recurrence_details" <?php echo $recurrence_enabled ? 'open' : ''; ?>>
+			<summary style="cursor: pointer; font-weight: 600; margin-bottom: 10px;">
+				<?php esc_html_e( 'Recurrence', 'fair-events' ); ?>
+			</summary>
+
+			<p>
+				<label for="event_recurrence_enabled">
+					<input
+						type="checkbox"
+						id="event_recurrence_enabled"
+						name="event_recurrence_enabled"
+						value="1"
+						<?php checked( $recurrence_enabled, true ); ?>
+					/>
+					<?php esc_html_e( 'Repeat this event', 'fair-events' ); ?>
+				</label>
+			</p>
+
+			<div id="recurrence_options" style="<?php echo $recurrence_enabled ? '' : 'display: none;'; ?>">
+				<p>
+					<label for="event_recurrence_frequency">
+						<?php esc_html_e( 'Frequency', 'fair-events' ); ?>
+					</label>
+					<select id="event_recurrence_frequency" name="event_recurrence_frequency" style="width: 100%; box-sizing: border-box;">
+						<option value="daily" <?php selected( $simple_frequency, 'daily' ); ?>><?php esc_html_e( 'Daily', 'fair-events' ); ?></option>
+						<option value="weekly" <?php selected( $simple_frequency, 'weekly' ); ?>><?php esc_html_e( 'Weekly', 'fair-events' ); ?></option>
+						<option value="biweekly" <?php selected( $simple_frequency, 'biweekly' ); ?>><?php esc_html_e( 'Biweekly', 'fair-events' ); ?></option>
+						<option value="monthly" <?php selected( $simple_frequency, 'monthly' ); ?>><?php esc_html_e( 'Monthly', 'fair-events' ); ?></option>
+					</select>
+				</p>
+
+				<p>
+					<label for="event_recurrence_end_type">
+						<?php esc_html_e( 'End', 'fair-events' ); ?>
+					</label>
+					<select id="event_recurrence_end_type" name="event_recurrence_end_type" style="width: 100%; box-sizing: border-box;">
+						<option value="count" <?php selected( $recurrence_end_type, 'count' ); ?>><?php esc_html_e( 'After number of occurrences', 'fair-events' ); ?></option>
+						<option value="until" <?php selected( $recurrence_end_type, 'until' ); ?>><?php esc_html_e( 'On date', 'fair-events' ); ?></option>
+					</select>
+				</p>
+
+				<p id="recurrence_count_wrapper" style="<?php echo $recurrence_end_type === 'until' ? 'display: none;' : ''; ?>">
+					<label for="event_recurrence_count">
+						<?php esc_html_e( 'Number of occurrences', 'fair-events' ); ?>
+					</label>
+					<input
+						type="number"
+						id="event_recurrence_count"
+						name="event_recurrence_count"
+						value="<?php echo esc_attr( $recurrence_count ? $recurrence_count : 10 ); ?>"
+						min="2"
+						max="100"
+						style="width: 100%;"
+					/>
+				</p>
+
+				<p id="recurrence_until_wrapper" style="<?php echo $recurrence_end_type === 'count' ? 'display: none;' : ''; ?>">
+					<label for="event_recurrence_until">
+						<?php esc_html_e( 'End date', 'fair-events' ); ?>
+					</label>
+					<input
+						type="date"
+						id="event_recurrence_until"
+						name="event_recurrence_until"
+						value="<?php echo esc_attr( $recurrence_until ); ?>"
+						style="width: 100%;"
+					/>
+				</p>
+
+				<input type="hidden" id="event_recurrence" name="event_recurrence" value="<?php echo esc_attr( $event_recurrence ); ?>" />
+			</div>
+		</details>
 		<?php
 	}
 
@@ -583,5 +693,56 @@ class Event {
 		if ( isset( $_POST['event_location'] ) ) {
 			update_post_meta( $post_id, 'event_location', sanitize_text_field( wp_unslash( $_POST['event_location'] ) ) );
 		}
+
+		// Handle recurrence.
+		// phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- checkbox only checked for presence.
+		$recurrence_enabled = isset( $_POST['event_recurrence_enabled'] ) && ! empty( wp_unslash( $_POST['event_recurrence_enabled'] ) );
+
+		if ( $recurrence_enabled ) {
+			// Build RRULE from form fields.
+			$frequency = isset( $_POST['event_recurrence_frequency'] ) ? sanitize_text_field( wp_unslash( $_POST['event_recurrence_frequency'] ) ) : 'weekly';
+			$end_type  = isset( $_POST['event_recurrence_end_type'] ) ? sanitize_text_field( wp_unslash( $_POST['event_recurrence_end_type'] ) ) : 'count';
+			$count     = isset( $_POST['event_recurrence_count'] ) ? absint( $_POST['event_recurrence_count'] ) : 10;
+			$until     = isset( $_POST['event_recurrence_until'] ) ? sanitize_text_field( wp_unslash( $_POST['event_recurrence_until'] ) ) : '';
+
+			// Map simplified frequency to RRULE frequency and interval.
+			$rrule_freq     = 'WEEKLY';
+			$rrule_interval = 1;
+
+			switch ( $frequency ) {
+				case 'daily':
+					$rrule_freq     = 'DAILY';
+					$rrule_interval = 1;
+					break;
+				case 'weekly':
+					$rrule_freq     = 'WEEKLY';
+					$rrule_interval = 1;
+					break;
+				case 'biweekly':
+					$rrule_freq     = 'WEEKLY';
+					$rrule_interval = 2;
+					break;
+				case 'monthly':
+					$rrule_freq     = 'MONTHLY';
+					$rrule_interval = 1;
+					break;
+			}
+
+			$rrule = \FairEvents\Services\RecurrenceService::build_rrule(
+				$rrule_freq,
+				$rrule_interval,
+				$end_type,
+				'count' === $end_type ? $count : null,
+				'until' === $end_type ? $until : null
+			);
+
+			update_post_meta( $post_id, 'event_recurrence', $rrule );
+		} else {
+			// No recurrence - delete the meta.
+			delete_post_meta( $post_id, 'event_recurrence' );
+		}
+
+		// Regenerate occurrences (this handles both recurring and non-recurring events).
+		\FairEvents\Services\RecurrenceService::regenerate_event_occurrences( $post_id );
 	}
 }

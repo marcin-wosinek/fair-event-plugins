@@ -17,7 +17,7 @@ class Schema {
 	/**
 	 * Database version
 	 */
-	const DB_VERSION = '1.4.0';
+	const DB_VERSION = '1.5.0';
 
 	/**
 	 * Get the SQL for creating the fair_event_dates table
@@ -39,13 +39,17 @@ class Schema {
 			start_datetime DATETIME NOT NULL,
 			end_datetime DATETIME DEFAULT NULL,
 			all_day BOOLEAN NOT NULL DEFAULT 0,
+			occurrence_type VARCHAR(20) NOT NULL DEFAULT 'single',
+			master_id BIGINT UNSIGNED DEFAULT NULL,
 			created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
 			updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
 			PRIMARY KEY (id),
 			KEY idx_event_id (event_id),
 			KEY idx_start_datetime (start_datetime),
 			KEY idx_end_datetime (end_datetime),
-			KEY idx_start_end (start_datetime, end_datetime)
+			KEY idx_start_end (start_datetime, end_datetime),
+			KEY idx_occurrence_type (occurrence_type),
+			KEY idx_master_id (master_id)
 		) ENGINE=InnoDB {$charset_collate};";
 	}
 

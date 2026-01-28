@@ -21,6 +21,27 @@ domReady(() => {
 	const locationInput = document.getElementById('event_location');
 	const durationSelect = document.getElementById('event_duration');
 
+	// Recurrence elements
+	const recurrenceEnabledCheckbox = document.getElementById(
+		'event_recurrence_enabled'
+	);
+	const recurrenceOptions = document.getElementById('recurrence_options');
+	const recurrenceFrequency = document.getElementById(
+		'event_recurrence_frequency'
+	);
+	const recurrenceEndType = document.getElementById(
+		'event_recurrence_end_type'
+	);
+	const recurrenceCount = document.getElementById('event_recurrence_count');
+	const recurrenceCountWrapper = document.getElementById(
+		'recurrence_count_wrapper'
+	);
+	const recurrenceUntil = document.getElementById('event_recurrence_until');
+	const recurrenceUntilWrapper = document.getElementById(
+		'recurrence_until_wrapper'
+	);
+	const recurrenceHiddenInput = document.getElementById('event_recurrence');
+
 	if (
 		!allDayCheckbox ||
 		!startInput ||
@@ -259,14 +280,20 @@ domReady(() => {
 	function updateEditorMeta() {
 		if (typeof wp !== 'undefined' && wp.data && wp.data.dispatch) {
 			const { editPost } = wp.data.dispatch('core/editor');
-			editPost({
-				meta: {
-					event_start: startInput.value,
-					event_end: endInput.value,
-					event_all_day: allDayCheckbox.checked,
-					event_location: locationInput.value,
-				},
-			});
+			const meta = {
+				event_start: startInput.value,
+				event_end: endInput.value,
+				event_all_day: allDayCheckbox.checked,
+				event_location: locationInput.value,
+			};
+
+			// Include recurrence if the field exists
+			const recurrenceInput = document.getElementById('event_recurrence');
+			if (recurrenceInput) {
+				meta.event_recurrence = recurrenceInput.value;
+			}
+
+			editPost({ meta });
 		}
 	}
 
@@ -295,4 +322,121 @@ domReady(() => {
 	locationInput.addEventListener('change', () => {
 		updateEditorMeta();
 	});
+
+	// Recurrence handling
+	if (recurrenceEnabledCheckbox && recurrenceOptions) {
+		/**
+		 * Build RRULE string from form fields
+		 */
+		function buildRRule() {
+			if (!recurrenceEnabledCheckbox.checked) {
+				return '';
+			}
+
+			const frequency = recurrenceFrequency?.value || 'weekly';
+			const endType = recurrenceEndType?.value || 'count';
+			const count = recurrenceCount?.value || 10;
+			const until = recurrenceUntil?.value || '';
+
+			// Map simplified frequency to RRULE
+			let freq = 'WEEKLY';
+			let interval = 1;
+
+			switch (frequency) {
+				case 'daily':
+					freq = 'DAILY';
+					interval = 1;
+					break;
+				case 'weekly':
+					freq = 'WEEKLY';
+					interval = 1;
+					break;
+				case 'biweekly':
+					freq = 'WEEKLY';
+					interval = 2;
+					break;
+				case 'monthly':
+					freq = 'MONTHLY';
+					interval = 1;
+					break;
+			}
+
+			const parts = [`FREQ=${freq}`];
+
+			if (interval > 1) {
+				parts.push(`INTERVAL=${interval}`);
+			}
+
+			if (endType === 'count' && count) {
+				parts.push(`COUNT=${count}`);
+			} else if (endType === 'until' && until) {
+				// Convert Y-m-d to YYYYMMDD
+				const untilFormatted = until.replace(/-/g, '');
+				parts.push(`UNTIL=${untilFormatted}`);
+			}
+
+			return parts.join(';');
+		}
+
+		/**
+		 * Update the hidden RRULE input
+		 */
+		function updateRRuleInput() {
+			if (recurrenceHiddenInput) {
+				recurrenceHiddenInput.value = buildRRule();
+			}
+			updateEditorMeta();
+		}
+
+		/**
+		 * Toggle recurrence options visibility
+		 */
+		function toggleRecurrenceOptions() {
+			if (recurrenceOptions) {
+				recurrenceOptions.style.display =
+					recurrenceEnabledCheckbox.checked ? '' : 'none';
+			}
+			updateRRuleInput();
+		}
+
+		/**
+		 * Toggle end type fields
+		 */
+		function toggleEndTypeFields() {
+			const endType = recurrenceEndType?.value || 'count';
+
+			if (recurrenceCountWrapper) {
+				recurrenceCountWrapper.style.display =
+					endType === 'count' ? '' : 'none';
+			}
+			if (recurrenceUntilWrapper) {
+				recurrenceUntilWrapper.style.display =
+					endType === 'until' ? '' : 'none';
+			}
+			updateRRuleInput();
+		}
+
+		// Event listeners for recurrence fields
+		recurrenceEnabledCheckbox.addEventListener(
+			'change',
+			toggleRecurrenceOptions
+		);
+
+		if (recurrenceFrequency) {
+			recurrenceFrequency.addEventListener('change', updateRRuleInput);
+		}
+
+		if (recurrenceEndType) {
+			recurrenceEndType.addEventListener('change', toggleEndTypeFields);
+		}
+
+		if (recurrenceCount) {
+			recurrenceCount.addEventListener('change', updateRRuleInput);
+			recurrenceCount.addEventListener('input', updateRRuleInput);
+		}
+
+		if (recurrenceUntil) {
+			recurrenceUntil.addEventListener('change', updateRRuleInput);
+		}
+	}
 });

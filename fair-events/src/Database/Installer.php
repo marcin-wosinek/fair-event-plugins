@@ -55,6 +55,11 @@ class Installer {
 			self::migrate_to_1_4_0();
 		}
 
+		// Run migration if upgrading from pre-1.5.0 (add recurrence columns to event_dates).
+		if ( version_compare( $current_version, '1.5.0', '<' ) ) {
+			self::migrate_to_1_5_0();
+		}
+
 		// Update database version
 		Schema::update_db_version( Schema::DB_VERSION );
 	}
@@ -89,6 +94,10 @@ class Installer {
 
 			if ( version_compare( $current_version, '1.4.0', '<' ) ) {
 				self::migrate_to_1_4_0();
+			}
+
+			if ( version_compare( $current_version, '1.5.0', '<' ) ) {
+				self::migrate_to_1_5_0();
 			}
 
 			// Install/update tables
@@ -316,5 +325,68 @@ class Installer {
 				$table_name
 			)
 		);
+	}
+
+	/**
+	 * Migrate to version 1.5.0 - Add recurrence columns to event_dates table.
+	 *
+	 * @return void
+	 */
+	private static function migrate_to_1_5_0() {
+		global $wpdb;
+
+		$table_name = $wpdb->prefix . 'fair_event_dates';
+
+		// Check if occurrence_type column already exists.
+		$occurrence_type_exists = $wpdb->get_results(
+			$wpdb->prepare(
+				"SHOW COLUMNS FROM %i LIKE 'occurrence_type'",
+				$table_name
+			)
+		);
+
+		if ( empty( $occurrence_type_exists ) ) {
+			// Add occurrence_type column.
+			$wpdb->query(
+				$wpdb->prepare(
+					"ALTER TABLE %i ADD COLUMN occurrence_type VARCHAR(20) NOT NULL DEFAULT 'single' AFTER all_day",
+					$table_name
+				)
+			);
+
+			// Add index for occurrence_type.
+			$wpdb->query(
+				$wpdb->prepare(
+					'ALTER TABLE %i ADD KEY idx_occurrence_type (occurrence_type)',
+					$table_name
+				)
+			);
+		}
+
+		// Check if master_id column already exists.
+		$master_id_exists = $wpdb->get_results(
+			$wpdb->prepare(
+				"SHOW COLUMNS FROM %i LIKE 'master_id'",
+				$table_name
+			)
+		);
+
+		if ( empty( $master_id_exists ) ) {
+			// Add master_id column.
+			$wpdb->query(
+				$wpdb->prepare(
+					'ALTER TABLE %i ADD COLUMN master_id BIGINT UNSIGNED DEFAULT NULL AFTER occurrence_type',
+					$table_name
+				)
+			);
+
+			// Add index for master_id.
+			$wpdb->query(
+				$wpdb->prepare(
+					'ALTER TABLE %i ADD KEY idx_master_id (master_id)',
+					$table_name
+				)
+			);
+		}
 	}
 }

@@ -255,20 +255,30 @@ if ( ! empty( $event_source_slugs ) && is_array( $event_source_slugs ) ) {
 	}
 }
 
-// Group events by date (handle multi-day events for both local and iCal)
-$events_by_date = array();
+// Group events by date (handle multi-day events and recurring events for both local and iCal)
+$events_by_date   = array();
+$processed_events = array(); // Track processed event IDs to avoid duplicates from JOIN.
 if ( $events_query->have_posts() ) {
 	while ( $events_query->have_posts() ) {
 		$events_query->the_post();
-		$event_dates = EventDates::get_by_event_id( get_the_ID() );
+		$event_id = get_the_ID();
 
-		if ( $event_dates ) {
+		// Skip if we've already processed this event (JOIN returns duplicates).
+		if ( isset( $processed_events[ $event_id ] ) ) {
+			continue;
+		}
+		$processed_events[ $event_id ] = true;
+
+		// Get ALL occurrences for this event (supports recurring events).
+		$all_occurrences = EventDates::get_all_by_event_id( $event_id );
+
+		foreach ( $all_occurrences as $event_dates ) {
 			$start_date = gmdate( 'Y-m-d', strtotime( $event_dates->start_datetime ) );
 			$end_date   = $event_dates->end_datetime
 				? gmdate( 'Y-m-d', strtotime( $event_dates->end_datetime ) )
 				: $start_date;
 
-			// Add event to all days it spans
+			// Add event to all days it spans.
 			$loop_date = $start_date;
 			while ( $loop_date <= $end_date ) {
 				if ( ! isset( $events_by_date[ $loop_date ] ) ) {
@@ -276,12 +286,12 @@ if ( $events_query->have_posts() ) {
 				}
 
 				$events_by_date[ $loop_date ][] = array(
-					'id'           => get_the_ID(),
+					'id'           => $event_id,
 					'is_first_day' => $loop_date === $start_date,
 					'is_last_day'  => $loop_date === $end_date,
 					'is_ical'      => false,
-					'title'        => get_the_title(),
-					'permalink'    => get_permalink(),
+					'title'        => get_the_title( $event_id ),
+					'permalink'    => get_permalink( $event_id ),
 				);
 
 				$loop_date = gmdate( 'Y-m-d', strtotime( $loop_date . ' +1 day' ) );
