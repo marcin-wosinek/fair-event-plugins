@@ -10,6 +10,7 @@ import {
 	SelectControl,
 	TabPanel,
 } from '@wordpress/components';
+import WordPressUsersImport from './WordPressUsersImport.js';
 
 export default function Import() {
 	const [file, setFile] = useState(null);
@@ -201,6 +202,10 @@ export default function Import() {
 					{
 						name: 'entradium',
 						title: __('Entradium', 'fair-audience'),
+					},
+					{
+						name: 'wordpress-users',
+						title: __('WordPress Users', 'fair-audience'),
 					},
 				]}
 			>
@@ -690,6 +695,9 @@ export default function Import() {
 									)}
 								</CardBody>
 							</Card>
+						)}
+						{tab.name === 'wordpress-users' && (
+							<WordPressUsersImport />
 						)}
 					</>
 				)}
