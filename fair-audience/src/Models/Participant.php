@@ -123,8 +123,8 @@ class Participant {
 
 		$table_name = $wpdb->prefix . 'fair_audience_participants';
 
-		// Validate required fields (email is optional).
-		if ( empty( $this->name ) || empty( $this->surname ) ) {
+		// Validate required fields (email and surname are optional).
+		if ( empty( $this->name ) ) {
 			return false;
 		}
 

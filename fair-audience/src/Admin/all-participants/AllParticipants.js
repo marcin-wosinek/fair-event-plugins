@@ -452,7 +452,7 @@ export default function AllParticipants() {
 								required
 							/>
 							<TextControl
-								label={__('Surname *', 'fair-audience')}
+								label={__('Surname', 'fair-audience')}
 								value={formData.surname}
 								onChange={(value) =>
 									setFormData({
@@ -460,7 +460,6 @@ export default function AllParticipants() {
 										surname: value,
 									})
 								}
-								required
 							/>
 							<TextControl
 								label={__('Email', 'fair-audience')}
