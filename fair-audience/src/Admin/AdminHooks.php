@@ -155,6 +155,16 @@ class AdminHooks {
 			array( $this, 'render_collaborators_page' )
 		);
 
+		// Submenu page - Groups.
+		add_submenu_page(
+			'fair-audience',
+			__( 'Groups', 'fair-audience' ),
+			__( 'Groups', 'fair-audience' ),
+			'manage_options',
+			'fair-audience-groups',
+			array( $this, 'render_groups_page' )
+		);
+
 		// Submenu page - By Event.
 		add_submenu_page(
 			'fair-audience',
@@ -249,6 +259,14 @@ class AdminHooks {
 	}
 
 	/**
+	 * Render Groups page.
+	 */
+	public function render_groups_page() {
+		$page = new GroupsPage();
+		$page->render();
+	}
+
+	/**
 	 * Enqueue admin scripts.
 	 *
 	 * @param string $hook Page hook.
@@ -289,6 +307,11 @@ class AdminHooks {
 		// Edit Poll page.
 		if ( 'admin_page_fair-audience-edit-poll' === $hook ) {
 			$this->enqueue_page_script( 'edit-poll', $plugin_dir );
+		}
+
+		// Groups page.
+		if ( 'fair-audience_page_fair-audience-groups' === $hook ) {
+			$this->enqueue_page_script( 'groups', $plugin_dir );
 		}
 	}
 

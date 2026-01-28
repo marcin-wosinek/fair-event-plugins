@@ -277,4 +277,47 @@ class Schema {
 			UNIQUE KEY idx_participant (participant_id)
 		) ENGINE=InnoDB $charset_collate;";
 	}
+
+	/**
+	 * Get SQL for creating the groups table.
+	 *
+	 * @return string SQL statement.
+	 */
+	public static function get_groups_table_sql() {
+		global $wpdb;
+
+		$table_name      = $wpdb->prefix . 'fair_audience_groups';
+		$charset_collate = $wpdb->get_charset_collate();
+
+		return "CREATE TABLE $table_name (
+			id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+			name VARCHAR(255) NOT NULL,
+			description TEXT DEFAULT '',
+			created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+			updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+			KEY idx_name (name)
+		) ENGINE=InnoDB $charset_collate;";
+	}
+
+	/**
+	 * Get SQL for creating the group participants junction table.
+	 *
+	 * @return string SQL statement.
+	 */
+	public static function get_group_participants_table_sql() {
+		global $wpdb;
+
+		$table_name      = $wpdb->prefix . 'fair_audience_group_participants';
+		$charset_collate = $wpdb->get_charset_collate();
+
+		return "CREATE TABLE $table_name (
+			id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+			group_id BIGINT UNSIGNED NOT NULL,
+			participant_id BIGINT UNSIGNED NOT NULL,
+			created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+			UNIQUE KEY idx_group_participant (group_id, participant_id),
+			KEY idx_group_id (group_id),
+			KEY idx_participant_id (participant_id)
+		) ENGINE=InnoDB $charset_collate;";
+	}
 }

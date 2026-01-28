@@ -42,6 +42,10 @@ const customConfig = {
 			process.cwd(),
 			'src/Admin/collaborators/index.js',
 		),
+		'admin/groups/index': path.resolve(
+			process.cwd(),
+			'src/Admin/groups/index.js',
+		),
 		'admin/media-library-filter': path.resolve(
 			process.cwd(),
 			'src/Admin/media-library-filter.js',

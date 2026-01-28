@@ -87,6 +87,9 @@ class Plugin {
 
 		$collaborators_controller = new \FairAudience\API\CollaboratorsController();
 		$collaborators_controller->register_routes();
+
+		$groups_controller = new \FairAudience\API\GroupsController();
+		$groups_controller->register_routes();
 	}
 
 	/**
