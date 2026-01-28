@@ -110,6 +110,29 @@ class ParticipantRepository {
 	}
 
 	/**
+	 * Get participant by WordPress user ID.
+	 *
+	 * @param int $wp_user_id WordPress user ID.
+	 * @return Participant|null Participant or null if not found.
+	 */
+	public function get_by_user_id( $wp_user_id ) {
+		global $wpdb;
+
+		$table_name = $this->get_table_name();
+
+		$result = $wpdb->get_row(
+			$wpdb->prepare(
+				'SELECT * FROM %i WHERE wp_user_id = %d',
+				$table_name,
+				$wp_user_id
+			),
+			ARRAY_A
+		);
+
+		return $result ? new Participant( $result ) : null;
+	}
+
+	/**
 	 * Search participants by name or email.
 	 *
 	 * @param string $search_term Search term.

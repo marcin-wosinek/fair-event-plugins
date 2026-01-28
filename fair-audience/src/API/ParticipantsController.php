@@ -218,6 +218,32 @@ class ParticipantsController extends WP_REST_Controller {
 		// Normalize email: convert empty string to null.
 		$email = $this->normalize_email( $request->get_param( 'email' ) );
 
+		// Handle wp_user_id.
+		$wp_user_id = $request->get_param( 'wp_user_id' );
+		$wp_user_id = $wp_user_id ? (int) $wp_user_id : null;
+
+		// Validate WP user exists if provided.
+		if ( $wp_user_id ) {
+			$wp_user = get_userdata( $wp_user_id );
+			if ( ! $wp_user ) {
+				return new WP_Error(
+					'invalid_wp_user',
+					__( 'The specified WordPress user does not exist.', 'fair-audience' ),
+					array( 'status' => 400 )
+				);
+			}
+
+			// Check if WP user is already linked to another participant.
+			$existing_linked = $this->repository->get_by_user_id( $wp_user_id );
+			if ( $existing_linked ) {
+				return new WP_Error(
+					'wp_user_already_linked',
+					__( 'This WordPress user is already linked to another participant.', 'fair-audience' ),
+					array( 'status' => 400 )
+				);
+			}
+		}
+
 		$participant = new Participant();
 		$participant->populate(
 			array(
@@ -226,6 +252,7 @@ class ParticipantsController extends WP_REST_Controller {
 				'email'         => $email,
 				'instagram'     => $request->get_param( 'instagram' ),
 				'email_profile' => $request->get_param( 'email_profile' ),
+				'wp_user_id'    => $wp_user_id,
 			)
 		);
 
@@ -293,6 +320,34 @@ class ParticipantsController extends WP_REST_Controller {
 		// Normalize email: convert empty string to null.
 		$new_email = $this->normalize_email( $request->get_param( 'email' ) );
 
+		// Handle wp_user_id - allow null to unlink.
+		$wp_user_id_param = $request->get_param( 'wp_user_id' );
+		$new_wp_user_id   = $wp_user_id_param ? (int) $wp_user_id_param : null;
+
+		// Validate WP user exists if provided.
+		if ( $new_wp_user_id ) {
+			$wp_user = get_userdata( $new_wp_user_id );
+			if ( ! $wp_user ) {
+				return new WP_Error(
+					'invalid_wp_user',
+					__( 'The specified WordPress user does not exist.', 'fair-audience' ),
+					array( 'status' => 400 )
+				);
+			}
+
+			// Check if WP user is already linked to another participant (not this one).
+			if ( $new_wp_user_id !== $participant->wp_user_id ) {
+				$existing_linked = $this->repository->get_by_user_id( $new_wp_user_id );
+				if ( $existing_linked && $existing_linked->id !== $participant->id ) {
+					return new WP_Error(
+						'wp_user_already_linked',
+						__( 'This WordPress user is already linked to another participant.', 'fair-audience' ),
+						array( 'status' => 400 )
+					);
+				}
+			}
+		}
+
 		// Check email uniqueness if changed (only if new email is provided and not empty).
 		if ( ! empty( $new_email ) && $new_email !== $participant->email ) {
 			$existing = $this->repository->get_by_email( $new_email );
@@ -313,6 +368,7 @@ class ParticipantsController extends WP_REST_Controller {
 				'email'         => $new_email,
 				'instagram'     => $request->get_param( 'instagram' ),
 				'email_profile' => $request->get_param( 'email_profile' ),
+				'wp_user_id'    => $new_wp_user_id,
 			)
 		);
 
@@ -386,6 +442,18 @@ class ParticipantsController extends WP_REST_Controller {
 	 * @return array Response data.
 	 */
 	public function prepare_item_for_response( $participant, $request ) {
+		$wp_user = null;
+		if ( $participant->wp_user_id ) {
+			$user = get_userdata( $participant->wp_user_id );
+			if ( $user ) {
+				$wp_user = array(
+					'id'           => $user->ID,
+					'display_name' => $user->display_name,
+					'email'        => $user->user_email,
+				);
+			}
+		}
+
 		return array(
 			'id'            => $participant->id,
 			'name'          => $participant->name,
@@ -394,6 +462,8 @@ class ParticipantsController extends WP_REST_Controller {
 			'instagram'     => $participant->instagram,
 			'email_profile' => $participant->email_profile,
 			'status'        => $participant->status,
+			'wp_user_id'    => $participant->wp_user_id,
+			'wp_user'       => $wp_user,
 			'created_at'    => $participant->created_at,
 			'updated_at'    => $participant->updated_at,
 		);

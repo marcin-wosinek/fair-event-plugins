@@ -64,6 +64,13 @@ class Participant {
 	public $status;
 
 	/**
+	 * WordPress user ID (if linked to a WP user).
+	 *
+	 * @var int|null
+	 */
+	public $wp_user_id;
+
+	/**
 	 * Created timestamp.
 	 *
 	 * @var string
@@ -101,6 +108,7 @@ class Participant {
 		$this->instagram     = isset( $data['instagram'] ) ? sanitize_text_field( $data['instagram'] ) : '';
 		$this->email_profile = isset( $data['email_profile'] ) ? $data['email_profile'] : 'minimal';
 		$this->status        = isset( $data['status'] ) ? $data['status'] : 'confirmed';
+		$this->wp_user_id    = isset( $data['wp_user_id'] ) && $data['wp_user_id'] ? (int) $data['wp_user_id'] : null;
 		$this->created_at    = isset( $data['created_at'] ) ? $data['created_at'] : '';
 		$this->updated_at    = isset( $data['updated_at'] ) ? $data['updated_at'] : '';
 	}
@@ -133,72 +141,54 @@ class Participant {
 		// Convert empty email to null for database storage.
 		$email = ! empty( $this->email ) ? $this->email : null;
 
+		// Build the SQL parts for nullable fields.
+		$email_sql      = null === $email ? 'email = NULL' : 'email = %s';
+		$wp_user_id_sql = null === $this->wp_user_id ? 'wp_user_id = NULL' : 'wp_user_id = %d';
+
 		if ( $this->id ) {
-			// Update existing - use raw query to properly handle NULL email.
-			if ( null === $email ) {
-				// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
-				$result = $wpdb->query(
-					$wpdb->prepare(
-						"UPDATE {$table_name} SET name = %s, surname = %s, instagram = %s, email_profile = %s, status = %s, email = NULL WHERE id = %d",
-						$this->name,
-						$this->surname,
-						$this->instagram,
-						$this->email_profile,
-						$this->status,
-						$this->id
-					)
-				);
-			} else {
-				// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
-				$result = $wpdb->update(
-					$table_name,
-					array(
-						'name'          => $this->name,
-						'surname'       => $this->surname,
-						'email'         => $email,
-						'instagram'     => $this->instagram,
-						'email_profile' => $this->email_profile,
-						'status'        => $this->status,
-					),
-					array( 'id' => $this->id ),
-					array( '%s', '%s', '%s', '%s', '%s', '%s' ),
-					array( '%d' )
-				);
+			// Update existing - use raw query to properly handle NULL values.
+			$sql  = "UPDATE {$table_name} SET name = %s, surname = %s, instagram = %s, email_profile = %s, status = %s, {$email_sql}, {$wp_user_id_sql} WHERE id = %d";
+			$args = array(
+				$this->name,
+				$this->surname,
+				$this->instagram,
+				$this->email_profile,
+				$this->status,
+			);
+			if ( null !== $email ) {
+				$args[] = $email;
 			}
+			if ( null !== $this->wp_user_id ) {
+				$args[] = $this->wp_user_id;
+			}
+			$args[] = $this->id;
+
+			// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.NotPrepared
+			$result = $wpdb->query( $wpdb->prepare( $sql, $args ) );
 		} else {
-			// Insert new - use raw query to properly handle NULL email.
-			if ( null === $email ) {
-				// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
-				$result = $wpdb->query(
-					$wpdb->prepare(
-						"INSERT INTO {$table_name} (name, surname, instagram, email_profile, status, email) VALUES (%s, %s, %s, %s, %s, NULL)",
-						$this->name,
-						$this->surname,
-						$this->instagram,
-						$this->email_profile,
-						$this->status
-					)
-				);
-				if ( $result ) {
-					$this->id = $wpdb->insert_id;
-				}
-			} else {
-				// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
-				$result = $wpdb->insert(
-					$table_name,
-					array(
-						'name'          => $this->name,
-						'surname'       => $this->surname,
-						'email'         => $email,
-						'instagram'     => $this->instagram,
-						'email_profile' => $this->email_profile,
-						'status'        => $this->status,
-					),
-					array( '%s', '%s', '%s', '%s', '%s', '%s' )
-				);
-				if ( $result ) {
-					$this->id = $wpdb->insert_id;
-				}
+			// Insert new - use raw query to properly handle NULL values.
+			$email_col      = null === $email ? 'NULL' : '%s';
+			$wp_user_id_col = null === $this->wp_user_id ? 'NULL' : '%d';
+
+			$sql  = "INSERT INTO {$table_name} (name, surname, instagram, email_profile, status, email, wp_user_id) VALUES (%s, %s, %s, %s, %s, {$email_col}, {$wp_user_id_col})";
+			$args = array(
+				$this->name,
+				$this->surname,
+				$this->instagram,
+				$this->email_profile,
+				$this->status,
+			);
+			if ( null !== $email ) {
+				$args[] = $email;
+			}
+			if ( null !== $this->wp_user_id ) {
+				$args[] = $this->wp_user_id;
+			}
+
+			// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.NotPrepared
+			$result = $wpdb->query( $wpdb->prepare( $sql, $args ) );
+			if ( $result ) {
+				$this->id = $wpdb->insert_id;
 			}
 		}
 

@@ -10,6 +10,8 @@ import {
 	SelectControl,
 } from '@wordpress/components';
 import { DataViews, filterSortAndPaginate } from '@wordpress/dataviews';
+import { Icon, warning } from '@wordpress/icons';
+import UserLinkSection from './UserLinkSection.js';
 
 const DEFAULT_VIEW = {
 	type: 'table',
@@ -27,6 +29,7 @@ const DEFAULT_VIEW = {
 		'instagram',
 		'email_profile',
 		'status',
+		'wp_user',
 		'events_signed_up',
 		'events_collaborated',
 	],
@@ -51,6 +54,8 @@ export default function AllParticipants() {
 		email: '',
 		instagram: '',
 		email_profile: 'minimal',
+		wp_user_id: null,
+		wp_user: null,
 	});
 
 	// Define fields configuration for DataViews.
@@ -131,6 +136,43 @@ export default function AllParticipants() {
 					operators: ['is'],
 				},
 				enableSorting: true,
+			},
+			{
+				id: 'wp_user',
+				label: __('WordPress User', 'fair-audience'),
+				render: ({ item }) => {
+					if (!item.wp_user) {
+						return '—';
+					}
+					const hasEmailMismatch =
+						item.email &&
+						item.wp_user.email &&
+						item.email.toLowerCase() !==
+							item.wp_user.email.toLowerCase();
+					return (
+						<span
+							style={{
+								display: 'flex',
+								alignItems: 'center',
+								gap: '4px',
+							}}
+						>
+							{item.wp_user.display_name}
+							{hasEmailMismatch && (
+								<span
+									title={__(
+										'Email addresses do not match',
+										'fair-audience'
+									)}
+									style={{ color: '#d63638' }}
+								>
+									<Icon icon={warning} size={16} />
+								</span>
+							)}
+						</span>
+					);
+				},
+				enableSorting: false,
 			},
 			{
 				id: 'events_signed_up',
@@ -234,6 +276,8 @@ export default function AllParticipants() {
 			email: '',
 			instagram: '',
 			email_profile: 'minimal',
+			wp_user_id: null,
+			wp_user: null,
 		});
 		setIsModalOpen(true);
 	};
@@ -246,6 +290,8 @@ export default function AllParticipants() {
 			email: participant.email || '',
 			instagram: participant.instagram || '',
 			email_profile: participant.email_profile,
+			wp_user_id: participant.wp_user_id || null,
+			wp_user: participant.wp_user || null,
 		});
 		setIsModalOpen(true);
 	};
@@ -256,10 +302,20 @@ export default function AllParticipants() {
 			? `/fair-audience/v1/participants/${editingParticipant.id}`
 			: '/fair-audience/v1/participants';
 
+		// Only send data that the API expects (not the wp_user object).
+		const dataToSend = {
+			name: formData.name,
+			surname: formData.surname,
+			email: formData.email,
+			instagram: formData.instagram,
+			email_profile: formData.email_profile,
+			wp_user_id: formData.wp_user_id,
+		};
+
 		apiFetch({
 			path,
 			method,
-			data: formData,
+			data: dataToSend,
 		})
 			.then(() => {
 				setIsModalOpen(false);
@@ -302,6 +358,22 @@ export default function AllParticipants() {
 			.catch((err) => {
 				alert(__('Error: ', 'fair-audience') + err.message);
 			});
+	};
+
+	const handleLinkUser = (user) => {
+		setFormData({
+			...formData,
+			wp_user_id: user.id,
+			wp_user: user,
+		});
+	};
+
+	const handleUnlinkUser = () => {
+		setFormData({
+			...formData,
+			wp_user_id: null,
+			wp_user: null,
+		});
 	};
 
 	// Define actions for DataViews.
@@ -435,11 +507,22 @@ export default function AllParticipants() {
 									})
 								}
 							/>
-							<Button variant="primary" onClick={handleSubmit}>
-								{editingParticipant
-									? __('Update', 'fair-audience')
-									: __('Add', 'fair-audience')}
-							</Button>
+							<UserLinkSection
+								linkedUser={formData.wp_user}
+								participantEmail={formData.email}
+								onLink={handleLinkUser}
+								onUnlink={handleUnlinkUser}
+							/>
+							<div style={{ marginTop: '16px' }}>
+								<Button
+									variant="primary"
+									onClick={handleSubmit}
+								>
+									{editingParticipant
+										? __('Update', 'fair-audience')
+										: __('Add', 'fair-audience')}
+								</Button>
+							</div>
 						</CardBody>
 					</Card>
 				</Modal>
