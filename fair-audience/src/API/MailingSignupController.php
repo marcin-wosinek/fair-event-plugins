@@ -296,9 +296,9 @@ class MailingSignupController extends WP_REST_Controller {
 			);
 		}
 
-		// Update participant status to confirmed and set email profile to in_the_loop.
+		// Update participant status to confirmed and set email profile to marketing.
 		$participant->status        = 'confirmed';
-		$participant->email_profile = 'in_the_loop';
+		$participant->email_profile = 'marketing';
 
 		if ( ! $participant->save() ) {
 			return new WP_Error(

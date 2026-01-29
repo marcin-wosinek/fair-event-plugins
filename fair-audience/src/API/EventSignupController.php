@@ -556,7 +556,7 @@ class EventSignupController extends WP_REST_Controller {
 				'name'          => $name,
 				'surname'       => $surname,
 				'email'         => $email,
-				'email_profile' => $keep_informed ? 'in_the_loop' : 'minimal',
+				'email_profile' => $keep_informed ? 'marketing' : 'minimal',
 				'status'        => 'confirmed',
 			)
 		);

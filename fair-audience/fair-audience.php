@@ -55,7 +55,7 @@ function fair_audience_activate() {
 	flush_rewrite_rules();
 
 	// Update database version.
-	update_option( 'fair_audience_db_version', '1.10.0' );
+	update_option( 'fair_audience_db_version', '1.11.0' );
 }
 register_activation_hook( __FILE__, __NAMESPACE__ . '\\fair_audience_activate' );
 
@@ -196,6 +196,35 @@ function fair_audience_maybe_upgrade_db() {
 		dbDelta( \FairAudience\Database\Schema::get_event_signup_access_keys_table_sql() );
 
 		update_option( 'fair_audience_db_version', '1.10.0' );
+	}
+
+	if ( version_compare( $db_version, '1.11.0', '<' ) ) {
+		global $wpdb;
+		$participants_table = $wpdb->prefix . 'fair_audience_participants';
+
+		// Step 1: Modify ENUM to include new value.
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.DirectDatabaseQuery.SchemaChange
+		$wpdb->query(
+			"ALTER TABLE {$participants_table}
+			 MODIFY COLUMN email_profile ENUM('minimal', 'in_the_loop', 'marketing') NOT NULL DEFAULT 'minimal'"
+		);
+
+		// Step 2: Update existing rows.
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+		$wpdb->query(
+			"UPDATE {$participants_table}
+			 SET email_profile = 'marketing'
+			 WHERE email_profile = 'in_the_loop'"
+		);
+
+		// Step 3: Remove old ENUM value.
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.DirectDatabaseQuery.SchemaChange
+		$wpdb->query(
+			"ALTER TABLE {$participants_table}
+			 MODIFY COLUMN email_profile ENUM('minimal', 'marketing') NOT NULL DEFAULT 'minimal'"
+		);
+
+		update_option( 'fair_audience_db_version', '1.11.0' );
 	}
 }
 add_action( 'plugins_loaded', __NAMESPACE__ . '\\fair_audience_maybe_upgrade_db' );

@@ -99,15 +99,15 @@ export default function AllParticipants() {
 				render: ({ item }) => {
 					const labels = {
 						minimal: __('Minimal', 'fair-audience'),
-						in_the_loop: __('In the Loop', 'fair-audience'),
+						marketing: __('Marketing', 'fair-audience'),
 					};
 					return labels[item.email_profile] || item.email_profile;
 				},
 				elements: [
 					{ value: 'minimal', label: __('Minimal', 'fair-audience') },
 					{
-						value: 'in_the_loop',
-						label: __('In the Loop', 'fair-audience'),
+						value: 'marketing',
+						label: __('Marketing', 'fair-audience'),
 					},
 				],
 				filterBy: {
@@ -492,11 +492,8 @@ export default function AllParticipants() {
 										value: 'minimal',
 									},
 									{
-										label: __(
-											'In the Loop',
-											'fair-audience'
-										),
-										value: 'in_the_loop',
+										label: __('Marketing', 'fair-audience'),
+										value: 'marketing',
 									},
 								]}
 								onChange={(value) =>

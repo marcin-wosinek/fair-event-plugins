@@ -185,7 +185,7 @@ class ParticipantRepository {
 		}
 
 		// Email profile filter.
-		$allowed_email_profiles = array( 'minimal', 'in_the_loop' );
+		$allowed_email_profiles = array( 'minimal', 'marketing' );
 		if ( ! empty( $args['email_profile'] ) && in_array( $args['email_profile'], $allowed_email_profiles, true ) ) {
 			$where_clauses[] = 'email_profile = %s';
 			$prepare_args[]  = $args['email_profile'];
@@ -216,7 +216,7 @@ class ParticipantRepository {
 	 *     Optional. Arguments for filtering, sorting, and pagination.
 	 *
 	 *     @type string $search        Search term for name/surname/email.
-	 *     @type string $email_profile Filter by email profile (minimal, in_the_loop).
+	 *     @type string $email_profile Filter by email profile (minimal, marketing).
 	 *     @type string $status        Filter by status (pending, confirmed).
 	 *     @type string $orderby       Column to order by.
 	 *     @type string $order         Order direction (ASC/DESC).
@@ -335,7 +335,7 @@ class ParticipantRepository {
 	 *     Optional. Arguments for filtering.
 	 *
 	 *     @type string $search        Search term for name/surname/email.
-	 *     @type string $email_profile Filter by email profile (minimal, in_the_loop).
+	 *     @type string $email_profile Filter by email profile (minimal, marketing).
 	 *     @type string $status        Filter by status (pending, confirmed).
 	 * }
 	 * @return int Count of matching participants.

@@ -31,7 +31,7 @@ class Schema {
 			surname VARCHAR(255) DEFAULT '',
 			email VARCHAR(255) DEFAULT NULL,
 			instagram VARCHAR(255) DEFAULT '' COMMENT 'Instagram handle without @',
-			email_profile ENUM('minimal', 'in_the_loop') NOT NULL DEFAULT 'minimal',
+			email_profile ENUM('minimal', 'marketing') NOT NULL DEFAULT 'minimal',
 			status ENUM('pending', 'confirmed') NOT NULL DEFAULT 'confirmed',
 			wp_user_id BIGINT UNSIGNED DEFAULT NULL,
 			created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
@@ -302,7 +302,7 @@ class Schema {
 		return "CREATE TABLE $table_name (
 			id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
 			name VARCHAR(255) NOT NULL,
-			description TEXT DEFAULT '',
+			description TEXT,
 			created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
 			updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
 			PRIMARY KEY  (id),
