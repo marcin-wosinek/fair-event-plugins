@@ -9,6 +9,7 @@ namespace FairAudience\API;
 
 use FairAudience\Database\ParticipantRepository;
 use FairAudience\Database\EventParticipantRepository;
+use FairAudience\Database\GroupParticipantRepository;
 use FairAudience\Models\Participant;
 use WP_REST_Controller;
 use WP_REST_Server;
@@ -52,11 +53,19 @@ class ParticipantsController extends WP_REST_Controller {
 	private $event_participant_repository;
 
 	/**
+	 * Group participant repository instance.
+	 *
+	 * @var GroupParticipantRepository
+	 */
+	private $group_participant_repository;
+
+	/**
 	 * Constructor.
 	 */
 	public function __construct() {
 		$this->repository                   = new ParticipantRepository();
 		$this->event_participant_repository = new EventParticipantRepository();
+		$this->group_participant_repository = new GroupParticipantRepository();
 	}
 
 	/**
@@ -154,8 +163,11 @@ class ParticipantsController extends WP_REST_Controller {
 		);
 		$event_counts    = $this->event_participant_repository->get_event_counts_for_participants( $participant_ids );
 
+		// Get groups for all participants in one query.
+		$participant_groups = $this->group_participant_repository->get_groups_for_participants( $participant_ids );
+
 		$items = array_map(
-			function ( $participant ) use ( $request, $event_counts ) {
+			function ( $participant ) use ( $request, $event_counts, $participant_groups ) {
 				$item = $this->prepare_item_for_response( $participant, $request );
 
 				// Add event counts.
@@ -167,6 +179,9 @@ class ParticipantsController extends WP_REST_Controller {
 				$item['events_signed_up']    = $counts['signed_up'];
 				$item['events_collaborated'] = $counts['collaborator'];
 				$item['events_interested']   = $counts['interested'];
+
+				// Add groups.
+				$item['groups'] = $participant_groups[ $participant->id ] ?? array();
 
 				return $item;
 			},

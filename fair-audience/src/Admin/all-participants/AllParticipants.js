@@ -29,6 +29,7 @@ const DEFAULT_VIEW = {
 		'instagram',
 		'email_profile',
 		'status',
+		'groups',
 		'wp_user',
 		'events_signed_up',
 		'events_collaborated',
@@ -136,6 +137,18 @@ export default function AllParticipants() {
 					operators: ['is'],
 				},
 				enableSorting: true,
+			},
+			{
+				id: 'groups',
+				label: __('Groups', 'fair-audience'),
+				render: ({ item }) => {
+					if (!item.groups || item.groups.length === 0) {
+						return '—';
+					}
+					return item.groups.map((g) => g.name).join(', ');
+				},
+				enableSorting: true,
+				getValue: ({ item }) => (item.groups ? item.groups.length : 0),
 			},
 			{
 				id: 'wp_user',

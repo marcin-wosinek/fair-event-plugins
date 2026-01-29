@@ -290,4 +290,56 @@ class GroupParticipantRepository {
 
 		return $counts;
 	}
+
+	/**
+	 * Get groups with names for specific participants.
+	 *
+	 * @param array $participant_ids Array of participant IDs.
+	 * @return array Associative array: participant_id => array of group data (id, name).
+	 */
+	public function get_groups_for_participants( $participant_ids ) {
+		global $wpdb;
+
+		if ( empty( $participant_ids ) ) {
+			return array();
+		}
+
+		$table_name   = $this->get_table_name();
+		$groups_table = $wpdb->prefix . 'fair_audience_groups';
+
+		// Build placeholders for IN clause.
+		$placeholders = implode( ',', array_fill( 0, count( $participant_ids ), '%d' ) );
+
+		// phpcs:disable WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.PreparedSQLPlaceholders.UnfinishedPrepare -- $placeholders is safely constructed.
+		$results = $wpdb->get_results(
+			$wpdb->prepare(
+				"SELECT gp.participant_id, g.id as group_id, g.name as group_name
+				FROM %i gp
+				INNER JOIN %i g ON gp.group_id = g.id
+				WHERE gp.participant_id IN ($placeholders)
+				ORDER BY g.name ASC",
+				array_merge( array( $table_name, $groups_table ), array_map( 'intval', $participant_ids ) )
+			),
+			ARRAY_A
+		);
+		// phpcs:enable WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.PreparedSQLPlaceholders.UnfinishedPrepare
+
+		$groups = array();
+
+		// Initialize all requested participants with empty arrays.
+		foreach ( $participant_ids as $id ) {
+			$groups[ (int) $id ] = array();
+		}
+
+		// Fill in actual groups.
+		foreach ( $results as $row ) {
+			$participant_id              = (int) $row['participant_id'];
+			$groups[ $participant_id ][] = array(
+				'id'   => (int) $row['group_id'],
+				'name' => $row['group_name'],
+			);
+		}
+
+		return $groups;
+	}
 }

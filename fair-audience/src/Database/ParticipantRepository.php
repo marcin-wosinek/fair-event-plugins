@@ -242,12 +242,14 @@ class ParticipantRepository {
 
 		$table_name       = $this->get_table_name();
 		$event_table_name = $wpdb->prefix . 'fair_audience_event_participants';
+		$group_table_name = $wpdb->prefix . 'fair_audience_group_participants';
 
-		// Validate orderby - includes event count columns.
+		// Validate orderby - includes event count and group count columns.
 		$allowed_orderby      = array( 'id', 'name', 'surname', 'email', 'email_profile', 'status', 'created_at' );
 		$event_count_orderbys = array( 'events_signed_up', 'events_collaborated', 'events_interested' );
 		$is_event_count_order = in_array( $args['orderby'], $event_count_orderbys, true );
-		$orderby              = in_array( $args['orderby'], $allowed_orderby, true ) ? $args['orderby'] : ( $is_event_count_order ? $args['orderby'] : 'surname' );
+		$is_group_count_order = 'groups' === $args['orderby'];
+		$orderby              = in_array( $args['orderby'], $allowed_orderby, true ) ? $args['orderby'] : ( $is_event_count_order || $is_group_count_order ? $args['orderby'] : 'surname' );
 		$order                = in_array( strtoupper( $args['order'] ), array( 'ASC', 'DESC' ), true ) ? strtoupper( $args['order'] ) : 'ASC';
 
 		// Build WHERE clause.
@@ -262,7 +264,7 @@ class ParticipantRepository {
 			$limit_sql = ' LIMIT %d OFFSET %d';
 		}
 
-		// Use different query for event count sorting vs regular column sorting.
+		// Use different query for event count sorting, group count sorting, or regular column sorting.
 		if ( $is_event_count_order ) {
 			// Map orderby to label value.
 			$label_map = array(
@@ -294,6 +296,33 @@ class ParticipantRepository {
 					) event_counts ON p.id = event_counts.participant_id
 					$where_sql
 					ORDER BY event_count $order, p.surname ASC
+					$limit_sql",
+					$prepare_args
+				),
+				ARRAY_A
+			);
+			// phpcs:enable WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.PreparedSQLPlaceholders.ReplacementsWrongNumber
+		} elseif ( $is_group_count_order ) {
+			// Add group table to prepare args.
+			$prepare_args[] = $group_table_name;
+
+			if ( $args['per_page'] > 0 ) {
+				$prepare_args[] = (int) $args['per_page'];
+				$prepare_args[] = $offset;
+			}
+
+			// phpcs:disable WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.PreparedSQLPlaceholders.ReplacementsWrongNumber -- $where_sql, $order, and $limit_sql are safely constructed with validated values.
+			$results = $wpdb->get_results(
+				$wpdb->prepare(
+					"SELECT p.*, COALESCE(group_counts.cnt, 0) as group_count
+					FROM %i p
+					LEFT JOIN (
+						SELECT participant_id, COUNT(*) as cnt
+						FROM %i
+						GROUP BY participant_id
+					) group_counts ON p.id = group_counts.participant_id
+					$where_sql
+					ORDER BY group_count $order, p.surname ASC
 					$limit_sql",
 					$prepare_args
 				),
