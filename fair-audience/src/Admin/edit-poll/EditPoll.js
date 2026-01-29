@@ -348,6 +348,7 @@ export default function EditPoll() {
 					<p>
 						<strong>
 							{sprintf(
+								/* translators: %d: number of participants who received invitations */
 								__(
 									'Invitations sent to %d participants',
 									'fair-audience'
@@ -511,7 +512,8 @@ export default function EditPoll() {
 						},
 						...events.map((event) => ({
 							label: sprintf(
-								__('%s (%d participants)', 'fair-audience'),
+								/* translators: %1$s: event title, %2$d: number of participants */
+								__('%1$s (%2$d participants)', 'fair-audience'),
 								event.title,
 								event.participant_counts.signed_up || 0
 							),
@@ -571,6 +573,7 @@ export default function EditPoll() {
 									handleOptionChange(index, value)
 								}
 								placeholder={sprintf(
+									/* translators: %d: option number (1, 2, 3, etc.) */
 									__('Option %d', 'fair-audience'),
 									index + 1
 								)}

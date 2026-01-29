@@ -51,10 +51,10 @@ msgstr "Todos los Participantes"
 msgid "By Event"
 msgstr "Por Evento"
 
-#: src/Admin/event-participants/EventParticipants.js:503
-#: src/Admin/event-participants/EventParticipants.js:512
-#: src/Admin/event-participants/EventParticipants.js:522
-#: src/Admin/event-participants/EventParticipants.js:538
+#: src/Admin/event-participants/EventParticipants.js:592
+#: src/Admin/event-participants/EventParticipants.js:601
+#: src/Admin/event-participants/EventParticipants.js:611
+#: src/Admin/event-participants/EventParticipants.js:627
 msgid "Event Participants"
 msgstr "Participantes del Evento"
 
@@ -64,6 +64,7 @@ msgstr "Participantes del Evento"
 msgid "Import"
 msgstr "Importar"
 
+#: src/API/EventInvitationsController.php:132
 #: src/API/EventParticipantsController.php:283
 #: src/API/EventParticipantsController.php:347
 #: src/API/EventParticipantsController.php:688
@@ -73,8 +74,9 @@ msgstr "Importar"
 #: src/API/EventSignupController.php:481
 #: src/API/GalleryAccessController.php:247
 #: src/API/GalleryAccessController.php:279
-#: src/Services/EmailService.php:235
-#: src/Services/EmailService.php:435
+#: src/Services/EmailService.php:271
+#: src/Services/EmailService.php:471
+#: src/Services/EmailService.php:802
 msgid "Event not found."
 msgstr "Evento no encontrado."
 
@@ -83,8 +85,9 @@ msgstr "Evento no encontrado."
 #: src/API/ParticipantsController.php:201
 #: src/API/ParticipantsController.php:315
 #: src/API/ParticipantsController.php:417
-#: src/Services/EmailService.php:258
-#: src/Services/EmailService.php:457
+#: src/Services/EmailService.php:294
+#: src/Services/EmailService.php:493
+#: src/Services/EmailService.php:853
 msgid "Participant not found."
 msgstr "Participante no encontrado."
 
@@ -144,9 +147,9 @@ msgstr "Participante eliminado con éxito."
 #: src/Admin/all-participants/AllParticipants.js:325
 #: src/Admin/all-participants/AllParticipants.js:359
 #: src/Admin/collaborators/Collaborators.js:274
-#: src/Admin/event-participants/EventParticipants.js:201
-#: src/Admin/event-participants/EventParticipants.js:245
-#: src/Admin/event-participants/EventParticipants.js:514
+#: src/Admin/event-participants/EventParticipants.js:214
+#: src/Admin/event-participants/EventParticipants.js:258
+#: src/Admin/event-participants/EventParticipants.js:603
 #: src/Admin/groups/Groups.js:180
 #: src/Admin/groups/Groups.js:214
 #: src/Admin/groups/Groups.js:320
@@ -167,7 +170,7 @@ msgstr "Agregar Participante"
 #: src/Admin/all-participants/AllParticipants.js:66
 #: src/Admin/collaborators/Collaborators.js:54
 #: src/Admin/edit-poll/EditPoll.js:248
-#: src/Admin/event-participants/EventParticipants.js:441
+#: src/Admin/event-participants/EventParticipants.js:530
 #: src/Admin/groups/Groups.js:63
 #: src/Admin/groups/Groups.js:427
 #: src/Admin/import/WordPressUsersImport.js:220
@@ -200,7 +203,7 @@ msgid "Actions"
 msgstr "Acciones"
 
 #: src/Admin/all-participants/AllParticipants.js:384
-#: src/Admin/event-participants/EventParticipants.js:474
+#: src/Admin/event-participants/EventParticipants.js:563
 #: src/Admin/groups/Groups.js:352
 #: src/Admin/polls-list/PollsList.js:157
 msgid "Edit"
@@ -213,7 +216,7 @@ msgid "Delete"
 msgstr "Eliminar"
 
 #: src/Admin/all-participants/AllParticipants.js:439
-#: src/Admin/event-participants/EventParticipants.js:787
+#: src/Admin/event-participants/EventParticipants.js:882
 msgid "Edit Participant"
 msgstr "Editar Participante"
 
@@ -235,40 +238,34 @@ msgstr "Ingrese solo el nombre de usuario (sin @)"
 msgid "Minimal"
 msgstr "Mínimo"
 
-#: src/Admin/all-participants/AllParticipants.js:102
-#: src/Admin/all-participants/AllParticipants.js:110
-#: src/Admin/all-participants/AllParticipants.js:495
-msgid "In the Loop"
-msgstr "En el círculo"
-
-#: src/Admin/all-participants/AllParticipants.js:521
+#: src/Admin/all-participants/AllParticipants.js:518
 #: src/Admin/groups/Groups.js:464
 msgid "Update"
 msgstr "Actualizar"
 
-#: src/Admin/all-participants/AllParticipants.js:522
-#: src/Admin/event-participants/EventParticipants.js:432
+#: src/Admin/all-participants/AllParticipants.js:519
+#: src/Admin/event-participants/EventParticipants.js:521
 msgid "Add"
 msgstr "Añadir"
 
-#: src/Admin/event-participants/EventParticipants.js:55
+#: src/Admin/event-participants/EventParticipants.js:59
 msgid "No event ID provided"
 msgstr "No se proporcionó un ID de evento"
 
-#: src/Admin/event-participants/EventParticipants.js:794
+#: src/Admin/event-participants/EventParticipants.js:889
 msgid "Label"
 msgstr "Etiqueta"
 
-#: src/Admin/event-participants/EventParticipants.js:798
+#: src/Admin/event-participants/EventParticipants.js:893
 msgid "Interested"
 msgstr "Interesado"
 
-#: src/Admin/event-participants/EventParticipants.js:802
+#: src/Admin/event-participants/EventParticipants.js:897
 msgid "Signed Up"
 msgstr "Inscrito"
 
-#: src/Admin/edit-poll/EditPoll.js:602
-#: src/Admin/event-participants/EventParticipants.js:479
+#: src/Admin/edit-poll/EditPoll.js:605
+#: src/Admin/event-participants/EventParticipants.js:568
 #: src/Admin/groups/Groups.js:531
 msgid "Remove"
 msgstr "Eliminar"
@@ -278,7 +275,7 @@ msgstr "Eliminar"
 msgid "Events"
 msgstr "Eventos"
 
-#: src/Admin/edit-poll/EditPoll.js:502
+#: src/Admin/edit-poll/EditPoll.js:503
 #: src/Admin/events-list/EventsList.js:37
 msgid "Event"
 msgstr "Evento"
@@ -487,7 +484,7 @@ msgstr "Ya ha respondido a esta encuesta."
 #: src/API/PollsController.php:486
 #: src/API/PollsController.php:520
 #: src/API/PollsController.php:553
-#: src/Services/EmailService.php:224
+#: src/Services/EmailService.php:260
 msgid "Poll not found."
 msgstr "Encuesta no encontrada."
 
@@ -554,52 +551,53 @@ msgid "Poll deleted successfully."
 msgstr "Encuesta eliminada con éxito."
 
 #. translators: %s: event title
-#: src/Services/EmailService.php:90
+#: src/Services/EmailService.php:126
 #, php-format
 msgid "Quick question about %s"
 msgstr "Pregunta rápida sobre %s"
 
 #. translators: %s: participant first name
-#: src/Services/EmailService.php:119
-#: src/Services/EmailService.php:330
-#: src/Services/EmailService.php:526
-#: src/Services/EmailService.php:646
+#: src/Services/EmailService.php:155
+#: src/Services/EmailService.php:366
+#: src/Services/EmailService.php:562
+#: src/Services/EmailService.php:685
 #, php-format
 msgid "Hi %s,"
 msgstr "Hola %s,"
 
 #. translators: %s: event title
-#: src/Services/EmailService.php:127
+#: src/Services/EmailService.php:163
 #, php-format
 msgid "We'd love to hear from you about %s!"
 msgstr "¡Nos encantaría saber tu opinión sobre %s!"
 
-#: src/Services/EmailService.php:141
+#: src/Services/EmailService.php:177
 msgid "Please take a moment to answer our quick poll:"
 msgstr "Por favor, tómate un momento para responder nuestra breve encuesta:"
 
-#: src/Services/EmailService.php:146
+#: src/Services/EmailService.php:182
 msgid "Answer Poll"
 msgstr "Responder Encuesta"
 
 #. translators: %s: site name
-#: src/Services/EmailService.php:153
-#: src/Services/EmailService.php:364
-#: src/Services/EmailService.php:552
-#: src/Services/EmailService.php:676
+#: src/Services/EmailService.php:189
+#: src/Services/EmailService.php:400
+#: src/Services/EmailService.php:588
+#: src/Services/EmailService.php:715
 #, php-format
 msgid "Thanks,%1$sThe %2$s Team"
 msgstr "Gracias,%1$sEl equipo de %2$s"
 
-#: src/Services/EmailService.php:165
-#: src/Services/EmailService.php:376
-#: src/Services/EmailService.php:564
-#: src/Services/EmailService.php:688
+#: src/Services/EmailService.php:201
+#: src/Services/EmailService.php:412
+#: src/Services/EmailService.php:600
+#: src/Services/EmailService.php:727
 msgid "If the button above doesn't work, copy and paste this link:"
 msgstr "Si el botón de arriba no funciona, copia y pega este enlace:"
 
-#: src/Services/EmailService.php:275
-#: src/Services/EmailService.php:473
+#: src/Services/EmailService.php:311
+#: src/Services/EmailService.php:509
+#: src/Services/EmailService.php:886
 msgid "wp_mail() failed to send."
 msgstr "wp_mail() no pudo enviar."
 
@@ -647,145 +645,144 @@ msgstr "Sí"
 msgid "Add New Poll"
 msgstr "Añadir Nueva Encuesta"
 
-#: src/Admin/edit-poll/EditPoll.js:351
+#. translators: %d: number of participants who received invitations
+#: src/Admin/edit-poll/EditPoll.js:352
 #, js-format
 msgid "Invitations sent to %d participants"
 msgstr "Invitaciones enviadas a %d participantes"
 
-#: src/Admin/edit-poll/EditPoll.js:361
+#: src/Admin/edit-poll/EditPoll.js:362
 msgid "Failed to send to:"
 msgstr "Error al enviar a:"
 
-#: src/Admin/edit-poll/EditPoll.js:386
+#: src/Admin/edit-poll/EditPoll.js:387
 msgid "Poll Statistics"
 msgstr "Estadísticas de la Encuesta"
 
-#: src/Admin/edit-poll/EditPoll.js:413
+#: src/Admin/edit-poll/EditPoll.js:414
 msgid "Answered"
 msgstr "Respondido"
 
-#: src/Admin/edit-poll/EditPoll.js:434
+#: src/Admin/edit-poll/EditPoll.js:435
 msgid "Received Email"
 msgstr "Correo Electrónico Recibido"
 
-#: src/Admin/edit-poll/EditPoll.js:455
+#: src/Admin/edit-poll/EditPoll.js:456
 msgid "Did Not Receive Email"
 msgstr "Correo Electrónico No Recibido"
 
-#: src/Admin/edit-poll/EditPoll.js:470
-#: src/Admin/event-participants/EventParticipants.js:638
+#: src/Admin/edit-poll/EditPoll.js:471
+#: src/Admin/event-participants/EventParticipants.js:733
+#: src/Admin/event-participants/EventParticipants.js:1018
 #: src/blocks/event-signup/frontend.js:276
 msgid "Sending..."
 msgstr "Enviando..."
 
-#: src/Admin/edit-poll/EditPoll.js:471
+#: src/Admin/edit-poll/EditPoll.js:472
 msgid "Send Poll Invitations"
 msgstr "Enviar Invitaciones de Encuesta"
 
-#: src/Admin/edit-poll/EditPoll.js:479
+#: src/Admin/edit-poll/EditPoll.js:480
 msgid "Generating PDF..."
 msgstr "Generando PDF..."
 
-#: src/Admin/edit-poll/EditPoll.js:480
+#: src/Admin/edit-poll/EditPoll.js:481
 msgid "Download Results PDF"
 msgstr "Descargar PDF de Resultados"
 
-#: src/Admin/edit-poll/EditPoll.js:483
+#: src/Admin/edit-poll/EditPoll.js:484
 msgid "Send this poll to all event participants who have not yet responded. Participants who have already answered will be skipped."
 msgstr "Envíe esta encuesta a todos los participantes del evento que aún no han respondido. Los participantes que ya han respondido serán omitidos."
 
-#: src/Admin/edit-poll/EditPoll.js:509
+#: src/Admin/edit-poll/EditPoll.js:510
 msgid "Select an event..."
 msgstr "Seleccione un evento..."
 
-#: src/Admin/edit-poll/EditPoll.js:514
-#, js-format
-msgid "%s (%d participants)"
-msgstr "%s (%d participantes)"
-
-#: src/Admin/edit-poll/EditPoll.js:525
+#: src/Admin/edit-poll/EditPoll.js:527
 msgid "Poll Title (Internal)"
 msgstr "Título de la Encuesta (Interno)"
 
-#: src/Admin/edit-poll/EditPoll.js:530
+#: src/Admin/edit-poll/EditPoll.js:532
 msgid "Internal reference for this poll."
 msgstr "Referencia interna para esta encuesta."
 
-#: src/Admin/edit-poll/EditPoll.js:537
+#: src/Admin/edit-poll/EditPoll.js:539
 #: src/Admin/polls-list/PollsList.js:110
 msgid "Question"
 msgstr "Pregunta"
 
-#: src/Admin/edit-poll/EditPoll.js:542
+#: src/Admin/edit-poll/EditPoll.js:544
 msgid "The question shown to participants."
 msgstr "La pregunta mostrada a los participantes."
 
-#: src/Admin/edit-poll/EditPoll.js:549
+#: src/Admin/edit-poll/EditPoll.js:551
 msgid "Options"
 msgstr "Opciones"
 
-#: src/Admin/edit-poll/EditPoll.js:551
+#: src/Admin/edit-poll/EditPoll.js:553
 msgid "Add the multiple-choice options for participants to select from."
 msgstr "Agregue las opciones de opción múltiple para que los participantes seleccionen."
 
-#: src/Admin/edit-poll/EditPoll.js:574
+#. translators: %d: option number (1, 2, 3, etc.)
+#: src/Admin/edit-poll/EditPoll.js:577
 #, js-format
 msgid "Option %d"
 msgstr "Opción %d"
 
-#: src/Admin/edit-poll/EditPoll.js:590
+#: src/Admin/edit-poll/EditPoll.js:593
 msgid "Move up"
 msgstr "Mover arriba"
 
-#: src/Admin/edit-poll/EditPoll.js:596
+#: src/Admin/edit-poll/EditPoll.js:599
 msgid "Move down"
 msgstr "Mover abajo"
 
-#: src/Admin/edit-poll/EditPoll.js:610
+#: src/Admin/edit-poll/EditPoll.js:613
 msgid "Add Option"
 msgstr "Agregar opción"
 
 #: src/Admin/all-participants/AllParticipants.js:120
-#: src/Admin/edit-poll/EditPoll.js:615
+#: src/Admin/edit-poll/EditPoll.js:618
 #: src/Admin/import/WordPressUsersImport.js:223
 #: src/Admin/polls-list/PollsList.js:111
 msgid "Status"
 msgstr "Estado"
 
-#: src/Admin/edit-poll/EditPoll.js:622
+#: src/Admin/edit-poll/EditPoll.js:625
 msgid "Draft"
 msgstr "Borrador"
 
-#: src/Admin/edit-poll/EditPoll.js:626
+#: src/Admin/edit-poll/EditPoll.js:629
 msgid "Active"
 msgstr "Activo"
 
-#: src/Admin/edit-poll/EditPoll.js:630
+#: src/Admin/edit-poll/EditPoll.js:633
 msgid "Closed"
 msgstr "Cerrado"
 
-#: src/Admin/edit-poll/EditPoll.js:634
+#: src/Admin/edit-poll/EditPoll.js:637
 msgid "Active polls can receive responses. Closed polls do not accept new responses."
 msgstr "Las encuestas activas pueden recibir respuestas. Las encuestas cerradas no aceptan nuevas respuestas."
 
 #: src/Admin/MediaLibraryHooks.php:349
-#: src/Admin/edit-poll/EditPoll.js:645
+#: src/Admin/edit-poll/EditPoll.js:648
 msgid "Saving..."
 msgstr "Guardando..."
 
-#: src/Admin/edit-poll/EditPoll.js:647
+#: src/Admin/edit-poll/EditPoll.js:650
 msgid "Update Poll"
 msgstr "Actualizar encuesta"
 
-#: src/Admin/edit-poll/EditPoll.js:648
+#: src/Admin/edit-poll/EditPoll.js:651
 msgid "Create Poll"
 msgstr "Crear encuesta"
 
 #: src/Admin/MediaBatchActions.php:257
 #: src/Admin/collaborators/Collaborators.js:397
-#: src/Admin/edit-poll/EditPoll.js:655
-#: src/Admin/event-participants/EventParticipants.js:759
-#: src/Admin/event-participants/EventParticipants.js:824
+#: src/Admin/edit-poll/EditPoll.js:658
+#: src/Admin/event-participants/EventParticipants.js:854
+#: src/Admin/event-participants/EventParticipants.js:919
+#: src/Admin/event-participants/EventParticipants.js:1007
 #: src/Admin/groups/Groups.js:455
 msgid "Cancel"
 msgstr "Cancelar"
@@ -856,7 +853,7 @@ msgstr "Enviando..."
 msgid "Submit Response"
 msgstr "Enviar Respuesta"
 
-#: src/Admin/event-participants/EventParticipants.js:806
+#: src/Admin/event-participants/EventParticipants.js:901
 msgid "Collaborator"
 msgstr "Colaborador"
 
@@ -1096,44 +1093,44 @@ msgid "Enter your email"
 msgstr "Introduce tu correo electrónico"
 
 #. translators: %s: event title
-#: src/Services/EmailService.php:301
+#: src/Services/EmailService.php:337
 #, php-format
 msgid "Photos from %s are ready!"
 msgstr "¡Las fotos de %s están listas!"
 
 #. translators: %s: event title
-#: src/Services/EmailService.php:338
+#: src/Services/EmailService.php:374
 #, php-format
 msgid "The photos from %s are now available for you to view and like!"
 msgstr "¡Las fotos de %s ya están disponibles para que las veas y te gusten!"
 
-#: src/Services/EmailService.php:352
+#: src/Services/EmailService.php:388
 msgid "Click the button below to browse the gallery and let us know which photos you like best:"
 msgstr "Haz clic en el botón de abajo para navegar por la galería y decirnos qué fotos te gustan más:"
 
-#: src/Services/EmailService.php:357
+#: src/Services/EmailService.php:393
 msgid "View Gallery"
 msgstr "Ver Galería"
 
 #. translators: %s: site name
-#: src/Services/EmailService.php:497
+#: src/Services/EmailService.php:533
 #, php-format
 msgid "Confirm your subscription to %s"
 msgstr "Confirma tu suscripción a %s"
 
-#: src/Services/EmailService.php:532
+#: src/Services/EmailService.php:568
 msgid "Thank you for signing up for our mailing list! Please confirm your email address by clicking the button below."
 msgstr "¡Gracias por suscribirte a nuestra lista de correo! Por favor, confirma tu dirección de correo electrónico haciendo clic en el botón de abajo."
 
-#: src/Services/EmailService.php:537
+#: src/Services/EmailService.php:573
 msgid "Confirm Email"
 msgstr "Confirmar Correo"
 
-#: src/Services/EmailService.php:542
+#: src/Services/EmailService.php:578
 msgid "This link will expire in 48 hours."
 msgstr "Este enlace caducará en 48 horas."
 
-#: src/Services/EmailService.php:546
+#: src/Services/EmailService.php:582
 msgid "If you didn't sign up for this mailing list, you can safely ignore this email."
 msgstr "Si no te has suscrito a esta lista de correo, puedes ignorar este correo electrónico de forma segura."
 
@@ -1166,89 +1163,92 @@ msgid "Confirmation Failed"
 msgstr "Confirmación Fallida"
 
 #: templates/email-confirmation.php:170
+#: templates/manage-subscription.php:219
+#: templates/manage-subscription.php:270
 msgid "Return to Homepage"
 msgstr "Volver a la página de inicio"
 
 #. translators: %d: number of participants
-#: src/Admin/event-participants/EventParticipants.js:168
+#: src/Admin/event-participants/EventParticipants.js:181
 #, js-format
 msgid "Successfully added %d participant(s)"
 msgstr "Se agregaron %d participante(s) correctamente"
 
-#: src/Admin/event-participants/EventParticipants.js:182
+#: src/Admin/event-participants/EventParticipants.js:195
 msgid "Error adding participants: "
 msgstr "Error al agregar participantes: "
 
-#: src/Admin/event-participants/EventParticipants.js:327
+#: src/Admin/event-participants/EventParticipants.js:340
 msgid "No participants to send gallery links to."
 msgstr "No hay participantes a quienes enviar enlaces de galería."
 
 #. translators: %d: number of participants
-#: src/Admin/event-participants/EventParticipants.js:258
-#: src/Admin/event-participants/EventParticipants.js:335
+#: src/Admin/event-participants/EventParticipants.js:271
+#: src/Admin/event-participants/EventParticipants.js:348
 #, js-format
 msgid "Send gallery links to %d participant(s)? They will receive an email with a unique link to view and like photos."
 msgstr "¿Enviar enlaces de galería a %d participante(s)? Recibirán un correo electrónico con un enlace único para ver y dar me gusta a las fotos."
 
 #. translators: %d: number of emails sent
-#: src/Admin/event-participants/EventParticipants.js:283
-#: src/Admin/event-participants/EventParticipants.js:369
+#: src/Admin/event-participants/EventParticipants.js:296
+#: src/Admin/event-participants/EventParticipants.js:382
 #, js-format
 msgid "Successfully sent gallery links to %d participant(s)!"
 msgstr "¡Se enviaron enlaces de galería a %d participante(s) correctamente!"
 
 #. translators: %d: number of failed sends
-#: src/Admin/event-participants/EventParticipants.js:298
-#: src/Admin/event-participants/EventParticipants.js:384
+#: src/Admin/event-participants/EventParticipants.js:311
+#: src/Admin/event-participants/EventParticipants.js:397
+#: src/Admin/event-participants/EventParticipants.js:492
 #, js-format
 msgid "Failed to send to %d participant(s). Check console for details."
 msgstr "No se pudo enviar a %d participante(s). Revise la consola para obtener detalles."
 
-#: src/Admin/event-participants/EventParticipants.js:308
-#: src/Admin/event-participants/EventParticipants.js:397
+#: src/Admin/event-participants/EventParticipants.js:321
+#: src/Admin/event-participants/EventParticipants.js:410
 msgid "Error sending gallery links: "
 msgstr "Error al enviar enlaces de galería: "
 
-#: src/Admin/event-participants/EventParticipants.js:426
-#: src/Admin/event-participants/EventParticipants.js:604
+#: src/Admin/event-participants/EventParticipants.js:515
+#: src/Admin/event-participants/EventParticipants.js:693
 msgid "Add Collaborators"
 msgstr "Agregar Colaboradores"
 
-#: src/Admin/event-participants/EventParticipants.js:428
-#: src/Admin/event-participants/EventParticipants.js:610
+#: src/Admin/event-participants/EventParticipants.js:517
+#: src/Admin/event-participants/EventParticipants.js:699
 msgid "Add Interested"
 msgstr "Agregar Interesados"
 
-#: src/Admin/event-participants/EventParticipants.js:430
-#: src/Admin/event-participants/EventParticipants.js:598
+#: src/Admin/event-participants/EventParticipants.js:519
+#: src/Admin/event-participants/EventParticipants.js:687
 msgid "Add Participants"
 msgstr "Agregar Participantes"
 
-#: src/Admin/event-participants/EventParticipants.js:665
+#: src/Admin/event-participants/EventParticipants.js:760
 msgid "All participants are already added to this event."
 msgstr "Todos los participantes ya están agregados a este evento."
 
 #. translators: %d: number of available participants
-#: src/Admin/event-participants/EventParticipants.js:683
+#: src/Admin/event-participants/EventParticipants.js:778
 #, js-format
 msgid "%d participant(s) available"
 msgstr "%d participante(s) disponible(s)"
 
-#: src/Admin/event-participants/EventParticipants.js:697
+#: src/Admin/event-participants/EventParticipants.js:792
 #: src/Admin/import/WordPressUsersImport.js:204
 msgid "Deselect All"
 msgstr "Deseleccionar todo"
 
-#: src/Admin/event-participants/EventParticipants.js:698
+#: src/Admin/event-participants/EventParticipants.js:793
 msgid "Select All"
 msgstr "Seleccionar todo"
 
-#: src/Admin/event-participants/EventParticipants.js:769
+#: src/Admin/event-participants/EventParticipants.js:864
 msgid "Adding..."
 msgstr "Agregando..."
 
 #. translators: %d: number of selected participants
-#: src/Admin/event-participants/EventParticipants.js:772
+#: src/Admin/event-participants/EventParticipants.js:867
 #, js-format
 msgid "Add %d Selected"
 msgstr "Agregar %d seleccionado(s)"
@@ -1399,52 +1399,52 @@ msgid "Edit Event"
 msgstr "Editar Evento"
 
 #. translators: %d: number of participants
-#: src/Admin/event-participants/EventParticipants.js:213
+#: src/Admin/event-participants/EventParticipants.js:226
 #, js-format
 msgid "Remove %d participant(s) from this event?"
 msgstr "¿Eliminar %d participante(s) de este evento?"
 
-#: src/Admin/event-participants/EventParticipants.js:450
+#: src/Admin/event-participants/EventParticipants.js:539
 msgid "Photo Likes"
 msgstr "Me gusta de Foto"
 
-#: src/Admin/event-participants/EventParticipants.js:468
+#: src/Admin/event-participants/EventParticipants.js:557
 msgid "Send Photo Link"
 msgstr "Enviar Enlace de Foto"
 
-#: src/Admin/event-participants/EventParticipants.js:550
+#: src/Admin/event-participants/EventParticipants.js:639
 msgid "Date:"
 msgstr "Fecha:"
 
 #. translators: %d: number of photos
-#: src/Admin/event-participants/EventParticipants.js:562
+#: src/Admin/event-participants/EventParticipants.js:651
 #, js-format
 msgid "%d Photos"
 msgstr "%d Fotos"
 
 #. translators: %d: number of signed up participants
-#: src/Admin/event-participants/EventParticipants.js:570
+#: src/Admin/event-participants/EventParticipants.js:659
 #, js-format
 msgid "%d Signed Up"
 msgstr "%d Inscritos"
 
 #. translators: %d: number of collaborators
-#: src/Admin/event-participants/EventParticipants.js:577
+#: src/Admin/event-participants/EventParticipants.js:666
 #, js-format
 msgid "%d Collaborators"
 msgstr "%d Colaboradores"
 
-#: src/Admin/event-participants/EventParticipants.js:827
+#: src/Admin/event-participants/EventParticipants.js:922
 msgid "Save"
 msgstr "Guardar"
 
 #. translators: %d: number of selected participants
-#: src/Admin/event-participants/EventParticipants.js:642
+#: src/Admin/event-participants/EventParticipants.js:737
 #, js-format
 msgid "Send Gallery Link to %d Selected"
 msgstr "Enviar enlace de galería a %d seleccionados"
 
-#: src/Admin/event-participants/EventParticipants.js:648
+#: src/Admin/event-participants/EventParticipants.js:743
 msgid "Send Gallery Link to All"
 msgstr "Enviar enlace de galería a todos"
 
@@ -1636,26 +1636,26 @@ msgid "Enter your email to receive a signup link."
 msgstr "Ingrese su correo electrónico para recibir un enlace de registro."
 
 #. translators: %s: event title
-#: src/Services/EmailService.php:617
+#: src/Services/EmailService.php:656
 #, php-format
 msgid "Sign up for %s"
 msgstr "Regístrese para %s"
 
 #. translators: %s: event title
-#: src/Services/EmailService.php:654
+#: src/Services/EmailService.php:693
 #, php-format
 msgid "You requested a signup link for %s."
 msgstr "Ha solicitado un enlace de registro para %s."
 
-#: src/Services/EmailService.php:660
+#: src/Services/EmailService.php:699
 msgid "Click the button below to sign up for the event:"
 msgstr "Haga clic en el botón de abajo para registrarse en el evento:"
 
-#: src/Services/EmailService.php:665
+#: src/Services/EmailService.php:704
 msgid "Sign Up Now"
 msgstr "Registrarse Ahora"
 
-#: src/Services/EmailService.php:670
+#: src/Services/EmailService.php:709
 msgid "If you didn't request this link, you can safely ignore this email."
 msgstr "Si no solicitó este enlace, puede ignorar este correo electrónico sin problemas."
 
@@ -2006,3 +2006,134 @@ msgstr "asistentes"
 msgctxt "block keyword"
 msgid "list"
 msgstr "lista"
+
+#: src/API/EventInvitationsController.php:107
+msgid "You do not have permission to send event invitations."
+msgstr "No tiene permiso para enviar invitaciones de eventos."
+
+#: src/API/EventInvitationsController.php:141
+msgid "Please specify participant IDs or group IDs."
+msgstr "Por favor, especifique los ID de participantes o ID de grupos."
+
+#: src/Services/EmailService.php:733
+msgid "Don't want to receive event invitations?"
+msgstr "¿No quiere recibir invitaciones de eventos?"
+
+#: src/Services/EmailService.php:734
+msgid "Manage your preferences"
+msgstr "Administre sus preferencias"
+
+#: src/Services/EmailService.php:842
+msgid "Already signed up"
+msgstr "Ya inscrito"
+
+#: src/Services/EmailService.php:862
+msgid "Participant opted out of marketing emails."
+msgstr "El participante ha optado por no recibir correos electrónicos de marketing."
+
+#: src/Services/EmailService.php:873
+msgid "Failed to create access key."
+msgstr "Error al crear la clave de acceso."
+
+#: templates/manage-subscription.php:34
+msgid "Invalid or expired link. Please use the link from your email."
+msgstr "Enlace inválido o caducado. Por favor, use el enlace de su correo electrónico."
+
+#: templates/manage-subscription.php:40
+msgid "Subscriber not found."
+msgstr "Suscriptor no encontrado."
+
+#: templates/manage-subscription.php:56
+msgid "Your preferences have been updated."
+msgstr "Sus preferencias han sido actualizadas."
+
+#: templates/manage-subscription.php:59
+msgid "Failed to update preferences. Please try again."
+msgstr "Error al actualizar las preferencias. Inténtelo de nuevo."
+
+#: templates/manage-subscription.php:213
+msgid "Invalid Link"
+msgstr "Enlace Inválido"
+
+#: templates/manage-subscription.php:224
+msgid "Manage Your Subscription"
+msgstr "Administre Su Suscripción"
+
+#: templates/manage-subscription.php:242
+msgid "All emails"
+msgstr "Todos los correos electrónicos"
+
+#: templates/manage-subscription.php:245
+msgid "Receive event invitations, photos, polls, and other updates."
+msgstr "Recibir invitaciones de eventos, fotos, encuestas y otras actualizaciones."
+
+#: templates/manage-subscription.php:254
+msgid "Essential emails only"
+msgstr "Solo correos electrónicos esenciales"
+
+#: templates/manage-subscription.php:257
+msgid "Only receive emails about events you signed up for (photos, polls, confirmations). No promotional emails."
+msgstr "Solo recibir correos electrónicos sobre eventos a los que se ha inscrito (fotos, encuestas, confirmaciones). Sin correos promocionales."
+
+#: templates/manage-subscription.php:264
+msgid "Save Preferences"
+msgstr "Guardar Preferencias"
+
+#: src/Admin/all-participants/AllParticipants.js:102
+#: src/Admin/all-participants/AllParticipants.js:110
+#: src/Admin/all-participants/AllParticipants.js:495
+msgid "Marketing"
+msgstr "Marketing"
+
+#. translators: %1$s: event title, %2$d: number of participants
+#: src/Admin/edit-poll/EditPoll.js:516
+#, js-format
+msgid "%1$s (%2$d participants)"
+msgstr "%1$s (%2$d participantes)"
+
+#. translators: %d: number of emails sent
+#: src/Admin/event-participants/EventParticipants.js:464
+#, js-format
+msgid "Successfully sent invitations to %d participant(s)!"
+msgstr "¡Invitaciones enviadas con éxito a %d participante(s)!"
+
+#. translators: %d: number of skipped participants
+#: src/Admin/event-participants/EventParticipants.js:476
+#, js-format
+msgid "%d skipped (already signed up or opted out of marketing)."
+msgstr "%d omitidos (ya registrados o con marketing desactivado)."
+
+#: src/Admin/event-participants/EventParticipants.js:505
+msgid "Error sending invitations: "
+msgstr "Error al enviar invitaciones: "
+
+#: src/Admin/event-participants/EventParticipants.js:705
+msgid "Send Invitation"
+msgstr "Enviar Invitación"
+
+#: src/Admin/event-participants/EventParticipants.js:930
+msgid "Send Event Invitations"
+msgstr "Enviar Invitaciones de Evento"
+
+#: src/Admin/event-participants/EventParticipants.js:937
+msgid "Select groups to invite:"
+msgstr "Seleccionar grupos para invitar:"
+
+#: src/Admin/event-participants/EventParticipants.js:939
+msgid "Participants already signed up or who opted out of marketing emails will be skipped."
+msgstr "Los participantes ya registrados o que han optado por no recibir correos de marketing serán omitidos."
+
+#: src/Admin/event-participants/EventParticipants.js:947
+msgid "No groups available. Create groups first."
+msgstr "No hay grupos disponibles. Cree grupos primero."
+
+#. translators: 1: group name, 2: member count
+#: src/Admin/event-participants/EventParticipants.js:976
+#, js-format
+msgid "%1$s (%2$d members)"
+msgstr "%1$s (%2$d miembros)"
+
+#: src/Admin/event-participants/EventParticipants.js:1019
+msgid "Send Invitations"
+msgstr "Enviar Invitaciones"
+
