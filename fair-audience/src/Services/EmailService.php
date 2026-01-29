@@ -15,6 +15,7 @@ use FairAudience\Database\EventParticipantRepository;
 use FairAudience\Database\ParticipantRepository;
 use FairAudience\Database\GroupParticipantRepository;
 use FairAudience\Models\Participant;
+use FairAudience\Services\EmailType;
 
 defined( 'WPINC' ) || die;
 
@@ -83,6 +84,23 @@ class EmailService {
 		$this->participant_repository             = new ParticipantRepository();
 		$this->group_participant_repository       = new GroupParticipantRepository();
 		$this->event_signup_access_key_repository = new EventSignupAccessKeyRepository();
+	}
+
+	/**
+	 * Check if a participant can receive a specific type of email.
+	 *
+	 * @param Participant $participant The participant to check.
+	 * @param string      $email_type  The email type (EmailType::MINIMAL or EmailType::MARKETING).
+	 * @return bool True if the participant can receive the email.
+	 */
+	private function can_receive_email( Participant $participant, string $email_type ): bool {
+		// Minimal emails are always allowed.
+		if ( EmailType::MINIMAL === $email_type ) {
+			return true;
+		}
+
+		// Marketing emails require explicit opt-in.
+		return 'marketing' === $participant->email_profile;
 	}
 
 	/**
@@ -825,6 +843,15 @@ class EmailService {
 				$results['failed'][] = array(
 					'email'  => '',
 					'reason' => __( 'Participant not found.', 'fair-audience' ),
+				);
+				continue;
+			}
+
+			// Check if participant can receive marketing emails.
+			if ( ! $this->can_receive_email( $participant, EmailType::MARKETING ) ) {
+				$results['skipped'][] = array(
+					'email'  => $participant->email,
+					'reason' => __( 'Participant opted out of marketing emails.', 'fair-audience' ),
 				);
 				continue;
 			}
