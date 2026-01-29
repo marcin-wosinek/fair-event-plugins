@@ -473,7 +473,10 @@ export default function EventParticipants() {
 					' ' +
 					sprintf(
 						/* translators: %d: number of skipped participants */
-						__('%d already signed up (skipped).', 'fair-audience'),
+						__(
+							'%d skipped (already signed up or opted out of marketing).',
+							'fair-audience'
+						),
 						response.skipped_count
 					);
 			}
@@ -934,7 +937,7 @@ export default function EventParticipants() {
 					<p>{__('Select groups to invite:', 'fair-audience')}</p>
 					<p style={{ fontSize: '12px', color: '#666' }}>
 						{__(
-							'Participants already signed up will be skipped.',
+							'Participants already signed up or who opted out of marketing emails will be skipped.',
 							'fair-audience'
 						)}
 					</p>

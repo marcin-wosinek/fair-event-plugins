@@ -48,6 +48,7 @@ class Plugin {
 		add_filter( 'query_vars', array( $this, 'add_query_vars' ) );
 		add_action( 'template_redirect', array( $this, 'handle_poll_response' ) );
 		add_action( 'template_redirect', array( $this, 'handle_email_confirmation' ) );
+		add_action( 'template_redirect', array( $this, 'handle_manage_subscription' ) );
 
 		// Initialize admin.
 		$admin_hooks = new \FairAudience\Admin\AdminHooks();
@@ -109,6 +110,7 @@ class Plugin {
 		$vars[] = 'gallery_key';
 		$vars[] = 'confirm_email_key';
 		$vars[] = 'signup_token';
+		$vars[] = 'manage_subscription';
 		return $vars;
 	}
 
@@ -139,6 +141,21 @@ class Plugin {
 
 		// Load email confirmation template.
 		include FAIR_AUDIENCE_PLUGIN_DIR . 'templates/email-confirmation.php';
+		exit;
+	}
+
+	/**
+	 * Handle manage subscription page requests.
+	 */
+	public function handle_manage_subscription() {
+		$token = get_query_var( 'manage_subscription' );
+
+		if ( empty( $token ) ) {
+			return;
+		}
+
+		// Load manage subscription template.
+		include FAIR_AUDIENCE_PLUGIN_DIR . 'templates/manage-subscription.php';
 		exit;
 	}
 }

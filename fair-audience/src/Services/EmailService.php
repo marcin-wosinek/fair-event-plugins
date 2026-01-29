@@ -16,6 +16,7 @@ use FairAudience\Database\ParticipantRepository;
 use FairAudience\Database\GroupParticipantRepository;
 use FairAudience\Models\Participant;
 use FairAudience\Services\EmailType;
+use FairAudience\Services\ManageSubscriptionToken;
 
 defined( 'WPINC' ) || die;
 
@@ -646,6 +647,9 @@ class EmailService {
 		// Build signup URL with token.
 		$signup_url = add_query_arg( 'signup_token', $token, get_permalink( $event->ID ) );
 
+		// Build manage subscription URL for unsubscribe link.
+		$manage_subscription_url = ManageSubscriptionToken::get_url( $participant->id );
+
 		// Subject line.
 		$subject = sprintf(
 			/* translators: %s: event title */
@@ -722,8 +726,12 @@ class EmailService {
 							<p style="margin: 0 0 5px 0;">
 								' . esc_html__( "If the button above doesn't work, copy and paste this link:", 'fair-audience' ) . '
 							</p>
-							<p style="margin: 0; word-break: break-all;">
+							<p style="margin: 0 0 15px 0; word-break: break-all;">
 								<a href="' . esc_url( $signup_url ) . '" style="color: #0073aa;">' . esc_url( $signup_url ) . '</a>
+							</p>
+							<p style="margin: 0; border-top: 1px solid #e0e0e0; padding-top: 15px;">
+								' . esc_html__( "Don't want to receive event invitations?", 'fair-audience' ) . '
+								<a href="' . esc_url( $manage_subscription_url ) . '" style="color: #0073aa;">' . esc_html__( 'Manage your preferences', 'fair-audience' ) . '</a>
 							</p>
 						</td>
 					</tr>
