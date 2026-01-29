@@ -47,6 +47,10 @@ export default function EventParticipants() {
 	const [editModalOpen, setEditModalOpen] = useState(false);
 	const [editingParticipant, setEditingParticipant] = useState(null);
 	const [editLabel, setEditLabel] = useState('');
+	const [showInvitationModal, setShowInvitationModal] = useState(false);
+	const [groups, setGroups] = useState([]);
+	const [selectedGroups, setSelectedGroups] = useState(new Set());
+	const [isSendingInvitations, setIsSendingInvitations] = useState(false);
 
 	const eventId = new URLSearchParams(window.location.search).get('event_id');
 
@@ -60,6 +64,7 @@ export default function EventParticipants() {
 		loadEventInfo();
 		loadParticipants();
 		loadAllParticipants();
+		loadGroups();
 	}, [eventId]);
 
 	const loadEventInfo = () => {
@@ -106,6 +111,14 @@ export default function EventParticipants() {
 		apiFetch({ path: '/fair-audience/v1/participants' })
 			.then((data) => {
 				setAllParticipants(data);
+			})
+			.catch(() => {});
+	};
+
+	const loadGroups = () => {
+		apiFetch({ path: '/fair-audience/v1/groups' })
+			.then((data) => {
+				setGroups(data);
 			})
 			.catch(() => {});
 	};
@@ -420,6 +433,79 @@ export default function EventParticipants() {
 		}
 	};
 
+	const handleToggleGroup = (groupId) => {
+		const newSelected = new Set(selectedGroups);
+		if (newSelected.has(groupId)) {
+			newSelected.delete(groupId);
+		} else {
+			newSelected.add(groupId);
+		}
+		setSelectedGroups(newSelected);
+	};
+
+	const handleSendInvitations = async () => {
+		if (selectedGroups.size === 0) {
+			return;
+		}
+
+		setIsSendingInvitations(true);
+
+		try {
+			const response = await apiFetch({
+				path: `/fair-audience/v1/events/${eventId}/event-invitations`,
+				method: 'POST',
+				data: {
+					group_ids: Array.from(selectedGroups),
+				},
+			});
+
+			let message = sprintf(
+				/* translators: %d: number of emails sent */
+				__(
+					'Successfully sent invitations to %d participant(s)!',
+					'fair-audience'
+				),
+				response.sent_count
+			);
+
+			if (response.skipped_count > 0) {
+				message +=
+					' ' +
+					sprintf(
+						/* translators: %d: number of skipped participants */
+						__('%d already signed up (skipped).', 'fair-audience'),
+						response.skipped_count
+					);
+			}
+
+			alert(message);
+
+			if (response.failed && response.failed.length > 0) {
+				// eslint-disable-next-line no-console
+				console.error('Failed to send to:', response.failed);
+				alert(
+					sprintf(
+						/* translators: %d: number of failed sends */
+						__(
+							'Failed to send to %d participant(s). Check console for details.',
+							'fair-audience'
+						),
+						response.failed.length
+					)
+				);
+			}
+
+			setShowInvitationModal(false);
+			setSelectedGroups(new Set());
+		} catch (err) {
+			alert(
+				__('Error sending invitations: ', 'fair-audience') + err.message
+			);
+		} finally {
+			setIsSendingInvitations(false);
+		}
+	};
+
 	const getLabelTitle = (label) => {
 		switch (label) {
 			case 'collaborator':
@@ -608,6 +694,12 @@ export default function EventParticipants() {
 							onClick={() => handleOpenAddModal('interested')}
 						>
 							{__('Add Interested', 'fair-audience')}
+						</Button>
+						<Button
+							variant="secondary"
+							onClick={() => setShowInvitationModal(true)}
+						>
+							{__('Send Invitation', 'fair-audience')}
 						</Button>
 					</div>
 
@@ -825,6 +917,103 @@ export default function EventParticipants() {
 						</Button>
 						<Button isPrimary onClick={handleSaveEdit}>
 							{__('Save', 'fair-audience')}
+						</Button>
+					</div>
+				</Modal>
+			)}
+
+			{showInvitationModal && (
+				<Modal
+					title={__('Send Event Invitations', 'fair-audience')}
+					onRequestClose={() => {
+						setShowInvitationModal(false);
+						setSelectedGroups(new Set());
+					}}
+					style={{ maxWidth: '500px', width: '100%' }}
+				>
+					<p>{__('Select groups to invite:', 'fair-audience')}</p>
+					<p style={{ fontSize: '12px', color: '#666' }}>
+						{__(
+							'Participants already signed up will be skipped.',
+							'fair-audience'
+						)}
+					</p>
+
+					{groups.length === 0 ? (
+						<p>
+							{__(
+								'No groups available. Create groups first.',
+								'fair-audience'
+							)}
+						</p>
+					) : (
+						<div
+							style={{
+								maxHeight: '300px',
+								overflow: 'auto',
+								marginBottom: '15px',
+								border: '1px solid #ddd',
+								borderRadius: '4px',
+							}}
+						>
+							{groups.map((group) => (
+								<div
+									key={group.id}
+									style={{
+										padding: '10px 15px',
+										borderBottom: '1px solid #eee',
+										display: 'flex',
+										alignItems: 'center',
+										gap: '10px',
+									}}
+								>
+									<CheckboxControl
+										label={sprintf(
+											/* translators: 1: group name, 2: member count */
+											__(
+												'%1$s (%2$d members)',
+												'fair-audience'
+											),
+											group.name,
+											group.member_count || 0
+										)}
+										checked={selectedGroups.has(group.id)}
+										onChange={() =>
+											handleToggleGroup(group.id)
+										}
+									/>
+								</div>
+							))}
+						</div>
+					)}
+
+					<div
+						style={{
+							display: 'flex',
+							justifyContent: 'flex-end',
+							gap: '10px',
+						}}
+					>
+						<Button
+							variant="secondary"
+							onClick={() => {
+								setShowInvitationModal(false);
+								setSelectedGroups(new Set());
+							}}
+						>
+							{__('Cancel', 'fair-audience')}
+						</Button>
+						<Button
+							variant="primary"
+							onClick={handleSendInvitations}
+							disabled={
+								selectedGroups.size === 0 ||
+								isSendingInvitations
+							}
+						>
+							{isSendingInvitations
+								? __('Sending...', 'fair-audience')
+								: __('Send Invitations', 'fair-audience')}
 						</Button>
 					</div>
 				</Modal>

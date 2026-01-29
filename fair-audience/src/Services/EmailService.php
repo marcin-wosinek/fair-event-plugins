@@ -13,6 +13,7 @@ use FairAudience\Database\GalleryAccessKeyRepository;
 use FairAudience\Database\EventSignupAccessKeyRepository;
 use FairAudience\Database\EventParticipantRepository;
 use FairAudience\Database\ParticipantRepository;
+use FairAudience\Database\GroupParticipantRepository;
 use FairAudience\Models\Participant;
 
 defined( 'WPINC' ) || die;
@@ -58,14 +59,30 @@ class EmailService {
 	private $participant_repository;
 
 	/**
+	 * Group participant repository instance.
+	 *
+	 * @var GroupParticipantRepository
+	 */
+	private $group_participant_repository;
+
+	/**
+	 * Event signup access key repository instance.
+	 *
+	 * @var EventSignupAccessKeyRepository
+	 */
+	private $event_signup_access_key_repository;
+
+	/**
 	 * Constructor.
 	 */
 	public function __construct() {
-		$this->poll_repository               = new PollRepository();
-		$this->access_key_repository         = new PollAccessKeyRepository();
-		$this->gallery_access_key_repository = new GalleryAccessKeyRepository();
-		$this->event_participant_repository  = new EventParticipantRepository();
-		$this->participant_repository        = new ParticipantRepository();
+		$this->poll_repository                    = new PollRepository();
+		$this->access_key_repository              = new PollAccessKeyRepository();
+		$this->gallery_access_key_repository      = new GalleryAccessKeyRepository();
+		$this->event_participant_repository       = new EventParticipantRepository();
+		$this->participant_repository             = new ParticipantRepository();
+		$this->group_participant_repository       = new GroupParticipantRepository();
+		$this->event_signup_access_key_repository = new EventSignupAccessKeyRepository();
 	}
 
 	/**
@@ -719,5 +736,123 @@ class EmailService {
 		);
 
 		return $result;
+	}
+
+	/**
+	 * Send bulk event invitations to participants.
+	 *
+	 * Sends event signup link emails to the specified participants or group members.
+	 * Participants who are already signed up for the event are skipped.
+	 *
+	 * @param int    $event_id        Event ID.
+	 * @param string $custom_message  Optional custom message (unused, for future use).
+	 * @param array  $participant_ids Optional array of participant IDs to send to.
+	 * @param array  $group_ids       Optional array of group IDs to expand to participants.
+	 * @param bool   $skip_signed_up  Whether to skip participants already signed up.
+	 * @return array Results array with 'sent', 'failed', and 'skipped' keys.
+	 */
+	public function send_bulk_event_invitations(
+		$event_id,
+		$custom_message = '',
+		$participant_ids = array(),
+		$group_ids = array(),
+		$skip_signed_up = true
+	) {
+		// Increase time limit for bulk sending.
+		set_time_limit( 300 ); // 5 minutes.
+
+		$results = array(
+			'sent'    => array(),
+			'failed'  => array(),
+			'skipped' => array(),
+		);
+
+		// Get event.
+		$event = get_post( $event_id );
+
+		if ( ! $event ) {
+			$results['failed'][] = array(
+				'email'  => '',
+				'reason' => __( 'Event not found.', 'fair-audience' ),
+			);
+			return $results;
+		}
+
+		// Collect all participant IDs.
+		$all_participant_ids = $participant_ids;
+
+		// Expand group IDs to participant IDs.
+		foreach ( $group_ids as $group_id ) {
+			$members = $this->group_participant_repository->get_by_group( $group_id );
+			foreach ( $members as $member ) {
+				$all_participant_ids[] = $member->participant_id;
+			}
+		}
+
+		// Deduplicate participant IDs.
+		$all_participant_ids = array_unique( array_map( 'intval', $all_participant_ids ) );
+
+		if ( empty( $all_participant_ids ) ) {
+			return $results;
+		}
+
+		// Get already signed up participants if we need to skip them.
+		$signed_up_ids = array();
+		if ( $skip_signed_up ) {
+			$event_participants = $this->event_participant_repository->get_by_event( $event_id );
+			foreach ( $event_participants as $ep ) {
+				if ( 'signed_up' === $ep->label ) {
+					$signed_up_ids[] = $ep->participant_id;
+				}
+			}
+		}
+
+		foreach ( $all_participant_ids as $participant_id ) {
+			// Skip if already signed up.
+			if ( $skip_signed_up && in_array( $participant_id, $signed_up_ids, true ) ) {
+				$participant          = $this->participant_repository->get_by_id( $participant_id );
+				$results['skipped'][] = array(
+					'email'  => $participant ? $participant->email : '',
+					'reason' => __( 'Already signed up', 'fair-audience' ),
+				);
+				continue;
+			}
+
+			// Get participant.
+			$participant = $this->participant_repository->get_by_id( $participant_id );
+
+			if ( ! $participant ) {
+				$results['failed'][] = array(
+					'email'  => '',
+					'reason' => __( 'Participant not found.', 'fair-audience' ),
+				);
+				continue;
+			}
+
+			// Get or create signup access key.
+			$access_key = $this->event_signup_access_key_repository->create_for_participant( $event_id, $participant_id );
+
+			if ( ! $access_key ) {
+				$results['failed'][] = array(
+					'email'  => $participant->email,
+					'reason' => __( 'Failed to create access key.', 'fair-audience' ),
+				);
+				continue;
+			}
+
+			// Send invitation email.
+			$success = $this->send_signup_link_email( $event, $participant, $access_key->token );
+
+			if ( $success ) {
+				$results['sent'][] = $participant->email;
+			} else {
+				$results['failed'][] = array(
+					'email'  => $participant->email,
+					'reason' => __( 'wp_mail() failed to send.', 'fair-audience' ),
+				);
+			}
+		}
+
+		return $results;
 	}
 }

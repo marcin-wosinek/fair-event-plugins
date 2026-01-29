@@ -93,6 +93,9 @@ class Plugin {
 
 		$event_signup_controller = new \FairAudience\API\EventSignupController();
 		$event_signup_controller->register_routes();
+
+		$event_invitations_controller = new \FairAudience\API\EventInvitationsController();
+		$event_invitations_controller->register_routes();
 	}
 
 	/**
