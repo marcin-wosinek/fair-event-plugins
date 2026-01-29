@@ -1940,7 +1940,69 @@ msgid "rsvp"
 msgstr "répondre"
 
 #: src/blocks/event-signup/block.json
+#: src/blocks/signups-list/block.json
 msgctxt "block keyword"
 msgid "audience"
 msgstr "audience"
 
+#: src/blocks/signups-list/render.php:53
+msgid "No one has signed up yet."
+msgstr "Personne ne s'est encore inscrit."
+
+#. translators: %d: Number of participants
+#: src/blocks/signups-list/render.php:60
+#, php-format
+msgid "%d person signed up"
+msgid_plural "%d people signed up"
+msgstr[0] "%d personne inscrite"
+msgstr[1] "%d personnes inscrites"
+
+#. translators: %d: Number of participants
+#: src/blocks/signups-list/render.php:69
+#, php-format
+msgid "Signed up (%d)"
+msgid_plural "Signed up (%d)"
+msgstr[0] "Inscrits (%d)"
+msgstr[1] "Inscrits (%d)"
+
+#: src/blocks/signups-list/editor.js:34
+msgid "Event Signups List"
+msgstr "Liste des inscriptions"
+
+#: src/blocks/signups-list/editor.js:43
+msgid "Preview available on frontend only"
+msgstr "Aperçu disponible uniquement sur le site"
+
+#: src/blocks/signups-list/editor.js:55
+msgid "Logged-in users see full list, anonymous users see count only."
+msgstr "Les utilisateurs connectés voient la liste complète, les anonymes uniquement le nombre."
+
+#: src/blocks/signups-list/block.json
+msgctxt "block title"
+msgid "Event Signups List"
+msgstr "Liste des inscriptions"
+
+#: src/blocks/signups-list/block.json
+msgctxt "block description"
+msgid "Display list of participants signed up for the event"
+msgstr "Affiche la liste des participants inscrits à l'événement"
+
+#: src/blocks/signups-list/block.json
+msgctxt "block keyword"
+msgid "signups"
+msgstr "inscriptions"
+
+#: src/blocks/signups-list/block.json
+msgctxt "block keyword"
+msgid "participants"
+msgstr "participants"
+
+#: src/blocks/signups-list/block.json
+msgctxt "block keyword"
+msgid "attendees"
+msgstr "participants"
+
+#: src/blocks/signups-list/block.json
+msgctxt "block keyword"
+msgid "list"
+msgstr "liste"

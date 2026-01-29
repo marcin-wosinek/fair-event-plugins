@@ -1,0 +1,61 @@
+/**
+ * Event Signups List Block - Frontend Styles
+ */
+
+.audience-signups {
+	margin: 1.5em 0;
+}
+
+.audience-signups__empty {
+	color: #666;
+	font-style: italic;
+	margin: 0;
+}
+
+.audience-signups__count {
+	font-size: 1.1em;
+	margin: 0;
+}
+
+.audience-signups__header {
+	margin-bottom: 1em;
+}
+
+.audience-signups__title {
+	font-size: 1.2em;
+	font-weight: 600;
+	margin: 0;
+}
+
+.audience-signups__list {
+	list-style: none;
+	margin: 0;
+	padding: 0;
+	display: grid;
+	grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+	gap: 1em;
+}
+
+.audience-signups__item {
+	display: flex;
+	align-items: center;
+	gap: 0.75em;
+	padding: 0.75em;
+	background: #f9f9f9;
+	border-radius: 4px;
+	transition: background 0.2s;
+}
+
+.audience-signups__item:hover {
+	background: #f0f0f0;
+}
+
+.audience-signups__avatar {
+	border-radius: 50%;
+	flex-shrink: 0;
+}
+
+.audience-signups__name {
+	font-weight: 500;
+	word-break: break-word;
+}

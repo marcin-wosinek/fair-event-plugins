@@ -9,7 +9,7 @@ msgstr ""
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"POT-Creation-Date: 2026-01-29T09:13:03+00:00\n"
+"POT-Creation-Date: 2026-01-29T09:34:40+00:00\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "X-Generator: WP-CLI 2.12.0\n"
 "X-Domain: fair-audience\n"
@@ -759,6 +759,26 @@ msgstr ""
 #: src/blocks/mailing-signup/editor.js:69
 msgid "Enter your last name"
 msgstr ""
+
+#: src/blocks/signups-list/render.php:53
+msgid "No one has signed up yet."
+msgstr ""
+
+#. translators: %d: Number of participants
+#: src/blocks/signups-list/render.php:60
+#, php-format
+msgid "%d person signed up"
+msgid_plural "%d people signed up"
+msgstr[0] ""
+msgstr[1] ""
+
+#. translators: %d: Number of participants
+#: src/blocks/signups-list/render.php:69
+#, php-format
+msgid "Signed up (%d)"
+msgid_plural "Signed up (%d)"
+msgstr[0] ""
+msgstr[1] ""
 
 #. translators: %s: event title
 #: src/Services/EmailService.php:90
@@ -1839,6 +1859,18 @@ msgstr ""
 msgid "Please enter your last name."
 msgstr ""
 
+#: src/blocks/signups-list/editor.js:34
+msgid "Event Signups List"
+msgstr ""
+
+#: src/blocks/signups-list/editor.js:43
+msgid "Preview available on frontend only"
+msgstr ""
+
+#: src/blocks/signups-list/editor.js:55
+msgid "Logged-in users see full list, anonymous users see count only."
+msgstr ""
+
 #: src/public/poll-response/PollResponse.js:24
 msgid "Invalid poll link."
 msgstr ""
@@ -1911,6 +1943,7 @@ msgid "rsvp"
 msgstr ""
 
 #: src/blocks/event-signup/block.json
+#: src/blocks/signups-list/block.json
 msgctxt "block keyword"
 msgid "audience"
 msgstr ""
@@ -1943,4 +1976,34 @@ msgstr ""
 #: src/blocks/mailing-signup/block.json
 msgctxt "block keyword"
 msgid "mailing"
+msgstr ""
+
+#: src/blocks/signups-list/block.json
+msgctxt "block title"
+msgid "Event Signups List"
+msgstr ""
+
+#: src/blocks/signups-list/block.json
+msgctxt "block description"
+msgid "Display list of participants signed up for the event"
+msgstr ""
+
+#: src/blocks/signups-list/block.json
+msgctxt "block keyword"
+msgid "signups"
+msgstr ""
+
+#: src/blocks/signups-list/block.json
+msgctxt "block keyword"
+msgid "participants"
+msgstr ""
+
+#: src/blocks/signups-list/block.json
+msgctxt "block keyword"
+msgid "attendees"
+msgstr ""
+
+#: src/blocks/signups-list/block.json
+msgctxt "block keyword"
+msgid "list"
 msgstr ""
