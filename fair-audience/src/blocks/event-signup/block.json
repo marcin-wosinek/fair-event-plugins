@@ -1,0 +1,43 @@
+{
+	"$schema": "https://schemas.wp.org/trunk/block.json",
+	"apiVersion": 3,
+	"name": "fair-audience/event-signup",
+	"version": "1.0.0",
+	"title": "Event Signup",
+	"category": "widgets",
+	"icon": "groups",
+	"description": "Allow audience members to sign up for events",
+	"keywords": ["event", "signup", "register", "rsvp", "audience"],
+	"textdomain": "fair-audience",
+	"supports": {
+		"html": false,
+		"align": ["wide", "full"],
+		"spacing": {
+			"padding": true,
+			"margin": ["top", "bottom"]
+		}
+	},
+	"attributes": {
+		"signupButtonText": {
+			"type": "string",
+			"default": "Sign Up"
+		},
+		"registerButtonText": {
+			"type": "string",
+			"default": "Register & Sign Up"
+		},
+		"requestLinkButtonText": {
+			"type": "string",
+			"default": "Send Signup Link"
+		},
+		"successMessage": {
+			"type": "string",
+			"default": "You have successfully signed up for the event!"
+		}
+	},
+	"editorScript": "file:./editor.js",
+	"viewScript": "file:./frontend.js",
+	"render": "file:./render.php",
+	"viewStyle": "file:./style-frontend.css",
+	"editorStyle": "file:./editor.css"
+}

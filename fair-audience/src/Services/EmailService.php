@@ -10,6 +10,7 @@ namespace FairAudience\Services;
 use FairAudience\Database\PollRepository;
 use FairAudience\Database\PollAccessKeyRepository;
 use FairAudience\Database\GalleryAccessKeyRepository;
+use FairAudience\Database\EventSignupAccessKeyRepository;
 use FairAudience\Database\EventParticipantRepository;
 use FairAudience\Database\ParticipantRepository;
 use FairAudience\Models\Participant;
@@ -564,6 +565,130 @@ class EmailService {
 							</p>
 							<p style="margin: 0; word-break: break-all;">
 								<a href="' . esc_url( $confirm_url ) . '" style="color: #0073aa;">' . esc_url( $confirm_url ) . '</a>
+							</p>
+						</td>
+					</tr>
+				</table>
+			</td>
+		</tr>
+	</table>
+</body>
+</html>';
+
+		// Set email content type to HTML.
+		add_filter(
+			'wp_mail_content_type',
+			function () {
+				return 'text/html';
+			}
+		);
+
+		// Send email.
+		$result = wp_mail( $participant->email, $subject, $message );
+
+		// Reset content type to avoid conflicts.
+		remove_filter(
+			'wp_mail_content_type',
+			function () {
+				return 'text/html';
+			}
+		);
+
+		return $result;
+	}
+
+	/**
+	 * Send event signup link email.
+	 *
+	 * @param object      $event        Event post object.
+	 * @param Participant $participant  Participant object.
+	 * @param string      $token        Signup access token.
+	 * @return bool Success.
+	 */
+	public function send_signup_link_email( $event, $participant, $token ) {
+		$site_name = wp_specialchars_decode( get_option( 'blogname' ), ENT_QUOTES );
+
+		// Build signup URL with token.
+		$signup_url = add_query_arg( 'signup_token', $token, get_permalink( $event->ID ) );
+
+		// Subject line.
+		$subject = sprintf(
+			/* translators: %s: event title */
+			__( 'Sign up for %s', 'fair-audience' ),
+			$event->post_title
+		);
+
+		// Build HTML message body.
+		$message = '<!DOCTYPE html>
+<html>
+<head>
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+</head>
+<body style="margin: 0; padding: 0; font-family: Arial, sans-serif; font-size: 16px; line-height: 1.6; color: #333333; background-color: #f4f4f4;">
+	<table width="100%" cellpadding="0" cellspacing="0" style="background-color: #f4f4f4;">
+		<tr>
+			<td align="center" style="padding: 20px 0;">
+				<table width="600" cellpadding="0" cellspacing="0" style="background-color: #ffffff; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
+					<!-- Header -->
+					<tr>
+						<td style="background-color: #0073aa; color: #ffffff; padding: 30px; border-radius: 8px 8px 0 0; text-align: center;">
+							<h1 style="margin: 0; font-size: 24px; font-weight: bold;">' . esc_html( $site_name ) . '</h1>
+						</td>
+					</tr>
+
+					<!-- Content -->
+					<tr>
+						<td style="padding: 40px 30px;">
+							<p style="margin: 0 0 20px 0; font-size: 16px;">
+								' . sprintf(
+									/* translators: %s: participant first name */
+								esc_html__( 'Hi %s,', 'fair-audience' ),
+								'<strong>' . esc_html( $participant->name ) . '</strong>'
+							) . '
+							</p>
+
+							<p style="margin: 0 0 20px 0; font-size: 16px;">
+								' . sprintf(
+									/* translators: %s: event title */
+								esc_html__( 'You requested a signup link for %s.', 'fair-audience' ),
+								'<strong>' . esc_html( $event->post_title ) . '</strong>'
+							) . '
+							</p>
+
+							<p style="margin: 0 0 20px 0; font-size: 16px;">
+								' . esc_html__( 'Click the button below to sign up for the event:', 'fair-audience' ) . '
+							</p>
+
+							<p style="margin: 0 0 30px 0; text-align: center;">
+								<a href="' . esc_url( $signup_url ) . '" style="display: inline-block; background-color: #0073aa; color: #ffffff; text-decoration: none; padding: 12px 30px; border-radius: 5px; font-weight: bold; font-size: 16px;">
+									' . esc_html__( 'Sign Up Now', 'fair-audience' ) . '
+								</a>
+							</p>
+
+							<p style="margin: 0 0 10px 0; font-size: 14px; color: #666666;">
+								' . esc_html__( "If you didn't request this link, you can safely ignore this email.", 'fair-audience' ) . '
+							</p>
+
+							<p style="margin: 20px 0 0 0; font-size: 14px; color: #666666;">
+								' . sprintf(
+									/* translators: %s: site name */
+									esc_html__( 'Thanks,%1$sThe %2$s Team', 'fair-audience' ),
+									'<br>',
+									esc_html( $site_name )
+								) . '
+							</p>
+						</td>
+					</tr>
+
+					<!-- Footer -->
+					<tr>
+						<td style="background-color: #f8f8f8; padding: 20px 30px; border-radius: 0 0 8px 8px; text-align: center; font-size: 12px; color: #666666;">
+							<p style="margin: 0 0 5px 0;">
+								' . esc_html__( "If the button above doesn't work, copy and paste this link:", 'fair-audience' ) . '
+							</p>
+							<p style="margin: 0; word-break: break-all;">
+								<a href="' . esc_url( $signup_url ) . '" style="color: #0073aa;">' . esc_url( $signup_url ) . '</a>
 							</p>
 						</td>
 					</tr>

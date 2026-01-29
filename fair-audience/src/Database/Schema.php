@@ -332,4 +332,30 @@ class Schema {
 			KEY idx_participant_id (participant_id)
 		) ENGINE=InnoDB $charset_collate;";
 	}
+
+	/**
+	 * Get SQL for creating the event signup access keys table.
+	 *
+	 * @return string SQL statement.
+	 */
+	public static function get_event_signup_access_keys_table_sql() {
+		global $wpdb;
+
+		$table_name      = $wpdb->prefix . 'fair_audience_event_signup_access_keys';
+		$charset_collate = $wpdb->get_charset_collate();
+
+		return "CREATE TABLE $table_name (
+			id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
+			event_id BIGINT UNSIGNED NOT NULL,
+			participant_id BIGINT UNSIGNED NOT NULL,
+			access_key CHAR(64) NOT NULL COMMENT 'SHA-256 hash for secure lookups',
+			token CHAR(32) NOT NULL COMMENT 'Original random token for URL generation',
+			created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+			PRIMARY KEY  (id),
+			UNIQUE KEY idx_event_participant (event_id, participant_id),
+			UNIQUE KEY idx_access_key (access_key),
+			UNIQUE KEY idx_token (token),
+			KEY idx_event_id (event_id)
+		) ENGINE=InnoDB $charset_collate;";
+	}
 }

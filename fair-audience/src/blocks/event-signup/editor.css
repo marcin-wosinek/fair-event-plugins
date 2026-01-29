@@ -1,0 +1,99 @@
+/**
+ * Editor styles for Event Signup block
+ */
+
+.fair-audience-event-signup {
+	padding: 20px;
+	background-color: #f8f9fa;
+	border: 1px dashed #ccc;
+	border-radius: 4px;
+}
+
+.fair-audience-event-signup-preview {
+	max-width: 500px;
+	margin: 0 auto;
+}
+
+.fair-audience-event-signup-notice {
+	text-align: center;
+	color: #666;
+	font-size: 12px;
+	margin-bottom: 15px;
+	font-style: italic;
+}
+
+/* Preview tabs */
+.fair-audience-event-signup-preview-tabs {
+	display: flex;
+	gap: 8px;
+	margin-bottom: 20px;
+	padding-bottom: 10px;
+	border-bottom: 1px solid #ddd;
+}
+
+.fair-audience-event-signup-preview-tabs .preview-tab {
+	padding: 6px 12px;
+	background: #fff;
+	border: 1px solid #ddd;
+	border-radius: 4px;
+	font-size: 11px;
+	color: #666;
+}
+
+.fair-audience-event-signup-preview-tabs .preview-tab.active {
+	background: #0073aa;
+	color: #fff;
+	border-color: #0073aa;
+}
+
+/* Form preview */
+.fair-audience-signup-form p {
+	margin-bottom: 12px;
+}
+
+.fair-audience-signup-form label {
+	display: block;
+	margin-bottom: 4px;
+	font-size: 13px;
+	font-weight: 500;
+}
+
+.fair-audience-signup-form .required {
+	color: #d63638;
+}
+
+.fair-audience-signup-form input[type="text"],
+.fair-audience-signup-form input[type="email"] {
+	width: 100%;
+	padding: 8px 10px;
+	border: 1px solid #ddd;
+	border-radius: 4px;
+	font-size: 13px;
+	background-color: #f5f5f5;
+}
+
+.fair-audience-signup-checkbox {
+	margin-top: 8px;
+}
+
+.fair-audience-signup-checkbox label {
+	display: flex;
+	align-items: center;
+	gap: 8px;
+	font-weight: normal;
+}
+
+.fair-audience-signup-checkbox input[type="checkbox"] {
+	width: 16px;
+	height: 16px;
+}
+
+.fair-audience-event-signup .wp-block-button {
+	margin-top: 15px;
+}
+
+.fair-audience-event-signup .wp-block-button__link {
+	width: 100%;
+	justify-content: center;
+	opacity: 0.7;
+}

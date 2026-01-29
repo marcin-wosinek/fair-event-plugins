@@ -90,6 +90,9 @@ class Plugin {
 
 		$groups_controller = new \FairAudience\API\GroupsController();
 		$groups_controller->register_routes();
+
+		$event_signup_controller = new \FairAudience\API\EventSignupController();
+		$event_signup_controller->register_routes();
 	}
 
 	/**
@@ -102,6 +105,7 @@ class Plugin {
 		$vars[] = 'poll_key';
 		$vars[] = 'gallery_key';
 		$vars[] = 'confirm_email_key';
+		$vars[] = 'signup_token';
 		return $vars;
 	}
 
