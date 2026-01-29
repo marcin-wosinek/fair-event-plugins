@@ -32,8 +32,9 @@ class ManageSubscriptionToken {
 		// Format: base64(participant_id:signature)
 		$token = base64_encode( $data . ':' . $signature );
 
-		// Make URL-safe.
-		return strtr( $token, '+/', '-_' );
+		// Make URL-safe: replace +/ with -_, and remove = padding.
+		// Padding can be reconstructed during decode.
+		return rtrim( strtr( $token, '+/', '-_' ), '=' );
 	}
 
 	/**
@@ -43,8 +44,13 @@ class ManageSubscriptionToken {
 	 * @return int|false Participant ID if valid, false otherwise.
 	 */
 	public static function verify( string $token ) {
-		// Decode URL-safe base64.
-		$decoded = base64_decode( strtr( $token, '-_', '+/' ), true );
+		// Restore URL-safe base64: replace -_ with +/, and restore = padding.
+		$base64 = strtr( $token, '-_', '+/' );
+		// Add padding: base64 length must be multiple of 4.
+		$padding = ( 4 - strlen( $base64 ) % 4 ) % 4;
+		$base64 .= str_repeat( '=', $padding );
+
+		$decoded = base64_decode( $base64, true );
 
 		if ( false === $decoded ) {
 			return false;
