@@ -8,6 +8,8 @@ import {
 	Modal,
 	TextControl,
 	SelectControl,
+	CheckboxControl,
+	Spinner,
 } from '@wordpress/components';
 import { DataViews, filterSortAndPaginate } from '@wordpress/dataviews';
 import { Icon, warning } from '@wordpress/icons';
@@ -58,6 +60,27 @@ export default function AllParticipants() {
 		wp_user_id: null,
 		wp_user: null,
 	});
+
+	// Groups management state.
+	const [allGroups, setAllGroups] = useState([]);
+	const [selectedGroupIds, setSelectedGroupIds] = useState([]);
+	const [originalGroupIds, setOriginalGroupIds] = useState([]);
+	const [groupsLoading, setGroupsLoading] = useState(false);
+
+	// Load all groups.
+	const loadGroups = useCallback(() => {
+		setGroupsLoading(true);
+		apiFetch({ path: '/fair-audience/v1/groups' })
+			.then((data) => {
+				setAllGroups(data);
+				setGroupsLoading(false);
+			})
+			.catch((err) => {
+				// eslint-disable-next-line no-console
+				console.error('Error loading groups:', err);
+				setGroupsLoading(false);
+			});
+	}, []);
 
 	// Define fields configuration for DataViews.
 	const fields = useMemo(
@@ -292,6 +315,9 @@ export default function AllParticipants() {
 			wp_user_id: null,
 			wp_user: null,
 		});
+		setSelectedGroupIds([]);
+		setOriginalGroupIds([]);
+		loadGroups();
 		setIsModalOpen(true);
 	};
 
@@ -306,10 +332,14 @@ export default function AllParticipants() {
 			wp_user_id: participant.wp_user_id || null,
 			wp_user: participant.wp_user || null,
 		});
+		const groupIds = (participant.groups || []).map((g) => g.id);
+		setSelectedGroupIds(groupIds);
+		setOriginalGroupIds(groupIds);
+		loadGroups();
 		setIsModalOpen(true);
 	};
 
-	const handleSubmit = () => {
+	const handleSubmit = async () => {
 		const method = editingParticipant ? 'PUT' : 'POST';
 		const path = editingParticipant
 			? `/fair-audience/v1/participants/${editingParticipant.id}`
@@ -325,18 +355,55 @@ export default function AllParticipants() {
 			wp_user_id: formData.wp_user_id,
 		};
 
-		apiFetch({
-			path,
-			method,
-			data: dataToSend,
-		})
-			.then(() => {
-				setIsModalOpen(false);
-				loadParticipants();
-			})
-			.catch((err) => {
-				alert(__('Error: ', 'fair-audience') + err.message);
+		try {
+			const result = await apiFetch({
+				path,
+				method,
+				data: dataToSend,
 			});
+
+			// Get participant ID (from result for new, from editingParticipant for existing).
+			const participantId = editingParticipant
+				? editingParticipant.id
+				: result.id;
+
+			// Calculate group changes.
+			const groupsToAdd = selectedGroupIds.filter(
+				(id) => !originalGroupIds.includes(id)
+			);
+			const groupsToRemove = originalGroupIds.filter(
+				(id) => !selectedGroupIds.includes(id)
+			);
+
+			// Add to new groups.
+			const addPromises = groupsToAdd.map((groupId) =>
+				apiFetch({
+					path: `/fair-audience/v1/groups/${groupId}/participants`,
+					method: 'POST',
+					data: { participant_id: participantId },
+				}).catch((err) => {
+					// Ignore "already member" errors.
+					if (!err.message?.includes('already')) {
+						throw err;
+					}
+				})
+			);
+
+			// Remove from groups.
+			const removePromises = groupsToRemove.map((groupId) =>
+				apiFetch({
+					path: `/fair-audience/v1/groups/${groupId}/participants/${participantId}`,
+					method: 'DELETE',
+				})
+			);
+
+			await Promise.all([...addPromises, ...removePromises]);
+
+			setIsModalOpen(false);
+			loadParticipants();
+		} catch (err) {
+			alert(__('Error: ', 'fair-audience') + err.message);
+		}
 	};
 
 	const handleDelete = (items) => {
@@ -522,6 +589,63 @@ export default function AllParticipants() {
 								onLink={handleLinkUser}
 								onUnlink={handleUnlinkUser}
 							/>
+							<div style={{ marginTop: '16px' }}>
+								<label
+									style={{
+										display: 'block',
+										marginBottom: '8px',
+										fontWeight: '600',
+									}}
+								>
+									{__('Groups', 'fair-audience')}
+								</label>
+								{groupsLoading ? (
+									<Spinner />
+								) : allGroups.length === 0 ? (
+									<p style={{ color: '#666' }}>
+										{__(
+											'No groups available.',
+											'fair-audience'
+										)}
+									</p>
+								) : (
+									<div
+										style={{
+											maxHeight: '150px',
+											overflowY: 'auto',
+											border: '1px solid #ddd',
+											padding: '8px',
+											borderRadius: '4px',
+										}}
+									>
+										{allGroups.map((group) => (
+											<CheckboxControl
+												key={group.id}
+												label={group.name}
+												checked={selectedGroupIds.includes(
+													group.id
+												)}
+												onChange={(checked) => {
+													if (checked) {
+														setSelectedGroupIds([
+															...selectedGroupIds,
+															group.id,
+														]);
+													} else {
+														setSelectedGroupIds(
+															selectedGroupIds.filter(
+																(id) =>
+																	id !==
+																	group.id
+															)
+														);
+													}
+												}}
+											/>
+										))}
+									</div>
+								)}
+							</div>
 							<div style={{ marginTop: '16px' }}>
 								<Button
 									variant="primary"
