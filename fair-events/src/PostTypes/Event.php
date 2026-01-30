@@ -237,6 +237,17 @@ class Event {
 		$event_location   = get_post_meta( $post->ID, 'event_location', true );
 		$event_recurrence = get_post_meta( $post->ID, 'event_recurrence', true );
 
+		// Check for event_date URL parameter (from calendar "add event" button) for new posts.
+		// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Read-only operation for prepopulating form.
+		if ( empty( $event_start ) && isset( $_GET['event_date'] ) ) {
+			$url_date = sanitize_text_field( wp_unslash( $_GET['event_date'] ) );
+			// Validate date format (Y-m-d).
+			if ( preg_match( '/^\d{4}-\d{2}-\d{2}$/', $url_date ) ) {
+				// Default to datetime with 10:00 start time.
+				$event_start = $url_date . 'T10:00';
+			}
+		}
+
 		// Determine input type based on all-day setting
 		$input_type = $event_all_day ? 'date' : 'datetime-local';
 
