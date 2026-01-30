@@ -95,8 +95,9 @@ export default function CalendarApp() {
 	};
 
 	const handleEditEvent = (eventId) => {
-		// Extract numeric ID from uid (format: fair_event_123@domain.com)
-		const match = eventId.match(/fair_event_(\d+)@/);
+		// Extract numeric ID from uid (format: fair_event_123_456@domain.com or fair_event_123@domain.com)
+		// The first number is the event_id, the second (optional) is the occurrence_id
+		const match = eventId.match(/fair_event_(\d+)(?:_\d+)?@/);
 		if (match) {
 			const numericId = match[1];
 			const editEventUrl = window.fairEventsCalendarData?.editEventUrl;

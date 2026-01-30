@@ -141,19 +141,6 @@ class Event {
 					'default'           => '',
 				)
 			);
-
-			register_post_meta(
-				$post_type,
-				'event_recurrence',
-				array(
-					'type'              => 'string',
-					'description'       => __( 'Event recurrence rule (RRULE format)', 'fair-events' ),
-					'single'            => true,
-					'show_in_rest'      => true,
-					'sanitize_callback' => 'sanitize_text_field',
-					'default'           => '',
-				)
-			);
 		}
 	}
 
@@ -235,7 +222,7 @@ class Event {
 		$event_end        = get_post_meta( $post->ID, 'event_end', true );
 		$event_all_day    = get_post_meta( $post->ID, 'event_all_day', true );
 		$event_location   = get_post_meta( $post->ID, 'event_location', true );
-		$event_recurrence = get_post_meta( $post->ID, 'event_recurrence', true );
+		$event_recurrence = \FairEvents\Models\EventDates::get_rrule_by_event_id( $post->ID );
 
 		// Check for event_date URL parameter (from calendar "add event" button) for new posts.
 		// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Read-only operation for prepopulating form.
@@ -709,6 +696,8 @@ class Event {
 		// phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- checkbox only checked for presence.
 		$recurrence_enabled = isset( $_POST['event_recurrence_enabled'] ) && ! empty( wp_unslash( $_POST['event_recurrence_enabled'] ) );
 
+		// Use empty string to explicitly indicate "no recurrence" vs null which means "read from DB".
+		$rrule = '';
 		if ( $recurrence_enabled ) {
 			// Build RRULE from form fields.
 			$frequency = isset( $_POST['event_recurrence_frequency'] ) ? sanitize_text_field( wp_unslash( $_POST['event_recurrence_frequency'] ) ) : 'weekly';
@@ -746,14 +735,10 @@ class Event {
 				'count' === $end_type ? $count : null,
 				'until' === $end_type ? $until : null
 			);
-
-			update_post_meta( $post_id, 'event_recurrence', $rrule );
-		} else {
-			// No recurrence - delete the meta.
-			delete_post_meta( $post_id, 'event_recurrence' );
 		}
 
 		// Regenerate occurrences (this handles both recurring and non-recurring events).
-		\FairEvents\Services\RecurrenceService::regenerate_event_occurrences( $post_id );
+		// Pass the RRULE directly so it gets saved to the database table.
+		\FairEvents\Services\RecurrenceService::regenerate_event_occurrences( $post_id, $rrule );
 	}
 }

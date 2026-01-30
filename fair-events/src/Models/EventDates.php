@@ -66,6 +66,13 @@ class EventDates {
 	public $master_id;
 
 	/**
+	 * Recurrence rule (RRULE format, only on master/single rows)
+	 *
+	 * @var string|null
+	 */
+	public $rrule;
+
+	/**
 	 * Get event dates by event ID
 	 *
 	 * @param int $event_id Event post ID.
@@ -96,6 +103,7 @@ class EventDates {
 		$event_dates->all_day         = (bool) $result->all_day;
 		$event_dates->occurrence_type = $result->occurrence_type ?? 'single';
 		$event_dates->master_id       = $result->master_id ? (int) $result->master_id : null;
+		$event_dates->rrule           = $result->rrule ?? null;
 
 		return $event_dates;
 	}
@@ -133,6 +141,7 @@ class EventDates {
 			$event_dates->all_day         = (bool) $result->all_day;
 			$event_dates->occurrence_type = $result->occurrence_type ?? 'single';
 			$event_dates->master_id       = $result->master_id ? (int) $result->master_id : null;
+			$event_dates->rrule           = $result->rrule ?? null;
 			$dates[]                      = $event_dates;
 		}
 
@@ -201,14 +210,15 @@ class EventDates {
 	/**
 	 * Update the master occurrence (first occurrence of a recurring event)
 	 *
-	 * @param int    $event_id        Event post ID.
-	 * @param string $start           Start datetime.
-	 * @param string $end             End datetime.
-	 * @param bool   $all_day         All day flag.
-	 * @param string $occurrence_type Occurrence type (single or master).
+	 * @param int         $event_id        Event post ID.
+	 * @param string      $start           Start datetime.
+	 * @param string      $end             End datetime.
+	 * @param bool        $all_day         All day flag.
+	 * @param string      $occurrence_type Occurrence type (single or master).
+	 * @param string|null $rrule           Recurrence rule (RRULE format).
 	 * @return int|false The row ID on success, false on failure.
 	 */
-	public static function save_or_update_master( $event_id, $start, $end, $all_day, $occurrence_type = 'single' ) {
+	public static function save_or_update_master( $event_id, $start, $end, $all_day, $occurrence_type = 'single', $rrule = null ) {
 		global $wpdb;
 
 		$table_name = $wpdb->prefix . 'fair_event_dates';
@@ -229,9 +239,10 @@ class EventDates {
 			'all_day'         => $all_day ? 1 : 0,
 			'occurrence_type' => $occurrence_type,
 			'master_id'       => null,
+			'rrule'           => $rrule,
 		);
 
-		$format = array( '%d', '%s', '%s', '%d', '%s', '%d' );
+		$format = array( '%d', '%s', '%s', '%d', '%s', '%d', '%s' );
 
 		if ( $existing ) {
 			$result = $wpdb->update(
@@ -342,5 +353,68 @@ class EventDates {
 		update_post_meta( $event_id, 'event_start', $start );
 		update_post_meta( $event_id, 'event_end', $end );
 		update_post_meta( $event_id, 'event_all_day', $all_day );
+	}
+
+	/**
+	 * Get RRULE by event ID
+	 *
+	 * @param int $event_id Event post ID.
+	 * @return string|null RRULE string or null if not found.
+	 */
+	public static function get_rrule_by_event_id( $event_id ) {
+		global $wpdb;
+
+		$table_name = $wpdb->prefix . 'fair_event_dates';
+
+		$rrule = $wpdb->get_var(
+			$wpdb->prepare(
+				"SELECT rrule FROM %i WHERE event_id = %d AND occurrence_type IN ('single', 'master') LIMIT 1",
+				$table_name,
+				$event_id
+			)
+		);
+
+		return $rrule ?: null;
+	}
+
+	/**
+	 * Save RRULE for an event
+	 *
+	 * @param int         $event_id Event post ID.
+	 * @param string|null $rrule    RRULE string (null to clear).
+	 * @return bool True on success, false on failure.
+	 */
+	public static function save_rrule( $event_id, $rrule ) {
+		global $wpdb;
+
+		$table_name = $wpdb->prefix . 'fair_event_dates';
+
+		$result = $wpdb->update(
+			$table_name,
+			array( 'rrule' => $rrule ),
+			array(
+				'event_id'        => $event_id,
+				'occurrence_type' => array( 'single', 'master' ),
+			),
+			array( '%s' ),
+			array( '%d', '%s' )
+		);
+
+		// If no row was updated (e.g., no master/single row exists yet), we need to handle that.
+		if ( $result === 0 ) {
+			// Check if any master/single row exists.
+			$existing = $wpdb->get_var(
+				$wpdb->prepare(
+					"SELECT COUNT(*) FROM %i WHERE event_id = %d AND occurrence_type IN ('single', 'master')",
+					$table_name,
+					$event_id
+				)
+			);
+
+			// If a row exists but wasn't updated (value unchanged), that's OK.
+			return $existing > 0;
+		}
+
+		return $result !== false;
 	}
 }

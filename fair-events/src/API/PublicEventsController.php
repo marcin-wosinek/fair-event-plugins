@@ -202,6 +202,9 @@ class PublicEventsController extends WP_REST_Controller {
 	/**
 	 * Query events from database
 	 *
+	 * Queries the fair_event_dates table directly to get each occurrence
+	 * with its specific dates, then joins with posts for event details.
+	 *
 	 * @param string|null $start_date Start date filter (Y-m-d).
 	 * @param string|null $end_date   End date filter (Y-m-d).
 	 * @param array       $category_ids Category IDs to filter by.
@@ -210,66 +213,130 @@ class PublicEventsController extends WP_REST_Controller {
 	 * @return array Array of event data.
 	 */
 	private function query_events( $start_date, $end_date, $category_ids, $per_page, $page ) {
-		// Build date query - always use QueryHelper for proper dates table integration
-		$date_query = array();
+		global $wpdb;
 
+		$dates_table = $wpdb->prefix . 'fair_event_dates';
+		$offset      = ( $page - 1 ) * $per_page;
+
+		// Get enabled post types for filtering.
+		$enabled_post_types     = Settings::get_enabled_post_types();
+		$post_type_placeholders = implode( ', ', array_fill( 0, count( $enabled_post_types ), '%s' ) );
+
+		// Build WHERE conditions.
+		$where_conditions = array(
+			"{$wpdb->posts}.post_status = 'publish'",
+		);
+		$where_values     = array();
+
+		// Post type filter.
+		$where_conditions[] = "{$wpdb->posts}.post_type IN ({$post_type_placeholders})";
+		$where_values       = array_merge( $where_values, $enabled_post_types );
+
+		// Date range filters.
 		if ( $start_date ) {
-			$date_query['end_after'] = $start_date . ' 00:00:00';
+			$where_conditions[] = "{$dates_table}.end_datetime >= %s";
+			$where_values[]     = $start_date . ' 00:00:00';
 		}
 
 		if ( $end_date ) {
-			$date_query['start_before'] = $end_date . ' 23:59:59';
+			$where_conditions[] = "{$dates_table}.start_datetime <= %s";
+			$where_values[]     = $end_date . ' 23:59:59';
 		}
 
-		$query_args = array(
-			'post_type'              => Settings::get_enabled_post_types(),
-			'posts_per_page'         => $per_page,
-			'paged'                  => $page,
-			'post_status'            => 'publish',
-			'fair_events_date_query' => $date_query,
-			'fair_events_order'      => 'ASC',
+		// Category filter via subquery.
+		if ( ! empty( $category_ids ) ) {
+			$category_placeholders = implode( ', ', array_fill( 0, count( $category_ids ), '%d' ) );
+			$where_conditions[]    = "{$wpdb->posts}.ID IN (
+				SELECT object_id FROM {$wpdb->term_relationships}
+				WHERE term_taxonomy_id IN (
+					SELECT term_taxonomy_id FROM {$wpdb->term_taxonomy}
+					WHERE term_id IN ({$category_placeholders})
+				)
+			)";
+			$where_values          = array_merge( $where_values, $category_ids );
+		}
+
+		$where_clause = implode( ' AND ', $where_conditions );
+
+		// Query occurrences directly from dates table with post data.
+		// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+		$query = $wpdb->prepare(
+			"SELECT
+				{$dates_table}.id as occurrence_id,
+				{$dates_table}.event_id,
+				{$dates_table}.start_datetime,
+				{$dates_table}.end_datetime,
+				{$dates_table}.all_day,
+				{$dates_table}.occurrence_type,
+				{$wpdb->posts}.post_title,
+				{$wpdb->posts}.post_content,
+				{$wpdb->posts}.post_excerpt
+			FROM {$dates_table}
+			INNER JOIN {$wpdb->posts} ON {$dates_table}.event_id = {$wpdb->posts}.ID
+			WHERE {$where_clause}
+			ORDER BY {$dates_table}.start_datetime ASC
+			LIMIT %d OFFSET %d",
+			array_merge( $where_values, array( $per_page, $offset ) )
 		);
 
-		// Add category filter if categories are specified
-		if ( ! empty( $category_ids ) ) {
-			// phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_tax_query
-			$query_args['tax_query'] = array(
-				array(
-					'taxonomy'         => 'category',
-					'field'            => 'term_id',
-					'terms'            => $category_ids,
-					'include_children' => false,
-				),
-			);
-		}
-
-		// Hook in the QueryHelper filters for dates table
-		add_filter( 'posts_join', array( 'FairEvents\\Helpers\\QueryHelper', 'join_dates_table' ), 10, 2 );
-		add_filter( 'posts_where', array( 'FairEvents\\Helpers\\QueryHelper', 'filter_by_dates' ), 10, 2 );
-		add_filter( 'posts_orderby', array( 'FairEvents\\Helpers\\QueryHelper', 'order_by_dates' ), 10, 2 );
-
-		$events_query = new \WP_Query( $query_args );
-
-		// Remove filters
-		remove_filter( 'posts_join', array( 'FairEvents\\Helpers\\QueryHelper', 'join_dates_table' ), 10 );
-		remove_filter( 'posts_where', array( 'FairEvents\\Helpers\\QueryHelper', 'filter_by_dates' ), 10 );
-		remove_filter( 'posts_orderby', array( 'FairEvents\\Helpers\\QueryHelper', 'order_by_dates' ), 10 );
+		// phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared
+		$results = $wpdb->get_results( $query );
 
 		$events = array();
-		if ( $events_query->have_posts() ) {
-			while ( $events_query->have_posts() ) {
-				$events_query->the_post();
-				$events[] = $this->format_event( get_the_ID() );
+		if ( $results ) {
+			foreach ( $results as $row ) {
+				$events[] = $this->format_occurrence( $row );
 			}
 		}
-
-		wp_reset_postdata();
 
 		return $events;
 	}
 
 	/**
-	 * Format a single event for JSON response
+	 * Format an occurrence row for JSON response
+	 *
+	 * @param object $row Database row with occurrence and post data.
+	 * @return array Formatted event data.
+	 */
+	private function format_occurrence( $row ) {
+		$start_datetime = $row->start_datetime;
+		$end_datetime   = $row->end_datetime ?: $start_datetime;
+
+		// Determine if all-day event.
+		$all_day = (bool) $row->all_day;
+		if ( ! $all_day && $start_datetime ) {
+			// Also check for midnight-to-midnight pattern.
+			$start_time = gmdate( 'H:i:s', strtotime( $start_datetime ) );
+			$end_time   = $end_datetime ? gmdate( 'H:i:s', strtotime( $end_datetime ) ) : '00:00:00';
+			$all_day    = ( '00:00:00' === $start_time && '00:00:00' === $end_time );
+		}
+
+		// Get excerpt or truncated content.
+		$description = '';
+		if ( ! empty( $row->post_excerpt ) ) {
+			$description = $row->post_excerpt;
+		} elseif ( ! empty( $row->post_content ) ) {
+			$description = wp_trim_words( wp_strip_all_tags( $row->post_content ), 30 );
+		}
+
+		// Generate unique ID for cross-site reference.
+		// Include occurrence_id to make each occurrence unique.
+		$site_host = wp_parse_url( get_site_url(), PHP_URL_HOST );
+		$uid       = 'fair_event_' . $row->event_id . '_' . $row->occurrence_id . '@' . $site_host;
+
+		return array(
+			'uid'         => $uid,
+			'title'       => $row->post_title,
+			'description' => $description,
+			'start'       => $start_datetime ? gmdate( 'c', strtotime( $start_datetime ) ) : '',
+			'end'         => $end_datetime ? gmdate( 'c', strtotime( $end_datetime ) ) : '',
+			'all_day'     => $all_day,
+			'url'         => get_permalink( $row->event_id ),
+		);
+	}
+
+	/**
+	 * Format a single event for JSON response (legacy method)
 	 *
 	 * @param int $event_id Event post ID.
 	 * @return array Formatted event data.

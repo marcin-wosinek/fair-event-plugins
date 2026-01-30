@@ -60,6 +60,11 @@ class Installer {
 			self::migrate_to_1_5_0();
 		}
 
+		// Run migration if upgrading from pre-1.6.0 (add rrule column to event_dates).
+		if ( version_compare( $current_version, '1.6.0', '<' ) ) {
+			self::migrate_to_1_6_0();
+		}
+
 		// Update database version
 		Schema::update_db_version( Schema::DB_VERSION );
 	}
@@ -98,6 +103,10 @@ class Installer {
 
 			if ( version_compare( $current_version, '1.5.0', '<' ) ) {
 				self::migrate_to_1_5_0();
+			}
+
+			if ( version_compare( $current_version, '1.6.0', '<' ) ) {
+				self::migrate_to_1_6_0();
 			}
 
 			// Install/update tables
@@ -385,6 +394,81 @@ class Installer {
 				$wpdb->prepare(
 					'ALTER TABLE %i ADD KEY idx_master_id (master_id)',
 					$table_name
+				)
+			);
+		}
+	}
+
+	/**
+	 * Migrate to version 1.6.0 - Add rrule column to event_dates table.
+	 *
+	 * @return void
+	 */
+	private static function migrate_to_1_6_0() {
+		global $wpdb;
+
+		$table_name = $wpdb->prefix . 'fair_event_dates';
+
+		// Check if rrule column already exists.
+		$rrule_exists = $wpdb->get_results(
+			$wpdb->prepare(
+				"SHOW COLUMNS FROM %i LIKE 'rrule'",
+				$table_name
+			)
+		);
+
+		if ( empty( $rrule_exists ) ) {
+			// Add rrule column.
+			$wpdb->query(
+				$wpdb->prepare(
+					'ALTER TABLE %i ADD COLUMN rrule VARCHAR(255) DEFAULT NULL AFTER master_id',
+					$table_name
+				)
+			);
+
+			// Add index for rrule.
+			$wpdb->query(
+				$wpdb->prepare(
+					'ALTER TABLE %i ADD KEY idx_rrule (rrule(100))',
+					$table_name
+				)
+			);
+		}
+
+		// Migrate existing data from post meta to table.
+		self::migrate_rrule_from_postmeta();
+	}
+
+	/**
+	 * Migrate RRULE data from postmeta to event_dates table.
+	 *
+	 * @return void
+	 */
+	private static function migrate_rrule_from_postmeta() {
+		global $wpdb;
+
+		$table_name = $wpdb->prefix . 'fair_event_dates';
+
+		// Get all events with event_recurrence meta.
+		$events_with_recurrence = $wpdb->get_results(
+			"SELECT post_id, meta_value FROM {$wpdb->postmeta} WHERE meta_key = 'event_recurrence' AND meta_value != ''"
+		);
+
+		if ( empty( $events_with_recurrence ) ) {
+			return;
+		}
+
+		foreach ( $events_with_recurrence as $row ) {
+			$event_id = (int) $row->post_id;
+			$rrule    = $row->meta_value;
+
+			// Update the master/single row with the rrule.
+			$wpdb->query(
+				$wpdb->prepare(
+					"UPDATE %i SET rrule = %s WHERE event_id = %d AND occurrence_type IN ('single', 'master')",
+					$table_name,
+					$rrule,
+					$event_id
 				)
 			);
 		}

@@ -187,18 +187,23 @@ class RecurrenceService {
 	/**
 	 * Regenerate all occurrences for an event
 	 *
-	 * @param int $event_id Event post ID.
+	 * @param int         $event_id Event post ID.
+	 * @param string|null $rrule    Optional RRULE to use. Pass null to read from database,
+	 *                              pass empty string to explicitly clear recurrence.
 	 * @return int Number of occurrences generated.
 	 */
-	public static function regenerate_event_occurrences( $event_id ) {
-		// Get the recurrence rule from post meta.
-		$rrule = get_post_meta( $event_id, 'event_recurrence', true );
-
+	public static function regenerate_event_occurrences( $event_id, $rrule = null ) {
 		// Get the master/single occurrence.
 		$master = EventDates::get_by_event_id( $event_id );
 
 		if ( ! $master ) {
 			return 0;
+		}
+
+		// Get the recurrence rule from database only if not provided (null).
+		// Empty string means "explicitly no recurrence".
+		if ( null === $rrule ) {
+			$rrule = EventDates::get_rrule_by_event_id( $event_id );
 		}
 
 		// Delete existing generated occurrences.
@@ -211,7 +216,8 @@ class RecurrenceService {
 				$master->start_datetime,
 				$master->end_datetime,
 				$master->all_day,
-				'single'
+				'single',
+				null
 			);
 			return 1;
 		}
@@ -234,7 +240,8 @@ class RecurrenceService {
 			$first['start'],
 			$first['end'],
 			$master->all_day,
-			'master'
+			'master',
+			$rrule
 		);
 
 		if ( ! $master_id ) {
