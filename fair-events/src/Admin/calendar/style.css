@@ -1,0 +1,195 @@
+/**
+ * Admin Calendar Styles
+ *
+ * @package FairEvents
+ */
+
+.fair-events-calendar-wrap {
+	max-width: 1200px;
+}
+
+.fair-events-calendar-loading {
+	display: flex;
+	justify-content: center;
+	padding: 40px;
+}
+
+/* Header */
+.fair-events-calendar-header {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	margin-bottom: 20px;
+	padding: 10px 0;
+}
+
+.fair-events-calendar-nav {
+	display: flex;
+	gap: 8px;
+}
+
+.fair-events-calendar-title {
+	margin: 0;
+	font-size: 1.5em;
+	font-weight: 600;
+}
+
+/* Calendar Grid */
+.fair-events-calendar-grid {
+	background: #fff;
+	border: 1px solid #c3c4c7;
+	border-radius: 4px;
+}
+
+.fair-events-calendar-weekdays {
+	display: grid;
+	grid-template-columns: repeat(7, 1fr);
+	background: #f0f0f1;
+	border-bottom: 1px solid #c3c4c7;
+}
+
+.fair-events-calendar-weekday {
+	padding: 10px;
+	text-align: center;
+	font-weight: 600;
+	font-size: 13px;
+	color: #1d2327;
+}
+
+.fair-events-calendar-days {
+	display: grid;
+	grid-template-columns: repeat(7, 1fr);
+}
+
+/* Day Cell */
+.fair-events-calendar-day {
+	min-height: 100px;
+	border-right: 1px solid #c3c4c7;
+	border-bottom: 1px solid #c3c4c7;
+	padding: 4px;
+	background: #fff;
+	position: relative;
+}
+
+.fair-events-calendar-day:nth-child(7n) {
+	border-right: none;
+}
+
+.fair-events-calendar-day:nth-last-child(-n + 7) {
+	border-bottom: none;
+}
+
+.fair-events-calendar-day.other-month {
+	background: #f6f7f7;
+}
+
+.fair-events-calendar-day.other-month .fair-events-calendar-day-number {
+	color: #8c8f94;
+}
+
+.fair-events-calendar-day.today {
+	background: #e7f5ff;
+}
+
+.fair-events-calendar-day.today .fair-events-calendar-day-number {
+	background: #2271b1;
+	color: #fff;
+	border-radius: 50%;
+	width: 24px;
+	height: 24px;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+}
+
+.fair-events-calendar-day.past {
+	opacity: 0.7;
+}
+
+/* Day Header */
+.fair-events-calendar-day-header {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	margin-bottom: 4px;
+}
+
+.fair-events-calendar-day-number {
+	font-size: 13px;
+	font-weight: 500;
+	color: #1d2327;
+	padding: 2px 6px;
+}
+
+.fair-events-calendar-add-btn {
+	opacity: 0;
+	transition: opacity 0.15s ease;
+	min-width: 24px !important;
+	height: 24px !important;
+	padding: 0 !important;
+}
+
+.fair-events-calendar-add-btn svg {
+	width: 16px;
+	height: 16px;
+}
+
+.fair-events-calendar-day:hover .fair-events-calendar-add-btn {
+	opacity: 1;
+}
+
+/* Events List */
+.fair-events-calendar-day-events {
+	display: flex;
+	flex-direction: column;
+	gap: 2px;
+}
+
+.fair-events-calendar-event {
+	display: block;
+	padding: 2px 6px;
+	background: #2271b1;
+	color: #fff;
+	border-radius: 3px;
+	font-size: 11px;
+	line-height: 1.4;
+	white-space: nowrap;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	text-align: left;
+	border: none;
+	cursor: pointer;
+	transition: background-color 0.15s ease;
+}
+
+.fair-events-calendar-event:hover {
+	background: #135e96;
+}
+
+.fair-events-calendar-event:focus {
+	outline: 2px solid #2271b1;
+	outline-offset: 1px;
+}
+
+.fair-events-calendar-more {
+	font-size: 11px;
+	color: #646970;
+	padding: 2px 6px;
+}
+
+/* Responsive */
+@media screen and (max-width: 782px) {
+	.fair-events-calendar-header {
+		flex-direction: column;
+		gap: 10px;
+		align-items: flex-start;
+	}
+
+	.fair-events-calendar-day {
+		min-height: 60px;
+	}
+
+	.fair-events-calendar-event {
+		font-size: 10px;
+	}
+}

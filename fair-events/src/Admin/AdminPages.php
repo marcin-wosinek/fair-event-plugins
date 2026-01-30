@@ -41,6 +41,16 @@ class AdminPages {
 			'edit.php?post_type=fair_event&upcoming=1'
 		);
 
+		// Calendar page
+		add_submenu_page(
+			'edit.php?post_type=fair_event',
+			__( 'Events Calendar', 'fair-events' ),
+			__( 'Calendar', 'fair-events' ),
+			'edit_posts',
+			'fair-events-calendar',
+			array( $this, 'render_calendar_page' )
+		);
+
 		// Settings page
 		add_submenu_page(
 			'edit.php?post_type=fair_event',
@@ -92,6 +102,44 @@ class AdminPages {
 	 * @return void
 	 */
 	public function enqueue_admin_scripts( $hook ) {
+		// Calendar page
+		if ( 'fair_event_page_fair-events-calendar' === $hook ) {
+			$asset_file = include FAIR_EVENTS_PLUGIN_DIR . 'build/admin/calendar/index.asset.php';
+
+			wp_enqueue_script(
+				'fair-events-calendar',
+				FAIR_EVENTS_PLUGIN_URL . 'build/admin/calendar/index.js',
+				$asset_file['dependencies'],
+				$asset_file['version'],
+				true
+			);
+
+			wp_enqueue_style(
+				'fair-events-calendar',
+				FAIR_EVENTS_PLUGIN_URL . 'build/admin/calendar/style-index.css',
+				array( 'wp-components' ),
+				$asset_file['version']
+			);
+
+			wp_localize_script(
+				'fair-events-calendar',
+				'fairEventsCalendarData',
+				array(
+					'startOfWeek'  => (int) get_option( 'start_of_week', 1 ),
+					'newEventUrl'  => admin_url( 'post-new.php?post_type=fair_event' ),
+					'editEventUrl' => admin_url( 'post.php?action=edit&post=' ),
+				)
+			);
+
+			wp_set_script_translations(
+				'fair-events-calendar',
+				'fair-events',
+				FAIR_EVENTS_PLUGIN_DIR . 'build/languages'
+			);
+
+			return;
+		}
+
 		// Event Sources page
 		if ( 'fair_event_page_fair-events-sources' === $hook ) {
 			$asset_file = include FAIR_EVENTS_PLUGIN_DIR . 'build/admin/sources/index.asset.php';
@@ -209,6 +257,17 @@ class AdminPages {
 	public function render_sources_page() {
 		?>
 		<div id="fair-events-sources-root"></div>
+		<?php
+	}
+
+	/**
+	 * Render calendar page
+	 *
+	 * @return void
+	 */
+	public function render_calendar_page() {
+		?>
+		<div id="fair-events-calendar-root"></div>
 		<?php
 	}
 
