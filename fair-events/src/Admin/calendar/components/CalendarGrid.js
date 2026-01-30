@@ -8,6 +8,19 @@
 
 import DayCell from './DayCell.js';
 
+/**
+ * Format a date as YYYY-MM-DD in local time (not UTC)
+ *
+ * @param {Date} date - Date object to format
+ * @return {string} Date string in YYYY-MM-DD format
+ */
+function formatLocalDate(date) {
+	const year = date.getFullYear();
+	const month = String(date.getMonth() + 1).padStart(2, '0');
+	const day = String(date.getDate()).padStart(2, '0');
+	return `${year}-${month}-${day}`;
+}
+
 export default function CalendarGrid({
 	currentDate,
 	events,
@@ -46,7 +59,7 @@ export default function CalendarGrid({
 		);
 	}
 
-	// Group events by date
+	// Group events by date (using local time, not UTC)
 	const eventsByDate = {};
 	events.forEach((event) => {
 		const startDate = event.start ? new Date(event.start) : null;
@@ -54,18 +67,24 @@ export default function CalendarGrid({
 
 		if (!startDate) return;
 
-		// Normalize dates to midnight for comparison
-		const startDateStr = startDate.toISOString().split('T')[0];
-		const endDateStr = endDate
-			? endDate.toISOString().split('T')[0]
-			: startDateStr;
+		// Normalize dates to midnight for comparison (local time)
+		const startDateStr = formatLocalDate(startDate);
+		const endDateStr = endDate ? formatLocalDate(endDate) : startDateStr;
 
 		// Add event to all days it spans
-		let loopDate = new Date(startDateStr);
-		const endLoop = new Date(endDateStr);
+		let loopDate = new Date(
+			startDate.getFullYear(),
+			startDate.getMonth(),
+			startDate.getDate()
+		);
+		const endLoop = new Date(
+			endDate.getFullYear(),
+			endDate.getMonth(),
+			endDate.getDate()
+		);
 
 		while (loopDate <= endLoop) {
-			const dateKey = loopDate.toISOString().split('T')[0];
+			const dateKey = formatLocalDate(loopDate);
 			if (!eventsByDate[dateKey]) {
 				eventsByDate[dateKey] = [];
 			}
@@ -83,7 +102,7 @@ export default function CalendarGrid({
 		days.push({
 			date,
 			isCurrentMonth: false,
-			events: eventsByDate[date.toISOString().split('T')[0]] || [],
+			events: eventsByDate[formatLocalDate(date)] || [],
 		});
 	}
 
@@ -93,7 +112,7 @@ export default function CalendarGrid({
 		days.push({
 			date,
 			isCurrentMonth: true,
-			events: eventsByDate[date.toISOString().split('T')[0]] || [],
+			events: eventsByDate[formatLocalDate(date)] || [],
 		});
 	}
 
@@ -103,7 +122,7 @@ export default function CalendarGrid({
 		days.push({
 			date,
 			isCurrentMonth: false,
-			events: eventsByDate[date.toISOString().split('T')[0]] || [],
+			events: eventsByDate[formatLocalDate(date)] || [],
 		});
 	}
 

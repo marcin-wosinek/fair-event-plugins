@@ -43,7 +43,7 @@
 
 .fair-events-calendar-weekdays {
 	display: grid;
-	grid-template-columns: repeat(7, 1fr);
+	grid-template-columns: repeat(7, minmax(0, 1fr));
 	background: #f0f0f1;
 	border-bottom: 1px solid #c3c4c7;
 }
@@ -58,7 +58,7 @@
 
 .fair-events-calendar-days {
 	display: grid;
-	grid-template-columns: repeat(7, 1fr);
+	grid-template-columns: repeat(7, minmax(0, 1fr));
 }
 
 /* Day Cell */
@@ -69,6 +69,7 @@
 	padding: 4px;
 	background: #fff;
 	position: relative;
+	overflow: hidden;
 }
 
 .fair-events-calendar-day:nth-child(7n) {
