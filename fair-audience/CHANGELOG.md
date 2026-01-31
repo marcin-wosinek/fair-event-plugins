@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.3.0
+
+### Minor Changes
+
+- 2708bf8: Add foto author to the image.
+
 ## 0.2.0
 
 ### Minor Changes

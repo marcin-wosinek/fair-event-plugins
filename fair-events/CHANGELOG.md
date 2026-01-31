@@ -1,5 +1,16 @@
 # fair-events
 
+## 0.8.0
+
+### Minor Changes
+
+- 51b63e5: Add photo taxonomy by events.
+- e09b50a: Add option to link the event images.
+
+### Patch Changes
+
+- 04c4196: Add migration workflow for events.
+
 ## 0.7.0
 
 ### Minor Changes
