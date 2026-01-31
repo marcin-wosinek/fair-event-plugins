@@ -7,19 +7,12 @@
  */
 
 import DayCell from './DayCell.js';
-
-/**
- * Format a date as YYYY-MM-DD in local time (not UTC)
- *
- * @param {Date} date - Date object to format
- * @return {string} Date string in YYYY-MM-DD format
- */
-function formatLocalDate(date) {
-	const year = date.getFullYear();
-	const month = String(date.getMonth() + 1).padStart(2, '0');
-	const day = String(date.getDate()).padStart(2, '0');
-	return `${year}-${month}-${day}`;
-}
+import {
+	formatLocalDate,
+	getWeekdayLabels,
+	calculateLeadingDays,
+	groupEventsByDate,
+} from 'fair-events-shared';
 
 export default function CalendarGrid({
 	currentDate,
@@ -38,60 +31,18 @@ export default function CalendarGrid({
 	const daysInMonth = lastDayOfMonth.getDate();
 
 	// Calculate first weekday (adjusted for start_of_week)
-	let firstWeekday = firstDayOfMonth.getDay();
-	if (startOfWeek === 1) {
-		firstWeekday = firstWeekday === 0 ? 6 : firstWeekday - 1;
-	}
+	// This gives us how many leading days we need from the previous month
+	const firstWeekday = calculateLeadingDays(firstDayOfMonth, startOfWeek);
 
 	// Calculate total cells needed
 	const totalCells = firstWeekday + daysInMonth;
 	const trailingDays = totalCells % 7 === 0 ? 0 : 7 - (totalCells % 7);
 
 	// Generate weekday labels
-	const weekdayLabels = [];
-	const baseDate = new Date(2024, 0, 7); // Known Sunday
-	for (let i = 0; i < 7; i++) {
-		const dayIndex = (startOfWeek + i) % 7;
-		const date = new Date(baseDate);
-		date.setDate(baseDate.getDate() + dayIndex);
-		weekdayLabels.push(
-			date.toLocaleDateString(undefined, { weekday: 'short' })
-		);
-	}
+	const weekdayLabels = getWeekdayLabels(startOfWeek);
 
 	// Group events by date (using local time, not UTC)
-	const eventsByDate = {};
-	events.forEach((event) => {
-		const startDate = event.start ? new Date(event.start) : null;
-		const endDate = event.end ? new Date(event.end) : startDate;
-
-		if (!startDate) return;
-
-		// Normalize dates to midnight for comparison (local time)
-		const startDateStr = formatLocalDate(startDate);
-		const endDateStr = endDate ? formatLocalDate(endDate) : startDateStr;
-
-		// Add event to all days it spans
-		let loopDate = new Date(
-			startDate.getFullYear(),
-			startDate.getMonth(),
-			startDate.getDate()
-		);
-		const endLoop = new Date(
-			endDate.getFullYear(),
-			endDate.getMonth(),
-			endDate.getDate()
-		);
-
-		while (loopDate <= endLoop) {
-			const dateKey = formatLocalDate(loopDate);
-			if (!eventsByDate[dateKey]) {
-				eventsByDate[dateKey] = [];
-			}
-			eventsByDate[dateKey].push(event);
-			loopDate.setDate(loopDate.getDate() + 1);
-		}
-	});
+	const eventsByDate = groupEventsByDate(events);
 
 	// Build calendar days array
 	const days = [];

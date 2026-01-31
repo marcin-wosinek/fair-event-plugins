@@ -8,6 +8,7 @@ import { useState, useEffect, useCallback } from '@wordpress/element';
 import { Spinner } from '@wordpress/components';
 import { __ } from '@wordpress/i18n';
 import apiFetch from '@wordpress/api-fetch';
+import { formatLocalDate, calculateLeadingDays } from 'fair-events-shared';
 import CalendarHeader from './components/CalendarHeader.js';
 import CalendarGrid from './components/CalendarGrid.js';
 
@@ -31,28 +32,23 @@ export default function CalendarApp() {
 		// Get start_of_week setting (0 = Sunday, 1 = Monday)
 		const startOfWeek = window.fairEventsCalendarData?.startOfWeek ?? 1;
 
-		// Calculate leading days
-		let firstWeekday = firstDayOfMonth.getDay();
-		if (startOfWeek === 1) {
-			firstWeekday = firstWeekday === 0 ? 6 : firstWeekday - 1;
-		}
+		// Calculate leading days (how many days from previous month to show)
+		const leadingDays = calculateLeadingDays(firstDayOfMonth, startOfWeek);
 
 		// Calculate trailing days
-		const totalCells = firstWeekday + lastDayOfMonth.getDate();
+		const totalCells = leadingDays + lastDayOfMonth.getDate();
 		const trailingDays = totalCells % 7 === 0 ? 0 : 7 - (totalCells % 7);
 
 		// Extend query range
 		const startDate = new Date(firstDayOfMonth);
-		startDate.setDate(startDate.getDate() - firstWeekday);
+		startDate.setDate(startDate.getDate() - leadingDays);
 
 		const endDate = new Date(lastDayOfMonth);
 		endDate.setDate(endDate.getDate() + trailingDays);
 
-		const formatDate = (d) => d.toISOString().split('T')[0];
-
 		try {
 			const response = await apiFetch({
-				path: `/fair-events/v1/events?start_date=${formatDate(startDate)}&end_date=${formatDate(endDate)}`,
+				path: `/fair-events/v1/events?start_date=${formatLocalDate(startDate)}&end_date=${formatLocalDate(endDate)}`,
 			});
 
 			setEvents(response.events || []);
@@ -87,7 +83,7 @@ export default function CalendarApp() {
 	};
 
 	const handleAddEvent = (date) => {
-		const dateStr = date.toISOString().split('T')[0];
+		const dateStr = formatLocalDate(date);
 		const newEventUrl = window.fairEventsCalendarData?.newEventUrl;
 		if (newEventUrl) {
 			window.location.href = `${newEventUrl}&event_date=${dateStr}`;
