@@ -224,6 +224,11 @@ class Event {
 		$event_location   = get_post_meta( $post->ID, 'event_location', true );
 		$event_recurrence = \FairEvents\Models\EventDates::get_rrule_by_event_id( $post->ID );
 
+		// Get venue data.
+		$event_dates      = \FairEvents\Models\EventDates::get_by_event_id( $post->ID );
+		$current_venue_id = $event_dates ? $event_dates->venue_id : null;
+		$venues           = \FairEvents\Models\Venue::get_all();
+
 		// Check for event_date URL parameter (from calendar "add event" button) for new posts.
 		// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Read-only operation for prepopulating form.
 		if ( empty( $event_start ) && isset( $_GET['event_date'] ) ) {
@@ -316,6 +321,39 @@ class Event {
 				<?php esc_html_e( 'All Day Event', 'fair-events' ); ?>
 			</label>
 		</p>
+		<p>
+			<label for="event_venue_id">
+				<?php esc_html_e( 'Venue', 'fair-events' ); ?>
+			</label>
+			<select id="event_venue_id" name="event_venue_id" style="width: 100%; box-sizing: border-box;">
+				<option value=""><?php esc_html_e( 'No venue', 'fair-events' ); ?></option>
+				<?php foreach ( $venues as $venue ) : ?>
+					<option value="<?php echo esc_attr( $venue->id ); ?>" <?php selected( $current_venue_id, $venue->id ); ?>>
+						<?php echo esc_html( $venue->name ); ?>
+					</option>
+				<?php endforeach; ?>
+				<option value="new"><?php esc_html_e( '+ Add new venue...', 'fair-events' ); ?></option>
+			</select>
+		</p>
+		<div id="new_venue_form" style="display: none; padding: 10px; background: #f9f9f9; border: 1px solid #ddd; margin-bottom: 10px;">
+			<p>
+				<label for="new_venue_name"><?php esc_html_e( 'Venue Name', 'fair-events' ); ?></label>
+				<input type="text" id="new_venue_name" style="width: 100%;" />
+			</p>
+			<p>
+				<label for="new_venue_address"><?php esc_html_e( 'Address', 'fair-events' ); ?></label>
+				<textarea id="new_venue_address" style="width: 100%;" rows="2"></textarea>
+			</p>
+			<p>
+				<button type="button" id="save_new_venue" class="button button-primary">
+					<?php esc_html_e( 'Save Venue', 'fair-events' ); ?>
+				</button>
+				<button type="button" id="cancel_new_venue" class="button">
+					<?php esc_html_e( 'Cancel', 'fair-events' ); ?>
+				</button>
+				<span id="new_venue_error" style="color: red; margin-left: 10px;"></span>
+			</p>
+		</div>
 		<p>
 			<label for="event_location">
 				<?php esc_html_e( 'Location', 'fair-events' ); ?>
@@ -690,6 +728,18 @@ class Event {
 		// Save event_location separately (not in dates table)
 		if ( isset( $_POST['event_location'] ) ) {
 			update_post_meta( $post_id, 'event_location', sanitize_text_field( wp_unslash( $_POST['event_location'] ) ) );
+		}
+
+		// Save venue_id.
+		if ( isset( $_POST['event_venue_id'] ) ) {
+			$venue_id = sanitize_text_field( wp_unslash( $_POST['event_venue_id'] ) );
+			// "new" value is handled via JavaScript API call, so skip it here.
+			if ( '' === $venue_id || 'new' === $venue_id ) {
+				$venue_id = null;
+			} else {
+				$venue_id = absint( $venue_id );
+			}
+			\FairEvents\Models\EventDates::save_venue_id( $post_id, $venue_id );
 		}
 
 		// Handle recurrence.

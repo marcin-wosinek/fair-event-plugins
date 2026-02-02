@@ -277,7 +277,8 @@ class VenueController extends WP_REST_Controller {
 	 * @return bool True if user has permission.
 	 */
 	public function get_items_permissions_check( $request ) {
-		return current_user_can( 'manage_options' );
+		// Allow users who can edit posts (needed for venue selector in event meta box).
+		return current_user_can( 'edit_posts' );
 	}
 
 	/**
@@ -287,7 +288,7 @@ class VenueController extends WP_REST_Controller {
 	 * @return bool True if user has permission.
 	 */
 	public function get_item_permissions_check( $request ) {
-		return current_user_can( 'manage_options' );
+		return current_user_can( 'edit_posts' );
 	}
 
 	/**
@@ -297,7 +298,8 @@ class VenueController extends WP_REST_Controller {
 	 * @return bool True if user has permission.
 	 */
 	public function create_item_permissions_check( $request ) {
-		return current_user_can( 'manage_options' );
+		// Allow users who can edit posts to create venues inline from event editor.
+		return current_user_can( 'edit_posts' );
 	}
 
 	/**

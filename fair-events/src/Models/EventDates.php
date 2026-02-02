@@ -365,6 +365,29 @@ class EventDates {
 	}
 
 	/**
+	 * Save venue_id for an event
+	 *
+	 * @param int      $event_id Event post ID.
+	 * @param int|null $venue_id Venue ID (null to clear).
+	 * @return bool True on success, false on failure.
+	 */
+	public static function save_venue_id( $event_id, $venue_id ) {
+		global $wpdb;
+
+		$table_name = $wpdb->prefix . 'fair_event_dates';
+
+		$result = $wpdb->update(
+			$table_name,
+			array( 'venue_id' => $venue_id ),
+			array( 'event_id' => $event_id ),
+			array( '%d' ),
+			array( '%d' )
+		);
+
+		return $result !== false;
+	}
+
+	/**
 	 * Get RRULE by event ID
 	 *
 	 * @param int $event_id Event post ID.

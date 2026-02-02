@@ -3,6 +3,7 @@
  */
 import domReady from '@wordpress/dom-ready';
 import { __ } from '@wordpress/i18n';
+import apiFetch from '@wordpress/api-fetch';
 
 /**
  * Fair Events Shared dependencies
@@ -438,5 +439,88 @@ domReady(() => {
 		if (recurrenceUntil) {
 			recurrenceUntil.addEventListener('change', updateRRuleInput);
 		}
+	}
+
+	// Venue handling
+	const venueSelect = document.getElementById('event_venue_id');
+	const newVenueForm = document.getElementById('new_venue_form');
+	const newVenueName = document.getElementById('new_venue_name');
+	const newVenueAddress = document.getElementById('new_venue_address');
+	const saveNewVenue = document.getElementById('save_new_venue');
+	const cancelNewVenue = document.getElementById('cancel_new_venue');
+	const newVenueError = document.getElementById('new_venue_error');
+
+	let previousVenueValue = venueSelect?.value || '';
+
+	if (venueSelect) {
+		venueSelect.addEventListener('change', () => {
+			if (venueSelect.value === 'new') {
+				newVenueForm.style.display = 'block';
+				newVenueName.focus();
+			} else {
+				newVenueForm.style.display = 'none';
+				previousVenueValue = venueSelect.value;
+			}
+			updateEditorMeta();
+		});
+	}
+
+	if (saveNewVenue) {
+		saveNewVenue.addEventListener('click', async () => {
+			const name = newVenueName.value.trim();
+			if (!name) {
+				newVenueError.textContent = __(
+					'Venue name is required',
+					'fair-events'
+				);
+				return;
+			}
+
+			// Disable the button while saving
+			saveNewVenue.disabled = true;
+			newVenueError.textContent = '';
+
+			try {
+				const venue = await apiFetch({
+					path: '/fair-events/v1/venues',
+					method: 'POST',
+					data: { name, address: newVenueAddress.value },
+				});
+
+				// Add new option and select it
+				const option = document.createElement('option');
+				option.value = venue.id;
+				option.textContent = venue.name;
+				venueSelect.insertBefore(
+					option,
+					venueSelect.querySelector('option[value="new"]')
+				);
+				venueSelect.value = venue.id;
+
+				// Reset and hide form
+				newVenueName.value = '';
+				newVenueAddress.value = '';
+				newVenueError.textContent = '';
+				newVenueForm.style.display = 'none';
+				previousVenueValue = venue.id;
+
+				updateEditorMeta();
+			} catch (err) {
+				newVenueError.textContent =
+					err.message || __('Failed to create venue', 'fair-events');
+			} finally {
+				saveNewVenue.disabled = false;
+			}
+		});
+	}
+
+	if (cancelNewVenue) {
+		cancelNewVenue.addEventListener('click', () => {
+			venueSelect.value = previousVenueValue;
+			newVenueName.value = '';
+			newVenueAddress.value = '';
+			newVenueError.textContent = '';
+			newVenueForm.style.display = 'none';
+		});
 	}
 });
