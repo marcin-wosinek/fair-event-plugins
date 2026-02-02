@@ -81,6 +81,16 @@ class AdminPages {
 			array( $this, 'render_sources_page' )
 		);
 
+		// Venues page
+		add_submenu_page(
+			'edit.php?post_type=fair_event',
+			__( 'Venues', 'fair-events' ),
+			__( 'Venues', 'fair-events' ),
+			'manage_options',
+			'fair-events-venues',
+			array( $this, 'render_venues_page' )
+		);
+
 		// Copy Event page (hidden from menu, accessed via row action)
 		$copy_hookname = add_submenu_page(
 			'', // Hidden from menu (empty string instead of null for PHP 8.1+ compatibility)
@@ -193,6 +203,28 @@ class AdminPages {
 			return;
 		}
 
+		// Venues page
+		if ( 'fair_event_page_fair-events-venues' === $hook ) {
+			$asset_file = include FAIR_EVENTS_PLUGIN_DIR . 'build/admin/venues/index.asset.php';
+
+			wp_enqueue_script(
+				'fair-events-venues',
+				FAIR_EVENTS_PLUGIN_URL . 'build/admin/venues/index.js',
+				$asset_file['dependencies'],
+				$asset_file['version'],
+				true
+			);
+
+			wp_set_script_translations(
+				'fair-events-venues',
+				'fair-events',
+				FAIR_EVENTS_PLUGIN_DIR . 'build/languages'
+			);
+
+			wp_enqueue_style( 'wp-components' );
+			return;
+		}
+
 		// Only load on Fair Events admin pages.
 		if ( 'fair_event_page_fair-events-settings' !== $hook ) {
 			return;
@@ -268,6 +300,17 @@ class AdminPages {
 	public function render_calendar_page() {
 		?>
 		<div id="fair-events-calendar-root"></div>
+		<?php
+	}
+
+	/**
+	 * Render venues page
+	 *
+	 * @return void
+	 */
+	public function render_venues_page() {
+		?>
+		<div id="fair-events-venues-root"></div>
 		<?php
 	}
 

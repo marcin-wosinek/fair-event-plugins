@@ -38,6 +38,9 @@ class Installer {
 		$sql = Schema::get_photo_likes_table_sql();
 		dbDelta( $sql );
 
+		$sql = Schema::get_event_venues_table_sql();
+		dbDelta( $sql );
+
 		// Run migration if upgrading from pre-1.0.0
 		if ( version_compare( $current_version, '1.0.0', '<' ) ) {
 			self::migrate_to_1_0_0();
@@ -63,6 +66,11 @@ class Installer {
 		// Run migration if upgrading from pre-1.6.0 (add rrule column to event_dates).
 		if ( version_compare( $current_version, '1.6.0', '<' ) ) {
 			self::migrate_to_1_6_0();
+		}
+
+		// Run migration if upgrading from pre-1.7.0 (add venue_id column to event_dates).
+		if ( version_compare( $current_version, '1.7.0', '<' ) ) {
+			self::migrate_to_1_7_0();
 		}
 
 		// Update database version
@@ -107,6 +115,10 @@ class Installer {
 
 			if ( version_compare( $current_version, '1.6.0', '<' ) ) {
 				self::migrate_to_1_6_0();
+			}
+
+			if ( version_compare( $current_version, '1.7.0', '<' ) ) {
+				self::migrate_to_1_7_0();
 			}
 
 			// Install/update tables
@@ -469,6 +481,43 @@ class Installer {
 					$table_name,
 					$rrule,
 					$event_id
+				)
+			);
+		}
+	}
+
+	/**
+	 * Migrate to version 1.7.0 - Add venue_id column to event_dates table.
+	 *
+	 * @return void
+	 */
+	private static function migrate_to_1_7_0() {
+		global $wpdb;
+
+		$table_name = $wpdb->prefix . 'fair_event_dates';
+
+		// Check if venue_id column already exists.
+		$venue_id_exists = $wpdb->get_results(
+			$wpdb->prepare(
+				"SHOW COLUMNS FROM %i LIKE 'venue_id'",
+				$table_name
+			)
+		);
+
+		if ( empty( $venue_id_exists ) ) {
+			// Add venue_id column.
+			$wpdb->query(
+				$wpdb->prepare(
+					'ALTER TABLE %i ADD COLUMN venue_id BIGINT UNSIGNED DEFAULT NULL AFTER rrule',
+					$table_name
+				)
+			);
+
+			// Add index for venue_id.
+			$wpdb->query(
+				$wpdb->prepare(
+					'ALTER TABLE %i ADD KEY idx_venue_id (venue_id)',
+					$table_name
 				)
 			);
 		}

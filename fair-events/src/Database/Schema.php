@@ -17,7 +17,7 @@ class Schema {
 	/**
 	 * Database version
 	 */
-	const DB_VERSION = '1.6.0';
+	const DB_VERSION = '1.7.0';
 
 	/**
 	 * Get the SQL for creating the fair_event_dates table
@@ -125,6 +125,28 @@ class Schema {
 			KEY idx_attachment_id (attachment_id),
 			KEY idx_user_id (user_id),
 			KEY idx_participant_id (participant_id)
+		) ENGINE=InnoDB {$charset_collate};";
+	}
+
+	/**
+	 * Get the SQL for creating the fair_event_venues table
+	 *
+	 * @return string SQL statement for creating the table.
+	 */
+	public static function get_event_venues_table_sql() {
+		global $wpdb;
+
+		$table_name      = $wpdb->prefix . 'fair_event_venues';
+		$charset_collate = $wpdb->get_charset_collate();
+
+		return "CREATE TABLE {$table_name} (
+			id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
+			name VARCHAR(255) NOT NULL,
+			address TEXT,
+			created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+			updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+			PRIMARY KEY (id),
+			KEY idx_name (name(100))
 		) ENGINE=InnoDB {$charset_collate};";
 	}
 

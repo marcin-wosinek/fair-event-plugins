@@ -73,6 +73,13 @@ class EventDates {
 	public $rrule;
 
 	/**
+	 * Venue ID
+	 *
+	 * @var int|null
+	 */
+	public $venue_id;
+
+	/**
 	 * Get event dates by event ID
 	 *
 	 * @param int $event_id Event post ID.
@@ -104,6 +111,7 @@ class EventDates {
 		$event_dates->occurrence_type = $result->occurrence_type ?? 'single';
 		$event_dates->master_id       = $result->master_id ? (int) $result->master_id : null;
 		$event_dates->rrule           = $result->rrule ?? null;
+		$event_dates->venue_id        = isset( $result->venue_id ) ? (int) $result->venue_id : null;
 
 		return $event_dates;
 	}
@@ -142,6 +150,7 @@ class EventDates {
 			$event_dates->occurrence_type = $result->occurrence_type ?? 'single';
 			$event_dates->master_id       = $result->master_id ? (int) $result->master_id : null;
 			$event_dates->rrule           = $result->rrule ?? null;
+			$event_dates->venue_id        = isset( $result->venue_id ) ? (int) $result->venue_id : null;
 			$dates[]                      = $event_dates;
 		}
 
