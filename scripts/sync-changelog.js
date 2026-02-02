@@ -19,39 +19,9 @@ const rootDir = join(__dirname, '..');
 // Plugin configurations
 const plugins = [
 	{
-		name: 'fair-calendar-button',
-		changelogPath: 'fair-calendar-button/CHANGELOG.md',
-		readmeFiles: ['fair-calendar-button/readme.txt'],
-	},
-	{
-		name: 'fair-timetable',
-		changelogPath: 'fair-timetable/CHANGELOG.md',
-		readmeFiles: ['fair-timetable/readme.txt'],
-	},
-	{
-		name: 'fair-schedule-blocks',
-		changelogPath: 'fair-schedule-blocks/CHANGELOG.md',
-		readmeFiles: ['fair-schedule-blocks/readme.txt'],
-	},
-	{
-		name: 'fair-membership',
-		changelogPath: 'fair-membership/CHANGELOG.md',
-		readmeFiles: ['fair-membership/readme.txt'],
-	},
-	{
 		name: 'fair-events',
 		changelogPath: 'fair-events/CHANGELOG.md',
 		readmeFiles: ['fair-events/readme.txt'],
-	},
-	{
-		name: 'fair-rsvp',
-		changelogPath: 'fair-rsvp/CHANGELOG.md',
-		readmeFiles: ['fair-rsvp/readme.txt'],
-	},
-	{
-		name: 'fair-team',
-		changelogPath: 'fair-team/CHANGELOG.md',
-		readmeFiles: ['fair-team/readme.txt'],
 	},
 	{
 		name: 'fair-audience',

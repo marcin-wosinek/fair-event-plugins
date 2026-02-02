@@ -19,40 +19,10 @@ const rootDir = join(__dirname, '..');
 // Plugin configurations
 const plugins = [
 	{
-		name: 'fair-calendar-button',
-		packagePath: 'fair-calendar-button/package.json',
-		phpFiles: ['fair-calendar-button/fair-calendar-button.php'],
-		readmeFiles: ['fair-calendar-button/readme.txt'],
-	},
-	{
 		name: 'fair-payment',
 		packagePath: 'fair-payment/package.json',
 		phpFiles: ['fair-payment/fair-payment.php'],
 		readmeFiles: [],
-	},
-	{
-		name: 'fair-registration',
-		packagePath: 'fair-registration/package.json',
-		phpFiles: ['fair-registration/fair-registration.php'],
-		readmeFiles: [],
-	},
-	{
-		name: 'fair-timetable',
-		packagePath: 'fair-timetable/package.json',
-		phpFiles: ['fair-timetable/fair-timetable.php'],
-		readmeFiles: ['fair-timetable/readme.txt'],
-	},
-	{
-		name: 'fair-schedule-blocks',
-		packagePath: 'fair-schedule-blocks/package.json',
-		phpFiles: ['fair-schedule-blocks/fair-schedule-blocks.php'],
-		readmeFiles: ['fair-schedule-blocks/readme.txt'],
-	},
-	{
-		name: 'fair-membership',
-		packagePath: 'fair-membership/package.json',
-		phpFiles: ['fair-membership/fair-membership.php'],
-		readmeFiles: ['fair-membership/readme.txt'],
 	},
 	{
 		name: 'fair-events',
@@ -61,28 +31,10 @@ const plugins = [
 		readmeFiles: ['fair-events/readme.txt'],
 	},
 	{
-		name: 'fair-rsvp',
-		packagePath: 'fair-rsvp/package.json',
-		phpFiles: ['fair-rsvp/fair-rsvp.php'],
-		readmeFiles: ['fair-rsvp/readme.txt'],
-	},
-	{
-		name: 'fair-user-import',
-		packagePath: 'fair-user-import/package.json',
-		phpFiles: ['fair-user-import/fair-user-import.php'],
-		readmeFiles: ['fair-user-import/readme.txt'],
-	},
-	{
 		name: 'fair-platform',
 		packagePath: 'fair-platform/package.json',
 		phpFiles: ['fair-platform/fair-platform.php'],
 		readmeFiles: ['fair-platform/readme.txt'],
-	},
-	{
-		name: 'fair-team',
-		packagePath: 'fair-team/package.json',
-		phpFiles: ['fair-team/fair-team.php'],
-		readmeFiles: ['fair-team/readme.txt'],
 	},
 	{
 		name: 'fair-audience',

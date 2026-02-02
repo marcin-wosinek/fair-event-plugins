@@ -1,9 +1,0 @@
-/**
- * Schedule Accordion Block Editor Styles
- */
-.schedule-accordion-content.block-editor-block-list__layout {
-  border: 1px solid color-mix(in srgb, var(--wp--preset--color--contrast) 25%, transparent);
-  border-radius: var(--wp--style--border--radius, var(--wp--preset--spacing--20, 0.5rem));
-  padding: 0 1rem;
-  margin: -1rem;
-}

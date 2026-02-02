@@ -9,10 +9,6 @@ export const config = {
 	plugins: [
 		{ name: 'fair-audience', textDomain: 'fair-audience' },
 		{ name: 'fair-events', textDomain: 'fair-events' },
-		{ name: 'fair-calendar-button', textDomain: 'fair-calendar-button' },
-		{ name: 'fair-rsvp', textDomain: 'fair-rsvp' },
-		{ name: 'fair-membership', textDomain: 'fair-membership' },
-		{ name: 'fair-team', textDomain: 'fair-team' },
 	],
 
 	// Supported locales

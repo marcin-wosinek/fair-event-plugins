@@ -39,16 +39,9 @@ jobs:
               uses: actions/cache@v3
               with:
                   path: |
-                      ./fair-calendar-button/vendor
                       ./fair-payment/vendor
-                      ./fair-registration/vendor
-                      ./fair-schedule-blocks/vendor
-                      ./fair-timetable/vendor
-                      ./fair-membership/vendor
                       ./fair-events/vendor
-                      ./fair-rsvp/vendor
                       ./fair-platform/vendor
-                      ./fair-team/vendor
                       ./fair-audience/vendor
                       ./vendor
                   key: ${{ runner.os }}-php-${{ hashFiles('**/composer.lock') }}
