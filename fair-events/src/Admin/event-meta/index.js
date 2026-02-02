@@ -19,7 +19,6 @@ domReady(() => {
 	const allDayCheckbox = document.getElementById('event_all_day');
 	const startInput = document.getElementById('event_start');
 	const endInput = document.getElementById('event_end');
-	const locationInput = document.getElementById('event_location');
 	const durationSelect = document.getElementById('event_duration');
 
 	// Recurrence elements
@@ -43,13 +42,7 @@ domReady(() => {
 	);
 	const recurrenceHiddenInput = document.getElementById('event_recurrence');
 
-	if (
-		!allDayCheckbox ||
-		!startInput ||
-		!endInput ||
-		!locationInput ||
-		!durationSelect
-	) {
+	if (!allDayCheckbox || !startInput || !endInput || !durationSelect) {
 		return;
 	}
 
@@ -285,7 +278,6 @@ domReady(() => {
 				event_start: startInput.value,
 				event_end: endInput.value,
 				event_all_day: allDayCheckbox.checked,
-				event_location: locationInput.value,
 			};
 
 			// Include recurrence if the field exists
@@ -316,11 +308,6 @@ domReady(() => {
 	endInput.addEventListener('change', () => {
 		validateDates();
 		updateDurationSelection();
-		updateEditorMeta();
-	});
-
-	// Update location changes to editor store
-	locationInput.addEventListener('change', () => {
 		updateEditorMeta();
 	});
 

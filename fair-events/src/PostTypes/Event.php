@@ -221,7 +221,6 @@ class Event {
 		$event_start      = get_post_meta( $post->ID, 'event_start', true );
 		$event_end        = get_post_meta( $post->ID, 'event_end', true );
 		$event_all_day    = get_post_meta( $post->ID, 'event_all_day', true );
-		$event_location   = get_post_meta( $post->ID, 'event_location', true );
 		$event_recurrence = \FairEvents\Models\EventDates::get_rrule_by_event_id( $post->ID );
 
 		// Get venue data.
@@ -354,19 +353,6 @@ class Event {
 				<span id="new_venue_error" style="color: red; margin-left: 10px;"></span>
 			</p>
 		</div>
-		<p>
-			<label for="event_location">
-				<?php esc_html_e( 'Location', 'fair-events' ); ?>
-			</label>
-			<input
-				type="text"
-				id="event_location"
-				name="event_location"
-				value="<?php echo esc_attr( $event_location ); ?>"
-				style="width: 100%;"
-				placeholder="<?php esc_attr_e( 'Event location', 'fair-events' ); ?>"
-			/>
-		</p>
 
 		<hr style="margin: 15px 0;" />
 
@@ -724,11 +710,6 @@ class Event {
 
 		// Save to custom table (also updates postmeta automatically for compatibility)
 		\FairEvents\Models\EventDates::save( $post_id, $event_start, $event_end, $event_all_day );
-
-		// Save event_location separately (not in dates table)
-		if ( isset( $_POST['event_location'] ) ) {
-			update_post_meta( $post_id, 'event_location', sanitize_text_field( wp_unslash( $_POST['event_location'] ) ) );
-		}
 
 		// Save venue_id.
 		if ( isset( $_POST['event_venue_id'] ) ) {
