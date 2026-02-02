@@ -8,6 +8,7 @@
 namespace FairEvents\Admin;
 
 use FairEvents\Database\EventPhotoRepository;
+use FairEvents\Database\EventRepository;
 
 defined( 'WPINC' ) || die;
 
@@ -57,15 +58,7 @@ class MediaLibraryHooks {
 		$current_event_id = $event_photo ? $event_photo->event_id : 0;
 
 		// Get all events for dropdown.
-		$events = get_posts(
-			array(
-				'post_type'      => 'fair_event',
-				'posts_per_page' => -1,
-				'orderby'        => 'title',
-				'order'          => 'ASC',
-				'post_status'    => 'any',
-			)
-		);
+		$events = EventRepository::get_all( array( 'post_status' => 'any' ) );
 
 		$options = '<option value="">' . __( '— Select Event —', 'fair-events' ) . '</option>';
 		foreach ( $events as $event ) {
@@ -126,15 +119,7 @@ class MediaLibraryHooks {
 
 		$selected = isset( $_GET['fair_event_filter'] ) ? absint( $_GET['fair_event_filter'] ) : 0;
 
-		$events = get_posts(
-			array(
-				'post_type'      => 'fair_event',
-				'posts_per_page' => -1,
-				'orderby'        => 'title',
-				'order'          => 'ASC',
-				'post_status'    => 'publish',
-			)
-		);
+		$events = EventRepository::get_all();
 
 		echo '<select name="fair_event_filter">';
 		echo '<option value="">' . esc_html__( 'All Events', 'fair-events' ) . '</option>';
@@ -225,15 +210,7 @@ class MediaLibraryHooks {
 	 * Add event selector to bulk upload page.
 	 */
 	public static function add_bulk_upload_event_selector() {
-		$events = get_posts(
-			array(
-				'post_type'      => 'fair_event',
-				'posts_per_page' => -1,
-				'orderby'        => 'title',
-				'order'          => 'ASC',
-				'post_status'    => 'any',
-			)
-		);
+		$events = EventRepository::get_all( array( 'post_status' => 'any' ) );
 
 		$selected = get_user_meta( get_current_user_id(), 'fair_events_bulk_upload_event', true );
 
@@ -357,9 +334,8 @@ class MediaLibraryHooks {
 			return;
 		}
 
-		// Verify event exists.
-		$event = get_post( $event_id );
-		if ( ! $event || 'fair_event' !== $event->post_type ) {
+		// Verify event exists and is a valid event type.
+		if ( ! EventRepository::is_event( $event_id ) ) {
 			return;
 		}
 
@@ -399,25 +375,7 @@ class MediaLibraryHooks {
 		);
 
 		// Get all events for the filter dropdown.
-		$events = get_posts(
-			array(
-				'post_type'      => 'fair_event',
-				'posts_per_page' => -1,
-				'orderby'        => 'title',
-				'order'          => 'ASC',
-				'post_status'    => 'publish',
-			)
-		);
-
-		$events_data = array_map(
-			function ( $event ) {
-				return array(
-					'id'    => $event->ID,
-					'title' => $event->post_title,
-				);
-			},
-			$events
-		);
+		$events_data = EventRepository::get_for_dropdown();
 
 		// Pass event data to JavaScript.
 		wp_localize_script(
