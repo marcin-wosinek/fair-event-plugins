@@ -35,12 +35,17 @@ import {
 export default function InstagramTab({ onNotice, shouldReload }) {
 	const [connected, setConnected] = useState(false);
 	const [username, setUsername] = useState('');
+	const [userId, setUserId] = useState('');
 	const [tokenExpires, setTokenExpires] = useState(null);
 	const [isLoading, setIsLoading] = useState(true);
 	const [isSaving, setIsSaving] = useState(false);
 
 	// Manual token entry state.
 	const [manualToken, setManualToken] = useState('');
+
+	// Manual user ID entry state.
+	const [manualUserId, setManualUserId] = useState('');
+	const [isSavingUserId, setIsSavingUserId] = useState(false);
 
 	// Test connection state.
 	const [isTesting, setIsTesting] = useState(false);
@@ -58,6 +63,8 @@ export default function InstagramTab({ onNotice, shouldReload }) {
 			.then((settings) => {
 				setConnected(settings.connected);
 				setUsername(settings.username);
+				setUserId(settings.userId);
+				setManualUserId(settings.userId);
 				setTokenExpires(settings.tokenExpires);
 				setIsLoading(false);
 			})
@@ -193,6 +200,35 @@ export default function InstagramTab({ onNotice, shouldReload }) {
 					status: 'error',
 					message: errorMessage,
 				});
+			});
+	};
+
+	/**
+	 * Handle saving user ID independently
+	 */
+	const handleSaveUserId = () => {
+		setIsSavingUserId(true);
+
+		saveSettings({
+			fair_audience_instagram_user_id: manualUserId.trim(),
+		})
+			.then(() => {
+				setUserId(manualUserId.trim());
+				onNotice({
+					status: 'success',
+					message: __(
+						'Instagram User ID saved successfully.',
+						'fair-audience'
+					),
+				});
+				setIsSavingUserId(false);
+			})
+			.catch(() => {
+				onNotice({
+					status: 'error',
+					message: __('Failed to save User ID.', 'fair-audience'),
+				});
+				setIsSavingUserId(false);
 			});
 	};
 
@@ -365,6 +401,69 @@ export default function InstagramTab({ onNotice, shouldReload }) {
 								</p>
 							</div>
 						)}
+
+						{/* User ID Section */}
+						<div
+							style={{
+								marginTop: '1.5rem',
+								padding: '1rem',
+								backgroundColor: '#f6f7f7',
+								borderRadius: '4px',
+							}}
+						>
+							<h3 style={{ marginTop: 0 }}>
+								{__('Instagram User ID', 'fair-audience')}
+							</h3>
+							<p
+								style={{
+									fontSize: '0.9em',
+									color: '#666',
+									marginBottom: '1rem',
+								}}
+							>
+								{__(
+									'Set the Instagram User ID manually. This is required for posting to Instagram. You can find it by testing the connection above.',
+									'fair-audience'
+								)}
+							</p>
+							{userId && (
+								<p style={{ marginBottom: '1rem' }}>
+									<strong>
+										{__(
+											'Current User ID:',
+											'fair-audience'
+										)}
+									</strong>{' '}
+									<code>{userId}</code>
+								</p>
+							)}
+							<TextControl
+								label={__('User ID', 'fair-audience')}
+								value={manualUserId}
+								onChange={setManualUserId}
+								placeholder={__(
+									'Enter Instagram User ID...',
+									'fair-audience'
+								)}
+								disabled={isSavingUserId}
+								help={__(
+									'The numeric ID of your Instagram account (e.g., 17841400123456789)',
+									'fair-audience'
+								)}
+							/>
+							<Button
+								variant="primary"
+								onClick={handleSaveUserId}
+								disabled={
+									isSavingUserId || manualUserId === userId
+								}
+								isBusy={isSavingUserId}
+							>
+								{isSavingUserId
+									? __('Saving...', 'fair-audience')
+									: __('Save User ID', 'fair-audience')}
+							</Button>
+						</div>
 
 						{/* Test Connection Section */}
 						<div
@@ -561,32 +660,88 @@ export default function InstagramTab({ onNotice, shouldReload }) {
 															)}
 														</h4>
 														{testResult.instagram_accounts.map(
-															(account) => (
-																<p
+															(
+																account,
+																index
+															) => (
+																<div
 																	key={
 																		account.id
 																	}
 																	style={{
-																		margin: '0.25rem 0',
+																		margin: '0.5rem 0',
+																		padding:
+																			'0.5rem',
+																		backgroundColor:
+																			index ===
+																			0
+																				? '#e7f5e7'
+																				: 'transparent',
+																		borderRadius:
+																			'4px',
 																	}}
 																>
-																	<code>
-																		@
+																	<p
+																		style={{
+																			margin: 0,
+																		}}
+																	>
+																		<code>
+																			@
+																			{
+																				account.username
+																			}
+																		</code>{' '}
+																		(
 																		{
-																			account.username
+																			account.page
 																		}
-																	</code>{' '}
-																	(
-																	{
-																		account.page
-																	}
-																	) - ID:{' '}
-																	<code>
-																		{
-																			account.id
-																		}
-																	</code>
-																</p>
+																		)
+																		{index ===
+																			0 && (
+																			<strong
+																				style={{
+																					marginLeft:
+																						'0.5rem',
+																					color: '#00a32a',
+																				}}
+																			>
+																				{__(
+																					'(Active)',
+																					'fair-audience'
+																				)}
+																			</strong>
+																		)}
+																	</p>
+																	<p
+																		style={{
+																			margin: '0.25rem 0 0 0',
+																			fontSize:
+																				'0.9em',
+																		}}
+																	>
+																		<strong>
+																			{__(
+																				'User ID:',
+																				'fair-audience'
+																			)}
+																		</strong>{' '}
+																		<code
+																			style={{
+																				backgroundColor:
+																					'#f0f0f0',
+																				padding:
+																					'2px 6px',
+																				borderRadius:
+																					'3px',
+																			}}
+																		>
+																			{
+																				account.id
+																			}
+																		</code>
+																	</p>
+																</div>
 															)
 														)}
 													</div>

@@ -138,38 +138,75 @@ class InstagramController extends WP_REST_Controller {
 			);
 		}
 
-		// Token is valid, try to get pages with Instagram accounts.
-		$pages_url = 'https://graph.facebook.com/v24.0/me/accounts?' . http_build_query(
+		$instagram_accounts = array();
+
+		// First, try Instagram Basic Display API (for personal/creator accounts).
+		$instagram_me_url = 'https://graph.instagram.com/me?' . http_build_query(
 			array(
 				'access_token' => $access_token,
-				'fields'       => 'id,name,instagram_business_account{id,username}',
+				'fields'       => 'id,username',
 			)
 		);
 
-		$pages_response = wp_remote_get(
-			$pages_url,
+		$instagram_me_response = wp_remote_get(
+			$instagram_me_url,
 			array(
 				'timeout' => 30,
 			)
 		);
 
-		$instagram_accounts = array();
+		if ( ! is_wp_error( $instagram_me_response ) ) {
+			$instagram_me_body = wp_remote_retrieve_body( $instagram_me_response );
+			$instagram_me_data = json_decode( $instagram_me_body, true );
 
-		if ( ! is_wp_error( $pages_response ) ) {
-			$pages_body = wp_remote_retrieve_body( $pages_response );
-			$pages_data = json_decode( $pages_body, true );
+			if ( isset( $instagram_me_data['id'] ) && ! isset( $instagram_me_data['error'] ) ) {
+				$instagram_accounts[] = array(
+					'id'       => $instagram_me_data['id'],
+					'username' => $instagram_me_data['username'] ?? '',
+					'page'     => __( 'Instagram Account', 'fair-audience' ),
+				);
+			}
+		}
 
-			if ( isset( $pages_data['data'] ) && is_array( $pages_data['data'] ) ) {
-				foreach ( $pages_data['data'] as $page ) {
-					if ( isset( $page['instagram_business_account'] ) ) {
-						$instagram_accounts[] = array(
-							'id'       => $page['instagram_business_account']['id'],
-							'username' => $page['instagram_business_account']['username'] ?? '',
-							'page'     => $page['name'],
-						);
+		// If no account found yet, try Facebook Pages with linked Instagram Business accounts.
+		if ( empty( $instagram_accounts ) ) {
+			$pages_url = 'https://graph.facebook.com/v24.0/me/accounts?' . http_build_query(
+				array(
+					'access_token' => $access_token,
+					'fields'       => 'id,name,instagram_business_account{id,username}',
+				)
+			);
+
+			$pages_response = wp_remote_get(
+				$pages_url,
+				array(
+					'timeout' => 30,
+				)
+			);
+
+			if ( ! is_wp_error( $pages_response ) ) {
+				$pages_body = wp_remote_retrieve_body( $pages_response );
+				$pages_data = json_decode( $pages_body, true );
+
+				if ( isset( $pages_data['data'] ) && is_array( $pages_data['data'] ) ) {
+					foreach ( $pages_data['data'] as $page ) {
+						if ( isset( $page['instagram_business_account'] ) ) {
+							$instagram_accounts[] = array(
+								'id'       => $page['instagram_business_account']['id'],
+								'username' => $page['instagram_business_account']['username'] ?? '',
+								'page'     => $page['name'],
+							);
+						}
 					}
 				}
 			}
+		}
+
+		// If we found Instagram accounts, save the first one's ID and username.
+		if ( ! empty( $instagram_accounts ) ) {
+			$first_account = $instagram_accounts[0];
+			update_option( 'fair_audience_instagram_user_id', $first_account['id'] );
+			update_option( 'fair_audience_instagram_username', $first_account['username'] );
 		}
 
 		$expires_at = $token_data['expires_at'] ?? 0;

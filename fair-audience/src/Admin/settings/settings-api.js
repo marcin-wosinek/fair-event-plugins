@@ -13,6 +13,7 @@ export function loadInstagramSettings() {
 		return {
 			connected: settings.fair_audience_instagram_connected || false,
 			username: settings.fair_audience_instagram_username || '',
+			userId: settings.fair_audience_instagram_user_id || '',
 			tokenExpires:
 				settings.fair_audience_instagram_token_expires || null,
 		};
