@@ -50,6 +50,10 @@ class Plugin {
 		add_action( 'template_redirect', array( $this, 'handle_email_confirmation' ) );
 		add_action( 'template_redirect', array( $this, 'handle_manage_subscription' ) );
 
+		// Initialize settings.
+		$settings = new \FairAudience\Settings\Settings();
+		$settings->init();
+
 		// Initialize admin.
 		$admin_hooks = new \FairAudience\Admin\AdminHooks();
 

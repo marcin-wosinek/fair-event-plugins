@@ -1,0 +1,35 @@
+/**
+ * WordPress dependencies
+ */
+import apiFetch from '@wordpress/api-fetch';
+
+/**
+ * Load Instagram connection settings from WordPress REST API
+ *
+ * @return {Promise<Object>} Promise resolving to connection settings
+ */
+export function loadInstagramSettings() {
+	return apiFetch({ path: '/wp/v2/settings' }).then((settings) => {
+		return {
+			connected: settings.fair_audience_instagram_connected || false,
+			userId: settings.fair_audience_instagram_user_id || '',
+			username: settings.fair_audience_instagram_username || '',
+			tokenExpires:
+				settings.fair_audience_instagram_token_expires || null,
+		};
+	});
+}
+
+/**
+ * Save settings to WordPress REST API
+ *
+ * @param {Object} data Settings data to save
+ * @return {Promise<Object>} Promise resolving to saved settings
+ */
+export function saveSettings(data) {
+	return apiFetch({
+		path: '/wp/v2/settings',
+		method: 'POST',
+		data,
+	});
+}

@@ -200,6 +200,16 @@ class AdminHooks {
 
 		// Hidden submenu page - Edit Poll.
 		$this->register_hidden_page( 'fair-audience-edit-poll' );
+
+		// Submenu page - Settings.
+		add_submenu_page(
+			'fair-audience',
+			__( 'Settings', 'fair-audience' ),
+			__( 'Settings', 'fair-audience' ),
+			'manage_options',
+			'fair-audience-settings',
+			array( $this, 'render_settings_page' )
+		);
 	}
 
 	/**
@@ -267,6 +277,14 @@ class AdminHooks {
 	}
 
 	/**
+	 * Render Settings page.
+	 */
+	public function render_settings_page() {
+		$page = new SettingsPage();
+		$page->render();
+	}
+
+	/**
 	 * Enqueue admin scripts.
 	 *
 	 * @param string $hook Page hook.
@@ -312,6 +330,11 @@ class AdminHooks {
 		// Groups page.
 		if ( 'fair-audience_page_fair-audience-groups' === $hook ) {
 			$this->enqueue_page_script( 'groups', $plugin_dir );
+		}
+
+		// Settings page.
+		if ( 'fair-audience_page_fair-audience-settings' === $hook ) {
+			$this->enqueue_page_script( 'settings', $plugin_dir );
 		}
 	}
 
