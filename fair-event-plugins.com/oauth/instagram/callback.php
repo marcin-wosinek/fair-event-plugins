@@ -58,7 +58,7 @@ $protocol     = ( ! empty( $_SERVER['HTTPS'] ) && $_SERVER['HTTPS'] !== 'off' ) 
 $callback_url = $protocol . '://' . $_SERVER['HTTP_HOST'] . '/oauth/instagram/callback.php';
 
 // Exchange code for access token.
-$token_url = 'https://graph.facebook.com/v21.0/oauth/access_token';
+$token_url = 'https://graph.facebook.com/v24.0/oauth/access_token';
 $token_params = array(
 	'client_id'     => $instagramAppId,
 	'client_secret' => $instagramAppSecret,
@@ -95,7 +95,7 @@ if ( empty( $access_token ) ) {
 }
 
 // Exchange short-lived token for long-lived token.
-$long_lived_url = 'https://graph.facebook.com/v21.0/oauth/access_token?' . http_build_query( array(
+$long_lived_url = 'https://graph.facebook.com/v24.0/oauth/access_token?' . http_build_query( array(
 	'grant_type'        => 'fb_exchange_token',
 	'client_id'         => $instagramAppId,
 	'client_secret'     => $instagramAppSecret,
@@ -117,7 +117,7 @@ if ( isset( $long_lived_data['access_token'] ) ) {
 }
 
 // Get the user's Facebook Pages to find linked Instagram accounts.
-$pages_url = 'https://graph.facebook.com/v21.0/me/accounts?' . http_build_query( array(
+$pages_url = 'https://graph.facebook.com/v24.0/me/accounts?' . http_build_query( array(
 	'access_token' => $access_token,
 	'fields'       => 'id,name,instagram_business_account',
 ) );
@@ -141,7 +141,7 @@ if ( isset( $pages_data['data'] ) && is_array( $pages_data['data'] ) ) {
 			$instagram_user_id = $page['instagram_business_account']['id'];
 
 			// Get Instagram account details.
-			$ig_url = 'https://graph.facebook.com/v21.0/' . $instagram_user_id . '?' . http_build_query( array(
+			$ig_url = 'https://graph.facebook.com/v24.0/' . $instagram_user_id . '?' . http_build_query( array(
 				'access_token' => $access_token,
 				'fields'       => 'id,username',
 			) );
@@ -164,7 +164,7 @@ if ( isset( $pages_data['data'] ) && is_array( $pages_data['data'] ) ) {
 // If no Instagram Business Account found, try to get basic user info.
 if ( empty( $instagram_user_id ) ) {
 	// Get basic Facebook user info as fallback.
-	$me_url = 'https://graph.facebook.com/v21.0/me?' . http_build_query( array(
+	$me_url = 'https://graph.facebook.com/v24.0/me?' . http_build_query( array(
 		'access_token' => $access_token,
 		'fields'       => 'id,name',
 	) );

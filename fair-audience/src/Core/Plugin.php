@@ -101,6 +101,9 @@ class Plugin {
 
 		$event_invitations_controller = new \FairAudience\API\EventInvitationsController();
 		$event_invitations_controller->register_routes();
+
+		$instagram_controller = new \FairAudience\API\InstagramController();
+		$instagram_controller->register_routes();
 	}
 
 	/**

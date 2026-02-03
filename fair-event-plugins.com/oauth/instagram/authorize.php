@@ -67,7 +67,7 @@ $auth_params = array(
 	'state'         => $state,
 );
 
-$auth_url = 'https://www.facebook.com/v21.0/dialog/oauth?' . http_build_query( $auth_params );
+$auth_url = 'https://www.facebook.com/v24.0/dialog/oauth?' . http_build_query( $auth_params );
 
 // Redirect to Facebook authorization page.
 header( 'Location: ' . $auth_url );

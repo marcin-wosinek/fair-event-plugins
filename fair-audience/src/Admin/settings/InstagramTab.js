@@ -9,12 +9,17 @@ import {
 	Card,
 	CardBody,
 	TextControl,
+	Spinner,
 } from '@wordpress/components';
 
 /**
  * Internal dependencies
  */
-import { loadInstagramSettings, saveSettings } from './settings-api.js';
+import {
+	loadInstagramSettings,
+	saveSettings,
+	testInstagramConnection,
+} from './settings-api.js';
 
 /**
  * Instagram Tab Component
@@ -29,7 +34,6 @@ import { loadInstagramSettings, saveSettings } from './settings-api.js';
  */
 export default function InstagramTab({ onNotice, shouldReload }) {
 	const [connected, setConnected] = useState(false);
-	const [userId, setUserId] = useState('');
 	const [username, setUsername] = useState('');
 	const [tokenExpires, setTokenExpires] = useState(null);
 	const [isLoading, setIsLoading] = useState(true);
@@ -37,7 +41,10 @@ export default function InstagramTab({ onNotice, shouldReload }) {
 
 	// Manual token entry state.
 	const [manualToken, setManualToken] = useState('');
-	const [manualUserId, setManualUserId] = useState('');
+
+	// Test connection state.
+	const [isTesting, setIsTesting] = useState(false);
+	const [testResult, setTestResult] = useState(null);
 
 	/**
 	 * Load Instagram settings from API
@@ -50,7 +57,6 @@ export default function InstagramTab({ onNotice, shouldReload }) {
 		loadInstagramSettings()
 			.then((settings) => {
 				setConnected(settings.connected);
-				setUserId(settings.userId);
 				setUsername(settings.username);
 				setTokenExpires(settings.tokenExpires);
 				setIsLoading(false);
@@ -121,14 +127,13 @@ export default function InstagramTab({ onNotice, shouldReload }) {
 
 		saveSettings({
 			fair_audience_instagram_access_token: manualToken.trim(),
-			fair_audience_instagram_user_id: manualUserId.trim(),
+			fair_audience_instagram_user_id: '',
 			fair_audience_instagram_username: '',
 			fair_audience_instagram_token_expires: 0,
 			fair_audience_instagram_connected: true,
 		})
 			.then(() => {
 				setManualToken('');
-				setManualUserId('');
 				loadSettings();
 				onNotice({
 					status: 'success',
@@ -149,6 +154,49 @@ export default function InstagramTab({ onNotice, shouldReload }) {
 	};
 
 	/**
+	 * Handle Test Connection button click
+	 */
+	const handleTestConnection = () => {
+		setIsTesting(true);
+		setTestResult(null);
+
+		testInstagramConnection()
+			.then((result) => {
+				setTestResult(result);
+				setIsTesting(false);
+
+				// Reload settings to get updated username if it was fetched.
+				loadSettings();
+
+				onNotice({
+					status: 'success',
+					message:
+						result.message ||
+						__('Connection successful!', 'fair-audience'),
+				});
+			})
+			.catch((error) => {
+				console.error('[Fair Audience] Connection test failed:', error);
+
+				const errorMessage =
+					error.message ||
+					__('Connection test failed.', 'fair-audience');
+
+				setTestResult({
+					success: false,
+					error: errorMessage,
+					details: error.data?.details || null,
+				});
+				setIsTesting(false);
+
+				onNotice({
+					status: 'error',
+					message: errorMessage,
+				});
+			});
+	};
+
+	/**
 	 * Handle Disconnect button click
 	 */
 	const handleDisconnect = () => {
@@ -164,6 +212,7 @@ export default function InstagramTab({ onNotice, shouldReload }) {
 		}
 
 		setIsSaving(true);
+		setTestResult(null);
 
 		saveSettings({
 			fair_audience_instagram_access_token: '',
@@ -242,23 +291,6 @@ export default function InstagramTab({ onNotice, shouldReload }) {
 								)}
 								disabled={isSaving}
 							/>
-							<TextControl
-								label={__(
-									'User ID (optional)',
-									'fair-audience'
-								)}
-								value={manualUserId}
-								onChange={setManualUserId}
-								placeholder={__(
-									'Enter Instagram user ID...',
-									'fair-audience'
-								)}
-								disabled={isSaving}
-								help={__(
-									'The Instagram Business Account ID.',
-									'fair-audience'
-								)}
-							/>
 							<Button
 								variant="primary"
 								onClick={handleSaveManualToken}
@@ -312,17 +344,6 @@ export default function InstagramTab({ onNotice, shouldReload }) {
 							</div>
 						)}
 
-						{userId && (
-							<div style={{ marginTop: '0.5rem' }}>
-								<p>
-									<strong>
-										{__('User ID:', 'fair-audience')}
-									</strong>{' '}
-									<code>{userId}</code>
-								</p>
-							</div>
-						)}
-
 						{tokenExpires && (
 							<div style={{ marginTop: '0.5rem' }}>
 								<p
@@ -344,6 +365,275 @@ export default function InstagramTab({ onNotice, shouldReload }) {
 								</p>
 							</div>
 						)}
+
+						{/* Test Connection Section */}
+						<div
+							style={{
+								marginTop: '1.5rem',
+								padding: '1rem',
+								backgroundColor: '#f6f7f7',
+								borderRadius: '4px',
+							}}
+						>
+							<h3 style={{ marginTop: 0 }}>
+								{__('Test Connection', 'fair-audience')}
+							</h3>
+							<p
+								style={{
+									fontSize: '0.9em',
+									color: '#666',
+									marginBottom: '1rem',
+								}}
+							>
+								{__(
+									'Verify your Instagram connection is working correctly.',
+									'fair-audience'
+								)}
+							</p>
+
+							<Button
+								variant="secondary"
+								onClick={handleTestConnection}
+								disabled={isTesting}
+								isBusy={isTesting}
+							>
+								{isTesting ? (
+									<>
+										<Spinner />
+										{__('Testing...', 'fair-audience')}
+									</>
+								) : (
+									__('Test Connection', 'fair-audience')
+								)}
+							</Button>
+
+							{/* Test Results */}
+							{testResult && (
+								<div style={{ marginTop: '1rem' }}>
+									{testResult.success ? (
+										<>
+											<Notice
+												status="success"
+												isDismissible={false}
+											>
+												{testResult.message}
+											</Notice>
+
+											{/* Account Info */}
+											{testResult.account && (
+												<div
+													style={{
+														marginTop: '1rem',
+														padding: '0.75rem',
+														backgroundColor: '#fff',
+														border: '1px solid #ddd',
+														borderRadius: '4px',
+													}}
+												>
+													<h4
+														style={{
+															marginTop: 0,
+															marginBottom:
+																'0.5rem',
+														}}
+													>
+														{__(
+															'Account Details',
+															'fair-audience'
+														)}
+													</h4>
+													{testResult.account
+														.username && (
+														<p
+															style={{
+																margin: '0.25rem 0',
+															}}
+														>
+															<strong>
+																{__(
+																	'Username:',
+																	'fair-audience'
+																)}
+															</strong>{' '}
+															@
+															{
+																testResult
+																	.account
+																	.username
+															}
+														</p>
+													)}
+												</div>
+											)}
+
+											{/* Token Info */}
+											{testResult.token_info && (
+												<div
+													style={{
+														marginTop: '1rem',
+														padding: '0.75rem',
+														backgroundColor: '#fff',
+														border: '1px solid #ddd',
+														borderRadius: '4px',
+													}}
+												>
+													<h4
+														style={{
+															marginTop: 0,
+															marginBottom:
+																'0.5rem',
+														}}
+													>
+														{__(
+															'Token Info',
+															'fair-audience'
+														)}
+													</h4>
+													{testResult.token_info
+														.expires_at && (
+														<p
+															style={{
+																margin: '0.25rem 0',
+															}}
+														>
+															<strong>
+																{__(
+																	'Expires:',
+																	'fair-audience'
+																)}
+															</strong>{' '}
+															{new Date(
+																testResult
+																	.token_info
+																	.expires_at *
+																	1000
+															).toLocaleString()}
+														</p>
+													)}
+													{testResult.token_info
+														.scopes &&
+														testResult.token_info
+															.scopes.length >
+															0 && (
+															<p
+																style={{
+																	margin: '0.25rem 0',
+																}}
+															>
+																<strong>
+																	{__(
+																		'Scopes:',
+																		'fair-audience'
+																	)}
+																</strong>{' '}
+																{testResult.token_info.scopes.join(
+																	', '
+																)}
+															</p>
+														)}
+												</div>
+											)}
+
+											{/* Instagram Accounts */}
+											{testResult.instagram_accounts &&
+												testResult.instagram_accounts
+													.length > 0 && (
+													<div
+														style={{
+															marginTop: '1rem',
+															padding: '0.75rem',
+															backgroundColor:
+																'#fff',
+															border: '1px solid #ddd',
+															borderRadius: '4px',
+														}}
+													>
+														<h4
+															style={{
+																marginTop: 0,
+																marginBottom:
+																	'0.5rem',
+															}}
+														>
+															{__(
+																'Available Instagram Accounts',
+																'fair-audience'
+															)}
+														</h4>
+														{testResult.instagram_accounts.map(
+															(account) => (
+																<p
+																	key={
+																		account.id
+																	}
+																	style={{
+																		margin: '0.25rem 0',
+																	}}
+																>
+																	<code>
+																		@
+																		{
+																			account.username
+																		}
+																	</code>{' '}
+																	(
+																	{
+																		account.page
+																	}
+																	) - ID:{' '}
+																	<code>
+																		{
+																			account.id
+																		}
+																	</code>
+																</p>
+															)
+														)}
+													</div>
+												)}
+										</>
+									) : (
+										<Notice
+											status="error"
+											isDismissible={false}
+										>
+											{testResult.error}
+											{testResult.details && (
+												<details
+													style={{
+														marginTop: '0.5rem',
+													}}
+												>
+													<summary>
+														{__(
+															'Details',
+															'fair-audience'
+														)}
+													</summary>
+													<pre
+														style={{
+															fontSize: '0.8em',
+															whiteSpace:
+																'pre-wrap',
+															marginTop: '0.5rem',
+														}}
+													>
+														{typeof testResult.details ===
+														'string'
+															? testResult.details
+															: JSON.stringify(
+																	testResult.details,
+																	null,
+																	2
+															  )}
+													</pre>
+												</details>
+											)}
+										</Notice>
+									)}
+								</div>
+							)}
+						</div>
 
 						<div style={{ marginTop: '1.5rem' }}>
 							<Button

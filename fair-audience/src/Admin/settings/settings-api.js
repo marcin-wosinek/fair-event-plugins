@@ -12,7 +12,6 @@ export function loadInstagramSettings() {
 	return apiFetch({ path: '/wp/v2/settings' }).then((settings) => {
 		return {
 			connected: settings.fair_audience_instagram_connected || false,
-			userId: settings.fair_audience_instagram_user_id || '',
 			username: settings.fair_audience_instagram_username || '',
 			tokenExpires:
 				settings.fair_audience_instagram_token_expires || null,
@@ -31,5 +30,17 @@ export function saveSettings(data) {
 		path: '/wp/v2/settings',
 		method: 'POST',
 		data,
+	});
+}
+
+/**
+ * Test Instagram connection
+ *
+ * @return {Promise<Object>} Promise resolving to connection test result
+ */
+export function testInstagramConnection() {
+	return apiFetch({
+		path: '/fair-audience/v1/instagram/test-connection',
+		method: 'POST',
 	});
 }
