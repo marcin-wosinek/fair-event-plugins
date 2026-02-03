@@ -12,7 +12,7 @@ import {
 	Spinner,
 } from '@wordpress/components';
 import { DataViews, filterSortAndPaginate } from '@wordpress/dataviews';
-import { Icon, warning } from '@wordpress/icons';
+import { Icon, caution } from '@wordpress/icons';
 import UserLinkSection from './UserLinkSection.js';
 
 const DEFAULT_VIEW = {
@@ -208,7 +208,7 @@ export default function AllParticipants() {
 									)}
 									style={{ color: '#d63638' }}
 								>
-									<Icon icon={warning} size={16} />
+									<Icon icon={caution} size={16} />
 								</span>
 							)}
 						</span>

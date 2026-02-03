@@ -2,7 +2,7 @@ import { __ } from '@wordpress/i18n';
 import { useState, useEffect, useCallback } from '@wordpress/element';
 import apiFetch from '@wordpress/api-fetch';
 import { Button, SearchControl, Spinner, Notice } from '@wordpress/components';
-import { Icon, warning } from '@wordpress/icons';
+import { Icon, caution } from '@wordpress/icons';
 
 /**
  * Component for linking a participant to a WordPress user.
@@ -136,7 +136,7 @@ export default function UserLinkSection({
 							)}
 							style={{ color: '#d63638' }}
 						>
-							<Icon icon={warning} size={20} />
+							<Icon icon={caution} size={20} />
 						</span>
 					)}
 					<Button
