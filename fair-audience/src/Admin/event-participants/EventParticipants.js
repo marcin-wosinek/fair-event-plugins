@@ -51,6 +51,10 @@ export default function EventParticipants() {
 	const [groups, setGroups] = useState([]);
 	const [selectedGroups, setSelectedGroups] = useState(new Set());
 	const [isSendingInvitations, setIsSendingInvitations] = useState(false);
+	const [inviteMode, setInviteMode] = useState('groups'); // 'groups' or 'participants'
+	const [selectedInviteParticipants, setSelectedInviteParticipants] =
+		useState(new Set());
+	const [inviteSearch, setInviteSearch] = useState('');
 
 	const eventId = new URLSearchParams(window.location.search).get('event_id');
 
@@ -445,20 +449,57 @@ export default function EventParticipants() {
 		setSelectedGroups(newSelected);
 	};
 
+	const handleToggleInviteParticipant = (participantId) => {
+		const newSelected = new Set(selectedInviteParticipants);
+		if (newSelected.has(participantId)) {
+			newSelected.delete(participantId);
+		} else {
+			newSelected.add(participantId);
+		}
+		setSelectedInviteParticipants(newSelected);
+	};
+
+	// Filter participants for invitation modal based on search.
+	const filteredInviteParticipants = useMemo(() => {
+		if (!inviteSearch.trim()) {
+			return allParticipants;
+		}
+		const searchLower = inviteSearch.toLowerCase();
+		return allParticipants.filter(
+			(p) =>
+				(p.name && p.name.toLowerCase().includes(searchLower)) ||
+				(p.surname && p.surname.toLowerCase().includes(searchLower)) ||
+				(p.email && p.email.toLowerCase().includes(searchLower))
+		);
+	}, [allParticipants, inviteSearch]);
+
 	const handleSendInvitations = async () => {
-		if (selectedGroups.size === 0) {
+		const hasGroupSelection =
+			inviteMode === 'groups' && selectedGroups.size > 0;
+		const hasParticipantSelection =
+			inviteMode === 'participants' &&
+			selectedInviteParticipants.size > 0;
+
+		if (!hasGroupSelection && !hasParticipantSelection) {
 			return;
 		}
 
 		setIsSendingInvitations(true);
 
 		try {
+			const requestData =
+				inviteMode === 'groups'
+					? { group_ids: Array.from(selectedGroups) }
+					: {
+							participant_ids: Array.from(
+								selectedInviteParticipants
+							),
+					  };
+
 			const response = await apiFetch({
 				path: `/fair-audience/v1/events/${eventId}/event-invitations`,
 				method: 'POST',
-				data: {
-					group_ids: Array.from(selectedGroups),
-				},
+				data: requestData,
 			});
 
 			let message = sprintf(
@@ -502,6 +543,8 @@ export default function EventParticipants() {
 
 			setShowInvitationModal(false);
 			setSelectedGroups(new Set());
+			setSelectedInviteParticipants(new Set());
+			setInviteSearch('');
 		} catch (err) {
 			alert(
 				__('Error sending invitations: ', 'fair-audience') + err.message
@@ -933,10 +976,11 @@ export default function EventParticipants() {
 					onRequestClose={() => {
 						setShowInvitationModal(false);
 						setSelectedGroups(new Set());
+						setSelectedInviteParticipants(new Set());
+						setInviteSearch('');
 					}}
-					style={{ maxWidth: '500px', width: '100%' }}
+					style={{ maxWidth: '600px', width: '100%' }}
 				>
-					<p>{__('Select groups to invite:', 'fair-audience')}</p>
 					<p style={{ fontSize: '12px', color: '#666' }}>
 						{__(
 							'Participants already signed up or who opted out of marketing emails will be skipped.',
@@ -944,52 +988,222 @@ export default function EventParticipants() {
 						)}
 					</p>
 
-					{groups.length === 0 ? (
-						<p>
-							{__(
-								'No groups available. Create groups first.',
-								'fair-audience'
-							)}
-						</p>
-					) : (
-						<div
+					<div
+						style={{
+							display: 'flex',
+							gap: '0',
+							marginBottom: '15px',
+							borderBottom: '1px solid #ddd',
+						}}
+					>
+						<button
+							type="button"
+							onClick={() => setInviteMode('groups')}
 							style={{
-								maxHeight: '300px',
-								overflow: 'auto',
-								marginBottom: '15px',
-								border: '1px solid #ddd',
-								borderRadius: '4px',
+								padding: '10px 20px',
+								border: 'none',
+								background:
+									inviteMode === 'groups'
+										? '#fff'
+										: '#f0f0f0',
+								borderBottom:
+									inviteMode === 'groups'
+										? '2px solid #007cba'
+										: '2px solid transparent',
+								cursor: 'pointer',
+								fontWeight:
+									inviteMode === 'groups' ? '600' : '400',
 							}}
 						>
-							{groups.map((group) => (
+							{__('By Group', 'fair-audience')}
+						</button>
+						<button
+							type="button"
+							onClick={() => setInviteMode('participants')}
+							style={{
+								padding: '10px 20px',
+								border: 'none',
+								background:
+									inviteMode === 'participants'
+										? '#fff'
+										: '#f0f0f0',
+								borderBottom:
+									inviteMode === 'participants'
+										? '2px solid #007cba'
+										: '2px solid transparent',
+								cursor: 'pointer',
+								fontWeight:
+									inviteMode === 'participants'
+										? '600'
+										: '400',
+							}}
+						>
+							{__('By Participant', 'fair-audience')}
+						</button>
+					</div>
+
+					{inviteMode === 'groups' && (
+						<>
+							{groups.length === 0 ? (
+								<p>
+									{__(
+										'No groups available. Create groups first.',
+										'fair-audience'
+									)}
+								</p>
+							) : (
 								<div
-									key={group.id}
 									style={{
-										padding: '10px 15px',
-										borderBottom: '1px solid #eee',
-										display: 'flex',
-										alignItems: 'center',
-										gap: '10px',
+										maxHeight: '300px',
+										overflow: 'auto',
+										marginBottom: '15px',
+										border: '1px solid #ddd',
+										borderRadius: '4px',
 									}}
 								>
-									<CheckboxControl
-										label={sprintf(
-											/* translators: 1: group name, 2: member count */
-											__(
-												'%1$s (%2$d members)',
-												'fair-audience'
-											),
-											group.name,
-											group.member_count || 0
-										)}
-										checked={selectedGroups.has(group.id)}
-										onChange={() =>
-											handleToggleGroup(group.id)
-										}
-									/>
+									{groups.map((group) => (
+										<div
+											key={group.id}
+											style={{
+												padding: '10px 15px',
+												borderBottom: '1px solid #eee',
+												display: 'flex',
+												alignItems: 'center',
+												gap: '10px',
+											}}
+										>
+											<CheckboxControl
+												label={sprintf(
+													/* translators: 1: group name, 2: member count */
+													__(
+														'%1$s (%2$d members)',
+														'fair-audience'
+													),
+													group.name,
+													group.member_count || 0
+												)}
+												checked={selectedGroups.has(
+													group.id
+												)}
+												onChange={() =>
+													handleToggleGroup(group.id)
+												}
+											/>
+										</div>
+									))}
 								</div>
-							))}
-						</div>
+							)}
+						</>
+					)}
+
+					{inviteMode === 'participants' && (
+						<>
+							<input
+								type="text"
+								placeholder={__(
+									'Search by name or email...',
+									'fair-audience'
+								)}
+								value={inviteSearch}
+								onChange={(e) =>
+									setInviteSearch(e.target.value)
+								}
+								style={{
+									width: '100%',
+									padding: '8px 12px',
+									marginBottom: '10px',
+									border: '1px solid #ddd',
+									borderRadius: '4px',
+								}}
+							/>
+							<div
+								style={{
+									marginBottom: '10px',
+									fontSize: '12px',
+									color: '#666',
+								}}
+							>
+								{sprintf(
+									/* translators: 1: selected count, 2: total count */
+									__(
+										'%1$d selected of %2$d participants',
+										'fair-audience'
+									),
+									selectedInviteParticipants.size,
+									allParticipants.length
+								)}
+							</div>
+							{allParticipants.length === 0 ? (
+								<p>
+									{__(
+										'No participants available.',
+										'fair-audience'
+									)}
+								</p>
+							) : (
+								<div
+									style={{
+										maxHeight: '300px',
+										overflow: 'auto',
+										marginBottom: '15px',
+										border: '1px solid #ddd',
+										borderRadius: '4px',
+									}}
+								>
+									{filteredInviteParticipants.map((p) => (
+										<div
+											key={p.id}
+											style={{
+												padding: '10px 15px',
+												borderBottom: '1px solid #eee',
+												display: 'flex',
+												alignItems: 'center',
+												gap: '10px',
+											}}
+										>
+											<CheckboxControl
+												checked={selectedInviteParticipants.has(
+													p.id
+												)}
+												onChange={() =>
+													handleToggleInviteParticipant(
+														p.id
+													)
+												}
+											/>
+											<div>
+												<strong>
+													{p.name} {p.surname}
+												</strong>
+												<br />
+												<span
+													style={{
+														color: '#666',
+														fontSize: '12px',
+													}}
+												>
+													{p.email}
+												</span>
+											</div>
+										</div>
+									))}
+									{filteredInviteParticipants.length ===
+										0 && (
+										<p
+											style={{
+												padding: '15px',
+												color: '#666',
+											}}
+										>
+											{__(
+												'No participants match your search.',
+												'fair-audience'
+											)}
+										</p>
+									)}
+								</div>
+							)}
+						</>
 					)}
 
 					<div
@@ -1004,6 +1218,8 @@ export default function EventParticipants() {
 							onClick={() => {
 								setShowInvitationModal(false);
 								setSelectedGroups(new Set());
+								setSelectedInviteParticipants(new Set());
+								setInviteSearch('');
 							}}
 						>
 							{__('Cancel', 'fair-audience')}
@@ -1012,12 +1228,25 @@ export default function EventParticipants() {
 							variant="primary"
 							onClick={handleSendInvitations}
 							disabled={
-								selectedGroups.size === 0 ||
+								(inviteMode === 'groups' &&
+									selectedGroups.size === 0) ||
+								(inviteMode === 'participants' &&
+									selectedInviteParticipants.size === 0) ||
 								isSendingInvitations
 							}
 						>
 							{isSendingInvitations
 								? __('Sending...', 'fair-audience')
+								: inviteMode === 'participants' &&
+								  selectedInviteParticipants.size > 0
+								? sprintf(
+										/* translators: %d: number of selected participants */
+										__(
+											'Send to %d Selected',
+											'fair-audience'
+										),
+										selectedInviteParticipants.size
+								  )
 								: __('Send Invitations', 'fair-audience')}
 						</Button>
 					</div>
