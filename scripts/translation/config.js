@@ -12,7 +12,7 @@ export const config = {
 	],
 
 	// Supported locales
-	locales: [ 'de_DE', 'es_ES', 'fr_FR', 'pl_PL' ],
+	locales: ['de_DE', 'es_ES', 'fr_FR', 'pl_PL'],
 
 	// Locale metadata
 	localeNames: {
@@ -24,10 +24,10 @@ export const config = {
 
 	// Path patterns
 	paths: {
-		languagesDir: ( plugin ) => `${ plugin }/languages`,
-		poFile: ( plugin, locale ) =>
-			`${ plugin }/languages/${ plugin }-${ locale }.po`,
-		potFile: ( plugin ) => `${ plugin }/languages/${ plugin }.pot`,
+		languagesDir: (plugin) => `${plugin}/languages`,
+		poFile: (plugin, locale) =>
+			`${plugin}/languages/${plugin}-${locale}.po`,
+		potFile: (plugin) => `${plugin}/languages/${plugin}.pot`,
 	},
 
 	// Validation rules
@@ -68,9 +68,9 @@ export const config = {
 		batchSize: 20,
 
 		// System prompt template
-		systemPrompt: ( locale, context ) =>
+		systemPrompt: (locale, context) =>
 			`You are a professional translator.
-Translate WordPress plugin strings from English to ${ context.localeName } (${ locale }).
+Translate WordPress plugin strings from English to ${context.localeName} (${locale}).
 Maintain formatting, placeholders (%s, %d, {{variable}}), and HTML tags.
 Consider WordPress conventions and the plugin context.
 Return translations in the same order as the input.`,

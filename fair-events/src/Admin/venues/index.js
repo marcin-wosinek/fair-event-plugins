@@ -10,10 +10,10 @@ import { createRoot } from '@wordpress/element';
 import VenuesApp from './VenuesApp.js';
 
 // Render the app when DOM is ready
-domReady( () => {
-	const rootElement = document.getElementById( 'fair-events-venues-root' );
-	if ( rootElement ) {
-		const root = createRoot( rootElement );
-		root.render( <VenuesApp /> );
+domReady(() => {
+	const rootElement = document.getElementById('fair-events-venues-root');
+	if (rootElement) {
+		const root = createRoot(rootElement);
+		root.render(<VenuesApp />);
 	}
-} );
+});

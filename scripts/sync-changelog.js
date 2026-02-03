@@ -12,21 +12,21 @@ import { join } from 'path';
 import { fileURLToPath } from 'url';
 import { dirname } from 'path';
 
-const __filename = fileURLToPath( import.meta.url );
-const __dirname = dirname( __filename );
-const rootDir = join( __dirname, '..' );
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
+const rootDir = join(__dirname, '..');
 
 // Plugin configurations
 const plugins = [
 	{
 		name: 'fair-events',
 		changelogPath: 'fair-events/CHANGELOG.md',
-		readmeFiles: [ 'fair-events/readme.txt' ],
+		readmeFiles: ['fair-events/readme.txt'],
 	},
 	{
 		name: 'fair-audience',
 		changelogPath: 'fair-audience/CHANGELOG.md',
-		readmeFiles: [ 'fair-audience/readme.txt' ],
+		readmeFiles: ['fair-audience/readme.txt'],
 	},
 ];
 
@@ -37,21 +37,21 @@ const plugins = [
  * @param {string} content - CHANGELOG.md content
  * @returns {string} Extracted changelog entries
  */
-function extractChangelogContent( content ) {
+function extractChangelogContent(content) {
 	// Find the first version header (## followed by version number)
 	const versionHeaderRegex = /^## \d+\.\d+\.\d+/m;
-	const match = content.match( versionHeaderRegex );
+	const match = content.match(versionHeaderRegex);
 
-	if ( ! match ) {
+	if (!match) {
 		return '';
 	}
 
 	// Get everything from the first version header onwards
-	const startIndex = content.indexOf( match[ 0 ] );
-	let changelogContent = content.substring( startIndex );
+	const startIndex = content.indexOf(match[0]);
+	let changelogContent = content.substring(startIndex);
 
 	// Remove the "# package-name" header if it exists at the beginning
-	changelogContent = changelogContent.replace( /^# [^\n]+\n\n/, '' );
+	changelogContent = changelogContent.replace(/^# [^\n]+\n\n/, '');
 
 	return changelogContent.trim();
 }
@@ -63,34 +63,34 @@ function extractChangelogContent( content ) {
  * @param {string} changelogContent - Changelog content to insert
  * @returns {string} Updated readme.txt content
  */
-function updateReadmeChangelog( readmeContent, changelogContent ) {
+function updateReadmeChangelog(readmeContent, changelogContent) {
 	// Find the == Changelog == section
 	const changelogSectionRegex = /== Changelog ==/i;
-	const match = readmeContent.match( changelogSectionRegex );
+	const match = readmeContent.match(changelogSectionRegex);
 
-	if ( ! match ) {
-		console.log( '   ⚠️  No == Changelog == section found in readme.txt' );
+	if (!match) {
+		console.log('   ⚠️  No == Changelog == section found in readme.txt');
 		return readmeContent;
 	}
 
-	const changelogStartIndex = readmeContent.indexOf( match[ 0 ] );
+	const changelogStartIndex = readmeContent.indexOf(match[0]);
 
 	// Find the next section (== something ==) or end of file
 	const nextSectionRegex = /\n== [^=]+ ==/;
 	const afterChangelog = readmeContent.substring(
-		changelogStartIndex + match[ 0 ].length
+		changelogStartIndex + match[0].length
 	);
-	const nextSectionMatch = afterChangelog.match( nextSectionRegex );
+	const nextSectionMatch = afterChangelog.match(nextSectionRegex);
 
-	let beforeChangelog = readmeContent.substring( 0, changelogStartIndex );
+	let beforeChangelog = readmeContent.substring(0, changelogStartIndex);
 	let afterChangelogSection = '';
 
-	if ( nextSectionMatch ) {
+	if (nextSectionMatch) {
 		const nextSectionIndex =
 			changelogStartIndex +
-			match[ 0 ].length +
-			afterChangelog.indexOf( nextSectionMatch[ 0 ] );
-		afterChangelogSection = readmeContent.substring( nextSectionIndex );
+			match[0].length +
+			afterChangelog.indexOf(nextSectionMatch[0]);
+		afterChangelogSection = readmeContent.substring(nextSectionIndex);
 	}
 
 	// Construct new content
@@ -107,16 +107,16 @@ function updateReadmeChangelog( readmeContent, changelogContent ) {
  * Main sync function
  */
 function syncChangelogs() {
-	console.log( '📋 Syncing changelogs to readme.txt files...\n' );
+	console.log('📋 Syncing changelogs to readme.txt files...\n');
 
 	let updatedCount = 0;
 
-	for ( const plugin of plugins ) {
+	for (const plugin of plugins) {
 		try {
-			console.log( `📦 ${ plugin.name }` );
+			console.log(`📦 ${plugin.name}`);
 
 			// Read CHANGELOG.md
-			const changelogPath = join( rootDir, plugin.changelogPath );
+			const changelogPath = join(rootDir, plugin.changelogPath);
 			let changelogContent;
 
 			try {
@@ -125,26 +125,26 @@ function syncChangelogs() {
 					'utf8'
 				);
 				changelogContent =
-					extractChangelogContent( fullChangelogContent );
+					extractChangelogContent(fullChangelogContent);
 
-				if ( ! changelogContent ) {
+				if (!changelogContent) {
 					console.log(
 						'   ⚠️  No version entries found in CHANGELOG.md'
 					);
-					console.log( '' );
+					console.log('');
 					continue;
 				}
-			} catch ( error ) {
+			} catch (error) {
 				console.log(
-					`   ⏭️  CHANGELOG.md not found, skipping: ${ error.message }`
+					`   ⏭️  CHANGELOG.md not found, skipping: ${error.message}`
 				);
-				console.log( '' );
+				console.log('');
 				continue;
 			}
 
 			// Update each readme file
-			for ( const readmeFile of plugin.readmeFiles ) {
-				const readmeFilePath = join( rootDir, readmeFile );
+			for (const readmeFile of plugin.readmeFiles) {
+				const readmeFilePath = join(rootDir, readmeFile);
 
 				try {
 					// Read current content
@@ -160,33 +160,28 @@ function syncChangelogs() {
 					);
 
 					// Only write if content changed
-					if ( originalContent !== updatedContent ) {
-						writeFileSync( readmeFilePath, updatedContent, 'utf8' );
-						console.log( `   ✅ Updated ${ readmeFile }` );
+					if (originalContent !== updatedContent) {
+						writeFileSync(readmeFilePath, updatedContent, 'utf8');
+						console.log(`   ✅ Updated ${readmeFile}`);
 						updatedCount++;
 					} else {
-						console.log(
-							`   ⏭️  ${ readmeFile } already up to date`
-						);
+						console.log(`   ⏭️  ${readmeFile} already up to date`);
 					}
-				} catch ( error ) {
+				} catch (error) {
 					console.error(
-						`   ❌ Error updating ${ readmeFile }:`,
+						`   ❌ Error updating ${readmeFile}:`,
 						error.message
 					);
 				}
 			}
-		} catch ( error ) {
-			console.error(
-				`❌ Error processing ${ plugin.name }:`,
-				error.message
-			);
+		} catch (error) {
+			console.error(`❌ Error processing ${plugin.name}:`, error.message);
 		}
 
-		console.log( '' ); // Empty line for readability
+		console.log(''); // Empty line for readability
 	}
 
-	console.log( `🎉 Sync complete! Updated ${ updatedCount } file(s).` );
+	console.log(`🎉 Sync complete! Updated ${updatedCount} file(s).`);
 }
 
 // Run the sync

@@ -18,97 +18,97 @@ import apiFetch from '@wordpress/api-fetch';
  * @param {string}   props.label            - Label for the control (optional)
  * @param {string}   props.help             - Help text (optional)
  */
-export default function EventSourceSelector( {
+export default function EventSourceSelector({
 	selectedSources = [],
 	onChange,
-	label = __( 'Event Sources', 'fair-events' ),
-	help = __( 'Select event sources to display', 'fair-events' ),
-} ) {
-	const [ sources, setSources ] = useState( [] );
-	const [ loading, setLoading ] = useState( true );
-	const [ error, setError ] = useState( null );
+	label = __('Event Sources', 'fair-events'),
+	help = __('Select event sources to display', 'fair-events'),
+}) {
+	const [sources, setSources] = useState([]);
+	const [loading, setLoading] = useState(true);
+	const [error, setError] = useState(null);
 
-	useEffect( () => {
-		apiFetch( {
+	useEffect(() => {
+		apiFetch({
 			path: '/fair-events/v1/sources?enabled_only=true',
-		} )
-			.then( ( data ) => {
-				setSources( data );
-				setLoading( false );
-			} )
-			.catch( ( err ) => {
+		})
+			.then((data) => {
+				setSources(data);
+				setLoading(false);
+			})
+			.catch((err) => {
 				setError(
 					err.message ||
-						__( 'Failed to load event sources', 'fair-events' )
+						__('Failed to load event sources', 'fair-events')
 				);
-				setLoading( false );
-			} );
-	}, [] );
+				setLoading(false);
+			});
+	}, []);
 
-	const handleToggle = ( slug, checked ) => {
+	const handleToggle = (slug, checked) => {
 		const newSelection = checked
-			? [ ...selectedSources, slug ]
-			: selectedSources.filter( ( s ) => s !== slug );
-		onChange( newSelection );
+			? [...selectedSources, slug]
+			: selectedSources.filter((s) => s !== slug);
+		onChange(newSelection);
 	};
 
-	if ( loading ) {
+	if (loading) {
 		return <Spinner />;
 	}
 
-	if ( error ) {
+	if (error) {
 		return (
-			<Notice status="error" isDismissible={ false }>
-				{ error }
+			<Notice status="error" isDismissible={false}>
+				{error}
 			</Notice>
 		);
 	}
 
-	if ( sources.length === 0 ) {
+	if (sources.length === 0) {
 		return (
-			<Notice status="info" isDismissible={ false }>
-				{ __(
+			<Notice status="info" isDismissible={false}>
+				{__(
 					'No event sources configured. Create event sources in Fair Events settings.',
 					'fair-events'
-				) }
+				)}
 			</Notice>
 		);
 	}
 
 	return (
 		<div>
-			{ label && <strong>{ label }</strong> }
-			{ help && (
+			{label && <strong>{label}</strong>}
+			{help && (
 				<p
-					style={ {
+					style={{
 						fontSize: '12px',
 						color: '#757575',
 						marginTop: '4px',
-					} }
+					}}
 				>
-					{ help }
+					{help}
 				</p>
-			) }
-			<div style={ { marginTop: '12px' } }>
-				{ sources.map( ( source ) => (
+			)}
+			<div style={{ marginTop: '12px' }}>
+				{sources.map((source) => (
 					<CheckboxControl
-						key={ source.slug }
-						label={ source.name }
-						checked={ selectedSources.includes( source.slug ) }
-						onChange={ ( checked ) =>
-							handleToggle( source.slug, checked )
+						key={source.slug}
+						label={source.name}
+						checked={selectedSources.includes(source.slug)}
+						onChange={(checked) =>
+							handleToggle(source.slug, checked)
 						}
 					/>
-				) ) }
+				))}
 			</div>
-			<div style={ { marginTop: '12px' } }>
+			<div style={{ marginTop: '12px' }}>
 				<a
 					href="admin.php?page=fair-events-sources"
-					style={ {
+					style={{
 						fontSize: '12px',
-					} }
+					}}
 				>
-					{ __( 'Manage Event Sources', 'fair-events' ) }
+					{__('Manage Event Sources', 'fair-events')}
 				</a>
 			</div>
 		</div>

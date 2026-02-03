@@ -5,8 +5,8 @@ import { useBlockProps, InspectorControls } from '@wordpress/block-editor';
 import { PanelBody, TextControl, TextareaControl } from '@wordpress/components';
 import { __ } from '@wordpress/i18n';
 
-registerBlockType( 'fair-audience/event-signup', {
-	edit: ( { attributes, setAttributes } ) => {
+registerBlockType('fair-audience/event-signup', {
+	edit: ({ attributes, setAttributes }) => {
 		const {
 			signupButtonText,
 			registerButtonText,
@@ -14,155 +14,147 @@ registerBlockType( 'fair-audience/event-signup', {
 			successMessage,
 		} = attributes;
 
-		const blockProps = useBlockProps( {
+		const blockProps = useBlockProps({
 			className: 'fair-audience-event-signup',
-		} );
+		});
 
 		return (
 			<>
 				<InspectorControls>
-					<PanelBody title={ __( 'Form Settings', 'fair-audience' ) }>
+					<PanelBody title={__('Form Settings', 'fair-audience')}>
 						<TextControl
-							label={ __(
-								'Signup Button Text',
-								'fair-audience'
-							) }
-							value={ signupButtonText }
-							onChange={ ( value ) =>
-								setAttributes( { signupButtonText: value } )
+							label={__('Signup Button Text', 'fair-audience')}
+							value={signupButtonText}
+							onChange={(value) =>
+								setAttributes({ signupButtonText: value })
 							}
-							placeholder={ __( 'Sign Up', 'fair-audience' ) }
-							help={ __(
+							placeholder={__('Sign Up', 'fair-audience')}
+							help={__(
 								'Button text for authenticated users.',
 								'fair-audience'
-							) }
+							)}
 						/>
 						<TextControl
-							label={ __(
-								'Register Button Text',
-								'fair-audience'
-							) }
-							value={ registerButtonText }
-							onChange={ ( value ) =>
-								setAttributes( { registerButtonText: value } )
+							label={__('Register Button Text', 'fair-audience')}
+							value={registerButtonText}
+							onChange={(value) =>
+								setAttributes({ registerButtonText: value })
 							}
-							placeholder={ __(
+							placeholder={__(
 								'Register & Sign Up',
 								'fair-audience'
-							) }
-							help={ __(
+							)}
+							help={__(
 								'Button text for new registrations.',
 								'fair-audience'
-							) }
+							)}
 						/>
 						<TextControl
-							label={ __(
+							label={__(
 								'Request Link Button Text',
 								'fair-audience'
-							) }
-							value={ requestLinkButtonText }
-							onChange={ ( value ) =>
-								setAttributes( {
+							)}
+							value={requestLinkButtonText}
+							onChange={(value) =>
+								setAttributes({
 									requestLinkButtonText: value,
-								} )
+								})
 							}
-							placeholder={ __(
+							placeholder={__(
 								'Send Signup Link',
 								'fair-audience'
-							) }
-							help={ __(
+							)}
+							help={__(
 								'Button text for existing participants.',
 								'fair-audience'
-							) }
+							)}
 						/>
 						<TextareaControl
-							label={ __( 'Success Message', 'fair-audience' ) }
-							value={ successMessage }
-							onChange={ ( value ) =>
-								setAttributes( { successMessage: value } )
+							label={__('Success Message', 'fair-audience')}
+							value={successMessage}
+							onChange={(value) =>
+								setAttributes({ successMessage: value })
 							}
-							placeholder={ __(
+							placeholder={__(
 								'You have successfully signed up for the event!',
 								'fair-audience'
-							) }
-							help={ __(
+							)}
+							help={__(
 								'Message shown after successful signup.',
 								'fair-audience'
-							) }
+							)}
 						/>
 					</PanelBody>
 				</InspectorControls>
 
-				<div { ...blockProps }>
+				<div {...blockProps}>
 					<div className="fair-audience-event-signup-preview">
 						<p className="fair-audience-event-signup-notice">
-							{ __(
+							{__(
 								'Event Signup form - displays based on user state',
 								'fair-audience'
-							) }
+							)}
 						</p>
 
 						<div className="fair-audience-event-signup-preview-tabs">
 							<span className="preview-tab active">
-								{ __( 'Anonymous', 'fair-audience' ) }
+								{__('Anonymous', 'fair-audience')}
 							</span>
 							<span className="preview-tab">
-								{ __( 'With Token', 'fair-audience' ) }
+								{__('With Token', 'fair-audience')}
 							</span>
 							<span className="preview-tab">
-								{ __( 'Logged In', 'fair-audience' ) }
+								{__('Logged In', 'fair-audience')}
 							</span>
 						</div>
 
 						<form className="fair-audience-signup-form fair-audience-signup-register">
 							<p>
 								<label>
-									{ __( 'First Name', 'fair-audience' ) }{ ' ' }
+									{__('First Name', 'fair-audience')}{' '}
 									<span className="required">*</span>
 								</label>
 								<input
 									type="text"
-									placeholder={ __(
+									placeholder={__(
 										'Enter your first name',
 										'fair-audience'
-									) }
+									)}
 									disabled
 								/>
 							</p>
 							<p>
-								<label>
-									{ __( 'Surname', 'fair-audience' ) }
-								</label>
+								<label>{__('Surname', 'fair-audience')}</label>
 								<input
 									type="text"
-									placeholder={ __(
+									placeholder={__(
 										'Enter your surname',
 										'fair-audience'
-									) }
+									)}
 									disabled
 								/>
 							</p>
 							<p>
 								<label>
-									{ __( 'Email', 'fair-audience' ) }{ ' ' }
+									{__('Email', 'fair-audience')}{' '}
 									<span className="required">*</span>
 								</label>
 								<input
 									type="email"
-									placeholder={ __(
+									placeholder={__(
 										'Enter your email',
 										'fair-audience'
-									) }
+									)}
 									disabled
 								/>
 							</p>
 							<p className="fair-audience-signup-checkbox">
 								<label>
 									<input type="checkbox" disabled />
-									{ __(
+									{__(
 										'Keep me informed about future events',
 										'fair-audience'
-									) }
+									)}
 								</label>
 							</p>
 
@@ -172,11 +164,11 @@ registerBlockType( 'fair-audience/event-signup', {
 									className="wp-block-button__link wp-element-button"
 									disabled
 								>
-									{ registerButtonText ||
+									{registerButtonText ||
 										__(
 											'Register & Sign Up',
 											'fair-audience'
-										) }
+										)}
 								</button>
 							</div>
 						</form>
@@ -188,4 +180,4 @@ registerBlockType( 'fair-audience/event-signup', {
 	save: () => {
 		return null; // Dynamic block, rendered via PHP
 	},
-} );
+});

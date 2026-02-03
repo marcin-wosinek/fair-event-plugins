@@ -7,7 +7,7 @@
 	"category": "widgets",
 	"icon": "calendar-alt",
 	"description": "Display events in a 7-day weekly schedule view.",
-	"keywords": [ "events", "schedule", "week", "weekly", "calendar" ],
+	"keywords": ["events", "schedule", "week", "weekly", "calendar"],
 	"textdomain": "fair-events",
 	"attributes": {
 		"currentWeek": {
@@ -32,7 +32,7 @@
 		"startOfWeek": {
 			"type": "number",
 			"default": 1,
-			"enum": [ 0, 1 ]
+			"enum": [0, 1]
 		},
 		"showNavigation": {
 			"type": "boolean",
@@ -61,7 +61,7 @@
 	"supports": {
 		"html": false,
 		"anchor": true,
-		"align": [ "wide", "full" ]
+		"align": ["wide", "full"]
 	},
 	"editorScript": "file:./editor.js",
 	"editorStyle": "file:./editor.css",

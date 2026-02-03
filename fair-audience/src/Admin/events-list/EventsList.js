@@ -15,7 +15,7 @@ const DEFAULT_VIEW = {
 	},
 	search: '',
 	filters: [],
-	fields: [ 'title', 'event_date', 'participants', 'images', 'likes' ],
+	fields: ['title', 'event_date', 'participants', 'images', 'likes'],
 };
 
 const DEFAULT_LAYOUTS = {
@@ -23,78 +23,78 @@ const DEFAULT_LAYOUTS = {
 };
 
 export default function EventsList() {
-	const [ events, setEvents ] = useState( [] );
-	const [ totalItems, setTotalItems ] = useState( 0 );
-	const [ totalPages, setTotalPages ] = useState( 0 );
-	const [ isLoading, setIsLoading ] = useState( true );
-	const [ view, setView ] = useState( DEFAULT_VIEW );
+	const [events, setEvents] = useState([]);
+	const [totalItems, setTotalItems] = useState(0);
+	const [totalPages, setTotalPages] = useState(0);
+	const [isLoading, setIsLoading] = useState(true);
+	const [view, setView] = useState(DEFAULT_VIEW);
 
 	// Define fields configuration for DataViews.
 	const fields = useMemo(
 		() => [
 			{
 				id: 'title',
-				label: __( 'Event', 'fair-audience' ),
-				render: ( { item } ) => (
+				label: __('Event', 'fair-audience'),
+				render: ({ item }) => (
 					<a
-						href={ `admin.php?page=fair-audience-event-participants&event_id=${ item.event_id }` }
+						href={`admin.php?page=fair-audience-event-participants&event_id=${item.event_id}`}
 					>
-						{ item.title }
+						{item.title}
 					</a>
 				),
 				enableSorting: true,
 				enableHiding: false,
-				getValue: ( { item } ) => item.title.toLowerCase(),
+				getValue: ({ item }) => item.title.toLowerCase(),
 			},
 			{
 				id: 'event_date',
-				label: __( 'Date', 'fair-audience' ),
-				render: ( { item } ) => {
-					if ( ! item.event_date ) {
+				label: __('Date', 'fair-audience'),
+				render: ({ item }) => {
+					if (!item.event_date) {
 						return '—';
 					}
 					const { formats } = getSettings();
-					return dateI18n( formats.datetime, item.event_date );
+					return dateI18n(formats.datetime, item.event_date);
 				},
 				enableSorting: true,
-				getValue: ( { item } ) => item.event_date || '',
+				getValue: ({ item }) => item.event_date || '',
 			},
 			{
 				id: 'participants',
-				label: __( 'Participants', 'fair-audience' ),
-				render: ( { item } ) => (
-					<div style={ { textAlign: 'right' } }>
-						{ item.participants || 0 }
+				label: __('Participants', 'fair-audience'),
+				render: ({ item }) => (
+					<div style={{ textAlign: 'right' }}>
+						{item.participants || 0}
 					</div>
 				),
 				enableSorting: true,
-				getValue: ( { item } ) => item.participants || 0,
+				getValue: ({ item }) => item.participants || 0,
 			},
 			{
 				id: 'images',
-				label: __( 'Images', 'fair-audience' ),
-				render: ( { item } ) => (
-					<div style={ { textAlign: 'right' } }>
+				label: __('Images', 'fair-audience'),
+				render: ({ item }) => (
+					<div style={{ textAlign: 'right' }}>
 						<a
-							href={ `upload.php?mode=list&fair_event_filter=${ item.event_id }` }
+							href={`upload.php?mode=list&fair_event_filter=${item.event_id}`}
 						>
-							{ item.gallery_count || 0 }
+							{item.gallery_count || 0}
 						</a>
 					</div>
 				),
 				enableSorting: true,
-				getValue: ( { item } ) => item.gallery_count || 0,
+				getValue: ({ item }) => item.gallery_count || 0,
 			},
 			{
 				id: 'likes',
-				label: __( 'Likes', 'fair-audience' ),
-				render: ( { item } ) => (
-					<div style={ { textAlign: 'right' } }>
-						{ item.likes_count || 0 }
+				label: __('Likes', 'fair-audience'),
+				render: ({ item }) => (
+					<div style={{ textAlign: 'right' }}>
+						{item.likes_count || 0}
 					</div>
 				),
 				enableSorting: true,
-				getValue: ( { item } ) => item.likes_count || 0,
+				getValue: ({ item }) => item.likes_count || 0,
 			},
 		],
 		[]
@@ -105,16 +105,16 @@ export default function EventsList() {
 		() => [
 			{
 				id: 'edit',
-				label: __( 'Edit Event', 'fair-audience' ),
-				callback: ( [ item ] ) => {
-					window.location.href = `post.php?post=${ item.event_id }&action=edit`;
+				label: __('Edit Event', 'fair-audience'),
+				callback: ([item]) => {
+					window.location.href = `post.php?post=${item.event_id}&action=edit`;
 				},
 			},
 			{
 				id: 'view',
-				label: __( 'View Event', 'fair-audience' ),
-				callback: ( [ item ] ) => {
-					window.open( item.link, '_blank' );
+				label: __('View Event', 'fair-audience'),
+				callback: ([item]) => {
+					window.open(item.link, '_blank');
 				},
 			},
 		],
@@ -122,89 +122,89 @@ export default function EventsList() {
 	);
 
 	// Convert view state to API query params.
-	const queryArgs = useMemo( () => {
+	const queryArgs = useMemo(() => {
 		const params = new URLSearchParams();
 
-		if ( view.search ) {
-			params.append( 'search', view.search );
+		if (view.search) {
+			params.append('search', view.search);
 		}
 
-		if ( view.sort?.field ) {
-			params.append( 'orderby', view.sort.field );
-			params.append( 'order', view.sort.direction || 'desc' );
+		if (view.sort?.field) {
+			params.append('orderby', view.sort.field);
+			params.append('order', view.sort.direction || 'desc');
 		}
 
 		// Pagination.
-		if ( view.perPage ) {
-			params.append( 'per_page', view.perPage );
+		if (view.perPage) {
+			params.append('per_page', view.perPage);
 		}
-		if ( view.page ) {
-			params.append( 'page', view.page );
+		if (view.page) {
+			params.append('page', view.page);
 		}
 
 		return params.toString();
-	}, [ view ] );
+	}, [view]);
 
-	const loadEvents = useCallback( () => {
-		setIsLoading( true );
+	const loadEvents = useCallback(() => {
+		setIsLoading(true);
 
 		const path = `/fair-audience/v1/events${
 			queryArgs ? '?' + queryArgs : ''
 		}`;
 
-		apiFetch( { path, parse: false } )
-			.then( ( response ) => {
+		apiFetch({ path, parse: false })
+			.then((response) => {
 				const total = parseInt(
-					response.headers.get( 'X-WP-Total' ) || '0',
+					response.headers.get('X-WP-Total') || '0',
 					10
 				);
 				const pages = parseInt(
-					response.headers.get( 'X-WP-TotalPages' ) || '1',
+					response.headers.get('X-WP-TotalPages') || '1',
 					10
 				);
-				setTotalItems( total );
-				setTotalPages( pages );
+				setTotalItems(total);
+				setTotalPages(pages);
 				return response.json();
-			} )
-			.then( ( data ) => {
-				setEvents( data );
-				setIsLoading( false );
-			} )
-			.catch( ( err ) => {
+			})
+			.then((data) => {
+				setEvents(data);
+				setIsLoading(false);
+			})
+			.catch((err) => {
 				// eslint-disable-next-line no-console
-				console.error( 'Error loading events:', err );
-				setIsLoading( false );
-			} );
-	}, [ queryArgs ] );
+				console.error('Error loading events:', err);
+				setIsLoading(false);
+			});
+	}, [queryArgs]);
 
-	useEffect( () => {
+	useEffect(() => {
 		loadEvents();
-	}, [ loadEvents ] );
+	}, [loadEvents]);
 
 	const paginationInfo = useMemo(
-		() => ( {
+		() => ({
 			totalItems,
 			totalPages,
-		} ),
-		[ totalItems, totalPages ]
+		}),
+		[totalItems, totalPages]
 	);
 
 	return (
 		<div className="wrap">
-			<h1>{ __( 'Events', 'fair-audience' ) }</h1>
+			<h1>{__('Events', 'fair-audience')}</h1>
 
 			<Card>
 				<CardBody>
 					<DataViews
-						data={ events }
-						fields={ fields }
-						view={ view }
-						onChangeView={ setView }
-						actions={ actions }
-						paginationInfo={ paginationInfo }
-						defaultLayouts={ DEFAULT_LAYOUTS }
-						isLoading={ isLoading }
-						getItemId={ ( item ) => item.event_id }
+						data={events}
+						fields={fields}
+						view={view}
+						onChangeView={setView}
+						actions={actions}
+						paginationInfo={paginationInfo}
+						defaultLayouts={DEFAULT_LAYOUTS}
+						isLoading={isLoading}
+						getItemId={(item) => item.event_id}
 					/>
 				</CardBody>
 			</Card>

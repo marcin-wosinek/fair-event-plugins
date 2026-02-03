@@ -21,38 +21,30 @@ import { EventSourceSelector } from 'fair-events-shared';
  * @param {string}   props.clientId      - Block client ID
  * @return {JSX.Element} The edit component
  */
-export default function EditComponent( {
-	attributes,
-	setAttributes,
-	clientId,
-} ) {
+export default function EditComponent({ attributes, setAttributes, clientId }) {
 	const { timeFilter, categories, displayPattern, eventSources } = attributes;
 
 	const blockProps = useBlockProps();
 
 	// Get all categories
-	const allCategories = useSelect( ( select ) => {
-		const cats = select( 'core' ).getEntityRecords(
-			'taxonomy',
-			'category',
-			{
-				per_page: -1,
-			}
-		);
+	const allCategories = useSelect((select) => {
+		const cats = select('core').getEntityRecords('taxonomy', 'category', {
+			per_page: -1,
+		});
 		return cats || [];
-	}, [] );
+	}, []);
 
 	// Get all block patterns from Fair Events category (PHP-registered)
-	const fairEventsPatterns = useSelect( ( select ) => {
-		const patterns = select( 'core' ).getBlockPatterns?.() || [];
-		return patterns.filter( ( pattern ) =>
-			pattern.categories?.includes( 'fair-events' )
+	const fairEventsPatterns = useSelect((select) => {
+		const patterns = select('core').getBlockPatterns?.() || [];
+		return patterns.filter((pattern) =>
+			pattern.categories?.includes('fair-events')
 		);
-	}, [] );
+	}, []);
 
 	// Get user-created patterns (reusable blocks / synced patterns)
-	const userPatterns = useSelect( ( select ) => {
-		const patterns = select( 'core' ).getEntityRecords(
+	const userPatterns = useSelect((select) => {
+		const patterns = select('core').getEntityRecords(
 			'postType',
 			'wp_block',
 			{
@@ -60,188 +52,183 @@ export default function EditComponent( {
 			}
 		);
 		return patterns || [];
-	}, [] );
+	}, []);
 
 	// Combine all patterns for the dropdown
 	const allPatterns = [
-		...fairEventsPatterns.map( ( pattern ) => ( {
+		...fairEventsPatterns.map((pattern) => ({
 			label: pattern.title,
 			value: pattern.name,
-		} ) ),
-		...userPatterns.map( ( pattern ) => ( {
+		})),
+		...userPatterns.map((pattern) => ({
 			label:
-				( pattern.title?.rendered ||
+				(pattern.title?.rendered ||
 					pattern.title?.raw ||
-					__( 'Untitled Pattern', 'fair-events' ) ) +
-				' (User Pattern)',
+					__('Untitled Pattern', 'fair-events')) + ' (User Pattern)',
 			value: 'wp_block:' + pattern.id,
-		} ) ),
+		})),
 	];
 
 	// Check if there are multiple categories (more than just "Uncategorized")
 	const meaningfulCategories = allCategories.filter(
-		( cat ) => cat.slug !== 'uncategorized'
+		(cat) => cat.slug !== 'uncategorized'
 	);
 	const hasCategories = meaningfulCategories.length > 0;
 
 	// Handle category checkbox toggle
-	const handleCategoryToggle = ( categoryId, checked ) => {
+	const handleCategoryToggle = (categoryId, checked) => {
 		let newCategories;
-		if ( checked ) {
+		if (checked) {
 			// Add category
-			newCategories = [ ...categories, categoryId ];
+			newCategories = [...categories, categoryId];
 		} else {
 			// Remove category
-			newCategories = categories.filter( ( id ) => id !== categoryId );
+			newCategories = categories.filter((id) => id !== categoryId);
 		}
-		setAttributes( { categories: newCategories } );
+		setAttributes({ categories: newCategories });
 	};
 
 	// Get selected category names for display
 	const selectedCategoryNames = allCategories
-		.filter( ( cat ) => categories.includes( cat.id ) )
-		.map( ( cat ) => cat.name );
+		.filter((cat) => categories.includes(cat.id))
+		.map((cat) => cat.name);
 
 	return (
 		<>
 			<InspectorControls>
-				<PanelBody
-					title={ __( 'Events List Settings', 'fair-events' ) }
-				>
+				<PanelBody title={__('Events List Settings', 'fair-events')}>
 					<SelectControl
-						label={ __( 'Display Pattern', 'fair-events' ) }
-						value={ displayPattern }
-						options={ allPatterns }
-						onChange={ ( value ) =>
-							setAttributes( { displayPattern: value } )
+						label={__('Display Pattern', 'fair-events')}
+						value={displayPattern}
+						options={allPatterns}
+						onChange={(value) =>
+							setAttributes({ displayPattern: value })
 						}
-						help={ __(
+						help={__(
 							'Choose a pattern for displaying events',
 							'fair-events'
-						) }
+						)}
 					/>
 					<SelectControl
-						label={ __( 'Time Filter', 'fair-events' ) }
-						value={ timeFilter }
-						options={ [
+						label={__('Time Filter', 'fair-events')}
+						value={timeFilter}
+						options={[
 							{
-								label: __( 'All Events', 'fair-events' ),
+								label: __('All Events', 'fair-events'),
 								value: 'all',
 							},
 							{
-								label: __( 'Upcoming Events', 'fair-events' ),
+								label: __('Upcoming Events', 'fair-events'),
 								value: 'upcoming',
 							},
 							{
-								label: __( 'Past Events', 'fair-events' ),
+								label: __('Past Events', 'fair-events'),
 								value: 'past',
 							},
 							{
-								label: __( 'Ongoing Events', 'fair-events' ),
+								label: __('Ongoing Events', 'fair-events'),
 								value: 'ongoing',
 							},
-						] }
-						onChange={ ( value ) =>
-							setAttributes( { timeFilter: value } )
+						]}
+						onChange={(value) =>
+							setAttributes({ timeFilter: value })
 						}
-						help={ __(
+						help={__(
 							'Filter events by time relative to now',
 							'fair-events'
-						) }
+						)}
 					/>
-					<div style={ { marginTop: '16px' } }>
-						<strong>{ __( 'Categories', 'fair-events' ) }</strong>
-						{ ! hasCategories ? (
+					<div style={{ marginTop: '16px' }}>
+						<strong>{__('Categories', 'fair-events')}</strong>
+						{!hasCategories ? (
 							<p
-								style={ {
+								style={{
 									fontStyle: 'italic',
 									color: '#757575',
-								} }
+								}}
 							>
-								{ __(
+								{__(
 									'Define more categories if you want to use category filtering',
 									'fair-events'
-								) }
+								)}
 							</p>
 						) : (
 							<>
-								{ allCategories.map( ( cat ) => (
+								{allCategories.map((cat) => (
 									<CheckboxControl
-										key={ cat.id }
-										label={ cat.name }
-										checked={ categories.includes(
-											cat.id
-										) }
-										onChange={ ( checked ) =>
+										key={cat.id}
+										label={cat.name}
+										checked={categories.includes(cat.id)}
+										onChange={(checked) =>
 											handleCategoryToggle(
 												cat.id,
 												checked
 											)
 										}
 									/>
-								) ) }
+								))}
 							</>
-						) }
+						)}
 					</div>
 				</PanelBody>
 
 				<PanelBody
-					title={ __( 'Event Sources', 'fair-events' ) }
-					initialOpen={ false }
+					title={__('Event Sources', 'fair-events')}
+					initialOpen={false}
 				>
-					<p style={ { marginBottom: '16px', color: '#666' } }>
-						{ __(
+					<p style={{ marginBottom: '16px', color: '#666' }}>
+						{__(
 							'Select event sources to display in the list.',
 							'fair-events'
-						) }
+						)}
 					</p>
 
 					<EventSourceSelector
-						selectedSources={ eventSources }
-						onChange={ ( slugs ) =>
-							setAttributes( { eventSources: slugs } )
+						selectedSources={eventSources}
+						onChange={(slugs) =>
+							setAttributes({ eventSources: slugs })
 						}
 						label=""
 					/>
 				</PanelBody>
 			</InspectorControls>
 
-			<div { ...blockProps }>
+			<div {...blockProps}>
 				<div className="events-list-placeholder">
 					<p>
-						<strong>{ __( 'Events List', 'fair-events' ) }</strong>
+						<strong>{__('Events List', 'fair-events')}</strong>
 					</p>
 					<p>
-						{ __( 'Display Pattern:', 'fair-events' ) }{ ' ' }
-						<code>{ displayPattern }</code>
+						{__('Display Pattern:', 'fair-events')}{' '}
+						<code>{displayPattern}</code>
 					</p>
 					<p>
-						{ __( 'Time Filter:', 'fair-events' ) }{ ' ' }
-						<code>{ timeFilter }</code>
+						{__('Time Filter:', 'fair-events')}{' '}
+						<code>{timeFilter}</code>
 					</p>
 					<p>
-						{ __( 'Categories:', 'fair-events' ) }{ ' ' }
-						{ categories.length === 0 ? (
-							<code>{ __( 'All', 'fair-events' ) }</code>
+						{__('Categories:', 'fair-events')}{' '}
+						{categories.length === 0 ? (
+							<code>{__('All', 'fair-events')}</code>
 						) : (
-							<code>{ selectedCategoryNames.join( ', ' ) }</code>
-						) }
+							<code>{selectedCategoryNames.join(', ')}</code>
+						)}
 					</p>
-					{ eventSources.length > 0 && (
+					{eventSources.length > 0 && (
 						<p>
-							{ __( 'Event Sources:', 'fair-events' ) }{ ' ' }
+							{__('Event Sources:', 'fair-events')}{' '}
 							<code>
-								{ eventSources.length }{ ' ' }
-								{ __( 'selected', 'fair-events' ) }
+								{eventSources.length}{' '}
+								{__('selected', 'fair-events')}
 							</code>
 						</p>
-					) }
+					)}
 					<p>
 						<em>
-							{ __(
+							{__(
 								'Event list will appear here on the frontend.',
 								'fair-events'
-							) }
+							)}
 						</em>
 					</p>
 				</div>

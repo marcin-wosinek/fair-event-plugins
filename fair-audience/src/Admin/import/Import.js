@@ -13,76 +13,73 @@ import {
 import WordPressUsersImport from './WordPressUsersImport.js';
 
 export default function Import() {
-	const [ file, setFile ] = useState( null );
-	const [ isUploading, setIsUploading ] = useState( false );
-	const [ results, setResults ] = useState( null );
-	const [ error, setError ] = useState( null );
-	const [ duplicateResolutions, setDuplicateResolutions ] = useState( {} );
-	const [ isResolvingDuplicates, setIsResolvingDuplicates ] =
-		useState( false );
-	const [ importFilename, setImportFilename ] = useState( '' );
-	const [ events, setEvents ] = useState( [] );
-	const [ selectedEventId, setSelectedEventId ] = useState( '' );
-	const [ isLoadingEvents, setIsLoadingEvents ] = useState( true );
+	const [file, setFile] = useState(null);
+	const [isUploading, setIsUploading] = useState(false);
+	const [results, setResults] = useState(null);
+	const [error, setError] = useState(null);
+	const [duplicateResolutions, setDuplicateResolutions] = useState({});
+	const [isResolvingDuplicates, setIsResolvingDuplicates] = useState(false);
+	const [importFilename, setImportFilename] = useState('');
+	const [events, setEvents] = useState([]);
+	const [selectedEventId, setSelectedEventId] = useState('');
+	const [isLoadingEvents, setIsLoadingEvents] = useState(true);
 
-	useEffect( () => {
-		apiFetch( { path: '/fair-audience/v1/events' } )
-			.then( ( data ) => {
-				setEvents( data );
-				setIsLoadingEvents( false );
-			} )
-			.catch( () => {
-				setIsLoadingEvents( false );
-			} );
-	}, [] );
+	useEffect(() => {
+		apiFetch({ path: '/fair-audience/v1/events' })
+			.then((data) => {
+				setEvents(data);
+				setIsLoadingEvents(false);
+			})
+			.catch(() => {
+				setIsLoadingEvents(false);
+			});
+	}, []);
 
-	const handleFileChange = ( event ) => {
-		const selectedFile = event.target.files[ 0 ];
-		if ( selectedFile ) {
-			setFile( selectedFile );
-			setResults( null );
-			setError( null );
+	const handleFileChange = (event) => {
+		const selectedFile = event.target.files[0];
+		if (selectedFile) {
+			setFile(selectedFile);
+			setResults(null);
+			setError(null);
 		}
 	};
 
 	const handleImport = async () => {
-		if ( ! file ) {
-			setError(
-				__( 'Please select a file to import.', 'fair-audience' )
-			);
+		if (!file) {
+			setError(__('Please select a file to import.', 'fair-audience'));
 			return;
 		}
 
-		setIsUploading( true );
-		setError( null );
-		setResults( null );
-		setDuplicateResolutions( {} );
+		setIsUploading(true);
+		setError(null);
+		setResults(null);
+		setDuplicateResolutions({});
 
 		try {
 			const formData = new FormData();
-			formData.append( 'file', file );
-			if ( selectedEventId ) {
-				formData.append( 'event_id', selectedEventId );
+			formData.append('file', file);
+			if (selectedEventId) {
+				formData.append('event_id', selectedEventId);
 			}
 
-			const response = await apiFetch( {
+			const response = await apiFetch({
 				path: '/fair-audience/v1/import/entradium',
 				method: 'POST',
 				body: formData,
-			} );
+			});
 
-			setResults( response );
-			setImportFilename( file.name );
-			setFile( null );
+			setResults(response);
+			setImportFilename(file.name);
+			setFile(null);
 			// Reset file input
-			document.getElementById( 'file-input' ).value = '';
+			document.getElementById('file-input').value = '';
 
 			// Initialize duplicate resolutions with default values
-			if ( response.duplicates && response.duplicates.length > 0 ) {
+			if (response.duplicates && response.duplicates.length > 0) {
 				const initialResolutions = {};
-				response.duplicates.forEach( ( dup ) => {
-					dup.rows.forEach( ( row ) => {
-						initialResolutions[ `${ dup.email }-${ row.row }` ] = {
+				response.duplicates.forEach((dup) => {
+					dup.rows.forEach((row) => {
+						initialResolutions[`${dup.email}-${row.row}`] = {
 							email: '',
 							action: 'edit', // 'edit', 'skip', or 'alias'
 							originalEmail: dup.email,
@@ -90,70 +87,70 @@ export default function Import() {
 							name: row.name,
 							surname: row.surname,
 						};
-					} );
-				} );
-				setDuplicateResolutions( initialResolutions );
+					});
+				});
+				setDuplicateResolutions(initialResolutions);
 			}
-		} catch ( err ) {
+		} catch (err) {
 			setError(
 				err.message ||
-					__( 'Import failed. Please try again.', 'fair-audience' )
+					__('Import failed. Please try again.', 'fair-audience')
 			);
 		} finally {
-			setIsUploading( false );
+			setIsUploading(false);
 		}
 	};
 
-	const handleResolutionChange = ( key, field, value ) => {
-		setDuplicateResolutions( ( prev ) => ( {
+	const handleResolutionChange = (key, field, value) => {
+		setDuplicateResolutions((prev) => ({
 			...prev,
-			[ key ]: {
-				...prev[ key ],
-				[ field ]: value,
+			[key]: {
+				...prev[key],
+				[field]: value,
 			},
-		} ) );
+		}));
 	};
 
-	const handleUseGmailAlias = ( key ) => {
-		const resolution = duplicateResolutions[ key ];
-		const baseEmail = resolution.originalEmail.replace( '@gmail.com', '' );
-		const firstName = resolution.name.toLowerCase().replace( /\s+/g, '' );
-		const aliasEmail = `${ baseEmail }+${ firstName }@gmail.com`;
+	const handleUseGmailAlias = (key) => {
+		const resolution = duplicateResolutions[key];
+		const baseEmail = resolution.originalEmail.replace('@gmail.com', '');
+		const firstName = resolution.name.toLowerCase().replace(/\s+/g, '');
+		const aliasEmail = `${baseEmail}+${firstName}@gmail.com`;
 
-		handleResolutionChange( key, 'email', aliasEmail );
-		handleResolutionChange( key, 'action', 'alias' );
+		handleResolutionChange(key, 'email', aliasEmail);
+		handleResolutionChange(key, 'action', 'alias');
 	};
 
-	const handleUseOriginalEmail = ( key ) => {
-		const resolution = duplicateResolutions[ key ];
-		handleResolutionChange( key, 'email', resolution.originalEmail );
-		handleResolutionChange( key, 'action', 'edit' );
+	const handleUseOriginalEmail = (key) => {
+		const resolution = duplicateResolutions[key];
+		handleResolutionChange(key, 'email', resolution.originalEmail);
+		handleResolutionChange(key, 'action', 'edit');
 	};
 
 	const handleResolveDuplicates = async () => {
-		setIsResolvingDuplicates( true );
-		setError( null );
+		setIsResolvingDuplicates(true);
+		setError(null);
 
 		try {
-			const participantsToCreate = Object.values( duplicateResolutions )
-				.filter( ( res ) => res.action !== 'skip' && res.email )
-				.map( ( res ) => ( {
+			const participantsToCreate = Object.values(duplicateResolutions)
+				.filter((res) => res.action !== 'skip' && res.email)
+				.map((res) => ({
 					name: res.name,
 					surname: res.surname,
 					email: res.email,
 					original_email: res.originalEmail,
 					row_number: res.row,
 					resolution_action: res.action,
-				} ) );
+				}));
 
-			if ( participantsToCreate.length === 0 ) {
+			if (participantsToCreate.length === 0) {
 				setError(
 					__(
 						'No participants to create. Please provide email addresses or select skip.',
 						'fair-audience'
 					)
 				);
-				setIsResolvingDuplicates( false );
+				setIsResolvingDuplicates(false);
 				return;
 			}
 
@@ -161,27 +158,27 @@ export default function Import() {
 				participants: participantsToCreate,
 				filename: importFilename || 'unknown',
 			};
-			if ( selectedEventId ) {
-				requestData.event_id = parseInt( selectedEventId );
+			if (selectedEventId) {
+				requestData.event_id = parseInt(selectedEventId);
 			}
 
-			const response = await apiFetch( {
+			const response = await apiFetch({
 				path: '/fair-audience/v1/import/resolve-duplicates',
 				method: 'POST',
 				data: requestData,
-			} );
+			});
 
 			// Update results to show the resolution
-			setResults( ( prev ) => ( {
+			setResults((prev) => ({
 				...prev,
 				imported: prev.imported + response.imported,
 				existing_linked:
-					( prev.existing_linked || 0 ) +
-					( response.existing_linked || 0 ),
+					(prev.existing_linked || 0) +
+					(response.existing_linked || 0),
 				duplicates: [],
-			} ) );
-			setDuplicateResolutions( {} );
-		} catch ( err ) {
+			}));
+			setDuplicateResolutions({});
+		} catch (err) {
 			setError(
 				err.message ||
 					__(
@@ -190,140 +187,137 @@ export default function Import() {
 					)
 			);
 		} finally {
-			setIsResolvingDuplicates( false );
+			setIsResolvingDuplicates(false);
 		}
 	};
 
 	return (
 		<div className="wrap">
-			<h1>{ __( 'Import Participants', 'fair-audience' ) }</h1>
+			<h1>{__('Import Participants', 'fair-audience')}</h1>
 
 			<TabPanel
 				className="fair-audience-import-tabs"
 				activeClass="is-active"
-				tabs={ [
+				tabs={[
 					{
 						name: 'entradium',
-						title: __( 'Entradium', 'fair-audience' ),
+						title: __('Entradium', 'fair-audience'),
 					},
 					{
 						name: 'wordpress-users',
-						title: __( 'WordPress Users', 'fair-audience' ),
+						title: __('WordPress Users', 'fair-audience'),
 					},
-				] }
+				]}
 			>
-				{ ( tab ) => (
+				{(tab) => (
 					<>
-						{ tab.name === 'entradium' && (
+						{tab.name === 'entradium' && (
 							<Card>
 								<CardBody>
 									<h2>
-										{ __(
+										{__(
 											'Import from Entradium',
 											'fair-audience'
-										) }
+										)}
 									</h2>
 									<p>
-										{ __(
+										{__(
 											'Upload an Entradium Excel file (.xlsx) to import participants. The file must contain columns: Nombre, Apellidos, and Email.',
 											'fair-audience'
-										) }
+										)}
 									</p>
 
-									<div style={ { marginTop: '20px' } }>
+									<div style={{ marginTop: '20px' }}>
 										<SelectControl
-											label={ __(
+											label={__(
 												'Related Event (Optional)',
 												'fair-audience'
-											) }
-											value={ selectedEventId }
-											onChange={ setSelectedEventId }
+											)}
+											value={selectedEventId}
+											onChange={setSelectedEventId}
 											disabled={
 												isLoadingEvents || isUploading
 											}
-											help={ __(
+											help={__(
 												'Select an event to associate imported participants with it. Leave empty to import without event association.',
 												'fair-audience'
-											) }
+											)}
 										>
 											<option value="">
-												{ __(
+												{__(
 													'No event association',
 													'fair-audience'
-												) }
+												)}
 											</option>
-											{ events.map( ( event ) => (
+											{events.map((event) => (
 												<option
-													key={ event.event_id }
-													value={ event.event_id }
+													key={event.event_id}
+													value={event.event_id}
 												>
-													{ event.title }
+													{event.title}
 												</option>
-											) ) }
+											))}
 										</SelectControl>
 									</div>
 
-									<div style={ { marginTop: '20px' } }>
+									<div style={{ marginTop: '20px' }}>
 										<input
 											id="file-input"
 											type="file"
 											accept=".xlsx,.xls"
-											onChange={ handleFileChange }
-											disabled={ isUploading }
+											onChange={handleFileChange}
+											disabled={isUploading}
 										/>
 									</div>
 
-									{ file && (
-										<div style={ { marginTop: '10px' } }>
+									{file && (
+										<div style={{ marginTop: '10px' }}>
 											<p>
 												<strong>
-													{ __(
+													{__(
 														'Selected file:',
 														'fair-audience'
-													) }
-												</strong>{ ' ' }
-												{ file.name }
+													)}
+												</strong>{' '}
+												{file.name}
 											</p>
 										</div>
-									) }
+									)}
 
-									<div style={ { marginTop: '20px' } }>
+									<div style={{ marginTop: '20px' }}>
 										<Button
 											isPrimary
-											onClick={ handleImport }
-											disabled={ ! file || isUploading }
+											onClick={handleImport}
+											disabled={!file || isUploading}
 										>
-											{ isUploading
+											{isUploading
 												? __(
 														'Importing...',
 														'fair-audience'
 												  )
-												: __(
-														'Import',
-														'fair-audience'
-												  ) }
+												: __('Import', 'fair-audience')}
 										</Button>
 									</div>
 
-									{ isUploading && (
-										<div style={ { marginTop: '20px' } }>
+									{isUploading && (
+										<div style={{ marginTop: '20px' }}>
 											<Spinner />
 										</div>
-									) }
+									)}
 
-									{ error && (
-										<div style={ { marginTop: '20px' } }>
+									{error && (
+										<div style={{ marginTop: '20px' }}>
 											<Notice
 												status="error"
-												isDismissible={ false }
+												isDismissible={false}
 											>
-												{ error }
+												{error}
 											</Notice>
 										</div>
-									) }
+									)}
 
-									{ results && (
-										<div style={ { marginTop: '20px' } }>
+									{results && (
+										<div style={{ marginTop: '20px' }}>
 											<Notice
 												status={
 													results.duplicates &&
@@ -332,11 +326,11 @@ export default function Import() {
 														? 'warning'
 														: 'success'
 												}
-												isDismissible={ false }
+												isDismissible={false}
 											>
 												<p>
 													<strong>
-														{ results.duplicates &&
+														{results.duplicates &&
 														results.duplicates
 															.length > 0
 															? __(
@@ -346,57 +340,57 @@ export default function Import() {
 															: __(
 																	'Import Complete',
 																	'fair-audience'
-															  ) }
+															  )}
 													</strong>
 												</p>
 												<ul>
 													<li>
-														{ __(
+														{__(
 															'Imported:',
 															'fair-audience'
-														) }{ ' ' }
-														{ results.imported }
+														)}{' '}
+														{results.imported}
 													</li>
-													{ results.existing_linked >
+													{results.existing_linked >
 														0 && (
 														<li>
-															{ __(
+															{__(
 																'Existing linked to event:',
 																'fair-audience'
-															) }{ ' ' }
+															)}{' '}
 															{
 																results.existing_linked
 															}
 														</li>
-													) }
-													{ results.auto_resolved >
+													)}
+													{results.auto_resolved >
 														0 && (
 														<li>
-															{ __(
+															{__(
 																'Auto-resolved from previous imports:',
 																'fair-audience'
-															) }{ ' ' }
+															)}{' '}
 															{
 																results.auto_resolved
 															}
 														</li>
-													) }
+													)}
 													<li>
-														{ __(
+														{__(
 															'Skipped (already exists):',
 															'fair-audience'
-														) }{ ' ' }
-														{ results.skipped }
+														)}{' '}
+														{results.skipped}
 													</li>
-													{ results.duplicates &&
+													{results.duplicates &&
 														results.duplicates
 															.length > 0 && (
 															<li>
-																{ __(
+																{__(
 																	'Duplicates requiring resolution:',
 																	'fair-audience'
-																) }{ ' ' }
-																{ results.duplicates.reduce(
+																)}{' '}
+																{results.duplicates.reduce(
 																	(
 																		sum,
 																		dup
@@ -404,43 +398,40 @@ export default function Import() {
 																		sum +
 																		dup.count,
 																	0
-																) }
+																)}
 															</li>
-														) }
+														)}
 												</ul>
 											</Notice>
 
-											{ results.duplicates &&
+											{results.duplicates &&
 												results.duplicates.length >
 													0 && (
 													<div
-														style={ {
+														style={{
 															marginTop: '20px',
-														} }
+														}}
 													>
 														<h3>
-															{ __(
+															{__(
 																'Resolve Duplicate Emails',
 																'fair-audience'
-															) }
+															)}
 														</h3>
 														<p>
-															{ __(
+															{__(
 																'The following people have duplicate email addresses. Please provide a unique email for each person or skip them.',
 																'fair-audience'
-															) }
+															)}
 														</p>
 
-														{ results.duplicates.map(
-															(
-																dup,
-																dupIndex
-															) => (
+														{results.duplicates.map(
+															(dup, dupIndex) => (
 																<div
 																	key={
 																		dupIndex
 																	}
-																	style={ {
+																	style={{
 																		marginTop:
 																			'20px',
 																		padding:
@@ -450,26 +441,26 @@ export default function Import() {
 																		border: '1px solid #ffc107',
 																		borderRadius:
 																			'4px',
-																	} }
+																	}}
 																>
 																	<p>
 																		<strong>
-																			{ __(
+																			{__(
 																				'Original Email:',
 																				'fair-audience'
-																			) }
-																		</strong>{ ' ' }
+																			)}
+																		</strong>{' '}
 																		{
 																			dup.email
 																		}
 																	</p>
 
-																	{ dup.rows.map(
+																	{dup.rows.map(
 																		(
 																			row,
 																			rowIndex
 																		) => {
-																			const key = `${ dup.email }-${ row.row }`;
+																			const key = `${dup.email}-${row.row}`;
 																			const resolution =
 																				duplicateResolutions[
 																					key
@@ -480,7 +471,7 @@ export default function Import() {
 																					key={
 																						rowIndex
 																					}
-																					style={ {
+																					style={{
 																						marginTop:
 																							'15px',
 																						padding:
@@ -490,18 +481,18 @@ export default function Import() {
 																						border: '1px solid #ddd',
 																						borderRadius:
 																							'4px',
-																					} }
+																					}}
 																				>
 																					<p>
 																						<strong>
 																							{
 																								row.name
-																							}{ ' ' }
+																							}{' '}
 																							{
 																								row.surname
 																							}
-																						</strong>{ ' ' }
-																						(Row{ ' ' }
+																						</strong>{' '}
+																						(Row{' '}
 																						{
 																							row.row
 																						}
@@ -510,7 +501,7 @@ export default function Import() {
 																					</p>
 
 																					<div
-																						style={ {
+																						style={{
 																							marginTop:
 																								'10px',
 																							display:
@@ -520,20 +511,20 @@ export default function Import() {
 																								'center',
 																							flexWrap:
 																								'wrap',
-																						} }
+																						}}
 																					>
 																						<label>
-																							{ __(
+																							{__(
 																								'New Email:',
 																								'fair-audience'
-																							) }
+																							)}
 																							<input
 																								type="email"
 																								value={
 																									resolution?.email ||
 																									''
 																								}
-																								onChange={ (
+																								onChange={(
 																									e
 																								) =>
 																									handleResolutionChange(
@@ -544,59 +535,59 @@ export default function Import() {
 																											.value
 																									)
 																								}
-																								style={ {
+																								style={{
 																									marginLeft:
 																										'10px',
 																									padding:
 																										'5px',
 																									width: '250px',
-																								} }
-																								placeholder={ __(
+																								}}
+																								placeholder={__(
 																									'Enter new email',
 																									'fair-audience'
-																								) }
+																								)}
 																							/>
 																						</label>
 
-																						{ dup.email.includes(
+																						{dup.email.includes(
 																							'@gmail.com'
 																						) && (
 																							<Button
 																								isSecondary
 																								isSmall
-																								onClick={ () =>
+																								onClick={() =>
 																									handleUseGmailAlias(
 																										key
 																									)
 																								}
 																							>
-																								{ __(
+																								{__(
 																									'Use Gmail Alias',
 																									'fair-audience'
-																								) }
+																								)}
 																							</Button>
-																						) }
+																						)}
 
 																						<Button
 																							isSecondary
 																							isSmall
-																							onClick={ () =>
+																							onClick={() =>
 																								handleUseOriginalEmail(
 																									key
 																								)
 																							}
 																						>
-																							{ __(
+																							{__(
 																								'Use Original Email',
 																								'fair-audience'
-																							) }
+																							)}
 																						</Button>
 
 																						<label
-																							style={ {
+																							style={{
 																								marginLeft:
 																									'10px',
-																							} }
+																							}}
 																						>
 																							<input
 																								type="checkbox"
@@ -604,7 +595,7 @@ export default function Import() {
 																									resolution?.action ===
 																									'skip'
 																								}
-																								onChange={ (
+																								onChange={(
 																									e
 																								) =>
 																									handleResolutionChange(
@@ -617,30 +608,30 @@ export default function Import() {
 																											: 'edit'
 																									)
 																								}
-																								style={ {
+																								style={{
 																									marginRight:
 																										'5px',
-																								} }
+																								}}
 																							/>
-																							{ __(
+																							{__(
 																								'Skip this person',
 																								'fair-audience'
-																							) }
+																							)}
 																						</label>
 																					</div>
 																				</div>
 																			);
 																		}
-																	) }
+																	)}
 																</div>
 															)
-														) }
+														)}
 
 														<div
-															style={ {
+															style={{
 																marginTop:
 																	'20px',
-															} }
+															}}
 														>
 															<Button
 																isPrimary
@@ -651,7 +642,7 @@ export default function Import() {
 																	isResolvingDuplicates
 																}
 															>
-																{ isResolvingDuplicates
+																{isResolvingDuplicates
 																	? __(
 																			'Resolving...',
 																			'fair-audience'
@@ -659,31 +650,31 @@ export default function Import() {
 																	: __(
 																			'Create Participants',
 																			'fair-audience'
-																	  ) }
+																	  )}
 															</Button>
 														</div>
 													</div>
-												) }
+												)}
 
-											{ results.errors &&
+											{results.errors &&
 												results.errors.length > 0 && (
 													<Notice
 														status="warning"
-														isDismissible={ false }
-														style={ {
+														isDismissible={false}
+														style={{
 															marginTop: '10px',
-														} }
+														}}
 													>
 														<p>
 															<strong>
-																{ __(
+																{__(
 																	'Errors:',
 																	'fair-audience'
-																) }
+																)}
 															</strong>
 														</p>
 														<ul>
-															{ results.errors.map(
+															{results.errors.map(
 																(
 																	err,
 																	index
@@ -693,23 +684,23 @@ export default function Import() {
 																			index
 																		}
 																	>
-																		{ err }
+																		{err}
 																	</li>
 																)
-															) }
+															)}
 														</ul>
 													</Notice>
-												) }
+												)}
 										</div>
-									) }
+									)}
 								</CardBody>
 							</Card>
-						) }
-						{ tab.name === 'wordpress-users' && (
+						)}
+						{tab.name === 'wordpress-users' && (
 							<WordPressUsersImport />
-						) }
+						)}
 					</>
-				) }
+				)}
 			</TabPanel>
 		</div>
 	);

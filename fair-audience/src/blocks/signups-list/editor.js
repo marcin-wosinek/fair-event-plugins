@@ -12,50 +12,50 @@ import { __ } from '@wordpress/i18n';
 /**
  * Register the signups-list block
  */
-registerBlockType( 'fair-audience/signups-list', {
+registerBlockType('fair-audience/signups-list', {
 	edit: () => {
-		const blockProps = useBlockProps( {
+		const blockProps = useBlockProps({
 			className: 'audience-signups',
-		} );
+		});
 
 		return (
-			<div { ...blockProps }>
+			<div {...blockProps}>
 				<div className="audience-signups__preview">
 					<div
-						style={ {
+						style={{
 							padding: '20px',
 							border: '2px dashed #ccc',
 							borderRadius: '4px',
 							textAlign: 'center',
 							backgroundColor: '#f9f9f9',
-						} }
+						}}
 					>
-						<p style={ { margin: 0, color: '#666' } }>
-							{ __( 'Event Signups List', 'fair-audience' ) }
+						<p style={{ margin: 0, color: '#666' }}>
+							{__('Event Signups List', 'fair-audience')}
 						</p>
 						<p
-							style={ {
+							style={{
 								margin: '8px 0 0',
 								fontSize: '12px',
 								color: '#999',
-							} }
+							}}
 						>
-							{ __(
+							{__(
 								'Preview available on frontend only',
 								'fair-audience'
-							) }
+							)}
 						</p>
 						<p
-							style={ {
+							style={{
 								margin: '8px 0 0',
 								fontSize: '12px',
 								color: '#666',
-							} }
+							}}
 						>
-							{ __(
+							{__(
 								'Logged-in users see full list, anonymous users see count only.',
 								'fair-audience'
-							) }
+							)}
 						</p>
 					</div>
 				</div>
@@ -67,4 +67,4 @@ registerBlockType( 'fair-audience/signups-list', {
 		// Server-side rendering
 		return null;
 	},
-} );
+});

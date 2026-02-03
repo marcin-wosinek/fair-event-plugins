@@ -13,11 +13,11 @@ import {
 // Import styles
 import './frontend.css';
 
-( function () {
+(function () {
 	'use strict';
 
 	// Defensive: handle both scenarios (DOM loading or already loaded)
-	if ( document.readyState === 'loading' ) {
+	if (document.readyState === 'loading') {
 		document.addEventListener(
 			'DOMContentLoaded',
 			initializeCalendarButtons
@@ -32,8 +32,8 @@ import './frontend.css';
 			'a.wp-block-button__link[data-calendar-button="true"]'
 		);
 
-		calendarButtons.forEach( ( button ) => {
-			button.addEventListener( 'click', function ( e ) {
+		calendarButtons.forEach((button) => {
+			button.addEventListener('click', function (e) {
 				e.preventDefault();
 
 				// Get event data from button data attributes
@@ -50,9 +50,9 @@ import './frontend.css';
 				};
 
 				// Create calendar event data and handle click
-				const eventData = createEventData( attributes );
-				handleCalendarClick( eventData, this );
-			} );
-		} );
+				const eventData = createEventData(attributes);
+				handleCalendarClick(eventData, this);
+			});
+		});
 	}
-} )();
+})();

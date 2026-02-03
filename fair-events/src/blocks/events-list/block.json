@@ -7,12 +7,12 @@
 	"category": "widgets",
 	"icon": "calendar-alt",
 	"description": "Display a list of events with filtering options.",
-	"keywords": [ "events", "calendar", "list", "schedule" ],
+	"keywords": ["events", "calendar", "list", "schedule"],
 	"textdomain": "fair-events",
 	"attributes": {
 		"timeFilter": {
 			"type": "string",
-			"enum": [ "all", "upcoming", "past", "ongoing" ],
+			"enum": ["all", "upcoming", "past", "ongoing"],
 			"default": "upcoming"
 		},
 		"categories": {

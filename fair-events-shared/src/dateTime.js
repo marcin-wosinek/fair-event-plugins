@@ -11,21 +11,21 @@ import { parseISO, isValid, differenceInMinutes } from 'date-fns';
  * @param {string} endTime   End datetime string (ISO format)
  * @return {number|null} Duration in minutes, or null if invalid
  */
-export const calculateDuration = ( startTime, endTime ) => {
-	if ( ! startTime || ! endTime ) {
+export const calculateDuration = (startTime, endTime) => {
+	if (!startTime || !endTime) {
 		return null;
 	}
 
 	try {
-		const startDate = parseISO( startTime );
-		const endDate = parseISO( endTime );
+		const startDate = parseISO(startTime);
+		const endDate = parseISO(endTime);
 
-		if ( ! isValid( startDate ) || ! isValid( endDate ) ) {
+		if (!isValid(startDate) || !isValid(endDate)) {
 			return null;
 		}
 
-		return differenceInMinutes( endDate, startDate );
-	} catch ( error ) {
+		return differenceInMinutes(endDate, startDate);
+	} catch (error) {
 		return null;
 	}
 };
@@ -37,8 +37,8 @@ export const calculateDuration = ( startTime, endTime ) => {
  * @param {string} fallback Fallback text to display if date is empty (default: '-')
  * @return {string} Formatted date or fallback text
  */
-export const formatDateOrFallback = ( dateValue, fallback = '-' ) => {
-	if ( ! dateValue || dateValue === '' ) {
+export const formatDateOrFallback = (dateValue, fallback = '-') => {
+	if (!dateValue || dateValue === '') {
 		return fallback;
 	}
 	return dateValue;
