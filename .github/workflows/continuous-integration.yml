@@ -14,7 +14,10 @@ on:
                 options:
                     - acroyoga-club.es
                     - fair-event-plugins.com
-                    - both
+                    - lamutable.es
+                    - fusion-dance.es
+                    - acro-agenda.es
+                    - all
 
 jobs:
     build:
@@ -141,7 +144,7 @@ jobs:
         needs: [build]
         if: |
             (github.event_name == 'push' && github.ref == 'refs/heads/main') ||
-            (github.event_name == 'workflow_dispatch' && (github.event.inputs.environment == 'acroyoga-club.es' || github.event.inputs.environment == 'both'))
+            (github.event_name == 'workflow_dispatch' && (github.event.inputs.environment == 'acroyoga-club.es' || github.event.inputs.environment == 'all'))
         uses: ./.github/workflows/deploy-to-environment.yml
         with:
             environment: acroyoga-club.es
@@ -152,8 +155,41 @@ jobs:
         needs: [build]
         if: |
             (github.event_name == 'push' && github.ref == 'refs/heads/main') ||
-            (github.event_name == 'workflow_dispatch' && (github.event.inputs.environment == 'fair-event-plugins.com' || github.event.inputs.environment == 'both'))
+            (github.event_name == 'workflow_dispatch' && (github.event.inputs.environment == 'fair-event-plugins.com' || github.event.inputs.environment == 'all'))
         uses: ./.github/workflows/deploy-to-environment.yml
         with:
             environment: fair-event-plugins.com
+        secrets: inherit
+
+    deploy-lamutable:
+        name: Deploy to lamutable.es
+        needs: [build]
+        if: |
+            (github.event_name == 'push' && github.ref == 'refs/heads/main') ||
+            (github.event_name == 'workflow_dispatch' && (github.event.inputs.environment == 'lamutable.es' || github.event.inputs.environment == 'all'))
+        uses: ./.github/workflows/deploy-to-environment.yml
+        with:
+            environment: lamutable.es
+        secrets: inherit
+
+    deploy-fusion-dance:
+        name: Deploy to fusion-dance.es
+        needs: [build]
+        if: |
+            (github.event_name == 'push' && github.ref == 'refs/heads/main') ||
+            (github.event_name == 'workflow_dispatch' && (github.event.inputs.environment == 'fusion-dance.es' || github.event.inputs.environment == 'all'))
+        uses: ./.github/workflows/deploy-to-environment.yml
+        with:
+            environment: fusion-dance.es
+        secrets: inherit
+
+    deploy-acro-agenda:
+        name: Deploy to acro-agenda.es
+        needs: [build]
+        if: |
+            (github.event_name == 'push' && github.ref == 'refs/heads/main') ||
+            (github.event_name == 'workflow_dispatch' && (github.event.inputs.environment == 'acro-agenda.es' || github.event.inputs.environment == 'all'))
+        uses: ./.github/workflows/deploy-to-environment.yml
+        with:
+            environment: acro-agenda.es
         secrets: inherit
