@@ -201,6 +201,16 @@ class AdminHooks {
 		// Hidden submenu page - Edit Poll.
 		$this->register_hidden_page( 'fair-audience-edit-poll' );
 
+		// Submenu page - Instagram Posts.
+		add_submenu_page(
+			'fair-audience',
+			__( 'Instagram Posts', 'fair-audience' ),
+			__( 'Instagram Posts', 'fair-audience' ),
+			'manage_options',
+			'fair-audience-instagram-posts',
+			array( $this, 'render_instagram_posts_page' )
+		);
+
 		// Submenu page - Settings.
 		add_submenu_page(
 			'fair-audience',
@@ -277,6 +287,14 @@ class AdminHooks {
 	}
 
 	/**
+	 * Render Instagram Posts page.
+	 */
+	public function render_instagram_posts_page() {
+		$page = new InstagramPostsPage();
+		$page->render();
+	}
+
+	/**
 	 * Render Settings page.
 	 */
 	public function render_settings_page() {
@@ -330,6 +348,11 @@ class AdminHooks {
 		// Groups page.
 		if ( 'fair-audience_page_fair-audience-groups' === $hook ) {
 			$this->enqueue_page_script( 'groups', $plugin_dir );
+		}
+
+		// Instagram Posts page.
+		if ( 'fair-audience_page_fair-audience-instagram-posts' === $hook ) {
+			$this->enqueue_page_script( 'instagram-posts', $plugin_dir );
 		}
 
 		// Settings page.

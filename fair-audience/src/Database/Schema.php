@@ -358,4 +358,31 @@ class Schema {
 			KEY idx_event_id (event_id)
 		) ENGINE=InnoDB $charset_collate;";
 	}
+
+	/**
+	 * Get SQL for creating the Instagram posts table.
+	 *
+	 * @return string SQL statement.
+	 */
+	public static function get_instagram_posts_table_sql() {
+		global $wpdb;
+
+		$table_name      = $wpdb->prefix . 'fair_audience_instagram_posts';
+		$charset_collate = $wpdb->get_charset_collate();
+
+		return "CREATE TABLE $table_name (
+			id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
+			ig_media_id VARCHAR(255) DEFAULT NULL COMMENT 'Instagram media ID after publishing',
+			ig_container_id VARCHAR(255) DEFAULT NULL COMMENT 'Instagram container ID during creation',
+			caption TEXT NOT NULL,
+			image_url VARCHAR(2083) NOT NULL COMMENT 'Must be publicly accessible URL',
+			status ENUM('pending', 'publishing', 'published', 'failed') NOT NULL DEFAULT 'pending',
+			error_message TEXT DEFAULT NULL,
+			created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+			published_at DATETIME DEFAULT NULL,
+			PRIMARY KEY  (id),
+			KEY idx_status (status),
+			KEY idx_created_at (created_at)
+		) ENGINE=InnoDB $charset_collate;";
+	}
 }

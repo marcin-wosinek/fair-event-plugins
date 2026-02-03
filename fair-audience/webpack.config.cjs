@@ -50,6 +50,10 @@ const customConfig = {
 			process.cwd(),
 			'src/Admin/settings/index.js',
 		),
+		'admin/instagram-posts/index': path.resolve(
+			process.cwd(),
+			'src/Admin/instagram-posts/index.js',
+		),
 		'admin/media-library-filter': path.resolve(
 			process.cwd(),
 			'src/Admin/media-library-filter.js',

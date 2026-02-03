@@ -104,6 +104,9 @@ class Plugin {
 
 		$instagram_controller = new \FairAudience\API\InstagramController();
 		$instagram_controller->register_routes();
+
+		$instagram_posts_controller = new \FairAudience\API\InstagramPostsController();
+		$instagram_posts_controller->register_routes();
 	}
 
 	/**
