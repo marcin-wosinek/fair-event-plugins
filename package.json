@@ -961,7 +961,7 @@
 	],
 	"devDependencies": {
 		"@changesets/cli": "^2.29.6",
-		"baseline-browser-mapping": "^2.8.32",
+		"baseline-browser-mapping": "^2.9.19",
 		"dotenv": "^17.2.3"
 	}
 }
