@@ -21,47 +21,48 @@ import { saveSettings } from './settings-api';
  * @return {JSX.Element} The settings app
  */
 export default function SettingsApp() {
-	const [notice, setNotice] = useState(null);
-	const [currentTab, setCurrentTab] = useState('connection');
-	const [shouldReloadConnection, setShouldReloadConnection] = useState(false);
+	const [ notice, setNotice ] = useState( null );
+	const [ currentTab, setCurrentTab ] = useState( 'connection' );
+	const [ shouldReloadConnection, setShouldReloadConnection ] =
+		useState( false );
 
 	/**
 	 * Handle OAuth callback on mount
 	 */
-	useEffect(() => {
-		const params = new URLSearchParams(window.location.search);
-		const accessToken = params.get('mollie_access_token');
-		const refreshToken = params.get('mollie_refresh_token');
-		const expiresIn = params.get('mollie_expires_in');
-		const orgId = params.get('mollie_organization_id');
-		const profileId = params.get('mollie_profile_id');
-		const testMode = params.get('mollie_test_mode');
-		const error = params.get('error');
+	useEffect( () => {
+		const params = new URLSearchParams( window.location.search );
+		const accessToken = params.get( 'mollie_access_token' );
+		const refreshToken = params.get( 'mollie_refresh_token' );
+		const expiresIn = params.get( 'mollie_expires_in' );
+		const orgId = params.get( 'mollie_organization_id' );
+		const profileId = params.get( 'mollie_profile_id' );
+		const testMode = params.get( 'mollie_test_mode' );
+		const error = params.get( 'error' );
 
 		// Debug: Log received OAuth parameters
-		if (accessToken || refreshToken || error) {
-			console.log('[Fair Payment OAuth] Callback parameters:', {
-				hasAccessToken: !!accessToken,
+		if ( accessToken || refreshToken || error ) {
+			console.log( '[Fair Payment OAuth] Callback parameters:', {
+				hasAccessToken: !! accessToken,
 				accessTokenLength: accessToken ? accessToken.length : 0,
-				hasRefreshToken: !!refreshToken,
+				hasRefreshToken: !! refreshToken,
 				refreshTokenLength: refreshToken ? refreshToken.length : 0,
 				expiresIn,
 				orgId,
 				profileId,
 				testMode,
 				error,
-			});
+			} );
 		}
 
 		// Handle OAuth errors
-		if (error === 'access_denied') {
-			setNotice({
+		if ( error === 'access_denied' ) {
+			setNotice( {
 				status: 'error',
 				message: __(
 					'Authorization cancelled. Please try again.',
 					'fair-payment'
 				),
-			});
+			} );
 			// Clean URL
 			window.history.replaceState(
 				{},
@@ -72,12 +73,12 @@ export default function SettingsApp() {
 		}
 
 		// Handle successful OAuth callback
-		if (accessToken && refreshToken) {
+		if ( accessToken && refreshToken ) {
 			const settingsData = {
 				fair_payment_mollie_access_token: accessToken,
 				fair_payment_mollie_refresh_token: refreshToken,
 				fair_payment_mollie_token_expires:
-					Math.floor(Date.now() / 1000) + parseInt(expiresIn),
+					Math.floor( Date.now() / 1000 ) + parseInt( expiresIn ),
 				fair_payment_mollie_organization_id: orgId || '',
 				fair_payment_mollie_profile_id: profileId || '',
 				fair_payment_mollie_connected: true,
@@ -85,10 +86,13 @@ export default function SettingsApp() {
 			};
 
 			// Debug: Log data being sent to API
-			console.log('[Fair Payment OAuth] Saving settings:', settingsData);
+			console.log(
+				'[Fair Payment OAuth] Saving settings:',
+				settingsData
+			);
 
-			saveSettings(settingsData)
-				.then((response) => {
+			saveSettings( settingsData )
+				.then( ( response ) => {
 					// Debug: Log successful save
 					console.log(
 						'[Fair Payment OAuth] Settings saved successfully:',
@@ -103,64 +107,64 @@ export default function SettingsApp() {
 					);
 
 					// Trigger reload in ConnectionTab
-					setShouldReloadConnection(true);
+					setShouldReloadConnection( true );
 
-					setNotice({
+					setNotice( {
 						status: 'success',
 						message: __(
 							'Successfully connected to Mollie!',
 							'fair-payment'
 						),
-					});
-				})
-				.catch((error) => {
+					} );
+				} )
+				.catch( ( error ) => {
 					// Debug: Log API error
-					console.error('[Fair Payment OAuth] Save error:', error);
+					console.error( '[Fair Payment OAuth] Save error:', error );
 					console.error(
 						'[Fair Payment OAuth] Error details:',
 						error.message,
 						error.data
 					);
 
-					setNotice({
+					setNotice( {
 						status: 'error',
 						message:
 							__(
 								'Failed to save OAuth tokens: ',
 								'fair-payment'
-							) + (error.message || 'Unknown error'),
-					});
-				});
-		} else if (accessToken && !refreshToken) {
+							) + ( error.message || 'Unknown error' ),
+					} );
+				} );
+		} else if ( accessToken && ! refreshToken ) {
 			// Debug: Access token received but no refresh token
 			console.warn(
 				'[Fair Payment OAuth] Access token received but refresh token is missing!'
 			);
-			setNotice({
+			setNotice( {
 				status: 'warning',
 				message: __(
 					'OAuth callback incomplete: refresh token not received from authorization server.',
 					'fair-payment'
 				),
-			});
+			} );
 		}
-	}, []);
+	}, [] );
 
 	/**
 	 * Reset shouldReloadConnection flag after it's been used
 	 */
-	useEffect(() => {
-		if (shouldReloadConnection) {
-			setShouldReloadConnection(false);
+	useEffect( () => {
+		if ( shouldReloadConnection ) {
+			setShouldReloadConnection( false );
 		}
-	}, [shouldReloadConnection]);
+	}, [ shouldReloadConnection ] );
 
 	/**
 	 * Handle tab selection
 	 *
 	 * @param {string} tabName Name of selected tab
 	 */
-	const handleTabSelect = (tabName) => {
+	const handleTabSelect = ( tabName ) => {
 		console.log(
 			'[Fair Payment] Tab selected:',
 			tabName,
@@ -170,56 +174,56 @@ export default function SettingsApp() {
 		);
 
 		// Only update tab if switching to different tab
-		if (tabName === currentTab) {
-			console.log('[Fair Payment] Same tab, skipping');
+		if ( tabName === currentTab ) {
+			console.log( '[Fair Payment] Same tab, skipping' );
 			return;
 		}
 
-		setCurrentTab(tabName);
+		setCurrentTab( tabName );
 	};
 
 	return (
 		<div className="wrap">
-			<h1>{__('Fair Payment Settings', 'fair-payment')}</h1>
+			<h1>{ __( 'Fair Payment Settings', 'fair-payment' ) }</h1>
 
-			{notice && (
+			{ notice && (
 				<Notice
-					status={notice.status}
-					isDismissible={true}
-					onRemove={() => setNotice(null)}
+					status={ notice.status }
+					isDismissible={ true }
+					onRemove={ () => setNotice( null ) }
 				>
-					{notice.message}
+					{ notice.message }
 				</Notice>
-			)}
+			) }
 
 			<TabPanel
 				className="fair-payment-settings-tabs"
 				activeClass="active-tab"
-				tabs={[
+				tabs={ [
 					{
 						name: 'connection',
-						title: __('Connection', 'fair-payment'),
+						title: __( 'Connection', 'fair-payment' ),
 					},
 					{
 						name: 'advanced',
-						title: __('Advanced', 'fair-payment'),
+						title: __( 'Advanced', 'fair-payment' ),
 					},
-				]}
-				onSelect={handleTabSelect}
+				] }
+				onSelect={ handleTabSelect }
 			>
-				{(tab) => (
-					<div style={{ marginTop: '1rem' }}>
-						{tab.name === 'connection' && (
+				{ ( tab ) => (
+					<div style={ { marginTop: '1rem' } }>
+						{ tab.name === 'connection' && (
 							<ConnectionTab
-								onNotice={setNotice}
-								shouldReload={shouldReloadConnection}
+								onNotice={ setNotice }
+								shouldReload={ shouldReloadConnection }
 							/>
-						)}
-						{tab.name === 'advanced' && (
-							<AdvancedTab onNotice={setNotice} />
-						)}
+						) }
+						{ tab.name === 'advanced' && (
+							<AdvancedTab onNotice={ setNotice } />
+						) }
 					</div>
-				)}
+				) }
 			</TabPanel>
 		</div>
 	);

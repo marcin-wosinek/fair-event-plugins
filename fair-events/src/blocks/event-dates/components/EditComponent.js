@@ -13,102 +13,110 @@ import { __ } from '@wordpress/i18n';
  * @param {boolean} allDay       - Whether event is all-day
  * @return {string} Formatted date range
  */
-function formatDateRange(startDateTime, endDateTime, allDay) {
-	if (!startDateTime) {
+function formatDateRange( startDateTime, endDateTime, allDay ) {
+	if ( ! startDateTime ) {
 		return '';
 	}
 
-	const startDate = new Date(startDateTime);
-	const endDate = endDateTime ? new Date(endDateTime) : null;
+	const startDate = new Date( startDateTime );
+	const endDate = endDateTime ? new Date( endDateTime ) : null;
 	const currentYear = new Date().getFullYear();
 
-	if (allDay) {
+	if ( allDay ) {
 		// All-day events: "1-4 October" or "31 October—2 November"
 		const startDay = startDate.getDate();
-		const startMonth = startDate.toLocaleString('en-US', { month: 'long' });
+		const startMonth = startDate.toLocaleString( 'en-US', {
+			month: 'long',
+		} );
 		const startYear = startDate.getFullYear();
 
-		if (endDate) {
+		if ( endDate ) {
 			const endDay = endDate.getDate();
-			const endMonth = endDate.toLocaleString('en-US', { month: 'long' });
+			const endMonth = endDate.toLocaleString( 'en-US', {
+				month: 'long',
+			} );
 			const endYear = endDate.getFullYear();
 
 			// Same month and year
-			if (startMonth === endMonth && startYear === endYear) {
-				if (startDay === endDay) {
+			if ( startMonth === endMonth && startYear === endYear ) {
+				if ( startDay === endDay ) {
 					// Single day: "15 October"
-					return `${startDay} ${startMonth}`;
+					return `${ startDay } ${ startMonth }`;
 				} else {
 					// Same month: "1–4 October"
-					return `${startDay}–${endDay} ${startMonth}`;
+					return `${ startDay }–${ endDay } ${ startMonth }`;
 				}
-			} else if (startYear === endYear) {
+			} else if ( startYear === endYear ) {
 				// Different months, same year: "31 October—2 November"
-				return `${startDay} ${startMonth}—${endDay} ${endMonth}`;
+				return `${ startDay } ${ startMonth }—${ endDay } ${ endMonth }`;
 			} else {
 				// Different years: "31 December 2024—2 January 2025"
-				return `${startDay} ${startMonth} ${startYear}—${endDay} ${endMonth} ${endYear}`;
+				return `${ startDay } ${ startMonth } ${ startYear }—${ endDay } ${ endMonth } ${ endYear }`;
 			}
 		} else {
 			// Only start date: "15 October"
-			return `${startDay} ${startMonth}`;
+			return `${ startDay } ${ startMonth }`;
 		}
 	} else {
 		// Timed events: "19:30—21:30, 15th October" or "22:00 15th November—03:00 16 November"
 		const startTime = startDate
-			.toLocaleTimeString('en-GB', {
+			.toLocaleTimeString( 'en-GB', {
 				hour: '2-digit',
 				minute: '2-digit',
 				hour12: false,
-			})
-			.replace(':', ':');
+			} )
+			.replace( ':', ':' );
 		const startDay = startDate.getDate();
-		const startDayOrdinal = getOrdinalSuffix(startDay);
-		const startMonth = startDate.toLocaleString('en-US', { month: 'long' });
+		const startDayOrdinal = getOrdinalSuffix( startDay );
+		const startMonth = startDate.toLocaleString( 'en-US', {
+			month: 'long',
+		} );
 		const startYear = startDate.getFullYear();
 
-		if (endDate) {
+		if ( endDate ) {
 			const endTime = endDate
-				.toLocaleTimeString('en-GB', {
+				.toLocaleTimeString( 'en-GB', {
 					hour: '2-digit',
 					minute: '2-digit',
 					hour12: false,
-				})
-				.replace(':', ':');
+				} )
+				.replace( ':', ':' );
 			const endDay = endDate.getDate();
-			const endDayOrdinal = getOrdinalSuffix(endDay);
-			const endMonth = endDate.toLocaleString('en-US', { month: 'long' });
+			const endDayOrdinal = getOrdinalSuffix( endDay );
+			const endMonth = endDate.toLocaleString( 'en-US', {
+				month: 'long',
+			} );
 			const endYear = endDate.getFullYear();
 
-			let startDateStr = `${startDay}${startDayOrdinal} ${startMonth}`;
-			let endDateStr = `${endDay}${endDayOrdinal} ${endMonth}`;
+			let startDateStr = `${ startDay }${ startDayOrdinal } ${ startMonth }`;
+			let endDateStr = `${ endDay }${ endDayOrdinal } ${ endMonth }`;
 
 			// Add year if different from current year
-			if (startYear !== currentYear) {
-				startDateStr += ` ${startYear}`;
+			if ( startYear !== currentYear ) {
+				startDateStr += ` ${ startYear }`;
 			}
-			if (endYear !== currentYear) {
-				endDateStr += ` ${endYear}`;
+			if ( endYear !== currentYear ) {
+				endDateStr += ` ${ endYear }`;
 			}
 
 			// Check if same day
-			const startDateOnly = startDate.toISOString().split('T')[0];
-			const endDateOnly = endDate.toISOString().split('T')[0];
+			const startDateOnly = startDate.toISOString().split( 'T' )[ 0 ];
+			const endDateOnly = endDate.toISOString().split( 'T' )[ 0 ];
 
-			if (startDateOnly === endDateOnly) {
+			if ( startDateOnly === endDateOnly ) {
 				// Same day: "19:30—21:30, 15th October"
-				return `${startTime}—${endTime}, ${startDateStr}`;
+				return `${ startTime }—${ endTime }, ${ startDateStr }`;
 			} else {
 				// Different days: "22:00 15th November—03:00 16 November"
-				return `${startTime} ${startDateStr}—${endTime} ${endDateStr}`;
+				return `${ startTime } ${ startDateStr }—${ endTime } ${ endDateStr }`;
 			}
 		} else {
 			// Only start time: "19:30, 15th October"
-			let startDateStr = `${startDay}${startDayOrdinal} ${startMonth}`;
-			if (startYear !== currentYear) {
-				startDateStr += ` ${startYear}`;
+			let startDateStr = `${ startDay }${ startDayOrdinal } ${ startMonth }`;
+			if ( startYear !== currentYear ) {
+				startDateStr += ` ${ startYear }`;
 			}
-			return `${startTime}, ${startDateStr}`;
+			return `${ startTime }, ${ startDateStr }`;
 		}
 	}
 }
@@ -119,16 +127,16 @@ function formatDateRange(startDateTime, endDateTime, allDay) {
  * @param {number} num - The number
  * @return {string} Ordinal suffix
  */
-function getOrdinalSuffix(num) {
+function getOrdinalSuffix( num ) {
 	const j = num % 10;
 	const k = num % 100;
-	if (j === 1 && k !== 11) {
+	if ( j === 1 && k !== 11 ) {
 		return 'st';
 	}
-	if (j === 2 && k !== 12) {
+	if ( j === 2 && k !== 12 ) {
 		return 'nd';
 	}
-	if (j === 3 && k !== 13) {
+	if ( j === 3 && k !== 13 ) {
 		return 'rd';
 	}
 	return 'th';
@@ -141,7 +149,7 @@ function getOrdinalSuffix(num) {
  * @param {Object} props.context    - Block context (postId, postType)
  * @return {JSX.Element} The edit component
  */
-export default function EditComponent({ context }) {
+export default function EditComponent( { context } ) {
 	const blockProps = useBlockProps();
 	const { postId, postType } = context;
 
@@ -150,8 +158,8 @@ export default function EditComponent({ context }) {
 
 	// Get event metadata from the editor store
 	const { eventStart, eventEnd, eventAllDay } = useSelect(
-		(select) => {
-			if (!isEventContext) {
+		( select ) => {
+			if ( ! isEventContext ) {
 				return {
 					eventStart: null,
 					eventEnd: null,
@@ -159,8 +167,8 @@ export default function EditComponent({ context }) {
 				};
 			}
 
-			const { getEditedPostAttribute } = select('core/editor');
-			const meta = getEditedPostAttribute('meta') || {};
+			const { getEditedPostAttribute } = select( 'core/editor' );
+			const meta = getEditedPostAttribute( 'meta' ) || {};
 
 			return {
 				eventStart: meta.event_start || '',
@@ -168,35 +176,35 @@ export default function EditComponent({ context }) {
 				eventAllDay: meta.event_all_day || false,
 			};
 		},
-		[isEventContext, postId]
+		[ isEventContext, postId ]
 	);
 
 	const formattedDate =
 		isEventContext && eventStart
-			? formatDateRange(eventStart, eventEnd, eventAllDay)
+			? formatDateRange( eventStart, eventEnd, eventAllDay )
 			: '';
 
 	return (
-		<div {...blockProps}>
-			{isEventContext ? (
+		<div { ...blockProps }>
+			{ isEventContext ? (
 				<div className="event-dates">
-					{formattedDate || (
-						<em style={{ color: '#999' }}>
-							{__(
+					{ formattedDate || (
+						<em style={ { color: '#999' } }>
+							{ __(
 								'No event dates set. Add dates in the Event Details panel.',
 								'fair-events'
-							)}
+							) }
 						</em>
-					)}
+					) }
 				</div>
 			) : (
-				<p style={{ fontStyle: 'italic', color: '#999' }}>
-					{__(
+				<p style={ { fontStyle: 'italic', color: '#999' } }>
+					{ __(
 						'Event Dates block: Only displays in event post context.',
 						'fair-events'
-					)}
+					) }
 				</p>
-			)}
+			) }
 		</div>
 	);
 }

@@ -12,112 +12,117 @@ import metadata from './block.json';
 import './editor.css';
 import './frontend.css';
 
-registerBlockType(metadata.name, {
+registerBlockType( metadata.name, {
 	...metadata,
-	edit: function Edit({ attributes, setAttributes }) {
+	edit: function Edit( { attributes, setAttributes } ) {
 		return (
 			<>
 				<InspectorControls>
-					<PanelBody title={__('Form Settings', 'fair-events')}>
+					<PanelBody title={ __( 'Form Settings', 'fair-events' ) }>
 						<ToggleControl
-							label={__('Enable Categories', 'fair-events')}
-							checked={attributes.enableCategories}
-							onChange={(value) =>
-								setAttributes({ enableCategories: value })
+							label={ __( 'Enable Categories', 'fair-events' ) }
+							checked={ attributes.enableCategories }
+							onChange={ ( value ) =>
+								setAttributes( { enableCategories: value } )
 							}
-							help={__(
+							help={ __(
 								'Allow users to select event categories',
 								'fair-events'
-							)}
+							) }
 						/>
 						<ToggleControl
-							label={__('Enable Description', 'fair-events')}
-							checked={attributes.enableDescription}
-							onChange={(value) =>
-								setAttributes({ enableDescription: value })
+							label={ __( 'Enable Description', 'fair-events' ) }
+							checked={ attributes.enableDescription }
+							onChange={ ( value ) =>
+								setAttributes( { enableDescription: value } )
 							}
-							help={__(
+							help={ __(
 								'Include a description field in the form',
 								'fair-events'
-							)}
+							) }
 						/>
 						<ToggleControl
-							label={__(
+							label={ __(
 								'Enable Admin Notifications',
 								'fair-events'
-							)}
-							checked={attributes.enableNotifications}
-							onChange={(value) =>
-								setAttributes({ enableNotifications: value })
+							) }
+							checked={ attributes.enableNotifications }
+							onChange={ ( value ) =>
+								setAttributes( { enableNotifications: value } )
 							}
-							help={__(
+							help={ __(
 								'Send email when new proposals are submitted',
 								'fair-events'
-							)}
+							) }
 						/>
-						{attributes.enableNotifications && (
+						{ attributes.enableNotifications && (
 							<TextControl
-								label={__('Notification Email', 'fair-events')}
-								value={attributes.notificationEmail}
-								onChange={(value) =>
-									setAttributes({ notificationEmail: value })
+								label={ __(
+									'Notification Email',
+									'fair-events'
+								) }
+								value={ attributes.notificationEmail }
+								onChange={ ( value ) =>
+									setAttributes( {
+										notificationEmail: value,
+									} )
 								}
 								type="email"
-								help={__(
+								help={ __(
 									'Email address for notifications',
 									'fair-events'
-								)}
+								) }
 							/>
-						)}
+						) }
 						<TextControl
-							label={__('Submit Button Text', 'fair-events')}
-							value={attributes.submitButtonText}
-							onChange={(value) =>
-								setAttributes({ submitButtonText: value })
+							label={ __( 'Submit Button Text', 'fair-events' ) }
+							value={ attributes.submitButtonText }
+							onChange={ ( value ) =>
+								setAttributes( { submitButtonText: value } )
 							}
 						/>
 						<TextControl
-							label={__('Success Message', 'fair-events')}
-							value={attributes.successMessage}
-							onChange={(value) =>
-								setAttributes({ successMessage: value })
+							label={ __( 'Success Message', 'fair-events' ) }
+							value={ attributes.successMessage }
+							onChange={ ( value ) =>
+								setAttributes( { successMessage: value } )
 							}
-							help={__(
+							help={ __(
 								'Message shown after successful submission',
 								'fair-events'
-							)}
+							) }
 						/>
 					</PanelBody>
 				</InspectorControls>
 
 				<div className="fair-events-proposal-placeholder">
 					<div className="placeholder-icon">📝</div>
-					<h3>{__('Event Proposal Form', 'fair-events')}</h3>
+					<h3>{ __( 'Event Proposal Form', 'fair-events' ) }</h3>
 					<p>
-						{__(
+						{ __(
 							'Form will be displayed on the frontend',
 							'fair-events'
-						)}
+						) }
 					</p>
 					<div className="placeholder-info">
-						{attributes.enableCategories && (
+						{ attributes.enableCategories && (
 							<span className="info-tag">
-								{__('Categories enabled', 'fair-events')}
+								{ __( 'Categories enabled', 'fair-events' ) }
 							</span>
-						)}
-						{attributes.enableDescription && (
+						) }
+						{ attributes.enableDescription && (
 							<span className="info-tag">
-								{__('Description enabled', 'fair-events')}
+								{ __( 'Description enabled', 'fair-events' ) }
 							</span>
-						)}
-						{attributes.enableNotifications && (
+						) }
+						{ attributes.enableNotifications && (
 							<span className="info-tag">
-								{__('Notifications enabled', 'fair-events')}
+								{ __( 'Notifications enabled', 'fair-events' ) }
 							</span>
-						)}
+						) }
 					</div>
 				</div>
 			</>
 		);
 	},
-});
+} );

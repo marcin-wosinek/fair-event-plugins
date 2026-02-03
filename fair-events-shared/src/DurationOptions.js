@@ -18,12 +18,12 @@ export class DurationOptions {
 	 * @param {number}   config.tolerance  - Tolerance for floating point comparison (default: 0.01)
 	 * @param {string}   config.textDomain - WordPress text domain for i18n (default: 'fair-events-shared')
 	 */
-	constructor({
+	constructor( {
 		values,
 		unit = 'hours',
 		tolerance = 0.01,
 		textDomain = 'fair-events-shared',
-	}) {
+	} ) {
 		this.values = values;
 		this.unit = unit;
 		this.tolerance = tolerance;
@@ -37,16 +37,16 @@ export class DurationOptions {
 	 * @param {number} hours - Duration in hours
 	 * @return {string} Formatted duration string
 	 */
-	static formatHoursLabel(hours) {
-		const wholeHours = Math.floor(hours);
-		const minutes = Math.round((hours - wholeHours) * 60);
+	static formatHoursLabel( hours ) {
+		const wholeHours = Math.floor( hours );
+		const minutes = Math.round( ( hours - wholeHours ) * 60 );
 
-		if (minutes === 0) {
-			return `${wholeHours} hours`;
-		} else if (wholeHours === 0) {
-			return `${minutes} minutes`;
+		if ( minutes === 0 ) {
+			return `${ wholeHours } hours`;
+		} else if ( wholeHours === 0 ) {
+			return `${ minutes } minutes`;
 		} else {
-			return `${wholeHours} hours, ${minutes} minutes`;
+			return `${ wholeHours } hours, ${ minutes } minutes`;
 		}
 	}
 
@@ -56,16 +56,18 @@ export class DurationOptions {
 	 * @param {number} minutes - Duration in minutes
 	 * @return {string} Formatted duration string
 	 */
-	static formatMinutesLabel(minutes) {
-		const hours = Math.floor(minutes / 60);
+	static formatMinutesLabel( minutes ) {
+		const hours = Math.floor( minutes / 60 );
 		const remainingMinutes = minutes % 60;
 
-		if (hours === 0) {
-			return `${minutes} minutes`;
-		} else if (remainingMinutes === 0) {
-			return `${hours} hour${hours > 1 ? 's' : ''}`;
+		if ( hours === 0 ) {
+			return `${ minutes } minutes`;
+		} else if ( remainingMinutes === 0 ) {
+			return `${ hours } hour${ hours > 1 ? 's' : '' }`;
 		} else {
-			return `${hours} hour${hours > 1 ? 's' : ''} ${remainingMinutes} minutes`;
+			return `${ hours } hour${
+				hours > 1 ? 's' : ''
+			} ${ remainingMinutes } minutes`;
 		}
 	}
 
@@ -75,8 +77,8 @@ export class DurationOptions {
 	 * @param {number} days - Duration in days
 	 * @return {string} Formatted duration string
 	 */
-	static formatDaysLabel(days) {
-		return `${days} day${days > 1 ? 's' : ''}`;
+	static formatDaysLabel( days ) {
+		return `${ days } day${ days > 1 ? 's' : '' }`;
 	}
 
 	/**
@@ -86,15 +88,15 @@ export class DurationOptions {
 	 * @param {string} unit  - Unit type: 'hours', 'minutes', or 'days'
 	 * @return {string} Formatted duration string
 	 */
-	static formatDurationLabel(value, unit = 'hours') {
-		switch (unit) {
+	static formatDurationLabel( value, unit = 'hours' ) {
+		switch ( unit ) {
 			case 'minutes':
-				return DurationOptions.formatMinutesLabel(value);
+				return DurationOptions.formatMinutesLabel( value );
 			case 'days':
-				return DurationOptions.formatDaysLabel(value);
+				return DurationOptions.formatDaysLabel( value );
 			case 'hours':
 			default:
-				return DurationOptions.formatHoursLabel(value);
+				return DurationOptions.formatHoursLabel( value );
 		}
 	}
 
@@ -104,8 +106,8 @@ export class DurationOptions {
 	 *
 	 * @param {number} value - Selected value
 	 */
-	setValue(value) {
-		const matchingValue = this.getMatchingValue(value);
+	setValue( value ) {
+		const matchingValue = this.getMatchingValue( value );
 		this.selectedValue =
 			matchingValue !== undefined ? matchingValue : value;
 	}
@@ -117,14 +119,14 @@ export class DurationOptions {
 	 * @param {number|null} value - Value to check
 	 * @return {number|undefined} Matching predefined value or undefined if no match
 	 */
-	getMatchingValue(value) {
-		if (value === null || value === undefined) {
+	getMatchingValue( value ) {
+		if ( value === null || value === undefined ) {
 			return undefined;
 		}
 
 		return this.values.find(
-			(predefinedValue) =>
-				Math.abs(predefinedValue - value) < this.tolerance
+			( predefinedValue ) =>
+				Math.abs( predefinedValue - value ) < this.tolerance
 		);
 	}
 
@@ -135,8 +137,8 @@ export class DurationOptions {
 	 * @param {number|null} currentValue - Current duration value
 	 * @return {number|string} Matching predefined value or 'other'
 	 */
-	getCurrentSelection(currentValue) {
-		const matchingValue = this.getMatchingValue(currentValue);
+	getCurrentSelection( currentValue ) {
+		const matchingValue = this.getMatchingValue( currentValue );
 		return matchingValue !== undefined ? matchingValue : 'other';
 	}
 
@@ -150,35 +152,35 @@ export class DurationOptions {
 	getDurationOptions() {
 		const options = [
 			{
-				label: __('Other', this.textDomain),
+				label: __( 'Other', this.textDomain ),
 				value: 'other',
 			},
 		];
 
 		// Collect all values (predefined + custom if applicable)
-		let allValues = [...this.values];
+		let allValues = [ ...this.values ];
 
 		// If selectedValue is set and not in the predefined list, add it temporarily
 		if (
 			this.selectedValue !== null &&
-			this.getMatchingValue(this.selectedValue) === undefined &&
+			this.getMatchingValue( this.selectedValue ) === undefined &&
 			this.selectedValue > 0
 		) {
-			allValues.push(this.selectedValue);
+			allValues.push( this.selectedValue );
 			// Sort all values
-			allValues.sort((a, b) => a - b);
+			allValues.sort( ( a, b ) => a - b );
 		}
 
 		// Add all values as options
-		allValues.forEach((value) => {
-			options.push({
+		allValues.forEach( ( value ) => {
+			options.push( {
 				label: __(
-					DurationOptions.formatDurationLabel(value, this.unit),
+					DurationOptions.formatDurationLabel( value, this.unit ),
 					this.textDomain
 				),
 				value: value,
-			});
-		});
+			} );
+		} );
 
 		return options;
 	}

@@ -10,18 +10,18 @@ import { config } from '../config.js';
  * Base AI Provider class
  */
 class AIProvider {
-	constructor(providerName) {
-		this.config = config.ai.providers[providerName];
-		this.apiKey = process.env[this.config.envVar];
+	constructor( providerName ) {
+		this.config = config.ai.providers[ providerName ];
+		this.apiKey = process.env[ this.config.envVar ];
 
-		if (!this.apiKey) {
+		if ( ! this.apiKey ) {
 			throw new Error(
-				`Missing API key: ${this.config.envVar} environment variable not set\n\n` +
+				`Missing API key: ${ this.config.envVar } environment variable not set\n\n` +
 					`   💡 To fix (option 1 - environment variable):\n` +
-					`      export ${this.config.envVar}=your_key_here\n\n` +
+					`      export ${ this.config.envVar }=your_key_here\n\n` +
 					`   💡 To fix (option 2 - .env file):\n` +
 					`      1. Copy .env.example to .env\n` +
-					`      2. Add your key: ${this.config.envVar}=your_key_here`
+					`      2. Add your key: ${ this.config.envVar }=your_key_here`
 			);
 		}
 	}
@@ -34,8 +34,8 @@ class AIProvider {
 	 * @param {Object} context - Additional context
 	 * @returns {Promise<Object>} Object with translations array and usage info
 	 */
-	async translateBatch(strings, targetLocale, context) {
-		throw new Error('translateBatch must be implemented by subclass');
+	async translateBatch( strings, targetLocale, context ) {
+		throw new Error( 'translateBatch must be implemented by subclass' );
 	}
 
 	/**
@@ -45,11 +45,11 @@ class AIProvider {
 	 * @param {number} outputTokens - Number of output tokens
 	 * @returns {number} Estimated cost in dollars
 	 */
-	estimateCost(inputTokens, outputTokens) {
+	estimateCost( inputTokens, outputTokens ) {
 		const inputCost =
-			(inputTokens / 1000) * this.config.costPer1kTokens.input;
+			( inputTokens / 1000 ) * this.config.costPer1kTokens.input;
 		const outputCost =
-			(outputTokens / 1000) * this.config.costPer1kTokens.output;
+			( outputTokens / 1000 ) * this.config.costPer1kTokens.output;
 		return inputCost + outputCost;
 	}
 }
@@ -59,38 +59,40 @@ class AIProvider {
  */
 class OpenAIProvider extends AIProvider {
 	constructor() {
-		super('openai');
+		super( 'openai' );
 	}
 
-	async translateBatch(strings, targetLocale, context) {
-		const systemPrompt = config.ai.systemPrompt(targetLocale, {
-			localeName: config.localeNames[targetLocale],
-		});
+	async translateBatch( strings, targetLocale, context ) {
+		const systemPrompt = config.ai.systemPrompt( targetLocale, {
+			localeName: config.localeNames[ targetLocale ],
+		} );
 
 		// Format input for the AI
-		const inputStrings = strings.map((s, idx) => ({
+		const inputStrings = strings.map( ( s, idx ) => ( {
 			index: idx,
 			msgid: s.msgid,
 			context: s.msgctxt || null,
-			reference: s.references?.[0] || null,
-		}));
+			reference: s.references?.[ 0 ] || null,
+		} ) );
 
-		const userPrompt = `Translate the following WordPress plugin strings to ${config.localeNames[targetLocale]}.
+		const userPrompt = `Translate the following WordPress plugin strings to ${
+			config.localeNames[ targetLocale ]
+		}.
 Return a JSON object with a "translations" array containing the translated strings in the same order.
 Each translation should be a string value.
 
 Input strings:
-${JSON.stringify(inputStrings, null, 2)}
+${ JSON.stringify( inputStrings, null, 2 ) }
 
 Return format: {"translations": ["translation 1", "translation 2", ...]}`;
 
-		const response = await fetch(this.config.apiEndpoint, {
+		const response = await fetch( this.config.apiEndpoint, {
 			method: 'POST',
 			headers: {
 				'Content-Type': 'application/json',
-				Authorization: `Bearer ${this.apiKey}`,
+				Authorization: `Bearer ${ this.apiKey }`,
 			},
-			body: JSON.stringify({
+			body: JSON.stringify( {
 				model: this.config.model,
 				messages: [
 					{ role: 'system', content: systemPrompt },
@@ -98,13 +100,13 @@ Return format: {"translations": ["translation 1", "translation 2", ...]}`;
 				],
 				response_format: { type: 'json_object' },
 				temperature: 0.3,
-			}),
-		});
+			} ),
+		} );
 
-		if (!response.ok) {
+		if ( ! response.ok ) {
 			const errorText = await response.text();
 			throw new Error(
-				`OpenAI API error (${response.status}): ${errorText}\n\n` +
+				`OpenAI API error (${ response.status }): ${ errorText }\n\n` +
 					`   💡 To fix:\n` +
 					`      1. Check your API key is valid\n` +
 					`      2. Check your API quota: https://platform.openai.com/usage\n` +
@@ -113,27 +115,29 @@ Return format: {"translations": ["translation 1", "translation 2", ...]}`;
 		}
 
 		const data = await response.json();
-		const result = JSON.parse(data.choices[0].message.content);
+		const result = JSON.parse( data.choices[ 0 ].message.content );
 		let translations = result.translations;
 
 		if (
-			!Array.isArray(translations) ||
+			! Array.isArray( translations ) ||
 			translations.length !== strings.length
 		) {
 			throw new Error(
-				`OpenAI returned invalid response: expected ${strings.length} translations, got ${translations?.length || 0}`
+				`OpenAI returned invalid response: expected ${
+					strings.length
+				} translations, got ${ translations?.length || 0 }`
 			);
 		}
 
 		// Normalize translations to strings (in case AI returns objects)
-		translations = translations.map((t) => {
-			if (typeof t === 'string') return t;
-			if (typeof t === 'object' && t !== null) {
+		translations = translations.map( ( t ) => {
+			if ( typeof t === 'string' ) return t;
+			if ( typeof t === 'object' && t !== null ) {
 				// If it's an object, try to extract the translation field
-				return t.translation || t.msgstr || String(t);
+				return t.translation || t.msgstr || String( t );
 			}
-			return String(t);
-		});
+			return String( t );
+		} );
 
 		return {
 			translations,
@@ -155,51 +159,53 @@ Return format: {"translations": ["translation 1", "translation 2", ...]}`;
  */
 class ClaudeProvider extends AIProvider {
 	constructor() {
-		super('claude');
+		super( 'claude' );
 	}
 
-	async translateBatch(strings, targetLocale, context) {
-		const systemPrompt = config.ai.systemPrompt(targetLocale, {
-			localeName: config.localeNames[targetLocale],
-		});
+	async translateBatch( strings, targetLocale, context ) {
+		const systemPrompt = config.ai.systemPrompt( targetLocale, {
+			localeName: config.localeNames[ targetLocale ],
+		} );
 
 		// Format input for the AI
-		const inputStrings = strings.map((s, idx) => ({
+		const inputStrings = strings.map( ( s, idx ) => ( {
 			index: idx,
 			msgid: s.msgid,
 			context: s.msgctxt || null,
-			reference: s.references?.[0] || null,
-		}));
+			reference: s.references?.[ 0 ] || null,
+		} ) );
 
-		const userPrompt = `Translate the following WordPress plugin strings to ${config.localeNames[targetLocale]}.
+		const userPrompt = `Translate the following WordPress plugin strings to ${
+			config.localeNames[ targetLocale ]
+		}.
 Return a JSON object with a "translations" array containing the translated strings in the same order.
 Each translation should be a string value.
 
 Input strings:
-${JSON.stringify(inputStrings, null, 2)}
+${ JSON.stringify( inputStrings, null, 2 ) }
 
 Return format: {"translations": ["translation 1", "translation 2", ...]}`;
 
-		const response = await fetch(this.config.apiEndpoint, {
+		const response = await fetch( this.config.apiEndpoint, {
 			method: 'POST',
 			headers: {
 				'Content-Type': 'application/json',
 				'x-api-key': this.apiKey,
 				'anthropic-version': '2023-06-01',
 			},
-			body: JSON.stringify({
+			body: JSON.stringify( {
 				model: this.config.model,
 				max_tokens: 4096,
 				system: systemPrompt,
-				messages: [{ role: 'user', content: userPrompt }],
+				messages: [ { role: 'user', content: userPrompt } ],
 				temperature: 0.3,
-			}),
-		});
+			} ),
+		} );
 
-		if (!response.ok) {
+		if ( ! response.ok ) {
 			const errorText = await response.text();
 			throw new Error(
-				`Claude API error (${response.status}): ${errorText}\n\n` +
+				`Claude API error (${ response.status }): ${ errorText }\n\n` +
 					`   💡 To fix:\n` +
 					`      1. Check your API key is valid\n` +
 					`      2. Check your API quota: https://console.anthropic.com/\n` +
@@ -208,22 +214,25 @@ Return format: {"translations": ["translation 1", "translation 2", ...]}`;
 		}
 
 		const data = await response.json();
-		const contentText = data.content[0].text;
+		const contentText = data.content[ 0 ].text;
 
 		// Try to extract JSON from the response
 		let result;
 		try {
-			result = JSON.parse(contentText);
-		} catch (e) {
+			result = JSON.parse( contentText );
+		} catch ( e ) {
 			// Sometimes Claude wraps JSON in markdown code blocks
 			const jsonMatch = contentText.match(
 				/```(?:json)?\s*([\s\S]*?)\s*```/
 			);
-			if (jsonMatch) {
-				result = JSON.parse(jsonMatch[1]);
+			if ( jsonMatch ) {
+				result = JSON.parse( jsonMatch[ 1 ] );
 			} else {
 				throw new Error(
-					`Claude returned invalid JSON: ${contentText.substring(0, 200)}...`
+					`Claude returned invalid JSON: ${ contentText.substring(
+						0,
+						200
+					) }...`
 				);
 			}
 		}
@@ -231,23 +240,25 @@ Return format: {"translations": ["translation 1", "translation 2", ...]}`;
 		let translations = result.translations;
 
 		if (
-			!Array.isArray(translations) ||
+			! Array.isArray( translations ) ||
 			translations.length !== strings.length
 		) {
 			throw new Error(
-				`Claude returned invalid response: expected ${strings.length} translations, got ${translations?.length || 0}`
+				`Claude returned invalid response: expected ${
+					strings.length
+				} translations, got ${ translations?.length || 0 }`
 			);
 		}
 
 		// Normalize translations to strings (in case AI returns objects)
-		translations = translations.map((t) => {
-			if (typeof t === 'string') return t;
-			if (typeof t === 'object' && t !== null) {
+		translations = translations.map( ( t ) => {
+			if ( typeof t === 'string' ) return t;
+			if ( typeof t === 'object' && t !== null ) {
 				// If it's an object, try to extract the translation field
-				return t.translation || t.msgstr || String(t);
+				return t.translation || t.msgstr || String( t );
 			}
-			return String(t);
-		});
+			return String( t );
+		} );
 
 		return {
 			translations,
@@ -270,15 +281,15 @@ Return format: {"translations": ["translation 1", "translation 2", ...]}`;
  * @param {string} providerName - 'openai' or 'claude'
  * @returns {AIProvider} Provider instance
  */
-export function getProvider(providerName) {
-	switch (providerName) {
+export function getProvider( providerName ) {
+	switch ( providerName ) {
 		case 'openai':
 			return new OpenAIProvider();
 		case 'claude':
 			return new ClaudeProvider();
 		default:
 			throw new Error(
-				`Unknown provider: ${providerName}\n\n` +
+				`Unknown provider: ${ providerName }\n\n` +
 					`   Available providers: openai, claude`
 			);
 	}

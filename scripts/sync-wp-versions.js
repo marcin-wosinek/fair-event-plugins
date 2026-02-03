@@ -12,35 +12,35 @@ import { join } from 'path';
 import { fileURLToPath } from 'url';
 import { dirname } from 'path';
 
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = dirname(__filename);
-const rootDir = join(__dirname, '..');
+const __filename = fileURLToPath( import.meta.url );
+const __dirname = dirname( __filename );
+const rootDir = join( __dirname, '..' );
 
 // Plugin configurations
 const plugins = [
 	{
 		name: 'fair-payment',
 		packagePath: 'fair-payment/package.json',
-		phpFiles: ['fair-payment/fair-payment.php'],
+		phpFiles: [ 'fair-payment/fair-payment.php' ],
 		readmeFiles: [],
 	},
 	{
 		name: 'fair-events',
 		packagePath: 'fair-events/package.json',
-		phpFiles: ['fair-events/fair-events.php'],
-		readmeFiles: ['fair-events/readme.txt'],
+		phpFiles: [ 'fair-events/fair-events.php' ],
+		readmeFiles: [ 'fair-events/readme.txt' ],
 	},
 	{
 		name: 'fair-platform',
 		packagePath: 'fair-platform/package.json',
-		phpFiles: ['fair-platform/fair-platform.php'],
-		readmeFiles: ['fair-platform/readme.txt'],
+		phpFiles: [ 'fair-platform/fair-platform.php' ],
+		readmeFiles: [ 'fair-platform/readme.txt' ],
 	},
 	{
 		name: 'fair-audience',
 		packagePath: 'fair-audience/package.json',
-		phpFiles: ['fair-audience/fair-audience.php'],
-		readmeFiles: ['fair-audience/readme.txt'],
+		phpFiles: [ 'fair-audience/fair-audience.php' ],
+		readmeFiles: [ 'fair-audience/readme.txt' ],
 	},
 ];
 
@@ -51,7 +51,7 @@ const plugins = [
  * @param {string} newVersion - New version to set
  * @returns {string} Updated content
  */
-function updatePluginVersion(content, newVersion) {
+function updatePluginVersion( content, newVersion ) {
 	// Match WordPress plugin header version patterns:
 	// Version: 1.0.0
 	// * Version: 1.0.0
@@ -61,8 +61,11 @@ function updatePluginVersion(content, newVersion) {
 	// Stable tag: 1.0.0
 	const stableTagRegex = /(Stable tag:\s*)([0-9]+\.[0-9]+\.[0-9]+)/gi;
 
-	let updatedContent = content.replace(versionRegex, `$1${newVersion}`);
-	updatedContent = updatedContent.replace(stableTagRegex, `$1${newVersion}`);
+	let updatedContent = content.replace( versionRegex, `$1${ newVersion }` );
+	updatedContent = updatedContent.replace(
+		stableTagRegex,
+		`$1${ newVersion }`
+	);
 
 	return updatedContent;
 }
@@ -71,28 +74,28 @@ function updatePluginVersion(content, newVersion) {
  * Main sync function
  */
 function syncVersions() {
-	console.log('🔄 Syncing WordPress plugin versions...\n');
+	console.log( '🔄 Syncing WordPress plugin versions...\n' );
 
 	let updatedCount = 0;
 
-	for (const plugin of plugins) {
+	for ( const plugin of plugins ) {
 		try {
 			// Read package.json version
-			const packageJsonPath = join(rootDir, plugin.packagePath);
+			const packageJsonPath = join( rootDir, plugin.packagePath );
 			const packageData = JSON.parse(
-				readFileSync(packageJsonPath, 'utf8')
+				readFileSync( packageJsonPath, 'utf8' )
 			);
 			const version = packageData.version;
 
-			console.log(`📦 ${plugin.name}: ${version}`);
+			console.log( `📦 ${ plugin.name }: ${ version }` );
 
 			// Update each PHP file
-			for (const phpFile of plugin.phpFiles) {
-				const phpFilePath = join(rootDir, phpFile);
+			for ( const phpFile of plugin.phpFiles ) {
+				const phpFilePath = join( rootDir, phpFile );
 
 				try {
 					// Read current content
-					const originalContent = readFileSync(phpFilePath, 'utf8');
+					const originalContent = readFileSync( phpFilePath, 'utf8' );
 
 					// Update version
 					const updatedContent = updatePluginVersion(
@@ -101,24 +104,24 @@ function syncVersions() {
 					);
 
 					// Only write if content changed
-					if (originalContent !== updatedContent) {
-						writeFileSync(phpFilePath, updatedContent, 'utf8');
-						console.log(`   ✅ Updated ${phpFile}`);
+					if ( originalContent !== updatedContent ) {
+						writeFileSync( phpFilePath, updatedContent, 'utf8' );
+						console.log( `   ✅ Updated ${ phpFile }` );
 						updatedCount++;
 					} else {
-						console.log(`   ⏭️  ${phpFile} already up to date`);
+						console.log( `   ⏭️  ${ phpFile } already up to date` );
 					}
-				} catch (error) {
+				} catch ( error ) {
 					console.error(
-						`   ❌ Error updating ${phpFile}:`,
+						`   ❌ Error updating ${ phpFile }:`,
 						error.message
 					);
 				}
 			}
 
 			// Update each readme file
-			for (const readmeFile of plugin.readmeFiles) {
-				const readmeFilePath = join(rootDir, readmeFile);
+			for ( const readmeFile of plugin.readmeFiles ) {
+				const readmeFilePath = join( rootDir, readmeFile );
 
 				try {
 					// Read current content
@@ -134,28 +137,33 @@ function syncVersions() {
 					);
 
 					// Only write if content changed
-					if (originalContent !== updatedContent) {
-						writeFileSync(readmeFilePath, updatedContent, 'utf8');
-						console.log(`   ✅ Updated ${readmeFile}`);
+					if ( originalContent !== updatedContent ) {
+						writeFileSync( readmeFilePath, updatedContent, 'utf8' );
+						console.log( `   ✅ Updated ${ readmeFile }` );
 						updatedCount++;
 					} else {
-						console.log(`   ⏭️  ${readmeFile} already up to date`);
+						console.log(
+							`   ⏭️  ${ readmeFile } already up to date`
+						);
 					}
-				} catch (error) {
+				} catch ( error ) {
 					console.error(
-						`   ❌ Error updating ${readmeFile}:`,
+						`   ❌ Error updating ${ readmeFile }:`,
 						error.message
 					);
 				}
 			}
-		} catch (error) {
-			console.error(`❌ Error processing ${plugin.name}:`, error.message);
+		} catch ( error ) {
+			console.error(
+				`❌ Error processing ${ plugin.name }:`,
+				error.message
+			);
 		}
 
-		console.log(''); // Empty line for readability
+		console.log( '' ); // Empty line for readability
 	}
 
-	console.log(`🎉 Sync complete! Updated ${updatedCount} file(s).`);
+	console.log( `🎉 Sync complete! Updated ${ updatedCount } file(s).` );
 }
 
 // Run the sync

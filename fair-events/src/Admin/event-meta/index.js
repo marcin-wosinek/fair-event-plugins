@@ -15,50 +15,50 @@ import { DurationOptions, calculateDuration } from 'fair-events-shared';
  *
  * Handles UI logic for the event metadata fields
  */
-domReady(() => {
-	const allDayCheckbox = document.getElementById('event_all_day');
-	const startInput = document.getElementById('event_start');
-	const endInput = document.getElementById('event_end');
-	const durationSelect = document.getElementById('event_duration');
+domReady( () => {
+	const allDayCheckbox = document.getElementById( 'event_all_day' );
+	const startInput = document.getElementById( 'event_start' );
+	const endInput = document.getElementById( 'event_end' );
+	const durationSelect = document.getElementById( 'event_duration' );
 
 	// Recurrence elements
 	const recurrenceEnabledCheckbox = document.getElementById(
 		'event_recurrence_enabled'
 	);
-	const recurrenceOptions = document.getElementById('recurrence_options');
+	const recurrenceOptions = document.getElementById( 'recurrence_options' );
 	const recurrenceFrequency = document.getElementById(
 		'event_recurrence_frequency'
 	);
 	const recurrenceEndType = document.getElementById(
 		'event_recurrence_end_type'
 	);
-	const recurrenceCount = document.getElementById('event_recurrence_count');
+	const recurrenceCount = document.getElementById( 'event_recurrence_count' );
 	const recurrenceCountWrapper = document.getElementById(
 		'recurrence_count_wrapper'
 	);
-	const recurrenceUntil = document.getElementById('event_recurrence_until');
+	const recurrenceUntil = document.getElementById( 'event_recurrence_until' );
 	const recurrenceUntilWrapper = document.getElementById(
 		'recurrence_until_wrapper'
 	);
-	const recurrenceHiddenInput = document.getElementById('event_recurrence');
+	const recurrenceHiddenInput = document.getElementById( 'event_recurrence' );
 
-	if (!allDayCheckbox || !startInput || !endInput || !durationSelect) {
+	if ( ! allDayCheckbox || ! startInput || ! endInput || ! durationSelect ) {
 		return;
 	}
 
 	// Duration options for timed events (in minutes)
-	const timedDurationOptions = new DurationOptions({
-		values: [30, 60, 90, 120, 150, 180, 240, 360, 480],
+	const timedDurationOptions = new DurationOptions( {
+		values: [ 30, 60, 90, 120, 150, 180, 240, 360, 480 ],
 		unit: 'minutes',
 		textDomain: 'fair-events',
-	});
+	} );
 
 	// Duration options for all-day events (in days)
-	const allDayDurationOptions = new DurationOptions({
-		values: [1, 2, 3, 4, 5, 6, 7],
+	const allDayDurationOptions = new DurationOptions( {
+		values: [ 1, 2, 3, 4, 5, 6, 7 ],
 		unit: 'days',
 		textDomain: 'fair-events',
-	});
+	} );
 
 	/**
 	 * Populate duration select with options based on all-day state
@@ -73,12 +73,12 @@ domReady(() => {
 		durationSelect.innerHTML = '';
 
 		// Add options
-		options.forEach((option) => {
-			const optionElement = document.createElement('option');
+		options.forEach( ( option ) => {
+			const optionElement = document.createElement( 'option' );
 			optionElement.value = option.value;
 			optionElement.textContent = option.label;
-			durationSelect.appendChild(optionElement);
-		});
+			durationSelect.appendChild( optionElement );
+		} );
 
 		// Update current selection
 		updateDurationSelection();
@@ -87,12 +87,12 @@ domReady(() => {
 	/**
 	 * Calculate days between two dates (inclusive)
 	 */
-	function calculateDaysInclusive(startDate, endDate) {
-		if (!startDate || !endDate) return null;
-		const start = new Date(startDate);
-		const end = new Date(endDate);
+	function calculateDaysInclusive( startDate, endDate ) {
+		if ( ! startDate || ! endDate ) return null;
+		const start = new Date( startDate );
+		const end = new Date( endDate );
 		const diffTime = end - start;
-		const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24)) + 1;
+		const diffDays = Math.ceil( diffTime / ( 1000 * 60 * 60 * 24 ) ) + 1;
 		return diffDays;
 	}
 
@@ -100,32 +100,35 @@ domReady(() => {
 	 * Update duration selection based on current start/end times
 	 */
 	function updateDurationSelection() {
-		if (!startInput.value || !endInput.value) {
+		if ( ! startInput.value || ! endInput.value ) {
 			durationSelect.value = 'other';
 			return;
 		}
 
 		const isAllDay = allDayCheckbox.checked;
 
-		if (isAllDay) {
+		if ( isAllDay ) {
 			const days = calculateDaysInclusive(
 				startInput.value,
 				endInput.value
 			);
-			if (days === null) {
+			if ( days === null ) {
 				durationSelect.value = 'other';
 			} else {
 				const selection =
-					allDayDurationOptions.getCurrentSelection(days);
+					allDayDurationOptions.getCurrentSelection( days );
 				durationSelect.value = selection;
 			}
 		} else {
-			const minutes = calculateDuration(startInput.value, endInput.value);
-			if (minutes === null) {
+			const minutes = calculateDuration(
+				startInput.value,
+				endInput.value
+			);
+			if ( minutes === null ) {
 				durationSelect.value = 'other';
 			} else {
 				const selection =
-					timedDurationOptions.getCurrentSelection(minutes);
+					timedDurationOptions.getCurrentSelection( minutes );
 				durationSelect.value = selection;
 			}
 		}
@@ -134,48 +137,48 @@ domReady(() => {
 	/**
 	 * Format date as YYYY-MM-DD in local timezone
 	 */
-	function formatDateLocal(date) {
+	function formatDateLocal( date ) {
 		const year = date.getFullYear();
-		const month = String(date.getMonth() + 1).padStart(2, '0');
-		const day = String(date.getDate()).padStart(2, '0');
-		return `${year}-${month}-${day}`;
+		const month = String( date.getMonth() + 1 ).padStart( 2, '0' );
+		const day = String( date.getDate() ).padStart( 2, '0' );
+		return `${ year }-${ month }-${ day }`;
 	}
 
 	/**
 	 * Format date as YYYY-MM-DDTHH:mm in local timezone
 	 */
-	function formatDateTimeLocal(date) {
+	function formatDateTimeLocal( date ) {
 		const year = date.getFullYear();
-		const month = String(date.getMonth() + 1).padStart(2, '0');
-		const day = String(date.getDate()).padStart(2, '0');
-		const hours = String(date.getHours()).padStart(2, '0');
-		const minutes = String(date.getMinutes()).padStart(2, '0');
-		return `${year}-${month}-${day}T${hours}:${minutes}`;
+		const month = String( date.getMonth() + 1 ).padStart( 2, '0' );
+		const day = String( date.getDate() ).padStart( 2, '0' );
+		const hours = String( date.getHours() ).padStart( 2, '0' );
+		const minutes = String( date.getMinutes() ).padStart( 2, '0' );
+		return `${ year }-${ month }-${ day }T${ hours }:${ minutes }`;
 	}
 
 	/**
 	 * Handle duration change and update end time
 	 */
 	function handleDurationChange() {
-		if (!startInput.value || durationSelect.value === 'other') {
+		if ( ! startInput.value || durationSelect.value === 'other' ) {
 			return;
 		}
 
 		const isAllDay = allDayCheckbox.checked;
 
-		if (isAllDay) {
+		if ( isAllDay ) {
 			// Calculate end date for all-day events
-			const days = parseInt(durationSelect.value);
-			const start = new Date(startInput.value);
-			const end = new Date(start);
-			end.setDate(start.getDate() + days - 1); // -1 because it's inclusive
-			endInput.value = formatDateLocal(end);
+			const days = parseInt( durationSelect.value );
+			const start = new Date( startInput.value );
+			const end = new Date( start );
+			end.setDate( start.getDate() + days - 1 ); // -1 because it's inclusive
+			endInput.value = formatDateLocal( end );
 		} else {
 			// Calculate end time for timed events
-			const minutes = parseInt(durationSelect.value);
-			const start = new Date(startInput.value);
-			const end = new Date(start.getTime() + minutes * 60000);
-			endInput.value = formatDateTimeLocal(end);
+			const minutes = parseInt( durationSelect.value );
+			const start = new Date( startInput.value );
+			const end = new Date( start.getTime() + minutes * 60000 );
+			endInput.value = formatDateTimeLocal( end );
 		}
 
 		validateDates();
@@ -188,20 +191,22 @@ domReady(() => {
 	function toggleTimeInputs() {
 		const isAllDay = allDayCheckbox.checked;
 
-		if (isAllDay) {
+		if ( isAllDay ) {
 			// Store current full datetime values before switching
-			if (startInput.type === 'datetime-local' && startInput.value) {
+			if ( startInput.type === 'datetime-local' && startInput.value ) {
 				startInput.dataset.datetimeValue = startInput.value;
 			}
-			if (endInput.type === 'datetime-local' && endInput.value) {
+			if ( endInput.type === 'datetime-local' && endInput.value ) {
 				endInput.dataset.datetimeValue = endInput.value;
 			}
 
 			// Get current values (date portion only)
 			const startDate = startInput.value
-				? startInput.value.split('T')[0]
+				? startInput.value.split( 'T' )[ 0 ]
 				: '';
-			const endDate = endInput.value ? endInput.value.split('T')[0] : '';
+			const endDate = endInput.value
+				? endInput.value.split( 'T' )[ 0 ]
+				: '';
 
 			// Change input type to date
 			startInput.type = 'date';
@@ -212,10 +217,10 @@ domReady(() => {
 			endInput.value = endDate;
 		} else {
 			// Store current date values before switching
-			if (startInput.type === 'date' && startInput.value) {
+			if ( startInput.type === 'date' && startInput.value ) {
 				startInput.dataset.dateValue = startInput.value;
 			}
-			if (endInput.type === 'date' && endInput.value) {
+			if ( endInput.type === 'date' && endInput.value ) {
 				endInput.dataset.dateValue = endInput.value;
 			}
 
@@ -224,16 +229,16 @@ domReady(() => {
 			endInput.type = 'datetime-local';
 
 			// Restore previous datetime values if they exist
-			if (startInput.dataset.datetimeValue) {
+			if ( startInput.dataset.datetimeValue ) {
 				startInput.value = startInput.dataset.datetimeValue;
-			} else if (startInput.dataset.dateValue) {
+			} else if ( startInput.dataset.dateValue ) {
 				// Add default time (00:00) if only date exists
 				startInput.value = startInput.dataset.dateValue + 'T00:00';
 			}
 
-			if (endInput.dataset.datetimeValue) {
+			if ( endInput.dataset.datetimeValue ) {
 				endInput.value = endInput.dataset.datetimeValue;
-			} else if (endInput.dataset.dateValue) {
+			} else if ( endInput.dataset.dateValue ) {
 				// Add default time (23:59) for end date
 				endInput.value = endInput.dataset.dateValue + 'T23:59';
 			}
@@ -247,19 +252,19 @@ domReady(() => {
 	 * Validate that end date is after start date
 	 */
 	function validateDates() {
-		if (!startInput.value || !endInput.value) {
+		if ( ! startInput.value || ! endInput.value ) {
 			return;
 		}
 
-		const start = new Date(startInput.value);
-		const end = new Date(endInput.value);
+		const start = new Date( startInput.value );
+		const end = new Date( endInput.value );
 
-		if (end < start) {
+		if ( end < start ) {
 			endInput.setCustomValidity(
-				__('End date must be after start date', 'fair-events')
+				__( 'End date must be after start date', 'fair-events' )
 			);
 		} else {
-			endInput.setCustomValidity('');
+			endInput.setCustomValidity( '' );
 		}
 	}
 
@@ -272,8 +277,8 @@ domReady(() => {
 	 * Update the WordPress editor store with new meta values
 	 */
 	function updateEditorMeta() {
-		if (typeof wp !== 'undefined' && wp.data && wp.data.dispatch) {
-			const { editPost } = wp.data.dispatch('core/editor');
+		if ( typeof wp !== 'undefined' && wp.data && wp.data.dispatch ) {
+			const { editPost } = wp.data.dispatch( 'core/editor' );
 			const meta = {
 				event_start: startInput.value,
 				event_end: endInput.value,
@@ -281,43 +286,44 @@ domReady(() => {
 			};
 
 			// Include recurrence if the field exists
-			const recurrenceInput = document.getElementById('event_recurrence');
-			if (recurrenceInput) {
+			const recurrenceInput =
+				document.getElementById( 'event_recurrence' );
+			if ( recurrenceInput ) {
 				meta.event_recurrence = recurrenceInput.value;
 			}
 
-			editPost({ meta });
+			editPost( { meta } );
 		}
 	}
 
 	// Listen for checkbox changes
-	allDayCheckbox.addEventListener('change', () => {
+	allDayCheckbox.addEventListener( 'change', () => {
 		toggleTimeInputs();
 		updateEditorMeta();
-	});
+	} );
 
 	// Handle duration selection changes
-	durationSelect.addEventListener('change', handleDurationChange);
+	durationSelect.addEventListener( 'change', handleDurationChange );
 
 	// Validate dates on input and update duration selection
-	startInput.addEventListener('change', () => {
+	startInput.addEventListener( 'change', () => {
 		validateDates();
 		updateDurationSelection();
 		updateEditorMeta();
-	});
-	endInput.addEventListener('change', () => {
+	} );
+	endInput.addEventListener( 'change', () => {
 		validateDates();
 		updateDurationSelection();
 		updateEditorMeta();
-	});
+	} );
 
 	// Recurrence handling
-	if (recurrenceEnabledCheckbox && recurrenceOptions) {
+	if ( recurrenceEnabledCheckbox && recurrenceOptions ) {
 		/**
 		 * Build RRULE string from form fields
 		 */
 		function buildRRule() {
-			if (!recurrenceEnabledCheckbox.checked) {
+			if ( ! recurrenceEnabledCheckbox.checked ) {
 				return '';
 			}
 
@@ -330,7 +336,7 @@ domReady(() => {
 			let freq = 'WEEKLY';
 			let interval = 1;
 
-			switch (frequency) {
+			switch ( frequency ) {
 				case 'daily':
 					freq = 'DAILY';
 					interval = 1;
@@ -349,28 +355,28 @@ domReady(() => {
 					break;
 			}
 
-			const parts = [`FREQ=${freq}`];
+			const parts = [ `FREQ=${ freq }` ];
 
-			if (interval > 1) {
-				parts.push(`INTERVAL=${interval}`);
+			if ( interval > 1 ) {
+				parts.push( `INTERVAL=${ interval }` );
 			}
 
-			if (endType === 'count' && count) {
-				parts.push(`COUNT=${count}`);
-			} else if (endType === 'until' && until) {
+			if ( endType === 'count' && count ) {
+				parts.push( `COUNT=${ count }` );
+			} else if ( endType === 'until' && until ) {
 				// Convert Y-m-d to YYYYMMDD
-				const untilFormatted = until.replace(/-/g, '');
-				parts.push(`UNTIL=${untilFormatted}`);
+				const untilFormatted = until.replace( /-/g, '' );
+				parts.push( `UNTIL=${ untilFormatted }` );
 			}
 
-			return parts.join(';');
+			return parts.join( ';' );
 		}
 
 		/**
 		 * Update the hidden RRULE input
 		 */
 		function updateRRuleInput() {
-			if (recurrenceHiddenInput) {
+			if ( recurrenceHiddenInput ) {
 				recurrenceHiddenInput.value = buildRRule();
 			}
 			updateEditorMeta();
@@ -380,7 +386,7 @@ domReady(() => {
 		 * Toggle recurrence options visibility
 		 */
 		function toggleRecurrenceOptions() {
-			if (recurrenceOptions) {
+			if ( recurrenceOptions ) {
 				recurrenceOptions.style.display =
 					recurrenceEnabledCheckbox.checked ? '' : 'none';
 			}
@@ -393,11 +399,11 @@ domReady(() => {
 		function toggleEndTypeFields() {
 			const endType = recurrenceEndType?.value || 'count';
 
-			if (recurrenceCountWrapper) {
+			if ( recurrenceCountWrapper ) {
 				recurrenceCountWrapper.style.display =
 					endType === 'count' ? '' : 'none';
 			}
-			if (recurrenceUntilWrapper) {
+			if ( recurrenceUntilWrapper ) {
 				recurrenceUntilWrapper.style.display =
 					endType === 'until' ? '' : 'none';
 			}
@@ -410,38 +416,38 @@ domReady(() => {
 			toggleRecurrenceOptions
 		);
 
-		if (recurrenceFrequency) {
-			recurrenceFrequency.addEventListener('change', updateRRuleInput);
+		if ( recurrenceFrequency ) {
+			recurrenceFrequency.addEventListener( 'change', updateRRuleInput );
 		}
 
-		if (recurrenceEndType) {
-			recurrenceEndType.addEventListener('change', toggleEndTypeFields);
+		if ( recurrenceEndType ) {
+			recurrenceEndType.addEventListener( 'change', toggleEndTypeFields );
 		}
 
-		if (recurrenceCount) {
-			recurrenceCount.addEventListener('change', updateRRuleInput);
-			recurrenceCount.addEventListener('input', updateRRuleInput);
+		if ( recurrenceCount ) {
+			recurrenceCount.addEventListener( 'change', updateRRuleInput );
+			recurrenceCount.addEventListener( 'input', updateRRuleInput );
 		}
 
-		if (recurrenceUntil) {
-			recurrenceUntil.addEventListener('change', updateRRuleInput);
+		if ( recurrenceUntil ) {
+			recurrenceUntil.addEventListener( 'change', updateRRuleInput );
 		}
 	}
 
 	// Venue handling
-	const venueSelect = document.getElementById('event_venue_id');
-	const newVenueForm = document.getElementById('new_venue_form');
-	const newVenueName = document.getElementById('new_venue_name');
-	const newVenueAddress = document.getElementById('new_venue_address');
-	const saveNewVenue = document.getElementById('save_new_venue');
-	const cancelNewVenue = document.getElementById('cancel_new_venue');
-	const newVenueError = document.getElementById('new_venue_error');
+	const venueSelect = document.getElementById( 'event_venue_id' );
+	const newVenueForm = document.getElementById( 'new_venue_form' );
+	const newVenueName = document.getElementById( 'new_venue_name' );
+	const newVenueAddress = document.getElementById( 'new_venue_address' );
+	const saveNewVenue = document.getElementById( 'save_new_venue' );
+	const cancelNewVenue = document.getElementById( 'cancel_new_venue' );
+	const newVenueError = document.getElementById( 'new_venue_error' );
 
 	let previousVenueValue = venueSelect?.value || '';
 
-	if (venueSelect) {
-		venueSelect.addEventListener('change', () => {
-			if (venueSelect.value === 'new') {
+	if ( venueSelect ) {
+		venueSelect.addEventListener( 'change', () => {
+			if ( venueSelect.value === 'new' ) {
 				newVenueForm.style.display = 'block';
 				newVenueName.focus();
 			} else {
@@ -449,13 +455,13 @@ domReady(() => {
 				previousVenueValue = venueSelect.value;
 			}
 			updateEditorMeta();
-		});
+		} );
 	}
 
-	if (saveNewVenue) {
-		saveNewVenue.addEventListener('click', async () => {
+	if ( saveNewVenue ) {
+		saveNewVenue.addEventListener( 'click', async () => {
 			const name = newVenueName.value.trim();
-			if (!name) {
+			if ( ! name ) {
 				newVenueError.textContent = __(
 					'Venue name is required',
 					'fair-events'
@@ -468,19 +474,19 @@ domReady(() => {
 			newVenueError.textContent = '';
 
 			try {
-				const venue = await apiFetch({
+				const venue = await apiFetch( {
 					path: '/fair-events/v1/venues',
 					method: 'POST',
 					data: { name, address: newVenueAddress.value },
-				});
+				} );
 
 				// Add new option and select it
-				const option = document.createElement('option');
+				const option = document.createElement( 'option' );
 				option.value = venue.id;
 				option.textContent = venue.name;
 				venueSelect.insertBefore(
 					option,
-					venueSelect.querySelector('option[value="new"]')
+					venueSelect.querySelector( 'option[value="new"]' )
 				);
 				venueSelect.value = venue.id;
 
@@ -492,22 +498,23 @@ domReady(() => {
 				previousVenueValue = venue.id;
 
 				updateEditorMeta();
-			} catch (err) {
+			} catch ( err ) {
 				newVenueError.textContent =
-					err.message || __('Failed to create venue', 'fair-events');
+					err.message ||
+					__( 'Failed to create venue', 'fair-events' );
 			} finally {
 				saveNewVenue.disabled = false;
 			}
-		});
+		} );
 	}
 
-	if (cancelNewVenue) {
-		cancelNewVenue.addEventListener('click', () => {
+	if ( cancelNewVenue ) {
+		cancelNewVenue.addEventListener( 'click', () => {
 			venueSelect.value = previousVenueValue;
 			newVenueName.value = '';
 			newVenueAddress.value = '';
 			newVenueError.textContent = '';
 			newVenueForm.style.display = 'none';
-		});
+		} );
 	}
-});
+} );

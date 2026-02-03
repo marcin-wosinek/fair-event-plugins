@@ -10,9 +10,9 @@ import { render } from '@wordpress/element';
 import SourcesList from './SourcesList.js';
 
 // Render the app when DOM is ready
-domReady(() => {
-	const rootElement = document.getElementById('fair-events-sources-root');
-	if (rootElement) {
-		render(<SourcesList />, rootElement);
+domReady( () => {
+	const rootElement = document.getElementById( 'fair-events-sources-root' );
+	if ( rootElement ) {
+		render( <SourcesList />, rootElement );
 	}
-});
+} );

@@ -44,14 +44,14 @@ const DEFAULT_LAYOUTS = {
 };
 
 export default function AllParticipants() {
-	const [participants, setParticipants] = useState([]);
-	const [totalItems, setTotalItems] = useState(0);
-	const [totalPages, setTotalPages] = useState(0);
-	const [isLoading, setIsLoading] = useState(true);
-	const [view, setView] = useState(DEFAULT_VIEW);
-	const [isModalOpen, setIsModalOpen] = useState(false);
-	const [editingParticipant, setEditingParticipant] = useState(null);
-	const [formData, setFormData] = useState({
+	const [ participants, setParticipants ] = useState( [] );
+	const [ totalItems, setTotalItems ] = useState( 0 );
+	const [ totalPages, setTotalPages ] = useState( 0 );
+	const [ isLoading, setIsLoading ] = useState( true );
+	const [ view, setView ] = useState( DEFAULT_VIEW );
+	const [ isModalOpen, setIsModalOpen ] = useState( false );
+	const [ editingParticipant, setEditingParticipant ] = useState( null );
+	const [ formData, setFormData ] = useState( {
 		name: '',
 		surname: '',
 		email: '',
@@ -59,58 +59,58 @@ export default function AllParticipants() {
 		email_profile: 'minimal',
 		wp_user_id: null,
 		wp_user: null,
-	});
+	} );
 
 	// Groups management state.
-	const [allGroups, setAllGroups] = useState([]);
-	const [selectedGroupIds, setSelectedGroupIds] = useState([]);
-	const [originalGroupIds, setOriginalGroupIds] = useState([]);
-	const [groupsLoading, setGroupsLoading] = useState(false);
+	const [ allGroups, setAllGroups ] = useState( [] );
+	const [ selectedGroupIds, setSelectedGroupIds ] = useState( [] );
+	const [ originalGroupIds, setOriginalGroupIds ] = useState( [] );
+	const [ groupsLoading, setGroupsLoading ] = useState( false );
 
 	// Load all groups.
-	const loadGroups = useCallback(() => {
-		setGroupsLoading(true);
-		apiFetch({ path: '/fair-audience/v1/groups' })
-			.then((data) => {
-				setAllGroups(data);
-				setGroupsLoading(false);
-			})
-			.catch((err) => {
+	const loadGroups = useCallback( () => {
+		setGroupsLoading( true );
+		apiFetch( { path: '/fair-audience/v1/groups' } )
+			.then( ( data ) => {
+				setAllGroups( data );
+				setGroupsLoading( false );
+			} )
+			.catch( ( err ) => {
 				// eslint-disable-next-line no-console
-				console.error('Error loading groups:', err);
-				setGroupsLoading(false);
-			});
-	}, []);
+				console.error( 'Error loading groups:', err );
+				setGroupsLoading( false );
+			} );
+	}, [] );
 
 	// Define fields configuration for DataViews.
 	const fields = useMemo(
 		() => [
 			{
 				id: 'name',
-				label: __('Name', 'fair-audience'),
-				render: ({ item }) => `${item.name} ${item.surname}`,
+				label: __( 'Name', 'fair-audience' ),
+				render: ( { item } ) => `${ item.name } ${ item.surname }`,
 				enableSorting: true,
 				enableHiding: false,
-				getValue: ({ item }) =>
-					`${item.surname}, ${item.name}`.toLowerCase(),
+				getValue: ( { item } ) =>
+					`${ item.surname }, ${ item.name }`.toLowerCase(),
 			},
 			{
 				id: 'email',
-				label: __('Email', 'fair-audience'),
-				render: ({ item }) => item.email || '—',
+				label: __( 'Email', 'fair-audience' ),
+				render: ( { item } ) => item.email || '—',
 				enableSorting: true,
 			},
 			{
 				id: 'instagram',
-				label: __('Instagram', 'fair-audience'),
-				render: ({ item }) =>
+				label: __( 'Instagram', 'fair-audience' ),
+				render: ( { item } ) =>
 					item.instagram ? (
 						<a
-							href={`https://instagram.com/${item.instagram}`}
+							href={ `https://instagram.com/${ item.instagram }` }
 							target="_blank"
 							rel="noopener noreferrer"
 						>
-							@{item.instagram}
+							@{ item.instagram }
 						</a>
 					) : (
 						'—'
@@ -119,65 +119,72 @@ export default function AllParticipants() {
 			},
 			{
 				id: 'email_profile',
-				label: __('Email Profile', 'fair-audience'),
-				render: ({ item }) => {
+				label: __( 'Email Profile', 'fair-audience' ),
+				render: ( { item } ) => {
 					const labels = {
-						minimal: __('Minimal', 'fair-audience'),
-						marketing: __('Marketing', 'fair-audience'),
+						minimal: __( 'Minimal', 'fair-audience' ),
+						marketing: __( 'Marketing', 'fair-audience' ),
 					};
-					return labels[item.email_profile] || item.email_profile;
+					return labels[ item.email_profile ] || item.email_profile;
 				},
 				elements: [
-					{ value: 'minimal', label: __('Minimal', 'fair-audience') },
+					{
+						value: 'minimal',
+						label: __( 'Minimal', 'fair-audience' ),
+					},
 					{
 						value: 'marketing',
-						label: __('Marketing', 'fair-audience'),
+						label: __( 'Marketing', 'fair-audience' ),
 					},
 				],
 				filterBy: {
-					operators: ['is'],
+					operators: [ 'is' ],
 				},
 				enableSorting: true,
 			},
 			{
 				id: 'status',
-				label: __('Status', 'fair-audience'),
-				render: ({ item }) => {
+				label: __( 'Status', 'fair-audience' ),
+				render: ( { item } ) => {
 					const labels = {
-						pending: __('Pending', 'fair-audience'),
-						confirmed: __('Confirmed', 'fair-audience'),
+						pending: __( 'Pending', 'fair-audience' ),
+						confirmed: __( 'Confirmed', 'fair-audience' ),
 					};
-					return labels[item.status] || item.status;
+					return labels[ item.status ] || item.status;
 				},
 				elements: [
-					{ value: 'pending', label: __('Pending', 'fair-audience') },
+					{
+						value: 'pending',
+						label: __( 'Pending', 'fair-audience' ),
+					},
 					{
 						value: 'confirmed',
-						label: __('Confirmed', 'fair-audience'),
+						label: __( 'Confirmed', 'fair-audience' ),
 					},
 				],
 				filterBy: {
-					operators: ['is'],
+					operators: [ 'is' ],
 				},
 				enableSorting: true,
 			},
 			{
 				id: 'groups',
-				label: __('Groups', 'fair-audience'),
-				render: ({ item }) => {
-					if (!item.groups || item.groups.length === 0) {
+				label: __( 'Groups', 'fair-audience' ),
+				render: ( { item } ) => {
+					if ( ! item.groups || item.groups.length === 0 ) {
 						return '—';
 					}
-					return item.groups.map((g) => g.name).join(', ');
+					return item.groups.map( ( g ) => g.name ).join( ', ' );
 				},
 				enableSorting: true,
-				getValue: ({ item }) => (item.groups ? item.groups.length : 0),
+				getValue: ( { item } ) =>
+					item.groups ? item.groups.length : 0,
 			},
 			{
 				id: 'wp_user',
-				label: __('WordPress User', 'fair-audience'),
-				render: ({ item }) => {
-					if (!item.wp_user) {
+				label: __( 'WordPress User', 'fair-audience' ),
+				render: ( { item } ) => {
+					if ( ! item.wp_user ) {
 						return '—';
 					}
 					const hasEmailMismatch =
@@ -187,24 +194,24 @@ export default function AllParticipants() {
 							item.wp_user.email.toLowerCase();
 					return (
 						<span
-							style={{
+							style={ {
 								display: 'flex',
 								alignItems: 'center',
 								gap: '4px',
-							}}
+							} }
 						>
-							{item.wp_user.display_name}
-							{hasEmailMismatch && (
+							{ item.wp_user.display_name }
+							{ hasEmailMismatch && (
 								<span
-									title={__(
+									title={ __(
 										'Email addresses do not match',
 										'fair-audience'
-									)}
-									style={{ color: '#d63638' }}
+									) }
+									style={ { color: '#d63638' } }
 								>
-									<Icon icon={warning} size={16} />
+									<Icon icon={ warning } size={ 16 } />
 								</span>
-							)}
+							) }
 						</span>
 					);
 				},
@@ -212,101 +219,103 @@ export default function AllParticipants() {
 			},
 			{
 				id: 'events_signed_up',
-				label: __('Events Signed Up', 'fair-audience'),
-				render: ({ item }) => (
-					<div style={{ textAlign: 'right' }}>
-						{item.events_signed_up || 0}
+				label: __( 'Events Signed Up', 'fair-audience' ),
+				render: ( { item } ) => (
+					<div style={ { textAlign: 'right' } }>
+						{ item.events_signed_up || 0 }
 					</div>
 				),
 				enableSorting: true,
-				getValue: ({ item }) => item.events_signed_up || 0,
+				getValue: ( { item } ) => item.events_signed_up || 0,
 			},
 			{
 				id: 'events_collaborated',
-				label: __('Events Collaborated', 'fair-audience'),
-				render: ({ item }) => (
-					<div style={{ textAlign: 'right' }}>
-						{item.events_collaborated || 0}
+				label: __( 'Events Collaborated', 'fair-audience' ),
+				render: ( { item } ) => (
+					<div style={ { textAlign: 'right' } }>
+						{ item.events_collaborated || 0 }
 					</div>
 				),
 				enableSorting: true,
-				getValue: ({ item }) => item.events_collaborated || 0,
+				getValue: ( { item } ) => item.events_collaborated || 0,
 			},
 		],
 		[]
 	);
 
 	// Convert view state to API query params.
-	const queryArgs = useMemo(() => {
+	const queryArgs = useMemo( () => {
 		const params = new URLSearchParams();
 
-		if (view.search) {
-			params.append('search', view.search);
+		if ( view.search ) {
+			params.append( 'search', view.search );
 		}
 
-		if (view.sort?.field) {
+		if ( view.sort?.field ) {
 			// Map 'name' field to 'surname' for backend sorting.
 			const orderby =
 				view.sort.field === 'name' ? 'surname' : view.sort.field;
-			params.append('orderby', orderby);
-			params.append('order', view.sort.direction || 'asc');
+			params.append( 'orderby', orderby );
+			params.append( 'order', view.sort.direction || 'asc' );
 		}
 
 		// Process filters.
-		view.filters?.forEach((filter) => {
-			if (filter.operator === 'is' && filter.value) {
-				params.append(filter.field, filter.value);
+		view.filters?.forEach( ( filter ) => {
+			if ( filter.operator === 'is' && filter.value ) {
+				params.append( filter.field, filter.value );
 			}
-		});
+		} );
 
 		// Pagination.
-		if (view.perPage) {
-			params.append('per_page', view.perPage);
+		if ( view.perPage ) {
+			params.append( 'per_page', view.perPage );
 		}
-		if (view.page) {
-			params.append('page', view.page);
+		if ( view.page ) {
+			params.append( 'page', view.page );
 		}
 
 		return params.toString();
-	}, [view]);
+	}, [ view ] );
 
-	const loadParticipants = useCallback(() => {
-		setIsLoading(true);
+	const loadParticipants = useCallback( () => {
+		setIsLoading( true );
 
-		const path = `/fair-audience/v1/participants${queryArgs ? '?' + queryArgs : ''}`;
+		const path = `/fair-audience/v1/participants${
+			queryArgs ? '?' + queryArgs : ''
+		}`;
 
-		apiFetch({ path, parse: false })
-			.then((response) => {
+		apiFetch( { path, parse: false } )
+			.then( ( response ) => {
 				const total = parseInt(
-					response.headers.get('X-WP-Total') || '0',
+					response.headers.get( 'X-WP-Total' ) || '0',
 					10
 				);
 				const pages = parseInt(
-					response.headers.get('X-WP-TotalPages') || '1',
+					response.headers.get( 'X-WP-TotalPages' ) || '1',
 					10
 				);
-				setTotalItems(total);
-				setTotalPages(pages);
+				setTotalItems( total );
+				setTotalPages( pages );
 				return response.json();
-			})
-			.then((data) => {
-				setParticipants(data);
-				setIsLoading(false);
-			})
-			.catch((err) => {
+			} )
+			.then( ( data ) => {
+				setParticipants( data );
+				setIsLoading( false );
+			} )
+			.catch( ( err ) => {
 				// eslint-disable-next-line no-console
-				console.error('Error loading participants:', err);
-				setIsLoading(false);
-			});
-	}, [queryArgs]);
+				console.error( 'Error loading participants:', err );
+				setIsLoading( false );
+			} );
+	}, [ queryArgs ] );
 
-	useEffect(() => {
+	useEffect( () => {
 		loadParticipants();
-	}, [loadParticipants]);
+	}, [ loadParticipants ] );
 
 	const openAddModal = () => {
-		setEditingParticipant(null);
-		setFormData({
+		setEditingParticipant( null );
+		setFormData( {
 			name: '',
 			surname: '',
 			email: '',
@@ -314,16 +323,16 @@ export default function AllParticipants() {
 			email_profile: 'minimal',
 			wp_user_id: null,
 			wp_user: null,
-		});
-		setSelectedGroupIds([]);
-		setOriginalGroupIds([]);
+		} );
+		setSelectedGroupIds( [] );
+		setOriginalGroupIds( [] );
 		loadGroups();
-		setIsModalOpen(true);
+		setIsModalOpen( true );
 	};
 
-	const openEditModal = (participant) => {
-		setEditingParticipant(participant);
-		setFormData({
+	const openEditModal = ( participant ) => {
+		setEditingParticipant( participant );
+		setFormData( {
 			name: participant.name,
 			surname: participant.surname,
 			email: participant.email || '',
@@ -331,18 +340,18 @@ export default function AllParticipants() {
 			email_profile: participant.email_profile,
 			wp_user_id: participant.wp_user_id || null,
 			wp_user: participant.wp_user || null,
-		});
-		const groupIds = (participant.groups || []).map((g) => g.id);
-		setSelectedGroupIds(groupIds);
-		setOriginalGroupIds(groupIds);
+		} );
+		const groupIds = ( participant.groups || [] ).map( ( g ) => g.id );
+		setSelectedGroupIds( groupIds );
+		setOriginalGroupIds( groupIds );
 		loadGroups();
-		setIsModalOpen(true);
+		setIsModalOpen( true );
 	};
 
 	const handleSubmit = async () => {
 		const method = editingParticipant ? 'PUT' : 'POST';
 		const path = editingParticipant
-			? `/fair-audience/v1/participants/${editingParticipant.id}`
+			? `/fair-audience/v1/participants/${ editingParticipant.id }`
 			: '/fair-audience/v1/participants';
 
 		// Only send data that the API expects (not the wp_user object).
@@ -356,11 +365,11 @@ export default function AllParticipants() {
 		};
 
 		try {
-			const result = await apiFetch({
+			const result = await apiFetch( {
 				path,
 				method,
 				data: dataToSend,
-			});
+			} );
 
 			// Get participant ID (from result for new, from editingParticipant for existing).
 			const participantId = editingParticipant
@@ -369,91 +378,91 @@ export default function AllParticipants() {
 
 			// Calculate group changes.
 			const groupsToAdd = selectedGroupIds.filter(
-				(id) => !originalGroupIds.includes(id)
+				( id ) => ! originalGroupIds.includes( id )
 			);
 			const groupsToRemove = originalGroupIds.filter(
-				(id) => !selectedGroupIds.includes(id)
+				( id ) => ! selectedGroupIds.includes( id )
 			);
 
 			// Add to new groups.
-			const addPromises = groupsToAdd.map((groupId) =>
-				apiFetch({
-					path: `/fair-audience/v1/groups/${groupId}/participants`,
+			const addPromises = groupsToAdd.map( ( groupId ) =>
+				apiFetch( {
+					path: `/fair-audience/v1/groups/${ groupId }/participants`,
 					method: 'POST',
 					data: { participant_id: participantId },
-				}).catch((err) => {
+				} ).catch( ( err ) => {
 					// Ignore "already member" errors.
-					if (!err.message?.includes('already')) {
+					if ( ! err.message?.includes( 'already' ) ) {
 						throw err;
 					}
-				})
+				} )
 			);
 
 			// Remove from groups.
-			const removePromises = groupsToRemove.map((groupId) =>
-				apiFetch({
-					path: `/fair-audience/v1/groups/${groupId}/participants/${participantId}`,
+			const removePromises = groupsToRemove.map( ( groupId ) =>
+				apiFetch( {
+					path: `/fair-audience/v1/groups/${ groupId }/participants/${ participantId }`,
 					method: 'DELETE',
-				})
+				} )
 			);
 
-			await Promise.all([...addPromises, ...removePromises]);
+			await Promise.all( [ ...addPromises, ...removePromises ] );
 
-			setIsModalOpen(false);
+			setIsModalOpen( false );
 			loadParticipants();
-		} catch (err) {
-			alert(__('Error: ', 'fair-audience') + err.message);
+		} catch ( err ) {
+			alert( __( 'Error: ', 'fair-audience' ) + err.message );
 		}
 	};
 
-	const handleDelete = (items) => {
+	const handleDelete = ( items ) => {
 		const count = items.length;
 		const message =
 			count === 1
 				? __(
 						'Are you sure you want to delete this participant?',
 						'fair-audience'
-					)
+				  )
 				: __(
 						'Are you sure you want to delete these participants?',
 						'fair-audience'
-					);
+				  );
 
-		if (!confirm(message)) {
+		if ( ! confirm( message ) ) {
 			return;
 		}
 
 		// Delete all selected items.
 		Promise.all(
-			items.map((item) =>
-				apiFetch({
-					path: `/fair-audience/v1/participants/${item.id}`,
+			items.map( ( item ) =>
+				apiFetch( {
+					path: `/fair-audience/v1/participants/${ item.id }`,
 					method: 'DELETE',
-				})
+				} )
 			)
 		)
-			.then(() => {
+			.then( () => {
 				loadParticipants();
-			})
-			.catch((err) => {
-				alert(__('Error: ', 'fair-audience') + err.message);
-			});
+			} )
+			.catch( ( err ) => {
+				alert( __( 'Error: ', 'fair-audience' ) + err.message );
+			} );
 	};
 
-	const handleLinkUser = (user) => {
-		setFormData({
+	const handleLinkUser = ( user ) => {
+		setFormData( {
 			...formData,
 			wp_user_id: user.id,
 			wp_user: user,
-		});
+		} );
 	};
 
 	const handleUnlinkUser = () => {
-		setFormData({
+		setFormData( {
 			...formData,
 			wp_user_id: null,
 			wp_user: null,
-		});
+		} );
 	};
 
 	// Define actions for DataViews.
@@ -461,205 +470,211 @@ export default function AllParticipants() {
 		() => [
 			{
 				id: 'edit',
-				label: __('Edit', 'fair-audience'),
+				label: __( 'Edit', 'fair-audience' ),
 				icon: 'edit',
-				callback: ([item]) => openEditModal(item),
+				callback: ( [ item ] ) => openEditModal( item ),
 				supportsBulk: false,
 			},
 			{
 				id: 'delete',
-				label: __('Delete', 'fair-audience'),
+				label: __( 'Delete', 'fair-audience' ),
 				icon: 'trash',
 				isDestructive: true,
 				callback: handleDelete,
 				supportsBulk: true,
 			},
 		],
-		[loadParticipants]
+		[ loadParticipants ]
 	);
 
 	const paginationInfo = useMemo(
-		() => ({
+		() => ( {
 			totalItems,
 			totalPages,
-		}),
-		[totalItems, totalPages]
+		} ),
+		[ totalItems, totalPages ]
 	);
 
 	return (
 		<div className="wrap">
-			<h1>{__('All Participants', 'fair-audience')}</h1>
+			<h1>{ __( 'All Participants', 'fair-audience' ) }</h1>
 
 			<Card>
 				<CardBody>
-					<div style={{ marginBottom: '16px' }}>
-						<Button variant="primary" onClick={openAddModal}>
-							{__('Add Participant', 'fair-audience')}
+					<div style={ { marginBottom: '16px' } }>
+						<Button variant="primary" onClick={ openAddModal }>
+							{ __( 'Add Participant', 'fair-audience' ) }
 						</Button>
 					</div>
 
 					<DataViews
-						data={participants}
-						fields={fields}
-						view={view}
-						onChangeView={setView}
-						actions={actions}
-						paginationInfo={paginationInfo}
-						defaultLayouts={DEFAULT_LAYOUTS}
-						isLoading={isLoading}
-						getItemId={(item) => item.id}
+						data={ participants }
+						fields={ fields }
+						view={ view }
+						onChangeView={ setView }
+						actions={ actions }
+						paginationInfo={ paginationInfo }
+						defaultLayouts={ DEFAULT_LAYOUTS }
+						isLoading={ isLoading }
+						getItemId={ ( item ) => item.id }
 					/>
 				</CardBody>
 			</Card>
 
-			{isModalOpen && (
+			{ isModalOpen && (
 				<Modal
 					title={
 						editingParticipant
-							? __('Edit Participant', 'fair-audience')
-							: __('Add Participant', 'fair-audience')
+							? __( 'Edit Participant', 'fair-audience' )
+							: __( 'Add Participant', 'fair-audience' )
 					}
-					onRequestClose={() => setIsModalOpen(false)}
+					onRequestClose={ () => setIsModalOpen( false ) }
 				>
 					<Card>
 						<CardBody>
 							<TextControl
-								label={__('Name *', 'fair-audience')}
-								value={formData.name}
-								onChange={(value) =>
-									setFormData({ ...formData, name: value })
+								label={ __( 'Name *', 'fair-audience' ) }
+								value={ formData.name }
+								onChange={ ( value ) =>
+									setFormData( { ...formData, name: value } )
 								}
 								required
 							/>
 							<TextControl
-								label={__('Surname', 'fair-audience')}
-								value={formData.surname}
-								onChange={(value) =>
-									setFormData({
+								label={ __( 'Surname', 'fair-audience' ) }
+								value={ formData.surname }
+								onChange={ ( value ) =>
+									setFormData( {
 										...formData,
 										surname: value,
-									})
+									} )
 								}
 							/>
 							<TextControl
-								label={__('Email', 'fair-audience')}
+								label={ __( 'Email', 'fair-audience' ) }
 								type="email"
-								value={formData.email}
-								onChange={(value) =>
-									setFormData({ ...formData, email: value })
+								value={ formData.email }
+								onChange={ ( value ) =>
+									setFormData( { ...formData, email: value } )
 								}
 							/>
 							<TextControl
-								label={__('Instagram Handle', 'fair-audience')}
-								value={formData.instagram}
-								onChange={(value) =>
-									setFormData({
+								label={ __(
+									'Instagram Handle',
+									'fair-audience'
+								) }
+								value={ formData.instagram }
+								onChange={ ( value ) =>
+									setFormData( {
 										...formData,
 										instagram: value,
-									})
+									} )
 								}
-								help={__(
+								help={ __(
 									'Enter handle only (without @)',
 									'fair-audience'
-								)}
+								) }
 							/>
 							<SelectControl
-								label={__('Email Profile', 'fair-audience')}
-								value={formData.email_profile}
-								options={[
+								label={ __( 'Email Profile', 'fair-audience' ) }
+								value={ formData.email_profile }
+								options={ [
 									{
-										label: __('Minimal', 'fair-audience'),
+										label: __( 'Minimal', 'fair-audience' ),
 										value: 'minimal',
 									},
 									{
-										label: __('Marketing', 'fair-audience'),
+										label: __(
+											'Marketing',
+											'fair-audience'
+										),
 										value: 'marketing',
 									},
-								]}
-								onChange={(value) =>
-									setFormData({
+								] }
+								onChange={ ( value ) =>
+									setFormData( {
 										...formData,
 										email_profile: value,
-									})
+									} )
 								}
 							/>
 							<UserLinkSection
-								linkedUser={formData.wp_user}
-								participantEmail={formData.email}
-								onLink={handleLinkUser}
-								onUnlink={handleUnlinkUser}
+								linkedUser={ formData.wp_user }
+								participantEmail={ formData.email }
+								onLink={ handleLinkUser }
+								onUnlink={ handleUnlinkUser }
 							/>
-							<div style={{ marginTop: '16px' }}>
+							<div style={ { marginTop: '16px' } }>
 								<label
-									style={{
+									style={ {
 										display: 'block',
 										marginBottom: '8px',
 										fontWeight: '600',
-									}}
+									} }
 								>
-									{__('Groups', 'fair-audience')}
+									{ __( 'Groups', 'fair-audience' ) }
 								</label>
-								{groupsLoading ? (
+								{ groupsLoading ? (
 									<Spinner />
 								) : allGroups.length === 0 ? (
-									<p style={{ color: '#666' }}>
-										{__(
+									<p style={ { color: '#666' } }>
+										{ __(
 											'No groups available.',
 											'fair-audience'
-										)}
+										) }
 									</p>
 								) : (
 									<div
-										style={{
+										style={ {
 											maxHeight: '150px',
 											overflowY: 'auto',
 											border: '1px solid #ddd',
 											padding: '8px',
 											borderRadius: '4px',
-										}}
+										} }
 									>
-										{allGroups.map((group) => (
+										{ allGroups.map( ( group ) => (
 											<CheckboxControl
-												key={group.id}
-												label={group.name}
-												checked={selectedGroupIds.includes(
+												key={ group.id }
+												label={ group.name }
+												checked={ selectedGroupIds.includes(
 													group.id
-												)}
-												onChange={(checked) => {
-													if (checked) {
-														setSelectedGroupIds([
+												) }
+												onChange={ ( checked ) => {
+													if ( checked ) {
+														setSelectedGroupIds( [
 															...selectedGroupIds,
 															group.id,
-														]);
+														] );
 													} else {
 														setSelectedGroupIds(
 															selectedGroupIds.filter(
-																(id) =>
+																( id ) =>
 																	id !==
 																	group.id
 															)
 														);
 													}
-												}}
+												} }
 											/>
-										))}
+										) ) }
 									</div>
-								)}
+								) }
 							</div>
-							<div style={{ marginTop: '16px' }}>
+							<div style={ { marginTop: '16px' } }>
 								<Button
 									variant="primary"
-									onClick={handleSubmit}
+									onClick={ handleSubmit }
 								>
-									{editingParticipant
-										? __('Update', 'fair-audience')
-										: __('Add', 'fair-audience')}
+									{ editingParticipant
+										? __( 'Update', 'fair-audience' )
+										: __( 'Add', 'fair-audience' ) }
 								</Button>
 							</div>
 						</CardBody>
 					</Card>
 				</Modal>
-			)}
+			) }
 		</div>
 	);
 }

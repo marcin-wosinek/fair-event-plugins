@@ -27,36 +27,36 @@ let fetchPromise = null;
  */
 export async function getDynamicDateOptions() {
 	// Return cached options if available
-	if (cachedOptions !== null) {
+	if ( cachedOptions !== null ) {
 		return cachedOptions;
 	}
 
 	// Return existing promise if fetch is in progress
-	if (fetchPromise !== null) {
+	if ( fetchPromise !== null ) {
 		return fetchPromise;
 	}
 
 	// Start new fetch
-	fetchPromise = apiFetch({ path: '/fair-events/v1/date-options' })
-		.then((response) => {
-			if (response.success && Array.isArray(response.options)) {
+	fetchPromise = apiFetch( { path: '/fair-events/v1/date-options' } )
+		.then( ( response ) => {
+			if ( response.success && Array.isArray( response.options ) ) {
 				cachedOptions = response.options;
 				return cachedOptions;
 			}
 			// Fallback to empty array if response format is unexpected
 			cachedOptions = [];
 			return cachedOptions;
-		})
-		.catch((error) => {
-			console.error('Failed to fetch dynamic date options:', error);
+		} )
+		.catch( ( error ) => {
+			console.error( 'Failed to fetch dynamic date options:', error );
 			// Return empty array on error
 			cachedOptions = [];
 			return cachedOptions;
-		})
-		.finally(() => {
+		} )
+		.finally( () => {
 			// Clear promise reference
 			fetchPromise = null;
-		});
+		} );
 
 	return fetchPromise;
 }
@@ -83,10 +83,10 @@ export function clearDynamicDateCache() {
  * @param {string} dateString The date string to check.
  * @return {boolean} True if the string appears to be a dynamic date format.
  */
-export function isDynamicDate(dateString) {
-	if (typeof dateString !== 'string') {
+export function isDynamicDate( dateString ) {
+	if ( typeof dateString !== 'string' ) {
 		return false;
 	}
 	// Check for the pattern: word-characters:word-characters
-	return /^[a-z0-9-]+:[a-z0-9-]+$/i.test(dateString);
+	return /^[a-z0-9-]+:[a-z0-9-]+$/i.test( dateString );
 }

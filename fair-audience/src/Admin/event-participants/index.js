@@ -4,6 +4,6 @@ import EventParticipants from './EventParticipants.js';
 const rootElement = document.getElementById(
 	'fair-audience-event-participants-root'
 );
-if (rootElement) {
-	render(<EventParticipants />, rootElement);
+if ( rootElement ) {
+	render( <EventParticipants />, rootElement );
 }

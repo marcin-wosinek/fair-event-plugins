@@ -7,14 +7,14 @@
 	"category": "widgets",
 	"icon": "groups",
 	"description": "Allow audience members to sign up for events",
-	"keywords": ["event", "signup", "register", "rsvp", "audience"],
+	"keywords": [ "event", "signup", "register", "rsvp", "audience" ],
 	"textdomain": "fair-audience",
 	"supports": {
 		"html": false,
-		"align": ["wide", "full"],
+		"align": [ "wide", "full" ],
 		"spacing": {
 			"padding": true,
-			"margin": ["top", "bottom"]
+			"margin": [ "top", "bottom" ]
 		}
 	},
 	"attributes": {

@@ -9,10 +9,10 @@ import apiFetch from '@wordpress/api-fetch';
  * @return {Promise<Object>} Promise resolving to connection settings
  */
 export function loadConnectionSettings() {
-	console.log('[Fair Payment] Loading connection settings...');
+	console.log( '[Fair Payment] Loading connection settings...' );
 
-	return apiFetch({ path: '/wp/v2/settings' }).then((settings) => {
-		console.log('[Fair Payment] Connection settings loaded');
+	return apiFetch( { path: '/wp/v2/settings' } ).then( ( settings ) => {
+		console.log( '[Fair Payment] Connection settings loaded' );
 		return {
 			connected: settings.fair_payment_mollie_connected || false,
 			mode: settings.fair_payment_mode || 'test',
@@ -20,7 +20,7 @@ export function loadConnectionSettings() {
 			profileId: settings.fair_payment_mollie_profile_id || '',
 			tokenExpires: settings.fair_payment_mollie_token_expires || null,
 		};
-	});
+	} );
 }
 
 /**
@@ -29,10 +29,10 @@ export function loadConnectionSettings() {
  * @return {Promise<Object>} Promise resolving to all Mollie-related settings
  */
 export function loadAdvancedSettings() {
-	console.log('[Fair Payment] Loading advanced settings...');
+	console.log( '[Fair Payment] Loading advanced settings...' );
 
-	return apiFetch({ path: '/wp/v2/settings' }).then((settings) => {
-		console.log('[Fair Payment] Advanced settings loaded');
+	return apiFetch( { path: '/wp/v2/settings' } ).then( ( settings ) => {
+		console.log( '[Fair Payment] Advanced settings loaded' );
 		return {
 			fair_payment_mollie_access_token:
 				settings.fair_payment_mollie_access_token || '',
@@ -52,7 +52,7 @@ export function loadAdvancedSettings() {
 			fair_payment_organization_id:
 				settings.fair_payment_organization_id || '',
 		};
-	});
+	} );
 }
 
 /**
@@ -61,17 +61,17 @@ export function loadAdvancedSettings() {
  * @param {Object} data Settings data to save
  * @return {Promise<Object>} Promise resolving to saved settings
  */
-export function saveSettings(data) {
-	console.log('[Fair Payment] Saving settings:', Object.keys(data));
+export function saveSettings( data ) {
+	console.log( '[Fair Payment] Saving settings:', Object.keys( data ) );
 
-	return apiFetch({
+	return apiFetch( {
 		path: '/wp/v2/settings',
 		method: 'POST',
 		data,
-	}).then((response) => {
-		console.log('[Fair Payment] Settings saved successfully');
+	} ).then( ( response ) => {
+		console.log( '[Fair Payment] Settings saved successfully' );
 		return response;
-	});
+	} );
 }
 
 /**
@@ -80,15 +80,15 @@ export function saveSettings(data) {
  * @return {Promise<Object>} Promise resolving to connection test result
  */
 export function testConnection() {
-	console.log('[Fair Payment] Testing connection...');
+	console.log( '[Fair Payment] Testing connection...' );
 
-	return apiFetch({
+	return apiFetch( {
 		path: '/fair-payment/v1/test-connection',
 		method: 'POST',
-	}).then((response) => {
-		console.log('[Fair Payment] Connection test successful:', response);
+	} ).then( ( response ) => {
+		console.log( '[Fair Payment] Connection test successful:', response );
 		return response;
-	});
+	} );
 }
 
 /**
@@ -98,24 +98,24 @@ export function testConnection() {
  * @param {*}      value Setting value
  * @return {string|JSX.Element} Formatted value
  */
-export function formatSettingValue(key, value) {
+export function formatSettingValue( key, value ) {
 	// Mask sensitive values
-	const isSensitive = key.includes('token') || key.includes('api_key');
+	const isSensitive = key.includes( 'token' ) || key.includes( 'api_key' );
 
-	if (isSensitive && value) {
-		return '•'.repeat(Math.min(value.length, 40));
+	if ( isSensitive && value ) {
+		return '•'.repeat( Math.min( value.length, 40 ) );
 	}
 
-	if (value === null || value === '') {
+	if ( value === null || value === '' ) {
 		return '';
 	}
 
-	if (typeof value === 'boolean') {
+	if ( typeof value === 'boolean' ) {
 		return value ? 'true' : 'false';
 	}
 
-	if (key === 'fair_payment_mollie_token_expires' && value) {
-		return `${value} (${new Date(value * 1000).toLocaleString()})`;
+	if ( key === 'fair_payment_mollie_token_expires' && value ) {
+		return `${ value } (${ new Date( value * 1000 ).toLocaleString() })`;
 	}
 
 	return value;

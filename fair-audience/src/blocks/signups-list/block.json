@@ -7,14 +7,14 @@
 	"category": "widgets",
 	"icon": "groups",
 	"description": "Display list of participants signed up for the event",
-	"keywords": ["audience", "signups", "participants", "attendees", "list"],
+	"keywords": [ "audience", "signups", "participants", "attendees", "list" ],
 	"textdomain": "fair-audience",
 	"supports": {
 		"html": false,
-		"align": ["wide", "full"],
+		"align": [ "wide", "full" ],
 		"spacing": {
 			"padding": true,
-			"margin": ["top", "bottom"]
+			"margin": [ "top", "bottom" ]
 		}
 	},
 	"editorScript": "file:./editor.js",

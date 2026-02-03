@@ -7,9 +7,9 @@
 	"category": "widgets",
 	"icon": "clock",
 	"description": "Display event start and end dates using WordPress date/time formats.",
-	"keywords": ["event", "date", "time", "schedule"],
+	"keywords": [ "event", "date", "time", "schedule" ],
 	"textdomain": "fair-events",
-	"usesContext": ["postId", "postType"],
+	"usesContext": [ "postId", "postType" ],
 	"supports": {
 		"html": false,
 		"anchor": true,
