@@ -3,7 +3,13 @@
  */
 import { __, sprintf } from '@wordpress/i18n';
 import { useState, useEffect } from '@wordpress/element';
-import { Button, Notice, Card, CardBody } from '@wordpress/components';
+import {
+	Button,
+	Notice,
+	Card,
+	CardBody,
+	TextControl,
+} from '@wordpress/components';
 
 /**
  * Internal dependencies
@@ -13,7 +19,8 @@ import { loadInstagramSettings, saveSettings } from './settings-api.js';
 /**
  * Instagram Tab Component
  *
- * Displays Instagram OAuth connection status and controls.
+ * Displays Instagram connection status and controls.
+ * Allows manual token entry or OAuth connection.
  *
  * @param {Object}   props              Props
  * @param {Function} props.onNotice     Handler for displaying notices
@@ -27,6 +34,10 @@ export default function InstagramTab({ onNotice, shouldReload }) {
 	const [tokenExpires, setTokenExpires] = useState(null);
 	const [isLoading, setIsLoading] = useState(true);
 	const [isSaving, setIsSaving] = useState(false);
+
+	// Manual token entry state.
+	const [manualToken, setManualToken] = useState('');
+	const [manualUserId, setManualUserId] = useState('');
 
 	/**
 	 * Load Instagram settings from API
@@ -74,7 +85,7 @@ export default function InstagramTab({ onNotice, shouldReload }) {
 	}, [shouldReload]);
 
 	/**
-	 * Handle Connect button click
+	 * Handle Connect button click (OAuth flow)
 	 */
 	const handleConnect = () => {
 		const siteId = btoa(window.location.hostname);
@@ -92,6 +103,49 @@ export default function InstagramTab({ onNotice, shouldReload }) {
 		authorizeUrl.searchParams.set('site_url', siteUrl);
 
 		window.location.href = authorizeUrl.toString();
+	};
+
+	/**
+	 * Handle manual token save
+	 */
+	const handleSaveManualToken = () => {
+		if (!manualToken.trim()) {
+			onNotice({
+				status: 'error',
+				message: __('Please enter an access token.', 'fair-audience'),
+			});
+			return;
+		}
+
+		setIsSaving(true);
+
+		saveSettings({
+			fair_audience_instagram_access_token: manualToken.trim(),
+			fair_audience_instagram_user_id: manualUserId.trim(),
+			fair_audience_instagram_username: '',
+			fair_audience_instagram_token_expires: 0,
+			fair_audience_instagram_connected: true,
+		})
+			.then(() => {
+				setManualToken('');
+				setManualUserId('');
+				loadSettings();
+				onNotice({
+					status: 'success',
+					message: __(
+						'Instagram token saved successfully.',
+						'fair-audience'
+					),
+				});
+				setIsSaving(false);
+			})
+			.catch(() => {
+				onNotice({
+					status: 'error',
+					message: __('Failed to save token.', 'fair-audience'),
+				});
+				setIsSaving(false);
+			});
 	};
 
 	/**
@@ -163,9 +217,83 @@ export default function InstagramTab({ onNotice, shouldReload }) {
 								'fair-audience'
 							)}
 						</p>
-						<Button variant="primary" onClick={handleConnect}>
-							{__('Connect with Instagram', 'fair-audience')}
-						</Button>
+
+						<div style={{ marginBottom: '2rem' }}>
+							<h3>{__('Manual Token Entry', 'fair-audience')}</h3>
+							<p
+								style={{
+									fontSize: '0.9em',
+									color: '#666',
+									marginBottom: '1rem',
+								}}
+							>
+								{__(
+									'Enter your Instagram access token manually. You can obtain this from the Meta Developer Portal.',
+									'fair-audience'
+								)}
+							</p>
+							<TextControl
+								label={__('Access Token', 'fair-audience')}
+								value={manualToken}
+								onChange={setManualToken}
+								placeholder={__(
+									'Enter Instagram access token...',
+									'fair-audience'
+								)}
+								disabled={isSaving}
+							/>
+							<TextControl
+								label={__(
+									'User ID (optional)',
+									'fair-audience'
+								)}
+								value={manualUserId}
+								onChange={setManualUserId}
+								placeholder={__(
+									'Enter Instagram user ID...',
+									'fair-audience'
+								)}
+								disabled={isSaving}
+								help={__(
+									'The Instagram Business Account ID.',
+									'fair-audience'
+								)}
+							/>
+							<Button
+								variant="primary"
+								onClick={handleSaveManualToken}
+								disabled={isSaving || !manualToken.trim()}
+								isBusy={isSaving}
+							>
+								{isSaving
+									? __('Saving...', 'fair-audience')
+									: __('Save Token', 'fair-audience')}
+							</Button>
+						</div>
+
+						<div
+							style={{
+								borderTop: '1px solid #ddd',
+								paddingTop: '1.5rem',
+							}}
+						>
+							<h3>{__('OAuth Connection', 'fair-audience')}</h3>
+							<p
+								style={{
+									fontSize: '0.9em',
+									color: '#666',
+									marginBottom: '1rem',
+								}}
+							>
+								{__(
+									'Or connect automatically via OAuth (requires server configuration).',
+									'fair-audience'
+								)}
+							</p>
+							<Button variant="secondary" onClick={handleConnect}>
+								{__('Connect with Instagram', 'fair-audience')}
+							</Button>
+						</div>
 					</>
 				) : (
 					<>
