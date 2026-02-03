@@ -60,7 +60,13 @@ jobs:
               id: npm-cache
               uses: actions/cache@v3
               with:
-                  path: ./node_modules
+                  path: |
+                      ./node_modules
+                      ./fair-events/node_modules
+                      ./fair-payment/node_modules
+                      ./fair-platform/node_modules
+                      ./fair-audience/node_modules
+                      ./fair-events-shared/node_modules
                   key: ${{ runner.os }}-node-${{ hashFiles('package-lock.json') }}
 
             - name: Install npm dependencies
@@ -125,7 +131,13 @@ jobs:
               id: npm-cache
               uses: actions/cache@v3
               with:
-                  path: ./node_modules
+                  path: |
+                      ./node_modules
+                      ./fair-events/node_modules
+                      ./fair-payment/node_modules
+                      ./fair-platform/node_modules
+                      ./fair-audience/node_modules
+                      ./fair-events-shared/node_modules
                   key: ${{ runner.os }}-node-${{ hashFiles('package-lock.json') }}
 
             - name: Install Dependencies
