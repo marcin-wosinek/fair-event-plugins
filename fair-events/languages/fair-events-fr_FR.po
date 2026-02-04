@@ -425,11 +425,11 @@ msgstr "La date de fin doit être postérieure à la date de début"
 
 #: fair-events.php:147
 msgid "Fair Event: Start Date"
-msgstr ""
+msgstr "Fair Event: Date de début"
 
 #: fair-events.php:151
 msgid "Fair Event: End Date"
-msgstr ""
+msgstr "Fair Event: Date de fin"
 
 #: src/Admin/AdminPages.php:77
 #: src/Admin/AdminPages.php:78
@@ -1292,3 +1292,4 @@ msgstr "semaine"
 msgctxt "block keyword"
 msgid "weekly"
 msgstr "hebdomadaire"
+

@@ -425,11 +425,11 @@ msgstr "Enddatum muss nach dem Startdatum liegen"
 
 #: fair-events.php:147
 msgid "Fair Event: Start Date"
-msgstr ""
+msgstr "Fair Event: Startdatum"
 
 #: fair-events.php:151
 msgid "Fair Event: End Date"
-msgstr ""
+msgstr "Fair Event: Enddatum"
 
 #: src/Admin/AdminPages.php:77
 #: src/Admin/AdminPages.php:78
@@ -1292,3 +1292,4 @@ msgstr "Woche"
 msgctxt "block keyword"
 msgid "weekly"
 msgstr "wöchentlich"
+

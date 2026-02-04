@@ -425,11 +425,11 @@ msgstr "Data zakończenia musi być późniejsza niż data rozpoczęcia"
 
 #: fair-events.php:147
 msgid "Fair Event: Start Date"
-msgstr ""
+msgstr "Fair Event: Data rozpoczęcia"
 
 #: fair-events.php:151
 msgid "Fair Event: End Date"
-msgstr ""
+msgstr "Fair Event: Data zakończenia"
 
 #: src/Admin/AdminPages.php:77
 #: src/Admin/AdminPages.php:78
@@ -1292,3 +1292,4 @@ msgstr "tydzień"
 msgctxt "block keyword"
 msgid "weekly"
 msgstr "tygodniowy"
+

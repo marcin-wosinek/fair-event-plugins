@@ -43,7 +43,14 @@ export const config = {
 		ignorePatterns: [
 			/^https?:\/\//, // URLs
 			/^Marcin Wosinek$/, // Author name
-			/^Fair [A-Z]/, // Plugin names starting with "Fair"
+			/^Fair Events$/, // Plugin name
+			/^Fair Calendar Button$/, // Plugin name
+			/^Fair RSVP$/, // Plugin name
+			/^Fair Membership$/, // Plugin name
+			/^Fair Team$/, // Plugin name
+			/^Fair Audience$/, // Plugin name
+			/^Fair Payment$/, // Plugin name
+			/^Fair Platform$/, // Plugin name
 		],
 	},
 
@@ -73,6 +80,8 @@ export const config = {
 Translate WordPress plugin strings from English to ${context.localeName} (${locale}).
 Maintain formatting, placeholders (%s, %d, {{variable}}), and HTML tags.
 Consider WordPress conventions and the plugin context.
+IMPORTANT: Keep "Fair Event:" prefix untranslated - it's a product name. Only translate the part after the colon.
+Example: "Fair Event: Start Date" → "Fair Event: Startdatum" (German), "Fair Event: Fecha de inicio" (Spanish).
 Return translations in the same order as the input.`,
 	},
 };
