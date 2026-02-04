@@ -38,6 +38,34 @@ class Venue {
 	public $address;
 
 	/**
+	 * Google Maps link
+	 *
+	 * @var string|null
+	 */
+	public $google_maps_link;
+
+	/**
+	 * Latitude coordinate
+	 *
+	 * @var string|null
+	 */
+	public $latitude;
+
+	/**
+	 * Longitude coordinate
+	 *
+	 * @var string|null
+	 */
+	public $longitude;
+
+	/**
+	 * Facebook page link
+	 *
+	 * @var string|null
+	 */
+	public $facebook_page_link;
+
+	/**
 	 * Created at timestamp
 	 *
 	 * @var string
@@ -100,7 +128,7 @@ class Venue {
 		$table_name = self::get_table_name();
 
 		// Validate order_by to prevent SQL injection.
-		$allowed_columns = array( 'id', 'name', 'address', 'created_at', 'updated_at' );
+		$allowed_columns = array( 'id', 'name', 'address', 'google_maps_link', 'latitude', 'longitude', 'facebook_page_link', 'created_at', 'updated_at' );
 		if ( ! in_array( $order_by, $allowed_columns, true ) ) {
 			$order_by = 'name';
 		}
@@ -131,21 +159,29 @@ class Venue {
 	/**
 	 * Create a new venue
 	 *
-	 * @param string      $name    Venue name.
-	 * @param string|null $address Venue address.
+	 * @param string      $name               Venue name.
+	 * @param string|null $address            Venue address.
+	 * @param string|null $google_maps_link   Google Maps URL.
+	 * @param string|null $latitude           Latitude coordinate.
+	 * @param string|null $longitude          Longitude coordinate.
+	 * @param string|null $facebook_page_link Facebook page URL.
 	 * @return int|false The venue ID on success, false on failure.
 	 */
-	public static function create( $name, $address = null ) {
+	public static function create( $name, $address = null, $google_maps_link = null, $latitude = null, $longitude = null, $facebook_page_link = null ) {
 		global $wpdb;
 
 		$table_name = self::get_table_name();
 
 		$data = array(
-			'name'    => $name,
-			'address' => $address,
+			'name'               => $name,
+			'address'            => $address,
+			'google_maps_link'   => $google_maps_link,
+			'latitude'           => $latitude,
+			'longitude'          => $longitude,
+			'facebook_page_link' => $facebook_page_link,
 		);
 
-		$format = array( '%s', '%s' );
+		$format = array( '%s', '%s', '%s', '%s', '%s', '%s' );
 
 		$result = $wpdb->insert( $table_name, $data, $format );
 
@@ -159,22 +195,30 @@ class Venue {
 	/**
 	 * Update a venue
 	 *
-	 * @param int         $id      Venue ID.
-	 * @param string      $name    Venue name.
-	 * @param string|null $address Venue address.
+	 * @param int         $id                 Venue ID.
+	 * @param string      $name               Venue name.
+	 * @param string|null $address            Venue address.
+	 * @param string|null $google_maps_link   Google Maps URL.
+	 * @param string|null $latitude           Latitude coordinate.
+	 * @param string|null $longitude          Longitude coordinate.
+	 * @param string|null $facebook_page_link Facebook page URL.
 	 * @return bool True on success, false on failure.
 	 */
-	public static function update( $id, $name, $address = null ) {
+	public static function update( $id, $name, $address = null, $google_maps_link = null, $latitude = null, $longitude = null, $facebook_page_link = null ) {
 		global $wpdb;
 
 		$table_name = self::get_table_name();
 
 		$data = array(
-			'name'    => $name,
-			'address' => $address,
+			'name'               => $name,
+			'address'            => $address,
+			'google_maps_link'   => $google_maps_link,
+			'latitude'           => $latitude,
+			'longitude'          => $longitude,
+			'facebook_page_link' => $facebook_page_link,
 		);
 
-		$format = array( '%s', '%s' );
+		$format = array( '%s', '%s', '%s', '%s', '%s', '%s' );
 
 		$result = $wpdb->update(
 			$table_name,
@@ -225,12 +269,16 @@ class Venue {
 	 * @return Venue Venue object.
 	 */
 	private static function hydrate( $row ) {
-		$venue             = new self();
-		$venue->id         = (int) $row->id;
-		$venue->name       = $row->name;
-		$venue->address    = $row->address;
-		$venue->created_at = $row->created_at;
-		$venue->updated_at = $row->updated_at;
+		$venue                     = new self();
+		$venue->id                 = (int) $row->id;
+		$venue->name               = $row->name;
+		$venue->address            = $row->address;
+		$venue->google_maps_link   = $row->google_maps_link;
+		$venue->latitude           = $row->latitude;
+		$venue->longitude          = $row->longitude;
+		$venue->facebook_page_link = $row->facebook_page_link;
+		$venue->created_at         = $row->created_at;
+		$venue->updated_at         = $row->updated_at;
 
 		return $venue;
 	}
@@ -242,11 +290,15 @@ class Venue {
 	 */
 	public function to_array() {
 		return array(
-			'id'         => $this->id,
-			'name'       => $this->name,
-			'address'    => $this->address,
-			'created_at' => $this->created_at,
-			'updated_at' => $this->updated_at,
+			'id'                 => $this->id,
+			'name'               => $this->name,
+			'address'            => $this->address,
+			'google_maps_link'   => $this->google_maps_link,
+			'latitude'           => $this->latitude,
+			'longitude'          => $this->longitude,
+			'facebook_page_link' => $this->facebook_page_link,
+			'created_at'         => $this->created_at,
+			'updated_at'         => $this->updated_at,
 		);
 	}
 }

@@ -73,6 +73,11 @@ class Installer {
 			self::migrate_to_1_7_0();
 		}
 
+		// Run migration if upgrading from pre-1.8.0 (add new venue fields).
+		if ( version_compare( $current_version, '1.8.0', '<' ) ) {
+			self::migrate_to_1_8_0();
+		}
+
 		// Update database version
 		Schema::update_db_version( Schema::DB_VERSION );
 	}
@@ -119,6 +124,10 @@ class Installer {
 
 			if ( version_compare( $current_version, '1.7.0', '<' ) ) {
 				self::migrate_to_1_7_0();
+			}
+
+			if ( version_compare( $current_version, '1.8.0', '<' ) ) {
+				self::migrate_to_1_8_0();
 			}
 
 			// Install/update tables
@@ -517,6 +526,85 @@ class Installer {
 			$wpdb->query(
 				$wpdb->prepare(
 					'ALTER TABLE %i ADD KEY idx_venue_id (venue_id)',
+					$table_name
+				)
+			);
+		}
+	}
+
+	/**
+	 * Migrate to version 1.8.0 - Add new venue fields (google_maps_link, latitude, longitude, facebook_page_link).
+	 *
+	 * @return void
+	 */
+	private static function migrate_to_1_8_0() {
+		global $wpdb;
+
+		$table_name = $wpdb->prefix . 'fair_event_venues';
+
+		// Check if google_maps_link column already exists.
+		$google_maps_link_exists = $wpdb->get_results(
+			$wpdb->prepare(
+				"SHOW COLUMNS FROM %i LIKE 'google_maps_link'",
+				$table_name
+			)
+		);
+
+		if ( empty( $google_maps_link_exists ) ) {
+			$wpdb->query(
+				$wpdb->prepare(
+					'ALTER TABLE %i ADD COLUMN google_maps_link TEXT AFTER address',
+					$table_name
+				)
+			);
+		}
+
+		// Check if latitude column already exists.
+		$latitude_exists = $wpdb->get_results(
+			$wpdb->prepare(
+				"SHOW COLUMNS FROM %i LIKE 'latitude'",
+				$table_name
+			)
+		);
+
+		if ( empty( $latitude_exists ) ) {
+			$wpdb->query(
+				$wpdb->prepare(
+					'ALTER TABLE %i ADD COLUMN latitude VARCHAR(20) DEFAULT NULL AFTER google_maps_link',
+					$table_name
+				)
+			);
+		}
+
+		// Check if longitude column already exists.
+		$longitude_exists = $wpdb->get_results(
+			$wpdb->prepare(
+				"SHOW COLUMNS FROM %i LIKE 'longitude'",
+				$table_name
+			)
+		);
+
+		if ( empty( $longitude_exists ) ) {
+			$wpdb->query(
+				$wpdb->prepare(
+					'ALTER TABLE %i ADD COLUMN longitude VARCHAR(20) DEFAULT NULL AFTER latitude',
+					$table_name
+				)
+			);
+		}
+
+		// Check if facebook_page_link column already exists.
+		$facebook_page_link_exists = $wpdb->get_results(
+			$wpdb->prepare(
+				"SHOW COLUMNS FROM %i LIKE 'facebook_page_link'",
+				$table_name
+			)
+		);
+
+		if ( empty( $facebook_page_link_exists ) ) {
+			$wpdb->query(
+				$wpdb->prepare(
+					'ALTER TABLE %i ADD COLUMN facebook_page_link TEXT AFTER longitude',
 					$table_name
 				)
 			);

@@ -100,17 +100,41 @@ class VenueController extends WP_REST_Controller {
 	 */
 	private function get_create_update_args() {
 		return array(
-			'name'    => array(
+			'name'               => array(
 				'description'       => __( 'Venue name.', 'fair-events' ),
 				'type'              => 'string',
 				'required'          => true,
 				'sanitize_callback' => 'sanitize_text_field',
 			),
-			'address' => array(
+			'address'            => array(
 				'description'       => __( 'Venue address.', 'fair-events' ),
 				'type'              => 'string',
 				'required'          => false,
 				'sanitize_callback' => 'sanitize_textarea_field',
+			),
+			'google_maps_link'   => array(
+				'description'       => __( 'Google Maps URL.', 'fair-events' ),
+				'type'              => 'string',
+				'required'          => false,
+				'sanitize_callback' => 'esc_url_raw',
+			),
+			'latitude'           => array(
+				'description'       => __( 'Latitude coordinate.', 'fair-events' ),
+				'type'              => 'string',
+				'required'          => false,
+				'sanitize_callback' => 'sanitize_text_field',
+			),
+			'longitude'          => array(
+				'description'       => __( 'Longitude coordinate.', 'fair-events' ),
+				'type'              => 'string',
+				'required'          => false,
+				'sanitize_callback' => 'sanitize_text_field',
+			),
+			'facebook_page_link' => array(
+				'description'       => __( 'Facebook page URL.', 'fair-events' ),
+				'type'              => 'string',
+				'required'          => false,
+				'sanitize_callback' => 'esc_url_raw',
 			),
 		);
 	}
@@ -162,8 +186,12 @@ class VenueController extends WP_REST_Controller {
 	 * @return WP_REST_Response|WP_Error Response object on success, or WP_Error on failure.
 	 */
 	public function create_item( $request ) {
-		$name    = $request->get_param( 'name' );
-		$address = $request->get_param( 'address' );
+		$name               = $request->get_param( 'name' );
+		$address            = $request->get_param( 'address' );
+		$google_maps_link   = $request->get_param( 'google_maps_link' );
+		$latitude           = $request->get_param( 'latitude' );
+		$longitude          = $request->get_param( 'longitude' );
+		$facebook_page_link = $request->get_param( 'facebook_page_link' );
 
 		if ( empty( $name ) ) {
 			return new WP_Error(
@@ -173,7 +201,7 @@ class VenueController extends WP_REST_Controller {
 			);
 		}
 
-		$venue_id = Venue::create( $name, $address );
+		$venue_id = Venue::create( $name, $address, $google_maps_link, $latitude, $longitude, $facebook_page_link );
 
 		if ( ! $venue_id ) {
 			return new WP_Error(
@@ -195,9 +223,13 @@ class VenueController extends WP_REST_Controller {
 	 * @return WP_REST_Response|WP_Error Response object on success, or WP_Error on failure.
 	 */
 	public function update_item( $request ) {
-		$id      = (int) $request->get_param( 'id' );
-		$name    = $request->get_param( 'name' );
-		$address = $request->get_param( 'address' );
+		$id                 = (int) $request->get_param( 'id' );
+		$name               = $request->get_param( 'name' );
+		$address            = $request->get_param( 'address' );
+		$google_maps_link   = $request->get_param( 'google_maps_link' );
+		$latitude           = $request->get_param( 'latitude' );
+		$longitude          = $request->get_param( 'longitude' );
+		$facebook_page_link = $request->get_param( 'facebook_page_link' );
 
 		// Check if venue exists.
 		$existing = Venue::get_by_id( $id );
@@ -217,7 +249,7 @@ class VenueController extends WP_REST_Controller {
 			);
 		}
 
-		$success = Venue::update( $id, $name, $address );
+		$success = Venue::update( $id, $name, $address, $google_maps_link, $latitude, $longitude, $facebook_page_link );
 
 		if ( ! $success ) {
 			return new WP_Error(

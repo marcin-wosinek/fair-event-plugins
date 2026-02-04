@@ -25,7 +25,14 @@ const VenuesApp = () => {
 	const [success, setSuccess] = useState(null);
 	const [isFormOpen, setIsFormOpen] = useState(false);
 	const [editingVenue, setEditingVenue] = useState(null);
-	const [formData, setFormData] = useState({ name: '', address: '' });
+	const [formData, setFormData] = useState({
+		name: '',
+		address: '',
+		google_maps_link: '',
+		latitude: '',
+		longitude: '',
+		facebook_page_link: '',
+	});
 	const [isSaving, setIsSaving] = useState(false);
 
 	useEffect(() => {
@@ -52,13 +59,27 @@ const VenuesApp = () => {
 
 	const handleCreate = () => {
 		setEditingVenue(null);
-		setFormData({ name: '', address: '' });
+		setFormData({
+			name: '',
+			address: '',
+			google_maps_link: '',
+			latitude: '',
+			longitude: '',
+			facebook_page_link: '',
+		});
 		setIsFormOpen(true);
 	};
 
 	const handleEdit = (venue) => {
 		setEditingVenue(venue);
-		setFormData({ name: venue.name, address: venue.address || '' });
+		setFormData({
+			name: venue.name,
+			address: venue.address || '',
+			google_maps_link: venue.google_maps_link || '',
+			latitude: venue.latitude || '',
+			longitude: venue.longitude || '',
+			facebook_page_link: venue.facebook_page_link || '',
+		});
 		setIsFormOpen(true);
 	};
 
@@ -278,6 +299,61 @@ const VenuesApp = () => {
 									'Full address of the venue',
 									'fair-events'
 								)}
+							/>
+							<TextControl
+								label={__('Google Maps Link', 'fair-events')}
+								value={formData.google_maps_link}
+								onChange={(value) =>
+									setFormData({
+										...formData,
+										google_maps_link: value,
+									})
+								}
+								type="url"
+								help={__(
+									'URL to Google Maps location',
+									'fair-events'
+								)}
+							/>
+							<TextControl
+								label={__('Latitude', 'fair-events')}
+								value={formData.latitude}
+								onChange={(value) =>
+									setFormData({
+										...formData,
+										latitude: value,
+									})
+								}
+								help={__(
+									'Latitude coordinate (e.g., 39.4878023)',
+									'fair-events'
+								)}
+							/>
+							<TextControl
+								label={__('Longitude', 'fair-events')}
+								value={formData.longitude}
+								onChange={(value) =>
+									setFormData({
+										...formData,
+										longitude: value,
+									})
+								}
+								help={__(
+									'Longitude coordinate (e.g., -0.3613204)',
+									'fair-events'
+								)}
+							/>
+							<TextControl
+								label={__('Facebook Page Link', 'fair-events')}
+								value={formData.facebook_page_link}
+								onChange={(value) =>
+									setFormData({
+										...formData,
+										facebook_page_link: value,
+									})
+								}
+								type="url"
+								help={__('URL to Facebook page', 'fair-events')}
 							/>
 							<HStack justify="flex-end" spacing={2}>
 								<Button
