@@ -171,6 +171,15 @@ const BudgetsApp = () => {
 		total_count: 0,
 	};
 
+	const getTotalBalance = () => {
+		let total = unbudgeted.balance || 0;
+		budgets.forEach((budget) => {
+			const budgetStats = getBudgetStats(budget.id);
+			total += budgetStats.balance || 0;
+		});
+		return total;
+	};
+
 	return (
 		<div className="wrap fair-payment-budgets-page">
 			<VStack spacing={4}>
@@ -267,7 +276,7 @@ const BudgetsApp = () => {
 								</div>
 							)}
 
-							{!loading && budgets.length > 0 && (
+							{!loading && (
 								<table className="wp-list-table widefat fixed striped">
 									<thead>
 										<tr>
@@ -363,7 +372,72 @@ const BudgetsApp = () => {
 												</tr>
 											);
 										})}
+										{/* Unbudgeted row */}
+										<tr>
+											<td>
+												<em>
+													{__(
+														'Unbudgeted',
+														'fair-payment'
+													)}
+												</em>
+											</td>
+											<td>
+												<em>
+													{__(
+														'Entries without a budget category',
+														'fair-payment'
+													)}
+												</em>
+											</td>
+											<td>
+												<span
+													style={{
+														color:
+															unbudgeted.balance >=
+															0
+																? '#007017'
+																: '#d63638',
+														fontWeight: 'bold',
+													}}
+												>
+													{formatAmount(
+														unbudgeted.balance
+													)}
+												</span>
+											</td>
+											<td></td>
+										</tr>
 									</tbody>
+									<tfoot>
+										<tr
+											style={{
+												backgroundColor: '#f0f0f1',
+												fontWeight: 'bold',
+											}}
+										>
+											<td colSpan={2}>
+												{__('Total', 'fair-payment')}
+											</td>
+											<td>
+												<span
+													style={{
+														color:
+															getTotalBalance() >=
+															0
+																? '#007017'
+																: '#d63638',
+														fontWeight: 'bold',
+													}}
+												>
+													{formatAmount(
+														getTotalBalance()
+													)}
+												</span>
+											</td>
+											<td></td>
+										</tr>
+									</tfoot>
 								</table>
 							)}
 						</VStack>
