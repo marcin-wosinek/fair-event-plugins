@@ -103,6 +103,13 @@ function createCalendarDropdown(eventData, buttonElement) {
 			e.preventDefault();
 			e.stopPropagation();
 
+			// Track calendar button click with Plausible (if available)
+			if (typeof window.plausible === 'function') {
+				window.plausible('Fair calendar button', {
+					props: { provider: provider.key },
+				});
+			}
+
 			try {
 				// Apply the same logic as the original commit: append URL to description
 				const modifiedEventData = { ...eventData };
