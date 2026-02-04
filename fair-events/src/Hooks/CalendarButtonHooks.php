@@ -13,6 +13,7 @@
 namespace FairEvents\Hooks;
 
 use FairEvents\Models\EventDates;
+use FairEvents\Models\Venue;
 use FairEvents\Settings\Settings;
 
 defined( 'WPINC' ) || die;
@@ -95,8 +96,24 @@ class CalendarButtonHooks {
 		// Get post data for calendar event.
 		$title       = get_the_title( $post_id );
 		$url         = get_permalink( $post_id );
-		$location    = get_post_meta( $post_id, 'event_location', true );
 		$description = get_the_excerpt( $post_id );
+
+		// Get location from venue if available, otherwise fall back to event_location meta.
+		$location = '';
+		if ( ! empty( $event_dates->venue_id ) ) {
+			$venue = Venue::get_by_id( $event_dates->venue_id );
+			if ( $venue ) {
+				$location = $venue->name;
+				if ( ! empty( $venue->address ) ) {
+					$location .= ', ' . $venue->address;
+				}
+			}
+		}
+
+		// Fall back to event_location meta if no venue location.
+		if ( empty( $location ) ) {
+			$location = get_post_meta( $post_id, 'event_location', true );
+		}
 
 		// Get RRULE if available.
 		$rrule     = $event_dates->rrule ?? '';
