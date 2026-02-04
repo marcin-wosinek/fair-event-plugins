@@ -83,6 +83,11 @@ class Installer {
 			self::migrate_to_1_9_0();
 		}
 
+		// Run migration if upgrading from pre-2.0.0 (add flexible event dates).
+		if ( version_compare( $current_version, '2.0.0', '<' ) ) {
+			self::migrate_to_2_0_0();
+		}
+
 		// Update database version
 		Schema::update_db_version( Schema::DB_VERSION );
 	}
@@ -137,6 +142,10 @@ class Installer {
 
 			if ( version_compare( $current_version, '1.9.0', '<' ) ) {
 				self::migrate_to_1_9_0();
+			}
+
+			if ( version_compare( $current_version, '2.0.0', '<' ) ) {
+				self::migrate_to_2_0_0();
 			}
 
 			// Install/update tables
@@ -642,6 +651,84 @@ class Installer {
 			$wpdb->query(
 				$wpdb->prepare(
 					'ALTER TABLE %i ADD COLUMN instagram_handle VARCHAR(255) DEFAULT NULL AFTER facebook_page_link',
+					$table_name
+				)
+			);
+		}
+	}
+
+	/**
+	 * Migrate to version 2.0.0 - Add flexible event dates (title, external_url, link_type).
+	 *
+	 * @return void
+	 */
+	private static function migrate_to_2_0_0() {
+		global $wpdb;
+
+		$table_name = $wpdb->prefix . 'fair_event_dates';
+
+		// Make event_id nullable.
+		$wpdb->query(
+			$wpdb->prepare(
+				'ALTER TABLE %i MODIFY COLUMN event_id BIGINT UNSIGNED DEFAULT NULL',
+				$table_name
+			)
+		);
+
+		// Check if title column already exists.
+		$title_exists = $wpdb->get_results(
+			$wpdb->prepare(
+				"SHOW COLUMNS FROM %i LIKE 'title'",
+				$table_name
+			)
+		);
+
+		if ( empty( $title_exists ) ) {
+			$wpdb->query(
+				$wpdb->prepare(
+					'ALTER TABLE %i ADD COLUMN title VARCHAR(255) DEFAULT NULL AFTER rrule',
+					$table_name
+				)
+			);
+		}
+
+		// Check if external_url column already exists.
+		$external_url_exists = $wpdb->get_results(
+			$wpdb->prepare(
+				"SHOW COLUMNS FROM %i LIKE 'external_url'",
+				$table_name
+			)
+		);
+
+		if ( empty( $external_url_exists ) ) {
+			$wpdb->query(
+				$wpdb->prepare(
+					'ALTER TABLE %i ADD COLUMN external_url TEXT DEFAULT NULL AFTER title',
+					$table_name
+				)
+			);
+		}
+
+		// Check if link_type column already exists.
+		$link_type_exists = $wpdb->get_results(
+			$wpdb->prepare(
+				"SHOW COLUMNS FROM %i LIKE 'link_type'",
+				$table_name
+			)
+		);
+
+		if ( empty( $link_type_exists ) ) {
+			$wpdb->query(
+				$wpdb->prepare(
+					"ALTER TABLE %i ADD COLUMN link_type VARCHAR(20) NOT NULL DEFAULT 'post' AFTER external_url",
+					$table_name
+				)
+			);
+
+			// Add index for link_type.
+			$wpdb->query(
+				$wpdb->prepare(
+					'ALTER TABLE %i ADD KEY idx_link_type (link_type)',
 					$table_name
 				)
 			);

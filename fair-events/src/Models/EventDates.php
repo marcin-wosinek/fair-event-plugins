@@ -80,6 +80,27 @@ class EventDates {
 	public $venue_id;
 
 	/**
+	 * Title (for external/unlinked events)
+	 *
+	 * @var string|null
+	 */
+	public $title;
+
+	/**
+	 * External URL (for external link events)
+	 *
+	 * @var string|null
+	 */
+	public $external_url;
+
+	/**
+	 * Link type ('post', 'external', 'none')
+	 *
+	 * @var string
+	 */
+	public $link_type = 'post';
+
+	/**
 	 * Get event dates by event ID
 	 *
 	 * @param int $event_id Event post ID.
@@ -102,9 +123,19 @@ class EventDates {
 			return null;
 		}
 
+		return self::hydrate( $result );
+	}
+
+	/**
+	 * Hydrate an EventDates object from a database row
+	 *
+	 * @param object $result Database row object.
+	 * @return EventDates Hydrated EventDates object.
+	 */
+	private static function hydrate( $result ) {
 		$event_dates                  = new self();
 		$event_dates->id              = (int) $result->id;
-		$event_dates->event_id        = (int) $result->event_id;
+		$event_dates->event_id        = $result->event_id ? (int) $result->event_id : null;
 		$event_dates->start_datetime  = $result->start_datetime;
 		$event_dates->end_datetime    = $result->end_datetime;
 		$event_dates->all_day         = (bool) $result->all_day;
@@ -112,6 +143,9 @@ class EventDates {
 		$event_dates->master_id       = $result->master_id ? (int) $result->master_id : null;
 		$event_dates->rrule           = $result->rrule ?? null;
 		$event_dates->venue_id        = isset( $result->venue_id ) ? (int) $result->venue_id : null;
+		$event_dates->title           = $result->title ?? null;
+		$event_dates->external_url    = $result->external_url ?? null;
+		$event_dates->link_type       = $result->link_type ?? 'post';
 
 		return $event_dates;
 	}
@@ -141,17 +175,7 @@ class EventDates {
 
 		$dates = array();
 		foreach ( $results as $result ) {
-			$event_dates                  = new self();
-			$event_dates->id              = (int) $result->id;
-			$event_dates->event_id        = (int) $result->event_id;
-			$event_dates->start_datetime  = $result->start_datetime;
-			$event_dates->end_datetime    = $result->end_datetime;
-			$event_dates->all_day         = (bool) $result->all_day;
-			$event_dates->occurrence_type = $result->occurrence_type ?? 'single';
-			$event_dates->master_id       = $result->master_id ? (int) $result->master_id : null;
-			$event_dates->rrule           = $result->rrule ?? null;
-			$event_dates->venue_id        = isset( $result->venue_id ) ? (int) $result->venue_id : null;
-			$dates[]                      = $event_dates;
+			$dates[] = self::hydrate( $result );
 		}
 
 		return $dates;
@@ -448,5 +472,191 @@ class EventDates {
 		}
 
 		return $result !== false;
+	}
+
+	/**
+	 * Get display title for an event date
+	 *
+	 * Returns the stored title for external/unlinked events,
+	 * or the post title for post-linked events.
+	 *
+	 * @return string|null The display title, or null if no title available.
+	 */
+	public function get_display_title() {
+		// For external/unlinked events, use stored title.
+		if ( 'post' !== $this->link_type ) {
+			return $this->title;
+		}
+
+		// For post-linked events, get the post title.
+		if ( $this->event_id ) {
+			return get_the_title( $this->event_id );
+		}
+
+		return null;
+	}
+
+	/**
+	 * Get display URL for an event date
+	 *
+	 * Returns the external URL for external events,
+	 * the post permalink for post-linked events,
+	 * or null for unlinked events.
+	 *
+	 * @return string|null The display URL, or null if no link.
+	 */
+	public function get_display_url() {
+		switch ( $this->link_type ) {
+			case 'external':
+				return $this->external_url;
+			case 'post':
+				return $this->event_id ? get_permalink( $this->event_id ) : null;
+			case 'none':
+			default:
+				return null;
+		}
+	}
+
+	/**
+	 * Check if this is a standalone event (no linked post)
+	 *
+	 * @return bool True if standalone (external or unlinked).
+	 */
+	public function is_standalone() {
+		return 'post' !== $this->link_type;
+	}
+
+	/**
+	 * Get event dates for a date range (including standalone events)
+	 *
+	 * This method fetches all event dates that fall within the given range,
+	 * including both post-linked and standalone (external/unlinked) events.
+	 *
+	 * @param string $start_date Start date (Y-m-d H:i:s format).
+	 * @param string $end_date   End date (Y-m-d H:i:s format).
+	 * @return EventDates[] Array of EventDates objects.
+	 */
+	public static function get_for_date_range( $start_date, $end_date ) {
+		global $wpdb;
+
+		$table_name = $wpdb->prefix . 'fair_event_dates';
+
+		$results = $wpdb->get_results(
+			$wpdb->prepare(
+				'SELECT * FROM %i WHERE start_datetime <= %s AND (end_datetime >= %s OR (end_datetime IS NULL AND start_datetime >= %s)) ORDER BY start_datetime ASC',
+				$table_name,
+				$end_date,
+				$start_date,
+				$start_date
+			)
+		);
+
+		if ( ! $results ) {
+			return array();
+		}
+
+		$dates = array();
+		foreach ( $results as $result ) {
+			$dates[] = self::hydrate( $result );
+		}
+
+		return $dates;
+	}
+
+	/**
+	 * Get standalone event dates for a date range
+	 *
+	 * Fetches only standalone events (external/unlinked) within the given range.
+	 *
+	 * @param string $start_date Start date (Y-m-d H:i:s format).
+	 * @param string $end_date   End date (Y-m-d H:i:s format).
+	 * @return EventDates[] Array of EventDates objects.
+	 */
+	public static function get_standalone_for_date_range( $start_date, $end_date ) {
+		global $wpdb;
+
+		$table_name = $wpdb->prefix . 'fair_event_dates';
+
+		$results = $wpdb->get_results(
+			$wpdb->prepare(
+				"SELECT * FROM %i WHERE link_type != 'post' AND start_datetime <= %s AND (end_datetime >= %s OR (end_datetime IS NULL AND start_datetime >= %s)) ORDER BY start_datetime ASC",
+				$table_name,
+				$end_date,
+				$start_date,
+				$start_date
+			)
+		);
+
+		if ( ! $results ) {
+			return array();
+		}
+
+		$dates = array();
+		foreach ( $results as $result ) {
+			$dates[] = self::hydrate( $result );
+		}
+
+		return $dates;
+	}
+
+	/**
+	 * Create a standalone event date (external or unlinked)
+	 *
+	 * @param array $data Event data with keys: start_datetime, end_datetime, all_day, title, link_type, external_url, rrule.
+	 * @return int|false The row ID on success, false on failure.
+	 */
+	public static function create_standalone( $data ) {
+		global $wpdb;
+
+		$table_name = $wpdb->prefix . 'fair_event_dates';
+
+		$insert_data = array(
+			'event_id'        => null,
+			'start_datetime'  => $data['start_datetime'],
+			'end_datetime'    => $data['end_datetime'] ?? null,
+			'all_day'         => isset( $data['all_day'] ) && $data['all_day'] ? 1 : 0,
+			'occurrence_type' => $data['occurrence_type'] ?? 'single',
+			'master_id'       => $data['master_id'] ?? null,
+			'rrule'           => $data['rrule'] ?? null,
+			'title'           => $data['title'],
+			'external_url'    => $data['external_url'] ?? null,
+			'link_type'       => $data['link_type'],
+		);
+
+		$format = array( '%d', '%s', '%s', '%d', '%s', '%d', '%s', '%s', '%s', '%s' );
+
+		$result = $wpdb->insert( $table_name, $insert_data, $format );
+
+		if ( $result ) {
+			return $wpdb->insert_id;
+		}
+
+		return false;
+	}
+
+	/**
+	 * Get event date by ID
+	 *
+	 * @param int $id Event date ID.
+	 * @return EventDates|null EventDates object or null if not found.
+	 */
+	public static function get_by_id( $id ) {
+		global $wpdb;
+
+		$table_name = $wpdb->prefix . 'fair_event_dates';
+
+		$result = $wpdb->get_row(
+			$wpdb->prepare(
+				'SELECT * FROM %i WHERE id = %d LIMIT 1',
+				$table_name,
+				$id
+			)
+		);
+
+		if ( ! $result ) {
+			return null;
+		}
+
+		return self::hydrate( $result );
 	}
 }

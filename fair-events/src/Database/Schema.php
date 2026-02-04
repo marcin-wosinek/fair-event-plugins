@@ -17,7 +17,7 @@ class Schema {
 	/**
 	 * Database version
 	 */
-	const DB_VERSION = '1.9.0';
+	const DB_VERSION = '2.0.0';
 
 	/**
 	 * Get the SQL for creating the fair_event_dates table
@@ -35,13 +35,16 @@ class Schema {
 
 		return "CREATE TABLE {$table_name} (
 			id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
-			event_id BIGINT UNSIGNED NOT NULL,
+			event_id BIGINT UNSIGNED DEFAULT NULL,
 			start_datetime DATETIME NOT NULL,
 			end_datetime DATETIME DEFAULT NULL,
 			all_day BOOLEAN NOT NULL DEFAULT 0,
 			occurrence_type VARCHAR(20) NOT NULL DEFAULT 'single',
 			master_id BIGINT UNSIGNED DEFAULT NULL,
 			rrule VARCHAR(255) DEFAULT NULL,
+			title VARCHAR(255) DEFAULT NULL,
+			external_url TEXT DEFAULT NULL,
+			link_type VARCHAR(20) NOT NULL DEFAULT 'post',
 			created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
 			updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
 			PRIMARY KEY (id),
@@ -51,7 +54,8 @@ class Schema {
 			KEY idx_start_end (start_datetime, end_datetime),
 			KEY idx_occurrence_type (occurrence_type),
 			KEY idx_master_id (master_id),
-			KEY idx_rrule (rrule(100))
+			KEY idx_rrule (rrule(100)),
+			KEY idx_link_type (link_type)
 		) ENGINE=InnoDB {$charset_collate};";
 	}
 

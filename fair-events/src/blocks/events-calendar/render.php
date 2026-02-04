@@ -88,6 +88,97 @@ if ( ! function_exists( 'fair_events_render_calendar_pattern' ) ) {
 	}
 }
 
+/**
+ * Render calendar event item HTML
+ *
+ * Handles rendering for all event types: WordPress posts, iCal, and standalone events.
+ *
+ * @param array  $event_data     Event data array.
+ * @param string $bg_color_value Background color CSS value.
+ * @param string $text_color_value Text color CSS value.
+ * @return void Outputs HTML directly.
+ */
+if ( ! function_exists( 'fair_events_render_calendar_event_item' ) ) {
+	function fair_events_render_calendar_event_item( $event_data, $bg_color_value, $text_color_value ) {
+		$is_ical       = $event_data['is_ical'] ?? false;
+		$is_standalone = $event_data['is_standalone'] ?? false;
+
+		if ( $is_ical ) {
+			// iCal event rendering
+			$event_title = esc_html( $event_data['title'] );
+			$event_url   = $event_data['permalink'] ?? '';
+			$event_desc  = esc_attr( $event_data['description'] ?? '' );
+
+			$item_classes = array( 'event-item', 'is-ical' );
+			?>
+			<div class="<?php echo esc_attr( implode( ' ', $item_classes ) ); ?>"
+				style="--event-bg-color: <?php echo esc_attr( $bg_color_value ); ?>; --event-text-color: <?php echo esc_attr( $text_color_value ); ?>">
+				<?php if ( ! empty( $event_url ) ) : ?>
+					<a href="<?php echo esc_url( $event_url ); ?>"
+						class="ical-event-title"
+						title="<?php echo $event_desc; ?>"
+						target="_blank"
+						rel="noopener noreferrer">
+						<?php echo $event_title; ?>
+					</a>
+				<?php else : ?>
+					<span class="ical-event-title" title="<?php echo $event_desc; ?>">
+						<?php echo $event_title; ?>
+					</span>
+				<?php endif; ?>
+			</div>
+			<?php
+		} elseif ( $is_standalone ) {
+			// Standalone event rendering (external/unlinked)
+			$event_title = esc_html( $event_data['title'] ?? '' );
+			$event_url   = $event_data['permalink'] ?? '';
+			$link_type   = $event_data['link_type'] ?? 'none';
+			$is_external = 'external' === $link_type;
+
+			$item_classes = array( 'event-item', 'is-standalone' );
+			if ( $is_external ) {
+				$item_classes[] = 'is-external';
+			} else {
+				$item_classes[] = 'is-unlinked';
+			}
+			?>
+			<div class="<?php echo esc_attr( implode( ' ', $item_classes ) ); ?>"
+				style="--event-bg-color: <?php echo esc_attr( $bg_color_value ); ?>; --event-text-color: <?php echo esc_attr( $text_color_value ); ?>">
+				<?php if ( $is_external && ! empty( $event_url ) ) : ?>
+					<a href="<?php echo esc_url( $event_url ); ?>"
+						class="event-title"
+						target="_blank"
+						rel="noopener noreferrer">
+						<?php echo $event_title; ?>
+					</a>
+				<?php else : ?>
+					<span class="event-title"><?php echo $event_title; ?></span>
+				<?php endif; ?>
+			</div>
+			<?php
+		} else {
+			// Local WordPress event rendering
+			$event_post  = get_post( $event_data['id'] );
+			$is_draft    = $event_post && 'draft' === $event_post->post_status;
+			$event_title = get_the_title( $event_data['id'] );
+			$event_url   = get_permalink( $event_data['id'] );
+
+			$item_classes = array( 'event-item' );
+			if ( $is_draft ) {
+				$item_classes[] = 'is-draft';
+			}
+			?>
+			<div class="<?php echo esc_attr( implode( ' ', $item_classes ) ); ?>"
+				style="--event-bg-color: <?php echo esc_attr( $bg_color_value ); ?>; --event-text-color: <?php echo esc_attr( $text_color_value ); ?>">
+				<a href="<?php echo esc_url( $event_url ); ?>" class="event-title">
+					<?php echo esc_html( $event_title ); ?>
+				</a>
+			</div>
+			<?php
+		}
+	}
+}
+
 /*
  * Calendar Rendering Logic
  *
@@ -292,11 +383,42 @@ if ( $events_query->have_posts() ) {
 					'is_ical'      => false,
 					'title'        => get_the_title( $event_id ),
 					'permalink'    => get_permalink( $event_id ),
+					'link_type'    => 'post',
 				);
 
 				$loop_date = gmdate( 'Y-m-d', strtotime( $loop_date . ' +1 day' ) );
 			}
 		}
+	}
+}
+
+// Fetch standalone events (external/unlinked) for the calendar range.
+$standalone_events = EventDates::get_standalone_for_date_range( $query_start, $query_end );
+foreach ( $standalone_events as $event_dates ) {
+	$start_date = gmdate( 'Y-m-d', strtotime( $event_dates->start_datetime ) );
+	$end_date   = $event_dates->end_datetime
+		? gmdate( 'Y-m-d', strtotime( $event_dates->end_datetime ) )
+		: $start_date;
+
+	// Add event to all days it spans.
+	$loop_date = $start_date;
+	while ( $loop_date <= $end_date ) {
+		if ( ! isset( $events_by_date[ $loop_date ] ) ) {
+			$events_by_date[ $loop_date ] = array();
+		}
+
+		$events_by_date[ $loop_date ][] = array(
+			'id'            => 'standalone_' . $event_dates->id,
+			'is_first_day'  => $loop_date === $start_date,
+			'is_last_day'   => $loop_date === $end_date,
+			'is_ical'       => false,
+			'is_standalone' => true,
+			'link_type'     => $event_dates->link_type,
+			'title'         => $event_dates->get_display_title(),
+			'permalink'     => $event_dates->get_display_url(),
+		);
+
+		$loop_date = gmdate( 'Y-m-d', strtotime( $loop_date . ' +1 day' ) );
 	}
 }
 
@@ -420,53 +542,7 @@ $today = current_time( 'Y-m-d' );
 				<?php if ( ! empty( $day_events ) ) : ?>
 				<div class="day-events">
 					<?php foreach ( $day_events as $event_data ) : ?>
-						<?php
-						$is_ical = $event_data['is_ical'] ?? false;
-
-						if ( $is_ical ) {
-							// iCal event rendering
-							$event_title = esc_html( $event_data['title'] );
-							$event_url   = $event_data['permalink'] ?? '';
-							$event_desc  = esc_attr( $event_data['description'] ?? '' );
-
-							$item_classes = array( 'event-item', 'is-ical' );
-							?>
-							<div class="<?php echo esc_attr( implode( ' ', $item_classes ) ); ?>"
-								style="--event-bg-color: <?php echo esc_attr( $bg_color_value ); ?>; --event-text-color: <?php echo esc_attr( $text_color_value ); ?>">
-								<?php if ( ! empty( $event_url ) ) : ?>
-									<a href="<?php echo esc_url( $event_url ); ?>"
-										class="ical-event-title"
-										title="<?php echo $event_desc; ?>"
-										target="_blank"
-										rel="noopener noreferrer">
-										<?php echo $event_title; ?>
-									</a>
-								<?php else : ?>
-									<span class="ical-event-title" title="<?php echo $event_desc; ?>">
-										<?php echo $event_title; ?>
-									</span>
-								<?php endif; ?>
-							</div>
-						<?php } else { ?>
-							<?php
-							// Local WordPress event rendering
-							$event_post  = get_post( $event_data['id'] );
-							$is_draft    = $event_post && 'draft' === $event_post->post_status;
-							$event_title = get_the_title( $event_data['id'] );
-							$event_url   = get_permalink( $event_data['id'] );
-
-							$item_classes = array( 'event-item' );
-							if ( $is_draft ) {
-								$item_classes[] = 'is-draft';
-							}
-							?>
-							<div class="<?php echo esc_attr( implode( ' ', $item_classes ) ); ?>"
-								style="--event-bg-color: <?php echo esc_attr( $bg_color_value ); ?>; --event-text-color: <?php echo esc_attr( $text_color_value ); ?>">
-								<a href="<?php echo esc_url( $event_url ); ?>" class="event-title">
-									<?php echo esc_html( $event_title ); ?>
-								</a>
-							</div>
-						<?php } ?>
+						<?php fair_events_render_calendar_event_item( $event_data, $bg_color_value, $text_color_value ); ?>
 					<?php endforeach; ?>
 				</div>
 				<?php endif; ?>
@@ -503,53 +579,7 @@ $today = current_time( 'Y-m-d' );
 				<?php if ( ! empty( $day_events ) ) : ?>
 				<div class="day-events">
 					<?php foreach ( $day_events as $event_data ) : ?>
-						<?php
-						$is_ical = $event_data['is_ical'] ?? false;
-
-						if ( $is_ical ) {
-							// iCal event rendering
-							$event_title = esc_html( $event_data['title'] );
-							$event_url   = $event_data['permalink'] ?? '';
-							$event_desc  = esc_attr( $event_data['description'] ?? '' );
-
-							$item_classes = array( 'event-item', 'is-ical' );
-							?>
-							<div class="<?php echo esc_attr( implode( ' ', $item_classes ) ); ?>"
-								style="--event-bg-color: <?php echo esc_attr( $bg_color_value ); ?>; --event-text-color: <?php echo esc_attr( $text_color_value ); ?>">
-								<?php if ( ! empty( $event_url ) ) : ?>
-									<a href="<?php echo esc_url( $event_url ); ?>"
-										class="ical-event-title"
-										title="<?php echo $event_desc; ?>"
-										target="_blank"
-										rel="noopener noreferrer">
-										<?php echo $event_title; ?>
-									</a>
-								<?php else : ?>
-									<span class="ical-event-title" title="<?php echo $event_desc; ?>">
-										<?php echo $event_title; ?>
-									</span>
-								<?php endif; ?>
-							</div>
-						<?php } else { ?>
-							<?php
-							// Local WordPress event rendering
-							$event_post  = get_post( $event_data['id'] );
-							$is_draft    = $event_post && 'draft' === $event_post->post_status;
-							$event_title = get_the_title( $event_data['id'] );
-							$event_url   = get_permalink( $event_data['id'] );
-
-							$item_classes = array( 'event-item' );
-							if ( $is_draft ) {
-								$item_classes[] = 'is-draft';
-							}
-							?>
-							<div class="<?php echo esc_attr( implode( ' ', $item_classes ) ); ?>"
-								style="--event-bg-color: <?php echo esc_attr( $bg_color_value ); ?>; --event-text-color: <?php echo esc_attr( $text_color_value ); ?>">
-								<a href="<?php echo esc_url( $event_url ); ?>" class="event-title">
-									<?php echo esc_html( $event_title ); ?>
-								</a>
-							</div>
-						<?php } ?>
+						<?php fair_events_render_calendar_event_item( $event_data, $bg_color_value, $text_color_value ); ?>
 					<?php endforeach; ?>
 				</div>
 				<?php endif; ?>
@@ -585,53 +615,7 @@ $today = current_time( 'Y-m-d' );
 				<?php if ( ! empty( $day_events ) ) : ?>
 				<div class="day-events">
 					<?php foreach ( $day_events as $event_data ) : ?>
-						<?php
-						$is_ical = $event_data['is_ical'] ?? false;
-
-						if ( $is_ical ) {
-							// iCal event rendering
-							$event_title = esc_html( $event_data['title'] );
-							$event_url   = $event_data['permalink'] ?? '';
-							$event_desc  = esc_attr( $event_data['description'] ?? '' );
-
-							$item_classes = array( 'event-item', 'is-ical' );
-							?>
-							<div class="<?php echo esc_attr( implode( ' ', $item_classes ) ); ?>"
-								style="--event-bg-color: <?php echo esc_attr( $bg_color_value ); ?>; --event-text-color: <?php echo esc_attr( $text_color_value ); ?>">
-								<?php if ( ! empty( $event_url ) ) : ?>
-									<a href="<?php echo esc_url( $event_url ); ?>"
-										class="ical-event-title"
-										title="<?php echo $event_desc; ?>"
-										target="_blank"
-										rel="noopener noreferrer">
-										<?php echo $event_title; ?>
-									</a>
-								<?php else : ?>
-									<span class="ical-event-title" title="<?php echo $event_desc; ?>">
-										<?php echo $event_title; ?>
-									</span>
-								<?php endif; ?>
-							</div>
-						<?php } else { ?>
-							<?php
-							// Local WordPress event rendering
-							$event_post  = get_post( $event_data['id'] );
-							$is_draft    = $event_post && 'draft' === $event_post->post_status;
-							$event_title = get_the_title( $event_data['id'] );
-							$event_url   = get_permalink( $event_data['id'] );
-
-							$item_classes = array( 'event-item' );
-							if ( $is_draft ) {
-								$item_classes[] = 'is-draft';
-							}
-							?>
-							<div class="<?php echo esc_attr( implode( ' ', $item_classes ) ); ?>"
-								style="--event-bg-color: <?php echo esc_attr( $bg_color_value ); ?>; --event-text-color: <?php echo esc_attr( $text_color_value ); ?>">
-								<a href="<?php echo esc_url( $event_url ); ?>" class="event-title">
-									<?php echo esc_html( $event_title ); ?>
-								</a>
-							</div>
-						<?php } ?>
+						<?php fair_events_render_calendar_event_item( $event_data, $bg_color_value, $text_color_value ); ?>
 					<?php endforeach; ?>
 				</div>
 				<?php endif; ?>

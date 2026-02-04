@@ -383,11 +383,48 @@ if ( $events_query->have_posts() ) {
 					'is_first_day' => $loop_date === $start_date,
 					'is_last_day'  => $loop_date === $end_date,
 					'is_ical'      => false,
+					'link_type'    => 'post',
 				);
 
 				$loop_date = gmdate( 'Y-m-d', strtotime( $loop_date . ' +1 day' ) );
 			}
 		}
+	}
+}
+
+// Fetch standalone events (external/unlinked) for the week.
+$standalone_events = EventDates::get_standalone_for_date_range( $week_start, $week_end );
+foreach ( $standalone_events as $event_dates ) {
+	$start_date = gmdate( 'Y-m-d', strtotime( $event_dates->start_datetime ) );
+	$end_date   = $event_dates->end_datetime
+		? gmdate( 'Y-m-d', strtotime( $event_dates->end_datetime ) )
+		: $start_date;
+
+	// Add event to all days it spans.
+	$loop_date = $start_date;
+	while ( $loop_date <= $end_date && $loop_date <= $boundaries['end'] ) {
+		// Skip dates before week start.
+		if ( $loop_date < $boundaries['start'] ) {
+			$loop_date = gmdate( 'Y-m-d', strtotime( $loop_date . ' +1 day' ) );
+			continue;
+		}
+
+		if ( ! isset( $events_by_date[ $loop_date ] ) ) {
+			$events_by_date[ $loop_date ] = array();
+		}
+
+		$events_by_date[ $loop_date ][] = array(
+			'id'            => 'standalone_' . $event_dates->id,
+			'is_first_day'  => $loop_date === $start_date,
+			'is_last_day'   => $loop_date === $end_date,
+			'is_ical'       => false,
+			'is_standalone' => true,
+			'link_type'     => $event_dates->link_type,
+			'title'         => $event_dates->get_display_title(),
+			'url'           => $event_dates->get_display_url(),
+		);
+
+		$loop_date = gmdate( 'Y-m-d', strtotime( $loop_date . ' +1 day' ) );
 	}
 }
 
@@ -500,6 +537,31 @@ $next_url = add_query_arg( 'schedule_week', sprintf( '%04d-W%02d', $next['year']
 									<span title="<?php echo $event_desc; ?>">
 										<?php echo $event_title; ?>
 									</span>
+								<?php endif; ?>
+							</div>
+						<?php elseif ( ! empty( $event_data['is_standalone'] ) ) : ?>
+							<?php
+							// Standalone event rendering (external/unlinked)
+							$event_title  = esc_html( $event_data['title'] ?? '' );
+							$event_url    = $event_data['url'] ?? '';
+							$is_external  = 'external' === $event_data['link_type'];
+							$item_classes = array( 'schedule-event', 'is-standalone' );
+							if ( $is_external ) {
+								$item_classes[] = 'is-external';
+							} else {
+								$item_classes[] = 'is-unlinked';
+							}
+							?>
+							<div class="<?php echo esc_attr( implode( ' ', $item_classes ) ); ?>"
+								style="--event-bg-color: <?php echo esc_attr( $bg_color_value ); ?>; --event-text-color: <?php echo esc_attr( $text_color_value ); ?>;">
+								<?php if ( $is_external && ! empty( $event_url ) ) : ?>
+									<a href="<?php echo esc_url( $event_url ); ?>"
+										target="_blank"
+										rel="noopener noreferrer">
+										<?php echo $event_title; ?>
+									</a>
+								<?php else : ?>
+									<span><?php echo $event_title; ?></span>
 								<?php endif; ?>
 							</div>
 						<?php else : ?>
