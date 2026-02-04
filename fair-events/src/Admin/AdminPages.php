@@ -340,7 +340,7 @@ class AdminPages {
 	}
 
 	/**
-	 * Reorder admin menu to put Upcoming before All Events
+	 * Reorder admin menu: Calendar first, Settings last
 	 *
 	 * @return void
 	 */
@@ -353,41 +353,69 @@ class AdminPages {
 			return;
 		}
 
-		// Find the Upcoming Events item
+		// Find special items
+		$calendar_item = null;
+		$calendar_key  = null;
+		$settings_item = null;
+		$settings_key  = null;
 		$upcoming_item = null;
 		$upcoming_key  = null;
 
 		foreach ( $submenu[ $parent_slug ] as $key => $item ) {
-			if ( isset( $item[2] ) && strpos( $item[2], 'upcoming=1' ) !== false ) {
-				$upcoming_item = $item;
-				$upcoming_key  = $key;
-				break;
+			if ( isset( $item[2] ) ) {
+				if ( 'fair-events-calendar' === $item[2] ) {
+					$calendar_item = $item;
+					$calendar_key  = $key;
+				} elseif ( 'fair-events-settings' === $item[2] ) {
+					$settings_item = $item;
+					$settings_key  = $key;
+				} elseif ( strpos( $item[2], 'upcoming=1' ) !== false ) {
+					$upcoming_item = $item;
+					$upcoming_key  = $key;
+				}
 			}
 		}
 
-		if ( $upcoming_item && $upcoming_key !== null ) {
-			// Remove Upcoming from current position
+		// Remove items we want to reposition
+		if ( null !== $calendar_key ) {
+			unset( $submenu[ $parent_slug ][ $calendar_key ] );
+		}
+		if ( null !== $settings_key ) {
+			unset( $submenu[ $parent_slug ][ $settings_key ] );
+		}
+		if ( null !== $upcoming_key ) {
 			unset( $submenu[ $parent_slug ][ $upcoming_key ] );
+		}
 
-			// Insert at position 1 (right after the parent item at position 0)
-			$new_submenu = array();
-			$position    = 0;
+		// Re-index the remaining items
+		$remaining_items = array_values( $submenu[ $parent_slug ] );
 
-			foreach ( $submenu[ $parent_slug ] as $key => $item ) {
-				if ( 1 === $position ) {
-					$new_submenu[] = $upcoming_item;
-				}
-				$new_submenu[] = $item;
-				++$position;
-			}
+		// Build the new menu order
+		$new_submenu = array();
 
-			// If there was only one item, add Upcoming at position 1
-			if ( 0 === $position ) {
+		// 1. Calendar first
+		if ( $calendar_item ) {
+			$new_submenu[] = $calendar_item;
+		}
+
+		// 2. Add remaining items, inserting Upcoming after the first item (All Events)
+		$position = 0;
+		foreach ( $remaining_items as $item ) {
+			$new_submenu[] = $item;
+			++$position;
+
+			// Insert Upcoming after "All Events" (first item) and "Add New" (second item)
+			if ( 2 === $position && $upcoming_item ) {
 				$new_submenu[] = $upcoming_item;
 			}
-
-			$submenu[ $parent_slug ] = $new_submenu;
 		}
+
+		// 3. Settings last
+		if ( $settings_item ) {
+			$new_submenu[] = $settings_item;
+		}
+
+		$submenu[ $parent_slug ] = $new_submenu;
 	}
 
 	/**
