@@ -29,6 +29,10 @@ module.exports = {
       process.cwd(),
       "src/blocks/event-proposal/frontend.js",
     ),
+    "blocks/event-info/editor": path.resolve(
+      process.cwd(),
+      "src/blocks/event-info/editor.js",
+    ),
     "blocks/calendar-button/editor": path.resolve(
       process.cwd(),
       "src/blocks/calendar-button/editor.js",
