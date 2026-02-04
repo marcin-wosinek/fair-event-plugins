@@ -29,7 +29,7 @@ class AdminPages {
 	 * @return void
 	 */
 	public function register_admin_pages() {
-		// Main transactions page
+		// Main transactions page.
 		add_menu_page(
 			__( 'Fair Payment', 'fair-payment' ),
 			__( 'Fair Payment', 'fair-payment' ),
@@ -40,7 +40,7 @@ class AdminPages {
 			30
 		);
 
-		// Transactions submenu (duplicate to rename main menu item)
+		// Transactions submenu (duplicate to rename main menu item).
 		add_submenu_page(
 			'fair-payment-transactions',
 			__( 'Transactions', 'fair-payment' ),
@@ -49,7 +49,7 @@ class AdminPages {
 			'fair-payment-transactions'
 		);
 
-		// Settings submenu
+		// Settings submenu.
 		add_submenu_page(
 			'fair-payment-transactions',
 			__( 'Settings', 'fair-payment' ),
@@ -57,6 +57,26 @@ class AdminPages {
 			'manage_options',
 			'fair-payment-settings',
 			array( $this, 'render_settings_page' )
+		);
+
+		// Financial Entries submenu.
+		add_submenu_page(
+			'fair-payment-transactions',
+			__( 'Financial Entries', 'fair-payment' ),
+			__( 'Entries', 'fair-payment' ),
+			'manage_options',
+			'fair-payment-entries',
+			array( $this, 'render_entries_page' )
+		);
+
+		// Budget Categories submenu.
+		add_submenu_page(
+			'fair-payment-transactions',
+			__( 'Budget Categories', 'fair-payment' ),
+			__( 'Budgets', 'fair-payment' ),
+			'manage_options',
+			'fair-payment-budgets',
+			array( $this, 'render_budgets_page' )
 		);
 	}
 
@@ -67,12 +87,33 @@ class AdminPages {
 	 * @return void
 	 */
 	public function enqueue_admin_scripts( $hook ) {
-		// Only load on Fair Payment settings page.
-		if ( false === strpos( $hook, 'fair-payment-settings' ) ) {
+		// Settings page.
+		if ( false !== strpos( $hook, 'fair-payment-settings' ) ) {
+			$this->enqueue_admin_page_script( 'settings' );
 			return;
 		}
 
-		$asset_file_path = FAIR_PAYMENT_PLUGIN_DIR . 'build/admin/settings/index.asset.php';
+		// Budgets page.
+		if ( false !== strpos( $hook, 'fair-payment-budgets' ) ) {
+			$this->enqueue_admin_page_script( 'budgets' );
+			return;
+		}
+
+		// Entries page.
+		if ( false !== strpos( $hook, 'fair-payment-entries' ) ) {
+			$this->enqueue_admin_page_script( 'entries' );
+			return;
+		}
+	}
+
+	/**
+	 * Enqueue script for an admin page
+	 *
+	 * @param string $page Page name (settings, budgets, entries).
+	 * @return void
+	 */
+	private function enqueue_admin_page_script( $page ) {
+		$asset_file_path = FAIR_PAYMENT_PLUGIN_DIR . 'build/admin/' . $page . '/index.asset.php';
 
 		if ( ! file_exists( $asset_file_path ) ) {
 			error_log( 'Fair Payment: Asset file not found at ' . $asset_file_path );
@@ -82,8 +123,8 @@ class AdminPages {
 		$asset_file = include $asset_file_path;
 
 		wp_enqueue_script(
-			'fair-payment-settings',
-			FAIR_PAYMENT_PLUGIN_URL . 'build/admin/settings/index.js',
+			'fair-payment-' . $page,
+			FAIR_PAYMENT_PLUGIN_URL . 'build/admin/' . $page . '/index.js',
 			$asset_file['dependencies'],
 			$asset_file['version'],
 			true
@@ -104,13 +145,35 @@ class AdminPages {
 	}
 
 	/**
+	 * Render budgets page
+	 *
+	 * @return void
+	 */
+	public function render_budgets_page() {
+		?>
+		<div id="fair-payment-budgets-root"></div>
+		<?php
+	}
+
+	/**
+	 * Render entries page
+	 *
+	 * @return void
+	 */
+	public function render_entries_page() {
+		?>
+		<div id="fair-payment-entries-root"></div>
+		<?php
+	}
+
+	/**
 	 * Render transactions page
 	 *
 	 * @return void
 	 */
 	public function render_transactions_page() {
 		if ( ! current_user_can( 'manage_options' ) ) {
-			wp_die( __( 'You do not have sufficient permissions to access this page.', 'fair-payment' ) );
+			wp_die( esc_html__( 'You do not have sufficient permissions to access this page.', 'fair-payment' ) );
 		}
 
 		$transactions    = \FairPayment\Models\Transaction::get_all( array( 'limit' => 100 ) );

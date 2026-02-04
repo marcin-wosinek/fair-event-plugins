@@ -34,6 +34,26 @@ class Schema {
 	}
 
 	/**
+	 * Get the table name for budgets
+	 *
+	 * @return string Full table name with prefix.
+	 */
+	public static function get_budgets_table_name() {
+		global $wpdb;
+		return $wpdb->prefix . 'fair_payment_budgets';
+	}
+
+	/**
+	 * Get the table name for financial entries
+	 *
+	 * @return string Full table name with prefix.
+	 */
+	public static function get_financial_entries_table_name() {
+		global $wpdb;
+		return $wpdb->prefix . 'fair_payment_financial_entries';
+	}
+
+	/**
 	 * Create database tables
 	 *
 	 * @return void
@@ -75,14 +95,21 @@ class Schema {
 		// Create line items table.
 		self::create_line_items_table();
 
+		// Create budgets table.
+		self::create_budgets_table();
+
+		// Create financial entries table.
+		self::create_financial_entries_table();
+
 		// Run migrations if needed.
 		self::migrate_to_v2();
 		self::migrate_to_v3();
 		self::migrate_to_v4();
 		self::migrate_to_v5();
+		self::migrate_to_v6();
 
 		// Store database version for future migrations.
-		update_option( 'fair_payment_db_version', '5.0' );
+		update_option( 'fair_payment_db_version', '6.0' );
 	}
 
 	/**
@@ -109,6 +136,62 @@ class Schema {
 			PRIMARY KEY  (id),
 			KEY transaction_id (transaction_id),
 			KEY sort_order (sort_order)
+		) $charset_collate;";
+
+		require_once ABSPATH . 'wp-admin/includes/upgrade.php';
+		dbDelta( $sql );
+	}
+
+	/**
+	 * Create budgets table
+	 *
+	 * @return void
+	 */
+	public static function create_budgets_table() {
+		global $wpdb;
+
+		$table_name      = self::get_budgets_table_name();
+		$charset_collate = $wpdb->get_charset_collate();
+
+		$sql = "CREATE TABLE $table_name (
+			id bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT,
+			name varchar(255) NOT NULL,
+			description text DEFAULT NULL,
+			created_at datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
+			updated_at datetime NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+			PRIMARY KEY  (id)
+		) $charset_collate;";
+
+		require_once ABSPATH . 'wp-admin/includes/upgrade.php';
+		dbDelta( $sql );
+	}
+
+	/**
+	 * Create financial entries table
+	 *
+	 * @return void
+	 */
+	public static function create_financial_entries_table() {
+		global $wpdb;
+
+		$table_name      = self::get_financial_entries_table_name();
+		$charset_collate = $wpdb->get_charset_collate();
+
+		$sql = "CREATE TABLE $table_name (
+			id bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT,
+			amount decimal(10,2) NOT NULL,
+			entry_type varchar(20) NOT NULL,
+			entry_date date NOT NULL,
+			description text DEFAULT NULL,
+			budget_id bigint(20) UNSIGNED DEFAULT NULL,
+			transaction_id bigint(20) UNSIGNED DEFAULT NULL,
+			created_at datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
+			updated_at datetime NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+			PRIMARY KEY  (id),
+			KEY entry_type (entry_type),
+			KEY entry_date (entry_date),
+			KEY budget_id (budget_id),
+			KEY transaction_id (transaction_id)
 		) $charset_collate;";
 
 		require_once ABSPATH . 'wp-admin/includes/upgrade.php';
@@ -301,6 +384,24 @@ class Schema {
 	}
 
 	/**
+	 * Migrate database from v5.0 to v6.0
+	 *
+	 * Adds budgets and financial_entries tables for cost & income tracking.
+	 *
+	 * @return void
+	 */
+	public static function migrate_to_v6() {
+		$current_version = get_option( 'fair_payment_db_version', '1.0' );
+
+		if ( version_compare( $current_version, '6.0', '<' ) ) {
+			// Tables are created via dbDelta in create_tables() method.
+			// This migration just ensures they exist for existing installations.
+			self::create_budgets_table();
+			self::create_financial_entries_table();
+		}
+	}
+
+	/**
 	 * Drop database tables (used for uninstall)
 	 *
 	 * @return void
@@ -308,10 +409,20 @@ class Schema {
 	public static function drop_tables() {
 		global $wpdb;
 
-		$line_items_table   = self::get_line_items_table_name();
-		$transactions_table = self::get_payments_table_name();
+		$line_items_table        = self::get_line_items_table_name();
+		$transactions_table      = self::get_payments_table_name();
+		$financial_entries_table = self::get_financial_entries_table_name();
+		$budgets_table           = self::get_budgets_table_name();
 
-		// Drop line items first (foreign key reference).
+		// Drop financial entries first (references transactions and budgets).
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.DirectDatabaseQuery.SchemaChange
+		$wpdb->query( $wpdb->prepare( 'DROP TABLE IF EXISTS %i', $financial_entries_table ) );
+
+		// Drop budgets table.
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.DirectDatabaseQuery.SchemaChange
+		$wpdb->query( $wpdb->prepare( 'DROP TABLE IF EXISTS %i', $budgets_table ) );
+
+		// Drop line items (foreign key reference to transactions).
 		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.DirectDatabaseQuery.SchemaChange
 		$wpdb->query( $wpdb->prepare( 'DROP TABLE IF EXISTS %i', $line_items_table ) );
 

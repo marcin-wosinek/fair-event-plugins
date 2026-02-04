@@ -17,6 +17,14 @@ module.exports = {
       process.cwd(),
       "src/Admin/settings/index.js",
     ),
+    "admin/budgets/index": path.resolve(
+      process.cwd(),
+      "src/Admin/budgets/index.js",
+    ),
+    "admin/entries/index": path.resolve(
+      process.cwd(),
+      "src/Admin/entries/index.js",
+    ),
     "payment-callback": path.resolve(
       process.cwd(),
       "src/payment-callback.js",

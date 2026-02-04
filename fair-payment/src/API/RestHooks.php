@@ -35,5 +35,11 @@ class RestHooks {
 
 		$connection_controller = new \FairPayment\API\ConnectionController();
 		$connection_controller->register_routes();
+
+		$budget_controller = new \FairPayment\API\BudgetController();
+		$budget_controller->register_routes();
+
+		$financial_entry_controller = new \FairPayment\API\FinancialEntryController();
+		$financial_entry_controller->register_routes();
 	}
 }
