@@ -352,6 +352,57 @@ class FinancialEntry {
 	}
 
 	/**
+	 * Get totals grouped by budget
+	 *
+	 * @return array Array with budget_id as key and totals as value.
+	 */
+	public static function get_totals_by_budget() {
+		global $wpdb;
+
+		$table_name = self::get_table_name();
+
+		// Get totals grouped by budget_id and entry_type.
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+		$results = $wpdb->get_results(
+			$wpdb->prepare(
+				'SELECT budget_id, entry_type, SUM(amount) as total, COUNT(*) as count FROM %i GROUP BY budget_id, entry_type',
+				$table_name
+			)
+		);
+
+		$stats = array();
+
+		foreach ( $results as $row ) {
+			$budget_key = null === $row->budget_id ? 'unbudgeted' : (int) $row->budget_id;
+
+			if ( ! isset( $stats[ $budget_key ] ) ) {
+				$stats[ $budget_key ] = array(
+					'total_cost'   => 0.0,
+					'total_income' => 0.0,
+					'cost_count'   => 0,
+					'income_count' => 0,
+				);
+			}
+
+			if ( 'cost' === $row->entry_type ) {
+				$stats[ $budget_key ]['total_cost'] = (float) $row->total;
+				$stats[ $budget_key ]['cost_count'] = (int) $row->count;
+			} else {
+				$stats[ $budget_key ]['total_income'] = (float) $row->total;
+				$stats[ $budget_key ]['income_count'] = (int) $row->count;
+			}
+		}
+
+		// Calculate balance for each.
+		foreach ( $stats as $key => $data ) {
+			$stats[ $key ]['balance']     = $data['total_income'] - $data['total_cost'];
+			$stats[ $key ]['total_count'] = $data['cost_count'] + $data['income_count'];
+		}
+
+		return $stats;
+	}
+
+	/**
 	 * Create a new financial entry
 	 *
 	 * @param float       $amount         Entry amount (positive value).

@@ -91,6 +91,19 @@ class BudgetController extends WP_REST_Controller {
 				),
 			)
 		);
+
+		// GET /fair-payment/v1/budgets/stats - Get budget statistics.
+		register_rest_route(
+			$this->namespace,
+			'/budgets/stats',
+			array(
+				array(
+					'methods'             => WP_REST_Server::READABLE,
+					'callback'            => array( $this, 'get_stats' ),
+					'permission_callback' => array( $this, 'get_items_permissions_check' ),
+				),
+			)
+		);
 	}
 
 	/**
@@ -132,6 +145,18 @@ class BudgetController extends WP_REST_Controller {
 		);
 
 		return new WP_REST_Response( $data, 200 );
+	}
+
+	/**
+	 * Get budget statistics (totals per budget and unbudgeted)
+	 *
+	 * @param WP_REST_Request $request Full data about the request.
+	 * @return WP_REST_Response|WP_Error Response object on success, or WP_Error on failure.
+	 */
+	public function get_stats( $request ) {
+		$stats = \FairPayment\Models\FinancialEntry::get_totals_by_budget();
+
+		return new WP_REST_Response( $stats, 200 );
 	}
 
 	/**
