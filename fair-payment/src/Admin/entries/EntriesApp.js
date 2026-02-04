@@ -22,6 +22,7 @@ import {
  */
 import EntryForm from './components/EntryForm.js';
 import MatchModal from './components/MatchModal.js';
+import ImportModal from './components/ImportModal.js';
 
 const EntriesApp = () => {
 	const [entries, setEntries] = useState([]);
@@ -51,6 +52,7 @@ const EntriesApp = () => {
 	const [isFormOpen, setIsFormOpen] = useState(false);
 	const [editingEntry, setEditingEntry] = useState(null);
 	const [matchingEntry, setMatchingEntry] = useState(null);
+	const [isImportOpen, setIsImportOpen] = useState(false);
 
 	useEffect(() => {
 		loadBudgets();
@@ -226,6 +228,21 @@ const EntriesApp = () => {
 		setMatchingEntry(null);
 	};
 
+	const handleImport = () => {
+		setIsImportOpen(true);
+	};
+
+	const handleImportComplete = () => {
+		setIsImportOpen(false);
+		setSuccess(__('Entries imported successfully.', 'fair-payment'));
+		loadEntries();
+		loadTotals();
+	};
+
+	const handleImportCancel = () => {
+		setIsImportOpen(false);
+	};
+
 	const handleFilterChange = (key, value) => {
 		setFilters((prev) => ({ ...prev, [key]: value }));
 		setPagination((prev) => ({ ...prev, page: 1 }));
@@ -316,9 +333,20 @@ const EntriesApp = () => {
 					<CardHeader>
 						<HStack justify="space-between">
 							<h1>{__('Financial Entries', 'fair-payment')}</h1>
-							<Button variant="primary" onClick={handleCreate}>
-								{__('Add Entry', 'fair-payment')}
-							</Button>
+							<div style={{ display: 'flex', gap: '8px' }}>
+								<Button
+									variant="primary"
+									onClick={handleCreate}
+								>
+									{__('Add Entry', 'fair-payment')}
+								</Button>
+								<Button
+									variant="secondary"
+									onClick={handleImport}
+								>
+									{__('Import', 'fair-payment')}
+								</Button>
+							</div>
 						</HStack>
 					</CardHeader>
 					<CardBody>
@@ -704,6 +732,14 @@ const EntriesApp = () => {
 					entry={matchingEntry}
 					onMatch={handleMatchComplete}
 					onCancel={handleMatchCancel}
+				/>
+			)}
+
+			{/* Import Modal */}
+			{isImportOpen && (
+				<ImportModal
+					onImport={handleImportComplete}
+					onCancel={handleImportCancel}
 				/>
 			)}
 		</div>

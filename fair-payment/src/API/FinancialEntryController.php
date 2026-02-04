@@ -186,6 +186,50 @@ class FinancialEntryController extends WP_REST_Controller {
 				),
 			)
 		);
+
+		// POST /fair-payment/v1/financial-entries/import - Import entries from parsed data.
+		register_rest_route(
+			$this->namespace,
+			'/financial-entries/import',
+			array(
+				array(
+					'methods'             => WP_REST_Server::CREATABLE,
+					'callback'            => array( $this, 'import_entries' ),
+					'permission_callback' => array( $this, 'create_item_permissions_check' ),
+					'args'                => array(
+						'entries' => array(
+							'description' => __( 'Array of entries to import.', 'fair-payment' ),
+							'type'        => 'array',
+							'required'    => true,
+							'items'       => array(
+								'type'       => 'object',
+								'properties' => array(
+									'amount'             => array(
+										'type'     => 'number',
+										'required' => true,
+									),
+									'entry_type'         => array(
+										'type'     => 'string',
+										'required' => true,
+									),
+									'entry_date'         => array(
+										'type'     => 'string',
+										'required' => true,
+									),
+									'description'        => array(
+										'type' => 'string',
+									),
+									'external_reference' => array(
+										'type'     => 'string',
+										'required' => true,
+									),
+								),
+							),
+						),
+					),
+				),
+			)
+		);
 	}
 
 	/**
@@ -695,6 +739,84 @@ class FinancialEntryController extends WP_REST_Controller {
 		);
 
 		return new WP_REST_Response( $data, 200 );
+	}
+
+	/**
+	 * Import entries from parsed data
+	 *
+	 * @param WP_REST_Request $request Full data about the request.
+	 * @return WP_REST_Response|WP_Error Response object on success, or WP_Error on failure.
+	 */
+	public function import_entries( $request ) {
+		$entries = $request->get_param( 'entries' );
+
+		if ( empty( $entries ) || ! is_array( $entries ) ) {
+			return new WP_Error(
+				'rest_invalid_entries',
+				__( 'No entries provided for import.', 'fair-payment' ),
+				array( 'status' => 400 )
+			);
+		}
+
+		$imported = 0;
+		$skipped  = 0;
+		$errors   = array();
+
+		foreach ( $entries as $index => $entry_data ) {
+			// Validate required fields.
+			if ( empty( $entry_data['amount'] ) || empty( $entry_data['entry_type'] ) ||
+				empty( $entry_data['entry_date'] ) || empty( $entry_data['external_reference'] ) ) {
+				++$skipped;
+				$errors[] = sprintf(
+					/* translators: %d: row number */
+					__( 'Row %d: Missing required fields.', 'fair-payment' ),
+					$index + 1
+				);
+				continue;
+			}
+
+			// Validate entry_type.
+			if ( ! in_array( $entry_data['entry_type'], array( 'cost', 'income' ), true ) ) {
+				++$skipped;
+				$errors[] = sprintf(
+					/* translators: %d: row number */
+					__( 'Row %d: Invalid entry type.', 'fair-payment' ),
+					$index + 1
+				);
+				continue;
+			}
+
+			// Try to create the entry (will skip if external_reference exists).
+			$entry_id = FinancialEntry::create_with_external_reference(
+				abs( (float) $entry_data['amount'] ),
+				$entry_data['entry_type'],
+				sanitize_text_field( $entry_data['entry_date'] ),
+				sanitize_text_field( $entry_data['external_reference'] ),
+				isset( $entry_data['description'] ) ? sanitize_textarea_field( $entry_data['description'] ) : null,
+				null // No budget_id for imports.
+			);
+
+			if ( $entry_id ) {
+				++$imported;
+			} else {
+				++$skipped;
+			}
+		}
+
+		return new WP_REST_Response(
+			array(
+				'imported' => $imported,
+				'skipped'  => $skipped,
+				'errors'   => $errors,
+				'message'  => sprintf(
+					/* translators: 1: imported count, 2: skipped count */
+					__( 'Imported %1$d entries, skipped %2$d (duplicates or errors).', 'fair-payment' ),
+					$imported,
+					$skipped
+				),
+			),
+			200
+		);
 	}
 
 	/**

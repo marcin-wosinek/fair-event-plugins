@@ -107,9 +107,10 @@ class Schema {
 		self::migrate_to_v4();
 		self::migrate_to_v5();
 		self::migrate_to_v6();
+		self::migrate_to_v7();
 
 		// Store database version for future migrations.
-		update_option( 'fair_payment_db_version', '6.0' );
+		update_option( 'fair_payment_db_version', '7.0' );
 	}
 
 	/**
@@ -185,9 +186,11 @@ class Schema {
 			description text DEFAULT NULL,
 			budget_id bigint(20) UNSIGNED DEFAULT NULL,
 			transaction_id bigint(20) UNSIGNED DEFAULT NULL,
+			external_reference varchar(255) DEFAULT NULL,
 			created_at datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
 			updated_at datetime NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
 			PRIMARY KEY  (id),
+			UNIQUE KEY external_reference (external_reference),
 			KEY entry_type (entry_type),
 			KEY entry_date (entry_date),
 			KEY budget_id (budget_id),
@@ -398,6 +401,53 @@ class Schema {
 			// This migration just ensures they exist for existing installations.
 			self::create_budgets_table();
 			self::create_financial_entries_table();
+		}
+	}
+
+	/**
+	 * Migrate database from v6.0 to v7.0
+	 *
+	 * Adds external_reference column to financial_entries for import deduplication.
+	 *
+	 * @return void
+	 */
+	public static function migrate_to_v7() {
+		global $wpdb;
+
+		$current_version = get_option( 'fair_payment_db_version', '1.0' );
+
+		if ( version_compare( $current_version, '7.0', '<' ) ) {
+			$table_name = self::get_financial_entries_table_name();
+
+			// Check if external_reference column already exists.
+			// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+			$column_exists = $wpdb->get_results(
+				$wpdb->prepare(
+					'SHOW COLUMNS FROM %i LIKE %s',
+					$table_name,
+					'external_reference'
+				)
+			);
+
+			// Add external_reference column if it doesn't exist.
+			if ( empty( $column_exists ) ) {
+				// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.DirectDatabaseQuery.SchemaChange
+				$wpdb->query(
+					$wpdb->prepare(
+						'ALTER TABLE %i ADD COLUMN external_reference varchar(255) DEFAULT NULL AFTER transaction_id',
+						$table_name
+					)
+				);
+
+				// Add unique index on external_reference.
+				// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.DirectDatabaseQuery.SchemaChange
+				$wpdb->query(
+					$wpdb->prepare(
+						'ALTER TABLE %i ADD UNIQUE KEY external_reference (external_reference)',
+						$table_name
+					)
+				);
+			}
 		}
 	}
 

@@ -68,6 +68,13 @@ class FinancialEntry {
 	public $transaction_id;
 
 	/**
+	 * External reference for deduplication (e.g., from imported data)
+	 *
+	 * @var string|null
+	 */
+	public $external_reference;
+
+	/**
 	 * Created at timestamp
 	 *
 	 * @var string
@@ -553,22 +560,91 @@ class FinancialEntry {
 	}
 
 	/**
+	 * Check if an external reference already exists
+	 *
+	 * @param string $external_reference The external reference to check.
+	 * @return bool True if exists, false otherwise.
+	 */
+	public static function external_reference_exists( $external_reference ) {
+		global $wpdb;
+
+		$table_name = self::get_table_name();
+
+		$result = $wpdb->get_var(
+			$wpdb->prepare(
+				'SELECT COUNT(*) FROM %i WHERE external_reference = %s',
+				$table_name,
+				$external_reference
+			)
+		);
+
+		return (int) $result > 0;
+	}
+
+	/**
+	 * Create an entry with external reference (for imports)
+	 *
+	 * @param float       $amount             Entry amount (positive value).
+	 * @param string      $entry_type         Entry type: 'cost' or 'income'.
+	 * @param string      $entry_date         Entry date (Y-m-d format).
+	 * @param string      $external_reference External reference for deduplication.
+	 * @param string|null $description        Entry description.
+	 * @param int|null    $budget_id          Budget ID.
+	 * @return int|false The entry ID on success, false on failure.
+	 */
+	public static function create_with_external_reference( $amount, $entry_type, $entry_date, $external_reference, $description = null, $budget_id = null ) {
+		global $wpdb;
+
+		$table_name = self::get_table_name();
+
+		// Validate entry_type.
+		if ( ! in_array( $entry_type, array( 'cost', 'income' ), true ) ) {
+			return false;
+		}
+
+		// Check if external reference already exists.
+		if ( self::external_reference_exists( $external_reference ) ) {
+			return false;
+		}
+
+		$data = array(
+			'amount'             => abs( (float) $amount ),
+			'entry_type'         => $entry_type,
+			'entry_date'         => $entry_date,
+			'description'        => $description,
+			'budget_id'          => $budget_id ? (int) $budget_id : null,
+			'external_reference' => $external_reference,
+		);
+
+		$format = array( '%f', '%s', '%s', '%s', '%d', '%s' );
+
+		$result = $wpdb->insert( $table_name, $data, $format );
+
+		if ( $result ) {
+			return $wpdb->insert_id;
+		}
+
+		return false;
+	}
+
+	/**
 	 * Hydrate an entry object from a database row
 	 *
 	 * @param object $row Database row.
 	 * @return FinancialEntry Entry object.
 	 */
 	private static function hydrate( $row ) {
-		$entry                 = new self();
-		$entry->id             = (int) $row->id;
-		$entry->amount         = (float) $row->amount;
-		$entry->entry_type     = $row->entry_type;
-		$entry->entry_date     = $row->entry_date;
-		$entry->description    = $row->description;
-		$entry->budget_id      = $row->budget_id ? (int) $row->budget_id : null;
-		$entry->transaction_id = $row->transaction_id ? (int) $row->transaction_id : null;
-		$entry->created_at     = $row->created_at;
-		$entry->updated_at     = $row->updated_at;
+		$entry                     = new self();
+		$entry->id                 = (int) $row->id;
+		$entry->amount             = (float) $row->amount;
+		$entry->entry_type         = $row->entry_type;
+		$entry->entry_date         = $row->entry_date;
+		$entry->description        = $row->description;
+		$entry->budget_id          = $row->budget_id ? (int) $row->budget_id : null;
+		$entry->transaction_id     = $row->transaction_id ? (int) $row->transaction_id : null;
+		$entry->external_reference = isset( $row->external_reference ) ? $row->external_reference : null;
+		$entry->created_at         = $row->created_at;
+		$entry->updated_at         = $row->updated_at;
 
 		return $entry;
 	}
@@ -580,15 +656,16 @@ class FinancialEntry {
 	 */
 	public function to_array() {
 		return array(
-			'id'             => $this->id,
-			'amount'         => $this->amount,
-			'entry_type'     => $this->entry_type,
-			'entry_date'     => $this->entry_date,
-			'description'    => $this->description,
-			'budget_id'      => $this->budget_id,
-			'transaction_id' => $this->transaction_id,
-			'created_at'     => $this->created_at,
-			'updated_at'     => $this->updated_at,
+			'id'                 => $this->id,
+			'amount'             => $this->amount,
+			'entry_type'         => $this->entry_type,
+			'entry_date'         => $this->entry_date,
+			'description'        => $this->description,
+			'budget_id'          => $this->budget_id,
+			'transaction_id'     => $this->transaction_id,
+			'external_reference' => $this->external_reference,
+			'created_at'         => $this->created_at,
+			'updated_at'         => $this->updated_at,
 		);
 	}
 }
