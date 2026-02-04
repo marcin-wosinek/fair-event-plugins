@@ -32,6 +32,7 @@ const VenuesApp = () => {
 		latitude: '',
 		longitude: '',
 		facebook_page_link: '',
+		instagram_handle: '',
 	});
 	const [isSaving, setIsSaving] = useState(false);
 
@@ -66,6 +67,7 @@ const VenuesApp = () => {
 			latitude: '',
 			longitude: '',
 			facebook_page_link: '',
+			instagram_handle: '',
 		});
 		setIsFormOpen(true);
 	};
@@ -79,6 +81,7 @@ const VenuesApp = () => {
 			latitude: venue.latitude || '',
 			longitude: venue.longitude || '',
 			facebook_page_link: venue.facebook_page_link || '',
+			instagram_handle: venue.instagram_handle || '',
 		});
 		setIsFormOpen(true);
 	};
@@ -354,6 +357,20 @@ const VenuesApp = () => {
 								}
 								type="url"
 								help={__('URL to Facebook page', 'fair-events')}
+							/>
+							<TextControl
+								label={__('Instagram Handle', 'fair-events')}
+								value={formData.instagram_handle}
+								onChange={(value) =>
+									setFormData({
+										...formData,
+										instagram_handle: value,
+									})
+								}
+								help={__(
+									'Instagram username without @ (e.g., venue_name)',
+									'fair-events'
+								)}
 							/>
 							<HStack justify="flex-end" spacing={2}>
 								<Button

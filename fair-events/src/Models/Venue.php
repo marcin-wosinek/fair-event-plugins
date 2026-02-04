@@ -66,6 +66,13 @@ class Venue {
 	public $facebook_page_link;
 
 	/**
+	 * Instagram handle (without @)
+	 *
+	 * @var string|null
+	 */
+	public $instagram_handle;
+
+	/**
 	 * Created at timestamp
 	 *
 	 * @var string
@@ -128,7 +135,7 @@ class Venue {
 		$table_name = self::get_table_name();
 
 		// Validate order_by to prevent SQL injection.
-		$allowed_columns = array( 'id', 'name', 'address', 'google_maps_link', 'latitude', 'longitude', 'facebook_page_link', 'created_at', 'updated_at' );
+		$allowed_columns = array( 'id', 'name', 'address', 'google_maps_link', 'latitude', 'longitude', 'facebook_page_link', 'instagram_handle', 'created_at', 'updated_at' );
 		if ( ! in_array( $order_by, $allowed_columns, true ) ) {
 			$order_by = 'name';
 		}
@@ -165,9 +172,10 @@ class Venue {
 	 * @param string|null $latitude           Latitude coordinate.
 	 * @param string|null $longitude          Longitude coordinate.
 	 * @param string|null $facebook_page_link Facebook page URL.
+	 * @param string|null $instagram_handle   Instagram handle (without @).
 	 * @return int|false The venue ID on success, false on failure.
 	 */
-	public static function create( $name, $address = null, $google_maps_link = null, $latitude = null, $longitude = null, $facebook_page_link = null ) {
+	public static function create( $name, $address = null, $google_maps_link = null, $latitude = null, $longitude = null, $facebook_page_link = null, $instagram_handle = null ) {
 		global $wpdb;
 
 		$table_name = self::get_table_name();
@@ -179,9 +187,10 @@ class Venue {
 			'latitude'           => $latitude,
 			'longitude'          => $longitude,
 			'facebook_page_link' => $facebook_page_link,
+			'instagram_handle'   => $instagram_handle,
 		);
 
-		$format = array( '%s', '%s', '%s', '%s', '%s', '%s' );
+		$format = array( '%s', '%s', '%s', '%s', '%s', '%s', '%s' );
 
 		$result = $wpdb->insert( $table_name, $data, $format );
 
@@ -202,9 +211,10 @@ class Venue {
 	 * @param string|null $latitude           Latitude coordinate.
 	 * @param string|null $longitude          Longitude coordinate.
 	 * @param string|null $facebook_page_link Facebook page URL.
+	 * @param string|null $instagram_handle   Instagram handle (without @).
 	 * @return bool True on success, false on failure.
 	 */
-	public static function update( $id, $name, $address = null, $google_maps_link = null, $latitude = null, $longitude = null, $facebook_page_link = null ) {
+	public static function update( $id, $name, $address = null, $google_maps_link = null, $latitude = null, $longitude = null, $facebook_page_link = null, $instagram_handle = null ) {
 		global $wpdb;
 
 		$table_name = self::get_table_name();
@@ -216,9 +226,10 @@ class Venue {
 			'latitude'           => $latitude,
 			'longitude'          => $longitude,
 			'facebook_page_link' => $facebook_page_link,
+			'instagram_handle'   => $instagram_handle,
 		);
 
-		$format = array( '%s', '%s', '%s', '%s', '%s', '%s' );
+		$format = array( '%s', '%s', '%s', '%s', '%s', '%s', '%s' );
 
 		$result = $wpdb->update(
 			$table_name,
@@ -277,6 +288,7 @@ class Venue {
 		$venue->latitude           = $row->latitude;
 		$venue->longitude          = $row->longitude;
 		$venue->facebook_page_link = $row->facebook_page_link;
+		$venue->instagram_handle   = $row->instagram_handle ?? null;
 		$venue->created_at         = $row->created_at;
 		$venue->updated_at         = $row->updated_at;
 
@@ -297,6 +309,7 @@ class Venue {
 			'latitude'           => $this->latitude,
 			'longitude'          => $this->longitude,
 			'facebook_page_link' => $this->facebook_page_link,
+			'instagram_handle'   => $this->instagram_handle,
 			'created_at'         => $this->created_at,
 			'updated_at'         => $this->updated_at,
 		);

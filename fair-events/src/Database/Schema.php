@@ -17,7 +17,7 @@ class Schema {
 	/**
 	 * Database version
 	 */
-	const DB_VERSION = '1.8.0';
+	const DB_VERSION = '1.9.0';
 
 	/**
 	 * Get the SQL for creating the fair_event_dates table
@@ -147,6 +147,7 @@ class Schema {
 			latitude VARCHAR(20) DEFAULT NULL,
 			longitude VARCHAR(20) DEFAULT NULL,
 			facebook_page_link TEXT,
+			instagram_handle VARCHAR(255) DEFAULT NULL,
 			created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
 			updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
 			PRIMARY KEY (id),

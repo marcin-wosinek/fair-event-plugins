@@ -78,6 +78,11 @@ class Installer {
 			self::migrate_to_1_8_0();
 		}
 
+		// Run migration if upgrading from pre-1.9.0 (add instagram_handle to venues).
+		if ( version_compare( $current_version, '1.9.0', '<' ) ) {
+			self::migrate_to_1_9_0();
+		}
+
 		// Update database version
 		Schema::update_db_version( Schema::DB_VERSION );
 	}
@@ -128,6 +133,10 @@ class Installer {
 
 			if ( version_compare( $current_version, '1.8.0', '<' ) ) {
 				self::migrate_to_1_8_0();
+			}
+
+			if ( version_compare( $current_version, '1.9.0', '<' ) ) {
+				self::migrate_to_1_9_0();
 			}
 
 			// Install/update tables
@@ -605,6 +614,34 @@ class Installer {
 			$wpdb->query(
 				$wpdb->prepare(
 					'ALTER TABLE %i ADD COLUMN facebook_page_link TEXT AFTER longitude',
+					$table_name
+				)
+			);
+		}
+	}
+
+	/**
+	 * Migrate to version 1.9.0 - Add instagram_handle to venues table.
+	 *
+	 * @return void
+	 */
+	private static function migrate_to_1_9_0() {
+		global $wpdb;
+
+		$table_name = $wpdb->prefix . 'fair_event_venues';
+
+		// Check if instagram_handle column already exists.
+		$instagram_handle_exists = $wpdb->get_results(
+			$wpdb->prepare(
+				"SHOW COLUMNS FROM %i LIKE 'instagram_handle'",
+				$table_name
+			)
+		);
+
+		if ( empty( $instagram_handle_exists ) ) {
+			$wpdb->query(
+				$wpdb->prepare(
+					'ALTER TABLE %i ADD COLUMN instagram_handle VARCHAR(255) DEFAULT NULL AFTER facebook_page_link',
 					$table_name
 				)
 			);
