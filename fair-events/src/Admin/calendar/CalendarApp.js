@@ -5,18 +5,21 @@
  */
 
 import { useState, useEffect, useCallback } from '@wordpress/element';
-import { Spinner } from '@wordpress/components';
-import { __ } from '@wordpress/i18n';
+import { Spinner, Notice } from '@wordpress/components';
+import { __, sprintf } from '@wordpress/i18n';
 import apiFetch from '@wordpress/api-fetch';
 import { formatLocalDate, calculateLeadingDays } from 'fair-events-shared';
 import CalendarHeader from './components/CalendarHeader.js';
 import CalendarGrid from './components/CalendarGrid.js';
+import QuickEventModal from './components/QuickEventModal.js';
 
 export default function CalendarApp() {
 	const [currentDate, setCurrentDate] = useState(new Date());
 	const [events, setEvents] = useState([]);
 	const [loading, setLoading] = useState(true);
 	const [error, setError] = useState(null);
+	const [modalDate, setModalDate] = useState(null);
+	const [successNotice, setSuccessNotice] = useState(null);
 
 	const fetchEvents = useCallback(async () => {
 		setLoading(true);
@@ -85,14 +88,40 @@ export default function CalendarApp() {
 	};
 
 	const handleAddEvent = (date) => {
-		const dateStr = formatLocalDate(date);
-		const newEventUrl = window.fairEventsCalendarData?.newEventUrl;
-		if (newEventUrl) {
-			window.location.href = `${newEventUrl}&event_date=${dateStr}`;
-		}
+		setModalDate(date);
+	};
+
+	const handleModalClose = () => {
+		setModalDate(null);
+	};
+
+	const handleModalSuccess = (eventDate) => {
+		setModalDate(null);
+		fetchEvents();
+
+		const manageEventUrl = window.fairEventsCalendarData?.manageEventUrl;
+		setSuccessNotice({
+			title: eventDate.title,
+			id: eventDate.id,
+			manageUrl: manageEventUrl
+				? `${manageEventUrl}&event_date_id=${eventDate.id}`
+				: null,
+		});
 	};
 
 	const handleEditEvent = (eventId) => {
+		// Handle standalone events (format: standalone_123@domain.com)
+		const standaloneMatch = eventId.match(/standalone_(\d+)@/);
+		if (standaloneMatch) {
+			const eventDateId = standaloneMatch[1];
+			const manageEventUrl =
+				window.fairEventsCalendarData?.manageEventUrl;
+			if (manageEventUrl) {
+				window.location.href = `${manageEventUrl}&event_date_id=${eventDateId}`;
+			}
+			return;
+		}
+
 		// Extract numeric ID from uid (format: fair_event_123_456@domain.com or fair_event_123@domain.com)
 		// The first number is the event_id, the second (optional) is the occurrence_id
 		const match = eventId.match(/fair_event_(\d+)(?:_\d+)?@/);
@@ -116,6 +145,25 @@ export default function CalendarApp() {
 				onToday={handleToday}
 			/>
 
+			{successNotice && (
+				<Notice
+					status="success"
+					isDismissible
+					onRemove={() => setSuccessNotice(null)}
+				>
+					{sprintf(
+						/* translators: %s: event title */
+						__('Event "%s" created.', 'fair-events'),
+						successNotice.title
+					)}{' '}
+					{successNotice.manageUrl && (
+						<a href={successNotice.manageUrl}>
+							{__('Manage Event', 'fair-events')}
+						</a>
+					)}
+				</Notice>
+			)}
+
 			{error && (
 				<div className="notice notice-error">
 					<p>{error}</p>
@@ -132,6 +180,14 @@ export default function CalendarApp() {
 					events={events}
 					onAddEvent={handleAddEvent}
 					onEditEvent={handleEditEvent}
+				/>
+			)}
+
+			{modalDate && (
+				<QuickEventModal
+					date={modalDate}
+					onClose={handleModalClose}
+					onSuccess={handleModalSuccess}
 				/>
 			)}
 		</div>

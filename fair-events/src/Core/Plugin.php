@@ -159,6 +159,15 @@ class Plugin {
 			}
 		);
 
+		// Event Dates controller.
+		add_action(
+			'rest_api_init',
+			function () {
+				$controller = new \FairEvents\API\EventDatesController();
+				$controller->register_routes();
+			}
+		);
+
 		// Venue controller.
 		add_action(
 			'rest_api_init',

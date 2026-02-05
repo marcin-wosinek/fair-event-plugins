@@ -204,6 +204,7 @@ class PublicEventsController extends WP_REST_Controller {
 	 *
 	 * Queries the fair_event_dates table directly to get each occurrence
 	 * with its specific dates, then joins with posts for event details.
+	 * Also includes standalone events (no linked post).
 	 *
 	 * @param string|null $start_date Start date filter (Y-m-d).
 	 * @param string|null $end_date   End date filter (Y-m-d).
@@ -222,62 +223,128 @@ class PublicEventsController extends WP_REST_Controller {
 		$enabled_post_types     = Settings::get_enabled_post_types();
 		$post_type_placeholders = implode( ', ', array_fill( 0, count( $enabled_post_types ), '%s' ) );
 
-		// Build WHERE conditions.
-		$where_conditions = array(
+		// Build WHERE conditions for post-linked events.
+		$post_where_conditions = array(
 			"{$wpdb->posts}.post_status = 'publish'",
 		);
-		$where_values     = array();
+		$post_where_values     = array();
 
 		// Post type filter.
-		$where_conditions[] = "{$wpdb->posts}.post_type IN ({$post_type_placeholders})";
-		$where_values       = array_merge( $where_values, $enabled_post_types );
+		$post_where_conditions[] = "{$wpdb->posts}.post_type IN ({$post_type_placeholders})";
+		$post_where_values       = array_merge( $post_where_values, $enabled_post_types );
 
-		// Date range filters.
+		// Date range filters for post-linked events.
 		if ( $start_date ) {
-			$where_conditions[] = "{$dates_table}.end_datetime >= %s";
-			$where_values[]     = $start_date . ' 00:00:00';
+			$post_where_conditions[] = "{$dates_table}.end_datetime >= %s";
+			$post_where_values[]     = $start_date . ' 00:00:00';
 		}
 
 		if ( $end_date ) {
-			$where_conditions[] = "{$dates_table}.start_datetime <= %s";
-			$where_values[]     = $end_date . ' 23:59:59';
+			$post_where_conditions[] = "{$dates_table}.start_datetime <= %s";
+			$post_where_values[]     = $end_date . ' 23:59:59';
 		}
 
 		// Category filter via subquery.
 		if ( ! empty( $category_ids ) ) {
-			$category_placeholders = implode( ', ', array_fill( 0, count( $category_ids ), '%d' ) );
-			$where_conditions[]    = "{$wpdb->posts}.ID IN (
+			$category_placeholders   = implode( ', ', array_fill( 0, count( $category_ids ), '%d' ) );
+			$post_where_conditions[] = "{$wpdb->posts}.ID IN (
 				SELECT object_id FROM {$wpdb->term_relationships}
 				WHERE term_taxonomy_id IN (
 					SELECT term_taxonomy_id FROM {$wpdb->term_taxonomy}
 					WHERE term_id IN ({$category_placeholders})
 				)
 			)";
-			$where_values          = array_merge( $where_values, $category_ids );
+			$post_where_values       = array_merge( $post_where_values, $category_ids );
 		}
 
-		$where_clause = implode( ' AND ', $where_conditions );
+		$post_where_clause = implode( ' AND ', $post_where_conditions );
 
-		// Query occurrences directly from dates table with post data.
-		// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
-		$query = $wpdb->prepare(
-			"SELECT
-				{$dates_table}.id as occurrence_id,
-				{$dates_table}.event_id,
-				{$dates_table}.start_datetime,
-				{$dates_table}.end_datetime,
-				{$dates_table}.all_day,
-				{$dates_table}.occurrence_type,
-				{$wpdb->posts}.post_title,
-				{$wpdb->posts}.post_content,
-				{$wpdb->posts}.post_excerpt
-			FROM {$dates_table}
-			INNER JOIN {$wpdb->posts} ON {$dates_table}.event_id = {$wpdb->posts}.ID
-			WHERE {$where_clause}
-			ORDER BY {$dates_table}.start_datetime ASC
-			LIMIT %d OFFSET %d",
-			array_merge( $where_values, array( $per_page, $offset ) )
+		// Build WHERE conditions for standalone events.
+		$standalone_where_conditions = array(
+			"{$dates_table}.event_id IS NULL",
 		);
+		$standalone_where_values     = array();
+
+		if ( $start_date ) {
+			$standalone_where_conditions[] = "{$dates_table}.end_datetime >= %s";
+			$standalone_where_values[]     = $start_date . ' 00:00:00';
+		}
+
+		if ( $end_date ) {
+			$standalone_where_conditions[] = "{$dates_table}.start_datetime <= %s";
+			$standalone_where_values[]     = $end_date . ' 23:59:59';
+		}
+
+		$standalone_where_clause = implode( ' AND ', $standalone_where_conditions );
+
+		// Skip standalone events when filtering by categories (they have no categories).
+		$include_standalone = empty( $category_ids );
+
+		if ( $include_standalone ) {
+			// UNION query: post-linked events + standalone events.
+			// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+			$query = $wpdb->prepare(
+				"(SELECT
+					{$dates_table}.id as occurrence_id,
+					{$dates_table}.event_id,
+					{$dates_table}.start_datetime,
+					{$dates_table}.end_datetime,
+					{$dates_table}.all_day,
+					{$dates_table}.occurrence_type,
+					{$dates_table}.title as standalone_title,
+					{$dates_table}.link_type,
+					{$dates_table}.external_url,
+					{$wpdb->posts}.post_title,
+					{$wpdb->posts}.post_content,
+					{$wpdb->posts}.post_excerpt
+				FROM {$dates_table}
+				INNER JOIN {$wpdb->posts} ON {$dates_table}.event_id = {$wpdb->posts}.ID
+				WHERE {$post_where_clause})
+				UNION ALL
+				(SELECT
+					{$dates_table}.id as occurrence_id,
+					{$dates_table}.event_id,
+					{$dates_table}.start_datetime,
+					{$dates_table}.end_datetime,
+					{$dates_table}.all_day,
+					{$dates_table}.occurrence_type,
+					{$dates_table}.title as standalone_title,
+					{$dates_table}.link_type,
+					{$dates_table}.external_url,
+					NULL as post_title,
+					NULL as post_content,
+					NULL as post_excerpt
+				FROM {$dates_table}
+				WHERE {$standalone_where_clause})
+				ORDER BY start_datetime ASC
+				LIMIT %d OFFSET %d",
+				array_merge( $post_where_values, $standalone_where_values, array( $per_page, $offset ) )
+			);
+		} else {
+			// Only post-linked events (category filter active).
+			// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+			$query = $wpdb->prepare(
+				"SELECT
+					{$dates_table}.id as occurrence_id,
+					{$dates_table}.event_id,
+					{$dates_table}.start_datetime,
+					{$dates_table}.end_datetime,
+					{$dates_table}.all_day,
+					{$dates_table}.occurrence_type,
+					{$dates_table}.title as standalone_title,
+					{$dates_table}.link_type,
+					{$dates_table}.external_url,
+					{$wpdb->posts}.post_title,
+					{$wpdb->posts}.post_content,
+					{$wpdb->posts}.post_excerpt
+				FROM {$dates_table}
+				INNER JOIN {$wpdb->posts} ON {$dates_table}.event_id = {$wpdb->posts}.ID
+				WHERE {$post_where_clause}
+				ORDER BY {$dates_table}.start_datetime ASC
+				LIMIT %d OFFSET %d",
+				array_merge( $post_where_values, array( $per_page, $offset ) )
+			);
+		}
 
 		// phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared
 		$results = $wpdb->get_results( $query );
@@ -301,6 +368,7 @@ class PublicEventsController extends WP_REST_Controller {
 	private function format_occurrence( $row ) {
 		$start_datetime = $row->start_datetime;
 		$end_datetime   = $row->end_datetime ?: $start_datetime;
+		$is_standalone  = empty( $row->event_id );
 
 		// Determine if all-day event.
 		$all_day = (bool) $row->all_day;
@@ -313,25 +381,39 @@ class PublicEventsController extends WP_REST_Controller {
 
 		// Get excerpt or truncated content.
 		$description = '';
-		if ( ! empty( $row->post_excerpt ) ) {
-			$description = $row->post_excerpt;
-		} elseif ( ! empty( $row->post_content ) ) {
-			$description = wp_trim_words( wp_strip_all_tags( $row->post_content ), 30 );
+		if ( ! $is_standalone ) {
+			if ( ! empty( $row->post_excerpt ) ) {
+				$description = $row->post_excerpt;
+			} elseif ( ! empty( $row->post_content ) ) {
+				$description = wp_trim_words( wp_strip_all_tags( $row->post_content ), 30 );
+			}
 		}
 
 		// Generate unique ID for cross-site reference.
-		// Include occurrence_id to make each occurrence unique.
 		$site_host = wp_parse_url( get_site_url(), PHP_URL_HOST );
-		$uid       = 'fair_event_' . $row->event_id . '_' . $row->occurrence_id . '@' . $site_host;
+
+		if ( $is_standalone ) {
+			$uid   = 'standalone_' . $row->occurrence_id . '@' . $site_host;
+			$title = $row->standalone_title ?? '';
+			$url   = '';
+
+			if ( isset( $row->link_type ) && 'external' === $row->link_type && ! empty( $row->external_url ) ) {
+				$url = $row->external_url;
+			}
+		} else {
+			$uid   = 'fair_event_' . $row->event_id . '_' . $row->occurrence_id . '@' . $site_host;
+			$title = $row->post_title;
+			$url   = get_permalink( $row->event_id );
+		}
 
 		return array(
 			'uid'         => $uid,
-			'title'       => $row->post_title,
+			'title'       => $title,
 			'description' => $description,
 			'start'       => $start_datetime ? gmdate( 'c', strtotime( $start_datetime ) ) : '',
 			'end'         => $end_datetime ? gmdate( 'c', strtotime( $end_datetime ) ) : '',
 			'all_day'     => $all_day,
-			'url'         => get_permalink( $row->event_id ),
+			'url'         => $url,
 		);
 	}
 

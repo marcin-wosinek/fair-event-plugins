@@ -91,6 +91,16 @@ class AdminPages {
 			array( $this, 'render_venues_page' )
 		);
 
+		// Manage Event page (hidden from menu, accessed via calendar)
+		add_submenu_page(
+			'', // Hidden from menu (empty string instead of null for PHP 8.1+ compatibility)
+			__( 'Manage Event', 'fair-events' ),
+			__( 'Manage Event', 'fair-events' ),
+			'edit_posts',
+			'fair-events-manage-event',
+			array( $this, 'render_manage_event_page' )
+		);
+
 		// Copy Event page (hidden from menu, accessed via row action)
 		$copy_hookname = add_submenu_page(
 			'', // Hidden from menu (empty string instead of null for PHP 8.1+ compatibility)
@@ -135,9 +145,10 @@ class AdminPages {
 				'fair-events-calendar',
 				'fairEventsCalendarData',
 				array(
-					'startOfWeek'  => (int) get_option( 'start_of_week', 1 ),
-					'newEventUrl'  => admin_url( 'post-new.php?post_type=fair_event' ),
-					'editEventUrl' => admin_url( 'post.php?action=edit&post=' ),
+					'startOfWeek'    => (int) get_option( 'start_of_week', 1 ),
+					'newEventUrl'    => admin_url( 'post-new.php?post_type=fair_event' ),
+					'editEventUrl'   => admin_url( 'post.php?action=edit&post=' ),
+					'manageEventUrl' => admin_url( 'admin.php?page=fair-events-manage-event' ),
 				)
 			);
 
@@ -195,6 +206,40 @@ class AdminPages {
 
 			wp_set_script_translations(
 				'fair-events-migration',
+				'fair-events',
+				FAIR_EVENTS_PLUGIN_DIR . 'build/languages'
+			);
+
+			wp_enqueue_style( 'wp-components' );
+			return;
+		}
+
+		// Manage Event page (hidden pages use 'admin_page_' prefix).
+		if ( 'admin_page_fair-events-manage-event' === $hook ) {
+			$asset_file = include FAIR_EVENTS_PLUGIN_DIR . 'build/admin/manage-event/index.asset.php';
+
+			wp_enqueue_script(
+				'fair-events-manage-event',
+				FAIR_EVENTS_PLUGIN_URL . 'build/admin/manage-event/index.js',
+				$asset_file['dependencies'],
+				$asset_file['version'],
+				true
+			);
+
+			// phpcs:ignore WordPress.Security.NonceVerification.Recommended
+			$event_date_id = isset( $_GET['event_date_id'] ) ? absint( $_GET['event_date_id'] ) : 0;
+
+			wp_localize_script(
+				'fair-events-manage-event',
+				'fairEventsManageEventData',
+				array(
+					'eventDateId' => $event_date_id,
+					'calendarUrl' => admin_url( 'admin.php?page=fair-events-calendar' ),
+				)
+			);
+
+			wp_set_script_translations(
+				'fair-events-manage-event',
 				'fair-events',
 				FAIR_EVENTS_PLUGIN_DIR . 'build/languages'
 			);
@@ -312,6 +357,16 @@ class AdminPages {
 		?>
 		<div id="fair-events-venues-root"></div>
 		<?php
+	}
+
+	/**
+	 * Render manage event page
+	 *
+	 * @return void
+	 */
+	public function render_manage_event_page() {
+		$manage_event_page = new ManageEventPage();
+		$manage_event_page->render();
 	}
 
 	/**

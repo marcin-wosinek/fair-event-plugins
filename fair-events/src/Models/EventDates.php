@@ -635,6 +635,77 @@ class EventDates {
 	}
 
 	/**
+	 * Update event date fields by ID
+	 *
+	 * @param int   $id   Event date row ID.
+	 * @param array $data Associative array of fields to update.
+	 * @return bool True on success, false on failure.
+	 */
+	public static function update_by_id( $id, $data ) {
+		global $wpdb;
+
+		$table_name = $wpdb->prefix . 'fair_event_dates';
+
+		$allowed_fields = array(
+			'event_id'        => '%d',
+			'start_datetime'  => '%s',
+			'end_datetime'    => '%s',
+			'all_day'         => '%d',
+			'occurrence_type' => '%s',
+			'master_id'       => '%d',
+			'rrule'           => '%s',
+			'venue_id'        => '%d',
+			'title'           => '%s',
+			'external_url'    => '%s',
+			'link_type'       => '%s',
+		);
+
+		$update_data   = array();
+		$update_format = array();
+
+		foreach ( $data as $key => $value ) {
+			if ( isset( $allowed_fields[ $key ] ) ) {
+				$update_data[ $key ] = $value;
+				$update_format[]     = $allowed_fields[ $key ];
+			}
+		}
+
+		if ( empty( $update_data ) ) {
+			return false;
+		}
+
+		$result = $wpdb->update(
+			$table_name,
+			$update_data,
+			array( 'id' => $id ),
+			$update_format,
+			array( '%d' )
+		);
+
+		return $result !== false;
+	}
+
+	/**
+	 * Delete event date by ID
+	 *
+	 * @param int $id Event date row ID.
+	 * @return bool True on success, false on failure.
+	 */
+	public static function delete_by_id( $id ) {
+		global $wpdb;
+
+		$table_name = $wpdb->prefix . 'fair_event_dates';
+
+		$result = $wpdb->delete(
+			$table_name,
+			array( 'id' => $id ),
+			array( '%d' )
+		);
+
+		return $result !== false;
+	}
+
+	/**
 	 * Get event date by ID
 	 *
 	 * @param int $id Event date ID.
