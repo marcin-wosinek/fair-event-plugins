@@ -39,6 +39,8 @@ export default function EventParticipants() {
 	const [error, setError] = useState(null);
 	const [addModalLabel, setAddModalLabel] = useState(null);
 	const [selectedToAdd, setSelectedToAdd] = useState(new Set());
+	const [addSearch, setAddSearch] = useState('');
+	const [addGroupFilter, setAddGroupFilter] = useState('');
 	const [isAdding, setIsAdding] = useState(false);
 	const [isRemoving, setIsRemoving] = useState(false);
 	const [isSendingGalleryLinks, setIsSendingGalleryLinks] = useState(false);
@@ -135,14 +137,43 @@ export default function EventParticipants() {
 		return allParticipants.filter((p) => !existingIds.has(p.id));
 	}, [allParticipants, participants]);
 
+	// Filter available participants by search text and group.
+	const filteredAvailableParticipants = useMemo(() => {
+		let filtered = availableParticipants;
+
+		if (addSearch.trim()) {
+			const searchLower = addSearch.toLowerCase();
+			filtered = filtered.filter(
+				(p) =>
+					(p.name && p.name.toLowerCase().includes(searchLower)) ||
+					(p.surname &&
+						p.surname.toLowerCase().includes(searchLower)) ||
+					(p.email && p.email.toLowerCase().includes(searchLower))
+			);
+		}
+
+		if (addGroupFilter) {
+			const groupId = parseInt(addGroupFilter, 10);
+			filtered = filtered.filter(
+				(p) => p.groups && p.groups.some((g) => g.id === groupId)
+			);
+		}
+
+		return filtered;
+	}, [availableParticipants, addSearch, addGroupFilter]);
+
 	const handleOpenAddModal = (label) => {
 		setAddModalLabel(label);
 		setSelectedToAdd(new Set());
+		setAddSearch('');
+		setAddGroupFilter('');
 	};
 
 	const handleCloseAddModal = () => {
 		setAddModalLabel(null);
 		setSelectedToAdd(new Set());
+		setAddSearch('');
+		setAddGroupFilter('');
 	};
 
 	const handleToggleParticipantToAdd = (participantId) => {
@@ -156,10 +187,16 @@ export default function EventParticipants() {
 	};
 
 	const handleSelectAllToAdd = () => {
-		if (selectedToAdd.size === availableParticipants.length) {
-			setSelectedToAdd(new Set());
+		const filteredIds = filteredAvailableParticipants.map((p) => p.id);
+		const allSelected = filteredIds.every((id) => selectedToAdd.has(id));
+		if (allSelected) {
+			const newSelected = new Set(selectedToAdd);
+			filteredIds.forEach((id) => newSelected.delete(id));
+			setSelectedToAdd(newSelected);
 		} else {
-			setSelectedToAdd(new Set(availableParticipants.map((p) => p.id)));
+			const newSelected = new Set(selectedToAdd);
+			filteredIds.forEach((id) => newSelected.add(id));
+			setSelectedToAdd(newSelected);
 		}
 	};
 
@@ -851,29 +888,92 @@ export default function EventParticipants() {
 						<>
 							<div
 								style={{
-									marginBottom: '15px',
+									display: 'flex',
+									gap: '10px',
+									marginBottom: '10px',
+								}}
+							>
+								<input
+									type="text"
+									placeholder={__(
+										'Search by name or email...',
+										'fair-audience'
+									)}
+									value={addSearch}
+									onChange={(e) =>
+										setAddSearch(e.target.value)
+									}
+									style={{
+										flex: 1,
+										padding: '8px 12px',
+										border: '1px solid #ddd',
+										borderRadius: '4px',
+									}}
+								/>
+								{groups.length > 0 && (
+									<SelectControl
+										value={addGroupFilter}
+										options={[
+											{
+												label: __(
+													'All groups',
+													'fair-audience'
+												),
+												value: '',
+											},
+											...groups.map((g) => ({
+												label: g.name,
+												value: String(g.id),
+											})),
+										]}
+										onChange={setAddGroupFilter}
+										__nextHasNoMarginBottom
+									/>
+								)}
+							</div>
+
+							<div
+								style={{
+									marginBottom: '10px',
 									display: 'flex',
 									justifyContent: 'space-between',
 									alignItems: 'center',
 								}}
 							>
-								<span>
-									{sprintf(
-										/* translators: %d: number of available participants */
-										__(
-											'%d participant(s) available',
-											'fair-audience'
-										),
-										availableParticipants.length
-									)}
+								<span
+									style={{
+										fontSize: '12px',
+										color: '#666',
+									}}
+								>
+									{selectedToAdd.size > 0
+										? sprintf(
+												/* translators: 1: selected count, 2: shown count */
+												__(
+													'%1$d selected, %2$d shown',
+													'fair-audience'
+												),
+												selectedToAdd.size,
+												filteredAvailableParticipants.length
+										  )
+										: sprintf(
+												/* translators: %d: number of available participants */
+												__(
+													'%d participant(s) available',
+													'fair-audience'
+												),
+												filteredAvailableParticipants.length
+										  )}
 								</span>
 								<Button
 									variant="secondary"
 									isSmall
 									onClick={handleSelectAllToAdd}
 								>
-									{selectedToAdd.size ===
-									availableParticipants.length
+									{filteredAvailableParticipants.length > 0 &&
+									filteredAvailableParticipants.every((p) =>
+										selectedToAdd.has(p.id)
+									)
 										? __('Deselect All', 'fair-audience')
 										: __('Select All', 'fair-audience')}
 								</Button>
@@ -887,7 +987,7 @@ export default function EventParticipants() {
 									borderRadius: '4px',
 								}}
 							>
-								{availableParticipants.map((p) => (
+								{filteredAvailableParticipants.map((p) => (
 									<div
 										key={p.id}
 										style={{
@@ -922,6 +1022,19 @@ export default function EventParticipants() {
 										</div>
 									</div>
 								))}
+								{filteredAvailableParticipants.length === 0 && (
+									<p
+										style={{
+											padding: '15px',
+											color: '#666',
+										}}
+									>
+										{__(
+											'No participants match your search.',
+											'fair-audience'
+										)}
+									</p>
+								)}
 							</div>
 
 							<div
