@@ -24,7 +24,7 @@ const DEFAULT_VIEW = {
 	},
 	search: '',
 	filters: [],
-	fields: ['name', 'photo_likes'],
+	fields: ['name', 'role', 'photo_likes'],
 };
 
 const DEFAULT_LAYOUTS = {
@@ -568,6 +568,19 @@ export default function EventParticipants() {
 	};
 
 	// Define fields for DataViews.
+	const formatLabel = (label) => {
+		switch (label) {
+			case 'signed_up':
+				return __('Signed Up', 'fair-audience');
+			case 'collaborator':
+				return __('Collaborator', 'fair-audience');
+			case 'interested':
+				return __('Interested', 'fair-audience');
+			default:
+				return label || '';
+		}
+	};
+
 	const fields = useMemo(
 		() => [
 			{
@@ -578,6 +591,13 @@ export default function EventParticipants() {
 				enableHiding: false,
 				getValue: ({ item }) =>
 					item.participant_name?.toLowerCase() || '',
+			},
+			{
+				id: 'role',
+				label: __('Role', 'fair-audience'),
+				render: ({ item }) => formatLabel(item.label),
+				enableSorting: true,
+				getValue: ({ item }) => item.label || '',
 			},
 			{
 				id: 'photo_likes',
