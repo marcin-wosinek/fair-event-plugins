@@ -166,6 +166,11 @@ class EventDatesController extends WP_REST_Controller {
 				'required'          => false,
 				'sanitize_callback' => 'esc_url_raw',
 			),
+			'theme_image_id' => array(
+				'description' => __( 'Theme image attachment ID.', 'fair-events' ),
+				'type'        => array( 'integer', 'null' ),
+				'required'    => false,
+			),
 		);
 	}
 
@@ -303,6 +308,11 @@ class EventDatesController extends WP_REST_Controller {
 		$external_url = $request->get_param( 'external_url' );
 		if ( null !== $external_url ) {
 			$update_data['external_url'] = $external_url;
+		}
+
+		$theme_image_id = $request->get_param( 'theme_image_id' );
+		if ( null !== $theme_image_id ) {
+			$update_data['theme_image_id'] = $theme_image_id ? absint( $theme_image_id ) : null;
 		}
 
 		if ( ! empty( $update_data ) ) {
@@ -460,6 +470,10 @@ class EventDatesController extends WP_REST_Controller {
 			'venue_id'        => $event_date->venue_id,
 			'link_type'       => $event_date->link_type,
 			'external_url'    => $event_date->external_url,
+			'theme_image_id'  => $event_date->theme_image_id ? (int) $event_date->theme_image_id : null,
+			'theme_image_url' => $event_date->theme_image_id
+				? wp_get_attachment_image_url( $event_date->theme_image_id, 'full' )
+				: null,
 		);
 
 		// Add linked post info if applicable.

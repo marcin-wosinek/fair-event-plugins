@@ -47,6 +47,8 @@ export default function ManageEventApp() {
 	const [venueId, setVenueId] = useState('');
 	const [linkType, setLinkType] = useState('none');
 	const [externalUrl, setExternalUrl] = useState('');
+	const [themeImageId, setThemeImageId] = useState(null);
+	const [themeImageUrl, setThemeImageUrl] = useState(null);
 
 	// Post creation state
 	const [creatingPost, setCreatingPost] = useState(false);
@@ -96,6 +98,8 @@ export default function ManageEventApp() {
 		setLinkType(data.link_type || 'none');
 		setExternalUrl(data.external_url || '');
 		setVenueId(data.venue_id ? String(data.venue_id) : '');
+		setThemeImageId(data.theme_image_id || null);
+		setThemeImageUrl(data.theme_image_url || null);
 
 		if (data.start_datetime) {
 			const [sDate, sTime] = data.start_datetime.split(' ');
@@ -134,6 +138,7 @@ export default function ManageEventApp() {
 					venue_id: venueId ? parseInt(venueId, 10) : null,
 					link_type: linkType,
 					external_url: linkType === 'external' ? externalUrl : null,
+					theme_image_id: themeImageId,
 				},
 			});
 			setEventDate(updated);
@@ -217,6 +222,28 @@ export default function ManageEventApp() {
 		} finally {
 			setSaving(false);
 		}
+	};
+
+	const handleSelectImage = () => {
+		const frame = window.wp.media({
+			title: __('Select Theme Image', 'fair-events'),
+			button: { text: __('Use this image', 'fair-events') },
+			multiple: false,
+			library: { type: 'image' },
+		});
+
+		frame.on('select', () => {
+			const attachment = frame.state().get('selection').first().toJSON();
+			setThemeImageId(attachment.id);
+			setThemeImageUrl(attachment.url);
+		});
+
+		frame.open();
+	};
+
+	const handleRemoveImage = () => {
+		setThemeImageId(null);
+		setThemeImageUrl(null);
 	};
 
 	const venueOptions = [
@@ -358,6 +385,45 @@ export default function ManageEventApp() {
 							options={venueOptions}
 							onChange={setVenueId}
 						/>
+					</VStack>
+				</CardBody>
+			</Card>
+
+			<Card style={{ marginTop: '16px' }}>
+				<CardHeader>
+					<h2>{__('Theme Image', 'fair-events')}</h2>
+				</CardHeader>
+				<CardBody>
+					<VStack spacing={4}>
+						{themeImageUrl && (
+							<img
+								src={themeImageUrl}
+								alt={__('Theme image preview', 'fair-events')}
+								style={{
+									maxWidth: '300px',
+									height: 'auto',
+								}}
+							/>
+						)}
+						<HStack spacing={2}>
+							<Button
+								variant="secondary"
+								onClick={handleSelectImage}
+							>
+								{themeImageId
+									? __('Change Image', 'fair-events')
+									: __('Select Image', 'fair-events')}
+							</Button>
+							{themeImageId && (
+								<Button
+									variant="tertiary"
+									isDestructive
+									onClick={handleRemoveImage}
+								>
+									{__('Remove Image', 'fair-events')}
+								</Button>
+							)}
+						</HStack>
 					</VStack>
 				</CardBody>
 			</Card>

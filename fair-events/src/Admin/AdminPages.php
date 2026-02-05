@@ -216,6 +216,8 @@ class AdminPages {
 
 		// Manage Event page (hidden pages use 'admin_page_' prefix).
 		if ( 'admin_page_fair-events-manage-event' === $hook ) {
+			wp_enqueue_media();
+
 			$asset_file = include FAIR_EVENTS_PLUGIN_DIR . 'build/admin/manage-event/index.asset.php';
 
 			wp_enqueue_script(

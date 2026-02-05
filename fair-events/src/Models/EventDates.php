@@ -101,6 +101,13 @@ class EventDates {
 	public $link_type = 'post';
 
 	/**
+	 * Theme image attachment ID
+	 *
+	 * @var int|null
+	 */
+	public $theme_image_id;
+
+	/**
 	 * Get event dates by event ID
 	 *
 	 * @param int $event_id Event post ID.
@@ -146,6 +153,7 @@ class EventDates {
 		$event_dates->title           = $result->title ?? null;
 		$event_dates->external_url    = $result->external_url ?? null;
 		$event_dates->link_type       = $result->link_type ?? 'post';
+		$event_dates->theme_image_id  = isset( $result->theme_image_id ) && $result->theme_image_id ? (int) $result->theme_image_id : null;
 
 		return $event_dates;
 	}
@@ -658,6 +666,7 @@ class EventDates {
 			'title'           => '%s',
 			'external_url'    => '%s',
 			'link_type'       => '%s',
+			'theme_image_id'  => '%d',
 		);
 
 		$update_data   = array();
