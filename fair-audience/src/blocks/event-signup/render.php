@@ -26,8 +26,8 @@ $success_message          = $attributes['successMessage'] ?? __( 'You have succe
 // Get event ID from current post.
 $event_id = get_the_ID();
 
-// Check if this is a fair_event post type.
-$is_valid_post_type = ( 'fair_event' === get_post_type( $event_id ) );
+// Check if this is an event post type.
+$is_valid_post_type = \FairEvents\Database\EventRepository::is_event( $event_id );
 
 // Generate unique ID for this form instance.
 $form_id = 'fair-audience-signup-' . wp_unique_id();

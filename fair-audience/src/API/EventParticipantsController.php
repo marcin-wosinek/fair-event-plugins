@@ -277,7 +277,7 @@ class EventParticipantsController extends WP_REST_Controller {
 
 		// Verify event exists.
 		$event = get_post( $event_id );
-		if ( ! $event || 'fair_event' !== $event->post_type ) {
+		if ( ! $event || ! \FairEvents\Database\EventRepository::is_event( $event ) ) {
 			return new WP_Error(
 				'invalid_event',
 				__( 'Event not found.', 'fair-audience' ),
@@ -341,7 +341,7 @@ class EventParticipantsController extends WP_REST_Controller {
 
 		// Validate event.
 		$event = get_post( $event_id );
-		if ( ! $event || 'fair_event' !== $event->post_type ) {
+		if ( ! $event || ! \FairEvents\Database\EventRepository::is_event( $event ) ) {
 			return new WP_Error(
 				'invalid_event',
 				__( 'Event not found.', 'fair-audience' ),
@@ -444,7 +444,7 @@ class EventParticipantsController extends WP_REST_Controller {
 
 		// Validate event exists.
 		$event = get_post( $event_id );
-		if ( ! $event || 'fair_event' !== $event->post_type ) {
+		if ( ! $event || ! \FairEvents\Database\EventRepository::is_event( $event ) ) {
 			return new WP_Error(
 				'invalid_event',
 				__( 'Invalid event ID.', 'fair-audience' ),
@@ -494,7 +494,7 @@ class EventParticipantsController extends WP_REST_Controller {
 
 		// Validate event exists.
 		$event = get_post( $event_id );
-		if ( ! $event || 'fair_event' !== $event->post_type ) {
+		if ( ! $event || ! \FairEvents\Database\EventRepository::is_event( $event ) ) {
 			return new WP_Error(
 				'invalid_event',
 				__( 'Invalid event ID.', 'fair-audience' ),
@@ -558,7 +558,7 @@ class EventParticipantsController extends WP_REST_Controller {
 
 		// Build base query args.
 		$query_args = array(
-			'post_type'      => 'fair_event',
+			'post_type'      => \FairEvents\Settings\Settings::get_enabled_post_types(),
 			'post_status'    => 'publish',
 			'posts_per_page' => $per_page,
 			'paged'          => $page,
@@ -682,7 +682,7 @@ class EventParticipantsController extends WP_REST_Controller {
 
 		// Verify event exists.
 		$event = get_post( $event_id );
-		if ( ! $event || 'fair_event' !== $event->post_type ) {
+		if ( ! $event || ! \FairEvents\Database\EventRepository::is_event( $event ) ) {
 			return new WP_Error(
 				'invalid_event',
 				__( 'Event not found.', 'fair-audience' ),

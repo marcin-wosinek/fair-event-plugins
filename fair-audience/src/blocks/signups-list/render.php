@@ -13,8 +13,7 @@ defined( 'WPINC' ) || die;
 	$event_id = get_the_ID();
 
 	// Check if we're on an event post type.
-	$post_type = get_post_type( $event_id );
-	if ( 'fair_event' !== $post_type ) {
+	if ( ! \FairEvents\Database\EventRepository::is_event( $event_id ) ) {
 		return;
 	}
 
