@@ -428,6 +428,33 @@ export default function ManageEventApp() {
 				</CardBody>
 			</Card>
 
+			{eventDate.gallery && (
+				<Card style={{ marginTop: '16px' }}>
+					<CardHeader>
+						<h2>{__('Photo Gallery', 'fair-events')}</h2>
+					</CardHeader>
+					<CardBody>
+						<VStack spacing={3}>
+							<p>
+								{__('Photos:', 'fair-events')}{' '}
+								<strong>{eventDate.gallery.photo_count}</strong>
+							</p>
+							<p>
+								{__('Total likes:', 'fair-events')}{' '}
+								<strong>{eventDate.gallery.total_likes}</strong>
+							</p>
+							<Button
+								variant="secondary"
+								href={eventDate.gallery.gallery_url}
+								target="_blank"
+							>
+								{__('View Gallery', 'fair-events')}
+							</Button>
+						</VStack>
+					</CardBody>
+				</Card>
+			)}
+
 			<Card style={{ marginTop: '16px' }}>
 				<CardHeader>
 					<h2>{__('Link Options', 'fair-events')}</h2>

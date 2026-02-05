@@ -10,6 +10,9 @@ namespace FairEvents\API;
 defined( 'WPINC' ) || die;
 
 use FairEvents\Models\EventDates;
+use FairEvents\Database\EventPhotoRepository;
+use FairEvents\Database\PhotoLikeRepository;
+use FairEvents\Frontend\EventGalleryPage;
 use FairEvents\Settings\Settings;
 use WP_REST_Controller;
 use WP_REST_Server;
@@ -535,6 +538,22 @@ class EventDatesController extends WP_REST_Controller {
 					'edit_url' => get_edit_post_link( $post->ID, 'raw' ),
 				);
 			}
+
+			// Add photo gallery info.
+			$photo_repo     = new EventPhotoRepository();
+			$photo_count    = $photo_repo->get_count_by_event( $event_date->event_id );
+			$total_likes    = 0;
+			$attachment_ids = $photo_repo->get_attachment_ids_by_event( $event_date->event_id );
+			if ( ! empty( $attachment_ids ) ) {
+				$like_repo   = new PhotoLikeRepository();
+				$like_counts = $like_repo->get_counts_for_photos( $attachment_ids );
+				$total_likes = array_sum( $like_counts );
+			}
+			$data['gallery'] = array(
+				'photo_count' => $photo_count,
+				'total_likes' => $total_likes,
+				'gallery_url' => EventGalleryPage::get_gallery_url( $event_date->event_id ),
+			);
 		}
 
 		return $data;
