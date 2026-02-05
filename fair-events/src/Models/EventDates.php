@@ -715,6 +715,38 @@ class EventDates {
 	}
 
 	/**
+	 * Get unlinked event dates (no linked post)
+	 *
+	 * Returns event dates where event_id IS NULL and occurrence_type is
+	 * 'single' or 'master', ordered by start_datetime descending.
+	 *
+	 * @return EventDates[] Array of EventDates objects.
+	 */
+	public static function get_unlinked() {
+		global $wpdb;
+
+		$table_name = $wpdb->prefix . 'fair_event_dates';
+
+		$results = $wpdb->get_results(
+			$wpdb->prepare(
+				"SELECT * FROM %i WHERE event_id IS NULL AND occurrence_type IN ('single', 'master') ORDER BY start_datetime DESC",
+				$table_name
+			)
+		);
+
+		if ( ! $results ) {
+			return array();
+		}
+
+		$dates = array();
+		foreach ( $results as $result ) {
+			$dates[] = self::hydrate( $result );
+		}
+
+		return $dates;
+	}
+
+	/**
 	 * Get event date by ID
 	 *
 	 * @param int $id Event date ID.

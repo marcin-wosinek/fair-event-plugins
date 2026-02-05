@@ -187,6 +187,27 @@ class Event {
 			$asset_file['version'],
 			true
 		);
+
+		// Pass event date info to JS.
+		global $post;
+		$event_date_id    = 0;
+		$manage_event_url = '';
+		if ( $post ) {
+			$event_dates = \FairEvents\Models\EventDates::get_by_event_id( $post->ID );
+			if ( $event_dates ) {
+				$event_date_id    = $event_dates->id;
+				$manage_event_url = admin_url( 'admin.php?page=fair-events-manage-event&event_date_id=' . $event_dates->id );
+			}
+		}
+
+		wp_localize_script(
+			'fair-events-event-meta',
+			'fairEventsMetaBox',
+			array(
+				'eventDateId'    => $event_date_id,
+				'manageEventUrl' => $manage_event_url,
+			)
+		);
 	}
 
 	/**
@@ -272,7 +293,45 @@ class Event {
 		} elseif ( 'MONTHLY' === $recurrence_freq ) {
 			$simple_frequency = 'monthly';
 		}
+
+		$is_linked = ( null !== $event_dates );
 		?>
+
+		<?php if ( $is_linked ) : ?>
+			<p>
+				<a
+					href="<?php echo esc_url( admin_url( 'admin.php?page=fair-events-manage-event&event_date_id=' . $event_dates->id ) ); ?>"
+					class="button"
+					style="width: 100%; text-align: center; box-sizing: border-box;"
+				>
+					<?php esc_html_e( 'Edit Event', 'fair-events' ); ?>
+				</a>
+			</p>
+		<?php endif; ?>
+
+		<?php if ( ! $is_linked ) : ?>
+			<div id="fair-event-unlinked-options">
+				<p>
+					<button type="button" id="fair-event-create-new" class="button button-primary" style="width: 100%; text-align: center; box-sizing: border-box;">
+						<?php esc_html_e( 'Create New Event', 'fair-events' ); ?>
+					</button>
+				</p>
+				<p style="text-align: center; color: #666;">
+					&mdash; <?php esc_html_e( 'or', 'fair-events' ); ?> &mdash;
+				</p>
+				<p>
+					<label for="fair-event-link-existing">
+						<?php esc_html_e( 'Link Existing Event', 'fair-events' ); ?>
+					</label>
+					<select id="fair-event-link-existing" style="width: 100%; box-sizing: border-box;">
+						<option value=""><?php esc_html_e( 'Select an event...', 'fair-events' ); ?></option>
+					</select>
+				</p>
+				<input type="hidden" id="fair-event-linked-event-date-id" name="linked_event_date_id" value="" />
+			</div>
+		<?php endif; ?>
+
+		<div id="fair-event-details-form" style="<?php echo $is_linked ? '' : 'display: none;'; ?>">
 		<p>
 			<label for="event_start">
 				<?php esc_html_e( 'Start Date & Time', 'fair-events' ); ?>
@@ -428,6 +487,7 @@ class Event {
 				<input type="hidden" id="event_recurrence" name="event_recurrence" value="<?php echo esc_attr( $event_recurrence ); ?>" />
 			</div>
 		</details>
+		</div><!-- #fair-event-details-form -->
 		<?php
 	}
 
@@ -687,6 +747,35 @@ class Event {
 		$enabled_post_types = Settings::get_enabled_post_types();
 		if ( ! in_array( $post_type, $enabled_post_types, true ) ) {
 			return;
+		}
+
+		// Handle linking an existing event date to this post.
+		if ( isset( $_POST['linked_event_date_id'] ) ) {
+			$linked_id = absint( $_POST['linked_event_date_id'] );
+			if ( $linked_id > 0 ) {
+				$event_date = \FairEvents\Models\EventDates::get_by_id( $linked_id );
+				if ( $event_date ) {
+					\FairEvents\Models\EventDates::update_by_id(
+						$linked_id,
+						array(
+							'event_id'  => $post_id,
+							'link_type' => 'post',
+						)
+					);
+					// Sync dates to postmeta.
+					\FairEvents\Models\EventDates::save(
+						$post_id,
+						$event_date->start_datetime,
+						$event_date->end_datetime,
+						$event_date->all_day
+					);
+					// Sync venue if set.
+					if ( $event_date->venue_id ) {
+						\FairEvents\Models\EventDates::save_venue_id( $post_id, $event_date->venue_id );
+					}
+					return;
+				}
+			}
 		}
 
 		// Get event data

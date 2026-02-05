@@ -510,4 +510,57 @@ domReady(() => {
 			newVenueForm.style.display = 'none';
 		});
 	}
+
+	// Unlinked mode: "Create New Event" and "Link Existing Event" handling.
+	const createNewButton = document.getElementById('fair-event-create-new');
+	const unlinkedOptions = document.getElementById(
+		'fair-event-unlinked-options'
+	);
+	const detailsForm = document.getElementById('fair-event-details-form');
+	const linkExistingSelect = document.getElementById(
+		'fair-event-link-existing'
+	);
+	const linkedEventDateIdInput = document.getElementById(
+		'fair-event-linked-event-date-id'
+	);
+
+	if (createNewButton && unlinkedOptions && detailsForm) {
+		createNewButton.addEventListener('click', () => {
+			unlinkedOptions.style.display = 'none';
+			detailsForm.style.display = '';
+			if (startInput) {
+				startInput.focus();
+			}
+		});
+	}
+
+	// Fetch unlinked events and populate the dropdown.
+	if (linkExistingSelect) {
+		apiFetch({ path: '/fair-events/v1/event-dates' })
+			.then((events) => {
+				events.forEach((event) => {
+					const option = document.createElement('option');
+					option.value = event.id;
+					const date = event.start_datetime
+						? new Date(
+								event.start_datetime.replace(' ', 'T')
+						  ).toLocaleDateString()
+						: '';
+					const label = event.title
+						? `${event.title} - ${date}`
+						: date;
+					option.textContent = label;
+					linkExistingSelect.appendChild(option);
+				});
+			})
+			.catch(() => {
+				// Silently fail - dropdown stays empty.
+			});
+
+		linkExistingSelect.addEventListener('change', () => {
+			if (linkedEventDateIdInput) {
+				linkedEventDateIdInput.value = linkExistingSelect.value;
+			}
+		});
+	}
 });

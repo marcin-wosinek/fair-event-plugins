@@ -37,11 +37,16 @@ class EventDatesController extends WP_REST_Controller {
 	 * @return void
 	 */
 	public function register_routes() {
-		// POST /fair-events/v1/event-dates - Create standalone event.
+		// GET, POST /fair-events/v1/event-dates.
 		register_rest_route(
 			$this->namespace,
 			'/event-dates',
 			array(
+				array(
+					'methods'             => WP_REST_Server::READABLE,
+					'callback'            => array( $this, 'get_items' ),
+					'permission_callback' => array( $this, 'get_item_permissions_check' ),
+				),
 				array(
 					'methods'             => WP_REST_Server::CREATABLE,
 					'callback'            => array( $this, 'create_item' ),
@@ -171,6 +176,11 @@ class EventDatesController extends WP_REST_Controller {
 				'type'        => array( 'integer', 'null' ),
 				'required'    => false,
 			),
+			'event_id'       => array(
+				'description' => __( 'Linked post ID.', 'fair-events' ),
+				'type'        => array( 'integer', 'null' ),
+				'required'    => false,
+			),
 		);
 	}
 
@@ -232,6 +242,23 @@ class EventDatesController extends WP_REST_Controller {
 		$event_date = EventDates::get_by_id( $id );
 
 		return new WP_REST_Response( $this->prepare_event_date( $event_date ), 201 );
+	}
+
+	/**
+	 * Get unlinked event dates
+	 *
+	 * @param WP_REST_Request $request Full data about the request.
+	 * @return WP_REST_Response Response object.
+	 */
+	public function get_items( $request ) {
+		$event_dates = EventDates::get_unlinked();
+
+		$items = array();
+		foreach ( $event_dates as $event_date ) {
+			$items[] = $this->prepare_event_date( $event_date );
+		}
+
+		return new WP_REST_Response( $items, 200 );
 	}
 
 	/**
@@ -315,6 +342,11 @@ class EventDatesController extends WP_REST_Controller {
 			$update_data['theme_image_id'] = $theme_image_id ? absint( $theme_image_id ) : null;
 		}
 
+		$event_id = $request->get_param( 'event_id' );
+		if ( null !== $event_id ) {
+			$update_data['event_id'] = $event_id ? absint( $event_id ) : null;
+		}
+
 		if ( ! empty( $update_data ) ) {
 			$success = EventDates::update_by_id( $id, $update_data );
 
@@ -326,10 +358,16 @@ class EventDatesController extends WP_REST_Controller {
 				);
 			}
 
-			// If this event date is linked to a post, sync dates to postmeta.
-			if ( $existing->event_id && ( isset( $update_data['start_datetime'] ) || isset( $update_data['end_datetime'] ) || isset( $update_data['all_day'] ) ) ) {
+			// Determine the effective event_id after update.
+			$effective_event_id = isset( $update_data['event_id'] ) ? $update_data['event_id'] : $existing->event_id;
+
+			// Sync dates to postmeta when linked to a post and dates/link changed.
+			$dates_changed = isset( $update_data['start_datetime'] ) || isset( $update_data['end_datetime'] ) || isset( $update_data['all_day'] );
+			$newly_linked  = isset( $update_data['event_id'] ) && $update_data['event_id'] && ! $existing->event_id;
+
+			if ( $effective_event_id && ( $dates_changed || $newly_linked ) ) {
 				$updated = EventDates::get_by_id( $id );
-				EventDates::save( $existing->event_id, $updated->start_datetime, $updated->end_datetime, $updated->all_day );
+				EventDates::save( $effective_event_id, $updated->start_datetime, $updated->end_datetime, $updated->all_day );
 			}
 		}
 
