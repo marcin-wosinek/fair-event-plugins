@@ -248,7 +248,11 @@ export default function ManageEventApp() {
 	const isLinkedToPost = eventDate.link_type === 'post' && eventDate.event_id;
 
 	return (
-		<div className="wrap">
+		<div className="wrap fair-events-manage-event">
+			<style>
+				{`.fair-events-manage-event .components-card > div:first-child { height: auto; }
+.fair-events-manage-event .components-card__body > * { max-width: 600px; }`}
+			</style>
 			<h1>
 				{__('Manage Event', 'fair-events')}
 				{title && `: ${title}`}
@@ -294,7 +298,7 @@ export default function ManageEventApp() {
 						/>
 
 						{allDay ? (
-							<HStack spacing={4} alignment="top">
+							<HStack spacing={4} alignment="top" wrap>
 								<TextControl
 									label={__('Start date', 'fair-events')}
 									type="date"
@@ -311,40 +315,36 @@ export default function ManageEventApp() {
 								/>
 							</HStack>
 						) : (
-							<>
-								<HStack spacing={4} alignment="top">
-									<TextControl
-										label={__('Start date', 'fair-events')}
-										type="date"
-										value={startDate}
-										onChange={setStartDate}
-										required
-									/>
-									<TextControl
-										label={__('Start time', 'fair-events')}
-										type="time"
-										value={startTime}
-										onChange={setStartTime}
-										required
-									/>
-								</HStack>
-								<HStack spacing={4} alignment="top">
-									<TextControl
-										label={__('End date', 'fair-events')}
-										type="date"
-										value={endDate}
-										onChange={setEndDate}
-										required
-									/>
-									<TextControl
-										label={__('End time', 'fair-events')}
-										type="time"
-										value={endTime}
-										onChange={setEndTime}
-										required
-									/>
-								</HStack>
-							</>
+							<HStack spacing={4} alignment="top" wrap>
+								<TextControl
+									label={__('Start date', 'fair-events')}
+									type="date"
+									value={startDate}
+									onChange={setStartDate}
+									required
+								/>
+								<TextControl
+									label={__('Start time', 'fair-events')}
+									type="time"
+									value={startTime}
+									onChange={setStartTime}
+									required
+								/>
+								<TextControl
+									label={__('End date', 'fair-events')}
+									type="date"
+									value={endDate}
+									onChange={setEndDate}
+									required
+								/>
+								<TextControl
+									label={__('End time', 'fair-events')}
+									type="time"
+									value={endTime}
+									onChange={setEndTime}
+									required
+								/>
+							</HStack>
 						)}
 
 						<SelectControl
