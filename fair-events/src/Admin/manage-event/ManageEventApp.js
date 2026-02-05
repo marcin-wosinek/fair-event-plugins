@@ -29,6 +29,7 @@ export default function ManageEventApp() {
 	const calendarUrl = window.fairEventsManageEventData?.calendarUrl;
 	const enabledPostTypes =
 		window.fairEventsManageEventData?.enabledPostTypes || [];
+	const audienceUrl = window.fairEventsManageEventData?.audienceUrl || '';
 
 	const [eventDate, setEventDate] = useState(null);
 	const [loading, setLoading] = useState(true);
@@ -451,6 +452,22 @@ export default function ManageEventApp() {
 								{__('View Gallery', 'fair-events')}
 							</Button>
 						</VStack>
+					</CardBody>
+				</Card>
+			)}
+
+			{audienceUrl && isLinkedToPost && (
+				<Card style={{ marginTop: '16px' }}>
+					<CardHeader>
+						<h2>{__('Audience', 'fair-events')}</h2>
+					</CardHeader>
+					<CardBody>
+						<Button
+							variant="secondary"
+							href={audienceUrl + eventDate.event_id}
+						>
+							{__('View Participants', 'fair-events')}
+						</Button>
 					</CardBody>
 				</Card>
 			)}

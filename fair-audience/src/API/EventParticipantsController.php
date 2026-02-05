@@ -711,18 +711,27 @@ class EventParticipantsController extends WP_REST_Controller {
 		$signed_up     = ( $counts['signed_up'] ?? 0 ) + ( $counts['interested'] ?? 0 );
 		$collaborators = $counts['collaborator'] ?? 0;
 
-		return rest_ensure_response(
-			array(
-				'event_id'      => $event_id,
-				'title'         => $event->post_title,
-				'link'          => get_permalink( $event_id ),
-				'event_date'    => $event_date,
-				'gallery_count' => $gallery_count,
-				'gallery_link'  => admin_url( "upload.php?mode=list&fair_event_filter={$event_id}" ),
-				'signed_up'     => $signed_up,
-				'collaborators' => $collaborators,
-			)
+		$response_data = array(
+			'event_id'      => $event_id,
+			'title'         => $event->post_title,
+			'link'          => get_permalink( $event_id ),
+			'edit_url'      => get_edit_post_link( $event_id, 'raw' ),
+			'event_date'    => $event_date,
+			'gallery_count' => $gallery_count,
+			'gallery_link'  => admin_url( "upload.php?mode=list&fair_event_filter={$event_id}" ),
+			'signed_up'     => $signed_up,
+			'collaborators' => $collaborators,
 		);
+
+		// Add manage-event URL if fair-events plugin provides event dates.
+		if ( class_exists( '\FairEvents\Models\EventDates' ) ) {
+			$event_dates = \FairEvents\Models\EventDates::get_by_event_id( $event_id );
+			if ( $event_dates ) {
+				$response_data['manage_event_url'] = admin_url( 'admin.php?page=fair-events-manage-event&event_date_id=' . $event_dates->id );
+			}
+		}
+
+		return rest_ensure_response( $response_data );
 	}
 
 	/**

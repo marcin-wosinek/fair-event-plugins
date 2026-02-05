@@ -667,10 +667,30 @@ export default function EventParticipants() {
 							gap: '10px',
 						}}
 					>
-						<h2 style={{ margin: 0 }}>
-							{eventInfo?.title ||
-								__('Event Participants', 'fair-audience')}
-						</h2>
+						<div>
+							<h2 style={{ margin: 0 }}>
+								{eventInfo?.title ||
+									__('Event Participants', 'fair-audience')}
+							</h2>
+							<div
+								style={{
+									display: 'flex',
+									gap: '12px',
+									marginTop: '4px',
+								}}
+							>
+								{eventInfo?.edit_url && (
+									<a href={eventInfo.edit_url}>
+										{__('Edit Article', 'fair-audience')}
+									</a>
+								)}
+								{eventInfo?.manage_event_url && (
+									<a href={eventInfo.manage_event_url}>
+										{__('Manage Event', 'fair-audience')}
+									</a>
+								)}
+							</div>
+						</div>
 						{eventInfo && (
 							<div
 								style={{
