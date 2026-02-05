@@ -239,15 +239,23 @@ class Event {
 	public static function render_meta_box( $post ) {
 		wp_nonce_field( 'fair_event_meta_box', 'fair_event_meta_box_nonce' );
 
-		$event_start      = get_post_meta( $post->ID, 'event_start', true );
-		$event_end        = get_post_meta( $post->ID, 'event_end', true );
-		$event_all_day    = get_post_meta( $post->ID, 'event_all_day', true );
-		$event_recurrence = \FairEvents\Models\EventDates::get_rrule_by_event_id( $post->ID );
-
-		// Get venue data.
+		// Get event dates from custom table (source of truth).
 		$event_dates      = \FairEvents\Models\EventDates::get_by_event_id( $post->ID );
 		$current_venue_id = $event_dates ? $event_dates->venue_id : null;
 		$venues           = \FairEvents\Models\Venue::get_all();
+
+		// Read dates from event_dates table if linked, fallback to postmeta.
+		if ( $event_dates ) {
+			$event_start   = $event_dates->start_datetime ? str_replace( ' ', 'T', substr( $event_dates->start_datetime, 0, 16 ) ) : '';
+			$event_end     = $event_dates->end_datetime ? str_replace( ' ', 'T', substr( $event_dates->end_datetime, 0, 16 ) ) : '';
+			$event_all_day = $event_dates->all_day;
+		} else {
+			$event_start   = get_post_meta( $post->ID, 'event_start', true );
+			$event_end     = get_post_meta( $post->ID, 'event_end', true );
+			$event_all_day = get_post_meta( $post->ID, 'event_all_day', true );
+		}
+
+		$event_recurrence = \FairEvents\Models\EventDates::get_rrule_by_event_id( $post->ID );
 
 		// Check for event_date URL parameter (from calendar "add event" button) for new posts.
 		// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Read-only operation for prepopulating form.
