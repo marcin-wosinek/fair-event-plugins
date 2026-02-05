@@ -800,6 +800,15 @@ class Event {
 		// Save to custom table (also updates postmeta automatically for compatibility)
 		\FairEvents\Models\EventDates::save( $post_id, $event_start, $event_end, $event_all_day );
 
+		// Sync post title to event_dates table.
+		$event_dates_row = \FairEvents\Models\EventDates::get_by_event_id( $post_id );
+		if ( $event_dates_row ) {
+			\FairEvents\Models\EventDates::update_by_id(
+				$event_dates_row->id,
+				array( 'title' => get_the_title( $post_id ) )
+			);
+		}
+
 		// Save venue_id.
 		if ( isset( $_POST['event_venue_id'] ) ) {
 			$venue_id = sanitize_text_field( wp_unslash( $_POST['event_venue_id'] ) );

@@ -369,6 +369,16 @@ class EventDatesController extends WP_REST_Controller {
 				$updated = EventDates::get_by_id( $id );
 				EventDates::save( $effective_event_id, $updated->start_datetime, $updated->end_datetime, $updated->all_day );
 			}
+
+			// Sync title to linked post when title changes.
+			if ( $effective_event_id && isset( $update_data['title'] ) ) {
+				wp_update_post(
+					array(
+						'ID'         => $effective_event_id,
+						'post_title' => $update_data['title'],
+					)
+				);
+			}
 		}
 
 		$event_date = EventDates::get_by_id( $id );
