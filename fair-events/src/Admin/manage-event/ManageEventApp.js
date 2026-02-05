@@ -6,7 +6,7 @@
  * @package FairEvents
  */
 
-import { useState, useEffect } from '@wordpress/element';
+import { useState, useEffect, useMemo } from '@wordpress/element';
 import {
 	Card,
 	CardHeader,
@@ -18,11 +18,13 @@ import {
 	CheckboxControl,
 	SelectControl,
 	RadioControl,
+	__experimentalNumberControl as NumberControl,
 	__experimentalVStack as VStack,
 	__experimentalHStack as HStack,
 } from '@wordpress/components';
 import { __ } from '@wordpress/i18n';
 import apiFetch from '@wordpress/api-fetch';
+import { DurationOptions, calculateDuration } from 'fair-events-shared';
 
 export default function ManageEventApp() {
 	const eventDateId = window.fairEventsManageEventData?.eventDateId;
@@ -50,6 +52,13 @@ export default function ManageEventApp() {
 	const [externalUrl, setExternalUrl] = useState('');
 	const [themeImageId, setThemeImageId] = useState(null);
 	const [themeImageUrl, setThemeImageUrl] = useState(null);
+
+	// Recurrence state
+	const [recurrenceEnabled, setRecurrenceEnabled] = useState(false);
+	const [recurrenceFrequency, setRecurrenceFrequency] = useState('weekly');
+	const [recurrenceEndType, setRecurrenceEndType] = useState('count');
+	const [recurrenceCount, setRecurrenceCount] = useState(10);
+	const [recurrenceUntil, setRecurrenceUntil] = useState('');
 
 	// Post creation state
 	const [creatingPost, setCreatingPost] = useState(false);
@@ -112,6 +121,155 @@ export default function ManageEventApp() {
 			setEndDate(eDate || '');
 			setEndTime(eTime ? eTime.substring(0, 5) : '');
 		}
+
+		// Populate recurrence from rrule
+		if (data.rrule) {
+			setRecurrenceEnabled(true);
+			parseRRule(data.rrule);
+		} else {
+			setRecurrenceEnabled(false);
+		}
+	};
+
+	// Duration options
+	const timedDurationOptions = useMemo(
+		() =>
+			new DurationOptions({
+				values: [30, 60, 90, 120, 150, 180, 240, 360, 480],
+				unit: 'minutes',
+				textDomain: 'fair-events',
+			}),
+		[]
+	);
+
+	const allDayDurationOptions = useMemo(
+		() =>
+			new DurationOptions({
+				values: [1, 2, 3, 4, 5, 6, 7],
+				unit: 'days',
+				textDomain: 'fair-events',
+			}),
+		[]
+	);
+
+	const getCurrentDuration = () => {
+		if (allDay) {
+			if (!startDate || !endDate) return 'other';
+			const start = new Date(startDate);
+			const end = new Date(endDate);
+			const diffDays =
+				Math.ceil((end - start) / (1000 * 60 * 60 * 24)) + 1;
+			return allDayDurationOptions.getCurrentSelection(diffDays);
+		}
+		if (!startDate || !startTime || !endDate || !endTime) return 'other';
+		const startIso = `${startDate}T${startTime}`;
+		const endIso = `${endDate}T${endTime}`;
+		const minutes = calculateDuration(startIso, endIso);
+		if (minutes === null) return 'other';
+		return timedDurationOptions.getCurrentSelection(minutes);
+	};
+
+	const durationValue = getCurrentDuration();
+
+	const durationOptions = allDay
+		? allDayDurationOptions.getDurationOptions()
+		: timedDurationOptions.getDurationOptions();
+
+	const handleDurationChange = (value) => {
+		if (value === 'other' || !startDate) return;
+		if (allDay) {
+			const days = parseInt(value, 10);
+			const start = new Date(startDate);
+			const end = new Date(start);
+			end.setDate(start.getDate() + days - 1);
+			const year = end.getFullYear();
+			const month = String(end.getMonth() + 1).padStart(2, '0');
+			const day = String(end.getDate()).padStart(2, '0');
+			setEndDate(`${year}-${month}-${day}`);
+		} else {
+			if (!startTime) return;
+			const minutes = parseInt(value, 10);
+			const start = new Date(`${startDate}T${startTime}`);
+			const end = new Date(start.getTime() + minutes * 60000);
+			const year = end.getFullYear();
+			const month = String(end.getMonth() + 1).padStart(2, '0');
+			const day = String(end.getDate()).padStart(2, '0');
+			const hours = String(end.getHours()).padStart(2, '0');
+			const mins = String(end.getMinutes()).padStart(2, '0');
+			setEndDate(`${year}-${month}-${day}`);
+			setEndTime(`${hours}:${mins}`);
+		}
+	};
+
+	// Recurrence helpers
+	const parseRRule = (rrule) => {
+		const parts = {};
+		rrule.split(';').forEach((part) => {
+			const [key, val] = part.split('=');
+			parts[key] = val;
+		});
+
+		const freq = parts.FREQ || 'WEEKLY';
+		const interval = parseInt(parts.INTERVAL || '1', 10);
+
+		if (freq === 'DAILY') {
+			setRecurrenceFrequency('daily');
+		} else if (freq === 'WEEKLY' && interval === 2) {
+			setRecurrenceFrequency('biweekly');
+		} else if (freq === 'WEEKLY') {
+			setRecurrenceFrequency('weekly');
+		} else if (freq === 'MONTHLY') {
+			setRecurrenceFrequency('monthly');
+		}
+
+		if (parts.COUNT) {
+			setRecurrenceEndType('count');
+			setRecurrenceCount(parseInt(parts.COUNT, 10));
+		} else if (parts.UNTIL) {
+			setRecurrenceEndType('until');
+			const u = parts.UNTIL;
+			setRecurrenceUntil(
+				`${u.substring(0, 4)}-${u.substring(4, 6)}-${u.substring(6, 8)}`
+			);
+		} else {
+			setRecurrenceEndType('count');
+			setRecurrenceCount(10);
+		}
+	};
+
+	const buildRRule = () => {
+		if (!recurrenceEnabled) return null;
+
+		let freq = 'WEEKLY';
+		let interval = 1;
+
+		switch (recurrenceFrequency) {
+			case 'daily':
+				freq = 'DAILY';
+				break;
+			case 'weekly':
+				freq = 'WEEKLY';
+				break;
+			case 'biweekly':
+				freq = 'WEEKLY';
+				interval = 2;
+				break;
+			case 'monthly':
+				freq = 'MONTHLY';
+				break;
+		}
+
+		const ruleParts = [`FREQ=${freq}`];
+		if (interval > 1) {
+			ruleParts.push(`INTERVAL=${interval}`);
+		}
+		if (recurrenceEndType === 'count' && recurrenceCount) {
+			ruleParts.push(`COUNT=${recurrenceCount}`);
+		} else if (recurrenceEndType === 'until' && recurrenceUntil) {
+			ruleParts.push(`UNTIL=${recurrenceUntil.replace(/-/g, '')}`);
+		}
+
+		return ruleParts.join(';');
 	};
 
 	const handleSave = async () => {
@@ -140,6 +298,7 @@ export default function ManageEventApp() {
 					link_type: linkType,
 					external_url: linkType === 'external' ? externalUrl : null,
 					theme_image_id: themeImageId,
+					rrule: buildRRule(),
 				},
 			});
 			setEventDate(updated);
@@ -381,11 +540,103 @@ export default function ManageEventApp() {
 						)}
 
 						<SelectControl
+							label={__('Event length', 'fair-events')}
+							value={String(durationValue)}
+							options={durationOptions.map((opt) => ({
+								label: opt.label,
+								value: String(opt.value),
+							}))}
+							onChange={handleDurationChange}
+						/>
+
+						<SelectControl
 							label={__('Venue', 'fair-events')}
 							value={venueId}
 							options={venueOptions}
 							onChange={setVenueId}
 						/>
+
+						<CheckboxControl
+							label={__('Repeat this event', 'fair-events')}
+							checked={recurrenceEnabled}
+							onChange={setRecurrenceEnabled}
+						/>
+
+						{recurrenceEnabled && (
+							<VStack spacing={3}>
+								<SelectControl
+									label={__('Frequency', 'fair-events')}
+									value={recurrenceFrequency}
+									options={[
+										{
+											label: __('Daily', 'fair-events'),
+											value: 'daily',
+										},
+										{
+											label: __('Weekly', 'fair-events'),
+											value: 'weekly',
+										},
+										{
+											label: __(
+												'Biweekly',
+												'fair-events'
+											),
+											value: 'biweekly',
+										},
+										{
+											label: __('Monthly', 'fair-events'),
+											value: 'monthly',
+										},
+									]}
+									onChange={setRecurrenceFrequency}
+								/>
+								<SelectControl
+									label={__('Ends', 'fair-events')}
+									value={recurrenceEndType}
+									options={[
+										{
+											label: __(
+												'After number of occurrences',
+												'fair-events'
+											),
+											value: 'count',
+										},
+										{
+											label: __(
+												'On a specific date',
+												'fair-events'
+											),
+											value: 'until',
+										},
+									]}
+									onChange={setRecurrenceEndType}
+								/>
+								{recurrenceEndType === 'count' && (
+									<NumberControl
+										label={__(
+											'Number of occurrences',
+											'fair-events'
+										)}
+										value={recurrenceCount}
+										onChange={(val) =>
+											setRecurrenceCount(
+												parseInt(val, 10) || 1
+											)
+										}
+										min={1}
+										max={365}
+									/>
+								)}
+								{recurrenceEndType === 'until' && (
+									<TextControl
+										label={__('End date', 'fair-events')}
+										type="date"
+										value={recurrenceUntil}
+										onChange={setRecurrenceUntil}
+									/>
+								)}
+							</VStack>
+						)}
 					</VStack>
 				</CardBody>
 			</Card>

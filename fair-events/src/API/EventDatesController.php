@@ -184,6 +184,12 @@ class EventDatesController extends WP_REST_Controller {
 				'type'        => array( 'integer', 'null' ),
 				'required'    => false,
 			),
+			'rrule'          => array(
+				'description'       => __( 'Recurrence rule in RRULE format.', 'fair-events' ),
+				'type'              => array( 'string', 'null' ),
+				'required'          => false,
+				'sanitize_callback' => 'sanitize_text_field',
+			),
 		);
 	}
 
@@ -348,6 +354,11 @@ class EventDatesController extends WP_REST_Controller {
 		$event_id = $request->get_param( 'event_id' );
 		if ( null !== $event_id ) {
 			$update_data['event_id'] = $event_id ? absint( $event_id ) : null;
+		}
+
+		$rrule = $request->get_param( 'rrule' );
+		if ( null !== $rrule ) {
+			$update_data['rrule'] = $rrule ?: null;
 		}
 
 		if ( ! empty( $update_data ) ) {
@@ -521,6 +532,7 @@ class EventDatesController extends WP_REST_Controller {
 			'venue_id'        => $event_date->venue_id,
 			'link_type'       => $event_date->link_type,
 			'external_url'    => $event_date->external_url,
+			'rrule'           => $event_date->rrule,
 			'theme_image_id'  => $event_date->theme_image_id ? (int) $event_date->theme_image_id : null,
 			'theme_image_url' => $event_date->theme_image_id
 				? wp_get_attachment_image_url( $event_date->theme_image_id, 'full' )
