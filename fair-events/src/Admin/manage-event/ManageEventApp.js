@@ -27,6 +27,8 @@ import apiFetch from '@wordpress/api-fetch';
 export default function ManageEventApp() {
 	const eventDateId = window.fairEventsManageEventData?.eventDateId;
 	const calendarUrl = window.fairEventsManageEventData?.calendarUrl;
+	const enabledPostTypes =
+		window.fairEventsManageEventData?.enabledPostTypes || [];
 
 	const [eventDate, setEventDate] = useState(null);
 	const [loading, setLoading] = useState(true);
@@ -48,6 +50,9 @@ export default function ManageEventApp() {
 
 	// Post creation state
 	const [creatingPost, setCreatingPost] = useState(false);
+	const [selectedPostType, setSelectedPostType] = useState(
+		enabledPostTypes[0]?.slug || 'fair_event'
+	);
 
 	useEffect(() => {
 		if (!eventDateId) {
@@ -173,7 +178,7 @@ export default function ManageEventApp() {
 				path: `/fair-events/v1/event-dates/${eventDateId}/create-post`,
 				method: 'POST',
 				data: {
-					post_type: 'fair_event',
+					post_type: selectedPostType,
 					post_status: 'draft',
 				},
 			});
@@ -444,14 +449,33 @@ export default function ManageEventApp() {
 								)}
 
 								{linkType === 'post' && (
-									<Button
-										variant="primary"
-										onClick={handleCreatePost}
-										isBusy={creatingPost}
-										disabled={creatingPost}
-									>
-										{__('Create New Post', 'fair-events')}
-									</Button>
+									<>
+										<SelectControl
+											label={__(
+												'Post type',
+												'fair-events'
+											)}
+											value={selectedPostType}
+											options={enabledPostTypes.map(
+												(pt) => ({
+													label: pt.label,
+													value: pt.slug,
+												})
+											)}
+											onChange={setSelectedPostType}
+										/>
+										<Button
+											variant="primary"
+											onClick={handleCreatePost}
+											isBusy={creatingPost}
+											disabled={creatingPost}
+										>
+											{__(
+												'Create New Post',
+												'fair-events'
+											)}
+										</Button>
+									</>
 								)}
 							</>
 						)}

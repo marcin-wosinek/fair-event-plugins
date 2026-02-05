@@ -229,12 +229,25 @@ class AdminPages {
 			// phpcs:ignore WordPress.Security.NonceVerification.Recommended
 			$event_date_id = isset( $_GET['event_date_id'] ) ? absint( $_GET['event_date_id'] ) : 0;
 
+			$enabled_slugs      = \FairEvents\Settings\Settings::get_enabled_post_types();
+			$enabled_post_types = array();
+			foreach ( $enabled_slugs as $slug ) {
+				$post_type_object = get_post_type_object( $slug );
+				if ( $post_type_object ) {
+					$enabled_post_types[] = array(
+						'slug'  => $slug,
+						'label' => $post_type_object->labels->singular_name,
+					);
+				}
+			}
+
 			wp_localize_script(
 				'fair-events-manage-event',
 				'fairEventsManageEventData',
 				array(
-					'eventDateId' => $event_date_id,
-					'calendarUrl' => admin_url( 'admin.php?page=fair-events-calendar' ),
+					'eventDateId'      => $event_date_id,
+					'calendarUrl'      => admin_url( 'admin.php?page=fair-events-calendar' ),
+					'enabledPostTypes' => $enabled_post_types,
 				)
 			);
 
