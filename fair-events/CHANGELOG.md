@@ -1,106 +1,117 @@
 # fair-events
 
+## 0.8.0
+
+### Minor Changes
+
+-   51b63e5: Add photo taxonomy by events.
+-   e09b50a: Add option to link the event images.
+
+### Patch Changes
+
+-   04c4196: Add migration workflow for events.
+
 ## 0.7.0
 
 ### Minor Changes
 
-- cf7f5de: Add weekly schedule block.
-- 27ff8bd: Add event sources & iCal feed.
+-   cf7f5de: Add weekly schedule block.
+-   27ff8bd: Add event sources & iCal feed.
 
 ### Patch Changes
 
-- c806c7c: Add iCal for calendar display.
+-   c806c7c: Add iCal for calendar display.
 
 ## 0.6.1
 
 ### Patch Changes
 
-- eeaccd0: Add option to show draft events on a calendar.
+-   eeaccd0: Add option to show draft events on a calendar.
 
 ## 0.6.0
 
 ### Minor Changes
 
-- 96a150c: Add calendar display block.
+-   96a150c: Add calendar display block.
 
 ## 0.5.2
 
 ### Patch Changes
 
-- fa15b85: Improve copy screen for events.
+-   fa15b85: Improve copy screen for events.
 
 ## 0.5.1
 
 ### Patch Changes
 
-- 7e7ea9c: Update version tested up to version to 6.9.
+-   7e7ea9c: Update version tested up to version to 6.9.
 
 ## 0.5.0
 
 ### Minor Changes
 
-- 83743d6: Add a workflow to copy the event
+-   83743d6: Add a workflow to copy the event
 
 ### Patch Changes
 
-- 3a60309: Add lenght dropdown to the event content type.
-- 97fd67d: Add support for user groups.
+-   3a60309: Add lenght dropdown to the event content type.
+-   97fd67d: Add support for user groups.
 
 ## 0.4.3
 
 ### Patch Changes
 
-- 9b83592: Link to RSVP confirmation if plugin is available
+-   9b83592: Link to RSVP confirmation if plugin is available
 
 ## 0.4.2
 
 ### Patch Changes
 
-- ccb5d6a: Add list of upcomming events
+-   ccb5d6a: Add list of upcomming events
 
 ## 0.4.1
 
 ### Patch Changes
 
-- 2ee1396: Integrate event & schedule blocks—reference event dates in block
-- 1bfddd0: Fix data formating in translated date
+-   2ee1396: Integrate event & schedule blocks—reference event dates in block
+-   1bfddd0: Fix data formating in translated date
 
 ## 0.4.0
 
 ### Minor Changes
 
-- 8f0db61: Move start & end dates to separate table
+-   8f0db61: Move start & end dates to separate table
 
 ## 0.3.3
 
 ### Patch Changes
 
-- 4ed3721: Add location to fair-events
-- ee8bef8: Simplify showing the dates in event-dates block
-- 2e270f0: Add translations for PL, DE & ES
+-   4ed3721: Add location to fair-events
+-   ee8bef8: Simplify showing the dates in event-dates block
+-   2e270f0: Add translations for PL, DE & ES
 
 ## 0.3.2
 
 ### Patch Changes
 
-- 8c3c2fe: Fix the category search in event-list block
-- 46fbaaf: Fix the filtering in event-list block
+-   8c3c2fe: Fix the category search in event-list block
+-   46fbaaf: Fix the filtering in event-list block
 
 ## 0.3.1
 
 ### Patch Changes
 
-- c8f06d5: Fix slug setting page
+-   c8f06d5: Fix slug setting page
 
 ## 0.3.0
 
 ### Minor Changes
 
-- Add slug setting
-- Improve edit UX
+-   Add slug setting
+-   Improve edit UX
 
 ## 0.2.0
 
 ### Minor Changes
 
-- f39c6fb: Add list view block with patterns support
+-   f39c6fb: Add list view block with patterns support
