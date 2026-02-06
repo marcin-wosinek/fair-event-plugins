@@ -363,6 +363,15 @@ export default function Import() {
 															}
 														</li>
 													)}
+													{results.marketing > 0 && (
+														<li>
+															{__(
+																'Set to marketing profile (Newsletter):',
+																'fair-audience'
+															)}{' '}
+															{results.marketing}
+														</li>
+													)}
 													{results.auto_resolved >
 														0 && (
 														<li>

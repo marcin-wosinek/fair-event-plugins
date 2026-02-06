@@ -189,9 +189,10 @@ class ImportController extends WP_REST_Controller {
 			$headers = $data[0];
 
 			// Find column indices.
-			$name_col    = array_search( 'Nombre', $headers, true );
-			$surname_col = array_search( 'Apellidos', $headers, true );
-			$email_col   = array_search( 'Email', $headers, true );
+			$name_col       = array_search( 'Nombre', $headers, true );
+			$surname_col    = array_search( 'Apellidos', $headers, true );
+			$email_col      = array_search( 'Email', $headers, true );
+			$newsletter_col = array_search( 'Newsletter', $headers, true );
 
 			if ( false === $name_col || false === $surname_col || false === $email_col ) {
 				// Debug: show what headers were found.
@@ -212,6 +213,7 @@ class ImportController extends WP_REST_Controller {
 				'existing_linked' => 0,
 				'skipped'         => 0,
 				'auto_resolved'   => 0,
+				'marketing'       => 0,
 				'errors'          => array(),
 				'duplicates'      => array(),
 			);
@@ -238,10 +240,14 @@ class ImportController extends WP_REST_Controller {
 				if ( ! isset( $email_rows[ $email ] ) ) {
 					$email_rows[ $email ] = array();
 				}
+				$newsletter_val         = ( false !== $newsletter_col && isset( $row[ $newsletter_col ] ) )
+					? strtolower( trim( (string) $row[ $newsletter_col ] ) )
+					: '';
 				$email_rows[ $email ][] = array(
-					'row'     => $row_number,
-					'name'    => isset( $row[ $name_col ] ) ? trim( (string) $row[ $name_col ] ) : '',
-					'surname' => isset( $row[ $surname_col ] ) ? trim( (string) $row[ $surname_col ] ) : '',
+					'row'           => $row_number,
+					'name'          => isset( $row[ $name_col ] ) ? trim( (string) $row[ $name_col ] ) : '',
+					'surname'       => isset( $row[ $surname_col ] ) ? trim( (string) $row[ $surname_col ] ) : '',
+					'email_profile' => in_array( $newsletter_val, array( 'si', 'yes', 'sí' ), true ) ? 'marketing' : 'minimal',
 				);
 			}
 
@@ -284,7 +290,7 @@ class ImportController extends WP_REST_Controller {
 										'surname'       => $row_data['surname'],
 										'email'         => $resolved_email,
 										'instagram'     => '',
-										'email_profile' => 'minimal',
+										'email_profile' => $row_data['email_profile'] ?? 'minimal',
 									)
 								);
 
@@ -328,6 +334,12 @@ class ImportController extends WP_REST_Controller {
 				$name    = isset( $row[ $name_col ] ) ? trim( (string) $row[ $name_col ] ) : '';
 				$surname = isset( $row[ $surname_col ] ) ? trim( (string) $row[ $surname_col ] ) : '';
 				$email   = isset( $row[ $email_col ] ) ? trim( (string) $row[ $email_col ] ) : '';
+
+				// Determine email profile from Newsletter column.
+				$newsletter_val = ( false !== $newsletter_col && isset( $row[ $newsletter_col ] ) )
+					? strtolower( trim( (string) $row[ $newsletter_col ] ) )
+					: '';
+				$email_profile  = in_array( $newsletter_val, array( 'si', 'yes', 'sí' ), true ) ? 'marketing' : 'minimal';
 
 				// Skip empty rows.
 				if ( empty( $name ) && empty( $surname ) && empty( $email ) ) {
@@ -388,12 +400,15 @@ class ImportController extends WP_REST_Controller {
 						'surname'       => $surname,
 						'email'         => $email,
 						'instagram'     => '',
-						'email_profile' => 'minimal',
+						'email_profile' => $email_profile,
 					)
 				);
 
 				if ( $participant->save() ) {
 					++$results['imported'];
+					if ( 'marketing' === $email_profile ) {
+						++$results['marketing'];
+					}
 
 					// If event_id is provided, associate participant with event.
 					if ( $event_id ) {
