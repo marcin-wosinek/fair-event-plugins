@@ -168,6 +168,15 @@ class Plugin {
 			}
 		);
 
+		// Image Export controller.
+		add_action(
+			'rest_api_init',
+			function () {
+				$controller = new \FairEvents\API\ImageExportController();
+				$controller->register_routes();
+			}
+		);
+
 		// Venue controller.
 		add_action(
 			'rest_api_init',

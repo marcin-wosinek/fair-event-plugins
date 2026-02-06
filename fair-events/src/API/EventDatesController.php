@@ -539,6 +539,9 @@ class EventDatesController extends WP_REST_Controller {
 				: null,
 		);
 
+		// Add image exports.
+		$data['image_exports'] = ImageExportController::get_exports_for_event_date( $event_date->id );
+
 		// Add linked post info if applicable.
 		if ( $event_date->event_id ) {
 			$post = get_post( $event_date->event_id );

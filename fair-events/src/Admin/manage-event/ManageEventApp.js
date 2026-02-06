@@ -25,6 +25,7 @@ import {
 import { __ } from '@wordpress/i18n';
 import apiFetch from '@wordpress/api-fetch';
 import { DurationOptions, calculateDuration } from 'fair-events-shared';
+import ImageExports from './ImageExports.js';
 
 export default function ManageEventApp() {
 	const eventDateId = window.fairEventsManageEventData?.eventDateId;
@@ -679,6 +680,12 @@ export default function ManageEventApp() {
 					</VStack>
 				</CardBody>
 			</Card>
+
+			<ImageExports
+				eventDateId={eventDateId}
+				themeImageId={themeImageId}
+				initialExports={eventDate?.image_exports || []}
+			/>
 
 			{eventDate.gallery && (
 				<Card style={{ marginTop: '16px' }}>
