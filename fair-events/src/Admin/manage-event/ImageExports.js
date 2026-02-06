@@ -19,6 +19,7 @@ import {
 } from '@wordpress/components';
 import { __ } from '@wordpress/i18n';
 import apiFetch from '@wordpress/api-fetch';
+import ImageCropModal from './ImageCropModal.js';
 
 const FORMATS = [
 	{ key: 'entradium', label: 'Entradium', width: 660, height: 930 },
@@ -30,6 +31,7 @@ const FORMATS = [
 export default function ImageExports({
 	eventDateId,
 	themeImageId,
+	themeImageUrl,
 	initialExports,
 }) {
 	const [exports, setExports] = useState(initialExports || []);
@@ -37,6 +39,7 @@ export default function ImageExports({
 	const [deleting, setDeleting] = useState({});
 	const [generatingAll, setGeneratingAll] = useState(false);
 	const [error, setError] = useState(null);
+	const [cropFormat, setCropFormat] = useState(null);
 
 	if (!themeImageId) {
 		return null;
@@ -46,15 +49,23 @@ export default function ImageExports({
 		return exports.find((exp) => exp.format === formatKey);
 	};
 
-	const handleGenerate = async (formatKey) => {
+	const handleGenerate = async (formatKey, cropArea) => {
 		setGenerating((prev) => ({ ...prev, [formatKey]: true }));
 		setError(null);
+
+		const data = { format: formatKey };
+		if (cropArea) {
+			data.crop_x = cropArea.x;
+			data.crop_y = cropArea.y;
+			data.crop_width = cropArea.width;
+			data.crop_height = cropArea.height;
+		}
 
 		try {
 			const result = await apiFetch({
 				path: `/fair-events/v1/event-dates/${eventDateId}/image-exports`,
 				method: 'POST',
-				data: { format: formatKey },
+				data,
 			});
 			setExports(result);
 		} catch (err) {
@@ -112,6 +123,17 @@ export default function ImageExports({
 		}
 
 		setGeneratingAll(false);
+	};
+
+	const openCropModal = (formatKey) => {
+		const format = FORMATS.find((f) => f.key === formatKey);
+		setCropFormat(format);
+	};
+
+	const handleCropGenerate = (croppedAreaPixels) => {
+		const formatKey = cropFormat.key;
+		setCropFormat(null);
+		handleGenerate(formatKey, croppedAreaPixels);
 	};
 
 	return (
@@ -188,7 +210,13 @@ export default function ImageExports({
 											<Button
 												variant="secondary"
 												onClick={() =>
-													handleGenerate(format.key)
+													themeImageUrl
+														? openCropModal(
+																format.key
+														  )
+														: handleGenerate(
+																format.key
+														  )
 												}
 												disabled={
 													generatingAll || isDeleting
@@ -251,6 +279,15 @@ export default function ImageExports({
 					})}
 				</VStack>
 			</CardBody>
+
+			{cropFormat && themeImageUrl && (
+				<ImageCropModal
+					imageUrl={themeImageUrl}
+					format={cropFormat}
+					onGenerate={handleCropGenerate}
+					onClose={() => setCropFormat(null)}
+				/>
+			)}
 		</Card>
 	);
 }

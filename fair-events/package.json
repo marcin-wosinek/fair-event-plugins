@@ -42,7 +42,8 @@
 		"@wordpress/element": "^6.2.0",
 		"@wordpress/i18n": "^6.2.0",
 		"calendar-link": "^2.11.0",
-		"fair-events-shared": "*"
+		"fair-events-shared": "*",
+		"react-easy-crop": "^5.5.6"
 	},
 	"devDependencies": {
 		"@babel/core": "^7.28.3",

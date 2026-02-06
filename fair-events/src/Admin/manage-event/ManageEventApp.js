@@ -684,6 +684,7 @@ export default function ManageEventApp() {
 			<ImageExports
 				eventDateId={eventDateId}
 				themeImageId={themeImageId}
+				themeImageUrl={themeImageUrl}
 				initialExports={eventDate?.image_exports || []}
 			/>
 

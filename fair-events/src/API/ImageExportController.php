@@ -89,17 +89,41 @@ class ImageExportController extends WP_REST_Controller {
 					'callback'            => array( $this, 'create_item' ),
 					'permission_callback' => array( $this, 'items_permissions_check' ),
 					'args'                => array(
-						'id'     => array(
+						'id'          => array(
 							'description' => __( 'Event date ID.', 'fair-events' ),
 							'type'        => 'integer',
 							'required'    => true,
 						),
-						'format' => array(
+						'format'      => array(
 							'description'       => __( 'Export format.', 'fair-events' ),
 							'type'              => 'string',
 							'required'          => true,
 							'enum'              => array_keys( self::FORMATS ),
 							'sanitize_callback' => 'sanitize_text_field',
+						),
+						'crop_x'      => array(
+							'description'       => __( 'Crop area X offset in pixels.', 'fair-events' ),
+							'type'              => 'integer',
+							'required'          => false,
+							'sanitize_callback' => 'absint',
+						),
+						'crop_y'      => array(
+							'description'       => __( 'Crop area Y offset in pixels.', 'fair-events' ),
+							'type'              => 'integer',
+							'required'          => false,
+							'sanitize_callback' => 'absint',
+						),
+						'crop_width'  => array(
+							'description'       => __( 'Crop area width in pixels.', 'fair-events' ),
+							'type'              => 'integer',
+							'required'          => false,
+							'sanitize_callback' => 'absint',
+						),
+						'crop_height' => array(
+							'description'       => __( 'Crop area height in pixels.', 'fair-events' ),
+							'type'              => 'integer',
+							'required'          => false,
+							'sanitize_callback' => 'absint',
 						),
 					),
 				),
@@ -208,8 +232,24 @@ class ImageExportController extends WP_REST_Controller {
 		// Delete existing export for this format if any.
 		$this->delete_existing_export( $event_date_id, $format );
 
+		// Extract optional crop parameters.
+		$crop_params = null;
+		$crop_x      = $request->get_param( 'crop_x' );
+		$crop_y      = $request->get_param( 'crop_y' );
+		$crop_width  = $request->get_param( 'crop_width' );
+		$crop_height = $request->get_param( 'crop_height' );
+
+		if ( null !== $crop_x && null !== $crop_y && null !== $crop_width && null !== $crop_height ) {
+			$crop_params = array(
+				'x'      => (int) $crop_x,
+				'y'      => (int) $crop_y,
+				'width'  => (int) $crop_width,
+				'height' => (int) $crop_height,
+			);
+		}
+
 		// Generate the cropped image.
-		$result = $this->generate_crop( $theme_image_id, $event_date_id, $format );
+		$result = $this->generate_crop( $theme_image_id, $event_date_id, $format, $crop_params );
 
 		if ( is_wp_error( $result ) ) {
 			return $result;
@@ -256,14 +296,15 @@ class ImageExportController extends WP_REST_Controller {
 	}
 
 	/**
-	 * Generate a center-cropped image for the given format
+	 * Generate a cropped image for the given format
 	 *
-	 * @param int    $source_image_id Source attachment ID.
-	 * @param int    $event_date_id   Event date ID.
-	 * @param string $format          Export format key.
+	 * @param int        $source_image_id Source attachment ID.
+	 * @param int        $event_date_id   Event date ID.
+	 * @param string     $format          Export format key.
+	 * @param array|null $crop_params     Optional crop coordinates { x, y, width, height } in pixels.
 	 * @return int|WP_Error New attachment ID on success.
 	 */
-	private function generate_crop( $source_image_id, $event_date_id, $format ) {
+	private function generate_crop( $source_image_id, $event_date_id, $format, $crop_params = null ) {
 		$source_path = get_attached_file( $source_image_id );
 
 		if ( ! $source_path || ! file_exists( $source_path ) ) {
@@ -291,22 +332,30 @@ class ImageExportController extends WP_REST_Controller {
 		$target_width  = self::FORMATS[ $format ]['width'];
 		$target_height = self::FORMATS[ $format ]['height'];
 
-		// Calculate center crop dimensions.
-		$target_ratio = $target_width / $target_height;
-		$source_ratio = $source_width / $source_height;
-
-		if ( $source_ratio > $target_ratio ) {
-			// Source is wider - crop horizontally.
-			$crop_height = $source_height;
-			$crop_width  = (int) round( $source_height * $target_ratio );
-			$crop_x      = (int) round( ( $source_width - $crop_width ) / 2 );
-			$crop_y      = 0;
+		if ( $crop_params ) {
+			// Use custom crop coordinates, clamped to source bounds.
+			$crop_x      = min( (int) $crop_params['x'], $source_width - 1 );
+			$crop_y      = min( (int) $crop_params['y'], $source_height - 1 );
+			$crop_width  = min( (int) $crop_params['width'], $source_width - $crop_x );
+			$crop_height = min( (int) $crop_params['height'], $source_height - $crop_y );
 		} else {
-			// Source is taller - crop vertically.
-			$crop_width  = $source_width;
-			$crop_height = (int) round( $source_width / $target_ratio );
-			$crop_x      = 0;
-			$crop_y      = (int) round( ( $source_height - $crop_height ) / 2 );
+			// Calculate center crop dimensions.
+			$target_ratio = $target_width / $target_height;
+			$source_ratio = $source_width / $source_height;
+
+			if ( $source_ratio > $target_ratio ) {
+				// Source is wider - crop horizontally.
+				$crop_height = $source_height;
+				$crop_width  = (int) round( $source_height * $target_ratio );
+				$crop_x      = (int) round( ( $source_width - $crop_width ) / 2 );
+				$crop_y      = 0;
+			} else {
+				// Source is taller - crop vertically.
+				$crop_width  = $source_width;
+				$crop_height = (int) round( $source_width / $target_ratio );
+				$crop_x      = 0;
+				$crop_y      = (int) round( ( $source_height - $crop_height ) / 2 );
+			}
 		}
 
 		// Crop to target aspect ratio.
@@ -320,15 +369,18 @@ class ImageExportController extends WP_REST_Controller {
 			);
 		}
 
-		// Resize to exact target dimensions.
-		$result = $editor->resize( $target_width, $target_height, true );
+		// Resize to exact target dimensions (only downscale, WP won't upscale).
+		$cropped_size = $editor->get_size();
+		if ( $cropped_size['width'] > $target_width || $cropped_size['height'] > $target_height ) {
+			$result = $editor->resize( $target_width, $target_height, true );
 
-		if ( is_wp_error( $result ) ) {
-			return new WP_Error(
-				'rest_resize_failed',
-				__( 'Failed to resize image.', 'fair-events' ),
-				array( 'status' => 500 )
-			);
+			if ( is_wp_error( $result ) ) {
+				return new WP_Error(
+					'rest_resize_failed',
+					__( 'Failed to resize image.', 'fair-events' ),
+					array( 'status' => 500 )
+				);
+			}
 		}
 
 		// Save the cropped image.
