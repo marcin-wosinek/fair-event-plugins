@@ -288,7 +288,22 @@ class ImageTemplatesController extends WP_REST_Controller {
 			);
 		}
 
-		// Replace text placeholders with XML-escaped values.
+		// Replace image placeholders with base64 data URIs first.
+		// Handles both {{name}} and {{image:name}} syntax.
+		if ( is_array( $images ) ) {
+			foreach ( $images as $name => $attachment_id ) {
+				$data_uri = $this->attachment_to_data_uri( absint( $attachment_id ) );
+				if ( ! $data_uri ) {
+					continue;
+				}
+
+				// Replace both {{name}} and {{image:name}} patterns.
+				$svg_content = str_replace( '{{' . $name . '}}', $data_uri, $svg_content );
+				$svg_content = str_replace( '{{image:' . $name . '}}', $data_uri, $svg_content );
+			}
+		}
+
+		// Replace remaining text placeholders with XML-escaped values.
 		if ( is_array( $variables ) ) {
 			foreach ( $variables as $name => $value ) {
 				$escaped_value = htmlspecialchars( $value, ENT_XML1, 'UTF-8' );
@@ -296,58 +311,98 @@ class ImageTemplatesController extends WP_REST_Controller {
 			}
 		}
 
-		// Replace image placeholders with base64 data URIs.
-		if ( is_array( $images ) ) {
-			foreach ( $images as $name => $attachment_id ) {
-				$image_path = get_attached_file( absint( $attachment_id ) );
-				if ( ! $image_path || ! file_exists( $image_path ) ) {
-					continue;
-				}
-
-				$image_data = file_get_contents( $image_path );
-				if ( false === $image_data ) {
-					continue;
-				}
-
-				$mime_type   = get_post_mime_type( absint( $attachment_id ) );
-				$base64      = base64_encode( $image_data );
-				$data_uri    = 'data:' . $mime_type . ';base64,' . $base64;
-				$svg_content = str_replace( '{{image:' . $name . '}}', $data_uri, $svg_content );
-			}
-		}
-
 		return new WP_REST_Response( array( 'svg' => $svg_content ), 200 );
 	}
 
 	/**
+	 * Convert an attachment to a base64 data URI.
+	 *
+	 * @param int $attachment_id Attachment ID.
+	 * @return string|false Data URI string or false on failure.
+	 */
+	private function attachment_to_data_uri( $attachment_id ) {
+		$image_path = get_attached_file( $attachment_id );
+		if ( ! $image_path || ! file_exists( $image_path ) ) {
+			return false;
+		}
+
+		$image_data = file_get_contents( $image_path );
+		if ( false === $image_data ) {
+			return false;
+		}
+
+		$mime_type = get_post_mime_type( $attachment_id );
+		return 'data:' . $mime_type . ';base64,' . base64_encode( $image_data );
+	}
+
+	/**
 	 * Parse text placeholders from SVG content.
+	 * Excludes placeholders that appear inside href/xlink:href attributes of <image> elements.
 	 *
 	 * @param string $svg_content SVG content.
 	 * @return array Array of variable names.
 	 */
 	private function parse_text_placeholders( $svg_content ) {
-		$variables = array();
-		// Match {{name}} but not {{image:name}}.
-		if ( preg_match_all( '/\{\{(?!image:)([a-zA-Z_]\w*)\}\}/', $svg_content, $matches ) ) {
-			$variables = array_unique( $matches[1] );
-			$variables = array_values( $variables );
-		}
-		return $variables;
+		$all_placeholders = $this->parse_all_placeholders( $svg_content );
+		$image_names      = $this->parse_image_placeholders( $svg_content );
+
+		$variables = array_diff( $all_placeholders, $image_names );
+		return array_values( $variables );
 	}
 
 	/**
 	 * Parse image placeholders from SVG content.
+	 * Detects {{name}} inside href/xlink:href attributes of <image> elements,
+	 * and also supports explicit {{image:name}} syntax.
 	 *
 	 * @param string $svg_content SVG content.
 	 * @return array Array of image placeholder names.
 	 */
 	private function parse_image_placeholders( $svg_content ) {
 		$images = array();
+
+		// Explicit {{image:name}} syntax.
 		if ( preg_match_all( '/\{\{image:([a-zA-Z_]\w*)\}\}/', $svg_content, $matches ) ) {
-			$images = array_unique( $matches[1] );
-			$images = array_values( $images );
+			$images = array_merge( $images, $matches[1] );
 		}
-		return $images;
+
+		// Auto-detect: {{name}} inside href/xlink:href of <image> elements.
+		$use_errors = libxml_use_internal_errors( true );
+		$doc        = new \DOMDocument();
+		if ( $doc->loadXML( $svg_content ) ) {
+			$xpath          = new \DOMXPath( $doc );
+			$svg_ns         = 'http://www.w3.org/2000/svg';
+			$xlink_ns       = 'http://www.w3.org/1999/xlink';
+			$image_elements = $xpath->query( '//*[local-name()="image"]' );
+
+			foreach ( $image_elements as $image ) {
+				$href = $image->getAttribute( 'href' );
+				if ( empty( $href ) ) {
+					$href = $image->getAttributeNS( $xlink_ns, 'href' );
+				}
+				if ( preg_match_all( '/\{\{([a-zA-Z_]\w*)\}\}/', $href, $href_matches ) ) {
+					$images = array_merge( $images, $href_matches[1] );
+				}
+			}
+		}
+		libxml_clear_errors();
+		libxml_use_internal_errors( $use_errors );
+
+		return array_values( array_unique( $images ) );
+	}
+
+	/**
+	 * Parse all {{name}} placeholders from SVG content.
+	 *
+	 * @param string $svg_content SVG content.
+	 * @return array Array of all placeholder names.
+	 */
+	private function parse_all_placeholders( $svg_content ) {
+		$all = array();
+		if ( preg_match_all( '/\{\{(?!image:)([a-zA-Z_]\w*)\}\}/', $svg_content, $matches ) ) {
+			$all = array_unique( $matches[1] );
+		}
+		return array_values( $all );
 	}
 
 	/**
