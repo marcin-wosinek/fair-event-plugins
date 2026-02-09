@@ -18,6 +18,7 @@ import apiFetch from '@wordpress/api-fetch';
  * Internal dependencies
  */
 import { loadGeneralSettings, saveSettings } from './settings-api.js';
+import CopyUrlButton from '../components/CopyUrlButton.js';
 
 /**
  * General Tab Component
@@ -202,6 +203,16 @@ export default function GeneralTab({ onNotice }) {
 						</p>
 
 						<p>
+							<CopyUrlButton
+								url={
+									window.fairEventsSettingsData?.eventsApiUrl
+								}
+								label={__('Copy API URL', 'fair-events')}
+								tooltip={__(
+									'Copy Events API URL to clipboard',
+									'fair-events'
+								)}
+							/>{' '}
 							<ExternalLink
 								href={
 									window.fairEventsSettingsData?.eventsApiUrl

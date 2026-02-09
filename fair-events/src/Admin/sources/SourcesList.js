@@ -12,16 +12,15 @@ import {
 	Spinner,
 	Notice,
 	Modal,
-	Tooltip,
 	__experimentalVStack as VStack,
 	__experimentalHStack as HStack,
 } from '@wordpress/components';
-import { copy } from '@wordpress/icons';
 
 /**
  * Internal dependencies
  */
 import SourceForm from './components/SourceForm.js';
+import CopyUrlButton from '../components/CopyUrlButton.js';
 import './style.css';
 
 const SourcesList = () => {
@@ -135,26 +134,6 @@ const SourcesList = () => {
 		return template.replace('{slug}', slug);
 	};
 
-	const handleCopyIcalUrl = async (slug) => {
-		const url = getIcalUrl(slug);
-		try {
-			await navigator.clipboard.writeText(url);
-			setSuccess(__('iCal URL copied to clipboard!', 'fair-events'));
-		} catch (err) {
-			setError(__('Failed to copy URL to clipboard.', 'fair-events'));
-		}
-	};
-
-	const handleCopyJsonUrl = async (slug) => {
-		const url = getJsonUrl(slug);
-		try {
-			await navigator.clipboard.writeText(url);
-			setSuccess(__('JSON API URL copied to clipboard!', 'fair-events'));
-		} catch (err) {
-			setError(__('Failed to copy URL to clipboard.', 'fair-events'));
-		}
-	};
-
 	return (
 		<div className="fair-events-sources-page">
 			<Card>
@@ -241,52 +220,26 @@ const SourcesList = () => {
 												)}
 											</td>
 											<td>
-												<Tooltip
-													text={__(
+												<CopyUrlButton
+													url={getIcalUrl(
+														source.slug
+													)}
+													tooltip={__(
 														'Copy iCal feed URL',
 														'fair-events'
 													)}
-												>
-													<Button
-														variant="secondary"
-														size="small"
-														icon={copy}
-														onClick={() =>
-															handleCopyIcalUrl(
-																source.slug
-															)
-														}
-													>
-														{__(
-															'Copy URL',
-															'fair-events'
-														)}
-													</Button>
-												</Tooltip>
+												/>
 											</td>
 											<td>
-												<Tooltip
-													text={__(
+												<CopyUrlButton
+													url={getJsonUrl(
+														source.slug
+													)}
+													tooltip={__(
 														'Copy JSON API URL',
 														'fair-events'
 													)}
-												>
-													<Button
-														variant="secondary"
-														size="small"
-														icon={copy}
-														onClick={() =>
-															handleCopyJsonUrl(
-																source.slug
-															)
-														}
-													>
-														{__(
-															'Copy URL',
-															'fair-events'
-														)}
-													</Button>
-												</Tooltip>
+												/>
 											</td>
 											<td>
 												{getStatusBadge(source.enabled)}
