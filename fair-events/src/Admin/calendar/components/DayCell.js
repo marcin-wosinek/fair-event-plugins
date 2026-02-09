@@ -51,27 +51,39 @@ export default function DayCell({
 				<span className="fair-events-calendar-day-number">
 					{dayNumber}
 				</span>
-				<Button
-					className="fair-events-calendar-add-btn"
-					onClick={handleAddClick}
-					label={__('Add event', 'fair-events')}
-					icon="plus"
-					size="small"
-				/>
+				{onAddEvent && (
+					<Button
+						className="fair-events-calendar-add-btn"
+						onClick={handleAddClick}
+						label={__('Add event', 'fair-events')}
+						icon="plus"
+						size="small"
+					/>
+				)}
 			</div>
 			{hasEvents && (
 				<div className="fair-events-calendar-day-events">
-					{visibleEvents.map((event, index) => (
-						<button
-							key={index}
-							type="button"
-							className="fair-events-calendar-event"
-							onClick={(e) => handleEventClick(e, event.uid)}
-							title={event.title}
-						>
-							{event.title}
-						</button>
-					))}
+					{visibleEvents.map((event, index) =>
+						onEditEvent ? (
+							<button
+								key={index}
+								type="button"
+								className="fair-events-calendar-event"
+								onClick={(e) => handleEventClick(e, event.uid)}
+								title={event.title}
+							>
+								{event.title}
+							</button>
+						) : (
+							<span
+								key={index}
+								className="fair-events-calendar-event fair-events-calendar-event-readonly"
+								title={event.title}
+							>
+								{event.title}
+							</span>
+						)
+					)}
 					{hiddenCount > 0 && (
 						<span className="fair-events-calendar-more">
 							{sprintf(

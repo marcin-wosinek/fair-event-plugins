@@ -53,6 +53,10 @@ module.exports = {
       process.cwd(),
       "src/Admin/sources/index.js",
     ),
+    "admin/source-view/index": path.resolve(
+      process.cwd(),
+      "src/Admin/source-view/index.js",
+    ),
     "admin/migration/index": path.resolve(
       process.cwd(),
       "src/Admin/migration/index.js",

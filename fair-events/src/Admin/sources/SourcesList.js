@@ -206,7 +206,13 @@ const SourcesList = () => {
 									{sources.map((source) => (
 										<tr key={source.id}>
 											<td>
-												<strong>{source.name}</strong>
+												<strong>
+													<a
+														href={`admin.php?page=fair-events-source-view&source_id=${source.id}`}
+													>
+														{source.name}
+													</a>
+												</strong>
 											</td>
 											<td>
 												<code>{source.slug}</code>
@@ -246,6 +252,16 @@ const SourcesList = () => {
 											</td>
 											<td>
 												<HStack spacing={2}>
+													<Button
+														variant="secondary"
+														size="small"
+														href={`admin.php?page=fair-events-source-view&source_id=${source.id}`}
+													>
+														{__(
+															'View',
+															'fair-events'
+														)}
+													</Button>
 													<Button
 														variant="secondary"
 														size="small"

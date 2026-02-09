@@ -92,13 +92,23 @@ class AdminPages {
 		);
 
 		// Manage Event page (hidden from menu, accessed via calendar)
-		add_submenu_page(
+		$manage_hookname = add_submenu_page(
 			'', // Hidden from menu (empty string instead of null for PHP 8.1+ compatibility)
 			__( 'Manage Event', 'fair-events' ),
 			__( 'Manage Event', 'fair-events' ),
 			'edit_posts',
 			'fair-events-manage-event',
 			array( $this, 'render_manage_event_page' )
+		);
+
+		// Source View page (hidden from menu, accessed via sources list)
+		$source_view_hookname = add_submenu_page(
+			'', // Hidden from menu (empty string instead of null for PHP 8.1+ compatibility)
+			__( 'View Source', 'fair-events' ),
+			__( 'View Source', 'fair-events' ),
+			'manage_options',
+			'fair-events-source-view',
+			array( $this, 'render_source_view_page' )
 		);
 
 		// Copy Event page (hidden from menu, accessed via row action)
@@ -111,8 +121,35 @@ class AdminPages {
 			array( $this, 'render_copy_event_page' )
 		);
 
+		// Set page titles for hidden pages to prevent strip_tags() deprecation warning.
+		$this->set_hidden_page_title( $manage_hookname, __( 'Manage Event', 'fair-events' ) );
+		$this->set_hidden_page_title( $source_view_hookname, __( 'View Source', 'fair-events' ) );
+		$this->set_hidden_page_title( $copy_hookname, __( 'Copy Event', 'fair-events' ) );
+
 		// Handle copy event form submission before page render
 		add_action( 'load-' . $copy_hookname, array( $this, 'handle_copy_event_submission' ) );
+	}
+
+	/**
+	 * Set the page title for a hidden admin page.
+	 *
+	 * Hidden pages (registered with empty parent slug) are not in the submenu array,
+	 * so WordPress cannot find their title. This causes $title to be null when
+	 * admin-header.php calls strip_tags(), triggering a PHP 8.1+ deprecation warning.
+	 *
+	 * @param string $hookname The page hook name returned by add_submenu_page().
+	 * @param string $page_title The title to set.
+	 * @return void
+	 */
+	private function set_hidden_page_title( $hookname, $page_title ) {
+		add_action(
+			'load-' . $hookname,
+			static function () use ( $page_title ) {
+				global $title;
+				// phpcs:ignore WordPress.WP.GlobalVariablesOverride.Prohibited
+				$title = $page_title;
+			}
+		);
 	}
 
 	/**
@@ -211,6 +248,51 @@ class AdminPages {
 			);
 
 			wp_enqueue_style( 'wp-components' );
+			return;
+		}
+
+		// Source View page (hidden pages use 'admin_page_' prefix).
+		if ( 'admin_page_fair-events-source-view' === $hook ) {
+			$asset_file = include FAIR_EVENTS_PLUGIN_DIR . 'build/admin/source-view/index.asset.php';
+
+			wp_enqueue_script(
+				'fair-events-source-view',
+				FAIR_EVENTS_PLUGIN_URL . 'build/admin/source-view/index.js',
+				$asset_file['dependencies'],
+				$asset_file['version'],
+				true
+			);
+
+			// Reuse the calendar stylesheet (shared CSS for calendar grid components).
+			$calendar_asset = include FAIR_EVENTS_PLUGIN_DIR . 'build/admin/calendar/index.asset.php';
+			wp_enqueue_style(
+				'fair-events-calendar',
+				FAIR_EVENTS_PLUGIN_URL . 'build/admin/calendar/style-index.css',
+				array( 'wp-components' ),
+				$calendar_asset['version']
+			);
+
+			// phpcs:ignore WordPress.Security.NonceVerification.Recommended
+			$source_id = isset( $_GET['source_id'] ) ? absint( $_GET['source_id'] ) : 0;
+
+			wp_localize_script(
+				'fair-events-source-view',
+				'fairEventsSourceViewData',
+				array(
+					'sourceId'        => $source_id,
+					'startOfWeek'     => (int) get_option( 'start_of_week', 1 ),
+					'sourcesListUrl'  => admin_url( 'admin.php?page=fair-events-sources' ),
+					'icalUrlTemplate' => rest_url( 'fair-events/v1/sources/{slug}/ical' ),
+					'jsonUrlTemplate' => rest_url( 'fair-events/v1/sources/{slug}/json' ),
+				)
+			);
+
+			wp_set_script_translations(
+				'fair-events-source-view',
+				'fair-events',
+				FAIR_EVENTS_PLUGIN_DIR . 'build/languages'
+			);
+
 			return;
 		}
 
@@ -378,6 +460,17 @@ class AdminPages {
 	public function render_venues_page() {
 		?>
 		<div id="fair-events-venues-root"></div>
+		<?php
+	}
+
+	/**
+	 * Render source view page
+	 *
+	 * @return void
+	 */
+	public function render_source_view_page() {
+		?>
+		<div id="fair-events-source-view-root"></div>
 		<?php
 	}
 

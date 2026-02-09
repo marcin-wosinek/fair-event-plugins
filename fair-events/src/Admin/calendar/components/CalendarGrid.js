@@ -19,9 +19,11 @@ export default function CalendarGrid({
 	events,
 	onAddEvent,
 	onEditEvent,
+	startOfWeek: startOfWeekProp,
 }) {
 	// Get start_of_week setting (0 = Sunday, 1 = Monday)
-	const startOfWeek = window.fairEventsCalendarData?.startOfWeek ?? 1;
+	const startOfWeek =
+		startOfWeekProp ?? window.fairEventsCalendarData?.startOfWeek ?? 1;
 
 	const year = currentDate.getFullYear();
 	const month = currentDate.getMonth();

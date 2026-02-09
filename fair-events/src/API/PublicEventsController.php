@@ -12,6 +12,8 @@ namespace FairEvents\API;
 defined( 'WPINC' ) || die;
 
 use FairEvents\Database\EventSourceRepository;
+use FairEvents\Helpers\FairEventsApiParser;
+use FairEvents\Helpers\ICalParser;
 use FairEvents\Models\EventDates;
 use FairEvents\Settings\Settings;
 use WP_REST_Controller;
@@ -186,15 +188,52 @@ class PublicEventsController extends WP_REST_Controller {
 			);
 		}
 
-		// Collect category IDs from source data sources
-		$category_ids = array();
+		// Collect external events from source data sources.
+		$external_events = array();
+
+		// Build date range strings for external source filtering.
+		$range_start = $start_date ? $start_date . ' 00:00:00' : null;
+		$range_end   = $end_date ? $end_date . ' 23:59:59' : null;
+
 		foreach ( $source['data_sources'] as $data_source ) {
-			if ( 'categories' === $data_source['source_type'] && isset( $data_source['config']['category_ids'] ) ) {
-				$category_ids = array_merge( $category_ids, $data_source['config']['category_ids'] );
+			if ( 'ical_url' === $data_source['source_type'] ) {
+				$ical_url = $data_source['config']['url'] ?? '';
+				if ( ! empty( $ical_url ) ) {
+					$fetched = ICalParser::fetch_and_parse( $ical_url );
+					if ( $range_start && $range_end ) {
+						$fetched = ICalParser::filter_events_for_month( $fetched, $range_start, $range_end );
+					}
+					foreach ( $fetched as $event ) {
+						$external_events[] = $this->format_external_event( $event );
+					}
+				}
+			}
+
+			if ( 'fair_events_api' === $data_source['source_type'] ) {
+				$api_url = $data_source['config']['url'] ?? '';
+				if ( ! empty( $api_url ) ) {
+					$fetched = FairEventsApiParser::fetch_and_parse( $api_url, $start_date, $end_date );
+					if ( $range_start && $range_end ) {
+						$fetched = FairEventsApiParser::filter_events_for_month( $fetched, $range_start, $range_end );
+					}
+					foreach ( $fetched as $event ) {
+						$external_events[] = $this->format_external_event( $event );
+					}
+				}
 			}
 		}
 
-		$events = $this->query_events( $start_date, $end_date, array_unique( $category_ids ), $per_page, $page );
+		// Query all local events (no category filter) to match the calendar block behavior.
+		$events = $this->query_events( $start_date, $end_date, array(), $per_page, $page );
+
+		// Merge external events with local events and sort by start date.
+		$events = array_merge( $events, $external_events );
+		usort(
+			$events,
+			function ( $a, $b ) {
+				return strcmp( $a['start'], $b['start'] );
+			}
+		);
 
 		return $this->build_response( $events, $per_page, $page );
 	}
@@ -414,6 +453,27 @@ class PublicEventsController extends WP_REST_Controller {
 			'end'         => $end_datetime ? gmdate( 'c', strtotime( $end_datetime ) ) : '',
 			'all_day'     => $all_day,
 			'url'         => $url,
+		);
+	}
+
+	/**
+	 * Format an external event (from iCal or Fair Events API) for JSON response.
+	 *
+	 * External parsers return events with 'summary' and 'Y-m-d H:i:s' dates.
+	 * This converts them to the same format as format_occurrence().
+	 *
+	 * @param array $event Event data from ICalParser or FairEventsApiParser.
+	 * @return array Formatted event data matching the JSON API output.
+	 */
+	private function format_external_event( $event ) {
+		return array(
+			'uid'         => $event['uid'] ?? '',
+			'title'       => $event['summary'] ?? '',
+			'description' => $event['description'] ?? '',
+			'start'       => ! empty( $event['start'] ) ? gmdate( 'c', strtotime( $event['start'] ) ) : '',
+			'end'         => ! empty( $event['end'] ) ? gmdate( 'c', strtotime( $event['end'] ) ) : '',
+			'all_day'     => $event['all_day'] ?? false,
+			'url'         => $event['url'] ?? '',
 		);
 	}
 
