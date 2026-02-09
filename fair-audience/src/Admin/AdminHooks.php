@@ -211,6 +211,16 @@ class AdminHooks {
 			array( $this, 'render_instagram_posts_page' )
 		);
 
+		// Submenu page - Image Templates.
+		add_submenu_page(
+			'fair-audience',
+			__( 'Image Templates', 'fair-audience' ),
+			__( 'Image Templates', 'fair-audience' ),
+			'manage_options',
+			'fair-audience-image-templates',
+			array( $this, 'render_image_templates_page' )
+		);
+
 		// Submenu page - Settings.
 		add_submenu_page(
 			'fair-audience',
@@ -295,6 +305,14 @@ class AdminHooks {
 	}
 
 	/**
+	 * Render Image Templates page.
+	 */
+	public function render_image_templates_page() {
+		$page = new ImageTemplatesPage();
+		$page->render();
+	}
+
+	/**
 	 * Render Settings page.
 	 */
 	public function render_settings_page() {
@@ -353,6 +371,12 @@ class AdminHooks {
 		// Instagram Posts page.
 		if ( 'fair-audience_page_fair-audience-instagram-posts' === $hook ) {
 			$this->enqueue_page_script( 'instagram-posts', $plugin_dir );
+		}
+
+		// Image Templates page.
+		if ( 'fair-audience_page_fair-audience-image-templates' === $hook ) {
+			wp_enqueue_media();
+			$this->enqueue_page_script( 'image-templates', $plugin_dir );
 		}
 
 		// Settings page.

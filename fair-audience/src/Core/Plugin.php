@@ -61,6 +61,9 @@ class Plugin {
 		\FairAudience\Admin\MediaLibraryHooks::init();
 		\FairAudience\Admin\MediaBatchActions::init();
 
+		// Initialize SVG upload support.
+		\FairAudience\Hooks\SvgUploadHooks::init();
+
 		// Initialize blocks.
 		$block_hooks = new \FairAudience\Hooks\BlockHooks();
 	}
@@ -107,6 +110,9 @@ class Plugin {
 
 		$instagram_posts_controller = new \FairAudience\API\InstagramPostsController();
 		$instagram_posts_controller->register_routes();
+
+		$image_templates_controller = new \FairAudience\API\ImageTemplatesController();
+		$image_templates_controller->register_routes();
 	}
 
 	/**

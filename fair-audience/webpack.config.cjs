@@ -54,6 +54,10 @@ const customConfig = {
 			process.cwd(),
 			'src/Admin/instagram-posts/index.js',
 		),
+		'admin/image-templates/index': path.resolve(
+			process.cwd(),
+			'src/Admin/image-templates/index.js',
+		),
 		'admin/media-library-filter': path.resolve(
 			process.cwd(),
 			'src/Admin/media-library-filter.js',
