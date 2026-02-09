@@ -290,9 +290,31 @@ class ImageTemplatesController extends WP_REST_Controller {
 
 		// Replace image placeholders with base64 data URIs first.
 		// Handles both {{name}} and {{image:name}} syntax.
+		// Accepts either plain attachment ID or object with id + crop params.
 		if ( is_array( $images ) ) {
-			foreach ( $images as $name => $attachment_id ) {
-				$data_uri = $this->attachment_to_data_uri( absint( $attachment_id ) );
+			foreach ( $images as $name => $value ) {
+				$attachment_id = null;
+				$crop_params   = null;
+
+				if ( is_array( $value ) && isset( $value['id'] ) ) {
+					$attachment_id = absint( $value['id'] );
+					if ( isset( $value['crop_x'], $value['crop_y'], $value['crop_width'], $value['crop_height'] ) ) {
+						$crop_params = array(
+							'x'      => (int) $value['crop_x'],
+							'y'      => (int) $value['crop_y'],
+							'width'  => (int) $value['crop_width'],
+							'height' => (int) $value['crop_height'],
+						);
+					}
+				} else {
+					$attachment_id = absint( $value );
+				}
+
+				if ( ! $attachment_id ) {
+					continue;
+				}
+
+				$data_uri = $this->attachment_to_data_uri( $attachment_id, $crop_params );
 				if ( ! $data_uri ) {
 					continue;
 				}
@@ -315,15 +337,20 @@ class ImageTemplatesController extends WP_REST_Controller {
 	}
 
 	/**
-	 * Convert an attachment to a base64 data URI.
+	 * Convert an attachment to a base64 data URI, optionally cropping first.
 	 *
-	 * @param int $attachment_id Attachment ID.
+	 * @param int        $attachment_id Attachment ID.
+	 * @param array|null $crop_params   Optional crop params {x, y, width, height} in pixels.
 	 * @return string|false Data URI string or false on failure.
 	 */
-	private function attachment_to_data_uri( $attachment_id ) {
+	private function attachment_to_data_uri( $attachment_id, $crop_params = null ) {
 		$image_path = get_attached_file( $attachment_id );
 		if ( ! $image_path || ! file_exists( $image_path ) ) {
 			return false;
+		}
+
+		if ( $crop_params ) {
+			return $this->crop_and_encode( $image_path, $crop_params );
 		}
 
 		$image_data = file_get_contents( $image_path );
@@ -336,6 +363,54 @@ class ImageTemplatesController extends WP_REST_Controller {
 	}
 
 	/**
+	 * Crop an image file and return as base64 data URI.
+	 *
+	 * @param string $image_path  Path to the image file.
+	 * @param array  $crop_params Crop params {x, y, width, height} in pixels.
+	 * @return string|false Data URI string or false on failure.
+	 */
+	private function crop_and_encode( $image_path, $crop_params ) {
+		$editor = \wp_get_image_editor( $image_path );
+		if ( \is_wp_error( $editor ) ) {
+			return false;
+		}
+
+		$result = $editor->crop(
+			$crop_params['x'],
+			$crop_params['y'],
+			$crop_params['width'],
+			$crop_params['height']
+		);
+		if ( \is_wp_error( $result ) ) {
+			return false;
+		}
+
+		// Save to a temporary file.
+		$temp_file = tempnam( sys_get_temp_dir(), 'fair_crop_' );
+		$saved     = $editor->save( $temp_file );
+		if ( \is_wp_error( $saved ) ) {
+			unlink( $temp_file );
+			return false;
+		}
+
+		$saved_path = $saved['path'];
+		$image_data = file_get_contents( $saved_path );
+		$mime_type  = $saved['mime-type'];
+
+		// Clean up temp file.
+		unlink( $saved_path );
+		if ( $saved_path !== $temp_file && file_exists( $temp_file ) ) {
+			unlink( $temp_file );
+		}
+
+		if ( false === $image_data ) {
+			return false;
+		}
+
+		return 'data:' . $mime_type . ';base64,' . base64_encode( $image_data );
+	}
+
+	/**
 	 * Parse text placeholders from SVG content.
 	 * Excludes placeholders that appear inside href/xlink:href attributes of <image> elements.
 	 *
@@ -344,7 +419,13 @@ class ImageTemplatesController extends WP_REST_Controller {
 	 */
 	private function parse_text_placeholders( $svg_content ) {
 		$all_placeholders = $this->parse_all_placeholders( $svg_content );
-		$image_names      = $this->parse_image_placeholders( $svg_content );
+		$image_objects    = $this->parse_image_placeholders( $svg_content );
+		$image_names      = array_map(
+			function ( $img ) {
+				return $img['name'];
+			},
+			$image_objects
+		);
 
 		$variables = array_diff( $all_placeholders, $image_names );
 		return array_values( $variables );
@@ -359,11 +440,17 @@ class ImageTemplatesController extends WP_REST_Controller {
 	 * @return array Array of image placeholder names.
 	 */
 	private function parse_image_placeholders( $svg_content ) {
-		$images = array();
+		$images     = array();
+		$seen_names = array();
 
-		// Explicit {{image:name}} syntax.
+		// Explicit {{image:name}} syntax (no dimension info available).
 		if ( preg_match_all( '/\{\{image:([a-zA-Z_]\w*)\}\}/', $svg_content, $matches ) ) {
-			$images = array_merge( $images, $matches[1] );
+			foreach ( $matches[1] as $name ) {
+				if ( ! isset( $seen_names[ $name ] ) ) {
+					$seen_names[ $name ] = true;
+					$images[]            = array( 'name' => $name );
+				}
+			}
 		}
 
 		// Auto-detect: {{name}} inside href/xlink:href of <image> elements.
@@ -371,7 +458,6 @@ class ImageTemplatesController extends WP_REST_Controller {
 		$doc        = new \DOMDocument();
 		if ( $doc->loadXML( $svg_content ) ) {
 			$xpath          = new \DOMXPath( $doc );
-			$svg_ns         = 'http://www.w3.org/2000/svg';
 			$xlink_ns       = 'http://www.w3.org/1999/xlink';
 			$image_elements = $xpath->query( '//*[local-name()="image"]' );
 
@@ -381,14 +467,26 @@ class ImageTemplatesController extends WP_REST_Controller {
 					$href = $image->getAttributeNS( $xlink_ns, 'href' );
 				}
 				if ( preg_match_all( '/\{\{([a-zA-Z_]\w*)\}\}/', $href, $href_matches ) ) {
-					$images = array_merge( $images, $href_matches[1] );
+					foreach ( $href_matches[1] as $name ) {
+						if ( ! isset( $seen_names[ $name ] ) ) {
+							$seen_names[ $name ] = true;
+							$entry               = array( 'name' => $name );
+							$width               = $image->getAttribute( 'width' );
+							$height              = $image->getAttribute( 'height' );
+							if ( '' !== $width && '' !== $height ) {
+								$entry['width']  = (int) round( (float) $width );
+								$entry['height'] = (int) round( (float) $height );
+							}
+							$images[] = $entry;
+						}
+					}
 				}
 			}
 		}
 		libxml_clear_errors();
 		libxml_use_internal_errors( $use_errors );
 
-		return array_values( array_unique( $images ) );
+		return $images;
 	}
 
 	/**

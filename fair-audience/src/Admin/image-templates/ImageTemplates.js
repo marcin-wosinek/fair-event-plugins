@@ -23,6 +23,7 @@ import {
 	renderTemplate,
 } from './image-templates-api.js';
 import { svgToPng, downloadBlob } from './svg-to-png.js';
+import ImageCropModal from './ImageCropModal.js';
 
 /**
  * Open the WordPress media picker and call onSelect with the chosen attachment.
@@ -62,8 +63,12 @@ export default function ImageTemplates() {
 	const [variables, setVariables] = useState({});
 	const [images, setImages] = useState({});
 	const [imageNames, setImageNames] = useState({});
+	const [imageCrops, setImageCrops] = useState({});
 	const [renderedSvg, setRenderedSvg] = useState(null);
 	const [isRendering, setIsRendering] = useState(false);
+
+	// Crop modal state.
+	const [cropModal, setCropModal] = useState(null);
 
 	const fetchTemplates = () => {
 		setIsLoading(true);
@@ -176,29 +181,65 @@ export default function ImageTemplates() {
 		setVariables(vars);
 
 		// Initialize images with empty values.
+		// template.images is now an array of {name, width?, height?} objects.
 		const imgs = {};
 		const names = {};
-		template.images.forEach((name) => {
-			imgs[name] = null;
-			names[name] = '';
+		const crops = {};
+		template.images.forEach((img) => {
+			imgs[img.name] = null;
+			names[img.name] = '';
+			crops[img.name] = null;
 		});
 		setImages(imgs);
 		setImageNames(names);
+		setImageCrops(crops);
 	};
 
-	const handlePickImage = (name) => {
+	const handlePickImage = (imagePlaceholder) => {
 		openMediaPicker({
 			title: __('Select Image', 'fair-audience'),
 			button: __('Use Image', 'fair-audience'),
 			type: 'image',
 			onSelect(attachment) {
-				setImages((prev) => ({ ...prev, [name]: attachment.id }));
-				setImageNames((prev) => ({
-					...prev,
-					[name]: attachment.filename,
-				}));
+				const name = imagePlaceholder.name;
+				const hasDimensions =
+					imagePlaceholder.width && imagePlaceholder.height;
+
+				if (hasDimensions) {
+					// Open crop modal.
+					setCropModal({
+						name,
+						imageUrl: attachment.url,
+						attachmentId: attachment.id,
+						filename: attachment.filename,
+						width: imagePlaceholder.width,
+						height: imagePlaceholder.height,
+					});
+				} else {
+					// No dimensions - use image directly without cropping.
+					setImages((prev) => ({
+						...prev,
+						[name]: attachment.id,
+					}));
+					setImageNames((prev) => ({
+						...prev,
+						[name]: attachment.filename,
+					}));
+					setImageCrops((prev) => ({ ...prev, [name]: null }));
+				}
 			},
 		});
+	};
+
+	const handleCropComplete = (croppedAreaPixels) => {
+		if (!cropModal) {
+			return;
+		}
+		const { name, attachmentId, filename } = cropModal;
+		setImages((prev) => ({ ...prev, [name]: attachmentId }));
+		setImageNames((prev) => ({ ...prev, [name]: filename }));
+		setImageCrops((prev) => ({ ...prev, [name]: croppedAreaPixels }));
+		setCropModal(null);
 	};
 
 	const handlePreview = () => {
@@ -206,10 +247,22 @@ export default function ImageTemplates() {
 		setRenderedSvg(null);
 
 		// Build images object with only non-null values.
+		// Include crop data if available.
 		const imageData = {};
 		Object.entries(images).forEach(([name, id]) => {
 			if (id) {
-				imageData[name] = id;
+				const crop = imageCrops[name];
+				if (crop) {
+					imageData[name] = {
+						id,
+						crop_x: Math.round(crop.x),
+						crop_y: Math.round(crop.y),
+						crop_width: Math.round(crop.width),
+						crop_height: Math.round(crop.height),
+					};
+				} else {
+					imageData[name] = id;
+				}
 			}
 		});
 
@@ -318,9 +371,9 @@ export default function ImageTemplates() {
 							/>
 						))}
 
-						{activeTemplate.images.map((name) => (
+						{activeTemplate.images.map((img) => (
 							<div
-								key={name}
+								key={img.name}
 								style={{
 									marginBottom: '1rem',
 									display: 'flex',
@@ -328,33 +381,48 @@ export default function ImageTemplates() {
 									gap: '8px',
 								}}
 							>
-								<span style={{ fontWeight: 500 }}>{name}:</span>
+								<span style={{ fontWeight: 500 }}>
+									{img.name}
+									{img.width && img.height
+										? ` (${img.width}\u00D7${img.height})`
+										: ''}
+									:
+								</span>
 								<Button
 									variant="secondary"
 									isSmall
-									onClick={() => handlePickImage(name)}
+									onClick={() => handlePickImage(img)}
 								>
-									{imageNames[name]
-										? imageNames[name]
+									{imageNames[img.name]
+										? imageNames[img.name]
 										: __('Select Image', 'fair-audience')}
 								</Button>
-								{images[name] && (
+								{images[img.name] && (
 									<Button
 										isDestructive
 										isSmall
 										onClick={() => {
 											setImages((prev) => ({
 												...prev,
-												[name]: null,
+												[img.name]: null,
 											}));
 											setImageNames((prev) => ({
 												...prev,
-												[name]: '',
+												[img.name]: '',
+											}));
+											setImageCrops((prev) => ({
+												...prev,
+												[img.name]: null,
 											}));
 										}}
 									>
 										{__('Clear', 'fair-audience')}
 									</Button>
+								)}
+								{imageCrops[img.name] && (
+									<span style={{ color: '#666' }}>
+										{__('Cropped', 'fair-audience')}
+									</span>
 								)}
 							</div>
 						))}
@@ -419,6 +487,16 @@ export default function ImageTemplates() {
 							</div>
 						</CardBody>
 					</Card>
+				)}
+
+				{cropModal && (
+					<ImageCropModal
+						imageUrl={cropModal.imageUrl}
+						width={cropModal.width}
+						height={cropModal.height}
+						onCrop={handleCropComplete}
+						onClose={() => setCropModal(null)}
+					/>
 				)}
 			</div>
 		);
@@ -511,7 +589,14 @@ export default function ImageTemplates() {
 										</td>
 										<td>
 											{template.images.length > 0
-												? template.images.join(', ')
+												? template.images
+														.map((img) =>
+															img.width &&
+															img.height
+																? `${img.name} (${img.width}\u00D7${img.height})`
+																: img.name
+														)
+														.join(', ')
 												: '-'}
 										</td>
 										<td>
