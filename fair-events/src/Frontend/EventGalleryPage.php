@@ -7,6 +7,8 @@
 
 namespace FairEvents\Frontend;
 
+use FairEvents\Settings\Settings;
+
 defined( 'WPINC' ) || die;
 
 /**
@@ -64,9 +66,10 @@ class EventGalleryPage {
 			return;
 		}
 
-		// Validate event exists.
-		$event = get_post( $event_id );
-		if ( ! $event || 'fair_event' !== $event->post_type ) {
+		// Validate event exists and is an enabled post type.
+		$event              = get_post( $event_id );
+		$enabled_post_types = Settings::get_enabled_post_types();
+		if ( ! $event || ! in_array( $event->post_type, $enabled_post_types, true ) ) {
 			global $wp_query;
 			$wp_query->set_404();
 			status_header( 404 );
@@ -107,8 +110,9 @@ class EventGalleryPage {
 		}
 
 		// Get the event.
-		$event = get_post( $access_data['event_id'] );
-		if ( ! $event || 'fair_event' !== $event->post_type ) {
+		$event              = get_post( $access_data['event_id'] );
+		$enabled_post_types = Settings::get_enabled_post_types();
+		if ( ! $event || ! in_array( $event->post_type, $enabled_post_types, true ) ) {
 			global $wp_query;
 			$wp_query->set_404();
 			status_header( 404 );
@@ -255,8 +259,9 @@ class EventGalleryPage {
 	 * @return string Modified content.
 	 */
 	public static function add_gallery_link_to_content( $content ) {
-		// Only on single event pages.
-		if ( ! is_singular( 'fair_event' ) ) {
+		// Only on single event pages (any enabled post type).
+		$enabled_post_types = Settings::get_enabled_post_types();
+		if ( ! is_singular( $enabled_post_types ) ) {
 			return $content;
 		}
 

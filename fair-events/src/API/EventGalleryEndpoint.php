@@ -8,6 +8,7 @@
 namespace FairEvents\API;
 
 use FairEvents\Database\EventPhotoRepository;
+use FairEvents\Settings\Settings;
 use WP_REST_Controller;
 use WP_REST_Server;
 use WP_REST_Request;
@@ -68,9 +69,10 @@ class EventGalleryEndpoint extends WP_REST_Controller {
 	public function get_items( $request ) {
 		$event_id = $request->get_param( 'event_id' );
 
-		// Validate event exists.
-		$event = get_post( $event_id );
-		if ( ! $event || 'fair_event' !== $event->post_type ) {
+		// Validate event exists and is an enabled post type.
+		$event              = get_post( $event_id );
+		$enabled_post_types = Settings::get_enabled_post_types();
+		if ( ! $event || ! in_array( $event->post_type, $enabled_post_types, true ) ) {
 			return new WP_Error(
 				'invalid_event',
 				__( 'Event not found.', 'fair-events' ),

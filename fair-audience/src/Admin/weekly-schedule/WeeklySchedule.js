@@ -279,9 +279,7 @@ export default function WeeklySchedule() {
 									minHeight: '120px',
 									border: '1px solid #ddd',
 									borderLeft:
-										idx === 0
-											? '1px solid #ddd'
-											: 'none',
+										idx === 0 ? '1px solid #ddd' : 'none',
 								}}
 							>
 								<div

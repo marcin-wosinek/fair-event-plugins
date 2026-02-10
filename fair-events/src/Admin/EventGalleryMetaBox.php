@@ -8,6 +8,7 @@
 namespace FairEvents\Admin;
 
 use FairEvents\Database\EventPhotoRepository;
+use FairEvents\Settings\Settings;
 
 defined( 'WPINC' ) || die;
 
@@ -27,14 +28,18 @@ class EventGalleryMetaBox {
 	 * Add gallery meta box to event edit screen.
 	 */
 	public static function add_meta_box() {
-		add_meta_box(
-			'fair_event_gallery',
-			__( 'Event Photos', 'fair-events' ),
-			array( __CLASS__, 'render_meta_box' ),
-			'fair_event',
-			'side',
-			'default'
-		);
+		$enabled_post_types = Settings::get_enabled_post_types();
+
+		foreach ( $enabled_post_types as $post_type ) {
+			add_meta_box(
+				'fair_event_gallery',
+				__( 'Event Photos', 'fair-events' ),
+				array( __CLASS__, 'render_meta_box' ),
+				$post_type,
+				'side',
+				'default'
+			);
+		}
 	}
 
 	/**
