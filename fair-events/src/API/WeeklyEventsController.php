@@ -12,6 +12,7 @@ namespace FairEvents\API;
 defined( 'WPINC' ) || die;
 
 use FairEvents\Database\EventSourceRepository;
+use FairEvents\Helpers\FairEventsApiParser;
 use FairEvents\Helpers\ICalParser;
 use FairEvents\Helpers\QueryHelper;
 use FairEvents\Models\EventDates;
@@ -123,6 +124,11 @@ class WeeklyEventsController extends \WP_REST_Controller {
 				if ( ! empty( $url ) ) {
 					$this->collect_ical_events( $url, $start_datetime, $end_datetime, $all_events );
 				}
+			} elseif ( 'fair_events_api' === $type ) {
+				$url = $data_source['config']['url'] ?? '';
+				if ( ! empty( $url ) ) {
+					$this->collect_fair_events_api_events( $url, $week_start, $week_end, $start_datetime, $end_datetime, $all_events );
+				}
 			} elseif ( 'categories' === $type ) {
 				$category_ids = $data_source['config']['category_ids'] ?? array();
 				if ( ! empty( $category_ids ) ) {
@@ -213,6 +219,37 @@ class WeeklyEventsController extends \WP_REST_Controller {
 	private function collect_ical_events( $url, $start_datetime, $end_datetime, &$all_events ) {
 		$fetched  = ICalParser::fetch_and_parse( $url );
 		$filtered = ICalParser::filter_events_for_month( $fetched, $start_datetime, $end_datetime );
+
+		foreach ( $filtered as $event ) {
+			$start_date = gmdate( 'Y-m-d', strtotime( $event['start'] ) );
+
+			if ( ! isset( $all_events[ $start_date ] ) ) {
+				$all_events[ $start_date ] = array();
+			}
+
+			$all_events[ $start_date ][] = array(
+				'title'      => $event['summary'] ?? '',
+				'start_time' => $event['all_day'] ? '' : gmdate( 'H:i', strtotime( $event['start'] ) ),
+				'end_time'   => $event['all_day'] ? '' : gmdate( 'H:i', strtotime( $event['end'] ) ),
+				'url'        => $event['url'] ?? '',
+				'all_day'    => (bool) $event['all_day'],
+			);
+		}
+	}
+
+	/**
+	 * Collect events from a Fair Events API endpoint.
+	 *
+	 * @param string $url            Fair Events API URL.
+	 * @param string $week_start     Week start date (Y-m-d).
+	 * @param string $week_end       Week end date (Y-m-d).
+	 * @param string $start_datetime Week start datetime.
+	 * @param string $end_datetime   Week end datetime.
+	 * @param array  $all_events     Events grouped by date (modified by reference).
+	 */
+	private function collect_fair_events_api_events( $url, $week_start, $week_end, $start_datetime, $end_datetime, &$all_events ) {
+		$fetched  = FairEventsApiParser::fetch_and_parse( $url, $week_start, $week_end );
+		$filtered = FairEventsApiParser::filter_events_for_month( $fetched, $start_datetime, $end_datetime );
 
 		foreach ( $filtered as $event ) {
 			$start_date = gmdate( 'Y-m-d', strtotime( $event['start'] ) );
