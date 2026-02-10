@@ -221,6 +221,18 @@ class AdminHooks {
 			array( $this, 'render_image_templates_page' )
 		);
 
+		// Submenu page - Weekly Schedule (only when fair-events is active).
+		if ( class_exists( 'FairEvents\Core\Plugin' ) ) {
+			add_submenu_page(
+				'fair-audience',
+				__( 'Weekly Schedule', 'fair-audience' ),
+				__( 'Weekly Schedule', 'fair-audience' ),
+				'manage_options',
+				'fair-audience-weekly-schedule',
+				array( $this, 'render_weekly_schedule_page' )
+			);
+		}
+
 		// Submenu page - Settings.
 		add_submenu_page(
 			'fair-audience',
@@ -313,6 +325,14 @@ class AdminHooks {
 	}
 
 	/**
+	 * Render Weekly Schedule page.
+	 */
+	public function render_weekly_schedule_page() {
+		$page = new WeeklySchedulePage();
+		$page->render();
+	}
+
+	/**
 	 * Render Settings page.
 	 */
 	public function render_settings_page() {
@@ -377,6 +397,11 @@ class AdminHooks {
 		if ( 'fair-audience_page_fair-audience-image-templates' === $hook ) {
 			wp_enqueue_media();
 			$this->enqueue_page_script( 'image-templates', $plugin_dir );
+		}
+
+		// Weekly Schedule page.
+		if ( 'fair-audience_page_fair-audience-weekly-schedule' === $hook ) {
+			$this->enqueue_page_script( 'weekly-schedule', $plugin_dir );
 		}
 
 		// Settings page.

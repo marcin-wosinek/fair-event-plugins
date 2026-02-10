@@ -58,6 +58,10 @@ const customConfig = {
 			process.cwd(),
 			'src/Admin/image-templates/index.js',
 		),
+		'admin/weekly-schedule/index': path.resolve(
+			process.cwd(),
+			'src/Admin/weekly-schedule/index.js',
+		),
 		'admin/media-library-filter': path.resolve(
 			process.cwd(),
 			'src/Admin/media-library-filter.js',

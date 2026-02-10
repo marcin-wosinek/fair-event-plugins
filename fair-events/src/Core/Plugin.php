@@ -186,6 +186,15 @@ class Plugin {
 			}
 		);
 
+		// Weekly Events controller.
+		add_action(
+			'rest_api_init',
+			function () {
+				$controller = new \FairEvents\API\WeeklyEventsController();
+				$controller->register_routes();
+			}
+		);
+
 		// Facebook controller.
 		add_action(
 			'rest_api_init',
