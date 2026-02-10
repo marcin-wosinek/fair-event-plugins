@@ -747,6 +747,70 @@ class EventDates {
 	}
 
 	/**
+	 * Delete generated occurrences by master ID
+	 *
+	 * Used for standalone events that have no event_id.
+	 *
+	 * @param int $master_id Master event date ID.
+	 * @return bool True on success, false on failure.
+	 */
+	public static function delete_generated_by_master_id( $master_id ) {
+		global $wpdb;
+
+		$table_name = $wpdb->prefix . 'fair_event_dates';
+
+		$result = $wpdb->delete(
+			$table_name,
+			array(
+				'master_id'       => $master_id,
+				'occurrence_type' => 'generated',
+			),
+			array( '%d', '%s' )
+		);
+
+		return $result !== false;
+	}
+
+	/**
+	 * Create a standalone generated occurrence
+	 *
+	 * Copies master properties (title, venue_id, link_type, etc.) with new start/end times.
+	 *
+	 * @param array $data Occurrence data with keys from master plus start/end overrides.
+	 * @return int|false The row ID on success, false on failure.
+	 */
+	public static function create_standalone_occurrence( $data ) {
+		global $wpdb;
+
+		$table_name = $wpdb->prefix . 'fair_event_dates';
+
+		$insert_data = array(
+			'event_id'        => $data['event_id'] ?? null,
+			'start_datetime'  => $data['start_datetime'],
+			'end_datetime'    => $data['end_datetime'] ?? null,
+			'all_day'         => isset( $data['all_day'] ) && $data['all_day'] ? 1 : 0,
+			'occurrence_type' => 'generated',
+			'master_id'       => $data['master_id'],
+			'rrule'           => null,
+			'title'           => $data['title'] ?? null,
+			'external_url'    => $data['external_url'] ?? null,
+			'link_type'       => $data['link_type'] ?? 'none',
+			'venue_id'        => $data['venue_id'] ?? null,
+			'theme_image_id'  => $data['theme_image_id'] ?? null,
+		);
+
+		$format = array( '%d', '%s', '%s', '%d', '%s', '%d', '%s', '%s', '%s', '%s', '%d', '%d' );
+
+		$result = $wpdb->insert( $table_name, $insert_data, $format );
+
+		if ( $result ) {
+			return $wpdb->insert_id;
+		}
+
+		return false;
+	}
+
+	/**
 	 * Get event date by ID
 	 *
 	 * @param int $id Event date ID.

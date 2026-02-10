@@ -10,6 +10,7 @@ namespace FairEvents\API;
 defined( 'WPINC' ) || die;
 
 use FairEvents\Models\EventDates;
+use FairEvents\Services\RecurrenceService;
 use FairEvents\Database\EventPhotoRepository;
 use FairEvents\Database\PhotoLikeRepository;
 use FairEvents\Frontend\EventGalleryPage;
@@ -248,6 +249,13 @@ class EventDatesController extends WP_REST_Controller {
 			EventDates::update_by_id( $id, array( 'venue_id' => $venue_id ) );
 		}
 
+		// Regenerate recurrence occurrences if rrule is provided.
+		$rrule = $request->get_param( 'rrule' );
+		if ( ! empty( $rrule ) ) {
+			EventDates::update_by_id( $id, array( 'rrule' => $rrule ) );
+			RecurrenceService::regenerate_standalone_occurrences( $id, $rrule );
+		}
+
 		$event_date = EventDates::get_by_id( $id );
 
 		return new WP_REST_Response( $this->prepare_event_date( $event_date ), 201 );
@@ -391,6 +399,20 @@ class EventDatesController extends WP_REST_Controller {
 						'post_title' => $update_data['title'],
 					)
 				);
+			}
+
+			// Regenerate recurrence occurrences when rrule or dates change.
+			$rrule_changed              = isset( $update_data['rrule'] );
+			$dates_changed_on_recurring = $dates_changed && ( $existing->occurrence_type === 'master' || $rrule_changed );
+
+			if ( $rrule_changed || $dates_changed_on_recurring ) {
+				$effective_rrule = $update_data['rrule'] ?? $existing->rrule;
+
+				if ( $effective_event_id ) {
+					RecurrenceService::regenerate_event_occurrences( $effective_event_id, $effective_rrule );
+				} else {
+					RecurrenceService::regenerate_standalone_occurrences( $id, $effective_rrule );
+				}
 			}
 		}
 

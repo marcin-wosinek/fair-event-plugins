@@ -270,6 +270,91 @@ class RecurrenceService {
 	}
 
 	/**
+	 * Regenerate occurrences for a standalone event date (no linked post)
+	 *
+	 * @param int         $event_date_id Event date row ID.
+	 * @param string|null $rrule         RRULE string. Pass null to read from DB,
+	 *                                   empty string to clear recurrence.
+	 * @return int Number of occurrences generated.
+	 */
+	public static function regenerate_standalone_occurrences( $event_date_id, $rrule = null ) {
+		$master = EventDates::get_by_id( $event_date_id );
+
+		if ( ! $master ) {
+			return 0;
+		}
+
+		// Read rrule from DB if not provided.
+		if ( null === $rrule ) {
+			$rrule = $master->rrule;
+		}
+
+		// Delete existing generated occurrences.
+		EventDates::delete_generated_by_master_id( $event_date_id );
+
+		// If no RRULE, mark as single and return.
+		if ( empty( $rrule ) ) {
+			EventDates::update_by_id(
+				$event_date_id,
+				array(
+					'occurrence_type' => 'single',
+					'rrule'           => null,
+				)
+			);
+			return 1;
+		}
+
+		// Generate occurrences from the master's start/end.
+		$occurrences = self::generate_occurrences(
+			$master->start_datetime,
+			$master->end_datetime,
+			$rrule
+		);
+
+		if ( empty( $occurrences ) ) {
+			return 0;
+		}
+
+		// Update master row: set as master with rrule.
+		EventDates::update_by_id(
+			$event_date_id,
+			array(
+				'occurrence_type' => 'master',
+				'rrule'           => $rrule,
+			)
+		);
+
+		// Skip first occurrence (that's the master itself).
+		array_shift( $occurrences );
+
+		$count = 1;
+
+		// Create generated occurrences copying master properties.
+		foreach ( $occurrences as $occurrence ) {
+			$result = EventDates::create_standalone_occurrence(
+				array(
+					'event_id'       => $master->event_id,
+					'start_datetime' => $occurrence['start'],
+					'end_datetime'   => $occurrence['end'],
+					'all_day'        => $master->all_day,
+					'master_id'      => $event_date_id,
+					'title'          => $master->title,
+					'link_type'      => $master->link_type,
+					'external_url'   => $master->external_url,
+					'venue_id'       => $master->venue_id,
+					'theme_image_id' => $master->theme_image_id,
+				)
+			);
+
+			if ( $result ) {
+				++$count;
+			}
+		}
+
+		return $count;
+	}
+
+	/**
 	 * Build an RRULE string from components
 	 *
 	 * @param string      $frequency Frequency (DAILY, WEEKLY, MONTHLY).
