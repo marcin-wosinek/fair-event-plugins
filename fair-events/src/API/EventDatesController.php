@@ -158,7 +158,7 @@ class EventDatesController extends WP_REST_Controller {
 			),
 			'venue_id'       => array(
 				'description' => __( 'Venue ID.', 'fair-events' ),
-				'type'        => 'integer',
+				'type'        => array( 'integer', 'null' ),
 				'required'    => false,
 			),
 			'link_type'      => array(
@@ -331,9 +331,8 @@ class EventDatesController extends WP_REST_Controller {
 			$update_data['all_day'] = $all_day ? 1 : 0;
 		}
 
-		$venue_id = $request->get_param( 'venue_id' );
-		if ( null !== $venue_id ) {
-			$update_data['venue_id'] = $venue_id;
+		if ( $request->has_param( 'venue_id' ) ) {
+			$update_data['venue_id'] = $request->get_param( 'venue_id' );
 		}
 
 		$link_type = $request->get_param( 'link_type' );
