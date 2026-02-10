@@ -38,7 +38,22 @@ export default function SourceViewApp() {
 	const [error, setError] = useState(null);
 	const [isEditOpen, setIsEditOpen] = useState(false);
 
-	// Fetch source details
+	const fetchSource = useCallback(async () => {
+		try {
+			const data = await apiFetch({
+				path: `/fair-events/v1/sources/${sourceId}`,
+			});
+			setSource(data);
+		} catch (err) {
+			setError(
+				err.message || __('Failed to load source.', 'fair-events')
+			);
+		} finally {
+			setLoading(false);
+		}
+	}, []);
+
+	// Fetch source details on mount.
 	useEffect(() => {
 		if (!sourceId) {
 			setError(__('No source ID provided.', 'fair-events'));
@@ -46,23 +61,8 @@ export default function SourceViewApp() {
 			return;
 		}
 
-		const fetchSource = async () => {
-			try {
-				const data = await apiFetch({
-					path: `/fair-events/v1/sources/${sourceId}`,
-				});
-				setSource(data);
-			} catch (err) {
-				setError(
-					err.message || __('Failed to load source.', 'fair-events')
-				);
-			} finally {
-				setLoading(false);
-			}
-		};
-
 		fetchSource();
-	}, []);
+	}, [fetchSource]);
 
 	// Fetch events for current month
 	const fetchEvents = useCallback(async () => {
@@ -136,16 +136,10 @@ export default function SourceViewApp() {
 		return template.replace('{slug}', slug);
 	};
 
-	const handleEditSuccess = async () => {
+	const handleEditSuccess = () => {
 		setIsEditOpen(false);
-		try {
-			const data = await apiFetch({
-				path: `/fair-events/v1/sources/${sourceId}`,
-			});
-			setSource(data);
-		} catch (err) {
-			// Ignore refresh errors
-		}
+		fetchSource();
+		fetchEvents();
 	};
 
 	if (loading) {
@@ -233,6 +227,14 @@ export default function SourceViewApp() {
 								tooltip={__('Copy JSON API URL', 'fair-events')}
 							/>
 						</HStack>
+					</VStack>
+					<VStack spacing={1}>
+						<Button
+							variant="secondary"
+							onClick={() => setIsEditOpen(true)}
+						>
+							{__('Edit Source', 'fair-events')}
+						</Button>
 					</VStack>
 				</HStack>
 				<Button
