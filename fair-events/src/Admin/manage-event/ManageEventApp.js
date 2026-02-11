@@ -18,6 +18,7 @@ import {
 	CheckboxControl,
 	SelectControl,
 	RadioControl,
+	FormTokenField,
 	__experimentalNumberControl as NumberControl,
 	__experimentalVStack as VStack,
 	__experimentalHStack as HStack,
@@ -53,6 +54,8 @@ export default function ManageEventApp() {
 	const [externalUrl, setExternalUrl] = useState('');
 	const [themeImageId, setThemeImageId] = useState(null);
 	const [themeImageUrl, setThemeImageUrl] = useState(null);
+	const [categories, setCategories] = useState([]);
+	const [availableCategories, setAvailableCategories] = useState([]);
 
 	// Recurrence state
 	const [recurrenceEnabled, setRecurrenceEnabled] = useState(false);
@@ -75,6 +78,7 @@ export default function ManageEventApp() {
 		}
 		loadEventDate();
 		loadVenues();
+		loadCategories();
 	}, []);
 
 	const loadEventDate = async () => {
@@ -103,6 +107,17 @@ export default function ManageEventApp() {
 		}
 	};
 
+	const loadCategories = async () => {
+		try {
+			const data = await apiFetch({
+				path: '/fair-events/v1/sources/categories',
+			});
+			setAvailableCategories(data);
+		} catch {
+			// Categories are optional, ignore errors.
+		}
+	};
+
 	const populateForm = (data) => {
 		setTitle(data.title || '');
 		setAllDay(data.all_day || false);
@@ -111,6 +126,7 @@ export default function ManageEventApp() {
 		setVenueId(data.venue_id ? String(data.venue_id) : '');
 		setThemeImageId(data.theme_image_id || null);
 		setThemeImageUrl(data.theme_image_url || null);
+		setCategories(data.categories?.map((c) => c.id) || []);
 
 		if (data.start_datetime) {
 			const [sDate, sTime] = data.start_datetime.split(' ');
@@ -300,6 +316,7 @@ export default function ManageEventApp() {
 					external_url: linkType === 'external' ? externalUrl : null,
 					theme_image_id: themeImageId,
 					rrule: buildRRule(),
+					categories,
 				},
 			});
 			setEventDate(updated);
@@ -555,6 +572,29 @@ export default function ManageEventApp() {
 							value={venueId}
 							options={venueOptions}
 							onChange={setVenueId}
+						/>
+
+						<FormTokenField
+							label={__('Categories', 'fair-events')}
+							value={categories.map((id) => {
+								const cat = availableCategories.find(
+									(c) => c.id === id
+								);
+								return cat ? cat.name : '';
+							})}
+							suggestions={availableCategories.map((c) => c.name)}
+							onChange={(tokens) => {
+								const ids = tokens
+									.map((token) => {
+										const cat = availableCategories.find(
+											(c) => c.name === token
+										);
+										return cat ? cat.id : null;
+									})
+									.filter(Boolean);
+								setCategories(ids);
+							}}
+							__experimentalExpandOnFocus
 						/>
 
 						<CheckboxControl

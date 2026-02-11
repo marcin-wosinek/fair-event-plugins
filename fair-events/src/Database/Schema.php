@@ -17,7 +17,7 @@ class Schema {
 	/**
 	 * Database version
 	 */
-	const DB_VERSION = '2.0.0';
+	const DB_VERSION = '2.1.0';
 
 	/**
 	 * Get the SQL for creating the fair_event_dates table
@@ -157,6 +157,27 @@ class Schema {
 			updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
 			PRIMARY KEY (id),
 			KEY idx_name (name(100))
+		) ENGINE=InnoDB {$charset_collate};";
+	}
+
+	/**
+	 * Get the SQL for creating the fair_event_date_categories table
+	 *
+	 * Junction table for standalone event date categories.
+	 *
+	 * @return string SQL statement for creating the table.
+	 */
+	public static function get_event_date_categories_table_sql() {
+		global $wpdb;
+
+		$table_name      = $wpdb->prefix . 'fair_event_date_categories';
+		$charset_collate = $wpdb->get_charset_collate();
+
+		return "CREATE TABLE {$table_name} (
+			event_date_id BIGINT UNSIGNED NOT NULL,
+			term_id BIGINT UNSIGNED NOT NULL,
+			PRIMARY KEY (event_date_id, term_id),
+			KEY idx_term_id (term_id)
 		) ENGINE=InnoDB {$charset_collate};";
 	}
 

@@ -316,74 +316,58 @@ class PublicEventsController extends WP_REST_Controller {
 
 		$standalone_where_clause = implode( ' AND ', $standalone_where_conditions );
 
-		// Skip standalone events when filtering by categories (they have no categories).
-		$include_standalone = empty( $category_ids );
+		$categories_table = $wpdb->prefix . 'fair_event_date_categories';
 
-		if ( $include_standalone ) {
-			// UNION query: post-linked events + standalone events.
-			// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
-			$query = $wpdb->prepare(
-				"(SELECT
-					{$dates_table}.id as occurrence_id,
-					{$dates_table}.event_id,
-					{$dates_table}.start_datetime,
-					{$dates_table}.end_datetime,
-					{$dates_table}.all_day,
-					{$dates_table}.occurrence_type,
-					{$dates_table}.title as standalone_title,
-					{$dates_table}.link_type,
-					{$dates_table}.external_url,
-					{$wpdb->posts}.post_title,
-					{$wpdb->posts}.post_content,
-					{$wpdb->posts}.post_excerpt
-				FROM {$dates_table}
-				INNER JOIN {$wpdb->posts} ON {$dates_table}.event_id = {$wpdb->posts}.ID
-				WHERE {$post_where_clause})
-				UNION ALL
-				(SELECT
-					{$dates_table}.id as occurrence_id,
-					{$dates_table}.event_id,
-					{$dates_table}.start_datetime,
-					{$dates_table}.end_datetime,
-					{$dates_table}.all_day,
-					{$dates_table}.occurrence_type,
-					{$dates_table}.title as standalone_title,
-					{$dates_table}.link_type,
-					{$dates_table}.external_url,
-					NULL as post_title,
-					NULL as post_content,
-					NULL as post_excerpt
-				FROM {$dates_table}
-				WHERE {$standalone_where_clause})
-				ORDER BY start_datetime ASC
-				LIMIT %d OFFSET %d",
-				array_merge( $post_where_values, $standalone_where_values, array( $per_page, $offset ) )
-			);
-		} else {
-			// Only post-linked events (category filter active).
-			// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
-			$query = $wpdb->prepare(
-				"SELECT
-					{$dates_table}.id as occurrence_id,
-					{$dates_table}.event_id,
-					{$dates_table}.start_datetime,
-					{$dates_table}.end_datetime,
-					{$dates_table}.all_day,
-					{$dates_table}.occurrence_type,
-					{$dates_table}.title as standalone_title,
-					{$dates_table}.link_type,
-					{$dates_table}.external_url,
-					{$wpdb->posts}.post_title,
-					{$wpdb->posts}.post_content,
-					{$wpdb->posts}.post_excerpt
-				FROM {$dates_table}
-				INNER JOIN {$wpdb->posts} ON {$dates_table}.event_id = {$wpdb->posts}.ID
-				WHERE {$post_where_clause}
-				ORDER BY {$dates_table}.start_datetime ASC
-				LIMIT %d OFFSET %d",
-				array_merge( $post_where_values, array( $per_page, $offset ) )
-			);
+		// When filtering by categories, include standalone events that have matching categories via junction table.
+		if ( ! empty( $category_ids ) ) {
+			$category_placeholders_standalone = implode( ', ', array_fill( 0, count( $category_ids ), '%d' ) );
+			$standalone_where_conditions[]    = "{$dates_table}.id IN (
+				SELECT event_date_id FROM {$categories_table}
+				WHERE term_id IN ({$category_placeholders_standalone})
+			)";
+			$standalone_where_values          = array_merge( $standalone_where_values, $category_ids );
+			$standalone_where_clause          = implode( ' AND ', $standalone_where_conditions );
 		}
+
+		// UNION query: post-linked events + standalone events.
+		// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+		$query = $wpdb->prepare(
+			"(SELECT
+				{$dates_table}.id as occurrence_id,
+				{$dates_table}.event_id,
+				{$dates_table}.start_datetime,
+				{$dates_table}.end_datetime,
+				{$dates_table}.all_day,
+				{$dates_table}.occurrence_type,
+				{$dates_table}.title as standalone_title,
+				{$dates_table}.link_type,
+				{$dates_table}.external_url,
+				{$wpdb->posts}.post_title,
+				{$wpdb->posts}.post_content,
+				{$wpdb->posts}.post_excerpt
+			FROM {$dates_table}
+			INNER JOIN {$wpdb->posts} ON {$dates_table}.event_id = {$wpdb->posts}.ID
+			WHERE {$post_where_clause})
+			UNION ALL
+			(SELECT
+				{$dates_table}.id as occurrence_id,
+				{$dates_table}.event_id,
+				{$dates_table}.start_datetime,
+				{$dates_table}.end_datetime,
+				{$dates_table}.all_day,
+				{$dates_table}.occurrence_type,
+				{$dates_table}.title as standalone_title,
+				{$dates_table}.link_type,
+				{$dates_table}.external_url,
+				NULL as post_title,
+				NULL as post_content,
+				NULL as post_excerpt
+			FROM {$dates_table}
+			WHERE {$standalone_where_clause})
+			ORDER BY start_datetime ASC
+			LIMIT %d OFFSET %d",
+			array_merge( $post_where_values, $standalone_where_values, array( $per_page, $offset ) )
+		);
 
 		// phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared
 		$results = $wpdb->get_results( $query );
@@ -445,6 +429,23 @@ class PublicEventsController extends WP_REST_Controller {
 			$url   = get_permalink( $row->event_id );
 		}
 
+		// Get categories.
+		$categories = array();
+		if ( ! $is_standalone && $row->event_id ) {
+			$terms = wp_get_post_terms( $row->event_id, 'category' );
+			if ( ! is_wp_error( $terms ) ) {
+				foreach ( $terms as $term ) {
+					$categories[] = array(
+						'id'   => $term->term_id,
+						'name' => $term->name,
+						'slug' => $term->slug,
+					);
+				}
+			}
+		} elseif ( $is_standalone ) {
+			$categories = $this->get_standalone_event_categories( $row->occurrence_id );
+		}
+
 		return array(
 			'uid'         => $uid,
 			'title'       => $title,
@@ -453,6 +454,7 @@ class PublicEventsController extends WP_REST_Controller {
 			'end'         => $end_datetime ? gmdate( 'c', strtotime( $end_datetime ) ) : '',
 			'all_day'     => $all_day,
 			'url'         => $url,
+			'categories'  => $categories,
 		);
 	}
 
@@ -519,6 +521,40 @@ class PublicEventsController extends WP_REST_Controller {
 			'all_day'     => $all_day,
 			'url'         => get_permalink( $event_id ),
 		);
+	}
+
+	/**
+	 * Get categories for a standalone event date from junction table
+	 *
+	 * @param int $event_date_id Event date ID.
+	 * @return array Array of category objects with id, name, slug.
+	 */
+	private function get_standalone_event_categories( $event_date_id ) {
+		global $wpdb;
+
+		$table_name = $wpdb->prefix . 'fair_event_date_categories';
+
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery
+		$term_ids = $wpdb->get_col(
+			$wpdb->prepare(
+				'SELECT term_id FROM %i WHERE event_date_id = %d',
+				$table_name,
+				$event_date_id
+			)
+		);
+
+		$categories = array();
+		foreach ( $term_ids as $term_id ) {
+			$term = get_term( (int) $term_id, 'category' );
+			if ( $term && ! is_wp_error( $term ) ) {
+				$categories[] = array(
+					'id'   => $term->term_id,
+					'name' => $term->name,
+					'slug' => $term->slug,
+				);
+			}
+		}
+		return $categories;
 	}
 
 	/**

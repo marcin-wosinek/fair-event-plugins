@@ -463,6 +463,19 @@ class EventSourceController extends WP_REST_Controller {
 			}
 
 			$ical .= 'URL:' . get_permalink( $event->ID ) . "\r\n";
+
+			// Add categories.
+			$terms = wp_get_post_terms( $event->ID, 'category' );
+			if ( ! is_wp_error( $terms ) && ! empty( $terms ) ) {
+				$cat_names = array_map(
+					function ( $term ) {
+						return $this->escape_ical( $term->name );
+					},
+					$terms
+				);
+				$ical     .= 'CATEGORIES:' . implode( ',', $cat_names ) . "\r\n";
+			}
+
 			$ical .= "STATUS:CONFIRMED\r\n";
 			$ical .= "END:VEVENT\r\n";
 		}

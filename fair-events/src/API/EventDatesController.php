@@ -191,6 +191,12 @@ class EventDatesController extends WP_REST_Controller {
 				'required'          => false,
 				'sanitize_callback' => 'sanitize_text_field',
 			),
+			'categories'     => array(
+				'description' => __( 'Category term IDs.', 'fair-events' ),
+				'type'        => 'array',
+				'required'    => false,
+				'items'       => array( 'type' => 'integer' ),
+			),
 		);
 	}
 
@@ -254,6 +260,12 @@ class EventDatesController extends WP_REST_Controller {
 		if ( ! empty( $rrule ) ) {
 			EventDates::update_by_id( $id, array( 'rrule' => $rrule ) );
 			RecurrenceService::regenerate_standalone_occurrences( $id, $rrule );
+		}
+
+		// Set categories for standalone event date.
+		$categories = $request->get_param( 'categories' );
+		if ( is_array( $categories ) ) {
+			$this->set_standalone_categories( $id, $categories );
 		}
 
 		$event_date = EventDates::get_by_id( $id );
@@ -414,6 +426,40 @@ class EventDatesController extends WP_REST_Controller {
 					RecurrenceService::regenerate_standalone_occurrences( $id, $effective_rrule );
 				}
 			}
+
+			// When linking a standalone event to a post, copy categories to post taxonomy.
+			if ( $newly_linked ) {
+				$standalone_cat_ids = $this->get_standalone_category_ids( $id );
+				if ( ! empty( $standalone_cat_ids ) ) {
+					wp_set_post_terms( $effective_event_id, $standalone_cat_ids, 'category' );
+					$this->set_standalone_categories( $id, array() );
+				}
+			}
+
+			// When unlinking a post-linked event, copy categories to junction table.
+			$newly_unlinked = isset( $update_data['event_id'] ) && ! $update_data['event_id'] && $existing->event_id;
+			if ( $newly_unlinked ) {
+				$terms   = wp_get_post_terms( $existing->event_id, 'category' );
+				$cat_ids = array();
+				if ( ! is_wp_error( $terms ) ) {
+					$cat_ids = wp_list_pluck( $terms, 'term_id' );
+				}
+				if ( ! empty( $cat_ids ) ) {
+					$this->set_standalone_categories( $id, $cat_ids );
+				}
+			}
+		}
+
+		// Handle categories parameter.
+		$categories = $request->get_param( 'categories' );
+		if ( is_array( $categories ) ) {
+			// Re-fetch to get latest state after potential link changes.
+			$current = EventDates::get_by_id( $id );
+			if ( $current->event_id ) {
+				wp_set_post_terms( $current->event_id, $categories, 'category' );
+			} else {
+				$this->set_standalone_categories( $id, $categories );
+			}
 		}
 
 		$event_date = EventDates::get_by_id( $id );
@@ -524,6 +570,13 @@ class EventDatesController extends WP_REST_Controller {
 			EventDates::save_venue_id( $post_id, $event_date->venue_id );
 		}
 
+		// Copy standalone categories to the new post.
+		$standalone_cat_ids = $this->get_standalone_category_ids( $id );
+		if ( ! empty( $standalone_cat_ids ) ) {
+			wp_set_post_terms( $post_id, $standalone_cat_ids, 'category' );
+			$this->set_standalone_categories( $id, array() );
+		}
+
 		$edit_url = get_edit_post_link( $post_id, 'raw' );
 
 		return new WP_REST_Response(
@@ -560,6 +613,9 @@ class EventDatesController extends WP_REST_Controller {
 				: null,
 		);
 
+		// Add categories.
+		$data['categories'] = $this->get_event_date_categories( $event_date );
+
 		// Add image exports.
 		$data['image_exports'] = ImageExportController::get_exports_for_event_date( $event_date->id );
 
@@ -593,6 +649,113 @@ class EventDatesController extends WP_REST_Controller {
 		}
 
 		return $data;
+	}
+
+	/**
+	 * Get categories for an event date
+	 *
+	 * @param object $event_date Event date object.
+	 * @return array Array of category objects with id, name, slug.
+	 */
+	private function get_event_date_categories( $event_date ) {
+		if ( $event_date->event_id ) {
+			$terms = wp_get_post_terms( $event_date->event_id, 'category' );
+			if ( is_wp_error( $terms ) ) {
+				return array();
+			}
+			return array_map(
+				function ( $term ) {
+					return array(
+						'id'   => $term->term_id,
+						'name' => $term->name,
+						'slug' => $term->slug,
+					);
+				},
+				$terms
+			);
+		}
+
+		return $this->get_standalone_categories( $event_date->id );
+	}
+
+	/**
+	 * Get categories for a standalone event date from junction table
+	 *
+	 * @param int $event_date_id Event date ID.
+	 * @return array Array of category objects with id, name, slug.
+	 */
+	private function get_standalone_categories( $event_date_id ) {
+		$term_ids = $this->get_standalone_category_ids( $event_date_id );
+		if ( empty( $term_ids ) ) {
+			return array();
+		}
+
+		$categories = array();
+		foreach ( $term_ids as $term_id ) {
+			$term = get_term( $term_id, 'category' );
+			if ( $term && ! is_wp_error( $term ) ) {
+				$categories[] = array(
+					'id'   => $term->term_id,
+					'name' => $term->name,
+					'slug' => $term->slug,
+				);
+			}
+		}
+		return $categories;
+	}
+
+	/**
+	 * Get category term IDs for a standalone event date
+	 *
+	 * @param int $event_date_id Event date ID.
+	 * @return array Array of term IDs.
+	 */
+	private function get_standalone_category_ids( $event_date_id ) {
+		global $wpdb;
+
+		$table_name = $wpdb->prefix . 'fair_event_date_categories';
+
+		$term_ids = $wpdb->get_col(
+			$wpdb->prepare(
+				'SELECT term_id FROM %i WHERE event_date_id = %d',
+				$table_name,
+				$event_date_id
+			)
+		);
+
+		return array_map( 'intval', $term_ids );
+	}
+
+	/**
+	 * Set categories for a standalone event date in junction table
+	 *
+	 * @param int   $event_date_id Event date ID.
+	 * @param array $category_ids  Array of term IDs.
+	 * @return void
+	 */
+	private function set_standalone_categories( $event_date_id, $category_ids ) {
+		global $wpdb;
+
+		$table_name = $wpdb->prefix . 'fair_event_date_categories';
+
+		// Delete existing rows.
+		$wpdb->delete(
+			$table_name,
+			array( 'event_date_id' => $event_date_id ),
+			array( '%d' )
+		);
+
+		// Insert new rows.
+		foreach ( $category_ids as $term_id ) {
+			$wpdb->insert(
+				$table_name,
+				array(
+					'event_date_id' => $event_date_id,
+					'term_id'       => (int) $term_id,
+				),
+				array( '%d', '%d' )
+			);
+		}
 	}
 
 	/**
