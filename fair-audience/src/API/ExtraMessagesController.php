@@ -112,7 +112,7 @@ class ExtraMessagesController extends WP_REST_Controller {
 	 * @return WP_REST_Response|WP_Error Response object or error.
 	 */
 	public function get_items( $request ) {
-		$orderby = $request->get_param( 'orderby' ) ?? 'start_date';
+		$orderby = $request->get_param( 'orderby' ) ?? 'created_at';
 		$order   = $request->get_param( 'order' ) ?? 'DESC';
 
 		$messages = $this->repository->get_all( $orderby, $order );
@@ -163,9 +163,8 @@ class ExtraMessagesController extends WP_REST_Controller {
 		$message = new ExtraMessage();
 		$message->populate(
 			array(
-				'content'    => $request->get_param( 'content' ),
-				'start_date' => $request->get_param( 'start_date' ),
-				'end_date'   => $request->get_param( 'end_date' ),
+				'content'   => $request->get_param( 'content' ),
+				'is_active' => $request->get_param( 'is_active' ) ?? true,
 			)
 		);
 
@@ -210,10 +209,9 @@ class ExtraMessagesController extends WP_REST_Controller {
 
 		$message->populate(
 			array(
-				'id'         => $message->id,
-				'content'    => $request->get_param( 'content' ) ?? $message->content,
-				'start_date' => $request->get_param( 'start_date' ) ?? $message->start_date,
-				'end_date'   => $request->get_param( 'end_date' ) ?? $message->end_date,
+				'id'        => $message->id,
+				'content'   => $request->get_param( 'content' ) ?? $message->content,
+				'is_active' => $request->get_param( 'is_active' ) ?? $message->is_active,
 			)
 		);
 
@@ -273,39 +271,12 @@ class ExtraMessagesController extends WP_REST_Controller {
 	 * @return true|WP_Error True if valid, WP_Error otherwise.
 	 */
 	private function validate_request_data( $request ) {
-		$content    = $request->get_param( 'content' );
-		$start_date = $request->get_param( 'start_date' );
-		$end_date   = $request->get_param( 'end_date' );
+		$content = $request->get_param( 'content' );
 
 		if ( empty( $content ) ) {
 			return new WP_Error(
 				'missing_content',
 				__( 'Content is required.', 'fair-audience' ),
-				array( 'status' => 400 )
-			);
-		}
-
-		if ( empty( $start_date ) || empty( $end_date ) ) {
-			return new WP_Error(
-				'missing_dates',
-				__( 'Start date and end date are required.', 'fair-audience' ),
-				array( 'status' => 400 )
-			);
-		}
-
-		// Validate date format (YYYY-MM-DD).
-		if ( ! preg_match( '/^\d{4}-\d{2}-\d{2}$/', $start_date ) || ! preg_match( '/^\d{4}-\d{2}-\d{2}$/', $end_date ) ) {
-			return new WP_Error(
-				'invalid_date_format',
-				__( 'Dates must be in YYYY-MM-DD format.', 'fair-audience' ),
-				array( 'status' => 400 )
-			);
-		}
-
-		if ( $end_date < $start_date ) {
-			return new WP_Error(
-				'invalid_date_range',
-				__( 'End date must be on or after start date.', 'fair-audience' ),
 				array( 'status' => 400 )
 			);
 		}
@@ -321,14 +292,10 @@ class ExtraMessagesController extends WP_REST_Controller {
 	 * @return array Response data.
 	 */
 	public function prepare_item_for_response( $message, $request ) {
-		$today = current_time( 'Y-m-d' );
-
 		return array(
 			'id'         => $message->id,
 			'content'    => $message->content,
-			'start_date' => $message->start_date,
-			'end_date'   => $message->end_date,
-			'is_active'  => $message->start_date <= $today && $message->end_date >= $today,
+			'is_active'  => $message->is_active,
 			'created_at' => $message->created_at,
 			'updated_at' => $message->updated_at,
 		);

@@ -373,12 +373,11 @@ class Schema {
 		return "CREATE TABLE $table_name (
 			id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
 			content TEXT NOT NULL,
-			start_date DATE NOT NULL,
-			end_date DATE NOT NULL,
+			is_active TINYINT(1) NOT NULL DEFAULT 1,
 			created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
 			updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
 			PRIMARY KEY  (id),
-			KEY idx_date_range (start_date, end_date)
+			KEY idx_is_active (is_active)
 		) ENGINE=InnoDB $charset_collate;";
 	}
 

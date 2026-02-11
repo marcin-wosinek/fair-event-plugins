@@ -29,18 +29,11 @@ class ExtraMessage {
 	public $content;
 
 	/**
-	 * Start date (YYYY-MM-DD).
+	 * Whether the message is active.
 	 *
-	 * @var string
+	 * @var bool
 	 */
-	public $start_date;
-
-	/**
-	 * End date (YYYY-MM-DD).
-	 *
-	 * @var string
-	 */
-	public $end_date;
+	public $is_active;
 
 	/**
 	 * Created timestamp.
@@ -75,8 +68,7 @@ class ExtraMessage {
 	public function populate( $data ) {
 		$this->id         = isset( $data['id'] ) ? (int) $data['id'] : null;
 		$this->content    = isset( $data['content'] ) ? sanitize_textarea_field( $data['content'] ) : '';
-		$this->start_date = isset( $data['start_date'] ) ? sanitize_text_field( $data['start_date'] ) : '';
-		$this->end_date   = isset( $data['end_date'] ) ? sanitize_text_field( $data['end_date'] ) : '';
+		$this->is_active  = isset( $data['is_active'] ) ? (bool) $data['is_active'] : true;
 		$this->created_at = isset( $data['created_at'] ) ? $data['created_at'] : '';
 		$this->updated_at = isset( $data['updated_at'] ) ? $data['updated_at'] : '';
 	}
@@ -92,22 +84,16 @@ class ExtraMessage {
 		$table_name = $wpdb->prefix . 'fair_audience_extra_messages';
 
 		// Validate required fields.
-		if ( empty( $this->content ) || empty( $this->start_date ) || empty( $this->end_date ) ) {
-			return false;
-		}
-
-		// Validate end_date >= start_date.
-		if ( $this->end_date < $this->start_date ) {
+		if ( empty( $this->content ) ) {
 			return false;
 		}
 
 		$data = array(
-			'content'    => $this->content,
-			'start_date' => $this->start_date,
-			'end_date'   => $this->end_date,
+			'content'   => $this->content,
+			'is_active' => $this->is_active ? 1 : 0,
 		);
 
-		$format = array( '%s', '%s', '%s' );
+		$format = array( '%s', '%d' );
 
 		if ( $this->id ) {
 			// Update existing.

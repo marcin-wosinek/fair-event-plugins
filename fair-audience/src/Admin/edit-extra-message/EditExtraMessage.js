@@ -1,7 +1,12 @@
 import { __ } from '@wordpress/i18n';
 import { useState, useEffect } from '@wordpress/element';
 import apiFetch from '@wordpress/api-fetch';
-import { Button, TextareaControl, Spinner } from '@wordpress/components';
+import {
+	Button,
+	TextareaControl,
+	ToggleControl,
+	Spinner,
+} from '@wordpress/components';
 
 export default function EditExtraMessage() {
 	const [isLoading, setIsLoading] = useState(true);
@@ -10,8 +15,7 @@ export default function EditExtraMessage() {
 	const [messageId, setMessageId] = useState(null);
 	const [formData, setFormData] = useState({
 		content: '',
-		start_date: '',
-		end_date: '',
+		is_active: true,
 	});
 
 	useEffect(() => {
@@ -30,8 +34,7 @@ export default function EditExtraMessage() {
 				setMessageId(id);
 				setFormData({
 					content: response.content,
-					start_date: response.start_date,
-					end_date: response.end_date,
+					is_active: response.is_active,
 				});
 			} catch (err) {
 				setError(err.message);
@@ -44,18 +47,6 @@ export default function EditExtraMessage() {
 	const handleSubmit = async () => {
 		if (!formData.content) {
 			alert(__('Please enter message content.', 'fair-audience'));
-			return;
-		}
-		if (!formData.start_date || !formData.end_date) {
-			alert(
-				__('Please enter both start and end dates.', 'fair-audience')
-			);
-			return;
-		}
-		if (formData.end_date < formData.start_date) {
-			alert(
-				__('End date must be on or after start date.', 'fair-audience')
-			);
 			return;
 		}
 
@@ -132,65 +123,17 @@ export default function EditExtraMessage() {
 					rows={5}
 				/>
 
-				<div
-					style={{
-						display: 'grid',
-						gridTemplateColumns: '1fr 1fr',
-						gap: '20px',
-						marginTop: '10px',
-					}}
-				>
-					<div>
-						<label
-							htmlFor="extra-message-start-date"
-							style={{
-								display: 'block',
-								marginBottom: '8px',
-								fontWeight: '600',
-							}}
-						>
-							{__('Start Date', 'fair-audience')}
-						</label>
-						<input
-							id="extra-message-start-date"
-							type="date"
-							value={formData.start_date}
-							onChange={(e) =>
-								setFormData({
-									...formData,
-									start_date: e.target.value,
-								})
-							}
-							className="components-text-control__input"
-							style={{ width: '100%' }}
-						/>
-					</div>
-					<div>
-						<label
-							htmlFor="extra-message-end-date"
-							style={{
-								display: 'block',
-								marginBottom: '8px',
-								fontWeight: '600',
-							}}
-						>
-							{__('End Date', 'fair-audience')}
-						</label>
-						<input
-							id="extra-message-end-date"
-							type="date"
-							value={formData.end_date}
-							onChange={(e) =>
-								setFormData({
-									...formData,
-									end_date: e.target.value,
-								})
-							}
-							className="components-text-control__input"
-							style={{ width: '100%' }}
-						/>
-					</div>
-				</div>
+				<ToggleControl
+					label={__('Active', 'fair-audience')}
+					checked={formData.is_active}
+					onChange={(value) =>
+						setFormData({ ...formData, is_active: value })
+					}
+					help={__(
+						'Active messages are appended to system emails.',
+						'fair-audience'
+					)}
+				/>
 			</div>
 
 			<div style={{ marginTop: '20px' }}>

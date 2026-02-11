@@ -49,6 +49,23 @@ export default function ExtraMessagesList() {
 			});
 	};
 
+	const handleToggleActive = (msg) => {
+		apiFetch({
+			path: `/fair-audience/v1/extra-messages/${msg.id}`,
+			method: 'PUT',
+			data: {
+				content: msg.content,
+				is_active: !msg.is_active,
+			},
+		})
+			.then(() => {
+				loadMessages();
+			})
+			.catch((err) => {
+				alert(__('Error: ', 'fair-audience') + err.message);
+			});
+	};
+
 	const truncateContent = (content, maxLength = 80) => {
 		if (content.length <= maxLength) {
 			return content;
@@ -102,8 +119,6 @@ export default function ExtraMessagesList() {
 							<thead>
 								<tr>
 									<th>{__('Content', 'fair-audience')}</th>
-									<th>{__('Start Date', 'fair-audience')}</th>
-									<th>{__('End Date', 'fair-audience')}</th>
 									<th>{__('Status', 'fair-audience')}</th>
 									<th>{__('Actions', 'fair-audience')}</th>
 								</tr>
@@ -112,21 +127,17 @@ export default function ExtraMessagesList() {
 								{messages.map((msg) => (
 									<tr key={msg.id}>
 										<td>{truncateContent(msg.content)}</td>
-										<td>{msg.start_date}</td>
-										<td>{msg.end_date}</td>
 										<td>
-											<span
-												style={{
-													padding: '3px 8px',
-													borderRadius: '3px',
-													backgroundColor:
-														msg.is_active
-															? '#00a32a'
-															: '#757575',
-													color: '#fff',
-													fontSize: '12px',
-													fontWeight: '500',
-												}}
+											<Button
+												isSmall
+												variant={
+													msg.is_active
+														? 'primary'
+														: 'secondary'
+												}
+												onClick={() =>
+													handleToggleActive(msg)
+												}
 											>
 												{msg.is_active
 													? __(
@@ -137,7 +148,7 @@ export default function ExtraMessagesList() {
 															'Inactive',
 															'fair-audience'
 													  )}
-											</span>
+											</Button>
 										</td>
 										<td>
 											<Button

@@ -35,13 +35,13 @@ class ExtraMessageRepository {
 	 * @param string $order   Order direction (ASC/DESC).
 	 * @return ExtraMessage[] Array of extra messages.
 	 */
-	public function get_all( $orderby = 'start_date', $order = 'DESC' ) {
+	public function get_all( $orderby = 'created_at', $order = 'DESC' ) {
 		global $wpdb;
 
 		$table_name = $this->get_table_name();
 
-		$allowed_orderby = array( 'id', 'start_date', 'end_date', 'created_at', 'updated_at' );
-		$orderby         = in_array( $orderby, $allowed_orderby, true ) ? $orderby : 'start_date';
+		$allowed_orderby = array( 'id', 'is_active', 'created_at', 'updated_at' );
+		$orderby         = in_array( $orderby, $allowed_orderby, true ) ? $orderby : 'created_at';
 		$order           = in_array( strtoupper( $order ), array( 'ASC', 'DESC' ), true ) ? strtoupper( $order ) : 'DESC';
 
 		// phpcs:disable WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- $order is safely validated above.
@@ -87,7 +87,7 @@ class ExtraMessageRepository {
 	}
 
 	/**
-	 * Get active extra messages (where today falls within the date range).
+	 * Get active extra messages.
 	 *
 	 * @return ExtraMessage[] Array of active extra messages.
 	 */
@@ -98,7 +98,7 @@ class ExtraMessageRepository {
 
 		$results = $wpdb->get_results(
 			$wpdb->prepare(
-				'SELECT * FROM %i WHERE start_date <= CURDATE() AND end_date >= CURDATE() ORDER BY start_date ASC',
+				'SELECT * FROM %i WHERE is_active = 1 ORDER BY created_at ASC',
 				$table_name
 			),
 			ARRAY_A
