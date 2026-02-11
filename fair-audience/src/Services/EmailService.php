@@ -424,15 +424,6 @@ class EmailService {
 							</p>';
 		}
 
-		// Append active extra messages.
-		$extra_messages = $this->get_active_extra_messages();
-		foreach ( $extra_messages as $extra_msg ) {
-			$message .= '
-							<p style="margin: 0 0 20px 0; font-size: 16px;">
-								' . $this->render_plain_text_as_html( $extra_msg->content ) . '
-							</p>';
-		}
-
 		$message .= '
 							<p style="margin: 0 0 20px 0; font-size: 16px;">
 								' . esc_html__( 'Click the button below to browse the gallery and let us know which photos you like best:', 'fair-audience' ) . '
@@ -442,15 +433,25 @@ class EmailService {
 								<a href="' . esc_url( $gallery_url ) . '" style="display: inline-block; background-color: #0073aa; color: #ffffff; text-decoration: none; padding: 12px 30px; border-radius: 5px; font-weight: bold; font-size: 16px;">
 									' . esc_html__( 'View Gallery', 'fair-audience' ) . '
 								</a>
-							</p>
+							</p>';
 
+		// Append active extra messages after CTA.
+		$extra_messages = $this->get_active_extra_messages();
+		foreach ( $extra_messages as $extra_msg ) {
+			$message .= '
+							<p style="margin: 0 0 20px 0; font-size: 16px;">
+								' . $this->render_plain_text_as_html( $extra_msg->content ) . '
+							</p>';
+		}
+
+		$message .= '
 							<p style="margin: 0 0 10px 0; font-size: 14px; color: #666666;">
 								' . sprintf(
 									/* translators: %s: site name */
-										esc_html__( 'Thanks,%1$sThe %2$s Team', 'fair-audience' ),
-										'<br>',
-										esc_html( $site_name )
-									) . '
+			esc_html__( 'Thanks,%1$sThe %2$s Team', 'fair-audience' ),
+			'<br>',
+			esc_html( $site_name )
+		) . '
 							</p>
 						</td>
 					</tr>
