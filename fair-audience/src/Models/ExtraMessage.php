@@ -67,7 +67,7 @@ class ExtraMessage {
 	 */
 	public function populate( $data ) {
 		$this->id         = isset( $data['id'] ) ? (int) $data['id'] : null;
-		$this->content    = isset( $data['content'] ) ? sanitize_textarea_field( $data['content'] ) : '';
+		$this->content    = isset( $data['content'] ) ? wp_kses_post( $data['content'] ) : '';
 		$this->is_active  = isset( $data['is_active'] ) ? (bool) $data['is_active'] : true;
 		$this->created_at = isset( $data['created_at'] ) ? $data['created_at'] : '';
 		$this->updated_at = isset( $data['updated_at'] ) ? $data['updated_at'] : '';

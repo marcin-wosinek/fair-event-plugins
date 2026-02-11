@@ -109,26 +109,6 @@ class EmailService {
 	}
 
 	/**
-	 * Render plain text content as HTML for email.
-	 *
-	 * Escapes HTML, auto-links URLs, and converts newlines to <br> tags.
-	 *
-	 * @param string $text Plain text content.
-	 * @return string HTML-safe content with linked URLs.
-	 */
-	private function render_plain_text_as_html( $text ) {
-		$html = esc_html( $text );
-		// Auto-link URLs.
-		$html = preg_replace(
-			'#(https?://[^\s<]+)#i',
-			'<a href="$1" style="color: #0073aa;">$1</a>',
-			$html
-		);
-		$html = nl2br( $html );
-		return $html;
-	}
-
-	/**
 	 * Check if a participant can receive a specific type of email.
 	 *
 	 * @param Participant $participant The participant to check.
@@ -439,9 +419,9 @@ class EmailService {
 		$extra_messages = $this->get_active_extra_messages();
 		foreach ( $extra_messages as $extra_msg ) {
 			$message .= '
-							<p style="margin: 0 0 20px 0; font-size: 16px;">
-								' . $this->render_plain_text_as_html( $extra_msg->content ) . '
-							</p>';
+							<div style="margin: 0 0 20px 0; font-size: 16px;">
+								' . wp_kses_post( $extra_msg->content ) . '
+							</div>';
 		}
 
 		$message .= '

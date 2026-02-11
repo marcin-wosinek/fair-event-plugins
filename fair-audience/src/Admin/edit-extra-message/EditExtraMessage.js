@@ -1,12 +1,7 @@
 import { __ } from '@wordpress/i18n';
-import { useState, useEffect } from '@wordpress/element';
+import { useState, useEffect, useRef } from '@wordpress/element';
 import apiFetch from '@wordpress/api-fetch';
-import {
-	Button,
-	TextareaControl,
-	ToggleControl,
-	Spinner,
-} from '@wordpress/components';
+import { Button, ToggleControl, Spinner } from '@wordpress/components';
 
 export default function EditExtraMessage() {
 	const [isLoading, setIsLoading] = useState(true);
@@ -17,10 +12,41 @@ export default function EditExtraMessage() {
 		content: '',
 		is_active: true,
 	});
+	const editorInitialized = useRef(false);
 
 	useEffect(() => {
 		loadData();
 	}, []);
+
+	// Initialize TinyMCE after data loads.
+	useEffect(() => {
+		if (isLoading || editorInitialized.current) {
+			return;
+		}
+
+		if (window.wp && window.wp.editor) {
+			window.wp.editor.initialize('extra-message-content', {
+				tinymce: {
+					toolbar1:
+						'bold,italic,bullist,numlist,link,unlink,removeformat',
+					plugins: 'lists,link',
+					branding: false,
+					menubar: false,
+					statusbar: false,
+				},
+				quicktags: true,
+				mediaButtons: false,
+			});
+			editorInitialized.current = true;
+		}
+
+		return () => {
+			if (window.wp && window.wp.editor && editorInitialized.current) {
+				window.wp.editor.remove('extra-message-content');
+				editorInitialized.current = false;
+			}
+		};
+	}, [isLoading]);
 
 	const loadData = async () => {
 		const urlParams = new URLSearchParams(window.location.search);
@@ -44,8 +70,21 @@ export default function EditExtraMessage() {
 		setIsLoading(false);
 	};
 
+	const getEditorContent = () => {
+		if (window.tinymce) {
+			const editor = window.tinymce.get('extra-message-content');
+			if (editor) {
+				return editor.getContent();
+			}
+		}
+		const textarea = document.getElementById('extra-message-content');
+		return textarea ? textarea.value : '';
+	};
+
 	const handleSubmit = async () => {
-		if (!formData.content) {
+		const content = getEditorContent();
+
+		if (!content || content === '<p></p>' || content === '<br>') {
 			alert(__('Please enter message content.', 'fair-audience'));
 			return;
 		}
@@ -62,7 +101,10 @@ export default function EditExtraMessage() {
 			await apiFetch({
 				path,
 				method,
-				data: formData,
+				data: {
+					content,
+					is_active: formData.is_active,
+				},
 			});
 
 			window.location.href =
@@ -110,30 +152,36 @@ export default function EditExtraMessage() {
 					boxShadow: '0 1px 3px rgba(0,0,0,0.1)',
 				}}
 			>
-				<TextareaControl
-					label={__('Content', 'fair-audience')}
-					value={formData.content}
-					onChange={(value) =>
-						setFormData({ ...formData, content: value })
-					}
-					help={__(
-						'Plain text message. URLs will be automatically linked when included in emails.',
-						'fair-audience'
-					)}
-					rows={5}
+				<label
+					htmlFor="extra-message-content"
+					style={{
+						display: 'block',
+						marginBottom: '8px',
+						fontWeight: '600',
+					}}
+				>
+					{__('Content', 'fair-audience')}
+				</label>
+				<textarea
+					id="extra-message-content"
+					defaultValue={formData.content}
+					rows={10}
+					style={{ width: '100%' }}
 				/>
 
-				<ToggleControl
-					label={__('Active', 'fair-audience')}
-					checked={formData.is_active}
-					onChange={(value) =>
-						setFormData({ ...formData, is_active: value })
-					}
-					help={__(
-						'Active messages are appended to system emails.',
-						'fair-audience'
-					)}
-				/>
+				<div style={{ marginTop: '16px' }}>
+					<ToggleControl
+						label={__('Active', 'fair-audience')}
+						checked={formData.is_active}
+						onChange={(value) =>
+							setFormData({ ...formData, is_active: value })
+						}
+						help={__(
+							'Active messages are appended to system emails.',
+							'fair-audience'
+						)}
+					/>
+				</div>
 			</div>
 
 			<div style={{ marginTop: '20px' }}>

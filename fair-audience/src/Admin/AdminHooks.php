@@ -444,6 +444,7 @@ class AdminHooks {
 
 		// Edit Extra Message page.
 		if ( 'admin_page_fair-audience-edit-extra-message' === $hook ) {
+			wp_enqueue_editor();
 			$this->enqueue_page_script( 'edit-extra-message', $plugin_dir );
 		}
 
