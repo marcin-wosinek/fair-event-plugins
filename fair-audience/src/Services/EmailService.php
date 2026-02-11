@@ -14,6 +14,7 @@ use FairAudience\Database\EventSignupAccessKeyRepository;
 use FairAudience\Database\EventParticipantRepository;
 use FairAudience\Database\ParticipantRepository;
 use FairAudience\Database\GroupParticipantRepository;
+use FairAudience\Database\ExtraMessageRepository;
 use FairAudience\Models\Participant;
 use FairAudience\Services\EmailType;
 use FairAudience\Services\ManageSubscriptionToken;
@@ -75,6 +76,13 @@ class EmailService {
 	private $event_signup_access_key_repository;
 
 	/**
+	 * Cached active extra messages (lazy-loaded).
+	 *
+	 * @var array|null
+	 */
+	private $active_extra_messages = null;
+
+	/**
 	 * Constructor.
 	 */
 	public function __construct() {
@@ -85,6 +93,39 @@ class EmailService {
 		$this->participant_repository             = new ParticipantRepository();
 		$this->group_participant_repository       = new GroupParticipantRepository();
 		$this->event_signup_access_key_repository = new EventSignupAccessKeyRepository();
+	}
+
+	/**
+	 * Get active extra messages (lazy-loaded, cached per instance).
+	 *
+	 * @return \FairAudience\Models\ExtraMessage[] Array of active extra messages.
+	 */
+	private function get_active_extra_messages() {
+		if ( null === $this->active_extra_messages ) {
+			$repository                  = new ExtraMessageRepository();
+			$this->active_extra_messages = $repository->get_active();
+		}
+		return $this->active_extra_messages;
+	}
+
+	/**
+	 * Render plain text content as HTML for email.
+	 *
+	 * Escapes HTML, auto-links URLs, and converts newlines to <br> tags.
+	 *
+	 * @param string $text Plain text content.
+	 * @return string HTML-safe content with linked URLs.
+	 */
+	private function render_plain_text_as_html( $text ) {
+		$html = esc_html( $text );
+		// Auto-link URLs.
+		$html = preg_replace(
+			'#(https?://[^\s<]+)#i',
+			'<a href="$1" style="color: #0073aa;">$1</a>',
+			$html
+		);
+		$html = nl2br( $html );
+		return $html;
 	}
 
 	/**
@@ -380,6 +421,15 @@ class EmailService {
 			$message .= '
 							<p style="margin: 0 0 20px 0; font-size: 16px;">
 								' . nl2br( esc_html( $custom_message ) ) . '
+							</p>';
+		}
+
+		// Append active extra messages.
+		$extra_messages = $this->get_active_extra_messages();
+		foreach ( $extra_messages as $extra_msg ) {
+			$message .= '
+							<p style="margin: 0 0 20px 0; font-size: 16px;">
+								' . $this->render_plain_text_as_html( $extra_msg->content ) . '
 							</p>';
 		}
 

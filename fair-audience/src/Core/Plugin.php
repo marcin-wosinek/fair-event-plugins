@@ -113,6 +113,9 @@ class Plugin {
 
 		$image_templates_controller = new \FairAudience\API\ImageTemplatesController();
 		$image_templates_controller->register_routes();
+
+		$extra_messages_controller = new \FairAudience\API\ExtraMessagesController();
+		$extra_messages_controller->register_routes();
 	}
 
 	/**

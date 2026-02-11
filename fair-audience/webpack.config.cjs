@@ -62,6 +62,14 @@ const customConfig = {
 			process.cwd(),
 			'src/Admin/weekly-schedule/index.js',
 		),
+		'admin/extra-messages-list/index': path.resolve(
+			process.cwd(),
+			'src/Admin/extra-messages-list/index.js',
+		),
+		'admin/edit-extra-message/index': path.resolve(
+			process.cwd(),
+			'src/Admin/edit-extra-message/index.js',
+		),
 		'admin/media-library-filter': path.resolve(
 			process.cwd(),
 			'src/Admin/media-library-filter.js',

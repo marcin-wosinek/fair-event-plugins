@@ -34,6 +34,10 @@ class AdminHooks {
 			'title'    => 'Edit Poll',
 			'callback' => 'render_edit_poll_page',
 		),
+		'fair-audience-edit-extra-message' => array(
+			'title'    => 'Edit Extra Message',
+			'callback' => 'render_edit_extra_message_page',
+		),
 	);
 
 	/**
@@ -233,6 +237,19 @@ class AdminHooks {
 			);
 		}
 
+		// Submenu page - Extra Messages.
+		add_submenu_page(
+			'fair-audience',
+			__( 'Extra Messages', 'fair-audience' ),
+			__( 'Extra Messages', 'fair-audience' ),
+			'manage_options',
+			'fair-audience-extra-messages',
+			array( $this, 'render_extra_messages_list_page' )
+		);
+
+		// Hidden submenu page - Edit Extra Message.
+		$this->register_hidden_page( 'fair-audience-edit-extra-message' );
+
 		// Submenu page - Settings.
 		add_submenu_page(
 			'fair-audience',
@@ -333,6 +350,22 @@ class AdminHooks {
 	}
 
 	/**
+	 * Render Extra Messages List page.
+	 */
+	public function render_extra_messages_list_page() {
+		$page = new ExtraMessagesListPage();
+		$page->render();
+	}
+
+	/**
+	 * Render Edit Extra Message page.
+	 */
+	public function render_edit_extra_message_page() {
+		$page = new EditExtraMessagePage();
+		$page->render();
+	}
+
+	/**
 	 * Render Settings page.
 	 */
 	public function render_settings_page() {
@@ -402,6 +435,16 @@ class AdminHooks {
 		// Weekly Schedule page.
 		if ( 'fair-audience_page_fair-audience-weekly-schedule' === $hook ) {
 			$this->enqueue_page_script( 'weekly-schedule', $plugin_dir );
+		}
+
+		// Extra Messages List page.
+		if ( 'fair-audience_page_fair-audience-extra-messages' === $hook ) {
+			$this->enqueue_page_script( 'extra-messages-list', $plugin_dir );
+		}
+
+		// Edit Extra Message page.
+		if ( 'admin_page_fair-audience-edit-extra-message' === $hook ) {
+			$this->enqueue_page_script( 'edit-extra-message', $plugin_dir );
 		}
 
 		// Settings page.

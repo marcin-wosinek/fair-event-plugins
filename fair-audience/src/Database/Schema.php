@@ -360,6 +360,29 @@ class Schema {
 	}
 
 	/**
+	 * Get SQL for creating the extra messages table.
+	 *
+	 * @return string SQL statement.
+	 */
+	public static function get_extra_messages_table_sql() {
+		global $wpdb;
+
+		$table_name      = $wpdb->prefix . 'fair_audience_extra_messages';
+		$charset_collate = $wpdb->get_charset_collate();
+
+		return "CREATE TABLE $table_name (
+			id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
+			content TEXT NOT NULL,
+			start_date DATE NOT NULL,
+			end_date DATE NOT NULL,
+			created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+			updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+			PRIMARY KEY  (id),
+			KEY idx_date_range (start_date, end_date)
+		) ENGINE=InnoDB $charset_collate;";
+	}
+
+	/**
 	 * Get SQL for creating the Instagram posts table.
 	 *
 	 * @return string SQL statement.
