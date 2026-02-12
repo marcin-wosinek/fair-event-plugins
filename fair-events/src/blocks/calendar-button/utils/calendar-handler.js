@@ -204,6 +204,15 @@ export function formatEventDescription(description, url) {
 }
 
 /**
+ * Parse a datetime string and create a Date at UTC noon to prevent
+ * timezone-related day shifts for all-day events.
+ */
+function toUTCNoon(datetimeStr) {
+	const [year, month, day] = datetimeStr.split(' ')[0].split('-').map(Number);
+	return new Date(Date.UTC(year, month - 1, day, 12, 0, 0));
+}
+
+/**
  * Convert block attributes to calendar event data
  *
  * @param {Object} attributes - Block attributes
@@ -223,9 +232,11 @@ export function createEventData(attributes) {
 	} = attributes;
 	const eventData = {};
 
-	if (start) eventData.start = new Date(start);
+	if (start) {
+		eventData.start = allDay ? toUTCNoon(start) : new Date(start);
+	}
 	if (end) {
-		const endDate = new Date(end);
+		const endDate = allDay ? toUTCNoon(end) : new Date(end);
 		// For all-day events, make the end date inclusive by adding one day
 		// This ensures multi-day all-day events include the end date
 		if (allDay && start && end !== start) {
