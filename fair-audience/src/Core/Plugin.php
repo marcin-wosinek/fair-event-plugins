@@ -61,6 +61,9 @@ class Plugin {
 		\FairAudience\Admin\MediaLibraryHooks::init();
 		\FairAudience\Admin\MediaBatchActions::init();
 
+		// Initialize event participants meta box.
+		\FairAudience\Admin\EventParticipantsMetaBox::init();
+
 		// Initialize SVG upload support.
 		\FairAudience\Hooks\SvgUploadHooks::init();
 
