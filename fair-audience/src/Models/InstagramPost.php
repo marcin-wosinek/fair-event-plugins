@@ -50,6 +50,13 @@ class InstagramPost {
 	public $image_url;
 
 	/**
+	 * Instagram post permalink URL.
+	 *
+	 * @var string|null
+	 */
+	public $permalink;
+
+	/**
 	 * Post status: pending, publishing, published, failed.
 	 *
 	 * @var string
@@ -99,6 +106,7 @@ class InstagramPost {
 		$this->ig_container_id = isset( $data['ig_container_id'] ) ? sanitize_text_field( $data['ig_container_id'] ) : null;
 		$this->caption         = isset( $data['caption'] ) ? sanitize_textarea_field( $data['caption'] ) : '';
 		$this->image_url       = isset( $data['image_url'] ) ? esc_url_raw( $data['image_url'] ) : '';
+		$this->permalink       = isset( $data['permalink'] ) ? esc_url_raw( $data['permalink'] ) : null;
 		$this->status          = isset( $data['status'] ) ? $data['status'] : 'pending';
 		$this->error_message   = isset( $data['error_message'] ) ? sanitize_textarea_field( $data['error_message'] ) : null;
 		$this->created_at      = isset( $data['created_at'] ) ? $data['created_at'] : '';
@@ -130,12 +138,13 @@ class InstagramPost {
 			'ig_container_id' => $this->ig_container_id,
 			'caption'         => $this->caption,
 			'image_url'       => $this->image_url,
+			'permalink'       => $this->permalink,
 			'status'          => $this->status,
 			'error_message'   => $this->error_message,
 			'published_at'    => $this->published_at,
 		);
 
-		$format = array( '%s', '%s', '%s', '%s', '%s', '%s', '%s' );
+		$format = array( '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s' );
 
 		if ( $this->id ) {
 			// Update existing.

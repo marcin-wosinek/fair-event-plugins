@@ -398,6 +398,7 @@ class Schema {
 			ig_container_id VARCHAR(255) DEFAULT NULL COMMENT 'Instagram container ID during creation',
 			caption TEXT NOT NULL,
 			image_url VARCHAR(2083) NOT NULL COMMENT 'Must be publicly accessible URL',
+			permalink VARCHAR(2083) DEFAULT NULL COMMENT 'Instagram post permalink URL',
 			status ENUM('pending', 'publishing', 'published', 'failed') NOT NULL DEFAULT 'pending',
 			error_message TEXT DEFAULT NULL,
 			created_at DATETIME DEFAULT CURRENT_TIMESTAMP,

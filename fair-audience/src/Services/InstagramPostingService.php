@@ -120,6 +120,13 @@ class InstagramPostingService {
 		$post->ig_media_id  = $publish_result['id'];
 		$post->status       = 'published';
 		$post->published_at = current_time( 'mysql' );
+
+		// Fetch permalink (non-critical).
+		$permalink = $this->fetch_permalink( $access_token, $publish_result['id'] );
+		if ( $permalink ) {
+			$post->permalink = $permalink;
+		}
+
 		$post->save();
 
 		return $post;
@@ -187,6 +194,40 @@ class InstagramPostingService {
 		}
 
 		return $data;
+	}
+
+	/**
+	 * Fetch the permalink for a published Instagram media.
+	 *
+	 * @param string $access_token Access token.
+	 * @param string $media_id     Instagram media ID.
+	 * @return string|null Permalink URL or null on failure.
+	 */
+	private function fetch_permalink( $access_token, $media_id ) {
+		$url = sprintf(
+			'https://graph.facebook.com/%s/%s?fields=permalink&access_token=%s',
+			self::API_VERSION,
+			$media_id,
+			$access_token
+		);
+
+		$response = wp_remote_get(
+			$url,
+			array( 'timeout' => 30 )
+		);
+
+		if ( is_wp_error( $response ) ) {
+			return null;
+		}
+
+		$body = wp_remote_retrieve_body( $response );
+		$data = json_decode( $body, true );
+
+		if ( ! empty( $data['permalink'] ) ) {
+			return $data['permalink'];
+		}
+
+		return null;
 	}
 
 	/**

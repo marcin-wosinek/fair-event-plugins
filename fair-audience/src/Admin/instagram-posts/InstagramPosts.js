@@ -348,12 +348,25 @@ export default function InstagramPosts() {
 								{posts.map((post) => (
 									<tr key={post.id}>
 										<td>
-											<span
-												title={post.caption}
-												style={{ cursor: 'default' }}
-											>
-												{truncate(post.caption, 60)}
-											</span>
+											{post.permalink ? (
+												<a
+													href={post.permalink}
+													target="_blank"
+													rel="noopener noreferrer"
+													title={post.caption}
+												>
+													{truncate(post.caption, 60)}
+												</a>
+											) : (
+												<span
+													title={post.caption}
+													style={{
+														cursor: 'default',
+													}}
+												>
+													{truncate(post.caption, 60)}
+												</span>
+											)}
 											{post.error_message && (
 												<div
 													style={{
