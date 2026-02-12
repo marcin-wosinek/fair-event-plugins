@@ -45,12 +45,12 @@ if ( ! function_exists( 'fair_events_format_date_range' ) ) {
 			return '';
 		}
 
-		$start_timestamp = strtotime( $start_datetime );
+		$start_timestamp = \FairEvents\Helpers\DateHelper::local_to_timestamp( $start_datetime );
 		if ( false === $start_timestamp ) {
 			return $start_datetime;
 		}
 
-		$end_timestamp = $end_datetime ? strtotime( $end_datetime ) : null;
+		$end_timestamp = $end_datetime ? \FairEvents\Helpers\DateHelper::local_to_timestamp( $end_datetime ) : null;
 
 		if ( $all_day ) {
 			// All-day events: "1-4 October" or "31 October—2 November"
