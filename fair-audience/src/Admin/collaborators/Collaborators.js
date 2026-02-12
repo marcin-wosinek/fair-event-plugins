@@ -371,20 +371,51 @@ export default function Collaborators() {
 							</p>
 						) : (
 							availableEvents.map((event) => (
-								<CheckboxControl
+								<div
 									key={event.event_id}
-									label={`${event.title}${
-										event.event_date
-											? ` (${event.event_date})`
-											: ''
-									}`}
-									checked={selectedEvents.includes(
-										event.event_id
+									style={{
+										display: 'flex',
+										alignItems: 'center',
+										gap: '4px',
+									}}
+								>
+									<div style={{ flex: 1 }}>
+										<CheckboxControl
+											label={`${event.title}${
+												event.event_date
+													? ` (${event.event_date})`
+													: ''
+											}`}
+											checked={selectedEvents.includes(
+												event.event_id
+											)}
+											onChange={() =>
+												toggleEventSelection(
+													event.event_id
+												)
+											}
+										/>
+									</div>
+									{window.fairAudienceCollaboratorsData
+										?.participantsUrl && (
+										<a
+											href={`${window.fairAudienceCollaboratorsData.participantsUrl}${event.event_id}`}
+											target="_blank"
+											rel="noopener noreferrer"
+											title={__(
+												'View Participants',
+												'fair-audience'
+											)}
+											style={{
+												color: '#2271b1',
+												textDecoration: 'none',
+												flexShrink: 0,
+											}}
+										>
+											<span className="dashicons dashicons-groups" />
+										</a>
 									)}
-									onChange={() =>
-										toggleEventSelection(event.event_id)
-									}
-								/>
+								</div>
 							))
 						)}
 					</div>

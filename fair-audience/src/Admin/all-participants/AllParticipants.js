@@ -10,6 +10,7 @@ import {
 	SelectControl,
 	CheckboxControl,
 	Spinner,
+	Popover,
 } from '@wordpress/components';
 import { DataViews, filterSortAndPaginate } from '@wordpress/dataviews';
 import { Icon, caution } from '@wordpress/icons';
@@ -61,11 +62,33 @@ export default function AllParticipants() {
 		wp_user: null,
 	});
 
+	// Events popover state.
+	const [eventsPopover, setEventsPopover] = useState(null);
+	const [popoverEvents, setPopoverEvents] = useState([]);
+	const [popoverLoading, setPopoverLoading] = useState(false);
+
 	// Groups management state.
 	const [allGroups, setAllGroups] = useState([]);
 	const [selectedGroupIds, setSelectedGroupIds] = useState([]);
 	const [originalGroupIds, setOriginalGroupIds] = useState([]);
 	const [groupsLoading, setGroupsLoading] = useState(false);
+
+	const showEventsPopover = useCallback((participantId, label, anchorRef) => {
+		setEventsPopover({ participantId, label, anchorRef });
+		setPopoverLoading(true);
+		setPopoverEvents([]);
+
+		apiFetch({
+			path: `/fair-audience/v1/participants/${participantId}/events?label=${label}`,
+		})
+			.then((data) => {
+				setPopoverEvents(data);
+				setPopoverLoading(false);
+			})
+			.catch(() => {
+				setPopoverLoading(false);
+			});
+	}, []);
 
 	// Load all groups.
 	const loadGroups = useCallback(() => {
@@ -221,7 +244,22 @@ export default function AllParticipants() {
 				label: __('Events Signed Up', 'fair-audience'),
 				render: ({ item }) => (
 					<div style={{ textAlign: 'right' }}>
-						{item.events_signed_up || 0}
+						{item.events_signed_up > 0 ? (
+							<Button
+								variant="link"
+								onClick={(e) =>
+									showEventsPopover(
+										item.id,
+										'signed_up',
+										e.currentTarget
+									)
+								}
+							>
+								{item.events_signed_up}
+							</Button>
+						) : (
+							'0'
+						)}
 					</div>
 				),
 				enableSorting: true,
@@ -232,14 +270,29 @@ export default function AllParticipants() {
 				label: __('Events Collaborated', 'fair-audience'),
 				render: ({ item }) => (
 					<div style={{ textAlign: 'right' }}>
-						{item.events_collaborated || 0}
+						{item.events_collaborated > 0 ? (
+							<Button
+								variant="link"
+								onClick={(e) =>
+									showEventsPopover(
+										item.id,
+										'collaborator',
+										e.currentTarget
+									)
+								}
+							>
+								{item.events_collaborated}
+							</Button>
+						) : (
+							'0'
+						)}
 					</div>
 				),
 				enableSorting: true,
 				getValue: ({ item }) => item.events_collaborated || 0,
 			},
 		],
-		[]
+		[showEventsPopover]
 	);
 
 	// Convert view state to API query params.
@@ -519,6 +572,53 @@ export default function AllParticipants() {
 					/>
 				</CardBody>
 			</Card>
+
+			{eventsPopover && (
+				<Popover
+					anchor={eventsPopover.anchorRef}
+					onClose={() => setEventsPopover(null)}
+					placement="bottom-start"
+				>
+					<div
+						style={{
+							padding: '12px',
+							minWidth: '200px',
+							maxWidth: '300px',
+						}}
+					>
+						{popoverLoading ? (
+							<Spinner />
+						) : popoverEvents.length === 0 ? (
+							<p style={{ margin: 0 }}>
+								{__('No events found.', 'fair-audience')}
+							</p>
+						) : (
+							<ul
+								style={{
+									margin: 0,
+									padding: 0,
+									listStyle: 'none',
+								}}
+							>
+								{popoverEvents.map((event) => (
+									<li
+										key={event.event_id}
+										style={{
+											padding: '4px 0',
+										}}
+									>
+										<a
+											href={`${window.fairAudienceAllParticipantsData?.participantsUrl}${event.event_id}`}
+										>
+											{event.title}
+										</a>
+									</li>
+								))}
+							</ul>
+						)}
+					</div>
+				</Popover>
+			)}
 
 			{isModalOpen && (
 				<Modal

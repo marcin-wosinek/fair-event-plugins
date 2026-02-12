@@ -384,11 +384,27 @@ class AdminHooks {
 		// All Participants page.
 		if ( 'toplevel_page_fair-audience' === $hook ) {
 			$this->enqueue_page_script( 'all-participants', $plugin_dir );
+
+			wp_localize_script(
+				'fair-audience-all-participants',
+				'fairAudienceAllParticipantsData',
+				array(
+					'participantsUrl' => admin_url( 'admin.php?page=fair-audience-event-participants&event_id=' ),
+				)
+			);
 		}
 
 		// Collaborators page.
 		if ( 'fair-audience_page_fair-audience-collaborators' === $hook ) {
 			$this->enqueue_page_script( 'collaborators', $plugin_dir );
+
+			wp_localize_script(
+				'fair-audience-collaborators',
+				'fairAudienceCollaboratorsData',
+				array(
+					'participantsUrl' => admin_url( 'admin.php?page=fair-audience-event-participants&event_id=' ),
+				)
+			);
 		}
 
 		// Events List page.
@@ -435,6 +451,14 @@ class AdminHooks {
 		// Weekly Schedule page.
 		if ( 'fair-audience_page_fair-audience-weekly-schedule' === $hook ) {
 			$this->enqueue_page_script( 'weekly-schedule', $plugin_dir );
+
+			wp_localize_script(
+				'fair-audience-weekly-schedule',
+				'fairAudienceWeeklyScheduleData',
+				array(
+					'participantsUrl' => admin_url( 'admin.php?page=fair-audience-event-participants&event_id=' ),
+				)
+			);
 		}
 
 		// Extra Messages List page.

@@ -312,29 +312,60 @@ export default function WeeklySchedule() {
 												backgroundColor: '#e8f0fe',
 												borderRadius: '3px',
 												lineHeight: '1.3',
+												display: 'flex',
+												alignItems: 'center',
+												gap: '4px',
 											}}
 										>
-											{!event.all_day &&
-												event.start_time && (
-													<strong
+											<span
+												style={{
+													flex: 1,
+													minWidth: 0,
+												}}
+											>
+												{!event.all_day &&
+													event.start_time && (
+														<strong
+															style={{
+																marginRight:
+																	'4px',
+															}}
+														>
+															{event.start_time}
+														</strong>
+													)}
+												{event.url ? (
+													<a
+														href={event.url}
+														target="_blank"
+														rel="noopener noreferrer"
+													>
+														{event.title}
+													</a>
+												) : (
+													event.title
+												)}
+											</span>
+											{event.event_id &&
+												window
+													.fairAudienceWeeklyScheduleData
+													?.participantsUrl && (
+													<a
+														href={`${window.fairAudienceWeeklyScheduleData.participantsUrl}${event.event_id}`}
+														title={__(
+															'View Participants',
+															'fair-audience'
+														)}
 														style={{
-															marginRight: '4px',
+															color: '#2271b1',
+															textDecoration:
+																'none',
+															flexShrink: 0,
 														}}
 													>
-														{event.start_time}
-													</strong>
+														<span className="dashicons dashicons-groups" />
+													</a>
 												)}
-											{event.url ? (
-												<a
-													href={event.url}
-													target="_blank"
-													rel="noopener noreferrer"
-												>
-													{event.title}
-												</a>
-											) : (
-												event.title
-											)}
 										</div>
 									))}
 								</div>

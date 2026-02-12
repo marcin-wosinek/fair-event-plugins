@@ -129,6 +129,29 @@ class ParticipantsController extends WP_REST_Controller {
 				),
 			)
 		);
+
+		// GET /fair-audience/v1/participants/{id}/events.
+		register_rest_route(
+			$this->namespace,
+			'/' . $this->rest_base . '/(?P<id>\d+)/events',
+			array(
+				'methods'             => WP_REST_Server::READABLE,
+				'callback'            => array( $this, 'get_participant_events' ),
+				'permission_callback' => 'is_user_logged_in',
+				'args'                => array(
+					'id'    => array(
+						'type'     => 'integer',
+						'required' => true,
+					),
+					'label' => array(
+						'type'              => 'string',
+						'required'          => false,
+						'enum'              => array( 'interested', 'signed_up', 'collaborator' ),
+						'sanitize_callback' => 'sanitize_text_field',
+					),
+				),
+			)
+		);
 	}
 
 	/**
@@ -198,6 +221,52 @@ class ParticipantsController extends WP_REST_Controller {
 		}
 
 		return $response;
+	}
+
+	/**
+	 * Get events for a participant.
+	 *
+	 * @param WP_REST_Request $request Request object.
+	 * @return WP_REST_Response|WP_Error Response object or error.
+	 */
+	public function get_participant_events( $request ) {
+		$id          = $request->get_param( 'id' );
+		$label       = $request->get_param( 'label' );
+		$participant = $this->repository->get_by_id( $id );
+
+		if ( ! $participant ) {
+			return new WP_Error(
+				'participant_not_found',
+				__( 'Participant not found.', 'fair-audience' ),
+				array( 'status' => 404 )
+			);
+		}
+
+		$relationships = $this->event_participant_repository->get_by_participant( $id );
+
+		// Filter by label if provided.
+		if ( $label ) {
+			$relationships = array_filter(
+				$relationships,
+				function ( $rel ) use ( $label ) {
+					return $rel->label === $label;
+				}
+			);
+		}
+
+		$events = array();
+		foreach ( $relationships as $rel ) {
+			$post = get_post( $rel->event_id );
+			if ( $post ) {
+				$events[] = array(
+					'event_id' => $rel->event_id,
+					'title'    => get_the_title( $post ),
+					'label'    => $rel->label,
+				);
+			}
+		}
+
+		return rest_ensure_response( $events );
 	}
 
 	/**

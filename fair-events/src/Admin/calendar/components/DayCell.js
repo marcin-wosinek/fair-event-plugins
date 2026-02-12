@@ -11,6 +11,19 @@ import { __, sprintf } from '@wordpress/i18n';
 
 const MAX_VISIBLE_EVENTS = 3;
 
+/**
+ * Extract the event post ID from a uid string.
+ * Post-linked events use format: fair_event_{id}_...@ or fair_event_{id}@
+ * Returns null for standalone or non-post events.
+ *
+ * @param {string} uid Event uid.
+ * @return {string|null} Event post ID or null.
+ */
+function getEventPostId(uid) {
+	const match = uid?.match(/^fair_event_(\d+)(?:_\d+)?@/);
+	return match ? match[1] : null;
+}
+
 export default function DayCell({
 	date,
 	events,
@@ -19,6 +32,7 @@ export default function DayCell({
 	isPast,
 	onAddEvent,
 	onEditEvent,
+	participantsUrl,
 }) {
 	const dayNumber = date.getDate();
 	const hasEvents = events.length > 0;
@@ -63,27 +77,48 @@ export default function DayCell({
 			</div>
 			{hasEvents && (
 				<div className="fair-events-calendar-day-events">
-					{visibleEvents.map((event, index) =>
-						onEditEvent ? (
-							<button
+					{visibleEvents.map((event, index) => {
+						const eventPostId = getEventPostId(event.uid);
+						return (
+							<div
 								key={index}
-								type="button"
-								className="fair-events-calendar-event"
-								onClick={(e) => handleEventClick(e, event.uid)}
-								title={event.title}
+								className="fair-events-calendar-event-row"
 							>
-								{event.title}
-							</button>
-						) : (
-							<span
-								key={index}
-								className="fair-events-calendar-event fair-events-calendar-event-readonly"
-								title={event.title}
-							>
-								{event.title}
-							</span>
-						)
-					)}
+								{onEditEvent ? (
+									<button
+										type="button"
+										className="fair-events-calendar-event"
+										onClick={(e) =>
+											handleEventClick(e, event.uid)
+										}
+										title={event.title}
+									>
+										{event.title}
+									</button>
+								) : (
+									<span
+										className="fair-events-calendar-event fair-events-calendar-event-readonly"
+										title={event.title}
+									>
+										{event.title}
+									</span>
+								)}
+								{participantsUrl && eventPostId && (
+									<a
+										href={`${participantsUrl}${eventPostId}`}
+										className="fair-events-calendar-participants-link"
+										title={__(
+											'View Participants',
+											'fair-events'
+										)}
+										onClick={(e) => e.stopPropagation()}
+									>
+										<span className="dashicons dashicons-groups" />
+									</a>
+								)}
+							</div>
+						);
+					})}
 					{hiddenCount > 0 && (
 						<span className="fair-events-calendar-more">
 							{sprintf(

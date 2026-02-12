@@ -180,6 +180,9 @@ export default function CalendarApp() {
 					events={events}
 					onAddEvent={handleAddEvent}
 					onEditEvent={handleEditEvent}
+					participantsUrl={
+						window.fairEventsCalendarData?.participantsUrl
+					}
 				/>
 			)}
 

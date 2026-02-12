@@ -178,15 +178,22 @@ class AdminPages {
 				$asset_file['version']
 			);
 
+			$calendar_data = array(
+				'startOfWeek'    => (int) get_option( 'start_of_week', 1 ),
+				'newEventUrl'    => admin_url( 'post-new.php?post_type=fair_event' ),
+				'editEventUrl'   => admin_url( 'post.php?action=edit&post=' ),
+				'manageEventUrl' => admin_url( 'admin.php?page=fair-events-manage-event' ),
+			);
+
+			// Add participants URL if fair-audience plugin is active.
+			if ( defined( 'FAIR_AUDIENCE_PLUGIN_DIR' ) ) {
+				$calendar_data['participantsUrl'] = admin_url( 'admin.php?page=fair-audience-event-participants&event_id=' );
+			}
+
 			wp_localize_script(
 				'fair-events-calendar',
 				'fairEventsCalendarData',
-				array(
-					'startOfWeek'    => (int) get_option( 'start_of_week', 1 ),
-					'newEventUrl'    => admin_url( 'post-new.php?post_type=fair_event' ),
-					'editEventUrl'   => admin_url( 'post.php?action=edit&post=' ),
-					'manageEventUrl' => admin_url( 'admin.php?page=fair-events-manage-event' ),
-				)
+				$calendar_data
 			);
 
 			wp_set_script_translations(
