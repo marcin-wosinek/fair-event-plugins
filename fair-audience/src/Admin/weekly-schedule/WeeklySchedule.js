@@ -128,6 +128,9 @@ export default function WeeklySchedule() {
 		apiFetch({ path: '/fair-events/v1/sources?enabled_only=true' })
 			.then((result) => {
 				setSources(result);
+				if (result.length > 0 && !selectedSource) {
+					setSelectedSource(result[0].slug);
+				}
 				setSourcesLoading(false);
 			})
 			.catch(() => {
