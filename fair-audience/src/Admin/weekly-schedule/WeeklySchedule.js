@@ -7,6 +7,12 @@ import { Button, SelectControl, Spinner, Notice } from '@wordpress/components';
 import apiFetch from '@wordpress/api-fetch';
 
 /**
+ * Internal dependencies
+ */
+import { svgToPng, downloadBlob } from '../image-templates/svg-to-png.js';
+import { generateScheduleSvg } from './schedule-svg.js';
+
+/**
  * Get current ISO week string.
  *
  * @return {string} ISO week string e.g. "2026-W07"
@@ -122,6 +128,7 @@ export default function WeeklySchedule() {
 	const [error, setError] = useState(null);
 	const [message, setMessage] = useState('');
 	const [copied, setCopied] = useState(false);
+	const [downloading, setDownloading] = useState(false);
 
 	// Fetch event sources on mount.
 	useEffect(() => {
@@ -177,6 +184,24 @@ export default function WeeklySchedule() {
 			setCopied(true);
 			setTimeout(() => setCopied(false), 2000);
 		});
+	};
+
+	const handleDownloadImage = async () => {
+		if (!data) {
+			return;
+		}
+		setDownloading(true);
+		try {
+			const svg = generateScheduleSvg(data);
+			const blob = await svgToPng(svg);
+			const filename = `schedule-${currentWeek}.png`;
+			downloadBlob(blob, filename);
+		} catch (err) {
+			setError(
+				err.message || __('Failed to generate image.', 'fair-audience')
+			);
+		}
+		setDownloading(false);
 	};
 
 	const sourceOptions = [
@@ -389,11 +414,27 @@ export default function WeeklySchedule() {
 								padding: '12px',
 							}}
 						/>
-						<div style={{ marginTop: '8px' }}>
+						<div
+							style={{
+								marginTop: '8px',
+								display: 'flex',
+								gap: '8px',
+							}}
+						>
 							<Button variant="primary" onClick={handleCopy}>
 								{copied
 									? __('Copied!', 'fair-audience')
 									: __('Copy to clipboard', 'fair-audience')}
+							</Button>
+							<Button
+								variant="secondary"
+								onClick={handleDownloadImage}
+								isBusy={downloading}
+								disabled={downloading}
+							>
+								{downloading
+									? __('Generating…', 'fair-audience')
+									: __('Download Image', 'fair-audience')}
 							</Button>
 						</div>
 					</div>
