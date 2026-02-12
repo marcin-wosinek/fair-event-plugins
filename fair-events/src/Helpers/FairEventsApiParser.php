@@ -112,21 +112,21 @@ class FairEventsApiParser {
 			return null;
 		}
 
-		// Parse dates
-		$start_datetime = strtotime( $event['start'] );
-		if ( false === $start_datetime ) {
+		// Parse dates — convert ISO 8601 (any tz) to site-local time.
+		$start_local = DateHelper::iso8601_to_local( $event['start'] );
+		if ( null === $start_local ) {
 			return null;
 		}
 
-		$end_datetime = ! empty( $event['end'] ) ? strtotime( $event['end'] ) : $start_datetime;
+		$end_local = ! empty( $event['end'] ) ? DateHelper::iso8601_to_local( $event['end'] ) : $start_local;
 
 		return array(
 			'uid'         => $event['uid'] ?? md5( $event['start'] . $event['title'] ),
 			'summary'     => $event['title'],
 			'description' => $event['description'] ?? '',
 			'url'         => $event['url'] ?? '',
-			'start'       => gmdate( 'Y-m-d H:i:s', $start_datetime ),
-			'end'         => gmdate( 'Y-m-d H:i:s', $end_datetime ),
+			'start'       => $start_local,
+			'end'         => $end_local,
 			'all_day'     => $event['all_day'] ?? false,
 		);
 	}

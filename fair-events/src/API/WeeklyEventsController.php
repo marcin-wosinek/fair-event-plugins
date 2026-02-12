@@ -12,6 +12,7 @@ namespace FairEvents\API;
 defined( 'WPINC' ) || die;
 
 use FairEvents\Database\EventSourceRepository;
+use FairEvents\Helpers\DateHelper;
 use FairEvents\Helpers\FairEventsApiParser;
 use FairEvents\Helpers\ICalParser;
 use FairEvents\Helpers\QueryHelper;
@@ -221,7 +222,7 @@ class WeeklyEventsController extends \WP_REST_Controller {
 		$filtered = ICalParser::filter_events_for_month( $fetched, $start_datetime, $end_datetime );
 
 		foreach ( $filtered as $event ) {
-			$start_date = gmdate( 'Y-m-d', strtotime( $event['start'] ) );
+			$start_date = DateHelper::local_date( $event['start'] );
 
 			if ( ! isset( $all_events[ $start_date ] ) ) {
 				$all_events[ $start_date ] = array();
@@ -229,8 +230,8 @@ class WeeklyEventsController extends \WP_REST_Controller {
 
 			$all_events[ $start_date ][] = array(
 				'title'      => $event['summary'] ?? '',
-				'start_time' => $event['all_day'] ? '' : gmdate( 'H:i', strtotime( $event['start'] ) ),
-				'end_time'   => $event['all_day'] ? '' : gmdate( 'H:i', strtotime( $event['end'] ) ),
+				'start_time' => $event['all_day'] ? '' : DateHelper::local_time( $event['start'] ),
+				'end_time'   => $event['all_day'] ? '' : DateHelper::local_time( $event['end'] ),
 				'url'        => $event['url'] ?? '',
 				'all_day'    => (bool) $event['all_day'],
 			);
@@ -252,7 +253,7 @@ class WeeklyEventsController extends \WP_REST_Controller {
 		$filtered = FairEventsApiParser::filter_events_for_month( $fetched, $start_datetime, $end_datetime );
 
 		foreach ( $filtered as $event ) {
-			$start_date = gmdate( 'Y-m-d', strtotime( $event['start'] ) );
+			$start_date = DateHelper::local_date( $event['start'] );
 
 			if ( ! isset( $all_events[ $start_date ] ) ) {
 				$all_events[ $start_date ] = array();
@@ -260,8 +261,8 @@ class WeeklyEventsController extends \WP_REST_Controller {
 
 			$all_events[ $start_date ][] = array(
 				'title'      => $event['summary'] ?? '',
-				'start_time' => $event['all_day'] ? '' : gmdate( 'H:i', strtotime( $event['start'] ) ),
-				'end_time'   => $event['all_day'] ? '' : gmdate( 'H:i', strtotime( $event['end'] ) ),
+				'start_time' => $event['all_day'] ? '' : DateHelper::local_time( $event['start'] ),
+				'end_time'   => $event['all_day'] ? '' : DateHelper::local_time( $event['end'] ),
 				'url'        => $event['url'] ?? '',
 				'all_day'    => (bool) $event['all_day'],
 			);
@@ -322,17 +323,17 @@ class WeeklyEventsController extends \WP_REST_Controller {
 				$occurrences = EventDates::get_all_by_event_id( $event_id );
 
 				foreach ( $occurrences as $event_dates ) {
-					$start_date = gmdate( 'Y-m-d', strtotime( $event_dates->start_datetime ) );
+					$start_date = DateHelper::local_date( $event_dates->start_datetime );
 
 					if ( ! isset( $all_events[ $start_date ] ) ) {
 						$all_events[ $start_date ] = array();
 					}
 
 					$is_all_day = (bool) $event_dates->all_day;
-					$start_time = $is_all_day ? '' : gmdate( 'H:i', strtotime( $event_dates->start_datetime ) );
+					$start_time = $is_all_day ? '' : DateHelper::local_time( $event_dates->start_datetime );
 					$end_time   = '';
 					if ( ! $is_all_day && $event_dates->end_datetime ) {
-						$end_time = gmdate( 'H:i', strtotime( $event_dates->end_datetime ) );
+						$end_time = DateHelper::local_time( $event_dates->end_datetime );
 					}
 
 					$all_events[ $start_date ][] = array(
@@ -360,17 +361,17 @@ class WeeklyEventsController extends \WP_REST_Controller {
 		$standalone = EventDates::get_standalone_for_date_range( $start_datetime, $end_datetime );
 
 		foreach ( $standalone as $event_dates ) {
-			$start_date = gmdate( 'Y-m-d', strtotime( $event_dates->start_datetime ) );
+			$start_date = DateHelper::local_date( $event_dates->start_datetime );
 
 			if ( ! isset( $all_events[ $start_date ] ) ) {
 				$all_events[ $start_date ] = array();
 			}
 
 			$is_all_day = (bool) $event_dates->all_day;
-			$start_time = $is_all_day ? '' : gmdate( 'H:i', strtotime( $event_dates->start_datetime ) );
+			$start_time = $is_all_day ? '' : DateHelper::local_time( $event_dates->start_datetime );
 			$end_time   = '';
 			if ( ! $is_all_day && $event_dates->end_datetime ) {
-				$end_time = gmdate( 'H:i', strtotime( $event_dates->end_datetime ) );
+				$end_time = DateHelper::local_time( $event_dates->end_datetime );
 			}
 
 			$all_events[ $start_date ][] = array(

@@ -12,6 +12,7 @@ namespace FairEvents\API;
 defined( 'WPINC' ) || die;
 
 use FairEvents\Database\EventSourceRepository;
+use FairEvents\Helpers\DateHelper;
 use FairEvents\Helpers\FairEventsApiParser;
 use FairEvents\Helpers\ICalParser;
 use FairEvents\Models\EventDates;
@@ -397,8 +398,8 @@ class PublicEventsController extends WP_REST_Controller {
 		$all_day = (bool) $row->all_day;
 		if ( ! $all_day && $start_datetime ) {
 			// Also check for midnight-to-midnight pattern.
-			$start_time = gmdate( 'H:i:s', strtotime( $start_datetime ) );
-			$end_time   = $end_datetime ? gmdate( 'H:i:s', strtotime( $end_datetime ) ) : '00:00:00';
+			$start_time = DateHelper::local_time_full( $start_datetime );
+			$end_time   = $end_datetime ? DateHelper::local_time_full( $end_datetime ) : '00:00:00';
 			$all_day    = ( '00:00:00' === $start_time && '00:00:00' === $end_time );
 		}
 
@@ -450,8 +451,8 @@ class PublicEventsController extends WP_REST_Controller {
 			'uid'         => $uid,
 			'title'       => $title,
 			'description' => $description,
-			'start'       => $start_datetime ? gmdate( 'c', strtotime( $start_datetime ) ) : '',
-			'end'         => $end_datetime ? gmdate( 'c', strtotime( $end_datetime ) ) : '',
+			'start'       => $start_datetime ? DateHelper::local_to_iso8601( $start_datetime ) : '',
+			'end'         => $end_datetime ? DateHelper::local_to_iso8601( $end_datetime ) : '',
 			'all_day'     => $all_day,
 			'url'         => $url,
 			'categories'  => $categories,
@@ -472,8 +473,8 @@ class PublicEventsController extends WP_REST_Controller {
 			'uid'         => $event['uid'] ?? '',
 			'title'       => $event['summary'] ?? '',
 			'description' => $event['description'] ?? '',
-			'start'       => ! empty( $event['start'] ) ? gmdate( 'c', strtotime( $event['start'] ) ) : '',
-			'end'         => ! empty( $event['end'] ) ? gmdate( 'c', strtotime( $event['end'] ) ) : '',
+			'start'       => ! empty( $event['start'] ) ? DateHelper::local_to_iso8601( $event['start'] ) : '',
+			'end'         => ! empty( $event['end'] ) ? DateHelper::local_to_iso8601( $event['end'] ) : '',
 			'all_day'     => $event['all_day'] ?? false,
 			'url'         => $event['url'] ?? '',
 		);
@@ -495,8 +496,8 @@ class PublicEventsController extends WP_REST_Controller {
 		// Determine if all-day event (no time component or midnight-to-midnight)
 		$all_day = false;
 		if ( $start_datetime ) {
-			$start_time = gmdate( 'H:i:s', strtotime( $start_datetime ) );
-			$end_time   = $end_datetime ? gmdate( 'H:i:s', strtotime( $end_datetime ) ) : '00:00:00';
+			$start_time = DateHelper::local_time_full( $start_datetime );
+			$end_time   = $end_datetime ? DateHelper::local_time_full( $end_datetime ) : '00:00:00';
 			$all_day    = ( '00:00:00' === $start_time && '00:00:00' === $end_time );
 		}
 
@@ -516,8 +517,8 @@ class PublicEventsController extends WP_REST_Controller {
 			'uid'         => $uid,
 			'title'       => get_the_title( $event_id ),
 			'description' => $description,
-			'start'       => $start_datetime ? gmdate( 'c', strtotime( $start_datetime ) ) : '',
-			'end'         => $end_datetime ? gmdate( 'c', strtotime( $end_datetime ) ) : '',
+			'start'       => $start_datetime ? DateHelper::local_to_iso8601( $start_datetime ) : '',
+			'end'         => $end_datetime ? DateHelper::local_to_iso8601( $end_datetime ) : '',
 			'all_day'     => $all_day,
 			'url'         => get_permalink( $event_id ),
 		);
@@ -570,6 +571,7 @@ class PublicEventsController extends WP_REST_Controller {
 			'meta'   => array(
 				'site_name' => get_bloginfo( 'name' ),
 				'site_url'  => get_site_url(),
+				'timezone'  => wp_timezone_string(),
 				'total'     => count( $events ),
 				'page'      => $page,
 				'per_page'  => $per_page,

@@ -7,6 +7,7 @@
 
 namespace FairEvents\API;
 
+use FairEvents\Helpers\DateHelper;
 use FairEvents\Models\EventDates;
 use FairEvents\PostTypes\Event;
 use WP_REST_Controller;
@@ -110,7 +111,7 @@ class EventProposalController extends WP_REST_Controller {
 		}
 
 		// Validate start datetime is in the future
-		$start_timestamp = strtotime( $start_datetime );
+		$start_timestamp = DateHelper::local_to_timestamp( $start_datetime );
 		if ( ! $start_timestamp || $start_timestamp <= time() ) {
 			return new WP_Error(
 				'invalid_date',
@@ -119,8 +120,10 @@ class EventProposalController extends WP_REST_Controller {
 			);
 		}
 
-		// Calculate end datetime
-		$end_datetime = gmdate( 'Y-m-d\TH:i:s', $start_timestamp + ( $duration_minutes * 60 ) );
+		// Calculate end datetime in site-local time
+		$end_dt = new \DateTime( '@' . ( $start_timestamp + ( $duration_minutes * 60 ) ) );
+		$end_dt->setTimezone( wp_timezone() );
+		$end_datetime = $end_dt->format( 'Y-m-d\TH:i:s' );
 
 		// Validate and filter category IDs
 		$valid_category_ids = array();

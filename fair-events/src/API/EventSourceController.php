@@ -10,6 +10,7 @@ namespace FairEvents\API;
 defined( 'WPINC' ) || die;
 
 use FairEvents\Database\EventSourceRepository;
+use FairEvents\Helpers\DateHelper;
 use WP_REST_Controller;
 use WP_REST_Server;
 use WP_REST_Request;
@@ -436,7 +437,7 @@ class EventSourceController extends WP_REST_Controller {
 		$ical .= 'PRODID:-//Fair Events//Event Source: ' . $source['name'] . "//EN\r\n";
 		$ical .= "CALSCALE:GREGORIAN\r\n";
 		$ical .= 'X-WR-CALNAME:' . $this->escape_ical( $source['name'] ) . "\r\n";
-		$ical .= "X-WR-TIMEZONE:UTC\r\n";
+		$ical .= 'X-WR-TIMEZONE:' . wp_timezone_string() . "\r\n";
 
 		foreach ( $events as $event ) {
 			$start_date = get_post_meta( $event->ID, '_fair_event_start_date', true );
@@ -447,8 +448,8 @@ class EventSourceController extends WP_REST_Controller {
 			}
 
 			// Format dates for iCal (YYYYMMDDTHHMMSSZ)
-			$dtstart = gmdate( 'Ymd\THis\Z', strtotime( $start_date ) );
-			$dtend   = $end_date ? gmdate( 'Ymd\THis\Z', strtotime( $end_date ) ) : gmdate( 'Ymd\THis\Z', strtotime( $start_date ) + 3600 );
+			$dtstart = DateHelper::local_to_ical_utc( $start_date );
+			$dtend   = $end_date ? DateHelper::local_to_ical_utc( $end_date ) : gmdate( 'Ymd\THis\Z', DateHelper::local_to_timestamp( $start_date ) + 3600 );
 
 			$ical .= "BEGIN:VEVENT\r\n";
 			$ical .= 'UID:' . $event->ID . '@' . get_site_url() . "\r\n";

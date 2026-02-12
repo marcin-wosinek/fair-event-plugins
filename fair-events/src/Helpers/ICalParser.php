@@ -96,9 +96,9 @@ class ICalParser {
 			return null;
 		}
 
-		// Get start date
+		// Get start date — convert from source timezone to site-local time.
 		$dtstart        = $vevent->DTSTART->getDateTime();
-		$start_datetime = $dtstart->format( 'Y-m-d H:i:s' );
+		$start_datetime = DateHelper::datetime_to_local( $dtstart );
 
 		// Check if all-day event (DATE vs DATE-TIME)
 		$all_day = ! $vevent->DTSTART->hasTime();
@@ -106,11 +106,11 @@ class ICalParser {
 		// Get end date (use DTEND or DURATION, fallback to start date)
 		if ( isset( $vevent->DTEND ) ) {
 			$dtend        = $vevent->DTEND->getDateTime();
-			$end_datetime = $dtend->format( 'Y-m-d H:i:s' );
+			$end_datetime = DateHelper::datetime_to_local( $dtend );
 		} elseif ( isset( $vevent->DURATION ) ) {
 			$dtend = clone $dtstart;
 			$dtend->add( VObject\DateTimeParser::parseDuration( $vevent->DURATION ) );
-			$end_datetime = $dtend->format( 'Y-m-d H:i:s' );
+			$end_datetime = DateHelper::datetime_to_local( $dtend );
 		} else {
 			$end_datetime = $start_datetime;
 		}

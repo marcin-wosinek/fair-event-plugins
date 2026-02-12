@@ -13,6 +13,7 @@
 
 defined( 'WPINC' ) || die;
 
+use FairEvents\Helpers\DateHelper;
 use FairEvents\Models\EventDates;
 use FairEvents\Helpers\ICalParser;
 use FairEvents\Settings\Settings;
@@ -141,8 +142,8 @@ if ( ! function_exists( 'fair_events_inject_event_time' ) ) {
 		}
 
 		// Format times
-		$start_time = gmdate( 'H:i', strtotime( $start_date ) );
-		$end_time   = $end_date ? gmdate( 'H:i', strtotime( $end_date ) ) : '';
+		$start_time = DateHelper::local_time( $start_date );
+		$end_time   = $end_date ? DateHelper::local_time( $end_date ) : '';
 
 		// Replace start time placeholder
 		$html = preg_replace(
@@ -366,9 +367,9 @@ if ( $events_query->have_posts() ) {
 		$all_occurrences = EventDates::get_all_by_event_id( $event_id );
 
 		foreach ( $all_occurrences as $event_dates ) {
-			$start_date = gmdate( 'Y-m-d', strtotime( $event_dates->start_datetime ) );
+			$start_date = DateHelper::local_date( $event_dates->start_datetime );
 			$end_date   = $event_dates->end_datetime
-				? gmdate( 'Y-m-d', strtotime( $event_dates->end_datetime ) )
+				? DateHelper::local_date( $event_dates->end_datetime )
 				: $start_date;
 
 			// Add event to all days it spans.
@@ -386,7 +387,7 @@ if ( $events_query->have_posts() ) {
 					'link_type'    => 'post',
 				);
 
-				$loop_date = gmdate( 'Y-m-d', strtotime( $loop_date . ' +1 day' ) );
+				$loop_date = DateHelper::next_date( $loop_date );
 			}
 		}
 	}
@@ -395,9 +396,9 @@ if ( $events_query->have_posts() ) {
 // Fetch standalone events (external/unlinked) for the week.
 $standalone_events = EventDates::get_standalone_for_date_range( $week_start, $week_end );
 foreach ( $standalone_events as $event_dates ) {
-	$start_date = gmdate( 'Y-m-d', strtotime( $event_dates->start_datetime ) );
+	$start_date = DateHelper::local_date( $event_dates->start_datetime );
 	$end_date   = $event_dates->end_datetime
-		? gmdate( 'Y-m-d', strtotime( $event_dates->end_datetime ) )
+		? DateHelper::local_date( $event_dates->end_datetime )
 		: $start_date;
 
 	// Add event to all days it spans.
@@ -405,7 +406,7 @@ foreach ( $standalone_events as $event_dates ) {
 	while ( $loop_date <= $end_date && $loop_date <= $boundaries['end'] ) {
 		// Skip dates before week start.
 		if ( $loop_date < $boundaries['start'] ) {
-			$loop_date = gmdate( 'Y-m-d', strtotime( $loop_date . ' +1 day' ) );
+			$loop_date = DateHelper::next_date( $loop_date );
 			continue;
 		}
 
@@ -424,14 +425,14 @@ foreach ( $standalone_events as $event_dates ) {
 			'url'           => $event_dates->get_display_url(),
 		);
 
-		$loop_date = gmdate( 'Y-m-d', strtotime( $loop_date . ' +1 day' ) );
+		$loop_date = DateHelper::next_date( $loop_date );
 	}
 }
 
 // Process iCal events
 foreach ( $all_ical_events as $ical_event ) {
-	$start_date = gmdate( 'Y-m-d', strtotime( $ical_event['start'] ) );
-	$end_date   = gmdate( 'Y-m-d', strtotime( $ical_event['end'] ) );
+	$start_date = DateHelper::local_date( $ical_event['start'] );
+	$end_date   = DateHelper::local_date( $ical_event['end'] );
 
 	$loop_date = $start_date;
 	while ( $loop_date <= $end_date ) {
@@ -450,7 +451,7 @@ foreach ( $all_ical_events as $ical_event ) {
 			'color'        => $ical_event['source_color'],
 		);
 
-		$loop_date = gmdate( 'Y-m-d', strtotime( $loop_date . ' +1 day' ) );
+		$loop_date = DateHelper::next_date( $loop_date );
 	}
 }
 
