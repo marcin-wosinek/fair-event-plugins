@@ -575,25 +575,46 @@ class EventDates {
 	 * Get standalone event dates for a date range
 	 *
 	 * Fetches only standalone events (external/unlinked) within the given range.
+	 * When category IDs are provided, only returns events matching those categories.
 	 *
-	 * @param string $start_date Start date (Y-m-d H:i:s format).
-	 * @param string $end_date   End date (Y-m-d H:i:s format).
+	 * @param string $start_date   Start date (Y-m-d H:i:s format).
+	 * @param string $end_date     End date (Y-m-d H:i:s format).
+	 * @param array  $category_ids Optional category term IDs to filter by.
 	 * @return EventDates[] Array of EventDates objects.
 	 */
-	public static function get_standalone_for_date_range( $start_date, $end_date ) {
+	public static function get_standalone_for_date_range( $start_date, $end_date, $category_ids = array() ) {
 		global $wpdb;
 
 		$table_name = $wpdb->prefix . 'fair_event_dates';
 
-		$results = $wpdb->get_results(
-			$wpdb->prepare(
-				"SELECT * FROM %i WHERE link_type != 'post' AND start_datetime <= %s AND (end_datetime >= %s OR (end_datetime IS NULL AND start_datetime >= %s)) ORDER BY start_datetime ASC",
-				$table_name,
-				$end_date,
-				$start_date,
-				$start_date
-			)
-		);
+		if ( ! empty( $category_ids ) ) {
+			$cat_table = $wpdb->prefix . 'fair_event_date_categories';
+
+			$id_placeholders = implode( ',', array_fill( 0, count( $category_ids ), '%d' ) );
+
+			$results = $wpdb->get_results(
+				// phpcs:ignore WordPress.DB.PreparedSQLPlaceholders.ReplacementsWrongNumber
+				$wpdb->prepare(
+					// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+					"SELECT ed.* FROM %i ed INNER JOIN %i edc ON ed.id = edc.event_date_id WHERE edc.term_id IN ($id_placeholders) AND ed.link_type != 'post' AND ed.start_datetime <= %s AND (ed.end_datetime >= %s OR (ed.end_datetime IS NULL AND ed.start_datetime >= %s)) GROUP BY ed.id ORDER BY ed.start_datetime ASC",
+					array_merge(
+						array( $table_name, $cat_table ),
+						array_map( 'intval', $category_ids ),
+						array( $end_date, $start_date, $start_date )
+					)
+				)
+			);
+		} else {
+			$results = $wpdb->get_results(
+				$wpdb->prepare(
+					"SELECT * FROM %i WHERE link_type != 'post' AND start_datetime <= %s AND (end_datetime >= %s OR (end_datetime IS NULL AND start_datetime >= %s)) ORDER BY start_datetime ASC",
+					$table_name,
+					$end_date,
+					$start_date,
+					$start_date
+				)
+			);
+		}
 
 		if ( ! $results ) {
 			return array();

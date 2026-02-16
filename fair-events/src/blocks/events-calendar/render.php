@@ -394,7 +394,7 @@ if ( $events_query->have_posts() ) {
 }
 
 // Fetch standalone events (external/unlinked) for the calendar range.
-$standalone_events = EventDates::get_standalone_for_date_range( $query_start, $query_end );
+$standalone_events = EventDates::get_standalone_for_date_range( $query_start, $query_end, $categories );
 foreach ( $standalone_events as $event_dates ) {
 	$start_date = DateHelper::local_date( $event_dates->start_datetime );
 	$end_date   = $event_dates->end_datetime

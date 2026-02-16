@@ -394,7 +394,7 @@ if ( $events_query->have_posts() ) {
 }
 
 // Fetch standalone events (external/unlinked) for the week.
-$standalone_events = EventDates::get_standalone_for_date_range( $week_start, $week_end );
+$standalone_events = EventDates::get_standalone_for_date_range( $week_start, $week_end, $categories );
 foreach ( $standalone_events as $event_dates ) {
 	$start_date = DateHelper::local_date( $event_dates->start_datetime );
 	$end_date   = $event_dates->end_datetime

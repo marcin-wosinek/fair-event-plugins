@@ -190,7 +190,8 @@ class PublicEventsController extends WP_REST_Controller {
 		}
 
 		// Collect external events from source data sources.
-		$external_events = array();
+		$external_events  = array();
+		$all_category_ids = array();
 
 		// Build date range strings for external source filtering.
 		$range_start = $start_date ? $start_date . ' 00:00:00' : null;
@@ -222,10 +223,21 @@ class PublicEventsController extends WP_REST_Controller {
 					}
 				}
 			}
+
+			if ( 'categories' === $data_source['source_type'] ) {
+				$category_ids = $data_source['config']['category_ids'] ?? array();
+				if ( ! empty( $category_ids ) ) {
+					$all_category_ids = array_merge( $all_category_ids, $category_ids );
+				}
+			}
 		}
 
-		// Query all local events (no category filter) to match the calendar block behavior.
-		$events = $this->query_events( $start_date, $end_date, array(), $per_page, $page );
+		if ( ! empty( $all_category_ids ) ) {
+			$all_category_ids = array_unique( array_map( 'intval', $all_category_ids ) );
+		}
+
+		// Query local events filtered by source categories.
+		$events = $this->query_events( $start_date, $end_date, $all_category_ids, $per_page, $page );
 
 		// Merge external events with local events and sort by start date.
 		$events = array_merge( $events, $external_events );

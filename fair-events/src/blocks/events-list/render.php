@@ -280,28 +280,32 @@ if ( ! empty( $event_source_slugs ) && is_array( $event_source_slugs ) ) {
 				// Get standalone events starting after now
 				$standalone_events_raw = EventDates::get_standalone_for_date_range(
 					$current_time,
-					'2099-12-31 23:59:59'
+					'2099-12-31 23:59:59',
+					$categories
 				);
 				break;
 			case 'past':
 				// Get standalone events ending before now
 				$standalone_events_raw = EventDates::get_standalone_for_date_range(
 					'1970-01-01 00:00:00',
-					$current_time
+					$current_time,
+					$categories
 				);
 				break;
 			case 'ongoing':
 				// Get standalone events spanning now
 				$standalone_events_raw = EventDates::get_standalone_for_date_range(
 					$current_time,
-					$current_time
+					$current_time,
+					$categories
 				);
 				break;
 			case 'all':
 			default:
 				$standalone_events_raw = EventDates::get_standalone_for_date_range(
 					'1970-01-01 00:00:00',
-					'2099-12-31 23:59:59'
+					'2099-12-31 23:59:59',
+					$categories
 				);
 				break;
 		}

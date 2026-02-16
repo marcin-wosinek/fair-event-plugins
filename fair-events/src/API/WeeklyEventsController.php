@@ -115,7 +115,8 @@ class WeeklyEventsController extends \WP_REST_Controller {
 		$end_datetime   = $week_end . ' 23:59:59';
 
 		// Collect all events.
-		$all_events = array();
+		$all_events       = array();
+		$all_category_ids = array();
 
 		foreach ( $source['data_sources'] as $data_source ) {
 			$type = $data_source['source_type'] ?? '';
@@ -134,12 +135,16 @@ class WeeklyEventsController extends \WP_REST_Controller {
 				$category_ids = $data_source['config']['category_ids'] ?? array();
 				if ( ! empty( $category_ids ) ) {
 					$this->collect_category_events( $category_ids, $start_datetime, $end_datetime, $all_events );
+					$all_category_ids = array_merge( $all_category_ids, $category_ids );
 				}
 			}
 		}
 
-		// Fetch standalone events.
-		$this->collect_standalone_events( $start_datetime, $end_datetime, $all_events );
+		// Fetch standalone events filtered by collected category IDs.
+		if ( ! empty( $all_category_ids ) ) {
+			$all_category_ids = array_unique( array_map( 'intval', $all_category_ids ) );
+			$this->collect_standalone_events( $start_datetime, $end_datetime, $all_events, $all_category_ids );
+		}
 
 		// Build 7-day response.
 		$days         = array();
@@ -359,9 +364,10 @@ class WeeklyEventsController extends \WP_REST_Controller {
 	 * @param string $start_datetime Week start datetime.
 	 * @param string $end_datetime   Week end datetime.
 	 * @param array  $all_events     Events grouped by date (modified by reference).
+	 * @param array  $category_ids   Optional category term IDs to filter by.
 	 */
-	private function collect_standalone_events( $start_datetime, $end_datetime, &$all_events ) {
-		$standalone = EventDates::get_standalone_for_date_range( $start_datetime, $end_datetime );
+	private function collect_standalone_events( $start_datetime, $end_datetime, &$all_events, $category_ids = array() ) {
+		$standalone = EventDates::get_standalone_for_date_range( $start_datetime, $end_datetime, $category_ids );
 
 		foreach ( $standalone as $event_dates ) {
 			$start_date = DateHelper::local_date( $event_dates->start_datetime );
