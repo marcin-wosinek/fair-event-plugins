@@ -4,7 +4,7 @@
  * @package FairEvents
  */
 
-import { useState, useEffect, useCallback } from '@wordpress/element';
+import { useState, useEffect, useCallback, useRef } from '@wordpress/element';
 import { Spinner, Notice } from '@wordpress/components';
 import { __, sprintf } from '@wordpress/i18n';
 import apiFetch from '@wordpress/api-fetch';
@@ -13,8 +13,32 @@ import CalendarHeader from './components/CalendarHeader.js';
 import CalendarGrid from './components/CalendarGrid.js';
 import QuickEventModal from './components/QuickEventModal.js';
 
+function getInitialDate() {
+	const params = new URLSearchParams(window.location.search);
+	const month = params.get('month');
+	if (month) {
+		const [year, mon] = month.split('-').map(Number);
+		if (year && mon) {
+			return new Date(year, mon - 1, 1);
+		}
+	}
+	return new Date();
+}
+
+function updateUrlMonth(date) {
+	const params = new URLSearchParams(window.location.search);
+	const month = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(
+		2,
+		'0'
+	)}`;
+	params.set('month', month);
+	const newUrl = `${window.location.pathname}?${params.toString()}`;
+	window.history.pushState({ month }, '', newUrl);
+}
+
 export default function CalendarApp() {
-	const [currentDate, setCurrentDate] = useState(new Date());
+	const [currentDate, setCurrentDate] = useState(getInitialDate);
+	const isPopState = useRef(false);
 	const [events, setEvents] = useState([]);
 	const [loading, setLoading] = useState(true);
 	const [error, setError] = useState(null);
@@ -70,6 +94,25 @@ export default function CalendarApp() {
 	useEffect(() => {
 		fetchEvents();
 	}, [fetchEvents]);
+
+	// Sync URL when currentDate changes (skip for popstate-triggered changes)
+	useEffect(() => {
+		if (isPopState.current) {
+			isPopState.current = false;
+			return;
+		}
+		updateUrlMonth(currentDate);
+	}, [currentDate]);
+
+	// Listen for browser back/forward
+	useEffect(() => {
+		const handlePopState = () => {
+			isPopState.current = true;
+			setCurrentDate(getInitialDate());
+		};
+		window.addEventListener('popstate', handlePopState);
+		return () => window.removeEventListener('popstate', handlePopState);
+	}, []);
 
 	const handlePrevMonth = () => {
 		setCurrentDate(
