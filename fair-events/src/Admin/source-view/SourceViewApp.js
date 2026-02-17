@@ -167,6 +167,16 @@ export default function SourceViewApp() {
 		setCurrentDate(new Date());
 	};
 
+	const handleEditEvent = useCallback(
+		(eventUid) => {
+			const event = events.find((e) => e.uid === eventUid);
+			if (event?.url) {
+				window.location.href = event.url;
+			}
+		},
+		[events]
+	);
+
 	const getIcalUrl = (slug) => {
 		const template =
 			icalUrlTemplate || '/wp-json/fair-events/v1/sources/{slug}/ical';
@@ -306,6 +316,7 @@ export default function SourceViewApp() {
 					currentDate={currentDate}
 					events={events}
 					startOfWeek={startOfWeek}
+					onEditEvent={handleEditEvent}
 				/>
 			)}
 
