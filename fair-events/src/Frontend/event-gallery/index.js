@@ -245,6 +245,25 @@ function Lightbox({
 }
 
 /**
+ * Read photo ID from URL hash (#photo-123).
+ */
+function getPhotoIdFromHash() {
+	const match = window.location.hash.match(/^#photo-(\d+)$/);
+	return match ? parseInt(match[1], 10) : null;
+}
+
+/**
+ * Clear the photo hash from the URL.
+ */
+function clearPhotoHash() {
+	history.replaceState(
+		null,
+		'',
+		window.location.pathname + window.location.search
+	);
+}
+
+/**
  * Photo card component
  *
  * @param {Object} props - Component props
@@ -435,24 +454,76 @@ function Gallery() {
 		[userLikes, participantId]
 	);
 
+	const lightboxPushed = useRef(false);
+
+	// Open lightbox from URL hash after photos load.
+	useEffect(() => {
+		if (photos.length === 0) return;
+		const photoId = getPhotoIdFromHash();
+		if (photoId !== null) {
+			const index = photos.findIndex((p) => p.id === photoId);
+			if (index !== -1) {
+				setLightboxIndex(index);
+			}
+		}
+	}, [photos]);
+
+	// Handle browser back/forward.
+	useEffect(() => {
+		const handlePopState = () => {
+			const photoId = getPhotoIdFromHash();
+			if (photoId !== null && photos.length > 0) {
+				const index = photos.findIndex((p) => p.id === photoId);
+				setLightboxIndex(index !== -1 ? index : null);
+			} else {
+				setLightboxIndex(null);
+			}
+			lightboxPushed.current = false;
+		};
+
+		window.addEventListener('popstate', handlePopState);
+		return () => window.removeEventListener('popstate', handlePopState);
+	}, [photos]);
+
 	// Lightbox handlers.
-	const openLightbox = useCallback((index) => {
-		setLightboxIndex(index);
-	}, []);
+	const openLightbox = useCallback(
+		(index) => {
+			setLightboxIndex(index);
+			history.pushState(null, '', `#photo-${photos[index].id}`);
+			lightboxPushed.current = true;
+		},
+		[photos]
+	);
 
 	const closeLightbox = useCallback(() => {
 		setLightboxIndex(null);
+		if (lightboxPushed.current) {
+			lightboxPushed.current = false;
+			history.back();
+		} else {
+			clearPhotoHash();
+		}
 	}, []);
 
 	const goToPrevPhoto = useCallback(() => {
-		setLightboxIndex((prev) => (prev > 0 ? prev - 1 : prev));
-	}, []);
+		setLightboxIndex((prev) => {
+			const next = prev > 0 ? prev - 1 : prev;
+			if (next !== prev) {
+				history.replaceState(null, '', `#photo-${photos[next].id}`);
+			}
+			return next;
+		});
+	}, [photos]);
 
 	const goToNextPhoto = useCallback(() => {
-		setLightboxIndex((prev) =>
-			prev < photos.length - 1 ? prev + 1 : prev
-		);
-	}, [photos.length]);
+		setLightboxIndex((prev) => {
+			const next = prev < photos.length - 1 ? prev + 1 : prev;
+			if (next !== prev) {
+				history.replaceState(null, '', `#photo-${photos[next].id}`);
+			}
+			return next;
+		});
+	}, [photos]);
 
 	if (loading) {
 		return (
