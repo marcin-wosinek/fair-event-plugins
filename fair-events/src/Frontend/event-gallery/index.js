@@ -136,6 +136,13 @@ function Lightbox({
 				case 'ArrowRight':
 					if (hasNext) onNext();
 					break;
+				case ' ':
+					e.preventDefault();
+					if (!isToggling) {
+						setIsToggling(true);
+						onLikeToggle(photo.id).then(() => setIsToggling(false));
+					}
+					break;
 			}
 		};
 
@@ -147,7 +154,16 @@ function Lightbox({
 			document.removeEventListener('keydown', handleKeyDown);
 			document.body.style.overflow = '';
 		};
-	}, [onClose, onPrev, onNext, hasPrev, hasNext]);
+	}, [
+		onClose,
+		onPrev,
+		onNext,
+		hasPrev,
+		hasNext,
+		onLikeToggle,
+		photo.id,
+		isToggling,
+	]);
 
 	// Close on backdrop click.
 	const handleBackdropClick = (e) => {
