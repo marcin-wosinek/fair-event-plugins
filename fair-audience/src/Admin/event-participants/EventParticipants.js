@@ -13,6 +13,7 @@ import {
 } from '@wordpress/components';
 import { DataViews } from '@wordpress/dataviews';
 import { dateI18n, getSettings } from '@wordpress/date';
+import EmailSendResultNotice from '../components/EmailSendResultNotice.js';
 
 const DEFAULT_VIEW = {
 	type: 'table',
@@ -57,6 +58,8 @@ export default function EventParticipants() {
 	const [selectedInviteParticipants, setSelectedInviteParticipants] =
 		useState(new Set());
 	const [inviteSearch, setInviteSearch] = useState('');
+	const [gallerySendResult, setGallerySendResult] = useState(null);
+	const [invitationSendResult, setInvitationSendResult] = useState(null);
 
 	const eventId = new URLSearchParams(window.location.search).get('event_id');
 
@@ -332,33 +335,10 @@ export default function EventParticipants() {
 				data: { participant_ids: participantIds },
 			});
 
-			if (response.sent_count > 0) {
-				alert(
-					sprintf(
-						/* translators: %d: number of emails sent */
-						__(
-							'Successfully sent gallery links to %d participant(s)!',
-							'fair-audience'
-						),
-						response.sent_count
-					)
-				);
-			}
-
-			if (response.failed && response.failed.length > 0) {
-				// eslint-disable-next-line no-console
-				console.error('Failed to send to:', response.failed);
-				alert(
-					sprintf(
-						/* translators: %d: number of failed sends */
-						__(
-							'Failed to send to %d participant(s). Check console for details.',
-							'fair-audience'
-						),
-						response.failed.length
-					)
-				);
-			}
+			setGallerySendResult({
+				sent_count: response.sent_count,
+				failed: response.failed,
+			});
 		} catch (err) {
 			alert(
 				__('Error sending gallery links: ', 'fair-audience') +
@@ -418,33 +398,10 @@ export default function EventParticipants() {
 				data: requestData,
 			});
 
-			if (response.sent_count > 0) {
-				alert(
-					sprintf(
-						/* translators: %d: number of emails sent */
-						__(
-							'Successfully sent gallery links to %d participant(s)!',
-							'fair-audience'
-						),
-						response.sent_count
-					)
-				);
-			}
-
-			if (response.failed && response.failed.length > 0) {
-				// eslint-disable-next-line no-console
-				console.error('Failed to send to:', response.failed);
-				alert(
-					sprintf(
-						/* translators: %d: number of failed sends */
-						__(
-							'Failed to send to %d participant(s). Check console for details.',
-							'fair-audience'
-						),
-						response.failed.length
-					)
-				);
-			}
+			setGallerySendResult({
+				sent_count: response.sent_count,
+				failed: response.failed,
+			});
 
 			// Clear selection after sending.
 			setSelection([]);
@@ -539,44 +496,11 @@ export default function EventParticipants() {
 				data: requestData,
 			});
 
-			let message = sprintf(
-				/* translators: %d: number of emails sent */
-				__(
-					'Successfully sent invitations to %d participant(s)!',
-					'fair-audience'
-				),
-				response.sent_count
-			);
-
-			if (response.skipped_count > 0) {
-				message +=
-					' ' +
-					sprintf(
-						/* translators: %d: number of skipped participants */
-						__(
-							'%d skipped (already signed up or opted out of marketing).',
-							'fair-audience'
-						),
-						response.skipped_count
-					);
-			}
-
-			alert(message);
-
-			if (response.failed && response.failed.length > 0) {
-				// eslint-disable-next-line no-console
-				console.error('Failed to send to:', response.failed);
-				alert(
-					sprintf(
-						/* translators: %d: number of failed sends */
-						__(
-							'Failed to send to %d participant(s). Check console for details.',
-							'fair-audience'
-						),
-						response.failed.length
-					)
-				);
-			}
+			setInvitationSendResult({
+				sent_count: response.sent_count,
+				failed: response.failed,
+				skipped_count: response.skipped_count,
+			});
 
 			setShowInvitationModal(false);
 			setSelectedGroups(new Set());
@@ -711,6 +635,15 @@ export default function EventParticipants() {
 	return (
 		<div className="wrap">
 			<h1>{__('Event Participants', 'fair-audience')}</h1>
+
+			<EmailSendResultNotice
+				result={gallerySendResult}
+				onDismiss={() => setGallerySendResult(null)}
+			/>
+			<EmailSendResultNotice
+				result={invitationSendResult}
+				onDismiss={() => setInvitationSendResult(null)}
+			/>
 
 			<Card>
 				<CardHeader>

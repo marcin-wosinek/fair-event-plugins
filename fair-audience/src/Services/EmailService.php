@@ -325,6 +325,7 @@ class EmailService {
 
 			if ( ! $participant ) {
 				$results['failed'][] = array(
+					'name'   => '',
 					'email'  => '',
 					'reason' => __( 'Participant not found.', 'fair-audience' ),
 				);
@@ -333,6 +334,7 @@ class EmailService {
 
 			if ( ! $this->has_valid_email( $participant ) ) {
 				$results['failed'][] = array(
+					'name'   => $participant->name,
 					'email'  => '',
 					'reason' => __( 'Participant has no email address.', 'fair-audience' ),
 				);
@@ -350,6 +352,7 @@ class EmailService {
 				$access_key->save();
 			} else {
 				$results['failed'][] = array(
+					'name'   => $participant->name,
 					'email'  => $participant->email,
 					'reason' => __( 'wp_mail() failed to send.', 'fair-audience' ),
 				);
@@ -546,6 +549,7 @@ class EmailService {
 
 			if ( ! $participant ) {
 				$results['failed'][] = array(
+					'name'   => '',
 					'email'  => '',
 					'reason' => __( 'Participant not found.', 'fair-audience' ),
 				);
@@ -554,6 +558,7 @@ class EmailService {
 
 			if ( ! $this->has_valid_email( $participant ) ) {
 				$results['failed'][] = array(
+					'name'   => $participant->name,
 					'email'  => '',
 					'reason' => __( 'Participant has no email address.', 'fair-audience' ),
 				);
@@ -570,6 +575,7 @@ class EmailService {
 				$access_key->mark_as_sent();
 			} else {
 				$results['failed'][] = array(
+					'name'   => $participant->name,
 					'email'  => $participant->email,
 					'reason' => __( 'wp_mail() failed to send.', 'fair-audience' ),
 				);
@@ -911,6 +917,7 @@ class EmailService {
 			if ( $skip_signed_up && in_array( $participant_id, $signed_up_ids, true ) ) {
 				$participant          = $this->participant_repository->get_by_id( $participant_id );
 				$results['skipped'][] = array(
+					'name'   => $participant ? $participant->name : '',
 					'email'  => $participant ? $participant->email : '',
 					'reason' => __( 'Already signed up', 'fair-audience' ),
 				);
@@ -922,6 +929,7 @@ class EmailService {
 
 			if ( ! $participant ) {
 				$results['failed'][] = array(
+					'name'   => '',
 					'email'  => '',
 					'reason' => __( 'Participant not found.', 'fair-audience' ),
 				);
@@ -930,6 +938,7 @@ class EmailService {
 
 			if ( ! $this->has_valid_email( $participant ) ) {
 				$results['failed'][] = array(
+					'name'   => $participant->name,
 					'email'  => '',
 					'reason' => __( 'Participant has no email address.', 'fair-audience' ),
 				);
@@ -939,6 +948,7 @@ class EmailService {
 			// Check if participant can receive marketing emails.
 			if ( ! $this->can_receive_email( $participant, EmailType::MARKETING ) ) {
 				$results['skipped'][] = array(
+					'name'   => $participant->name,
 					'email'  => $participant->email,
 					'reason' => __( 'Participant opted out of marketing emails.', 'fair-audience' ),
 				);
@@ -950,6 +960,7 @@ class EmailService {
 
 			if ( ! $access_key ) {
 				$results['failed'][] = array(
+					'name'   => $participant->name,
 					'email'  => $participant->email,
 					'reason' => __( 'Failed to create access key.', 'fair-audience' ),
 				);
@@ -963,6 +974,7 @@ class EmailService {
 				$results['sent'][] = $participant->email;
 			} else {
 				$results['failed'][] = array(
+					'name'   => $participant->name,
 					'email'  => $participant->email,
 					'reason' => __( 'wp_mail() failed to send.', 'fair-audience' ),
 				);

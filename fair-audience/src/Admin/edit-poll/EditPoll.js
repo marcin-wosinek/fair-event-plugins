@@ -7,10 +7,10 @@ import {
 	TextareaControl,
 	SelectControl,
 	Spinner,
-	Notice,
 } from '@wordpress/components';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
+import EmailSendResultNotice from '../components/EmailSendResultNotice.js';
 
 export default function EditPoll() {
 	const [isLoading, setIsLoading] = useState(true);
@@ -207,7 +207,6 @@ export default function EditPoll() {
 			});
 
 			setSendResult({
-				type: 'success',
 				sent_count: response.sent_count,
 				failed: response.failed,
 			});
@@ -341,38 +340,10 @@ export default function EditPoll() {
 				</div>
 			)}
 
-			{sendResult && sendResult.type === 'success' && (
-				<Notice
-					status="success"
-					isDismissible={true}
-					onRemove={() => setSendResult(null)}
-				>
-					<p>
-						<strong>
-							{sprintf(
-								/* translators: %d: number of participants who received invitations */
-								__(
-									'Invitations sent to %d participants',
-									'fair-audience'
-								),
-								sendResult.sent_count
-							)}
-						</strong>
-					</p>
-					{sendResult.failed && sendResult.failed.length > 0 && (
-						<>
-							<p>{__('Failed to send to:', 'fair-audience')}</p>
-							<ul>
-								{sendResult.failed.map((fail, index) => (
-									<li key={index}>
-										{fail.email}: {fail.reason}
-									</li>
-								))}
-							</ul>
-						</>
-					)}
-				</Notice>
-			)}
+			<EmailSendResultNotice
+				result={sendResult}
+				onDismiss={() => setSendResult(null)}
+			/>
 
 			{pollId && pollStats && (
 				<div
