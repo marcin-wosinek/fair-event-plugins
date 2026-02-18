@@ -126,6 +126,16 @@ class EmailService {
 	}
 
 	/**
+	 * Check if a participant has a valid email address.
+	 *
+	 * @param Participant $participant The participant to check.
+	 * @return bool True if the participant has a non-empty email.
+	 */
+	private function has_valid_email( Participant $participant ): bool {
+		return ! empty( $participant->email );
+	}
+
+	/**
 	 * Send poll invitation to a single participant.
 	 *
 	 * @param object $poll         Poll object.
@@ -136,6 +146,10 @@ class EmailService {
 	 * @return bool Success.
 	 */
 	public function send_poll_invitation( $poll, $event, $participant, $access_token, $custom_message = '' ) {
+		if ( ! $this->has_valid_email( $participant ) ) {
+			return false;
+		}
+
 		$site_name = wp_specialchars_decode( get_option( 'blogname' ), ENT_QUOTES );
 
 		// Build poll URL.
@@ -317,6 +331,14 @@ class EmailService {
 				continue;
 			}
 
+			if ( ! $this->has_valid_email( $participant ) ) {
+				$results['failed'][] = array(
+					'email'  => '',
+					'reason' => __( 'Participant has no email address.', 'fair-audience' ),
+				);
+				continue;
+			}
+
 			// Send invitation.
 			$success = $this->send_poll_invitation( $poll, $event, $participant, $access_key->token, $message );
 
@@ -347,6 +369,10 @@ class EmailService {
 	 * @return bool Success.
 	 */
 	public function send_gallery_invitation( $event, $participant, $access_token, $custom_message = '' ) {
+		if ( ! $this->has_valid_email( $participant ) ) {
+			return false;
+		}
+
 		$site_name = wp_specialchars_decode( get_option( 'blogname' ), ENT_QUOTES );
 
 		// Build gallery URL.
@@ -526,6 +552,14 @@ class EmailService {
 				continue;
 			}
 
+			if ( ! $this->has_valid_email( $participant ) ) {
+				$results['failed'][] = array(
+					'email'  => '',
+					'reason' => __( 'Participant has no email address.', 'fair-audience' ),
+				);
+				continue;
+			}
+
 			// Send invitation.
 			$success = $this->send_gallery_invitation( $event, $participant, $access_key->token, $custom_message );
 
@@ -553,6 +587,10 @@ class EmailService {
 	 * @return bool Success.
 	 */
 	public function send_confirmation_email( $participant, $token ) {
+		if ( ! $this->has_valid_email( $participant ) ) {
+			return false;
+		}
+
 		$site_name = wp_specialchars_decode( get_option( 'blogname' ), ENT_QUOTES );
 
 		// Build confirmation URL.
@@ -673,6 +711,10 @@ class EmailService {
 	 * @return bool Success.
 	 */
 	public function send_signup_link_email( $event, $participant, $token ) {
+		if ( ! $this->has_valid_email( $participant ) ) {
+			return false;
+		}
+
 		$site_name = wp_specialchars_decode( get_option( 'blogname' ), ENT_QUOTES );
 
 		// Build signup URL with token.
@@ -882,6 +924,14 @@ class EmailService {
 				$results['failed'][] = array(
 					'email'  => '',
 					'reason' => __( 'Participant not found.', 'fair-audience' ),
+				);
+				continue;
+			}
+
+			if ( ! $this->has_valid_email( $participant ) ) {
+				$results['failed'][] = array(
+					'email'  => '',
+					'reason' => __( 'Participant has no email address.', 'fair-audience' ),
 				);
 				continue;
 			}
