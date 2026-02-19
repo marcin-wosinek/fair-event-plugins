@@ -372,7 +372,7 @@ class EmailService {
 	 * @param string $custom_message Optional custom message.
 	 * @return bool Success.
 	 */
-	public function send_gallery_invitation( $event, $participant, $access_token, $custom_message = '' ) {
+	public function send_gallery_invitation( $event, $participant, $access_token, $custom_message = '', $disabled_extra_message_ids = array() ) {
 		if ( ! $this->has_valid_email( $participant ) ) {
 			return false;
 		}
@@ -447,6 +447,14 @@ class EmailService {
 
 		// Append active extra messages after CTA.
 		$extra_messages = $this->get_active_extra_messages( $event->ID );
+		if ( ! empty( $disabled_extra_message_ids ) ) {
+			$extra_messages = array_filter(
+				$extra_messages,
+				function ( $msg ) use ( $disabled_extra_message_ids ) {
+					return ! in_array( $msg->id, $disabled_extra_message_ids, true );
+				}
+			);
+		}
 		foreach ( $extra_messages as $extra_msg ) {
 			$message .= '
 							<div style="margin: 0 0 20px 0; font-size: 16px;">
@@ -514,7 +522,7 @@ class EmailService {
 	 * @param array  $participant_ids Optional array of participant IDs to send to. If empty, sends to all.
 	 * @return array Results array with 'sent' and 'failed' keys.
 	 */
-	public function send_bulk_gallery_invitations( $event_id, $custom_message = '', $participant_ids = array() ) {
+	public function send_bulk_gallery_invitations( $event_id, $custom_message = '', $participant_ids = array(), $disabled_extra_message_ids = array() ) {
 		// Increase time limit for bulk sending.
 		set_time_limit( 300 ); // 5 minutes.
 
@@ -567,7 +575,7 @@ class EmailService {
 			}
 
 			// Send invitation.
-			$success = $this->send_gallery_invitation( $event, $participant, $access_key->token, $custom_message );
+			$success = $this->send_gallery_invitation( $event, $participant, $access_key->token, $custom_message, $disabled_extra_message_ids );
 
 			if ( $success ) {
 				$results['sent'][] = $participant->email;

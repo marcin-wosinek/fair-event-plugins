@@ -7,6 +7,7 @@ import {
 	SelectControl,
 	Spinner,
 	CheckboxControl,
+	ToggleControl,
 	Card,
 	CardHeader,
 	CardBody,
@@ -60,6 +61,15 @@ export default function EventParticipants() {
 	const [inviteSearch, setInviteSearch] = useState('');
 	const [gallerySendResult, setGallerySendResult] = useState(null);
 	const [invitationSendResult, setInvitationSendResult] = useState(null);
+	const [showGalleryPreviewModal, setShowGalleryPreviewModal] =
+		useState(false);
+	const [galleryPreviewParticipants, setGalleryPreviewParticipants] =
+		useState([]);
+	const [extraMessages, setExtraMessages] = useState([]);
+	const [disabledExtraMessageIds, setDisabledExtraMessageIds] = useState(
+		new Set()
+	);
+	const [isLoadingExtraMessages, setIsLoadingExtraMessages] = useState(false);
 
 	const eventId = new URLSearchParams(window.location.search).get('event_id');
 
@@ -307,49 +317,29 @@ export default function EventParticipants() {
 		}
 	};
 
-	const handleSendGalleryLink = async (items) => {
-		const participantIds = items.map((item) => item.participant_id);
-		const count = participantIds.length;
-
-		const confirmed = window.confirm(
-			sprintf(
-				/* translators: %d: number of participants */
-				__(
-					'Send gallery links to %d participant(s)? They will receive an email with a unique link to view and like photos.',
-					'fair-audience'
-				),
-				count
-			)
-		);
-
-		if (!confirmed) {
-			return;
-		}
-
-		setIsSendingGalleryLinks(true);
+	const openGalleryPreviewModal = async (targetParticipants) => {
+		setGalleryPreviewParticipants(targetParticipants);
+		setDisabledExtraMessageIds(new Set());
+		setIsLoadingExtraMessages(true);
+		setShowGalleryPreviewModal(true);
 
 		try {
-			const response = await apiFetch({
-				path: `/fair-audience/v1/events/${eventId}/gallery-invitations`,
-				method: 'POST',
-				data: { participant_ids: participantIds },
+			const messages = await apiFetch({
+				path: '/fair-audience/v1/extra-messages',
 			});
-
-			setGallerySendResult({
-				sent_count: response.sent_count,
-				failed: response.failed,
-			});
-		} catch (err) {
-			alert(
-				__('Error sending gallery links: ', 'fair-audience') +
-					err.message
-			);
+			setExtraMessages(messages.filter((m) => m.is_active));
+		} catch {
+			setExtraMessages([]);
 		} finally {
-			setIsSendingGalleryLinks(false);
+			setIsLoadingExtraMessages(false);
 		}
 	};
 
-	const handleSendGalleryLinkButton = async () => {
+	const handleSendGalleryLink = (items) => {
+		openGalleryPreviewModal(items);
+	};
+
+	const handleSendGalleryLinkButton = () => {
 		// If some participants are selected, send to them; otherwise send to all.
 		const targetParticipants =
 			selection.length > 0
@@ -365,32 +355,21 @@ export default function EventParticipants() {
 			return;
 		}
 
-		const confirmed = window.confirm(
-			sprintf(
-				/* translators: %d: number of participants */
-				__(
-					'Send gallery links to %d participant(s)? They will receive an email with a unique link to view and like photos.',
-					'fair-audience'
-				),
-				targetParticipants.length
-			)
-		);
+		openGalleryPreviewModal(targetParticipants);
+	};
 
-		if (!confirmed) {
-			return;
-		}
-
+	const handleConfirmGalleryLink = async () => {
 		setIsSendingGalleryLinks(true);
 
 		try {
-			const requestData =
-				selection.length > 0
-					? {
-							participant_ids: targetParticipants.map(
-								(p) => p.participant_id
-							),
-					  }
-					: {};
+			const participantIds = galleryPreviewParticipants.map(
+				(p) => p.participant_id
+			);
+
+			const requestData = {
+				participant_ids: participantIds,
+				disabled_extra_message_ids: Array.from(disabledExtraMessageIds),
+			};
 
 			const response = await apiFetch({
 				path: `/fair-audience/v1/events/${eventId}/gallery-invitations`,
@@ -403,7 +382,7 @@ export default function EventParticipants() {
 				failed: response.failed,
 			});
 
-			// Clear selection after sending.
+			setShowGalleryPreviewModal(false);
 			setSelection([]);
 		} catch (err) {
 			alert(
@@ -413,6 +392,16 @@ export default function EventParticipants() {
 		} finally {
 			setIsSendingGalleryLinks(false);
 		}
+	};
+
+	const handleToggleExtraMessage = (messageId) => {
+		const newDisabled = new Set(disabledExtraMessageIds);
+		if (newDisabled.has(messageId)) {
+			newDisabled.delete(messageId);
+		} else {
+			newDisabled.add(messageId);
+		}
+		setDisabledExtraMessageIds(newDisabled);
 	};
 
 	const handleOpenEditModal = (item) => {
@@ -1051,6 +1040,198 @@ export default function EventParticipants() {
 						</Button>
 						<Button isPrimary onClick={handleSaveEdit}>
 							{__('Save', 'fair-audience')}
+						</Button>
+					</div>
+				</Modal>
+			)}
+
+			{showGalleryPreviewModal && (
+				<Modal
+					title={__('Send Gallery Invitations', 'fair-audience')}
+					onRequestClose={() => setShowGalleryPreviewModal(false)}
+					style={{ maxWidth: '600px', width: '100%' }}
+				>
+					<p>
+						{sprintf(
+							/* translators: %d: number of participants */
+							__('Send to %d participant(s)', 'fair-audience'),
+							galleryPreviewParticipants.length
+						)}
+					</p>
+
+					<div
+						style={{
+							border: '1px solid #ddd',
+							borderRadius: '8px',
+							overflow: 'hidden',
+							marginBottom: '20px',
+							boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
+						}}
+					>
+						<div
+							style={{
+								backgroundColor: '#0073aa',
+								color: '#fff',
+								padding: '20px',
+								textAlign: 'center',
+								fontSize: '18px',
+								fontWeight: 'bold',
+							}}
+						>
+							{eventInfo?.title || ''}
+						</div>
+						<div style={{ padding: '25px 20px' }}>
+							<p
+								style={{
+									margin: '0 0 15px 0',
+									fontSize: '14px',
+								}}
+							>
+								{sprintf(
+									/* translators: %s: participant name placeholder */
+									__('Hi %s,', 'fair-audience'),
+									'(...)'
+								)}
+							</p>
+							<p
+								style={{
+									margin: '0 0 15px 0',
+									fontSize: '14px',
+								}}
+							>
+								{sprintf(
+									/* translators: %s: event title */
+									__(
+										'The photos from %s are now available for you to view and like!',
+										'fair-audience'
+									),
+									eventInfo?.title || ''
+								)}
+							</p>
+							<p
+								style={{
+									margin: '0 0 15px 0',
+									fontSize: '14px',
+								}}
+							>
+								{__(
+									'Click the button below to browse the gallery and let us know which photos you like best:',
+									'fair-audience'
+								)}
+							</p>
+							<p
+								style={{
+									textAlign: 'center',
+									margin: '0 0 20px 0',
+								}}
+							>
+								<span
+									style={{
+										display: 'inline-block',
+										backgroundColor: '#0073aa',
+										color: '#fff',
+										padding: '10px 24px',
+										borderRadius: '5px',
+										fontWeight: 'bold',
+										fontSize: '14px',
+									}}
+								>
+									{__('View Gallery', 'fair-audience')}
+								</span>
+							</p>
+
+							{isLoadingExtraMessages ? (
+								<Spinner />
+							) : (
+								extraMessages.map((msg) => (
+									<div
+										key={msg.id}
+										style={{
+											marginBottom: '12px',
+											padding: '10px',
+											border: '1px solid #e0e0e0',
+											borderRadius: '4px',
+											opacity:
+												disabledExtraMessageIds.has(
+													msg.id
+												)
+													? 0.4
+													: 1,
+										}}
+									>
+										<div
+											style={{
+												display: 'flex',
+												alignItems: 'center',
+												justifyContent: 'space-between',
+												marginBottom: '6px',
+											}}
+										>
+											<ToggleControl
+												label={
+													msg.category_name
+														? msg.category_name
+														: __(
+																'All categories',
+																'fair-audience'
+														  )
+												}
+												checked={
+													!disabledExtraMessageIds.has(
+														msg.id
+													)
+												}
+												onChange={() =>
+													handleToggleExtraMessage(
+														msg.id
+													)
+												}
+												__nextHasNoMarginBottom
+											/>
+										</div>
+										<div
+											style={{
+												fontSize: '13px',
+												color: '#555',
+											}}
+											dangerouslySetInnerHTML={{
+												__html: msg.content,
+											}}
+										/>
+									</div>
+								))
+							)}
+						</div>
+					</div>
+
+					<div
+						style={{
+							display: 'flex',
+							justifyContent: 'flex-end',
+							gap: '10px',
+						}}
+					>
+						<Button
+							variant="secondary"
+							onClick={() => setShowGalleryPreviewModal(false)}
+						>
+							{__('Cancel', 'fair-audience')}
+						</Button>
+						<Button
+							variant="primary"
+							onClick={handleConfirmGalleryLink}
+							disabled={isSendingGalleryLinks}
+						>
+							{isSendingGalleryLinks
+								? __('Sending...', 'fair-audience')
+								: sprintf(
+										/* translators: %d: number of participants */
+										__(
+											'Send to %d Participant(s)',
+											'fair-audience'
+										),
+										galleryPreviewParticipants.length
+								  )}
 						</Button>
 					</div>
 				</Modal>
