@@ -110,6 +110,9 @@ class EventDates {
 	/**
 	 * Get event dates by event ID
 	 *
+	 * Checks the direct event_id column first (primary post), then falls back
+	 * to the junction table for secondary linked posts.
+	 *
 	 * @param int $event_id Event post ID.
 	 * @return EventDates|null EventDates object or null if not found.
 	 */
@@ -118,10 +121,27 @@ class EventDates {
 
 		$table_name = $wpdb->prefix . 'fair_event_dates';
 
+		// Fast path: direct event_id lookup (primary post).
 		$result = $wpdb->get_row(
 			$wpdb->prepare(
 				'SELECT * FROM %i WHERE event_id = %d LIMIT 1',
 				$table_name,
+				$event_id
+			)
+		);
+
+		if ( $result ) {
+			return self::hydrate( $result );
+		}
+
+		// Fallback: check junction table for secondary linked posts.
+		$posts_table = $wpdb->prefix . 'fair_event_date_posts';
+
+		$result = $wpdb->get_row(
+			$wpdb->prepare(
+				'SELECT ed.* FROM %i ed JOIN %i edp ON ed.id = edp.event_date_id WHERE edp.post_id = %d LIMIT 1',
+				$table_name,
+				$posts_table,
 				$event_id
 			)
 		);
@@ -295,8 +315,9 @@ class EventDates {
 			);
 
 			if ( $result !== false ) {
-				// Also sync to postmeta for compatibility.
+				// Sync to postmeta for all linked posts.
 				self::sync_to_postmeta( $event_id, $start, $end, $all_day );
+				self::sync_all_linked_postmeta( (int) $existing->id );
 				return (int) $existing->id;
 			}
 			return false;
@@ -304,8 +325,9 @@ class EventDates {
 			$result = $wpdb->insert( $table_name, $data, $format );
 
 			if ( $result ) {
-				// Also sync to postmeta for compatibility.
+				// Sync to postmeta for all linked posts.
 				self::sync_to_postmeta( $event_id, $start, $end, $all_day );
+				self::sync_all_linked_postmeta( $wpdb->insert_id );
 				return $wpdb->insert_id;
 			}
 			return false;
@@ -354,8 +376,11 @@ class EventDates {
 			$result = $wpdb->insert( $table_name, $data, $format );
 		}
 
-		// Always sync to postmeta for compatibility.
+		// Always sync to postmeta for all linked posts.
 		self::sync_to_postmeta( $event_id, $start, $end, $all_day );
+		if ( $existing ) {
+			self::sync_all_linked_postmeta( $existing->id );
+		}
 
 		return $result !== false;
 	}
@@ -384,6 +409,8 @@ class EventDates {
 	/**
 	 * Sync event dates to postmeta (for backward compatibility)
 	 *
+	 * Syncs to the given post and all linked posts via junction table.
+	 *
 	 * @param int    $event_id Event post ID.
 	 * @param string $start    Start datetime.
 	 * @param string $end      End datetime.
@@ -394,6 +421,19 @@ class EventDates {
 		update_post_meta( $event_id, 'event_start', $start );
 		update_post_meta( $event_id, 'event_end', $end );
 		update_post_meta( $event_id, 'event_all_day', $all_day );
+
+		// Also sync to all linked posts via junction table.
+		$event_date = self::get_by_event_id( $event_id );
+		if ( $event_date ) {
+			$linked_post_ids = self::get_linked_post_ids( $event_date->id );
+			foreach ( $linked_post_ids as $linked_post_id ) {
+				if ( (int) $linked_post_id !== (int) $event_id ) {
+					update_post_meta( $linked_post_id, 'event_start', $start );
+					update_post_meta( $linked_post_id, 'event_end', $end );
+					update_post_meta( $linked_post_id, 'event_all_day', $all_day );
+				}
+			}
+		}
 	}
 
 	/**
@@ -718,13 +758,23 @@ class EventDates {
 	/**
 	 * Delete event date by ID
 	 *
+	 * Also cleans up junction table entries.
+	 *
 	 * @param int $id Event date row ID.
 	 * @return bool True on success, false on failure.
 	 */
 	public static function delete_by_id( $id ) {
 		global $wpdb;
 
-		$table_name = $wpdb->prefix . 'fair_event_dates';
+		$table_name  = $wpdb->prefix . 'fair_event_dates';
+		$posts_table = $wpdb->prefix . 'fair_event_date_posts';
+
+		// Clean up junction table entries.
+		$wpdb->delete(
+			$posts_table,
+			array( 'event_date_id' => $id ),
+			array( '%d' )
+		);
 
 		$result = $wpdb->delete(
 			$table_name,
@@ -829,6 +879,127 @@ class EventDates {
 		}
 
 		return false;
+	}
+
+	/**
+	 * Get all linked post IDs for an event date from the junction table
+	 *
+	 * @param int $event_date_id Event date ID.
+	 * @return int[] Array of post IDs.
+	 */
+	public static function get_linked_post_ids( $event_date_id ) {
+		global $wpdb;
+
+		$table_name = $wpdb->prefix . 'fair_event_date_posts';
+
+		$post_ids = $wpdb->get_col(
+			$wpdb->prepare(
+				'SELECT post_id FROM %i WHERE event_date_id = %d',
+				$table_name,
+				$event_date_id
+			)
+		);
+
+		return array_map( 'intval', $post_ids );
+	}
+
+	/**
+	 * Add a linked post to an event date in the junction table
+	 *
+	 * @param int $event_date_id Event date ID.
+	 * @param int $post_id       Post ID.
+	 * @return bool True on success, false on failure.
+	 */
+	public static function add_linked_post( $event_date_id, $post_id ) {
+		global $wpdb;
+
+		$table_name = $wpdb->prefix . 'fair_event_date_posts';
+
+		// INSERT IGNORE to avoid duplicate key errors.
+		$result = $wpdb->query(
+			$wpdb->prepare(
+				'INSERT IGNORE INTO %i (event_date_id, post_id) VALUES (%d, %d)',
+				$table_name,
+				$event_date_id,
+				$post_id
+			)
+		);
+
+		return $result !== false;
+	}
+
+	/**
+	 * Remove a linked post from an event date in the junction table
+	 *
+	 * @param int $event_date_id Event date ID.
+	 * @param int $post_id       Post ID.
+	 * @return bool True on success, false on failure.
+	 */
+	public static function remove_linked_post( $event_date_id, $post_id ) {
+		global $wpdb;
+
+		$table_name = $wpdb->prefix . 'fair_event_date_posts';
+
+		$result = $wpdb->delete(
+			$table_name,
+			array(
+				'event_date_id' => $event_date_id,
+				'post_id'       => $post_id,
+			),
+			array( '%d', '%d' )
+		);
+
+		return $result !== false;
+	}
+
+	/**
+	 * Remove a post from all event dates in the junction table
+	 *
+	 * Used for post deletion cleanup.
+	 *
+	 * @param int $post_id Post ID.
+	 * @return bool True on success, false on failure.
+	 */
+	public static function remove_linked_post_from_all( $post_id ) {
+		global $wpdb;
+
+		$table_name = $wpdb->prefix . 'fair_event_date_posts';
+
+		$result = $wpdb->delete(
+			$table_name,
+			array( 'post_id' => $post_id ),
+			array( '%d' )
+		);
+
+		return $result !== false;
+	}
+
+	/**
+	 * Sync postmeta (event_start, event_end, event_all_day) to ALL linked posts
+	 *
+	 * Includes both the primary post (event_id) and all secondary posts from
+	 * the junction table. Safe to call after any date change.
+	 *
+	 * @param int $event_date_id Event date row ID.
+	 * @return void
+	 */
+	public static function sync_all_linked_postmeta( $event_date_id ) {
+		$event_date = self::get_by_id( $event_date_id );
+		if ( ! $event_date ) {
+			return;
+		}
+
+		// Collect ALL post IDs: junction table + primary (in case not in junction table).
+		$post_ids = self::get_linked_post_ids( $event_date_id );
+		if ( $event_date->event_id && ! in_array( (int) $event_date->event_id, $post_ids, true ) ) {
+			$post_ids[] = (int) $event_date->event_id;
+		}
+
+		foreach ( $post_ids as $post_id ) {
+			update_post_meta( $post_id, 'event_start', $event_date->start_datetime );
+			update_post_meta( $post_id, 'event_end', $event_date->end_datetime );
+			update_post_meta( $post_id, 'event_all_day', $event_date->all_day );
+		}
 	}
 
 	/**

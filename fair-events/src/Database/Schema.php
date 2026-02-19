@@ -17,7 +17,7 @@ class Schema {
 	/**
 	 * Database version
 	 */
-	const DB_VERSION = '2.1.0';
+	const DB_VERSION = '2.2.0';
 
 	/**
 	 * Get the SQL for creating the fair_event_dates table
@@ -178,6 +178,27 @@ class Schema {
 			term_id BIGINT UNSIGNED NOT NULL,
 			PRIMARY KEY (event_date_id, term_id),
 			KEY idx_term_id (term_id)
+		) ENGINE=InnoDB {$charset_collate};";
+	}
+
+	/**
+	 * Get the SQL for creating the fair_event_date_posts junction table
+	 *
+	 * Maps event_date_id to post_id for multi-post linking.
+	 *
+	 * @return string SQL statement for creating the table.
+	 */
+	public static function get_event_date_posts_table_sql() {
+		global $wpdb;
+
+		$table_name      = $wpdb->prefix . 'fair_event_date_posts';
+		$charset_collate = $wpdb->get_charset_collate();
+
+		return "CREATE TABLE {$table_name} (
+			event_date_id BIGINT UNSIGNED NOT NULL,
+			post_id BIGINT UNSIGNED NOT NULL,
+			PRIMARY KEY (event_date_id, post_id),
+			KEY idx_post_id (post_id)
 		) ENGINE=InnoDB {$charset_collate};";
 	}
 

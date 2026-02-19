@@ -70,6 +70,11 @@ export default function ManageEventApp() {
 		enabledPostTypes[0]?.slug || 'fair_event'
 	);
 
+	// Link additional post state
+	const [linkingPost, setLinkingPost] = useState(false);
+	const [linkPostId, setLinkPostId] = useState('');
+	const [searchResults, setSearchResults] = useState([]);
+
 	useEffect(() => {
 		if (!eventDateId) {
 			setLoading(false);
@@ -378,20 +383,20 @@ export default function ManageEventApp() {
 		}
 	};
 
-	const handleUnlinkPost = async () => {
+	const handleUnlinkPost = async (postId) => {
 		setSaving(true);
 		setError(null);
 
 		try {
 			const updated = await apiFetch({
-				path: `/fair-events/v1/event-dates/${eventDateId}`,
-				method: 'PUT',
+				path: `/fair-events/v1/event-dates/${eventDateId}/link-post`,
+				method: 'DELETE',
 				data: {
-					link_type: 'none',
+					post_id: postId,
 				},
 			});
 			setEventDate(updated);
-			setLinkType('none');
+			populateForm(updated);
 			setSuccess(__('Post unlinked successfully.', 'fair-events'));
 		} catch (err) {
 			setError(
@@ -399,6 +404,49 @@ export default function ManageEventApp() {
 			);
 		} finally {
 			setSaving(false);
+		}
+	};
+
+	const handleLinkPost = async () => {
+		if (!linkPostId) return;
+		setLinkingPost(true);
+		setError(null);
+
+		try {
+			const updated = await apiFetch({
+				path: `/fair-events/v1/event-dates/${eventDateId}/link-post`,
+				method: 'POST',
+				data: {
+					post_id: parseInt(linkPostId, 10),
+				},
+			});
+			setEventDate(updated);
+			populateForm(updated);
+			setLinkPostId('');
+			setSearchResults([]);
+			setSuccess(__('Post linked successfully.', 'fair-events'));
+		} catch (err) {
+			setError(err.message || __('Failed to link post.', 'fair-events'));
+		} finally {
+			setLinkingPost(false);
+		}
+	};
+
+	const handleSearchPosts = async (searchTerm) => {
+		if (!searchTerm || searchTerm.length < 2) {
+			setSearchResults([]);
+			return;
+		}
+
+		try {
+			const results = await apiFetch({
+				path: `/wp/v2/search?search=${encodeURIComponent(
+					searchTerm
+				)}&type=post&subtype=any&per_page=10`,
+			});
+			setSearchResults(results);
+		} catch {
+			// Ignore search errors.
 		}
 	};
 
@@ -456,6 +504,7 @@ export default function ManageEventApp() {
 	}
 
 	const isLinkedToPost = eventDate.link_type === 'post' && eventDate.event_id;
+	const linkedPosts = eventDate.linked_posts || [];
 
 	return (
 		<div className="wrap fair-events-manage-event">
@@ -777,26 +826,46 @@ export default function ManageEventApp() {
 				</CardHeader>
 				<CardBody>
 					<VStack spacing={4}>
-						{isLinkedToPost ? (
+						{linkedPosts.length > 0 && (
 							<>
 								<Notice status="info" isDismissible={false}>
-									{__(
-										'This event is linked to a WordPress post.',
-										'fair-events'
-									)}
+									{linkedPosts.length === 1
+										? __(
+												'This event is linked to 1 post.',
+												'fair-events'
+										  )
+										: `${__(
+												'This event is linked to',
+												'fair-events'
+										  )} ${linkedPosts.length} ${__(
+												'posts.',
+												'fair-events'
+										  )}`}
 								</Notice>
-								{eventDate.post && (
-									<HStack spacing={4}>
+								{linkedPosts.map((lp) => (
+									<HStack key={lp.id} spacing={3} wrap>
 										<span>
-											<strong>
-												{eventDate.post.title}
-											</strong>{' '}
-											({eventDate.post.status})
+											<strong>{lp.title}</strong> (
+											{lp.status})
+											{lp.is_primary && (
+												<span
+													style={{
+														marginLeft: '4px',
+														color: '#007cba',
+														fontSize: '12px',
+													}}
+												>
+													{__(
+														'Primary',
+														'fair-events'
+													)}
+												</span>
+											)}
 										</span>
-										{eventDate.post.edit_url && (
+										{lp.edit_url && (
 											<Button
 												variant="secondary"
-												href={eventDate.post.edit_url}
+												href={lp.edit_url}
 												size="small"
 											>
 												{__('Edit Post', 'fair-events')}
@@ -806,14 +875,18 @@ export default function ManageEventApp() {
 											variant="tertiary"
 											size="small"
 											isDestructive
-											onClick={handleUnlinkPost}
+											onClick={() =>
+												handleUnlinkPost(lp.id)
+											}
 										>
-											{__('Unlink Post', 'fair-events')}
+											{__('Unlink', 'fair-events')}
 										</Button>
 									</HStack>
-								)}
+								))}
 							</>
-						) : (
+						)}
+
+						{!isLinkedToPost && linkedPosts.length === 0 && (
 							<>
 								<RadioControl
 									label={__('Link type', 'fair-events')}
@@ -888,6 +961,53 @@ export default function ManageEventApp() {
 								)}
 							</>
 						)}
+
+						<VStack spacing={2}>
+							<h3 style={{ margin: 0 }}>
+								{__('Link Additional Post', 'fair-events')}
+							</h3>
+							<TextControl
+								label={__(
+									'Search posts by title',
+									'fair-events'
+								)}
+								onChange={handleSearchPosts}
+								placeholder={__(
+									'Start typing to search...',
+									'fair-events'
+								)}
+							/>
+							{searchResults.length > 0 && (
+								<SelectControl
+									label={__('Select a post', 'fair-events')}
+									value={linkPostId}
+									options={[
+										{
+											label: __(
+												'Select...',
+												'fair-events'
+											),
+											value: '',
+										},
+										...searchResults.map((r) => ({
+											label: r.title,
+											value: String(r.id),
+										})),
+									]}
+									onChange={setLinkPostId}
+								/>
+							)}
+							{linkPostId && (
+								<Button
+									variant="primary"
+									onClick={handleLinkPost}
+									isBusy={linkingPost}
+									disabled={linkingPost}
+								>
+									{__('Link Post', 'fair-events')}
+								</Button>
+							)}
+						</VStack>
 					</VStack>
 				</CardBody>
 			</Card>

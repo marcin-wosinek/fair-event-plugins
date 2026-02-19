@@ -44,6 +44,9 @@ class Installer {
 		$sql = Schema::get_event_date_categories_table_sql();
 		dbDelta( $sql );
 
+		$sql = Schema::get_event_date_posts_table_sql();
+		dbDelta( $sql );
+
 		// Run migration if upgrading from pre-1.0.0
 		if ( version_compare( $current_version, '1.0.0', '<' ) ) {
 			self::migrate_to_1_0_0();
@@ -92,6 +95,11 @@ class Installer {
 		}
 
 		// Version 2.1.0 - Event date categories junction table (no data migration needed, table created by dbDelta).
+
+		// Run migration if upgrading from pre-2.2.0 (populate event_date_posts junction table).
+		if ( version_compare( $current_version, '2.2.0', '<' ) ) {
+			self::migrate_to_2_2_0();
+		}
 
 		// Update database version
 		Schema::update_db_version( Schema::DB_VERSION );
@@ -151,6 +159,10 @@ class Installer {
 
 			if ( version_compare( $current_version, '2.0.0', '<' ) ) {
 				self::migrate_to_2_0_0();
+			}
+
+			if ( version_compare( $current_version, '2.2.0', '<' ) ) {
+				self::migrate_to_2_2_0();
 			}
 
 			// Install/update tables
@@ -660,6 +672,27 @@ class Installer {
 				)
 			);
 		}
+	}
+
+	/**
+	 * Migrate to version 2.2.0 - Populate event_date_posts junction table from existing event_id values.
+	 *
+	 * @return void
+	 */
+	private static function migrate_to_2_2_0() {
+		global $wpdb;
+
+		$dates_table = $wpdb->prefix . 'fair_event_dates';
+		$posts_table = $wpdb->prefix . 'fair_event_date_posts';
+
+		// Populate junction table from existing event_id values.
+		$wpdb->query(
+			$wpdb->prepare(
+				'INSERT IGNORE INTO %i (event_date_id, post_id) SELECT id, event_id FROM %i WHERE event_id IS NOT NULL',
+				$posts_table,
+				$dates_table
+			)
+		);
 	}
 
 	/**

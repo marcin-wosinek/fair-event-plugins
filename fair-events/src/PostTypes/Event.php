@@ -763,20 +763,25 @@ class Event {
 			if ( $linked_id > 0 ) {
 				$event_date = \FairEvents\Models\EventDates::get_by_id( $linked_id );
 				if ( $event_date ) {
-					\FairEvents\Models\EventDates::update_by_id(
-						$linked_id,
-						array(
-							'event_id'  => $post_id,
-							'link_type' => 'post',
-						)
-					);
+					// Add to junction table.
+					\FairEvents\Models\EventDates::add_linked_post( $linked_id, $post_id );
+
+					// Set as primary if no primary post yet.
+					if ( ! $event_date->event_id ) {
+						\FairEvents\Models\EventDates::update_by_id(
+							$linked_id,
+							array(
+								'event_id'  => $post_id,
+								'link_type' => 'post',
+							)
+						);
+					}
+
 					// Sync dates to postmeta.
-					\FairEvents\Models\EventDates::save(
-						$post_id,
-						$event_date->start_datetime,
-						$event_date->end_datetime,
-						$event_date->all_day
-					);
+					update_post_meta( $post_id, 'event_start', $event_date->start_datetime );
+					update_post_meta( $post_id, 'event_end', $event_date->end_datetime );
+					update_post_meta( $post_id, 'event_all_day', $event_date->all_day );
+
 					// Sync venue if set.
 					if ( $event_date->venue_id ) {
 						\FairEvents\Models\EventDates::save_venue_id( $post_id, $event_date->venue_id );

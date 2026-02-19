@@ -45,6 +45,7 @@ class Plugin {
 		$this->load_settings();
 		$this->load_rest_api();
 		$this->load_frontend();
+		$this->load_post_cleanup();
 	}
 
 	/**
@@ -245,6 +246,58 @@ class Plugin {
 	 */
 	private function load_frontend() {
 		\FairEvents\Frontend\EventGalleryPage::init();
+	}
+
+	/**
+	 * Load post deletion cleanup hooks
+	 *
+	 * @return void
+	 */
+	private function load_post_cleanup() {
+		add_action( 'before_delete_post', array( $this, 'cleanup_linked_posts_on_delete' ) );
+	}
+
+	/**
+	 * Clean up junction table when a post is deleted
+	 *
+	 * If the deleted post was the primary, promotes the next linked post.
+	 *
+	 * @param int $post_id Post ID being deleted.
+	 * @return void
+	 *
+	 * phpcs:disable WordPress.DB.DirectDatabaseQuery
+	 */
+	public function cleanup_linked_posts_on_delete( $post_id ) {
+		$event_date = \FairEvents\Models\EventDates::get_by_event_id( $post_id );
+
+		if ( ! $event_date ) {
+			return;
+		}
+
+		// Remove from junction table.
+		\FairEvents\Models\EventDates::remove_linked_post_from_all( $post_id );
+
+		// If this was the primary post, promote next linked post.
+		if ( (int) $event_date->event_id === (int) $post_id ) {
+			$remaining_post_ids = \FairEvents\Models\EventDates::get_linked_post_ids( $event_date->id );
+
+			if ( ! empty( $remaining_post_ids ) ) {
+				$new_primary = $remaining_post_ids[0];
+				\FairEvents\Models\EventDates::update_by_id(
+					$event_date->id,
+					array( 'event_id' => $new_primary )
+				);
+			} else {
+				// No more linked posts, clear event_id.
+				\FairEvents\Models\EventDates::update_by_id(
+					$event_date->id,
+					array(
+						'event_id'  => null,
+						'link_type' => 'none',
+					)
+				);
+			}
+		}
 	}
 
 	/**

@@ -534,9 +534,11 @@ domReady(() => {
 		});
 	}
 
-	// Fetch unlinked events and populate the dropdown.
+	// Fetch all events (including linked) and populate the dropdown.
 	if (linkExistingSelect) {
-		apiFetch({ path: '/fair-events/v1/event-dates' })
+		apiFetch({
+			path: '/fair-events/v1/event-dates?include_linked=true',
+		})
 			.then((events) => {
 				events.forEach((event) => {
 					const option = document.createElement('option');
@@ -546,9 +548,14 @@ domReady(() => {
 								event.start_datetime.replace(' ', 'T')
 						  ).toLocaleDateString()
 						: '';
-					const label = event.title
-						? `${event.title} - ${date}`
-						: date;
+					const linkedCount = event.linked_posts?.length || 0;
+					let label = event.title ? `${event.title} - ${date}` : date;
+					if (linkedCount > 0) {
+						const postTitles = event.linked_posts
+							.map((p) => p.title)
+							.join(', ');
+						label += ` [${postTitles}]`;
+					}
 					option.textContent = label;
 					linkExistingSelect.appendChild(option);
 				});

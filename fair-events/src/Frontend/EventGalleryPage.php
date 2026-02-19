@@ -66,6 +66,9 @@ class EventGalleryPage {
 			return;
 		}
 
+		// Resolve to primary event_id for secondary linked posts.
+		$event_id = self::resolve_primary_event_id( $event_id );
+
 		// Validate event exists and is an enabled post type.
 		$event              = get_post( $event_id );
 		$enabled_post_types = Settings::get_enabled_post_types();
@@ -276,15 +279,18 @@ class EventGalleryPage {
 			return $content;
 		}
 
+		// Resolve to primary event_id for secondary linked posts.
+		$resolved_event_id = self::resolve_primary_event_id( $event_id );
+
 		$repository  = new \FairEvents\Database\EventPhotoRepository();
-		$photo_count = $repository->get_count_by_event( $event_id );
+		$photo_count = $repository->get_count_by_event( $resolved_event_id );
 
 		if ( $photo_count < 1 ) {
 			return $content;
 		}
 
-		// Build gallery link.
-		$gallery_url = self::get_gallery_url( $event_id );
+		// Build gallery link using primary event_id.
+		$gallery_url = self::get_gallery_url( $resolved_event_id );
 		$link_text   = sprintf(
 			/* translators: %d: number of photos */
 			_n(
@@ -303,6 +309,31 @@ class EventGalleryPage {
 		);
 
 		return $content . $gallery_link;
+	}
+
+	/**
+	 * Resolve a post ID to the primary event_id.
+	 *
+	 * If the given post_id is a secondary linked post, returns the primary
+	 * event_id from the event_dates table. Otherwise returns the input unchanged.
+	 *
+	 * @param int $post_id Post ID to resolve.
+	 * @return int The primary event_id, or the input if not a secondary post.
+	 */
+	private static function resolve_primary_event_id( $post_id ) {
+		$event_date = \FairEvents\Models\EventDates::get_by_event_id( $post_id );
+
+		if ( ! $event_date ) {
+			return $post_id;
+		}
+
+		// If event_id is set and different from the given post_id, the given post
+		// is a secondary linked post - return the primary event_id.
+		if ( $event_date->event_id && (int) $event_date->event_id !== (int) $post_id ) {
+			return (int) $event_date->event_id;
+		}
+
+		return $post_id;
 	}
 
 	/**

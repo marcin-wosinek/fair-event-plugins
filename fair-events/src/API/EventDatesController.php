@@ -124,6 +124,54 @@ class EventDatesController extends WP_REST_Controller {
 				),
 			)
 		);
+
+		// POST /fair-events/v1/event-dates/{id}/link-post - Link an existing post.
+		register_rest_route(
+			$this->namespace,
+			'/event-dates/(?P<id>\d+)/link-post',
+			array(
+				array(
+					'methods'             => WP_REST_Server::CREATABLE,
+					'callback'            => array( $this, 'link_post' ),
+					'permission_callback' => array( $this, 'update_item_permissions_check' ),
+					'args'                => array(
+						'id'      => array(
+							'description' => __( 'Event date ID.', 'fair-events' ),
+							'type'        => 'integer',
+						),
+						'post_id' => array(
+							'description' => __( 'Post ID to link.', 'fair-events' ),
+							'type'        => 'integer',
+							'required'    => true,
+						),
+					),
+				),
+			)
+		);
+
+		// DELETE /fair-events/v1/event-dates/{id}/link-post - Unlink a post.
+		register_rest_route(
+			$this->namespace,
+			'/event-dates/(?P<id>\d+)/link-post',
+			array(
+				array(
+					'methods'             => WP_REST_Server::DELETABLE,
+					'callback'            => array( $this, 'unlink_post' ),
+					'permission_callback' => array( $this, 'update_item_permissions_check' ),
+					'args'                => array(
+						'id'      => array(
+							'description' => __( 'Event date ID.', 'fair-events' ),
+							'type'        => 'integer',
+						),
+						'post_id' => array(
+							'description' => __( 'Post ID to unlink.', 'fair-events' ),
+							'type'        => 'integer',
+							'required'    => true,
+						),
+					),
+				),
+			)
+		);
 	}
 
 	/**
@@ -274,13 +322,21 @@ class EventDatesController extends WP_REST_Controller {
 	}
 
 	/**
-	 * Get unlinked event dates
+	 * Get event dates
+	 *
+	 * By default returns unlinked events. Pass include_linked=true to include all events.
 	 *
 	 * @param WP_REST_Request $request Full data about the request.
 	 * @return WP_REST_Response Response object.
 	 */
 	public function get_items( $request ) {
-		$event_dates = EventDates::get_unlinked();
+		$include_linked = $request->get_param( 'include_linked' );
+
+		if ( $include_linked ) {
+			$event_dates = $this->get_all_master_event_dates();
+		} else {
+			$event_dates = EventDates::get_unlinked();
+		}
 
 		$items = array();
 		foreach ( $event_dates as $event_date ) {
@@ -288,6 +344,35 @@ class EventDatesController extends WP_REST_Controller {
 		}
 
 		return new WP_REST_Response( $items, 200 );
+	}
+
+	/**
+	 * Get all master/single event dates (including linked ones)
+	 *
+	 * @return EventDates[] Array of EventDates objects.
+	 */
+	private function get_all_master_event_dates() {
+		global $wpdb;
+
+		$table_name = $wpdb->prefix . 'fair_event_dates';
+
+		$results = $wpdb->get_results(
+			$wpdb->prepare(
+				"SELECT * FROM %i WHERE occurrence_type IN ('single', 'master') ORDER BY start_datetime DESC",
+				$table_name
+			)
+		);
+
+		if ( ! $results ) {
+			return array();
+		}
+
+		$dates = array();
+		foreach ( $results as $result ) {
+			$dates[] = EventDates::get_by_id( (int) $result->id );
+		}
+
+		return array_filter( $dates );
 	}
 
 	/**
@@ -372,7 +457,16 @@ class EventDatesController extends WP_REST_Controller {
 
 		$event_id = $request->get_param( 'event_id' );
 		if ( null !== $event_id ) {
-			$update_data['event_id'] = $event_id ? absint( $event_id ) : null;
+			$new_event_id            = $event_id ? absint( $event_id ) : null;
+			$update_data['event_id'] = $new_event_id;
+
+			// Keep junction table in sync.
+			if ( $new_event_id ) {
+				EventDates::add_linked_post( $id, $new_event_id );
+			}
+			if ( $existing->event_id && ( ! $new_event_id || $new_event_id !== $existing->event_id ) ) {
+				EventDates::remove_linked_post( $id, $existing->event_id );
+			}
 		}
 
 		$rrule = $request->get_param( 'rrule' );
@@ -461,6 +555,9 @@ class EventDatesController extends WP_REST_Controller {
 				$this->set_standalone_categories( $id, $categories );
 			}
 		}
+
+		// Always sync postmeta to all linked posts after any update.
+		EventDates::sync_all_linked_postmeta( $id );
 
 		$event_date = EventDates::get_by_id( $id );
 
@@ -562,6 +659,9 @@ class EventDatesController extends WP_REST_Controller {
 			)
 		);
 
+		// Add to junction table.
+		EventDates::add_linked_post( $id, $post_id );
+
 		// Sync dates to postmeta.
 		EventDates::save( $post_id, $event_date->start_datetime, $event_date->end_datetime, $event_date->all_day );
 
@@ -586,6 +686,112 @@ class EventDatesController extends WP_REST_Controller {
 			),
 			201
 		);
+	}
+
+	/**
+	 * Link an existing post to an event date
+	 *
+	 * @param WP_REST_Request $request Full data about the request.
+	 * @return WP_REST_Response|WP_Error Response object on success, or WP_Error on failure.
+	 */
+	public function link_post( $request ) {
+		$id      = (int) $request->get_param( 'id' );
+		$post_id = (int) $request->get_param( 'post_id' );
+
+		$event_date = EventDates::get_by_id( $id );
+
+		if ( ! $event_date ) {
+			return new WP_Error(
+				'rest_event_date_not_found',
+				__( 'Event date not found.', 'fair-events' ),
+				array( 'status' => 404 )
+			);
+		}
+
+		$post = get_post( $post_id );
+		if ( ! $post ) {
+			return new WP_Error(
+				'rest_post_not_found',
+				__( 'Post not found.', 'fair-events' ),
+				array( 'status' => 404 )
+			);
+		}
+
+		// Add to junction table.
+		EventDates::add_linked_post( $id, $post_id );
+
+		// If this is the first linked post (no primary set), set as primary.
+		if ( ! $event_date->event_id ) {
+			EventDates::update_by_id(
+				$id,
+				array(
+					'event_id'  => $post_id,
+					'link_type' => 'post',
+				)
+			);
+		}
+
+		// Sync dates to postmeta for the newly linked post.
+		update_post_meta( $post_id, 'event_start', $event_date->start_datetime );
+		update_post_meta( $post_id, 'event_end', $event_date->end_datetime );
+		update_post_meta( $post_id, 'event_all_day', $event_date->all_day );
+
+		$event_date = EventDates::get_by_id( $id );
+
+		return new WP_REST_Response( $this->prepare_event_date( $event_date ), 200 );
+	}
+
+	/**
+	 * Unlink a post from an event date
+	 *
+	 * @param WP_REST_Request $request Full data about the request.
+	 * @return WP_REST_Response|WP_Error Response object on success, or WP_Error on failure.
+	 */
+	public function unlink_post( $request ) {
+		$id      = (int) $request->get_param( 'id' );
+		$post_id = (int) $request->get_param( 'post_id' );
+
+		$event_date = EventDates::get_by_id( $id );
+
+		if ( ! $event_date ) {
+			return new WP_Error(
+				'rest_event_date_not_found',
+				__( 'Event date not found.', 'fair-events' ),
+				array( 'status' => 404 )
+			);
+		}
+
+		// Remove from junction table.
+		EventDates::remove_linked_post( $id, $post_id );
+
+		// If this was the primary post, promote next linked post.
+		if ( (int) $event_date->event_id === $post_id ) {
+			$remaining_post_ids = EventDates::get_linked_post_ids( $id );
+
+			if ( ! empty( $remaining_post_ids ) ) {
+				// Promote first remaining post to primary.
+				$new_primary = $remaining_post_ids[0];
+				EventDates::update_by_id( $id, array( 'event_id' => $new_primary ) );
+			} else {
+				// No more linked posts, clear event_id and set link_type to none.
+				EventDates::update_by_id(
+					$id,
+					array(
+						'event_id'  => null,
+						'link_type' => 'none',
+					)
+				);
+			}
+		}
+
+		// Clean up postmeta on the unlinked post.
+		delete_post_meta( $post_id, 'event_start' );
+		delete_post_meta( $post_id, 'event_end' );
+		delete_post_meta( $post_id, 'event_all_day' );
+
+		$event_date = EventDates::get_by_id( $id );
+
+		return new WP_REST_Response( $this->prepare_event_date( $event_date ), 200 );
 	}
 
 	/**
@@ -619,7 +825,23 @@ class EventDatesController extends WP_REST_Controller {
 		// Add image exports.
 		$data['image_exports'] = ImageExportController::get_exports_for_event_date( $event_date->id );
 
-		// Add linked post info if applicable.
+		// Add all linked posts from junction table.
+		$linked_post_ids      = EventDates::get_linked_post_ids( $event_date->id );
+		$data['linked_posts'] = array();
+		foreach ( $linked_post_ids as $linked_post_id ) {
+			$linked_post = get_post( $linked_post_id );
+			if ( $linked_post ) {
+				$data['linked_posts'][] = array(
+					'id'         => $linked_post->ID,
+					'title'      => $linked_post->post_title,
+					'status'     => $linked_post->post_status,
+					'edit_url'   => get_edit_post_link( $linked_post->ID, 'raw' ),
+					'is_primary' => (int) $linked_post->ID === (int) $event_date->event_id,
+				);
+			}
+		}
+
+		// Add linked post info if applicable (primary post).
 		if ( $event_date->event_id ) {
 			$post = get_post( $event_date->event_id );
 			if ( $post ) {
