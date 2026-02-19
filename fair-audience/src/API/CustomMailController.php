@@ -455,7 +455,9 @@ class CustomMailController extends WP_REST_Controller {
 		return array(
 			'id'            => $message->id,
 			'subject'       => $message->subject,
+			'content'       => $message->content,
 			'event_id'      => $message->event_id,
+			'event_date_id' => $message->event_date_id,
 			'event_title'   => $event_title,
 			'is_marketing'  => $message->is_marketing,
 			'sent_count'    => $message->sent_count,

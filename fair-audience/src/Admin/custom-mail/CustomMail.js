@@ -217,6 +217,38 @@ export default function CustomMail() {
 	};
 
 	/**
+	 * Set TinyMCE editor content
+	 *
+	 * @param {string} content HTML content to set
+	 */
+	const setEditorContent = (content) => {
+		if (window.tinymce) {
+			const editor = window.tinymce.get('custom-mail-content');
+			if (editor) {
+				editor.setContent(content);
+				return;
+			}
+		}
+		const textarea = document.getElementById('custom-mail-content');
+		if (textarea) {
+			textarea.value = content;
+		}
+	};
+
+	/**
+	 * Handle duplicating a mail from history into the form
+	 *
+	 * @param {Object} mail Mail record
+	 */
+	const handleDuplicate = (mail) => {
+		setSubject(mail.subject);
+		setEditorContent(mail.content || '');
+		setEventDateId(mail.event_date_id ? String(mail.event_date_id) : '');
+		setIsMarketing(mail.is_marketing);
+		window.scrollTo({ top: 0, behavior: 'smooth' });
+	};
+
+	/**
 	 * Handle form submission
 	 *
 	 * @param {Event} e Form event
@@ -719,6 +751,20 @@ export default function CustomMail() {
 										<td>{mail.skipped_count}</td>
 										<td>{formatDate(mail.created_at)}</td>
 										<td>
+											<Button
+												isSmall
+												onClick={() =>
+													handleDuplicate(mail)
+												}
+												style={{
+													marginRight: '8px',
+												}}
+											>
+												{__(
+													'Duplicate',
+													'fair-audience'
+												)}
+											</Button>
 											<Button
 												isDestructive
 												isSmall
