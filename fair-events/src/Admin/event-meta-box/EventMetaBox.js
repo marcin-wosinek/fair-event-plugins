@@ -2,7 +2,7 @@
  * WordPress dependencies
  */
 import { useState, useEffect } from '@wordpress/element';
-import { Spinner } from '@wordpress/components';
+import { Button, Spinner } from '@wordpress/components';
 import { __ } from '@wordpress/i18n';
 import apiFetch from '@wordpress/api-fetch';
 import { useDispatch } from '@wordpress/data';
@@ -87,6 +87,28 @@ export default function EventMetaBox({
 		);
 	};
 
+	const [unlinking, setUnlinking] = useState(false);
+
+	const handleUnlink = async () => {
+		setUnlinking(true);
+		try {
+			await apiFetch({
+				path: `/fair-events/v1/event-dates/${eventDateId}/link-post`,
+				method: 'DELETE',
+				data: { post_id: parseInt(postId, 10) },
+			});
+			setEventDateId(0);
+			setManageEventUrl('');
+			setEventData(null);
+		} catch (err) {
+			setError(
+				err.message || __('Failed to unlink event.', 'fair-events')
+			);
+		} finally {
+			setUnlinking(false);
+		}
+	};
+
 	if (loading) {
 		return <Spinner />;
 	}
@@ -98,12 +120,30 @@ export default function EventMetaBox({
 	// For fair_event posts or linked posts: show edit form.
 	if (isLinked) {
 		return (
-			<EventEditForm
-				eventDateId={eventDateId}
-				manageEventUrl={manageEventUrl}
-				postId={postId}
-				postType={postType}
-			/>
+			<>
+				<EventEditForm
+					eventDateId={eventDateId}
+					manageEventUrl={manageEventUrl}
+					postId={postId}
+					postType={postType}
+				/>
+				{!isFairEvent && (
+					<Button
+						variant="tertiary"
+						isDestructive
+						onClick={handleUnlink}
+						isBusy={unlinking}
+						disabled={unlinking}
+						style={{
+							width: '100%',
+							justifyContent: 'center',
+							marginTop: '8px',
+						}}
+					>
+						{__('Unlink from event', 'fair-events')}
+					</Button>
+				)}
+			</>
 		);
 	}
 
