@@ -712,6 +712,16 @@ class EventDatesController extends WP_REST_Controller {
 			);
 		}
 
+		// Check if post is already linked to a different event.
+		$existing = EventDates::get_by_event_id( $post_id );
+		if ( $existing && (int) $existing->id !== $id ) {
+			return new WP_Error(
+				'rest_post_already_linked',
+				__( 'This post is already linked to another event.', 'fair-events' ),
+				array( 'status' => 409 )
+			);
+		}
+
 		// Add to junction table.
 		EventDates::add_linked_post( $id, $post_id );
 
