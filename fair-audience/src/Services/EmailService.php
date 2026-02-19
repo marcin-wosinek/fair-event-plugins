@@ -961,10 +961,11 @@ class EmailService {
 	 * @param string $subject      Email subject.
 	 * @param string $content      Email content (HTML).
 	 * @param bool   $is_marketing Whether to filter by marketing consent.
-	 * @param array  $labels       Labels to include (e.g. 'signed_up', 'collaborator', 'interested').
+	 * @param array  $labels               Labels to include (e.g. 'signed_up', 'collaborator', 'interested').
+	 * @param array  $skip_participant_ids  Participant IDs to skip.
 	 * @return array Results array with 'sent', 'failed', and 'skipped' keys.
 	 */
-	public function send_bulk_custom_mail( $event_id, $subject, $content, $is_marketing = true, $labels = array( 'signed_up', 'collaborator' ) ) {
+	public function send_bulk_custom_mail( $event_id, $subject, $content, $is_marketing = true, $labels = array( 'signed_up', 'collaborator' ), $skip_participant_ids = array() ) {
 		// Increase time limit for bulk sending.
 		set_time_limit( 300 ); // 5 minutes.
 
@@ -991,6 +992,17 @@ class EmailService {
 		foreach ( $event_participants as $ep ) {
 			// Only send to participants with matching labels.
 			if ( ! in_array( $ep->label, $labels, true ) ) {
+				continue;
+			}
+
+			// Skip manually excluded participants.
+			if ( ! empty( $skip_participant_ids ) && in_array( $ep->participant_id, $skip_participant_ids, true ) ) {
+				$participant          = $this->participant_repository->get_by_id( $ep->participant_id );
+				$results['skipped'][] = array(
+					'name'   => $participant ? $participant->name : '',
+					'email'  => $participant ? $participant->email : '',
+					'reason' => __( 'Manually skipped.', 'fair-audience' ),
+				);
 				continue;
 			}
 
@@ -1046,10 +1058,11 @@ class EmailService {
 	 *
 	 * @param string $subject      Email subject.
 	 * @param string $content      Email content (HTML).
-	 * @param bool   $is_marketing Whether to filter by marketing consent.
+	 * @param bool   $is_marketing         Whether to filter by marketing consent.
+	 * @param array  $skip_participant_ids  Participant IDs to skip.
 	 * @return array Results array with 'sent', 'failed', and 'skipped' keys.
 	 */
-	public function send_bulk_custom_mail_to_all( $subject, $content, $is_marketing = true ) {
+	public function send_bulk_custom_mail_to_all( $subject, $content, $is_marketing = true, $skip_participant_ids = array() ) {
 		// Increase time limit for bulk sending.
 		set_time_limit( 300 ); // 5 minutes.
 
@@ -1062,6 +1075,16 @@ class EmailService {
 		$participants = $this->participant_repository->get_all();
 
 		foreach ( $participants as $participant ) {
+			// Skip manually excluded participants.
+			if ( ! empty( $skip_participant_ids ) && in_array( $participant->id, $skip_participant_ids, true ) ) {
+				$results['skipped'][] = array(
+					'name'   => $participant->name,
+					'email'  => $participant->email,
+					'reason' => __( 'Manually skipped.', 'fair-audience' ),
+				);
+				continue;
+			}
+
 			if ( ! $this->has_valid_email( $participant ) ) {
 				$results['failed'][] = array(
 					'name'   => $participant->name,
@@ -1197,6 +1220,77 @@ class EmailService {
 		);
 
 		return $result;
+	}
+
+	/**
+	 * Preview recipients for bulk custom mail to event participants.
+	 *
+	 * @param int   $event_id     Event ID.
+	 * @param bool  $is_marketing Whether to filter by marketing consent.
+	 * @param array $labels       Labels to include.
+	 * @return array List of recipient info arrays.
+	 */
+	public function preview_custom_mail_recipients( $event_id, $is_marketing = true, $labels = array( 'signed_up', 'collaborator' ) ) {
+		$recipients = array();
+
+		$event = get_post( $event_id );
+		if ( ! $event ) {
+			return $recipients;
+		}
+
+		$event_participants = $this->event_participant_repository->get_by_event( $event_id );
+
+		foreach ( $event_participants as $ep ) {
+			if ( ! in_array( $ep->label, $labels, true ) ) {
+				continue;
+			}
+
+			$participant = $this->participant_repository->get_by_id( $ep->participant_id );
+			if ( ! $participant ) {
+				continue;
+			}
+
+			$would_skip_marketing = $is_marketing && ! $this->can_receive_email( $participant, EmailType::MARKETING );
+
+			$recipients[] = array(
+				'participant_id'       => $participant->id,
+				'name'                 => $participant->name,
+				'surname'              => $participant->surname,
+				'email'                => $participant->email,
+				'label'                => $ep->label,
+				'has_valid_email'      => $this->has_valid_email( $participant ),
+				'would_skip_marketing' => $would_skip_marketing,
+			);
+		}
+
+		return $recipients;
+	}
+
+	/**
+	 * Preview recipients for bulk custom mail to all audience.
+	 *
+	 * @param bool $is_marketing Whether to filter by marketing consent.
+	 * @return array List of recipient info arrays.
+	 */
+	public function preview_custom_mail_recipients_all( $is_marketing = true ) {
+		$recipients   = array();
+		$participants = $this->participant_repository->get_all();
+
+		foreach ( $participants as $participant ) {
+			$would_skip_marketing = $is_marketing && ! $this->can_receive_email( $participant, EmailType::MARKETING );
+
+			$recipients[] = array(
+				'participant_id'       => $participant->id,
+				'name'                 => $participant->name,
+				'surname'              => $participant->surname,
+				'email'                => $participant->email,
+				'label'                => '',
+				'has_valid_email'      => $this->has_valid_email( $participant ),
+				'would_skip_marketing' => $would_skip_marketing,
+			);
+		}
+
+		return $recipients;
 	}
 
 	/**

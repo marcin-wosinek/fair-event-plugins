@@ -1,7 +1,7 @@
 /**
  * WordPress dependencies
  */
-import { __ } from '@wordpress/i18n';
+import { __, sprintf } from '@wordpress/i18n';
 import { useState, useEffect, useRef } from '@wordpress/element';
 import {
 	Button,
@@ -23,6 +23,7 @@ import {
 	sendCustomMail,
 	loadEventDates,
 	deleteCustomMail,
+	previewRecipients,
 } from './custom-mail-api.js';
 
 /**
@@ -44,6 +45,11 @@ export default function CustomMail() {
 	const [includeSignedUp, setIncludeSignedUp] = useState(true);
 	const [includeCollaborators, setIncludeCollaborators] = useState(true);
 	const [includeInterested, setIncludeInterested] = useState(false);
+
+	// Recipient preview state.
+	const [recipients, setRecipients] = useState([]);
+	const [skippedIds, setSkippedIds] = useState(new Set());
+	const [isLoadingRecipients, setIsLoadingRecipients] = useState(false);
 
 	const editorInitialized = useRef(false);
 
@@ -108,6 +114,74 @@ export default function CustomMail() {
 			}
 		};
 	}, [isLoading]);
+
+	/**
+	 * Fetch recipient preview when criteria change
+	 */
+	useEffect(() => {
+		if (isLoading) {
+			return;
+		}
+
+		const data = {
+			is_marketing: isMarketing,
+		};
+
+		if (eventDateId) {
+			data.event_date_id = parseInt(eventDateId, 10);
+
+			const labels = [];
+			if (includeSignedUp) labels.push('signed_up');
+			if (includeCollaborators) labels.push('collaborator');
+			if (includeInterested) labels.push('interested');
+			data.labels = labels;
+
+			if (labels.length === 0) {
+				setRecipients([]);
+				return;
+			}
+		}
+
+		setIsLoadingRecipients(true);
+		previewRecipients(data)
+			.then((result) => {
+				setRecipients(result);
+				setSkippedIds(new Set());
+				setIsLoadingRecipients(false);
+			})
+			.catch((error) => {
+				console.error(
+					'[Fair Audience] Failed to load recipients:',
+					error
+				);
+				setRecipients([]);
+				setIsLoadingRecipients(false);
+			});
+	}, [
+		isLoading,
+		eventDateId,
+		isMarketing,
+		includeSignedUp,
+		includeCollaborators,
+		includeInterested,
+	]);
+
+	/**
+	 * Toggle skip for a participant
+	 *
+	 * @param {number} participantId Participant ID
+	 */
+	const toggleSkip = (participantId) => {
+		setSkippedIds((prev) => {
+			const next = new Set(prev);
+			if (next.has(participantId)) {
+				next.delete(participantId);
+			} else {
+				next.add(participantId);
+			}
+			return next;
+		});
+	};
 
 	/**
 	 * Get content from TinyMCE editor
@@ -192,6 +266,7 @@ export default function CustomMail() {
 			subject: subject.trim(),
 			content,
 			is_marketing: isMarketing,
+			skip_participant_ids: Array.from(skippedIds),
 		};
 
 		if (eventDateId) {
@@ -429,6 +504,154 @@ export default function CustomMail() {
 							)}
 							disabled={isSending}
 						/>
+
+						{/* Recipient Preview */}
+						{isLoadingRecipients && (
+							<div
+								style={{
+									display: 'flex',
+									alignItems: 'center',
+									gap: '8px',
+									marginBottom: '16px',
+								}}
+							>
+								<Spinner />
+								<span>
+									{__(
+										'Loading recipients...',
+										'fair-audience'
+									)}
+								</span>
+							</div>
+						)}
+
+						{!isLoadingRecipients && recipients.length > 0 && (
+							<div style={{ marginBottom: '16px' }}>
+								<p>
+									<strong>
+										{sprintf(
+											/* translators: %1$d: active recipients count, %2$d: total count, %3$d: skipped count */
+											__(
+												'%1$d recipients (%2$d skipped)',
+												'fair-audience'
+											),
+											recipients.filter(
+												(r) =>
+													!skippedIds.has(
+														r.participant_id
+													) &&
+													r.has_valid_email &&
+													!r.would_skip_marketing
+											).length,
+											recipients.filter(
+												(r) =>
+													skippedIds.has(
+														r.participant_id
+													) ||
+													!r.has_valid_email ||
+													r.would_skip_marketing
+											).length
+										)}
+									</strong>
+								</p>
+								<table
+									className="wp-list-table widefat fixed striped"
+									style={{ marginTop: '8px' }}
+								>
+									<thead>
+										<tr>
+											<th style={{ width: '60px' }}>
+												{__('Skip', 'fair-audience')}
+											</th>
+											<th>
+												{__('Name', 'fair-audience')}
+											</th>
+											<th>
+												{__('Email', 'fair-audience')}
+											</th>
+											<th style={{ width: '120px' }}>
+												{__('Label', 'fair-audience')}
+											</th>
+											<th style={{ width: '100px' }}>
+												{__('Status', 'fair-audience')}
+											</th>
+										</tr>
+									</thead>
+									<tbody>
+										{recipients.map((r) => {
+											const isSkipped = skippedIds.has(
+												r.participant_id
+											);
+											const hasIssue =
+												!r.has_valid_email ||
+												r.would_skip_marketing;
+											return (
+												<tr
+													key={r.participant_id}
+													style={
+														isSkipped || hasIssue
+															? {
+																	opacity: 0.5,
+															  }
+															: {}
+													}
+												>
+													<td>
+														<input
+															type="checkbox"
+															checked={isSkipped}
+															onChange={() =>
+																toggleSkip(
+																	r.participant_id
+																)
+															}
+															disabled={isSending}
+														/>
+													</td>
+													<td>
+														{r.name} {r.surname}
+													</td>
+													<td>{r.email || '-'}</td>
+													<td>{r.label || '-'}</td>
+													<td>
+														{!r.has_valid_email
+															? __(
+																	'No email',
+																	'fair-audience'
+															  )
+															: r.would_skip_marketing
+															? __(
+																	'No marketing',
+																	'fair-audience'
+															  )
+															: isSkipped
+															? __(
+																	'Skipped',
+																	'fair-audience'
+															  )
+															: __(
+																	'Will send',
+																	'fair-audience'
+															  )}
+													</td>
+												</tr>
+											);
+										})}
+									</tbody>
+								</table>
+							</div>
+						)}
+
+						{!isLoadingRecipients && recipients.length === 0 && (
+							<p
+								style={{
+									color: '#666',
+									marginBottom: '16px',
+								}}
+							>
+								{__('No matching recipients.', 'fair-audience')}
+							</p>
+						)}
 
 						<Button
 							variant="primary"

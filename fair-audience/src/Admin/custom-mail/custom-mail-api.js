@@ -40,6 +40,23 @@ export function loadEventDates() {
 }
 
 /**
+ * Preview recipients for a custom mail
+ *
+ * @param {Object}  data               Preview data
+ * @param {number}  data.event_date_id Event date ID (0 for all audience)
+ * @param {boolean} data.is_marketing  Whether to filter by marketing consent
+ * @param {Array}   data.labels        Labels to include
+ * @return {Promise<Array>} Promise resolving to array of recipients
+ */
+export function previewRecipients(data) {
+	return apiFetch({
+		path: '/fair-audience/v1/custom-mail/preview',
+		method: 'POST',
+		data,
+	});
+}
+
+/**
  * Delete a custom mail message record
  *
  * @param {number} id Message ID

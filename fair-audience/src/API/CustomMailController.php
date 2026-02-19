@@ -78,15 +78,84 @@ class CustomMailController extends WP_REST_Controller {
 					'callback'            => array( $this, 'create_item' ),
 					'permission_callback' => array( $this, 'admin_permissions_check' ),
 					'args'                => array(
-						'subject'       => array(
+						'subject'              => array(
 							'type'              => 'string',
 							'required'          => true,
 							'sanitize_callback' => 'sanitize_text_field',
 						),
-						'content'       => array(
+						'content'              => array(
 							'type'     => 'string',
 							'required' => true,
 						),
+						'event_date_id'        => array(
+							'type'              => 'integer',
+							'required'          => false,
+							'default'           => 0,
+							'sanitize_callback' => 'absint',
+						),
+						'is_marketing'         => array(
+							'type'    => 'boolean',
+							'default' => true,
+						),
+						'labels'               => array(
+							'type'              => 'array',
+							'required'          => false,
+							'default'           => array( 'signed_up', 'collaborator' ),
+							'items'             => array(
+								'type' => 'string',
+								'enum' => array( 'signed_up', 'collaborator', 'interested' ),
+							),
+							'sanitize_callback' => function ( $value ) {
+								$allowed = array( 'signed_up', 'collaborator', 'interested' );
+								return array_values( array_intersect( (array) $value, $allowed ) );
+							},
+						),
+						'skip_participant_ids' => array(
+							'type'              => 'array',
+							'required'          => false,
+							'default'           => array(),
+							'items'             => array(
+								'type' => 'integer',
+							),
+							'sanitize_callback' => function ( $value ) {
+								return array_map( 'absint', (array) $value );
+							},
+						),
+					),
+				),
+			)
+		);
+
+		// DELETE /fair-audience/v1/custom-mail/{id} - Delete a record.
+		register_rest_route(
+			$this->namespace,
+			'/custom-mail/(?P<id>[\d]+)',
+			array(
+				array(
+					'methods'             => WP_REST_Server::DELETABLE,
+					'callback'            => array( $this, 'delete_item' ),
+					'permission_callback' => array( $this, 'admin_permissions_check' ),
+					'args'                => array(
+						'id' => array(
+							'type'              => 'integer',
+							'required'          => true,
+							'sanitize_callback' => 'absint',
+						),
+					),
+				),
+			)
+		);
+
+		// POST /fair-audience/v1/custom-mail/preview - Preview recipients.
+		register_rest_route(
+			$this->namespace,
+			'/custom-mail/preview',
+			array(
+				array(
+					'methods'             => WP_REST_Server::CREATABLE,
+					'callback'            => array( $this, 'preview_recipients' ),
+					'permission_callback' => array( $this, 'admin_permissions_check' ),
+					'args'                => array(
 						'event_date_id' => array(
 							'type'              => 'integer',
 							'required'          => false,
@@ -109,26 +178,6 @@ class CustomMailController extends WP_REST_Controller {
 								$allowed = array( 'signed_up', 'collaborator', 'interested' );
 								return array_values( array_intersect( (array) $value, $allowed ) );
 							},
-						),
-					),
-				),
-			)
-		);
-
-		// DELETE /fair-audience/v1/custom-mail/{id} - Delete a record.
-		register_rest_route(
-			$this->namespace,
-			'/custom-mail/(?P<id>[\d]+)',
-			array(
-				array(
-					'methods'             => WP_REST_Server::DELETABLE,
-					'callback'            => array( $this, 'delete_item' ),
-					'permission_callback' => array( $this, 'admin_permissions_check' ),
-					'args'                => array(
-						'id' => array(
-							'type'              => 'integer',
-							'required'          => true,
-							'sanitize_callback' => 'absint',
 						),
 					),
 				),
@@ -193,11 +242,12 @@ class CustomMailController extends WP_REST_Controller {
 	 * @return WP_REST_Response|WP_Error Response object.
 	 */
 	public function create_item( $request ) {
-		$subject       = $request->get_param( 'subject' );
-		$content       = wp_kses_post( $request->get_param( 'content' ) );
-		$event_date_id = $request->get_param( 'event_date_id' );
-		$is_marketing  = $request->get_param( 'is_marketing' );
-		$labels        = $request->get_param( 'labels' );
+		$subject              = $request->get_param( 'subject' );
+		$content              = wp_kses_post( $request->get_param( 'content' ) );
+		$event_date_id        = $request->get_param( 'event_date_id' );
+		$is_marketing         = $request->get_param( 'is_marketing' );
+		$labels               = $request->get_param( 'labels' );
+		$skip_participant_ids = $request->get_param( 'skip_participant_ids' );
 
 		$event_id = null;
 
@@ -232,14 +282,16 @@ class CustomMailController extends WP_REST_Controller {
 				$subject,
 				$content,
 				$is_marketing,
-				$labels
+				$labels,
+				$skip_participant_ids
 			);
 		} else {
 			// Send to all audience members.
 			$results = $this->email_service->send_bulk_custom_mail_to_all(
 				$subject,
 				$content,
-				$is_marketing
+				$is_marketing,
+				$skip_participant_ids
 			);
 		}
 
@@ -266,6 +318,52 @@ class CustomMailController extends WP_REST_Controller {
 				'skipped'       => $results['skipped'],
 			)
 		);
+	}
+
+	/**
+	 * Preview recipients for a custom mail.
+	 *
+	 * @param WP_REST_Request $request Request object.
+	 * @return WP_REST_Response|WP_Error Response object.
+	 */
+	public function preview_recipients( $request ) {
+		$event_date_id = $request->get_param( 'event_date_id' );
+		$is_marketing  = $request->get_param( 'is_marketing' );
+		$labels        = $request->get_param( 'labels' );
+
+		if ( $event_date_id ) {
+			global $wpdb;
+			$event_dates_table = $wpdb->prefix . 'fair_event_dates';
+
+			// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+			$event_date = $wpdb->get_row(
+				$wpdb->prepare(
+					'SELECT * FROM %i WHERE id = %d',
+					$event_dates_table,
+					$event_date_id
+				),
+				ARRAY_A
+			);
+
+			if ( ! $event_date ) {
+				return new WP_Error(
+					'invalid_event_date',
+					__( 'Event date not found.', 'fair-audience' ),
+					array( 'status' => 404 )
+				);
+			}
+
+			$event_id   = (int) $event_date['event_id'];
+			$recipients = $this->email_service->preview_custom_mail_recipients(
+				$event_id,
+				$is_marketing,
+				$labels
+			);
+		} else {
+			$recipients = $this->email_service->preview_custom_mail_recipients_all( $is_marketing );
+		}
+
+		return rest_ensure_response( $recipients );
 	}
 
 	/**
