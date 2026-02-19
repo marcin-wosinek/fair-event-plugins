@@ -111,4 +111,69 @@ class ExtraMessageRepository {
 			$results
 		);
 	}
+
+	/**
+	 * Get active extra messages for a specific event.
+	 *
+	 * Returns messages that either have no category (global) or match one of the event's categories.
+	 *
+	 * @param int $event_id Event post ID.
+	 * @return ExtraMessage[] Array of active extra messages for the event.
+	 */
+	public function get_active_for_event( $event_id ) {
+		global $wpdb;
+
+		$table_name   = $this->get_table_name();
+		$category_ids = wp_get_post_categories( $event_id );
+
+		if ( empty( $category_ids ) ) {
+			// Event has no categories — return only global messages.
+			return $this->get_active_global();
+		}
+
+		$placeholders = implode( ',', array_fill( 0, count( $category_ids ), '%d' ) );
+
+		// phpcs:disable WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- $placeholders is safely generated above.
+		$results = $wpdb->get_results(
+			$wpdb->prepare(
+				"SELECT * FROM %i WHERE is_active = 1 AND (category_id IS NULL OR category_id IN ($placeholders)) ORDER BY created_at ASC",
+				array_merge( array( $table_name ), $category_ids )
+			),
+			ARRAY_A
+		);
+		// phpcs:enable WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+
+		return array_map(
+			function ( $row ) {
+				return new ExtraMessage( $row );
+			},
+			$results
+		);
+	}
+
+	/**
+	 * Get active global extra messages (no category assigned).
+	 *
+	 * @return ExtraMessage[] Array of active global extra messages.
+	 */
+	public function get_active_global() {
+		global $wpdb;
+
+		$table_name = $this->get_table_name();
+
+		$results = $wpdb->get_results(
+			$wpdb->prepare(
+				'SELECT * FROM %i WHERE is_active = 1 AND category_id IS NULL ORDER BY created_at ASC',
+				$table_name
+			),
+			ARRAY_A
+		);
+
+		return array_map(
+			function ( $row ) {
+				return new ExtraMessage( $row );
+			},
+			$results
+		);
+	}
 }

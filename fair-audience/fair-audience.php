@@ -57,7 +57,7 @@ function fair_audience_activate() {
 	flush_rewrite_rules();
 
 	// Update database version.
-	update_option( 'fair_audience_db_version', '1.14.0' );
+	update_option( 'fair_audience_db_version', '1.15.0' );
 }
 register_activation_hook( __FILE__, __NAMESPACE__ . '\\fair_audience_activate' );
 
@@ -251,6 +251,26 @@ function fair_audience_maybe_upgrade_db() {
 		dbDelta( \FairAudience\Database\Schema::get_instagram_posts_table_sql() );
 
 		update_option( 'fair_audience_db_version', '1.14.0' );
+	}
+
+	if ( version_compare( $db_version, '1.15.0', '<' ) ) {
+		global $wpdb;
+
+		$table_name = $wpdb->prefix . 'fair_audience_extra_messages';
+
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.DirectDatabaseQuery.SchemaChange
+		$wpdb->query(
+			"ALTER TABLE {$table_name}
+			 ADD COLUMN IF NOT EXISTS category_id BIGINT UNSIGNED DEFAULT NULL AFTER is_active"
+		);
+
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.DirectDatabaseQuery.SchemaChange
+		$wpdb->query(
+			"ALTER TABLE {$table_name}
+			 ADD INDEX IF NOT EXISTS idx_category_id (category_id)"
+		);
+
+		update_option( 'fair_audience_db_version', '1.15.0' );
 	}
 }
 add_action( 'plugins_loaded', __NAMESPACE__ . '\\fair_audience_maybe_upgrade_db' );

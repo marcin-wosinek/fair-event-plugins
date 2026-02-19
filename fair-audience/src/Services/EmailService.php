@@ -76,11 +76,11 @@ class EmailService {
 	private $event_signup_access_key_repository;
 
 	/**
-	 * Cached active extra messages (lazy-loaded).
+	 * Cached active extra messages per event (lazy-loaded).
 	 *
-	 * @var array|null
+	 * @var array
 	 */
-	private $active_extra_messages = null;
+	private $active_extra_messages_cache = array();
 
 	/**
 	 * Constructor.
@@ -96,16 +96,17 @@ class EmailService {
 	}
 
 	/**
-	 * Get active extra messages (lazy-loaded, cached per instance).
+	 * Get active extra messages for an event (lazy-loaded, cached per event).
 	 *
+	 * @param int $event_id Event post ID.
 	 * @return \FairAudience\Models\ExtraMessage[] Array of active extra messages.
 	 */
-	private function get_active_extra_messages() {
-		if ( null === $this->active_extra_messages ) {
-			$repository                  = new ExtraMessageRepository();
-			$this->active_extra_messages = $repository->get_active();
+	private function get_active_extra_messages( $event_id ) {
+		if ( ! isset( $this->active_extra_messages_cache[ $event_id ] ) ) {
+			$repository                                     = new ExtraMessageRepository();
+			$this->active_extra_messages_cache[ $event_id ] = $repository->get_active_for_event( $event_id );
 		}
-		return $this->active_extra_messages;
+		return $this->active_extra_messages_cache[ $event_id ];
 	}
 
 	/**
@@ -445,7 +446,7 @@ class EmailService {
 							</p>';
 
 		// Append active extra messages after CTA.
-		$extra_messages = $this->get_active_extra_messages();
+		$extra_messages = $this->get_active_extra_messages( $event->ID );
 		foreach ( $extra_messages as $extra_msg ) {
 			$message .= '
 							<div style="margin: 0 0 20px 0; font-size: 16px;">

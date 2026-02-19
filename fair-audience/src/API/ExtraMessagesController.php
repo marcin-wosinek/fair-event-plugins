@@ -161,10 +161,14 @@ class ExtraMessagesController extends WP_REST_Controller {
 		}
 
 		$message = new ExtraMessage();
+
+		$category_id = $request->get_param( 'category_id' );
+
 		$message->populate(
 			array(
-				'content'   => $request->get_param( 'content' ),
-				'is_active' => $request->get_param( 'is_active' ) ?? true,
+				'content'     => $request->get_param( 'content' ),
+				'is_active'   => $request->get_param( 'is_active' ) ?? true,
+				'category_id' => ! empty( $category_id ) ? (int) $category_id : null,
 			)
 		);
 
@@ -207,11 +211,18 @@ class ExtraMessagesController extends WP_REST_Controller {
 			return $validation;
 		}
 
+		$category_id = $message->category_id;
+		if ( $request->has_param( 'category_id' ) ) {
+			$raw_category_id = $request->get_param( 'category_id' );
+			$category_id     = ! empty( $raw_category_id ) ? (int) $raw_category_id : null;
+		}
+
 		$message->populate(
 			array(
-				'id'        => $message->id,
-				'content'   => $request->get_param( 'content' ) ?? $message->content,
-				'is_active' => $request->get_param( 'is_active' ) ?? $message->is_active,
+				'id'          => $message->id,
+				'content'     => $request->get_param( 'content' ) ?? $message->content,
+				'is_active'   => $request->get_param( 'is_active' ) ?? $message->is_active,
+				'category_id' => $category_id,
 			)
 		);
 
@@ -281,6 +292,18 @@ class ExtraMessagesController extends WP_REST_Controller {
 			);
 		}
 
+		$category_id = $request->get_param( 'category_id' );
+		if ( ! empty( $category_id ) ) {
+			$term = get_term( (int) $category_id, 'category' );
+			if ( ! $term || is_wp_error( $term ) ) {
+				return new WP_Error(
+					'invalid_category',
+					__( 'The specified category does not exist.', 'fair-audience' ),
+					array( 'status' => 400 )
+				);
+			}
+		}
+
 		return true;
 	}
 
@@ -292,12 +315,22 @@ class ExtraMessagesController extends WP_REST_Controller {
 	 * @return array Response data.
 	 */
 	public function prepare_item_for_response( $message, $request ) {
+		$category_name = null;
+		if ( null !== $message->category_id ) {
+			$term = get_term( $message->category_id, 'category' );
+			if ( $term && ! is_wp_error( $term ) ) {
+				$category_name = $term->name;
+			}
+		}
+
 		return array(
-			'id'         => $message->id,
-			'content'    => $message->content,
-			'is_active'  => $message->is_active,
-			'created_at' => $message->created_at,
-			'updated_at' => $message->updated_at,
+			'id'            => $message->id,
+			'content'       => $message->content,
+			'is_active'     => $message->is_active,
+			'category_id'   => $message->category_id,
+			'category_name' => $category_name,
+			'created_at'    => $message->created_at,
+			'updated_at'    => $message->updated_at,
 		);
 	}
 

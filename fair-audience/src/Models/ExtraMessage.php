@@ -36,6 +36,13 @@ class ExtraMessage {
 	public $is_active;
 
 	/**
+	 * Category ID (null = all categories).
+	 *
+	 * @var int|null
+	 */
+	public $category_id;
+
+	/**
 	 * Created timestamp.
 	 *
 	 * @var string
@@ -66,11 +73,12 @@ class ExtraMessage {
 	 * @param array $data Data array.
 	 */
 	public function populate( $data ) {
-		$this->id         = isset( $data['id'] ) ? (int) $data['id'] : null;
-		$this->content    = isset( $data['content'] ) ? wp_kses_post( $data['content'] ) : '';
-		$this->is_active  = isset( $data['is_active'] ) ? (bool) $data['is_active'] : true;
-		$this->created_at = isset( $data['created_at'] ) ? $data['created_at'] : '';
-		$this->updated_at = isset( $data['updated_at'] ) ? $data['updated_at'] : '';
+		$this->id          = isset( $data['id'] ) ? (int) $data['id'] : null;
+		$this->content     = isset( $data['content'] ) ? wp_kses_post( $data['content'] ) : '';
+		$this->is_active   = isset( $data['is_active'] ) ? (bool) $data['is_active'] : true;
+		$this->category_id = isset( $data['category_id'] ) && null !== $data['category_id'] ? (int) $data['category_id'] : null;
+		$this->created_at  = isset( $data['created_at'] ) ? $data['created_at'] : '';
+		$this->updated_at  = isset( $data['updated_at'] ) ? $data['updated_at'] : '';
 	}
 
 	/**
@@ -89,11 +97,12 @@ class ExtraMessage {
 		}
 
 		$data = array(
-			'content'   => $this->content,
-			'is_active' => $this->is_active ? 1 : 0,
+			'content'     => $this->content,
+			'is_active'   => $this->is_active ? 1 : 0,
+			'category_id' => null !== $this->category_id ? $this->category_id : 0,
 		);
 
-		$format = array( '%s', '%d' );
+		$format = array( '%s', '%d', '%d' );
 
 		if ( $this->id ) {
 			// Update existing.
@@ -112,7 +121,22 @@ class ExtraMessage {
 			}
 		}
 
-		return false !== $result;
+		if ( false === $result ) {
+			return false;
+		}
+
+		// wpdb format %d converts null to 0, so fix NULL category_id after save.
+		if ( null === $this->category_id ) {
+			$wpdb->update(
+				$table_name,
+				array( 'category_id' => null ),
+				array( 'id' => $this->id ),
+				array( null ),
+				array( '%d' )
+			);
+		}
+
+		return true;
 	}
 
 	/**

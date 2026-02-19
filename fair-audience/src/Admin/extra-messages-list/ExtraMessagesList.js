@@ -56,6 +56,7 @@ export default function ExtraMessagesList() {
 			data: {
 				content: msg.content,
 				is_active: !msg.is_active,
+				category_id: msg.category_id,
 			},
 		})
 			.then(() => {
@@ -119,6 +120,7 @@ export default function ExtraMessagesList() {
 							<thead>
 								<tr>
 									<th>{__('Content', 'fair-audience')}</th>
+									<th>{__('Category', 'fair-audience')}</th>
 									<th>{__('Status', 'fair-audience')}</th>
 									<th>{__('Actions', 'fair-audience')}</th>
 								</tr>
@@ -127,6 +129,10 @@ export default function ExtraMessagesList() {
 								{messages.map((msg) => (
 									<tr key={msg.id}>
 										<td>{truncateContent(msg.content)}</td>
+										<td>
+											{msg.category_name ||
+												__('All', 'fair-audience')}
+										</td>
 										<td>
 											<Button
 												isSmall

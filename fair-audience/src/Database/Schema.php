@@ -374,10 +374,12 @@ class Schema {
 			id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
 			content TEXT NOT NULL,
 			is_active TINYINT(1) NOT NULL DEFAULT 1,
+			category_id BIGINT UNSIGNED DEFAULT NULL,
 			created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
 			updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
 			PRIMARY KEY  (id),
-			KEY idx_is_active (is_active)
+			KEY idx_is_active (is_active),
+			KEY idx_category_id (category_id)
 		) ENGINE=InnoDB $charset_collate;";
 	}
 

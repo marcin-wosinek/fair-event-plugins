@@ -1,7 +1,12 @@
 import { __ } from '@wordpress/i18n';
 import { useState, useEffect, useRef } from '@wordpress/element';
 import apiFetch from '@wordpress/api-fetch';
-import { Button, ToggleControl, Spinner } from '@wordpress/components';
+import {
+	Button,
+	ToggleControl,
+	SelectControl,
+	Spinner,
+} from '@wordpress/components';
 
 export default function EditExtraMessage() {
 	const [isLoading, setIsLoading] = useState(true);
@@ -11,7 +16,9 @@ export default function EditExtraMessage() {
 	const [formData, setFormData] = useState({
 		content: '',
 		is_active: true,
+		category_id: '',
 	});
+	const [categories, setCategories] = useState([]);
 	const editorInitialized = useRef(false);
 
 	useEffect(() => {
@@ -49,6 +56,16 @@ export default function EditExtraMessage() {
 	}, [isLoading]);
 
 	const loadData = async () => {
+		// Fetch categories.
+		try {
+			const cats = await apiFetch({
+				path: '/wp/v2/categories?per_page=100',
+			});
+			setCategories(cats);
+		} catch {
+			// Non-critical: categories dropdown will just show "All".
+		}
+
 		const urlParams = new URLSearchParams(window.location.search);
 		const id = urlParams.get('message_id');
 
@@ -61,6 +78,10 @@ export default function EditExtraMessage() {
 				setFormData({
 					content: response.content,
 					is_active: response.is_active,
+					category_id:
+						response.category_id !== null
+							? String(response.category_id)
+							: '',
 				});
 			} catch (err) {
 				setError(err.message);
@@ -104,6 +125,9 @@ export default function EditExtraMessage() {
 				data: {
 					content,
 					is_active: formData.is_active,
+					category_id: formData.category_id
+						? parseInt(formData.category_id, 10)
+						: null,
 				},
 			});
 
@@ -168,6 +192,33 @@ export default function EditExtraMessage() {
 					rows={10}
 					style={{ width: '100%' }}
 				/>
+
+				<div style={{ marginTop: '16px' }}>
+					<SelectControl
+						label={__('Category', 'fair-audience')}
+						value={formData.category_id}
+						options={[
+							{
+								label: __('All categories', 'fair-audience'),
+								value: '',
+							},
+							...categories.map((cat) => ({
+								label: cat.name,
+								value: String(cat.id),
+							})),
+						]}
+						onChange={(value) =>
+							setFormData({
+								...formData,
+								category_id: value,
+							})
+						}
+						help={__(
+							'Limit this message to events in a specific category, or leave as "All categories" for all events.',
+							'fair-audience'
+						)}
+					/>
+				</div>
 
 				<div style={{ marginTop: '16px' }}>
 					<ToggleControl
