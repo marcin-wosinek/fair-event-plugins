@@ -52,12 +52,13 @@ function fair_audience_activate() {
 	dbDelta( \FairAudience\Database\Schema::get_event_signup_access_keys_table_sql() );
 	dbDelta( \FairAudience\Database\Schema::get_instagram_posts_table_sql() );
 	dbDelta( \FairAudience\Database\Schema::get_extra_messages_table_sql() );
+	dbDelta( \FairAudience\Database\Schema::get_custom_mail_messages_table_sql() );
 
 	// Flush rewrite rules for poll_key, gallery_key, and confirm_email_key query vars.
 	flush_rewrite_rules();
 
 	// Update database version.
-	update_option( 'fair_audience_db_version', '1.15.0' );
+	update_option( 'fair_audience_db_version', '1.16.0' );
 }
 register_activation_hook( __FILE__, __NAMESPACE__ . '\\fair_audience_activate' );
 
@@ -271,6 +272,14 @@ function fair_audience_maybe_upgrade_db() {
 		);
 
 		update_option( 'fair_audience_db_version', '1.15.0' );
+	}
+
+	if ( version_compare( $db_version, '1.16.0', '<' ) ) {
+		require_once ABSPATH . 'wp-admin/includes/upgrade.php';
+
+		dbDelta( \FairAudience\Database\Schema::get_custom_mail_messages_table_sql() );
+
+		update_option( 'fair_audience_db_version', '1.16.0' );
 	}
 }
 add_action( 'plugins_loaded', __NAMESPACE__ . '\\fair_audience_maybe_upgrade_db' );

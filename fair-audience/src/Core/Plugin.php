@@ -119,6 +119,9 @@ class Plugin {
 
 		$extra_messages_controller = new \FairAudience\API\ExtraMessagesController();
 		$extra_messages_controller->register_routes();
+
+		$custom_mail_controller = new \FairAudience\API\CustomMailController();
+		$custom_mail_controller->register_routes();
 	}
 
 	/**

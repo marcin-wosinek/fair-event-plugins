@@ -237,6 +237,16 @@ class AdminHooks {
 			);
 		}
 
+		// Submenu page - Custom Mail.
+		add_submenu_page(
+			'fair-audience',
+			__( 'Custom Mail', 'fair-audience' ),
+			__( 'Custom Mail', 'fair-audience' ),
+			'manage_options',
+			'fair-audience-custom-mail',
+			array( $this, 'render_custom_mail_page' )
+		);
+
 		// Submenu page - Extra Messages.
 		add_submenu_page(
 			'fair-audience',
@@ -350,6 +360,14 @@ class AdminHooks {
 	}
 
 	/**
+	 * Render Custom Mail page.
+	 */
+	public function render_custom_mail_page() {
+		$page = new CustomMailPage();
+		$page->render();
+	}
+
+	/**
 	 * Render Extra Messages List page.
 	 */
 	public function render_extra_messages_list_page() {
@@ -459,6 +477,12 @@ class AdminHooks {
 					'participantsUrl' => admin_url( 'admin.php?page=fair-audience-event-participants&event_id=' ),
 				)
 			);
+		}
+
+		// Custom Mail page.
+		if ( 'fair-audience_page_fair-audience-custom-mail' === $hook ) {
+			wp_enqueue_editor();
+			$this->enqueue_page_script( 'custom-mail', $plugin_dir );
 		}
 
 		// Extra Messages List page.

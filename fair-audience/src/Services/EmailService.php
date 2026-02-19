@@ -853,6 +853,353 @@ class EmailService {
 	}
 
 	/**
+	 * Send a custom mail to a single participant.
+	 *
+	 * @param object      $event       Event post object.
+	 * @param Participant $participant Participant object.
+	 * @param string      $subject     Email subject.
+	 * @param string      $content     Email content (HTML).
+	 * @return bool Success.
+	 */
+	public function send_custom_mail( $event, $participant, $subject, $content ) {
+		if ( ! $this->has_valid_email( $participant ) ) {
+			return false;
+		}
+
+		$site_name = wp_specialchars_decode( get_option( 'blogname' ), ENT_QUOTES );
+
+		// Build manage subscription URL for unsubscribe link.
+		$manage_subscription_url = ManageSubscriptionToken::get_url( $participant->id );
+
+		// Build HTML message body.
+		$message = '<!DOCTYPE html>
+<html>
+<head>
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+</head>
+<body style="margin: 0; padding: 0; font-family: Arial, sans-serif; font-size: 16px; line-height: 1.6; color: #333333; background-color: #f4f4f4;">
+	<table width="100%" cellpadding="0" cellspacing="0" style="background-color: #f4f4f4;">
+		<tr>
+			<td align="center" style="padding: 20px 0;">
+				<table width="600" cellpadding="0" cellspacing="0" style="background-color: #ffffff; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
+					<!-- Header -->
+					<tr>
+						<td style="background-color: #0073aa; color: #ffffff; padding: 30px; border-radius: 8px 8px 0 0; text-align: center;">
+							<h1 style="margin: 0; font-size: 24px; font-weight: bold;">' . esc_html( $site_name ) . '</h1>
+						</td>
+					</tr>
+
+					<!-- Content -->
+					<tr>
+						<td style="padding: 40px 30px;">
+							<p style="margin: 0 0 20px 0; font-size: 16px;">
+								' . sprintf(
+									/* translators: %s: participant first name */
+								esc_html__( 'Hi %s,', 'fair-audience' ),
+								'<strong>' . esc_html( $participant->name ) . '</strong>'
+							) . '
+							</p>
+
+							<div style="margin: 0 0 20px 0; font-size: 16px;">
+								' . wp_kses_post( $content ) . '
+							</div>
+
+							<p style="margin: 20px 0 0 0; font-size: 14px; color: #666666;">
+								' . sprintf(
+									/* translators: %s: site name */
+									esc_html__( 'Thanks,%1$sThe %2$s Team', 'fair-audience' ),
+									'<br>',
+									esc_html( $site_name )
+								) . '
+							</p>
+						</td>
+					</tr>
+
+					<!-- Footer -->
+					<tr>
+						<td style="background-color: #f8f8f8; padding: 20px 30px; border-radius: 0 0 8px 8px; text-align: center; font-size: 12px; color: #666666;">
+							<p style="margin: 0;">
+								' . esc_html__( "Don't want to receive these emails?", 'fair-audience' ) . '
+								<a href="' . esc_url( $manage_subscription_url ) . '" style="color: #0073aa;">' . esc_html__( 'Manage your preferences', 'fair-audience' ) . '</a>
+							</p>
+						</td>
+					</tr>
+				</table>
+			</td>
+		</tr>
+	</table>
+</body>
+</html>';
+
+		// Set email content type to HTML.
+		add_filter(
+			'wp_mail_content_type',
+			function () {
+				return 'text/html';
+			}
+		);
+
+		// Send email.
+		$result = wp_mail( $participant->email, $subject, $message );
+
+		// Reset content type to avoid conflicts.
+		remove_filter(
+			'wp_mail_content_type',
+			function () {
+				return 'text/html';
+			}
+		);
+
+		return $result;
+	}
+
+	/**
+	 * Send bulk custom mail to event participants.
+	 *
+	 * @param int    $event_id     Event ID.
+	 * @param string $subject      Email subject.
+	 * @param string $content      Email content (HTML).
+	 * @param bool   $is_marketing Whether to filter by marketing consent.
+	 * @param array  $labels       Labels to include (e.g. 'signed_up', 'collaborator', 'interested').
+	 * @return array Results array with 'sent', 'failed', and 'skipped' keys.
+	 */
+	public function send_bulk_custom_mail( $event_id, $subject, $content, $is_marketing = true, $labels = array( 'signed_up', 'collaborator' ) ) {
+		// Increase time limit for bulk sending.
+		set_time_limit( 300 ); // 5 minutes.
+
+		$results = array(
+			'sent'    => array(),
+			'failed'  => array(),
+			'skipped' => array(),
+		);
+
+		// Get event.
+		$event = get_post( $event_id );
+
+		if ( ! $event ) {
+			$results['failed'][] = array(
+				'email'  => '',
+				'reason' => __( 'Event not found.', 'fair-audience' ),
+			);
+			return $results;
+		}
+
+		// Get participants signed up for this event.
+		$event_participants = $this->event_participant_repository->get_by_event( $event_id );
+
+		foreach ( $event_participants as $ep ) {
+			// Only send to participants with matching labels.
+			if ( ! in_array( $ep->label, $labels, true ) ) {
+				continue;
+			}
+
+			$participant = $this->participant_repository->get_by_id( $ep->participant_id );
+
+			if ( ! $participant ) {
+				$results['failed'][] = array(
+					'name'   => '',
+					'email'  => '',
+					'reason' => __( 'Participant not found.', 'fair-audience' ),
+				);
+				continue;
+			}
+
+			if ( ! $this->has_valid_email( $participant ) ) {
+				$results['failed'][] = array(
+					'name'   => $participant->name,
+					'email'  => '',
+					'reason' => __( 'Participant has no email address.', 'fair-audience' ),
+				);
+				continue;
+			}
+
+			// Check marketing consent if needed.
+			if ( $is_marketing && ! $this->can_receive_email( $participant, EmailType::MARKETING ) ) {
+				$results['skipped'][] = array(
+					'name'   => $participant->name,
+					'email'  => $participant->email,
+					'reason' => __( 'Participant opted out of marketing emails.', 'fair-audience' ),
+				);
+				continue;
+			}
+
+			// Send custom mail.
+			$success = $this->send_custom_mail( $event, $participant, $subject, $content );
+
+			if ( $success ) {
+				$results['sent'][] = $participant->email;
+			} else {
+				$results['failed'][] = array(
+					'name'   => $participant->name,
+					'email'  => $participant->email,
+					'reason' => __( 'wp_mail() failed to send.', 'fair-audience' ),
+				);
+			}
+		}
+
+		return $results;
+	}
+
+	/**
+	 * Send bulk custom mail to all audience members.
+	 *
+	 * @param string $subject      Email subject.
+	 * @param string $content      Email content (HTML).
+	 * @param bool   $is_marketing Whether to filter by marketing consent.
+	 * @return array Results array with 'sent', 'failed', and 'skipped' keys.
+	 */
+	public function send_bulk_custom_mail_to_all( $subject, $content, $is_marketing = true ) {
+		// Increase time limit for bulk sending.
+		set_time_limit( 300 ); // 5 minutes.
+
+		$results = array(
+			'sent'    => array(),
+			'failed'  => array(),
+			'skipped' => array(),
+		);
+
+		$participants = $this->participant_repository->get_all();
+
+		foreach ( $participants as $participant ) {
+			if ( ! $this->has_valid_email( $participant ) ) {
+				$results['failed'][] = array(
+					'name'   => $participant->name,
+					'email'  => '',
+					'reason' => __( 'Participant has no email address.', 'fair-audience' ),
+				);
+				continue;
+			}
+
+			// Check marketing consent if needed.
+			if ( $is_marketing && ! $this->can_receive_email( $participant, EmailType::MARKETING ) ) {
+				$results['skipped'][] = array(
+					'name'   => $participant->name,
+					'email'  => $participant->email,
+					'reason' => __( 'Participant opted out of marketing emails.', 'fair-audience' ),
+				);
+				continue;
+			}
+
+			// Send custom mail (no event context).
+			$success = $this->send_custom_mail_without_event( $participant, $subject, $content );
+
+			if ( $success ) {
+				$results['sent'][] = $participant->email;
+			} else {
+				$results['failed'][] = array(
+					'name'   => $participant->name,
+					'email'  => $participant->email,
+					'reason' => __( 'wp_mail() failed to send.', 'fair-audience' ),
+				);
+			}
+		}
+
+		return $results;
+	}
+
+	/**
+	 * Send a custom mail to a single participant without event context.
+	 *
+	 * @param Participant $participant Participant object.
+	 * @param string      $subject     Email subject.
+	 * @param string      $content     Email content (HTML).
+	 * @return bool Success.
+	 */
+	public function send_custom_mail_without_event( $participant, $subject, $content ) {
+		if ( ! $this->has_valid_email( $participant ) ) {
+			return false;
+		}
+
+		$site_name = wp_specialchars_decode( get_option( 'blogname' ), ENT_QUOTES );
+
+		// Build manage subscription URL for unsubscribe link.
+		$manage_subscription_url = ManageSubscriptionToken::get_url( $participant->id );
+
+		// Build HTML message body.
+		$message = '<!DOCTYPE html>
+<html>
+<head>
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+</head>
+<body style="margin: 0; padding: 0; font-family: Arial, sans-serif; font-size: 16px; line-height: 1.6; color: #333333; background-color: #f4f4f4;">
+	<table width="100%" cellpadding="0" cellspacing="0" style="background-color: #f4f4f4;">
+		<tr>
+			<td align="center" style="padding: 20px 0;">
+				<table width="600" cellpadding="0" cellspacing="0" style="background-color: #ffffff; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
+					<!-- Header -->
+					<tr>
+						<td style="background-color: #0073aa; color: #ffffff; padding: 30px; border-radius: 8px 8px 0 0; text-align: center;">
+							<h1 style="margin: 0; font-size: 24px; font-weight: bold;">' . esc_html( $site_name ) . '</h1>
+						</td>
+					</tr>
+
+					<!-- Content -->
+					<tr>
+						<td style="padding: 40px 30px;">
+							<p style="margin: 0 0 20px 0; font-size: 16px;">
+								' . sprintf(
+									/* translators: %s: participant first name */
+								esc_html__( 'Hi %s,', 'fair-audience' ),
+								'<strong>' . esc_html( $participant->name ) . '</strong>'
+							) . '
+							</p>
+
+							<div style="margin: 0 0 20px 0; font-size: 16px;">
+								' . wp_kses_post( $content ) . '
+							</div>
+
+							<p style="margin: 20px 0 0 0; font-size: 14px; color: #666666;">
+								' . sprintf(
+									/* translators: %s: site name */
+									esc_html__( 'Thanks,%1$sThe %2$s Team', 'fair-audience' ),
+									'<br>',
+									esc_html( $site_name )
+								) . '
+							</p>
+						</td>
+					</tr>
+
+					<!-- Footer -->
+					<tr>
+						<td style="background-color: #f8f8f8; padding: 20px 30px; border-radius: 0 0 8px 8px; text-align: center; font-size: 12px; color: #666666;">
+							<p style="margin: 0;">
+								' . esc_html__( "Don't want to receive these emails?", 'fair-audience' ) . '
+								<a href="' . esc_url( $manage_subscription_url ) . '" style="color: #0073aa;">' . esc_html__( 'Manage your preferences', 'fair-audience' ) . '</a>
+							</p>
+						</td>
+					</tr>
+				</table>
+			</td>
+		</tr>
+	</table>
+</body>
+</html>';
+
+		// Set email content type to HTML.
+		add_filter(
+			'wp_mail_content_type',
+			function () {
+				return 'text/html';
+			}
+		);
+
+		// Send email.
+		$result = wp_mail( $participant->email, $subject, $message );
+
+		// Reset content type to avoid conflicts.
+		remove_filter(
+			'wp_mail_content_type',
+			function () {
+				return 'text/html';
+			}
+		);
+
+		return $result;
+	}
+
+	/**
 	 * Send bulk event invitations to participants.
 	 *
 	 * Sends event signup link emails to the specified participants or group members.

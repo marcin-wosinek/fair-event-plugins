@@ -384,6 +384,34 @@ class Schema {
 	}
 
 	/**
+	 * Get SQL for creating the custom mail messages table.
+	 *
+	 * @return string SQL statement.
+	 */
+	public static function get_custom_mail_messages_table_sql() {
+		global $wpdb;
+
+		$table_name      = $wpdb->prefix . 'fair_audience_custom_mail_messages';
+		$charset_collate = $wpdb->get_charset_collate();
+
+		return "CREATE TABLE $table_name (
+			id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
+			subject VARCHAR(255) NOT NULL,
+			content TEXT NOT NULL,
+			event_date_id BIGINT UNSIGNED DEFAULT NULL,
+			event_id BIGINT UNSIGNED DEFAULT NULL,
+			is_marketing TINYINT(1) NOT NULL DEFAULT 1,
+			sent_count INT NOT NULL DEFAULT 0,
+			failed_count INT NOT NULL DEFAULT 0,
+			skipped_count INT NOT NULL DEFAULT 0,
+			created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+			PRIMARY KEY  (id),
+			KEY idx_event_date_id (event_date_id),
+			KEY idx_created_at (created_at)
+		) ENGINE=InnoDB $charset_collate;";
+	}
+
+	/**
 	 * Get SQL for creating the Instagram posts table.
 	 *
 	 * @return string SQL statement.
