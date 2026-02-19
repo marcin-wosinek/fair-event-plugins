@@ -6,6 +6,11 @@ import { useSelect } from '@wordpress/data';
 import { __ } from '@wordpress/i18n';
 
 /**
+ * Internal dependencies — import store to ensure it is registered
+ */
+import { STORE_NAME } from '../../../Admin/event-meta-box/store.js';
+
+/**
  * Format event date range
  *
  * @param {string} startDateTime - Start datetime string
@@ -156,7 +161,7 @@ export default function EditComponent({ context }) {
 	// Check if we're in an event post context
 	const isEventContext = postType === 'fair_event' && postId;
 
-	// Get event metadata from the editor store
+	// Get event data from the custom store
 	const { eventStart, eventEnd, eventAllDay } = useSelect(
 		(select) => {
 			if (!isEventContext) {
@@ -167,13 +172,20 @@ export default function EditComponent({ context }) {
 				};
 			}
 
-			const { getEditedPostAttribute } = select('core/editor');
-			const meta = getEditedPostAttribute('meta') || {};
+			const eventData = select(STORE_NAME).getEventData();
+
+			if (!eventData) {
+				return {
+					eventStart: null,
+					eventEnd: null,
+					eventAllDay: false,
+				};
+			}
 
 			return {
-				eventStart: meta.event_start || '',
-				eventEnd: meta.event_end || '',
-				eventAllDay: meta.event_all_day || false,
+				eventStart: eventData.start_datetime || '',
+				eventEnd: eventData.end_datetime || '',
+				eventAllDay: eventData.all_day || false,
 			};
 		},
 		[isEventContext, postId]

@@ -87,48 +87,15 @@ class Event {
 	/**
 	 * Register custom meta fields for all enabled post types
 	 *
+	 * Only registers event_location (legacy, used by CalendarButtonHooks as fallback).
+	 * Event dates are now stored exclusively in the fair_event_dates custom table.
+	 *
 	 * @return void
 	 */
 	public static function register_meta() {
 		$enabled_post_types = Settings::get_enabled_post_types();
 
 		foreach ( $enabled_post_types as $post_type ) {
-			register_post_meta(
-				$post_type,
-				'event_start',
-				array(
-					'type'              => 'string',
-					'description'       => __( 'Event start date and time', 'fair-events' ),
-					'single'            => true,
-					'show_in_rest'      => true,
-					'sanitize_callback' => 'sanitize_text_field',
-				)
-			);
-
-			register_post_meta(
-				$post_type,
-				'event_end',
-				array(
-					'type'              => 'string',
-					'description'       => __( 'Event end date and time', 'fair-events' ),
-					'single'            => true,
-					'show_in_rest'      => true,
-					'sanitize_callback' => 'sanitize_text_field',
-				)
-			);
-
-			register_post_meta(
-				$post_type,
-				'event_all_day',
-				array(
-					'type'         => 'boolean',
-					'description'  => __( 'Whether the event is an all-day event', 'fair-events' ),
-					'single'       => true,
-					'show_in_rest' => true,
-					'default'      => false,
-				)
-			);
-
 			register_post_meta(
 				$post_type,
 				'event_location',
@@ -151,7 +118,6 @@ class Event {
 	 */
 	public static function register_meta_box() {
 		add_action( 'add_meta_boxes', array( __CLASS__, 'add_meta_box' ) );
-		add_action( 'save_post', array( __CLASS__, 'save_meta_box' ) );
 		add_action( 'admin_enqueue_scripts', array( __CLASS__, 'enqueue_meta_box_scripts' ) );
 	}
 
@@ -178,20 +144,23 @@ class Event {
 			return;
 		}
 
-		$asset_file = include FAIR_EVENTS_PLUGIN_DIR . 'build/admin/event-meta/index.asset.php';
+		$asset_file = include FAIR_EVENTS_PLUGIN_DIR . 'build/admin/event-meta-box/index.asset.php';
 
 		wp_enqueue_script(
-			'fair-events-event-meta',
-			FAIR_EVENTS_PLUGIN_URL . 'build/admin/event-meta/index.js',
+			'fair-events-event-meta-box',
+			FAIR_EVENTS_PLUGIN_URL . 'build/admin/event-meta-box/index.js',
 			$asset_file['dependencies'],
 			$asset_file['version'],
 			true
 		);
 
+		wp_enqueue_style( 'wp-components' );
+
 		// Pass event date info to JS.
 		global $post;
 		$event_date_id    = 0;
 		$manage_event_url = '';
+		$post_id          = $post ? $post->ID : 0;
 		if ( $post ) {
 			$event_dates = \FairEvents\Models\EventDates::get_by_event_id( $post->ID );
 			if ( $event_dates ) {
@@ -201,12 +170,20 @@ class Event {
 		}
 
 		wp_localize_script(
-			'fair-events-event-meta',
+			'fair-events-event-meta-box',
 			'fairEventsMetaBox',
 			array(
+				'postId'         => $post_id,
+				'postType'       => $screen->post_type,
 				'eventDateId'    => $event_date_id,
 				'manageEventUrl' => $manage_event_url,
 			)
+		);
+
+		wp_set_script_translations(
+			'fair-events-event-meta-box',
+			'fair-events',
+			FAIR_EVENTS_PLUGIN_DIR . 'build/languages'
 		);
 	}
 
@@ -233,269 +210,16 @@ class Event {
 	/**
 	 * Render meta box content
 	 *
+	 * Renders a React mount point. The React component handles all UI and saves via REST API.
+	 *
 	 * @param \WP_Post $post The post object.
 	 * @return void
 	 */
 	public static function render_meta_box( $post ) {
-		wp_nonce_field( 'fair_event_meta_box', 'fair_event_meta_box_nonce' );
-
-		// Get event dates from custom table (source of truth).
-		$event_dates      = \FairEvents\Models\EventDates::get_by_event_id( $post->ID );
-		$current_venue_id = $event_dates ? $event_dates->venue_id : null;
-		$venues           = \FairEvents\Models\Venue::get_all();
-
-		// Read dates from event_dates table if linked, fallback to postmeta.
-		if ( $event_dates ) {
-			$event_start   = $event_dates->start_datetime ? str_replace( ' ', 'T', substr( $event_dates->start_datetime, 0, 16 ) ) : '';
-			$event_end     = $event_dates->end_datetime ? str_replace( ' ', 'T', substr( $event_dates->end_datetime, 0, 16 ) ) : '';
-			$event_all_day = $event_dates->all_day;
-		} else {
-			$event_start   = get_post_meta( $post->ID, 'event_start', true );
-			$event_end     = get_post_meta( $post->ID, 'event_end', true );
-			$event_all_day = get_post_meta( $post->ID, 'event_all_day', true );
-		}
-
-		$event_recurrence = \FairEvents\Models\EventDates::get_rrule_by_event_id( $post->ID );
-
-		// Check for event_date URL parameter (from calendar "add event" button) for new posts.
-		// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Read-only operation for prepopulating form.
-		if ( empty( $event_start ) && isset( $_GET['event_date'] ) ) {
-			$url_date = sanitize_text_field( wp_unslash( $_GET['event_date'] ) );
-			// Validate date format (Y-m-d).
-			if ( preg_match( '/^\d{4}-\d{2}-\d{2}$/', $url_date ) ) {
-				// Default to datetime with 10:00 start time.
-				$event_start = $url_date . 'T10:00';
-			}
-		}
-
-		// Determine input type based on all-day setting
-		$input_type = $event_all_day ? 'date' : 'datetime-local';
-
-		// Extract date portion if all-day event
-		if ( $event_all_day ) {
-			if ( $event_start && strpos( $event_start, 'T' ) !== false ) {
-				$event_start = substr( $event_start, 0, strpos( $event_start, 'T' ) );
-			}
-			if ( $event_end && strpos( $event_end, 'T' ) !== false ) {
-				$event_end = substr( $event_end, 0, strpos( $event_end, 'T' ) );
-			}
-		}
-
-		// Parse recurrence settings.
-		$recurrence_enabled  = ! empty( $event_recurrence );
-		$parsed_rrule        = $recurrence_enabled ? \FairEvents\Services\RecurrenceService::parse_rrule( $event_recurrence ) : array();
-		$recurrence_freq     = $parsed_rrule['freq'] ?? '';
-		$recurrence_interval = $parsed_rrule['interval'] ?? 1;
-		$recurrence_count    = $parsed_rrule['count'] ?? '';
-		$recurrence_until    = ! empty( $parsed_rrule['until'] ) ? $parsed_rrule['until']->format( 'Y-m-d' ) : '';
-		$recurrence_end_type = $recurrence_count ? 'count' : ( $recurrence_until ? 'until' : 'count' );
-
-		// Map frequency + interval to simplified frequency.
-		$simple_frequency = '';
-		if ( 'DAILY' === $recurrence_freq ) {
-			$simple_frequency = 'daily';
-		} elseif ( 'WEEKLY' === $recurrence_freq && 1 === $recurrence_interval ) {
-			$simple_frequency = 'weekly';
-		} elseif ( 'WEEKLY' === $recurrence_freq && 2 === $recurrence_interval ) {
-			$simple_frequency = 'biweekly';
-		} elseif ( 'MONTHLY' === $recurrence_freq ) {
-			$simple_frequency = 'monthly';
-		}
-
-		$is_linked = ( null !== $event_dates );
 		?>
-
-		<?php if ( $is_linked ) : ?>
-			<p>
-				<a
-					href="<?php echo esc_url( admin_url( 'admin.php?page=fair-events-manage-event&event_date_id=' . $event_dates->id ) ); ?>"
-					class="button"
-					style="width: 100%; text-align: center; box-sizing: border-box;"
-				>
-					<?php esc_html_e( 'Edit Event', 'fair-events' ); ?>
-				</a>
-			</p>
-		<?php endif; ?>
-
-		<?php if ( ! $is_linked ) : ?>
-			<div id="fair-event-unlinked-options">
-				<p>
-					<button type="button" id="fair-event-create-new" class="button button-primary" style="width: 100%; text-align: center; box-sizing: border-box;">
-						<?php esc_html_e( 'Create New Event', 'fair-events' ); ?>
-					</button>
-				</p>
-				<p style="text-align: center; color: #666;">
-					&mdash; <?php esc_html_e( 'or', 'fair-events' ); ?> &mdash;
-				</p>
-				<p>
-					<label for="fair-event-link-existing">
-						<?php esc_html_e( 'Link Existing Event', 'fair-events' ); ?>
-					</label>
-					<select id="fair-event-link-existing" style="width: 100%; box-sizing: border-box;">
-						<option value=""><?php esc_html_e( 'Select an event...', 'fair-events' ); ?></option>
-					</select>
-				</p>
-				<input type="hidden" id="fair-event-linked-event-date-id" name="linked_event_date_id" value="" />
-			</div>
-		<?php endif; ?>
-
-		<div id="fair-event-details-form" style="<?php echo $is_linked ? '' : 'display: none;'; ?>">
-		<p>
-			<label for="event_start">
-				<?php esc_html_e( 'Start Date & Time', 'fair-events' ); ?>
-			</label>
-			<input
-				type="<?php echo esc_attr( $input_type ); ?>"
-				id="event_start"
-				name="event_start"
-				value="<?php echo esc_attr( $event_start ); ?>"
-				style="width: 100%;"
-			/>
-		</p>
-		<p>
-			<label for="event_duration">
-				<?php esc_html_e( 'Event Length', 'fair-events' ); ?>
-			</label>
-			<select id="event_duration" name="event_duration" style="width: 100%; box-sizing: border-box;">
-				<option value="other"><?php esc_html_e( 'Other', 'fair-events' ); ?></option>
-			</select>
-			<small class="description">
-				<?php esc_html_e( 'Select a duration to automatically set the end time', 'fair-events' ); ?>
-			</small>
-		</p>
-		<p>
-			<label for="event_end">
-				<?php esc_html_e( 'End Date & Time', 'fair-events' ); ?>
-			</label>
-			<input
-				type="<?php echo esc_attr( $input_type ); ?>"
-				id="event_end"
-				name="event_end"
-				value="<?php echo esc_attr( $event_end ); ?>"
-				style="width: 100%;"
-			/>
-		</p>
-		<p>
-			<label for="event_all_day">
-				<input
-					type="checkbox"
-					id="event_all_day"
-					name="event_all_day"
-					value="1"
-					<?php checked( $event_all_day, true ); ?>
-				/>
-				<?php esc_html_e( 'All Day Event', 'fair-events' ); ?>
-			</label>
-		</p>
-		<p>
-			<label for="event_venue_id">
-				<?php esc_html_e( 'Venue', 'fair-events' ); ?>
-			</label>
-			<select id="event_venue_id" name="event_venue_id" style="width: 100%; box-sizing: border-box;">
-				<option value=""><?php esc_html_e( 'No venue', 'fair-events' ); ?></option>
-				<?php foreach ( $venues as $venue ) : ?>
-					<option value="<?php echo esc_attr( $venue->id ); ?>" <?php selected( $current_venue_id, $venue->id ); ?>>
-						<?php echo esc_html( $venue->name ); ?>
-					</option>
-				<?php endforeach; ?>
-				<option value="new"><?php esc_html_e( '+ Add new venue...', 'fair-events' ); ?></option>
-			</select>
-		</p>
-		<div id="new_venue_form" style="display: none; padding: 10px; background: #f9f9f9; border: 1px solid #ddd; margin-bottom: 10px;">
-			<p>
-				<label for="new_venue_name"><?php esc_html_e( 'Venue Name', 'fair-events' ); ?></label>
-				<input type="text" id="new_venue_name" style="width: 100%;" />
-			</p>
-			<p>
-				<label for="new_venue_address"><?php esc_html_e( 'Address', 'fair-events' ); ?></label>
-				<textarea id="new_venue_address" style="width: 100%;" rows="2"></textarea>
-			</p>
-			<p>
-				<button type="button" id="save_new_venue" class="button button-primary">
-					<?php esc_html_e( 'Save Venue', 'fair-events' ); ?>
-				</button>
-				<button type="button" id="cancel_new_venue" class="button">
-					<?php esc_html_e( 'Cancel', 'fair-events' ); ?>
-				</button>
-				<span id="new_venue_error" style="color: red; margin-left: 10px;"></span>
-			</p>
+		<div id="fair-events-meta-box-root">
+			<p><?php esc_html_e( 'Loading...', 'fair-events' ); ?></p>
 		</div>
-
-		<hr style="margin: 15px 0;" />
-
-		<details id="recurrence_details" <?php echo $recurrence_enabled ? 'open' : ''; ?>>
-			<summary style="cursor: pointer; font-weight: 600; margin-bottom: 10px;">
-				<?php esc_html_e( 'Recurrence', 'fair-events' ); ?>
-			</summary>
-
-			<p>
-				<label for="event_recurrence_enabled">
-					<input
-						type="checkbox"
-						id="event_recurrence_enabled"
-						name="event_recurrence_enabled"
-						value="1"
-						<?php checked( $recurrence_enabled, true ); ?>
-					/>
-					<?php esc_html_e( 'Repeat this event', 'fair-events' ); ?>
-				</label>
-			</p>
-
-			<div id="recurrence_options" style="<?php echo $recurrence_enabled ? '' : 'display: none;'; ?>">
-				<p>
-					<label for="event_recurrence_frequency">
-						<?php esc_html_e( 'Frequency', 'fair-events' ); ?>
-					</label>
-					<select id="event_recurrence_frequency" name="event_recurrence_frequency" style="width: 100%; box-sizing: border-box;">
-						<option value="daily" <?php selected( $simple_frequency, 'daily' ); ?>><?php esc_html_e( 'Daily', 'fair-events' ); ?></option>
-						<option value="weekly" <?php selected( $simple_frequency, 'weekly' ); ?>><?php esc_html_e( 'Weekly', 'fair-events' ); ?></option>
-						<option value="biweekly" <?php selected( $simple_frequency, 'biweekly' ); ?>><?php esc_html_e( 'Biweekly', 'fair-events' ); ?></option>
-						<option value="monthly" <?php selected( $simple_frequency, 'monthly' ); ?>><?php esc_html_e( 'Monthly', 'fair-events' ); ?></option>
-					</select>
-				</p>
-
-				<p>
-					<label for="event_recurrence_end_type">
-						<?php esc_html_e( 'End', 'fair-events' ); ?>
-					</label>
-					<select id="event_recurrence_end_type" name="event_recurrence_end_type" style="width: 100%; box-sizing: border-box;">
-						<option value="count" <?php selected( $recurrence_end_type, 'count' ); ?>><?php esc_html_e( 'After number of occurrences', 'fair-events' ); ?></option>
-						<option value="until" <?php selected( $recurrence_end_type, 'until' ); ?>><?php esc_html_e( 'On date', 'fair-events' ); ?></option>
-					</select>
-				</p>
-
-				<p id="recurrence_count_wrapper" style="<?php echo $recurrence_end_type === 'until' ? 'display: none;' : ''; ?>">
-					<label for="event_recurrence_count">
-						<?php esc_html_e( 'Number of occurrences', 'fair-events' ); ?>
-					</label>
-					<input
-						type="number"
-						id="event_recurrence_count"
-						name="event_recurrence_count"
-						value="<?php echo esc_attr( $recurrence_count ? $recurrence_count : 10 ); ?>"
-						min="2"
-						max="100"
-						style="width: 100%;"
-					/>
-				</p>
-
-				<p id="recurrence_until_wrapper" style="<?php echo $recurrence_end_type === 'count' ? 'display: none;' : ''; ?>">
-					<label for="event_recurrence_until">
-						<?php esc_html_e( 'End date', 'fair-events' ); ?>
-					</label>
-					<input
-						type="date"
-						id="event_recurrence_until"
-						name="event_recurrence_until"
-						value="<?php echo esc_attr( $recurrence_until ); ?>"
-						style="width: 100%;"
-					/>
-				</p>
-
-				<input type="hidden" id="event_recurrence" name="event_recurrence" value="<?php echo esc_attr( $event_recurrence ); ?>" />
-			</div>
-		</details>
-		</div><!-- #fair-event-details-form -->
 		<?php
 	}
 
@@ -545,7 +269,7 @@ class Event {
 			return;
 		}
 
-		// Copy event metadata from original post
+		// Copy event data from original post's custom table row.
 		$event_dates    = \FairEvents\Models\EventDates::get_by_event_id( $origin_id );
 		$event_location = get_post_meta( $origin_id, 'event_location', true );
 
@@ -556,6 +280,20 @@ class Event {
 				$event_dates->end_datetime,
 				$event_dates->all_day
 			);
+
+			// Copy venue from custom table.
+			if ( $event_dates->venue_id ) {
+				$new_event_dates = \FairEvents\Models\EventDates::get_by_event_id( $post_id );
+				if ( $new_event_dates ) {
+					\FairEvents\Models\EventDates::update_by_id( $new_event_dates->id, array( 'venue_id' => $event_dates->venue_id ) );
+				}
+			}
+
+			// Add to junction table.
+			$new_event_dates = \FairEvents\Models\EventDates::get_by_event_id( $post_id );
+			if ( $new_event_dates ) {
+				\FairEvents\Models\EventDates::add_linked_post( $new_event_dates->id, $post_id );
+			}
 		}
 		if ( $event_location ) {
 			update_post_meta( $post_id, 'event_location', $event_location );
@@ -664,10 +402,12 @@ class Event {
 	}
 
 	/**
-	 * Handle sorting by event meta fields
+	 * Handle sorting by event date/time via custom table JOIN
 	 *
 	 * @param \WP_Query $query The query object.
 	 * @return void
+	 *
+	 * phpcs:disable WordPress.DB.DirectDatabaseQuery
 	 */
 	public static function handle_column_sorting( $query ) {
 		if ( ! is_admin() || ! $query->is_main_query() ) {
@@ -677,9 +417,39 @@ class Event {
 		$orderby = $query->get( 'orderby' );
 
 		if ( 'event_datetime' === $orderby ) {
-			$query->set( 'meta_key', 'event_start' );
-			$query->set( 'orderby', 'meta_value' );
+			add_filter( 'posts_clauses', array( __CLASS__, 'sort_by_event_date_clauses' ), 10, 2 );
 		}
+	}
+
+	/**
+	 * Modify query clauses to sort by event start datetime from custom table
+	 *
+	 * @param array     $clauses Query clauses.
+	 * @param \WP_Query $query   The query object.
+	 * @return array Modified clauses.
+	 *
+	 * phpcs:disable WordPress.DB.DirectDatabaseQuery
+	 */
+	public static function sort_by_event_date_clauses( $clauses, $query ) {
+		global $wpdb;
+
+		$table_name  = $wpdb->prefix . 'fair_event_dates';
+		$posts_table = $wpdb->prefix . 'fair_event_date_posts';
+
+		// LEFT JOIN via direct event_id OR junction table.
+		$clauses['join'] .= " LEFT JOIN {$table_name} AS fed ON ({$wpdb->posts}.ID = fed.event_id AND fed.occurrence_type IN ('single', 'master'))";
+		$clauses['join'] .= " LEFT JOIN {$posts_table} AS fedp ON {$wpdb->posts}.ID = fedp.post_id";
+		$clauses['join'] .= " LEFT JOIN {$table_name} AS fed2 ON (fedp.event_date_id = fed2.id AND fed2.occurrence_type IN ('single', 'master'))";
+
+		$order = $query->get( 'order' ) ?: 'ASC';
+		$order = strtoupper( $order ) === 'DESC' ? 'DESC' : 'ASC';
+
+		$clauses['orderby'] = "COALESCE(fed.start_datetime, fed2.start_datetime) {$order}";
+
+		// Remove this filter after first use to avoid affecting other queries.
+		remove_filter( 'posts_clauses', array( __CLASS__, 'sort_by_event_date_clauses' ), 10 );
+
+		return $clauses;
 	}
 
 	/**
@@ -721,166 +491,5 @@ class Event {
 		}
 
 		return $actions;
-	}
-
-	/**
-	 * Save meta box data
-	 *
-	 * @param int $post_id The post ID.
-	 * @return void
-	 */
-	public static function save_meta_box( $post_id ) {
-		// Check if nonce is set.
-		if ( ! isset( $_POST['fair_event_meta_box_nonce'] ) ) {
-			return;
-		}
-
-		// Verify nonce.
-		if ( ! wp_verify_nonce( sanitize_text_field( wp_unslash( $_POST['fair_event_meta_box_nonce'] ) ), 'fair_event_meta_box' ) ) {
-			return;
-		}
-
-		// Check if this is an autosave.
-		if ( defined( 'DOING_AUTOSAVE' ) && DOING_AUTOSAVE ) {
-			return;
-		}
-
-		// Check user permissions.
-		if ( ! current_user_can( 'edit_post', $post_id ) ) {
-			return;
-		}
-
-		// Check if this post type is enabled for events.
-		$post_type          = get_post_type( $post_id );
-		$enabled_post_types = Settings::get_enabled_post_types();
-		if ( ! in_array( $post_type, $enabled_post_types, true ) ) {
-			return;
-		}
-
-		// Handle linking an existing event date to this post.
-		if ( isset( $_POST['linked_event_date_id'] ) ) {
-			$linked_id = absint( $_POST['linked_event_date_id'] );
-			if ( $linked_id > 0 ) {
-				$event_date = \FairEvents\Models\EventDates::get_by_id( $linked_id );
-				if ( $event_date ) {
-					// Add to junction table.
-					\FairEvents\Models\EventDates::add_linked_post( $linked_id, $post_id );
-
-					// Set as primary if no primary post yet.
-					if ( ! $event_date->event_id ) {
-						\FairEvents\Models\EventDates::update_by_id(
-							$linked_id,
-							array(
-								'event_id'  => $post_id,
-								'link_type' => 'post',
-							)
-						);
-					}
-
-					// Sync dates to postmeta.
-					update_post_meta( $post_id, 'event_start', $event_date->start_datetime );
-					update_post_meta( $post_id, 'event_end', $event_date->end_datetime );
-					update_post_meta( $post_id, 'event_all_day', $event_date->all_day );
-
-					// Sync venue if set.
-					if ( $event_date->venue_id ) {
-						\FairEvents\Models\EventDates::save_venue_id( $post_id, $event_date->venue_id );
-					}
-					return;
-				}
-			}
-		}
-
-		// Get event data
-		$event_start   = isset( $_POST['event_start'] ) ? sanitize_text_field( wp_unslash( $_POST['event_start'] ) ) : '';
-		$event_end     = isset( $_POST['event_end'] ) ? sanitize_text_field( wp_unslash( $_POST['event_end'] ) ) : '';
-		$event_all_day = isset( $_POST['event_all_day'] ) ? true : false;
-
-		// Auto-set end time if not provided
-		if ( empty( $event_end ) && ! empty( $event_start ) ) {
-			$start_timestamp = strtotime( $event_start );
-			if ( false !== $start_timestamp ) {
-				if ( $event_all_day ) {
-					// All-day event: add 1 day
-					$event_end = gmdate( 'Y-m-d', $start_timestamp + DAY_IN_SECONDS );
-				} else {
-					// Timed event: add 1 hour
-					$event_end = gmdate( 'Y-m-d\TH:i', $start_timestamp + HOUR_IN_SECONDS );
-				}
-			}
-		}
-
-		// Save to custom table (also updates postmeta automatically for compatibility)
-		\FairEvents\Models\EventDates::save( $post_id, $event_start, $event_end, $event_all_day );
-
-		// Sync post title to event_dates table.
-		$event_dates_row = \FairEvents\Models\EventDates::get_by_event_id( $post_id );
-		if ( $event_dates_row ) {
-			\FairEvents\Models\EventDates::update_by_id(
-				$event_dates_row->id,
-				array( 'title' => get_the_title( $post_id ) )
-			);
-		}
-
-		// Save venue_id.
-		if ( isset( $_POST['event_venue_id'] ) ) {
-			$venue_id = sanitize_text_field( wp_unslash( $_POST['event_venue_id'] ) );
-			// "new" value is handled via JavaScript API call, so skip it here.
-			if ( '' === $venue_id || 'new' === $venue_id ) {
-				$venue_id = null;
-			} else {
-				$venue_id = absint( $venue_id );
-			}
-			\FairEvents\Models\EventDates::save_venue_id( $post_id, $venue_id );
-		}
-
-		// Handle recurrence.
-		// phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- checkbox only checked for presence.
-		$recurrence_enabled = isset( $_POST['event_recurrence_enabled'] ) && ! empty( wp_unslash( $_POST['event_recurrence_enabled'] ) );
-
-		// Use empty string to explicitly indicate "no recurrence" vs null which means "read from DB".
-		$rrule = '';
-		if ( $recurrence_enabled ) {
-			// Build RRULE from form fields.
-			$frequency = isset( $_POST['event_recurrence_frequency'] ) ? sanitize_text_field( wp_unslash( $_POST['event_recurrence_frequency'] ) ) : 'weekly';
-			$end_type  = isset( $_POST['event_recurrence_end_type'] ) ? sanitize_text_field( wp_unslash( $_POST['event_recurrence_end_type'] ) ) : 'count';
-			$count     = isset( $_POST['event_recurrence_count'] ) ? absint( $_POST['event_recurrence_count'] ) : 10;
-			$until     = isset( $_POST['event_recurrence_until'] ) ? sanitize_text_field( wp_unslash( $_POST['event_recurrence_until'] ) ) : '';
-
-			// Map simplified frequency to RRULE frequency and interval.
-			$rrule_freq     = 'WEEKLY';
-			$rrule_interval = 1;
-
-			switch ( $frequency ) {
-				case 'daily':
-					$rrule_freq     = 'DAILY';
-					$rrule_interval = 1;
-					break;
-				case 'weekly':
-					$rrule_freq     = 'WEEKLY';
-					$rrule_interval = 1;
-					break;
-				case 'biweekly':
-					$rrule_freq     = 'WEEKLY';
-					$rrule_interval = 2;
-					break;
-				case 'monthly':
-					$rrule_freq     = 'MONTHLY';
-					$rrule_interval = 1;
-					break;
-			}
-
-			$rrule = \FairEvents\Services\RecurrenceService::build_rrule(
-				$rrule_freq,
-				$rrule_interval,
-				$end_type,
-				'count' === $end_type ? $count : null,
-				'until' === $end_type ? $until : null
-			);
-		}
-
-		// Regenerate occurrences (this handles both recurring and non-recurring events).
-		// Pass the RRULE directly so it gets saved to the database table.
-		\FairEvents\Services\RecurrenceService::regenerate_event_occurrences( $post_id, $rrule );
 	}
 }

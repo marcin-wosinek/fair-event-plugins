@@ -315,9 +315,6 @@ class EventDates {
 			);
 
 			if ( $result !== false ) {
-				// Sync to postmeta for all linked posts.
-				self::sync_to_postmeta( $event_id, $start, $end, $all_day );
-				self::sync_all_linked_postmeta( (int) $existing->id );
 				return (int) $existing->id;
 			}
 			return false;
@@ -325,9 +322,6 @@ class EventDates {
 			$result = $wpdb->insert( $table_name, $data, $format );
 
 			if ( $result ) {
-				// Sync to postmeta for all linked posts.
-				self::sync_to_postmeta( $event_id, $start, $end, $all_day );
-				self::sync_all_linked_postmeta( $wpdb->insert_id );
 				return $wpdb->insert_id;
 			}
 			return false;
@@ -376,12 +370,6 @@ class EventDates {
 			$result = $wpdb->insert( $table_name, $data, $format );
 		}
 
-		// Always sync to postmeta for all linked posts.
-		self::sync_to_postmeta( $event_id, $start, $end, $all_day );
-		if ( $existing ) {
-			self::sync_all_linked_postmeta( $existing->id );
-		}
-
 		return $result !== false;
 	}
 
@@ -406,35 +394,6 @@ class EventDates {
 		return $result !== false;
 	}
 
-	/**
-	 * Sync event dates to postmeta (for backward compatibility)
-	 *
-	 * Syncs to the given post and all linked posts via junction table.
-	 *
-	 * @param int    $event_id Event post ID.
-	 * @param string $start    Start datetime.
-	 * @param string $end      End datetime.
-	 * @param bool   $all_day  All day flag.
-	 * @return void
-	 */
-	private static function sync_to_postmeta( $event_id, $start, $end, $all_day ) {
-		update_post_meta( $event_id, 'event_start', $start );
-		update_post_meta( $event_id, 'event_end', $end );
-		update_post_meta( $event_id, 'event_all_day', $all_day );
-
-		// Also sync to all linked posts via junction table.
-		$event_date = self::get_by_event_id( $event_id );
-		if ( $event_date ) {
-			$linked_post_ids = self::get_linked_post_ids( $event_date->id );
-			foreach ( $linked_post_ids as $linked_post_id ) {
-				if ( (int) $linked_post_id !== (int) $event_id ) {
-					update_post_meta( $linked_post_id, 'event_start', $start );
-					update_post_meta( $linked_post_id, 'event_end', $end );
-					update_post_meta( $linked_post_id, 'event_all_day', $all_day );
-				}
-			}
-		}
-	}
 
 	/**
 	 * Save venue_id for an event
@@ -974,33 +933,6 @@ class EventDates {
 		return $result !== false;
 	}
 
-	/**
-	 * Sync postmeta (event_start, event_end, event_all_day) to ALL linked posts
-	 *
-	 * Includes both the primary post (event_id) and all secondary posts from
-	 * the junction table. Safe to call after any date change.
-	 *
-	 * @param int $event_date_id Event date row ID.
-	 * @return void
-	 */
-	public static function sync_all_linked_postmeta( $event_date_id ) {
-		$event_date = self::get_by_id( $event_date_id );
-		if ( ! $event_date ) {
-			return;
-		}
-
-		// Collect ALL post IDs: junction table + primary (in case not in junction table).
-		$post_ids = self::get_linked_post_ids( $event_date_id );
-		if ( $event_date->event_id && ! in_array( (int) $event_date->event_id, $post_ids, true ) ) {
-			$post_ids[] = (int) $event_date->event_id;
-		}
-
-		foreach ( $post_ids as $post_id ) {
-			update_post_meta( $post_id, 'event_start', $event_date->start_datetime );
-			update_post_meta( $post_id, 'event_end', $event_date->end_datetime );
-			update_post_meta( $post_id, 'event_all_day', $event_date->all_day );
-		}
-	}
 
 	/**
 	 * Get event date by ID

@@ -8,6 +8,11 @@ import { useState, useEffect } from '@wordpress/element';
 import apiFetch from '@wordpress/api-fetch';
 
 /**
+ * Internal dependencies — import store to ensure it is registered
+ */
+import { STORE_NAME } from '../../../Admin/event-meta-box/store.js';
+
+/**
  * Format event date range
  *
  * @param {string}  startDateTime - Start datetime string
@@ -156,14 +161,22 @@ export default function EditComponent({ context }) {
 				};
 			}
 
-			const { getEditedPostAttribute } = select('core/editor');
-			const meta = getEditedPostAttribute('meta') || {};
+			const eventData = select(STORE_NAME).getEventData();
+
+			if (!eventData) {
+				return {
+					eventStart: null,
+					eventEnd: null,
+					eventAllDay: false,
+					venueId: null,
+				};
+			}
 
 			return {
-				eventStart: meta.event_start || '',
-				eventEnd: meta.event_end || '',
-				eventAllDay: meta.event_all_day || false,
-				venueId: meta.event_venue_id || null,
+				eventStart: eventData.start_datetime || '',
+				eventEnd: eventData.end_datetime || '',
+				eventAllDay: eventData.all_day || false,
+				venueId: eventData.venue_id || null,
 			};
 		},
 		[isEventContext, postId]

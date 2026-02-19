@@ -80,7 +80,7 @@ class EventDatesController extends WP_REST_Controller {
 					'methods'             => WP_REST_Server::EDITABLE,
 					'callback'            => array( $this, 'update_item' ),
 					'permission_callback' => array( $this, 'update_item_permissions_check' ),
-					'args'                => $this->get_create_update_args(),
+					'args'                => $this->get_update_args(),
 				),
 				array(
 					'methods'             => WP_REST_Server::DELETABLE,
@@ -246,6 +246,21 @@ class EventDatesController extends WP_REST_Controller {
 				'items'       => array( 'type' => 'integer' ),
 			),
 		);
+	}
+
+	/**
+	 * Get args for update requests (all fields optional)
+	 *
+	 * @return array Update endpoint arguments.
+	 */
+	private function get_update_args() {
+		$args = $this->get_create_update_args();
+
+		// For updates, title and start_datetime are optional.
+		$args['title']['required']          = false;
+		$args['start_datetime']['required'] = false;
+
+		return $args;
 	}
 
 	/**
@@ -488,15 +503,6 @@ class EventDatesController extends WP_REST_Controller {
 			// Determine the effective event_id after update.
 			$effective_event_id = isset( $update_data['event_id'] ) ? $update_data['event_id'] : $existing->event_id;
 
-			// Sync dates to postmeta when linked to a post and dates/link changed.
-			$dates_changed = isset( $update_data['start_datetime'] ) || isset( $update_data['end_datetime'] ) || isset( $update_data['all_day'] );
-			$newly_linked  = isset( $update_data['event_id'] ) && $update_data['event_id'] && ! $existing->event_id;
-
-			if ( $effective_event_id && ( $dates_changed || $newly_linked ) ) {
-				$updated = EventDates::get_by_id( $id );
-				EventDates::save( $effective_event_id, $updated->start_datetime, $updated->end_datetime, $updated->all_day );
-			}
-
 			// Sync title to linked post when title changes.
 			if ( $effective_event_id && isset( $update_data['title'] ) ) {
 				wp_update_post(
@@ -555,9 +561,6 @@ class EventDatesController extends WP_REST_Controller {
 				$this->set_standalone_categories( $id, $categories );
 			}
 		}
-
-		// Always sync postmeta to all linked posts after any update.
-		EventDates::sync_all_linked_postmeta( $id );
 
 		$event_date = EventDates::get_by_id( $id );
 
@@ -662,14 +665,6 @@ class EventDatesController extends WP_REST_Controller {
 		// Add to junction table.
 		EventDates::add_linked_post( $id, $post_id );
 
-		// Sync dates to postmeta.
-		EventDates::save( $post_id, $event_date->start_datetime, $event_date->end_datetime, $event_date->all_day );
-
-		// Sync venue to postmeta if set.
-		if ( $event_date->venue_id ) {
-			EventDates::save_venue_id( $post_id, $event_date->venue_id );
-		}
-
 		// Copy standalone categories to the new post.
 		$standalone_cat_ids = $this->get_standalone_category_ids( $id );
 		if ( ! empty( $standalone_cat_ids ) ) {
@@ -731,11 +726,6 @@ class EventDatesController extends WP_REST_Controller {
 			);
 		}
 
-		// Sync dates to postmeta for the newly linked post.
-		update_post_meta( $post_id, 'event_start', $event_date->start_datetime );
-		update_post_meta( $post_id, 'event_end', $event_date->end_datetime );
-		update_post_meta( $post_id, 'event_all_day', $event_date->all_day );
-
 		$event_date = EventDates::get_by_id( $id );
 
 		return new WP_REST_Response( $this->prepare_event_date( $event_date ), 200 );
@@ -783,11 +773,6 @@ class EventDatesController extends WP_REST_Controller {
 				);
 			}
 		}
-
-		// Clean up postmeta on the unlinked post.
-		delete_post_meta( $post_id, 'event_start' );
-		delete_post_meta( $post_id, 'event_end' );
-		delete_post_meta( $post_id, 'event_all_day' );
 
 		$event_date = EventDates::get_by_id( $id );
 

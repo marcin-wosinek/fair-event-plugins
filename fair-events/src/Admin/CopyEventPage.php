@@ -81,7 +81,7 @@ class CopyEventPage {
 			wp_die( esc_html__( 'Failed to create new event.', 'fair-events' ) );
 		}
 
-		// Copy event dates.
+		// Copy event dates to custom table.
 		EventDates::save(
 			$new_post_id,
 			$new_dates['start'],
@@ -89,7 +89,21 @@ class CopyEventPage {
 			$original_dates->all_day
 		);
 
-		// Copy location.
+		// Copy venue from custom table.
+		if ( $original_dates->venue_id ) {
+			$new_event_dates = EventDates::get_by_event_id( $new_post_id );
+			if ( $new_event_dates ) {
+				EventDates::update_by_id( $new_event_dates->id, array( 'venue_id' => $original_dates->venue_id ) );
+			}
+		}
+
+		// Add to junction table.
+		$new_event_dates = EventDates::get_by_event_id( $new_post_id );
+		if ( $new_event_dates ) {
+			EventDates::add_linked_post( $new_event_dates->id, $new_post_id );
+		}
+
+		// Copy location post meta (legacy, used by CalendarButtonHooks).
 		$location = get_post_meta( $event_id, 'event_location', true );
 		if ( $location ) {
 			update_post_meta( $new_post_id, 'event_location', $location );

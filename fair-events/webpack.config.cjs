@@ -45,9 +45,9 @@ module.exports = {
       process.cwd(),
       "src/Admin/settings/index.js",
     ),
-    "admin/event-meta/index": path.resolve(
+    "admin/event-meta-box/index": path.resolve(
       process.cwd(),
-      "src/Admin/event-meta/index.js",
+      "src/Admin/event-meta-box/index.js",
     ),
     "admin/sources/index": path.resolve(
       process.cwd(),

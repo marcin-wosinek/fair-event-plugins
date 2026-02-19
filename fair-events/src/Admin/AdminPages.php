@@ -596,42 +596,63 @@ class AdminPages {
 	}
 
 	/**
-	 * Filter events to show only upcoming ones
+	 * Filter events to show only upcoming ones via custom table JOIN
 	 *
 	 * @param \WP_Query $query The query object.
 	 * @return void
+	 *
+	 * phpcs:disable WordPress.DB.DirectDatabaseQuery
 	 */
 	public function filter_upcoming_events( $query ) {
-		// Only on admin, main query, for fair_event post type
+		// Only on admin, main query, for fair_event post type.
 		if ( ! is_admin() || ! $query->is_main_query() || 'fair_event' !== $query->get( 'post_type' ) ) {
 			return;
 		}
 
-		// Check if upcoming filter is active
+		// Check if upcoming filter is active.
 		// phpcs:ignore WordPress.Security.NonceVerification.Recommended
 		if ( ! isset( $_GET['upcoming'] ) || '1' !== $_GET['upcoming'] ) {
 			return;
 		}
 
-		// Get current datetime in same format as event_start
+		add_filter( 'posts_clauses', array( $this, 'upcoming_events_clauses' ), 10, 2 );
+	}
+
+	/**
+	 * Modify query clauses for upcoming events filter
+	 *
+	 * @param array     $clauses Query clauses.
+	 * @param \WP_Query $query   The query object.
+	 * @return array Modified clauses.
+	 *
+	 * phpcs:disable WordPress.DB.DirectDatabaseQuery
+	 */
+	public function upcoming_events_clauses( $clauses, $query ) {
+		global $wpdb;
+
+		$table_name  = $wpdb->prefix . 'fair_event_dates';
+		$posts_table = $wpdb->prefix . 'fair_event_date_posts';
+
 		$current_datetime = current_time( 'mysql' );
 
-		// Filter: event_start >= now
-		$meta_query = array(
-			array(
-				'key'     => 'event_start',
-				'value'   => $current_datetime,
-				'compare' => '>=',
-				'type'    => 'DATETIME',
-			),
+		// JOIN via direct event_id OR junction table.
+		$clauses['join'] .= " LEFT JOIN {$table_name} AS fed_upcoming ON ({$wpdb->posts}.ID = fed_upcoming.event_id AND fed_upcoming.occurrence_type IN ('single', 'master'))";
+		$clauses['join'] .= " LEFT JOIN {$posts_table} AS fedp_upcoming ON {$wpdb->posts}.ID = fedp_upcoming.post_id";
+		$clauses['join'] .= " LEFT JOIN {$table_name} AS fed2_upcoming ON (fedp_upcoming.event_date_id = fed2_upcoming.id AND fed2_upcoming.occurrence_type IN ('single', 'master'))";
+
+		// WHERE: start_datetime >= now (from either join path).
+		$clauses['where'] .= $wpdb->prepare(
+			' AND COALESCE(fed_upcoming.start_datetime, fed2_upcoming.start_datetime) >= %s',
+			$current_datetime
 		);
 
-		$query->set( 'meta_query', $meta_query );
+		// ORDER BY start_datetime ASC.
+		$clauses['orderby'] = 'COALESCE(fed_upcoming.start_datetime, fed2_upcoming.start_datetime) ASC';
 
-		// Order by event_start ASC (earliest first)
-		$query->set( 'meta_key', 'event_start' );
-		$query->set( 'orderby', 'meta_value' );
-		$query->set( 'order', 'ASC' );
+		// Remove this filter after first use.
+		remove_filter( 'posts_clauses', array( $this, 'upcoming_events_clauses' ), 10 );
+
+		return $clauses;
 	}
 
 	/**

@@ -46,6 +46,8 @@ class Plugin {
 		$this->load_rest_api();
 		$this->load_frontend();
 		$this->load_post_cleanup();
+		$this->load_auto_create_event();
+		$this->load_title_sync();
 	}
 
 	/**
@@ -255,6 +257,97 @@ class Plugin {
 	 */
 	private function load_post_cleanup() {
 		add_action( 'before_delete_post', array( $this, 'cleanup_linked_posts_on_delete' ) );
+	}
+
+	/**
+	 * Load auto-create event hook for fair_event posts
+	 *
+	 * @return void
+	 */
+	private function load_auto_create_event() {
+		add_action( 'wp_after_insert_post', array( $this, 'auto_create_event_date' ), 10, 4 );
+	}
+
+	/**
+	 * Load title sync hook: primary post title → event_date title
+	 *
+	 * @return void
+	 */
+	private function load_title_sync() {
+		add_action( 'save_post', array( $this, 'sync_title_to_event_date' ), 20, 2 );
+	}
+
+	/**
+	 * Sync post title to event_date title when the post is the primary linked post
+	 *
+	 * @param int      $post_id Post ID.
+	 * @param \WP_Post $post    Post object.
+	 * @return void
+	 */
+	public function sync_title_to_event_date( $post_id, $post ) {
+		if ( defined( 'DOING_AUTOSAVE' ) && DOING_AUTOSAVE ) {
+			return;
+		}
+
+		if ( wp_is_post_revision( $post_id ) ) {
+			return;
+		}
+
+		$enabled_post_types = \FairEvents\Settings\Settings::get_enabled_post_types();
+		if ( ! in_array( $post->post_type, $enabled_post_types, true ) ) {
+			return;
+		}
+
+		// Look up the event_date where this post is the primary (event_id = post_id).
+		$event_date = \FairEvents\Models\EventDates::get_by_event_id( $post_id );
+		if ( ! $event_date ) {
+			return;
+		}
+
+		// Only sync if this post is the primary post.
+		if ( (int) $event_date->event_id !== (int) $post_id ) {
+			return;
+		}
+
+		\FairEvents\Models\EventDates::update_by_id(
+			$event_date->id,
+			array( 'title' => $post->post_title )
+		);
+	}
+
+	/**
+	 * Auto-create an event_dates row when a fair_event post is first created
+	 *
+	 * @param int      $post_id     Post ID.
+	 * @param \WP_Post $post        Post object.
+	 * @param bool     $update      Whether this is an existing post being updated.
+	 * @param \WP_Post $post_before Post object before the update (null for new posts).
+	 * @return void
+	 */
+	public function auto_create_event_date( $post_id, $post, $update, $post_before ) {
+		// Only for new fair_event posts (not updates).
+		if ( $update ) {
+			return;
+		}
+
+		if ( \FairEvents\PostTypes\Event::POST_TYPE !== $post->post_type ) {
+			return;
+		}
+
+		// Guard: don't create if an event_date already exists for this post.
+		$existing = \FairEvents\Models\EventDates::get_by_event_id( $post_id );
+		if ( $existing ) {
+			return;
+		}
+
+		// Create a minimal event_dates row.
+		\FairEvents\Models\EventDates::save( $post_id, null, null, false );
+
+		// Also add to junction table.
+		$event_date = \FairEvents\Models\EventDates::get_by_event_id( $post_id );
+		if ( $event_date ) {
+			\FairEvents\Models\EventDates::add_linked_post( $event_date->id, $post_id );
+		}
 	}
 
 	/**
