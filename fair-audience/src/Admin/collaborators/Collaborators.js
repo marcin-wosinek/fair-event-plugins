@@ -9,6 +9,7 @@ import {
 	CheckboxControl,
 	SearchControl,
 	Spinner,
+	ExternalLink,
 } from '@wordpress/components';
 import { DataViews } from '@wordpress/dataviews';
 
@@ -310,6 +311,23 @@ export default function Collaborators() {
 	return (
 		<div className="wrap">
 			<h1>{__('Collaborators', 'fair-audience')}</h1>
+
+			{window.fairAudienceCollaboratorsData?.collaboratorProfileUrl && (
+				<p>
+					{__('Registration form:', 'fair-audience')}{' '}
+					<ExternalLink
+						href={
+							window.fairAudienceCollaboratorsData
+								.collaboratorProfileUrl
+						}
+					>
+						{
+							window.fairAudienceCollaboratorsData
+								.collaboratorProfileUrl
+						}
+					</ExternalLink>
+				</p>
+			)}
 
 			<Card>
 				<CardBody>

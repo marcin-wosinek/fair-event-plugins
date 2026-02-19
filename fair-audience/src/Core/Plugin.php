@@ -49,6 +49,7 @@ class Plugin {
 		add_action( 'template_redirect', array( $this, 'handle_poll_response' ) );
 		add_action( 'template_redirect', array( $this, 'handle_email_confirmation' ) );
 		add_action( 'template_redirect', array( $this, 'handle_manage_subscription' ) );
+		add_action( 'template_redirect', array( $this, 'handle_collaborator_profile' ) );
 
 		// Initialize settings.
 		$settings = new \FairAudience\Settings\Settings();
@@ -136,6 +137,7 @@ class Plugin {
 		$vars[] = 'confirm_email_key';
 		$vars[] = 'signup_token';
 		$vars[] = 'manage_subscription';
+		$vars[] = 'collaborator_profile';
 		return $vars;
 	}
 
@@ -181,6 +183,21 @@ class Plugin {
 
 		// Load manage subscription template.
 		include FAIR_AUDIENCE_PLUGIN_DIR . 'templates/manage-subscription.php';
+		exit;
+	}
+
+	/**
+	 * Handle collaborator profile registration page requests.
+	 */
+	public function handle_collaborator_profile() {
+		$value = get_query_var( 'collaborator_profile' );
+
+		if ( empty( $value ) ) {
+			return;
+		}
+
+		// Load collaborator profile template.
+		include FAIR_AUDIENCE_PLUGIN_DIR . 'templates/collaborator-profile.php';
 		exit;
 	}
 }

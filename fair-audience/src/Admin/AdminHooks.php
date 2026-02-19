@@ -420,7 +420,8 @@ class AdminHooks {
 				'fair-audience-collaborators',
 				'fairAudienceCollaboratorsData',
 				array(
-					'participantsUrl' => admin_url( 'admin.php?page=fair-audience-event-participants&event_id=' ),
+					'participantsUrl'        => admin_url( 'admin.php?page=fair-audience-event-participants&event_id=' ),
+					'collaboratorProfileUrl' => home_url( '?collaborator_profile=1' ),
 				)
 			);
 		}
