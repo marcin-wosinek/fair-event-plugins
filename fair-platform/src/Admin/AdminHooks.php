@@ -8,6 +8,7 @@
 namespace FairPlatform\Admin;
 
 use FairPlatform\Admin\ConnectionsPage;
+use FairPlatform\Admin\InstagramConnectionsPage;
 
 defined( 'WPINC' ) || die;
 
@@ -49,6 +50,15 @@ class AdminHooks {
 			'fair-platform-connections',
 			array( $this, 'render_connections_page' )
 		);
+
+		add_submenu_page(
+			'fair-platform-settings',
+			__( 'Instagram Connections', 'fair-platform' ),
+			__( 'Instagram', 'fair-platform' ),
+			'manage_options',
+			'fair-platform-instagram-connections',
+			array( $this, 'render_instagram_connections_page' )
+		);
 	}
 
 	/**
@@ -58,7 +68,13 @@ class AdminHooks {
 	 * @return void
 	 */
 	public function enqueue_admin_styles( $hook ) {
-		if ( 'toplevel_page_fair-platform-settings' !== $hook && 'fair-platform_page_fair-platform-connections' !== $hook ) {
+		$allowed_hooks = array(
+			'toplevel_page_fair-platform-settings',
+			'fair-platform_page_fair-platform-connections',
+			'fair-platform_page_fair-platform-instagram-connections',
+		);
+
+		if ( ! in_array( $hook, $allowed_hooks, true ) ) {
 			return;
 		}
 
@@ -69,7 +85,7 @@ class AdminHooks {
 			\FAIR_PLATFORM_VERSION
 		);
 
-		// Enqueue React admin page scripts.
+		// Enqueue React admin page scripts for connections page.
 		if ( 'fair-platform_page_fair-platform-connections' === $hook ) {
 			$asset_file = \FAIR_PLATFORM_DIR . 'build/admin/connections/index.asset.php';
 
@@ -87,6 +103,30 @@ class AdminHooks {
 				wp_enqueue_style(
 					'fair-platform-connections',
 					\FAIR_PLATFORM_URL . 'build/admin/connections/index.css',
+					array( 'wp-components' ),
+					$asset['version']
+				);
+			}
+		}
+
+		// Enqueue React admin page scripts for Instagram connections page.
+		if ( 'fair-platform_page_fair-platform-instagram-connections' === $hook ) {
+			$asset_file = \FAIR_PLATFORM_DIR . 'build/admin/instagram-connections/index.asset.php';
+
+			if ( file_exists( $asset_file ) ) {
+				$asset = include $asset_file;
+
+				wp_enqueue_script(
+					'fair-platform-instagram-connections',
+					\FAIR_PLATFORM_URL . 'build/admin/instagram-connections/index.js',
+					$asset['dependencies'],
+					$asset['version'],
+					true
+				);
+
+				wp_enqueue_style(
+					'fair-platform-instagram-connections',
+					\FAIR_PLATFORM_URL . 'build/admin/instagram-connections/index.css',
 					array( 'wp-components' ),
 					$asset['version']
 				);
@@ -129,5 +169,14 @@ class AdminHooks {
 	 */
 	public function render_connections_page() {
 		ConnectionsPage::render();
+	}
+
+	/**
+	 * Render Instagram connections page
+	 *
+	 * @return void
+	 */
+	public function render_instagram_connections_page() {
+		InstagramConnectionsPage::render();
 	}
 }

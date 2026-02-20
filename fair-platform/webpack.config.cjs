@@ -9,6 +9,10 @@ module.exports = {
       process.cwd(),
       "src/Admin/connections/index.js",
     ),
+    "admin/instagram-connections/index": path.resolve(
+      process.cwd(),
+      "src/Admin/instagram-connections/index.js",
+    ),
   },
   plugins: [
     ...defaultConfig.plugins,

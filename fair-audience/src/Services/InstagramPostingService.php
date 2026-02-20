@@ -143,7 +143,7 @@ class InstagramPostingService {
 	 */
 	private function create_media_container( $user_id, $access_token, $image_url, $caption ) {
 		$url = sprintf(
-			'https://graph.facebook.com/%s/%s/media',
+			'https://graph.instagram.com/%s/%s/media',
 			self::API_VERSION,
 			$user_id
 		);
@@ -205,7 +205,7 @@ class InstagramPostingService {
 	 */
 	private function fetch_permalink( $access_token, $media_id ) {
 		$url = sprintf(
-			'https://graph.facebook.com/%s/%s?fields=permalink&access_token=%s',
+			'https://graph.instagram.com/%s/%s?fields=permalink&access_token=%s',
 			self::API_VERSION,
 			$media_id,
 			$access_token
@@ -240,7 +240,7 @@ class InstagramPostingService {
 	 */
 	private function publish_container( $user_id, $access_token, $container_id ) {
 		$url = sprintf(
-			'https://graph.facebook.com/%s/%s/media_publish',
+			'https://graph.instagram.com/%s/%s/media_publish',
 			self::API_VERSION,
 			$user_id
 		);

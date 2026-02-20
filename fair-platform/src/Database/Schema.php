@@ -18,7 +18,7 @@ class Schema {
 	 *
 	 * @var string
 	 */
-	const DB_VERSION = '1.0.0';
+	const DB_VERSION = '1.1.0';
 
 	/**
 	 * Create database tables
@@ -53,8 +53,33 @@ class Schema {
 			INDEX idx_connected_at (connected_at)
 		) {$charset_collate};";
 
+		// Instagram connections table.
+		$instagram_table_name = $wpdb->prefix . 'fair_platform_instagram_connections';
+
+		$instagram_sql = "CREATE TABLE {$instagram_table_name} (
+			id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+			site_id VARCHAR(255) NOT NULL,
+			site_name VARCHAR(255),
+			site_url VARCHAR(255),
+			instagram_user_id VARCHAR(100),
+			instagram_username VARCHAR(100),
+			status VARCHAR(20) NOT NULL,
+			error_code VARCHAR(50),
+			error_message TEXT,
+			scope_granted TEXT,
+			connected_at DATETIME NOT NULL,
+			last_token_refresh DATETIME,
+			ip_address VARCHAR(45),
+			user_agent TEXT,
+			INDEX idx_site_id (site_id),
+			INDEX idx_instagram_user (instagram_user_id),
+			INDEX idx_status (status),
+			INDEX idx_connected_at (connected_at)
+		) {$charset_collate};";
+
 		require_once ABSPATH . 'wp-admin/includes/upgrade.php';
 		dbDelta( $sql );
+		dbDelta( $instagram_sql );
 
 		// Store database version.
 		update_option( 'fair_platform_db_version', self::DB_VERSION );
@@ -68,9 +93,12 @@ class Schema {
 	public static function drop_tables() {
 		global $wpdb;
 
-		$table_name = $wpdb->prefix . 'fair_platform_connections';
+		$table_name           = $wpdb->prefix . 'fair_platform_connections';
+		$instagram_table_name = $wpdb->prefix . 'fair_platform_instagram_connections';
 		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.SchemaChange
 		$wpdb->query( "DROP TABLE IF EXISTS {$table_name}" );
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.SchemaChange
+		$wpdb->query( "DROP TABLE IF EXISTS {$instagram_table_name}" );
 
 		delete_option( 'fair_platform_db_version' );
 	}

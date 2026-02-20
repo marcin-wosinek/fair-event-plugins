@@ -9,7 +9,9 @@ namespace FairPlatform\Core;
 
 use FairPlatform\Database\Schema;
 use FairPlatform\Database\ConnectionRepository;
+use FairPlatform\Database\InstagramConnectionRepository;
 use FairPlatform\API\ConnectionsController;
+use FairPlatform\API\InstagramConnectionsController;
 
 defined( 'ABSPATH' ) || die;
 
@@ -61,6 +63,11 @@ class Plugin {
 			add_action( 'admin_notices', array( $this, 'missing_library_notice' ) );
 			return;
 		}
+
+		// Check for Instagram credentials (non-blocking - Instagram is additive).
+		if ( ! defined( 'INSTAGRAM_APP_ID' ) || ! defined( 'INSTAGRAM_APP_SECRET' ) ) {
+			add_action( 'admin_notices', array( $this, 'missing_instagram_credentials_notice' ) );
+		}
 	}
 
 	/**
@@ -69,6 +76,11 @@ class Plugin {
 	 * @return void
 	 */
 	private function init_hooks() {
+		// Check for database updates.
+		if ( Schema::needs_update() ) {
+			Schema::create_tables();
+		}
+
 		// Register rewrite rules for OAuth endpoints.
 		add_action( 'init', array( $this, 'register_rewrite_rules' ) );
 		add_filter( 'query_vars', array( $this, 'add_query_vars' ) );
@@ -89,6 +101,9 @@ class Plugin {
 	public function register_rest_api() {
 		$connections_controller = new ConnectionsController();
 		$connections_controller->register_routes();
+
+		$instagram_connections_controller = new InstagramConnectionsController();
+		$instagram_connections_controller->register_routes();
 	}
 
 	/**
@@ -136,6 +151,25 @@ class Plugin {
 			'index.php?fair_oauth_endpoint=refresh',
 			'top'
 		);
+
+		// Instagram OAuth endpoints.
+		add_rewrite_rule(
+			'^oauth/instagram/authorize/?$',
+			'index.php?fair_oauth_endpoint=instagram-authorize',
+			'top'
+		);
+
+		add_rewrite_rule(
+			'^oauth/instagram/callback/?$',
+			'index.php?fair_oauth_endpoint=instagram-callback',
+			'top'
+		);
+
+		add_rewrite_rule(
+			'^oauth/instagram/refresh/?$',
+			'index.php?fair_oauth_endpoint=instagram-refresh',
+			'top'
+		);
 	}
 
 	/**
@@ -176,6 +210,18 @@ class Plugin {
 
 			case 'refresh':
 				$this->handle_refresh();
+				break;
+
+			case 'instagram-authorize':
+				$this->handle_instagram_authorize();
+				break;
+
+			case 'instagram-callback':
+				$this->handle_instagram_callback();
+				break;
+
+			case 'instagram-refresh':
+				$this->handle_instagram_refresh();
 				break;
 
 			default:
@@ -947,6 +993,433 @@ class Plugin {
 	}
 
 	/**
+	 * Handle /oauth/instagram/authorize endpoint
+	 *
+	 * @return void
+	 */
+	private function handle_instagram_authorize() {
+		if ( ! defined( 'INSTAGRAM_APP_ID' ) || ! defined( 'INSTAGRAM_APP_SECRET' ) ) {
+			wp_die( 'Instagram OAuth credentials not configured' );
+		}
+
+		// Get and validate parameters.
+		$site_id    = sanitize_text_field( $_GET['site_id'] ?? '' );
+		$return_url = esc_url_raw( $_GET['return_url'] ?? '' );
+		$site_name  = sanitize_text_field( $_GET['site_name'] ?? '' );
+		$site_url   = esc_url_raw( $_GET['site_url'] ?? '' );
+
+		if ( empty( $site_id ) || empty( $return_url ) ) {
+			wp_die( 'Missing required parameters: site_id and return_url' );
+		}
+
+		// Verify return URL is HTTPS.
+		if ( 'https' !== wp_parse_url( $return_url, PHP_URL_SCHEME ) ) {
+			wp_die( 'Return URL must use HTTPS' );
+		}
+
+		// Generate secure state token.
+		$state = hash( 'sha256', $site_id . bin2hex( random_bytes( 32 ) ) );
+
+		// Store state data in transient (10 minutes).
+		set_transient(
+			"instagram_oauth_{$state}",
+			array(
+				'site_id'    => $site_id,
+				'return_url' => $return_url,
+				'site_name'  => $site_name,
+				'site_url'   => $site_url,
+				'timestamp'  => time(),
+			),
+			600
+		);
+
+		// Build Instagram authorization URL.
+		$authorize_url = 'https://api.instagram.com/oauth/authorize?' . http_build_query(
+			array(
+				'client_id'     => INSTAGRAM_APP_ID,
+				'redirect_uri'  => home_url( '/oauth/instagram/callback' ),
+				'scope'         => 'instagram_business_basic,instagram_business_content_publish',
+				'response_type' => 'code',
+				'state'         => $state,
+			)
+		);
+
+		// Redirect to Instagram.
+		wp_redirect( $authorize_url );
+		exit;
+	}
+
+	/**
+	 * Handle /oauth/instagram/callback endpoint
+	 *
+	 * @return void
+	 */
+	private function handle_instagram_callback() {
+		if ( ! defined( 'INSTAGRAM_APP_ID' ) || ! defined( 'INSTAGRAM_APP_SECRET' ) ) {
+			wp_die( 'Instagram OAuth credentials not configured' );
+		}
+
+		// Get parameters.
+		$code  = sanitize_text_field( $_GET['code'] ?? '' );
+		$state = sanitize_text_field( $_GET['state'] ?? '' );
+		$error = sanitize_text_field( $_GET['error'] ?? '' );
+
+		// Check for authorization error.
+		if ( ! empty( $error ) ) {
+			$error_description = sanitize_text_field( $_GET['error_description'] ?? 'Unknown error' );
+
+			$this->log_instagram_connection(
+				array(),
+				array(),
+				'failed',
+				$error,
+				$error_description
+			);
+
+			$this->redirect_with_error( '', $error, $error_description );
+		}
+
+		if ( empty( $code ) || empty( $state ) ) {
+			wp_die( 'Missing required parameters: code and state' );
+		}
+
+		// Verify state token.
+		$data = get_transient( "instagram_oauth_{$state}" );
+		if ( ! $data ) {
+			wp_die( 'Invalid or expired state token' );
+		}
+
+		// Clean up state transient.
+		delete_transient( "instagram_oauth_{$state}" );
+
+		// Step 1: Exchange code for short-lived token.
+		$short_lived = $this->exchange_instagram_code( $code );
+		if ( is_wp_error( $short_lived ) ) {
+			$this->log_instagram_connection(
+				$data,
+				array(),
+				'failed',
+				'token_exchange_failed',
+				$short_lived->get_error_message()
+			);
+
+			$this->redirect_with_error(
+				$data['return_url'],
+				'token_exchange_failed',
+				$short_lived->get_error_message()
+			);
+		}
+
+		// Step 2: Exchange short-lived token for long-lived token.
+		$long_lived = $this->exchange_instagram_long_lived_token( $short_lived['access_token'] );
+		if ( is_wp_error( $long_lived ) ) {
+			$this->log_instagram_connection(
+				$data,
+				array(),
+				'failed',
+				'long_lived_token_failed',
+				$long_lived->get_error_message()
+			);
+
+			$this->redirect_with_error(
+				$data['return_url'],
+				'long_lived_token_failed',
+				$long_lived->get_error_message()
+			);
+		}
+
+		// Step 3: Get user info.
+		$user_info = $this->get_instagram_user_info( $long_lived['access_token'] );
+		if ( is_wp_error( $user_info ) ) {
+			$this->log_instagram_connection(
+				$data,
+				array(),
+				'failed',
+				'user_info_failed',
+				$user_info->get_error_message()
+			);
+
+			$this->redirect_with_error(
+				$data['return_url'],
+				'user_info_failed',
+				$user_info->get_error_message()
+			);
+		}
+
+		// Log successful connection.
+		$this->log_instagram_connection(
+			$data,
+			array(
+				'instagram_user_id'  => $user_info['user_id'],
+				'instagram_username' => $user_info['username'],
+				'scope'              => 'instagram_business_basic,instagram_business_content_publish',
+			),
+			'connected'
+		);
+
+		// Redirect back with token params.
+		$redirect_url = add_query_arg(
+			array(
+				'instagram_access_token' => $long_lived['access_token'],
+				'instagram_user_id'      => $user_info['user_id'],
+				'instagram_username'     => $user_info['username'],
+				'instagram_expires_in'   => $long_lived['expires_in'],
+			),
+			$data['return_url']
+		);
+
+		wp_redirect( $redirect_url );
+		exit;
+	}
+
+	/**
+	 * Exchange authorization code for short-lived Instagram token
+	 *
+	 * @param string $code Authorization code from Instagram.
+	 * @return array|\WP_Error Token data or error.
+	 */
+	private function exchange_instagram_code( $code ) {
+		$response = wp_remote_post(
+			'https://api.instagram.com/oauth/access_token',
+			array(
+				'timeout' => 30,
+				'body'    => array(
+					'client_id'     => INSTAGRAM_APP_ID,
+					'client_secret' => INSTAGRAM_APP_SECRET,
+					'grant_type'    => 'authorization_code',
+					'redirect_uri'  => home_url( '/oauth/instagram/callback' ),
+					'code'          => $code,
+				),
+			)
+		);
+
+		if ( is_wp_error( $response ) ) {
+			error_log( 'Instagram token exchange failed: ' . $response->get_error_message() );
+			return $response;
+		}
+
+		$status_code = wp_remote_retrieve_response_code( $response );
+		$body        = json_decode( wp_remote_retrieve_body( $response ), true );
+
+		if ( 200 !== $status_code ) {
+			$error_message = $body['error_message'] ?? $body['error'] ?? 'Unknown error';
+			error_log( "Instagram token exchange failed with status {$status_code}: {$error_message}" );
+			return new \WP_Error( 'token_exchange_failed', $error_message );
+		}
+
+		if ( empty( $body['access_token'] ) || empty( $body['user_id'] ) ) {
+			error_log( 'Instagram token exchange returned invalid data' );
+			return new \WP_Error( 'invalid_token_response', 'Invalid token response from Instagram' );
+		}
+
+		return array(
+			'access_token' => $body['access_token'],
+			'user_id'      => $body['user_id'],
+		);
+	}
+
+	/**
+	 * Exchange short-lived token for long-lived Instagram token
+	 *
+	 * @param string $short_lived_token Short-lived access token.
+	 * @return array|\WP_Error Long-lived token data or error.
+	 */
+	private function exchange_instagram_long_lived_token( $short_lived_token ) {
+		$url = 'https://graph.instagram.com/access_token?' . http_build_query(
+			array(
+				'grant_type'    => 'ig_exchange_token',
+				'client_secret' => INSTAGRAM_APP_SECRET,
+				'access_token'  => $short_lived_token,
+			)
+		);
+
+		$response = wp_remote_get(
+			$url,
+			array( 'timeout' => 30 )
+		);
+
+		if ( is_wp_error( $response ) ) {
+			error_log( 'Instagram long-lived token exchange failed: ' . $response->get_error_message() );
+			return $response;
+		}
+
+		$status_code = wp_remote_retrieve_response_code( $response );
+		$body        = json_decode( wp_remote_retrieve_body( $response ), true );
+
+		if ( 200 !== $status_code ) {
+			$error_message = $body['error']['message'] ?? 'Unknown error';
+			error_log( "Instagram long-lived token exchange failed with status {$status_code}: {$error_message}" );
+			return new \WP_Error( 'long_lived_token_failed', $error_message );
+		}
+
+		if ( empty( $body['access_token'] ) ) {
+			error_log( 'Instagram long-lived token exchange returned invalid data' );
+			return new \WP_Error( 'invalid_token_response', 'Invalid long-lived token response from Instagram' );
+		}
+
+		return array(
+			'access_token' => $body['access_token'],
+			'expires_in'   => $body['expires_in'] ?? 5184000,
+		);
+	}
+
+	/**
+	 * Get Instagram user info
+	 *
+	 * @param string $access_token Long-lived access token.
+	 * @return array|\WP_Error User info or error.
+	 */
+	private function get_instagram_user_info( $access_token ) {
+		$url = 'https://graph.instagram.com/me?' . http_build_query(
+			array(
+				'fields'       => 'user_id,username',
+				'access_token' => $access_token,
+			)
+		);
+
+		$response = wp_remote_get(
+			$url,
+			array( 'timeout' => 30 )
+		);
+
+		if ( is_wp_error( $response ) ) {
+			error_log( 'Instagram user info fetch failed: ' . $response->get_error_message() );
+			return $response;
+		}
+
+		$status_code = wp_remote_retrieve_response_code( $response );
+		$body        = json_decode( wp_remote_retrieve_body( $response ), true );
+
+		if ( 200 !== $status_code ) {
+			$error_message = $body['error']['message'] ?? 'Unknown error';
+			error_log( "Instagram user info fetch failed with status {$status_code}: {$error_message}" );
+			return new \WP_Error( 'user_info_failed', $error_message );
+		}
+
+		return array(
+			'user_id'  => $body['user_id'] ?? $body['id'] ?? '',
+			'username' => $body['username'] ?? '',
+		);
+	}
+
+	/**
+	 * Handle /oauth/instagram/refresh endpoint
+	 *
+	 * @return void
+	 */
+	private function handle_instagram_refresh() {
+		// Only accept POST requests.
+		if ( 'POST' !== $_SERVER['REQUEST_METHOD'] ) {
+			wp_send_json_error( array( 'message' => 'Method not allowed' ), 405 );
+		}
+
+		// Get access token from request body.
+		$access_token = sanitize_text_field( $_POST['access_token'] ?? '' );
+
+		if ( empty( $access_token ) ) {
+			wp_send_json_error( array( 'message' => 'Missing access_token' ), 400 );
+		}
+
+		// Instagram refresh uses GET, doesn't need client_secret.
+		$url = 'https://graph.instagram.com/refresh_access_token?' . http_build_query(
+			array(
+				'grant_type'   => 'ig_refresh_token',
+				'access_token' => $access_token,
+			)
+		);
+
+		$response = wp_remote_get(
+			$url,
+			array( 'timeout' => 30 )
+		);
+
+		if ( is_wp_error( $response ) ) {
+			error_log( 'Instagram token refresh failed: ' . $response->get_error_message() );
+			wp_send_json_error(
+				array( 'message' => 'Token refresh failed: ' . $response->get_error_message() ),
+				500
+			);
+		}
+
+		$status_code = wp_remote_retrieve_response_code( $response );
+		$body        = json_decode( wp_remote_retrieve_body( $response ), true );
+
+		if ( 200 !== $status_code ) {
+			$error_message = $body['error']['message'] ?? 'Unknown error';
+			error_log( "Instagram token refresh failed with status {$status_code}: {$error_message}" );
+			wp_send_json_error(
+				array( 'message' => $error_message ),
+				$status_code
+			);
+		}
+
+		if ( empty( $body['access_token'] ) ) {
+			error_log( 'Instagram token refresh returned invalid data' );
+			wp_send_json_error(
+				array( 'message' => 'Invalid token response from Instagram' ),
+				500
+			);
+		}
+
+		// Return new access token.
+		wp_send_json_success(
+			array(
+				'access_token' => $body['access_token'],
+				'expires_in'   => $body['expires_in'] ?? 5184000,
+			)
+		);
+	}
+
+	/**
+	 * Log an Instagram connection attempt
+	 *
+	 * @param array  $site_data Site data from OAuth flow.
+	 * @param array  $instagram_data Instagram account data.
+	 * @param string $status Connection status (connected, failed).
+	 * @param string $error_code Optional error code.
+	 * @param string $error_message Optional error message.
+	 * @return void
+	 */
+	private function log_instagram_connection( $site_data, $instagram_data, $status, $error_code = null, $error_message = null ) {
+		$repository = new InstagramConnectionRepository();
+
+		$log_data = array(
+			'site_id'            => $site_data['site_id'] ?? '',
+			'site_name'          => $site_data['site_name'] ?? '',
+			'site_url'           => $site_data['site_url'] ?? '',
+			'instagram_user_id'  => $instagram_data['instagram_user_id'] ?? '',
+			'instagram_username' => $instagram_data['instagram_username'] ?? '',
+			'status'             => $status,
+			'error_code'         => $error_code,
+			'error_message'      => $error_message,
+			'scope_granted'      => $instagram_data['scope'] ?? '',
+		);
+
+		$repository->log_connection( $log_data );
+	}
+
+	/**
+	 * Show admin notice for missing Instagram credentials
+	 *
+	 * @return void
+	 */
+	public function missing_instagram_credentials_notice() {
+		?>
+		<div class="notice notice-warning">
+			<p>
+				<strong><?php esc_html_e( 'Fair Platform:', 'fair-platform' ); ?></strong>
+				<?php
+				esc_html_e(
+					'Instagram OAuth credentials not configured. Please add INSTAGRAM_APP_ID and INSTAGRAM_APP_SECRET to wp-config.php for Instagram integration.',
+					'fair-platform'
+				);
+				?>
+			</p>
+		</div>
+		<?php
+	}
+
+	/**
 	 * Show admin notice for missing credentials
 	 *
 	 * @return void
@@ -1048,6 +1521,25 @@ class Plugin {
 		add_rewrite_rule(
 			'^oauth/refresh/?$',
 			'index.php?fair_oauth_endpoint=refresh',
+			'top'
+		);
+
+		// Instagram OAuth endpoints.
+		add_rewrite_rule(
+			'^oauth/instagram/authorize/?$',
+			'index.php?fair_oauth_endpoint=instagram-authorize',
+			'top'
+		);
+
+		add_rewrite_rule(
+			'^oauth/instagram/callback/?$',
+			'index.php?fair_oauth_endpoint=instagram-callback',
+			'top'
+		);
+
+		add_rewrite_rule(
+			'^oauth/instagram/refresh/?$',
+			'index.php?fair_oauth_endpoint=instagram-refresh',
 			'top'
 		);
 

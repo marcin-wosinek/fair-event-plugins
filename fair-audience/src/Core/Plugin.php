@@ -51,6 +51,9 @@ class Plugin {
 		add_action( 'template_redirect', array( $this, 'handle_manage_subscription' ) );
 		add_action( 'template_redirect', array( $this, 'handle_collaborator_profile' ) );
 
+		// Instagram token refresh cron.
+		add_action( 'fair_audience_refresh_instagram_token', array( $this, 'refresh_instagram_token' ) );
+
 		// Initialize settings.
 		$settings = new \FairAudience\Settings\Settings();
 		$settings->init();
@@ -184,6 +187,57 @@ class Plugin {
 		// Load manage subscription template.
 		include FAIR_AUDIENCE_PLUGIN_DIR . 'templates/manage-subscription.php';
 		exit;
+	}
+
+	/**
+	 * Refresh Instagram access token via fair-platform OAuth endpoint.
+	 */
+	public function refresh_instagram_token() {
+		$access_token = get_option( 'fair_audience_instagram_access_token', '' );
+		$expires      = (int) get_option( 'fair_audience_instagram_token_expires', 0 );
+
+		// Skip if no token configured.
+		if ( empty( $access_token ) ) {
+			return;
+		}
+
+		// Skip if token expiry is more than 7 days away.
+		if ( $expires > 0 && ( $expires - time() ) > 7 * DAY_IN_SECONDS ) {
+			return;
+		}
+
+		$response = wp_remote_post(
+			'https://fair-event-plugins.com/oauth/instagram/refresh',
+			array(
+				'timeout' => 30,
+				'body'    => array(
+					'access_token' => $access_token,
+				),
+			)
+		);
+
+		if ( is_wp_error( $response ) ) {
+			error_log( 'Fair Audience: Instagram token refresh failed: ' . $response->get_error_message() );
+			return;
+		}
+
+		$status_code = wp_remote_retrieve_response_code( $response );
+		$body        = json_decode( wp_remote_retrieve_body( $response ), true );
+
+		if ( 200 !== $status_code || empty( $body['success'] ) ) {
+			$error_message = $body['data']['message'] ?? 'Unknown error';
+			error_log( "Fair Audience: Instagram token refresh failed with status {$status_code}: {$error_message}" );
+			return;
+		}
+
+		$new_token  = $body['data']['access_token'] ?? '';
+		$expires_in = $body['data']['expires_in'] ?? 5184000;
+
+		if ( ! empty( $new_token ) ) {
+			update_option( 'fair_audience_instagram_access_token', $new_token );
+			update_option( 'fair_audience_instagram_token_expires', time() + $expires_in );
+			error_log( 'Fair Audience: Instagram token refreshed successfully.' );
+		}
 	}
 
 	/**

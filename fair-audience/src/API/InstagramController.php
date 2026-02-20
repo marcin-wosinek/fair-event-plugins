@@ -69,7 +69,7 @@ class InstagramController extends WP_REST_Controller {
 			);
 		}
 
-		$result = $this->test_facebook_token( $access_token );
+		$result = $this->test_instagram_token( $access_token );
 
 		if ( is_wp_error( $result ) ) {
 			return $result;
@@ -79,31 +79,28 @@ class InstagramController extends WP_REST_Controller {
 	}
 
 	/**
-	 * Test Facebook token validity.
+	 * Test Instagram token validity via graph.instagram.com/me.
 	 *
 	 * @param string $access_token The access token.
 	 * @return array|WP_Error Result or error.
 	 */
-	private function test_facebook_token( $access_token ) {
-		// First, debug the token to check validity.
-		$debug_url = 'https://graph.facebook.com/debug_token?' . http_build_query(
+	private function test_instagram_token( $access_token ) {
+		$url = 'https://graph.instagram.com/me?' . http_build_query(
 			array(
-				'input_token'  => $access_token,
+				'fields'       => 'user_id,username',
 				'access_token' => $access_token,
 			)
 		);
 
 		$response = wp_remote_get(
-			$debug_url,
-			array(
-				'timeout' => 30,
-			)
+			$url,
+			array( 'timeout' => 30 )
 		);
 
 		if ( is_wp_error( $response ) ) {
 			return new WP_Error(
 				'connection_failed',
-				__( 'Failed to connect to Facebook API.', 'fair-audience' ),
+				__( 'Failed to connect to Instagram API.', 'fair-audience' ),
 				array(
 					'status'  => 500,
 					'details' => $response->get_error_message(),
@@ -117,7 +114,7 @@ class InstagramController extends WP_REST_Controller {
 		if ( isset( $data['error'] ) ) {
 			return new WP_Error(
 				'token_invalid',
-				__( 'The access token is invalid.', 'fair-audience' ),
+				__( 'The access token is invalid or expired.', 'fair-audience' ),
 				array(
 					'status'  => 401,
 					'details' => $data['error']['message'] ?? '',
@@ -125,102 +122,33 @@ class InstagramController extends WP_REST_Controller {
 			);
 		}
 
-		$token_data = $data['data'] ?? array();
+		$user_id  = $data['user_id'] ?? $data['id'] ?? '';
+		$username = $data['username'] ?? '';
 
-		if ( ! ( $token_data['is_valid'] ?? false ) ) {
-			return new WP_Error(
-				'token_invalid',
-				__( 'The access token is no longer valid.', 'fair-audience' ),
-				array(
-					'status'  => 401,
-					'details' => $token_data['error']['message'] ?? '',
-				)
-			);
+		// Update stored account info.
+		if ( ! empty( $user_id ) ) {
+			update_option( 'fair_audience_instagram_user_id', $user_id );
+		}
+		if ( ! empty( $username ) ) {
+			update_option( 'fair_audience_instagram_username', $username );
 		}
 
-		$instagram_accounts = array();
-
-		// First, try Instagram Basic Display API (for personal/creator accounts).
-		$instagram_me_url = 'https://graph.instagram.com/me?' . http_build_query(
-			array(
-				'access_token' => $access_token,
-				'fields'       => 'id,username',
-			)
-		);
-
-		$instagram_me_response = wp_remote_get(
-			$instagram_me_url,
-			array(
-				'timeout' => 30,
-			)
-		);
-
-		if ( ! is_wp_error( $instagram_me_response ) ) {
-			$instagram_me_body = wp_remote_retrieve_body( $instagram_me_response );
-			$instagram_me_data = json_decode( $instagram_me_body, true );
-
-			if ( isset( $instagram_me_data['id'] ) && ! isset( $instagram_me_data['error'] ) ) {
-				$instagram_accounts[] = array(
-					'id'       => $instagram_me_data['id'],
-					'username' => $instagram_me_data['username'] ?? '',
-					'page'     => __( 'Instagram Account', 'fair-audience' ),
-				);
-			}
-		}
-
-		// If no account found yet, try Facebook Pages with linked Instagram Business accounts.
-		if ( empty( $instagram_accounts ) ) {
-			$pages_url = 'https://graph.facebook.com/v24.0/me/accounts?' . http_build_query(
-				array(
-					'access_token' => $access_token,
-					'fields'       => 'id,name,instagram_business_account{id,username}',
-				)
-			);
-
-			$pages_response = wp_remote_get(
-				$pages_url,
-				array(
-					'timeout' => 30,
-				)
-			);
-
-			if ( ! is_wp_error( $pages_response ) ) {
-				$pages_body = wp_remote_retrieve_body( $pages_response );
-				$pages_data = json_decode( $pages_body, true );
-
-				if ( isset( $pages_data['data'] ) && is_array( $pages_data['data'] ) ) {
-					foreach ( $pages_data['data'] as $page ) {
-						if ( isset( $page['instagram_business_account'] ) ) {
-							$instagram_accounts[] = array(
-								'id'       => $page['instagram_business_account']['id'],
-								'username' => $page['instagram_business_account']['username'] ?? '',
-								'page'     => $page['name'],
-							);
-						}
-					}
-				}
-			}
-		}
-
-		// If we found Instagram accounts, save the first one's ID and username.
-		if ( ! empty( $instagram_accounts ) ) {
-			$first_account = $instagram_accounts[0];
-			update_option( 'fair_audience_instagram_user_id', $first_account['id'] );
-			update_option( 'fair_audience_instagram_username', $first_account['username'] );
-		}
-
-		$expires_at = $token_data['expires_at'] ?? 0;
+		$expires_at = (int) get_option( 'fair_audience_instagram_token_expires', 0 );
 
 		return array(
 			'success'            => true,
 			'message'            => __( 'Token is valid!', 'fair-audience' ),
 			'token_info'         => array(
-				'app_id'     => $token_data['app_id'] ?? '',
 				'expires_at' => $expires_at,
 				'expires_in' => $expires_at > 0 ? $expires_at - time() : null,
-				'scopes'     => $token_data['scopes'] ?? array(),
 			),
-			'instagram_accounts' => $instagram_accounts,
+			'instagram_accounts' => array(
+				array(
+					'id'       => $user_id,
+					'username' => $username,
+					'page'     => __( 'Instagram Account', 'fair-audience' ),
+				),
+			),
 		);
 	}
 
