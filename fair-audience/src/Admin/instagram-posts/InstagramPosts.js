@@ -174,6 +174,17 @@ export default function InstagramPosts() {
 	};
 
 	/**
+	 * Handle post duplication - copies data back into the form
+	 *
+	 * @param {Object} post Post object
+	 */
+	const handleDuplicate = (post) => {
+		setImageUrl(post.image_url || '');
+		setCaption(post.caption || '');
+		window.scrollTo({ top: 0, behavior: 'smooth' });
+	};
+
+	/**
 	 * Handle post deletion
 	 *
 	 * @param {number} id Post ID
@@ -384,6 +395,20 @@ export default function InstagramPosts() {
 										</td>
 										<td>{formatDate(post.created_at)}</td>
 										<td>
+											<Button
+												isSmall
+												onClick={() =>
+													handleDuplicate(post)
+												}
+												style={{
+													marginRight: '8px',
+												}}
+											>
+												{__(
+													'Duplicate',
+													'fair-audience'
+												)}
+											</Button>
 											<Button
 												isDestructive
 												isSmall
