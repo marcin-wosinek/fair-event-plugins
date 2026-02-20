@@ -143,7 +143,7 @@ class InstagramPostingService {
 	 */
 	private function create_media_container( $user_id, $access_token, $image_url, $caption ) {
 		$url = sprintf(
-			'https://graph.facebook.com/%s/%s/media',
+			'https://graph.instagram.com/%s/%s/media',
 			self::API_VERSION,
 			$user_id
 		);
@@ -152,10 +152,15 @@ class InstagramPostingService {
 			$url,
 			array(
 				'timeout' => 60,
-				'body'    => array(
-					'image_url'    => $image_url,
-					'caption'      => $caption,
-					'access_token' => $access_token,
+				'headers' => array(
+					'Authorization' => 'Bearer ' . $access_token,
+					'Content-Type'  => 'application/json',
+				),
+				'body'    => wp_json_encode(
+					array(
+						'image_url' => $image_url,
+						'caption'   => $caption,
+					)
 				),
 			)
 		);
@@ -205,15 +210,19 @@ class InstagramPostingService {
 	 */
 	private function fetch_permalink( $access_token, $media_id ) {
 		$url = sprintf(
-			'https://graph.facebook.com/%s/%s?fields=permalink&access_token=%s',
+			'https://graph.instagram.com/%s/%s?fields=permalink',
 			self::API_VERSION,
-			$media_id,
-			$access_token
+			$media_id
 		);
 
 		$response = wp_remote_get(
 			$url,
-			array( 'timeout' => 30 )
+			array(
+				'timeout' => 30,
+				'headers' => array(
+					'Authorization' => 'Bearer ' . $access_token,
+				),
+			)
 		);
 
 		if ( is_wp_error( $response ) ) {
@@ -240,7 +249,7 @@ class InstagramPostingService {
 	 */
 	private function publish_container( $user_id, $access_token, $container_id ) {
 		$url = sprintf(
-			'https://graph.facebook.com/%s/%s/media_publish',
+			'https://graph.instagram.com/%s/%s/media_publish',
 			self::API_VERSION,
 			$user_id
 		);
@@ -249,9 +258,14 @@ class InstagramPostingService {
 			$url,
 			array(
 				'timeout' => 60,
-				'body'    => array(
-					'creation_id'  => $container_id,
-					'access_token' => $access_token,
+				'headers' => array(
+					'Authorization' => 'Bearer ' . $access_token,
+					'Content-Type'  => 'application/json',
+				),
+				'body'    => wp_json_encode(
+					array(
+						'creation_id' => $container_id,
+					)
 				),
 			)
 		);
