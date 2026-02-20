@@ -161,6 +161,7 @@ class InstagramPostingService {
 		);
 
 		if ( is_wp_error( $response ) ) {
+			error_log( "Fair Audience: create_media_container WP_Error - URL: {$url}, image_url: {$image_url}, error: " . $response->get_error_message() );
 			return new WP_Error(
 				'api_error',
 				sprintf(
@@ -171,10 +172,12 @@ class InstagramPostingService {
 			);
 		}
 
-		$body = wp_remote_retrieve_body( $response );
-		$data = json_decode( $body, true );
+		$status_code = wp_remote_retrieve_response_code( $response );
+		$body        = wp_remote_retrieve_body( $response );
+		$data        = json_decode( $body, true );
 
 		if ( isset( $data['error'] ) ) {
+			error_log( "Fair Audience: create_media_container failed - URL: {$url}, image_url: {$image_url}, status: {$status_code}, response: {$body}" );
 			$error_message = $data['error']['message'] ?? __( 'Unknown error', 'fair-audience' );
 			return new WP_Error(
 				'instagram_error',
@@ -187,6 +190,7 @@ class InstagramPostingService {
 		}
 
 		if ( empty( $data['id'] ) ) {
+			error_log( "Fair Audience: create_media_container no ID - URL: {$url}, status: {$status_code}, response: {$body}" );
 			return new WP_Error(
 				'invalid_response',
 				__( 'Invalid response from Instagram API: no container ID returned.', 'fair-audience' )
@@ -257,6 +261,7 @@ class InstagramPostingService {
 		);
 
 		if ( is_wp_error( $response ) ) {
+			error_log( "Fair Audience: publish_container WP_Error - URL: {$url}, container_id: {$container_id}, error: " . $response->get_error_message() );
 			return new WP_Error(
 				'api_error',
 				sprintf(
@@ -267,10 +272,12 @@ class InstagramPostingService {
 			);
 		}
 
-		$body = wp_remote_retrieve_body( $response );
-		$data = json_decode( $body, true );
+		$status_code = wp_remote_retrieve_response_code( $response );
+		$body        = wp_remote_retrieve_body( $response );
+		$data        = json_decode( $body, true );
 
 		if ( isset( $data['error'] ) ) {
+			error_log( "Fair Audience: publish_container failed - URL: {$url}, container_id: {$container_id}, status: {$status_code}, response: {$body}" );
 			$error_message = $data['error']['message'] ?? __( 'Unknown error', 'fair-audience' );
 			return new WP_Error(
 				'instagram_error',
@@ -283,6 +290,7 @@ class InstagramPostingService {
 		}
 
 		if ( empty( $data['id'] ) ) {
+			error_log( "Fair Audience: publish_container no ID - URL: {$url}, status: {$status_code}, response: {$body}" );
 			return new WP_Error(
 				'invalid_response',
 				__( 'Invalid response from Instagram API: no media ID returned.', 'fair-audience' )
