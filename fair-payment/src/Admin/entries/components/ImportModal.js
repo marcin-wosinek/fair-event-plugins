@@ -74,7 +74,7 @@ const ImportModal = ({ onImport, onCancel }) => {
 									(cell.toLowerCase().includes('fecha') ||
 										cell
 											.toLowerCase()
-											.includes("data de l'operaci"))
+											.includes('data de l'))
 							)
 						) {
 							headerRowIndex = i;
