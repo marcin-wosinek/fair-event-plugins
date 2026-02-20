@@ -73,9 +73,10 @@ class InstagramPostingService {
 	/**
 	 * Create and publish an Instagram post.
 	 *
-	 * This is a two-step process:
+	 * This is a three-step process:
 	 * 1. Create a media container
-	 * 2. Publish the container
+	 * 2. Wait for Instagram to process the image
+	 * 3. Publish the container
 	 *
 	 * @param InstagramPost $post The post to publish.
 	 * @return InstagramPost|WP_Error Updated post or error.
@@ -106,7 +107,17 @@ class InstagramPostingService {
 		$post->ig_container_id = $container_result['id'];
 		$post->save();
 
-		// Step 2: Publish the container.
+		// Step 2: Wait for container to be ready.
+		$ready = $this->wait_for_container( $access_token, $container_result['id'] );
+
+		if ( is_wp_error( $ready ) ) {
+			$post->status        = 'failed';
+			$post->error_message = $ready->get_error_message();
+			$post->save();
+			return $ready;
+		}
+
+		// Step 3: Publish the container.
 		$publish_result = $this->publish_container( $user_id, $access_token, $container_result['id'] );
 
 		if ( is_wp_error( $publish_result ) ) {
@@ -178,7 +189,9 @@ class InstagramPostingService {
 
 		if ( isset( $data['error'] ) ) {
 			error_log( "Fair Audience: create_media_container failed - URL: {$url}, image_url: {$image_url}, status: {$status_code}, response: {$body}" );
-			$error_message = $data['error']['message'] ?? __( 'Unknown error', 'fair-audience' );
+			$error_message = $data['error']['error_user_msg']
+				?? $data['error']['message']
+				?? __( 'Unknown error', 'fair-audience' );
 			return new WP_Error(
 				'instagram_error',
 				sprintf(
@@ -198,6 +211,60 @@ class InstagramPostingService {
 		}
 
 		return $data;
+	}
+
+	/**
+	 * Wait for a media container to finish processing.
+	 *
+	 * Polls the container status every 5 seconds, up to 60 seconds total.
+	 *
+	 * @param string $access_token Access token.
+	 * @param string $container_id Container ID.
+	 * @return true|WP_Error True when ready, WP_Error on failure or timeout.
+	 */
+	private function wait_for_container( $access_token, $container_id ) {
+		$max_attempts = 12;
+		$delay        = 5;
+
+		for ( $i = 0; $i < $max_attempts; $i++ ) {
+			sleep( $delay );
+
+			$url = sprintf(
+				'https://graph.instagram.com/%s/%s?fields=status_code&access_token=%s',
+				self::API_VERSION,
+				$container_id,
+				$access_token
+			);
+
+			$response = wp_remote_get( $url, array( 'timeout' => 30 ) );
+
+			if ( is_wp_error( $response ) ) {
+				continue;
+			}
+
+			$body = wp_remote_retrieve_body( $response );
+			$data = json_decode( $body, true );
+
+			if ( ! empty( $data['status_code'] ) ) {
+				if ( 'FINISHED' === $data['status_code'] ) {
+					return true;
+				}
+
+				if ( 'ERROR' === $data['status_code'] ) {
+					error_log( "Fair Audience: container processing failed - container_id: {$container_id}, response: {$body}" );
+					return new WP_Error(
+						'container_error',
+						__( 'Instagram failed to process the image.', 'fair-audience' )
+					);
+				}
+			}
+		}
+
+		error_log( "Fair Audience: container processing timed out - container_id: {$container_id}" );
+		return new WP_Error(
+			'container_timeout',
+			__( 'Instagram took too long to process the image. Please try again.', 'fair-audience' )
+		);
 	}
 
 	/**

@@ -1013,7 +1013,7 @@ class Plugin {
 		}
 
 		// Verify return URL is HTTPS (allow localhost for development).
-		$return_host = wp_parse_url( $return_url, PHP_URL_HOST );
+		$return_host  = wp_parse_url( $return_url, PHP_URL_HOST );
 		$is_localhost = in_array( $return_host, array( 'localhost', '127.0.0.1' ), true );
 		if ( ! $is_localhost && 'https' !== wp_parse_url( $return_url, PHP_URL_SCHEME ) ) {
 			wp_die( 'Return URL must use HTTPS' );
