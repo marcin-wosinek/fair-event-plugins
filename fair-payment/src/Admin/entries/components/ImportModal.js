@@ -63,7 +63,7 @@ const ImportModal = ({ onImport, onCancel }) => {
 					const sheet = workbook.Sheets[sheetName];
 					const rows = XLSX.utils.sheet_to_json(sheet, { header: 1 });
 
-					// Find the header row (contains 'Fecha de la operación')
+					// Find the header row (contains date column in Spanish or Catalan)
 					let headerRowIndex = -1;
 					for (let i = 0; i < rows.length; i++) {
 						if (
@@ -71,7 +71,10 @@ const ImportModal = ({ onImport, onCancel }) => {
 							rows[i].some(
 								(cell) =>
 									typeof cell === 'string' &&
-									cell.toLowerCase().includes('fecha')
+									(cell.toLowerCase().includes('fecha') ||
+										cell
+											.toLowerCase()
+											.includes("data de l'operaci"))
 							)
 						) {
 							headerRowIndex = i;
