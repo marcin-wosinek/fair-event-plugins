@@ -152,15 +152,10 @@ class InstagramPostingService {
 			$url,
 			array(
 				'timeout' => 60,
-				'headers' => array(
-					'Authorization' => 'Bearer ' . $access_token,
-					'Content-Type'  => 'application/json',
-				),
-				'body'    => wp_json_encode(
-					array(
-						'image_url' => $image_url,
-						'caption'   => $caption,
-					)
+				'body'    => array(
+					'image_url'    => $image_url,
+					'caption'      => $caption,
+					'access_token' => $access_token,
 				),
 			)
 		);
@@ -210,19 +205,15 @@ class InstagramPostingService {
 	 */
 	private function fetch_permalink( $access_token, $media_id ) {
 		$url = sprintf(
-			'https://graph.instagram.com/%s/%s?fields=permalink',
+			'https://graph.instagram.com/%s/%s?fields=permalink&access_token=%s',
 			self::API_VERSION,
-			$media_id
+			$media_id,
+			$access_token
 		);
 
 		$response = wp_remote_get(
 			$url,
-			array(
-				'timeout' => 30,
-				'headers' => array(
-					'Authorization' => 'Bearer ' . $access_token,
-				),
-			)
+			array( 'timeout' => 30 )
 		);
 
 		if ( is_wp_error( $response ) ) {
@@ -258,14 +249,9 @@ class InstagramPostingService {
 			$url,
 			array(
 				'timeout' => 60,
-				'headers' => array(
-					'Authorization' => 'Bearer ' . $access_token,
-					'Content-Type'  => 'application/json',
-				),
-				'body'    => wp_json_encode(
-					array(
-						'creation_id' => $container_id,
-					)
+				'body'    => array(
+					'creation_id'  => $container_id,
+					'access_token' => $access_token,
 				),
 			)
 		);
