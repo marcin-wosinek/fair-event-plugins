@@ -155,6 +155,7 @@ class InstagramPostingService {
 				'body'    => array(
 					'image_url'    => $image_url,
 					'caption'      => $caption,
+					'media_type'   => 'IMAGE',
 					'access_token' => $access_token,
 				),
 			)
