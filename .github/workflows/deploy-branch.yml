@@ -1,0 +1,114 @@
+name: Deploy Branch
+
+on:
+    workflow_dispatch:
+        inputs:
+            environment:
+                description: 'Environment to deploy to'
+                required: true
+                type: choice
+                options:
+                    - acroyoga-club.es
+                    - fair-event-plugins.com
+                    - lamutable.es
+                    - fusion-dance.es
+                    - acro-agenda.es
+                    - all
+
+jobs:
+    prepare:
+        name: Fetch artifacts from latest CI run
+        runs-on: ubuntu-latest
+        steps:
+            - name: Find latest successful CI run for this branch
+              id: find-run
+              uses: actions/github-script@v7
+              with:
+                  script: |
+                      const branch = context.ref.replace('refs/heads/', '');
+                      console.log(`Looking for successful CI runs on branch: ${branch}`);
+
+                      const runs = await github.rest.actions.listWorkflowRuns({
+                        owner: context.repo.owner,
+                        repo: context.repo.repo,
+                        workflow_id: 'continuous-integration.yml',
+                        branch: branch,
+                        status: 'success',
+                        per_page: 1,
+                      });
+
+                      if (runs.data.workflow_runs.length === 0) {
+                        core.setFailed(`No successful CI run found for branch '${branch}'. Run CI first.`);
+                        return;
+                      }
+
+                      const run = runs.data.workflow_runs[0];
+                      core.setOutput('run_id', run.id);
+                      console.log(`Found CI run #${run.run_number} (ID: ${run.id}) from ${run.created_at}`);
+                      console.log(`  Commit: ${run.head_sha}`);
+                      console.log(`  URL: ${run.html_url}`);
+
+            - name: Download plugins artifact from CI run
+              uses: actions/download-artifact@v4
+              with:
+                  name: plugins
+                  path: ./dist
+                  run-id: ${{ steps.find-run.outputs.run_id }}
+                  github-token: ${{ secrets.GITHUB_TOKEN }}
+
+            - name: Verify artifacts
+              run: |
+                  echo "Downloaded artifacts:"
+                  ls -lah ./dist/
+
+            - name: Re-upload for deploy jobs
+              uses: actions/upload-artifact@v4
+              with:
+                  name: plugins
+                  path: ./dist/*.zip
+                  retention-days: 1
+
+    deploy-acroyoga:
+        name: Deploy to acroyoga-club.es
+        needs: [prepare]
+        if: github.event.inputs.environment == 'acroyoga-club.es' || github.event.inputs.environment == 'all'
+        uses: ./.github/workflows/deploy-to-environment.yml
+        with:
+            environment: acroyoga-club.es
+        secrets: inherit
+
+    deploy-fair-event-plugins:
+        name: Deploy to fair-event-plugins.com
+        needs: [prepare]
+        if: github.event.inputs.environment == 'fair-event-plugins.com' || github.event.inputs.environment == 'all'
+        uses: ./.github/workflows/deploy-to-environment.yml
+        with:
+            environment: fair-event-plugins.com
+        secrets: inherit
+
+    deploy-lamutable:
+        name: Deploy to lamutable.es
+        needs: [prepare]
+        if: github.event.inputs.environment == 'lamutable.es' || github.event.inputs.environment == 'all'
+        uses: ./.github/workflows/deploy-to-environment.yml
+        with:
+            environment: lamutable.es
+        secrets: inherit
+
+    deploy-fusion-dance:
+        name: Deploy to fusion-dance.es
+        needs: [prepare]
+        if: github.event.inputs.environment == 'fusion-dance.es' || github.event.inputs.environment == 'all'
+        uses: ./.github/workflows/deploy-to-environment.yml
+        with:
+            environment: fusion-dance.es
+        secrets: inherit
+
+    deploy-acro-agenda:
+        name: Deploy to acro-agenda.es
+        needs: [prepare]
+        if: github.event.inputs.environment == 'acro-agenda.es' || github.event.inputs.environment == 'all'
+        uses: ./.github/workflows/deploy-to-environment.yml
+        with:
+            environment: acro-agenda.es
+        secrets: inherit
