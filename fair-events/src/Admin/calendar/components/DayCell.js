@@ -99,6 +99,11 @@ export default function DayCell({
 								: linkType === 'external'
 								? 'dashicons-admin-links'
 								: 'dashicons-editor-unlink';
+						const categoryNames =
+							event.categories?.map((c) => c.name) || [];
+						const tooltip = categoryNames.length
+							? `${event.title}\n${categoryNames.join(', ')}`
+							: event.title;
 						return (
 							<div
 								key={index}
@@ -111,22 +116,32 @@ export default function DayCell({
 										onClick={(e) =>
 											handleEventClick(e, event.uid)
 										}
-										title={event.title}
+										title={tooltip}
 									>
 										<span
 											className={`dashicons ${linkTypeIcon} fair-events-calendar-event-icon`}
 										/>
 										{event.title}
+										{categoryNames.length > 0 && (
+											<span className="fair-events-calendar-event-categories">
+												{categoryNames.join(', ')}
+											</span>
+										)}
 									</button>
 								) : (
 									<span
 										className="fair-events-calendar-event fair-events-calendar-event-readonly"
-										title={event.title}
+										title={tooltip}
 									>
 										<span
 											className={`dashicons ${linkTypeIcon} fair-events-calendar-event-icon`}
 										/>
 										{event.title}
+										{categoryNames.length > 0 && (
+											<span className="fair-events-calendar-event-categories">
+												{categoryNames.join(', ')}
+											</span>
+										)}
 									</span>
 								)}
 								{participantsUrl && eventPostId && (

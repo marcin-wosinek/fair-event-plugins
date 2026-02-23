@@ -214,6 +214,16 @@
 	border-radius: 3px 0 0 3px;
 }
 
+/* Event categories */
+.fair-events-calendar-event-categories {
+	display: block;
+	font-size: 10px;
+	opacity: 0.8;
+	white-space: nowrap;
+	overflow: hidden;
+	text-overflow: ellipsis;
+}
+
 /* Event link type icons */
 .fair-events-calendar-event-icon {
 	font-size: 11px;
