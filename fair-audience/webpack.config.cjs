@@ -74,6 +74,14 @@ const customConfig = {
 			process.cwd(),
 			'src/Admin/custom-mail/index.js',
 		),
+		'admin/fees-list/index': path.resolve(
+			process.cwd(),
+			'src/Admin/fees-list/index.js',
+		),
+		'admin/fee-detail/index': path.resolve(
+			process.cwd(),
+			'src/Admin/fee-detail/index.js',
+		),
 		'admin/media-library-filter': path.resolve(
 			process.cwd(),
 			'src/Admin/media-library-filter.js',

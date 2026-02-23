@@ -15,6 +15,9 @@ use FairAudience\Database\EventParticipantRepository;
 use FairAudience\Database\ParticipantRepository;
 use FairAudience\Database\GroupParticipantRepository;
 use FairAudience\Database\ExtraMessageRepository;
+use FairAudience\Database\FeeRepository;
+use FairAudience\Database\FeePaymentRepository;
+use FairAudience\Database\FeeAuditLogRepository;
 use FairAudience\Models\Participant;
 use FairAudience\Services\EmailType;
 use FairAudience\Services\ManageSubscriptionToken;
@@ -1264,6 +1267,211 @@ class EmailService {
 		}
 
 		return $recipients;
+	}
+
+	/**
+	 * Send fee payment reminder to a single participant.
+	 *
+	 * @param Participant $participant  Participant object.
+	 * @param object      $fee         Fee object.
+	 * @param object      $fee_payment Fee payment object.
+	 * @return bool Success.
+	 */
+	public function send_fee_reminder( $participant, $fee, $fee_payment ) {
+		if ( ! $this->has_valid_email( $participant ) ) {
+			return false;
+		}
+
+		$site_name = wp_specialchars_decode( get_option( 'blogname' ), ENT_QUOTES );
+
+		// Subject line.
+		$subject = sprintf(
+			/* translators: %s: fee name */
+			__( 'Payment reminder: %s', 'fair-audience' ),
+			$fee->name
+		);
+
+		// Build HTML message body.
+		$message = '<!DOCTYPE html>
+<html>
+<head>
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+</head>
+<body style="margin: 0; padding: 0; font-family: Arial, sans-serif; font-size: 16px; line-height: 1.6; color: #333333; background-color: #f4f4f4;">
+	<table width="100%" cellpadding="0" cellspacing="0" style="background-color: #f4f4f4;">
+		<tr>
+			<td align="center" style="padding: 20px 0;">
+				<table width="600" cellpadding="0" cellspacing="0" style="background-color: #ffffff; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
+					<!-- Header -->
+					<tr>
+						<td style="background-color: #0073aa; color: #ffffff; padding: 30px; border-radius: 8px 8px 0 0; text-align: center;">
+							<h1 style="margin: 0; font-size: 24px; font-weight: bold;">' . esc_html( $site_name ) . '</h1>
+						</td>
+					</tr>
+
+					<!-- Content -->
+					<tr>
+						<td style="padding: 40px 30px;">
+							<p style="margin: 0 0 20px 0; font-size: 16px;">
+								' . sprintf(
+									/* translators: %s: participant first name */
+								esc_html__( 'Hi %s,', 'fair-audience' ),
+								'<strong>' . esc_html( $participant->name ) . '</strong>'
+							) . '
+							</p>
+
+							<p style="margin: 0 0 20px 0; font-size: 16px;">
+								' . esc_html__( 'This is a friendly reminder about a pending payment:', 'fair-audience' ) . '
+							</p>
+
+							<table style="width: 100%; border-collapse: collapse; margin: 0 0 20px 0;">
+								<tr>
+									<td style="padding: 8px 0; border-bottom: 1px solid #eee; font-weight: bold;">' . esc_html__( 'Fee:', 'fair-audience' ) . '</td>
+									<td style="padding: 8px 0; border-bottom: 1px solid #eee;">' . esc_html( $fee->name ) . '</td>
+								</tr>
+								<tr>
+									<td style="padding: 8px 0; border-bottom: 1px solid #eee; font-weight: bold;">' . esc_html__( 'Amount:', 'fair-audience' ) . '</td>
+									<td style="padding: 8px 0; border-bottom: 1px solid #eee;">' . esc_html( number_format( (float) $fee_payment->amount, 2 ) . ' ' . $fee->currency ) . '</td>
+								</tr>';
+
+		if ( ! empty( $fee->due_date ) ) {
+			$message .= '
+								<tr>
+									<td style="padding: 8px 0; border-bottom: 1px solid #eee; font-weight: bold;">' . esc_html__( 'Due Date:', 'fair-audience' ) . '</td>
+									<td style="padding: 8px 0; border-bottom: 1px solid #eee;">' . esc_html( $fee->due_date ) . '</td>
+								</tr>';
+		}
+
+		$message .= '
+							</table>
+
+							<p style="margin: 0 0 10px 0; font-size: 14px; color: #666666;">
+								' . sprintf(
+									/* translators: %s: site name */
+			esc_html__( 'Thanks,%1$sThe %2$s Team', 'fair-audience' ),
+			'<br>',
+			esc_html( $site_name )
+		) . '
+							</p>
+						</td>
+					</tr>
+
+					<!-- Footer -->
+					<tr>
+						<td style="background-color: #f8f8f8; padding: 20px 30px; border-radius: 0 0 8px 8px; text-align: center; font-size: 12px; color: #666666;">
+							<p style="margin: 0;">
+								' . esc_html( $site_name ) . '
+							</p>
+						</td>
+					</tr>
+				</table>
+			</td>
+		</tr>
+	</table>
+</body>
+</html>';
+
+		// Set email content type to HTML.
+		add_filter(
+			'wp_mail_content_type',
+			function () {
+				return 'text/html';
+			}
+		);
+
+		// Send email.
+		$result = wp_mail( $participant->email, $subject, $message );
+
+		// Reset content type to avoid conflicts.
+		remove_filter(
+			'wp_mail_content_type',
+			function () {
+				return 'text/html';
+			}
+		);
+
+		return $result;
+	}
+
+	/**
+	 * Send bulk fee payment reminders.
+	 *
+	 * @param int $fee_id Fee ID.
+	 * @return array Results array with 'sent' and 'failed' keys.
+	 */
+	public function send_bulk_fee_reminders( $fee_id ) {
+		// Increase time limit for bulk sending.
+		set_time_limit( 300 ); // 5 minutes.
+
+		$results = array(
+			'sent'   => array(),
+			'failed' => array(),
+		);
+
+		$fee_repository       = new FeeRepository();
+		$payment_repository   = new FeePaymentRepository();
+		$audit_log_repository = new FeeAuditLogRepository();
+
+		$fee = $fee_repository->get_by_id( $fee_id );
+		if ( ! $fee ) {
+			$results['failed'][] = array(
+				'email'  => '',
+				'reason' => __( 'Fee not found.', 'fair-audience' ),
+			);
+			return $results;
+		}
+
+		$pending_payments = $payment_repository->get_pending_by_fee( $fee_id );
+
+		foreach ( $pending_payments as $payment ) {
+			$participant = $this->participant_repository->get_by_id( $payment->participant_id );
+
+			if ( ! $participant ) {
+				$results['failed'][] = array(
+					'name'   => '',
+					'email'  => '',
+					'reason' => __( 'Participant not found.', 'fair-audience' ),
+				);
+				continue;
+			}
+
+			if ( ! $this->has_valid_email( $participant ) ) {
+				$results['failed'][] = array(
+					'name'   => $participant->name,
+					'email'  => '',
+					'reason' => __( 'Participant has no email address.', 'fair-audience' ),
+				);
+				continue;
+			}
+
+			$success = $this->send_fee_reminder( $participant, $fee, $payment );
+
+			if ( $success ) {
+				$results['sent'][] = $participant->email;
+
+				// Update reminder_sent_at.
+				$payment->reminder_sent_at = current_time( 'mysql' );
+				$payment->save();
+
+				// Log the action.
+				$audit_log_repository->log_action(
+					$payment->id,
+					'reminder_sent',
+					null,
+					null,
+					null
+				);
+			} else {
+				$results['failed'][] = array(
+					'name'   => $participant->name,
+					'email'  => $participant->email,
+					'reason' => __( 'wp_mail() failed to send.', 'fair-audience' ),
+				);
+			}
+		}
+
+		return $results;
 	}
 
 	/**

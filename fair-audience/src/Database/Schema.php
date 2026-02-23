@@ -384,6 +384,93 @@ class Schema {
 	}
 
 	/**
+	 * Get SQL for creating the fees table.
+	 *
+	 * @return string SQL statement.
+	 */
+	public static function get_fees_table_sql() {
+		global $wpdb;
+
+		$table_name      = $wpdb->prefix . 'fair_audience_fees';
+		$charset_collate = $wpdb->get_charset_collate();
+
+		return "CREATE TABLE $table_name (
+			id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
+			name VARCHAR(255) NOT NULL,
+			description TEXT,
+			group_id BIGINT UNSIGNED NOT NULL,
+			amount DECIMAL(10,2) NOT NULL,
+			currency VARCHAR(3) NOT NULL DEFAULT 'EUR',
+			due_date DATE DEFAULT NULL,
+			status ENUM('draft', 'active', 'closed') NOT NULL DEFAULT 'draft',
+			created_by BIGINT UNSIGNED NOT NULL,
+			created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+			updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+			PRIMARY KEY  (id),
+			KEY idx_group_id (group_id),
+			KEY idx_status (status),
+			KEY idx_due_date (due_date)
+		) ENGINE=InnoDB $charset_collate;";
+	}
+
+	/**
+	 * Get SQL for creating the fee payments table.
+	 *
+	 * @return string SQL statement.
+	 */
+	public static function get_fee_payments_table_sql() {
+		global $wpdb;
+
+		$table_name      = $wpdb->prefix . 'fair_audience_fee_payments';
+		$charset_collate = $wpdb->get_charset_collate();
+
+		return "CREATE TABLE $table_name (
+			id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
+			fee_id BIGINT UNSIGNED NOT NULL,
+			participant_id BIGINT UNSIGNED NOT NULL,
+			amount DECIMAL(10,2) NOT NULL,
+			status ENUM('pending', 'paid', 'canceled') NOT NULL DEFAULT 'pending',
+			transaction_id BIGINT UNSIGNED DEFAULT NULL,
+			paid_at DATETIME DEFAULT NULL,
+			reminder_sent_at DATETIME DEFAULT NULL,
+			created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+			updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+			PRIMARY KEY  (id),
+			UNIQUE KEY idx_fee_participant (fee_id, participant_id),
+			KEY idx_fee_id (fee_id),
+			KEY idx_participant_id (participant_id),
+			KEY idx_status (status)
+		) ENGINE=InnoDB $charset_collate;";
+	}
+
+	/**
+	 * Get SQL for creating the fee audit log table.
+	 *
+	 * @return string SQL statement.
+	 */
+	public static function get_fee_audit_log_table_sql() {
+		global $wpdb;
+
+		$table_name      = $wpdb->prefix . 'fair_audience_fee_audit_log';
+		$charset_collate = $wpdb->get_charset_collate();
+
+		return "CREATE TABLE $table_name (
+			id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
+			fee_payment_id BIGINT UNSIGNED NOT NULL,
+			action ENUM('amount_adjusted', 'marked_paid', 'marked_canceled', 'reminder_sent') NOT NULL,
+			old_value VARCHAR(255) DEFAULT NULL,
+			new_value VARCHAR(255) DEFAULT NULL,
+			comment TEXT,
+			performed_by BIGINT UNSIGNED NOT NULL,
+			created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+			PRIMARY KEY  (id),
+			KEY idx_fee_payment_id (fee_payment_id),
+			KEY idx_action (action),
+			KEY idx_created_at (created_at)
+		) ENGINE=InnoDB $charset_collate;";
+	}
+
+	/**
 	 * Get SQL for creating the custom mail messages table.
 	 *
 	 * @return string SQL statement.

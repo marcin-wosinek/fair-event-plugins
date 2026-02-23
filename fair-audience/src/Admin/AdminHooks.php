@@ -38,6 +38,10 @@ class AdminHooks {
 			'title'    => 'Edit Extra Message',
 			'callback' => 'render_edit_extra_message_page',
 		),
+		'fair-audience-fee-detail'         => array(
+			'title'    => 'Fee Detail',
+			'callback' => 'render_fee_detail_page',
+		),
 	);
 
 	/**
@@ -168,6 +172,21 @@ class AdminHooks {
 			'fair-audience-groups',
 			array( $this, 'render_groups_page' )
 		);
+
+		// Submenu page - Membership Fees (only when fair-payment is active).
+		if ( class_exists( 'FairPayment\Core\Plugin' ) ) {
+			add_submenu_page(
+				'fair-audience',
+				__( 'Membership Fees', 'fair-audience' ),
+				__( 'Membership Fees', 'fair-audience' ),
+				'manage_options',
+				'fair-audience-fees',
+				array( $this, 'render_fees_list_page' )
+			);
+
+			// Hidden submenu page - Fee Detail.
+			$this->register_hidden_page( 'fair-audience-fee-detail' );
+		}
 
 		// Submenu page - By Event.
 		add_submenu_page(
@@ -336,6 +355,22 @@ class AdminHooks {
 	}
 
 	/**
+	 * Render Fees List page.
+	 */
+	public function render_fees_list_page() {
+		$page = new FeesListPage();
+		$page->render();
+	}
+
+	/**
+	 * Render Fee Detail page.
+	 */
+	public function render_fee_detail_page() {
+		$page = new FeeDetailPage();
+		$page->render();
+	}
+
+	/**
 	 * Render Instagram Posts page.
 	 */
 	public function render_instagram_posts_page() {
@@ -454,6 +489,16 @@ class AdminHooks {
 		// Groups page.
 		if ( 'fair-audience_page_fair-audience-groups' === $hook ) {
 			$this->enqueue_page_script( 'groups', $plugin_dir );
+		}
+
+		// Fees List page.
+		if ( 'fair-audience_page_fair-audience-fees' === $hook ) {
+			$this->enqueue_page_script( 'fees-list', $plugin_dir );
+		}
+
+		// Fee Detail page.
+		if ( 'admin_page_fair-audience-fee-detail' === $hook ) {
+			$this->enqueue_page_script( 'fee-detail', $plugin_dir );
 		}
 
 		// Instagram Posts page.
