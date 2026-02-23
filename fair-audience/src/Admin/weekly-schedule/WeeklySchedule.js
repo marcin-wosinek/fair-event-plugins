@@ -83,9 +83,15 @@ function generateMessage(data) {
 	// Find the range of days with month name
 	const firstDay = days[0];
 	const lastDay = days[days.length - 1];
-	const monthName = firstDay.month_name;
 
-	const header = `Agenda de ${source.name}, ${firstDay.day_num}\u2013${lastDay.day_num} de ${monthName}:`;
+	let dateRange;
+	if (firstDay.month_name === lastDay.month_name) {
+		dateRange = `${firstDay.day_num}\u2013${lastDay.day_num} de ${firstDay.month_name}`;
+	} else {
+		dateRange = `${firstDay.day_num} de ${firstDay.month_name}\u2013${lastDay.day_num} de ${lastDay.month_name}`;
+	}
+
+	const header = `Agenda de ${source.name}, ${dateRange}:`;
 
 	const lines = [header];
 

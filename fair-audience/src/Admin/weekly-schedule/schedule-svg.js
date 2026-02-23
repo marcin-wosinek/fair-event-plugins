@@ -41,7 +41,12 @@ export function generateScheduleSvg(data) {
 	// Date range for the header.
 	const firstDay = days[0];
 	const lastDay = days[days.length - 1];
-	const dateRange = `${firstDay.day_num}\u2013${lastDay.day_num} de ${firstDay.month_name}`;
+	let dateRange;
+	if (firstDay.month_name === lastDay.month_name) {
+		dateRange = `${firstDay.day_num}\u2013${lastDay.day_num} de ${firstDay.month_name}`;
+	} else {
+		dateRange = `${firstDay.day_num} de ${firstDay.month_name}\u2013${lastDay.day_num} de ${lastDay.month_name}`;
+	}
 
 	// Count total items (day headers + events) for layout calculation.
 	let totalItems = 0;
