@@ -31,6 +31,8 @@ import ImageExports from './ImageExports.js';
 export default function ManageEventApp() {
 	const eventDateId = window.fairEventsManageEventData?.eventDateId;
 	const calendarUrl = window.fairEventsManageEventData?.calendarUrl;
+	const manageEventUrl =
+		window.fairEventsManageEventData?.manageEventUrl || '';
 	const enabledPostTypes =
 		window.fairEventsManageEventData?.enabledPostTypes || [];
 	const audienceUrl = window.fairEventsManageEventData?.audienceUrl || '';
@@ -537,6 +539,51 @@ export default function ManageEventApp() {
 				</Notice>
 			)}
 
+			{eventDate.occurrence_type === 'generated' && eventDate.master && (
+				<Card style={{ marginBottom: '16px' }}>
+					<CardBody>
+						<Notice status="info" isDismissible={false}>
+							{__(
+								'This is a recurring occurrence of:',
+								'fair-events'
+							)}{' '}
+							<a
+								href={`${manageEventUrl}&event_date_id=${eventDate.master.id}`}
+							>
+								<strong>
+									{eventDate.master.title ||
+										eventDate.master.start_datetime}
+								</strong>
+							</a>
+						</Notice>
+					</CardBody>
+				</Card>
+			)}
+
+			{eventDate.occurrence_type === 'master' &&
+				eventDate.generated_occurrences?.length > 0 && (
+					<Card style={{ marginBottom: '16px' }}>
+						<CardHeader>
+							<h2>
+								{__('Recurring Occurrences', 'fair-events')}
+							</h2>
+						</CardHeader>
+						<CardBody>
+							<VStack spacing={2}>
+								{eventDate.generated_occurrences.map((occ) => (
+									<HStack key={occ.id} spacing={3}>
+										<a
+											href={`${manageEventUrl}&event_date_id=${occ.id}`}
+										>
+											{occ.start_datetime}
+										</a>
+									</HStack>
+								))}
+							</VStack>
+						</CardBody>
+					</Card>
+				)}
+
 			<Card>
 				<CardHeader>
 					<h2>{__('Event Details', 'fair-events')}</h2>
@@ -646,87 +693,102 @@ export default function ManageEventApp() {
 							__experimentalExpandOnFocus
 						/>
 
-						<CheckboxControl
-							label={__('Repeat this event', 'fair-events')}
-							checked={recurrenceEnabled}
-							onChange={setRecurrenceEnabled}
-						/>
-
-						{recurrenceEnabled && (
-							<VStack spacing={3}>
-								<SelectControl
-									label={__('Frequency', 'fair-events')}
-									value={recurrenceFrequency}
-									options={[
-										{
-											label: __('Daily', 'fair-events'),
-											value: 'daily',
-										},
-										{
-											label: __('Weekly', 'fair-events'),
-											value: 'weekly',
-										},
-										{
-											label: __(
-												'Biweekly',
-												'fair-events'
-											),
-											value: 'biweekly',
-										},
-										{
-											label: __('Monthly', 'fair-events'),
-											value: 'monthly',
-										},
-									]}
-									onChange={setRecurrenceFrequency}
-								/>
-								<SelectControl
-									label={__('Ends', 'fair-events')}
-									value={recurrenceEndType}
-									options={[
-										{
-											label: __(
-												'After number of occurrences',
-												'fair-events'
-											),
-											value: 'count',
-										},
-										{
-											label: __(
-												'On a specific date',
-												'fair-events'
-											),
-											value: 'until',
-										},
-									]}
-									onChange={setRecurrenceEndType}
-								/>
-								{recurrenceEndType === 'count' && (
-									<NumberControl
-										label={__(
-											'Number of occurrences',
-											'fair-events'
-										)}
-										value={recurrenceCount}
-										onChange={(val) =>
-											setRecurrenceCount(
-												parseInt(val, 10) || 1
-											)
-										}
-										min={1}
-										max={365}
-									/>
-								)}
-								{recurrenceEndType === 'until' && (
-									<TextControl
-										label={__('End date', 'fair-events')}
-										type="date"
-										value={recurrenceUntil}
-										onChange={setRecurrenceUntil}
-									/>
-								)}
-							</VStack>
+						{eventDate.occurrence_type !== 'generated' && (
+							<CheckboxControl
+								label={__('Repeat this event', 'fair-events')}
+								checked={recurrenceEnabled}
+								onChange={setRecurrenceEnabled}
+							/>
 						)}
+
+						{recurrenceEnabled &&
+							eventDate.occurrence_type !== 'generated' && (
+								<VStack spacing={3}>
+									<SelectControl
+										label={__('Frequency', 'fair-events')}
+										value={recurrenceFrequency}
+										options={[
+											{
+												label: __(
+													'Daily',
+													'fair-events'
+												),
+												value: 'daily',
+											},
+											{
+												label: __(
+													'Weekly',
+													'fair-events'
+												),
+												value: 'weekly',
+											},
+											{
+												label: __(
+													'Biweekly',
+													'fair-events'
+												),
+												value: 'biweekly',
+											},
+											{
+												label: __(
+													'Monthly',
+													'fair-events'
+												),
+												value: 'monthly',
+											},
+										]}
+										onChange={setRecurrenceFrequency}
+									/>
+									<SelectControl
+										label={__('Ends', 'fair-events')}
+										value={recurrenceEndType}
+										options={[
+											{
+												label: __(
+													'After number of occurrences',
+													'fair-events'
+												),
+												value: 'count',
+											},
+											{
+												label: __(
+													'On a specific date',
+													'fair-events'
+												),
+												value: 'until',
+											},
+										]}
+										onChange={setRecurrenceEndType}
+									/>
+									{recurrenceEndType === 'count' && (
+										<NumberControl
+											label={__(
+												'Number of occurrences',
+												'fair-events'
+											)}
+											value={recurrenceCount}
+											onChange={(val) =>
+												setRecurrenceCount(
+													parseInt(val, 10) || 1
+												)
+											}
+											min={1}
+											max={365}
+										/>
+									)}
+									{recurrenceEndType === 'until' && (
+										<TextControl
+											label={__(
+												'End date',
+												'fair-events'
+											)}
+											type="date"
+											value={recurrenceUntil}
+											onChange={setRecurrenceUntil}
+										/>
+									)}
+								</VStack>
+							)}
 					</VStack>
 				</CardBody>
 			</Card>

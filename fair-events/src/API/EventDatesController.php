@@ -804,6 +804,7 @@ class EventDatesController extends WP_REST_Controller {
 			'end_datetime'    => $event_date->end_datetime,
 			'all_day'         => $event_date->all_day,
 			'occurrence_type' => $event_date->occurrence_type,
+			'master_id'       => $event_date->master_id,
 			'venue_id'        => $event_date->venue_id,
 			'link_type'       => $event_date->link_type,
 			'external_url'    => $event_date->external_url,
@@ -813,6 +814,33 @@ class EventDatesController extends WP_REST_Controller {
 				? wp_get_attachment_image_url( $event_date->theme_image_id, 'full' )
 				: null,
 		);
+
+		// Add master event info for generated occurrences.
+		if ( 'generated' === $event_date->occurrence_type && $event_date->master_id ) {
+			$master = EventDates::get_by_id( $event_date->master_id );
+			if ( $master ) {
+				$data['master'] = array(
+					'id'             => $master->id,
+					'title'          => $master->title,
+					'start_datetime' => $master->start_datetime,
+				);
+			}
+		}
+
+		// Add generated occurrences for master events.
+		if ( 'master' === $event_date->occurrence_type ) {
+			$generated                     = EventDates::get_generated_by_master_id( $event_date->id );
+			$data['generated_occurrences'] = array_map(
+				function ( $occ ) {
+					return array(
+						'id'             => $occ->id,
+						'start_datetime' => $occ->start_datetime,
+						'title'          => $occ->title,
+					);
+				},
+				$generated
+			);
+		}
 
 		// Add categories.
 		$data['categories'] = $this->get_event_date_categories( $event_date );

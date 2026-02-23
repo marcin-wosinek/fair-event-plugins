@@ -335,6 +335,7 @@ class AdminPages {
 			$localized_data = array(
 				'eventDateId'      => $event_date_id,
 				'calendarUrl'      => admin_url( 'admin.php?page=fair-events-calendar' ),
+				'manageEventUrl'   => admin_url( 'admin.php?page=fair-events-manage-event' ),
 				'enabledPostTypes' => $enabled_post_types,
 			);
 

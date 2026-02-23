@@ -777,6 +777,35 @@ class EventDates {
 	}
 
 	/**
+	 * Get generated occurrences by master ID
+	 *
+	 * @param int $master_id Master event date ID.
+	 * @return EventDates[] Array of generated EventDates objects.
+	 */
+	public static function get_generated_by_master_id( $master_id ) {
+		global $wpdb;
+
+		$table_name = $wpdb->prefix . 'fair_event_dates';
+
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+		$results = $wpdb->get_results(
+			$wpdb->prepare(
+				'SELECT * FROM %i WHERE master_id = %d AND occurrence_type = %s ORDER BY start_datetime ASC',
+				$table_name,
+				$master_id,
+				'generated'
+			)
+		);
+
+		$dates = array();
+		foreach ( $results as $result ) {
+			$dates[] = self::hydrate( $result );
+		}
+
+		return $dates;
+	}
+
+	/**
 	 * Delete generated occurrences by master ID
 	 *
 	 * Used for standalone events that have no event_id.
