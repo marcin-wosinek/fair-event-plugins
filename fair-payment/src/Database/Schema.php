@@ -108,9 +108,10 @@ class Schema {
 		self::migrate_to_v5();
 		self::migrate_to_v6();
 		self::migrate_to_v7();
+		self::migrate_to_v8();
 
 		// Store database version for future migrations.
-		update_option( 'fair_payment_db_version', '7.0' );
+		update_option( 'fair_payment_db_version', '8.0' );
 	}
 
 	/**
@@ -187,6 +188,7 @@ class Schema {
 			budget_id bigint(20) UNSIGNED DEFAULT NULL,
 			transaction_id bigint(20) UNSIGNED DEFAULT NULL,
 			external_reference varchar(255) DEFAULT NULL,
+			import_source varchar(255) DEFAULT NULL,
 			created_at datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
 			updated_at datetime NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
 			PRIMARY KEY  (id),
@@ -444,6 +446,44 @@ class Schema {
 				$wpdb->query(
 					$wpdb->prepare(
 						'ALTER TABLE %i ADD UNIQUE KEY external_reference (external_reference)',
+						$table_name
+					)
+				);
+			}
+		}
+	}
+
+	/**
+	 * Migrate database from v7.0 to v8.0
+	 *
+	 * Adds import_source column to financial_entries to track which file entries were imported from.
+	 *
+	 * @return void
+	 */
+	public static function migrate_to_v8() {
+		global $wpdb;
+
+		$current_version = get_option( 'fair_payment_db_version', '1.0' );
+
+		if ( version_compare( $current_version, '8.0', '<' ) ) {
+			$table_name = self::get_financial_entries_table_name();
+
+			// Check if import_source column already exists.
+			// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+			$column_exists = $wpdb->get_results(
+				$wpdb->prepare(
+					'SHOW COLUMNS FROM %i LIKE %s',
+					$table_name,
+					'import_source'
+				)
+			);
+
+			// Add import_source column if it doesn't exist.
+			if ( empty( $column_exists ) ) {
+				// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.DirectDatabaseQuery.SchemaChange
+				$wpdb->query(
+					$wpdb->prepare(
+						'ALTER TABLE %i ADD COLUMN import_source varchar(255) DEFAULT NULL AFTER external_reference',
 						$table_name
 					)
 				);

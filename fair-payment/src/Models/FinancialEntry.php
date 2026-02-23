@@ -75,6 +75,13 @@ class FinancialEntry {
 	public $external_reference;
 
 	/**
+	 * Import source filename
+	 *
+	 * @var string|null
+	 */
+	public $import_source;
+
+	/**
 	 * Created at timestamp
 	 *
 	 * @var string
@@ -590,9 +597,10 @@ class FinancialEntry {
 	 * @param string      $external_reference External reference for deduplication.
 	 * @param string|null $description        Entry description.
 	 * @param int|null    $budget_id          Budget ID.
+	 * @param string|null $import_source      Import source filename.
 	 * @return int|false The entry ID on success, false on failure.
 	 */
-	public static function create_with_external_reference( $amount, $entry_type, $entry_date, $external_reference, $description = null, $budget_id = null ) {
+	public static function create_with_external_reference( $amount, $entry_type, $entry_date, $external_reference, $description = null, $budget_id = null, $import_source = null ) {
 		global $wpdb;
 
 		$table_name = self::get_table_name();
@@ -614,9 +622,10 @@ class FinancialEntry {
 			'description'        => $description,
 			'budget_id'          => $budget_id ? (int) $budget_id : null,
 			'external_reference' => $external_reference,
+			'import_source'      => $import_source,
 		);
 
-		$format = array( '%f', '%s', '%s', '%s', '%d', '%s' );
+		$format = array( '%f', '%s', '%s', '%s', '%d', '%s', '%s' );
 
 		$result = $wpdb->insert( $table_name, $data, $format );
 
@@ -643,6 +652,7 @@ class FinancialEntry {
 		$entry->budget_id          = $row->budget_id ? (int) $row->budget_id : null;
 		$entry->transaction_id     = $row->transaction_id ? (int) $row->transaction_id : null;
 		$entry->external_reference = isset( $row->external_reference ) ? $row->external_reference : null;
+		$entry->import_source      = isset( $row->import_source ) ? $row->import_source : null;
 		$entry->created_at         = $row->created_at;
 		$entry->updated_at         = $row->updated_at;
 
@@ -664,6 +674,7 @@ class FinancialEntry {
 			'budget_id'          => $this->budget_id,
 			'transaction_id'     => $this->transaction_id,
 			'external_reference' => $this->external_reference,
+			'import_source'      => $this->import_source,
 			'created_at'         => $this->created_at,
 			'updated_at'         => $this->updated_at,
 		);

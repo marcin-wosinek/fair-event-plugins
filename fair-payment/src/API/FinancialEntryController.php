@@ -197,7 +197,7 @@ class FinancialEntryController extends WP_REST_Controller {
 					'callback'            => array( $this, 'import_entries' ),
 					'permission_callback' => array( $this, 'create_item_permissions_check' ),
 					'args'                => array(
-						'entries' => array(
+						'entries'       => array(
 							'description' => __( 'Array of entries to import.', 'fair-payment' ),
 							'type'        => 'array',
 							'required'    => true,
@@ -225,6 +225,12 @@ class FinancialEntryController extends WP_REST_Controller {
 									),
 								),
 							),
+						),
+						'import_source' => array(
+							'description'       => __( 'Source filename of the import.', 'fair-payment' ),
+							'type'              => 'string',
+							'required'          => false,
+							'sanitize_callback' => 'sanitize_file_name',
 						),
 					),
 				),
@@ -748,7 +754,8 @@ class FinancialEntryController extends WP_REST_Controller {
 	 * @return WP_REST_Response|WP_Error Response object on success, or WP_Error on failure.
 	 */
 	public function import_entries( $request ) {
-		$entries = $request->get_param( 'entries' );
+		$entries       = $request->get_param( 'entries' );
+		$import_source = $request->get_param( 'import_source' );
 
 		if ( empty( $entries ) || ! is_array( $entries ) ) {
 			return new WP_Error(
@@ -793,7 +800,8 @@ class FinancialEntryController extends WP_REST_Controller {
 				sanitize_text_field( $entry_data['entry_date'] ),
 				sanitize_text_field( $entry_data['external_reference'] ),
 				isset( $entry_data['description'] ) ? sanitize_textarea_field( $entry_data['description'] ) : null,
-				null // No budget_id for imports.
+				null, // No budget_id for imports.
+				$import_source
 			);
 
 			if ( $entry_id ) {

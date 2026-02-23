@@ -520,6 +520,12 @@ const EntriesApp = () => {
 												</th>
 												<th>
 													{__(
+														'Source',
+														'fair-payment'
+													)}
+												</th>
+												<th>
+													{__(
 														'Actions',
 														'fair-payment'
 													)}
@@ -594,6 +600,11 @@ const EntriesApp = () => {
 																	'fair-payment'
 																)}
 															</span>
+														)}
+													</td>
+													<td>
+														{entry.import_source || (
+															<em>-</em>
 														)}
 													</td>
 													<td>
