@@ -20,6 +20,7 @@ import {
 	loadInstagramPosts,
 	createInstagramPost,
 	deleteInstagramPost,
+	uploadImageToTmpFiles,
 } from './instagram-posts-api.js';
 
 /**
@@ -86,6 +87,7 @@ export default function InstagramPosts() {
 	// Form state.
 	const [imageUrl, setImageUrl] = useState('');
 	const [imagePreview, setImagePreview] = useState('');
+	const [attachmentId, setAttachmentId] = useState(null);
 	const [caption, setCaption] = useState('');
 	const mediaFrameRef = useRef(null);
 
@@ -140,6 +142,7 @@ export default function InstagramPosts() {
 					.get('selection')
 					.first()
 					.toJSON();
+				setAttachmentId(attachment.id);
 				setImageUrl(attachment.url);
 				setImagePreview(attachment.url);
 			});
@@ -152,6 +155,7 @@ export default function InstagramPosts() {
 	 * Clear selected image
 	 */
 	const clearImage = () => {
+		setAttachmentId(null);
 		setImageUrl('');
 		setImagePreview('');
 	};
@@ -183,10 +187,18 @@ export default function InstagramPosts() {
 		setIsPosting(true);
 		setNotice(null);
 
-		createInstagramPost({
-			image_url: imageUrl.trim(),
-			caption: caption.trim(),
-		})
+		// If we have an attachment ID, upload to tmpfiles.org first.
+		const getPublicUrl = attachmentId
+			? uploadImageToTmpFiles(attachmentId).then((result) => result.url)
+			: Promise.resolve(imageUrl.trim());
+
+		getPublicUrl
+			.then((publicImageUrl) =>
+				createInstagramPost({
+					image_url: publicImageUrl,
+					caption: caption.trim(),
+				})
+			)
 			.then((result) => {
 				setNotice({
 					status: 'success',
@@ -194,6 +206,7 @@ export default function InstagramPosts() {
 						result.message ||
 						__('Post published successfully!', 'fair-audience'),
 				});
+				setAttachmentId(null);
 				setImageUrl('');
 				setImagePreview('');
 				setCaption('');
@@ -219,6 +232,7 @@ export default function InstagramPosts() {
 	 * @param {Object} post Post object
 	 */
 	const handleDuplicate = (post) => {
+		setAttachmentId(null);
 		setImageUrl(post.image_url || '');
 		setImagePreview(post.image_url || '');
 		setCaption(post.caption || '');

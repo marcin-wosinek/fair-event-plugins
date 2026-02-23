@@ -34,6 +34,20 @@ export function createInstagramPost(data) {
 }
 
 /**
+ * Upload a WordPress attachment to tmpfiles.org for public access
+ *
+ * @param {number} attachmentId WordPress attachment ID
+ * @return {Promise<Object>} Promise resolving to { url: string }
+ */
+export function uploadImageToTmpFiles(attachmentId) {
+	return apiFetch({
+		path: '/fair-audience/v1/instagram/upload-image',
+		method: 'POST',
+		data: { attachment_id: attachmentId },
+	});
+}
+
+/**
  * Delete an Instagram post record
  *
  * @param {number} id Post ID
