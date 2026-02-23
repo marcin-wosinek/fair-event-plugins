@@ -24,6 +24,19 @@ function getEventPostId(uid) {
 	return match ? match[1] : null;
 }
 
+/**
+ * Get event link type from uid and url.
+ *
+ * @param {Object} event Event object with uid and url.
+ * @return {string} 'post', 'external', or 'unlinked'.
+ */
+function getEventLinkType(event) {
+	if (getEventPostId(event.uid)) {
+		return 'post';
+	}
+	return event.url ? 'external' : 'unlinked';
+}
+
 export default function DayCell({
 	date,
 	events,
@@ -79,10 +92,17 @@ export default function DayCell({
 				<div className="fair-events-calendar-day-events">
 					{visibleEvents.map((event, index) => {
 						const eventPostId = getEventPostId(event.uid);
+						const linkType = getEventLinkType(event);
+						const linkTypeIcon =
+							linkType === 'post'
+								? 'dashicons-admin-post'
+								: linkType === 'external'
+								? 'dashicons-admin-links'
+								: 'dashicons-editor-unlink';
 						return (
 							<div
 								key={index}
-								className="fair-events-calendar-event-row"
+								className={`fair-events-calendar-event-row link-type-${linkType}`}
 							>
 								{onEditEvent ? (
 									<button
@@ -93,6 +113,9 @@ export default function DayCell({
 										}
 										title={event.title}
 									>
+										<span
+											className={`dashicons ${linkTypeIcon} fair-events-calendar-event-icon`}
+										/>
 										{event.title}
 									</button>
 								) : (
@@ -100,6 +123,9 @@ export default function DayCell({
 										className="fair-events-calendar-event fair-events-calendar-event-readonly"
 										title={event.title}
 									>
+										<span
+											className={`dashicons ${linkTypeIcon} fair-events-calendar-event-icon`}
+										/>
 										{event.title}
 									</span>
 								)}

@@ -214,6 +214,32 @@
 	border-radius: 3px 0 0 3px;
 }
 
+/* Event link type icons */
+.fair-events-calendar-event-icon {
+	font-size: 11px;
+	width: 11px;
+	height: 11px;
+	margin-right: 3px;
+	vertical-align: middle;
+	line-height: 1;
+}
+
+.fair-events-calendar-event-row.link-type-external .fair-events-calendar-event {
+	background: #8c6e1a;
+}
+
+.fair-events-calendar-event-row.link-type-external .fair-events-calendar-event:hover {
+	background: #6e5614;
+}
+
+.fair-events-calendar-event-row.link-type-unlinked .fair-events-calendar-event {
+	background: #646970;
+}
+
+.fair-events-calendar-event-row.link-type-unlinked .fair-events-calendar-event:hover {
+	background: #4e5157;
+}
+
 .fair-events-calendar-more {
 	font-size: 11px;
 	color: #646970;
