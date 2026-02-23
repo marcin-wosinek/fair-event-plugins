@@ -28,12 +28,13 @@ $participant_repository = new ParticipantRepository();
 
 // Process the request.
 $result = array(
-	'success'     => false,
-	'message'     => '',
-	'type'        => 'error',
-	'fee_payment' => null,
-	'fee'         => null,
-	'participant' => null,
+	'success'            => false,
+	'message'            => '',
+	'type'               => 'error',
+	'fee_payment'        => null,
+	'fee'                => null,
+	'participant'        => null,
+	'payment_processing' => false,
 );
 
 // Verify token.
@@ -59,18 +60,18 @@ if ( false === $fee_payment_id ) {
 			$result['fee']         = $fee;
 			$result['participant'] = $participant;
 
-			// Check if returning from payment (transaction_id is set).
-			if ( $fee_payment->transaction_id ) {
+			// Check if returning from payment (transaction_id is set but fee_payment still pending).
+			if ( $fee_payment->transaction_id && 'pending' === $fee_payment->status ) {
 				$transaction = fair_payment_get_transaction( $fee_payment->transaction_id );
 				if ( $transaction && 'paid' === $transaction->status ) {
-					$result['type']    = 'success';
-					$result['message'] = __( 'Your payment has been received. Thank you!', 'fair-audience' );
+					// Webhook already updated the transaction but not the fee_payment yet - mark processing.
+					$result['payment_processing'] = true;
 				} elseif ( $transaction && in_array( $transaction->status, array( 'failed', 'canceled', 'expired' ), true ) ) {
 					$result['type']    = 'warning';
 					$result['message'] = __( 'Your payment was not completed. You can try again.', 'fair-audience' );
-				} elseif ( $transaction && 'pending' === $transaction->status ) {
-					$result['type']    = 'info';
-					$result['message'] = __( 'Your payment is being processed. This page will update once the payment is confirmed.', 'fair-audience' );
+				} elseif ( $transaction ) {
+					// Transaction exists but not yet resolved (open/pending) - payment in progress.
+					$result['payment_processing'] = true;
 				}
 			}
 
@@ -302,6 +303,32 @@ get_header();
 		margin-bottom: 20px;
 		text-align: center;
 	}
+
+	.fair-audience-fee-payment-processing {
+		text-align: center;
+		padding: 20px 0;
+	}
+
+	.fair-audience-fee-payment-spinner {
+		display: inline-block;
+		width: 40px;
+		height: 40px;
+		border: 4px solid #e0e0e0;
+		border-top-color: #0073aa;
+		border-radius: 50%;
+		animation: fair-audience-spin 0.8s linear infinite;
+		margin-bottom: 16px;
+	}
+
+	@keyframes fair-audience-spin {
+		to { transform: rotate(360deg); }
+	}
+
+	.fair-audience-fee-payment-processing-text {
+		font-size: 16px;
+		color: #555;
+		margin: 0;
+	}
 </style>
 
 <div class="fair-audience-fee-payment-container">
@@ -360,6 +387,27 @@ get_header();
 					<?php echo esc_html__( 'Return to Homepage', 'fair-audience' ); ?>
 				</a>
 			</div>
+		<?php elseif ( $result['payment_processing'] ) : ?>
+			<h1 class="fair-audience-fee-payment-title">
+				<?php echo esc_html( $result['fee']->name ); ?>
+			</h1>
+
+			<div class="fair-audience-fee-payment-amount">
+				<?php echo esc_html( number_format( (float) $result['fee_payment']->amount, 2 ) . ' ' . $result['fee']->currency ); ?>
+			</div>
+
+			<div class="fair-audience-fee-payment-processing" id="fair-audience-processing">
+				<div class="fair-audience-fee-payment-spinner"></div>
+				<p class="fair-audience-fee-payment-processing-text">
+					<?php echo esc_html__( 'Your payment is being processed...', 'fair-audience' ); ?>
+				</p>
+			</div>
+
+			<div class="fair-audience-fee-payment-footer">
+				<a href="<?php echo esc_url( home_url( '/' ) ); ?>" class="fair-audience-fee-payment-link">
+					<?php echo esc_html__( 'Return to Homepage', 'fair-audience' ); ?>
+				</a>
+			</div>
 		<?php else : ?>
 			<h1 class="fair-audience-fee-payment-title">
 				<?php echo esc_html( $result['fee']->name ); ?>
@@ -409,6 +457,32 @@ get_header();
 		<?php endif; ?>
 	</div>
 </div>
+
+<?php if ( $result['payment_processing'] ) : ?>
+<script>
+	(function() {
+		var delays = [3000, 5000, 5000, 10000, 10000, 15000];
+		var params = new URLSearchParams(window.location.search);
+		var attempt = parseInt(params.get('_check') || '0', 10);
+
+		if (attempt >= delays.length) {
+			var el = document.getElementById('fair-audience-processing');
+			if (el) {
+				el.innerHTML = '<p class="fair-audience-fee-payment-processing-text">' +
+					<?php echo wp_json_encode( __( 'Payment is taking longer than expected. Please reload this page to check the status.', 'fair-audience' ) ); ?> +
+					'</p>';
+			}
+			return;
+		}
+
+		setTimeout(function() {
+			var url = new URL(window.location.href);
+			url.searchParams.set('_check', attempt + 1);
+			window.location.href = url.toString();
+		}, delays[attempt]);
+	})();
+</script>
+<?php endif; ?>
 
 <?php
 get_footer();
