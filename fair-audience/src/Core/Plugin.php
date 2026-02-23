@@ -50,6 +50,7 @@ class Plugin {
 		add_action( 'template_redirect', array( $this, 'handle_email_confirmation' ) );
 		add_action( 'template_redirect', array( $this, 'handle_manage_subscription' ) );
 		add_action( 'template_redirect', array( $this, 'handle_collaborator_profile' ) );
+		add_action( 'template_redirect', array( $this, 'handle_fee_payment' ) );
 
 		// Instagram token refresh cron.
 		add_action( 'fair_audience_refresh_instagram_token', array( $this, 'refresh_instagram_token' ) );
@@ -70,6 +71,9 @@ class Plugin {
 
 		// Initialize SVG upload support.
 		\FairAudience\Hooks\SvgUploadHooks::init();
+
+		// Initialize payment hooks (for fair-payment webhook integration).
+		\FairAudience\Hooks\PaymentHooks::init();
 
 		// Initialize blocks.
 		$block_hooks = new \FairAudience\Hooks\BlockHooks();
@@ -147,6 +151,7 @@ class Plugin {
 		$vars[] = 'signup_token';
 		$vars[] = 'manage_subscription';
 		$vars[] = 'collaborator_profile';
+		$vars[] = 'fee_payment';
 		return $vars;
 	}
 
@@ -244,6 +249,21 @@ class Plugin {
 			update_option( 'fair_audience_instagram_token_expires', time() + $expires_in );
 			error_log( 'Fair Audience: Instagram token refreshed successfully.' );
 		}
+	}
+
+	/**
+	 * Handle fee payment page requests.
+	 */
+	public function handle_fee_payment() {
+		$token = get_query_var( 'fee_payment' );
+
+		if ( empty( $token ) ) {
+			return;
+		}
+
+		// Load fee payment template.
+		include FAIR_AUDIENCE_PLUGIN_DIR . 'templates/fee-payment.php';
+		exit;
 	}
 
 	/**

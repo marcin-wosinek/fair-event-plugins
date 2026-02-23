@@ -290,6 +290,32 @@ export default function FeeDetail() {
 			});
 	};
 
+	// Copy payment link.
+	const handleCopyPaymentLink = (payment) => {
+		apiFetch({
+			path: `/fair-audience/v1/fees/${feeId}/payments/${payment.id}/payment-url`,
+		})
+			.then((data) => {
+				navigator.clipboard.writeText(data.url).then(() => {
+					setNotice({
+						status: 'success',
+						message: __(
+							'Payment link copied to clipboard.',
+							'fair-audience'
+						),
+					});
+				});
+			})
+			.catch((err) => {
+				// eslint-disable-next-line no-undef
+				alert(
+					__('Error: ', 'fair-audience') +
+						(err.message ||
+							__('Failed to get payment link.', 'fair-audience'))
+				);
+			});
+	};
+
 	// Send reminders.
 	const handleSendReminders = () => {
 		// eslint-disable-next-line no-undef
@@ -369,6 +395,14 @@ export default function FeeDetail() {
 				callback: ([item]) => handleCancel(item),
 				supportsBulk: false,
 				isDestructive: true,
+				isEligible: (item) => item.status === 'pending',
+			},
+			{
+				id: 'copy-payment-link',
+				label: __('Copy Payment Link', 'fair-audience'),
+				icon: 'admin-links',
+				callback: ([item]) => handleCopyPaymentLink(item),
+				supportsBulk: false,
 				isEligible: (item) => item.status === 'pending',
 			},
 			{

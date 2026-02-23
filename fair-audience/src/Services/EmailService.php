@@ -21,6 +21,7 @@ use FairAudience\Database\FeeAuditLogRepository;
 use FairAudience\Models\Participant;
 use FairAudience\Services\EmailType;
 use FairAudience\Services\ManageSubscriptionToken;
+use FairAudience\Services\FeePaymentToken;
 
 defined( 'WPINC' ) || die;
 
@@ -1344,8 +1345,20 @@ class EmailService {
 		}
 
 		$message .= '
-							</table>
+							</table>';
 
+		// Add "Pay Now" button if fair-payment plugin is active.
+		if ( function_exists( 'fair_payment_create_transaction' ) ) {
+			$payment_url = FeePaymentToken::get_url( $fee_payment->id );
+			$message    .= '
+							<p style="margin: 0 0 30px 0; text-align: center;">
+								<a href="' . esc_url( $payment_url ) . '" style="display: inline-block; background-color: #0073aa; color: #ffffff; text-decoration: none; padding: 12px 30px; border-radius: 5px; font-weight: bold; font-size: 16px;">
+									' . esc_html__( 'Pay Now', 'fair-audience' ) . '
+								</a>
+							</p>';
+		}
+
+		$message .= '
 							<p style="margin: 0 0 10px 0; font-size: 14px; color: #666666;">
 								' . sprintf(
 									/* translators: %s: site name */
@@ -1359,7 +1372,19 @@ class EmailService {
 
 					<!-- Footer -->
 					<tr>
-						<td style="background-color: #f8f8f8; padding: 20px 30px; border-radius: 0 0 8px 8px; text-align: center; font-size: 12px; color: #666666;">
+						<td style="background-color: #f8f8f8; padding: 20px 30px; border-radius: 0 0 8px 8px; text-align: center; font-size: 12px; color: #666666;">';
+
+		if ( function_exists( 'fair_payment_create_transaction' ) ) {
+			$message .= '
+							<p style="margin: 0 0 5px 0;">
+								' . esc_html__( 'If the button above doesn\'t work, copy and paste this link:', 'fair-audience' ) . '
+							</p>
+							<p style="margin: 0 0 15px 0; word-break: break-all;">
+								<a href="' . esc_url( $payment_url ) . '" style="color: #0073aa;">' . esc_url( $payment_url ) . '</a>
+							</p>';
+		}
+
+		$message .= '
 							<p style="margin: 0;">
 								' . esc_html( $site_name ) . '
 							</p>

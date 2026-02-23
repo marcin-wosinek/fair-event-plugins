@@ -12,6 +12,7 @@ use FairAudience\Database\FeePaymentRepository;
 use FairAudience\Database\FeeAuditLogRepository;
 use FairAudience\Models\Fee;
 use FairAudience\Services\EmailService;
+use FairAudience\Services\FeePaymentToken;
 use WP_REST_Controller;
 use WP_REST_Server;
 use WP_REST_Request;
@@ -200,6 +201,19 @@ class FeesController extends WP_REST_Controller {
 				array(
 					'methods'             => WP_REST_Server::CREATABLE,
 					'callback'            => array( $this, 'send_reminders' ),
+					'permission_callback' => array( $this, 'update_item_permissions_check' ),
+				),
+			)
+		);
+
+		// GET /fees/{id}/payments/{pid}/payment-url.
+		register_rest_route(
+			$this->namespace,
+			'/' . $this->rest_base . '/(?P<id>\d+)/payments/(?P<pid>\d+)/payment-url',
+			array(
+				array(
+					'methods'             => WP_REST_Server::READABLE,
+					'callback'            => array( $this, 'get_payment_url' ),
 					'permission_callback' => array( $this, 'update_item_permissions_check' ),
 				),
 			)
@@ -616,6 +630,27 @@ class FeesController extends WP_REST_Controller {
 		$results       = $email_service->send_bulk_fee_reminders( $fee_id );
 
 		return rest_ensure_response( $results );
+	}
+
+	/**
+	 * Get payment URL for a fee payment.
+	 *
+	 * @param WP_REST_Request $request Request object.
+	 * @return WP_REST_Response|WP_Error Response object or error.
+	 */
+	public function get_payment_url( $request ) {
+		$payment = $this->get_validated_payment( $request );
+		if ( is_wp_error( $payment ) ) {
+			return $payment;
+		}
+
+		$url = FeePaymentToken::get_url( $payment->id );
+
+		return rest_ensure_response(
+			array(
+				'url' => $url,
+			)
+		);
 	}
 
 	/**
