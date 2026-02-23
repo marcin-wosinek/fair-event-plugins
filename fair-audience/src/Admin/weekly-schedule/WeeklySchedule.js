@@ -19,12 +19,15 @@ import { generateScheduleSvg } from './schedule-svg.js';
  */
 function getCurrentWeek() {
 	const now = new Date();
-	const jan4 = new Date(now.getFullYear(), 0, 4);
-	const dayOfYear =
-		Math.floor((now - new Date(now.getFullYear(), 0, 1)) / 86400000) + 1;
-	const weekNum = Math.ceil((dayOfYear + jan4.getDay() - 1) / 7);
-	const year = now.getFullYear();
-	return `${year}-W${String(weekNum).padStart(2, '0')}`;
+	// ISO week is defined by the Thursday of the current week
+	const dayOfWeek = now.getDay() || 7; // Convert Sunday=0 to Sunday=7
+	const thursday = new Date(now);
+	thursday.setDate(now.getDate() + 4 - dayOfWeek);
+	const yearStart = new Date(thursday.getFullYear(), 0, 1);
+	const weekNum = Math.ceil(((thursday - yearStart) / 86400000 + 1) / 7);
+	// ISO year is based on the Thursday, not the current date
+	const isoYear = thursday.getFullYear();
+	return `${isoYear}-W${String(weekNum).padStart(2, '0')}`;
 }
 
 /**
