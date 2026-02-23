@@ -7,8 +7,17 @@
 
 defined( 'WPINC' ) || die;
 
-get_header();
+$site_name = wp_specialchars_decode( get_option( 'blogname' ), ENT_QUOTES );
 ?>
+<!DOCTYPE html>
+<html <?php language_attributes(); ?>>
+<head>
+	<meta charset="<?php bloginfo( 'charset' ); ?>">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<title><?php echo esc_html( $site_name ); ?></title>
+	<?php wp_head(); ?>
+</head>
+<body <?php body_class(); ?>>
 
 <div id="fair-audience-poll-root" data-access-key="<?php echo esc_attr( $_GET['poll_key'] ); ?>"></div>
 
@@ -31,5 +40,7 @@ wp_enqueue_style(
 	$asset_file['version']
 );
 
-get_footer();
+wp_footer();
 ?>
+</body>
+</html>

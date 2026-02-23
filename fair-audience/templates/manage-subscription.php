@@ -63,8 +63,17 @@ if ( false === $participant_id ) {
 	}
 }
 
-get_header();
+$site_name_header = wp_specialchars_decode( get_option( 'blogname' ), ENT_QUOTES );
 ?>
+<!DOCTYPE html>
+<html <?php language_attributes(); ?>>
+<head>
+	<meta charset="<?php bloginfo( 'charset' ); ?>">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<title><?php echo esc_html( $site_name_header ); ?></title>
+	<?php wp_head(); ?>
+</head>
+<body <?php body_class(); ?>>
 
 <style>
 	.fair-audience-subscription-container {
@@ -291,6 +300,6 @@ get_header();
 	});
 </script>
 
-<?php
-get_footer();
-?>
+<?php wp_footer(); ?>
+</body>
+</html>
