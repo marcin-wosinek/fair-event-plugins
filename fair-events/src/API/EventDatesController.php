@@ -329,6 +329,14 @@ class EventDatesController extends WP_REST_Controller {
 		$categories = $request->get_param( 'categories' );
 		if ( is_array( $categories ) ) {
 			$this->set_standalone_categories( $id, $categories );
+
+			// Propagate categories to generated occurrences.
+			if ( ! empty( $rrule ) ) {
+				$generated = EventDates::get_generated_by_master_id( $id );
+				foreach ( $generated as $occ ) {
+					$this->set_standalone_categories( $occ->id, $categories );
+				}
+			}
 		}
 
 		$event_date = EventDates::get_by_id( $id );
@@ -559,6 +567,16 @@ class EventDatesController extends WP_REST_Controller {
 				wp_set_post_terms( $current->event_id, $categories, 'category' );
 			} else {
 				$this->set_standalone_categories( $id, $categories );
+			}
+		}
+
+		// Propagate categories to generated occurrences for standalone master events.
+		$current_for_propagation = EventDates::get_by_id( $id );
+		if ( 'master' === $current_for_propagation->occurrence_type && ! $current_for_propagation->event_id ) {
+			$master_cat_ids = $this->get_standalone_category_ids( $id );
+			$generated      = EventDates::get_generated_by_master_id( $id );
+			foreach ( $generated as $occ ) {
+				$this->set_standalone_categories( $occ->id, $master_cat_ids );
 			}
 		}
 
