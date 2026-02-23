@@ -539,51 +539,6 @@ export default function ManageEventApp() {
 				</Notice>
 			)}
 
-			{eventDate.occurrence_type === 'generated' && eventDate.master && (
-				<Card style={{ marginBottom: '16px' }}>
-					<CardBody>
-						<Notice status="info" isDismissible={false}>
-							{__(
-								'This is a recurring occurrence of:',
-								'fair-events'
-							)}{' '}
-							<a
-								href={`${manageEventUrl}&event_date_id=${eventDate.master.id}`}
-							>
-								<strong>
-									{eventDate.master.title ||
-										eventDate.master.start_datetime}
-								</strong>
-							</a>
-						</Notice>
-					</CardBody>
-				</Card>
-			)}
-
-			{eventDate.occurrence_type === 'master' &&
-				eventDate.generated_occurrences?.length > 0 && (
-					<Card style={{ marginBottom: '16px' }}>
-						<CardHeader>
-							<h2>
-								{__('Recurring Occurrences', 'fair-events')}
-							</h2>
-						</CardHeader>
-						<CardBody>
-							<VStack spacing={2}>
-								{eventDate.generated_occurrences.map((occ) => (
-									<HStack key={occ.id} spacing={3}>
-										<a
-											href={`${manageEventUrl}&event_date_id=${occ.id}`}
-										>
-											{occ.start_datetime}
-										</a>
-									</HStack>
-								))}
-							</VStack>
-						</CardBody>
-					</Card>
-				)}
-
 			<Card>
 				<CardHeader>
 					<h2>{__('Event Details', 'fair-events')}</h2>
@@ -792,6 +747,51 @@ export default function ManageEventApp() {
 					</VStack>
 				</CardBody>
 			</Card>
+
+			{eventDate.occurrence_type === 'generated' && eventDate.master && (
+				<Card style={{ marginTop: '16px' }}>
+					<CardBody>
+						<Notice status="info" isDismissible={false}>
+							{__(
+								'This is a recurring occurrence of:',
+								'fair-events'
+							)}{' '}
+							<a
+								href={`${manageEventUrl}&event_date_id=${eventDate.master.id}`}
+							>
+								<strong>
+									{eventDate.master.title ||
+										eventDate.master.start_datetime}
+								</strong>
+							</a>
+						</Notice>
+					</CardBody>
+				</Card>
+			)}
+
+			{eventDate.occurrence_type === 'master' &&
+				eventDate.generated_occurrences?.length > 0 && (
+					<Card style={{ marginTop: '16px' }}>
+						<CardHeader>
+							<h2>
+								{__('Recurring Occurrences', 'fair-events')}
+							</h2>
+						</CardHeader>
+						<CardBody>
+							<VStack spacing={2}>
+								{eventDate.generated_occurrences.map((occ) => (
+									<HStack key={occ.id} spacing={3}>
+										<a
+											href={`${manageEventUrl}&event_date_id=${occ.id}`}
+										>
+											{occ.start_datetime}
+										</a>
+									</HStack>
+								))}
+							</VStack>
+						</CardBody>
+					</Card>
+				)}
 
 			<Card style={{ marginTop: '16px' }}>
 				<CardHeader>
