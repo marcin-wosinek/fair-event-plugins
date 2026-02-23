@@ -41,6 +41,7 @@ class FeeRepository {
 		$table_name     = $this->get_table_name();
 		$groups_table   = $wpdb->prefix . 'fair_audience_groups';
 		$payments_table = $wpdb->prefix . 'fair_audience_fee_payments';
+		$budgets_table  = $wpdb->prefix . 'fair_payment_budgets';
 
 		$allowed_orderby = array( 'id', 'name', 'amount', 'due_date', 'status', 'created_at' );
 		$orderby         = in_array( $orderby, $allowed_orderby, true ) ? $orderby : 'created_at';
@@ -51,12 +52,14 @@ class FeeRepository {
 			$wpdb->prepare(
 				"SELECT f.*,
 					g.name as group_name,
+					b.name as budget_name,
 					COALESCE(ps.pending_count, 0) as pending_count,
 					COALESCE(ps.paid_count, 0) as paid_count,
 					COALESCE(ps.member_count, 0) as member_count,
 					COALESCE(ps.total_amount, 0) as total_amount
 				FROM %i f
 				LEFT JOIN %i g ON f.group_id = g.id
+				LEFT JOIN %i b ON f.budget_id = b.id
 				LEFT JOIN (
 					SELECT fee_id,
 						SUM(CASE WHEN status = 'pending' THEN 1 ELSE 0 END) as pending_count,
@@ -69,6 +72,7 @@ class FeeRepository {
 				ORDER BY f.%i $order",
 				$table_name,
 				$groups_table,
+				$budgets_table,
 				$payments_table,
 				$orderby
 			),
@@ -111,14 +115,16 @@ class FeeRepository {
 	public function get_by_id_with_group( $id ) {
 		global $wpdb;
 
-		$table_name   = $this->get_table_name();
-		$groups_table = $wpdb->prefix . 'fair_audience_groups';
+		$table_name    = $this->get_table_name();
+		$groups_table  = $wpdb->prefix . 'fair_audience_groups';
+		$budgets_table = $wpdb->prefix . 'fair_payment_budgets';
 
 		$result = $wpdb->get_row(
 			$wpdb->prepare(
-				'SELECT f.*, g.name as group_name FROM %i f LEFT JOIN %i g ON f.group_id = g.id WHERE f.id = %d',
+				'SELECT f.*, g.name as group_name, b.name as budget_name FROM %i f LEFT JOIN %i g ON f.group_id = g.id LEFT JOIN %i b ON f.budget_id = b.id WHERE f.id = %d',
 				$table_name,
 				$groups_table,
+				$budgets_table,
 				$id
 			),
 			ARRAY_A

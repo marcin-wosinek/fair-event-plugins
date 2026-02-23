@@ -401,6 +401,7 @@ class Schema {
 			group_id BIGINT UNSIGNED NOT NULL,
 			amount DECIMAL(10,2) NOT NULL,
 			currency VARCHAR(3) NOT NULL DEFAULT 'EUR',
+			budget_id BIGINT UNSIGNED DEFAULT NULL,
 			due_date DATE DEFAULT NULL,
 			status ENUM('draft', 'active', 'closed') NOT NULL DEFAULT 'draft',
 			created_by BIGINT UNSIGNED NOT NULL,
@@ -408,6 +409,7 @@ class Schema {
 			updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
 			PRIMARY KEY  (id),
 			KEY idx_group_id (group_id),
+			KEY idx_budget_id (budget_id),
 			KEY idx_status (status),
 			KEY idx_due_date (due_date)
 		) ENGINE=InnoDB $charset_collate;";

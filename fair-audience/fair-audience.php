@@ -66,7 +66,7 @@ function fair_audience_activate() {
 	}
 
 	// Update database version.
-	update_option( 'fair_audience_db_version', '1.17.0' );
+	update_option( 'fair_audience_db_version', '1.18.0' );
 }
 register_activation_hook( __FILE__, __NAMESPACE__ . '\\fair_audience_activate' );
 
@@ -298,6 +298,26 @@ function fair_audience_maybe_upgrade_db() {
 		dbDelta( \FairAudience\Database\Schema::get_fee_audit_log_table_sql() );
 
 		update_option( 'fair_audience_db_version', '1.17.0' );
+	}
+
+	if ( version_compare( $db_version, '1.18.0', '<' ) ) {
+		global $wpdb;
+
+		$fees_table = $wpdb->prefix . 'fair_audience_fees';
+
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.DirectDatabaseQuery.SchemaChange
+		$wpdb->query(
+			"ALTER TABLE {$fees_table}
+			 ADD COLUMN IF NOT EXISTS budget_id BIGINT UNSIGNED DEFAULT NULL AFTER currency"
+		);
+
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.DirectDatabaseQuery.SchemaChange
+		$wpdb->query(
+			"ALTER TABLE {$fees_table}
+			 ADD INDEX IF NOT EXISTS idx_budget_id (budget_id)"
+		);
+
+		update_option( 'fair_audience_db_version', '1.18.0' );
 	}
 }
 add_action( 'plugins_loaded', __NAMESPACE__ . '\\fair_audience_maybe_upgrade_db' );

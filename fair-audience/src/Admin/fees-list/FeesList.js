@@ -9,6 +9,7 @@ import {
 	TextControl,
 	TextareaControl,
 	SelectControl,
+	Tooltip,
 } from '@wordpress/components';
 import { DataViews } from '@wordpress/dataviews';
 
@@ -25,6 +26,7 @@ const DEFAULT_VIEW = {
 	fields: [
 		'name',
 		'group_name',
+		'budget_name',
 		'amount',
 		'due_date',
 		'status',
@@ -50,6 +52,7 @@ export default function FeesList() {
 	const [feeGroupId, setFeeGroupId] = useState('');
 	const [feeAmount, setFeeAmount] = useState('');
 	const [feeDueDate, setFeeDueDate] = useState('');
+	const [feeBudgetId, setFeeBudgetId] = useState('');
 	const [isSaving, setIsSaving] = useState(false);
 
 	// Edit modal state.
@@ -58,6 +61,9 @@ export default function FeesList() {
 
 	// Groups for select.
 	const [groups, setGroups] = useState([]);
+
+	// Budgets for select.
+	const [budgets, setBudgets] = useState([]);
 
 	// Define fields configuration for DataViews.
 	const fields = useMemo(
@@ -82,10 +88,38 @@ export default function FeesList() {
 				enableSorting: false,
 			},
 			{
+				id: 'budget_name',
+				label: __('Budget', 'fair-audience'),
+				render: ({ item }) => item.budget_name || '—',
+				enableSorting: false,
+			},
+			{
 				id: 'amount',
 				label: __('Amount', 'fair-audience'),
-				render: ({ item }) =>
-					`${parseFloat(item.amount).toFixed(2)} ${item.currency}`,
+				render: ({ item }) => {
+					const amountText = `${parseFloat(item.amount).toFixed(2)} ${
+						item.currency
+					}`;
+					const memberCount = parseInt(item.member_count) || 0;
+					if (memberCount > 0) {
+						const totalAmount = (
+							parseFloat(item.amount) * memberCount
+						).toFixed(2);
+						const tooltipText = `${parseFloat(item.amount).toFixed(
+							2
+						)} ${
+							item.currency
+						} x ${memberCount} members = ${totalAmount} ${
+							item.currency
+						}`;
+						return (
+							<Tooltip text={tooltipText}>
+								<span>{amountText}</span>
+							</Tooltip>
+						);
+					}
+					return amountText;
+				},
 				enableSorting: true,
 				getValue: ({ item }) => parseFloat(item.amount),
 			},
@@ -186,6 +220,17 @@ export default function FeesList() {
 			});
 	}, []);
 
+	const loadBudgets = useCallback(() => {
+		apiFetch({ path: '/fair-payment/v1/budgets' })
+			.then((data) => {
+				setBudgets(data);
+			})
+			.catch((err) => {
+				// eslint-disable-next-line no-console
+				console.error('Error loading budgets:', err);
+			});
+	}, []);
+
 	useEffect(() => {
 		loadFees();
 	}, [loadFees]);
@@ -194,6 +239,10 @@ export default function FeesList() {
 		loadGroups();
 	}, [loadGroups]);
 
+	useEffect(() => {
+		loadBudgets();
+	}, [loadBudgets]);
+
 	// Open create modal.
 	const openCreateModal = () => {
 		setFeeName('');
@@ -201,6 +250,7 @@ export default function FeesList() {
 		setFeeGroupId('');
 		setFeeAmount('');
 		setFeeDueDate('');
+		setFeeBudgetId('');
 		setIsCreateModalOpen(true);
 	};
 
@@ -221,6 +271,7 @@ export default function FeesList() {
 				group_id: parseInt(feeGroupId),
 				amount: parseFloat(feeAmount),
 				due_date: feeDueDate || null,
+				budget_id: feeBudgetId ? parseInt(feeBudgetId) : null,
 			},
 		})
 			.then(() => {
@@ -360,6 +411,11 @@ export default function FeesList() {
 		...groups.map((g) => ({ label: g.name, value: String(g.id) })),
 	];
 
+	const budgetOptions = [
+		{ label: __('-- No Budget --', 'fair-audience'), value: '' },
+		...budgets.map((b) => ({ label: b.name, value: String(b.id) })),
+	];
+
 	return (
 		<div className="wrap">
 			<h1>{__('Membership Fees', 'fair-audience')}</h1>
@@ -431,6 +487,17 @@ export default function FeesList() {
 						type="date"
 						value={feeDueDate}
 						onChange={setFeeDueDate}
+					/>
+
+					<SelectControl
+						label={__('Budget', 'fair-audience')}
+						value={feeBudgetId}
+						options={budgetOptions}
+						onChange={setFeeBudgetId}
+						help={__(
+							'Optionally link to a budget for financial tracking.',
+							'fair-audience'
+						)}
 					/>
 
 					<div

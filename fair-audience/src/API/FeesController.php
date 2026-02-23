@@ -13,6 +13,7 @@ use FairAudience\Database\FeeAuditLogRepository;
 use FairAudience\Models\Fee;
 use FairAudience\Services\EmailService;
 use FairAudience\Services\FeePaymentToken;
+use FairPayment\Models\FinancialEntry;
 use WP_REST_Controller;
 use WP_REST_Server;
 use WP_REST_Request;
@@ -295,6 +296,8 @@ class FeesController extends WP_REST_Controller {
 			);
 		}
 
+		$budget_id = $request->get_param( 'budget_id' );
+
 		$fee = new Fee();
 		$fee->populate(
 			array(
@@ -303,6 +306,7 @@ class FeesController extends WP_REST_Controller {
 				'group_id'    => $group_id,
 				'amount'      => $amount,
 				'currency'    => $request->get_param( 'currency' ) ?? 'EUR',
+				'budget_id'   => $budget_id,
 				'due_date'    => $request->get_param( 'due_date' ) ?? '',
 				'status'      => $request->get_param( 'status' ) ?? 'active',
 				'created_by'  => get_current_user_id(),
@@ -319,6 +323,22 @@ class FeesController extends WP_REST_Controller {
 
 		// Generate fee_payment records for all group members.
 		$created = $this->payment_repository->create_payments_for_group( $fee->id, $group_id, $amount );
+
+		// Auto-create financial entry if budget is linked.
+		if ( ! empty( $budget_id ) && $created > 0 && class_exists( FinancialEntry::class ) ) {
+			$total_amount = (float) $amount * $created;
+			$entry_date   = ! empty( $fee->due_date ) ? $fee->due_date : current_time( 'Y-m-d' );
+
+			FinancialEntry::create_with_external_reference(
+				$total_amount,
+				'income',
+				$entry_date,
+				'fee_' . $fee->id,
+				$fee->name,
+				(int) $budget_id,
+				'fair-audience-fees'
+			);
+		}
 
 		return rest_ensure_response(
 			array(
@@ -347,6 +367,8 @@ class FeesController extends WP_REST_Controller {
 			);
 		}
 
+		$budget_id = $request->get_param( 'budget_id' );
+
 		$fee->populate(
 			array(
 				'id'          => $fee->id,
@@ -355,6 +377,7 @@ class FeesController extends WP_REST_Controller {
 				'group_id'    => $fee->group_id,
 				'amount'      => $fee->amount,
 				'currency'    => $fee->currency,
+				'budget_id'   => null !== $budget_id ? $budget_id : $fee->budget_id,
 				'due_date'    => $request->get_param( 'due_date' ) ?? $fee->due_date,
 				'status'      => $request->get_param( 'status' ) ?? $fee->status,
 				'created_by'  => $fee->created_by,

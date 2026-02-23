@@ -57,6 +57,13 @@ class Fee {
 	public $currency;
 
 	/**
+	 * Budget ID (optional link to fair-payment budget).
+	 *
+	 * @var int|null
+	 */
+	public $budget_id;
+
+	/**
 	 * Due date.
 	 *
 	 * @var string
@@ -114,6 +121,7 @@ class Fee {
 		$this->group_id    = isset( $data['group_id'] ) ? (int) $data['group_id'] : 0;
 		$this->amount      = isset( $data['amount'] ) ? $data['amount'] : '0.00';
 		$this->currency    = isset( $data['currency'] ) ? sanitize_text_field( $data['currency'] ) : 'EUR';
+		$this->budget_id   = isset( $data['budget_id'] ) ? ( ! empty( $data['budget_id'] ) ? (int) $data['budget_id'] : null ) : null;
 		$this->due_date    = isset( $data['due_date'] ) ? sanitize_text_field( $data['due_date'] ) : '';
 		$this->status      = isset( $data['status'] ) ? sanitize_text_field( $data['status'] ) : 'draft';
 		$this->created_by  = isset( $data['created_by'] ) ? (int) $data['created_by'] : 0;
@@ -142,11 +150,12 @@ class Fee {
 			'group_id'    => $this->group_id,
 			'amount'      => $this->amount,
 			'currency'    => $this->currency,
+			'budget_id'   => $this->budget_id,
 			'due_date'    => ! empty( $this->due_date ) ? $this->due_date : null,
 			'status'      => $this->status,
 		);
 
-		$format = array( '%s', '%s', '%d', '%f', '%s', '%s', '%s' );
+		$format = array( '%s', '%s', '%d', '%f', '%s', '%d', '%s', '%s' );
 
 		if ( $this->id ) {
 			// Update existing.
