@@ -189,6 +189,7 @@ class Schema {
 			transaction_id bigint(20) UNSIGNED DEFAULT NULL,
 			external_reference varchar(255) DEFAULT NULL,
 			import_source varchar(255) DEFAULT NULL,
+			imported_at datetime DEFAULT NULL,
 			created_at datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
 			updated_at datetime NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
 			PRIMARY KEY  (id),
@@ -456,7 +457,7 @@ class Schema {
 	/**
 	 * Migrate database from v7.0 to v8.0
 	 *
-	 * Adds import_source column to financial_entries to track which file entries were imported from.
+	 * Adds import_source and imported_at columns to financial_entries to track import origin.
 	 *
 	 * @return void
 	 */
@@ -484,6 +485,27 @@ class Schema {
 				$wpdb->query(
 					$wpdb->prepare(
 						'ALTER TABLE %i ADD COLUMN import_source varchar(255) DEFAULT NULL AFTER external_reference',
+						$table_name
+					)
+				);
+			}
+
+			// Check if imported_at column already exists.
+			// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+			$imported_at_exists = $wpdb->get_results(
+				$wpdb->prepare(
+					'SHOW COLUMNS FROM %i LIKE %s',
+					$table_name,
+					'imported_at'
+				)
+			);
+
+			// Add imported_at column if it doesn't exist.
+			if ( empty( $imported_at_exists ) ) {
+				// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.DirectDatabaseQuery.SchemaChange
+				$wpdb->query(
+					$wpdb->prepare(
+						'ALTER TABLE %i ADD COLUMN imported_at datetime DEFAULT NULL AFTER import_source',
 						$table_name
 					)
 				);

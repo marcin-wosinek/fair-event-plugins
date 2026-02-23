@@ -82,6 +82,13 @@ class FinancialEntry {
 	public $import_source;
 
 	/**
+	 * Imported at timestamp
+	 *
+	 * @var string|null
+	 */
+	public $imported_at;
+
+	/**
 	 * Created at timestamp
 	 *
 	 * @var string
@@ -623,9 +630,10 @@ class FinancialEntry {
 			'budget_id'          => $budget_id ? (int) $budget_id : null,
 			'external_reference' => $external_reference,
 			'import_source'      => $import_source,
+			'imported_at'        => current_time( 'mysql' ),
 		);
 
-		$format = array( '%f', '%s', '%s', '%s', '%d', '%s', '%s' );
+		$format = array( '%f', '%s', '%s', '%s', '%d', '%s', '%s', '%s' );
 
 		$result = $wpdb->insert( $table_name, $data, $format );
 
@@ -653,6 +661,7 @@ class FinancialEntry {
 		$entry->transaction_id     = $row->transaction_id ? (int) $row->transaction_id : null;
 		$entry->external_reference = isset( $row->external_reference ) ? $row->external_reference : null;
 		$entry->import_source      = isset( $row->import_source ) ? $row->import_source : null;
+		$entry->imported_at        = isset( $row->imported_at ) ? $row->imported_at : null;
 		$entry->created_at         = $row->created_at;
 		$entry->updated_at         = $row->updated_at;
 
@@ -675,6 +684,7 @@ class FinancialEntry {
 			'transaction_id'     => $this->transaction_id,
 			'external_reference' => $this->external_reference,
 			'import_source'      => $this->import_source,
+			'imported_at'        => $this->imported_at,
 			'created_at'         => $this->created_at,
 			'updated_at'         => $this->updated_at,
 		);

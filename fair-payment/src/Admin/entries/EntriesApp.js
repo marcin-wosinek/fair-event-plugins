@@ -526,6 +526,12 @@ const EntriesApp = () => {
 												</th>
 												<th>
 													{__(
+														'Imported',
+														'fair-payment'
+													)}
+												</th>
+												<th>
+													{__(
 														'Actions',
 														'fair-payment'
 													)}
@@ -604,6 +610,11 @@ const EntriesApp = () => {
 													</td>
 													<td>
 														{entry.import_source || (
+															<em>-</em>
+														)}
+													</td>
+													<td>
+														{entry.imported_at || (
 															<em>-</em>
 														)}
 													</td>
