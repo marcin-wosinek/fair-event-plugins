@@ -458,6 +458,7 @@ class AdminHooks {
 
 		// Instagram Posts page.
 		if ( 'fair-audience_page_fair-audience-instagram-posts' === $hook ) {
+			wp_enqueue_media();
 			$this->enqueue_page_script( 'instagram-posts', $plugin_dir );
 		}
 

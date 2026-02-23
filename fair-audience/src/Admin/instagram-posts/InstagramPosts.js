@@ -2,13 +2,12 @@
  * WordPress dependencies
  */
 import { __ } from '@wordpress/i18n';
-import { useState, useEffect } from '@wordpress/element';
+import { useState, useEffect, useRef } from '@wordpress/element';
 import {
 	Button,
 	Card,
 	CardBody,
 	CardHeader,
-	TextControl,
 	TextareaControl,
 	Notice,
 	Spinner,
@@ -86,7 +85,9 @@ export default function InstagramPosts() {
 
 	// Form state.
 	const [imageUrl, setImageUrl] = useState('');
+	const [imagePreview, setImagePreview] = useState('');
 	const [caption, setCaption] = useState('');
+	const mediaFrameRef = useRef(null);
 
 	/**
 	 * Load posts from API
@@ -118,6 +119,44 @@ export default function InstagramPosts() {
 	}, []);
 
 	/**
+	 * Open the WordPress media library picker
+	 */
+	const openMediaLibrary = () => {
+		if (!mediaFrameRef.current) {
+			mediaFrameRef.current = wp.media({
+				title: __('Select Image for Instagram', 'fair-audience'),
+				button: {
+					text: __('Use this image', 'fair-audience'),
+				},
+				multiple: false,
+				library: {
+					type: 'image',
+				},
+			});
+
+			mediaFrameRef.current.on('select', () => {
+				const attachment = mediaFrameRef.current
+					.state()
+					.get('selection')
+					.first()
+					.toJSON();
+				setImageUrl(attachment.url);
+				setImagePreview(attachment.url);
+			});
+		}
+
+		mediaFrameRef.current.open();
+	};
+
+	/**
+	 * Clear selected image
+	 */
+	const clearImage = () => {
+		setImageUrl('');
+		setImagePreview('');
+	};
+
+	/**
 	 * Handle form submission
 	 *
 	 * @param {Event} e Form event
@@ -128,7 +167,7 @@ export default function InstagramPosts() {
 		if (!imageUrl.trim()) {
 			setNotice({
 				status: 'error',
-				message: __('Please enter an image URL.', 'fair-audience'),
+				message: __('Please select an image.', 'fair-audience'),
 			});
 			return;
 		}
@@ -156,6 +195,7 @@ export default function InstagramPosts() {
 						__('Post published successfully!', 'fair-audience'),
 				});
 				setImageUrl('');
+				setImagePreview('');
 				setCaption('');
 				loadPosts();
 				setIsPosting(false);
@@ -180,6 +220,7 @@ export default function InstagramPosts() {
 	 */
 	const handleDuplicate = (post) => {
 		setImageUrl(post.image_url || '');
+		setImagePreview(post.image_url || '');
 		setCaption(post.caption || '');
 		window.scrollTo({ top: 0, behavior: 'smooth' });
 	};
@@ -271,17 +312,72 @@ export default function InstagramPosts() {
 				</CardHeader>
 				<CardBody>
 					<form onSubmit={handleSubmit}>
-						<TextControl
-							label={__('Image URL', 'fair-audience')}
-							value={imageUrl}
-							onChange={setImageUrl}
-							placeholder="https://example.com/image.jpg"
-							help={__(
-								'Must be a publicly accessible URL.',
-								'fair-audience'
+						<div style={{ marginBottom: '1rem' }}>
+							<label
+								style={{
+									display: 'block',
+									marginBottom: '8px',
+									fontWeight: 500,
+								}}
+							>
+								{__('Image', 'fair-audience')}
+							</label>
+							{imagePreview ? (
+								<div style={{ marginBottom: '8px' }}>
+									<img
+										src={imagePreview}
+										alt=""
+										style={{
+											maxWidth: '300px',
+											maxHeight: '300px',
+											display: 'block',
+											marginBottom: '8px',
+											borderRadius: '4px',
+										}}
+									/>
+									<Button
+										variant="secondary"
+										onClick={openMediaLibrary}
+										disabled={isPosting}
+										style={{ marginRight: '8px' }}
+									>
+										{__('Replace Image', 'fair-audience')}
+									</Button>
+									<Button
+										isDestructive
+										variant="secondary"
+										onClick={clearImage}
+										disabled={isPosting}
+									>
+										{__('Remove Image', 'fair-audience')}
+									</Button>
+								</div>
+							) : (
+								<Button
+									variant="secondary"
+									onClick={openMediaLibrary}
+									disabled={isPosting}
+								>
+									{__(
+										'Select from Media Library',
+										'fair-audience'
+									)}
+								</Button>
 							)}
-							disabled={isPosting}
-						/>
+							<p
+								className="components-base-control__help"
+								style={{
+									fontSize: '12px',
+									color: '#757575',
+									marginTop: '8px',
+								}}
+							>
+								{__(
+									'Must be a publicly accessible URL.',
+									'fair-audience'
+								)}
+							</p>
+						</div>
 
 						<TextareaControl
 							label={__('Caption', 'fair-audience')}
