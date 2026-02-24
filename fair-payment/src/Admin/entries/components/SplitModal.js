@@ -15,10 +15,29 @@ import {
 } from '@wordpress/components';
 
 const SplitModal = ({ entry, budgets, onSplit, onCancel }) => {
-	const [allocations, setAllocations] = useState([
-		{ budget_id: '', amount: '', description: entry.description || '' },
-		{ budget_id: '', amount: '', description: entry.description || '' },
-	]);
+	const isEditMode = entry.children && entry.children.length > 0;
+	const [allocations, setAllocations] = useState(
+		isEditMode
+			? entry.children.map((child) => ({
+					budget_id: child.budget_id
+						? child.budget_id.toString()
+						: '',
+					amount: child.amount.toString(),
+					description: child.description || '',
+			  }))
+			: [
+					{
+						budget_id: '',
+						amount: '',
+						description: entry.description || '',
+					},
+					{
+						budget_id: '',
+						amount: '',
+						description: entry.description || '',
+					},
+			  ]
+	);
 	const [isSaving, setIsSaving] = useState(false);
 	const [error, setError] = useState(null);
 
@@ -67,7 +86,7 @@ const SplitModal = ({ entry, budgets, onSplit, onCancel }) => {
 		try {
 			await apiFetch({
 				path: `/fair-payment/v1/financial-entries/${entry.id}/split`,
-				method: 'POST',
+				method: isEditMode ? 'PUT' : 'POST',
 				data: {
 					allocations: allocations.map((a) => ({
 						budget_id: a.budget_id
@@ -97,7 +116,11 @@ const SplitModal = ({ entry, budgets, onSplit, onCancel }) => {
 
 	return (
 		<Modal
-			title={__('Split Entry', 'fair-payment')}
+			title={
+				isEditMode
+					? __('Edit Split', 'fair-payment')
+					: __('Split Entry', 'fair-payment')
+			}
 			onRequestClose={onCancel}
 			style={{ maxWidth: '600px', width: '100%' }}
 		>
@@ -261,7 +284,9 @@ const SplitModal = ({ entry, budgets, onSplit, onCancel }) => {
 								isSaving || !isBalanced || !allAmountsPositive
 							}
 						>
-							{__('Split Entry', 'fair-payment')}
+							{isEditMode
+								? __('Update Split', 'fair-payment')
+								: __('Split Entry', 'fair-payment')}
 						</Button>
 					</HStack>
 				</VStack>

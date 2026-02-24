@@ -263,8 +263,14 @@ const EntriesApp = () => {
 	};
 
 	const handleSplitComplete = () => {
+		const wasEdit =
+			splittingEntry?.children && splittingEntry.children.length > 0;
 		setSplittingEntry(null);
-		setSuccess(__('Entry split successfully.', 'fair-payment'));
+		setSuccess(
+			wasEdit
+				? __('Split updated successfully.', 'fair-payment')
+				: __('Entry split successfully.', 'fair-payment')
+		);
 		loadEntries();
 		loadTotals();
 	};
@@ -789,13 +795,13 @@ const EntriesApp = () => {
 																				variant="tertiary"
 																				size="small"
 																				onClick={() =>
-																					handleUnsplit(
-																						entry.id
+																					handleSplit(
+																						entry
 																					)
 																				}
 																			>
 																				{__(
-																					'Unsplit',
+																					'Edit Split',
 																					'fair-payment'
 																				)}
 																			</Button>

@@ -188,6 +188,7 @@ class FinancialEntryController extends WP_REST_Controller {
 		);
 
 		// POST /fair-payment/v1/financial-entries/{id}/split - Split entry into multiple budgets.
+		// PUT /fair-payment/v1/financial-entries/{id}/split - Update an existing split.
 		// DELETE /fair-payment/v1/financial-entries/{id}/split - Unsplit entry.
 		register_rest_route(
 			$this->namespace,
@@ -197,32 +198,13 @@ class FinancialEntryController extends WP_REST_Controller {
 					'methods'             => WP_REST_Server::CREATABLE,
 					'callback'            => array( $this, 'split_entry' ),
 					'permission_callback' => array( $this, 'update_item_permissions_check' ),
-					'args'                => array(
-						'id'          => array(
-							'description' => __( 'Unique identifier for the financial entry.', 'fair-payment' ),
-							'type'        => 'integer',
-						),
-						'allocations' => array(
-							'description' => __( 'Array of budget allocations.', 'fair-payment' ),
-							'type'        => 'array',
-							'required'    => true,
-							'items'       => array(
-								'type'       => 'object',
-								'properties' => array(
-									'budget_id'   => array(
-										'type' => array( 'integer', 'null' ),
-									),
-									'amount'      => array(
-										'type'     => 'number',
-										'required' => true,
-									),
-									'description' => array(
-										'type' => 'string',
-									),
-								),
-							),
-						),
-					),
+					'args'                => $this->get_split_args(),
+				),
+				array(
+					'methods'             => WP_REST_Server::EDITABLE,
+					'callback'            => array( $this, 'update_split_entry' ),
+					'permission_callback' => array( $this, 'update_item_permissions_check' ),
+					'args'                => $this->get_split_args(),
 				),
 				array(
 					'methods'             => WP_REST_Server::DELETABLE,
@@ -407,6 +389,40 @@ class FinancialEntryController extends WP_REST_Controller {
 				'description' => __( 'Transaction ID.', 'fair-payment' ),
 				'type'        => 'integer',
 				'required'    => false,
+			),
+		);
+	}
+
+	/**
+	 * Get arguments for split endpoints (POST and PUT)
+	 *
+	 * @return array Arguments definition.
+	 */
+	private function get_split_args() {
+		return array(
+			'id'          => array(
+				'description' => __( 'Unique identifier for the financial entry.', 'fair-payment' ),
+				'type'        => 'integer',
+			),
+			'allocations' => array(
+				'description' => __( 'Array of budget allocations.', 'fair-payment' ),
+				'type'        => 'array',
+				'required'    => true,
+				'items'       => array(
+					'type'       => 'object',
+					'properties' => array(
+						'budget_id'   => array(
+							'type' => array( 'integer', 'null' ),
+						),
+						'amount'      => array(
+							'type'     => 'number',
+							'required' => true,
+						),
+						'description' => array(
+							'type' => 'string',
+						),
+					),
+				),
 			),
 		);
 	}
@@ -837,6 +853,100 @@ class FinancialEntryController extends WP_REST_Controller {
 				),
 			),
 			201
+		);
+	}
+
+	/**
+	 * Update an existing split entry's allocations
+	 *
+	 * @param WP_REST_Request $request Full data about the request.
+	 * @return WP_REST_Response|WP_Error Response object on success, or WP_Error on failure.
+	 */
+	public function update_split_entry( $request ) {
+		$id          = (int) $request->get_param( 'id' );
+		$allocations = $request->get_param( 'allocations' );
+
+		// Check if entry exists.
+		$entry = FinancialEntry::get_by_id( $id );
+		if ( ! $entry ) {
+			return new WP_Error(
+				'rest_entry_not_found',
+				__( 'Financial entry not found.', 'fair-payment' ),
+				array( 'status' => 404 )
+			);
+		}
+
+		// Cannot update split on a child entry.
+		if ( $entry->parent_entry_id ) {
+			return new WP_Error(
+				'rest_entry_is_child',
+				__( 'Cannot update split on a child entry.', 'fair-payment' ),
+				array( 'status' => 400 )
+			);
+		}
+
+		// Must already be split.
+		if ( ! FinancialEntry::has_children( $id ) ) {
+			return new WP_Error(
+				'rest_entry_not_split',
+				__( 'Entry is not split.', 'fair-payment' ),
+				array( 'status' => 400 )
+			);
+		}
+
+		// Validate allocations.
+		if ( empty( $allocations ) || ! is_array( $allocations ) || count( $allocations ) < 2 ) {
+			return new WP_Error(
+				'rest_invalid_allocations',
+				__( 'At least 2 allocations are required.', 'fair-payment' ),
+				array( 'status' => 400 )
+			);
+		}
+
+		$total_allocated = 0;
+		foreach ( $allocations as $allocation ) {
+			if ( empty( $allocation['amount'] ) || (float) $allocation['amount'] <= 0 ) {
+				return new WP_Error(
+					'rest_invalid_allocation_amount',
+					__( 'Each allocation amount must be greater than zero.', 'fair-payment' ),
+					array( 'status' => 400 )
+				);
+			}
+			$total_allocated += (float) $allocation['amount'];
+		}
+
+		// Check total matches original (with 0.01 tolerance).
+		if ( abs( $total_allocated - $entry->amount ) > 0.01 ) {
+			return new WP_Error(
+				'rest_allocation_mismatch',
+				__( 'Total allocations must match the original entry amount.', 'fair-payment' ),
+				array( 'status' => 400 )
+			);
+		}
+
+		$child_ids = FinancialEntry::update_split( $id, $allocations );
+
+		if ( ! $child_ids ) {
+			return new WP_Error(
+				'rest_update_split_failed',
+				__( 'Failed to update split.', 'fair-payment' ),
+				array( 'status' => 500 )
+			);
+		}
+
+		$children = FinancialEntry::get_children( $id );
+
+		return new WP_REST_Response(
+			array(
+				'parent'   => $entry->to_array(),
+				'children' => array_map(
+					function ( $child ) {
+						return $child->to_array();
+					},
+					$children
+				),
+			),
+			200
 		);
 	}
 

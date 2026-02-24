@@ -792,6 +792,79 @@ class FinancialEntry {
 	}
 
 	/**
+	 * Update an existing split by replacing all children atomically
+	 *
+	 * @param int   $id          Parent entry ID.
+	 * @param array $allocations Array of allocations, each with budget_id, amount, description.
+	 * @return int[]|false Array of new child entry IDs on success, false on failure.
+	 */
+	public static function update_split( $id, $allocations ) {
+		global $wpdb;
+
+		$table_name = self::get_table_name();
+
+		// Validate the entry exists.
+		$entry = self::get_by_id( $id );
+		if ( ! $entry ) {
+			return false;
+		}
+
+		// Must already be split.
+		if ( ! self::has_children( $id ) ) {
+			return false;
+		}
+
+		// Start transaction.
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+		$wpdb->query( 'START TRANSACTION' );
+
+		// Delete existing children.
+		$delete_result = $wpdb->delete(
+			$table_name,
+			array( 'parent_entry_id' => $id ),
+			array( '%d' )
+		);
+
+		if ( false === $delete_result ) {
+			// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+			$wpdb->query( 'ROLLBACK' );
+			return false;
+		}
+
+		// Create new children.
+		$child_ids = array();
+
+		foreach ( $allocations as $allocation ) {
+			$data = array(
+				'amount'          => abs( (float) $allocation['amount'] ),
+				'entry_type'      => $entry->entry_type,
+				'entry_date'      => $entry->entry_date,
+				'description'     => isset( $allocation['description'] ) ? $allocation['description'] : $entry->description,
+				'budget_id'       => ! empty( $allocation['budget_id'] ) ? (int) $allocation['budget_id'] : null,
+				'transaction_id'  => $entry->transaction_id,
+				'parent_entry_id' => $id,
+			);
+
+			$format = array( '%f', '%s', '%s', '%s', '%d', '%d', '%d' );
+
+			$result = $wpdb->insert( $table_name, $data, $format );
+
+			if ( ! $result ) {
+				// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+				$wpdb->query( 'ROLLBACK' );
+				return false;
+			}
+
+			$child_ids[] = $wpdb->insert_id;
+		}
+
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+		$wpdb->query( 'COMMIT' );
+
+		return $child_ids;
+	}
+
+	/**
 	 * Unsplit an entry by deleting all child entries
 	 *
 	 * @param int $id Parent entry ID.
