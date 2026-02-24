@@ -1,9 +1,10 @@
 <?php
 /**
- * Open Graph meta tags for Fair Events
+ * Open Graph meta tags and JSON-LD structured data for Fair Events
  *
- * Outputs OG meta tags on wp_head for singular posts linked to events,
- * enabling rich previews when shared on social media.
+ * Outputs OG meta tags and Schema.org Event JSON-LD on wp_head for
+ * singular posts linked to events, enabling rich previews when shared
+ * on social media and improved search engine results.
  *
  * @package FairEvents
  */
@@ -17,7 +18,7 @@ use FairEvents\Settings\Settings;
 defined( 'WPINC' ) || die;
 
 /**
- * Handles Open Graph meta tag output for event pages
+ * Handles Open Graph meta tags and JSON-LD structured data for event pages
  */
 class OpenGraphHooks {
 
@@ -26,6 +27,7 @@ class OpenGraphHooks {
 	 */
 	public function __construct() {
 		add_action( 'wp_head', array( $this, 'output_og_tags' ), 1 );
+		add_action( 'wp_head', array( $this, 'output_jsonld' ), 1 );
 	}
 
 	/**
@@ -78,6 +80,119 @@ class OpenGraphHooks {
 		if ( $location ) {
 			$this->output_meta_tag( 'event:location', $location );
 		}
+	}
+
+	/**
+	 * Output Schema.org Event JSON-LD for event pages
+	 *
+	 * @return void
+	 */
+	public function output_jsonld() {
+		if ( ! is_singular() ) {
+			return;
+		}
+
+		$post_id       = get_the_ID();
+		$post_type     = get_post_type( $post_id );
+		$enabled_types = Settings::get_enabled_post_types();
+
+		if ( ! in_array( $post_type, $enabled_types, true ) ) {
+			return;
+		}
+
+		$event_date = EventDates::get_by_event_id( $post_id );
+		if ( ! $event_date ) {
+			return;
+		}
+
+		if ( empty( $event_date->start_datetime ) ) {
+			return;
+		}
+
+		$post = get_post( $post_id );
+
+		$data = array(
+			'@context'    => 'https://schema.org',
+			'@type'       => 'Event',
+			'name'        => $this->get_title( $post, $event_date ),
+			'startDate'   => $this->format_iso8601( $event_date->start_datetime ),
+			'url'         => get_permalink( $post_id ),
+			'eventStatus' => 'https://schema.org/EventScheduled',
+		);
+
+		if ( ! empty( $event_date->end_datetime ) ) {
+			$data['endDate'] = $this->format_iso8601( $event_date->end_datetime );
+		}
+
+		$description = $this->get_description( $post );
+		if ( $description ) {
+			$data['description'] = $description;
+		}
+
+		$image_url = $this->get_image_url( $post_id, $event_date );
+		if ( $image_url ) {
+			$data['image'] = $image_url;
+		}
+
+		$location = $this->get_jsonld_location( $event_date, $post_id );
+		if ( $location ) {
+			$data['location'] = $location;
+		}
+
+		$data['organizer'] = array(
+			'@type' => 'Organization',
+			'name'  => get_bloginfo( 'name' ),
+			'url'   => home_url(),
+		);
+
+		echo '<script type="application/ld+json">' . "\n";
+		echo wp_json_encode( $data, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT );
+		echo "\n" . '</script>' . "\n";
+	}
+
+	/**
+	 * Build Schema.org location object for JSON-LD
+	 *
+	 * @param EventDates $event_date Event date object.
+	 * @param int        $post_id    Post ID.
+	 * @return array|null Location data array or null.
+	 */
+	private function get_jsonld_location( $event_date, $post_id ) {
+		if ( ! empty( $event_date->venue_id ) ) {
+			$venue = Venue::get_by_id( $event_date->venue_id );
+			if ( $venue ) {
+				$location = array(
+					'@type' => 'Place',
+					'name'  => $venue->name,
+				);
+
+				if ( ! empty( $venue->address ) ) {
+					$location['address'] = $venue->address;
+				}
+
+				if ( ! empty( $venue->latitude ) && ! empty( $venue->longitude ) ) {
+					$location['geo'] = array(
+						'@type'     => 'GeoCoordinates',
+						'latitude'  => $venue->latitude,
+						'longitude' => $venue->longitude,
+					);
+				}
+
+				return $location;
+			}
+		}
+
+		// Fall back to event_location meta.
+		$meta_location = get_post_meta( $post_id, 'event_location', true );
+		if ( ! empty( $meta_location ) ) {
+			return array(
+				'@type'   => 'Place',
+				'name'    => $meta_location,
+				'address' => $meta_location,
+			);
+		}
+
+		return null;
 	}
 
 	/**
