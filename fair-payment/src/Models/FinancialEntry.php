@@ -240,8 +240,12 @@ class FinancialEntry {
 		}
 
 		if ( ! empty( $filters['budget_id'] ) ) {
-			$where_clauses[] = 'budget_id = %d';
-			$where_values[]  = (int) $filters['budget_id'];
+			if ( 'none' === $filters['budget_id'] ) {
+				$where_clauses[] = 'budget_id IS NULL';
+			} else {
+				$where_clauses[] = 'budget_id = %d';
+				$where_values[]  = (int) $filters['budget_id'];
+			}
 		}
 
 		if ( ! empty( $filters['entry_type'] ) && in_array( $filters['entry_type'], array( 'cost', 'income' ), true ) ) {
@@ -344,8 +348,12 @@ class FinancialEntry {
 		}
 
 		if ( ! empty( $filters['budget_id'] ) ) {
-			$where_clauses[] = 'budget_id = %d';
-			$where_values[]  = (int) $filters['budget_id'];
+			if ( 'none' === $filters['budget_id'] ) {
+				$where_clauses[] = 'budget_id IS NULL';
+			} else {
+				$where_clauses[] = 'budget_id = %d';
+				$where_values[]  = (int) $filters['budget_id'];
+			}
 		}
 
 		if ( ! empty( $filters['unmatched'] ) ) {

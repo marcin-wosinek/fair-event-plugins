@@ -309,8 +309,9 @@ class FinancialEntryController extends WP_REST_Controller {
 				'sanitize_callback' => 'sanitize_text_field',
 			),
 			'budget_id'  => array(
-				'description' => __( 'Filter by budget ID.', 'fair-payment' ),
-				'type'        => 'integer',
+				'description'       => __( 'Filter by budget ID, or "none" for unbudgeted.', 'fair-payment' ),
+				'type'              => 'string',
+				'sanitize_callback' => 'sanitize_text_field',
 			),
 			'entry_type' => array(
 				'description'       => __( 'Filter by entry type: cost or income.', 'fair-payment' ),

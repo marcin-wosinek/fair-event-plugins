@@ -341,6 +341,16 @@ const BudgetsApp = () => {
 															<Button
 																variant="secondary"
 																size="small"
+																href={`admin.php?page=fair-payment-entries&budget_id=${budget.id}`}
+															>
+																{__(
+																	'View',
+																	'fair-payment'
+																)}
+															</Button>
+															<Button
+																variant="secondary"
+																size="small"
 																onClick={() =>
 																	handleEdit(
 																		budget
@@ -406,7 +416,15 @@ const BudgetsApp = () => {
 													)}
 												</span>
 											</td>
-											<td></td>
+											<td>
+												<Button
+													variant="secondary"
+													size="small"
+													href="admin.php?page=fair-payment-entries&budget_id=none"
+												>
+													{__('View', 'fair-payment')}
+												</Button>
+											</td>
 										</tr>
 									</tbody>
 									<tfoot>

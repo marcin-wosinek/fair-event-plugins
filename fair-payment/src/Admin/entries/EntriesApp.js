@@ -63,6 +63,12 @@ const EntriesApp = () => {
 
 	useEffect(() => {
 		loadBudgets();
+
+		const params = new URLSearchParams(window.location.search);
+		const budgetId = params.get('budget_id');
+		if (budgetId) {
+			setFilters((prev) => ({ ...prev, budget_id: budgetId }));
+		}
 	}, []);
 
 	useEffect(() => {
@@ -357,6 +363,7 @@ const EntriesApp = () => {
 			label: budget.name,
 			value: budget.id.toString(),
 		})),
+		{ label: __('Unbudgeted', 'fair-payment'), value: 'none' },
 	];
 
 	return (
