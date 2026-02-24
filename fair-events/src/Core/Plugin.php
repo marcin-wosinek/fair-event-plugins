@@ -58,6 +58,7 @@ class Plugin {
 	private function load_hooks() {
 		new \FairEvents\Hooks\BlockHooks();
 		new \FairEvents\Hooks\CalendarButtonHooks();
+		new \FairEvents\Hooks\OpenGraphHooks();
 	}
 
 	/**
