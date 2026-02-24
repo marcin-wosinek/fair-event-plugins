@@ -334,7 +334,7 @@ class FinancialEntryController extends WP_REST_Controller {
 			),
 			'budget_id'      => array(
 				'description' => __( 'Budget ID.', 'fair-payment' ),
-				'type'        => 'integer',
+				'type'        => array( 'integer', 'null' ),
 				'required'    => false,
 			),
 			'transaction_id' => array(
