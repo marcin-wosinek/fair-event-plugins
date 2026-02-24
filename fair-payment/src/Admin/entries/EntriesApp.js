@@ -485,207 +485,217 @@ const EntriesApp = () => {
 							{/* Entries Table */}
 							{!loading && entries.length > 0 && (
 								<>
-									<table className="wp-list-table widefat fixed striped">
-										<thead>
-											<tr>
-												<th>
-													{__('Date', 'fair-payment')}
-												</th>
-												<th>
-													{__('Type', 'fair-payment')}
-												</th>
-												<th>
-													{__(
-														'Amount',
-														'fair-payment'
-													)}
-												</th>
-												<th>
-													{__(
-														'Description',
-														'fair-payment'
-													)}
-												</th>
-												<th>
-													{__(
-														'Budget',
-														'fair-payment'
-													)}
-												</th>
-												<th>
-													{__(
-														'Matched',
-														'fair-payment'
-													)}
-												</th>
-												<th>
-													{__(
-														'Source',
-														'fair-payment'
-													)}
-												</th>
-												<th>
-													{__(
-														'Imported',
-														'fair-payment'
-													)}
-												</th>
-												<th>
-													{__(
-														'Actions',
-														'fair-payment'
-													)}
-												</th>
-											</tr>
-										</thead>
-										<tbody>
-											{entries.map((entry) => (
-												<tr key={entry.id}>
-													<td>{entry.entry_date}</td>
-													<td>
-														<span
-															style={{
-																color:
-																	entry.entry_type ===
-																	'cost'
-																		? '#d63638'
-																		: '#007017',
-																fontWeight:
-																	'bold',
-															}}
-														>
-															{entry.entry_type ===
-															'cost'
-																? __(
-																		'Cost',
-																		'fair-payment'
-																  )
-																: __(
-																		'Income',
-																		'fair-payment'
-																  )}
-														</span>
-													</td>
-													<td>
-														<strong>
-															{formatAmount(
-																entry.amount
+									<div style={{ overflowX: 'auto' }}>
+										<table className="wp-list-table widefat fixed striped">
+											<thead>
+												<tr>
+													<th>
+														{__(
+															'Date',
+															'fair-payment'
+														)}
+													</th>
+													<th>
+														{__(
+															'Type',
+															'fair-payment'
+														)}
+													</th>
+													<th>
+														{__(
+															'Amount',
+															'fair-payment'
+														)}
+													</th>
+													<th>
+														{__(
+															'Description',
+															'fair-payment'
+														)}
+													</th>
+													<th>
+														{__(
+															'Budget',
+															'fair-payment'
+														)}
+													</th>
+													<th>
+														{__(
+															'Matched',
+															'fair-payment'
+														)}
+													</th>
+													<th>
+														{__(
+															'Source',
+															'fair-payment'
+														)}
+													</th>
+													<th>
+														{__(
+															'Imported',
+															'fair-payment'
+														)}
+													</th>
+													<th>
+														{__(
+															'Actions',
+															'fair-payment'
+														)}
+													</th>
+												</tr>
+											</thead>
+											<tbody>
+												{entries.map((entry) => (
+													<tr key={entry.id}>
+														<td>
+															{entry.entry_date}
+														</td>
+														<td>
+															<span
+																style={{
+																	color:
+																		entry.entry_type ===
+																		'cost'
+																			? '#d63638'
+																			: '#007017',
+																	fontWeight:
+																		'bold',
+																}}
+															>
+																{entry.entry_type ===
+																'cost'
+																	? __(
+																			'Cost',
+																			'fair-payment'
+																	  )
+																	: __(
+																			'Income',
+																			'fair-payment'
+																	  )}
+															</span>
+														</td>
+														<td>
+															<strong>
+																{formatAmount(
+																	entry.amount
+																)}
+															</strong>
+														</td>
+														<td>
+															{entry.description || (
+																<em>-</em>
 															)}
-														</strong>
-													</td>
-													<td>
-														{entry.description || (
-															<em>-</em>
-														)}
-													</td>
-													<td>
-														{getBudgetName(
-															entry.budget_id
-														)}
-													</td>
-													<td>
-														{entry.transaction_id ? (
-															<span
-																style={{
-																	color: '#007017',
-																}}
-															>
-																{__(
-																	'Yes',
-																	'fair-payment'
-																)}
-															</span>
-														) : (
-															<span
-																style={{
-																	color: '#996800',
-																}}
-															>
-																{__(
-																	'No',
-																	'fair-payment'
-																)}
-															</span>
-														)}
-													</td>
-													<td>
-														{entry.import_source || (
-															<em>-</em>
-														)}
-													</td>
-													<td>
-														{entry.imported_at || (
-															<em>-</em>
-														)}
-													</td>
-													<td>
-														<HStack spacing={1}>
-															<Button
-																variant="secondary"
-																size="small"
-																onClick={() =>
-																	handleEdit(
-																		entry
-																	)
-																}
-															>
-																{__(
-																	'Edit',
-																	'fair-payment'
-																)}
-															</Button>
+														</td>
+														<td>
+															{getBudgetName(
+																entry.budget_id
+															)}
+														</td>
+														<td>
 															{entry.transaction_id ? (
-																<Button
-																	variant="tertiary"
-																	size="small"
-																	onClick={() =>
-																		handleUnmatch(
-																			entry.id
-																		)
-																	}
+																<span
+																	style={{
+																		color: '#007017',
+																	}}
 																>
 																	{__(
-																		'Unmatch',
+																		'Yes',
 																		'fair-payment'
 																	)}
-																</Button>
+																</span>
 															) : (
+																<span
+																	style={{
+																		color: '#996800',
+																	}}
+																>
+																	{__(
+																		'No',
+																		'fair-payment'
+																	)}
+																</span>
+															)}
+														</td>
+														<td>
+															{entry.import_source || (
+																<em>-</em>
+															)}
+														</td>
+														<td>
+															{entry.imported_at || (
+																<em>-</em>
+															)}
+														</td>
+														<td>
+															<HStack spacing={1}>
 																<Button
-																	variant="tertiary"
+																	variant="secondary"
 																	size="small"
 																	onClick={() =>
-																		handleMatch(
+																		handleEdit(
 																			entry
 																		)
 																	}
 																>
 																	{__(
-																		'Match',
+																		'Edit',
 																		'fair-payment'
 																	)}
 																</Button>
-															)}
-															<Button
-																variant="tertiary"
-																size="small"
-																isDestructive
-																onClick={() =>
-																	handleDelete(
-																		entry.id
-																	)
-																}
-															>
-																{__(
-																	'Delete',
-																	'fair-payment'
+																{entry.transaction_id ? (
+																	<Button
+																		variant="tertiary"
+																		size="small"
+																		onClick={() =>
+																			handleUnmatch(
+																				entry.id
+																			)
+																		}
+																	>
+																		{__(
+																			'Unmatch',
+																			'fair-payment'
+																		)}
+																	</Button>
+																) : (
+																	<Button
+																		variant="tertiary"
+																		size="small"
+																		onClick={() =>
+																			handleMatch(
+																				entry
+																			)
+																		}
+																	>
+																		{__(
+																			'Match',
+																			'fair-payment'
+																		)}
+																	</Button>
 																)}
-															</Button>
-														</HStack>
-													</td>
-												</tr>
-											))}
-										</tbody>
-									</table>
+																<Button
+																	variant="tertiary"
+																	size="small"
+																	isDestructive
+																	onClick={() =>
+																		handleDelete(
+																			entry.id
+																		)
+																	}
+																>
+																	{__(
+																		'Delete',
+																		'fair-payment'
+																	)}
+																</Button>
+															</HStack>
+														</td>
+													</tr>
+												))}
+											</tbody>
+										</table>
+									</div>
 
 									{/* Pagination */}
 									{pagination.pages > 1 && (
