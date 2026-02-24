@@ -489,7 +489,11 @@ const EntriesApp = () => {
 										<table className="wp-list-table widefat striped">
 											<thead>
 												<tr>
-													<th style={{ minWidth: '7em' }}>
+													<th
+														style={{
+															minWidth: '7em',
+														}}
+													>
 														{__(
 															'Date',
 															'fair-payment'
@@ -501,7 +505,11 @@ const EntriesApp = () => {
 															'fair-payment'
 														)}
 													</th>
-													<th style={{ minWidth: '6em' }}>
+													<th
+														style={{
+															minWidth: '6em',
+														}}
+													>
 														{__(
 															'Amount',
 															'fair-payment'
@@ -525,13 +533,11 @@ const EntriesApp = () => {
 															'fair-payment'
 														)}
 													</th>
-													<th>
-														{__(
-															'Source',
-															'fair-payment'
-														)}
-													</th>
-													<th style={{ minWidth: '7em' }}>
+													<th
+														style={{
+															minWidth: '7em',
+														}}
+													>
 														{__(
 															'Imported',
 															'fair-payment'
@@ -617,12 +623,12 @@ const EntriesApp = () => {
 																</span>
 															)}
 														</td>
-														<td>
-															{entry.import_source || (
-																<em>-</em>
-															)}
-														</td>
-														<td>
+														<td
+															title={
+																entry.import_source ||
+																''
+															}
+														>
 															{entry.imported_at || (
 																<em>-</em>
 															)}
