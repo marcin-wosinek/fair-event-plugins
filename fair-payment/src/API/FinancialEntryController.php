@@ -296,6 +296,20 @@ class FinancialEntryController extends WP_REST_Controller {
 					'default'     => 1,
 					'minimum'     => 1,
 				),
+				'orderby'  => array(
+					'description'       => __( 'Sort by column.', 'fair-payment' ),
+					'type'              => 'string',
+					'default'           => 'entry_date',
+					'enum'              => array( 'entry_date', 'amount', 'budget_id', 'imported_at' ),
+					'sanitize_callback' => 'sanitize_text_field',
+				),
+				'order'    => array(
+					'description'       => __( 'Sort direction.', 'fair-payment' ),
+					'type'              => 'string',
+					'default'           => 'desc',
+					'enum'              => array( 'asc', 'desc' ),
+					'sanitize_callback' => 'sanitize_text_field',
+				),
 			)
 		);
 	}
@@ -360,6 +374,8 @@ class FinancialEntryController extends WP_REST_Controller {
 			'unmatched'  => $request->get_param( 'unmatched' ),
 			'per_page'   => $request->get_param( 'per_page' ),
 			'page'       => $request->get_param( 'page' ),
+			'orderby'    => $request->get_param( 'orderby' ),
+			'order'      => $request->get_param( 'order' ),
 		);
 
 		$result = FinancialEntry::get_filtered( $filters );

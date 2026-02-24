@@ -274,8 +274,14 @@ class FinancialEntry {
 		} elseif ( ! empty( $where_sql ) ) {
 			$query .= ' ' . $where_sql;
 		}
+		$allowed_orderby = array( 'entry_date', 'amount', 'budget_id', 'imported_at' );
+		$orderby         = ! empty( $filters['orderby'] ) && in_array( $filters['orderby'], $allowed_orderby, true )
+			? $filters['orderby']
+			: 'entry_date';
+		$order           = ! empty( $filters['order'] ) && 'asc' === strtolower( $filters['order'] ) ? 'ASC' : 'DESC';
+
 		// phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared
-		$query .= $wpdb->prepare( ' ORDER BY entry_date DESC, id DESC LIMIT %d OFFSET %d', $per_page, $offset );
+		$query .= $wpdb->prepare( " ORDER BY %i $order, id DESC LIMIT %d OFFSET %d", $orderby, $per_page, $offset );
 
 		// phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared
 		$results = $wpdb->get_results( $query );

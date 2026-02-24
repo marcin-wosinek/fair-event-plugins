@@ -44,6 +44,10 @@ const EntriesApp = () => {
 		entry_type: '',
 		unmatched: false,
 	});
+	const [sort, setSort] = useState({
+		orderby: 'entry_date',
+		order: 'desc',
+	});
 	const [loading, setLoading] = useState(true);
 	const [error, setError] = useState(null);
 	const [success, setSuccess] = useState(null);
@@ -61,7 +65,7 @@ const EntriesApp = () => {
 	useEffect(() => {
 		loadEntries();
 		loadTotals();
-	}, [filters, pagination.page]);
+	}, [filters, pagination.page, sort]);
 
 	const loadBudgets = async () => {
 		try {
@@ -91,6 +95,8 @@ const EntriesApp = () => {
 			if (filters.entry_type)
 				params.append('entry_type', filters.entry_type);
 			if (filters.unmatched) params.append('unmatched', 'true');
+			params.append('orderby', sort.orderby);
+			params.append('order', sort.order);
 
 			const data = await apiFetch({
 				path: `/fair-payment/v1/financial-entries?${params.toString()}`,
@@ -250,6 +256,35 @@ const EntriesApp = () => {
 
 	const handlePageChange = (newPage) => {
 		setPagination((prev) => ({ ...prev, page: newPage }));
+	};
+
+	const handleSort = (column) => {
+		setSort((prev) => ({
+			orderby: column,
+			order:
+				prev.orderby === column && prev.order === 'desc'
+					? 'asc'
+					: 'desc',
+		}));
+		setPagination((prev) => ({ ...prev, page: 1 }));
+	};
+
+	const SortableHeader = ({ column, children }) => {
+		const isActive = sort.orderby === column;
+		const arrow = isActive
+			? sort.order === 'asc'
+				? ' \u25B2'
+				: ' \u25BC'
+			: '';
+		return (
+			<th
+				style={{ cursor: 'pointer', userSelect: 'none' }}
+				onClick={() => handleSort(column)}
+			>
+				{children}
+				{arrow}
+			</th>
+		);
 	};
 
 	const formatAmount = (amount) => {
@@ -489,60 +524,48 @@ const EntriesApp = () => {
 										<table className="wp-list-table widefat striped">
 											<thead>
 												<tr>
-													<th
-														style={{
-															minWidth: '7em',
-														}}
-													>
+													<SortableHeader column="entry_date">
 														{__(
 															'Date',
 															'fair-payment'
 														)}
-													</th>
+													</SortableHeader>
 													<th>
 														{__(
 															'Type',
 															'fair-payment'
 														)}
 													</th>
-													<th
-														style={{
-															minWidth: '6em',
-														}}
-													>
+													<SortableHeader column="amount">
 														{__(
 															'Amount',
 															'fair-payment'
 														)}
-													</th>
+													</SortableHeader>
 													<th>
 														{__(
 															'Description',
 															'fair-payment'
 														)}
 													</th>
-													<th>
+													<SortableHeader column="budget_id">
 														{__(
 															'Budget',
 															'fair-payment'
 														)}
-													</th>
+													</SortableHeader>
 													<th>
 														{__(
 															'Matched',
 															'fair-payment'
 														)}
 													</th>
-													<th
-														style={{
-															minWidth: '7em',
-														}}
-													>
+													<SortableHeader column="imported_at">
 														{__(
 															'Imported',
 															'fair-payment'
 														)}
-													</th>
+													</SortableHeader>
 													<th>
 														{__(
 															'Actions',
