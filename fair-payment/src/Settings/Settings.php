@@ -170,6 +170,19 @@ class Settings {
 			)
 		);
 
+		// Enable Budgets Feature
+		register_setting(
+			'fair_payment_settings',
+			'fair_payment_enable_budgets',
+			array(
+				'type'              => 'boolean',
+				'description'       => __( 'Enable budgeting features', 'fair-payment' ),
+				'sanitize_callback' => 'rest_sanitize_boolean',
+				'show_in_rest'      => true,
+				'default'           => false,
+			)
+		);
+
 		// Mollie Profile ID (cached for OAuth)
 		register_setting(
 			'fair_payment_settings',

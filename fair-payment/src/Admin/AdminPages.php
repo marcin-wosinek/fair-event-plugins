@@ -49,25 +49,28 @@ class AdminPages {
 			'fair-payment-transactions'
 		);
 
-		// Financial Entries submenu.
-		add_submenu_page(
-			'fair-payment-transactions',
-			__( 'Financial Entries', 'fair-payment' ),
-			__( 'Entries', 'fair-payment' ),
-			'manage_options',
-			'fair-payment-entries',
-			array( $this, 'render_entries_page' )
-		);
+		// Budgeting submenus (only if budgeting is enabled).
+		if ( get_option( 'fair_payment_enable_budgets', false ) ) {
+			// Financial Entries submenu.
+			add_submenu_page(
+				'fair-payment-transactions',
+				__( 'Financial Entries', 'fair-payment' ),
+				__( 'Entries', 'fair-payment' ),
+				'manage_options',
+				'fair-payment-entries',
+				array( $this, 'render_entries_page' )
+			);
 
-		// Budget Categories submenu.
-		add_submenu_page(
-			'fair-payment-transactions',
-			__( 'Budget Categories', 'fair-payment' ),
-			__( 'Budgets', 'fair-payment' ),
-			'manage_options',
-			'fair-payment-budgets',
-			array( $this, 'render_budgets_page' )
-		);
+			// Budget Categories submenu.
+			add_submenu_page(
+				'fair-payment-transactions',
+				__( 'Budget Categories', 'fair-payment' ),
+				__( 'Budgets', 'fair-payment' ),
+				'manage_options',
+				'fair-payment-budgets',
+				array( $this, 'render_budgets_page' )
+			);
+		}
 
 		// Settings submenu.
 		add_submenu_page(
@@ -102,6 +105,13 @@ class AdminPages {
 		// Entries page.
 		if ( false !== strpos( $hook, 'fair-payment-entries' ) ) {
 			$this->enqueue_admin_page_script( 'entries' );
+			wp_localize_script(
+				'fair-payment-entries',
+				'fairPaymentSettings',
+				array(
+					'budgetingEnabled' => (bool) get_option( 'fair_payment_enable_budgets', false ),
+				)
+			);
 			return;
 		}
 	}

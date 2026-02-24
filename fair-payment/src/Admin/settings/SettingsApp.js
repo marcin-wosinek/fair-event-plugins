@@ -10,6 +10,7 @@ import { Notice, TabPanel } from '@wordpress/components';
  */
 import ConnectionTab from './ConnectionTab';
 import AdvancedTab from './AdvancedTab';
+import FeaturesTab from './FeaturesTab.js';
 import { saveSettings } from './settings-api';
 
 /**
@@ -201,6 +202,10 @@ export default function SettingsApp() {
 						title: __('Connection', 'fair-payment'),
 					},
 					{
+						name: 'features',
+						title: __('Features', 'fair-payment'),
+					},
+					{
 						name: 'advanced',
 						title: __('Advanced', 'fair-payment'),
 					},
@@ -214,6 +219,9 @@ export default function SettingsApp() {
 								onNotice={setNotice}
 								shouldReload={shouldReloadConnection}
 							/>
+						)}
+						{tab.name === 'features' && (
+							<FeaturesTab onNotice={setNotice} />
 						)}
 						{tab.name === 'advanced' && (
 							<AdvancedTab onNotice={setNotice} />

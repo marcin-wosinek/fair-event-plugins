@@ -14,7 +14,14 @@ import {
 	__experimentalHStack as HStack,
 } from '@wordpress/components';
 
-const SplitModal = ({ entry, budgets, onSplit, onCancel, onUnsplit }) => {
+const SplitModal = ({
+	entry,
+	budgets,
+	budgetingEnabled,
+	onSplit,
+	onCancel,
+	onUnsplit,
+}) => {
 	const isEditMode = entry.children && entry.children.length > 0;
 	const [allocations, setAllocations] = useState(
 		isEditMode
@@ -180,20 +187,27 @@ const SplitModal = ({ entry, budgets, onSplit, onCancel, onUnsplit }) => {
 							}}
 						>
 							<HStack spacing={2} alignment="top" wrap>
-								<div style={{ flex: 1, minWidth: '150px' }}>
-									<SelectControl
-										label={__('Budget', 'fair-payment')}
-										value={allocation.budget_id}
-										options={budgetOptions}
-										onChange={(value) =>
-											updateAllocation(
-												index,
-												'budget_id',
-												value
-											)
-										}
-									/>
-								</div>
+								{budgetingEnabled && (
+									<div
+										style={{
+											flex: 1,
+											minWidth: '150px',
+										}}
+									>
+										<SelectControl
+											label={__('Budget', 'fair-payment')}
+											value={allocation.budget_id}
+											options={budgetOptions}
+											onChange={(value) =>
+												updateAllocation(
+													index,
+													'budget_id',
+													value
+												)
+											}
+										/>
+									</div>
+								)}
 								<div style={{ width: '120px' }}>
 									<TextControl
 										label={__('Amount', 'fair-payment')}

@@ -25,6 +25,8 @@ import MatchModal from './components/MatchModal.js';
 import ImportModal from './components/ImportModal.js';
 import SplitModal from './components/SplitModal.js';
 
+const budgetingEnabled = window.fairPaymentSettings?.budgetingEnabled === '1';
+
 const EntriesApp = () => {
 	const [entries, setEntries] = useState([]);
 	const [budgets, setBudgets] = useState([]);
@@ -62,12 +64,14 @@ const EntriesApp = () => {
 	const [expandedEntries, setExpandedEntries] = useState({});
 
 	useEffect(() => {
-		loadBudgets();
+		if (budgetingEnabled) {
+			loadBudgets();
 
-		const params = new URLSearchParams(window.location.search);
-		const budgetId = params.get('budget_id');
-		if (budgetId) {
-			setFilters((prev) => ({ ...prev, budget_id: budgetId }));
+			const params = new URLSearchParams(window.location.search);
+			const budgetId = params.get('budget_id');
+			if (budgetId) {
+				setFilters((prev) => ({ ...prev, budget_id: budgetId }));
+			}
 		}
 	}, []);
 
@@ -470,14 +474,19 @@ const EntriesApp = () => {
 									}
 									type="date"
 								/>
-								<SelectControl
-									label={__('Budget', 'fair-payment')}
-									value={filters.budget_id}
-									options={budgetOptions}
-									onChange={(value) =>
-										handleFilterChange('budget_id', value)
-									}
-								/>
+								{budgetingEnabled && (
+									<SelectControl
+										label={__('Budget', 'fair-payment')}
+										value={filters.budget_id}
+										options={budgetOptions}
+										onChange={(value) =>
+											handleFilterChange(
+												'budget_id',
+												value
+											)
+										}
+									/>
+								)}
 								<SelectControl
 									label={__('Type', 'fair-payment')}
 									value={filters.entry_type}
@@ -614,12 +623,14 @@ const EntriesApp = () => {
 															'fair-payment'
 														)}
 													</th>
-													<SortableHeader column="budget_id">
-														{__(
-															'Budget',
-															'fair-payment'
-														)}
-													</SortableHeader>
+													{budgetingEnabled && (
+														<SortableHeader column="budget_id">
+															{__(
+																'Budget',
+																'fair-payment'
+															)}
+														</SortableHeader>
+													)}
 													<th>
 														{__(
 															'Matched',
@@ -717,38 +728,40 @@ const EntriesApp = () => {
 																		</em>
 																	)}
 																</td>
-																<td>
-																	{isSplit ? (
-																		<Button
-																			variant="link"
-																			size="small"
-																			onClick={() =>
-																				toggleExpanded(
-																					entry.id
-																				)
-																			}
-																			style={{
-																				color: '#2271b1',
-																				fontWeight:
-																					'bold',
-																			}}
-																		>
-																			{isExpanded
-																				? __(
-																						'Split \u25BE',
-																						'fair-payment'
-																				  )
-																				: __(
-																						'Split \u25B8',
-																						'fair-payment'
-																				  )}
-																		</Button>
-																	) : (
-																		getBudgetName(
-																			entry.budget_id
-																		)
-																	)}
-																</td>
+																{budgetingEnabled && (
+																	<td>
+																		{isSplit ? (
+																			<Button
+																				variant="link"
+																				size="small"
+																				onClick={() =>
+																					toggleExpanded(
+																						entry.id
+																					)
+																				}
+																				style={{
+																					color: '#2271b1',
+																					fontWeight:
+																						'bold',
+																				}}
+																			>
+																				{isExpanded
+																					? __(
+																							'Split \u25BE',
+																							'fair-payment'
+																					  )
+																					: __(
+																							'Split \u25B8',
+																							'fair-payment'
+																					  )}
+																			</Button>
+																		) : (
+																			getBudgetName(
+																				entry.budget_id
+																			)
+																		)}
+																	</td>
+																)}
 																<td>
 																	{entry.transaction_id ? (
 																		<span
@@ -951,11 +964,13 @@ const EntriesApp = () => {
 																					</em>
 																				)}
 																			</td>
-																			<td>
-																				{getBudgetName(
-																					child.budget_id
-																				)}
-																			</td>
+																			{budgetingEnabled && (
+																				<td>
+																					{getBudgetName(
+																						child.budget_id
+																					)}
+																				</td>
+																			)}
 																			<td
 																				colSpan={
 																					3
@@ -1027,6 +1042,7 @@ const EntriesApp = () => {
 				<EntryForm
 					entry={editingEntry}
 					budgets={budgets}
+					budgetingEnabled={budgetingEnabled}
 					onSave={handleFormSave}
 					onCancel={handleFormCancel}
 				/>
@@ -1054,6 +1070,7 @@ const EntriesApp = () => {
 				<SplitModal
 					entry={splittingEntry}
 					budgets={budgets}
+					budgetingEnabled={budgetingEnabled}
 					onSplit={handleSplitComplete}
 					onCancel={handleSplitCancel}
 					onUnsplit={() => handleUnsplit(splittingEntry.id)}

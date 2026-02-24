@@ -14,7 +14,7 @@ import {
 	__experimentalHStack as HStack,
 } from '@wordpress/components';
 
-const EntryForm = ({ entry, budgets, onSave, onCancel }) => {
+const EntryForm = ({ entry, budgets, budgetingEnabled, onSave, onCancel }) => {
 	const [formData, setFormData] = useState({
 		amount: '',
 		entry_type: 'cost',
@@ -157,14 +157,16 @@ const EntryForm = ({ entry, budgets, onSave, onCancel }) => {
 						)}
 					/>
 
-					<SelectControl
-						label={__('Budget Category', 'fair-payment')}
-						value={formData.budget_id}
-						options={budgetOptions}
-						onChange={(value) =>
-							setFormData({ ...formData, budget_id: value })
-						}
-					/>
+					{budgetingEnabled && (
+						<SelectControl
+							label={__('Budget Category', 'fair-payment')}
+							value={formData.budget_id}
+							options={budgetOptions}
+							onChange={(value) =>
+								setFormData({ ...formData, budget_id: value })
+							}
+						/>
+					)}
 
 					<HStack justify="flex-end" spacing={2}>
 						<Button
