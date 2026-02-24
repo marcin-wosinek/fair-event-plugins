@@ -49,16 +49,6 @@ class AdminPages {
 			'fair-payment-transactions'
 		);
 
-		// Settings submenu.
-		add_submenu_page(
-			'fair-payment-transactions',
-			__( 'Settings', 'fair-payment' ),
-			__( 'Settings', 'fair-payment' ),
-			'manage_options',
-			'fair-payment-settings',
-			array( $this, 'render_settings_page' )
-		);
-
 		// Financial Entries submenu.
 		add_submenu_page(
 			'fair-payment-transactions',
@@ -77,6 +67,16 @@ class AdminPages {
 			'manage_options',
 			'fair-payment-budgets',
 			array( $this, 'render_budgets_page' )
+		);
+
+		// Settings submenu.
+		add_submenu_page(
+			'fair-payment-transactions',
+			__( 'Settings', 'fair-payment' ),
+			__( 'Settings', 'fair-payment' ),
+			'manage_options',
+			'fair-payment-settings',
+			array( $this, 'render_settings_page' )
 		);
 	}
 
