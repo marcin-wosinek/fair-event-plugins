@@ -296,6 +296,7 @@ const EntriesApp = () => {
 				path: `/fair-payment/v1/financial-entries/${id}/split`,
 				method: 'DELETE',
 			});
+			setSplittingEntry(null);
 			setSuccess(__('Entry unsplit successfully.', 'fair-payment'));
 			loadEntries();
 			loadTotals();
@@ -1055,6 +1056,7 @@ const EntriesApp = () => {
 					budgets={budgets}
 					onSplit={handleSplitComplete}
 					onCancel={handleSplitCancel}
+					onUnsplit={() => handleUnsplit(splittingEntry.id)}
 				/>
 			)}
 		</div>

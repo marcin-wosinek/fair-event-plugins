@@ -14,7 +14,7 @@ import {
 	__experimentalHStack as HStack,
 } from '@wordpress/components';
 
-const SplitModal = ({ entry, budgets, onSplit, onCancel }) => {
+const SplitModal = ({ entry, budgets, onSplit, onCancel, onUnsplit }) => {
 	const isEditMode = entry.children && entry.children.length > 0;
 	const [allocations, setAllocations] = useState(
 		isEditMode
@@ -268,26 +268,43 @@ const SplitModal = ({ entry, budgets, onSplit, onCancel }) => {
 						)}
 					</div>
 
-					<HStack justify="flex-end" spacing={2}>
-						<Button
-							variant="tertiary"
-							onClick={onCancel}
-							disabled={isSaving}
-						>
-							{__('Cancel', 'fair-payment')}
-						</Button>
-						<Button
-							variant="primary"
-							type="submit"
-							isBusy={isSaving}
-							disabled={
-								isSaving || !isBalanced || !allAmountsPositive
-							}
-						>
-							{isEditMode
-								? __('Update Split', 'fair-payment')
-								: __('Split Entry', 'fair-payment')}
-						</Button>
+					<HStack
+						justify={isEditMode ? 'space-between' : 'flex-end'}
+						spacing={2}
+					>
+						{isEditMode && (
+							<Button
+								variant="tertiary"
+								isDestructive
+								onClick={onUnsplit}
+								disabled={isSaving}
+							>
+								{__('Unsplit', 'fair-payment')}
+							</Button>
+						)}
+						<HStack justify="flex-end" spacing={2}>
+							<Button
+								variant="tertiary"
+								onClick={onCancel}
+								disabled={isSaving}
+							>
+								{__('Cancel', 'fair-payment')}
+							</Button>
+							<Button
+								variant="primary"
+								type="submit"
+								isBusy={isSaving}
+								disabled={
+									isSaving ||
+									!isBalanced ||
+									!allAmountsPositive
+								}
+							>
+								{isEditMode
+									? __('Update Split', 'fair-payment')
+									: __('Split Entry', 'fair-payment')}
+							</Button>
+						</HStack>
 					</HStack>
 				</VStack>
 			</form>
