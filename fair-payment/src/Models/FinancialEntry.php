@@ -75,6 +75,13 @@ class FinancialEntry {
 	public $external_reference;
 
 	/**
+	 * Parent entry ID (for split entries)
+	 *
+	 * @var int|null
+	 */
+	public $parent_entry_id;
+
+	/**
 	 * Import source filename
 	 *
 	 * @var string|null
@@ -219,6 +226,9 @@ class FinancialEntry {
 		$where_clauses = array();
 		$where_values  = array();
 
+		// Exclude child entries from the main list (they are shown under their parent).
+		$where_clauses[] = 'parent_entry_id IS NULL';
+
 		if ( ! empty( $filters['date_from'] ) ) {
 			$where_clauses[] = 'entry_date >= %s';
 			$where_values[]  = $filters['date_from'];
@@ -316,8 +326,12 @@ class FinancialEntry {
 		$table_name = self::get_table_name();
 
 		// Build WHERE clause (same as get_filtered but without pagination).
+		// Exclude parent entries that have children (to avoid double-counting).
 		$where_clauses = array();
 		$where_values  = array();
+
+		// Exclude entries that are parents (have children). Count children instead.
+		$where_clauses[] = 'id NOT IN (SELECT DISTINCT parent_entry_id FROM ' . $table_name . ' WHERE parent_entry_id IS NOT NULL)';
 
 		if ( ! empty( $filters['date_from'] ) ) {
 			$where_clauses[] = 'entry_date >= %s';
@@ -389,10 +403,12 @@ class FinancialEntry {
 		$table_name = self::get_table_name();
 
 		// Get totals grouped by budget_id and entry_type.
+		// Exclude parent entries that have children (to avoid double-counting).
 		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
 		$results = $wpdb->get_results(
 			$wpdb->prepare(
-				'SELECT budget_id, entry_type, SUM(amount) as total, COUNT(*) as count FROM %i GROUP BY budget_id, entry_type',
+				'SELECT budget_id, entry_type, SUM(amount) as total, COUNT(*) as count FROM %i WHERE id NOT IN (SELECT DISTINCT parent_entry_id FROM %i WHERE parent_entry_id IS NOT NULL) GROUP BY budget_id, entry_type',
+				$table_name,
 				$table_name
 			)
 		);
@@ -651,6 +667,154 @@ class FinancialEntry {
 	}
 
 	/**
+	 * Get child entries for a parent entry
+	 *
+	 * @param int $parent_id Parent entry ID.
+	 * @return FinancialEntry[] Array of child entries.
+	 */
+	public static function get_children( $parent_id ) {
+		global $wpdb;
+
+		$table_name = self::get_table_name();
+
+		$results = $wpdb->get_results(
+			$wpdb->prepare(
+				'SELECT * FROM %i WHERE parent_entry_id = %d ORDER BY id ASC',
+				$table_name,
+				$parent_id
+			)
+		);
+
+		if ( ! $results ) {
+			return array();
+		}
+
+		$entries = array();
+		foreach ( $results as $result ) {
+			$entries[] = self::hydrate( $result );
+		}
+
+		return $entries;
+	}
+
+	/**
+	 * Check if an entry has children (is a split parent)
+	 *
+	 * @param int $id Entry ID.
+	 * @return bool True if entry has children.
+	 */
+	public static function has_children( $id ) {
+		global $wpdb;
+
+		$table_name = self::get_table_name();
+
+		$count = $wpdb->get_var(
+			$wpdb->prepare(
+				'SELECT COUNT(*) FROM %i WHERE parent_entry_id = %d',
+				$table_name,
+				$id
+			)
+		);
+
+		return (int) $count > 0;
+	}
+
+	/**
+	 * Split an entry into multiple budget allocations
+	 *
+	 * @param int   $id          Entry ID to split.
+	 * @param array $allocations Array of allocations, each with budget_id, amount, description.
+	 * @return int[]|false Array of new child entry IDs on success, false on failure.
+	 */
+	public static function split_entry( $id, $allocations ) {
+		global $wpdb;
+
+		$table_name = self::get_table_name();
+
+		// Validate the entry exists.
+		$entry = self::get_by_id( $id );
+		if ( ! $entry ) {
+			return false;
+		}
+
+		// Cannot split a child entry.
+		if ( $entry->parent_entry_id ) {
+			return false;
+		}
+
+		// Cannot split an already-split entry.
+		if ( self::has_children( $id ) ) {
+			return false;
+		}
+
+		// Start transaction.
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+		$wpdb->query( 'START TRANSACTION' );
+
+		$child_ids = array();
+
+		foreach ( $allocations as $allocation ) {
+			$data = array(
+				'amount'          => abs( (float) $allocation['amount'] ),
+				'entry_type'      => $entry->entry_type,
+				'entry_date'      => $entry->entry_date,
+				'description'     => isset( $allocation['description'] ) ? $allocation['description'] : $entry->description,
+				'budget_id'       => ! empty( $allocation['budget_id'] ) ? (int) $allocation['budget_id'] : null,
+				'transaction_id'  => $entry->transaction_id,
+				'parent_entry_id' => $id,
+			);
+
+			$format = array( '%f', '%s', '%s', '%s', '%d', '%d', '%d' );
+
+			$result = $wpdb->insert( $table_name, $data, $format );
+
+			if ( ! $result ) {
+				// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+				$wpdb->query( 'ROLLBACK' );
+				return false;
+			}
+
+			$child_ids[] = $wpdb->insert_id;
+		}
+
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+		$wpdb->query( 'COMMIT' );
+
+		return $child_ids;
+	}
+
+	/**
+	 * Unsplit an entry by deleting all child entries
+	 *
+	 * @param int $id Parent entry ID.
+	 * @return bool True on success, false on failure.
+	 */
+	public static function unsplit_entry( $id ) {
+		global $wpdb;
+
+		$table_name = self::get_table_name();
+
+		// Validate the entry exists and has children.
+		$entry = self::get_by_id( $id );
+		if ( ! $entry ) {
+			return false;
+		}
+
+		if ( ! self::has_children( $id ) ) {
+			return false;
+		}
+
+		// Delete all child entries.
+		$result = $wpdb->delete(
+			$table_name,
+			array( 'parent_entry_id' => $id ),
+			array( '%d' )
+		);
+
+		return false !== $result;
+	}
+
+	/**
 	 * Hydrate an entry object from a database row
 	 *
 	 * @param object $row Database row.
@@ -666,6 +830,7 @@ class FinancialEntry {
 		$entry->budget_id          = $row->budget_id ? (int) $row->budget_id : null;
 		$entry->transaction_id     = $row->transaction_id ? (int) $row->transaction_id : null;
 		$entry->external_reference = isset( $row->external_reference ) ? $row->external_reference : null;
+		$entry->parent_entry_id    = isset( $row->parent_entry_id ) && $row->parent_entry_id ? (int) $row->parent_entry_id : null;
 		$entry->import_source      = isset( $row->import_source ) ? $row->import_source : null;
 		$entry->imported_at        = isset( $row->imported_at ) ? $row->imported_at : null;
 		$entry->created_at         = $row->created_at;
@@ -689,6 +854,7 @@ class FinancialEntry {
 			'budget_id'          => $this->budget_id,
 			'transaction_id'     => $this->transaction_id,
 			'external_reference' => $this->external_reference,
+			'parent_entry_id'    => $this->parent_entry_id,
 			'import_source'      => $this->import_source,
 			'imported_at'        => $this->imported_at,
 			'created_at'         => $this->created_at,

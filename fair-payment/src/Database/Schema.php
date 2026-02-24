@@ -109,9 +109,10 @@ class Schema {
 		self::migrate_to_v6();
 		self::migrate_to_v7();
 		self::migrate_to_v8();
+		self::migrate_to_v9();
 
 		// Store database version for future migrations.
-		update_option( 'fair_payment_db_version', '8.0' );
+		update_option( 'fair_payment_db_version', '9.0' );
 	}
 
 	/**
@@ -189,6 +190,7 @@ class Schema {
 			transaction_id bigint(20) UNSIGNED DEFAULT NULL,
 			external_reference varchar(255) DEFAULT NULL,
 			import_source varchar(255) DEFAULT NULL,
+			parent_entry_id bigint(20) UNSIGNED DEFAULT NULL,
 			imported_at datetime DEFAULT NULL,
 			created_at datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
 			updated_at datetime NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
@@ -197,7 +199,8 @@ class Schema {
 			KEY entry_type (entry_type),
 			KEY entry_date (entry_date),
 			KEY budget_id (budget_id),
-			KEY transaction_id (transaction_id)
+			KEY transaction_id (transaction_id),
+			KEY parent_entry_id (parent_entry_id)
 		) $charset_collate;";
 
 		require_once ABSPATH . 'wp-admin/includes/upgrade.php';
@@ -506,6 +509,53 @@ class Schema {
 				$wpdb->query(
 					$wpdb->prepare(
 						'ALTER TABLE %i ADD COLUMN imported_at datetime DEFAULT NULL AFTER import_source',
+						$table_name
+					)
+				);
+			}
+		}
+	}
+
+	/**
+	 * Migrate database from v8.0 to v9.0
+	 *
+	 * Adds parent_entry_id column to financial_entries for split entry support.
+	 *
+	 * @return void
+	 */
+	public static function migrate_to_v9() {
+		global $wpdb;
+
+		$current_version = get_option( 'fair_payment_db_version', '1.0' );
+
+		if ( version_compare( $current_version, '9.0', '<' ) ) {
+			$table_name = self::get_financial_entries_table_name();
+
+			// Check if parent_entry_id column already exists.
+			// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+			$column_exists = $wpdb->get_results(
+				$wpdb->prepare(
+					'SHOW COLUMNS FROM %i LIKE %s',
+					$table_name,
+					'parent_entry_id'
+				)
+			);
+
+			// Add parent_entry_id column if it doesn't exist.
+			if ( empty( $column_exists ) ) {
+				// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.DirectDatabaseQuery.SchemaChange
+				$wpdb->query(
+					$wpdb->prepare(
+						'ALTER TABLE %i ADD COLUMN parent_entry_id bigint(20) UNSIGNED DEFAULT NULL AFTER import_source',
+						$table_name
+					)
+				);
+
+				// Add index on parent_entry_id.
+				// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.DirectDatabaseQuery.SchemaChange
+				$wpdb->query(
+					$wpdb->prepare(
+						'ALTER TABLE %i ADD KEY parent_entry_id (parent_entry_id)',
 						$table_name
 					)
 				);

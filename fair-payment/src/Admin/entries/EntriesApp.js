@@ -1,7 +1,7 @@
 /**
  * WordPress dependencies
  */
-import { useState, useEffect, useCallback } from '@wordpress/element';
+import { useState, useEffect, useCallback, Fragment } from '@wordpress/element';
 import { __ } from '@wordpress/i18n';
 import apiFetch from '@wordpress/api-fetch';
 import {
@@ -23,6 +23,7 @@ import {
 import EntryForm from './components/EntryForm.js';
 import MatchModal from './components/MatchModal.js';
 import ImportModal from './components/ImportModal.js';
+import SplitModal from './components/SplitModal.js';
 
 const EntriesApp = () => {
 	const [entries, setEntries] = useState([]);
@@ -57,6 +58,8 @@ const EntriesApp = () => {
 	const [editingEntry, setEditingEntry] = useState(null);
 	const [matchingEntry, setMatchingEntry] = useState(null);
 	const [isImportOpen, setIsImportOpen] = useState(false);
+	const [splittingEntry, setSplittingEntry] = useState(null);
+	const [expandedEntries, setExpandedEntries] = useState({});
 
 	useEffect(() => {
 		loadBudgets();
@@ -247,6 +250,55 @@ const EntriesApp = () => {
 
 	const handleImportCancel = () => {
 		setIsImportOpen(false);
+	};
+
+	const handleSplit = (entry) => {
+		setSplittingEntry(entry);
+	};
+
+	const handleSplitComplete = () => {
+		setSplittingEntry(null);
+		setSuccess(__('Entry split successfully.', 'fair-payment'));
+		loadEntries();
+		loadTotals();
+	};
+
+	const handleSplitCancel = () => {
+		setSplittingEntry(null);
+	};
+
+	const handleUnsplit = async (id) => {
+		if (
+			!window.confirm(
+				__(
+					'Are you sure you want to unsplit this entry? All child allocations will be deleted.',
+					'fair-payment'
+				)
+			)
+		) {
+			return;
+		}
+
+		try {
+			await apiFetch({
+				path: `/fair-payment/v1/financial-entries/${id}/split`,
+				method: 'DELETE',
+			});
+			setSuccess(__('Entry unsplit successfully.', 'fair-payment'));
+			loadEntries();
+			loadTotals();
+		} catch (err) {
+			setError(
+				err.message || __('Failed to unsplit entry.', 'fair-payment')
+			);
+		}
+	};
+
+	const toggleExpanded = (entryId) => {
+		setExpandedEntries((prev) => ({
+			...prev,
+			[entryId]: !prev[entryId],
+		}));
 	};
 
 	const handleFilterChange = (key, value) => {
@@ -575,153 +627,291 @@ const EntriesApp = () => {
 												</tr>
 											</thead>
 											<tbody>
-												{entries.map((entry) => (
-													<tr key={entry.id}>
-														<td>
-															{entry.entry_date}
-														</td>
-														<td>
-															<span
-																style={{
-																	color:
-																		entry.entry_type ===
-																		'cost'
-																			? '#d63638'
-																			: '#007017',
-																	fontWeight:
-																		'bold',
-																}}
-															>
-																{entry.entry_type ===
-																'cost'
-																	? __(
-																			'Cost',
-																			'fair-payment'
-																	  )
-																	: __(
-																			'Income',
-																			'fair-payment'
-																	  )}
-															</span>
-														</td>
-														<td>
-															<strong>
-																{formatAmount(
-																	entry.amount
-																)}
-															</strong>
-														</td>
-														<td>
-															{entry.description || (
-																<em>-</em>
-															)}
-														</td>
-														<td>
-															{getBudgetName(
-																entry.budget_id
-															)}
-														</td>
-														<td>
-															{entry.transaction_id ? (
-																<span
-																	style={{
-																		color: '#007017',
-																	}}
-																>
-																	{__(
-																		'Yes',
-																		'fair-payment'
-																	)}
-																</span>
-															) : (
-																<span
-																	style={{
-																		color: '#996800',
-																	}}
-																>
-																	{__(
-																		'No',
-																		'fair-payment'
-																	)}
-																</span>
-															)}
-														</td>
-														<td
-															title={
-																entry.import_source ||
-																''
-															}
+												{entries.map((entry) => {
+													const isSplit =
+														entry.children &&
+														entry.children.length >
+															0;
+													const isExpanded =
+														expandedEntries[
+															entry.id
+														];
+
+													return (
+														<Fragment
+															key={entry.id}
 														>
-															{entry.imported_at || (
-																<em>-</em>
-															)}
-														</td>
-														<td>
-															<HStack spacing={1}>
-																<Button
-																	variant="secondary"
-																	size="small"
-																	onClick={() =>
-																		handleEdit(
-																			entry
+															<tr>
+																<td>
+																	{
+																		entry.entry_date
+																	}
+																</td>
+																<td>
+																	<span
+																		style={{
+																			color:
+																				entry.entry_type ===
+																				'cost'
+																					? '#d63638'
+																					: '#007017',
+																			fontWeight:
+																				'bold',
+																		}}
+																	>
+																		{entry.entry_type ===
+																		'cost'
+																			? __(
+																					'Cost',
+																					'fair-payment'
+																			  )
+																			: __(
+																					'Income',
+																					'fair-payment'
+																			  )}
+																	</span>
+																</td>
+																<td>
+																	<strong>
+																		{formatAmount(
+																			entry.amount
+																		)}
+																	</strong>
+																</td>
+																<td>
+																	{entry.description || (
+																		<em>
+																			-
+																		</em>
+																	)}
+																</td>
+																<td>
+																	{isSplit ? (
+																		<Button
+																			variant="link"
+																			size="small"
+																			onClick={() =>
+																				toggleExpanded(
+																					entry.id
+																				)
+																			}
+																			style={{
+																				color: '#2271b1',
+																				fontWeight:
+																					'bold',
+																			}}
+																		>
+																			{isExpanded
+																				? __(
+																						'Split \u25BE',
+																						'fair-payment'
+																				  )
+																				: __(
+																						'Split \u25B8',
+																						'fair-payment'
+																				  )}
+																		</Button>
+																	) : (
+																		getBudgetName(
+																			entry.budget_id
 																		)
+																	)}
+																</td>
+																<td>
+																	{entry.transaction_id ? (
+																		<span
+																			style={{
+																				color: '#007017',
+																			}}
+																		>
+																			{__(
+																				'Yes',
+																				'fair-payment'
+																			)}
+																		</span>
+																	) : (
+																		<span
+																			style={{
+																				color: '#996800',
+																			}}
+																		>
+																			{__(
+																				'No',
+																				'fair-payment'
+																			)}
+																		</span>
+																	)}
+																</td>
+																<td
+																	title={
+																		entry.import_source ||
+																		''
 																	}
 																>
-																	{__(
-																		'Edit',
-																		'fair-payment'
+																	{entry.imported_at || (
+																		<em>
+																			-
+																		</em>
 																	)}
-																</Button>
-																{entry.transaction_id ? (
-																	<Button
-																		variant="tertiary"
-																		size="small"
-																		onClick={() =>
-																			handleUnmatch(
-																				entry.id
-																			)
+																</td>
+																<td>
+																	<HStack
+																		spacing={
+																			1
 																		}
 																	>
-																		{__(
-																			'Unmatch',
-																			'fair-payment'
+																		<Button
+																			variant="secondary"
+																			size="small"
+																			onClick={() =>
+																				handleEdit(
+																					entry
+																				)
+																			}
+																			disabled={
+																				isSplit
+																			}
+																		>
+																			{__(
+																				'Edit',
+																				'fair-payment'
+																			)}
+																		</Button>
+																		{isSplit ? (
+																			<Button
+																				variant="tertiary"
+																				size="small"
+																				onClick={() =>
+																					handleUnsplit(
+																						entry.id
+																					)
+																				}
+																			>
+																				{__(
+																					'Unsplit',
+																					'fair-payment'
+																				)}
+																			</Button>
+																		) : (
+																			<Button
+																				variant="tertiary"
+																				size="small"
+																				onClick={() =>
+																					handleSplit(
+																						entry
+																					)
+																				}
+																			>
+																				{__(
+																					'Split',
+																					'fair-payment'
+																				)}
+																			</Button>
 																		)}
-																	</Button>
-																) : (
-																	<Button
-																		variant="tertiary"
-																		size="small"
-																		onClick={() =>
-																			handleMatch(
-																				entry
-																			)
-																		}
-																	>
-																		{__(
-																			'Match',
-																			'fair-payment'
+																		{entry.transaction_id ? (
+																			<Button
+																				variant="tertiary"
+																				size="small"
+																				onClick={() =>
+																					handleUnmatch(
+																						entry.id
+																					)
+																				}
+																			>
+																				{__(
+																					'Unmatch',
+																					'fair-payment'
+																				)}
+																			</Button>
+																		) : (
+																			<Button
+																				variant="tertiary"
+																				size="small"
+																				onClick={() =>
+																					handleMatch(
+																						entry
+																					)
+																				}
+																			>
+																				{__(
+																					'Match',
+																					'fair-payment'
+																				)}
+																			</Button>
 																		)}
-																	</Button>
+																		<Button
+																			variant="tertiary"
+																			size="small"
+																			isDestructive
+																			onClick={() =>
+																				handleDelete(
+																					entry.id
+																				)
+																			}
+																			disabled={
+																				isSplit
+																			}
+																		>
+																			{__(
+																				'Delete',
+																				'fair-payment'
+																			)}
+																		</Button>
+																	</HStack>
+																</td>
+															</tr>
+															{isSplit &&
+																isExpanded &&
+																entry.children.map(
+																	(child) => (
+																		<tr
+																			key={`child-${child.id}`}
+																			style={{
+																				backgroundColor:
+																					'#f6f7f7',
+																			}}
+																		>
+																			<td></td>
+																			<td></td>
+																			<td
+																				style={{
+																					paddingLeft:
+																						'20px',
+																				}}
+																			>
+																				{formatAmount(
+																					child.amount
+																				)}
+																			</td>
+																			<td
+																				style={{
+																					color: '#666',
+																					fontSize:
+																						'13px',
+																				}}
+																			>
+																				{child.description || (
+																					<em>
+																						-
+																					</em>
+																				)}
+																			</td>
+																			<td>
+																				{getBudgetName(
+																					child.budget_id
+																				)}
+																			</td>
+																			<td
+																				colSpan={
+																					3
+																				}
+																			></td>
+																		</tr>
+																	)
 																)}
-																<Button
-																	variant="tertiary"
-																	size="small"
-																	isDestructive
-																	onClick={() =>
-																		handleDelete(
-																			entry.id
-																		)
-																	}
-																>
-																	{__(
-																		'Delete',
-																		'fair-payment'
-																	)}
-																</Button>
-															</HStack>
-														</td>
-													</tr>
-												))}
+														</Fragment>
+													);
+												})}
 											</tbody>
 										</table>
 									</div>
@@ -801,6 +991,16 @@ const EntriesApp = () => {
 				<ImportModal
 					onImport={handleImportComplete}
 					onCancel={handleImportCancel}
+				/>
+			)}
+
+			{/* Split Modal */}
+			{splittingEntry && (
+				<SplitModal
+					entry={splittingEntry}
+					budgets={budgets}
+					onSplit={handleSplitComplete}
+					onCancel={handleSplitCancel}
 				/>
 			)}
 		</div>
