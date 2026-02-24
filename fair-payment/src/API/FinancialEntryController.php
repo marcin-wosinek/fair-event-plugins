@@ -452,16 +452,34 @@ class FinancialEntryController extends WP_REST_Controller {
 			'entries' => array_map(
 				function ( $entry ) {
 					$entry_data = $entry->to_array();
-					// Include children for split parent entries.
-					$children = FinancialEntry::get_children( $entry->id );
-					if ( ! empty( $children ) ) {
-						$entry_data['children'] = array_map(
-							function ( $child ) {
-								return $child->to_array();
-							},
-							$children
-						);
+
+					if ( $entry->parent_entry_id ) {
+						// This is a child entry (shown due to budget filter).
+						// Include parent with all children for Edit Split functionality.
+						$parent = FinancialEntry::get_by_id( $entry->parent_entry_id );
+						if ( $parent ) {
+							$parent_data             = $parent->to_array();
+							$parent_data['children'] = array_map(
+								function ( $child ) {
+									return $child->to_array();
+								},
+								FinancialEntry::get_children( $parent->id )
+							);
+							$entry_data['parent'] = $parent_data;
+						}
+					} else {
+						// Include children for split parent entries.
+						$children = FinancialEntry::get_children( $entry->id );
+						if ( ! empty( $children ) ) {
+							$entry_data['children'] = array_map(
+								function ( $child ) {
+									return $child->to_array();
+								},
+								$children
+							);
+						}
 					}
+
 					return $entry_data;
 				},
 				$result['entries']

@@ -226,8 +226,13 @@ class FinancialEntry {
 		$where_clauses = array();
 		$where_values  = array();
 
-		// Exclude child entries from the main list (they are shown under their parent).
-		$where_clauses[] = 'parent_entry_id IS NULL';
+		// When filtering by a specific budget, include child entries matching that budget.
+		// Otherwise, exclude child entries (they are shown under their parent).
+		if ( ! empty( $filters['budget_id'] ) && 'none' !== $filters['budget_id'] ) {
+			// No parent_entry_id restriction — budget_id filter will match both parents and children.
+		} else {
+			$where_clauses[] = 'parent_entry_id IS NULL';
+		}
 
 		if ( ! empty( $filters['date_from'] ) ) {
 			$where_clauses[] = 'entry_date >= %s';

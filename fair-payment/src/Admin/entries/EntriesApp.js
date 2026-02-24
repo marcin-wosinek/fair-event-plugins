@@ -645,6 +645,8 @@ const EntriesApp = () => {
 														entry.children &&
 														entry.children.length >
 															0;
+													const isChild =
+														!!entry.parent_entry_id;
 													const isExpanded =
 														expandedEntries[
 															entry.id
@@ -690,6 +692,22 @@ const EntriesApp = () => {
 																			entry.amount
 																		)}
 																	</strong>
+																	{isChild && (
+																		<span
+																			style={{
+																				marginLeft:
+																					'4px',
+																				color: '#2271b1',
+																				fontSize:
+																					'12px',
+																			}}
+																		>
+																			{__(
+																				'(split)',
+																				'fair-payment'
+																			)}
+																		</span>
+																	)}
 																</td>
 																<td>
 																	{entry.description || (
@@ -768,35 +786,18 @@ const EntriesApp = () => {
 																	)}
 																</td>
 																<td>
-																	<HStack
-																		spacing={
-																			1
-																		}
-																	>
-																		<Button
-																			variant="secondary"
-																			size="small"
-																			onClick={() =>
-																				handleEdit(
-																					entry
-																				)
-																			}
-																			disabled={
-																				isSplit
+																	{isChild ? (
+																		<HStack
+																			spacing={
+																				1
 																			}
 																		>
-																			{__(
-																				'Edit',
-																				'fair-payment'
-																			)}
-																		</Button>
-																		{isSplit ? (
 																			<Button
-																				variant="tertiary"
+																				variant="secondary"
 																				size="small"
 																				onClick={() =>
 																					handleSplit(
-																						entry
+																						entry.parent
 																					)
 																				}
 																			>
@@ -805,72 +806,112 @@ const EntriesApp = () => {
 																					'fair-payment'
 																				)}
 																			</Button>
-																		) : (
+																		</HStack>
+																	) : (
+																		<HStack
+																			spacing={
+																				1
+																			}
+																		>
 																			<Button
-																				variant="tertiary"
+																				variant="secondary"
 																				size="small"
 																				onClick={() =>
-																					handleSplit(
+																					handleEdit(
 																						entry
 																					)
 																				}
+																				disabled={
+																					isSplit
+																				}
 																			>
 																				{__(
-																					'Split',
+																					'Edit',
 																					'fair-payment'
 																				)}
 																			</Button>
-																		)}
-																		{entry.transaction_id ? (
+																			{isSplit ? (
+																				<Button
+																					variant="tertiary"
+																					size="small"
+																					onClick={() =>
+																						handleSplit(
+																							entry
+																						)
+																					}
+																				>
+																					{__(
+																						'Edit Split',
+																						'fair-payment'
+																					)}
+																				</Button>
+																			) : (
+																				<Button
+																					variant="tertiary"
+																					size="small"
+																					onClick={() =>
+																						handleSplit(
+																							entry
+																						)
+																					}
+																				>
+																					{__(
+																						'Split',
+																						'fair-payment'
+																					)}
+																				</Button>
+																			)}
+																			{entry.transaction_id ? (
+																				<Button
+																					variant="tertiary"
+																					size="small"
+																					onClick={() =>
+																						handleUnmatch(
+																							entry.id
+																						)
+																					}
+																				>
+																					{__(
+																						'Unmatch',
+																						'fair-payment'
+																					)}
+																				</Button>
+																			) : (
+																				<Button
+																					variant="tertiary"
+																					size="small"
+																					onClick={() =>
+																						handleMatch(
+																							entry
+																						)
+																					}
+																				>
+																					{__(
+																						'Match',
+																						'fair-payment'
+																					)}
+																				</Button>
+																			)}
 																			<Button
 																				variant="tertiary"
 																				size="small"
+																				isDestructive
 																				onClick={() =>
-																					handleUnmatch(
+																					handleDelete(
 																						entry.id
 																					)
 																				}
-																			>
-																				{__(
-																					'Unmatch',
-																					'fair-payment'
-																				)}
-																			</Button>
-																		) : (
-																			<Button
-																				variant="tertiary"
-																				size="small"
-																				onClick={() =>
-																					handleMatch(
-																						entry
-																					)
+																				disabled={
+																					isSplit
 																				}
 																			>
 																				{__(
-																					'Match',
+																					'Delete',
 																					'fair-payment'
 																				)}
 																			</Button>
-																		)}
-																		<Button
-																			variant="tertiary"
-																			size="small"
-																			isDestructive
-																			onClick={() =>
-																				handleDelete(
-																					entry.id
-																				)
-																			}
-																			disabled={
-																				isSplit
-																			}
-																		>
-																			{__(
-																				'Delete',
-																				'fair-payment'
-																			)}
-																		</Button>
-																	</HStack>
+																		</HStack>
+																	)}
 																</td>
 															</tr>
 															{isSplit &&
