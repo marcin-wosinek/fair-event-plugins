@@ -27,6 +27,7 @@ class OpenGraphHooks {
 	 */
 	public function __construct() {
 		add_action( 'wp_head', array( $this, 'output_og_tags' ), 1 );
+		add_action( 'wp_head', array( $this, 'output_twitter_tags' ), 1 );
 		add_action( 'wp_head', array( $this, 'output_jsonld' ), 1 );
 	}
 
@@ -79,6 +80,41 @@ class OpenGraphHooks {
 		$location = $this->get_location( $event_date, $post_id );
 		if ( $location ) {
 			$this->output_meta_tag( 'event:location', $location );
+		}
+	}
+
+	/**
+	 * Output Twitter Card meta tags for event pages
+	 *
+	 * @return void
+	 */
+	public function output_twitter_tags() {
+		if ( ! is_singular() ) {
+			return;
+		}
+
+		$post_id       = get_the_ID();
+		$post_type     = get_post_type( $post_id );
+		$enabled_types = Settings::get_enabled_post_types();
+
+		if ( ! in_array( $post_type, $enabled_types, true ) ) {
+			return;
+		}
+
+		$event_date = EventDates::get_by_event_id( $post_id );
+		if ( ! $event_date ) {
+			return;
+		}
+
+		$post      = get_post( $post_id );
+		$image_url = $this->get_image_url( $post_id, $event_date );
+
+		$this->output_name_meta_tag( 'twitter:card', $image_url ? 'summary_large_image' : 'summary' );
+		$this->output_name_meta_tag( 'twitter:title', $this->get_title( $post, $event_date ) );
+		$this->output_name_meta_tag( 'twitter:description', $this->get_description( $post ) );
+
+		if ( $image_url ) {
+			$this->output_name_meta_tag( 'twitter:image', $image_url );
 		}
 	}
 
@@ -300,7 +336,7 @@ class OpenGraphHooks {
 	}
 
 	/**
-	 * Output a single meta tag
+	 * Output a single meta tag with property attribute (OG tags)
 	 *
 	 * @param string $property Meta property name.
 	 * @param string $content  Meta content value.
@@ -314,6 +350,25 @@ class OpenGraphHooks {
 		printf(
 			'<meta property="%s" content="%s" />' . "\n",
 			esc_attr( $property ),
+			esc_attr( $content )
+		);
+	}
+
+	/**
+	 * Output a single meta tag with name attribute (Twitter tags)
+	 *
+	 * @param string $name    Meta name.
+	 * @param string $content Meta content value.
+	 * @return void
+	 */
+	private function output_name_meta_tag( $name, $content ) {
+		if ( empty( $content ) ) {
+			return;
+		}
+
+		printf(
+			'<meta name="%s" content="%s" />' . "\n",
+			esc_attr( $name ),
 			esc_attr( $content )
 		);
 	}
