@@ -764,6 +764,15 @@ class FinancialEntry {
 		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
 		$wpdb->query( 'START TRANSACTION' );
 
+		// Clear budget on parent — budgets are now on the children.
+		$wpdb->update(
+			$table_name,
+			array( 'budget_id' => null ),
+			array( 'id' => $id ),
+			array( '%d' ),
+			array( '%d' )
+		);
+
 		$child_ids = array();
 
 		foreach ( $allocations as $allocation ) {
@@ -822,6 +831,15 @@ class FinancialEntry {
 		// Start transaction.
 		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
 		$wpdb->query( 'START TRANSACTION' );
+
+		// Ensure parent has no budget — budgets are on the children.
+		$wpdb->update(
+			$table_name,
+			array( 'budget_id' => null ),
+			array( 'id' => $id ),
+			array( '%d' ),
+			array( '%d' )
+		);
 
 		// Delete existing children.
 		$delete_result = $wpdb->delete(
