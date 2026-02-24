@@ -486,10 +486,10 @@ const EntriesApp = () => {
 							{!loading && entries.length > 0 && (
 								<>
 									<div style={{ overflowX: 'auto' }}>
-										<table className="wp-list-table widefat fixed striped">
+										<table className="wp-list-table widefat striped">
 											<thead>
 												<tr>
-													<th>
+													<th style={{ minWidth: '7em' }}>
 														{__(
 															'Date',
 															'fair-payment'
@@ -501,7 +501,7 @@ const EntriesApp = () => {
 															'fair-payment'
 														)}
 													</th>
-													<th>
+													<th style={{ minWidth: '6em' }}>
 														{__(
 															'Amount',
 															'fair-payment'
@@ -531,7 +531,7 @@ const EntriesApp = () => {
 															'fair-payment'
 														)}
 													</th>
-													<th>
+													<th style={{ minWidth: '7em' }}>
 														{__(
 															'Imported',
 															'fair-payment'
