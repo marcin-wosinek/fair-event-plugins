@@ -110,9 +110,10 @@ class Schema {
 		self::migrate_to_v7();
 		self::migrate_to_v8();
 		self::migrate_to_v9();
+		self::migrate_to_v10();
 
 		// Store database version for future migrations.
-		update_option( 'fair_payment_db_version', '9.0' );
+		update_option( 'fair_payment_db_version', '10.0' );
 	}
 
 	/**
@@ -191,6 +192,7 @@ class Schema {
 			external_reference varchar(255) DEFAULT NULL,
 			import_source varchar(255) DEFAULT NULL,
 			parent_entry_id bigint(20) UNSIGNED DEFAULT NULL,
+			event_url varchar(500) DEFAULT NULL,
 			imported_at datetime DEFAULT NULL,
 			created_at datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
 			updated_at datetime NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
@@ -556,6 +558,53 @@ class Schema {
 				$wpdb->query(
 					$wpdb->prepare(
 						'ALTER TABLE %i ADD KEY parent_entry_id (parent_entry_id)',
+						$table_name
+					)
+				);
+			}
+		}
+	}
+
+	/**
+	 * Migrate database from v9.0 to v10.0
+	 *
+	 * Adds event_url column to financial_entries for linking entries to events.
+	 *
+	 * @return void
+	 */
+	public static function migrate_to_v10() {
+		global $wpdb;
+
+		$current_version = get_option( 'fair_payment_db_version', '1.0' );
+
+		if ( version_compare( $current_version, '10.0', '<' ) ) {
+			$table_name = self::get_financial_entries_table_name();
+
+			// Check if event_url column already exists.
+			// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+			$column_exists = $wpdb->get_results(
+				$wpdb->prepare(
+					'SHOW COLUMNS FROM %i LIKE %s',
+					$table_name,
+					'event_url'
+				)
+			);
+
+			// Add event_url column if it doesn't exist.
+			if ( empty( $column_exists ) ) {
+				// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.DirectDatabaseQuery.SchemaChange
+				$wpdb->query(
+					$wpdb->prepare(
+						'ALTER TABLE %i ADD COLUMN event_url varchar(500) DEFAULT NULL AFTER parent_entry_id',
+						$table_name
+					)
+				);
+
+				// Add index on event_url.
+				// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.DirectDatabaseQuery.SchemaChange
+				$wpdb->query(
+					$wpdb->prepare(
+						'ALTER TABLE %i ADD KEY event_url (event_url)',
 						$table_name
 					)
 				);

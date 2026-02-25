@@ -110,6 +110,7 @@ class AdminPages {
 				'fairPaymentSettings',
 				array(
 					'budgetingEnabled' => (bool) get_option( 'fair_payment_enable_budgets', false ),
+					'eventsEnabled'    => class_exists( 'FairEvents\Core\Plugin' ),
 				)
 			);
 			return;

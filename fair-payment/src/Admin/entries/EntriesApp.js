@@ -26,10 +26,23 @@ import ImportModal from './components/ImportModal.js';
 import SplitModal from './components/SplitModal.js';
 
 const budgetingEnabled = window.fairPaymentSettings?.budgetingEnabled === '1';
+const eventsEnabled = window.fairPaymentSettings?.eventsEnabled === '1';
+
+const getEventUrlLabel = (url) => {
+	try {
+		const parsed = new URL(url);
+		const path = parsed.pathname.replace(/\/$/, '');
+		const segment = path.split('/').pop();
+		return segment ? segment.replace(/-/g, ' ') : parsed.hostname;
+	} catch {
+		return url;
+	}
+};
 
 const EntriesApp = () => {
 	const [entries, setEntries] = useState([]);
 	const [budgets, setBudgets] = useState([]);
+	const [eventUrls, setEventUrls] = useState([]);
 	const [totals, setTotals] = useState({
 		total_cost: 0,
 		total_income: 0,
@@ -44,6 +57,7 @@ const EntriesApp = () => {
 		date_from: '',
 		date_to: '',
 		budget_id: '',
+		event_url: '',
 		entry_type: '',
 		unmatched: false,
 	});
@@ -73,6 +87,9 @@ const EntriesApp = () => {
 				setFilters((prev) => ({ ...prev, budget_id: budgetId }));
 			}
 		}
+		if (eventsEnabled) {
+			loadEventUrls();
+		}
 	}, []);
 
 	useEffect(() => {
@@ -91,6 +108,17 @@ const EntriesApp = () => {
 		}
 	};
 
+	const loadEventUrls = async () => {
+		try {
+			const data = await apiFetch({
+				path: '/fair-payment/v1/financial-entries/event-urls',
+			});
+			setEventUrls(data);
+		} catch (err) {
+			console.error('Failed to load event URLs:', err);
+		}
+	};
+
 	const loadEntries = async () => {
 		setLoading(true);
 		setError(null);
@@ -105,6 +133,8 @@ const EntriesApp = () => {
 			if (filters.date_to) params.append('date_to', filters.date_to);
 			if (filters.budget_id)
 				params.append('budget_id', filters.budget_id);
+			if (filters.event_url)
+				params.append('event_url', filters.event_url);
 			if (filters.entry_type)
 				params.append('entry_type', filters.entry_type);
 			if (filters.unmatched) params.append('unmatched', 'true');
@@ -138,6 +168,8 @@ const EntriesApp = () => {
 			if (filters.date_to) params.append('date_to', filters.date_to);
 			if (filters.budget_id)
 				params.append('budget_id', filters.budget_id);
+			if (filters.event_url)
+				params.append('event_url', filters.event_url);
 			if (filters.unmatched) params.append('unmatched', 'true');
 
 			const data = await apiFetch({
@@ -183,6 +215,7 @@ const EntriesApp = () => {
 			setSuccess(__('Entry deleted successfully.', 'fair-payment'));
 			loadEntries();
 			loadTotals();
+			if (eventsEnabled) loadEventUrls();
 		} catch (err) {
 			setError(
 				err.message || __('Failed to delete entry.', 'fair-payment')
@@ -200,6 +233,7 @@ const EntriesApp = () => {
 		);
 		loadEntries();
 		loadTotals();
+		if (eventsEnabled) loadEventUrls();
 	};
 
 	const handleFormCancel = () => {
@@ -256,6 +290,7 @@ const EntriesApp = () => {
 		setSuccess(__('Entries imported successfully.', 'fair-payment'));
 		loadEntries();
 		loadTotals();
+		if (eventsEnabled) loadEventUrls();
 	};
 
 	const handleImportCancel = () => {
@@ -277,6 +312,7 @@ const EntriesApp = () => {
 		);
 		loadEntries();
 		loadTotals();
+		if (eventsEnabled) loadEventUrls();
 	};
 
 	const handleSplitCancel = () => {
@@ -304,6 +340,7 @@ const EntriesApp = () => {
 			setSuccess(__('Entry unsplit successfully.', 'fair-payment'));
 			loadEntries();
 			loadTotals();
+			if (eventsEnabled) loadEventUrls();
 		} catch (err) {
 			setError(
 				err.message || __('Failed to unsplit entry.', 'fair-payment')
@@ -375,6 +412,14 @@ const EntriesApp = () => {
 			value: budget.id.toString(),
 		})),
 		{ label: __('Unbudgeted', 'fair-payment'), value: 'none' },
+	];
+
+	const eventUrlOptions = [
+		{ label: __('All Events', 'fair-payment'), value: '' },
+		...eventUrls.map((url) => ({
+			label: getEventUrlLabel(url),
+			value: url,
+		})),
 	];
 
 	return (
@@ -482,6 +527,19 @@ const EntriesApp = () => {
 										onChange={(value) =>
 											handleFilterChange(
 												'budget_id',
+												value
+											)
+										}
+									/>
+								)}
+								{eventsEnabled && eventUrls.length > 0 && (
+									<SelectControl
+										label={__('Event', 'fair-payment')}
+										value={filters.event_url}
+										options={eventUrlOptions}
+										onChange={(value) =>
+											handleFilterChange(
+												'event_url',
 												value
 											)
 										}
@@ -631,6 +689,14 @@ const EntriesApp = () => {
 															)}
 														</SortableHeader>
 													)}
+													{eventsEnabled && (
+														<th>
+															{__(
+																'Event',
+																'fair-payment'
+															)}
+														</th>
+													)}
 													<th>
 														{__(
 															'Matched',
@@ -759,6 +825,59 @@ const EntriesApp = () => {
 																			getBudgetName(
 																				entry.budget_id
 																			)
+																		)}
+																	</td>
+																)}
+																{eventsEnabled && (
+																	<td>
+																		{entry.event_url ? (
+																			<a
+																				href={
+																					entry.event_url
+																				}
+																				target="_blank"
+																				rel="noopener noreferrer"
+																				title={
+																					entry.event_url
+																				}
+																				style={{
+																					fontSize:
+																						'13px',
+																				}}
+																			>
+																				{getEventUrlLabel(
+																					entry.event_url
+																				)}
+																			</a>
+																		) : isSplit ? (
+																			<Button
+																				variant="link"
+																				size="small"
+																				onClick={() =>
+																					toggleExpanded(
+																						entry.id
+																					)
+																				}
+																				style={{
+																					color: '#2271b1',
+																					fontWeight:
+																						'bold',
+																				}}
+																			>
+																				{isExpanded
+																					? __(
+																							'Split \u25BE',
+																							'fair-payment'
+																					  )
+																					: __(
+																							'Split \u25B8',
+																							'fair-payment'
+																					  )}
+																			</Button>
+																		) : (
+																			<em>
+																				-
+																			</em>
 																		)}
 																	</td>
 																)}
@@ -971,6 +1090,34 @@ const EntriesApp = () => {
 																					)}
 																				</td>
 																			)}
+																			{eventsEnabled && (
+																				<td>
+																					{child.event_url ? (
+																						<a
+																							href={
+																								child.event_url
+																							}
+																							target="_blank"
+																							rel="noopener noreferrer"
+																							title={
+																								child.event_url
+																							}
+																							style={{
+																								fontSize:
+																									'12px',
+																							}}
+																						>
+																							{getEventUrlLabel(
+																								child.event_url
+																							)}
+																						</a>
+																					) : (
+																						<em>
+																							-
+																						</em>
+																					)}
+																				</td>
+																			)}
 																			<td
 																				colSpan={
 																					3
@@ -1043,6 +1190,7 @@ const EntriesApp = () => {
 					entry={editingEntry}
 					budgets={budgets}
 					budgetingEnabled={budgetingEnabled}
+					eventsEnabled={eventsEnabled}
 					onSave={handleFormSave}
 					onCancel={handleFormCancel}
 				/>
@@ -1071,6 +1219,7 @@ const EntriesApp = () => {
 					entry={splittingEntry}
 					budgets={budgets}
 					budgetingEnabled={budgetingEnabled}
+					eventsEnabled={eventsEnabled}
 					onSplit={handleSplitComplete}
 					onCancel={handleSplitCancel}
 					onUnsplit={() => handleUnsplit(splittingEntry.id)}

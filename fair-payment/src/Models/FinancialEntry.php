@@ -82,6 +82,13 @@ class FinancialEntry {
 	public $parent_entry_id;
 
 	/**
+	 * Event URL (link to local or external event)
+	 *
+	 * @var string|null
+	 */
+	public $event_url;
+
+	/**
 	 * Import source filename
 	 *
 	 * @var string|null
@@ -214,6 +221,7 @@ class FinancialEntry {
 			'date_from'  => null,
 			'date_to'    => null,
 			'budget_id'  => null,
+			'event_url'  => null,
 			'entry_type' => null,
 			'unmatched'  => false,
 			'per_page'   => 50,
@@ -226,10 +234,10 @@ class FinancialEntry {
 		$where_clauses = array();
 		$where_values  = array();
 
-		// When filtering by a specific budget, include child entries matching that budget.
+		// When filtering by a specific budget or event_url, include child entries matching that filter.
 		// Otherwise, exclude child entries (they are shown under their parent).
-		if ( ! empty( $filters['budget_id'] ) && 'none' !== $filters['budget_id'] ) {
-			// No parent_entry_id restriction — budget_id filter will match both parents and children.
+		if ( ( ! empty( $filters['budget_id'] ) && 'none' !== $filters['budget_id'] ) || ! empty( $filters['event_url'] ) ) {
+			// No parent_entry_id restriction — filter will match both parents and children.
 		} else {
 			$where_clauses[] = 'parent_entry_id IS NULL';
 		}
@@ -251,6 +259,11 @@ class FinancialEntry {
 				$where_clauses[] = 'budget_id = %d';
 				$where_values[]  = (int) $filters['budget_id'];
 			}
+		}
+
+		if ( ! empty( $filters['event_url'] ) ) {
+			$where_clauses[] = 'event_url = %s';
+			$where_values[]  = $filters['event_url'];
 		}
 
 		if ( ! empty( $filters['entry_type'] ) && in_array( $filters['entry_type'], array( 'cost', 'income' ), true ) ) {
@@ -361,6 +374,11 @@ class FinancialEntry {
 			}
 		}
 
+		if ( ! empty( $filters['event_url'] ) ) {
+			$where_clauses[] = 'event_url = %s';
+			$where_values[]  = $filters['event_url'];
+		}
+
 		if ( ! empty( $filters['unmatched'] ) ) {
 			$where_clauses[] = 'transaction_id IS NULL';
 		}
@@ -469,7 +487,7 @@ class FinancialEntry {
 	 * @param int|null    $transaction_id Transaction ID.
 	 * @return int|false The entry ID on success, false on failure.
 	 */
-	public static function create( $amount, $entry_type, $entry_date, $description = null, $budget_id = null, $transaction_id = null ) {
+	public static function create( $amount, $entry_type, $entry_date, $description = null, $budget_id = null, $transaction_id = null, $event_url = null ) {
 		global $wpdb;
 
 		$table_name = self::get_table_name();
@@ -486,9 +504,10 @@ class FinancialEntry {
 			'description'    => $description,
 			'budget_id'      => $budget_id ? (int) $budget_id : null,
 			'transaction_id' => $transaction_id ? (int) $transaction_id : null,
+			'event_url'      => $event_url ? $event_url : null,
 		);
 
-		$format = array( '%f', '%s', '%s', '%s', '%d', '%d' );
+		$format = array( '%f', '%s', '%s', '%s', '%d', '%d', '%s' );
 
 		$result = $wpdb->insert( $table_name, $data, $format );
 
@@ -511,7 +530,7 @@ class FinancialEntry {
 	 * @param int|null    $transaction_id Transaction ID.
 	 * @return bool True on success, false on failure.
 	 */
-	public static function update( $id, $amount, $entry_type, $entry_date, $description = null, $budget_id = null, $transaction_id = null ) {
+	public static function update( $id, $amount, $entry_type, $entry_date, $description = null, $budget_id = null, $transaction_id = null, $event_url = null ) {
 		global $wpdb;
 
 		$table_name = self::get_table_name();
@@ -528,9 +547,10 @@ class FinancialEntry {
 			'description'    => $description,
 			'budget_id'      => $budget_id ? (int) $budget_id : null,
 			'transaction_id' => $transaction_id ? (int) $transaction_id : null,
+			'event_url'      => $event_url ? $event_url : null,
 		);
 
-		$format = array( '%f', '%s', '%s', '%s', '%d', '%d' );
+		$format = array( '%f', '%s', '%s', '%s', '%d', '%d', '%s' );
 
 		$result = $wpdb->update(
 			$table_name,
@@ -764,12 +784,15 @@ class FinancialEntry {
 		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
 		$wpdb->query( 'START TRANSACTION' );
 
-		// Clear budget on parent — budgets are now on the children.
+		// Clear budget and event_url on parent — they are now on the children.
 		$wpdb->update(
 			$table_name,
-			array( 'budget_id' => null ),
+			array(
+				'budget_id' => null,
+				'event_url' => null,
+			),
 			array( 'id' => $id ),
-			array( '%d' ),
+			array( '%d', '%s' ),
 			array( '%d' )
 		);
 
@@ -784,9 +807,10 @@ class FinancialEntry {
 				'budget_id'       => ! empty( $allocation['budget_id'] ) ? (int) $allocation['budget_id'] : null,
 				'transaction_id'  => $entry->transaction_id,
 				'parent_entry_id' => $id,
+				'event_url'       => ! empty( $allocation['event_url'] ) ? $allocation['event_url'] : null,
 			);
 
-			$format = array( '%f', '%s', '%s', '%s', '%d', '%d', '%d' );
+			$format = array( '%f', '%s', '%s', '%s', '%d', '%d', '%d', '%s' );
 
 			$result = $wpdb->insert( $table_name, $data, $format );
 
@@ -832,12 +856,15 @@ class FinancialEntry {
 		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
 		$wpdb->query( 'START TRANSACTION' );
 
-		// Ensure parent has no budget — budgets are on the children.
+		// Ensure parent has no budget or event_url — they are on the children.
 		$wpdb->update(
 			$table_name,
-			array( 'budget_id' => null ),
+			array(
+				'budget_id' => null,
+				'event_url' => null,
+			),
 			array( 'id' => $id ),
-			array( '%d' ),
+			array( '%d', '%s' ),
 			array( '%d' )
 		);
 
@@ -866,9 +893,10 @@ class FinancialEntry {
 				'budget_id'       => ! empty( $allocation['budget_id'] ) ? (int) $allocation['budget_id'] : null,
 				'transaction_id'  => $entry->transaction_id,
 				'parent_entry_id' => $id,
+				'event_url'       => ! empty( $allocation['event_url'] ) ? $allocation['event_url'] : null,
 			);
 
-			$format = array( '%f', '%s', '%s', '%s', '%d', '%d', '%d' );
+			$format = array( '%f', '%s', '%s', '%s', '%d', '%d', '%d', '%s' );
 
 			$result = $wpdb->insert( $table_name, $data, $format );
 
@@ -919,6 +947,26 @@ class FinancialEntry {
 	}
 
 	/**
+	 * Get distinct event URLs from all entries
+	 *
+	 * @return string[] Array of unique event URLs.
+	 */
+	public static function get_distinct_event_urls() {
+		global $wpdb;
+
+		$table_name = self::get_table_name();
+
+		$results = $wpdb->get_col(
+			$wpdb->prepare(
+				'SELECT DISTINCT event_url FROM %i WHERE event_url IS NOT NULL ORDER BY event_url ASC',
+				$table_name
+			)
+		);
+
+		return $results ? $results : array();
+	}
+
+	/**
 	 * Hydrate an entry object from a database row
 	 *
 	 * @param object $row Database row.
@@ -935,6 +983,7 @@ class FinancialEntry {
 		$entry->transaction_id     = $row->transaction_id ? (int) $row->transaction_id : null;
 		$entry->external_reference = isset( $row->external_reference ) ? $row->external_reference : null;
 		$entry->parent_entry_id    = isset( $row->parent_entry_id ) && $row->parent_entry_id ? (int) $row->parent_entry_id : null;
+		$entry->event_url          = isset( $row->event_url ) ? $row->event_url : null;
 		$entry->import_source      = isset( $row->import_source ) ? $row->import_source : null;
 		$entry->imported_at        = isset( $row->imported_at ) ? $row->imported_at : null;
 		$entry->created_at         = $row->created_at;
@@ -959,6 +1008,7 @@ class FinancialEntry {
 			'transaction_id'     => $this->transaction_id,
 			'external_reference' => $this->external_reference,
 			'parent_entry_id'    => $this->parent_entry_id,
+			'event_url'          => $this->event_url,
 			'import_source'      => $this->import_source,
 			'imported_at'        => $this->imported_at,
 			'created_at'         => $this->created_at,

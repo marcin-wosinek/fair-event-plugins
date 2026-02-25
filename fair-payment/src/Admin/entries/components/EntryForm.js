@@ -10,17 +10,195 @@ import {
 	TextareaControl,
 	SelectControl,
 	Button,
+	Spinner,
 	__experimentalVStack as VStack,
 	__experimentalHStack as HStack,
 } from '@wordpress/components';
 
-const EntryForm = ({ entry, budgets, budgetingEnabled, onSave, onCancel }) => {
+const EventUrlField = ({ value, onChange }) => {
+	const [mode, setMode] = useState(value ? 'manual' : 'search');
+	const [searchTerm, setSearchTerm] = useState('');
+	const [searchResults, setSearchResults] = useState([]);
+	const [isSearching, setIsSearching] = useState(false);
+
+	useEffect(() => {
+		if (mode !== 'search' || searchTerm.length < 2) {
+			setSearchResults([]);
+			return;
+		}
+
+		const timeout = setTimeout(async () => {
+			setIsSearching(true);
+			try {
+				const params = new URLSearchParams();
+				params.append('search', searchTerm);
+				params.append('per_page', 10);
+				const data = await apiFetch({
+					path: `/fair-events/v1/event-dates?${params.toString()}`,
+				});
+				setSearchResults(
+					(data.event_dates || []).filter((ed) => ed.display_url)
+				);
+			} catch {
+				setSearchResults([]);
+			} finally {
+				setIsSearching(false);
+			}
+		}, 300);
+
+		return () => clearTimeout(timeout);
+	}, [searchTerm, mode]);
+
+	if (value) {
+		return (
+			<div>
+				<div style={{ marginBottom: '4px', fontWeight: '600' }}>
+					{__('Event', 'fair-payment')}
+				</div>
+				<HStack spacing={2}>
+					<a
+						href={value}
+						target="_blank"
+						rel="noopener noreferrer"
+						style={{ wordBreak: 'break-all' }}
+					>
+						{value}
+					</a>
+					<Button
+						variant="tertiary"
+						size="small"
+						isDestructive
+						onClick={() => onChange('')}
+					>
+						{__('Clear', 'fair-payment')}
+					</Button>
+				</HStack>
+			</div>
+		);
+	}
+
+	return (
+		<div>
+			<div style={{ marginBottom: '4px', fontWeight: '600' }}>
+				{__('Event', 'fair-payment')}
+			</div>
+			<HStack spacing={2} style={{ marginBottom: '8px' }}>
+				<Button
+					variant={mode === 'search' ? 'primary' : 'secondary'}
+					size="small"
+					onClick={() => setMode('search')}
+				>
+					{__('Search', 'fair-payment')}
+				</Button>
+				<Button
+					variant={mode === 'manual' ? 'primary' : 'secondary'}
+					size="small"
+					onClick={() => setMode('manual')}
+				>
+					{__('Manual URL', 'fair-payment')}
+				</Button>
+			</HStack>
+
+			{mode === 'search' && (
+				<div>
+					<TextControl
+						value={searchTerm}
+						onChange={setSearchTerm}
+						placeholder={__('Search events...', 'fair-payment')}
+					/>
+					{isSearching && <Spinner />}
+					{searchResults.length > 0 && (
+						<div
+							style={{
+								border: '1px solid #ddd',
+								borderRadius: '4px',
+								maxHeight: '200px',
+								overflowY: 'auto',
+							}}
+						>
+							{searchResults.map((event) => (
+								<div
+									key={event.id}
+									style={{
+										padding: '8px 12px',
+										cursor: 'pointer',
+										borderBottom: '1px solid #eee',
+									}}
+									onClick={() => {
+										onChange(event.display_url);
+										setSearchTerm('');
+										setSearchResults([]);
+									}}
+									onKeyDown={(e) => {
+										if (e.key === 'Enter') {
+											onChange(event.display_url);
+											setSearchTerm('');
+											setSearchResults([]);
+										}
+									}}
+									role="button"
+									tabIndex={0}
+								>
+									<strong>{event.title}</strong>
+									<div
+										style={{
+											fontSize: '12px',
+											color: '#666',
+										}}
+									>
+										{event.start_datetime?.split('T')[0] ||
+											event.start_datetime?.split(' ')[0]}
+									</div>
+								</div>
+							))}
+						</div>
+					)}
+				</div>
+			)}
+
+			{mode === 'manual' && (
+				<TextControl
+					value=""
+					onChange={(val) => {
+						if (val) {
+							onChange(val);
+						}
+					}}
+					placeholder={__(
+						'https://example.com/event',
+						'fair-payment'
+					)}
+					type="url"
+					help={__(
+						'Enter the event URL and press Tab or click away',
+						'fair-payment'
+					)}
+					onBlur={(e) => {
+						if (e.target.value) {
+							onChange(e.target.value);
+						}
+					}}
+				/>
+			)}
+		</div>
+	);
+};
+
+const EntryForm = ({
+	entry,
+	budgets,
+	budgetingEnabled,
+	eventsEnabled,
+	onSave,
+	onCancel,
+}) => {
 	const [formData, setFormData] = useState({
 		amount: '',
 		entry_type: 'cost',
 		entry_date: new Date().toISOString().split('T')[0],
 		description: '',
 		budget_id: '',
+		event_url: '',
 	});
 	const [isSaving, setIsSaving] = useState(false);
 	const [error, setError] = useState(null);
@@ -34,6 +212,7 @@ const EntryForm = ({ entry, budgets, budgetingEnabled, onSave, onCancel }) => {
 					entry.entry_date || new Date().toISOString().split('T')[0],
 				description: entry.description || '',
 				budget_id: entry.budget_id?.toString() || '',
+				event_url: entry.event_url || '',
 			});
 		}
 	}, [entry]);
@@ -50,6 +229,7 @@ const EntryForm = ({ entry, budgets, budgetingEnabled, onSave, onCancel }) => {
 				budget_id: formData.budget_id
 					? parseInt(formData.budget_id, 10)
 					: null,
+				event_url: formData.event_url || null,
 			};
 
 			if (entry) {
@@ -164,6 +344,15 @@ const EntryForm = ({ entry, budgets, budgetingEnabled, onSave, onCancel }) => {
 							options={budgetOptions}
 							onChange={(value) =>
 								setFormData({ ...formData, budget_id: value })
+							}
+						/>
+					)}
+
+					{eventsEnabled && (
+						<EventUrlField
+							value={formData.event_url}
+							onChange={(value) =>
+								setFormData({ ...formData, event_url: value })
 							}
 						/>
 					)}

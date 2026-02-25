@@ -1,7 +1,7 @@
 /**
  * WordPress dependencies
  */
-import { useState } from '@wordpress/element';
+import { useState, useEffect } from '@wordpress/element';
 import { __ } from '@wordpress/i18n';
 import apiFetch from '@wordpress/api-fetch';
 import {
@@ -10,14 +10,175 @@ import {
 	TextareaControl,
 	SelectControl,
 	Button,
+	Spinner,
 	__experimentalVStack as VStack,
 	__experimentalHStack as HStack,
 } from '@wordpress/components';
+
+const SplitEventUrlField = ({ value, onChange }) => {
+	const [mode, setMode] = useState(value ? 'manual' : 'search');
+	const [searchTerm, setSearchTerm] = useState('');
+	const [searchResults, setSearchResults] = useState([]);
+	const [isSearching, setIsSearching] = useState(false);
+
+	useEffect(() => {
+		if (mode !== 'search' || searchTerm.length < 2) {
+			setSearchResults([]);
+			return;
+		}
+
+		const timeout = setTimeout(async () => {
+			setIsSearching(true);
+			try {
+				const params = new URLSearchParams();
+				params.append('search', searchTerm);
+				params.append('per_page', 10);
+				const data = await apiFetch({
+					path: `/fair-events/v1/event-dates?${params.toString()}`,
+				});
+				setSearchResults(
+					(data.event_dates || []).filter((ed) => ed.display_url)
+				);
+			} catch {
+				setSearchResults([]);
+			} finally {
+				setIsSearching(false);
+			}
+		}, 300);
+
+		return () => clearTimeout(timeout);
+	}, [searchTerm, mode]);
+
+	if (value) {
+		return (
+			<HStack spacing={2}>
+				<span
+					style={{
+						fontSize: '12px',
+						wordBreak: 'break-all',
+						flex: 1,
+					}}
+				>
+					{value}
+				</span>
+				<Button
+					variant="tertiary"
+					size="small"
+					isDestructive
+					onClick={() => onChange('')}
+				>
+					{__('Clear', 'fair-payment')}
+				</Button>
+			</HStack>
+		);
+	}
+
+	return (
+		<div>
+			<HStack spacing={2} style={{ marginBottom: '4px' }}>
+				<Button
+					variant={mode === 'search' ? 'primary' : 'secondary'}
+					size="compact"
+					onClick={() => setMode('search')}
+				>
+					{__('Search', 'fair-payment')}
+				</Button>
+				<Button
+					variant={mode === 'manual' ? 'primary' : 'secondary'}
+					size="compact"
+					onClick={() => setMode('manual')}
+				>
+					{__('URL', 'fair-payment')}
+				</Button>
+			</HStack>
+
+			{mode === 'search' && (
+				<div>
+					<TextControl
+						value={searchTerm}
+						onChange={setSearchTerm}
+						placeholder={__('Search events...', 'fair-payment')}
+					/>
+					{isSearching && <Spinner />}
+					{searchResults.length > 0 && (
+						<div
+							style={{
+								border: '1px solid #ddd',
+								borderRadius: '4px',
+								maxHeight: '150px',
+								overflowY: 'auto',
+							}}
+						>
+							{searchResults.map((event) => (
+								<div
+									key={event.id}
+									style={{
+										padding: '6px 10px',
+										cursor: 'pointer',
+										borderBottom: '1px solid #eee',
+										fontSize: '13px',
+									}}
+									onClick={() => {
+										onChange(event.display_url);
+										setSearchTerm('');
+										setSearchResults([]);
+									}}
+									onKeyDown={(e) => {
+										if (e.key === 'Enter') {
+											onChange(event.display_url);
+											setSearchTerm('');
+											setSearchResults([]);
+										}
+									}}
+									role="button"
+									tabIndex={0}
+								>
+									<strong>{event.title}</strong>
+									<span
+										style={{
+											marginLeft: '8px',
+											color: '#666',
+										}}
+									>
+										{event.start_datetime?.split('T')[0] ||
+											event.start_datetime?.split(' ')[0]}
+									</span>
+								</div>
+							))}
+						</div>
+					)}
+				</div>
+			)}
+
+			{mode === 'manual' && (
+				<TextControl
+					value=""
+					onChange={(val) => {
+						if (val) {
+							onChange(val);
+						}
+					}}
+					placeholder={__(
+						'https://example.com/event',
+						'fair-payment'
+					)}
+					type="url"
+					onBlur={(e) => {
+						if (e.target.value) {
+							onChange(e.target.value);
+						}
+					}}
+				/>
+			)}
+		</div>
+	);
+};
 
 const SplitModal = ({
 	entry,
 	budgets,
 	budgetingEnabled,
+	eventsEnabled,
 	onSplit,
 	onCancel,
 	onUnsplit,
@@ -31,17 +192,20 @@ const SplitModal = ({
 						: '',
 					amount: child.amount.toString(),
 					description: child.description || '',
+					event_url: child.event_url || '',
 			  }))
 			: [
 					{
 						budget_id: '',
 						amount: '',
 						description: entry.description || '',
+						event_url: '',
 					},
 					{
 						budget_id: '',
 						amount: '',
 						description: entry.description || '',
+						event_url: '',
 					},
 			  ]
 	);
@@ -67,7 +231,12 @@ const SplitModal = ({
 	const addRow = () => {
 		setAllocations((prev) => [
 			...prev,
-			{ budget_id: '', amount: '', description: entry.description || '' },
+			{
+				budget_id: '',
+				amount: '',
+				description: entry.description || '',
+				event_url: '',
+			},
 		]);
 	};
 
@@ -101,6 +270,7 @@ const SplitModal = ({
 							: null,
 						amount: parseFloat(a.amount),
 						description: a.description,
+						event_url: a.event_url || null,
 					})),
 				},
 			});
@@ -250,6 +420,29 @@ const SplitModal = ({
 								}
 								rows={2}
 							/>
+							{eventsEnabled && (
+								<div style={{ marginTop: '8px' }}>
+									<div
+										style={{
+											marginBottom: '4px',
+											fontWeight: '600',
+											fontSize: '13px',
+										}}
+									>
+										{__('Event', 'fair-payment')}
+									</div>
+									<SplitEventUrlField
+										value={allocation.event_url}
+										onChange={(value) =>
+											updateAllocation(
+												index,
+												'event_url',
+												value
+											)
+										}
+									/>
+								</div>
+							)}
 						</div>
 					))}
 

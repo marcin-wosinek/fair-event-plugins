@@ -826,6 +826,7 @@ class EventDatesController extends WP_REST_Controller {
 			'venue_id'        => $event_date->venue_id,
 			'link_type'       => $event_date->link_type,
 			'external_url'    => $event_date->external_url,
+			'display_url'     => $event_date->get_display_url(),
 			'rrule'           => $event_date->rrule,
 			'theme_image_id'  => $event_date->theme_image_id ? (int) $event_date->theme_image_id : null,
 			'theme_image_url' => $event_date->theme_image_id
