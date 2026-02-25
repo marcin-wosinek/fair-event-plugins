@@ -59,6 +59,12 @@ export default function FeeDetail() {
 	const [auditEntries, setAuditEntries] = useState([]);
 	const [auditLoading, setAuditLoading] = useState(false);
 
+	// Transactions modal.
+	const [isTransactionsModalOpen, setIsTransactionsModalOpen] =
+		useState(false);
+	const [transactionEntries, setTransactionEntries] = useState([]);
+	const [transactionsLoading, setTransactionsLoading] = useState(false);
+
 	// Notice state.
 	const [notice, setNotice] = useState(null);
 
@@ -290,6 +296,26 @@ export default function FeeDetail() {
 			});
 	};
 
+	// View payment attempts.
+	const openTransactionsModal = (payment) => {
+		setTransactionsLoading(true);
+		setTransactionEntries([]);
+		setIsTransactionsModalOpen(true);
+
+		apiFetch({
+			path: `/fair-audience/v1/fees/${feeId}/payments/${payment.id}/transactions`,
+		})
+			.then((data) => {
+				setTransactionEntries(data);
+				setTransactionsLoading(false);
+			})
+			.catch((err) => {
+				// eslint-disable-next-line no-console
+				console.error('Error loading transactions:', err);
+				setTransactionsLoading(false);
+			});
+	};
+
 	// Copy payment link.
 	const handleCopyPaymentLink = (payment) => {
 		apiFetch({
@@ -404,6 +430,14 @@ export default function FeeDetail() {
 				callback: ([item]) => handleCopyPaymentLink(item),
 				supportsBulk: false,
 				isEligible: (item) => item.status === 'pending',
+			},
+			{
+				id: 'view-transactions',
+				label: __('View Payment Attempts', 'fair-audience'),
+				icon: 'money-alt',
+				callback: ([item]) => openTransactionsModal(item),
+				supportsBulk: false,
+				isEligible: (item) => !!item.transaction_id,
 			},
 			{
 				id: 'audit-log',
@@ -594,6 +628,133 @@ export default function FeeDetail() {
 							isBusy={isSaving}
 						>
 							{__('Adjust', 'fair-audience')}
+						</Button>
+					</div>
+				</Modal>
+			)}
+
+			{/* Payment Attempts Modal */}
+			{isTransactionsModalOpen && (
+				<Modal
+					title={__('Payment Attempts', 'fair-audience')}
+					onRequestClose={() => setIsTransactionsModalOpen(false)}
+					style={{ width: '600px', maxWidth: '90vw' }}
+				>
+					{transactionsLoading ? (
+						<Spinner />
+					) : transactionEntries.length === 0 ? (
+						<p>
+							{__('No payment attempts found.', 'fair-audience')}
+						</p>
+					) : (
+						<div
+							style={{
+								maxHeight: '400px',
+								overflowY: 'auto',
+							}}
+						>
+							{transactionEntries.map((entry) => {
+								const statusColors = {
+									paid: '#00a32a',
+									failed: '#d63638',
+									canceled: '#d63638',
+									expired: '#d63638',
+									pending_payment: '#dba617',
+									draft: '#757575',
+								};
+								return (
+									<div
+										key={entry.id}
+										style={{
+											padding: '12px',
+											borderBottom: '1px solid #eee',
+										}}
+									>
+										<div
+											style={{
+												display: 'flex',
+												justifyContent: 'space-between',
+												marginBottom: '4px',
+											}}
+										>
+											<span
+												style={{
+													color:
+														statusColors[
+															entry.status
+														] || '#333',
+													fontWeight: 'bold',
+												}}
+											>
+												{entry.status ||
+													__(
+														'unknown',
+														'fair-audience'
+													)}
+											</span>
+											<span
+												style={{
+													color: '#666',
+													fontSize: '12px',
+												}}
+											>
+												{entry.created_at}
+											</span>
+										</div>
+										<div
+											style={{
+												fontSize: '13px',
+												color: '#555',
+											}}
+										>
+											{__(
+												'Transaction:',
+												'fair-audience'
+											)}{' '}
+											#{entry.transaction_id}
+											{entry.amount && (
+												<>
+													{' — '}
+													{parseFloat(
+														entry.amount
+													).toFixed(2)}{' '}
+													{entry.currency || 'EUR'}
+												</>
+											)}
+										</div>
+										{entry.payment_initiated_at && (
+											<div
+												style={{
+													fontSize: '12px',
+													color: '#888',
+													marginTop: '4px',
+												}}
+											>
+												{__(
+													'Initiated:',
+													'fair-audience'
+												)}{' '}
+												{entry.payment_initiated_at}
+											</div>
+										)}
+									</div>
+								);
+							})}
+						</div>
+					)}
+
+					<div
+						style={{
+							display: 'flex',
+							justifyContent: 'flex-end',
+							marginTop: '16px',
+						}}
+					>
+						<Button
+							variant="secondary"
+							onClick={() => setIsTransactionsModalOpen(false)}
+						>
+							{__('Close', 'fair-audience')}
 						</Button>
 					</div>
 				</Modal>

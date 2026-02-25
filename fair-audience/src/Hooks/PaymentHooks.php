@@ -24,6 +24,7 @@ class PaymentHooks {
 	 */
 	public static function init() {
 		add_action( 'fair_payment_paid', array( static::class, 'handle_payment_paid' ), 10, 2 );
+		add_action( 'fair_payment_failed', array( static::class, 'handle_payment_failed' ), 10, 2 );
 	}
 
 	/**
@@ -70,6 +71,49 @@ class PaymentHooks {
 			$old_status,
 			'paid',
 			__( 'Paid online via Mollie', 'fair-audience' )
+		);
+	}
+
+	/**
+	 * Handle failed/canceled/expired payment via Mollie webhook or sync.
+	 *
+	 * @param object $payment Mollie payment object.
+	 * @param object $transaction Transaction from database.
+	 */
+	public static function handle_payment_failed( $payment, $transaction ) {
+		$metadata = ! empty( $transaction->metadata ) ? json_decode( $transaction->metadata, true ) : array();
+
+		if ( empty( $metadata['fee_payment_id'] ) ) {
+			return;
+		}
+
+		$fee_payment_id = (int) $metadata['fee_payment_id'];
+
+		$payment_repository   = new FeePaymentRepository();
+		$audit_log_repository = new FeeAuditLogRepository();
+
+		$fee_payment = $payment_repository->get_by_id( $fee_payment_id );
+
+		if ( ! $fee_payment ) {
+			return;
+		}
+
+		// Only log for pending payments (already paid or canceled don't need logging).
+		if ( 'pending' !== $fee_payment->status ) {
+			return;
+		}
+
+		$audit_log_repository->log_action(
+			$fee_payment->id,
+			'payment_failed',
+			'pending',
+			$payment->status,
+			sprintf(
+				/* translators: %1$s: Mollie status, %2$d: transaction ID */
+				__( 'Online payment %1$s (transaction #%2$d)', 'fair-audience' ),
+				$payment->status,
+				$transaction->id
+			)
 		);
 	}
 }

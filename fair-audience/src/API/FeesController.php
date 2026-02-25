@@ -10,6 +10,7 @@ namespace FairAudience\API;
 use FairAudience\Database\FeeRepository;
 use FairAudience\Database\FeePaymentRepository;
 use FairAudience\Database\FeeAuditLogRepository;
+use FairAudience\Database\FeePaymentTransactionRepository;
 use FairAudience\Models\Fee;
 use FairAudience\Services\EmailService;
 use FairAudience\Services\FeePaymentToken;
@@ -63,12 +64,20 @@ class FeesController extends WP_REST_Controller {
 	private $audit_log_repository;
 
 	/**
+	 * Fee payment transaction repository instance.
+	 *
+	 * @var FeePaymentTransactionRepository
+	 */
+	private $transaction_repository;
+
+	/**
 	 * Constructor.
 	 */
 	public function __construct() {
-		$this->fee_repository       = new FeeRepository();
-		$this->payment_repository   = new FeePaymentRepository();
-		$this->audit_log_repository = new FeeAuditLogRepository();
+		$this->fee_repository         = new FeeRepository();
+		$this->payment_repository     = new FeePaymentRepository();
+		$this->audit_log_repository   = new FeeAuditLogRepository();
+		$this->transaction_repository = new FeePaymentTransactionRepository();
 	}
 
 	/**
@@ -216,6 +225,19 @@ class FeesController extends WP_REST_Controller {
 					'methods'             => WP_REST_Server::READABLE,
 					'callback'            => array( $this, 'get_payment_url' ),
 					'permission_callback' => array( $this, 'update_item_permissions_check' ),
+				),
+			)
+		);
+
+		// GET /fees/{id}/payments/{pid}/transactions.
+		register_rest_route(
+			$this->namespace,
+			'/' . $this->rest_base . '/(?P<id>\d+)/payments/(?P<pid>\d+)/transactions',
+			array(
+				array(
+					'methods'             => WP_REST_Server::READABLE,
+					'callback'            => array( $this, 'get_payment_transactions' ),
+					'permission_callback' => 'is_user_logged_in',
 				),
 			)
 		);
@@ -674,6 +696,23 @@ class FeesController extends WP_REST_Controller {
 				'url' => $url,
 			)
 		);
+	}
+
+	/**
+	 * Get all transaction attempts for a fee payment.
+	 *
+	 * @param WP_REST_Request $request Request object.
+	 * @return WP_REST_Response|WP_Error Response object or error.
+	 */
+	public function get_payment_transactions( $request ) {
+		$payment = $this->get_validated_payment( $request );
+		if ( is_wp_error( $payment ) ) {
+			return $payment;
+		}
+
+		$transactions = $this->transaction_repository->get_by_fee_payment_id( $payment->id );
+
+		return rest_ensure_response( $transactions );
 	}
 
 	/**

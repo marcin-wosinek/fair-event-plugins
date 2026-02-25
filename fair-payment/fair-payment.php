@@ -141,3 +141,19 @@ function fair_payment_initiate_payment( $transaction_id, $args = array() ) {
 function fair_payment_get_transaction( $transaction_id ) {
 	return \FairPayment\API\TransactionAPI::get_transaction( $transaction_id );
 }
+
+/**
+ * Sync transaction status with Mollie
+ *
+ * Proactively checks Mollie API for the real status of a pending_payment transaction.
+ * If the status has changed, updates the DB and fires action hooks (fair_payment_paid,
+ * fair_payment_failed, etc.).
+ *
+ * Safe to call on any transaction — returns immediately for non-pending transactions.
+ *
+ * @param int $transaction_id Transaction ID.
+ * @return object|null Updated transaction object, or null if not found.
+ */
+function fair_payment_sync_transaction_status( $transaction_id ) {
+	return \FairPayment\API\TransactionAPI::sync_transaction_status( $transaction_id );
+}

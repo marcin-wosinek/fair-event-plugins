@@ -446,6 +446,31 @@ class Schema {
 	}
 
 	/**
+	 * Get SQL for creating the fee payment transactions junction table.
+	 *
+	 * Tracks all transaction attempts for a fee payment, preserving the link
+	 * even when fee_payment.transaction_id gets overwritten on retry.
+	 *
+	 * @return string SQL statement.
+	 */
+	public static function get_fee_payment_transactions_table_sql() {
+		global $wpdb;
+
+		$table_name      = $wpdb->prefix . 'fair_audience_fee_payment_transactions';
+		$charset_collate = $wpdb->get_charset_collate();
+
+		return "CREATE TABLE $table_name (
+			id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
+			fee_payment_id BIGINT UNSIGNED NOT NULL,
+			transaction_id BIGINT UNSIGNED NOT NULL,
+			created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+			PRIMARY KEY  (id),
+			KEY idx_fee_payment_id (fee_payment_id),
+			KEY idx_transaction_id (transaction_id)
+		) ENGINE=InnoDB $charset_collate;";
+	}
+
+	/**
 	 * Get SQL for creating the fee audit log table.
 	 *
 	 * @return string SQL statement.
@@ -459,7 +484,7 @@ class Schema {
 		return "CREATE TABLE $table_name (
 			id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
 			fee_payment_id BIGINT UNSIGNED NOT NULL,
-			action ENUM('amount_adjusted', 'marked_paid', 'marked_canceled', 'reminder_sent') NOT NULL,
+			action ENUM('amount_adjusted', 'marked_paid', 'marked_canceled', 'reminder_sent', 'payment_failed') NOT NULL,
 			old_value VARCHAR(255) DEFAULT NULL,
 			new_value VARCHAR(255) DEFAULT NULL,
 			comment TEXT,

@@ -65,8 +65,10 @@ function fair_audience_activate() {
 		wp_schedule_event( time(), 'daily', 'fair_audience_refresh_instagram_token' );
 	}
 
+	dbDelta( \FairAudience\Database\Schema::get_fee_payment_transactions_table_sql() );
+
 	// Update database version.
-	update_option( 'fair_audience_db_version', '1.18.0' );
+	update_option( 'fair_audience_db_version', '1.19.0' );
 }
 register_activation_hook( __FILE__, __NAMESPACE__ . '\\fair_audience_activate' );
 
@@ -318,6 +320,24 @@ function fair_audience_maybe_upgrade_db() {
 		);
 
 		update_option( 'fair_audience_db_version', '1.18.0' );
+	}
+
+	if ( version_compare( $db_version, '1.19.0', '<' ) ) {
+		global $wpdb;
+		require_once ABSPATH . 'wp-admin/includes/upgrade.php';
+
+		// Create fee payment transactions junction table.
+		dbDelta( \FairAudience\Database\Schema::get_fee_payment_transactions_table_sql() );
+
+		// Add 'payment_failed' to audit log action ENUM.
+		$audit_log_table = $wpdb->prefix . 'fair_audience_fee_audit_log';
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.DirectDatabaseQuery.SchemaChange
+		$wpdb->query(
+			"ALTER TABLE {$audit_log_table}
+			 MODIFY action ENUM('amount_adjusted', 'marked_paid', 'marked_canceled', 'reminder_sent', 'payment_failed') NOT NULL"
+		);
+
+		update_option( 'fair_audience_db_version', '1.19.0' );
 	}
 }
 add_action( 'plugins_loaded', __NAMESPACE__ . '\\fair_audience_maybe_upgrade_db' );

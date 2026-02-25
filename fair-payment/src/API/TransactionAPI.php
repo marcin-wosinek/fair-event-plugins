@@ -216,6 +216,86 @@ class TransactionAPI {
 	}
 
 	/**
+	 * Handle payment status change actions
+	 *
+	 * Fires the appropriate action hooks based on the payment status.
+	 * Shared between webhook handler and sync method.
+	 *
+	 * @param object $payment Mollie payment object.
+	 * @param object $transaction Transaction from database.
+	 * @return void
+	 */
+	public static function handle_payment_status_change( $payment, $transaction ) {
+		switch ( $payment->status ) {
+			case 'paid':
+				do_action( 'fair_payment_paid', $payment, $transaction );
+				break;
+
+			case 'failed':
+			case 'canceled':
+			case 'expired':
+				do_action( 'fair_payment_failed', $payment, $transaction );
+				break;
+
+			case 'authorized':
+				do_action( 'fair_payment_authorized', $payment, $transaction );
+				break;
+		}
+
+		do_action( 'fair_payment_status_changed', $payment, $transaction );
+	}
+
+	/**
+	 * Sync transaction status with Mollie
+	 *
+	 * Proactively checks Mollie API for the real status of a pending_payment transaction.
+	 * If the status has changed, updates the DB and fires action hooks.
+	 *
+	 * @param int $transaction_id Transaction ID.
+	 * @return object|null Updated transaction object, or null if not found.
+	 */
+	public static function sync_transaction_status( $transaction_id ) {
+		$transaction = Transaction::get_by_id( $transaction_id );
+
+		if ( ! $transaction ) {
+			return null;
+		}
+
+		// Only sync transactions that are in pending_payment state.
+		if ( 'pending_payment' !== $transaction->status ) {
+			return $transaction;
+		}
+
+		// Only sync if we have a Mollie payment ID.
+		if ( empty( $transaction->mollie_payment_id ) ) {
+			return $transaction;
+		}
+
+		try {
+			$handler = new MolliePaymentHandler();
+			$options = array(
+				'testmode' => ! empty( $transaction->testmode ),
+			);
+			$payment = $handler->get_payment( $transaction->mollie_payment_id, $options );
+
+			// If Mollie status differs from our stored status, update.
+			if ( $payment->status !== $transaction->status ) {
+				Transaction::update_status( $transaction->mollie_payment_id, $payment->status );
+				self::handle_payment_status_change( $payment, $transaction );
+
+				// Return fresh transaction from DB.
+				return Transaction::get_by_id( $transaction_id );
+			}
+		} catch ( \Exception $e ) {
+			// If Mollie API fails, return current state without updating.
+			// phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
+			error_log( 'Fair Payment sync error: ' . $e->getMessage() );
+		}
+
+		return $transaction;
+	}
+
+	/**
 	 * Validate line items structure
 	 *
 	 * @param array $line_items Array of line items.

@@ -16,6 +16,7 @@ use FairAudience\Services\FeePaymentToken;
 use FairAudience\Database\FeePaymentRepository;
 use FairAudience\Database\FeeRepository;
 use FairAudience\Database\FeeAuditLogRepository;
+use FairAudience\Database\FeePaymentTransactionRepository;
 use FairAudience\Database\ParticipantRepository;
 
 // Get the token from the query var.
@@ -62,15 +63,27 @@ if ( false === $fee_payment_id ) {
 
 			// Check if returning from payment (transaction_id is set but fee_payment still pending).
 			if ( $fee_payment->transaction_id && 'pending' === $fee_payment->status ) {
-				$transaction = fair_payment_get_transaction( $fee_payment->transaction_id );
+				// Proactively sync with Mollie to get real status.
+				$transaction = fair_payment_sync_transaction_status( $fee_payment->transaction_id );
 				if ( $transaction && 'paid' === $transaction->status ) {
 					// Webhook already updated the transaction but not the fee_payment yet - mark processing.
 					$result['payment_processing'] = true;
 				} elseif ( $transaction && in_array( $transaction->status, array( 'failed', 'canceled', 'expired' ), true ) ) {
 					$result['type']    = 'warning';
 					$result['message'] = __( 'Your payment was not completed. You can try again.', 'fair-audience' );
+				} elseif ( $transaction && 'pending_payment' === $transaction->status ) {
+					// Still pending after sync — check staleness (20 min timeout).
+					$initiated_at = strtotime( $transaction->payment_initiated_at );
+					$age_minutes  = ( time() - $initiated_at ) / 60;
+
+					if ( $age_minutes > 20 ) {
+						$result['type']    = 'warning';
+						$result['message'] = __( 'Your previous payment attempt has timed out. You can try again.', 'fair-audience' );
+					} else {
+						$result['payment_processing'] = true;
+					}
 				} elseif ( $transaction ) {
-					// Transaction exists but not yet resolved (open/pending) - payment in progress.
+					// Other status — show processing.
 					$result['payment_processing'] = true;
 				}
 			}
@@ -108,6 +121,10 @@ if ( false === $fee_payment_id ) {
 					// Link transaction to fee payment.
 					$fee_payment->transaction_id = $transaction_id;
 					$fee_payment->save();
+
+					// Record transaction attempt in junction table.
+					$transaction_repository = new FeePaymentTransactionRepository();
+					$transaction_repository->record_attempt( $fee_payment->id, $transaction_id );
 
 					// Initiate payment with redirect back to this page.
 					$redirect_url = FeePaymentToken::get_url( $fee_payment->id );

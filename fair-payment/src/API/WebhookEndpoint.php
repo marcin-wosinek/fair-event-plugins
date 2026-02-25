@@ -132,51 +132,13 @@ class WebhookEndpoint extends WP_REST_Controller {
 	/**
 	 * Handle different payment statuses
 	 *
+	 * Delegates to TransactionAPI::handle_payment_status_change() for shared logic.
+	 *
 	 * @param object $payment Mollie payment object.
 	 * @param object $transaction Transaction from database.
 	 * @return void
 	 */
 	private function handle_payment_status( $payment, $transaction ) {
-		switch ( $payment->status ) {
-			case 'paid':
-				/**
-				 * Fires when a payment is successfully completed
-				 *
-				 * @param object $payment Mollie payment object.
-				 * @param object $transaction Transaction from database.
-				 */
-				do_action( 'fair_payment_paid', $payment, $transaction );
-				break;
-
-			case 'failed':
-			case 'canceled':
-			case 'expired':
-				/**
-				 * Fires when a payment fails, is canceled, or expires
-				 *
-				 * @param object $payment Mollie payment object.
-				 * @param object $transaction Transaction from database.
-				 */
-				do_action( 'fair_payment_failed', $payment, $transaction );
-				break;
-
-			case 'authorized':
-				/**
-				 * Fires when a payment is authorized
-				 *
-				 * @param object $payment Mollie payment object.
-				 * @param object $transaction Transaction from database.
-				 */
-				do_action( 'fair_payment_authorized', $payment, $transaction );
-				break;
-		}
-
-		/**
-		 * Fires for any payment status change
-		 *
-		 * @param object $payment Mollie payment object.
-		 * @param object $transaction Transaction from database.
-		 */
-		do_action( 'fair_payment_status_changed', $payment, $transaction );
+		TransactionAPI::handle_payment_status_change( $payment, $transaction );
 	}
 }
