@@ -68,7 +68,7 @@ function fair_audience_activate() {
 	dbDelta( \FairAudience\Database\Schema::get_fee_payment_transactions_table_sql() );
 
 	// Update database version.
-	update_option( 'fair_audience_db_version', '1.19.0' );
+	update_option( 'fair_audience_db_version', '1.20.0' );
 }
 register_activation_hook( __FILE__, __NAMESPACE__ . '\\fair_audience_activate' );
 
@@ -338,6 +338,45 @@ function fair_audience_maybe_upgrade_db() {
 		);
 
 		update_option( 'fair_audience_db_version', '1.19.0' );
+	}
+
+	if ( version_compare( $db_version, '1.20.0', '<' ) ) {
+		global $wpdb;
+
+		$tables = array(
+			$wpdb->prefix . 'fair_audience_event_participants',
+			$wpdb->prefix . 'fair_audience_polls',
+			$wpdb->prefix . 'fair_audience_gallery_access_keys',
+			$wpdb->prefix . 'fair_audience_event_signup_access_keys',
+		);
+
+		foreach ( $tables as $table_name ) {
+			// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.DirectDatabaseQuery.SchemaChange
+			$wpdb->query(
+				"ALTER TABLE {$table_name}
+				 ADD COLUMN IF NOT EXISTS event_date_id BIGINT UNSIGNED DEFAULT NULL AFTER event_id"
+			);
+
+			// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.DirectDatabaseQuery.SchemaChange
+			$wpdb->query(
+				"ALTER TABLE {$table_name}
+				 ADD INDEX IF NOT EXISTS idx_event_date_id (event_date_id)"
+			);
+		}
+
+		// Backfill event_date_id from fair_event_dates where event_id matches.
+		$event_dates_table = $wpdb->prefix . 'fair_event_dates';
+		foreach ( $tables as $table_name ) {
+			// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+			$wpdb->query(
+				"UPDATE {$table_name} t
+				 JOIN {$event_dates_table} ed ON ed.event_id = t.event_id
+				 SET t.event_date_id = ed.id
+				 WHERE t.event_date_id IS NULL"
+			);
+		}
+
+		update_option( 'fair_audience_db_version', '1.20.0' );
 	}
 }
 add_action( 'plugins_loaded', __NAMESPACE__ . '\\fair_audience_maybe_upgrade_db' );

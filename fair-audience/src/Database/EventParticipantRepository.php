@@ -57,6 +57,34 @@ class EventParticipantRepository {
 	}
 
 	/**
+	 * Get all participants for an event date.
+	 *
+	 * @param int $event_date_id Event date ID.
+	 * @return EventParticipant[] Array of event-participant relationships.
+	 */
+	public function get_by_event_date( $event_date_id ) {
+		global $wpdb;
+
+		$table_name = $this->get_table_name();
+
+		$results = $wpdb->get_results(
+			$wpdb->prepare(
+				'SELECT * FROM %i WHERE event_date_id = %d ORDER BY created_at ASC',
+				$table_name,
+				$event_date_id
+			),
+			ARRAY_A
+		);
+
+		return array_map(
+			function ( $row ) {
+				return new EventParticipant( $row );
+			},
+			$results
+		);
+	}
+
+	/**
 	 * Get all events for a participant.
 	 *
 	 * @param int $participant_id Participant ID.
@@ -112,12 +140,13 @@ class EventParticipantRepository {
 	/**
 	 * Add participant to event.
 	 *
-	 * @param int    $event_id       Event ID.
-	 * @param int    $participant_id Participant ID.
-	 * @param string $label          Label (interested or signed_up).
+	 * @param int      $event_id       Event ID.
+	 * @param int      $participant_id Participant ID.
+	 * @param string   $label          Label (interested or signed_up).
+	 * @param int|null $event_date_id  Optional event date ID.
 	 * @return int|false Relationship ID or false on failure.
 	 */
-	public function add_participant_to_event( $event_id, $participant_id, $label = 'interested' ) {
+	public function add_participant_to_event( $event_id, $participant_id, $label = 'interested', $event_date_id = null ) {
 		$existing = $this->get_by_event_and_participant( $event_id, $participant_id );
 		if ( $existing ) {
 			return false; // Already exists.
@@ -126,6 +155,7 @@ class EventParticipantRepository {
 		$relationship = new EventParticipant(
 			array(
 				'event_id'       => $event_id,
+				'event_date_id'  => $event_date_id,
 				'participant_id' => $participant_id,
 				'label'          => $label,
 			)

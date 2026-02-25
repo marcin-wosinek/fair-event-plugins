@@ -101,12 +101,17 @@ class EventSignupController extends WP_REST_Controller {
 					'callback'            => array( $this, 'get_status' ),
 					'permission_callback' => '__return_true',
 					'args'                => array(
-						'event_id' => array(
+						'event_id'      => array(
 							'type'              => 'integer',
 							'required'          => true,
 							'sanitize_callback' => 'absint',
 						),
-						'token'    => array(
+						'event_date_id' => array(
+							'type'              => 'integer',
+							'required'          => false,
+							'sanitize_callback' => 'absint',
+						),
+						'token'         => array(
 							'type'              => 'string',
 							'required'          => false,
 							'sanitize_callback' => 'sanitize_text_field',
@@ -126,12 +131,17 @@ class EventSignupController extends WP_REST_Controller {
 					'callback'            => array( $this, 'create_signup' ),
 					'permission_callback' => array( $this, 'create_signup_permissions_check' ),
 					'args'                => array(
-						'event_id' => array(
+						'event_id'      => array(
 							'type'              => 'integer',
 							'required'          => true,
 							'sanitize_callback' => 'absint',
 						),
-						'token'    => array(
+						'event_date_id' => array(
+							'type'              => 'integer',
+							'required'          => false,
+							'sanitize_callback' => 'absint',
+						),
+						'token'         => array(
 							'type'              => 'string',
 							'required'          => false,
 							'sanitize_callback' => 'sanitize_text_field',
@@ -182,6 +192,11 @@ class EventSignupController extends WP_REST_Controller {
 						'event_id'      => array(
 							'type'              => 'integer',
 							'required'          => true,
+							'sanitize_callback' => 'absint',
+						),
+						'event_date_id' => array(
+							'type'              => 'integer',
+							'required'          => false,
 							'sanitize_callback' => 'absint',
 						),
 						'name'          => array(
@@ -329,9 +344,10 @@ class EventSignupController extends WP_REST_Controller {
 	 * @return WP_REST_Response|WP_Error Response object or error.
 	 */
 	public function create_signup( $request ) {
-		$event_id = $request->get_param( 'event_id' );
-		$token    = $request->get_param( 'token' );
-		$user_id  = get_current_user_id();
+		$event_id      = $request->get_param( 'event_id' );
+		$event_date_id = $request->get_param( 'event_date_id' ) ?: null;
+		$token         = $request->get_param( 'token' );
+		$user_id       = get_current_user_id();
 
 		// Validate event exists.
 		$event = get_post( $event_id );
@@ -384,7 +400,7 @@ class EventSignupController extends WP_REST_Controller {
 			$this->event_participant_repository->update_label( $event_id, $participant->id, 'signed_up' );
 		} else {
 			// Create new signup.
-			$this->event_participant_repository->add_participant_to_event( $event_id, $participant->id, 'signed_up' );
+			$this->event_participant_repository->add_participant_to_event( $event_id, $participant->id, 'signed_up', $event_date_id );
 		}
 
 		return rest_ensure_response(
@@ -468,6 +484,7 @@ class EventSignupController extends WP_REST_Controller {
 	 */
 	public function register_and_signup( $request ) {
 		$event_id      = $request->get_param( 'event_id' );
+		$event_date_id = $request->get_param( 'event_date_id' ) ?: null;
 		$name          = $request->get_param( 'name' );
 		$surname       = $request->get_param( 'surname' );
 		$email         = $request->get_param( 'email' );
@@ -537,7 +554,7 @@ class EventSignupController extends WP_REST_Controller {
 			if ( $existing ) {
 				$this->event_participant_repository->update_label( $event_id, $participant->id, 'signed_up' );
 			} else {
-				$this->event_participant_repository->add_participant_to_event( $event_id, $participant->id, 'signed_up' );
+				$this->event_participant_repository->add_participant_to_event( $event_id, $participant->id, 'signed_up', $event_date_id );
 			}
 
 			return rest_ensure_response(
@@ -570,7 +587,7 @@ class EventSignupController extends WP_REST_Controller {
 		}
 
 		// Sign up for event.
-		$this->event_participant_repository->add_participant_to_event( $event_id, $participant->id, 'signed_up' );
+		$this->event_participant_repository->add_participant_to_event( $event_id, $participant->id, 'signed_up', $event_date_id );
 
 		return rest_ensure_response(
 			array(

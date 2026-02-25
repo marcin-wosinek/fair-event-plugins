@@ -234,12 +234,13 @@ class WeeklyEventsController extends \WP_REST_Controller {
 			}
 
 			$all_events[ $start_date ][] = array(
-				'title'      => $event['summary'] ?? '',
-				'start_time' => $event['all_day'] ? '' : DateHelper::local_time( $event['start'] ),
-				'end_time'   => $event['all_day'] ? '' : DateHelper::local_time( $event['end'] ),
-				'url'        => $event['url'] ?? '',
-				'all_day'    => (bool) $event['all_day'],
-				'event_id'   => null,
+				'title'         => $event['summary'] ?? '',
+				'start_time'    => $event['all_day'] ? '' : DateHelper::local_time( $event['start'] ),
+				'end_time'      => $event['all_day'] ? '' : DateHelper::local_time( $event['end'] ),
+				'url'           => $event['url'] ?? '',
+				'all_day'       => (bool) $event['all_day'],
+				'event_id'      => null,
+				'event_date_id' => null,
 			);
 		}
 	}
@@ -266,12 +267,13 @@ class WeeklyEventsController extends \WP_REST_Controller {
 			}
 
 			$all_events[ $start_date ][] = array(
-				'title'      => $event['summary'] ?? '',
-				'start_time' => $event['all_day'] ? '' : DateHelper::local_time( $event['start'] ),
-				'end_time'   => $event['all_day'] ? '' : DateHelper::local_time( $event['end'] ),
-				'url'        => $event['url'] ?? '',
-				'all_day'    => (bool) $event['all_day'],
-				'event_id'   => null,
+				'title'         => $event['summary'] ?? '',
+				'start_time'    => $event['all_day'] ? '' : DateHelper::local_time( $event['start'] ),
+				'end_time'      => $event['all_day'] ? '' : DateHelper::local_time( $event['end'] ),
+				'url'           => $event['url'] ?? '',
+				'all_day'       => (bool) $event['all_day'],
+				'event_id'      => null,
+				'event_date_id' => null,
 			);
 		}
 	}
@@ -344,12 +346,13 @@ class WeeklyEventsController extends \WP_REST_Controller {
 					}
 
 					$all_events[ $start_date ][] = array(
-						'title'      => get_the_title( $event_id ),
-						'start_time' => $start_time,
-						'end_time'   => $end_time,
-						'url'        => get_permalink( $event_id ),
-						'all_day'    => $is_all_day,
-						'event_id'   => $event_id,
+						'title'         => get_the_title( $event_id ),
+						'start_time'    => $start_time,
+						'end_time'      => $end_time,
+						'url'           => get_permalink( $event_id ),
+						'all_day'       => $is_all_day,
+						'event_id'      => $event_id,
+						'event_date_id' => (int) $event_dates->id,
 					);
 				}
 			}
@@ -384,12 +387,13 @@ class WeeklyEventsController extends \WP_REST_Controller {
 			}
 
 			$all_events[ $start_date ][] = array(
-				'title'      => $event_dates->get_display_title(),
-				'start_time' => $start_time,
-				'end_time'   => $end_time,
-				'url'        => $event_dates->get_display_url(),
-				'all_day'    => $is_all_day,
-				'event_id'   => null,
+				'title'         => $event_dates->get_display_title(),
+				'start_time'    => $start_time,
+				'end_time'      => $end_time,
+				'url'           => $event_dates->get_display_url(),
+				'all_day'       => $is_all_day,
+				'event_id'      => null,
+				'event_date_id' => (int) $event_dates->id,
 			);
 		}
 	}

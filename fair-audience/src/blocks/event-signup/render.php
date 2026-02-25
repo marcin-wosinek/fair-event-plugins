@@ -16,6 +16,7 @@ defined( 'WPINC' ) || die;
 use FairAudience\Database\ParticipantRepository;
 use FairAudience\Database\EventParticipantRepository;
 use FairAudience\Database\EventSignupAccessKeyRepository;
+use FairEvents\Models\EventDates;
 
 // Get block attributes.
 $signup_button_text       = $attributes['signupButtonText'] ?? __( 'Sign Up', 'fair-audience' );
@@ -83,11 +84,21 @@ if ( $is_valid_post_type ) {
 	}
 }
 
+// Resolve event_date_id from fair_event_dates table.
+$event_date_id = '';
+if ( class_exists( EventDates::class ) ) {
+	$event_dates_obj = EventDates::get_by_event_id( $event_id );
+	if ( $event_dates_obj ) {
+		$event_date_id = (string) $event_dates_obj->id;
+	}
+}
+
 // Get wrapper attributes.
 $wrapper_attributes = get_block_wrapper_attributes(
 	array(
 		'class'                => 'fair-audience-event-signup',
 		'data-event-id'        => esc_attr( (string) $event_id ),
+		'data-event-date-id'   => esc_attr( $event_date_id ),
 		'data-state'           => esc_attr( $state ),
 		'data-is-signed-up'    => $is_signed_up ? 'true' : 'false',
 		'data-token'           => esc_attr( $token ),

@@ -29,6 +29,13 @@ class EventParticipant {
 	public $event_id;
 
 	/**
+	 * Event date ID from fair_event_dates table.
+	 *
+	 * @var int|null
+	 */
+	public $event_date_id;
+
+	/**
 	 * Participant ID.
 	 *
 	 * @var int
@@ -75,6 +82,7 @@ class EventParticipant {
 	public function populate( $data ) {
 		$this->id             = isset( $data['id'] ) ? (int) $data['id'] : null;
 		$this->event_id       = isset( $data['event_id'] ) ? (int) $data['event_id'] : 0;
+		$this->event_date_id  = isset( $data['event_date_id'] ) && $data['event_date_id'] ? (int) $data['event_date_id'] : null;
 		$this->participant_id = isset( $data['participant_id'] ) ? (int) $data['participant_id'] : 0;
 		$this->label          = isset( $data['label'] ) ? $data['label'] : 'interested';
 		$this->created_at     = isset( $data['created_at'] ) ? $data['created_at'] : '';
@@ -102,11 +110,12 @@ class EventParticipant {
 
 		$data = array(
 			'event_id'       => $this->event_id,
+			'event_date_id'  => $this->event_date_id,
 			'participant_id' => $this->participant_id,
 			'label'          => $this->label,
 		);
 
-		$format = array( '%d', '%d', '%s' );
+		$format = array( '%d', '%d', '%d', '%s' );
 
 		if ( $this->id ) {
 			// Update existing.

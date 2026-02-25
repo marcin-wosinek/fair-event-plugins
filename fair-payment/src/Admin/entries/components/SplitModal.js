@@ -15,7 +15,7 @@ import {
 	__experimentalHStack as HStack,
 } from '@wordpress/components';
 
-const SplitEventUrlField = ({ value, onChange }) => {
+const SplitEventUrlField = ({ value, eventDateId, onChange }) => {
 	const [mode, setMode] = useState(value ? 'manual' : 'search');
 	const [searchTerm, setSearchTerm] = useState('');
 	const [searchResults, setSearchResults] = useState([]);
@@ -68,7 +68,7 @@ const SplitEventUrlField = ({ value, onChange }) => {
 					variant="tertiary"
 					size="small"
 					isDestructive
-					onClick={() => onChange('')}
+					onClick={() => onChange('', null)}
 				>
 					{__('Clear', 'fair-payment')}
 				</Button>
@@ -123,13 +123,27 @@ const SplitEventUrlField = ({ value, onChange }) => {
 										fontSize: '13px',
 									}}
 									onClick={() => {
-										onChange(event.display_url);
+										const isExternalSource = String(
+											event.id
+										).startsWith('source_');
+										onChange(
+											event.display_url,
+											isExternalSource ? null : event.id
+										);
 										setSearchTerm('');
 										setSearchResults([]);
 									}}
 									onKeyDown={(e) => {
 										if (e.key === 'Enter') {
-											onChange(event.display_url);
+											const isExternalSource = String(
+												event.id
+											).startsWith('source_');
+											onChange(
+												event.display_url,
+												isExternalSource
+													? null
+													: event.id
+											);
 											setSearchTerm('');
 											setSearchResults([]);
 										}
@@ -159,7 +173,7 @@ const SplitEventUrlField = ({ value, onChange }) => {
 					value=""
 					onChange={(val) => {
 						if (val) {
-							onChange(val);
+							onChange(val, null);
 						}
 					}}
 					placeholder={__(
@@ -169,7 +183,7 @@ const SplitEventUrlField = ({ value, onChange }) => {
 					type="url"
 					onBlur={(e) => {
 						if (e.target.value) {
-							onChange(e.target.value);
+							onChange(e.target.value, null);
 						}
 					}}
 				/>
@@ -197,6 +211,7 @@ const SplitModal = ({
 					amount: child.amount.toString(),
 					description: child.description || '',
 					event_url: child.event_url || '',
+					event_date_id: child.event_date_id || null,
 			  }))
 			: [
 					{
@@ -204,12 +219,14 @@ const SplitModal = ({
 						amount: '',
 						description: entry.description || '',
 						event_url: '',
+						event_date_id: null,
 					},
 					{
 						budget_id: '',
 						amount: '',
 						description: entry.description || '',
 						event_url: '',
+						event_date_id: null,
 					},
 			  ]
 	);
@@ -240,6 +257,7 @@ const SplitModal = ({
 				amount: '',
 				description: entry.description || '',
 				event_url: '',
+				event_date_id: null,
 			},
 		]);
 	};
@@ -275,6 +293,7 @@ const SplitModal = ({
 						amount: parseFloat(a.amount),
 						description: a.description,
 						event_url: a.event_url || null,
+						event_date_id: a.event_date_id || null,
 					})),
 				},
 			});
@@ -437,13 +456,18 @@ const SplitModal = ({
 									</div>
 									<SplitEventUrlField
 										value={allocation.event_url}
-										onChange={(value) =>
-											updateAllocation(
-												index,
-												'event_url',
-												value
-											)
-										}
+										eventDateId={allocation.event_date_id}
+										onChange={(url, dateId) => {
+											setAllocations((prev) => {
+												const updated = [...prev];
+												updated[index] = {
+													...updated[index],
+													event_url: url,
+													event_date_id: dateId,
+												};
+												return updated;
+											});
+										}}
 									/>
 								</div>
 							)}

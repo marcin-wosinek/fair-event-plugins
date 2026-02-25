@@ -111,9 +111,10 @@ class Schema {
 		self::migrate_to_v8();
 		self::migrate_to_v9();
 		self::migrate_to_v10();
+		self::migrate_to_v11();
 
 		// Store database version for future migrations.
-		update_option( 'fair_payment_db_version', '10.0' );
+		update_option( 'fair_payment_db_version', '11.0' );
 	}
 
 	/**
@@ -193,6 +194,7 @@ class Schema {
 			import_source varchar(255) DEFAULT NULL,
 			parent_entry_id bigint(20) UNSIGNED DEFAULT NULL,
 			event_url varchar(500) DEFAULT NULL,
+			event_date_id bigint(20) UNSIGNED DEFAULT NULL,
 			imported_at datetime DEFAULT NULL,
 			created_at datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
 			updated_at datetime NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
@@ -202,7 +204,8 @@ class Schema {
 			KEY entry_date (entry_date),
 			KEY budget_id (budget_id),
 			KEY transaction_id (transaction_id),
-			KEY parent_entry_id (parent_entry_id)
+			KEY parent_entry_id (parent_entry_id),
+			KEY event_date_id (event_date_id)
 		) $charset_collate;";
 
 		require_once ABSPATH . 'wp-admin/includes/upgrade.php';
@@ -605,6 +608,53 @@ class Schema {
 				$wpdb->query(
 					$wpdb->prepare(
 						'ALTER TABLE %i ADD KEY event_url (event_url)',
+						$table_name
+					)
+				);
+			}
+		}
+	}
+
+	/**
+	 * Migrate database from v10.0 to v11.0
+	 *
+	 * Adds event_date_id column to financial_entries for linking entries to event dates by ID.
+	 *
+	 * @return void
+	 */
+	public static function migrate_to_v11() {
+		global $wpdb;
+
+		$current_version = get_option( 'fair_payment_db_version', '1.0' );
+
+		if ( version_compare( $current_version, '11.0', '<' ) ) {
+			$table_name = self::get_financial_entries_table_name();
+
+			// Check if event_date_id column already exists.
+			// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+			$column_exists = $wpdb->get_results(
+				$wpdb->prepare(
+					'SHOW COLUMNS FROM %i LIKE %s',
+					$table_name,
+					'event_date_id'
+				)
+			);
+
+			// Add event_date_id column if it doesn't exist.
+			if ( empty( $column_exists ) ) {
+				// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.DirectDatabaseQuery.SchemaChange
+				$wpdb->query(
+					$wpdb->prepare(
+						'ALTER TABLE %i ADD COLUMN event_date_id bigint(20) UNSIGNED DEFAULT NULL AFTER event_url',
+						$table_name
+					)
+				);
+
+				// Add index on event_date_id.
+				// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.DirectDatabaseQuery.SchemaChange
+				$wpdb->query(
+					$wpdb->prepare(
+						'ALTER TABLE %i ADD KEY event_date_id (event_date_id)',
 						$table_name
 					)
 				);

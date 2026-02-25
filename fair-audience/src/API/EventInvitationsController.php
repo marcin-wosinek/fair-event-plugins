@@ -60,6 +60,11 @@ class EventInvitationsController extends WP_REST_Controller {
 							'type'     => 'integer',
 							'required' => true,
 						),
+						'event_date_id'   => array(
+							'type'              => 'integer',
+							'required'          => false,
+							'sanitize_callback' => 'absint',
+						),
 						'participant_ids' => array(
 							'type'              => 'array',
 							'required'          => false,

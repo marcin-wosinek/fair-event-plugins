@@ -175,6 +175,27 @@ class EventDatesController extends WP_REST_Controller {
 				),
 			)
 		);
+
+		// GET /fair-events/v1/event-dates/batch - Batch lookup by IDs.
+		register_rest_route(
+			$this->namespace,
+			'/event-dates/batch',
+			array(
+				array(
+					'methods'             => WP_REST_Server::READABLE,
+					'callback'            => array( $this, 'get_batch' ),
+					'permission_callback' => array( $this, 'get_item_permissions_check' ),
+					'args'                => array(
+						'ids' => array(
+							'description'       => __( 'Comma-separated list of event date IDs.', 'fair-events' ),
+							'type'              => 'string',
+							'required'          => true,
+							'sanitize_callback' => 'sanitize_text_field',
+						),
+					),
+				),
+			)
+		);
 	}
 
 	/**
@@ -563,6 +584,36 @@ class EventDatesController extends WP_REST_Controller {
 		}
 
 		return new WP_REST_Response( $this->prepare_event_date( $event_date ), 200 );
+	}
+
+	/**
+	 * Get multiple event dates by IDs (batch lookup)
+	 *
+	 * @param WP_REST_Request $request Full data about the request.
+	 * @return WP_REST_Response Response object.
+	 */
+	public function get_batch( $request ) {
+		$ids_param = $request->get_param( 'ids' );
+		$ids       = array_filter( array_map( 'intval', explode( ',', $ids_param ) ) );
+
+		if ( empty( $ids ) ) {
+			return new WP_REST_Response( array(), 200 );
+		}
+
+		$results = array();
+		foreach ( $ids as $id ) {
+			$event_date = EventDates::get_by_id( $id );
+			if ( $event_date ) {
+				$results[] = array(
+					'id'             => (int) $event_date->id,
+					'title'          => $event_date->get_display_title(),
+					'display_url'    => $event_date->get_display_url(),
+					'start_datetime' => $event_date->start_datetime,
+				);
+			}
+		}
+
+		return new WP_REST_Response( $results, 200 );
 	}
 
 	/**

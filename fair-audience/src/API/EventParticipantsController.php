@@ -97,6 +97,11 @@ class EventParticipantsController extends WP_REST_Controller {
 							'enum'    => array( 'interested', 'signed_up', 'collaborator' ),
 							'default' => 'interested',
 						),
+						'event_date_id'  => array(
+							'type'              => 'integer',
+							'required'          => false,
+							'sanitize_callback' => 'absint',
+						),
 					),
 				),
 			)
@@ -310,6 +315,7 @@ class EventParticipantsController extends WP_REST_Controller {
 				return array(
 					'id'                   => $ep->id,
 					'participant_id'       => $ep->participant_id,
+					'event_date_id'        => $ep->event_date_id,
 					'participant_name'     => $participant ? $participant->name . ' ' . $participant->surname : '',
 					'name'                 => $participant ? $participant->name : '',
 					'surname'              => $participant ? $participant->surname : '',
@@ -338,6 +344,7 @@ class EventParticipantsController extends WP_REST_Controller {
 		$event_id       = $request->get_param( 'event_id' );
 		$participant_id = $request->get_param( 'participant_id' );
 		$label          = $request->get_param( 'label' );
+		$event_date_id  = $request->get_param( 'event_date_id' ) ?: null;
 
 		// Validate event.
 		$event = get_post( $event_id );
@@ -359,7 +366,7 @@ class EventParticipantsController extends WP_REST_Controller {
 			);
 		}
 
-		$id = $this->event_participant_repo->add_participant_to_event( $event_id, $participant_id, $label );
+		$id = $this->event_participant_repo->add_participant_to_event( $event_id, $participant_id, $label, $event_date_id );
 
 		if ( false === $id ) {
 			return new WP_Error(
@@ -616,8 +623,18 @@ class EventParticipantsController extends WP_REST_Controller {
 			// Calculate total participants (signed_up + collaborator).
 			$participants = ( $counts['signed_up'] ?? 0 ) + ( $counts['collaborator'] ?? 0 );
 
+			// Resolve event_date_id from fair_event_dates table.
+			$event_date_id = null;
+			if ( class_exists( '\FairEvents\Models\EventDates' ) ) {
+				$event_dates_obj = \FairEvents\Models\EventDates::get_by_event_id( $event->ID );
+				if ( $event_dates_obj ) {
+					$event_date_id = (int) $event_dates_obj->id;
+				}
+			}
+
 			$items[] = array(
 				'event_id'           => $event->ID,
+				'event_date_id'      => $event_date_id,
 				'title'              => $event->post_title,
 				'link'               => get_permalink( $event->ID ),
 				'event_date'         => $event_date,
@@ -713,6 +730,7 @@ class EventParticipantsController extends WP_REST_Controller {
 
 		$response_data = array(
 			'event_id'      => $event_id,
+			'event_date_id' => null,
 			'title'         => $event->post_title,
 			'link'          => get_permalink( $event_id ),
 			'edit_url'      => get_edit_post_link( $event_id, 'raw' ),
@@ -723,10 +741,11 @@ class EventParticipantsController extends WP_REST_Controller {
 			'collaborators' => $collaborators,
 		);
 
-		// Add manage-event URL if fair-events plugin provides event dates.
+		// Add manage-event URL and event_date_id if fair-events plugin provides event dates.
 		if ( class_exists( '\FairEvents\Models\EventDates' ) ) {
 			$event_dates = \FairEvents\Models\EventDates::get_by_event_id( $event_id );
 			if ( $event_dates ) {
+				$response_data['event_date_id']    = (int) $event_dates->id;
 				$response_data['manage_event_url'] = admin_url( 'admin.php?page=fair-events-manage-event&event_date_id=' . $event_dates->id );
 			}
 		}

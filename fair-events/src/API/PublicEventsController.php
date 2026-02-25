@@ -460,14 +460,15 @@ class PublicEventsController extends WP_REST_Controller {
 		}
 
 		return array(
-			'uid'         => $uid,
-			'title'       => $title,
-			'description' => $description,
-			'start'       => $start_datetime ? DateHelper::local_to_iso8601( $start_datetime ) : '',
-			'end'         => $end_datetime ? DateHelper::local_to_iso8601( $end_datetime ) : '',
-			'all_day'     => $all_day,
-			'url'         => $url,
-			'categories'  => $categories,
+			'uid'           => $uid,
+			'event_date_id' => (int) $row->occurrence_id,
+			'title'         => $title,
+			'description'   => $description,
+			'start'         => $start_datetime ? DateHelper::local_to_iso8601( $start_datetime ) : '',
+			'end'           => $end_datetime ? DateHelper::local_to_iso8601( $end_datetime ) : '',
+			'all_day'       => $all_day,
+			'url'           => $url,
+			'categories'    => $categories,
 		);
 	}
 

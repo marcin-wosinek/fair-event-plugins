@@ -124,6 +124,9 @@ import { __ } from '@wordpress/i18n';
 	 */
 	function submitRegistration(block, form) {
 		const eventId = parseInt(block.dataset.eventId, 10);
+		const eventDateId = block.dataset.eventDateId
+			? parseInt(block.dataset.eventDateId, 10)
+			: null;
 		const messageContainer = form.querySelector(
 			'.fair-audience-signup-message'
 		);
@@ -174,6 +177,10 @@ import { __ } from '@wordpress/i18n';
 				? keepInformedInput.checked
 				: false,
 		};
+
+		if (eventDateId) {
+			requestData.event_date_id = eventDateId;
+		}
 
 		// Disable button and show loading state
 		submitButton.disabled = true;
@@ -245,6 +252,9 @@ import { __ } from '@wordpress/i18n';
 	 */
 	function submitRequestLink(block, form) {
 		const eventId = parseInt(block.dataset.eventId, 10);
+		const eventDateId = block.dataset.eventDateId
+			? parseInt(block.dataset.eventDateId, 10)
+			: null;
 		const messageContainer = form.querySelector(
 			'.fair-audience-signup-message'
 		);
@@ -269,6 +279,10 @@ import { __ } from '@wordpress/i18n';
 			event_id: eventId,
 			email: emailInput.value.trim(),
 		};
+
+		if (eventDateId) {
+			requestData.event_date_id = eventDateId;
+		}
 
 		// Disable button and show loading state
 		submitButton.disabled = true;
@@ -313,6 +327,9 @@ import { __ } from '@wordpress/i18n';
 	 */
 	function submitSignup(block, button) {
 		const eventId = parseInt(block.dataset.eventId, 10);
+		const eventDateId = block.dataset.eventDateId
+			? parseInt(block.dataset.eventDateId, 10)
+			: null;
 		const token = block.dataset.token || '';
 		const messageContainer = block.querySelector(
 			'.fair-audience-signup-message'
@@ -328,6 +345,10 @@ import { __ } from '@wordpress/i18n';
 		const requestData = {
 			event_id: eventId,
 		};
+
+		if (eventDateId) {
+			requestData.event_date_id = eventDateId;
+		}
 
 		if (token) {
 			requestData.token = token;

@@ -43,6 +43,7 @@ const EntriesApp = () => {
 	const [entries, setEntries] = useState([]);
 	const [budgets, setBudgets] = useState([]);
 	const [eventUrls, setEventUrls] = useState([]);
+	const [eventDateOptions, setEventDateOptions] = useState([]);
 	const [totals, setTotals] = useState({
 		total_cost: 0,
 		total_income: 0,
@@ -58,6 +59,7 @@ const EntriesApp = () => {
 		date_to: '',
 		budget_id: '',
 		event_url: '',
+		event_date_id: '',
 		entry_type: '',
 		unmatched: false,
 	});
@@ -89,6 +91,7 @@ const EntriesApp = () => {
 		}
 		if (eventsEnabled) {
 			loadEventUrls();
+			loadEventDateOptions();
 		}
 	}, []);
 
@@ -119,6 +122,43 @@ const EntriesApp = () => {
 		}
 	};
 
+	const loadEventDateOptions = async () => {
+		try {
+			const ids = await apiFetch({
+				path: '/fair-payment/v1/financial-entries/event-date-ids',
+			});
+			if (ids.length === 0) {
+				setEventDateOptions([]);
+				return;
+			}
+			try {
+				const events = await apiFetch({
+					path: `/fair-events/v1/event-dates/batch?ids=${ids.join(
+						','
+					)}`,
+				});
+				setEventDateOptions(
+					events.map((event) => ({
+						label:
+							event.title ||
+							getEventUrlLabel(event.display_url || ''),
+						value: event.id.toString(),
+					}))
+				);
+			} catch {
+				// fair-events not available, fall back to bare IDs.
+				setEventDateOptions(
+					ids.map((id) => ({
+						label: `#${id}`,
+						value: id.toString(),
+					}))
+				);
+			}
+		} catch (err) {
+			console.error('Failed to load event date IDs:', err);
+		}
+	};
+
 	const loadEntries = async () => {
 		setLoading(true);
 		setError(null);
@@ -135,6 +175,8 @@ const EntriesApp = () => {
 				params.append('budget_id', filters.budget_id);
 			if (filters.event_url)
 				params.append('event_url', filters.event_url);
+			if (filters.event_date_id)
+				params.append('event_date_id', filters.event_date_id);
 			if (filters.entry_type)
 				params.append('entry_type', filters.entry_type);
 			if (filters.unmatched) params.append('unmatched', 'true');
@@ -170,6 +212,8 @@ const EntriesApp = () => {
 				params.append('budget_id', filters.budget_id);
 			if (filters.event_url)
 				params.append('event_url', filters.event_url);
+			if (filters.event_date_id)
+				params.append('event_date_id', filters.event_date_id);
 			if (filters.unmatched) params.append('unmatched', 'true');
 
 			const data = await apiFetch({
@@ -215,7 +259,10 @@ const EntriesApp = () => {
 			setSuccess(__('Entry deleted successfully.', 'fair-payment'));
 			loadEntries();
 			loadTotals();
-			if (eventsEnabled) loadEventUrls();
+			if (eventsEnabled) {
+				loadEventUrls();
+				loadEventDateOptions();
+			}
 		} catch (err) {
 			setError(
 				err.message || __('Failed to delete entry.', 'fair-payment')
@@ -233,7 +280,10 @@ const EntriesApp = () => {
 		);
 		loadEntries();
 		loadTotals();
-		if (eventsEnabled) loadEventUrls();
+		if (eventsEnabled) {
+			loadEventUrls();
+			loadEventDateOptions();
+		}
 	};
 
 	const handleFormCancel = () => {
@@ -290,7 +340,10 @@ const EntriesApp = () => {
 		setSuccess(__('Entries imported successfully.', 'fair-payment'));
 		loadEntries();
 		loadTotals();
-		if (eventsEnabled) loadEventUrls();
+		if (eventsEnabled) {
+			loadEventUrls();
+			loadEventDateOptions();
+		}
 	};
 
 	const handleImportCancel = () => {
@@ -312,7 +365,10 @@ const EntriesApp = () => {
 		);
 		loadEntries();
 		loadTotals();
-		if (eventsEnabled) loadEventUrls();
+		if (eventsEnabled) {
+			loadEventUrls();
+			loadEventDateOptions();
+		}
 	};
 
 	const handleSplitCancel = () => {
@@ -340,7 +396,10 @@ const EntriesApp = () => {
 			setSuccess(__('Entry unsplit successfully.', 'fair-payment'));
 			loadEntries();
 			loadTotals();
-			if (eventsEnabled) loadEventUrls();
+			if (eventsEnabled) {
+				loadEventUrls();
+				loadEventDateOptions();
+			}
 		} catch (err) {
 			setError(
 				err.message || __('Failed to unsplit entry.', 'fair-payment')
@@ -532,19 +591,44 @@ const EntriesApp = () => {
 										}
 									/>
 								)}
-								{eventsEnabled && eventUrls.length > 0 && (
-									<SelectControl
-										label={__('Event', 'fair-payment')}
-										value={filters.event_url}
-										options={eventUrlOptions}
-										onChange={(value) =>
-											handleFilterChange(
-												'event_url',
-												value
-											)
-										}
-									/>
-								)}
+								{eventsEnabled &&
+									eventDateOptions.length > 0 && (
+										<SelectControl
+											label={__('Event', 'fair-payment')}
+											value={filters.event_date_id}
+											options={[
+												{
+													label: __(
+														'All Events',
+														'fair-payment'
+													),
+													value: '',
+												},
+												...eventDateOptions,
+											]}
+											onChange={(value) =>
+												handleFilterChange(
+													'event_date_id',
+													value
+												)
+											}
+										/>
+									)}
+								{eventsEnabled &&
+									eventDateOptions.length === 0 &&
+									eventUrls.length > 0 && (
+										<SelectControl
+											label={__('Event', 'fair-payment')}
+											value={filters.event_url}
+											options={eventUrlOptions}
+											onChange={(value) =>
+												handleFilterChange(
+													'event_url',
+													value
+												)
+											}
+										/>
+									)}
 								<SelectControl
 									label={__('Type', 'fair-payment')}
 									value={filters.entry_type}

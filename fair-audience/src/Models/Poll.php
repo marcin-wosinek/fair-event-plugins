@@ -29,6 +29,13 @@ class Poll {
 	public $event_id;
 
 	/**
+	 * Event date ID from fair_event_dates table.
+	 *
+	 * @var int|null
+	 */
+	public $event_date_id;
+
+	/**
 	 * Poll title (internal reference).
 	 *
 	 * @var string
@@ -80,13 +87,14 @@ class Poll {
 	 * @param array $data Data array.
 	 */
 	public function populate( $data ) {
-		$this->id         = isset( $data['id'] ) ? (int) $data['id'] : null;
-		$this->event_id   = isset( $data['event_id'] ) ? (int) $data['event_id'] : 0;
-		$this->title      = isset( $data['title'] ) ? sanitize_text_field( $data['title'] ) : '';
-		$this->question   = isset( $data['question'] ) ? sanitize_textarea_field( $data['question'] ) : '';
-		$this->status     = isset( $data['status'] ) ? $data['status'] : 'draft';
-		$this->created_at = isset( $data['created_at'] ) ? $data['created_at'] : '';
-		$this->updated_at = isset( $data['updated_at'] ) ? $data['updated_at'] : '';
+		$this->id            = isset( $data['id'] ) ? (int) $data['id'] : null;
+		$this->event_id      = isset( $data['event_id'] ) ? (int) $data['event_id'] : 0;
+		$this->event_date_id = isset( $data['event_date_id'] ) && $data['event_date_id'] ? (int) $data['event_date_id'] : null;
+		$this->title         = isset( $data['title'] ) ? sanitize_text_field( $data['title'] ) : '';
+		$this->question      = isset( $data['question'] ) ? sanitize_textarea_field( $data['question'] ) : '';
+		$this->status        = isset( $data['status'] ) ? $data['status'] : 'draft';
+		$this->created_at    = isset( $data['created_at'] ) ? $data['created_at'] : '';
+		$this->updated_at    = isset( $data['updated_at'] ) ? $data['updated_at'] : '';
 	}
 
 	/**
@@ -110,13 +118,14 @@ class Poll {
 		}
 
 		$data = array(
-			'event_id' => $this->event_id,
-			'title'    => $this->title,
-			'question' => $this->question,
-			'status'   => $this->status,
+			'event_id'      => $this->event_id,
+			'event_date_id' => $this->event_date_id,
+			'title'         => $this->title,
+			'question'      => $this->question,
+			'status'        => $this->status,
 		);
 
-		$format = array( '%d', '%s', '%s', '%s' );
+		$format = array( '%d', '%d', '%s', '%s', '%s' );
 
 		if ( $this->id ) {
 			// Update existing.

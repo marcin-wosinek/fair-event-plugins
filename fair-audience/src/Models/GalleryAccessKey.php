@@ -29,6 +29,13 @@ class GalleryAccessKey {
 	public $event_id;
 
 	/**
+	 * Event date ID from fair_event_dates table.
+	 *
+	 * @var int|null
+	 */
+	public $event_date_id;
+
+	/**
 	 * Participant ID.
 	 *
 	 * @var int
@@ -82,6 +89,7 @@ class GalleryAccessKey {
 	public function populate( $data ) {
 		$this->id             = isset( $data['id'] ) ? (int) $data['id'] : null;
 		$this->event_id       = isset( $data['event_id'] ) ? (int) $data['event_id'] : 0;
+		$this->event_date_id  = isset( $data['event_date_id'] ) && $data['event_date_id'] ? (int) $data['event_date_id'] : null;
 		$this->participant_id = isset( $data['participant_id'] ) ? (int) $data['participant_id'] : 0;
 		$this->access_key     = isset( $data['access_key'] ) ? $data['access_key'] : '';
 		$this->token          = isset( $data['token'] ) ? $data['token'] : '';
@@ -106,13 +114,14 @@ class GalleryAccessKey {
 
 		$data = array(
 			'event_id'       => $this->event_id,
+			'event_date_id'  => $this->event_date_id,
 			'participant_id' => $this->participant_id,
 			'access_key'     => $this->access_key,
 			'token'          => $this->token,
 			'sent_at'        => $this->sent_at,
 		);
 
-		$format = array( '%d', '%d', '%s', '%s', '%s' );
+		$format = array( '%d', '%d', '%d', '%s', '%s', '%s' );
 
 		if ( $this->id ) {
 			// Update existing.

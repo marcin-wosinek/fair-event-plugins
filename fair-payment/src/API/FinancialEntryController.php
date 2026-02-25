@@ -83,6 +83,19 @@ class FinancialEntryController extends WP_REST_Controller {
 			)
 		);
 
+		// GET /fair-payment/v1/financial-entries/event-date-ids - Get distinct event date IDs.
+		register_rest_route(
+			$this->namespace,
+			'/financial-entries/event-date-ids',
+			array(
+				array(
+					'methods'             => WP_REST_Server::READABLE,
+					'callback'            => array( $this, 'get_event_date_ids' ),
+					'permission_callback' => array( $this, 'get_items_permissions_check' ),
+				),
+			)
+		);
+
 		// GET /fair-payment/v1/financial-entries/{id} - Get single entry.
 		// PUT /fair-payment/v1/financial-entries/{id} - Update entry.
 		// DELETE /fair-payment/v1/financial-entries/{id} - Delete entry.
@@ -291,35 +304,39 @@ class FinancialEntryController extends WP_REST_Controller {
 	 */
 	private function get_filter_params() {
 		return array(
-			'date_from'  => array(
+			'date_from'     => array(
 				'description'       => __( 'Filter by start date (Y-m-d format).', 'fair-payment' ),
 				'type'              => 'string',
 				'format'            => 'date',
 				'sanitize_callback' => 'sanitize_text_field',
 			),
-			'date_to'    => array(
+			'date_to'       => array(
 				'description'       => __( 'Filter by end date (Y-m-d format).', 'fair-payment' ),
 				'type'              => 'string',
 				'format'            => 'date',
 				'sanitize_callback' => 'sanitize_text_field',
 			),
-			'budget_id'  => array(
+			'budget_id'     => array(
 				'description'       => __( 'Filter by budget ID, or "none" for unbudgeted.', 'fair-payment' ),
 				'type'              => 'string',
 				'sanitize_callback' => 'sanitize_text_field',
 			),
-			'event_url'  => array(
+			'event_url'     => array(
 				'description'       => __( 'Filter by event URL.', 'fair-payment' ),
 				'type'              => 'string',
 				'sanitize_callback' => 'sanitize_text_field',
 			),
-			'entry_type' => array(
+			'event_date_id' => array(
+				'description' => __( 'Filter by event date ID.', 'fair-payment' ),
+				'type'        => 'integer',
+			),
+			'entry_type'    => array(
 				'description'       => __( 'Filter by entry type: cost or income.', 'fair-payment' ),
 				'type'              => 'string',
 				'enum'              => array( 'cost', 'income' ),
 				'sanitize_callback' => 'sanitize_text_field',
 			),
-			'unmatched'  => array(
+			'unmatched'     => array(
 				'description' => __( 'Filter to only unmatched entries.', 'fair-payment' ),
 				'type'        => 'boolean',
 			),
@@ -416,6 +433,11 @@ class FinancialEntryController extends WP_REST_Controller {
 					return $value ? esc_url_raw( $value ) : null;
 				},
 			),
+			'event_date_id'  => array(
+				'description' => __( 'Event date ID.', 'fair-payment' ),
+				'type'        => array( 'integer', 'null' ),
+				'required'    => false,
+			),
 		);
 	}
 
@@ -437,18 +459,21 @@ class FinancialEntryController extends WP_REST_Controller {
 				'items'       => array(
 					'type'       => 'object',
 					'properties' => array(
-						'budget_id'   => array(
+						'budget_id'     => array(
 							'type' => array( 'integer', 'null' ),
 						),
-						'amount'      => array(
+						'amount'        => array(
 							'type'     => 'number',
 							'required' => true,
 						),
-						'description' => array(
+						'description'   => array(
 							'type' => 'string',
 						),
-						'event_url'   => array(
+						'event_url'     => array(
 							'type' => array( 'string', 'null' ),
+						),
+						'event_date_id' => array(
+							'type' => array( 'integer', 'null' ),
 						),
 					),
 				),
@@ -464,16 +489,17 @@ class FinancialEntryController extends WP_REST_Controller {
 	 */
 	public function get_items( $request ) {
 		$filters = array(
-			'date_from'  => $request->get_param( 'date_from' ),
-			'date_to'    => $request->get_param( 'date_to' ),
-			'budget_id'  => $request->get_param( 'budget_id' ),
-			'event_url'  => $request->get_param( 'event_url' ),
-			'entry_type' => $request->get_param( 'entry_type' ),
-			'unmatched'  => $request->get_param( 'unmatched' ),
-			'per_page'   => $request->get_param( 'per_page' ),
-			'page'       => $request->get_param( 'page' ),
-			'orderby'    => $request->get_param( 'orderby' ),
-			'order'      => $request->get_param( 'order' ),
+			'date_from'     => $request->get_param( 'date_from' ),
+			'date_to'       => $request->get_param( 'date_to' ),
+			'budget_id'     => $request->get_param( 'budget_id' ),
+			'event_url'     => $request->get_param( 'event_url' ),
+			'event_date_id' => $request->get_param( 'event_date_id' ),
+			'entry_type'    => $request->get_param( 'entry_type' ),
+			'unmatched'     => $request->get_param( 'unmatched' ),
+			'per_page'      => $request->get_param( 'per_page' ),
+			'page'          => $request->get_param( 'page' ),
+			'orderby'       => $request->get_param( 'orderby' ),
+			'order'         => $request->get_param( 'order' ),
 		);
 
 		$result = FinancialEntry::get_filtered( $filters );
@@ -529,11 +555,12 @@ class FinancialEntryController extends WP_REST_Controller {
 	 */
 	public function get_totals( $request ) {
 		$filters = array(
-			'date_from' => $request->get_param( 'date_from' ),
-			'date_to'   => $request->get_param( 'date_to' ),
-			'budget_id' => $request->get_param( 'budget_id' ),
-			'event_url' => $request->get_param( 'event_url' ),
-			'unmatched' => $request->get_param( 'unmatched' ),
+			'date_from'     => $request->get_param( 'date_from' ),
+			'date_to'       => $request->get_param( 'date_to' ),
+			'budget_id'     => $request->get_param( 'budget_id' ),
+			'event_url'     => $request->get_param( 'event_url' ),
+			'event_date_id' => $request->get_param( 'event_date_id' ),
+			'unmatched'     => $request->get_param( 'unmatched' ),
 		);
 
 		$totals = FinancialEntry::get_totals( $filters );
@@ -551,6 +578,18 @@ class FinancialEntryController extends WP_REST_Controller {
 		$urls = FinancialEntry::get_distinct_event_urls();
 
 		return new WP_REST_Response( $urls, 200 );
+	}
+
+	/**
+	 * Get distinct event date IDs used in entries
+	 *
+	 * @param WP_REST_Request $request Full data about the request.
+	 * @return WP_REST_Response Response object.
+	 */
+	public function get_event_date_ids( $request ) {
+		$ids = FinancialEntry::get_distinct_event_date_ids();
+
+		return new WP_REST_Response( $ids, 200 );
 	}
 
 	/**
@@ -588,6 +627,7 @@ class FinancialEntryController extends WP_REST_Controller {
 		$budget_id      = $request->get_param( 'budget_id' );
 		$transaction_id = $request->get_param( 'transaction_id' );
 		$event_url      = $request->get_param( 'event_url' );
+		$event_date_id  = $request->get_param( 'event_date_id' );
 
 		if ( empty( $amount ) || $amount <= 0 ) {
 			return new WP_Error(
@@ -620,7 +660,8 @@ class FinancialEntryController extends WP_REST_Controller {
 			$description,
 			! empty( $budget_id ) ? $budget_id : null,
 			! empty( $transaction_id ) ? $transaction_id : null,
-			! empty( $event_url ) ? $event_url : null
+			! empty( $event_url ) ? $event_url : null,
+			! empty( $event_date_id ) ? $event_date_id : null
 		);
 
 		if ( ! $entry_id ) {
@@ -651,6 +692,7 @@ class FinancialEntryController extends WP_REST_Controller {
 		$budget_id      = $request->get_param( 'budget_id' );
 		$transaction_id = $request->get_param( 'transaction_id' );
 		$event_url      = $request->get_param( 'event_url' );
+		$event_date_id  = $request->get_param( 'event_date_id' );
 
 		// Check if entry exists.
 		$existing = FinancialEntry::get_by_id( $id );
@@ -694,7 +736,8 @@ class FinancialEntryController extends WP_REST_Controller {
 			$description,
 			! empty( $budget_id ) ? $budget_id : null,
 			! empty( $transaction_id ) ? $transaction_id : null,
-			! empty( $event_url ) ? $event_url : null
+			! empty( $event_url ) ? $event_url : null,
+			! empty( $event_date_id ) ? $event_date_id : null
 		);
 
 		if ( ! $success ) {

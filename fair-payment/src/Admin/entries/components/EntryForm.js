@@ -15,7 +15,7 @@ import {
 	__experimentalHStack as HStack,
 } from '@wordpress/components';
 
-const EventUrlField = ({ value, onChange }) => {
+const EventUrlField = ({ value, eventDateId, onChange }) => {
 	const [mode, setMode] = useState(value ? 'manual' : 'search');
 	const [searchTerm, setSearchTerm] = useState('');
 	const [searchResults, setSearchResults] = useState([]);
@@ -71,7 +71,7 @@ const EventUrlField = ({ value, onChange }) => {
 						variant="tertiary"
 						size="small"
 						isDestructive
-						onClick={() => onChange('')}
+						onClick={() => onChange('', null)}
 					>
 						{__('Clear', 'fair-payment')}
 					</Button>
@@ -129,13 +129,27 @@ const EventUrlField = ({ value, onChange }) => {
 										borderBottom: '1px solid #eee',
 									}}
 									onClick={() => {
-										onChange(event.display_url);
+										const isExternalSource = String(
+											event.id
+										).startsWith('source_');
+										onChange(
+											event.display_url,
+											isExternalSource ? null : event.id
+										);
 										setSearchTerm('');
 										setSearchResults([]);
 									}}
 									onKeyDown={(e) => {
 										if (e.key === 'Enter') {
-											onChange(event.display_url);
+											const isExternalSource = String(
+												event.id
+											).startsWith('source_');
+											onChange(
+												event.display_url,
+												isExternalSource
+													? null
+													: event.id
+											);
 											setSearchTerm('');
 											setSearchResults([]);
 										}
@@ -165,7 +179,7 @@ const EventUrlField = ({ value, onChange }) => {
 					value=""
 					onChange={(val) => {
 						if (val) {
-							onChange(val);
+							onChange(val, null);
 						}
 					}}
 					placeholder={__(
@@ -179,7 +193,7 @@ const EventUrlField = ({ value, onChange }) => {
 					)}
 					onBlur={(e) => {
 						if (e.target.value) {
-							onChange(e.target.value);
+							onChange(e.target.value, null);
 						}
 					}}
 				/>
@@ -203,6 +217,7 @@ const EntryForm = ({
 		description: '',
 		budget_id: '',
 		event_url: '',
+		event_date_id: null,
 	});
 	const [isSaving, setIsSaving] = useState(false);
 	const [error, setError] = useState(null);
@@ -217,6 +232,7 @@ const EntryForm = ({
 				description: entry.description || '',
 				budget_id: entry.budget_id?.toString() || '',
 				event_url: entry.event_url || '',
+				event_date_id: entry.event_date_id || null,
 			});
 		}
 	}, [entry]);
@@ -234,6 +250,7 @@ const EntryForm = ({
 					? parseInt(formData.budget_id, 10)
 					: null,
 				event_url: formData.event_url || null,
+				event_date_id: formData.event_date_id || null,
 			};
 
 			if (entry) {
@@ -355,8 +372,13 @@ const EntryForm = ({
 					{eventsEnabled && (
 						<EventUrlField
 							value={formData.event_url}
-							onChange={(value) =>
-								setFormData({ ...formData, event_url: value })
+							eventDateId={formData.event_date_id}
+							onChange={(url, dateId) =>
+								setFormData({
+									...formData,
+									event_url: url,
+									event_date_id: dateId,
+								})
 							}
 						/>
 					)}

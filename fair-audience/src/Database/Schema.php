@@ -60,6 +60,7 @@ class Schema {
 		return "CREATE TABLE $table_name (
 			id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
 			event_id BIGINT UNSIGNED NOT NULL,
+			event_date_id BIGINT UNSIGNED DEFAULT NULL,
 			participant_id BIGINT UNSIGNED NOT NULL,
 			label ENUM('interested', 'signed_up', 'collaborator') NOT NULL DEFAULT 'interested',
 			created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
@@ -67,6 +68,7 @@ class Schema {
 			PRIMARY KEY  (id),
 			UNIQUE KEY idx_event_participant (event_id, participant_id),
 			KEY idx_event_id (event_id),
+			KEY idx_event_date_id (event_date_id),
 			KEY idx_participant_id (participant_id),
 			KEY idx_label (label)
 		) ENGINE=InnoDB $charset_collate;";
@@ -86,6 +88,7 @@ class Schema {
 		return "CREATE TABLE $table_name (
 			id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
 			event_id BIGINT UNSIGNED NOT NULL,
+			event_date_id BIGINT UNSIGNED DEFAULT NULL,
 			title VARCHAR(255) NOT NULL COMMENT 'Internal title for admin reference',
 			question TEXT NOT NULL COMMENT 'The actual question shown to participants',
 			status ENUM('draft', 'active', 'closed') NOT NULL DEFAULT 'draft',
@@ -93,6 +96,7 @@ class Schema {
 			updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
 			PRIMARY KEY  (id),
 			KEY idx_event_id (event_id),
+			KEY idx_event_date_id (event_date_id),
 			KEY idx_status (status)
 		) ENGINE=InnoDB $charset_collate;";
 	}
@@ -252,6 +256,7 @@ class Schema {
 		return "CREATE TABLE $table_name (
 			id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
 			event_id BIGINT UNSIGNED NOT NULL,
+			event_date_id BIGINT UNSIGNED DEFAULT NULL,
 			participant_id BIGINT UNSIGNED NOT NULL,
 			access_key CHAR(64) NOT NULL COMMENT 'SHA-256 hash for secure lookups',
 			token CHAR(32) NOT NULL COMMENT 'Original random token for URL generation',
@@ -261,7 +266,8 @@ class Schema {
 			UNIQUE KEY idx_event_participant (event_id, participant_id),
 			UNIQUE KEY idx_access_key (access_key),
 			UNIQUE KEY idx_token (token),
-			KEY idx_event_id (event_id)
+			KEY idx_event_id (event_id),
+			KEY idx_event_date_id (event_date_id)
 		) ENGINE=InnoDB $charset_collate;";
 	}
 
@@ -347,6 +353,7 @@ class Schema {
 		return "CREATE TABLE $table_name (
 			id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
 			event_id BIGINT UNSIGNED NOT NULL,
+			event_date_id BIGINT UNSIGNED DEFAULT NULL,
 			participant_id BIGINT UNSIGNED NOT NULL,
 			access_key CHAR(64) NOT NULL COMMENT 'SHA-256 hash for secure lookups',
 			token CHAR(32) NOT NULL COMMENT 'Original random token for URL generation',
@@ -355,7 +362,8 @@ class Schema {
 			UNIQUE KEY idx_event_participant (event_id, participant_id),
 			UNIQUE KEY idx_access_key (access_key),
 			UNIQUE KEY idx_token (token),
-			KEY idx_event_id (event_id)
+			KEY idx_event_id (event_id),
+			KEY idx_event_date_id (event_date_id)
 		) ENGINE=InnoDB $charset_collate;";
 	}
 

@@ -165,6 +165,34 @@ class GalleryAccessKeyRepository {
 	}
 
 	/**
+	 * Get all access keys for an event date.
+	 *
+	 * @param int $event_date_id Event date ID.
+	 * @return GalleryAccessKey[] Array of access keys.
+	 */
+	public function get_by_event_date( $event_date_id ) {
+		global $wpdb;
+
+		$table_name = $this->get_table_name();
+
+		$results = $wpdb->get_results(
+			$wpdb->prepare(
+				'SELECT * FROM %i WHERE event_date_id = %d ORDER BY created_at DESC',
+				$table_name,
+				$event_date_id
+			),
+			ARRAY_A
+		);
+
+		return array_map(
+			function ( $row ) {
+				return new GalleryAccessKey( $row );
+			},
+			$results
+		);
+	}
+
+	/**
 	 * Generate access keys for participants of an event.
 	 *
 	 * @param int   $event_id Event ID.
