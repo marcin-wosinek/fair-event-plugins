@@ -37,7 +37,9 @@ const EventUrlField = ({ value, onChange }) => {
 					path: `/fair-events/v1/event-dates?${params.toString()}`,
 				});
 				setSearchResults(
-					(data.event_dates || []).filter((ed) => ed.display_url)
+					(Array.isArray(data) ? data : []).filter(
+						(ed) => ed.display_url
+					)
 				);
 			} catch {
 				setSearchResults([]);
@@ -105,6 +107,7 @@ const EventUrlField = ({ value, onChange }) => {
 						value={searchTerm}
 						onChange={setSearchTerm}
 						placeholder={__('Search events...', 'fair-payment')}
+						autoComplete="off"
 					/>
 					{isSearching && <Spinner />}
 					{searchResults.length > 0 && (
