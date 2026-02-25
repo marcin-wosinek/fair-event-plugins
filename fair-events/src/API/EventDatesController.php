@@ -12,8 +12,11 @@ defined( 'WPINC' ) || die;
 use FairEvents\Models\EventDates;
 use FairEvents\Services\RecurrenceService;
 use FairEvents\Database\EventPhotoRepository;
+use FairEvents\Database\EventSourceRepository;
 use FairEvents\Database\PhotoLikeRepository;
 use FairEvents\Frontend\EventGalleryPage;
+use FairEvents\Helpers\FairEventsApiParser;
+use FairEvents\Helpers\ICalParser;
 use FairEvents\Settings\Settings;
 use WP_REST_Controller;
 use WP_REST_Server;
@@ -348,14 +351,21 @@ class EventDatesController extends WP_REST_Controller {
 	 * Get event dates
 	 *
 	 * By default returns unlinked events. Pass include_linked=true to include all events.
+	 * Supports search, per_page, and include_sources parameters.
 	 *
 	 * @param WP_REST_Request $request Full data about the request.
 	 * @return WP_REST_Response Response object.
 	 */
 	public function get_items( $request ) {
-		$include_linked = $request->get_param( 'include_linked' );
+		$include_linked  = $request->get_param( 'include_linked' );
+		$search          = $request->get_param( 'search' );
+		$per_page        = $request->get_param( 'per_page' );
+		$include_sources = $request->get_param( 'include_sources' );
 
-		if ( $include_linked ) {
+		// Get local event dates.
+		if ( $search ) {
+			$event_dates = $this->search_event_dates( $search, $per_page ? (int) $per_page * 2 : 50 );
+		} elseif ( $include_linked ) {
 			$event_dates = $this->get_all_master_event_dates();
 		} else {
 			$event_dates = EventDates::get_unlinked();
@@ -366,7 +376,143 @@ class EventDatesController extends WP_REST_Controller {
 			$items[] = $this->prepare_event_date( $event_date );
 		}
 
+		// Include events from enabled event sources.
+		if ( $include_sources && $search ) {
+			// Collect local display_urls for deduplication.
+			$local_urls = array();
+			foreach ( $items as $item ) {
+				if ( ! empty( $item['display_url'] ) ) {
+					$local_urls[ $item['display_url'] ] = true;
+				}
+			}
+
+			$source_events = $this->search_source_events( $search, $local_urls );
+			$items         = array_merge( $items, $source_events );
+		}
+
+		// Apply per_page limit.
+		if ( $per_page && count( $items ) > (int) $per_page ) {
+			$items = array_slice( $items, 0, (int) $per_page );
+		}
+
 		return new WP_REST_Response( $items, 200 );
+	}
+
+	/**
+	 * Search event dates by title
+	 *
+	 * @param string $search Search term.
+	 * @param int    $limit  Maximum number of results.
+	 * @return EventDates[] Array of matching EventDates objects.
+	 */
+	private function search_event_dates( $search, $limit ) {
+		global $wpdb;
+
+		$table_name = $wpdb->prefix . 'fair_event_dates';
+
+		$results = $wpdb->get_results(
+			$wpdb->prepare(
+				"SELECT * FROM %i WHERE title LIKE %s AND occurrence_type IN ('single', 'master') ORDER BY start_datetime DESC LIMIT %d",
+				$table_name,
+				'%' . $wpdb->esc_like( $search ) . '%',
+				$limit
+			)
+		);
+
+		if ( ! $results ) {
+			return array();
+		}
+
+		$dates = array();
+		foreach ( $results as $result ) {
+			$dates[] = EventDates::get_by_id( (int) $result->id );
+		}
+
+		return array_filter( $dates );
+	}
+
+	/**
+	 * Search events from all enabled event sources
+	 *
+	 * @param string $search    Search term.
+	 * @param array  $local_urls URLs already present in local results for deduplication.
+	 * @return array Array of event data matching the typeahead format.
+	 */
+	private function search_source_events( $search, $local_urls ) {
+		$repository = new EventSourceRepository();
+		$sources    = $repository->get_all( true );
+		$results    = array();
+
+		foreach ( $sources as $source ) {
+			foreach ( $source['data_sources'] as $data_source ) {
+				// Skip categories type — local search already covers these.
+				if ( 'categories' === $data_source['source_type'] ) {
+					continue;
+				}
+
+				$events = $this->fetch_data_source_events( $source['id'], $data_source );
+
+				foreach ( $events as $event ) {
+					$title = $event['summary'] ?? '';
+					$url   = $event['url'] ?? '';
+
+					// Filter by search term and require a URL.
+					if ( empty( $url ) || false === stripos( $title, $search ) ) {
+						continue;
+					}
+
+					// Skip duplicates already in local results.
+					if ( isset( $local_urls[ $url ] ) ) {
+						continue;
+					}
+
+					$local_urls[ $url ] = true;
+
+					$results[] = array(
+						'id'             => 'source_' . ( $event['uid'] ?? md5( $url ) ),
+						'title'          => $title,
+						'start_datetime' => $event['start'] ?? '',
+						'display_url'    => $url,
+					);
+				}
+			}
+		}
+
+		return $results;
+	}
+
+	/**
+	 * Fetch events from a single data source with transient caching
+	 *
+	 * @param int   $source_id   Event source ID.
+	 * @param array $data_source Data source configuration.
+	 * @return array Array of parsed events.
+	 */
+	private function fetch_data_source_events( $source_id, $data_source ) {
+		$cache_key = 'fair_events_src_' . $source_id . '_' . md5( wp_json_encode( $data_source ) );
+		$cached    = get_transient( $cache_key );
+
+		if ( false !== $cached ) {
+			return $cached;
+		}
+
+		$events = array();
+
+		if ( 'ical_url' === $data_source['source_type'] ) {
+			$url = $data_source['config']['url'] ?? '';
+			if ( ! empty( $url ) ) {
+				$events = ICalParser::fetch_and_parse( $url );
+			}
+		} elseif ( 'fair_events_api' === $data_source['source_type'] ) {
+			$url = $data_source['config']['url'] ?? '';
+			if ( ! empty( $url ) ) {
+				$events = FairEventsApiParser::fetch_and_parse( $url );
+			}
+		}
+
+		set_transient( $cache_key, $events, HOUR_IN_SECONDS );
+
+		return $events;
 	}
 
 	/**

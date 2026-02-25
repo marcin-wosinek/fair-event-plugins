@@ -33,6 +33,7 @@ const EventUrlField = ({ value, onChange }) => {
 				const params = new URLSearchParams();
 				params.append('search', searchTerm);
 				params.append('per_page', 10);
+				params.append('include_sources', true);
 				const data = await apiFetch({
 					path: `/fair-events/v1/event-dates?${params.toString()}`,
 				});
