@@ -49,6 +49,8 @@ jobs:
 
             - name: Deploy plugins via rsync
               run: |
+                  MAX_ATTEMPTS=3
+
                   # Get plugins to deploy from environment variable
                   PLUGINS_TO_DEPLOY="${{ vars.PLUGINS_TO_DEPLOY }}"
 
@@ -74,12 +76,27 @@ jobs:
                   for plugin in $PLUGINS; do
                     if [ -d "extracted-plugins/$plugin" ]; then
                       echo "Deploying $plugin..."
-                      rsync -avz --delete \
-                        -e "ssh -p ${{ vars.SSH_PORT }}" \
-                        "extracted-plugins/$plugin/" \
-                        "${{ vars.SSH_USER }}@${{ vars.SSH_HOST }}:${{ vars.WORDPRESS_PLUGINS_PATH }}/$plugin/"
 
-                      echo "✓ $plugin deployed successfully"
+                      ATTEMPT=1
+                      while [ $ATTEMPT -le $MAX_ATTEMPTS ]; do
+                        if rsync -avz --delete \
+                          -e "ssh -p ${{ vars.SSH_PORT }}" \
+                          "extracted-plugins/$plugin/" \
+                          "${{ vars.SSH_USER }}@${{ vars.SSH_HOST }}:${{ vars.WORDPRESS_PLUGINS_PATH }}/$plugin/"; then
+                          echo "✓ $plugin deployed successfully"
+                          break
+                        fi
+
+                        echo "Attempt $ATTEMPT/$MAX_ATTEMPTS failed for $plugin"
+                        if [ $ATTEMPT -eq $MAX_ATTEMPTS ]; then
+                          echo "ERROR: Failed to deploy $plugin after $MAX_ATTEMPTS attempts"
+                          exit 1
+                        fi
+                        echo "Retrying in 10 seconds..."
+                        sleep 10
+                        ATTEMPT=$((ATTEMPT + 1))
+                      done
+
                       echo ""
                       DEPLOYED_COUNT=$((DEPLOYED_COUNT + 1))
                     else
