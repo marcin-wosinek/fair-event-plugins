@@ -101,6 +101,11 @@ class Installer {
 			self::migrate_to_2_2_0();
 		}
 
+		// Run migration if upgrading from pre-2.3.0 (add website_url to venues).
+		if ( version_compare( $current_version, '2.3.0', '<' ) ) {
+			self::migrate_to_2_3_0();
+		}
+
 		// Update database version
 		Schema::update_db_version( Schema::DB_VERSION );
 	}
@@ -163,6 +168,10 @@ class Installer {
 
 			if ( version_compare( $current_version, '2.2.0', '<' ) ) {
 				self::migrate_to_2_2_0();
+			}
+
+			if ( version_compare( $current_version, '2.3.0', '<' ) ) {
+				self::migrate_to_2_3_0();
 			}
 
 			// Install/update tables
@@ -767,6 +776,34 @@ class Installer {
 			$wpdb->query(
 				$wpdb->prepare(
 					'ALTER TABLE %i ADD KEY idx_link_type (link_type)',
+					$table_name
+				)
+			);
+		}
+	}
+
+	/**
+	 * Migrate to version 2.3.0 - Add website_url to venues table.
+	 *
+	 * @return void
+	 */
+	private static function migrate_to_2_3_0() {
+		global $wpdb;
+
+		$table_name = $wpdb->prefix . 'fair_event_venues';
+
+		// Check if website_url column already exists.
+		$website_url_exists = $wpdb->get_results(
+			$wpdb->prepare(
+				"SHOW COLUMNS FROM %i LIKE 'website_url'",
+				$table_name
+			)
+		);
+
+		if ( empty( $website_url_exists ) ) {
+			$wpdb->query(
+				$wpdb->prepare(
+					'ALTER TABLE %i ADD COLUMN website_url TEXT AFTER instagram_handle',
 					$table_name
 				)
 			);

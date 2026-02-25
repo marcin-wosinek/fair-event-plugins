@@ -142,6 +142,12 @@ class VenueController extends WP_REST_Controller {
 				'required'          => false,
 				'sanitize_callback' => 'sanitize_text_field',
 			),
+			'website_url'        => array(
+				'description'       => __( 'Website URL.', 'fair-events' ),
+				'type'              => 'string',
+				'required'          => false,
+				'sanitize_callback' => 'esc_url_raw',
+			),
 		);
 	}
 
@@ -199,6 +205,7 @@ class VenueController extends WP_REST_Controller {
 		$longitude          = $request->get_param( 'longitude' );
 		$facebook_page_link = $request->get_param( 'facebook_page_link' );
 		$instagram_handle   = $request->get_param( 'instagram_handle' );
+		$website_url        = $request->get_param( 'website_url' );
 
 		if ( empty( $name ) ) {
 			return new WP_Error(
@@ -208,7 +215,7 @@ class VenueController extends WP_REST_Controller {
 			);
 		}
 
-		$venue_id = Venue::create( $name, $address, $google_maps_link, $latitude, $longitude, $facebook_page_link, $instagram_handle );
+		$venue_id = Venue::create( $name, $address, $google_maps_link, $latitude, $longitude, $facebook_page_link, $instagram_handle, $website_url );
 
 		if ( ! $venue_id ) {
 			return new WP_Error(
@@ -238,6 +245,7 @@ class VenueController extends WP_REST_Controller {
 		$longitude          = $request->get_param( 'longitude' );
 		$facebook_page_link = $request->get_param( 'facebook_page_link' );
 		$instagram_handle   = $request->get_param( 'instagram_handle' );
+		$website_url        = $request->get_param( 'website_url' );
 
 		// Check if venue exists.
 		$existing = Venue::get_by_id( $id );
@@ -257,7 +265,7 @@ class VenueController extends WP_REST_Controller {
 			);
 		}
 
-		$success = Venue::update( $id, $name, $address, $google_maps_link, $latitude, $longitude, $facebook_page_link, $instagram_handle );
+		$success = Venue::update( $id, $name, $address, $google_maps_link, $latitude, $longitude, $facebook_page_link, $instagram_handle, $website_url );
 
 		if ( ! $success ) {
 			return new WP_Error(

@@ -33,6 +33,7 @@ const VenuesApp = () => {
 		longitude: '',
 		facebook_page_link: '',
 		instagram_handle: '',
+		website_url: '',
 	});
 	const [isSaving, setIsSaving] = useState(false);
 
@@ -82,6 +83,7 @@ const VenuesApp = () => {
 			longitude: venue.longitude || '',
 			facebook_page_link: venue.facebook_page_link || '',
 			instagram_handle: venue.instagram_handle || '',
+			website_url: venue.website_url || '',
 		});
 		setIsFormOpen(true);
 	};
@@ -369,6 +371,21 @@ const VenuesApp = () => {
 								}
 								help={__(
 									'Instagram username without @ (e.g., venue_name)',
+									'fair-events'
+								)}
+							/>
+							<TextControl
+								label={__('Website URL', 'fair-events')}
+								value={formData.website_url}
+								onChange={(value) =>
+									setFormData({
+										...formData,
+										website_url: value,
+									})
+								}
+								type="url"
+								help={__(
+									'Website URL of the venue',
 									'fair-events'
 								)}
 							/>
