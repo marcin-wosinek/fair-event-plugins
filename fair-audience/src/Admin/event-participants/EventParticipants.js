@@ -797,7 +797,7 @@ export default function EventParticipants() {
 				<Modal
 					title={getLabelTitle(addModalLabel)}
 					onRequestClose={handleCloseAddModal}
-					style={{ maxWidth: '600px', width: '100%' }}
+					style={{ maxWidth: '640px', width: '100%' }}
 				>
 					{availableParticipants.length === 0 ? (
 						<p>
@@ -1001,6 +1001,7 @@ export default function EventParticipants() {
 				<Modal
 					title={__('Edit Participant', 'fair-audience')}
 					onRequestClose={handleCloseEditModal}
+					style={{ maxWidth: '500px', width: '100%' }}
 				>
 					<p>
 						<strong>{editingParticipant.participant_name}</strong>
@@ -1049,7 +1050,7 @@ export default function EventParticipants() {
 				<Modal
 					title={__('Send Gallery Invitations', 'fair-audience')}
 					onRequestClose={() => setShowGalleryPreviewModal(false)}
-					style={{ maxWidth: '600px', width: '100%' }}
+					style={{ maxWidth: '640px', width: '100%' }}
 				>
 					<p>
 						{sprintf(
@@ -1246,7 +1247,7 @@ export default function EventParticipants() {
 						setSelectedInviteParticipants(new Set());
 						setInviteSearch('');
 					}}
-					style={{ maxWidth: '600px', width: '100%' }}
+					style={{ maxWidth: '640px', width: '100%' }}
 				>
 					<p style={{ fontSize: '12px', color: '#666' }}>
 						{__(

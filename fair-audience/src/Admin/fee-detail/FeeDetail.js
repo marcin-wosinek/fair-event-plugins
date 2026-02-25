@@ -577,6 +577,7 @@ export default function FeeDetail() {
 						setIsAdjustModalOpen(false);
 						setAdjustingPayment(null);
 					}}
+					style={{ maxWidth: '500px', width: '100%' }}
 				>
 					<p>
 						{__('Current amount:', 'fair-audience')}{' '}
@@ -638,7 +639,7 @@ export default function FeeDetail() {
 				<Modal
 					title={__('Payment Attempts', 'fair-audience')}
 					onRequestClose={() => setIsTransactionsModalOpen(false)}
-					style={{ width: '600px', maxWidth: '90vw' }}
+					style={{ maxWidth: '640px', width: '100%' }}
 				>
 					{transactionsLoading ? (
 						<Spinner />
@@ -765,7 +766,7 @@ export default function FeeDetail() {
 				<Modal
 					title={__('Audit Log', 'fair-audience')}
 					onRequestClose={() => setIsAuditModalOpen(false)}
-					style={{ width: '600px', maxWidth: '90vw' }}
+					style={{ maxWidth: '640px', width: '100%' }}
 				>
 					{auditLoading ? (
 						<Spinner />

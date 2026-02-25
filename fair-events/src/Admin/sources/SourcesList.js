@@ -308,7 +308,7 @@ const SourcesList = () => {
 							: __('Add New Event Source', 'fair-events')
 					}
 					onRequestClose={handleFormCancel}
-					style={{ maxWidth: '800px' }}
+					style={{ maxWidth: '800px', width: '100%' }}
 				>
 					<SourceForm
 						source={editingSource}

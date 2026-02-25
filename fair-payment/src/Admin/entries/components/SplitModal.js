@@ -303,7 +303,7 @@ const SplitModal = ({
 					: __('Split Entry', 'fair-payment')
 			}
 			onRequestClose={onCancel}
-			style={{ maxWidth: '600px', width: '100%' }}
+			style={{ maxWidth: '640px', width: '100%' }}
 		>
 			<form onSubmit={handleSubmit}>
 				<VStack spacing={4}>

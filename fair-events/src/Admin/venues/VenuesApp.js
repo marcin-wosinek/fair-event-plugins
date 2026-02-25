@@ -279,7 +279,7 @@ const VenuesApp = () => {
 							: __('Add New Venue', 'fair-events')
 					}
 					onRequestClose={handleFormCancel}
-					style={{ maxWidth: '500px' }}
+					style={{ maxWidth: '500px', width: '100%' }}
 				>
 					<form onSubmit={handleFormSubmit}>
 						<VStack spacing={4}>

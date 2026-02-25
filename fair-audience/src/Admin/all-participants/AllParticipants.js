@@ -628,6 +628,7 @@ export default function AllParticipants() {
 							: __('Add Participant', 'fair-audience')
 					}
 					onRequestClose={() => setIsModalOpen(false)}
+					style={{ maxWidth: '500px', width: '100%' }}
 				>
 					<Card>
 						<CardBody>

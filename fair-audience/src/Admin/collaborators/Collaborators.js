@@ -349,6 +349,7 @@ export default function Collaborators() {
 				<Modal
 					title={__('Add to Event', 'fair-audience')}
 					onRequestClose={() => setIsModalOpen(false)}
+					style={{ maxWidth: '500px', width: '100%' }}
 				>
 					<p>
 						{__(

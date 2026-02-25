@@ -324,7 +324,7 @@ export default function SourceViewApp() {
 				<Modal
 					title={__('Edit Event Source', 'fair-events')}
 					onRequestClose={() => setIsEditOpen(false)}
-					style={{ maxWidth: '800px' }}
+					style={{ maxWidth: '800px', width: '100%' }}
 				>
 					<SourceForm
 						source={source}

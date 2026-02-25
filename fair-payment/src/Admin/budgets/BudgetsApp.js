@@ -471,7 +471,7 @@ const BudgetsApp = () => {
 							: __('Add New Budget', 'fair-payment')
 					}
 					onRequestClose={handleFormCancel}
-					style={{ maxWidth: '500px' }}
+					style={{ maxWidth: '500px', width: '100%' }}
 				>
 					<form onSubmit={handleFormSubmit}>
 						<VStack spacing={4}>

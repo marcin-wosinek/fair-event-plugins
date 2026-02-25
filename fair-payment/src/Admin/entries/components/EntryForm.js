@@ -275,7 +275,7 @@ const EntryForm = ({
 					: __('Add Financial Entry', 'fair-payment')
 			}
 			onRequestClose={onCancel}
-			style={{ maxWidth: '500px' }}
+			style={{ maxWidth: '500px', width: '100%' }}
 		>
 			<form onSubmit={handleSubmit}>
 				<VStack spacing={4}>

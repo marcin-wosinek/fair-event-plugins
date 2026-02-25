@@ -424,6 +424,7 @@ export default function Groups() {
 							: __('Create Group', 'fair-audience')
 					}
 					onRequestClose={() => setIsEditModalOpen(false)}
+					style={{ maxWidth: '500px', width: '100%' }}
 				>
 					<TextControl
 						label={__('Name', 'fair-audience')}
@@ -479,7 +480,7 @@ export default function Groups() {
 						selectedGroup.name
 					}
 					onRequestClose={() => setIsMembersModalOpen(false)}
-					style={{ width: '600px', maxWidth: '90vw' }}
+					style={{ maxWidth: '640px', width: '100%' }}
 				>
 					{/* Current Members */}
 					<h3>{__('Current Members', 'fair-audience')}</h3>

@@ -112,7 +112,7 @@ const MatchModal = ({ entry, onMatch, onCancel }) => {
 		<Modal
 			title={__('Match to Transaction', 'fair-payment')}
 			onRequestClose={onCancel}
-			style={{ maxWidth: '700px', width: '100%' }}
+			style={{ maxWidth: '640px', width: '100%' }}
 		>
 			<VStack spacing={4}>
 				<div

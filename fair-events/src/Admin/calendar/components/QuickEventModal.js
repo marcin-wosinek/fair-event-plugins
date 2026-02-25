@@ -88,7 +88,7 @@ export default function QuickEventModal({ date, onClose, onSuccess }) {
 		<Modal
 			title={__('Quick Add Event', 'fair-events')}
 			onRequestClose={onClose}
-			style={{ maxWidth: '480px' }}
+			style={{ maxWidth: '500px', width: '100%' }}
 		>
 			<form onSubmit={handleSubmit}>
 				<VStack spacing={4}>

@@ -447,6 +447,7 @@ export default function FeesList() {
 				<Modal
 					title={__('Create Fee', 'fair-audience')}
 					onRequestClose={() => setIsCreateModalOpen(false)}
+					style={{ maxWidth: '500px', width: '100%' }}
 				>
 					<TextControl
 						label={__('Name', 'fair-audience')}
@@ -539,6 +540,7 @@ export default function FeesList() {
 						setIsEditModalOpen(false);
 						setEditingFee(null);
 					}}
+					style={{ maxWidth: '500px', width: '100%' }}
 				>
 					<TextControl
 						label={__('Name', 'fair-audience')}

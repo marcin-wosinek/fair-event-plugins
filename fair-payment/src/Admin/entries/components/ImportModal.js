@@ -213,7 +213,7 @@ const ImportModal = ({ onImport, onCancel }) => {
 		<Modal
 			title={__('Import Financial Entries', 'fair-payment')}
 			onRequestClose={onCancel}
-			style={{ maxWidth: '600px' }}
+			style={{ maxWidth: '640px', width: '100%' }}
 		>
 			<VStack spacing={4}>
 				{error && (
