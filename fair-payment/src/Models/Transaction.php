@@ -101,6 +101,26 @@ class Transaction {
 	}
 
 	/**
+	 * Update Mollie processing fee for a transaction
+	 *
+	 * @param string $mollie_payment_id Mollie payment ID.
+	 * @param float  $mollie_fee Mollie processing fee amount.
+	 * @return bool True on success, false on failure.
+	 */
+	public static function update_mollie_fee( $mollie_payment_id, $mollie_fee ) {
+		global $wpdb;
+		$table_name = \FairPayment\Database\Schema::get_payments_table_name();
+
+		return (bool) $wpdb->update(
+			$table_name,
+			array( 'mollie_fee' => $mollie_fee ),
+			array( 'mollie_payment_id' => $mollie_payment_id ),
+			array( '%f' ),
+			array( '%s' )
+		);
+	}
+
+	/**
 	 * Get transaction by Mollie payment ID
 	 *
 	 * @param string $mollie_payment_id Mollie payment ID.

@@ -72,6 +72,7 @@ class Schema {
 			amount decimal(10,2) NOT NULL,
 			currency varchar(3) NOT NULL DEFAULT 'EUR',
 			application_fee decimal(10,2) DEFAULT NULL,
+			mollie_fee decimal(10,2) DEFAULT NULL,
 			status varchar(20) NOT NULL DEFAULT 'draft',
 			payment_initiated_at datetime DEFAULT NULL,
 			testmode tinyint(1) NOT NULL DEFAULT 1,
@@ -112,9 +113,10 @@ class Schema {
 		self::migrate_to_v9();
 		self::migrate_to_v10();
 		self::migrate_to_v11();
+		self::migrate_to_v12();
 
 		// Store database version for future migrations.
-		update_option( 'fair_payment_db_version', '11.0' );
+		update_option( 'fair_payment_db_version', '12.0' );
 	}
 
 	/**
@@ -655,6 +657,44 @@ class Schema {
 				$wpdb->query(
 					$wpdb->prepare(
 						'ALTER TABLE %i ADD KEY event_date_id (event_date_id)',
+						$table_name
+					)
+				);
+			}
+		}
+	}
+
+	/**
+	 * Migrate database from v11.0 to v12.0
+	 *
+	 * Adds mollie_fee column to transactions to track Mollie processing fees.
+	 *
+	 * @return void
+	 */
+	public static function migrate_to_v12() {
+		global $wpdb;
+
+		$current_version = get_option( 'fair_payment_db_version', '1.0' );
+
+		if ( version_compare( $current_version, '12.0', '<' ) ) {
+			$table_name = self::get_payments_table_name();
+
+			// Check if mollie_fee column already exists.
+			// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+			$column_exists = $wpdb->get_results(
+				$wpdb->prepare(
+					'SHOW COLUMNS FROM %i LIKE %s',
+					$table_name,
+					'mollie_fee'
+				)
+			);
+
+			// Add mollie_fee column if it doesn't exist.
+			if ( empty( $column_exists ) ) {
+				// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.DirectDatabaseQuery.SchemaChange
+				$wpdb->query(
+					$wpdb->prepare(
+						'ALTER TABLE %i ADD COLUMN mollie_fee decimal(10,2) DEFAULT NULL AFTER application_fee',
 						$table_name
 					)
 				);

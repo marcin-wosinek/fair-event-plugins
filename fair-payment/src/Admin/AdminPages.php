@@ -218,6 +218,8 @@ class AdminPages {
 							<th><?php esc_html_e( 'ID', 'fair-payment' ); ?></th>
 							<th><?php esc_html_e( 'Mollie ID', 'fair-payment' ); ?></th>
 							<th><?php esc_html_e( 'Amount', 'fair-payment' ); ?></th>
+							<th><?php esc_html_e( 'Mollie Fee', 'fair-payment' ); ?></th>
+							<th><?php esc_html_e( 'Integration Fee', 'fair-payment' ); ?></th>
 							<th><?php esc_html_e( 'Status', 'fair-payment' ); ?></th>
 							<th><?php esc_html_e( 'Mode', 'fair-payment' ); ?></th>
 							<th><?php esc_html_e( 'Description', 'fair-payment' ); ?></th>
@@ -251,6 +253,22 @@ class AdminPages {
 								<td>
 									<strong><?php echo esc_html( number_format( (float) ( $transaction->amount ?? 0 ), 2 ) ); ?></strong>
 									<?php echo esc_html( $transaction->currency ?? 'EUR' ); ?>
+								</td>
+								<td>
+									<?php if ( null !== $transaction->mollie_fee ) : ?>
+										<?php echo esc_html( number_format( (float) $transaction->mollie_fee, 2 ) ); ?>
+										<?php echo esc_html( $transaction->currency ?? 'EUR' ); ?>
+									<?php else : ?>
+										-
+									<?php endif; ?>
+								</td>
+								<td>
+									<?php if ( null !== $transaction->application_fee ) : ?>
+										<?php echo esc_html( number_format( (float) $transaction->application_fee, 2 ) ); ?>
+										<?php echo esc_html( $transaction->currency ?? 'EUR' ); ?>
+									<?php else : ?>
+										-
+									<?php endif; ?>
 								</td>
 								<td>
 									<?php

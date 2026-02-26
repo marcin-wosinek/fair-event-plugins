@@ -228,6 +228,7 @@ class TransactionAPI {
 	public static function handle_payment_status_change( $payment, $transaction ) {
 		switch ( $payment->status ) {
 			case 'paid':
+				self::capture_mollie_fee( $payment, $transaction );
 				do_action( 'fair_payment_paid', $payment, $transaction );
 				break;
 
@@ -293,6 +294,34 @@ class TransactionAPI {
 		}
 
 		return $transaction;
+	}
+
+	/**
+	 * Capture Mollie processing fee from a paid payment
+	 *
+	 * Calculates the Mollie fee as: amount - settlementAmount - application_fee.
+	 * Only stores the fee if settlementAmount is available and the calculated fee is non-negative.
+	 *
+	 * @param object $payment Mollie payment object.
+	 * @param object $transaction Transaction from database.
+	 * @return void
+	 */
+	private static function capture_mollie_fee( $payment, $transaction ) {
+		// phpcs:ignore WordPress.NamingConventions.ValidVariableName.UsedPropertyNotSnakeCase -- Mollie API property name.
+		if ( empty( $payment->settlementAmount ) ) {
+			return;
+		}
+
+		$amount = (float) $payment->amount->value;
+		// phpcs:ignore WordPress.NamingConventions.ValidVariableName.UsedPropertyNotSnakeCase -- Mollie API property name.
+		$settlement_amount = (float) $payment->settlementAmount->value;
+		$application_fee   = (float) ( $transaction->application_fee ?? 0 );
+
+		$mollie_fee = round( $amount - $settlement_amount - $application_fee, 2 );
+
+		if ( $mollie_fee >= 0 ) {
+			Transaction::update_mollie_fee( $transaction->mollie_payment_id, $mollie_fee );
+		}
 	}
 
 	/**
