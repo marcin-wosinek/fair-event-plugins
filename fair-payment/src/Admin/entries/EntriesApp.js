@@ -92,6 +92,15 @@ const EntriesApp = () => {
 		if (eventsEnabled) {
 			loadEventUrls();
 			loadEventDateOptions();
+
+			const params = new URLSearchParams(window.location.search);
+			const eventDateId = params.get('event_date_id');
+			if (eventDateId) {
+				setFilters((prev) => ({
+					...prev,
+					event_date_id: eventDateId,
+				}));
+			}
 		}
 	}, []);
 
@@ -774,9 +783,7 @@ const EntriesApp = () => {
 														</SortableHeader>
 													)}
 													{eventsEnabled && (
-														<SortableHeader
-															column="event_date_id"
-														>
+														<SortableHeader column="event_date_id">
 															{__(
 																'Event',
 																'fair-payment'

@@ -344,6 +344,11 @@ class AdminPages {
 				$localized_data['audienceUrl'] = admin_url( 'admin.php?page=fair-audience-event-participants&event_id=' );
 			}
 
+			// Add payment entries URL if fair-payment plugin is active.
+			if ( class_exists( 'FairPayment\Core\Plugin' ) ) {
+				$localized_data['paymentEntriesUrl'] = admin_url( 'admin.php?page=fair-payment-entries' );
+			}
+
 			wp_localize_script(
 				'fair-events-manage-event',
 				'fairEventsManageEventData',

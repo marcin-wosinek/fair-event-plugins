@@ -27,6 +27,7 @@ import { __ } from '@wordpress/i18n';
 import apiFetch from '@wordpress/api-fetch';
 import { DurationOptions, calculateDuration } from 'fair-events-shared';
 import ImageExports from './ImageExports.js';
+import EventBudget from './EventBudget.js';
 
 export default function ManageEventApp() {
 	const eventDateId = window.fairEventsManageEventData?.eventDateId;
@@ -36,6 +37,8 @@ export default function ManageEventApp() {
 	const enabledPostTypes =
 		window.fairEventsManageEventData?.enabledPostTypes || [];
 	const audienceUrl = window.fairEventsManageEventData?.audienceUrl || '';
+	const paymentEntriesUrl =
+		window.fairEventsManageEventData?.paymentEntriesUrl || '';
 
 	const [eventDate, setEventDate] = useState(null);
 	const [loading, setLoading] = useState(true);
@@ -880,6 +883,13 @@ export default function ManageEventApp() {
 						</Button>
 					</CardBody>
 				</Card>
+			)}
+
+			{paymentEntriesUrl && (
+				<EventBudget
+					eventDateId={eventDateId}
+					entriesUrl={paymentEntriesUrl}
+				/>
 			)}
 
 			<Card style={{ marginTop: '16px' }}>
