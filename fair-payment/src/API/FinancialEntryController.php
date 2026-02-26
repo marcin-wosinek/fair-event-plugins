@@ -96,6 +96,42 @@ class FinancialEntryController extends WP_REST_Controller {
 			)
 		);
 
+		// POST /fair-payment/v1/financial-entries/transfer - Create transfer.
+		// PUT /fair-payment/v1/financial-entries/transfer/{id} - Update transfer.
+		register_rest_route(
+			$this->namespace,
+			'/financial-entries/transfer',
+			array(
+				array(
+					'methods'             => WP_REST_Server::CREATABLE,
+					'callback'            => array( $this, 'create_transfer' ),
+					'permission_callback' => array( $this, 'create_item_permissions_check' ),
+					'args'                => $this->get_transfer_args(),
+				),
+			)
+		);
+
+		register_rest_route(
+			$this->namespace,
+			'/financial-entries/transfer/(?P<id>\d+)',
+			array(
+				array(
+					'methods'             => WP_REST_Server::EDITABLE,
+					'callback'            => array( $this, 'update_transfer' ),
+					'permission_callback' => array( $this, 'update_item_permissions_check' ),
+					'args'                => array_merge(
+						array(
+							'id' => array(
+								'description' => __( 'Unique identifier for the transfer entry.', 'fair-payment' ),
+								'type'        => 'integer',
+							),
+						),
+						$this->get_transfer_args()
+					),
+				),
+			)
+		);
+
 		// GET /fair-payment/v1/financial-entries/{id} - Get single entry.
 		// PUT /fair-payment/v1/financial-entries/{id} - Update entry.
 		// DELETE /fair-payment/v1/financial-entries/{id} - Delete entry.
@@ -331,9 +367,9 @@ class FinancialEntryController extends WP_REST_Controller {
 				'type'        => 'integer',
 			),
 			'entry_type'    => array(
-				'description'       => __( 'Filter by entry type: cost or income.', 'fair-payment' ),
+				'description'       => __( 'Filter by entry type: cost, income, or transfer.', 'fair-payment' ),
 				'type'              => 'string',
-				'enum'              => array( 'cost', 'income' ),
+				'enum'              => array( 'cost', 'income', 'transfer' ),
 				'sanitize_callback' => 'sanitize_text_field',
 			),
 			'unmatched'     => array(
@@ -1097,6 +1133,235 @@ class FinancialEntryController extends WP_REST_Controller {
 		}
 
 		return new WP_REST_Response( $entry->to_array(), 200 );
+	}
+
+	/**
+	 * Get arguments for transfer endpoints
+	 *
+	 * @return array Arguments definition.
+	 */
+	private function get_transfer_args() {
+		return array(
+			'amount'           => array(
+				'description' => __( 'Transfer amount (positive value).', 'fair-payment' ),
+				'type'        => 'number',
+				'required'    => true,
+			),
+			'entry_date'       => array(
+				'description'       => __( 'Transfer date (Y-m-d format).', 'fair-payment' ),
+				'type'              => 'string',
+				'required'          => true,
+				'format'            => 'date',
+				'sanitize_callback' => 'sanitize_text_field',
+			),
+			'source_budget_id' => array(
+				'description' => __( 'Source budget ID (money comes from).', 'fair-payment' ),
+				'type'        => 'integer',
+				'required'    => true,
+			),
+			'target_budget_id' => array(
+				'description' => __( 'Target budget ID (money goes to).', 'fair-payment' ),
+				'type'        => 'integer',
+				'required'    => true,
+			),
+			'description'      => array(
+				'description'       => __( 'Transfer description.', 'fair-payment' ),
+				'type'              => 'string',
+				'required'          => false,
+				'sanitize_callback' => 'sanitize_textarea_field',
+			),
+			'event_url'        => array(
+				'description'       => __( 'Event URL (local or external).', 'fair-payment' ),
+				'type'              => array( 'string', 'null' ),
+				'required'          => false,
+				'sanitize_callback' => function ( $value ) {
+					return $value ? esc_url_raw( $value ) : null;
+				},
+			),
+			'event_date_id'    => array(
+				'description' => __( 'Event date ID.', 'fair-payment' ),
+				'type'        => array( 'integer', 'null' ),
+				'required'    => false,
+			),
+		);
+	}
+
+	/**
+	 * Create a transfer between budgets
+	 *
+	 * @param WP_REST_Request $request Full data about the request.
+	 * @return WP_REST_Response|WP_Error Response object on success, or WP_Error on failure.
+	 */
+	public function create_transfer( $request ) {
+		$amount           = $request->get_param( 'amount' );
+		$entry_date       = $request->get_param( 'entry_date' );
+		$source_budget_id = $request->get_param( 'source_budget_id' );
+		$target_budget_id = $request->get_param( 'target_budget_id' );
+		$description      = $request->get_param( 'description' );
+		$event_url        = $request->get_param( 'event_url' );
+		$event_date_id    = $request->get_param( 'event_date_id' );
+
+		if ( empty( $amount ) || $amount <= 0 ) {
+			return new WP_Error(
+				'rest_invalid_amount',
+				__( 'Amount must be greater than zero.', 'fair-payment' ),
+				array( 'status' => 400 )
+			);
+		}
+
+		if ( empty( $entry_date ) ) {
+			return new WP_Error(
+				'rest_invalid_entry_date',
+				__( 'Entry date is required.', 'fair-payment' ),
+				array( 'status' => 400 )
+			);
+		}
+
+		if ( empty( $source_budget_id ) || empty( $target_budget_id ) ) {
+			return new WP_Error(
+				'rest_invalid_budgets',
+				__( 'Both source and target budgets are required.', 'fair-payment' ),
+				array( 'status' => 400 )
+			);
+		}
+
+		if ( (int) $source_budget_id === (int) $target_budget_id ) {
+			return new WP_Error(
+				'rest_same_budget',
+				__( 'Source and target budgets must be different.', 'fair-payment' ),
+				array( 'status' => 400 )
+			);
+		}
+
+		$parent_id = FinancialEntry::create_transfer(
+			$amount,
+			$entry_date,
+			$source_budget_id,
+			$target_budget_id,
+			$description,
+			! empty( $event_url ) ? $event_url : null,
+			! empty( $event_date_id ) ? $event_date_id : null
+		);
+
+		if ( ! $parent_id ) {
+			return new WP_Error(
+				'rest_transfer_creation_failed',
+				__( 'Failed to create transfer.', 'fair-payment' ),
+				array( 'status' => 500 )
+			);
+		}
+
+		$entry    = FinancialEntry::get_by_id( $parent_id );
+		$children = FinancialEntry::get_children( $parent_id );
+
+		$entry_data             = $entry->to_array();
+		$entry_data['children'] = array_map(
+			function ( $child ) {
+				return $child->to_array();
+			},
+			$children
+		);
+
+		return new WP_REST_Response( $entry_data, 201 );
+	}
+
+	/**
+	 * Update an existing transfer
+	 *
+	 * @param WP_REST_Request $request Full data about the request.
+	 * @return WP_REST_Response|WP_Error Response object on success, or WP_Error on failure.
+	 */
+	public function update_transfer( $request ) {
+		$id               = (int) $request->get_param( 'id' );
+		$amount           = $request->get_param( 'amount' );
+		$entry_date       = $request->get_param( 'entry_date' );
+		$source_budget_id = $request->get_param( 'source_budget_id' );
+		$target_budget_id = $request->get_param( 'target_budget_id' );
+		$description      = $request->get_param( 'description' );
+		$event_url        = $request->get_param( 'event_url' );
+		$event_date_id    = $request->get_param( 'event_date_id' );
+
+		// Check if entry exists and is a transfer.
+		$existing = FinancialEntry::get_by_id( $id );
+		if ( ! $existing ) {
+			return new WP_Error(
+				'rest_entry_not_found',
+				__( 'Transfer entry not found.', 'fair-payment' ),
+				array( 'status' => 404 )
+			);
+		}
+
+		if ( 'transfer' !== $existing->entry_type ) {
+			return new WP_Error(
+				'rest_not_a_transfer',
+				__( 'Entry is not a transfer.', 'fair-payment' ),
+				array( 'status' => 400 )
+			);
+		}
+
+		if ( empty( $amount ) || $amount <= 0 ) {
+			return new WP_Error(
+				'rest_invalid_amount',
+				__( 'Amount must be greater than zero.', 'fair-payment' ),
+				array( 'status' => 400 )
+			);
+		}
+
+		if ( empty( $entry_date ) ) {
+			return new WP_Error(
+				'rest_invalid_entry_date',
+				__( 'Entry date is required.', 'fair-payment' ),
+				array( 'status' => 400 )
+			);
+		}
+
+		if ( empty( $source_budget_id ) || empty( $target_budget_id ) ) {
+			return new WP_Error(
+				'rest_invalid_budgets',
+				__( 'Both source and target budgets are required.', 'fair-payment' ),
+				array( 'status' => 400 )
+			);
+		}
+
+		if ( (int) $source_budget_id === (int) $target_budget_id ) {
+			return new WP_Error(
+				'rest_same_budget',
+				__( 'Source and target budgets must be different.', 'fair-payment' ),
+				array( 'status' => 400 )
+			);
+		}
+
+		$success = FinancialEntry::update_transfer(
+			$id,
+			$amount,
+			$entry_date,
+			$source_budget_id,
+			$target_budget_id,
+			$description,
+			! empty( $event_url ) ? $event_url : null,
+			! empty( $event_date_id ) ? $event_date_id : null
+		);
+
+		if ( ! $success ) {
+			return new WP_Error(
+				'rest_transfer_update_failed',
+				__( 'Failed to update transfer.', 'fair-payment' ),
+				array( 'status' => 500 )
+			);
+		}
+
+		$entry    = FinancialEntry::get_by_id( $id );
+		$children = FinancialEntry::get_children( $id );
+
+		$entry_data             = $entry->to_array();
+		$entry_data['children'] = array_map(
+			function ( $child ) {
+				return $child->to_array();
+			},
+			$children
+		);
+
+		return new WP_REST_Response( $entry_data, 200 );
 	}
 
 	/**

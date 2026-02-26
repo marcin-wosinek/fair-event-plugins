@@ -24,6 +24,7 @@ import EntryForm from './components/EntryForm.js';
 import MatchModal from './components/MatchModal.js';
 import ImportModal from './components/ImportModal.js';
 import SplitModal from './components/SplitModal.js';
+import TransferModal from './components/TransferModal.js';
 
 const budgetingEnabled = window.fairPaymentSettings?.budgetingEnabled === '1';
 const eventsEnabled = window.fairPaymentSettings?.eventsEnabled === '1';
@@ -77,6 +78,8 @@ const EntriesApp = () => {
 	const [matchingEntry, setMatchingEntry] = useState(null);
 	const [isImportOpen, setIsImportOpen] = useState(false);
 	const [splittingEntry, setSplittingEntry] = useState(null);
+	const [isTransferOpen, setIsTransferOpen] = useState(false);
+	const [transferEntry, setTransferEntry] = useState(null);
 	const [expandedEntries, setExpandedEntries] = useState({});
 
 	useEffect(() => {
@@ -416,6 +419,37 @@ const EntriesApp = () => {
 		}
 	};
 
+	const handleTransfer = () => {
+		setTransferEntry(null);
+		setIsTransferOpen(true);
+	};
+
+	const handleEditTransfer = (entry) => {
+		setTransferEntry(entry);
+		setIsTransferOpen(true);
+	};
+
+	const handleTransferSave = () => {
+		setIsTransferOpen(false);
+		setTransferEntry(null);
+		setSuccess(
+			transferEntry
+				? __('Transfer updated successfully.', 'fair-payment')
+				: __('Transfer created successfully.', 'fair-payment')
+		);
+		loadEntries();
+		loadTotals();
+		if (eventsEnabled) {
+			loadEventUrls();
+			loadEventDateOptions();
+		}
+	};
+
+	const handleTransferCancel = () => {
+		setIsTransferOpen(false);
+		setTransferEntry(null);
+	};
+
 	const toggleExpanded = (entryId) => {
 		setExpandedEntries((prev) => ({
 			...prev,
@@ -558,6 +592,14 @@ const EntriesApp = () => {
 								>
 									{__('Add Entry', 'fair-payment')}
 								</Button>
+								{budgetingEnabled && (
+									<Button
+										variant="secondary"
+										onClick={handleTransfer}
+									>
+										{__('Transfer', 'fair-payment')}
+									</Button>
+								)}
 								<Button
 									variant="secondary"
 									onClick={handleImport}
@@ -656,6 +698,13 @@ const EntriesApp = () => {
 										{
 											label: __('Income', 'fair-payment'),
 											value: 'income',
+										},
+										{
+											label: __(
+												'Transfer',
+												'fair-payment'
+											),
+											value: 'transfer',
 										},
 									]}
 									onChange={(value) =>
@@ -812,7 +861,11 @@ const EntriesApp = () => {
 											</thead>
 											<tbody>
 												{entries.map((entry) => {
+													const isTransfer =
+														entry.entry_type ===
+														'transfer';
 													const isSplit =
+														!isTransfer &&
 														entry.children &&
 														entry.children.length >
 															0;
@@ -836,17 +889,23 @@ const EntriesApp = () => {
 																<td>
 																	<span
 																		style={{
-																			color:
-																				entry.entry_type ===
-																				'cost'
-																					? '#d63638'
-																					: '#007017',
+																			color: isTransfer
+																				? '#2271b1'
+																				: entry.entry_type ===
+																				  'cost'
+																				? '#d63638'
+																				: '#007017',
 																			fontWeight:
 																				'bold',
 																		}}
 																	>
-																		{entry.entry_type ===
-																		'cost'
+																		{isTransfer
+																			? __(
+																					'Transfer',
+																					'fair-payment'
+																			  )
+																			: entry.entry_type ===
+																			  'cost'
 																			? __(
 																					'Cost',
 																					'fair-payment'
@@ -889,7 +948,32 @@ const EntriesApp = () => {
 																</td>
 																{budgetingEnabled && (
 																	<td>
-																		{isSplit ? (
+																		{isTransfer ? (
+																			<Button
+																				variant="link"
+																				size="small"
+																				onClick={() =>
+																					toggleExpanded(
+																						entry.id
+																					)
+																				}
+																				style={{
+																					color: '#2271b1',
+																					fontWeight:
+																						'bold',
+																				}}
+																			>
+																				{isExpanded
+																					? __(
+																							'Transfer \u25BE',
+																							'fair-payment'
+																					  )
+																					: __(
+																							'Transfer \u25B8',
+																							'fair-payment'
+																					  )}
+																			</Button>
+																		) : isSplit ? (
 																			<Button
 																				variant="link"
 																				size="small"
@@ -942,6 +1026,31 @@ const EntriesApp = () => {
 																					entry.event_url
 																				)}
 																			</a>
+																		) : isTransfer ? (
+																			<Button
+																				variant="link"
+																				size="small"
+																				onClick={() =>
+																					toggleExpanded(
+																						entry.id
+																					)
+																				}
+																				style={{
+																					color: '#2271b1',
+																					fontWeight:
+																						'bold',
+																				}}
+																			>
+																				{isExpanded
+																					? __(
+																							'Transfer \u25BE',
+																							'fair-payment'
+																					  )
+																					: __(
+																							'Transfer \u25B8',
+																							'fair-payment'
+																					  )}
+																			</Button>
 																		) : isSplit ? (
 																			<Button
 																				variant="link"
@@ -1029,6 +1138,42 @@ const EntriesApp = () => {
 																			>
 																				{__(
 																					'Edit Split',
+																					'fair-payment'
+																				)}
+																			</Button>
+																		</HStack>
+																	) : isTransfer ? (
+																		<HStack
+																			spacing={
+																				1
+																			}
+																		>
+																			<Button
+																				variant="secondary"
+																				size="small"
+																				onClick={() =>
+																					handleEditTransfer(
+																						entry
+																					)
+																				}
+																			>
+																				{__(
+																					'Edit',
+																					'fair-payment'
+																				)}
+																			</Button>
+																			<Button
+																				variant="tertiary"
+																				size="small"
+																				isDestructive
+																				onClick={() =>
+																					handleDelete(
+																						entry.id
+																					)
+																				}
+																			>
+																				{__(
+																					'Delete',
 																					'fair-payment'
 																				)}
 																			</Button>
@@ -1140,6 +1285,109 @@ const EntriesApp = () => {
 																	)}
 																</td>
 															</tr>
+															{isTransfer &&
+																isExpanded &&
+																entry.children &&
+																entry.children.map(
+																	(child) => (
+																		<tr
+																			key={`child-${child.id}`}
+																			style={{
+																				backgroundColor:
+																					'#f6f7f7',
+																			}}
+																		>
+																			<td></td>
+																			<td>
+																				<span
+																					style={{
+																						color:
+																							child.entry_type ===
+																							'cost'
+																								? '#d63638'
+																								: '#007017',
+																						fontSize:
+																							'13px',
+																					}}
+																				>
+																					{child.entry_type ===
+																					'cost'
+																						? __(
+																								'Cost',
+																								'fair-payment'
+																						  )
+																						: __(
+																								'Income',
+																								'fair-payment'
+																						  )}
+																				</span>
+																			</td>
+																			<td
+																				style={{
+																					paddingLeft:
+																						'20px',
+																				}}
+																			>
+																				{formatAmount(
+																					child.amount
+																				)}
+																			</td>
+																			<td
+																				style={{
+																					color: '#666',
+																					fontSize:
+																						'13px',
+																				}}
+																			>
+																				{child.description || (
+																					<em>
+																						-
+																					</em>
+																				)}
+																			</td>
+																			{budgetingEnabled && (
+																				<td>
+																					{getBudgetName(
+																						child.budget_id
+																					)}
+																				</td>
+																			)}
+																			{eventsEnabled && (
+																				<td>
+																					{child.event_url ? (
+																						<a
+																							href={
+																								child.event_url
+																							}
+																							target="_blank"
+																							rel="noopener noreferrer"
+																							title={
+																								child.event_url
+																							}
+																							style={{
+																								fontSize:
+																									'12px',
+																							}}
+																						>
+																							{getEventUrlLabel(
+																								child.event_url
+																							)}
+																						</a>
+																					) : (
+																						<em>
+																							-
+																						</em>
+																					)}
+																				</td>
+																			)}
+																			<td
+																				colSpan={
+																					3
+																				}
+																			></td>
+																		</tr>
+																	)
+																)}
 															{isSplit &&
 																isExpanded &&
 																entry.children.map(
@@ -1316,6 +1564,17 @@ const EntriesApp = () => {
 					onSplit={handleSplitComplete}
 					onCancel={handleSplitCancel}
 					onUnsplit={() => handleUnsplit(splittingEntry.id)}
+				/>
+			)}
+
+			{/* Transfer Modal */}
+			{isTransferOpen && (
+				<TransferModal
+					entry={transferEntry}
+					budgets={budgets}
+					eventsEnabled={eventsEnabled}
+					onSave={handleTransferSave}
+					onCancel={handleTransferCancel}
 				/>
 			)}
 		</div>

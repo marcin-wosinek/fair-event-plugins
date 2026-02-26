@@ -33,7 +33,7 @@ class FinancialEntry {
 	public $amount;
 
 	/**
-	 * Entry type: 'cost' or 'income'
+	 * Entry type: 'cost', 'income', or 'transfer'
 	 *
 	 * @var string
 	 */
@@ -279,7 +279,7 @@ class FinancialEntry {
 			$where_values[]  = (int) $filters['event_date_id'];
 		}
 
-		if ( ! empty( $filters['entry_type'] ) && in_array( $filters['entry_type'], array( 'cost', 'income' ), true ) ) {
+		if ( ! empty( $filters['entry_type'] ) && in_array( $filters['entry_type'], array( 'cost', 'income', 'transfer' ), true ) ) {
 			$where_clauses[] = 'entry_type = %s';
 			$where_values[]  = $filters['entry_type'];
 		}
@@ -511,7 +511,7 @@ class FinancialEntry {
 		$table_name = self::get_table_name();
 
 		// Validate entry_type.
-		if ( ! in_array( $entry_type, array( 'cost', 'income' ), true ) ) {
+		if ( ! in_array( $entry_type, array( 'cost', 'income', 'transfer' ), true ) ) {
 			return false;
 		}
 
@@ -555,7 +555,7 @@ class FinancialEntry {
 		$table_name = self::get_table_name();
 
 		// Validate entry_type.
-		if ( ! in_array( $entry_type, array( 'cost', 'income' ), true ) ) {
+		if ( ! in_array( $entry_type, array( 'cost', 'income', 'transfer' ), true ) ) {
 			return false;
 		}
 
@@ -593,6 +593,13 @@ class FinancialEntry {
 		global $wpdb;
 
 		$table_name = self::get_table_name();
+
+		// Cascade delete children before parent.
+		$wpdb->delete(
+			$table_name,
+			array( 'parent_entry_id' => $id ),
+			array( '%d' )
+		);
 
 		$result = $wpdb->delete(
 			$table_name,
@@ -937,6 +944,207 @@ class FinancialEntry {
 		$wpdb->query( 'COMMIT' );
 
 		return $child_ids;
+	}
+
+	/**
+	 * Create a transfer between two budgets
+	 *
+	 * Creates a parent entry (type 'transfer') with two children:
+	 * a cost child (source budget) and an income child (target budget).
+	 *
+	 * @param float       $amount            Transfer amount (positive value).
+	 * @param string      $entry_date        Entry date (Y-m-d format).
+	 * @param int         $source_budget_id  Source budget ID (money comes from).
+	 * @param int         $target_budget_id  Target budget ID (money goes to).
+	 * @param string|null $description       Transfer description.
+	 * @param string|null $event_url         Event URL.
+	 * @param int|null    $event_date_id     Event date ID.
+	 * @return int|false The parent entry ID on success, false on failure.
+	 */
+	public static function create_transfer( $amount, $entry_date, $source_budget_id, $target_budget_id, $description = null, $event_url = null, $event_date_id = null ) {
+		global $wpdb;
+
+		$table_name = self::get_table_name();
+
+		// Start transaction.
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+		$wpdb->query( 'START TRANSACTION' );
+
+		// Create parent entry (transfer).
+		$parent_data = array(
+			'amount'      => abs( (float) $amount ),
+			'entry_type'  => 'transfer',
+			'entry_date'  => $entry_date,
+			'description' => $description,
+		);
+
+		$result = $wpdb->insert( $table_name, $parent_data, array( '%f', '%s', '%s', '%s' ) );
+
+		if ( ! $result ) {
+			// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+			$wpdb->query( 'ROLLBACK' );
+			return false;
+		}
+
+		$parent_id = $wpdb->insert_id;
+
+		// Create cost child (source budget).
+		$cost_data = array(
+			'amount'          => abs( (float) $amount ),
+			'entry_type'      => 'cost',
+			'entry_date'      => $entry_date,
+			'description'     => $description,
+			'budget_id'       => (int) $source_budget_id,
+			'parent_entry_id' => $parent_id,
+			'event_url'       => $event_url ? $event_url : null,
+			'event_date_id'   => $event_date_id ? (int) $event_date_id : null,
+		);
+
+		$result = $wpdb->insert( $table_name, $cost_data, array( '%f', '%s', '%s', '%s', '%d', '%d', '%s', '%d' ) );
+
+		if ( ! $result ) {
+			// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+			$wpdb->query( 'ROLLBACK' );
+			return false;
+		}
+
+		// Create income child (target budget).
+		$income_data = array(
+			'amount'          => abs( (float) $amount ),
+			'entry_type'      => 'income',
+			'entry_date'      => $entry_date,
+			'description'     => $description,
+			'budget_id'       => (int) $target_budget_id,
+			'parent_entry_id' => $parent_id,
+			'event_url'       => $event_url ? $event_url : null,
+			'event_date_id'   => $event_date_id ? (int) $event_date_id : null,
+		);
+
+		$result = $wpdb->insert( $table_name, $income_data, array( '%f', '%s', '%s', '%s', '%d', '%d', '%s', '%d' ) );
+
+		if ( ! $result ) {
+			// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+			$wpdb->query( 'ROLLBACK' );
+			return false;
+		}
+
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+		$wpdb->query( 'COMMIT' );
+
+		return $parent_id;
+	}
+
+	/**
+	 * Update an existing transfer
+	 *
+	 * Deletes old children and recreates with new values, updates parent.
+	 *
+	 * @param int         $id                Parent transfer entry ID.
+	 * @param float       $amount            Transfer amount (positive value).
+	 * @param string      $entry_date        Entry date (Y-m-d format).
+	 * @param int         $source_budget_id  Source budget ID.
+	 * @param int         $target_budget_id  Target budget ID.
+	 * @param string|null $description       Transfer description.
+	 * @param string|null $event_url         Event URL.
+	 * @param int|null    $event_date_id     Event date ID.
+	 * @return bool True on success, false on failure.
+	 */
+	public static function update_transfer( $id, $amount, $entry_date, $source_budget_id, $target_budget_id, $description = null, $event_url = null, $event_date_id = null ) {
+		global $wpdb;
+
+		$table_name = self::get_table_name();
+
+		// Validate the entry exists and is a transfer.
+		$entry = self::get_by_id( $id );
+		if ( ! $entry || 'transfer' !== $entry->entry_type ) {
+			return false;
+		}
+
+		// Must have children.
+		if ( ! self::has_children( $id ) ) {
+			return false;
+		}
+
+		// Start transaction.
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+		$wpdb->query( 'START TRANSACTION' );
+
+		// Update parent.
+		$parent_result = $wpdb->update(
+			$table_name,
+			array(
+				'amount'      => abs( (float) $amount ),
+				'entry_date'  => $entry_date,
+				'description' => $description,
+			),
+			array( 'id' => $id ),
+			array( '%f', '%s', '%s' ),
+			array( '%d' )
+		);
+
+		if ( false === $parent_result ) {
+			// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+			$wpdb->query( 'ROLLBACK' );
+			return false;
+		}
+
+		// Delete existing children.
+		$delete_result = $wpdb->delete(
+			$table_name,
+			array( 'parent_entry_id' => $id ),
+			array( '%d' )
+		);
+
+		if ( false === $delete_result ) {
+			// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+			$wpdb->query( 'ROLLBACK' );
+			return false;
+		}
+
+		// Create cost child (source budget).
+		$cost_data = array(
+			'amount'          => abs( (float) $amount ),
+			'entry_type'      => 'cost',
+			'entry_date'      => $entry_date,
+			'description'     => $description,
+			'budget_id'       => (int) $source_budget_id,
+			'parent_entry_id' => $id,
+			'event_url'       => $event_url ? $event_url : null,
+			'event_date_id'   => $event_date_id ? (int) $event_date_id : null,
+		);
+
+		$result = $wpdb->insert( $table_name, $cost_data, array( '%f', '%s', '%s', '%s', '%d', '%d', '%s', '%d' ) );
+
+		if ( ! $result ) {
+			// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+			$wpdb->query( 'ROLLBACK' );
+			return false;
+		}
+
+		// Create income child (target budget).
+		$income_data = array(
+			'amount'          => abs( (float) $amount ),
+			'entry_type'      => 'income',
+			'entry_date'      => $entry_date,
+			'description'     => $description,
+			'budget_id'       => (int) $target_budget_id,
+			'parent_entry_id' => $id,
+			'event_url'       => $event_url ? $event_url : null,
+			'event_date_id'   => $event_date_id ? (int) $event_date_id : null,
+		);
+
+		$result = $wpdb->insert( $table_name, $income_data, array( '%f', '%s', '%s', '%s', '%d', '%d', '%s', '%d' ) );
+
+		if ( ! $result ) {
+			// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+			$wpdb->query( 'ROLLBACK' );
+			return false;
+		}
+
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+		$wpdb->query( 'COMMIT' );
+
+		return true;
 	}
 
 	/**
