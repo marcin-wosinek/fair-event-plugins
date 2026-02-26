@@ -37,7 +37,7 @@ class AdminPages {
 			'fair-payment-transactions',
 			array( $this, 'render_transactions_page' ),
 			'dashicons-money-alt',
-			30
+			21
 		);
 
 		// Transactions submenu (duplicate to rename main menu item).

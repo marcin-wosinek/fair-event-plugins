@@ -140,7 +140,7 @@ class AdminHooks {
 			'fair-audience',
 			array( $this, 'render_all_participants_page' ),
 			'dashicons-groups',
-			31
+			22
 		);
 
 		// Override first submenu item label (same slug as parent).
