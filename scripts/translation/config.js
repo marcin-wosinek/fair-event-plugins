@@ -64,7 +64,7 @@ export const config = {
 				costPer1kTokens: { input: 0.00015, output: 0.0006 },
 			},
 			claude: {
-				model: 'claude-3-5-haiku-20241022',
+				model: 'claude-haiku-4-5-20251001',
 				apiEndpoint: 'https://api.anthropic.com/v1/messages',
 				envVar: 'ANTHROPIC_API_KEY',
 				costPer1kTokens: { input: 0.0008, output: 0.004 },
