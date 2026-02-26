@@ -774,12 +774,14 @@ const EntriesApp = () => {
 														</SortableHeader>
 													)}
 													{eventsEnabled && (
-														<th>
+														<SortableHeader
+															column="event_date_id"
+														>
 															{__(
 																'Event',
 																'fair-payment'
 															)}
-														</th>
+														</SortableHeader>
 													)}
 													<th>
 														{__(

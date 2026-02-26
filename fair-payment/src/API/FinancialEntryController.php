@@ -369,7 +369,7 @@ class FinancialEntryController extends WP_REST_Controller {
 					'description'       => __( 'Sort by column.', 'fair-payment' ),
 					'type'              => 'string',
 					'default'           => 'entry_date',
-					'enum'              => array( 'entry_date', 'amount', 'budget_id', 'imported_at' ),
+					'enum'              => array( 'entry_date', 'amount', 'budget_id', 'event_date_id', 'imported_at' ),
 					'sanitize_callback' => 'sanitize_text_field',
 				),
 				'order'    => array(
