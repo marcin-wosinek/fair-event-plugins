@@ -45,7 +45,12 @@ jobs:
             - name: Add SSH host key
               run: |
                   mkdir -p ~/.ssh
-                  ssh-keyscan -p ${{ vars.SSH_PORT }} -H ${{ vars.SSH_HOST }} >> ~/.ssh/known_hosts
+                  for i in 1 2 3; do
+                    ssh-keyscan -T 10 -p ${{ vars.SSH_PORT }} -H ${{ vars.SSH_HOST }} >> ~/.ssh/known_hosts && break
+                    echo "ssh-keyscan attempt $i failed, retrying in 5s..."
+                    sleep 5
+                  done
+                  test -s ~/.ssh/known_hosts || { echo "ERROR: Failed to get SSH host key"; exit 1; }
 
             - name: Deploy plugins via rsync
               run: |
