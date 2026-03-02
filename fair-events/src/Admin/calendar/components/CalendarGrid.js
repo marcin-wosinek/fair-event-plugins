@@ -18,7 +18,6 @@ export default function CalendarGrid({
 	currentDate,
 	events,
 	onAddEvent,
-	editEventUrl,
 	manageEventUrl,
 	startOfWeek: startOfWeekProp,
 	participantsUrl,
@@ -109,7 +108,6 @@ export default function CalendarGrid({
 							isToday={isToday}
 							isPast={isPast}
 							onAddEvent={onAddEvent}
-							editEventUrl={editEventUrl}
 							manageEventUrl={manageEventUrl}
 							participantsUrl={participantsUrl}
 						/>

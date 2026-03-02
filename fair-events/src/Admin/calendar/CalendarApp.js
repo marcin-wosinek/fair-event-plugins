@@ -197,7 +197,6 @@ export default function CalendarApp() {
 					currentDate={currentDate}
 					events={events}
 					onAddEvent={handleAddEvent}
-					editEventUrl={window.fairEventsCalendarData?.editEventUrl}
 					manageEventUrl={
 						window.fairEventsCalendarData?.manageEventUrl
 					}

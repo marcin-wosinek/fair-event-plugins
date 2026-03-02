@@ -50,23 +50,40 @@ function getEventLinkType(event) {
 }
 
 /**
- * Build the edit URL for an event based on its uid.
+ * Extract event date ID from a uid string.
+ * Post-linked: fair_event_{postId}_{eventDateId}@host
+ * Standalone: standalone_{eventDateId}@host
+ *
+ * @param {string} uid Event uid.
+ * @return {string|null} Event date ID or null.
+ */
+function getEventDateId(uid) {
+	const standaloneMatch = uid?.match(/standalone_(\d+)@/);
+	if (standaloneMatch) {
+		return standaloneMatch[1];
+	}
+
+	const postMatch = uid?.match(/^fair_event_\d+_(\d+)@/);
+	if (postMatch) {
+		return postMatch[1];
+	}
+
+	return null;
+}
+
+/**
+ * Build the URL for an event.
+ * All local events link to the manage-event page.
  * Falls back to event.url for external/source events.
  *
  * @param {Object} event          Event object with uid and url.
- * @param {string} editEventUrl   Base URL for editing post-linked events.
- * @param {string} manageEventUrl Base URL for managing standalone events.
- * @return {string|null} Edit URL or null.
+ * @param {string} manageEventUrl Base URL for managing events.
+ * @return {string|null} URL or null.
  */
-function getEventEditUrl(event, editEventUrl, manageEventUrl) {
-	const standaloneId = getStandaloneId(event.uid);
-	if (standaloneId && manageEventUrl) {
-		return `${manageEventUrl}&event_date_id=${standaloneId}`;
-	}
-
-	const postId = getEventPostId(event.uid);
-	if (postId && editEventUrl) {
-		return `${editEventUrl}${postId}`;
+function getEventEditUrl(event, manageEventUrl) {
+	const eventDateId = getEventDateId(event.uid);
+	if (eventDateId && manageEventUrl) {
+		return `${manageEventUrl}&event_date_id=${eventDateId}`;
 	}
 
 	if (event.url) {
@@ -83,7 +100,6 @@ export default function DayCell({
 	isToday,
 	isPast,
 	onAddEvent,
-	editEventUrl,
 	manageEventUrl,
 	participantsUrl,
 }) {
@@ -139,11 +155,7 @@ export default function DayCell({
 						const tooltip = categoryNames.length
 							? `${event.title}\n${categoryNames.join(', ')}`
 							: event.title;
-						const eventUrl = getEventEditUrl(
-							event,
-							editEventUrl,
-							manageEventUrl
-						);
+						const eventUrl = getEventEditUrl(event, manageEventUrl);
 						return (
 							<div
 								key={index}
