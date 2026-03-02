@@ -152,31 +152,6 @@ export default function CalendarApp() {
 		});
 	};
 
-	const handleEditEvent = (eventId) => {
-		// Handle standalone events (format: standalone_123@domain.com)
-		const standaloneMatch = eventId.match(/standalone_(\d+)@/);
-		if (standaloneMatch) {
-			const eventDateId = standaloneMatch[1];
-			const manageEventUrl =
-				window.fairEventsCalendarData?.manageEventUrl;
-			if (manageEventUrl) {
-				window.location.href = `${manageEventUrl}&event_date_id=${eventDateId}`;
-			}
-			return;
-		}
-
-		// Extract numeric ID from uid (format: fair_event_123_456@domain.com or fair_event_123@domain.com)
-		// The first number is the event_id, the second (optional) is the occurrence_id
-		const match = eventId.match(/fair_event_(\d+)(?:_\d+)?@/);
-		if (match) {
-			const numericId = match[1];
-			const editEventUrl = window.fairEventsCalendarData?.editEventUrl;
-			if (editEventUrl) {
-				window.location.href = `${editEventUrl}${numericId}`;
-			}
-		}
-	};
-
 	return (
 		<div className="wrap fair-events-calendar-wrap">
 			<h1>{__('Events Calendar', 'fair-events')}</h1>
@@ -222,7 +197,10 @@ export default function CalendarApp() {
 					currentDate={currentDate}
 					events={events}
 					onAddEvent={handleAddEvent}
-					onEditEvent={handleEditEvent}
+					editEventUrl={window.fairEventsCalendarData?.editEventUrl}
+					manageEventUrl={
+						window.fairEventsCalendarData?.manageEventUrl
+					}
 					participantsUrl={
 						window.fairEventsCalendarData?.participantsUrl
 					}

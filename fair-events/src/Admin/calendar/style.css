@@ -163,8 +163,15 @@
 	transition: background-color 0.15s ease;
 }
 
+a.fair-events-calendar-event,
+a.fair-events-calendar-event:visited {
+	color: #fff;
+	text-decoration: none;
+}
+
 .fair-events-calendar-event:hover {
 	background: #135e96;
+	color: #fff;
 }
 
 .fair-events-calendar-event:focus {

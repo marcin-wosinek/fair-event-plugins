@@ -25,6 +25,18 @@ function getEventPostId(uid) {
 }
 
 /**
+ * Extract standalone event date ID from a uid string.
+ * Standalone events use format: standalone_123@domain.com
+ *
+ * @param {string} uid Event uid.
+ * @return {string|null} Event date ID or null.
+ */
+function getStandaloneId(uid) {
+	const match = uid?.match(/standalone_(\d+)@/);
+	return match ? match[1] : null;
+}
+
+/**
  * Get event link type from uid and url.
  *
  * @param {Object} event Event object with uid and url.
@@ -37,6 +49,33 @@ function getEventLinkType(event) {
 	return event.url ? 'external' : 'unlinked';
 }
 
+/**
+ * Build the edit URL for an event based on its uid.
+ * Falls back to event.url for external/source events.
+ *
+ * @param {Object} event          Event object with uid and url.
+ * @param {string} editEventUrl   Base URL for editing post-linked events.
+ * @param {string} manageEventUrl Base URL for managing standalone events.
+ * @return {string|null} Edit URL or null.
+ */
+function getEventEditUrl(event, editEventUrl, manageEventUrl) {
+	const standaloneId = getStandaloneId(event.uid);
+	if (standaloneId && manageEventUrl) {
+		return `${manageEventUrl}&event_date_id=${standaloneId}`;
+	}
+
+	const postId = getEventPostId(event.uid);
+	if (postId && editEventUrl) {
+		return `${editEventUrl}${postId}`;
+	}
+
+	if (event.url) {
+		return event.url;
+	}
+
+	return null;
+}
+
 export default function DayCell({
 	date,
 	events,
@@ -44,7 +83,8 @@ export default function DayCell({
 	isToday,
 	isPast,
 	onAddEvent,
-	onEditEvent,
+	editEventUrl,
+	manageEventUrl,
 	participantsUrl,
 }) {
 	const dayNumber = date.getDate();
@@ -65,11 +105,6 @@ export default function DayCell({
 	const handleAddClick = (e) => {
 		e.stopPropagation();
 		onAddEvent(date);
-	};
-
-	const handleEventClick = (e, eventUid) => {
-		e.stopPropagation();
-		onEditEvent(eventUid);
 	};
 
 	return (
@@ -104,18 +139,20 @@ export default function DayCell({
 						const tooltip = categoryNames.length
 							? `${event.title}\n${categoryNames.join(', ')}`
 							: event.title;
+						const eventUrl = getEventEditUrl(
+							event,
+							editEventUrl,
+							manageEventUrl
+						);
 						return (
 							<div
 								key={index}
 								className={`fair-events-calendar-event-row link-type-${linkType}`}
 							>
-								{onEditEvent ? (
-									<button
-										type="button"
+								{eventUrl ? (
+									<a
+										href={eventUrl}
 										className="fair-events-calendar-event"
-										onClick={(e) =>
-											handleEventClick(e, event.uid)
-										}
 										title={tooltip}
 									>
 										<span
@@ -127,7 +164,7 @@ export default function DayCell({
 												{categoryNames.join(', ')}
 											</span>
 										)}
-									</button>
+									</a>
 								) : (
 									<span
 										className="fair-events-calendar-event fair-events-calendar-event-readonly"
