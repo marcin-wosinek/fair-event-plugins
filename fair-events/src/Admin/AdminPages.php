@@ -24,6 +24,7 @@ class AdminPages {
 		add_action( 'admin_enqueue_scripts', array( $this, 'enqueue_admin_scripts' ) );
 		add_action( 'pre_get_posts', array( $this, 'filter_upcoming_events' ) );
 		add_action( 'admin_bar_menu', array( $this, 'add_copy_button_to_admin_bar' ), 100 );
+		add_filter( 'views_edit-fair_event', array( $this, 'add_upcoming_view_link' ) );
 	}
 
 	/**
@@ -32,15 +33,6 @@ class AdminPages {
 	 * @return void
 	 */
 	public function register_admin_pages() {
-		// Upcoming Events page (redirect to filtered list)
-		add_submenu_page(
-			'edit.php?post_type=fair_event',
-			__( 'Upcoming Events', 'fair-events' ),
-			__( 'Upcoming', 'fair-events' ),
-			'edit_posts',
-			'edit.php?post_type=fair_event&upcoming=1'
-		);
-
 		// Calendar page
 		add_submenu_page(
 			'edit.php?post_type=fair_event',
@@ -594,8 +586,6 @@ class AdminPages {
 		$all_events_key  = null;
 		$settings_item   = null;
 		$settings_key    = null;
-		$upcoming_item   = null;
-		$upcoming_key    = null;
 
 		foreach ( $submenu[ $parent_slug ] as $key => $item ) {
 			if ( isset( $item[2] ) ) {
@@ -608,9 +598,6 @@ class AdminPages {
 				} elseif ( 'fair-events-settings' === $item[2] ) {
 					$settings_item = $item;
 					$settings_key  = $key;
-				} elseif ( strpos( $item[2], 'upcoming=1' ) !== false ) {
-					$upcoming_item = $item;
-					$upcoming_key  = $key;
 				}
 			}
 		}
@@ -624,9 +611,6 @@ class AdminPages {
 		}
 		if ( null !== $settings_key ) {
 			unset( $submenu[ $parent_slug ][ $settings_key ] );
-		}
-		if ( null !== $upcoming_key ) {
-			unset( $submenu[ $parent_slug ][ $upcoming_key ] );
 		}
 
 		// Re-index the remaining items
@@ -645,16 +629,9 @@ class AdminPages {
 			$new_submenu[] = $all_events_item;
 		}
 
-		// 3. Add remaining items, inserting Upcoming after the first item (All Events) and "Add New" (second item)
-		$position = 0;
+		// 3. Add remaining items
 		foreach ( $remaining_items as $item ) {
 			$new_submenu[] = $item;
-			++$position;
-
-			// Insert Upcoming after "All Events" (first item) and "Add New" (second item)
-			if ( 2 === $position && $upcoming_item ) {
-				$new_submenu[] = $upcoming_item;
-			}
 		}
 
 		// 4. Settings last
@@ -663,6 +640,29 @@ class AdminPages {
 		}
 
 		$submenu[ $parent_slug ] = $new_submenu;
+	}
+
+	/**
+	 * Add "Upcoming" link to the post list views bar
+	 *
+	 * @param array $views Existing views.
+	 * @return array Modified views.
+	 */
+	public function add_upcoming_view_link( $views ) {
+		$url = admin_url( 'edit.php?post_type=fair_event&upcoming=1' );
+
+		// phpcs:ignore WordPress.Security.NonceVerification.Recommended
+		$is_current = isset( $_GET['upcoming'] ) && '1' === $_GET['upcoming'];
+		$class      = $is_current ? 'current' : '';
+
+		$views['upcoming'] = sprintf(
+			'<a href="%s" class="%s">%s</a>',
+			esc_url( $url ),
+			esc_attr( $class ),
+			esc_html__( 'Upcoming', 'fair-events' )
+		);
+
+		return $views;
 	}
 
 	/**
