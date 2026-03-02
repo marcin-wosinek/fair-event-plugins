@@ -51,6 +51,16 @@ class AdminPages {
 			array( $this, 'render_calendar_page' )
 		);
 
+		// All Events page
+		add_submenu_page(
+			'edit.php?post_type=fair_event',
+			__( 'All Events', 'fair-events' ),
+			__( 'All Events', 'fair-events' ),
+			'edit_posts',
+			'fair-events-all-events',
+			array( $this, 'render_all_events_page' )
+		);
+
 		// Settings page
 		add_submenu_page(
 			'edit.php?post_type=fair_event',
@@ -202,6 +212,36 @@ class AdminPages {
 				FAIR_EVENTS_PLUGIN_DIR . 'build/languages'
 			);
 
+			return;
+		}
+
+		// All Events page
+		if ( 'fair_event_page_fair-events-all-events' === $hook ) {
+			$asset_file = include FAIR_EVENTS_PLUGIN_DIR . 'build/admin/all-events/index.asset.php';
+
+			wp_enqueue_script(
+				'fair-events-all-events',
+				FAIR_EVENTS_PLUGIN_URL . 'build/admin/all-events/index.js',
+				$asset_file['dependencies'],
+				$asset_file['version'],
+				true
+			);
+
+			wp_localize_script(
+				'fair-events-all-events',
+				'fairEventsAllEventsData',
+				array(
+					'manageEventUrl' => admin_url( 'admin.php?page=fair-events-manage-event' ),
+				)
+			);
+
+			wp_set_script_translations(
+				'fair-events-all-events',
+				'fair-events',
+				FAIR_EVENTS_PLUGIN_DIR . 'build/languages'
+			);
+
+			wp_enqueue_style( 'wp-components' );
 			return;
 		}
 
@@ -466,6 +506,17 @@ class AdminPages {
 	}
 
 	/**
+	 * Render all events page
+	 *
+	 * @return void
+	 */
+	public function render_all_events_page() {
+		?>
+		<div id="fair-events-all-events-root"></div>
+		<?php
+	}
+
+	/**
 	 * Render venues page
 	 *
 	 * @return void
@@ -537,18 +588,23 @@ class AdminPages {
 		}
 
 		// Find special items
-		$calendar_item = null;
-		$calendar_key  = null;
-		$settings_item = null;
-		$settings_key  = null;
-		$upcoming_item = null;
-		$upcoming_key  = null;
+		$calendar_item   = null;
+		$calendar_key    = null;
+		$all_events_item = null;
+		$all_events_key  = null;
+		$settings_item   = null;
+		$settings_key    = null;
+		$upcoming_item   = null;
+		$upcoming_key    = null;
 
 		foreach ( $submenu[ $parent_slug ] as $key => $item ) {
 			if ( isset( $item[2] ) ) {
 				if ( 'fair-events-calendar' === $item[2] ) {
 					$calendar_item = $item;
 					$calendar_key  = $key;
+				} elseif ( 'fair-events-all-events' === $item[2] ) {
+					$all_events_item = $item;
+					$all_events_key  = $key;
 				} elseif ( 'fair-events-settings' === $item[2] ) {
 					$settings_item = $item;
 					$settings_key  = $key;
@@ -562,6 +618,9 @@ class AdminPages {
 		// Remove items we want to reposition
 		if ( null !== $calendar_key ) {
 			unset( $submenu[ $parent_slug ][ $calendar_key ] );
+		}
+		if ( null !== $all_events_key ) {
+			unset( $submenu[ $parent_slug ][ $all_events_key ] );
 		}
 		if ( null !== $settings_key ) {
 			unset( $submenu[ $parent_slug ][ $settings_key ] );
@@ -581,7 +640,12 @@ class AdminPages {
 			$new_submenu[] = $calendar_item;
 		}
 
-		// 2. Add remaining items, inserting Upcoming after the first item (All Events)
+		// 2. All Events right after Calendar
+		if ( $all_events_item ) {
+			$new_submenu[] = $all_events_item;
+		}
+
+		// 3. Add remaining items, inserting Upcoming after the first item (All Events) and "Add New" (second item)
 		$position = 0;
 		foreach ( $remaining_items as $item ) {
 			$new_submenu[] = $item;
@@ -593,7 +657,7 @@ class AdminPages {
 			}
 		}
 
-		// 3. Settings last
+		// 4. Settings last
 		if ( $settings_item ) {
 			$new_submenu[] = $settings_item;
 		}

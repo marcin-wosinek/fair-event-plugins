@@ -196,6 +196,61 @@ class EventDatesController extends WP_REST_Controller {
 				),
 			)
 		);
+
+		// GET /fair-events/v1/event-dates/all - Paginated list of all event dates.
+		register_rest_route(
+			$this->namespace,
+			'/event-dates/all',
+			array(
+				array(
+					'methods'             => WP_REST_Server::READABLE,
+					'callback'            => array( $this, 'get_all_items' ),
+					'permission_callback' => array( $this, 'get_item_permissions_check' ),
+					'args'                => array(
+						'page'            => array(
+							'description' => __( 'Current page of the collection.', 'fair-events' ),
+							'type'        => 'integer',
+							'default'     => 1,
+							'minimum'     => 1,
+						),
+						'per_page'        => array(
+							'description' => __( 'Maximum number of items per page.', 'fair-events' ),
+							'type'        => 'integer',
+							'default'     => 25,
+							'minimum'     => 1,
+							'maximum'     => 100,
+						),
+						'orderby'         => array(
+							'description' => __( 'Sort collection by field.', 'fair-events' ),
+							'type'        => 'string',
+							'default'     => 'start_datetime',
+							'enum'        => array( 'id', 'title', 'start_datetime', 'link_type', 'occurrence_type' ),
+						),
+						'order'           => array(
+							'description' => __( 'Order sort attribute ascending or descending.', 'fair-events' ),
+							'type'        => 'string',
+							'default'     => 'desc',
+							'enum'        => array( 'asc', 'desc' ),
+						),
+						'search'          => array(
+							'description'       => __( 'Limit results to those matching a string.', 'fair-events' ),
+							'type'              => 'string',
+							'sanitize_callback' => 'sanitize_text_field',
+						),
+						'link_type'       => array(
+							'description' => __( 'Filter by link type.', 'fair-events' ),
+							'type'        => 'string',
+							'enum'        => array( 'post', 'external', 'none' ),
+						),
+						'occurrence_type' => array(
+							'description' => __( 'Filter by occurrence type.', 'fair-events' ),
+							'type'        => 'string',
+							'enum'        => array( 'single', 'master', 'generated' ),
+						),
+					),
+				),
+			)
+		);
 	}
 
 	/**
@@ -1002,6 +1057,139 @@ class EventDatesController extends WP_REST_Controller {
 		$event_date = EventDates::get_by_id( $id );
 
 		return new WP_REST_Response( $this->prepare_event_date( $event_date ), 200 );
+	}
+
+	/**
+	 * Get paginated list of all event dates
+	 *
+	 * @param WP_REST_Request $request Full data about the request.
+	 * @return WP_REST_Response Response object.
+	 */
+	public function get_all_items( $request ) {
+		global $wpdb;
+
+		$table_name = $wpdb->prefix . 'fair_event_dates';
+		$page       = $request->get_param( 'page' );
+		$per_page   = $request->get_param( 'per_page' );
+		$orderby    = $request->get_param( 'orderby' );
+		$order      = strtoupper( $request->get_param( 'order' ) );
+
+		// Build WHERE clauses.
+		$where_clauses = array();
+		$where_values  = array();
+
+		$search = $request->get_param( 'search' );
+		if ( ! empty( $search ) ) {
+			$where_clauses[] = 'title LIKE %s';
+			$where_values[]  = '%' . $wpdb->esc_like( $search ) . '%';
+		}
+
+		$link_type = $request->get_param( 'link_type' );
+		if ( ! empty( $link_type ) ) {
+			$where_clauses[] = 'link_type = %s';
+			$where_values[]  = $link_type;
+		}
+
+		$occurrence_type = $request->get_param( 'occurrence_type' );
+		if ( ! empty( $occurrence_type ) ) {
+			$where_clauses[] = 'occurrence_type = %s';
+			$where_values[]  = $occurrence_type;
+		}
+
+		$where_sql = '';
+		if ( ! empty( $where_clauses ) ) {
+			$where_sql = 'WHERE ' . implode( ' AND ', $where_clauses );
+		}
+
+		// Whitelist orderby to prevent SQL injection.
+		$allowed_orderby = array( 'id', 'title', 'start_datetime', 'link_type', 'occurrence_type' );
+		if ( ! in_array( $orderby, $allowed_orderby, true ) ) {
+			$orderby = 'start_datetime';
+		}
+		if ( 'ASC' !== $order ) {
+			$order = 'DESC';
+		}
+
+		// Count total items.
+		if ( ! empty( $where_values ) ) {
+			// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+			$total = (int) $wpdb->get_var( $wpdb->prepare( "SELECT COUNT(*) FROM %i $where_sql", $table_name, ...$where_values ) );
+		} else {
+			$total = (int) $wpdb->get_var( $wpdb->prepare( 'SELECT COUNT(*) FROM %i', $table_name ) );
+		}
+
+		$total_pages = (int) ceil( $total / $per_page );
+		$offset      = ( $page - 1 ) * $per_page;
+
+		// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+		$order_sql = "ORDER BY `$orderby` $order LIMIT %d OFFSET %d";
+
+		if ( ! empty( $where_values ) ) {
+			$select_args = array_merge( array( $table_name ), $where_values, array( $per_page, $offset ) );
+			// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+			$results = $wpdb->get_results( $wpdb->prepare( "SELECT * FROM %i $where_sql $order_sql", ...$select_args ) );
+		} else {
+			// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+			$results = $wpdb->get_results( $wpdb->prepare( "SELECT * FROM %i $order_sql", $table_name, $per_page, $offset ) );
+		}
+
+		$items = array();
+		foreach ( $results as $result ) {
+			$items[] = $this->prepare_event_date_summary( $result );
+		}
+
+		$response = new WP_REST_Response( $items, 200 );
+		$response->header( 'X-WP-Total', $total );
+		$response->header( 'X-WP-TotalPages', $total_pages );
+
+		return $response;
+	}
+
+	/**
+	 * Prepare a lightweight event date summary for list view
+	 *
+	 * @param object $result Database row object.
+	 * @return array Summary data.
+	 */
+	private function prepare_event_date_summary( $result ) {
+		$data = array(
+			'id'              => (int) $result->id,
+			'event_id'        => $result->event_id ? (int) $result->event_id : null,
+			'title'           => $result->title,
+			'start_datetime'  => $result->start_datetime,
+			'end_datetime'    => $result->end_datetime,
+			'all_day'         => (bool) $result->all_day,
+			'occurrence_type' => $result->occurrence_type,
+			'master_id'       => $result->master_id ? (int) $result->master_id : null,
+			'link_type'       => $result->link_type,
+			'external_url'    => $result->external_url,
+			'venue_id'        => $result->venue_id ? (int) $result->venue_id : null,
+		);
+
+		// Add display_url.
+		$event_date = EventDates::get_by_id( (int) $result->id );
+		if ( $event_date ) {
+			$data['display_url'] = $event_date->get_display_url();
+			$data['categories']  = $this->get_event_date_categories( $event_date );
+		} else {
+			$data['display_url'] = null;
+			$data['categories']  = array();
+		}
+
+		// Add post info if linked.
+		if ( $result->event_id ) {
+			$post = get_post( (int) $result->event_id );
+			if ( $post ) {
+				$data['post'] = array(
+					'id'       => $post->ID,
+					'title'    => $post->post_title,
+					'status'   => $post->post_status,
+					'edit_url' => get_edit_post_link( $post->ID, 'raw' ),
+				);
+			}
+		}
+
+		return $data;
 	}
 
 	/**
