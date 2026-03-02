@@ -39,7 +39,7 @@ class Event {
 			'new_item'              => __( 'New Event', 'fair-events' ),
 			'edit_item'             => __( 'Edit Event', 'fair-events' ),
 			'view_item'             => __( 'View Event', 'fair-events' ),
-			'all_items'             => __( 'All Events', 'fair-events' ),
+			'all_items'             => __( 'Event Posts', 'fair-events' ),
 			'search_items'          => __( 'Search Events', 'fair-events' ),
 			'parent_item_colon'     => __( 'Parent Events:', 'fair-events' ),
 			'not_found'             => __( 'No events found.', 'fair-events' ),
