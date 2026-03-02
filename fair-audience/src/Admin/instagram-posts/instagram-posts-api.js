@@ -48,6 +48,20 @@ export function uploadImageToTmpFiles(attachmentId) {
 }
 
 /**
+ * Upload a base64-encoded image blob to tmpfiles.org via the REST API
+ *
+ * @param {string} base64Data Base64-encoded image data (with or without data URI prefix)
+ * @return {Promise<Object>} Promise resolving to { url: string }
+ */
+export function uploadImageBlob(base64Data) {
+	return apiFetch({
+		path: '/fair-audience/v1/instagram/upload-blob',
+		method: 'POST',
+		data: { image_data: base64Data },
+	});
+}
+
+/**
  * Delete an Instagram post record
  *
  * @param {number} id Post ID

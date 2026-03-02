@@ -9,8 +9,16 @@ import apiFetch from '@wordpress/api-fetch';
 /**
  * Internal dependencies
  */
-import { svgToPng, downloadBlob } from '../image-templates/svg-to-png.js';
+import {
+	svgToPng,
+	svgToBase64Png,
+	downloadBlob,
+} from '../image-templates/svg-to-png.js';
 import { generateScheduleSvg } from './schedule-svg.js';
+import {
+	uploadImageBlob,
+	createInstagramPost,
+} from '../instagram-posts/instagram-posts-api.js';
 
 /**
  * Get current ISO week string.
@@ -141,6 +149,8 @@ export default function WeeklySchedule() {
 	const [message, setMessage] = useState('');
 	const [copied, setCopied] = useState(false);
 	const [downloading, setDownloading] = useState(false);
+	const [posting, setPosting] = useState(false);
+	const [postSuccess, setPostSuccess] = useState(null);
 
 	// Fetch event sources on mount.
 	useEffect(() => {
@@ -214,6 +224,31 @@ export default function WeeklySchedule() {
 			);
 		}
 		setDownloading(false);
+	};
+
+	const handlePostToInstagram = async () => {
+		if (!data || !message) {
+			return;
+		}
+		setPosting(true);
+		setPostSuccess(null);
+		setError(null);
+		try {
+			const svg = generateScheduleSvg(data);
+			const base64 = await svgToBase64Png(svg);
+			const { url } = await uploadImageBlob(base64);
+			const result = await createInstagramPost({
+				image_url: url,
+				caption: message,
+			});
+			setPostSuccess(result.post?.permalink || true);
+		} catch (err) {
+			setError(
+				err.message ||
+					__('Failed to post to Instagram.', 'fair-audience')
+			);
+		}
+		setPosting(false);
 	};
 
 	const sourceOptions = [
@@ -437,15 +472,32 @@ export default function WeeklySchedule() {
 								marginTop: '8px',
 								display: 'flex',
 								gap: '8px',
+								alignItems: 'center',
 							}}
 						>
-							<Button variant="primary" onClick={handleCopy}>
+							<Button
+								variant="primary"
+								onClick={handlePostToInstagram}
+								isBusy={posting}
+								disabled={posting || !message}
+							>
+								{posting
+									? __(
+											'Posting to Instagram…',
+											'fair-audience'
+									  )
+									: __(
+											'Post Schedule to Instagram',
+											'fair-audience'
+									  )}
+							</Button>
+							<Button variant="secondary" onClick={handleCopy}>
 								{copied
 									? __('Copied!', 'fair-audience')
 									: __('Copy to clipboard', 'fair-audience')}
 							</Button>
 							<Button
-								variant="secondary"
+								variant="tertiary"
 								onClick={handleDownloadImage}
 								isBusy={downloading}
 								disabled={downloading}
@@ -455,6 +507,32 @@ export default function WeeklySchedule() {
 									: __('Download Image', 'fair-audience')}
 							</Button>
 						</div>
+						{postSuccess && (
+							<Notice
+								status="success"
+								isDismissible
+								onDismiss={() => setPostSuccess(null)}
+								style={{ marginTop: '12px' }}
+							>
+								{typeof postSuccess === 'string' ? (
+									<>
+										{__(
+											'Posted to Instagram!',
+											'fair-audience'
+										)}{' '}
+										<a
+											href={postSuccess}
+											target="_blank"
+											rel="noopener noreferrer"
+										>
+											{__('View post', 'fair-audience')}
+										</a>
+									</>
+								) : (
+									__('Posted to Instagram!', 'fair-audience')
+								)}
+							</Notice>
+						)}
 					</div>
 				</>
 			)}

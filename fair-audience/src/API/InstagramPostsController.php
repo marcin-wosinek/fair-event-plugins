@@ -125,6 +125,26 @@ class InstagramPostsController extends WP_REST_Controller {
 			)
 		);
 
+		// POST /fair-audience/v1/instagram/upload-blob - Upload base64 image to tmpfiles.org.
+		register_rest_route(
+			$this->namespace,
+			'/instagram/upload-blob',
+			array(
+				array(
+					'methods'             => WP_REST_Server::CREATABLE,
+					'callback'            => array( $this, 'upload_blob' ),
+					'permission_callback' => array( $this, 'create_item_permissions_check' ),
+					'args'                => array(
+						'image_data' => array(
+							'type'        => 'string',
+							'required'    => true,
+							'description' => __( 'Base64-encoded PNG image data.', 'fair-audience' ),
+						),
+					),
+				),
+			)
+		);
+
 		// DELETE /fair-audience/v1/instagram/posts/{id} - Delete a post record.
 		register_rest_route(
 			$this->namespace,
@@ -379,6 +399,94 @@ class InstagramPostsController extends WP_REST_Controller {
 		}
 
 		// Transform URL: tmpfiles.org/12345/file.jpg -> tmpfiles.org/dl/12345/file.jpg
+		$url          = $data['data']['url'];
+		$download_url = str_replace( 'tmpfiles.org/', 'tmpfiles.org/dl/', $url );
+
+		// Ensure HTTPS.
+		$download_url = str_replace( 'http://', 'https://', $download_url );
+
+		return rest_ensure_response(
+			array(
+				'url' => $download_url,
+			)
+		);
+	}
+
+	/**
+	 * Upload a base64-encoded image to tmpfiles.org.
+	 *
+	 * Used for client-generated images (e.g., schedule SVG → PNG).
+	 *
+	 * @param WP_REST_Request $request Request object.
+	 * @return WP_REST_Response|WP_Error Response with public URL or error.
+	 */
+	public function upload_blob( $request ) {
+		$image_data = $request->get_param( 'image_data' );
+
+		// Strip data URI prefix if present.
+		if ( str_contains( $image_data, ',' ) ) {
+			$image_data = substr( $image_data, strpos( $image_data, ',' ) + 1 );
+		}
+
+		// phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions.obfuscation_base64_decode -- Decoding client-uploaded image.
+		$binary = base64_decode( $image_data, true );
+		if ( false === $binary ) {
+			return new WP_Error(
+				'invalid_image_data',
+				__( 'Invalid base64 image data.', 'fair-audience' ),
+				array( 'status' => 400 )
+			);
+		}
+
+		$filename  = 'schedule-' . gmdate( 'Y-m-d-His' ) . '.png';
+		$mime_type = 'image/png';
+		$boundary  = wp_generate_password( 24, false );
+
+		// Build multipart body directly from binary data.
+		$body  = '--' . $boundary . "\r\n";
+		$body .= 'Content-Disposition: form-data; name="file"; filename="' . $filename . '"' . "\r\n";
+		$body .= 'Content-Type: ' . $mime_type . "\r\n\r\n";
+		$body .= $binary . "\r\n";
+		$body .= '--' . $boundary . '--' . "\r\n";
+
+		$response = wp_remote_post(
+			'https://tmpfiles.org/api/v1/upload',
+			array(
+				'timeout' => 60,
+				'headers' => array(
+					'Content-Type' => 'multipart/form-data; boundary=' . $boundary,
+				),
+				'body'    => $body,
+			)
+		);
+
+		if ( is_wp_error( $response ) ) {
+			error_log( 'Fair Audience: tmpfiles.org blob upload failed - ' . $response->get_error_message() );
+			return new WP_Error(
+				'upload_failed',
+				sprintf(
+					/* translators: %s: error message */
+					__( 'Failed to upload image: %s', 'fair-audience' ),
+					$response->get_error_message()
+				),
+				array( 'status' => 500 )
+			);
+		}
+
+		$status_code   = wp_remote_retrieve_response_code( $response );
+		$response_body = wp_remote_retrieve_body( $response );
+		$data          = json_decode( $response_body, true );
+
+		if ( 200 !== $status_code || empty( $data['data']['url'] ) ) {
+			error_log( "Fair Audience: tmpfiles.org blob upload failed - status: {$status_code}, response: {$response_body}" );
+			return new WP_Error(
+				'upload_failed',
+				__( 'Failed to upload image to temporary storage.', 'fair-audience' ),
+				array( 'status' => 500 )
+			);
+		}
+
+		// Transform URL: tmpfiles.org/12345/file.png -> tmpfiles.org/dl/12345/file.png
 		$url          = $data['data']['url'];
 		$download_url = str_replace( 'tmpfiles.org/', 'tmpfiles.org/dl/', $url );
 

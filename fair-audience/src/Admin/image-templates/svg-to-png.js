@@ -39,6 +39,40 @@ export function svgToPng(svgString) {
 }
 
 /**
+ * Convert a self-contained SVG string to a base64 PNG data URL using Canvas.
+ *
+ * @param {string} svgString SVG markup with images already base64-embedded
+ * @return {Promise<string>} Promise resolving to base64 data URL (data:image/png;base64,...)
+ */
+export function svgToBase64Png(svgString) {
+	return new Promise((resolve, reject) => {
+		const svgBlob = new Blob([svgString], { type: 'image/svg+xml' });
+		const url = URL.createObjectURL(svgBlob);
+
+		const img = new Image();
+		img.onload = () => {
+			const canvas = document.createElement('canvas');
+			canvas.width = img.naturalWidth;
+			canvas.height = img.naturalHeight;
+
+			const ctx = canvas.getContext('2d');
+			ctx.drawImage(img, 0, 0);
+
+			URL.revokeObjectURL(url);
+
+			resolve(canvas.toDataURL('image/png'));
+		};
+
+		img.onerror = () => {
+			URL.revokeObjectURL(url);
+			reject(new Error('Failed to load SVG as image'));
+		};
+
+		img.src = url;
+	});
+}
+
+/**
  * Trigger a browser download for the given blob.
  *
  * @param {Blob}   blob     The blob to download
