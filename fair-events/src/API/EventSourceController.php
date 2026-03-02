@@ -155,6 +155,8 @@ class EventSourceController extends WP_REST_Controller {
 		$enabled_only = $request->get_param( 'enabled_only' );
 		$sources      = $this->repository->get_all( $enabled_only );
 
+		$sources = array_map( array( $this, 'add_page_url' ), $sources );
+
 		return new WP_REST_Response( $sources, 200 );
 	}
 
@@ -175,6 +177,8 @@ class EventSourceController extends WP_REST_Controller {
 				array( 'status' => 404 )
 			);
 		}
+
+		$source = $this->add_page_url( $source );
 
 		return new WP_REST_Response( $source, 200 );
 	}
@@ -214,7 +218,10 @@ class EventSourceController extends WP_REST_Controller {
 			return $validation_error;
 		}
 
-		$source_id = $this->repository->create( $name, $slug, $data_sources, $enabled );
+		$page_id = $request->get_param( 'page_id' );
+		$page_id = $page_id ? absint( $page_id ) : null;
+
+		$source_id = $this->repository->create( $name, $slug, $data_sources, $enabled, $page_id );
 
 		if ( ! $source_id ) {
 			return new WP_Error(
@@ -225,6 +232,7 @@ class EventSourceController extends WP_REST_Controller {
 		}
 
 		$source = $this->repository->get_by_id( $source_id );
+		$source = $this->add_page_url( $source );
 
 		return new WP_REST_Response( $source, 201 );
 	}
@@ -275,7 +283,10 @@ class EventSourceController extends WP_REST_Controller {
 			return $validation_error;
 		}
 
-		$success = $this->repository->update( $id, $name, $slug, $data_sources, $enabled );
+		$page_id = $request->get_param( 'page_id' );
+		$page_id = $page_id ? absint( $page_id ) : null;
+
+		$success = $this->repository->update( $id, $name, $slug, $data_sources, $enabled, $page_id );
 
 		if ( ! $success ) {
 			return new WP_Error(
@@ -286,6 +297,7 @@ class EventSourceController extends WP_REST_Controller {
 		}
 
 		$source = $this->repository->get_by_id( $id );
+		$source = $this->add_page_url( $source );
 
 		return new WP_REST_Response( $source, 200 );
 	}
@@ -648,6 +660,27 @@ class EventSourceController extends WP_REST_Controller {
 		}
 
 		return true;
+	}
+
+	/**
+	 * Add page_url to source data if page_id is set
+	 *
+	 * @param array $source Source data array.
+	 * @return array Source data with page_url added.
+	 */
+	private function add_page_url( $source ) {
+		$source['page_url']   = null;
+		$source['page_title'] = null;
+
+		if ( ! empty( $source['page_id'] ) ) {
+			$page = get_post( $source['page_id'] );
+			if ( $page && 'publish' === $page->post_status ) {
+				$source['page_url']   = get_permalink( $page );
+				$source['page_title'] = $page->post_title;
+			}
+		}
+
+		return $source;
 	}
 
 	/**

@@ -6,6 +6,7 @@ import { __ } from '@wordpress/i18n';
 import apiFetch from '@wordpress/api-fetch';
 import {
 	TextControl,
+	SelectControl,
 	ToggleControl,
 	Button,
 	Notice,
@@ -26,8 +27,17 @@ const SourceForm = ({ source, onSuccess, onCancel }) => {
 		source?.data_sources || [{ source_type: 'categories', config: {} }]
 	);
 	const [enabled, setEnabled] = useState(source?.enabled ?? true);
+	const [pageId, setPageId] = useState(source?.page_id || '');
+	const [pages, setPages] = useState([]);
 	const [loading, setLoading] = useState(false);
 	const [error, setError] = useState(null);
+
+	// Fetch published pages for the page selector.
+	useEffect(() => {
+		apiFetch({ path: '/wp/v2/pages?per_page=100&status=publish' })
+			.then((result) => setPages(result))
+			.catch(() => setPages([]));
+	}, []);
 
 	// Auto-generate slug from name if creating new source
 	useEffect(() => {
@@ -51,6 +61,7 @@ const SourceForm = ({ source, onSuccess, onCancel }) => {
 				slug,
 				data_sources: dataSources,
 				enabled,
+				page_id: pageId ? parseInt(pageId, 10) : null,
 			};
 
 			if (source) {
@@ -144,6 +155,26 @@ const SourceForm = ({ source, onSuccess, onCancel }) => {
 									'fair-events'
 							  )
 					}
+				/>
+
+				<SelectControl
+					label={__('Linked Page', 'fair-events')}
+					value={pageId}
+					onChange={setPageId}
+					options={[
+						{
+							label: __('— No page —', 'fair-events'),
+							value: '',
+						},
+						...pages.map((page) => ({
+							label: page.title.rendered,
+							value: page.id,
+						})),
+					]}
+					help={__(
+						'Optional page that displays events from this source.',
+						'fair-events'
+					)}
 				/>
 
 				<div>

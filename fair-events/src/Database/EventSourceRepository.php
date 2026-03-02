@@ -29,27 +29,34 @@ class EventSourceRepository {
 	/**
 	 * Create a new event source
 	 *
-	 * @param string $name Source name.
-	 * @param string $slug Source slug.
-	 * @param array  $data_sources Array of data sources.
-	 * @param bool   $enabled Whether source is enabled.
+	 * @param string   $name Source name.
+	 * @param string   $slug Source slug.
+	 * @param array    $data_sources Array of data sources.
+	 * @param bool     $enabled Whether source is enabled.
+	 * @param int|null $page_id Optional linked WordPress page ID.
 	 * @return int|false Source ID on success, false on failure.
 	 */
-	public function create( $name, $slug, $data_sources, $enabled = true ) {
+	public function create( $name, $slug, $data_sources, $enabled = true, $page_id = null ) {
 		global $wpdb;
 
 		$table_name = $this->get_table_name();
 
-		$result = $wpdb->insert(
-			$table_name,
-			array(
-				'name'         => $name,
-				'slug'         => $slug,
-				'data_sources' => wp_json_encode( $data_sources ),
-				'enabled'      => $enabled ? 1 : 0,
-			),
-			array( '%s', '%s', '%s', '%d' )
+		$data    = array(
+			'name'         => $name,
+			'slug'         => $slug,
+			'data_sources' => wp_json_encode( $data_sources ),
+			'enabled'      => $enabled ? 1 : 0,
+			'page_id'      => $page_id,
 		);
+		$formats = array( '%s', '%s', '%s', '%d', $page_id ? '%d' : null );
+
+		// Remove null format entries for null page_id.
+		if ( null === $page_id ) {
+			unset( $data['page_id'] );
+			$formats = array( '%s', '%s', '%s', '%d' );
+		}
+
+		$result = $wpdb->insert( $table_name, $data, $formats );
 
 		return $result ? $wpdb->insert_id : false;
 	}
@@ -57,14 +64,15 @@ class EventSourceRepository {
 	/**
 	 * Update an existing event source
 	 *
-	 * @param int    $id Source ID.
-	 * @param string $name Source name.
-	 * @param string $slug Source slug.
-	 * @param array  $data_sources Array of data sources.
-	 * @param bool   $enabled Whether source is enabled.
+	 * @param int      $id Source ID.
+	 * @param string   $name Source name.
+	 * @param string   $slug Source slug.
+	 * @param array    $data_sources Array of data sources.
+	 * @param bool     $enabled Whether source is enabled.
+	 * @param int|null $page_id Optional linked WordPress page ID.
 	 * @return bool True on success, false on failure.
 	 */
-	public function update( $id, $name, $slug, $data_sources, $enabled ) {
+	public function update( $id, $name, $slug, $data_sources, $enabled, $page_id = null ) {
 		global $wpdb;
 
 		$table_name = $this->get_table_name();
@@ -76,9 +84,10 @@ class EventSourceRepository {
 				'slug'         => $slug,
 				'data_sources' => wp_json_encode( $data_sources ),
 				'enabled'      => $enabled ? 1 : 0,
+				'page_id'      => $page_id,
 			),
 			array( 'id' => $id ),
-			array( '%s', '%s', '%s', '%d' ),
+			array( '%s', '%s', '%s', '%d', $page_id ? '%d' : null ),
 			array( '%d' )
 		);
 
@@ -125,6 +134,7 @@ class EventSourceRepository {
 		if ( $source ) {
 			$source['data_sources'] = json_decode( $source['data_sources'], true );
 			$source['enabled']      = (bool) $source['enabled'];
+			$source['page_id']      = $source['page_id'] ? (int) $source['page_id'] : null;
 		}
 
 		return $source;
@@ -158,6 +168,7 @@ class EventSourceRepository {
 		foreach ( $sources as &$source ) {
 			$source['data_sources'] = json_decode( $source['data_sources'], true );
 			$source['enabled']      = (bool) $source['enabled'];
+			$source['page_id']      = $source['page_id'] ? (int) $source['page_id'] : null;
 		}
 
 		return $sources;
@@ -183,6 +194,7 @@ class EventSourceRepository {
 		if ( $source ) {
 			$source['data_sources'] = json_decode( $source['data_sources'], true );
 			$source['enabled']      = (bool) $source['enabled'];
+			$source['page_id']      = $source['page_id'] ? (int) $source['page_id'] : null;
 		}
 
 		return $source;

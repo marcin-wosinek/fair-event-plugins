@@ -253,6 +253,20 @@ export default function SourceViewApp() {
 							{__('data source(s)', 'fair-events')}
 						</span>
 					</VStack>
+					{source.page_url && (
+						<VStack spacing={1}>
+							<strong>{__('Page', 'fair-events')}</strong>
+							<a
+								href={source.page_url}
+								target="_blank"
+								rel="noopener noreferrer"
+							>
+								{source.page_title ||
+									__('View page', 'fair-events')}{' '}
+								&#8599;
+							</a>
+						</VStack>
+					)}
 					<VStack spacing={1}>
 						<strong>{__('Feed URLs', 'fair-events')}</strong>
 						<HStack spacing={2}>

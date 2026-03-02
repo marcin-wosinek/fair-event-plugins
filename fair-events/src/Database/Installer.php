@@ -106,6 +106,11 @@ class Installer {
 			self::migrate_to_2_3_0();
 		}
 
+		// Run migration if upgrading from pre-2.4.0 (add page_id to event_sources).
+		if ( version_compare( $current_version, '2.4.0', '<' ) ) {
+			self::migrate_to_2_4_0();
+		}
+
 		// Update database version
 		Schema::update_db_version( Schema::DB_VERSION );
 	}
@@ -172,6 +177,10 @@ class Installer {
 
 			if ( version_compare( $current_version, '2.3.0', '<' ) ) {
 				self::migrate_to_2_3_0();
+			}
+
+			if ( version_compare( $current_version, '2.4.0', '<' ) ) {
+				self::migrate_to_2_4_0();
 			}
 
 			// Install/update tables
@@ -804,6 +813,34 @@ class Installer {
 			$wpdb->query(
 				$wpdb->prepare(
 					'ALTER TABLE %i ADD COLUMN website_url TEXT AFTER instagram_handle',
+					$table_name
+				)
+			);
+		}
+	}
+
+	/**
+	 * Migrate to version 2.4.0 - Add page_id to event_sources table.
+	 *
+	 * @return void
+	 */
+	private static function migrate_to_2_4_0() {
+		global $wpdb;
+
+		$table_name = $wpdb->prefix . 'fair_event_sources';
+
+		// Check if page_id column already exists.
+		$page_id_exists = $wpdb->get_results(
+			$wpdb->prepare(
+				"SHOW COLUMNS FROM %i LIKE 'page_id'",
+				$table_name
+			)
+		);
+
+		if ( empty( $page_id_exists ) ) {
+			$wpdb->query(
+				$wpdb->prepare(
+					'ALTER TABLE %i ADD COLUMN page_id BIGINT UNSIGNED DEFAULT NULL AFTER enabled',
 					$table_name
 				)
 			);
