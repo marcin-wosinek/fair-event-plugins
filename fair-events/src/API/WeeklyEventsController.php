@@ -176,8 +176,9 @@ class WeeklyEventsController extends \WP_REST_Controller {
 		return rest_ensure_response(
 			array(
 				'source' => array(
-					'name' => $source['name'],
-					'slug' => $source['slug'],
+					'name'     => $source['name'],
+					'slug'     => $source['slug'],
+					'page_url' => $source['page_id'] ? get_permalink( $source['page_id'] ) : null,
 				),
 				'week'   => array(
 					'year'  => $year,

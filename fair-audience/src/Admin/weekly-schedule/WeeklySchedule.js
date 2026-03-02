@@ -91,7 +91,10 @@ function generateMessage(data) {
 		dateRange = `${firstDay.day_num} de ${firstDay.month_name}\u2013${lastDay.day_num} de ${lastDay.month_name}`;
 	}
 
-	const header = `Agenda de ${source.name}, ${dateRange}:`;
+	const sourceName = source.page_url
+		? `${source.name} (${source.page_url})`
+		: source.name;
+	const header = `Agenda de ${sourceName}, ${dateRange}:`;
 
 	const lines = [header];
 
