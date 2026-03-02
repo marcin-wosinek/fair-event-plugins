@@ -35,7 +35,7 @@ class Event {
 			'menu_name'             => 'Fair Events',
 			'name_admin_bar'        => _x( 'Event', 'Add New on Toolbar', 'fair-events' ),
 			'add_new'               => __( 'Add New', 'fair-events' ),
-			'add_new_item'          => __( 'Add New Event', 'fair-events' ),
+			'add_new_item'          => __( 'Add New Event Post', 'fair-events' ),
 			'new_item'              => __( 'New Event', 'fair-events' ),
 			'edit_item'             => __( 'Edit Event', 'fair-events' ),
 			'view_item'             => __( 'View Event', 'fair-events' ),
