@@ -242,6 +242,12 @@ export default function WeeklySchedule() {
 							onChange={setSelectedSource}
 						/>
 					)}
+					<a
+						href="edit.php?post_type=fair_event&page=fair-events-sources"
+						style={{ fontSize: '12px' }}
+					>
+						{__('Manage Event Sources', 'fair-audience')}
+					</a>
 				</div>
 
 				<div

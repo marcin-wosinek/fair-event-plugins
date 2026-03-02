@@ -2295,7 +2295,7 @@ msgstr "Aucun participant pour le moment."
 
 #: src/Admin/EventParticipantsMetaBox.php:96
 #: src/Admin/collaborators/Collaborators.js:424
-#: src/Admin/weekly-schedule/WeeklySchedule.js:392
+#: src/Admin/weekly-schedule/WeeklySchedule.js:398
 msgid "View Participants"
 msgstr "Voir les participants"
 
@@ -3675,35 +3675,39 @@ msgstr "— Sélectionner une source —"
 msgid "Event Source"
 msgstr "Source d'événement"
 
-#: src/Admin/weekly-schedule/WeeklySchedule.js:259
+#: src/Admin/weekly-schedule/WeeklySchedule.js:265
 msgid "Previous week"
 msgstr "Semaine précédente"
 
-#: src/Admin/weekly-schedule/WeeklySchedule.js:277
+#: src/Admin/weekly-schedule/WeeklySchedule.js:283
 msgid "Next week"
 msgstr "Semaine suivante"
 
-#: src/Admin/weekly-schedule/WeeklySchedule.js:285
+#: src/Admin/weekly-schedule/WeeklySchedule.js:291
 msgid "Today"
 msgstr "Aujourd'hui"
 
-#: src/Admin/weekly-schedule/WeeklySchedule.js:414
+#: src/Admin/weekly-schedule/WeeklySchedule.js:420
 msgid "WhatsApp Message"
 msgstr "Message WhatsApp"
 
-#: src/Admin/weekly-schedule/WeeklySchedule.js:435
+#: src/Admin/weekly-schedule/WeeklySchedule.js:441
 msgid "Copied!"
 msgstr "Copié !"
 
-#: src/Admin/weekly-schedule/WeeklySchedule.js:436
+#: src/Admin/weekly-schedule/WeeklySchedule.js:442
 msgid "Copy to clipboard"
 msgstr "Copier dans le presse-papiers"
 
-#: src/Admin/weekly-schedule/WeeklySchedule.js:445
+#: src/Admin/weekly-schedule/WeeklySchedule.js:451
 msgid "Generating…"
 msgstr "Génération…"
 
-#: src/Admin/weekly-schedule/WeeklySchedule.js:446
+#: src/Admin/weekly-schedule/WeeklySchedule.js:452
 msgid "Download Image"
 msgstr "Télécharger l'image"
+
+#: src/Admin/weekly-schedule/WeeklySchedule.js:249
+msgid "Manage Event Sources"
+msgstr "Gérer les sources d'événements"
 

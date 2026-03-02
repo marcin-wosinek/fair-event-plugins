@@ -9,7 +9,7 @@ msgstr ""
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"POT-Creation-Date: 2026-02-26T14:02:18+00:00\n"
+"POT-Creation-Date: 2026-03-02T16:51:21+00:00\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "X-Generator: WP-CLI 2.12.0\n"
 "X-Domain: fair-audience\n"
@@ -164,7 +164,7 @@ msgstr ""
 
 #: src/Admin/EventParticipantsMetaBox.php:96
 #: src/Admin/collaborators/Collaborators.js:424
-#: src/Admin/weekly-schedule/WeeklySchedule.js:392
+#: src/Admin/weekly-schedule/WeeklySchedule.js:398
 msgid "View Participants"
 msgstr ""
 
@@ -3435,35 +3435,39 @@ msgstr ""
 msgid "Event Source"
 msgstr ""
 
-#: src/Admin/weekly-schedule/WeeklySchedule.js:259
+#: src/Admin/weekly-schedule/WeeklySchedule.js:249
+msgid "Manage Event Sources"
+msgstr ""
+
+#: src/Admin/weekly-schedule/WeeklySchedule.js:265
 msgid "Previous week"
 msgstr ""
 
-#: src/Admin/weekly-schedule/WeeklySchedule.js:277
+#: src/Admin/weekly-schedule/WeeklySchedule.js:283
 msgid "Next week"
 msgstr ""
 
-#: src/Admin/weekly-schedule/WeeklySchedule.js:285
+#: src/Admin/weekly-schedule/WeeklySchedule.js:291
 msgid "Today"
 msgstr ""
 
-#: src/Admin/weekly-schedule/WeeklySchedule.js:414
+#: src/Admin/weekly-schedule/WeeklySchedule.js:420
 msgid "WhatsApp Message"
 msgstr ""
 
-#: src/Admin/weekly-schedule/WeeklySchedule.js:435
+#: src/Admin/weekly-schedule/WeeklySchedule.js:441
 msgid "Copied!"
 msgstr ""
 
-#: src/Admin/weekly-schedule/WeeklySchedule.js:436
+#: src/Admin/weekly-schedule/WeeklySchedule.js:442
 msgid "Copy to clipboard"
 msgstr ""
 
-#: src/Admin/weekly-schedule/WeeklySchedule.js:445
+#: src/Admin/weekly-schedule/WeeklySchedule.js:451
 msgid "Generating…"
 msgstr ""
 
-#: src/Admin/weekly-schedule/WeeklySchedule.js:446
+#: src/Admin/weekly-schedule/WeeklySchedule.js:452
 msgid "Download Image"
 msgstr ""
 
