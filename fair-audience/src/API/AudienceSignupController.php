@@ -8,7 +8,9 @@
 namespace FairAudience\API;
 
 use FairAudience\Database\ParticipantRepository;
+use FairAudience\Database\EmailConfirmationTokenRepository;
 use FairAudience\Models\Participant;
+use FairAudience\Services\EmailService;
 use WP_REST_Controller;
 use WP_REST_Server;
 use WP_REST_Request;
@@ -44,6 +46,20 @@ class AudienceSignupController extends WP_REST_Controller {
 	private $participant_repository;
 
 	/**
+	 * Token repository instance.
+	 *
+	 * @var EmailConfirmationTokenRepository
+	 */
+	private $token_repository;
+
+	/**
+	 * Email service instance.
+	 *
+	 * @var EmailService
+	 */
+	private $email_service;
+
+	/**
 	 * Rate limit: max requests per email per hour.
 	 */
 	const RATE_LIMIT_MAX = 3;
@@ -58,6 +74,8 @@ class AudienceSignupController extends WP_REST_Controller {
 	 */
 	public function __construct() {
 		$this->participant_repository = new ParticipantRepository();
+		$this->token_repository       = new EmailConfirmationTokenRepository();
+		$this->email_service          = new EmailService();
 	}
 
 	/**
@@ -164,7 +182,7 @@ class AudienceSignupController extends WP_REST_Controller {
 			);
 		}
 
-		// Create new confirmed participant.
+		// Create new participant.
 		$participant = new Participant();
 		$participant->populate(
 			array(
@@ -172,8 +190,8 @@ class AudienceSignupController extends WP_REST_Controller {
 				'surname'       => $surname,
 				'email'         => $email,
 				'instagram'     => $instagram,
-				'status'        => 'confirmed',
 				'email_profile' => $keep_informed ? 'marketing' : 'minimal',
+				'status'        => $keep_informed ? 'pending' : 'confirmed',
 			)
 		);
 
@@ -182,6 +200,22 @@ class AudienceSignupController extends WP_REST_Controller {
 				'creation_failed',
 				__( 'Failed to process signup. Please try again.', 'fair-audience' ),
 				array( 'status' => 500 )
+			);
+		}
+
+		// If keep_informed, send confirmation email.
+		if ( $keep_informed ) {
+			$token = $this->token_repository->create_token( $participant->id );
+			if ( $token ) {
+				$this->email_service->send_confirmation_email( $participant, $token->token );
+			}
+
+			return rest_ensure_response(
+				array(
+					'success' => true,
+					'message' => __( 'Please check your email to confirm your subscription.', 'fair-audience' ),
+					'status'  => 'pending',
+				)
 			);
 		}
 

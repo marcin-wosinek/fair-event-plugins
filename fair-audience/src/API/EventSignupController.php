@@ -10,6 +10,7 @@ namespace FairAudience\API;
 use FairAudience\Database\ParticipantRepository;
 use FairAudience\Database\EventParticipantRepository;
 use FairAudience\Database\EventSignupAccessKeyRepository;
+use FairAudience\Database\EmailConfirmationTokenRepository;
 use FairAudience\Models\Participant;
 use FairAudience\Services\EmailService;
 use WP_REST_Controller;
@@ -68,6 +69,13 @@ class EventSignupController extends WP_REST_Controller {
 	private $email_service;
 
 	/**
+	 * Token repository instance.
+	 *
+	 * @var EmailConfirmationTokenRepository
+	 */
+	private $token_repository;
+
+	/**
 	 * Rate limit: max requests per email per hour.
 	 */
 	const RATE_LIMIT_MAX = 3;
@@ -85,6 +93,7 @@ class EventSignupController extends WP_REST_Controller {
 		$this->event_participant_repository = new EventParticipantRepository();
 		$this->access_key_repository        = new EventSignupAccessKeyRepository();
 		$this->email_service                = new EmailService();
+		$this->token_repository             = new EmailConfirmationTokenRepository();
 	}
 
 	/**
@@ -574,7 +583,7 @@ class EventSignupController extends WP_REST_Controller {
 				'surname'       => $surname,
 				'email'         => $email,
 				'email_profile' => $keep_informed ? 'marketing' : 'minimal',
-				'status'        => 'confirmed',
+				'status'        => $keep_informed ? 'pending' : 'confirmed',
 			)
 		);
 
@@ -588,6 +597,22 @@ class EventSignupController extends WP_REST_Controller {
 
 		// Sign up for event.
 		$this->event_participant_repository->add_participant_to_event( $event_id, $participant->id, 'signed_up', $event_date_id );
+
+		// If keep_informed, send confirmation email.
+		if ( $keep_informed ) {
+			$token = $this->token_repository->create_token( $participant->id );
+			if ( $token ) {
+				$this->email_service->send_confirmation_email( $participant, $token->token );
+			}
+
+			return rest_ensure_response(
+				array(
+					'success' => true,
+					'message' => __( 'You have been signed up for the event! Please check your email to confirm your subscription.', 'fair-audience' ),
+					'status'  => 'registered_and_signed_up',
+				)
+			);
+		}
 
 		return rest_ensure_response(
 			array(

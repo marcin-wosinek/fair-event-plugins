@@ -122,11 +122,13 @@ const CSS_PREFIX = 'fair-audience-audience';
 			data: requestData,
 		})
 			.then(function (response) {
-				let message = successMessage;
+				let message = response.message || successMessage;
 
 				if (response.status === 'already_registered') {
-					message = response.message;
 					showMessage(messageContainer, message, 'info', CSS_PREFIX);
+				} else if (response.status === 'pending') {
+					showMessage(messageContainer, message, 'info', CSS_PREFIX);
+					form.reset();
 				} else {
 					showMessage(
 						messageContainer,
@@ -134,7 +136,6 @@ const CSS_PREFIX = 'fair-audience-audience';
 						'success',
 						CSS_PREFIX
 					);
-					// Clear form on new signup
 					form.reset();
 				}
 
