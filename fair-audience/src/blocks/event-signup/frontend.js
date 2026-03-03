@@ -1,6 +1,13 @@
 import './style.css';
 import apiFetch from '@wordpress/api-fetch';
 import { __ } from '@wordpress/i18n';
+import {
+	extractErrorMessage,
+	showNotification,
+	showMessage,
+	setButtonLoading,
+	onDomReady,
+} from '../shared/form-utils.js';
 
 /**
  * Frontend JavaScript for Fair Audience Event Signup
@@ -8,15 +15,12 @@ import { __ } from '@wordpress/i18n';
  * @package FairAudience
  */
 
+const CSS_PREFIX = 'fair-audience-signup';
+
 (function () {
 	'use strict';
 
-	// Defensive: handle both scenarios (DOM loading or already loaded)
-	if (document.readyState === 'loading') {
-		document.addEventListener('DOMContentLoaded', initializeEventSignup);
-	} else {
-		initializeEventSignup();
-	}
+	onDomReady(initializeEventSignup);
 
 	/**
 	 * Initialize all event signup blocks on the page
@@ -153,7 +157,8 @@ import { __ } from '@wordpress/i18n';
 			showMessage(
 				messageContainer,
 				__('Please enter your first name.', 'fair-audience'),
-				'error'
+				'error',
+				CSS_PREFIX
 			);
 			return;
 		}
@@ -162,7 +167,8 @@ import { __ } from '@wordpress/i18n';
 			showMessage(
 				messageContainer,
 				__('Please enter your email.', 'fair-audience'),
-				'error'
+				'error',
+				CSS_PREFIX
 			);
 			return;
 		}
@@ -183,9 +189,10 @@ import { __ } from '@wordpress/i18n';
 		}
 
 		// Disable button and show loading state
-		submitButton.disabled = true;
-		const originalButtonText = submitButton.textContent;
-		submitButton.textContent = __('Submitting...', 'fair-audience');
+		const restoreButton = setButtonLoading(
+			submitButton,
+			__('Submitting...', 'fair-audience')
+		);
 
 		// Submit to API
 		apiFetch({
@@ -198,7 +205,8 @@ import { __ } from '@wordpress/i18n';
 					showMessage(
 						messageContainer,
 						response.message || successMessage,
-						'success'
+						'success',
+						CSS_PREFIX
 					);
 					showNotification(
 						response.message || successMessage,
@@ -236,12 +244,16 @@ import { __ } from '@wordpress/i18n';
 					error,
 					__('Failed to sign up. Please try again.', 'fair-audience')
 				);
-				showMessage(messageContainer, errorMessage, 'error');
+				showMessage(
+					messageContainer,
+					errorMessage,
+					'error',
+					CSS_PREFIX
+				);
 				showNotification(errorMessage, 'error');
 			})
 			.finally(function () {
-				submitButton.disabled = false;
-				submitButton.textContent = originalButtonText;
+				restoreButton();
 			});
 	}
 
@@ -269,7 +281,8 @@ import { __ } from '@wordpress/i18n';
 			showMessage(
 				messageContainer,
 				__('Please enter your email.', 'fair-audience'),
-				'error'
+				'error',
+				CSS_PREFIX
 			);
 			return;
 		}
@@ -285,9 +298,10 @@ import { __ } from '@wordpress/i18n';
 		}
 
 		// Disable button and show loading state
-		submitButton.disabled = true;
-		const originalButtonText = submitButton.textContent;
-		submitButton.textContent = __('Sending...', 'fair-audience');
+		const restoreButton = setButtonLoading(
+			submitButton,
+			__('Sending...', 'fair-audience')
+		);
 
 		// Submit to API
 		apiFetch({
@@ -297,7 +311,12 @@ import { __ } from '@wordpress/i18n';
 		})
 			.then(function (response) {
 				if (response.success) {
-					showMessage(messageContainer, response.message, 'success');
+					showMessage(
+						messageContainer,
+						response.message,
+						'success',
+						CSS_PREFIX
+					);
 					showNotification(response.message, 'success');
 					form.reset();
 				}
@@ -311,12 +330,16 @@ import { __ } from '@wordpress/i18n';
 						'fair-audience'
 					)
 				);
-				showMessage(messageContainer, errorMessage, 'error');
+				showMessage(
+					messageContainer,
+					errorMessage,
+					'error',
+					CSS_PREFIX
+				);
 				showNotification(errorMessage, 'error');
 			})
 			.finally(function () {
-				submitButton.disabled = false;
-				submitButton.textContent = originalButtonText;
+				restoreButton();
 			});
 	}
 
@@ -355,9 +378,10 @@ import { __ } from '@wordpress/i18n';
 		}
 
 		// Disable button and show loading state
-		button.disabled = true;
-		const originalButtonText = button.textContent;
-		button.textContent = __('Signing up...', 'fair-audience');
+		const restoreButton = setButtonLoading(
+			button,
+			__('Signing up...', 'fair-audience')
+		);
 
 		// Submit to API
 		apiFetch({
@@ -370,7 +394,8 @@ import { __ } from '@wordpress/i18n';
 					showMessage(
 						messageContainer,
 						response.message || successMessage,
-						'success'
+						'success',
+						CSS_PREFIX
 					);
 					showNotification(
 						response.message || successMessage,
@@ -405,82 +430,16 @@ import { __ } from '@wordpress/i18n';
 					error,
 					__('Failed to sign up. Please try again.', 'fair-audience')
 				);
-				showMessage(messageContainer, errorMessage, 'error');
+				showMessage(
+					messageContainer,
+					errorMessage,
+					'error',
+					CSS_PREFIX
+				);
 				showNotification(errorMessage, 'error');
 			})
 			.finally(function () {
-				button.disabled = false;
-				button.textContent = originalButtonText;
+				restoreButton();
 			});
-	}
-
-	/**
-	 * Extract error message from error object
-	 * @param {Object} error Error object
-	 * @param {string} defaultMessage Default message
-	 * @returns {string} Error message
-	 */
-	function extractErrorMessage(error, defaultMessage) {
-		if (error.message) {
-			return error.message;
-		}
-		if (error.data && error.data.message) {
-			return error.data.message;
-		}
-		return defaultMessage;
-	}
-
-	/**
-	 * Show message in a container
-	 * @param {HTMLElement} container Message container
-	 * @param {string} message The message
-	 * @param {string} type Message type (success, error, info)
-	 */
-	function showMessage(container, message, type) {
-		if (!container) {
-			return;
-		}
-
-		container.textContent = message;
-		container.className =
-			'fair-audience-signup-message fair-audience-signup-message-' + type;
-		container.style.display = 'block';
-
-		// Hide after 8 seconds (except for success which should stay visible)
-		if (type !== 'success') {
-			setTimeout(function () {
-				container.style.display = 'none';
-			}, 8000);
-		}
-	}
-
-	/**
-	 * Show a toast notification
-	 * @param {string} message The message
-	 * @param {string} type Notification type (success, error)
-	 */
-	function showNotification(message, type) {
-		const notification = document.createElement('div');
-		notification.className =
-			'fair-audience-signup-notification fair-audience-signup-notification-' +
-			type;
-		notification.textContent = message;
-
-		notification.style.cssText =
-			'position: fixed; top: 20px; right: 20px; padding: 15px 20px; border-radius: 4px; color: white; font-weight: 500; z-index: 9999; max-width: 400px; box-shadow: 0 4px 12px rgba(0,0,0,0.15);';
-
-		if (type === 'success' || type === 'info') {
-			notification.style.backgroundColor = '#00a32a';
-		} else {
-			notification.style.backgroundColor = '#d63638';
-		}
-
-		document.body.appendChild(notification);
-
-		setTimeout(function () {
-			if (notification.parentNode) {
-				notification.parentNode.removeChild(notification);
-			}
-		}, 5000);
 	}
 })();

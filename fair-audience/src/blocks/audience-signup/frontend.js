@@ -10,23 +10,23 @@ import {
 } from '../shared/form-utils.js';
 
 /**
- * Frontend JavaScript for Fair Audience Mailing Signup
+ * Frontend JavaScript for Fair Audience Audience Signup
  *
  * @package FairAudience
  */
 
-const CSS_PREFIX = 'fair-audience-mailing';
+const CSS_PREFIX = 'fair-audience-audience';
 
 (function () {
 	'use strict';
 
-	onDomReady(initializeMailingSignupForms);
+	onDomReady(initializeAudienceSignupForms);
 
 	/**
-	 * Initialize all mailing signup forms on the page
+	 * Initialize all audience signup forms on the page
 	 */
-	function initializeMailingSignupForms() {
-		const forms = document.querySelectorAll('.fair-audience-mailing-form');
+	function initializeAudienceSignupForms() {
+		const forms = document.querySelectorAll('.fair-audience-audience-form');
 
 		forms.forEach(function (form) {
 			setupFormSubmission(form);
@@ -49,42 +49,35 @@ const CSS_PREFIX = 'fair-audience-mailing';
 	 * @param {HTMLElement} form The form element
 	 */
 	function submitSignup(form) {
-		const container = form.closest('.fair-audience-mailing-signup');
+		const container = form.closest('.fair-audience-audience-signup');
 		const submitButton = form.querySelector(
-			'.fair-audience-mailing-submit-button'
+			'.fair-audience-audience-submit-button'
 		);
 		const messageContainer = form.querySelector(
-			'.fair-audience-mailing-message'
+			'.fair-audience-audience-message'
 		);
 		const successMessage =
 			container.dataset.successMessage ||
-			__(
-				'Please check your email to confirm your subscription.',
-				'fair-audience'
-			);
+			__('You have been registered successfully!', 'fair-audience');
 
 		// Get form data
-		const nameInput = form.querySelector('input[name="mailing_name"]');
+		const nameInput = form.querySelector('input[name="audience_name"]');
 		const surnameInput = form.querySelector(
-			'input[name="mailing_surname"]'
+			'input[name="audience_surname"]'
 		);
-		const emailInput = form.querySelector('input[name="mailing_email"]');
+		const emailInput = form.querySelector('input[name="audience_email"]');
+		const instagramInput = form.querySelector(
+			'input[name="audience_instagram"]'
+		);
+		const keepInformedInput = form.querySelector(
+			'input[name="audience_keep_informed"]'
+		);
 
 		// Validate inputs
 		if (!nameInput || !nameInput.value.trim()) {
 			showMessage(
 				messageContainer,
 				__('Please enter your first name.', 'fair-audience'),
-				'error',
-				CSS_PREFIX
-			);
-			return;
-		}
-
-		if (!surnameInput || !surnameInput.value.trim()) {
-			showMessage(
-				messageContainer,
-				__('Please enter your last name.', 'fair-audience'),
 				'error',
 				CSS_PREFIX
 			);
@@ -104,9 +97,17 @@ const CSS_PREFIX = 'fair-audience-mailing';
 		// Build request data
 		const requestData = {
 			name: nameInput.value.trim(),
-			surname: surnameInput.value.trim(),
+			surname: surnameInput ? surnameInput.value.trim() : '',
 			email: emailInput.value.trim(),
 		};
+
+		if (instagramInput && instagramInput.value.trim()) {
+			requestData.instagram = instagramInput.value.trim();
+		}
+
+		if (keepInformedInput) {
+			requestData.keep_informed = keepInformedInput.checked;
+		}
 
 		// Disable button and show loading state
 		const restoreButton = setButtonLoading(
@@ -116,18 +117,14 @@ const CSS_PREFIX = 'fair-audience-mailing';
 
 		// Submit to API
 		apiFetch({
-			path: '/fair-audience/v1/mailing-signup',
+			path: '/fair-audience/v1/audience-signup',
 			method: 'POST',
 			data: requestData,
 		})
 			.then(function (response) {
-				// Handle different response statuses
 				let message = successMessage;
 
-				if (response.status === 'already_subscribed') {
-					message = response.message;
-					showMessage(messageContainer, message, 'info', CSS_PREFIX);
-				} else if (response.status === 'resent') {
+				if (response.status === 'already_registered') {
 					message = response.message;
 					showMessage(messageContainer, message, 'info', CSS_PREFIX);
 				} else {
@@ -145,7 +142,7 @@ const CSS_PREFIX = 'fair-audience-mailing';
 				showNotification(message, 'success');
 			})
 			.catch(function (error) {
-				console.error('Mailing signup error:', error);
+				console.error('Audience signup error:', error);
 
 				const errorMessage = extractErrorMessage(
 					error,

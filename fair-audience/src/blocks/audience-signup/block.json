@@ -1,0 +1,43 @@
+{
+	"$schema": "https://schemas.wp.org/trunk/block.json",
+	"apiVersion": 3,
+	"name": "fair-audience/audience-signup",
+	"version": "1.0.0",
+	"title": "Audience Signup",
+	"category": "widgets",
+	"icon": "admin-users",
+	"description": "A standalone signup form for audience member registration",
+	"keywords": ["signup", "register", "audience", "member"],
+	"textdomain": "fair-audience",
+	"supports": {
+		"html": false,
+		"align": ["wide", "full"],
+		"spacing": {
+			"padding": true,
+			"margin": ["top", "bottom"]
+		}
+	},
+	"attributes": {
+		"submitButtonText": {
+			"type": "string",
+			"default": "Register"
+		},
+		"successMessage": {
+			"type": "string",
+			"default": "You have been registered successfully!"
+		},
+		"showInstagram": {
+			"type": "boolean",
+			"default": false
+		},
+		"showKeepInformed": {
+			"type": "boolean",
+			"default": true
+		}
+	},
+	"editorScript": "file:./editor.js",
+	"viewScript": "file:./frontend.js",
+	"render": "file:./render.php",
+	"viewStyle": "file:./style-frontend.css",
+	"editorStyle": "file:./editor.css"
+}
