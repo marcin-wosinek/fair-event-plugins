@@ -964,6 +964,37 @@ class EventDates {
 
 
 	/**
+	 * Get the next upcoming generated occurrence by master ID
+	 *
+	 * Efficiently queries for the single next occurrence with start_datetime >= NOW().
+	 *
+	 * @param int $master_id Master event date ID.
+	 * @return EventDates|null Next upcoming EventDates object or null if none.
+	 */
+	public static function get_next_upcoming_by_master_id( $master_id ) {
+		global $wpdb;
+
+		$table_name = $wpdb->prefix . 'fair_event_dates';
+		$now        = current_time( 'mysql' );
+
+		$result = $wpdb->get_row(
+			$wpdb->prepare(
+				'SELECT * FROM %i WHERE master_id = %d AND occurrence_type = %s AND start_datetime >= %s ORDER BY start_datetime ASC LIMIT 1',
+				$table_name,
+				$master_id,
+				'generated',
+				$now
+			)
+		);
+
+		if ( ! $result ) {
+			return null;
+		}
+
+		return self::hydrate( $result );
+	}
+
+	/**
 	 * Get event date by ID
 	 *
 	 * @param int $id Event date ID.

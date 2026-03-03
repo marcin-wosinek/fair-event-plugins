@@ -9,7 +9,7 @@ msgstr ""
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"POT-Creation-Date: 2026-02-26T14:02:17+00:00\n"
+"POT-Creation-Date: 2026-03-03T09:13:24+00:00\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "X-Generator: WP-CLI 2.12.0\n"
 "X-Domain: fair-events\n"
@@ -48,45 +48,44 @@ msgstr ""
 msgid "Fair Event: End Date"
 msgstr ""
 
-#: src/Admin/AdminPages.php:38
-#: src/blocks/events-list/components/EditComponent.js:121
-msgid "Upcoming Events"
-msgstr ""
-
 #: src/Admin/AdminPages.php:39
-msgid "Upcoming"
-msgstr ""
-
-#: src/Admin/AdminPages.php:47
-#: src/Admin/calendar/CalendarApp.js:182
+#: src/Admin/calendar/CalendarApp.js:157
 #: src/blocks/events-calendar/components/EditComponent.js:291
 msgid "Events Calendar"
 msgstr ""
 
-#: src/Admin/AdminPages.php:48
+#: src/Admin/AdminPages.php:40
 msgid "Calendar"
 msgstr ""
 
-#: src/Admin/AdminPages.php:57
+#: src/Admin/AdminPages.php:49
+#: src/Admin/AdminPages.php:50
+#: src/Admin/MediaLibraryHooks.php:125
+#: src/Admin/all-events/AllEvents.js:235
+#: src/blocks/events-list/components/EditComponent.js:117
+msgid "All Events"
+msgstr ""
+
+#: src/Admin/AdminPages.php:59
 #: src/Admin/settings/SettingsApp.js:26
 msgid "Fair Events Settings"
 msgstr ""
 
-#: src/Admin/AdminPages.php:58
+#: src/Admin/AdminPages.php:60
 msgid "Settings"
 msgstr ""
 
-#: src/Admin/AdminPages.php:67
+#: src/Admin/AdminPages.php:69
 #: src/Admin/migration/MigrationApp.js:163
 msgid "Migrate Posts to Events"
 msgstr ""
 
-#: src/Admin/AdminPages.php:68
+#: src/Admin/AdminPages.php:70
 msgid "Migrate Posts"
 msgstr ""
 
-#: src/Admin/AdminPages.php:77
-#: src/Admin/AdminPages.php:78
+#: src/Admin/AdminPages.php:79
+#: src/Admin/AdminPages.php:80
 #: src/Admin/sources/SourcesList.js:142
 #: src/blocks/events-calendar/components/EditComponent.js:243
 #: src/blocks/events-list/components/EditComponent.js:176
@@ -94,40 +93,44 @@ msgstr ""
 msgid "Event Sources"
 msgstr ""
 
-#: src/Admin/AdminPages.php:87
-#: src/Admin/AdminPages.php:88
+#: src/Admin/AdminPages.php:89
+#: src/Admin/AdminPages.php:90
 #: src/Admin/venues/VenuesApp.js:163
 msgid "Venues"
 msgstr ""
 
-#: src/Admin/AdminPages.php:97
-#: src/Admin/AdminPages.php:98
-#: src/Admin/AdminPages.php:125
-#: src/Admin/calendar/CalendarApp.js:204
+#: src/Admin/AdminPages.php:99
+#: src/Admin/AdminPages.php:100
+#: src/Admin/AdminPages.php:127
+#: src/Admin/calendar/CalendarApp.js:179
 #: src/Admin/manage-event/ManageEventApp.js:496
 #: src/Admin/manage-event/ManageEventApp.js:521
 msgid "Manage Event"
 msgstr ""
 
-#: src/Admin/AdminPages.php:107
-#: src/Admin/AdminPages.php:108
-#: src/Admin/AdminPages.php:126
+#: src/Admin/AdminPages.php:109
+#: src/Admin/AdminPages.php:110
+#: src/Admin/AdminPages.php:128
 msgid "View Source"
 msgstr ""
 
-#: src/Admin/AdminPages.php:117
-#: src/Admin/AdminPages.php:118
-#: src/Admin/AdminPages.php:127
+#: src/Admin/AdminPages.php:119
+#: src/Admin/AdminPages.php:120
+#: src/Admin/AdminPages.php:129
 #: src/Admin/CopyEventPage.php:283
 msgid "Copy Event"
 msgstr ""
 
-#: src/Admin/AdminPages.php:713
+#: src/Admin/AdminPages.php:662
+msgid "Upcoming"
+msgstr ""
+
+#: src/Admin/AdminPages.php:777
 #: src/PostTypes/Event.php:479
 msgid "Copy"
 msgstr ""
 
-#: src/Admin/AdminPages.php:716
+#: src/Admin/AdminPages.php:780
 msgid "Copy this event"
 msgstr ""
 
@@ -152,7 +155,7 @@ msgid "Event not found."
 msgstr ""
 
 #: src/Admin/CopyEventPage.php:56
-#: src/API/EventDatesController.php:308
+#: src/API/EventDatesController.php:363
 msgid "Event title is required."
 msgstr ""
 
@@ -231,6 +234,7 @@ msgstr ""
 
 #: src/Admin/CopyEventPage.php:369
 #: src/blocks/event-proposal/render.php:156
+#: src/Admin/all-events/AllEvents.js:92
 #: src/Admin/manage-event/ManageEventApp.js:632
 #: src/blocks/events-calendar/components/EditComponent.js:172
 #: src/blocks/events-list/components/EditComponent.js:142
@@ -254,7 +258,7 @@ msgstr ""
 #: src/Admin/MediaBatchActions.php:262
 #: src/Admin/calendar/components/QuickEventModal.js:182
 #: src/Admin/manage-event/ImageCropModal.js:72
-#: src/Admin/sources/components/SourceForm.js:200
+#: src/Admin/sources/components/SourceForm.js:231
 #: src/Admin/venues/VenuesApp.js:398
 msgid "Cancel"
 msgstr ""
@@ -350,12 +354,6 @@ msgstr[1] ""
 msgid "Link this image to an event"
 msgstr ""
 
-#: src/Admin/MediaLibraryHooks.php:125
-#: src/PostTypes/Event.php:42
-#: src/blocks/events-list/components/EditComponent.js:117
-msgid "All Events"
-msgstr ""
-
 #: src/Admin/MediaLibraryHooks.php:219
 msgid "Event Gallery"
 msgstr ""
@@ -417,92 +415,120 @@ msgstr ""
 msgid "Comma-separated list of event date IDs."
 msgstr ""
 
-#: src/API/EventDatesController.php:209
+#: src/API/EventDatesController.php:211
+msgid "Current page of the collection."
+msgstr ""
+
+#: src/API/EventDatesController.php:217
+msgid "Maximum number of items per page."
+msgstr ""
+
+#: src/API/EventDatesController.php:224
+msgid "Sort collection by field."
+msgstr ""
+
+#: src/API/EventDatesController.php:230
+msgid "Order sort attribute ascending or descending."
+msgstr ""
+
+#: src/API/EventDatesController.php:236
+msgid "Limit results to those matching a string."
+msgstr ""
+
+#: src/API/EventDatesController.php:241
+msgid "Filter by link type."
+msgstr ""
+
+#: src/API/EventDatesController.php:246
+msgid "Filter by occurrence type."
+msgstr ""
+
+#: src/API/EventDatesController.php:264
 msgid "Event title."
 msgstr ""
 
-#: src/API/EventDatesController.php:215
+#: src/API/EventDatesController.php:270
 msgid "Start date/time (Y-m-d H:i:s format)."
 msgstr ""
 
-#: src/API/EventDatesController.php:221
+#: src/API/EventDatesController.php:276
 msgid "End date/time (Y-m-d H:i:s format)."
 msgstr ""
 
-#: src/API/EventDatesController.php:227
+#: src/API/EventDatesController.php:282
 msgid "Whether this is an all-day event."
 msgstr ""
 
-#: src/API/EventDatesController.php:233
+#: src/API/EventDatesController.php:288
 msgid "Venue ID."
 msgstr ""
 
-#: src/API/EventDatesController.php:238
+#: src/API/EventDatesController.php:293
 msgid "Link type (post, external, none)."
 msgstr ""
 
-#: src/API/EventDatesController.php:245
+#: src/API/EventDatesController.php:300
 msgid "External URL for the event."
 msgstr ""
 
-#: src/API/EventDatesController.php:251
+#: src/API/EventDatesController.php:306
 msgid "Theme image attachment ID."
 msgstr ""
 
-#: src/API/EventDatesController.php:256
+#: src/API/EventDatesController.php:311
 msgid "Linked post ID."
 msgstr ""
 
-#: src/API/EventDatesController.php:261
+#: src/API/EventDatesController.php:316
 msgid "Recurrence rule in RRULE format."
 msgstr ""
 
-#: src/API/EventDatesController.php:267
+#: src/API/EventDatesController.php:322
 msgid "Category term IDs."
 msgstr ""
 
-#: src/API/EventDatesController.php:316
+#: src/API/EventDatesController.php:371
 msgid "Start date/time is required."
 msgstr ""
 
-#: src/API/EventDatesController.php:335
+#: src/API/EventDatesController.php:390
 msgid "Failed to create event date."
 msgstr ""
 
-#: src/API/EventDatesController.php:581
-#: src/API/EventDatesController.php:632
-#: src/API/EventDatesController.php:798
-#: src/API/EventDatesController.php:838
-#: src/API/EventDatesController.php:916
-#: src/API/EventDatesController.php:974
+#: src/API/EventDatesController.php:636
+#: src/API/EventDatesController.php:687
+#: src/API/EventDatesController.php:853
+#: src/API/EventDatesController.php:893
+#: src/API/EventDatesController.php:971
+#: src/API/EventDatesController.php:1029
 #: src/API/ImageExportController.php:184
 #: src/API/ImageExportController.php:209
 #: src/API/ImageExportController.php:278
 msgid "Event date not found."
 msgstr ""
 
-#: src/API/EventDatesController.php:703
+#: src/API/EventDatesController.php:758
 msgid "Failed to update event date."
 msgstr ""
 
-#: src/API/EventDatesController.php:808
+#: src/API/EventDatesController.php:863
 msgid "Failed to delete event date."
 msgstr ""
 
-#: src/API/EventDatesController.php:848
+#: src/API/EventDatesController.php:903
 msgid "The specified post type is not enabled."
 msgstr ""
 
-#: src/API/EventDatesController.php:856
+#: src/API/EventDatesController.php:911
 #: src/Admin/event-meta-box/LinkOptions.js:37
 msgid "Untitled Event"
 msgstr ""
 
-#: src/API/EventDatesController.php:925
+#: src/API/EventDatesController.php:980
 msgid "Post not found."
 msgstr ""
 
-#: src/API/EventDatesController.php:935
+#: src/API/EventDatesController.php:990
 msgid "This post is already linked to another event."
 msgstr ""
 
@@ -587,96 +613,96 @@ msgstr ""
 msgid "Unique slug identifier for the source."
 msgstr ""
 
-#: src/API/EventSourceController.php:174
-#: src/API/EventSourceController.php:250
-#: src/API/EventSourceController.php:307
-#: src/API/EventSourceController.php:378
+#: src/API/EventSourceController.php:176
+#: src/API/EventSourceController.php:258
+#: src/API/EventSourceController.php:319
+#: src/API/EventSourceController.php:390
 #: src/API/PublicEventsController.php:179
 msgid "Source not found."
 msgstr ""
 
-#: src/API/EventSourceController.php:206
-#: src/API/EventSourceController.php:267
+#: src/API/EventSourceController.php:210
+#: src/API/EventSourceController.php:275
 msgid "A source with this slug already exists."
 msgstr ""
 
-#: src/API/EventSourceController.php:222
+#: src/API/EventSourceController.php:229
 msgid "Failed to create source."
 msgstr ""
 
-#: src/API/EventSourceController.php:283
+#: src/API/EventSourceController.php:294
 msgid "Failed to update source."
 msgstr ""
 
-#: src/API/EventSourceController.php:317
+#: src/API/EventSourceController.php:329
 #: src/Admin/sources/SourcesList.js:90
 msgid "Failed to delete source."
 msgstr ""
 
-#: src/API/EventSourceController.php:386
+#: src/API/EventSourceController.php:398
 #: src/API/PublicEventsController.php:187
 msgid "This source is disabled."
 msgstr ""
 
-#: src/API/EventSourceController.php:511
+#: src/API/EventSourceController.php:523
 msgid "Data sources must be an array."
 msgstr ""
 
-#: src/API/EventSourceController.php:519
+#: src/API/EventSourceController.php:531
 msgid "At least one data source is required."
 msgstr ""
 
 #. translators: %d: Data source index
-#: src/API/EventSourceController.php:529
+#: src/API/EventSourceController.php:541
 #, php-format
 msgid "Data source at index %d is missing source_type or config."
 msgstr ""
 
 #. translators: %d: Data source index
-#: src/API/EventSourceController.php:557
+#: src/API/EventSourceController.php:569
 #, php-format
 msgid "Invalid source type at index %d."
 msgstr ""
 
 #. translators: %d: Data source index
-#: src/API/EventSourceController.php:566
+#: src/API/EventSourceController.php:578
 #, php-format
 msgid "Config at index %d must be an object."
 msgstr ""
 
 #. translators: %d: Data source index
-#: src/API/EventSourceController.php:577
+#: src/API/EventSourceController.php:589
 #, php-format
 msgid "Categories source at index %d requires category_ids array."
 msgstr ""
 
 #. translators: 1: Category ID, 2: Data source index
-#: src/API/EventSourceController.php:588
+#: src/API/EventSourceController.php:600
 #, php-format
 msgid "Category ID %1$d does not exist (data source index %2$d)."
 msgstr ""
 
 #. translators: %d: Data source index
-#: src/API/EventSourceController.php:600
+#: src/API/EventSourceController.php:612
 #, php-format
 msgid "iCal source at index %d requires url field."
 msgstr ""
 
 #. translators: %d: Data source index
-#: src/API/EventSourceController.php:610
-#: src/API/EventSourceController.php:631
+#: src/API/EventSourceController.php:622
+#: src/API/EventSourceController.php:643
 #, php-format
 msgid "Invalid URL format at index %d."
 msgstr ""
 
 #. translators: %d: Data source index
-#: src/API/EventSourceController.php:621
+#: src/API/EventSourceController.php:633
 #, php-format
 msgid "Fair Events API source at index %d requires url field."
 msgstr ""
 
 #. translators: %d: Data source index
-#: src/API/EventSourceController.php:645
+#: src/API/EventSourceController.php:657
 #, php-format
 msgid "Unknown source type at index %d."
 msgstr ""
@@ -879,6 +905,74 @@ msgstr ""
 msgid "Event source not found."
 msgstr ""
 
+#. translators: %d: number of days
+#: src/blocks/event-info/render.php:161
+#: src/blocks/event-info/components/EditComponent.js:176
+#, php-format,js-format
+msgid "Every %d days"
+msgstr ""
+
+#: src/blocks/event-info/render.php:163
+#: src/Admin/event-meta-box/EventEditForm.js:445
+#: src/Admin/manage-event/ManageEventApp.js:670
+#: src/blocks/event-info/components/EditComponent.js:178
+msgid "Daily"
+msgstr ""
+
+#. translators: %s: day of week
+#: src/blocks/event-info/render.php:168
+#: src/blocks/event-info/components/EditComponent.js:183
+#, php-format,js-format
+msgid "Every 2 weeks on %s"
+msgstr ""
+
+#. translators: 1: number of weeks, 2: day of week
+#: src/blocks/event-info/render.php:172
+#: src/blocks/event-info/components/EditComponent.js:189
+#, php-format,js-format
+msgid "Every %1$d weeks on %2$s"
+msgstr ""
+
+#. translators: %s: day of week
+#: src/blocks/event-info/render.php:175
+#: src/blocks/event-info/components/EditComponent.js:194
+#, php-format,js-format
+msgid "Every %s"
+msgstr ""
+
+#. translators: %d: number of months
+#: src/blocks/event-info/render.php:180
+#: src/blocks/event-info/components/EditComponent.js:198
+#, php-format,js-format
+msgid "Every %d months"
+msgstr ""
+
+#: src/blocks/event-info/render.php:182
+#: src/Admin/event-meta-box/EventEditForm.js:457
+#: src/Admin/manage-event/ManageEventApp.js:691
+#: src/blocks/event-info/components/EditComponent.js:200
+msgid "Monthly"
+msgstr ""
+
+#. translators: %d: number of years
+#: src/blocks/event-info/render.php:187
+#: src/blocks/event-info/components/EditComponent.js:204
+#, php-format,js-format
+msgid "Every %d years"
+msgstr ""
+
+#: src/blocks/event-info/render.php:189
+#: src/blocks/event-info/components/EditComponent.js:206
+msgid "Yearly"
+msgstr ""
+
+#. translators: %s: date of next occurrence
+#: src/blocks/event-info/render.php:262
+#: src/blocks/event-info/components/EditComponent.js:374
+#, php-format,js-format
+msgid "Next: %s"
+msgstr ""
+
 #: src/blocks/event-proposal/render.php:17
 msgid "Submit Event Proposal"
 msgstr ""
@@ -1061,7 +1155,7 @@ msgid "Add New"
 msgstr ""
 
 #: src/PostTypes/Event.php:38
-msgid "Add New Event"
+msgid "Add New Event Post"
 msgstr ""
 
 #: src/PostTypes/Event.php:39
@@ -1074,6 +1168,10 @@ msgstr ""
 
 #: src/PostTypes/Event.php:41
 msgid "View Event"
+msgstr ""
+
+#: src/PostTypes/Event.php:42
+msgid "Event Posts"
 msgstr ""
 
 #: src/PostTypes/Event.php:43
@@ -1200,12 +1298,61 @@ msgstr ""
 msgid "Post types that can have event data"
 msgstr ""
 
+#: src/Admin/all-events/AllEvents.js:11
+msgid "Post"
+msgstr ""
+
+#: src/Admin/all-events/AllEvents.js:12
+msgid "External"
+msgstr ""
+
+#: src/Admin/all-events/AllEvents.js:13
+msgid "None"
+msgstr ""
+
+#: src/Admin/all-events/AllEvents.js:17
+msgid "Single"
+msgstr ""
+
+#: src/Admin/all-events/AllEvents.js:18
+msgid "Master"
+msgstr ""
+
+#: src/Admin/all-events/AllEvents.js:19
+msgid "Generated"
+msgstr ""
+
+#: src/Admin/all-events/AllEvents.js:67
+#: src/Admin/sources/SourcesList.js:192
+#: src/Admin/venues/VenuesApp.js:213
+#: src/Admin/venues/VenuesApp.js:287
+msgid "Name"
+msgstr ""
+
+#: src/Admin/all-events/AllEvents.js:79
+#: src/Admin/manage-event/EventBudget.js:152
+#: src/Admin/migration/MigrationApp.js:227
+msgid "Date"
+msgstr ""
+
+#: src/Admin/all-events/AllEvents.js:103
+msgid "Link Type"
+msgstr ""
+
+#: src/Admin/all-events/AllEvents.js:114
+msgid "Linked Post / URL"
+msgstr ""
+
+#: src/Admin/all-events/AllEvents.js:141
+msgid "Occurrence"
+msgstr ""
+
 #: src/Admin/calendar/CalendarApp.js:86
 msgid "Failed to load events."
 msgstr ""
 
 #. translators: %s: event title
-#: src/Admin/calendar/CalendarApp.js:199
+#: src/Admin/calendar/CalendarApp.js:174
 #, js-format
 msgid "Event \"%s\" created."
 msgstr ""
@@ -1214,17 +1361,17 @@ msgstr ""
 msgid "Today"
 msgstr ""
 
-#: src/Admin/calendar/components/DayCell.js:85
+#: src/Admin/calendar/components/DayCell.js:136
 msgid "Add event"
 msgstr ""
 
-#: src/Admin/calendar/components/DayCell.js:151
+#: src/Admin/calendar/components/DayCell.js:200
 #: src/Admin/manage-event/ManageEventApp.js:882
 msgid "View Participants"
 msgstr ""
 
 #. translators: %d: number of additional events
-#: src/Admin/calendar/components/DayCell.js:167
+#: src/Admin/calendar/components/DayCell.js:216
 #, js-format
 msgid "+%d more"
 msgstr ""
@@ -1235,7 +1382,7 @@ msgid "Failed to create event."
 msgstr ""
 
 #: src/Admin/calendar/components/QuickEventModal.js:83
-#: src/Admin/event-meta-box/EventEditForm.js:333
+#: src/Admin/event-meta-box/EventEditForm.js:347
 #: src/Admin/manage-event/ManageEventApp.js:481
 msgid "— No venue —"
 msgstr ""
@@ -1245,14 +1392,14 @@ msgid "Quick Add Event"
 msgstr ""
 
 #: src/Admin/calendar/components/QuickEventModal.js:110
-#: src/Admin/event-meta-box/EventEditForm.js:364
+#: src/Admin/event-meta-box/EventEditForm.js:378
 #: src/Admin/manage-event/ManageEventApp.js:559
 msgid "All day"
 msgstr ""
 
 #: src/Admin/calendar/components/QuickEventModal.js:118
 #: src/Admin/calendar/components/QuickEventModal.js:136
-#: src/Admin/event-meta-box/EventEditForm.js:370
+#: src/Admin/event-meta-box/EventEditForm.js:384
 #: src/Admin/manage-event/ManageEventApp.js:567
 #: src/Admin/manage-event/ManageEventApp.js:584
 msgid "Start date"
@@ -1260,8 +1407,8 @@ msgstr ""
 
 #: src/Admin/calendar/components/QuickEventModal.js:125
 #: src/Admin/calendar/components/QuickEventModal.js:152
-#: src/Admin/event-meta-box/EventEditForm.js:396
-#: src/Admin/event-meta-box/EventEditForm.js:481
+#: src/Admin/event-meta-box/EventEditForm.js:410
+#: src/Admin/event-meta-box/EventEditForm.js:495
 #: src/Admin/manage-event/ManageEventApp.js:574
 #: src/Admin/manage-event/ManageEventApp.js:598
 #: src/Admin/manage-event/ManageEventApp.js:739
@@ -1269,19 +1416,19 @@ msgid "End date"
 msgstr ""
 
 #: src/Admin/calendar/components/QuickEventModal.js:143
-#: src/Admin/event-meta-box/EventEditForm.js:378
+#: src/Admin/event-meta-box/EventEditForm.js:392
 #: src/Admin/manage-event/ManageEventApp.js:591
 msgid "Start time"
 msgstr ""
 
 #: src/Admin/calendar/components/QuickEventModal.js:159
-#: src/Admin/event-meta-box/EventEditForm.js:404
+#: src/Admin/event-meta-box/EventEditForm.js:418
 #: src/Admin/manage-event/ManageEventApp.js:605
 msgid "End time"
 msgstr ""
 
 #: src/Admin/calendar/components/QuickEventModal.js:170
-#: src/Admin/event-meta-box/EventEditForm.js:412
+#: src/Admin/event-meta-box/EventEditForm.js:426
 #: src/Admin/manage-event/ManageEventApp.js:625
 msgid "Venue"
 msgstr ""
@@ -1314,66 +1461,56 @@ msgstr ""
 msgid "Failed to save event."
 msgstr ""
 
-#: src/Admin/event-meta-box/EventEditForm.js:386
+#: src/Admin/event-meta-box/EventEditForm.js:400
 #: src/Admin/manage-event/ManageEventApp.js:615
 msgid "Event length"
 msgstr ""
 
-#: src/Admin/event-meta-box/EventEditForm.js:419
+#: src/Admin/event-meta-box/EventEditForm.js:433
 #: src/Admin/manage-event/ManageEventApp.js:656
 msgid "Repeat this event"
 msgstr ""
 
-#: src/Admin/event-meta-box/EventEditForm.js:427
+#: src/Admin/event-meta-box/EventEditForm.js:441
 #: src/Admin/manage-event/ManageEventApp.js:666
 msgid "Frequency"
 msgstr ""
 
-#: src/Admin/event-meta-box/EventEditForm.js:431
-#: src/Admin/manage-event/ManageEventApp.js:670
-msgid "Daily"
-msgstr ""
-
-#: src/Admin/event-meta-box/EventEditForm.js:435
+#: src/Admin/event-meta-box/EventEditForm.js:449
 #: src/Admin/manage-event/ManageEventApp.js:677
 msgid "Weekly"
 msgstr ""
 
-#: src/Admin/event-meta-box/EventEditForm.js:439
+#: src/Admin/event-meta-box/EventEditForm.js:453
 #: src/Admin/manage-event/ManageEventApp.js:684
 msgid "Biweekly"
 msgstr ""
 
-#: src/Admin/event-meta-box/EventEditForm.js:443
-#: src/Admin/manage-event/ManageEventApp.js:691
-msgid "Monthly"
-msgstr ""
-
-#: src/Admin/event-meta-box/EventEditForm.js:450
+#: src/Admin/event-meta-box/EventEditForm.js:464
 #: src/Admin/manage-event/ManageEventApp.js:701
 msgid "Ends"
 msgstr ""
 
-#: src/Admin/event-meta-box/EventEditForm.js:454
+#: src/Admin/event-meta-box/EventEditForm.js:468
 #: src/Admin/manage-event/ManageEventApp.js:705
 msgid "After number of occurrences"
 msgstr ""
 
-#: src/Admin/event-meta-box/EventEditForm.js:461
+#: src/Admin/event-meta-box/EventEditForm.js:475
 #: src/Admin/manage-event/ManageEventApp.js:712
 msgid "On a specific date"
 msgstr ""
 
-#: src/Admin/event-meta-box/EventEditForm.js:469
+#: src/Admin/event-meta-box/EventEditForm.js:483
 #: src/Admin/manage-event/ManageEventApp.js:723
 msgid "Number of occurrences"
 msgstr ""
 
-#: src/Admin/event-meta-box/EventEditForm.js:500
+#: src/Admin/event-meta-box/EventEditForm.js:514
 msgid "Save Event"
 msgstr ""
 
-#: src/Admin/event-meta-box/EventEditForm.js:512
+#: src/Admin/event-meta-box/EventEditForm.js:526
 msgid "Edit Full Details"
 msgstr ""
 
@@ -1431,11 +1568,6 @@ msgstr ""
 
 #: src/Admin/manage-event/EventBudget.js:141
 msgid "Balance"
-msgstr ""
-
-#: src/Admin/manage-event/EventBudget.js:152
-#: src/Admin/migration/MigrationApp.js:227
-msgid "Date"
 msgstr ""
 
 #: src/Admin/manage-event/EventBudget.js:153
@@ -1827,7 +1959,7 @@ msgstr ""
 #: src/Admin/settings/FacebookTab.js:302
 #: src/Admin/settings/FacebookTab.js:452
 #: src/Admin/settings/GeneralTab.js:240
-#: src/Admin/sources/components/SourceForm.js:206
+#: src/Admin/sources/components/SourceForm.js:237
 msgid "Saving..."
 msgstr ""
 
@@ -2026,77 +2158,85 @@ msgstr ""
 msgid "No source ID provided."
 msgstr ""
 
-#: src/Admin/source-view/SourceViewApp.js:211
-#: src/Admin/source-view/SourceViewApp.js:225
+#: src/Admin/source-view/SourceViewApp.js:201
+#: src/Admin/source-view/SourceViewApp.js:215
 msgid "Back to Event Sources"
 msgstr ""
 
 #. translators: %s: source name
-#: src/Admin/source-view/SourceViewApp.js:232
+#: src/Admin/source-view/SourceViewApp.js:222
 #, js-format
 msgid "Source: %s"
 msgstr ""
 
-#: src/Admin/source-view/SourceViewApp.js:248
-#: src/Admin/sources/components/SourceForm.js:132
+#: src/Admin/source-view/SourceViewApp.js:238
+#: src/Admin/sources/components/SourceForm.js:143
 #: src/Admin/sources/SourcesList.js:193
 msgid "Slug"
 msgstr ""
 
-#: src/Admin/source-view/SourceViewApp.js:252
+#: src/Admin/source-view/SourceViewApp.js:242
 #: src/Admin/sources/SourcesList.js:201
 msgid "Status"
 msgstr ""
 
-#: src/Admin/source-view/SourceViewApp.js:255
+#: src/Admin/source-view/SourceViewApp.js:245
 #: src/Admin/sources/SourcesList.js:114
 msgid "Enabled"
 msgstr ""
 
-#: src/Admin/source-view/SourceViewApp.js:256
+#: src/Admin/source-view/SourceViewApp.js:246
 #: src/Admin/sources/SourcesList.js:118
 msgid "Disabled"
 msgstr ""
 
-#: src/Admin/source-view/SourceViewApp.js:260
-#: src/Admin/sources/components/SourceForm.js:152
+#: src/Admin/source-view/SourceViewApp.js:250
+#: src/Admin/sources/components/SourceForm.js:183
 #: src/Admin/sources/SourcesList.js:195
 msgid "Data Sources"
 msgstr ""
 
-#: src/Admin/source-view/SourceViewApp.js:263
+#: src/Admin/source-view/SourceViewApp.js:253
 #: src/Admin/sources/SourcesList.js:223
 msgid "data source(s)"
 msgstr ""
 
-#: src/Admin/source-view/SourceViewApp.js:267
-msgid "Feed URLs"
+#: src/Admin/source-view/SourceViewApp.js:258
+msgid "Page"
+msgstr ""
+
+#: src/Admin/source-view/SourceViewApp.js:265
+msgid "View page"
 msgstr ""
 
 #: src/Admin/source-view/SourceViewApp.js:271
+msgid "Feed URLs"
+msgstr ""
+
+#: src/Admin/source-view/SourceViewApp.js:275
 msgid "iCal"
 msgstr ""
 
-#: src/Admin/source-view/SourceViewApp.js:272
+#: src/Admin/source-view/SourceViewApp.js:276
 #: src/Admin/sources/SourcesList.js:233
 msgid "Copy iCal feed URL"
 msgstr ""
 
-#: src/Admin/source-view/SourceViewApp.js:279
+#: src/Admin/source-view/SourceViewApp.js:283
 msgid "JSON"
 msgstr ""
 
-#: src/Admin/source-view/SourceViewApp.js:280
+#: src/Admin/source-view/SourceViewApp.js:284
 #: src/Admin/sources/SourcesList.js:244
 msgid "Copy JSON API URL"
 msgstr ""
 
-#: src/Admin/source-view/SourceViewApp.js:289
-#: src/Admin/source-view/SourceViewApp.js:299
+#: src/Admin/source-view/SourceViewApp.js:293
+#: src/Admin/source-view/SourceViewApp.js:303
 msgid "Edit Source"
 msgstr ""
 
-#: src/Admin/source-view/SourceViewApp.js:325
+#: src/Admin/source-view/SourceViewApp.js:328
 #: src/Admin/sources/SourcesList.js:307
 msgid "Edit Event Source"
 msgstr ""
@@ -2183,43 +2323,55 @@ msgstr ""
 msgid "Select the type of event source."
 msgstr ""
 
-#: src/Admin/sources/components/SourceForm.js:121
+#: src/Admin/sources/components/SourceForm.js:132
 msgid "Source Name"
 msgstr ""
 
-#: src/Admin/sources/components/SourceForm.js:125
+#: src/Admin/sources/components/SourceForm.js:136
 msgid "A descriptive name for this event source."
 msgstr ""
 
-#: src/Admin/sources/components/SourceForm.js:138
+#: src/Admin/sources/components/SourceForm.js:149
 msgid "URL-friendly identifier for this source."
 msgstr ""
 
-#: src/Admin/sources/components/SourceForm.js:142
+#: src/Admin/sources/components/SourceForm.js:153
 msgid "Auto-generated from name. Can be customized."
 msgstr ""
 
-#: src/Admin/sources/components/SourceForm.js:159
+#: src/Admin/sources/components/SourceForm.js:161
+msgid "Linked Page"
+msgstr ""
+
+#: src/Admin/sources/components/SourceForm.js:166
+msgid "— No page —"
+msgstr ""
+
+#: src/Admin/sources/components/SourceForm.js:174
+msgid "Optional page that displays events from this source."
+msgstr ""
+
+#: src/Admin/sources/components/SourceForm.js:190
 msgid "Add Data Source"
 msgstr ""
 
-#: src/Admin/sources/components/SourceForm.js:163
+#: src/Admin/sources/components/SourceForm.js:194
 msgid "Configure one or more data sources to aggregate events from."
 msgstr ""
 
-#: src/Admin/sources/components/SourceForm.js:185
+#: src/Admin/sources/components/SourceForm.js:216
 msgid "Enable this source"
 msgstr ""
 
-#: src/Admin/sources/components/SourceForm.js:188
+#: src/Admin/sources/components/SourceForm.js:219
 msgid "Disabled sources will not be used for event imports."
 msgstr ""
 
-#: src/Admin/sources/components/SourceForm.js:209
+#: src/Admin/sources/components/SourceForm.js:240
 msgid "Update Source"
 msgstr ""
 
-#: src/Admin/sources/components/SourceForm.js:211
+#: src/Admin/sources/components/SourceForm.js:242
 msgid "Create Source"
 msgstr ""
 
@@ -2253,12 +2405,6 @@ msgstr ""
 
 #: src/Admin/sources/SourcesList.js:180
 msgid "No sources found. Create your first source to get started."
-msgstr ""
-
-#: src/Admin/sources/SourcesList.js:192
-#: src/Admin/venues/VenuesApp.js:213
-#: src/Admin/venues/VenuesApp.js:287
-msgid "Name"
 msgstr ""
 
 #: src/Admin/sources/SourcesList.js:198
@@ -2406,7 +2552,7 @@ msgid "Download ICS"
 msgstr ""
 
 #: src/blocks/event-dates/components/EditComponent.js:205
-#: src/blocks/event-info/components/EditComponent.js:207
+#: src/blocks/event-info/components/EditComponent.js:399
 msgid "No event dates set. Add dates in the Event Details panel."
 msgstr ""
 
@@ -2414,11 +2560,11 @@ msgstr ""
 msgid "Event Dates block: Only displays in event post context."
 msgstr ""
 
-#: src/blocks/event-info/components/EditComponent.js:238
+#: src/blocks/event-info/components/EditComponent.js:431
 msgid "Loading venue..."
 msgstr ""
 
-#: src/blocks/event-info/components/EditComponent.js:245
+#: src/blocks/event-info/components/EditComponent.js:438
 msgid "Event Info block: Only displays in event post context."
 msgstr ""
 
@@ -2603,6 +2749,10 @@ msgstr ""
 
 #: src/blocks/events-list/components/EditComponent.js:113
 msgid "Time Filter"
+msgstr ""
+
+#: src/blocks/events-list/components/EditComponent.js:121
+msgid "Upcoming Events"
 msgstr ""
 
 #: src/blocks/events-list/components/EditComponent.js:125

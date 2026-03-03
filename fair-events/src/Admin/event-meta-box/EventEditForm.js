@@ -326,8 +326,22 @@ export default function EventEditForm({
 			end_datetime: endDatetime,
 			all_day: allDay,
 			venue_id: venueId ? parseInt(venueId, 10) : null,
+			rrule: buildRRule(),
+			occurrence_type: recurrenceEnabled ? 'master' : 'single',
 		});
-	}, [startDate, startTime, endDate, endTime, allDay, venueId]);
+	}, [
+		startDate,
+		startTime,
+		endDate,
+		endTime,
+		allDay,
+		venueId,
+		recurrenceEnabled,
+		recurrenceFrequency,
+		recurrenceEndType,
+		recurrenceCount,
+		recurrenceUntil,
+	]);
 
 	const venueOptions = [
 		{ label: __('— No venue —', 'fair-events'), value: '' },
