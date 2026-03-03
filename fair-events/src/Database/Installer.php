@@ -47,6 +47,9 @@ class Installer {
 		$sql = Schema::get_event_date_posts_table_sql();
 		dbDelta( $sql );
 
+		$sql = Schema::get_group_pricing_rules_table_sql();
+		dbDelta( $sql );
+
 		// Run migration if upgrading from pre-1.0.0
 		if ( version_compare( $current_version, '1.0.0', '<' ) ) {
 			self::migrate_to_1_0_0();
@@ -110,6 +113,8 @@ class Installer {
 		if ( version_compare( $current_version, '2.4.0', '<' ) ) {
 			self::migrate_to_2_4_0();
 		}
+
+		// Version 2.5.0 - Group pricing rules table (no data migration needed, table created by dbDelta).
 
 		// Update database version
 		Schema::update_db_version( Schema::DB_VERSION );

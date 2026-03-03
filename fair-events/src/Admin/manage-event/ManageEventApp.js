@@ -19,6 +19,7 @@ import {
 	SelectControl,
 	RadioControl,
 	FormTokenField,
+	TabPanel,
 	__experimentalNumberControl as NumberControl,
 	__experimentalVStack as VStack,
 	__experimentalHStack as HStack,
@@ -28,6 +29,7 @@ import apiFetch from '@wordpress/api-fetch';
 import { DurationOptions, calculateDuration } from 'fair-events-shared';
 import ImageExports from './ImageExports.js';
 import EventBudget from './EventBudget.js';
+import GroupPricingRules from './GroupPricingRules.js';
 
 export default function ManageEventApp() {
 	const eventDateId = window.fairEventsManageEventData?.eventDateId;
@@ -39,6 +41,8 @@ export default function ManageEventApp() {
 	const audienceUrl = window.fairEventsManageEventData?.audienceUrl || '';
 	const paymentEntriesUrl =
 		window.fairEventsManageEventData?.paymentEntriesUrl || '';
+	const groupPricingEnabled =
+		window.fairEventsManageEventData?.groupPricingEnabled || false;
 
 	const [eventDate, setEventDate] = useState(null);
 	const [loading, setLoading] = useState(true);
@@ -511,37 +515,23 @@ export default function ManageEventApp() {
 	const isLinkedToPost = eventDate.link_type === 'post' && eventDate.event_id;
 	const linkedPosts = eventDate.linked_posts || [];
 
-	return (
-		<div className="wrap fair-events-manage-event">
-			<style>
-				{`.fair-events-manage-event .components-card > div:first-child { height: auto; }
-.fair-events-manage-event .components-card__body > * { max-width: 600px; }`}
-			</style>
-			<h1>
-				{__('Manage Event', 'fair-events')}
-				{title && `: ${title}`}
-			</h1>
+	const tabs = [
+		{
+			name: 'event-details',
+			title: __('Event Details', 'fair-events'),
+		},
+		...(groupPricingEnabled
+			? [
+					{
+						name: 'group-pricing',
+						title: __('Group Pricing Rules', 'fair-events'),
+					},
+			  ]
+			: []),
+	];
 
-			{error && (
-				<Notice
-					status="error"
-					isDismissible
-					onRemove={() => setError(null)}
-				>
-					{error}
-				</Notice>
-			)}
-
-			{success && (
-				<Notice
-					status="success"
-					isDismissible
-					onRemove={() => setSuccess(null)}
-				>
-					{success}
-				</Notice>
-			)}
-
+	const renderEventDetailsTab = () => (
+		<>
 			<Card>
 				<CardHeader>
 					<h2>{__('Event Details', 'fair-events')}</h2>
@@ -1083,6 +1073,48 @@ export default function ManageEventApp() {
 					</VStack>
 				</CardBody>
 			</Card>
+		</>
+	);
+
+	return (
+		<div className="wrap fair-events-manage-event">
+			<style>
+				{`.fair-events-manage-event .components-card > div:first-child { height: auto; }
+.fair-events-manage-event .components-card__body > * { max-width: 600px; }`}
+			</style>
+			<h1>
+				{__('Manage Event', 'fair-events')}
+				{title && `: ${title}`}
+			</h1>
+
+			{error && (
+				<Notice
+					status="error"
+					isDismissible
+					onRemove={() => setError(null)}
+				>
+					{error}
+				</Notice>
+			)}
+
+			{success && (
+				<Notice
+					status="success"
+					isDismissible
+					onRemove={() => setSuccess(null)}
+				>
+					{success}
+				</Notice>
+			)}
+
+			<TabPanel tabs={tabs}>
+				{(tab) => {
+					if (tab.name === 'group-pricing') {
+						return <GroupPricingRules eventDateId={eventDateId} />;
+					}
+					return renderEventDetailsTab();
+				}}
+			</TabPanel>
 
 			<HStack
 				spacing={4}

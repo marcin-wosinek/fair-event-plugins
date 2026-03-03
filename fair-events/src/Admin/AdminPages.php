@@ -371,9 +371,10 @@ class AdminPages {
 				'enabledPostTypes' => $enabled_post_types,
 			);
 
-			// Add audience URL if fair-audience plugin is active.
+			// Add audience URL and group pricing flag if fair-audience plugin is active.
 			if ( defined( 'FAIR_AUDIENCE_PLUGIN_DIR' ) ) {
-				$localized_data['audienceUrl'] = admin_url( 'admin.php?page=fair-audience-event-participants&event_id=' );
+				$localized_data['audienceUrl']         = admin_url( 'admin.php?page=fair-audience-event-participants&event_id=' );
+				$localized_data['groupPricingEnabled'] = true;
 			}
 
 			// Add payment entries URL if fair-payment plugin is active.

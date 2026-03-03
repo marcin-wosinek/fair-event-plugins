@@ -17,7 +17,7 @@ class Schema {
 	/**
 	 * Database version
 	 */
-	const DB_VERSION = '2.4.0';
+	const DB_VERSION = '2.5.0';
 
 	/**
 	 * Get the SQL for creating the fair_event_dates table
@@ -201,6 +201,32 @@ class Schema {
 			post_id BIGINT UNSIGNED NOT NULL,
 			PRIMARY KEY (event_date_id, post_id),
 			KEY idx_post_id (post_id)
+		) ENGINE=InnoDB {$charset_collate};";
+	}
+
+	/**
+	 * Get the SQL for creating the fair_events_group_pricing_rules table
+	 *
+	 * @return string SQL statement for creating the table.
+	 */
+	public static function get_group_pricing_rules_table_sql() {
+		global $wpdb;
+
+		$table_name      = $wpdb->prefix . 'fair_events_group_pricing_rules';
+		$charset_collate = $wpdb->get_charset_collate();
+
+		return "CREATE TABLE {$table_name} (
+			id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
+			event_date_id BIGINT UNSIGNED NOT NULL,
+			group_id BIGINT UNSIGNED NOT NULL,
+			discount_type VARCHAR(20) NOT NULL DEFAULT 'percentage',
+			discount_value DECIMAL(10,2) NOT NULL DEFAULT 0.00,
+			created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+			updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+			PRIMARY KEY (id),
+			UNIQUE KEY idx_event_date_group (event_date_id, group_id),
+			KEY idx_event_date_id (event_date_id),
+			KEY idx_group_id (group_id)
 		) ENGINE=InnoDB {$charset_collate};";
 	}
 
