@@ -23,7 +23,11 @@
 }
 
 .fair-audience-audience-form input[type="text"],
-.fair-audience-audience-form input[type="email"] {
+.fair-audience-audience-form input[type="email"],
+.fair-audience-audience-form input[type="number"],
+.fair-audience-audience-form input[type="date"],
+.fair-audience-audience-form textarea,
+.fair-audience-audience-form select {
 	width: 100%;
 	padding: 10px 12px;
 	border: 1px solid #ddd;
@@ -31,8 +35,37 @@
 	font-size: 14px;
 }
 
-.fair-audience-audience-form input:disabled {
+.fair-audience-audience-form textarea {
+	resize: vertical;
+	font-family: inherit;
+}
+
+.fair-audience-audience-form input:disabled,
+.fair-audience-audience-form textarea:disabled,
+.fair-audience-audience-form select:disabled,
+.fair-audience-audience-form fieldset:disabled {
 	opacity: 0.7;
+}
+
+/* Question groups */
+.fair-audience-audience-question-group {
+	margin-bottom: 15px;
+	border: none;
+	padding: 0;
+}
+
+.fair-audience-audience-question-group legend {
+	font-weight: 500;
+	margin-bottom: 5px;
+}
+
+/* Radio and checkbox option labels */
+.fair-audience-option-label {
+	display: flex;
+	align-items: center;
+	gap: 8px;
+	font-weight: normal;
+	padding: 4px 0;
 }
 
 /* Checkbox */

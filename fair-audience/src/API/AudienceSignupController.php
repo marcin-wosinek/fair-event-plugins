@@ -9,7 +9,10 @@ namespace FairAudience\API;
 
 use FairAudience\Database\ParticipantRepository;
 use FairAudience\Database\EmailConfirmationTokenRepository;
+use FairAudience\Database\QuestionnaireSubmissionRepository;
+use FairAudience\Database\QuestionnaireAnswerRepository;
 use FairAudience\Models\Participant;
+use FairAudience\Models\QuestionnaireSubmission;
 use FairAudience\Services\EmailService;
 use WP_REST_Controller;
 use WP_REST_Server;
@@ -60,6 +63,20 @@ class AudienceSignupController extends WP_REST_Controller {
 	private $email_service;
 
 	/**
+	 * Questionnaire submission repository instance.
+	 *
+	 * @var QuestionnaireSubmissionRepository
+	 */
+	private $submission_repository;
+
+	/**
+	 * Questionnaire answer repository instance.
+	 *
+	 * @var QuestionnaireAnswerRepository
+	 */
+	private $answer_repository;
+
+	/**
 	 * Rate limit: max requests per email per hour.
 	 */
 	const RATE_LIMIT_MAX = 3;
@@ -76,6 +93,8 @@ class AudienceSignupController extends WP_REST_Controller {
 		$this->participant_repository = new ParticipantRepository();
 		$this->token_repository       = new EmailConfirmationTokenRepository();
 		$this->email_service          = new EmailService();
+		$this->submission_repository  = new QuestionnaireSubmissionRepository();
+		$this->answer_repository      = new QuestionnaireAnswerRepository();
 	}
 
 	/**
@@ -92,18 +111,18 @@ class AudienceSignupController extends WP_REST_Controller {
 					'callback'            => array( $this, 'create_item' ),
 					'permission_callback' => '__return_true',
 					'args'                => array(
-						'name'          => array(
+						'name'                  => array(
 							'type'              => 'string',
 							'required'          => true,
 							'sanitize_callback' => 'sanitize_text_field',
 						),
-						'surname'       => array(
+						'surname'               => array(
 							'type'              => 'string',
 							'required'          => false,
 							'default'           => '',
 							'sanitize_callback' => 'sanitize_text_field',
 						),
-						'email'         => array(
+						'email'                 => array(
 							'type'              => 'string',
 							'required'          => true,
 							'sanitize_callback' => 'sanitize_email',
@@ -111,17 +130,51 @@ class AudienceSignupController extends WP_REST_Controller {
 								return is_email( $value );
 							},
 						),
-						'instagram'     => array(
+						'instagram'             => array(
 							'type'              => 'string',
 							'required'          => false,
 							'default'           => '',
 							'sanitize_callback' => 'sanitize_text_field',
 						),
-						'keep_informed' => array(
+						'keep_informed'         => array(
 							'type'              => 'boolean',
 							'required'          => false,
 							'default'           => false,
 							'sanitize_callback' => 'rest_sanitize_boolean',
+						),
+						'questionnaire_answers' => array(
+							'type'     => 'array',
+							'required' => false,
+							'default'  => array(),
+							'items'    => array(
+								'type'       => 'object',
+								'properties' => array(
+									'question_key'  => array(
+										'type'     => 'string',
+										'required' => true,
+										'sanitize_callback' => 'sanitize_key',
+									),
+									'question_text' => array(
+										'type'     => 'string',
+										'required' => true,
+										'sanitize_callback' => 'sanitize_text_field',
+									),
+									'question_type' => array(
+										'type'     => 'string',
+										'required' => true,
+										'enum'     => array( 'radio', 'checkbox', 'short_text', 'long_text', 'select', 'number', 'date' ),
+									),
+									'answer_value'  => array(
+										'type'     => 'string',
+										'required' => true,
+										'sanitize_callback' => 'sanitize_text_field',
+									),
+									'display_order' => array(
+										'type'     => 'integer',
+										'required' => true,
+									),
+								),
+							),
 						),
 					),
 				),
@@ -136,11 +189,12 @@ class AudienceSignupController extends WP_REST_Controller {
 	 * @return WP_REST_Response|WP_Error Response object or error.
 	 */
 	public function create_item( $request ) {
-		$name          = $request->get_param( 'name' );
-		$surname       = $request->get_param( 'surname' );
-		$email         = $request->get_param( 'email' );
-		$instagram     = $request->get_param( 'instagram' );
-		$keep_informed = $request->get_param( 'keep_informed' );
+		$name                  = $request->get_param( 'name' );
+		$surname               = $request->get_param( 'surname' );
+		$email                 = $request->get_param( 'email' );
+		$instagram             = $request->get_param( 'instagram' );
+		$keep_informed         = $request->get_param( 'keep_informed' );
+		$questionnaire_answers = $request->get_param( 'questionnaire_answers' );
 
 		// Validate email.
 		if ( ! is_email( $email ) ) {
@@ -173,6 +227,9 @@ class AudienceSignupController extends WP_REST_Controller {
 				$existing->save();
 			}
 
+			// Save questionnaire answers even for existing participants.
+			$this->save_questionnaire_answers( $existing->id, $questionnaire_answers );
+
 			return rest_ensure_response(
 				array(
 					'success' => true,
@@ -203,6 +260,9 @@ class AudienceSignupController extends WP_REST_Controller {
 			);
 		}
 
+		// Save questionnaire answers.
+		$this->save_questionnaire_answers( $participant->id, $questionnaire_answers );
+
 		// If keep_informed, send confirmation email.
 		if ( $keep_informed ) {
 			$token = $this->token_repository->create_token( $participant->id );
@@ -226,6 +286,32 @@ class AudienceSignupController extends WP_REST_Controller {
 				'status'  => 'registered',
 			)
 		);
+	}
+
+	/**
+	 * Save questionnaire answers for a participant.
+	 *
+	 * @param int   $participant_id Participant ID.
+	 * @param array $answers        Questionnaire answers from request.
+	 */
+	private function save_questionnaire_answers( $participant_id, $answers ) {
+		if ( empty( $answers ) ) {
+			return;
+		}
+
+		$submission = new QuestionnaireSubmission();
+		$submission->populate(
+			array(
+				'participant_id' => $participant_id,
+				'title'          => __( 'Audience Signup', 'fair-audience' ),
+			)
+		);
+
+		if ( ! $submission->save() ) {
+			return;
+		}
+
+		$this->answer_repository->save_answers( $submission->id, $answers );
 	}
 
 	/**

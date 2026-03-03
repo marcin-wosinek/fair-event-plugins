@@ -33,6 +33,10 @@
 		"showKeepInformed": {
 			"type": "boolean",
 			"default": true
+		},
+		"questions": {
+			"type": "array",
+			"default": []
 		}
 	},
 	"editorScript": "file:./editor.js",

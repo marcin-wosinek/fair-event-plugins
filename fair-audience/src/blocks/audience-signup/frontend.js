@@ -45,6 +45,115 @@ const CSS_PREFIX = 'fair-audience-audience';
 	}
 
 	/**
+	 * Parse questions config from data attribute
+	 * @param {HTMLElement} container The block wrapper element
+	 * @return {Array} Questions config array
+	 */
+	function getQuestionsConfig(container) {
+		const raw = container.dataset.questions;
+		if (!raw) return [];
+		try {
+			return JSON.parse(raw);
+		} catch {
+			return [];
+		}
+	}
+
+	/**
+	 * Validate required questionnaire fields
+	 * @param {HTMLElement} form The form element
+	 * @param {Array} questionsConfig Questions configuration
+	 * @param {HTMLElement} messageContainer Message container element
+	 * @return {boolean} True if valid
+	 */
+	function validateQuestionnaireFields(
+		form,
+		questionsConfig,
+		messageContainer
+	) {
+		for (const question of questionsConfig) {
+			if (!question.required) continue;
+
+			const { key, type, text } = question;
+			let hasValue = false;
+
+			if (type === 'checkbox') {
+				const checked = form.querySelectorAll(
+					`input[name="questionnaire[${key}][]"]:checked`
+				);
+				hasValue = checked.length > 0;
+			} else if (type === 'radio') {
+				const checked = form.querySelector(
+					`input[name="questionnaire[${key}]"]:checked`
+				);
+				hasValue = !!checked;
+			} else {
+				const input = form.querySelector(
+					`[name="questionnaire[${key}]"]`
+				);
+				hasValue = input && input.value.trim() !== '';
+			}
+
+			if (!hasValue) {
+				showMessage(
+					messageContainer,
+					/* translators: %s: question text */
+					__('Please answer: ', 'fair-audience') + text,
+					'error',
+					CSS_PREFIX
+				);
+				return false;
+			}
+		}
+		return true;
+	}
+
+	/**
+	 * Collect questionnaire answers from form
+	 * @param {HTMLElement} form The form element
+	 * @param {Array} questionsConfig Questions configuration
+	 * @return {Array} Answers array
+	 */
+	function collectQuestionnaireAnswers(form, questionsConfig) {
+		const answers = [];
+
+		questionsConfig.forEach(function (question, index) {
+			const { key, type, text } = question;
+			let answerValue = '';
+
+			if (type === 'checkbox') {
+				const checked = form.querySelectorAll(
+					`input[name="questionnaire[${key}][]"]:checked`
+				);
+				const values = Array.from(checked).map((el) => el.value);
+				answerValue = JSON.stringify(values);
+			} else if (type === 'radio') {
+				const checked = form.querySelector(
+					`input[name="questionnaire[${key}]"]:checked`
+				);
+				answerValue = checked ? checked.value : '';
+			} else {
+				const input = form.querySelector(
+					`[name="questionnaire[${key}]"]`
+				);
+				answerValue = input ? input.value.trim() : '';
+			}
+
+			if (answerValue !== '' && answerValue !== '[]') {
+				answers.push({
+					question_key: key,
+					question_text: text,
+					question_type: type,
+					answer_value: answerValue,
+					display_order: index,
+				});
+			}
+		});
+
+		return answers;
+	}
+
+	/**
 	 * Submit signup
 	 * @param {HTMLElement} form The form element
 	 */
@@ -59,6 +168,9 @@ const CSS_PREFIX = 'fair-audience-audience';
 		const successMessage =
 			container.dataset.successMessage ||
 			__('You have been registered successfully!', 'fair-audience');
+
+		// Get questions config
+		const questionsConfig = getQuestionsConfig(container);
 
 		// Get form data
 		const nameInput = form.querySelector('input[name="audience_name"]');
@@ -94,6 +206,17 @@ const CSS_PREFIX = 'fair-audience-audience';
 			return;
 		}
 
+		// Validate required questionnaire fields
+		if (
+			!validateQuestionnaireFields(
+				form,
+				questionsConfig,
+				messageContainer
+			)
+		) {
+			return;
+		}
+
 		// Build request data
 		const requestData = {
 			name: nameInput.value.trim(),
@@ -107,6 +230,12 @@ const CSS_PREFIX = 'fair-audience-audience';
 
 		if (keepInformedInput) {
 			requestData.keep_informed = keepInformedInput.checked;
+		}
+
+		// Collect questionnaire answers
+		const answers = collectQuestionnaireAnswers(form, questionsConfig);
+		if (answers.length > 0) {
+			requestData.questionnaire_answers = answers;
 		}
 
 		// Disable button and show loading state

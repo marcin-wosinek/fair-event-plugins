@@ -9,6 +9,96 @@ import {
 	ToggleControl,
 } from '@wordpress/components';
 import { __ } from '@wordpress/i18n';
+import QuestionBuilder from './QuestionBuilder.js';
+
+function QuestionPreview({ question }) {
+	const { text, type, required, options } = question;
+
+	const label = (
+		<label>
+			{text || __('Untitled Question', 'fair-audience')}
+			{required && <span className="required"> *</span>}
+		</label>
+	);
+
+	switch (type) {
+		case 'long_text':
+			return (
+				<div className="fair-audience-audience-question-group">
+					{label}
+					<textarea disabled rows="3" />
+				</div>
+			);
+		case 'number':
+			return (
+				<p>
+					{label}
+					<input type="number" disabled />
+				</p>
+			);
+		case 'date':
+			return (
+				<p>
+					{label}
+					<input type="date" disabled />
+				</p>
+			);
+		case 'select':
+			return (
+				<p>
+					{label}
+					<select disabled>
+						<option value="">
+							{__('Select...', 'fair-audience')}
+						</option>
+						{(options || []).map((opt, i) => (
+							<option key={i} value={opt}>
+								{opt}
+							</option>
+						))}
+					</select>
+				</p>
+			);
+		case 'radio':
+			return (
+				<fieldset
+					className="fair-audience-audience-question-group"
+					disabled
+				>
+					<legend>{label}</legend>
+					{(options || []).map((opt, i) => (
+						<label key={i} className="fair-audience-option-label">
+							<input type="radio" disabled />
+							{opt}
+						</label>
+					))}
+				</fieldset>
+			);
+		case 'checkbox':
+			return (
+				<fieldset
+					className="fair-audience-audience-question-group"
+					disabled
+				>
+					<legend>{label}</legend>
+					{(options || []).map((opt, i) => (
+						<label key={i} className="fair-audience-option-label">
+							<input type="checkbox" disabled />
+							{opt}
+						</label>
+					))}
+				</fieldset>
+			);
+		case 'short_text':
+		default:
+			return (
+				<p>
+					{label}
+					<input type="text" disabled />
+				</p>
+			);
+	}
+}
 
 registerBlockType('fair-audience/audience-signup', {
 	edit: ({ attributes, setAttributes }) => {
@@ -17,6 +107,7 @@ registerBlockType('fair-audience/audience-signup', {
 			successMessage,
 			showInstagram,
 			showKeepInformed,
+			questions,
 		} = attributes;
 
 		const blockProps = useBlockProps({
@@ -74,6 +165,17 @@ registerBlockType('fair-audience/audience-signup', {
 								'Allow users to opt-in to future event notifications.',
 								'fair-audience'
 							)}
+						/>
+					</PanelBody>
+					<PanelBody
+						title={__('Questions', 'fair-audience')}
+						initialOpen={false}
+					>
+						<QuestionBuilder
+							questions={questions || []}
+							onChange={(value) =>
+								setAttributes({ questions: value })
+							}
 						/>
 					</PanelBody>
 				</InspectorControls>
@@ -135,6 +237,10 @@ registerBlockType('fair-audience/audience-signup', {
 								/>
 							</p>
 						)}
+
+						{(questions || []).map((question, index) => (
+							<QuestionPreview key={index} question={question} />
+						))}
 
 						{showKeepInformed && (
 							<div className="fair-audience-audience-checkbox">
