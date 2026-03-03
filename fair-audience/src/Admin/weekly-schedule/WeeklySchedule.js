@@ -117,7 +117,12 @@ function generateMessage(data) {
 				}
 			}
 
-			const parts = [`* ${day.weekday}`];
+			let dayLabel = day.weekday;
+			if (event.end_weekday) {
+				dayLabel += `\u2014${event.end_weekday}`;
+			}
+
+			const parts = [`* ${dayLabel}`];
 			if (timeStr) {
 				parts[0] += `, ${timeStr}`;
 			}

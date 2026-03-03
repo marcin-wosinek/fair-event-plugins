@@ -113,6 +113,7 @@ export function generateScheduleSvg(data) {
 				day.weekday
 			)} ${escapeXml(String(day.day_num))}</text>`
 		);
+
 		y += rowH;
 
 		// Events for this day.
@@ -120,9 +121,11 @@ export function generateScheduleSvg(data) {
 			const textY = y + eventFontSize;
 			const indent = PAD + 20;
 
-			// Build time string.
+			// Build time string or day range for multi-day events.
 			let timeStr = '';
-			if (!event.all_day) {
+			if (event.end_weekday) {
+				timeStr = `${day.weekday}\u2014${event.end_weekday}`;
+			} else if (!event.all_day) {
 				if (event.end_time && event.end_time !== event.start_time) {
 					timeStr = `${event.start_time}\u2013${event.end_time}`;
 				} else if (event.start_time) {

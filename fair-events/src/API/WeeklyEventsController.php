@@ -150,6 +150,8 @@ class WeeklyEventsController extends \WP_REST_Controller {
 		$days         = array();
 		$current_date = new \DateTime( $week_start, new \DateTimeZone( wp_timezone_string() ) );
 
+		$tz = new \DateTimeZone( wp_timezone_string() );
+
 		for ( $i = 0; $i < 7; $i++ ) {
 			$date_string = $current_date->format( 'Y-m-d' );
 			$day_events  = $all_events[ $date_string ] ?? array();
@@ -161,6 +163,15 @@ class WeeklyEventsController extends \WP_REST_Controller {
 					return strcmp( $a['start_time'] ?? '99:99', $b['start_time'] ?? '99:99' );
 				}
 			);
+
+			// Resolve end_weekday for multi-day events.
+			foreach ( $day_events as &$evt ) {
+				if ( ! empty( $evt['end_date'] ) ) {
+					$end_dt             = new \DateTime( $evt['end_date'], $tz );
+					$evt['end_weekday'] = wp_date( 'l', $end_dt->getTimestamp() );
+				}
+			}
+			unset( $evt );
 
 			$days[] = array(
 				'date'       => $date_string,
@@ -234,6 +245,8 @@ class WeeklyEventsController extends \WP_REST_Controller {
 				$all_events[ $start_date ] = array();
 			}
 
+			$end_date = DateHelper::local_date( $event['end'] );
+
 			$all_events[ $start_date ][] = array(
 				'title'         => $event['summary'] ?? '',
 				'start_time'    => $event['all_day'] ? '' : DateHelper::local_time( $event['start'] ),
@@ -242,6 +255,7 @@ class WeeklyEventsController extends \WP_REST_Controller {
 				'all_day'       => (bool) $event['all_day'],
 				'event_id'      => null,
 				'event_date_id' => null,
+				'end_date'      => $end_date !== $start_date ? $end_date : null,
 			);
 		}
 	}
@@ -267,6 +281,8 @@ class WeeklyEventsController extends \WP_REST_Controller {
 				$all_events[ $start_date ] = array();
 			}
 
+			$end_date = DateHelper::local_date( $event['end'] );
+
 			$all_events[ $start_date ][] = array(
 				'title'         => $event['summary'] ?? '',
 				'start_time'    => $event['all_day'] ? '' : DateHelper::local_time( $event['start'] ),
@@ -275,6 +291,7 @@ class WeeklyEventsController extends \WP_REST_Controller {
 				'all_day'       => (bool) $event['all_day'],
 				'event_id'      => null,
 				'event_date_id' => null,
+				'end_date'      => $end_date !== $start_date ? $end_date : null,
 			);
 		}
 	}
@@ -346,6 +363,8 @@ class WeeklyEventsController extends \WP_REST_Controller {
 						$end_time = DateHelper::local_time( $event_dates->end_datetime );
 					}
 
+					$end_date = $event_dates->end_datetime ? DateHelper::local_date( $event_dates->end_datetime ) : null;
+
 					$all_events[ $start_date ][] = array(
 						'title'         => get_the_title( $event_id ),
 						'start_time'    => $start_time,
@@ -354,6 +373,7 @@ class WeeklyEventsController extends \WP_REST_Controller {
 						'all_day'       => $is_all_day,
 						'event_id'      => $event_id,
 						'event_date_id' => (int) $event_dates->id,
+						'end_date'      => $end_date !== $start_date ? $end_date : null,
 					);
 				}
 			}
@@ -387,6 +407,8 @@ class WeeklyEventsController extends \WP_REST_Controller {
 				$end_time = DateHelper::local_time( $event_dates->end_datetime );
 			}
 
+			$end_date = $event_dates->end_datetime ? DateHelper::local_date( $event_dates->end_datetime ) : null;
+
 			$all_events[ $start_date ][] = array(
 				'title'         => $event_dates->get_display_title(),
 				'start_time'    => $start_time,
@@ -395,6 +417,7 @@ class WeeklyEventsController extends \WP_REST_Controller {
 				'all_day'       => $is_all_day,
 				'event_id'      => null,
 				'event_date_id' => (int) $event_dates->id,
+				'end_date'      => $end_date !== $start_date ? $end_date : null,
 			);
 		}
 	}
