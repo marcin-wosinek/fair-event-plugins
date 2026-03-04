@@ -1089,7 +1089,7 @@ export default function EventParticipants() {
 								}}
 							>
 								{sprintf(
-									/* translators: %s: participant name placeholder */
+									/* translators: %s: participant first name */
 									__('Hi %s,', 'fair-audience'),
 									'(...)'
 								)}
