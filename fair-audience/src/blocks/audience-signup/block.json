@@ -37,6 +37,10 @@
 		"questions": {
 			"type": "array",
 			"default": []
+		},
+		"eventDateId": {
+			"type": "integer",
+			"default": 0
 		}
 	},
 	"editorScript": "file:./editor.js",

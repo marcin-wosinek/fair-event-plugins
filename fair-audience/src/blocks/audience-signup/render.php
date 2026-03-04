@@ -14,24 +14,46 @@
 
 defined( 'WPINC' ) || die;
 
+use FairEvents\Models\EventDates;
+
 // Get block attributes.
 $submit_text        = $attributes['submitButtonText'] ?? __( 'Register', 'fair-audience' );
 $success_message    = $attributes['successMessage'] ?? __( 'You have been registered successfully!', 'fair-audience' );
 $show_instagram     = $attributes['showInstagram'] ?? false;
 $show_keep_informed = $attributes['showKeepInformed'] ?? true;
 $questions          = $attributes['questions'] ?? array();
+$event_date_id_attr = $attributes['eventDateId'] ?? 0;
+
+// Resolve event_date_id: use attribute if set, otherwise auto-detect from current event post.
+$event_date_id = '';
+if ( $event_date_id_attr > 0 ) {
+	$event_date_id = (string) $event_date_id_attr;
+} elseif ( class_exists( EventDates::class ) ) {
+	$post_id = get_the_ID();
+	if ( $post_id && \FairEvents\Database\EventRepository::is_event( $post_id ) ) {
+		$event_dates_obj = EventDates::get_by_event_id( $post_id );
+		if ( $event_dates_obj ) {
+			$event_date_id = (string) $event_dates_obj->id;
+		}
+	}
+}
 
 // Generate unique ID for this form instance.
 $form_id = 'fair-audience-audience-' . wp_unique_id();
 
-// Get wrapper attributes.
-$wrapper_attributes = get_block_wrapper_attributes(
-	array(
-		'class'                => 'fair-audience-audience-signup',
-		'data-success-message' => esc_attr( $success_message ),
-		'data-questions'       => wp_json_encode( $questions ),
-	)
+// Build wrapper data attributes.
+$wrapper_data = array(
+	'class'                => 'fair-audience-audience-signup',
+	'data-success-message' => esc_attr( $success_message ),
+	'data-questions'       => wp_json_encode( $questions ),
 );
+
+if ( '' !== $event_date_id ) {
+	$wrapper_data['data-event-date-id'] = esc_attr( $event_date_id );
+}
+
+// Get wrapper attributes.
+$wrapper_attributes = get_block_wrapper_attributes( $wrapper_data );
 ?>
 
 <div <?php echo wp_kses_data( $wrapper_attributes ); ?>>

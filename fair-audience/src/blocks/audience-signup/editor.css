@@ -93,3 +93,41 @@
 	opacity: 0.7;
 	cursor: not-allowed;
 }
+
+/* Event link panel */
+.fair-audience-event-link-notice {
+	margin-bottom: 12px;
+}
+
+.fair-audience-event-link-current {
+	margin-bottom: 12px;
+	padding: 8px;
+	background: #f0f0f0;
+	border-radius: 4px;
+}
+
+.fair-audience-event-link-current p {
+	margin: 0 0 8px;
+}
+
+.fair-audience-event-link-results {
+	margin: 8px 0 0;
+	padding: 0;
+	list-style: none;
+	max-height: 200px;
+	overflow-y: auto;
+}
+
+.fair-audience-event-link-results li {
+	padding: 4px 0;
+	border-bottom: 1px solid #eee;
+}
+
+.fair-audience-event-link-results li:last-child {
+	border-bottom: none;
+}
+
+.fair-audience-event-link-no-results {
+	color: #757575;
+	font-style: italic;
+}

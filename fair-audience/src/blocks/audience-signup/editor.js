@@ -10,6 +10,7 @@ import {
 } from '@wordpress/components';
 import { __ } from '@wordpress/i18n';
 import QuestionBuilder from './QuestionBuilder.js';
+import EventLinkPanel from './EventLinkPanel.js';
 
 function QuestionPreview({ question }) {
 	const { text, type, required, options } = question;
@@ -108,6 +109,7 @@ registerBlockType('fair-audience/audience-signup', {
 			showInstagram,
 			showKeepInformed,
 			questions,
+			eventDateId,
 		} = attributes;
 
 		const blockProps = useBlockProps({
@@ -175,6 +177,17 @@ registerBlockType('fair-audience/audience-signup', {
 							questions={questions || []}
 							onChange={(value) =>
 								setAttributes({ questions: value })
+							}
+						/>
+					</PanelBody>
+					<PanelBody
+						title={__('Event Link', 'fair-audience')}
+						initialOpen={false}
+					>
+						<EventLinkPanel
+							eventDateId={eventDateId || 0}
+							onChange={(value) =>
+								setAttributes({ eventDateId: value })
 							}
 						/>
 					</PanelBody>

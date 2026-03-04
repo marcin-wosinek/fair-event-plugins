@@ -232,6 +232,14 @@ const CSS_PREFIX = 'fair-audience-audience';
 			requestData.keep_informed = keepInformedInput.checked;
 		}
 
+		// Include event_date_id if linked to an event
+		const eventDateId = container.dataset.eventDateId
+			? parseInt(container.dataset.eventDateId, 10)
+			: null;
+		if (eventDateId) {
+			requestData.event_date_id = eventDateId;
+		}
+
 		// Collect questionnaire answers
 		const answers = collectQuestionnaireAnswers(form, questionsConfig);
 		if (answers.length > 0) {
