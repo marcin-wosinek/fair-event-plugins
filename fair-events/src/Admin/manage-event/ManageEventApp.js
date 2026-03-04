@@ -6,7 +6,7 @@
  * @package FairEvents
  */
 
-import { useState, useEffect, useMemo } from '@wordpress/element';
+import { useState, useEffect, useMemo, useCallback } from '@wordpress/element';
 import {
 	Card,
 	CardHeader,
@@ -486,6 +486,65 @@ export default function ManageEventApp() {
 		...venues.map((v) => ({ label: v.name, value: String(v.id) })),
 	];
 
+	const isLinkedToPost =
+		eventDate?.link_type === 'post' && eventDate?.event_id;
+
+	const urlTab = useMemo(() => {
+		const urlParams = new URLSearchParams(window.location.search);
+		return urlParams.get('tab') || 'event-details';
+	}, []);
+
+	const handleTabSelect = useCallback((tabName) => {
+		const url = new URL(window.location.href);
+		if (tabName === 'event-details') {
+			url.searchParams.delete('tab');
+		} else {
+			url.searchParams.set('tab', tabName);
+		}
+		window.history.replaceState(null, '', url.toString());
+	}, []);
+
+	const tabs = useMemo(
+		() => [
+			{
+				name: 'event-details',
+				title: __('Event Details', 'fair-events'),
+			},
+			...(audienceUrl && isLinkedToPost
+				? [
+						{
+							name: 'audience',
+							title: __('Audience', 'fair-events'),
+						},
+				  ]
+				: []),
+			...(paymentEntriesUrl
+				? [
+						{
+							name: 'finance',
+							title: __('Budget & Transactions', 'fair-events'),
+						},
+				  ]
+				: []),
+			...(groupPricingEnabled
+				? [
+						{
+							name: 'group-pricing',
+							title: __('Group Pricing Rules', 'fair-events'),
+						},
+				  ]
+				: []),
+		],
+		[audienceUrl, isLinkedToPost, paymentEntriesUrl, groupPricingEnabled]
+	);
+
+	const initialTab = useMemo(() => {
+		if (tabs.some((t) => t.name === urlTab)) {
+			return urlTab;
+		}
+		return 'event-details';
+	}, [tabs, urlTab]);
+
 	if (loading) {
 		return (
 			<div className="wrap">
@@ -512,39 +571,7 @@ export default function ManageEventApp() {
 		);
 	}
 
-	const isLinkedToPost = eventDate.link_type === 'post' && eventDate.event_id;
 	const linkedPosts = eventDate.linked_posts || [];
-
-	const tabs = [
-		{
-			name: 'event-details',
-			title: __('Event Details', 'fair-events'),
-		},
-		...(audienceUrl && isLinkedToPost
-			? [
-					{
-						name: 'audience',
-						title: __('Audience', 'fair-events'),
-					},
-			  ]
-			: []),
-		...(paymentEntriesUrl
-			? [
-					{
-						name: 'finance',
-						title: __('Budget & Transactions', 'fair-events'),
-					},
-			  ]
-			: []),
-		...(groupPricingEnabled
-			? [
-					{
-						name: 'group-pricing',
-						title: __('Group Pricing Rules', 'fair-events'),
-					},
-			  ]
-			: []),
-	];
 
 	const renderEventDetailsTab = () => (
 		<>
@@ -1100,7 +1127,11 @@ export default function ManageEventApp() {
 				</Notice>
 			)}
 
-			<TabPanel tabs={tabs}>
+			<TabPanel
+				tabs={tabs}
+				initialTabName={initialTab}
+				onSelect={handleTabSelect}
+			>
 				{(tab) => {
 					if (tab.name === 'audience') {
 						return (
