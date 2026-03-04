@@ -520,6 +520,22 @@ export default function ManageEventApp() {
 			name: 'event-details',
 			title: __('Event Details', 'fair-events'),
 		},
+		...(audienceUrl && isLinkedToPost
+			? [
+					{
+						name: 'audience',
+						title: __('Audience', 'fair-events'),
+					},
+			  ]
+			: []),
+		...(paymentEntriesUrl
+			? [
+					{
+						name: 'finance',
+						title: __('Budget & Transactions', 'fair-events'),
+					},
+			  ]
+			: []),
 		...(groupPricingEnabled
 			? [
 					{
@@ -859,29 +875,6 @@ export default function ManageEventApp() {
 				</Card>
 			)}
 
-			{audienceUrl && isLinkedToPost && (
-				<Card style={{ marginTop: '16px' }}>
-					<CardHeader>
-						<h2>{__('Audience', 'fair-events')}</h2>
-					</CardHeader>
-					<CardBody>
-						<Button
-							variant="secondary"
-							href={audienceUrl + eventDate.event_id}
-						>
-							{__('View Participants', 'fair-events')}
-						</Button>
-					</CardBody>
-				</Card>
-			)}
-
-			{paymentEntriesUrl && (
-				<EventBudget
-					eventDateId={eventDateId}
-					entriesUrl={paymentEntriesUrl}
-				/>
-			)}
-
 			<Card style={{ marginTop: '16px' }}>
 				<CardHeader>
 					<h2>{__('Link Options', 'fair-events')}</h2>
@@ -1109,6 +1102,31 @@ export default function ManageEventApp() {
 
 			<TabPanel tabs={tabs}>
 				{(tab) => {
+					if (tab.name === 'audience') {
+						return (
+							<Card style={{ marginTop: '16px' }}>
+								<CardHeader>
+									<h2>{__('Audience', 'fair-events')}</h2>
+								</CardHeader>
+								<CardBody>
+									<Button
+										variant="secondary"
+										href={audienceUrl + eventDate.event_id}
+									>
+										{__('View Participants', 'fair-events')}
+									</Button>
+								</CardBody>
+							</Card>
+						);
+					}
+					if (tab.name === 'finance') {
+						return (
+							<EventBudget
+								eventDateId={eventDateId}
+								entriesUrl={paymentEntriesUrl}
+							/>
+						);
+					}
 					if (tab.name === 'group-pricing') {
 						return <GroupPricingRules eventDateId={eventDateId} />;
 					}
