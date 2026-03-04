@@ -29,6 +29,7 @@ import apiFetch from '@wordpress/api-fetch';
 import { DurationOptions, calculateDuration } from 'fair-events-shared';
 import ImageExports from './ImageExports.js';
 import EventBudget from './EventBudget.js';
+import EventAudience from './EventAudience.js';
 import GroupPricingRules from './GroupPricingRules.js';
 
 export default function ManageEventApp() {
@@ -510,7 +511,7 @@ export default function ManageEventApp() {
 				name: 'event-details',
 				title: __('Event Details', 'fair-events'),
 			},
-			...(audienceUrl && isLinkedToPost
+			...(audienceUrl
 				? [
 						{
 							name: 'audience',
@@ -535,7 +536,7 @@ export default function ManageEventApp() {
 				  ]
 				: []),
 		],
-		[audienceUrl, isLinkedToPost, paymentEntriesUrl, groupPricingEnabled]
+		[audienceUrl, paymentEntriesUrl, groupPricingEnabled]
 	);
 
 	const initialTab = useMemo(() => {
@@ -1135,19 +1136,11 @@ export default function ManageEventApp() {
 				{(tab) => {
 					if (tab.name === 'audience') {
 						return (
-							<Card style={{ marginTop: '16px' }}>
-								<CardHeader>
-									<h2>{__('Audience', 'fair-events')}</h2>
-								</CardHeader>
-								<CardBody>
-									<Button
-										variant="secondary"
-										href={audienceUrl + eventDate.event_id}
-									>
-										{__('View Participants', 'fair-events')}
-									</Button>
-								</CardBody>
-							</Card>
+							<EventAudience
+								eventId={eventDate.event_id}
+								eventDateId={eventDateId}
+								audienceUrl={audienceUrl}
+							/>
 						);
 					}
 					if (tab.name === 'finance') {

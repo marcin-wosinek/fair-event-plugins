@@ -727,6 +727,7 @@ class EventParticipantsController extends WP_REST_Controller {
 
 		$signed_up     = ( $counts['signed_up'] ?? 0 ) + ( $counts['interested'] ?? 0 );
 		$collaborators = $counts['collaborator'] ?? 0;
+		$interested    = $counts['interested'] ?? 0;
 
 		$response_data = array(
 			'event_id'      => $event_id,
@@ -739,6 +740,7 @@ class EventParticipantsController extends WP_REST_Controller {
 			'gallery_link'  => admin_url( "upload.php?mode=list&fair_event_filter={$event_id}" ),
 			'signed_up'     => $signed_up,
 			'collaborators' => $collaborators,
+			'interested'    => $interested,
 		);
 
 		// Add manage-event URL and event_date_id if fair-events plugin provides event dates.
