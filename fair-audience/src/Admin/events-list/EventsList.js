@@ -117,6 +117,13 @@ export default function EventsList() {
 					window.open(item.link, '_blank');
 				},
 			},
+			{
+				id: 'questionnaire-responses',
+				label: __('Questionnaire Responses', 'fair-audience'),
+				callback: ([item]) => {
+					window.location.href = `admin.php?page=fair-audience-questionnaire-responses&event_date_id=${item.event_date_id}`;
+				},
+			},
 		],
 		[]
 	);

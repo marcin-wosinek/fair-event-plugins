@@ -134,6 +134,9 @@ class Plugin {
 		$custom_mail_controller = new \FairAudience\API\CustomMailController();
 		$custom_mail_controller->register_routes();
 
+		$questionnaire_responses_controller = new \FairAudience\API\QuestionnaireResponsesController();
+		$questionnaire_responses_controller->register_routes();
+
 		// Membership fees (only when fair-payment plugin is active).
 		if ( class_exists( 'FairPayment\Core\Plugin' ) ) {
 			$fees_controller = new \FairAudience\API\FeesController();

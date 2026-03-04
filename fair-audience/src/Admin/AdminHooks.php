@@ -26,21 +26,25 @@ class AdminHooks {
 	 * @var array<string, array{title: string, callback: string}>
 	 */
 	private const HIDDEN_PAGES = array(
-		'fair-audience-event-participants' => array(
+		'fair-audience-event-participants'      => array(
 			'title'    => 'Event Participants',
 			'callback' => 'render_event_participants_page',
 		),
-		'fair-audience-edit-poll'          => array(
+		'fair-audience-edit-poll'               => array(
 			'title'    => 'Edit Poll',
 			'callback' => 'render_edit_poll_page',
 		),
-		'fair-audience-edit-extra-message' => array(
+		'fair-audience-edit-extra-message'      => array(
 			'title'    => 'Edit Extra Message',
 			'callback' => 'render_edit_extra_message_page',
 		),
-		'fair-audience-fee-detail'         => array(
+		'fair-audience-fee-detail'              => array(
 			'title'    => 'Fee Detail',
 			'callback' => 'render_fee_detail_page',
+		),
+		'fair-audience-questionnaire-responses' => array(
+			'title'    => 'Questionnaire Responses',
+			'callback' => 'render_questionnaire_responses_page',
 		),
 	);
 
@@ -200,6 +204,9 @@ class AdminHooks {
 
 		// Hidden submenu page - Event Participants.
 		$this->register_hidden_page( 'fair-audience-event-participants' );
+
+		// Hidden submenu page - Questionnaire Responses.
+		$this->register_hidden_page( 'fair-audience-questionnaire-responses' );
 
 		// Submenu page - Import.
 		add_submenu_page(
@@ -419,6 +426,14 @@ class AdminHooks {
 	}
 
 	/**
+	 * Render Questionnaire Responses page.
+	 */
+	public function render_questionnaire_responses_page() {
+		$page = new QuestionnaireResponsesPage();
+		$page->render();
+	}
+
+	/**
 	 * Render Settings page.
 	 */
 	public function render_settings_page() {
@@ -499,6 +514,11 @@ class AdminHooks {
 		// Fee Detail page.
 		if ( 'admin_page_fair-audience-fee-detail' === $hook ) {
 			$this->enqueue_page_script( 'fee-detail', $plugin_dir );
+		}
+
+		// Questionnaire Responses page.
+		if ( 'admin_page_fair-audience-questionnaire-responses' === $hook ) {
+			$this->enqueue_page_script( 'questionnaire-responses', $plugin_dir );
 		}
 
 		// Instagram Posts page.
