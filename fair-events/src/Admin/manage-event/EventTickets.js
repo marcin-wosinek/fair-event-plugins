@@ -174,11 +174,12 @@ export default function EventTickets({ eventDateId, onSaveRef }) {
 	};
 
 	const addSalePeriod = () => {
+		const lastPeriod = salePeriods[salePeriods.length - 1];
 		setSalePeriods([
 			...salePeriods,
 			{
 				name: '',
-				sale_start: '',
+				sale_start: lastPeriod?.sale_end || '',
 				sale_end: '',
 				sort_order: salePeriods.length,
 			},
@@ -237,7 +238,11 @@ export default function EventTickets({ eventDateId, onSaveRef }) {
 	}
 
 	return (
-		<VStack spacing={4} style={{ marginTop: '16px' }}>
+		<VStack
+			spacing={4}
+			className="fair-events-tickets"
+			style={{ marginTop: '16px' }}
+		>
 			{error && (
 				<Notice
 					status="error"

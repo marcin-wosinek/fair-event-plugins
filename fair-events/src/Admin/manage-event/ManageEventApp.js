@@ -1119,7 +1119,8 @@ export default function ManageEventApp() {
 		<div className="wrap fair-events-manage-event">
 			<style>
 				{`.fair-events-manage-event .components-card > div:first-child { height: auto; }
-.fair-events-manage-event .components-card__body > * { max-width: 600px; }`}
+.fair-events-manage-event .components-card__body > * { max-width: 600px; }
+.fair-events-manage-event .fair-events-tickets .components-card__body > * { max-width: none; }`}
 			</style>
 			<h1>
 				{__('Manage Event', 'fair-events')}
