@@ -240,6 +240,14 @@ const CSS_PREFIX = 'fair-audience-audience';
 			requestData.event_date_id = eventDateId;
 		}
 
+		// Include post_id for answer emails
+		const postId = container.dataset.postId
+			? parseInt(container.dataset.postId, 10)
+			: null;
+		if (postId) {
+			requestData.post_id = postId;
+		}
+
 		// Collect questionnaire answers
 		const answers = collectQuestionnaireAnswers(form, questionsConfig);
 		if (answers.length > 0) {
@@ -253,6 +261,8 @@ const CSS_PREFIX = 'fair-audience-audience';
 		);
 
 		// Submit to API
+		const isEditMode = container.dataset.editMode === '1';
+
 		apiFetch({
 			path: '/fair-audience/v1/audience-signup',
 			method: 'POST',
@@ -276,6 +286,13 @@ const CSS_PREFIX = 'fair-audience-audience';
 
 				form.reset();
 				submitButton.disabled = true;
+
+				// In edit mode, clean the URL to remove the token
+				if (isEditMode) {
+					const url = new URL(window.location);
+					url.searchParams.delete('edit_audience_signup');
+					window.history.replaceState({}, '', url);
+				}
 
 				// Show notification
 				showNotification(message, 'success');

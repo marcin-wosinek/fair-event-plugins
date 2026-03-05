@@ -15,6 +15,10 @@
 defined( 'WPINC' ) || die;
 
 use FairEvents\Models\EventDates;
+use FairAudience\Services\AudienceSignupToken;
+use FairAudience\Database\QuestionnaireSubmissionRepository;
+use FairAudience\Database\QuestionnaireAnswerRepository;
+use FairAudience\Database\ParticipantRepository;
 
 // Get block attributes.
 $submit_text        = $attributes['submitButtonText'] ?? __( 'Register', 'fair-audience' );
@@ -38,6 +42,43 @@ if ( $event_date_id_attr > 0 ) {
 	}
 }
 
+// Check for edit mode via token.
+$edit_token       = get_query_var( 'edit_audience_signup', '' );
+$existing_answers = array();
+$existing_name    = '';
+$existing_surname = '';
+$existing_email   = '';
+$is_edit_mode     = false;
+
+if ( ! empty( $edit_token ) ) {
+	$submission_id = AudienceSignupToken::verify( $edit_token );
+	if ( $submission_id ) {
+		$submission_repo = new QuestionnaireSubmissionRepository();
+		$submission      = $submission_repo->get_by_id( $submission_id );
+		if ( $submission ) {
+			$answer_repo = new QuestionnaireAnswerRepository();
+			$answers     = $answer_repo->get_by_submission( $submission_id );
+
+			foreach ( $answers as $answer ) {
+				$existing_answers[ $answer->question_key ] = array(
+					'value' => $answer->answer_value,
+					'type'  => $answer->question_type,
+				);
+			}
+
+			$participant_repo = new ParticipantRepository();
+			$participant      = $participant_repo->get_by_id( $submission->participant_id );
+			if ( $participant ) {
+				$existing_name    = $participant->name;
+				$existing_surname = $participant->surname;
+				$existing_email   = $participant->email;
+			}
+
+			$is_edit_mode = true;
+		}
+	}
+}
+
 // Generate unique ID for this form instance.
 $form_id = 'fair-audience-audience-' . wp_unique_id();
 
@@ -50,6 +91,19 @@ $wrapper_data = array(
 
 if ( '' !== $event_date_id ) {
 	$wrapper_data['data-event-date-id'] = esc_attr( $event_date_id );
+}
+
+$current_post_id = get_the_ID();
+if ( $current_post_id ) {
+	$wrapper_data['data-post-id'] = (string) $current_post_id;
+}
+
+if ( $is_edit_mode ) {
+	$wrapper_data['data-existing-answers'] = wp_json_encode( $existing_answers );
+	$wrapper_data['data-existing-name']    = esc_attr( $existing_name );
+	$wrapper_data['data-existing-surname'] = esc_attr( $existing_surname );
+	$wrapper_data['data-existing-email']   = esc_attr( $existing_email );
+	$wrapper_data['data-edit-mode']        = '1';
 }
 
 // Get wrapper attributes.
@@ -68,6 +122,7 @@ $wrapper_attributes = get_block_wrapper_attributes( $wrapper_data );
 				name="audience_name"
 				required
 				placeholder="<?php echo esc_attr__( 'Enter your first name', 'fair-audience' ); ?>"
+				value="<?php echo esc_attr( $existing_name ); ?>"
 			/>
 		</p>
 		<p>
@@ -79,6 +134,7 @@ $wrapper_attributes = get_block_wrapper_attributes( $wrapper_data );
 				id="<?php echo esc_attr( $form_id ); ?>-surname"
 				name="audience_surname"
 				placeholder="<?php echo esc_attr__( 'Enter your last name', 'fair-audience' ); ?>"
+				value="<?php echo esc_attr( $existing_surname ); ?>"
 			/>
 		</p>
 		<p>
@@ -91,6 +147,7 @@ $wrapper_attributes = get_block_wrapper_attributes( $wrapper_data );
 				name="audience_email"
 				required
 				placeholder="<?php echo esc_attr__( 'Enter your email', 'fair-audience' ); ?>"
+				value="<?php echo esc_attr( $existing_email ); ?>"
 			/>
 		</p>
 
@@ -117,6 +174,9 @@ $wrapper_attributes = get_block_wrapper_attributes( $wrapper_data );
 			$q_options  = $question['options'] ?? array();
 			$q_id       = esc_attr( $form_id . '-q-' . $q_key );
 
+			$q_existing       = $existing_answers[ $q_key ] ?? null;
+			$q_existing_value = $q_existing ? $q_existing['value'] : '';
+
 			$required_html = $q_required
 				? ' <span class="required">*</span>'
 				: '';
@@ -132,6 +192,7 @@ $wrapper_attributes = get_block_wrapper_attributes( $wrapper_data );
 					type="text"
 					id="<?php echo $q_id; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?>"
 					name="questionnaire[<?php echo esc_attr( $q_key ); ?>]"
+					value="<?php echo esc_attr( $q_existing_value ); ?>"
 					<?php echo $required_attr; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?>
 				/>
 			</p>
@@ -146,7 +207,7 @@ $wrapper_attributes = get_block_wrapper_attributes( $wrapper_data );
 					name="questionnaire[<?php echo esc_attr( $q_key ); ?>]"
 					rows="3"
 					<?php echo $required_attr; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?>
-				></textarea>
+				><?php echo esc_textarea( $q_existing_value ); ?></textarea>
 			</div>
 
 			<?php elseif ( 'number' === $q_type ) : ?>
@@ -158,6 +219,7 @@ $wrapper_attributes = get_block_wrapper_attributes( $wrapper_data );
 					type="number"
 					id="<?php echo $q_id; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?>"
 					name="questionnaire[<?php echo esc_attr( $q_key ); ?>]"
+					value="<?php echo esc_attr( $q_existing_value ); ?>"
 					<?php echo $required_attr; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?>
 				/>
 			</p>
@@ -171,6 +233,7 @@ $wrapper_attributes = get_block_wrapper_attributes( $wrapper_data );
 					type="date"
 					id="<?php echo $q_id; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?>"
 					name="questionnaire[<?php echo esc_attr( $q_key ); ?>]"
+					value="<?php echo esc_attr( $q_existing_value ); ?>"
 					<?php echo $required_attr; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?>
 				/>
 			</p>
@@ -187,7 +250,7 @@ $wrapper_attributes = get_block_wrapper_attributes( $wrapper_data );
 				>
 					<option value=""><?php echo esc_html__( 'Select...', 'fair-audience' ); ?></option>
 					<?php foreach ( $q_options as $option ) : ?>
-					<option value="<?php echo esc_attr( $option ); ?>"><?php echo esc_html( $option ); ?></option>
+					<option value="<?php echo esc_attr( $option ); ?>"<?php selected( $q_existing_value, $option ); ?>><?php echo esc_html( $option ); ?></option>
 					<?php endforeach; ?>
 				</select>
 			</p>
@@ -203,6 +266,7 @@ $wrapper_attributes = get_block_wrapper_attributes( $wrapper_data );
 						type="radio"
 						name="questionnaire[<?php echo esc_attr( $q_key ); ?>]"
 						value="<?php echo esc_attr( $option ); ?>"
+						<?php checked( $q_existing_value, $option ); ?>
 						<?php echo $required_attr; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?>
 					/>
 					<?php echo esc_html( $option ); ?>
@@ -210,7 +274,16 @@ $wrapper_attributes = get_block_wrapper_attributes( $wrapper_data );
 				<?php endforeach; ?>
 			</fieldset>
 
-			<?php elseif ( 'checkbox' === $q_type ) : ?>
+				<?php
+			elseif ( 'checkbox' === $q_type ) :
+				$q_checked_values = array();
+				if ( ! empty( $q_existing_value ) ) {
+					$decoded = json_decode( $q_existing_value, true );
+					if ( is_array( $decoded ) ) {
+						$q_checked_values = $decoded;
+					}
+				}
+				?>
 			<fieldset class="fair-audience-audience-question-group">
 				<legend>
 					<?php echo esc_html( $q_text ); ?><?php echo $required_html; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?>
@@ -221,6 +294,7 @@ $wrapper_attributes = get_block_wrapper_attributes( $wrapper_data );
 						type="checkbox"
 						name="questionnaire[<?php echo esc_attr( $q_key ); ?>][]"
 						value="<?php echo esc_attr( $option ); ?>"
+						<?php checked( in_array( $option, $q_checked_values, true ) ); ?>
 					/>
 					<?php echo esc_html( $option ); ?>
 				</label>
@@ -241,7 +315,7 @@ $wrapper_attributes = get_block_wrapper_attributes( $wrapper_data );
 
 		<div class="wp-block-button">
 			<button type="submit" class="wp-block-button__link wp-element-button fair-audience-audience-submit-button">
-				<?php echo esc_html( $submit_text ); ?>
+				<?php echo esc_html( $is_edit_mode ? __( 'Update Answers', 'fair-audience' ) : $submit_text ); ?>
 			</button>
 		</div>
 

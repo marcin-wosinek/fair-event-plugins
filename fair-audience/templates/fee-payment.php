@@ -23,8 +23,8 @@ use FairAudience\Database\ParticipantRepository;
 $token = sanitize_text_field( get_query_var( 'fee_payment' ) );
 
 // Initialize repositories.
-$payment_repository   = new FeePaymentRepository();
-$fee_repository       = new FeeRepository();
+$payment_repository     = new FeePaymentRepository();
+$fee_repository         = new FeeRepository();
 $participant_repository = new ParticipantRepository();
 
 // Process the request.
@@ -127,7 +127,7 @@ if ( false === $fee_payment_id ) {
 					$transaction_repository->record_attempt( $fee_payment->id, $transaction_id );
 
 					// Initiate payment with redirect back to this page.
-					$redirect_url = FeePaymentToken::get_url( $fee_payment->id );
+					$redirect_url   = FeePaymentToken::get_url( $fee_payment->id );
 					$payment_result = fair_payment_initiate_payment(
 						$transaction_id,
 						array(

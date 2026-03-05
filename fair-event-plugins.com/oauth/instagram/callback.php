@@ -13,7 +13,7 @@ session_start();
 
 // Check for errors from Facebook.
 if ( isset( $_GET['error'] ) ) {
-	$error = $_GET['error'];
+	$error      = $_GET['error'];
 	$return_url = $_SESSION['instagram_oauth_return_url'] ?? '';
 
 	if ( ! empty( $return_url ) ) {
@@ -27,7 +27,7 @@ if ( isset( $_GET['error'] ) ) {
 }
 
 // Validate state to prevent CSRF.
-$state = $_GET['state'] ?? '';
+$state        = $_GET['state'] ?? '';
 $stored_state = $_SESSION['instagram_oauth_state'] ?? '';
 
 if ( empty( $state ) || $state !== $stored_state ) {
@@ -58,7 +58,7 @@ $protocol     = ( ! empty( $_SERVER['HTTPS'] ) && $_SERVER['HTTPS'] !== 'off' ) 
 $callback_url = $protocol . '://' . $_SERVER['HTTP_HOST'] . '/oauth/instagram/callback.php';
 
 // Exchange code for access token.
-$token_url = 'https://graph.facebook.com/v24.0/oauth/access_token';
+$token_url    = 'https://graph.facebook.com/v24.0/oauth/access_token';
 $token_params = array(
 	'client_id'     => $instagramAppId,
 	'client_secret' => $instagramAppSecret,
@@ -71,7 +71,7 @@ curl_setopt( $ch, CURLOPT_URL, $token_url . '?' . http_build_query( $token_param
 curl_setopt( $ch, CURLOPT_RETURNTRANSFER, true );
 curl_setopt( $ch, CURLOPT_TIMEOUT, 30 );
 $token_response = curl_exec( $ch );
-$curl_error = curl_error( $ch );
+$curl_error     = curl_error( $ch );
 curl_close( $ch );
 
 if ( $curl_error ) {
@@ -95,12 +95,14 @@ if ( empty( $access_token ) ) {
 }
 
 // Exchange short-lived token for long-lived token.
-$long_lived_url = 'https://graph.facebook.com/v24.0/oauth/access_token?' . http_build_query( array(
-	'grant_type'        => 'fb_exchange_token',
-	'client_id'         => $instagramAppId,
-	'client_secret'     => $instagramAppSecret,
-	'fb_exchange_token' => $access_token,
-) );
+$long_lived_url = 'https://graph.facebook.com/v24.0/oauth/access_token?' . http_build_query(
+	array(
+		'grant_type'        => 'fb_exchange_token',
+		'client_id'         => $instagramAppId,
+		'client_secret'     => $instagramAppSecret,
+		'fb_exchange_token' => $access_token,
+	)
+);
 
 $ch = curl_init();
 curl_setopt( $ch, CURLOPT_URL, $long_lived_url );
@@ -117,10 +119,12 @@ if ( isset( $long_lived_data['access_token'] ) ) {
 }
 
 // Get the user's Facebook Pages to find linked Instagram accounts.
-$pages_url = 'https://graph.facebook.com/v24.0/me/accounts?' . http_build_query( array(
-	'access_token' => $access_token,
-	'fields'       => 'id,name,instagram_business_account',
-) );
+$pages_url = 'https://graph.facebook.com/v24.0/me/accounts?' . http_build_query(
+	array(
+		'access_token' => $access_token,
+		'fields'       => 'id,name,instagram_business_account',
+	)
+);
 
 $ch = curl_init();
 curl_setopt( $ch, CURLOPT_URL, $pages_url );
@@ -131,7 +135,7 @@ curl_close( $ch );
 
 $pages_data = json_decode( $pages_response, true );
 
-$instagram_user_id = '';
+$instagram_user_id  = '';
 $instagram_username = '';
 
 // Find the first Instagram Business Account linked to a Page.
@@ -141,10 +145,12 @@ if ( isset( $pages_data['data'] ) && is_array( $pages_data['data'] ) ) {
 			$instagram_user_id = $page['instagram_business_account']['id'];
 
 			// Get Instagram account details.
-			$ig_url = 'https://graph.facebook.com/v24.0/' . $instagram_user_id . '?' . http_build_query( array(
-				'access_token' => $access_token,
-				'fields'       => 'id,username',
-			) );
+			$ig_url = 'https://graph.facebook.com/v24.0/' . $instagram_user_id . '?' . http_build_query(
+				array(
+					'access_token' => $access_token,
+					'fields'       => 'id,username',
+				)
+			);
 
 			$ch = curl_init();
 			curl_setopt( $ch, CURLOPT_URL, $ig_url );
@@ -153,7 +159,7 @@ if ( isset( $pages_data['data'] ) && is_array( $pages_data['data'] ) ) {
 			$ig_response = curl_exec( $ch );
 			curl_close( $ch );
 
-			$ig_data = json_decode( $ig_response, true );
+			$ig_data            = json_decode( $ig_response, true );
 			$instagram_username = $ig_data['username'] ?? '';
 
 			break; // Use the first Instagram account found.
@@ -164,10 +170,12 @@ if ( isset( $pages_data['data'] ) && is_array( $pages_data['data'] ) ) {
 // If no Instagram Business Account found, try to get basic user info.
 if ( empty( $instagram_user_id ) ) {
 	// Get basic Facebook user info as fallback.
-	$me_url = 'https://graph.facebook.com/v24.0/me?' . http_build_query( array(
-		'access_token' => $access_token,
-		'fields'       => 'id,name',
-	) );
+	$me_url = 'https://graph.facebook.com/v24.0/me?' . http_build_query(
+		array(
+			'access_token' => $access_token,
+			'fields'       => 'id,name',
+		)
+	);
 
 	$ch = curl_init();
 	curl_setopt( $ch, CURLOPT_URL, $me_url );

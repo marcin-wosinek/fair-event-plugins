@@ -21,7 +21,7 @@ $token_repository       = new EmailConfirmationTokenRepository();
 $participant_repository = new ParticipantRepository();
 
 // Process the confirmation.
-$result        = array(
+$result = array(
 	'success' => false,
 	'message' => '',
 	'type'    => 'error',

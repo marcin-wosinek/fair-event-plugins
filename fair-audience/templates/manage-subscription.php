@@ -20,7 +20,7 @@ $token = sanitize_text_field( get_query_var( 'manage_subscription' ) );
 $participant_repository = new ParticipantRepository();
 
 // Process the request.
-$result      = array(
+$result = array(
 	'success'     => false,
 	'message'     => '',
 	'type'        => 'error',

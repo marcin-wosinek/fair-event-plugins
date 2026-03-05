@@ -158,6 +158,7 @@ class Plugin {
 		$vars[] = 'manage_subscription';
 		$vars[] = 'collaborator_profile';
 		$vars[] = 'fee_payment';
+		$vars[] = 'edit_audience_signup';
 		return $vars;
 	}
 

@@ -147,6 +147,11 @@ class AudienceSignupController extends WP_REST_Controller {
 							'required' => false,
 							'default'  => 0,
 						),
+						'post_id'               => array(
+							'type'     => 'integer',
+							'required' => false,
+							'default'  => 0,
+						),
 						'questionnaire_answers' => array(
 							'type'     => 'array',
 							'required' => false,
@@ -201,6 +206,7 @@ class AudienceSignupController extends WP_REST_Controller {
 		$keep_informed         = $request->get_param( 'keep_informed' );
 		$questionnaire_answers = $request->get_param( 'questionnaire_answers' );
 		$event_date_id         = $request->get_param( 'event_date_id' );
+		$post_id               = $request->get_param( 'post_id' );
 
 		// Validate email.
 		if ( ! is_email( $email ) ) {
@@ -234,7 +240,12 @@ class AudienceSignupController extends WP_REST_Controller {
 			}
 
 			// Save questionnaire answers even for existing participants.
-			$this->save_questionnaire_answers( $existing->id, $questionnaire_answers, $event_date_id );
+			$submission_id = $this->save_questionnaire_answers( $existing->id, $questionnaire_answers, $event_date_id, $post_id );
+
+			// Send answers email if there are answers.
+			if ( $submission_id > 0 && ! empty( $questionnaire_answers ) ) {
+				$this->email_service->send_audience_signup_answers_email( $existing, $submission_id, $questionnaire_answers, $post_id );
+			}
 
 			return rest_ensure_response(
 				array(
@@ -267,7 +278,12 @@ class AudienceSignupController extends WP_REST_Controller {
 		}
 
 		// Save questionnaire answers.
-		$this->save_questionnaire_answers( $participant->id, $questionnaire_answers, $event_date_id );
+		$submission_id = $this->save_questionnaire_answers( $participant->id, $questionnaire_answers, $event_date_id, $post_id );
+
+		// Send answers email if there are answers.
+		if ( $submission_id > 0 && ! empty( $questionnaire_answers ) ) {
+			$this->email_service->send_audience_signup_answers_email( $participant, $submission_id, $questionnaire_answers, $post_id );
+		}
 
 		// If keep_informed, send confirmation email.
 		if ( $keep_informed ) {
@@ -300,10 +316,12 @@ class AudienceSignupController extends WP_REST_Controller {
 	 * @param int   $participant_id Participant ID.
 	 * @param array $answers        Questionnaire answers from request.
 	 * @param int   $event_date_id  Optional event date ID.
+	 * @param int   $post_id        Optional post ID.
+	 * @return int Submission ID, or 0 on failure.
 	 */
-	private function save_questionnaire_answers( $participant_id, $answers, $event_date_id = 0 ) {
+	private function save_questionnaire_answers( $participant_id, $answers, $event_date_id = 0, $post_id = 0 ) {
 		if ( empty( $answers ) ) {
-			return;
+			return 0;
 		}
 
 		$submission_data = array(
@@ -315,14 +333,20 @@ class AudienceSignupController extends WP_REST_Controller {
 			$submission_data['event_date_id'] = $event_date_id;
 		}
 
+		if ( $post_id > 0 ) {
+			$submission_data['post_id'] = $post_id;
+		}
+
 		$submission = new QuestionnaireSubmission();
 		$submission->populate( $submission_data );
 
 		if ( ! $submission->save() ) {
-			return;
+			return 0;
 		}
 
 		$this->answer_repository->save_answers( $submission->id, $answers );
+
+		return $submission->id;
 	}
 
 	/**

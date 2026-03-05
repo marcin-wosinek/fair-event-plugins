@@ -34,7 +34,7 @@ if ( ! filter_var( $return_url, FILTER_VALIDATE_URL ) ) {
 
 // Store state in session for CSRF protection.
 session_start();
-$state = bin2hex( random_bytes( 16 ) );
+$state                                  = bin2hex( random_bytes( 16 ) );
 $_SESSION['instagram_oauth_state']      = $state;
 $_SESSION['instagram_oauth_return_url'] = $return_url;
 $_SESSION['instagram_oauth_site_id']    = $site_id;
