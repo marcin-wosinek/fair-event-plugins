@@ -55,6 +55,18 @@ class QuestionnaireResponsesController extends WP_REST_Controller {
 				),
 			)
 		);
+
+		register_rest_route(
+			$this->namespace,
+			'/' . $this->rest_base . '/(?P<id>\d+)',
+			array(
+				array(
+					'methods'             => WP_REST_Server::DELETABLE,
+					'callback'            => array( $this, 'delete_item' ),
+					'permission_callback' => array( $this, 'delete_item_permissions_check' ),
+				),
+			)
+		);
 	}
 
 	/**
@@ -114,5 +126,42 @@ class QuestionnaireResponsesController extends WP_REST_Controller {
 		}
 
 		return new WP_REST_Response( $data, 200 );
+	}
+
+	/**
+	 * Check permissions for delete.
+	 *
+	 * @param WP_REST_Request $request Request.
+	 * @return bool|WP_Error True if allowed.
+	 */
+	public function delete_item_permissions_check( $request ) {
+		return current_user_can( 'manage_options' );
+	}
+
+	/**
+	 * Delete a questionnaire response (submission and its answers).
+	 *
+	 * @param WP_REST_Request $request Request.
+	 * @return WP_REST_Response|WP_Error Response.
+	 */
+	public function delete_item( $request ) {
+		$id = (int) $request->get_param( 'id' );
+
+		$submission_repo = new QuestionnaireSubmissionRepository();
+		$submission      = $submission_repo->get_by_id( $id );
+
+		if ( ! $submission ) {
+			return new WP_Error(
+				'not_found',
+				__( 'Response not found.', 'fair-audience' ),
+				array( 'status' => 404 )
+			);
+		}
+
+		$answer_repo = new QuestionnaireAnswerRepository();
+		$answer_repo->delete_by_submission( $id );
+		$submission_repo->delete_by_id( $id );
+
+		return new WP_REST_Response( null, 204 );
 	}
 }

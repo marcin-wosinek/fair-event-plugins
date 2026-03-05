@@ -179,6 +179,24 @@ class QuestionnaireSubmissionRepository {
 	}
 
 	/**
+	 * Delete a submission by ID.
+	 *
+	 * @param int $id Submission ID.
+	 * @return bool Success.
+	 */
+	public function delete_by_id( $id ) {
+		global $wpdb;
+
+		$table_name = $this->get_table_name();
+
+		return $wpdb->delete(
+			$table_name,
+			array( 'id' => $id ),
+			array( '%d' )
+		) !== false;
+	}
+
+	/**
 	 * Delete all submissions for a participant.
 	 *
 	 * @param int $participant_id Participant ID.

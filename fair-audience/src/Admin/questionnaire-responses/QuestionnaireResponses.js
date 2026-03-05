@@ -122,6 +122,50 @@ export default function QuestionnaireResponses() {
 		[responses.length, view.perPage]
 	);
 
+	const handleDelete = (item) => {
+		// eslint-disable-next-line no-undef
+		if (
+			!confirm(
+				__(
+					'Are you sure you want to delete this response?',
+					'fair-audience'
+				)
+			)
+		) {
+			return;
+		}
+
+		apiFetch({
+			path: `/fair-audience/v1/questionnaire-responses/${item.id}`,
+			method: 'DELETE',
+		})
+			.then(() => {
+				setResponses((prev) => prev.filter((r) => r.id !== item.id));
+			})
+			.catch((err) => {
+				// eslint-disable-next-line no-undef
+				alert(
+					__('Error: ', 'fair-audience') +
+						(err.message ||
+							__('Failed to delete response.', 'fair-audience'))
+				);
+			});
+	};
+
+	const actions = useMemo(
+		() => [
+			{
+				id: 'delete',
+				label: __('Delete', 'fair-audience'),
+				icon: 'trash',
+				callback: ([item]) => handleDelete(item),
+				supportsBulk: false,
+				isDestructive: true,
+			},
+		],
+		[]
+	);
+
 	const exportCsv = () => {
 		if (responses.length === 0) {
 			return;
@@ -210,6 +254,7 @@ export default function QuestionnaireResponses() {
 						fields={fields}
 						view={viewWithFields}
 						onChangeView={setView}
+						actions={actions}
 						paginationInfo={paginationInfo}
 						defaultLayouts={DEFAULT_LAYOUTS}
 						isLoading={isLoading}
