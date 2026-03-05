@@ -217,6 +217,15 @@ class Plugin {
 			}
 		);
 
+		// Tickets controller.
+		add_action(
+			'rest_api_init',
+			function () {
+				$controller = new \FairEvents\API\TicketsController();
+				$controller->register_routes();
+			}
+		);
+
 		// Add event relationship to attachment REST responses.
 		add_action(
 			'rest_api_init',

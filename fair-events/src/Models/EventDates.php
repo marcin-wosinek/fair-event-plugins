@@ -108,6 +108,13 @@ class EventDates {
 	public $theme_image_id;
 
 	/**
+	 * Event capacity
+	 *
+	 * @var int|null
+	 */
+	public $capacity;
+
+	/**
 	 * Get event dates by event ID
 	 *
 	 * Checks the direct event_id column first (primary post), then falls back
@@ -174,6 +181,7 @@ class EventDates {
 		$event_dates->external_url    = $result->external_url ?? null;
 		$event_dates->link_type       = $result->link_type ?? 'post';
 		$event_dates->theme_image_id  = isset( $result->theme_image_id ) && $result->theme_image_id ? (int) $result->theme_image_id : null;
+		$event_dates->capacity        = isset( $result->capacity ) && null !== $result->capacity ? (int) $result->capacity : null;
 
 		return $event_dates;
 	}
@@ -687,6 +695,7 @@ class EventDates {
 			'external_url'    => '%s',
 			'link_type'       => '%s',
 			'theme_image_id'  => '%d',
+			'capacity'        => '%d',
 		);
 
 		$update_data   = array();

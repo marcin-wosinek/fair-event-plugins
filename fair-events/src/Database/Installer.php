@@ -50,6 +50,15 @@ class Installer {
 		$sql = Schema::get_group_pricing_rules_table_sql();
 		dbDelta( $sql );
 
+		$sql = Schema::get_ticket_types_table_sql();
+		dbDelta( $sql );
+
+		$sql = Schema::get_ticket_sale_periods_table_sql();
+		dbDelta( $sql );
+
+		$sql = Schema::get_ticket_prices_table_sql();
+		dbDelta( $sql );
+
 		// Run migration if upgrading from pre-1.0.0
 		if ( version_compare( $current_version, '1.0.0', '<' ) ) {
 			self::migrate_to_1_0_0();
@@ -115,6 +124,13 @@ class Installer {
 		}
 
 		// Version 2.5.0 - Group pricing rules table (no data migration needed, table created by dbDelta).
+
+		// Run migration if upgrading from pre-2.6.0 (add capacity to event_dates).
+		if ( version_compare( $current_version, '2.6.0', '<' ) ) {
+			self::migrate_to_2_6_0();
+		}
+
+		// Version 2.6.0 - Ticket tables (no data migration needed, tables created by dbDelta).
 
 		// Update database version
 		Schema::update_db_version( Schema::DB_VERSION );
@@ -186,6 +202,10 @@ class Installer {
 
 			if ( version_compare( $current_version, '2.4.0', '<' ) ) {
 				self::migrate_to_2_4_0();
+			}
+
+			if ( version_compare( $current_version, '2.6.0', '<' ) ) {
+				self::migrate_to_2_6_0();
 			}
 
 			// Install/update tables
@@ -846,6 +866,34 @@ class Installer {
 			$wpdb->query(
 				$wpdb->prepare(
 					'ALTER TABLE %i ADD COLUMN page_id BIGINT UNSIGNED DEFAULT NULL AFTER enabled',
+					$table_name
+				)
+			);
+		}
+	}
+
+	/**
+	 * Migrate to version 2.6.0 - Add capacity column to event_dates table.
+	 *
+	 * @return void
+	 */
+	private static function migrate_to_2_6_0() {
+		global $wpdb;
+
+		$table_name = $wpdb->prefix . 'fair_event_dates';
+
+		// Check if capacity column already exists.
+		$capacity_exists = $wpdb->get_results(
+			$wpdb->prepare(
+				"SHOW COLUMNS FROM %i LIKE 'capacity'",
+				$table_name
+			)
+		);
+
+		if ( empty( $capacity_exists ) ) {
+			$wpdb->query(
+				$wpdb->prepare(
+					'ALTER TABLE %i ADD COLUMN capacity INT UNSIGNED DEFAULT NULL AFTER theme_image_id',
 					$table_name
 				)
 			);

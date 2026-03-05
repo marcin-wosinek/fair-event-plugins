@@ -6,7 +6,13 @@
  * @package FairEvents
  */
 
-import { useState, useEffect, useMemo, useCallback } from '@wordpress/element';
+import {
+	useState,
+	useEffect,
+	useMemo,
+	useCallback,
+	useRef,
+} from '@wordpress/element';
 import {
 	Card,
 	CardHeader,
@@ -31,6 +37,7 @@ import ImageExports from './ImageExports.js';
 import EventBudget from './EventBudget.js';
 import EventAudience from './EventAudience.js';
 import GroupPricingRules from './GroupPricingRules.js';
+import EventTickets from './EventTickets.js';
 
 export default function ManageEventApp() {
 	const eventDateId = window.fairEventsManageEventData?.eventDateId;
@@ -84,6 +91,12 @@ export default function ManageEventApp() {
 	const [linkingPost, setLinkingPost] = useState(false);
 	const [linkPostId, setLinkPostId] = useState('');
 	const [searchResults, setSearchResults] = useState([]);
+	const [activeTab, setActiveTab] = useState(
+		() =>
+			new URLSearchParams(window.location.search).get('tab') ||
+			'event-details'
+	);
+	const ticketSaveRef = useRef(null);
 
 	useEffect(() => {
 		if (!eventDateId) {
@@ -496,6 +509,7 @@ export default function ManageEventApp() {
 	}, []);
 
 	const handleTabSelect = useCallback((tabName) => {
+		setActiveTab(tabName);
 		const url = new URL(window.location.href);
 		if (tabName === 'event-details') {
 			url.searchParams.delete('tab');
@@ -510,6 +524,10 @@ export default function ManageEventApp() {
 			{
 				name: 'event-details',
 				title: __('Event Details', 'fair-events'),
+			},
+			{
+				name: 'tickets',
+				title: __('Tickets', 'fair-events'),
 			},
 			...(audienceUrl
 				? [
@@ -1134,6 +1152,14 @@ export default function ManageEventApp() {
 				onSelect={handleTabSelect}
 			>
 				{(tab) => {
+					if (tab.name === 'tickets') {
+						return (
+							<EventTickets
+								eventDateId={eventDateId}
+								onSaveRef={ticketSaveRef}
+							/>
+						);
+					}
 					if (tab.name === 'audience') {
 						return (
 							<EventAudience
@@ -1166,9 +1192,17 @@ export default function ManageEventApp() {
 				<HStack spacing={2}>
 					<Button
 						variant="primary"
-						onClick={handleSave}
+						onClick={
+							activeTab === 'tickets'
+								? () => ticketSaveRef.current?.()
+								: handleSave
+						}
 						isBusy={saving}
-						disabled={saving || !title}
+						disabled={
+							activeTab === 'event-details'
+								? saving || !title
+								: saving
+						}
 					>
 						{__('Save Changes', 'fair-events')}
 					</Button>
