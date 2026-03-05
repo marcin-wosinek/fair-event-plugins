@@ -9,7 +9,7 @@ msgstr ""
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"POT-Creation-Date: 2026-03-04T12:02:32+00:00\n"
+"POT-Creation-Date: 2026-03-05T16:36:35+00:00\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "X-Generator: WP-CLI 2.12.0\n"
 "X-Domain: fair-audience\n"
@@ -303,7 +303,7 @@ msgstr ""
 msgid "Error:"
 msgstr ""
 
-#: src/API/AudienceSignupController.php:209
+#: src/API/AudienceSignupController.php:215
 #: src/API/EventSignupController.php:448
 #: src/API/EventSignupController.php:516
 #: src/API/MailingSignupController.php:154
@@ -311,26 +311,26 @@ msgstr ""
 msgid "Please enter a valid email address."
 msgstr ""
 
-#: src/API/AudienceSignupController.php:218
+#: src/API/AudienceSignupController.php:224
 #: src/API/EventSignupController.php:457
 #: src/API/EventSignupController.php:534
 #: src/API/MailingSignupController.php:163
 msgid "Too many requests. Please try again later."
 msgstr ""
 
-#: src/API/AudienceSignupController.php:242
+#: src/API/AudienceSignupController.php:253
 msgid "You're already registered!"
 msgstr ""
 
-#: src/API/AudienceSignupController.php:264
+#: src/API/AudienceSignupController.php:275
 #: src/API/MailingSignupController.php:217
 #: src/API/MailingSignupController.php:228
-#: src/blocks/audience-signup/frontend.js:287
+#: src/blocks/audience-signup/frontend.js:305
 #: src/blocks/mailing-signup/frontend.js:152
 msgid "Failed to process signup. Please try again."
 msgstr ""
 
-#: src/API/AudienceSignupController.php:282
+#: src/API/AudienceSignupController.php:298
 #: src/API/MailingSignupController.php:247
 #: src/blocks/mailing-signup/render.php:19
 #: templates/collaborator-profile.php:259
@@ -339,14 +339,14 @@ msgstr ""
 msgid "Please check your email to confirm your subscription."
 msgstr ""
 
-#: src/API/AudienceSignupController.php:291
-#: src/blocks/audience-signup/render.php:21
+#: src/API/AudienceSignupController.php:307
+#: src/blocks/audience-signup/render.php:25
 #: src/blocks/audience-signup/editor.js:137
 #: src/blocks/audience-signup/frontend.js:170
 msgid "You have been registered successfully!"
 msgstr ""
 
-#: src/API/AudienceSignupController.php:311
+#: src/API/AudienceSignupController.php:329
 msgid "Audience Signup"
 msgstr ""
 
@@ -377,10 +377,10 @@ msgstr ""
 #: src/API/EventSignupController.php:507
 #: src/API/GalleryAccessController.php:259
 #: src/API/GalleryAccessController.php:291
-#: src/Services/EmailService.php:311
-#: src/Services/EmailService.php:544
-#: src/Services/EmailService.php:988
-#: src/Services/EmailService.php:1564
+#: src/Services/EmailService.php:312
+#: src/Services/EmailService.php:545
+#: src/Services/EmailService.php:1128
+#: src/Services/EmailService.php:1857
 msgid "Event not found."
 msgstr ""
 
@@ -394,11 +394,11 @@ msgstr ""
 #: src/API/ParticipantsController.php:285
 #: src/API/ParticipantsController.php:399
 #: src/API/ParticipantsController.php:501
-#: src/Services/EmailService.php:335
-#: src/Services/EmailService.php:567
-#: src/Services/EmailService.php:1019
-#: src/Services/EmailService.php:1459
-#: src/Services/EmailService.php:1617
+#: src/Services/EmailService.php:336
+#: src/Services/EmailService.php:568
+#: src/Services/EmailService.php:1159
+#: src/Services/EmailService.php:1599
+#: src/Services/EmailService.php:1910
 msgid "Participant not found."
 msgstr ""
 
@@ -531,7 +531,7 @@ msgstr ""
 #: src/API/FeesController.php:646
 #: src/API/FeesController.php:669
 #: src/API/FeesController.php:732
-#: src/Services/EmailService.php:1445
+#: src/Services/EmailService.php:1585
 msgid "Fee not found."
 msgstr ""
 
@@ -975,7 +975,7 @@ msgstr ""
 #: src/API/PollsController.php:486
 #: src/API/PollsController.php:520
 #: src/API/PollsController.php:553
-#: src/Services/EmailService.php:300
+#: src/Services/EmailService.php:301
 msgid "Poll not found."
 msgstr ""
 
@@ -1035,13 +1035,17 @@ msgstr ""
 msgid "Poll deleted successfully."
 msgstr ""
 
-#: src/blocks/audience-signup/render.php:20
+#: src/API/QuestionnaireResponsesController.php:156
+msgid "Response not found."
+msgstr ""
+
+#: src/blocks/audience-signup/render.php:24
 #: src/blocks/audience-signup/editor.js:129
 #: src/blocks/audience-signup/editor.js:277
 msgid "Register"
 msgstr ""
 
-#: src/blocks/audience-signup/render.php:63
+#: src/blocks/audience-signup/render.php:117
 #: src/blocks/event-signup/render.php:184
 #: src/blocks/mailing-signup/render.php:37
 #: src/blocks/audience-signup/editor.js:200
@@ -1050,7 +1054,7 @@ msgstr ""
 msgid "First Name"
 msgstr ""
 
-#: src/blocks/audience-signup/render.php:70
+#: src/blocks/audience-signup/render.php:124
 #: src/blocks/event-signup/render.php:191
 #: src/blocks/mailing-signup/render.php:44
 #: src/blocks/audience-signup/editor.js:205
@@ -1059,21 +1063,21 @@ msgstr ""
 msgid "Enter your first name"
 msgstr ""
 
-#: src/blocks/audience-signup/render.php:75
+#: src/blocks/audience-signup/render.php:130
 #: src/blocks/mailing-signup/render.php:49
 #: src/blocks/audience-signup/editor.js:213
 #: src/blocks/mailing-signup/editor.js:64
 msgid "Last Name"
 msgstr ""
 
-#: src/blocks/audience-signup/render.php:81
+#: src/blocks/audience-signup/render.php:136
 #: src/blocks/mailing-signup/render.php:56
 #: src/blocks/audience-signup/editor.js:216
 #: src/blocks/mailing-signup/editor.js:69
 msgid "Enter your last name"
 msgstr ""
 
-#: src/blocks/audience-signup/render.php:86
+#: src/blocks/audience-signup/render.php:142
 #: src/blocks/event-signup/render.php:207
 #: src/blocks/event-signup/render.php:240
 #: src/blocks/mailing-signup/render.php:61
@@ -1085,14 +1089,14 @@ msgstr ""
 #: src/Admin/fee-detail/FeeDetail.js:124
 #: src/Admin/import/WordPressUsersImport.js:221
 #: src/Admin/questionnaire-responses/QuestionnaireResponses.js:80
-#: src/Admin/questionnaire-responses/QuestionnaireResponses.js:132
+#: src/Admin/questionnaire-responses/QuestionnaireResponses.js:176
 #: src/blocks/audience-signup/editor.js:225
 #: src/blocks/event-signup/editor.js:139
 #: src/blocks/mailing-signup/editor.js:78
 msgid "Email"
 msgstr ""
 
-#: src/blocks/audience-signup/render.php:93
+#: src/blocks/audience-signup/render.php:149
 #: src/blocks/event-signup/render.php:214
 #: src/blocks/event-signup/render.php:247
 #: src/blocks/mailing-signup/render.php:68
@@ -1102,7 +1106,7 @@ msgstr ""
 msgid "Enter your email"
 msgstr ""
 
-#: src/blocks/audience-signup/render.php:100
+#: src/blocks/audience-signup/render.php:157
 #: templates/collaborator-profile.php:331
 #: src/Admin/all-participants/AllParticipants.js:128
 #: src/Admin/settings/SettingsApp.js:134
@@ -1110,21 +1114,25 @@ msgstr ""
 msgid "Instagram"
 msgstr ""
 
-#: src/blocks/audience-signup/render.php:106
+#: src/blocks/audience-signup/render.php:163
 #: src/blocks/audience-signup/editor.js:245
 msgid "@username"
 msgstr ""
 
-#: src/blocks/audience-signup/render.php:188
+#: src/blocks/audience-signup/render.php:251
 #: src/blocks/audience-signup/editor.js:53
 msgid "Select..."
 msgstr ""
 
-#: src/blocks/audience-signup/render.php:237
+#: src/blocks/audience-signup/render.php:311
 #: src/blocks/event-signup/render.php:220
 #: src/blocks/audience-signup/editor.js:262
 #: src/blocks/event-signup/editor.js:154
 msgid "Keep me informed about future events"
+msgstr ""
+
+#: src/blocks/audience-signup/render.php:318
+msgid "Update Answers"
 msgstr ""
 
 #: src/blocks/event-signup/render.php:22
@@ -1239,208 +1247,252 @@ msgid "Invalid SVG file."
 msgstr ""
 
 #. translators: %s: event title
-#: src/Services/EmailService.php:166
+#: src/Services/EmailService.php:167
 #, php-format
 msgid "Quick question about %s"
 msgstr ""
 
 #. translators: %s: participant first name
-#: src/Services/EmailService.php:195
-#: src/Services/EmailService.php:421
-#: src/Services/EmailService.php:650
-#: src/Services/EmailService.php:777
-#: src/Services/EmailService.php:903
-#: src/Services/EmailService.php:1171
-#: src/Services/EmailService.php:1320
+#: src/Services/EmailService.php:196
+#: src/Services/EmailService.php:422
+#: src/Services/EmailService.php:651
+#: src/Services/EmailService.php:794
+#: src/Services/EmailService.php:917
+#: src/Services/EmailService.php:1043
+#: src/Services/EmailService.php:1311
+#: src/Services/EmailService.php:1460
+#: src/Services/EmailService.php:1739
 #: src/Admin/event-participants/EventParticipants.js:1093
 #, php-format,js-format
 msgid "Hi %s,"
 msgstr ""
 
 #. translators: %s: event title
-#: src/Services/EmailService.php:203
+#: src/Services/EmailService.php:204
 #, php-format
 msgid "We'd love to hear from you about %s!"
 msgstr ""
 
-#: src/Services/EmailService.php:217
+#: src/Services/EmailService.php:218
 msgid "Please take a moment to answer our quick poll:"
 msgstr ""
 
-#: src/Services/EmailService.php:222
+#: src/Services/EmailService.php:223
 msgid "Answer Poll"
 msgstr ""
 
 #. translators: %s: site name
-#: src/Services/EmailService.php:229
-#: src/Services/EmailService.php:473
-#: src/Services/EmailService.php:676
-#: src/Services/EmailService.php:807
-#: src/Services/EmailService.php:915
-#: src/Services/EmailService.php:1183
-#: src/Services/EmailService.php:1365
+#: src/Services/EmailService.php:230
+#: src/Services/EmailService.php:474
+#: src/Services/EmailService.php:677
+#: src/Services/EmailService.php:816
+#: src/Services/EmailService.php:947
+#: src/Services/EmailService.php:1055
+#: src/Services/EmailService.php:1323
+#: src/Services/EmailService.php:1505
 #, php-format
 msgid "Thanks,%1$sThe %2$s Team"
 msgstr ""
 
-#: src/Services/EmailService.php:241
-#: src/Services/EmailService.php:485
-#: src/Services/EmailService.php:688
-#: src/Services/EmailService.php:819
-#: src/Services/EmailService.php:1380
+#: src/Services/EmailService.php:242
+#: src/Services/EmailService.php:486
+#: src/Services/EmailService.php:689
+#: src/Services/EmailService.php:828
+#: src/Services/EmailService.php:959
+#: src/Services/EmailService.php:1520
+#: src/Services/EmailService.php:1785
 msgid "If the button above doesn't work, copy and paste this link:"
 msgstr ""
 
-#: src/Services/EmailService.php:344
-#: src/Services/EmailService.php:576
-#: src/Services/EmailService.php:1028
-#: src/Services/EmailService.php:1096
-#: src/Services/EmailService.php:1468
-#: src/Services/EmailService.php:1626
+#: src/Services/EmailService.php:345
+#: src/Services/EmailService.php:577
+#: src/Services/EmailService.php:1168
+#: src/Services/EmailService.php:1236
+#: src/Services/EmailService.php:1608
+#: src/Services/EmailService.php:1919
 msgid "Participant has no email address."
 msgstr ""
 
-#: src/Services/EmailService.php:362
-#: src/Services/EmailService.php:593
-#: src/Services/EmailService.php:1052
-#: src/Services/EmailService.php:1120
-#: src/Services/EmailService.php:1494
-#: src/Services/EmailService.php:1662
+#: src/Services/EmailService.php:363
+#: src/Services/EmailService.php:594
+#: src/Services/EmailService.php:1192
+#: src/Services/EmailService.php:1260
+#: src/Services/EmailService.php:1634
+#: src/Services/EmailService.php:1955
 msgid "wp_mail() failed to send."
 msgstr ""
 
 #. translators: %s: event title
-#: src/Services/EmailService.php:392
+#: src/Services/EmailService.php:393
 #, php-format
 msgid "Photos from %s are ready!"
 msgstr ""
 
 #. translators: %s: event title
-#: src/Services/EmailService.php:429
+#: src/Services/EmailService.php:430
 #: src/Admin/event-participants/EventParticipants.js:1105
 #, php-format,js-format
 msgid "The photos from %s are now available for you to view and like!"
 msgstr ""
 
-#: src/Services/EmailService.php:443
+#: src/Services/EmailService.php:444
 #: src/Admin/event-participants/EventParticipants.js:1118
 msgid "Click the button below to browse the gallery and let us know which photos you like best:"
 msgstr ""
 
-#: src/Services/EmailService.php:448
+#: src/Services/EmailService.php:449
 #: src/Admin/event-participants/EventParticipants.js:1140
 msgid "View Gallery"
 msgstr ""
 
 #. translators: %s: site name
-#: src/Services/EmailService.php:621
+#: src/Services/EmailService.php:622
 #, php-format
 msgid "Confirm your subscription to %s"
 msgstr ""
 
-#: src/Services/EmailService.php:656
+#: src/Services/EmailService.php:657
 msgid "Thank you for signing up for our mailing list! Please confirm your email address by clicking the button below."
 msgstr ""
 
-#: src/Services/EmailService.php:661
+#: src/Services/EmailService.php:662
 msgid "Confirm Email"
 msgstr ""
 
-#: src/Services/EmailService.php:666
+#: src/Services/EmailService.php:667
 msgid "This link will expire in 48 hours."
 msgstr ""
 
-#: src/Services/EmailService.php:670
+#: src/Services/EmailService.php:671
 msgid "If you didn't sign up for this mailing list, you can safely ignore this email."
 msgstr ""
 
+#. translators: %s: site name
+#: src/Services/EmailService.php:747
+#, php-format
+msgid "Your signup answers — %s"
+msgstr ""
+
+#: src/Services/EmailService.php:800
+msgid "Thank you for signing up! Here are the answers you submitted:"
+msgstr ""
+
+#: src/Services/EmailService.php:809
+msgid "Edit Your Answers"
+msgstr ""
+
 #. translators: %s: event title
-#: src/Services/EmailService.php:748
+#: src/Services/EmailService.php:888
 #, php-format
 msgid "Sign up for %s"
 msgstr ""
 
 #. translators: %s: event title
-#: src/Services/EmailService.php:785
+#: src/Services/EmailService.php:925
 #, php-format
 msgid "You requested a signup link for %s."
 msgstr ""
 
-#: src/Services/EmailService.php:791
+#: src/Services/EmailService.php:931
 msgid "Click the button below to sign up for the event:"
 msgstr ""
 
-#: src/Services/EmailService.php:796
+#: src/Services/EmailService.php:936
+#: src/Services/EmailService.php:1766
 msgid "Sign Up Now"
 msgstr ""
 
-#: src/Services/EmailService.php:801
+#: src/Services/EmailService.php:941
 msgid "If you didn't request this link, you can safely ignore this email."
 msgstr ""
 
-#: src/Services/EmailService.php:825
+#: src/Services/EmailService.php:965
+#: src/Services/EmailService.php:1791
 msgid "Don't want to receive event invitations?"
 msgstr ""
 
-#: src/Services/EmailService.php:826
-#: src/Services/EmailService.php:928
-#: src/Services/EmailService.php:1196
+#: src/Services/EmailService.php:966
+#: src/Services/EmailService.php:1068
+#: src/Services/EmailService.php:1336
+#: src/Services/EmailService.php:1792
 msgid "Manage your preferences"
 msgstr ""
 
-#: src/Services/EmailService.php:927
-#: src/Services/EmailService.php:1195
+#: src/Services/EmailService.php:1067
+#: src/Services/EmailService.php:1335
 msgid "Don't want to receive these emails?"
 msgstr ""
 
-#: src/Services/EmailService.php:1008
-#: src/Services/EmailService.php:1087
+#: src/Services/EmailService.php:1148
+#: src/Services/EmailService.php:1227
 msgid "Manually skipped."
 msgstr ""
 
-#: src/Services/EmailService.php:1038
-#: src/Services/EmailService.php:1106
-#: src/Services/EmailService.php:1636
+#: src/Services/EmailService.php:1178
+#: src/Services/EmailService.php:1246
+#: src/Services/EmailService.php:1929
 msgid "Participant opted out of marketing emails."
 msgstr ""
 
 #. translators: %s: fee name
-#: src/Services/EmailService.php:1291
+#: src/Services/EmailService.php:1431
 #, php-format
 msgid "Payment reminder: %s"
 msgstr ""
 
-#: src/Services/EmailService.php:1326
+#: src/Services/EmailService.php:1466
 msgid "This is a friendly reminder about a pending payment:"
 msgstr ""
 
-#: src/Services/EmailService.php:1331
+#: src/Services/EmailService.php:1471
 #: templates/fee-payment.php:384
 #: templates/fee-payment.php:458
 msgid "Fee:"
 msgstr ""
 
-#: src/Services/EmailService.php:1335
+#: src/Services/EmailService.php:1475
 #: templates/fee-payment.php:388
 msgid "Amount:"
 msgstr ""
 
-#: src/Services/EmailService.php:1342
+#: src/Services/EmailService.php:1482
 #: templates/fee-payment.php:463
 #: src/Admin/fee-detail/FeeDetail.js:523
 msgid "Due Date:"
 msgstr ""
 
-#: src/Services/EmailService.php:1356
+#: src/Services/EmailService.php:1496
 #: templates/fee-payment.php:472
 msgid "Pay Now"
 msgstr ""
 
-#: src/Services/EmailService.php:1605
+#. translators: %s: event title
+#: src/Services/EmailService.php:1710
+#, php-format
+msgid "You're invited: %s"
+msgstr ""
+
+#. translators: %s: event title
+#: src/Services/EmailService.php:1747
+#, php-format
+msgid "We have a new event coming up: %s."
+msgstr ""
+
+#: src/Services/EmailService.php:1761
+msgid "Would you like to join? Click the button below to sign up:"
+msgstr ""
+
+#. translators: %s: site name
+#: src/Services/EmailService.php:1773
+#, php-format
+msgid "See you there!%1$sThe %2$s Team"
+msgstr ""
+
+#: src/Services/EmailService.php:1898
 msgid "Already signed up"
 msgstr ""
 
-#: src/Services/EmailService.php:1648
+#: src/Services/EmailService.php:1941
 msgid "Failed to create access key."
 msgstr ""
 
@@ -1574,7 +1626,7 @@ msgstr ""
 #: src/Admin/image-templates/ImageTemplates.js:562
 #: src/Admin/import/WordPressUsersImport.js:220
 #: src/Admin/questionnaire-responses/QuestionnaireResponses.js:73
-#: src/Admin/questionnaire-responses/QuestionnaireResponses.js:131
+#: src/Admin/questionnaire-responses/QuestionnaireResponses.js:175
 msgid "Name"
 msgstr ""
 
@@ -1797,6 +1849,7 @@ msgstr ""
 #: src/Admin/groups/Groups.js:322
 #: src/Admin/groups/Groups.js:345
 #: src/Admin/polls-list/PollsList.js:48
+#: src/Admin/questionnaire-responses/QuestionnaireResponses.js:148
 msgid "Error: "
 msgstr ""
 
@@ -1825,6 +1878,7 @@ msgstr ""
 #: src/Admin/image-templates/ImageTemplates.js:627
 #: src/Admin/instagram-posts/InstagramPosts.js:529
 #: src/Admin/polls-list/PollsList.js:167
+#: src/Admin/questionnaire-responses/QuestionnaireResponses.js:159
 #: src/blocks/audience-signup/QuestionBuilder.js:128
 msgid "Delete"
 msgstr ""
@@ -2115,7 +2169,7 @@ msgstr ""
 #: src/Admin/custom-mail/CustomMail.js:737
 #: src/Admin/events-list/EventsList.js:51
 #: src/Admin/questionnaire-responses/QuestionnaireResponses.js:86
-#: src/Admin/questionnaire-responses/QuestionnaireResponses.js:133
+#: src/Admin/questionnaire-responses/QuestionnaireResponses.js:177
 #: src/blocks/audience-signup/QuestionBuilder.js:19
 msgid "Date"
 msgstr ""
@@ -2581,7 +2635,7 @@ msgid "View Event"
 msgstr ""
 
 #: src/Admin/events-list/EventsList.js:122
-#: src/Admin/questionnaire-responses/QuestionnaireResponses.js:188
+#: src/Admin/questionnaire-responses/QuestionnaireResponses.js:232
 msgid "Questionnaire Responses"
 msgstr ""
 
@@ -3310,15 +3364,23 @@ msgstr ""
 msgid "Title"
 msgstr ""
 
-#: src/Admin/questionnaire-responses/QuestionnaireResponses.js:181
+#: src/Admin/questionnaire-responses/QuestionnaireResponses.js:129
+msgid "Are you sure you want to delete this response?"
+msgstr ""
+
+#: src/Admin/questionnaire-responses/QuestionnaireResponses.js:150
+msgid "Failed to delete response."
+msgstr ""
+
+#: src/Admin/questionnaire-responses/QuestionnaireResponses.js:225
 msgid "No event date ID provided."
 msgstr ""
 
-#: src/Admin/questionnaire-responses/QuestionnaireResponses.js:192
+#: src/Admin/questionnaire-responses/QuestionnaireResponses.js:236
 msgid "Back to Events"
 msgstr ""
 
-#: src/Admin/questionnaire-responses/QuestionnaireResponses.js:202
+#: src/Admin/questionnaire-responses/QuestionnaireResponses.js:246
 msgid "Export CSV"
 msgstr ""
 
@@ -3690,7 +3752,7 @@ msgstr ""
 msgid "Please enter your email."
 msgstr ""
 
-#: src/blocks/audience-signup/frontend.js:252
+#: src/blocks/audience-signup/frontend.js:260
 #: src/blocks/event-signup/frontend.js:194
 #: src/blocks/mailing-signup/frontend.js:114
 #: src/blocks/shared/form-utils.js:92

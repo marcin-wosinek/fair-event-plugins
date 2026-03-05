@@ -15,8 +15,8 @@ msgstr ""
 
 #. Plugin Name of the plugin
 #: fair-audience.php
-#: src/Admin/AdminHooks.php:137
-#: src/Admin/AdminHooks.php:138
+#: src/Admin/AdminHooks.php:141
+#: src/Admin/AdminHooks.php:142
 msgid "Fair Audience"
 msgstr ""
 
@@ -40,14 +40,14 @@ msgstr ""
 msgid "https://github.com/marcin-wosinek"
 msgstr ""
 
-#: src/Admin/AdminHooks.php:149
-#: src/Admin/AdminHooks.php:150
+#: src/Admin/AdminHooks.php:153
+#: src/Admin/AdminHooks.php:154
 #: src/Admin/all-participants/AllParticipants.js:552
 msgid "All Participants"
 msgstr "Alle Teilnehmer"
 
-#: src/Admin/AdminHooks.php:194
-#: src/Admin/AdminHooks.php:195
+#: src/Admin/AdminHooks.php:198
+#: src/Admin/AdminHooks.php:199
 msgid "By Event"
 msgstr "Nach Veranstaltung"
 
@@ -59,8 +59,8 @@ msgstr "Nach Veranstaltung"
 msgid "Event Participants"
 msgstr "Veranstaltungsteilnehmer"
 
-#: src/Admin/AdminHooks.php:207
-#: src/Admin/AdminHooks.php:208
+#: src/Admin/AdminHooks.php:214
+#: src/Admin/AdminHooks.php:215
 #: src/Admin/import/Import.js:298
 msgid "Import"
 msgstr "Import"
@@ -69,16 +69,16 @@ msgstr "Import"
 #: src/API/EventParticipantsController.php:288
 #: src/API/EventParticipantsController.php:354
 #: src/API/EventParticipantsController.php:705
-#: src/API/EventSignupController.php:280
-#: src/API/EventSignupController.php:357
-#: src/API/EventSignupController.php:430
-#: src/API/EventSignupController.php:498
+#: src/API/EventSignupController.php:289
+#: src/API/EventSignupController.php:366
+#: src/API/EventSignupController.php:439
+#: src/API/EventSignupController.php:507
 #: src/API/GalleryAccessController.php:259
 #: src/API/GalleryAccessController.php:291
-#: src/Services/EmailService.php:311
-#: src/Services/EmailService.php:544
-#: src/Services/EmailService.php:988
-#: src/Services/EmailService.php:1564
+#: src/Services/EmailService.php:312
+#: src/Services/EmailService.php:545
+#: src/Services/EmailService.php:1128
+#: src/Services/EmailService.php:1857
 msgid "Event not found."
 msgstr "Veranstaltung nicht gefunden."
 
@@ -88,11 +88,11 @@ msgstr "Veranstaltung nicht gefunden."
 #: src/API/ParticipantsController.php:285
 #: src/API/ParticipantsController.php:399
 #: src/API/ParticipantsController.php:501
-#: src/Services/EmailService.php:335
-#: src/Services/EmailService.php:567
-#: src/Services/EmailService.php:1019
-#: src/Services/EmailService.php:1459
-#: src/Services/EmailService.php:1617
+#: src/Services/EmailService.php:336
+#: src/Services/EmailService.php:568
+#: src/Services/EmailService.php:1159
+#: src/Services/EmailService.php:1599
+#: src/Services/EmailService.php:1910
 msgid "Participant not found."
 msgstr "Teilnehmer nicht gefunden."
 
@@ -170,6 +170,7 @@ msgstr "Teilnehmer erfolgreich gelöscht."
 #: src/Admin/groups/Groups.js:322
 #: src/Admin/groups/Groups.js:345
 #: src/Admin/polls-list/PollsList.js:48
+#: src/Admin/questionnaire-responses/QuestionnaireResponses.js:148
 msgid "Error: "
 msgstr "Fehler: "
 
@@ -196,9 +197,12 @@ msgstr "Teilnehmer hinzufügen"
 #: src/Admin/groups/Groups.js:430
 #: src/Admin/image-templates/ImageTemplates.js:562
 #: src/Admin/import/WordPressUsersImport.js:220
+#: src/Admin/questionnaire-responses/QuestionnaireResponses.js:73
+#: src/Admin/questionnaire-responses/QuestionnaireResponses.js:175
 msgid "Name"
 msgstr "Name"
 
+#: src/blocks/audience-signup/render.php:142
 #: src/blocks/event-signup/render.php:207
 #: src/blocks/event-signup/render.php:240
 #: src/blocks/mailing-signup/render.php:61
@@ -209,14 +213,19 @@ msgstr "Name"
 #: src/Admin/custom-mail/CustomMail.js:602
 #: src/Admin/fee-detail/FeeDetail.js:124
 #: src/Admin/import/WordPressUsersImport.js:221
+#: src/Admin/questionnaire-responses/QuestionnaireResponses.js:80
+#: src/Admin/questionnaire-responses/QuestionnaireResponses.js:176
+#: src/blocks/audience-signup/editor.js:225
 #: src/blocks/event-signup/editor.js:139
 #: src/blocks/mailing-signup/editor.js:78
 msgid "Email"
 msgstr "E-Mail"
 
+#: src/blocks/audience-signup/render.php:157
 #: templates/collaborator-profile.php:331
 #: src/Admin/all-participants/AllParticipants.js:128
 #: src/Admin/settings/SettingsApp.js:134
+#: src/blocks/audience-signup/editor.js:241
 msgid "Instagram"
 msgstr "Instagram"
 
@@ -250,6 +259,8 @@ msgstr "Bearbeiten"
 #: src/Admin/image-templates/ImageTemplates.js:627
 #: src/Admin/instagram-posts/InstagramPosts.js:529
 #: src/Admin/polls-list/PollsList.js:167
+#: src/Admin/questionnaire-responses/QuestionnaireResponses.js:159
+#: src/blocks/audience-signup/QuestionBuilder.js:128
 msgid "Delete"
 msgstr "Löschen"
 
@@ -314,7 +325,7 @@ msgid "Remove"
 msgstr "Entfernen"
 
 #: src/Admin/collaborators/Collaborators.js:87
-#: src/Admin/events-list/EventsList.js:194
+#: src/Admin/events-list/EventsList.js:201
 msgid "Events"
 msgstr "Veranstaltungen"
 
@@ -498,8 +509,8 @@ msgstr "Wählen Sie ein Ereignis aus, um importierte Teilnehmer damit zu verknü
 msgid "No event association"
 msgstr "Keine Ereigniszuordnung"
 
-#: src/Admin/AdminHooks.php:217
-#: src/Admin/AdminHooks.php:218
+#: src/Admin/AdminHooks.php:224
+#: src/Admin/AdminHooks.php:225
 #: src/Admin/polls-list/PollsList.js:67
 #: src/Admin/polls-list/PollsList.js:76
 #: src/Admin/polls-list/PollsList.js:87
@@ -529,7 +540,7 @@ msgstr "Sie haben diese Umfrage bereits beantwortet."
 #: src/API/PollsController.php:486
 #: src/API/PollsController.php:520
 #: src/API/PollsController.php:553
-#: src/Services/EmailService.php:300
+#: src/Services/EmailService.php:301
 msgid "Poll not found."
 msgstr "Umfrage nicht gefunden."
 
@@ -596,64 +607,69 @@ msgid "Poll deleted successfully."
 msgstr "Umfrage erfolgreich gelöscht."
 
 #. translators: %s: event title
-#: src/Services/EmailService.php:166
+#: src/Services/EmailService.php:167
 #, php-format
 msgid "Quick question about %s"
 msgstr "Kurze Frage zu %s"
 
-#. translators: %s: participant name placeholder
-#: src/Services/EmailService.php:195
-#: src/Services/EmailService.php:421
-#: src/Services/EmailService.php:650
-#: src/Services/EmailService.php:777
-#: src/Services/EmailService.php:903
-#: src/Services/EmailService.php:1171
-#: src/Services/EmailService.php:1320
+#. translators: %s: participant first name
+#: src/Services/EmailService.php:196
+#: src/Services/EmailService.php:422
+#: src/Services/EmailService.php:651
+#: src/Services/EmailService.php:794
+#: src/Services/EmailService.php:917
+#: src/Services/EmailService.php:1043
+#: src/Services/EmailService.php:1311
+#: src/Services/EmailService.php:1460
+#: src/Services/EmailService.php:1739
 #: src/Admin/event-participants/EventParticipants.js:1093
 #, php-format, js-format
 msgid "Hi %s,"
 msgstr "Hallo %s,"
 
 #. translators: %s: event title
-#: src/Services/EmailService.php:203
+#: src/Services/EmailService.php:204
 #, php-format
 msgid "We'd love to hear from you about %s!"
 msgstr "Wir würden gerne Ihre Meinung zu %s hören!"
 
-#: src/Services/EmailService.php:217
+#: src/Services/EmailService.php:218
 msgid "Please take a moment to answer our quick poll:"
 msgstr "Bitte nehmen Sie sich einen Moment Zeit, unsere kurze Umfrage zu beantworten:"
 
-#: src/Services/EmailService.php:222
+#: src/Services/EmailService.php:223
 msgid "Answer Poll"
 msgstr "Umfrage beantworten"
 
 #. translators: %s: site name
-#: src/Services/EmailService.php:229
-#: src/Services/EmailService.php:473
-#: src/Services/EmailService.php:676
-#: src/Services/EmailService.php:807
-#: src/Services/EmailService.php:915
-#: src/Services/EmailService.php:1183
-#: src/Services/EmailService.php:1365
+#: src/Services/EmailService.php:230
+#: src/Services/EmailService.php:474
+#: src/Services/EmailService.php:677
+#: src/Services/EmailService.php:816
+#: src/Services/EmailService.php:947
+#: src/Services/EmailService.php:1055
+#: src/Services/EmailService.php:1323
+#: src/Services/EmailService.php:1505
 #, php-format
 msgid "Thanks,%1$sThe %2$s Team"
 msgstr "Vielen Dank,%1$sDas %2$s Team"
 
-#: src/Services/EmailService.php:241
-#: src/Services/EmailService.php:485
-#: src/Services/EmailService.php:688
-#: src/Services/EmailService.php:819
-#: src/Services/EmailService.php:1380
+#: src/Services/EmailService.php:242
+#: src/Services/EmailService.php:486
+#: src/Services/EmailService.php:689
+#: src/Services/EmailService.php:828
+#: src/Services/EmailService.php:959
+#: src/Services/EmailService.php:1520
+#: src/Services/EmailService.php:1785
 msgid "If the button above doesn't work, copy and paste this link:"
 msgstr "Falls der Button oben nicht funktioniert, kopieren und fügen Sie diesen Link ein:"
 
-#: src/Services/EmailService.php:362
-#: src/Services/EmailService.php:593
-#: src/Services/EmailService.php:1052
-#: src/Services/EmailService.php:1120
-#: src/Services/EmailService.php:1494
-#: src/Services/EmailService.php:1662
+#: src/Services/EmailService.php:363
+#: src/Services/EmailService.php:594
+#: src/Services/EmailService.php:1192
+#: src/Services/EmailService.php:1260
+#: src/Services/EmailService.php:1634
+#: src/Services/EmailService.php:1955
 msgid "wp_mail() failed to send."
 msgstr "wp_mail() konnte keine E-Mail senden."
 
@@ -733,7 +749,7 @@ msgstr "Keine E-Mail erhalten"
 #: src/Admin/event-participants/EventParticipants.js:777
 #: src/Admin/event-participants/EventParticipants.js:1227
 #: src/Admin/event-participants/EventParticipants.js:1507
-#: src/blocks/event-signup/frontend.js:290
+#: src/blocks/event-signup/frontend.js:303
 msgid "Sending..."
 msgstr "Wird gesendet..."
 
@@ -775,6 +791,7 @@ msgid "The question shown to participants."
 msgstr "Die Frage, die den Teilnehmern angezeigt wird."
 
 #: src/Admin/edit-poll/EditPoll.js:524
+#: src/blocks/audience-signup/QuestionBuilder.js:181
 msgid "Options"
 msgstr "Optionen"
 
@@ -789,14 +806,17 @@ msgid "Option %d"
 msgstr "Option %d"
 
 #: src/Admin/edit-poll/EditPoll.js:566
+#: src/blocks/audience-signup/QuestionBuilder.js:114
 msgid "Move up"
 msgstr "Nach oben verschieben"
 
 #: src/Admin/edit-poll/EditPoll.js:572
+#: src/blocks/audience-signup/QuestionBuilder.js:121
 msgid "Move down"
 msgstr "Nach unten verschieben"
 
 #: src/Admin/edit-poll/EditPoll.js:586
+#: src/blocks/audience-signup/QuestionBuilder.js:231
 msgid "Add Option"
 msgstr "Option hinzufügen"
 
@@ -925,8 +945,10 @@ msgstr "Ihre Antwort wurde erfolgreich aufgezeichnet."
 msgid "Hi"
 msgstr "Hallo"
 
-#: src/blocks/event-signup/frontend.js:188
-#: src/blocks/mailing-signup/frontend.js:110
+#: src/blocks/audience-signup/frontend.js:260
+#: src/blocks/event-signup/frontend.js:194
+#: src/blocks/mailing-signup/frontend.js:114
+#: src/blocks/shared/form-utils.js:92
 #: src/public/poll-response/PollResponse.js:248
 msgid "Submitting..."
 msgstr "Wird übermittelt..."
@@ -1077,15 +1099,17 @@ msgstr "Zeile %1$d: Fehler beim Verknüpfen des Teilnehmers mit der Veranstaltun
 msgid "Participant %1$d: Failed to link to event: %2$s"
 msgstr "Teilnehmer %1$d: Fehler beim Verknüpfen mit der Veranstaltung: %2$s"
 
-#: src/API/EventSignupController.php:439
-#: src/API/EventSignupController.php:507
+#: src/API/AudienceSignupController.php:215
+#: src/API/EventSignupController.php:448
+#: src/API/EventSignupController.php:516
 #: src/API/MailingSignupController.php:154
 #: templates/collaborator-profile.php:59
 msgid "Please enter a valid email address."
 msgstr "Bitte geben Sie eine gültige E-Mail-Adresse ein."
 
-#: src/API/EventSignupController.php:448
-#: src/API/EventSignupController.php:525
+#: src/API/AudienceSignupController.php:224
+#: src/API/EventSignupController.php:457
+#: src/API/EventSignupController.php:534
 #: src/API/MailingSignupController.php:163
 msgid "Too many requests. Please try again later."
 msgstr "Zu viele Anfragen. Bitte versuchen Sie es später erneut."
@@ -1098,9 +1122,11 @@ msgstr "Sie sind bereits angemeldet!"
 msgid "We sent you another confirmation email. Please check your inbox."
 msgstr "Wir haben Ihnen eine weitere Bestätigungs-E-Mail gesendet. Bitte überprüfen Sie Ihren Posteingang."
 
+#: src/API/AudienceSignupController.php:275
 #: src/API/MailingSignupController.php:217
 #: src/API/MailingSignupController.php:228
-#: src/blocks/mailing-signup/frontend.js:140
+#: src/blocks/audience-signup/frontend.js:305
+#: src/blocks/mailing-signup/frontend.js:152
 msgid "Failed to process signup. Please try again."
 msgstr "Anmeldung konnte nicht verarbeitet werden. Bitte versuchen Sie es erneut."
 
@@ -1108,11 +1134,12 @@ msgstr "Anmeldung konnte nicht verarbeitet werden. Bitte versuchen Sie es erneut
 msgid "Failed to send confirmation email. Please try again."
 msgstr "Bestätigungs-E-Mail konnte nicht gesendet werden. Bitte versuchen Sie es erneut."
 
+#: src/API/AudienceSignupController.php:298
 #: src/API/MailingSignupController.php:247
 #: src/blocks/mailing-signup/render.php:19
 #: templates/collaborator-profile.php:259
 #: src/blocks/mailing-signup/editor.js:34
-#: src/blocks/mailing-signup/frontend.js:60
+#: src/blocks/mailing-signup/frontend.js:61
 msgid "Please check your email to confirm your subscription."
 msgstr "Bitte überprüfen Sie Ihre E-Mails zur Bestätigung Ihrer Anmeldung."
 
@@ -1145,80 +1172,90 @@ msgstr "Ihre E-Mail wurde bestätigt. Willkommen!"
 msgid "Subscribe"
 msgstr "Abonnieren"
 
+#: src/blocks/audience-signup/render.php:117
 #: src/blocks/event-signup/render.php:184
 #: src/blocks/mailing-signup/render.php:37
+#: src/blocks/audience-signup/editor.js:200
 #: src/blocks/event-signup/editor.js:114
 #: src/blocks/mailing-signup/editor.js:50
 msgid "First Name"
 msgstr "Vorname"
 
+#: src/blocks/audience-signup/render.php:124
 #: src/blocks/event-signup/render.php:191
 #: src/blocks/mailing-signup/render.php:44
+#: src/blocks/audience-signup/editor.js:205
 #: src/blocks/event-signup/editor.js:119
 #: src/blocks/mailing-signup/editor.js:55
 msgid "Enter your first name"
 msgstr "Geben Sie Ihren Vornamen ein"
 
+#: src/blocks/audience-signup/render.php:130
 #: src/blocks/mailing-signup/render.php:49
+#: src/blocks/audience-signup/editor.js:213
 #: src/blocks/mailing-signup/editor.js:64
 msgid "Last Name"
 msgstr "Nachname"
 
+#: src/blocks/audience-signup/render.php:136
 #: src/blocks/mailing-signup/render.php:56
+#: src/blocks/audience-signup/editor.js:216
 #: src/blocks/mailing-signup/editor.js:69
 msgid "Enter your last name"
 msgstr "Geben Sie Ihren Nachnamen ein"
 
+#: src/blocks/audience-signup/render.php:149
 #: src/blocks/event-signup/render.php:214
 #: src/blocks/event-signup/render.php:247
 #: src/blocks/mailing-signup/render.php:68
+#: src/blocks/audience-signup/editor.js:230
 #: src/blocks/event-signup/editor.js:144
 #: src/blocks/mailing-signup/editor.js:83
 msgid "Enter your email"
 msgstr "Geben Sie Ihre E-Mail-Adresse ein"
 
 #. translators: %s: event title
-#: src/Services/EmailService.php:392
+#: src/Services/EmailService.php:393
 #, php-format
 msgid "Photos from %s are ready!"
 msgstr "Fotos von %s sind fertig!"
 
 #. translators: %s: event title
-#: src/Services/EmailService.php:429
+#: src/Services/EmailService.php:430
 #: src/Admin/event-participants/EventParticipants.js:1105
 #, php-format, js-format
 msgid "The photos from %s are now available for you to view and like!"
 msgstr "Die Fotos von %s sind jetzt für Sie zum Ansehen und Liken verfügbar!"
 
-#: src/Services/EmailService.php:443
+#: src/Services/EmailService.php:444
 #: src/Admin/event-participants/EventParticipants.js:1118
 msgid "Click the button below to browse the gallery and let us know which photos you like best:"
 msgstr "Klicken Sie auf die Schaltfläche unten, um die Galerie zu durchsuchen und uns mitzuteilen, welche Fotos Ihnen am besten gefallen:"
 
-#: src/Services/EmailService.php:448
+#: src/Services/EmailService.php:449
 #: src/Admin/event-participants/EventParticipants.js:1140
 msgid "View Gallery"
 msgstr "Galerie anzeigen"
 
 #. translators: %s: site name
-#: src/Services/EmailService.php:621
+#: src/Services/EmailService.php:622
 #, php-format
 msgid "Confirm your subscription to %s"
 msgstr "Bestätigen Sie Ihr Abonnement für %s"
 
-#: src/Services/EmailService.php:656
+#: src/Services/EmailService.php:657
 msgid "Thank you for signing up for our mailing list! Please confirm your email address by clicking the button below."
 msgstr "Vielen Dank, dass Sie sich für unseren Verteiler angemeldet haben! Bitte bestätigen Sie Ihre E-Mail-Adresse, indem Sie auf die Schaltfläche unten klicken."
 
-#: src/Services/EmailService.php:661
+#: src/Services/EmailService.php:662
 msgid "Confirm Email"
 msgstr "E-Mail bestätigen"
 
-#: src/Services/EmailService.php:666
+#: src/Services/EmailService.php:667
 msgid "This link will expire in 48 hours."
 msgstr "Dieser Link läuft in 48 Stunden ab."
 
-#: src/Services/EmailService.php:670
+#: src/Services/EmailService.php:671
 msgid "If you didn't sign up for this mailing list, you can safely ignore this email."
 msgstr "Wenn Sie sich nicht für diesen Verteiler angemeldet haben, können Sie diese E-Mail ignorieren."
 
@@ -1336,15 +1373,18 @@ msgstr "Bereits mit Veranstaltung verknüpft:"
 msgid "Auto-resolved from previous imports:"
 msgstr "Automatisch aus vorherigen Importen aufgelöst:"
 
+#: src/blocks/audience-signup/editor.js:122
 #: src/blocks/event-signup/editor.js:24
 #: src/blocks/mailing-signup/editor.js:19
 msgid "Form Settings"
 msgstr "Formular-Einstellungen"
 
+#: src/blocks/audience-signup/editor.js:124
 #: src/blocks/mailing-signup/editor.js:21
 msgid "Submit Button Text"
 msgstr "Text des Absende-Buttons"
 
+#: src/blocks/audience-signup/editor.js:132
 #: src/blocks/event-signup/editor.js:73
 #: src/blocks/mailing-signup/editor.js:29
 msgid "Success Message"
@@ -1355,18 +1395,20 @@ msgstr "Erfolgsmeldung"
 msgid "Message shown after successful signup."
 msgstr "Nachricht nach erfolgreichem Anmelden."
 
-#: src/blocks/event-signup/frontend.js:155
-#: src/blocks/mailing-signup/frontend.js:76
+#: src/blocks/audience-signup/frontend.js:192
+#: src/blocks/event-signup/frontend.js:159
+#: src/blocks/mailing-signup/frontend.js:77
 msgid "Please enter your first name."
 msgstr "Bitte geben Sie Ihren Vornamen ein."
 
-#: src/blocks/mailing-signup/frontend.js:85
+#: src/blocks/mailing-signup/frontend.js:87
 msgid "Please enter your last name."
 msgstr "Bitte geben Sie Ihren Nachnamen ein."
 
-#: src/blocks/event-signup/frontend.js:164
-#: src/blocks/event-signup/frontend.js:271
-#: src/blocks/mailing-signup/frontend.js:94
+#: src/blocks/audience-signup/frontend.js:202
+#: src/blocks/event-signup/frontend.js:169
+#: src/blocks/event-signup/frontend.js:283
+#: src/blocks/mailing-signup/frontend.js:97
 msgid "Please enter your email."
 msgstr "Bitte geben Sie Ihre E-Mail-Adresse ein."
 
@@ -1390,6 +1432,7 @@ msgctxt "block keyword"
 msgid "newsletter"
 msgstr "Newsletter"
 
+#: src/blocks/audience-signup/block.json
 #: src/blocks/event-signup/block.json
 #: src/blocks/mailing-signup/block.json
 msgctxt "block keyword"
@@ -1466,6 +1509,9 @@ msgstr "Event anzeigen"
 
 #: src/Admin/custom-mail/CustomMail.js:737
 #: src/Admin/events-list/EventsList.js:51
+#: src/Admin/questionnaire-responses/QuestionnaireResponses.js:86
+#: src/Admin/questionnaire-responses/QuestionnaireResponses.js:177
+#: src/blocks/audience-signup/QuestionBuilder.js:19
 msgid "Date"
 msgstr "Datum"
 
@@ -1523,56 +1569,56 @@ msgstr "Galerielink an %d Ausgewählte senden"
 msgid "Send Gallery Link to All"
 msgstr "Galerielink an alle senden"
 
-#: src/Admin/AdminHooks.php:159
-#: src/Admin/AdminHooks.php:160
+#: src/Admin/AdminHooks.php:163
+#: src/Admin/AdminHooks.php:164
 #: src/Admin/collaborators/Collaborators.js:313
 #: src/Admin/custom-mail/CustomMail.js:515
 msgid "Collaborators"
 msgstr "Mitarbeiter"
 
-#: src/Admin/AdminHooks.php:169
-#: src/Admin/AdminHooks.php:170
+#: src/Admin/AdminHooks.php:173
+#: src/Admin/AdminHooks.php:174
 #: src/Admin/all-participants/AllParticipants.js:195
 #: src/Admin/all-participants/AllParticipants.js:709
 #: src/Admin/groups/Groups.js:394
 msgid "Groups"
 msgstr "Gruppen"
 
-#: src/API/EventSignupController.php:259
+#: src/API/EventSignupController.php:268
 msgid "You must be logged in or have a valid signup link."
 msgstr "Sie müssen angemeldet sein oder einen gültigen Anmeldelink haben."
 
-#: src/API/EventSignupController.php:377
+#: src/API/EventSignupController.php:386
 msgid "Could not find your participant profile."
 msgstr "Ihr Teilnehmerprofil konnte nicht gefunden werden."
 
-#: src/API/EventSignupController.php:393
-#: src/API/EventSignupController.php:547
+#: src/API/EventSignupController.php:402
+#: src/API/EventSignupController.php:556
 msgid "You are already signed up for this event."
 msgstr "Sie sind bereits für diese Veranstaltung angemeldet."
 
-#: src/API/EventSignupController.php:409
-#: src/API/EventSignupController.php:563
+#: src/API/EventSignupController.php:418
+#: src/API/EventSignupController.php:572
 #: src/blocks/event-signup/render.php:25
 #: src/blocks/event-signup/editor.js:78
-#: src/blocks/event-signup/frontend.js:138
-#: src/blocks/event-signup/frontend.js:339
+#: src/blocks/event-signup/frontend.js:142
+#: src/blocks/event-signup/frontend.js:362
 msgid "You have successfully signed up for the event!"
 msgstr "Sie haben sich erfolgreich für die Veranstaltung angemeldet!"
 
-#: src/API/EventSignupController.php:474
+#: src/API/EventSignupController.php:483
 msgid "If your email is in our system, you will receive a signup link shortly. Please check your inbox."
 msgstr "Wenn Ihre E-Mail in unserem System ist, erhalten Sie gleich einen Anmeldelink. Bitte überprüfen Sie Ihren Posteingang."
 
-#: src/API/EventSignupController.php:516
+#: src/API/EventSignupController.php:525
 msgid "Please enter your name."
 msgstr "Bitte geben Sie Ihren Namen ein."
 
-#: src/API/EventSignupController.php:584
+#: src/API/EventSignupController.php:593
 msgid "Failed to process registration. Please try again."
 msgstr "Die Registrierung konnte nicht verarbeitet werden. Bitte versuchen Sie es erneut."
 
-#: src/API/EventSignupController.php:595
+#: src/API/EventSignupController.php:620
 msgid "You have successfully registered and signed up for the event!"
 msgstr "Sie haben sich erfolgreich registriert und für die Veranstaltung angemeldet!"
 
@@ -1670,8 +1716,8 @@ msgid "This block can only be used on event pages."
 msgstr "Dieser Block kann nur auf Ereignisseiten verwendet werden."
 
 #: src/blocks/event-signup/render.php:119
-#: src/blocks/event-signup/frontend.js:223
-#: src/blocks/event-signup/frontend.js:393
+#: src/blocks/event-signup/frontend.js:231
+#: src/blocks/event-signup/frontend.js:418
 msgid "You are signed up for this event!"
 msgstr "Sie sind für dieses Ereignis angemeldet!"
 
@@ -1704,7 +1750,9 @@ msgstr "Ich habe ein Konto"
 msgid "Enter your surname"
 msgstr "Geben Sie Ihren Nachnamen ein"
 
+#: src/blocks/audience-signup/render.php:311
 #: src/blocks/event-signup/render.php:220
+#: src/blocks/audience-signup/editor.js:262
 #: src/blocks/event-signup/editor.js:154
 msgid "Keep me informed about future events"
 msgstr "Halten Sie mich über zukünftige Veranstaltungen auf dem Laufenden"
@@ -1714,26 +1762,27 @@ msgid "Enter your email to receive a signup link."
 msgstr "Geben Sie Ihre E-Mail-Adresse ein, um einen Anmeldelink zu erhalten."
 
 #. translators: %s: event title
-#: src/Services/EmailService.php:748
+#: src/Services/EmailService.php:888
 #, php-format
 msgid "Sign up for %s"
 msgstr "Anmelden für %s"
 
 #. translators: %s: event title
-#: src/Services/EmailService.php:785
+#: src/Services/EmailService.php:925
 #, php-format
 msgid "You requested a signup link for %s."
 msgstr "Sie haben einen Anmeldelink für %s angefordert."
 
-#: src/Services/EmailService.php:791
+#: src/Services/EmailService.php:931
 msgid "Click the button below to sign up for the event:"
 msgstr "Klicken Sie auf die Schaltfläche unten, um sich für die Veranstaltung anzumelden:"
 
-#: src/Services/EmailService.php:796
+#: src/Services/EmailService.php:936
+#: src/Services/EmailService.php:1766
 msgid "Sign Up Now"
 msgstr "Jetzt anmelden"
 
-#: src/Services/EmailService.php:801
+#: src/Services/EmailService.php:941
 msgid "If you didn't request this link, you can safely ignore this email."
 msgstr "Wenn Sie diesen Link nicht angefordert haben, können Sie diese E-Mail ignorieren."
 
@@ -1987,16 +2036,16 @@ msgstr "Mit Token"
 msgid "Logged In"
 msgstr "Angemeldet"
 
-#: src/blocks/event-signup/frontend.js:237
-#: src/blocks/event-signup/frontend.js:406
+#: src/blocks/event-signup/frontend.js:245
+#: src/blocks/event-signup/frontend.js:431
 msgid "Failed to sign up. Please try again."
 msgstr "Anmeldung fehlgeschlagen. Bitte versuchen Sie es erneut."
 
-#: src/blocks/event-signup/frontend.js:309
+#: src/blocks/event-signup/frontend.js:328
 msgid "Failed to send link. Please try again."
 msgstr "Link konnte nicht gesendet werden. Bitte versuchen Sie es erneut."
 
-#: src/blocks/event-signup/frontend.js:360
+#: src/blocks/event-signup/frontend.js:383
 msgid "Signing up..."
 msgstr "Anmeldung läuft..."
 
@@ -2015,6 +2064,7 @@ msgctxt "block keyword"
 msgid "event"
 msgstr "Ereignis"
 
+#: src/blocks/audience-signup/block.json
 #: src/blocks/event-signup/block.json
 msgctxt "block keyword"
 msgid "register"
@@ -2025,6 +2075,7 @@ msgctxt "block keyword"
 msgid "rsvp"
 msgstr "RSVP"
 
+#: src/blocks/audience-signup/block.json
 #: src/blocks/event-signup/block.json
 #: src/blocks/signups-list/block.json
 msgctxt "block keyword"
@@ -2101,27 +2152,29 @@ msgstr "Sie haben keine Berechtigung, Veranstaltungseinladungen zu senden."
 msgid "Please specify participant IDs or group IDs."
 msgstr "Bitte geben Sie Teilnehmer-IDs oder Gruppen-IDs an."
 
-#: src/Services/EmailService.php:825
+#: src/Services/EmailService.php:965
+#: src/Services/EmailService.php:1791
 msgid "Don't want to receive event invitations?"
 msgstr "Möchten Sie keine Veranstaltungseinladungen mehr erhalten?"
 
-#: src/Services/EmailService.php:826
-#: src/Services/EmailService.php:928
-#: src/Services/EmailService.php:1196
+#: src/Services/EmailService.php:966
+#: src/Services/EmailService.php:1068
+#: src/Services/EmailService.php:1336
+#: src/Services/EmailService.php:1792
 msgid "Manage your preferences"
 msgstr "Ihre Einstellungen verwalten"
 
-#: src/Services/EmailService.php:1605
+#: src/Services/EmailService.php:1898
 msgid "Already signed up"
 msgstr "Bereits angemeldet"
 
-#: src/Services/EmailService.php:1038
-#: src/Services/EmailService.php:1106
-#: src/Services/EmailService.php:1636
+#: src/Services/EmailService.php:1178
+#: src/Services/EmailService.php:1246
+#: src/Services/EmailService.php:1929
 msgid "Participant opted out of marketing emails."
 msgstr "Teilnehmer hat den Erhalt von Marketing-E-Mails abgelehnt."
 
-#: src/Services/EmailService.php:1648
+#: src/Services/EmailService.php:1941
 msgid "Failed to create access key."
 msgstr "Erstellung des Zugriffsschlüssels fehlgeschlagen."
 
@@ -2220,48 +2273,48 @@ msgstr "%1$s (%2$d Mitglieder)"
 msgid "Send Invitations"
 msgstr "Einladungen senden"
 
-#: src/Admin/AdminHooks.php:180
-#: src/Admin/AdminHooks.php:181
+#: src/Admin/AdminHooks.php:184
+#: src/Admin/AdminHooks.php:185
 #: src/Admin/fee-detail/FeeDetail.js:473
 #: src/Admin/fees-list/FeesList.js:421
 msgid "Membership Fees"
 msgstr "Mitgliedschaftsgebühren"
 
-#: src/Admin/AdminHooks.php:230
-#: src/Admin/AdminHooks.php:231
+#: src/Admin/AdminHooks.php:237
+#: src/Admin/AdminHooks.php:238
 #: src/Admin/instagram-posts/InstagramPosts.js:307
 msgid "Instagram Posts"
 msgstr "Instagram-Beiträge"
 
-#: src/Admin/AdminHooks.php:240
-#: src/Admin/AdminHooks.php:241
+#: src/Admin/AdminHooks.php:247
+#: src/Admin/AdminHooks.php:248
 #: src/Admin/image-templates/ImageTemplates.js:508
 msgid "Image Templates"
 msgstr "Bildvorlagen"
 
-#: src/Admin/AdminHooks.php:251
-#: src/Admin/AdminHooks.php:252
-#: src/Admin/weekly-schedule/WeeklySchedule.js:223
+#: src/Admin/AdminHooks.php:258
+#: src/Admin/AdminHooks.php:259
+#: src/Admin/weekly-schedule/WeeklySchedule.js:266
 msgid "Weekly Schedule"
 msgstr "Wochenplan"
 
-#: src/Admin/AdminHooks.php:262
-#: src/Admin/AdminHooks.php:263
+#: src/Admin/AdminHooks.php:269
+#: src/Admin/AdminHooks.php:270
 #: src/Admin/custom-mail/CustomMail.js:414
 #: src/Admin/custom-mail/CustomMail.js:430
 msgid "Custom Mail"
 msgstr "Benutzerdefinierte E-Mail"
 
-#: src/Admin/AdminHooks.php:272
-#: src/Admin/AdminHooks.php:273
+#: src/Admin/AdminHooks.php:279
+#: src/Admin/AdminHooks.php:280
 #: src/Admin/extra-messages-list/ExtraMessagesList.js:80
 #: src/Admin/extra-messages-list/ExtraMessagesList.js:89
 #: src/Admin/extra-messages-list/ExtraMessagesList.js:100
 msgid "Extra Messages"
 msgstr "Zusätzliche Nachrichten"
 
-#: src/Admin/AdminHooks.php:285
-#: src/Admin/AdminHooks.php:286
+#: src/Admin/AdminHooks.php:292
+#: src/Admin/AdminHooks.php:293
 msgid "Settings"
 msgstr "Einstellungen"
 
@@ -2295,7 +2348,7 @@ msgstr "Noch keine Teilnehmer."
 
 #: src/Admin/EventParticipantsMetaBox.php:96
 #: src/Admin/collaborators/Collaborators.js:424
-#: src/Admin/weekly-schedule/WeeklySchedule.js:398
+#: src/Admin/weekly-schedule/WeeklySchedule.js:441
 msgid "View Participants"
 msgstr "Teilnehmer anzeigen"
 
@@ -2357,7 +2410,7 @@ msgstr "Die angegebene Kategorie existiert nicht."
 #: src/API/FeesController.php:646
 #: src/API/FeesController.php:669
 #: src/API/FeesController.php:732
-#: src/Services/EmailService.php:1445
+#: src/Services/EmailService.php:1585
 msgid "Fee not found."
 msgstr "Gebühr nicht gefunden."
 
@@ -2495,51 +2548,53 @@ msgstr "Beitragsbeschriftung."
 msgid "WordPress attachment ID."
 msgstr "WordPress-Anhang-ID."
 
-#: src/API/InstagramPostsController.php:193
+#: src/API/InstagramPostsController.php:213
 msgid "Image URL is required."
 msgstr "Bild-URL ist erforderlich."
 
-#: src/API/InstagramPostsController.php:202
+#: src/API/InstagramPostsController.php:222
 msgid "Caption is required."
 msgstr "Beschriftung ist erforderlich."
 
-#: src/API/InstagramPostsController.php:230
+#: src/API/InstagramPostsController.php:250
 msgid "Failed to create post record."
 msgstr "Beitragsdatensatz konnte nicht erstellt werden."
 
-#: src/API/InstagramPostsController.php:256
+#: src/API/InstagramPostsController.php:276
 #: src/Admin/instagram-posts/InstagramPosts.js:207
 msgid "Post published successfully!"
 msgstr "Beitrag erfolgreich veröffentlicht!"
 
-#: src/API/InstagramPostsController.php:284
+#: src/API/InstagramPostsController.php:304
 msgid "Post not found."
 msgstr "Beitrag nicht gefunden."
 
-#: src/API/InstagramPostsController.php:292
+#: src/API/InstagramPostsController.php:312
 #: src/Admin/instagram-posts/InstagramPosts.js:273
 msgid "Failed to delete post."
 msgstr "Beitrag konnte nicht gelöscht werden."
 
-#: src/API/InstagramPostsController.php:300
+#: src/API/InstagramPostsController.php:320
 msgid "Post deleted successfully."
 msgstr "Beitrag erfolgreich gelöscht."
 
-#: src/API/InstagramPostsController.php:318
+#: src/API/InstagramPostsController.php:338
 msgid "Attachment is not a valid image."
 msgstr "Anlage ist kein gültiges Bild."
 
-#: src/API/InstagramPostsController.php:327
+#: src/API/InstagramPostsController.php:347
 msgid "Attachment file not found."
 msgstr "Anlagendatei nicht gefunden."
 
 #. translators: %s: error message
-#: src/API/InstagramPostsController.php:361
+#: src/API/InstagramPostsController.php:381
+#: src/API/InstagramPostsController.php:469
 #, php-format
 msgid "Failed to upload image: %s"
 msgstr "Fehler beim Hochladen des Bildes: %s"
 
-#: src/API/InstagramPostsController.php:376
+#: src/API/InstagramPostsController.php:396
+#: src/API/InstagramPostsController.php:484
 msgid "Failed to upload image to temporary storage."
 msgstr "Fehler beim Hochladen des Bildes in den temporären Speicher."
 
@@ -2561,53 +2616,53 @@ msgstr "Du darfst keine SVG-Dateien hochladen."
 msgid "Invalid SVG file."
 msgstr "Ungültige SVG-Datei."
 
-#: src/Services/EmailService.php:344
-#: src/Services/EmailService.php:576
-#: src/Services/EmailService.php:1028
-#: src/Services/EmailService.php:1096
-#: src/Services/EmailService.php:1468
-#: src/Services/EmailService.php:1626
+#: src/Services/EmailService.php:345
+#: src/Services/EmailService.php:577
+#: src/Services/EmailService.php:1168
+#: src/Services/EmailService.php:1236
+#: src/Services/EmailService.php:1608
+#: src/Services/EmailService.php:1919
 msgid "Participant has no email address."
 msgstr "Teilnehmer hat keine E-Mail-Adresse."
 
-#: src/Services/EmailService.php:927
-#: src/Services/EmailService.php:1195
+#: src/Services/EmailService.php:1067
+#: src/Services/EmailService.php:1335
 msgid "Don't want to receive these emails?"
 msgstr "Möchtest du diese E-Mails nicht mehr erhalten?"
 
-#: src/Services/EmailService.php:1008
-#: src/Services/EmailService.php:1087
+#: src/Services/EmailService.php:1148
+#: src/Services/EmailService.php:1227
 msgid "Manually skipped."
 msgstr "Manuell übersprungen."
 
 #. translators: %s: fee name
-#: src/Services/EmailService.php:1291
+#: src/Services/EmailService.php:1431
 #, php-format
 msgid "Payment reminder: %s"
 msgstr "Zahlungserinnerung: %s"
 
-#: src/Services/EmailService.php:1326
+#: src/Services/EmailService.php:1466
 msgid "This is a friendly reminder about a pending payment:"
 msgstr "Dies ist eine freundliche Erinnerung an eine ausstehende Zahlung:"
 
-#: src/Services/EmailService.php:1331
+#: src/Services/EmailService.php:1471
 #: templates/fee-payment.php:384
 #: templates/fee-payment.php:458
 msgid "Fee:"
 msgstr "Gebühr:"
 
-#: src/Services/EmailService.php:1335
+#: src/Services/EmailService.php:1475
 #: templates/fee-payment.php:388
 msgid "Amount:"
 msgstr "Betrag:"
 
-#: src/Services/EmailService.php:1342
+#: src/Services/EmailService.php:1482
 #: templates/fee-payment.php:463
 #: src/Admin/fee-detail/FeeDetail.js:523
 msgid "Due Date:"
 msgstr "Fälligkeitsdatum:"
 
-#: src/Services/EmailService.php:1356
+#: src/Services/EmailService.php:1496
 #: templates/fee-payment.php:472
 msgid "Pay Now"
 msgstr "Jetzt bezahlen"
@@ -2772,6 +2827,7 @@ msgid "Payment is taking longer than expected. Please reload this page to check 
 msgstr "Die Zahlung dauert länger als erwartet. Bitte laden Sie diese Seite neu, um den Status zu überprüfen."
 
 #: src/Admin/all-participants/AllParticipants.js:593
+#: src/blocks/audience-signup/EventLinkPanel.js:230
 msgid "No events found."
 msgstr "Keine Veranstaltungen gefunden."
 
@@ -3659,55 +3715,336 @@ msgstr "Fehler beim Speichern von OAuth-Token: "
 msgid "Fair Audience Settings"
 msgstr "Fair Audience-Einstellungen"
 
-#: src/Admin/weekly-schedule/WeeklySchedule.js:181
+#: src/Admin/weekly-schedule/WeeklySchedule.js:199
 msgid "Failed to fetch events."
 msgstr "Fehler beim Abrufen von Ereignissen."
 
-#: src/Admin/weekly-schedule/WeeklySchedule.js:210
+#: src/Admin/weekly-schedule/WeeklySchedule.js:228
 msgid "Failed to generate image."
 msgstr "Fehler beim Generieren des Bildes."
 
-#: src/Admin/weekly-schedule/WeeklySchedule.js:217
+#: src/Admin/weekly-schedule/WeeklySchedule.js:260
 msgid "— Select source —"
 msgstr "— Quelle auswählen —"
 
-#: src/Admin/weekly-schedule/WeeklySchedule.js:239
+#: src/Admin/weekly-schedule/WeeklySchedule.js:282
 msgid "Event Source"
 msgstr "Ereignisquelle"
 
-#: src/Admin/weekly-schedule/WeeklySchedule.js:265
+#: src/Admin/weekly-schedule/WeeklySchedule.js:308
 msgid "Previous week"
 msgstr "Vorherige Woche"
 
-#: src/Admin/weekly-schedule/WeeklySchedule.js:283
+#: src/Admin/weekly-schedule/WeeklySchedule.js:326
 msgid "Next week"
 msgstr "Nächste Woche"
 
-#: src/Admin/weekly-schedule/WeeklySchedule.js:291
+#: src/Admin/weekly-schedule/WeeklySchedule.js:334
 msgid "Today"
 msgstr "Heute"
 
-#: src/Admin/weekly-schedule/WeeklySchedule.js:420
+#: src/Admin/weekly-schedule/WeeklySchedule.js:463
 msgid "WhatsApp Message"
 msgstr "WhatsApp-Nachricht"
 
-#: src/Admin/weekly-schedule/WeeklySchedule.js:441
+#: src/Admin/weekly-schedule/WeeklySchedule.js:501
 msgid "Copied!"
 msgstr "Kopiert!"
 
-#: src/Admin/weekly-schedule/WeeklySchedule.js:442
+#: src/Admin/weekly-schedule/WeeklySchedule.js:502
 msgid "Copy to clipboard"
 msgstr "In Zwischenablage kopieren"
 
-#: src/Admin/weekly-schedule/WeeklySchedule.js:451
+#: src/Admin/weekly-schedule/WeeklySchedule.js:511
 msgid "Generating…"
 msgstr "Wird generiert…"
 
-#: src/Admin/weekly-schedule/WeeklySchedule.js:452
+#: src/Admin/weekly-schedule/WeeklySchedule.js:512
 msgid "Download Image"
 msgstr "Bild herunterladen"
 
-#: src/Admin/weekly-schedule/WeeklySchedule.js:249
+#: src/Admin/weekly-schedule/WeeklySchedule.js:292
 msgid "Manage Event Sources"
 msgstr "Ereignisquellen verwalten"
+
+#: src/API/AudienceSignupController.php:253
+msgid "You're already registered!"
+msgstr "Sie sind bereits registriert!"
+
+#: src/API/AudienceSignupController.php:307
+#: src/blocks/audience-signup/render.php:25
+#: src/blocks/audience-signup/editor.js:137
+#: src/blocks/audience-signup/frontend.js:170
+msgid "You have been registered successfully!"
+msgstr "Sie wurden erfolgreich registriert!"
+
+#: src/API/AudienceSignupController.php:329
+msgid "Audience Signup"
+msgstr "Audience Signup"
+
+#: src/API/EventSignupController.php:611
+msgid "You have been signed up for the event! Please check your email to confirm your subscription."
+msgstr "Sie haben sich für die Veranstaltung angemeldet! Bitte überprüfen Sie Ihre E-Mail, um Ihr Abonnement zu bestätigen."
+
+#: src/API/InstagramPostsController.php:141
+msgid "Base64-encoded PNG image data."
+msgstr "Base64-codierte PNG-Bilddaten."
+
+#: src/API/InstagramPostsController.php:436
+msgid "Invalid base64 image data."
+msgstr "Ungültige Base64-Bilddaten."
+
+#: src/API/QuestionnaireResponsesController.php:156
+msgid "Response not found."
+msgstr "Antwort nicht gefunden."
+
+#: src/blocks/audience-signup/render.php:24
+#: src/blocks/audience-signup/editor.js:129
+#: src/blocks/audience-signup/editor.js:277
+msgid "Register"
+msgstr "Registrieren"
+
+#: src/blocks/audience-signup/render.php:163
+#: src/blocks/audience-signup/editor.js:245
+msgid "@username"
+msgstr "@username"
+
+#: src/blocks/audience-signup/render.php:251
+#: src/blocks/audience-signup/editor.js:53
+msgid "Select..."
+msgstr "Auswählen..."
+
+#: src/blocks/audience-signup/render.php:318
+msgid "Update Answers"
+msgstr "Antworten aktualisieren"
+
+#. translators: %s: site name
+#: src/Services/EmailService.php:747
+#, php-format
+msgid "Your signup answers — %s"
+msgstr "Ihre Anmeldeantworten — %s"
+
+#: src/Services/EmailService.php:800
+msgid "Thank you for signing up! Here are the answers you submitted:"
+msgstr "Vielen Dank für Ihre Anmeldung! Hier sind die Antworten, die Sie eingereicht haben:"
+
+#: src/Services/EmailService.php:809
+msgid "Edit Your Answers"
+msgstr "Bearbeiten Sie Ihre Antworten"
+
+#. translators: %s: event title
+#: src/Services/EmailService.php:1710
+#, php-format
+msgid "You're invited: %s"
+msgstr "Sie sind eingeladen: %s"
+
+#. translators: %s: event title
+#: src/Services/EmailService.php:1747
+#, php-format
+msgid "We have a new event coming up: %s."
+msgstr "Wir haben eine neue Veranstaltung: %s."
+
+#: src/Services/EmailService.php:1761
+msgid "Would you like to join? Click the button below to sign up:"
+msgstr "Möchten Sie teilnehmen? Klicken Sie auf die Schaltfläche unten, um sich anzumelden:"
+
+#. translators: %s: site name
+#: src/Services/EmailService.php:1773
+#, php-format
+msgid "See you there!%1$sThe %2$s Team"
+msgstr "Bis bald!%1$sThe %2$s Team"
+
+#: src/Admin/events-list/EventsList.js:122
+#: src/Admin/questionnaire-responses/QuestionnaireResponses.js:232
+msgid "Questionnaire Responses"
+msgstr "Fragebogenantworten"
+
+#: src/Admin/questionnaire-responses/QuestionnaireResponses.js:129
+msgid "Are you sure you want to delete this response?"
+msgstr "Sind Sie sicher, dass Sie diese Antwort löschen möchten?"
+
+#: src/Admin/questionnaire-responses/QuestionnaireResponses.js:150
+msgid "Failed to delete response."
+msgstr "Antwort konnte nicht gelöscht werden."
+
+#: src/Admin/questionnaire-responses/QuestionnaireResponses.js:225
+msgid "No event date ID provided."
+msgstr "Keine Ereignisdatum-ID angegeben."
+
+#: src/Admin/questionnaire-responses/QuestionnaireResponses.js:236
+msgid "Back to Events"
+msgstr "Zurück zu Ereignissen"
+
+#: src/Admin/questionnaire-responses/QuestionnaireResponses.js:246
+msgid "Export CSV"
+msgstr "CSV exportieren"
+
+#: src/Admin/weekly-schedule/WeeklySchedule.js:253
+msgid "Failed to post to Instagram."
+msgstr "Fehler beim Posten auf Instagram."
+
+#: src/Admin/weekly-schedule/WeeklySchedule.js:490
+msgid "Posting to Instagram…"
+msgstr "Wird auf Instagram gepostet…"
+
+#: src/Admin/weekly-schedule/WeeklySchedule.js:494
+msgid "Post Schedule to Instagram"
+msgstr "Zeitplan auf Instagram posten"
+
+#: src/Admin/weekly-schedule/WeeklySchedule.js:524
+#: src/Admin/weekly-schedule/WeeklySchedule.js:537
+msgid "Posted to Instagram!"
+msgstr "Auf Instagram gepostet!"
+
+#: src/Admin/weekly-schedule/WeeklySchedule.js:533
+msgid "View post"
+msgstr "Beitrag anzeigen"
+
+#: src/blocks/audience-signup/editor.js:20
+msgid "Untitled Question"
+msgstr "Unbenannte Frage"
+
+#: src/blocks/audience-signup/editor.js:141
+msgid "Message shown after successful registration."
+msgstr "Nachricht, die nach erfolgreicher Registrierung angezeigt wird."
+
+#: src/blocks/audience-signup/editor.js:147
+msgid "Show Instagram field"
+msgstr "Instagram-Feld anzeigen"
+
+#: src/blocks/audience-signup/editor.js:152
+msgid "Show an optional Instagram username field."
+msgstr "Ein optionales Instagram-Benutzernamenfeld anzeigen."
+
+#: src/blocks/audience-signup/editor.js:158
+msgid "Show \"Keep me informed\" checkbox"
+msgstr "Kontrollkästchen \"Halten Sie mich informiert\" anzeigen"
+
+#: src/blocks/audience-signup/editor.js:166
+msgid "Allow users to opt-in to future event notifications."
+msgstr "Benutzern ermöglichen, sich für zukünftige Ereignisbenachrichtigungen anzumelden."
+
+#: src/blocks/audience-signup/editor.js:173
+msgid "Questions"
+msgstr "Fragen"
+
+#: src/blocks/audience-signup/editor.js:184
+msgid "Event Link"
+msgstr "Ereignislink"
+
+#: src/blocks/audience-signup/EventLinkPanel.js:119
+msgid "Auto-linked to this event page:"
+msgstr "Automatisch mit dieser Ereignisseite verknüpft:"
+
+#: src/blocks/audience-signup/EventLinkPanel.js:120
+msgid "This page is an event, but a different event is linked:"
+msgstr "Diese Seite ist ein Ereignis, aber ein anderes Ereignis ist verknüpft:"
+
+#: src/blocks/audience-signup/EventLinkPanel.js:139
+msgid "Use auto-detected event"
+msgstr "Automatisch erkanntes Ereignis verwenden"
+
+#: src/blocks/audience-signup/EventLinkPanel.js:154
+msgid "Linked event:"
+msgstr "Verknüpftes Ereignis:"
+
+#: src/blocks/audience-signup/EventLinkPanel.js:177
+msgid "Remove link"
+msgstr "Verknüpfung entfernen"
+
+#: src/blocks/audience-signup/EventLinkPanel.js:182
+msgid "Linked event not found (ID:"
+msgstr "Verknüpftes Ereignis nicht gefunden (ID:"
+
+#: src/blocks/audience-signup/EventLinkPanel.js:190
+msgid "Search events"
+msgstr "Ereignisse durchsuchen"
+
+#: src/blocks/audience-signup/EventLinkPanel.js:193
+msgid "Type to search..."
+msgstr "Zum Suchen eingeben..."
+
+#: src/blocks/audience-signup/EventLinkPanel.js:196
+msgid "Link this form to a specific event."
+msgstr "Verknüpfen Sie dieses Formular mit einem bestimmten Ereignis."
+
+#. translators: %s: question text
+#: src/blocks/audience-signup/frontend.js:101
+msgid "Please answer: "
+msgstr "Bitte beantworten Sie: "
+
+#: src/blocks/audience-signup/QuestionBuilder.js:16
+msgid "Short Text"
+msgstr "Kurzer Text"
+
+#: src/blocks/audience-signup/QuestionBuilder.js:17
+msgid "Long Text"
+msgstr "Langer Text"
+
+#: src/blocks/audience-signup/QuestionBuilder.js:18
+msgid "Number"
+msgstr "Nummer"
+
+#: src/blocks/audience-signup/QuestionBuilder.js:20
+msgid "Select"
+msgstr "Auswahl"
+
+#: src/blocks/audience-signup/QuestionBuilder.js:21
+msgid "Radio"
+msgstr "Radio"
+
+#: src/blocks/audience-signup/QuestionBuilder.js:22
+msgid "Checkbox"
+msgstr "Kontrollkästchen"
+
+#: src/blocks/audience-signup/QuestionBuilder.js:108
+msgid "New Question"
+msgstr "Neue Frage"
+
+#: src/blocks/audience-signup/QuestionBuilder.js:138
+msgid "Question Text"
+msgstr "Fragetext"
+
+#: src/blocks/audience-signup/QuestionBuilder.js:152
+msgid "Question Key"
+msgstr "Fragenschlüssel"
+
+#: src/blocks/audience-signup/QuestionBuilder.js:157
+msgid "Machine-readable identifier."
+msgstr "Maschinenlesbarer Bezeichner."
+
+#: src/blocks/audience-signup/QuestionBuilder.js:163
+msgid "Type"
+msgstr "Typ"
+
+#: src/blocks/audience-signup/QuestionBuilder.js:171
+msgid "Required"
+msgstr "Erforderlich"
+
+#: src/blocks/audience-signup/QuestionBuilder.js:199
+msgid "Option"
+msgstr "Option"
+
+#: src/blocks/audience-signup/QuestionBuilder.js:209
+msgid "Remove option"
+msgstr "Option entfernen"
+
+#: src/blocks/audience-signup/QuestionBuilder.js:240
+msgid "Add Question"
+msgstr "Frage hinzufügen"
+
+#: src/blocks/audience-signup/block.json
+msgctxt "block title"
+msgid "Audience Signup"
+msgstr "Audience Signup"
+
+#: src/blocks/audience-signup/block.json
+msgctxt "block description"
+msgid "A standalone signup form for audience member registration"
+msgstr "Ein eigenständiges Anmeldeformular für die Registrierung von Zuschauern"
+
+#: src/blocks/audience-signup/block.json
+msgctxt "block keyword"
+msgid "member"
+msgstr "Mitglied"
 
