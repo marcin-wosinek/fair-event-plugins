@@ -265,7 +265,6 @@ const CSS_PREFIX = 'fair-audience-audience';
 					showMessage(messageContainer, message, 'info', CSS_PREFIX);
 				} else if (response.status === 'pending') {
 					showMessage(messageContainer, message, 'info', CSS_PREFIX);
-					form.reset();
 				} else {
 					showMessage(
 						messageContainer,
@@ -273,8 +272,10 @@ const CSS_PREFIX = 'fair-audience-audience';
 						'success',
 						CSS_PREFIX
 					);
-					form.reset();
 				}
+
+				form.reset();
+				submitButton.disabled = true;
 
 				// Show notification
 				showNotification(message, 'success');
