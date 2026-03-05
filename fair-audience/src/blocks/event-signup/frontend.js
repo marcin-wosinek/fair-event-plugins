@@ -353,7 +353,7 @@ const CSS_PREFIX = 'fair-audience-signup';
 		const eventDateId = block.dataset.eventDateId
 			? parseInt(block.dataset.eventDateId, 10)
 			: null;
-		const token = block.dataset.token || '';
+		const token = block.dataset.participantToken || '';
 		const messageContainer = block.querySelector(
 			'.fair-audience-signup-message'
 		);
@@ -374,7 +374,7 @@ const CSS_PREFIX = 'fair-audience-signup';
 		}
 
 		if (token) {
-			requestData.token = token;
+			requestData.participant_token = token;
 		}
 
 		// Disable button and show loading state

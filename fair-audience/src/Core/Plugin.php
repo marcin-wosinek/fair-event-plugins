@@ -154,7 +154,7 @@ class Plugin {
 		$vars[] = 'poll_key';
 		$vars[] = 'gallery_key';
 		$vars[] = 'confirm_email_key';
-		$vars[] = 'signup_token';
+		$vars[] = 'participant_token';
 		$vars[] = 'manage_subscription';
 		$vars[] = 'collaborator_profile';
 		$vars[] = 'fee_payment';

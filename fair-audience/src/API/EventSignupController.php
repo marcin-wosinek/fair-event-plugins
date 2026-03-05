@@ -9,10 +9,10 @@ namespace FairAudience\API;
 
 use FairAudience\Database\ParticipantRepository;
 use FairAudience\Database\EventParticipantRepository;
-use FairAudience\Database\EventSignupAccessKeyRepository;
 use FairAudience\Database\EmailConfirmationTokenRepository;
 use FairAudience\Models\Participant;
 use FairAudience\Services\EmailService;
+use FairAudience\Services\ParticipantToken;
 use WP_REST_Controller;
 use WP_REST_Server;
 use WP_REST_Request;
@@ -55,13 +55,6 @@ class EventSignupController extends WP_REST_Controller {
 	private $event_participant_repository;
 
 	/**
-	 * Event signup access key repository instance.
-	 *
-	 * @var EventSignupAccessKeyRepository
-	 */
-	private $access_key_repository;
-
-	/**
 	 * Email service instance.
 	 *
 	 * @var EmailService
@@ -91,7 +84,6 @@ class EventSignupController extends WP_REST_Controller {
 	public function __construct() {
 		$this->participant_repository       = new ParticipantRepository();
 		$this->event_participant_repository = new EventParticipantRepository();
-		$this->access_key_repository        = new EventSignupAccessKeyRepository();
 		$this->email_service                = new EmailService();
 		$this->token_repository             = new EmailConfirmationTokenRepository();
 	}
@@ -110,17 +102,17 @@ class EventSignupController extends WP_REST_Controller {
 					'callback'            => array( $this, 'get_status' ),
 					'permission_callback' => '__return_true',
 					'args'                => array(
-						'event_id'      => array(
+						'event_id'          => array(
 							'type'              => 'integer',
 							'required'          => true,
 							'sanitize_callback' => 'absint',
 						),
-						'event_date_id' => array(
+						'event_date_id'     => array(
 							'type'              => 'integer',
 							'required'          => false,
 							'sanitize_callback' => 'absint',
 						),
-						'token'         => array(
+						'participant_token' => array(
 							'type'              => 'string',
 							'required'          => false,
 							'sanitize_callback' => 'sanitize_text_field',
@@ -140,17 +132,17 @@ class EventSignupController extends WP_REST_Controller {
 					'callback'            => array( $this, 'create_signup' ),
 					'permission_callback' => array( $this, 'create_signup_permissions_check' ),
 					'args'                => array(
-						'event_id'      => array(
+						'event_id'          => array(
 							'type'              => 'integer',
 							'required'          => true,
 							'sanitize_callback' => 'absint',
 						),
-						'event_date_id' => array(
+						'event_date_id'     => array(
 							'type'              => 'integer',
 							'required'          => false,
 							'sanitize_callback' => 'absint',
 						),
-						'token'         => array(
+						'participant_token' => array(
 							'type'              => 'string',
 							'required'          => false,
 							'sanitize_callback' => 'sanitize_text_field',
@@ -170,12 +162,18 @@ class EventSignupController extends WP_REST_Controller {
 					'callback'            => array( $this, 'request_link' ),
 					'permission_callback' => '__return_true',
 					'args'                => array(
-						'event_id' => array(
+						'event_id'      => array(
 							'type'              => 'integer',
 							'required'          => true,
 							'sanitize_callback' => 'absint',
 						),
-						'email'    => array(
+						'event_date_id' => array(
+							'type'              => 'integer',
+							'required'          => false,
+							'default'           => 0,
+							'sanitize_callback' => 'absint',
+						),
+						'email'         => array(
 							'type'              => 'string',
 							'required'          => true,
 							'sanitize_callback' => 'sanitize_email',
@@ -247,18 +245,18 @@ class EventSignupController extends WP_REST_Controller {
 	 * @return bool|WP_Error True if allowed, error otherwise.
 	 */
 	public function create_signup_permissions_check( $request ) {
-		$token   = $request->get_param( 'token' );
-		$user_id = get_current_user_id();
+		$participant_token = $request->get_param( 'participant_token' );
+		$user_id           = get_current_user_id();
 
 		// Allow if user is logged in.
 		if ( $user_id ) {
 			return true;
 		}
 
-		// Allow if valid token provided.
-		if ( ! empty( $token ) ) {
-			$access_key = $this->access_key_repository->get_by_token( $token );
-			if ( $access_key ) {
+		// Allow if valid participant token provided.
+		if ( ! empty( $participant_token ) ) {
+			$token_data = ParticipantToken::verify( $participant_token );
+			if ( $token_data ) {
 				return true;
 			}
 		}
@@ -277,9 +275,9 @@ class EventSignupController extends WP_REST_Controller {
 	 * @return WP_REST_Response|WP_Error Response object or error.
 	 */
 	public function get_status( $request ) {
-		$event_id = $request->get_param( 'event_id' );
-		$token    = $request->get_param( 'token' );
-		$user_id  = get_current_user_id();
+		$event_id          = $request->get_param( 'event_id' );
+		$participant_token = $request->get_param( 'participant_token' );
+		$user_id           = get_current_user_id();
 
 		// Validate event exists.
 		$event = get_post( $event_id );
@@ -296,12 +294,12 @@ class EventSignupController extends WP_REST_Controller {
 		$participant  = null;
 		$is_signed_up = false;
 
-		if ( ! empty( $token ) ) {
-			// Token-based access.
-			$access_key = $this->access_key_repository->get_by_token( $token );
-			if ( $access_key && $access_key->event_id === $event_id ) {
+		if ( ! empty( $participant_token ) ) {
+			// Token-based access via HMAC participant token.
+			$token_data = ParticipantToken::verify( $participant_token );
+			if ( $token_data ) {
 				$state       = 'with_token';
-				$participant = $this->participant_repository->get_by_id( $access_key->participant_id );
+				$participant = $this->participant_repository->get_by_id( $token_data['participant_id'] );
 			}
 		} elseif ( $user_id ) {
 			// Logged-in user.
@@ -353,10 +351,10 @@ class EventSignupController extends WP_REST_Controller {
 	 * @return WP_REST_Response|WP_Error Response object or error.
 	 */
 	public function create_signup( $request ) {
-		$event_id      = $request->get_param( 'event_id' );
-		$event_date_id = $request->get_param( 'event_date_id' ) ?: null;
-		$token         = $request->get_param( 'token' );
-		$user_id       = get_current_user_id();
+		$event_id          = $request->get_param( 'event_id' );
+		$event_date_id     = $request->get_param( 'event_date_id' ) ?: null;
+		$participant_token = $request->get_param( 'participant_token' );
+		$user_id           = get_current_user_id();
 
 		// Validate event exists.
 		$event = get_post( $event_id );
@@ -371,10 +369,10 @@ class EventSignupController extends WP_REST_Controller {
 		// Get participant based on auth method.
 		$participant = null;
 
-		if ( ! empty( $token ) ) {
-			$access_key = $this->access_key_repository->get_by_token( $token );
-			if ( $access_key && $access_key->event_id === $event_id ) {
-				$participant = $this->participant_repository->get_by_id( $access_key->participant_id );
+		if ( ! empty( $participant_token ) ) {
+			$token_data = ParticipantToken::verify( $participant_token );
+			if ( $token_data ) {
+				$participant = $this->participant_repository->get_by_id( $token_data['participant_id'] );
 			}
 		} elseif ( $user_id ) {
 			$participant = $this->participant_repository->get_by_user_id( $user_id );
@@ -428,8 +426,9 @@ class EventSignupController extends WP_REST_Controller {
 	 * @return WP_REST_Response|WP_Error Response object or error.
 	 */
 	public function request_link( $request ) {
-		$event_id = $request->get_param( 'event_id' );
-		$email    = $request->get_param( 'email' );
+		$event_id      = $request->get_param( 'event_id' );
+		$event_date_id = $request->get_param( 'event_date_id' ) ?: 0;
+		$email         = $request->get_param( 'email' );
 
 		// Validate event exists.
 		$event = get_post( $event_id );
@@ -468,13 +467,19 @@ class EventSignupController extends WP_REST_Controller {
 		// Always return success to prevent email enumeration.
 		// But only send email if participant exists.
 		if ( $participant ) {
-			// Create or get access key.
-			$access_key = $this->access_key_repository->create_for_participant( $event_id, $participant->id );
-
-			if ( $access_key ) {
-				// Send signup link email.
-				$this->email_service->send_signup_link_email( $event, $participant, $access_key->token );
+			// Resolve event_date_id if not provided.
+			if ( ! $event_date_id && class_exists( \FairEvents\Models\EventDates::class ) ) {
+				$event_dates_obj = \FairEvents\Models\EventDates::get_by_event_id( $event_id );
+				if ( $event_dates_obj ) {
+					$event_date_id = $event_dates_obj->id;
+				}
 			}
+
+			// Generate participant token URL.
+			$token_url = ParticipantToken::get_url( $participant->id, $event_date_id, $event->ID );
+
+			// Send signup link email.
+			$this->email_service->send_signup_link_email( $event, $participant, $token_url );
 		}
 
 		return rest_ensure_response(

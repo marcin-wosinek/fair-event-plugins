@@ -142,6 +142,12 @@ class AudienceSignupController extends WP_REST_Controller {
 							'default'           => false,
 							'sanitize_callback' => 'rest_sanitize_boolean',
 						),
+						'participant_id'        => array(
+							'type'              => 'integer',
+							'required'          => false,
+							'default'           => 0,
+							'sanitize_callback' => 'absint',
+						),
 						'event_date_id'         => array(
 							'type'     => 'integer',
 							'required' => false,
@@ -207,6 +213,7 @@ class AudienceSignupController extends WP_REST_Controller {
 		$questionnaire_answers = $request->get_param( 'questionnaire_answers' );
 		$event_date_id         = $request->get_param( 'event_date_id' );
 		$post_id               = $request->get_param( 'post_id' );
+		$participant_id        = $request->get_param( 'participant_id' );
 
 		// Validate email.
 		if ( ! is_email( $email ) ) {
@@ -229,8 +236,13 @@ class AudienceSignupController extends WP_REST_Controller {
 		// Increment rate limit counter.
 		$this->increment_rate_limit( $email );
 
-		// Check if email already exists.
-		$existing = $this->participant_repository->get_by_email( $email );
+		// If a participant_id was provided via token, use that participant directly.
+		if ( $participant_id > 0 ) {
+			$existing = $this->participant_repository->get_by_id( $participant_id );
+		} else {
+			// Check if email already exists.
+			$existing = $this->participant_repository->get_by_email( $email );
+		}
 
 		if ( $existing ) {
 			// Update instagram if provided and different.
