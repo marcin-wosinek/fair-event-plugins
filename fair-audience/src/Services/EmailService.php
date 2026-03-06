@@ -10,7 +10,6 @@ namespace FairAudience\Services;
 use FairAudience\Database\PollRepository;
 use FairAudience\Database\PollAccessKeyRepository;
 use FairAudience\Database\GalleryAccessKeyRepository;
-use FairAudience\Database\EventSignupAccessKeyRepository;
 use FairAudience\Database\EventParticipantRepository;
 use FairAudience\Database\ParticipantRepository;
 use FairAudience\Database\GroupParticipantRepository;
@@ -22,6 +21,7 @@ use FairAudience\Models\Participant;
 use FairAudience\Services\EmailType;
 use FairAudience\Services\AudienceSignupToken;
 use FairAudience\Services\ManageSubscriptionToken;
+use FairAudience\Services\ParticipantToken;
 use FairAudience\Services\FeePaymentToken;
 
 defined( 'WPINC' ) || die;
@@ -74,13 +74,6 @@ class EmailService {
 	private $group_participant_repository;
 
 	/**
-	 * Event signup access key repository instance.
-	 *
-	 * @var EventSignupAccessKeyRepository
-	 */
-	private $event_signup_access_key_repository;
-
-	/**
 	 * Cached active extra messages per event (lazy-loaded).
 	 *
 	 * @var array
@@ -91,13 +84,12 @@ class EmailService {
 	 * Constructor.
 	 */
 	public function __construct() {
-		$this->poll_repository                    = new PollRepository();
-		$this->access_key_repository              = new PollAccessKeyRepository();
-		$this->gallery_access_key_repository      = new GalleryAccessKeyRepository();
-		$this->event_participant_repository       = new EventParticipantRepository();
-		$this->participant_repository             = new ParticipantRepository();
-		$this->group_participant_repository       = new GroupParticipantRepository();
-		$this->event_signup_access_key_repository = new EventSignupAccessKeyRepository();
+		$this->poll_repository               = new PollRepository();
+		$this->access_key_repository         = new PollAccessKeyRepository();
+		$this->gallery_access_key_repository = new GalleryAccessKeyRepository();
+		$this->event_participant_repository  = new EventParticipantRepository();
+		$this->participant_repository        = new ParticipantRepository();
+		$this->group_participant_repository  = new GroupParticipantRepository();
 	}
 
 	/**
@@ -864,20 +856,17 @@ class EmailService {
 	/**
 	 * Send event signup link email.
 	 *
-	 * @param object      $event        Event post object.
-	 * @param Participant $participant  Participant object.
-	 * @param string      $token        Signup access token.
+	 * @param object      $event      Event post object.
+	 * @param Participant $participant Participant object.
+	 * @param string      $signup_url Full signup URL with participant token.
 	 * @return bool Success.
 	 */
-	public function send_signup_link_email( $event, $participant, $token ) {
+	public function send_signup_link_email( $event, $participant, $signup_url ) {
 		if ( ! $this->has_valid_email( $participant ) ) {
 			return false;
 		}
 
 		$site_name = wp_specialchars_decode( get_option( 'blogname' ), ENT_QUOTES );
-
-		// Build signup URL with token.
-		$signup_url = add_query_arg( 'signup_token', $token, get_permalink( $event->ID ) );
 
 		// Build manage subscription URL for unsubscribe link.
 		$manage_subscription_url = ManageSubscriptionToken::get_url( $participant->id );
@@ -1877,6 +1866,15 @@ class EmailService {
 			return $results;
 		}
 
+		// Resolve event_date_id once for this event.
+		$event_date_id = 0;
+		if ( class_exists( \FairEvents\Models\EventDates::class ) ) {
+			$event_dates_obj = \FairEvents\Models\EventDates::get_by_event_id( $event_id );
+			if ( $event_dates_obj ) {
+				$event_date_id = $event_dates_obj->id;
+			}
+		}
+
 		// Get already signed up participants if we need to skip them.
 		$signed_up_ids = array();
 		if ( $skip_signed_up ) {
@@ -1931,20 +1929,11 @@ class EmailService {
 				continue;
 			}
 
-			// Get or create signup access key.
-			$access_key = $this->event_signup_access_key_repository->create_for_participant( $event_id, $participant_id );
-
-			if ( ! $access_key ) {
-				$results['failed'][] = array(
-					'name'   => $participant->name,
-					'email'  => $participant->email,
-					'reason' => __( 'Failed to create access key.', 'fair-audience' ),
-				);
-				continue;
-			}
+			// Generate participant token URL.
+			$token_url = ParticipantToken::get_url( $participant_id, $event_date_id, $event->ID );
 
 			// Send invitation email.
-			$success = $this->send_event_invitation( $event, $participant, $access_key->token, $custom_message );
+			$success = $this->send_signup_link_email( $event, $participant, $token_url );
 
 			if ( $success ) {
 				$results['sent'][] = $participant->email;

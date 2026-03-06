@@ -15,7 +15,7 @@ defined( 'WPINC' ) || die;
 
 use FairAudience\Database\ParticipantRepository;
 use FairAudience\Database\EventParticipantRepository;
-use FairAudience\Database\EventSignupAccessKeyRepository;
+use FairAudience\Services\ParticipantToken;
 use FairEvents\Models\EventDates;
 
 // Get block attributes.
@@ -34,9 +34,8 @@ $is_valid_post_type = \FairEvents\Database\EventRepository::is_event( $event_id 
 $form_id = 'fair-audience-signup-' . wp_unique_id();
 
 // Determine user state.
-// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Token is validated server-side.
-$token   = isset( $_GET['signup_token'] ) ? sanitize_text_field( wp_unslash( $_GET['signup_token'] ) ) : '';
-$user_id = get_current_user_id();
+$participant_token = get_query_var( 'participant_token', '' );
+$user_id           = get_current_user_id();
 
 $state            = 'anonymous';
 $participant      = null;
@@ -46,14 +45,13 @@ $is_signed_up     = false;
 if ( $is_valid_post_type ) {
 	$participant_repository       = new ParticipantRepository();
 	$event_participant_repository = new EventParticipantRepository();
-	$access_key_repository        = new EventSignupAccessKeyRepository();
 
-	if ( ! empty( $token ) ) {
-		// Token-based access.
-		$access_key = $access_key_repository->get_by_token( $token );
-		if ( $access_key && (int) $access_key->event_id === (int) $event_id ) {
+	if ( ! empty( $participant_token ) ) {
+		// Token-based access via HMAC participant token.
+		$token_data = ParticipantToken::verify( $participant_token );
+		if ( $token_data ) {
 			$state       = 'with_token';
-			$participant = $participant_repository->get_by_id( $access_key->participant_id );
+			$participant = $participant_repository->get_by_id( $token_data['participant_id'] );
 		}
 	} elseif ( $user_id ) {
 		// Logged-in user.
@@ -96,13 +94,13 @@ if ( class_exists( EventDates::class ) ) {
 // Get wrapper attributes.
 $wrapper_attributes = get_block_wrapper_attributes(
 	array(
-		'class'                => 'fair-audience-event-signup',
-		'data-event-id'        => esc_attr( (string) $event_id ),
-		'data-event-date-id'   => esc_attr( $event_date_id ),
-		'data-state'           => esc_attr( $state ),
-		'data-is-signed-up'    => $is_signed_up ? 'true' : 'false',
-		'data-token'           => esc_attr( $token ),
-		'data-success-message' => esc_attr( $success_message ),
+		'class'                  => 'fair-audience-event-signup',
+		'data-event-id'          => esc_attr( (string) $event_id ),
+		'data-event-date-id'     => esc_attr( $event_date_id ),
+		'data-state'             => esc_attr( $state ),
+		'data-is-signed-up'      => $is_signed_up ? 'true' : 'false',
+		'data-participant-token' => esc_attr( $participant_token ),
+		'data-success-message'   => esc_attr( $success_message ),
 	)
 );
 ?>

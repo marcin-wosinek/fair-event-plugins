@@ -49,7 +49,6 @@ function fair_audience_activate() {
 	dbDelta( \FairAudience\Database\Schema::get_email_confirmation_tokens_table_sql() );
 	dbDelta( \FairAudience\Database\Schema::get_groups_table_sql() );
 	dbDelta( \FairAudience\Database\Schema::get_group_participants_table_sql() );
-	dbDelta( \FairAudience\Database\Schema::get_event_signup_access_keys_table_sql() );
 	dbDelta( \FairAudience\Database\Schema::get_instagram_posts_table_sql() );
 	dbDelta( \FairAudience\Database\Schema::get_extra_messages_table_sql() );
 	dbDelta( \FairAudience\Database\Schema::get_custom_mail_messages_table_sql() );
@@ -206,10 +205,6 @@ function fair_audience_maybe_upgrade_db() {
 	}
 
 	if ( version_compare( $db_version, '1.10.0', '<' ) ) {
-		require_once ABSPATH . 'wp-admin/includes/upgrade.php';
-
-		dbDelta( \FairAudience\Database\Schema::get_event_signup_access_keys_table_sql() );
-
 		update_option( 'fair_audience_db_version', '1.10.0' );
 	}
 
@@ -349,7 +344,6 @@ function fair_audience_maybe_upgrade_db() {
 			$wpdb->prefix . 'fair_audience_event_participants',
 			$wpdb->prefix . 'fair_audience_polls',
 			$wpdb->prefix . 'fair_audience_gallery_access_keys',
-			$wpdb->prefix . 'fair_audience_event_signup_access_keys',
 		);
 
 		foreach ( $tables as $table_name ) {

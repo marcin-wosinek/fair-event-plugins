@@ -30,6 +30,7 @@ const CSS_PREFIX = 'fair-audience-audience';
 
 		forms.forEach(function (form) {
 			setupFormSubmission(form);
+			setupParticipantLink(form);
 		});
 	}
 
@@ -42,6 +43,55 @@ const CSS_PREFIX = 'fair-audience-audience';
 			e.preventDefault();
 			submitSignup(form);
 		});
+	}
+
+	/**
+	 * Setup participant link UI (pre-filled form with "Not you?" button)
+	 * @param {HTMLElement} form The form element
+	 */
+	function setupParticipantLink(form) {
+		const container = form.closest('.fair-audience-audience-signup');
+		const participantId = container?.dataset.participantId;
+
+		if (!participantId) return;
+
+		// Create "Not you?" button
+		const notYouButton = document.createElement('button');
+		notYouButton.type = 'button';
+		notYouButton.className = 'fair-audience-audience-not-you';
+		notYouButton.textContent = __('Not you? Start fresh', 'fair-audience');
+
+		notYouButton.addEventListener('click', function () {
+			// Clear participant link
+			delete container.dataset.participantId;
+
+			// Clear pre-filled fields
+			const nameInput = form.querySelector('input[name="audience_name"]');
+			const surnameInput = form.querySelector(
+				'input[name="audience_surname"]'
+			);
+			const emailInput = form.querySelector(
+				'input[name="audience_email"]'
+			);
+
+			if (nameInput) nameInput.value = '';
+			if (surnameInput) surnameInput.value = '';
+			if (emailInput) emailInput.value = '';
+
+			// Remove the "Not you?" button
+			notYouButton.remove();
+
+			// Clean the URL to remove the participant_token
+			const url = new URL(window.location);
+			url.searchParams.delete('participant_token');
+			window.history.replaceState({}, '', url);
+		});
+
+		// Insert before the submit button
+		const submitWrapper = form.querySelector('.wp-block-button');
+		if (submitWrapper) {
+			form.insertBefore(notYouButton, submitWrapper);
+		}
 	}
 
 	/**
@@ -224,6 +274,14 @@ const CSS_PREFIX = 'fair-audience-audience';
 			email: emailInput.value.trim(),
 		};
 
+		// Include participant_id if linked via participant token
+		const participantId = container.dataset.participantId
+			? parseInt(container.dataset.participantId, 10)
+			: null;
+		if (participantId) {
+			requestData.participant_id = participantId;
+		}
+
 		if (instagramInput && instagramInput.value.trim()) {
 			requestData.instagram = instagramInput.value.trim();
 		}
@@ -287,10 +345,18 @@ const CSS_PREFIX = 'fair-audience-audience';
 				form.reset();
 				submitButton.disabled = true;
 
-				// In edit mode, clean the URL to remove the token
+				// Clean up token query params from URL
+				const url = new URL(window.location);
+				let urlChanged = false;
 				if (isEditMode) {
-					const url = new URL(window.location);
 					url.searchParams.delete('edit_audience_signup');
+					urlChanged = true;
+				}
+				if (url.searchParams.has('participant_token')) {
+					url.searchParams.delete('participant_token');
+					urlChanged = true;
+				}
+				if (urlChanged) {
 					window.history.replaceState({}, '', url);
 				}
 

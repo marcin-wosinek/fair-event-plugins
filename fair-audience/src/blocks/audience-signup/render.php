@@ -16,6 +16,7 @@ defined( 'WPINC' ) || die;
 
 use FairEvents\Models\EventDates;
 use FairAudience\Services\AudienceSignupToken;
+use FairAudience\Services\ParticipantToken;
 use FairAudience\Database\QuestionnaireSubmissionRepository;
 use FairAudience\Database\QuestionnaireAnswerRepository;
 use FairAudience\Database\ParticipantRepository;
@@ -42,13 +43,31 @@ if ( $event_date_id_attr > 0 ) {
 	}
 }
 
+// Check for participant token (pre-fill mode).
+$participant_token_value = get_query_var( 'participant_token', '' );
+$linked_participant_id   = 0;
+$existing_answers        = array();
+$existing_name           = '';
+$existing_surname        = '';
+$existing_email          = '';
+$is_edit_mode            = false;
+
+if ( ! empty( $participant_token_value ) ) {
+	$token_data = ParticipantToken::verify( $participant_token_value );
+	if ( $token_data ) {
+		$participant_repo = new ParticipantRepository();
+		$participant      = $participant_repo->get_by_id( $token_data['participant_id'] );
+		if ( $participant ) {
+			$linked_participant_id = $participant->id;
+			$existing_name         = $participant->name;
+			$existing_surname      = $participant->surname;
+			$existing_email        = $participant->email;
+		}
+	}
+}
+
 // Check for edit mode via token.
-$edit_token       = get_query_var( 'edit_audience_signup', '' );
-$existing_answers = array();
-$existing_name    = '';
-$existing_surname = '';
-$existing_email   = '';
-$is_edit_mode     = false;
+$edit_token = get_query_var( 'edit_audience_signup', '' );
 
 if ( ! empty( $edit_token ) ) {
 	$submission_id = AudienceSignupToken::verify( $edit_token );
@@ -66,12 +85,14 @@ if ( ! empty( $edit_token ) ) {
 				);
 			}
 
-			$participant_repo = new ParticipantRepository();
-			$participant      = $participant_repo->get_by_id( $submission->participant_id );
-			if ( $participant ) {
-				$existing_name    = $participant->name;
-				$existing_surname = $participant->surname;
-				$existing_email   = $participant->email;
+			if ( ! $linked_participant_id ) {
+				$participant_repo = new ParticipantRepository();
+				$participant      = $participant_repo->get_by_id( $submission->participant_id );
+				if ( $participant ) {
+					$existing_name    = $participant->name;
+					$existing_surname = $participant->surname;
+					$existing_email   = $participant->email;
+				}
 			}
 
 			$is_edit_mode = true;
@@ -98,12 +119,21 @@ if ( $current_post_id ) {
 	$wrapper_data['data-post-id'] = (string) $current_post_id;
 }
 
-if ( $is_edit_mode ) {
-	$wrapper_data['data-existing-answers'] = wp_json_encode( $existing_answers );
+if ( $linked_participant_id ) {
+	$wrapper_data['data-participant-id']   = (string) $linked_participant_id;
 	$wrapper_data['data-existing-name']    = esc_attr( $existing_name );
 	$wrapper_data['data-existing-surname'] = esc_attr( $existing_surname );
 	$wrapper_data['data-existing-email']   = esc_attr( $existing_email );
-	$wrapper_data['data-edit-mode']        = '1';
+}
+
+if ( $is_edit_mode ) {
+	$wrapper_data['data-existing-answers'] = wp_json_encode( $existing_answers );
+	if ( ! $linked_participant_id ) {
+		$wrapper_data['data-existing-name']    = esc_attr( $existing_name );
+		$wrapper_data['data-existing-surname'] = esc_attr( $existing_surname );
+		$wrapper_data['data-existing-email']   = esc_attr( $existing_email );
+	}
+	$wrapper_data['data-edit-mode'] = '1';
 }
 
 // Get wrapper attributes.
