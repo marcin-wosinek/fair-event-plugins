@@ -59,7 +59,10 @@ export default function EventPhotos({ eventId }) {
 	}
 
 	return (
-		<Card style={{ marginTop: '16px' }}>
+		<Card
+			className="fair-events-photos"
+			style={{ marginTop: '16px', maxWidth: 'none' }}
+		>
 			<CardHeader>
 				<h2>{__('Photos', 'fair-events')}</h2>
 				<Button variant="secondary" href={mediaLibraryUrl}>
@@ -72,14 +75,13 @@ export default function EventPhotos({ eventId }) {
 						display: 'grid',
 						gridTemplateColumns:
 							'repeat(auto-fill, minmax(180px, 1fr))',
-						gap: '16px',
+						gap: '8px',
 					}}
 				>
 					{photos.map((photo) => (
 						<div
 							key={photo.id}
 							style={{
-								border: '1px solid #ddd',
 								borderRadius: '4px',
 								overflow: 'hidden',
 								background: '#f9f9f9',
@@ -97,14 +99,14 @@ export default function EventPhotos({ eventId }) {
 							/>
 							<div
 								style={{
-									padding: '8px',
+									padding: '6px 8px',
 									fontSize: '13px',
 								}}
 							>
 								{photo.author_name && (
 									<div
 										style={{
-											marginBottom: '4px',
+											marginBottom: '2px',
 											color: '#50575e',
 										}}
 									>
