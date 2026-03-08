@@ -8,6 +8,7 @@
 namespace FairEvents\API;
 
 use FairEvents\Database\EventPhotoRepository;
+use FairEvents\Database\PhotoLikeRepository;
 use FairEvents\Settings\Settings;
 use WP_REST_Controller;
 use WP_REST_Server;
@@ -98,8 +99,13 @@ class EventGalleryEndpoint extends WP_REST_Controller {
 			)
 		);
 
+		// Get like counts for all photos in one query.
+		$like_repository = new PhotoLikeRepository();
+		$like_counts     = $like_repository->get_counts_for_photos( $attachment_ids );
+
 		$items = array();
 		foreach ( $attachments as $attachment ) {
+			$author  = get_user_by( 'id', $attachment->post_author );
 			$items[] = array(
 				'id'          => $attachment->ID,
 				'title'       => $attachment->post_title,
@@ -108,6 +114,8 @@ class EventGalleryEndpoint extends WP_REST_Controller {
 				'alt_text'    => get_post_meta( $attachment->ID, '_wp_attachment_image_alt', true ),
 				'mime_type'   => $attachment->post_mime_type,
 				'url'         => wp_get_attachment_url( $attachment->ID ),
+				'author_name' => $author ? $author->display_name : '',
+				'likes_count' => $like_counts[ $attachment->ID ] ?? 0,
 				'sizes'       => array(
 					'thumbnail' => wp_get_attachment_image_url( $attachment->ID, 'thumbnail' ),
 					'medium'    => wp_get_attachment_image_url( $attachment->ID, 'medium' ),
