@@ -1,5 +1,11 @@
 import { useState, useEffect } from '@wordpress/element';
-import { Card, CardHeader, CardBody, Spinner } from '@wordpress/components';
+import {
+	Card,
+	CardHeader,
+	CardBody,
+	Button,
+	Spinner,
+} from '@wordpress/components';
 import { __ } from '@wordpress/i18n';
 import apiFetch from '@wordpress/api-fetch';
 
@@ -32,6 +38,10 @@ export default function EventPhotos({ eventId }) {
 		);
 	}
 
+	const mediaLibraryUrl = eventId
+		? `upload.php?fair_event_filter=${eventId}`
+		: 'upload.php';
+
 	if (!eventId || photos.length === 0) {
 		return (
 			<Card style={{ marginTop: '16px' }}>
@@ -40,6 +50,9 @@ export default function EventPhotos({ eventId }) {
 				</CardHeader>
 				<CardBody>
 					<p>{__('No photos for this event.', 'fair-events')}</p>
+					<Button variant="secondary" href={mediaLibraryUrl}>
+						{__('Media Library', 'fair-events')}
+					</Button>
 				</CardBody>
 			</Card>
 		);
@@ -49,6 +62,9 @@ export default function EventPhotos({ eventId }) {
 		<Card style={{ marginTop: '16px' }}>
 			<CardHeader>
 				<h2>{__('Photos', 'fair-events')}</h2>
+				<Button variant="secondary" href={mediaLibraryUrl}>
+					{__('Media Library', 'fair-events')}
+				</Button>
 			</CardHeader>
 			<CardBody>
 				<div
