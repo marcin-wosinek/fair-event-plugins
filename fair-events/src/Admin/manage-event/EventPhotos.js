@@ -18,7 +18,7 @@ export default function EventPhotos({ eventId }) {
 	const [selectMode, setSelectMode] = useState(false);
 	const [selectedIds, setSelectedIds] = useState([]);
 	const [showTagModal, setShowTagModal] = useState(false);
-	const [detailPhoto, setDetailPhoto] = useState(null);
+	const [detailIndex, setDetailIndex] = useState(null);
 
 	useEffect(() => {
 		if (!eventId) {
@@ -157,14 +157,6 @@ export default function EventPhotos({ eventId }) {
 				</div>
 			</CardHeader>
 			<CardBody>
-				{detailPhoto && (
-					<PhotoDetail
-						photo={detailPhoto}
-						eventId={eventId}
-						onClose={() => setDetailPhoto(null)}
-						onTagsChanged={handleTagsChanged}
-					/>
-				)}
 				<div
 					style={{
 						display: 'grid',
@@ -191,7 +183,11 @@ export default function EventPhotos({ eventId }) {
 								if (selectMode) {
 									toggleSelect(photo.id);
 								} else {
-									setDetailPhoto(photo);
+									setDetailIndex(
+										photos.findIndex(
+											(p) => p.id === photo.id
+										)
+									);
 								}
 							}}
 							onKeyDown={(e) => {
@@ -200,7 +196,11 @@ export default function EventPhotos({ eventId }) {
 									if (selectMode) {
 										toggleSelect(photo.id);
 									} else {
-										setDetailPhoto(photo);
+										setDetailIndex(
+											photos.findIndex(
+												(p) => p.id === photo.id
+											)
+										);
 									}
 								}
 							}}
@@ -284,6 +284,18 @@ export default function EventPhotos({ eventId }) {
 					{__('Add New Photos', 'fair-events')}
 				</Button>
 			</CardBody>
+			{detailIndex !== null && photos[detailIndex] && (
+				<PhotoDetail
+					photo={photos[detailIndex]}
+					eventId={eventId}
+					onClose={() => setDetailIndex(null)}
+					onTagsChanged={handleTagsChanged}
+					hasPrev={detailIndex > 0}
+					hasNext={detailIndex < photos.length - 1}
+					onPrev={() => setDetailIndex((i) => i - 1)}
+					onNext={() => setDetailIndex((i) => i + 1)}
+				/>
+			)}
 			{showTagModal && (
 				<PhotoTagModal
 					eventId={eventId}
