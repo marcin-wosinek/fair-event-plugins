@@ -119,6 +119,13 @@ export default function EventPhotos({ eventId }) {
 						</div>
 					))}
 				</div>
+				<Button
+					variant="secondary"
+					href={`media-new.php?fair_event=${eventId}`}
+					style={{ marginTop: '16px' }}
+				>
+					{__('Add New Photos', 'fair-events')}
+				</Button>
 			</CardBody>
 		</Card>
 	);

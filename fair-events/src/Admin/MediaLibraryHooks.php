@@ -212,7 +212,15 @@ class MediaLibraryHooks {
 	public static function add_bulk_upload_event_selector() {
 		$events = EventRepository::get_all( array( 'post_status' => 'any' ) );
 
-		$selected = get_user_meta( get_current_user_id(), 'fair_events_bulk_upload_event', true );
+		// Allow pre-selecting event via URL parameter.
+		// phpcs:ignore WordPress.Security.NonceVerification.Recommended
+		$url_event = isset( $_GET['fair_event'] ) ? absint( $_GET['fair_event'] ) : 0;
+		if ( $url_event ) {
+			update_user_meta( get_current_user_id(), 'fair_events_bulk_upload_event', $url_event );
+			$selected = $url_event;
+		} else {
+			$selected = get_user_meta( get_current_user_id(), 'fair_events_bulk_upload_event', true );
+		}
 
 		?>
 		<div id="fair-events-bulk-upload" style="margin: 20px 0; padding: 15px; background: #f0f0f1; border: 1px solid #c3c4c7; border-radius: 4px;">
