@@ -1,17 +1,24 @@
-import { useState, useEffect } from '@wordpress/element';
+import { useState, useEffect, useCallback } from '@wordpress/element';
 import {
 	Card,
 	CardHeader,
 	CardBody,
 	Button,
 	Spinner,
+	CheckboxControl,
 } from '@wordpress/components';
 import { __ } from '@wordpress/i18n';
 import apiFetch from '@wordpress/api-fetch';
+import PhotoTagModal from './PhotoTagModal.js';
+import PhotoDetail from './PhotoDetail.js';
 
 export default function EventPhotos({ eventId }) {
 	const [photos, setPhotos] = useState([]);
 	const [loading, setLoading] = useState(true);
+	const [selectMode, setSelectMode] = useState(false);
+	const [selectedIds, setSelectedIds] = useState([]);
+	const [showTagModal, setShowTagModal] = useState(false);
+	const [detailPhoto, setDetailPhoto] = useState(null);
 
 	useEffect(() => {
 		if (!eventId) {
@@ -27,6 +34,65 @@ export default function EventPhotos({ eventId }) {
 			})
 			.finally(() => setLoading(false));
 	}, [eventId]);
+
+	const toggleSelect = (photoId) => {
+		setSelectedIds((prev) =>
+			prev.includes(photoId)
+				? prev.filter((id) => id !== photoId)
+				: [...prev, photoId]
+		);
+	};
+
+	const handleBatchTag = (participant) => {
+		setShowTagModal(false);
+		apiFetch({
+			path: '/fair-audience/v1/photos/batch-tag',
+			method: 'POST',
+			data: {
+				attachment_ids: selectedIds,
+				participant_id: participant.id,
+			},
+		}).then(() => {
+			// Update local state with new tags.
+			setPhotos((prev) =>
+				prev.map((p) => {
+					if (!selectedIds.includes(p.id)) return p;
+					const alreadyTagged = (p.tagged_participants || []).some(
+						(t) => t.participant_id === participant.id
+					);
+					if (alreadyTagged) return p;
+					const newTag = {
+						participant_id: participant.id,
+						name: `${participant.name || ''} ${
+							participant.surname || ''
+						}`.trim(),
+					};
+					const updated = [...(p.tagged_participants || []), newTag];
+					return {
+						...p,
+						tagged_participants: updated,
+						tags_count: updated.length,
+					};
+				})
+			);
+			setSelectedIds([]);
+			setSelectMode(false);
+		});
+	};
+
+	const handleTagsChanged = useCallback((photoId, newTags) => {
+		setPhotos((prev) =>
+			prev.map((p) =>
+				p.id === photoId
+					? {
+							...p,
+							tagged_participants: newTags,
+							tags_count: newTags.length,
+					  }
+					: p
+			)
+		);
+	}, []);
 
 	if (loading) {
 		return (
@@ -65,11 +131,40 @@ export default function EventPhotos({ eventId }) {
 		>
 			<CardHeader>
 				<h2>{__('Photos', 'fair-events')}</h2>
-				<Button variant="secondary" href={mediaLibraryUrl}>
-					{__('Media Library', 'fair-events')}
-				</Button>
+				<div style={{ display: 'flex', gap: '8px' }}>
+					{selectMode && selectedIds.length > 0 && (
+						<Button
+							variant="primary"
+							onClick={() => setShowTagModal(true)}
+						>
+							{__('Tag Person', 'fair-events')}
+						</Button>
+					)}
+					<Button
+						variant={selectMode ? 'primary' : 'secondary'}
+						onClick={() => {
+							setSelectMode(!selectMode);
+							setSelectedIds([]);
+						}}
+					>
+						{selectMode
+							? __('Cancel Selection', 'fair-events')
+							: __('Select Photos', 'fair-events')}
+					</Button>
+					<Button variant="secondary" href={mediaLibraryUrl}>
+						{__('Media Library', 'fair-events')}
+					</Button>
+				</div>
 			</CardHeader>
 			<CardBody>
+				{detailPhoto && (
+					<PhotoDetail
+						photo={detailPhoto}
+						eventId={eventId}
+						onClose={() => setDetailPhoto(null)}
+						onTagsChanged={handleTagsChanged}
+					/>
+				)}
 				<div
 					style={{
 						display: 'grid',
@@ -85,8 +180,68 @@ export default function EventPhotos({ eventId }) {
 								borderRadius: '4px',
 								overflow: 'hidden',
 								background: '#f9f9f9',
+								cursor: selectMode ? 'pointer' : 'pointer',
+								outline:
+									selectMode && selectedIds.includes(photo.id)
+										? '3px solid #007cba'
+										: 'none',
+								position: 'relative',
 							}}
+							onClick={() => {
+								if (selectMode) {
+									toggleSelect(photo.id);
+								} else {
+									setDetailPhoto(photo);
+								}
+							}}
+							onKeyDown={(e) => {
+								if (e.key === 'Enter' || e.key === ' ') {
+									e.preventDefault();
+									if (selectMode) {
+										toggleSelect(photo.id);
+									} else {
+										setDetailPhoto(photo);
+									}
+								}
+							}}
+							role="button"
+							tabIndex={0}
 						>
+							{selectMode && (
+								<div
+									style={{
+										position: 'absolute',
+										top: '6px',
+										left: '6px',
+										zIndex: 1,
+									}}
+									onClick={(e) => e.stopPropagation()}
+									onKeyDown={(e) => e.stopPropagation()}
+									role="presentation"
+								>
+									<CheckboxControl
+										checked={selectedIds.includes(photo.id)}
+										onChange={() => toggleSelect(photo.id)}
+									/>
+								</div>
+							)}
+							{photo.tags_count > 0 && (
+								<div
+									style={{
+										position: 'absolute',
+										top: '6px',
+										right: '6px',
+										background: '#007cba',
+										color: '#fff',
+										borderRadius: '10px',
+										padding: '2px 8px',
+										fontSize: '11px',
+										zIndex: 1,
+									}}
+								>
+									{photo.tags_count}
+								</div>
+							)}
 							<img
 								src={photo.sizes.medium || photo.url}
 								alt={photo.alt_text || photo.title}
@@ -129,6 +284,13 @@ export default function EventPhotos({ eventId }) {
 					{__('Add New Photos', 'fair-events')}
 				</Button>
 			</CardBody>
+			{showTagModal && (
+				<PhotoTagModal
+					eventId={eventId}
+					onSelect={handleBatchTag}
+					onClose={() => setShowTagModal(false)}
+				/>
+			)}
 		</Card>
 	);
 }

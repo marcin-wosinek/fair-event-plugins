@@ -103,20 +103,42 @@ class EventGalleryEndpoint extends WP_REST_Controller {
 		$like_repository = new PhotoLikeRepository();
 		$like_counts     = $like_repository->get_counts_for_photos( $attachment_ids );
 
+		// Load tagged participants if fair-audience plugin is active.
+		$tags_by_attachment = array();
+		if ( class_exists( 'FairAudience\Database\PhotoParticipantRepository' ) ) {
+			$photo_repo         = new \FairAudience\Database\PhotoParticipantRepository();
+			$participant_repo   = new \FairAudience\Database\ParticipantRepository();
+			$tags_by_attachment = $photo_repo->get_tagged_for_attachments( $attachment_ids );
+		}
+
 		$items = array();
 		foreach ( $attachments as $attachment ) {
-			$author  = get_user_by( 'id', $attachment->post_author );
+			$author = get_user_by( 'id', $attachment->post_author );
+
+			$tagged_participants = array();
+			if ( ! empty( $tags_by_attachment[ $attachment->ID ] ) ) {
+				foreach ( $tags_by_attachment[ $attachment->ID ] as $tag ) {
+					$participant           = $participant_repo->get_by_id( $tag->participant_id );
+					$tagged_participants[] = array(
+						'participant_id' => $tag->participant_id,
+						'name'           => $participant ? trim( $participant->name . ' ' . $participant->surname ) : '',
+					);
+				}
+			}
+
 			$items[] = array(
-				'id'          => $attachment->ID,
-				'title'       => $attachment->post_title,
-				'caption'     => $attachment->post_excerpt,
-				'description' => $attachment->post_content,
-				'alt_text'    => get_post_meta( $attachment->ID, '_wp_attachment_image_alt', true ),
-				'mime_type'   => $attachment->post_mime_type,
-				'url'         => wp_get_attachment_url( $attachment->ID ),
-				'author_name' => $author ? $author->display_name : '',
-				'likes_count' => $like_counts[ $attachment->ID ] ?? 0,
-				'sizes'       => array(
+				'id'                  => $attachment->ID,
+				'title'               => $attachment->post_title,
+				'caption'             => $attachment->post_excerpt,
+				'description'         => $attachment->post_content,
+				'alt_text'            => get_post_meta( $attachment->ID, '_wp_attachment_image_alt', true ),
+				'mime_type'           => $attachment->post_mime_type,
+				'url'                 => wp_get_attachment_url( $attachment->ID ),
+				'author_name'         => $author ? $author->display_name : '',
+				'likes_count'         => $like_counts[ $attachment->ID ] ?? 0,
+				'tags_count'          => count( $tagged_participants ),
+				'tagged_participants' => $tagged_participants,
+				'sizes'               => array(
 					'thumbnail' => wp_get_attachment_image_url( $attachment->ID, 'thumbnail' ),
 					'medium'    => wp_get_attachment_image_url( $attachment->ID, 'medium' ),
 					'large'     => wp_get_attachment_image_url( $attachment->ID, 'large' ),

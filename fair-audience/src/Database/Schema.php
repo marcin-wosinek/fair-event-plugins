@@ -235,7 +235,7 @@ class Schema {
 			role ENUM('author', 'tagged') NOT NULL DEFAULT 'author',
 			created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
 			PRIMARY KEY  (id),
-			UNIQUE KEY idx_attachment_author (attachment_id, role),
+			UNIQUE KEY idx_attachment_participant (attachment_id, participant_id),
 			KEY idx_participant_id (participant_id),
 			KEY idx_attachment_id (attachment_id),
 			KEY idx_role (role)

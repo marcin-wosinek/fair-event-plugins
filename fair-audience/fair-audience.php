@@ -69,7 +69,7 @@ function fair_audience_activate() {
 	dbDelta( \FairAudience\Database\Schema::get_questionnaire_answers_table_sql() );
 
 	// Update database version.
-	update_option( 'fair_audience_db_version', '1.21.0' );
+	update_option( 'fair_audience_db_version', '1.22.0' );
 }
 register_activation_hook( __FILE__, __NAMESPACE__ . '\\fair_audience_activate' );
 
@@ -382,6 +382,22 @@ function fair_audience_maybe_upgrade_db() {
 		dbDelta( \FairAudience\Database\Schema::get_questionnaire_answers_table_sql() );
 
 		update_option( 'fair_audience_db_version', '1.21.0' );
+	}
+
+	if ( version_compare( $db_version, '1.22.0', '<' ) ) {
+		global $wpdb;
+
+		$table_name = $wpdb->prefix . 'fair_audience_photo_participants';
+
+		// Drop old unique key that only allows one tagged person per photo.
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.DirectDatabaseQuery.SchemaChange
+		$wpdb->query( "ALTER TABLE {$table_name} DROP INDEX IF EXISTS idx_attachment_author" );
+
+		// Add new unique key that prevents duplicate tags but allows multiple tagged people.
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.DirectDatabaseQuery.SchemaChange
+		$wpdb->query( "ALTER TABLE {$table_name} ADD UNIQUE INDEX idx_attachment_participant (attachment_id, participant_id)" );
+
+		update_option( 'fair_audience_db_version', '1.22.0' );
 	}
 }
 add_action( 'plugins_loaded', __NAMESPACE__ . '\\fair_audience_maybe_upgrade_db' );

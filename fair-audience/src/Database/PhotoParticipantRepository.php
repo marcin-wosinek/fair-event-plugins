@@ -201,6 +201,113 @@ class PhotoParticipantRepository {
 	}
 
 	/**
+	 * Add a tagged participant to a photo.
+	 *
+	 * @param int $attachment_id  Attachment ID.
+	 * @param int $participant_id Participant ID.
+	 * @return int|false Relationship ID or false on failure.
+	 */
+	public function add_tag( $attachment_id, $participant_id ) {
+		$relationship = new PhotoParticipant(
+			array(
+				'attachment_id'  => $attachment_id,
+				'participant_id' => $participant_id,
+				'role'           => 'tagged',
+			)
+		);
+
+		return $relationship->save() ? $relationship->id : false;
+	}
+
+	/**
+	 * Remove a tagged participant from a photo.
+	 *
+	 * @param int $attachment_id  Attachment ID.
+	 * @param int $participant_id Participant ID.
+	 * @return bool Success.
+	 */
+	public function remove_tag( $attachment_id, $participant_id ) {
+		global $wpdb;
+
+		$table_name = $this->get_table_name();
+
+		return $wpdb->delete(
+			$table_name,
+			array(
+				'attachment_id'  => $attachment_id,
+				'participant_id' => $participant_id,
+				'role'           => 'tagged',
+			),
+			array( '%d', '%d', '%s' )
+		) !== false;
+	}
+
+	/**
+	 * Get all tagged participants for an attachment.
+	 *
+	 * @param int $attachment_id Attachment ID.
+	 * @return PhotoParticipant[] Array of tagged photo-participant relationships.
+	 */
+	public function get_tagged_for_attachment( $attachment_id ) {
+		global $wpdb;
+
+		$table_name = $this->get_table_name();
+
+		$results = $wpdb->get_results(
+			$wpdb->prepare(
+				"SELECT * FROM %i WHERE attachment_id = %d AND role = 'tagged' ORDER BY created_at ASC",
+				$table_name,
+				$attachment_id
+			),
+			ARRAY_A
+		);
+
+		return array_map(
+			function ( $row ) {
+				return new PhotoParticipant( $row );
+			},
+			$results
+		);
+	}
+
+	/**
+	 * Get all tagged participants for multiple attachments (batch).
+	 *
+	 * @param int[] $attachment_ids Array of attachment IDs.
+	 * @return array Associative array: attachment_id => PhotoParticipant[].
+	 */
+	public function get_tagged_for_attachments( $attachment_ids ) {
+		global $wpdb;
+
+		if ( empty( $attachment_ids ) ) {
+			return array();
+		}
+
+		$table_name = $this->get_table_name();
+
+		$placeholders = implode( ',', array_fill( 0, count( $attachment_ids ), '%d' ) );
+
+		// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+		$results = $wpdb->get_results(
+			$wpdb->prepare(
+				"SELECT * FROM %i WHERE attachment_id IN ($placeholders) AND role = 'tagged' ORDER BY created_at ASC",
+				array_merge( array( $table_name ), array_map( 'intval', $attachment_ids ) )
+			),
+			ARRAY_A
+		);
+
+		$grouped = array();
+		foreach ( $attachment_ids as $id ) {
+			$grouped[ $id ] = array();
+		}
+		foreach ( $results as $row ) {
+			$grouped[ $row['attachment_id'] ][] = new PhotoParticipant( $row );
+		}
+
+		return $grouped;
+	}
+
+	/**
 	 * Get all attachment IDs by a participant (for media library filtering).
 	 *
 	 * @param int    $participant_id Participant ID.

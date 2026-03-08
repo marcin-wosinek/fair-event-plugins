@@ -137,6 +137,9 @@ class Plugin {
 		$questionnaire_responses_controller = new \FairAudience\API\QuestionnaireResponsesController();
 		$questionnaire_responses_controller->register_routes();
 
+		$photo_tags_controller = new \FairAudience\API\PhotoTagsController();
+		$photo_tags_controller->register_routes();
+
 		// Membership fees (only when fair-payment plugin is active).
 		if ( class_exists( 'FairPayment\Core\Plugin' ) ) {
 			$fees_controller = new \FairAudience\API\FeesController();
