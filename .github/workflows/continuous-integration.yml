@@ -166,7 +166,8 @@ jobs:
         uses: ./.github/workflows/deploy-to-environment.yml
         with:
             environment: acroyoga-club.es
-        secrets: inherit
+        secrets:
+            SSH_PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
 
     deploy-fair-event-plugins:
         name: Deploy to fair-event-plugins.com
@@ -177,7 +178,8 @@ jobs:
         uses: ./.github/workflows/deploy-to-environment.yml
         with:
             environment: fair-event-plugins.com
-        secrets: inherit
+        secrets:
+            SSH_PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
 
     deploy-lamutable:
         name: Deploy to lamutable.es
@@ -188,7 +190,8 @@ jobs:
         uses: ./.github/workflows/deploy-to-environment.yml
         with:
             environment: lamutable.es
-        secrets: inherit
+        secrets:
+            SSH_PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
 
     deploy-fusion-dance:
         name: Deploy to fusion-dance.es
@@ -199,7 +202,8 @@ jobs:
         uses: ./.github/workflows/deploy-to-environment.yml
         with:
             environment: fusion-dance.es
-        secrets: inherit
+        secrets:
+            SSH_PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
 
     deploy-acro-agenda:
         name: Deploy to acro-agenda.es
@@ -210,4 +214,5 @@ jobs:
         uses: ./.github/workflows/deploy-to-environment.yml
         with:
             environment: acro-agenda.es
-        secrets: inherit
+        secrets:
+            SSH_PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }}

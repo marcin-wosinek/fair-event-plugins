@@ -7,6 +7,10 @@ on:
                 description: 'Environment to deploy to'
                 required: true
                 type: string
+        secrets:
+            SSH_PRIVATE_KEY:
+                description: 'SSH private key for deployment'
+                required: true
 
 permissions:
     contents: read
