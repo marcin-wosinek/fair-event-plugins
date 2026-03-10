@@ -40,6 +40,7 @@ import GroupPricingRules from './GroupPricingRules.js';
 import EventTickets from './EventTickets.js';
 import EventPhotos from './EventPhotos.js';
 import DuplicateEventWizard from './DuplicateEventWizard.js';
+import RecurrenceCalendar from './RecurrenceCalendar.js';
 
 export default function ManageEventApp() {
 	const eventDateId = window.fairEventsManageEventData?.eventDateId;
@@ -869,116 +870,14 @@ export default function ManageEventApp() {
 			{eventDate.occurrence_type === 'master' &&
 				(eventDate.generated_occurrences?.length > 0 ||
 					eventDate.exdates?.length > 0) && (
-					<Card style={{ marginTop: '16px' }}>
-						<CardHeader>
-							<h2>
-								{__('Recurring Occurrences', 'fair-events')}
-							</h2>
-						</CardHeader>
-						<CardBody>
-							<VStack spacing={2}>
-								{(() => {
-									const occurrences = (
-										eventDate.generated_occurrences || []
-									).map((occ) => ({
-										date: occ.start_datetime.split(' ')[0],
-										type: 'active',
-										id: occ.id,
-										start_datetime: occ.start_datetime,
-									}));
-									const cancelled = (
-										eventDate.exdates || []
-									).map((date) => ({
-										date,
-										type: 'cancelled',
-									}));
-									const combined = [
-										...occurrences,
-										...cancelled,
-									].sort((a, b) =>
-										a.date.localeCompare(b.date)
-									);
-
-									return combined.map((item) =>
-										item.type === 'active' ? (
-											<HStack
-												key={`active-${item.id}`}
-												spacing={3}
-											>
-												<a
-													href={`${manageEventUrl}&event_date_id=${item.id}`}
-													style={{
-														minWidth: '160px',
-													}}
-												>
-													{item.start_datetime}
-												</a>
-												<Button
-													variant="tertiary"
-													isDestructive
-													size="small"
-													isBusy={
-														togglingExdate ===
-														item.date
-													}
-													disabled={
-														togglingExdate !== null
-													}
-													onClick={() =>
-														handleToggleExdate(
-															item.date
-														)
-													}
-												>
-													{__(
-														'Cancel',
-														'fair-events'
-													)}
-												</Button>
-											</HStack>
-										) : (
-											<HStack
-												key={`cancelled-${item.date}`}
-												spacing={3}
-												style={{ opacity: 0.5 }}
-											>
-												<span
-													style={{
-														textDecoration:
-															'line-through',
-														minWidth: '160px',
-													}}
-												>
-													{item.date}
-												</span>
-												<Button
-													variant="secondary"
-													size="small"
-													isBusy={
-														togglingExdate ===
-														item.date
-													}
-													disabled={
-														togglingExdate !== null
-													}
-													onClick={() =>
-														handleToggleExdate(
-															item.date
-														)
-													}
-												>
-													{__(
-														'Restore',
-														'fair-events'
-													)}
-												</Button>
-											</HStack>
-										)
-									);
-								})()}
-							</VStack>
-						</CardBody>
-					</Card>
+					<RecurrenceCalendar
+						generatedOccurrences={eventDate.generated_occurrences}
+						exdates={eventDate.exdates}
+						masterDate={eventDate.start_datetime?.split(' ')[0]}
+						manageEventUrl={`${manageEventUrl}&event_date_id=${eventDateId}`}
+						onToggleExdate={handleToggleExdate}
+						togglingExdate={togglingExdate}
+					/>
 				)}
 		</>
 	);
