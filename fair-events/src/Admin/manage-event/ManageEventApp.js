@@ -49,8 +49,6 @@ export default function ManageEventApp() {
 	const audienceUrl = window.fairEventsManageEventData?.audienceUrl || '';
 	const paymentEntriesUrl =
 		window.fairEventsManageEventData?.paymentEntriesUrl || '';
-	const groupPricingEnabled =
-		window.fairEventsManageEventData?.groupPricingEnabled || false;
 
 	const [eventDate, setEventDate] = useState(null);
 	const [loading, setLoading] = useState(true);
@@ -553,16 +551,8 @@ export default function ManageEventApp() {
 						},
 				  ]
 				: []),
-			...(groupPricingEnabled
-				? [
-						{
-							name: 'group-pricing',
-							title: __('Group Pricing Rules', 'fair-events'),
-						},
-				  ]
-				: []),
 		],
-		[audienceUrl, paymentEntriesUrl, groupPricingEnabled]
+		[audienceUrl, paymentEntriesUrl]
 	);
 
 	const initialTab = useMemo(() => {
@@ -1127,10 +1117,17 @@ export default function ManageEventApp() {
 					}
 					if (tab.name === 'tickets') {
 						return (
-							<EventTickets
-								eventDateId={eventDateId}
-								onSaveRef={ticketSaveRef}
-							/>
+							<>
+								<EventTickets
+									eventDateId={eventDateId}
+									onSaveRef={ticketSaveRef}
+								/>
+								{audienceUrl && (
+									<GroupPricingRules
+										eventDateId={eventDateId}
+									/>
+								)}
+							</>
 						);
 					}
 					if (tab.name === 'audience') {
@@ -1149,9 +1146,6 @@ export default function ManageEventApp() {
 								entriesUrl={paymentEntriesUrl}
 							/>
 						);
-					}
-					if (tab.name === 'group-pricing') {
-						return <GroupPricingRules eventDateId={eventDateId} />;
 					}
 					return renderEventDetailsTab();
 				}}

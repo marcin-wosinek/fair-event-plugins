@@ -203,43 +203,41 @@ export default function GroupPricingRules({ eventDateId }) {
 	};
 
 	return (
-		<VStack spacing={4}>
-			{error && (
-				<Notice
-					status="error"
-					isDismissible
-					onRemove={() => setError(null)}
-				>
-					{error}
-				</Notice>
-			)}
+		<Card style={{ marginTop: '16px' }}>
+			<CardHeader>
+				<h2>{__('Group Discount Rules', 'fair-events')}</h2>
+			</CardHeader>
+			<CardBody>
+				<VStack spacing={4}>
+					{error && (
+						<Notice
+							status="error"
+							isDismissible
+							onRemove={() => setError(null)}
+						>
+							{error}
+						</Notice>
+					)}
 
-			{success && (
-				<Notice
-					status="success"
-					isDismissible
-					onRemove={() => setSuccess(null)}
-				>
-					{success}
-				</Notice>
-			)}
+					{success && (
+						<Notice
+							status="success"
+							isDismissible
+							onRemove={() => setSuccess(null)}
+						>
+							{success}
+						</Notice>
+					)}
 
-			{loading && (
-				<div style={{ textAlign: 'center', padding: '20px' }}>
-					<Spinner />
-				</div>
-			)}
+					{loading && (
+						<div style={{ textAlign: 'center', padding: '20px' }}>
+							<Spinner />
+						</div>
+					)}
 
-			{!loading && (
-				<>
-					{rules.length > 0 && (
-						<Card>
-							<CardHeader>
-								<h3 style={{ margin: 0 }}>
-									{__('Current Rules', 'fair-events')}
-								</h3>
-							</CardHeader>
-							<CardBody>
+					{!loading && (
+						<>
+							{rules.length > 0 && (
 								<div style={{ overflowX: 'auto' }}>
 									<table className="wp-list-table widefat striped">
 										<thead>
@@ -412,28 +410,27 @@ export default function GroupPricingRules({ eventDateId }) {
 										</tbody>
 									</table>
 								</div>
-							</CardBody>
-						</Card>
-					)}
-
-					{rules.length === 0 && (
-						<p style={{ textAlign: 'center', color: '#666' }}>
-							{__(
-								'No group pricing rules yet. Add one below.',
-								'fair-events'
 							)}
-						</p>
-					)}
 
-					{availableGroups.length > 0 && (
-						<Card>
-							<CardHeader>
-								<h3 style={{ margin: 0 }}>
-									{__('Add Pricing Rule', 'fair-events')}
-								</h3>
-							</CardHeader>
-							<CardBody>
+							{rules.length === 0 && (
+								<p
+									style={{
+										textAlign: 'center',
+										color: '#666',
+									}}
+								>
+									{__(
+										'No group pricing rules yet. Add one below.',
+										'fair-events'
+									)}
+								</p>
+							)}
+
+							{availableGroups.length > 0 && (
 								<VStack spacing={3}>
+									<h3 style={{ margin: 0 }}>
+										{__('Add Pricing Rule', 'fair-events')}
+									</h3>
 									<SelectControl
 										label={__('Group', 'fair-events')}
 										value={selectedGroupId}
@@ -490,20 +487,21 @@ export default function GroupPricingRules({ eventDateId }) {
 										{__('Add Rule', 'fair-events')}
 									</Button>
 								</VStack>
-							</CardBody>
-						</Card>
-					)}
-
-					{availableGroups.length === 0 && groups.length > 0 && (
-						<Notice status="info" isDismissible={false}>
-							{__(
-								'All groups already have pricing rules for this event.',
-								'fair-events'
 							)}
-						</Notice>
+
+							{availableGroups.length === 0 &&
+								groups.length > 0 && (
+									<Notice status="info" isDismissible={false}>
+										{__(
+											'All groups already have pricing rules for this event.',
+											'fair-events'
+										)}
+									</Notice>
+								)}
+						</>
 					)}
-				</>
-			)}
-		</VStack>
+				</VStack>
+			</CardBody>
+		</Card>
 	);
 }
