@@ -1,5 +1,5 @@
 /**
- * Event Budget Component
+ * Event Finance Component
  *
  * Shows financial totals and recent entries for the current event date.
  * Only rendered when fair-payment plugin is active.
@@ -28,7 +28,7 @@ const formatAmount = (amount) => {
 	}).format(amount);
 };
 
-export default function EventBudget({ eventDateId, entriesUrl }) {
+export default function EventFinance({ eventDateId, entriesUrl }) {
 	const [totals, setTotals] = useState(null);
 	const [entries, setEntries] = useState([]);
 	const [loading, setLoading] = useState(true);
@@ -73,7 +73,7 @@ export default function EventBudget({ eventDateId, entriesUrl }) {
 	return (
 		<Card style={{ marginTop: '16px' }}>
 			<CardHeader>
-				<h2>{__('Budget & Transactions', 'fair-events')}</h2>
+				<h2>{__('Finance', 'fair-events')}</h2>
 			</CardHeader>
 			<CardBody>
 				{loading && (

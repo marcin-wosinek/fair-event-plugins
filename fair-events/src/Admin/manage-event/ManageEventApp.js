@@ -34,7 +34,7 @@ import { __ } from '@wordpress/i18n';
 import apiFetch from '@wordpress/api-fetch';
 import { DurationOptions, calculateDuration } from 'fair-events-shared';
 import ImageExports from './ImageExports.js';
-import EventBudget from './EventBudget.js';
+import EventFinance from './EventFinance.js';
 import EventAudience from './EventAudience.js';
 import GroupPricingRules from './GroupPricingRules.js';
 import EventTickets from './EventTickets.js';
@@ -547,7 +547,7 @@ export default function ManageEventApp() {
 				? [
 						{
 							name: 'finance',
-							title: __('Budget & Transactions', 'fair-events'),
+							title: __('Finance', 'fair-events'),
 						},
 				  ]
 				: []),
@@ -1141,7 +1141,7 @@ export default function ManageEventApp() {
 					}
 					if (tab.name === 'finance') {
 						return (
-							<EventBudget
+							<EventFinance
 								eventDateId={eventDateId}
 								entriesUrl={paymentEntriesUrl}
 							/>
