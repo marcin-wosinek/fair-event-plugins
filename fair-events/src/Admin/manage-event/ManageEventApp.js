@@ -556,6 +556,10 @@ export default function ManageEventApp() {
 						},
 				  ]
 				: []),
+			{
+				name: 'admin',
+				title: __('Admin', 'fair-events'),
+			},
 		],
 		[audienceUrl, paymentEntriesUrl]
 	);
@@ -1155,40 +1159,89 @@ export default function ManageEventApp() {
 							/>
 						);
 					}
+					if (tab.name === 'admin') {
+						return (
+							<Card style={{ marginTop: '16px' }}>
+								<CardHeader>
+									<h2>
+										{__(
+											'Event Administration',
+											'fair-events'
+										)}
+									</h2>
+								</CardHeader>
+								<CardBody>
+									<VStack spacing={6}>
+										<VStack spacing={2}>
+											<p style={{ color: '#666' }}>
+												{__(
+													'Create a copy of this event with the same details, links, and settings.',
+													'fair-events'
+												)}
+											</p>
+											<div>
+												<Button
+													variant="secondary"
+													disabled
+												>
+													{__(
+														'Duplicate Event',
+														'fair-events'
+													)}
+												</Button>
+											</div>
+										</VStack>
+
+										<VStack spacing={2}>
+											<p style={{ color: '#666' }}>
+												{__(
+													'Permanently delete this event and all associated data. This action cannot be undone.',
+													'fair-events'
+												)}
+											</p>
+											<div>
+												<Button
+													variant="tertiary"
+													isDestructive
+													onClick={handleDelete}
+												>
+													{__(
+														'Delete Event',
+														'fair-events'
+													)}
+												</Button>
+											</div>
+										</VStack>
+									</VStack>
+								</CardBody>
+							</Card>
+						);
+					}
 					return renderEventDetailsTab();
 				}}
 			</TabPanel>
 
-			<HStack
-				spacing={4}
-				justify="space-between"
-				style={{ marginTop: '16px' }}
-			>
-				<HStack spacing={2}>
-					<Button
-						variant="primary"
-						onClick={
-							activeTab === 'tickets'
-								? () => ticketSaveRef.current?.()
-								: handleSave
-						}
-						isBusy={saving}
-						disabled={
-							activeTab === 'event-details' ||
-							activeTab === 'images' ||
-							activeTab === 'links'
-								? saving || !title
-								: saving
-						}
-					>
-						{__('Save Changes', 'fair-events')}
-					</Button>
-					<Button variant="secondary" href={calendarUrl}>
-						{__('Back to Calendar', 'fair-events')}
-					</Button>
-				</HStack>
-				<Button variant="tertiary" isDestructive onClick={handleDelete}>
-					{__('Delete Event', 'fair-events')}
+			<HStack spacing={2} style={{ marginTop: '16px' }}>
+				<Button
+					variant="primary"
+					onClick={
+						activeTab === 'tickets'
+							? () => ticketSaveRef.current?.()
+							: handleSave
+					}
+					isBusy={saving}
+					disabled={
+						activeTab === 'event-details' ||
+						activeTab === 'images' ||
+						activeTab === 'links'
+							? saving || !title
+							: saving
+					}
+				>
+					{__('Save Changes', 'fair-events')}
+				</Button>
+				<Button variant="secondary" href={calendarUrl}>
+					{__('Back to Calendar', 'fair-events')}
 				</Button>
 			</HStack>
 		</div>
