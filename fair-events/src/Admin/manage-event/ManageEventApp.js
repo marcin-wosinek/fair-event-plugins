@@ -39,6 +39,7 @@ import EventAudience from './EventAudience.js';
 import GroupPricingRules from './GroupPricingRules.js';
 import EventTickets from './EventTickets.js';
 import EventPhotos from './EventPhotos.js';
+import DuplicateEventWizard from './DuplicateEventWizard.js';
 
 export default function ManageEventApp() {
 	const eventDateId = window.fairEventsManageEventData?.eventDateId;
@@ -96,6 +97,7 @@ export default function ManageEventApp() {
 			'event-details'
 	);
 	const ticketSaveRef = useRef(null);
+	const [duplicateMode, setDuplicateMode] = useState(false);
 
 	useEffect(() => {
 		if (!eventDateId) {
@@ -594,6 +596,18 @@ export default function ManageEventApp() {
 					</a>
 				</p>
 			</div>
+		);
+	}
+
+	if (duplicateMode) {
+		return (
+			<DuplicateEventWizard
+				sourceEventDate={eventDate}
+				sourceEventDateId={eventDateId}
+				audienceUrl={audienceUrl}
+				onCancel={() => setDuplicateMode(false)}
+				manageEventUrl={manageEventUrl}
+			/>
 		);
 	}
 
@@ -1182,7 +1196,9 @@ export default function ManageEventApp() {
 											<div>
 												<Button
 													variant="secondary"
-													disabled
+													onClick={() =>
+														setDuplicateMode(true)
+													}
 												>
 													{__(
 														'Duplicate Event',

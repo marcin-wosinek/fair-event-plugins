@@ -226,6 +226,15 @@ class Plugin {
 			}
 		);
 
+		// Event Duplication controller.
+		add_action(
+			'rest_api_init',
+			function () {
+				$controller = new \FairEvents\API\EventDuplicationController();
+				$controller->register_routes();
+			}
+		);
+
 		// Add event relationship to attachment REST responses.
 		add_action(
 			'rest_api_init',
