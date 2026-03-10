@@ -38,7 +38,6 @@ import EventBudget from './EventBudget.js';
 import EventAudience from './EventAudience.js';
 import GroupPricingRules from './GroupPricingRules.js';
 import EventTickets from './EventTickets.js';
-import EventPhotos from './EventPhotos.js';
 
 export default function ManageEventApp() {
 	const eventDateId = window.fairEventsManageEventData?.eventDateId;
@@ -527,12 +526,16 @@ export default function ManageEventApp() {
 				title: __('Event Details', 'fair-events'),
 			},
 			{
-				name: 'tickets',
-				title: __('Tickets', 'fair-events'),
+				name: 'images',
+				title: __('Images', 'fair-events'),
 			},
 			{
-				name: 'photos',
-				title: __('Photos', 'fair-events'),
+				name: 'links',
+				title: __('Links', 'fair-events'),
+			},
+			{
+				name: 'tickets',
+				title: __('Tickets', 'fair-events'),
 			},
 			...(audienceUrl
 				? [
@@ -852,8 +855,12 @@ export default function ManageEventApp() {
 						</CardBody>
 					</Card>
 				)}
+		</>
+	);
 
-			<Card style={{ marginTop: '16px' }}>
+	const renderImagesTab = () => (
+		<>
+			<Card>
 				<CardHeader>
 					<h2>{__('Theme Image', 'fair-events')}</h2>
 				</CardHeader>
@@ -898,226 +905,179 @@ export default function ManageEventApp() {
 				themeImageUrl={themeImageUrl}
 				initialExports={eventDate?.image_exports || []}
 			/>
+		</>
+	);
 
-			{eventDate.gallery && (
-				<Card style={{ marginTop: '16px' }}>
-					<CardHeader>
-						<h2>{__('Photo Gallery', 'fair-events')}</h2>
-					</CardHeader>
-					<CardBody>
-						<VStack spacing={3}>
-							<p>
-								{__('Photos:', 'fair-events')}{' '}
-								<strong>{eventDate.gallery.photo_count}</strong>
-							</p>
-							<p>
-								{__('Total likes:', 'fair-events')}{' '}
-								<strong>{eventDate.gallery.total_likes}</strong>
-							</p>
-							<Button
-								variant="secondary"
-								href={eventDate.gallery.gallery_url}
-								target="_blank"
-							>
-								{__('View Gallery', 'fair-events')}
-							</Button>
-						</VStack>
-					</CardBody>
-				</Card>
-			)}
-
-			<Card style={{ marginTop: '16px' }}>
-				<CardHeader>
-					<h2>{__('Link Options', 'fair-events')}</h2>
-				</CardHeader>
-				<CardBody>
-					<VStack spacing={4}>
-						{linkedPosts.length > 0 && (
-							<>
-								<Notice status="info" isDismissible={false}>
-									{linkedPosts.length === 1
-										? __(
-												'This event is linked to 1 post.',
-												'fair-events'
-										  )
-										: `${__(
-												'This event is linked to',
-												'fair-events'
-										  )} ${linkedPosts.length} ${__(
-												'posts.',
-												'fair-events'
-										  )}`}
-								</Notice>
-								{linkedPosts.map((lp) => (
-									<HStack key={lp.id} spacing={3} wrap>
-										<span>
-											<strong>{lp.title}</strong> (
-											{lp.status})
-											{lp.is_primary && (
-												<span
-													style={{
-														marginLeft: '4px',
-														color: '#007cba',
-														fontSize: '12px',
-													}}
-												>
-													{__(
-														'Primary',
-														'fair-events'
-													)}
-												</span>
-											)}
-										</span>
-										{lp.edit_url && (
-											<Button
-												variant="secondary"
-												href={lp.edit_url}
-												size="small"
+	const renderLinksTab = () => (
+		<Card>
+			<CardHeader>
+				<h2>{__('Link Options', 'fair-events')}</h2>
+			</CardHeader>
+			<CardBody>
+				<VStack spacing={4}>
+					{linkedPosts.length > 0 && (
+						<>
+							<Notice status="info" isDismissible={false}>
+								{linkedPosts.length === 1
+									? __(
+											'This event is linked to 1 post.',
+											'fair-events'
+									  )
+									: `${__(
+											'This event is linked to',
+											'fair-events'
+									  )} ${linkedPosts.length} ${__(
+											'posts.',
+											'fair-events'
+									  )}`}
+							</Notice>
+							{linkedPosts.map((lp) => (
+								<HStack key={lp.id} spacing={3} wrap>
+									<span>
+										<strong>{lp.title}</strong> ({lp.status}
+										)
+										{lp.is_primary && (
+											<span
+												style={{
+													marginLeft: '4px',
+													color: '#007cba',
+													fontSize: '12px',
+												}}
 											>
-												{__('Edit Post', 'fair-events')}
-											</Button>
+												{__('Primary', 'fair-events')}
+											</span>
 										)}
+									</span>
+									{lp.edit_url && (
 										<Button
-											variant="tertiary"
+											variant="secondary"
+											href={lp.edit_url}
 											size="small"
-											isDestructive
-											onClick={() =>
-												handleUnlinkPost(lp.id)
-											}
 										>
-											{__('Unlink', 'fair-events')}
+											{__('Edit Post', 'fair-events')}
 										</Button>
-									</HStack>
-								))}
-							</>
-						)}
+									)}
+									<Button
+										variant="tertiary"
+										size="small"
+										isDestructive
+										onClick={() => handleUnlinkPost(lp.id)}
+									>
+										{__('Unlink', 'fair-events')}
+									</Button>
+								</HStack>
+							))}
+						</>
+					)}
 
-						{!isLinkedToPost && linkedPosts.length === 0 && (
-							<>
-								<RadioControl
-									label={__('Link type', 'fair-events')}
-									selected={linkType}
-									options={[
-										{
-											label: __(
-												'No link (standalone event)',
-												'fair-events'
-											),
-											value: 'none',
-										},
-										{
-											label: __(
-												'External URL',
-												'fair-events'
-											),
-											value: 'external',
-										},
-										{
-											label: __(
-												'WordPress Post',
-												'fair-events'
-											),
-											value: 'post',
-										},
-									]}
-									onChange={setLinkType}
-								/>
-
-								{linkType === 'external' && (
-									<TextControl
-										label={__(
+					{!isLinkedToPost && linkedPosts.length === 0 && (
+						<>
+							<RadioControl
+								label={__('Link type', 'fair-events')}
+								selected={linkType}
+								options={[
+									{
+										label: __(
+											'No link (standalone event)',
+											'fair-events'
+										),
+										value: 'none',
+									},
+									{
+										label: __(
 											'External URL',
 											'fair-events'
-										)}
-										type="url"
-										value={externalUrl}
-										onChange={setExternalUrl}
-										placeholder="https://"
-									/>
-								)}
-
-								{linkType === 'post' && (
-									<>
-										<SelectControl
-											label={__(
-												'Post type',
-												'fair-events'
-											)}
-											value={selectedPostType}
-											options={enabledPostTypes.map(
-												(pt) => ({
-													label: pt.label,
-													value: pt.slug,
-												})
-											)}
-											onChange={setSelectedPostType}
-										/>
-										<Button
-											variant="primary"
-											onClick={handleCreatePost}
-											isBusy={creatingPost}
-											disabled={creatingPost}
-										>
-											{__(
-												'Create New Post',
-												'fair-events'
-											)}
-										</Button>
-									</>
-								)}
-							</>
-						)}
-
-						<VStack spacing={2}>
-							<h3 style={{ margin: 0 }}>
-								{__('Link Additional Post', 'fair-events')}
-							</h3>
-							<TextControl
-								label={__(
-									'Search posts by title',
-									'fair-events'
-								)}
-								onChange={handleSearchPosts}
-								placeholder={__(
-									'Start typing to search...',
-									'fair-events'
-								)}
+										),
+										value: 'external',
+									},
+									{
+										label: __(
+											'WordPress Post',
+											'fair-events'
+										),
+										value: 'post',
+									},
+								]}
+								onChange={setLinkType}
 							/>
-							{searchResults.length > 0 && (
-								<SelectControl
-									label={__('Select a post', 'fair-events')}
-									value={linkPostId}
-									options={[
-										{
-											label: __(
-												'Select...',
-												'fair-events'
-											),
-											value: '',
-										},
-										...searchResults.map((r) => ({
-											label: r.title,
-											value: String(r.id),
-										})),
-									]}
-									onChange={setLinkPostId}
+
+							{linkType === 'external' && (
+								<TextControl
+									label={__('External URL', 'fair-events')}
+									type="url"
+									value={externalUrl}
+									onChange={setExternalUrl}
+									placeholder="https://"
 								/>
 							)}
-							{linkPostId && (
-								<Button
-									variant="primary"
-									onClick={handleLinkPost}
-									isBusy={linkingPost}
-									disabled={linkingPost}
-								>
-									{__('Link Post', 'fair-events')}
-								</Button>
+
+							{linkType === 'post' && (
+								<>
+									<SelectControl
+										label={__('Post type', 'fair-events')}
+										value={selectedPostType}
+										options={enabledPostTypes.map((pt) => ({
+											label: pt.label,
+											value: pt.slug,
+										}))}
+										onChange={setSelectedPostType}
+									/>
+									<Button
+										variant="primary"
+										onClick={handleCreatePost}
+										isBusy={creatingPost}
+										disabled={creatingPost}
+									>
+										{__('Create New Post', 'fair-events')}
+									</Button>
+								</>
 							)}
-						</VStack>
+						</>
+					)}
+
+					<VStack spacing={2}>
+						<h3 style={{ margin: 0 }}>
+							{__('Link Additional Post', 'fair-events')}
+						</h3>
+						<TextControl
+							label={__('Search posts by title', 'fair-events')}
+							onChange={handleSearchPosts}
+							placeholder={__(
+								'Start typing to search...',
+								'fair-events'
+							)}
+						/>
+						{searchResults.length > 0 && (
+							<SelectControl
+								label={__('Select a post', 'fair-events')}
+								value={linkPostId}
+								options={[
+									{
+										label: __('Select...', 'fair-events'),
+										value: '',
+									},
+									...searchResults.map((r) => ({
+										label: r.title,
+										value: String(r.id),
+									})),
+								]}
+								onChange={setLinkPostId}
+							/>
+						)}
+						{linkPostId && (
+							<Button
+								variant="primary"
+								onClick={handleLinkPost}
+								isBusy={linkingPost}
+								disabled={linkingPost}
+							>
+								{__('Link Post', 'fair-events')}
+							</Button>
+						)}
 					</VStack>
-				</CardBody>
-			</Card>
-		</>
+				</VStack>
+			</CardBody>
+		</Card>
 	);
 
 	return (
@@ -1159,6 +1119,12 @@ export default function ManageEventApp() {
 				onSelect={handleTabSelect}
 			>
 				{(tab) => {
+					if (tab.name === 'images') {
+						return renderImagesTab();
+					}
+					if (tab.name === 'links') {
+						return renderLinksTab();
+					}
 					if (tab.name === 'tickets') {
 						return (
 							<EventTickets
@@ -1166,9 +1132,6 @@ export default function ManageEventApp() {
 								onSaveRef={ticketSaveRef}
 							/>
 						);
-					}
-					if (tab.name === 'photos') {
-						return <EventPhotos eventId={eventDate.event_id} />;
 					}
 					if (tab.name === 'audience') {
 						return (
@@ -1209,7 +1172,9 @@ export default function ManageEventApp() {
 						}
 						isBusy={saving}
 						disabled={
-							activeTab === 'event-details'
+							activeTab === 'event-details' ||
+							activeTab === 'images' ||
+							activeTab === 'links'
 								? saving || !title
 								: saving
 						}
