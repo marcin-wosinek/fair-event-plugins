@@ -1,38 +1,53 @@
-import { useState, useEffect } from '@wordpress/element';
+import { useState, useEffect, useMemo } from '@wordpress/element';
 import {
 	Card,
 	CardHeader,
 	CardBody,
 	Button,
 	Spinner,
+	SelectControl,
+	TextControl,
 	__experimentalVStack as VStack,
+	__experimentalHStack as HStack,
 } from '@wordpress/components';
 import { __ } from '@wordpress/i18n';
 import apiFetch from '@wordpress/api-fetch';
 
+const LABEL_ORDER = { collaborator: 0, signed_up: 1, interested: 2 };
+
+const LABEL_DISPLAY = {
+	collaborator: __('Collaborator', 'fair-events'),
+	signed_up: __('Signed up', 'fair-events'),
+	interested: __('Interested', 'fair-events'),
+};
+
 export default function EventAudience({ eventId, eventDateId, audienceUrl }) {
-	const [counts, setCounts] = useState(null);
-	const [loadingCounts, setLoadingCounts] = useState(true);
+	const [participants, setParticipants] = useState([]);
+	const [loadingParticipants, setLoadingParticipants] = useState(true);
 	const [questionnaireSummary, setQuestionnaireSummary] = useState(null);
 	const [loadingQuestionnaire, setLoadingQuestionnaire] = useState(true);
 
+	// Filter & sort state
+	const [filterRole, setFilterRole] = useState('all');
+	const [searchText, setSearchText] = useState('');
+	const [sortBy, setSortBy] = useState('role');
+	const [sortOrder, setSortOrder] = useState('asc');
+
 	useEffect(() => {
 		if (!eventId) {
-			setLoadingCounts(false);
+			setLoadingParticipants(false);
 			return;
 		}
-		apiFetch({ path: `/fair-audience/v1/events/${eventId}` })
+		apiFetch({
+			path: `/fair-audience/v1/events/${eventId}/participants`,
+		})
 			.then((data) => {
-				setCounts({
-					signedUp: data.signed_up || 0,
-					collaborators: data.collaborators || 0,
-					interested: data.interested || 0,
-				});
+				setParticipants(Array.isArray(data) ? data : []);
 			})
 			.catch(() => {
-				setCounts(null);
+				setParticipants([]);
 			})
-			.finally(() => setLoadingCounts(false));
+			.finally(() => setLoadingParticipants(false));
 	}, [eventId]);
 
 	useEffect(() => {
@@ -47,7 +62,6 @@ export default function EventAudience({ eventId, eventDateId, audienceUrl }) {
 				if (!data || data.length === 0) {
 					setQuestionnaireSummary(null);
 				} else {
-					// Aggregate answer counts per question.
 					const questions = new Map();
 					data.forEach((submission) => {
 						(submission.answers || []).forEach((answer) => {
@@ -75,6 +89,69 @@ export default function EventAudience({ eventId, eventDateId, audienceUrl }) {
 			.finally(() => setLoadingQuestionnaire(false));
 	}, [eventDateId]);
 
+	const filteredParticipants = useMemo(() => {
+		let list = participants;
+
+		if (filterRole !== 'all') {
+			list = list.filter((p) => p.label === filterRole);
+		}
+
+		if (searchText) {
+			const term = searchText.toLowerCase();
+			list = list.filter((p) =>
+				(p.participant_name || '').toLowerCase().includes(term)
+			);
+		}
+
+		list = [...list].sort((a, b) => {
+			let cmp = 0;
+			if (sortBy === 'role') {
+				cmp = (LABEL_ORDER[a.label] ?? 3) - (LABEL_ORDER[b.label] ?? 3);
+				if (cmp === 0) {
+					cmp = (a.participant_name || '').localeCompare(
+						b.participant_name || ''
+					);
+				}
+			} else {
+				cmp = (a.participant_name || '').localeCompare(
+					b.participant_name || ''
+				);
+				if (cmp === 0) {
+					cmp =
+						(LABEL_ORDER[a.label] ?? 3) -
+						(LABEL_ORDER[b.label] ?? 3);
+				}
+			}
+			return sortOrder === 'desc' ? -cmp : cmp;
+		});
+
+		return list;
+	}, [participants, filterRole, searchText, sortBy, sortOrder]);
+
+	const counts = useMemo(() => {
+		const c = { collaborator: 0, signed_up: 0, interested: 0 };
+		participants.forEach((p) => {
+			if (c[p.label] !== undefined) {
+				c[p.label]++;
+			}
+		});
+		return c;
+	}, [participants]);
+
+	const handleSort = (column) => {
+		if (sortBy === column) {
+			setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc');
+		} else {
+			setSortBy(column);
+			setSortOrder('asc');
+		}
+	};
+
+	const sortIndicator = (column) => {
+		if (sortBy !== column) return '';
+		return sortOrder === 'asc' ? ' \u25B2' : ' \u25BC';
+	};
+
 	return (
 		<>
 			{eventId && (
@@ -83,36 +160,158 @@ export default function EventAudience({ eventId, eventDateId, audienceUrl }) {
 						<h2>{__('Participants', 'fair-events')}</h2>
 					</CardHeader>
 					<CardBody>
-						{loadingCounts ? (
+						{loadingParticipants ? (
 							<Spinner />
-						) : counts ? (
-							<VStack spacing={3}>
-								<p>
-									{__('Signed up:', 'fair-events')}{' '}
-									<strong>{counts.signedUp}</strong>
-								</p>
-								<p>
-									{__('Collaborators:', 'fair-events')}{' '}
-									<strong>{counts.collaborators}</strong>
-								</p>
-								<p>
-									{__('Interested:', 'fair-events')}{' '}
-									<strong>{counts.interested}</strong>
-								</p>
+						) : (
+							<VStack spacing={4}>
+								<HStack spacing={4} wrap>
+									<span>
+										{__('Collaborators:', 'fair-events')}{' '}
+										<strong>{counts.collaborator}</strong>
+									</span>
+									<span>
+										{__('Signed up:', 'fair-events')}{' '}
+										<strong>{counts.signed_up}</strong>
+									</span>
+									<span>
+										{__('Interested:', 'fair-events')}{' '}
+										<strong>{counts.interested}</strong>
+									</span>
+									<span>
+										{__('Total:', 'fair-events')}{' '}
+										<strong>{participants.length}</strong>
+									</span>
+								</HStack>
+
+								<HStack spacing={4} wrap alignment="bottom">
+									<TextControl
+										label={__('Search', 'fair-events')}
+										value={searchText}
+										onChange={setSearchText}
+										placeholder={__(
+											'Filter by name…',
+											'fair-events'
+										)}
+										__nextHasNoMarginBottom
+									/>
+									<SelectControl
+										label={__('Role', 'fair-events')}
+										value={filterRole}
+										options={[
+											{
+												label: __(
+													'All roles',
+													'fair-events'
+												),
+												value: 'all',
+											},
+											{
+												label: __(
+													'Collaborator',
+													'fair-events'
+												),
+												value: 'collaborator',
+											},
+											{
+												label: __(
+													'Signed up',
+													'fair-events'
+												),
+												value: 'signed_up',
+											},
+											{
+												label: __(
+													'Interested',
+													'fair-events'
+												),
+												value: 'interested',
+											},
+										]}
+										onChange={setFilterRole}
+										__nextHasNoMarginBottom
+									/>
+								</HStack>
+
+								{filteredParticipants.length > 0 ? (
+									<div style={{ overflowX: 'auto' }}>
+										<table className="wp-list-table widefat striped">
+											<thead>
+												<tr>
+													<th
+														style={{
+															cursor: 'pointer',
+														}}
+														onClick={() =>
+															handleSort('name')
+														}
+													>
+														{__(
+															'Name',
+															'fair-events'
+														)}
+														{sortIndicator('name')}
+													</th>
+													<th
+														style={{
+															cursor: 'pointer',
+														}}
+														onClick={() =>
+															handleSort('role')
+														}
+													>
+														{__(
+															'Role',
+															'fair-events'
+														)}
+														{sortIndicator('role')}
+													</th>
+												</tr>
+											</thead>
+											<tbody>
+												{filteredParticipants.map(
+													(p) => (
+														<tr key={p.id}>
+															<td>
+																{p.participant_name ||
+																	'—'}
+															</td>
+															<td>
+																{LABEL_DISPLAY[
+																	p.label
+																] || p.label}
+															</td>
+														</tr>
+													)
+												)}
+											</tbody>
+										</table>
+									</div>
+								) : (
+									<p
+										style={{
+											textAlign: 'center',
+											color: '#666',
+										}}
+									>
+										{participants.length === 0
+											? __(
+													'No participants yet.',
+													'fair-events'
+											  )
+											: __(
+													'No participants match the current filters.',
+													'fair-events'
+											  )}
+									</p>
+								)}
+
 								<Button
 									variant="secondary"
 									href={audienceUrl + eventId}
 								>
-									{__('View Participants', 'fair-events')}
+									{__('Manage Participants', 'fair-events')}
 								</Button>
 							</VStack>
-						) : (
-							<p>
-								{__(
-									'No participant data available.',
-									'fair-events'
-								)}
-							</p>
 						)}
 					</CardBody>
 				</Card>
