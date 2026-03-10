@@ -21,15 +21,43 @@ import {
 import { __ } from '@wordpress/i18n';
 import apiFetch from '@wordpress/api-fetch';
 
-export default function EventTickets({ eventDateId, onSaveRef }) {
+export default function EventTickets({
+	eventDateId,
+	onSaveRef,
+	initialData,
+	onDataRef,
+}) {
 	const [capacity, setCapacity] = useState('');
 	const [ticketTypes, setTicketTypes] = useState([]);
 	const [salePeriods, setSalePeriods] = useState([]);
 	const [prices, setPrices] = useState({});
-	const [loading, setLoading] = useState(true);
+	const [loading, setLoading] = useState(!initialData);
 	const [saving, setSaving] = useState(false);
 	const [error, setError] = useState(null);
 	const [success, setSuccess] = useState(null);
+
+	const populateFromData = useCallback((data) => {
+		setCapacity(
+			data.capacity !== null && data.capacity !== undefined
+				? String(data.capacity)
+				: ''
+		);
+		setTicketTypes(data.ticket_types || []);
+		setSalePeriods(data.sale_periods || []);
+
+		const priceMap = {};
+		(data.prices || []).forEach((p) => {
+			const key = `${p.ticket_type_id}-${p.sale_period_id}`;
+			priceMap[key] = {
+				price: String(p.price),
+				capacity:
+					p.capacity !== null && p.capacity !== undefined
+						? String(p.capacity)
+						: '',
+			};
+		});
+		setPrices(priceMap);
+	}, []);
 
 	const loadTickets = useCallback(async () => {
 		setLoading(true);
@@ -37,26 +65,7 @@ export default function EventTickets({ eventDateId, onSaveRef }) {
 			const data = await apiFetch({
 				path: `/fair-events/v1/event-dates/${eventDateId}/tickets`,
 			});
-			setCapacity(
-				data.capacity !== null && data.capacity !== undefined
-					? String(data.capacity)
-					: ''
-			);
-			setTicketTypes(data.ticket_types || []);
-			setSalePeriods(data.sale_periods || []);
-
-			const priceMap = {};
-			(data.prices || []).forEach((p) => {
-				const key = `${p.ticket_type_id}-${p.sale_period_id}`;
-				priceMap[key] = {
-					price: String(p.price),
-					capacity:
-						p.capacity !== null && p.capacity !== undefined
-							? String(p.capacity)
-							: '',
-				};
-			});
-			setPrices(priceMap);
+			populateFromData(data);
 		} catch (err) {
 			setError(
 				err.message || __('Failed to load tickets.', 'fair-events')
@@ -64,15 +73,52 @@ export default function EventTickets({ eventDateId, onSaveRef }) {
 		} finally {
 			setLoading(false);
 		}
-	}, [eventDateId]);
+	}, [eventDateId, populateFromData]);
 
 	useEffect(() => {
-		loadTickets();
-	}, [loadTickets]);
+		if (initialData) {
+			populateFromData(initialData);
+		} else {
+			loadTickets();
+		}
+	}, [initialData, loadTickets, populateFromData]);
 
 	useEffect(() => {
 		if (onSaveRef) {
 			onSaveRef.current = handleSave;
+		}
+	});
+
+	useEffect(() => {
+		if (onDataRef) {
+			onDataRef.current = () => {
+				const pricesArray = [];
+				Object.entries(prices).forEach(([key, val]) => {
+					if (val.price === '' && val.capacity === '') return;
+					const [typeId, periodId] = key.split('-').map(Number);
+					pricesArray.push({
+						ticket_type_id: typeId,
+						sale_period_id: periodId,
+						price: parseFloat(val.price) || 0,
+						capacity:
+							val.capacity !== ''
+								? parseInt(val.capacity, 10)
+								: null,
+					});
+				});
+				return {
+					capacity: capacity !== '' ? parseInt(capacity, 10) : null,
+					ticket_types: ticketTypes.map((t, i) => ({
+						...t,
+						sort_order: i,
+					})),
+					sale_periods: salePeriods.map((p, i) => ({
+						...p,
+						sort_order: i,
+					})),
+					prices: pricesArray,
+				};
+			};
 		}
 	});
 

@@ -78,6 +78,12 @@ class PublicEventsController extends WP_REST_Controller {
 							'default'     => 1,
 							'minimum'     => 1,
 						),
+						'context'    => array(
+							'description' => __( 'Request context. Use "edit" to include events linked to non-published posts (requires edit_posts capability).', 'fair-events' ),
+							'type'        => 'string',
+							'default'     => 'view',
+							'enum'        => array( 'view', 'edit' ),
+						),
 					),
 				),
 			)
@@ -139,6 +145,10 @@ class PublicEventsController extends WP_REST_Controller {
 		$categories = $request->get_param( 'categories' );
 		$per_page   = $request->get_param( 'per_page' );
 		$page       = $request->get_param( 'page' );
+		$context    = $request->get_param( 'context' );
+
+		// Only allow edit context for users with edit_posts capability.
+		$include_all_statuses = ( 'edit' === $context && current_user_can( 'edit_posts' ) );
 
 		// Parse categories if provided
 		$category_ids = array();
@@ -152,7 +162,7 @@ class PublicEventsController extends WP_REST_Controller {
 			}
 		}
 
-		$events = $this->query_events( $start_date, $end_date, $category_ids, $per_page, $page );
+		$events = $this->query_events( $start_date, $end_date, $category_ids, $per_page, $page, $include_all_statuses );
 
 		return $this->build_response( $events, $per_page, $page );
 	}
@@ -258,14 +268,15 @@ class PublicEventsController extends WP_REST_Controller {
 	 * with its specific dates, then joins with posts for event details.
 	 * Also includes standalone events (no linked post).
 	 *
-	 * @param string|null $start_date Start date filter (Y-m-d).
-	 * @param string|null $end_date   End date filter (Y-m-d).
-	 * @param array       $category_ids Category IDs to filter by.
-	 * @param int         $per_page   Number of events per page.
-	 * @param int         $page       Page number.
+	 * @param string|null $start_date           Start date filter (Y-m-d).
+	 * @param string|null $end_date             End date filter (Y-m-d).
+	 * @param array       $category_ids         Category IDs to filter by.
+	 * @param int         $per_page             Number of events per page.
+	 * @param int         $page                 Page number.
+	 * @param bool        $include_all_statuses Whether to include non-published posts.
 	 * @return array Array of event data.
 	 */
-	private function query_events( $start_date, $end_date, $category_ids, $per_page, $page ) {
+	private function query_events( $start_date, $end_date, $category_ids, $per_page, $page, $include_all_statuses = false ) {
 		global $wpdb;
 
 		$dates_table = $wpdb->prefix . 'fair_event_dates';
@@ -276,10 +287,11 @@ class PublicEventsController extends WP_REST_Controller {
 		$post_type_placeholders = implode( ', ', array_fill( 0, count( $enabled_post_types ), '%s' ) );
 
 		// Build WHERE conditions for post-linked events.
-		$post_where_conditions = array(
-			"{$wpdb->posts}.post_status = 'publish'",
-		);
-		$post_where_values     = array();
+		$post_where_conditions = array();
+		if ( ! $include_all_statuses ) {
+			$post_where_conditions[] = "{$wpdb->posts}.post_status = 'publish'";
+		}
+		$post_where_values = array();
 
 		// Post type filter.
 		$post_where_conditions[] = "{$wpdb->posts}.post_type IN ({$post_type_placeholders})";
@@ -357,7 +369,8 @@ class PublicEventsController extends WP_REST_Controller {
 				{$dates_table}.external_url,
 				{$wpdb->posts}.post_title,
 				{$wpdb->posts}.post_content,
-				{$wpdb->posts}.post_excerpt
+				{$wpdb->posts}.post_excerpt,
+				{$wpdb->posts}.post_status
 			FROM {$dates_table}
 			INNER JOIN {$wpdb->posts} ON {$dates_table}.event_id = {$wpdb->posts}.ID
 			WHERE {$post_where_clause})
@@ -374,7 +387,8 @@ class PublicEventsController extends WP_REST_Controller {
 				{$dates_table}.external_url,
 				NULL as post_title,
 				NULL as post_content,
-				NULL as post_excerpt
+				NULL as post_excerpt,
+				NULL as post_status
 			FROM {$dates_table}
 			WHERE {$standalone_where_clause})
 			ORDER BY start_datetime ASC
@@ -404,7 +418,7 @@ class PublicEventsController extends WP_REST_Controller {
 	private function format_occurrence( $row ) {
 		$start_datetime = $row->start_datetime;
 		$end_datetime   = $row->end_datetime ?: $start_datetime;
-		$is_standalone  = empty( $row->event_id );
+		$is_standalone  = empty( $row->event_id ) || ( isset( $row->post_status ) && 'publish' !== $row->post_status );
 
 		// Determine if all-day event.
 		$all_day = (bool) $row->all_day;

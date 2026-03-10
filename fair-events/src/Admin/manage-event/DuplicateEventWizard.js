@@ -6,7 +6,13 @@
  * @package FairEvents
  */
 
-import { useState, useEffect, useMemo, useCallback } from '@wordpress/element';
+import {
+	useState,
+	useEffect,
+	useMemo,
+	useCallback,
+	useRef,
+} from '@wordpress/element';
 import {
 	Card,
 	CardHeader,
@@ -19,7 +25,6 @@ import {
 	SelectControl,
 	RadioControl,
 	FormTokenField,
-	TabPanel,
 	__experimentalNumberControl as NumberControl,
 	__experimentalVStack as VStack,
 	__experimentalHStack as HStack,
@@ -70,13 +75,17 @@ export default function DuplicateEventWizard({
 	const [linksOption, setLinksOption] = useState('clone');
 
 	// Tickets state
-	const [ticketData, setTicketData] = useState(null);
+	const [ticketInitialData, setTicketInitialData] = useState(null);
 	const [loadingTickets, setLoadingTickets] = useState(true);
+	const ticketDataRef = useRef(null);
 
 	// Audience state
 	const [collaborators, setCollaborators] = useState([]);
 	const [selectedCollaborators, setSelectedCollaborators] = useState({});
 	const [loadingCollaborators, setLoadingCollaborators] = useState(false);
+
+	// Step navigation
+	const [activeStep, setActiveStep] = useState(0);
 
 	// UI state
 	const [venues, setVenues] = useState([]);
@@ -120,17 +129,25 @@ export default function DuplicateEventWizard({
 			.catch(() => {});
 	}, []);
 
-	// Load tickets from source
+	// Load tickets from source and adjust dates
 	useEffect(() => {
 		setLoadingTickets(true);
 		apiFetch({
 			path: `/fair-events/v1/event-dates/${sourceEventDateId}/tickets`,
 		})
 			.then((data) => {
-				setTicketData(data);
+				const adjustedPeriods = adjustTicketDates(
+					data.sale_periods || [],
+					sourceEventDate.start_datetime,
+					getNewStartDatetime()
+				);
+				setTicketInitialData({
+					...data,
+					sale_periods: adjustedPeriods,
+				});
 			})
 			.catch(() => {
-				setTicketData(null);
+				setTicketInitialData(null);
 			})
 			.finally(() => setLoadingTickets(false));
 	}, [sourceEventDateId]);
@@ -326,22 +343,6 @@ export default function DuplicateEventWizard({
 		return `${endDate} ${endTime}:00`;
 	};
 
-	// Adjust ticket sale periods based on date shift
-	const getAdjustedTicketData = useCallback(() => {
-		if (!ticketData) return null;
-
-		const adjustedPeriods = adjustTicketDates(
-			ticketData.sale_periods || [],
-			sourceEventDate.start_datetime,
-			getNewStartDatetime()
-		);
-
-		return {
-			...ticketData,
-			sale_periods: adjustedPeriods,
-		};
-	}, [ticketData, startDate, startTime, allDay, sourceEventDate]);
-
 	// Creation sequence
 	const handleCreate = async () => {
 		setCreating(true);
@@ -399,38 +400,13 @@ export default function DuplicateEventWizard({
 			setCompletedSteps((prev) => [...prev, 'links']);
 
 			// Step 4: Save tickets
-			const adjusted = getAdjustedTicketData();
-			if (adjusted && hasTicketData(adjusted)) {
+			const currentTickets = ticketDataRef.current?.();
+			if (currentTickets && hasTicketData(currentTickets)) {
 				setProgress(__('Saving tickets…', 'fair-events'));
-				// Build prices array from the ticket data
-				const prices = (adjusted.prices || []).map((p) => ({
-					ticket_type_id: p.ticket_type_id,
-					sale_period_id: p.sale_period_id,
-					price: p.price,
-					capacity: p.capacity,
-				}));
 				await apiFetch({
 					path: `/fair-events/v1/event-dates/${createdEventDateId}/tickets`,
 					method: 'PUT',
-					data: {
-						capacity: adjusted.capacity,
-						ticket_types: (adjusted.ticket_types || []).map(
-							(t, i) => ({
-								name: t.name,
-								capacity: t.capacity,
-								sort_order: i,
-							})
-						),
-						sale_periods: (adjusted.sale_periods || []).map(
-							(p, i) => ({
-								name: p.name,
-								sale_start: p.sale_start,
-								sale_end: p.sale_end,
-								sort_order: i,
-							})
-						),
-						prices,
-					},
+					data: currentTickets,
 				});
 			}
 			setCompletedSteps((prev) => [...prev, 'tickets']);
@@ -501,8 +477,8 @@ export default function DuplicateEventWizard({
 
 	const linkedPosts = sourceEventDate.linked_posts || [];
 
-	const tabs = useMemo(
-		() => [
+	const steps = useMemo(() => {
+		const s = [
 			{
 				name: 'event-details',
 				title: __('Event Details', 'fair-events'),
@@ -511,29 +487,46 @@ export default function DuplicateEventWizard({
 				name: 'images',
 				title: __('Images', 'fair-events'),
 			},
-			...(linkedPosts.length > 0
-				? [
-						{
-							name: 'links',
-							title: __('Links', 'fair-events'),
-						},
-				  ]
-				: []),
-			{
-				name: 'tickets',
-				title: __('Tickets', 'fair-events'),
-			},
-			...(audienceUrl && sourceEventDate.event_id
-				? [
-						{
-							name: 'audience',
-							title: __('Audience', 'fair-events'),
-						},
-				  ]
-				: []),
-		],
-		[audienceUrl, linkedPosts.length, sourceEventDate.event_id]
-	);
+		];
+		if (linkedPosts.length > 0) {
+			s.push({
+				name: 'links',
+				title: __('Links', 'fair-events'),
+			});
+		}
+		s.push({
+			name: 'tickets',
+			title: __('Tickets', 'fair-events'),
+		});
+		if (audienceUrl && sourceEventDate.event_id) {
+			s.push({
+				name: 'audience',
+				title: __('Audience', 'fair-events'),
+			});
+		}
+		return s;
+	}, [audienceUrl, linkedPosts.length, sourceEventDate.event_id]);
+
+	const isLastStep = activeStep === steps.length - 1;
+	const currentStep = steps[activeStep];
+
+	const renderCurrentStep = () => {
+		if (!currentStep) return null;
+		switch (currentStep.name) {
+			case 'event-details':
+				return renderEventDetailsTab();
+			case 'images':
+				return renderImagesTab();
+			case 'links':
+				return renderLinksTab();
+			case 'tickets':
+				return renderTicketsTab();
+			case 'audience':
+				return renderAudienceTab();
+			default:
+				return null;
+		}
+	};
 
 	return (
 		<div className="wrap fair-events-manage-event">
@@ -579,38 +572,45 @@ export default function DuplicateEventWizard({
 			)}
 
 			{!creating && (
-				<TabPanel tabs={tabs}>
-					{(tab) => {
-						if (tab.name === 'event-details') {
-							return renderEventDetailsTab();
-						}
-						if (tab.name === 'images') {
-							return renderImagesTab();
-						}
-						if (tab.name === 'links') {
-							return renderLinksTab();
-						}
-						if (tab.name === 'tickets') {
-							return renderTicketsTab();
-						}
-						if (tab.name === 'audience') {
-							return renderAudienceTab();
-						}
-						return null;
-					}}
-				</TabPanel>
+				<>
+					<p style={{ color: '#666' }}>
+						{`${__('Step', 'fair-events')} ${activeStep + 1} / ${
+							steps.length
+						}: ${currentStep?.title}`}
+					</p>
+					{renderCurrentStep()}
+				</>
 			)}
 
 			{!creating && (
 				<HStack spacing={2} style={{ marginTop: '16px' }}>
-					<Button
-						variant="primary"
-						onClick={handleCreate}
-						disabled={!title || !startDate}
-					>
-						{__('Create Duplicate', 'fair-events')}
-					</Button>
-					<Button variant="secondary" onClick={onCancel}>
+					{activeStep > 0 && (
+						<Button
+							variant="secondary"
+							onClick={() => setActiveStep((s) => s - 1)}
+						>
+							{__('Back', 'fair-events')}
+						</Button>
+					)}
+					{!isLastStep && (
+						<Button
+							variant="primary"
+							onClick={() => setActiveStep((s) => s + 1)}
+							disabled={!title || !startDate}
+						>
+							{__('Next', 'fair-events')}
+						</Button>
+					)}
+					{isLastStep && (
+						<Button
+							variant="primary"
+							onClick={handleCreate}
+							disabled={!title || !startDate}
+						>
+							{__('Create Duplicate', 'fair-events')}
+						</Button>
+					)}
+					<Button variant="tertiary" onClick={onCancel}>
 						{__('Cancel', 'fair-events')}
 					</Button>
 				</HStack>
@@ -935,83 +935,11 @@ export default function DuplicateEventWizard({
 			return <Spinner />;
 		}
 
-		if (!ticketData || !hasTicketData(ticketData)) {
-			return (
-				<Card style={{ marginTop: '16px' }}>
-					<CardBody>
-						<p>
-							{__(
-								'No ticket data to copy from source event.',
-								'fair-events'
-							)}
-						</p>
-					</CardBody>
-				</Card>
-			);
-		}
-
-		const adjusted = getAdjustedTicketData();
-
 		return (
-			<Card style={{ marginTop: '16px' }}>
-				<CardHeader>
-					<h2>{__('Tickets', 'fair-events')}</h2>
-				</CardHeader>
-				<CardBody>
-					<VStack spacing={4}>
-						<Notice status="info" isDismissible={false}>
-							{__(
-								'Ticket data will be copied from the source event. Sale period dates are automatically adjusted based on the date shift.',
-								'fair-events'
-							)}
-						</Notice>
-
-						{adjusted && (
-							<VStack spacing={3}>
-								<p>
-									<strong>
-										{__('Capacity:', 'fair-events')}
-									</strong>{' '}
-									{adjusted.capacity ?? '—'}
-								</p>
-
-								{(adjusted.ticket_types || []).length > 0 && (
-									<>
-										<h3 style={{ margin: 0 }}>
-											{__('Ticket Types', 'fair-events')}
-										</h3>
-										{adjusted.ticket_types.map((t) => (
-											<span key={t.id || t.name}>
-												{t.name}
-												{t.capacity
-													? ` (${__(
-															'capacity:',
-															'fair-events'
-													  )} ${t.capacity})`
-													: ''}
-											</span>
-										))}
-									</>
-								)}
-
-								{(adjusted.sale_periods || []).length > 0 && (
-									<>
-										<h3 style={{ margin: 0 }}>
-											{__('Sale Periods', 'fair-events')}
-										</h3>
-										{adjusted.sale_periods.map((p) => (
-											<span key={p.id || p.name}>
-												{p.name}: {p.sale_start} →{' '}
-												{p.sale_end}
-											</span>
-										))}
-									</>
-								)}
-							</VStack>
-						)}
-					</VStack>
-				</CardBody>
-			</Card>
+			<EventTickets
+				initialData={ticketInitialData}
+				onDataRef={ticketDataRef}
+			/>
 		);
 	}
 

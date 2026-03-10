@@ -77,7 +77,7 @@ export default function CalendarApp() {
 			const response = await apiFetch({
 				path: `/fair-events/v1/events?start_date=${formatLocalDate(
 					startDate
-				)}&end_date=${formatLocalDate(endDate)}`,
+				)}&end_date=${formatLocalDate(endDate)}&context=edit`,
 			});
 
 			setEvents(response.events || []);
