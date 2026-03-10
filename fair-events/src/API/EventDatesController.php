@@ -176,6 +176,31 @@ class EventDatesController extends WP_REST_Controller {
 			)
 		);
 
+		// POST /fair-events/v1/event-dates/{id}/toggle-exdate - Toggle an excluded date on a master event.
+		register_rest_route(
+			$this->namespace,
+			'/event-dates/(?P<id>\d+)/toggle-exdate',
+			array(
+				array(
+					'methods'             => WP_REST_Server::CREATABLE,
+					'callback'            => array( $this, 'toggle_exdate' ),
+					'permission_callback' => array( $this, 'update_item_permissions_check' ),
+					'args'                => array(
+						'id'   => array(
+							'description' => __( 'Master event date ID.', 'fair-events' ),
+							'type'        => 'integer',
+						),
+						'date' => array(
+							'description'       => __( 'Date to toggle (Y-m-d format).', 'fair-events' ),
+							'type'              => 'string',
+							'required'          => true,
+							'sanitize_callback' => 'sanitize_text_field',
+						),
+					),
+				),
+			)
+		);
+
 		// GET /fair-events/v1/event-dates/batch - Batch lookup by IDs.
 		register_rest_route(
 			$this->namespace,
@@ -1060,6 +1085,81 @@ class EventDatesController extends WP_REST_Controller {
 	}
 
 	/**
+	 * Toggle an excluded date on a master event
+	 *
+	 * @param WP_REST_Request $request Full data about the request.
+	 * @return WP_REST_Response|WP_Error Response object on success, or WP_Error on failure.
+	 */
+	public function toggle_exdate( $request ) {
+		$id   = (int) $request->get_param( 'id' );
+		$date = $request->get_param( 'date' );
+
+		$event_date = EventDates::get_by_id( $id );
+
+		if ( ! $event_date ) {
+			return new WP_Error(
+				'rest_event_date_not_found',
+				__( 'Event date not found.', 'fair-events' ),
+				array( 'status' => 404 )
+			);
+		}
+
+		if ( 'master' !== $event_date->occurrence_type ) {
+			return new WP_Error(
+				'rest_not_master_event',
+				__( 'Exdates can only be set on master events.', 'fair-events' ),
+				array( 'status' => 400 )
+			);
+		}
+
+		// Don't allow excluding the master's own date.
+		$master_date = ( new \DateTime( $event_date->start_datetime ) )->format( 'Y-m-d' );
+		if ( $date === $master_date ) {
+			return new WP_Error(
+				'rest_cannot_exclude_master',
+				__( 'Cannot exclude the master event date.', 'fair-events' ),
+				array( 'status' => 400 )
+			);
+		}
+
+		// Parse current exdates.
+		$exdates = RecurrenceService::parse_exdates( $event_date->exdates );
+
+		// Toggle: add if not present, remove if present.
+		$key = array_search( $date, $exdates, true );
+		if ( false !== $key ) {
+			unset( $exdates[ $key ] );
+			$exdates = array_values( $exdates );
+		} else {
+			$exdates[] = $date;
+		}
+
+		// Clean stale exdates.
+		$exdates = RecurrenceService::clean_stale_exdates(
+			$event_date->start_datetime,
+			$event_date->end_datetime,
+			$event_date->rrule,
+			$exdates
+		);
+
+		// Save exdates.
+		$exdates_string = ! empty( $exdates ) ? implode( ',', $exdates ) : null;
+		EventDates::update_by_id( $id, array( 'exdates' => $exdates_string ) );
+
+		// Regenerate occurrences.
+		if ( $event_date->event_id ) {
+			RecurrenceService::regenerate_event_occurrences( $event_date->event_id );
+		} else {
+			RecurrenceService::regenerate_standalone_occurrences( $id );
+		}
+
+		// Return updated event date.
+		$updated = EventDates::get_by_id( $id );
+
+		return new WP_REST_Response( $this->prepare_event_date( $updated ), 200 );
+	}
+
+	/**
 	 * Get paginated list of all event dates
 	 *
 	 * @param WP_REST_Request $request Full data about the request.
@@ -1218,6 +1318,13 @@ class EventDatesController extends WP_REST_Controller {
 				? wp_get_attachment_image_url( $event_date->theme_image_id, 'full' )
 				: null,
 		);
+
+		// Add exdates for master events.
+		if ( 'master' === $event_date->occurrence_type ) {
+			$data['exdates'] = $event_date->exdates
+				? array_values( array_filter( array_map( 'trim', explode( ',', $event_date->exdates ) ) ) )
+				: array();
+		}
 
 		// Add master event info for generated occurrences.
 		if ( 'generated' === $event_date->occurrence_type && $event_date->master_id ) {

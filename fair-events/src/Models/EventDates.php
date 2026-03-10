@@ -73,6 +73,13 @@ class EventDates {
 	public $rrule;
 
 	/**
+	 * Excluded dates (comma-separated Y-m-d, only on master rows)
+	 *
+	 * @var string|null
+	 */
+	public $exdates;
+
+	/**
 	 * Venue ID
 	 *
 	 * @var int|null
@@ -176,6 +183,7 @@ class EventDates {
 		$event_dates->occurrence_type = $result->occurrence_type ?? 'single';
 		$event_dates->master_id       = $result->master_id ? (int) $result->master_id : null;
 		$event_dates->rrule           = $result->rrule ?? null;
+		$event_dates->exdates         = $result->exdates ?? null;
 		$event_dates->venue_id        = isset( $result->venue_id ) ? (int) $result->venue_id : null;
 		$event_dates->title           = $result->title ?? null;
 		$event_dates->external_url    = $result->external_url ?? null;
@@ -690,6 +698,7 @@ class EventDates {
 			'occurrence_type' => '%s',
 			'master_id'       => '%d',
 			'rrule'           => '%s',
+			'exdates'         => '%s',
 			'venue_id'        => '%d',
 			'title'           => '%s',
 			'external_url'    => '%s',

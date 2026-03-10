@@ -98,6 +98,7 @@ export default function ManageEventApp() {
 	);
 	const ticketSaveRef = useRef(null);
 	const [duplicateMode, setDuplicateMode] = useState(false);
+	const [togglingExdate, setTogglingExdate] = useState(null);
 
 	useEffect(() => {
 		if (!eventDateId) {
@@ -496,6 +497,26 @@ export default function ManageEventApp() {
 		setThemeImageUrl(null);
 	};
 
+	const handleToggleExdate = async (date) => {
+		setTogglingExdate(date);
+		setError(null);
+
+		try {
+			const updated = await apiFetch({
+				path: `/fair-events/v1/event-dates/${eventDateId}/toggle-exdate`,
+				method: 'POST',
+				data: { date },
+			});
+			setEventDate(updated);
+		} catch (err) {
+			setError(
+				err.message || __('Failed to toggle occurrence.', 'fair-events')
+			);
+		} finally {
+			setTogglingExdate(null);
+		}
+	};
+
 	const venueOptions = [
 		{ label: __('— No venue —', 'fair-events'), value: '' },
 		...venues.map((v) => ({ label: v.name, value: String(v.id) })),
@@ -846,7 +867,8 @@ export default function ManageEventApp() {
 			)}
 
 			{eventDate.occurrence_type === 'master' &&
-				eventDate.generated_occurrences?.length > 0 && (
+				(eventDate.generated_occurrences?.length > 0 ||
+					eventDate.exdates?.length > 0) && (
 					<Card style={{ marginTop: '16px' }}>
 						<CardHeader>
 							<h2>
@@ -855,15 +877,105 @@ export default function ManageEventApp() {
 						</CardHeader>
 						<CardBody>
 							<VStack spacing={2}>
-								{eventDate.generated_occurrences.map((occ) => (
-									<HStack key={occ.id} spacing={3}>
-										<a
-											href={`${manageEventUrl}&event_date_id=${occ.id}`}
-										>
-											{occ.start_datetime}
-										</a>
-									</HStack>
-								))}
+								{(() => {
+									const occurrences = (
+										eventDate.generated_occurrences || []
+									).map((occ) => ({
+										date: occ.start_datetime.split(' ')[0],
+										type: 'active',
+										id: occ.id,
+										start_datetime: occ.start_datetime,
+									}));
+									const cancelled = (
+										eventDate.exdates || []
+									).map((date) => ({
+										date,
+										type: 'cancelled',
+									}));
+									const combined = [
+										...occurrences,
+										...cancelled,
+									].sort((a, b) =>
+										a.date.localeCompare(b.date)
+									);
+
+									return combined.map((item) =>
+										item.type === 'active' ? (
+											<HStack
+												key={`active-${item.id}`}
+												spacing={3}
+											>
+												<a
+													href={`${manageEventUrl}&event_date_id=${item.id}`}
+													style={{
+														minWidth: '160px',
+													}}
+												>
+													{item.start_datetime}
+												</a>
+												<Button
+													variant="tertiary"
+													isDestructive
+													size="small"
+													isBusy={
+														togglingExdate ===
+														item.date
+													}
+													disabled={
+														togglingExdate !== null
+													}
+													onClick={() =>
+														handleToggleExdate(
+															item.date
+														)
+													}
+												>
+													{__(
+														'Cancel',
+														'fair-events'
+													)}
+												</Button>
+											</HStack>
+										) : (
+											<HStack
+												key={`cancelled-${item.date}`}
+												spacing={3}
+												style={{ opacity: 0.5 }}
+											>
+												<span
+													style={{
+														textDecoration:
+															'line-through',
+														minWidth: '160px',
+													}}
+												>
+													{item.date}
+												</span>
+												<Button
+													variant="secondary"
+													size="small"
+													isBusy={
+														togglingExdate ===
+														item.date
+													}
+													disabled={
+														togglingExdate !== null
+													}
+													onClick={() =>
+														handleToggleExdate(
+															item.date
+														)
+													}
+												>
+													{__(
+														'Restore',
+														'fair-events'
+													)}
+												</Button>
+											</HStack>
+										)
+									);
+								})()}
 							</VStack>
 						</CardBody>
 					</Card>

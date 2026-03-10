@@ -132,6 +132,11 @@ class Installer {
 
 		// Version 2.6.0 - Ticket tables (no data migration needed, tables created by dbDelta).
 
+		// Run migration if upgrading from pre-2.7.0 (add exdates to event_dates).
+		if ( version_compare( $current_version, '2.7.0', '<' ) ) {
+			self::migrate_to_2_7_0();
+		}
+
 		// Update database version
 		Schema::update_db_version( Schema::DB_VERSION );
 	}
@@ -206,6 +211,10 @@ class Installer {
 
 			if ( version_compare( $current_version, '2.6.0', '<' ) ) {
 				self::migrate_to_2_6_0();
+			}
+
+			if ( version_compare( $current_version, '2.7.0', '<' ) ) {
+				self::migrate_to_2_7_0();
 			}
 
 			// Install/update tables
@@ -894,6 +903,34 @@ class Installer {
 			$wpdb->query(
 				$wpdb->prepare(
 					'ALTER TABLE %i ADD COLUMN capacity INT UNSIGNED DEFAULT NULL AFTER theme_image_id',
+					$table_name
+				)
+			);
+		}
+	}
+
+	/**
+	 * Migrate to version 2.7.0 - Add exdates column to event_dates table.
+	 *
+	 * @return void
+	 */
+	private static function migrate_to_2_7_0() {
+		global $wpdb;
+
+		$table_name = $wpdb->prefix . 'fair_event_dates';
+
+		// Check if exdates column already exists.
+		$exdates_exists = $wpdb->get_results(
+			$wpdb->prepare(
+				"SHOW COLUMNS FROM %i LIKE 'exdates'",
+				$table_name
+			)
+		);
+
+		if ( empty( $exdates_exists ) ) {
+			$wpdb->query(
+				$wpdb->prepare(
+					'ALTER TABLE %i ADD COLUMN exdates TEXT DEFAULT NULL AFTER rrule',
 					$table_name
 				)
 			);

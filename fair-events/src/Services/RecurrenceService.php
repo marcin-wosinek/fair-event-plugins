@@ -105,9 +105,10 @@ class RecurrenceService {
 	 * @param string $end_datetime   End datetime (Y-m-d H:i:s or Y-m-d\TH:i).
 	 * @param string $rrule          RRULE string.
 	 * @param int    $max            Maximum occurrences to generate.
+	 * @param array  $exdates        Array of excluded dates (Y-m-d format). Skipped dates still count toward COUNT limit.
 	 * @return array Array of occurrences with 'start' and 'end' keys.
 	 */
-	public static function generate_occurrences( $start_datetime, $end_datetime, $rrule, $max = null ) {
+	public static function generate_occurrences( $start_datetime, $end_datetime, $rrule, $max = null, $exdates = array() ) {
 		if ( null === $max ) {
 			$max = self::MAX_OCCURRENCES;
 		}
@@ -137,16 +138,22 @@ class RecurrenceService {
 				break;
 			}
 
-			// Calculate end for this occurrence.
-			$current_end = clone $current_start;
-			$current_end->add( $duration );
-
-			$occurrences[] = array(
-				'start' => $current_start->format( 'Y-m-d\TH:i:s' ),
-				'end'   => $current_end->format( 'Y-m-d\TH:i:s' ),
-			);
-
+			// Count toward RRULE COUNT limit regardless of exclusion.
 			++$count;
+
+			$current_date = $current_start->format( 'Y-m-d' );
+
+			// Skip excluded dates but still count them.
+			if ( ! in_array( $current_date, $exdates, true ) ) {
+				// Calculate end for this occurrence.
+				$current_end = clone $current_start;
+				$current_end->add( $duration );
+
+				$occurrences[] = array(
+					'start' => $current_start->format( 'Y-m-d\TH:i:s' ),
+					'end'   => $current_end->format( 'Y-m-d\TH:i:s' ),
+				);
+			}
 
 			// Calculate next occurrence.
 			$current_start = self::add_interval( $current_start, $parsed['freq'], $parsed['interval'] );
@@ -222,11 +229,16 @@ class RecurrenceService {
 			return 1;
 		}
 
+		// Parse exdates from master.
+		$exdates = self::parse_exdates( $master->exdates );
+
 		// Generate occurrences.
 		$occurrences = self::generate_occurrences(
 			$master->start_datetime,
 			$master->end_datetime,
-			$rrule
+			$rrule,
+			null,
+			$exdates
 		);
 
 		if ( empty( $occurrences ) ) {
@@ -304,11 +316,16 @@ class RecurrenceService {
 			return 1;
 		}
 
+		// Parse exdates from master.
+		$exdates = self::parse_exdates( $master->exdates );
+
 		// Generate occurrences from the master's start/end.
 		$occurrences = self::generate_occurrences(
 			$master->start_datetime,
 			$master->end_datetime,
-			$rrule
+			$rrule,
+			null,
+			$exdates
 		);
 
 		if ( empty( $occurrences ) ) {
@@ -352,6 +369,55 @@ class RecurrenceService {
 		}
 
 		return $count;
+	}
+
+	/**
+	 * Parse exdates string into an array of Y-m-d date strings
+	 *
+	 * @param string|null $exdates Comma-separated date string.
+	 * @return array Array of Y-m-d date strings.
+	 */
+	public static function parse_exdates( $exdates ) {
+		if ( empty( $exdates ) ) {
+			return array();
+		}
+
+		return array_filter( array_map( 'trim', explode( ',', $exdates ) ) );
+	}
+
+	/**
+	 * Clean stale exdates that no longer match any would-be occurrence date
+	 *
+	 * @param string $start_datetime Start datetime of the master event.
+	 * @param string $end_datetime   End datetime of the master event.
+	 * @param string $rrule          RRULE string.
+	 * @param array  $exdates        Current exdates array.
+	 * @return array Cleaned exdates array.
+	 */
+	public static function clean_stale_exdates( $start_datetime, $end_datetime, $rrule, $exdates ) {
+		if ( empty( $exdates ) || empty( $rrule ) ) {
+			return array();
+		}
+
+		// Generate all possible occurrences without exclusions to get valid dates.
+		$all_occurrences = self::generate_occurrences( $start_datetime, $end_datetime, $rrule );
+
+		$valid_dates = array();
+		foreach ( $all_occurrences as $occ ) {
+			$dt            = new \DateTime( $occ['start'] );
+			$valid_dates[] = $dt->format( 'Y-m-d' );
+		}
+
+		// Keep only exdates that match a would-be occurrence (skip the master's own date).
+		$master_date = ( new \DateTime( $start_datetime ) )->format( 'Y-m-d' );
+		$cleaned     = array();
+		foreach ( $exdates as $exdate ) {
+			if ( $exdate !== $master_date && in_array( $exdate, $valid_dates, true ) ) {
+				$cleaned[] = $exdate;
+			}
+		}
+
+		return $cleaned;
 	}
 
 	/**
