@@ -12,6 +12,89 @@ defined( 'WPINC' ) || die;
 
 use FairAudience\Services\ParticipantToken;
 
+/**
+ * Check if the current viewer has group permission to view signups.
+ *
+ * Identifies the viewer via participant_token (URL) or logged-in WP user,
+ * then checks if the viewer's participant belongs to a group that has
+ * view_signups or manage_signups permission for this event's event_date.
+ *
+ * @param int                                          $event_id        Event post ID.
+ * @param \FairAudience\Database\ParticipantRepository $participant_repo Participant repository.
+ * @return bool True if viewer has permission.
+ */
+if ( ! function_exists( 'fair_audience_check_signup_permission' ) ) {
+	function fair_audience_check_signup_permission( $event_id, $participant_repo ) {
+		// Need fair-events for event_date lookup and group permission rules.
+		if ( ! class_exists( \FairEvents\Models\EventDates::class ) ||
+		! class_exists( \FairEvents\Models\GroupPermissionRule::class ) ) {
+			return false;
+		}
+
+		// Resolve event_date_id from event post.
+		$event_date = \FairEvents\Models\EventDates::get_by_event_id( $event_id );
+		if ( ! $event_date ) {
+			return false;
+		}
+
+		$event_date_id = (int) $event_date->id;
+
+		// Get permission rules for this event date.
+		$permission_rules = \FairEvents\Models\GroupPermissionRule::get_all_by_event_date_id( $event_date_id );
+		if ( empty( $permission_rules ) ) {
+			return false;
+		}
+
+		// Collect group IDs that have view_signups or manage_signups permission.
+		$allowed_group_ids = array();
+		foreach ( $permission_rules as $rule ) {
+			if ( 'view_signups' === $rule->permission_type || 'manage_signups' === $rule->permission_type ) {
+				$allowed_group_ids[] = $rule->group_id;
+			}
+		}
+
+		if ( empty( $allowed_group_ids ) ) {
+			return false;
+		}
+
+		// Identify the viewer's participant.
+		$participant = null;
+
+		// Try participant_token from URL first.
+		$participant_token = get_query_var( 'participant_token', '' );
+		if ( ! empty( $participant_token ) ) {
+			$token_data = ParticipantToken::verify( $participant_token );
+			if ( $token_data ) {
+				$participant = $participant_repo->get_by_id( $token_data['participant_id'] );
+			}
+		}
+
+		// Fall back to logged-in user.
+		if ( ! $participant ) {
+			$user_id = get_current_user_id();
+			if ( $user_id ) {
+				$participant = $participant_repo->get_by_user_id( $user_id );
+			}
+		}
+
+		if ( ! $participant ) {
+			return false;
+		}
+
+		// Check if participant belongs to any of the allowed groups.
+		$group_participant_repo = new \FairAudience\Database\GroupParticipantRepository();
+		$participant_groups     = $group_participant_repo->get_by_participant( $participant->id );
+
+		foreach ( $participant_groups as $group_participant ) {
+			if ( in_array( $group_participant->group_id, $allowed_group_ids, true ) ) {
+				return true;
+			}
+		}
+
+		return false;
+	}
+}
+
 // Wrap in closure to avoid polluting global namespace.
 ( function () {
 	// Get current post ID.
@@ -109,86 +192,3 @@ use FairAudience\Services\ParticipantToken;
 	</div>
 	<?php
 } )();
-
-/**
- * Check if the current viewer has group permission to view signups.
- *
- * Identifies the viewer via participant_token (URL) or logged-in WP user,
- * then checks if the viewer's participant belongs to a group that has
- * view_signups or manage_signups permission for this event's event_date.
- *
- * @param int                                          $event_id        Event post ID.
- * @param \FairAudience\Database\ParticipantRepository $participant_repo Participant repository.
- * @return bool True if viewer has permission.
- */
-if ( ! function_exists( 'fair_audience_check_signup_permission' ) ) {
-	function fair_audience_check_signup_permission( $event_id, $participant_repo ) {
-		// Need fair-events for event_date lookup and group permission rules.
-		if ( ! class_exists( \FairEvents\Models\EventDates::class ) ||
-		! class_exists( \FairEvents\Models\GroupPermissionRule::class ) ) {
-			return false;
-		}
-
-		// Resolve event_date_id from event post.
-		$event_date = \FairEvents\Models\EventDates::get_by_event_id( $event_id );
-		if ( ! $event_date ) {
-			return false;
-		}
-
-		$event_date_id = (int) $event_date->id;
-
-		// Get permission rules for this event date.
-		$permission_rules = \FairEvents\Models\GroupPermissionRule::get_all_by_event_date_id( $event_date_id );
-		if ( empty( $permission_rules ) ) {
-			return false;
-		}
-
-		// Collect group IDs that have view_signups or manage_signups permission.
-		$allowed_group_ids = array();
-		foreach ( $permission_rules as $rule ) {
-			if ( 'view_signups' === $rule->permission_type || 'manage_signups' === $rule->permission_type ) {
-				$allowed_group_ids[] = $rule->group_id;
-			}
-		}
-
-		if ( empty( $allowed_group_ids ) ) {
-			return false;
-		}
-
-		// Identify the viewer's participant.
-		$participant = null;
-
-		// Try participant_token from URL first.
-		$participant_token = get_query_var( 'participant_token', '' );
-		if ( ! empty( $participant_token ) ) {
-			$token_data = ParticipantToken::verify( $participant_token );
-			if ( $token_data ) {
-				$participant = $participant_repo->get_by_id( $token_data['participant_id'] );
-			}
-		}
-
-		// Fall back to logged-in user.
-		if ( ! $participant ) {
-			$user_id = get_current_user_id();
-			if ( $user_id ) {
-				$participant = $participant_repo->get_by_user_id( $user_id );
-			}
-		}
-
-		if ( ! $participant ) {
-			return false;
-		}
-
-		// Check if participant belongs to any of the allowed groups.
-		$group_participant_repo = new \FairAudience\Database\GroupParticipantRepository();
-		$participant_groups     = $group_participant_repo->get_by_participant( $participant->id );
-
-		foreach ( $participant_groups as $group_participant ) {
-			if ( in_array( $group_participant->group_id, $allowed_group_ids, true ) ) {
-				return true;
-			}
-		}
-
-		return false;
-	}
-}
