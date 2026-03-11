@@ -180,6 +180,22 @@
 	justify-content: center;
 }
 
+/* Cancel signup button */
+.fair-audience-unsignup-button-wrap {
+	margin-top: 15px;
+}
+
+.fair-audience-unsignup-button.wp-block-button__link {
+	background: transparent;
+	color: #d63638;
+	border: 1px solid #d63638;
+}
+
+.fair-audience-unsignup-button.wp-block-button__link:hover {
+	background: #d63638;
+	color: #fff;
+}
+
 /* Disabled button state */
 .fair-audience-signup-submit-button:disabled,
 .fair-audience-signup-button:disabled {
