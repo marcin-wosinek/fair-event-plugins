@@ -22,6 +22,7 @@
 		"composer:install": "npm run composer:install --workspaces --if-present",
 		"composer:install:prod": "npm run composer:install:prod --workspaces --if-present",
 		"composer:update": "npm run composer:update --workspaces --if-present",
+		"composer:update:shared": "npm run composer:update:shared --workspaces --if-present",
 		"composer:validate": "npm run composer:validate --workspaces --if-present",
 		"start": "npm run start --workspace=fair-payment & npm run start --workspace=fair-events & npm run start --workspace=fair-audience & wait",
 		"format": "npm-run-all format:*",

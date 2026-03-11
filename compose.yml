@@ -48,6 +48,7 @@ services:
             - ./fair-events:/var/www/html/wp-content/plugins/fair-events
             - ./fair-platform:/var/www/html/wp-content/plugins/fair-platform
             - ./fair-audience:/var/www/html/wp-content/plugins/fair-audience
+
         environment:
             WORDPRESS_DB_HOST: db
             WORDPRESS_DB_USER: exampleuser

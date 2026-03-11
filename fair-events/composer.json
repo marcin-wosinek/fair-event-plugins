@@ -30,14 +30,17 @@
 		},
 		{
 			"type": "path",
-			"url": "../fair-events-shared/php"
+			"url": "../fair-events-shared/php",
+			"options": {
+				"symlink": false
+			}
 		}
 	],
 	"require": {
 		"php": ">=7.4 <9.0",
 		"composer/installers": "^2.3",
 		"sabre/vobject": "^4.5",
-		"fair-events/shared": "@dev"
+		"fair-events/shared": "^0.1"
 	},
 	"autoload": {
 		"psr-4": {
