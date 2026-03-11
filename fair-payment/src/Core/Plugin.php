@@ -44,6 +44,9 @@ class Plugin {
 		// Initialize REST API hooks.
 		new \FairPayment\API\RestHooks();
 
+		// Shared REST API endpoints (block renderer).
+		new \FairEventsShared\API\RestHooks();
+
 		$this->load_admin();
 		$this->load_settings();
 		$this->load_migration_notice();

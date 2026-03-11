@@ -48,6 +48,9 @@ class Plugin {
 		$this->load_post_cleanup();
 		$this->load_auto_create_event();
 		$this->load_title_sync();
+
+		// Shared REST API endpoints (block renderer).
+		new \FairEventsShared\API\RestHooks();
 	}
 
 	/**

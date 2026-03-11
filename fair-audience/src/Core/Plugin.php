@@ -59,6 +59,9 @@ class Plugin {
 		$settings = new \FairAudience\Settings\Settings();
 		$settings->init();
 
+		// Shared REST API endpoints (block renderer).
+		new \FairEventsShared\API\RestHooks();
+
 		// Initialize admin.
 		$admin_hooks = new \FairAudience\Admin\AdminHooks();
 
