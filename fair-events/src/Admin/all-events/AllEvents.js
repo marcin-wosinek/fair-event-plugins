@@ -67,12 +67,12 @@ export default function AllEvents() {
 				label: __('Name', 'fair-events'),
 				render: ({ item }) => (
 					<a href={`${manageEventUrl}&event_date_id=${item.id}`}>
-						{item.title}
+						{item.title || __('(no name)', 'fair-events')}
 					</a>
 				),
 				enableSorting: true,
 				enableHiding: false,
-				getValue: ({ item }) => item.title.toLowerCase(),
+				getValue: ({ item }) => (item.title || '').toLowerCase(),
 			},
 			{
 				id: 'start_datetime',
@@ -222,6 +222,20 @@ export default function AllEvents() {
 		loadEvents();
 	}, [loadEvents]);
 
+	const actions = useMemo(
+		() => [
+			{
+				id: 'edit',
+				label: __('Edit', 'fair-events'),
+				isPrimary: true,
+				callback: ([item]) => {
+					window.location.href = `${manageEventUrl}&event_date_id=${item.id}`;
+				},
+			},
+		],
+		[]
+	);
+
 	const paginationInfo = useMemo(
 		() => ({
 			totalItems,
@@ -243,6 +257,7 @@ export default function AllEvents() {
 						onChangeView={setView}
 						paginationInfo={paginationInfo}
 						defaultLayouts={DEFAULT_LAYOUTS}
+						actions={actions}
 						isLoading={isLoading}
 						getItemId={(item) => item.id}
 					/>
