@@ -9,10 +9,17 @@
 			"email": "marcin.wosinek@gmail.com"
 		}
 	],
+	"repositories": [
+		{
+			"type": "path",
+			"url": "../fair-events-shared/php"
+		}
+	],
 	"require": {
 		"php": ">=8.0 <9.0",
 		"phpoffice/phpspreadsheet": "^1.29",
-		"maennchen/zipstream-php": "^2.1 || ^3.0 <3.2"
+		"maennchen/zipstream-php": "^2.1 || ^3.0 <3.2",
+		"fair-events/shared": "@dev"
 	},
 	"autoload": {
 		"psr-4": {

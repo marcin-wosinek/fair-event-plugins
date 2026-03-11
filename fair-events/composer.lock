@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "782f9ea5558cb3ac7f90b5a6a19bc1c6",
+    "content-hash": "86b6d7db2a47b135f097e6c1aa939630",
     "packages": [
         {
             "name": "composer/installers",
@@ -151,6 +151,31 @@
                 }
             ],
             "time": "2024-06-24T20:46:46+00:00"
+        },
+        {
+            "name": "fair-events/shared",
+            "version": "dev-rendering",
+            "dist": {
+                "type": "path",
+                "url": "../fair-events-shared/php",
+                "reference": "d3b76cdcbf85910898d13b950c41953d9f62484d"
+            },
+            "require": {
+                "php": ">=7.4 <9.0"
+            },
+            "type": "library",
+            "autoload": {
+                "psr-4": {
+                    "FairEventsShared\\": "src/"
+                }
+            },
+            "license": [
+                "GPL-3.0-or-later"
+            ],
+            "description": "Shared PHP utilities for Fair Event plugins",
+            "transport-options": {
+                "relative": true
+            }
         },
         {
             "name": "sabre/uri",
@@ -2187,7 +2212,9 @@
     ],
     "aliases": [],
     "minimum-stability": "stable",
-    "stability-flags": {},
+    "stability-flags": {
+        "fair-events/shared": 20
+    },
     "prefer-stable": false,
     "prefer-lowest": false,
     "platform": {

@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "d9b0e64dd2afd192f7a6f5fc808c4d50",
+    "content-hash": "ac557056f38bfc4827844435d5561ac2",
     "packages": [
         {
             "name": "composer/pcre",
@@ -145,6 +145,31 @@
                 "source": "https://github.com/ezyang/htmlpurifier/tree/v4.19.0"
             },
             "time": "2025-10-17T16:34:55+00:00"
+        },
+        {
+            "name": "fair-events/shared",
+            "version": "dev-rendering",
+            "dist": {
+                "type": "path",
+                "url": "../fair-events-shared/php",
+                "reference": "d3b76cdcbf85910898d13b950c41953d9f62484d"
+            },
+            "require": {
+                "php": ">=7.4 <9.0"
+            },
+            "type": "library",
+            "autoload": {
+                "psr-4": {
+                    "FairEventsShared\\": "src/"
+                }
+            },
+            "license": [
+                "GPL-3.0-or-later"
+            ],
+            "description": "Shared PHP utilities for Fair Event plugins",
+            "transport-options": {
+                "relative": true
+            }
         },
         {
             "name": "maennchen/zipstream-php",
@@ -652,7 +677,9 @@
     "packages-dev": [],
     "aliases": [],
     "minimum-stability": "stable",
-    "stability-flags": {},
+    "stability-flags": {
+        "fair-events/shared": 20
+    },
     "prefer-stable": false,
     "prefer-lowest": false,
     "platform": {

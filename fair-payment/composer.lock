@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "3731f167aedf17d11aa5c8164bfef18a",
+    "content-hash": "c0e21c911e8a6f8fef81d2c7f5184e97",
     "packages": [
         {
             "name": "composer/ca-bundle",
@@ -77,6 +77,31 @@
                 }
             ],
             "time": "2025-11-06T11:46:17+00:00"
+        },
+        {
+            "name": "fair-events/shared",
+            "version": "dev-rendering",
+            "dist": {
+                "type": "path",
+                "url": "../fair-events-shared/php",
+                "reference": "d3b76cdcbf85910898d13b950c41953d9f62484d"
+            },
+            "require": {
+                "php": ">=7.4 <9.0"
+            },
+            "type": "library",
+            "autoload": {
+                "psr-4": {
+                    "FairEventsShared\\": "src/"
+                }
+            },
+            "license": [
+                "GPL-3.0-or-later"
+            ],
+            "description": "Shared PHP utilities for Fair Event plugins",
+            "transport-options": {
+                "relative": true
+            }
         },
         {
             "name": "mollie/mollie-api-php",
@@ -2388,7 +2413,9 @@
     ],
     "aliases": [],
     "minimum-stability": "stable",
-    "stability-flags": {},
+    "stability-flags": {
+        "fair-events/shared": 20
+    },
     "prefer-stable": false,
     "prefer-lowest": false,
     "platform": {

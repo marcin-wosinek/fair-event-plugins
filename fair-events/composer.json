@@ -27,12 +27,17 @@
 		{
 			"type": "composer",
 			"url": "https://wpackagist.org"
+		},
+		{
+			"type": "path",
+			"url": "../fair-events-shared/php"
 		}
 	],
 	"require": {
 		"php": ">=7.4 <9.0",
 		"composer/installers": "^2.3",
-		"sabre/vobject": "^4.5"
+		"sabre/vobject": "^4.5",
+		"fair-events/shared": "@dev"
 	},
 	"autoload": {
 		"psr-4": {

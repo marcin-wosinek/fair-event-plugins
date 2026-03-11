@@ -1,0 +1,14 @@
+{
+	"name": "fair-events/shared",
+	"description": "Shared PHP utilities for Fair Event plugins",
+	"type": "library",
+	"license": "GPL-3.0-or-later",
+	"autoload": {
+		"psr-4": {
+			"FairEventsShared\\": "src/"
+		}
+	},
+	"require": {
+		"php": ">=7.4 <9.0"
+	}
+}
