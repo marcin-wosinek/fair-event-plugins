@@ -526,6 +526,7 @@ $next_url = add_query_arg( 'schedule_week', sprintf( '%04d-W%02d', $next['year']
 							$event_desc  = esc_attr( $event_data['description'] ?? '' );
 							?>
 							<div class="schedule-event is-ical"
+								data-event-id="<?php echo esc_attr( $event_data['id'] ); ?>"
 								style="--event-bg-color: <?php echo esc_attr( $event_data['color'] ); ?>; --event-text-color: #ffffff;">
 								<?php if ( ! empty( $event_url ) ) : ?>
 									<a href="<?php echo esc_url( $event_url ); ?>"
@@ -554,6 +555,7 @@ $next_url = add_query_arg( 'schedule_week', sprintf( '%04d-W%02d', $next['year']
 							}
 							?>
 							<div class="<?php echo esc_attr( implode( ' ', $item_classes ) ); ?>"
+								data-event-id="<?php echo esc_attr( $event_data['id'] ); ?>"
 								style="--event-bg-color: <?php echo esc_attr( $bg_color_value ); ?>; --event-text-color: <?php echo esc_attr( $text_color_value ); ?>;">
 								<?php if ( $is_external && ! empty( $event_url ) ) : ?>
 									<a href="<?php echo esc_url( $event_url ); ?>"
@@ -576,6 +578,7 @@ $next_url = add_query_arg( 'schedule_week', sprintf( '%04d-W%02d', $next['year']
 							}
 							?>
 							<div class="<?php echo esc_attr( implode( ' ', $item_classes ) ); ?>"
+								data-event-id="<?php echo esc_attr( $event_data['id'] ); ?>"
 								style="--event-bg-color: <?php echo esc_attr( $bg_color_value ); ?>; --event-text-color: <?php echo esc_attr( $text_color_value ); ?>;">
 								<?php echo fair_events_render_schedule_pattern( $display_pattern, $event_data['id'] ); ?>
 							</div>

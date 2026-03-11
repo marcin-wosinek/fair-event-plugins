@@ -113,6 +113,7 @@ if ( ! function_exists( 'fair_events_render_calendar_event_item' ) ) {
 			$item_classes = array( 'event-item', 'is-ical' );
 			?>
 			<div class="<?php echo esc_attr( implode( ' ', $item_classes ) ); ?>"
+				data-event-id="<?php echo esc_attr( $event_data['id'] ); ?>"
 				style="--event-bg-color: <?php echo esc_attr( $bg_color_value ); ?>; --event-text-color: <?php echo esc_attr( $text_color_value ); ?>">
 				<?php if ( ! empty( $event_url ) ) : ?>
 					<a href="<?php echo esc_url( $event_url ); ?>"
@@ -144,6 +145,7 @@ if ( ! function_exists( 'fair_events_render_calendar_event_item' ) ) {
 			}
 			?>
 			<div class="<?php echo esc_attr( implode( ' ', $item_classes ) ); ?>"
+				data-event-id="<?php echo esc_attr( $event_data['id'] ); ?>"
 				style="--event-bg-color: <?php echo esc_attr( $bg_color_value ); ?>; --event-text-color: <?php echo esc_attr( $text_color_value ); ?>">
 				<?php if ( $is_external && ! empty( $event_url ) ) : ?>
 					<a href="<?php echo esc_url( $event_url ); ?>"
@@ -170,6 +172,7 @@ if ( ! function_exists( 'fair_events_render_calendar_event_item' ) ) {
 			}
 			?>
 			<div class="<?php echo esc_attr( implode( ' ', $item_classes ) ); ?>"
+				data-event-id="<?php echo esc_attr( $event_data['id'] ); ?>"
 				style="--event-bg-color: <?php echo esc_attr( $bg_color_value ); ?>; --event-text-color: <?php echo esc_attr( $text_color_value ); ?>">
 				<a href="<?php echo esc_url( $event_url ); ?>" class="event-title">
 					<?php echo esc_html( $event_title ); ?>
