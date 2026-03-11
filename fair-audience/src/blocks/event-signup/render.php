@@ -111,8 +111,22 @@ $wrapper_attributes = get_block_wrapper_attributes(
 </p>
 <?php else : ?>
 <div <?php echo wp_kses_data( $wrapper_attributes ); ?>>
-	<?php if ( $is_signed_up ) : ?>
-		<!-- Already signed up -->
+	<?php if ( $is_signed_up && ( 'with_token' === $state || 'linked' === $state ) ) : ?>
+		<!-- Signed up: authenticated user can cancel -->
+		<div class="fair-audience-signup-signed-up">
+			<div class="fair-audience-signup-status fair-audience-signup-status-success">
+				<p><?php echo esc_html__( 'You are signed up for this event!', 'fair-audience' ); ?></p>
+			</div>
+			<div class="wp-block-button fair-audience-unsignup-button-wrap">
+				<button type="button" class="wp-block-button__link wp-element-button fair-audience-unsignup-button is-style-outline">
+					<?php echo esc_html__( 'Cancel signup', 'fair-audience' ); ?>
+				</button>
+			</div>
+			<div class="fair-audience-signup-message" style="display: none;"></div>
+		</div>
+
+	<?php elseif ( $is_signed_up ) : ?>
+		<!-- Signed up: anonymous user (no cancel option) -->
 		<div class="fair-audience-signup-status fair-audience-signup-status-success">
 			<p><?php echo esc_html__( 'You are signed up for this event!', 'fair-audience' ); ?></p>
 		</div>

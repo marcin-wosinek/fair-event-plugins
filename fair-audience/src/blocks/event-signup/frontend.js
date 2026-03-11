@@ -41,7 +41,17 @@ const CSS_PREFIX = 'fair-audience-signup';
 		const state = block.dataset.state;
 		const isSignedUp = block.dataset.isSignedUp === 'true';
 
-		// Skip if already signed up
+		// Initialize unsignup button if present
+		const unsignupButton = block.querySelector(
+			'.fair-audience-unsignup-button'
+		);
+		if (unsignupButton) {
+			unsignupButton.addEventListener('click', function () {
+				submitUnsignup(block, this);
+			});
+		}
+
+		// Skip signup initialization if already signed up
 		if (isSignedUp) {
 			return;
 		}
@@ -402,7 +412,7 @@ const CSS_PREFIX = 'fair-audience-signup';
 						'success'
 					);
 
-					// Replace form with success state
+					// Replace form with signed-up state including cancel button
 					const formContainer =
 						block.querySelector(
 							'.fair-audience-signup-token-form'
@@ -420,7 +430,21 @@ const CSS_PREFIX = 'fair-audience-signup';
 								'fair-audience'
 							) +
 							'</p>' +
-							'</div>';
+							'</div>' +
+							'<div class="wp-block-button fair-audience-unsignup-button-wrap">' +
+							'<button type="button" class="wp-block-button__link wp-element-button fair-audience-unsignup-button is-style-outline">' +
+							__('Cancel signup', 'fair-audience') +
+							'</button>' +
+							'</div>' +
+							'<div class="fair-audience-signup-message" style="display: none;"></div>';
+
+						// Attach handler to the new button
+						const newUnsignupBtn = formContainer.querySelector(
+							'.fair-audience-unsignup-button'
+						);
+						newUnsignupBtn.addEventListener('click', function () {
+							submitUnsignup(block, this);
+						});
 					}
 				}
 			})
@@ -436,6 +460,129 @@ const CSS_PREFIX = 'fair-audience-signup';
 					'error',
 					CSS_PREFIX
 				);
+				showNotification(errorMessage, 'error');
+			})
+			.finally(function () {
+				restoreButton();
+			});
+	}
+
+	/**
+	 * Submit unsignup (cancel signup)
+	 * @param {HTMLElement} block The block element
+	 * @param {HTMLElement} button The unsignup button
+	 */
+	function submitUnsignup(block, button) {
+		const eventId = parseInt(block.dataset.eventId, 10);
+		const token = block.dataset.participantToken || '';
+		const state = block.dataset.state;
+
+		const container =
+			block.querySelector('.fair-audience-signup-signed-up') ||
+			block.querySelector('.fair-audience-signup-token-form') ||
+			block.querySelector('.fair-audience-signup-linked-form');
+
+		const messageContainer = container
+			? container.querySelector('.fair-audience-signup-message')
+			: null;
+
+		// Build request data
+		const requestData = {
+			event_id: eventId,
+		};
+
+		if (token) {
+			requestData.participant_token = token;
+		}
+
+		// Disable button and show loading state
+		const restoreButton = setButtonLoading(
+			button,
+			__('Cancelling...', 'fair-audience')
+		);
+
+		apiFetch({
+			path: '/fair-audience/v1/event-signup',
+			method: 'DELETE',
+			data: requestData,
+		})
+			.then(function (response) {
+				if (response.success) {
+					showNotification(
+						response.message ||
+							__(
+								'You have been removed from this event.',
+								'fair-audience'
+							),
+						'success'
+					);
+
+					// Get participant name from greeting or fallback
+					const greetingEl = block.querySelector(
+						'.fair-audience-signup-greeting'
+					);
+					const participantName = greetingEl
+						? greetingEl.textContent.match(
+								/(?:Hi|Hola|Salut|Ciao)\s+(.+?)!/
+						  )?.[1] || ''
+						: '';
+
+					// Replace with signup form
+					if (container) {
+						const greetingText = participantName
+							? __(
+									'Hi %s! You can sign up for this event.',
+									'fair-audience'
+							  ).replace('%s', participantName)
+							: __(
+									'You can sign up for this event.',
+									'fair-audience'
+							  );
+
+						const wrapClass =
+							state === 'with_token'
+								? 'fair-audience-signup-token-form'
+								: 'fair-audience-signup-linked-form';
+
+						container.className = wrapClass;
+						container.innerHTML =
+							'<p class="fair-audience-signup-greeting">' +
+							greetingText +
+							'</p>' +
+							'<div class="wp-block-button">' +
+							'<button type="button" class="wp-block-button__link wp-element-button fair-audience-signup-button" data-action="signup">' +
+							__('Sign Up', 'fair-audience') +
+							'</button>' +
+							'</div>' +
+							'<div class="fair-audience-signup-message" style="display: none;"></div>';
+
+						// Attach signup handler to new button
+						const newSignupBtn = container.querySelector(
+							'.fair-audience-signup-button'
+						);
+						newSignupBtn.addEventListener('click', function () {
+							submitSignup(block, this);
+						});
+					}
+				}
+			})
+			.catch(function (error) {
+				console.error('Unsignup error:', error);
+				const errorMessage = extractErrorMessage(
+					error,
+					__(
+						'Failed to cancel signup. Please try again.',
+						'fair-audience'
+					)
+				);
+				if (messageContainer) {
+					showMessage(
+						messageContainer,
+						errorMessage,
+						'error',
+						CSS_PREFIX
+					);
+				}
 				showNotification(errorMessage, 'error');
 			})
 			.finally(function () {

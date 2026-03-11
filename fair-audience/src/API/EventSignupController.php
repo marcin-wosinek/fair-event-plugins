@@ -152,6 +152,31 @@ class EventSignupController extends WP_REST_Controller {
 			)
 		);
 
+		// DELETE /fair-audience/v1/event-signup
+		register_rest_route(
+			$this->namespace,
+			'/' . $this->rest_base,
+			array(
+				array(
+					'methods'             => WP_REST_Server::DELETABLE,
+					'callback'            => array( $this, 'cancel_signup' ),
+					'permission_callback' => array( $this, 'create_signup_permissions_check' ),
+					'args'                => array(
+						'event_id'          => array(
+							'type'              => 'integer',
+							'required'          => true,
+							'sanitize_callback' => 'absint',
+						),
+						'participant_token' => array(
+							'type'              => 'string',
+							'required'          => false,
+							'sanitize_callback' => 'sanitize_text_field',
+						),
+					),
+				),
+			)
+		);
+
 		// POST /fair-audience/v1/event-signup/request-link
 		register_rest_route(
 			$this->namespace,
@@ -624,6 +649,73 @@ class EventSignupController extends WP_REST_Controller {
 				'success' => true,
 				'message' => __( 'You have successfully registered and signed up for the event!', 'fair-audience' ),
 				'status'  => 'registered_and_signed_up',
+			)
+		);
+	}
+
+	/**
+	 * Cancel signup for event.
+	 *
+	 * @param WP_REST_Request $request Request object.
+	 * @return WP_REST_Response|WP_Error Response object or error.
+	 */
+	public function cancel_signup( $request ) {
+		$event_id          = $request->get_param( 'event_id' );
+		$participant_token = $request->get_param( 'participant_token' );
+		$user_id           = get_current_user_id();
+
+		// Validate event exists.
+		$event = get_post( $event_id );
+		if ( ! $event || ! \FairEvents\Database\EventRepository::is_event( $event ) ) {
+			return new WP_Error(
+				'invalid_event',
+				__( 'Event not found.', 'fair-audience' ),
+				array( 'status' => 404 )
+			);
+		}
+
+		// Get participant based on auth method.
+		$participant = null;
+
+		if ( ! empty( $participant_token ) ) {
+			$token_data = ParticipantToken::verify( $participant_token );
+			if ( $token_data ) {
+				$participant = $this->participant_repository->get_by_id( $token_data['participant_id'] );
+			}
+		} elseif ( $user_id ) {
+			$participant = $this->participant_repository->get_by_user_id( $user_id );
+		}
+
+		if ( ! $participant ) {
+			return new WP_Error(
+				'no_participant',
+				__( 'Could not find your participant profile.', 'fair-audience' ),
+				array( 'status' => 400 )
+			);
+		}
+
+		// Check if signed up.
+		$existing = $this->event_participant_repository->get_by_event_and_participant(
+			$event_id,
+			$participant->id
+		);
+
+		if ( ! $existing || 'signed_up' !== $existing->label ) {
+			return new WP_Error(
+				'not_signed_up',
+				__( 'You are not signed up for this event.', 'fair-audience' ),
+				array( 'status' => 400 )
+			);
+		}
+
+		// Remove signup.
+		$this->event_participant_repository->remove_participant_from_event( $event_id, $participant->id );
+
+		return rest_ensure_response(
+			array(
+				'success' => true,
+				'message' => __( 'You have been removed from this event.', 'fair-audience' ),
+				'status'  => 'cancelled',
 			)
 		);
 	}
