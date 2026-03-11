@@ -611,7 +611,7 @@ class EventDates {
 				// phpcs:ignore WordPress.DB.PreparedSQLPlaceholders.ReplacementsWrongNumber
 				$wpdb->prepare(
 					// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
-					"SELECT ed.* FROM %i ed INNER JOIN %i edc ON ed.id = edc.event_date_id WHERE edc.term_id IN ($id_placeholders) AND ed.link_type != 'post' AND ed.start_datetime <= %s AND (ed.end_datetime >= %s OR (ed.end_datetime IS NULL AND ed.start_datetime >= %s)) GROUP BY ed.id ORDER BY ed.start_datetime ASC",
+					"SELECT ed.* FROM %i ed INNER JOIN %i edc ON ed.id = edc.event_date_id WHERE edc.term_id IN ($id_placeholders) AND ed.link_type != 'post' AND ed.event_id IS NULL AND ed.start_datetime <= %s AND (ed.end_datetime >= %s OR (ed.end_datetime IS NULL AND ed.start_datetime >= %s)) GROUP BY ed.id ORDER BY ed.start_datetime ASC",
 					array_merge(
 						array( $table_name, $cat_table ),
 						array_map( 'intval', $category_ids ),
@@ -622,7 +622,7 @@ class EventDates {
 		} else {
 			$results = $wpdb->get_results(
 				$wpdb->prepare(
-					"SELECT * FROM %i WHERE link_type != 'post' AND start_datetime <= %s AND (end_datetime >= %s OR (end_datetime IS NULL AND start_datetime >= %s)) ORDER BY start_datetime ASC",
+					"SELECT * FROM %i WHERE link_type != 'post' AND event_id IS NULL AND start_datetime <= %s AND (end_datetime >= %s OR (end_datetime IS NULL AND start_datetime >= %s)) ORDER BY start_datetime ASC",
 					$table_name,
 					$end_date,
 					$start_date,
