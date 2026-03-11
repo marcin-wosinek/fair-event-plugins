@@ -59,6 +59,9 @@ class Installer {
 		$sql = Schema::get_ticket_prices_table_sql();
 		dbDelta( $sql );
 
+		$sql = Schema::get_group_permission_rules_table_sql();
+		dbDelta( $sql );
+
 		// Run migration if upgrading from pre-1.0.0
 		if ( version_compare( $current_version, '1.0.0', '<' ) ) {
 			self::migrate_to_1_0_0();
@@ -126,6 +129,7 @@ class Installer {
 		// Version 2.5.0 - Group pricing rules table (no data migration needed, table created by dbDelta).
 
 		// Run migration if upgrading from pre-2.6.0 (add capacity to event_dates).
+		// Version 2.8.0 - Group permission rules table (no data migration needed, table created by dbDelta).
 		if ( version_compare( $current_version, '2.6.0', '<' ) ) {
 			self::migrate_to_2_6_0();
 		}

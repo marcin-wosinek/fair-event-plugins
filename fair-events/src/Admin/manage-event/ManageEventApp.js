@@ -36,7 +36,7 @@ import { DurationOptions, calculateDuration } from 'fair-events-shared';
 import ImageExports from './ImageExports.js';
 import EventFinance from './EventFinance.js';
 import EventAudience from './EventAudience.js';
-import GroupPricingRules from './GroupPricingRules.js';
+import GroupRules from './GroupRules.js';
 import EventTickets from './EventTickets.js';
 import EventPhotos from './EventPhotos.js';
 import DuplicateEventWizard from './DuplicateEventWizard.js';
@@ -560,6 +560,14 @@ export default function ManageEventApp() {
 				name: 'tickets',
 				title: __('Tickets', 'fair-events'),
 			},
+			...(audienceUrl
+				? [
+						{
+							name: 'groups',
+							title: __('Groups', 'fair-events'),
+						},
+				  ]
+				: []),
 			{
 				name: 'photos',
 				title: __('Photos', 'fair-events'),
@@ -1151,18 +1159,14 @@ export default function ManageEventApp() {
 					}
 					if (tab.name === 'tickets') {
 						return (
-							<>
-								<EventTickets
-									eventDateId={eventDateId}
-									onSaveRef={ticketSaveRef}
-								/>
-								{audienceUrl && (
-									<GroupPricingRules
-										eventDateId={eventDateId}
-									/>
-								)}
-							</>
+							<EventTickets
+								eventDateId={eventDateId}
+								onSaveRef={ticketSaveRef}
+							/>
 						);
+					}
+					if (tab.name === 'groups') {
+						return <GroupRules eventDateId={eventDateId} />;
 					}
 					if (tab.name === 'photos') {
 						return <EventPhotos eventId={eventDate.event_id} />;

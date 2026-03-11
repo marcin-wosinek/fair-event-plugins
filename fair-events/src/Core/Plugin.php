@@ -217,6 +217,15 @@ class Plugin {
 			}
 		);
 
+		// Group Permission Rules controller.
+		add_action(
+			'rest_api_init',
+			function () {
+				$controller = new \FairEvents\API\GroupPermissionRulesController();
+				$controller->register_routes();
+			}
+		);
+
 		// Tickets controller.
 		add_action(
 			'rest_api_init',
