@@ -150,24 +150,76 @@ class Transaction {
 		$table_name = \FairPayment\Database\Schema::get_payments_table_name();
 
 		$defaults = array(
-			'limit'  => 50,
-			'offset' => 0,
-			'status' => '',
+			'limit'   => 50,
+			'offset'  => 0,
+			'status'  => '',
+			'mode'    => '',
+			'orderby' => 'created_at',
+			'order'   => 'DESC',
 		);
 
 		$args = wp_parse_args( $args, $defaults );
 
-		$where = '';
+		$where_clauses = array();
+
 		if ( ! empty( $args['status'] ) ) {
-			$where = $wpdb->prepare( ' WHERE status = %s', $args['status'] );
+			$where_clauses[] = $wpdb->prepare( 'status = %s', $args['status'] );
 		}
+
+		if ( '' !== $args['mode'] ) {
+			$testmode        = 'test' === $args['mode'] ? 1 : 0;
+			$where_clauses[] = $wpdb->prepare( 'testmode = %d', $testmode );
+		}
+
+		$where = '';
+		if ( ! empty( $where_clauses ) ) {
+			$where = ' WHERE ' . implode( ' AND ', $where_clauses );
+		}
+
+		$allowed_orderby = array( 'created_at', 'amount', 'status', 'id' );
+		$orderby         = in_array( $args['orderby'], $allowed_orderby, true ) ? $args['orderby'] : 'created_at';
+		$order           = 'ASC' === strtoupper( $args['order'] ) ? 'ASC' : 'DESC';
 
 		return $wpdb->get_results(
 			$wpdb->prepare(
-				"SELECT * FROM %i{$where} ORDER BY created_at DESC LIMIT %d OFFSET %d",
+				"SELECT * FROM %i{$where} ORDER BY {$orderby} {$order} LIMIT %d OFFSET %d",
 				$table_name,
 				$args['limit'],
 				$args['offset']
+			)
+		);
+	}
+
+	/**
+	 * Count transactions with optional filters
+	 *
+	 * @param array $args Query arguments.
+	 * @return int Total count.
+	 */
+	public static function count( $args = array() ) {
+		global $wpdb;
+		$table_name = \FairPayment\Database\Schema::get_payments_table_name();
+
+		$where_clauses = array();
+
+		if ( ! empty( $args['status'] ) ) {
+			$where_clauses[] = $wpdb->prepare( 'status = %s', $args['status'] );
+		}
+
+		if ( isset( $args['mode'] ) && '' !== $args['mode'] ) {
+			$testmode        = 'test' === $args['mode'] ? 1 : 0;
+			$where_clauses[] = $wpdb->prepare( 'testmode = %d', $testmode );
+		}
+
+		$where = '';
+		if ( ! empty( $where_clauses ) ) {
+			$where = ' WHERE ' . implode( ' AND ', $where_clauses );
+		}
+
+		return (int) $wpdb->get_var(
+			$wpdb->prepare(
+				"SELECT COUNT(*) FROM %i{$where}",
+				$table_name
 			)
 		);
 	}

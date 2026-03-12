@@ -13,6 +13,10 @@ module.exports = {
       process.cwd(),
       "src/blocks/simple-payment/view.js",
     ),
+    "admin/transactions/index": path.resolve(
+      process.cwd(),
+      "src/Admin/transactions/index.js",
+    ),
     "admin/settings/index": path.resolve(
       process.cwd(),
       "src/Admin/settings/index.js",
