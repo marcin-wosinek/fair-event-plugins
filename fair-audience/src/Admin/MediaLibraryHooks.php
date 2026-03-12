@@ -21,9 +21,11 @@ class MediaLibraryHooks {
 	 * Initialize hooks for media library.
 	 */
 	public static function init() {
-		// Add author field to attachment details.
+		// Add author and tags fields to attachment details.
 		add_filter( 'attachment_fields_to_edit', array( __CLASS__, 'add_author_field' ), 10, 2 );
+		add_filter( 'attachment_fields_to_edit', array( __CLASS__, 'add_tags_field' ), 11, 2 );
 		add_filter( 'attachment_fields_to_save', array( __CLASS__, 'save_author_field' ), 10, 2 );
+		add_filter( 'attachment_fields_to_save', array( __CLASS__, 'save_tags_field' ), 11, 2 );
 
 		// Add dropdown filter to media library.
 		add_action( 'restrict_manage_posts', array( __CLASS__, 'add_author_filter_dropdown' ) );
@@ -45,6 +47,10 @@ class MediaLibraryHooks {
 		add_action( 'add_attachment', array( __CLASS__, 'auto_tag_on_upload' ) );
 		add_action( 'wp_ajax_fair_audience_set_bulk_upload_author', array( __CLASS__, 'ajax_set_bulk_upload_author' ) );
 		add_action( 'wp_ajax_fair_audience_set_bulk_upload_tag', array( __CLASS__, 'ajax_set_bulk_upload_tag' ) );
+
+		// Attachment edit page tag management.
+		add_action( 'wp_ajax_fair_audience_edit_tag', array( __CLASS__, 'ajax_edit_tag' ) );
+		add_action( 'admin_enqueue_scripts', array( __CLASS__, 'enqueue_attachment_edit_scripts' ) );
 
 		// Media modal filter (JavaScript-based).
 		add_action( 'admin_enqueue_scripts', array( __CLASS__, 'enqueue_media_modal_scripts' ) );
@@ -127,6 +133,85 @@ class MediaLibraryHooks {
 		$repository     = new PhotoParticipantRepository();
 		$repository->set_author( $post['ID'], $participant_id );
 
+		return $post;
+	}
+
+	/**
+	 * Add tagged people field to attachment edit screen.
+	 *
+	 * @param array   $form_fields Form fields array.
+	 * @param WP_Post $post        Post object.
+	 * @return array Modified form fields.
+	 */
+	public static function add_tags_field( $form_fields, $post ) {
+		$repository   = new PhotoParticipantRepository();
+		$tagged       = $repository->get_tagged_for_attachment( $post->ID );
+		$participants = self::get_participants_for_dropdown();
+
+		// Build chips for currently tagged people.
+		$chips_html = '';
+		foreach ( $tagged as $tag ) {
+			$name = '';
+			foreach ( $participants as $p ) {
+				if ( (int) $p['id'] === (int) $tag->participant_id ) {
+					$name = $p['name'];
+					break;
+				}
+			}
+			if ( ! $name ) {
+				continue;
+			}
+			$chips_html .= sprintf(
+				'<span class="fair-audience-edit-tag-chip" data-id="%d" style="display: inline-flex; align-items: center; background: #ddd; border-radius: 3px; padding: 2px 8px; font-size: 13px; margin: 2px;">'
+				. '%s'
+				. '<button type="button" class="fair-audience-edit-tag-remove" data-id="%d" data-attachment="%d" style="background: none; border: none; cursor: pointer; margin-left: 4px; padding: 0; font-size: 16px; line-height: 1; color: #666;">&times;</button>'
+				. '</span>',
+				$tag->participant_id,
+				esc_html( $name ),
+				$tag->participant_id,
+				$post->ID
+			);
+		}
+
+		// Build dropdown options.
+		$options = '<option value="">' . __( '— Add Person —', 'fair-audience' ) . '</option>';
+		foreach ( $participants as $participant ) {
+			$options .= sprintf(
+				'<option value="%d">%s</option>',
+				$participant['id'],
+				esc_html( $participant['name'] )
+			);
+		}
+
+		$html = sprintf(
+			'<div id="fair-audience-tags-container-%1$d">'
+			. '<div class="fair-audience-edit-tag-list" data-attachment="%1$d" style="display: flex; flex-wrap: wrap; gap: 2px; margin-bottom: 6px;">%2$s</div>'
+			. '<select class="fair-audience-edit-tag-selector" data-attachment="%1$d" style="min-width: 200px;">%3$s</select>'
+			. '<span class="fair-audience-edit-tag-status" style="margin-left: 8px; color: #666; font-size: 12px;"></span>'
+			. '</div>',
+			$post->ID,
+			$chips_html,
+			$options
+		);
+
+		$form_fields['fair_photo_tags'] = array(
+			'label' => __( 'Tagged People', 'fair-audience' ),
+			'input' => 'html',
+			'html'  => $html,
+			'helps' => __( 'People in this photo', 'fair-audience' ),
+		);
+
+		return $form_fields;
+	}
+
+	/**
+	 * Save tagged people for attachment (no-op, handled via AJAX).
+	 *
+	 * @param array $post       Post data array.
+	 * @param array $attachment Attachment data array.
+	 * @return array Modified post data.
+	 */
+	public static function save_tags_field( $post, $attachment ) {
 		return $post;
 	}
 
@@ -595,6 +680,131 @@ class MediaLibraryHooks {
 		// Assign author.
 		$repository = new PhotoParticipantRepository();
 		$repository->set_author( $attachment_id, $author_id );
+	}
+
+	/**
+	 * AJAX handler to add/remove tags on attachment edit page.
+	 */
+	public static function ajax_edit_tag() {
+		check_ajax_referer( 'fair_audience_edit_tag', 'nonce' );
+
+		if ( ! current_user_can( 'upload_files' ) ) {
+			wp_send_json_error();
+		}
+
+		$attachment_id  = isset( $_POST['attachment_id'] ) ? absint( $_POST['attachment_id'] ) : 0;
+		$participant_id = isset( $_POST['participant_id'] ) ? absint( $_POST['participant_id'] ) : 0;
+		$operation      = isset( $_POST['operation'] ) ? sanitize_text_field( $_POST['operation'] ) : '';
+
+		if ( ! $attachment_id || ! $participant_id || ! in_array( $operation, array( 'add', 'remove' ), true ) ) {
+			wp_send_json_error();
+		}
+
+		$repository = new PhotoParticipantRepository();
+
+		if ( 'add' === $operation ) {
+			$repository->add_tag( $attachment_id, $participant_id );
+		} else {
+			$repository->remove_tag( $attachment_id, $participant_id );
+		}
+
+		wp_send_json_success();
+	}
+
+	/**
+	 * Enqueue scripts for attachment edit page tag management.
+	 *
+	 * @param string $hook Hook suffix.
+	 */
+	public static function enqueue_attachment_edit_scripts( $hook ) {
+		if ( 'post.php' !== $hook ) {
+			return;
+		}
+
+		global $post;
+		if ( ! $post || 'attachment' !== $post->post_type ) {
+			return;
+		}
+
+		wp_enqueue_script( 'jquery' );
+
+		wp_add_inline_script(
+			'jquery',
+			"
+			jQuery(document).ready(function($) {
+				var editTagNonce = '" . wp_create_nonce( 'fair_audience_edit_tag' ) . "';
+
+				// Add tag from dropdown.
+				$(document).on('change', '.fair-audience-edit-tag-selector', function() {
+					var sel = $(this);
+					var attachmentId = sel.data('attachment');
+					var participantId = sel.val();
+					if (!participantId) return;
+
+					var participantName = sel.find('option:selected').text().trim();
+					var container = sel.closest('[id^=\"fair-audience-tags-container-\"]');
+					var list = container.find('.fair-audience-edit-tag-list');
+					var statusEl = container.find('.fair-audience-edit-tag-status');
+
+					// Check if already tagged.
+					if (list.find('.fair-audience-edit-tag-chip[data-id=\"' + participantId + '\"]').length) {
+						sel.val('');
+						return;
+					}
+
+					statusEl.text('" . esc_js( __( 'Saving...', 'fair-audience' ) ) . "').css('color', '#666');
+
+					$.post(ajaxurl, {
+						action: 'fair_audience_edit_tag',
+						operation: 'add',
+						attachment_id: attachmentId,
+						participant_id: participantId,
+						nonce: editTagNonce
+					}, function(response) {
+						if (response.success) {
+							var chip = $('<span class=\"fair-audience-edit-tag-chip\" data-id=\"' + participantId + '\" style=\"display: inline-flex; align-items: center; background: #ddd; border-radius: 3px; padding: 2px 8px; font-size: 13px; margin: 2px;\"></span>');
+							chip.text(participantName);
+							var removeBtn = $('<button type=\"button\" class=\"fair-audience-edit-tag-remove\" data-id=\"' + participantId + '\" data-attachment=\"' + attachmentId + '\" style=\"background: none; border: none; cursor: pointer; margin-left: 4px; padding: 0; font-size: 16px; line-height: 1; color: #666;\">&times;</button>');
+							chip.append(removeBtn);
+							list.append(chip);
+							statusEl.text('" . esc_js( __( 'Saved.', 'fair-audience' ) ) . "').css('color', '#00a32a');
+							setTimeout(function() { statusEl.text(''); }, 2000);
+						} else {
+							statusEl.text('" . esc_js( __( 'Error', 'fair-audience' ) ) . "').css('color', '#d63638');
+						}
+						sel.val('');
+					}).fail(function() {
+						statusEl.text('" . esc_js( __( 'Error', 'fair-audience' ) ) . "').css('color', '#d63638');
+						sel.val('');
+					});
+				});
+
+				// Remove tag chip.
+				$(document).on('click', '.fair-audience-edit-tag-remove', function() {
+					var btn = $(this);
+					var participantId = btn.data('id');
+					var attachmentId = btn.data('attachment');
+					var chip = btn.closest('.fair-audience-edit-tag-chip');
+					var container = btn.closest('[id^=\"fair-audience-tags-container-\"]');
+					var statusEl = container.find('.fair-audience-edit-tag-status');
+
+					$.post(ajaxurl, {
+						action: 'fair_audience_edit_tag',
+						operation: 'remove',
+						attachment_id: attachmentId,
+						participant_id: participantId,
+						nonce: editTagNonce
+					}, function(response) {
+						if (response.success) {
+							chip.remove();
+						} else {
+							statusEl.text('" . esc_js( __( 'Error', 'fair-audience' ) ) . "').css('color', '#d63638');
+						}
+					});
+				});
+			});
+			"
+		);
 	}
 
 	/**
