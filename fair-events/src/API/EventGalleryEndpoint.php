@@ -103,18 +103,28 @@ class EventGalleryEndpoint extends WP_REST_Controller {
 		$like_repository = new PhotoLikeRepository();
 		$like_counts     = $like_repository->get_counts_for_photos( $attachment_ids );
 
-		// Load tagged participants if fair-audience plugin is active.
-		$tags_by_attachment = array();
+		// Load tagged participants and photo authors if fair-audience plugin is active.
+		$tags_by_attachment    = array();
+		$authors_by_attachment = array();
 		if ( class_exists( 'FairAudience\Database\PhotoParticipantRepository' ) ) {
 			$photo_repo         = new \FairAudience\Database\PhotoParticipantRepository();
 			$participant_repo   = new \FairAudience\Database\ParticipantRepository();
 			$tags_by_attachment = $photo_repo->get_tagged_for_attachments( $attachment_ids );
+
+			// Load photo authors (fair-audience participants, not WP users).
+			foreach ( $attachment_ids as $aid ) {
+				$photo_author = $photo_repo->get_author_for_attachment( $aid );
+				if ( $photo_author ) {
+					$participant = $participant_repo->get_by_id( $photo_author->participant_id );
+					if ( $participant ) {
+						$authors_by_attachment[ $aid ] = trim( $participant->name . ' ' . $participant->surname );
+					}
+				}
+			}
 		}
 
 		$items = array();
 		foreach ( $attachments as $attachment ) {
-			$author = get_user_by( 'id', $attachment->post_author );
-
 			$tagged_participants = array();
 			if ( ! empty( $tags_by_attachment[ $attachment->ID ] ) ) {
 				foreach ( $tags_by_attachment[ $attachment->ID ] as $tag ) {
@@ -126,6 +136,13 @@ class EventGalleryEndpoint extends WP_REST_Controller {
 				}
 			}
 
+			// Use fair-audience photo author if available, fall back to WP user.
+			$author_name = $authors_by_attachment[ $attachment->ID ] ?? '';
+			if ( empty( $author_name ) ) {
+				$wp_author   = get_user_by( 'id', $attachment->post_author );
+				$author_name = $wp_author ? $wp_author->display_name : '';
+			}
+
 			$items[] = array(
 				'id'                  => $attachment->ID,
 				'title'               => $attachment->post_title,
@@ -134,7 +151,7 @@ class EventGalleryEndpoint extends WP_REST_Controller {
 				'alt_text'            => get_post_meta( $attachment->ID, '_wp_attachment_image_alt', true ),
 				'mime_type'           => $attachment->post_mime_type,
 				'url'                 => wp_get_attachment_url( $attachment->ID ),
-				'author_name'         => $author ? $author->display_name : '',
+				'author_name'         => $author_name,
 				'likes_count'         => $like_counts[ $attachment->ID ] ?? 0,
 				'tags_count'          => count( $tagged_participants ),
 				'tagged_participants' => $tagged_participants,
