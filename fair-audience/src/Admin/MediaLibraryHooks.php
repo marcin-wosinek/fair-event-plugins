@@ -39,9 +39,12 @@ class MediaLibraryHooks {
 
 		// Bulk upload page.
 		add_action( 'post-upload-ui', array( __CLASS__, 'add_bulk_upload_author_selector' ) );
+		add_action( 'post-upload-ui', array( __CLASS__, 'add_bulk_upload_tag_selector' ) );
 		add_action( 'admin_enqueue_scripts', array( __CLASS__, 'enqueue_bulk_upload_scripts' ) );
 		add_action( 'add_attachment', array( __CLASS__, 'auto_assign_author_on_upload' ) );
+		add_action( 'add_attachment', array( __CLASS__, 'auto_tag_on_upload' ) );
 		add_action( 'wp_ajax_fair_audience_set_bulk_upload_author', array( __CLASS__, 'ajax_set_bulk_upload_author' ) );
+		add_action( 'wp_ajax_fair_audience_set_bulk_upload_tag', array( __CLASS__, 'ajax_set_bulk_upload_tag' ) );
 
 		// Media modal filter (JavaScript-based).
 		add_action( 'admin_enqueue_scripts', array( __CLASS__, 'enqueue_media_modal_scripts' ) );
@@ -303,17 +306,13 @@ class MediaLibraryHooks {
 		$selected     = get_user_meta( get_current_user_id(), 'fair_audience_bulk_upload_author', true );
 
 		?>
-		<div id="fair-audience-bulk-upload" style="margin: 20px 0; padding: 15px; background: #f0f0f1; border: 1px solid #c3c4c7; border-radius: 4px;">
-			<h3 style="margin-top: 0;"><?php esc_html_e( 'Photo Author', 'fair-audience' ); ?></h3>
-			<p class="description">
-				<?php esc_html_e( 'Automatically assign an author to uploaded photos. Select an author below before uploading.', 'fair-audience' ); ?>
-			</p>
+		<div id="fair-audience-bulk-upload" class="fair-bulk-upload-section" style="margin-top: 10px;">
 			<p>
 				<label for="fair-audience-bulk-upload-selector">
-					<strong><?php esc_html_e( 'Author:', 'fair-audience' ); ?></strong>
+					<strong><?php esc_html_e( 'Photo Author:', 'fair-audience' ); ?></strong>
 				</label>
 				<select id="fair-audience-bulk-upload-selector" style="margin-left: 10px; min-width: 250px;">
-					<option value=""><?php esc_html_e( '— No Author (Manual Assignment) —', 'fair-audience' ); ?></option>
+					<option value=""><?php esc_html_e( '— Select Author —', 'fair-audience' ); ?></option>
 					<?php foreach ( $participants as $participant ) : ?>
 						<option value="<?php echo esc_attr( $participant['id'] ); ?>" <?php selected( $selected, $participant['id'] ); ?>>
 							<?php echo esc_html( $participant['name'] ); ?>
@@ -322,6 +321,54 @@ class MediaLibraryHooks {
 				</select>
 				<span id="fair-audience-bulk-upload-status" style="margin-left: 10px; color: #666;"></span>
 			</p>
+		</div>
+		<?php
+	}
+
+	/**
+	 * Add tag people selector to bulk upload page.
+	 */
+	public static function add_bulk_upload_tag_selector() {
+		$participants = self::get_participants_for_dropdown();
+		$selected_ids = get_user_meta( get_current_user_id(), 'fair_audience_bulk_upload_tags', true );
+		if ( ! is_array( $selected_ids ) ) {
+			$selected_ids = array();
+		}
+
+		?>
+		<div id="fair-audience-bulk-tag" class="fair-bulk-upload-section" style="margin-top: 10px;">
+			<p>
+				<label for="fair-audience-bulk-tag-selector">
+					<strong><?php esc_html_e( 'Tag People:', 'fair-audience' ); ?></strong>
+				</label>
+				<select id="fair-audience-bulk-tag-selector" style="margin-left: 10px; min-width: 250px;">
+					<option value=""><?php esc_html_e( '— Add Person —', 'fair-audience' ); ?></option>
+					<?php foreach ( $participants as $participant ) : ?>
+						<option value="<?php echo esc_attr( $participant['id'] ); ?>">
+							<?php echo esc_html( $participant['name'] ); ?>
+						</option>
+					<?php endforeach; ?>
+				</select>
+				<span id="fair-audience-bulk-tag-status" style="margin-left: 10px; color: #666;"></span>
+			</p>
+			<div id="fair-audience-bulk-tag-list" style="display: flex; flex-wrap: wrap; gap: 5px; margin-top: 5px;">
+				<?php
+				foreach ( $selected_ids as $pid ) :
+					$pid = absint( $pid );
+					foreach ( $participants as $participant ) :
+						if ( (int) $participant['id'] === $pid ) :
+							?>
+							<span class="fair-audience-tag-chip" data-id="<?php echo esc_attr( $pid ); ?>" style="display: inline-flex; align-items: center; background: #ddd; border-radius: 3px; padding: 2px 8px; font-size: 13px;">
+								<?php echo esc_html( $participant['name'] ); ?>
+								<button type="button" class="fair-audience-tag-remove" data-id="<?php echo esc_attr( $pid ); ?>" style="background: none; border: none; cursor: pointer; margin-left: 4px; padding: 0; font-size: 16px; line-height: 1; color: #666;">&times;</button>
+							</span>
+							<?php
+							break;
+						endif;
+					endforeach;
+				endforeach;
+				?>
+			</div>
 		</div>
 		<?php
 	}
@@ -342,6 +389,7 @@ class MediaLibraryHooks {
 			'jquery',
 			"
 			jQuery(document).ready(function($) {
+				// Author selector.
 				$('#fair-audience-bulk-upload-selector').on('change', function() {
 					var authorId = $(this).val();
 					var statusEl = $('#fair-audience-bulk-upload-status');
@@ -355,7 +403,7 @@ class MediaLibraryHooks {
 					}, function(response) {
 						if (response.success) {
 							if (authorId) {
-								statusEl.text('" . esc_js( __( 'Selected. New uploads will be credited to this author.', 'fair-audience' ) ) . "').css('color', '#00a32a');
+								statusEl.text('" . esc_js( __( 'Saved.', 'fair-audience' ) ) . "').css('color', '#00a32a');
 							} else {
 								statusEl.text('').css('color', '#666');
 							}
@@ -364,6 +412,69 @@ class MediaLibraryHooks {
 						}
 					}).fail(function(xhr, status, error) {
 						statusEl.text('" . esc_js( __( 'Error:', 'fair-audience' ) ) . " ' + error).css('color', '#d63638');
+					});
+				});
+
+				// Tag people: add from dropdown.
+				var tagNonce = '" . wp_create_nonce( 'fair_audience_bulk_tag' ) . "';
+
+				$('#fair-audience-bulk-tag-selector').on('change', function() {
+					var sel = $(this);
+					var participantId = sel.val();
+					if (!participantId) return;
+
+					var participantName = sel.find('option:selected').text().trim();
+					var statusEl = $('#fair-audience-bulk-tag-status');
+
+					// Check if already added.
+					if ($('#fair-audience-bulk-tag-list .fair-audience-tag-chip[data-id=\"' + participantId + '\"]').length) {
+						sel.val('');
+						return;
+					}
+
+					statusEl.text('" . esc_js( __( 'Saving...', 'fair-audience' ) ) . "').css('color', '#666');
+
+					$.post(ajaxurl, {
+						action: 'fair_audience_set_bulk_upload_tag',
+						operation: 'add',
+						participant_id: participantId,
+						nonce: tagNonce
+					}, function(response) {
+						if (response.success) {
+							var chip = $('<span class=\"fair-audience-tag-chip\" data-id=\"' + participantId + '\" style=\"display: inline-flex; align-items: center; background: #ddd; border-radius: 3px; padding: 2px 8px; font-size: 13px;\"></span>');
+							chip.text(participantName);
+							var removeBtn = $('<button type=\"button\" class=\"fair-audience-tag-remove\" data-id=\"' + participantId + '\" style=\"background: none; border: none; cursor: pointer; margin-left: 4px; padding: 0; font-size: 16px; line-height: 1; color: #666;\">&times;</button>');
+							chip.append(removeBtn);
+							$('#fair-audience-bulk-tag-list').append(chip);
+							statusEl.text('" . esc_js( __( 'Saved.', 'fair-audience' ) ) . "').css('color', '#00a32a');
+						} else {
+							statusEl.text('" . esc_js( __( 'Error saving selection', 'fair-audience' ) ) . "').css('color', '#d63638');
+						}
+						sel.val('');
+					}).fail(function(xhr, status, error) {
+						statusEl.text('" . esc_js( __( 'Error:', 'fair-audience' ) ) . " ' + error).css('color', '#d63638');
+						sel.val('');
+					});
+				});
+
+				// Tag people: remove chip.
+				$(document).on('click', '.fair-audience-tag-remove', function() {
+					var participantId = $(this).data('id');
+					var chip = $(this).closest('.fair-audience-tag-chip');
+					var statusEl = $('#fair-audience-bulk-tag-status');
+
+					$.post(ajaxurl, {
+						action: 'fair_audience_set_bulk_upload_tag',
+						operation: 'remove',
+						participant_id: participantId,
+						nonce: tagNonce
+					}, function(response) {
+						if (response.success) {
+							chip.remove();
+							statusEl.text('').css('color', '#666');
+						} else {
+							statusEl.text('" . esc_js( __( 'Error removing tag', 'fair-audience' ) ) . "').css('color', '#d63638');
+						}
 					});
 				});
 			});
@@ -387,6 +498,72 @@ class MediaLibraryHooks {
 		update_user_meta( $user_id, 'fair_audience_bulk_upload_author', $author_id );
 
 		wp_send_json_success( array( 'saved_author_id' => $author_id ) );
+	}
+
+	/**
+	 * AJAX handler to add/remove tag participants for bulk upload.
+	 */
+	public static function ajax_set_bulk_upload_tag() {
+		check_ajax_referer( 'fair_audience_bulk_tag', 'nonce' );
+
+		if ( ! current_user_can( 'upload_files' ) ) {
+			wp_send_json_error();
+		}
+
+		$participant_id = isset( $_POST['participant_id'] ) ? absint( $_POST['participant_id'] ) : 0;
+		$operation      = isset( $_POST['operation'] ) ? sanitize_text_field( $_POST['operation'] ) : 'add';
+		$user_id        = get_current_user_id();
+
+		$current_tags = get_user_meta( $user_id, 'fair_audience_bulk_upload_tags', true );
+		if ( ! is_array( $current_tags ) ) {
+			$current_tags = array();
+		}
+
+		if ( 'add' === $operation && $participant_id ) {
+			if ( ! in_array( $participant_id, $current_tags, true ) ) {
+				$current_tags[] = $participant_id;
+			}
+		} elseif ( 'remove' === $operation && $participant_id ) {
+			$current_tags = array_values( array_diff( $current_tags, array( $participant_id ) ) );
+		}
+
+		update_user_meta( $user_id, 'fair_audience_bulk_upload_tags', $current_tags );
+
+		wp_send_json_success( array( 'tags' => $current_tags ) );
+	}
+
+	/**
+	 * Automatically tag participants on newly uploaded attachments.
+	 *
+	 * @param int $attachment_id Attachment ID.
+	 */
+	public static function auto_tag_on_upload( $attachment_id ) {
+		// Check if this is an image or video.
+		if ( ! wp_attachment_is( 'image', $attachment_id ) && ! wp_attachment_is( 'video', $attachment_id ) ) {
+			return;
+		}
+
+		// Get the selected participants for bulk tagging.
+		$tag_ids = get_user_meta( get_current_user_id(), 'fair_audience_bulk_upload_tags', true );
+
+		if ( ! is_array( $tag_ids ) || empty( $tag_ids ) ) {
+			return;
+		}
+
+		$participant_repo = new ParticipantRepository();
+		$repository       = new PhotoParticipantRepository();
+
+		foreach ( $tag_ids as $participant_id ) {
+			$participant_id = absint( $participant_id );
+			if ( ! $participant_id ) {
+				continue;
+			}
+
+			$participant = $participant_repo->get_by_id( $participant_id );
+			if ( $participant ) {
+				$repository->add_tag( $attachment_id, $participant_id );
+			}
+		}
 	}
 
 	/**

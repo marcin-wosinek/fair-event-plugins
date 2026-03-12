@@ -218,22 +218,20 @@ class MediaLibraryHooks {
 		if ( $url_event ) {
 			update_user_meta( get_current_user_id(), 'fair_events_bulk_upload_event', $url_event );
 			$selected = $url_event;
+			$checked  = true;
 		} else {
 			$selected = get_user_meta( get_current_user_id(), 'fair_events_bulk_upload_event', true );
+			$checked  = false;
 		}
 
 		?>
-		<div id="fair-events-bulk-upload" style="margin: 20px 0; padding: 15px; background: #f0f0f1; border: 1px solid #c3c4c7; border-radius: 4px;">
-			<h3 style="margin-top: 0;"><?php esc_html_e( 'Event Gallery', 'fair-events' ); ?></h3>
-			<p class="description">
-				<?php esc_html_e( 'Automatically link uploaded photos to an event. Select an event below before uploading.', 'fair-events' ); ?>
-			</p>
+		<div id="fair-events-bulk-upload" class="fair-bulk-upload-section" style="margin-top: 10px;">
 			<p>
 				<label for="fair-events-bulk-upload-selector">
 					<strong><?php esc_html_e( 'Event:', 'fair-events' ); ?></strong>
 				</label>
 				<select id="fair-events-bulk-upload-selector" style="margin-left: 10px; min-width: 250px;">
-					<option value=""><?php esc_html_e( '— No Event (Manual Assignment) —', 'fair-events' ); ?></option>
+					<option value=""><?php esc_html_e( '— Select Event —', 'fair-events' ); ?></option>
 					<?php foreach ( $events as $event ) : ?>
 						<option value="<?php echo esc_attr( $event->ID ); ?>" <?php selected( $selected, $event->ID ); ?>>
 							<?php echo esc_html( $event->post_title ); ?>
@@ -258,38 +256,53 @@ class MediaLibraryHooks {
 
 		wp_enqueue_script( 'jquery' );
 
+		$checked = isset( $_GET['fair_event'] ) && absint( $_GET['fair_event'] ) > 0; // phpcs:ignore WordPress.Security.NonceVerification.Recommended
+
 		wp_add_inline_script(
 			'jquery',
 			"
 			jQuery(document).ready(function($) {
-				console.log('Fair Events bulk upload script loaded');
+				// Wrap all bulk upload sections in a single togglable container.
+				var sections = $('.fair-bulk-upload-section');
+				if (sections.length) {
+					var wrapper = $('<div id=\"fair-bulk-upload-wrapper\" style=\"margin: 20px 0; padding: 15px; background: #f0f0f1; border: 1px solid #c3c4c7; border-radius: 4px;\"></div>');
+					var checkbox = $('<p style=\"margin-top: 0;\"><label><input type=\"checkbox\" id=\"fair-bulk-upload-toggle\" " . ( $checked ? 'checked' : '' ) . ' /> <strong>' . esc_js( __( 'Auto-fill photo details on upload', 'fair-events' ) ) . "</strong></label></p>');
+					var fields = $('<div id=\"fair-bulk-upload-fields\" style=\"" . ( $checked ? '' : 'display: none;' ) . "\"></div>');
+
+					sections.first().before(wrapper);
+					wrapper.append(checkbox);
+					wrapper.append(fields);
+					sections.each(function() {
+						fields.append($(this));
+					});
+
+					$('#fair-bulk-upload-toggle').on('change', function() {
+						$('#fair-bulk-upload-fields').toggle($(this).is(':checked'));
+					});
+				}
 
 				$('#fair-events-bulk-upload-selector').on('change', function() {
 					var eventId = $(this).val();
 					var statusEl = $('#fair-events-bulk-upload-status');
 
-					console.log('Event selected:', eventId);
-
-					statusEl.text('Saving...').css('color', '#666');
+					statusEl.text('" . esc_js( __( 'Saving...', 'fair-events' ) ) . "').css('color', '#666');
 
 					$.post(ajaxurl, {
 						action: 'fair_events_set_bulk_upload_event',
 						event_id: eventId,
 						nonce: '" . wp_create_nonce( 'fair_events_bulk_upload' ) . "'
 					}, function(response) {
-						console.log('AJAX response:', response);
 						if (response.success) {
 							if (eventId) {
-								statusEl.text('" . esc_js( __( 'Selected. New uploads will be linked to this event.', 'fair-events' ) ) . "').css('color', '#00a32a');
+								statusEl.text('" . esc_js( __( 'Saved.', 'fair-events' ) ) . "').css('color', '#00a32a');
 							} else {
 								statusEl.text('').css('color', '#666');
 							}
 						} else {
-							statusEl.text('Error saving selection').css('color', '#d63638');
+							statusEl.text('" . esc_js( __( 'Error saving selection', 'fair-events' ) ) . "').css('color', '#d63638');
 						}
 					}).fail(function(xhr, status, error) {
-						console.error('AJAX error:', status, error);
-						statusEl.text('Error: ' + error).css('color', '#d63638');
+						statusEl.text('" . esc_js( __( 'Error:', 'fair-events' ) ) . " ' + error).css('color', '#d63638');
 					});
 				});
 			});
