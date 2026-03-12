@@ -10,6 +10,7 @@ namespace FairPayment\API;
 defined( 'WPINC' ) || die;
 
 use FairPayment\Models\Transaction;
+use FairPayment\Models\LineItem;
 use WP_REST_Controller;
 use WP_REST_Server;
 use WP_REST_Request;
@@ -95,18 +96,37 @@ class TransactionsController extends WP_REST_Controller {
 				}
 			}
 
+			$participant_name = $this->get_participant_name( $transaction->user_id );
+
+			$post_title    = '';
+			$post_edit_url = '';
+			if ( $transaction->post_id ) {
+				$post = get_post( $transaction->post_id );
+				if ( $post ) {
+					$post_title    = $post->post_title ?: __( '(no name)', 'fair-payment' );
+					$post_edit_url = get_edit_post_link( $post->ID, 'raw' );
+				}
+			}
+
+			$line_items         = LineItem::get_by_transaction_id( $transaction->id );
+			$line_items_summary = $this->format_line_items_summary( $line_items );
+
 			$data[] = array(
-				'id'                => (int) $transaction->id,
-				'mollie_payment_id' => $transaction->mollie_payment_id ?? '',
-				'amount'            => (float) ( $transaction->amount ?? 0 ),
-				'currency'          => $transaction->currency ?? 'EUR',
-				'mollie_fee'        => null !== $transaction->mollie_fee ? (float) $transaction->mollie_fee : null,
-				'application_fee'   => null !== $transaction->application_fee ? (float) $transaction->application_fee : null,
-				'status'            => $transaction->status ?? 'unknown',
-				'testmode'          => ! empty( $transaction->testmode ),
-				'description'       => $transaction->description ?? '',
-				'user_name'         => $user_name,
-				'created_at'        => $transaction->created_at ?? '',
+				'id'                 => (int) $transaction->id,
+				'mollie_payment_id'  => $transaction->mollie_payment_id ?? '',
+				'amount'             => (float) ( $transaction->amount ?? 0 ),
+				'currency'           => $transaction->currency ?? 'EUR',
+				'mollie_fee'         => null !== $transaction->mollie_fee ? (float) $transaction->mollie_fee : null,
+				'application_fee'    => null !== $transaction->application_fee ? (float) $transaction->application_fee : null,
+				'status'             => $transaction->status ?? 'unknown',
+				'testmode'           => ! empty( $transaction->testmode ),
+				'description'        => $transaction->description ?? '',
+				'user_name'          => $user_name,
+				'participant_name'   => $participant_name,
+				'post_title'         => $post_title,
+				'post_edit_url'      => $post_edit_url,
+				'line_items_summary' => $line_items_summary,
+				'created_at'         => $transaction->created_at ?? '',
 			);
 		}
 
@@ -119,6 +139,51 @@ class TransactionsController extends WP_REST_Controller {
 			),
 			200
 		);
+	}
+
+	/**
+	 * Get participant name for a WordPress user ID
+	 *
+	 * @param int|null $user_id WordPress user ID.
+	 * @return string Participant name or empty string.
+	 */
+	private function get_participant_name( $user_id ) {
+		if ( ! $user_id ) {
+			return '';
+		}
+
+		if ( ! class_exists( '\FairAudience\Database\ParticipantRepository' ) ) {
+			return '';
+		}
+
+		$repository  = new \FairAudience\Database\ParticipantRepository();
+		$participant = $repository->get_by_user_id( $user_id );
+
+		if ( ! $participant ) {
+			return '';
+		}
+
+		return trim( $participant->name . ' ' . $participant->surname );
+	}
+
+	/**
+	 * Format line items into a summary string
+	 *
+	 * @param array $line_items Array of line item objects.
+	 * @return string Summary like "2x Workshop ticket, 1x T-shirt".
+	 */
+	private function format_line_items_summary( $line_items ) {
+		if ( empty( $line_items ) ) {
+			return '';
+		}
+
+		$parts = array();
+		foreach ( $line_items as $item ) {
+			$qty     = (int) $item->quantity;
+			$parts[] = $qty . "\u{00d7} " . $item->name;
+		}
+
+		return implode( ', ', $parts );
 	}
 
 	/**

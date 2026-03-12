@@ -244,8 +244,12 @@ const TransactionsApp = () => {
 											__('Status', 'fair-payment')
 										)}
 										<th>{__('Mode', 'fair-payment')}</th>
+										<th>{__('Event', 'fair-payment')}</th>
 										<th>
 											{__('Description', 'fair-payment')}
+										</th>
+										<th>
+											{__('Line Items', 'fair-payment')}
 										</th>
 										<th>{__('User', 'fair-payment')}</th>
 										{sortableHeader(
@@ -330,8 +334,37 @@ const TransactionsApp = () => {
 														  )}
 												</span>
 											</td>
+											<td>
+												{t.post_edit_url ? (
+													<a href={t.post_edit_url}>
+														{t.post_title}
+													</a>
+												) : (
+													t.post_title || '-'
+												)}
+											</td>
 											<td>{t.description}</td>
-											<td>{t.user_name || '-'}</td>
+											<td>
+												{t.line_items_summary || '-'}
+											</td>
+											<td>
+												{t.user_name ||
+													t.participant_name ||
+													'-'}
+												{t.user_name &&
+													t.participant_name &&
+													t.user_name !==
+														t.participant_name && (
+														<>
+															<br />
+															<small>
+																{
+																	t.participant_name
+																}
+															</small>
+														</>
+													)}
+											</td>
 											<td>{t.created_at}</td>
 										</tr>
 									))}
