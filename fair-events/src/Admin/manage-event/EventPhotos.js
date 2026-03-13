@@ -6,6 +6,7 @@ import {
 	Button,
 	Spinner,
 	CheckboxControl,
+	SelectControl,
 } from '@wordpress/components';
 import { __ } from '@wordpress/i18n';
 import apiFetch from '@wordpress/api-fetch';
@@ -19,6 +20,7 @@ export default function EventPhotos({ eventId }) {
 	const [selectedIds, setSelectedIds] = useState([]);
 	const [showTagModal, setShowTagModal] = useState(false);
 	const [detailIndex, setDetailIndex] = useState(null);
+	const [sortBy, setSortBy] = useState('default');
 
 	useEffect(() => {
 		if (!eventId) {
@@ -104,6 +106,16 @@ export default function EventPhotos({ eventId }) {
 		);
 	}
 
+	const sortedPhotos = [...photos].sort((a, b) => {
+		if (sortBy === 'likes-desc') {
+			return b.likes_count - a.likes_count;
+		}
+		if (sortBy === 'likes-asc') {
+			return a.likes_count - b.likes_count;
+		}
+		return 0;
+	});
+
 	const mediaLibraryUrl = eventId
 		? `upload.php?fair_event_filter=${eventId}`
 		: 'upload.php';
@@ -131,7 +143,32 @@ export default function EventPhotos({ eventId }) {
 		>
 			<CardHeader>
 				<h2>{__('Photos', 'fair-events')}</h2>
-				<div style={{ display: 'flex', gap: '8px' }}>
+				<div
+					style={{
+						display: 'flex',
+						gap: '8px',
+						alignItems: 'center',
+					}}
+				>
+					<SelectControl
+						value={sortBy}
+						options={[
+							{
+								label: __('Default order', 'fair-events'),
+								value: 'default',
+							},
+							{
+								label: __('Most liked', 'fair-events'),
+								value: 'likes-desc',
+							},
+							{
+								label: __('Least liked', 'fair-events'),
+								value: 'likes-asc',
+							},
+						]}
+						onChange={setSortBy}
+						__nextHasNoMarginBottom
+					/>
 					{selectMode && selectedIds.length > 0 && (
 						<Button
 							variant="primary"
@@ -172,7 +209,7 @@ export default function EventPhotos({ eventId }) {
 						gap: '8px',
 					}}
 				>
-					{photos.map((photo) => (
+					{sortedPhotos.map((photo) => (
 						<div
 							key={photo.id}
 							style={{
@@ -191,7 +228,7 @@ export default function EventPhotos({ eventId }) {
 									toggleSelect(photo.id);
 								} else {
 									setDetailIndex(
-										photos.findIndex(
+										sortedPhotos.findIndex(
 											(p) => p.id === photo.id
 										)
 									);
@@ -298,14 +335,14 @@ export default function EventPhotos({ eventId }) {
 					{__('Add New Photos', 'fair-events')}
 				</Button>
 			</CardBody>
-			{detailIndex !== null && photos[detailIndex] && (
+			{detailIndex !== null && sortedPhotos[detailIndex] && (
 				<PhotoDetail
-					photo={photos[detailIndex]}
+					photo={sortedPhotos[detailIndex]}
 					eventId={eventId}
 					onClose={() => setDetailIndex(null)}
 					onTagsChanged={handleTagsChanged}
 					hasPrev={detailIndex > 0}
-					hasNext={detailIndex < photos.length - 1}
+					hasNext={detailIndex < sortedPhotos.length - 1}
 					onPrev={() => setDetailIndex((i) => i - 1)}
 					onNext={() => setDetailIndex((i) => i + 1)}
 				/>
