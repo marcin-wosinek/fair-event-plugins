@@ -257,7 +257,13 @@ const TransactionsApp = () => {
 								<tbody>
 									{transactions.map((t) => (
 										<tr key={t.id}>
-											<td>{t.id}</td>
+											<td>
+												<a
+													href={`admin.php?page=fair-payment-transaction&transaction_id=${t.id}`}
+												>
+													{t.id}
+												</a>
+											</td>
 											<td>
 												{t.mollie_payment_id ? (
 													<a

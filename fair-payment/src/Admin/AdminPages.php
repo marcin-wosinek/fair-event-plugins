@@ -72,6 +72,19 @@ class AdminPages {
 			);
 		}
 
+		// Hidden transaction detail page.
+		$transaction_hookname = add_submenu_page(
+			'',
+			__( 'Transaction Detail', 'fair-payment' ),
+			__( 'Transaction Detail', 'fair-payment' ),
+			'manage_options',
+			'fair-payment-transaction',
+			array( $this, 'render_transaction_page' )
+		);
+
+		// Set page title for hidden page to prevent strip_tags() deprecation warning.
+		$this->set_hidden_page_title( $transaction_hookname, __( 'Transaction Detail', 'fair-payment' ) );
+
 		// Settings submenu.
 		add_submenu_page(
 			'fair-payment-transactions',
@@ -115,6 +128,19 @@ class AdminPages {
 			return;
 		}
 
+		// Transaction detail page.
+		if ( 'admin_page_fair-payment-transaction' === $hook ) {
+			$this->enqueue_admin_page_script( 'transaction' );
+			wp_localize_script(
+				'fair-payment-transaction',
+				'fairPaymentTransactions',
+				array(
+					'organizationId' => get_option( 'fair_payment_organization_id', '' ),
+				)
+			);
+			return;
+		}
+
 		// Entries page.
 		if ( false !== strpos( $hook, 'fair-payment-entries' ) ) {
 			$this->enqueue_admin_page_script( 'entries' );
@@ -128,6 +154,28 @@ class AdminPages {
 			);
 			return;
 		}
+	}
+
+	/**
+	 * Set the page title for a hidden admin page.
+	 *
+	 * Hidden pages (registered with empty parent slug) are not in the submenu array,
+	 * so WordPress cannot find their title. This causes $title to be null when
+	 * admin-header.php calls strip_tags(), triggering a PHP 8.1+ deprecation warning.
+	 *
+	 * @param string $hookname The page hook name returned by add_submenu_page().
+	 * @param string $page_title The title to set.
+	 * @return void
+	 */
+	private function set_hidden_page_title( $hookname, $page_title ) {
+		add_action(
+			'load-' . $hookname,
+			static function () use ( $page_title ) {
+				global $title;
+				// phpcs:ignore WordPress.WP.GlobalVariablesOverride.Prohibited
+				$title = $page_title;
+			}
+		);
 	}
 
 	/**
@@ -187,6 +235,17 @@ class AdminPages {
 	public function render_entries_page() {
 		?>
 		<div id="fair-payment-entries-root"></div>
+		<?php
+	}
+
+	/**
+	 * Render transaction detail page
+	 *
+	 * @return void
+	 */
+	public function render_transaction_page() {
+		?>
+		<div id="fair-payment-transaction-root"></div>
 		<?php
 	}
 

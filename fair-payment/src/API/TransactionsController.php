@@ -10,10 +10,12 @@ namespace FairPayment\API;
 defined( 'WPINC' ) || die;
 
 use FairPayment\Models\Transaction;
+use FairPayment\Models\LineItem;
 use WP_REST_Controller;
 use WP_REST_Server;
 use WP_REST_Request;
 use WP_REST_Response;
+use WP_Error;
 
 /**
  * Handles transaction REST API endpoints
@@ -42,6 +44,25 @@ class TransactionsController extends WP_REST_Controller {
 					'callback'            => array( $this, 'get_items' ),
 					'permission_callback' => array( $this, 'get_items_permissions_check' ),
 					'args'                => $this->get_collection_params(),
+				),
+			)
+		);
+
+		register_rest_route(
+			$this->namespace,
+			'/transactions/(?P<id>\d+)',
+			array(
+				array(
+					'methods'             => WP_REST_Server::READABLE,
+					'callback'            => array( $this, 'get_item' ),
+					'permission_callback' => array( $this, 'get_items_permissions_check' ),
+					'args'                => array(
+						'id' => array(
+							'type'              => 'integer',
+							'required'          => true,
+							'sanitize_callback' => 'absint',
+						),
+					),
 				),
 			)
 		);
@@ -119,6 +140,85 @@ class TransactionsController extends WP_REST_Controller {
 			),
 			200
 		);
+	}
+
+	/**
+	 * Get a single transaction
+	 *
+	 * @param WP_REST_Request $request Full data about the request.
+	 * @return WP_REST_Response|WP_Error
+	 */
+	public function get_item( $request ) {
+		$transaction = Transaction::get_by_id( $request->get_param( 'id' ) );
+
+		if ( ! $transaction ) {
+			return new WP_Error(
+				'not_found',
+				__( 'Transaction not found.', 'fair-payment' ),
+				array( 'status' => 404 )
+			);
+		}
+
+		$user_name = '';
+		if ( $transaction->user_id ) {
+			$user = get_userdata( $transaction->user_id );
+			if ( $user ) {
+				$user_name = $user->display_name;
+			}
+		}
+
+		$post_title = '';
+		if ( $transaction->post_id ) {
+			$post = get_post( $transaction->post_id );
+			if ( $post ) {
+				$post_title = $post->post_title;
+			}
+		}
+
+		$metadata = $transaction->metadata ?? '';
+		if ( is_string( $metadata ) && '' !== $metadata ) {
+			$decoded  = json_decode( $metadata );
+			$metadata = ( null !== $decoded ) ? $decoded : $metadata;
+		}
+
+		$line_items     = LineItem::get_by_transaction_id( $transaction->id );
+		$line_item_data = array();
+		foreach ( $line_items as $item ) {
+			$line_item_data[] = array(
+				'id'           => (int) $item->id,
+				'name'         => $item->name,
+				'description'  => $item->description ?? '',
+				'quantity'     => (int) $item->quantity,
+				'unit_amount'  => (float) $item->unit_amount,
+				'total_amount' => (float) $item->total_amount,
+			);
+		}
+
+		$data = array(
+			'id'                   => (int) $transaction->id,
+			'mollie_payment_id'    => $transaction->mollie_payment_id ?? '',
+			'post_id'              => $transaction->post_id ? (int) $transaction->post_id : null,
+			'post_title'           => $post_title,
+			'user_id'              => $transaction->user_id ? (int) $transaction->user_id : null,
+			'user_name'            => $user_name,
+			'amount'               => (float) ( $transaction->amount ?? 0 ),
+			'currency'             => $transaction->currency ?? 'EUR',
+			'mollie_fee'           => null !== $transaction->mollie_fee ? (float) $transaction->mollie_fee : null,
+			'application_fee'      => null !== $transaction->application_fee ? (float) $transaction->application_fee : null,
+			'status'               => $transaction->status ?? 'unknown',
+			'testmode'             => ! empty( $transaction->testmode ),
+			'description'          => $transaction->description ?? '',
+			'redirect_url'         => $transaction->redirect_url ?? '',
+			'webhook_url'          => $transaction->webhook_url ?? '',
+			'checkout_url'         => $transaction->checkout_url ?? '',
+			'metadata'             => $metadata,
+			'created_at'           => $transaction->created_at ?? '',
+			'payment_initiated_at' => $transaction->payment_initiated_at ?? '',
+			'updated_at'           => $transaction->updated_at ?? '',
+			'line_items'           => $line_item_data,
+		);
+
+		return new WP_REST_Response( $data, 200 );
 	}
 
 	/**
