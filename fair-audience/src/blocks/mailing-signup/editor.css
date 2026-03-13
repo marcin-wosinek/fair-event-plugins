@@ -1,31 +1,14 @@
 /**
  * Mailing Signup Block - Editor Styles
- * Minimal styles matching frontend
  */
 
 .fair-audience-mailing-signup {
 	margin: 2rem 0;
 }
 
-.fair-audience-mailing-signup .required {
-	color: #d63638;
-}
-
-.fair-audience-mailing-signup .fair-audience-mailing-form p {
-	display: flex;
-	flex-direction: column;
-	gap: 0.5rem;
-}
-
-.fair-audience-mailing-signup .fair-audience-mailing-form input {
-	width: 100%;
-}
-
-.fair-audience-mailing-signup .fair-audience-mailing-form input:disabled {
-	opacity: 0.7;
-}
-
-.fair-audience-mailing-signup .wp-block-button button:disabled {
-	opacity: 0.7;
-	cursor: not-allowed;
+/* Prevent interaction with SSR form in editor */
+.fair-audience-mailing-signup input,
+.fair-audience-mailing-signup button,
+.fair-audience-mailing-signup .wp-block-button__link {
+	pointer-events: none;
 }

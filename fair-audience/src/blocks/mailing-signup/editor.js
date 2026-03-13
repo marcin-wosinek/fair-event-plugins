@@ -4,6 +4,7 @@ import { registerBlockType } from '@wordpress/blocks';
 import { useBlockProps, InspectorControls } from '@wordpress/block-editor';
 import { PanelBody, TextControl, TextareaControl } from '@wordpress/components';
 import { __ } from '@wordpress/i18n';
+import ServerSideRender from '@wordpress/server-side-render';
 
 registerBlockType('fair-audience/mailing-signup', {
 	edit: ({ attributes, setAttributes }) => {
@@ -44,61 +45,10 @@ registerBlockType('fair-audience/mailing-signup', {
 				</InspectorControls>
 
 				<div {...blockProps}>
-					<form className="fair-audience-mailing-form">
-						<p>
-							<label>
-								{__('First Name', 'fair-audience')}{' '}
-								<span className="required">*</span>
-							</label>
-							<input
-								type="text"
-								placeholder={__(
-									'Enter your first name',
-									'fair-audience'
-								)}
-								disabled
-							/>
-						</p>
-						<p>
-							<label>
-								{__('Last Name', 'fair-audience')}{' '}
-								<span className="required">*</span>
-							</label>
-							<input
-								type="text"
-								placeholder={__(
-									'Enter your last name',
-									'fair-audience'
-								)}
-								disabled
-							/>
-						</p>
-						<p>
-							<label>
-								{__('Email', 'fair-audience')}{' '}
-								<span className="required">*</span>
-							</label>
-							<input
-								type="email"
-								placeholder={__(
-									'Enter your email',
-									'fair-audience'
-								)}
-								disabled
-							/>
-						</p>
-
-						<div className="wp-block-button">
-							<button
-								type="button"
-								className="wp-block-button__link wp-element-button"
-								disabled
-							>
-								{submitButtonText ||
-									__('Subscribe', 'fair-audience')}
-							</button>
-						</div>
-					</form>
+					<ServerSideRender
+						block="fair-audience/mailing-signup"
+						attributes={attributes}
+					/>
 				</div>
 			</>
 		);
