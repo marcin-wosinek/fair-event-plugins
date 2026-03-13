@@ -227,6 +227,10 @@ export default function EventPhotos({ eventId }) {
 							)}
 							{photo.tags_count > 0 && (
 								<div
+									title={(photo.tagged_participants || [])
+										.map((t) => t.name)
+										.filter(Boolean)
+										.join(', ')}
 									style={{
 										position: 'absolute',
 										top: '6px',
@@ -268,7 +272,10 @@ export default function EventPhotos({ eventId }) {
 										{photo.author_name}
 									</div>
 								)}
-								<div style={{ color: '#9ca0a4' }}>
+								<div
+									style={{ color: '#9ca0a4' }}
+									title={(photo.liked_by || []).join(', ')}
+								>
 									{'♥ '}
 									{photo.likes_count}
 								</div>

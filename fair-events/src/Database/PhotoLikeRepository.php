@@ -417,6 +417,44 @@ class PhotoLikeRepository {
 	}
 
 	/**
+	 * Get likes for multiple photos grouped by attachment ID.
+	 *
+	 * @param int[] $attachment_ids Array of attachment IDs.
+	 * @return array Associative array of attachment_id => PhotoLike[].
+	 */
+	public function get_likes_for_photos( $attachment_ids ) {
+		global $wpdb;
+
+		if ( empty( $attachment_ids ) ) {
+			return array();
+		}
+
+		$table_name = $this->get_table_name();
+
+		// Build placeholders for IN clause.
+		$placeholders = implode( ',', array_fill( 0, count( $attachment_ids ), '%d' ) );
+
+		// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+		$results = $wpdb->get_results(
+			$wpdb->prepare(
+				"SELECT * FROM %i WHERE attachment_id IN ({$placeholders}) ORDER BY created_at DESC",
+				array_merge( array( $table_name ), $attachment_ids )
+			),
+			ARRAY_A
+		);
+
+		$grouped = array();
+		foreach ( $attachment_ids as $id ) {
+			$grouped[ $id ] = array();
+		}
+		foreach ( $results as $row ) {
+			$grouped[ (int) $row['attachment_id'] ][] = new PhotoLike( $row );
+		}
+
+		return $grouped;
+	}
+
+	/**
 	 * Delete all likes by a participant.
 	 *
 	 * @param int $participant_id Participant ID.

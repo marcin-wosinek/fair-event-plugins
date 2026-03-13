@@ -99,9 +99,10 @@ class EventGalleryEndpoint extends WP_REST_Controller {
 			)
 		);
 
-		// Get like counts for all photos in one query.
-		$like_repository = new PhotoLikeRepository();
-		$like_counts     = $like_repository->get_counts_for_photos( $attachment_ids );
+		// Get like counts and liker details for all photos.
+		$like_repository  = new PhotoLikeRepository();
+		$like_counts      = $like_repository->get_counts_for_photos( $attachment_ids );
+		$likes_by_photo   = $like_repository->get_likes_for_photos( $attachment_ids );
 
 		// Load tagged participants and photo authors if fair-audience plugin is active.
 		$tags_by_attachment    = array();
@@ -136,6 +137,24 @@ class EventGalleryEndpoint extends WP_REST_Controller {
 				}
 			}
 
+			// Resolve liker names.
+			$liked_by = array();
+			if ( ! empty( $likes_by_photo[ $attachment->ID ] ) ) {
+				foreach ( $likes_by_photo[ $attachment->ID ] as $like ) {
+					if ( ! empty( $like->participant_id ) && isset( $participant_repo ) ) {
+						$participant = $participant_repo->get_by_id( $like->participant_id );
+						if ( $participant ) {
+							$liked_by[] = trim( $participant->name . ' ' . $participant->surname );
+						}
+					} elseif ( ! empty( $like->user_id ) ) {
+						$wp_user = get_user_by( 'id', $like->user_id );
+						if ( $wp_user ) {
+							$liked_by[] = $wp_user->display_name;
+						}
+					}
+				}
+			}
+
 			// Use fair-audience photo author if available, fall back to WP user.
 			$author_name = $authors_by_attachment[ $attachment->ID ] ?? '';
 			if ( empty( $author_name ) ) {
@@ -153,6 +172,7 @@ class EventGalleryEndpoint extends WP_REST_Controller {
 				'url'                 => wp_get_attachment_url( $attachment->ID ),
 				'author_name'         => $author_name,
 				'likes_count'         => $like_counts[ $attachment->ID ] ?? 0,
+				'liked_by'            => $liked_by,
 				'tags_count'          => count( $tagged_participants ),
 				'tagged_participants' => $tagged_participants,
 				'sizes'               => array(
