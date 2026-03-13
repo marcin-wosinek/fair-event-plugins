@@ -100,9 +100,9 @@ class EventGalleryEndpoint extends WP_REST_Controller {
 		);
 
 		// Get like counts and liker details for all photos.
-		$like_repository  = new PhotoLikeRepository();
-		$like_counts      = $like_repository->get_counts_for_photos( $attachment_ids );
-		$likes_by_photo   = $like_repository->get_likes_for_photos( $attachment_ids );
+		$like_repository = new PhotoLikeRepository();
+		$like_counts     = $like_repository->get_counts_for_photos( $attachment_ids );
+		$likes_by_photo  = $like_repository->get_likes_for_photos( $attachment_ids );
 
 		// Load tagged participants and photo authors if fair-audience plugin is active.
 		$tags_by_attachment    = array();

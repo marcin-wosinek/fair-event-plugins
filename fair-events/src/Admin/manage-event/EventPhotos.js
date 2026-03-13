@@ -151,6 +151,13 @@ export default function EventPhotos({ eventId }) {
 							? __('Cancel Selection', 'fair-events')
 							: __('Select Photos', 'fair-events')}
 					</Button>
+					<Button
+						variant="secondary"
+						href={`/?event_gallery_id=${eventId}`}
+						target="_blank"
+					>
+						{__('View Gallery', 'fair-events')}
+					</Button>
 					<Button variant="secondary" href={mediaLibraryUrl}>
 						{__('Media Library', 'fair-events')}
 					</Button>
