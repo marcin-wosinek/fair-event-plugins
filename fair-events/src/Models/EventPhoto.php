@@ -31,6 +31,13 @@ class EventPhoto {
 	public $event_id;
 
 	/**
+	 * Event date ID (optional).
+	 *
+	 * @var int|null
+	 */
+	public $event_date_id;
+
+	/**
 	 * Attachment (photo) ID.
 	 *
 	 * @var int
@@ -65,6 +72,9 @@ class EventPhoto {
 
 		$this->id            = isset( $data['id'] ) ? (int) $data['id'] : null;
 		$this->event_id      = isset( $data['event_id'] ) ? (int) $data['event_id'] : 0;
+		$this->event_date_id = isset( $data['event_date_id'] ) && $data['event_date_id']
+			? (int) $data['event_date_id']
+			: null;
 		$this->attachment_id = isset( $data['attachment_id'] ) ? (int) $data['attachment_id'] : 0;
 		$this->created_at    = isset( $data['created_at'] ) ? $data['created_at'] : '';
 	}
@@ -85,10 +95,11 @@ class EventPhoto {
 
 		$data = array(
 			'event_id'      => $this->event_id,
+			'event_date_id' => $this->event_date_id,
 			'attachment_id' => $this->attachment_id,
 		);
 
-		$format = array( '%d', '%d' );
+		$format = array( '%d', '%d', '%d' );
 
 		if ( $this->id ) {
 			// Update existing.

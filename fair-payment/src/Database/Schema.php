@@ -68,6 +68,7 @@ class Schema {
 			id bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT,
 			mollie_payment_id varchar(50) NOT NULL,
 			post_id bigint(20) UNSIGNED DEFAULT NULL,
+			event_date_id bigint(20) UNSIGNED DEFAULT NULL,
 			user_id bigint(20) UNSIGNED DEFAULT NULL,
 			amount decimal(10,2) NOT NULL,
 			currency varchar(3) NOT NULL DEFAULT 'EUR',
@@ -87,7 +88,8 @@ class Schema {
 			KEY mollie_payment_id (mollie_payment_id),
 			KEY status (status),
 			KEY user_id (user_id),
-			KEY post_id (post_id)
+			KEY post_id (post_id),
+			KEY event_date_id (event_date_id)
 		) $charset_collate;";
 
 		require_once ABSPATH . 'wp-admin/includes/upgrade.php';
@@ -114,9 +116,10 @@ class Schema {
 		self::migrate_to_v10();
 		self::migrate_to_v11();
 		self::migrate_to_v12();
+		self::migrate_to_v13();
 
 		// Store database version for future migrations.
-		update_option( 'fair_payment_db_version', '12.0' );
+		update_option( 'fair_payment_db_version', '13.0' );
 	}
 
 	/**
@@ -695,6 +698,53 @@ class Schema {
 				$wpdb->query(
 					$wpdb->prepare(
 						'ALTER TABLE %i ADD COLUMN mollie_fee decimal(10,2) DEFAULT NULL AFTER application_fee',
+						$table_name
+					)
+				);
+			}
+		}
+	}
+
+	/**
+	 * Migrate database from v12.0 to v13.0
+	 *
+	 * Adds event_date_id column to transactions for linking to event dates.
+	 *
+	 * @return void
+	 */
+	public static function migrate_to_v13() {
+		global $wpdb;
+
+		$current_version = get_option( 'fair_payment_db_version', '1.0' );
+
+		if ( version_compare( $current_version, '13.0', '<' ) ) {
+			$table_name = self::get_payments_table_name();
+
+			// Check if event_date_id column already exists.
+			// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+			$column_exists = $wpdb->get_results(
+				$wpdb->prepare(
+					'SHOW COLUMNS FROM %i LIKE %s',
+					$table_name,
+					'event_date_id'
+				)
+			);
+
+			// Add event_date_id column if it doesn't exist.
+			if ( empty( $column_exists ) ) {
+				// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.DirectDatabaseQuery.SchemaChange
+				$wpdb->query(
+					$wpdb->prepare(
+						'ALTER TABLE %i ADD COLUMN event_date_id bigint(20) UNSIGNED DEFAULT NULL AFTER post_id',
+						$table_name
+					)
+				);
+
+				// Add index on event_date_id.
+				// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.DirectDatabaseQuery.SchemaChange
+				$wpdb->query(
+					$wpdb->prepare(
+						'ALTER TABLE %i ADD KEY event_date_id (event_date_id)',
 						$table_name
 					)
 				);

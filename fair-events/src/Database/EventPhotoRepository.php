@@ -83,11 +83,12 @@ class EventPhotoRepository {
 	 * Set event for an attachment.
 	 * Replaces any existing event (1-to-1 relationship).
 	 *
-	 * @param int $attachment_id Attachment ID.
-	 * @param int $event_id      Event ID (0 to remove).
+	 * @param int      $attachment_id Attachment ID.
+	 * @param int      $event_id      Event ID (0 to remove).
+	 * @param int|null $event_date_id Optional event date ID.
 	 * @return int|bool Relationship ID or true on removal, false on failure.
 	 */
-	public function set_event( $attachment_id, $event_id ) {
+	public function set_event( $attachment_id, $event_id, $event_date_id = null ) {
 		// Remove existing event assignment if any.
 		$this->remove_from_event( $attachment_id );
 
@@ -98,6 +99,7 @@ class EventPhotoRepository {
 		$relationship = new EventPhoto(
 			array(
 				'event_id'      => $event_id,
+				'event_date_id' => $event_date_id,
 				'attachment_id' => $attachment_id,
 			)
 		);
@@ -157,6 +159,56 @@ class EventPhotoRepository {
 				'SELECT attachment_id FROM %i WHERE event_id = %d',
 				$table_name,
 				$event_id
+			)
+		);
+
+		return array_map( 'intval', $result );
+	}
+
+	/**
+	 * Get all photos for an event date.
+	 *
+	 * @param int $event_date_id Event date ID.
+	 * @return EventPhoto[] Array of event-photo relationships.
+	 */
+	public function get_attachments_for_event_date( $event_date_id ) {
+		global $wpdb;
+
+		$table_name = $this->get_table_name();
+
+		$results = $wpdb->get_results(
+			$wpdb->prepare(
+				'SELECT * FROM %i WHERE event_date_id = %d ORDER BY created_at ASC',
+				$table_name,
+				$event_date_id
+			),
+			ARRAY_A
+		);
+
+		return array_map(
+			function ( $row ) {
+				return new EventPhoto( $row );
+			},
+			$results
+		);
+	}
+
+	/**
+	 * Get all attachment IDs for an event date.
+	 *
+	 * @param int $event_date_id Event date ID.
+	 * @return int[] Array of attachment IDs.
+	 */
+	public function get_attachment_ids_by_event_date( $event_date_id ) {
+		global $wpdb;
+
+		$table_name = $this->get_table_name();
+
+		$result = $wpdb->get_col(
+			$wpdb->prepare(
+				'SELECT attachment_id FROM %i WHERE event_date_id = %d',
+				$table_name,
+				$event_date_id
 			)
 		);
 

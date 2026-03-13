@@ -141,6 +141,11 @@ class Installer {
 			self::migrate_to_2_7_0();
 		}
 
+		// Run migration if upgrading from pre-2.9.0 (add event_date_id to event_photos).
+		if ( version_compare( $current_version, '2.9.0', '<' ) ) {
+			self::migrate_to_2_9_0();
+		}
+
 		// Update database version
 		Schema::update_db_version( Schema::DB_VERSION );
 	}
@@ -219,6 +224,10 @@ class Installer {
 
 			if ( version_compare( $current_version, '2.7.0', '<' ) ) {
 				self::migrate_to_2_7_0();
+			}
+
+			if ( version_compare( $current_version, '2.9.0', '<' ) ) {
+				self::migrate_to_2_9_0();
 			}
 
 			// Install/update tables
@@ -939,5 +948,55 @@ class Installer {
 				)
 			);
 		}
+	}
+
+	/**
+	 * Migrate to version 2.9.0 - Add event_date_id column to event_photos table.
+	 *
+	 * @return void
+	 */
+	private static function migrate_to_2_9_0() {
+		global $wpdb;
+
+		$table_name = $wpdb->prefix . 'fair_events_event_photos';
+
+		// Check if event_date_id column already exists.
+		$column_exists = $wpdb->get_results(
+			$wpdb->prepare(
+				"SHOW COLUMNS FROM %i LIKE 'event_date_id'",
+				$table_name
+			)
+		);
+
+		if ( empty( $column_exists ) ) {
+			// Add event_date_id column.
+			$wpdb->query(
+				$wpdb->prepare(
+					'ALTER TABLE %i ADD COLUMN event_date_id BIGINT UNSIGNED DEFAULT NULL AFTER event_id',
+					$table_name
+				)
+			);
+
+			// Add index for event_date_id.
+			$wpdb->query(
+				$wpdb->prepare(
+					'ALTER TABLE %i ADD KEY idx_event_date_id (event_date_id)',
+					$table_name
+				)
+			);
+		}
+
+		// Backfill event_date_id from fair_event_date_posts junction table.
+		$posts_table = $wpdb->prefix . 'fair_event_date_posts';
+		$wpdb->query(
+			$wpdb->prepare(
+				'UPDATE %i p
+				JOIN %i edp ON edp.post_id = p.event_id
+				SET p.event_date_id = edp.event_date_id
+				WHERE p.event_date_id IS NULL',
+				$table_name,
+				$posts_table
+			)
+		);
 	}
 }

@@ -119,6 +119,7 @@ class TransactionsController extends WP_REST_Controller {
 			$data[] = array(
 				'id'                => (int) $transaction->id,
 				'mollie_payment_id' => $transaction->mollie_payment_id ?? '',
+				'event_date_id'     => $transaction->event_date_id ? (int) $transaction->event_date_id : null,
 				'amount'            => (float) ( $transaction->amount ?? 0 ),
 				'currency'          => $transaction->currency ?? 'EUR',
 				'mollie_fee'        => null !== $transaction->mollie_fee ? (float) $transaction->mollie_fee : null,
@@ -198,6 +199,7 @@ class TransactionsController extends WP_REST_Controller {
 			'id'                   => (int) $transaction->id,
 			'mollie_payment_id'    => $transaction->mollie_payment_id ?? '',
 			'post_id'              => $transaction->post_id ? (int) $transaction->post_id : null,
+			'event_date_id'        => $transaction->event_date_id ? (int) $transaction->event_date_id : null,
 			'post_title'           => $post_title,
 			'user_id'              => $transaction->user_id ? (int) $transaction->user_id : null,
 			'user_name'            => $user_name,

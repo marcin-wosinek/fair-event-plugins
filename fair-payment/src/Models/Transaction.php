@@ -30,6 +30,7 @@ class Transaction {
 		$defaults = array(
 			'mollie_payment_id' => '',
 			'post_id'           => null,
+			'event_date_id'     => null,
 			'user_id'           => get_current_user_id(),
 			'amount'            => 0,
 			'currency'          => 'EUR',
@@ -62,6 +63,7 @@ class Transaction {
 			array(
 				'mollie_payment_id' => $data['mollie_payment_id'],
 				'post_id'           => $data['post_id'],
+				'event_date_id'     => $data['event_date_id'],
 				'user_id'           => $data['user_id'],
 				'amount'            => $data['amount'],
 				'currency'          => $data['currency'],
@@ -74,7 +76,7 @@ class Transaction {
 				'checkout_url'      => $data['checkout_url'],
 				'metadata'          => $data['metadata'],
 			),
-			array( '%s', '%d', '%d', '%f', '%s', '%f', '%s', '%d', '%s', '%s', '%s', '%s', '%s' )
+			array( '%s', '%d', '%d', '%d', '%f', '%s', '%f', '%s', '%d', '%s', '%s', '%s', '%s', '%s' )
 		);
 
 		return $inserted ? $wpdb->insert_id : false;
