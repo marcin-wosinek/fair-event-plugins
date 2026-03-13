@@ -31,6 +31,7 @@ const RELATIONSHIP_LABELS = {
 	ticket_sale_periods: __('Ticket Sale Periods', 'fair-events'),
 	group_permission_rules: __('Group Permission Rules', 'fair-events'),
 	image_exports: __('Image Exports', 'fair-events'),
+	event_photos: __('Event Photos', 'fair-events'),
 	participants: __('Participants', 'fair-events'),
 	polls: __('Polls', 'fair-events'),
 	gallery_access_keys: __('Gallery Access Keys', 'fair-events'),

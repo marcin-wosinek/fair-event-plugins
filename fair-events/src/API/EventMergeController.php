@@ -175,6 +175,7 @@ class EventMergeController extends WP_REST_Controller {
 			$this->process_simple_table( 'fair_events_ticket_sale_periods', $source_id, $target_id, $actions['ticket_sale_periods'] ?? 'skip' );
 			$this->process_simple_table( 'fair_events_group_permission_rules', $source_id, $target_id, $actions['group_permission_rules'] ?? 'skip' );
 			$this->process_image_exports( $source_id, $target_id, $actions['image_exports'] ?? 'skip' );
+			$this->process_event_photos( $source_id, $target_id, $actions['event_photos'] ?? 'skip' );
 
 			// Cross-plugin tables (check existence first).
 			$this->process_cross_plugin_table( 'fair_audience_event_participants', $source_id, $target_id, $actions['participants'] ?? 'skip' );
@@ -233,6 +234,9 @@ class EventMergeController extends WP_REST_Controller {
 				$event_date_id
 			)
 		);
+
+		// Event photos (now keyed by event_date_id).
+		$counts['event_photos'] = $this->count_rows( 'fair_events_event_photos', $event_date_id );
 
 		// Cross-plugin tables.
 		$counts['participants']         = $this->count_rows_if_exists( 'fair_audience_event_participants', $event_date_id );
@@ -494,6 +498,66 @@ class EventMergeController extends WP_REST_Controller {
 				array( '%s' ),
 				array( '%s', '%s' )
 			);
+		}
+	}
+
+	/**
+	 * Process event photos (keyed by event_date_id).
+	 *
+	 * Moves or deletes rows in fair_events_event_photos. Skips duplicates
+	 * since attachment_id has a UNIQUE constraint.
+	 *
+	 * @param int    $source_id Source event date ID.
+	 * @param int    $target_id Target event date ID.
+	 * @param string $action    Action: move, delete, or skip.
+	 * @return void
+	 */
+	private function process_event_photos( $source_id, $target_id, $action ) {
+		global $wpdb;
+
+		if ( 'skip' === $action ) {
+			return;
+		}
+
+		$table_name = $wpdb->prefix . 'fair_events_event_photos';
+
+		if ( 'delete' === $action ) {
+			$wpdb->delete( $table_name, array( 'event_date_id' => $source_id ), array( '%d' ) );
+			return;
+		}
+
+		if ( 'move' === $action ) {
+			// Get existing attachment_ids on target to avoid UNIQUE constraint violations.
+			$existing_attachments = $wpdb->get_col(
+				$wpdb->prepare(
+					'SELECT attachment_id FROM %i WHERE event_date_id = %d',
+					$table_name,
+					$target_id
+				)
+			);
+
+			$source_photos = $wpdb->get_results(
+				$wpdb->prepare(
+					'SELECT id, attachment_id FROM %i WHERE event_date_id = %d',
+					$table_name,
+					$source_id
+				)
+			);
+
+			foreach ( $source_photos as $photo ) {
+				if ( in_array( (int) $photo->attachment_id, array_map( 'intval', $existing_attachments ), true ) ) {
+					// Duplicate attachment — delete the source row.
+					$wpdb->delete( $table_name, array( 'id' => $photo->id ), array( '%d' ) );
+				} else {
+					$wpdb->update(
+						$table_name,
+						array( 'event_date_id' => $target_id ),
+						array( 'id' => $photo->id ),
+						array( '%d' ),
+						array( '%d' )
+					);
+				}
+			}
 		}
 	}
 
