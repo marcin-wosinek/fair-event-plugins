@@ -148,6 +148,15 @@ class Plugin {
 			}
 		);
 
+		// Photo Download controller.
+		add_action(
+			'rest_api_init',
+			function () {
+				$controller = new \FairEvents\API\PhotoDownloadController();
+				$controller->register_routes();
+			}
+		);
+
 		// Migration controller.
 		add_action(
 			'rest_api_init',

@@ -106,6 +106,29 @@ export default function EventPhotos({ eventId }) {
 		);
 	}
 
+	const handleDownload = () => {
+		const ids = selectMode && selectedIds.length > 0 ? selectedIds : null;
+		let path = `/fair-events/v1/events/${eventId}/gallery/download`;
+		if (ids) {
+			path += `?ids=${ids.join(',')}`;
+		}
+		apiFetch({ path, parse: false }).then((response) => {
+			response.blob().then((blob) => {
+				const url = URL.createObjectURL(blob);
+				const a = document.createElement('a');
+				a.href = url;
+				const disposition = response.headers.get('Content-Disposition');
+				const match =
+					disposition && disposition.match(/filename="(.+)"/);
+				a.download = match ? match[1] : 'photos.zip';
+				document.body.appendChild(a);
+				a.click();
+				a.remove();
+				URL.revokeObjectURL(url);
+			});
+		});
+	};
+
 	const sortedPhotos = [...photos].sort((a, b) => {
 		if (sortBy === 'likes-desc') {
 			return b.likes_count - a.likes_count;
@@ -177,6 +200,11 @@ export default function EventPhotos({ eventId }) {
 							{__('Tag Person', 'fair-events')}
 						</Button>
 					)}
+					<Button variant="secondary" onClick={handleDownload}>
+						{selectMode && selectedIds.length > 0
+							? __('Download Selected', 'fair-events')
+							: __('Download All', 'fair-events')}
+					</Button>
 					<Button
 						variant={selectMode ? 'primary' : 'secondary'}
 						onClick={() => {
