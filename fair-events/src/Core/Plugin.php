@@ -256,6 +256,15 @@ class Plugin {
 			}
 		);
 
+		// Event Merge controller.
+		add_action(
+			'rest_api_init',
+			function () {
+				$controller = new \FairEvents\API\EventMergeController();
+				$controller->register_routes();
+			}
+		);
+
 		// Add event relationship to attachment REST responses.
 		add_action(
 			'rest_api_init',

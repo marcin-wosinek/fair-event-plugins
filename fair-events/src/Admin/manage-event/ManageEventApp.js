@@ -40,6 +40,7 @@ import GroupRules from './GroupRules.js';
 import EventTickets from './EventTickets.js';
 import EventPhotos from './EventPhotos.js';
 import DuplicateEventWizard from './DuplicateEventWizard.js';
+import MergeEventWizard from './MergeEventWizard.js';
 import RecurrenceCalendar from './RecurrenceCalendar.js';
 
 export default function ManageEventApp() {
@@ -99,6 +100,7 @@ export default function ManageEventApp() {
 	);
 	const ticketSaveRef = useRef(null);
 	const [duplicateMode, setDuplicateMode] = useState(false);
+	const [mergeMode, setMergeMode] = useState(false);
 	const [togglingExdate, setTogglingExdate] = useState(null);
 
 	useEffect(() => {
@@ -636,6 +638,17 @@ export default function ManageEventApp() {
 				sourceEventDateId={eventDateId}
 				audienceUrl={audienceUrl}
 				onCancel={() => setDuplicateMode(false)}
+				manageEventUrl={manageEventUrl}
+			/>
+		);
+	}
+
+	if (mergeMode) {
+		return (
+			<MergeEventWizard
+				sourceEventDate={eventDate}
+				sourceEventDateId={eventDateId}
+				onCancel={() => setMergeMode(false)}
 				manageEventUrl={manageEventUrl}
 			/>
 		);
@@ -1217,6 +1230,28 @@ export default function ManageEventApp() {
 												>
 													{__(
 														'Duplicate Event',
+														'fair-events'
+													)}
+												</Button>
+											</div>
+										</VStack>
+
+										<VStack spacing={2}>
+											<p style={{ color: '#666' }}>
+												{__(
+													'Merge this event into another event date, moving or cleaning up all linked data.',
+													'fair-events'
+												)}
+											</p>
+											<div>
+												<Button
+													variant="secondary"
+													onClick={() =>
+														setMergeMode(true)
+													}
+												>
+													{__(
+														'Merge Event',
 														'fair-events'
 													)}
 												</Button>
