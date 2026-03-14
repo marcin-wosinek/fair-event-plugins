@@ -2,19 +2,14 @@
  * Audience Signup Block - Frontend styles
  */
 
-.fair-audience-audience-signup {
-	max-width: 500px;
-	margin: 0 auto;
-}
-
 /* Form fields */
 .fair-audience-audience-form p {
-	margin-bottom: 15px;
+	margin-bottom: 20px;
 }
 
 .fair-audience-audience-form label {
 	display: block;
-	margin-bottom: 5px;
+	margin-bottom: 8px;
 	font-weight: 500;
 }
 
@@ -29,10 +24,12 @@
 .fair-audience-audience-form textarea,
 .fair-audience-audience-form select {
 	width: 100%;
-	padding: 10px 12px;
-	border: 1px solid #ddd;
+	padding: 14px 16px;
+	border: 1px solid #ccc;
 	border-radius: 4px;
-	font-size: 14px;
+	font-size: 1em;
+	background-color: #fafafa;
+	box-sizing: border-box;
 	transition: border-color 0.2s ease;
 }
 
@@ -50,18 +47,20 @@
 	outline: none;
 	border-color: #0073aa;
 	box-shadow: 0 0 0 1px #0073aa;
+	background-color: #fff;
 }
 
 /* Question groups (fieldset, textarea wrappers) */
 .fair-audience-audience-question-group {
-	margin-bottom: 15px;
+	margin-bottom: 20px;
 	border: none;
 	padding: 0;
 }
 
 .fair-audience-audience-question-group legend {
 	font-weight: 500;
-	margin-bottom: 5px;
+	font-size: 1.1em;
+	margin-bottom: 8px;
 }
 
 .fair-audience-audience-question-group label {
@@ -106,12 +105,7 @@
 
 /* Button container */
 .fair-audience-audience-signup .wp-block-button {
-	margin-top: 20px;
-}
-
-.fair-audience-audience-signup .wp-block-button__link {
-	width: 100%;
-	justify-content: center;
+	margin-top: 24px;
 }
 
 /* Disabled button state */

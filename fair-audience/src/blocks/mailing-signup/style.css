@@ -2,19 +2,14 @@
  * Mailing Signup Block - Frontend styles
  */
 
-.fair-audience-mailing-signup {
-	max-width: 500px;
-	margin: 0 auto;
-}
-
 /* Form fields */
 .fair-audience-mailing-form p {
-	margin-bottom: 15px;
+	margin-bottom: 20px;
 }
 
 .fair-audience-mailing-form label {
 	display: block;
-	margin-bottom: 5px;
+	margin-bottom: 8px;
 	font-weight: 500;
 }
 
@@ -25,10 +20,12 @@
 .fair-audience-mailing-form input[type="text"],
 .fair-audience-mailing-form input[type="email"] {
 	width: 100%;
-	padding: 10px 12px;
-	border: 1px solid #ddd;
+	padding: 14px 16px;
+	border: 1px solid #ccc;
 	border-radius: 4px;
-	font-size: 14px;
+	font-size: 1em;
+	background-color: #fafafa;
+	box-sizing: border-box;
 	transition: border-color 0.2s ease;
 }
 
@@ -37,16 +34,12 @@
 	outline: none;
 	border-color: #0073aa;
 	box-shadow: 0 0 0 1px #0073aa;
+	background-color: #fff;
 }
 
 /* Button container */
 .fair-audience-mailing-signup .wp-block-button {
-	margin-top: 20px;
-}
-
-.fair-audience-mailing-signup .wp-block-button__link {
-	width: 100%;
-	justify-content: center;
+	margin-top: 24px;
 }
 
 /* Disabled button state */

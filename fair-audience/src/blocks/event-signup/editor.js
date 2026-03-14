@@ -4,6 +4,7 @@ import { registerBlockType } from '@wordpress/blocks';
 import { useBlockProps, InspectorControls } from '@wordpress/block-editor';
 import { PanelBody, TextControl, TextareaControl } from '@wordpress/components';
 import { __ } from '@wordpress/i18n';
+import ServerSideRender from '@wordpress/server-side-render';
 
 registerBlockType('fair-audience/event-signup', {
 	edit: ({ attributes, setAttributes }) => {
@@ -88,91 +89,10 @@ registerBlockType('fair-audience/event-signup', {
 				</InspectorControls>
 
 				<div {...blockProps}>
-					<div className="fair-audience-event-signup-preview">
-						<p className="fair-audience-event-signup-notice">
-							{__(
-								'Event Signup form - displays based on user state',
-								'fair-audience'
-							)}
-						</p>
-
-						<div className="fair-audience-event-signup-preview-tabs">
-							<span className="preview-tab active">
-								{__('Anonymous', 'fair-audience')}
-							</span>
-							<span className="preview-tab">
-								{__('With Token', 'fair-audience')}
-							</span>
-							<span className="preview-tab">
-								{__('Logged In', 'fair-audience')}
-							</span>
-						</div>
-
-						<form className="fair-audience-signup-form fair-audience-signup-register">
-							<p>
-								<label>
-									{__('First Name', 'fair-audience')}{' '}
-									<span className="required">*</span>
-								</label>
-								<input
-									type="text"
-									placeholder={__(
-										'Enter your first name',
-										'fair-audience'
-									)}
-									disabled
-								/>
-							</p>
-							<p>
-								<label>{__('Surname', 'fair-audience')}</label>
-								<input
-									type="text"
-									placeholder={__(
-										'Enter your surname',
-										'fair-audience'
-									)}
-									disabled
-								/>
-							</p>
-							<p>
-								<label>
-									{__('Email', 'fair-audience')}{' '}
-									<span className="required">*</span>
-								</label>
-								<input
-									type="email"
-									placeholder={__(
-										'Enter your email',
-										'fair-audience'
-									)}
-									disabled
-								/>
-							</p>
-							<p className="fair-audience-signup-checkbox">
-								<label>
-									<input type="checkbox" disabled />
-									{__(
-										'Keep me informed about future events',
-										'fair-audience'
-									)}
-								</label>
-							</p>
-
-							<div className="wp-block-button">
-								<button
-									type="button"
-									className="wp-block-button__link wp-element-button"
-									disabled
-								>
-									{registerButtonText ||
-										__(
-											'Register & Sign Up',
-											'fair-audience'
-										)}
-								</button>
-							</div>
-						</form>
-					</div>
+					<ServerSideRender
+						block="fair-audience/event-signup"
+						attributes={attributes}
+					/>
 				</div>
 			</>
 		);

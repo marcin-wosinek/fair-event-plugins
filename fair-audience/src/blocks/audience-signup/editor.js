@@ -9,97 +9,9 @@ import {
 	ToggleControl,
 } from '@wordpress/components';
 import { __ } from '@wordpress/i18n';
+import ServerSideRender from '@wordpress/server-side-render';
 import QuestionBuilder from './QuestionBuilder.js';
 import EventLinkPanel from './EventLinkPanel.js';
-
-function QuestionPreview({ question }) {
-	const { text, type, required, options } = question;
-
-	const label = (
-		<label>
-			{text || __('Untitled Question', 'fair-audience')}
-			{required && <span className="required"> *</span>}
-		</label>
-	);
-
-	switch (type) {
-		case 'long_text':
-			return (
-				<div className="fair-audience-audience-question-group">
-					{label}
-					<textarea disabled rows="3" />
-				</div>
-			);
-		case 'number':
-			return (
-				<p>
-					{label}
-					<input type="number" disabled />
-				</p>
-			);
-		case 'date':
-			return (
-				<p>
-					{label}
-					<input type="date" disabled />
-				</p>
-			);
-		case 'select':
-			return (
-				<p>
-					{label}
-					<select disabled>
-						<option value="">
-							{__('Select...', 'fair-audience')}
-						</option>
-						{(options || []).map((opt, i) => (
-							<option key={i} value={opt}>
-								{opt}
-							</option>
-						))}
-					</select>
-				</p>
-			);
-		case 'radio':
-			return (
-				<fieldset
-					className="fair-audience-audience-question-group"
-					disabled
-				>
-					<legend>{label}</legend>
-					{(options || []).map((opt, i) => (
-						<label key={i} className="fair-audience-option-label">
-							<input type="radio" disabled />
-							{opt}
-						</label>
-					))}
-				</fieldset>
-			);
-		case 'checkbox':
-			return (
-				<fieldset
-					className="fair-audience-audience-question-group"
-					disabled
-				>
-					<legend>{label}</legend>
-					{(options || []).map((opt, i) => (
-						<label key={i} className="fair-audience-option-label">
-							<input type="checkbox" disabled />
-							{opt}
-						</label>
-					))}
-				</fieldset>
-			);
-		case 'short_text':
-		default:
-			return (
-				<p>
-					{label}
-					<input type="text" disabled />
-				</p>
-			);
-	}
-}
 
 registerBlockType('fair-audience/audience-signup', {
 	edit: ({ attributes, setAttributes }) => {
@@ -194,90 +106,10 @@ registerBlockType('fair-audience/audience-signup', {
 				</InspectorControls>
 
 				<div {...blockProps}>
-					<form className="fair-audience-audience-form">
-						<p>
-							<label>
-								{__('First Name', 'fair-audience')}{' '}
-								<span className="required">*</span>
-							</label>
-							<input
-								type="text"
-								placeholder={__(
-									'Enter your first name',
-									'fair-audience'
-								)}
-								disabled
-							/>
-						</p>
-						<p>
-							<label>{__('Last Name', 'fair-audience')}</label>
-							<input
-								type="text"
-								placeholder={__(
-									'Enter your last name',
-									'fair-audience'
-								)}
-								disabled
-							/>
-						</p>
-						<p>
-							<label>
-								{__('Email', 'fair-audience')}{' '}
-								<span className="required">*</span>
-							</label>
-							<input
-								type="email"
-								placeholder={__(
-									'Enter your email',
-									'fair-audience'
-								)}
-								disabled
-							/>
-						</p>
-
-						{showInstagram && (
-							<p>
-								<label>
-									{__('Instagram', 'fair-audience')}
-								</label>
-								<input
-									type="text"
-									placeholder={__(
-										'@username',
-										'fair-audience'
-									)}
-									disabled
-								/>
-							</p>
-						)}
-
-						{(questions || []).map((question, index) => (
-							<QuestionPreview key={index} question={question} />
-						))}
-
-						{showKeepInformed && (
-							<div className="fair-audience-audience-checkbox">
-								<label>
-									<input type="checkbox" disabled />
-									{__(
-										'Keep me informed about future events',
-										'fair-audience'
-									)}
-								</label>
-							</div>
-						)}
-
-						<div className="wp-block-button">
-							<button
-								type="button"
-								className="wp-block-button__link wp-element-button"
-								disabled
-							>
-								{submitButtonText ||
-									__('Register', 'fair-audience')}
-							</button>
-						</div>
-					</form>
+					<ServerSideRender
+						block="fair-audience/audience-signup"
+						attributes={attributes}
+					/>
 				</div>
 			</>
 		);

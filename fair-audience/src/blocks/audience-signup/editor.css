@@ -3,95 +3,16 @@
  */
 
 .fair-audience-audience-signup {
-	max-width: 500px;
-	margin: 0 auto;
+	margin: 2rem 0;
 }
 
-/* Form fields */
-.fair-audience-audience-form p {
-	margin-bottom: 15px;
-}
-
-.fair-audience-audience-form label {
-	display: block;
-	margin-bottom: 5px;
-	font-weight: 500;
-}
-
-.fair-audience-audience-form .required {
-	color: #d63638;
-}
-
-.fair-audience-audience-form input[type="text"],
-.fair-audience-audience-form input[type="email"],
-.fair-audience-audience-form input[type="number"],
-.fair-audience-audience-form input[type="date"],
-.fair-audience-audience-form textarea,
-.fair-audience-audience-form select {
-	width: 100%;
-	padding: 10px 12px;
-	border: 1px solid #ddd;
-	border-radius: 4px;
-	font-size: 14px;
-}
-
-.fair-audience-audience-form textarea {
-	resize: vertical;
-	font-family: inherit;
-}
-
-.fair-audience-audience-form input:disabled,
-.fair-audience-audience-form textarea:disabled,
-.fair-audience-audience-form select:disabled,
-.fair-audience-audience-form fieldset:disabled {
-	opacity: 0.7;
-}
-
-/* Question groups */
-.fair-audience-audience-question-group {
-	margin-bottom: 15px;
-	border: none;
-	padding: 0;
-}
-
-.fair-audience-audience-question-group legend {
-	font-weight: 500;
-	margin-bottom: 5px;
-}
-
-/* Radio and checkbox option labels */
-.fair-audience-option-label {
-	display: flex;
-	align-items: center;
-	gap: 8px;
-	font-weight: normal;
-	padding: 4px 0;
-}
-
-/* Checkbox */
-.fair-audience-audience-checkbox {
-	margin-top: 10px;
-}
-
-.fair-audience-audience-checkbox label {
-	display: flex;
-	align-items: center;
-	gap: 8px;
-	font-weight: normal;
-}
-
-.fair-audience-audience-checkbox input[type="checkbox"]:disabled {
-	opacity: 0.7;
-}
-
-/* Button */
-.fair-audience-audience-signup .wp-block-button {
-	margin-top: 20px;
-}
-
-.fair-audience-audience-signup .wp-block-button button:disabled {
-	opacity: 0.7;
-	cursor: not-allowed;
+/* Prevent interaction with SSR form in editor */
+.fair-audience-audience-signup input,
+.fair-audience-audience-signup textarea,
+.fair-audience-audience-signup select,
+.fair-audience-audience-signup button,
+.fair-audience-audience-signup .wp-block-button__link {
+	pointer-events: none;
 }
 
 /* Event link panel */
