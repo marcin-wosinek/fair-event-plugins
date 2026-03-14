@@ -25,6 +25,24 @@
 		"successMessage": {
 			"type": "string",
 			"default": "Please check your email to confirm your subscription."
+		},
+		"showCategories": {
+			"type": "boolean",
+			"default": false
+		},
+		"categoryIds": {
+			"type": "array",
+			"default": [],
+			"items": {
+				"type": "number"
+			}
+		},
+		"preselectedCategoryIds": {
+			"type": "array",
+			"default": [],
+			"items": {
+				"type": "number"
+			}
 		}
 	},
 	"editorScript": "file:./editor.js",

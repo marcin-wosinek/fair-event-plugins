@@ -478,6 +478,29 @@ class Schema {
 	}
 
 	/**
+	 * Get SQL for creating the participant categories junction table.
+	 *
+	 * @return string SQL statement.
+	 */
+	public static function get_participant_categories_table_sql() {
+		global $wpdb;
+
+		$table_name      = $wpdb->prefix . 'fair_audience_participant_categories';
+		$charset_collate = $wpdb->get_charset_collate();
+
+		return "CREATE TABLE $table_name (
+			id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
+			participant_id BIGINT UNSIGNED NOT NULL,
+			category_id BIGINT UNSIGNED NOT NULL,
+			created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+			PRIMARY KEY  (id),
+			UNIQUE KEY idx_participant_category (participant_id, category_id),
+			KEY idx_participant_id (participant_id),
+			KEY idx_category_id (category_id)
+		) ENGINE=InnoDB $charset_collate;";
+	}
+
+	/**
 	 * Get SQL for creating the custom mail messages table.
 	 *
 	 * @return string SQL statement.

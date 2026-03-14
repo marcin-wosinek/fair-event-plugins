@@ -37,6 +37,29 @@
 	background-color: #fff;
 }
 
+/* Category checkboxes */
+.fair-audience-mailing-categories {
+	border: 1px solid #ccc;
+	border-radius: 4px;
+	padding: 16px;
+	margin-bottom: 20px;
+}
+
+.fair-audience-mailing-categories legend {
+	font-weight: 500;
+	padding: 0 4px;
+}
+
+.fair-audience-mailing-category-label {
+	display: block;
+	margin: 8px 0;
+	cursor: pointer;
+}
+
+.fair-audience-mailing-category-label input[type="checkbox"] {
+	margin-right: 8px;
+}
+
 /* Button container */
 .fair-audience-mailing-signup .wp-block-button {
 	margin-top: 24px;

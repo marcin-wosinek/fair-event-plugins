@@ -101,11 +101,20 @@ const CSS_PREFIX = 'fair-audience-mailing';
 			return;
 		}
 
+		// Collect selected category IDs
+		const categoryCheckboxes = form.querySelectorAll(
+			'input[name="mailing_categories[]"]:checked'
+		);
+		const categoryIds = Array.from(categoryCheckboxes).map((cb) =>
+			parseInt(cb.value, 10)
+		);
+
 		// Build request data
 		const requestData = {
 			name: nameInput.value.trim(),
 			surname: surnameInput.value.trim(),
 			email: emailInput.value.trim(),
+			category_ids: categoryIds,
 		};
 
 		// Disable button and show loading state

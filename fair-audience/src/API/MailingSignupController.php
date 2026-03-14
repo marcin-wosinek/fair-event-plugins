@@ -8,6 +8,7 @@
 namespace FairAudience\API;
 
 use FairAudience\Database\ParticipantRepository;
+use FairAudience\Database\ParticipantCategoryRepository;
 use FairAudience\Database\EmailConfirmationTokenRepository;
 use FairAudience\Models\Participant;
 use FairAudience\Services\EmailService;
@@ -60,6 +61,13 @@ class MailingSignupController extends WP_REST_Controller {
 	private $email_service;
 
 	/**
+	 * Participant category repository instance.
+	 *
+	 * @var ParticipantCategoryRepository
+	 */
+	private $category_repository;
+
+	/**
 	 * Rate limit: max requests per email per hour.
 	 */
 	const RATE_LIMIT_MAX = 3;
@@ -76,6 +84,7 @@ class MailingSignupController extends WP_REST_Controller {
 		$this->participant_repository = new ParticipantRepository();
 		$this->token_repository       = new EmailConfirmationTokenRepository();
 		$this->email_service          = new EmailService();
+		$this->category_repository    = new ParticipantCategoryRepository();
 	}
 
 	/**
@@ -92,23 +101,30 @@ class MailingSignupController extends WP_REST_Controller {
 					'callback'            => array( $this, 'create_item' ),
 					'permission_callback' => '__return_true',
 					'args'                => array(
-						'name'    => array(
+						'name'         => array(
 							'type'              => 'string',
 							'required'          => true,
 							'sanitize_callback' => 'sanitize_text_field',
 						),
-						'surname' => array(
+						'surname'      => array(
 							'type'              => 'string',
 							'required'          => true,
 							'sanitize_callback' => 'sanitize_text_field',
 						),
-						'email'   => array(
+						'email'        => array(
 							'type'              => 'string',
 							'required'          => true,
 							'sanitize_callback' => 'sanitize_email',
 							'validate_callback' => function ( $value ) {
 								return is_email( $value );
 							},
+						),
+						'category_ids' => array(
+							'type'    => 'array',
+							'default' => array(),
+							'items'   => array(
+								'type' => 'integer',
+							),
 						),
 					),
 				),
@@ -143,9 +159,10 @@ class MailingSignupController extends WP_REST_Controller {
 	 * @return WP_REST_Response|WP_Error Response object or error.
 	 */
 	public function create_item( $request ) {
-		$name    = $request->get_param( 'name' );
-		$surname = $request->get_param( 'surname' );
-		$email   = $request->get_param( 'email' );
+		$name         = $request->get_param( 'name' );
+		$surname      = $request->get_param( 'surname' );
+		$email        = $request->get_param( 'email' );
+		$category_ids = $request->get_param( 'category_ids' ) ?? array();
 
 		// Validate email.
 		if ( ! is_email( $email ) ) {
@@ -185,6 +202,15 @@ class MailingSignupController extends WP_REST_Controller {
 			} else {
 				// Pending - resend confirmation email.
 				$token = $this->token_repository->create_token( $existing->id );
+
+				// Update pending category selections.
+				if ( ! empty( $category_ids ) ) {
+					set_transient(
+						'fair_audience_pending_cats_' . $existing->id,
+						array_map( 'intval', $category_ids ),
+						48 * HOUR_IN_SECONDS
+					);
+				}
 
 				if ( $token ) {
 					$this->email_service->send_confirmation_email( $existing, $token->token );
@@ -227,6 +253,15 @@ class MailingSignupController extends WP_REST_Controller {
 				'token_failed',
 				__( 'Failed to process signup. Please try again.', 'fair-audience' ),
 				array( 'status' => 500 )
+			);
+		}
+
+		// Store pending category selections (48 hours, matching token expiry).
+		if ( ! empty( $category_ids ) ) {
+			set_transient(
+				'fair_audience_pending_cats_' . $participant->id,
+				array_map( 'intval', $category_ids ),
+				48 * HOUR_IN_SECONDS
 			);
 		}
 
@@ -306,6 +341,14 @@ class MailingSignupController extends WP_REST_Controller {
 				__( 'Failed to confirm subscription. Please try again.', 'fair-audience' ),
 				array( 'status' => 500 )
 			);
+		}
+
+		// Apply pending category selections.
+		$transient_key      = 'fair_audience_pending_cats_' . $participant->id;
+		$pending_categories = get_transient( $transient_key );
+		if ( is_array( $pending_categories ) && ! empty( $pending_categories ) ) {
+			$this->category_repository->set_categories( $participant->id, $pending_categories );
+			delete_transient( $transient_key );
 		}
 
 		// Delete the token (one-time use).

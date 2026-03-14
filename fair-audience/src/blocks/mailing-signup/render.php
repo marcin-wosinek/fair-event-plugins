@@ -15,11 +15,35 @@
 defined( 'WPINC' ) || die;
 
 // Get block attributes.
-$submit_text     = $attributes['submitButtonText'] ?? __( 'Subscribe', 'fair-audience' );
-$success_message = $attributes['successMessage'] ?? __( 'Please check your email to confirm your subscription.', 'fair-audience' );
+$submit_text              = $attributes['submitButtonText'] ?? __( 'Subscribe', 'fair-audience' );
+$success_message          = $attributes['successMessage'] ?? __( 'Please check your email to confirm your subscription.', 'fair-audience' );
+$show_categories          = ! empty( $attributes['showCategories'] );
+$category_ids             = $attributes['categoryIds'] ?? array();
+$preselected_category_ids = $attributes['preselectedCategoryIds'] ?? array();
 
 // Generate unique ID for this form instance.
 $form_id = 'fair-audience-mailing-' . wp_unique_id();
+
+// Fetch categories if needed.
+$categories = array();
+if ( $show_categories ) {
+	$cat_args = array(
+		'taxonomy'   => 'category',
+		'hide_empty' => false,
+		'orderby'    => 'name',
+		'order'      => 'ASC',
+	);
+
+	// Filter to specific categories if set.
+	if ( ! empty( $category_ids ) ) {
+		$cat_args['include'] = array_map( 'intval', $category_ids );
+	}
+
+	$categories = get_terms( $cat_args );
+	if ( is_wp_error( $categories ) ) {
+		$categories = array();
+	}
+}
 
 // Get wrapper attributes.
 $wrapper_attributes = get_block_wrapper_attributes(
@@ -68,6 +92,23 @@ $wrapper_attributes = get_block_wrapper_attributes(
 				placeholder="<?php echo esc_attr__( 'Enter your email', 'fair-audience' ); ?>"
 			/>
 		</p>
+
+		<?php if ( $show_categories && ! empty( $categories ) ) : ?>
+		<fieldset class="fair-audience-mailing-categories">
+			<legend><?php echo esc_html__( 'I am interested in:', 'fair-audience' ); ?></legend>
+			<?php foreach ( $categories as $category ) : ?>
+			<label class="fair-audience-mailing-category-label">
+				<input
+					type="checkbox"
+					name="mailing_categories[]"
+					value="<?php echo esc_attr( $category->term_id ); ?>"
+					<?php checked( in_array( $category->term_id, $preselected_category_ids, true ) ); ?>
+				/>
+				<?php echo esc_html( $category->name ); ?>
+			</label>
+			<?php endforeach; ?>
+		</fieldset>
+		<?php endif; ?>
 
 		<div class="wp-block-button">
 			<button type="submit" class="wp-block-button__link wp-element-button fair-audience-mailing-submit-button">
