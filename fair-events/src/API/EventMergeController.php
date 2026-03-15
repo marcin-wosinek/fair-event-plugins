@@ -100,8 +100,6 @@ class EventMergeController extends WP_REST_Controller {
 	 * @return WP_REST_Response|WP_Error
 	 */
 	public function merge_preview( $request ) {
-		global $wpdb;
-
 		$event_date_id = $request->get_param( 'id' );
 
 		$event_date = EventDates::get_by_id( $event_date_id );
@@ -168,21 +166,9 @@ class EventMergeController extends WP_REST_Controller {
 		$wpdb->query( 'START TRANSACTION' );
 
 		try {
-			$this->process_linked_posts( $source_id, $target_id, $actions['linked_posts'] ?? 'skip' );
-			$this->process_categories( $source_id, $target_id, $actions['categories'] ?? 'skip' );
-			$this->process_simple_table( 'fair_events_group_pricing_rules', $source_id, $target_id, $actions['group_pricing_rules'] ?? 'skip' );
-			$this->process_simple_table( 'fair_events_ticket_types', $source_id, $target_id, $actions['ticket_types'] ?? 'skip' );
-			$this->process_simple_table( 'fair_events_ticket_sale_periods', $source_id, $target_id, $actions['ticket_sale_periods'] ?? 'skip' );
-			$this->process_simple_table( 'fair_events_group_permission_rules', $source_id, $target_id, $actions['group_permission_rules'] ?? 'skip' );
-			$this->process_image_exports( $source_id, $target_id, $actions['image_exports'] ?? 'skip' );
 			$this->process_event_photos( $source_id, $target_id, $actions['event_photos'] ?? 'skip' );
-
-			// Cross-plugin tables (check existence first).
 			$this->process_cross_plugin_table( 'fair_audience_event_participants', $source_id, $target_id, $actions['participants'] ?? 'skip' );
-			$this->process_cross_plugin_table( 'fair_audience_polls', $source_id, $target_id, $actions['polls'] ?? 'skip' );
-			$this->process_cross_plugin_table( 'fair_audience_gallery_access_keys', $source_id, $target_id, $actions['gallery_access_keys'] ?? 'skip' );
-			$this->process_cross_plugin_table( 'fair_audience_custom_mail_messages', $source_id, $target_id, $actions['custom_mail_messages'] ?? 'skip' );
-			$this->process_cross_plugin_table( 'fair_payment_financial_entries', $source_id, $target_id, $actions['financial_entries'] ?? 'skip' );
+			$this->process_cross_plugin_table( 'fair_audience_questionnaire_submissions', $source_id, $target_id, $actions['questionnaire_submissions'] ?? 'skip' );
 
 			if ( $delete_source ) {
 				EventDates::delete_by_id( $source_id );
@@ -215,35 +201,11 @@ class EventMergeController extends WP_REST_Controller {
 	 * @return array Associative array of key => count.
 	 */
 	private function get_linked_data_counts( $event_date_id ) {
-		global $wpdb;
-
 		$counts = array();
 
-		// Fair-events tables.
-		$counts['linked_posts']           = $this->count_rows( 'fair_event_date_posts', $event_date_id );
-		$counts['categories']             = $this->count_rows( 'fair_event_date_categories', $event_date_id );
-		$counts['group_pricing_rules']    = $this->count_rows( 'fair_events_group_pricing_rules', $event_date_id );
-		$counts['ticket_types']           = $this->count_rows( 'fair_events_ticket_types', $event_date_id );
-		$counts['ticket_sale_periods']    = $this->count_rows( 'fair_events_ticket_sale_periods', $event_date_id );
-		$counts['group_permission_rules'] = $this->count_rows( 'fair_events_group_permission_rules', $event_date_id );
-
-		// Image exports (postmeta).
-		$counts['image_exports'] = (int) $wpdb->get_var(
-			$wpdb->prepare(
-				"SELECT COUNT(*) FROM {$wpdb->postmeta} WHERE meta_key = '_fair_events_event_date_id' AND meta_value = %s",
-				$event_date_id
-			)
-		);
-
-		// Event photos (now keyed by event_date_id).
-		$counts['event_photos'] = $this->count_rows( 'fair_events_event_photos', $event_date_id );
-
-		// Cross-plugin tables.
-		$counts['participants']         = $this->count_rows_if_exists( 'fair_audience_event_participants', $event_date_id );
-		$counts['polls']                = $this->count_rows_if_exists( 'fair_audience_polls', $event_date_id );
-		$counts['gallery_access_keys']  = $this->count_rows_if_exists( 'fair_audience_gallery_access_keys', $event_date_id );
-		$counts['custom_mail_messages'] = $this->count_rows_if_exists( 'fair_audience_custom_mail_messages', $event_date_id );
-		$counts['financial_entries']    = $this->count_rows_if_exists( 'fair_payment_financial_entries', $event_date_id );
+		$counts['event_photos']              = $this->count_rows( 'fair_events_event_photos', $event_date_id );
+		$counts['participants']              = $this->count_rows_if_exists( 'fair_audience_event_participants', $event_date_id );
+		$counts['questionnaire_submissions'] = $this->count_rows_if_exists( 'fair_audience_questionnaire_submissions', $event_date_id );
 
 		return $counts;
 	}
@@ -290,215 +252,6 @@ class EventMergeController extends WP_REST_Controller {
 		}
 
 		return $this->count_rows( $table_suffix, $event_date_id );
-	}
-
-	/**
-	 * Process linked_posts junction table (handles duplicates).
-	 *
-	 * @param int    $source_id Source event date ID.
-	 * @param int    $target_id Target event date ID.
-	 * @param string $action    Action: move, delete, or skip.
-	 * @return void
-	 */
-	private function process_linked_posts( $source_id, $target_id, $action ) {
-		global $wpdb;
-
-		if ( 'skip' === $action ) {
-			return;
-		}
-
-		$table_name = $wpdb->prefix . 'fair_event_date_posts';
-
-		if ( 'delete' === $action ) {
-			$wpdb->delete( $table_name, array( 'event_date_id' => $source_id ), array( '%d' ) );
-			return;
-		}
-
-		if ( 'move' === $action ) {
-			// Get existing target post IDs to avoid duplicates.
-			$existing = $wpdb->get_col(
-				$wpdb->prepare(
-					'SELECT post_id FROM %i WHERE event_date_id = %d',
-					$table_name,
-					$target_id
-				)
-			);
-
-			$source_posts = $wpdb->get_col(
-				$wpdb->prepare(
-					'SELECT post_id FROM %i WHERE event_date_id = %d',
-					$table_name,
-					$source_id
-				)
-			);
-
-			foreach ( $source_posts as $post_id ) {
-				if ( in_array( (int) $post_id, array_map( 'intval', $existing ), true ) ) {
-					// Duplicate — just delete the source row.
-					$wpdb->delete(
-						$table_name,
-						array(
-							'event_date_id' => $source_id,
-							'post_id'       => $post_id,
-						),
-						array( '%d', '%d' )
-					);
-				} else {
-					$wpdb->update(
-						$table_name,
-						array( 'event_date_id' => $target_id ),
-						array(
-							'event_date_id' => $source_id,
-							'post_id'       => $post_id,
-						),
-						array( '%d' ),
-						array( '%d', '%d' )
-					);
-				}
-			}
-		}
-	}
-
-	/**
-	 * Process categories junction table (handles duplicates).
-	 *
-	 * @param int    $source_id Source event date ID.
-	 * @param int    $target_id Target event date ID.
-	 * @param string $action    Action: move, delete, or skip.
-	 * @return void
-	 */
-	private function process_categories( $source_id, $target_id, $action ) {
-		global $wpdb;
-
-		if ( 'skip' === $action ) {
-			return;
-		}
-
-		$table_name = $wpdb->prefix . 'fair_event_date_categories';
-
-		if ( 'delete' === $action ) {
-			$wpdb->delete( $table_name, array( 'event_date_id' => $source_id ), array( '%d' ) );
-			return;
-		}
-
-		if ( 'move' === $action ) {
-			$existing = $wpdb->get_col(
-				$wpdb->prepare(
-					'SELECT category_id FROM %i WHERE event_date_id = %d',
-					$table_name,
-					$target_id
-				)
-			);
-
-			$source_cats = $wpdb->get_col(
-				$wpdb->prepare(
-					'SELECT category_id FROM %i WHERE event_date_id = %d',
-					$table_name,
-					$source_id
-				)
-			);
-
-			foreach ( $source_cats as $cat_id ) {
-				if ( in_array( (int) $cat_id, array_map( 'intval', $existing ), true ) ) {
-					$wpdb->delete(
-						$table_name,
-						array(
-							'event_date_id' => $source_id,
-							'category_id'   => $cat_id,
-						),
-						array( '%d', '%d' )
-					);
-				} else {
-					$wpdb->update(
-						$table_name,
-						array( 'event_date_id' => $target_id ),
-						array(
-							'event_date_id' => $source_id,
-							'category_id'   => $cat_id,
-						),
-						array( '%d' ),
-						array( '%d', '%d' )
-					);
-				}
-			}
-		}
-	}
-
-	/**
-	 * Process a simple 1:N table (UPDATE or DELETE).
-	 *
-	 * @param string $table_suffix Table name without prefix.
-	 * @param int    $source_id    Source event date ID.
-	 * @param int    $target_id    Target event date ID.
-	 * @param string $action       Action: move, delete, or skip.
-	 * @return void
-	 */
-	private function process_simple_table( $table_suffix, $source_id, $target_id, $action ) {
-		global $wpdb;
-
-		if ( 'skip' === $action ) {
-			return;
-		}
-
-		$table_name = $wpdb->prefix . $table_suffix;
-
-		if ( 'delete' === $action ) {
-			$wpdb->delete( $table_name, array( 'event_date_id' => $source_id ), array( '%d' ) );
-			return;
-		}
-
-		if ( 'move' === $action ) {
-			$wpdb->update(
-				$table_name,
-				array( 'event_date_id' => $target_id ),
-				array( 'event_date_id' => $source_id ),
-				array( '%d' ),
-				array( '%d' )
-			);
-		}
-	}
-
-	/**
-	 * Process image exports (postmeta-based).
-	 *
-	 * @param int    $source_id Source event date ID.
-	 * @param int    $target_id Target event date ID.
-	 * @param string $action    Action: move, delete, or skip.
-	 * @return void
-	 */
-	private function process_image_exports( $source_id, $target_id, $action ) {
-		global $wpdb;
-
-		if ( 'skip' === $action ) {
-			return;
-		}
-
-		if ( 'delete' === $action ) {
-			$attachment_ids = $wpdb->get_col(
-				$wpdb->prepare(
-					"SELECT post_id FROM {$wpdb->postmeta} WHERE meta_key = '_fair_events_event_date_id' AND meta_value = %s",
-					$source_id
-				)
-			);
-
-			foreach ( $attachment_ids as $attachment_id ) {
-				wp_delete_attachment( $attachment_id, true );
-			}
-			return;
-		}
-
-		if ( 'move' === $action ) {
-			$wpdb->update(
-				$wpdb->postmeta,
-				array( 'meta_value' => $target_id ),
-				array(
-					'meta_key'   => '_fair_events_event_date_id',
-					'meta_value' => $source_id,
-				),
-				array( '%s' ),
-				array( '%s', '%s' )
-			);
-		}
 	}
 
 	/**
@@ -587,6 +340,19 @@ class EventMergeController extends WP_REST_Controller {
 			return;
 		}
 
-		$this->process_simple_table( $table_suffix, $source_id, $target_id, $action );
+		if ( 'delete' === $action ) {
+			$wpdb->delete( $table_name, array( 'event_date_id' => $source_id ), array( '%d' ) );
+			return;
+		}
+
+		if ( 'move' === $action ) {
+			$wpdb->update(
+				$table_name,
+				array( 'event_date_id' => $target_id ),
+				array( 'event_date_id' => $source_id ),
+				array( '%d' ),
+				array( '%d' )
+			);
+		}
 	}
 }

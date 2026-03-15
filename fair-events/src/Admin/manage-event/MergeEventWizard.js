@@ -24,19 +24,9 @@ import { __ } from '@wordpress/i18n';
 import apiFetch from '@wordpress/api-fetch';
 
 const RELATIONSHIP_LABELS = {
-	linked_posts: __('Linked Posts', 'fair-events'),
-	categories: __('Categories', 'fair-events'),
-	group_pricing_rules: __('Group Pricing Rules', 'fair-events'),
-	ticket_types: __('Ticket Types', 'fair-events'),
-	ticket_sale_periods: __('Ticket Sale Periods', 'fair-events'),
-	group_permission_rules: __('Group Permission Rules', 'fair-events'),
-	image_exports: __('Image Exports', 'fair-events'),
 	event_photos: __('Event Photos', 'fair-events'),
 	participants: __('Participants', 'fair-events'),
-	polls: __('Polls', 'fair-events'),
-	gallery_access_keys: __('Gallery Access Keys', 'fair-events'),
-	custom_mail_messages: __('Custom Mail Messages', 'fair-events'),
-	financial_entries: __('Financial Entries', 'fair-events'),
+	questionnaire_submissions: __('Questionnaire Responses', 'fair-events'),
 };
 
 const ACTION_OPTIONS = [
