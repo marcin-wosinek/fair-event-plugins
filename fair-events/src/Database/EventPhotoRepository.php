@@ -52,53 +52,24 @@ class EventPhotoRepository {
 	}
 
 	/**
-	 * Get all photos for an event.
+	 * Set event date for an attachment.
+	 * Replaces any existing assignment (1-to-1 relationship).
 	 *
-	 * @param int $event_id Event ID.
-	 * @return EventPhoto[] Array of event-photo relationships.
-	 */
-	public function get_attachments_for_event( $event_id ) {
-		global $wpdb;
-
-		$table_name = $this->get_table_name();
-
-		$results = $wpdb->get_results(
-			$wpdb->prepare(
-				'SELECT * FROM %i WHERE event_id = %d ORDER BY created_at ASC',
-				$table_name,
-				$event_id
-			),
-			ARRAY_A
-		);
-
-		return array_map(
-			function ( $row ) {
-				return new EventPhoto( $row );
-			},
-			$results
-		);
-	}
-
-	/**
-	 * Set event for an attachment.
-	 * Replaces any existing event (1-to-1 relationship).
-	 *
-	 * @param int      $attachment_id Attachment ID.
-	 * @param int      $event_id      Event ID (0 to remove).
-	 * @param int|null $event_date_id Optional event date ID.
+	 * @param int $attachment_id  Attachment ID.
+	 * @param int $event_date_id  Event date ID (0 to remove).
 	 * @return int|bool Relationship ID or true on removal, false on failure.
 	 */
-	public function set_event( $attachment_id, $event_id, $event_date_id = null ) {
-		// Remove existing event assignment if any.
+	public function set_event_date( $attachment_id, $event_date_id ) {
+		// Remove existing assignment if any.
 		$this->remove_from_event( $attachment_id );
 
-		if ( empty( $event_id ) ) {
-			return true; // Just removing, no new event.
+		if ( empty( $event_date_id ) ) {
+			return true; // Just removing, no new assignment.
 		}
 
 		$relationship = new EventPhoto(
 			array(
-				'event_id'      => $event_id,
+				'event_id'      => 0,
 				'event_date_id' => $event_date_id,
 				'attachment_id' => $attachment_id,
 			)
@@ -126,43 +97,21 @@ class EventPhotoRepository {
 	}
 
 	/**
-	 * Remove all photos from an event.
+	 * Remove all photos from an event date.
 	 *
-	 * @param int $event_id Event ID.
+	 * @param int $event_date_id Event date ID.
 	 * @return bool Success.
 	 */
-	public function remove_all_for_event( $event_id ) {
+	public function remove_all_for_event_date( $event_date_id ) {
 		global $wpdb;
 
 		$table_name = $this->get_table_name();
 
 		return $wpdb->delete(
 			$table_name,
-			array( 'event_id' => $event_id ),
+			array( 'event_date_id' => $event_date_id ),
 			array( '%d' )
 		) !== false;
-	}
-
-	/**
-	 * Get all attachment IDs for an event.
-	 *
-	 * @param int $event_id Event ID.
-	 * @return int[] Array of attachment IDs.
-	 */
-	public function get_attachment_ids_by_event( $event_id ) {
-		global $wpdb;
-
-		$table_name = $this->get_table_name();
-
-		$result = $wpdb->get_col(
-			$wpdb->prepare(
-				'SELECT attachment_id FROM %i WHERE event_id = %d',
-				$table_name,
-				$event_id
-			)
-		);
-
-		return array_map( 'intval', $result );
 	}
 
 	/**
@@ -216,21 +165,21 @@ class EventPhotoRepository {
 	}
 
 	/**
-	 * Get count of photos for an event.
+	 * Get count of photos for an event date.
 	 *
-	 * @param int $event_id Event ID.
+	 * @param int $event_date_id Event date ID.
 	 * @return int Count.
 	 */
-	public function get_count_by_event( $event_id ) {
+	public function get_count_by_event_date( $event_date_id ) {
 		global $wpdb;
 
 		$table_name = $this->get_table_name();
 
 		return (int) $wpdb->get_var(
 			$wpdb->prepare(
-				'SELECT COUNT(*) FROM %i WHERE event_id = %d',
+				'SELECT COUNT(*) FROM %i WHERE event_date_id = %d',
 				$table_name,
-				$event_id
+				$event_date_id
 			)
 		);
 	}

@@ -9,7 +9,7 @@ namespace FairEvents\API;
 
 use FairEvents\Database\EventPhotoRepository;
 use FairEvents\Database\PhotoLikeRepository;
-use FairEvents\Settings\Settings;
+use FairEvents\Models\EventDates;
 use WP_REST_Controller;
 use WP_REST_Server;
 use WP_REST_Request;
@@ -35,13 +35,13 @@ class EventGalleryEndpoint extends WP_REST_Controller {
 	 *
 	 * @var string
 	 */
-	protected $rest_base = 'events/(?P<event_id>[\d]+)/gallery';
+	protected $rest_base = 'event-dates/(?P<event_date_id>[\d]+)/gallery';
 
 	/**
 	 * Register REST API routes.
 	 */
 	public function register_routes() {
-		// GET /fair-events/v1/events/{event_id}/gallery.
+		// GET /fair-events/v1/event-dates/{event_date_id}/gallery.
 		register_rest_route(
 			$this->namespace,
 			'/' . $this->rest_base,
@@ -51,7 +51,7 @@ class EventGalleryEndpoint extends WP_REST_Controller {
 					'callback'            => array( $this, 'get_items' ),
 					'permission_callback' => '__return_true', // Public endpoint.
 					'args'                => array(
-						'event_id' => array(
+						'event_date_id' => array(
 							'type'     => 'integer',
 							'required' => true,
 						),
@@ -62,18 +62,17 @@ class EventGalleryEndpoint extends WP_REST_Controller {
 	}
 
 	/**
-	 * Get all photos for an event.
+	 * Get all photos for an event date.
 	 *
 	 * @param WP_REST_Request $request Request object.
 	 * @return WP_REST_Response|WP_Error Response object or error.
 	 */
 	public function get_items( $request ) {
-		$event_id = $request->get_param( 'event_id' );
+		$event_date_id = $request->get_param( 'event_date_id' );
 
-		// Validate event exists and is an enabled post type.
-		$event              = get_post( $event_id );
-		$enabled_post_types = Settings::get_enabled_post_types();
-		if ( ! $event || ! in_array( $event->post_type, $enabled_post_types, true ) ) {
+		// Validate event date exists.
+		$event_date = EventDates::get_by_id( $event_date_id );
+		if ( ! $event_date ) {
 			return new WP_Error(
 				'invalid_event',
 				__( 'Event not found.', 'fair-events' ),
@@ -82,7 +81,7 @@ class EventGalleryEndpoint extends WP_REST_Controller {
 		}
 
 		$repository     = new EventPhotoRepository();
-		$attachment_ids = $repository->get_attachment_ids_by_event( $event_id );
+		$attachment_ids = $repository->get_attachment_ids_by_event_date( $event_date_id );
 
 		if ( empty( $attachment_ids ) ) {
 			return rest_ensure_response( array() );

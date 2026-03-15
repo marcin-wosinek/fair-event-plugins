@@ -8,7 +8,7 @@
 namespace FairEvents\API;
 
 use FairEvents\Database\EventPhotoRepository;
-use FairEvents\Settings\Settings;
+use FairEvents\Models\EventDates;
 use WP_REST_Controller;
 use WP_REST_Server;
 use WP_REST_Request;
@@ -34,7 +34,7 @@ class PhotoDownloadController extends WP_REST_Controller {
 	 *
 	 * @var string
 	 */
-	protected $rest_base = 'events/(?P<event_id>[\d]+)/gallery/download';
+	protected $rest_base = 'event-dates/(?P<event_date_id>[\d]+)/gallery/download';
 
 	/**
 	 * Register REST API routes.
@@ -51,11 +51,11 @@ class PhotoDownloadController extends WP_REST_Controller {
 						return current_user_can( 'manage_options' );
 					},
 					'args'                => array(
-						'event_id' => array(
+						'event_date_id' => array(
 							'type'     => 'integer',
 							'required' => true,
 						),
-						'ids'      => array(
+						'ids'           => array(
 							'type'              => 'string',
 							'required'          => false,
 							'sanitize_callback' => 'sanitize_text_field',
@@ -73,12 +73,11 @@ class PhotoDownloadController extends WP_REST_Controller {
 	 * @return WP_REST_Response|WP_Error Response object or error.
 	 */
 	public function get_items( $request ) {
-		$event_id = $request->get_param( 'event_id' );
+		$event_date_id = $request->get_param( 'event_date_id' );
 
-		// Validate event exists.
-		$event              = get_post( $event_id );
-		$enabled_post_types = Settings::get_enabled_post_types();
-		if ( ! $event || ! in_array( $event->post_type, $enabled_post_types, true ) ) {
+		// Validate event date exists.
+		$event_date = EventDates::get_by_id( $event_date_id );
+		if ( ! $event_date ) {
 			return new WP_Error(
 				'invalid_event',
 				__( 'Event not found.', 'fair-events' ),
@@ -87,7 +86,7 @@ class PhotoDownloadController extends WP_REST_Controller {
 		}
 
 		$repository     = new EventPhotoRepository();
-		$attachment_ids = $repository->get_attachment_ids_by_event( $event_id );
+		$attachment_ids = $repository->get_attachment_ids_by_event_date( $event_date_id );
 
 		// Filter by specific IDs if provided.
 		$ids_param = $request->get_param( 'ids' );
@@ -140,8 +139,9 @@ class PhotoDownloadController extends WP_REST_Controller {
 		$zip->close();
 
 		// Stream the ZIP file.
-		$event_slug = sanitize_title( $event->post_title );
-		$filename   = $event_slug . '-photos.zip';
+		$event_title = $event_date->title ?? 'event';
+		$event_slug  = sanitize_title( $event_title );
+		$filename    = $event_slug . '-photos.zip';
 
 		header( 'Content-Type: application/zip' );
 		header( 'Content-Disposition: attachment; filename="' . $filename . '"' );

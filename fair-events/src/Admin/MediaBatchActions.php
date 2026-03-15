@@ -112,16 +112,16 @@ class MediaBatchActions {
 			wp_die( esc_html__( 'You do not have permission to access this page.', 'fair-events' ) );
 		}
 
-		// Get event ID.
-		$event_id = isset( $_POST['event_id'] ) ? absint( $_POST['event_id'] ) : 0;
+		// Get event date ID.
+		$event_date_id = isset( $_POST['event_id'] ) ? absint( $_POST['event_id'] ) : 0;
 
-		if ( ! $event_id ) {
+		if ( ! $event_date_id ) {
 			wp_die( esc_html__( 'Please select an event.', 'fair-events' ) );
 		}
 
-		// Verify event exists.
-		$event = get_post( $event_id );
-		if ( ! $event || 'fair_event' !== $event->post_type ) {
+		// Verify event date exists.
+		$event_date = \FairEvents\Models\EventDates::get_by_id( $event_date_id );
+		if ( ! $event_date ) {
 			wp_die( esc_html__( 'Invalid event selected.', 'fair-events' ) );
 		}
 
@@ -133,7 +133,7 @@ class MediaBatchActions {
 			wp_die( esc_html__( 'No photos to assign.', 'fair-events' ) );
 		}
 
-		// Assign photos to event.
+		// Assign photos to event date.
 		$repository = new EventPhotoRepository();
 		$assigned   = 0;
 
@@ -143,7 +143,7 @@ class MediaBatchActions {
 				continue;
 			}
 
-			$repository->set_event( $attachment_id, $event_id );
+			$repository->set_event_date( $attachment_id, $event_date_id );
 			++$assigned;
 		}
 
@@ -151,7 +151,7 @@ class MediaBatchActions {
 		$redirect_url = add_query_arg(
 			array(
 				'fair_events_batch_assigned' => $assigned,
-				'fair_events_batch_event'    => $event_id,
+				'fair_events_batch_event'    => $event_date_id,
 			),
 			admin_url( 'upload.php' )
 		);
@@ -182,16 +182,8 @@ class MediaBatchActions {
 			wp_die( esc_html__( 'No photos selected.', 'fair-events' ) );
 		}
 
-		// Get events for dropdown.
-		$events = get_posts(
-			array(
-				'post_type'      => 'fair_event',
-				'posts_per_page' => -1,
-				'orderby'        => 'title',
-				'order'          => 'ASC',
-				'post_status'    => 'any',
-			)
-		);
+		// Get event dates for dropdown.
+		$event_dates = \FairEvents\Models\EventDates::get_all();
 
 		?>
 		<div class="wrap">
@@ -244,9 +236,9 @@ class MediaBatchActions {
 						<td>
 							<select name="event_id" id="fair_events_event_id" required>
 								<option value=""><?php esc_html_e( '— Select Event —', 'fair-events' ); ?></option>
-								<?php foreach ( $events as $event ) : ?>
-									<option value="<?php echo esc_attr( $event->ID ); ?>">
-										<?php echo esc_html( $event->post_title ); ?>
+								<?php foreach ( $event_dates as $ed ) : ?>
+									<option value="<?php echo esc_attr( $ed->id ); ?>">
+										<?php echo esc_html( $ed->title ?: $ed->start_datetime ); ?>
 									</option>
 								<?php endforeach; ?>
 							</select>
@@ -278,11 +270,12 @@ class MediaBatchActions {
 			return;
 		}
 
-		$assigned = absint( $_GET['fair_events_batch_assigned'] );
-		$event_id = isset( $_GET['fair_events_batch_event'] ) ? absint( $_GET['fair_events_batch_event'] ) : 0;
-		$event    = get_post( $event_id );
+		$assigned      = absint( $_GET['fair_events_batch_assigned'] );
+		$event_date_id = isset( $_GET['fair_events_batch_event'] ) ? absint( $_GET['fair_events_batch_event'] ) : 0;
+		$event_date    = \FairEvents\Models\EventDates::get_by_id( $event_date_id );
 
-		if ( $assigned > 0 && $event ) {
+		if ( $assigned > 0 && $event_date ) {
+			$title   = $event_date->title ?: $event_date->start_datetime;
 			$message = sprintf(
 				/* translators: 1: number of photos, 2: event title */
 				_n(
@@ -292,7 +285,7 @@ class MediaBatchActions {
 					'fair-events'
 				),
 				$assigned,
-				$event->post_title
+				$title
 			);
 
 			printf(

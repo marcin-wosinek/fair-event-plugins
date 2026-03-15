@@ -53,8 +53,8 @@ class EventGalleryPage {
 	 * Handle the gallery page template.
 	 */
 	public static function handle_template() {
-		$event_id    = get_query_var( 'event_gallery_id' );
-		$gallery_key = get_query_var( 'gallery_key' );
+		$event_date_id = get_query_var( 'event_gallery_id' );
+		$gallery_key   = get_query_var( 'gallery_key' );
 
 		// Handle gallery_key access (token-based).
 		if ( ! empty( $gallery_key ) ) {
@@ -62,17 +62,13 @@ class EventGalleryPage {
 			return;
 		}
 
-		if ( empty( $event_id ) ) {
+		if ( empty( $event_date_id ) ) {
 			return;
 		}
 
-		// Resolve to primary event_id for secondary linked posts.
-		$event_id = self::resolve_primary_event_id( $event_id );
-
-		// Validate event exists and is an enabled post type.
-		$event              = get_post( $event_id );
-		$enabled_post_types = Settings::get_enabled_post_types();
-		if ( ! $event || ! in_array( $event->post_type, $enabled_post_types, true ) ) {
+		// Validate event date exists.
+		$event_date = \FairEvents\Models\EventDates::get_by_id( $event_date_id );
+		if ( ! $event_date ) {
 			global $wp_query;
 			$wp_query->set_404();
 			status_header( 404 );
@@ -83,13 +79,13 @@ class EventGalleryPage {
 
 		// Check if user is logged in.
 		if ( ! is_user_logged_in() ) {
-			$redirect_url = self::get_gallery_url( $event_id );
+			$redirect_url = self::get_gallery_url( $event_date_id );
 			wp_safe_redirect( wp_login_url( $redirect_url ) );
 			exit;
 		}
 
 		// Render the gallery page (user-based access).
-		self::render_page( $event );
+		self::render_page( $event_date );
 		exit;
 	}
 
@@ -102,7 +98,7 @@ class EventGalleryPage {
 		// Validate the token via fair-audience repository.
 		$access_data = self::validate_gallery_token( $gallery_key );
 
-		if ( ! $access_data ) {
+		if ( ! $access_data || ! $access_data['event_date_id'] ) {
 			// Invalid token - show error page.
 			global $wp_query;
 			$wp_query->set_404();
@@ -112,10 +108,9 @@ class EventGalleryPage {
 			exit;
 		}
 
-		// Get the event.
-		$event              = get_post( $access_data['event_id'] );
-		$enabled_post_types = Settings::get_enabled_post_types();
-		if ( ! $event || ! in_array( $event->post_type, $enabled_post_types, true ) ) {
+		// Get the event date.
+		$event_date = \FairEvents\Models\EventDates::get_by_id( $access_data['event_date_id'] );
+		if ( ! $event_date ) {
 			global $wp_query;
 			$wp_query->set_404();
 			status_header( 404 );
@@ -125,7 +120,7 @@ class EventGalleryPage {
 		}
 
 		// Render the gallery page with participant context.
-		self::render_page( $event, $access_data['participant_id'] );
+		self::render_page( $event_date, $access_data['participant_id'] );
 		exit;
 	}
 
@@ -149,7 +144,7 @@ class EventGalleryPage {
 		}
 
 		return array(
-			'event_id'       => $access_key->event_id,
+			'event_date_id'  => $access_key->event_date_id,
 			'participant_id' => $access_key->participant_id,
 		);
 	}
@@ -157,12 +152,14 @@ class EventGalleryPage {
 	/**
 	 * Render the gallery page.
 	 *
-	 * @param WP_Post  $event          Event post object.
+	 * @param object   $event_date     Event date object.
 	 * @param int|null $participant_id Optional participant ID for token-based access.
 	 */
-	private static function render_page( $event, $participant_id = null ) {
+	private static function render_page( $event_date, $participant_id = null ) {
 		// Enqueue scripts and styles.
-		self::enqueue_assets( $event, $participant_id );
+		self::enqueue_assets( $event_date, $participant_id );
+
+		$title = $event_date->title ?? '';
 
 		// Render the page.
 		?>
@@ -171,14 +168,13 @@ class EventGalleryPage {
 		<head>
 			<meta charset="<?php bloginfo( 'charset' ); ?>">
 			<meta name="viewport" content="width=device-width, initial-scale=1">
-			<title><?php echo esc_html( $event->post_title ); ?> - <?php bloginfo( 'name' ); ?></title>
+			<title><?php echo esc_html( $title ); ?> - <?php bloginfo( 'name' ); ?></title>
 			<?php wp_head(); ?>
 		</head>
 		<body class="fair-events-gallery-page">
 			<div id="fair-events-gallery-root"
-				data-event-id="<?php echo esc_attr( $event->ID ); ?>"
-				data-event-title="<?php echo esc_attr( $event->post_title ); ?>"
-				data-event-url="<?php echo esc_url( get_permalink( $event->ID ) ); ?>"
+				data-event-date-id="<?php echo esc_attr( $event_date->id ); ?>"
+				data-event-title="<?php echo esc_attr( $title ); ?>"
 				<?php if ( $participant_id ) : ?>
 				data-participant-id="<?php echo esc_attr( $participant_id ); ?>"
 				<?php endif; ?>
@@ -193,10 +189,10 @@ class EventGalleryPage {
 	/**
 	 * Enqueue scripts and styles for the gallery page.
 	 *
-	 * @param WP_Post  $event          Event post object.
+	 * @param object   $event_date     Event date object.
 	 * @param int|null $participant_id Optional participant ID for token-based access.
 	 */
-	private static function enqueue_assets( $event, $participant_id = null ) {
+	private static function enqueue_assets( $event_date, $participant_id = null ) {
 		$asset_file = FAIR_EVENTS_PLUGIN_DIR . 'build/frontend/event-gallery.asset.php';
 
 		if ( ! file_exists( $asset_file ) ) {
@@ -220,14 +216,15 @@ class EventGalleryPage {
 			$asset['version']
 		);
 
+		$title = $event_date->title ?? '';
+
 		// Build script data.
 		$script_data = array(
-			'eventId'    => $event->ID,
-			'eventTitle' => $event->post_title,
-			'eventUrl'   => get_permalink( $event->ID ),
-			'apiUrl'     => rest_url( 'fair-events/v1' ),
-			'nonce'      => wp_create_nonce( 'wp_rest' ),
-			'i18n'       => array(
+			'eventDateId' => $event_date->id,
+			'eventTitle'  => $title,
+			'apiUrl'      => rest_url( 'fair-events/v1' ),
+			'nonce'       => wp_create_nonce( 'wp_rest' ),
+			'i18n'        => array(
 				'loading'  => __( 'Loading...', 'fair-events' ),
 				'error'    => __( 'Failed to load photos.', 'fair-events' ),
 				'noPhotos' => __( 'No photos available for this event.', 'fair-events' ),
@@ -274,23 +271,25 @@ class EventGalleryPage {
 		}
 
 		// Check if event has photos.
-		$event_id = get_the_ID();
-		if ( ! $event_id ) {
+		$post_id = get_the_ID();
+		if ( ! $post_id ) {
 			return $content;
 		}
 
-		// Resolve to primary event_id for secondary linked posts.
-		$resolved_event_id = self::resolve_primary_event_id( $event_id );
+		// Resolve post_id to event_date_id.
+		$event_date = \FairEvents\Models\EventDates::get_by_event_id( $post_id );
+		if ( ! $event_date ) {
+			return $content;
+		}
 
 		$repository  = new \FairEvents\Database\EventPhotoRepository();
-		$photo_count = $repository->get_count_by_event( $resolved_event_id );
+		$photo_count = $repository->get_count_by_event_date( $event_date->id );
 
 		if ( $photo_count < 1 ) {
 			return $content;
 		}
 
-		// Build gallery link using primary event_id.
-		$gallery_url = self::get_gallery_url( $resolved_event_id );
+		$gallery_url = self::get_gallery_url( $event_date->id );
 		$link_text   = sprintf(
 			/* translators: %d: number of photos */
 			_n(
@@ -312,40 +311,15 @@ class EventGalleryPage {
 	}
 
 	/**
-	 * Resolve a post ID to the primary event_id.
-	 *
-	 * If the given post_id is a secondary linked post, returns the primary
-	 * event_id from the event_dates table. Otherwise returns the input unchanged.
-	 *
-	 * @param int $post_id Post ID to resolve.
-	 * @return int The primary event_id, or the input if not a secondary post.
-	 */
-	private static function resolve_primary_event_id( $post_id ) {
-		$event_date = \FairEvents\Models\EventDates::get_by_event_id( $post_id );
-
-		if ( ! $event_date ) {
-			return $post_id;
-		}
-
-		// If event_id is set and different from the given post_id, the given post
-		// is a secondary linked post - return the primary event_id.
-		if ( $event_date->event_id && (int) $event_date->event_id !== (int) $post_id ) {
-			return (int) $event_date->event_id;
-		}
-
-		return $post_id;
-	}
-
-	/**
-	 * Get the gallery URL for an event.
+	 * Get the gallery URL for an event date.
 	 *
 	 * Uses query string format to work with any permalink structure.
 	 *
-	 * @param int $event_id Event ID.
+	 * @param int $event_date_id Event date ID.
 	 * @return string Gallery URL.
 	 */
-	public static function get_gallery_url( $event_id ) {
-		return add_query_arg( 'event_gallery_id', $event_id, home_url( '/' ) );
+	public static function get_gallery_url( $event_date_id ) {
+		return add_query_arg( 'event_gallery_id', $event_date_id, home_url( '/' ) );
 	}
 
 	/**

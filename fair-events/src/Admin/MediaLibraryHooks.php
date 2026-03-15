@@ -52,22 +52,23 @@ class MediaLibraryHooks {
 	 * @return array Modified form fields.
 	 */
 	public static function add_event_field( $form_fields, $post ) {
-		// Get current event assignment.
-		$repository       = new EventPhotoRepository();
-		$event_photo      = $repository->get_event_for_attachment( $post->ID );
-		$current_event_id = $event_photo ? $event_photo->event_id : 0;
+		// Get current event date assignment.
+		$repository            = new EventPhotoRepository();
+		$event_photo           = $repository->get_event_for_attachment( $post->ID );
+		$current_event_date_id = $event_photo ? (int) $event_photo->event_date_id : 0;
 
-		// Get all events for dropdown.
-		$events = EventRepository::get_all( array( 'post_status' => 'any' ) );
+		// Get all event dates for dropdown.
+		$event_dates = \FairEvents\Models\EventDates::get_all();
 
 		$options = '<option value="">' . __( '— Select Event —', 'fair-events' ) . '</option>';
-		foreach ( $events as $event ) {
-			$selected = selected( $current_event_id, $event->ID, false );
+		foreach ( $event_dates as $ed ) {
+			$selected = selected( $current_event_date_id, (int) $ed->id, false );
+			$label    = $ed->title ?: $ed->start_datetime;
 			$options .= sprintf(
 				'<option value="%d"%s>%s</option>',
-				$event->ID,
+				$ed->id,
 				$selected,
-				esc_html( $event->post_title )
+				esc_html( $label )
 			);
 		}
 
@@ -98,11 +99,10 @@ class MediaLibraryHooks {
 			return $post;
 		}
 
-		$event_id   = absint( $attachment['fair_event'] );
-		$repository = new EventPhotoRepository();
+		$event_date_id = absint( $attachment['fair_event'] );
+		$repository    = new EventPhotoRepository();
 
-		// set_event handles remove + assign (enforces 1-to-1).
-		$repository->set_event( $post['ID'], $event_id );
+		$repository->set_event_date( $post['ID'], $event_date_id );
 
 		return $post;
 	}
@@ -119,16 +119,17 @@ class MediaLibraryHooks {
 
 		$selected = isset( $_GET['fair_event_filter'] ) ? absint( $_GET['fair_event_filter'] ) : 0;
 
-		$events = EventRepository::get_all();
+		$event_dates = \FairEvents\Models\EventDates::get_all();
 
 		echo '<select name="fair_event_filter">';
 		echo '<option value="">' . esc_html__( 'All Events', 'fair-events' ) . '</option>';
-		foreach ( $events as $event ) {
+		foreach ( $event_dates as $ed ) {
+			$label = $ed->title ?: $ed->start_datetime;
 			printf(
 				'<option value="%d"%s>%s</option>',
-				$event->ID,
-				selected( $selected, $event->ID, false ),
-				esc_html( $event->post_title )
+				$ed->id,
+				selected( $selected, (int) $ed->id, false ),
+				esc_html( $label )
 			);
 		}
 		echo '</select>';
@@ -150,10 +151,10 @@ class MediaLibraryHooks {
 			return;
 		}
 
-		$event_id   = absint( $_GET['fair_event_filter'] );
-		$repository = new EventPhotoRepository();
+		$event_date_id = absint( $_GET['fair_event_filter'] );
+		$repository    = new EventPhotoRepository();
 
-		$attachment_ids = $repository->get_attachment_ids_by_event( $event_id );
+		$attachment_ids = $repository->get_attachment_ids_by_event_date( $event_date_id );
 
 		if ( ! empty( $attachment_ids ) ) {
 			$query->set( 'post__in', $attachment_ids );
@@ -188,19 +189,15 @@ class MediaLibraryHooks {
 		$repository  = new EventPhotoRepository();
 		$event_photo = $repository->get_event_for_attachment( $post_id );
 
-		if ( ! $event_photo ) {
+		if ( ! $event_photo || ! $event_photo->event_date_id ) {
 			echo '—';
 			return;
 		}
 
-		$event = get_post( $event_photo->event_id );
+		$event_date = \FairEvents\Models\EventDates::get_by_id( $event_photo->event_date_id );
 
-		if ( $event ) {
-			printf(
-				'<a href="%s">%s</a>',
-				esc_url( get_edit_post_link( $event_photo->event_id ) ),
-				esc_html( $event->post_title )
-			);
+		if ( $event_date ) {
+			echo esc_html( $event_date->title ?: $event_date->start_datetime );
 		} else {
 			echo '—';
 		}
@@ -210,7 +207,7 @@ class MediaLibraryHooks {
 	 * Add event selector to bulk upload page.
 	 */
 	public static function add_bulk_upload_event_selector() {
-		$events = EventRepository::get_all( array( 'post_status' => 'any' ) );
+		$event_dates = \FairEvents\Models\EventDates::get_all();
 
 		// Allow pre-selecting event via URL parameter.
 		// phpcs:ignore WordPress.Security.NonceVerification.Recommended
@@ -232,9 +229,9 @@ class MediaLibraryHooks {
 				</label>
 				<select id="fair-events-bulk-upload-selector" style="margin-left: 10px; min-width: 250px;">
 					<option value=""><?php esc_html_e( '— Select Event —', 'fair-events' ); ?></option>
-					<?php foreach ( $events as $event ) : ?>
-						<option value="<?php echo esc_attr( $event->ID ); ?>" <?php selected( $selected, $event->ID ); ?>>
-							<?php echo esc_html( $event->post_title ); ?>
+					<?php foreach ( $event_dates as $ed ) : ?>
+						<option value="<?php echo esc_attr( $ed->id ); ?>" <?php selected( $selected, (int) $ed->id ); ?>>
+							<?php echo esc_html( $ed->title ?: $ed->start_datetime ); ?>
 						</option>
 					<?php endforeach; ?>
 				</select>
@@ -348,21 +345,22 @@ class MediaLibraryHooks {
 			return;
 		}
 
-		// Get the selected event for bulk upload.
-		$event_id = get_user_meta( get_current_user_id(), 'fair_events_bulk_upload_event', true );
+		// Get the selected event_date_id for bulk upload.
+		$event_date_id = get_user_meta( get_current_user_id(), 'fair_events_bulk_upload_event', true );
 
-		if ( ! $event_id ) {
+		if ( ! $event_date_id ) {
 			return;
 		}
 
-		// Verify event exists and is a valid event type.
-		if ( ! EventRepository::is_event( $event_id ) ) {
+		// Verify event date exists.
+		$event_date = \FairEvents\Models\EventDates::get_by_id( $event_date_id );
+		if ( ! $event_date ) {
 			return;
 		}
 
-		// Assign to the selected event.
+		// Assign to the selected event date.
 		$repository = new EventPhotoRepository();
-		$repository->set_event( $attachment_id, $event_id );
+		$repository->set_event_date( $attachment_id, $event_date_id );
 	}
 
 	/**
@@ -422,13 +420,13 @@ class MediaLibraryHooks {
 			return $query;
 		}
 
-		$event_id = absint( $_REQUEST['query']['fair_event_filter'] );
-		if ( ! $event_id ) {
+		$event_date_id = absint( $_REQUEST['query']['fair_event_filter'] );
+		if ( ! $event_date_id ) {
 			return $query;
 		}
 
 		$repository     = new EventPhotoRepository();
-		$attachment_ids = $repository->get_attachment_ids_by_event( $event_id );
+		$attachment_ids = $repository->get_attachment_ids_by_event_date( $event_date_id );
 
 		if ( ! empty( $attachment_ids ) ) {
 			$query['post__in'] = $attachment_ids;

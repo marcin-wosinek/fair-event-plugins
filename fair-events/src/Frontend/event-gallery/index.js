@@ -335,7 +335,7 @@ function Gallery() {
 
 	// Get event info from the root element.
 	const root = document.getElementById('fair-events-gallery-root');
-	const eventId = root?.dataset?.eventId;
+	const eventId = root?.dataset?.eventDateId;
 	const eventTitle = root?.dataset?.eventTitle;
 	const eventUrl = root?.dataset?.eventUrl;
 	// Get participant ID if token-based access.
@@ -359,7 +359,7 @@ function Gallery() {
 			setError(null);
 
 			const response = await apiFetch({
-				path: `/fair-events/v1/events/${eventId}/gallery`,
+				path: `/fair-events/v1/event-dates/${eventId}/gallery`,
 			});
 
 			setPhotos(response);

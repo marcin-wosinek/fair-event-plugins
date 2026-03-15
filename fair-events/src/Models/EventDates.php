@@ -1018,6 +1018,28 @@ class EventDates {
 	 * @param int $id Event date ID.
 	 * @return EventDates|null EventDates object or null if not found.
 	 */
+	/**
+	 * Get all event dates ordered by start datetime descending.
+	 *
+	 * @return array Array of event date objects.
+	 *
+	 * phpcs:disable WordPress.DB.DirectDatabaseQuery
+	 */
+	public static function get_all() {
+		global $wpdb;
+
+		$table_name = $wpdb->prefix . 'fair_event_dates';
+
+		$results = $wpdb->get_results(
+			$wpdb->prepare(
+				'SELECT * FROM %i ORDER BY start_datetime DESC',
+				$table_name
+			)
+		);
+
+		return array_map( array( __CLASS__, 'hydrate' ), $results );
+	}
+
 	public static function get_by_id( $id ) {
 		global $wpdb;
 

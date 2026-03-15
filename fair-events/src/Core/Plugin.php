@@ -277,16 +277,15 @@ class Plugin {
 							$repository  = new \FairEvents\Database\EventPhotoRepository();
 							$event_photo = $repository->get_event_for_attachment( $object['id'] );
 
-							if ( ! $event_photo ) {
+							if ( ! $event_photo || ! $event_photo->event_date_id ) {
 								return null;
 							}
 
-							$event = get_post( $event_photo->event_id );
+							$event_date = \FairEvents\Models\EventDates::get_by_id( $event_photo->event_date_id );
 
-							return $event ? array(
-								'id'    => $event->ID,
-								'title' => $event->post_title,
-								'link'  => get_permalink( $event->ID ),
+							return $event_date ? array(
+								'event_date_id' => (int) $event_date->id,
+								'title'         => $event_date->title,
 							) : null;
 						},
 						'schema'       => array(

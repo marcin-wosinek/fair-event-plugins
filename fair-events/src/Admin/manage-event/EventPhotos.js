@@ -13,7 +13,7 @@ import apiFetch from '@wordpress/api-fetch';
 import PhotoTagModal from './PhotoTagModal.js';
 import PhotoDetail from './PhotoDetail.js';
 
-export default function EventPhotos({ eventId }) {
+export default function EventPhotos({ eventDateId }) {
 	const [photos, setPhotos] = useState([]);
 	const [loading, setLoading] = useState(true);
 	const [selectMode, setSelectMode] = useState(false);
@@ -24,11 +24,11 @@ export default function EventPhotos({ eventId }) {
 	const [groupBy, setGroupBy] = useState('none');
 
 	useEffect(() => {
-		if (!eventId) {
+		if (!eventDateId) {
 			setLoading(false);
 			return;
 		}
-		apiFetch({ path: `/fair-events/v1/events/${eventId}/gallery` })
+		apiFetch({ path: `/fair-events/v1/event-dates/${eventDateId}/gallery` })
 			.then((data) => {
 				setPhotos(data || []);
 			})
@@ -36,7 +36,7 @@ export default function EventPhotos({ eventId }) {
 				setPhotos([]);
 			})
 			.finally(() => setLoading(false));
-	}, [eventId]);
+	}, [eventDateId]);
 
 	const toggleSelect = (photoId) => {
 		setSelectedIds((prev) =>
@@ -109,7 +109,7 @@ export default function EventPhotos({ eventId }) {
 
 	const handleDownload = () => {
 		const ids = selectMode && selectedIds.length > 0 ? selectedIds : null;
-		let path = `/fair-events/v1/events/${eventId}/gallery/download`;
+		let path = `/fair-events/v1/events/${eventDateId}/gallery/download`;
 		if (ids) {
 			path += `?ids=${ids.join(',')}`;
 		}
@@ -193,8 +193,8 @@ export default function EventPhotos({ eventId }) {
 		}
 	};
 
-	const mediaLibraryUrl = eventId
-		? `upload.php?fair_event_filter=${eventId}`
+	const mediaLibraryUrl = eventDateId
+		? `upload.php?fair_event_filter=${eventDateId}`
 		: 'upload.php';
 
 	const renderPhotoGrid = (photoList) => (
@@ -323,7 +323,7 @@ export default function EventPhotos({ eventId }) {
 		</div>
 	);
 
-	if (!eventId || photos.length === 0) {
+	if (!eventDateId || photos.length === 0) {
 		return (
 			<Card style={{ marginTop: '16px' }}>
 				<CardHeader>
@@ -417,7 +417,7 @@ export default function EventPhotos({ eventId }) {
 					</Button>
 					<Button
 						variant="secondary"
-						href={`/?event_gallery_id=${eventId}`}
+						href={`/?event_gallery_id=${eventDateId}`}
 						target="_blank"
 					>
 						{__('View Gallery', 'fair-events')}
@@ -465,7 +465,7 @@ export default function EventPhotos({ eventId }) {
 					: renderPhotoGrid(sortedPhotos)}
 				<Button
 					variant="secondary"
-					href={`media-new.php?fair_event=${eventId}`}
+					href={`media-new.php?fair_event=${eventDateId}`}
 					style={{ marginTop: '16px' }}
 				>
 					{__('Add New Photos', 'fair-events')}
@@ -474,7 +474,7 @@ export default function EventPhotos({ eventId }) {
 			{detailIndex !== null && sortedPhotos[detailIndex] && (
 				<PhotoDetail
 					photo={sortedPhotos[detailIndex]}
-					eventId={eventId}
+					eventDateId={eventDateId}
 					onClose={() => setDetailIndex(null)}
 					onTagsChanged={handleTagsChanged}
 					hasPrev={detailIndex > 0}
@@ -485,7 +485,7 @@ export default function EventPhotos({ eventId }) {
 			)}
 			{showTagModal && (
 				<PhotoTagModal
-					eventId={eventId}
+					eventDateId={eventDateId}
 					onSelect={handleBatchTag}
 					onClose={() => setShowTagModal(false)}
 				/>

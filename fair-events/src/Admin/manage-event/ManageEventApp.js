@@ -1182,7 +1182,7 @@ export default function ManageEventApp() {
 						return <GroupRules eventDateId={eventDateId} />;
 					}
 					if (tab.name === 'photos') {
-						return <EventPhotos eventId={eventDate.event_id} />;
+						return <EventPhotos eventDateId={eventDateId} />;
 					}
 					if (tab.name === 'audience') {
 						return (

@@ -89,7 +89,7 @@ class EventPhoto {
 
 		$table_name = $wpdb->prefix . 'fair_events_event_photos';
 
-		if ( empty( $this->event_id ) || empty( $this->attachment_id ) ) {
+		if ( ( empty( $this->event_id ) && empty( $this->event_date_id ) ) || empty( $this->attachment_id ) ) {
 			return false;
 		}
 

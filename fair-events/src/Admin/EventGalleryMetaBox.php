@@ -48,8 +48,14 @@ class EventGalleryMetaBox {
 	 * @param WP_Post $post Post object.
 	 */
 	public static function render_meta_box( $post ) {
+		$event_date = \FairEvents\Models\EventDates::get_by_event_id( $post->ID );
+		if ( ! $event_date ) {
+			echo '<p>' . esc_html__( 'No event date linked.', 'fair-events' ) . '</p>';
+			return;
+		}
+
 		$repository  = new EventPhotoRepository();
-		$photo_count = $repository->get_count_by_event( $post->ID );
+		$photo_count = $repository->get_count_by_event_date( $event_date->id );
 
 		?>
 		<p>
@@ -66,7 +72,7 @@ class EventGalleryMetaBox {
 
 		<?php if ( 'publish' === $post->post_status && $photo_count > 0 ) : ?>
 			<p>
-				<a href="<?php echo esc_url( \FairEvents\Frontend\EventGalleryPage::get_gallery_url( $post->ID ) ); ?>" target="_blank" class="button">
+				<a href="<?php echo esc_url( \FairEvents\Frontend\EventGalleryPage::get_gallery_url( $event_date->id ) ); ?>" target="_blank" class="button">
 					<?php esc_html_e( "Review Event's Photos", 'fair-events' ); ?> ↗
 				</a>
 			</p>
