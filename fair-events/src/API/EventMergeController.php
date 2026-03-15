@@ -257,8 +257,8 @@ class EventMergeController extends WP_REST_Controller {
 	/**
 	 * Process event photos (keyed by event_date_id).
 	 *
-	 * Moves or deletes rows in fair_events_event_photos. Skips duplicates
-	 * since attachment_id has a UNIQUE constraint.
+	 * Updates event_date_id to target and clears event_id.
+	 * Skips photos already assigned to the target (UNIQUE attachment_id).
 	 *
 	 * @param int    $source_id Source event date ID.
 	 * @param int    $target_id Target event date ID.
@@ -280,37 +280,16 @@ class EventMergeController extends WP_REST_Controller {
 		}
 
 		if ( 'move' === $action ) {
-			// Get existing attachment_ids on target to avoid UNIQUE constraint violations.
-			$existing_attachments = $wpdb->get_col(
-				$wpdb->prepare(
-					'SELECT attachment_id FROM %i WHERE event_date_id = %d',
-					$table_name,
-					$target_id
-				)
+			$wpdb->update(
+				$table_name,
+				array(
+					'event_date_id' => $target_id,
+					'event_id'      => 0,
+				),
+				array( 'event_date_id' => $source_id ),
+				array( '%d', '%d' ),
+				array( '%d' )
 			);
-
-			$source_photos = $wpdb->get_results(
-				$wpdb->prepare(
-					'SELECT id, attachment_id FROM %i WHERE event_date_id = %d',
-					$table_name,
-					$source_id
-				)
-			);
-
-			foreach ( $source_photos as $photo ) {
-				if ( in_array( (int) $photo->attachment_id, array_map( 'intval', $existing_attachments ), true ) ) {
-					// Duplicate attachment — delete the source row.
-					$wpdb->delete( $table_name, array( 'id' => $photo->id ), array( '%d' ) );
-				} else {
-					$wpdb->update(
-						$table_name,
-						array( 'event_date_id' => $target_id ),
-						array( 'id' => $photo->id ),
-						array( '%d' ),
-						array( '%d' )
-					);
-				}
-			}
 		}
 	}
 
