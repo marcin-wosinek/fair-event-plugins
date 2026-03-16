@@ -13,6 +13,7 @@ use WP_REST_Controller;
 use WP_REST_Server;
 use WP_REST_Request;
 use WP_REST_Response;
+use WP_Error;
 
 /**
  * Returns per-table migration counts.
@@ -48,16 +49,42 @@ class MigrationSummaryController extends WP_REST_Controller {
 				),
 			)
 		);
+
+		register_rest_route(
+			$this->namespace,
+			'/' . $this->rest_base . '/fix-orphans',
+			array(
+				array(
+					'methods'             => WP_REST_Server::CREATABLE,
+					'callback'            => array( $this, 'fix_orphans' ),
+					'permission_callback' => function () {
+						return current_user_can( 'manage_options' );
+					},
+					'args'                => array(
+						'table' => array(
+							'required'          => true,
+							'type'              => 'string',
+							'sanitize_callback' => 'sanitize_text_field',
+						),
+						'type'  => array(
+							'required'          => true,
+							'type'              => 'string',
+							'enum'              => array( 'event_id', 'event_date_id' ),
+							'sanitize_callback' => 'sanitize_text_field',
+						),
+					),
+				),
+			)
+		);
 	}
 
 	/**
-	 * Get migration summary for all tracked tables.
+	 * Allowed table configurations.
 	 *
-	 * @param WP_REST_Request $request Request object.
-	 * @return WP_REST_Response
+	 * @return array
 	 */
-	public function get_items( $request ) {
-		$tables = array(
+	private function get_table_configs() {
+		return array(
 			'fair_events_event_photos'           => array(
 				'label'             => __( 'Event Photos', 'fair-events' ),
 				'event_id_nullable' => false,
@@ -79,7 +106,16 @@ class MigrationSummaryController extends WP_REST_Controller {
 				'event_id_nullable' => true,
 			),
 		);
+	}
 
+	/**
+	 * Get migration summary for all tracked tables.
+	 *
+	 * @param WP_REST_Request $request Request object.
+	 * @return WP_REST_Response
+	 */
+	public function get_items( $request ) {
+		$tables = $this->get_table_configs();
 		$result = array();
 
 		foreach ( $tables as $table_suffix => $config ) {
@@ -87,6 +123,69 @@ class MigrationSummaryController extends WP_REST_Controller {
 		}
 
 		return rest_ensure_response( array( 'tables' => $result ) );
+	}
+
+	/**
+	 * Delete orphaned rows from a specific table.
+	 *
+	 * @param WP_REST_Request $request Request object.
+	 * @return WP_REST_Response|WP_Error
+	 */
+	public function fix_orphans( $request ) {
+		global $wpdb;
+
+		$table_suffix = $request->get_param( 'table' );
+		$orphan_type  = $request->get_param( 'type' );
+		$configs      = $this->get_table_configs();
+
+		if ( ! isset( $configs[ $table_suffix ] ) ) {
+			return new WP_Error(
+				'invalid_table',
+				__( 'Invalid table name.', 'fair-events' ),
+				array( 'status' => 400 )
+			);
+		}
+
+		$table_name = $wpdb->prefix . $table_suffix;
+
+		// Verify the table exists.
+		$exists = $wpdb->get_var(
+			$wpdb->prepare( 'SHOW TABLES LIKE %s', $table_name )
+		);
+
+		if ( ! $exists ) {
+			return new WP_Error(
+				'table_not_found',
+				__( 'Table does not exist.', 'fair-events' ),
+				array( 'status' => 404 )
+			);
+		}
+
+		if ( 'event_id' === $orphan_type ) {
+			$deleted = $wpdb->query(
+				$wpdb->prepare(
+					'DELETE t FROM %i t LEFT JOIN %i p ON t.event_id = p.ID WHERE t.event_id IS NOT NULL AND t.event_id != 0 AND p.ID IS NULL',
+					$table_name,
+					$wpdb->posts
+				)
+			);
+		} else {
+			$event_dates_table = $wpdb->prefix . 'fair_event_dates';
+			$deleted           = $wpdb->query(
+				$wpdb->prepare(
+					'DELETE t FROM %i t LEFT JOIN %i ed ON t.event_date_id = ed.id WHERE t.event_date_id IS NOT NULL AND ed.id IS NULL',
+					$table_name,
+					$event_dates_table
+				)
+			);
+		}
+
+		return rest_ensure_response(
+			array(
+				'success' => true,
+				'deleted' => (int) $deleted,
+			)
+		);
 	}
 
 	/**

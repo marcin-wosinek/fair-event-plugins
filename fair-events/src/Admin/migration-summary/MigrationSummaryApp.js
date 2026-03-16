@@ -1,12 +1,13 @@
-import { useState, useEffect } from '@wordpress/element';
+import { useState, useEffect, useCallback } from '@wordpress/element';
 import {
 	Card,
 	CardHeader,
 	CardBody,
 	Spinner,
 	Notice,
+	Button,
 } from '@wordpress/components';
-import { __ } from '@wordpress/i18n';
+import { __, sprintf } from '@wordpress/i18n';
 import apiFetch from '@wordpress/api-fetch';
 
 export default function MigrationSummaryApp() {
@@ -14,10 +15,12 @@ export default function MigrationSummaryApp() {
 	const [error, setError] = useState(null);
 	const [loading, setLoading] = useState(true);
 
-	useEffect(() => {
+	const fetchSummary = useCallback(() => {
+		setLoading(true);
 		apiFetch({ path: '/fair-events/v1/migration-summary' })
 			.then((response) => {
 				setTables(response.tables);
+				setError(null);
 			})
 			.catch((err) => {
 				setError(
@@ -29,7 +32,11 @@ export default function MigrationSummaryApp() {
 			});
 	}, []);
 
-	if (loading) {
+	useEffect(() => {
+		fetchSummary();
+	}, [fetchSummary]);
+
+	if (loading && !tables) {
 		return (
 			<div className="wrap">
 				<h1>{__('Migration Summary', 'fair-events')}</h1>
@@ -38,7 +45,7 @@ export default function MigrationSummaryApp() {
 		);
 	}
 
-	if (error) {
+	if (error && !tables) {
 		return (
 			<div className="wrap">
 				<h1>{__('Migration Summary', 'fair-events')}</h1>
@@ -75,14 +82,19 @@ export default function MigrationSummaryApp() {
 				}}
 			>
 				{entries.map(([key, data]) => (
-					<TableCard key={key} tableKey={key} data={data} />
+					<TableCard
+						key={key}
+						tableKey={key}
+						data={data}
+						onFixed={fetchSummary}
+					/>
 				))}
 			</div>
 		</div>
 	);
 }
 
-function TableCard({ tableKey, data }) {
+function TableCard({ tableKey, data, onFixed }) {
 	if (data === null) {
 		return (
 			<Card>
@@ -130,26 +142,101 @@ function TableCard({ tableKey, data }) {
 							value={data.pending}
 							status={data.pending > 0 ? 'warning' : 'good'}
 						/>
-						<Row
+						<OrphanRow
 							label={__('Orphaned event_id', 'fair-events')}
 							value={data.orphaned_event_id}
-							status={
-								data.orphaned_event_id > 0 ? 'error' : 'good'
-							}
+							tableKey={tableKey}
+							orphanType="event_id"
+							onFixed={onFixed}
 						/>
-						<Row
+						<OrphanRow
 							label={__('Orphaned event_date_id', 'fair-events')}
 							value={data.orphaned_event_date_id}
-							status={
-								data.orphaned_event_date_id > 0
-									? 'error'
-									: 'good'
-							}
+							tableKey={tableKey}
+							orphanType="event_date_id"
+							onFixed={onFixed}
 						/>
 					</tbody>
 				</table>
 			</CardBody>
 		</Card>
+	);
+}
+
+function OrphanRow({ label, value, tableKey, orphanType, onFixed }) {
+	const [fixing, setFixing] = useState(false);
+	const [result, setResult] = useState(null);
+
+	const handleFix = () => {
+		setFixing(true);
+		setResult(null);
+		apiFetch({
+			path: '/fair-events/v1/migration-summary/fix-orphans',
+			method: 'POST',
+			data: { table: tableKey, type: orphanType },
+		})
+			.then((response) => {
+				setResult(
+					sprintf(
+						__('Deleted %d rows', 'fair-events'),
+						response.deleted
+					)
+				);
+				onFixed();
+			})
+			.catch((err) => {
+				setResult(err.message || __('Fix failed', 'fair-events'));
+			})
+			.finally(() => {
+				setFixing(false);
+			});
+	};
+
+	const status = value > 0 ? 'error' : 'good';
+	const colors = {
+		good: '#00a32a',
+		error: '#d63638',
+	};
+
+	return (
+		<tr>
+			<td>{label}</td>
+			<td style={{ textAlign: 'right' }}>
+				<span
+					style={{
+						fontWeight: 600,
+						color: colors[status],
+						marginRight: value > 0 ? '8px' : 0,
+					}}
+				>
+					{value}
+				</span>
+				{value > 0 && (
+					<Button
+						variant="secondary"
+						size="small"
+						isBusy={fixing}
+						disabled={fixing}
+						onClick={handleFix}
+					>
+						{fixing
+							? __('Fixing...', 'fair-events')
+							: __('Fix', 'fair-events')}
+					</Button>
+				)}
+				{result && (
+					<span
+						style={{
+							marginLeft: '8px',
+							fontSize: '12px',
+							color: '#757575',
+						}}
+					>
+						{result}
+					</span>
+				)}
+			</td>
+		</tr>
 	);
 }
 
