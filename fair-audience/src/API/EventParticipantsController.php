@@ -246,16 +246,16 @@ class EventParticipantsController extends WP_REST_Controller {
 			)
 		);
 
-		// GET /fair-audience/v1/events/{event_id} (single event info).
+		// GET /fair-audience/v1/event-dates/{event_date_id} (single event info).
 		register_rest_route(
 			$this->namespace,
-			'/events/(?P<event_id>\d+)',
+			'/event-dates/(?P<event_date_id>\d+)',
 			array(
 				'methods'             => WP_REST_Server::READABLE,
 				'callback'            => array( $this, 'get_event' ),
 				'permission_callback' => 'is_user_logged_in',
 				'args'                => array(
-					'event_id' => array(
+					'event_date_id' => array(
 						'type'     => 'integer',
 						'required' => true,
 					),
@@ -632,7 +632,18 @@ class EventParticipantsController extends WP_REST_Controller {
 
 		$items = array();
 		foreach ( $query->posts as $event ) {
-			$counts = $this->event_participant_repo->get_label_counts_for_event( $event->ID );
+			// Resolve event_date_id from fair_event_dates table.
+			$event_date_id = null;
+			if ( class_exists( '\FairEvents\Models\EventDates' ) ) {
+				$event_dates_obj = \FairEvents\Models\EventDates::get_by_event_id( $event->ID );
+				if ( $event_dates_obj ) {
+					$event_date_id = (int) $event_dates_obj->id;
+				}
+			}
+
+			$counts = $event_date_id
+				? $this->event_participant_repo->get_label_counts_for_event_date( $event_date_id )
+				: $this->event_participant_repo->get_label_counts_for_event( $event->ID );
 
 			// Get event date metadata (from fair-events plugin).
 			// Try event_start first, fall back to event_date for compatibility.
@@ -661,15 +672,6 @@ class EventParticipantsController extends WP_REST_Controller {
 
 			// Calculate total participants (signed_up + collaborator).
 			$participants = ( $counts['signed_up'] ?? 0 ) + ( $counts['collaborator'] ?? 0 );
-
-			// Resolve event_date_id from fair_event_dates table.
-			$event_date_id = null;
-			if ( class_exists( '\FairEvents\Models\EventDates' ) ) {
-				$event_dates_obj = \FairEvents\Models\EventDates::get_by_event_id( $event->ID );
-				if ( $event_dates_obj ) {
-					$event_date_id = (int) $event_dates_obj->id;
-				}
-			}
 
 			$items[] = array(
 				'event_id'           => $event->ID,
@@ -734,7 +736,18 @@ class EventParticipantsController extends WP_REST_Controller {
 	public function get_event( $request ) {
 		global $wpdb;
 
-		$event_id = $request->get_param( 'event_id' );
+		$event_date_id = $request->get_param( 'event_date_id' );
+
+		// Resolve event_id from event_date_id.
+		$event_date_obj = \FairEvents\Models\EventDates::get_by_id( $event_date_id );
+		if ( ! $event_date_obj ) {
+			return new WP_Error(
+				'invalid_event_date',
+				__( 'Event date not found.', 'fair-audience' ),
+				array( 'status' => 404 )
+			);
+		}
+		$event_id = (int) $event_date_obj->event_id;
 
 		// Verify event exists.
 		$event = get_post( $event_id );
@@ -762,34 +775,26 @@ class EventParticipantsController extends WP_REST_Controller {
 		);
 
 		// Get participant counts by label.
-		$counts = $this->event_participant_repo->get_label_counts_for_event( $event_id );
+		$counts = $this->event_participant_repo->get_label_counts_for_event_date( $event_date_id );
 
 		$signed_up     = ( $counts['signed_up'] ?? 0 ) + ( $counts['interested'] ?? 0 );
 		$collaborators = $counts['collaborator'] ?? 0;
 		$interested    = $counts['interested'] ?? 0;
 
 		$response_data = array(
-			'event_id'      => $event_id,
-			'event_date_id' => null,
-			'title'         => $event->post_title,
-			'link'          => get_permalink( $event_id ),
-			'edit_url'      => get_edit_post_link( $event_id, 'raw' ),
-			'event_date'    => $event_date,
-			'gallery_count' => $gallery_count,
-			'gallery_link'  => admin_url( "upload.php?mode=list&fair_event_filter={$event_id}" ),
-			'signed_up'     => $signed_up,
-			'collaborators' => $collaborators,
-			'interested'    => $interested,
+			'event_id'         => $event_id,
+			'event_date_id'    => $event_date_id,
+			'title'            => $event->post_title,
+			'link'             => get_permalink( $event_id ),
+			'edit_url'         => get_edit_post_link( $event_id, 'raw' ),
+			'event_date'       => $event_date,
+			'gallery_count'    => $gallery_count,
+			'gallery_link'     => admin_url( "upload.php?mode=list&fair_event_filter={$event_id}" ),
+			'signed_up'        => $signed_up,
+			'collaborators'    => $collaborators,
+			'interested'       => $interested,
+			'manage_event_url' => admin_url( 'admin.php?page=fair-events-manage-event&event_date_id=' . $event_date_id ),
 		);
-
-		// Add manage-event URL and event_date_id if fair-events plugin provides event dates.
-		if ( class_exists( '\FairEvents\Models\EventDates' ) ) {
-			$event_dates = \FairEvents\Models\EventDates::get_by_event_id( $event_id );
-			if ( $event_dates ) {
-				$response_data['event_date_id']    = (int) $event_dates->id;
-				$response_data['manage_event_url'] = admin_url( 'admin.php?page=fair-events-manage-event&event_date_id=' . $event_dates->id );
-			}
-		}
 
 		return rest_ensure_response( $response_data );
 	}

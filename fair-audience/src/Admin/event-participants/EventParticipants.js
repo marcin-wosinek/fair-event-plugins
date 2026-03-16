@@ -70,16 +70,52 @@ export default function EventParticipants() {
 		new Set()
 	);
 	const [isLoadingExtraMessages, setIsLoadingExtraMessages] = useState(false);
-	const [resolvedEventId, setResolvedEventId] = useState(null);
 
 	const params = new URLSearchParams(window.location.search);
-	const eventDateId = params.get('event_date_id');
+	const urlEventDateId = params.get('event_date_id');
 	const legacyEventId = params.get('event_id');
+	const [resolvedEventDateId, setResolvedEventDateId] =
+		useState(urlEventDateId);
 
+	// Step 1: resolve event_date_id if only legacy event_id is provided.
 	useEffect(() => {
-		if (!eventDateId && !legacyEventId) {
+		if (!urlEventDateId && !legacyEventId) {
 			setError(__('No event date ID provided', 'fair-audience'));
 			setIsLoading(false);
+			return;
+		}
+
+		if (urlEventDateId) {
+			// Already have event_date_id.
+			return;
+		}
+
+		// Legacy: resolve event_date_id from event_id.
+		apiFetch({
+			path: `/fair-events/v1/event-dates?event_id=${legacyEventId}`,
+		})
+			.then((data) => {
+				if (data && data.length > 0) {
+					setResolvedEventDateId(String(data[0].id));
+				} else {
+					setError(
+						__(
+							'No event date found for this event',
+							'fair-audience'
+						)
+					);
+					setIsLoading(false);
+				}
+			})
+			.catch((err) => {
+				setError(err.message);
+				setIsLoading(false);
+			});
+	}, [urlEventDateId, legacyEventId]);
+
+	// Step 2: load data once event_date_id is resolved.
+	useEffect(() => {
+		if (!resolvedEventDateId) {
 			return;
 		}
 
@@ -87,65 +123,24 @@ export default function EventParticipants() {
 		loadParticipants();
 		loadAllParticipants();
 		loadGroups();
-	}, [eventDateId, legacyEventId]);
+	}, [resolvedEventDateId]);
 
 	const loadEventInfo = () => {
-		const fetchEventInfo = (eventId) => {
-			return apiFetch({
-				path: `/fair-audience/v1/events/${eventId}`,
-			})
-				.then((data) => {
-					setEventInfo(data);
-					setResolvedEventId(eventId);
-				})
-				.catch((err) => {
-					// Fallback: try to get event title from WP REST API.
-					apiFetch({ path: `/wp/v2/fair_event/${eventId}` })
-						.then((event) => {
-							setEventInfo({
-								event_id: eventId,
-								title: event.title.rendered,
-								event_date: null,
-								gallery_count: 0,
-								gallery_link: `upload.php?event_id=${eventId}`,
-								signed_up: 0,
-								collaborators: 0,
-							});
-						})
-						.catch(() => {
-							// eslint-disable-next-line no-console
-							console.error('Error loading event info:', err);
-						});
-				});
-		};
-
-		if (legacyEventId) {
-			setResolvedEventId(legacyEventId);
-			fetchEventInfo(legacyEventId);
-			return;
-		}
-
-		// Resolve event_id from event_date_id via fair-events API.
 		apiFetch({
-			path: `/fair-events/v1/event-dates/${eventDateId}`,
+			path: `/fair-audience/v1/event-dates/${resolvedEventDateId}`,
 		})
 			.then((data) => {
-				const eventId = data.event_id;
-				setResolvedEventId(eventId);
-				return fetchEventInfo(eventId);
+				setEventInfo(data);
 			})
 			.catch((err) => {
 				// eslint-disable-next-line no-console
-				console.error('Error resolving event from event_date_id:', err);
+				console.error('Error loading event info:', err);
 			});
 	};
 
 	const loadParticipants = () => {
-		const basePath = eventDateId
-			? `/fair-audience/v1/event-dates/${eventDateId}/participants`
-			: `/fair-audience/v1/events/${legacyEventId}/participants`;
 		apiFetch({
-			path: basePath,
+			path: `/fair-audience/v1/event-dates/${resolvedEventDateId}/participants`,
 		})
 			.then((data) => {
 				setParticipants(data);
@@ -250,9 +245,7 @@ export default function EventParticipants() {
 		setIsAdding(true);
 
 		try {
-			const batchBasePath = eventDateId
-				? `/fair-audience/v1/event-dates/${eventDateId}/participants/batch`
-				: `/fair-audience/v1/events/${legacyEventId}/participants/batch`;
+			const batchBasePath = `/fair-audience/v1/event-dates/${resolvedEventDateId}/participants/batch`;
 			const response = await apiFetch({
 				path: batchBasePath,
 				method: 'POST',
@@ -289,9 +282,7 @@ export default function EventParticipants() {
 
 	const handleUpdateLabel = async (participantId, newLabel) => {
 		try {
-			const updatePath = eventDateId
-				? `/fair-audience/v1/event-dates/${eventDateId}/participants/${participantId}`
-				: `/fair-audience/v1/events/${legacyEventId}/participants/${participantId}`;
+			const updatePath = `/fair-audience/v1/event-dates/${resolvedEventDateId}/participants/${participantId}`;
 			await apiFetch({
 				path: updatePath,
 				method: 'PUT',
@@ -328,9 +319,7 @@ export default function EventParticipants() {
 		setIsRemoving(true);
 
 		try {
-			const removeBasePath = eventDateId
-				? `/fair-audience/v1/event-dates/${eventDateId}/participants`
-				: `/fair-audience/v1/events/${legacyEventId}/participants`;
+			const removeBasePath = `/fair-audience/v1/event-dates/${resolvedEventDateId}/participants`;
 			if (count === 1) {
 				await apiFetch({
 					path: `${removeBasePath}/${participantIds[0]}`,
@@ -409,9 +398,7 @@ export default function EventParticipants() {
 				disabled_extra_message_ids: Array.from(disabledExtraMessageIds),
 			};
 
-			const galleryPath = eventDateId
-				? `/fair-audience/v1/event-dates/${eventDateId}/gallery-invitations`
-				: `/fair-audience/v1/events/${legacyEventId}/gallery-invitations`;
+			const galleryPath = `/fair-audience/v1/event-dates/${resolvedEventDateId}/gallery-invitations`;
 			const response = await apiFetch({
 				path: galleryPath,
 				method: 'POST',
@@ -520,9 +507,7 @@ export default function EventParticipants() {
 							),
 					  };
 
-			const invitationPath = eventDateId
-				? `/fair-audience/v1/event-dates/${eventDateId}/event-invitations`
-				: `/fair-audience/v1/events/${legacyEventId}/event-invitations`;
+			const invitationPath = `/fair-audience/v1/event-dates/${resolvedEventDateId}/event-invitations`;
 			const response = await apiFetch({
 				path: invitationPath,
 				method: 'POST',
@@ -630,7 +615,7 @@ export default function EventParticipants() {
 				supportsBulk: true,
 			},
 		],
-		[eventDateId, legacyEventId]
+		[resolvedEventDateId]
 	);
 
 	// Pagination info for DataViews (client-side pagination).

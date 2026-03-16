@@ -195,18 +195,20 @@ export default function Collaborators() {
 			})
 			.then((allEvents) => {
 				// Filter to find events where this participant is a collaborator.
-				const promises = allEvents.map((event) =>
-					apiFetch({
-						path: `/fair-audience/v1/events/${event.event_id}/participants`,
-					}).then((participants) => {
-						const isCollaborator = participants.some(
-							(p) =>
-								p.participant_id === collaboratorId &&
-								p.label === 'collaborator'
-						);
-						return isCollaborator ? event.event_id : null;
-					})
-				);
+				const promises = allEvents
+					.filter((event) => event.event_date_id)
+					.map((event) =>
+						apiFetch({
+							path: `/fair-audience/v1/event-dates/${event.event_date_id}/participants`,
+						}).then((participants) => {
+							const isCollaborator = participants.some(
+								(p) =>
+									p.participant_id === collaboratorId &&
+									p.label === 'collaborator'
+							);
+							return isCollaborator ? event.event_id : null;
+						})
+					);
 
 				return Promise.all(promises);
 			})
@@ -234,12 +236,12 @@ export default function Collaborators() {
 		loadEvents(value);
 	};
 
-	const toggleEventSelection = (eventId) => {
+	const toggleEventSelection = (eventDateId) => {
 		setSelectedEvents((prev) => {
-			if (prev.includes(eventId)) {
-				return prev.filter((id) => id !== eventId);
+			if (prev.includes(eventDateId)) {
+				return prev.filter((id) => id !== eventDateId);
 			}
-			return [...prev, eventId];
+			return [...prev, eventDateId];
 		});
 	};
 
@@ -251,9 +253,9 @@ export default function Collaborators() {
 		setIsSubmitting(true);
 
 		// Add collaborator to each selected event.
-		const promises = selectedEvents.map((eventId) =>
+		const promises = selectedEvents.map((eventDateId) =>
 			apiFetch({
-				path: `/fair-audience/v1/events/${eventId}/participants`,
+				path: `/fair-audience/v1/event-dates/${eventDateId}/participants`,
 				method: 'POST',
 				data: {
 					participant_id: selectedCollaborator.id,
@@ -406,34 +408,35 @@ export default function Collaborators() {
 													: ''
 											}`}
 											checked={selectedEvents.includes(
-												event.event_id
+												event.event_date_id
 											)}
 											onChange={() =>
 												toggleEventSelection(
-													event.event_id
+													event.event_date_id
 												)
 											}
 										/>
 									</div>
 									{window.fairAudienceCollaboratorsData
-										?.participantsUrl && (
-										<a
-											href={`${window.fairAudienceCollaboratorsData.participantsUrl}${event.event_id}`}
-											target="_blank"
-											rel="noopener noreferrer"
-											title={__(
-												'View Participants',
-												'fair-audience'
-											)}
-											style={{
-												color: '#2271b1',
-												textDecoration: 'none',
-												flexShrink: 0,
-											}}
-										>
-											<span className="dashicons dashicons-groups" />
-										</a>
-									)}
+										?.participantsUrl &&
+										event.event_date_id && (
+											<a
+												href={`${window.fairAudienceCollaboratorsData.participantsUrl}${event.event_date_id}`}
+												target="_blank"
+												rel="noopener noreferrer"
+												title={__(
+													'View Participants',
+													'fair-audience'
+												)}
+												style={{
+													color: '#2271b1',
+													textDecoration: 'none',
+													flexShrink: 0,
+												}}
+											>
+												<span className="dashicons dashicons-groups" />
+											</a>
+										)}
 								</div>
 							))
 						)}
