@@ -6,7 +6,7 @@ import PhotoTagModal from './PhotoTagModal.js';
 
 export default function PhotoDetail({
 	photo,
-	eventId,
+	eventDateId,
 	onClose,
 	onTagsChanged,
 	onPrev,
@@ -194,7 +194,7 @@ export default function PhotoDetail({
 			</div>
 			{showTagModal && (
 				<PhotoTagModal
-					eventId={eventId}
+					eventDateId={eventDateId}
 					onSelect={handleAddTag}
 					onClose={() => setShowTagModal(false)}
 				/>

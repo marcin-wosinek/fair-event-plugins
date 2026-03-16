@@ -101,9 +101,7 @@ class EventParticipantsMetaBox {
 			<?php
 		}
 
-		$participants_url = $event_date_id
-			? admin_url( 'admin.php?page=fair-audience-event-participants&event_date_id=' . $event_date_id )
-			: admin_url( 'admin.php?page=fair-audience-event-participants&event_id=' . $post->ID );
+		$participants_url = admin_url( 'admin.php?page=fair-audience-event-participants&event_date_id=' . $event_date_id );
 		?>
 		<p>
 			<a href="<?php echo esc_url( $participants_url ); ?>" class="button">

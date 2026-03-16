@@ -193,19 +193,22 @@ export default function DayCell({
 										)}
 									</span>
 								)}
-								{participantsUrl && eventPostId && (
-									<a
-										href={`${participantsUrl}${eventPostId}`}
-										className="fair-events-calendar-participants-link"
-										title={__(
-											'View Participants',
-											'fair-events'
-										)}
-										onClick={(e) => e.stopPropagation()}
-									>
-										<span className="dashicons dashicons-groups" />
-									</a>
-								)}
+								{participantsUrl &&
+									getEventDateId(event.uid) && (
+										<a
+											href={`${participantsUrl}${getEventDateId(
+												event.uid
+											)}`}
+											className="fair-events-calendar-participants-link"
+											title={__(
+												'View Participants',
+												'fair-events'
+											)}
+											onClick={(e) => e.stopPropagation()}
+										>
+											<span className="dashicons dashicons-groups" />
+										</a>
+									)}
 							</div>
 						);
 					})}

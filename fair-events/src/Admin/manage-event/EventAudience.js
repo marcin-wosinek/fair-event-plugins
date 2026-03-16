@@ -34,12 +34,12 @@ export default function EventAudience({ eventId, eventDateId, audienceUrl }) {
 	const [sortOrder, setSortOrder] = useState('asc');
 
 	useEffect(() => {
-		if (!eventId) {
+		if (!eventDateId) {
 			setLoadingParticipants(false);
 			return;
 		}
 		apiFetch({
-			path: `/fair-audience/v1/events/${eventId}/participants`,
+			path: `/fair-audience/v1/event-dates/${eventDateId}/participants`,
 		})
 			.then((data) => {
 				setParticipants(Array.isArray(data) ? data : []);
@@ -48,7 +48,7 @@ export default function EventAudience({ eventId, eventDateId, audienceUrl }) {
 				setParticipants([]);
 			})
 			.finally(() => setLoadingParticipants(false));
-	}, [eventId]);
+	}, [eventDateId]);
 
 	useEffect(() => {
 		if (!eventDateId) {
@@ -307,7 +307,7 @@ export default function EventAudience({ eventId, eventDateId, audienceUrl }) {
 
 								<Button
 									variant="secondary"
-									href={audienceUrl + eventId}
+									href={audienceUrl + eventDateId}
 								>
 									{__('Manage Participants', 'fair-events')}
 								</Button>

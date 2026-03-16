@@ -154,10 +154,10 @@ export default function DuplicateEventWizard({
 
 	// Load collaborators from source
 	useEffect(() => {
-		if (!audienceUrl || !sourceEventDate.event_id) return;
+		if (!audienceUrl || !sourceEventDateId) return;
 		setLoadingCollaborators(true);
 		apiFetch({
-			path: `/fair-audience/v1/events/${sourceEventDate.event_id}/participants`,
+			path: `/fair-audience/v1/event-dates/${sourceEventDateId}/participants`,
 		})
 			.then((data) => {
 				const collabs = (Array.isArray(data) ? data : []).filter(
@@ -174,7 +174,7 @@ export default function DuplicateEventWizard({
 				setCollaborators([]);
 			})
 			.finally(() => setLoadingCollaborators(false));
-	}, [audienceUrl, sourceEventDate.event_id]);
+	}, [audienceUrl, sourceEventDateId]);
 
 	// Duration helpers
 	const timedDurationOptions = useMemo(
@@ -451,7 +451,7 @@ export default function DuplicateEventWizard({
 				}
 
 				await apiFetch({
-					path: `/fair-audience/v1/events/${eventId}/participants/batch`,
+					path: `/fair-audience/v1/event-dates/${createdEventDateId}/participants/batch`,
 					method: 'POST',
 					data: {
 						participant_ids: selectedIds,
@@ -498,14 +498,14 @@ export default function DuplicateEventWizard({
 			name: 'tickets',
 			title: __('Tickets', 'fair-events'),
 		});
-		if (audienceUrl && sourceEventDate.event_id) {
+		if (audienceUrl && sourceEventDateId) {
 			s.push({
 				name: 'audience',
 				title: __('Audience', 'fair-events'),
 			});
 		}
 		return s;
-	}, [audienceUrl, linkedPosts.length, sourceEventDate.event_id]);
+	}, [audienceUrl, linkedPosts.length, sourceEventDateId]);
 
 	const isLastStep = activeStep === steps.length - 1;
 	const currentStep = steps[activeStep];

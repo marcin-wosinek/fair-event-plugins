@@ -189,7 +189,7 @@ class AdminPages {
 
 			// Add participants URL if fair-audience plugin is active.
 			if ( defined( 'FAIR_AUDIENCE_PLUGIN_DIR' ) ) {
-				$calendar_data['participantsUrl'] = admin_url( 'admin.php?page=fair-audience-event-participants&event_id=' );
+				$calendar_data['participantsUrl'] = admin_url( 'admin.php?page=fair-audience-event-participants&event_date_id=' );
 			}
 
 			wp_localize_script(
@@ -373,7 +373,7 @@ class AdminPages {
 
 			// Add audience URL and group pricing flag if fair-audience plugin is active.
 			if ( defined( 'FAIR_AUDIENCE_PLUGIN_DIR' ) ) {
-				$localized_data['audienceUrl']         = admin_url( 'admin.php?page=fair-audience-event-participants&event_id=' );
+				$localized_data['audienceUrl']         = admin_url( 'admin.php?page=fair-audience-event-participants&event_date_id=' );
 				$localized_data['groupPricingEnabled'] = true;
 			}
 

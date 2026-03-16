@@ -3,14 +3,14 @@ import { Modal, TextControl, Button, Spinner } from '@wordpress/components';
 import { __ } from '@wordpress/i18n';
 import apiFetch from '@wordpress/api-fetch';
 
-export default function PhotoTagModal({ eventId, onSelect, onClose }) {
+export default function PhotoTagModal({ eventDateId, onSelect, onClose }) {
 	const [participants, setParticipants] = useState([]);
 	const [loading, setLoading] = useState(true);
 	const [search, setSearch] = useState('');
 
 	useEffect(() => {
 		apiFetch({
-			path: `/fair-audience/v1/events/${eventId}/participants`,
+			path: `/fair-audience/v1/event-dates/${eventDateId}/participants`,
 		})
 			.then((data) => {
 				setParticipants(data || []);
@@ -19,7 +19,7 @@ export default function PhotoTagModal({ eventId, onSelect, onClose }) {
 				setParticipants([]);
 			})
 			.finally(() => setLoading(false));
-	}, [eventId]);
+	}, [eventDateId]);
 
 	const filtered = participants.filter((p) => {
 		const fullName = `${p.name || ''} ${p.surname || ''}`.toLowerCase();
