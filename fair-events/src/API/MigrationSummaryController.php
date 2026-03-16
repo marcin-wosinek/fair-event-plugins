@@ -52,11 +52,38 @@ class MigrationSummaryController extends WP_REST_Controller {
 
 		register_rest_route(
 			$this->namespace,
-			'/' . $this->rest_base . '/fix-orphans',
+			'/' . $this->rest_base . '/update-orphans',
 			array(
 				array(
 					'methods'             => WP_REST_Server::CREATABLE,
-					'callback'            => array( $this, 'fix_orphans' ),
+					'callback'            => array( $this, 'update_orphans' ),
+					'permission_callback' => function () {
+						return current_user_can( 'manage_options' );
+					},
+					'args'                => array(
+						'table' => array(
+							'required'          => true,
+							'type'              => 'string',
+							'sanitize_callback' => 'sanitize_text_field',
+						),
+						'type'  => array(
+							'required'          => true,
+							'type'              => 'string',
+							'enum'              => array( 'event_id', 'event_date_id' ),
+							'sanitize_callback' => 'sanitize_text_field',
+						),
+					),
+				),
+			)
+		);
+
+		register_rest_route(
+			$this->namespace,
+			'/' . $this->rest_base . '/delete-orphans',
+			array(
+				array(
+					'methods'             => WP_REST_Server::CREATABLE,
+					'callback'            => array( $this, 'delete_orphans' ),
 					'permission_callback' => function () {
 						return current_user_can( 'manage_options' );
 					},
@@ -126,39 +153,80 @@ class MigrationSummaryController extends WP_REST_Controller {
 	}
 
 	/**
+	 * Update orphaned rows by looking up event_date_id from event_id.
+	 *
+	 * For orphaned event_date_id: finds a valid event_date via the row's event_id.
+	 * For orphaned event_id: finds a valid event_id via the row's event_date_id.
+	 *
+	 * @param WP_REST_Request $request Request object.
+	 * @return WP_REST_Response|WP_Error
+	 */
+	public function update_orphans( $request ) {
+		global $wpdb;
+
+		$table_suffix = $request->get_param( 'table' );
+		$orphan_type  = $request->get_param( 'type' );
+
+		$table_name = $this->validate_table( $table_suffix );
+		if ( is_wp_error( $table_name ) ) {
+			return $table_name;
+		}
+
+		$event_dates_table = $wpdb->prefix . 'fair_event_dates';
+
+		if ( 'event_date_id' === $orphan_type ) {
+			// Update orphaned event_date_id by looking up a valid event_date via event_id.
+			$updated = $wpdb->query(
+				$wpdb->prepare(
+					'UPDATE %i t
+					LEFT JOIN %i ed_check ON t.event_date_id = ed_check.id
+					JOIN %i ed_new ON t.event_id = ed_new.event_id AND ed_new.occurrence_type IN ("single", "master")
+					SET t.event_date_id = ed_new.id
+					WHERE t.event_date_id IS NOT NULL AND ed_check.id IS NULL',
+					$table_name,
+					$event_dates_table,
+					$event_dates_table
+				)
+			);
+		} else {
+			// Update orphaned event_id by looking up event_id from event_date_id.
+			$updated = $wpdb->query(
+				$wpdb->prepare(
+					'UPDATE %i t
+					LEFT JOIN %i p ON t.event_id = p.ID
+					JOIN %i ed ON t.event_date_id = ed.id
+					SET t.event_id = ed.event_id
+					WHERE t.event_id IS NOT NULL AND t.event_id != 0 AND p.ID IS NULL',
+					$table_name,
+					$wpdb->posts,
+					$event_dates_table
+				)
+			);
+		}
+
+		return rest_ensure_response(
+			array(
+				'success' => true,
+				'updated' => (int) $updated,
+			)
+		);
+	}
+
+	/**
 	 * Delete orphaned rows from a specific table.
 	 *
 	 * @param WP_REST_Request $request Request object.
 	 * @return WP_REST_Response|WP_Error
 	 */
-	public function fix_orphans( $request ) {
+	public function delete_orphans( $request ) {
 		global $wpdb;
 
 		$table_suffix = $request->get_param( 'table' );
 		$orphan_type  = $request->get_param( 'type' );
-		$configs      = $this->get_table_configs();
 
-		if ( ! isset( $configs[ $table_suffix ] ) ) {
-			return new WP_Error(
-				'invalid_table',
-				__( 'Invalid table name.', 'fair-events' ),
-				array( 'status' => 400 )
-			);
-		}
-
-		$table_name = $wpdb->prefix . $table_suffix;
-
-		// Verify the table exists.
-		$exists = $wpdb->get_var(
-			$wpdb->prepare( 'SHOW TABLES LIKE %s', $table_name )
-		);
-
-		if ( ! $exists ) {
-			return new WP_Error(
-				'table_not_found',
-				__( 'Table does not exist.', 'fair-events' ),
-				array( 'status' => 404 )
-			);
+		$table_name = $this->validate_table( $table_suffix );
+		if ( is_wp_error( $table_name ) ) {
+			return $table_name;
 		}
 
 		if ( 'event_id' === $orphan_type ) {
@@ -186,6 +254,42 @@ class MigrationSummaryController extends WP_REST_Controller {
 				'deleted' => (int) $deleted,
 			)
 		);
+	}
+
+	/**
+	 * Validate a table suffix and return the full table name.
+	 *
+	 * @param string $table_suffix Table name without prefix.
+	 * @return string|WP_Error Full table name or error.
+	 */
+	private function validate_table( $table_suffix ) {
+		global $wpdb;
+
+		$configs = $this->get_table_configs();
+
+		if ( ! isset( $configs[ $table_suffix ] ) ) {
+			return new WP_Error(
+				'invalid_table',
+				__( 'Invalid table name.', 'fair-events' ),
+				array( 'status' => 400 )
+			);
+		}
+
+		$table_name = $wpdb->prefix . $table_suffix;
+
+		$exists = $wpdb->get_var(
+			$wpdb->prepare( 'SHOW TABLES LIKE %s', $table_name )
+		);
+
+		if ( ! $exists ) {
+			return new WP_Error(
+				'table_not_found',
+				__( 'Table does not exist.', 'fair-events' ),
+				array( 'status' => 404 )
+			);
+		}
+
+		return $table_name;
 	}
 
 	/**

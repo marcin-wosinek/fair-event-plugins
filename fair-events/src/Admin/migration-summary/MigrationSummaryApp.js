@@ -164,31 +164,32 @@ function TableCard({ tableKey, data, onFixed }) {
 }
 
 function OrphanRow({ label, value, tableKey, orphanType, onFixed }) {
-	const [fixing, setFixing] = useState(false);
+	const [busy, setBusy] = useState(null);
 	const [result, setResult] = useState(null);
 
-	const handleFix = () => {
-		setFixing(true);
+	const handleAction = (action) => {
+		setBusy(action);
 		setResult(null);
 		apiFetch({
-			path: '/fair-events/v1/migration-summary/fix-orphans',
+			path: `/fair-events/v1/migration-summary/${action}-orphans`,
 			method: 'POST',
 			data: { table: tableKey, type: orphanType },
 		})
 			.then((response) => {
-				setResult(
-					sprintf(
-						__('Deleted %d rows', 'fair-events'),
-						response.deleted
-					)
-				);
+				const count =
+					action === 'update' ? response.updated : response.deleted;
+				const message =
+					action === 'update'
+						? sprintf(__('Updated %d rows', 'fair-events'), count)
+						: sprintf(__('Deleted %d rows', 'fair-events'), count);
+				setResult(message);
 				onFixed();
 			})
 			.catch((err) => {
-				setResult(err.message || __('Fix failed', 'fair-events'));
+				setResult(err.message || __('Operation failed', 'fair-events'));
 			})
 			.finally(() => {
-				setFixing(false);
+				setBusy(null);
 			});
 	};
 
@@ -212,17 +213,31 @@ function OrphanRow({ label, value, tableKey, orphanType, onFixed }) {
 					{value}
 				</span>
 				{value > 0 && (
-					<Button
-						variant="secondary"
-						size="small"
-						isBusy={fixing}
-						disabled={fixing}
-						onClick={handleFix}
-					>
-						{fixing
-							? __('Fixing...', 'fair-events')
-							: __('Fix', 'fair-events')}
-					</Button>
+					<>
+						<Button
+							variant="secondary"
+							size="small"
+							isBusy={busy === 'update'}
+							disabled={busy !== null}
+							onClick={() => handleAction('update')}
+						>
+							{busy === 'update'
+								? __('Updating...', 'fair-events')
+								: __('Update', 'fair-events')}
+						</Button>{' '}
+						<Button
+							variant="tertiary"
+							size="small"
+							isDestructive
+							isBusy={busy === 'delete'}
+							disabled={busy !== null}
+							onClick={() => handleAction('delete')}
+						>
+							{busy === 'delete'
+								? __('Deleting...', 'fair-events')
+								: __('Delete', 'fair-events')}
+						</Button>
+					</>
 				)}
 				{result && (
 					<span
