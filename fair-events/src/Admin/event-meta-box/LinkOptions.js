@@ -36,12 +36,18 @@ export default function LinkOptions({ postId, onEventLinked, setError }) {
 				document.getElementById('title')?.value ||
 				__('Untitled Event', 'fair-events');
 
+			const now = new Date();
+			const defaultStart = now
+				.toISOString()
+				.replace('T', ' ')
+				.slice(0, 19);
+
 			const newEvent = await apiFetch({
 				path: '/fair-events/v1/event-dates',
 				method: 'POST',
 				data: {
 					title: postTitle,
-					start_datetime: null,
+					start_datetime: defaultStart,
 					link_type: 'none',
 				},
 			});
