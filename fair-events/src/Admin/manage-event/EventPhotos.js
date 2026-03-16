@@ -109,7 +109,7 @@ export default function EventPhotos({ eventDateId }) {
 
 	const handleDownload = () => {
 		const ids = selectMode && selectedIds.length > 0 ? selectedIds : null;
-		let path = `/fair-events/v1/events/${eventDateId}/gallery/download`;
+		let path = `/fair-events/v1/event-dates/${eventDateId}/gallery/download`;
 		if (ids) {
 			path += `?ids=${ids.join(',')}`;
 		}
