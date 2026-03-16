@@ -588,27 +588,29 @@ export default function EventTickets({
 																			)
 																		}
 																	/>
-																	<TextControl
-																		type="number"
-																		min="0"
-																		placeholder={__(
-																			'Cap',
-																			'fair-events'
-																		)}
-																		value={
-																			cell.capacity
-																		}
-																		onChange={(
-																			v
-																		) =>
-																			updatePrice(
-																				type,
-																				period,
-																				'capacity',
+																	{!settings.unlimited_tickets_in_price_period && (
+																		<TextControl
+																			type="number"
+																			min="0"
+																			placeholder={__(
+																				'Cap',
+																				'fair-events'
+																			)}
+																			value={
+																				cell.capacity
+																			}
+																			onChange={(
 																				v
-																			)
-																		}
-																	/>
+																			) =>
+																				updatePrice(
+																					type,
+																					period,
+																					'capacity',
+																					v
+																				)
+																			}
+																		/>
+																	)}
 																</VStack>
 															</td>
 														);
