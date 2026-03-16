@@ -10,6 +10,7 @@ namespace FairEvents\API;
 defined( 'WPINC' ) || die;
 
 use FairEvents\Models\EventDates;
+use FairEvents\Models\EventDateSetting;
 use FairEvents\Models\TicketType;
 use FairEvents\Models\TicketSalePeriod;
 use FairEvents\Models\TicketPrice;
@@ -153,7 +154,16 @@ class TicketsController extends WP_REST_Controller {
 			}
 		}
 
-		// 5. Return refreshed response.
+		// 5. Save settings.
+		if ( isset( $body['settings'] ) && is_array( $body['settings'] ) ) {
+			$settings = array();
+			foreach ( $body['settings'] as $key => $value ) {
+				$settings[ sanitize_key( $key ) ] = $value ? '1' : '0';
+			}
+			EventDateSetting::set_multiple( $event_date_id, $settings );
+		}
+
+		// 6. Return refreshed response.
 		$event_date = EventDates::get_by_id( $event_date_id );
 
 		return new WP_REST_Response( $this->build_response( $event_date_id, $event_date ), 200 );
@@ -268,12 +278,19 @@ class TicketsController extends WP_REST_Controller {
 		$ticket_types = TicketType::get_all_by_event_date_id( $event_date_id );
 		$sale_periods = TicketSalePeriod::get_all_by_event_date_id( $event_date_id );
 		$prices       = TicketPrice::get_all_by_event_date_id( $event_date_id );
+		$raw_settings = EventDateSetting::get_all_for_event_date( $event_date_id );
+
+		$settings = array();
+		foreach ( $raw_settings as $key => $value ) {
+			$settings[ $key ] = '1' === $value;
+		}
 
 		return array(
 			'capacity'     => $event_date->capacity,
 			'ticket_types' => array_map( fn( $t ) => $t->to_array(), $ticket_types ),
 			'sale_periods' => array_map( fn( $p ) => $p->to_array(), $sale_periods ),
 			'prices'       => array_map( fn( $pr ) => $pr->to_array(), $prices ),
+			'settings'     => $settings,
 		);
 	}
 }

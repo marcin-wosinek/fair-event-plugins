@@ -62,6 +62,9 @@ class Installer {
 		$sql = Schema::get_group_permission_rules_table_sql();
 		dbDelta( $sql );
 
+		$sql = Schema::get_event_date_settings_table_sql();
+		dbDelta( $sql );
+
 		// Run migration if upgrading from pre-1.0.0
 		if ( version_compare( $current_version, '1.0.0', '<' ) ) {
 			self::migrate_to_1_0_0();
@@ -145,6 +148,8 @@ class Installer {
 		if ( version_compare( $current_version, '2.9.0', '<' ) ) {
 			self::migrate_to_2_9_0();
 		}
+
+		// Version 3.0.0 - Event date settings table (no data migration needed, table created by dbDelta).
 
 		// Update database version
 		Schema::update_db_version( Schema::DB_VERSION );

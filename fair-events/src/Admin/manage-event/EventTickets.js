@@ -34,6 +34,10 @@ export default function EventTickets({
 	const [ticketTypes, setTicketTypes] = useState([]);
 	const [salePeriods, setSalePeriods] = useState([]);
 	const [prices, setPrices] = useState({});
+	const [settings, setSettings] = useState({
+		continues_pricing_period: true,
+		unlimited_tickets_in_price_period: true,
+	});
 	const [loading, setLoading] = useState(!initialData);
 	const [saving, setSaving] = useState(false);
 	const [error, setError] = useState(null);
@@ -60,6 +64,10 @@ export default function EventTickets({
 			};
 		});
 		setPrices(priceMap);
+
+		if (data.settings) {
+			setSettings((prev) => ({ ...prev, ...data.settings }));
+		}
 	}, []);
 
 	const loadTickets = useCallback(async () => {
@@ -120,6 +128,7 @@ export default function EventTickets({
 						sort_order: i,
 					})),
 					prices: pricesArray,
+					settings,
 				};
 			};
 		}
@@ -158,6 +167,7 @@ export default function EventTickets({
 						sort_order: i,
 					})),
 					prices: pricesArray,
+					settings,
 				},
 			});
 
@@ -181,6 +191,10 @@ export default function EventTickets({
 				};
 			});
 			setPrices(priceMap);
+
+			if (data.settings) {
+				setSettings((prev) => ({ ...prev, ...data.settings }));
+			}
 
 			setSuccess(__('Tickets saved successfully.', 'fair-events'));
 		} catch (err) {
@@ -657,16 +671,29 @@ export default function EventTickets({
 									'Continues pricing period',
 									'fair-events'
 								)}
-								checked={false}
-								onChange={() => {}}
+								checked={settings.continues_pricing_period}
+								onChange={(value) =>
+									setSettings((prev) => ({
+										...prev,
+										continues_pricing_period: value,
+									}))
+								}
 							/>
 							<CheckboxControl
 								label={__(
 									'Unlimited tickets in pricing period',
 									'fair-events'
 								)}
-								checked={false}
-								onChange={() => {}}
+								checked={
+									settings.unlimited_tickets_in_price_period
+								}
+								onChange={(value) =>
+									setSettings((prev) => ({
+										...prev,
+										unlimited_tickets_in_price_period:
+											value,
+									}))
+								}
 							/>
 						</VStack>
 					</PanelBody>
