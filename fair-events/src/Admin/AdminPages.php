@@ -73,6 +73,16 @@ class AdminPages {
 			array( $this, 'render_migration_page' )
 		);
 
+		// Migration Summary page
+		add_submenu_page(
+			'edit.php?post_type=fair_event',
+			__( 'Migration Summary', 'fair-events' ),
+			__( 'Migration Summary', 'fair-events' ),
+			'manage_options',
+			'fair-events-migration-summary',
+			array( $this, 'render_migration_summary_page' )
+		);
+
 		// Event Sources page
 		add_submenu_page(
 			'edit.php?post_type=fair_event',
@@ -290,6 +300,28 @@ class AdminPages {
 			return;
 		}
 
+		// Migration Summary page
+		if ( 'fair_event_page_fair-events-migration-summary' === $hook ) {
+			$asset_file = include FAIR_EVENTS_PLUGIN_DIR . 'build/admin/migration-summary/index.asset.php';
+
+			wp_enqueue_script(
+				'fair-events-migration-summary',
+				FAIR_EVENTS_PLUGIN_URL . 'build/admin/migration-summary/index.js',
+				$asset_file['dependencies'],
+				$asset_file['version'],
+				true
+			);
+
+			wp_set_script_translations(
+				'fair-events-migration-summary',
+				'fair-events',
+				FAIR_EVENTS_PLUGIN_DIR . 'build/languages'
+			);
+
+			wp_enqueue_style( 'wp-components' );
+			return;
+		}
+
 		// Source View page (hidden pages use 'admin_page_' prefix).
 		if ( 'admin_page_fair-events-source-view' === $hook ) {
 			$asset_file = include FAIR_EVENTS_PLUGIN_DIR . 'build/admin/source-view/index.asset.php';
@@ -473,6 +505,17 @@ class AdminPages {
 	public function render_migration_page() {
 		?>
 		<div id="fair-events-migration-root"></div>
+		<?php
+	}
+
+	/**
+	 * Render migration summary page
+	 *
+	 * @return void
+	 */
+	public function render_migration_summary_page() {
+		?>
+		<div id="fair-events-migration-summary-root"></div>
 		<?php
 	}
 

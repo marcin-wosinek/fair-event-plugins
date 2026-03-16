@@ -166,6 +166,15 @@ class Plugin {
 			}
 		);
 
+		// Migration summary controller.
+		add_action(
+			'rest_api_init',
+			function () {
+				$controller = new \FairEvents\API\MigrationSummaryController();
+				$controller->register_routes();
+			}
+		);
+
 		// Public Events controller (JSON export for cross-site sharing).
 		add_action(
 			'rest_api_init',
