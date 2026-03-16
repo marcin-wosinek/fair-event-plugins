@@ -328,6 +328,13 @@ export default function EventTickets({
 		return prices[key] || { price: '', capacity: '' };
 	};
 
+	const formatCurrency = (value) => {
+		return new Intl.NumberFormat('en-US', {
+			style: 'currency',
+			currency: 'EUR',
+		}).format(value);
+	};
+
 	if (loading) {
 		return (
 			<Card style={{ marginTop: '16px' }}>
@@ -362,6 +369,81 @@ export default function EventTickets({
 				>
 					{success}
 				</Notice>
+			)}
+
+			{ticketTypes.length > 0 && salePeriods.length > 0 && (
+				<Card>
+					<CardHeader>
+						<strong>{__('Ticket Prices', 'fair-events')}</strong>
+					</CardHeader>
+					<CardBody>
+						<div style={{ overflowX: 'auto' }}>
+							<table className="wp-list-table widefat striped">
+								<thead>
+									<tr>
+										<th>
+											{__('Ticket Type', 'fair-events')}
+										</th>
+										{salePeriods.map((period, pIndex) => (
+											<th
+												key={
+													period.id || `new-${pIndex}`
+												}
+											>
+												{period.name ||
+													__(
+														'(unnamed)',
+														'fair-events'
+													)}
+											</th>
+										))}
+									</tr>
+								</thead>
+								<tbody>
+									{ticketTypes.map((type, tIndex) => (
+										<tr key={type.id || `new-${tIndex}`}>
+											<td>
+												{type.name ||
+													__(
+														'(unnamed)',
+														'fair-events'
+													)}
+											</td>
+											{salePeriods.map(
+												(period, pIndex) => {
+													const cell = getPrice(
+														type,
+														period
+													);
+													const hasPrice =
+														cell.price !== '';
+													return (
+														<td
+															key={
+																period.id ||
+																`new-${pIndex}`
+															}
+														>
+															{hasPrice
+																? formatCurrency(
+																		cell.price
+																  )
+																: '—'}
+															{!settings.unlimited_tickets_in_price_period &&
+																cell.capacity !==
+																	'' &&
+																` (${cell.capacity})`}
+														</td>
+													);
+												}
+											)}
+										</tr>
+									))}
+								</tbody>
+							</table>
+						</div>
+					</CardBody>
+				</Card>
 			)}
 
 			<Card>
