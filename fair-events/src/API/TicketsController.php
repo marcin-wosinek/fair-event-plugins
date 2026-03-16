@@ -287,6 +287,7 @@ class TicketsController extends WP_REST_Controller {
 
 		return array(
 			'capacity'     => $event_date->capacity,
+			'end_datetime' => $event_date->end_datetime,
 			'ticket_types' => array_map( fn( $t ) => $t->to_array(), $ticket_types ),
 			'sale_periods' => array_map( fn( $p ) => $p->to_array(), $sale_periods ),
 			'prices'       => array_map( fn( $pr ) => $pr->to_array(), $prices ),

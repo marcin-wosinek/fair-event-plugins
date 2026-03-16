@@ -31,6 +31,7 @@ export default function EventTickets({
 	onDataRef,
 }) {
 	const [capacity, setCapacity] = useState('');
+	const [endDatetime, setEndDatetime] = useState('');
 	const [ticketTypes, setTicketTypes] = useState([]);
 	const [salePeriods, setSalePeriods] = useState([]);
 	const [prices, setPrices] = useState({});
@@ -49,6 +50,9 @@ export default function EventTickets({
 				? String(data.capacity)
 				: ''
 		);
+		if (data.end_datetime) {
+			setEndDatetime(data.end_datetime);
+		}
 		setTicketTypes(data.ticket_types || []);
 		setSalePeriods(data.sale_periods || []);
 
@@ -123,7 +127,7 @@ export default function EventTickets({
 						...t,
 						sort_order: i,
 					})),
-					sale_periods: salePeriods.map((p, i) => ({
+					sale_periods: getEffectiveSalePeriods().map((p, i) => ({
 						...p,
 						sort_order: i,
 					})),
@@ -162,7 +166,7 @@ export default function EventTickets({
 						...t,
 						sort_order: i,
 					})),
-					sale_periods: salePeriods.map((p, i) => ({
+					sale_periods: getEffectiveSalePeriods().map((p, i) => ({
 						...p,
 						sort_order: i,
 					})),
@@ -236,13 +240,23 @@ export default function EventTickets({
 		setTicketTypes(updated);
 	};
 
+	const formatNow = () => {
+		const now = new Date();
+		const pad = (n) => String(n).padStart(2, '0');
+		return `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())} ${pad(now.getHours())}:${pad(now.getMinutes())}:00`;
+	};
+
 	const addSalePeriod = () => {
 		const lastPeriod = salePeriods[salePeriods.length - 1];
+		const isFirst = salePeriods.length === 0;
+		const defaultStart = isFirst
+			? formatNow()
+			: lastPeriod?.sale_end || '';
 		setSalePeriods([
 			...salePeriods,
 			{
 				name: '',
-				sale_start: lastPeriod?.sale_end || '',
+				sale_start: defaultStart,
 				sale_end: '',
 				sort_order: salePeriods.length,
 			},
@@ -265,6 +279,14 @@ export default function EventTickets({
 	const updateSalePeriod = (index, field, value) => {
 		const updated = [...salePeriods];
 		updated[index] = { ...updated[index], [field]: value };
+
+		if (settings.continues_pricing_period && field === 'sale_end') {
+			const next = index + 1;
+			if (next < updated.length) {
+				updated[next] = { ...updated[next], sale_start: value };
+			}
+		}
+
 		setSalePeriods(updated);
 	};
 
@@ -283,6 +305,22 @@ export default function EventTickets({
 				[field]: value,
 			},
 		}));
+	};
+
+	const getEffectiveSalePeriods = () => {
+		if (!settings.continues_pricing_period) {
+			return salePeriods;
+		}
+		return salePeriods.map((p, i) => {
+			const updated = { ...p };
+			if (i > 0) {
+				updated.sale_start = salePeriods[i - 1].sale_end || '';
+			}
+			if (i === salePeriods.length - 1 && endDatetime) {
+				updated.sale_end = endDatetime;
+			}
+			return updated;
+		});
 	};
 
 	const getPrice = (type, period) => {
@@ -389,145 +427,187 @@ export default function EventTickets({
 												{__('Capacity', 'fair-events')}
 											</th>
 											{salePeriods.map(
-												(period, pIndex) => (
-													<th
-														key={
-															period.id ||
-															`new-${pIndex}`
-														}
-													>
-														<VStack spacing={1}>
-															<HStack
-																alignment="center"
-																spacing={2}
-															>
-																<span
-																	style={{
-																		whiteSpace:
-																			'nowrap',
-																	}}
+												(period, pIndex) => {
+													const isContinuous =
+														settings.continues_pricing_period;
+													const isFirst =
+														pIndex === 0;
+													const isLast =
+														pIndex ===
+														salePeriods.length - 1;
+													const fromValue =
+														isContinuous && !isFirst
+															? salePeriods[
+																	pIndex - 1
+															  ]?.sale_end || ''
+															: period.sale_start ||
+															  '';
+													const untilValue =
+														isContinuous && isLast
+															? endDatetime
+															: period.sale_end ||
+															  '';
+
+													return (
+														<th
+															key={
+																period.id ||
+																`new-${pIndex}`
+															}
+														>
+															<VStack spacing={1}>
+																<HStack
+																	alignment="center"
+																	spacing={2}
 																>
-																	{__(
-																		'Name',
-																		'fair-events'
-																	)}
-																</span>
-																<TextControl
-																	placeholder={__(
-																		'Period name',
-																		'fair-events'
-																	)}
-																	value={
-																		period.name ||
-																		''
-																	}
-																	onChange={(
-																		v
-																	) =>
-																		updateSalePeriod(
-																			pIndex,
-																			'name',
+																	<span
+																		style={{
+																			whiteSpace:
+																				'nowrap',
+																		}}
+																	>
+																		{__(
+																			'Name',
+																			'fair-events'
+																		)}
+																	</span>
+																	<TextControl
+																		placeholder={__(
+																			'Period name',
+																			'fair-events'
+																		)}
+																		value={
+																			period.name ||
+																			''
+																		}
+																		onChange={(
 																			v
-																		)
-																	}
-																/>
-															</HStack>
-															<HStack
-																alignment="center"
-																spacing={2}
-															>
-																<span
-																	style={{
-																		whiteSpace:
-																			'nowrap',
-																	}}
+																		) =>
+																			updateSalePeriod(
+																				pIndex,
+																				'name',
+																				v
+																			)
+																		}
+																	/>
+																</HStack>
+																<HStack
+																	alignment="center"
+																	spacing={2}
 																>
-																	{__(
-																		'From',
-																		'fair-events'
-																	)}
-																</span>
-																<TextControl
-																	type="datetime-local"
-																	value={
-																		period.sale_start
-																			? period.sale_start.replace(
-																					' ',
-																					'T'
-																			  )
-																			: ''
-																	}
-																	onChange={(
-																		v
-																	) =>
-																		updateSalePeriod(
-																			pIndex,
-																			'sale_start',
-																			v.replace(
+																	<span
+																		style={{
+																			whiteSpace:
+																				'nowrap',
+																		}}
+																	>
+																		{__(
+																			'From',
+																			'fair-events'
+																		)}
+																	</span>
+																	{isContinuous &&
+																	!isFirst ? (
+																		<span>
+																			{fromValue.replace(
 																				'T',
 																				' '
-																			)
-																		)
-																	}
-																/>
-															</HStack>
-															<HStack
-																alignment="center"
-																spacing={2}
-															>
-																<span
-																	style={{
-																		whiteSpace:
-																			'nowrap',
-																	}}
-																>
-																	{__(
-																		'Until',
-																		'fair-events'
+																			)}
+																		</span>
+																	) : (
+																		<TextControl
+																			type="datetime-local"
+																			value={
+																				fromValue
+																					? fromValue.replace(
+																							' ',
+																							'T'
+																					  )
+																					: ''
+																			}
+																			onChange={(
+																				v
+																			) =>
+																				updateSalePeriod(
+																					pIndex,
+																					'sale_start',
+																					v.replace(
+																						'T',
+																						' '
+																					)
+																				)
+																			}
+																		/>
 																	)}
-																</span>
-																<TextControl
-																	type="datetime-local"
-																	value={
-																		period.sale_end
-																			? period.sale_end.replace(
-																					' ',
-																					'T'
-																			  )
-																			: ''
-																	}
-																	onChange={(
-																		v
-																	) =>
-																		updateSalePeriod(
-																			pIndex,
-																			'sale_end',
-																			v.replace(
+																</HStack>
+																<HStack
+																	alignment="center"
+																	spacing={2}
+																>
+																	<span
+																		style={{
+																			whiteSpace:
+																				'nowrap',
+																		}}
+																	>
+																		{__(
+																			'Until',
+																			'fair-events'
+																		)}
+																	</span>
+																	{isContinuous &&
+																	isLast ? (
+																		<span>
+																			{untilValue.replace(
 																				'T',
 																				' '
-																			)
+																			)}
+																		</span>
+																	) : (
+																		<TextControl
+																			type="datetime-local"
+																			value={
+																				untilValue
+																					? untilValue.replace(
+																							' ',
+																							'T'
+																					  )
+																					: ''
+																			}
+																			onChange={(
+																				v
+																			) =>
+																				updateSalePeriod(
+																					pIndex,
+																					'sale_end',
+																					v.replace(
+																						'T',
+																						' '
+																					)
+																				)
+																			}
+																		/>
+																	)}
+																</HStack>
+																<Button
+																	variant="tertiary"
+																	isDestructive
+																	size="small"
+																	onClick={() =>
+																		removeSalePeriod(
+																			pIndex
 																		)
 																	}
-																/>
-															</HStack>
-															<Button
-																variant="tertiary"
-																isDestructive
-																size="small"
-																onClick={() =>
-																	removeSalePeriod(
-																		pIndex
-																	)
-																}
-															>
-																{__(
-																	'Remove',
-																	'fair-events'
-																)}
-															</Button>
-														</VStack>
-													</th>
-												)
+																>
+																	{__(
+																		'Remove',
+																		'fair-events'
+																	)}
+																</Button>
+															</VStack>
+														</th>
+													);
+												}
 											)}
 											<th>
 												<Button
