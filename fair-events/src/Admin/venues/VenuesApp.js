@@ -18,6 +18,17 @@ import {
 	__experimentalHStack as HStack,
 } from '@wordpress/components';
 
+const VENUE_FIELDS = [
+	'name',
+	'address',
+	'google_maps_link',
+	'latitude',
+	'longitude',
+	'facebook_page_link',
+	'instagram_handle',
+	'website_url',
+];
+
 const VenuesApp = () => {
 	const [venues, setVenues] = useState([]);
 	const [loading, setLoading] = useState(true);
@@ -36,6 +47,8 @@ const VenuesApp = () => {
 		website_url: '',
 	});
 	const [isSaving, setIsSaving] = useState(false);
+	const [selectedVenues, setSelectedVenues] = useState(new Set());
+	const [isImporting, setIsImporting] = useState(false);
 
 	useEffect(() => {
 		loadVenues();
@@ -155,15 +168,159 @@ const VenuesApp = () => {
 		setEditingVenue(null);
 	};
 
+	const toggleVenueSelection = (id) => {
+		setSelectedVenues((prev) => {
+			const next = new Set(prev);
+			if (next.has(id)) {
+				next.delete(id);
+			} else {
+				next.add(id);
+			}
+			return next;
+		});
+	};
+
+	const toggleAllVenues = () => {
+		if (selectedVenues.size === venues.length) {
+			setSelectedVenues(new Set());
+		} else {
+			setSelectedVenues(new Set(venues.map((v) => v.id)));
+		}
+	};
+
+	const handleExport = () => {
+		const venuesToExport = venues
+			.filter((v) => selectedVenues.has(v.id))
+			.map((v) => {
+				const exported = {};
+				VENUE_FIELDS.forEach((field) => {
+					if (v[field]) {
+						exported[field] = v[field];
+					}
+				});
+				return exported;
+			});
+
+		const blob = new Blob([JSON.stringify(venuesToExport, null, 2)], {
+			type: 'application/json',
+		});
+		const url = URL.createObjectURL(blob);
+		const a = document.createElement('a');
+		a.href = url;
+		a.download = 'venues.json';
+		a.click();
+		URL.revokeObjectURL(url);
+		setSuccess(
+			// translators: %d is the number of exported venues
+			__('%d venue(s) exported.', 'fair-events').replace(
+				'%d',
+				venuesToExport.length
+			)
+		);
+	};
+
+	const handleImport = async (e) => {
+		const file = e.target.files[0];
+		if (!file) {
+			return;
+		}
+
+		// Reset the input so the same file can be re-selected
+		e.target.value = '';
+
+		setIsImporting(true);
+		setError(null);
+		setSuccess(null);
+
+		try {
+			const text = await file.text();
+			const importedVenues = JSON.parse(text);
+
+			if (!Array.isArray(importedVenues)) {
+				throw new Error(
+					__(
+						'Invalid file format. Expected a JSON array.',
+						'fair-events'
+					)
+				);
+			}
+
+			let created = 0;
+			for (const venue of importedVenues) {
+				if (!venue.name) {
+					continue;
+				}
+				const data = {};
+				VENUE_FIELDS.forEach((field) => {
+					if (venue[field]) {
+						data[field] = venue[field];
+					}
+				});
+				await apiFetch({
+					path: '/fair-events/v1/venues',
+					method: 'POST',
+					data,
+				});
+				created++;
+			}
+
+			setSuccess(
+				// translators: %d is the number of imported venues
+				__('%d venue(s) imported.', 'fair-events').replace(
+					'%d',
+					created
+				)
+			);
+			loadVenues();
+		} catch (err) {
+			setError(
+				err.message || __('Failed to import venues.', 'fair-events')
+			);
+		} finally {
+			setIsImporting(false);
+		}
+	};
+
 	return (
 		<div className="fair-events-venues-page">
 			<Card>
 				<CardHeader>
 					<HStack justify="space-between">
 						<h1>{__('Venues', 'fair-events')}</h1>
-						<Button variant="primary" onClick={handleCreate}>
-							{__('Add New Venue', 'fair-events')}
-						</Button>
+						<HStack spacing={2} expanded={false}>
+							{selectedVenues.size > 0 && (
+								<Button
+									variant="secondary"
+									onClick={handleExport}
+								>
+									{__('Export Selected', 'fair-events')}
+								</Button>
+							)}
+							<Button
+								variant="secondary"
+								onClick={() =>
+									document
+										.getElementById(
+											'fair-events-venue-import'
+										)
+										.click()
+								}
+								isBusy={isImporting}
+								disabled={isImporting}
+							>
+								{__('Import', 'fair-events')}
+							</Button>
+							<input
+								id="fair-events-venue-import"
+								type="file"
+								accept=".json"
+								style={{ display: 'none' }}
+								onChange={handleImport}
+							/>
+							<Button variant="primary" onClick={handleCreate}>
+								{__('Add New Venue', 'fair-events')}
+							</Button>
+						</HStack>
 					</HStack>
 				</CardHeader>
 				<CardBody>
@@ -210,6 +367,16 @@ const VenuesApp = () => {
 							<table className="wp-list-table widefat fixed striped">
 								<thead>
 									<tr>
+										<td className="check-column">
+											<input
+												type="checkbox"
+												checked={
+													selectedVenues.size ===
+													venues.length
+												}
+												onChange={toggleAllVenues}
+											/>
+										</td>
 										<th>{__('Name', 'fair-events')}</th>
 										<th>{__('Address', 'fair-events')}</th>
 										<th>{__('Actions', 'fair-events')}</th>
@@ -218,6 +385,19 @@ const VenuesApp = () => {
 								<tbody>
 									{venues.map((venue) => (
 										<tr key={venue.id}>
+											<th className="check-column">
+												<input
+													type="checkbox"
+													checked={selectedVenues.has(
+														venue.id
+													)}
+													onChange={() =>
+														toggleVenueSelection(
+															venue.id
+														)
+													}
+												/>
+											</th>
 											<td>
 												<strong>{venue.name}</strong>
 											</td>
