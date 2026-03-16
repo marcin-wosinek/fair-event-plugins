@@ -12,6 +12,9 @@ import {
 	CardHeader,
 	CardBody,
 	Button,
+	CheckboxControl,
+	Panel,
+	PanelBody,
 	Spinner,
 	Notice,
 	TextControl,
@@ -640,6 +643,34 @@ export default function EventTickets({
 						</VStack>
 					)}
 				</CardBody>
+			</Card>
+
+			<Card>
+				<Panel>
+					<PanelBody
+						title={__('Settings', 'fair-events')}
+						initialOpen={false}
+					>
+						<VStack spacing={4}>
+							<CheckboxControl
+								label={__(
+									'Continues pricing period',
+									'fair-events'
+								)}
+								checked={false}
+								onChange={() => {}}
+							/>
+							<CheckboxControl
+								label={__(
+									'Unlimited tickets in pricing period',
+									'fair-events'
+								)}
+								checked={false}
+								onChange={() => {}}
+							/>
+						</VStack>
+					</PanelBody>
+				</Panel>
 			</Card>
 		</VStack>
 	);
