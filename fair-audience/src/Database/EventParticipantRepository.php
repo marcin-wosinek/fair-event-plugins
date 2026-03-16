@@ -113,7 +113,32 @@ class EventParticipantRepository {
 	}
 
 	/**
-	 * Get specific relationship.
+	 * Get specific relationship by event_date_id and participant_id.
+	 *
+	 * @param int $event_date_id  Event date ID.
+	 * @param int $participant_id Participant ID.
+	 * @return EventParticipant|null Relationship or null if not found.
+	 */
+	public function get_by_event_date_and_participant( $event_date_id, $participant_id ) {
+		global $wpdb;
+
+		$table_name = $this->get_table_name();
+
+		$result = $wpdb->get_row(
+			$wpdb->prepare(
+				'SELECT * FROM %i WHERE event_date_id = %d AND participant_id = %d',
+				$table_name,
+				$event_date_id,
+				$participant_id
+			),
+			ARRAY_A
+		);
+
+		return $result ? new EventParticipant( $result ) : null;
+	}
+
+	/**
+	 * Get specific relationship by event_id and participant_id (legacy compat).
 	 *
 	 * @param int $event_id       Event ID.
 	 * @param int $participant_id Participant ID.
@@ -140,14 +165,22 @@ class EventParticipantRepository {
 	/**
 	 * Add participant to event.
 	 *
-	 * @param int      $event_id       Event ID.
-	 * @param int      $participant_id Participant ID.
-	 * @param string   $label          Label (interested or signed_up).
-	 * @param int|null $event_date_id  Optional event date ID.
+	 * @param int    $event_id       Event ID.
+	 * @param int    $participant_id Participant ID.
+	 * @param string $label          Label (interested or signed_up).
+	 * @param int    $event_date_id  Event date ID (resolved from event_id if 0).
 	 * @return int|false Relationship ID or false on failure.
 	 */
-	public function add_participant_to_event( $event_id, $participant_id, $label = 'interested', $event_date_id = null ) {
-		$existing = $this->get_by_event_and_participant( $event_id, $participant_id );
+	public function add_participant_to_event( $event_id, $participant_id, $label = 'interested', $event_date_id = 0 ) {
+		// Resolve event_date_id if not provided.
+		if ( empty( $event_date_id ) && class_exists( \FairEvents\Models\EventDates::class ) ) {
+			$event_dates_obj = \FairEvents\Models\EventDates::get_by_event_id( $event_id );
+			if ( $event_dates_obj ) {
+				$event_date_id = (int) $event_dates_obj->id;
+			}
+		}
+
+		$existing = $this->get_by_event_date_and_participant( $event_date_id, $participant_id );
 		if ( $existing ) {
 			return false; // Already exists.
 		}
@@ -165,7 +198,24 @@ class EventParticipantRepository {
 	}
 
 	/**
-	 * Remove participant from event.
+	 * Remove participant from event by event_date_id.
+	 *
+	 * @param int $event_date_id  Event date ID.
+	 * @param int $participant_id Participant ID.
+	 * @return bool Success.
+	 */
+	public function remove_participant_from_event_date( $event_date_id, $participant_id ) {
+		$relationship = $this->get_by_event_date_and_participant( $event_date_id, $participant_id );
+
+		if ( ! $relationship ) {
+			return false;
+		}
+
+		return $relationship->delete();
+	}
+
+	/**
+	 * Remove participant from event by event_id (legacy compat).
 	 *
 	 * @param int $event_id       Event ID.
 	 * @param int $participant_id Participant ID.
@@ -182,7 +232,26 @@ class EventParticipantRepository {
 	}
 
 	/**
-	 * Update label for event-participant relationship.
+	 * Update label for event-participant relationship by event_date_id.
+	 *
+	 * @param int    $event_date_id  Event date ID.
+	 * @param int    $participant_id Participant ID.
+	 * @param string $label          New label.
+	 * @return bool Success.
+	 */
+	public function update_label_by_event_date( $event_date_id, $participant_id, $label ) {
+		$relationship = $this->get_by_event_date_and_participant( $event_date_id, $participant_id );
+
+		if ( ! $relationship ) {
+			return false;
+		}
+
+		$relationship->label = $label;
+		return $relationship->save();
+	}
+
+	/**
+	 * Update label for event-participant relationship by event_id (legacy compat).
 	 *
 	 * @param int    $event_id       Event ID.
 	 * @param int    $participant_id Participant ID.
@@ -201,7 +270,40 @@ class EventParticipantRepository {
 	}
 
 	/**
-	 * Get counts by label for an event.
+	 * Get counts by label for an event date.
+	 *
+	 * @param int $event_date_id Event date ID.
+	 * @return array Associative array with label counts.
+	 */
+	public function get_label_counts_for_event_date( $event_date_id ) {
+		global $wpdb;
+
+		$table_name = $this->get_table_name();
+
+		$results = $wpdb->get_results(
+			$wpdb->prepare(
+				'SELECT label, COUNT(*) as count FROM %i WHERE event_date_id = %d GROUP BY label',
+				$table_name,
+				$event_date_id
+			),
+			ARRAY_A
+		);
+
+		$counts = array(
+			'interested'   => 0,
+			'signed_up'    => 0,
+			'collaborator' => 0,
+		);
+
+		foreach ( $results as $row ) {
+			$counts[ $row['label'] ] = (int) $row['count'];
+		}
+
+		return $counts;
+	}
+
+	/**
+	 * Get counts by label for an event (by event_id).
 	 *
 	 * @param int $event_id Event ID.
 	 * @return array Associative array with label counts.

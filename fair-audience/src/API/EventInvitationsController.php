@@ -46,24 +46,19 @@ class EventInvitationsController extends WP_REST_Controller {
 	 * Register REST API routes.
 	 */
 	public function register_routes() {
-		// POST /fair-audience/v1/events/{event_id}/event-invitations.
+		// POST /fair-audience/v1/event-dates/{event_date_id}/event-invitations.
 		register_rest_route(
 			$this->namespace,
-			'/events/(?P<event_id>[\d]+)/event-invitations',
+			'/event-dates/(?P<event_date_id>[\d]+)/event-invitations',
 			array(
 				array(
 					'methods'             => WP_REST_Server::CREATABLE,
 					'callback'            => array( $this, 'send_invitations' ),
 					'permission_callback' => array( $this, 'send_invitations_permissions_check' ),
 					'args'                => array(
-						'event_id'        => array(
+						'event_date_id'   => array(
 							'type'     => 'integer',
 							'required' => true,
-						),
-						'event_date_id'   => array(
-							'type'              => 'integer',
-							'required'          => false,
-							'sanitize_callback' => 'absint',
 						),
 						'participant_ids' => array(
 							'type'              => 'array',
@@ -124,10 +119,21 @@ class EventInvitationsController extends WP_REST_Controller {
 	 * @return WP_REST_Response|WP_Error Response object or error.
 	 */
 	public function send_invitations( $request ) {
-		$event_id        = $request->get_param( 'event_id' );
+		$event_date_id   = $request->get_param( 'event_date_id' );
 		$participant_ids = $request->get_param( 'participant_ids' );
 		$group_ids       = $request->get_param( 'group_ids' );
 		$custom_message  = $request->get_param( 'message' );
+
+		// Resolve event_id from event_date_id.
+		$event_date_obj = \FairEvents\Models\EventDates::get_by_id( $event_date_id );
+		if ( ! $event_date_obj ) {
+			return new WP_Error(
+				'invalid_event_date',
+				__( 'Event date not found.', 'fair-audience' ),
+				array( 'status' => 404 )
+			);
+		}
+		$event_id = (int) $event_date_obj->event_id;
 
 		// Validate event exists.
 		$event = get_post( $event_id );

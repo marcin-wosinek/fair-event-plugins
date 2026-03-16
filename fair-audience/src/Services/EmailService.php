@@ -514,12 +514,14 @@ class EmailService {
 	/**
 	 * Send gallery invitations to event participants (bulk).
 	 *
-	 * @param int    $event_id Event ID.
+	 * @param int    $event_date_id Event date ID.
 	 * @param string $custom_message Optional custom message.
 	 * @param array  $participant_ids Optional array of participant IDs to send to. If empty, sends to all.
+	 * @param array  $disabled_extra_message_ids Extra message IDs to exclude.
+	 * @param int    $event_id Event ID (resolved from event_date_id if 0).
 	 * @return array Results array with 'sent' and 'failed' keys.
 	 */
-	public function send_bulk_gallery_invitations( $event_id, $custom_message = '', $participant_ids = array(), $disabled_extra_message_ids = array() ) {
+	public function send_bulk_gallery_invitations( $event_date_id, $custom_message = '', $participant_ids = array(), $disabled_extra_message_ids = array(), $event_id = 0 ) {
 		// Increase time limit for bulk sending.
 		set_time_limit( 300 ); // 5 minutes.
 
@@ -527,6 +529,14 @@ class EmailService {
 			'sent'   => array(),
 			'failed' => array(),
 		);
+
+		// Resolve event_id from event_date_id if not provided.
+		if ( empty( $event_id ) && class_exists( \FairEvents\Models\EventDates::class ) ) {
+			$event_date = \FairEvents\Models\EventDates::get_by_id( $event_date_id );
+			if ( $event_date ) {
+				$event_id = (int) $event_date->event_id;
+			}
+		}
 
 		// Get event.
 		$event = get_post( $event_id );
@@ -539,11 +549,11 @@ class EmailService {
 			return $results;
 		}
 
-		// Generate access keys for all event participants (or just the selected ones).
-		$this->gallery_access_key_repository->generate_keys_for_event_participants( $event_id, $participant_ids );
+		// Generate access keys for event date participants (or just the selected ones).
+		$this->gallery_access_key_repository->generate_keys_for_event_date_participants( $event_date_id, $participant_ids, $event_id );
 
-		// Get all access keys for this event.
-		$access_keys = $this->gallery_access_key_repository->get_by_event( $event_id );
+		// Get all access keys for this event date.
+		$access_keys = $this->gallery_access_key_repository->get_by_event_date( $event_date_id );
 
 		foreach ( $access_keys as $access_key ) {
 			// Skip participants not in the filter list (if provided).

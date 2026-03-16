@@ -37,7 +37,7 @@ export default function EventsList() {
 				label: __('Event', 'fair-audience'),
 				render: ({ item }) => (
 					<a
-						href={`admin.php?page=fair-audience-event-participants&event_id=${item.event_id}`}
+						href={`admin.php?page=fair-audience-event-participants&event_date_id=${item.event_date_id}`}
 					>
 						{item.title}
 					</a>

@@ -167,6 +167,11 @@ class EventSignupController extends WP_REST_Controller {
 							'required'          => true,
 							'sanitize_callback' => 'absint',
 						),
+						'event_date_id'     => array(
+							'type'              => 'integer',
+							'required'          => false,
+							'sanitize_callback' => 'absint',
+						),
 						'participant_token' => array(
 							'type'              => 'string',
 							'required'          => false,
@@ -314,6 +319,15 @@ class EventSignupController extends WP_REST_Controller {
 			);
 		}
 
+		// Resolve event_date_id.
+		$event_date_id = $request->get_param( 'event_date_id' ) ?: 0;
+		if ( empty( $event_date_id ) && class_exists( \FairEvents\Models\EventDates::class ) ) {
+			$event_dates_obj = \FairEvents\Models\EventDates::get_by_event_id( $event_id );
+			if ( $event_dates_obj ) {
+				$event_date_id = (int) $event_dates_obj->id;
+			}
+		}
+
 		// Determine user state and participant.
 		$state        = 'anonymous';
 		$participant  = null;
@@ -338,10 +352,17 @@ class EventSignupController extends WP_REST_Controller {
 
 		// Check if already signed up.
 		if ( $participant ) {
-			$event_participant = $this->event_participant_repository->get_by_event_and_participant(
-				$event_id,
-				$participant->id
-			);
+			if ( $event_date_id ) {
+				$event_participant = $this->event_participant_repository->get_by_event_date_and_participant(
+					$event_date_id,
+					$participant->id
+				);
+			} else {
+				$event_participant = $this->event_participant_repository->get_by_event_and_participant(
+					$event_id,
+					$participant->id
+				);
+			}
 			if ( $event_participant && 'signed_up' === $event_participant->label ) {
 				$is_signed_up = true;
 			}
@@ -377,7 +398,6 @@ class EventSignupController extends WP_REST_Controller {
 	 */
 	public function create_signup( $request ) {
 		$event_id          = $request->get_param( 'event_id' );
-		$event_date_id     = $request->get_param( 'event_date_id' ) ?: null;
 		$participant_token = $request->get_param( 'participant_token' );
 		$user_id           = get_current_user_id();
 
@@ -389,6 +409,15 @@ class EventSignupController extends WP_REST_Controller {
 				__( 'Event not found.', 'fair-audience' ),
 				array( 'status' => 404 )
 			);
+		}
+
+		// Resolve event_date_id.
+		$event_date_id = $request->get_param( 'event_date_id' ) ?: 0;
+		if ( empty( $event_date_id ) && class_exists( \FairEvents\Models\EventDates::class ) ) {
+			$event_dates_obj = \FairEvents\Models\EventDates::get_by_event_id( $event_id );
+			if ( $event_dates_obj ) {
+				$event_date_id = (int) $event_dates_obj->id;
+			}
 		}
 
 		// Get participant based on auth method.
@@ -412,10 +441,17 @@ class EventSignupController extends WP_REST_Controller {
 		}
 
 		// Check if already signed up.
-		$existing = $this->event_participant_repository->get_by_event_and_participant(
-			$event_id,
-			$participant->id
-		);
+		if ( $event_date_id ) {
+			$existing = $this->event_participant_repository->get_by_event_date_and_participant(
+				$event_date_id,
+				$participant->id
+			);
+		} else {
+			$existing = $this->event_participant_repository->get_by_event_and_participant(
+				$event_id,
+				$participant->id
+			);
+		}
 
 		if ( $existing ) {
 			if ( 'signed_up' === $existing->label ) {
@@ -429,7 +465,11 @@ class EventSignupController extends WP_REST_Controller {
 			}
 
 			// Update existing relationship to signed_up.
-			$this->event_participant_repository->update_label( $event_id, $participant->id, 'signed_up' );
+			if ( $event_date_id ) {
+				$this->event_participant_repository->update_label_by_event_date( $event_date_id, $participant->id, 'signed_up' );
+			} else {
+				$this->event_participant_repository->update_label( $event_id, $participant->id, 'signed_up' );
+			}
 		} else {
 			// Create new signup.
 			$this->event_participant_repository->add_participant_to_event( $event_id, $participant->id, 'signed_up', $event_date_id );
@@ -523,7 +563,6 @@ class EventSignupController extends WP_REST_Controller {
 	 */
 	public function register_and_signup( $request ) {
 		$event_id      = $request->get_param( 'event_id' );
-		$event_date_id = $request->get_param( 'event_date_id' ) ?: null;
 		$name          = $request->get_param( 'name' );
 		$surname       = $request->get_param( 'surname' );
 		$email         = $request->get_param( 'email' );
@@ -537,6 +576,15 @@ class EventSignupController extends WP_REST_Controller {
 				__( 'Event not found.', 'fair-audience' ),
 				array( 'status' => 404 )
 			);
+		}
+
+		// Resolve event_date_id.
+		$event_date_id = $request->get_param( 'event_date_id' ) ?: 0;
+		if ( empty( $event_date_id ) && class_exists( \FairEvents\Models\EventDates::class ) ) {
+			$event_dates_obj = \FairEvents\Models\EventDates::get_by_event_id( $event_id );
+			if ( $event_dates_obj ) {
+				$event_date_id = (int) $event_dates_obj->id;
+			}
 		}
 
 		// Validate email.
@@ -574,10 +622,17 @@ class EventSignupController extends WP_REST_Controller {
 
 		if ( $participant ) {
 			// Participant exists - check if already signed up.
-			$existing = $this->event_participant_repository->get_by_event_and_participant(
-				$event_id,
-				$participant->id
-			);
+			if ( $event_date_id ) {
+				$existing = $this->event_participant_repository->get_by_event_date_and_participant(
+					$event_date_id,
+					$participant->id
+				);
+			} else {
+				$existing = $this->event_participant_repository->get_by_event_and_participant(
+					$event_id,
+					$participant->id
+				);
+			}
 
 			if ( $existing && 'signed_up' === $existing->label ) {
 				return rest_ensure_response(
@@ -591,7 +646,11 @@ class EventSignupController extends WP_REST_Controller {
 
 			// Sign up existing participant.
 			if ( $existing ) {
-				$this->event_participant_repository->update_label( $event_id, $participant->id, 'signed_up' );
+				if ( $event_date_id ) {
+					$this->event_participant_repository->update_label_by_event_date( $event_date_id, $participant->id, 'signed_up' );
+				} else {
+					$this->event_participant_repository->update_label( $event_id, $participant->id, 'signed_up' );
+				}
 			} else {
 				$this->event_participant_repository->add_participant_to_event( $event_id, $participant->id, 'signed_up', $event_date_id );
 			}
@@ -674,6 +733,15 @@ class EventSignupController extends WP_REST_Controller {
 			);
 		}
 
+		// Resolve event_date_id.
+		$event_date_id = $request->get_param( 'event_date_id' ) ?: 0;
+		if ( empty( $event_date_id ) && class_exists( \FairEvents\Models\EventDates::class ) ) {
+			$event_dates_obj = \FairEvents\Models\EventDates::get_by_event_id( $event_id );
+			if ( $event_dates_obj ) {
+				$event_date_id = (int) $event_dates_obj->id;
+			}
+		}
+
 		// Get participant based on auth method.
 		$participant = null;
 
@@ -695,10 +763,17 @@ class EventSignupController extends WP_REST_Controller {
 		}
 
 		// Check if signed up.
-		$existing = $this->event_participant_repository->get_by_event_and_participant(
-			$event_id,
-			$participant->id
-		);
+		if ( $event_date_id ) {
+			$existing = $this->event_participant_repository->get_by_event_date_and_participant(
+				$event_date_id,
+				$participant->id
+			);
+		} else {
+			$existing = $this->event_participant_repository->get_by_event_and_participant(
+				$event_id,
+				$participant->id
+			);
+		}
 
 		if ( ! $existing || 'signed_up' !== $existing->label ) {
 			return new WP_Error(
@@ -709,7 +784,11 @@ class EventSignupController extends WP_REST_Controller {
 		}
 
 		// Remove signup.
-		$this->event_participant_repository->remove_participant_from_event( $event_id, $participant->id );
+		if ( $event_date_id ) {
+			$this->event_participant_repository->remove_participant_from_event_date( $event_date_id, $participant->id );
+		} else {
+			$this->event_participant_repository->remove_participant_from_event( $event_id, $participant->id );
+		}
 
 		return rest_ensure_response(
 			array(

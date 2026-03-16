@@ -52,7 +52,19 @@ class EventParticipantsMetaBox {
 	 */
 	public static function render_meta_box( $post ) {
 		$repository = new EventParticipantRepository();
-		$counts     = $repository->get_label_counts_for_event( $post->ID );
+
+		// Resolve event_date_id.
+		$event_date_id = 0;
+		if ( class_exists( \FairEvents\Models\EventDates::class ) ) {
+			$event_dates_obj = \FairEvents\Models\EventDates::get_by_event_id( $post->ID );
+			if ( $event_dates_obj ) {
+				$event_date_id = (int) $event_dates_obj->id;
+			}
+		}
+
+		$counts = $event_date_id
+			? $repository->get_label_counts_for_event_date( $event_date_id )
+			: $repository->get_label_counts_for_event( $post->ID );
 
 		$total = $counts['signed_up'] + $counts['collaborator'] + $counts['interested'];
 
@@ -89,7 +101,9 @@ class EventParticipantsMetaBox {
 			<?php
 		}
 
-		$participants_url = admin_url( 'admin.php?page=fair-audience-event-participants&event_id=' . $post->ID );
+		$participants_url = $event_date_id
+			? admin_url( 'admin.php?page=fair-audience-event-participants&event_date_id=' . $event_date_id )
+			: admin_url( 'admin.php?page=fair-audience-event-participants&event_id=' . $post->ID );
 		?>
 		<p>
 			<a href="<?php echo esc_url( $participants_url ); ?>" class="button">

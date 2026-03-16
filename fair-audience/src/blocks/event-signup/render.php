@@ -63,12 +63,20 @@ if ( $is_valid_post_type ) {
 		}
 	}
 
-	// Check if already signed up.
+	// Check if already signed up (prefer event_date_id if available).
 	if ( $participant ) {
-		$event_participant = $event_participant_repository->get_by_event_and_participant(
-			$event_id,
-			$participant->id
-		);
+		$event_participant = null;
+		if ( ! empty( $event_date_id ) ) {
+			$event_participant = $event_participant_repository->get_by_event_date_and_participant(
+				(int) $event_date_id,
+				$participant->id
+			);
+		} else {
+			$event_participant = $event_participant_repository->get_by_event_and_participant(
+				$event_id,
+				$participant->id
+			);
+		}
 		if ( $event_participant && 'signed_up' === $event_participant->label ) {
 			$is_signed_up = true;
 		}

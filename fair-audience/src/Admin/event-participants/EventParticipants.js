@@ -70,12 +70,15 @@ export default function EventParticipants() {
 		new Set()
 	);
 	const [isLoadingExtraMessages, setIsLoadingExtraMessages] = useState(false);
+	const [resolvedEventId, setResolvedEventId] = useState(null);
 
-	const eventId = new URLSearchParams(window.location.search).get('event_id');
+	const params = new URLSearchParams(window.location.search);
+	const eventDateId = params.get('event_date_id');
+	const legacyEventId = params.get('event_id');
 
 	useEffect(() => {
-		if (!eventId) {
-			setError(__('No event ID provided', 'fair-audience'));
+		if (!eventDateId && !legacyEventId) {
+			setError(__('No event date ID provided', 'fair-audience'));
 			setIsLoading(false);
 			return;
 		}
@@ -84,39 +87,65 @@ export default function EventParticipants() {
 		loadParticipants();
 		loadAllParticipants();
 		loadGroups();
-	}, [eventId]);
+	}, [eventDateId, legacyEventId]);
 
 	const loadEventInfo = () => {
+		const fetchEventInfo = (eventId) => {
+			return apiFetch({
+				path: `/fair-audience/v1/events/${eventId}`,
+			})
+				.then((data) => {
+					setEventInfo(data);
+					setResolvedEventId(eventId);
+				})
+				.catch((err) => {
+					// Fallback: try to get event title from WP REST API.
+					apiFetch({ path: `/wp/v2/fair_event/${eventId}` })
+						.then((event) => {
+							setEventInfo({
+								event_id: eventId,
+								title: event.title.rendered,
+								event_date: null,
+								gallery_count: 0,
+								gallery_link: `upload.php?event_id=${eventId}`,
+								signed_up: 0,
+								collaborators: 0,
+							});
+						})
+						.catch(() => {
+							// eslint-disable-next-line no-console
+							console.error('Error loading event info:', err);
+						});
+				});
+		};
+
+		if (legacyEventId) {
+			setResolvedEventId(legacyEventId);
+			fetchEventInfo(legacyEventId);
+			return;
+		}
+
+		// Resolve event_id from event_date_id via fair-events API.
 		apiFetch({
-			path: `/fair-audience/v1/events/${eventId}`,
+			path: `/fair-events/v1/event-dates/${eventDateId}`,
 		})
 			.then((data) => {
-				setEventInfo(data);
+				const eventId = data.event_id;
+				setResolvedEventId(eventId);
+				return fetchEventInfo(eventId);
 			})
 			.catch((err) => {
-				// Fallback: try to get event title from WP REST API.
-				apiFetch({ path: `/wp/v2/fair_event/${eventId}` })
-					.then((event) => {
-						setEventInfo({
-							event_id: eventId,
-							title: event.title.rendered,
-							event_date: null,
-							gallery_count: 0,
-							gallery_link: `upload.php?event_id=${eventId}`,
-							signed_up: 0,
-							collaborators: 0,
-						});
-					})
-					.catch(() => {
-						// eslint-disable-next-line no-console
-						console.error('Error loading event info:', err);
-					});
+				// eslint-disable-next-line no-console
+				console.error('Error resolving event from event_date_id:', err);
 			});
 	};
 
 	const loadParticipants = () => {
+		const basePath = eventDateId
+			? `/fair-audience/v1/event-dates/${eventDateId}/participants`
+			: `/fair-audience/v1/events/${legacyEventId}/participants`;
 		apiFetch({
-			path: `/fair-audience/v1/events/${eventId}/participants`,
+			path: basePath,
 		})
 			.then((data) => {
 				setParticipants(data);
@@ -221,8 +250,11 @@ export default function EventParticipants() {
 		setIsAdding(true);
 
 		try {
+			const batchBasePath = eventDateId
+				? `/fair-audience/v1/event-dates/${eventDateId}/participants/batch`
+				: `/fair-audience/v1/events/${legacyEventId}/participants/batch`;
 			const response = await apiFetch({
-				path: `/fair-audience/v1/events/${eventId}/participants/batch`,
+				path: batchBasePath,
 				method: 'POST',
 				data: {
 					participant_ids: Array.from(selectedToAdd),
@@ -257,8 +289,11 @@ export default function EventParticipants() {
 
 	const handleUpdateLabel = async (participantId, newLabel) => {
 		try {
+			const updatePath = eventDateId
+				? `/fair-audience/v1/event-dates/${eventDateId}/participants/${participantId}`
+				: `/fair-audience/v1/events/${legacyEventId}/participants/${participantId}`;
 			await apiFetch({
-				path: `/fair-audience/v1/events/${eventId}/participants/${participantId}`,
+				path: updatePath,
 				method: 'PUT',
 				data: { label: newLabel },
 			});
@@ -293,14 +328,17 @@ export default function EventParticipants() {
 		setIsRemoving(true);
 
 		try {
+			const removeBasePath = eventDateId
+				? `/fair-audience/v1/event-dates/${eventDateId}/participants`
+				: `/fair-audience/v1/events/${legacyEventId}/participants`;
 			if (count === 1) {
 				await apiFetch({
-					path: `/fair-audience/v1/events/${eventId}/participants/${participantIds[0]}`,
+					path: `${removeBasePath}/${participantIds[0]}`,
 					method: 'DELETE',
 				});
 			} else {
 				await apiFetch({
-					path: `/fair-audience/v1/events/${eventId}/participants/batch`,
+					path: `${removeBasePath}/batch`,
 					method: 'DELETE',
 					data: {
 						participant_ids: participantIds,
@@ -371,8 +409,11 @@ export default function EventParticipants() {
 				disabled_extra_message_ids: Array.from(disabledExtraMessageIds),
 			};
 
+			const galleryPath = eventDateId
+				? `/fair-audience/v1/event-dates/${eventDateId}/gallery-invitations`
+				: `/fair-audience/v1/events/${legacyEventId}/gallery-invitations`;
 			const response = await apiFetch({
-				path: `/fair-audience/v1/events/${eventId}/gallery-invitations`,
+				path: galleryPath,
 				method: 'POST',
 				data: requestData,
 			});
@@ -479,8 +520,11 @@ export default function EventParticipants() {
 							),
 					  };
 
+			const invitationPath = eventDateId
+				? `/fair-audience/v1/event-dates/${eventDateId}/event-invitations`
+				: `/fair-audience/v1/events/${legacyEventId}/event-invitations`;
 			const response = await apiFetch({
-				path: `/fair-audience/v1/events/${eventId}/event-invitations`,
+				path: invitationPath,
 				method: 'POST',
 				data: requestData,
 			});
@@ -586,7 +630,7 @@ export default function EventParticipants() {
 				supportsBulk: true,
 			},
 		],
-		[eventId]
+		[eventDateId, legacyEventId]
 	);
 
 	// Pagination info for DataViews (client-side pagination).

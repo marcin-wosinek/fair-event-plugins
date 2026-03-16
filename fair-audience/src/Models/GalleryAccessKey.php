@@ -31,7 +31,7 @@ class GalleryAccessKey {
 	/**
 	 * Event date ID from fair_event_dates table.
 	 *
-	 * @var int|null
+	 * @var int
 	 */
 	public $event_date_id;
 
@@ -89,7 +89,7 @@ class GalleryAccessKey {
 	public function populate( $data ) {
 		$this->id             = isset( $data['id'] ) ? (int) $data['id'] : null;
 		$this->event_id       = isset( $data['event_id'] ) ? (int) $data['event_id'] : 0;
-		$this->event_date_id  = isset( $data['event_date_id'] ) && $data['event_date_id'] ? (int) $data['event_date_id'] : null;
+		$this->event_date_id  = isset( $data['event_date_id'] ) && $data['event_date_id'] ? (int) $data['event_date_id'] : 0;
 		$this->participant_id = isset( $data['participant_id'] ) ? (int) $data['participant_id'] : 0;
 		$this->access_key     = isset( $data['access_key'] ) ? $data['access_key'] : '';
 		$this->token          = isset( $data['token'] ) ? $data['token'] : '';
@@ -108,7 +108,7 @@ class GalleryAccessKey {
 		$table_name = $wpdb->prefix . 'fair_audience_gallery_access_keys';
 
 		// Validate required fields.
-		if ( empty( $this->event_id ) || empty( $this->participant_id ) || empty( $this->access_key ) || empty( $this->token ) ) {
+		if ( empty( $this->event_id ) || empty( $this->event_date_id ) || empty( $this->participant_id ) || empty( $this->access_key ) || empty( $this->token ) ) {
 			return false;
 		}
 

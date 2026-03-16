@@ -31,7 +31,7 @@ class Poll {
 	/**
 	 * Event date ID from fair_event_dates table.
 	 *
-	 * @var int|null
+	 * @var int
 	 */
 	public $event_date_id;
 
@@ -89,7 +89,7 @@ class Poll {
 	public function populate( $data ) {
 		$this->id            = isset( $data['id'] ) ? (int) $data['id'] : null;
 		$this->event_id      = isset( $data['event_id'] ) ? (int) $data['event_id'] : 0;
-		$this->event_date_id = isset( $data['event_date_id'] ) && $data['event_date_id'] ? (int) $data['event_date_id'] : null;
+		$this->event_date_id = isset( $data['event_date_id'] ) && $data['event_date_id'] ? (int) $data['event_date_id'] : 0;
 		$this->title         = isset( $data['title'] ) ? sanitize_text_field( $data['title'] ) : '';
 		$this->question      = isset( $data['question'] ) ? sanitize_textarea_field( $data['question'] ) : '';
 		$this->status        = isset( $data['status'] ) ? $data['status'] : 'draft';
@@ -108,7 +108,7 @@ class Poll {
 		$table_name = $wpdb->prefix . 'fair_audience_polls';
 
 		// Validate required fields.
-		if ( empty( $this->event_id ) || empty( $this->title ) || empty( $this->question ) ) {
+		if ( empty( $this->event_id ) || empty( $this->event_date_id ) || empty( $this->title ) || empty( $this->question ) ) {
 			return false;
 		}
 

@@ -70,7 +70,7 @@ function fair_audience_activate() {
 	dbDelta( \FairAudience\Database\Schema::get_participant_categories_table_sql() );
 
 	// Update database version.
-	update_option( 'fair_audience_db_version', '1.23.0' );
+	update_option( 'fair_audience_db_version', '1.24.0' );
 }
 register_activation_hook( __FILE__, __NAMESPACE__ . '\\fair_audience_activate' );
 
@@ -407,6 +407,63 @@ function fair_audience_maybe_upgrade_db() {
 		dbDelta( \FairAudience\Database\Schema::get_participant_categories_table_sql() );
 
 		update_option( 'fair_audience_db_version', '1.23.0' );
+	}
+
+	if ( version_compare( $db_version, '1.24.0', '<' ) ) {
+		global $wpdb;
+		require_once ABSPATH . 'wp-admin/includes/upgrade.php';
+
+		// Backfill event_date_id for event_participants where it is NULL.
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+		$wpdb->query(
+			"UPDATE {$wpdb->prefix}fair_audience_event_participants ep
+			SET ep.event_date_id = (
+				SELECT ed.id FROM {$wpdb->prefix}fair_event_dates ed
+				WHERE ed.event_id = ep.event_id LIMIT 1
+			)
+			WHERE ep.event_date_id IS NULL OR ep.event_date_id = 0"
+		);
+
+		// Backfill event_date_id for gallery_access_keys where it is NULL.
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+		$wpdb->query(
+			"UPDATE {$wpdb->prefix}fair_audience_gallery_access_keys gak
+			SET gak.event_date_id = (
+				SELECT ed.id FROM {$wpdb->prefix}fair_event_dates ed
+				WHERE ed.event_id = gak.event_id LIMIT 1
+			)
+			WHERE gak.event_date_id IS NULL OR gak.event_date_id = 0"
+		);
+
+		// Backfill event_date_id for polls where it is NULL.
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+		$wpdb->query(
+			"UPDATE {$wpdb->prefix}fair_audience_polls p
+			SET p.event_date_id = (
+				SELECT ed.id FROM {$wpdb->prefix}fair_event_dates ed
+				WHERE ed.event_id = p.event_id LIMIT 1
+			)
+			WHERE p.event_date_id IS NULL OR p.event_date_id = 0"
+		);
+
+		// Drop old unique keys and add new ones for event_participants.
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.DirectDatabaseQuery.SchemaChange
+		$wpdb->query( "ALTER TABLE {$wpdb->prefix}fair_audience_event_participants DROP INDEX IF EXISTS idx_event_participant" );
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.DirectDatabaseQuery.SchemaChange
+		$wpdb->query( "ALTER TABLE {$wpdb->prefix}fair_audience_event_participants ADD UNIQUE INDEX idx_event_date_participant (event_date_id, participant_id)" );
+
+		// Drop old unique key and add new one for gallery_access_keys.
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.DirectDatabaseQuery.SchemaChange
+		$wpdb->query( "ALTER TABLE {$wpdb->prefix}fair_audience_gallery_access_keys DROP INDEX IF EXISTS idx_event_participant" );
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.DirectDatabaseQuery.SchemaChange
+		$wpdb->query( "ALTER TABLE {$wpdb->prefix}fair_audience_gallery_access_keys ADD UNIQUE INDEX idx_event_date_participant (event_date_id, participant_id)" );
+
+		// Re-run dbDelta to update column definitions (NOT NULL).
+		dbDelta( \FairAudience\Database\Schema::get_event_participants_table_sql() );
+		dbDelta( \FairAudience\Database\Schema::get_gallery_access_keys_table_sql() );
+		dbDelta( \FairAudience\Database\Schema::get_polls_table_sql() );
+
+		update_option( 'fair_audience_db_version', '1.24.0' );
 	}
 }
 add_action( 'plugins_loaded', __NAMESPACE__ . '\\fair_audience_maybe_upgrade_db' );

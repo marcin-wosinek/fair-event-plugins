@@ -432,12 +432,12 @@ export default function WeeklySchedule() {
 													event.title
 												)}
 											</span>
-											{event.event_id &&
+											{event.event_date_id &&
 												window
 													.fairAudienceWeeklyScheduleData
 													?.participantsUrl && (
 													<a
-														href={`${window.fairAudienceWeeklyScheduleData.participantsUrl}${event.event_id}`}
+														href={`${window.fairAudienceWeeklyScheduleData.participantsUrl}${event.event_date_id}`}
 														title={__(
 															'View Participants',
 															'fair-audience'

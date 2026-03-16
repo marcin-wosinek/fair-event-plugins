@@ -366,14 +366,24 @@ class PollsController extends WP_REST_Controller {
 			);
 		}
 
+		// Resolve event_date_id from event_id.
+		$event_date_id = 0;
+		if ( class_exists( \FairEvents\Models\EventDates::class ) ) {
+			$event_dates_obj = \FairEvents\Models\EventDates::get_by_event_id( $event_id );
+			if ( $event_dates_obj ) {
+				$event_date_id = (int) $event_dates_obj->id;
+			}
+		}
+
 		// Create poll.
 		$poll = new Poll();
 		$poll->populate(
 			array(
-				'event_id' => $event_id,
-				'title'    => $title,
-				'question' => $question,
-				'status'   => $status ? $status : 'draft',
+				'event_id'      => $event_id,
+				'event_date_id' => $event_date_id,
+				'title'         => $title,
+				'question'      => $question,
+				'status'        => $status ? $status : 'draft',
 			)
 		);
 

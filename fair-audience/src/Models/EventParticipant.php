@@ -31,7 +31,7 @@ class EventParticipant {
 	/**
 	 * Event date ID from fair_event_dates table.
 	 *
-	 * @var int|null
+	 * @var int
 	 */
 	public $event_date_id;
 
@@ -82,7 +82,7 @@ class EventParticipant {
 	public function populate( $data ) {
 		$this->id             = isset( $data['id'] ) ? (int) $data['id'] : null;
 		$this->event_id       = isset( $data['event_id'] ) ? (int) $data['event_id'] : 0;
-		$this->event_date_id  = isset( $data['event_date_id'] ) && $data['event_date_id'] ? (int) $data['event_date_id'] : null;
+		$this->event_date_id  = isset( $data['event_date_id'] ) && $data['event_date_id'] ? (int) $data['event_date_id'] : 0;
 		$this->participant_id = isset( $data['participant_id'] ) ? (int) $data['participant_id'] : 0;
 		$this->label          = isset( $data['label'] ) ? $data['label'] : 'interested';
 		$this->created_at     = isset( $data['created_at'] ) ? $data['created_at'] : '';
@@ -99,7 +99,7 @@ class EventParticipant {
 
 		$table_name = $wpdb->prefix . 'fair_audience_event_participants';
 
-		if ( empty( $this->event_id ) || empty( $this->participant_id ) ) {
+		if ( empty( $this->event_id ) || empty( $this->event_date_id ) || empty( $this->participant_id ) ) {
 			return false;
 		}
 

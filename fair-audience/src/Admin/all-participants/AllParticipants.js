@@ -608,7 +608,7 @@ export default function AllParticipants() {
 										}}
 									>
 										<a
-											href={`${window.fairAudienceAllParticipantsData?.participantsUrl}${event.event_id}`}
+											href={`${window.fairAudienceAllParticipantsData?.participantsUrl}${event.event_date_id}`}
 										>
 											{event.title}
 										</a>

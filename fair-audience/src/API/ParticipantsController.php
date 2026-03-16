@@ -259,9 +259,10 @@ class ParticipantsController extends WP_REST_Controller {
 			$post = get_post( $rel->event_id );
 			if ( $post ) {
 				$events[] = array(
-					'event_id' => $rel->event_id,
-					'title'    => get_the_title( $post ),
-					'label'    => $rel->label,
+					'event_id'      => $rel->event_id,
+					'event_date_id' => $rel->event_date_id,
+					'title'         => get_the_title( $post ),
+					'label'         => $rel->label,
 				);
 			}
 		}

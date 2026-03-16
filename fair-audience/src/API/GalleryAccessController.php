@@ -91,17 +91,17 @@ class GalleryAccessController extends WP_REST_Controller {
 			)
 		);
 
-		// POST /fair-audience/v1/events/{event_id}/gallery-invitations - Send bulk gallery invitations.
+		// POST /fair-audience/v1/event-dates/{event_date_id}/gallery-invitations - Send bulk gallery invitations.
 		register_rest_route(
 			$this->namespace,
-			'/events/(?P<event_id>[\d]+)/gallery-invitations',
+			'/event-dates/(?P<event_date_id>[\d]+)/gallery-invitations',
 			array(
 				array(
 					'methods'             => WP_REST_Server::CREATABLE,
 					'callback'            => array( $this, 'send_invitations' ),
 					'permission_callback' => array( $this, 'send_invitations_permissions_check' ),
 					'args'                => array(
-						'event_id'                   => array(
+						'event_date_id'              => array(
 							'type'     => 'integer',
 							'required' => true,
 						),
@@ -138,17 +138,17 @@ class GalleryAccessController extends WP_REST_Controller {
 			)
 		);
 
-		// GET /fair-audience/v1/events/{event_id}/gallery-invitations/stats - Get invitation statistics.
+		// GET /fair-audience/v1/event-dates/{event_date_id}/gallery-invitations/stats - Get invitation statistics.
 		register_rest_route(
 			$this->namespace,
-			'/events/(?P<event_id>[\d]+)/gallery-invitations/stats',
+			'/event-dates/(?P<event_date_id>[\d]+)/gallery-invitations/stats',
 			array(
 				array(
 					'methods'             => WP_REST_Server::READABLE,
 					'callback'            => array( $this, 'get_stats' ),
 					'permission_callback' => array( $this, 'get_stats_permissions_check' ),
 					'args'                => array(
-						'event_id' => array(
+						'event_date_id' => array(
 							'type'     => 'integer',
 							'required' => true,
 						),
@@ -246,10 +246,21 @@ class GalleryAccessController extends WP_REST_Controller {
 	 * @return WP_REST_Response|WP_Error Response object or error.
 	 */
 	public function send_invitations( $request ) {
-		$event_id                   = $request->get_param( 'event_id' );
+		$event_date_id              = $request->get_param( 'event_date_id' );
 		$custom_message             = $request->get_param( 'message' );
 		$participant_ids            = $request->get_param( 'participant_ids' );
 		$disabled_extra_message_ids = $request->get_param( 'disabled_extra_message_ids' );
+
+		// Resolve event_id from event_date_id.
+		$event_date_obj = \FairEvents\Models\EventDates::get_by_id( $event_date_id );
+		if ( ! $event_date_obj ) {
+			return new WP_Error(
+				'invalid_event_date',
+				__( 'Event date not found.', 'fair-audience' ),
+				array( 'status' => 404 )
+			);
+		}
+		$event_id = (int) $event_date_obj->event_id;
 
 		// Validate event exists.
 		$event = get_post( $event_id );
@@ -262,7 +273,7 @@ class GalleryAccessController extends WP_REST_Controller {
 		}
 
 		// Send invitations (to selected participants or all if empty).
-		$results = $this->email_service->send_bulk_gallery_invitations( $event_id, $custom_message, $participant_ids, $disabled_extra_message_ids );
+		$results = $this->email_service->send_bulk_gallery_invitations( $event_date_id, $custom_message, $participant_ids, $disabled_extra_message_ids, $event_id );
 
 		return rest_ensure_response(
 			array(
@@ -281,7 +292,18 @@ class GalleryAccessController extends WP_REST_Controller {
 	 * @return WP_REST_Response|WP_Error Response object or error.
 	 */
 	public function get_stats( $request ) {
-		$event_id = $request->get_param( 'event_id' );
+		$event_date_id = $request->get_param( 'event_date_id' );
+
+		// Resolve event_id from event_date_id.
+		$event_date_obj = \FairEvents\Models\EventDates::get_by_id( $event_date_id );
+		if ( ! $event_date_obj ) {
+			return new WP_Error(
+				'invalid_event_date',
+				__( 'Event date not found.', 'fair-audience' ),
+				array( 'status' => 404 )
+			);
+		}
+		$event_id = (int) $event_date_obj->event_id;
 
 		// Validate event exists.
 		$event = get_post( $event_id );
@@ -293,7 +315,7 @@ class GalleryAccessController extends WP_REST_Controller {
 			);
 		}
 
-		$stats = $this->access_key_repository->get_stats( $event_id );
+		$stats = $this->access_key_repository->get_stats( $event_date_id );
 
 		return rest_ensure_response( $stats );
 	}

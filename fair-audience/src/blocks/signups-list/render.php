@@ -109,8 +109,19 @@ if ( ! function_exists( 'fair_audience_check_signup_permission' ) ) {
 	$event_participant_repo = new \FairAudience\Database\EventParticipantRepository();
 	$participant_repo       = new \FairAudience\Database\ParticipantRepository();
 
-	// Get all event participants.
-	$event_participants = $event_participant_repo->get_by_event( $event_id );
+	// Resolve event_date_id and get participants.
+	$event_date_id = 0;
+	if ( class_exists( \FairEvents\Models\EventDates::class ) ) {
+		$event_date_obj = \FairEvents\Models\EventDates::get_by_event_id( $event_id );
+		if ( $event_date_obj ) {
+			$event_date_id = (int) $event_date_obj->id;
+		}
+	}
+
+	// Get all event participants (prefer event_date_id).
+	$event_participants = $event_date_id
+		? $event_participant_repo->get_by_event_date( $event_date_id )
+		: $event_participant_repo->get_by_event( $event_id );
 
 	// Filter to only signed_up participants and get their details.
 	$signed_up_participants = array();

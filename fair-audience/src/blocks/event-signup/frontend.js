@@ -474,6 +474,9 @@ const CSS_PREFIX = 'fair-audience-signup';
 	 */
 	function submitUnsignup(block, button) {
 		const eventId = parseInt(block.dataset.eventId, 10);
+		const eventDateId = block.dataset.eventDateId
+			? parseInt(block.dataset.eventDateId, 10)
+			: null;
 		const token = block.dataset.participantToken || '';
 		const state = block.dataset.state;
 
@@ -490,6 +493,10 @@ const CSS_PREFIX = 'fair-audience-signup';
 		const requestData = {
 			event_id: eventId,
 		};
+
+		if (eventDateId) {
+			requestData.event_date_id = eventDateId;
+		}
 
 		if (token) {
 			requestData.participant_token = token;

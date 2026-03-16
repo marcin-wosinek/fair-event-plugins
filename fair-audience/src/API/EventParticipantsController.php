@@ -34,7 +34,7 @@ class EventParticipantsController extends WP_REST_Controller {
 	 *
 	 * @var string
 	 */
-	protected $rest_base = 'events/(?P<event_id>\d+)/participants';
+	protected $rest_base = 'event-dates/(?P<event_date_id>\d+)/participants';
 
 	/**
 	 * Event participant repository.
@@ -62,8 +62,8 @@ class EventParticipantsController extends WP_REST_Controller {
 	 * Register REST API routes.
 	 */
 	public function register_routes() {
-		// GET /fair-audience/v1/events/{event_id}/participants
-		// POST /fair-audience/v1/events/{event_id}/participants
+		// GET /fair-audience/v1/event-dates/{event_date_id}/participants.
+		// POST /fair-audience/v1/event-dates/{event_date_id}/participants.
 		register_rest_route(
 			$this->namespace,
 			'/' . $this->rest_base,
@@ -73,7 +73,7 @@ class EventParticipantsController extends WP_REST_Controller {
 					'callback'            => array( $this, 'get_items' ),
 					'permission_callback' => 'is_user_logged_in',
 					'args'                => array(
-						'event_id' => array(
+						'event_date_id' => array(
 							'type'     => 'integer',
 							'required' => true,
 						),
@@ -84,7 +84,7 @@ class EventParticipantsController extends WP_REST_Controller {
 					'callback'            => array( $this, 'create_item' ),
 					'permission_callback' => array( $this, 'create_item_permissions_check' ),
 					'args'                => array(
-						'event_id'       => array(
+						'event_date_id'  => array(
 							'type'     => 'integer',
 							'required' => true,
 						),
@@ -97,18 +97,13 @@ class EventParticipantsController extends WP_REST_Controller {
 							'enum'    => array( 'interested', 'signed_up', 'collaborator' ),
 							'default' => 'interested',
 						),
-						'event_date_id'  => array(
-							'type'              => 'integer',
-							'required'          => false,
-							'sanitize_callback' => 'absint',
-						),
 					),
 				),
 			)
 		);
 
-		// DELETE /fair-audience/v1/events/{event_id}/participants/{participant_id}
-		// PUT /fair-audience/v1/events/{event_id}/participants/{participant_id}
+		// DELETE /fair-audience/v1/event-dates/{event_date_id}/participants/{participant_id}.
+		// PUT /fair-audience/v1/event-dates/{event_date_id}/participants/{participant_id}.
 		register_rest_route(
 			$this->namespace,
 			'/' . $this->rest_base . '/(?P<participant_id>\d+)',
@@ -118,7 +113,7 @@ class EventParticipantsController extends WP_REST_Controller {
 					'callback'            => array( $this, 'update_item' ),
 					'permission_callback' => array( $this, 'update_item_permissions_check' ),
 					'args'                => array(
-						'event_id'       => array(
+						'event_date_id'  => array(
 							'type'     => 'integer',
 							'required' => true,
 						),
@@ -138,7 +133,7 @@ class EventParticipantsController extends WP_REST_Controller {
 					'callback'            => array( $this, 'delete_item' ),
 					'permission_callback' => array( $this, 'delete_item_permissions_check' ),
 					'args'                => array(
-						'event_id'       => array(
+						'event_date_id'  => array(
 							'type'     => 'integer',
 							'required' => true,
 						),
@@ -151,8 +146,8 @@ class EventParticipantsController extends WP_REST_Controller {
 			)
 		);
 
-		// DELETE /fair-audience/v1/events/{event_id}/participants/batch.
-		// POST /fair-audience/v1/events/{event_id}/participants/batch.
+		// DELETE /fair-audience/v1/event-dates/{event_date_id}/participants/batch.
+		// POST /fair-audience/v1/event-dates/{event_date_id}/participants/batch.
 		register_rest_route(
 			$this->namespace,
 			'/' . $this->rest_base . '/batch',
@@ -162,7 +157,7 @@ class EventParticipantsController extends WP_REST_Controller {
 					'callback'            => array( $this, 'delete_batch_items' ),
 					'permission_callback' => array( $this, 'delete_item_permissions_check' ),
 					'args'                => array(
-						'event_id'        => array(
+						'event_date_id'   => array(
 							'type'              => 'integer',
 							'required'          => true,
 							'validate_callback' => function ( $param ) {
@@ -186,7 +181,7 @@ class EventParticipantsController extends WP_REST_Controller {
 					'callback'            => array( $this, 'create_batch_items' ),
 					'permission_callback' => array( $this, 'create_item_permissions_check' ),
 					'args'                => array(
-						'event_id'        => array(
+						'event_date_id'   => array(
 							'type'              => 'integer',
 							'required'          => true,
 							'validate_callback' => function ( $param ) {
@@ -213,7 +208,7 @@ class EventParticipantsController extends WP_REST_Controller {
 			)
 		);
 
-		// GET /fair-audience/v1/events (list events with participant counts)
+		// GET /fair-audience/v1/events (list events with participant counts).
 		register_rest_route(
 			$this->namespace,
 			'/events',
@@ -251,7 +246,7 @@ class EventParticipantsController extends WP_REST_Controller {
 			)
 		);
 
-		// GET /fair-audience/v1/events/{event_id} (single event info)
+		// GET /fair-audience/v1/events/{event_id} (single event info).
 		register_rest_route(
 			$this->namespace,
 			'/events/(?P<event_id>\d+)',
@@ -278,7 +273,18 @@ class EventParticipantsController extends WP_REST_Controller {
 	public function get_items( $request ) {
 		global $wpdb;
 
-		$event_id = $request->get_param( 'event_id' );
+		$event_date_id = $request->get_param( 'event_date_id' );
+
+		// Resolve event_id from event_date_id.
+		$event_date = \FairEvents\Models\EventDates::get_by_id( $event_date_id );
+		if ( ! $event_date ) {
+			return new WP_Error(
+				'invalid_event_date',
+				__( 'Event date not found.', 'fair-audience' ),
+				array( 'status' => 404 )
+			);
+		}
+		$event_id = (int) $event_date->event_id;
 
 		// Verify event exists.
 		$event = get_post( $event_id );
@@ -290,7 +296,7 @@ class EventParticipantsController extends WP_REST_Controller {
 			);
 		}
 
-		$event_participants = $this->event_participant_repo->get_by_event( $event_id );
+		$event_participants = $this->event_participant_repo->get_by_event_date( $event_date_id );
 
 		// Get likes received per participant (for photos they authored).
 		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
@@ -341,10 +347,20 @@ class EventParticipantsController extends WP_REST_Controller {
 	 * @return WP_REST_Response|WP_Error Response object or error.
 	 */
 	public function create_item( $request ) {
-		$event_id       = $request->get_param( 'event_id' );
+		$event_date_id  = $request->get_param( 'event_date_id' );
 		$participant_id = $request->get_param( 'participant_id' );
 		$label          = $request->get_param( 'label' );
-		$event_date_id  = $request->get_param( 'event_date_id' ) ?: null;
+
+		// Resolve event_id from event_date_id.
+		$event_date = \FairEvents\Models\EventDates::get_by_id( $event_date_id );
+		if ( ! $event_date ) {
+			return new WP_Error(
+				'invalid_event_date',
+				__( 'Event date not found.', 'fair-audience' ),
+				array( 'status' => 404 )
+			);
+		}
+		$event_id = (int) $event_date->event_id;
 
 		// Validate event.
 		$event = get_post( $event_id );
@@ -391,11 +407,11 @@ class EventParticipantsController extends WP_REST_Controller {
 	 * @return WP_REST_Response|WP_Error Response object or error.
 	 */
 	public function update_item( $request ) {
-		$event_id       = $request->get_param( 'event_id' );
+		$event_date_id  = $request->get_param( 'event_date_id' );
 		$participant_id = $request->get_param( 'participant_id' );
 		$label          = $request->get_param( 'label' );
 
-		$success = $this->event_participant_repo->update_label( $event_id, $participant_id, $label );
+		$success = $this->event_participant_repo->update_label_by_event_date( $event_date_id, $participant_id, $label );
 
 		if ( ! $success ) {
 			return new WP_Error(
@@ -419,10 +435,10 @@ class EventParticipantsController extends WP_REST_Controller {
 	 * @return WP_REST_Response|WP_Error Response object or error.
 	 */
 	public function delete_item( $request ) {
-		$event_id       = $request->get_param( 'event_id' );
+		$event_date_id  = $request->get_param( 'event_date_id' );
 		$participant_id = $request->get_param( 'participant_id' );
 
-		$success = $this->event_participant_repo->remove_participant_from_event( $event_id, $participant_id );
+		$success = $this->event_participant_repo->remove_participant_from_event_date( $event_date_id, $participant_id );
 
 		if ( ! $success ) {
 			return new WP_Error(
@@ -446,8 +462,19 @@ class EventParticipantsController extends WP_REST_Controller {
 	 * @return WP_REST_Response|WP_Error Response object or error.
 	 */
 	public function delete_batch_items( $request ) {
-		$event_id        = (int) $request['event_id'];
+		$event_date_id   = (int) $request['event_date_id'];
 		$participant_ids = $request->get_param( 'participant_ids' );
+
+		// Resolve event_id from event_date_id.
+		$event_date = \FairEvents\Models\EventDates::get_by_id( $event_date_id );
+		if ( ! $event_date ) {
+			return new WP_Error(
+				'invalid_event_date',
+				__( 'Event date not found.', 'fair-audience' ),
+				array( 'status' => 404 )
+			);
+		}
+		$event_id = (int) $event_date->event_id;
 
 		// Validate event exists.
 		$event = get_post( $event_id );
@@ -468,8 +495,8 @@ class EventParticipantsController extends WP_REST_Controller {
 		foreach ( $participant_ids as $participant_id ) {
 			$participant_id = (int) $participant_id;
 
-			$deleted = $this->event_participant_repo->remove_participant_from_event(
-				$event_id,
+			$deleted = $this->event_participant_repo->remove_participant_from_event_date(
+				$event_date_id,
 				$participant_id
 			);
 
@@ -495,9 +522,20 @@ class EventParticipantsController extends WP_REST_Controller {
 	 * @return WP_REST_Response|WP_Error Response object or error.
 	 */
 	public function create_batch_items( $request ) {
-		$event_id        = (int) $request['event_id'];
+		$event_date_id   = (int) $request['event_date_id'];
 		$participant_ids = $request->get_param( 'participant_ids' );
 		$label           = $request->get_param( 'label' );
+
+		// Resolve event_id from event_date_id.
+		$event_date = \FairEvents\Models\EventDates::get_by_id( $event_date_id );
+		if ( ! $event_date ) {
+			return new WP_Error(
+				'invalid_event_date',
+				__( 'Event date not found.', 'fair-audience' ),
+				array( 'status' => 404 )
+			);
+		}
+		$event_id = (int) $event_date->event_id;
 
 		// Validate event exists.
 		$event = get_post( $event_id );
@@ -534,7 +572,8 @@ class EventParticipantsController extends WP_REST_Controller {
 			$id = $this->event_participant_repo->add_participant_to_event(
 				$event_id,
 				$participant_id,
-				$label
+				$label,
+				$event_date_id
 			);
 
 			if ( false === $id ) {

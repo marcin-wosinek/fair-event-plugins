@@ -31,15 +31,24 @@ class GalleryAccessKeyRepository {
 	/**
 	 * Create access key for a participant.
 	 *
-	 * @param int $event_id       Event ID.
+	 * @param int $event_date_id  Event date ID.
 	 * @param int $participant_id Participant ID.
+	 * @param int $event_id       Event ID (derived from event_date_id if 0).
 	 * @return GalleryAccessKey|null Created access key or null on failure.
 	 */
-	public function create_for_participant( $event_id, $participant_id ) {
+	public function create_for_participant( $event_date_id, $participant_id, $event_id = 0 ) {
 		// Check if key already exists.
-		$existing = $this->get_by_event_and_participant( $event_id, $participant_id );
+		$existing = $this->get_by_event_date_and_participant( $event_date_id, $participant_id );
 		if ( $existing ) {
 			return $existing;
+		}
+
+		// Derive event_id from event_date_id if not provided.
+		if ( empty( $event_id ) && class_exists( \FairEvents\Models\EventDates::class ) ) {
+			$event_date = \FairEvents\Models\EventDates::get_by_id( $event_date_id );
+			if ( $event_date ) {
+				$event_id = (int) $event_date->event_id;
+			}
 		}
 
 		// Generate cryptographically secure random token.
@@ -52,6 +61,7 @@ class GalleryAccessKeyRepository {
 		$access_key->populate(
 			array(
 				'event_id'       => $event_id,
+				'event_date_id'  => $event_date_id,
 				'participant_id' => $participant_id,
 				'access_key'     => $access_key_hash,
 				'token'          => $token,
@@ -112,22 +122,22 @@ class GalleryAccessKeyRepository {
 	}
 
 	/**
-	 * Get access key for a specific event and participant.
+	 * Get access key for a specific event date and participant.
 	 *
-	 * @param int $event_id       Event ID.
+	 * @param int $event_date_id  Event date ID.
 	 * @param int $participant_id Participant ID.
 	 * @return GalleryAccessKey|null Access key or null if not found.
 	 */
-	public function get_by_event_and_participant( $event_id, $participant_id ) {
+	public function get_by_event_date_and_participant( $event_date_id, $participant_id ) {
 		global $wpdb;
 
 		$table_name = $this->get_table_name();
 
 		$result = $wpdb->get_row(
 			$wpdb->prepare(
-				'SELECT * FROM %i WHERE event_id = %d AND participant_id = %d',
+				'SELECT * FROM %i WHERE event_date_id = %d AND participant_id = %d',
 				$table_name,
-				$event_id,
+				$event_date_id,
 				$participant_id
 			),
 			ARRAY_A
@@ -193,15 +203,16 @@ class GalleryAccessKeyRepository {
 	}
 
 	/**
-	 * Generate access keys for participants of an event.
+	 * Generate access keys for participants of an event date.
 	 *
-	 * @param int   $event_id Event ID.
+	 * @param int   $event_date_id  Event date ID.
 	 * @param array $participant_ids Optional array of participant IDs. If empty, generates for all.
+	 * @param int   $event_id       Event ID (for denormalized storage).
 	 * @return int Number of keys created.
 	 */
-	public function generate_keys_for_event_participants( $event_id, $participant_ids = array() ) {
+	public function generate_keys_for_event_date_participants( $event_date_id, $participant_ids = array(), $event_id = 0 ) {
 		$event_participant_repo = new EventParticipantRepository();
-		$participants           = $event_participant_repo->get_by_event( $event_id );
+		$participants           = $event_participant_repo->get_by_event_date( $event_date_id );
 
 		$created_count = 0;
 
@@ -211,7 +222,7 @@ class GalleryAccessKeyRepository {
 				continue;
 			}
 
-			$access_key = $this->create_for_participant( $event_id, $event_participant->participant_id );
+			$access_key = $this->create_for_participant( $event_date_id, $event_participant->participant_id, $event_id );
 			if ( $access_key ) {
 				++$created_count;
 			}
@@ -221,12 +232,12 @@ class GalleryAccessKeyRepository {
 	}
 
 	/**
-	 * Get statistics for access keys of an event.
+	 * Get statistics for access keys of an event date.
 	 *
-	 * @param int $event_id Event ID.
+	 * @param int $event_date_id Event date ID.
 	 * @return array Array with counts ['total' => 5, 'sent' => 3, 'not_sent' => 2].
 	 */
-	public function get_stats( $event_id ) {
+	public function get_stats( $event_date_id ) {
 		global $wpdb;
 
 		$table_name = $this->get_table_name();
@@ -234,18 +245,18 @@ class GalleryAccessKeyRepository {
 		// Get total count.
 		$total = (int) $wpdb->get_var(
 			$wpdb->prepare(
-				'SELECT COUNT(*) FROM %i WHERE event_id = %d',
+				'SELECT COUNT(*) FROM %i WHERE event_date_id = %d',
 				$table_name,
-				$event_id
+				$event_date_id
 			)
 		);
 
 		// Get count of emails sent (sent_at IS NOT NULL).
 		$sent = (int) $wpdb->get_var(
 			$wpdb->prepare(
-				'SELECT COUNT(*) FROM %i WHERE event_id = %d AND sent_at IS NOT NULL',
+				'SELECT COUNT(*) FROM %i WHERE event_date_id = %d AND sent_at IS NOT NULL',
 				$table_name,
-				$event_id
+				$event_date_id
 			)
 		);
 
@@ -260,19 +271,19 @@ class GalleryAccessKeyRepository {
 	}
 
 	/**
-	 * Delete all access keys for an event.
+	 * Delete all access keys for an event date.
 	 *
-	 * @param int $event_id Event ID.
+	 * @param int $event_date_id Event date ID.
 	 * @return bool Success.
 	 */
-	public function delete_by_event( $event_id ) {
+	public function delete_by_event_date( $event_date_id ) {
 		global $wpdb;
 
 		$table_name = $this->get_table_name();
 
 		return $wpdb->delete(
 			$table_name,
-			array( 'event_id' => $event_id ),
+			array( 'event_date_id' => $event_date_id ),
 			array( '%d' )
 		) !== false;
 	}
