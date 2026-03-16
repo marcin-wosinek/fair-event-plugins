@@ -20,6 +20,7 @@ on:
                     - lamutable.es
                     - fusion-dance.es
                     - acro-agenda.es
+                    - fusion-circus.com
                     - all
 
 jobs:
@@ -215,5 +216,17 @@ jobs:
         uses: ./.github/workflows/deploy-to-environment.yml
         with:
             environment: acro-agenda.es
+        secrets:
+            SSH_PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
+
+    deploy-fusion-circus:
+        name: Deploy to fusion-circus.com
+        needs: [build]
+        if: |
+            (github.event_name == 'push' && github.ref == 'refs/heads/main') ||
+            (github.event_name == 'workflow_dispatch' && (github.event.inputs.environment == 'fusion-circus.com' || github.event.inputs.environment == 'all'))
+        uses: ./.github/workflows/deploy-to-environment.yml
+        with:
+            environment: fusion-circus.com
         secrets:
             SSH_PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
