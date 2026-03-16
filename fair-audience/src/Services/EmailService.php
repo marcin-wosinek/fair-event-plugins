@@ -1674,21 +1674,18 @@ class EmailService {
 	 * Unlike send_signup_link_email (which is for requested links),
 	 * this is a marketing email for participants who subscribed to updates.
 	 *
-	 * @param object $event        Event post object.
-	 * @param object $participant  Participant object.
-	 * @param string $access_token Signup access token.
-	 * @param string $custom_message Optional custom message.
+	 * @param object $event           Event post object.
+	 * @param object $participant     Participant object.
+	 * @param string $signup_url      Full signup URL with participant token.
+	 * @param string $custom_message  Optional custom message.
 	 * @return bool Success.
 	 */
-	public function send_event_invitation( $event, $participant, $access_token, $custom_message = '' ) {
+	public function send_event_invitation( $event, $participant, $signup_url, $custom_message = '' ) {
 		if ( ! $this->has_valid_email( $participant ) ) {
 			return false;
 		}
 
 		$site_name = wp_specialchars_decode( get_option( 'blogname' ), ENT_QUOTES );
-
-		// Build signup URL with token.
-		$signup_url = add_query_arg( 'signup_token', $access_token, get_permalink( $event->ID ) );
 
 		// Build manage subscription URL for unsubscribe link.
 		$manage_subscription_url = ManageSubscriptionToken::get_url( $participant->id );
@@ -1933,7 +1930,7 @@ class EmailService {
 			$token_url = ParticipantToken::get_url( $participant_id, $event_date_id, $event->ID );
 
 			// Send invitation email.
-			$success = $this->send_signup_link_email( $event, $participant, $token_url );
+			$success = $this->send_event_invitation( $event, $participant, $token_url, $custom_message );
 
 			if ( $success ) {
 				$results['sent'][] = $participant->email;
