@@ -28,7 +28,7 @@ jobs:
         runs-on: ubuntu-latest
 
         steps:
-            - uses: actions/checkout@v4
+            - uses: actions/checkout@v6
 
             - name: Setup PHP
               uses: shivammathur/setup-php@44454db4f0199b8b9685a5d763dc37cbf79108e1 # v2
@@ -43,7 +43,7 @@ jobs:
 
             - name: Cache Composer packages
               id: composer-cache
-              uses: actions/cache@v4
+              uses: actions/cache@v5
               with:
                   path: |
                       ./fair-payment/vendor
@@ -56,13 +56,13 @@ jobs:
                       ${{ runner.os }}-php-
 
             - name: Setup Node.js
-              uses: actions/setup-node@v4
+              uses: actions/setup-node@v6
               with:
                   node-version: '24'
 
             - name: Cache node_modules
               id: npm-cache
-              uses: actions/cache@v4
+              uses: actions/cache@v5
               with:
                   path: |
                       ./node_modules
@@ -111,7 +111,7 @@ jobs:
                   npm test
 
             - name: Upload plugins
-              uses: actions/upload-artifact@v4
+              uses: actions/upload-artifact@v6
               with:
                   name: plugins
                   path: ./dist/*.zip
@@ -128,16 +128,16 @@ jobs:
             pull-requests: write
         steps:
             - name: Checkout Repo
-              uses: actions/checkout@v4
+              uses: actions/checkout@v6
 
             - name: Setup Node.js
-              uses: actions/setup-node@v4
+              uses: actions/setup-node@v6
               with:
                   node-version: '24'
 
             - name: Cache node_modules
               id: npm-cache
-              uses: actions/cache@v4
+              uses: actions/cache@v5
               with:
                   path: |
                       ./node_modules
