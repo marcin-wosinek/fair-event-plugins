@@ -38,6 +38,8 @@ class Plugin {
 	 * @return void
 	 */
 	public function init() {
+		load_plugin_textdomain( 'fair-payment', false, 'fair-payment/languages' );
+
 		add_action( 'init', array( $this, 'register_blocks' ) );
 		add_action( 'wp_enqueue_scripts', array( $this, 'enqueue_callback_script' ) );
 

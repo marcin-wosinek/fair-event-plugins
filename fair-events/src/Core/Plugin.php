@@ -38,6 +38,8 @@ class Plugin {
 	 * @return void
 	 */
 	public function init() {
+		load_plugin_textdomain( 'fair-events', false, 'fair-events/languages' );
+
 		add_action( 'init', array( $this, 'register_post_types' ) );
 		$this->load_hooks();
 		$this->load_patterns();

@@ -259,7 +259,11 @@ WordPress generates translation JSON hashes based on **source file paths** but l
 - **PHP translations**: `languages/` directory (`.pot`, `.po`, `.mo`)
 - **JavaScript translations**: `build/languages/` directory (`.json` files)
 
-**Important**: PHP `.mo` files are loaded automatically from `languages/` (no `load_plugin_textdomain()` needed for WordPress 6.7+). JavaScript translations require `wp_set_script_translations()` pointing to `build/languages/`.
+**Important**: PHP `.mo` files bundled in the plugin's `languages/` directory require `load_plugin_textdomain()` to be loaded. Add it in `Plugin::init()`:
+```php
+load_plugin_textdomain( 'plugin-name', false, 'plugin-name/languages' );
+```
+JavaScript translations require `wp_set_script_translations()` pointing to `build/languages/`.
 
 ## Versioning and Deployment
 

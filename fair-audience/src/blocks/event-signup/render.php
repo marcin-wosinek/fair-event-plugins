@@ -18,11 +18,11 @@ use FairAudience\Database\EventParticipantRepository;
 use FairAudience\Services\ParticipantToken;
 use FairEvents\Models\EventDates;
 
-// Get block attributes.
-$signup_button_text       = $attributes['signupButtonText'] ?? __( 'Sign Up', 'fair-audience' );
-$register_button_text     = $attributes['registerButtonText'] ?? __( 'Register & Sign Up', 'fair-audience' );
-$request_link_button_text = $attributes['requestLinkButtonText'] ?? __( 'Send Signup Link', 'fair-audience' );
-$success_message          = $attributes['successMessage'] ?? __( 'You have successfully signed up for the event!', 'fair-audience' );
+// Get block attributes — translate defaults so stored English values get localized.
+$signup_button_text       = __( $attributes['signupButtonText'] ?? 'Sign Up', 'fair-audience' );
+$register_button_text     = __( $attributes['registerButtonText'] ?? 'Register & Sign Up', 'fair-audience' );
+$request_link_button_text = __( $attributes['requestLinkButtonText'] ?? 'Send Signup Link', 'fair-audience' );
+$success_message          = __( $attributes['successMessage'] ?? 'You have successfully signed up for the event!', 'fair-audience' );
 
 // Get event ID from current post.
 $event_id = get_the_ID();

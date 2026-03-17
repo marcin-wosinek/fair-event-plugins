@@ -44,6 +44,8 @@ class Plugin {
 	 * Initialize the plugin.
 	 */
 	public function init() {
+		load_plugin_textdomain( 'fair-audience', false, 'fair-audience/languages' );
+
 		add_action( 'rest_api_init', array( $this, 'register_api_endpoints' ) );
 		add_filter( 'query_vars', array( $this, 'add_query_vars' ) );
 		add_action( 'template_redirect', array( $this, 'handle_poll_response' ) );

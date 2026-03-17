@@ -14,7 +14,7 @@ defined( 'WPINC' ) || die;
 // Get block attributes
 $enable_categories  = $attributes['enableCategories'] ?? true;
 $enable_description = $attributes['enableDescription'] ?? true;
-$submit_button_text = $attributes['submitButtonText'] ?? __( 'Submit Event Proposal', 'fair-events' );
+$submit_button_text = __( $attributes['submitButtonText'] ?? 'Submit Event Proposal', 'fair-events' );
 
 // Check if user is logged in
 $is_logged_in = is_user_logged_in();

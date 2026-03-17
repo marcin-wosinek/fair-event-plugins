@@ -21,9 +21,9 @@ use FairAudience\Database\QuestionnaireSubmissionRepository;
 use FairAudience\Database\QuestionnaireAnswerRepository;
 use FairAudience\Database\ParticipantRepository;
 
-// Get block attributes.
-$submit_text        = $attributes['submitButtonText'] ?? __( 'Register', 'fair-audience' );
-$success_message    = $attributes['successMessage'] ?? __( 'You have been registered successfully!', 'fair-audience' );
+// Get block attributes — translate defaults so stored English values get localized.
+$submit_text        = __( $attributes['submitButtonText'] ?? 'Register', 'fair-audience' );
+$success_message    = __( $attributes['successMessage'] ?? 'You have been registered successfully!', 'fair-audience' );
 $show_instagram     = $attributes['showInstagram'] ?? false;
 $show_keep_informed = $attributes['showKeepInformed'] ?? true;
 $questions          = $attributes['questions'] ?? array();

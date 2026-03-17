@@ -9,7 +9,7 @@ msgstr ""
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"POT-Creation-Date: 2026-03-17T15:58:59+00:00\n"
+"POT-Creation-Date: 2026-03-17T16:53:58+00:00\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "X-Generator: WP-CLI 2.12.0\n"
 "X-Domain: fair-platform\n"
@@ -291,21 +291,21 @@ msgstr ""
 msgid "You do not have permission to view Instagram connection logs."
 msgstr ""
 
-#: src/Core/Plugin.php:1412
-#: src/Core/Plugin.php:1433
-#: src/Core/Plugin.php:1454
+#: src/Core/Plugin.php:1414
+#: src/Core/Plugin.php:1435
+#: src/Core/Plugin.php:1456
 msgid "Fair Platform:"
 msgstr ""
 
-#: src/Core/Plugin.php:1414
+#: src/Core/Plugin.php:1416
 msgid "Instagram OAuth credentials not configured. Please add INSTAGRAM_APP_ID and INSTAGRAM_APP_SECRET to wp-config.php for Instagram integration."
 msgstr ""
 
-#: src/Core/Plugin.php:1435
+#: src/Core/Plugin.php:1437
 msgid "Mollie OAuth credentials not configured. Please add MOLLIE_CLIENT_ID and MOLLIE_CLIENT_SECRET to wp-config.php"
 msgstr ""
 
-#: src/Core/Plugin.php:1456
+#: src/Core/Plugin.php:1458
 msgid "Mollie PHP library not installed. Please run: composer require mollie/mollie-api-php"
 msgstr ""
 

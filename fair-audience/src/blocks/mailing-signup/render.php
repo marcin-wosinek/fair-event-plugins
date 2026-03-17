@@ -14,9 +14,9 @@
 
 defined( 'WPINC' ) || die;
 
-// Get block attributes.
-$submit_text              = $attributes['submitButtonText'] ?? __( 'Subscribe', 'fair-audience' );
-$success_message          = $attributes['successMessage'] ?? __( 'Please check your email to confirm your subscription.', 'fair-audience' );
+// Get block attributes — translate defaults so stored English values get localized.
+$submit_text              = __( $attributes['submitButtonText'] ?? 'Subscribe', 'fair-audience' );
+$success_message          = __( $attributes['successMessage'] ?? 'Please check your email to confirm your subscription.', 'fair-audience' );
 $show_categories          = ! empty( $attributes['showCategories'] );
 $category_ids             = $attributes['categoryIds'] ?? array();
 $preselected_category_ids = $attributes['preselectedCategoryIds'] ?? array();

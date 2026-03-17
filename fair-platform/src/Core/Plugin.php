@@ -76,6 +76,8 @@ class Plugin {
 	 * @return void
 	 */
 	private function init_hooks() {
+		load_plugin_textdomain( 'fair-platform', false, 'fair-platform/languages' );
+
 		// Check for database updates.
 		if ( Schema::needs_update() ) {
 			Schema::create_tables();
