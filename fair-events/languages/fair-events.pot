@@ -9,7 +9,7 @@ msgstr ""
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"POT-Creation-Date: 2026-03-04T12:02:23+00:00\n"
+"POT-Creation-Date: 2026-03-17T15:58:58+00:00\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "X-Generator: WP-CLI 2.12.0\n"
 "X-Domain: fair-events\n"
@@ -61,7 +61,7 @@ msgstr ""
 #: src/Admin/AdminPages.php:49
 #: src/Admin/AdminPages.php:50
 #: src/Admin/MediaLibraryHooks.php:125
-#: src/Admin/all-events/AllEvents.js:235
+#: src/Admin/all-events/AllEvents.js:249
 #: src/blocks/events-list/components/EditComponent.js:117
 msgid "All Events"
 msgstr ""
@@ -72,6 +72,7 @@ msgid "Fair Events Settings"
 msgstr ""
 
 #: src/Admin/AdminPages.php:60
+#: src/Admin/manage-event/EventTickets.js:951
 msgid "Settings"
 msgstr ""
 
@@ -86,6 +87,14 @@ msgstr ""
 
 #: src/Admin/AdminPages.php:79
 #: src/Admin/AdminPages.php:80
+#: src/Admin/migration-summary/MigrationSummaryApp.js:42
+#: src/Admin/migration-summary/MigrationSummaryApp.js:51
+#: src/Admin/migration-summary/MigrationSummaryApp.js:70
+msgid "Migration Summary"
+msgstr ""
+
+#: src/Admin/AdminPages.php:89
+#: src/Admin/AdminPages.php:90
 #: src/Admin/sources/SourcesList.js:142
 #: src/blocks/events-calendar/components/EditComponent.js:243
 #: src/blocks/events-list/components/EditComponent.js:176
@@ -93,44 +102,44 @@ msgstr ""
 msgid "Event Sources"
 msgstr ""
 
-#: src/Admin/AdminPages.php:89
-#: src/Admin/AdminPages.php:90
-#: src/Admin/venues/VenuesApp.js:163
-msgid "Venues"
-msgstr ""
-
 #: src/Admin/AdminPages.php:99
 #: src/Admin/AdminPages.php:100
-#: src/Admin/AdminPages.php:127
-#: src/Admin/calendar/CalendarApp.js:179
-#: src/Admin/manage-event/ManageEventApp.js:560
-#: src/Admin/manage-event/ManageEventApp.js:1107
-msgid "Manage Event"
+#: src/Admin/venues/VenuesApp.js:289
+msgid "Venues"
 msgstr ""
 
 #: src/Admin/AdminPages.php:109
 #: src/Admin/AdminPages.php:110
-#: src/Admin/AdminPages.php:128
-msgid "View Source"
+#: src/Admin/AdminPages.php:137
+#: src/Admin/calendar/CalendarApp.js:179
+#: src/Admin/manage-event/ManageEventApp.js:619
+#: src/Admin/manage-event/ManageEventApp.js:1137
+msgid "Manage Event"
 msgstr ""
 
 #: src/Admin/AdminPages.php:119
 #: src/Admin/AdminPages.php:120
+#: src/Admin/AdminPages.php:138
+msgid "View Source"
+msgstr ""
+
 #: src/Admin/AdminPages.php:129
+#: src/Admin/AdminPages.php:130
+#: src/Admin/AdminPages.php:139
 #: src/Admin/CopyEventPage.php:283
 msgid "Copy Event"
 msgstr ""
 
-#: src/Admin/AdminPages.php:663
+#: src/Admin/AdminPages.php:706
 msgid "Upcoming"
 msgstr ""
 
-#: src/Admin/AdminPages.php:778
+#: src/Admin/AdminPages.php:821
 #: src/PostTypes/Event.php:479
 msgid "Copy"
 msgstr ""
 
-#: src/Admin/AdminPages.php:781
+#: src/Admin/AdminPages.php:824
 msgid "Copy this event"
 msgstr ""
 
@@ -151,11 +160,12 @@ msgstr ""
 #: src/Admin/CopyEventPage.php:46
 #: src/Admin/CopyEventPage.php:157
 #: src/API/EventGalleryEndpoint.php:78
+#: src/API/PhotoDownloadController.php:83
 msgid "Event not found."
 msgstr ""
 
 #: src/Admin/CopyEventPage.php:56
-#: src/API/EventDatesController.php:363
+#: src/API/EventDatesController.php:388
 msgid "Event title is required."
 msgstr ""
 
@@ -210,7 +220,8 @@ msgstr ""
 
 #: src/Admin/CopyEventPage.php:342
 #: src/Admin/calendar/components/QuickEventModal.js:102
-#: src/Admin/manage-event/ManageEventApp.js:586
+#: src/Admin/manage-event/DuplicateEventWizard.js:630
+#: src/Admin/manage-event/ManageEventApp.js:668
 #: src/Admin/migration/MigrationApp.js:218
 msgid "Title"
 msgstr ""
@@ -235,7 +246,8 @@ msgstr ""
 #: src/Admin/CopyEventPage.php:369
 #: src/blocks/event-proposal/render.php:156
 #: src/Admin/all-events/AllEvents.js:92
-#: src/Admin/manage-event/ManageEventApp.js:666
+#: src/Admin/manage-event/DuplicateEventWizard.js:710
+#: src/Admin/manage-event/ManageEventApp.js:748
 #: src/blocks/events-calendar/components/EditComponent.js:172
 #: src/blocks/events-list/components/EditComponent.js:142
 #: src/blocks/weekly-schedule/components/EditComponent.js:172
@@ -255,29 +267,15 @@ msgid "Create Copy"
 msgstr ""
 
 #: src/Admin/CopyEventPage.php:393
-#: src/Admin/MediaBatchActions.php:262
+#: src/Admin/MediaBatchActions.php:254
 #: src/Admin/calendar/components/QuickEventModal.js:182
-#: src/Admin/manage-event/GroupPricingRules.js:338
+#: src/Admin/manage-event/DuplicateEventWizard.js:614
+#: src/Admin/manage-event/GroupRules.js:469
 #: src/Admin/manage-event/ImageCropModal.js:72
+#: src/Admin/manage-event/MergeEventWizard.js:444
 #: src/Admin/sources/components/SourceForm.js:231
-#: src/Admin/venues/VenuesApp.js:398
+#: src/Admin/venues/VenuesApp.js:578
 msgid "Cancel"
-msgstr ""
-
-#: src/Admin/EventGalleryMetaBox.php:36
-msgid "Event Photos"
-msgstr ""
-
-#. translators: %d: number of photos
-#: src/Admin/EventGalleryMetaBox.php:60
-#, php-format
-msgid "%d photo linked to this event."
-msgid_plural "%d photos linked to this event."
-msgstr[0] ""
-msgstr[1] ""
-
-#: src/Admin/EventGalleryMetaBox.php:70
-msgid "Review Event's Photos"
 msgstr ""
 
 #: src/Admin/MediaBatchActions.php:37
@@ -286,7 +284,7 @@ msgstr ""
 
 #: src/Admin/MediaBatchActions.php:83
 #: src/Admin/MediaBatchActions.php:84
-#: src/Admin/MediaBatchActions.php:198
+#: src/Admin/MediaBatchActions.php:190
 msgid "Assign Photos to Event"
 msgstr ""
 
@@ -317,65 +315,74 @@ msgid "No photos selected."
 msgstr ""
 
 #. translators: %d: number of photos
-#: src/Admin/MediaBatchActions.php:209
+#: src/Admin/MediaBatchActions.php:201
 #, php-format
 msgid "%d photo selected:"
 msgid_plural "%d photos selected:"
 msgstr[0] ""
 msgstr[1] ""
 
-#: src/Admin/MediaBatchActions.php:242
-#: src/Admin/MediaLibraryHooks.php:75
-#: src/Admin/MediaLibraryHooks.php:173
+#: src/Admin/MediaBatchActions.php:234
+#: src/Admin/MediaLibraryHooks.php:76
+#: src/Admin/MediaLibraryHooks.php:174
 msgid "Event"
 msgstr ""
 
-#: src/Admin/MediaBatchActions.php:246
+#: src/Admin/MediaBatchActions.php:238
 #: src/Admin/MediaLibraryHooks.php:63
+#: src/Admin/MediaLibraryHooks.php:231
 msgid "— Select Event —"
 msgstr ""
 
-#: src/Admin/MediaBatchActions.php:254
+#: src/Admin/MediaBatchActions.php:246
 msgid "All selected photos will be linked to this event."
 msgstr ""
 
-#: src/Admin/MediaBatchActions.php:265
+#: src/Admin/MediaBatchActions.php:257
 msgid "Assign Photos"
 msgstr ""
 
 #. translators: 1: number of photos, 2: event title
-#: src/Admin/MediaBatchActions.php:288
+#: src/Admin/MediaBatchActions.php:281
 #, php-format
 msgid "%1$d photo assigned to \"%2$s\"."
 msgid_plural "%1$d photos assigned to \"%2$s\"."
 msgstr[0] ""
 msgstr[1] ""
 
-#: src/Admin/MediaLibraryHooks.php:83
+#: src/Admin/MediaLibraryHooks.php:84
 msgid "Link this image to an event"
 msgstr ""
 
-#: src/Admin/MediaLibraryHooks.php:219
-msgid "Event Gallery"
-msgstr ""
-
-#: src/Admin/MediaLibraryHooks.php:221
-msgid "Automatically link uploaded photos to an event. Select an event below before uploading."
-msgstr ""
-
-#: src/Admin/MediaLibraryHooks.php:225
+#: src/Admin/MediaLibraryHooks.php:228
 msgid "Event:"
 msgstr ""
 
-#: src/Admin/MediaLibraryHooks.php:228
-msgid "— No Event (Manual Assignment) —"
+#: src/Admin/MediaLibraryHooks.php:266
+msgid "Auto-fill photo details on upload"
 msgstr ""
 
-#: src/Admin/MediaLibraryHooks.php:275
-msgid "Selected. New uploads will be linked to this event."
+#: src/Admin/MediaLibraryHooks.php:285
+#: src/Admin/settings/FacebookTab.js:302
+#: src/Admin/settings/FacebookTab.js:452
+#: src/Admin/settings/GeneralTab.js:240
+#: src/Admin/sources/components/SourceForm.js:237
+msgid "Saving..."
 msgstr ""
 
-#: src/Admin/MediaLibraryHooks.php:385
+#: src/Admin/MediaLibraryHooks.php:294
+msgid "Saved."
+msgstr ""
+
+#: src/Admin/MediaLibraryHooks.php:299
+msgid "Error saving selection"
+msgstr ""
+
+#: src/Admin/MediaLibraryHooks.php:302
+msgid "Error:"
+msgstr ""
+
+#: src/Admin/MediaLibraryHooks.php:404
 msgid "Event: "
 msgstr ""
 
@@ -398,6 +405,9 @@ msgstr ""
 
 #: src/API/EventDatesController.php:142
 #: src/API/EventDatesController.php:166
+#: src/API/GroupPermissionRulesController.php:63
+#: src/API/GroupPermissionRulesController.php:75
+#: src/API/GroupPermissionRulesController.php:108
 #: src/API/GroupPricingRulesController.php:56
 #: src/API/GroupPricingRulesController.php:68
 #: src/API/GroupPricingRulesController.php:109
@@ -405,6 +415,8 @@ msgstr ""
 #: src/API/ImageExportController.php:80
 #: src/API/ImageExportController.php:93
 #: src/API/ImageExportController.php:144
+#: src/API/TicketsController.php:53
+#: src/API/TicketsController.php:65
 msgid "Event date ID."
 msgstr ""
 
@@ -417,126 +429,166 @@ msgid "Post ID to unlink."
 msgstr ""
 
 #: src/API/EventDatesController.php:190
+msgid "Master event date ID."
+msgstr ""
+
+#: src/API/EventDatesController.php:194
+msgid "Date to toggle (Y-m-d format)."
+msgstr ""
+
+#: src/API/EventDatesController.php:215
 msgid "Comma-separated list of event date IDs."
 msgstr ""
 
-#: src/API/EventDatesController.php:211
+#: src/API/EventDatesController.php:236
 msgid "Current page of the collection."
 msgstr ""
 
-#: src/API/EventDatesController.php:217
+#: src/API/EventDatesController.php:242
 msgid "Maximum number of items per page."
 msgstr ""
 
-#: src/API/EventDatesController.php:224
+#: src/API/EventDatesController.php:249
 msgid "Sort collection by field."
 msgstr ""
 
-#: src/API/EventDatesController.php:230
+#: src/API/EventDatesController.php:255
 msgid "Order sort attribute ascending or descending."
 msgstr ""
 
-#: src/API/EventDatesController.php:236
+#: src/API/EventDatesController.php:261
 msgid "Limit results to those matching a string."
 msgstr ""
 
-#: src/API/EventDatesController.php:241
+#: src/API/EventDatesController.php:266
 msgid "Filter by link type."
 msgstr ""
 
-#: src/API/EventDatesController.php:246
+#: src/API/EventDatesController.php:271
 msgid "Filter by occurrence type."
 msgstr ""
 
-#: src/API/EventDatesController.php:264
+#: src/API/EventDatesController.php:289
 msgid "Event title."
 msgstr ""
 
-#: src/API/EventDatesController.php:270
+#: src/API/EventDatesController.php:295
 msgid "Start date/time (Y-m-d H:i:s format)."
 msgstr ""
 
-#: src/API/EventDatesController.php:276
+#: src/API/EventDatesController.php:301
 msgid "End date/time (Y-m-d H:i:s format)."
 msgstr ""
 
-#: src/API/EventDatesController.php:282
+#: src/API/EventDatesController.php:307
 msgid "Whether this is an all-day event."
 msgstr ""
 
-#: src/API/EventDatesController.php:288
+#: src/API/EventDatesController.php:313
 msgid "Venue ID."
 msgstr ""
 
-#: src/API/EventDatesController.php:293
+#: src/API/EventDatesController.php:318
 msgid "Link type (post, external, none)."
 msgstr ""
 
-#: src/API/EventDatesController.php:300
+#: src/API/EventDatesController.php:325
 msgid "External URL for the event."
 msgstr ""
 
-#: src/API/EventDatesController.php:306
+#: src/API/EventDatesController.php:331
 msgid "Theme image attachment ID."
 msgstr ""
 
-#: src/API/EventDatesController.php:311
+#: src/API/EventDatesController.php:336
 msgid "Linked post ID."
 msgstr ""
 
-#: src/API/EventDatesController.php:316
+#: src/API/EventDatesController.php:341
 msgid "Recurrence rule in RRULE format."
 msgstr ""
 
-#: src/API/EventDatesController.php:322
+#: src/API/EventDatesController.php:347
 msgid "Category term IDs."
 msgstr ""
 
-#: src/API/EventDatesController.php:371
+#: src/API/EventDatesController.php:396
 msgid "Start date/time is required."
 msgstr ""
 
-#: src/API/EventDatesController.php:390
+#: src/API/EventDatesController.php:415
 msgid "Failed to create event date."
 msgstr ""
 
-#: src/API/EventDatesController.php:636
-#: src/API/EventDatesController.php:687
-#: src/API/EventDatesController.php:853
-#: src/API/EventDatesController.php:893
-#: src/API/EventDatesController.php:971
-#: src/API/EventDatesController.php:1029
+#: src/API/EventDatesController.php:661
+#: src/API/EventDatesController.php:712
+#: src/API/EventDatesController.php:878
+#: src/API/EventDatesController.php:918
+#: src/API/EventDatesController.php:996
+#: src/API/EventDatesController.php:1054
+#: src/API/EventDatesController.php:1102
+#: src/API/EventMergeController.php:109
+#: src/API/GroupPermissionRulesController.php:146
+#: src/API/GroupPermissionRulesController.php:174
 #: src/API/GroupPricingRulesController.php:177
 #: src/API/GroupPricingRulesController.php:207
 #: src/API/ImageExportController.php:184
 #: src/API/ImageExportController.php:209
 #: src/API/ImageExportController.php:278
+#: src/API/TicketsController.php:98
+#: src/API/TicketsController.php:119
 msgid "Event date not found."
 msgstr ""
 
-#: src/API/EventDatesController.php:758
+#: src/API/EventDatesController.php:783
 msgid "Failed to update event date."
 msgstr ""
 
-#: src/API/EventDatesController.php:863
+#: src/API/EventDatesController.php:888
 msgid "Failed to delete event date."
 msgstr ""
 
-#: src/API/EventDatesController.php:903
+#: src/API/EventDatesController.php:928
 msgid "The specified post type is not enabled."
 msgstr ""
 
-#: src/API/EventDatesController.php:911
+#: src/API/EventDatesController.php:936
 #: src/Admin/event-meta-box/LinkOptions.js:37
 msgid "Untitled Event"
 msgstr ""
 
-#: src/API/EventDatesController.php:980
+#: src/API/EventDatesController.php:1005
 msgid "Post not found."
 msgstr ""
 
-#: src/API/EventDatesController.php:990
+#: src/API/EventDatesController.php:1015
 msgid "This post is already linked to another event."
+msgstr ""
+
+#: src/API/EventDatesController.php:1110
+msgid "Exdates can only be set on master events."
+msgstr ""
+
+#: src/API/EventDatesController.php:1120
+msgid "Cannot exclude the master event date."
+msgstr ""
+
+#: src/API/EventDuplicationController.php:78
+#: src/API/EventMergeController.php:143
+msgid "Target event date not found."
+msgstr ""
+
+#: src/API/EventDuplicationController.php:88
+#: src/API/EventMergeController.php:152
+msgid "Source event date not found."
+msgstr ""
+
+#: src/API/EventDuplicationController.php:98
+msgid "Source event has no linked posts to clone."
+msgstr ""
+
+#: src/API/EventMergeController.php:160
+msgid "Cannot merge an event date into itself."
 msgstr ""
 
 #: src/API/EventProposalController.php:98
@@ -616,7 +668,7 @@ msgid "Unique identifier for the source."
 msgstr ""
 
 #: src/API/EventSourceController.php:139
-#: src/API/PublicEventsController.php:97
+#: src/API/PublicEventsController.php:103
 msgid "Unique slug identifier for the source."
 msgstr ""
 
@@ -624,7 +676,7 @@ msgstr ""
 #: src/API/EventSourceController.php:258
 #: src/API/EventSourceController.php:319
 #: src/API/EventSourceController.php:390
-#: src/API/PublicEventsController.php:179
+#: src/API/PublicEventsController.php:189
 msgid "Source not found."
 msgstr ""
 
@@ -647,7 +699,7 @@ msgid "Failed to delete source."
 msgstr ""
 
 #: src/API/EventSourceController.php:398
-#: src/API/PublicEventsController.php:187
+#: src/API/PublicEventsController.php:197
 msgid "This source is disabled."
 msgstr ""
 
@@ -734,8 +786,31 @@ msgstr ""
 msgid "Token is valid!"
 msgstr ""
 
+#: src/API/GroupPermissionRulesController.php:80
 #: src/API/GroupPricingRulesController.php:73
 msgid "Group ID."
+msgstr ""
+
+#: src/API/GroupPermissionRulesController.php:86
+msgid "Permission type."
+msgstr ""
+
+#: src/API/GroupPermissionRulesController.php:113
+#: src/API/GroupPricingRulesController.php:114
+#: src/API/GroupPricingRulesController.php:144
+msgid "Rule ID."
+msgstr ""
+
+#: src/API/GroupPermissionRulesController.php:187
+msgid "Failed to create permission rule. The group may already have this permission for this event."
+msgstr ""
+
+#: src/API/GroupPermissionRulesController.php:212
+msgid "Permission rule not found."
+msgstr ""
+
+#: src/API/GroupPermissionRulesController.php:222
+msgid "Failed to delete permission rule."
 msgstr ""
 
 #: src/API/GroupPricingRulesController.php:79
@@ -746,11 +821,6 @@ msgstr ""
 #: src/API/GroupPricingRulesController.php:86
 #: src/API/GroupPricingRulesController.php:125
 msgid "Discount value."
-msgstr ""
-
-#: src/API/GroupPricingRulesController.php:114
-#: src/API/GroupPricingRulesController.php:144
-msgid "Rule ID."
 msgstr ""
 
 #: src/API/GroupPricingRulesController.php:221
@@ -767,12 +837,10 @@ msgid "No data to update."
 msgstr ""
 
 #: src/API/GroupPricingRulesController.php:278
-#: src/Admin/manage-event/GroupPricingRules.js:146
 msgid "Failed to update pricing rule."
 msgstr ""
 
 #: src/API/GroupPricingRulesController.php:315
-#: src/Admin/manage-event/GroupPricingRules.js:179
 msgid "Failed to delete pricing rule."
 msgstr ""
 
@@ -845,6 +913,47 @@ msgstr ""
 msgid "Post migrated successfully to event."
 msgstr ""
 
+#: src/API/MigrationSummaryController.php:116
+#: src/Admin/manage-event/MergeEventWizard.js:27
+msgid "Event Photos"
+msgstr ""
+
+#: src/API/MigrationSummaryController.php:120
+msgid "Event Participants"
+msgstr ""
+
+#: src/API/MigrationSummaryController.php:124
+msgid "Polls"
+msgstr ""
+
+#: src/API/MigrationSummaryController.php:128
+msgid "Gallery Access Keys"
+msgstr ""
+
+#: src/API/MigrationSummaryController.php:132
+msgid "Custom Mail Messages"
+msgstr ""
+
+#: src/API/MigrationSummaryController.php:273
+msgid "Invalid table name."
+msgstr ""
+
+#: src/API/MigrationSummaryController.php:287
+msgid "Table does not exist."
+msgstr ""
+
+#: src/API/PhotoDownloadController.php:101
+msgid "No photos to download."
+msgstr ""
+
+#: src/API/PhotoDownloadController.php:118
+msgid "No photo files found."
+msgstr ""
+
+#: src/API/PhotoDownloadController.php:130
+msgid "Failed to create ZIP file."
+msgstr ""
+
 #: src/API/PhotoLikesController.php:116
 msgid "You must be logged in to like photos."
 msgstr ""
@@ -864,12 +973,12 @@ msgid "Failed to like photo."
 msgstr ""
 
 #: src/API/PublicEventsController.php:55
-#: src/API/PublicEventsController.php:102
+#: src/API/PublicEventsController.php:108
 msgid "Filter events starting on or after this date (Y-m-d format)."
 msgstr ""
 
 #: src/API/PublicEventsController.php:60
-#: src/API/PublicEventsController.php:107
+#: src/API/PublicEventsController.php:113
 msgid "Filter events ending on or before this date (Y-m-d format)."
 msgstr ""
 
@@ -878,13 +987,17 @@ msgid "Filter by category slugs (comma-separated)."
 msgstr ""
 
 #: src/API/PublicEventsController.php:69
-#: src/API/PublicEventsController.php:112
+#: src/API/PublicEventsController.php:118
 msgid "Number of events per page."
 msgstr ""
 
 #: src/API/PublicEventsController.php:76
-#: src/API/PublicEventsController.php:119
+#: src/API/PublicEventsController.php:125
 msgid "Page number."
+msgstr ""
+
+#: src/API/PublicEventsController.php:82
+msgid "Request context. Use \"edit\" to include events linked to non-published posts (requires edit_posts capability)."
 msgstr ""
 
 #: src/API/VenueController.php:70
@@ -936,17 +1049,17 @@ msgid "Venue name is required."
 msgstr ""
 
 #: src/API/VenueController.php:223
-#: src/Admin/venues/VenuesApp.js:146
+#: src/Admin/venues/VenuesApp.js:159
 msgid "Failed to create venue."
 msgstr ""
 
 #: src/API/VenueController.php:273
-#: src/Admin/venues/VenuesApp.js:145
+#: src/Admin/venues/VenuesApp.js:158
 msgid "Failed to update venue."
 msgstr ""
 
 #: src/API/VenueController.php:307
-#: src/Admin/venues/VenuesApp.js:112
+#: src/Admin/venues/VenuesApp.js:125
 msgid "Failed to delete venue."
 msgstr ""
 
@@ -956,69 +1069,61 @@ msgstr ""
 
 #. translators: %d: number of days
 #: src/blocks/event-info/render.php:161
-#: src/blocks/event-info/components/EditComponent.js:176
-#, php-format,js-format
+#, php-format
 msgid "Every %d days"
 msgstr ""
 
 #: src/blocks/event-info/render.php:163
 #: src/Admin/event-meta-box/EventEditForm.js:445
-#: src/Admin/manage-event/ManageEventApp.js:704
-#: src/blocks/event-info/components/EditComponent.js:178
+#: src/Admin/manage-event/DuplicateEventWizard.js:745
+#: src/Admin/manage-event/ManageEventApp.js:786
 msgid "Daily"
 msgstr ""
 
 #. translators: %s: day of week
 #: src/blocks/event-info/render.php:168
-#: src/blocks/event-info/components/EditComponent.js:183
-#, php-format,js-format
+#, php-format
 msgid "Every 2 weeks on %s"
 msgstr ""
 
 #. translators: 1: number of weeks, 2: day of week
 #: src/blocks/event-info/render.php:172
-#: src/blocks/event-info/components/EditComponent.js:189
-#, php-format,js-format
+#, php-format
 msgid "Every %1$d weeks on %2$s"
 msgstr ""
 
 #. translators: %s: day of week
 #: src/blocks/event-info/render.php:175
-#: src/blocks/event-info/components/EditComponent.js:194
-#, php-format,js-format
+#, php-format
 msgid "Every %s"
 msgstr ""
 
 #. translators: %d: number of months
 #: src/blocks/event-info/render.php:180
-#: src/blocks/event-info/components/EditComponent.js:198
-#, php-format,js-format
+#, php-format
 msgid "Every %d months"
 msgstr ""
 
 #: src/blocks/event-info/render.php:182
 #: src/Admin/event-meta-box/EventEditForm.js:457
-#: src/Admin/manage-event/ManageEventApp.js:725
-#: src/blocks/event-info/components/EditComponent.js:200
+#: src/Admin/manage-event/DuplicateEventWizard.js:760
+#: src/Admin/manage-event/ManageEventApp.js:807
 msgid "Monthly"
 msgstr ""
 
 #. translators: %d: number of years
 #: src/blocks/event-info/render.php:187
-#: src/blocks/event-info/components/EditComponent.js:204
-#, php-format,js-format
+#, php-format
 msgid "Every %d years"
 msgstr ""
 
 #: src/blocks/event-info/render.php:189
-#: src/blocks/event-info/components/EditComponent.js:206
 msgid "Yearly"
 msgstr ""
 
 #. translators: %s: date of next occurrence
 #: src/blocks/event-info/render.php:262
-#: src/blocks/event-info/components/EditComponent.js:374
-#, php-format,js-format
+#, php-format
 msgid "Next: %s"
 msgstr ""
 
@@ -1078,15 +1183,18 @@ msgstr ""
 msgid "Event Description"
 msgstr ""
 
-#: src/blocks/events-calendar/render.php:494
+#: src/blocks/events-calendar/render.php:497
 #: src/blocks/weekly-schedule/render.php:489
 #: src/Admin/calendar/components/CalendarHeader.js:27
 msgid "Previous"
 msgstr ""
 
-#: src/blocks/events-calendar/render.php:500
+#: src/blocks/events-calendar/render.php:503
 #: src/blocks/weekly-schedule/render.php:498
 #: src/Admin/calendar/components/CalendarHeader.js:33
+#: src/Admin/manage-event/DuplicateEventWizard.js:601
+#: src/Admin/manage-event/MergeEventWizard.js:431
+#: src/Admin/manage-event/MergeEventWizard.js:440
 msgid "Next"
 msgstr ""
 
@@ -1100,36 +1208,36 @@ msgstr ""
 msgid "Week %1$s, %2$s"
 msgstr ""
 
-#: src/Core/Plugin.php:245
+#: src/Core/Plugin.php:300
 msgid "Event associated with this image"
 msgstr ""
 
-#: src/Frontend/EventGalleryPage.php:231
+#: src/Frontend/EventGalleryPage.php:228
 #: src/PostTypes/Event.php:222
 #: src/Frontend/event-gallery/index.js:537
 msgid "Loading..."
 msgstr ""
 
-#: src/Frontend/EventGalleryPage.php:232
+#: src/Frontend/EventGalleryPage.php:229
 #: src/Frontend/event-gallery/index.js:374
 msgid "Failed to load photos."
 msgstr ""
 
-#: src/Frontend/EventGalleryPage.php:233
+#: src/Frontend/EventGalleryPage.php:230
 #: src/Frontend/event-gallery/index.js:565
 msgid "No photos available for this event."
 msgstr ""
 
-#: src/Frontend/EventGalleryPage.php:234
+#: src/Frontend/EventGalleryPage.php:231
 msgid "Like"
 msgstr ""
 
-#: src/Frontend/EventGalleryPage.php:235
+#: src/Frontend/EventGalleryPage.php:232
 msgid "Unlike"
 msgstr ""
 
 #. translators: %d: number of photos
-#: src/Frontend/EventGalleryPage.php:296
+#: src/Frontend/EventGalleryPage.php:295
 #, php-format
 msgid "Review Event's Photos (%d photo)"
 msgid_plural "Review Event's Photos (%d photos)"
@@ -1290,8 +1398,10 @@ msgid "Events list"
 msgstr ""
 
 #: src/PostTypes/Event.php:202
-#: src/Admin/manage-event/ManageEventApp.js:512
-#: src/Admin/manage-event/ManageEventApp.js:581
+#: src/Admin/manage-event/DuplicateEventWizard.js:484
+#: src/Admin/manage-event/DuplicateEventWizard.js:625
+#: src/Admin/manage-event/ManageEventApp.js:551
+#: src/Admin/manage-event/ManageEventApp.js:663
 msgid "Event Details"
 msgstr ""
 
@@ -1365,6 +1475,7 @@ msgid "Single"
 msgstr ""
 
 #: src/Admin/all-events/AllEvents.js:18
+#: src/Admin/manage-event/RecurrenceCalendar.js:177
 msgid "Master"
 msgstr ""
 
@@ -1373,14 +1484,20 @@ msgid "Generated"
 msgstr ""
 
 #: src/Admin/all-events/AllEvents.js:67
+#: src/Admin/manage-event/EventAudience.js:248
+#: src/Admin/manage-event/EventTickets.js:567
 #: src/Admin/sources/SourcesList.js:192
-#: src/Admin/venues/VenuesApp.js:213
-#: src/Admin/venues/VenuesApp.js:287
+#: src/Admin/venues/VenuesApp.js:380
+#: src/Admin/venues/VenuesApp.js:467
 msgid "Name"
 msgstr ""
 
+#: src/Admin/all-events/AllEvents.js:70
+msgid "(no name)"
+msgstr ""
+
 #: src/Admin/all-events/AllEvents.js:79
-#: src/Admin/manage-event/EventBudget.js:152
+#: src/Admin/manage-event/EventFinance.js:152
 #: src/Admin/migration/MigrationApp.js:227
 msgid "Date"
 msgstr ""
@@ -1395,6 +1512,13 @@ msgstr ""
 
 #: src/Admin/all-events/AllEvents.js:141
 msgid "Occurrence"
+msgstr ""
+
+#: src/Admin/all-events/AllEvents.js:229
+#: src/Admin/manage-event/GroupRules.js:496
+#: src/Admin/sources/SourcesList.js:272
+#: src/Admin/venues/VenuesApp.js:423
+msgid "Edit"
 msgstr ""
 
 #: src/Admin/calendar/CalendarApp.js:86
@@ -1415,25 +1539,25 @@ msgstr ""
 msgid "Add event"
 msgstr ""
 
-#: src/Admin/calendar/components/DayCell.js:200
-#: src/Admin/manage-event/EventAudience.js:106
+#: src/Admin/calendar/components/DayCell.js:203
 msgid "View Participants"
 msgstr ""
 
 #. translators: %d: number of additional events
-#: src/Admin/calendar/components/DayCell.js:216
+#: src/Admin/calendar/components/DayCell.js:219
 #, js-format
 msgid "+%d more"
 msgstr ""
 
 #: src/Admin/calendar/components/QuickEventModal.js:75
-#: src/Admin/event-meta-box/LinkOptions.js:59
+#: src/Admin/event-meta-box/LinkOptions.js:65
 msgid "Failed to create event."
 msgstr ""
 
 #: src/Admin/calendar/components/QuickEventModal.js:83
 #: src/Admin/event-meta-box/EventEditForm.js:347
-#: src/Admin/manage-event/ManageEventApp.js:486
+#: src/Admin/manage-event/DuplicateEventWizard.js:245
+#: src/Admin/manage-event/ManageEventApp.js:524
 msgid "— No venue —"
 msgstr ""
 
@@ -1443,15 +1567,18 @@ msgstr ""
 
 #: src/Admin/calendar/components/QuickEventModal.js:110
 #: src/Admin/event-meta-box/EventEditForm.js:378
-#: src/Admin/manage-event/ManageEventApp.js:593
+#: src/Admin/manage-event/DuplicateEventWizard.js:637
+#: src/Admin/manage-event/ManageEventApp.js:675
 msgid "All day"
 msgstr ""
 
 #: src/Admin/calendar/components/QuickEventModal.js:118
 #: src/Admin/calendar/components/QuickEventModal.js:136
 #: src/Admin/event-meta-box/EventEditForm.js:384
-#: src/Admin/manage-event/ManageEventApp.js:601
-#: src/Admin/manage-event/ManageEventApp.js:618
+#: src/Admin/manage-event/DuplicateEventWizard.js:645
+#: src/Admin/manage-event/DuplicateEventWizard.js:662
+#: src/Admin/manage-event/ManageEventApp.js:683
+#: src/Admin/manage-event/ManageEventApp.js:700
 msgid "Start date"
 msgstr ""
 
@@ -1459,27 +1586,33 @@ msgstr ""
 #: src/Admin/calendar/components/QuickEventModal.js:152
 #: src/Admin/event-meta-box/EventEditForm.js:410
 #: src/Admin/event-meta-box/EventEditForm.js:495
-#: src/Admin/manage-event/ManageEventApp.js:608
-#: src/Admin/manage-event/ManageEventApp.js:632
-#: src/Admin/manage-event/ManageEventApp.js:773
+#: src/Admin/manage-event/DuplicateEventWizard.js:652
+#: src/Admin/manage-event/DuplicateEventWizard.js:676
+#: src/Admin/manage-event/DuplicateEventWizard.js:805
+#: src/Admin/manage-event/ManageEventApp.js:690
+#: src/Admin/manage-event/ManageEventApp.js:714
+#: src/Admin/manage-event/ManageEventApp.js:855
 msgid "End date"
 msgstr ""
 
 #: src/Admin/calendar/components/QuickEventModal.js:143
 #: src/Admin/event-meta-box/EventEditForm.js:392
-#: src/Admin/manage-event/ManageEventApp.js:625
+#: src/Admin/manage-event/DuplicateEventWizard.js:669
+#: src/Admin/manage-event/ManageEventApp.js:707
 msgid "Start time"
 msgstr ""
 
 #: src/Admin/calendar/components/QuickEventModal.js:159
 #: src/Admin/event-meta-box/EventEditForm.js:418
-#: src/Admin/manage-event/ManageEventApp.js:639
+#: src/Admin/manage-event/DuplicateEventWizard.js:683
+#: src/Admin/manage-event/ManageEventApp.js:721
 msgid "End time"
 msgstr ""
 
 #: src/Admin/calendar/components/QuickEventModal.js:170
 #: src/Admin/event-meta-box/EventEditForm.js:426
-#: src/Admin/manage-event/ManageEventApp.js:659
+#: src/Admin/manage-event/DuplicateEventWizard.js:703
+#: src/Admin/manage-event/ManageEventApp.js:741
 msgid "Venue"
 msgstr ""
 
@@ -1512,47 +1645,56 @@ msgid "Failed to save event."
 msgstr ""
 
 #: src/Admin/event-meta-box/EventEditForm.js:400
-#: src/Admin/manage-event/ManageEventApp.js:649
+#: src/Admin/manage-event/DuplicateEventWizard.js:693
+#: src/Admin/manage-event/ManageEventApp.js:731
 msgid "Event length"
 msgstr ""
 
 #: src/Admin/event-meta-box/EventEditForm.js:433
-#: src/Admin/manage-event/ManageEventApp.js:690
+#: src/Admin/manage-event/DuplicateEventWizard.js:733
+#: src/Admin/manage-event/ManageEventApp.js:772
 msgid "Repeat this event"
 msgstr ""
 
 #: src/Admin/event-meta-box/EventEditForm.js:441
-#: src/Admin/manage-event/ManageEventApp.js:700
+#: src/Admin/manage-event/DuplicateEventWizard.js:741
+#: src/Admin/manage-event/ManageEventApp.js:782
 msgid "Frequency"
 msgstr ""
 
 #: src/Admin/event-meta-box/EventEditForm.js:449
-#: src/Admin/manage-event/ManageEventApp.js:711
+#: src/Admin/manage-event/DuplicateEventWizard.js:749
+#: src/Admin/manage-event/ManageEventApp.js:793
 msgid "Weekly"
 msgstr ""
 
 #: src/Admin/event-meta-box/EventEditForm.js:453
-#: src/Admin/manage-event/ManageEventApp.js:718
+#: src/Admin/manage-event/DuplicateEventWizard.js:753
+#: src/Admin/manage-event/ManageEventApp.js:800
 msgid "Biweekly"
 msgstr ""
 
 #: src/Admin/event-meta-box/EventEditForm.js:464
-#: src/Admin/manage-event/ManageEventApp.js:735
+#: src/Admin/manage-event/DuplicateEventWizard.js:767
+#: src/Admin/manage-event/ManageEventApp.js:817
 msgid "Ends"
 msgstr ""
 
 #: src/Admin/event-meta-box/EventEditForm.js:468
-#: src/Admin/manage-event/ManageEventApp.js:739
+#: src/Admin/manage-event/DuplicateEventWizard.js:771
+#: src/Admin/manage-event/ManageEventApp.js:821
 msgid "After number of occurrences"
 msgstr ""
 
 #: src/Admin/event-meta-box/EventEditForm.js:475
-#: src/Admin/manage-event/ManageEventApp.js:746
+#: src/Admin/manage-event/DuplicateEventWizard.js:778
+#: src/Admin/manage-event/ManageEventApp.js:828
 msgid "On a specific date"
 msgstr ""
 
 #: src/Admin/event-meta-box/EventEditForm.js:483
-#: src/Admin/manage-event/ManageEventApp.js:757
+#: src/Admin/manage-event/DuplicateEventWizard.js:789
+#: src/Admin/manage-event/ManageEventApp.js:839
 msgid "Number of occurrences"
 msgstr ""
 
@@ -1576,225 +1718,591 @@ msgstr ""
 msgid "No event data found. Please save the post and reload."
 msgstr ""
 
-#: src/Admin/event-meta-box/LinkOptions.js:78
+#: src/Admin/event-meta-box/LinkOptions.js:84
 msgid "Failed to link event."
 msgstr ""
 
-#: src/Admin/event-meta-box/LinkOptions.js:85
+#: src/Admin/event-meta-box/LinkOptions.js:91
 msgid "Select an event..."
 msgstr ""
 
-#: src/Admin/event-meta-box/LinkOptions.js:116
+#: src/Admin/event-meta-box/LinkOptions.js:122
 msgid "Create New Event"
 msgstr ""
 
-#: src/Admin/event-meta-box/LinkOptions.js:126
+#: src/Admin/event-meta-box/LinkOptions.js:132
 msgid "or"
 msgstr ""
 
-#: src/Admin/event-meta-box/LinkOptions.js:130
+#: src/Admin/event-meta-box/LinkOptions.js:136
 msgid "Link Existing Event"
 msgstr ""
 
-#: src/Admin/event-meta-box/LinkOptions.js:147
+#: src/Admin/event-meta-box/LinkOptions.js:153
 msgid "Link Event"
 msgstr ""
 
-#: src/Admin/manage-event/EventAudience.js:83
+#: src/Admin/manage-event/DuplicateEventWizard.js:315
+#: src/Admin/manage-event/ManageEventApp.js:483
+msgid "Select Theme Image"
+msgstr ""
+
+#: src/Admin/manage-event/DuplicateEventWizard.js:316
+#: src/Admin/manage-event/ManageEventApp.js:484
+msgid "Use this image"
+msgstr ""
+
+#: src/Admin/manage-event/DuplicateEventWizard.js:358
+msgid "Creating event…"
+msgstr ""
+
+#: src/Admin/manage-event/DuplicateEventWizard.js:378
+msgid "Setting theme image…"
+msgstr ""
+
+#: src/Admin/manage-event/DuplicateEventWizard.js:390
+msgid "Cloning posts…"
+msgstr ""
+
+#: src/Admin/manage-event/DuplicateEventWizard.js:405
+msgid "Saving tickets…"
+msgstr ""
+
+#: src/Admin/manage-event/DuplicateEventWizard.js:420
+msgid "Adding collaborators…"
+msgstr ""
+
+#: src/Admin/manage-event/DuplicateEventWizard.js:465
+msgid "Done! Redirecting…"
+msgstr ""
+
+#: src/Admin/manage-event/DuplicateEventWizard.js:472
+msgid "Failed to create duplicate event."
+msgstr ""
+
+#: src/Admin/manage-event/DuplicateEventWizard.js:488
+#: src/Admin/manage-event/ManageEventApp.js:555
+msgid "Images"
+msgstr ""
+
+#: src/Admin/manage-event/DuplicateEventWizard.js:494
+#: src/Admin/manage-event/ManageEventApp.js:559
+msgid "Links"
+msgstr ""
+
+#: src/Admin/manage-event/DuplicateEventWizard.js:499
+#: src/Admin/manage-event/ManageEventApp.js:563
+msgid "Tickets"
+msgstr ""
+
+#: src/Admin/manage-event/DuplicateEventWizard.js:504
+#: src/Admin/manage-event/ManageEventApp.js:581
+msgid "Audience"
+msgstr ""
+
+#: src/Admin/manage-event/DuplicateEventWizard.js:539
+#: src/Admin/manage-event/ManageEventApp.js:1231
+msgid "Duplicate Event"
+msgstr ""
+
+#: src/Admin/manage-event/DuplicateEventWizard.js:555
+msgid "View partially created event"
+msgstr ""
+
+#: src/Admin/manage-event/DuplicateEventWizard.js:577
+#: src/Admin/manage-event/MergeEventWizard.js:407
+msgid "Step"
+msgstr ""
+
+#: src/Admin/manage-event/DuplicateEventWizard.js:592
+#: src/Admin/manage-event/MergeEventWizard.js:422
+msgid "Back"
+msgstr ""
+
+#: src/Admin/manage-event/DuplicateEventWizard.js:610
+msgid "Create Duplicate"
+msgstr ""
+
+#: src/Admin/manage-event/DuplicateEventWizard.js:823
+#: src/Admin/manage-event/ManageEventApp.js:910
+msgid "Theme Image"
+msgstr ""
+
+#: src/Admin/manage-event/DuplicateEventWizard.js:830
+#: src/Admin/manage-event/ManageEventApp.js:917
+msgid "Theme image preview"
+msgstr ""
+
+#: src/Admin/manage-event/DuplicateEventWizard.js:843
+#: src/Admin/manage-event/ManageEventApp.js:930
+msgid "Change Image"
+msgstr ""
+
+#: src/Admin/manage-event/DuplicateEventWizard.js:844
+#: src/Admin/manage-event/ManageEventApp.js:931
+msgid "Select Image"
+msgstr ""
+
+#: src/Admin/manage-event/DuplicateEventWizard.js:852
+#: src/Admin/manage-event/ManageEventApp.js:939
+msgid "Remove Image"
+msgstr ""
+
+#: src/Admin/manage-event/DuplicateEventWizard.js:866
+msgid "Linked Posts"
+msgstr ""
+
+#: src/Admin/manage-event/DuplicateEventWizard.js:871
+msgid "How to handle linked posts"
+msgstr ""
+
+#: src/Admin/manage-event/DuplicateEventWizard.js:878
+msgid "Clone linked posts — create draft copies"
+msgstr ""
+
+#: src/Admin/manage-event/DuplicateEventWizard.js:885
+msgid "Leave empty — no links"
+msgstr ""
+
+#: src/Admin/manage-event/DuplicateEventWizard.js:898
+msgid "Source event linked posts:"
+msgstr ""
+
+#: src/Admin/manage-event/DuplicateEventWizard.js:916
+#: src/Admin/manage-event/ManageEventApp.js:992
+msgid "Primary"
+msgstr ""
+
+#: src/Admin/manage-event/DuplicateEventWizard.js:956
+msgid "No collaborators found on source event."
+msgstr ""
+
+#: src/Admin/manage-event/DuplicateEventWizard.js:969
+msgid "Collaborators"
+msgstr ""
+
+#: src/Admin/manage-event/DuplicateEventWizard.js:974
+msgid "Select which collaborators to copy to the new event."
+msgstr ""
+
+#: src/Admin/manage-event/EventAudience.js:19
+#: src/Admin/manage-event/EventAudience.js:209
+msgid "Collaborator"
+msgstr ""
+
+#: src/Admin/manage-event/EventAudience.js:20
+#: src/Admin/manage-event/EventAudience.js:216
+msgid "Signed up"
+msgstr ""
+
+#: src/Admin/manage-event/EventAudience.js:21
+#: src/Admin/manage-event/EventAudience.js:223
+msgid "Interested"
+msgstr ""
+
+#: src/Admin/manage-event/EventAudience.js:160
+#: src/Admin/manage-event/MergeEventWizard.js:28
 msgid "Participants"
 msgstr ""
 
-#: src/Admin/manage-event/EventAudience.js:91
-msgid "Signed up:"
-msgstr ""
-
-#: src/Admin/manage-event/EventAudience.js:95
+#: src/Admin/manage-event/EventAudience.js:169
 msgid "Collaborators:"
 msgstr ""
 
-#: src/Admin/manage-event/EventAudience.js:99
+#: src/Admin/manage-event/EventAudience.js:173
+msgid "Signed up:"
+msgstr ""
+
+#: src/Admin/manage-event/EventAudience.js:177
 msgid "Interested:"
 msgstr ""
 
-#: src/Admin/manage-event/EventAudience.js:111
-msgid "No participant data available."
+#: src/Admin/manage-event/EventAudience.js:181
+msgid "Total:"
 msgstr ""
 
-#: src/Admin/manage-event/EventAudience.js:123
+#: src/Admin/manage-event/EventAudience.js:188
+msgid "Search"
+msgstr ""
+
+#: src/Admin/manage-event/EventAudience.js:191
+msgid "Filter by name…"
+msgstr ""
+
+#: src/Admin/manage-event/EventAudience.js:198
+#: src/Admin/manage-event/EventAudience.js:262
+msgid "Role"
+msgstr ""
+
+#: src/Admin/manage-event/EventAudience.js:202
+msgid "All roles"
+msgstr ""
+
+#: src/Admin/manage-event/EventAudience.js:297
+msgid "No participants yet."
+msgstr ""
+
+#: src/Admin/manage-event/EventAudience.js:301
+msgid "No participants match the current filters."
+msgstr ""
+
+#: src/Admin/manage-event/EventAudience.js:312
+msgid "Manage Participants"
+msgstr ""
+
+#: src/Admin/manage-event/EventAudience.js:322
+#: src/Admin/manage-event/MergeEventWizard.js:29
 msgid "Questionnaire Responses"
 msgstr ""
 
-#: src/Admin/manage-event/EventAudience.js:131
+#: src/Admin/manage-event/EventAudience.js:330
 msgid "Total responses:"
 msgstr ""
 
-#: src/Admin/manage-event/EventAudience.js:156
+#: src/Admin/manage-event/EventAudience.js:355
 msgid "View All Responses"
 msgstr ""
 
-#: src/Admin/manage-event/EventAudience.js:161
+#: src/Admin/manage-event/EventAudience.js:360
 msgid "No questionnaire responses yet."
 msgstr ""
 
-#: src/Admin/manage-event/EventBudget.js:64
+#: src/Admin/manage-event/EventFinance.js:64
 msgid "Failed to load financial data."
 msgstr ""
 
-#: src/Admin/manage-event/EventBudget.js:76
-#: src/Admin/manage-event/ManageEventApp.js:526
-msgid "Budget & Transactions"
+#: src/Admin/manage-event/EventFinance.js:76
+#: src/Admin/manage-event/ManageEventApp.js:589
+msgid "Finance"
 msgstr ""
 
-#: src/Admin/manage-event/EventBudget.js:110
+#: src/Admin/manage-event/EventFinance.js:110
 msgid "Total Costs"
 msgstr ""
 
-#: src/Admin/manage-event/EventBudget.js:124
+#: src/Admin/manage-event/EventFinance.js:124
 msgid "Total Income"
 msgstr ""
 
-#: src/Admin/manage-event/EventBudget.js:141
+#: src/Admin/manage-event/EventFinance.js:141
 msgid "Balance"
 msgstr ""
 
-#: src/Admin/manage-event/EventBudget.js:153
+#: src/Admin/manage-event/EventFinance.js:153
 #: src/Admin/migration/MigrationApp.js:221
 msgid "Type"
 msgstr ""
 
-#: src/Admin/manage-event/EventBudget.js:155
+#: src/Admin/manage-event/EventFinance.js:155
 msgid "Amount"
 msgstr ""
 
-#: src/Admin/manage-event/EventBudget.js:158
+#: src/Admin/manage-event/EventFinance.js:158
 msgid "Description"
 msgstr ""
 
-#: src/Admin/manage-event/EventBudget.js:182
+#: src/Admin/manage-event/EventFinance.js:182
 msgid "Cost"
 msgstr ""
 
-#: src/Admin/manage-event/EventBudget.js:186
+#: src/Admin/manage-event/EventFinance.js:186
 msgid "Income"
 msgstr ""
 
-#: src/Admin/manage-event/EventBudget.js:220
+#: src/Admin/manage-event/EventFinance.js:220
 msgid "No financial entries for this event yet."
 msgstr ""
 
-#: src/Admin/manage-event/EventBudget.js:228
+#: src/Admin/manage-event/EventFinance.js:228
 msgid "View All Entries"
 msgstr ""
 
-#: src/Admin/manage-event/GroupPricingRules.js:72
-msgid "Failed to load pricing rules."
+#: src/Admin/manage-event/EventPhotos.js:148
+msgid "Unknown"
 msgstr ""
 
-#: src/Admin/manage-event/GroupPricingRules.js:105
-msgid "Pricing rule added."
+#: src/Admin/manage-event/EventPhotos.js:159
+msgid "Not tagged"
 msgstr ""
 
-#: src/Admin/manage-event/GroupPricingRules.js:108
-msgid "Failed to add pricing rule."
+#: src/Admin/manage-event/EventPhotos.js:330
+#: src/Admin/manage-event/EventPhotos.js:348
+#: src/Admin/manage-event/ManageEventApp.js:575
+msgid "Photos"
 msgstr ""
 
-#: src/Admin/manage-event/GroupPricingRules.js:142
-msgid "Pricing rule updated."
+#: src/Admin/manage-event/EventPhotos.js:333
+msgid "No photos for this event."
 msgstr ""
 
-#: src/Admin/manage-event/GroupPricingRules.js:156
-msgid "Are you sure you want to delete this pricing rule?"
+#: src/Admin/manage-event/EventPhotos.js:335
+#: src/Admin/manage-event/EventPhotos.js:426
+msgid "Media Library"
 msgstr ""
 
-#: src/Admin/manage-event/GroupPricingRules.js:175
-msgid "Pricing rule deleted."
+#: src/Admin/manage-event/EventPhotos.js:360
+msgid "Default order"
 msgstr ""
 
-#: src/Admin/manage-event/GroupPricingRules.js:186
+#: src/Admin/manage-event/EventPhotos.js:364
+msgid "Most liked"
+msgstr ""
+
+#: src/Admin/manage-event/EventPhotos.js:368
+msgid "Least liked"
+msgstr ""
+
+#: src/Admin/manage-event/EventPhotos.js:379
+msgid "No grouping"
+msgstr ""
+
+#: src/Admin/manage-event/EventPhotos.js:383
+msgid "Group by author"
+msgstr ""
+
+#: src/Admin/manage-event/EventPhotos.js:387
+msgid "Group by tagged"
+msgstr ""
+
+#: src/Admin/manage-event/EventPhotos.js:399
+msgid "Tag Person"
+msgstr ""
+
+#: src/Admin/manage-event/EventPhotos.js:404
+msgid "Download Selected"
+msgstr ""
+
+#: src/Admin/manage-event/EventPhotos.js:405
+msgid "Download All"
+msgstr ""
+
+#: src/Admin/manage-event/EventPhotos.js:415
+msgid "Cancel Selection"
+msgstr ""
+
+#: src/Admin/manage-event/EventPhotos.js:416
+msgid "Select Photos"
+msgstr ""
+
+#: src/Admin/manage-event/EventPhotos.js:423
+msgid "View Gallery"
+msgstr ""
+
+#: src/Admin/manage-event/EventPhotos.js:471
+msgid "Add New Photos"
+msgstr ""
+
+#: src/Admin/manage-event/EventTickets.js:86
+msgid "Failed to load tickets."
+msgstr ""
+
+#: src/Admin/manage-event/EventTickets.js:203
+msgid "Tickets saved successfully."
+msgstr ""
+
+#: src/Admin/manage-event/EventTickets.js:206
+msgid "Failed to save tickets."
+msgstr ""
+
+#: src/Admin/manage-event/EventTickets.js:377
+msgid "Ticket Prices"
+msgstr ""
+
+#: src/Admin/manage-event/EventTickets.js:385
+#: src/Admin/manage-event/EventTickets.js:504
+msgid "Ticket Type"
+msgstr ""
+
+#: src/Admin/manage-event/EventTickets.js:394
+#: src/Admin/manage-event/EventTickets.js:407
+msgid "(unnamed)"
+msgstr ""
+
+#: src/Admin/manage-event/EventTickets.js:452
+msgid "Edit tickets"
+msgstr ""
+
+#: src/Admin/manage-event/EventTickets.js:457
+msgid "Total capacity"
+msgstr ""
+
+#: src/Admin/manage-event/EventTickets.js:462
+msgid "Leave empty for unlimited capacity."
+msgstr ""
+
+#: src/Admin/manage-event/EventTickets.js:471
+msgid "Add ticket types and sale periods to configure pricing."
+msgstr ""
+
+#: src/Admin/manage-event/EventTickets.js:481
+#: src/Admin/manage-event/EventTickets.js:931
+msgid "+ Add Ticket Type"
+msgstr ""
+
+#: src/Admin/manage-event/EventTickets.js:490
+msgid "+ Add Sale Period"
+msgstr ""
+
+#: src/Admin/manage-event/EventTickets.js:510
+msgid "Capacity"
+msgstr ""
+
+#: src/Admin/manage-event/EventTickets.js:573
+msgid "Period name"
+msgstr ""
+
+#: src/Admin/manage-event/EventTickets.js:604
+msgid "From"
+msgstr ""
+
+#: src/Admin/manage-event/EventTickets.js:655
+msgid "Until"
+msgstr ""
+
+#: src/Admin/manage-event/EventTickets.js:704
+#: src/Admin/manage-event/EventTickets.js:906
+#: src/Admin/manage-event/GroupRules.js:511
+#: src/Admin/manage-event/PhotoDetail.js:182
+#: src/Admin/sources/components/DataSourceItem.js:228
+msgid "Remove"
+msgstr ""
+
+#: src/Admin/manage-event/EventTickets.js:722
+msgid "+ Period"
+msgstr ""
+
+#: src/Admin/manage-event/EventTickets.js:741
+msgid "Type name"
+msgstr ""
+
+#: src/Admin/manage-event/EventTickets.js:764
+msgid "Unlimited"
+msgstr ""
+
+#: src/Admin/manage-event/EventTickets.js:829
+msgid "Price"
+msgstr ""
+
+#: src/Admin/manage-event/EventTickets.js:866
+msgid "Cap"
+msgstr ""
+
+#: src/Admin/manage-event/EventTickets.js:956
+msgid "Continues pricing period"
+msgstr ""
+
+#: src/Admin/manage-event/EventTickets.js:969
+msgid "Unlimited tickets in pricing period"
+msgstr ""
+
+#: src/Admin/manage-event/GroupRules.js:31
 msgid "Percentage (%)"
 msgstr ""
 
-#: src/Admin/manage-event/GroupPricingRules.js:190
-#: src/Admin/manage-event/GroupPricingRules.js:362
+#: src/Admin/manage-event/GroupRules.js:35
 msgid "Fixed amount"
 msgstr ""
 
-#: src/Admin/manage-event/GroupPricingRules.js:239
-msgid "Current Rules"
+#: src/Admin/manage-event/GroupRules.js:53
+msgid "View signups"
 msgstr ""
 
-#: src/Admin/manage-event/GroupPricingRules.js:248
-#: src/Admin/manage-event/GroupPricingRules.js:438
-msgid "Group"
+#: src/Admin/manage-event/GroupRules.js:55
+msgid "Manage signups"
 msgstr ""
 
-#: src/Admin/manage-event/GroupPricingRules.js:251
-#: src/Admin/manage-event/GroupPricingRules.js:456
+#: src/Admin/manage-event/GroupRules.js:117
+msgid "Failed to load group rules."
+msgstr ""
+
+#: src/Admin/manage-event/GroupRules.js:198
+msgid "Group rules added."
+msgstr ""
+
+#: src/Admin/manage-event/GroupRules.js:201
+msgid "Failed to add group rules."
+msgstr ""
+
+#: src/Admin/manage-event/GroupRules.js:263
+msgid "Group rules updated."
+msgstr ""
+
+#: src/Admin/manage-event/GroupRules.js:267
+msgid "Failed to update group rules."
+msgstr ""
+
+#: src/Admin/manage-event/GroupRules.js:300
+msgid "Failed to update permission."
+msgstr ""
+
+#: src/Admin/manage-event/GroupRules.js:308
+msgid "Are you sure you want to remove all rules for this group?"
+msgstr ""
+
+#: src/Admin/manage-event/GroupRules.js:343
+msgid "Group rules removed."
+msgstr ""
+
+#: src/Admin/manage-event/GroupRules.js:347
+msgid "Failed to remove group rules."
+msgstr ""
+
+#: src/Admin/manage-event/GroupRules.js:355
+msgid "Group Rules"
+msgstr ""
+
+#: src/Admin/manage-event/GroupRules.js:409
+#: src/Admin/manage-event/GroupRules.js:614
 msgid "Discount Type"
 msgstr ""
 
-#: src/Admin/manage-event/GroupPricingRules.js:257
-msgid "Value"
-msgstr ""
-
-#: src/Admin/manage-event/GroupPricingRules.js:260
-#: src/Admin/migration/MigrationApp.js:230
-#: src/Admin/sources/SourcesList.js:202
-#: src/Admin/venues/VenuesApp.js:215
-msgid "Actions"
-msgstr ""
-
-#: src/Admin/manage-event/GroupPricingRules.js:326
-msgid "Save"
-msgstr ""
-
-#: src/Admin/manage-event/GroupPricingRules.js:358
-msgid "Percentage"
-msgstr ""
-
-#: src/Admin/manage-event/GroupPricingRules.js:386
-#: src/Admin/sources/SourcesList.js:272
-#: src/Admin/venues/VenuesApp.js:243
-msgid "Edit"
-msgstr ""
-
-#: src/Admin/manage-event/GroupPricingRules.js:401
-#: src/Admin/manage-event/ImageExports.js:267
-#: src/Admin/sources/SourcesList.js:287
-#: src/Admin/venues/VenuesApp.js:258
-msgid "Delete"
-msgstr ""
-
-#: src/Admin/manage-event/GroupPricingRules.js:421
-msgid "No group pricing rules yet. Add one below."
-msgstr ""
-
-#: src/Admin/manage-event/GroupPricingRules.js:432
-msgid "Add Pricing Rule"
-msgstr ""
-
-#: src/Admin/manage-event/GroupPricingRules.js:442
-msgid "Select a group..."
-msgstr ""
-
-#: src/Admin/manage-event/GroupPricingRules.js:465
+#: src/Admin/manage-event/GroupRules.js:425
+#: src/Admin/manage-event/GroupRules.js:623
 msgid "Discount Value"
 msgstr ""
 
-#: src/Admin/manage-event/GroupPricingRules.js:476
+#: src/Admin/manage-event/GroupRules.js:438
+msgid "0 = no discount"
+msgstr ""
+
+#: src/Admin/manage-event/GroupRules.js:457
+msgid "Save"
+msgstr ""
+
+#: src/Admin/manage-event/GroupRules.js:524
+msgid "Discount:"
+msgstr ""
+
+#: src/Admin/manage-event/GroupRules.js:582
+msgid "No group rules yet. Add one below."
+msgstr ""
+
+#: src/Admin/manage-event/GroupRules.js:592
+msgid "Add Group"
+msgstr ""
+
+#: src/Admin/manage-event/GroupRules.js:595
+msgid "Group"
+msgstr ""
+
+#: src/Admin/manage-event/GroupRules.js:599
+msgid "Select a group..."
+msgstr ""
+
+#: src/Admin/manage-event/GroupRules.js:634
 msgid "e.g. 10"
 msgstr ""
 
-#: src/Admin/manage-event/GroupPricingRules.js:477
+#: src/Admin/manage-event/GroupRules.js:638
 msgid "e.g. 5.00"
 msgstr ""
 
-#: src/Admin/manage-event/GroupPricingRules.js:490
-msgid "Add Rule"
+#: src/Admin/manage-event/GroupRules.js:678
+msgid "Add"
 msgstr ""
 
-#: src/Admin/manage-event/GroupPricingRules.js:499
-msgid "All groups already have pricing rules for this event."
+#: src/Admin/manage-event/GroupRules.js:686
+msgid "All groups already have rules for this event."
 msgstr ""
 
 #: src/Admin/manage-event/ImageCropModal.js:43
@@ -1831,198 +2339,426 @@ msgstr ""
 msgid "Download"
 msgstr ""
 
-#: src/Admin/manage-event/ManageEventApp.js:91
-msgid "No event date ID specified."
+#: src/Admin/manage-event/ImageExports.js:267
+#: src/Admin/manage-event/MergeEventWizard.js:34
+#: src/Admin/migration-summary/MigrationSummaryApp.js:238
+#: src/Admin/sources/SourcesList.js:287
+#: src/Admin/venues/VenuesApp.js:438
+msgid "Delete"
 msgstr ""
 
 #: src/Admin/manage-event/ManageEventApp.js:109
+msgid "No event date ID specified."
+msgstr ""
+
+#: src/Admin/manage-event/ManageEventApp.js:127
 msgid "Failed to load event date."
 msgstr ""
 
-#: src/Admin/manage-event/ManageEventApp.js:338
+#: src/Admin/manage-event/ManageEventApp.js:356
 msgid "Event updated successfully."
 msgstr ""
 
-#: src/Admin/manage-event/ManageEventApp.js:341
+#: src/Admin/manage-event/ManageEventApp.js:359
 msgid "Failed to update event."
 msgstr ""
 
-#: src/Admin/manage-event/ManageEventApp.js:351
+#: src/Admin/manage-event/ManageEventApp.js:369
 msgid "Are you sure you want to delete this event?"
 msgstr ""
 
-#: src/Admin/manage-event/ManageEventApp.js:365
+#: src/Admin/manage-event/ManageEventApp.js:383
 msgid "Failed to delete event."
 msgstr ""
 
-#: src/Admin/manage-event/ManageEventApp.js:389
+#: src/Admin/manage-event/ManageEventApp.js:407
 msgid "Failed to create post."
 msgstr ""
 
-#: src/Admin/manage-event/ManageEventApp.js:410
+#: src/Admin/manage-event/ManageEventApp.js:428
 msgid "Post unlinked successfully."
 msgstr ""
 
-#: src/Admin/manage-event/ManageEventApp.js:413
+#: src/Admin/manage-event/ManageEventApp.js:431
 msgid "Failed to unlink post."
 msgstr ""
 
-#: src/Admin/manage-event/ManageEventApp.js:437
+#: src/Admin/manage-event/ManageEventApp.js:455
 msgid "Post linked successfully."
 msgstr ""
 
-#: src/Admin/manage-event/ManageEventApp.js:439
+#: src/Admin/manage-event/ManageEventApp.js:457
 msgid "Failed to link post."
 msgstr ""
 
-#: src/Admin/manage-event/ManageEventApp.js:465
-msgid "Select Theme Image"
+#: src/Admin/manage-event/ManageEventApp.js:516
+msgid "Failed to toggle occurrence."
 msgstr ""
 
-#: src/Admin/manage-event/ManageEventApp.js:466
-msgid "Use this image"
+#: src/Admin/manage-event/ManageEventApp.js:569
+msgid "Groups"
 msgstr ""
 
-#: src/Admin/manage-event/ManageEventApp.js:518
-msgid "Audience"
+#: src/Admin/manage-event/ManageEventApp.js:595
+msgid "Admin"
 msgstr ""
 
-#: src/Admin/manage-event/ManageEventApp.js:534
-msgid "Group Pricing Rules"
-msgstr ""
-
-#: src/Admin/manage-event/ManageEventApp.js:568
-#: src/Admin/manage-event/ManageEventApp.js:1176
+#: src/Admin/manage-event/ManageEventApp.js:627
+#: src/Admin/manage-event/ManageEventApp.js:1310
 msgid "Back to Calendar"
 msgstr ""
 
-#: src/Admin/manage-event/ManageEventApp.js:792
+#: src/Admin/manage-event/ManageEventApp.js:874
 msgid "This is a recurring occurrence of:"
 msgstr ""
 
-#: src/Admin/manage-event/ManageEventApp.js:814
-msgid "Recurring Occurrences"
-msgstr ""
-
-#: src/Admin/manage-event/ManageEventApp.js:835
-msgid "Theme Image"
-msgstr ""
-
-#: src/Admin/manage-event/ManageEventApp.js:842
-msgid "Theme image preview"
-msgstr ""
-
-#: src/Admin/manage-event/ManageEventApp.js:855
-msgid "Change Image"
-msgstr ""
-
-#: src/Admin/manage-event/ManageEventApp.js:856
-msgid "Select Image"
-msgstr ""
-
-#: src/Admin/manage-event/ManageEventApp.js:864
-msgid "Remove Image"
-msgstr ""
-
-#: src/Admin/manage-event/ManageEventApp.js:882
-msgid "Photo Gallery"
-msgstr ""
-
-#: src/Admin/manage-event/ManageEventApp.js:887
-msgid "Photos:"
-msgstr ""
-
-#: src/Admin/manage-event/ManageEventApp.js:891
-msgid "Total likes:"
-msgstr ""
-
-#: src/Admin/manage-event/ManageEventApp.js:899
-msgid "View Gallery"
-msgstr ""
-
-#: src/Admin/manage-event/ManageEventApp.js:908
+#: src/Admin/manage-event/ManageEventApp.js:959
 msgid "Link Options"
 msgstr ""
 
-#: src/Admin/manage-event/ManageEventApp.js:916
+#: src/Admin/manage-event/ManageEventApp.js:967
 msgid "This event is linked to 1 post."
 msgstr ""
 
-#: src/Admin/manage-event/ManageEventApp.js:920
+#: src/Admin/manage-event/ManageEventApp.js:971
 msgid "This event is linked to"
 msgstr ""
 
-#: src/Admin/manage-event/ManageEventApp.js:923
+#: src/Admin/manage-event/ManageEventApp.js:974
 msgid "posts."
 msgstr ""
 
-#: src/Admin/manage-event/ManageEventApp.js:941
-msgid "Primary"
-msgstr ""
-
-#: src/Admin/manage-event/ManageEventApp.js:954
+#: src/Admin/manage-event/ManageEventApp.js:1002
 msgid "Edit Post"
 msgstr ""
 
-#: src/Admin/manage-event/ManageEventApp.js:965
+#: src/Admin/manage-event/ManageEventApp.js:1011
 msgid "Unlink"
 msgstr ""
 
-#: src/Admin/manage-event/ManageEventApp.js:975
+#: src/Admin/manage-event/ManageEventApp.js:1021
 msgid "Link type"
 msgstr ""
 
-#: src/Admin/manage-event/ManageEventApp.js:979
+#: src/Admin/manage-event/ManageEventApp.js:1025
 msgid "No link (standalone event)"
 msgstr ""
 
-#: src/Admin/manage-event/ManageEventApp.js:986
-#: src/Admin/manage-event/ManageEventApp.js:1005
+#: src/Admin/manage-event/ManageEventApp.js:1032
+#: src/Admin/manage-event/ManageEventApp.js:1051
 msgid "External URL"
 msgstr ""
 
-#: src/Admin/manage-event/ManageEventApp.js:993
+#: src/Admin/manage-event/ManageEventApp.js:1039
 msgid "WordPress Post"
 msgstr ""
 
-#: src/Admin/manage-event/ManageEventApp.js:1019
+#: src/Admin/manage-event/ManageEventApp.js:1062
 msgid "Post type"
 msgstr ""
 
-#: src/Admin/manage-event/ManageEventApp.js:1038
+#: src/Admin/manage-event/ManageEventApp.js:1076
 msgid "Create New Post"
 msgstr ""
 
-#: src/Admin/manage-event/ManageEventApp.js:1050
+#: src/Admin/manage-event/ManageEventApp.js:1085
 msgid "Link Additional Post"
 msgstr ""
 
-#: src/Admin/manage-event/ManageEventApp.js:1053
+#: src/Admin/manage-event/ManageEventApp.js:1088
 msgid "Search posts by title"
 msgstr ""
 
-#: src/Admin/manage-event/ManageEventApp.js:1058
+#: src/Admin/manage-event/ManageEventApp.js:1090
+#: src/Admin/manage-event/MergeEventWizard.js:170
 msgid "Start typing to search..."
 msgstr ""
 
-#: src/Admin/manage-event/ManageEventApp.js:1065
+#: src/Admin/manage-event/ManageEventApp.js:1097
 msgid "Select a post"
 msgstr ""
 
-#: src/Admin/manage-event/ManageEventApp.js:1069
+#: src/Admin/manage-event/ManageEventApp.js:1101
+#: src/Admin/manage-event/MergeEventWizard.js:182
 msgid "Select..."
 msgstr ""
 
-#: src/Admin/manage-event/ManageEventApp.js:1090
+#: src/Admin/manage-event/ManageEventApp.js:1119
 msgid "Link Post"
 msgstr ""
 
-#: src/Admin/manage-event/ManageEventApp.js:1173
+#: src/Admin/manage-event/ManageEventApp.js:1209
+msgid "Event Administration"
+msgstr ""
+
+#: src/Admin/manage-event/ManageEventApp.js:1219
+msgid "Create a copy of this event with the same details, links, and settings."
+msgstr ""
+
+#: src/Admin/manage-event/ManageEventApp.js:1241
+msgid "Merge this event into another event date, moving or cleaning up all linked data."
+msgstr ""
+
+#: src/Admin/manage-event/ManageEventApp.js:1253
+#: src/Admin/manage-event/MergeEventWizard.js:381
+msgid "Merge Event"
+msgstr ""
+
+#: src/Admin/manage-event/ManageEventApp.js:1263
+msgid "Permanently delete this event and all associated data. This action cannot be undone."
+msgstr ""
+
+#: src/Admin/manage-event/ManageEventApp.js:1274
+msgid "Delete Event"
+msgstr ""
+
+#: src/Admin/manage-event/ManageEventApp.js:1307
 msgid "Save Changes"
 msgstr ""
 
-#: src/Admin/manage-event/ManageEventApp.js:1180
-msgid "Delete Event"
+#: src/Admin/manage-event/MergeEventWizard.js:33
+msgid "Move"
+msgstr ""
+
+#: src/Admin/manage-event/MergeEventWizard.js:35
+msgid "Skip"
+msgstr ""
+
+#: src/Admin/manage-event/MergeEventWizard.js:112
+msgid "Failed to load preview."
+msgstr ""
+
+#: src/Admin/manage-event/MergeEventWizard.js:127
+msgid "Merging events..."
+msgstr ""
+
+#: src/Admin/manage-event/MergeEventWizard.js:139
+msgid "Done! Redirecting..."
+msgstr ""
+
+#: src/Admin/manage-event/MergeEventWizard.js:143
+msgid "Failed to merge events."
+msgstr ""
+
+#: src/Admin/manage-event/MergeEventWizard.js:156
+msgid "Select Target Event"
+msgstr ""
+
+#: src/Admin/manage-event/MergeEventWizard.js:161
+msgid "Search for the event date you want to merge this event into. All data from the current event (source) will be moved to the target."
+msgstr ""
+
+#: src/Admin/manage-event/MergeEventWizard.js:167
+msgid "Search events by title"
+msgstr ""
+
+#: src/Admin/manage-event/MergeEventWizard.js:178
+msgid "Select target event"
+msgstr ""
+
+#: src/Admin/manage-event/MergeEventWizard.js:188
+#: src/Admin/manage-event/MergeEventWizard.js:201
+#: src/Admin/manage-event/MergeEventWizard.js:306
+#: src/Admin/manage-event/MergeEventWizard.js:312
+msgid "(No title)"
+msgstr ""
+
+#: src/Admin/manage-event/MergeEventWizard.js:198
+#: src/Admin/manage-event/MergeEventWizard.js:310
+msgid "Target:"
+msgstr ""
+
+#: src/Admin/manage-event/MergeEventWizard.js:225
+#: src/Admin/manage-event/MergeEventWizard.js:355
+msgid "Review & Configure"
+msgstr ""
+
+#: src/Admin/manage-event/MergeEventWizard.js:230
+msgid "Review the linked data counts and choose what to do with each type."
+msgstr ""
+
+#: src/Admin/manage-event/MergeEventWizard.js:242
+msgid "Data Type"
+msgstr ""
+
+#: src/Admin/manage-event/MergeEventWizard.js:244
+msgid "Source"
+msgstr ""
+
+#: src/Admin/manage-event/MergeEventWizard.js:247
+msgid "Target"
+msgstr ""
+
+#: src/Admin/manage-event/MergeEventWizard.js:249
+msgid "Action"
+msgstr ""
+
+#: src/Admin/manage-event/MergeEventWizard.js:283
+msgid "Delete source event after merge"
+msgstr ""
+
+#: src/Admin/manage-event/MergeEventWizard.js:299
+msgid "Confirm Merge"
+msgstr ""
+
+#: src/Admin/manage-event/MergeEventWizard.js:304
+msgid "Source:"
+msgstr ""
+
+#: src/Admin/manage-event/MergeEventWizard.js:324
+msgid "item"
+msgstr ""
+
+#: src/Admin/manage-event/MergeEventWizard.js:325
+msgid "items"
+msgstr ""
+
+#: src/Admin/manage-event/MergeEventWizard.js:332
+msgid "The source event date will be deleted after merge."
+msgstr ""
+
+#: src/Admin/manage-event/MergeEventWizard.js:345
+msgid "Execute Merge"
+msgstr ""
+
+#: src/Admin/manage-event/MergeEventWizard.js:354
+msgid "Select Target"
+msgstr ""
+
+#: src/Admin/manage-event/MergeEventWizard.js:356
+msgid "Confirm"
+msgstr ""
+
+#: src/Admin/manage-event/PhotoDetail.js:79
+msgid "Photo Details"
+msgstr ""
+
+#: src/Admin/manage-event/PhotoDetail.js:108
+#: src/Frontend/event-gallery/index.js:204
+msgid "Previous photo"
+msgstr ""
+
+#: src/Admin/manage-event/PhotoDetail.js:138
+#: src/Frontend/event-gallery/index.js:222
+msgid "Next photo"
+msgstr ""
+
+#: src/Admin/manage-event/PhotoDetail.js:147
+msgid "Author:"
+msgstr ""
+
+#: src/Admin/manage-event/PhotoDetail.js:156
+msgid "Tagged People"
+msgstr ""
+
+#: src/Admin/manage-event/PhotoDetail.js:161
+msgid "No one tagged yet."
+msgstr ""
+
+#: src/Admin/manage-event/PhotoDetail.js:191
+msgid "Add Tag"
+msgstr ""
+
+#: src/Admin/manage-event/PhotoTagModal.js:31
+msgid "Tag a Participant"
+msgstr ""
+
+#: src/Admin/manage-event/PhotoTagModal.js:35
+msgid "Search participants..."
+msgstr ""
+
+#: src/Admin/manage-event/PhotoTagModal.js:41
+msgid "No participants found."
+msgstr ""
+
+#: src/Admin/manage-event/RecurrenceCalendar.js:100
+msgid "Recurring Occurrences"
+msgstr ""
+
+#: src/Admin/manage-event/RecurrenceCalendar.js:108
+msgid "Previous months"
+msgstr ""
+
+#: src/Admin/manage-event/RecurrenceCalendar.js:119
+msgid "Next months"
+msgstr ""
+
+#: src/Admin/manage-event/RecurrenceCalendar.js:191
+msgid "Active"
+msgstr ""
+
+#: src/Admin/manage-event/RecurrenceCalendar.js:206
+msgid "Cancelled"
+msgstr ""
+
+#: src/Admin/manage-event/RecurrenceCalendar.js:325
+msgid "Master event"
+msgstr ""
+
+#: src/Admin/manage-event/RecurrenceCalendar.js:338
+msgid "Click to cancel this occurrence"
+msgstr ""
+
+#: src/Admin/manage-event/RecurrenceCalendar.js:347
+msgid "Click to restore this occurrence"
+msgstr ""
+
+#: src/Admin/migration-summary/MigrationSummaryApp.js:27
+msgid "Failed to load data."
+msgstr ""
+
+#: src/Admin/migration-summary/MigrationSummaryApp.js:73
+msgid "tables fully migrated"
+msgstr ""
+
+#: src/Admin/migration-summary/MigrationSummaryApp.js:106
+msgid "Table not found (plugin not active)"
+msgstr ""
+
+#: src/Admin/migration-summary/MigrationSummaryApp.js:132
+msgid "Total rows"
+msgstr ""
+
+#: src/Admin/migration-summary/MigrationSummaryApp.js:136
+msgid "Migrated"
+msgstr ""
+
+#: src/Admin/migration-summary/MigrationSummaryApp.js:141
+msgid "Pending"
+msgstr ""
+
+#: src/Admin/migration-summary/MigrationSummaryApp.js:146
+msgid "Orphaned event_id"
+msgstr ""
+
+#: src/Admin/migration-summary/MigrationSummaryApp.js:153
+msgid "Orphaned event_date_id"
+msgstr ""
+
+#: src/Admin/migration-summary/MigrationSummaryApp.js:183
+#, js-format
+msgid "Updated %d rows"
+msgstr ""
+
+#: src/Admin/migration-summary/MigrationSummaryApp.js:184
+#, js-format
+msgid "Deleted %d rows"
+msgstr ""
+
+#: src/Admin/migration-summary/MigrationSummaryApp.js:189
+msgid "Operation failed"
+msgstr ""
+
+#: src/Admin/migration-summary/MigrationSummaryApp.js:225
+msgid "Updating..."
+msgstr ""
+
+#: src/Admin/migration-summary/MigrationSummaryApp.js:226
+msgid "Update"
+msgstr ""
+
+#: src/Admin/migration-summary/MigrationSummaryApp.js:237
+msgid "Deleting..."
 msgstr ""
 
 #: src/Admin/migration/MigrationApp.js:57
@@ -2059,6 +2795,12 @@ msgstr ""
 
 #: src/Admin/migration/MigrationApp.js:224
 msgid "Author"
+msgstr ""
+
+#: src/Admin/migration/MigrationApp.js:230
+#: src/Admin/sources/SourcesList.js:202
+#: src/Admin/venues/VenuesApp.js:382
+msgid "Actions"
 msgstr ""
 
 #: src/Admin/migration/MigrationApp.js:245
@@ -2144,13 +2886,6 @@ msgstr ""
 
 #: src/Admin/settings/FacebookTab.js:289
 msgid "Enter Facebook Page access token..."
-msgstr ""
-
-#: src/Admin/settings/FacebookTab.js:302
-#: src/Admin/settings/FacebookTab.js:452
-#: src/Admin/settings/GeneralTab.js:240
-#: src/Admin/sources/components/SourceForm.js:237
-msgid "Saving..."
 msgstr ""
 
 #: src/Admin/settings/FacebookTab.js:303
@@ -2501,10 +3236,6 @@ msgstr ""
 msgid "Data Source"
 msgstr ""
 
-#: src/Admin/sources/components/DataSourceItem.js:228
-msgid "Remove"
-msgstr ""
-
 #: src/Admin/sources/components/DataSourceItem.js:233
 msgid "Source Type"
 msgstr ""
@@ -2613,109 +3344,137 @@ msgstr ""
 msgid "Add New Event Source"
 msgstr ""
 
-#: src/Admin/venues/VenuesApp.js:55
+#: src/Admin/venues/VenuesApp.js:68
 msgid "Failed to load venues."
 msgstr ""
 
-#: src/Admin/venues/VenuesApp.js:94
+#: src/Admin/venues/VenuesApp.js:107
 msgid "Are you sure you want to delete this venue?"
 msgstr ""
 
-#: src/Admin/venues/VenuesApp.js:108
+#: src/Admin/venues/VenuesApp.js:121
 msgid "Venue deleted successfully."
 msgstr ""
 
-#: src/Admin/venues/VenuesApp.js:129
+#: src/Admin/venues/VenuesApp.js:142
 msgid "Venue updated successfully."
 msgstr ""
 
-#: src/Admin/venues/VenuesApp.js:136
+#: src/Admin/venues/VenuesApp.js:149
 msgid "Venue created successfully."
 msgstr ""
 
-#: src/Admin/venues/VenuesApp.js:165
-#: src/Admin/venues/VenuesApp.js:279
+#. translators: %d is the number of exported venues
+#: src/Admin/venues/VenuesApp.js:215
+#, js-format
+msgid "%d venue(s) exported."
+msgstr ""
+
+#: src/Admin/venues/VenuesApp.js:241
+msgid "Invalid file format. Expected a JSON array."
+msgstr ""
+
+#. translators: %d is the number of imported venues
+#: src/Admin/venues/VenuesApp.js:269
+#, js-format
+msgid "%d venue(s) imported."
+msgstr ""
+
+#: src/Admin/venues/VenuesApp.js:277
+msgid "Failed to import venues."
+msgstr ""
+
+#: src/Admin/venues/VenuesApp.js:296
+msgid "Export Selected"
+msgstr ""
+
+#: src/Admin/venues/VenuesApp.js:311
+msgid "Import"
+msgstr ""
+
+#: src/Admin/venues/VenuesApp.js:321
+#: src/Admin/venues/VenuesApp.js:459
 msgid "Add New Venue"
 msgstr ""
 
-#: src/Admin/venues/VenuesApp.js:194
+#: src/Admin/venues/VenuesApp.js:351
 msgid "Loading venues..."
 msgstr ""
 
-#: src/Admin/venues/VenuesApp.js:201
+#: src/Admin/venues/VenuesApp.js:358
 msgid "No venues found. Create your first venue to get started."
 msgstr ""
 
-#: src/Admin/venues/VenuesApp.js:214
-#: src/Admin/venues/VenuesApp.js:295
+#: src/Admin/venues/VenuesApp.js:381
+#: src/Admin/venues/VenuesApp.js:475
 msgid "Address"
 msgstr ""
 
-#: src/Admin/venues/VenuesApp.js:227
+#: src/Admin/venues/VenuesApp.js:407
 msgid "No address"
 msgstr ""
 
-#: src/Admin/venues/VenuesApp.js:278
+#: src/Admin/venues/VenuesApp.js:458
 msgid "Edit Venue"
 msgstr ""
 
-#: src/Admin/venues/VenuesApp.js:303
+#: src/Admin/venues/VenuesApp.js:483
 msgid "Full address of the venue"
 msgstr ""
 
-#: src/Admin/venues/VenuesApp.js:309
+#: src/Admin/venues/VenuesApp.js:489
 msgid "Google Maps Link"
 msgstr ""
 
-#: src/Admin/venues/VenuesApp.js:318
+#: src/Admin/venues/VenuesApp.js:498
 msgid "URL to Google Maps location"
 msgstr ""
 
-#: src/Admin/venues/VenuesApp.js:324
+#: src/Admin/venues/VenuesApp.js:504
 msgid "Latitude"
 msgstr ""
 
-#: src/Admin/venues/VenuesApp.js:332
+#: src/Admin/venues/VenuesApp.js:512
 msgid "Latitude coordinate (e.g., 39.4878023)"
 msgstr ""
 
-#: src/Admin/venues/VenuesApp.js:338
+#: src/Admin/venues/VenuesApp.js:518
 msgid "Longitude"
 msgstr ""
 
-#: src/Admin/venues/VenuesApp.js:346
+#: src/Admin/venues/VenuesApp.js:526
 msgid "Longitude coordinate (e.g., -0.3613204)"
 msgstr ""
 
-#: src/Admin/venues/VenuesApp.js:352
+#: src/Admin/venues/VenuesApp.js:532
 msgid "Facebook Page Link"
 msgstr ""
 
-#: src/Admin/venues/VenuesApp.js:361
+#: src/Admin/venues/VenuesApp.js:541
 msgid "URL to Facebook page"
 msgstr ""
 
-#: src/Admin/venues/VenuesApp.js:364
+#: src/Admin/venues/VenuesApp.js:544
 msgid "Instagram Handle"
 msgstr ""
 
-#: src/Admin/venues/VenuesApp.js:372
+#: src/Admin/venues/VenuesApp.js:552
 msgid "Instagram username without @ (e.g., venue_name)"
 msgstr ""
 
-#: src/Admin/venues/VenuesApp.js:378
+#: src/Admin/venues/VenuesApp.js:558
 msgid "Website URL"
 msgstr ""
 
-#: src/Admin/venues/VenuesApp.js:387
+#: src/Admin/venues/VenuesApp.js:567
 msgid "Website URL of the venue"
 msgstr ""
 
-#: src/Admin/venues/VenuesApp.js:407
+#: src/Admin/venues/VenuesApp.js:587
 msgid "Update Venue"
 msgstr ""
 
-#: src/Admin/venues/VenuesApp.js:408
+#: src/Admin/venues/VenuesApp.js:588
 msgid "Create Venue"
 msgstr ""
 
@@ -2737,7 +3496,6 @@ msgid "Download ICS"
 msgstr ""
 
 #: src/blocks/event-dates/components/EditComponent.js:205
-#: src/blocks/event-info/components/EditComponent.js:399
 msgid "No event dates set. Add dates in the Event Details panel."
 msgstr ""
 
@@ -2745,12 +3503,8 @@ msgstr ""
 msgid "Event Dates block: Only displays in event post context."
 msgstr ""
 
-#: src/blocks/event-info/components/EditComponent.js:431
-msgid "Loading venue..."
-msgstr ""
-
-#: src/blocks/event-info/components/EditComponent.js:438
-msgid "Event Info block: Only displays in event post context."
+#: src/blocks/event-info/components/EditComponent.js:47
+msgid "Event Info block is disabled — no event is linked to this post."
 msgstr ""
 
 #: src/blocks/event-proposal/editor.js:21
@@ -3022,14 +3776,6 @@ msgstr ""
 
 #: src/Frontend/event-gallery/index.js:195
 msgid "Close"
-msgstr ""
-
-#: src/Frontend/event-gallery/index.js:204
-msgid "Previous photo"
-msgstr ""
-
-#: src/Frontend/event-gallery/index.js:222
-msgid "Next photo"
 msgstr ""
 
 #: src/Frontend/event-gallery/index.js:236

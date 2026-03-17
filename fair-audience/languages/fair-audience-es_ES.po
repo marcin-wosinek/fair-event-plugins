@@ -3971,51 +3971,51 @@ msgstr "miembro"
 #: src/Admin/MediaLibraryHooks.php:177
 #: src/Admin/MediaLibraryHooks.php:430
 msgid "— Add Person —"
-msgstr ""
+msgstr "— Añadir persona —"
 
 #: src/Admin/MediaLibraryHooks.php:198
 msgid "Tagged People"
-msgstr ""
+msgstr "Personas etiquetadas"
 
 #: src/Admin/MediaLibraryHooks.php:201
 msgid "People in this photo"
-msgstr ""
+msgstr "Personas en esta foto"
 
 #: src/Admin/MediaLibraryHooks.php:397
 msgid "Photo Author:"
-msgstr ""
+msgstr "Autor de la foto:"
 
 #: src/Admin/MediaLibraryHooks.php:427
 msgid "Tag People:"
-msgstr ""
+msgstr "Etiquetar personas:"
 
 #: src/Admin/MediaLibraryHooks.php:491
 #: src/Admin/MediaLibraryHooks.php:534
 #: src/Admin/MediaLibraryHooks.php:770
 msgid "Saved."
-msgstr ""
+msgstr "Guardado."
 
 #: src/Admin/MediaLibraryHooks.php:561
 msgid "Error removing tag"
-msgstr ""
+msgstr "Error al eliminar etiqueta"
 
 #: src/API/EventSignupController.php:781
 msgid "You are not signed up for this event."
-msgstr ""
+msgstr "No estás registrado para este evento."
 
 #: src/API/EventSignupController.php:796
 #: src/blocks/event-signup/frontend.js:520
 msgid "You have been removed from this event."
-msgstr ""
+msgstr "Has sido eliminado de este evento."
 
 #: src/API/PhotoTagsController.php:196
 msgid "Failed to tag participant."
-msgstr ""
+msgstr "Error al etiquetar al participante."
 
 #: src/blocks/event-signup/render.php:130
 #: src/blocks/event-signup/frontend.js:436
 msgid "Cancel signup"
-msgstr ""
+msgstr "Cancelar registro"
 
 #: src/blocks/mailing-signup/render.php:98
 msgid "I am interested in:"
@@ -4023,52 +4023,52 @@ msgstr "Me interesa:"
 
 #: src/Admin/event-participants/EventParticipants.js:83
 msgid "No event date ID provided"
-msgstr ""
+msgstr "No se proporcionó ID de fecha de evento"
 
 #: src/Admin/event-participants/EventParticipants.js:102
 msgid "No event date found for this event"
-msgstr ""
+msgstr "No se encontró fecha de evento para este evento"
 
 #: src/blocks/audience-signup/frontend.js:62
 msgid "Not you? Start fresh"
-msgstr ""
+msgstr "¿No eres tú? Empezar de nuevo"
 
 #: src/blocks/event-signup/frontend.js:508
 msgid "Cancelling..."
-msgstr ""
+msgstr "Cancelando..."
 
 #: src/blocks/event-signup/frontend.js:544
 msgid "You can sign up for this event."
-msgstr ""
+msgstr "Puedes registrarte para este evento."
 
 #: src/blocks/event-signup/frontend.js:580
 msgid "Failed to cancel signup. Please try again."
-msgstr ""
+msgstr "Error al cancelar el registro. Por favor, inténtalo de nuevo."
 
 #: src/blocks/mailing-signup/editor.js:91
 msgid "Category Preferences"
-msgstr ""
+msgstr "Preferencias de categoría"
 
 #: src/blocks/mailing-signup/editor.js:94
 msgid "Show category preferences"
-msgstr ""
+msgstr "Mostrar preferencias de categoría"
 
 #: src/blocks/mailing-signup/editor.js:102
 msgid "Let subscribers choose which categories of content they want to receive."
-msgstr ""
+msgstr "Permite que los suscriptores elijan qué categorías de contenido desean recibir."
 
 #: src/blocks/mailing-signup/editor.js:113
 msgid "Select which categories to show in the form. If none are selected, all categories will be shown."
-msgstr ""
+msgstr "Selecciona qué categorías mostrar en el formulario. Si no se selecciona ninguna, se mostrarán todas las categorías."
 
 #: src/blocks/mailing-signup/editor.js:120
 msgid "Available categories"
-msgstr ""
+msgstr "Categorías disponibles"
 
 #: src/blocks/mailing-signup/editor.js:144
 msgid "Preselected categories"
-msgstr ""
+msgstr "Categorías preseleccionadas"
 
 #: src/blocks/mailing-signup/editor.js:150
 msgid "Categories checked by default when the form loads."
-msgstr ""
+msgstr "Categorías marcadas por defecto cuando se carga el formulario."

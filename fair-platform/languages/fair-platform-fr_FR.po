@@ -9,8 +9,8 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "POT-Creation-Date: 2026-03-04T11:49:55+00:00\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
-"X-Generator: WP-CLI 2.12.0\n"
 "Language: fr_FR\n"
+"X-Generator: WP-CLI 2.12.0\n"
 "Plural-Forms: nplurals=2; plural=(n > 1);\n"
 "X-Domain: fair-platform\n"
 
@@ -510,4 +510,3 @@ msgstr "Nom d'utilisateur IG"
 #: src/Admin/instagram-connections/InstagramConnectionsPage.js:394
 msgid "IG User ID"
 msgstr "ID utilisateur IG"
-
