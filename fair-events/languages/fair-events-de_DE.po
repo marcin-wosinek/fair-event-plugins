@@ -1326,8 +1326,8 @@ msgstr "Veranstaltungsfotos"
 #, php-format
 msgid "%d photo linked to this event."
 msgid_plural "%d photos linked to this event."
-msgstr[0] ""
-msgstr[1] ""
+msgstr[0] "%d Foto mit diesem Event verknüpft."
+msgstr[1] "%d Fotos mit diesem Event verknüpft."
 
 #: src/Admin/EventGalleryMetaBox.php:70
 msgid "Review Event's Photos"
@@ -1374,8 +1374,8 @@ msgstr "Keine Fotos ausgewählt."
 #, php-format
 msgid "%d photo selected:"
 msgid_plural "%d photos selected:"
-msgstr[0] ""
-msgstr[1] ""
+msgstr[0] "%d Foto ausgewählt:"
+msgstr[1] "%d Fotos ausgewählt:"
 
 #: src/Admin/MediaBatchActions.php:242
 #: src/Admin/MediaLibraryHooks.php:75
@@ -1401,8 +1401,8 @@ msgstr "Fotos zuordnen"
 #, php-format
 msgid "%1$d photo assigned to \"%2$s\"."
 msgid_plural "%1$d photos assigned to \"%2$s\"."
-msgstr[0] ""
-msgstr[1] ""
+msgstr[0] "%1$d Foto „%2$s" zugewiesen."
+msgstr[1] "%1$d Fotos „%2$s" zugewiesen."
 
 #: src/Admin/MediaLibraryHooks.php:83
 msgid "Link this image to an event"
@@ -1795,8 +1795,8 @@ msgstr "Mag ich nicht mehr"
 #, php-format
 msgid "Review Event's Photos (%d photo)"
 msgid_plural "Review Event's Photos (%d photos)"
-msgstr[0] ""
-msgstr[1] ""
+msgstr[0] "Fotos des Events ansehen (%d Foto)"
+msgstr[1] "Fotos des Events ansehen (%d Fotos)"
 
 #: src/Services/PostMigrationService.php:32
 msgid "Source post not found."

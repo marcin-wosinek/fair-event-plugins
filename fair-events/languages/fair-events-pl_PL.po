@@ -1326,8 +1326,9 @@ msgstr "Zdjęcia zdarzenia"
 #, php-format
 msgid "%d photo linked to this event."
 msgid_plural "%d photos linked to this event."
-msgstr[0] ""
-msgstr[1] ""
+msgstr[0] "%d zdjęcie powiązane z tym wydarzeniem."
+msgstr[1] "%d zdjęcia powiązane z tym wydarzeniem."
+msgstr[2] "%d zdjęć powiązanych z tym wydarzeniem."
 
 #: src/Admin/EventGalleryMetaBox.php:70
 msgid "Review Event's Photos"
@@ -1374,8 +1375,9 @@ msgstr "Nie wybrano żadnych zdjęć."
 #, php-format
 msgid "%d photo selected:"
 msgid_plural "%d photos selected:"
-msgstr[0] ""
-msgstr[1] ""
+msgstr[0] "%d zdjęcie wybrane:"
+msgstr[1] "%d zdjęcia wybrane:"
+msgstr[2] "%d zdjęć wybranych:"
 
 #: src/Admin/MediaBatchActions.php:242
 #: src/Admin/MediaLibraryHooks.php:75
@@ -1401,8 +1403,9 @@ msgstr "Przypisz zdjęcia"
 #, php-format
 msgid "%1$d photo assigned to \"%2$s\"."
 msgid_plural "%1$d photos assigned to \"%2$s\"."
-msgstr[0] ""
-msgstr[1] ""
+msgstr[0] "%1$d zdjęcie przypisane do „%2$s"."
+msgstr[1] "%1$d zdjęcia przypisane do „%2$s"."
+msgstr[2] "%1$d zdjęć przypisanych do „%2$s"."
 
 #: src/Admin/MediaLibraryHooks.php:83
 msgid "Link this image to an event"
@@ -1795,8 +1798,9 @@ msgstr "Nie lubię"
 #, php-format
 msgid "Review Event's Photos (%d photo)"
 msgid_plural "Review Event's Photos (%d photos)"
-msgstr[0] ""
-msgstr[1] ""
+msgstr[0] "Przejrzyj zdjęcia wydarzenia (%d zdjęcie)"
+msgstr[1] "Przejrzyj zdjęcia wydarzenia (%d zdjęcia)"
+msgstr[2] "Przejrzyj zdjęcia wydarzenia (%d zdjęć)"
 
 #: src/Services/PostMigrationService.php:32
 msgid "Source post not found."

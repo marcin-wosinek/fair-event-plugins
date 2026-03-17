@@ -9,6 +9,8 @@ export const config = {
 	plugins: [
 		{ name: 'fair-audience', textDomain: 'fair-audience' },
 		{ name: 'fair-events', textDomain: 'fair-events' },
+		{ name: 'fair-payment', textDomain: 'fair-payment' },
+		{ name: 'fair-platform', textDomain: 'fair-platform' },
 	],
 
 	// Supported locales

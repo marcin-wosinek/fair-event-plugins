@@ -1,0 +1,513 @@
+msgid ""
+msgstr ""
+"Project-Id-Version: Fair Platform - Mollie OAuth Integration 1.1.0\n"
+"Report-Msgid-Bugs-To: https://wordpress.org/support/plugin/fair-platform\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language-Team: LANGUAGE <LL@li.org>\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"POT-Creation-Date: 2026-03-04T11:49:55+00:00\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"X-Generator: WP-CLI 2.12.0\n"
+"Language: fr_FR\n"
+"Plural-Forms: nplurals=2; plural=(n > 1);\n"
+"X-Domain: fair-platform\n"
+
+#. Plugin Name of the plugin
+#: fair-platform.php
+msgid "Fair Platform - Mollie OAuth Integration"
+msgstr "Fair Platform - Intégration OAuth Mollie"
+
+#. Plugin URI of the plugin
+#: fair-platform.php
+msgid "https://fair-event-plugins.com"
+msgstr ""
+
+#. Description of the plugin
+#: fair-platform.php
+msgid "Minimal OAuth proxy for Mollie Connect integration. Enables WordPress sites to connect Mollie accounts with platform fees."
+msgstr "Proxy OAuth minimal pour l'intégration Mollie Connect. Permet aux sites WordPress de connecter les comptes Mollie avec les frais de plateforme."
+
+#. Author of the plugin
+#: fair-platform.php
+msgid "Marcin Wosinek"
+msgstr ""
+
+#. Author URI of the plugin
+#: fair-platform.php
+msgid "https://github.com/marcin-wosinek"
+msgstr ""
+
+#: src/Admin/AdminHooks.php:36
+msgid "Fair Platform Settings"
+msgstr "Paramètres Fair Platform"
+
+#: src/Admin/AdminHooks.php:37
+msgid "Fair Platform"
+msgstr ""
+
+#: src/Admin/AdminHooks.php:47
+#: src/Admin/connections/ConnectionsPage.js:163
+msgid "Connection Logs"
+msgstr "Journaux de connexion"
+
+#: src/Admin/AdminHooks.php:48
+msgid "Connections"
+msgstr "Connexions"
+
+#: src/Admin/AdminHooks.php:56
+msgid "Instagram Connections"
+msgstr "Connexions Instagram"
+
+#: src/Admin/AdminHooks.php:57
+msgid "Instagram"
+msgstr "Instagram"
+
+#: src/Admin/AdminHooks.php:145
+#: src/Admin/ConnectionsPage.php:24
+#: src/Admin/InstagramConnectionsPage.php:24
+msgid "You do not have sufficient permissions to access this page."
+msgstr "Vous n'avez pas les permissions suffisantes pour accéder à cette page."
+
+#: src/Admin/settings-page.php:12
+msgid "Fair Platform - Mollie OAuth Settings"
+msgstr "Fair Platform - Paramètres OAuth Mollie"
+
+#: src/Admin/settings-page.php:17
+msgid "Configuration Status"
+msgstr "État de la configuration"
+
+#: src/Admin/settings-page.php:22
+msgid "Client ID"
+msgstr "ID client"
+
+#: src/Admin/settings-page.php:29
+#: src/Admin/settings-page.php:41
+msgid "Not configured"
+msgstr "Non configuré"
+
+#: src/Admin/settings-page.php:34
+msgid "Client Secret"
+msgstr "Secret client"
+
+#: src/Admin/settings-page.php:38
+msgid "Configured"
+msgstr "Configuré"
+
+#: src/Admin/settings-page.php:46
+msgid "OAuth Endpoints"
+msgstr "Points de terminaison OAuth"
+
+#: src/Admin/settings-page.php:66
+msgid "Mollie OAuth is not configured."
+msgstr "OAuth Mollie n'est pas configuré."
+
+#: src/Admin/settings-page.php:68
+msgid "Add the following to your wp-config.php:"
+msgstr "Ajoutez ce qui suit à votre wp-config.php :"
+
+#. translators: %s: README.md URL
+#: src/Admin/settings-page.php:76
+#, php-format
+msgid "See <a href=\"%s\" target=\"_blank\">README.md</a> for setup instructions."
+msgstr "Consultez <a href=\"%s\" target=\"_blank\">README.md</a> pour les instructions de configuration."
+
+#: src/Admin/settings-page.php:88
+msgid "Test OAuth Connection"
+msgstr "Tester la connexion OAuth"
+
+#: src/Admin/settings-page.php:91
+msgid "Test the OAuth flow by initiating a connection."
+msgstr "Testez le flux OAuth en initiant une connexion."
+
+#: src/Admin/settings-page.php:98
+msgid "Test OAuth Flow"
+msgstr "Tester le flux OAuth"
+
+#: src/Admin/settings-page.php:107
+msgid "Invalid nonce."
+msgstr "Nonce invalide."
+
+#: src/Admin/settings-page.php:120
+msgid "Redirecting to Mollie OAuth..."
+msgstr "Redirection vers OAuth Mollie..."
+
+#: src/Admin/settings-page.php:130
+msgid "OAuth test successful!"
+msgstr "Test OAuth réussi !"
+
+#: src/Admin/settings-page.php:131
+msgid "Access token received:"
+msgstr "Jeton d'accès reçu :"
+
+#: src/Admin/settings-page.php:136
+msgid "OAuth test failed:"
+msgstr "Échec du test OAuth :"
+
+#: src/Admin/settings-page.php:148
+msgid "Configure Mollie credentials first to test the connection."
+msgstr "Configurez d'abord les identifiants Mollie pour tester la connexion."
+
+#: src/Admin/settings-page.php:155
+msgid "Recent OAuth Activity"
+msgstr "Activité OAuth récente"
+
+#: src/Admin/settings-page.php:161
+msgid "State Token"
+msgstr "Jeton d'état"
+
+#: src/Admin/settings-page.php:162
+msgid "Site Info"
+msgstr "Informations du site"
+
+#: src/Admin/settings-page.php:163
+msgid "Created"
+msgstr "Créé"
+
+#: src/Admin/settings-page.php:179
+msgid "Invalid data"
+msgstr "Données invalides"
+
+#: src/Admin/settings-page.php:196
+msgid "No recent OAuth activity."
+msgstr "Aucune activité OAuth récente."
+
+#: src/Admin/settings-page.php:202
+msgid "Documentation"
+msgstr "Documentation"
+
+#: src/Admin/settings-page.php:204
+msgid "Setup Instructions"
+msgstr "Instructions de configuration"
+
+#: src/Admin/settings-page.php:207
+msgid "Create Mollie Partner Account"
+msgstr "Créer un compte partenaire Mollie"
+
+#: src/Admin/settings-page.php:211
+msgid "Create OAuth Application"
+msgstr "Créer une application OAuth"
+
+#: src/Admin/settings-page.php:212
+msgid "In Mollie Dashboard → Developers → Your Apps"
+msgstr "Dans le tableau de bord Mollie → Développeurs → Vos applications"
+
+#: src/Admin/settings-page.php:213
+msgid "Redirect URI:"
+msgstr "URI de redirection :"
+
+#: src/Admin/settings-page.php:214
+msgid "Scopes:"
+msgstr "Portées :"
+
+#: src/Admin/settings-page.php:217
+msgid "Add Credentials to wp-config.php"
+msgstr "Ajouter les identifiants à wp-config.php"
+
+#: src/Admin/settings-page.php:223
+msgid "How It Works"
+msgstr "Comment ça marche"
+
+#: src/Admin/settings-page.php:224
+msgid "This plugin acts as an OAuth proxy between WordPress sites and Mollie:"
+msgstr "Ce plugin agit comme un proxy OAuth entre les sites WordPress et Mollie :"
+
+#: src/Admin/settings-page.php:226
+msgid "User clicks \"Connect Mollie\" on their WordPress site"
+msgstr "L'utilisateur clique sur « Connecter Mollie » sur son site WordPress"
+
+#: src/Admin/settings-page.php:227
+msgid "Site redirects to fair-event-plugins.com/oauth/authorize"
+msgstr "Le site redirige vers fair-event-plugins.com/oauth/authorize"
+
+#: src/Admin/settings-page.php:228
+msgid "This plugin redirects to Mollie for authorization"
+msgstr "Ce plugin redirige vers Mollie pour l'autorisation"
+
+#: src/Admin/settings-page.php:229
+msgid "User authorizes the connection on Mollie"
+msgstr "L'utilisateur autorise la connexion sur Mollie"
+
+#: src/Admin/settings-page.php:230
+msgid "Mollie redirects back to fair-event-plugins.com/oauth/callback"
+msgstr "Mollie redirige vers fair-event-plugins.com/oauth/callback"
+
+#: src/Admin/settings-page.php:231
+msgid "Plugin exchanges authorization code for access tokens"
+msgstr "Le plugin échange le code d'autorisation contre des jetons d'accès"
+
+#: src/Admin/settings-page.php:232
+msgid "Tokens are sent back to the WordPress site"
+msgstr "Les jetons sont renvoyés au site WordPress"
+
+#: src/API/ConnectionsController.php:69
+#: src/API/InstagramConnectionsController.php:69
+msgid "Page number."
+msgstr "Numéro de page."
+
+#: src/API/ConnectionsController.php:75
+#: src/API/InstagramConnectionsController.php:75
+msgid "Items per page."
+msgstr "Éléments par page."
+
+#: src/API/ConnectionsController.php:81
+#: src/API/InstagramConnectionsController.php:81
+msgid "Filter by status."
+msgstr "Filtrer par statut."
+
+#: src/API/ConnectionsController.php:87
+#: src/API/InstagramConnectionsController.php:87
+msgid "Order by field."
+msgstr "Trier par champ."
+
+#: src/API/ConnectionsController.php:94
+#: src/API/InstagramConnectionsController.php:94
+msgid "Order direction."
+msgstr "Direction du tri."
+
+#: src/API/ConnectionsController.php:129
+#: src/API/InstagramConnectionsController.php:129
+msgid "Delete logs older than X days."
+msgstr "Supprimer les journaux antérieurs à X jours."
+
+#. translators: %d: number of deleted records
+#: src/API/ConnectionsController.php:188
+#, php-format
+msgid "Deleted %d old connection logs."
+msgstr "Suppression de %d anciens journaux de connexion."
+
+#: src/API/ConnectionsController.php:206
+msgid "You do not have permission to view connection logs."
+msgstr "Vous n'avez pas la permission de consulter les journaux de connexion."
+
+#. translators: %d: number of deleted records
+#: src/API/InstagramConnectionsController.php:188
+#, php-format
+msgid "Deleted %d old Instagram connection logs."
+msgstr "Suppression de %d anciens journaux de connexion Instagram."
+
+#: src/API/InstagramConnectionsController.php:206
+msgid "You do not have permission to view Instagram connection logs."
+msgstr "Vous n'avez pas la permission de consulter les journaux de connexion Instagram."
+
+#: src/Core/Plugin.php:1412
+#: src/Core/Plugin.php:1433
+#: src/Core/Plugin.php:1454
+msgid "Fair Platform:"
+msgstr "Fair Platform :"
+
+#: src/Core/Plugin.php:1414
+msgid "Instagram OAuth credentials not configured. Please add INSTAGRAM_APP_ID and INSTAGRAM_APP_SECRET to wp-config.php for Instagram integration."
+msgstr "Les identifiants OAuth Instagram ne sont pas configurés. Veuillez ajouter INSTAGRAM_APP_ID et INSTAGRAM_APP_SECRET à wp-config.php pour l'intégration Instagram."
+
+#: src/Core/Plugin.php:1435
+msgid "Mollie OAuth credentials not configured. Please add MOLLIE_CLIENT_ID and MOLLIE_CLIENT_SECRET to wp-config.php"
+msgstr "Les identifiants OAuth Mollie ne sont pas configurés. Veuillez ajouter MOLLIE_CLIENT_ID et MOLLIE_CLIENT_SECRET à wp-config.php"
+
+#: src/Core/Plugin.php:1456
+msgid "Mollie PHP library not installed. Please run: composer require mollie/mollie-api-php"
+msgstr "La bibliothèque PHP Mollie n'est pas installée. Veuillez exécuter : composer require mollie/mollie-api-php"
+
+#: src/Admin/connections/ConnectionsPage.js:69
+msgid "Failed to load connections"
+msgstr "Échec du chargement des connexions"
+
+#: src/Admin/connections/ConnectionsPage.js:90
+msgid "Are you sure you want to delete old connection logs? This cannot be undone."
+msgstr "Êtes-vous sûr de vouloir supprimer les anciens journaux de connexion ? Cette action ne peut pas être annulée."
+
+#: src/Admin/connections/ConnectionsPage.js:109
+#: src/Admin/instagram-connections/InstagramConnectionsPage.js:110
+msgid "Old logs cleaned up successfully"
+msgstr "Les anciens journaux ont été nettoyés avec succès"
+
+#: src/Admin/connections/ConnectionsPage.js:114
+#: src/Admin/instagram-connections/InstagramConnectionsPage.js:115
+msgid "Failed to cleanup logs"
+msgstr "Échec du nettoyage des journaux"
+
+#: src/Admin/connections/ConnectionsPage.js:129
+#: src/Admin/connections/ConnectionsPage.js:261
+#: src/Admin/instagram-connections/InstagramConnectionsPage.js:130
+#: src/Admin/instagram-connections/InstagramConnectionsPage.js:258
+msgid "Connected"
+msgstr "Connecté"
+
+#: src/Admin/connections/ConnectionsPage.js:131
+#: src/Admin/connections/ConnectionsPage.js:223
+#: src/Admin/connections/ConnectionsPage.js:265
+#: src/Admin/instagram-connections/InstagramConnectionsPage.js:132
+#: src/Admin/instagram-connections/InstagramConnectionsPage.js:220
+#: src/Admin/instagram-connections/InstagramConnectionsPage.js:262
+msgid "Failed"
+msgstr "Échoué"
+
+#: src/Admin/connections/ConnectionsPage.js:134
+#: src/Admin/connections/ConnectionsPage.js:269
+msgid "Disconnected"
+msgstr "Déconnecté"
+
+#: src/Admin/connections/ConnectionsPage.js:165
+msgid "Monitor OAuth connections from WordPress sites."
+msgstr "Surveiller les connexions OAuth depuis les sites WordPress."
+
+#: src/Admin/connections/ConnectionsPage.js:187
+#: src/Admin/instagram-connections/InstagramConnectionsPage.js:184
+msgid "Total Connections"
+msgstr "Connexions totales"
+
+#: src/Admin/connections/ConnectionsPage.js:205
+#: src/Admin/instagram-connections/InstagramConnectionsPage.js:202
+msgid "Successful"
+msgstr "Réussi"
+
+#: src/Admin/connections/ConnectionsPage.js:240
+msgid "Unique Sites"
+msgstr "Sites uniques"
+
+#: src/Admin/connections/ConnectionsPage.js:253
+#: src/Admin/instagram-connections/InstagramConnectionsPage.js:250
+msgid "Status Filter"
+msgstr "Filtre de statut"
+
+#: src/Admin/connections/ConnectionsPage.js:257
+#: src/Admin/instagram-connections/InstagramConnectionsPage.js:254
+msgid "All Statuses"
+msgstr "Tous les statuts"
+
+#: src/Admin/connections/ConnectionsPage.js:276
+#: src/Admin/instagram-connections/InstagramConnectionsPage.js:269
+msgid "Sort By"
+msgstr "Trier par"
+
+#: src/Admin/connections/ConnectionsPage.js:280
+#: src/Admin/instagram-connections/InstagramConnectionsPage.js:273
+msgid "Connection Date"
+msgstr "Date de connexion"
+
+#: src/Admin/connections/ConnectionsPage.js:287
+#: src/Admin/instagram-connections/InstagramConnectionsPage.js:280
+msgid "Site Name"
+msgstr "Nom du site"
+
+#: src/Admin/connections/ConnectionsPage.js:291
+#: src/Admin/connections/ConnectionsPage.js:380
+#: src/Admin/instagram-connections/InstagramConnectionsPage.js:284
+#: src/Admin/instagram-connections/InstagramConnectionsPage.js:388
+msgid "Status"
+msgstr "Statut"
+
+#: src/Admin/connections/ConnectionsPage.js:295
+#: src/Admin/connections/ConnectionsPage.js:374
+#: src/Admin/instagram-connections/InstagramConnectionsPage.js:288
+#: src/Admin/instagram-connections/InstagramConnectionsPage.js:382
+msgid "ID"
+msgstr "ID"
+
+#: src/Admin/connections/ConnectionsPage.js:302
+#: src/Admin/instagram-connections/InstagramConnectionsPage.js:295
+msgid "Order"
+msgstr "Ordre"
+
+#: src/Admin/connections/ConnectionsPage.js:306
+#: src/Admin/instagram-connections/InstagramConnectionsPage.js:299
+msgid "Descending"
+msgstr "Décroissant"
+
+#: src/Admin/connections/ConnectionsPage.js:310
+#: src/Admin/instagram-connections/InstagramConnectionsPage.js:303
+msgid "Ascending"
+msgstr "Croissant"
+
+#: src/Admin/connections/ConnectionsPage.js:318
+#: src/Admin/instagram-connections/InstagramConnectionsPage.js:311
+msgid "Cleanup Days"
+msgstr "Jours de nettoyage"
+
+#: src/Admin/connections/ConnectionsPage.js:335
+#: src/Admin/instagram-connections/InstagramConnectionsPage.js:328
+msgid "Cleanup Old Logs"
+msgstr "Nettoyer les anciens journaux"
+
+#: src/Admin/connections/ConnectionsPage.js:352
+msgid "Connection History"
+msgstr "Historique des connexions"
+
+#: src/Admin/connections/ConnectionsPage.js:362
+msgid "No connections found."
+msgstr "Aucune connexion trouvée."
+
+#: src/Admin/connections/ConnectionsPage.js:377
+#: src/Admin/instagram-connections/InstagramConnectionsPage.js:385
+msgid "Site"
+msgstr "Site"
+
+#: src/Admin/connections/ConnectionsPage.js:383
+msgid "Organization"
+msgstr "Organisation"
+
+#: src/Admin/connections/ConnectionsPage.js:389
+msgid "Profile"
+msgstr "Profil"
+
+#: src/Admin/connections/ConnectionsPage.js:392
+#: src/Admin/instagram-connections/InstagramConnectionsPage.js:397
+msgid "Connected At"
+msgstr "Connecté à"
+
+#: src/Admin/connections/ConnectionsPage.js:398
+#: src/Admin/instagram-connections/InstagramConnectionsPage.js:403
+msgid "Last Refresh"
+msgstr "Dernier rafraîchissement"
+
+#: src/Admin/connections/ConnectionsPage.js:476
+msgid "✓ Profile created"
+msgstr "✓ Profil créé"
+
+#: src/Admin/connections/ConnectionsPage.js:535
+#: src/Admin/instagram-connections/InstagramConnectionsPage.js:532
+msgid "Previous"
+msgstr "Précédent"
+
+#: src/Admin/connections/ConnectionsPage.js:542
+#: src/Admin/instagram-connections/InstagramConnectionsPage.js:539
+msgid "Next"
+msgstr "Suivant"
+
+#: src/Admin/instagram-connections/InstagramConnectionsPage.js:70
+msgid "Failed to load Instagram connections"
+msgstr "Échec du chargement des connexions Instagram"
+
+#: src/Admin/instagram-connections/InstagramConnectionsPage.js:91
+msgid "Are you sure you want to delete old Instagram connection logs? This cannot be undone."
+msgstr "Êtes-vous sûr de vouloir supprimer les anciens journaux de connexion Instagram ? Cette action ne peut pas être annulée."
+
+#: src/Admin/instagram-connections/InstagramConnectionsPage.js:160
+msgid "Instagram Connection Logs"
+msgstr "Journaux de connexion Instagram"
+
+#: src/Admin/instagram-connections/InstagramConnectionsPage.js:162
+msgid "Monitor Instagram OAuth connections from WordPress sites."
+msgstr "Surveillez les connexions OAuth Instagram depuis les sites WordPress."
+
+#: src/Admin/instagram-connections/InstagramConnectionsPage.js:237
+msgid "Unique Usernames"
+msgstr "Noms d'utilisateur uniques"
+
+#: src/Admin/instagram-connections/InstagramConnectionsPage.js:346
+msgid "Instagram Connection History"
+msgstr "Historique des connexions Instagram"
+
+#: src/Admin/instagram-connections/InstagramConnectionsPage.js:367
+msgid "No Instagram connections found."
+msgstr "Aucune connexion Instagram trouvée."
+
+#: src/Admin/instagram-connections/InstagramConnectionsPage.js:391
+msgid "IG Username"
+msgstr "Nom d'utilisateur IG"
+
+#: src/Admin/instagram-connections/InstagramConnectionsPage.js:394
+msgid "IG User ID"
+msgstr "ID utilisateur IG"
+

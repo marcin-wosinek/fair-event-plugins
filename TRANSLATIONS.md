@@ -126,7 +126,10 @@ npm run translation:validate -- --all
 
 ### Available Plugins
 
+- `fair-audience`
 - `fair-events`
+- `fair-payment`
+- `fair-platform`
 - `fair-calendar-button`
 - `fair-rsvp`
 - `fair-membership`

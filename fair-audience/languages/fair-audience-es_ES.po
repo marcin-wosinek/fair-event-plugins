@@ -2323,24 +2323,24 @@ msgstr "Configuración"
 #, php-format
 msgid "%d signed up"
 msgid_plural "%d signed up"
-msgstr[0] ""
-msgstr[1] ""
+msgstr[0] "%d inscrito"
+msgstr[1] "%d inscritos"
 
 #. translators: %d: number of collaborators
 #: src/Admin/EventParticipantsMetaBox.php:70
 #, php-format
 msgid "%d collaborator"
 msgid_plural "%d collaborators"
-msgstr[0] ""
-msgstr[1] ""
+msgstr[0] "%d colaborador"
+msgstr[1] "%d colaboradores"
 
 #. translators: %d: number of interested participants
 #: src/Admin/EventParticipantsMetaBox.php:77
 #, php-format
 msgid "%d interested"
 msgid_plural "%d interested"
-msgstr[0] ""
-msgstr[1] ""
+msgstr[0] "%d interesado"
+msgstr[1] "%d interesados"
 
 #: src/Admin/EventParticipantsMetaBox.php:88
 msgid "No participants yet."

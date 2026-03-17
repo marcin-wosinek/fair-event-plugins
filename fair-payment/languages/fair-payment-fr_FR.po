@@ -1,0 +1,1683 @@
+msgid ""
+msgstr ""
+"Project-Id-Version: Fair Payment 0.2.0\n"
+"Report-Msgid-Bugs-To: https://wordpress.org/support/plugin/fair-payment\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language-Team: LANGUAGE <LL@li.org>\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"POT-Creation-Date: 2026-03-17T10:37:21+00:00\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"X-Generator: WP-CLI 2.12.0\n"
+"Language: fr_FR\n"
+"Plural-Forms: nplurals=2; plural=(n > 1);\n"
+"X-Domain: fair-payment\n"
+
+#. Plugin Name of the plugin
+#: fair-payment.php
+#: src/Admin/AdminPages.php:34
+#: src/Admin/AdminPages.php:35
+msgid "Fair Payment"
+msgstr ""
+
+#. Author URI of the plugin
+#: fair-payment.php
+msgid "https://fair-event-plugins.com"
+msgstr ""
+
+#. Description of the plugin
+#: fair-payment.php
+msgid "Simple payment block for WordPress"
+msgstr "Bloc de paiement simple pour WordPress"
+
+#. Author of the plugin
+#: fair-payment.php
+msgid "Fair Event Plugins"
+msgstr "Fair Event Plugins"
+
+#: src/Admin/AdminPages.php:46
+#: src/Admin/AdminPages.php:47
+msgid "Transactions"
+msgstr "Transactions"
+
+#: src/Admin/AdminPages.php:57
+#: src/Admin/entries/EntriesApp.js:587
+msgid "Financial Entries"
+msgstr "Entrées financières"
+
+#: src/Admin/AdminPages.php:58
+msgid "Entries"
+msgstr "Entrées"
+
+#: src/Admin/AdminPages.php:67
+#: src/Admin/budgets/BudgetsApp.js:228
+msgid "Budget Categories"
+msgstr "Catégories de budget"
+
+#: src/Admin/AdminPages.php:68
+msgid "Budgets"
+msgstr "Budgets"
+
+#: src/Admin/AdminPages.php:78
+#: src/Admin/AdminPages.php:79
+#: src/Admin/AdminPages.php:86
+#: src/Admin/transaction/TransactionPage.js:128
+msgid "Transaction Detail"
+msgstr "Détail de la transaction"
+
+#: src/Admin/AdminPages.php:91
+#: src/Admin/AdminPages.php:92
+msgid "Settings"
+msgstr "Paramètres"
+
+#: src/Admin/MigrationNotice.php:66
+msgid "Fair Payment:"
+msgstr "Fair Payment:"
+
+#: src/Admin/MigrationNotice.php:67
+msgid "Please migrate to OAuth authentication."
+msgstr "Veuillez migrer vers l'authentification OAuth."
+
+#: src/Admin/MigrationNotice.php:69
+#: src/Admin/settings/ConnectionTab.js:287
+msgid "Connect with Mollie"
+msgstr "Se connecter avec Mollie"
+
+#: src/API/BudgetController.php:70
+#: src/API/BudgetController.php:87
+msgid "Unique identifier for the budget."
+msgstr "Identifiant unique pour le budget."
+
+#: src/API/BudgetController.php:117
+msgid "Budget name."
+msgstr "Nom du budget."
+
+#: src/API/BudgetController.php:123
+msgid "Budget description."
+msgstr "Description du budget."
+
+#: src/API/BudgetController.php:175
+#: src/API/BudgetController.php:232
+#: src/API/BudgetController.php:274
+msgid "Budget not found."
+msgstr "Budget non trouvé."
+
+#: src/API/BudgetController.php:196
+#: src/API/BudgetController.php:240
+msgid "Budget name is required."
+msgstr "Le nom du budget est requis."
+
+#: src/API/BudgetController.php:206
+#: src/Admin/budgets/BudgetsApp.js:135
+msgid "Failed to create budget."
+msgstr "Échec de la création du budget."
+
+#: src/API/BudgetController.php:250
+#: src/Admin/budgets/BudgetsApp.js:134
+msgid "Failed to update budget."
+msgstr "Échec de la mise à jour du budget."
+
+#: src/API/BudgetController.php:284
+#: src/Admin/budgets/BudgetsApp.js:101
+msgid "Failed to delete budget."
+msgstr "Échec de la suppression du budget."
+
+#: src/API/ConnectionController.php:49
+msgid "Mollie is not connected. Please connect your Mollie account first."
+msgstr "Mollie n'est pas connecté. Veuillez d'abord connecter votre compte Mollie."
+
+#: src/API/ConnectionController.php:74
+msgid "Connection test successful. Token was refreshed."
+msgstr "Test de connexion réussi. Le jeton a été actualisé."
+
+#: src/API/ConnectionController.php:75
+msgid "Connection test successful. Token is still valid."
+msgstr "Test de connexion réussi. Le jeton est toujours valide."
+
+#. translators: %s: error message
+#: src/API/ConnectionController.php:91
+#, php-format
+msgid "Connection test failed: %s"
+msgstr "Échec du test de connexion : %s"
+
+#: src/API/FinancialEntryController.php:125
+msgid "Unique identifier for the transfer entry."
+msgstr "Identifiant unique pour l'entrée de transfert."
+
+#: src/API/FinancialEntryController.php:148
+#: src/API/FinancialEntryController.php:165
+#: src/API/FinancialEntryController.php:184
+#: src/API/FinancialEntryController.php:208
+#: src/API/FinancialEntryController.php:277
+#: src/API/FinancialEntryController.php:488
+msgid "Unique identifier for the financial entry."
+msgstr "Identifiant unique pour l'entrée financière."
+
+#: src/API/FinancialEntryController.php:188
+msgid "Transaction ID to match."
+msgstr "ID de transaction à faire correspondre."
+
+#: src/API/FinancialEntryController.php:227
+msgid "Filter by amount."
+msgstr "Filtrer par montant."
+
+#: src/API/FinancialEntryController.php:231
+msgid "Filter by start date."
+msgstr "Filtrer par date de début."
+
+#: src/API/FinancialEntryController.php:237
+msgid "Filter by end date."
+msgstr "Filtrer par date de fin."
+
+#: src/API/FinancialEntryController.php:243
+msgid "Search term."
+msgstr "Terme de recherche."
+
+#: src/API/FinancialEntryController.php:296
+msgid "Array of entries to import."
+msgstr "Tableau des entrées à importer."
+
+#: src/API/FinancialEntryController.php:325
+msgid "Source filename of the import."
+msgstr "Nom de fichier source de l'importation."
+
+#: src/API/FinancialEntryController.php:344
+msgid "Filter by start date (Y-m-d format)."
+msgstr "Filtrer par date de début (format Y-m-d)."
+
+#: src/API/FinancialEntryController.php:350
+msgid "Filter by end date (Y-m-d format)."
+msgstr "Filtrer par date de fin (format Y-m-d)."
+
+#: src/API/FinancialEntryController.php:356
+msgid "Filter by budget ID, or \"none\" for unbudgeted."
+msgstr "Filtrer par ID de budget, ou « none » pour les éléments sans budget."
+
+#: src/API/FinancialEntryController.php:361
+msgid "Filter by event URL."
+msgstr "Filtrer par URL d'événement."
+
+#: src/API/FinancialEntryController.php:366
+msgid "Filter by event date ID."
+msgstr "Filtrer par ID de date d'événement."
+
+#: src/API/FinancialEntryController.php:370
+msgid "Filter by entry type: cost, income, or transfer."
+msgstr "Filtrer par type d'entrée : cost, income ou transfer."
+
+#: src/API/FinancialEntryController.php:376
+msgid "Filter to only unmatched entries."
+msgstr "Filtrer pour afficher uniquement les entrées non appariées."
+
+#: src/API/FinancialEntryController.php:392
+msgid "Maximum number of items per page."
+msgstr "Nombre maximum d'éléments par page."
+
+#: src/API/FinancialEntryController.php:399
+msgid "Current page number."
+msgstr "Numéro de page actuel."
+
+#: src/API/FinancialEntryController.php:405
+msgid "Sort by column."
+msgstr "Trier par colonne."
+
+#: src/API/FinancialEntryController.php:412
+msgid "Sort direction."
+msgstr "Direction du tri."
+
+#: src/API/FinancialEntryController.php:430
+msgid "Entry amount (positive value)."
+msgstr "Montant de l'entrée (valeur positive)."
+
+#: src/API/FinancialEntryController.php:435
+msgid "Entry type: cost or income."
+msgstr "Type d'entrée : coût ou revenu."
+
+#: src/API/FinancialEntryController.php:442
+msgid "Entry date (Y-m-d format)."
+msgstr "Date de l'entrée (format Y-m-d)."
+
+#: src/API/FinancialEntryController.php:449
+msgid "Entry description."
+msgstr "Description de l'entrée."
+
+#: src/API/FinancialEntryController.php:455
+msgid "Budget ID."
+msgstr "ID du budget."
+
+#: src/API/FinancialEntryController.php:460
+msgid "Transaction ID."
+msgstr "ID de la transaction."
+
+#: src/API/FinancialEntryController.php:465
+#: src/API/FinancialEntryController.php:1174
+msgid "Event URL (local or external)."
+msgstr "URL de l'événement (locale ou externe)."
+
+#: src/API/FinancialEntryController.php:473
+#: src/API/FinancialEntryController.php:1182
+msgid "Event date ID."
+msgstr "ID de la date de l'événement."
+
+#: src/API/FinancialEntryController.php:492
+msgid "Array of budget allocations."
+msgstr "Tableau des allocations budgétaires."
+
+#: src/API/FinancialEntryController.php:644
+#: src/API/FinancialEntryController.php:738
+#: src/API/FinancialEntryController.php:806
+#: src/API/FinancialEntryController.php:845
+#: src/API/FinancialEntryController.php:889
+#: src/API/FinancialEntryController.php:924
+#: src/API/FinancialEntryController.php:1018
+#: src/API/FinancialEntryController.php:1111
+msgid "Financial entry not found."
+msgstr "Entrée financière non trouvée."
+
+#: src/API/FinancialEntryController.php:671
+#: src/API/FinancialEntryController.php:746
+#: src/API/FinancialEntryController.php:1207
+#: src/API/FinancialEntryController.php:1305
+msgid "Amount must be greater than zero."
+msgstr "Le montant doit être supérieur à zéro."
+
+#: src/API/FinancialEntryController.php:679
+#: src/API/FinancialEntryController.php:754
+msgid "Entry type must be cost or income."
+msgstr "Le type d'entrée doit être coût ou revenu."
+
+#: src/API/FinancialEntryController.php:687
+#: src/API/FinancialEntryController.php:762
+#: src/API/FinancialEntryController.php:1215
+#: src/API/FinancialEntryController.php:1313
+msgid "Entry date is required."
+msgstr "La date de l'entrée est requise."
+
+#: src/API/FinancialEntryController.php:706
+msgid "Failed to create financial entry."
+msgstr "Échec de la création de l'entrée financière."
+
+#: src/API/FinancialEntryController.php:782
+msgid "Failed to update financial entry."
+msgstr "Échec de la mise à jour de l'entrée financière."
+
+#: src/API/FinancialEntryController.php:816
+msgid "Failed to delete financial entry."
+msgstr "Échec de la suppression de l'entrée financière."
+
+#: src/API/FinancialEntryController.php:855
+#: src/API/PaymentEndpoint.php:231
+#: src/API/TransactionAPI.php:117
+#: src/API/TransactionsController.php:158
+#: src/Models/Transaction.php:295
+msgid "Transaction not found."
+msgstr "Transaction non trouvée."
+
+#: src/API/FinancialEntryController.php:865
+msgid "Failed to match entry to transaction."
+msgstr "Échec de l'appariement de l'entrée à la transaction."
+
+#: src/API/FinancialEntryController.php:899
+msgid "Failed to unmatch entry from transaction."
+msgstr "Échec du désappariement de l'entrée de la transaction."
+
+#: src/API/FinancialEntryController.php:933
+msgid "Cannot split a child entry."
+msgstr "Impossible de diviser une entrée enfant."
+
+#: src/API/FinancialEntryController.php:942
+msgid "Entry is already split."
+msgstr "L'entrée est déjà divisée."
+
+#: src/API/FinancialEntryController.php:951
+#: src/API/FinancialEntryController.php:1045
+msgid "At least 2 allocations are required."
+msgstr "Au moins 2 allocations sont requises."
+
+#: src/API/FinancialEntryController.php:961
+#: src/API/FinancialEntryController.php:1055
+msgid "Each allocation amount must be greater than zero."
+msgstr "Chaque montant d'allocation doit être supérieur à zéro."
+
+#: src/API/FinancialEntryController.php:972
+#: src/API/FinancialEntryController.php:1066
+msgid "Total allocations must match the original entry amount."
+msgstr "Le total des allocations doit correspondre au montant de l'entrée d'origine."
+
+#: src/API/FinancialEntryController.php:982
+#: src/Admin/entries/components/SplitModal.js:303
+msgid "Failed to split entry."
+msgstr "Échec de la division de l'entrée."
+
+#: src/API/FinancialEntryController.php:1027
+msgid "Cannot update split on a child entry."
+msgstr "Impossible de mettre à jour la division sur une entrée enfant."
+
+#: src/API/FinancialEntryController.php:1036
+#: src/API/FinancialEntryController.php:1120
+msgid "Entry is not split."
+msgstr "L'entrée n'est pas divisée."
+
+#: src/API/FinancialEntryController.php:1076
+msgid "Failed to update split."
+msgstr "Échec de la mise à jour de la division."
+
+#: src/API/FinancialEntryController.php:1130
+#: src/Admin/entries/EntriesApp.js:417
+msgid "Failed to unsplit entry."
+msgstr "Échec de la fusion de l'entrée."
+
+#: src/API/FinancialEntryController.php:1146
+msgid "Transfer amount (positive value)."
+msgstr "Montant du transfert (valeur positive)."
+
+#: src/API/FinancialEntryController.php:1151
+msgid "Transfer date (Y-m-d format)."
+msgstr "Date du transfert (format Y-m-d)."
+
+#: src/API/FinancialEntryController.php:1158
+msgid "Source budget ID (money comes from)."
+msgstr "ID du budget source (d'où provient l'argent)."
+
+#: src/API/FinancialEntryController.php:1163
+msgid "Target budget ID (money goes to)."
+msgstr "ID du budget cible (où va l'argent)."
+
+#: src/API/FinancialEntryController.php:1168
+msgid "Transfer description."
+msgstr "Description du transfert."
+
+#: src/API/FinancialEntryController.php:1223
+#: src/API/FinancialEntryController.php:1321
+msgid "Both source and target budgets are required."
+msgstr "Les budgets source et cible sont tous deux requis."
+
+#: src/API/FinancialEntryController.php:1231
+#: src/API/FinancialEntryController.php:1329
+#: src/Admin/entries/components/TransferModal.js:371
+msgid "Source and target budgets must be different."
+msgstr "Les budgets source et cible doivent être différents."
+
+#: src/API/FinancialEntryController.php:1249
+msgid "Failed to create transfer."
+msgstr "Échec de la création du transfert."
+
+#: src/API/FinancialEntryController.php:1289
+msgid "Transfer entry not found."
+msgstr "Entrée de transfert non trouvée."
+
+#: src/API/FinancialEntryController.php:1297
+msgid "Entry is not a transfer."
+msgstr "L'entrée n'est pas un transfert."
+
+#: src/API/FinancialEntryController.php:1348
+msgid "Failed to update transfer."
+msgstr "Échec de la mise à jour du transfert."
+
+#: src/API/FinancialEntryController.php:1460
+msgid "No entries provided for import."
+msgstr "Aucune entrée fournie pour l'importation."
+
+#. translators: %d: row number
+#: src/API/FinancialEntryController.php:1476
+#, php-format
+msgid "Row %d: Missing required fields."
+msgstr "Ligne %d : Champs obligatoires manquants."
+
+#. translators: %d: row number
+#: src/API/FinancialEntryController.php:1487
+#, php-format
+msgid "Row %d: Invalid entry type."
+msgstr "Ligne %d : Type d'entrée invalide."
+
+#. translators: 1: imported count, 2: skipped count
+#: src/API/FinancialEntryController.php:1518
+#, php-format
+msgid "Imported %1$d entries, skipped %2$d (duplicates or errors)."
+msgstr "Importé %1$d entrées, %2$d ignorées (doublons ou erreurs)."
+
+#: src/API/PaymentEndpoint.php:117
+msgid "Mollie payment gateway is not configured. Please configure your API keys in settings."
+msgstr "La passerelle de paiement Mollie n'est pas configurée. Veuillez configurer vos clés API dans les paramètres."
+
+#: src/API/PaymentEndpoint.php:131
+msgid "Invalid payment amount."
+msgstr "Montant de paiement invalide."
+
+#. translators: %s: amount and currency
+#: src/API/PaymentEndpoint.php:139
+#, php-format
+msgid "Payment of %1$s %2$s"
+msgstr "Paiement de %1$s %2$s"
+
+#: src/API/TransactionAPI.php:77
+msgid "Failed to create transaction."
+msgstr "Échec de la création de la transaction."
+
+#: src/API/TransactionAPI.php:93
+msgid "Failed to create line items."
+msgstr "Échec de la création des articles de ligne."
+
+#: src/API/TransactionAPI.php:131
+msgid "Redirect URL is required."
+msgstr "L'URL de redirection est requise."
+
+#. translators: %d: transaction ID
+#: src/API/TransactionAPI.php:144
+#, php-format
+msgid "Payment #%d"
+msgstr "Paiement n°%d"
+
+#: src/API/TransactionAPI.php:181
+msgid "Failed to update transaction with payment details."
+msgstr "Échec de la mise à jour de la transaction avec les détails de paiement."
+
+#: src/API/TransactionAPI.php:338
+msgid "Line items must be an array."
+msgstr "Les articles de ligne doivent être un tableau."
+
+#: src/API/TransactionAPI.php:346
+msgid "At least one line item is required."
+msgstr "Au moins un article de ligne est requis."
+
+#. translators: %d: line item index
+#: src/API/TransactionAPI.php:358
+#, php-format
+msgid "Line item at index %d must be an array."
+msgstr "L'article de ligne à l'index %d doit être un tableau."
+
+#. translators: %d: line item index
+#: src/API/TransactionAPI.php:370
+#, php-format
+msgid "Line item at index %d is missing required \"name\" field."
+msgstr "L'article de ligne à l'index %d est manquant du champ obligatoire « name »."
+
+#. translators: %d: line item index
+#: src/API/TransactionAPI.php:382
+#, php-format
+msgid "Line item at index %d has invalid \"amount\" field."
+msgstr "L'élément de ligne à l'index %d a un champ « montant » invalide."
+
+#. translators: %d: line item index
+#: src/API/TransactionAPI.php:394
+#, php-format
+msgid "Line item at index %d must have positive amount."
+msgstr "L'élément de ligne à l'index %d doit avoir un montant positif."
+
+#. translators: %d: line item index
+#: src/API/TransactionAPI.php:408
+#, php-format
+msgid "Line item at index %d must have positive quantity."
+msgstr "L'élément de ligne à l'index %d doit avoir une quantité positive."
+
+#: src/API/WebhookEndpoint.php:71
+msgid "Payment ID is missing from webhook."
+msgstr "L'ID de paiement est manquant du webhook."
+
+#: src/API/WebhookEndpoint.php:83
+msgid "Transaction not found in database."
+msgstr "Transaction introuvable dans la base de données."
+
+#: src/API/WebhookEndpoint.php:101
+msgid "Failed to update transaction status."
+msgstr "Échec de la mise à jour du statut de la transaction."
+
+#: src/blocks/simple-payment/render.php:39
+msgid "Thank you! Your payment has been received and is being processed."
+msgstr "Merci ! Votre paiement a été reçu et est en cours de traitement."
+
+#: src/blocks/simple-payment/render.php:42
+msgid "Continue"
+msgstr "Continuer"
+
+#: src/blocks/simple-payment/render.php:48
+msgid "Thank you! Your payment is being processed."
+msgstr "Merci ! Votre paiement est en cours de traitement."
+
+#: src/blocks/simple-payment/render.php:67
+#: src/blocks/simple-payment/index.js:72
+msgid "Pay Now"
+msgstr "Payer maintenant"
+
+#: src/blocks/simple-payment/render.php:70
+msgid "Processing payment..."
+msgstr "Traitement du paiement en cours..."
+
+#: src/blocks/simple-payment/render.php:75
+msgid "Payment gateway is not configured. Please configure your Mollie API keys."
+msgstr "La passerelle de paiement n'est pas configurée. Veuillez configurer vos clés API Mollie."
+
+#: src/Models/Transaction.php:303
+msgid "Payment has already been initiated for this transaction. Create a new transaction to retry."
+msgstr "Un paiement a déjà été initié pour cette transaction. Créez une nouvelle transaction pour réessayer."
+
+#. translators: %s: current transaction status
+#: src/Models/Transaction.php:313
+#, php-format
+msgid "Transaction status must be \"draft\" to initiate payment. Current status: %s"
+msgstr "Le statut de la transaction doit être « brouillon » pour initier le paiement. Statut actuel : %s"
+
+#: src/Payment/MolliePaymentHandler.php:55
+msgid "Mollie API key is not configured."
+msgstr "La clé API Mollie n'est pas configurée."
+
+#: src/Payment/MolliePaymentHandler.php:74
+msgid "Mollie is not connected. Please connect your Mollie account in settings."
+msgstr "Mollie n'est pas connecté. Veuillez connecter votre compte Mollie dans les paramètres."
+
+#: src/Payment/MolliePaymentHandler.php:221
+msgid "Payment"
+msgstr "Paiement"
+
+#: src/Payment/MolliePaymentHandler.php:248
+msgid "Application fee"
+msgstr "Frais d'application"
+
+#. translators: %s: error message
+#: src/Payment/MolliePaymentHandler.php:273
+#, php-format
+msgid "Failed to create payment: %s"
+msgstr "Échec de la création du paiement : %s"
+
+#. translators: %s: error message
+#: src/Payment/MolliePaymentHandler.php:295
+#, php-format
+msgid "Failed to retrieve payment: %s"
+msgstr "Échec de la récupération du paiement : %s"
+
+#: src/Settings/Settings.php:37
+msgid "Mollie Test API Key"
+msgstr "Clé API de test Mollie"
+
+#: src/Settings/Settings.php:50
+msgid "Mollie Live API Key"
+msgstr "Clé API en direct Mollie"
+
+#: src/Settings/Settings.php:63
+msgid "Payment mode (test or live)"
+msgstr "Mode de paiement (test ou en direct)"
+
+#: src/Settings/Settings.php:76
+msgid "Mollie Organization ID"
+msgstr "ID d'organisation Mollie"
+
+#: src/Settings/Settings.php:89
+msgid "Mollie OAuth Access Token"
+msgstr "Jeton d'accès OAuth Mollie"
+
+#: src/Settings/Settings.php:107
+msgid "Mollie OAuth Refresh Token"
+msgstr "Jeton d'actualisation OAuth Mollie"
+
+#: src/Settings/Settings.php:125
+msgid "Mollie OAuth Token Expiration (Unix timestamp)"
+msgstr "Expiration du jeton OAuth Mollie (horodatage Unix)"
+
+#: src/Settings/Settings.php:143
+msgid "Unique Site Identifier for OAuth"
+msgstr "Identifiant de site unique pour OAuth"
+
+#: src/Settings/Settings.php:161
+msgid "Mollie OAuth Connection Status"
+msgstr "Statut de connexion OAuth Mollie"
+
+#: src/Settings/Settings.php:179
+msgid "Enable budgeting features"
+msgstr "Activer les fonctionnalités de budgétisation"
+
+#: src/Settings/Settings.php:192
+msgid "Mollie Profile ID (cached)"
+msgstr "ID de profil Mollie (en cache)"
+
+#: src/Admin/budgets/BudgetsApp.js:52
+msgid "Failed to load budgets."
+msgstr "Échec du chargement des budgets."
+
+#: src/Admin/budgets/BudgetsApp.js:80
+msgid "Are you sure you want to delete this budget? Financial entries will be unlinked but not deleted."
+msgstr "Êtes-vous sûr de vouloir supprimer ce budget ? Les entrées financières seront dissociées mais non supprimées."
+
+#: src/Admin/budgets/BudgetsApp.js:97
+msgid "Budget deleted successfully."
+msgstr "Budget supprimé avec succès."
+
+#: src/Admin/budgets/BudgetsApp.js:118
+msgid "Budget updated successfully."
+msgstr "Budget mis à jour avec succès."
+
+#: src/Admin/budgets/BudgetsApp.js:125
+msgid "Budget created successfully."
+msgstr "Budget créé avec succès."
+
+#: src/Admin/budgets/BudgetsApp.js:201
+msgid "Unbudgeted Costs"
+msgstr "Coûts non budgétisés"
+
+#: src/Admin/budgets/BudgetsApp.js:216
+msgid "Unbudgeted Income"
+msgstr "Revenus non budgétisés"
+
+#: src/Admin/budgets/BudgetsApp.js:230
+#: src/Admin/budgets/BudgetsApp.js:471
+msgid "Add New Budget"
+msgstr "Ajouter un nouveau budget"
+
+#: src/Admin/budgets/BudgetsApp.js:260
+msgid "Loading budgets..."
+msgstr "Chargement des budgets..."
+
+#: src/Admin/budgets/BudgetsApp.js:271
+msgid "No budget categories found. Create your first budget category to organize your costs and income."
+msgstr "Aucune catégorie budgétaire trouvée. Créez votre première catégorie budgétaire pour organiser vos coûts et revenus."
+
+#: src/Admin/budgets/BudgetsApp.js:284
+#: src/Admin/budgets/BudgetsApp.js:479
+#: src/Admin/transaction/TransactionPage.js:310
+msgid "Name"
+msgstr "Nom"
+
+#: src/Admin/budgets/BudgetsApp.js:287
+#: src/Admin/budgets/BudgetsApp.js:487
+#: src/Admin/entries/components/EntryForm.js:350
+#: src/Admin/entries/components/ImportModal.js:331
+#: src/Admin/entries/components/MatchModal.js:190
+#: src/Admin/entries/components/SplitModal.js:435
+#: src/Admin/entries/components/TransferModal.js:331
+#: src/Admin/entries/EntriesApp.js:821
+#: src/Admin/transaction/TransactionPage.js:262
+#: src/Admin/transaction/TransactionPage.js:312
+#: src/Admin/transactions/TransactionsApp.js:248
+msgid "Description"
+msgstr "Description"
+
+#: src/Admin/budgets/BudgetsApp.js:293
+#: src/Admin/entries/EntriesApp.js:576
+msgid "Balance"
+msgstr "Solde"
+
+#: src/Admin/budgets/BudgetsApp.js:296
+#: src/Admin/entries/EntriesApp.js:855
+msgid "Actions"
+msgstr "Actions"
+
+#: src/Admin/budgets/BudgetsApp.js:315
+#: src/Admin/entries/components/MatchModal.js:212
+msgid "No description"
+msgstr "Aucune description"
+
+#: src/Admin/budgets/BudgetsApp.js:346
+#: src/Admin/budgets/BudgetsApp.js:425
+msgid "View"
+msgstr "Afficher"
+
+#: src/Admin/budgets/BudgetsApp.js:360
+#: src/Admin/entries/EntriesApp.js:1160
+#: src/Admin/entries/EntriesApp.js:1199
+msgid "Edit"
+msgstr "Modifier"
+
+#: src/Admin/budgets/BudgetsApp.js:375
+#: src/Admin/entries/EntriesApp.js:1175
+#: src/Admin/entries/EntriesApp.js:1279
+msgid "Delete"
+msgstr "Supprimer"
+
+#: src/Admin/budgets/BudgetsApp.js:389
+#: src/Admin/entries/EntriesApp.js:516
+msgid "Unbudgeted"
+msgstr "Non budgétisé"
+
+#: src/Admin/budgets/BudgetsApp.js:397
+msgid "Entries without a budget category"
+msgstr "Entrées sans catégorie budgétaire"
+
+#: src/Admin/budgets/BudgetsApp.js:438
+#: src/Admin/transaction/TransactionPage.js:320
+msgid "Total"
+msgstr "Total"
+
+#: src/Admin/budgets/BudgetsApp.js:470
+msgid "Edit Budget"
+msgstr "Modifier le budget"
+
+#: src/Admin/budgets/BudgetsApp.js:495
+msgid "Optional description for this budget category"
+msgstr "Description optionnelle pour cette catégorie budgétaire"
+
+#: src/Admin/budgets/BudgetsApp.js:506
+#: src/Admin/entries/components/EntryForm.js:392
+#: src/Admin/entries/components/ImportModal.js:390
+#: src/Admin/entries/components/MatchModal.js:249
+#: src/Admin/entries/components/SplitModal.js:526
+#: src/Admin/entries/components/TransferModal.js:398
+msgid "Cancel"
+msgstr "Annuler"
+
+#: src/Admin/budgets/BudgetsApp.js:515
+msgid "Update Budget"
+msgstr "Mettre à jour le budget"
+
+#: src/Admin/budgets/BudgetsApp.js:516
+msgid "Create Budget"
+msgstr "Créer un budget"
+
+#: src/Admin/entries/components/EntryForm.js:59
+#: src/Admin/entries/components/EntryForm.js:86
+#: src/Admin/entries/components/SplitModal.js:455
+#: src/Admin/entries/components/TransferModal.js:59
+#: src/Admin/entries/components/TransferModal.js:86
+#: src/Admin/entries/EntriesApp.js:648
+#: src/Admin/entries/EntriesApp.js:672
+#: src/Admin/entries/EntriesApp.js:836
+msgid "Event"
+msgstr "Événement"
+
+#: src/Admin/entries/components/EntryForm.js:76
+#: src/Admin/entries/components/SplitModal.js:73
+#: src/Admin/entries/components/TransferModal.js:76
+msgid "Clear"
+msgstr "Effacer"
+
+#: src/Admin/entries/components/EntryForm.js:94
+#: src/Admin/entries/components/MatchModal.js:135
+#: src/Admin/entries/components/MatchModal.js:150
+#: src/Admin/entries/components/SplitModal.js:87
+#: src/Admin/entries/components/TransferModal.js:94
+msgid "Search"
+msgstr "Rechercher"
+
+#: src/Admin/entries/components/EntryForm.js:101
+#: src/Admin/entries/components/TransferModal.js:101
+msgid "Manual URL"
+msgstr "URL manuel"
+
+#: src/Admin/entries/components/EntryForm.js:110
+#: src/Admin/entries/components/SplitModal.js:103
+#: src/Admin/entries/components/TransferModal.js:110
+msgid "Search events..."
+msgstr "Rechercher des événements..."
+
+#: src/Admin/entries/components/EntryForm.js:185
+#: src/Admin/entries/components/SplitModal.js:179
+#: src/Admin/entries/components/TransferModal.js:185
+msgid "https://example.com/event"
+msgstr ""
+
+#: src/Admin/entries/components/EntryForm.js:190
+#: src/Admin/entries/components/TransferModal.js:190
+msgid "Enter the event URL and press Tab or click away"
+msgstr "Entrez l'URL de l'événement et appuyez sur Tab ou cliquez ailleurs"
+
+#: src/Admin/entries/components/EntryForm.js:272
+msgid "Failed to save entry."
+msgstr "Échec de l'enregistrement de l'entrée."
+
+#: src/Admin/entries/components/EntryForm.js:280
+#: src/Admin/entries/components/SplitModal.js:237
+msgid "-- No Budget --"
+msgstr "-- Aucun budget --"
+
+#: src/Admin/entries/components/EntryForm.js:291
+msgid "Edit Financial Entry"
+msgstr "Modifier l'entrée financière"
+
+#: src/Admin/entries/components/EntryForm.js:292
+msgid "Add Financial Entry"
+msgstr "Ajouter une entrée financière"
+
+#: src/Admin/entries/components/EntryForm.js:309
+#: src/Admin/entries/components/ImportModal.js:325
+#: src/Admin/entries/EntriesApp.js:684
+#: src/Admin/entries/EntriesApp.js:809
+msgid "Type"
+msgstr "Type"
+
+#: src/Admin/entries/components/EntryForm.js:313
+#: src/Admin/entries/components/ImportModal.js:352
+#: src/Admin/entries/components/SplitModal.js:345
+#: src/Admin/entries/EntriesApp.js:695
+#: src/Admin/entries/EntriesApp.js:909
+#: src/Admin/entries/EntriesApp.js:1315
+msgid "Cost"
+msgstr "Coût"
+
+#: src/Admin/entries/components/EntryForm.js:317
+#: src/Admin/entries/components/ImportModal.js:356
+#: src/Admin/entries/components/SplitModal.js:346
+#: src/Admin/entries/EntriesApp.js:699
+#: src/Admin/entries/EntriesApp.js:913
+#: src/Admin/entries/EntriesApp.js:1319
+msgid "Income"
+msgstr "Revenu"
+
+#: src/Admin/entries/components/EntryForm.js:327
+#: src/Admin/entries/components/ImportModal.js:328
+#: src/Admin/entries/components/MatchModal.js:189
+#: src/Admin/entries/components/SplitModal.js:406
+#: src/Admin/entries/components/TransferModal.js:308
+#: src/Admin/entries/EntriesApp.js:815
+#: src/Admin/transaction/TransactionPage.js:171
+#: src/Admin/transactions/TransactionsApp.js:231
+#: src/blocks/simple-payment/index.js:35
+msgid "Amount"
+msgstr "Montant"
+
+#: src/Admin/entries/components/EntryForm.js:336
+#: src/Admin/entries/components/TransferModal.js:317
+msgid "Enter amount in EUR"
+msgstr "Entrez le montant en EUR"
+
+#: src/Admin/entries/components/EntryForm.js:340
+#: src/Admin/entries/components/ImportModal.js:322
+#: src/Admin/entries/components/MatchModal.js:188
+#: src/Admin/entries/components/TransferModal.js:321
+#: src/Admin/entries/EntriesApp.js:803
+#: src/Admin/transactions/TransactionsApp.js:253
+msgid "Date"
+msgstr "Date"
+
+#: src/Admin/entries/components/EntryForm.js:355
+msgid "Optional description for this entry"
+msgstr "Description optionnelle pour cette entrée"
+
+#: src/Admin/entries/components/EntryForm.js:363
+msgid "Budget Category"
+msgstr "Catégorie de budget"
+
+#: src/Admin/entries/components/EntryForm.js:405
+msgid "Update Entry"
+msgstr "Mettre à jour l'entrée"
+
+#: src/Admin/entries/components/EntryForm.js:406
+msgid "Create Entry"
+msgstr "Créer une entrée"
+
+#: src/Admin/entries/components/ImportModal.js:47
+msgid "Failed to parse file."
+msgstr "Échec de l'analyse du fichier."
+
+#: src/Admin/entries/components/ImportModal.js:88
+msgid "Could not find header row in the file."
+msgstr "Impossible de trouver la ligne d'en-tête dans le fichier."
+
+#: src/Admin/entries/components/ImportModal.js:139
+msgid "No valid entries found in the file."
+msgstr "Aucune entrée valide trouvée dans le fichier."
+
+#: src/Admin/entries/components/ImportModal.js:155
+msgid "Failed to read file."
+msgstr "Impossible de lire le fichier."
+
+#: src/Admin/entries/components/ImportModal.js:191
+msgid "Failed to import entries."
+msgstr "Impossible d'importer les entrées."
+
+#: src/Admin/entries/components/ImportModal.js:214
+msgid "Import Financial Entries"
+msgstr "Importer les entrées financières"
+
+#: src/Admin/entries/components/ImportModal.js:236
+msgid "Select an Excel file (.xlsx) to import financial entries. The file should have columns for date, description, and amount."
+msgstr "Sélectionnez un fichier Excel (.xlsx) pour importer les entrées financières. Le fichier doit contenir des colonnes pour la date, la description et le montant."
+
+#: src/Admin/entries/components/ImportModal.js:243
+msgid "Note: Duplicate entries will be automatically skipped."
+msgstr "Remarque : Les entrées en double seront automatiquement ignorées."
+
+#: src/Admin/entries/components/ImportModal.js:264
+msgid "Parsing file..."
+msgstr "Analyse du fichier en cours..."
+
+#: src/Admin/entries/components/ImportModal.js:277
+msgid "Preview"
+msgstr "Aperçu"
+
+#: src/Admin/entries/components/ImportModal.js:281
+msgid "Total entries:"
+msgstr "Nombre total d'entrées :"
+
+#: src/Admin/entries/components/ImportModal.js:286
+msgid "Costs:"
+msgstr "Dépenses :"
+
+#: src/Admin/entries/components/ImportModal.js:290
+msgid "Income:"
+msgstr "Revenus :"
+
+#: src/Admin/entries/components/ImportModal.js:294
+msgid "Balance:"
+msgstr "Solde :"
+
+#: src/Admin/entries/components/ImportModal.js:310
+msgid "Entries to import:"
+msgstr "Entrées à importer :"
+
+#: src/Admin/entries/components/ImportModal.js:403
+#: src/Admin/entries/EntriesApp.js:607
+msgid "Import"
+msgstr "Importer"
+
+#: src/Admin/entries/components/MatchModal.js:45
+#: src/Admin/transactions/TransactionsApp.js:117
+msgid "Failed to load transactions."
+msgstr "Impossible de charger les transactions."
+
+#: src/Admin/entries/components/MatchModal.js:72
+msgid "Failed to search transactions."
+msgstr "Impossible de rechercher les transactions."
+
+#: src/Admin/entries/components/MatchModal.js:93
+msgid "Failed to match transaction."
+msgstr "Impossible de faire correspondre la transaction."
+
+#: src/Admin/entries/components/MatchModal.js:113
+msgid "Match to Transaction"
+msgstr "Faire correspondre à une transaction"
+
+#: src/Admin/entries/components/MatchModal.js:126
+msgid "Entry:"
+msgstr "Entrée :"
+
+#: src/Admin/entries/components/MatchModal.js:138
+msgid "Search by description or Mollie ID..."
+msgstr "Rechercher par description ou ID Mollie..."
+
+#: src/Admin/entries/components/MatchModal.js:166
+msgid "Loading transactions..."
+msgstr "Chargement des transactions en cours..."
+
+#: src/Admin/entries/components/MatchModal.js:173
+msgid "No matching transactions found. Try adjusting your search."
+msgstr "Aucune transaction correspondante trouvée. Essayez d'ajuster votre recherche."
+
+#: src/Admin/entries/components/MatchModal.js:191
+#: src/Admin/transactions/TransactionsApp.js:227
+msgid "Mollie ID"
+msgstr "ID Mollie"
+
+#: src/Admin/entries/components/MatchModal.js:193
+msgid "Action"
+msgstr "Action"
+
+#: src/Admin/entries/components/MatchModal.js:234
+#: src/Admin/entries/EntriesApp.js:1260
+msgid "Match"
+msgstr "Associer"
+
+#: src/Admin/entries/components/SplitModal.js:94
+msgid "URL"
+msgstr "URL"
+
+#: src/Admin/entries/components/SplitModal.js:321
+#: src/Admin/entries/EntriesApp.js:1139
+#: src/Admin/entries/EntriesApp.js:1214
+msgid "Edit Split"
+msgstr "Modifier la division"
+
+#: src/Admin/entries/components/SplitModal.js:322
+#: src/Admin/entries/components/SplitModal.js:540
+msgid "Split Entry"
+msgstr "Diviser l'entrée"
+
+#: src/Admin/entries/components/SplitModal.js:339
+msgid "Amount:"
+msgstr "Montant :"
+
+#: src/Admin/entries/components/SplitModal.js:343
+msgid "Type:"
+msgstr "Type :"
+
+#: src/Admin/entries/components/SplitModal.js:349
+msgid "Date:"
+msgstr "Date :"
+
+#: src/Admin/entries/components/SplitModal.js:356
+msgid "Description:"
+msgstr "Description :"
+
+#: src/Admin/entries/components/SplitModal.js:391
+#: src/Admin/entries/EntriesApp.js:634
+#: src/Admin/entries/EntriesApp.js:828
+msgid "Budget"
+msgstr "Budget"
+
+#: src/Admin/entries/components/SplitModal.js:429
+msgid "Remove"
+msgstr "Supprimer"
+
+#: src/Admin/entries/components/SplitModal.js:478
+msgid "+ Add Row"
+msgstr "+ Ajouter une ligne"
+
+#: src/Admin/entries/components/SplitModal.js:490
+msgid "Allocated:"
+msgstr "Alloué :"
+
+#: src/Admin/entries/components/SplitModal.js:500
+msgid "Remaining:"
+msgstr "Restant :"
+
+#: src/Admin/entries/components/SplitModal.js:517
+msgid "Unsplit"
+msgstr "Non divisé"
+
+#: src/Admin/entries/components/SplitModal.js:539
+msgid "Update Split"
+msgstr "Mettre à jour la division"
+
+#: src/Admin/entries/components/TransferModal.js:235
+msgid "-- Select Budget --"
+msgstr "-- Sélectionner un budget --"
+
+#: src/Admin/entries/components/TransferModal.js:279
+msgid "Failed to save transfer."
+msgstr "Échec de l'enregistrement du transfert."
+
+#: src/Admin/entries/components/TransferModal.js:290
+msgid "Edit Transfer"
+msgstr "Modifier le transfert"
+
+#: src/Admin/entries/components/TransferModal.js:291
+msgid "New Transfer"
+msgstr "Nouveau transfert"
+
+#: src/Admin/entries/components/TransferModal.js:336
+msgid "Optional description for this transfer"
+msgstr "Description optionnelle pour ce transfert"
+
+#: src/Admin/entries/components/TransferModal.js:343
+msgid "From Budget (Source)"
+msgstr "Du budget (Source)"
+
+#: src/Admin/entries/components/TransferModal.js:355
+msgid "To Budget (Target)"
+msgstr "Au budget (Cible)"
+
+#: src/Admin/entries/components/TransferModal.js:414
+msgid "Update Transfer"
+msgstr "Mettre à jour le transfert"
+
+#: src/Admin/entries/components/TransferModal.js:415
+msgid "Create Transfer"
+msgstr "Créer un transfert"
+
+#: src/Admin/entries/EntriesApp.js:210
+msgid "Failed to load entries."
+msgstr "Échec du chargement des entrées."
+
+#: src/Admin/entries/EntriesApp.js:254
+msgid "Are you sure you want to delete this entry?"
+msgstr "Êtes-vous sûr de vouloir supprimer cette entrée ?"
+
+#: src/Admin/entries/EntriesApp.js:271
+msgid "Entry deleted successfully."
+msgstr "Entrée supprimée avec succès."
+
+#: src/Admin/entries/EntriesApp.js:280
+msgid "Failed to delete entry."
+msgstr "Échec de la suppression de l'entrée."
+
+#: src/Admin/entries/EntriesApp.js:290
+msgid "Entry updated successfully."
+msgstr "Entrée mise à jour avec succès."
+
+#: src/Admin/entries/EntriesApp.js:291
+msgid "Entry created successfully."
+msgstr "Entrée créée avec succès."
+
+#: src/Admin/entries/EntriesApp.js:313
+msgid "Are you sure you want to unmatch this entry from its transaction?"
+msgstr "Êtes-vous sûr de vouloir dissocier cette entrée de sa transaction ?"
+
+#: src/Admin/entries/EntriesApp.js:327
+msgid "Entry unmatched successfully."
+msgstr "Entrée dissociée avec succès."
+
+#: src/Admin/entries/EntriesApp.js:331
+msgid "Failed to unmatch entry."
+msgstr "Échec de la dissociation de l'entrée."
+
+#: src/Admin/entries/EntriesApp.js:338
+msgid "Entry matched to transaction."
+msgstr "Entrée associée à la transaction."
+
+#: src/Admin/entries/EntriesApp.js:352
+msgid "Entries imported successfully."
+msgstr "Entrées importées avec succès."
+
+#: src/Admin/entries/EntriesApp.js:375
+msgid "Split updated successfully."
+msgstr "Division mise à jour avec succès."
+
+#: src/Admin/entries/EntriesApp.js:376
+msgid "Entry split successfully."
+msgstr "Entrée divisée avec succès."
+
+#: src/Admin/entries/EntriesApp.js:393
+msgid "Are you sure you want to unsplit this entry? All child allocations will be deleted."
+msgstr "Êtes-vous sûr de vouloir annuler la division de cette entrée ? Toutes les allocations enfants seront supprimées."
+
+#: src/Admin/entries/EntriesApp.js:408
+msgid "Entry unsplit successfully."
+msgstr "Entrée divisée avec succès."
+
+#: src/Admin/entries/EntriesApp.js:437
+msgid "Transfer updated successfully."
+msgstr "Transfert mis à jour avec succès."
+
+#: src/Admin/entries/EntriesApp.js:438
+msgid "Transfer created successfully."
+msgstr "Transfert créé avec succès."
+
+#: src/Admin/entries/EntriesApp.js:511
+msgid "All Budgets"
+msgstr "Tous les budgets"
+
+#: src/Admin/entries/EntriesApp.js:520
+#: src/Admin/entries/EntriesApp.js:652
+msgid "All Events"
+msgstr "Tous les événements"
+
+#: src/Admin/entries/EntriesApp.js:545
+msgid "Total Costs"
+msgstr "Coûts totaux"
+
+#: src/Admin/entries/EntriesApp.js:559
+msgid "Total Income"
+msgstr "Revenu total"
+
+#: src/Admin/entries/EntriesApp.js:593
+msgid "Add Entry"
+msgstr "Ajouter une entrée"
+
+#: src/Admin/entries/EntriesApp.js:600
+#: src/Admin/entries/EntriesApp.js:703
+#: src/Admin/entries/EntriesApp.js:903
+msgid "Transfer"
+msgstr "Transfert"
+
+#: src/Admin/entries/EntriesApp.js:617
+msgid "From Date"
+msgstr "Date de début"
+
+#: src/Admin/entries/EntriesApp.js:625
+msgid "To Date"
+msgstr "Date de fin"
+
+#: src/Admin/entries/EntriesApp.js:688
+msgid "All Types"
+msgstr "Tous les types"
+
+#: src/Admin/entries/EntriesApp.js:715
+msgid "Matching"
+msgstr "Correspondance"
+
+#: src/Admin/entries/EntriesApp.js:719
+msgid "All"
+msgstr "Tous"
+
+#: src/Admin/entries/EntriesApp.js:723
+msgid "Unmatched Only"
+msgstr "Non appariés uniquement"
+
+#: src/Admin/entries/EntriesApp.js:770
+msgid "Loading entries..."
+msgstr "Chargement des entrées..."
+
+#: src/Admin/entries/EntriesApp.js:787
+msgid "No entries found. Add your first entry to start tracking costs and income."
+msgstr "Aucune entrée trouvée. Ajoutez votre première entrée pour commencer à suivre les coûts et les revenus."
+
+#: src/Admin/entries/EntriesApp.js:843
+msgid "Matched"
+msgstr "Apparié"
+
+#: src/Admin/entries/EntriesApp.js:849
+msgid "Imported"
+msgstr "Importé"
+
+#: src/Admin/entries/EntriesApp.js:935
+msgid "(split)"
+msgstr "(divisé)"
+
+#: src/Admin/entries/EntriesApp.js:967
+#: src/Admin/entries/EntriesApp.js:1045
+msgid "Transfer ▾"
+msgstr "Transférer ▾"
+
+#: src/Admin/entries/EntriesApp.js:971
+#: src/Admin/entries/EntriesApp.js:1049
+msgid "Transfer ▸"
+msgstr "Transférer ▸"
+
+#: src/Admin/entries/EntriesApp.js:992
+#: src/Admin/entries/EntriesApp.js:1070
+msgid "Split ▾"
+msgstr "Diviser ▾"
+
+#: src/Admin/entries/EntriesApp.js:996
+#: src/Admin/entries/EntriesApp.js:1074
+msgid "Split ▸"
+msgstr "Diviser ▸"
+
+#: src/Admin/entries/EntriesApp.js:1093
+msgid "Yes"
+msgstr "Oui"
+
+#: src/Admin/entries/EntriesApp.js:1104
+msgid "No"
+msgstr "Non"
+
+#: src/Admin/entries/EntriesApp.js:1229
+msgid "Split"
+msgstr "Diviser"
+
+#: src/Admin/entries/EntriesApp.js:1245
+msgid "Unmatch"
+msgstr "Dissocier"
+
+#: src/Admin/entries/EntriesApp.js:1489
+#: src/Admin/transactions/TransactionsApp.js:364
+msgid "Previous"
+msgstr "Précédent"
+
+#: src/Admin/entries/EntriesApp.js:1492
+#, js-format
+msgid "Page %1$d of %2$d"
+msgstr "Page %1$d sur %2$d"
+
+#: src/Admin/entries/EntriesApp.js:1517
+#: src/Admin/transactions/TransactionsApp.js:381
+msgid "Next"
+msgstr "Suivant"
+
+#: src/Admin/settings/AdvancedTab.js:52
+msgid "Failed to load advanced settings."
+msgstr "Échec du chargement des paramètres avancés."
+
+#: src/Admin/settings/AdvancedTab.js:71
+msgid "Advanced Settings"
+msgstr "Paramètres avancés"
+
+#: src/Admin/settings/AdvancedTab.js:73
+msgid "All Mollie-related settings stored in the database. For troubleshooting purposes only."
+msgstr "Tous les paramètres liés à Mollie stockés dans la base de données. À des fins de dépannage uniquement."
+
+#: src/Admin/settings/AdvancedTab.js:80
+msgid "Loading settings..."
+msgstr "Chargement des paramètres..."
+
+#: src/Admin/settings/AdvancedTab.js:89
+msgid "Setting Name"
+msgstr "Nom du paramètre"
+
+#: src/Admin/settings/AdvancedTab.js:91
+msgid "Value"
+msgstr "Valeur"
+
+#: src/Admin/settings/AdvancedTab.js:119
+msgid "(empty)"
+msgstr "(vide)"
+
+#: src/Admin/settings/ConnectionTab.js:71
+msgid "Failed to load settings."
+msgstr "Échec du chargement des paramètres."
+
+#: src/Admin/settings/ConnectionTab.js:120
+msgid "Are you sure you want to disconnect from Mollie? You will need to reconnect to accept payments."
+msgstr "Êtes-vous sûr de vouloir vous déconnecter de Mollie ? Vous devrez vous reconnecter pour accepter les paiements."
+
+#: src/Admin/settings/ConnectionTab.js:141
+msgid "Disconnected from Mollie."
+msgstr "Déconnecté de Mollie."
+
+#: src/Admin/settings/ConnectionTab.js:148
+msgid "Failed to disconnect."
+msgstr "Échec de la déconnexion."
+
+#. translators: %s: mode name (Test or Live)
+#: src/Admin/settings/ConnectionTab.js:171
+#, js-format
+msgid "Switched to %s mode."
+msgstr "Passage en mode %s."
+
+#: src/Admin/settings/ConnectionTab.js:173
+#: src/Admin/transaction/TransactionPage.js:211
+#: src/Admin/transactions/TransactionsApp.js:38
+#: src/Admin/transactions/TransactionsApp.js:329
+msgid "Test"
+msgstr "Test"
+
+#: src/Admin/settings/ConnectionTab.js:174
+#: src/Admin/transaction/TransactionPage.js:212
+#: src/Admin/transactions/TransactionsApp.js:37
+#: src/Admin/transactions/TransactionsApp.js:333
+msgid "Live"
+msgstr "En direct"
+
+#: src/Admin/settings/ConnectionTab.js:182
+msgid "Failed to change mode."
+msgstr "Échec du changement de mode."
+
+#: src/Admin/settings/ConnectionTab.js:201
+msgid "Connection refreshed successfully."
+msgstr "Connexion actualisée avec succès."
+
+#: src/Admin/settings/ConnectionTab.js:219
+msgid "Failed to refresh connection."
+msgstr "Échec de l'actualisation de la connexion."
+
+#: src/Admin/settings/ConnectionTab.js:248
+msgid "Please check the error log for more details or try reconnecting to Mollie."
+msgstr "Veuillez vérifier le journal des erreurs pour plus de détails ou essayer de vous reconnecter à Mollie."
+
+#: src/Admin/settings/ConnectionTab.js:266
+msgid "Loading connection settings..."
+msgstr "Chargement des paramètres de connexion..."
+
+#: src/Admin/settings/ConnectionTab.js:276
+msgid "Mollie Connection"
+msgstr "Connexion Mollie"
+
+#: src/Admin/settings/ConnectionTab.js:281
+msgid "Connect your Mollie account to accept payments. This uses secure OAuth authentication."
+msgstr "Connectez votre compte Mollie pour accepter les paiements. Cela utilise une authentification OAuth sécurisée."
+
+#: src/Admin/settings/ConnectionTab.js:293
+msgid "Connected to Mollie"
+msgstr "Connecté à Mollie"
+
+#: src/Admin/settings/ConnectionTab.js:300
+msgid "Organization ID:"
+msgstr "ID d'organisation :"
+
+#: src/Admin/settings/ConnectionTab.js:310
+msgid "Profile ID:"
+msgstr "ID de profil :"
+
+#: src/Admin/settings/ConnectionTab.js:316
+msgid "Missing (required for payments)"
+msgstr "Manquant (requis pour les paiements)"
+
+#: src/Admin/settings/ConnectionTab.js:331
+msgid "Please reconnect to Mollie to fetch the profile ID."
+msgstr "Veuillez vous reconnecter à Mollie pour récupérer l'ID de profil."
+
+#. translators: %s: expiration date
+#: src/Admin/settings/ConnectionTab.js:349
+#, js-format
+msgid "Token expires: %s"
+msgstr "Le jeton expire : %s"
+
+#: src/Admin/settings/ConnectionTab.js:360
+#: src/Admin/transaction/TransactionPage.js:196
+#: src/Admin/transactions/TransactionsApp.js:189
+#: src/Admin/transactions/TransactionsApp.js:246
+msgid "Mode"
+msgstr "Mode"
+
+#: src/Admin/settings/ConnectionTab.js:364
+msgid "Test Mode"
+msgstr "Mode Test"
+
+#: src/Admin/settings/ConnectionTab.js:368
+msgid "Live Mode"
+msgstr "Mode Live"
+
+#: src/Admin/settings/ConnectionTab.js:384
+msgid "Disconnect"
+msgstr "Déconnecter"
+
+#: src/Admin/settings/ConnectionTab.js:393
+msgid "Refreshing..."
+msgstr "Actualisation en cours..."
+
+#: src/Admin/settings/ConnectionTab.js:394
+msgid "Refresh Connection"
+msgstr "Actualiser la connexion"
+
+#: src/Admin/settings/FeaturesTab.js:49
+msgid "Features saved. Reload the page to see menu changes."
+msgstr "Fonctionnalités enregistrées. Rechargez la page pour voir les modifications du menu."
+
+#: src/Admin/settings/FeaturesTab.js:59
+msgid "Failed to save features."
+msgstr "Échec de l'enregistrement des fonctionnalités."
+
+#: src/Admin/settings/FeaturesTab.js:75
+msgid "Enable Budgeting"
+msgstr "Activer la budgétisation"
+
+#: src/Admin/settings/FeaturesTab.js:76
+msgid "Show budget categories, budget columns in entries, and budget assignment in forms."
+msgstr "Afficher les catégories de budget, les colonnes de budget dans les entrées et l'attribution de budget dans les formulaires."
+
+#: src/Admin/settings/FeaturesTab.js:90
+msgid "Save"
+msgstr "Enregistrer"
+
+#: src/Admin/settings/SettingsApp.js:61
+msgid "Authorization cancelled. Please try again."
+msgstr "Autorisation annulée. Veuillez réessayer."
+
+#: src/Admin/settings/SettingsApp.js:111
+msgid "Successfully connected to Mollie!"
+msgstr "Connecté avec succès à Mollie !"
+
+#: src/Admin/settings/SettingsApp.js:129
+msgid "Failed to save OAuth tokens: "
+msgstr "Échec de l'enregistrement des jetons OAuth : "
+
+#: src/Admin/settings/SettingsApp.js:142
+msgid "OAuth callback incomplete: refresh token not received from authorization server."
+msgstr "Rappel OAuth incomplet : le jeton d'actualisation n'a pas été reçu du serveur d'autorisation."
+
+#: src/Admin/settings/SettingsApp.js:184
+msgid "Fair Payment Settings"
+msgstr "Paramètres de paiement Fair"
+
+#: src/Admin/settings/SettingsApp.js:202
+msgid "Connection"
+msgstr "Connexion"
+
+#: src/Admin/settings/SettingsApp.js:206
+msgid "Features"
+msgstr "Fonctionnalités"
+
+#: src/Admin/settings/SettingsApp.js:210
+msgid "Advanced"
+msgstr "Avancé"
+
+#: src/Admin/transaction/TransactionPage.js:95
+msgid "No transaction ID provided."
+msgstr "Aucun ID de transaction fourni."
+
+#: src/Admin/transaction/TransactionPage.js:109
+msgid "Failed to load transaction."
+msgstr "Échec du chargement de la transaction."
+
+#: src/Admin/transaction/TransactionPage.js:134
+#: src/Admin/transaction/TransactionPage.js:149
+msgid "Back to Transactions"
+msgstr "Retour aux Transactions"
+
+#: src/Admin/transaction/TransactionPage.js:152
+msgid "Transaction"
+msgstr "Transaction"
+
+#: src/Admin/transaction/TransactionPage.js:165
+msgid "Payment Details"
+msgstr "Détails du Paiement"
+
+#: src/Admin/transaction/TransactionPage.js:176
+#: src/Admin/transactions/TransactionsApp.js:234
+msgid "Mollie Fee"
+msgstr "Frais Mollie"
+
+#: src/Admin/transaction/TransactionPage.js:185
+#: src/Admin/transactions/TransactionsApp.js:237
+msgid "Integration Fee"
+msgstr "Frais d'Intégration"
+
+#: src/Admin/transaction/TransactionPage.js:223
+msgid "Status & Timing"
+msgstr "Statut et Timing"
+
+#: src/Admin/transaction/TransactionPage.js:229
+#: src/Admin/transactions/TransactionsApp.js:173
+#: src/Admin/transactions/TransactionsApp.js:244
+msgid "Status"
+msgstr "Statut"
+
+#: src/Admin/transaction/TransactionPage.js:236
+msgid "Created"
+msgstr "Créé"
+
+#: src/Admin/transaction/TransactionPage.js:241
+msgid "Payment Initiated"
+msgstr "Paiement Initié"
+
+#: src/Admin/transaction/TransactionPage.js:249
+msgid "Updated"
+msgstr "Mis à jour"
+
+#: src/Admin/transaction/TransactionPage.js:275
+msgid "Metadata"
+msgstr "Métadonnées"
+
+#: src/Admin/transaction/TransactionPage.js:303
+msgid "Line Items"
+msgstr "Articles"
+
+#: src/Admin/transaction/TransactionPage.js:315
+msgid "Quantity"
+msgstr "Quantité"
+
+#: src/Admin/transaction/TransactionPage.js:318
+msgid "Unit Amount"
+msgstr "Montant Unitaire"
+
+#: src/Admin/transaction/TransactionPage.js:348
+msgid "User & Post"
+msgstr "Utilisateur et Article"
+
+#: src/Admin/transaction/TransactionPage.js:354
+#: src/Admin/transactions/TransactionsApp.js:250
+msgid "User"
+msgstr "Utilisateur"
+
+#: src/Admin/transaction/TransactionPage.js:365
+msgid "Post"
+msgstr "Article"
+
+#: src/Admin/transaction/TransactionPage.js:384
+msgid "URLs & Mollie"
+msgstr "URLs et Mollie"
+
+#: src/Admin/transaction/TransactionPage.js:391
+msgid "Mollie Payment ID"
+msgstr "ID de Paiement Mollie"
+
+#: src/Admin/transaction/TransactionPage.js:415
+msgid "Redirect URL"
+msgstr "URL de Redirection"
+
+#: src/Admin/transaction/TransactionPage.js:430
+msgid "Webhook URL"
+msgstr "URL du webhook"
+
+#: src/Admin/transaction/TransactionPage.js:445
+msgid "Checkout URL"
+msgstr "URL de paiement"
+
+#: src/Admin/transactions/TransactionsApp.js:22
+msgid "All statuses"
+msgstr "Tous les statuts"
+
+#: src/Admin/transactions/TransactionsApp.js:23
+msgid "Paid"
+msgstr "Payé"
+
+#: src/Admin/transactions/TransactionsApp.js:24
+msgid "Pending"
+msgstr "En attente"
+
+#: src/Admin/transactions/TransactionsApp.js:25
+msgid "Open"
+msgstr "Ouvert"
+
+#: src/Admin/transactions/TransactionsApp.js:26
+msgid "Failed"
+msgstr "Échoué"
+
+#: src/Admin/transactions/TransactionsApp.js:27
+msgid "Canceled"
+msgstr "Annulé"
+
+#: src/Admin/transactions/TransactionsApp.js:28
+msgid "Expired"
+msgstr "Expiré"
+
+#: src/Admin/transactions/TransactionsApp.js:29
+msgid "Draft"
+msgstr "Brouillon"
+
+#: src/Admin/transactions/TransactionsApp.js:31
+msgid "Pending payment"
+msgstr "Paiement en attente"
+
+#: src/Admin/transactions/TransactionsApp.js:39
+msgid "All modes"
+msgstr "Tous les modes"
+
+#: src/Admin/transactions/TransactionsApp.js:152
+msgid "Payment Transactions"
+msgstr "Transactions de paiement"
+
+#: src/Admin/transactions/TransactionsApp.js:157
+msgid "To enable direct links to Mollie transactions, please configure your Organization ID in the"
+msgstr "Pour activer les liens directs vers les transactions Mollie, veuillez configurer votre ID d'organisation dans les"
+
+#: src/Admin/transactions/TransactionsApp.js:162
+msgid "settings"
+msgstr "paramètres"
+
+#: src/Admin/transactions/TransactionsApp.js:216
+msgid "No transactions found."
+msgstr "Aucune transaction trouvée."
+
+#: src/Admin/transactions/TransactionsApp.js:224
+msgid "ID"
+msgstr "ID"
+
+#: src/Admin/transactions/TransactionsApp.js:275
+msgid "View in Mollie Dashboard"
+msgstr "Afficher dans le tableau de bord Mollie"
+
+#: src/blocks/simple-payment/index.js:33
+msgid "Simple Payment Block"
+msgstr "Bloc de paiement simple"
+
+#: src/blocks/simple-payment/index.js:43
+msgid "Currency"
+msgstr "Devise"
+
+#: src/blocks/simple-payment/index.js:48
+msgid "Description (optional)"
+msgstr "Description (facultatif)"
+
+#: src/blocks/simple-payment/index.js:53
+msgid "Optional description for the payment"
+msgstr "Description facultative pour le paiement"
+
+#: src/blocks/simple-payment/block.json
+msgctxt "block title"
+msgid "Simple Payment"
+msgstr "Paiement simple"
+
+#: src/blocks/simple-payment/block.json
+msgctxt "block description"
+msgid "Simple payment block for WordPress"
+msgstr "Bloc de paiement simple pour WordPress"
+

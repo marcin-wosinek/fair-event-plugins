@@ -10,13 +10,17 @@
 		"composer:update:shared": "composer update fair-events/shared",
 		"composer:validate": "composer validate --strict",
 		"prebuild": "npm run clean",
-		"build": "webpack --mode=production --config webpack.config.cjs",
+		"build": "webpack --mode=production --config webpack.config.cjs; npm run makejson",
 		"clean": "rm -rf build",
 		"start": "webpack --mode=development --watch --config webpack.config.cjs",
 		"format": "wp-scripts format",
 		"test": "npm-run-all test:js",
 		"test:js": "jest",
-		"test:php": "vendor/bin/phpunit"
+		"test:php": "vendor/bin/phpunit",
+		"makepot": "wp i18n make-pot . languages/fair-payment.pot --exclude=node_modules,vendor,tests,build,svn",
+		"makejson": "wp i18n make-json languages ./build/languages --domain=fair-payment --pretty-print --no-purge --use-map=build/map.json",
+		"makemo": "wp i18n make-mo languages/",
+		"updatepo": "wp i18n update-po languages/fair-payment.pot languages/"
 	},
 	"keywords": [
 		"wordpress",
