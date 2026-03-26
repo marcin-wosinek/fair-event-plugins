@@ -27,6 +27,17 @@ registerBlockType('fair-audience/fair-form-multiselect', {
 					);
 				},
 			},
+			{
+				type: 'block',
+				blocks: ['fair-audience/fair-form-radio'],
+				transform: (attributes, innerBlocks) => {
+					return createBlock(
+						'fair-audience/fair-form-radio',
+						attributes,
+						innerBlocks
+					);
+				},
+			},
 		],
 	},
 	edit: ({ attributes, setAttributes }) => {

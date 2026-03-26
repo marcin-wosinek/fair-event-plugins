@@ -1,13 +1,13 @@
 {
 	"$schema": "https://schemas.wp.org/trunk/block.json",
 	"apiVersion": 3,
-	"name": "fair-audience/fair-form-select-one",
+	"name": "fair-audience/fair-form-radio",
 	"version": "1.0.0",
-	"title": "Select One Question",
+	"title": "Radio Button Question",
 	"category": "widgets",
-	"icon": "yes",
-	"description": "A single-choice question (select or radio) for Fair Form",
-	"keywords": ["question", "select", "radio", "choice"],
+	"icon": "button",
+	"description": "A single-choice radio button question for Fair Form",
+	"keywords": ["question", "radio", "choice", "button"],
 	"textdomain": "fair-audience",
 	"parent": ["fair-audience/fair-form"],
 	"supports": {

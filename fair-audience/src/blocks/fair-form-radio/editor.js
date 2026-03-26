@@ -13,26 +13,26 @@ import { generateQuestionKey } from '../shared/question-utils.js';
 
 const ALLOWED_BLOCKS = ['fair-audience/fair-form-option'];
 
-registerBlockType('fair-audience/fair-form-select-one', {
+registerBlockType('fair-audience/fair-form-radio', {
 	transforms: {
 		to: [
 			{
 				type: 'block',
-				blocks: ['fair-audience/fair-form-multiselect'],
+				blocks: ['fair-audience/fair-form-select-one'],
 				transform: (attributes, innerBlocks) => {
 					return createBlock(
-						'fair-audience/fair-form-multiselect',
-						attributes,
+						'fair-audience/fair-form-select-one',
+						{ ...attributes, displayAs: 'select' },
 						innerBlocks
 					);
 				},
 			},
 			{
 				type: 'block',
-				blocks: ['fair-audience/fair-form-radio'],
+				blocks: ['fair-audience/fair-form-multiselect'],
 				transform: (attributes, innerBlocks) => {
 					return createBlock(
-						'fair-audience/fair-form-radio',
+						'fair-audience/fair-form-multiselect',
 						attributes,
 						innerBlocks
 					);
@@ -55,7 +55,7 @@ registerBlockType('fair-audience/fair-form-select-one', {
 		};
 
 		const blockProps = useBlockProps({
-			className: 'fair-form-question fair-form-question-select-one',
+			className: 'fair-form-question fair-form-question-radio',
 		});
 
 		const innerBlocksProps = useInnerBlocksProps(

@@ -11,7 +11,8 @@
 	"textdomain": "fair-audience",
 	"parent": [
 		"fair-audience/fair-form-select-one",
-		"fair-audience/fair-form-multiselect"
+		"fair-audience/fair-form-multiselect",
+		"fair-audience/fair-form-radio"
 	],
 	"supports": {
 		"html": false,
