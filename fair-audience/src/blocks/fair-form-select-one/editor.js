@@ -1,7 +1,12 @@
 import './style.css';
 
 import { registerBlockType, createBlock } from '@wordpress/blocks';
-import { useBlockProps, InspectorControls } from '@wordpress/block-editor';
+import {
+	useBlockProps,
+	useInnerBlocksProps,
+	InspectorControls,
+	InnerBlocks,
+} from '@wordpress/block-editor';
 import {
 	PanelBody,
 	TextControl,
@@ -10,7 +15,8 @@ import {
 } from '@wordpress/components';
 import { __ } from '@wordpress/i18n';
 import { generateQuestionKey } from '../shared/question-utils.js';
-import OptionsEditor from '../shared/OptionsEditor.js';
+
+const ALLOWED_BLOCKS = ['fair-audience/fair-form-option'];
 
 registerBlockType('fair-audience/fair-form-select-one', {
 	transforms: {
@@ -18,19 +24,19 @@ registerBlockType('fair-audience/fair-form-select-one', {
 			{
 				type: 'block',
 				blocks: ['fair-audience/fair-form-multiselect'],
-				transform: (attributes) => {
+				transform: (attributes, innerBlocks) => {
 					const { displayAs, ...rest } = attributes;
 					return createBlock(
 						'fair-audience/fair-form-multiselect',
-						rest
+						rest,
+						innerBlocks
 					);
 				},
 			},
 		],
 	},
 	edit: ({ attributes, setAttributes }) => {
-		const { questionText, questionKey, required, options, displayAs } =
-			attributes;
+		const { questionText, questionKey, required, displayAs } = attributes;
 
 		const onQuestionTextChange = (value) => {
 			const updates = { questionText: value };
@@ -46,6 +52,14 @@ registerBlockType('fair-audience/fair-form-select-one', {
 		const blockProps = useBlockProps({
 			className: 'fair-form-question fair-form-question-select-one',
 		});
+
+		const innerBlocksProps = useInnerBlocksProps(
+			{ className: 'fair-form-options-list' },
+			{
+				allowedBlocks: ALLOWED_BLOCKS,
+				renderAppender: InnerBlocks.ButtonBlockAppender,
+			}
+		);
 
 		return (
 			<>
@@ -87,14 +101,6 @@ registerBlockType('fair-audience/fair-form-select-one', {
 							}
 						/>
 					</PanelBody>
-					<PanelBody title={__('Options', 'fair-audience')}>
-						<OptionsEditor
-							options={options}
-							onChange={(value) =>
-								setAttributes({ options: value })
-							}
-						/>
-					</PanelBody>
 				</InspectorControls>
 
 				<div {...blockProps}>
@@ -112,47 +118,13 @@ registerBlockType('fair-audience/fair-form-select-one', {
 							className="fair-form-question-label-input"
 						/>
 						{required && <span className="required"> *</span>}
-						<br />
-						{displayAs === 'select' && (
-							<select disabled>
-								<option value="">
-									{__('Select an option...', 'fair-audience')}
-								</option>
-								{options.map((opt, i) => (
-									<option key={i} value={opt}>
-										{opt}
-									</option>
-								))}
-							</select>
-						)}
-						{displayAs === 'radio' && (
-							<span className="fair-form-radio-preview">
-								{options.length === 0 && (
-									<em>
-										{__(
-											'Add options in the sidebar',
-											'fair-audience'
-										)}
-									</em>
-								)}
-								{options.map((opt, i) => (
-									<label key={i}>
-										<input
-											type="radio"
-											disabled
-											name="preview"
-										/>
-										{opt}
-									</label>
-								))}
-							</span>
-						)}
 					</p>
+					<div {...innerBlocksProps} />
 				</div>
 			</>
 		);
 	},
 	save: () => {
-		return null;
+		return <InnerBlocks.Content />;
 	},
 });

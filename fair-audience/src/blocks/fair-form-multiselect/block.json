@@ -25,10 +25,6 @@
 		"required": {
 			"type": "boolean",
 			"default": false
-		},
-		"options": {
-			"type": "array",
-			"default": []
 		}
 	},
 	"editorScript": "file:./editor.js",

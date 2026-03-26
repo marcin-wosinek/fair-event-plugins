@@ -26,10 +26,6 @@
 			"type": "boolean",
 			"default": false
 		},
-		"options": {
-			"type": "array",
-			"default": []
-		},
 		"displayAs": {
 			"type": "string",
 			"default": "select"

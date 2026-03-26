@@ -1,0 +1,28 @@
+{
+	"$schema": "https://schemas.wp.org/trunk/block.json",
+	"apiVersion": 3,
+	"name": "fair-audience/fair-form-option",
+	"version": "1.0.0",
+	"title": "Form Option",
+	"category": "widgets",
+	"icon": "marker",
+	"description": "An option for select or multiselect questions",
+	"keywords": ["option", "choice"],
+	"textdomain": "fair-audience",
+	"parent": [
+		"fair-audience/fair-form-select-one",
+		"fair-audience/fair-form-multiselect"
+	],
+	"supports": {
+		"html": false,
+		"reusable": false
+	},
+	"attributes": {
+		"value": {
+			"type": "string",
+			"default": ""
+		}
+	},
+	"editorScript": "file:./editor.js",
+	"render": "file:./render.php"
+}

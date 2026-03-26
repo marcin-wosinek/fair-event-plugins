@@ -17,11 +17,21 @@ defined( 'WPINC' ) || die;
 $question_text = $attributes['questionText'] ?? '';
 $question_key  = $attributes['questionKey'] ?? '';
 $required      = ! empty( $attributes['required'] );
-$options       = $attributes['options'] ?? array();
 
 // Skip rendering if no question text is set.
 if ( empty( $question_text ) ) {
 	return '';
+}
+
+// Collect options from inner blocks.
+$options = array();
+foreach ( $block->inner_blocks as $inner_block ) {
+	if ( 'fair-audience/fair-form-option' === $inner_block->name ) {
+		$value = $inner_block->attributes['value'] ?? '';
+		if ( '' !== $value ) {
+			$options[] = $value;
+		}
+	}
 }
 
 // Generate unique ID for this input.
