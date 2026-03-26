@@ -1,6 +1,6 @@
 import './style.css';
 
-import { registerBlockType } from '@wordpress/blocks';
+import { registerBlockType, createBlock } from '@wordpress/blocks';
 import { useBlockProps, InspectorControls } from '@wordpress/block-editor';
 import {
 	PanelBody,
@@ -12,6 +12,20 @@ import { __ } from '@wordpress/i18n';
 import { generateQuestionKey } from '../shared/question-utils.js';
 
 registerBlockType('fair-audience/fair-form-long-text', {
+	transforms: {
+		to: [
+			{
+				type: 'block',
+				blocks: ['fair-audience/fair-form-short-text'],
+				transform: (attributes) => {
+					return createBlock(
+						'fair-audience/fair-form-short-text',
+						attributes
+					);
+				},
+			},
+		],
+	},
 	edit: ({ attributes, setAttributes }) => {
 		const { questionText, questionKey, required, placeholder, rows } =
 			attributes;
