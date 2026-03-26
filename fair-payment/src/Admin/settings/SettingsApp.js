@@ -79,7 +79,7 @@ export default function SettingsApp() {
 				fair_payment_mollie_refresh_token: refreshToken,
 				fair_payment_mollie_token_expires:
 					Math.floor(Date.now() / 1000) + parseInt(expiresIn),
-				fair_payment_mollie_organization_id: orgId || '',
+				fair_payment_organization_id: orgId || '',
 				fair_payment_mollie_profile_id: profileId || '',
 				fair_payment_mollie_connected: true,
 				fair_payment_mode: testMode === '1' ? 'test' : 'live',
