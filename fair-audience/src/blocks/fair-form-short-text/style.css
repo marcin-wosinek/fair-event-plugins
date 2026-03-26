@@ -1,20 +1,24 @@
-.fair-form-question-short-text label {
-	display: block;
-	margin-bottom: 0.25em;
+.fair-form-question-short-text .fair-form-question-label-input {
+	border: none;
+	border-bottom: 1px dashed #8c8f94;
+	background: transparent;
 	font-weight: 600;
+	padding: 2px 0;
+	font-size: inherit;
+	width: auto;
 }
 
-.fair-form-question-short-text input[type="text"] {
+.fair-form-question-short-text .fair-form-question-label-input:focus {
+	outline: none;
+	border-bottom-color: #2271b1;
+}
+
+.fair-form-question-short-text input[type="text"]:disabled {
 	width: 100%;
 	padding: 8px 12px;
 	border: 1px solid #8c8f94;
 	border-radius: 4px;
 	font-size: inherit;
 	line-height: 1.5;
-}
-
-.fair-form-question-text-input {
-	margin-top: 8px;
-	font-style: italic;
-	opacity: 0.7;
+	background: #f0f0f0;
 }

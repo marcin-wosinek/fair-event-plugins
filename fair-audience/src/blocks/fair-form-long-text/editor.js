@@ -5,7 +5,6 @@ import { useBlockProps, InspectorControls } from '@wordpress/block-editor';
 import {
 	PanelBody,
 	TextControl,
-	TextareaControl,
 	ToggleControl,
 	RangeControl,
 } from '@wordpress/components';
@@ -60,34 +59,34 @@ registerBlockType('fair-audience/fair-form-long-text', {
 				</InspectorControls>
 
 				<div {...blockProps}>
-					<TextareaControl
-						label={
-							questionText
-								? questionText + (required ? ' *' : '')
-								: __('Long Text Question', 'fair-audience') +
-								  (required ? ' *' : '')
-						}
-						value=""
-						placeholder={
-							placeholder ||
-							__('Type your answer...', 'fair-audience')
-						}
-						onChange={() => {}}
-						rows={rows}
-						disabled
-					/>
-					<TextControl
-						className="fair-form-question-text-input"
-						value={questionText}
-						onChange={(value) =>
-							setAttributes({ questionText: value })
-						}
-						placeholder={__(
-							'Enter your question text...',
-							'fair-audience'
+					<p>
+						<input
+							type="text"
+							value={questionText}
+							onChange={(e) =>
+								setAttributes({
+									questionText: e.target.value,
+								})
+							}
+							placeholder={__(
+								'Enter your question...',
+								'fair-audience'
+							)}
+							className="fair-form-question-label-input"
+						/>
+						{required && (
+							<span className="required"> *</span>
 						)}
-						hideLabelFromVision
-					/>
+						<br />
+						<textarea
+							disabled
+							rows={rows}
+							placeholder={
+								placeholder ||
+								__('Type your answer...', 'fair-audience')
+							}
+						/>
+					</p>
 				</div>
 			</>
 		);

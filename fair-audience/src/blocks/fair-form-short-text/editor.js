@@ -46,33 +46,34 @@ registerBlockType('fair-audience/fair-form-short-text', {
 				</InspectorControls>
 
 				<div {...blockProps}>
-					<TextControl
-						label={
-							questionText
-								? questionText + (required ? ' *' : '')
-								: __('Short Text Question', 'fair-audience') +
-								  (required ? ' *' : '')
-						}
-						value=""
-						placeholder={
-							placeholder ||
-							__('Type your answer...', 'fair-audience')
-						}
-						onChange={() => {}}
-						disabled
-					/>
-					<TextControl
-						className="fair-form-question-text-input"
-						value={questionText}
-						onChange={(value) =>
-							setAttributes({ questionText: value })
-						}
-						placeholder={__(
-							'Enter your question text...',
-							'fair-audience'
+					<p>
+						<input
+							type="text"
+							value={questionText}
+							onChange={(e) =>
+								setAttributes({
+									questionText: e.target.value,
+								})
+							}
+							placeholder={__(
+								'Enter your question...',
+								'fair-audience'
+							)}
+							className="fair-form-question-label-input"
+						/>
+						{required && (
+							<span className="required"> *</span>
 						)}
-						hideLabelFromVision
-					/>
+						<br />
+						<input
+							type="text"
+							disabled
+							placeholder={
+								placeholder ||
+								__('Type your answer...', 'fair-audience')
+							}
+						/>
+					</p>
 				</div>
 			</>
 		);
