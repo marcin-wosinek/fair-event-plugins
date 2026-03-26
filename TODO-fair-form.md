@@ -23,6 +23,8 @@ Goal: working end-to-end form with InnerBlocks architecture.
   - [x] `POST /fair-audience/v1/fair-form-submit` - accepts name, email, surname, keep_informed, event_date_id, post_id, questionnaire_answers[]
   - [x] Creates/finds participant, creates QuestionnaireSubmission, saves QuestionnaireAnswers
   - [x] Permission: `__return_true` (public form, same as audience-signup)
+- [x] Create `src/blocks/shared/question-utils.js` - `generateQuestionKey()` to auto-derive key from question text
+- [x] Add block transforms between short-text and long-text (both directions)
 - [x] Register blocks in `src/Hooks/BlockHooks.php`
 - [x] Register controller in `src/Core/Plugin.php`
 - [ ] Test: add fair-form block in editor, add headings + short-text + long-text questions, submit on frontend, verify data in DB
@@ -46,7 +48,9 @@ Goal: option-based question types.
   - [ ] `render.php` - checkbox fieldset, `data-question-type="multiselect"`
   - [ ] `style.css`
 - [ ] Update parent `frontend.js` - handle multiselect (collect checked checkboxes, JSON-encode values)
-- [ ] Update parent `block.json` allowedBlocks list
+- [ ] Update parent `editor.js` - add new blocks to ALLOWED_BLOCKS array
+- [ ] Add block transforms between select-one and multiselect (both directions)
+- [ ] Use `generateQuestionKey()` from `shared/question-utils.js` for auto-key derivation
 - [ ] Register new blocks in `BlockHooks.php`
 - [ ] Test: add select-one and multiselect questions, submit, verify answers stored correctly
 
@@ -65,7 +69,8 @@ Goal: image/file upload capability.
   - [ ] Use `wp_handle_upload()` to process files into WP media library
   - [ ] Store attachment ID in answer_value
 - [ ] Update parent `frontend.js` - build FormData when file inputs are present, switch from JSON to multipart submission
-- [ ] Update parent `block.json` allowedBlocks
+- [ ] Update parent `editor.js` - add file-upload to ALLOWED_BLOCKS array
+- [ ] Use `generateQuestionKey()` from `shared/question-utils.js` for auto-key derivation
 - [ ] Register block in `BlockHooks.php`
 - [ ] Test: upload image via form, verify attachment created and answer stored
 
@@ -85,9 +90,20 @@ Each child question block's `render.php` outputs:
 
 Parent's `frontend.js` collects all `[data-fair-form-question]` elements to build the submission payload.
 
-### Existing code to reuse
+### Shared utilities
 
 - `src/blocks/shared/form-utils.js` - extractErrorMessage, showMessage, setButtonLoading, onDomReady
+- `src/blocks/shared/question-utils.js` - generateQuestionKey (auto-derive snake_case key from question text)
+
+### Existing code reused
+
 - `src/Database/QuestionnaireSubmissionRepository.php` + `QuestionnaireAnswerRepository.php`
 - `src/Models/QuestionnaireSubmission.php` + `QuestionnaireAnswer.php`
 - `src/API/AudienceSignupController.php` - reference for participant creation flow
+
+### Editor patterns
+
+- Question blocks use inline editing: editable `<input>` for question text (styled as label), disabled input/textarea as answer preview
+- Question key auto-derives from question text until manually edited in sidebar
+- Blocks with compatible attributes support transforms between each other
+- Allowed blocks list lives in parent's `editor.js` (ALLOWED_BLOCKS constant), not in block.json
