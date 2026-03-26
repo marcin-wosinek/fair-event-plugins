@@ -9,11 +9,23 @@ import {
 	RangeControl,
 } from '@wordpress/components';
 import { __ } from '@wordpress/i18n';
+import { generateQuestionKey } from '../shared/question-utils.js';
 
 registerBlockType('fair-audience/fair-form-long-text', {
 	edit: ({ attributes, setAttributes }) => {
 		const { questionText, questionKey, required, placeholder, rows } =
 			attributes;
+
+		const onQuestionTextChange = (value) => {
+			const updates = { questionText: value };
+			if (
+				!questionKey ||
+				questionKey === generateQuestionKey(questionText)
+			) {
+				updates.questionKey = generateQuestionKey(value);
+			}
+			setAttributes(updates);
+		};
 
 		const blockProps = useBlockProps({
 			className: 'fair-form-question fair-form-question-long-text',
@@ -64,9 +76,7 @@ registerBlockType('fair-audience/fair-form-long-text', {
 							type="text"
 							value={questionText}
 							onChange={(e) =>
-								setAttributes({
-									questionText: e.target.value,
-								})
+								onQuestionTextChange(e.target.value)
 							}
 							placeholder={__(
 								'Enter your question...',
@@ -74,9 +84,7 @@ registerBlockType('fair-audience/fair-form-long-text', {
 							)}
 							className="fair-form-question-label-input"
 						/>
-						{required && (
-							<span className="required"> *</span>
-						)}
+						{required && <span className="required"> *</span>}
 						<br />
 						<textarea
 							disabled

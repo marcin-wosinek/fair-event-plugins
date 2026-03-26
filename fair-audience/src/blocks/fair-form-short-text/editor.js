@@ -4,10 +4,22 @@ import { registerBlockType } from '@wordpress/blocks';
 import { useBlockProps, InspectorControls } from '@wordpress/block-editor';
 import { PanelBody, TextControl, ToggleControl } from '@wordpress/components';
 import { __ } from '@wordpress/i18n';
+import { generateQuestionKey } from '../shared/question-utils.js';
 
 registerBlockType('fair-audience/fair-form-short-text', {
 	edit: ({ attributes, setAttributes }) => {
 		const { questionText, questionKey, required, placeholder } = attributes;
+
+		const onQuestionTextChange = (value) => {
+			const updates = { questionText: value };
+			if (
+				!questionKey ||
+				questionKey === generateQuestionKey(questionText)
+			) {
+				updates.questionKey = generateQuestionKey(value);
+			}
+			setAttributes(updates);
+		};
 
 		const blockProps = useBlockProps({
 			className: 'fair-form-question fair-form-question-short-text',
@@ -51,9 +63,7 @@ registerBlockType('fair-audience/fair-form-short-text', {
 							type="text"
 							value={questionText}
 							onChange={(e) =>
-								setAttributes({
-									questionText: e.target.value,
-								})
+								onQuestionTextChange(e.target.value)
 							}
 							placeholder={__(
 								'Enter your question...',
@@ -61,9 +71,7 @@ registerBlockType('fair-audience/fair-form-short-text', {
 							)}
 							className="fair-form-question-label-input"
 						/>
-						{required && (
-							<span className="required"> *</span>
-						)}
+						{required && <span className="required"> *</span>}
 						<br />
 						<input
 							type="text"
