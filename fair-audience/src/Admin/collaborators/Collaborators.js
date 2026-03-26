@@ -7,11 +7,15 @@ import {
 	CardBody,
 	Modal,
 	CheckboxControl,
+	Notice,
 	SearchControl,
 	Spinner,
 	ExternalLink,
+	__experimentalHStack as HStack,
 } from '@wordpress/components';
 import { DataViews } from '@wordpress/dataviews';
+
+const COLLABORATOR_FIELDS = ['name', 'surname', 'email', 'instagram'];
 
 const DEFAULT_VIEW = {
 	type: 'table',
@@ -46,6 +50,8 @@ export default function Collaborators() {
 	const [selectedEvents, setSelectedEvents] = useState([]);
 	const [collaboratorEvents, setCollaboratorEvents] = useState([]);
 	const [isSubmitting, setIsSubmitting] = useState(false);
+	const [isImporting, setIsImporting] = useState(false);
+	const [notice, setNotice] = useState(null);
 
 	// Define fields configuration for DataViews.
 	const fields = useMemo(
@@ -293,6 +299,13 @@ export default function Collaborators() {
 				callback: ([item]) => openAddToEventModal(item),
 				supportsBulk: false,
 			},
+			{
+				id: 'export',
+				label: __('Export', 'fair-audience'),
+				icon: 'download',
+				callback: (items) => handleExport(items),
+				supportsBulk: true,
+			},
 		],
 		[]
 	);
@@ -305,6 +318,101 @@ export default function Collaborators() {
 		[totalItems, totalPages]
 	);
 
+	const handleExport = (items) => {
+		const dataToExport = items.map((item) => {
+			const exported = {};
+			COLLABORATOR_FIELDS.forEach((field) => {
+				if (item[field]) {
+					exported[field] = item[field];
+				}
+			});
+			return exported;
+		});
+
+		const blob = new Blob([JSON.stringify(dataToExport, null, 2)], {
+			type: 'application/json',
+		});
+		const url = URL.createObjectURL(blob);
+		const a = document.createElement('a');
+		a.href = url;
+		a.download = 'collaborators.json';
+		a.click();
+		URL.revokeObjectURL(url);
+		setNotice({
+			status: 'success',
+			// translators: %d is the number of exported collaborators
+			message: __(
+				'%d collaborator(s) exported.',
+				'fair-audience'
+			).replace('%d', dataToExport.length),
+		});
+	};
+
+	const handleImport = async (e) => {
+		const file = e.target.files[0];
+		if (!file) {
+			return;
+		}
+
+		// Reset the input so the same file can be re-selected.
+		e.target.value = '';
+
+		setIsImporting(true);
+		setNotice(null);
+
+		try {
+			const text = await file.text();
+			const imported = JSON.parse(text);
+
+			if (!Array.isArray(imported)) {
+				throw new Error(
+					__(
+						'Invalid file format. Expected a JSON array.',
+						'fair-audience'
+					)
+				);
+			}
+
+			let created = 0;
+			for (const item of imported) {
+				if (!item.name && !item.surname) {
+					continue;
+				}
+				const data = {};
+				COLLABORATOR_FIELDS.forEach((field) => {
+					if (item[field]) {
+						data[field] = item[field];
+					}
+				});
+				await apiFetch({
+					path: '/fair-audience/v1/participants',
+					method: 'POST',
+					data,
+				});
+				created++;
+			}
+
+			setNotice({
+				status: 'success',
+				// translators: %d is the number of imported collaborators
+				message: __(
+					'%d collaborator(s) imported.',
+					'fair-audience'
+				).replace('%d', created),
+			});
+			loadCollaborators();
+		} catch (err) {
+			setNotice({
+				status: 'error',
+				message:
+					err.message ||
+					__('Failed to import collaborators.', 'fair-audience'),
+			});
+		} finally {
+			setIsImporting(false);
+		}
+	};
+
 	// Filter out events the collaborator is already part of.
 	const availableEvents = events.filter(
 		(event) => !collaboratorEvents.includes(event.event_id)
@@ -312,7 +420,32 @@ export default function Collaborators() {
 
 	return (
 		<div className="wrap">
-			<h1>{__('Collaborators', 'fair-audience')}</h1>
+			<HStack justify="space-between" align="center">
+				<h1>{__('Collaborators', 'fair-audience')}</h1>
+				<HStack spacing={2} expanded={false}>
+					<Button
+						variant="secondary"
+						onClick={() =>
+							document
+								.getElementById(
+									'fair-audience-collaborator-import'
+								)
+								.click()
+						}
+						isBusy={isImporting}
+						disabled={isImporting}
+					>
+						{__('Import', 'fair-audience')}
+					</Button>
+					<input
+						id="fair-audience-collaborator-import"
+						type="file"
+						accept=".json"
+						style={{ display: 'none' }}
+						onChange={handleImport}
+					/>
+				</HStack>
+			</HStack>
 
 			{window.fairAudienceCollaboratorsData?.collaboratorProfileUrl && (
 				<p>
@@ -329,6 +462,16 @@ export default function Collaborators() {
 						}
 					</ExternalLink>
 				</p>
+			)}
+
+			{notice && (
+				<Notice
+					status={notice.status}
+					isDismissible
+					onRemove={() => setNotice(null)}
+				>
+					{notice.message}
+				</Notice>
 			)}
 
 			<Card>
