@@ -29,33 +29,35 @@ Goal: working end-to-end form with InnerBlocks architecture.
 - [x] Register controller in `src/Core/Plugin.php`
 - [ ] Test: add fair-form block in editor, add headings + short-text + long-text questions, submit on frontend, verify data in DB
 
-## Phase 2: Select-one + multiselect question blocks
+## Phase 2: Option-based question blocks (select-one, multiselect, radio)
 
-Goal: option-based question types.
+Goal: option-based question types with draggable option inner blocks.
 
 - [x] DB migration: add `multiselect` to `question_type` ENUM
   - [x] Update `src/Database/Schema.php` ENUM definition
   - [x] Add migration v1.25.0 in `fair-audience.php`
   - [x] Update `VALID_QUESTION_TYPES` in `src/Models/QuestionnaireAnswer.php`
   - [x] Update `enum` in `src/API/FairFormController.php`
-- [x] Create child block `fair-audience/fair-form-select-one`
-  - [x] `block.json` - attributes: questionText, questionKey, required, options (array of strings), displayAs (select|radio)
-  - [x] `editor.js` - option list builder in InspectorControls, preview of select/radio
-  - [x] `render.php` - `<select>` or radio fieldset based on displayAs attribute, with data-attribute convention
-  - [x] `style.css`
-- [x] Create child block `fair-audience/fair-form-multiselect`
-  - [x] `block.json` - attributes: questionText, questionKey, required, options (array of strings)
-  - [x] `editor.js` - option list builder, checkbox group preview
-  - [x] `render.php` - checkbox fieldset, `data-question-type="multiselect"`
-  - [x] `style.css`
-- [x] Create `src/blocks/shared/OptionsEditor.js` - reusable options list editor component
+- [x] Create child block `fair-audience/fair-form-option` - reusable option block for all option-based questions
+  - [x] `parent: ["fair-audience/fair-form-select-one", "fair-audience/fair-form-multiselect", "fair-audience/fair-form-radio"]`
+  - [x] Single `value` attribute, inline editable input
+  - [x] `render.php` returns empty - parent blocks iterate `$block->inner_blocks` to render
+- [x] Create child block `fair-audience/fair-form-select-one` - dropdown question
+  - [x] Uses InnerBlocks with `fair-form-option` children
+  - [x] `render.php` renders `<select>` from inner block values
+- [x] Create child block `fair-audience/fair-form-multiselect` - checkbox group question
+  - [x] Uses InnerBlocks with `fair-form-option` children
+  - [x] `render.php` renders checkbox fieldset, `data-question-type="multiselect"`
+- [x] Create child block `fair-audience/fair-form-radio` - radio button question (all options visible)
+  - [x] Uses InnerBlocks with `fair-form-option` children
+  - [x] `render.php` renders radio fieldset, `data-question-type="radio"`
 - [x] Update parent `frontend.js` - handle multiselect (collect checked checkboxes, JSON-encode values) + radio validation
 - [x] Update parent `editor.js` - add new blocks to ALLOWED_BLOCKS array
-- [x] Add block transforms between select-one and multiselect (both directions)
+- [x] Add block transforms between select-one, multiselect, and radio (all directions, preserving inner blocks)
 - [x] Use `generateQuestionKey()` from `shared/question-utils.js` for auto-key derivation
-- [x] Register new blocks in `BlockHooks.php`
+- [x] Register all new blocks in `BlockHooks.php`
 - [x] Fix child block.json `style` field to reference `style-editor.css` (no viewScript means no `style-frontend.css`)
-- [ ] Test: add select-one and multiselect questions, submit, verify answers stored correctly
+- [ ] Test: add select-one, multiselect, and radio questions, submit, verify answers stored correctly
 
 ## Phase 3: File upload question block
 
@@ -76,6 +78,62 @@ Goal: image/file upload capability.
 - [ ] Use `generateQuestionKey()` from `shared/question-utils.js` for auto-key derivation
 - [ ] Register block in `BlockHooks.php`
 - [ ] Test: upload image via form, verify attachment created and answer stored
+
+## Phase 4: Conditional sections
+
+Goal: show/hide groups of fields based on answers to previous questions.
+
+- [ ] Create block `fair-audience/fair-form-conditional`
+  - [ ] `block.json` - attributes: `conditionQuestionKey` (string, which question to watch), `conditionOperator` (string: `equals`, `not_equals`, `contains`, `not_empty`), `conditionValue` (string, the value to match against)
+  - [ ] `parent: ["fair-audience/fair-form"]` - can only be placed inside the main form
+  - [ ] Uses InnerBlocks - can contain any of the same blocks the fair-form allows (question blocks, core/heading, core/paragraph, core/list) plus other conditional sections (nesting)
+  - [ ] `editor.js` - InnerBlocks container with InspectorControls for condition settings. Show a dropdown of available question keys (populated from sibling blocks via `useSelect` + `getBlocks`). Visual indicator showing the condition rule
+  - [ ] `render.php` - wraps `$content` in a `<div>` with data attributes: `data-fair-form-conditional`, `data-condition-question-key`, `data-condition-operator`, `data-condition-value`. Hidden by default via CSS (`display: none`)
+  - [ ] `style.css` - default hidden state, visible state when `.fair-form-conditional-visible`
+  - [ ] `editor.css` - always visible in editor with a visual border/label showing the condition
+- [ ] Update parent `frontend.js`
+  - [ ] On form load and on input change, evaluate all `[data-fair-form-conditional]` elements
+  - [ ] For each conditional section, find the question element matching `data-condition-question-key`, read its current value, apply the operator, toggle `.fair-form-conditional-visible` class
+  - [ ] Listen to `change` and `input` events on all form inputs to re-evaluate conditions
+  - [ ] When collecting answers, skip questions inside hidden conditional sections (not visible = not submitted)
+  - [ ] When validating required fields, skip those inside hidden conditional sections
+- [ ] Update parent `editor.js` - add `fair-audience/fair-form-conditional` to ALLOWED_BLOCKS
+- [ ] Register block in `BlockHooks.php`
+- [ ] Test: create form with a radio/select question, add conditional section that shows only when a specific option is selected, verify show/hide on frontend, verify hidden answers are not submitted
+
+### Condition operators
+
+| Operator | Description | Use case |
+|---|---|---|
+| `equals` | Exact match against `conditionValue` | Show section when "Yes" is selected |
+| `not_equals` | Does not match `conditionValue` | Show section when anything except "No" is selected |
+| `contains` | Value contains `conditionValue` (for multiselect JSON) | Show section when "Other" is among checked options |
+| `not_empty` | Any non-empty value (ignores `conditionValue`) | Show section when any answer is provided |
+
+### Example frontend logic
+
+```javascript
+function evaluateConditionals(form) {
+    const conditionals = form.querySelectorAll('[data-fair-form-conditional]');
+    conditionals.forEach((section) => {
+        const questionKey = section.dataset.conditionQuestionKey;
+        const operator = section.dataset.conditionOperator;
+        const expectedValue = section.dataset.conditionValue;
+
+        const questionEl = form.querySelector(
+            `[data-fair-form-question][data-question-key="${questionKey}"]`
+        );
+        if (!questionEl) {
+            section.classList.remove('fair-form-conditional-visible');
+            return;
+        }
+
+        const currentValue = getQuestionValue(questionEl);
+        const visible = evaluateCondition(currentValue, operator, expectedValue);
+        section.classList.toggle('fair-form-conditional-visible', visible);
+    });
+}
+```
 
 ## Architecture Notes
 
@@ -108,5 +166,12 @@ Parent's `frontend.js` collects all `[data-fair-form-question]` elements to buil
 
 - Question blocks use inline editing: editable `<input>` for question text (styled as label), disabled input/textarea as answer preview
 - Question key auto-derives from question text until manually edited in sidebar
-- Blocks with compatible attributes support transforms between each other
+- Blocks with compatible attributes support transforms between each other (including inner blocks)
 - Allowed blocks list lives in parent's `editor.js` (ALLOWED_BLOCKS constant), not in block.json
+
+### Option blocks architecture
+
+- `fair-form-option` is a shared child block used by select-one, multiselect, and radio
+- Options are draggable/reorderable via WordPress InnerBlocks
+- Parent blocks iterate `$block->inner_blocks` in render.php to build HTML (option block's own render.php returns empty)
+- Transforms between option-based blocks preserve inner blocks
