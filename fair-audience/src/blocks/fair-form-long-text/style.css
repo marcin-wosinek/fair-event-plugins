@@ -1,0 +1,21 @@
+.fair-form-question-long-text label {
+	display: block;
+	margin-bottom: 0.25em;
+	font-weight: 600;
+}
+
+.fair-form-question-long-text textarea {
+	width: 100%;
+	padding: 8px 12px;
+	border: 1px solid #8c8f94;
+	border-radius: 4px;
+	font-size: inherit;
+	line-height: 1.5;
+	resize: vertical;
+}
+
+.fair-form-question-text-input {
+	margin-top: 8px;
+	font-style: italic;
+	opacity: 0.7;
+}

@@ -31,6 +31,9 @@ class BlockHooks {
 		register_block_type( FAIR_AUDIENCE_PLUGIN_DIR . 'build/blocks/event-signup' );
 		register_block_type( FAIR_AUDIENCE_PLUGIN_DIR . 'build/blocks/signups-list' );
 		register_block_type( FAIR_AUDIENCE_PLUGIN_DIR . 'build/blocks/audience-signup' );
+		register_block_type( FAIR_AUDIENCE_PLUGIN_DIR . 'build/blocks/fair-form' );
+		register_block_type( FAIR_AUDIENCE_PLUGIN_DIR . 'build/blocks/fair-form-short-text' );
+		register_block_type( FAIR_AUDIENCE_PLUGIN_DIR . 'build/blocks/fair-form-long-text' );
 
 		// Set script translations for mailing-signup blocks (editor scripts).
 		wp_set_script_translations(
@@ -77,6 +80,34 @@ class BlockHooks {
 		// Set script translations for audience-signup blocks (frontend scripts).
 		wp_set_script_translations(
 			'fair-audience-audience-signup-view-script',
+			'fair-audience',
+			FAIR_AUDIENCE_PLUGIN_DIR . 'build/languages'
+		);
+
+		// Set script translations for fair-form blocks (editor scripts).
+		wp_set_script_translations(
+			'fair-audience-fair-form-editor-script',
+			'fair-audience',
+			FAIR_AUDIENCE_PLUGIN_DIR . 'build/languages'
+		);
+
+		// Set script translations for fair-form blocks (frontend scripts).
+		wp_set_script_translations(
+			'fair-audience-fair-form-view-script',
+			'fair-audience',
+			FAIR_AUDIENCE_PLUGIN_DIR . 'build/languages'
+		);
+
+		// Set script translations for fair-form-short-text blocks (editor scripts).
+		wp_set_script_translations(
+			'fair-audience-fair-form-short-text-editor-script',
+			'fair-audience',
+			FAIR_AUDIENCE_PLUGIN_DIR . 'build/languages'
+		);
+
+		// Set script translations for fair-form-long-text blocks (editor scripts).
+		wp_set_script_translations(
+			'fair-audience-fair-form-long-text-editor-script',
 			'fair-audience',
 			FAIR_AUDIENCE_PLUGIN_DIR . 'build/languages'
 		);

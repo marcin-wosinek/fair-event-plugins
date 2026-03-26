@@ -1,0 +1,41 @@
+{
+	"$schema": "https://schemas.wp.org/trunk/block.json",
+	"apiVersion": 3,
+	"name": "fair-audience/fair-form-long-text",
+	"version": "1.0.0",
+	"title": "Long Text Question",
+	"category": "widgets",
+	"icon": "editor-paragraph",
+	"description": "A long text (textarea) question for Fair Form",
+	"keywords": ["question", "textarea", "long text"],
+	"textdomain": "fair-audience",
+	"parent": ["fair-audience/fair-form"],
+	"supports": {
+		"html": false
+	},
+	"attributes": {
+		"questionText": {
+			"type": "string",
+			"default": ""
+		},
+		"questionKey": {
+			"type": "string",
+			"default": ""
+		},
+		"required": {
+			"type": "boolean",
+			"default": false
+		},
+		"placeholder": {
+			"type": "string",
+			"default": ""
+		},
+		"rows": {
+			"type": "integer",
+			"default": 4
+		}
+	},
+	"editorScript": "file:./editor.js",
+	"render": "file:./render.php",
+	"style": "file:./style-frontend.css"
+}

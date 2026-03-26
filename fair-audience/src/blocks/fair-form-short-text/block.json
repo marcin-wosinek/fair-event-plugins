@@ -1,0 +1,37 @@
+{
+	"$schema": "https://schemas.wp.org/trunk/block.json",
+	"apiVersion": 3,
+	"name": "fair-audience/fair-form-short-text",
+	"version": "1.0.0",
+	"title": "Short Text Question",
+	"category": "widgets",
+	"icon": "editor-textcolor",
+	"description": "A short text input question for Fair Form",
+	"keywords": ["question", "text", "input"],
+	"textdomain": "fair-audience",
+	"parent": ["fair-audience/fair-form"],
+	"supports": {
+		"html": false
+	},
+	"attributes": {
+		"questionText": {
+			"type": "string",
+			"default": ""
+		},
+		"questionKey": {
+			"type": "string",
+			"default": ""
+		},
+		"required": {
+			"type": "boolean",
+			"default": false
+		},
+		"placeholder": {
+			"type": "string",
+			"default": ""
+		}
+	},
+	"editorScript": "file:./editor.js",
+	"render": "file:./render.php",
+	"style": "file:./style-frontend.css"
+}

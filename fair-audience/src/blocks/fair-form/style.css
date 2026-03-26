@@ -1,0 +1,73 @@
+.fair-form {
+	max-width: 600px;
+}
+
+.fair-form-form p {
+	margin-bottom: 1em;
+}
+
+.fair-form-form label {
+	display: block;
+	margin-bottom: 0.25em;
+	font-weight: 600;
+}
+
+.fair-form-form input[type="text"],
+.fair-form-form input[type="email"],
+.fair-form-form textarea,
+.fair-form-form select {
+	width: 100%;
+	padding: 8px 12px;
+	border: 1px solid #8c8f94;
+	border-radius: 4px;
+	font-size: inherit;
+	line-height: 1.5;
+}
+
+.fair-form-form input[type="text"]:focus,
+.fair-form-form input[type="email"]:focus,
+.fair-form-form textarea:focus,
+.fair-form-form select:focus {
+	border-color: #2271b1;
+	box-shadow: 0 0 0 1px #2271b1;
+	outline: none;
+}
+
+.fair-form-form .required {
+	color: #d63638;
+}
+
+.fair-form-question {
+	margin-bottom: 1em;
+}
+
+.fair-form-keep-informed {
+	margin-top: 1em;
+}
+
+.fair-form-keep-informed label {
+	display: inline;
+	font-weight: normal;
+}
+
+.fair-form-keep-informed input[type="checkbox"] {
+	margin-right: 0.5em;
+}
+
+.fair-form-message {
+	margin-top: 1em;
+	padding: 12px 16px;
+	border-radius: 4px;
+}
+
+.fair-form-message-success {
+	background-color: #edfaef;
+	border: 1px solid #00a32a;
+	color: #00a32a;
+}
+
+.fair-form-message-error {
+	background-color: #fcf0f1;
+	border: 1px solid #d63638;
+	color: #d63638;
+}

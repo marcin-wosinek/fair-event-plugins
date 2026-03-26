@@ -1,0 +1,63 @@
+.fair-form {
+	border: 1px solid #ddd;
+	border-radius: 4px;
+	padding: 16px;
+}
+
+.fair-form-editor-header {
+	margin-bottom: 12px;
+	padding-bottom: 8px;
+	border-bottom: 1px solid #eee;
+}
+
+.fair-form-editor-label {
+	font-weight: 600;
+	font-size: 14px;
+	color: #1e1e1e;
+}
+
+.fair-form-editor-fields {
+	margin-bottom: 16px;
+	padding: 12px;
+	background: #f9f9f9;
+	border-radius: 4px;
+}
+
+.fair-form-editor-field {
+	margin-bottom: 8px;
+}
+
+.fair-form-editor-field:last-child {
+	margin-bottom: 0;
+}
+
+.fair-form-editor-field label {
+	display: block;
+	font-size: 13px;
+	margin-bottom: 4px;
+}
+
+.fair-form-editor-field input {
+	width: 100%;
+	padding: 4px 8px;
+	border: 1px solid #ddd;
+	border-radius: 2px;
+	background: #fff;
+}
+
+.fair-form-editor-field input[type="checkbox"] {
+	width: auto;
+	margin-right: 6px;
+}
+
+.fair-form-inner-blocks {
+	min-height: 40px;
+	margin: 16px 0;
+	padding: 8px;
+	border: 1px dashed #ccc;
+	border-radius: 4px;
+}
+
+.fair-form-editor-footer {
+	margin-top: 12px;
+}

@@ -1,0 +1,43 @@
+{
+	"$schema": "https://schemas.wp.org/trunk/block.json",
+	"apiVersion": 3,
+	"name": "fair-audience/fair-form",
+	"version": "1.0.0",
+	"title": "Fair Form",
+	"category": "widgets",
+	"icon": "feedback",
+	"description": "A composable questionnaire form with nested question blocks",
+	"keywords": ["form", "questionnaire", "survey", "signup"],
+	"textdomain": "fair-audience",
+	"supports": {
+		"html": false,
+		"align": ["wide", "full"],
+		"spacing": {
+			"padding": true,
+			"margin": ["top", "bottom"]
+		}
+	},
+	"attributes": {
+		"submitButtonText": {
+			"type": "string",
+			"default": "Submit"
+		},
+		"successMessage": {
+			"type": "string",
+			"default": "Thank you for your submission!"
+		},
+		"showKeepInformed": {
+			"type": "boolean",
+			"default": false
+		},
+		"eventDateId": {
+			"type": "integer",
+			"default": 0
+		}
+	},
+	"editorScript": "file:./editor.js",
+	"viewScript": "file:./frontend.js",
+	"render": "file:./render.php",
+	"style": ["wp-block-button", "file:./style-frontend.css"],
+	"editorStyle": "file:./editor.css"
+}
