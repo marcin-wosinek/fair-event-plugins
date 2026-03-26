@@ -27,6 +27,7 @@ class QuestionnaireAnswer {
 		'select',
 		'number',
 		'date',
+		'multiselect',
 	);
 
 	/**

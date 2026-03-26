@@ -147,7 +147,7 @@ class FairFormController extends WP_REST_Controller {
 									'question_type' => array(
 										'type'     => 'string',
 										'required' => true,
-										'enum'     => array( 'radio', 'checkbox', 'short_text', 'long_text', 'select', 'number', 'date' ),
+										'enum'     => array( 'radio', 'checkbox', 'short_text', 'long_text', 'select', 'number', 'date', 'multiselect' ),
 									),
 									'answer_value'  => array(
 										'type'     => 'string',

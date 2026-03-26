@@ -22,6 +22,8 @@ const ALLOWED_BLOCKS = [
 	'core/list',
 	'fair-audience/fair-form-short-text',
 	'fair-audience/fair-form-long-text',
+	'fair-audience/fair-form-select-one',
+	'fair-audience/fair-form-multiselect',
 ];
 
 registerBlockType('fair-audience/fair-form', {

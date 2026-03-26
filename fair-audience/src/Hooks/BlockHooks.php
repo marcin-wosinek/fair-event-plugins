@@ -34,6 +34,8 @@ class BlockHooks {
 		register_block_type( FAIR_AUDIENCE_PLUGIN_DIR . 'build/blocks/fair-form' );
 		register_block_type( FAIR_AUDIENCE_PLUGIN_DIR . 'build/blocks/fair-form-short-text' );
 		register_block_type( FAIR_AUDIENCE_PLUGIN_DIR . 'build/blocks/fair-form-long-text' );
+		register_block_type( FAIR_AUDIENCE_PLUGIN_DIR . 'build/blocks/fair-form-select-one' );
+		register_block_type( FAIR_AUDIENCE_PLUGIN_DIR . 'build/blocks/fair-form-multiselect' );
 
 		// Set script translations for mailing-signup blocks (editor scripts).
 		wp_set_script_translations(
@@ -108,6 +110,20 @@ class BlockHooks {
 		// Set script translations for fair-form-long-text blocks (editor scripts).
 		wp_set_script_translations(
 			'fair-audience-fair-form-long-text-editor-script',
+			'fair-audience',
+			FAIR_AUDIENCE_PLUGIN_DIR . 'build/languages'
+		);
+
+		// Set script translations for fair-form-select-one blocks (editor scripts).
+		wp_set_script_translations(
+			'fair-audience-fair-form-select-one-editor-script',
+			'fair-audience',
+			FAIR_AUDIENCE_PLUGIN_DIR . 'build/languages'
+		);
+
+		// Set script translations for fair-form-multiselect blocks (editor scripts).
+		wp_set_script_translations(
+			'fair-audience-fair-form-multiselect-editor-script',
 			'fair-audience',
 			FAIR_AUDIENCE_PLUGIN_DIR . 'build/languages'
 		);

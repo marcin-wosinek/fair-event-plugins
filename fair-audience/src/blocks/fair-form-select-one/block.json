@@ -1,13 +1,13 @@
 {
 	"$schema": "https://schemas.wp.org/trunk/block.json",
 	"apiVersion": 3,
-	"name": "fair-audience/fair-form-short-text",
+	"name": "fair-audience/fair-form-select-one",
 	"version": "1.0.0",
-	"title": "Short Text Question",
+	"title": "Select One Question",
 	"category": "widgets",
-	"icon": "editor-textcolor",
-	"description": "A short text input question for Fair Form",
-	"keywords": ["question", "text", "input"],
+	"icon": "yes",
+	"description": "A single-choice question (select or radio) for Fair Form",
+	"keywords": ["question", "select", "radio", "choice"],
 	"textdomain": "fair-audience",
 	"parent": ["fair-audience/fair-form"],
 	"supports": {
@@ -26,9 +26,13 @@
 			"type": "boolean",
 			"default": false
 		},
-		"placeholder": {
+		"options": {
+			"type": "array",
+			"default": []
+		},
+		"displayAs": {
 			"type": "string",
-			"default": ""
+			"default": "select"
 		}
 	},
 	"editorScript": "file:./editor.js",

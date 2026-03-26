@@ -27,16 +27,32 @@ function collectQuestionAnswers(form) {
 	const answers = [];
 
 	questionElements.forEach((el, index) => {
-		const input = el.querySelector('input, textarea, select');
-		if (!input) {
-			return;
+		const questionType = el.dataset.questionType;
+		let answerValue = '';
+
+		if (questionType === 'multiselect') {
+			// Collect all checked checkboxes and JSON-encode.
+			const checked = el.querySelectorAll(
+				'input[type="checkbox"]:checked'
+			);
+			const values = Array.from(checked).map((cb) => cb.value);
+			answerValue = JSON.stringify(values);
+		} else {
+			// For select, radio, text, textarea - get value from first input/select/textarea.
+			const input = el.querySelector(
+				'input:checked, select, input, textarea'
+			);
+			if (!input) {
+				return;
+			}
+			answerValue = input.value;
 		}
 
 		answers.push({
 			question_key: el.dataset.questionKey,
 			question_text: el.dataset.questionText,
-			question_type: el.dataset.questionType,
-			answer_value: input.value,
+			question_type: questionType,
+			answer_value: answerValue,
 			display_order: index,
 		});
 	});
@@ -67,8 +83,21 @@ function validateForm(form) {
 		'[data-fair-form-question][data-required="1"]'
 	);
 	for (const el of requiredQuestions) {
-		const input = el.querySelector('input, textarea, select');
-		if (!input || !input.value.trim()) {
+		const questionType = el.dataset.questionType;
+		let hasValue = false;
+
+		if (questionType === 'multiselect') {
+			hasValue =
+				el.querySelectorAll('input[type="checkbox"]:checked').length >
+				0;
+		} else if (el.querySelector('input[type="radio"]')) {
+			hasValue = !!el.querySelector('input[type="radio"]:checked');
+		} else {
+			const input = el.querySelector('input, textarea, select');
+			hasValue = input && input.value.trim() !== '';
+		}
+
+		if (!hasValue) {
 			const questionText = el.dataset.questionText || '';
 			return (
 				__('Please answer the required question: ', 'fair-audience') +

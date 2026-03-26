@@ -1,0 +1,58 @@
+.fair-form-question-select-one .fair-form-question-label-input {
+	border: none;
+	border-bottom: 1px dashed #8c8f94;
+	background: transparent;
+	font-weight: 600;
+	padding: 2px 0;
+	font-size: inherit;
+	width: auto;
+}
+
+.fair-form-question-select-one .fair-form-question-label-input:focus {
+	outline: none;
+	border-bottom-color: #2271b1;
+}
+
+.fair-form-question-select-one select {
+	width: 100%;
+	padding: 8px 12px;
+	border: 1px solid #8c8f94;
+	border-radius: 4px;
+	font-size: inherit;
+	line-height: 1.5;
+}
+
+.fair-form-question-select-one select:disabled {
+	background: #f0f0f0;
+}
+
+.fair-form-radio-fieldset {
+	border: none;
+	padding: 0;
+	margin: 0.25em 0 0;
+}
+
+.fair-form-radio-label {
+	display: block;
+	margin-bottom: 0.25em;
+	font-weight: normal;
+}
+
+.fair-form-radio-label input[type="radio"] {
+	margin-right: 0.5em;
+}
+
+.fair-form-radio-preview {
+	display: block;
+	margin-top: 0.25em;
+}
+
+.fair-form-radio-preview label {
+	display: block;
+	margin-bottom: 0.25em;
+	font-weight: normal;
+}
+
+.fair-form-radio-preview input[type="radio"] {
+	margin-right: 0.5em;
+}

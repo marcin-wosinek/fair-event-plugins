@@ -33,25 +33,28 @@ Goal: working end-to-end form with InnerBlocks architecture.
 
 Goal: option-based question types.
 
-- [ ] DB migration: add `multiselect` to `question_type` ENUM
-  - [ ] Update `src/Database/Schema.php` ENUM definition
-  - [ ] Add migration v1.25.0 in `fair-audience.php`
-  - [ ] Update `VALID_QUESTION_TYPES` in `src/Models/QuestionnaireAnswer.php`
-- [ ] Create child block `fair-audience/fair-form-select-one`
-  - [ ] `block.json` - attributes: questionText, questionKey, required, options (array of strings), displayAs (select|radio)
-  - [ ] `editor.js` - option list builder in InspectorControls, preview of select/radio
-  - [ ] `render.php` - `<select>` or radio fieldset based on displayAs attribute, with data-attribute convention
-  - [ ] `style.css`
-- [ ] Create child block `fair-audience/fair-form-multiselect`
-  - [ ] `block.json` - attributes: questionText, questionKey, required, options (array of strings)
-  - [ ] `editor.js` - option list builder, checkbox group preview
-  - [ ] `render.php` - checkbox fieldset, `data-question-type="multiselect"`
-  - [ ] `style.css`
-- [ ] Update parent `frontend.js` - handle multiselect (collect checked checkboxes, JSON-encode values)
-- [ ] Update parent `editor.js` - add new blocks to ALLOWED_BLOCKS array
-- [ ] Add block transforms between select-one and multiselect (both directions)
-- [ ] Use `generateQuestionKey()` from `shared/question-utils.js` for auto-key derivation
-- [ ] Register new blocks in `BlockHooks.php`
+- [x] DB migration: add `multiselect` to `question_type` ENUM
+  - [x] Update `src/Database/Schema.php` ENUM definition
+  - [x] Add migration v1.25.0 in `fair-audience.php`
+  - [x] Update `VALID_QUESTION_TYPES` in `src/Models/QuestionnaireAnswer.php`
+  - [x] Update `enum` in `src/API/FairFormController.php`
+- [x] Create child block `fair-audience/fair-form-select-one`
+  - [x] `block.json` - attributes: questionText, questionKey, required, options (array of strings), displayAs (select|radio)
+  - [x] `editor.js` - option list builder in InspectorControls, preview of select/radio
+  - [x] `render.php` - `<select>` or radio fieldset based on displayAs attribute, with data-attribute convention
+  - [x] `style.css`
+- [x] Create child block `fair-audience/fair-form-multiselect`
+  - [x] `block.json` - attributes: questionText, questionKey, required, options (array of strings)
+  - [x] `editor.js` - option list builder, checkbox group preview
+  - [x] `render.php` - checkbox fieldset, `data-question-type="multiselect"`
+  - [x] `style.css`
+- [x] Create `src/blocks/shared/OptionsEditor.js` - reusable options list editor component
+- [x] Update parent `frontend.js` - handle multiselect (collect checked checkboxes, JSON-encode values) + radio validation
+- [x] Update parent `editor.js` - add new blocks to ALLOWED_BLOCKS array
+- [x] Add block transforms between select-one and multiselect (both directions)
+- [x] Use `generateQuestionKey()` from `shared/question-utils.js` for auto-key derivation
+- [x] Register new blocks in `BlockHooks.php`
+- [x] Fix child block.json `style` field to reference `style-editor.css` (no viewScript means no `style-frontend.css`)
 - [ ] Test: add select-one and multiselect questions, submit, verify answers stored correctly
 
 ## Phase 3: File upload question block

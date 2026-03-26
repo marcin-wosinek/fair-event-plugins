@@ -1,13 +1,13 @@
 {
 	"$schema": "https://schemas.wp.org/trunk/block.json",
 	"apiVersion": 3,
-	"name": "fair-audience/fair-form-short-text",
+	"name": "fair-audience/fair-form-multiselect",
 	"version": "1.0.0",
-	"title": "Short Text Question",
+	"title": "Multiselect Question",
 	"category": "widgets",
-	"icon": "editor-textcolor",
-	"description": "A short text input question for Fair Form",
-	"keywords": ["question", "text", "input"],
+	"icon": "yes-alt",
+	"description": "A multiple-choice checkbox question for Fair Form",
+	"keywords": ["question", "checkbox", "multiselect", "multiple"],
 	"textdomain": "fair-audience",
 	"parent": ["fair-audience/fair-form"],
 	"supports": {
@@ -26,9 +26,9 @@
 			"type": "boolean",
 			"default": false
 		},
-		"placeholder": {
-			"type": "string",
-			"default": ""
+		"options": {
+			"type": "array",
+			"default": []
 		}
 	},
 	"editorScript": "file:./editor.js",

@@ -37,5 +37,5 @@
 	},
 	"editorScript": "file:./editor.js",
 	"render": "file:./render.php",
-	"style": "file:./style-frontend.css"
+	"style": "file:./style-editor.css"
 }

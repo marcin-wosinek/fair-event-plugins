@@ -70,7 +70,7 @@ function fair_audience_activate() {
 	dbDelta( \FairAudience\Database\Schema::get_participant_categories_table_sql() );
 
 	// Update database version.
-	update_option( 'fair_audience_db_version', '1.24.0' );
+	update_option( 'fair_audience_db_version', '1.25.0' );
 }
 register_activation_hook( __FILE__, __NAMESPACE__ . '\\fair_audience_activate' );
 
@@ -464,6 +464,19 @@ function fair_audience_maybe_upgrade_db() {
 		dbDelta( \FairAudience\Database\Schema::get_polls_table_sql() );
 
 		update_option( 'fair_audience_db_version', '1.24.0' );
+	}
+
+	if ( version_compare( $db_version, '1.25.0', '<' ) ) {
+		global $wpdb;
+
+		// Add 'multiselect' to the question_type ENUM.
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.DirectDatabaseQuery.SchemaChange
+		$wpdb->query(
+			"ALTER TABLE {$wpdb->prefix}fair_audience_questionnaire_answers
+			MODIFY question_type ENUM('radio','checkbox','short_text','long_text','select','number','date','multiselect') NOT NULL DEFAULT 'short_text'"
+		);
+
+		update_option( 'fair_audience_db_version', '1.25.0' );
 	}
 }
 add_action( 'plugins_loaded', __NAMESPACE__ . '\\fair_audience_maybe_upgrade_db' );
