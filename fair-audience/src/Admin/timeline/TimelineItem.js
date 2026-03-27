@@ -14,7 +14,7 @@ function getIcon(type) {
 	const icons = {
 		signup: 'groups',
 		form_submission: 'forms',
-		payment: 'money-alt',
+		fee: 'money-alt',
 		email: 'email',
 		instagram: 'camera',
 		poll: 'chart-bar',
@@ -33,7 +33,7 @@ function getTypeColor(type) {
 	const colors = {
 		signup: '#007cba',
 		form_submission: '#9b59b6',
-		payment: '#00a32a',
+		fee: '#00a32a',
 		email: '#e67e22',
 		instagram: '#e91e63',
 		poll: '#3498db',
@@ -76,6 +76,34 @@ function getRelativeTime(dateString) {
 	}
 
 	return date.toLocaleDateString();
+}
+
+/**
+ * Fee summary content component.
+ *
+ * @param {Object} props Props.
+ * @param {Object} props.item Timeline item with fee details.
+ * @return {JSX.Element} Fee summary.
+ */
+function FeeContent({ item }) {
+	const { details } = item;
+	const feeUrl = `admin.php?page=fair-audience-fee-detail&fee_id=${details.fee_id}`;
+
+	return (
+		<div style={{ fontSize: '13px', lineHeight: '1.6' }}>
+			<div>
+				{__('Membership fee', 'fair-audience')}{' '}
+				<a href={feeUrl}>
+					<strong>{details.fee_name}</strong>
+				</a>
+			</div>
+			<div>
+				{__('Already paid:', 'fair-audience')}{' '}
+				{Number(details.total_paid).toFixed(2)} {details.currency}.{' '}
+				{__('Pending:', 'fair-audience')} {details.pending_text}
+			</div>
+		</div>
+	);
 }
 
 /**
@@ -122,9 +150,18 @@ export default function TimelineItem({ item }) {
 						/>
 					</div>
 					<div style={{ flex: 1, minWidth: 0 }}>
-						<div style={{ fontSize: '13px', lineHeight: '1.5' }}>
-							{item.summary}
-						</div>
+						{item.type === 'fee' ? (
+							<FeeContent item={item} />
+						) : (
+							<div
+								style={{
+									fontSize: '13px',
+									lineHeight: '1.5',
+								}}
+							>
+								{item.summary}
+							</div>
+						)}
 						<div
 							style={{
 								fontSize: '12px',

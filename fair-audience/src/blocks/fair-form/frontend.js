@@ -20,6 +20,43 @@ function setupFormSubmission(form) {
 		e.preventDefault();
 		submitForm(form);
 	});
+
+	// Set up file upload previews.
+	const fileInputs = form.querySelectorAll(
+		'[data-question-type="file_upload"] input[type="file"]'
+	);
+	fileInputs.forEach((input) => {
+		input.addEventListener('change', () => handleFilePreview(input));
+	});
+}
+
+function handleFilePreview(input) {
+	const wrapper = input.closest('[data-fair-form-question]');
+	// Remove existing preview.
+	const existing = wrapper.querySelector('.fair-form-file-preview');
+	if (existing) {
+		existing.remove();
+	}
+
+	if (!input.files || input.files.length === 0) {
+		return;
+	}
+
+	const file = input.files[0];
+	if (!file.type.startsWith('image/')) {
+		return;
+	}
+
+	const preview = document.createElement('div');
+	preview.className = 'fair-form-file-preview';
+
+	const img = document.createElement('img');
+	img.alt = file.name;
+	img.src = URL.createObjectURL(file);
+	img.onload = () => URL.revokeObjectURL(img.src);
+
+	preview.appendChild(img);
+	wrapper.appendChild(preview);
 }
 
 function collectQuestionAnswers(form) {
@@ -270,6 +307,9 @@ function submitForm(form) {
 				'fair-form'
 			);
 			form.reset();
+			form.querySelectorAll('.fair-form-file-preview').forEach((el) =>
+				el.remove()
+			);
 		})
 		.catch((error) => {
 			const msg = extractErrorMessage(
