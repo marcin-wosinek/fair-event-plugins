@@ -87,6 +87,9 @@ const TransactionsApp = () => {
 	});
 	const [loading, setLoading] = useState(true);
 	const [error, setError] = useState(null);
+	const [success, setSuccess] = useState(null);
+	const [selectedTransactions, setSelectedTransactions] = useState(new Set());
+	const [isImporting, setIsImporting] = useState(false);
 
 	const loadTransactions = useCallback(async () => {
 		setLoading(true);
@@ -140,6 +143,164 @@ const TransactionsApp = () => {
 		return sort.order === 'asc' ? ' \u25B2' : ' \u25BC';
 	};
 
+	const toggleTransactionSelection = (id) => {
+		setSelectedTransactions((prev) => {
+			const next = new Set(prev);
+			if (next.has(id)) {
+				next.delete(id);
+			} else {
+				next.add(id);
+			}
+			return next;
+		});
+	};
+
+	const toggleAllTransactions = () => {
+		if (selectedTransactions.size === transactions.length) {
+			setSelectedTransactions(new Set());
+		} else {
+			setSelectedTransactions(new Set(transactions.map((t) => t.id)));
+		}
+	};
+
+	const handleExport = () => {
+		const sourceDomain = window.location.hostname;
+		const siteUrl = window.location.origin;
+
+		const toExport = transactions
+			.filter((t) => selectedTransactions.has(t.id))
+			.map((t) => ({
+				amount: t.amount,
+				currency: t.currency,
+				mollie_fee: t.mollie_fee,
+				application_fee: t.application_fee,
+				description: t.description,
+				created_at: t.created_at,
+				mollie_payment_id: t.mollie_payment_id,
+				source_domain: sourceDomain,
+				detail_url: `${siteUrl}/wp-admin/admin.php?page=fair-payment-transaction&transaction_id=${t.id}`,
+			}));
+
+		const blob = new Blob([JSON.stringify(toExport, null, 2)], {
+			type: 'application/json',
+		});
+		const url = URL.createObjectURL(blob);
+		const a = document.createElement('a');
+		a.href = url;
+		a.download = 'transactions.json';
+		a.click();
+		URL.revokeObjectURL(url);
+		setSuccess(
+			// translators: %d is the number of exported transactions
+			__('%d transaction(s) exported.', 'fair-payment').replace(
+				'%d',
+				toExport.length
+			)
+		);
+	};
+
+	const handleImport = async (e) => {
+		const file = e.target.files[0];
+		if (!file) {
+			return;
+		}
+
+		// Reset the input so the same file can be re-selected
+		e.target.value = '';
+
+		setIsImporting(true);
+		setError(null);
+		setSuccess(null);
+
+		try {
+			const text = await file.text();
+			const imported = JSON.parse(text);
+
+			if (!Array.isArray(imported)) {
+				throw new Error(
+					__(
+						'Invalid file format. Expected a JSON array.',
+						'fair-payment'
+					)
+				);
+			}
+
+			const entries = imported
+				.filter((t) => t.amount && t.created_at)
+				.map((t) => {
+					const entryDate = t.created_at.split(' ')[0];
+					const feeParts = [];
+					if (t.mollie_fee !== null && t.mollie_fee !== undefined) {
+						feeParts.push(
+							`Mollie fee: ${Number(t.mollie_fee).toFixed(2)} ${
+								t.currency || 'EUR'
+							}`
+						);
+					}
+					if (
+						t.application_fee !== null &&
+						t.application_fee !== undefined
+					) {
+						feeParts.push(
+							`App fee: ${Number(t.application_fee).toFixed(2)} ${
+								t.currency || 'EUR'
+							}`
+						);
+					}
+					const feeInfo =
+						feeParts.length > 0 ? ` (${feeParts.join(', ')})` : '';
+					const sourceInfo = t.source_domain
+						? ` [${t.source_domain}]`
+						: '';
+					const urlInfo = t.detail_url ? ` ${t.detail_url}` : '';
+
+					const description = `${
+						t.description || ''
+					}${feeInfo}${sourceInfo}${urlInfo}`.trim();
+
+					const refId =
+						t.mollie_payment_id ||
+						`amount_${t.amount}_${entryDate}`;
+					const refDomain = t.source_domain || 'unknown';
+
+					return {
+						amount: Math.abs(t.amount),
+						entry_type: 'income',
+						entry_date: entryDate,
+						description,
+						external_reference: `mollie_${refDomain}_${refId}`,
+					};
+				});
+
+			if (entries.length === 0) {
+				throw new Error(
+					__(
+						'No valid transactions found in the file.',
+						'fair-payment'
+					)
+				);
+			}
+
+			const response = await apiFetch({
+				path: '/fair-payment/v1/financial-entries/import',
+				method: 'POST',
+				data: {
+					entries,
+					import_source: file.name,
+				},
+			});
+
+			setSuccess(response.message);
+		} catch (err) {
+			setError(
+				err.message ||
+					__('Failed to import transactions.', 'fair-payment')
+			);
+		} finally {
+			setIsImporting(false);
+		}
+	};
+
 	const sortableHeader = (column, label) => (
 		<th style={{ cursor: 'pointer' }} onClick={() => handleSort(column)}>
 			{label}
@@ -168,45 +329,92 @@ const TransactionsApp = () => {
 
 			<Card>
 				<CardHeader>
-					<HStack>
-						<SelectControl
-							label={__('Status', 'fair-payment')}
-							value={filters.status}
-							options={STATUS_OPTIONS}
-							onChange={(value) => {
-								setFilters((prev) => ({
-									...prev,
-									status: value,
-								}));
-								setPagination((prev) => ({
-									...prev,
-									page: 1,
-								}));
-							}}
-							__nextHasNoMarginBottom
-						/>
-						<SelectControl
-							label={__('Mode', 'fair-payment')}
-							value={filters.mode}
-							options={MODE_OPTIONS}
-							onChange={(value) => {
-								setFilters((prev) => ({
-									...prev,
-									mode: value,
-								}));
-								setPagination((prev) => ({
-									...prev,
-									page: 1,
-								}));
-							}}
-							__nextHasNoMarginBottom
-						/>
+					<HStack justify="space-between">
+						<HStack>
+							<SelectControl
+								label={__('Status', 'fair-payment')}
+								value={filters.status}
+								options={STATUS_OPTIONS}
+								onChange={(value) => {
+									setFilters((prev) => ({
+										...prev,
+										status: value,
+									}));
+									setPagination((prev) => ({
+										...prev,
+										page: 1,
+									}));
+								}}
+								__nextHasNoMarginBottom
+							/>
+							<SelectControl
+								label={__('Mode', 'fair-payment')}
+								value={filters.mode}
+								options={MODE_OPTIONS}
+								onChange={(value) => {
+									setFilters((prev) => ({
+										...prev,
+										mode: value,
+									}));
+									setPagination((prev) => ({
+										...prev,
+										page: 1,
+									}));
+								}}
+								__nextHasNoMarginBottom
+							/>
+						</HStack>
+						<HStack spacing={2} expanded={false}>
+							{selectedTransactions.size > 0 && (
+								<Button
+									variant="secondary"
+									onClick={handleExport}
+								>
+									{__('Export Selected', 'fair-payment')}
+								</Button>
+							)}
+							<Button
+								variant="secondary"
+								onClick={() =>
+									document
+										.getElementById(
+											'fair-payment-transaction-import'
+										)
+										.click()
+								}
+								isBusy={isImporting}
+								disabled={isImporting}
+							>
+								{__('Import', 'fair-payment')}
+							</Button>
+							<input
+								id="fair-payment-transaction-import"
+								type="file"
+								accept=".json"
+								style={{ display: 'none' }}
+								onChange={handleImport}
+							/>
+						</HStack>
 					</HStack>
 				</CardHeader>
 				<CardBody>
 					{error && (
-						<Notice status="error" isDismissible={false}>
+						<Notice
+							status="error"
+							isDismissible
+							onRemove={() => setError(null)}
+						>
 							{error}
+						</Notice>
+					)}
+
+					{success && (
+						<Notice
+							status="success"
+							isDismissible
+							onRemove={() => setSuccess(null)}
+						>
+							{success}
 						</Notice>
 					)}
 
@@ -219,6 +427,16 @@ const TransactionsApp = () => {
 							<table className="wp-list-table widefat fixed striped">
 								<thead>
 									<tr>
+										<td className="check-column">
+											<input
+												type="checkbox"
+												checked={
+													selectedTransactions.size ===
+													transactions.length
+												}
+												onChange={toggleAllTransactions}
+											/>
+										</td>
 										{sortableHeader(
 											'id',
 											__('ID', 'fair-payment')
@@ -257,6 +475,19 @@ const TransactionsApp = () => {
 								<tbody>
 									{transactions.map((t) => (
 										<tr key={t.id}>
+											<th className="check-column">
+												<input
+													type="checkbox"
+													checked={selectedTransactions.has(
+														t.id
+													)}
+													onChange={() =>
+														toggleTransactionSelection(
+															t.id
+														)
+													}
+												/>
+											</th>
 											<td>
 												<a
 													href={`admin.php?page=fair-payment-transaction&transaction_id=${t.id}`}
