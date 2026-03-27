@@ -136,23 +136,36 @@ class TimelineController extends WP_REST_Controller {
 			);
 		}
 
-		// Fee payments (conditional).
+		// Membership fees (conditional).
 		if ( $include_payments ) {
-			$payments = $this->repository->get_recent_payments( $fetch_limit );
-			foreach ( $payments as $row ) {
-				$name   = trim( $row['participant_name'] . ' ' . $row['participant_surname'] );
-				$amount = $row['amount'] . ' ' . ( $row['currency'] ?? '' );
+			$fees = $this->repository->get_recent_fees( $fetch_limit );
+			foreach ( $fees as $row ) {
+				$currency = $row['currency'] ?? 'EUR';
+
+				// Build pending breakdown string: "15 × 45€, 1 × 30€".
+				$pending_parts = array();
+				foreach ( $row['pending_groups'] as $group ) {
+					$pending_parts[] = sprintf(
+						'%d × %s %s',
+						(int) $group['count'],
+						number_format( (float) $group['amount'], 2 ),
+						$currency
+					);
+				}
+				$pending_text = $pending_parts ? implode( ', ', $pending_parts ) : '0';
 
 				$items[] = array(
-					'id'         => 'payment_' . $row['id'],
-					'type'       => 'payment',
+					'id'         => 'fee_' . $row['id'],
+					'type'       => 'fee',
 					'created_at' => $row['created_at'],
-					'summary'    => sprintf( '%s payment of %s for %s — %s', $name, $amount, $row['fee_name'], $row['status'] ),
+					'summary'    => $row['name'],
 					'details'    => array(
-						'amount'   => $row['amount'],
-						'currency' => $row['currency'] ?? '',
-						'status'   => $row['status'],
-						'fee_name' => $row['fee_name'],
+						'fee_id'       => (int) $row['id'],
+						'fee_name'     => $row['name'],
+						'currency'     => $currency,
+						'total_paid'   => (float) $row['total_paid'],
+						'pending_text' => $pending_text,
+						'status'       => $row['status'],
 					),
 				);
 			}

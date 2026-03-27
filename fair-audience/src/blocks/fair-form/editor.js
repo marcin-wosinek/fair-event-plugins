@@ -25,6 +25,7 @@ const ALLOWED_BLOCKS = [
 	'fair-audience/fair-form-select-one',
 	'fair-audience/fair-form-multiselect',
 	'fair-audience/fair-form-radio',
+	'fair-audience/fair-form-file-upload',
 ];
 
 registerBlockType('fair-audience/fair-form', {

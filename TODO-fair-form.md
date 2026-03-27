@@ -63,20 +63,20 @@ Goal: option-based question types with draggable option inner blocks.
 
 Goal: image/file upload capability.
 
-- [ ] DB migration: add `file_upload` to `question_type` ENUM (v1.26.0)
-- [ ] Create child block `fair-audience/fair-form-file-upload`
-  - [ ] `block.json` - attributes: questionText, questionKey, required, acceptedTypes (default "image/*"), maxFileSize (default 5MB)
-  - [ ] `editor.js` - upload area preview with settings
-  - [ ] `render.php` - `<input type="file">` with data attributes, client-side validation attributes
-  - [ ] `style.css`
-- [ ] Update `FairFormController.php` for multipart/form-data handling
-  - [ ] Detect file uploads in request
-  - [ ] Use `wp_handle_upload()` to process files into WP media library
-  - [ ] Store attachment ID in answer_value
-- [ ] Update parent `frontend.js` - build FormData when file inputs are present, switch from JSON to multipart submission
-- [ ] Update parent `editor.js` - add file-upload to ALLOWED_BLOCKS array
-- [ ] Use `generateQuestionKey()` from `shared/question-utils.js` for auto-key derivation
-- [ ] Register block in `BlockHooks.php`
+- [x] DB migration: add `file_upload` to `question_type` ENUM (v1.26.0)
+- [x] Create child block `fair-audience/fair-form-file-upload`
+  - [x] `block.json` - attributes: questionText, questionKey, required, acceptedTypes (default "image/*"), maxFileSize (default 5MB)
+  - [x] `editor.js` - upload area preview with settings
+  - [x] `render.php` - `<input type="file">` with data attributes, client-side validation attributes
+  - [x] `style.css`
+- [x] Update `FairFormController.php` for multipart/form-data handling
+  - [x] Detect file uploads in request
+  - [x] Use `wp_handle_upload()` to process files into WP media library
+  - [x] Store attachment ID in answer_value
+- [x] Update parent `frontend.js` - build FormData when file inputs are present, switch from JSON to multipart submission
+- [x] Update parent `editor.js` - add file-upload to ALLOWED_BLOCKS array
+- [x] Use `generateQuestionKey()` from `shared/question-utils.js` for auto-key derivation
+- [x] Register block in `BlockHooks.php`
 - [ ] Test: upload image via form, verify attachment created and answer stored
 
 ## Phase 4: Conditional sections

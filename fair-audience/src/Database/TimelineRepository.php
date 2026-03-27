@@ -73,35 +73,54 @@ class TimelineRepository {
 	}
 
 	/**
-	 * Get recent fee payments.
+	 * Get recent fees with payment summaries.
+	 *
+	 * Returns one row per fee with aggregated payment stats.
 	 *
 	 * @param int $limit Maximum number of rows.
-	 * @return array Raw rows.
+	 * @return array Raw rows with fee info and payment aggregates.
 	 */
-	public function get_recent_payments( $limit ) {
+	public function get_recent_fees( $limit ) {
 		global $wpdb;
 
-		$fp_table = $wpdb->prefix . 'fair_audience_fee_payments';
 		$f_table  = $wpdb->prefix . 'fair_audience_fees';
-		$p_table  = $wpdb->prefix . 'fair_audience_participants';
+		$fp_table = $wpdb->prefix . 'fair_audience_fee_payments';
 
-		return $wpdb->get_results(
+		// Get recent fees.
+		$fees = $wpdb->get_results(
 			$wpdb->prepare(
-				'SELECT fp.id, fp.amount, fp.status, fp.paid_at, fp.created_at,
-					f.name AS fee_name, f.currency,
-					p.name AS participant_name, p.surname AS participant_surname
-				FROM %i fp
-				LEFT JOIN %i f ON fp.fee_id = f.id
-				LEFT JOIN %i p ON fp.participant_id = p.id
-				ORDER BY fp.created_at DESC
+				'SELECT id, name, amount, currency, status, created_at
+				FROM %i
+				ORDER BY created_at DESC
 				LIMIT %d',
-				$fp_table,
 				$f_table,
-				$p_table,
 				$limit
 			),
 			ARRAY_A
 		);
+
+		// For each fee, get payment summary.
+		foreach ( $fees as &$fee ) {
+			$fee['total_paid'] = (float) $wpdb->get_var(
+				$wpdb->prepare(
+					"SELECT COALESCE(SUM(amount), 0) FROM %i WHERE fee_id = %d AND status = 'paid'",
+					$fp_table,
+					$fee['id']
+				)
+			);
+
+			// Get pending payments grouped by amount.
+			$fee['pending_groups'] = $wpdb->get_results(
+				$wpdb->prepare(
+					"SELECT amount, COUNT(*) AS count FROM %i WHERE fee_id = %d AND status = 'pending' GROUP BY amount ORDER BY count DESC",
+					$fp_table,
+					$fee['id']
+				),
+				ARRAY_A
+			);
+		}
+
+		return $fees;
 	}
 
 	/**
@@ -221,7 +240,7 @@ class TimelineRepository {
 		);
 
 		if ( $include_payments ) {
-			$tables[] = $wpdb->prefix . 'fair_audience_fee_payments';
+			$tables[] = $wpdb->prefix . 'fair_audience_fees';
 		}
 
 		foreach ( $tables as $table ) {

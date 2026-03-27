@@ -569,7 +569,7 @@ class Schema {
 			submission_id BIGINT UNSIGNED NOT NULL,
 			question_key VARCHAR(100) DEFAULT '',
 			question_text VARCHAR(500) NOT NULL,
-			question_type ENUM('radio','checkbox','short_text','long_text','select','number','date','multiselect') NOT NULL DEFAULT 'short_text',
+			question_type ENUM('radio','checkbox','short_text','long_text','select','number','date','multiselect','file_upload') NOT NULL DEFAULT 'short_text',
 			answer_value TEXT NOT NULL,
 			display_order INT DEFAULT 0,
 			created_at DATETIME DEFAULT CURRENT_TIMESTAMP,

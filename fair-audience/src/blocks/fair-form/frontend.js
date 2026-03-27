@@ -30,7 +30,15 @@ function collectQuestionAnswers(form) {
 		const questionType = el.dataset.questionType;
 		let answerValue = '';
 
-		if (questionType === 'multiselect') {
+		if (questionType === 'file_upload') {
+			// File uploads are handled separately via FormData.
+			// Store a placeholder that will be replaced with attachment ID by the server.
+			const fileInput = el.querySelector('input[type="file"]');
+			answerValue =
+				fileInput && fileInput.files.length > 0
+					? '__file_pending__'
+					: '';
+		} else if (questionType === 'multiselect') {
 			// Collect all checked checkboxes and JSON-encode.
 			const checked = el.querySelectorAll(
 				'input[type="checkbox"]:checked'
@@ -86,7 +94,10 @@ function validateForm(form) {
 		const questionType = el.dataset.questionType;
 		let hasValue = false;
 
-		if (questionType === 'multiselect') {
+		if (questionType === 'file_upload') {
+			const fileInput = el.querySelector('input[type="file"]');
+			hasValue = fileInput && fileInput.files.length > 0;
+		} else if (questionType === 'multiselect') {
 			hasValue =
 				el.querySelectorAll('input[type="checkbox"]:checked').length >
 				0;
@@ -106,7 +117,46 @@ function validateForm(form) {
 		}
 	}
 
+	// Validate file upload constraints (size and type).
+	const fileUploadQuestions = form.querySelectorAll(
+		'[data-fair-form-question][data-question-type="file_upload"]'
+	);
+	for (const el of fileUploadQuestions) {
+		const fileInput = el.querySelector('input[type="file"]');
+		if (!fileInput || fileInput.files.length === 0) {
+			continue;
+		}
+
+		const file = fileInput.files[0];
+		const maxSizeMB = parseInt(el.dataset.maxFileSize, 10) || 5;
+		const maxSizeBytes = maxSizeMB * 1024 * 1024;
+
+		if (file.size > maxSizeBytes) {
+			const questionText = el.dataset.questionText || '';
+			return (
+				questionText +
+				': ' +
+				__('File is too large. Maximum size is ', 'fair-audience') +
+				maxSizeMB +
+				' MB.'
+			);
+		}
+	}
+
 	return null;
+}
+
+function hasFileUploads(form) {
+	const fileQuestions = form.querySelectorAll(
+		'[data-fair-form-question][data-question-type="file_upload"]'
+	);
+	for (const el of fileQuestions) {
+		const fileInput = el.querySelector('input[type="file"]');
+		if (fileInput && fileInput.files.length > 0) {
+			return true;
+		}
+	}
+	return false;
 }
 
 function submitForm(form) {
@@ -126,34 +176,88 @@ function submitForm(form) {
 		__('Submitting...', 'fair-audience')
 	);
 
-	const requestData = {
-		name: form.querySelector('input[name="fair_form_name"]').value.trim(),
-		surname: (
-			form.querySelector('input[name="fair_form_surname"]')?.value || ''
-		).trim(),
-		email: form.querySelector('input[name="fair_form_email"]').value.trim(),
-		keep_informed:
-			form.querySelector('input[name="fair_form_keep_informed"]')
-				?.checked || false,
-		questionnaire_answers: collectQuestionAnswers(form),
-	};
+	const nameValue = form
+		.querySelector('input[name="fair_form_name"]')
+		.value.trim();
+	const surnameValue = (
+		form.querySelector('input[name="fair_form_surname"]')?.value || ''
+	).trim();
+	const emailValue = form
+		.querySelector('input[name="fair_form_email"]')
+		.value.trim();
+	const keepInformed =
+		form.querySelector('input[name="fair_form_keep_informed"]')?.checked ||
+		false;
+	const questionnaireAnswers = collectQuestionAnswers(form);
 
-	// Add optional IDs from wrapper data attributes.
 	const eventDateId = parseInt(wrapper?.dataset.eventDateId, 10) || 0;
-	if (eventDateId > 0) {
-		requestData.event_date_id = eventDateId;
-	}
-
 	const postId = parseInt(wrapper?.dataset.postId, 10) || 0;
-	if (postId > 0) {
-		requestData.post_id = postId;
+
+	let fetchOptions;
+
+	if (hasFileUploads(form)) {
+		// Use FormData for multipart submission with files.
+		const formData = new FormData();
+		formData.append('name', nameValue);
+		formData.append('surname', surnameValue);
+		formData.append('email', emailValue);
+		formData.append('keep_informed', keepInformed ? '1' : '0');
+		formData.append(
+			'questionnaire_answers',
+			JSON.stringify(questionnaireAnswers)
+		);
+
+		if (eventDateId > 0) {
+			formData.append('event_date_id', eventDateId);
+		}
+		if (postId > 0) {
+			formData.append('post_id', postId);
+		}
+
+		// Append file inputs.
+		const fileQuestions = form.querySelectorAll(
+			'[data-fair-form-question][data-question-type="file_upload"]'
+		);
+		fileQuestions.forEach((el) => {
+			const fileInput = el.querySelector('input[type="file"]');
+			if (fileInput && fileInput.files.length > 0) {
+				formData.append(
+					'fair_form_file_' + el.dataset.questionKey,
+					fileInput.files[0]
+				);
+			}
+		});
+
+		fetchOptions = {
+			path: '/fair-audience/v1/fair-form-submit',
+			method: 'POST',
+			body: formData,
+		};
+	} else {
+		// Use JSON for submissions without files.
+		const requestData = {
+			name: nameValue,
+			surname: surnameValue,
+			email: emailValue,
+			keep_informed: keepInformed,
+			questionnaire_answers: questionnaireAnswers,
+		};
+
+		if (eventDateId > 0) {
+			requestData.event_date_id = eventDateId;
+		}
+		if (postId > 0) {
+			requestData.post_id = postId;
+		}
+
+		fetchOptions = {
+			path: '/fair-audience/v1/fair-form-submit',
+			method: 'POST',
+			data: requestData,
+		};
 	}
 
-	apiFetch({
-		path: '/fair-audience/v1/fair-form-submit',
-		method: 'POST',
-		data: requestData,
-	})
+	apiFetch(fetchOptions)
 		.then((response) => {
 			const successMessage =
 				wrapper?.dataset.successMessage ||

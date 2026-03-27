@@ -1,0 +1,28 @@
+.fair-form-question-file-upload .fair-form-question-label-input {
+	border: none;
+	border-bottom: 1px dashed #8c8f94;
+	background: transparent;
+	font-weight: 600;
+	padding: 2px 0;
+	font-size: inherit;
+	width: auto;
+}
+
+.fair-form-question-file-upload .fair-form-question-label-input:focus {
+	outline: none;
+	border-bottom-color: #2271b1;
+}
+
+.fair-form-question-file-upload input[type="file"] {
+	width: 100%;
+	padding: 8px 0;
+	font-size: inherit;
+	line-height: 1.5;
+}
+
+.fair-form-question-file-upload .fair-form-file-upload-help {
+	display: block;
+	font-size: 0.85em;
+	color: #757575;
+	margin-top: 4px;
+}

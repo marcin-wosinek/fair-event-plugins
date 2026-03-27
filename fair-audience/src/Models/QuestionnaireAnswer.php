@@ -28,6 +28,7 @@ class QuestionnaireAnswer {
 		'number',
 		'date',
 		'multiselect',
+		'file_upload',
 	);
 
 	/**

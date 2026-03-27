@@ -1,0 +1,41 @@
+{
+	"$schema": "https://schemas.wp.org/trunk/block.json",
+	"apiVersion": 3,
+	"name": "fair-audience/fair-form-file-upload",
+	"version": "1.0.0",
+	"title": "File Upload Question",
+	"category": "widgets",
+	"icon": "upload",
+	"description": "A file upload question for Fair Form",
+	"keywords": ["question", "file", "upload", "image"],
+	"textdomain": "fair-audience",
+	"parent": ["fair-audience/fair-form"],
+	"supports": {
+		"html": false
+	},
+	"attributes": {
+		"questionText": {
+			"type": "string",
+			"default": ""
+		},
+		"questionKey": {
+			"type": "string",
+			"default": ""
+		},
+		"required": {
+			"type": "boolean",
+			"default": false
+		},
+		"acceptedTypes": {
+			"type": "string",
+			"default": "image/*"
+		},
+		"maxFileSize": {
+			"type": "integer",
+			"default": 5
+		}
+	},
+	"editorScript": "file:./editor.js",
+	"render": "file:./render.php",
+	"style": "file:./style-editor.css"
+}
