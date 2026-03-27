@@ -145,6 +145,9 @@ class Plugin {
 		$photo_tags_controller = new \FairAudience\API\PhotoTagsController();
 		$photo_tags_controller->register_routes();
 
+		$timeline_controller = new \FairAudience\API\TimelineController();
+		$timeline_controller->register_routes();
+
 		// Membership fees (only when fair-payment plugin is active).
 		if ( class_exists( 'FairPayment\Core\Plugin' ) ) {
 			$fees_controller = new \FairAudience\API\FeesController();

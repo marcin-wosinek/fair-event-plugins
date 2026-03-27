@@ -14,6 +14,10 @@ const customConfig = {
 	entry: () => ({
 		...defaultEntries,
 		// Admin scripts
+		'admin/timeline/index': path.resolve(
+			process.cwd(),
+			'src/Admin/timeline/index.js',
+		),
 		'admin/all-participants/index': path.resolve(
 			process.cwd(),
 			'src/Admin/all-participants/index.js',

@@ -136,13 +136,13 @@ class AdminHooks {
 	 * Register admin menu pages.
 	 */
 	public function register_admin_menu() {
-		// Main menu page - All Participants.
+		// Main menu page - Activity Timeline.
 		add_menu_page(
 			__( 'Fair Audience', 'fair-audience' ),
 			__( 'Fair Audience', 'fair-audience' ),
 			'manage_options',
 			'fair-audience',
-			array( $this, 'render_all_participants_page' ),
+			array( $this, 'render_timeline_page' ),
 			'dashicons-groups',
 			22
 		);
@@ -150,10 +150,20 @@ class AdminHooks {
 		// Override first submenu item label (same slug as parent).
 		add_submenu_page(
 			'fair-audience',
+			__( 'Activity', 'fair-audience' ),
+			__( 'Activity', 'fair-audience' ),
+			'manage_options',
+			'fair-audience',
+			array( $this, 'render_timeline_page' )
+		);
+
+		// Submenu page - All Participants.
+		add_submenu_page(
+			'fair-audience',
 			__( 'All Participants', 'fair-audience' ),
 			__( 'All Participants', 'fair-audience' ),
 			'manage_options',
-			'fair-audience',
+			'fair-audience-all-participants',
 			array( $this, 'render_all_participants_page' )
 		);
 
@@ -295,6 +305,14 @@ class AdminHooks {
 			'fair-audience-settings',
 			array( $this, 'render_settings_page' )
 		);
+	}
+
+	/**
+	 * Render Timeline page.
+	 */
+	public function render_timeline_page() {
+		$page = new TimelinePage();
+		$page->render();
 	}
 
 	/**
@@ -449,8 +467,13 @@ class AdminHooks {
 	public function enqueue_admin_scripts( $hook ) {
 		$plugin_dir = plugin_dir_path( dirname( __DIR__ ) );
 
-		// All Participants page.
+		// Activity Timeline page.
 		if ( 'toplevel_page_fair-audience' === $hook ) {
+			$this->enqueue_page_script( 'timeline', $plugin_dir );
+		}
+
+		// All Participants page.
+		if ( 'fair-audience_page_fair-audience-all-participants' === $hook ) {
 			$this->enqueue_page_script( 'all-participants', $plugin_dir );
 
 			wp_localize_script(
