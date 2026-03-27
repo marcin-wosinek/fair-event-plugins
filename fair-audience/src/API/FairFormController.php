@@ -216,7 +216,7 @@ class FairFormController extends WP_REST_Controller {
 		$this->increment_rate_limit( $email );
 
 		// Process file uploads and update answer values with attachment IDs.
-		$file_result = $this->process_file_uploads( $request, $questionnaire_answers );
+		$file_result = $this->process_file_uploads( $request, $questionnaire_answers, $event_date_id );
 		if ( is_wp_error( $file_result ) ) {
 			return $file_result;
 		}
@@ -262,11 +262,12 @@ class FairFormController extends WP_REST_Controller {
 	/**
 	 * Process file uploads from the request and update answer values.
 	 *
-	 * @param WP_REST_Request $request Request object.
-	 * @param array           $answers Questionnaire answers to update.
+	 * @param WP_REST_Request $request       Request object.
+	 * @param array           $answers       Questionnaire answers to update.
+	 * @param int             $event_date_id Optional event date ID to link images to.
 	 * @return array|WP_Error Updated answers array or error.
 	 */
-	private function process_file_uploads( $request, $answers ) {
+	private function process_file_uploads( $request, $answers, $event_date_id = 0 ) {
 		$files = $request->get_file_params();
 		if ( empty( $files ) ) {
 			return $answers;
@@ -355,6 +356,12 @@ class FairFormController extends WP_REST_Controller {
 			// Generate attachment metadata (thumbnails, etc.).
 			$attachment_metadata = wp_generate_attachment_metadata( $attachment_id, $upload['file'] );
 			wp_update_attachment_metadata( $attachment_id, $attachment_metadata );
+
+			// Link image to event if event_date_id is set and fair-events plugin is active.
+			if ( $event_date_id > 0 && class_exists( '\FairEvents\Database\EventPhotoRepository' ) ) {
+				$photo_repo = new \FairEvents\Database\EventPhotoRepository();
+				$photo_repo->set_event_date( $attachment_id, $event_date_id );
+			}
 
 			// Store attachment ID as the answer value.
 			$answer['answer_value'] = (string) $attachment_id;
