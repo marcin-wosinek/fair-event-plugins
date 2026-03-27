@@ -215,13 +215,6 @@ class FairFormController extends WP_REST_Controller {
 		// Increment rate limit counter.
 		$this->increment_rate_limit( $email );
 
-		// Process file uploads and update answer values with attachment IDs.
-		$file_result = $this->process_file_uploads( $request, $questionnaire_answers, $event_date_id );
-		if ( is_wp_error( $file_result ) ) {
-			return $file_result;
-		}
-		$questionnaire_answers = $file_result;
-
 		// Find or create participant.
 		$existing = $this->participant_repository->get_by_email( $email );
 
@@ -248,6 +241,13 @@ class FairFormController extends WP_REST_Controller {
 			}
 		}
 
+		// Process file uploads and update answer values with attachment IDs.
+		$file_result = $this->process_file_uploads( $request, $questionnaire_answers, $event_date_id, $participant->id );
+		if ( is_wp_error( $file_result ) ) {
+			return $file_result;
+		}
+		$questionnaire_answers = $file_result;
+
 		// Save questionnaire answers.
 		$this->save_questionnaire_answers( $participant->id, $questionnaire_answers, $event_date_id, $post_id );
 
@@ -262,12 +262,13 @@ class FairFormController extends WP_REST_Controller {
 	/**
 	 * Process file uploads from the request and update answer values.
 	 *
-	 * @param WP_REST_Request $request       Request object.
-	 * @param array           $answers       Questionnaire answers to update.
-	 * @param int             $event_date_id Optional event date ID to link images to.
+	 * @param WP_REST_Request $request        Request object.
+	 * @param array           $answers        Questionnaire answers to update.
+	 * @param int             $event_date_id  Optional event date ID to link images to.
+	 * @param int             $participant_id Participant ID to set as photo author.
 	 * @return array|WP_Error Updated answers array or error.
 	 */
-	private function process_file_uploads( $request, $answers, $event_date_id = 0 ) {
+	private function process_file_uploads( $request, $answers, $event_date_id = 0, $participant_id = 0 ) {
 		$files = $request->get_file_params();
 		if ( empty( $files ) ) {
 			return $answers;
@@ -361,6 +362,12 @@ class FairFormController extends WP_REST_Controller {
 			if ( $event_date_id > 0 && class_exists( '\FairEvents\Database\EventPhotoRepository' ) ) {
 				$photo_repo = new \FairEvents\Database\EventPhotoRepository();
 				$photo_repo->set_event_date( $attachment_id, $event_date_id );
+			}
+
+			// Set participant as photo author.
+			if ( $participant_id > 0 ) {
+				$photo_participant_repo = new \FairAudience\Database\PhotoParticipantRepository();
+				$photo_participant_repo->set_author( $attachment_id, $participant_id );
 			}
 
 			// Store attachment ID as the answer value.
