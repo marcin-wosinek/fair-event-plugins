@@ -61,11 +61,18 @@ class FinancialEntry {
 	public $budget_id;
 
 	/**
-	 * Transaction ID (foreign key to payments table)
+	 * Transaction ID (legacy 1:1 match, kept for backward compatibility)
 	 *
 	 * @var int|null
 	 */
 	public $transaction_id;
+
+	/**
+	 * Transaction IDs (from junction table, supports 1:many matching)
+	 *
+	 * @var int[]
+	 */
+	public $transaction_ids = array();
 
 	/**
 	 * External reference for deduplication (e.g., from imported data)
@@ -285,7 +292,11 @@ class FinancialEntry {
 		}
 
 		if ( ! empty( $filters['unmatched'] ) ) {
-			$where_clauses[] = 'transaction_id IS NULL';
+			$junction_table  = Schema::get_entry_transactions_table_name();
+			$where_clauses[] = $wpdb->prepare(
+				'NOT EXISTS (SELECT 1 FROM %i WHERE entry_id = ' . $table_name . '.id)',
+				$junction_table
+			);
 		}
 
 		$where_sql = '';
@@ -398,7 +409,11 @@ class FinancialEntry {
 		}
 
 		if ( ! empty( $filters['unmatched'] ) ) {
-			$where_clauses[] = 'transaction_id IS NULL';
+			$junction_table  = Schema::get_entry_transactions_table_name();
+			$where_clauses[] = $wpdb->prepare(
+				'NOT EXISTS (SELECT 1 FROM %i WHERE entry_id = ' . $table_name . '.id)',
+				$junction_table
+			);
 		}
 
 		$where_sql = '';
@@ -622,6 +637,10 @@ class FinancialEntry {
 
 		$table_name = self::get_table_name();
 
+		// Write to junction table (source of truth).
+		EntryTransaction::link( $id, $transaction_id );
+
+		// Also update legacy column for backward compatibility.
 		$result = $wpdb->update(
 			$table_name,
 			array( 'transaction_id' => (int) $transaction_id ),
@@ -634,7 +653,36 @@ class FinancialEntry {
 	}
 
 	/**
-	 * Unmatch entry from transaction
+	 * Match entry to multiple transactions
+	 *
+	 * @param int   $id              Entry ID.
+	 * @param int[] $transaction_ids Array of transaction IDs.
+	 * @return bool True on success, false on failure.
+	 */
+	public static function match_transactions( $id, $transaction_ids ) {
+		foreach ( $transaction_ids as $transaction_id ) {
+			EntryTransaction::link( $id, (int) $transaction_id );
+		}
+
+		// Update legacy column with the first transaction ID.
+		if ( ! empty( $transaction_ids ) ) {
+			global $wpdb;
+			$table_name = self::get_table_name();
+
+			$wpdb->update(
+				$table_name,
+				array( 'transaction_id' => (int) $transaction_ids[0] ),
+				array( 'id' => $id ),
+				array( '%d' ),
+				array( '%d' )
+			);
+		}
+
+		return true;
+	}
+
+	/**
+	 * Unmatch entry from all transactions
 	 *
 	 * @param int $id Entry ID.
 	 * @return bool True on success, false on failure.
@@ -644,6 +692,10 @@ class FinancialEntry {
 
 		$table_name = self::get_table_name();
 
+		// Clear junction table.
+		EntryTransaction::unlink_all_for_entry( $id );
+
+		// Clear legacy column.
 		$result = $wpdb->update(
 			$table_name,
 			array( 'transaction_id' => null ),
@@ -653,6 +705,33 @@ class FinancialEntry {
 		);
 
 		return false !== $result;
+	}
+
+	/**
+	 * Unmatch a single transaction from an entry
+	 *
+	 * @param int $id             Entry ID.
+	 * @param int $transaction_id Transaction ID to unlink.
+	 * @return bool True on success, false on failure.
+	 */
+	public static function unmatch_single_transaction( $id, $transaction_id ) {
+		EntryTransaction::unlink( $id, $transaction_id );
+
+		// Update legacy column: set to first remaining linked transaction or null.
+		$remaining = EntryTransaction::get_transaction_ids_for_entry( $id );
+
+		global $wpdb;
+		$table_name = self::get_table_name();
+
+		$wpdb->update(
+			$table_name,
+			array( 'transaction_id' => ! empty( $remaining ) ? $remaining[0] : null ),
+			array( 'id' => $id ),
+			array( '%d' ),
+			array( '%d' )
+		);
+
+		return true;
 	}
 
 	/**
@@ -1242,6 +1321,11 @@ class FinancialEntry {
 		$entry->created_at         = $row->created_at;
 		$entry->updated_at         = $row->updated_at;
 
+		// Load transaction IDs from junction table.
+		if ( $entry->id ) {
+			$entry->transaction_ids = EntryTransaction::get_transaction_ids_for_entry( $entry->id );
+		}
+
 		return $entry;
 	}
 
@@ -1259,6 +1343,7 @@ class FinancialEntry {
 			'description'        => $this->description,
 			'budget_id'          => $this->budget_id,
 			'transaction_id'     => $this->transaction_id,
+			'transaction_ids'    => $this->transaction_ids,
 			'external_reference' => $this->external_reference,
 			'parent_entry_id'    => $this->parent_entry_id,
 			'event_url'          => $this->event_url,

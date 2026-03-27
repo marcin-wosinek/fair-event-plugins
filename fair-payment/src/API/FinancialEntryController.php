@@ -9,6 +9,7 @@ namespace FairPayment\API;
 
 defined( 'WPINC' ) || die;
 
+use FairPayment\Models\EntryTransaction;
 use FairPayment\Models\FinancialEntry;
 use FairPayment\Models\Transaction;
 use WP_REST_Controller;
@@ -170,7 +171,8 @@ class FinancialEntryController extends WP_REST_Controller {
 			)
 		);
 
-		// POST /fair-payment/v1/financial-entries/{id}/match - Match entry to transaction.
+		// POST /fair-payment/v1/financial-entries/{id}/match - Match entry to transaction(s).
+		// DELETE /fair-payment/v1/financial-entries/{id}/match - Unmatch entry from transaction(s).
 		register_rest_route(
 			$this->namespace,
 			'/financial-entries/(?P<id>\d+)/match',
@@ -180,32 +182,32 @@ class FinancialEntryController extends WP_REST_Controller {
 					'callback'            => array( $this, 'match_transaction' ),
 					'permission_callback' => array( $this, 'update_item_permissions_check' ),
 					'args'                => array(
-						'id'             => array(
+						'id'              => array(
 							'description' => __( 'Unique identifier for the financial entry.', 'fair-payment' ),
 							'type'        => 'integer',
 						),
-						'transaction_id' => array(
-							'description' => __( 'Transaction ID to match.', 'fair-payment' ),
+						'transaction_id'  => array(
+							'description' => __( 'Single transaction ID to match.', 'fair-payment' ),
 							'type'        => 'integer',
-							'required'    => true,
+						),
+						'transaction_ids' => array(
+							'description' => __( 'Array of transaction IDs to match.', 'fair-payment' ),
+							'type'        => 'array',
+							'items'       => array( 'type' => 'integer' ),
 						),
 					),
 				),
-			)
-		);
-
-		// DELETE /fair-payment/v1/financial-entries/{id}/match - Unmatch entry from transaction.
-		register_rest_route(
-			$this->namespace,
-			'/financial-entries/(?P<id>\d+)/match',
-			array(
 				array(
 					'methods'             => WP_REST_Server::DELETABLE,
 					'callback'            => array( $this, 'unmatch_transaction' ),
 					'permission_callback' => array( $this, 'update_item_permissions_check' ),
 					'args'                => array(
-						'id' => array(
+						'id'             => array(
 							'description' => __( 'Unique identifier for the financial entry.', 'fair-payment' ),
+							'type'        => 'integer',
+						),
+						'transaction_id' => array(
+							'description' => __( 'Specific transaction ID to unmatch. If omitted, unmatches all.', 'fair-payment' ),
 							'type'        => 'integer',
 						),
 					),
@@ -223,10 +225,76 @@ class FinancialEntryController extends WP_REST_Controller {
 					'callback'            => array( $this, 'search_transactions' ),
 					'permission_callback' => array( $this, 'get_items_permissions_check' ),
 					'args'                => array(
-						'amount'    => array(
+						'amount'          => array(
 							'description' => __( 'Filter by amount.', 'fair-payment' ),
 							'type'        => 'number',
 						),
+						'date_from'       => array(
+							'description'       => __( 'Filter by start date.', 'fair-payment' ),
+							'type'              => 'string',
+							'format'            => 'date',
+							'sanitize_callback' => 'sanitize_text_field',
+						),
+						'date_to'         => array(
+							'description'       => __( 'Filter by end date.', 'fair-payment' ),
+							'type'              => 'string',
+							'format'            => 'date',
+							'sanitize_callback' => 'sanitize_text_field',
+						),
+						'search'          => array(
+							'description'       => __( 'Search term.', 'fair-payment' ),
+							'type'              => 'string',
+							'sanitize_callback' => 'sanitize_text_field',
+						),
+						'exclude_matched' => array(
+							'description' => __( 'Exclude already matched transactions.', 'fair-payment' ),
+							'type'        => 'boolean',
+							'default'     => false,
+						),
+					),
+				),
+			)
+		);
+
+		// GET /fair-payment/v1/financial-entries/{id}/suggest-matches - Suggest transaction matches.
+		register_rest_route(
+			$this->namespace,
+			'/financial-entries/(?P<id>\d+)/suggest-matches',
+			array(
+				array(
+					'methods'             => WP_REST_Server::READABLE,
+					'callback'            => array( $this, 'suggest_matches' ),
+					'permission_callback' => array( $this, 'get_items_permissions_check' ),
+					'args'                => array(
+						'id'              => array(
+							'description' => __( 'Unique identifier for the financial entry.', 'fair-payment' ),
+							'type'        => 'integer',
+						),
+						'tolerance'       => array(
+							'description' => __( 'Amount tolerance for matching.', 'fair-payment' ),
+							'type'        => 'number',
+							'default'     => 0.10,
+						),
+						'date_range_days' => array(
+							'description' => __( 'Number of days before entry date to search.', 'fair-payment' ),
+							'type'        => 'integer',
+							'default'     => 30,
+						),
+					),
+				),
+			)
+		);
+
+		// GET /fair-payment/v1/reconciliation - Get reconciliation data.
+		register_rest_route(
+			$this->namespace,
+			'/reconciliation',
+			array(
+				array(
+					'methods'             => WP_REST_Server::READABLE,
+					'callback'            => array( $this, 'get_reconciliation' ),
+					'permission_callback' => array( $this, 'get_items_permissions_check' ),
+					'args'                => array(
 						'date_from' => array(
 							'description'       => __( 'Filter by start date.', 'fair-payment' ),
 							'type'              => 'string',
@@ -237,11 +305,6 @@ class FinancialEntryController extends WP_REST_Controller {
 							'description'       => __( 'Filter by end date.', 'fair-payment' ),
 							'type'              => 'string',
 							'format'            => 'date',
-							'sanitize_callback' => 'sanitize_text_field',
-						),
-						'search'    => array(
-							'description'       => __( 'Search term.', 'fair-payment' ),
-							'type'              => 'string',
 							'sanitize_callback' => 'sanitize_text_field',
 						),
 					),
@@ -834,8 +897,9 @@ class FinancialEntryController extends WP_REST_Controller {
 	 * @return WP_REST_Response|WP_Error Response object on success, or WP_Error on failure.
 	 */
 	public function match_transaction( $request ) {
-		$id             = (int) $request->get_param( 'id' );
-		$transaction_id = (int) $request->get_param( 'transaction_id' );
+		$id              = (int) $request->get_param( 'id' );
+		$transaction_id  = $request->get_param( 'transaction_id' );
+		$transaction_ids = $request->get_param( 'transaction_ids' );
 
 		// Check if entry exists.
 		$entry = FinancialEntry::get_by_id( $id );
@@ -847,17 +911,34 @@ class FinancialEntryController extends WP_REST_Controller {
 			);
 		}
 
-		// Check if transaction exists.
-		$transaction = Transaction::get_by_id( $transaction_id );
-		if ( ! $transaction ) {
+		// Build list of transaction IDs to match.
+		$ids_to_match = array();
+		if ( ! empty( $transaction_ids ) && is_array( $transaction_ids ) ) {
+			$ids_to_match = array_map( 'intval', $transaction_ids );
+		} elseif ( ! empty( $transaction_id ) ) {
+			$ids_to_match = array( (int) $transaction_id );
+		} else {
 			return new WP_Error(
-				'rest_transaction_not_found',
-				__( 'Transaction not found.', 'fair-payment' ),
-				array( 'status' => 404 )
+				'rest_missing_param',
+				__( 'Either transaction_id or transaction_ids is required.', 'fair-payment' ),
+				array( 'status' => 400 )
 			);
 		}
 
-		$success = FinancialEntry::match_transaction( $id, $transaction_id );
+		// Verify all transactions exist.
+		foreach ( $ids_to_match as $tid ) {
+			$transaction = Transaction::get_by_id( $tid );
+			if ( ! $transaction ) {
+				return new WP_Error(
+					'rest_transaction_not_found',
+					/* translators: %d: transaction ID */
+					sprintf( __( 'Transaction %d not found.', 'fair-payment' ), $tid ),
+					array( 'status' => 404 )
+				);
+			}
+		}
+
+		$success = FinancialEntry::match_transactions( $id, $ids_to_match );
 
 		if ( ! $success ) {
 			return new WP_Error(
@@ -873,13 +954,14 @@ class FinancialEntryController extends WP_REST_Controller {
 	}
 
 	/**
-	 * Unmatch entry from transaction
+	 * Unmatch entry from transaction(s)
 	 *
 	 * @param WP_REST_Request $request Full data about the request.
 	 * @return WP_REST_Response|WP_Error Response object on success, or WP_Error on failure.
 	 */
 	public function unmatch_transaction( $request ) {
-		$id = (int) $request->get_param( 'id' );
+		$id             = (int) $request->get_param( 'id' );
+		$transaction_id = $request->get_param( 'transaction_id' );
 
 		// Check if entry exists.
 		$entry = FinancialEntry::get_by_id( $id );
@@ -891,7 +973,11 @@ class FinancialEntryController extends WP_REST_Controller {
 			);
 		}
 
-		$success = FinancialEntry::unmatch_transaction( $id );
+		if ( ! empty( $transaction_id ) ) {
+			$success = FinancialEntry::unmatch_single_transaction( $id, (int) $transaction_id );
+		} else {
+			$success = FinancialEntry::unmatch_transaction( $id );
+		}
 
 		if ( ! $success ) {
 			return new WP_Error(
@@ -1371,18 +1457,29 @@ class FinancialEntryController extends WP_REST_Controller {
 	 * @return WP_REST_Response|WP_Error Response object on success, or WP_Error on failure.
 	 */
 	public function search_transactions( $request ) {
-		$amount    = $request->get_param( 'amount' );
-		$date_from = $request->get_param( 'date_from' );
-		$date_to   = $request->get_param( 'date_to' );
-		$search    = $request->get_param( 'search' );
+		$amount          = $request->get_param( 'amount' );
+		$date_from       = $request->get_param( 'date_from' );
+		$date_to         = $request->get_param( 'date_to' );
+		$search          = $request->get_param( 'search' );
+		$exclude_matched = $request->get_param( 'exclude_matched' );
 
 		// Build filters for transaction search.
 		$filters = array(
-			'limit'  => 20,
+			'limit'  => 50,
 			'status' => 'paid',
 		);
 
 		$transactions = Transaction::get_all( $filters );
+
+		// Exclude already-matched transactions.
+		if ( $exclude_matched ) {
+			$transactions = array_filter(
+				$transactions,
+				function ( $t ) {
+					return ! EntryTransaction::is_transaction_matched( $t->id );
+				}
+			);
+		}
 
 		// Filter by amount if provided (with some tolerance).
 		if ( ! empty( $amount ) ) {
@@ -1433,6 +1530,8 @@ class FinancialEntryController extends WP_REST_Controller {
 					'mollie_payment_id' => $transaction->mollie_payment_id,
 					'amount'            => $transaction->amount,
 					'currency'          => $transaction->currency,
+					'application_fee'   => $transaction->application_fee,
+					'mollie_fee'        => $transaction->mollie_fee,
 					'status'            => $transaction->status,
 					'description'       => $transaction->description,
 					'created_at'        => $transaction->created_at,
@@ -1572,5 +1671,255 @@ class FinancialEntryController extends WP_REST_Controller {
 	 */
 	public function delete_item_permissions_check( $request ) {
 		return current_user_can( 'manage_options' );
+	}
+
+	/**
+	 * Suggest transaction matches for a financial entry
+	 *
+	 * @param WP_REST_Request $request Full data about the request.
+	 * @return WP_REST_Response|WP_Error Response object on success, or WP_Error on failure.
+	 */
+	public function suggest_matches( $request ) {
+		$id              = (int) $request->get_param( 'id' );
+		$tolerance       = (float) $request->get_param( 'tolerance' );
+		$date_range_days = (int) $request->get_param( 'date_range_days' );
+
+		$entry = FinancialEntry::get_by_id( $id );
+		if ( ! $entry ) {
+			return new WP_Error(
+				'rest_entry_not_found',
+				__( 'Financial entry not found.', 'fair-payment' ),
+				array( 'status' => 404 )
+			);
+		}
+
+		$target_amount = (float) $entry->amount;
+		$entry_date    = $entry->entry_date;
+
+		// Get unmatched paid transactions within the date range.
+		$date_from = gmdate( 'Y-m-d', strtotime( $entry_date . " -{$date_range_days} days" ) );
+		$date_to   = gmdate( 'Y-m-d', strtotime( $entry_date . ' +3 days' ) );
+
+		$filters      = array(
+			'limit'  => 200,
+			'status' => 'paid',
+		);
+		$transactions = Transaction::get_all( $filters );
+
+		// Filter: unmatched, within date range.
+		$candidates = array();
+		foreach ( $transactions as $t ) {
+			if ( EntryTransaction::is_transaction_matched( $t->id ) ) {
+				continue;
+			}
+			$t_date = substr( $t->created_at, 0, 10 );
+			if ( $t_date >= $date_from && $t_date <= $date_to ) {
+				$candidates[] = $t;
+			}
+		}
+
+		$suggestions = array();
+
+		// Strategy 1: Find single exact match (net amount).
+		foreach ( $candidates as $t ) {
+			$net = (float) $t->amount - (float) ( $t->application_fee ?? 0 ) - (float) ( $t->mollie_fee ?? 0 );
+			if ( abs( $net - $target_amount ) <= $tolerance ) {
+				$suggestions[] = array(
+					'transaction_ids' => array( (int) $t->id ),
+					'total_amount'    => (float) $t->amount,
+					'net_amount'      => $net,
+					'difference'      => round( $net - $target_amount, 2 ),
+					'strategy'        => 'exact_single',
+				);
+			}
+		}
+
+		// Strategy 2: Greedy accumulation sorted by date.
+		usort(
+			$candidates,
+			function ( $a, $b ) {
+				return strcmp( $a->created_at, $b->created_at );
+			}
+		);
+
+		$greedy_ids   = array();
+		$greedy_total = 0.0;
+		$greedy_net   = 0.0;
+		foreach ( $candidates as $t ) {
+			$net           = (float) $t->amount - (float) ( $t->application_fee ?? 0 ) - (float) ( $t->mollie_fee ?? 0 );
+			$greedy_ids[]  = (int) $t->id;
+			$greedy_total += (float) $t->amount;
+			$greedy_net   += $net;
+
+			if ( $greedy_net >= $target_amount - $tolerance ) {
+				break;
+			}
+		}
+
+		if ( ! empty( $greedy_ids ) && count( $greedy_ids ) > 1 && abs( $greedy_net - $target_amount ) <= $tolerance * count( $greedy_ids ) ) {
+			$suggestions[] = array(
+				'transaction_ids' => $greedy_ids,
+				'total_amount'    => round( $greedy_total, 2 ),
+				'net_amount'      => round( $greedy_net, 2 ),
+				'difference'      => round( $greedy_net - $target_amount, 2 ),
+				'strategy'        => 'greedy_date',
+			);
+		}
+
+		// Strategy 3: All candidates in date range.
+		if ( count( $candidates ) > 1 ) {
+			$all_ids   = array();
+			$all_total = 0.0;
+			$all_net   = 0.0;
+			foreach ( $candidates as $t ) {
+				$net        = (float) $t->amount - (float) ( $t->application_fee ?? 0 ) - (float) ( $t->mollie_fee ?? 0 );
+				$all_ids[]  = (int) $t->id;
+				$all_total += (float) $t->amount;
+				$all_net   += $net;
+			}
+
+			if ( abs( $all_net - $target_amount ) <= $tolerance * count( $all_ids ) ) {
+				$suggestions[] = array(
+					'transaction_ids' => $all_ids,
+					'total_amount'    => round( $all_total, 2 ),
+					'net_amount'      => round( $all_net, 2 ),
+					'difference'      => round( $all_net - $target_amount, 2 ),
+					'strategy'        => 'all_in_range',
+				);
+			}
+		}
+
+		// Deduplicate suggestions with identical transaction ID sets.
+		$seen               = array();
+		$unique_suggestions = array();
+		foreach ( $suggestions as $s ) {
+			$key = implode( ',', $s['transaction_ids'] );
+			if ( ! isset( $seen[ $key ] ) ) {
+				$seen[ $key ]         = true;
+				$unique_suggestions[] = $s;
+			}
+		}
+
+		// Sort by smallest absolute difference.
+		usort(
+			$unique_suggestions,
+			function ( $a, $b ) {
+				return abs( $a['difference'] ) <=> abs( $b['difference'] );
+			}
+		);
+
+		return new WP_REST_Response( array_slice( $unique_suggestions, 0, 3 ), 200 );
+	}
+
+	/**
+	 * Get reconciliation data: unmatched entries, unmatched transactions, and matched entries
+	 *
+	 * @param WP_REST_Request $request Full data about the request.
+	 * @return WP_REST_Response Response object.
+	 */
+	public function get_reconciliation( $request ) {
+		$date_from = $request->get_param( 'date_from' );
+		$date_to   = $request->get_param( 'date_to' );
+
+		// Get unmatched income entries (bank imports that need matching).
+		$entry_filters = array(
+			'unmatched' => true,
+			'per_page'  => 100,
+			'page'      => 1,
+		);
+		if ( $date_from ) {
+			$entry_filters['date_from'] = $date_from;
+		}
+		if ( $date_to ) {
+			$entry_filters['date_to'] = $date_to;
+		}
+
+		$unmatched_entries_result = FinancialEntry::get_filtered( $entry_filters );
+		$unmatched_entries        = array_map(
+			function ( $entry ) {
+				return $entry->to_array();
+			},
+			$unmatched_entries_result['entries']
+		);
+
+		// Get unmatched paid transactions.
+		$all_transactions       = Transaction::get_all(
+			array(
+				'limit'  => 200,
+				'status' => 'paid',
+			)
+		);
+		$unmatched_transactions = array();
+		foreach ( $all_transactions as $t ) {
+			if ( ! EntryTransaction::is_transaction_matched( $t->id ) ) {
+				$t_date = substr( $t->created_at, 0, 10 );
+				if ( $date_from && $t_date < $date_from ) {
+					continue;
+				}
+				if ( $date_to && $t_date > $date_to ) {
+					continue;
+				}
+				$unmatched_transactions[] = array(
+					'id'                => $t->id,
+					'mollie_payment_id' => $t->mollie_payment_id,
+					'amount'            => $t->amount,
+					'currency'          => $t->currency,
+					'application_fee'   => $t->application_fee,
+					'mollie_fee'        => $t->mollie_fee,
+					'status'            => $t->status,
+					'description'       => $t->description,
+					'created_at'        => $t->created_at,
+				);
+			}
+		}
+
+		// Get matched entries (entries that have linked transactions).
+		$matched_filters = array(
+			'unmatched' => false,
+			'per_page'  => 100,
+			'page'      => 1,
+		);
+		if ( $date_from ) {
+			$matched_filters['date_from'] = $date_from;
+		}
+		if ( $date_to ) {
+			$matched_filters['date_to'] = $date_to;
+		}
+
+		$matched_entries_result = FinancialEntry::get_filtered( $matched_filters );
+		$matched_entries        = array();
+		foreach ( $matched_entries_result['entries'] as $entry ) {
+			if ( ! empty( $entry->transaction_ids ) ) {
+				$entry_data                 = $entry->to_array();
+				$entry_data['transactions'] = array();
+
+				foreach ( $entry->transaction_ids as $tid ) {
+					$t = Transaction::get_by_id( $tid );
+					if ( $t ) {
+						$entry_data['transactions'][] = array(
+							'id'                => $t->id,
+							'mollie_payment_id' => $t->mollie_payment_id,
+							'amount'            => $t->amount,
+							'currency'          => $t->currency,
+							'application_fee'   => $t->application_fee,
+							'mollie_fee'        => $t->mollie_fee,
+							'description'       => $t->description,
+							'created_at'        => $t->created_at,
+						);
+					}
+				}
+
+				$matched_entries[] = $entry_data;
+			}
+		}
+
+		return new WP_REST_Response(
+			array(
+				'unmatched_entries'      => $unmatched_entries,
+				'unmatched_transactions' => $unmatched_transactions,
+				'matched_entries'        => $matched_entries,
+			),
+			200
+		);
 	}
 }

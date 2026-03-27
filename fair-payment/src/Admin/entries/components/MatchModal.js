@@ -84,7 +84,10 @@ const MatchModal = ({ entry, onMatch, onCancel }) => {
 			await apiFetch({
 				path: `/fair-payment/v1/financial-entries/${entry.id}/match`,
 				method: 'POST',
-				data: { transaction_id: transactionId },
+				data: {
+					transaction_id: transactionId,
+					transaction_ids: [transactionId],
+				},
 			});
 			onMatch();
 		} catch (err) {

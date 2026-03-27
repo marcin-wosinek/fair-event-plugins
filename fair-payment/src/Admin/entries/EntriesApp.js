@@ -2,7 +2,7 @@
  * WordPress dependencies
  */
 import { useState, useEffect, useCallback, Fragment } from '@wordpress/element';
-import { __ } from '@wordpress/i18n';
+import { __, sprintf } from '@wordpress/i18n';
 import apiFetch from '@wordpress/api-fetch';
 import {
 	Card,
@@ -1084,16 +1084,34 @@ const EntriesApp = () => {
 																	</td>
 																)}
 																<td>
-																	{entry.transaction_id ? (
+																	{entry.transaction_ids &&
+																	entry
+																		.transaction_ids
+																		.length >
+																		0 ? (
 																		<span
 																			style={{
 																				color: '#007017',
 																			}}
 																		>
-																			{__(
-																				'Yes',
-																				'fair-payment'
-																			)}
+																			{entry
+																				.transaction_ids
+																				.length >
+																			1
+																				? /* translators: %d: number of matched transactions */
+																				  sprintf(
+																						__(
+																							'Yes (%d)',
+																							'fair-payment'
+																						),
+																						entry
+																							.transaction_ids
+																							.length
+																				  )
+																				: __(
+																						'Yes',
+																						'fair-payment'
+																				  )}
 																		</span>
 																	) : (
 																		<span
@@ -1232,7 +1250,11 @@ const EntriesApp = () => {
 																					)}
 																				</Button>
 																			)}
-																			{entry.transaction_id ? (
+																			{entry.transaction_ids &&
+																			entry
+																				.transaction_ids
+																				.length >
+																				0 ? (
 																				<Button
 																					variant="tertiary"
 																					size="small"

@@ -54,6 +54,16 @@ class Schema {
 	}
 
 	/**
+	 * Get the table name for entry-transaction junction table
+	 *
+	 * @return string Full table name with prefix.
+	 */
+	public static function get_entry_transactions_table_name() {
+		global $wpdb;
+		return $wpdb->prefix . 'fair_payment_entry_transactions';
+	}
+
+	/**
 	 * Create database tables
 	 *
 	 * @return void
@@ -104,6 +114,9 @@ class Schema {
 		// Create financial entries table.
 		self::create_financial_entries_table();
 
+		// Create entry-transaction junction table.
+		self::create_entry_transactions_table();
+
 		// Run migrations if needed.
 		self::migrate_to_v2();
 		self::migrate_to_v3();
@@ -117,9 +130,10 @@ class Schema {
 		self::migrate_to_v11();
 		self::migrate_to_v12();
 		self::migrate_to_v13();
+		self::migrate_to_v14();
 
 		// Store database version for future migrations.
-		update_option( 'fair_payment_db_version', '13.0' );
+		update_option( 'fair_payment_db_version', '14.0' );
 	}
 
 	/**
@@ -211,6 +225,32 @@ class Schema {
 			KEY transaction_id (transaction_id),
 			KEY parent_entry_id (parent_entry_id),
 			KEY event_date_id (event_date_id)
+		) $charset_collate;";
+
+		require_once ABSPATH . 'wp-admin/includes/upgrade.php';
+		dbDelta( $sql );
+	}
+
+	/**
+	 * Create entry-transaction junction table for 1:many matching
+	 *
+	 * @return void
+	 */
+	public static function create_entry_transactions_table() {
+		global $wpdb;
+
+		$table_name      = self::get_entry_transactions_table_name();
+		$charset_collate = $wpdb->get_charset_collate();
+
+		$sql = "CREATE TABLE $table_name (
+			id bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT,
+			entry_id bigint(20) UNSIGNED NOT NULL,
+			transaction_id bigint(20) UNSIGNED NOT NULL,
+			created_at datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
+			PRIMARY KEY  (id),
+			UNIQUE KEY entry_transaction (entry_id, transaction_id),
+			KEY entry_id (entry_id),
+			KEY transaction_id (transaction_id)
 		) $charset_collate;";
 
 		require_once ABSPATH . 'wp-admin/includes/upgrade.php';
@@ -753,6 +793,37 @@ class Schema {
 	}
 
 	/**
+	 * Migrate database from v13.0 to v14.0
+	 *
+	 * Creates entry-transaction junction table and migrates existing 1:1 matches.
+	 *
+	 * @return void
+	 */
+	public static function migrate_to_v14() {
+		global $wpdb;
+
+		$current_version = get_option( 'fair_payment_db_version', '1.0' );
+
+		if ( version_compare( $current_version, '14.0', '<' ) ) {
+			// Ensure junction table exists.
+			self::create_entry_transactions_table();
+
+			$junction_table = self::get_entry_transactions_table_name();
+			$entries_table  = self::get_financial_entries_table_name();
+
+			// Migrate existing 1:1 matches into the junction table.
+			// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+			$wpdb->query(
+				$wpdb->prepare(
+					'INSERT IGNORE INTO %i (entry_id, transaction_id) SELECT id, transaction_id FROM %i WHERE transaction_id IS NOT NULL',
+					$junction_table,
+					$entries_table
+				)
+			);
+		}
+	}
+
+	/**
 	 * Drop database tables (used for uninstall)
 	 *
 	 * @return void
@@ -760,12 +831,17 @@ class Schema {
 	public static function drop_tables() {
 		global $wpdb;
 
-		$line_items_table        = self::get_line_items_table_name();
-		$transactions_table      = self::get_payments_table_name();
-		$financial_entries_table = self::get_financial_entries_table_name();
-		$budgets_table           = self::get_budgets_table_name();
+		$line_items_table         = self::get_line_items_table_name();
+		$transactions_table       = self::get_payments_table_name();
+		$financial_entries_table  = self::get_financial_entries_table_name();
+		$budgets_table            = self::get_budgets_table_name();
+		$entry_transactions_table = self::get_entry_transactions_table_name();
 
-		// Drop financial entries first (references transactions and budgets).
+		// Drop entry-transaction junction table first (references both entries and transactions).
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.DirectDatabaseQuery.SchemaChange
+		$wpdb->query( $wpdb->prepare( 'DROP TABLE IF EXISTS %i', $entry_transactions_table ) );
+
+		// Drop financial entries (references transactions and budgets).
 		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.DirectDatabaseQuery.SchemaChange
 		$wpdb->query( $wpdb->prepare( 'DROP TABLE IF EXISTS %i', $financial_entries_table ) );
 

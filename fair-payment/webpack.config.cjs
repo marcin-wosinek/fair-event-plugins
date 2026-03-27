@@ -33,6 +33,10 @@ module.exports = {
       process.cwd(),
       "src/Admin/entries/index.js",
     ),
+    "admin/reconciliation/index": path.resolve(
+      process.cwd(),
+      "src/Admin/reconciliation/index.js",
+    ),
     "payment-callback": path.resolve(
       process.cwd(),
       "src/payment-callback.js",

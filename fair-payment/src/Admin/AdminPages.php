@@ -70,6 +70,16 @@ class AdminPages {
 				'fair-payment-budgets',
 				array( $this, 'render_budgets_page' )
 			);
+
+			// Reconciliation submenu.
+			add_submenu_page(
+				'fair-payment-transactions',
+				__( 'Reconciliation', 'fair-payment' ),
+				__( 'Reconciliation', 'fair-payment' ),
+				'manage_options',
+				'fair-payment-reconciliation',
+				array( $this, 'render_reconciliation_page' )
+			);
 		}
 
 		// Hidden transaction detail page.
@@ -138,6 +148,12 @@ class AdminPages {
 					'organizationId' => get_option( 'fair_payment_organization_id', '' ),
 				)
 			);
+			return;
+		}
+
+		// Reconciliation page.
+		if ( false !== strpos( $hook, 'fair-payment-reconciliation' ) ) {
+			$this->enqueue_admin_page_script( 'reconciliation' );
 			return;
 		}
 
@@ -235,6 +251,17 @@ class AdminPages {
 	public function render_entries_page() {
 		?>
 		<div id="fair-payment-entries-root"></div>
+		<?php
+	}
+
+	/**
+	 * Render reconciliation page
+	 *
+	 * @return void
+	 */
+	public function render_reconciliation_page() {
+		?>
+		<div id="fair-payment-reconciliation-root"></div>
 		<?php
 	}
 
