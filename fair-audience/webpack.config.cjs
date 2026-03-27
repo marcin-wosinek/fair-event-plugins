@@ -90,6 +90,10 @@ const customConfig = {
 			process.cwd(),
 			'src/Admin/questionnaire-responses/index.js',
 		),
+		'admin/submission-detail/index': path.resolve(
+			process.cwd(),
+			'src/Admin/submission-detail/index.js',
+		),
 		'admin/media-library-filter': path.resolve(
 			process.cwd(),
 			'src/Admin/media-library-filter.js',

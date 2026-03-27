@@ -46,6 +46,10 @@ class AdminHooks {
 			'title'    => 'Questionnaire Responses',
 			'callback' => 'render_questionnaire_responses_page',
 		),
+		'fair-audience-submission-detail'       => array(
+			'title'    => 'Submission Detail',
+			'callback' => 'render_submission_detail_page',
+		),
 	);
 
 	/**
@@ -217,6 +221,9 @@ class AdminHooks {
 
 		// Hidden submenu page - Questionnaire Responses.
 		$this->register_hidden_page( 'fair-audience-questionnaire-responses' );
+
+		// Hidden submenu page - Submission Detail.
+		$this->register_hidden_page( 'fair-audience-submission-detail' );
 
 		// Submenu page - Import.
 		add_submenu_page(
@@ -444,6 +451,14 @@ class AdminHooks {
 	}
 
 	/**
+	 * Render Submission Detail page.
+	 */
+	public function render_submission_detail_page() {
+		$page = new SubmissionDetailPage();
+		$page->render();
+	}
+
+	/**
 	 * Render Questionnaire Responses page.
 	 */
 	public function render_questionnaire_responses_page() {
@@ -537,6 +552,11 @@ class AdminHooks {
 		// Fee Detail page.
 		if ( 'admin_page_fair-audience-fee-detail' === $hook ) {
 			$this->enqueue_page_script( 'fee-detail', $plugin_dir );
+		}
+
+		// Submission Detail page.
+		if ( 'admin_page_fair-audience-submission-detail' === $hook ) {
+			$this->enqueue_page_script( 'submission-detail', $plugin_dir );
 		}
 
 		// Questionnaire Responses page.

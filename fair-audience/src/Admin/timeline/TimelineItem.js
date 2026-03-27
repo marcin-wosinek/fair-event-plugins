@@ -79,6 +79,23 @@ function getRelativeTime(dateString) {
 }
 
 /**
+ * Form submission content component.
+ *
+ * @param {Object} props Props.
+ * @param {Object} props.item Timeline item with submission details.
+ * @return {JSX.Element} Submission summary with link.
+ */
+function FormSubmissionContent({ item }) {
+	const submissionUrl = `admin.php?page=fair-audience-submission-detail&submission_id=${item.details.submission_id}`;
+
+	return (
+		<div style={{ fontSize: '13px', lineHeight: '1.5' }}>
+			<a href={submissionUrl}>{item.summary}</a>
+		</div>
+	);
+}
+
+/**
  * Fee summary content component.
  *
  * @param {Object} props Props.
@@ -154,6 +171,8 @@ export default function TimelineItem({ item }) {
 					<div style={{ flex: 1, minWidth: 0 }}>
 						{item.type === 'fee' ? (
 							<FeeContent item={item} />
+						) : item.type === 'form_submission' ? (
+							<FormSubmissionContent item={item} />
 						) : (
 							<div
 								style={{
