@@ -1,0 +1,33 @@
+{
+	"$schema": "https://schemas.wp.org/trunk/block.json",
+	"apiVersion": 3,
+	"name": "fair-audience/fair-form-conditional",
+	"version": "1.0.0",
+	"title": "Conditional Section",
+	"category": "widgets",
+	"icon": "visibility",
+	"description": "Show or hide a group of fields based on an answer to a previous question",
+	"keywords": ["conditional", "show", "hide", "section", "logic"],
+	"textdomain": "fair-audience",
+	"parent": ["fair-audience/fair-form"],
+	"supports": {
+		"html": false
+	},
+	"attributes": {
+		"conditionQuestionKey": {
+			"type": "string",
+			"default": ""
+		},
+		"conditionOperator": {
+			"type": "string",
+			"default": "equals"
+		},
+		"conditionValue": {
+			"type": "string",
+			"default": ""
+		}
+	},
+	"editorScript": "file:./editor.js",
+	"render": "file:./render.php",
+	"style": "file:./style-editor.css"
+}

@@ -1,0 +1,35 @@
+.fair-form-conditional-editor {
+	border: 2px dashed #007cba;
+	border-radius: 4px;
+	padding: 16px;
+	position: relative;
+	margin: 12px 0;
+}
+
+.fair-form-conditional-editor-label {
+	position: absolute;
+	top: -10px;
+	left: 12px;
+	background: #fff;
+	padding: 0 6px;
+	font-size: 11px;
+	color: #007cba;
+	font-weight: 600;
+	line-height: 20px;
+}
+
+.fair-form-conditional-editor-label .dashicons {
+	font-size: 14px;
+	width: 14px;
+	height: 14px;
+	margin-right: 4px;
+	vertical-align: middle;
+}
+
+.fair-form-conditional-editor--unconfigured {
+	border-color: #cc1818;
+}
+
+.fair-form-conditional-editor--unconfigured .fair-form-conditional-editor-label {
+	color: #cc1818;
+}

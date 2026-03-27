@@ -1,0 +1,7 @@
+.fair-form-conditional {
+	display: none;
+}
+
+.fair-form-conditional.fair-form-conditional-visible {
+	display: block;
+}

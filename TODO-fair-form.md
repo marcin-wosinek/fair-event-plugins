@@ -83,22 +83,22 @@ Goal: image/file upload capability.
 
 Goal: show/hide groups of fields based on answers to previous questions.
 
-- [ ] Create block `fair-audience/fair-form-conditional`
-  - [ ] `block.json` - attributes: `conditionQuestionKey` (string, which question to watch), `conditionOperator` (string: `equals`, `not_equals`, `contains`, `not_empty`), `conditionValue` (string, the value to match against)
-  - [ ] `parent: ["fair-audience/fair-form"]` - can only be placed inside the main form
-  - [ ] Uses InnerBlocks - can contain any of the same blocks the fair-form allows (question blocks, core/heading, core/paragraph, core/list) plus other conditional sections (nesting)
-  - [ ] `editor.js` - InnerBlocks container with InspectorControls for condition settings. Show a dropdown of available question keys (populated from sibling blocks via `useSelect` + `getBlocks`). Visual indicator showing the condition rule
-  - [ ] `render.php` - wraps `$content` in a `<div>` with data attributes: `data-fair-form-conditional`, `data-condition-question-key`, `data-condition-operator`, `data-condition-value`. Hidden by default via CSS (`display: none`)
-  - [ ] `style.css` - default hidden state, visible state when `.fair-form-conditional-visible`
-  - [ ] `editor.css` - always visible in editor with a visual border/label showing the condition
-- [ ] Update parent `frontend.js`
-  - [ ] On form load and on input change, evaluate all `[data-fair-form-conditional]` elements
-  - [ ] For each conditional section, find the question element matching `data-condition-question-key`, read its current value, apply the operator, toggle `.fair-form-conditional-visible` class
-  - [ ] Listen to `change` and `input` events on all form inputs to re-evaluate conditions
-  - [ ] When collecting answers, skip questions inside hidden conditional sections (not visible = not submitted)
-  - [ ] When validating required fields, skip those inside hidden conditional sections
-- [ ] Update parent `editor.js` - add `fair-audience/fair-form-conditional` to ALLOWED_BLOCKS
-- [ ] Register block in `BlockHooks.php`
+- [x] Create block `fair-audience/fair-form-conditional`
+  - [x] `block.json` - attributes: `conditionQuestionKey` (string, which question to watch), `conditionOperator` (string: `equals`, `not_equals`, `contains`, `not_empty`), `conditionValue` (string, the value to match against)
+  - [x] `parent: ["fair-audience/fair-form"]` - can only be placed inside the main form
+  - [x] Uses InnerBlocks - can contain any of the same blocks the fair-form allows (question blocks, core/heading, core/paragraph, core/list) plus other conditional sections (nesting)
+  - [x] `editor.js` - InnerBlocks container with InspectorControls for condition settings. Show a dropdown of available question keys (populated from sibling blocks via `useSelect` + `getBlocks`). Visual indicator showing the condition rule
+  - [x] `render.php` - wraps `$content` in a `<div>` with data attributes: `data-fair-form-conditional`, `data-condition-question-key`, `data-condition-operator`, `data-condition-value`. Hidden by default via CSS (`display: none`)
+  - [x] `style.css` - default hidden state, visible state when `.fair-form-conditional-visible`
+  - [x] `editor.css` - always visible in editor with a visual border/label showing the condition
+- [x] Update parent `frontend.js`
+  - [x] On form load and on input change, evaluate all `[data-fair-form-conditional]` elements
+  - [x] For each conditional section, find the question element matching `data-condition-question-key`, read its current value, apply the operator, toggle `.fair-form-conditional-visible` class
+  - [x] Listen to `change` and `input` events on all form inputs to re-evaluate conditions
+  - [x] When collecting answers, skip questions inside hidden conditional sections (not visible = not submitted)
+  - [x] When validating required fields, skip those inside hidden conditional sections
+- [x] Update parent `editor.js` - add `fair-audience/fair-form-conditional` to ALLOWED_BLOCKS
+- [x] Register block in `BlockHooks.php`
 - [ ] Test: create form with a radio/select question, add conditional section that shows only when a specific option is selected, verify show/hide on frontend, verify hidden answers are not submitted
 
 ### Condition operators
