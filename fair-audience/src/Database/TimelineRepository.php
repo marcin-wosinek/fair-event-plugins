@@ -101,6 +101,14 @@ class TimelineRepository {
 
 		// For each fee, get payment summary.
 		foreach ( $fees as &$fee ) {
+			$fee['total_amount'] = (float) $wpdb->get_var(
+				$wpdb->prepare(
+					'SELECT COALESCE(SUM(amount), 0) FROM %i WHERE fee_id = %d',
+					$fp_table,
+					$fee['id']
+				)
+			);
+
 			$fee['total_paid'] = (float) $wpdb->get_var(
 				$wpdb->prepare(
 					"SELECT COALESCE(SUM(amount), 0) FROM %i WHERE fee_id = %d AND status = 'paid'",

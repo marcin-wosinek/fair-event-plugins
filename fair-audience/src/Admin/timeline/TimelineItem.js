@@ -92,10 +92,12 @@ function FeeContent({ item }) {
 	return (
 		<div style={{ fontSize: '13px', lineHeight: '1.6' }}>
 			<div>
-				{__('Membership fee', 'fair-audience')}{' '}
+				{__('Created membership fee', 'fair-audience')}{' '}
 				<a href={feeUrl}>
 					<strong>{details.fee_name}</strong>
 				</a>
+				. {__('Total amount:', 'fair-audience')}{' '}
+				{Number(details.total_amount).toFixed(2)} {details.currency}.
 			</div>
 			<div>
 				{__('Already paid:', 'fair-audience')}{' '}

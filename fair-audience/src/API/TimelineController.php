@@ -163,6 +163,7 @@ class TimelineController extends WP_REST_Controller {
 						'fee_id'       => (int) $row['id'],
 						'fee_name'     => $row['name'],
 						'currency'     => $currency,
+						'total_amount' => (float) $row['total_amount'],
 						'total_paid'   => (float) $row['total_paid'],
 						'pending_text' => $pending_text,
 						'status'       => $row['status'],
