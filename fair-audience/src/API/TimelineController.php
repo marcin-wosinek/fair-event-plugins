@@ -94,28 +94,65 @@ class TimelineController extends WP_REST_Controller {
 
 		$items = array();
 
-		// Event signups.
-		$signups = $this->repository->get_recent_signups( $fetch_limit );
+		// Event signups – group by event_date_id + calendar day.
+		$signups       = $this->repository->get_recent_signups( $fetch_limit );
+		$signup_groups = array();
 		foreach ( $signups as $row ) {
-			$event_title = $row['event_id'] ? get_the_title( (int) $row['event_id'] ) : '';
-			$name        = trim( $row['participant_name'] . ' ' . $row['participant_surname'] );
+			$day = substr( $row['created_at'], 0, 10 ); // YYYY-MM-DD.
+			$key = $row['event_date_id'] . '_' . $day;
 
-			$label_text = 'signed up';
-			if ( 'interested' === $row['label'] ) {
-				$label_text = 'is interested in';
-			} elseif ( 'collaborator' === $row['label'] ) {
-				$label_text = 'is collaborating on';
+			if ( ! isset( $signup_groups[ $key ] ) ) {
+				$signup_groups[ $key ] = array(
+					'rows' => array(),
+					'row'  => $row,
+				);
+			}
+			$signup_groups[ $key ]['rows'][] = $row;
+		}
+
+		foreach ( $signup_groups as $group ) {
+			$first       = $group['row'];
+			$count       = count( $group['rows'] );
+			$event_title = $first['event_id'] ? get_the_title( (int) $first['event_id'] ) : '';
+
+			if ( $count > 1 ) {
+				$summary = sprintf(
+					/* translators: 1: number of people, 2: event title */
+					_n(
+						'%1$d person signed up %2$s',
+						'%1$d people signed up %2$s',
+						$count,
+						'fair-audience'
+					),
+					$count,
+					$event_title
+				);
+				$id = 'signup_group_' . $first['event_date_id'] . '_' . substr( $first['created_at'], 0, 10 );
+			} else {
+				$name = trim( $first['participant_name'] . ' ' . $first['participant_surname'] );
+
+				$label_text = 'signed up';
+				if ( 'interested' === $first['label'] ) {
+					$label_text = 'is interested in';
+				} elseif ( 'collaborator' === $first['label'] ) {
+					$label_text = 'is collaborating on';
+				}
+
+				$summary = sprintf( '%s %s %s', $name, $label_text, $event_title );
+				$id      = 'signup_' . $first['id'];
 			}
 
+			// Use the most recent created_at from the group.
 			$items[] = array(
-				'id'         => 'signup_' . $row['id'],
+				'id'         => $id,
 				'type'       => 'signup',
-				'created_at' => $row['created_at'],
-				'summary'    => sprintf( '%s %s %s', $name, $label_text, $event_title ),
+				'created_at' => $first['created_at'],
+				'summary'    => $summary,
 				'details'    => array(
-					'event_id'      => (int) $row['event_id'],
-					'event_date_id' => (int) $row['event_date_id'],
-					'label'         => $row['label'],
+					'event_id'      => (int) $first['event_id'],
+					'event_date_id' => (int) $first['event_date_id'],
+					'label'         => $first['label'],
+					'count'         => $count,
 				),
 			);
 		}
