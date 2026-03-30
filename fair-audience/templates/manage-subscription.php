@@ -12,12 +12,14 @@ defined( 'WPINC' ) || die;
 
 use FairAudience\Services\ManageSubscriptionToken;
 use FairAudience\Database\ParticipantRepository;
+use FairAudience\Database\ParticipantCategoryRepository;
 
 // Get the token from the query var.
 $token = sanitize_text_field( get_query_var( 'manage_subscription' ) );
 
-// Initialize repository.
+// Initialize repositories.
 $participant_repository = new ParticipantRepository();
+$category_repository    = new ParticipantCategoryRepository();
 
 // Process the request.
 $result = array(
@@ -52,6 +54,11 @@ if ( false === $participant_id ) {
 				$participant->email_profile = $new_profile;
 
 				if ( $participant->save() ) {
+					// Save category preferences.
+					// phpcs:ignore WordPress.Security.NonceVerification.Missing -- Public form, token provides auth.
+					$selected_cats = isset( $_POST['mailing_categories'] ) ? array_map( 'absint', (array) $_POST['mailing_categories'] ) : array();
+					$category_repository->set_categories( $participant->id, $selected_cats );
+
 					$result['type']    = 'success';
 					$result['message'] = __( 'Your preferences have been updated.', 'fair-audience' );
 				} else {
@@ -61,6 +68,28 @@ if ( false === $participant_id ) {
 			}
 		}
 	}
+}
+
+// Load mailing categories for display.
+$mailing_category_ids  = get_option( 'fair_audience_mailing_category_ids', array() );
+$mailing_categories    = array();
+$participant_cat_ids   = array();
+
+if ( ! empty( $mailing_category_ids ) && $result['success'] ) {
+	$mailing_categories = get_terms(
+		array(
+			'taxonomy'   => 'category',
+			'hide_empty' => false,
+			'include'    => array_map( 'intval', $mailing_category_ids ),
+			'orderby'    => 'name',
+			'order'      => 'ASC',
+		)
+	);
+	if ( is_wp_error( $mailing_categories ) ) {
+		$mailing_categories = array();
+	}
+
+	$participant_cat_ids = $category_repository->get_category_ids_by_participant( $result['participant']->id );
 }
 
 $site_name_header = wp_specialchars_decode( get_option( 'blogname' ), ENT_QUOTES );
@@ -202,6 +231,34 @@ $site_name_header = wp_specialchars_decode( get_option( 'blogname' ), ENT_QUOTES
 		text-decoration: underline;
 	}
 
+	.fair-audience-subscription-categories {
+		margin-bottom: 24px;
+		padding: 16px;
+		border: 1px solid #e0e0e0;
+		border-radius: 8px;
+	}
+
+	.fair-audience-subscription-categories-title {
+		font-size: 16px;
+		font-weight: 600;
+		color: #1e1e1e;
+		margin: 0 0 12px 0;
+	}
+
+	.fair-audience-subscription-category-label {
+		display: flex;
+		align-items: center;
+		padding: 8px 0;
+		cursor: pointer;
+		font-size: 14px;
+		color: #1e1e1e;
+	}
+
+	.fair-audience-subscription-category-label input[type="checkbox"] {
+		margin-right: 10px;
+		flex-shrink: 0;
+	}
+
 	.fair-audience-error-container {
 		text-align: center;
 	}
@@ -268,6 +325,25 @@ $site_name_header = wp_specialchars_decode( get_option( 'blogname' ), ENT_QUOTES
 						</div>
 					</label>
 				</div>
+
+				<?php if ( ! empty( $mailing_categories ) ) : ?>
+					<div class="fair-audience-subscription-categories">
+						<h2 class="fair-audience-subscription-categories-title">
+							<?php echo esc_html__( 'I want to receive updates about:', 'fair-audience' ); ?>
+						</h2>
+						<?php foreach ( $mailing_categories as $category ) : ?>
+							<label class="fair-audience-subscription-category-label">
+								<input
+									type="checkbox"
+									name="mailing_categories[]"
+									value="<?php echo esc_attr( $category->term_id ); ?>"
+									<?php checked( in_array( (int) $category->term_id, $participant_cat_ids, true ) ); ?>
+								/>
+								<?php echo esc_html( $category->name ); ?>
+							</label>
+						<?php endforeach; ?>
+					</div>
+				<?php endif; ?>
 
 				<button type="submit" class="fair-audience-subscription-submit">
 					<?php echo esc_html__( 'Save Preferences', 'fair-audience' ); ?>

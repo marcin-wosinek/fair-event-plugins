@@ -9,6 +9,7 @@ import { Notice, TabPanel } from '@wordpress/components';
  * Internal dependencies
  */
 import InstagramTab from './InstagramTab.js';
+import MailingTab from './MailingTab.js';
 import { saveSettings } from './settings-api.js';
 
 /**
@@ -133,6 +134,10 @@ export default function SettingsApp() {
 						name: 'instagram',
 						title: __('Instagram', 'fair-audience'),
 					},
+					{
+						name: 'mailing',
+						title: __('Mailing', 'fair-audience'),
+					},
 				]}
 			>
 				{(tab) => (
@@ -142,6 +147,9 @@ export default function SettingsApp() {
 								onNotice={setNotice}
 								shouldReload={shouldReloadInstagram}
 							/>
+						)}
+						{tab.name === 'mailing' && (
+							<MailingTab onNotice={setNotice} />
 						)}
 					</div>
 				)}

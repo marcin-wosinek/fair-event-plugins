@@ -112,5 +112,30 @@ class Settings {
 				'default'           => 0,
 			)
 		);
+
+		// Mailing Category IDs.
+		register_setting(
+			'fair_audience_settings',
+			'fair_audience_mailing_category_ids',
+			array(
+				'type'              => 'array',
+				'description'       => __( 'Category IDs used for marketing mailing', 'fair-audience' ),
+				'sanitize_callback' => function ( $value ) {
+					if ( ! is_array( $value ) ) {
+						return array();
+					}
+					return array_values( array_map( 'absint', $value ) );
+				},
+				'show_in_rest'      => array(
+					'schema' => array(
+						'type'  => 'array',
+						'items' => array(
+							'type' => 'integer',
+						),
+					),
+				),
+				'default'           => array(),
+			)
+		);
 	}
 }
