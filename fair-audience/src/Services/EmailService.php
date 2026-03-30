@@ -1004,16 +1004,21 @@ class EmailService {
 	 * @return string Processed content.
 	 */
 	private function replace_placeholders( $content, $participant, $event_date_id = 0 ) {
-		if ( false === strpos( $content, '{photo_upload_link}' ) ) {
-			return $content;
+		if ( false !== strpos( $content, '{photo_upload_url}' ) ) {
+			$token = ParticipantToken::generate( $participant->id, $event_date_id );
+			$url   = add_query_arg( 'participant_token', $token, home_url( '/' ) );
+			$url   = add_query_arg( 'photo_upload', '1', $url );
+
+			$content = str_replace( '{photo_upload_url}', esc_url( $url ), $content );
 		}
 
-		$token = ParticipantToken::generate( $participant->id, $event_date_id );
-		$url   = add_query_arg( 'participant_token', $token, home_url( '/' ) );
-		$url   = add_query_arg( 'photo_upload', '1', $url );
-		$link  = '<a href="' . esc_url( $url ) . '">' . esc_html__( 'Upload photos', 'fair-audience' ) . '</a>';
+		if ( false !== strpos( $content, '{manage_subscription_url}' ) ) {
+			$url = ManageSubscriptionToken::get_url( $participant->id );
 
-		return str_replace( '{photo_upload_link}', $link, $content );
+			$content = str_replace( '{manage_subscription_url}', esc_url( $url ), $content );
+		}
+
+		return $content;
 	}
 
 	/**

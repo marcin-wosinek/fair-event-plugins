@@ -236,6 +236,44 @@ export default function CustomMail() {
 	};
 
 	/**
+	 * Insert a placeholder link into the editor.
+	 *
+	 * If text is selected, wraps it in a link. Otherwise inserts a link
+	 * with default text.
+	 *
+	 * @param {string} placeholder URL placeholder (e.g. '{photo_upload_url}')
+	 * @param {string} defaultText Default link text when nothing is selected
+	 */
+	const insertPlaceholderLink = (placeholder, defaultText) => {
+		if (window.tinymce) {
+			const editor = window.tinymce.get('custom-mail-content');
+			if (editor) {
+				const selectedText = editor.selection.getContent({
+					format: 'text',
+				});
+				const linkText = selectedText || defaultText;
+				editor.execCommand(
+					'mceInsertContent',
+					false,
+					'<a href="' + placeholder + '">' + linkText + '</a>'
+				);
+				return;
+			}
+		}
+		const textarea = document.getElementById('custom-mail-content');
+		if (textarea) {
+			const start = textarea.selectionStart;
+			const end = textarea.selectionEnd;
+			const text = textarea.value;
+			const selectedText = text.substring(start, end);
+			const linkText = selectedText || defaultText;
+			const html = '<a href="' + placeholder + '">' + linkText + '</a>';
+			textarea.value =
+				text.substring(0, start) + html + text.substring(end);
+		}
+	};
+
+	/**
 	 * Handle duplicating a mail from history into the form
 	 *
 	 * @param {Object} mail Mail record
@@ -477,39 +515,36 @@ export default function CustomMail() {
 								<Button
 									isSecondary
 									isSmall
-									onClick={() => {
-										if (window.tinymce) {
-											const editor = window.tinymce.get(
-												'custom-mail-content'
-											);
-											if (editor) {
-												editor.execCommand(
-													'mceInsertContent',
-													false,
-													'{photo_upload_link}'
-												);
-												return;
-											}
-										}
-										const textarea =
-											document.getElementById(
-												'custom-mail-content'
-											);
-										if (textarea) {
-											const start =
-												textarea.selectionStart;
-											const end = textarea.selectionEnd;
-											const text = textarea.value;
-											textarea.value =
-												text.substring(0, start) +
-												'{photo_upload_link}' +
-												text.substring(end);
-										}
-									}}
+									onClick={() =>
+										insertPlaceholderLink(
+											'{photo_upload_url}',
+											__('Upload photos', 'fair-audience')
+										)
+									}
 									disabled={isSending}
 								>
 									{__(
 										'Insert photo upload link',
+										'fair-audience'
+									)}
+								</Button>
+								<Button
+									isSecondary
+									isSmall
+									onClick={() =>
+										insertPlaceholderLink(
+											'{manage_subscription_url}',
+											__(
+												'Manage your preferences',
+												'fair-audience'
+											)
+										)
+									}
+									disabled={isSending}
+									style={{ marginLeft: '8px' }}
+								>
+									{__(
+										'Insert subscription link',
 										'fair-audience'
 									)}
 								</Button>
