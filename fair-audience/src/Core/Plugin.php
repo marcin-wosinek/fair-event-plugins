@@ -53,6 +53,7 @@ class Plugin {
 		add_action( 'template_redirect', array( $this, 'handle_manage_subscription' ) );
 		add_action( 'template_redirect', array( $this, 'handle_collaborator_profile' ) );
 		add_action( 'template_redirect', array( $this, 'handle_fee_payment' ) );
+		add_action( 'template_redirect', array( $this, 'handle_photo_upload' ) );
 
 		// Instagram token refresh cron.
 		add_action( 'fair_audience_refresh_instagram_token', array( $this, 'refresh_instagram_token' ) );
@@ -145,6 +146,9 @@ class Plugin {
 		$photo_tags_controller = new \FairAudience\API\PhotoTagsController();
 		$photo_tags_controller->register_routes();
 
+		$photo_upload_controller = new \FairAudience\API\PhotoUploadController();
+		$photo_upload_controller->register_routes();
+
 		$timeline_controller = new \FairAudience\API\TimelineController();
 		$timeline_controller->register_routes();
 
@@ -170,6 +174,7 @@ class Plugin {
 		$vars[] = 'collaborator_profile';
 		$vars[] = 'fee_payment';
 		$vars[] = 'edit_audience_signup';
+		$vars[] = 'photo_upload';
 		return $vars;
 	}
 
@@ -281,6 +286,21 @@ class Plugin {
 
 		// Load fee payment template.
 		include FAIR_AUDIENCE_PLUGIN_DIR . 'templates/fee-payment.php';
+		exit;
+	}
+
+	/**
+	 * Handle photo upload page requests.
+	 */
+	public function handle_photo_upload() {
+		$token = get_query_var( 'photo_upload' );
+
+		if ( empty( $token ) ) {
+			return;
+		}
+
+		// Load photo upload template.
+		include FAIR_AUDIENCE_PLUGIN_DIR . 'templates/photo-upload.php';
 		exit;
 	}
 

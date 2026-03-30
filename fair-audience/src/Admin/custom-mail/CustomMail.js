@@ -473,6 +473,47 @@ export default function CustomMail() {
 								style={{ width: '100%' }}
 								disabled={isSending}
 							/>
+							<div style={{ marginTop: '8px' }}>
+								<Button
+									isSecondary
+									isSmall
+									onClick={() => {
+										if (window.tinymce) {
+											const editor = window.tinymce.get(
+												'custom-mail-content'
+											);
+											if (editor) {
+												editor.execCommand(
+													'mceInsertContent',
+													false,
+													'{photo_upload_link}'
+												);
+												return;
+											}
+										}
+										const textarea =
+											document.getElementById(
+												'custom-mail-content'
+											);
+										if (textarea) {
+											const start =
+												textarea.selectionStart;
+											const end = textarea.selectionEnd;
+											const text = textarea.value;
+											textarea.value =
+												text.substring(0, start) +
+												'{photo_upload_link}' +
+												text.substring(end);
+										}
+									}}
+									disabled={isSending}
+								>
+									{__(
+										'Insert photo upload link',
+										'fair-audience'
+									)}
+								</Button>
+							</div>
 						</div>
 
 						<SelectControl

@@ -283,7 +283,8 @@ class CustomMailController extends WP_REST_Controller {
 				$content,
 				$is_marketing,
 				$labels,
-				$skip_participant_ids
+				$skip_participant_ids,
+				$event_date_id
 			);
 		} else {
 			// Send to all audience members.

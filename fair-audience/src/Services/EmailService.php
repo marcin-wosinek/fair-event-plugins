@@ -996,18 +996,41 @@ class EmailService {
 	}
 
 	/**
+	 * Replace participant-specific placeholders in email content.
+	 *
+	 * @param string      $content       Email content (HTML).
+	 * @param Participant $participant   Participant object.
+	 * @param int         $event_date_id Event date ID (0 if not linked to an event date).
+	 * @return string Processed content.
+	 */
+	private function replace_placeholders( $content, $participant, $event_date_id = 0 ) {
+		if ( false === strpos( $content, '{photo_upload_link}' ) ) {
+			return $content;
+		}
+
+		$token = ParticipantToken::generate( $participant->id, $event_date_id );
+		$url   = add_query_arg( 'photo_upload', $token, home_url( '/' ) );
+
+		return str_replace( '{photo_upload_link}', esc_url( $url ), $content );
+	}
+
+	/**
 	 * Send a custom mail to a single participant.
 	 *
-	 * @param object      $event       Event post object.
-	 * @param Participant $participant Participant object.
-	 * @param string      $subject     Email subject.
-	 * @param string      $content     Email content (HTML).
+	 * @param object      $event         Event post object.
+	 * @param Participant $participant   Participant object.
+	 * @param string      $subject       Email subject.
+	 * @param string      $content       Email content (HTML).
+	 * @param int         $event_date_id Event date ID for placeholder replacement.
 	 * @return bool Success.
 	 */
-	public function send_custom_mail( $event, $participant, $subject, $content ) {
+	public function send_custom_mail( $event, $participant, $subject, $content, $event_date_id = 0 ) {
 		if ( ! $this->has_valid_email( $participant ) ) {
 			return false;
 		}
+
+		// Replace participant-specific placeholders.
+		$content = $this->replace_placeholders( $content, $participant, $event_date_id );
 
 		$site_name = wp_specialchars_decode( get_option( 'blogname' ), ENT_QUOTES );
 
@@ -1108,7 +1131,7 @@ class EmailService {
 	 * @param array  $skip_participant_ids  Participant IDs to skip.
 	 * @return array Results array with 'sent', 'failed', and 'skipped' keys.
 	 */
-	public function send_bulk_custom_mail( $event_id, $subject, $content, $is_marketing = true, $labels = array( 'signed_up', 'collaborator' ), $skip_participant_ids = array() ) {
+	public function send_bulk_custom_mail( $event_id, $subject, $content, $is_marketing = true, $labels = array( 'signed_up', 'collaborator' ), $skip_participant_ids = array(), $event_date_id = 0 ) {
 		// Increase time limit for bulk sending.
 		set_time_limit( 300 ); // 5 minutes.
 
@@ -1180,7 +1203,7 @@ class EmailService {
 			}
 
 			// Send custom mail.
-			$success = $this->send_custom_mail( $event, $participant, $subject, $content );
+			$success = $this->send_custom_mail( $event, $participant, $subject, $content, $event_date_id );
 
 			if ( $success ) {
 				$results['sent'][] = $participant->email;
@@ -1276,6 +1299,9 @@ class EmailService {
 		if ( ! $this->has_valid_email( $participant ) ) {
 			return false;
 		}
+
+		// Replace participant-specific placeholders.
+		$content = $this->replace_placeholders( $content, $participant );
 
 		$site_name = wp_specialchars_decode( get_option( 'blogname' ), ENT_QUOTES );
 
