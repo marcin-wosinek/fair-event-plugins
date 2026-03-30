@@ -1009,9 +1009,11 @@ class EmailService {
 		}
 
 		$token = ParticipantToken::generate( $participant->id, $event_date_id );
-		$url   = add_query_arg( 'photo_upload', $token, home_url( '/' ) );
+		$url   = add_query_arg( 'participant_token', $token, home_url( '/' ) );
+		$url   = add_query_arg( 'photo_upload', '1', $url );
+		$link  = '<a href="' . esc_url( $url ) . '">' . esc_html__( 'Upload photos', 'fair-audience' ) . '</a>';
 
-		return str_replace( '{photo_upload_link}', esc_url( $url ), $content );
+		return str_replace( '{photo_upload_link}', $link, $content );
 	}
 
 	/**

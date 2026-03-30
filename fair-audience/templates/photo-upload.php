@@ -16,7 +16,7 @@ use FairAudience\Services\ParticipantToken;
 use FairAudience\Database\ParticipantRepository;
 
 // Get the token from the query var.
-$token = sanitize_text_field( get_query_var( 'photo_upload' ) );
+$token = sanitize_text_field( get_query_var( 'participant_token' ) );
 
 // Process the request.
 $result = array(

@@ -293,9 +293,9 @@ class Plugin {
 	 * Handle photo upload page requests.
 	 */
 	public function handle_photo_upload() {
-		$token = get_query_var( 'photo_upload' );
+		$photo_upload = get_query_var( 'photo_upload' );
 
-		if ( empty( $token ) ) {
+		if ( empty( $photo_upload ) ) {
 			return;
 		}
 
