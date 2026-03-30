@@ -422,10 +422,12 @@ $rest_url         = esc_url( rest_url( 'fair-audience/v1/photo-upload' ) );
 						messageDiv.style.display = 'none';
 
 						var formData = new FormData();
-						formData.append('participant_token', token);
 						selectedFiles.forEach(function(file, i) {
 							formData.append('photos[' + i + ']', file);
 						});
+
+						var uploadUrl = restUrl + (restUrl.indexOf('?') === -1 ? '?' : '&') +
+							'participant_token=' + encodeURIComponent(token);
 
 						var xhr = new XMLHttpRequest();
 
@@ -474,7 +476,7 @@ $rest_url         = esc_url( rest_url( 'fair-audience/v1/photo-upload' ) );
 							updateButton();
 						});
 
-						xhr.open('POST', restUrl);
+						xhr.open('POST', uploadUrl);
 						xhr.send(formData);
 					});
 				})();
