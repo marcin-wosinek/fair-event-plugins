@@ -15,6 +15,7 @@ services:
             - ./fair-events:/var/www/html/wp-content/plugins/fair-events
             - ./fair-platform:/var/www/html/wp-content/plugins/fair-platform
             - ./fair-audience:/var/www/html/wp-content/plugins/fair-audience
+            - ./uploads.ini:/usr/local/etc/php/conf.d/uploads.ini
 
     db:
         image: mysql:8.0

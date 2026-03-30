@@ -126,9 +126,14 @@ class PhotoUploadController extends WP_REST_Controller {
 			);
 		}
 
-		// Get uploaded files.
+		// Get uploaded files - try request then $_FILES directly.
 		$files = $request->get_file_params();
+		// phpcs:ignore WordPress.Security.NonceVerification.Missing -- Public endpoint; participant token provides auth.
 		if ( empty( $files ) ) {
+			$files = $_FILES;
+		}
+		$photos = isset( $files['photos'] ) ? $files['photos'] : null;
+		if ( empty( $photos ) || empty( $photos['name'] ) ) {
 			return new WP_Error(
 				'no_files',
 				__( 'No files uploaded.', 'fair-audience' ),
@@ -145,44 +150,28 @@ class PhotoUploadController extends WP_REST_Controller {
 		$uploaded_count         = 0;
 		$errors                 = array();
 
-		// Process each uploaded file.
-		foreach ( $files as $file_key => $file ) {
+		// Normalize: photos[] comes as arrays of name/type/tmp_name/error/size.
+		$file_names = is_array( $photos['name'] ) ? $photos['name'] : array( $photos['name'] );
+		$file_count = count( $file_names );
+
+		for ( $i = 0; $i < $file_count; $i++ ) {
 			if ( $uploaded_count >= self::MAX_FILES ) {
 				break;
 			}
 
-			// Handle both single file and array of files.
-			if ( is_array( $file['name'] ) ) {
-				// Multiple files under the same key.
-				$file_count = count( $file['name'] );
-				for ( $i = 0; $i < $file_count; $i++ ) {
-					if ( $uploaded_count >= self::MAX_FILES ) {
-						break;
-					}
+			$single_file = array(
+				'name'     => is_array( $photos['name'] ) ? $photos['name'][ $i ] : $photos['name'],
+				'type'     => is_array( $photos['type'] ) ? $photos['type'][ $i ] : $photos['type'],
+				'tmp_name' => is_array( $photos['tmp_name'] ) ? $photos['tmp_name'][ $i ] : $photos['tmp_name'],
+				'error'    => is_array( $photos['error'] ) ? $photos['error'][ $i ] : $photos['error'],
+				'size'     => is_array( $photos['size'] ) ? $photos['size'][ $i ] : $photos['size'],
+			);
 
-					$single_file = array(
-						'name'     => $file['name'][ $i ],
-						'type'     => $file['type'][ $i ],
-						'tmp_name' => $file['tmp_name'][ $i ],
-						'error'    => $file['error'][ $i ],
-						'size'     => $file['size'][ $i ],
-					);
-
-					$result = $this->process_single_file( $single_file, $participant_id, $event_date_id, $photo_participant_repo );
-					if ( is_wp_error( $result ) ) {
-						$errors[] = $result->get_error_message();
-					} else {
-						++$uploaded_count;
-					}
-				}
+			$result = $this->process_single_file( $single_file, $participant_id, $event_date_id, $photo_participant_repo );
+			if ( is_wp_error( $result ) ) {
+				$errors[] = $result->get_error_message();
 			} else {
-				// Single file.
-				$result = $this->process_single_file( $file, $participant_id, $event_date_id, $photo_participant_repo );
-				if ( is_wp_error( $result ) ) {
-					$errors[] = $result->get_error_message();
-				} else {
-					++$uploaded_count;
-				}
+				++$uploaded_count;
 			}
 		}
 

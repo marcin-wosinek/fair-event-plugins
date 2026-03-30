@@ -422,8 +422,8 @@ $rest_url         = esc_url( rest_url( 'fair-audience/v1/photo-upload' ) );
 						messageDiv.style.display = 'none';
 
 						var formData = new FormData();
-						selectedFiles.forEach(function(file, i) {
-							formData.append('photos[' + i + ']', file);
+						selectedFiles.forEach(function(file) {
+							formData.append('photos[]', file);
 						});
 
 						var uploadUrl = restUrl + (restUrl.indexOf('?') === -1 ? '?' : '&') +
