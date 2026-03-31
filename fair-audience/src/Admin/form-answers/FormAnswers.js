@@ -1,7 +1,14 @@
 import { __ } from '@wordpress/i18n';
 import { useState, useEffect, useMemo } from '@wordpress/element';
 import apiFetch from '@wordpress/api-fetch';
-import { Card, CardBody } from '@wordpress/components';
+import {
+	Card,
+	CardBody,
+	Modal,
+	Button,
+	SelectControl,
+	Spinner,
+} from '@wordpress/components';
 import { DataViews } from '@wordpress/dataviews';
 
 const DEFAULT_VIEW = {
@@ -25,6 +32,10 @@ export default function FormAnswers() {
 	const [submissions, setSubmissions] = useState([]);
 	const [isLoading, setIsLoading] = useState(true);
 	const [view, setView] = useState(DEFAULT_VIEW);
+	const [editingItem, setEditingItem] = useState(null);
+	const [eventDates, setEventDates] = useState([]);
+	const [selectedEventDateId, setSelectedEventDateId] = useState('');
+	const [isSaving, setIsSaving] = useState(false);
 
 	useEffect(() => {
 		setIsLoading(true);
@@ -41,6 +52,70 @@ export default function FormAnswers() {
 				setIsLoading(false);
 			});
 	}, []);
+
+	const loadEventDates = () => {
+		if (eventDates.length > 0) {
+			return;
+		}
+		apiFetch({ path: '/fair-audience/v1/custom-mail/events' })
+			.then((data) => {
+				setEventDates(data);
+			})
+			.catch((err) => {
+				// eslint-disable-next-line no-console
+				console.error('Error loading event dates:', err);
+			});
+	};
+
+	const openEdit = (item) => {
+		setEditingItem(item);
+		setSelectedEventDateId(
+			item.event_date_id ? String(item.event_date_id) : ''
+		);
+		loadEventDates();
+	};
+
+	const handleSave = () => {
+		if (!editingItem) {
+			return;
+		}
+
+		setIsSaving(true);
+		apiFetch({
+			path: `/fair-audience/v1/questionnaire-responses/${editingItem.id}`,
+			method: 'PUT',
+			data: {
+				event_date_id: selectedEventDateId
+					? parseInt(selectedEventDateId, 10)
+					: 0,
+			},
+		})
+			.then((updated) => {
+				setSubmissions((prev) =>
+					prev.map((s) =>
+						s.id === editingItem.id
+							? {
+									...s,
+									event_date_id: updated.event_date_id,
+									event_name: updated.event_name || '',
+							  }
+							: s
+					)
+				);
+				setEditingItem(null);
+			})
+			.catch((err) => {
+				// eslint-disable-next-line no-undef
+				alert(
+					__('Error: ', 'fair-audience') +
+						(err.message ||
+							__('Failed to update submission.', 'fair-audience'))
+				);
+			})
+			.finally(() => {
+				setIsSaving(false);
+			});
+	};
 
 	const fields = useMemo(
 		() => [
@@ -127,6 +202,13 @@ export default function FormAnswers() {
 	const actions = useMemo(
 		() => [
 			{
+				id: 'edit',
+				label: __('Edit', 'fair-audience'),
+				icon: 'edit',
+				callback: ([item]) => openEdit(item),
+				supportsBulk: false,
+			},
+			{
 				id: 'view',
 				label: __('View', 'fair-audience'),
 				icon: 'visibility',
@@ -145,6 +227,17 @@ export default function FormAnswers() {
 			},
 		],
 		[]
+	);
+
+	const eventDateOptions = useMemo(
+		() => [
+			{ label: __('— None —', 'fair-audience'), value: '' },
+			...eventDates.map((ed) => ({
+				label: ed.display_label,
+				value: String(ed.id),
+			})),
+		],
+		[eventDates]
 	);
 
 	return (
@@ -166,6 +259,47 @@ export default function FormAnswers() {
 					/>
 				</CardBody>
 			</Card>
+
+			{editingItem && (
+				<Modal
+					title={__('Edit Submission', 'fair-audience')}
+					onRequestClose={() => setEditingItem(null)}
+				>
+					<SelectControl
+						label={__('Event', 'fair-audience')}
+						value={selectedEventDateId}
+						options={eventDateOptions}
+						onChange={setSelectedEventDateId}
+					/>
+					<div
+						style={{
+							marginTop: '16px',
+							display: 'flex',
+							justifyContent: 'flex-end',
+							gap: '8px',
+						}}
+					>
+						<Button
+							variant="tertiary"
+							onClick={() => setEditingItem(null)}
+						>
+							{__('Cancel', 'fair-audience')}
+						</Button>
+						<Button
+							variant="primary"
+							onClick={handleSave}
+							isBusy={isSaving}
+							disabled={isSaving}
+						>
+							{isSaving ? (
+								<Spinner />
+							) : (
+								__('Save', 'fair-audience')
+							)}
+						</Button>
+					</div>
+				</Modal>
+			)}
 		</div>
 	);
 }

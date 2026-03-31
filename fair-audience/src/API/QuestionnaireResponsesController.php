@@ -78,6 +78,17 @@ class QuestionnaireResponsesController extends WP_REST_Controller {
 					'permission_callback' => array( $this, 'get_items_permissions_check' ),
 				),
 				array(
+					'methods'             => WP_REST_Server::EDITABLE,
+					'callback'            => array( $this, 'update_item' ),
+					'permission_callback' => array( $this, 'delete_item_permissions_check' ),
+					'args'                => array(
+						'event_date_id' => array(
+							'type'              => 'integer',
+							'sanitize_callback' => 'absint',
+						),
+					),
+				),
+				array(
 					'methods'             => WP_REST_Server::DELETABLE,
 					'callback'            => array( $this, 'delete_item' ),
 					'permission_callback' => array( $this, 'delete_item_permissions_check' ),
@@ -247,11 +258,23 @@ class QuestionnaireResponsesController extends WP_REST_Controller {
 			$participant_email = $participant->email;
 		}
 
+		$event_name = '';
+		if ( $submission->event_date_id && class_exists( '\FairEvents\Models\EventDates' ) ) {
+			$event_date = \FairEvents\Models\EventDates::get_by_id( $submission->event_date_id );
+			if ( $event_date ) {
+				$event = get_post( (int) $event_date->event_id );
+				if ( $event ) {
+					$event_name = $event->post_title;
+				}
+			}
+		}
+
 		$data = array(
 			'id'                => $submission->id,
 			'title'             => $submission->title,
 			'participant_name'  => $participant_name,
 			'participant_email' => $participant_email,
+			'event_name'        => $event_name,
 			'created_at'        => $submission->created_at,
 			'post_id'           => $submission->post_id,
 			'event_date_id'     => $submission->event_date_id,
@@ -259,6 +282,56 @@ class QuestionnaireResponsesController extends WP_REST_Controller {
 		);
 
 		return new WP_REST_Response( $data, 200 );
+	}
+
+	/**
+	 * Update a questionnaire response.
+	 *
+	 * @param WP_REST_Request $request Request.
+	 * @return WP_REST_Response|WP_Error Response.
+	 */
+	public function update_item( $request ) {
+		$id = (int) $request->get_param( 'id' );
+
+		$submission_repo = new QuestionnaireSubmissionRepository();
+		$submission      = $submission_repo->get_by_id( $id );
+
+		if ( ! $submission ) {
+			return new WP_Error(
+				'not_found',
+				__( 'Submission not found.', 'fair-audience' ),
+				array( 'status' => 404 )
+			);
+		}
+
+		if ( $request->has_param( 'event_date_id' ) ) {
+			$event_date_id = (int) $request->get_param( 'event_date_id' );
+
+			if ( $event_date_id > 0 && class_exists( '\FairEvents\Models\EventDates' ) ) {
+				$event_date = \FairEvents\Models\EventDates::get_by_id( $event_date_id );
+				if ( ! $event_date ) {
+					return new WP_Error(
+						'invalid_event_date',
+						__( 'Event date not found.', 'fair-audience' ),
+						array( 'status' => 400 )
+					);
+				}
+			}
+
+			$submission->event_date_id = $event_date_id > 0 ? $event_date_id : null;
+		}
+
+		$success = $submission->save();
+
+		if ( ! $success ) {
+			return new WP_Error(
+				'update_failed',
+				__( 'Failed to update submission.', 'fair-audience' ),
+				array( 'status' => 500 )
+			);
+		}
+
+		return $this->get_item( $request );
 	}
 
 	/**
