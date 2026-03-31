@@ -7,6 +7,8 @@ import {
 	CardHeader,
 	Spinner,
 	Notice,
+	Button,
+	SelectControl,
 } from '@wordpress/components';
 
 function formatDate(dateString) {
@@ -55,6 +57,109 @@ function AnswerDisplay({ answer }) {
 	}
 
 	return <span>{answer_value || '—'}</span>;
+}
+
+function EventField({ submission, onUpdate }) {
+	const [isEditing, setIsEditing] = useState(false);
+	const [eventDates, setEventDates] = useState([]);
+	const [selectedEventDateId, setSelectedEventDateId] = useState(
+		submission.event_date_id ? String(submission.event_date_id) : ''
+	);
+	const [isSaving, setIsSaving] = useState(false);
+
+	const loadEventDates = () => {
+		if (eventDates.length > 0) {
+			return;
+		}
+		apiFetch({ path: '/fair-audience/v1/custom-mail/events' })
+			.then((data) => {
+				setEventDates(data);
+			})
+			.catch((err) => {
+				// eslint-disable-next-line no-console
+				console.error('Error loading event dates:', err);
+			});
+	};
+
+	const handleEdit = () => {
+		setIsEditing(true);
+		loadEventDates();
+	};
+
+	const handleSave = () => {
+		setIsSaving(true);
+		apiFetch({
+			path: `/fair-audience/v1/questionnaire-responses/${submission.id}`,
+			method: 'PUT',
+			data: {
+				event_date_id: selectedEventDateId
+					? parseInt(selectedEventDateId, 10)
+					: 0,
+			},
+		})
+			.then((updated) => {
+				onUpdate(updated);
+				setIsEditing(false);
+			})
+			.catch((err) => {
+				// eslint-disable-next-line no-undef
+				alert(
+					__('Error: ', 'fair-audience') +
+						(err.message ||
+							__('Failed to update.', 'fair-audience'))
+				);
+			})
+			.finally(() => {
+				setIsSaving(false);
+			});
+	};
+
+	const eventDateOptions = [
+		{ label: __('— None —', 'fair-audience'), value: '' },
+		...eventDates.map((ed) => ({
+			label: ed.display_label,
+			value: String(ed.id),
+		})),
+	];
+
+	if (!isEditing) {
+		return (
+			<td>
+				{submission.event_name || '—'}
+				<Button
+					variant="link"
+					onClick={handleEdit}
+					style={{ marginLeft: '8px' }}
+				>
+					{__('Edit', 'fair-audience')}
+				</Button>
+			</td>
+		);
+	}
+
+	return (
+		<td>
+			<div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+				<SelectControl
+					value={selectedEventDateId}
+					options={eventDateOptions}
+					onChange={setSelectedEventDateId}
+					__nextHasNoMarginBottom
+				/>
+				<Button
+					variant="primary"
+					onClick={handleSave}
+					isBusy={isSaving}
+					disabled={isSaving}
+				>
+					{__('Save', 'fair-audience')}
+				</Button>
+				<Button variant="tertiary" onClick={() => setIsEditing(false)}>
+					{__('Cancel', 'fair-audience')}
+				</Button>
+			</div>
+		</td>
+	);
 }
 
 export default function SubmissionDetail() {
@@ -139,6 +244,13 @@ export default function SubmissionDetail() {
 							<tr>
 								<th>{__('Date', 'fair-audience')}</th>
 								<td>{formatDate(submission.created_at)}</td>
+							</tr>
+							<tr>
+								<th>{__('Event', 'fair-audience')}</th>
+								<EventField
+									submission={submission}
+									onUpdate={setSubmission}
+								/>
 							</tr>
 						</tbody>
 					</table>
