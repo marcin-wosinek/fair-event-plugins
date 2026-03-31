@@ -1,0 +1,42 @@
+{
+	"$schema": "https://schemas.wp.org/trunk/block.json",
+	"apiVersion": 3,
+	"name": "fair-audience/fair-form-mailing-signup",
+	"version": "1.0.0",
+	"title": "Mailing Sign Up",
+	"category": "widgets",
+	"icon": "email",
+	"description": "Add mailing list signup with category preferences to a Fair Form",
+	"keywords": ["mailing", "newsletter", "signup", "subscribe", "categories"],
+	"textdomain": "fair-audience",
+	"parent": [
+		"fair-audience/fair-form",
+		"fair-audience/fair-form-conditional"
+	],
+	"supports": {
+		"html": false
+	},
+	"attributes": {
+		"showCategories": {
+			"type": "boolean",
+			"default": false
+		},
+		"categoryIds": {
+			"type": "array",
+			"default": [],
+			"items": {
+				"type": "number"
+			}
+		},
+		"preselectedCategoryIds": {
+			"type": "array",
+			"default": [],
+			"items": {
+				"type": "number"
+			}
+		}
+	},
+	"editorScript": "file:./editor.js",
+	"render": "file:./render.php",
+	"style": "file:./style-editor.css"
+}

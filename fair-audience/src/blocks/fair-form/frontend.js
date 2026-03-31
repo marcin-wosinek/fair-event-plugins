@@ -319,6 +319,16 @@ function submitForm(form) {
 	const keepInformed =
 		form.querySelector('input[name="fair_form_keep_informed"]')?.checked ||
 		false;
+	const mailingSignup =
+		form.querySelector('input[name="fair_form_mailing_signup"]')?.checked ||
+		false;
+	const mailingCategories = mailingSignup
+		? Array.from(
+				form.querySelectorAll(
+					'input[name="fair_form_mailing_categories[]"]:checked'
+				)
+		  ).map((cb) => parseInt(cb.value, 10))
+		: [];
 	const questionnaireAnswers = collectQuestionAnswers(form);
 
 	const eventDateId = parseInt(wrapper?.dataset.eventDateId, 10) || 0;
@@ -333,6 +343,11 @@ function submitForm(form) {
 		formData.append('surname', surnameValue);
 		formData.append('email', emailValue);
 		formData.append('keep_informed', keepInformed ? '1' : '0');
+		formData.append('mailing_signup', mailingSignup ? '1' : '0');
+		formData.append(
+			'mailing_category_ids',
+			JSON.stringify(mailingCategories)
+		);
 		formData.append(
 			'questionnaire_answers',
 			JSON.stringify(questionnaireAnswers)
@@ -374,6 +389,8 @@ function submitForm(form) {
 			surname: surnameValue,
 			email: emailValue,
 			keep_informed: keepInformed,
+			mailing_signup: mailingSignup,
+			mailing_category_ids: mailingCategories,
 			questionnaire_answers: questionnaireAnswers,
 		};
 

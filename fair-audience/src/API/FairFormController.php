@@ -8,6 +8,7 @@
 namespace FairAudience\API;
 
 use FairAudience\Database\ParticipantRepository;
+use FairAudience\Database\ParticipantCategoryRepository;
 use FairAudience\Database\QuestionnaireSubmissionRepository;
 use FairAudience\Database\QuestionnaireAnswerRepository;
 use FairAudience\Models\Participant;
@@ -61,6 +62,13 @@ class FairFormController extends WP_REST_Controller {
 	private $answer_repository;
 
 	/**
+	 * Participant category repository instance.
+	 *
+	 * @var ParticipantCategoryRepository
+	 */
+	private $category_repository;
+
+	/**
 	 * Rate limit: max requests per email per hour.
 	 */
 	const RATE_LIMIT_MAX = 3;
@@ -77,6 +85,7 @@ class FairFormController extends WP_REST_Controller {
 		$this->participant_repository = new ParticipantRepository();
 		$this->submission_repository  = new QuestionnaireSubmissionRepository();
 		$this->answer_repository      = new QuestionnaireAnswerRepository();
+		$this->category_repository    = new ParticipantCategoryRepository();
 	}
 
 	/**
@@ -126,6 +135,16 @@ class FairFormController extends WP_REST_Controller {
 							'type'     => 'integer',
 							'required' => false,
 							'default'  => 0,
+						),
+						'mailing_signup'        => array(
+							'type'     => array( 'boolean', 'string' ),
+							'required' => false,
+							'default'  => false,
+						),
+						'mailing_category_ids'  => array(
+							'type'     => array( 'array', 'string' ),
+							'required' => false,
+							'default'  => array(),
 						),
 						'questionnaire_answers' => array(
 							'type'     => array( 'array', 'string' ),
@@ -238,6 +257,18 @@ class FairFormController extends WP_REST_Controller {
 					__( 'Failed to process submission. Please try again.', 'fair-audience' ),
 					array( 'status' => 500 )
 				);
+			}
+		}
+
+		// Handle mailing signup if opted in.
+		$mailing_signup = $request->get_param( 'mailing_signup' );
+		if ( $mailing_signup && '0' !== $mailing_signup ) {
+			$participant->email_profile = 'marketing';
+			$participant->save();
+
+			$mailing_category_ids = $this->parse_mailing_category_ids( $request->get_param( 'mailing_category_ids' ) );
+			if ( ! empty( $mailing_category_ids ) ) {
+				$this->category_repository->set_categories( $participant->id, $mailing_category_ids );
 			}
 		}
 
@@ -412,6 +443,30 @@ class FairFormController extends WP_REST_Controller {
 		}
 
 		return $submission->id;
+	}
+
+	/**
+	 * Parse mailing_category_ids from various formats.
+	 *
+	 * When sent via FormData, the IDs arrive as a JSON string.
+	 *
+	 * @param mixed $raw Raw mailing_category_ids value.
+	 * @return array Parsed array of integer category IDs.
+	 */
+	private function parse_mailing_category_ids( $raw ) {
+		if ( is_string( $raw ) ) {
+			$decoded = json_decode( $raw, true );
+			if ( is_array( $decoded ) ) {
+				return array_map( 'intval', $decoded );
+			}
+			return array();
+		}
+
+		if ( is_array( $raw ) ) {
+			return array_map( 'intval', $raw );
+		}
+
+		return array();
 	}
 
 	/**

@@ -1,0 +1,11 @@
+.fair-form-mailing-signup {
+	margin-top: 1em;
+	padding: 0.75em;
+	border: 1px dashed #ccc;
+	border-radius: 4px;
+}
+
+.fair-form-mailing-signup-categories-preview {
+	margin-left: 1.5em;
+	color: #757575;
+}
