@@ -58,6 +58,18 @@ class QuestionnaireResponsesController extends WP_REST_Controller {
 
 		register_rest_route(
 			$this->namespace,
+			'/' . $this->rest_base . '/all',
+			array(
+				array(
+					'methods'             => WP_REST_Server::READABLE,
+					'callback'            => array( $this, 'get_all_items' ),
+					'permission_callback' => array( $this, 'get_items_permissions_check' ),
+				),
+			)
+		);
+
+		register_rest_route(
+			$this->namespace,
 			'/' . $this->rest_base . '/(?P<id>\d+)',
 			array(
 				array(
@@ -127,6 +139,55 @@ class QuestionnaireResponsesController extends WP_REST_Controller {
 				'participant_email' => $participant_email,
 				'created_at'        => $submission->created_at,
 				'answers'           => $answers_data,
+			);
+		}
+
+		return new WP_REST_Response( $data, 200 );
+	}
+
+	/**
+	 * Get all questionnaire responses.
+	 *
+	 * @param WP_REST_Request $request Request.
+	 * @return WP_REST_Response Response.
+	 */
+	public function get_all_items( $request ) {
+		$submission_repo  = new QuestionnaireSubmissionRepository();
+		$participant_repo = new ParticipantRepository();
+
+		$submissions = $submission_repo->get_all();
+
+		$data = array();
+		foreach ( $submissions as $submission ) {
+			$participant = $participant_repo->get_by_id( $submission->participant_id );
+
+			$participant_name  = '';
+			$participant_email = '';
+			if ( $participant ) {
+				$participant_name  = trim( $participant->name . ' ' . $participant->surname );
+				$participant_email = $participant->email;
+			}
+
+			$event_name = '';
+			if ( $submission->event_date_id && class_exists( '\FairEvents\Models\EventDates' ) ) {
+				$event_date = \FairEvents\Models\EventDates::get_by_id( $submission->event_date_id );
+				if ( $event_date ) {
+					$event = get_post( (int) $event_date->event_id );
+					if ( $event ) {
+						$event_name = $event->post_title;
+					}
+				}
+			}
+
+			$data[] = array(
+				'id'                => $submission->id,
+				'title'             => $submission->title,
+				'participant_name'  => $participant_name,
+				'participant_email' => $participant_email,
+				'event_name'        => $event_name,
+				'created_at'        => $submission->created_at,
+				'post_id'           => $submission->post_id,
+				'event_date_id'     => $submission->event_date_id,
 			);
 		}
 

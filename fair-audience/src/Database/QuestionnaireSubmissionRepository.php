@@ -29,6 +29,32 @@ class QuestionnaireSubmissionRepository {
 	}
 
 	/**
+	 * Get all submissions.
+	 *
+	 * @return QuestionnaireSubmission[] Array of submissions.
+	 */
+	public function get_all() {
+		global $wpdb;
+
+		$table_name = $this->get_table_name();
+
+		$results = $wpdb->get_results(
+			$wpdb->prepare(
+				'SELECT * FROM %i ORDER BY created_at DESC',
+				$table_name
+			),
+			ARRAY_A
+		);
+
+		return array_map(
+			function ( $row ) {
+				return new QuestionnaireSubmission( $row );
+			},
+			$results
+		);
+	}
+
+	/**
 	 * Get a submission by ID.
 	 *
 	 * @param int $id Submission ID.

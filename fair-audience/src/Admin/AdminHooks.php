@@ -206,6 +206,16 @@ class AdminHooks {
 			$this->register_hidden_page( 'fair-audience-fee-detail' );
 		}
 
+		// Submenu page - Form Answers.
+		add_submenu_page(
+			'fair-audience',
+			__( 'Form Answers', 'fair-audience' ),
+			__( 'Form Answers', 'fair-audience' ),
+			'manage_options',
+			'fair-audience-form-answers',
+			array( $this, 'render_form_answers_page' )
+		);
+
 		// Submenu page - By Event.
 		add_submenu_page(
 			'fair-audience',
@@ -459,6 +469,14 @@ class AdminHooks {
 	}
 
 	/**
+	 * Render Form Answers page.
+	 */
+	public function render_form_answers_page() {
+		$page = new FormAnswersPage();
+		$page->render();
+	}
+
+	/**
 	 * Render Questionnaire Responses page.
 	 */
 	public function render_questionnaire_responses_page() {
@@ -557,6 +575,11 @@ class AdminHooks {
 		// Submission Detail page.
 		if ( 'admin_page_fair-audience-submission-detail' === $hook ) {
 			$this->enqueue_page_script( 'submission-detail', $plugin_dir );
+		}
+
+		// Form Answers page.
+		if ( 'fair-audience_page_fair-audience-form-answers' === $hook ) {
+			$this->enqueue_page_script( 'form-answers', $plugin_dir );
 		}
 
 		// Questionnaire Responses page.

@@ -86,6 +86,10 @@ const customConfig = {
 			process.cwd(),
 			'src/Admin/fee-detail/index.js',
 		),
+		'admin/form-answers/index': path.resolve(
+			process.cwd(),
+			'src/Admin/form-answers/index.js',
+		),
 		'admin/questionnaire-responses/index': path.resolve(
 			process.cwd(),
 			'src/Admin/questionnaire-responses/index.js',
