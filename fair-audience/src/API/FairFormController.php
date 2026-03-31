@@ -9,10 +9,12 @@ namespace FairAudience\API;
 
 use FairAudience\Database\ParticipantRepository;
 use FairAudience\Database\ParticipantCategoryRepository;
+use FairAudience\Database\EmailConfirmationTokenRepository;
 use FairAudience\Database\QuestionnaireSubmissionRepository;
 use FairAudience\Database\QuestionnaireAnswerRepository;
 use FairAudience\Models\Participant;
 use FairAudience\Models\QuestionnaireSubmission;
+use FairAudience\Services\EmailService;
 use WP_REST_Controller;
 use WP_REST_Server;
 use WP_REST_Request;
@@ -69,6 +71,20 @@ class FairFormController extends WP_REST_Controller {
 	private $category_repository;
 
 	/**
+	 * Token repository instance.
+	 *
+	 * @var EmailConfirmationTokenRepository
+	 */
+	private $token_repository;
+
+	/**
+	 * Email service instance.
+	 *
+	 * @var EmailService
+	 */
+	private $email_service;
+
+	/**
 	 * Rate limit: max requests per email per hour.
 	 */
 	const RATE_LIMIT_MAX = 3;
@@ -86,6 +102,8 @@ class FairFormController extends WP_REST_Controller {
 		$this->submission_repository  = new QuestionnaireSubmissionRepository();
 		$this->answer_repository      = new QuestionnaireAnswerRepository();
 		$this->category_repository    = new ParticipantCategoryRepository();
+		$this->token_repository       = new EmailConfirmationTokenRepository();
+		$this->email_service          = new EmailService();
 	}
 
 	/**
@@ -260,15 +278,29 @@ class FairFormController extends WP_REST_Controller {
 			}
 		}
 
-		// Handle mailing signup if opted in.
+		// Handle mailing signup if opted in — trigger email confirmation workflow.
 		$mailing_signup = $request->get_param( 'mailing_signup' );
 		if ( $mailing_signup && '0' !== $mailing_signup ) {
-			$participant->email_profile = 'marketing';
-			$participant->save();
+			if ( 'marketing' !== $participant->email_profile ) {
+				// Set status to pending until email is confirmed.
+				$participant->status = 'pending';
+				$participant->save();
 
+				// Create confirmation token and send email.
+				$token = $this->token_repository->create_token( $participant->id );
+				if ( $token ) {
+					$this->email_service->send_confirmation_email( $participant, $token->token );
+				}
+			}
+
+			// Store pending category selections (applied upon confirmation).
 			$mailing_category_ids = $this->parse_mailing_category_ids( $request->get_param( 'mailing_category_ids' ) );
 			if ( ! empty( $mailing_category_ids ) ) {
-				$this->category_repository->set_categories( $participant->id, $mailing_category_ids );
+				set_transient(
+					'fair_audience_pending_cats_' . $participant->id,
+					array_map( 'intval', $mailing_category_ids ),
+					48 * HOUR_IN_SECONDS
+				);
 			}
 		}
 
