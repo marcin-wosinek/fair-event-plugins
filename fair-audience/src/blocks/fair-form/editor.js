@@ -13,8 +13,13 @@ import {
 	TextControl,
 	TextareaControl,
 	ToggleControl,
+	SelectControl,
+	Spinner,
 } from '@wordpress/components';
 import { __ } from '@wordpress/i18n';
+import { useState, useEffect, useRef } from '@wordpress/element';
+import { useSelect } from '@wordpress/data';
+import apiFetch from '@wordpress/api-fetch';
 
 const ALLOWED_BLOCKS = [
 	'core/heading',
@@ -28,6 +33,77 @@ const ALLOWED_BLOCKS = [
 	'fair-audience/fair-form-file-upload',
 	'fair-audience/fair-form-conditional',
 ];
+
+function EventDateSelect({ eventDateId, onChange }) {
+	const [eventDates, setEventDates] = useState([]);
+	const [isLoading, setIsLoading] = useState(true);
+	const appliedDefault = useRef(false);
+
+	const { postType, postId } = useSelect((select) => {
+		const editor = select('core/editor');
+		return {
+			postType: editor.getCurrentPostType(),
+			postId: editor.getCurrentPostId(),
+		};
+	}, []);
+
+	useEffect(() => {
+		apiFetch({ path: '/fair-audience/v1/custom-mail/events' })
+			.then((data) => {
+				setEventDates(data);
+			})
+			.catch((err) => {
+				// eslint-disable-next-line no-console
+				console.error('Error loading event dates:', err);
+			})
+			.finally(() => {
+				setIsLoading(false);
+			});
+	}, []);
+
+	// Auto-select event date if on an event page and no event is set yet.
+	useEffect(() => {
+		if (
+			appliedDefault.current ||
+			eventDateId ||
+			!postId ||
+			postType !== 'fair_event' ||
+			eventDates.length === 0
+		) {
+			return;
+		}
+		const match = eventDates.find((ed) => ed.event_id === postId);
+		if (match) {
+			appliedDefault.current = true;
+			onChange(match.id);
+		}
+	}, [eventDates, postId, postType, eventDateId, onChange]);
+
+	if (isLoading) {
+		return <Spinner />;
+	}
+
+	const options = [
+		{ label: __('— None —', 'fair-audience'), value: '' },
+		...eventDates.map((ed) => ({
+			label: ed.display_label,
+			value: String(ed.id),
+		})),
+	];
+
+	return (
+		<SelectControl
+			label={__('Event', 'fair-audience')}
+			value={eventDateId ? String(eventDateId) : ''}
+			options={options}
+			onChange={(value) => onChange(parseInt(value, 10) || 0)}
+			help={__(
+				'Optional. Link this form to a specific event.',
+				'fair-audience'
+			)}
+		/>
+	);
+}
 
 registerBlockType('fair-audience/fair-form', {
 	edit: ({ attributes, setAttributes }) => {
@@ -91,19 +167,11 @@ registerBlockType('fair-audience/fair-form', {
 								'fair-audience'
 							)}
 						/>
-						<TextControl
-							label={__('Event Date ID', 'fair-audience')}
-							type="number"
-							value={eventDateId || ''}
+						<EventDateSelect
+							eventDateId={eventDateId}
 							onChange={(value) =>
-								setAttributes({
-									eventDateId: parseInt(value, 10) || 0,
-								})
+								setAttributes({ eventDateId: value })
 							}
-							help={__(
-								'Optional. Link this form to a specific event date.',
-								'fair-audience'
-							)}
 						/>
 					</PanelBody>
 				</InspectorControls>
