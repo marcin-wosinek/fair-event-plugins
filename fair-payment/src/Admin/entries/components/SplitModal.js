@@ -15,14 +15,15 @@ import {
 	__experimentalHStack as HStack,
 } from '@wordpress/components';
 
+const isUrl = (text) => /^https?:\/\//i.test(text.trim());
+
 const SplitEventUrlField = ({ value, eventDateId, onChange }) => {
-	const [mode, setMode] = useState(value ? 'manual' : 'search');
 	const [searchTerm, setSearchTerm] = useState('');
 	const [searchResults, setSearchResults] = useState([]);
 	const [isSearching, setIsSearching] = useState(false);
 
 	useEffect(() => {
-		if (mode !== 'search' || searchTerm.length < 2) {
+		if (searchTerm.length < 2 || isUrl(searchTerm)) {
 			setSearchResults([]);
 			return;
 		}
@@ -50,7 +51,7 @@ const SplitEventUrlField = ({ value, eventDateId, onChange }) => {
 		}, 300);
 
 		return () => clearTimeout(timeout);
-	}, [searchTerm, mode]);
+	}, [searchTerm]);
 
 	if (value) {
 		return (
@@ -78,115 +79,87 @@ const SplitEventUrlField = ({ value, eventDateId, onChange }) => {
 
 	return (
 		<div>
-			<HStack spacing={2} style={{ marginBottom: '4px' }}>
+			<TextControl
+				value={searchTerm}
+				onChange={setSearchTerm}
+				placeholder={__(
+					'Search events or paste a URL...',
+					'fair-payment'
+				)}
+				autoComplete="off"
+			/>
+			{isUrl(searchTerm) && (
 				<Button
-					variant={mode === 'search' ? 'primary' : 'secondary'}
+					variant="primary"
 					size="compact"
-					onClick={() => setMode('search')}
+					style={{ marginBottom: '4px' }}
+					onClick={() => {
+						onChange(searchTerm.trim(), null);
+						setSearchTerm('');
+					}}
 				>
-					{__('Search', 'fair-payment')}
+					{__('Use this URL', 'fair-payment')}
 				</Button>
-				<Button
-					variant={mode === 'manual' ? 'primary' : 'secondary'}
-					size="compact"
-					onClick={() => setMode('manual')}
-				>
-					{__('URL', 'fair-payment')}
-				</Button>
-			</HStack>
-
-			{mode === 'search' && (
-				<div>
-					<TextControl
-						value={searchTerm}
-						onChange={setSearchTerm}
-						placeholder={__('Search events...', 'fair-payment')}
-						autoComplete="off"
-					/>
-					{isSearching && <Spinner />}
-					{searchResults.length > 0 && (
-						<div
-							style={{
-								border: '1px solid #ddd',
-								borderRadius: '4px',
-								maxHeight: '150px',
-								overflowY: 'auto',
-							}}
-						>
-							{searchResults.map((event) => (
-								<div
-									key={event.id}
-									style={{
-										padding: '6px 10px',
-										cursor: 'pointer',
-										borderBottom: '1px solid #eee',
-										fontSize: '13px',
-									}}
-									onClick={() => {
-										const isExternalSource = String(
-											event.id
-										).startsWith('source_');
-										onChange(
-											event.display_url,
-											isExternalSource ? null : event.id
-										);
-										setSearchTerm('');
-										setSearchResults([]);
-									}}
-									onKeyDown={(e) => {
-										if (e.key === 'Enter') {
-											const isExternalSource = String(
-												event.id
-											).startsWith('source_');
-											onChange(
-												event.display_url,
-												isExternalSource
-													? null
-													: event.id
-											);
-											setSearchTerm('');
-											setSearchResults([]);
-										}
-									}}
-									role="button"
-									tabIndex={0}
-								>
-									<strong>{event.title}</strong>
-									<span
-										style={{
-											marginLeft: '8px',
-											color: '#666',
-										}}
-									>
-										{event.start_datetime?.split('T')[0] ||
-											event.start_datetime?.split(' ')[0]}
-									</span>
-								</div>
-							))}
-						</div>
-					)}
-				</div>
 			)}
-
-			{mode === 'manual' && (
-				<TextControl
-					value=""
-					onChange={(val) => {
-						if (val) {
-							onChange(val, null);
-						}
+			{isSearching && <Spinner />}
+			{searchResults.length > 0 && (
+				<div
+					style={{
+						border: '1px solid #ddd',
+						borderRadius: '4px',
+						maxHeight: '150px',
+						overflowY: 'auto',
 					}}
-					placeholder={__(
-						'https://example.com/event',
-						'fair-payment'
-					)}
-					type="url"
-					onBlur={(e) => {
-						if (e.target.value) {
-							onChange(e.target.value, null);
-						}
-					}}
-				/>
+				>
+					{searchResults.map((event) => (
+						<div
+							key={event.id}
+							style={{
+								padding: '6px 10px',
+								cursor: 'pointer',
+								borderBottom: '1px solid #eee',
+								fontSize: '13px',
+							}}
+							onClick={() => {
+								const isExternalSource = String(
+									event.id
+								).startsWith('source_');
+								onChange(
+									event.display_url,
+									isExternalSource ? null : event.id
+								);
+								setSearchTerm('');
+								setSearchResults([]);
+							}}
+							onKeyDown={(e) => {
+								if (e.key === 'Enter') {
+									const isExternalSource = String(
+										event.id
+									).startsWith('source_');
+									onChange(
+										event.display_url,
+										isExternalSource ? null : event.id
+									);
+									setSearchTerm('');
+									setSearchResults([]);
+								}
+							}}
+							role="button"
+							tabIndex={0}
+						>
+							<strong>{event.title}</strong>
+							<span
+								style={{
+									marginLeft: '8px',
+									color: '#666',
+								}}
+							>
+								{event.start_datetime?.split('T')[0] ||
+									event.start_datetime?.split(' ')[0]}
+							</span>
+						</div>
+					))}
+				</div>
 			)}
 		</div>
 	);
