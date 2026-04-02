@@ -14,6 +14,7 @@ import {
 	__experimentalVStack as VStack,
 	__experimentalHStack as HStack,
 	__experimentalText as Text,
+	TextControl,
 } from '@wordpress/components';
 
 const formatAmount = (amount, currency = 'EUR') => {
@@ -42,6 +43,16 @@ const ReconciliationApp = () => {
 	const [suggestions, setSuggestions] = useState([]);
 	const [loadingSuggestions, setLoadingSuggestions] = useState(false);
 	const [matching, setMatching] = useState(false);
+	const [descriptionFilter, setDescriptionFilter] = useState(
+		'trf. stichting mollie payments'
+	);
+
+	const filteredUnmatchedEntries = unmatchedEntries.filter((entry) => {
+		if (!descriptionFilter) return true;
+		return (entry.description || '')
+			.toLowerCase()
+			.includes(descriptionFilter.toLowerCase());
+	});
 
 	const loadData = useCallback(async () => {
 		setLoading(true);
@@ -229,11 +240,23 @@ const ReconciliationApp = () => {
 						<PanelBody
 							title={
 								__('Unmatched Bank Entries', 'fair-payment') +
-								` (${unmatchedEntries.length})`
+								` (${filteredUnmatchedEntries.length}/${unmatchedEntries.length})`
 							}
 							initialOpen={true}
 						>
-							{unmatchedEntries.length === 0 ? (
+							<TextControl
+								label={__(
+									'Filter by description',
+									'fair-payment'
+								)}
+								value={descriptionFilter}
+								onChange={setDescriptionFilter}
+								placeholder={__(
+									'Type to filter…',
+									'fair-payment'
+								)}
+							/>
+							{filteredUnmatchedEntries.length === 0 ? (
 								<p>
 									{__(
 										'All bank entries are matched.',
@@ -268,61 +291,65 @@ const ReconciliationApp = () => {
 										</tr>
 									</thead>
 									<tbody>
-										{unmatchedEntries.map((entry) => (
-											<tr
-												key={entry.id}
-												style={{
-													background:
-														selectedEntry?.id ===
-														entry.id
-															? '#e7f5fa'
-															: undefined,
-												}}
-											>
-												<td>{entry.entry_date}</td>
-												<td>
-													{formatAmount(entry.amount)}
-												</td>
-												<td>{entry.entry_type}</td>
-												<td>
-													{entry.description || (
-														<em>
-															{__(
-																'No description',
-																'fair-payment'
-															)}
-														</em>
-													)}
-												</td>
-												<td>
-													<Button
-														variant={
+										{filteredUnmatchedEntries.map(
+											(entry) => (
+												<tr
+													key={entry.id}
+													style={{
+														background:
 															selectedEntry?.id ===
 															entry.id
-																? 'primary'
-																: 'secondary'
-														}
-														size="small"
-														onClick={() =>
-															handleSelectEntry(
-																entry
-															)
-														}
-													>
-														{selectedEntry?.id ===
-														entry.id
-															? __(
-																	'Selected',
+																? '#e7f5fa'
+																: undefined,
+													}}
+												>
+													<td>{entry.entry_date}</td>
+													<td>
+														{formatAmount(
+															entry.amount
+														)}
+													</td>
+													<td>{entry.entry_type}</td>
+													<td>
+														{entry.description || (
+															<em>
+																{__(
+																	'No description',
 																	'fair-payment'
-															  )
-															: __(
-																	'Select',
-																	'fair-payment'
-															  )}
-													</Button>
-												</td>
-											</tr>
-										))}
+																)}
+															</em>
+														)}
+													</td>
+													<td>
+														<Button
+															variant={
+																selectedEntry?.id ===
+																entry.id
+																	? 'primary'
+																	: 'secondary'
+															}
+															size="small"
+															onClick={() =>
+																handleSelectEntry(
+																	entry
+																)
+															}
+														>
+															{selectedEntry?.id ===
+															entry.id
+																? __(
+																		'Selected',
+																		'fair-payment'
+																  )
+																: __(
+																		'Select',
+																		'fair-payment'
+																  )}
+														</Button>
+													</td>
+												</tr>
+											)
+										)}
 									</tbody>
 								</table>
 							)}
