@@ -26,6 +26,8 @@ export default function EventAudience({ eventId, eventDateId, audienceUrl }) {
 	const [loadingParticipants, setLoadingParticipants] = useState(true);
 	const [questionnaireSummary, setQuestionnaireSummary] = useState(null);
 	const [loadingQuestionnaire, setLoadingQuestionnaire] = useState(true);
+	const [formsSummary, setFormsSummary] = useState([]);
+	const [loadingForms, setLoadingForms] = useState(true);
 
 	// Filter & sort state
 	const [filterRole, setFilterRole] = useState('all');
@@ -48,6 +50,23 @@ export default function EventAudience({ eventId, eventDateId, audienceUrl }) {
 				setParticipants([]);
 			})
 			.finally(() => setLoadingParticipants(false));
+	}, [eventDateId]);
+
+	useEffect(() => {
+		if (!eventDateId) {
+			setLoadingForms(false);
+			return;
+		}
+		apiFetch({
+			path: `/fair-audience/v1/questionnaire-responses/forms-summary?event_date_id=${eventDateId}`,
+		})
+			.then((data) => {
+				setFormsSummary(Array.isArray(data) ? data : []);
+			})
+			.catch(() => {
+				setFormsSummary([]);
+			})
+			.finally(() => setLoadingForms(false));
 	}, [eventDateId]);
 
 	useEffect(() => {
@@ -316,6 +335,56 @@ export default function EventAudience({ eventId, eventDateId, audienceUrl }) {
 					</CardBody>
 				</Card>
 			)}
+
+			<Card style={{ marginTop: '16px' }}>
+				<CardHeader>
+					<h2>{__('Forms', 'fair-events')}</h2>
+				</CardHeader>
+				<CardBody>
+					{loadingForms ? (
+						<Spinner />
+					) : formsSummary.length > 0 ? (
+						<div style={{ overflowX: 'auto' }}>
+							<table className="wp-list-table widefat striped">
+								<thead>
+									<tr>
+										<th>{__('Form', 'fair-events')}</th>
+										<th>
+											{__('Responses', 'fair-events')}
+										</th>
+										<th>{__('Actions', 'fair-events')}</th>
+									</tr>
+								</thead>
+								<tbody>
+									{formsSummary.map((form, index) => (
+										<tr key={form.post_id || index}>
+											<td>
+												{form.post_title ||
+													form.title ||
+													'—'}
+											</td>
+											<td>{form.submission_count}</td>
+											<td>
+												<Button
+													variant="link"
+													href={`admin.php?page=fair-audience-questionnaire-responses&event_date_id=${eventDateId}`}
+												>
+													{__(
+														'View Responses',
+														'fair-events'
+													)}
+												</Button>
+											</td>
+										</tr>
+									))}
+								</tbody>
+							</table>
+						</div>
+					) : (
+						<p>{__('No form submissions yet.', 'fair-events')}</p>
+					)}
+				</CardBody>
+			</Card>
 
 			<Card style={{ marginTop: '16px' }}>
 				<CardHeader>

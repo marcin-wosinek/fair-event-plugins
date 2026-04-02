@@ -58,6 +58,25 @@ class QuestionnaireResponsesController extends WP_REST_Controller {
 
 		register_rest_route(
 			$this->namespace,
+			'/' . $this->rest_base . '/forms-summary',
+			array(
+				array(
+					'methods'             => WP_REST_Server::READABLE,
+					'callback'            => array( $this, 'get_forms_summary' ),
+					'permission_callback' => array( $this, 'get_items_permissions_check' ),
+					'args'                => array(
+						'event_date_id' => array(
+							'required'          => true,
+							'type'              => 'integer',
+							'sanitize_callback' => 'absint',
+						),
+					),
+				),
+			)
+		);
+
+		register_rest_route(
+			$this->namespace,
 			'/' . $this->rest_base . '/all',
 			array(
 				array(
@@ -154,6 +173,21 @@ class QuestionnaireResponsesController extends WP_REST_Controller {
 		}
 
 		return new WP_REST_Response( $data, 200 );
+	}
+
+	/**
+	 * Get forms summary grouped by post_id for an event date.
+	 *
+	 * @param WP_REST_Request $request Request.
+	 * @return WP_REST_Response Response.
+	 */
+	public function get_forms_summary( $request ) {
+		$event_date_id   = $request->get_param( 'event_date_id' );
+		$submission_repo = new QuestionnaireSubmissionRepository();
+
+		$forms = $submission_repo->get_forms_summary_by_event_date( $event_date_id );
+
+		return new WP_REST_Response( $forms, 200 );
 	}
 
 	/**

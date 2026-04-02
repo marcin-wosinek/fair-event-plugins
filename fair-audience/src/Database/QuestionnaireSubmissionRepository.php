@@ -205,6 +205,47 @@ class QuestionnaireSubmissionRepository {
 	}
 
 	/**
+	 * Get form summaries grouped by post_id for a given event date.
+	 *
+	 * @param int $event_date_id Event date ID.
+	 * @return array Array of form summary objects with post_id, title, post_title, and submission_count.
+	 */
+	public function get_forms_summary_by_event_date( $event_date_id ) {
+		global $wpdb;
+
+		$table_name = $this->get_table_name();
+
+		$results = $wpdb->get_results(
+			$wpdb->prepare(
+				'SELECT post_id, title, COUNT(*) AS submission_count FROM %i WHERE event_date_id = %d GROUP BY post_id, title ORDER BY submission_count DESC',
+				$table_name,
+				$event_date_id
+			),
+			ARRAY_A
+		);
+
+		return array_map(
+			function ( $row ) {
+				$post_title = '';
+				if ( ! empty( $row['post_id'] ) ) {
+					$post = get_post( (int) $row['post_id'] );
+					if ( $post ) {
+						$post_title = $post->post_title;
+					}
+				}
+
+				return array(
+					'post_id'          => (int) $row['post_id'],
+					'title'            => $row['title'],
+					'post_title'       => $post_title,
+					'submission_count' => (int) $row['submission_count'],
+				);
+			},
+			$results
+		);
+	}
+
+	/**
 	 * Delete a submission by ID.
 	 *
 	 * @param int $id Submission ID.
