@@ -150,7 +150,8 @@ class TransactionsController extends WP_REST_Controller {
 	 * @return WP_REST_Response|WP_Error
 	 */
 	public function get_item( $request ) {
-		$transaction = Transaction::get_by_id( $request->get_param( 'id' ) );
+		// Sync with Mollie to capture missing fee or update pending status.
+		$transaction = TransactionAPI::sync_transaction_status( $request->get_param( 'id' ) );
 
 		if ( ! $transaction ) {
 			return new WP_Error(

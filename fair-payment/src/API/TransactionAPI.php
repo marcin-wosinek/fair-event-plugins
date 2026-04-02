@@ -262,13 +262,16 @@ class TransactionAPI {
 			return null;
 		}
 
-		// Only sync transactions that are in pending_payment state.
-		if ( 'pending_payment' !== $transaction->status ) {
+		// Only sync if we have a Mollie payment ID.
+		if ( empty( $transaction->mollie_payment_id ) ) {
 			return $transaction;
 		}
 
-		// Only sync if we have a Mollie payment ID.
-		if ( empty( $transaction->mollie_payment_id ) ) {
+		// Determine if we need to call Mollie API.
+		$needs_status_sync = 'pending_payment' === $transaction->status;
+		$needs_fee_sync    = 'paid' === $transaction->status && null === $transaction->mollie_fee;
+
+		if ( ! $needs_status_sync && ! $needs_fee_sync ) {
 			return $transaction;
 		}
 
@@ -285,6 +288,12 @@ class TransactionAPI {
 				self::handle_payment_status_change( $payment, $transaction );
 
 				// Return fresh transaction from DB.
+				return Transaction::get_by_id( $transaction_id );
+			}
+
+			// Capture Mollie fee for paid transactions where it was not yet available.
+			if ( $needs_fee_sync ) {
+				self::capture_mollie_fee( $payment, $transaction );
 				return Transaction::get_by_id( $transaction_id );
 			}
 		} catch ( \Exception $e ) {
