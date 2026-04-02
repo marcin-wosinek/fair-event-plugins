@@ -205,6 +205,60 @@ class QuestionnaireSubmissionRepository {
 	}
 
 	/**
+	 * Get submissions matching multiple filters.
+	 *
+	 * @param array $filters Associative array of filters: event_date_id, post_id, title, participant_id.
+	 * @return QuestionnaireSubmission[] Array of submissions.
+	 */
+	public function get_by_filters( $filters = array() ) {
+		global $wpdb;
+
+		$table_name = $this->get_table_name();
+		$where      = array();
+		$values     = array( $table_name );
+
+		if ( ! empty( $filters['event_date_id'] ) ) {
+			$where[]  = 'event_date_id = %d';
+			$values[] = $filters['event_date_id'];
+		}
+
+		if ( ! empty( $filters['post_id'] ) ) {
+			$where[]  = 'post_id = %d';
+			$values[] = $filters['post_id'];
+		}
+
+		if ( ! empty( $filters['title'] ) ) {
+			$where[]  = 'title = %s';
+			$values[] = $filters['title'];
+		}
+
+		if ( ! empty( $filters['participant_id'] ) ) {
+			$where[]  = 'participant_id = %d';
+			$values[] = $filters['participant_id'];
+		}
+
+		$sql = 'SELECT * FROM %i';
+
+		if ( ! empty( $where ) ) {
+			$sql .= ' WHERE ' . implode( ' AND ', $where );
+		}
+
+		$sql .= ' ORDER BY created_at DESC';
+
+		$results = $wpdb->get_results(
+			$wpdb->prepare( $sql, ...$values ),
+			ARRAY_A
+		);
+
+		return array_map(
+			function ( $row ) {
+				return new QuestionnaireSubmission( $row );
+			},
+			$results
+		);
+	}
+
+	/**
 	 * Get form summaries grouped by post_id for a given event date.
 	 *
 	 * @param int $event_date_id Event date ID.

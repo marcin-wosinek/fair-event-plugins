@@ -27,6 +27,8 @@ export default function QuestionnaireResponses() {
 
 	const params = new URLSearchParams(window.location.search);
 	const eventDateId = params.get('event_date_id');
+	const postId = params.get('post_id');
+	const title = params.get('title');
 
 	useEffect(() => {
 		if (!eventDateId) {
@@ -34,9 +36,17 @@ export default function QuestionnaireResponses() {
 			return;
 		}
 
+		let apiPath = `/fair-audience/v1/questionnaire-responses?event_date_id=${eventDateId}`;
+		if (postId) {
+			apiPath += `&post_id=${postId}`;
+		}
+		if (title) {
+			apiPath += `&title=${encodeURIComponent(title)}`;
+		}
+
 		setIsLoading(true);
 		apiFetch({
-			path: `/fair-audience/v1/questionnaire-responses?event_date_id=${eventDateId}`,
+			path: apiPath,
 		})
 			.then((data) => {
 				setResponses(data);

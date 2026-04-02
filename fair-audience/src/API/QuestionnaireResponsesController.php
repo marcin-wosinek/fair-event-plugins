@@ -51,6 +51,16 @@ class QuestionnaireResponsesController extends WP_REST_Controller {
 							'type'              => 'integer',
 							'sanitize_callback' => 'absint',
 						),
+						'post_id'       => array(
+							'required'          => false,
+							'type'              => 'integer',
+							'sanitize_callback' => 'absint',
+						),
+						'title'         => array(
+							'required'          => false,
+							'type'              => 'string',
+							'sanitize_callback' => 'sanitize_text_field',
+						),
 					),
 				),
 			)
@@ -134,12 +144,22 @@ class QuestionnaireResponsesController extends WP_REST_Controller {
 	 */
 	public function get_items( $request ) {
 		$event_date_id = $request->get_param( 'event_date_id' );
+		$post_id       = $request->get_param( 'post_id' );
+		$title         = $request->get_param( 'title' );
 
 		$submission_repo  = new QuestionnaireSubmissionRepository();
 		$answer_repo      = new QuestionnaireAnswerRepository();
 		$participant_repo = new ParticipantRepository();
 
-		$submissions = $submission_repo->get_by_event_date( $event_date_id );
+		$filters = array( 'event_date_id' => $event_date_id );
+		if ( $post_id ) {
+			$filters['post_id'] = $post_id;
+		}
+		if ( $title ) {
+			$filters['title'] = $title;
+		}
+
+		$submissions = $submission_repo->get_by_filters( $filters );
 
 		$data = array();
 		foreach ( $submissions as $submission ) {

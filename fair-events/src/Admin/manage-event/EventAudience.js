@@ -367,7 +367,13 @@ export default function EventAudience({ eventId, eventDateId, audienceUrl }) {
 											<td>
 												<Button
 													variant="link"
-													href={`admin.php?page=fair-audience-questionnaire-responses&event_date_id=${eventDateId}`}
+													href={`admin.php?page=fair-audience-questionnaire-responses&event_date_id=${eventDateId}${
+														form.post_id
+															? `&post_id=${form.post_id}`
+															: `&title=${encodeURIComponent(
+																	form.title
+															  )}`
+													}`}
 												>
 													{__(
 														'View Responses',
