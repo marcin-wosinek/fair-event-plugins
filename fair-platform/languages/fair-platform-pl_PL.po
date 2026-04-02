@@ -291,21 +291,21 @@ msgstr "Usunięto %d starych dzienników połączeń Instagram."
 msgid "You do not have permission to view Instagram connection logs."
 msgstr "Nie masz uprawnień do przeglądania dzienników połączeń Instagram."
 
-#: src/Core/Plugin.php:1412
-#: src/Core/Plugin.php:1433
-#: src/Core/Plugin.php:1454
+#: src/Core/Plugin.php:1414
+#: src/Core/Plugin.php:1435
+#: src/Core/Plugin.php:1456
 msgid "Fair Platform:"
 msgstr "Fair Platform:"
 
-#: src/Core/Plugin.php:1414
+#: src/Core/Plugin.php:1416
 msgid "Instagram OAuth credentials not configured. Please add INSTAGRAM_APP_ID and INSTAGRAM_APP_SECRET to wp-config.php for Instagram integration."
 msgstr "Poświadczenia OAuth Instagram nie są skonfigurowane. Dodaj INSTAGRAM_APP_ID i INSTAGRAM_APP_SECRET do wp-config.php, aby włączyć integrację z Instagramem."
 
-#: src/Core/Plugin.php:1435
+#: src/Core/Plugin.php:1437
 msgid "Mollie OAuth credentials not configured. Please add MOLLIE_CLIENT_ID and MOLLIE_CLIENT_SECRET to wp-config.php"
 msgstr "Poświadczenia OAuth Mollie nie są skonfigurowane. Dodaj MOLLIE_CLIENT_ID i MOLLIE_CLIENT_SECRET do wp-config.php"
 
-#: src/Core/Plugin.php:1456
+#: src/Core/Plugin.php:1458
 msgid "Mollie PHP library not installed. Please run: composer require mollie/mollie-api-php"
 msgstr "Biblioteka Mollie PHP nie jest zainstalowana. Uruchom: composer require mollie/mollie-api-php"
 

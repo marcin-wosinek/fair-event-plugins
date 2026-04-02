@@ -15,8 +15,8 @@ msgstr ""
 
 #. Plugin Name of the plugin
 #: fair-audience.php
-#: src/Admin/AdminHooks.php:141
-#: src/Admin/AdminHooks.php:142
+#: src/Admin/AdminHooks.php:145
+#: src/Admin/AdminHooks.php:146
 msgid "Fair Audience"
 msgstr ""
 
@@ -40,14 +40,14 @@ msgstr ""
 msgid "https://github.com/marcin-wosinek"
 msgstr ""
 
-#: src/Admin/AdminHooks.php:153
-#: src/Admin/AdminHooks.php:154
+#: src/Admin/AdminHooks.php:167
+#: src/Admin/AdminHooks.php:168
 #: src/Admin/all-participants/AllParticipants.js:552
 msgid "All Participants"
 msgstr "Tous les participants"
 
-#: src/Admin/AdminHooks.php:198
-#: src/Admin/AdminHooks.php:199
+#: src/Admin/AdminHooks.php:222
+#: src/Admin/AdminHooks.php:223
 msgid "By Event"
 msgstr "Par événement"
 
@@ -58,8 +58,9 @@ msgstr "Par événement"
 msgid "Event Participants"
 msgstr "Participants à l'événement"
 
-#: src/Admin/AdminHooks.php:214
-#: src/Admin/AdminHooks.php:215
+#: src/Admin/AdminHooks.php:241
+#: src/Admin/AdminHooks.php:242
+#: src/Admin/collaborators/Collaborators.js:438
 #: src/Admin/import/Import.js:298
 msgid "Import"
 msgstr "Importer"
@@ -77,8 +78,8 @@ msgstr "Importer"
 #: src/API/GalleryAccessController.php:313
 #: src/Services/EmailService.php:304
 #: src/Services/EmailService.php:547
-#: src/Services/EmailService.php:1127
-#: src/Services/EmailService.php:1853
+#: src/Services/EmailService.php:1157
+#: src/Services/EmailService.php:1886
 msgid "Event not found."
 msgstr "Événement non trouvé."
 
@@ -88,11 +89,13 @@ msgstr "Événement non trouvé."
 #: src/API/ParticipantsController.php:286
 #: src/API/ParticipantsController.php:400
 #: src/API/ParticipantsController.php:502
+#: src/API/PhotoUploadController.php:124
 #: src/Services/EmailService.php:328
 #: src/Services/EmailService.php:570
-#: src/Services/EmailService.php:1158
-#: src/Services/EmailService.php:1598
-#: src/Services/EmailService.php:1915
+#: src/Services/EmailService.php:1188
+#: src/Services/EmailService.php:1631
+#: src/Services/EmailService.php:1948
+#: templates/photo-upload.php:40
 msgid "Participant not found."
 msgstr "Participant non trouvé."
 
@@ -151,7 +154,7 @@ msgstr "Participant supprimé avec succès."
 
 #: src/Admin/all-participants/AllParticipants.js:466
 #: src/Admin/all-participants/AllParticipants.js:500
-#: src/Admin/collaborators/Collaborators.js:279
+#: src/Admin/collaborators/Collaborators.js:285
 #: src/Admin/event-participants/EventParticipants.js:296
 #: src/Admin/event-participants/EventParticipants.js:341
 #: src/Admin/event-participants/EventParticipants.js:647
@@ -165,12 +168,15 @@ msgstr "Participant supprimé avec succès."
 #: src/Admin/fees-list/FeesList.js:284
 #: src/Admin/fees-list/FeesList.js:329
 #: src/Admin/fees-list/FeesList.js:363
+#: src/Admin/form-answers/FormAnswers.js:110
+#: src/Admin/form-answers/FormAnswers.js:195
 #: src/Admin/groups/Groups.js:182
 #: src/Admin/groups/Groups.js:216
 #: src/Admin/groups/Groups.js:322
 #: src/Admin/groups/Groups.js:345
 #: src/Admin/polls-list/PollsList.js:48
 #: src/Admin/questionnaire-responses/QuestionnaireResponses.js:148
+#: src/Admin/submission-detail/SubmissionDetail.js:107
 msgid "Error: "
 msgstr "Erreur : "
 
@@ -185,14 +191,15 @@ msgstr "Ajouter un participant"
 
 #: templates/collaborator-profile.php:290
 #: src/Admin/all-participants/AllParticipants.js:113
-#: src/Admin/collaborators/Collaborators.js:55
-#: src/Admin/custom-mail/CustomMail.js:599
+#: src/Admin/collaborators/Collaborators.js:61
+#: src/Admin/custom-mail/CustomMail.js:675
 #: src/Admin/edit-poll/EditPoll.js:247
 #: src/Admin/event-participants/EventParticipants.js:567
 #: src/Admin/fee-detail/FeeDetail.js:114
 #: src/Admin/fees-list/FeesList.js:73
 #: src/Admin/fees-list/FeesList.js:453
 #: src/Admin/fees-list/FeesList.js:546
+#: src/Admin/form-answers/FormAnswers.js:124
 #: src/Admin/groups/Groups.js:63
 #: src/Admin/groups/Groups.js:430
 #: src/Admin/image-templates/ImageTemplates.js:562
@@ -205,23 +212,27 @@ msgstr "Nom"
 #: src/blocks/audience-signup/render.php:172
 #: src/blocks/event-signup/render.php:227
 #: src/blocks/event-signup/render.php:260
+#: src/blocks/fair-form/render.php:63
 #: src/blocks/mailing-signup/render.php:85
 #: templates/collaborator-profile.php:318
 #: src/Admin/all-participants/AllParticipants.js:122
 #: src/Admin/all-participants/AllParticipants.js:654
-#: src/Admin/collaborators/Collaborators.js:64
-#: src/Admin/custom-mail/CustomMail.js:602
+#: src/Admin/collaborators/Collaborators.js:70
+#: src/Admin/custom-mail/CustomMail.js:678
 #: src/Admin/fee-detail/FeeDetail.js:124
+#: src/Admin/form-answers/FormAnswers.js:138
 #: src/Admin/import/WordPressUsersImport.js:221
 #: src/Admin/questionnaire-responses/QuestionnaireResponses.js:80
 #: src/Admin/questionnaire-responses/QuestionnaireResponses.js:176
+#: src/Admin/submission-detail/SubmissionDetail.js:241
+#: src/blocks/fair-form/editor.js:196
 msgid "Email"
 msgstr "E-mail"
 
 #: src/blocks/audience-signup/render.php:187
 #: templates/collaborator-profile.php:331
 #: src/Admin/all-participants/AllParticipants.js:128
-#: src/Admin/settings/SettingsApp.js:134
+#: src/Admin/settings/SettingsApp.js:135
 msgid "Instagram"
 msgstr "Instagram"
 
@@ -230,7 +241,7 @@ msgstr "Instagram"
 msgid "Email Profile"
 msgstr "Profil E-mail"
 
-#: src/Admin/custom-mail/CustomMail.js:740
+#: src/Admin/custom-mail/CustomMail.js:816
 #: src/Admin/extra-messages-list/ExtraMessagesList.js:125
 #: src/Admin/image-templates/ImageTemplates.js:577
 #: src/Admin/instagram-posts/InstagramPosts.js:464
@@ -242,15 +253,18 @@ msgstr "Actions"
 #: src/Admin/event-participants/EventParticipants.js:607
 #: src/Admin/extra-messages-list/ExtraMessagesList.js:164
 #: src/Admin/fees-list/FeesList.js:384
+#: src/Admin/form-answers/FormAnswers.js:206
 #: src/Admin/groups/Groups.js:354
 #: src/Admin/polls-list/PollsList.js:157
+#: src/Admin/submission-detail/SubmissionDetail.js:134
 msgid "Edit"
 msgstr "Modifier"
 
 #: src/Admin/all-participants/AllParticipants.js:532
-#: src/Admin/custom-mail/CustomMail.js:775
+#: src/Admin/custom-mail/CustomMail.js:851
 #: src/Admin/extra-messages-list/ExtraMessagesList.js:176
 #: src/Admin/fees-list/FeesList.js:391
+#: src/Admin/form-answers/FormAnswers.js:222
 #: src/Admin/groups/Groups.js:368
 #: src/Admin/image-templates/ImageTemplates.js:627
 #: src/Admin/instagram-posts/InstagramPosts.js:529
@@ -294,12 +308,12 @@ msgstr "Mettre à jour"
 msgid "Add"
 msgstr "Ajouter"
 
-#: src/Admin/custom-mail/CustomMail.js:605
+#: src/Admin/custom-mail/CustomMail.js:681
 #: src/Admin/event-participants/EventParticipants.js:1039
 msgid "Label"
 msgstr "Libellé"
 
-#: src/Admin/custom-mail/CustomMail.js:521
+#: src/Admin/custom-mail/CustomMail.js:597
 #: src/Admin/event-participants/EventParticipants.js:557
 #: src/Admin/event-participants/EventParticipants.js:1043
 msgid "Interested"
@@ -316,15 +330,19 @@ msgstr "Inscrit"
 msgid "Remove"
 msgstr "Retirer"
 
-#: src/Admin/collaborators/Collaborators.js:87
+#: src/Admin/collaborators/Collaborators.js:93
 #: src/Admin/events-list/EventsList.js:201
 msgid "Events"
 msgstr "Événements"
 
-#: src/Admin/custom-mail/CustomMail.js:479
-#: src/Admin/custom-mail/CustomMail.js:725
+#: src/Admin/custom-mail/CustomMail.js:555
+#: src/Admin/custom-mail/CustomMail.js:801
 #: src/Admin/edit-poll/EditPoll.js:476
 #: src/Admin/events-list/EventsList.js:37
+#: src/Admin/form-answers/FormAnswers.js:150
+#: src/Admin/form-answers/FormAnswers.js:269
+#: src/Admin/submission-detail/SubmissionDetail.js:249
+#: src/blocks/fair-form/editor.js:97
 msgid "Event"
 msgstr "Événement"
 
@@ -337,6 +355,7 @@ msgid "No file uploaded."
 msgstr "Aucun fichier téléchargé."
 
 #: src/API/ImportController.php:153
+#: src/API/PhotoUploadController.php:208
 msgid "File upload failed."
 msgstr "Le téléchargement du fichier a échoué."
 
@@ -501,8 +520,8 @@ msgstr "Sélectionnez un événement pour associer les participants importés. L
 msgid "No event association"
 msgstr "Aucune association d'événement"
 
-#: src/Admin/AdminHooks.php:224
-#: src/Admin/AdminHooks.php:225
+#: src/Admin/AdminHooks.php:251
+#: src/Admin/AdminHooks.php:252
 #: src/Admin/polls-list/PollsList.js:67
 #: src/Admin/polls-list/PollsList.js:76
 #: src/Admin/polls-list/PollsList.js:87
@@ -610,12 +629,12 @@ msgstr "Une petite question à propos de %s"
 #: src/Services/EmailService.php:653
 #: src/Services/EmailService.php:796
 #: src/Services/EmailService.php:916
-#: src/Services/EmailService.php:1042
-#: src/Services/EmailService.php:1310
-#: src/Services/EmailService.php:1459
-#: src/Services/EmailService.php:1735
+#: src/Services/EmailService.php:1072
+#: src/Services/EmailService.php:1343
+#: src/Services/EmailService.php:1492
+#: src/Services/EmailService.php:1768
 #: src/Admin/event-participants/EventParticipants.js:1122
-#, php-format,js-format
+#, php-format, js-format
 msgid "Hi %s,"
 msgstr "Bonjour %s,"
 
@@ -639,9 +658,9 @@ msgstr "Répondre au sondage"
 #: src/Services/EmailService.php:679
 #: src/Services/EmailService.php:818
 #: src/Services/EmailService.php:946
-#: src/Services/EmailService.php:1054
-#: src/Services/EmailService.php:1322
-#: src/Services/EmailService.php:1504
+#: src/Services/EmailService.php:1084
+#: src/Services/EmailService.php:1355
+#: src/Services/EmailService.php:1537
 #, php-format
 msgid "Thanks,%1$sThe %2$s Team"
 msgstr "Merci,%1$sL'équipe %2$s"
@@ -651,17 +670,17 @@ msgstr "Merci,%1$sL'équipe %2$s"
 #: src/Services/EmailService.php:691
 #: src/Services/EmailService.php:830
 #: src/Services/EmailService.php:958
-#: src/Services/EmailService.php:1519
-#: src/Services/EmailService.php:1781
+#: src/Services/EmailService.php:1552
+#: src/Services/EmailService.php:1814
 msgid "If the button above doesn't work, copy and paste this link:"
 msgstr "Si le bouton ci-dessus ne fonctionne pas, copiez et collez ce lien :"
 
 #: src/Services/EmailService.php:355
 #: src/Services/EmailService.php:596
-#: src/Services/EmailService.php:1191
-#: src/Services/EmailService.php:1259
-#: src/Services/EmailService.php:1633
-#: src/Services/EmailService.php:1951
+#: src/Services/EmailService.php:1221
+#: src/Services/EmailService.php:1289
+#: src/Services/EmailService.php:1666
+#: src/Services/EmailService.php:1984
 msgid "wp_mail() failed to send."
 msgstr "L'envoi par wp_mail() a échoué."
 
@@ -735,7 +754,7 @@ msgstr "E-mail reçu"
 msgid "Did Not Receive Email"
 msgstr "E-mail non reçu"
 
-#: src/Admin/custom-mail/CustomMail.js:695
+#: src/Admin/custom-mail/CustomMail.js:771
 #: src/Admin/edit-poll/EditPoll.js:444
 #: src/Admin/event-participants/EventParticipants.js:806
 #: src/Admin/event-participants/EventParticipants.js:1256
@@ -774,6 +793,7 @@ msgstr "Référence interne pour ce sondage."
 
 #: src/Admin/edit-poll/EditPoll.js:512
 #: src/Admin/polls-list/PollsList.js:110
+#: src/Admin/submission-detail/SubmissionDetail.js:277
 msgid "Question"
 msgstr "Question"
 
@@ -812,7 +832,7 @@ msgid "Add Option"
 msgstr "Ajouter une option"
 
 #: src/Admin/all-participants/AllParticipants.js:170
-#: src/Admin/custom-mail/CustomMail.js:608
+#: src/Admin/custom-mail/CustomMail.js:684
 #: src/Admin/edit-poll/EditPoll.js:591
 #: src/Admin/extra-messages-list/ExtraMessagesList.js:124
 #: src/Admin/fee-detail/FeeDetail.js:141
@@ -864,7 +884,7 @@ msgid "Create Poll"
 msgstr "Créer un sondage"
 
 #: src/Admin/MediaBatchActions.php:257
-#: src/Admin/collaborators/Collaborators.js:456
+#: src/Admin/collaborators/Collaborators.js:599
 #: src/Admin/edit-extra-message/EditExtraMessage.js:251
 #: src/Admin/edit-poll/EditPoll.js:631
 #: src/Admin/event-participants/EventParticipants.js:1003
@@ -875,8 +895,10 @@ msgstr "Créer un sondage"
 #: src/Admin/fee-detail/FeeDetail.js:623
 #: src/Admin/fees-list/FeesList.js:516
 #: src/Admin/fees-list/FeesList.js:601
+#: src/Admin/form-answers/FormAnswers.js:286
 #: src/Admin/groups/Groups.js:458
 #: src/Admin/image-templates/ImageCropModal.js:73
+#: src/Admin/submission-detail/SubmissionDetail.js:158
 msgid "Cancel"
 msgstr "Annuler"
 
@@ -943,6 +965,7 @@ msgstr "Bonjour"
 
 #: src/blocks/audience-signup/frontend.js:318
 #: src/blocks/event-signup/frontend.js:204
+#: src/blocks/fair-form/frontend.js:307
 #: src/blocks/mailing-signup/frontend.js:123
 #: src/blocks/shared/form-utils.js:92
 #: src/public/poll-response/PollResponse.js:248
@@ -1084,14 +1107,17 @@ msgstr "Participant %1$d : Échec de la liaison à l'événement : %2$s"
 #: src/API/AudienceSignupController.php:222
 #: src/API/EventSignupController.php:512
 #: src/API/EventSignupController.php:594
+#: src/API/FairFormController.php:238
 #: src/API/MailingSignupController.php:171
 #: templates/collaborator-profile.php:59
+#: src/blocks/fair-form/frontend.js:207
 msgid "Please enter a valid email address."
 msgstr "Veuillez saisir une adresse e-mail valide."
 
 #: src/API/AudienceSignupController.php:231
 #: src/API/EventSignupController.php:521
 #: src/API/EventSignupController.php:612
+#: src/API/FairFormController.php:247
 #: src/API/MailingSignupController.php:180
 msgid "Too many requests. Please try again later."
 msgstr "Trop de requêtes. Veuillez réessayer plus tard."
@@ -1118,7 +1144,6 @@ msgstr "Échec de l'envoi de l'e-mail de confirmation. Veuillez réessayer."
 
 #: src/API/AudienceSignupController.php:310
 #: src/API/MailingSignupController.php:282
-#: src/blocks/mailing-signup/render.php:19
 #: templates/collaborator-profile.php:259
 #: src/blocks/mailing-signup/editor.js:80
 #: src/blocks/mailing-signup/frontend.js:61
@@ -1148,29 +1173,34 @@ msgstr "Échec de la confirmation de l'abonnement. Veuillez réessayer."
 msgid "Your email has been confirmed. Welcome!"
 msgstr "Votre e-mail a été confirmé. Bienvenue !"
 
-#: src/blocks/mailing-signup/render.php:18
 #: src/blocks/mailing-signup/editor.js:72
 msgid "Subscribe"
 msgstr "S'abonner"
 
 #: src/blocks/audience-signup/render.php:147
 #: src/blocks/event-signup/render.php:204
+#: src/blocks/fair-form/render.php:40
 #: src/blocks/mailing-signup/render.php:61
+#: src/blocks/fair-form/editor.js:188
 msgid "First Name"
 msgstr "Prénom"
 
 #: src/blocks/audience-signup/render.php:154
 #: src/blocks/event-signup/render.php:211
+#: src/blocks/fair-form/render.php:47
 #: src/blocks/mailing-signup/render.php:68
 msgid "Enter your first name"
 msgstr "Entrez votre prénom"
 
 #: src/blocks/audience-signup/render.php:160
+#: src/blocks/fair-form/render.php:52
 #: src/blocks/mailing-signup/render.php:73
+#: src/blocks/fair-form/editor.js:192
 msgid "Last Name"
 msgstr "Nom de famille"
 
 #: src/blocks/audience-signup/render.php:166
+#: src/blocks/fair-form/render.php:58
 #: src/blocks/mailing-signup/render.php:80
 msgid "Enter your last name"
 msgstr "Entrez votre nom de famille"
@@ -1178,6 +1208,7 @@ msgstr "Entrez votre nom de famille"
 #: src/blocks/audience-signup/render.php:179
 #: src/blocks/event-signup/render.php:234
 #: src/blocks/event-signup/render.php:267
+#: src/blocks/fair-form/render.php:70
 #: src/blocks/mailing-signup/render.php:92
 msgid "Enter your email"
 msgstr "Entrez votre adresse e-mail"
@@ -1191,7 +1222,7 @@ msgstr "Les photos de %s sont prêtes !"
 #. translators: %s: event title
 #: src/Services/EmailService.php:422
 #: src/Admin/event-participants/EventParticipants.js:1134
-#, php-format,js-format
+#, php-format, js-format
 msgid "The photos from %s are now available for you to view and like!"
 msgstr "Les photos de %s sont maintenant disponibles pour que vous puissiez les consulter et les aimer !"
 
@@ -1262,8 +1293,10 @@ msgstr "Confirmation échouée"
 #: templates/fee-payment.php:411
 #: templates/fee-payment.php:432
 #: templates/fee-payment.php:478
-#: templates/manage-subscription.php:228
-#: templates/manage-subscription.php:279
+#: templates/manage-subscription.php:285
+#: templates/manage-subscription.php:355
+#: templates/photo-upload.php:263
+#: templates/photo-upload.php:307
 msgid "Return to Homepage"
 msgstr "Retour à la page d'accueil"
 
@@ -1343,17 +1376,20 @@ msgstr "Résolu automatiquement à partir des importations précédentes :"
 
 #: src/blocks/audience-signup/editor.js:35
 #: src/blocks/event-signup/editor.js:26
+#: src/blocks/fair-form/editor.js:133
 #: src/blocks/mailing-signup/editor.js:65
 msgid "Form Settings"
 msgstr "Paramètres du formulaire"
 
 #: src/blocks/audience-signup/editor.js:37
+#: src/blocks/fair-form/editor.js:135
 #: src/blocks/mailing-signup/editor.js:67
 msgid "Submit Button Text"
 msgstr "Texte du bouton de soumission"
 
 #: src/blocks/audience-signup/editor.js:45
 #: src/blocks/event-signup/editor.js:75
+#: src/blocks/fair-form/editor.js:143
 #: src/blocks/mailing-signup/editor.js:75
 msgid "Success Message"
 msgstr "Message de succès"
@@ -1365,6 +1401,7 @@ msgstr "Message affiché après une inscription réussie."
 
 #: src/blocks/audience-signup/frontend.js:242
 #: src/blocks/event-signup/frontend.js:169
+#: src/blocks/fair-form/frontend.js:197
 #: src/blocks/mailing-signup/frontend.js:77
 msgid "Please enter your first name."
 msgstr "Veuillez saisir votre prénom."
@@ -1395,6 +1432,7 @@ msgctxt "block keyword"
 msgid "email"
 msgstr "e-mail"
 
+#: src/blocks/fair-form-mailing-signup/block.json
 #: src/blocks/mailing-signup/block.json
 msgctxt "block keyword"
 msgid "newsletter"
@@ -1402,16 +1440,20 @@ msgstr "newsletter"
 
 #: src/blocks/audience-signup/block.json
 #: src/blocks/event-signup/block.json
+#: src/blocks/fair-form-mailing-signup/block.json
+#: src/blocks/fair-form/block.json
 #: src/blocks/mailing-signup/block.json
 msgctxt "block keyword"
 msgid "signup"
 msgstr "inscription"
 
+#: src/blocks/fair-form-mailing-signup/block.json
 #: src/blocks/mailing-signup/block.json
 msgctxt "block keyword"
 msgid "subscribe"
 msgstr "s'abonner"
 
+#: src/blocks/fair-form-mailing-signup/block.json
 #: src/blocks/mailing-signup/block.json
 msgctxt "block keyword"
 msgid "mailing"
@@ -1457,7 +1499,7 @@ msgstr "Événements inscrits"
 msgid "Events Collaborated"
 msgstr "Événements collaborés"
 
-#: src/Admin/custom-mail/CustomMail.js:509
+#: src/Admin/custom-mail/CustomMail.js:585
 #: src/Admin/events-list/EventsList.js:64
 msgid "Participants"
 msgstr "Participants"
@@ -1475,10 +1517,12 @@ msgstr "J'aime"
 msgid "View Event"
 msgstr "Voir l'événement"
 
-#: src/Admin/custom-mail/CustomMail.js:737
+#: src/Admin/custom-mail/CustomMail.js:813
 #: src/Admin/events-list/EventsList.js:51
+#: src/Admin/form-answers/FormAnswers.js:156
 #: src/Admin/questionnaire-responses/QuestionnaireResponses.js:86
 #: src/Admin/questionnaire-responses/QuestionnaireResponses.js:177
+#: src/Admin/submission-detail/SubmissionDetail.js:245
 #: src/blocks/audience-signup/QuestionBuilder.js:19
 msgid "Date"
 msgstr "Date"
@@ -1524,6 +1568,9 @@ msgid "%d Collaborators"
 msgstr "%d Collaborateurs"
 
 #: src/Admin/event-participants/EventParticipants.js:1072
+#: src/Admin/form-answers/FormAnswers.js:297
+#: src/Admin/settings/MailingTab.js:132
+#: src/Admin/submission-detail/SubmissionDetail.js:155
 msgid "Save"
 msgstr "Enregistrer"
 
@@ -1537,15 +1584,15 @@ msgstr "Envoyer le lien de la galerie aux %d sélectionnés"
 msgid "Send Gallery Link to All"
 msgstr "Envoyer le lien de la galerie à tous"
 
-#: src/Admin/AdminHooks.php:163
-#: src/Admin/AdminHooks.php:164
-#: src/Admin/collaborators/Collaborators.js:315
-#: src/Admin/custom-mail/CustomMail.js:515
+#: src/Admin/AdminHooks.php:177
+#: src/Admin/AdminHooks.php:178
+#: src/Admin/collaborators/Collaborators.js:424
+#: src/Admin/custom-mail/CustomMail.js:591
 msgid "Collaborators"
 msgstr "Collaborateurs"
 
-#: src/Admin/AdminHooks.php:173
-#: src/Admin/AdminHooks.php:174
+#: src/Admin/AdminHooks.php:187
+#: src/Admin/AdminHooks.php:188
 #: src/Admin/all-participants/AllParticipants.js:195
 #: src/Admin/all-participants/AllParticipants.js:709
 #: src/Admin/groups/Groups.js:394
@@ -1568,7 +1615,6 @@ msgstr "Vous êtes déjà inscrit à cet événement."
 
 #: src/API/EventSignupController.php:481
 #: src/API/EventSignupController.php:661
-#: src/blocks/event-signup/render.php:25
 #: src/blocks/event-signup/editor.js:80
 #: src/blocks/event-signup/frontend.js:152
 #: src/blocks/event-signup/frontend.js:372
@@ -1664,18 +1710,15 @@ msgstr "L'utilisateur WordPress spécifié n'existe pas."
 msgid "This WordPress user is already linked to another participant."
 msgstr "Cet utilisateur WordPress est déjà lié à un autre participant."
 
-#: src/blocks/event-signup/render.php:22
 #: src/blocks/event-signup/editor.js:33
 #: src/blocks/event-signup/frontend.js:561
 msgid "Sign Up"
 msgstr "S'inscrire"
 
-#: src/blocks/event-signup/render.php:23
 #: src/blocks/event-signup/editor.js:45
 msgid "Register & Sign Up"
 msgstr "S'enregistrer et s'inscrire"
 
-#: src/blocks/event-signup/render.php:24
 #: src/blocks/event-signup/editor.js:65
 msgid "Send Signup Link"
 msgstr "Envoyer le lien d'inscription"
@@ -1700,7 +1743,7 @@ msgstr "Bonjour %s ! Cliquez sur le bouton ci-dessous pour vous inscrire à cet 
 #. translators: %s: participant name
 #: src/blocks/event-signup/render.php:169
 #: src/blocks/event-signup/frontend.js:540
-#, php-format,js-format
+#, php-format, js-format
 msgid "Hi %s! You can sign up for this event."
 msgstr "Bonjour %s ! Vous pouvez vous inscrire à cet événement."
 
@@ -1746,7 +1789,7 @@ msgid "Click the button below to sign up for the event:"
 msgstr "Cliquez sur le bouton ci-dessous pour vous inscrire à l'événement :"
 
 #: src/Services/EmailService.php:935
-#: src/Services/EmailService.php:1762
+#: src/Services/EmailService.php:1795
 msgid "Sign Up Now"
 msgstr "S'inscrire maintenant"
 
@@ -1793,31 +1836,31 @@ msgstr "Rechercher par nom ou e-mail (min. 2 caractères)"
 msgid "No users found."
 msgstr "Aucun utilisateur trouvé."
 
-#: src/Admin/collaborators/Collaborators.js:70
+#: src/Admin/collaborators/Collaborators.js:76
 msgid "Photos"
 msgstr "Photos"
 
-#: src/Admin/collaborators/Collaborators.js:291
+#: src/Admin/collaborators/Collaborators.js:297
 msgid "Add to event"
 msgstr "Ajouter à l'événement"
 
-#: src/Admin/collaborators/Collaborators.js:352
+#: src/Admin/collaborators/Collaborators.js:495
 msgid "Add to Event"
 msgstr "Ajouter à l'événement"
 
-#: src/Admin/collaborators/Collaborators.js:357
+#: src/Admin/collaborators/Collaborators.js:500
 msgid "Select events to add this collaborator to:"
 msgstr "Sélectionnez les événements auxquels ajouter ce collaborateur :"
 
-#: src/Admin/collaborators/Collaborators.js:372
+#: src/Admin/collaborators/Collaborators.js:515
 msgid "Search events..."
 msgstr "Rechercher des événements..."
 
-#: src/Admin/collaborators/Collaborators.js:388
+#: src/Admin/collaborators/Collaborators.js:531
 msgid "No available events found."
 msgstr "Aucun événement disponible trouvé."
 
-#: src/Admin/collaborators/Collaborators.js:466
+#: src/Admin/collaborators/Collaborators.js:609
 msgid "Add to Events"
 msgstr "Ajouter aux événements"
 
@@ -2105,77 +2148,80 @@ msgid "Please specify participant IDs or group IDs."
 msgstr "Veuillez spécifier les identifiants des participants ou des groupes."
 
 #: src/Services/EmailService.php:964
-#: src/Services/EmailService.php:1787
+#: src/Services/EmailService.php:1820
 msgid "Don't want to receive event invitations?"
 msgstr "Vous ne voulez plus recevoir d'invitations à des événements ?"
 
 #: src/Services/EmailService.php:965
-#: src/Services/EmailService.php:1067
-#: src/Services/EmailService.php:1335
-#: src/Services/EmailService.php:1788
+#: src/Services/EmailService.php:1097
+#: src/Services/EmailService.php:1368
+#: src/Services/EmailService.php:1821
+#: src/Admin/custom-mail/CustomMail.js:537
 msgid "Manage your preferences"
 msgstr "Gérer vos préférences"
 
-#: src/Services/EmailService.php:1903
+#: src/Services/EmailService.php:1936
 msgid "Already signed up"
 msgstr "Déjà inscrit"
 
-#: src/Services/EmailService.php:1177
-#: src/Services/EmailService.php:1245
-#: src/Services/EmailService.php:1934
+#: src/Services/EmailService.php:1207
+#: src/Services/EmailService.php:1275
+#: src/Services/EmailService.php:1967
 msgid "Participant opted out of marketing emails."
 msgstr "Le participant a refusé les emails marketing."
 
 #: templates/fee-payment.php:45
-#: templates/manage-subscription.php:34
+#: templates/manage-subscription.php:36
+#: templates/photo-upload.php:34
 msgid "Invalid or expired link. Please use the link from your email."
 msgstr "Lien invalide ou expiré. Veuillez utiliser le lien de votre email."
 
-#: templates/manage-subscription.php:40
+#: templates/manage-subscription.php:42
 msgid "Subscriber not found."
 msgstr "Abonné non trouvé."
 
-#: templates/manage-subscription.php:56
+#: templates/manage-subscription.php:63
 msgid "Your preferences have been updated."
 msgstr "Vos préférences ont été mises à jour."
 
-#: templates/manage-subscription.php:59
+#: templates/manage-subscription.php:66
 msgid "Failed to update preferences. Please try again."
 msgstr "Échec de la mise à jour des préférences. Veuillez réessayer."
 
 #: templates/fee-payment.php:364
-#: templates/manage-subscription.php:222
+#: templates/manage-subscription.php:279
+#: templates/photo-upload.php:257
 msgid "Invalid Link"
 msgstr "Lien invalide"
 
-#: templates/manage-subscription.php:233
+#: templates/manage-subscription.php:290
 msgid "Manage Your Subscription"
 msgstr "Gérer votre abonnement"
 
-#: templates/manage-subscription.php:251
+#: templates/manage-subscription.php:308
 msgid "All emails"
 msgstr "Tous les emails"
 
-#: templates/manage-subscription.php:254
+#: templates/manage-subscription.php:311
 msgid "Receive event invitations, photos, polls, and other updates."
 msgstr "Recevoir les invitations aux événements, photos, sondages et autres mises à jour."
 
-#: templates/manage-subscription.php:263
+#: templates/manage-subscription.php:320
 msgid "Essential emails only"
 msgstr "Emails essentiels uniquement"
 
-#: templates/manage-subscription.php:266
+#: templates/manage-subscription.php:323
 msgid "Only receive emails about events you signed up for (photos, polls, confirmations). No promotional emails."
 msgstr "Recevoir uniquement les emails concernant les événements auxquels vous êtes inscrit (photos, sondages, confirmations). Aucun email promotionnel."
 
-#: templates/manage-subscription.php:273
+#: templates/manage-subscription.php:349
 msgid "Save Preferences"
 msgstr "Enregistrer les préférences"
 
 #: src/Admin/all-participants/AllParticipants.js:149
 #: src/Admin/all-participants/AllParticipants.js:160
 #: src/Admin/all-participants/AllParticipants.js:684
-#: src/Admin/custom-mail/CustomMail.js:530
+#: src/Admin/custom-mail/CustomMail.js:606
 msgid "Marketing"
 msgstr "Marketing"
 
@@ -2221,52 +2267,52 @@ msgstr "%1$s (%2$d membres)"
 msgid "Send Invitations"
 msgstr "Envoyer les invitations"
 
-#: src/Admin/AdminHooks.php:184
-#: src/Admin/AdminHooks.php:185
+#: src/Admin/AdminHooks.php:198
+#: src/Admin/AdminHooks.php:199
 #: src/Admin/fee-detail/FeeDetail.js:473
 #: src/Admin/fees-list/FeesList.js:421
 msgid "Membership Fees"
 msgstr "Frais d'adhésion"
 
-#: src/Admin/AdminHooks.php:237
-#: src/Admin/AdminHooks.php:238
+#: src/Admin/AdminHooks.php:264
+#: src/Admin/AdminHooks.php:265
 #: src/Admin/instagram-posts/InstagramPosts.js:307
 msgid "Instagram Posts"
 msgstr "Publications Instagram"
 
-#: src/Admin/AdminHooks.php:247
-#: src/Admin/AdminHooks.php:248
+#: src/Admin/AdminHooks.php:274
+#: src/Admin/AdminHooks.php:275
 #: src/Admin/image-templates/ImageTemplates.js:508
 msgid "Image Templates"
 msgstr "Modèles d'image"
 
-#: src/Admin/AdminHooks.php:258
-#: src/Admin/AdminHooks.php:259
+#: src/Admin/AdminHooks.php:285
+#: src/Admin/AdminHooks.php:286
 #: src/Admin/weekly-schedule/WeeklySchedule.js:266
 msgid "Weekly Schedule"
 msgstr "Calendrier hebdomadaire"
 
-#: src/Admin/AdminHooks.php:269
-#: src/Admin/AdminHooks.php:270
-#: src/Admin/custom-mail/CustomMail.js:414
-#: src/Admin/custom-mail/CustomMail.js:430
+#: src/Admin/AdminHooks.php:296
+#: src/Admin/AdminHooks.php:297
+#: src/Admin/custom-mail/CustomMail.js:452
+#: src/Admin/custom-mail/CustomMail.js:468
 msgid "Custom Mail"
 msgstr "E-mail personnalisé"
 
-#: src/Admin/AdminHooks.php:279
-#: src/Admin/AdminHooks.php:280
+#: src/Admin/AdminHooks.php:306
+#: src/Admin/AdminHooks.php:307
 #: src/Admin/extra-messages-list/ExtraMessagesList.js:80
 #: src/Admin/extra-messages-list/ExtraMessagesList.js:89
 #: src/Admin/extra-messages-list/ExtraMessagesList.js:100
 msgid "Extra Messages"
 msgstr "Messages supplémentaires"
 
-#: src/Admin/AdminHooks.php:292
-#: src/Admin/AdminHooks.php:293
+#: src/Admin/AdminHooks.php:319
+#: src/Admin/AdminHooks.php:320
 msgid "Settings"
 msgstr "Paramètres"
 
-#: src/Admin/collaborators/Collaborators.js:427
+#: src/Admin/collaborators/Collaborators.js:570
 #: src/Admin/weekly-schedule/WeeklySchedule.js:441
 msgid "View Participants"
 msgstr "Voir les participants"
@@ -2276,7 +2322,7 @@ msgid "You do not have permission to manage custom mail."
 msgstr "Vous n'avez pas la permission de gérer les e-mails personnalisés."
 
 #: src/API/CustomMailController.php:272
-#: src/API/CustomMailController.php:351
+#: src/API/CustomMailController.php:352
 #: src/API/EventInvitationsController.php:132
 #: src/API/EventParticipantsController.php:283
 #: src/API/EventParticipantsController.php:359
@@ -2285,10 +2331,11 @@ msgstr "Vous n'avez pas la permission de gérer les e-mails personnalisés."
 #: src/API/EventParticipantsController.php:746
 #: src/API/GalleryAccessController.php:259
 #: src/API/GalleryAccessController.php:302
+#: src/API/QuestionnaireResponsesController.php:315
 msgid "Event date not found."
 msgstr "Date de l'événement introuvable."
 
-#: src/API/CustomMailController.php:382
+#: src/API/CustomMailController.php:383
 msgid "Custom mail message not found."
 msgstr "Message e-mail personnalisé introuvable."
 
@@ -2337,7 +2384,7 @@ msgstr "La catégorie spécifiée n'existe pas."
 #: src/API/FeesController.php:646
 #: src/API/FeesController.php:669
 #: src/API/FeesController.php:732
-#: src/Services/EmailService.php:1584
+#: src/Services/EmailService.php:1617
 msgid "Fee not found."
 msgstr "Frais non trouvés."
 
@@ -2545,51 +2592,51 @@ msgstr "Fichier SVG invalide."
 
 #: src/Services/EmailService.php:337
 #: src/Services/EmailService.php:579
-#: src/Services/EmailService.php:1167
-#: src/Services/EmailService.php:1235
-#: src/Services/EmailService.php:1607
-#: src/Services/EmailService.php:1924
+#: src/Services/EmailService.php:1197
+#: src/Services/EmailService.php:1265
+#: src/Services/EmailService.php:1640
+#: src/Services/EmailService.php:1957
 msgid "Participant has no email address."
 msgstr "Le participant n'a pas d'adresse e-mail."
 
-#: src/Services/EmailService.php:1066
-#: src/Services/EmailService.php:1334
+#: src/Services/EmailService.php:1096
+#: src/Services/EmailService.php:1367
 msgid "Don't want to receive these emails?"
 msgstr "Vous ne voulez pas recevoir ces e-mails ?"
 
-#: src/Services/EmailService.php:1147
-#: src/Services/EmailService.php:1226
+#: src/Services/EmailService.php:1177
+#: src/Services/EmailService.php:1256
 msgid "Manually skipped."
 msgstr "Ignoré manuellement."
 
 #. translators: %s: fee name
-#: src/Services/EmailService.php:1430
+#: src/Services/EmailService.php:1463
 #, php-format
 msgid "Payment reminder: %s"
 msgstr "Rappel de paiement : %s"
 
-#: src/Services/EmailService.php:1465
+#: src/Services/EmailService.php:1498
 msgid "This is a friendly reminder about a pending payment:"
 msgstr "Ceci est un rappel amical concernant un paiement en attente :"
 
-#: src/Services/EmailService.php:1470
+#: src/Services/EmailService.php:1503
 #: templates/fee-payment.php:384
 #: templates/fee-payment.php:458
 msgid "Fee:"
 msgstr "Frais :"
 
-#: src/Services/EmailService.php:1474
+#: src/Services/EmailService.php:1507
 #: templates/fee-payment.php:388
 msgid "Amount:"
 msgstr "Montant :"
 
-#: src/Services/EmailService.php:1481
+#: src/Services/EmailService.php:1514
 #: templates/fee-payment.php:463
 #: src/Admin/fee-detail/FeeDetail.js:523
 msgid "Due Date:"
 msgstr "Date d'échéance :"
 
-#: src/Services/EmailService.php:1495
+#: src/Services/EmailService.php:1528
 #: templates/fee-payment.php:472
 msgid "Pay Now"
 msgstr "Payer maintenant"
@@ -2762,7 +2809,7 @@ msgstr "Aucun événement trouvé."
 msgid "No groups available."
 msgstr "Aucun groupe disponible."
 
-#: src/Admin/collaborators/Collaborators.js:319
+#: src/Admin/collaborators/Collaborators.js:452
 msgid "Registration form:"
 msgstr "Formulaire d'inscription :"
 
@@ -2770,131 +2817,131 @@ msgstr "Formulaire d'inscription :"
 msgid "Failed to load data."
 msgstr "Échec du chargement des données."
 
-#: src/Admin/custom-mail/CustomMail.js:262
+#: src/Admin/custom-mail/CustomMail.js:300
 msgid "Please enter a subject."
 msgstr "Veuillez entrer un sujet."
 
-#: src/Admin/custom-mail/CustomMail.js:271
+#: src/Admin/custom-mail/CustomMail.js:309
 msgid "Please enter content."
 msgstr "Veuillez entrer du contenu."
 
-#: src/Admin/custom-mail/CustomMail.js:285
+#: src/Admin/custom-mail/CustomMail.js:323
 msgid "Please select at least one audience type."
 msgstr "Veuillez sélectionner au moins un type d'audience."
 
-#: src/Admin/custom-mail/CustomMail.js:318
+#: src/Admin/custom-mail/CustomMail.js:356
 msgid "sent"
 msgstr "envoyé"
 
-#: src/Admin/custom-mail/CustomMail.js:322
+#: src/Admin/custom-mail/CustomMail.js:360
 #: src/Admin/fee-detail/FeeDetail.js:376
 msgid "failed"
 msgstr "échoué"
 
-#: src/Admin/custom-mail/CustomMail.js:330
+#: src/Admin/custom-mail/CustomMail.js:368
 msgid "skipped"
 msgstr "ignoré"
 
-#: src/Admin/custom-mail/CustomMail.js:353
+#: src/Admin/custom-mail/CustomMail.js:391
 msgid "Failed to send mail."
 msgstr "Échec de l'envoi du courrier."
 
-#: src/Admin/custom-mail/CustomMail.js:367
+#: src/Admin/custom-mail/CustomMail.js:405
 msgid "Are you sure you want to delete this record?"
 msgstr "Êtes-vous sûr de vouloir supprimer cet enregistrement ?"
 
-#: src/Admin/custom-mail/CustomMail.js:380
+#: src/Admin/custom-mail/CustomMail.js:418
 msgid "Record deleted."
 msgstr "Enregistrement supprimé."
 
-#: src/Admin/custom-mail/CustomMail.js:393
+#: src/Admin/custom-mail/CustomMail.js:431
 msgid "Failed to delete record."
 msgstr "Échec de la suppression de l'enregistrement."
 
-#: src/Admin/custom-mail/CustomMail.js:447
+#: src/Admin/custom-mail/CustomMail.js:485
 msgid "Send Custom Mail"
 msgstr "Envoyer un courrier personnalisé"
 
-#: src/Admin/custom-mail/CustomMail.js:453
-#: src/Admin/custom-mail/CustomMail.js:722
+#: src/Admin/custom-mail/CustomMail.js:491
+#: src/Admin/custom-mail/CustomMail.js:798
 msgid "Subject"
 msgstr "Objet"
 
-#: src/Admin/custom-mail/CustomMail.js:468
+#: src/Admin/custom-mail/CustomMail.js:506
 #: src/Admin/edit-extra-message/EditExtraMessage.js:187
 #: src/Admin/extra-messages-list/ExtraMessagesList.js:122
 msgid "Content"
 msgstr "Contenu"
 
-#: src/Admin/custom-mail/CustomMail.js:483
+#: src/Admin/custom-mail/CustomMail.js:559
 msgid "-- All audience --"
 msgstr "-- Toute l'audience --"
 
-#: src/Admin/custom-mail/CustomMail.js:506
+#: src/Admin/custom-mail/CustomMail.js:582
 msgid "Audience"
 msgstr "Audience"
 
-#: src/Admin/custom-mail/CustomMail.js:533
+#: src/Admin/custom-mail/CustomMail.js:609
 msgid "If checked, only sends to participants who consented to marketing communications."
 msgstr "Si coché, envoie uniquement aux participants qui ont consenti aux communications marketing."
 
-#: src/Admin/custom-mail/CustomMail.js:552
+#: src/Admin/custom-mail/CustomMail.js:628
 msgid "Loading recipients..."
 msgstr "Chargement des destinataires..."
 
 #. translators: %1$d: active recipients count, %2$d: total count, %3$d: skipped count
-#: src/Admin/custom-mail/CustomMail.js:566
+#: src/Admin/custom-mail/CustomMail.js:642
 #, js-format
 msgid "%1$d recipients (%2$d skipped)"
 msgstr "%1$d destinataires (%2$d ignorés)"
 
-#: src/Admin/custom-mail/CustomMail.js:596
+#: src/Admin/custom-mail/CustomMail.js:672
 msgid "Skip"
 msgstr "Ignorer"
 
-#: src/Admin/custom-mail/CustomMail.js:650
+#: src/Admin/custom-mail/CustomMail.js:726
 msgid "No email"
 msgstr "Pas d'e-mail"
 
-#: src/Admin/custom-mail/CustomMail.js:655
+#: src/Admin/custom-mail/CustomMail.js:731
 msgid "No marketing"
 msgstr "Pas de marketing"
 
-#: src/Admin/custom-mail/CustomMail.js:660
-#: src/Admin/custom-mail/CustomMail.js:734
+#: src/Admin/custom-mail/CustomMail.js:736
+#: src/Admin/custom-mail/CustomMail.js:810
 msgid "Skipped"
 msgstr "Ignoré"
 
-#: src/Admin/custom-mail/CustomMail.js:664
+#: src/Admin/custom-mail/CustomMail.js:740
 msgid "Will send"
 msgstr "Sera envoyé"
 
-#: src/Admin/custom-mail/CustomMail.js:684
+#: src/Admin/custom-mail/CustomMail.js:760
 msgid "No matching recipients."
 msgstr "Aucun destinataire correspondant."
 
-#: src/Admin/custom-mail/CustomMail.js:696
+#: src/Admin/custom-mail/CustomMail.js:772
 msgid "Send Mail"
 msgstr "Envoyer un e-mail"
 
-#: src/Admin/custom-mail/CustomMail.js:706
+#: src/Admin/custom-mail/CustomMail.js:782
 msgid "Mail History"
 msgstr "Historique des e-mails"
 
-#: src/Admin/custom-mail/CustomMail.js:712
+#: src/Admin/custom-mail/CustomMail.js:788
 msgid "No messages sent yet."
 msgstr "Aucun message envoyé pour le moment."
 
-#: src/Admin/custom-mail/CustomMail.js:728
+#: src/Admin/custom-mail/CustomMail.js:804
 msgid "Sent"
 msgstr "Envoyé"
 
-#: src/Admin/custom-mail/CustomMail.js:731
+#: src/Admin/custom-mail/CustomMail.js:807
 #: src/Admin/instagram-posts/InstagramPosts.js:57
 msgid "Failed"
 msgstr "Échoué"
 
-#: src/Admin/custom-mail/CustomMail.js:763
+#: src/Admin/custom-mail/CustomMail.js:839
 #: src/Admin/instagram-posts/InstagramPosts.js:517
 msgid "Duplicate"
 msgstr "Doublon"
@@ -3626,19 +3673,19 @@ msgstr "Détails"
 msgid "Disconnect"
 msgstr "Déconnecter"
 
-#: src/Admin/settings/SettingsApp.js:41
+#: src/Admin/settings/SettingsApp.js:42
 msgid "Authorization cancelled. Please try again."
 msgstr "Autorisation annulée. Veuillez réessayer."
 
-#: src/Admin/settings/SettingsApp.js:82
+#: src/Admin/settings/SettingsApp.js:83
 msgid "Successfully connected to Instagram!"
 msgstr "Connecté avec succès à Instagram !"
 
-#: src/Admin/settings/SettingsApp.js:96
+#: src/Admin/settings/SettingsApp.js:97
 msgid "Failed to save OAuth tokens: "
 msgstr "Échec de l'enregistrement des jetons OAuth : "
 
-#: src/Admin/settings/SettingsApp.js:116
+#: src/Admin/settings/SettingsApp.js:117
 msgid "Fair Audience Settings"
 msgstr "Fair Audience Settings"
 
@@ -3699,7 +3746,6 @@ msgid "You're already registered!"
 msgstr "Vous êtes déjà inscrit !"
 
 #: src/API/AudienceSignupController.php:319
-#: src/blocks/audience-signup/render.php:26
 #: src/blocks/audience-signup/editor.js:50
 #: src/blocks/audience-signup/frontend.js:220
 msgid "You have been registered successfully!"
@@ -3721,11 +3767,10 @@ msgstr "Données d'image PNG codées en Base64."
 msgid "Invalid base64 image data."
 msgstr "Données d'image base64 invalides."
 
-#: src/API/QuestionnaireResponsesController.php:156
+#: src/API/QuestionnaireResponsesController.php:362
 msgid "Response not found."
 msgstr "Réponse non trouvée."
 
-#: src/blocks/audience-signup/render.php:25
 #: src/blocks/audience-signup/editor.js:42
 msgid "Register"
 msgstr "S'inscrire"
@@ -3757,23 +3802,23 @@ msgid "Edit Your Answers"
 msgstr "Modifier vos réponses"
 
 #. translators: %s: event title
-#: src/Services/EmailService.php:1706
+#: src/Services/EmailService.php:1739
 #, php-format
 msgid "You're invited: %s"
 msgstr "Vous êtes invité : %s"
 
 #. translators: %s: event title
-#: src/Services/EmailService.php:1743
+#: src/Services/EmailService.php:1776
 #, php-format
 msgid "We have a new event coming up: %s."
 msgstr "Nous avons un nouvel événement à venir : %s."
 
-#: src/Services/EmailService.php:1757
+#: src/Services/EmailService.php:1790
 msgid "Would you like to join? Click the button below to sign up:"
 msgstr "Aimeriez-vous participer ? Cliquez sur le bouton ci-dessous pour vous inscrire :"
 
 #. translators: %s: site name
-#: src/Services/EmailService.php:1769
+#: src/Services/EmailService.php:1802
 #, php-format
 msgid "See you there!%1$sThe %2$s Team"
 msgstr "À bientôt !%1$sL'équipe %2$s"
@@ -3837,6 +3882,7 @@ msgid "Show an optional Instagram username field."
 msgstr "Afficher un champ de nom d'utilisateur Instagram facultatif."
 
 #: src/blocks/audience-signup/editor.js:71
+#: src/blocks/fair-form/editor.js:158
 msgid "Show \"Keep me informed\" checkbox"
 msgstr "Afficher la case à cocher « Me tenir informé »"
 
@@ -3926,6 +3972,12 @@ msgid "Question Text"
 msgstr "Texte de la question"
 
 #: src/blocks/audience-signup/QuestionBuilder.js:152
+#: src/blocks/fair-form-file-upload/editor.js:44
+#: src/blocks/fair-form-long-text/editor.js:53
+#: src/blocks/fair-form-multiselect/editor.js:74
+#: src/blocks/fair-form-radio/editor.js:74
+#: src/blocks/fair-form-select-one/editor.js:74
+#: src/blocks/fair-form-short-text/editor.js:47
 msgid "Question Key"
 msgstr "Clé de la question"
 
@@ -3938,6 +3990,12 @@ msgid "Type"
 msgstr "Type"
 
 #: src/blocks/audience-signup/QuestionBuilder.js:171
+#: src/blocks/fair-form-file-upload/editor.js:55
+#: src/blocks/fair-form-long-text/editor.js:64
+#: src/blocks/fair-form-multiselect/editor.js:85
+#: src/blocks/fair-form-radio/editor.js:85
+#: src/blocks/fair-form-select-one/editor.js:85
+#: src/blocks/fair-form-short-text/editor.js:58
 msgid "Required"
 msgstr "Obligatoire"
 
@@ -4017,6 +4075,7 @@ msgstr "Impossible d'identifier le participant."
 msgid "Cancel signup"
 msgstr "Annuler l'inscription"
 
+#: src/blocks/fair-form-mailing-signup/render.php:68
 #: src/blocks/mailing-signup/render.php:98
 msgid "I am interested in:"
 msgstr "Je suis intéressé(e) par :"
@@ -4045,30 +4104,751 @@ msgstr "Vous pouvez vous inscrire à cet événement."
 msgid "Failed to cancel signup. Please try again."
 msgstr "Impossible d'annuler l'inscription. Veuillez réessayer."
 
+#: src/blocks/fair-form-mailing-signup/editor.js:57
 #: src/blocks/mailing-signup/editor.js:91
 msgid "Category Preferences"
 msgstr "Préférences de catégorie"
 
+#: src/blocks/fair-form-mailing-signup/editor.js:60
 #: src/blocks/mailing-signup/editor.js:94
 msgid "Show category preferences"
 msgstr "Afficher les préférences de catégorie"
 
+#: src/blocks/fair-form-mailing-signup/editor.js:68
 #: src/blocks/mailing-signup/editor.js:102
 msgid "Let subscribers choose which categories of content they want to receive."
 msgstr "Permettez aux abonnés de choisir les catégories de contenu qu'ils souhaitent recevoir."
 
+#: src/blocks/fair-form-mailing-signup/editor.js:79
 #: src/blocks/mailing-signup/editor.js:113
 msgid "Select which categories to show in the form. If none are selected, all categories will be shown."
 msgstr "Sélectionnez les catégories à afficher dans le formulaire. Si aucune n'est sélectionnée, toutes les catégories seront affichées."
 
+#: src/blocks/fair-form-mailing-signup/editor.js:86
 #: src/blocks/mailing-signup/editor.js:120
 msgid "Available categories"
 msgstr "Catégories disponibles"
 
+#: src/blocks/fair-form-mailing-signup/editor.js:110
 #: src/blocks/mailing-signup/editor.js:144
 msgid "Preselected categories"
 msgstr "Catégories présélectionnées"
 
+#: src/blocks/fair-form-mailing-signup/editor.js:116
 #: src/blocks/mailing-signup/editor.js:150
 msgid "Categories checked by default when the form loads."
 msgstr "Catégories cochées par défaut au chargement du formulaire."
+
+#: src/Admin/AdminHooks.php:157
+#: src/Admin/AdminHooks.php:158
+#: src/Admin/timeline/Timeline.js:74
+msgid "Activity"
+msgstr "Activité"
+
+#: src/Admin/AdminHooks.php:212
+#: src/Admin/AdminHooks.php:213
+#: src/Admin/form-answers/FormAnswers.js:245
+msgid "Form Answers"
+msgstr "Réponses au formulaire"
+
+#: src/API/FairFormController.php:275
+msgid "Failed to process submission. Please try again."
+msgstr "Échec du traitement de la soumission. Veuillez réessayer."
+
+#: src/API/FairFormController.php:320
+#: src/blocks/fair-form/render.php:18
+#: src/blocks/fair-form/editor.js:148
+#: src/blocks/fair-form/frontend.js:416
+msgid "Thank you for your submission!"
+msgstr "Merci pour votre soumission !"
+
+#: src/API/FairFormController.php:362
+msgid "File upload failed. Please try again."
+msgstr "Échec du téléchargement du fichier. Veuillez réessayer."
+
+#: src/API/FairFormController.php:371
+#: src/API/PhotoUploadController.php:216
+msgid "File is too large."
+msgstr "Le fichier est trop volumineux."
+
+#: src/API/FairFormController.php:381
+msgid "File type not allowed."
+msgstr "Type de fichier non autorisé."
+
+#: src/API/FairFormController.php:415
+#: src/API/PhotoUploadController.php:257
+msgid "Failed to save uploaded file."
+msgstr "Échec de l'enregistrement du fichier téléchargé."
+
+#: src/API/FairFormController.php:455
+#: src/blocks/fair-form/editor.js:183
+msgid "Fair Form"
+msgstr "Fair Form"
+
+#: src/API/PhotoUploadController.php:109
+msgid "Invalid or expired link."
+msgstr "Lien invalide ou expiré."
+
+#: src/API/PhotoUploadController.php:139
+msgid "No files uploaded."
+msgstr "Aucun fichier téléchargé."
+
+#: src/API/PhotoUploadController.php:225
+msgid "Only image files are allowed (JPEG, PNG, GIF, WebP)."
+msgstr "Seuls les fichiers image sont autorisés (JPEG, PNG, GIF, WebP)."
+
+#: src/API/QuestionnaireResponsesController.php:226
+#: src/API/QuestionnaireResponsesController.php:302
+#: src/Admin/submission-detail/SubmissionDetail.js:187
+msgid "Submission not found."
+msgstr "Soumission introuvable."
+
+#: src/API/QuestionnaireResponsesController.php:329
+#: src/Admin/form-answers/FormAnswers.js:112
+msgid "Failed to update submission."
+msgstr "Échec de la mise à jour de la soumission."
+
+#. translators: 1: number of people, 2: event title
+#: src/API/TimelineController.php:121
+#, php-format
+msgid "%1$d person signed up %2$s"
+msgid_plural "%1$d people signed up %2$s"
+msgstr[0] ""
+msgstr[1] ""
+
+#. translators: %d: maximum file size in megabytes
+#: src/blocks/fair-form-file-upload/render.php:67
+#, php-format
+msgid "Max file size: %d MB"
+msgstr "Taille maximale du fichier : %d Mo"
+
+#: src/blocks/fair-form-mailing-signup/render.php:62
+#: src/blocks/fair-form-mailing-signup/editor.js:152
+msgid "Sign me up for the mailing list"
+msgstr "Inscrivez-moi à la liste de diffusion"
+
+#: src/blocks/fair-form-select-one/render.php:66
+msgid "Select an option..."
+msgstr "Sélectionnez une option..."
+
+#: src/blocks/fair-form/render.php:17
+#: src/blocks/fair-form/editor.js:140
+#: src/blocks/fair-form/editor.js:216
+msgid "Submit"
+msgstr "Soumettre"
+
+#: src/blocks/fair-form/render.php:80
+msgid "Keep me informed about future events and updates"
+msgstr "Tenez-moi informé des événements et mises à jour futurs"
+
+#: src/Settings/Settings.php:122
+msgid "Category IDs used for marketing mailing"
+msgstr "ID de catégories utilisés pour la diffusion marketing"
+
+#: templates/manage-subscription.php:332
+msgid "I want to receive updates about:"
+msgstr "Je souhaite recevoir des mises à jour sur :"
+
+#: templates/photo-upload.php:56
+#: templates/photo-upload.php:268
+#: templates/photo-upload.php:302
+#: templates/photo-upload.php:403
+#: templates/photo-upload.php:404
+msgid "Upload Photos"
+msgstr "Télécharger des photos"
+
+#. translators: %s: participant name
+#: templates/photo-upload.php:275
+#, php-format
+msgid "Hi %s! Share your photos from the event."
+msgstr "Bonjour %s ! Partagez vos photos de l'événement."
+
+#: templates/photo-upload.php:287
+msgid "Drag & drop photos here or click to browse"
+msgstr "Glissez-déposez des photos ici ou cliquez pour parcourir"
+
+#: templates/photo-upload.php:290
+msgid "JPEG, PNG, GIF, or WebP. Max 20 MB per file."
+msgstr "JPEG, PNG, GIF ou WebP. Maximum 20 Mo par fichier."
+
+#: templates/photo-upload.php:419
+msgid "Uploading..."
+msgstr "Téléchargement en cours..."
+
+#: templates/photo-upload.php:446
+msgid "Photos uploaded successfully!"
+msgstr "Photos téléchargées avec succès !"
+
+#: templates/photo-upload.php:461
+msgid "Upload failed. Please try again."
+msgstr "Le téléchargement a échoué. Veuillez réessayer."
+
+#: templates/photo-upload.php:472
+msgid "Upload failed. Please check your connection and try again."
+msgstr "Le téléchargement a échoué. Veuillez vérifier votre connexion et réessayer."
+
+#: src/Admin/collaborators/Collaborators.js:304
+msgid "Export"
+msgstr "Exporter"
+
+#. translators: %d is the number of exported collaborators
+#: src/Admin/collaborators/Collaborators.js:344
+#, js-format
+msgid "%d collaborator(s) exported."
+msgstr "%d collaborateur(s) exporté(s)."
+
+#: src/Admin/collaborators/Collaborators.js:369
+msgid "Invalid file format. Expected a JSON array."
+msgstr "Format de fichier invalide. Un tableau JSON est attendu."
+
+#. translators: %d is the number of imported collaborators
+#: src/Admin/collaborators/Collaborators.js:398
+#, js-format
+msgid "%d collaborator(s) imported."
+msgstr "%d collaborateur(s) importé(s)."
+
+#: src/Admin/collaborators/Collaborators.js:409
+msgid "Failed to import collaborators."
+msgstr "Échec de l'importation des collaborateurs."
+
+#: src/Admin/custom-mail/CustomMail.js:521
+msgid "Upload photos"
+msgstr "Télécharger des photos"
+
+#: src/Admin/custom-mail/CustomMail.js:526
+msgid "Insert photo upload link"
+msgstr "Insérer le lien de téléchargement de photos"
+
+#: src/Admin/custom-mail/CustomMail.js:546
+msgid "Insert subscription link"
+msgstr "Insérer le lien d'abonnement"
+
+#: src/Admin/form-answers/FormAnswers.js:144
+msgid "Form"
+msgstr "Formulaire"
+
+#: src/Admin/form-answers/FormAnswers.js:176
+msgid "Are you sure you want to delete this submission?"
+msgstr "Êtes-vous sûr de vouloir supprimer cet envoi ?"
+
+#: src/Admin/form-answers/FormAnswers.js:197
+msgid "Failed to delete submission."
+msgstr "Échec de la suppression de l'envoi."
+
+#: src/Admin/form-answers/FormAnswers.js:213
+msgid "View"
+msgstr "Afficher"
+
+#: src/Admin/form-answers/FormAnswers.js:234
+#: src/Admin/submission-detail/SubmissionDetail.js:118
+#: src/blocks/fair-form/editor.js:88
+msgid "— None —"
+msgstr "— Aucun —"
+
+#: src/Admin/form-answers/FormAnswers.js:265
+msgid "Edit Submission"
+msgstr "Modifier la soumission"
+
+#: src/Admin/settings/MailingTab.js:53
+msgid "Failed to load categories: "
+msgstr "Échec du chargement des catégories : "
+
+#: src/Admin/settings/MailingTab.js:74
+msgid "Mailing categories saved."
+msgstr "Catégories de mailing enregistrées."
+
+#: src/Admin/settings/MailingTab.js:81
+msgid "Failed to save: "
+msgstr "Échec de l'enregistrement : "
+
+#: src/Admin/settings/MailingTab.js:96
+msgid "Marketing mailing categories"
+msgstr "Catégories de mailing marketing"
+
+#: src/Admin/settings/MailingTab.js:101
+msgid "Select which categories should be available for marketing mailing. Subscribers will be able to choose which of these categories they want to receive updates about."
+msgstr "Sélectionnez les catégories qui doivent être disponibles pour le mailing marketing. Les abonnés pourront choisir les catégories pour lesquelles ils souhaitent recevoir des mises à jour."
+
+#: src/Admin/settings/MailingTab.js:109
+msgid "No categories found."
+msgstr "Aucune catégorie trouvée."
+
+#: src/Admin/settings/SettingsApp.js:139
+msgid "Mailing"
+msgstr "Mailing"
+
+#: src/Admin/submission-detail/SubmissionDetail.js:41
+msgid "View file"
+msgstr "Afficher le fichier"
+
+#: src/Admin/submission-detail/SubmissionDetail.js:109
+msgid "Failed to update."
+msgstr "Échec de la mise à jour."
+
+#: src/Admin/submission-detail/SubmissionDetail.js:176
+msgid "No submission ID provided."
+msgstr "Aucun ID de soumission fourni."
+
+#: src/Admin/submission-detail/SubmissionDetail.js:219
+msgid "Form Submission"
+msgstr "Soumission de formulaire"
+
+#: src/Admin/submission-detail/SubmissionDetail.js:225
+msgid "Submission Info"
+msgstr "Informations de soumission"
+
+#: src/Admin/submission-detail/SubmissionDetail.js:236
+msgid "Submitted by"
+msgstr "Soumis par"
+
+#: src/Admin/submission-detail/SubmissionDetail.js:263
+msgid "Answers"
+msgstr "Réponses"
+
+#: src/Admin/submission-detail/SubmissionDetail.js:268
+msgid "No answers recorded."
+msgstr "Aucune réponse enregistrée."
+
+#: src/Admin/submission-detail/SubmissionDetail.js:279
+msgid "Answer"
+msgstr "Réponse"
+
+#: src/Admin/timeline/Timeline.js:89
+msgid "No activity yet."
+msgstr "Aucune activité pour le moment."
+
+#: src/Admin/timeline/Timeline.js:112
+msgid "Loading…"
+msgstr "Chargement…"
+
+#: src/Admin/timeline/Timeline.js:113
+msgid "Load more"
+msgstr "Charger plus"
+
+#: src/Admin/timeline/TimelineItem.js:60
+msgid "just now"
+msgstr "à l'instant"
+
+#: src/Admin/timeline/TimelineItem.js:64
+msgid "1 minute ago"
+msgstr "il y a 1 minute"
+
+#: src/Admin/timeline/TimelineItem.js:65
+msgid "minutes ago"
+msgstr "minutes ago"
+
+#: src/Admin/timeline/TimelineItem.js:69
+msgid "1 hour ago"
+msgstr "il y a 1 heure"
+
+#: src/Admin/timeline/TimelineItem.js:70
+msgid "hours ago"
+msgstr "heures ago"
+
+#: src/Admin/timeline/TimelineItem.js:74
+msgid "yesterday"
+msgstr "hier"
+
+#: src/Admin/timeline/TimelineItem.js:75
+msgid "days ago"
+msgstr "jours ago"
+
+#: src/Admin/timeline/TimelineItem.js:112
+msgid "Created membership fee"
+msgstr "Frais d'adhésion créés"
+
+#: src/Admin/timeline/TimelineItem.js:116
+msgid "Total amount:"
+msgstr "Montant total :"
+
+#: src/Admin/timeline/TimelineItem.js:120
+msgid "Already paid:"
+msgstr "Déjà payé :"
+
+#: src/Admin/timeline/TimelineItem.js:122
+msgid "Pending:"
+msgstr "En attente :"
+
+#: src/blocks/fair-form-conditional/editor.js:30
+msgid "equals"
+msgstr "égal à"
+
+#: src/blocks/fair-form-conditional/editor.js:31
+msgid "not equals"
+msgstr "différent de"
+
+#: src/blocks/fair-form-conditional/editor.js:32
+msgid "contains"
+msgstr "contient"
+
+#: src/blocks/fair-form-conditional/editor.js:33
+msgid "is not empty"
+msgstr "n'est pas vide"
+
+#: src/blocks/fair-form-conditional/editor.js:84
+msgid "— Select a question —"
+msgstr "— Sélectionner une question —"
+
+#: src/blocks/fair-form-conditional/editor.js:101
+msgid "No condition set"
+msgstr "Aucune condition définie"
+
+#: src/blocks/fair-form-conditional/editor.js:123
+msgid "Condition Settings"
+msgstr "Paramètres de condition"
+
+#: src/blocks/fair-form-conditional/editor.js:126
+msgid "Show when question"
+msgstr "Afficher quand la question"
+
+#: src/blocks/fair-form-conditional/editor.js:134
+msgid "Operator"
+msgstr "Opérateur"
+
+#: src/blocks/fair-form-conditional/editor.js:143
+msgid "Value"
+msgstr "Valeur"
+
+#: src/blocks/fair-form-conditional/editor.js:148
+msgid "The value to compare against."
+msgstr "La valeur à comparer."
+
+#: src/blocks/fair-form-file-upload/editor.js:42
+#: src/blocks/fair-form-long-text/editor.js:51
+#: src/blocks/fair-form-multiselect/editor.js:72
+#: src/blocks/fair-form-radio/editor.js:72
+#: src/blocks/fair-form-select-one/editor.js:72
+#: src/blocks/fair-form-short-text/editor.js:45
+msgid "Question Settings"
+msgstr "Paramètres de la question"
+
+#: src/blocks/fair-form-file-upload/editor.js:49
+msgid "A unique identifier for this question (e.g. \"photo_upload\"). Used internally."
+msgstr "Un identifiant unique pour cette question (par exemple « photo_upload »). Utilisé en interne."
+
+#: src/blocks/fair-form-file-upload/editor.js:62
+msgid "Accepted File Types"
+msgstr "Types de fichiers acceptés"
+
+#: src/blocks/fair-form-file-upload/editor.js:67
+msgid "MIME types or extensions (e.g. \"image/*\", \".pdf,.doc\", \"image/png,image/jpeg\")."
+msgstr "Types MIME ou extensions (par exemple « image/* », « .pdf,.doc », « image/png,image/jpeg »)."
+
+#: src/blocks/fair-form-file-upload/editor.js:73
+msgid "Max File Size (MB)"
+msgstr "Taille maximale du fichier (Mo)"
+
+#: src/blocks/fair-form-file-upload/editor.js:94
+#: src/blocks/fair-form-long-text/editor.js:95
+#: src/blocks/fair-form-multiselect/editor.js:102
+#: src/blocks/fair-form-radio/editor.js:102
+#: src/blocks/fair-form-select-one/editor.js:102
+#: src/blocks/fair-form-short-text/editor.js:82
+msgid "Enter your question..."
+msgstr "Entrez votre question..."
+
+#: src/blocks/fair-form-file-upload/editor.js:104
+msgid "Max file size:"
+msgstr "Taille maximale du fichier :"
+
+#: src/blocks/fair-form-long-text/editor.js:58
+msgid "A unique identifier for this question (e.g. \"comments\"). Used internally."
+msgstr "Un identifiant unique pour cette question (par exemple « comments »). Utilisé en interne."
+
+#: src/blocks/fair-form-long-text/editor.js:71
+#: src/blocks/fair-form-short-text/editor.js:65
+msgid "Placeholder"
+msgstr "Espace réservé"
+
+#: src/blocks/fair-form-long-text/editor.js:78
+msgid "Rows"
+msgstr "Lignes"
+
+#: src/blocks/fair-form-long-text/editor.js:108
+#: src/blocks/fair-form-short-text/editor.js:95
+msgid "Type your answer..."
+msgstr "Tapez votre réponse..."
+
+#: src/blocks/fair-form-mailing-signup/editor.js:161
+msgid "Category preferences will be shown here"
+msgstr "Les préférences de catégorie s'afficheront ici"
+
+#: src/blocks/fair-form-multiselect/editor.js:79
+#: src/blocks/fair-form-radio/editor.js:79
+#: src/blocks/fair-form-select-one/editor.js:79
+msgid "A unique identifier for this question. Used internally."
+msgstr "Un identifiant unique pour cette question. Utilisé en interne."
+
+#: src/blocks/fair-form-option/editor.js:19
+msgid "Enter option text..."
+msgstr "Entrez le texte de l'option..."
+
+#: src/blocks/fair-form-short-text/editor.js:52
+msgid "A unique identifier for this question (e.g. \"favorite_color\"). Used internally."
+msgstr "Un identifiant unique pour cette question (par exemple « favorite_color »). Utilisé en interne."
+
+#: src/blocks/fair-form/editor.js:101
+msgid "Optional. Link this form to a specific event."
+msgstr "Facultatif. Liez ce formulaire à un événement spécifique."
+
+#: src/blocks/fair-form/editor.js:152
+msgid "Message shown after successful form submission."
+msgstr "Message affichée après la soumission réussie du formulaire."
+
+#: src/blocks/fair-form/editor.js:166
+msgid "Adds a marketing opt-in checkbox to the form."
+msgstr "Ajoute une case à cocher d'opt-in marketing au formulaire."
+
+#: src/blocks/fair-form/editor.js:203
+msgid "Keep me informed"
+msgstr "Tenez-moi informé"
+
+#: src/blocks/fair-form/frontend.js:201
+msgid "Please enter your email address."
+msgstr "Veuillez entrer votre adresse e-mail."
+
+#: src/blocks/fair-form/frontend.js:239
+msgid "Please answer the required question: "
+msgstr "Veuillez répondre à la question obligatoire : "
+
+#: src/blocks/fair-form/frontend.js:267
+msgid "File is too large. Maximum size is "
+msgstr "Le fichier est trop volumineux. La taille maximale est "
+
+#: src/blocks/fair-form/frontend.js:431
+msgid "An error occurred. Please try again."
+msgstr "Une erreur s'est produite. Veuillez réessayer."
+
+#: src/blocks/fair-form-conditional/block.json
+msgctxt "block title"
+msgid "Conditional Section"
+msgstr "Section conditionnelle"
+
+#: src/blocks/fair-form-conditional/block.json
+msgctxt "block description"
+msgid "Show or hide a group of fields based on an answer to a previous question"
+msgstr "Afficher ou masquer un groupe de champs en fonction d'une réponse à une question précédente"
+
+#: src/blocks/fair-form-conditional/block.json
+msgctxt "block keyword"
+msgid "conditional"
+msgstr "conditionnel"
+
+#: src/blocks/fair-form-conditional/block.json
+msgctxt "block keyword"
+msgid "show"
+msgstr "afficher"
+
+#: src/blocks/fair-form-conditional/block.json
+msgctxt "block keyword"
+msgid "hide"
+msgstr "masquer"
+
+#: src/blocks/fair-form-conditional/block.json
+msgctxt "block keyword"
+msgid "section"
+msgstr "section"
+
+#: src/blocks/fair-form-conditional/block.json
+msgctxt "block keyword"
+msgid "logic"
+msgstr "logique"
+
+#: src/blocks/fair-form-file-upload/block.json
+msgctxt "block title"
+msgid "File Upload Question"
+msgstr "Question de téléchargement de fichier"
+
+#: src/blocks/fair-form-file-upload/block.json
+msgctxt "block description"
+msgid "A file upload question for Fair Form"
+msgstr "Une question de téléchargement de fichier pour Fair Form"
+
+#: src/blocks/fair-form-file-upload/block.json
+#: src/blocks/fair-form-long-text/block.json
+#: src/blocks/fair-form-multiselect/block.json
+#: src/blocks/fair-form-radio/block.json
+#: src/blocks/fair-form-select-one/block.json
+#: src/blocks/fair-form-short-text/block.json
+msgctxt "block keyword"
+msgid "question"
+msgstr "question"
+
+#: src/blocks/fair-form-file-upload/block.json
+msgctxt "block keyword"
+msgid "file"
+msgstr "fichier"
+
+#: src/blocks/fair-form-file-upload/block.json
+msgctxt "block keyword"
+msgid "upload"
+msgstr "télécharger"
+
+#: src/blocks/fair-form-file-upload/block.json
+msgctxt "block keyword"
+msgid "image"
+msgstr "image"
+
+#: src/blocks/fair-form-long-text/block.json
+msgctxt "block title"
+msgid "Long Text Question"
+msgstr "Question de texte long"
+
+#: src/blocks/fair-form-long-text/block.json
+msgctxt "block description"
+msgid "A long text (textarea) question for Fair Form"
+msgstr "Une question de texte long (textarea) pour Fair Form"
+
+#: src/blocks/fair-form-long-text/block.json
+msgctxt "block keyword"
+msgid "textarea"
+msgstr "textarea"
+
+#: src/blocks/fair-form-long-text/block.json
+msgctxt "block keyword"
+msgid "long text"
+msgstr "texte long"
+
+#: src/blocks/fair-form-mailing-signup/block.json
+msgctxt "block title"
+msgid "Mailing Sign Up"
+msgstr "Inscription à la liste de diffusion"
+
+#: src/blocks/fair-form-mailing-signup/block.json
+msgctxt "block description"
+msgid "Add mailing list signup with category preferences to a Fair Form"
+msgstr "Ajouter une inscription à la liste de diffusion avec préférences de catégories à un Fair Form"
+
+#: src/blocks/fair-form-mailing-signup/block.json
+msgctxt "block keyword"
+msgid "categories"
+msgstr "catégories"
+
+#: src/blocks/fair-form-multiselect/block.json
+msgctxt "block title"
+msgid "Multiselect Question"
+msgstr "Question à sélection multiple"
+
+#: src/blocks/fair-form-multiselect/block.json
+msgctxt "block description"
+msgid "A multiple-choice checkbox question for Fair Form"
+msgstr "Une question à choix multiples avec cases à cocher pour Fair Form"
+
+#: src/blocks/fair-form-multiselect/block.json
+msgctxt "block keyword"
+msgid "checkbox"
+msgstr "case à cocher"
+
+#: src/blocks/fair-form-multiselect/block.json
+msgctxt "block keyword"
+msgid "multiselect"
+msgstr "sélection multiple"
+
+#: src/blocks/fair-form-multiselect/block.json
+msgctxt "block keyword"
+msgid "multiple"
+msgstr "multiple"
+
+#: src/blocks/fair-form-option/block.json
+msgctxt "block title"
+msgid "Form Option"
+msgstr "Option de formulaire"
+
+#: src/blocks/fair-form-option/block.json
+msgctxt "block description"
+msgid "An option for select or multiselect questions"
+msgstr "Une option pour les questions de sélection ou sélection multiple"
+
+#: src/blocks/fair-form-option/block.json
+msgctxt "block keyword"
+msgid "option"
+msgstr "option"
+
+#: src/blocks/fair-form-option/block.json
+#: src/blocks/fair-form-radio/block.json
+#: src/blocks/fair-form-select-one/block.json
+msgctxt "block keyword"
+msgid "choice"
+msgstr "choix"
+
+#: src/blocks/fair-form-radio/block.json
+msgctxt "block title"
+msgid "Radio Button Question"
+msgstr "Question avec boutons radio"
+
+#: src/blocks/fair-form-radio/block.json
+msgctxt "block description"
+msgid "A single-choice radio button question for Fair Form"
+msgstr "Une question à choix unique avec boutons radio pour Fair Form"
+
+#: src/blocks/fair-form-radio/block.json
+#: src/blocks/fair-form-select-one/block.json
+msgctxt "block keyword"
+msgid "radio"
+msgstr "radio"
+
+#: src/blocks/fair-form-radio/block.json
+msgctxt "block keyword"
+msgid "button"
+msgstr "bouton"
+
+#: src/blocks/fair-form-select-one/block.json
+msgctxt "block title"
+msgid "Select One Question"
+msgstr "Sélectionner une question"
+
+#: src/blocks/fair-form-select-one/block.json
+msgctxt "block description"
+msgid "A single-choice question (select or radio) for Fair Form"
+msgstr "Une question à choix unique (sélection ou bouton radio) pour Fair Form"
+
+#: src/blocks/fair-form-select-one/block.json
+msgctxt "block keyword"
+msgid "select"
+msgstr "sélection"
+
+#: src/blocks/fair-form-short-text/block.json
+msgctxt "block title"
+msgid "Short Text Question"
+msgstr "Question de texte court"
+
+#: src/blocks/fair-form-short-text/block.json
+msgctxt "block description"
+msgid "A short text input question for Fair Form"
+msgstr "Une question avec saisie de texte court pour Fair Form"
+
+#: src/blocks/fair-form-short-text/block.json
+msgctxt "block keyword"
+msgid "text"
+msgstr "texte"
+
+#: src/blocks/fair-form-short-text/block.json
+msgctxt "block keyword"
+msgid "input"
+msgstr "saisie"
+
+#: src/blocks/fair-form/block.json
+msgctxt "block title"
+msgid "Fair Form"
+msgstr "Fair Form"
+
+#: src/blocks/fair-form/block.json
+msgctxt "block description"
+msgid "A composable questionnaire form with nested question blocks"
+msgstr "Un formulaire de questionnaire composable avec des blocs de questions imbriqués"
+
+#: src/blocks/fair-form/block.json
+msgctxt "block keyword"
+msgid "form"
+msgstr "formulaire"
+
+#: src/blocks/fair-form/block.json
+msgctxt "block keyword"
+msgid "questionnaire"
+msgstr "questionnaire"
+
+#: src/blocks/fair-form/block.json
+msgctxt "block keyword"
+msgid "survey"
+msgstr "sondage"
+

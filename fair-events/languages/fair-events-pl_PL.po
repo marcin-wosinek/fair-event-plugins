@@ -1089,10 +1089,6 @@ msgstr "Nie można przetworzyć Twojego zgłoszenia. Proszę spróbować ponowni
 msgid "Please wait %d seconds before submitting another proposal."
 msgstr "Proszę zaczekać %d sekund przed przesłaniem kolejnej propozycji."
 
-#: src/blocks/event-proposal/render.php:17
-msgid "Submit Event Proposal"
-msgstr "Prześlij propozycję wydarzenia"
-
 #: src/blocks/event-proposal/render.php:40
 msgid "30 minutes"
 msgstr "30 minut"
@@ -1773,7 +1769,7 @@ msgstr "Nie udało się usunąć miejsca."
 msgid "Event source not found."
 msgstr "Źródło wydarzenia nie znalezione."
 
-#: src/Core/Plugin.php:300
+#: src/Core/Plugin.php:302
 msgid "Event associated with this image"
 msgstr "Wydarzenie powiązane z tym obrazem"
 

@@ -1089,10 +1089,6 @@ msgstr "No se pudo procesar su envío. Intente de nuevo."
 msgid "Please wait %d seconds before submitting another proposal."
 msgstr "Espere %d segundos antes de enviar otra propuesta."
 
-#: src/blocks/event-proposal/render.php:17
-msgid "Submit Event Proposal"
-msgstr "Enviar Propuesta de Evento"
-
 #: src/blocks/event-proposal/render.php:40
 msgid "30 minutes"
 msgstr "30 minutos"
@@ -1771,7 +1767,7 @@ msgstr "Error al eliminar el lugar."
 msgid "Event source not found."
 msgstr "Fuente de evento no encontrada."
 
-#: src/Core/Plugin.php:300
+#: src/Core/Plugin.php:302
 msgid "Event associated with this image"
 msgstr "Evento asociado con esta imagen"
 

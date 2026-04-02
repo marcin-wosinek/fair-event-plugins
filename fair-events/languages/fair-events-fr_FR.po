@@ -1089,10 +1089,6 @@ msgstr "Votre soumission n'a pas pu être traitée. Veuillez réessayer."
 msgid "Please wait %d seconds before submitting another proposal."
 msgstr "Veuillez attendre %d secondes avant de soumettre une autre proposition."
 
-#: src/blocks/event-proposal/render.php:17
-msgid "Submit Event Proposal"
-msgstr "Soumettre une proposition d'événement"
-
 #: src/blocks/event-proposal/render.php:40
 msgid "30 minutes"
 msgstr "30 minutes"
@@ -1771,7 +1767,7 @@ msgstr "Impossible de supprimer le lieu."
 msgid "Event source not found."
 msgstr "Source d'événement introuvable."
 
-#: src/Core/Plugin.php:300
+#: src/Core/Plugin.php:302
 msgid "Event associated with this image"
 msgstr "Événement associé à cette image"
 

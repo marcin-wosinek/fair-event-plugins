@@ -1089,10 +1089,6 @@ msgstr "Ihre Einreichung konnte nicht verarbeitet werden. Bitte versuchen Sie es
 msgid "Please wait %d seconds before submitting another proposal."
 msgstr "Bitte warten Sie %d Sekunden, bevor Sie einen weiteren Vorschlag einreichen."
 
-#: src/blocks/event-proposal/render.php:17
-msgid "Submit Event Proposal"
-msgstr "Ereignisvorschlag einreichen"
-
 #: src/blocks/event-proposal/render.php:40
 msgid "30 minutes"
 msgstr "30 Minuten"
@@ -1771,7 +1767,7 @@ msgstr "Veranstaltungsort konnte nicht gelöscht werden."
 msgid "Event source not found."
 msgstr "Ereignisquelle nicht gefunden."
 
-#: src/Core/Plugin.php:300
+#: src/Core/Plugin.php:302
 msgid "Event associated with this image"
 msgstr "Mit diesem Bild verknüpftes Ereignis"
 
