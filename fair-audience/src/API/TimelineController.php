@@ -164,6 +164,7 @@ class TimelineController extends WP_REST_Controller {
 			$form_name  = $row['title'] ? $row['title'] : __( 'Fair Form', 'fair-audience' );
 			$post_id    = (int) $row['post_id'];
 			$page_title = $post_id ? get_the_title( $post_id ) : '';
+			$post_url   = $post_id ? get_permalink( $post_id ) : '';
 
 			if ( $page_title ) {
 				$summary = sprintf(
@@ -188,10 +189,14 @@ class TimelineController extends WP_REST_Controller {
 				'created_at' => $row['created_at'],
 				'summary'    => $summary,
 				'details'    => array(
-					'submission_id' => (int) $row['id'],
-					'event_date_id' => (int) $row['event_date_id'],
-					'post_id'       => $post_id,
-					'page_title'    => $page_title,
+					'submission_id'    => (int) $row['id'],
+					'event_date_id'    => (int) $row['event_date_id'],
+					'participant_id'   => (int) $row['participant_id'],
+					'participant_name' => $name,
+					'form_name'        => $form_name,
+					'post_id'          => $post_id,
+					'page_title'       => $page_title,
+					'post_url'         => $post_url ? $post_url : '',
 				),
 			);
 		}

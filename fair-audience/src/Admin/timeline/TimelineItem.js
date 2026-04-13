@@ -86,11 +86,51 @@ function getRelativeTime(dateString) {
  * @return {JSX.Element} Submission summary with link.
  */
 function FormSubmissionContent({ item }) {
-	const submissionUrl = `admin.php?page=fair-audience-submission-detail&submission_id=${item.details.submission_id}`;
+	const {
+		submission_id: submissionId,
+		participant_id: participantId,
+		participant_name: participantName,
+		form_name: formName,
+		page_title: pageTitle,
+		post_url: postUrl,
+	} = item.details;
+
+	const submissionUrl = `admin.php?page=fair-audience-submission-detail&submission_id=${submissionId}`;
+	const participantUrl = participantId
+		? `admin.php?page=fair-audience-participant-detail&participant_id=${participantId}`
+		: null;
+
+	const nameNode = participantUrl ? (
+		<a href={participantUrl}>{participantName}</a>
+	) : (
+		participantName
+	);
+
+	const pageNode =
+		pageTitle && postUrl ? (
+			<a href={postUrl} target="_blank" rel="noopener noreferrer">
+				{pageTitle}
+			</a>
+		) : (
+			pageTitle
+		);
 
 	return (
 		<div style={{ fontSize: '13px', lineHeight: '1.5' }}>
-			<a href={submissionUrl}>{item.summary}</a>
+			{pageTitle ? (
+				<>
+					{nameNode} {__('submitted', 'fair-audience')} &quot;
+					{formName}&quot; {__('on', 'fair-audience')} &quot;
+					{pageNode}&quot;
+				</>
+			) : (
+				<>
+					{nameNode} {__('submitted', 'fair-audience')} &quot;
+					{formName}&quot;
+				</>
+			)}
+			{' — '}
+			<a href={submissionUrl}>{__('View answers', 'fair-audience')}</a>
 		</div>
 	);
 }
