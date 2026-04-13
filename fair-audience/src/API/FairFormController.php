@@ -215,17 +215,33 @@ class FairFormController extends WP_REST_Controller {
 		$questionnaire_answers = $this->parse_questionnaire_answers( $questionnaire_answers );
 
 		// Sanitize each answer.
-		$valid_types = array( 'radio', 'checkbox', 'short_text', 'long_text', 'select', 'number', 'date', 'multiselect', 'file_upload' );
+		$valid_types = array( 'radio', 'checkbox', 'short_text', 'long_text', 'select', 'number', 'date', 'multiselect', 'file_upload', 'phone' );
 		$sanitized   = array();
 		foreach ( $questionnaire_answers as $answer ) {
 			if ( ! is_array( $answer ) ) {
 				continue;
 			}
+			$question_type = in_array( $answer['question_type'] ?? '', $valid_types, true ) ? $answer['question_type'] : 'short_text';
+			$answer_value  = sanitize_text_field( $answer['answer_value'] ?? '' );
+			$question_text = sanitize_text_field( $answer['question_text'] ?? '' );
+
+			if ( 'phone' === $question_type && '' !== $answer_value && ! preg_match( '/^\+[1-9][0-9]{6,14}$/', $answer_value ) ) {
+				return new WP_Error(
+					'invalid_phone',
+					sprintf(
+						/* translators: %s: question text */
+						__( 'Please enter a valid phone number with country code (e.g. +49170...) for: %s', 'fair-audience' ),
+						$question_text
+					),
+					array( 'status' => 400 )
+				);
+			}
+
 			$sanitized[] = array(
 				'question_key'  => sanitize_key( $answer['question_key'] ?? '' ),
-				'question_text' => sanitize_text_field( $answer['question_text'] ?? '' ),
-				'question_type' => in_array( $answer['question_type'] ?? '', $valid_types, true ) ? $answer['question_type'] : 'short_text',
-				'answer_value'  => sanitize_text_field( $answer['answer_value'] ?? '' ),
+				'question_text' => $question_text,
+				'question_type' => $question_type,
+				'answer_value'  => $answer_value,
 				'display_order' => (int) ( $answer['display_order'] ?? 0 ),
 			);
 		}

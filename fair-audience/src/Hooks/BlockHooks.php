@@ -34,6 +34,7 @@ class BlockHooks {
 		register_block_type( FAIR_AUDIENCE_PLUGIN_DIR . 'build/blocks/fair-form' );
 		register_block_type( FAIR_AUDIENCE_PLUGIN_DIR . 'build/blocks/fair-form-short-text' );
 		register_block_type( FAIR_AUDIENCE_PLUGIN_DIR . 'build/blocks/fair-form-long-text' );
+		register_block_type( FAIR_AUDIENCE_PLUGIN_DIR . 'build/blocks/fair-form-phone' );
 		register_block_type( FAIR_AUDIENCE_PLUGIN_DIR . 'build/blocks/fair-form-select-one' );
 		register_block_type( FAIR_AUDIENCE_PLUGIN_DIR . 'build/blocks/fair-form-multiselect' );
 		register_block_type( FAIR_AUDIENCE_PLUGIN_DIR . 'build/blocks/fair-form-radio' );
@@ -115,6 +116,13 @@ class BlockHooks {
 		// Set script translations for fair-form-long-text blocks (editor scripts).
 		wp_set_script_translations(
 			'fair-audience-fair-form-long-text-editor-script',
+			'fair-audience',
+			FAIR_AUDIENCE_PLUGIN_DIR . 'build/languages'
+		);
+
+		// Set script translations for fair-form-phone blocks (editor scripts).
+		wp_set_script_translations(
+			'fair-audience-fair-form-phone-editor-script',
 			'fair-audience',
 			FAIR_AUDIENCE_PLUGIN_DIR . 'build/languages'
 		);

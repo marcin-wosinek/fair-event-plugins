@@ -1,0 +1,37 @@
+{
+	"$schema": "https://schemas.wp.org/trunk/block.json",
+	"apiVersion": 3,
+	"name": "fair-audience/fair-form-phone",
+	"version": "1.0.0",
+	"title": "Phone Question",
+	"category": "widgets",
+	"icon": "phone",
+	"description": "A phone number input question with enforced country code for Fair Form",
+	"keywords": ["question", "phone", "tel"],
+	"textdomain": "fair-audience",
+	"parent": ["fair-audience/fair-form"],
+	"supports": {
+		"html": false
+	},
+	"attributes": {
+		"questionText": {
+			"type": "string",
+			"default": ""
+		},
+		"questionKey": {
+			"type": "string",
+			"default": ""
+		},
+		"required": {
+			"type": "boolean",
+			"default": false
+		},
+		"placeholder": {
+			"type": "string",
+			"default": "+49 170 1234567"
+		}
+	},
+	"editorScript": "file:./editor.js",
+	"render": "file:./render.php",
+	"style": "file:./style-editor.css"
+}

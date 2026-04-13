@@ -1,0 +1,24 @@
+.fair-form-question-phone .fair-form-question-label-input {
+	border: none;
+	border-bottom: 1px dashed #8c8f94;
+	background: transparent;
+	font-weight: 600;
+	padding: 2px 0;
+	font-size: inherit;
+	width: auto;
+}
+
+.fair-form-question-phone .fair-form-question-label-input:focus {
+	outline: none;
+	border-bottom-color: #2271b1;
+}
+
+.fair-form-question-phone input[type="tel"]:disabled {
+	width: 100%;
+	padding: 8px 12px;
+	border: 1px solid #8c8f94;
+	border-radius: 4px;
+	font-size: inherit;
+	line-height: 1.5;
+	background: #f0f0f0;
+}

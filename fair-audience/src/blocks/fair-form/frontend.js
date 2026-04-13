@@ -242,6 +242,30 @@ function validateForm(form) {
 		}
 	}
 
+	// Validate phone questions (E.164 format with country code).
+	const phoneQuestions = form.querySelectorAll(
+		'[data-fair-form-question][data-question-type="phone"]'
+	);
+	for (const el of phoneQuestions) {
+		if (!isQuestionVisible(el)) {
+			continue;
+		}
+		const input = el.querySelector('input[type="tel"]');
+		const value = input ? input.value.trim() : '';
+		if (!value) {
+			continue;
+		}
+		if (!/^\+[1-9]\d{6,14}$/.test(value)) {
+			const questionText = el.dataset.questionText || '';
+			return (
+				__(
+					'Please enter a valid phone number with country code (e.g. +49170...): ',
+					'fair-audience'
+				) + questionText
+			);
+		}
+	}
+
 	// Validate file upload constraints (size and type), skip hidden ones.
 	const fileUploadQuestions = form.querySelectorAll(
 		'[data-fair-form-question][data-question-type="file_upload"]'
