@@ -10,6 +10,7 @@ namespace FairAudience\API;
 use FairAudience\Database\QuestionnaireSubmissionRepository;
 use FairAudience\Database\QuestionnaireAnswerRepository;
 use FairAudience\Database\ParticipantRepository;
+use FairAudience\Database\ParticipantCategoryRepository;
 use WP_REST_Controller;
 use WP_REST_Server;
 use WP_REST_Request;
@@ -150,6 +151,7 @@ class QuestionnaireResponsesController extends WP_REST_Controller {
 		$submission_repo  = new QuestionnaireSubmissionRepository();
 		$answer_repo      = new QuestionnaireAnswerRepository();
 		$participant_repo = new ParticipantRepository();
+		$category_repo    = new ParticipantCategoryRepository();
 
 		$filters = array( 'event_date_id' => $event_date_id );
 		if ( $post_id ) {
@@ -160,6 +162,35 @@ class QuestionnaireResponsesController extends WP_REST_Controller {
 		}
 
 		$submissions = $submission_repo->get_by_filters( $filters );
+
+		$participant_ids = array();
+		foreach ( $submissions as $submission ) {
+			if ( $submission->participant_id ) {
+				$participant_ids[] = (int) $submission->participant_id;
+			}
+		}
+		$participant_ids   = array_values( array_unique( $participant_ids ) );
+		$categories_by_pid = ! empty( $participant_ids )
+			? $category_repo->get_categories_for_participants( $participant_ids )
+			: array();
+
+		$category_name_cache = array();
+		$resolve_categories  = function ( $participant_id ) use ( $categories_by_pid, &$category_name_cache ) {
+			$ids = isset( $categories_by_pid[ $participant_id ] ) ? $categories_by_pid[ $participant_id ] : array();
+			$out = array();
+			foreach ( $ids as $category_id ) {
+				$category_id = (int) $category_id;
+				if ( ! isset( $category_name_cache[ $category_id ] ) ) {
+					$term                                = get_term( $category_id, 'category' );
+					$category_name_cache[ $category_id ] = ( $term && ! is_wp_error( $term ) ) ? $term->name : '';
+				}
+				$out[] = array(
+					'id'   => $category_id,
+					'name' => $category_name_cache[ $category_id ],
+				);
+			}
+			return $out;
+		};
 
 		$data = array();
 		foreach ( $submissions as $submission ) {
@@ -176,20 +207,27 @@ class QuestionnaireResponsesController extends WP_REST_Controller {
 				);
 			}
 
-			$participant_name  = '';
-			$participant_email = '';
+			$participant_name    = '';
+			$participant_email   = '';
+			$participant_status  = '';
+			$participant_mailing = '';
 			if ( $participant ) {
-				$participant_name  = trim( $participant->name . ' ' . $participant->surname );
-				$participant_email = $participant->email;
+				$participant_name    = trim( $participant->name . ' ' . $participant->surname );
+				$participant_email   = $participant->email;
+				$participant_status  = $participant->status;
+				$participant_mailing = $participant->email_profile;
 			}
 
 			$data[] = array(
-				'id'                => $submission->id,
-				'participant_id'    => (int) $submission->participant_id,
-				'participant_name'  => $participant_name,
-				'participant_email' => $participant_email,
-				'created_at'        => $submission->created_at,
-				'answers'           => $answers_data,
+				'id'                     => $submission->id,
+				'participant_id'         => (int) $submission->participant_id,
+				'participant_name'       => $participant_name,
+				'participant_email'      => $participant_email,
+				'participant_status'     => $participant_status,
+				'participant_mailing'    => $participant_mailing,
+				'participant_categories' => $resolve_categories( (int) $submission->participant_id ),
+				'created_at'             => $submission->created_at,
+				'answers'                => $answers_data,
 			);
 		}
 

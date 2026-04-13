@@ -102,6 +102,72 @@ export default function QuestionnaireResponses() {
 				getValue: ({ item }) => item.participant_email || '',
 			},
 			{
+				id: 'participant_status',
+				label: __('Status', 'fair-audience'),
+				enableSorting: true,
+				getValue: ({ item }) => item.participant_status || '',
+				render: ({ item }) => {
+					const labels = {
+						pending: __('Pending', 'fair-audience'),
+						confirmed: __('Confirmed', 'fair-audience'),
+					};
+					return (
+						labels[item.participant_status] ||
+						item.participant_status ||
+						'—'
+					);
+				},
+				elements: [
+					{ value: 'pending', label: __('Pending', 'fair-audience') },
+					{
+						value: 'confirmed',
+						label: __('Confirmed', 'fair-audience'),
+					},
+				],
+				filterBy: { operators: ['is'] },
+			},
+			{
+				id: 'participant_mailing',
+				label: __('Mailing', 'fair-audience'),
+				enableSorting: true,
+				getValue: ({ item }) => item.participant_mailing || '',
+				render: ({ item }) => {
+					const labels = {
+						minimal: __('Minimal', 'fair-audience'),
+						marketing: __('Marketing', 'fair-audience'),
+					};
+					return (
+						labels[item.participant_mailing] ||
+						item.participant_mailing ||
+						'—'
+					);
+				},
+				elements: [
+					{ value: 'minimal', label: __('Minimal', 'fair-audience') },
+					{
+						value: 'marketing',
+						label: __('Marketing', 'fair-audience'),
+					},
+				],
+				filterBy: { operators: ['is'] },
+			},
+			{
+				id: 'participant_categories',
+				label: __('Subscribed Categories', 'fair-audience'),
+				enableSorting: false,
+				getValue: ({ item }) =>
+					(item.participant_categories || [])
+						.map((c) => c.name)
+						.join(', '),
+				render: ({ item }) => {
+					const cats = item.participant_categories || [];
+					if (cats.length === 0) {
+						return '—';
+					}
+					return cats.map((c) => c.name).join(', ');
+				},
+			},
+			{
 				id: 'created_at',
 				label: __('Date', 'fair-audience'),
 				enableSorting: true,
@@ -194,6 +260,9 @@ export default function QuestionnaireResponses() {
 		const headers = [
 			__('Name', 'fair-audience'),
 			__('Email', 'fair-audience'),
+			__('Status', 'fair-audience'),
+			__('Mailing', 'fair-audience'),
+			__('Subscribed Categories', 'fair-audience'),
 			__('Date', 'fair-audience'),
 			...questionColumns.map((col) => col.text),
 		];
@@ -202,6 +271,11 @@ export default function QuestionnaireResponses() {
 			const base = [
 				response.participant_name,
 				response.participant_email,
+				response.participant_status,
+				response.participant_mailing,
+				(response.participant_categories || [])
+					.map((c) => c.name)
+					.join(', '),
 				response.created_at,
 			];
 			const answers = questionColumns.map((col) => {
