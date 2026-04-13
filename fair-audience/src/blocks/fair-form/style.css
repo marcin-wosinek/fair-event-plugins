@@ -14,6 +14,7 @@
 
 .fair-form-form input[type="text"],
 .fair-form-form input[type="email"],
+.fair-form-form input[type="tel"],
 .fair-form-form textarea,
 .fair-form-form select {
 	width: 100%;
@@ -26,6 +27,7 @@
 
 .fair-form-form input[type="text"]:focus,
 .fair-form-form input[type="email"]:focus,
+.fair-form-form input[type="tel"]:focus,
 .fair-form-form textarea:focus,
 .fair-form-form select:focus {
 	border-color: #2271b1;
