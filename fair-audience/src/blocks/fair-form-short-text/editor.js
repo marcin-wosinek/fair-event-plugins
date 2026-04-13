@@ -19,6 +19,16 @@ registerBlockType('fair-audience/fair-form-short-text', {
 					);
 				},
 			},
+			{
+				type: 'block',
+				blocks: ['fair-audience/fair-form-phone'],
+				transform: (attributes) => {
+					return createBlock(
+						'fair-audience/fair-form-phone',
+						attributes
+					);
+				},
+			},
 		],
 	},
 	edit: ({ attributes, setAttributes }) => {
