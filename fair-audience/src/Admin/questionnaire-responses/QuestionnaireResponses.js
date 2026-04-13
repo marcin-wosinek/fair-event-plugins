@@ -84,6 +84,16 @@ export default function QuestionnaireResponses() {
 				enableSorting: true,
 				enableHiding: false,
 				getValue: ({ item }) => item.participant_name || '',
+				render: ({ item }) =>
+					item.participant_id ? (
+						<a
+							href={`admin.php?page=fair-audience-participant-detail&participant_id=${item.participant_id}`}
+						>
+							{item.participant_name || ''}
+						</a>
+					) : (
+						item.participant_name || ''
+					),
 			},
 			{
 				id: 'participant_email',

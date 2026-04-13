@@ -185,6 +185,7 @@ class QuestionnaireResponsesController extends WP_REST_Controller {
 
 			$data[] = array(
 				'id'                => $submission->id,
+				'participant_id'    => (int) $submission->participant_id,
 				'participant_name'  => $participant_name,
 				'participant_email' => $participant_email,
 				'created_at'        => $submission->created_at,
