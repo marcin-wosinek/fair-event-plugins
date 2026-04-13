@@ -98,6 +98,10 @@ const customConfig = {
 			process.cwd(),
 			'src/Admin/submission-detail/index.js',
 		),
+		'admin/participant-detail/index': path.resolve(
+			process.cwd(),
+			'src/Admin/participant-detail/index.js',
+		),
 		'admin/media-library-filter': path.resolve(
 			process.cwd(),
 			'src/Admin/media-library-filter.js',

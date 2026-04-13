@@ -111,7 +111,13 @@ export default function AllParticipants() {
 			{
 				id: 'name',
 				label: __('Name', 'fair-audience'),
-				render: ({ item }) => `${item.name} ${item.surname}`,
+				render: ({ item }) => (
+					<a
+						href={`admin.php?page=fair-audience-participant-detail&participant_id=${item.id}`}
+					>
+						{`${item.name} ${item.surname}`}
+					</a>
+				),
 				enableSorting: true,
 				enableHiding: false,
 				getValue: ({ item }) =>

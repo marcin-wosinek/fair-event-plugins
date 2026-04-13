@@ -10,6 +10,7 @@ namespace FairAudience\API;
 use FairAudience\Database\ParticipantRepository;
 use FairAudience\Database\EventParticipantRepository;
 use FairAudience\Database\GroupParticipantRepository;
+use FairAudience\Database\QuestionnaireSubmissionRepository;
 use FairAudience\Models\Participant;
 use WP_REST_Controller;
 use WP_REST_Server;
@@ -152,6 +153,23 @@ class ParticipantsController extends WP_REST_Controller {
 				),
 			)
 		);
+
+		// GET /fair-audience/v1/participants/{id}/activity.
+		register_rest_route(
+			$this->namespace,
+			'/' . $this->rest_base . '/(?P<id>\d+)/activity',
+			array(
+				'methods'             => WP_REST_Server::READABLE,
+				'callback'            => array( $this, 'get_activity' ),
+				'permission_callback' => 'is_user_logged_in',
+				'args'                => array(
+					'id' => array(
+						'type'     => 'integer',
+						'required' => true,
+					),
+				),
+			)
+		);
 	}
 
 	/**
@@ -268,6 +286,88 @@ class ParticipantsController extends WP_REST_Controller {
 		}
 
 		return rest_ensure_response( $events );
+	}
+
+	/**
+	 * Get the full activity (events + form submissions) for a participant.
+	 *
+	 * @param WP_REST_Request $request Request object.
+	 * @return WP_REST_Response|WP_Error Response object or error.
+	 */
+	public function get_activity( $request ) {
+		$id          = (int) $request->get_param( 'id' );
+		$participant = $this->repository->get_by_id( $id );
+
+		if ( ! $participant ) {
+			return new WP_Error(
+				'participant_not_found',
+				__( 'Participant not found.', 'fair-audience' ),
+				array( 'status' => 404 )
+			);
+		}
+
+		$has_event_dates = class_exists( '\FairEvents\Models\EventDates' );
+
+		// Build events list.
+		$events        = array();
+		$relationships = $this->event_participant_repository->get_by_participant( $id );
+		foreach ( $relationships as $rel ) {
+			$event_title    = $rel->event_id ? get_the_title( (int) $rel->event_id ) : '';
+			$start_datetime = '';
+			if ( $has_event_dates && $rel->event_date_id ) {
+				$event_date = \FairEvents\Models\EventDates::get_by_id( (int) $rel->event_date_id );
+				if ( $event_date ) {
+					$start_datetime = $event_date->start_datetime;
+				}
+			}
+
+			$events[] = array(
+				'id'             => (int) $rel->id,
+				'event_id'       => (int) $rel->event_id,
+				'event_date_id'  => (int) $rel->event_date_id,
+				'event_title'    => $event_title,
+				'start_datetime' => $start_datetime,
+				'label'          => $rel->label,
+				'created_at'     => $rel->created_at,
+			);
+		}
+
+		// Build form submissions list.
+		$submissions     = array();
+		$submission_repo = new QuestionnaireSubmissionRepository();
+		$rows            = $submission_repo->get_by_participant( $id );
+		foreach ( $rows as $row ) {
+			$page_title     = $row->post_id ? get_the_title( (int) $row->post_id ) : '';
+			$event_title    = '';
+			$start_datetime = '';
+			if ( $has_event_dates && $row->event_date_id ) {
+				$event_date = \FairEvents\Models\EventDates::get_by_id( (int) $row->event_date_id );
+				if ( $event_date ) {
+					$start_datetime = $event_date->start_datetime;
+					if ( $event_date->event_id ) {
+						$event_title = get_the_title( (int) $event_date->event_id );
+					}
+				}
+			}
+
+			$submissions[] = array(
+				'id'             => (int) $row->id,
+				'title'          => $row->title,
+				'post_id'        => (int) $row->post_id,
+				'page_title'     => $page_title,
+				'event_date_id'  => (int) $row->event_date_id,
+				'event_title'    => $event_title,
+				'start_datetime' => $start_datetime,
+				'created_at'     => $row->created_at,
+			);
+		}
+
+		return rest_ensure_response(
+			array(
+				'events'      => $events,
+				'submissions' => $submissions,
+			)
+		);
 	}
 
 	/**

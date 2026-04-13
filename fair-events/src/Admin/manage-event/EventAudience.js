@@ -291,8 +291,17 @@ export default function EventAudience({ eventId, eventDateId, audienceUrl }) {
 													(p) => (
 														<tr key={p.id}>
 															<td>
-																{p.participant_name ||
-																	'—'}
+																{p.participant_id ? (
+																	<a
+																		href={`admin.php?page=fair-audience-participant-detail&participant_id=${p.participant_id}`}
+																	>
+																		{p.participant_name ||
+																			'—'}
+																	</a>
+																) : (
+																	p.participant_name ||
+																	'—'
+																)}
 															</td>
 															<td>
 																{LABEL_DISPLAY[

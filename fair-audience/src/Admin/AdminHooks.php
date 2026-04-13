@@ -50,6 +50,10 @@ class AdminHooks {
 			'title'    => 'Submission Detail',
 			'callback' => 'render_submission_detail_page',
 		),
+		'fair-audience-participant-detail'      => array(
+			'title'    => 'Participant Detail',
+			'callback' => 'render_participant_detail_page',
+		),
 	);
 
 	/**
@@ -234,6 +238,9 @@ class AdminHooks {
 
 		// Hidden submenu page - Submission Detail.
 		$this->register_hidden_page( 'fair-audience-submission-detail' );
+
+		// Hidden submenu page - Participant Detail.
+		$this->register_hidden_page( 'fair-audience-participant-detail' );
 
 		// Submenu page - Import.
 		add_submenu_page(
@@ -469,6 +476,14 @@ class AdminHooks {
 	}
 
 	/**
+	 * Render Participant Detail page.
+	 */
+	public function render_participant_detail_page() {
+		$page = new ParticipantDetailPage();
+		$page->render();
+	}
+
+	/**
 	 * Render Form Answers page.
 	 */
 	public function render_form_answers_page() {
@@ -575,6 +590,11 @@ class AdminHooks {
 		// Submission Detail page.
 		if ( 'admin_page_fair-audience-submission-detail' === $hook ) {
 			$this->enqueue_page_script( 'submission-detail', $plugin_dir );
+		}
+
+		// Participant Detail page.
+		if ( 'admin_page_fair-audience-participant-detail' === $hook ) {
+			$this->enqueue_page_script( 'participant-detail', $plugin_dir );
 		}
 
 		// Form Answers page.
