@@ -132,6 +132,42 @@ class TimelineRepository {
 	}
 
 	/**
+	 * Get recent paid fee payments.
+	 *
+	 * Returns paid payments ordered by paid_at descending, joined with fee
+	 * and participant data so the timeline can group them by day.
+	 *
+	 * @param int $limit Maximum number of rows.
+	 * @return array Raw rows.
+	 */
+	public function get_recent_fee_payments( $limit ) {
+		global $wpdb;
+
+		$fp_table = $wpdb->prefix . 'fair_audience_fee_payments';
+		$f_table  = $wpdb->prefix . 'fair_audience_fees';
+		$p_table  = $wpdb->prefix . 'fair_audience_participants';
+
+		return $wpdb->get_results(
+			$wpdb->prepare(
+				"SELECT fp.id, fp.fee_id, fp.participant_id, fp.amount, fp.paid_at,
+					f.name AS fee_name, f.currency,
+					p.name AS participant_name, p.surname AS participant_surname
+				FROM %i fp
+				LEFT JOIN %i f ON fp.fee_id = f.id
+				LEFT JOIN %i p ON fp.participant_id = p.id
+				WHERE fp.status = 'paid' AND fp.paid_at IS NOT NULL
+				ORDER BY fp.paid_at DESC
+				LIMIT %d",
+				$fp_table,
+				$f_table,
+				$p_table,
+				$limit
+			),
+			ARRAY_A
+		);
+	}
+
+	/**
 	 * Get recent custom mail messages.
 	 *
 	 * @param int $limit Maximum number of rows.
@@ -249,6 +285,7 @@ class TimelineRepository {
 
 		if ( $include_payments ) {
 			$tables[] = $wpdb->prefix . 'fair_audience_fees';
+			$tables[] = $wpdb->prefix . 'fair_audience_fee_payments';
 		}
 
 		foreach ( $tables as $table ) {

@@ -15,6 +15,7 @@ function getIcon(type) {
 		signup: 'groups',
 		form_submission: 'forms',
 		fee: 'money-alt',
+		fee_payments_day: 'money-alt',
 		email: 'email',
 		instagram: 'camera',
 		poll: 'chart-bar',
@@ -34,6 +35,7 @@ function getTypeColor(type) {
 		signup: '#007cba',
 		form_submission: '#9b59b6',
 		fee: '#00a32a',
+		fee_payments_day: '#00a32a',
 		email: '#e67e22',
 		instagram: '#e91e63',
 		poll: '#3498db',
@@ -195,6 +197,69 @@ function FeeContent({ item }) {
 }
 
 /**
+ * Fee payments day content component.
+ *
+ * @param {Object} props Props.
+ * @param {Object} props.item Timeline item with grouped payments details.
+ * @return {JSX.Element} Summary of payments made on a single day.
+ */
+function FeePaymentsDayContent({ item }) {
+	const {
+		day,
+		currency,
+		total_amount: totalAmount,
+		count,
+		participants = [],
+	} = item.details;
+
+	return (
+		<div style={{ fontSize: '13px', lineHeight: '1.6' }}>
+			<div>
+				<strong>
+					{count}{' '}
+					{count === 1
+						? __('fee payment on', 'fair-audience')
+						: __('fee payments on', 'fair-audience')}{' '}
+					{day}
+				</strong>
+				{' — '}
+				{__('total:', 'fair-audience')} {Number(totalAmount).toFixed(2)}{' '}
+				{currency}
+			</div>
+			<ul style={{ margin: '4px 0 0 18px', padding: 0 }}>
+				{participants.map((payment) => {
+					const participantUrl = payment.participant_id
+						? `admin.php?page=fair-audience-participant-detail&participant_id=${payment.participant_id}`
+						: null;
+					const feeUrl = payment.fee_id
+						? `admin.php?page=fair-audience-fee-detail&fee_id=${payment.fee_id}`
+						: null;
+
+					return (
+						<li key={payment.payment_id}>
+							{participantUrl ? (
+								<a href={participantUrl}>{payment.name}</a>
+							) : (
+								payment.name
+							)}
+							{' — '}
+							{Number(payment.amount).toFixed(2)} {currency}
+							{payment.fee_name && feeUrl && (
+								<>
+									{' ('}
+									<a href={feeUrl}>{payment.fee_name}</a>
+									{')'}
+								</>
+							)}
+						</li>
+					);
+				})}
+			</ul>
+		</div>
+	);
+}
+
+/**
  * Timeline item component.
  *
  * @param {Object} props Props.
@@ -240,6 +305,8 @@ export default function TimelineItem({ item }) {
 					<div style={{ flex: 1, minWidth: 0 }}>
 						{item.type === 'fee' ? (
 							<FeeContent item={item} />
+						) : item.type === 'fee_payments_day' ? (
+							<FeePaymentsDayContent item={item} />
 						) : item.type === 'form_submission' ? (
 							<FormSubmissionContent item={item} />
 						) : item.type === 'new_participant' ? (

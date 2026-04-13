@@ -201,8 +201,71 @@ class TimelineController extends WP_REST_Controller {
 			);
 		}
 
-		// Membership fees (conditional).
+		// Membership fee payments – group paid payments by calendar day.
 		if ( $include_payments ) {
+			$payment_rows   = $this->repository->get_recent_fee_payments( $fetch_limit );
+			$payment_groups = array();
+			foreach ( $payment_rows as $row ) {
+				$day = substr( (string) $row['paid_at'], 0, 10 ); // YYYY-MM-DD.
+				if ( '' === $day ) {
+					continue;
+				}
+				if ( ! isset( $payment_groups[ $day ] ) ) {
+					$payment_groups[ $day ] = array(
+						'day'          => $day,
+						'latest_at'    => $row['paid_at'],
+						'currency'     => $row['currency'] ?? 'EUR',
+						'total_amount' => 0.0,
+						'participants' => array(),
+					);
+				}
+
+				$payment_groups[ $day ]['total_amount'] += (float) $row['amount'];
+				if ( strcmp( $row['paid_at'], $payment_groups[ $day ]['latest_at'] ) > 0 ) {
+					$payment_groups[ $day ]['latest_at'] = $row['paid_at'];
+				}
+
+				$name = trim( $row['participant_name'] . ' ' . $row['participant_surname'] );
+				if ( '' === $name ) {
+					$name = __( 'Unknown', 'fair-audience' );
+				}
+
+				$payment_groups[ $day ]['participants'][] = array(
+					'payment_id'     => (int) $row['id'],
+					'participant_id' => (int) $row['participant_id'],
+					'name'           => $name,
+					'amount'         => (float) $row['amount'],
+					'fee_id'         => (int) $row['fee_id'],
+					'fee_name'       => $row['fee_name'],
+				);
+			}
+
+			foreach ( $payment_groups as $group ) {
+				$items[] = array(
+					'id'         => 'fee_payments_' . $group['day'],
+					'type'       => 'fee_payments_day',
+					'created_at' => $group['latest_at'],
+					'summary'    => sprintf(
+						/* translators: 1: number of payments, 2: day */
+						_n(
+							'%1$d fee payment on %2$s',
+							'%1$d fee payments on %2$s',
+							count( $group['participants'] ),
+							'fair-audience'
+						),
+						count( $group['participants'] ),
+						$group['day']
+					),
+					'details'    => array(
+						'day'          => $group['day'],
+						'currency'     => $group['currency'],
+						'total_amount' => (float) $group['total_amount'],
+						'count'        => count( $group['participants'] ),
+						'participants' => $group['participants'],
+					),
+				);
+			}
+
 			$fees = $this->repository->get_recent_fees( $fetch_limit );
 			foreach ( $fees as $row ) {
 				$currency = $row['currency'] ?? 'EUR';
