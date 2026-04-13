@@ -7,6 +7,7 @@
 
 namespace FairEvents\API;
 
+use FairEvents\Core\Plugin;
 use FairEvents\Models\EventDates;
 use WP_REST_Controller;
 use WP_REST_Server;
@@ -102,49 +103,59 @@ class EventDuplicationController extends WP_REST_Controller {
 
 		$first_cloned_id = null;
 
-		foreach ( $linked_post_ids as $post_id ) {
-			$original_post = get_post( $post_id );
-			if ( ! $original_post ) {
-				continue;
-			}
+		// Suppress auto-creation of event_date rows for each cloned post — the
+		// clones are attached to an existing target event_date, and the hook's
+		// NULL datetimes would violate the NOT NULL schema constraint.
+		$plugin = Plugin::instance();
+		remove_action( 'wp_after_insert_post', array( $plugin, 'auto_create_event_date' ), 10 );
 
-			// Create new post as draft copy.
-			$new_post_data = array(
-				'post_title'   => $original_post->post_title,
-				'post_content' => $original_post->post_content,
-				'post_excerpt' => $original_post->post_excerpt,
-				'post_type'    => $original_post->post_type,
-				'post_status'  => 'draft',
-				'post_author'  => get_current_user_id(),
-			);
+		try {
+			foreach ( $linked_post_ids as $post_id ) {
+				$original_post = get_post( $post_id );
+				if ( ! $original_post ) {
+					continue;
+				}
 
-			$new_post_id = wp_insert_post( $new_post_data );
+				// Create new post as draft copy.
+				$new_post_data = array(
+					'post_title'   => $original_post->post_title,
+					'post_content' => $original_post->post_content,
+					'post_excerpt' => $original_post->post_excerpt,
+					'post_type'    => $original_post->post_type,
+					'post_status'  => 'draft',
+					'post_author'  => get_current_user_id(),
+				);
 
-			if ( is_wp_error( $new_post_id ) ) {
-				continue;
-			}
+				$new_post_id = wp_insert_post( $new_post_data );
 
-			// Copy featured image.
-			$thumbnail_id = get_post_thumbnail_id( $original_post->ID );
-			if ( $thumbnail_id ) {
-				set_post_thumbnail( $new_post_id, $thumbnail_id );
-			}
+				if ( is_wp_error( $new_post_id ) ) {
+					continue;
+				}
 
-			// Copy taxonomies.
-			$taxonomies = get_object_taxonomies( $original_post->post_type );
-			foreach ( $taxonomies as $taxonomy ) {
-				$terms = wp_get_object_terms( $original_post->ID, $taxonomy, array( 'fields' => 'ids' ) );
-				if ( ! is_wp_error( $terms ) && ! empty( $terms ) ) {
-					wp_set_object_terms( $new_post_id, $terms, $taxonomy );
+				// Copy featured image.
+				$thumbnail_id = get_post_thumbnail_id( $original_post->ID );
+				if ( $thumbnail_id ) {
+					set_post_thumbnail( $new_post_id, $thumbnail_id );
+				}
+
+				// Copy taxonomies.
+				$taxonomies = get_object_taxonomies( $original_post->post_type );
+				foreach ( $taxonomies as $taxonomy ) {
+					$terms = wp_get_object_terms( $original_post->ID, $taxonomy, array( 'fields' => 'ids' ) );
+					if ( ! is_wp_error( $terms ) && ! empty( $terms ) ) {
+						wp_set_object_terms( $new_post_id, $terms, $taxonomy );
+					}
+				}
+
+				// Link cloned post to target event date.
+				EventDates::add_linked_post( $target_event_date_id, $new_post_id );
+
+				if ( null === $first_cloned_id ) {
+					$first_cloned_id = $new_post_id;
 				}
 			}
-
-			// Link cloned post to target event date.
-			EventDates::add_linked_post( $target_event_date_id, $new_post_id );
-
-			if ( null === $first_cloned_id ) {
-				$first_cloned_id = $new_post_id;
-			}
+		} finally {
+			add_action( 'wp_after_insert_post', array( $plugin, 'auto_create_event_date' ), 10, 4 );
 		}
 
 		// Set first cloned post as primary event_id.
