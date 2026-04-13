@@ -64,6 +64,7 @@ class Plugin {
 		new \FairEvents\Hooks\BlockHooks();
 		new \FairEvents\Hooks\CalendarButtonHooks();
 		new \FairEvents\Hooks\OpenGraphHooks();
+		new \FairEvents\Hooks\AdminBarHooks();
 	}
 
 	/**
