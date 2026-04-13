@@ -292,7 +292,9 @@ class TimelineController extends WP_REST_Controller {
 				'created_at' => $row['created_at'],
 				'summary'    => sprintf( 'New participant: %s', $name ),
 				'details'    => array(
-					'email' => $row['email'],
+					'participant_id' => (int) $row['id'],
+					'name'           => $name,
+					'email'          => $row['email'],
 				),
 			);
 		}

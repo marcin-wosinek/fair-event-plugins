@@ -96,6 +96,35 @@ function FormSubmissionContent({ item }) {
 }
 
 /**
+ * New participant content component.
+ *
+ * @param {Object} props Props.
+ * @param {Object} props.item Timeline item with participant details.
+ * @return {JSX.Element} Participant summary with linked name.
+ */
+function NewParticipantContent({ item }) {
+	const { participant_id: participantId, name } = item.details;
+	const displayName = name || item.summary;
+
+	if (!participantId) {
+		return (
+			<div style={{ fontSize: '13px', lineHeight: '1.5' }}>
+				{item.summary}
+			</div>
+		);
+	}
+
+	const participantUrl = `admin.php?page=fair-audience-participant-detail&participant_id=${participantId}`;
+
+	return (
+		<div style={{ fontSize: '13px', lineHeight: '1.5' }}>
+			{__('New participant:', 'fair-audience')}{' '}
+			<a href={participantUrl}>{displayName}</a>
+		</div>
+	);
+}
+
+/**
  * Fee summary content component.
  *
  * @param {Object} props Props.
@@ -173,6 +202,8 @@ export default function TimelineItem({ item }) {
 							<FeeContent item={item} />
 						) : item.type === 'form_submission' ? (
 							<FormSubmissionContent item={item} />
+						) : item.type === 'new_participant' ? (
+							<NewParticipantContent item={item} />
 						) : (
 							<div
 								style={{
