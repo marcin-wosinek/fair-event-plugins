@@ -160,16 +160,38 @@ class TimelineController extends WP_REST_Controller {
 		// Questionnaire submissions.
 		$submissions = $this->repository->get_recent_submissions( $fetch_limit );
 		foreach ( $submissions as $row ) {
-			$name = trim( $row['participant_name'] . ' ' . $row['participant_surname'] );
+			$name       = trim( $row['participant_name'] . ' ' . $row['participant_surname'] );
+			$form_name  = $row['title'] ? $row['title'] : __( 'Fair Form', 'fair-audience' );
+			$post_id    = (int) $row['post_id'];
+			$page_title = $post_id ? get_the_title( $post_id ) : '';
+
+			if ( $page_title ) {
+				$summary = sprintf(
+					/* translators: 1: participant name, 2: form name, 3: page title */
+					__( '%1$s submitted "%2$s" on "%3$s"', 'fair-audience' ),
+					$name,
+					$form_name,
+					$page_title
+				);
+			} else {
+				$summary = sprintf(
+					/* translators: 1: participant name, 2: form name */
+					__( '%1$s submitted "%2$s"', 'fair-audience' ),
+					$name,
+					$form_name
+				);
+			}
 
 			$items[] = array(
 				'id'         => 'form_submission_' . $row['id'],
 				'type'       => 'form_submission',
 				'created_at' => $row['created_at'],
-				'summary'    => sprintf( '%s submitted "%s"', $name, $row['title'] ),
+				'summary'    => $summary,
 				'details'    => array(
 					'submission_id' => (int) $row['id'],
 					'event_date_id' => (int) $row['event_date_id'],
+					'post_id'       => $post_id,
+					'page_title'    => $page_title,
 				),
 			);
 		}

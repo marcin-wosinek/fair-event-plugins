@@ -58,7 +58,7 @@ class TimelineRepository {
 
 		return $wpdb->get_results(
 			$wpdb->prepare(
-				'SELECT qs.id, qs.title, qs.event_date_id, qs.created_at,
+				'SELECT qs.id, qs.title, qs.event_date_id, qs.post_id, qs.created_at,
 					p.name AS participant_name, p.surname AS participant_surname
 				FROM %i qs
 				LEFT JOIN %i p ON qs.participant_id = p.id
