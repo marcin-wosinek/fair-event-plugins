@@ -235,7 +235,17 @@ export default function SubmissionDetail() {
 								<th style={{ width: '200px' }}>
 									{__('Submitted by', 'fair-audience')}
 								</th>
-								<td>{submission.participant_name}</td>
+								<td>
+									{submission.participant_id ? (
+										<a
+											href={`admin.php?page=fair-audience-participant-detail&participant_id=${submission.participant_id}`}
+										>
+											{submission.participant_name}
+										</a>
+									) : (
+										submission.participant_name
+									)}
+								</td>
 							</tr>
 							<tr>
 								<th>{__('Email', 'fair-audience')}</th>
