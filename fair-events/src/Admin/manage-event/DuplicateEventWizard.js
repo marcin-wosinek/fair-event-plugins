@@ -84,6 +84,12 @@ export default function DuplicateEventWizard({
 	const [selectedCollaborators, setSelectedCollaborators] = useState({});
 	const [loadingCollaborators, setLoadingCollaborators] = useState(false);
 
+	// Group rules state
+	const [sourcePricingRules, setSourcePricingRules] = useState([]);
+	const [sourcePermissionRules, setSourcePermissionRules] = useState([]);
+	const [selectedGroupRules, setSelectedGroupRules] = useState({});
+	const [loadingGroupRules, setLoadingGroupRules] = useState(false);
+
 	// Step navigation
 	const [activeStep, setActiveStep] = useState(0);
 
@@ -174,6 +180,37 @@ export default function DuplicateEventWizard({
 				setCollaborators([]);
 			})
 			.finally(() => setLoadingCollaborators(false));
+	}, [audienceUrl, sourceEventDateId]);
+
+	// Load group rules from source
+	useEffect(() => {
+		if (!audienceUrl || !sourceEventDateId) return;
+		setLoadingGroupRules(true);
+		Promise.all([
+			apiFetch({
+				path: `/fair-events/v1/event-dates/${sourceEventDateId}/group-pricing-rules`,
+			}).catch(() => []),
+			apiFetch({
+				path: `/fair-events/v1/event-dates/${sourceEventDateId}/group-permission-rules`,
+			}).catch(() => []),
+		])
+			.then(([pricing, permissions]) => {
+				const pricingArr = Array.isArray(pricing) ? pricing : [];
+				const permissionsArr = Array.isArray(permissions)
+					? permissions
+					: [];
+				setSourcePricingRules(pricingArr);
+				setSourcePermissionRules(permissionsArr);
+				const selected = {};
+				pricingArr.forEach((r) => {
+					selected[r.group_id] = true;
+				});
+				permissionsArr.forEach((r) => {
+					selected[r.group_id] = true;
+				});
+				setSelectedGroupRules(selected);
+			})
+			.finally(() => setLoadingGroupRules(false));
 	}, [audienceUrl, sourceEventDateId]);
 
 	// Duration helpers
@@ -461,6 +498,46 @@ export default function DuplicateEventWizard({
 			}
 			setCompletedSteps((prev) => [...prev, 'collaborators']);
 
+			// Step 6: Copy group rules
+			const selectedGroupIds = Object.entries(selectedGroupRules)
+				.filter(([, checked]) => checked)
+				.map(([id]) => parseInt(id, 10));
+
+			if (selectedGroupIds.length > 0) {
+				setProgress(__('Copying group rules…', 'fair-events'));
+
+				const pricingToCopy = sourcePricingRules.filter((r) =>
+					selectedGroupIds.includes(r.group_id)
+				);
+				const permissionsToCopy = sourcePermissionRules.filter((r) =>
+					selectedGroupIds.includes(r.group_id)
+				);
+
+				for (const rule of pricingToCopy) {
+					await apiFetch({
+						path: `/fair-events/v1/event-dates/${createdEventDateId}/group-pricing-rules`,
+						method: 'POST',
+						data: {
+							group_id: rule.group_id,
+							discount_type: rule.discount_type,
+							discount_value: rule.discount_value,
+						},
+					});
+				}
+
+				for (const rule of permissionsToCopy) {
+					await apiFetch({
+						path: `/fair-events/v1/event-dates/${createdEventDateId}/group-permission-rules`,
+						method: 'POST',
+						data: {
+							group_id: rule.group_id,
+							permission_type: rule.permission_type,
+						},
+					});
+				}
+			}
+			setCompletedSteps((prev) => [...prev, 'group-rules']);
+
 			// Success - redirect
 			setProgress(__('Done! Redirecting…', 'fair-events'));
 			window.location.href = `${manageEventUrl}&event_date_id=${createdEventDateId}`;
@@ -503,6 +580,10 @@ export default function DuplicateEventWizard({
 				name: 'audience',
 				title: __('Audience', 'fair-events'),
 			});
+			s.push({
+				name: 'group-rules',
+				title: __('Group Rules', 'fair-events'),
+			});
 		}
 		return s;
 	}, [audienceUrl, linkedPosts.length, sourceEventDateId]);
@@ -523,6 +604,8 @@ export default function DuplicateEventWizard({
 				return renderTicketsTab();
 			case 'audience':
 				return renderAudienceTab();
+			case 'group-rules':
+				return renderGroupRulesTab();
 			default:
 				return null;
 		}
@@ -943,6 +1026,138 @@ export default function DuplicateEventWizard({
 		);
 	}
 
+	function renderGroupRulesTab() {
+		if (loadingGroupRules) {
+			return <Spinner />;
+		}
+
+		const groupIds = new Set();
+		sourcePricingRules.forEach((r) => groupIds.add(r.group_id));
+		sourcePermissionRules.forEach((r) => groupIds.add(r.group_id));
+
+		if (groupIds.size === 0) {
+			return (
+				<Card style={{ marginTop: '16px' }}>
+					<CardBody>
+						<p>
+							{__(
+								'No group rules found on source event.',
+								'fair-events'
+							)}
+						</p>
+					</CardBody>
+				</Card>
+			);
+		}
+
+		const permissionLabel = (type) => {
+			switch (type) {
+				case 'view_signups':
+					return __('View signups', 'fair-events');
+				case 'manage_signups':
+					return __('Manage signups', 'fair-events');
+				default:
+					return type;
+			}
+		};
+
+		const formatDiscount = (type, value) => {
+			if (type === 'percentage') {
+				return `${value}%`;
+			}
+			return new Intl.NumberFormat('en-US', {
+				style: 'currency',
+				currency: 'EUR',
+			}).format(value);
+		};
+
+		return (
+			<Card style={{ marginTop: '16px' }}>
+				<CardHeader>
+					<h2>{__('Group Rules', 'fair-events')}</h2>
+				</CardHeader>
+				<CardBody>
+					<VStack spacing={3}>
+						<p style={{ color: '#666' }}>
+							{__(
+								'Select which groups to copy rules for.',
+								'fair-events'
+							)}
+						</p>
+						{Array.from(groupIds).map((groupId) => {
+							const pricing = sourcePricingRules.find(
+								(r) => r.group_id === groupId
+							);
+							const permissions = sourcePermissionRules.filter(
+								(r) => r.group_id === groupId
+							);
+							const groupName =
+								pricing?.group_name ||
+								permissions[0]?.group_name ||
+								`Group #${groupId}`;
+
+							return (
+								<Card key={groupId}>
+									<CardBody>
+										<CheckboxControl
+											label={groupName}
+											checked={
+												!!selectedGroupRules[groupId]
+											}
+											onChange={(checked) => {
+												setSelectedGroupRules(
+													(prev) => ({
+														...prev,
+														[groupId]: checked,
+													})
+												);
+											}}
+										/>
+										<div
+											style={{
+												marginLeft: '24px',
+												color: '#666',
+												fontSize: '13px',
+											}}
+										>
+											{pricing && (
+												<p style={{ margin: '4px 0' }}>
+													{__(
+														'Discount:',
+														'fair-events'
+													)}{' '}
+													{formatDiscount(
+														pricing.discount_type,
+														pricing.discount_value
+													)}
+												</p>
+											)}
+											{permissions.length > 0 && (
+												<p style={{ margin: '4px 0' }}>
+													{__(
+														'Permissions:',
+														'fair-events'
+													)}{' '}
+													{permissions
+														.map((p) =>
+															permissionLabel(
+																p.permission_type
+															)
+														)
+														.join(', ')}
+												</p>
+											)}
+										</div>
+									</CardBody>
+								</Card>
+							);
+						})}
+					</VStack>
+				</CardBody>
+			</Card>
+		);
+	}
+
 	function renderAudienceTab() {
 		if (loadingCollaborators) {
 			return <Spinner />;
@@ -1019,7 +1234,14 @@ function hasTicketData(data) {
 }
 
 function getNextStep(completedSteps) {
-	const allSteps = ['create', 'image', 'links', 'tickets', 'collaborators'];
+	const allSteps = [
+		'create',
+		'image',
+		'links',
+		'tickets',
+		'collaborators',
+		'group-rules',
+	];
 	for (const step of allSteps) {
 		if (!completedSteps.includes(step)) return step;
 	}
