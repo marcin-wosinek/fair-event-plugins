@@ -66,6 +66,25 @@ class TransactionsController extends WP_REST_Controller {
 				),
 			)
 		);
+
+		register_rest_route(
+			$this->namespace,
+			'/transactions/(?P<id>\d+)/sync-mollie',
+			array(
+				array(
+					'methods'             => WP_REST_Server::CREATABLE,
+					'callback'            => array( $this, 'sync_mollie' ),
+					'permission_callback' => array( $this, 'get_items_permissions_check' ),
+					'args'                => array(
+						'id' => array(
+							'type'              => 'integer',
+							'required'          => true,
+							'sanitize_callback' => 'absint',
+						),
+					),
+				),
+			)
+		);
 	}
 
 	/**
@@ -161,6 +180,41 @@ class TransactionsController extends WP_REST_Controller {
 			);
 		}
 
+		return new WP_REST_Response( $this->prepare_transaction_response( $transaction ), 200 );
+	}
+
+	/**
+	 * Force a Mollie sync for a transaction to refresh status and fee data.
+	 *
+	 * @param WP_REST_Request $request Full data about the request.
+	 * @return WP_REST_Response|WP_Error
+	 */
+	public function sync_mollie( $request ) {
+		$result = TransactionAPI::sync_transaction_status( $request->get_param( 'id' ), true );
+
+		if ( null === $result ) {
+			return new WP_Error(
+				'not_found',
+				__( 'Transaction not found.', 'fair-payment' ),
+				array( 'status' => 404 )
+			);
+		}
+
+		if ( is_wp_error( $result ) ) {
+			$result->add_data( array( 'status' => 400 ) );
+			return $result;
+		}
+
+		return new WP_REST_Response( $this->prepare_transaction_response( $result ), 200 );
+	}
+
+	/**
+	 * Build the REST response payload for a transaction row.
+	 *
+	 * @param object $transaction Transaction record from the DB.
+	 * @return array
+	 */
+	private function prepare_transaction_response( $transaction ) {
 		$user_name = '';
 		if ( $transaction->user_id ) {
 			$user = get_userdata( $transaction->user_id );
@@ -221,7 +275,7 @@ class TransactionsController extends WP_REST_Controller {
 			'line_items'           => $line_item_data,
 		);
 
-		return new WP_REST_Response( $data, 200 );
+		return $data;
 	}
 
 	/**

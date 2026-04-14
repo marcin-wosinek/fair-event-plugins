@@ -252,10 +252,11 @@ class TransactionAPI {
 	 * Proactively checks Mollie API for the real status of a pending_payment transaction.
 	 * If the status has changed, updates the DB and fires action hooks.
 	 *
-	 * @param int $transaction_id Transaction ID.
-	 * @return object|null Updated transaction object, or null if not found.
+	 * @param int  $transaction_id Transaction ID.
+	 * @param bool $force Force Mollie API call even when heuristics say it is not needed.
+	 * @return object|\WP_Error|null Updated transaction object, WP_Error on forced-sync failure, or null if not found.
 	 */
-	public static function sync_transaction_status( $transaction_id ) {
+	public static function sync_transaction_status( $transaction_id, $force = false ) {
 		$transaction = Transaction::get_by_id( $transaction_id );
 
 		if ( ! $transaction ) {
@@ -264,6 +265,12 @@ class TransactionAPI {
 
 		// Only sync if we have a Mollie payment ID.
 		if ( empty( $transaction->mollie_payment_id ) ) {
+			if ( $force ) {
+				return new \WP_Error(
+					'no_mollie_payment_id',
+					__( 'This transaction has no Mollie payment ID to sync.', 'fair-payment' )
+				);
+			}
 			return $transaction;
 		}
 
@@ -271,7 +278,7 @@ class TransactionAPI {
 		$needs_status_sync = 'pending_payment' === $transaction->status;
 		$needs_fee_sync    = 'paid' === $transaction->status && null === $transaction->mollie_fee;
 
-		if ( ! $needs_status_sync && ! $needs_fee_sync ) {
+		if ( ! $force && ! $needs_status_sync && ! $needs_fee_sync ) {
 			return $transaction;
 		}
 
@@ -291,15 +298,21 @@ class TransactionAPI {
 				return Transaction::get_by_id( $transaction_id );
 			}
 
-			// Capture Mollie fee for paid transactions where it was not yet available.
-			if ( $needs_fee_sync ) {
+			// Capture Mollie fee whenever settlement data is available (covers forced syncs too).
+			if ( 'paid' === $payment->status ) {
 				self::capture_mollie_fee( $payment, $transaction );
 				return Transaction::get_by_id( $transaction_id );
 			}
 		} catch ( \Exception $e ) {
-			// If Mollie API fails, return current state without updating.
 			// phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
 			error_log( 'Fair Payment sync error: ' . $e->getMessage() );
+
+			if ( $force ) {
+				return new \WP_Error(
+					'mollie_sync_failed',
+					$e->getMessage()
+				);
+			}
 		}
 
 		return $transaction;

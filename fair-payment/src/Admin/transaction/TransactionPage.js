@@ -5,6 +5,7 @@ import { useState, useEffect } from '@wordpress/element';
 import { __ } from '@wordpress/i18n';
 import apiFetch from '@wordpress/api-fetch';
 import {
+	Button,
 	Card,
 	CardHeader,
 	CardBody,
@@ -86,9 +87,48 @@ const TransactionPage = () => {
 	const [transaction, setTransaction] = useState(null);
 	const [loading, setLoading] = useState(true);
 	const [error, setError] = useState(null);
+	const [syncing, setSyncing] = useState(false);
+	const [syncNotice, setSyncNotice] = useState(null);
 
 	const params = new URLSearchParams(window.location.search);
 	const transactionId = params.get('transaction_id');
+
+	const handleSyncMollie = () => {
+		setSyncing(true);
+		setSyncNotice(null);
+
+		apiFetch({
+			path: `/fair-payment/v1/transactions/${transactionId}/sync-mollie`,
+			method: 'POST',
+		})
+			.then((data) => {
+				setTransaction(data);
+				setSyncNotice({
+					status: data.mollie_fee !== null ? 'success' : 'warning',
+					message:
+						data.mollie_fee !== null
+							? __(
+									'Synced with Mollie successfully.',
+									'fair-payment'
+							  )
+							: __(
+									'Mollie responded but the settlement fee is not available yet. Try again after the payment is settled.',
+									'fair-payment'
+							  ),
+				});
+			})
+			.catch((err) => {
+				setSyncNotice({
+					status: 'error',
+					message:
+						err.message ||
+						__('Failed to sync with Mollie.', 'fair-payment'),
+				});
+			})
+			.finally(() => {
+				setSyncing(false);
+			});
+	};
 
 	useEffect(() => {
 		if (!transactionId) {
@@ -161,10 +201,38 @@ const TransactionPage = () => {
 			<VStack spacing={4}>
 				<Card>
 					<CardHeader>
-						<Heading level={4}>
-							{__('Payment Details', 'fair-payment')}
-						</Heading>
+						<HStack justify="space-between" alignment="center">
+							<Heading level={4}>
+								{__('Payment Details', 'fair-payment')}
+							</Heading>
+							{t.mollie_payment_id && (
+								<Button
+									variant="secondary"
+									onClick={handleSyncMollie}
+									isBusy={syncing}
+									disabled={syncing}
+								>
+									{syncing
+										? __('Syncing…', 'fair-payment')
+										: __(
+												'Sync with Mollie',
+												'fair-payment'
+										  )}
+								</Button>
+							)}
+						</HStack>
 					</CardHeader>
+					{syncNotice && (
+						<CardBody style={{ paddingBottom: 0 }}>
+							<Notice
+								status={syncNotice.status}
+								isDismissible
+								onRemove={() => setSyncNotice(null)}
+							>
+								{syncNotice.message}
+							</Notice>
+						</CardBody>
+					)}
 					<CardBody>
 						<table>
 							<tbody>
