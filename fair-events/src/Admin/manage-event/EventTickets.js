@@ -44,6 +44,7 @@ export default function EventTickets({
 	const [saving, setSaving] = useState(false);
 	const [error, setError] = useState(null);
 	const [success, setSuccess] = useState(null);
+	const [pricingRules, setPricingRules] = useState([]);
 
 	const hasAdvancedTickets = ticketTypes.length > 0 || salePeriods.length > 0;
 
@@ -105,6 +106,15 @@ export default function EventTickets({
 			loadTickets();
 		}
 	}, [initialData, loadTickets, populateFromData]);
+
+	useEffect(() => {
+		if (!eventDateId) return;
+		apiFetch({
+			path: `/fair-events/v1/event-dates/${eventDateId}/group-pricing-rules`,
+		})
+			.then((rules) => setPricingRules(rules || []))
+			.catch(() => setPricingRules([]));
+	}, [eventDateId]);
 
 	useEffect(() => {
 		if (onSaveRef) {
@@ -358,6 +368,21 @@ export default function EventTickets({
 		}).format(value);
 	};
 
+	const applyDiscount = (basePrice, type, value) => {
+		const discounted =
+			type === 'percentage'
+				? basePrice * (1 - value / 100)
+				: basePrice - value;
+		return Math.max(0, discounted);
+	};
+
+	const formatDiscount = (type, value) => {
+		if (type === 'percentage') {
+			return `${value}%`;
+		}
+		return formatCurrency(value);
+	};
+
 	if (loading) {
 		return (
 			<Card style={{ marginTop: '16px' }}>
@@ -417,6 +442,45 @@ export default function EventTickets({
 										)
 								  )}
 						</p>
+						{signupPrice.trim() !== '' &&
+							pricingRules.length > 0 && (
+								<ul
+									style={{
+										margin: '8px 0 0',
+										paddingLeft: '20px',
+									}}
+								>
+									{pricingRules.map((rule) => {
+										const base =
+											parseFloat(signupPrice) || 0;
+										const finalPrice = applyDiscount(
+											base,
+											rule.discount_type,
+											parseFloat(rule.discount_value) || 0
+										);
+										return (
+											<li key={rule.id}>
+												{sprintf(
+													/* translators: 1: group name, 2: discount, 3: final price */
+													__(
+														'%1$s: %2$s discount → %3$s',
+														'fair-events'
+													),
+													rule.group_name ||
+														`#${rule.group_id}`,
+													formatDiscount(
+														rule.discount_type,
+														parseFloat(
+															rule.discount_value
+														) || 0
+													),
+													formatCurrency(finalPrice)
+												)}
+											</li>
+										);
+									})}
+								</ul>
+							)}
 					</CardBody>
 				</Card>
 			)}
