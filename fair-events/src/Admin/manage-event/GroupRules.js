@@ -65,8 +65,6 @@ export default function GroupRules({ eventDateId }) {
 	const [loading, setLoading] = useState(true);
 	const [error, setError] = useState(null);
 	const [success, setSuccess] = useState(null);
-	const [signupPrice, setSignupPrice] = useState('');
-	const [savingSignupPrice, setSavingSignupPrice] = useState(false);
 
 	// Add form state
 	const [selectedGroupId, setSelectedGroupId] = useState('');
@@ -97,8 +95,8 @@ export default function GroupRules({ eventDateId }) {
 		setError(null);
 
 		try {
-			const [pricingData, permissionData, groupsData, eventDateData] =
-				await Promise.all([
+			const [pricingData, permissionData, groupsData] = await Promise.all(
+				[
 					apiFetch({
 						path: `/fair-events/v1/event-dates/${eventDateId}/group-pricing-rules`,
 					}),
@@ -108,21 +106,12 @@ export default function GroupRules({ eventDateId }) {
 					apiFetch({
 						path: '/fair-audience/v1/groups',
 					}),
-					apiFetch({
-						path: `/fair-events/v1/event-dates/${eventDateId}`,
-					}),
-				]);
+				]
+			);
 
 			setPricingRules(pricingData);
 			setPermissionRules(permissionData);
 			setGroups(groupsData);
-			setSignupPrice(
-				eventDateData &&
-					eventDateData.signup_price !== null &&
-					eventDateData.signup_price !== undefined
-					? String(eventDateData.signup_price)
-					: ''
-			);
 		} catch (err) {
 			setError(
 				err.message || __('Failed to load group rules.', 'fair-events')
@@ -156,31 +145,6 @@ export default function GroupRules({ eventDateId }) {
 	});
 
 	const availableGroups = groups.filter((g) => !groupIdsWithRules.has(g.id));
-
-	const handleSaveSignupPrice = async () => {
-		setSavingSignupPrice(true);
-		setError(null);
-		setSuccess(null);
-		try {
-			const trimmed = signupPrice.trim();
-			const payload =
-				trimmed === ''
-					? { signup_price: null }
-					: { signup_price: parseFloat(trimmed) };
-			await apiFetch({
-				path: `/fair-events/v1/event-dates/${eventDateId}`,
-				method: 'PUT',
-				data: payload,
-			});
-			setSuccess(__('Signup price saved.', 'fair-events'));
-		} catch (err) {
-			setError(
-				err.message || __('Failed to save signup price.', 'fair-events')
-			);
-		} finally {
-			setSavingSignupPrice(false);
-		}
-	};
 
 	const handleAdd = async () => {
 		if (!selectedGroupId) return;
@@ -420,37 +384,6 @@ export default function GroupRules({ eventDateId }) {
 
 					{!loading && (
 						<>
-							<Card>
-								<CardBody>
-									<HStack alignment="bottom" spacing={3} wrap>
-										<TextControl
-											label={__(
-												'Signup price (EUR)',
-												'fair-events'
-											)}
-											help={__(
-												'Leave empty for free signup. Group discounts below apply to this base price.',
-												'fair-events'
-											)}
-											type="number"
-											min="0"
-											step="0.01"
-											value={signupPrice}
-											onChange={setSignupPrice}
-											__nextHasNoMarginBottom
-										/>
-										<Button
-											variant="secondary"
-											isBusy={savingSignupPrice}
-											disabled={savingSignupPrice}
-											onClick={handleSaveSignupPrice}
-										>
-											{__('Save price', 'fair-events')}
-										</Button>
-									</HStack>
-								</CardBody>
-							</Card>
-
 							{groupsWithRules.length > 0 &&
 								groupsWithRules.map((entry) => (
 									<Card key={entry.groupId}>

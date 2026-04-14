@@ -21,7 +21,7 @@ import {
 	__experimentalVStack as VStack,
 	__experimentalHStack as HStack,
 } from '@wordpress/components';
-import { __ } from '@wordpress/i18n';
+import { __, sprintf } from '@wordpress/i18n';
 import apiFetch from '@wordpress/api-fetch';
 
 export default function EventTickets({
@@ -31,6 +31,7 @@ export default function EventTickets({
 	onDataRef,
 }) {
 	const [capacity, setCapacity] = useState('');
+	const [signupPrice, setSignupPrice] = useState('');
 	const [endDatetime, setEndDatetime] = useState('');
 	const [ticketTypes, setTicketTypes] = useState([]);
 	const [salePeriods, setSalePeriods] = useState([]);
@@ -44,10 +45,17 @@ export default function EventTickets({
 	const [error, setError] = useState(null);
 	const [success, setSuccess] = useState(null);
 
+	const hasAdvancedTickets = ticketTypes.length > 0 || salePeriods.length > 0;
+
 	const populateFromData = useCallback((data) => {
 		setCapacity(
 			data.capacity !== null && data.capacity !== undefined
 				? String(data.capacity)
+				: ''
+		);
+		setSignupPrice(
+			data.signup_price !== null && data.signup_price !== undefined
+				? String(data.signup_price)
 				: ''
 		);
 		if (data.end_datetime) {
@@ -123,6 +131,11 @@ export default function EventTickets({
 				});
 				return {
 					capacity: capacity !== '' ? parseInt(capacity, 10) : null,
+					signup_price: hasAdvancedTickets
+						? null
+						: signupPrice.trim() === ''
+						? null
+						: parseFloat(signupPrice),
 					ticket_types: ticketTypes.map((t, i) => ({
 						...t,
 						sort_order: i,
@@ -162,6 +175,11 @@ export default function EventTickets({
 				method: 'PUT',
 				data: {
 					capacity: capacity !== '' ? parseInt(capacity, 10) : null,
+					signup_price: hasAdvancedTickets
+						? null
+						: signupPrice.trim() === ''
+						? null
+						: parseFloat(signupPrice),
 					ticket_types: ticketTypes.map((t, i) => ({
 						...t,
 						sort_order: i,
@@ -178,6 +196,11 @@ export default function EventTickets({
 			setCapacity(
 				data.capacity !== null && data.capacity !== undefined
 					? String(data.capacity)
+					: ''
+			);
+			setSignupPrice(
+				data.signup_price !== null && data.signup_price !== undefined
+					? String(data.signup_price)
 					: ''
 			);
 			setTicketTypes(data.ticket_types || []);
@@ -371,6 +394,33 @@ export default function EventTickets({
 				</Notice>
 			)}
 
+			{!hasAdvancedTickets && (
+				<Card>
+					<CardHeader>
+						<strong>{__('Signup price', 'fair-events')}</strong>
+					</CardHeader>
+					<CardBody>
+						<p>
+							{signupPrice.trim() === ''
+								? __(
+										'Free signup. Enter a price below to charge for this event, or switch to advanced ticketing for multiple ticket types.',
+										'fair-events'
+								  )
+								: sprintf(
+										/* translators: %s: formatted price */
+										__(
+											'Signup price: %s. Group discounts configured in the Groups tab still apply.',
+											'fair-events'
+										),
+										formatCurrency(
+											parseFloat(signupPrice) || 0
+										)
+								  )}
+						</p>
+					</CardBody>
+				</Card>
+			)}
+
 			{ticketTypes.length > 0 && salePeriods.length > 0 && (
 				<Card>
 					<CardHeader>
@@ -464,31 +514,40 @@ export default function EventTickets({
 									'fair-events'
 								)}
 							/>
-							{ticketTypes.length === 0 &&
-							salePeriods.length === 0 ? (
+							{!hasAdvancedTickets ? (
 								<VStack spacing={3}>
+									<TextControl
+										label={__(
+											'Signup price (EUR)',
+											'fair-events'
+										)}
+										help={__(
+											'Leave empty for free signup. Group discounts (Groups tab) apply to this base price.',
+											'fair-events'
+										)}
+										type="number"
+										min="0"
+										step="0.01"
+										value={signupPrice}
+										onChange={setSignupPrice}
+										__nextHasNoMarginBottom
+									/>
 									<p>
 										{__(
-											'Add ticket types and sale periods to configure pricing.',
+											'Need multiple ticket types or time-based pricing? Switch to advanced ticketing below.',
 											'fair-events'
 										)}
 									</p>
 									<HStack spacing={2}>
 										<Button
 											variant="secondary"
-											onClick={addTicketType}
+											onClick={() => {
+												addTicketType();
+												addSalePeriod();
+											}}
 										>
 											{__(
-												'+ Add Ticket Type',
-												'fair-events'
-											)}
-										</Button>
-										<Button
-											variant="secondary"
-											onClick={addSalePeriod}
-										>
-											{__(
-												'+ Add Sale Period',
+												'Switch to advanced ticketing',
 												'fair-events'
 											)}
 										</Button>
