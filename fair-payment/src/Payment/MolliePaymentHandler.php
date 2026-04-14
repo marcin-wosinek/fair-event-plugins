@@ -300,6 +300,32 @@ class MolliePaymentHandler {
 	}
 
 	/**
+	 * Iterate balance transactions on the primary balance (newest first).
+	 *
+	 * Used to look up the real Mollie processing fee charged on a payment, which is
+	 * exposed via BalanceTransaction.deductions rather than on the Payment object.
+	 *
+	 * @param bool $testmode Whether to query the test balance.
+	 * @return \Mollie\Api\Resources\LazyCollection
+	 * @throws \Exception If the balance transactions endpoint is unreachable.
+	 */
+	public function iterate_primary_balance_transactions( $testmode = false ) {
+		$parameters = $testmode ? array( 'testmode' => 'true' ) : array();
+
+		try {
+			return $this->mollie->balanceTransactions->iteratorForPrimary( $parameters );
+		} catch ( ApiException $e ) {
+			throw new \Exception(
+				sprintf(
+					/* translators: %s: error message */
+					__( 'Failed to list balance transactions: %s', 'fair-payment' ),
+					$e->getMessage()
+				)
+			);
+		}
+	}
+
+	/**
 	 * Check if API is configured
 	 *
 	 * Checks if either OAuth connection or API keys are configured.

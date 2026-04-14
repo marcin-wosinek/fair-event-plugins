@@ -300,11 +300,14 @@ class TransactionAPI {
 				return $updated;
 			}
 
-			// Capture Mollie fee whenever settlement data is available (covers forced syncs too).
+			// Capture Mollie fee from balance transactions when paid.
 			if ( 'paid' === $payment->status ) {
-				self::capture_mollie_fee( $payment, $transaction );
+				$fee_debug           = self::capture_mollie_fee( $payment, $transaction );
 				$updated             = Transaction::get_by_id( $transaction_id );
-				$updated->sync_debug = self::build_mollie_debug( $payment );
+				$updated->sync_debug = array_merge(
+					self::build_mollie_debug( $payment ),
+					array( 'fee_lookup' => $fee_debug )
+				);
 				return $updated;
 			}
 
@@ -359,31 +362,63 @@ class TransactionAPI {
 	}
 
 	/**
-	 * Capture Mollie processing fee from a paid payment
+	 * Capture Mollie processing fee from a paid payment.
 	 *
-	 * Calculates the Mollie fee as: amount - settlementAmount - application_fee.
-	 * Only stores the fee if settlementAmount is available and the calculated fee is non-negative.
+	 * Reads the real fee from the primary balance transaction's `deductions` field,
+	 * which is Mollie's authoritative source for per-payment processing fees. The
+	 * settlementAmount on the Payment object is gross (pre-fee) for same-currency
+	 * accounts and cannot be used to derive the fee.
 	 *
 	 * @param object $payment Mollie payment object.
 	 * @param object $transaction Transaction from database.
-	 * @return void
+	 * @return array Debug details about the lookup, for surfacing in the UI.
 	 */
 	private static function capture_mollie_fee( $payment, $transaction ) {
-		// phpcs:ignore WordPress.NamingConventions.ValidVariableName.UsedPropertyNotSnakeCase -- Mollie API property name.
-		if ( empty( $payment->settlementAmount ) ) {
-			return;
+		$debug = array(
+			'source'         => null,
+			'scanned'        => 0,
+			'match_found'    => false,
+			'deductions'     => null,
+			'result_amount'  => null,
+			'initial_amount' => null,
+			'error'          => null,
+		);
+
+		try {
+			$handler  = new MolliePaymentHandler();
+			$iterator = $handler->iterate_primary_balance_transactions( ! empty( $transaction->testmode ) );
+
+			$max_scan = 2000;
+			foreach ( $iterator as $txn ) {
+				++$debug['scanned'];
+
+				if ( isset( $txn->context->paymentId ) && $txn->context->paymentId === $payment->id ) {
+					$debug['match_found']    = true;
+					$debug['deductions']     = isset( $txn->deductions ) ? (array) $txn->deductions : null;
+					$debug['result_amount']  = isset( $txn->resultAmount ) ? (array) $txn->resultAmount : null;
+					$debug['initial_amount'] = isset( $txn->initialAmount ) ? (array) $txn->initialAmount : null;
+
+					if ( isset( $txn->deductions->value ) ) {
+						$fee = abs( round( (float) $txn->deductions->value, 2 ) );
+						Transaction::update_mollie_fee( $transaction->mollie_payment_id, $fee );
+						$debug['source'] = 'balance_transaction';
+					}
+
+					return $debug;
+				}
+
+				if ( $debug['scanned'] >= $max_scan ) {
+					$debug['error'] = sprintf( 'max_scan_reached_%d', $max_scan );
+					break;
+				}
+			}
+		} catch ( \Exception $e ) {
+			$debug['error'] = $e->getMessage();
+			// phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
+			error_log( 'Fair Payment balance lookup error: ' . $e->getMessage() );
 		}
 
-		$amount = (float) $payment->amount->value;
-		// phpcs:ignore WordPress.NamingConventions.ValidVariableName.UsedPropertyNotSnakeCase -- Mollie API property name.
-		$settlement_amount = (float) $payment->settlementAmount->value;
-		$application_fee   = (float) ( $transaction->application_fee ?? 0 );
-
-		$mollie_fee = round( $amount - $settlement_amount - $application_fee, 2 );
-
-		if ( $mollie_fee >= 0 ) {
-			Transaction::update_mollie_fee( $transaction->mollie_payment_id, $mollie_fee );
-		}
+		return $debug;
 	}
 
 	/**
