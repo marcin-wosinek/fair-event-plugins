@@ -422,7 +422,7 @@ const TransactionsApp = () => {
 										<th>
 											{__('Description', 'fair-payment')}
 										</th>
-										<th>{__('User', 'fair-payment')}</th>
+										<th>{__('Person', 'fair-payment')}</th>
 										{sortableHeader(
 											'created_at',
 											__('Date', 'fair-payment')
@@ -525,7 +525,23 @@ const TransactionsApp = () => {
 												</span>
 											</td>
 											<td>{t.description}</td>
-											<td>{t.user_name || '-'}</td>
+											<td>
+												{t.participant ? (
+													<a
+														href={
+															t.participant
+																.admin_url
+														}
+													>
+														{t.participant.name ||
+															t.participant
+																.email ||
+															`#${t.participant.id}`}
+													</a>
+												) : (
+													t.user_name || '-'
+												)}
+											</td>
 											<td>{t.created_at}</td>
 										</tr>
 									))}

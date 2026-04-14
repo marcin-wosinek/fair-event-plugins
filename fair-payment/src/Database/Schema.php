@@ -80,6 +80,7 @@ class Schema {
 			post_id bigint(20) UNSIGNED DEFAULT NULL,
 			event_date_id bigint(20) UNSIGNED DEFAULT NULL,
 			user_id bigint(20) UNSIGNED DEFAULT NULL,
+			participant_id bigint(20) UNSIGNED DEFAULT NULL,
 			amount decimal(10,2) NOT NULL,
 			currency varchar(3) NOT NULL DEFAULT 'EUR',
 			application_fee decimal(10,2) DEFAULT NULL,
@@ -98,6 +99,7 @@ class Schema {
 			KEY mollie_payment_id (mollie_payment_id),
 			KEY status (status),
 			KEY user_id (user_id),
+			KEY participant_id (participant_id),
 			KEY post_id (post_id),
 			KEY event_date_id (event_date_id)
 		) $charset_collate;";
@@ -131,9 +133,10 @@ class Schema {
 		self::migrate_to_v12();
 		self::migrate_to_v13();
 		self::migrate_to_v14();
+		self::migrate_to_v15();
 
 		// Store database version for future migrations.
-		update_option( 'fair_payment_db_version', '14.0' );
+		update_option( 'fair_payment_db_version', '15.0' );
 	}
 
 	/**
@@ -820,6 +823,59 @@ class Schema {
 					$entries_table
 				)
 			);
+		}
+	}
+
+	/**
+	 * Migrate database from v14.0 to v15.0
+	 *
+	 * Adds participant_id column to transactions to link transactions to fair-audience participants.
+	 * The user_id column is kept as a fallback alternative.
+	 *
+	 * @return void
+	 */
+	public static function migrate_to_v15() {
+		global $wpdb;
+
+		$current_version = get_option( 'fair_payment_db_version', '1.0' );
+
+		if ( version_compare( $current_version, '15.0', '<' ) ) {
+			$table_name = self::get_payments_table_name();
+
+			// Check if participant_id column already exists.
+			// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+			$column_exists = $wpdb->get_results(
+				$wpdb->prepare(
+					'SHOW COLUMNS FROM %i LIKE %s',
+					$table_name,
+					'participant_id'
+				)
+			);
+
+			// Add participant_id column if it doesn't exist.
+			if ( empty( $column_exists ) ) {
+				// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.DirectDatabaseQuery.SchemaChange
+				$wpdb->query(
+					$wpdb->prepare(
+						'ALTER TABLE %i ADD COLUMN participant_id bigint(20) UNSIGNED DEFAULT NULL AFTER user_id',
+						$table_name
+					)
+				);
+
+				// Add index on participant_id.
+				// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.DirectDatabaseQuery.SchemaChange
+				$wpdb->query(
+					$wpdb->prepare(
+						'ALTER TABLE %i ADD KEY participant_id (participant_id)',
+						$table_name
+					)
+				);
+			}
+
+			// Trigger backfill hook so fair-audience (or any listener) can populate participant_id
+			// from existing user_id values. Listeners should be idempotent (only update rows where
+			// participant_id IS NULL).
+			do_action( 'fair_payment_backfill_participant_ids' );
 		}
 	}
 

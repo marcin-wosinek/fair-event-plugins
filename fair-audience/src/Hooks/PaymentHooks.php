@@ -11,6 +11,7 @@ namespace FairAudience\Hooks;
 
 use FairAudience\Database\FeePaymentRepository;
 use FairAudience\Database\FeeAuditLogRepository;
+use FairAudience\Database\ParticipantRepository;
 
 defined( 'WPINC' ) || die;
 
@@ -25,6 +26,106 @@ class PaymentHooks {
 	public static function init() {
 		add_action( 'fair_payment_paid', array( static::class, 'handle_payment_paid' ), 10, 2 );
 		add_action( 'fair_payment_failed', array( static::class, 'handle_payment_failed' ), 10, 2 );
+		add_filter( 'fair_payment_resolve_participant_id', array( static::class, 'resolve_participant_id' ), 10, 2 );
+		add_filter( 'fair_payment_prepare_participant', array( static::class, 'prepare_participant' ), 10, 2 );
+		add_action( 'fair_payment_backfill_participant_ids', array( static::class, 'backfill_participant_ids' ) );
+	}
+
+	/**
+	 * Resolve a participant ID from transaction creation context.
+	 *
+	 * Resolution order: explicit metadata → email lookup → wp_user_id lookup.
+	 * Returns null when no participant matches; fair-payment then falls back
+	 * to storing only user_id on the transaction row.
+	 *
+	 * @param int|null $participant_id Current value (null if not yet resolved).
+	 * @param array    $context        Context: user_id, email, metadata.
+	 * @return int|null Participant ID or null.
+	 */
+	public static function resolve_participant_id( $participant_id, $context ) {
+		if ( null !== $participant_id ) {
+			return $participant_id;
+		}
+
+		$repository = new ParticipantRepository();
+
+		if ( ! empty( $context['metadata']['participant_id'] ) ) {
+			$participant = $repository->get_by_id( (int) $context['metadata']['participant_id'] );
+			if ( $participant ) {
+				return $participant->id;
+			}
+		}
+
+		if ( ! empty( $context['email'] ) ) {
+			$participant = $repository->get_by_email( $context['email'] );
+			if ( $participant ) {
+				return $participant->id;
+			}
+		}
+
+		if ( ! empty( $context['user_id'] ) ) {
+			$participant = $repository->get_by_user_id( (int) $context['user_id'] );
+			if ( $participant ) {
+				return $participant->id;
+			}
+		}
+
+		return null;
+	}
+
+	/**
+	 * Prepare a participant summary for API responses.
+	 *
+	 * @param array|null $prepared       Current value (null if not yet prepared).
+	 * @param int|null   $participant_id Participant ID.
+	 * @return array|null Summary with id, name, email, admin_url — or null.
+	 */
+	public static function prepare_participant( $prepared, $participant_id ) {
+		if ( null !== $prepared || empty( $participant_id ) ) {
+			return $prepared;
+		}
+
+		$repository  = new ParticipantRepository();
+		$participant = $repository->get_by_id( (int) $participant_id );
+
+		if ( ! $participant ) {
+			return null;
+		}
+
+		$full_name = trim( $participant->name . ' ' . $participant->surname );
+
+		return array(
+			'id'        => (int) $participant->id,
+			'name'      => $full_name,
+			'email'     => $participant->email,
+			'admin_url' => admin_url( 'admin.php?page=fair-audience-participant-detail&participant_id=' . (int) $participant->id ),
+		);
+	}
+
+	/**
+	 * Backfill participant_id on transactions that only have user_id.
+	 *
+	 * Triggered by fair-payment's v15 migration. Idempotent: only touches rows
+	 * where participant_id IS NULL AND user_id IS NOT NULL, matching against
+	 * the participants table by wp_user_id in a single UPDATE ... JOIN.
+	 */
+	public static function backfill_participant_ids() {
+		global $wpdb;
+
+		$transactions_table = $wpdb->prefix . 'fair_payment_transactions';
+		$participants_table = $wpdb->prefix . 'fair_audience_participants';
+
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+		$wpdb->query(
+			$wpdb->prepare(
+				'UPDATE %i AS t
+				INNER JOIN %i AS p ON p.wp_user_id = t.user_id
+				SET t.participant_id = p.id
+				WHERE t.participant_id IS NULL AND t.user_id IS NOT NULL',
+				$transactions_table,
+				$participants_table
+			)
+		);
 	}
 
 	/**

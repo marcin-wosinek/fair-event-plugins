@@ -444,12 +444,25 @@ const TransactionPage = () => {
 				<Card>
 					<CardHeader>
 						<Heading level={4}>
-							{__('User & Post', 'fair-payment')}
+							{__('Person & Post', 'fair-payment')}
 						</Heading>
 					</CardHeader>
 					<CardBody>
 						<table>
 							<tbody>
+								<DetailRow
+									label={__('Participant', 'fair-payment')}
+								>
+									{t.participant ? (
+										<a href={t.participant.admin_url}>
+											{t.participant.name ||
+												t.participant.email ||
+												`#${t.participant.id}`}
+										</a>
+									) : (
+										'-'
+									)}
+								</DetailRow>
 								<DetailRow label={__('User', 'fair-payment')}>
 									{t.user_id ? (
 										<a

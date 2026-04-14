@@ -153,6 +153,11 @@ class TransactionsController extends WP_REST_Controller {
 				}
 			}
 
+			$participant_id = isset( $transaction->participant_id ) && $transaction->participant_id
+				? (int) $transaction->participant_id
+				: null;
+			$participant    = apply_filters( 'fair_payment_prepare_participant', null, $participant_id );
+
 			$data[] = array(
 				'id'                => (int) $transaction->id,
 				'mollie_payment_id' => $transaction->mollie_payment_id ?? '',
@@ -165,6 +170,8 @@ class TransactionsController extends WP_REST_Controller {
 				'testmode'          => ! empty( $transaction->testmode ),
 				'description'       => $transaction->description ?? '',
 				'user_name'         => $user_name,
+				'participant_id'    => $participant_id,
+				'participant'       => $participant,
 				'created_at'        => $transaction->created_at ?? '',
 			);
 		}
@@ -325,6 +332,11 @@ class TransactionsController extends WP_REST_Controller {
 			);
 		}
 
+		$participant_id = isset( $transaction->participant_id ) && $transaction->participant_id
+			? (int) $transaction->participant_id
+			: null;
+		$participant    = apply_filters( 'fair_payment_prepare_participant', null, $participant_id );
+
 		$data = array(
 			'id'                   => (int) $transaction->id,
 			'mollie_payment_id'    => $transaction->mollie_payment_id ?? '',
@@ -333,6 +345,8 @@ class TransactionsController extends WP_REST_Controller {
 			'post_title'           => $post_title,
 			'user_id'              => $transaction->user_id ? (int) $transaction->user_id : null,
 			'user_name'            => $user_name,
+			'participant_id'       => $participant_id,
+			'participant'          => $participant,
 			'amount'               => (float) ( $transaction->amount ?? 0 ),
 			'currency'             => $transaction->currency ?? 'EUR',
 			'mollie_fee'           => null !== $transaction->mollie_fee ? (float) $transaction->mollie_fee : null,

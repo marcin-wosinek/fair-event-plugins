@@ -42,19 +42,37 @@ class TransactionAPI {
 
 		// 3. Parse arguments.
 		$defaults = array(
-			'currency'    => 'EUR',
-			'description' => '',
-			'post_id'     => null,
-			'user_id'     => get_current_user_id(),
-			'metadata'    => array(),
+			'currency'       => 'EUR',
+			'description'    => '',
+			'post_id'        => null,
+			'user_id'        => get_current_user_id(),
+			'participant_id' => null,
+			'email'          => null,
+			'metadata'       => array(),
 		);
 		$args     = wp_parse_args( $args, $defaults );
 
-		// 4. Prepare transaction data.
+		// 4. Resolve participant_id if not explicitly provided.
+		// fair-audience listens to this filter and resolves by email or user_id.
+		// user_id is kept regardless as a fallback link.
+		if ( null === $args['participant_id'] ) {
+			$args['participant_id'] = apply_filters(
+				'fair_payment_resolve_participant_id',
+				null,
+				array(
+					'user_id'  => $args['user_id'],
+					'email'    => $args['email'],
+					'metadata' => $args['metadata'],
+				)
+			);
+		}
+
+		// 5. Prepare transaction data.
 		$transaction_data = array(
 			'mollie_payment_id' => '', // Empty until payment initiated.
 			'post_id'           => $args['post_id'],
 			'user_id'           => $args['user_id'],
+			'participant_id'    => $args['participant_id'],
 			'amount'            => $total,
 			'currency'          => $args['currency'],
 			'status'            => 'draft',
@@ -68,7 +86,7 @@ class TransactionAPI {
 		// Allow filtering of transaction data before creation.
 		$transaction_data = apply_filters( 'fair_payment_before_create_transaction', $transaction_data );
 
-		// 5. Create transaction record.
+		// 6. Create transaction record.
 		$transaction_id = Transaction::create( $transaction_data );
 
 		if ( ! $transaction_id ) {
@@ -78,7 +96,7 @@ class TransactionAPI {
 			);
 		}
 
-		// 6. Create line items.
+		// 7. Create line items.
 		$line_items_created = LineItem::create_for_transaction( $transaction_id, $line_items );
 
 		if ( ! $line_items_created ) {
@@ -94,7 +112,7 @@ class TransactionAPI {
 			);
 		}
 
-		// 7. Fire action hook.
+		// 8. Fire action hook.
 		do_action( 'fair_payment_transaction_created', $transaction_id, $line_items, $args );
 
 		return $transaction_id;
@@ -150,7 +168,10 @@ class TransactionAPI {
 				: rest_url( 'fair-payment/v1/webhook' ),
 			'metadata'        => array_merge(
 				! empty( $transaction->metadata ) ? json_decode( $transaction->metadata, true ) : array(),
-				array( 'transaction_id' => $transaction_id )
+				array(
+					'transaction_id' => $transaction_id,
+					'participant_id' => ! empty( $transaction->participant_id ) ? (int) $transaction->participant_id : null,
+				)
 			),
 		);
 
