@@ -50,6 +50,10 @@ const customConfig = {
 			process.cwd(),
 			'src/Admin/groups/index.js',
 		),
+		'admin/group-detail/index': path.resolve(
+			process.cwd(),
+			'src/Admin/group-detail/index.js',
+		),
 		'admin/settings/index': path.resolve(
 			process.cwd(),
 			'src/Admin/settings/index.js',
