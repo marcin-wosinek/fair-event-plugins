@@ -232,21 +232,34 @@ const TransactionPage = () => {
 							>
 								{syncNotice.message}
 								{syncNotice.debug && (
-									<pre
-										style={{
-											marginTop: '8px',
-											padding: '8px',
-											background: '#f6f7f7',
-											fontSize: '11px',
-											overflowX: 'auto',
-										}}
-									>
-										{JSON.stringify(
-											syncNotice.debug,
-											null,
-											2
-										)}
-									</pre>
+									<details style={{ marginTop: '8px' }}>
+										<summary
+											style={{
+												cursor: 'pointer',
+												fontSize: '12px',
+											}}
+										>
+											{__(
+												'See Mollie response',
+												'fair-payment'
+											)}
+										</summary>
+										<pre
+											style={{
+												marginTop: '8px',
+												padding: '8px',
+												background: '#f6f7f7',
+												fontSize: '11px',
+												overflowX: 'auto',
+											}}
+										>
+											{JSON.stringify(
+												syncNotice.debug,
+												null,
+												2
+											)}
+										</pre>
+									</details>
 								)}
 							</Notice>
 						</CardBody>
