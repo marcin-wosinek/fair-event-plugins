@@ -465,6 +465,20 @@ export default function QuestionnaireResponses() {
 				<a href="admin.php?page=fair-audience-by-event">
 					&larr; {__('Back to Events', 'fair-audience')}
 				</a>
+				{' | '}
+				<a
+					href={`admin.php?page=fair-events-manage-event&event_date_id=${eventDateId}`}
+				>
+					{__('Event edit page', 'fair-audience')}
+				</a>
+				{postId && (
+					<>
+						{' | '}
+						<a href={`post.php?post=${postId}&action=edit`}>
+							{__('Event entry', 'fair-audience')}
+						</a>
+					</>
+				)}
 			</p>
 
 			<div
