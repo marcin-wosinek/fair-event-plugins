@@ -275,7 +275,7 @@ class Plugin {
 			array(
 				'client_id'       => MOLLIE_CLIENT_ID,
 				'state'           => $state,
-				'scope'           => 'payments.read payments.write refunds.read refunds.write organizations.read profiles.read profiles.write',
+				'scope'           => 'payments.read payments.write refunds.read refunds.write organizations.read profiles.read profiles.write balances.read',
 				'response_type'   => 'code',
 				'approval_prompt' => 'auto',
 				'redirect_uri'    => home_url( '/oauth/callback' ),

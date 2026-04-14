@@ -211,7 +211,7 @@ define('MOLLIE_CLIENT_SECRET', 'xxxxxxxxxxxxx');</pre>
 					<strong><?php esc_html_e( 'Create OAuth Application', 'fair-platform' ); ?></strong><br>
 					<?php esc_html_e( 'In Mollie Dashboard → Developers → Your Apps', 'fair-platform' ); ?><br>
 					<?php esc_html_e( 'Redirect URI:', 'fair-platform' ); ?> <code><?php echo esc_html( home_url( '/oauth/callback' ) ); ?></code><br>
-					<?php esc_html_e( 'Scopes:', 'fair-platform' ); ?> <code>payments.read payments.write refunds.read refunds.write organizations.read profiles.read</code>
+					<?php esc_html_e( 'Scopes:', 'fair-platform' ); ?> <code>payments.read payments.write refunds.read refunds.write organizations.read profiles.read profiles.write balances.read</code>
 				</li>
 				<li>
 					<strong><?php esc_html_e( 'Add Credentials to wp-config.php', 'fair-platform' ); ?></strong>
