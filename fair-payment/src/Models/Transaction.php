@@ -83,6 +83,72 @@ class Transaction {
 	}
 
 	/**
+	 * Import a transaction from an external source.
+	 *
+	 * Creates a new transaction record or updates an existing one matched by
+	 * mollie_payment_id. Preserves fees, status, mode, description and the
+	 * original created_at timestamp so the source and target sites stay in sync.
+	 *
+	 * @param array $data Transaction data from an export file.
+	 * @return string 'created', 'updated', or 'skipped'.
+	 */
+	public static function import( $data ) {
+		global $wpdb;
+		$table_name = \FairPayment\Database\Schema::get_payments_table_name();
+
+		$mollie_payment_id = isset( $data['mollie_payment_id'] ) ? (string) $data['mollie_payment_id'] : '';
+
+		if ( '' === $mollie_payment_id ) {
+			return 'skipped';
+		}
+
+		$metadata = array();
+		if ( ! empty( $data['source_domain'] ) ) {
+			$metadata['source_domain'] = (string) $data['source_domain'];
+		}
+		if ( ! empty( $data['detail_url'] ) ) {
+			$metadata['detail_url'] = (string) $data['detail_url'];
+		}
+
+		$row = array(
+			'amount'          => isset( $data['amount'] ) ? (float) $data['amount'] : 0,
+			'currency'        => ! empty( $data['currency'] ) ? (string) $data['currency'] : 'EUR',
+			'mollie_fee'      => isset( $data['mollie_fee'] ) && null !== $data['mollie_fee'] ? (float) $data['mollie_fee'] : null,
+			'application_fee' => isset( $data['application_fee'] ) && null !== $data['application_fee'] ? (float) $data['application_fee'] : null,
+			'status'          => ! empty( $data['status'] ) ? (string) $data['status'] : 'paid',
+			'testmode'        => ! empty( $data['testmode'] ) ? 1 : 0,
+			'description'     => isset( $data['description'] ) ? (string) $data['description'] : '',
+			'metadata'        => wp_json_encode( $metadata ),
+		);
+
+		$existing = self::get_by_mollie_id( $mollie_payment_id );
+
+		if ( $existing ) {
+			$wpdb->update(
+				$table_name,
+				$row,
+				array( 'mollie_payment_id' => $mollie_payment_id ),
+				array( '%f', '%s', '%f', '%f', '%s', '%d', '%s', '%s' ),
+				array( '%s' )
+			);
+			return 'updated';
+		}
+
+		$row['mollie_payment_id'] = $mollie_payment_id;
+
+		$formats = array( '%f', '%s', '%f', '%f', '%s', '%d', '%s', '%s', '%s' );
+
+		if ( ! empty( $data['created_at'] ) ) {
+			$row['created_at'] = (string) $data['created_at'];
+			$formats[]         = '%s';
+		}
+
+		$inserted = $wpdb->insert( $table_name, $row, $formats );
+
+		return $inserted ? 'created' : 'skipped';
+	}
+
+	/**
 	 * Update transaction status
 	 *
 	 * @param string $mollie_payment_id Mollie payment ID.

@@ -174,6 +174,8 @@ const TransactionsApp = () => {
 				currency: t.currency,
 				mollie_fee: t.mollie_fee,
 				application_fee: t.application_fee,
+				status: t.status,
+				testmode: t.testmode,
 				description: t.description,
 				created_at: t.created_at,
 				mollie_payment_id: t.mollie_payment_id,
@@ -225,54 +227,9 @@ const TransactionsApp = () => {
 				);
 			}
 
-			const entries = imported
-				.filter((t) => t.amount && t.created_at)
-				.map((t) => {
-					const entryDate = t.created_at.split(' ')[0];
-					const feeParts = [];
-					if (t.mollie_fee !== null && t.mollie_fee !== undefined) {
-						feeParts.push(
-							`Mollie fee: ${Number(t.mollie_fee).toFixed(2)} ${
-								t.currency || 'EUR'
-							}`
-						);
-					}
-					if (
-						t.application_fee !== null &&
-						t.application_fee !== undefined
-					) {
-						feeParts.push(
-							`App fee: ${Number(t.application_fee).toFixed(2)} ${
-								t.currency || 'EUR'
-							}`
-						);
-					}
-					const feeInfo =
-						feeParts.length > 0 ? ` (${feeParts.join(', ')})` : '';
-					const sourceInfo = t.source_domain
-						? ` [${t.source_domain}]`
-						: '';
-					const urlInfo = t.detail_url ? ` ${t.detail_url}` : '';
+			const toImport = imported.filter((t) => t.mollie_payment_id);
 
-					const description = `${
-						t.description || ''
-					}${feeInfo}${sourceInfo}${urlInfo}`.trim();
-
-					const refId =
-						t.mollie_payment_id ||
-						`amount_${t.amount}_${entryDate}`;
-					const refDomain = t.source_domain || 'unknown';
-
-					return {
-						amount: Math.abs(t.amount),
-						entry_type: 'income',
-						entry_date: entryDate,
-						description,
-						external_reference: `mollie_${refDomain}_${refId}`,
-					};
-				});
-
-			if (entries.length === 0) {
+			if (toImport.length === 0) {
 				throw new Error(
 					__(
 						'No valid transactions found in the file.',
@@ -282,15 +239,15 @@ const TransactionsApp = () => {
 			}
 
 			const response = await apiFetch({
-				path: '/fair-payment/v1/financial-entries/import',
+				path: '/fair-payment/v1/transactions/import',
 				method: 'POST',
 				data: {
-					entries,
-					import_source: file.name,
+					transactions: toImport,
 				},
 			});
 
 			setSuccess(response.message);
+			loadTransactions();
 		} catch (err) {
 			setError(
 				err.message ||

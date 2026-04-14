@@ -69,6 +69,24 @@ class TransactionsController extends WP_REST_Controller {
 
 		register_rest_route(
 			$this->namespace,
+			'/transactions/import',
+			array(
+				array(
+					'methods'             => WP_REST_Server::CREATABLE,
+					'callback'            => array( $this, 'import_items' ),
+					'permission_callback' => array( $this, 'get_items_permissions_check' ),
+					'args'                => array(
+						'transactions' => array(
+							'type'     => 'array',
+							'required' => true,
+						),
+					),
+				),
+			)
+		);
+
+		register_rest_route(
+			$this->namespace,
 			'/transactions/(?P<id>\d+)/sync-mollie',
 			array(
 				array(
@@ -181,6 +199,63 @@ class TransactionsController extends WP_REST_Controller {
 		}
 
 		return new WP_REST_Response( $this->prepare_transaction_response( $transaction ), 200 );
+	}
+
+	/**
+	 * Import transactions from an exported JSON payload.
+	 *
+	 * Creates new rows or updates existing ones matched by mollie_payment_id.
+	 *
+	 * @param WP_REST_Request $request Full data about the request.
+	 * @return WP_REST_Response|WP_Error
+	 */
+	public function import_items( $request ) {
+		$transactions = $request->get_param( 'transactions' );
+
+		if ( ! is_array( $transactions ) ) {
+			return new WP_Error(
+				'invalid_payload',
+				__( 'Expected an array of transactions.', 'fair-payment' ),
+				array( 'status' => 400 )
+			);
+		}
+
+		$created = 0;
+		$updated = 0;
+		$skipped = 0;
+
+		foreach ( $transactions as $transaction ) {
+			if ( ! is_array( $transaction ) ) {
+				++$skipped;
+				continue;
+			}
+
+			$result = Transaction::import( $transaction );
+
+			if ( 'created' === $result ) {
+				++$created;
+			} elseif ( 'updated' === $result ) {
+				++$updated;
+			} else {
+				++$skipped;
+			}
+		}
+
+		return new WP_REST_Response(
+			array(
+				'created' => $created,
+				'updated' => $updated,
+				'skipped' => $skipped,
+				'message' => sprintf(
+					/* translators: 1: created count, 2: updated count, 3: skipped count */
+					__( 'Imported %1$d new, updated %2$d, skipped %3$d transaction(s).', 'fair-payment' ),
+					$created,
+					$updated,
+					$skipped
+				),
+			),
+			200
+		);
 	}
 
 	/**
