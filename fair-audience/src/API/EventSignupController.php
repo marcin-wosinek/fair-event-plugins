@@ -463,34 +463,57 @@ class EventSignupController extends WP_REST_Controller {
 			);
 		}
 
-		// Resolve effective signup price (null = free, > 0 = paid).
+		$paid_response = $this->maybe_start_paid_signup( $event_id, $event_date_id, $participant, $existing, $user_id );
+		if ( null !== $paid_response ) {
+			return $paid_response;
+		}
+
+		// Free path: either no price configured, or the price resolved to 0 (e.g. 100% discount).
+		if ( $existing ) {
+			if ( $event_date_id ) {
+				$this->event_participant_repository->update_label_by_event_date( $event_date_id, $participant->id, 'signed_up' );
+			} else {
+				$this->event_participant_repository->update_label( $event_id, $participant->id, 'signed_up' );
+			}
+		} else {
+			$this->event_participant_repository->add_participant_to_event( $event_id, $participant->id, 'signed_up', $event_date_id );
+		}
+
+		return rest_ensure_response(
+			array(
+				'success' => true,
+				'message' => __( 'You have successfully signed up for the event!', 'fair-audience' ),
+				'status'  => 'signed_up',
+			)
+		);
+	}
+
+	/**
+	 * Start the paid-signup flow when the event date has a positive resolved
+	 * price for this participant. Returns null for the free path so the caller
+	 * can continue with its normal success response.
+	 *
+	 * On paid: upserts a `pending_payment` participant row holding a 15-minute
+	 * slot, creates a fair-payment transaction linked back to that row via
+	 * metadata + transaction_id, and returns the Mollie checkout URL.
+	 *
+	 * @param int                                        $event_id      Event post ID.
+	 * @param int                                        $event_date_id Event date ID.
+	 * @param \FairAudience\Models\Participant           $participant   Participant doing the signup.
+	 * @param \FairAudience\Models\EventParticipant|null $existing      Existing row for (event_date, participant), if any.
+	 * @param int                                        $user_id       Current WP user ID (0 for anonymous).
+	 * @return \WP_REST_Response|\WP_Error|null WP_REST_Response/WP_Error on paid path, null on free path.
+	 */
+	private function maybe_start_paid_signup( $event_id, $event_date_id, $participant, $existing, $user_id ) {
 		$final_price = null;
 		if ( $event_date_id && class_exists( \FairEvents\Services\EventSignupPricing::class ) ) {
 			$final_price = \FairEvents\Services\EventSignupPricing::resolve_price( $event_date_id, $participant->id );
 		}
 
-		// Free path: either no price configured, or the price resolved to 0 (e.g. 100% discount).
 		if ( null === $final_price || $final_price <= 0 ) {
-			if ( $existing ) {
-				if ( $event_date_id ) {
-					$this->event_participant_repository->update_label_by_event_date( $event_date_id, $participant->id, 'signed_up' );
-				} else {
-					$this->event_participant_repository->update_label( $event_id, $participant->id, 'signed_up' );
-				}
-			} else {
-				$this->event_participant_repository->add_participant_to_event( $event_id, $participant->id, 'signed_up', $event_date_id );
-			}
-
-			return rest_ensure_response(
-				array(
-					'success' => true,
-					'message' => __( 'You have successfully signed up for the event!', 'fair-audience' ),
-					'status'  => 'signed_up',
-				)
-			);
+			return null;
 		}
 
-		// Paid path. Requires fair-payment plugin.
 		if ( ! class_exists( \FairPayment\API\TransactionAPI::class ) ) {
 			return new WP_Error(
 				'payment_unavailable',
@@ -499,7 +522,6 @@ class EventSignupController extends WP_REST_Controller {
 			);
 		}
 
-		// Enforce capacity including unexpired pending_payment rows.
 		$event_date_row = \FairEvents\Models\EventDates::get_by_id( $event_date_id );
 		if ( $event_date_row && null !== $event_date_row->capacity ) {
 			$active_count       = $this->event_participant_repository->count_active_for_event_date( $event_date_id );
@@ -513,7 +535,6 @@ class EventSignupController extends WP_REST_Controller {
 			}
 		}
 
-		// Upsert the participant row as pending_payment with expiry.
 		$expires_at = gmdate( 'Y-m-d H:i:s', time() + 15 * MINUTE_IN_SECONDS );
 
 		if ( $existing ) {
@@ -535,7 +556,6 @@ class EventSignupController extends WP_REST_Controller {
 			$event_participant->save();
 		}
 
-		// Create fair-payment transaction.
 		$line_item_description = sprintf(
 			/* translators: %s: event title */
 			__( 'Signup for %s', 'fair-audience' ),
@@ -568,7 +588,6 @@ class EventSignupController extends WP_REST_Controller {
 			return $transaction_id;
 		}
 
-		// Remember the transaction on the event_participant row for webhook lookup.
 		$event_participant->transaction_id = (int) $transaction_id;
 		$event_participant->save();
 
@@ -739,6 +758,7 @@ class EventSignupController extends WP_REST_Controller {
 
 		// Check if participant already exists.
 		$participant = $this->participant_repository->get_by_email( $email );
+		$existing    = null;
 
 		if ( $participant ) {
 			// Participant exists - check if already signed up.
@@ -763,49 +783,45 @@ class EventSignupController extends WP_REST_Controller {
 					)
 				);
 			}
-
-			// Sign up existing participant.
-			if ( $existing ) {
-				if ( $event_date_id ) {
-					$this->event_participant_repository->update_label_by_event_date( $event_date_id, $participant->id, 'signed_up' );
-				} else {
-					$this->event_participant_repository->update_label( $event_id, $participant->id, 'signed_up' );
-				}
-			} else {
-				$this->event_participant_repository->add_participant_to_event( $event_id, $participant->id, 'signed_up', $event_date_id );
-			}
-
-			return rest_ensure_response(
+		} else {
+			// Create new participant before starting the paid or free flow so
+			// we always have a participant_id to link the signup/payment to.
+			$participant = new Participant();
+			$participant->populate(
 				array(
-					'success' => true,
-					'message' => __( 'You have successfully signed up for the event!', 'fair-audience' ),
-					'status'  => 'signed_up',
+					'name'          => $name,
+					'surname'       => $surname,
+					'email'         => $email,
+					'email_profile' => $keep_informed ? 'marketing' : 'minimal',
+					'status'        => $keep_informed ? 'pending' : 'confirmed',
 				)
 			);
+
+			if ( ! $participant->save() ) {
+				return new WP_Error(
+					'creation_failed',
+					__( 'Failed to process registration. Please try again.', 'fair-audience' ),
+					array( 'status' => 500 )
+				);
+			}
 		}
 
-		// Create new participant.
-		$participant = new Participant();
-		$participant->populate(
-			array(
-				'name'          => $name,
-				'surname'       => $surname,
-				'email'         => $email,
-				'email_profile' => $keep_informed ? 'marketing' : 'minimal',
-				'status'        => $keep_informed ? 'pending' : 'confirmed',
-			)
-		);
-
-		if ( ! $participant->save() ) {
-			return new WP_Error(
-				'creation_failed',
-				__( 'Failed to process registration. Please try again.', 'fair-audience' ),
-				array( 'status' => 500 )
-			);
+		// Paid path takes over when a positive price resolves for this participant.
+		$paid_response = $this->maybe_start_paid_signup( $event_id, $event_date_id, $participant, $existing, 0 );
+		if ( null !== $paid_response ) {
+			return $paid_response;
 		}
 
-		// Sign up for event.
-		$this->event_participant_repository->add_participant_to_event( $event_id, $participant->id, 'signed_up', $event_date_id );
+		// Free path: sign the participant up.
+		if ( $existing ) {
+			if ( $event_date_id ) {
+				$this->event_participant_repository->update_label_by_event_date( $event_date_id, $participant->id, 'signed_up' );
+			} else {
+				$this->event_participant_repository->update_label( $event_id, $participant->id, 'signed_up' );
+			}
+		} else {
+			$this->event_participant_repository->add_participant_to_event( $event_id, $participant->id, 'signed_up', $event_date_id );
+		}
 
 		// If keep_informed, send confirmation email.
 		if ( $keep_informed ) {
