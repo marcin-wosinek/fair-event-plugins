@@ -399,9 +399,23 @@ class TransactionAPI {
 					$debug['initial_amount'] = isset( $txn->initialAmount ) ? (array) $txn->initialAmount : null;
 
 					if ( isset( $txn->deductions->value ) ) {
-						$fee = abs( round( (float) $txn->deductions->value, 2 ) );
+						// BalanceTransaction.deductions is the total withheld from the merchant's
+						// balance, which includes both the Mollie processing fee and any
+						// Mollie Connect application fee. Subtract the application fee so we
+						// store only the Mollie processing fee.
+						$total_deductions = abs( (float) $txn->deductions->value );
+						$application_fee  = (float) ( $transaction->application_fee ?? 0 );
+						$fee              = round( $total_deductions - $application_fee, 2 );
+
+						if ( $fee < 0 ) {
+							$fee = 0.0;
+						}
+
 						Transaction::update_mollie_fee( $transaction->mollie_payment_id, $fee );
-						$debug['source'] = 'balance_transaction';
+						$debug['source']           = 'balance_transaction';
+						$debug['computed_fee']     = $fee;
+						$debug['total_deductions'] = $total_deductions;
+						$debug['application_fee']  = $application_fee;
 					}
 
 					return $debug;
