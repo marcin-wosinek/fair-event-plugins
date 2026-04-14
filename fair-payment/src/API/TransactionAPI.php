@@ -295,14 +295,20 @@ class TransactionAPI {
 				self::handle_payment_status_change( $payment, $transaction );
 
 				// Return fresh transaction from DB.
-				return Transaction::get_by_id( $transaction_id );
+				$updated             = Transaction::get_by_id( $transaction_id );
+				$updated->sync_debug = self::build_mollie_debug( $payment );
+				return $updated;
 			}
 
 			// Capture Mollie fee whenever settlement data is available (covers forced syncs too).
 			if ( 'paid' === $payment->status ) {
 				self::capture_mollie_fee( $payment, $transaction );
-				return Transaction::get_by_id( $transaction_id );
+				$updated             = Transaction::get_by_id( $transaction_id );
+				$updated->sync_debug = self::build_mollie_debug( $payment );
+				return $updated;
 			}
+
+			$transaction->sync_debug = self::build_mollie_debug( $payment );
 		} catch ( \Exception $e ) {
 			// phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
 			error_log( 'Fair Payment sync error: ' . $e->getMessage() );
@@ -316,6 +322,40 @@ class TransactionAPI {
 		}
 
 		return $transaction;
+	}
+
+	/**
+	 * Build a snapshot of the Mollie fields we rely on for diagnostics.
+	 *
+	 * @param object $payment Mollie payment object.
+	 * @return array
+	 */
+	private static function build_mollie_debug( $payment ) {
+		$to_amount = static function ( $field ) {
+			if ( empty( $field ) || ! isset( $field->value ) ) {
+				return null;
+			}
+			return array(
+				'value'    => $field->value,
+				'currency' => $field->currency ?? null,
+			);
+		};
+
+		return array(
+			'status'            => $payment->status ?? null,
+			// phpcs:ignore WordPress.NamingConventions.ValidVariableName.UsedPropertyNotSnakeCase -- Mollie API field.
+			'settlement_id'     => $payment->settlementId ?? null,
+			'amount'            => $to_amount( $payment->amount ?? null ),
+			// phpcs:ignore WordPress.NamingConventions.ValidVariableName.UsedPropertyNotSnakeCase -- Mollie API field.
+			'settlement_amount' => $to_amount( $payment->settlementAmount ?? null ),
+			'application_fee'   => isset( $payment->applicationFee->amount )
+				? $to_amount( $payment->applicationFee->amount )
+				: null,
+			// phpcs:ignore WordPress.NamingConventions.ValidVariableName.UsedPropertyNotSnakeCase -- Mollie API field.
+			'amount_remaining'  => $to_amount( $payment->amountRemaining ?? null ),
+			// phpcs:ignore WordPress.NamingConventions.ValidVariableName.UsedPropertyNotSnakeCase -- Mollie API field.
+			'amount_refunded'   => $to_amount( $payment->amountRefunded ?? null ),
+		);
 	}
 
 	/**

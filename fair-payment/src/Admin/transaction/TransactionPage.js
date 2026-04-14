@@ -112,9 +112,10 @@ const TransactionPage = () => {
 									'fair-payment'
 							  )
 							: __(
-									'Mollie responded but the settlement fee is not available yet. Try again after the payment is settled.',
+									'Mollie responded but the settlement fee could not be extracted. See Mollie response below.',
 									'fair-payment'
 							  ),
+					debug: data.sync_debug || null,
 				});
 			})
 			.catch((err) => {
@@ -230,6 +231,23 @@ const TransactionPage = () => {
 								onRemove={() => setSyncNotice(null)}
 							>
 								{syncNotice.message}
+								{syncNotice.debug && (
+									<pre
+										style={{
+											marginTop: '8px',
+											padding: '8px',
+											background: '#f6f7f7',
+											fontSize: '11px',
+											overflowX: 'auto',
+										}}
+									>
+										{JSON.stringify(
+											syncNotice.debug,
+											null,
+											2
+										)}
+									</pre>
+								)}
 							</Notice>
 						</CardBody>
 					)}

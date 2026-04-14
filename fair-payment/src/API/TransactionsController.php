@@ -275,6 +275,10 @@ class TransactionsController extends WP_REST_Controller {
 			'line_items'           => $line_item_data,
 		);
 
+		if ( isset( $transaction->sync_debug ) ) {
+			$data['sync_debug'] = $transaction->sync_debug;
+		}
+
 		return $data;
 	}
 
