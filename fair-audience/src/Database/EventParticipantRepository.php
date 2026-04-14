@@ -270,6 +270,87 @@ class EventParticipantRepository {
 	}
 
 	/**
+	 * Count active signups for an event date.
+	 *
+	 * Counts rows with label = 'signed_up' plus unexpired 'pending_payment' rows.
+	 * Used for capacity enforcement: a pending payment row holds a slot until
+	 * its payment_expires_at passes.
+	 *
+	 * @param int $event_date_id Event date ID.
+	 * @return int Number of active signups holding a slot.
+	 */
+	public function count_active_for_event_date( $event_date_id ) {
+		global $wpdb;
+
+		$table_name = $this->get_table_name();
+		$now        = current_time( 'mysql' );
+
+		$count = $wpdb->get_var(
+			$wpdb->prepare(
+				"SELECT COUNT(*) FROM %i
+				 WHERE event_date_id = %d
+				 AND (
+				     label = 'signed_up'
+				     OR ( label = 'pending_payment' AND payment_expires_at IS NOT NULL AND payment_expires_at > %s )
+				 )",
+				$table_name,
+				$event_date_id,
+				$now
+			)
+		);
+
+		return (int) $count;
+	}
+
+	/**
+	 * Find an event participant row by its fair-payment transaction ID.
+	 *
+	 * @param int $transaction_id fair-payment transaction ID.
+	 * @return EventParticipant|null Relationship or null.
+	 */
+	public function get_by_transaction_id( $transaction_id ) {
+		global $wpdb;
+
+		$table_name = $this->get_table_name();
+
+		$result = $wpdb->get_row(
+			$wpdb->prepare(
+				'SELECT * FROM %i WHERE transaction_id = %d LIMIT 1',
+				$table_name,
+				$transaction_id
+			),
+			ARRAY_A
+		);
+
+		return $result ? new EventParticipant( $result ) : null;
+	}
+
+	/**
+	 * Delete pending_payment rows whose payment_expires_at has passed.
+	 *
+	 * @return int Number of rows deleted.
+	 */
+	public function delete_expired_pending_payments() {
+		global $wpdb;
+
+		$table_name = $this->get_table_name();
+		$now        = current_time( 'mysql' );
+
+		$deleted = $wpdb->query(
+			$wpdb->prepare(
+				"DELETE FROM %i
+				 WHERE label = 'pending_payment'
+				 AND payment_expires_at IS NOT NULL
+				 AND payment_expires_at <= %s",
+				$table_name,
+				$now
+			)
+		);
+
+		return (int) $deleted;
+	}
+
+	/**
 	 * Get counts by label for an event date.
 	 *
 	 * @param int $event_date_id Event date ID.

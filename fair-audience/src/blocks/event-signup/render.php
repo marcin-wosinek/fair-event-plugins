@@ -99,6 +99,31 @@ if ( class_exists( EventDates::class ) ) {
 	}
 }
 
+// Resolve effective signup price for the current viewer so we can append it
+// to the button label. null = free, > 0 = paid.
+$signup_price = null;
+if ( $event_date_id && class_exists( \FairEvents\Services\EventSignupPricing::class ) ) {
+	$signup_price = \FairEvents\Services\EventSignupPricing::resolve_price(
+		(int) $event_date_id,
+		$participant ? (int) $participant->id : null
+	);
+}
+
+if ( null !== $signup_price && $signup_price > 0 ) {
+	$signup_button_text = sprintf(
+		/* translators: 1: base button label, 2: formatted price */
+		__( '%1$s — €%2$s', 'fair-audience' ),
+		$signup_button_text,
+		number_format_i18n( $signup_price, 2 )
+	);
+	$register_button_text = sprintf(
+		/* translators: 1: base button label, 2: formatted price */
+		__( '%1$s — €%2$s', 'fair-audience' ),
+		$register_button_text,
+		number_format_i18n( $signup_price, 2 )
+	);
+}
+
 // Get wrapper attributes.
 $wrapper_attributes = get_block_wrapper_attributes(
 	array(

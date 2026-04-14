@@ -122,6 +122,13 @@ class EventDates {
 	public $capacity;
 
 	/**
+	 * Signup price (null = free, 0.00+ = paid)
+	 *
+	 * @var float|null
+	 */
+	public $signup_price;
+
+	/**
 	 * Get event dates by event ID
 	 *
 	 * Checks the direct event_id column first (primary post), then falls back
@@ -190,6 +197,7 @@ class EventDates {
 		$event_dates->link_type       = $result->link_type ?? 'post';
 		$event_dates->theme_image_id  = isset( $result->theme_image_id ) && $result->theme_image_id ? (int) $result->theme_image_id : null;
 		$event_dates->capacity        = isset( $result->capacity ) && null !== $result->capacity ? (int) $result->capacity : null;
+		$event_dates->signup_price    = isset( $result->signup_price ) && null !== $result->signup_price ? (float) $result->signup_price : null;
 
 		return $event_dates;
 	}
@@ -705,6 +713,7 @@ class EventDates {
 			'link_type'       => '%s',
 			'theme_image_id'  => '%d',
 			'capacity'        => '%d',
+			'signup_price'    => '%f',
 		);
 
 		$update_data   = array();

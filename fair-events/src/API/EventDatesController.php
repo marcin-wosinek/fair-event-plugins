@@ -332,6 +332,11 @@ class EventDatesController extends WP_REST_Controller {
 				'type'        => array( 'integer', 'null' ),
 				'required'    => false,
 			),
+			'signup_price'   => array(
+				'description' => __( 'Signup price (null = free).', 'fair-events' ),
+				'type'        => array( 'number', 'null' ),
+				'required'    => false,
+			),
 			'event_id'       => array(
 				'description' => __( 'Linked post ID.', 'fair-events' ),
 				'type'        => array( 'integer', 'null' ),
@@ -753,6 +758,13 @@ class EventDatesController extends WP_REST_Controller {
 		$theme_image_id = $request->get_param( 'theme_image_id' );
 		if ( null !== $theme_image_id ) {
 			$update_data['theme_image_id'] = $theme_image_id ? absint( $theme_image_id ) : null;
+		}
+
+		if ( $request->has_param( 'signup_price' ) ) {
+			$raw_signup_price            = $request->get_param( 'signup_price' );
+			$update_data['signup_price'] = ( null === $raw_signup_price || '' === $raw_signup_price )
+				? null
+				: (float) $raw_signup_price;
 		}
 
 		$event_id = $request->get_param( 'event_id' );
@@ -1317,6 +1329,7 @@ class EventDatesController extends WP_REST_Controller {
 			'theme_image_url' => $event_date->theme_image_id
 				? wp_get_attachment_image_url( $event_date->theme_image_id, 'full' )
 				: null,
+			'signup_price'    => null !== $event_date->signup_price ? (float) $event_date->signup_price : null,
 		);
 
 		// Add exdates for master events.

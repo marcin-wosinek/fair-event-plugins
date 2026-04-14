@@ -453,33 +453,153 @@ class EventSignupController extends WP_REST_Controller {
 			);
 		}
 
-		if ( $existing ) {
-			if ( 'signed_up' === $existing->label ) {
-				return rest_ensure_response(
-					array(
-						'success' => true,
-						'message' => __( 'You are already signed up for this event.', 'fair-audience' ),
-						'status'  => 'already_signed_up',
-					)
-				);
+		if ( $existing && 'signed_up' === $existing->label ) {
+			return rest_ensure_response(
+				array(
+					'success' => true,
+					'message' => __( 'You are already signed up for this event.', 'fair-audience' ),
+					'status'  => 'already_signed_up',
+				)
+			);
+		}
+
+		// Resolve effective signup price (null = free, > 0 = paid).
+		$final_price = null;
+		if ( $event_date_id && class_exists( \FairEvents\Services\EventSignupPricing::class ) ) {
+			$final_price = \FairEvents\Services\EventSignupPricing::resolve_price( $event_date_id, $participant->id );
+		}
+
+		// Free path: either no price configured, or the price resolved to 0 (e.g. 100% discount).
+		if ( null === $final_price || $final_price <= 0 ) {
+			if ( $existing ) {
+				if ( $event_date_id ) {
+					$this->event_participant_repository->update_label_by_event_date( $event_date_id, $participant->id, 'signed_up' );
+				} else {
+					$this->event_participant_repository->update_label( $event_id, $participant->id, 'signed_up' );
+				}
+			} else {
+				$this->event_participant_repository->add_participant_to_event( $event_id, $participant->id, 'signed_up', $event_date_id );
 			}
 
-			// Update existing relationship to signed_up.
-			if ( $event_date_id ) {
-				$this->event_participant_repository->update_label_by_event_date( $event_date_id, $participant->id, 'signed_up' );
-			} else {
-				$this->event_participant_repository->update_label( $event_id, $participant->id, 'signed_up' );
+			return rest_ensure_response(
+				array(
+					'success' => true,
+					'message' => __( 'You have successfully signed up for the event!', 'fair-audience' ),
+					'status'  => 'signed_up',
+				)
+			);
+		}
+
+		// Paid path. Requires fair-payment plugin.
+		if ( ! class_exists( \FairPayment\API\TransactionAPI::class ) ) {
+			return new WP_Error(
+				'payment_unavailable',
+				__( 'Paid signup is not available because the payment plugin is missing.', 'fair-audience' ),
+				array( 'status' => 503 )
+			);
+		}
+
+		// Enforce capacity including unexpired pending_payment rows.
+		$event_date_row = \FairEvents\Models\EventDates::get_by_id( $event_date_id );
+		if ( $event_date_row && null !== $event_date_row->capacity ) {
+			$active_count       = $this->event_participant_repository->count_active_for_event_date( $event_date_id );
+			$already_holds_slot = $existing && in_array( $existing->label, array( 'signed_up', 'pending_payment' ), true );
+			if ( ! $already_holds_slot && $active_count >= (int) $event_date_row->capacity ) {
+				return new WP_Error(
+					'event_full',
+					__( 'This event is fully booked.', 'fair-audience' ),
+					array( 'status' => 409 )
+				);
 			}
+		}
+
+		// Upsert the participant row as pending_payment with expiry.
+		$expires_at = gmdate( 'Y-m-d H:i:s', time() + 15 * MINUTE_IN_SECONDS );
+
+		if ( $existing ) {
+			$existing->label              = 'pending_payment';
+			$existing->payment_expires_at = $expires_at;
+			$existing->transaction_id     = null;
+			$existing->save();
+			$event_participant = $existing;
 		} else {
-			// Create new signup.
-			$this->event_participant_repository->add_participant_to_event( $event_id, $participant->id, 'signed_up', $event_date_id );
+			$event_participant = new \FairAudience\Models\EventParticipant(
+				array(
+					'event_id'           => $event_id,
+					'event_date_id'      => $event_date_id,
+					'participant_id'     => $participant->id,
+					'label'              => 'pending_payment',
+					'payment_expires_at' => $expires_at,
+				)
+			);
+			$event_participant->save();
+		}
+
+		// Create fair-payment transaction.
+		$line_item_description = sprintf(
+			/* translators: %s: event title */
+			__( 'Signup for %s', 'fair-audience' ),
+			get_the_title( $event_id )
+		);
+
+		$transaction_id = \FairPayment\API\TransactionAPI::create_transaction(
+			array(
+				array(
+					'name'     => $line_item_description,
+					'quantity' => 1,
+					'amount'   => (float) $final_price,
+				),
+			),
+			array(
+				'currency'    => 'EUR',
+				'description' => $line_item_description,
+				'post_id'     => $event_id,
+				'user_id'     => $user_id ? $user_id : null,
+				'metadata'    => array(
+					'source'               => 'fair-audience-signup',
+					'event_date_id'        => $event_date_id,
+					'event_participant_id' => $event_participant->id,
+					'participant_id'       => $participant->id,
+				),
+			)
+		);
+
+		if ( is_wp_error( $transaction_id ) ) {
+			return $transaction_id;
+		}
+
+		// Remember the transaction on the event_participant row for webhook lookup.
+		$event_participant->transaction_id = (int) $transaction_id;
+		$event_participant->save();
+
+		$redirect_url = add_query_arg(
+			array(
+				'fair_payment_callback' => 'true',
+				'fair_signup_tx'        => $transaction_id,
+			),
+			get_permalink( $event_id )
+		);
+
+		$payment = \FairPayment\API\TransactionAPI::initiate_payment(
+			$transaction_id,
+			array(
+				'redirect_url' => $redirect_url,
+			)
+		);
+
+		if ( is_wp_error( $payment ) ) {
+			return $payment;
 		}
 
 		return rest_ensure_response(
 			array(
-				'success' => true,
-				'message' => __( 'You have successfully signed up for the event!', 'fair-audience' ),
-				'status'  => 'signed_up',
+				'success'        => true,
+				'status'         => 'payment_required',
+				'message'        => __( 'Redirecting to payment…', 'fair-audience' ),
+				'checkout_url'   => $payment['checkout_url'],
+				'transaction_id' => $transaction_id,
+				'amount'         => (float) $final_price,
+				'currency'       => 'EUR',
 			)
 		);
 	}

@@ -151,6 +151,11 @@ class Installer {
 
 		// Version 3.0.0 - Event date settings table (no data migration needed, table created by dbDelta).
 
+		// Run migration if upgrading from pre-3.1.0 (add signup_price to event_dates).
+		if ( version_compare( $current_version, '3.1.0', '<' ) ) {
+			self::migrate_to_3_1_0();
+		}
+
 		// Update database version
 		Schema::update_db_version( Schema::DB_VERSION );
 	}
@@ -233,6 +238,10 @@ class Installer {
 
 			if ( version_compare( $current_version, '2.9.0', '<' ) ) {
 				self::migrate_to_2_9_0();
+			}
+
+			if ( version_compare( $current_version, '3.1.0', '<' ) ) {
+				self::migrate_to_3_1_0();
 			}
 
 			// Install/update tables
@@ -1003,5 +1012,32 @@ class Installer {
 				$posts_table
 			)
 		);
+	}
+
+	/**
+	 * Migrate to version 3.1.0 - Add signup_price column to event_dates table.
+	 *
+	 * @return void
+	 */
+	private static function migrate_to_3_1_0() {
+		global $wpdb;
+
+		$table_name = $wpdb->prefix . 'fair_event_dates';
+
+		$column_exists = $wpdb->get_results(
+			$wpdb->prepare(
+				"SHOW COLUMNS FROM %i LIKE 'signup_price'",
+				$table_name
+			)
+		);
+
+		if ( empty( $column_exists ) ) {
+			$wpdb->query(
+				$wpdb->prepare(
+					'ALTER TABLE %i ADD COLUMN signup_price DECIMAL(10,2) DEFAULT NULL AFTER capacity',
+					$table_name
+				)
+			);
+		}
 	}
 }

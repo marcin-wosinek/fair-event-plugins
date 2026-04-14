@@ -401,6 +401,22 @@ const CSS_PREFIX = 'fair-audience-signup';
 		})
 			.then(function (response) {
 				if (response.success) {
+					// Paid signup: redirect to Mollie checkout.
+					if (
+						response.status === 'payment_required' &&
+						response.checkout_url
+					) {
+						showMessage(
+							messageContainer,
+							response.message ||
+								__('Redirecting to payment…', 'fair-audience'),
+							'success',
+							CSS_PREFIX
+						);
+						window.location = response.checkout_url;
+						return;
+					}
+
 					showMessage(
 						messageContainer,
 						response.message || successMessage,

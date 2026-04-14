@@ -50,6 +50,20 @@ class EventParticipant {
 	public $label;
 
 	/**
+	 * Pending payment expiry (nullable DATETIME).
+	 *
+	 * @var string|null
+	 */
+	public $payment_expires_at;
+
+	/**
+	 * fair-payment transaction ID, when the signup requires payment.
+	 *
+	 * @var int|null
+	 */
+	public $transaction_id;
+
+	/**
 	 * Created timestamp.
 	 *
 	 * @var string
@@ -80,13 +94,15 @@ class EventParticipant {
 	 * @param array $data Data array.
 	 */
 	public function populate( $data ) {
-		$this->id             = isset( $data['id'] ) ? (int) $data['id'] : null;
-		$this->event_id       = isset( $data['event_id'] ) ? (int) $data['event_id'] : 0;
-		$this->event_date_id  = isset( $data['event_date_id'] ) && $data['event_date_id'] ? (int) $data['event_date_id'] : 0;
-		$this->participant_id = isset( $data['participant_id'] ) ? (int) $data['participant_id'] : 0;
-		$this->label          = isset( $data['label'] ) ? $data['label'] : 'interested';
-		$this->created_at     = isset( $data['created_at'] ) ? $data['created_at'] : '';
-		$this->updated_at     = isset( $data['updated_at'] ) ? $data['updated_at'] : '';
+		$this->id                 = isset( $data['id'] ) ? (int) $data['id'] : null;
+		$this->event_id           = isset( $data['event_id'] ) ? (int) $data['event_id'] : 0;
+		$this->event_date_id      = isset( $data['event_date_id'] ) && $data['event_date_id'] ? (int) $data['event_date_id'] : 0;
+		$this->participant_id     = isset( $data['participant_id'] ) ? (int) $data['participant_id'] : 0;
+		$this->label              = isset( $data['label'] ) ? $data['label'] : 'interested';
+		$this->payment_expires_at = isset( $data['payment_expires_at'] ) && $data['payment_expires_at'] ? $data['payment_expires_at'] : null;
+		$this->transaction_id     = isset( $data['transaction_id'] ) && $data['transaction_id'] ? (int) $data['transaction_id'] : null;
+		$this->created_at         = isset( $data['created_at'] ) ? $data['created_at'] : '';
+		$this->updated_at         = isset( $data['updated_at'] ) ? $data['updated_at'] : '';
 	}
 
 	/**
@@ -104,18 +120,20 @@ class EventParticipant {
 		}
 
 		// Validate label enum.
-		if ( ! in_array( $this->label, array( 'interested', 'signed_up', 'collaborator' ), true ) ) {
+		if ( ! in_array( $this->label, array( 'interested', 'signed_up', 'collaborator', 'pending_payment' ), true ) ) {
 			$this->label = 'interested';
 		}
 
 		$data = array(
-			'event_id'       => $this->event_id,
-			'event_date_id'  => $this->event_date_id,
-			'participant_id' => $this->participant_id,
-			'label'          => $this->label,
+			'event_id'           => $this->event_id,
+			'event_date_id'      => $this->event_date_id,
+			'participant_id'     => $this->participant_id,
+			'label'              => $this->label,
+			'payment_expires_at' => $this->payment_expires_at,
+			'transaction_id'     => $this->transaction_id,
 		);
 
-		$format = array( '%d', '%d', '%d', '%s' );
+		$format = array( '%d', '%d', '%d', '%s', '%s', '%d' );
 
 		if ( $this->id ) {
 			// Update existing.

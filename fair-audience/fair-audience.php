@@ -70,7 +70,7 @@ function fair_audience_activate() {
 	dbDelta( \FairAudience\Database\Schema::get_participant_categories_table_sql() );
 
 	// Update database version.
-	update_option( 'fair_audience_db_version', '1.26.0' );
+	update_option( 'fair_audience_db_version', '1.27.0' );
 }
 register_activation_hook( __FILE__, __NAMESPACE__ . '\\fair_audience_activate' );
 
@@ -491,6 +491,47 @@ function fair_audience_maybe_upgrade_db() {
 
 		update_option( 'fair_audience_db_version', '1.26.0' );
 	}
+
+	if ( version_compare( $db_version, '1.27.0', '<' ) ) {
+		global $wpdb;
+
+		$table = $wpdb->prefix . 'fair_audience_event_participants';
+
+		// Add 'pending_payment' to label ENUM.
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.DirectDatabaseQuery.SchemaChange
+		$wpdb->query(
+			"ALTER TABLE {$table}
+			MODIFY label ENUM('interested', 'signed_up', 'collaborator', 'pending_payment') NOT NULL DEFAULT 'interested'"
+		);
+
+		// Add payment_expires_at column if missing.
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+		$has_expires = $wpdb->get_results(
+			$wpdb->prepare( "SHOW COLUMNS FROM {$table} LIKE %s", 'payment_expires_at' )
+		);
+		if ( empty( $has_expires ) ) {
+			// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.DirectDatabaseQuery.SchemaChange
+			$wpdb->query(
+				"ALTER TABLE {$table} ADD COLUMN payment_expires_at DATETIME DEFAULT NULL AFTER label,
+				ADD KEY idx_payment_expires_at (payment_expires_at)"
+			);
+		}
+
+		// Add transaction_id column if missing.
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+		$has_tx = $wpdb->get_results(
+			$wpdb->prepare( "SHOW COLUMNS FROM {$table} LIKE %s", 'transaction_id' )
+		);
+		if ( empty( $has_tx ) ) {
+			// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.DirectDatabaseQuery.SchemaChange
+			$wpdb->query(
+				"ALTER TABLE {$table} ADD COLUMN transaction_id BIGINT UNSIGNED DEFAULT NULL AFTER payment_expires_at,
+				ADD KEY idx_transaction_id (transaction_id)"
+			);
+		}
+
+		update_option( 'fair_audience_db_version', '1.27.0' );
+	}
 }
 add_action( 'plugins_loaded', __NAMESPACE__ . '\\fair_audience_maybe_upgrade_db' );
 
@@ -500,5 +541,6 @@ add_action( 'plugins_loaded', __NAMESPACE__ . '\\fair_audience_maybe_upgrade_db'
 function fair_audience_deactivate() {
 	// Clear scheduled Instagram token refresh.
 	wp_clear_scheduled_hook( 'fair_audience_refresh_instagram_token' );
+	wp_clear_scheduled_hook( 'fair_audience_cleanup_expired_signups' );
 }
 register_deactivation_hook( __FILE__, __NAMESPACE__ . '\\fair_audience_deactivate' );

@@ -12,6 +12,7 @@ namespace FairAudience\Hooks;
 use FairAudience\Database\FeePaymentRepository;
 use FairAudience\Database\FeeAuditLogRepository;
 use FairAudience\Database\ParticipantRepository;
+use FairAudience\Database\EventParticipantRepository;
 
 defined( 'WPINC' ) || die;
 
@@ -26,9 +27,19 @@ class PaymentHooks {
 	public static function init() {
 		add_action( 'fair_payment_paid', array( static::class, 'handle_payment_paid' ), 10, 2 );
 		add_action( 'fair_payment_failed', array( static::class, 'handle_payment_failed' ), 10, 2 );
+		add_action( 'fair_payment_paid', array( static::class, 'handle_signup_paid' ), 10, 2 );
+		add_action( 'fair_payment_failed', array( static::class, 'handle_signup_failed' ), 10, 2 );
+
 		add_filter( 'fair_payment_resolve_participant_id', array( static::class, 'resolve_participant_id' ), 10, 2 );
 		add_filter( 'fair_payment_prepare_participant', array( static::class, 'prepare_participant' ), 10, 2 );
 		add_action( 'fair_payment_backfill_participant_ids', array( static::class, 'backfill_participant_ids' ) );
+
+		// Expire pending signup rows whose payment never completed.
+		add_action( 'fair_audience_cleanup_expired_signups', array( static::class, 'cleanup_expired_signups' ) );
+		if ( ! wp_next_scheduled( 'fair_audience_cleanup_expired_signups' ) ) {
+			wp_schedule_event( time() + MINUTE_IN_SECONDS, 'fair_audience_every_five_minutes', 'fair_audience_cleanup_expired_signups' );
+		}
+		add_filter( 'cron_schedules', array( static::class, 'add_cron_schedule' ) );
 	}
 
 	/**
@@ -126,6 +137,84 @@ class PaymentHooks {
 				$participants_table
 			)
 		);
+	}
+
+	/**
+	 * Register a 5-minute cron schedule used by the signup expiry cleanup.
+	 *
+	 * @param array $schedules Existing schedules.
+	 * @return array
+	 */
+	public static function add_cron_schedule( $schedules ) {
+		if ( ! isset( $schedules['fair_audience_every_five_minutes'] ) ) {
+			$schedules['fair_audience_every_five_minutes'] = array(
+				'interval' => 5 * MINUTE_IN_SECONDS,
+				'display'  => __( 'Every 5 minutes (fair-audience)', 'fair-audience' ),
+			);
+		}
+		return $schedules;
+	}
+
+	/**
+	 * Delete pending_payment rows whose payment window has elapsed.
+	 *
+	 * Protects against lost webhook deliveries: stale rows still hold a slot
+	 * until this cleanup runs (or a new request triggers the capacity check,
+	 * which already filters on payment_expires_at).
+	 */
+	public static function cleanup_expired_signups() {
+		$repo = new EventParticipantRepository();
+		$repo->delete_expired_pending_payments();
+	}
+
+	/**
+	 * Flip a pending_payment event_participant row to signed_up when Mollie
+	 * confirms the payment.
+	 *
+	 * @param object $payment     Mollie payment object.
+	 * @param object $transaction Transaction row from fair-payment.
+	 */
+	public static function handle_signup_paid( $payment, $transaction ) {
+		$metadata = ! empty( $transaction->metadata ) ? json_decode( $transaction->metadata, true ) : array();
+		if ( empty( $metadata['source'] ) || 'fair-audience-signup' !== $metadata['source'] ) {
+			return;
+		}
+
+		$repo              = new EventParticipantRepository();
+		$event_participant = $repo->get_by_transaction_id( (int) $transaction->id );
+		if ( ! $event_participant || 'pending_payment' !== $event_participant->label ) {
+			return;
+		}
+
+		$event_participant->label              = 'signed_up';
+		$event_participant->payment_expires_at = null;
+		$event_participant->save();
+
+		do_action( 'fair_audience_event_signup_paid', $event_participant, $transaction );
+	}
+
+	/**
+	 * Release the slot held by a pending_payment event_participant row when
+	 * Mollie reports the payment failed/canceled/expired.
+	 *
+	 * @param object $payment     Mollie payment object.
+	 * @param object $transaction Transaction row from fair-payment.
+	 */
+	public static function handle_signup_failed( $payment, $transaction ) {
+		$metadata = ! empty( $transaction->metadata ) ? json_decode( $transaction->metadata, true ) : array();
+		if ( empty( $metadata['source'] ) || 'fair-audience-signup' !== $metadata['source'] ) {
+			return;
+		}
+
+		$repo              = new EventParticipantRepository();
+		$event_participant = $repo->get_by_transaction_id( (int) $transaction->id );
+		if ( ! $event_participant || 'pending_payment' !== $event_participant->label ) {
+			return;
+		}
+
+		$event_participant->delete();
+
+		do_action( 'fair_audience_event_signup_failed', $event_participant, $transaction );
 	}
 
 	/**

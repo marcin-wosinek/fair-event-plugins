@@ -62,7 +62,9 @@ class Schema {
 			event_id BIGINT UNSIGNED NOT NULL,
 			event_date_id BIGINT UNSIGNED NOT NULL,
 			participant_id BIGINT UNSIGNED NOT NULL,
-			label ENUM('interested', 'signed_up', 'collaborator') NOT NULL DEFAULT 'interested',
+			label ENUM('interested', 'signed_up', 'collaborator', 'pending_payment') NOT NULL DEFAULT 'interested',
+			payment_expires_at DATETIME DEFAULT NULL,
+			transaction_id BIGINT UNSIGNED DEFAULT NULL,
 			created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
 			updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
 			PRIMARY KEY  (id),
@@ -70,7 +72,9 @@ class Schema {
 			KEY idx_event_id (event_id),
 			KEY idx_event_date_id (event_date_id),
 			KEY idx_participant_id (participant_id),
-			KEY idx_label (label)
+			KEY idx_label (label),
+			KEY idx_transaction_id (transaction_id),
+			KEY idx_payment_expires_at (payment_expires_at)
 		) ENGINE=InnoDB $charset_collate;";
 	}
 
