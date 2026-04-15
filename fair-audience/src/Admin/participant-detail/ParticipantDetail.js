@@ -144,6 +144,11 @@ export default function ParticipantDetail() {
 
 	return (
 		<div style={{ maxWidth: '900px', margin: '20px 0' }}>
+			<p style={{ margin: '0 0 8px' }}>
+				<a href="admin.php?page=fair-audience-all-participants">
+					&larr; {__('All participants', 'fair-audience')}
+				</a>
+			</p>
 			<div
 				style={{
 					display: 'flex',
