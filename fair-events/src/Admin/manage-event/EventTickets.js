@@ -39,6 +39,7 @@ export default function EventTickets({
 	const [settings, setSettings] = useState({
 		continues_pricing_period: true,
 		unlimited_tickets_in_price_period: true,
+		show_ticket_type_capacity: false,
 	});
 	const [loading, setLoading] = useState(!initialData);
 	const [saving, setSaving] = useState(false);
@@ -630,12 +631,14 @@ export default function EventTickets({
 															'fair-events'
 														)}
 													</th>
-													<th>
-														{__(
-															'Capacity',
-															'fair-events'
-														)}
-													</th>
+													{settings.show_ticket_type_capacity && (
+														<th>
+															{__(
+																'Capacity',
+																'fair-events'
+															)}
+														</th>
+													)}
 													<th>
 														{__(
 															'Seats',
@@ -887,41 +890,43 @@ export default function EventTickets({
 																	}
 																/>
 															</td>
-															<td>
-																<TextControl
-																	type="number"
-																	min="0"
-																	placeholder={__(
-																		'Unlimited',
-																		'fair-events'
-																	)}
-																	value={
-																		type.capacity !==
-																			null &&
-																		type.capacity !==
-																			undefined
-																			? String(
-																					type.capacity
-																			  )
-																			: ''
-																	}
-																	onChange={(
-																		v
-																	) =>
-																		updateTicketType(
-																			tIndex,
-																			'capacity',
-																			v !==
-																				''
-																				? parseInt(
-																						v,
-																						10
+															{settings.show_ticket_type_capacity && (
+																<td>
+																	<TextControl
+																		type="number"
+																		min="0"
+																		placeholder={__(
+																			'Unlimited',
+																			'fair-events'
+																		)}
+																		value={
+																			type.capacity !==
+																				null &&
+																			type.capacity !==
+																				undefined
+																				? String(
+																						type.capacity
 																				  )
-																				: null
-																		)
-																	}
-																/>
-															</td>
+																				: ''
+																		}
+																		onChange={(
+																			v
+																		) =>
+																			updateTicketType(
+																				tIndex,
+																				'capacity',
+																				v !==
+																					''
+																					? parseInt(
+																							v,
+																							10
+																					  )
+																					: null
+																			)
+																		}
+																	/>
+																</td>
+															)}
 															<td>
 																<TextControl
 																	type="number"
@@ -1078,7 +1083,9 @@ export default function EventTickets({
 													<td
 														colSpan={
 															salePeriods.length +
-															3
+															(settings.show_ticket_type_capacity
+																? 3
+																: 2)
 														}
 													>
 														<Button
@@ -1138,6 +1145,23 @@ export default function EventTickets({
 										...prev,
 										unlimited_tickets_in_price_period:
 											value,
+									}))
+								}
+							/>
+							<CheckboxControl
+								label={__(
+									'Per-ticket-type capacity',
+									'fair-events'
+								)}
+								help={__(
+									'Show a Capacity input on each ticket type to cap how many can be sold of that type.',
+									'fair-events'
+								)}
+								checked={settings.show_ticket_type_capacity}
+								onChange={(value) =>
+									setSettings((prev) => ({
+										...prev,
+										show_ticket_type_capacity: value,
 									}))
 								}
 							/>
