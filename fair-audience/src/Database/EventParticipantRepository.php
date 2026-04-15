@@ -251,6 +251,36 @@ class EventParticipantRepository {
 	}
 
 	/**
+	 * Mark participant as attended (or not) by event_date_id.
+	 *
+	 * Sets attended_at to the current timestamp when $attended is true, or
+	 * NULL when false. Idempotent: when $attended is true and attended_at
+	 * is already set, the existing timestamp is preserved.
+	 *
+	 * @param int  $event_date_id  Event date ID.
+	 * @param int  $participant_id Participant ID.
+	 * @param bool $attended       Whether the participant has shown up.
+	 * @return bool Success.
+	 */
+	public function update_attended_at_by_event_date( $event_date_id, $participant_id, $attended ) {
+		$relationship = $this->get_by_event_date_and_participant( $event_date_id, $participant_id );
+
+		if ( ! $relationship ) {
+			return false;
+		}
+
+		if ( $attended ) {
+			if ( empty( $relationship->attended_at ) ) {
+				$relationship->attended_at = current_time( 'mysql' );
+			}
+		} else {
+			$relationship->attended_at = null;
+		}
+
+		return $relationship->save();
+	}
+
+	/**
 	 * Update label for event-participant relationship by event_id (legacy compat).
 	 *
 	 * @param int    $event_id       Event ID.

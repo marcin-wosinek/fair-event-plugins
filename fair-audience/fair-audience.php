@@ -70,7 +70,7 @@ function fair_audience_activate() {
 	dbDelta( \FairAudience\Database\Schema::get_participant_categories_table_sql() );
 
 	// Update database version.
-	update_option( 'fair_audience_db_version', '1.28.0' );
+	update_option( 'fair_audience_db_version', '1.29.0' );
 }
 register_activation_hook( __FILE__, __NAMESPACE__ . '\\fair_audience_activate' );
 
@@ -563,6 +563,25 @@ function fair_audience_maybe_upgrade_db() {
 		}
 
 		update_option( 'fair_audience_db_version', '1.28.0' );
+	}
+
+	if ( version_compare( $db_version, '1.29.0', '<' ) ) {
+		global $wpdb;
+		$table = $wpdb->prefix . 'fair_audience_event_participants';
+
+		// Add attended_at column if missing.
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+		$has_attended_at = $wpdb->get_results(
+			$wpdb->prepare( "SHOW COLUMNS FROM {$table} LIKE %s", 'attended_at' )
+		);
+		if ( empty( $has_attended_at ) ) {
+			// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.DirectDatabaseQuery.SchemaChange
+			$wpdb->query(
+				"ALTER TABLE {$table} ADD COLUMN attended_at DATETIME DEFAULT NULL AFTER seats"
+			);
+		}
+
+		update_option( 'fair_audience_db_version', '1.29.0' );
 	}
 }
 add_action( 'plugins_loaded', __NAMESPACE__ . '\\fair_audience_maybe_upgrade_db' );

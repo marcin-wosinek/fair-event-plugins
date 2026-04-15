@@ -124,7 +124,11 @@ class EventParticipantsController extends WP_REST_Controller {
 						'label'          => array(
 							'type'     => 'string',
 							'enum'     => array( 'interested', 'signed_up', 'collaborator' ),
-							'required' => true,
+							'required' => false,
+						),
+						'attended'       => array(
+							'type'     => 'boolean',
+							'required' => false,
 						),
 					),
 				),
@@ -328,6 +332,7 @@ class EventParticipantsController extends WP_REST_Controller {
 					'participant_email'    => $participant ? $participant->email : '',
 					'instagram'            => $participant ? $participant->instagram : '',
 					'label'                => $ep->label,
+					'attended_at'          => $ep->attended_at,
 					'created_at'           => $ep->created_at,
 					'photo_likes_received' => isset( $likes_data[ $ep->participant_id ] )
 						? (int) $likes_data[ $ep->participant_id ]->likes_count
@@ -410,20 +415,45 @@ class EventParticipantsController extends WP_REST_Controller {
 		$event_date_id  = $request->get_param( 'event_date_id' );
 		$participant_id = $request->get_param( 'participant_id' );
 		$label          = $request->get_param( 'label' );
+		$attended       = $request->get_param( 'attended' );
 
-		$success = $this->event_participant_repo->update_label_by_event_date( $event_date_id, $participant_id, $label );
-
-		if ( ! $success ) {
+		if ( null === $label && null === $attended ) {
 			return new WP_Error(
-				'update_failed',
-				__( 'Failed to update label.', 'fair-audience' ),
+				'missing_fields',
+				__( 'Provide at least one of: label, attended.', 'fair-audience' ),
 				array( 'status' => 400 )
 			);
 		}
 
+		if ( null !== $label ) {
+			$success = $this->event_participant_repo->update_label_by_event_date( $event_date_id, $participant_id, $label );
+			if ( ! $success ) {
+				return new WP_Error(
+					'update_failed',
+					__( 'Failed to update label.', 'fair-audience' ),
+					array( 'status' => 400 )
+				);
+			}
+		}
+
+		if ( null !== $attended ) {
+			$success = $this->event_participant_repo->update_attended_at_by_event_date( $event_date_id, $participant_id, (bool) $attended );
+			if ( ! $success ) {
+				return new WP_Error(
+					'update_failed',
+					__( 'Failed to update attendance.', 'fair-audience' ),
+					array( 'status' => 400 )
+				);
+			}
+		}
+
+		$updated = $this->event_participant_repo->get_by_event_date_and_participant( $event_date_id, $participant_id );
+
 		return rest_ensure_response(
 			array(
-				'message' => __( 'Label updated successfully.', 'fair-audience' ),
+				'message'     => __( 'Participant updated successfully.', 'fair-audience' ),
+				'label'       => $updated ? $updated->label : null,
+				'attended_at' => $updated ? $updated->attended_at : null,
 			)
 		);
 	}

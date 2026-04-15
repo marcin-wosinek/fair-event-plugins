@@ -171,6 +171,45 @@ export default function EventAudience({ eventId, eventDateId, audienceUrl }) {
 		return sortOrder === 'asc' ? ' \u25B2' : ' \u25BC';
 	};
 
+	const handleToggleAttended = (participant, attended) => {
+		setParticipants((current) =>
+			current.map((p) =>
+				p.id === participant.id
+					? {
+							...p,
+							attended_at: attended
+								? p.attended_at || new Date().toISOString()
+								: null,
+					  }
+					: p
+			)
+		);
+
+		apiFetch({
+			path: `/fair-audience/v1/event-dates/${eventDateId}/participants/${participant.participant_id}`,
+			method: 'PUT',
+			data: { attended },
+		})
+			.then((response) => {
+				setParticipants((current) =>
+					current.map((p) =>
+						p.id === participant.id
+							? { ...p, attended_at: response.attended_at }
+							: p
+					)
+				);
+			})
+			.catch(() => {
+				setParticipants((current) =>
+					current.map((p) =>
+						p.id === participant.id
+							? { ...p, attended_at: participant.attended_at }
+							: p
+					)
+				);
+			});
+	};
+
 	return (
 		<>
 			{eventId && (
@@ -284,6 +323,12 @@ export default function EventAudience({ eventId, eventDateId, audienceUrl }) {
 														)}
 														{sortIndicator('role')}
 													</th>
+													<th>
+														{__(
+															'Shown up',
+															'fair-events'
+														)}
+													</th>
 												</tr>
 											</thead>
 											<tbody>
@@ -307,6 +352,28 @@ export default function EventAudience({ eventId, eventDateId, audienceUrl }) {
 																{LABEL_DISPLAY[
 																	p.label
 																] || p.label}
+															</td>
+															<td>
+																<input
+																	type="checkbox"
+																	aria-label={__(
+																		'Shown up',
+																		'fair-events'
+																	)}
+																	checked={
+																		!!p.attended_at
+																	}
+																	onChange={(
+																		e
+																	) =>
+																		handleToggleAttended(
+																			p,
+																			e
+																				.target
+																				.checked
+																		)
+																	}
+																/>
 															</td>
 														</tr>
 													)

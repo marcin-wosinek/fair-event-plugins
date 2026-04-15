@@ -78,6 +78,13 @@ class EventParticipant {
 	public $seats = 1;
 
 	/**
+	 * Attendance timestamp — when the participant was marked as shown up (nullable DATETIME).
+	 *
+	 * @var string|null
+	 */
+	public $attended_at;
+
+	/**
 	 * Created timestamp.
 	 *
 	 * @var string
@@ -117,6 +124,7 @@ class EventParticipant {
 		$this->transaction_id     = isset( $data['transaction_id'] ) && $data['transaction_id'] ? (int) $data['transaction_id'] : null;
 		$this->ticket_type_id     = isset( $data['ticket_type_id'] ) && $data['ticket_type_id'] ? (int) $data['ticket_type_id'] : null;
 		$this->seats              = isset( $data['seats'] ) ? max( 1, (int) $data['seats'] ) : 1;
+		$this->attended_at        = isset( $data['attended_at'] ) && $data['attended_at'] ? $data['attended_at'] : null;
 		$this->created_at         = isset( $data['created_at'] ) ? $data['created_at'] : '';
 		$this->updated_at         = isset( $data['updated_at'] ) ? $data['updated_at'] : '';
 	}
@@ -149,9 +157,10 @@ class EventParticipant {
 			'transaction_id'     => $this->transaction_id,
 			'ticket_type_id'     => $this->ticket_type_id,
 			'seats'              => max( 1, (int) $this->seats ),
+			'attended_at'        => $this->attended_at,
 		);
 
-		$format = array( '%d', '%d', '%d', '%s', '%s', '%d', '%d', '%d' );
+		$format = array( '%d', '%d', '%d', '%s', '%s', '%d', '%d', '%d', '%s' );
 
 		if ( $this->id ) {
 			// Update existing.
