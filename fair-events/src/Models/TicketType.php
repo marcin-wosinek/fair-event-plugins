@@ -45,6 +45,13 @@ class TicketType {
 	public $capacity;
 
 	/**
+	 * Seats consumed per ticket (1 = single seat, 2 = pair/+1, etc.)
+	 *
+	 * @var int
+	 */
+	public $seats_per_ticket = 1;
+
+	/**
 	 * Sort order
 	 *
 	 * @var int
@@ -137,11 +144,12 @@ class TicketType {
 	 *
 	 * @param int      $event_date_id Event date ID.
 	 * @param string   $name          Name.
-	 * @param int|null $capacity      Capacity (null = no limit).
-	 * @param int      $sort_order    Sort order.
+	 * @param int|null $capacity         Capacity (null = no limit).
+	 * @param int      $sort_order       Sort order.
+	 * @param int      $seats_per_ticket Seats consumed per ticket (default 1).
 	 * @return int|false The ticket type ID on success, false on failure.
 	 */
-	public static function create( $event_date_id, $name, $capacity, $sort_order ) {
+	public static function create( $event_date_id, $name, $capacity, $sort_order, $seats_per_ticket = 1 ) {
 		global $wpdb;
 
 		$table_name = self::get_table_name();
@@ -149,12 +157,13 @@ class TicketType {
 		$result = $wpdb->insert(
 			$table_name,
 			array(
-				'event_date_id' => $event_date_id,
-				'name'          => $name,
-				'capacity'      => $capacity,
-				'sort_order'    => $sort_order,
+				'event_date_id'    => $event_date_id,
+				'name'             => $name,
+				'capacity'         => $capacity,
+				'seats_per_ticket' => max( 1, (int) $seats_per_ticket ),
+				'sort_order'       => $sort_order,
 			),
-			array( '%d', '%s', '%d', '%d' )
+			array( '%d', '%s', '%d', '%d', '%d' )
 		);
 
 		if ( $result ) {
@@ -187,6 +196,11 @@ class TicketType {
 		if ( array_key_exists( 'capacity', $data ) ) {
 			$update_data['capacity'] = $data['capacity'];
 			$update_format[]         = '%d';
+		}
+
+		if ( isset( $data['seats_per_ticket'] ) ) {
+			$update_data['seats_per_ticket'] = max( 1, (int) $data['seats_per_ticket'] );
+			$update_format[]                 = '%d';
 		}
 
 		if ( isset( $data['sort_order'] ) ) {
@@ -256,14 +270,15 @@ class TicketType {
 	 * @return TicketType Ticket type object.
 	 */
 	private static function hydrate( $row ) {
-		$item                = new self();
-		$item->id            = (int) $row->id;
-		$item->event_date_id = (int) $row->event_date_id;
-		$item->name          = $row->name;
-		$item->capacity      = null !== $row->capacity ? (int) $row->capacity : null;
-		$item->sort_order    = (int) $row->sort_order;
-		$item->created_at    = $row->created_at;
-		$item->updated_at    = $row->updated_at;
+		$item                   = new self();
+		$item->id               = (int) $row->id;
+		$item->event_date_id    = (int) $row->event_date_id;
+		$item->name             = $row->name;
+		$item->capacity         = null !== $row->capacity ? (int) $row->capacity : null;
+		$item->seats_per_ticket = isset( $row->seats_per_ticket ) ? max( 1, (int) $row->seats_per_ticket ) : 1;
+		$item->sort_order       = (int) $row->sort_order;
+		$item->created_at       = $row->created_at;
+		$item->updated_at       = $row->updated_at;
 
 		return $item;
 	}
@@ -275,13 +290,14 @@ class TicketType {
 	 */
 	public function to_array() {
 		return array(
-			'id'            => $this->id,
-			'event_date_id' => $this->event_date_id,
-			'name'          => $this->name,
-			'capacity'      => $this->capacity,
-			'sort_order'    => $this->sort_order,
-			'created_at'    => $this->created_at,
-			'updated_at'    => $this->updated_at,
+			'id'               => $this->id,
+			'event_date_id'    => $this->event_date_id,
+			'name'             => $this->name,
+			'capacity'         => $this->capacity,
+			'seats_per_ticket' => $this->seats_per_ticket,
+			'sort_order'       => $this->sort_order,
+			'created_at'       => $this->created_at,
+			'updated_at'       => $this->updated_at,
 		);
 	}
 }

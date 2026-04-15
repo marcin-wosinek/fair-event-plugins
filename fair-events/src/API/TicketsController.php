@@ -206,23 +206,25 @@ class TicketsController extends WP_REST_Controller {
 
 		// Update existing / insert new.
 		foreach ( $incoming as $index => $item ) {
-			$name       = sanitize_text_field( $item['name'] ?? '' );
-			$capacity   = isset( $item['capacity'] ) && '' !== $item['capacity'] && null !== $item['capacity']
+			$name             = sanitize_text_field( $item['name'] ?? '' );
+			$capacity         = isset( $item['capacity'] ) && '' !== $item['capacity'] && null !== $item['capacity']
 				? absint( $item['capacity'] )
 				: null;
-			$sort_order = $index;
+			$seats_per_ticket = isset( $item['seats_per_ticket'] ) ? max( 1, absint( $item['seats_per_ticket'] ) ) : 1;
+			$sort_order       = $index;
 
 			if ( ! empty( $item['id'] ) && in_array( (int) $item['id'], $existing_ids, true ) ) {
 				TicketType::update(
 					(int) $item['id'],
 					array(
-						'name'       => $name,
-						'capacity'   => $capacity,
-						'sort_order' => $sort_order,
+						'name'             => $name,
+						'capacity'         => $capacity,
+						'seats_per_ticket' => $seats_per_ticket,
+						'sort_order'       => $sort_order,
 					)
 				);
 			} else {
-				TicketType::create( $event_date_id, $name, $capacity, $sort_order );
+				TicketType::create( $event_date_id, $name, $capacity, $sort_order, $seats_per_ticket );
 			}
 		}
 	}

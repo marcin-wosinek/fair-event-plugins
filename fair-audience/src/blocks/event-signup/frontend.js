@@ -198,6 +198,13 @@ const CSS_PREFIX = 'fair-audience-signup';
 			requestData.event_date_id = eventDateId;
 		}
 
+		const ticketTypeInput = form.querySelector(
+			'input[name="ticket_type_id"]:checked'
+		);
+		if (ticketTypeInput) {
+			requestData.ticket_type_id = parseInt(ticketTypeInput.value, 10);
+		}
+
 		// Disable button and show loading state
 		const restoreButton = setButtonLoading(
 			submitButton,
@@ -401,6 +408,13 @@ const CSS_PREFIX = 'fair-audience-signup';
 
 		if (token) {
 			requestData.participant_token = token;
+		}
+
+		const ticketTypeInput = block.querySelector(
+			'input[name="ticket_type_id"]:checked'
+		);
+		if (ticketTypeInput) {
+			requestData.ticket_type_id = parseInt(ticketTypeInput.value, 10);
 		}
 
 		// Disable button and show loading state

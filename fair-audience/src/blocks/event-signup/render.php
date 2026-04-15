@@ -99,6 +99,30 @@ if ( class_exists( EventDates::class ) ) {
 	}
 }
 
+// Resolve ticket types for this event date, if any. When present, the
+// signup form switches from a single-price button to a radio picker of
+// ticket types, each with its own price and seat count.
+$ticket_types_for_display = array();
+if ( $event_date_id && class_exists( \FairEvents\Models\TicketType::class ) ) {
+	$raw_types = \FairEvents\Models\TicketType::get_all_by_event_date_id( (int) $event_date_id );
+	foreach ( $raw_types as $tt ) {
+		$tt_price = null;
+		if ( class_exists( \FairEvents\Services\EventSignupPricing::class ) ) {
+			$tt_price = \FairEvents\Services\EventSignupPricing::resolve_price_for_ticket_type(
+				$tt->id,
+				$participant ? (int) $participant->id : null
+			);
+		}
+		$ticket_types_for_display[] = array(
+			'id'               => (int) $tt->id,
+			'name'             => $tt->name,
+			'price'            => $tt_price,
+			'seats_per_ticket' => (int) $tt->seats_per_ticket,
+		);
+	}
+}
+$has_ticket_types = ! empty( $ticket_types_for_display );
+
 // Resolve effective signup price for the current viewer so we can reflect it
 // in the button label.
 // null = no price configured at all → keep the default button text
@@ -106,7 +130,7 @@ if ( class_exists( EventDates::class ) ) {
 // 0    = a price exists but the viewer gets it for free (e.g. 100% group
 // discount, or base price explicitly set to 0) → show "… for free"
 $signup_price = null;
-if ( $event_date_id && class_exists( \FairEvents\Services\EventSignupPricing::class ) ) {
+if ( ! $has_ticket_types && $event_date_id && class_exists( \FairEvents\Services\EventSignupPricing::class ) ) {
 	$signup_price = \FairEvents\Services\EventSignupPricing::resolve_price(
 		(int) $event_date_id,
 		$participant ? (int) $participant->id : null
@@ -132,6 +156,47 @@ if ( null !== $signup_price ) {
 		$register_button_text = __( 'Register for free', 'fair-audience' );
 	}
 }
+
+/**
+ * Render the ticket-type radio fieldset. No-op when the event date has no
+ * ticket types configured. First enabled option is pre-selected.
+ */
+$render_ticket_types = static function () use ( $ticket_types_for_display, $has_ticket_types, $form_id ) {
+	if ( ! $has_ticket_types ) {
+		return;
+	}
+	echo '<fieldset class="fair-audience-ticket-types">';
+	echo '<legend>' . esc_html__( 'Choose ticket type', 'fair-audience' ) . '</legend>';
+	$first = true;
+	foreach ( $ticket_types_for_display as $tt ) {
+		$tt_label = $tt['name'];
+		if ( null !== $tt['price'] ) {
+			if ( $tt['price'] > 0 ) {
+				$tt_label .= ' — €' . number_format_i18n( (float) $tt['price'], 2 );
+			} else {
+				$tt_label .= ' — ' . __( 'free', 'fair-audience' );
+			}
+		}
+		if ( $tt['seats_per_ticket'] > 1 ) {
+			$tt_label .= ' ' . sprintf(
+				/* translators: %d: number of seats this ticket consumes */
+				_n( '(%d seat)', '(%d seats)', $tt['seats_per_ticket'], 'fair-audience' ),
+				$tt['seats_per_ticket']
+			);
+		}
+		$radio_id = esc_attr( $form_id ) . '-tt-' . (int) $tt['id'];
+		echo '<label class="fair-audience-ticket-type-option" for="' . $radio_id . '">';
+		echo '<input type="radio" name="ticket_type_id" id="' . $radio_id . '" value="' . (int) $tt['id'] . '"';
+		if ( $first ) {
+			echo ' checked';
+			$first = false;
+		}
+		echo ' /> ';
+		echo esc_html( $tt_label );
+		echo '</label>';
+	}
+	echo '</fieldset>';
+};
 
 // Get wrapper attributes.
 $wrapper_attributes = get_block_wrapper_attributes(
@@ -185,6 +250,7 @@ $wrapper_attributes = get_block_wrapper_attributes(
 				);
 				?>
 			</p>
+			<?php $render_ticket_types(); ?>
 			<div class="wp-block-button">
 				<button type="button" class="wp-block-button__link wp-element-button fair-audience-signup-button" data-action="signup">
 					<?php echo esc_html( $signup_button_text ); ?>
@@ -205,6 +271,7 @@ $wrapper_attributes = get_block_wrapper_attributes(
 				);
 				?>
 			</p>
+			<?php $render_ticket_types(); ?>
 			<div class="wp-block-button">
 				<button type="button" class="wp-block-button__link wp-element-button fair-audience-signup-button" data-action="signup">
 					<?php echo esc_html( $signup_button_text ); ?>
@@ -233,6 +300,7 @@ $wrapper_attributes = get_block_wrapper_attributes(
 
 			<!-- Registration form (new participant) -->
 			<form class="fair-audience-signup-form fair-audience-signup-register" data-tab-content="register">
+				<?php $render_ticket_types(); ?>
 				<p>
 					<label for="<?php echo esc_attr( $form_id ); ?>-name">
 						<?php echo esc_html__( 'First Name', 'fair-audience' ); ?> <span class="required">*</span>

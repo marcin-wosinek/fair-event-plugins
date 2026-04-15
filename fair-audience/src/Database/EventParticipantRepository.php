@@ -287,7 +287,7 @@ class EventParticipantRepository {
 
 		$count = $wpdb->get_var(
 			$wpdb->prepare(
-				"SELECT COUNT(*) FROM %i
+				"SELECT COALESCE(SUM(seats), 0) FROM %i
 				 WHERE event_date_id = %d
 				 AND (
 				     label = 'signed_up'
@@ -295,6 +295,39 @@ class EventParticipantRepository {
 				 )",
 				$table_name,
 				$event_date_id,
+				$now
+			)
+		);
+
+		return (int) $count;
+	}
+
+	/**
+	 * Count active seats for a specific ticket type.
+	 *
+	 * Sums seats on rows with label = 'signed_up' plus unexpired
+	 * 'pending_payment' rows filtered to one ticket type. Used for
+	 * per-ticket-type capacity enforcement.
+	 *
+	 * @param int $ticket_type_id Ticket type ID.
+	 * @return int Number of seats held against the ticket type.
+	 */
+	public function count_seats_for_ticket_type( $ticket_type_id ) {
+		global $wpdb;
+
+		$table_name = $this->get_table_name();
+		$now        = current_time( 'mysql' );
+
+		$count = $wpdb->get_var(
+			$wpdb->prepare(
+				"SELECT COALESCE(SUM(seats), 0) FROM %i
+				 WHERE ticket_type_id = %d
+				 AND (
+				     label = 'signed_up'
+				     OR ( label = 'pending_payment' AND payment_expires_at IS NOT NULL AND payment_expires_at > %s )
+				 )",
+				$table_name,
+				$ticket_type_id,
 				$now
 			)
 		);

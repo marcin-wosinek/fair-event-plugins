@@ -64,6 +64,20 @@ class EventParticipant {
 	public $transaction_id;
 
 	/**
+	 * Ticket type ID from fair_events_ticket_types, when the signup was made against a specific ticket type.
+	 *
+	 * @var int|null
+	 */
+	public $ticket_type_id;
+
+	/**
+	 * Seats consumed by this signup (snapshot of ticket type's seats_per_ticket).
+	 *
+	 * @var int
+	 */
+	public $seats = 1;
+
+	/**
 	 * Created timestamp.
 	 *
 	 * @var string
@@ -101,6 +115,8 @@ class EventParticipant {
 		$this->label              = isset( $data['label'] ) ? $data['label'] : 'interested';
 		$this->payment_expires_at = isset( $data['payment_expires_at'] ) && $data['payment_expires_at'] ? $data['payment_expires_at'] : null;
 		$this->transaction_id     = isset( $data['transaction_id'] ) && $data['transaction_id'] ? (int) $data['transaction_id'] : null;
+		$this->ticket_type_id     = isset( $data['ticket_type_id'] ) && $data['ticket_type_id'] ? (int) $data['ticket_type_id'] : null;
+		$this->seats              = isset( $data['seats'] ) ? max( 1, (int) $data['seats'] ) : 1;
 		$this->created_at         = isset( $data['created_at'] ) ? $data['created_at'] : '';
 		$this->updated_at         = isset( $data['updated_at'] ) ? $data['updated_at'] : '';
 	}
@@ -131,9 +147,11 @@ class EventParticipant {
 			'label'              => $this->label,
 			'payment_expires_at' => $this->payment_expires_at,
 			'transaction_id'     => $this->transaction_id,
+			'ticket_type_id'     => $this->ticket_type_id,
+			'seats'              => max( 1, (int) $this->seats ),
 		);
 
-		$format = array( '%d', '%d', '%d', '%s', '%s', '%d' );
+		$format = array( '%d', '%d', '%d', '%s', '%s', '%d', '%d', '%d' );
 
 		if ( $this->id ) {
 			// Update existing.

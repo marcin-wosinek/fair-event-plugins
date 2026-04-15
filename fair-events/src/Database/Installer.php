@@ -156,6 +156,11 @@ class Installer {
 			self::migrate_to_3_1_0();
 		}
 
+		// Run migration if upgrading from pre-3.2.0 (add seats_per_ticket to ticket_types).
+		if ( version_compare( $current_version, '3.2.0', '<' ) ) {
+			self::migrate_to_3_2_0();
+		}
+
 		// Update database version
 		Schema::update_db_version( Schema::DB_VERSION );
 	}
@@ -242,6 +247,10 @@ class Installer {
 
 			if ( version_compare( $current_version, '3.1.0', '<' ) ) {
 				self::migrate_to_3_1_0();
+			}
+
+			if ( version_compare( $current_version, '3.2.0', '<' ) ) {
+				self::migrate_to_3_2_0();
 			}
 
 			// Install/update tables
@@ -1035,6 +1044,33 @@ class Installer {
 			$wpdb->query(
 				$wpdb->prepare(
 					'ALTER TABLE %i ADD COLUMN signup_price DECIMAL(10,2) DEFAULT NULL AFTER capacity',
+					$table_name
+				)
+			);
+		}
+	}
+
+	/**
+	 * Migrate to version 3.2.0 - Add seats_per_ticket column to ticket_types table.
+	 *
+	 * @return void
+	 */
+	private static function migrate_to_3_2_0() {
+		global $wpdb;
+
+		$table_name = $wpdb->prefix . 'fair_events_ticket_types';
+
+		$column_exists = $wpdb->get_results(
+			$wpdb->prepare(
+				"SHOW COLUMNS FROM %i LIKE 'seats_per_ticket'",
+				$table_name
+			)
+		);
+
+		if ( empty( $column_exists ) ) {
+			$wpdb->query(
+				$wpdb->prepare(
+					'ALTER TABLE %i ADD COLUMN seats_per_ticket INT UNSIGNED NOT NULL DEFAULT 1 AFTER capacity',
 					$table_name
 				)
 			);

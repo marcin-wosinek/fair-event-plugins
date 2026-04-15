@@ -142,6 +142,11 @@ class EventSignupController extends WP_REST_Controller {
 							'required'          => false,
 							'sanitize_callback' => 'absint',
 						),
+						'ticket_type_id'    => array(
+							'type'              => 'integer',
+							'required'          => false,
+							'sanitize_callback' => 'absint',
+						),
 						'participant_token' => array(
 							'type'              => 'string',
 							'required'          => false,
@@ -226,28 +231,33 @@ class EventSignupController extends WP_REST_Controller {
 					'callback'            => array( $this, 'register_and_signup' ),
 					'permission_callback' => '__return_true',
 					'args'                => array(
-						'event_id'      => array(
+						'event_id'       => array(
 							'type'              => 'integer',
 							'required'          => true,
 							'sanitize_callback' => 'absint',
 						),
-						'event_date_id' => array(
+						'event_date_id'  => array(
 							'type'              => 'integer',
 							'required'          => false,
 							'sanitize_callback' => 'absint',
 						),
-						'name'          => array(
+						'ticket_type_id' => array(
+							'type'              => 'integer',
+							'required'          => false,
+							'sanitize_callback' => 'absint',
+						),
+						'name'           => array(
 							'type'              => 'string',
 							'required'          => true,
 							'sanitize_callback' => 'sanitize_text_field',
 						),
-						'surname'       => array(
+						'surname'        => array(
 							'type'              => 'string',
 							'required'          => false,
 							'default'           => '',
 							'sanitize_callback' => 'sanitize_text_field',
 						),
-						'email'         => array(
+						'email'          => array(
 							'type'              => 'string',
 							'required'          => true,
 							'sanitize_callback' => 'sanitize_email',
@@ -255,7 +265,7 @@ class EventSignupController extends WP_REST_Controller {
 								return is_email( $value );
 							},
 						),
-						'keep_informed' => array(
+						'keep_informed'  => array(
 							'type'              => 'boolean',
 							'required'          => false,
 							'default'           => false,
@@ -399,6 +409,7 @@ class EventSignupController extends WP_REST_Controller {
 	public function create_signup( $request ) {
 		$event_id          = $request->get_param( 'event_id' );
 		$participant_token = $request->get_param( 'participant_token' );
+		$ticket_type_id    = $request->get_param( 'ticket_type_id' ) ?: null;
 		$user_id           = get_current_user_id();
 
 		// Validate event exists.
@@ -463,7 +474,7 @@ class EventSignupController extends WP_REST_Controller {
 			);
 		}
 
-		$paid_response = $this->maybe_start_paid_signup( $event_id, $event_date_id, $participant, $existing, $user_id );
+		$paid_response = $this->maybe_start_paid_signup( $event_id, $event_date_id, $participant, $existing, $user_id, $ticket_type_id );
 		if ( null !== $paid_response ) {
 			return $paid_response;
 		}
@@ -479,6 +490,8 @@ class EventSignupController extends WP_REST_Controller {
 			$this->event_participant_repository->add_participant_to_event( $event_id, $participant->id, 'signed_up', $event_date_id );
 		}
 
+		$this->snapshot_ticket_type_on_signup( $event_date_id, $participant->id, $ticket_type_id );
+
 		return rest_ensure_response(
 			array(
 				'success' => true,
@@ -486,6 +499,39 @@ class EventSignupController extends WP_REST_Controller {
 				'status'  => 'signed_up',
 			)
 		);
+	}
+
+	/**
+	 * Snapshot ticket_type_id + seats onto the EventParticipant row after a
+	 * free-path signup. No-op when no ticket type was selected or the row
+	 * cannot be found.
+	 *
+	 * @param int      $event_date_id  Event date ID.
+	 * @param int      $participant_id Participant ID.
+	 * @param int|null $ticket_type_id Ticket type ID, or null for legacy flows.
+	 * @return void
+	 */
+	private function snapshot_ticket_type_on_signup( $event_date_id, $participant_id, $ticket_type_id ) {
+		if ( ! $ticket_type_id || ! $event_date_id ) {
+			return;
+		}
+		if ( ! class_exists( \FairEvents\Models\TicketType::class ) ) {
+			return;
+		}
+
+		$ticket_type = \FairEvents\Models\TicketType::get_by_id( $ticket_type_id );
+		if ( ! $ticket_type ) {
+			return;
+		}
+
+		$row = $this->event_participant_repository->get_by_event_date_and_participant( $event_date_id, $participant_id );
+		if ( ! $row ) {
+			return;
+		}
+
+		$row->ticket_type_id = (int) $ticket_type_id;
+		$row->seats          = max( 1, (int) $ticket_type->seats_per_ticket );
+		$row->save();
 	}
 
 	/**
@@ -497,17 +543,29 @@ class EventSignupController extends WP_REST_Controller {
 	 * slot, creates a fair-payment transaction linked back to that row via
 	 * metadata + transaction_id, and returns the Mollie checkout URL.
 	 *
-	 * @param int                                        $event_id      Event post ID.
-	 * @param int                                        $event_date_id Event date ID.
-	 * @param \FairAudience\Models\Participant           $participant   Participant doing the signup.
-	 * @param \FairAudience\Models\EventParticipant|null $existing      Existing row for (event_date, participant), if any.
-	 * @param int                                        $user_id       Current WP user ID (0 for anonymous).
+	 * @param int                                        $event_id       Event post ID.
+	 * @param int                                        $event_date_id  Event date ID.
+	 * @param \FairAudience\Models\Participant           $participant    Participant doing the signup.
+	 * @param \FairAudience\Models\EventParticipant|null $existing       Existing row for (event_date, participant), if any.
+	 * @param int                                        $user_id        Current WP user ID (0 for anonymous).
+	 * @param int|null                                   $ticket_type_id Selected ticket type ID, or null when not using ticket types.
 	 * @return \WP_REST_Response|\WP_Error|null WP_REST_Response/WP_Error on paid path, null on free path.
 	 */
-	private function maybe_start_paid_signup( $event_id, $event_date_id, $participant, $existing, $user_id ) {
-		$final_price = null;
+	private function maybe_start_paid_signup( $event_id, $event_date_id, $participant, $existing, $user_id, $ticket_type_id = null ) {
+		$final_price      = null;
+		$seats_per_ticket = 1;
 		if ( $event_date_id && class_exists( \FairEvents\Services\EventSignupPricing::class ) ) {
-			$final_price = \FairEvents\Services\EventSignupPricing::resolve_price( $event_date_id, $participant->id );
+			if ( $ticket_type_id ) {
+				$final_price = \FairEvents\Services\EventSignupPricing::resolve_price_for_ticket_type( $ticket_type_id, $participant->id );
+				if ( class_exists( \FairEvents\Models\TicketType::class ) ) {
+					$ticket_type = \FairEvents\Models\TicketType::get_by_id( $ticket_type_id );
+					if ( $ticket_type ) {
+						$seats_per_ticket = max( 1, (int) $ticket_type->seats_per_ticket );
+					}
+				}
+			} else {
+				$final_price = \FairEvents\Services\EventSignupPricing::resolve_price( $event_date_id, $participant->id );
+			}
 		}
 
 		if ( null === $final_price || $final_price <= 0 ) {
@@ -526,7 +584,9 @@ class EventSignupController extends WP_REST_Controller {
 		if ( $event_date_row && null !== $event_date_row->capacity ) {
 			$active_count       = $this->event_participant_repository->count_active_for_event_date( $event_date_id );
 			$already_holds_slot = $existing && in_array( $existing->label, array( 'signed_up', 'pending_payment' ), true );
-			if ( ! $already_holds_slot && $active_count >= (int) $event_date_row->capacity ) {
+			$held_seats         = $already_holds_slot ? max( 1, (int) $existing->seats ) : 0;
+			$projected          = $active_count - $held_seats + $seats_per_ticket;
+			if ( $projected > (int) $event_date_row->capacity ) {
 				return new WP_Error(
 					'event_full',
 					__( 'This event is fully booked.', 'fair-audience' ),
@@ -541,6 +601,8 @@ class EventSignupController extends WP_REST_Controller {
 			$existing->label              = 'pending_payment';
 			$existing->payment_expires_at = $expires_at;
 			$existing->transaction_id     = null;
+			$existing->ticket_type_id     = $ticket_type_id ?: null;
+			$existing->seats              = $seats_per_ticket;
 			$existing->save();
 			$event_participant = $existing;
 		} else {
@@ -551,6 +613,8 @@ class EventSignupController extends WP_REST_Controller {
 					'participant_id'     => $participant->id,
 					'label'              => 'pending_payment',
 					'payment_expires_at' => $expires_at,
+					'ticket_type_id'     => $ticket_type_id ?: null,
+					'seats'              => $seats_per_ticket,
 				)
 			);
 			$event_participant->save();
@@ -701,11 +765,12 @@ class EventSignupController extends WP_REST_Controller {
 	 * @return WP_REST_Response|WP_Error Response object or error.
 	 */
 	public function register_and_signup( $request ) {
-		$event_id      = $request->get_param( 'event_id' );
-		$name          = $request->get_param( 'name' );
-		$surname       = $request->get_param( 'surname' );
-		$email         = $request->get_param( 'email' );
-		$keep_informed = $request->get_param( 'keep_informed' );
+		$event_id       = $request->get_param( 'event_id' );
+		$name           = $request->get_param( 'name' );
+		$surname        = $request->get_param( 'surname' );
+		$email          = $request->get_param( 'email' );
+		$keep_informed  = $request->get_param( 'keep_informed' );
+		$ticket_type_id = $request->get_param( 'ticket_type_id' ) ?: null;
 
 		// Validate event exists.
 		$event = get_post( $event_id );
@@ -807,7 +872,7 @@ class EventSignupController extends WP_REST_Controller {
 		}
 
 		// Paid path takes over when a positive price resolves for this participant.
-		$paid_response = $this->maybe_start_paid_signup( $event_id, $event_date_id, $participant, $existing, 0 );
+		$paid_response = $this->maybe_start_paid_signup( $event_id, $event_date_id, $participant, $existing, 0, $ticket_type_id );
 		if ( null !== $paid_response ) {
 			return $paid_response;
 		}
@@ -822,6 +887,8 @@ class EventSignupController extends WP_REST_Controller {
 		} else {
 			$this->event_participant_repository->add_participant_to_event( $event_id, $participant->id, 'signed_up', $event_date_id );
 		}
+
+		$this->snapshot_ticket_type_on_signup( $event_date_id, $participant->id, $ticket_type_id );
 
 		// If keep_informed, send confirmation email.
 		if ( $keep_informed ) {

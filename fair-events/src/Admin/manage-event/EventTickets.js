@@ -249,6 +249,7 @@ export default function EventTickets({
 			{
 				name: '',
 				capacity: null,
+				seats_per_ticket: 1,
 				sort_order: ticketTypes.length,
 			},
 		]);
@@ -635,6 +636,12 @@ export default function EventTickets({
 															'fair-events'
 														)}
 													</th>
+													<th>
+														{__(
+															'Seats',
+															'fair-events'
+														)}
+													</th>
 													{salePeriods.map(
 														(period, pIndex) => {
 															const isContinuous =
@@ -913,6 +920,36 @@ export default function EventTickets({
 																				: null
 																		)
 																	}
+																/>
+															</td>
+															<td>
+																<TextControl
+																	type="number"
+																	min="1"
+																	value={String(
+																		type.seats_per_ticket ||
+																			1
+																	)}
+																	onChange={(
+																		v
+																	) =>
+																		updateTicketType(
+																			tIndex,
+																			'seats_per_ticket',
+																			Math.max(
+																				1,
+																				parseInt(
+																					v,
+																					10
+																				) ||
+																					1
+																			)
+																		)
+																	}
+																	help={__(
+																		'How many capacity slots this ticket consumes (1 = single, 2 = pair/+1).',
+																		'fair-events'
+																	)}
 																/>
 															</td>
 															{salePeriods.map(

@@ -70,7 +70,7 @@ function fair_audience_activate() {
 	dbDelta( \FairAudience\Database\Schema::get_participant_categories_table_sql() );
 
 	// Update database version.
-	update_option( 'fair_audience_db_version', '1.27.0' );
+	update_option( 'fair_audience_db_version', '1.28.0' );
 }
 register_activation_hook( __FILE__, __NAMESPACE__ . '\\fair_audience_activate' );
 
@@ -531,6 +531,38 @@ function fair_audience_maybe_upgrade_db() {
 		}
 
 		update_option( 'fair_audience_db_version', '1.27.0' );
+	}
+
+	if ( version_compare( $db_version, '1.28.0', '<' ) ) {
+		global $wpdb;
+		$table = $wpdb->prefix . 'fair_audience_event_participants';
+
+		// Add ticket_type_id column if missing.
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+		$has_ticket_type = $wpdb->get_results(
+			$wpdb->prepare( "SHOW COLUMNS FROM {$table} LIKE %s", 'ticket_type_id' )
+		);
+		if ( empty( $has_ticket_type ) ) {
+			// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.DirectDatabaseQuery.SchemaChange
+			$wpdb->query(
+				"ALTER TABLE {$table} ADD COLUMN ticket_type_id BIGINT UNSIGNED DEFAULT NULL AFTER transaction_id,
+				ADD KEY idx_ticket_type_id (ticket_type_id)"
+			);
+		}
+
+		// Add seats column if missing.
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+		$has_seats = $wpdb->get_results(
+			$wpdb->prepare( "SHOW COLUMNS FROM {$table} LIKE %s", 'seats' )
+		);
+		if ( empty( $has_seats ) ) {
+			// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.DirectDatabaseQuery.SchemaChange
+			$wpdb->query(
+				"ALTER TABLE {$table} ADD COLUMN seats INT UNSIGNED NOT NULL DEFAULT 1 AFTER ticket_type_id"
+			);
+		}
+
+		update_option( 'fair_audience_db_version', '1.28.0' );
 	}
 }
 add_action( 'plugins_loaded', __NAMESPACE__ . '\\fair_audience_maybe_upgrade_db' );
