@@ -161,7 +161,6 @@ jobs:
 
     branch-approval:
         name: Wait for branch deploy approval
-        needs: [build]
         if: github.ref != 'refs/heads/main' && github.event_name != 'workflow_dispatch'
         runs-on: ubuntu-latest
         environment: branch-review
