@@ -56,7 +56,8 @@ jobs:
 
             - name: Deploy plugins via rsync
               run: |
-                  MAX_ATTEMPTS=3
+                  MAX_ATTEMPTS=2
+                  SSH_OPTS="-p ${{ vars.SSH_PORT }} -o ConnectTimeout=15 -o ServerAliveInterval=30 -o ServerAliveCountMax=3"
 
                   # Get plugins to deploy from environment variable
                   PLUGINS_TO_DEPLOY="${{ vars.PLUGINS_TO_DEPLOY }}"
@@ -86,8 +87,8 @@ jobs:
 
                       ATTEMPT=1
                       while [ $ATTEMPT -le $MAX_ATTEMPTS ]; do
-                        if rsync -avz --delete \
-                          -e "ssh -p ${{ vars.SSH_PORT }}" \
+                        if timeout 300 rsync -avz --delete \
+                          -e "ssh $SSH_OPTS" \
                           "extracted-plugins/$plugin/" \
                           "${{ vars.SSH_USER }}@${{ vars.SSH_HOST }}:${{ vars.WORDPRESS_PLUGINS_PATH }}/$plugin/"; then
                           echo "✓ $plugin deployed successfully"
