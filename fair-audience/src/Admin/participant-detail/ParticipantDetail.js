@@ -87,6 +87,33 @@ export default function ParticipantDetail() {
 		loadParticipant();
 	}, [loadParticipant]);
 
+	const handleDelete = () => {
+		// eslint-disable-next-line no-alert
+		if (
+			!confirm(
+				__(
+					'Are you sure you want to delete this participant?',
+					'fair-audience'
+				)
+			)
+		) {
+			return;
+		}
+
+		apiFetch({
+			path: `/fair-audience/v1/participants/${participantId}`,
+			method: 'DELETE',
+		})
+			.then(() => {
+				window.location.href =
+					'admin.php?page=fair-audience-all-participants';
+			})
+			.catch((err) => {
+				// eslint-disable-next-line no-alert
+				alert(__('Error: ', 'fair-audience') + err.message);
+			});
+	};
+
 	if (isLoading) {
 		return (
 			<div style={{ padding: '20px', textAlign: 'center' }}>
@@ -128,12 +155,21 @@ export default function ParticipantDetail() {
 				<h1 style={{ margin: 0 }}>
 					{fullName || __('Participant', 'fair-audience')}
 				</h1>
-				<Button
-					variant="secondary"
-					onClick={() => setIsEditModalOpen(true)}
-				>
-					{__('Edit participant', 'fair-audience')}
-				</Button>
+				<div style={{ display: 'flex', gap: '8px' }}>
+					<Button
+						variant="secondary"
+						onClick={() => setIsEditModalOpen(true)}
+					>
+						{__('Edit participant', 'fair-audience')}
+					</Button>
+					<Button
+						variant="secondary"
+						isDestructive
+						onClick={handleDelete}
+					>
+						{__('Delete participant', 'fair-audience')}
+					</Button>
+				</div>
 			</div>
 
 			<Card style={{ marginTop: '16px', marginBottom: '16px' }}>
