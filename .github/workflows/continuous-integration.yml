@@ -159,12 +159,25 @@ jobs:
               env:
                   GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
+    branch-approval:
+        name: Wait for branch deploy approval
+        needs: [build]
+        if: github.ref != 'refs/heads/main' && github.event_name != 'workflow_dispatch'
+        runs-on: ubuntu-latest
+        environment: branch-review
+        steps:
+            - run: echo "Branch deploy approved for ${{ github.ref }}"
+
     deploy-acroyoga:
         name: Deploy to acroyoga-club.es
-        needs: [build]
+        needs: [build, branch-approval]
         if: |
-            github.event_name == 'push' ||
-            (github.event_name == 'workflow_dispatch' && (github.event.inputs.environment == 'acroyoga-club.es' || github.event.inputs.environment == 'all'))
+            always() && needs.build.result == 'success' &&
+            (needs.branch-approval.result == 'success' || needs.branch-approval.result == 'skipped') &&
+            (
+              github.event_name == 'push' || github.event_name == 'pull_request' ||
+              (github.event_name == 'workflow_dispatch' && (github.event.inputs.environment == 'acroyoga-club.es' || github.event.inputs.environment == 'all'))
+            )
         uses: ./.github/workflows/deploy-to-environment.yml
         with:
             environment: acroyoga-club.es
@@ -173,10 +186,14 @@ jobs:
 
     deploy-fair-event-plugins:
         name: Deploy to fair-event-plugins.com
-        needs: [build]
+        needs: [build, branch-approval]
         if: |
-            github.event_name == 'push' ||
-            (github.event_name == 'workflow_dispatch' && (github.event.inputs.environment == 'fair-event-plugins.com' || github.event.inputs.environment == 'all'))
+            always() && needs.build.result == 'success' &&
+            (needs.branch-approval.result == 'success' || needs.branch-approval.result == 'skipped') &&
+            (
+              github.event_name == 'push' || github.event_name == 'pull_request' ||
+              (github.event_name == 'workflow_dispatch' && (github.event.inputs.environment == 'fair-event-plugins.com' || github.event.inputs.environment == 'all'))
+            )
         uses: ./.github/workflows/deploy-to-environment.yml
         with:
             environment: fair-event-plugins.com
@@ -185,10 +202,14 @@ jobs:
 
     deploy-lamutable:
         name: Deploy to lamutable.es
-        needs: [build]
+        needs: [build, branch-approval]
         if: |
-            github.event_name == 'push' ||
-            (github.event_name == 'workflow_dispatch' && (github.event.inputs.environment == 'lamutable.es' || github.event.inputs.environment == 'all'))
+            always() && needs.build.result == 'success' &&
+            (needs.branch-approval.result == 'success' || needs.branch-approval.result == 'skipped') &&
+            (
+              github.event_name == 'push' || github.event_name == 'pull_request' ||
+              (github.event_name == 'workflow_dispatch' && (github.event.inputs.environment == 'lamutable.es' || github.event.inputs.environment == 'all'))
+            )
         uses: ./.github/workflows/deploy-to-environment.yml
         with:
             environment: lamutable.es
@@ -197,10 +218,14 @@ jobs:
 
     deploy-fusion-dance:
         name: Deploy to fusion-dance.es
-        needs: [build]
+        needs: [build, branch-approval]
         if: |
-            github.event_name == 'push' ||
-            (github.event_name == 'workflow_dispatch' && (github.event.inputs.environment == 'fusion-dance.es' || github.event.inputs.environment == 'all'))
+            always() && needs.build.result == 'success' &&
+            (needs.branch-approval.result == 'success' || needs.branch-approval.result == 'skipped') &&
+            (
+              github.event_name == 'push' || github.event_name == 'pull_request' ||
+              (github.event_name == 'workflow_dispatch' && (github.event.inputs.environment == 'fusion-dance.es' || github.event.inputs.environment == 'all'))
+            )
         uses: ./.github/workflows/deploy-to-environment.yml
         with:
             environment: fusion-dance.es
@@ -209,10 +234,14 @@ jobs:
 
     deploy-acro-agenda:
         name: Deploy to acro-agenda.es
-        needs: [build]
+        needs: [build, branch-approval]
         if: |
-            github.event_name == 'push' ||
-            (github.event_name == 'workflow_dispatch' && (github.event.inputs.environment == 'acro-agenda.es' || github.event.inputs.environment == 'all'))
+            always() && needs.build.result == 'success' &&
+            (needs.branch-approval.result == 'success' || needs.branch-approval.result == 'skipped') &&
+            (
+              github.event_name == 'push' || github.event_name == 'pull_request' ||
+              (github.event_name == 'workflow_dispatch' && (github.event.inputs.environment == 'acro-agenda.es' || github.event.inputs.environment == 'all'))
+            )
         uses: ./.github/workflows/deploy-to-environment.yml
         with:
             environment: acro-agenda.es
@@ -221,10 +250,14 @@ jobs:
 
     deploy-fusion-circus:
         name: Deploy to fusion-circus.com
-        needs: [build]
+        needs: [build, branch-approval]
         if: |
-            github.event_name == 'push' ||
-            (github.event_name == 'workflow_dispatch' && (github.event.inputs.environment == 'fusion-circus.com' || github.event.inputs.environment == 'all'))
+            always() && needs.build.result == 'success' &&
+            (needs.branch-approval.result == 'success' || needs.branch-approval.result == 'skipped') &&
+            (
+              github.event_name == 'push' || github.event_name == 'pull_request' ||
+              (github.event_name == 'workflow_dispatch' && (github.event.inputs.environment == 'fusion-circus.com' || github.event.inputs.environment == 'all'))
+            )
         uses: ./.github/workflows/deploy-to-environment.yml
         with:
             environment: fusion-circus.com
