@@ -1141,6 +1141,44 @@ export default function EventTickets({
 									}))
 								}
 							/>
+							{hasAdvancedTickets ? (
+								<Button
+									variant="secondary"
+									isDestructive
+									onClick={() => {
+										if (
+											window.confirm(
+												__(
+													'Switching back to simple ticketing will remove all ticket types, sale periods, and prices. Continue?',
+													'fair-events'
+												)
+											)
+										) {
+											setTicketTypes([]);
+											setSalePeriods([]);
+											setPrices({});
+										}
+									}}
+								>
+									{__(
+										'Switch to simple ticketing',
+										'fair-events'
+									)}
+								</Button>
+							) : (
+								<Button
+									variant="secondary"
+									onClick={() => {
+										addTicketType();
+										addSalePeriod();
+									}}
+								>
+									{__(
+										'Switch to advanced ticketing',
+										'fair-events'
+									)}
+								</Button>
+							)}
 						</VStack>
 					</PanelBody>
 				</Panel>
