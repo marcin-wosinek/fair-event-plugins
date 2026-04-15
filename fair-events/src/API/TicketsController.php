@@ -70,6 +70,25 @@ class TicketsController extends WP_REST_Controller {
 				),
 			)
 		);
+
+		register_rest_route(
+			$this->namespace,
+			'/event-dates/(?P<id>\d+)/tickets/import',
+			array(
+				array(
+					'methods'             => WP_REST_Server::CREATABLE,
+					'callback'            => array( $this, 'import_items' ),
+					'permission_callback' => array( $this, 'items_permissions_check' ),
+					'args'                => array(
+						'id' => array(
+							'description' => __( 'Event date ID.', 'fair-events' ),
+							'type'        => 'integer',
+							'required'    => true,
+						),
+					),
+				),
+			)
+		);
 	}
 
 	/**
@@ -173,6 +192,144 @@ class TicketsController extends WP_REST_Controller {
 		}
 
 		// 6. Return refreshed response.
+		$event_date = EventDates::get_by_id( $event_date_id );
+
+		return new WP_REST_Response( $this->build_response( $event_date_id, $event_date ), 200 );
+	}
+
+	/**
+	 * Import a ticket configuration, replacing the existing one atomically.
+	 *
+	 * Prices reference ticket types and sale periods by array index into the
+	 * incoming payload (ticket_type_index / sale_period_index), so the
+	 * configuration is portable across events.
+	 *
+	 * @param WP_REST_Request $request Full data about the request.
+	 * @return WP_REST_Response|WP_Error Response object on success.
+	 */
+	public function import_items( $request ) {
+		$event_date_id = (int) $request->get_param( 'id' );
+		$event_date    = EventDates::get_by_id( $event_date_id );
+
+		if ( ! $event_date ) {
+			return new WP_Error(
+				'rest_event_date_not_found',
+				__( 'Event date not found.', 'fair-events' ),
+				array( 'status' => 404 )
+			);
+		}
+
+		$body = $request->get_json_params();
+		if ( ! is_array( $body ) ) {
+			return new WP_Error(
+				'rest_invalid_import',
+				__( 'Invalid import payload.', 'fair-events' ),
+				array( 'status' => 400 )
+			);
+		}
+
+		// 1. Update capacity + signup_price on event_dates row.
+		$event_date_updates = array();
+		if ( array_key_exists( 'capacity', $body ) ) {
+			$event_date_updates['capacity'] = null !== $body['capacity'] && '' !== $body['capacity']
+				? absint( $body['capacity'] )
+				: null;
+		}
+		if ( array_key_exists( 'signup_price', $body ) ) {
+			$raw_price                          = $body['signup_price'];
+			$event_date_updates['signup_price'] = ( null === $raw_price || '' === $raw_price )
+				? null
+				: (float) $raw_price;
+		}
+		if ( ! empty( $event_date_updates ) ) {
+			EventDates::update_by_id( $event_date_id, $event_date_updates );
+		}
+
+		// 2. Wipe existing prices, types, and periods for a clean replace.
+		TicketPrice::delete_by_event_date_id( $event_date_id );
+
+		$existing_types = TicketType::get_all_by_event_date_id( $event_date_id );
+		foreach ( $existing_types as $type ) {
+			TicketType::delete( $type->id );
+		}
+
+		$existing_periods = TicketSalePeriod::get_all_by_event_date_id( $event_date_id );
+		foreach ( $existing_periods as $period ) {
+			TicketSalePeriod::delete( $period->id );
+		}
+
+		// 3. Create new ticket types; track new IDs by input index.
+		$type_ids_by_index = array();
+		$incoming_types    = isset( $body['ticket_types'] ) && is_array( $body['ticket_types'] )
+			? $body['ticket_types']
+			: array();
+		foreach ( $incoming_types as $index => $item ) {
+			$name             = sanitize_text_field( $item['name'] ?? '' );
+			$capacity         = isset( $item['capacity'] ) && '' !== $item['capacity'] && null !== $item['capacity']
+				? absint( $item['capacity'] )
+				: null;
+			$seats_per_ticket = isset( $item['seats_per_ticket'] ) ? max( 1, absint( $item['seats_per_ticket'] ) ) : 1;
+
+			$new_id = TicketType::create( $event_date_id, $name, $capacity, $index, $seats_per_ticket );
+			if ( $new_id ) {
+				$type_ids_by_index[ $index ] = (int) $new_id;
+			}
+		}
+
+		// 4. Create new sale periods; track new IDs by input index.
+		$period_ids_by_index = array();
+		$incoming_periods    = isset( $body['sale_periods'] ) && is_array( $body['sale_periods'] )
+			? $body['sale_periods']
+			: array();
+		foreach ( $incoming_periods as $index => $item ) {
+			$name       = isset( $item['name'] ) ? sanitize_text_field( $item['name'] ) : null;
+			$sale_start = sanitize_text_field( $item['sale_start'] ?? '' );
+			$sale_end   = sanitize_text_field( $item['sale_end'] ?? '' );
+
+			$new_id = TicketSalePeriod::create( $event_date_id, $name, $sale_start, $sale_end, $index );
+			if ( $new_id ) {
+				$period_ids_by_index[ $index ] = (int) $new_id;
+			}
+		}
+
+		// 5. Create prices, resolving indices to the freshly-created IDs.
+		$incoming_prices = isset( $body['prices'] ) && is_array( $body['prices'] )
+			? $body['prices']
+			: array();
+		foreach ( $incoming_prices as $price_data ) {
+			if ( ! isset( $price_data['ticket_type_index'], $price_data['sale_period_index'] ) ) {
+				continue;
+			}
+			$type_index   = (int) $price_data['ticket_type_index'];
+			$period_index = (int) $price_data['sale_period_index'];
+
+			if ( ! isset( $type_ids_by_index[ $type_index ], $period_ids_by_index[ $period_index ] ) ) {
+				continue;
+			}
+
+			$price = isset( $price_data['price'] ) ? (float) $price_data['price'] : 0;
+			$cap   = isset( $price_data['capacity'] ) && null !== $price_data['capacity'] && '' !== $price_data['capacity']
+				? absint( $price_data['capacity'] )
+				: null;
+
+			TicketPrice::create(
+				$type_ids_by_index[ $type_index ],
+				$period_ids_by_index[ $period_index ],
+				$price,
+				$cap
+			);
+		}
+
+		// 6. Save settings.
+		if ( isset( $body['settings'] ) && is_array( $body['settings'] ) ) {
+			$settings = array();
+			foreach ( $body['settings'] as $key => $value ) {
+				$settings[ sanitize_key( $key ) ] = $value ? '1' : '0';
+			}
+			EventDateSetting::set_multiple( $event_date_id, $settings );
+		}
+
+		// 7. Return refreshed response.
 		$event_date = EventDates::get_by_id( $event_date_id );
 
 		return new WP_REST_Response( $this->build_response( $event_date_id, $event_date ), 200 );

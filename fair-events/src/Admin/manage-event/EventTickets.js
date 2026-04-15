@@ -6,7 +6,7 @@
  * @package FairEvents
  */
 
-import { useState, useEffect, useCallback } from '@wordpress/element';
+import { useState, useEffect, useCallback, useRef } from '@wordpress/element';
 import {
 	Card,
 	CardHeader,
@@ -45,9 +45,11 @@ export default function EventTickets({
 	});
 	const [loading, setLoading] = useState(!initialData);
 	const [saving, setSaving] = useState(false);
+	const [importing, setImporting] = useState(false);
 	const [error, setError] = useState(null);
 	const [success, setSuccess] = useState(null);
 	const [pricingRules, setPricingRules] = useState([]);
+	const fileInputRef = useRef(null);
 
 	const hasAdvancedTickets = ticketTypes.length > 0 || salePeriods.length > 0;
 
@@ -246,6 +248,139 @@ export default function EventTickets({
 		}
 	};
 
+	const buildExportPayload = () => {
+		const exportPrices = [];
+		ticketTypes.forEach((type, tIndex) => {
+			salePeriods.forEach((period, pIndex) => {
+				const cell = getPrice(type, period);
+				if (cell.price === '' && cell.capacity === '') return;
+				exportPrices.push({
+					ticket_type_index: tIndex,
+					sale_period_index: pIndex,
+					price: parseFloat(cell.price) || 0,
+					capacity:
+						cell.capacity !== ''
+							? parseInt(cell.capacity, 10)
+							: null,
+				});
+			});
+		});
+
+		return {
+			version: 1,
+			type: 'fair-events-tickets',
+			exported_at: new Date().toISOString(),
+			capacity: capacity !== '' ? parseInt(capacity, 10) : null,
+			signup_price: hasAdvancedTickets
+				? null
+				: signupPrice.trim() === ''
+				? null
+				: parseFloat(signupPrice),
+			settings,
+			ticket_types: ticketTypes.map((t) => ({
+				name: t.name || '',
+				capacity:
+					t.capacity !== null && t.capacity !== undefined
+						? t.capacity
+						: null,
+				seats_per_ticket: t.seats_per_ticket || 1,
+			})),
+			sale_periods: getEffectiveSalePeriods().map((p) => ({
+				name: p.name || '',
+				sale_start: p.sale_start || '',
+				sale_end: p.sale_end || '',
+			})),
+			prices: exportPrices,
+		};
+	};
+
+	const handleExport = () => {
+		try {
+			const payload = buildExportPayload();
+			const json = JSON.stringify(payload, null, 2);
+			const blob = new Blob([json], { type: 'application/json' });
+			const url = URL.createObjectURL(blob);
+			const a = document.createElement('a');
+			a.href = url;
+			a.download = `tickets-event-${eventDateId}-${new Date()
+				.toISOString()
+				.slice(0, 10)}.json`;
+			document.body.appendChild(a);
+			a.click();
+			a.remove();
+			URL.revokeObjectURL(url);
+		} catch (err) {
+			setError(
+				err.message ||
+					__('Failed to export ticket configuration.', 'fair-events')
+			);
+		}
+	};
+
+	const handleImportFile = async (event) => {
+		const file = event.target.files && event.target.files[0];
+		if (file) {
+			if (
+				!window.confirm(
+					__(
+						'Importing will replace all current ticket types, sale periods, prices, and settings for this event. Continue?',
+						'fair-events'
+					)
+				)
+			) {
+				event.target.value = '';
+				return;
+			}
+
+			setImporting(true);
+			setError(null);
+			setSuccess(null);
+
+			try {
+				const text = await file.text();
+				const parsed = JSON.parse(text);
+
+				if (
+					!parsed ||
+					typeof parsed !== 'object' ||
+					parsed.type !== 'fair-events-tickets'
+				) {
+					throw new Error(
+						__(
+							'Invalid file format. Expected a fair-events-tickets export.',
+							'fair-events'
+						)
+					);
+				}
+
+				const data = await apiFetch({
+					path: `/fair-events/v1/event-dates/${eventDateId}/tickets/import`,
+					method: 'POST',
+					data: parsed,
+				});
+
+				populateFromData(data);
+				setSuccess(
+					__(
+						'Ticket configuration imported successfully.',
+						'fair-events'
+					)
+				);
+			} catch (err) {
+				setError(
+					err.message ||
+						__(
+							'Failed to import ticket configuration.',
+							'fair-events'
+						)
+				);
+			} finally {
+				setImporting(false);
+				event.target.value = '';
+			}
+		}
+	};
+
 	const addTicketType = () => {
 		setTicketTypes([
 			...ticketTypes,
@@ -422,6 +557,31 @@ export default function EventTickets({
 					{success}
 				</Notice>
 			)}
+
+			<HStack spacing={2} justify="flex-end">
+				<Button
+					variant="secondary"
+					onClick={handleExport}
+					disabled={importing || saving}
+				>
+					{__('Export ticket settings', 'fair-events')}
+				</Button>
+				<Button
+					variant="secondary"
+					onClick={() => fileInputRef.current?.click()}
+					disabled={importing || saving}
+					isBusy={importing}
+				>
+					{__('Import ticket settings', 'fair-events')}
+				</Button>
+				<input
+					ref={fileInputRef}
+					type="file"
+					accept="application/json,.json"
+					style={{ display: 'none' }}
+					onChange={handleImportFile}
+				/>
+			</HStack>
 
 			{!hasAdvancedTickets && (
 				<Card>
