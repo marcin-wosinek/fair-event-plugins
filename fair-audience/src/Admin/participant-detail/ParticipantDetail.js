@@ -1,13 +1,15 @@
 import { __ } from '@wordpress/i18n';
-import { useState, useEffect } from '@wordpress/element';
+import { useState, useEffect, useCallback } from '@wordpress/element';
 import apiFetch from '@wordpress/api-fetch';
 import {
+	Button,
 	Card,
 	CardBody,
 	CardHeader,
 	Spinner,
 	Notice,
 } from '@wordpress/components';
+import ParticipantEditModal from '../components/ParticipantEditModal.js';
 
 function formatDateTime(dateString) {
 	if (!dateString) {
@@ -52,8 +54,9 @@ export default function ParticipantDetail() {
 	const [activity, setActivity] = useState(null);
 	const [isLoading, setIsLoading] = useState(true);
 	const [error, setError] = useState(null);
+	const [isEditModalOpen, setIsEditModalOpen] = useState(false);
 
-	useEffect(() => {
+	const loadParticipant = useCallback(() => {
 		if (!participantId) {
 			setIsLoading(false);
 			setError(__('No participant ID provided.', 'fair-audience'));
@@ -79,6 +82,10 @@ export default function ParticipantDetail() {
 				setIsLoading(false);
 			});
 	}, [participantId]);
+
+	useEffect(() => {
+		loadParticipant();
+	}, [loadParticipant]);
 
 	if (isLoading) {
 		return (
@@ -110,9 +117,26 @@ export default function ParticipantDetail() {
 
 	return (
 		<div style={{ maxWidth: '900px', margin: '20px 0' }}>
-			<h1>{fullName || __('Participant', 'fair-audience')}</h1>
+			<div
+				style={{
+					display: 'flex',
+					alignItems: 'center',
+					justifyContent: 'space-between',
+					gap: '16px',
+				}}
+			>
+				<h1 style={{ margin: 0 }}>
+					{fullName || __('Participant', 'fair-audience')}
+				</h1>
+				<Button
+					variant="secondary"
+					onClick={() => setIsEditModalOpen(true)}
+				>
+					{__('Edit participant', 'fair-audience')}
+				</Button>
+			</div>
 
-			<Card style={{ marginBottom: '16px' }}>
+			<Card style={{ marginTop: '16px', marginBottom: '16px' }}>
 				<CardHeader>
 					<h2 style={{ margin: 0 }}>
 						{__('Profile', 'fair-audience')}
@@ -298,6 +322,13 @@ export default function ParticipantDetail() {
 					)}
 				</CardBody>
 			</Card>
+
+			<ParticipantEditModal
+				isOpen={isEditModalOpen}
+				participant={participant}
+				onClose={() => setIsEditModalOpen(false)}
+				onSaved={loadParticipant}
+			/>
 		</div>
 	);
 }

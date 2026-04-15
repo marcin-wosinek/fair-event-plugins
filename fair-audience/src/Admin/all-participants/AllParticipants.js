@@ -5,16 +5,12 @@ import {
 	Button,
 	Card,
 	CardBody,
-	Modal,
-	TextControl,
-	SelectControl,
-	CheckboxControl,
 	Spinner,
 	Popover,
 } from '@wordpress/components';
 import { DataViews, filterSortAndPaginate } from '@wordpress/dataviews';
 import { Icon, caution } from '@wordpress/icons';
-import UserLinkSection from './UserLinkSection.js';
+import ParticipantEditModal from '../components/ParticipantEditModal.js';
 
 const DEFAULT_VIEW = {
 	type: 'table',
@@ -52,26 +48,11 @@ export default function AllParticipants() {
 	const [view, setView] = useState(DEFAULT_VIEW);
 	const [isModalOpen, setIsModalOpen] = useState(false);
 	const [editingParticipant, setEditingParticipant] = useState(null);
-	const [formData, setFormData] = useState({
-		name: '',
-		surname: '',
-		email: '',
-		instagram: '',
-		email_profile: 'minimal',
-		wp_user_id: null,
-		wp_user: null,
-	});
 
 	// Events popover state.
 	const [eventsPopover, setEventsPopover] = useState(null);
 	const [popoverEvents, setPopoverEvents] = useState([]);
 	const [popoverLoading, setPopoverLoading] = useState(false);
-
-	// Groups management state.
-	const [allGroups, setAllGroups] = useState([]);
-	const [selectedGroupIds, setSelectedGroupIds] = useState([]);
-	const [originalGroupIds, setOriginalGroupIds] = useState([]);
-	const [groupsLoading, setGroupsLoading] = useState(false);
 
 	const showEventsPopover = useCallback((participantId, label, anchorRef) => {
 		setEventsPopover({ participantId, label, anchorRef });
@@ -87,21 +68,6 @@ export default function AllParticipants() {
 			})
 			.catch(() => {
 				setPopoverLoading(false);
-			});
-	}, []);
-
-	// Load all groups.
-	const loadGroups = useCallback(() => {
-		setGroupsLoading(true);
-		apiFetch({ path: '/fair-audience/v1/groups' })
-			.then((data) => {
-				setAllGroups(data);
-				setGroupsLoading(false);
-			})
-			.catch((err) => {
-				// eslint-disable-next-line no-console
-				console.error('Error loading groups:', err);
-				setGroupsLoading(false);
 			});
 	}, []);
 
@@ -373,104 +339,12 @@ export default function AllParticipants() {
 
 	const openAddModal = () => {
 		setEditingParticipant(null);
-		setFormData({
-			name: '',
-			surname: '',
-			email: '',
-			instagram: '',
-			email_profile: 'minimal',
-			wp_user_id: null,
-			wp_user: null,
-		});
-		setSelectedGroupIds([]);
-		setOriginalGroupIds([]);
-		loadGroups();
 		setIsModalOpen(true);
 	};
 
 	const openEditModal = (participant) => {
 		setEditingParticipant(participant);
-		setFormData({
-			name: participant.name,
-			surname: participant.surname,
-			email: participant.email || '',
-			instagram: participant.instagram || '',
-			email_profile: participant.email_profile,
-			wp_user_id: participant.wp_user_id || null,
-			wp_user: participant.wp_user || null,
-		});
-		const groupIds = (participant.groups || []).map((g) => g.id);
-		setSelectedGroupIds(groupIds);
-		setOriginalGroupIds(groupIds);
-		loadGroups();
 		setIsModalOpen(true);
-	};
-
-	const handleSubmit = async () => {
-		const method = editingParticipant ? 'PUT' : 'POST';
-		const path = editingParticipant
-			? `/fair-audience/v1/participants/${editingParticipant.id}`
-			: '/fair-audience/v1/participants';
-
-		// Only send data that the API expects (not the wp_user object).
-		const dataToSend = {
-			name: formData.name,
-			surname: formData.surname,
-			email: formData.email,
-			instagram: formData.instagram,
-			email_profile: formData.email_profile,
-			wp_user_id: formData.wp_user_id,
-		};
-
-		try {
-			const result = await apiFetch({
-				path,
-				method,
-				data: dataToSend,
-			});
-
-			// Get participant ID (from result for new, from editingParticipant for existing).
-			const participantId = editingParticipant
-				? editingParticipant.id
-				: result.id;
-
-			// Calculate group changes.
-			const groupsToAdd = selectedGroupIds.filter(
-				(id) => !originalGroupIds.includes(id)
-			);
-			const groupsToRemove = originalGroupIds.filter(
-				(id) => !selectedGroupIds.includes(id)
-			);
-
-			// Add to new groups.
-			const addPromises = groupsToAdd.map((groupId) =>
-				apiFetch({
-					path: `/fair-audience/v1/groups/${groupId}/participants`,
-					method: 'POST',
-					data: { participant_id: participantId },
-				}).catch((err) => {
-					// Ignore "already member" errors.
-					if (!err.message?.includes('already')) {
-						throw err;
-					}
-				})
-			);
-
-			// Remove from groups.
-			const removePromises = groupsToRemove.map((groupId) =>
-				apiFetch({
-					path: `/fair-audience/v1/groups/${groupId}/participants/${participantId}`,
-					method: 'DELETE',
-				})
-			);
-
-			await Promise.all([...addPromises, ...removePromises]);
-
-			setIsModalOpen(false);
-			loadParticipants();
-		} catch (err) {
-			alert(__('Error: ', 'fair-audience') + err.message);
-		}
 	};
 
 	const handleDelete = (items) => {
@@ -505,22 +379,6 @@ export default function AllParticipants() {
 			.catch((err) => {
 				alert(__('Error: ', 'fair-audience') + err.message);
 			});
-	};
-
-	const handleLinkUser = (user) => {
-		setFormData({
-			...formData,
-			wp_user_id: user.id,
-			wp_user: user,
-		});
-	};
-
-	const handleUnlinkUser = () => {
-		setFormData({
-			...formData,
-			wp_user_id: null,
-			wp_user: null,
-		});
 	};
 
 	// Define actions for DataViews.
@@ -626,155 +484,12 @@ export default function AllParticipants() {
 				</Popover>
 			)}
 
-			{isModalOpen && (
-				<Modal
-					title={
-						editingParticipant
-							? __('Edit Participant', 'fair-audience')
-							: __('Add Participant', 'fair-audience')
-					}
-					onRequestClose={() => setIsModalOpen(false)}
-					style={{ maxWidth: '500px', width: '100%' }}
-				>
-					<Card>
-						<CardBody>
-							<TextControl
-								label={__('Name *', 'fair-audience')}
-								value={formData.name}
-								onChange={(value) =>
-									setFormData({ ...formData, name: value })
-								}
-								required
-							/>
-							<TextControl
-								label={__('Surname', 'fair-audience')}
-								value={formData.surname}
-								onChange={(value) =>
-									setFormData({
-										...formData,
-										surname: value,
-									})
-								}
-							/>
-							<TextControl
-								label={__('Email', 'fair-audience')}
-								type="email"
-								value={formData.email}
-								onChange={(value) =>
-									setFormData({ ...formData, email: value })
-								}
-							/>
-							<TextControl
-								label={__('Instagram Handle', 'fair-audience')}
-								value={formData.instagram}
-								onChange={(value) =>
-									setFormData({
-										...formData,
-										instagram: value,
-									})
-								}
-								help={__(
-									'Enter handle only (without @)',
-									'fair-audience'
-								)}
-							/>
-							<SelectControl
-								label={__('Email Profile', 'fair-audience')}
-								value={formData.email_profile}
-								options={[
-									{
-										label: __('Minimal', 'fair-audience'),
-										value: 'minimal',
-									},
-									{
-										label: __('Marketing', 'fair-audience'),
-										value: 'marketing',
-									},
-								]}
-								onChange={(value) =>
-									setFormData({
-										...formData,
-										email_profile: value,
-									})
-								}
-							/>
-							<UserLinkSection
-								linkedUser={formData.wp_user}
-								participantEmail={formData.email}
-								onLink={handleLinkUser}
-								onUnlink={handleUnlinkUser}
-							/>
-							<div style={{ marginTop: '16px' }}>
-								<label
-									style={{
-										display: 'block',
-										marginBottom: '8px',
-										fontWeight: '600',
-									}}
-								>
-									{__('Groups', 'fair-audience')}
-								</label>
-								{groupsLoading ? (
-									<Spinner />
-								) : allGroups.length === 0 ? (
-									<p style={{ color: '#666' }}>
-										{__(
-											'No groups available.',
-											'fair-audience'
-										)}
-									</p>
-								) : (
-									<div
-										style={{
-											maxHeight: '150px',
-											overflowY: 'auto',
-											border: '1px solid #ddd',
-											padding: '8px',
-											borderRadius: '4px',
-										}}
-									>
-										{allGroups.map((group) => (
-											<CheckboxControl
-												key={group.id}
-												label={group.name}
-												checked={selectedGroupIds.includes(
-													group.id
-												)}
-												onChange={(checked) => {
-													if (checked) {
-														setSelectedGroupIds([
-															...selectedGroupIds,
-															group.id,
-														]);
-													} else {
-														setSelectedGroupIds(
-															selectedGroupIds.filter(
-																(id) =>
-																	id !==
-																	group.id
-															)
-														);
-													}
-												}}
-											/>
-										))}
-									</div>
-								)}
-							</div>
-							<div style={{ marginTop: '16px' }}>
-								<Button
-									variant="primary"
-									onClick={handleSubmit}
-								>
-									{editingParticipant
-										? __('Update', 'fair-audience')
-										: __('Add', 'fair-audience')}
-								</Button>
-							</div>
-						</CardBody>
-					</Card>
-				</Modal>
-			)}
+			<ParticipantEditModal
+				isOpen={isModalOpen}
+				participant={editingParticipant}
+				onClose={() => setIsModalOpen(false)}
+				onSaved={loadParticipants}
+			/>
 		</div>
 	);
 }

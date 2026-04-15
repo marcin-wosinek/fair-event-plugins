@@ -388,7 +388,11 @@ class ParticipantsController extends WP_REST_Controller {
 			);
 		}
 
-		return rest_ensure_response( $this->prepare_item_for_response( $participant, $request ) );
+		$item           = $this->prepare_item_for_response( $participant, $request );
+		$groups_by_pid  = $this->group_participant_repository->get_groups_for_participants( array( $participant->id ) );
+		$item['groups'] = $groups_by_pid[ $participant->id ] ?? array();
+
+		return rest_ensure_response( $item );
 	}
 
 	/**
