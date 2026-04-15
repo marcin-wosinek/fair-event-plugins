@@ -69,6 +69,7 @@ class EventDateSetting {
 		'continues_pricing_period'          => '1',
 		'unlimited_tickets_in_price_period' => '1',
 		'show_ticket_type_capacity'         => '0',
+		'multiple_pricing_periods'          => '0',
 	);
 
 	/**
