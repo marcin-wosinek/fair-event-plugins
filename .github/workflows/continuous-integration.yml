@@ -176,12 +176,15 @@ jobs:
             - name: Create GitHub release
               run: |
                   SHORT_SHA="${GITHUB_SHA:0:7}"
-                  gh release create "build-${SHORT_SHA}" ./dist/*.zip \
-                    --repo "$GITHUB_REPOSITORY" \
-                    --title "Build ${SHORT_SHA}" \
-                    --notes "Automated build from commit ${GITHUB_SHA}" \
-                    --prerelease \
-                    --clobber
+                  if gh release view "build-${SHORT_SHA}" --repo "$GITHUB_REPOSITORY" &>/dev/null; then
+                    echo "Release build-${SHORT_SHA} already exists, skipping."
+                  else
+                    gh release create "build-${SHORT_SHA}" ./dist/*.zip \
+                      --repo "$GITHUB_REPOSITORY" \
+                      --title "Build ${SHORT_SHA}" \
+                      --notes "Automated build from commit ${GITHUB_SHA}" \
+                      --prerelease
+                  fi
               env:
                   GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
