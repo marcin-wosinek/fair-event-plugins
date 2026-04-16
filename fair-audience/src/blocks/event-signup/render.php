@@ -24,24 +24,38 @@ $register_button_text     = __( $attributes['registerButtonText'] ?? 'Register &
 $request_link_button_text = __( $attributes['requestLinkButtonText'] ?? 'Send Signup Link', 'fair-audience' );
 $success_message          = __( $attributes['successMessage'] ?? 'You have successfully signed up for the event!', 'fair-audience' );
 
-// Get event ID from current post.
-$event_id = get_the_ID();
+// Get the current post ID (may be a direct event post or a linked page).
+$post_id = get_the_ID();
 
-// Check if this is an event post type.
-$is_valid_post_type = \FairEvents\Database\EventRepository::is_event( $event_id );
-
-// Generate unique ID for this form instance.
-$form_id = 'fair-audience-signup-' . wp_unique_id();
-
-// Resolve event_date_id from fair_event_dates table.
-// Must be done before the participant lookup block so $event_date_id is available there.
-$event_date_id = '';
+// Resolve the event date first. EventDates::get_by_event_id() checks both the
+// direct event_id column and the fair_event_date_posts junction table, so it
+// returns an event date for pages that are linked to an event but are not
+// themselves of an event post type (e.g. "entry type" pages).
+$event_date_id   = '';
+$event_dates_obj = null;
 if ( class_exists( EventDates::class ) ) {
-	$event_dates_obj = EventDates::get_by_event_id( $event_id );
+	$event_dates_obj = EventDates::get_by_event_id( $post_id );
 	if ( $event_dates_obj ) {
 		$event_date_id = (string) $event_dates_obj->id;
 	}
 }
+
+// Determine the effective event ID for participant lookups and API calls.
+// For direct event posts: the current post IS the event.
+// For junction-linked pages: use event_date->event_id (the primary event post)
+// so that the API's EventRepository::is_event() check passes.
+$event_id = $post_id;
+if ( $event_dates_obj && $event_dates_obj->event_id && $event_dates_obj->event_id !== $post_id ) {
+	$event_id = $event_dates_obj->event_id;
+}
+
+// The block is valid if the current post is a known event post type, OR it is
+// linked to an event via the junction table (event date was found).
+$is_valid_post_type = \FairEvents\Database\EventRepository::is_event( $post_id )
+	|| null !== $event_dates_obj;
+
+// Generate unique ID for this form instance.
+$form_id = 'fair-audience-signup-' . wp_unique_id();
 
 // Determine user state.
 $participant_token = get_query_var( 'participant_token', '' );
