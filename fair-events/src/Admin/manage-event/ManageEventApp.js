@@ -993,6 +993,16 @@ export default function ManageEventApp() {
 											</span>
 										)}
 									</span>
+									{lp.view_url && (
+										<Button
+											variant="secondary"
+											href={lp.view_url}
+											target="_blank"
+											size="small"
+										>
+											{__('View Entry', 'fair-events')}
+										</Button>
+									)}
 									{lp.edit_url && (
 										<Button
 											variant="secondary"

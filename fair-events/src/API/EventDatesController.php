@@ -1383,6 +1383,7 @@ class EventDatesController extends WP_REST_Controller {
 					'title'      => $linked_post->post_title,
 					'status'     => $linked_post->post_status,
 					'edit_url'   => get_edit_post_link( $linked_post->ID, 'raw' ),
+					'view_url'   => get_permalink( $linked_post->ID ),
 					'is_primary' => (int) $linked_post->ID === (int) $event_date->event_id,
 				);
 			}
