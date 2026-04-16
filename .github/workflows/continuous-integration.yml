@@ -159,6 +159,31 @@ jobs:
               env:
                   GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
+    general-release:
+        name: General release
+        runs-on: ubuntu-latest
+        needs: [build]
+        if: github.ref == 'refs/heads/main'
+        permissions:
+            contents: write
+        steps:
+            - name: Download build artifacts
+              uses: actions/download-artifact@v8
+              with:
+                  name: plugins
+                  path: ./dist
+
+            - name: Create GitHub release
+              run: |
+                  SHORT_SHA="${GITHUB_SHA:0:7}"
+                  gh release create "build-${SHORT_SHA}" ./dist/*.zip \
+                    --repo "$GITHUB_REPOSITORY" \
+                    --title "Build ${SHORT_SHA}" \
+                    --notes "Automated build from commit ${GITHUB_SHA}" \
+                    --prerelease
+              env:
+                  GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
     branch-approval-acroyoga:
         name: Wait for branch deploy approval - acroyoga-club.es
         if: github.ref != 'refs/heads/main' && github.event_name != 'workflow_dispatch'
