@@ -8,8 +8,10 @@ import {
 	TextControl,
 	TextareaControl,
 	ToggleControl,
+	Notice,
 } from '@wordpress/components';
 import { __ } from '@wordpress/i18n';
+import { useSelect } from '@wordpress/data';
 import ServerSideRender from '@wordpress/server-side-render';
 
 registerBlockType('fair-audience/event-signup', {
@@ -22,9 +24,31 @@ registerBlockType('fair-audience/event-signup', {
 			showOptionPrices,
 		} = attributes;
 
+		const postType = useSelect(
+			(select) => select('core/editor').getCurrentPostType(),
+			[]
+		);
+
 		const blockProps = useBlockProps({
 			className: 'fair-audience-event-signup',
 		});
+
+		const eventPostTypes = window.fairAudienceEventPostTypes ?? [];
+		const isEventPage =
+			eventPostTypes.length === 0 || eventPostTypes.includes(postType);
+
+		if (!isEventPage) {
+			return (
+				<div {...blockProps}>
+					<Notice status="warning" isDismissible={false}>
+						{__(
+							'This block can only be used on event pages.',
+							'fair-audience'
+						)}
+					</Notice>
+				</div>
+			);
+		}
 
 		return (
 			<>

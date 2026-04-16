@@ -33,6 +33,16 @@ $is_valid_post_type = \FairEvents\Database\EventRepository::is_event( $event_id 
 // Generate unique ID for this form instance.
 $form_id = 'fair-audience-signup-' . wp_unique_id();
 
+// Resolve event_date_id from fair_event_dates table.
+// Must be done before the participant lookup block so $event_date_id is available there.
+$event_date_id = '';
+if ( class_exists( EventDates::class ) ) {
+	$event_dates_obj = EventDates::get_by_event_id( $event_id );
+	if ( $event_dates_obj ) {
+		$event_date_id = (string) $event_dates_obj->id;
+	}
+}
+
 // Determine user state.
 $participant_token = get_query_var( 'participant_token', '' );
 $user_id           = get_current_user_id();
@@ -87,15 +97,6 @@ if ( $is_valid_post_type ) {
 			'surname' => $participant->surname,
 			'email'   => $participant->email,
 		);
-	}
-}
-
-// Resolve event_date_id from fair_event_dates table.
-$event_date_id = '';
-if ( class_exists( EventDates::class ) ) {
-	$event_dates_obj = EventDates::get_by_event_id( $event_id );
-	if ( $event_dates_obj ) {
-		$event_date_id = (string) $event_dates_obj->id;
 	}
 }
 

@@ -29,6 +29,18 @@ class BlockHooks {
 	public function register_blocks() {
 		register_block_type( FAIR_AUDIENCE_PLUGIN_DIR . 'build/blocks/mailing-signup' );
 		register_block_type( FAIR_AUDIENCE_PLUGIN_DIR . 'build/blocks/event-signup' );
+
+		// Pass enabled event post types to the editor so it can warn when the
+		// block is placed on a non-event page.
+		$event_post_types = class_exists( '\FairEvents\Database\Settings' )
+			? \FairEvents\Database\Settings::get_enabled_post_types()
+			: array();
+		wp_add_inline_script(
+			'fair-audience-event-signup-editor-script',
+			'window.fairAudienceEventPostTypes = ' . wp_json_encode( $event_post_types ) . ';',
+			'before'
+		);
+
 		register_block_type( FAIR_AUDIENCE_PLUGIN_DIR . 'build/blocks/signups-list' );
 		register_block_type( FAIR_AUDIENCE_PLUGIN_DIR . 'build/blocks/audience-signup' );
 		register_block_type( FAIR_AUDIENCE_PLUGIN_DIR . 'build/blocks/fair-form' );
