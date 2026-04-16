@@ -14,6 +14,7 @@ use FairEvents\Models\EventDateSetting;
 use FairEvents\Models\TicketType;
 use FairEvents\Models\TicketSalePeriod;
 use FairEvents\Models\TicketPrice;
+use FairEvents\Models\TicketOption;
 use WP_REST_Controller;
 use WP_REST_Server;
 use WP_REST_Request;
@@ -191,7 +192,18 @@ class TicketsController extends WP_REST_Controller {
 			EventDateSetting::set_multiple( $event_date_id, $settings );
 		}
 
-		// 6. Return refreshed response.
+		// 6. Sync ticket options (delete all and re-insert).
+		TicketOption::delete_by_event_date_id( $event_date_id );
+		$incoming_options = $body['options'] ?? array();
+		foreach ( $incoming_options as $index => $option_data ) {
+			$name  = sanitize_text_field( $option_data['name'] ?? '' );
+			$price = isset( $option_data['price'] ) ? (float) $option_data['price'] : 0.0;
+			if ( '' !== $name ) {
+				TicketOption::create( $event_date_id, $name, $price, $index );
+			}
+		}
+
+		// 7. Return refreshed response.
 		$event_date = EventDates::get_by_id( $event_date_id );
 
 		return new WP_REST_Response( $this->build_response( $event_date_id, $event_date ), 200 );
@@ -329,7 +341,20 @@ class TicketsController extends WP_REST_Controller {
 			EventDateSetting::set_multiple( $event_date_id, $settings );
 		}
 
-		// 7. Return refreshed response.
+		// 7. Import ticket options (delete all and re-insert).
+		TicketOption::delete_by_event_date_id( $event_date_id );
+		$incoming_options = isset( $body['options'] ) && is_array( $body['options'] )
+			? $body['options']
+			: array();
+		foreach ( $incoming_options as $index => $option_data ) {
+			$name  = sanitize_text_field( $option_data['name'] ?? '' );
+			$price = isset( $option_data['price'] ) ? (float) $option_data['price'] : 0.0;
+			if ( '' !== $name ) {
+				TicketOption::create( $event_date_id, $name, $price, $index );
+			}
+		}
+
+		// 8. Return refreshed response.
 		$event_date = EventDates::get_by_id( $event_date_id );
 
 		return new WP_REST_Response( $this->build_response( $event_date_id, $event_date ), 200 );
@@ -447,6 +472,7 @@ class TicketsController extends WP_REST_Controller {
 		$sale_periods = TicketSalePeriod::get_all_by_event_date_id( $event_date_id );
 		$prices       = TicketPrice::get_all_by_event_date_id( $event_date_id );
 		$raw_settings = EventDateSetting::get_all_for_event_date( $event_date_id );
+		$options      = TicketOption::get_all_by_event_date_id( $event_date_id );
 
 		$settings = array();
 		foreach ( $raw_settings as $key => $value ) {
@@ -461,6 +487,7 @@ class TicketsController extends WP_REST_Controller {
 			'sale_periods' => array_map( fn( $p ) => $p->to_array(), $sale_periods ),
 			'prices'       => array_map( fn( $pr ) => $pr->to_array(), $prices ),
 			'settings'     => $settings,
+			'options'      => array_map( fn( $o ) => $o->to_array(), $options ),
 		);
 	}
 }

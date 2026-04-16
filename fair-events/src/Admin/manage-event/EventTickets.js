@@ -43,6 +43,7 @@ export default function EventTickets({
 		multiple_pricing_periods: false,
 		show_seats_per_ticket: false,
 	});
+	const [options, setOptions] = useState([]);
 	const [loading, setLoading] = useState(!initialData);
 	const [saving, setSaving] = useState(false);
 	const [importing, setImporting] = useState(false);
@@ -86,6 +87,7 @@ export default function EventTickets({
 		if (data.settings) {
 			setSettings((prev) => ({ ...prev, ...data.settings }));
 		}
+		setOptions(data.options || []);
 	}, []);
 
 	const loadTickets = useCallback(async () => {
@@ -205,6 +207,10 @@ export default function EventTickets({
 					})),
 					prices: pricesArray,
 					settings,
+					options: options.map((o, i) => ({
+						...o,
+						sort_order: i,
+					})),
 				},
 			});
 
@@ -237,6 +243,7 @@ export default function EventTickets({
 			if (data.settings) {
 				setSettings((prev) => ({ ...prev, ...data.settings }));
 			}
+			setOptions(data.options || []);
 
 			setSuccess(__('Tickets saved successfully.', 'fair-events'));
 		} catch (err) {
@@ -291,6 +298,10 @@ export default function EventTickets({
 				sale_end: p.sale_end || '',
 			})),
 			prices: exportPrices,
+			options: options.map((o) => ({
+				name: o.name || '',
+				price: o.price !== undefined ? o.price : 0,
+			})),
 		};
 	};
 
@@ -1420,6 +1431,102 @@ export default function EventTickets({
 									)}
 								</Button>
 							)}
+						</VStack>
+					</PanelBody>
+				</Panel>
+			</Card>
+
+			<Card>
+				<Panel>
+					<PanelBody
+						title={__('Activity Options', 'fair-events')}
+						initialOpen={false}
+					>
+						<VStack spacing={3}>
+							<p>
+								{__(
+									'Add selectable activity options (checkboxes) shown to participants at signup. Each option has its own price added on top of the base price.',
+									'fair-events'
+								)}
+							</p>
+							{options.map((option, index) => (
+								<HStack
+									key={index}
+									spacing={2}
+									alignment="center"
+								>
+									<TextControl
+										label={__('Name', 'fair-events')}
+										placeholder={__(
+											'Activity name',
+											'fair-events'
+										)}
+										value={option.name || ''}
+										onChange={(v) => {
+											const updated = [...options];
+											updated[index] = {
+												...updated[index],
+												name: v,
+											};
+											setOptions(updated);
+										}}
+										__nextHasNoMarginBottom
+									/>
+									<TextControl
+										label={__('Price (EUR)', 'fair-events')}
+										type="number"
+										step="0.01"
+										min="0"
+										value={
+											option.price !== undefined
+												? String(option.price)
+												: '0'
+										}
+										onChange={(v) => {
+											const updated = [...options];
+											updated[index] = {
+												...updated[index],
+												price:
+													v !== ''
+														? parseFloat(v)
+														: 0,
+											};
+											setOptions(updated);
+										}}
+										__nextHasNoMarginBottom
+									/>
+									<Button
+										variant="tertiary"
+										isDestructive
+										size="small"
+										onClick={() => {
+											setOptions(
+												options.filter(
+													(_, i) => i !== index
+												)
+											);
+										}}
+									>
+										{__('Remove', 'fair-events')}
+									</Button>
+								</HStack>
+							))}
+							<Button
+								variant="secondary"
+								size="small"
+								onClick={() => {
+									setOptions([
+										...options,
+										{
+											name: '',
+											price: 0,
+											sort_order: options.length,
+										},
+									]);
+								}}
+							>
+								{__('+ Add Option', 'fair-events')}
+							</Button>
 						</VStack>
 					</PanelBody>
 				</Panel>

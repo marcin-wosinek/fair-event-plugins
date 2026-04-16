@@ -147,6 +147,10 @@ class EventSignupController extends WP_REST_Controller {
 							'required'          => false,
 							'sanitize_callback' => 'absint',
 						),
+						'ticket_option_ids' => array(
+							'type'  => 'array',
+							'items' => array( 'type' => 'integer' ),
+						),
 						'participant_token' => array(
 							'type'              => 'string',
 							'required'          => false,
@@ -231,33 +235,37 @@ class EventSignupController extends WP_REST_Controller {
 					'callback'            => array( $this, 'register_and_signup' ),
 					'permission_callback' => '__return_true',
 					'args'                => array(
-						'event_id'       => array(
+						'event_id'          => array(
 							'type'              => 'integer',
 							'required'          => true,
 							'sanitize_callback' => 'absint',
 						),
-						'event_date_id'  => array(
+						'event_date_id'     => array(
 							'type'              => 'integer',
 							'required'          => false,
 							'sanitize_callback' => 'absint',
 						),
-						'ticket_type_id' => array(
+						'ticket_type_id'    => array(
 							'type'              => 'integer',
 							'required'          => false,
 							'sanitize_callback' => 'absint',
 						),
-						'name'           => array(
+						'ticket_option_ids' => array(
+							'type'  => 'array',
+							'items' => array( 'type' => 'integer' ),
+						),
+						'name'              => array(
 							'type'              => 'string',
 							'required'          => true,
 							'sanitize_callback' => 'sanitize_text_field',
 						),
-						'surname'        => array(
+						'surname'           => array(
 							'type'              => 'string',
 							'required'          => false,
 							'default'           => '',
 							'sanitize_callback' => 'sanitize_text_field',
 						),
-						'email'          => array(
+						'email'             => array(
 							'type'              => 'string',
 							'required'          => true,
 							'sanitize_callback' => 'sanitize_email',
@@ -265,7 +273,7 @@ class EventSignupController extends WP_REST_Controller {
 								return is_email( $value );
 							},
 						),
-						'keep_informed'  => array(
+						'keep_informed'     => array(
 							'type'              => 'boolean',
 							'required'          => false,
 							'default'           => false,
@@ -411,6 +419,7 @@ class EventSignupController extends WP_REST_Controller {
 		$participant_token = $request->get_param( 'participant_token' );
 		$ticket_type_id    = $request->get_param( 'ticket_type_id' ) ?: null;
 		$user_id           = get_current_user_id();
+		$raw_option_ids    = $request->get_param( 'ticket_option_ids' ) ?: array();
 
 		// Validate event exists.
 		$event = get_post( $event_id );
@@ -474,7 +483,8 @@ class EventSignupController extends WP_REST_Controller {
 			);
 		}
 
-		$paid_response = $this->maybe_start_paid_signup( $event_id, $event_date_id, $participant, $existing, $user_id, $ticket_type_id );
+		$option_items  = $this->load_valid_options( $event_date_id, $raw_option_ids );
+		$paid_response = $this->maybe_start_paid_signup( $event_id, $event_date_id, $participant, $existing, $user_id, $ticket_type_id, $option_items );
 		if ( null !== $paid_response ) {
 			return $paid_response;
 		}
@@ -491,6 +501,7 @@ class EventSignupController extends WP_REST_Controller {
 		}
 
 		$this->snapshot_ticket_type_on_signup( $event_date_id, $participant->id, $ticket_type_id );
+		$this->snapshot_options_on_signup( $event_date_id, $participant->id, $option_items );
 
 		return rest_ensure_response(
 			array(
@@ -535,6 +546,90 @@ class EventSignupController extends WP_REST_Controller {
 	}
 
 	/**
+	 * Store the selected ticket options for an event participant (free path).
+	 *
+	 * @param int   $event_date_id  Event date ID.
+	 * @param int   $participant_id Participant ID.
+	 * @param array $option_items   Array of TicketOption objects.
+	 * @return void
+	 */
+	private function snapshot_options_on_signup( $event_date_id, $participant_id, $option_items ) {
+		if ( empty( $option_items ) || ! $event_date_id ) {
+			return;
+		}
+
+		$row = $this->event_participant_repository->get_by_event_date_and_participant( $event_date_id, $participant_id );
+		if ( ! $row ) {
+			return;
+		}
+
+		$this->save_participant_options( (int) $row->id, $option_items );
+	}
+
+	/**
+	 * Load and validate ticket options by ID, ensuring they belong to the event date.
+	 *
+	 * @param int   $event_date_id Event date ID.
+	 * @param array $option_ids    Array of option IDs from the request.
+	 * @return array Array of valid TicketOption objects.
+	 */
+	private function load_valid_options( $event_date_id, $option_ids ) {
+		if ( empty( $option_ids ) || ! $event_date_id ) {
+			return array();
+		}
+
+		if ( ! class_exists( \FairEvents\Models\TicketOption::class ) ) {
+			return array();
+		}
+
+		$valid_options   = array();
+		$available_by_id = array();
+		$all_options     = \FairEvents\Models\TicketOption::get_all_by_event_date_id( $event_date_id );
+		foreach ( $all_options as $opt ) {
+			$available_by_id[ $opt->id ] = $opt;
+		}
+
+		foreach ( $option_ids as $id ) {
+			$id = absint( $id );
+			if ( $id && isset( $available_by_id[ $id ] ) ) {
+				$valid_options[] = $available_by_id[ $id ];
+			}
+		}
+
+		return $valid_options;
+	}
+
+	/**
+	 * Insert rows into fair_audience_event_participant_options.
+	 *
+	 * phpcs:disable WordPress.DB.DirectDatabaseQuery
+	 *
+	 * @param int   $event_participant_id Event participant record ID.
+	 * @param array $option_items         Array of TicketOption objects.
+	 * @return void
+	 */
+	private function save_participant_options( $event_participant_id, $option_items ) {
+		global $wpdb;
+
+		if ( empty( $option_items ) ) {
+			return;
+		}
+
+		$table_name = $wpdb->prefix . 'fair_audience_event_participant_options';
+
+		foreach ( $option_items as $option ) {
+			$wpdb->replace(
+				$table_name,
+				array(
+					'event_participant_id' => $event_participant_id,
+					'ticket_option_id'     => $option->id,
+				),
+				array( '%d', '%d' )
+			);
+		}
+	}
+
+	/**
 	 * Start the paid-signup flow when the event date has a positive resolved
 	 * price for this participant. Returns null for the free path so the caller
 	 * can continue with its normal success response.
@@ -549,9 +644,10 @@ class EventSignupController extends WP_REST_Controller {
 	 * @param \FairAudience\Models\EventParticipant|null $existing       Existing row for (event_date, participant), if any.
 	 * @param int                                        $user_id        Current WP user ID (0 for anonymous).
 	 * @param int|null                                   $ticket_type_id Selected ticket type ID, or null when not using ticket types.
+	 * @param array                                      $option_items   Selected TicketOption objects.
 	 * @return \WP_REST_Response|\WP_Error|null WP_REST_Response/WP_Error on paid path, null on free path.
 	 */
-	private function maybe_start_paid_signup( $event_id, $event_date_id, $participant, $existing, $user_id, $ticket_type_id = null ) {
+	private function maybe_start_paid_signup( $event_id, $event_date_id, $participant, $existing, $user_id, $ticket_type_id = null, $option_items = array() ) {
 		$final_price      = null;
 		$seats_per_ticket = 1;
 		if ( $event_date_id && class_exists( \FairEvents\Services\EventSignupPricing::class ) ) {
@@ -620,20 +716,34 @@ class EventSignupController extends WP_REST_Controller {
 			$event_participant->save();
 		}
 
+		$this->save_participant_options( (int) $event_participant->id, $option_items );
+
 		$line_item_description = sprintf(
 			/* translators: %s: event title */
 			__( 'Signup for %s', 'fair-audience' ),
 			get_the_title( $event_id )
 		);
 
-		$transaction_id = \FairPayment\API\TransactionAPI::create_transaction(
+		$line_items = array(
 			array(
-				array(
-					'name'     => $line_item_description,
-					'quantity' => 1,
-					'amount'   => (float) $final_price,
-				),
+				'name'     => $line_item_description,
+				'quantity' => 1,
+				'amount'   => (float) $final_price,
 			),
+		);
+		foreach ( $option_items as $opt ) {
+			$line_items[] = array(
+				'name'     => $opt->name,
+				'quantity' => 1,
+				'amount'   => (float) $opt->price,
+			);
+		}
+
+		$options_total = array_sum( array_column( $option_items, 'price' ) );
+		$total_amount  = (float) $final_price + (float) $options_total;
+
+		$transaction_id = \FairPayment\API\TransactionAPI::create_transaction(
+			$line_items,
 			array(
 				'currency'      => 'EUR',
 				'description'   => $line_item_description,
@@ -682,7 +792,7 @@ class EventSignupController extends WP_REST_Controller {
 				'message'        => __( 'Redirecting to payment…', 'fair-audience' ),
 				'checkout_url'   => $payment['checkout_url'],
 				'transaction_id' => $transaction_id,
-				'amount'         => (float) $final_price,
+				'amount'         => $total_amount,
 				'currency'       => 'EUR',
 			)
 		);
@@ -772,6 +882,7 @@ class EventSignupController extends WP_REST_Controller {
 		$email          = $request->get_param( 'email' );
 		$keep_informed  = $request->get_param( 'keep_informed' );
 		$ticket_type_id = $request->get_param( 'ticket_type_id' ) ?: null;
+		$raw_option_ids = $request->get_param( 'ticket_option_ids' ) ?: array();
 
 		// Validate event exists.
 		$event = get_post( $event_id );
@@ -873,7 +984,8 @@ class EventSignupController extends WP_REST_Controller {
 		}
 
 		// Paid path takes over when a positive price resolves for this participant.
-		$paid_response = $this->maybe_start_paid_signup( $event_id, $event_date_id, $participant, $existing, 0, $ticket_type_id );
+		$option_items  = $this->load_valid_options( $event_date_id, $raw_option_ids );
+		$paid_response = $this->maybe_start_paid_signup( $event_id, $event_date_id, $participant, $existing, 0, $ticket_type_id, $option_items );
 		if ( null !== $paid_response ) {
 			return $paid_response;
 		}
@@ -890,6 +1002,7 @@ class EventSignupController extends WP_REST_Controller {
 		}
 
 		$this->snapshot_ticket_type_on_signup( $event_date_id, $participant->id, $ticket_type_id );
+		$this->snapshot_options_on_signup( $event_date_id, $participant->id, $option_items );
 
 		// If keep_informed, send confirmation email.
 		if ( $keep_informed ) {

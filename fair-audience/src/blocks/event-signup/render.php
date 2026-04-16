@@ -123,6 +123,21 @@ if ( $event_date_id && class_exists( \FairEvents\Models\TicketType::class ) ) {
 }
 $has_ticket_types = ! empty( $ticket_types_for_display );
 
+// Resolve ticket options for this event date, if any. Options are displayed
+// as checkboxes — participants can select zero or more at signup.
+$ticket_options_for_display = array();
+if ( $event_date_id && class_exists( \FairEvents\Models\TicketOption::class ) ) {
+	$raw_options = \FairEvents\Models\TicketOption::get_all_by_event_date_id( (int) $event_date_id );
+	foreach ( $raw_options as $opt ) {
+		$ticket_options_for_display[] = array(
+			'id'    => (int) $opt->id,
+			'name'  => $opt->name,
+			'price' => (float) $opt->price,
+		);
+	}
+}
+$has_ticket_options = ! empty( $ticket_options_for_display );
+
 // Resolve effective signup price for the current viewer so we can reflect it
 // in the button label.
 // null = no price configured at all → keep the default button text
@@ -198,6 +213,31 @@ $render_ticket_types = static function () use ( $ticket_types_for_display, $has_
 	echo '</fieldset>';
 };
 
+/**
+ * Render the ticket options checkbox fieldset. No-op when no options configured.
+ */
+$render_ticket_options = static function () use ( $ticket_options_for_display, $has_ticket_options, $form_id ) {
+	if ( ! $has_ticket_options ) {
+		return;
+	}
+	echo '<fieldset class="fair-audience-ticket-options">';
+	echo '<legend>' . esc_html__( 'Select activities', 'fair-audience' ) . '</legend>';
+	foreach ( $ticket_options_for_display as $opt ) {
+		$opt_label = $opt['name'];
+		if ( $opt['price'] > 0 ) {
+			$opt_label .= ' — €' . number_format_i18n( $opt['price'], 2 );
+		} elseif ( 0.0 === $opt['price'] ) {
+			$opt_label .= ' — ' . __( 'free', 'fair-audience' );
+		}
+		$checkbox_id = esc_attr( $form_id ) . '-opt-' . (int) $opt['id'];
+		echo '<label class="fair-audience-ticket-option-item" for="' . $checkbox_id . '">';
+		echo '<input type="checkbox" name="ticket_option_ids[]" id="' . $checkbox_id . '" value="' . (int) $opt['id'] . '" /> ';
+		echo esc_html( $opt_label );
+		echo '</label>';
+	}
+	echo '</fieldset>';
+};
+
 // Get wrapper attributes.
 $wrapper_attributes = get_block_wrapper_attributes(
 	array(
@@ -251,6 +291,7 @@ $wrapper_attributes = get_block_wrapper_attributes(
 				?>
 			</p>
 			<?php $render_ticket_types(); ?>
+			<?php $render_ticket_options(); ?>
 			<div class="wp-block-button">
 				<button type="button" class="wp-block-button__link wp-element-button fair-audience-signup-button" data-action="signup">
 					<?php echo esc_html( $signup_button_text ); ?>
@@ -272,6 +313,7 @@ $wrapper_attributes = get_block_wrapper_attributes(
 				?>
 			</p>
 			<?php $render_ticket_types(); ?>
+			<?php $render_ticket_options(); ?>
 			<div class="wp-block-button">
 				<button type="button" class="wp-block-button__link wp-element-button fair-audience-signup-button" data-action="signup">
 					<?php echo esc_html( $signup_button_text ); ?>
@@ -301,6 +343,7 @@ $wrapper_attributes = get_block_wrapper_attributes(
 			<!-- Registration form (new participant) -->
 			<form class="fair-audience-signup-form fair-audience-signup-register" data-tab-content="register">
 				<?php $render_ticket_types(); ?>
+				<?php $render_ticket_options(); ?>
 				<p>
 					<label for="<?php echo esc_attr( $form_id ); ?>-name">
 						<?php echo esc_html__( 'First Name', 'fair-audience' ); ?> <span class="required">*</span>

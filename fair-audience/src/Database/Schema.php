@@ -588,6 +588,31 @@ class Schema {
 	}
 
 	/**
+	 * Get SQL for creating the event participant options junction table.
+	 *
+	 * Records which ticket options a participant selected at signup.
+	 *
+	 * @return string SQL statement.
+	 */
+	public static function get_event_participant_options_table_sql() {
+		global $wpdb;
+
+		$table_name      = $wpdb->prefix . 'fair_audience_event_participant_options';
+		$charset_collate = $wpdb->get_charset_collate();
+
+		return "CREATE TABLE $table_name (
+			id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
+			event_participant_id BIGINT UNSIGNED NOT NULL,
+			ticket_option_id BIGINT UNSIGNED NOT NULL,
+			created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+			PRIMARY KEY  (id),
+			UNIQUE KEY idx_participant_option (event_participant_id, ticket_option_id),
+			KEY idx_event_participant_id (event_participant_id),
+			KEY idx_ticket_option_id (ticket_option_id)
+		) ENGINE=InnoDB $charset_collate;";
+	}
+
+	/**
 	 * Get SQL for creating the Instagram posts table.
 	 *
 	 * @return string SQL statement.

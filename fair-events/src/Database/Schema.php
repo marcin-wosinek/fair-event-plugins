@@ -17,7 +17,7 @@ class Schema {
 	/**
 	 * Database version
 	 */
-	const DB_VERSION = '3.2.0';
+	const DB_VERSION = '3.3.0';
 
 	/**
 	 * Get the SQL for creating the fair_event_dates table
@@ -359,6 +359,30 @@ class Schema {
 			updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
 			PRIMARY KEY (id),
 			UNIQUE KEY idx_event_date_key (event_date_id, setting_key),
+			KEY idx_event_date_id (event_date_id)
+		) ENGINE=InnoDB {$charset_collate};";
+	}
+
+	/**
+	 * Get the SQL for creating the fair_events_ticket_options table
+	 *
+	 * @return string SQL statement for creating the table.
+	 */
+	public static function get_ticket_options_table_sql() {
+		global $wpdb;
+
+		$table_name      = $wpdb->prefix . 'fair_events_ticket_options';
+		$charset_collate = $wpdb->get_charset_collate();
+
+		return "CREATE TABLE {$table_name} (
+			id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
+			event_date_id BIGINT UNSIGNED NOT NULL,
+			name VARCHAR(255) NOT NULL,
+			price DECIMAL(10,2) NOT NULL DEFAULT 0.00,
+			sort_order INT UNSIGNED NOT NULL DEFAULT 0,
+			created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+			updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+			PRIMARY KEY (id),
 			KEY idx_event_date_id (event_date_id)
 		) ENGINE=InnoDB {$charset_collate};";
 	}

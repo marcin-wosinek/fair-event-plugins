@@ -205,6 +205,15 @@ const CSS_PREFIX = 'fair-audience-signup';
 			requestData.ticket_type_id = parseInt(ticketTypeInput.value, 10);
 		}
 
+		const optionInputs = form.querySelectorAll(
+			'input[name="ticket_option_ids[]"]:checked'
+		);
+		if (optionInputs.length > 0) {
+			requestData.ticket_option_ids = Array.from(optionInputs).map((i) =>
+				parseInt(i.value, 10)
+			);
+		}
+
 		// Disable button and show loading state
 		const restoreButton = setButtonLoading(
 			submitButton,
@@ -415,6 +424,15 @@ const CSS_PREFIX = 'fair-audience-signup';
 		);
 		if (ticketTypeInput) {
 			requestData.ticket_type_id = parseInt(ticketTypeInput.value, 10);
+		}
+
+		const optionInputs = block.querySelectorAll(
+			'input[name="ticket_option_ids[]"]:checked'
+		);
+		if (optionInputs.length > 0) {
+			requestData.ticket_option_ids = Array.from(optionInputs).map((i) =>
+				parseInt(i.value, 10)
+			);
 		}
 
 		// Disable button and show loading state
