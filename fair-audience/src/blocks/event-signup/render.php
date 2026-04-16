@@ -138,6 +138,9 @@ if ( $event_date_id && class_exists( \FairEvents\Models\TicketOption::class ) ) 
 }
 $has_ticket_options = ! empty( $ticket_options_for_display );
 
+// Read block attribute to control whether option prices are displayed.
+$show_option_prices = $attributes['showOptionPrices'] ?? true;
+
 // Resolve effective signup price for the current viewer so we can reflect it
 // in the button label.
 // null = no price configured at all → keep the default button text
@@ -216,7 +219,7 @@ $render_ticket_types = static function () use ( $ticket_types_for_display, $has_
 /**
  * Render the ticket options checkbox fieldset. No-op when no options configured.
  */
-$render_ticket_options = static function () use ( $ticket_options_for_display, $has_ticket_options, $form_id ) {
+$render_ticket_options = static function () use ( $ticket_options_for_display, $has_ticket_options, $form_id, $show_option_prices ) {
 	if ( ! $has_ticket_options ) {
 		return;
 	}
@@ -224,30 +227,39 @@ $render_ticket_options = static function () use ( $ticket_options_for_display, $
 	echo '<legend>' . esc_html__( 'Select activities', 'fair-audience' ) . '</legend>';
 	foreach ( $ticket_options_for_display as $opt ) {
 		$opt_label = $opt['name'];
-		if ( $opt['price'] > 0 ) {
-			$opt_label .= ' — €' . number_format_i18n( $opt['price'], 2 );
-		} elseif ( 0.0 === $opt['price'] ) {
-			$opt_label .= ' — ' . __( 'free', 'fair-audience' );
+		if ( $show_option_prices ) {
+			if ( $opt['price'] > 0 ) {
+				$opt_label .= ' — €' . number_format_i18n( $opt['price'], 2 );
+			} else {
+				$opt_label .= ' — ' . __( 'free', 'fair-audience' );
+			}
 		}
 		$checkbox_id = esc_attr( $form_id ) . '-opt-' . (int) $opt['id'];
 		echo '<label class="fair-audience-ticket-option-item" for="' . $checkbox_id . '">';
-		echo '<input type="checkbox" name="ticket_option_ids[]" id="' . $checkbox_id . '" value="' . (int) $opt['id'] . '" /> ';
+		echo '<input type="checkbox" name="ticket_option_ids[]" id="' . $checkbox_id . '" value="' . (int) $opt['id'] . '" data-option-price="' . esc_attr( number_format( $opt['price'], 2, '.', '' ) ) . '" /> ';
 		echo esc_html( $opt_label );
 		echo '</label>';
 	}
 	echo '</fieldset>';
 };
 
+// Base button labels (without price suffix) for dynamic JS price updates.
+$base_signup_button_text   = __( $attributes['signupButtonText'] ?? 'Sign Up', 'fair-audience' );
+$base_register_button_text = __( $attributes['registerButtonText'] ?? 'Register & Sign Up', 'fair-audience' );
+
 // Get wrapper attributes.
 $wrapper_attributes = get_block_wrapper_attributes(
 	array(
-		'class'                  => 'fair-audience-event-signup',
-		'data-event-id'          => esc_attr( (string) $event_id ),
-		'data-event-date-id'     => esc_attr( $event_date_id ),
-		'data-state'             => esc_attr( $state ),
-		'data-is-signed-up'      => $is_signed_up ? 'true' : 'false',
-		'data-participant-token' => esc_attr( $participant_token ),
-		'data-success-message'   => esc_attr( $success_message ),
+		'class'                   => 'fair-audience-event-signup',
+		'data-event-id'           => esc_attr( (string) $event_id ),
+		'data-event-date-id'      => esc_attr( $event_date_id ),
+		'data-state'              => esc_attr( $state ),
+		'data-is-signed-up'       => $is_signed_up ? 'true' : 'false',
+		'data-participant-token'  => esc_attr( $participant_token ),
+		'data-success-message'    => esc_attr( $success_message ),
+		'data-base-price'         => null !== $signup_price ? esc_attr( (string) $signup_price ) : '',
+		'data-signup-base-text'   => esc_attr( $base_signup_button_text ),
+		'data-register-base-text' => esc_attr( $base_register_button_text ),
 	)
 );
 ?>

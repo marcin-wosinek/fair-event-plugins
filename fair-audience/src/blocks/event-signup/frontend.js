@@ -65,6 +65,73 @@ const CSS_PREFIX = 'fair-audience-signup';
 	}
 
 	/**
+	 * Update signup button text to reflect current base price + selected option prices.
+	 * No-op when no base price is configured on the block.
+	 * @param {HTMLElement} block The block element
+	 */
+	function updateButtonTotal(block) {
+		const basePriceStr = block.dataset.basePrice;
+		if (basePriceStr === '' || basePriceStr === undefined) {
+			return;
+		}
+
+		const basePrice = parseFloat(basePriceStr);
+
+		const checkedOptions = block.querySelectorAll(
+			'input[name="ticket_option_ids[]"]:checked'
+		);
+		let optionsTotal = 0;
+		checkedOptions.forEach(function (input) {
+			optionsTotal += parseFloat(input.dataset.optionPrice || 0);
+		});
+
+		const total = basePrice + optionsTotal;
+		const signupBaseText =
+			block.dataset.signupBaseText || __('Sign Up', 'fair-audience');
+		const registerBaseText =
+			block.dataset.registerBaseText ||
+			__('Register & Sign Up', 'fair-audience');
+
+		let signupText, registerText;
+		if (total > 0) {
+			const formatted = total.toFixed(2);
+			signupText = signupBaseText + ' \u2014 \u20ac' + formatted;
+			registerText = registerBaseText + ' \u2014 \u20ac' + formatted;
+		} else {
+			signupText = __('Sign up for free', 'fair-audience');
+			registerText = __('Register for free', 'fair-audience');
+		}
+
+		const signupBtn = block.querySelector('.fair-audience-signup-button');
+		if (signupBtn) {
+			signupBtn.textContent = signupText;
+		}
+
+		const submitBtn = block.querySelector(
+			'.fair-audience-signup-submit-button'
+		);
+		if (submitBtn) {
+			submitBtn.textContent = registerText;
+		}
+	}
+
+	/**
+	 * Attach change listeners to ticket option checkboxes so the button total
+	 * stays in sync as the user checks/unchecks options.
+	 * @param {HTMLElement} block The block element
+	 */
+	function initializeOptionTotals(block) {
+		const optionCheckboxes = block.querySelectorAll(
+			'input[name="ticket_option_ids[]"]'
+		);
+		optionCheckboxes.forEach(function (checkbox) {
+			checkbox.addEventListener('change', function () {
+				updateButtonTotal(block);
+			});
+		});
+	}
+
+	/**
 	 * Initialize anonymous block with tabs and forms
 	 * @param {HTMLElement} block The block element
 	 */
@@ -91,6 +158,8 @@ const CSS_PREFIX = 'fair-audience-signup';
 				});
 			});
 		});
+
+		initializeOptionTotals(block);
 
 		// Setup registration form
 		const registerForm = block.querySelector(
@@ -120,6 +189,8 @@ const CSS_PREFIX = 'fair-audience-signup';
 	 * @param {HTMLElement} block The block element
 	 */
 	function initializeAuthenticatedBlock(block) {
+		initializeOptionTotals(block);
+
 		const signupButton = block.querySelector(
 			'.fair-audience-signup-button'
 		);

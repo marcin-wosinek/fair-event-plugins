@@ -3,7 +3,12 @@ import './editor.css';
 
 import { registerBlockType } from '@wordpress/blocks';
 import { useBlockProps, InspectorControls } from '@wordpress/block-editor';
-import { PanelBody, TextControl, TextareaControl } from '@wordpress/components';
+import {
+	PanelBody,
+	TextControl,
+	TextareaControl,
+	ToggleControl,
+} from '@wordpress/components';
 import { __ } from '@wordpress/i18n';
 import ServerSideRender from '@wordpress/server-side-render';
 
@@ -14,6 +19,7 @@ registerBlockType('fair-audience/event-signup', {
 			registerButtonText,
 			requestLinkButtonText,
 			successMessage,
+			showOptionPrices,
 		} = attributes;
 
 		const blockProps = useBlockProps({
@@ -85,6 +91,20 @@ registerBlockType('fair-audience/event-signup', {
 								'Message shown after successful signup.',
 								'fair-audience'
 							)}
+						/>
+						<ToggleControl
+							label={__(
+								'Show activity option prices',
+								'fair-audience'
+							)}
+							help={__(
+								'Display the price of each activity option next to its label. The running total in the button always updates regardless of this setting.',
+								'fair-audience'
+							)}
+							checked={showOptionPrices}
+							onChange={(value) =>
+								setAttributes({ showOptionPrices: value })
+							}
 						/>
 					</PanelBody>
 				</InspectorControls>

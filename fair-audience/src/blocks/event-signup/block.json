@@ -33,6 +33,10 @@
 		"successMessage": {
 			"type": "string",
 			"default": "You have successfully signed up for the event!"
+		},
+		"showOptionPrices": {
+			"type": "boolean",
+			"default": true
 		}
 	},
 	"editorScript": "file:./editor.js",
