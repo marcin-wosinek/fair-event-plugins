@@ -1,0 +1,32 @@
+name: Cleanup general releases
+
+on:
+    schedule:
+        - cron: '0 3 * * *' # daily at 03:00 UTC
+    workflow_dispatch:
+
+permissions:
+    contents: write
+
+jobs:
+    cleanup:
+        name: Delete general releases older than 30 days
+        runs-on: ubuntu-latest
+        steps:
+            - name: Delete old general releases
+              run: |
+                  CUTOFF=$(date -d '30 days ago' --utc +%Y-%m-%dT%H:%M:%SZ)
+                  echo "Deleting general releases published before: $CUTOFF"
+
+                  gh release list \
+                    --repo "$GITHUB_REPOSITORY" \
+                    --limit 100 \
+                    --json tagName,publishedAt,isPrerelease \
+                    | jq -r --arg cutoff "$CUTOFF" \
+                        '.[] | select(.isPrerelease == true) | select(.publishedAt < $cutoff) | .tagName' \
+                    | while read -r tag; do
+                        echo "Deleting release and tag: $tag"
+                        gh release delete "$tag" --repo "$GITHUB_REPOSITORY" --yes --cleanup-tag
+                      done
+              env:
+                  GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
