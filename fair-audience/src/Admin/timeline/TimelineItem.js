@@ -16,6 +16,7 @@ function getIcon(type) {
 		form_submission: 'forms',
 		fee: 'money-alt',
 		fee_payments_day: 'money-alt',
+		ticket_sales_day: 'tickets-alt',
 		email: 'email',
 		instagram: 'camera',
 		poll: 'chart-bar',
@@ -36,6 +37,7 @@ function getTypeColor(type) {
 		form_submission: '#9b59b6',
 		fee: '#00a32a',
 		fee_payments_day: '#00a32a',
+		ticket_sales_day: '#1a8a5f',
 		email: '#e67e22',
 		instagram: '#e91e63',
 		poll: '#3498db',
@@ -260,6 +262,76 @@ function FeePaymentsDayContent({ item }) {
 }
 
 /**
+ * Ticket sales day content component.
+ *
+ * @param {Object} props Props.
+ * @param {Object} props.item Timeline item with grouped ticket sales details.
+ * @return {JSX.Element} Summary of ticket sales made on a single day.
+ */
+function TicketSalesDayContent({ item }) {
+	const {
+		day,
+		currency,
+		total_amount: totalAmount,
+		count,
+		tickets = [],
+	} = item.details;
+
+	return (
+		<div style={{ fontSize: '13px', lineHeight: '1.6' }}>
+			<div>
+				<strong>
+					{count}{' '}
+					{count === 1
+						? __('ticket sale on', 'fair-audience')
+						: __('ticket sales on', 'fair-audience')}{' '}
+					{day}
+				</strong>
+				{' — '}
+				{__('total:', 'fair-audience')} {Number(totalAmount).toFixed(2)}{' '}
+				{currency}
+			</div>
+			<ul style={{ margin: '4px 0 0 18px', padding: 0 }}>
+				{tickets.map((ticket) => {
+					const participantUrl = ticket.participant_id
+						? `admin.php?page=fair-audience-participant-detail&participant_id=${ticket.participant_id}`
+						: null;
+					const eventUrl =
+						ticket.event_date_id && ticket.post_id
+							? `admin.php?page=fair-events-manage-event&event_date_id=${ticket.event_date_id}`
+							: null;
+
+					return (
+						<li key={ticket.transaction_id}>
+							{participantUrl ? (
+								<a href={participantUrl}>{ticket.name}</a>
+							) : (
+								ticket.name
+							)}
+							{' — '}
+							{Number(ticket.amount).toFixed(2)} {currency}
+							{ticket.event_title && (
+								<>
+									{' ('}
+									{eventUrl ? (
+										<a href={eventUrl}>
+											{ticket.event_title}
+										</a>
+									) : (
+										ticket.event_title
+									)}
+									{')'}
+								</>
+							)}
+						</li>
+					);
+				})}
+			</ul>
+		</div>
+	);
+}
+
+/**
  * Timeline item component.
  *
  * @param {Object} props Props.
@@ -307,6 +379,8 @@ export default function TimelineItem({ item }) {
 							<FeeContent item={item} />
 						) : item.type === 'fee_payments_day' ? (
 							<FeePaymentsDayContent item={item} />
+						) : item.type === 'ticket_sales_day' ? (
+							<TicketSalesDayContent item={item} />
 						) : item.type === 'form_submission' ? (
 							<FormSubmissionContent item={item} />
 						) : item.type === 'new_participant' ? (

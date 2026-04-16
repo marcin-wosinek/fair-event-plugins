@@ -240,6 +240,43 @@ class TimelineRepository {
 	}
 
 	/**
+	 * Get recent paid ticket sales (transactions from fair-payment).
+	 *
+	 * Returns paid transactions ordered by created_at descending, joined with
+	 * participants so the timeline can group them by day.
+	 *
+	 * @param int $limit Maximum number of rows.
+	 * @return array Raw rows.
+	 */
+	public function get_recent_ticket_sales( $limit ) {
+		global $wpdb;
+
+		$t_table   = $wpdb->prefix . 'fair_payment_transactions';
+		$p_table   = $wpdb->prefix . 'fair_audience_participants';
+		$fpt_table = $wpdb->prefix . 'fair_audience_fee_payment_transactions';
+
+		return $wpdb->get_results(
+			$wpdb->prepare(
+				"SELECT t.id, t.participant_id, t.event_date_id, t.post_id, t.amount, t.currency, t.created_at,
+					p.name AS participant_name, p.surname AS participant_surname
+				FROM %i t
+				LEFT JOIN %i p ON t.participant_id = p.id
+				WHERE t.status = 'paid'
+				AND NOT EXISTS (
+					SELECT 1 FROM %i fpt WHERE fpt.transaction_id = t.id
+				)
+				ORDER BY t.created_at DESC
+				LIMIT %d",
+				$t_table,
+				$p_table,
+				$fpt_table,
+				$limit
+			),
+			ARRAY_A
+		);
+	}
+
+	/**
 	 * Get recent new participants.
 	 *
 	 * @param int $limit Maximum number of rows.
@@ -286,6 +323,7 @@ class TimelineRepository {
 		if ( $include_payments ) {
 			$tables[] = $wpdb->prefix . 'fair_audience_fees';
 			$tables[] = $wpdb->prefix . 'fair_audience_fee_payments';
+			$tables[] = $wpdb->prefix . 'fair_payment_transactions';
 		}
 
 		foreach ( $tables as $table ) {

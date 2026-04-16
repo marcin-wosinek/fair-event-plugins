@@ -300,6 +300,77 @@ class TimelineController extends WP_REST_Controller {
 			}
 		}
 
+		// Ticket sales (paid transactions from fair-payment) – group by calendar day.
+		if ( $include_payments ) {
+			$ticket_rows   = $this->repository->get_recent_ticket_sales( $fetch_limit );
+			$ticket_groups = array();
+			foreach ( $ticket_rows as $row ) {
+				$day = substr( (string) $row['created_at'], 0, 10 ); // YYYY-MM-DD.
+				if ( '' === $day ) {
+					continue;
+				}
+				if ( ! isset( $ticket_groups[ $day ] ) ) {
+					$ticket_groups[ $day ] = array(
+						'day'          => $day,
+						'latest_at'    => $row['created_at'],
+						'currency'     => $row['currency'] ?? 'EUR',
+						'total_amount' => 0.0,
+						'tickets'      => array(),
+					);
+				}
+
+				$ticket_groups[ $day ]['total_amount'] += (float) $row['amount'];
+				if ( strcmp( $row['created_at'], $ticket_groups[ $day ]['latest_at'] ) > 0 ) {
+					$ticket_groups[ $day ]['latest_at'] = $row['created_at'];
+				}
+
+				$name = trim( $row['participant_name'] . ' ' . $row['participant_surname'] );
+				if ( '' === $name ) {
+					$name = __( 'Unknown', 'fair-audience' );
+				}
+
+				$post_id     = ! empty( $row['post_id'] ) ? (int) $row['post_id'] : 0;
+				$event_title = $post_id ? get_the_title( $post_id ) : '';
+
+				$ticket_groups[ $day ]['tickets'][] = array(
+					'transaction_id' => (int) $row['id'],
+					'participant_id' => ! empty( $row['participant_id'] ) ? (int) $row['participant_id'] : null,
+					'name'           => $name,
+					'amount'         => (float) $row['amount'],
+					'event_date_id'  => ! empty( $row['event_date_id'] ) ? (int) $row['event_date_id'] : null,
+					'post_id'        => $post_id ?: null,
+					'event_title'    => $event_title,
+				);
+			}
+
+			foreach ( $ticket_groups as $group ) {
+				$count   = count( $group['tickets'] );
+				$items[] = array(
+					'id'         => 'ticket_sales_' . $group['day'],
+					'type'       => 'ticket_sales_day',
+					'created_at' => $group['latest_at'],
+					'summary'    => sprintf(
+						/* translators: 1: number of sales, 2: day */
+						_n(
+							'%1$d ticket sale on %2$s',
+							'%1$d ticket sales on %2$s',
+							$count,
+							'fair-audience'
+						),
+						$count,
+						$group['day']
+					),
+					'details'    => array(
+						'day'          => $group['day'],
+						'currency'     => $group['currency'],
+						'total_amount' => (float) $group['total_amount'],
+						'count'        => $count,
+						'tickets'      => $group['tickets'],
+					),
+				);
+			}
+		}
+
 		// Custom emails.
 		$emails = $this->repository->get_recent_emails( $fetch_limit );
 		foreach ( $emails as $row ) {
