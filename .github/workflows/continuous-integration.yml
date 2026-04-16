@@ -180,7 +180,8 @@ jobs:
                     --repo "$GITHUB_REPOSITORY" \
                     --title "Build ${SHORT_SHA}" \
                     --notes "Automated build from commit ${GITHUB_SHA}" \
-                    --prerelease
+                    --prerelease \
+                    --clobber
               env:
                   GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
