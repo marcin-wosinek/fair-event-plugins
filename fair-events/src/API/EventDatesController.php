@@ -1019,9 +1019,18 @@ class EventDatesController extends WP_REST_Controller {
 			);
 		}
 
+		// Generated occurrences store links on the master event date.
+		$link_event_date = $event_date;
+		if ( 'generated' === $event_date->occurrence_type && $event_date->master_id ) {
+			$master = EventDates::get_by_id( $event_date->master_id );
+			if ( $master ) {
+				$link_event_date = $master;
+			}
+		}
+
 		// Check if post is already linked to a different event.
 		$existing = EventDates::get_by_event_id( $post_id );
-		if ( $existing && (int) $existing->id !== $id ) {
+		if ( $existing && (int) $existing->id !== $link_event_date->id ) {
 			return new WP_Error(
 				'rest_post_already_linked',
 				__( 'This post is already linked to another event.', 'fair-events' ),
@@ -1030,12 +1039,12 @@ class EventDatesController extends WP_REST_Controller {
 		}
 
 		// Add to junction table.
-		EventDates::add_linked_post( $id, $post_id );
+		EventDates::add_linked_post( $link_event_date->id, $post_id );
 
 		// If this is the first linked post (no primary set), set as primary.
-		if ( ! $event_date->event_id ) {
+		if ( ! $link_event_date->event_id ) {
 			EventDates::update_by_id(
-				$id,
+				$link_event_date->id,
 				array(
 					'event_id'  => $post_id,
 					'link_type' => 'post',
@@ -1068,21 +1077,30 @@ class EventDatesController extends WP_REST_Controller {
 			);
 		}
 
-		// Remove from junction table.
-		EventDates::remove_linked_post( $id, $post_id );
+		// Generated occurrences store links on the master event date.
+		$link_event_date = $event_date;
+		if ( 'generated' === $event_date->occurrence_type && $event_date->master_id ) {
+			$master = EventDates::get_by_id( $event_date->master_id );
+			if ( $master ) {
+				$link_event_date = $master;
+			}
+		}
 
-		// If this was the primary post, promote next linked post.
-		if ( (int) $event_date->event_id === $post_id ) {
-			$remaining_post_ids = EventDates::get_linked_post_ids( $id );
+		// Remove from junction table.
+		EventDates::remove_linked_post( $link_event_date->id, $post_id );
+
+		// If this was the primary post, promote next linked post or clear the link.
+		if ( (int) $link_event_date->event_id === $post_id ) {
+			$remaining_post_ids = EventDates::get_linked_post_ids( $link_event_date->id );
 
 			if ( ! empty( $remaining_post_ids ) ) {
 				// Promote first remaining post to primary.
 				$new_primary = $remaining_post_ids[0];
-				EventDates::update_by_id( $id, array( 'event_id' => $new_primary ) );
+				EventDates::update_by_id( $link_event_date->id, array( 'event_id' => $new_primary ) );
 			} else {
 				// No more linked posts, clear event_id and set link_type to none.
 				EventDates::update_by_id(
-					$id,
+					$link_event_date->id,
 					array(
 						'event_id'  => null,
 						'link_type' => 'none',
@@ -1091,6 +1109,7 @@ class EventDatesController extends WP_REST_Controller {
 			}
 		}
 
+		// Return the originally requested event date (occurrence, not master).
 		$event_date = EventDates::get_by_id( $id );
 
 		return new WP_REST_Response( $this->prepare_event_date( $event_date ), 200 );
@@ -1373,7 +1392,15 @@ class EventDatesController extends WP_REST_Controller {
 		$data['image_exports'] = ImageExportController::get_exports_for_event_date( $event_date->id );
 
 		// Add all linked posts from junction table.
-		$linked_post_ids      = EventDates::get_linked_post_ids( $event_date->id );
+		// Generated occurrences inherit linked posts from their master event date.
+		$link_source = $event_date;
+		if ( 'generated' === $event_date->occurrence_type && $event_date->master_id ) {
+			$master = EventDates::get_by_id( $event_date->master_id );
+			if ( $master ) {
+				$link_source = $master;
+			}
+		}
+		$linked_post_ids      = EventDates::get_linked_post_ids( $link_source->id );
 		$data['linked_posts'] = array();
 		foreach ( $linked_post_ids as $linked_post_id ) {
 			$linked_post = get_post( $linked_post_id );
@@ -1384,7 +1411,7 @@ class EventDatesController extends WP_REST_Controller {
 					'status'     => $linked_post->post_status,
 					'edit_url'   => get_edit_post_link( $linked_post->ID, 'raw' ),
 					'view_url'   => get_permalink( $linked_post->ID ),
-					'is_primary' => (int) $linked_post->ID === (int) $event_date->event_id,
+					'is_primary' => (int) $linked_post->ID === (int) $link_source->event_id,
 				);
 			}
 		}

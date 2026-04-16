@@ -34,7 +34,23 @@ class EventSignupPricing {
 	public static function resolve_price( $event_date_id, $participant_id = null ) {
 		$event_date = EventDates::get_by_id( $event_date_id );
 
-		if ( ! $event_date || null === $event_date->signup_price ) {
+		if ( ! $event_date ) {
+			return null;
+		}
+
+		// Generated occurrences do not store signup_price — inherit from master.
+		$pricing_event_date_id = $event_date_id;
+		if ( null === $event_date->signup_price
+			&& 'generated' === $event_date->occurrence_type
+			&& $event_date->master_id ) {
+			$master = EventDates::get_by_id( $event_date->master_id );
+			if ( $master && null !== $master->signup_price ) {
+				$event_date            = $master;
+				$pricing_event_date_id = $master->id;
+			}
+		}
+
+		if ( null === $event_date->signup_price ) {
 			return null;
 		}
 
@@ -44,7 +60,7 @@ class EventSignupPricing {
 			return max( 0.0, $base_price );
 		}
 
-		$rules = GroupPricingRule::get_all_by_event_date_id( $event_date_id );
+		$rules = GroupPricingRule::get_all_by_event_date_id( $pricing_event_date_id );
 		if ( empty( $rules ) ) {
 			return $base_price;
 		}

@@ -40,6 +40,17 @@ if ( class_exists( EventDates::class ) ) {
 	}
 }
 
+// For generated occurrences, ticket types, ticket options, and signup_price
+// are stored on the master event date.  Use $pricing_event_date_id for all
+// pricing/option lookups so they resolve correctly.
+$pricing_event_date_id = $event_date_id;
+if ( $event_dates_obj
+	&& 'generated' === ( $event_dates_obj->occurrence_type ?? null )
+	&& ! empty( $event_dates_obj->master_id )
+) {
+	$pricing_event_date_id = (string) $event_dates_obj->master_id;
+}
+
 // Determine the effective event ID for participant lookups and API calls.
 // For direct event posts: the current post IS the event.
 // For junction-linked pages: use event_date->event_id (the primary event post)
@@ -118,8 +129,8 @@ if ( $is_valid_post_type ) {
 // signup form switches from a single-price button to a radio picker of
 // ticket types, each with its own price and seat count.
 $ticket_types_for_display = array();
-if ( $event_date_id && class_exists( \FairEvents\Models\TicketType::class ) ) {
-	$raw_types = \FairEvents\Models\TicketType::get_all_by_event_date_id( (int) $event_date_id );
+if ( $pricing_event_date_id && class_exists( \FairEvents\Models\TicketType::class ) ) {
+	$raw_types = \FairEvents\Models\TicketType::get_all_by_event_date_id( (int) $pricing_event_date_id );
 	foreach ( $raw_types as $tt ) {
 		$tt_price = null;
 		if ( class_exists( \FairEvents\Services\EventSignupPricing::class ) ) {
@@ -141,8 +152,8 @@ $has_ticket_types = ! empty( $ticket_types_for_display );
 // Resolve ticket options for this event date, if any. Options are displayed
 // as checkboxes — participants can select zero or more at signup.
 $ticket_options_for_display = array();
-if ( $event_date_id && class_exists( \FairEvents\Models\TicketOption::class ) ) {
-	$raw_options = \FairEvents\Models\TicketOption::get_all_by_event_date_id( (int) $event_date_id );
+if ( $pricing_event_date_id && class_exists( \FairEvents\Models\TicketOption::class ) ) {
+	$raw_options = \FairEvents\Models\TicketOption::get_all_by_event_date_id( (int) $pricing_event_date_id );
 	foreach ( $raw_options as $opt ) {
 		$ticket_options_for_display[] = array(
 			'id'    => (int) $opt->id,
@@ -156,6 +167,18 @@ $has_ticket_options = ! empty( $ticket_options_for_display );
 // Read block attribute to control whether option prices are displayed.
 $show_option_prices = $attributes['showOptionPrices'] ?? true;
 
+// Detect whether any ticket option carries a non-zero price.  Used below to
+// decide whether data-base-price should be "0" (options-only pricing) vs ""
+// (truly free, no JS total updates needed).
+$has_priced_options = ! empty(
+	array_filter(
+		$ticket_options_for_display,
+		static function ( $opt ) {
+			return $opt['price'] > 0;
+		}
+	)
+);
+
 // Resolve effective signup price for the current viewer so we can reflect it
 // in the button label.
 // null = no price configured at all → keep the default button text
@@ -163,9 +186,9 @@ $show_option_prices = $attributes['showOptionPrices'] ?? true;
 // 0    = a price exists but the viewer gets it for free (e.g. 100% group
 // discount, or base price explicitly set to 0) → show "… for free"
 $signup_price = null;
-if ( ! $has_ticket_types && $event_date_id && class_exists( \FairEvents\Services\EventSignupPricing::class ) ) {
+if ( ! $has_ticket_types && $pricing_event_date_id && class_exists( \FairEvents\Services\EventSignupPricing::class ) ) {
 	$signup_price = \FairEvents\Services\EventSignupPricing::resolve_price(
-		(int) $event_date_id,
+		(int) $pricing_event_date_id,
 		$participant ? (int) $participant->id : null
 	);
 }
@@ -272,7 +295,7 @@ $wrapper_attributes = get_block_wrapper_attributes(
 		'data-is-signed-up'       => $is_signed_up ? 'true' : 'false',
 		'data-participant-token'  => esc_attr( $participant_token ),
 		'data-success-message'    => esc_attr( $success_message ),
-		'data-base-price'         => null !== $signup_price ? esc_attr( (string) $signup_price ) : '',
+		'data-base-price'         => null !== $signup_price ? esc_attr( (string) $signup_price ) : ( $has_priced_options ? '0' : '' ),
 		'data-signup-base-text'   => esc_attr( $base_signup_button_text ),
 		'data-register-base-text' => esc_attr( $base_register_button_text ),
 	)

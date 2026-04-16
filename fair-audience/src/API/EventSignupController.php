@@ -582,9 +582,17 @@ class EventSignupController extends WP_REST_Controller {
 			return array();
 		}
 
+		$lookup_id = $event_date_id;
+		if ( class_exists( \FairEvents\Models\EventDates::class ) ) {
+			$ed = \FairEvents\Models\EventDates::get_by_id( $event_date_id );
+			if ( $ed && 'generated' === $ed->occurrence_type && $ed->master_id ) {
+				$lookup_id = (int) $ed->master_id;
+			}
+		}
+
 		$valid_options   = array();
 		$available_by_id = array();
-		$all_options     = \FairEvents\Models\TicketOption::get_all_by_event_date_id( $event_date_id );
+		$all_options     = \FairEvents\Models\TicketOption::get_all_by_event_date_id( $lookup_id );
 		foreach ( $all_options as $opt ) {
 			$available_by_id[ $opt->id ] = $opt;
 		}
@@ -664,7 +672,11 @@ class EventSignupController extends WP_REST_Controller {
 			}
 		}
 
-		if ( null === $final_price || $final_price <= 0 ) {
+		// Option prices count towards the total even when there is no base price.
+		$options_total = array_sum( array_column( $option_items, 'price' ) );
+		$total_amount  = (float) ( $final_price ?? 0 ) + $options_total;
+
+		if ( $total_amount <= 0 ) {
 			return null;
 		}
 
@@ -724,13 +736,15 @@ class EventSignupController extends WP_REST_Controller {
 			get_the_title( $event_id )
 		);
 
-		$line_items = array(
-			array(
+		// Build line items: base price (when positive) plus each selected option.
+		$line_items = array();
+		if ( null !== $final_price && $final_price > 0 ) {
+			$line_items[] = array(
 				'name'     => $line_item_description,
 				'quantity' => 1,
 				'amount'   => (float) $final_price,
-			),
-		);
+			);
+		}
 		foreach ( $option_items as $opt ) {
 			$line_items[] = array(
 				'name'     => $opt->name,
@@ -738,9 +752,6 @@ class EventSignupController extends WP_REST_Controller {
 				'amount'   => (float) $opt->price,
 			);
 		}
-
-		$options_total = array_sum( array_column( $option_items, 'price' ) );
-		$total_amount  = (float) $final_price + (float) $options_total;
 
 		$transaction_id = \FairPayment\API\TransactionAPI::create_transaction(
 			$line_items,
