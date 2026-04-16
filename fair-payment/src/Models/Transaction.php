@@ -220,12 +220,13 @@ class Transaction {
 		$table_name = \FairPayment\Database\Schema::get_payments_table_name();
 
 		$defaults = array(
-			'limit'   => 50,
-			'offset'  => 0,
-			'status'  => '',
-			'mode'    => '',
-			'orderby' => 'created_at',
-			'order'   => 'DESC',
+			'limit'         => 50,
+			'offset'        => 0,
+			'status'        => '',
+			'mode'          => '',
+			'event_date_id' => 0,
+			'orderby'       => 'created_at',
+			'order'         => 'DESC',
 		);
 
 		$args = wp_parse_args( $args, $defaults );
@@ -239,6 +240,10 @@ class Transaction {
 		if ( '' !== $args['mode'] ) {
 			$testmode        = 'test' === $args['mode'] ? 1 : 0;
 			$where_clauses[] = $wpdb->prepare( 'testmode = %d', $testmode );
+		}
+
+		if ( ! empty( $args['event_date_id'] ) ) {
+			$where_clauses[] = $wpdb->prepare( 'event_date_id = %d', (int) $args['event_date_id'] );
 		}
 
 		$where = '';
@@ -279,6 +284,10 @@ class Transaction {
 		if ( isset( $args['mode'] ) && '' !== $args['mode'] ) {
 			$testmode        = 'test' === $args['mode'] ? 1 : 0;
 			$where_clauses[] = $wpdb->prepare( 'testmode = %d', $testmode );
+		}
+
+		if ( ! empty( $args['event_date_id'] ) ) {
+			$where_clauses[] = $wpdb->prepare( 'event_date_id = %d', (int) $args['event_date_id'] );
 		}
 
 		$where = '';

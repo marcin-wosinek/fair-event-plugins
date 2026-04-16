@@ -134,9 +134,10 @@ class Schema {
 		self::migrate_to_v13();
 		self::migrate_to_v14();
 		self::migrate_to_v15();
+		self::migrate_to_v16();
 
 		// Store database version for future migrations.
-		update_option( 'fair_payment_db_version', '15.0' );
+		update_option( 'fair_payment_db_version', '16.0' );
 	}
 
 	/**
@@ -876,6 +877,50 @@ class Schema {
 			// from existing user_id values. Listeners should be idempotent (only update rows where
 			// participant_id IS NULL).
 			do_action( 'fair_payment_backfill_participant_ids' );
+		}
+	}
+
+	/**
+	 * Migrate database from v15.0 to v16.0
+	 *
+	 * Backfills event_date_id column on transactions from metadata.event_date_id
+	 * for rows created before event_date_id was persisted as a top-level column.
+	 *
+	 * @return void
+	 */
+	public static function migrate_to_v16() {
+		global $wpdb;
+
+		$current_version = get_option( 'fair_payment_db_version', '1.0' );
+
+		if ( version_compare( $current_version, '16.0', '<' ) ) {
+			$table_name = self::get_payments_table_name();
+
+			// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+			$rows = $wpdb->get_results(
+				$wpdb->prepare(
+					"SELECT id, metadata FROM %i WHERE event_date_id IS NULL AND metadata IS NOT NULL AND metadata != ''",
+					$table_name
+				)
+			);
+
+			if ( ! empty( $rows ) ) {
+				foreach ( $rows as $row ) {
+					$metadata = json_decode( $row->metadata, true );
+					if ( ! is_array( $metadata ) || empty( $metadata['event_date_id'] ) ) {
+						continue;
+					}
+
+					// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+					$wpdb->update(
+						$table_name,
+						array( 'event_date_id' => (int) $metadata['event_date_id'] ),
+						array( 'id' => (int) $row->id ),
+						array( '%d' ),
+						array( '%d' )
+					);
+				}
+			}
 		}
 	}
 

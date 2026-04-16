@@ -45,6 +45,7 @@ class TransactionAPI {
 			'currency'       => 'EUR',
 			'description'    => '',
 			'post_id'        => null,
+			'event_date_id'  => null,
 			'user_id'        => get_current_user_id(),
 			'participant_id' => null,
 			'email'          => null,
@@ -71,6 +72,7 @@ class TransactionAPI {
 		$transaction_data = array(
 			'mollie_payment_id' => '', // Empty until payment initiated.
 			'post_id'           => $args['post_id'],
+			'event_date_id'     => $args['event_date_id'],
 			'user_id'           => $args['user_id'],
 			'participant_id'    => $args['participant_id'],
 			'amount'            => $total,

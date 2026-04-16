@@ -635,11 +635,12 @@ class EventSignupController extends WP_REST_Controller {
 				),
 			),
 			array(
-				'currency'    => 'EUR',
-				'description' => $line_item_description,
-				'post_id'     => $event_id,
-				'user_id'     => $user_id ? $user_id : null,
-				'metadata'    => array(
+				'currency'      => 'EUR',
+				'description'   => $line_item_description,
+				'post_id'       => $event_id,
+				'event_date_id' => $event_date_id,
+				'user_id'       => $user_id ? $user_id : null,
+				'metadata'      => array(
 					'source'               => 'fair-audience-signup',
 					'event_date_id'        => $event_date_id,
 					'event_participant_id' => $event_participant->id,

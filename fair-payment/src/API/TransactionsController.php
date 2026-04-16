@@ -127,19 +127,21 @@ class TransactionsController extends WP_REST_Controller {
 		$offset   = ( $page - 1 ) * $per_page;
 
 		$query_args = array(
-			'limit'   => $per_page,
-			'offset'  => $offset,
-			'status'  => $request->get_param( 'status' ) ?? '',
-			'mode'    => $request->get_param( 'mode' ) ?? '',
-			'orderby' => $request->get_param( 'orderby' ) ?? 'created_at',
-			'order'   => $request->get_param( 'order' ) ?? 'DESC',
+			'limit'         => $per_page,
+			'offset'        => $offset,
+			'status'        => $request->get_param( 'status' ) ?? '',
+			'mode'          => $request->get_param( 'mode' ) ?? '',
+			'event_date_id' => $request->get_param( 'event_date_id' ) ?? 0,
+			'orderby'       => $request->get_param( 'orderby' ) ?? 'created_at',
+			'order'         => $request->get_param( 'order' ) ?? 'DESC',
 		);
 
 		$transactions = Transaction::get_all( $query_args );
 		$total        = Transaction::count(
 			array(
-				'status' => $query_args['status'],
-				'mode'   => $query_args['mode'],
+				'status'        => $query_args['status'],
+				'mode'          => $query_args['mode'],
+				'event_date_id' => $query_args['event_date_id'],
 			)
 		);
 
@@ -378,37 +380,43 @@ class TransactionsController extends WP_REST_Controller {
 	 */
 	public function get_collection_params() {
 		return array(
-			'page'     => array(
+			'page'          => array(
 				'type'              => 'integer',
 				'default'           => 1,
 				'minimum'           => 1,
 				'sanitize_callback' => 'absint',
 			),
-			'per_page' => array(
+			'per_page'      => array(
 				'type'              => 'integer',
 				'default'           => 50,
 				'minimum'           => 1,
 				'maximum'           => 100,
 				'sanitize_callback' => 'absint',
 			),
-			'status'   => array(
+			'status'        => array(
 				'type'              => 'string',
 				'default'           => '',
 				'sanitize_callback' => 'sanitize_text_field',
 			),
-			'mode'     => array(
+			'mode'          => array(
 				'type'              => 'string',
 				'default'           => '',
 				'enum'              => array( '', 'live', 'test' ),
 				'sanitize_callback' => 'sanitize_text_field',
 			),
-			'orderby'  => array(
+			'event_date_id' => array(
+				'type'              => 'integer',
+				'default'           => 0,
+				'minimum'           => 0,
+				'sanitize_callback' => 'absint',
+			),
+			'orderby'       => array(
 				'type'              => 'string',
 				'default'           => 'created_at',
 				'enum'              => array( 'created_at', 'amount', 'status', 'id' ),
 				'sanitize_callback' => 'sanitize_text_field',
 			),
-			'order'    => array(
+			'order'         => array(
 				'type'              => 'string',
 				'default'           => 'DESC',
 				'enum'              => array( 'ASC', 'DESC' ),

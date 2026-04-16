@@ -31,6 +31,7 @@ const formatAmount = (amount) => {
 export default function EventFinance({ eventDateId, entriesUrl }) {
 	const [totals, setTotals] = useState(null);
 	const [entries, setEntries] = useState([]);
+	const [transactions, setTransactions] = useState([]);
 	const [loading, setLoading] = useState(true);
 	const [error, setError] = useState(null);
 
@@ -47,17 +48,33 @@ export default function EventFinance({ eventDateId, entriesUrl }) {
 		setError(null);
 
 		try {
-			const [totalsData, entriesData] = await Promise.all([
-				apiFetch({
-					path: `/fair-payment/v1/financial-entries/totals?event_date_id=${eventDateId}`,
-				}),
-				apiFetch({
-					path: `/fair-payment/v1/financial-entries?event_date_id=${eventDateId}&per_page=10`,
-				}),
-			]);
+			const [totalsData, entriesData, transactionsData] =
+				await Promise.all([
+					apiFetch({
+						path: `/fair-payment/v1/financial-entries/totals?event_date_id=${eventDateId}`,
+					}),
+					apiFetch({
+						path: `/fair-payment/v1/financial-entries?event_date_id=${eventDateId}&per_page=10`,
+					}),
+					apiFetch({
+						path: `/fair-payment/v1/transactions?event_date_id=${eventDateId}&status=paid&per_page=100`,
+					}),
+				]);
 
-			setTotals(totalsData);
+			const paidTransactions = transactionsData.transactions || [];
+			const transactionIncome = paidTransactions.reduce(
+				(sum, tx) => sum + (tx.amount || 0),
+				0
+			);
+
+			setTotals({
+				...totalsData,
+				total_income:
+					(totalsData.total_income || 0) + transactionIncome,
+				balance: (totalsData.balance || 0) + transactionIncome,
+			});
 			setEntries(entriesData.entries || []);
+			setTransactions(paidTransactions);
 		} catch (err) {
 			setError(
 				err.message ||
@@ -208,7 +225,74 @@ export default function EventFinance({ eventDateId, entriesUrl }) {
 							</div>
 						)}
 
+						{transactions.length > 0 && (
+							<div style={{ overflowX: 'auto' }}>
+								<h3 style={{ marginBottom: '8px' }}>
+									{__('Payments', 'fair-events')}
+								</h3>
+								<table className="wp-list-table widefat striped">
+									<thead>
+										<tr>
+											<th>{__('Date', 'fair-events')}</th>
+											<th>
+												{__('Amount', 'fair-events')}
+											</th>
+											<th>
+												{__(
+													'Description',
+													'fair-events'
+												)}
+											</th>
+											<th>
+												{__(
+													'Participant',
+													'fair-events'
+												)}
+											</th>
+										</tr>
+									</thead>
+									<tbody>
+										{transactions.map((tx) => (
+											<tr key={tx.id}>
+												<td>
+													{tx.created_at
+														? tx.created_at.slice(
+																0,
+																10
+														  )
+														: '-'}
+												</td>
+												<td>
+													<strong
+														style={{
+															color: '#007017',
+														}}
+													>
+														{formatAmount(
+															tx.amount
+														)}
+													</strong>
+												</td>
+												<td>
+													{tx.description || (
+														<em>-</em>
+													)}
+												</td>
+												<td>
+													{tx.participant?.name ||
+														tx.user_name || (
+															<em>-</em>
+														)}
+												</td>
+											</tr>
+										))}
+									</tbody>
+								</table>
+							</div>
+						)}
+
 						{entries.length === 0 &&
+							transactions.length === 0 &&
 							!totals?.total_cost &&
 							!totals?.total_income && (
 								<p
