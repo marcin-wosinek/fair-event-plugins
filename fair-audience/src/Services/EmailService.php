@@ -134,6 +134,28 @@ class EmailService {
 	}
 
 	/**
+	 * Get unique participant IDs for an array of group IDs.
+	 *
+	 * @param array $group_ids Array of group IDs.
+	 * @return array Array of unique participant IDs.
+	 */
+	private function get_participant_ids_for_groups( $group_ids ) {
+		if ( empty( $group_ids ) ) {
+			return array();
+		}
+
+		$participant_ids = array();
+		foreach ( $group_ids as $group_id ) {
+			$members = $this->group_participant_repository->get_by_group( $group_id );
+			foreach ( $members as $member ) {
+				$participant_ids[] = $member->participant_id;
+			}
+		}
+
+		return array_unique( $participant_ids );
+	}
+
+	/**
 	 * Send poll invitation to a single participant.
 	 *
 	 * @param object $poll         Poll object.
@@ -1145,7 +1167,7 @@ class EmailService {
 	 * @param array  $skip_participant_ids  Participant IDs to skip.
 	 * @return array Results array with 'sent', 'failed', and 'skipped' keys.
 	 */
-	public function send_bulk_custom_mail( $event_id, $subject, $content, $is_marketing = true, $labels = array( 'signed_up', 'collaborator' ), $skip_participant_ids = array(), $event_date_id = 0 ) {
+	public function send_bulk_custom_mail( $event_id, $subject, $content, $is_marketing = true, $labels = array( 'signed_up', 'collaborator' ), $skip_participant_ids = array(), $event_date_id = 0, $group_ids = array() ) {
 		// Increase time limit for bulk sending.
 		set_time_limit( 300 ); // 5 minutes.
 
@@ -1166,12 +1188,19 @@ class EmailService {
 			return $results;
 		}
 
+		$group_participant_ids = $this->get_participant_ids_for_groups( $group_ids );
+
 		// Get participants signed up for this event.
 		$event_participants = $this->event_participant_repository->get_by_event( $event_id );
 
 		foreach ( $event_participants as $ep ) {
 			// Only send to participants with matching labels.
 			if ( ! in_array( $ep->label, $labels, true ) ) {
+				continue;
+			}
+
+			// Filter by group membership.
+			if ( ! empty( $group_ids ) && ! in_array( $ep->participant_id, $group_participant_ids, true ) ) {
 				continue;
 			}
 
@@ -1242,7 +1271,7 @@ class EmailService {
 	 * @param array  $skip_participant_ids  Participant IDs to skip.
 	 * @return array Results array with 'sent', 'failed', and 'skipped' keys.
 	 */
-	public function send_bulk_custom_mail_to_all( $subject, $content, $is_marketing = true, $skip_participant_ids = array() ) {
+	public function send_bulk_custom_mail_to_all( $subject, $content, $is_marketing = true, $skip_participant_ids = array(), $group_ids = array() ) {
 		// Increase time limit for bulk sending.
 		set_time_limit( 300 ); // 5 minutes.
 
@@ -1252,9 +1281,15 @@ class EmailService {
 			'skipped' => array(),
 		);
 
-		$participants = $this->participant_repository->get_all();
+		$participants          = $this->participant_repository->get_all();
+		$group_participant_ids = $this->get_participant_ids_for_groups( $group_ids );
 
 		foreach ( $participants as $participant ) {
+			// Filter by group membership.
+			if ( ! empty( $group_ids ) && ! in_array( $participant->id, $group_participant_ids, true ) ) {
+				continue;
+			}
+
 			// Skip manually excluded participants.
 			if ( ! empty( $skip_participant_ids ) && in_array( $participant->id, $skip_participant_ids, true ) ) {
 				$results['skipped'][] = array(
@@ -1413,7 +1448,7 @@ class EmailService {
 	 * @param array $labels       Labels to include.
 	 * @return array List of recipient info arrays.
 	 */
-	public function preview_custom_mail_recipients( $event_id, $is_marketing = true, $labels = array( 'signed_up', 'collaborator' ) ) {
+	public function preview_custom_mail_recipients( $event_id, $is_marketing = true, $labels = array( 'signed_up', 'collaborator' ), $group_ids = array() ) {
 		$recipients = array();
 
 		$event = get_post( $event_id );
@@ -1421,10 +1456,16 @@ class EmailService {
 			return $recipients;
 		}
 
+		$group_participant_ids = $this->get_participant_ids_for_groups( $group_ids );
+
 		$event_participants = $this->event_participant_repository->get_by_event( $event_id );
 
 		foreach ( $event_participants as $ep ) {
 			if ( ! in_array( $ep->label, $labels, true ) ) {
+				continue;
+			}
+
+			if ( ! empty( $group_ids ) && ! in_array( $ep->participant_id, $group_participant_ids, true ) ) {
 				continue;
 			}
 
@@ -1684,11 +1725,17 @@ class EmailService {
 	 * @param bool $is_marketing Whether to filter by marketing consent.
 	 * @return array List of recipient info arrays.
 	 */
-	public function preview_custom_mail_recipients_all( $is_marketing = true ) {
+	public function preview_custom_mail_recipients_all( $is_marketing = true, $group_ids = array() ) {
 		$recipients   = array();
 		$participants = $this->participant_repository->get_all();
 
+		$group_participant_ids = $this->get_participant_ids_for_groups( $group_ids );
+
 		foreach ( $participants as $participant ) {
+			if ( ! empty( $group_ids ) && ! in_array( $participant->id, $group_participant_ids, true ) ) {
+				continue;
+			}
+
 			$would_skip_marketing = $is_marketing && ! $this->can_receive_email( $participant, EmailType::MARKETING );
 
 			$recipients[] = array(

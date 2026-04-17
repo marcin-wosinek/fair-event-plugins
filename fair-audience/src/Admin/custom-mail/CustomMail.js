@@ -23,6 +23,7 @@ import {
 	loadCustomMails,
 	sendCustomMail,
 	loadEventDates,
+	loadGroups,
 	deleteCustomMail,
 	previewRecipients,
 } from './custom-mail-api.js';
@@ -35,6 +36,7 @@ import {
 export default function CustomMail() {
 	const [mails, setMails] = useState([]);
 	const [eventDates, setEventDates] = useState([]);
+	const [groups, setGroups] = useState([]);
 	const [isLoading, setIsLoading] = useState(true);
 	const [isSending, setIsSending] = useState(false);
 	const [notice, setNotice] = useState(null);
@@ -46,6 +48,7 @@ export default function CustomMail() {
 	const [includeSignedUp, setIncludeSignedUp] = useState(true);
 	const [includeCollaborators, setIncludeCollaborators] = useState(true);
 	const [includeInterested, setIncludeInterested] = useState(false);
+	const [selectedGroupIds, setSelectedGroupIds] = useState([]);
 
 	// Token link page search state.
 	const [pageSearch, setPageSearch] = useState('');
@@ -65,10 +68,11 @@ export default function CustomMail() {
 	 */
 	const loadData = () => {
 		setIsLoading(true);
-		Promise.all([loadCustomMails(), loadEventDates()])
-			.then(([mailsData, eventDatesData]) => {
+		Promise.all([loadCustomMails(), loadEventDates(), loadGroups()])
+			.then(([mailsData, eventDatesData, groupsData]) => {
 				setMails(mailsData);
 				setEventDates(eventDatesData);
+				setGroups(groupsData);
 				setIsLoading(false);
 			})
 			.catch((error) => {
@@ -134,6 +138,10 @@ export default function CustomMail() {
 			is_marketing: isMarketing,
 		};
 
+		if (selectedGroupIds.length > 0) {
+			data.group_ids = selectedGroupIds;
+		}
+
 		if (eventDateId) {
 			data.event_date_id = parseInt(eventDateId, 10);
 
@@ -171,6 +179,7 @@ export default function CustomMail() {
 		includeSignedUp,
 		includeCollaborators,
 		includeInterested,
+		selectedGroupIds,
 	]);
 
 	/**
@@ -207,6 +216,14 @@ export default function CustomMail() {
 	 *
 	 * @param {number} participantId Participant ID
 	 */
+	const toggleGroup = (groupId) => {
+		setSelectedGroupIds((prev) =>
+			prev.includes(groupId)
+				? prev.filter((id) => id !== groupId)
+				: [...prev, groupId]
+		);
+	};
+
 	const toggleSkip = (participantId) => {
 		setSkippedIds((prev) => {
 			const next = new Set(prev);
@@ -374,6 +391,10 @@ export default function CustomMail() {
 			is_marketing: isMarketing,
 			skip_participant_ids: Array.from(skippedIds),
 		};
+
+		if (selectedGroupIds.length > 0) {
+			data.group_ids = selectedGroupIds;
+		}
 
 		if (eventDateId) {
 			data.event_date_id = parseInt(eventDateId, 10);
@@ -739,6 +760,42 @@ export default function CustomMail() {
 							)}
 							disabled={isSending}
 						/>
+
+						{groups.length > 0 && (
+							<fieldset style={{ marginBottom: '16px' }}>
+								<legend
+									style={{
+										fontWeight: '600',
+										marginBottom: '8px',
+									}}
+								>
+									{__('Groups', 'fair-audience')}
+								</legend>
+								<p
+									style={{
+										color: '#666',
+										fontSize: '12px',
+										margin: '0 0 8px',
+									}}
+								>
+									{__(
+										'If selected, only sends to members of these groups.',
+										'fair-audience'
+									)}
+								</p>
+								{groups.map((group) => (
+									<CheckboxControl
+										key={group.id}
+										label={`${group.name} (${group.member_count})`}
+										checked={selectedGroupIds.includes(
+											group.id
+										)}
+										onChange={() => toggleGroup(group.id)}
+										disabled={isSending}
+									/>
+								))}
+							</fieldset>
+						)}
 
 						{/* Recipient Preview */}
 						{isLoadingRecipients && (

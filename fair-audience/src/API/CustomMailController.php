@@ -8,6 +8,7 @@
 namespace FairAudience\API;
 
 use FairAudience\Database\CustomMailMessageRepository;
+use FairAudience\Database\GroupRepository;
 use FairAudience\Services\EmailService;
 use WP_REST_Controller;
 use WP_REST_Server;
@@ -44,11 +45,19 @@ class CustomMailController extends WP_REST_Controller {
 	private $email_service;
 
 	/**
+	 * Group repository instance.
+	 *
+	 * @var GroupRepository
+	 */
+	private $group_repository;
+
+	/**
 	 * Constructor.
 	 */
 	public function __construct() {
-		$this->repository    = new CustomMailMessageRepository();
-		$this->email_service = new EmailService();
+		$this->repository       = new CustomMailMessageRepository();
+		$this->email_service    = new EmailService();
+		$this->group_repository = new GroupRepository();
 	}
 
 	/**
@@ -121,6 +130,17 @@ class CustomMailController extends WP_REST_Controller {
 								return array_map( 'absint', (array) $value );
 							},
 						),
+						'group_ids'            => array(
+							'type'              => 'array',
+							'required'          => false,
+							'default'           => array(),
+							'items'             => array(
+								'type' => 'integer',
+							),
+							'sanitize_callback' => function ( $value ) {
+								return array_map( 'absint', (array) $value );
+							},
+						),
 					),
 				),
 			)
@@ -179,6 +199,17 @@ class CustomMailController extends WP_REST_Controller {
 								return array_values( array_intersect( (array) $value, $allowed ) );
 							},
 						),
+						'group_ids'     => array(
+							'type'              => 'array',
+							'required'          => false,
+							'default'           => array(),
+							'items'             => array(
+								'type' => 'integer',
+							),
+							'sanitize_callback' => function ( $value ) {
+								return array_map( 'absint', (array) $value );
+							},
+						),
 					),
 				),
 			)
@@ -192,6 +223,19 @@ class CustomMailController extends WP_REST_Controller {
 				array(
 					'methods'             => WP_REST_Server::READABLE,
 					'callback'            => array( $this, 'get_event_dates' ),
+					'permission_callback' => array( $this, 'admin_permissions_check' ),
+				),
+			)
+		);
+
+		// GET /fair-audience/v1/custom-mail/groups - List groups for filtering.
+		register_rest_route(
+			$this->namespace,
+			'/custom-mail/groups',
+			array(
+				array(
+					'methods'             => WP_REST_Server::READABLE,
+					'callback'            => array( $this, 'get_groups' ),
 					'permission_callback' => array( $this, 'admin_permissions_check' ),
 				),
 			)
@@ -248,6 +292,7 @@ class CustomMailController extends WP_REST_Controller {
 		$is_marketing         = $request->get_param( 'is_marketing' );
 		$labels               = $request->get_param( 'labels' );
 		$skip_participant_ids = $request->get_param( 'skip_participant_ids' );
+		$group_ids            = $request->get_param( 'group_ids' );
 
 		$event_id = null;
 
@@ -284,7 +329,8 @@ class CustomMailController extends WP_REST_Controller {
 				$is_marketing,
 				$labels,
 				$skip_participant_ids,
-				$event_date_id
+				$event_date_id,
+				$group_ids
 			);
 		} else {
 			// Send to all audience members.
@@ -292,7 +338,8 @@ class CustomMailController extends WP_REST_Controller {
 				$subject,
 				$content,
 				$is_marketing,
-				$skip_participant_ids
+				$skip_participant_ids,
+				$group_ids
 			);
 		}
 
@@ -331,6 +378,7 @@ class CustomMailController extends WP_REST_Controller {
 		$event_date_id = $request->get_param( 'event_date_id' );
 		$is_marketing  = $request->get_param( 'is_marketing' );
 		$labels        = $request->get_param( 'labels' );
+		$group_ids     = $request->get_param( 'group_ids' );
 
 		if ( $event_date_id ) {
 			global $wpdb;
@@ -358,10 +406,11 @@ class CustomMailController extends WP_REST_Controller {
 			$recipients = $this->email_service->preview_custom_mail_recipients(
 				$event_id,
 				$is_marketing,
-				$labels
+				$labels,
+				$group_ids
 			);
 		} else {
-			$recipients = $this->email_service->preview_custom_mail_recipients_all( $is_marketing );
+			$recipients = $this->email_service->preview_custom_mail_recipients_all( $is_marketing, $group_ids );
 		}
 
 		return rest_ensure_response( $recipients );
@@ -433,6 +482,29 @@ class CustomMailController extends WP_REST_Controller {
 				);
 			},
 			$results
+		);
+
+		return rest_ensure_response( $data );
+	}
+
+	/**
+	 * Get groups for filtering selection.
+	 *
+	 * @param WP_REST_Request $request Request object.
+	 * @return WP_REST_Response Response object.
+	 */
+	public function get_groups( $request ) {
+		$groups = $this->group_repository->get_all_with_member_counts();
+
+		$data = array_map(
+			function ( $group ) {
+				return array(
+					'id'           => $group->id,
+					'name'         => $group->name,
+					'member_count' => $group->member_count,
+				);
+			},
+			$groups
 		);
 
 		return rest_ensure_response( $data );

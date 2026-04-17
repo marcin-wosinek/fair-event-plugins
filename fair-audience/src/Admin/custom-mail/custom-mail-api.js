@@ -40,6 +40,15 @@ export function loadEventDates() {
 }
 
 /**
+ * Load groups for filtering
+ *
+ * @return {Promise<Array>} Promise resolving to array of groups
+ */
+export function loadGroups() {
+	return apiFetch({ path: '/fair-audience/v1/custom-mail/groups' });
+}
+
+/**
  * Preview recipients for a custom mail
  *
  * @param {Object}  data               Preview data
