@@ -18,6 +18,7 @@ import {
 /**
  * Internal dependencies
  */
+import apiFetch from '@wordpress/api-fetch';
 import {
 	loadCustomMails,
 	sendCustomMail,
@@ -45,6 +46,12 @@ export default function CustomMail() {
 	const [includeSignedUp, setIncludeSignedUp] = useState(true);
 	const [includeCollaborators, setIncludeCollaborators] = useState(true);
 	const [includeInterested, setIncludeInterested] = useState(false);
+
+	// Token link page search state.
+	const [pageSearch, setPageSearch] = useState('');
+	const [pageResults, setPageResults] = useState([]);
+	const [selectedPage, setSelectedPage] = useState(null);
+	const [isSearchingPages, setIsSearchingPages] = useState(false);
 
 	// Recipient preview state.
 	const [recipients, setRecipients] = useState([]);
@@ -165,6 +172,35 @@ export default function CustomMail() {
 		includeCollaborators,
 		includeInterested,
 	]);
+
+	/**
+	 * Search pages when search term changes
+	 */
+	useEffect(() => {
+		if (pageSearch.length < 2) {
+			setPageResults([]);
+			return;
+		}
+
+		const timeout = setTimeout(() => {
+			setIsSearchingPages(true);
+			apiFetch({
+				path: `/wp/v2/pages?search=${encodeURIComponent(
+					pageSearch
+				)}&per_page=10&_fields=id,title`,
+			})
+				.then((results) => {
+					setPageResults(results);
+					setIsSearchingPages(false);
+				})
+				.catch(() => {
+					setPageResults([]);
+					setIsSearchingPages(false);
+				});
+		}, 300);
+
+		return () => clearTimeout(timeout);
+	}, [pageSearch]);
 
 	/**
 	 * Toggle skip for a participant
@@ -548,6 +584,97 @@ export default function CustomMail() {
 										'fair-audience'
 									)}
 								</Button>
+								<span
+									style={{
+										display: 'inline-flex',
+										alignItems: 'center',
+										gap: '4px',
+										marginLeft: '8px',
+										position: 'relative',
+									}}
+								>
+									<TextControl
+										placeholder={__(
+											'Search page…',
+											'fair-audience'
+										)}
+										value={
+											selectedPage
+												? selectedPage.title.rendered
+												: pageSearch
+										}
+										onChange={(value) => {
+											setPageSearch(value);
+											setSelectedPage(null);
+										}}
+										disabled={isSending}
+										__nextHasNoMarginBottom
+										style={{
+											width: '180px',
+											marginBottom: 0,
+										}}
+									/>
+									{isSearchingPages && <Spinner />}
+									{pageResults.length > 0 &&
+										!selectedPage && (
+											<ul
+												style={{
+													position: 'absolute',
+													top: '100%',
+													left: 0,
+													zIndex: 100,
+													background: '#fff',
+													border: '1px solid #ccc',
+													borderRadius: '2px',
+													listStyle: 'none',
+													margin: 0,
+													padding: 0,
+													maxHeight: '200px',
+													overflow: 'auto',
+													width: '280px',
+													boxShadow:
+														'0 2px 6px rgba(0,0,0,0.15)',
+												}}
+											>
+												{pageResults.map((page) => (
+													<li
+														key={page.id}
+														style={{
+															padding: '6px 10px',
+															cursor: 'pointer',
+														}}
+														onMouseDown={() => {
+															setSelectedPage(
+																page
+															);
+															setPageSearch('');
+															setPageResults([]);
+														}}
+													>
+														{page.title.rendered}
+													</li>
+												))}
+											</ul>
+										)}
+									<Button
+										isSecondary
+										isSmall
+										onClick={() => {
+											if (selectedPage) {
+												insertPlaceholderLink(
+													`{token_link_${selectedPage.id}}`,
+													selectedPage.title.rendered
+												);
+											}
+										}}
+										disabled={isSending || !selectedPage}
+									>
+										{__(
+											'Insert token link',
+											'fair-audience'
+										)}
+									</Button>
+								</span>
 							</div>
 						</div>
 

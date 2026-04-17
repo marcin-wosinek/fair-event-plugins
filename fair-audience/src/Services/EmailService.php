@@ -1018,6 +1018,13 @@ class EmailService {
 			$content = str_replace( '{manage_subscription_url}', esc_url( $url ), $content );
 		}
 
+		if ( preg_match_all( '/\{token_link_(\d+)\}/', $content, $matches ) ) {
+			foreach ( $matches[1] as $index => $post_id ) {
+				$url     = ParticipantToken::get_url( $participant->id, $event_date_id, (int) $post_id );
+				$content = str_replace( $matches[0][ $index ], esc_url( $url ), $content );
+			}
+		}
+
 		return $content;
 	}
 
