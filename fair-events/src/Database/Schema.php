@@ -17,7 +17,7 @@ class Schema {
 	/**
 	 * Database version
 	 */
-	const DB_VERSION = '3.3.0';
+	const DB_VERSION = '3.4.0';
 
 	/**
 	 * Get the SQL for creating the fair_event_dates table
@@ -332,6 +332,27 @@ class Schema {
 			PRIMARY KEY (id),
 			UNIQUE KEY idx_event_date_group_permission (event_date_id, group_id, permission_type),
 			KEY idx_event_date_id (event_date_id),
+			KEY idx_group_id (group_id)
+		) ENGINE=InnoDB {$charset_collate};";
+	}
+
+	/**
+	 * Get the SQL for creating the fair_events_ticket_type_group_restrictions table
+	 *
+	 * Junction table linking ticket types to groups for availability restrictions.
+	 *
+	 * @return string SQL statement for creating the table.
+	 */
+	public static function get_ticket_type_group_restrictions_table_sql() {
+		global $wpdb;
+
+		$table_name      = $wpdb->prefix . 'fair_events_ticket_type_group_restrictions';
+		$charset_collate = $wpdb->get_charset_collate();
+
+		return "CREATE TABLE {$table_name} (
+			ticket_type_id BIGINT UNSIGNED NOT NULL,
+			group_id BIGINT UNSIGNED NOT NULL,
+			PRIMARY KEY (ticket_type_id, group_id),
 			KEY idx_group_id (group_id)
 		) ENGINE=InnoDB {$charset_collate};";
 	}

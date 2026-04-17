@@ -68,6 +68,9 @@ class Installer {
 		$sql = Schema::get_ticket_options_table_sql();
 		dbDelta( $sql );
 
+		$sql = Schema::get_ticket_type_group_restrictions_table_sql();
+		dbDelta( $sql );
+
 		// Run migration if upgrading from pre-1.0.0
 		if ( version_compare( $current_version, '1.0.0', '<' ) ) {
 			self::migrate_to_1_0_0();
@@ -166,6 +169,8 @@ class Installer {
 
 		// Version 3.3.0 - Ticket options table (no data migration needed, table created by dbDelta).
 
+		// Version 3.4.0 - Ticket type group restrictions table (no data migration needed, table created by dbDelta).
+
 		// Update database version
 		Schema::update_db_version( Schema::DB_VERSION );
 	}
@@ -259,6 +264,8 @@ class Installer {
 			}
 
 			// Version 3.3.0 - Ticket options table (no data migration needed, table created by dbDelta).
+
+			// Version 3.4.0 - Ticket type group restrictions table (no data migration needed, table created by dbDelta).
 
 			// Install/update tables
 			self::install();

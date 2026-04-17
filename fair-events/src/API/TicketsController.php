@@ -15,6 +15,7 @@ use FairEvents\Models\TicketType;
 use FairEvents\Models\TicketSalePeriod;
 use FairEvents\Models\TicketPrice;
 use FairEvents\Models\TicketOption;
+use FairEvents\Models\TicketTypeGroupRestriction;
 use WP_REST_Controller;
 use WP_REST_Server;
 use WP_REST_Request;
@@ -262,6 +263,7 @@ class TicketsController extends WP_REST_Controller {
 
 		$existing_types = TicketType::get_all_by_event_date_id( $event_date_id );
 		foreach ( $existing_types as $type ) {
+			TicketTypeGroupRestriction::delete_by_ticket_type_id( $type->id );
 			TicketType::delete( $type->id );
 		}
 
@@ -285,6 +287,11 @@ class TicketsController extends WP_REST_Controller {
 			$new_id = TicketType::create( $event_date_id, $name, $capacity, $index, $seats_per_ticket );
 			if ( $new_id ) {
 				$type_ids_by_index[ $index ] = (int) $new_id;
+
+				$group_ids = isset( $item['group_ids'] ) && is_array( $item['group_ids'] ) ? array_map( 'absint', $item['group_ids'] ) : array();
+				if ( ! empty( $group_ids ) ) {
+					TicketTypeGroupRestriction::sync_for_ticket_type( (int) $new_id, $group_ids );
+				}
 			}
 		}
 
@@ -382,6 +389,7 @@ class TicketsController extends WP_REST_Controller {
 		foreach ( $existing_ids as $eid ) {
 			if ( ! in_array( $eid, $incoming_ids, true ) ) {
 				TicketPrice::delete_by_ticket_type_id( $eid );
+				TicketTypeGroupRestriction::delete_by_ticket_type_id( $eid );
 				TicketType::delete( $eid );
 			}
 		}
@@ -394,6 +402,7 @@ class TicketsController extends WP_REST_Controller {
 				: null;
 			$seats_per_ticket = isset( $item['seats_per_ticket'] ) ? max( 1, absint( $item['seats_per_ticket'] ) ) : 1;
 			$sort_order       = $index;
+			$group_ids        = isset( $item['group_ids'] ) && is_array( $item['group_ids'] ) ? array_map( 'absint', $item['group_ids'] ) : array();
 
 			if ( ! empty( $item['id'] ) && in_array( (int) $item['id'], $existing_ids, true ) ) {
 				TicketType::update(
@@ -405,8 +414,12 @@ class TicketsController extends WP_REST_Controller {
 						'sort_order'       => $sort_order,
 					)
 				);
+				TicketTypeGroupRestriction::sync_for_ticket_type( (int) $item['id'], $group_ids );
 			} else {
-				TicketType::create( $event_date_id, $name, $capacity, $sort_order, $seats_per_ticket );
+				$new_id = TicketType::create( $event_date_id, $name, $capacity, $sort_order, $seats_per_ticket );
+				if ( $new_id && ! empty( $group_ids ) ) {
+					TicketTypeGroupRestriction::sync_for_ticket_type( (int) $new_id, $group_ids );
+				}
 			}
 		}
 	}
@@ -473,6 +486,7 @@ class TicketsController extends WP_REST_Controller {
 		$prices       = TicketPrice::get_all_by_event_date_id( $event_date_id );
 		$raw_settings = EventDateSetting::get_all_for_event_date( $event_date_id );
 		$options      = TicketOption::get_all_by_event_date_id( $event_date_id );
+		$restrictions = TicketTypeGroupRestriction::get_all_by_event_date_id( $event_date_id );
 
 		$settings = array();
 		foreach ( $raw_settings as $key => $value ) {
@@ -483,7 +497,14 @@ class TicketsController extends WP_REST_Controller {
 			'capacity'     => $event_date->capacity,
 			'signup_price' => null !== $event_date->signup_price ? (float) $event_date->signup_price : null,
 			'end_datetime' => $event_date->end_datetime,
-			'ticket_types' => array_map( fn( $t ) => $t->to_array(), $ticket_types ),
+			'ticket_types' => array_map(
+				function ( $t ) use ( $restrictions ) {
+					$data               = $t->to_array();
+					$data['group_ids'] = $restrictions[ $t->id ] ?? array();
+					return $data;
+				},
+				$ticket_types
+			),
 			'sale_periods' => array_map( fn( $p ) => $p->to_array(), $sale_periods ),
 			'prices'       => array_map( fn( $pr ) => $pr->to_array(), $prices ),
 			'settings'     => $settings,

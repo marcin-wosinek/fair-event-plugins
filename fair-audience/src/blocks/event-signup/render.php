@@ -131,7 +131,28 @@ if ( $is_valid_post_type ) {
 $ticket_types_for_display = array();
 if ( $pricing_event_date_id && class_exists( \FairEvents\Models\TicketType::class ) ) {
 	$raw_types = \FairEvents\Models\TicketType::get_all_by_event_date_id( (int) $pricing_event_date_id );
+
+	// Load group restrictions and participant's groups for filtering.
+	$tt_group_restrictions = array();
+	$participant_group_ids = array();
+	if ( class_exists( \FairEvents\Models\TicketTypeGroupRestriction::class ) ) {
+		$tt_group_restrictions = \FairEvents\Models\TicketTypeGroupRestriction::get_all_by_event_date_id( (int) $pricing_event_date_id );
+	}
+	if ( $participant && ! empty( $tt_group_restrictions ) ) {
+		$group_participant_repo = new \FairAudience\Database\GroupParticipantRepository();
+		$memberships            = $group_participant_repo->get_by_participant( $participant->id );
+		$participant_group_ids  = array_map( fn( $m ) => (int) $m->group_id, $memberships );
+	}
+
 	foreach ( $raw_types as $tt ) {
+		// Skip ticket types restricted to groups the participant doesn't belong to.
+		$allowed_groups = $tt_group_restrictions[ $tt->id ] ?? array();
+		if ( ! empty( $allowed_groups ) ) {
+			if ( empty( $participant_group_ids ) || empty( array_intersect( $allowed_groups, $participant_group_ids ) ) ) {
+				continue;
+			}
+		}
+
 		$tt_price = null;
 		if ( class_exists( \FairEvents\Services\EventSignupPricing::class ) ) {
 			$tt_price = \FairEvents\Services\EventSignupPricing::resolve_price_for_ticket_type(

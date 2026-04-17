@@ -460,6 +460,12 @@ class EventSignupController extends WP_REST_Controller {
 			);
 		}
 
+		// Validate ticket type group restrictions.
+		$group_error = $this->validate_ticket_type_group_restriction( $ticket_type_id, $participant->id );
+		if ( is_wp_error( $group_error ) ) {
+			return $group_error;
+		}
+
 		// Check if already signed up.
 		if ( $event_date_id ) {
 			$existing = $this->event_participant_repository->get_by_event_date_and_participant(
@@ -510,6 +516,38 @@ class EventSignupController extends WP_REST_Controller {
 				'status'  => 'signed_up',
 			)
 		);
+	}
+
+	/**
+	 * Validate that a participant is allowed to use a group-restricted ticket type.
+	 *
+	 * @param int|null $ticket_type_id Ticket type ID, or null if none selected.
+	 * @param int      $participant_id Participant ID.
+	 * @return WP_Error|null WP_Error if restricted, null if allowed.
+	 */
+	private function validate_ticket_type_group_restriction( $ticket_type_id, $participant_id ) {
+		if ( ! $ticket_type_id || ! class_exists( \FairEvents\Models\TicketTypeGroupRestriction::class ) ) {
+			return null;
+		}
+
+		$allowed_group_ids = \FairEvents\Models\TicketTypeGroupRestriction::get_group_ids_by_ticket_type_id( $ticket_type_id );
+		if ( empty( $allowed_group_ids ) ) {
+			return null;
+		}
+
+		$group_participant_repo = new \FairAudience\Database\GroupParticipantRepository();
+		$memberships            = $group_participant_repo->get_by_participant( $participant_id );
+		$participant_group_ids  = array_map( fn( $m ) => (int) $m->group_id, $memberships );
+
+		if ( empty( array_intersect( $allowed_group_ids, $participant_group_ids ) ) ) {
+			return new WP_Error(
+				'ticket_type_restricted',
+				__( 'This ticket type is not available for your account.', 'fair-audience' ),
+				array( 'status' => 403 )
+			);
+		}
+
+		return null;
 	}
 
 	/**
@@ -992,6 +1030,12 @@ class EventSignupController extends WP_REST_Controller {
 					array( 'status' => 500 )
 				);
 			}
+		}
+
+		// Validate ticket type group restrictions.
+		$group_error = $this->validate_ticket_type_group_restriction( $ticket_type_id, $participant->id );
+		if ( is_wp_error( $group_error ) ) {
+			return $group_error;
 		}
 
 		// Paid path takes over when a positive price resolves for this participant.

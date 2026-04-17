@@ -13,6 +13,7 @@ import {
 	CardBody,
 	Button,
 	CheckboxControl,
+	FormTokenField,
 	Panel,
 	PanelBody,
 	Spinner,
@@ -50,9 +51,14 @@ export default function EventTickets({
 	const [error, setError] = useState(null);
 	const [success, setSuccess] = useState(null);
 	const [pricingRules, setPricingRules] = useState([]);
+	const [groups, setGroups] = useState([]);
 	const fileInputRef = useRef(null);
 
 	const hasAdvancedTickets = ticketTypes.length > 0 || salePeriods.length > 0;
+	const hasGroups = groups.length > 0;
+	const groupNameById = Object.fromEntries(groups.map((g) => [g.id, g.name]));
+	const groupIdByName = Object.fromEntries(groups.map((g) => [g.name, g.id]));
+	const groupSuggestions = groups.map((g) => g.name);
 
 	const populateFromData = useCallback((data) => {
 		setCapacity(
@@ -122,6 +128,12 @@ export default function EventTickets({
 			.then((rules) => setPricingRules(rules || []))
 			.catch(() => setPricingRules([]));
 	}, [eventDateId]);
+
+	useEffect(() => {
+		apiFetch({ path: '/fair-audience/v1/groups' })
+			.then((data) => setGroups(data || []))
+			.catch(() => setGroups([]));
+	}, []);
 
 	useEffect(() => {
 		if (onSaveRef) {
@@ -291,6 +303,7 @@ export default function EventTickets({
 						? t.capacity
 						: null,
 				seats_per_ticket: t.seats_per_ticket || 1,
+				group_ids: t.group_ids || [],
 			})),
 			sale_periods: getEffectiveSalePeriods().map((p) => ({
 				name: p.name || '',
@@ -399,6 +412,7 @@ export default function EventTickets({
 				name: '',
 				capacity: null,
 				seats_per_ticket: 1,
+				group_ids: [],
 				sort_order: ticketTypes.length,
 			},
 		]);
@@ -825,6 +839,14 @@ export default function EventTickets({
 															)}
 														</th>
 													)}
+													{hasGroups && (
+														<th>
+															{__(
+																'Groups',
+																'fair-events'
+															)}
+														</th>
+													)}
 													{salePeriods.map(
 														(period, pIndex) => {
 															const isContinuous =
@@ -1150,6 +1172,55 @@ export default function EventTickets({
 																	/>
 																</td>
 															)}
+															{hasGroups && (
+																<td>
+																	<FormTokenField
+																		value={(
+																			type.group_ids ||
+																			[]
+																		).map(
+																			(
+																				id
+																			) =>
+																				groupNameById[
+																					id
+																				] ||
+																				`#${id}`
+																		)}
+																		suggestions={
+																			groupSuggestions
+																		}
+																		onChange={(
+																			tokens
+																		) => {
+																			const ids =
+																				tokens
+																					.map(
+																						(
+																							name
+																						) =>
+																							groupIdByName[
+																								name
+																							]
+																					)
+																					.filter(
+																						Boolean
+																					);
+																			updateTicketType(
+																				tIndex,
+																				'group_ids',
+																				ids
+																			);
+																		}}
+																		__experimentalExpandOnFocus
+																		__experimentalAutoSelectFirstMatch
+																		placeholder={__(
+																			'All participants',
+																			'fair-events'
+																		)}
+																	/>
+																</td>
+															)}
 															{salePeriods.map(
 																(
 																	period,
@@ -1282,7 +1353,8 @@ export default function EventTickets({
 																: 0) +
 															(settings.show_seats_per_ticket
 																? 1
-																: 0)
+																: 0) +
+															(hasGroups ? 1 : 0)
 														}
 													>
 														<Button
