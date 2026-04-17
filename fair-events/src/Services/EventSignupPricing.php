@@ -8,6 +8,7 @@
 namespace FairEvents\Services;
 
 use FairEvents\Models\EventDates;
+use FairEvents\Models\EventDateSetting;
 use FairEvents\Models\GroupPricingRule;
 use FairEvents\Models\TicketType;
 use FairEvents\Models\TicketSalePeriod;
@@ -108,10 +109,18 @@ class EventSignupPricing {
 		$now           = current_time( 'mysql' );
 		$sale_periods  = TicketSalePeriod::get_all_by_event_date_id( $ticket_type->event_date_id );
 		$active_period = null;
-		foreach ( $sale_periods as $period ) {
+
+		$continues  = class_exists( EventDateSetting::class )
+			&& '1' === EventDateSetting::get( $ticket_type->event_date_id, 'continues_pricing_period' );
+		$last_index = count( $sale_periods ) - 1;
+
+		foreach ( $sale_periods as $index => $period ) {
 			if ( $period->sale_start <= $now && $period->sale_end >= $now ) {
 				$active_period = $period;
 				break;
+			}
+			if ( $continues && $index === $last_index && $period->sale_start <= $now ) {
+				$active_period = $period;
 			}
 		}
 		if ( ! $active_period ) {
