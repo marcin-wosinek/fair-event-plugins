@@ -193,13 +193,17 @@ export default function CustomMail() {
 
 		const timeout = setTimeout(() => {
 			setIsSearchingPages(true);
+			const searchParam = encodeURIComponent(pageSearch);
 			apiFetch({
-				path: `/wp/v2/pages?search=${encodeURIComponent(
-					pageSearch
-				)}&per_page=10&_fields=id,title`,
+				path: `/wp/v2/search?search=${searchParam}&per_page=10&_fields=id,title`,
 			})
 				.then((results) => {
-					setPageResults(results);
+					setPageResults(
+						results.map((r) => ({
+							id: r.id,
+							title: { rendered: r.title },
+						}))
+					);
 					setIsSearchingPages(false);
 				})
 				.catch(() => {
