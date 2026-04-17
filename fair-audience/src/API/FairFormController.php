@@ -159,13 +159,15 @@ class FairFormController extends WP_REST_Controller {
 							'required' => false,
 							'default'  => false,
 						),
+						// No 'type' declared: WP's rest_sanitize_array() splits strings on
+						// /[\s,]+/, which corrupts JSON payloads sent via FormData (spaces
+						// inside values get dropped). Let the parse_* helpers handle both
+						// raw JSON strings and already-decoded arrays.
 						'mailing_category_ids'  => array(
-							'type'     => array( 'array', 'string' ),
 							'required' => false,
 							'default'  => array(),
 						),
 						'questionnaire_answers' => array(
-							'type'     => array( 'array', 'string' ),
 							'required' => false,
 							'default'  => array(),
 						),
@@ -521,30 +523,18 @@ class FairFormController extends WP_REST_Controller {
 	 * Parse questionnaire_answers from various formats.
 	 *
 	 * When sent via FormData, the answers arrive as a JSON string.
-	 * WP REST API may also wrap the string in an array: array( '...' ).
+	 * When sent via a JSON request body, they arrive as a decoded array.
 	 *
 	 * @param mixed $raw Raw questionnaire_answers value.
 	 * @return array Parsed answers array.
 	 */
 	private function parse_questionnaire_answers( $raw ) {
-		// Direct JSON string.
 		if ( is_string( $raw ) ) {
 			$decoded = json_decode( $raw, true );
 			return is_array( $decoded ) ? $decoded : array();
 		}
 
-		// Already an array — but WP may have split the JSON string by commas.
-		// e.g. '[{"key":"val","key2":"val2"}]' becomes array('[{"key":"val"', '"key2":"val2"}]').
-		if ( is_array( $raw ) && ! empty( $raw ) ) {
-			$first = reset( $raw );
-			if ( is_string( $first ) && str_starts_with( $first, '[' ) ) {
-				// Rejoin the comma-split fragments and decode.
-				$rejoined = implode( ',', $raw );
-				$decoded  = json_decode( $rejoined, true );
-				if ( is_array( $decoded ) ) {
-					return $decoded;
-				}
-			}
+		if ( is_array( $raw ) ) {
 			return $raw;
 		}
 
