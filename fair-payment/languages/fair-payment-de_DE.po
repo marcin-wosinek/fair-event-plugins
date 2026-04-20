@@ -21,6 +21,7 @@ msgstr ""
 msgid "Fair Payment"
 msgstr ""
 
+#. Plugin URI of the plugin
 #. Author URI of the plugin
 #: fair-payment.php
 msgid "https://fair-event-plugins.com"
@@ -1929,4 +1930,3 @@ msgstr "Teilnehmer"
 #: src/Admin/transactions/TransactionsApp.js:425
 msgid "Person"
 msgstr "Person"
-

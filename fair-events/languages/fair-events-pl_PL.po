@@ -2917,37 +2917,37 @@ msgstr "Filtruj według typu wystąpienia."
 
 #. translators: %d: number of days
 #: src/blocks/event-info/render.php:161
-#, php-format, js-format
+#, php-format,js-format
 msgid "Every %d days"
 msgstr "Co %d dni"
 
 #. translators: %s: day of week
 #: src/blocks/event-info/render.php:168
-#, php-format, js-format
+#, php-format,js-format
 msgid "Every 2 weeks on %s"
 msgstr "Co 2 tygodnie w %s"
 
 #. translators: 1: number of weeks, 2: day of week
 #: src/blocks/event-info/render.php:172
-#, php-format, js-format
+#, php-format,js-format
 msgid "Every %1$d weeks on %2$s"
 msgstr "Co %1$d tygodni w %2$s"
 
 #. translators: %s: day of week
 #: src/blocks/event-info/render.php:175
-#, php-format, js-format
+#, php-format,js-format
 msgid "Every %s"
 msgstr "Co %s"
 
 #. translators: %d: number of months
 #: src/blocks/event-info/render.php:180
-#, php-format, js-format
+#, php-format,js-format
 msgid "Every %d months"
 msgstr "Co %d miesięcy"
 
 #. translators: %d: number of years
 #: src/blocks/event-info/render.php:187
-#, php-format, js-format
+#, php-format,js-format
 msgid "Every %d years"
 msgstr "Co %d lat"
 
@@ -2957,7 +2957,7 @@ msgstr "Rocznie"
 
 #. translators: %s: date of next occurrence
 #: src/blocks/event-info/render.php:262
-#, php-format, js-format
+#, php-format,js-format
 msgid "Next: %s"
 msgstr "Następnie: %s"
 
@@ -4287,4 +4287,3 @@ msgstr "Utworzono"
 #: src/Admin/manage-invitations/ManageInvitations.js:371
 msgid "Copy link"
 msgstr "Kopiuj link"
-
