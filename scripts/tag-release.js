@@ -48,7 +48,9 @@ function createTag(tag) {
 console.log('🏷️  Creating release tags...\n');
 
 const sharedVersion = getVersion(FIXED_GROUP_PLUGIN);
-console.log(`📦 Fixed group (fair-events, fair-payment, fair-audience): ${sharedVersion}`);
+console.log(
+	`📦 Fixed group (fair-events, fair-payment, fair-audience): ${sharedVersion}`
+);
 createTag(sharedVersion);
 
 for (const plugin of INDEPENDENT_PLUGINS) {
