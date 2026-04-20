@@ -652,7 +652,7 @@ msgstr "Pregunta rápida sobre %s"
 #: src/Services/EmailService.php:1540
 #: src/Services/EmailService.php:1822
 #: src/Admin/event-participants/EventParticipants.js:1122
-#, php-format,js-format
+#, php-format, js-format
 msgid "Hi %s,"
 msgstr "Hola %s,"
 
@@ -1246,7 +1246,7 @@ msgstr "¡Las fotos de %s están listas!"
 #. translators: %s: event title
 #: src/Services/EmailService.php:444
 #: src/Admin/event-participants/EventParticipants.js:1134
-#, php-format,js-format
+#, php-format, js-format
 msgid "The photos from %s are now available for you to view and like!"
 msgstr "¡Las fotos de %s ya están disponibles para que las veas y te gusten!"
 
@@ -1777,7 +1777,7 @@ msgstr "¡Hola %s! Haz clic en el botón de abajo para inscribirte en este event
 #. translators: %s: participant name
 #: src/blocks/event-signup/render.php:438
 #: src/blocks/event-signup/frontend.js:685
-#, php-format,js-format
+#, php-format, js-format
 msgid "Hi %s! You can sign up for this event."
 msgstr "¡Hola %s! Puedes inscribirte en este evento."
 
@@ -4903,95 +4903,95 @@ msgstr "encuesta"
 
 #: src/API/EventParticipantsController.php:423
 msgid "Provide at least one of: label, attended."
-msgstr ""
+msgstr "Proporcione al menos uno de: etiqueta, asistió."
 
 #: src/API/EventParticipantsController.php:444
 msgid "Failed to update attendance."
-msgstr ""
+msgstr "Error al actualizar la asistencia."
 
 #: src/API/EventSignupController.php:571
 msgid "This ticket type is not available for your account."
-msgstr ""
+msgstr "Este tipo de entrada no está disponible para tu cuenta."
 
 #: src/API/EventSignupController.php:591
 msgid "This ticket type requires an invitation link."
-msgstr ""
+msgstr "Este tipo de entrada requiere un enlace de invitación."
 
 #: src/API/EventSignupController.php:600
 msgid "This invitation link is not valid."
-msgstr ""
+msgstr "Este enlace de invitación no es válido."
 
 #: src/API/EventSignupController.php:608
 msgid "This invitation link has expired or has been fully used."
-msgstr ""
+msgstr "Este enlace de invitación ha expirado o se ha utilizado completamente."
 
 #: src/API/EventSignupController.php:789
 msgid "Paid signup is not available because the payment plugin is missing."
-msgstr ""
+msgstr "El registro de pago no está disponible porque falta el complemento de pago."
 
 #: src/API/EventSignupController.php:803
 msgid "This event is fully booked."
-msgstr ""
+msgstr "Este evento está completamente reservado."
 
 #. translators: %s: event title
 #: src/API/EventSignupController.php:838
 #, php-format
 msgid "Signup for %s"
-msgstr ""
+msgstr "Registro para %s"
 
 #: src/API/EventSignupController.php:906
 #: src/blocks/event-signup/frontend.js:315
 #: src/blocks/event-signup/frontend.js:541
 msgid "Redirecting to payment…"
-msgstr ""
+msgstr "Redirigiendo al pago…"
 
 #. translators: %s: question text
 #: src/API/FairFormController.php:235
 #, php-format
 msgid "Please enter a valid phone number with country code (e.g. +49170...) for: %s"
-msgstr ""
+msgstr "Por favor, ingresa un número de teléfono válido con código de país (p. ej. +49170...) para: %s"
 
 #: src/API/FeesController.php:508
 msgid "Participant is required."
-msgstr ""
+msgstr "El participante es obligatorio."
 
 #: src/API/FeesController.php:539
 msgid "Participant is not a member of this fee's group."
-msgstr ""
+msgstr "El participante no es miembro del grupo de esta tarifa."
 
 #: src/API/FeesController.php:549
 msgid "This participant already has a payment for this fee."
-msgstr ""
+msgstr "Este participante ya tiene un pago para esta tarifa."
 
 #: src/API/FeesController.php:567
 msgid "Failed to add participant to fee."
-msgstr ""
+msgstr "Error al agregar participante a la tarifa."
 
 #: src/API/FeesController.php:577
 msgid "Participant added manually."
-msgstr ""
+msgstr "Participante agregado manualmente."
 
 #: src/API/FeesController.php:583
 #: src/Admin/fee-detail/FeeDetail.js:398
 msgid "Participant added to fee."
-msgstr ""
+msgstr "Participante agregado a la tarifa."
 
 #. translators: 1: participant name, 2: form name, 3: page title
 #: src/API/TimelineController.php:172
 #, php-format
 msgid "%1$s submitted \"%2$s\" on \"%3$s\""
-msgstr ""
+msgstr "%1$s envió \"%2$s\" en \"%3$s\""
 
 #. translators: 1: participant name, 2: form name
 #: src/API/TimelineController.php:180
 #, php-format
 msgid "%1$s submitted \"%2$s\""
-msgstr ""
+msgstr "%1$s envió \"%2$s\""
 
 #: src/API/TimelineController.php:230
 #: src/API/TimelineController.php:329
 msgid "Unknown"
-msgstr ""
+msgstr "Desconocido"
 
 #. translators: 1: number of payments, 2: day
 #: src/API/TimelineController.php:250
@@ -5014,36 +5014,36 @@ msgstr[1] ""
 #: src/blocks/event-signup/render.php:257
 #, php-format
 msgid "%1$s — €%2$s"
-msgstr ""
+msgstr "%1$s — €%2$s"
 
 #: src/blocks/event-signup/render.php:262
 #: src/blocks/event-signup/frontend.js:101
 msgid "Sign up for free"
-msgstr ""
+msgstr "Regístrate gratis"
 
 #: src/blocks/event-signup/render.php:263
 #: src/blocks/event-signup/frontend.js:102
 msgid "Register for free"
-msgstr ""
+msgstr "Regístrate gratis"
 
 #. translators: %s: inviter's name
 #: src/blocks/event-signup/render.php:284
 #, php-format
 msgid "You have been invited by %s."
-msgstr ""
+msgstr "Has sido invitado por %s."
 
 #: src/blocks/event-signup/render.php:289
 msgid "You have been invited to this event."
-msgstr ""
+msgstr "Has sido invitado a este evento."
 
 #: src/blocks/event-signup/render.php:295
 msgid "Choose ticket type"
-msgstr ""
+msgstr "Elige tipo de entrada"
 
 #: src/blocks/event-signup/render.php:303
 #: src/blocks/event-signup/render.php:349
 msgid "free"
-msgstr ""
+msgstr "gratis"
 
 #. translators: %d: number of seats this ticket consumes
 #: src/blocks/event-signup/render.php:309
@@ -5055,282 +5055,283 @@ msgstr[1] ""
 
 #: src/blocks/event-signup/render.php:314
 msgid "invitation"
-msgstr ""
+msgstr "invitación"
 
 #: src/blocks/event-signup/render.php:342
 msgid "Select activities"
-msgstr ""
+msgstr "Selecciona actividades"
 
 #: src/blocks/fair-form-phone/render.php:41
 msgid "Include country code with leading \"+\" (e.g. +49170...)."
-msgstr ""
+msgstr "Incluye código de país con \"+\" al inicio (p. ej. +49170...)."
 
 #: src/Hooks/PaymentHooks.php:152
 msgid "Every 5 minutes (fair-audience)"
-msgstr ""
+msgstr "Cada 5 minutos (fair-audience)"
 
 #: src/Admin/custom-mail/CustomMail.js:622
 msgid "Search page…"
-msgstr ""
+msgstr "Buscar página…"
 
 #: src/Admin/custom-mail/CustomMail.js:697
 msgid "Insert token link"
-msgstr ""
+msgstr "Insertar enlace de token"
 
 #: src/Admin/custom-mail/CustomMail.js:785
 msgid "If selected, only sends to members of these groups."
-msgstr ""
+msgstr "Si se selecciona, solo envía a miembros de estos grupos."
 
 #: src/Admin/fee-detail/FeeDetail.js:406
 msgid "Failed to add participant."
-msgstr ""
+msgstr "Error al añadir participante."
 
 #: src/Admin/fee-detail/FeeDetail.js:651
 msgid "Add Participant to Fee"
-msgstr ""
+msgstr "Añadir participante a cuota"
 
 #: src/Admin/fee-detail/FeeDetail.js:677
 msgid "Search group members..."
-msgstr ""
+msgstr "Buscar miembros del grupo..."
 
 #: src/Admin/fee-detail/FeeDetail.js:705
 msgid "All group members already have a payment for this fee."
-msgstr ""
+msgstr "Todos los miembros del grupo ya tienen un pago para esta cuota."
 
 #: src/Admin/fee-detail/FeeDetail.js:709
 msgid "No matches."
-msgstr ""
+msgstr "Sin coincidencias."
 
 #: src/Admin/fee-detail/FeeDetail.js:739
 #: src/Admin/group-detail/GroupDetail.js:259
 msgid "(unnamed)"
-msgstr ""
+msgstr "(sin nombre)"
 
 #: src/Admin/group-detail/GroupDetail.js:40
 msgid "No group ID provided."
-msgstr ""
+msgstr "No se proporcionó ID de grupo."
 
 #: src/Admin/group-detail/GroupDetail.js:160
 msgid "Remove this participant from the group?"
-msgstr ""
+msgstr "¿Eliminar este participante del grupo?"
 
 #: src/Admin/group-detail/GroupDetail.js:192
 #: src/Admin/group-detail/GroupDetail.js:215
 msgid "← Back to Groups"
-msgstr ""
+msgstr "← Volver a Grupos"
 
 #: src/Admin/participant-detail/ParticipantDetail.js:35
 msgid "Signed up"
-msgstr ""
+msgstr "Registrado"
 
 #: src/Admin/participant-detail/ParticipantDetail.js:62
 msgid "No participant ID provided."
-msgstr ""
+msgstr "No se proporcionó ID de participante."
 
 #: src/Admin/participant-detail/ParticipantDetail.js:149
 msgid "All participants"
-msgstr ""
+msgstr "Todos los participantes"
 
 #: src/Admin/participant-detail/ParticipantDetail.js:161
 msgid "Participant"
-msgstr ""
+msgstr "Participante"
 
 #: src/Admin/participant-detail/ParticipantDetail.js:168
 msgid "Edit participant"
-msgstr ""
+msgstr "Editar participante"
 
 #: src/Admin/participant-detail/ParticipantDetail.js:175
 msgid "Delete participant"
-msgstr ""
+msgstr "Eliminar participante"
 
 #: src/Admin/participant-detail/ParticipantDetail.js:183
 msgid "Profile"
-msgstr ""
+msgstr "Perfil"
 
 #: src/Admin/participant-detail/ParticipantDetail.js:211
 msgid "Email profile"
-msgstr ""
+msgstr "Perfil de correo electrónico"
 
 #: src/Admin/participant-detail/ParticipantDetail.js:237
 msgid "WordPress user"
-msgstr ""
+msgstr "Usuario de WordPress"
 
 #: src/Admin/participant-detail/ParticipantDetail.js:263
 msgid "No events yet."
-msgstr ""
+msgstr "Sin eventos aún."
 
 #: src/Admin/participant-detail/ParticipantDetail.js:272
 msgid "Signed up at"
-msgstr ""
+msgstr "Registrado en"
 
 #: src/Admin/participant-detail/ParticipantDetail.js:287
 msgid "(untitled)"
-msgstr ""
+msgstr "(sin título)"
 
 #: src/Admin/participant-detail/ParticipantDetail.js:320
 msgid "Form submissions"
-msgstr ""
+msgstr "Envíos de formularios"
 
 #: src/Admin/participant-detail/ParticipantDetail.js:326
 msgid "No form submissions yet."
-msgstr ""
+msgstr "Sin envíos de formularios aún."
 
 #: src/Admin/participant-detail/ParticipantDetail.js:332
 msgid "Page"
-msgstr ""
+msgstr "Página"
 
 #: src/Admin/participant-detail/ParticipantDetail.js:335
 msgid "Submitted at"
-msgstr ""
+msgstr "Enviado en"
 
 #: src/Admin/questionnaire-responses/QuestionnaireResponses.js:177
 #: src/Admin/questionnaire-responses/QuestionnaireResponses.js:401
 msgid "Subscribed Categories"
-msgstr ""
+msgstr "Categorías suscritas"
 
 #. translators: 1: number added, 2: number already in group
 #: src/Admin/questionnaire-responses/QuestionnaireResponses.js:360
 #, js-format
 msgid "%1$d participant(s) added, %2$d already in group."
-msgstr ""
+msgstr "%1$d participante(s) añadido(s), %2$d ya en el grupo."
 
 #: src/Admin/questionnaire-responses/QuestionnaireResponses.js:374
 msgid "Failed to add participants to group."
-msgstr ""
+msgstr "Error al añadir participantes al grupo."
 
 #: src/Admin/questionnaire-responses/QuestionnaireResponses.js:472
 msgid "Event edit page"
-msgstr ""
+msgstr "Página de edición del evento"
 
 #: src/Admin/questionnaire-responses/QuestionnaireResponses.js:478
 msgid "Event entry"
-msgstr ""
+msgstr "Entrada del evento"
 
 #: src/Admin/questionnaire-responses/QuestionnaireResponses.js:496
 #: src/Admin/questionnaire-responses/QuestionnaireResponses.js:509
 msgid "Add participants to group"
-msgstr ""
+msgstr "Añadir participantes al grupo"
 
 #. translators: %d: number of unique participants
 #: src/Admin/questionnaire-responses/QuestionnaireResponses.js:516
 #, js-format
 msgid "%d unique participant(s) will be added."
-msgstr ""
+msgstr "%d participante(s) único(s) será(n) añadido(s)."
 
 #: src/Admin/questionnaire-responses/QuestionnaireResponses.js:525
 msgid "Target group"
-msgstr ""
+msgstr "Grupo destino"
 
 #: src/Admin/questionnaire-responses/QuestionnaireResponses.js:529
 msgid "Use existing group"
-msgstr ""
+msgstr "Usar grupo existente"
 
 #: src/Admin/questionnaire-responses/QuestionnaireResponses.js:536
 msgid "Create new group"
-msgstr ""
+msgstr "Crear nuevo grupo"
 
 #: src/Admin/questionnaire-responses/QuestionnaireResponses.js:551
 msgid "Loading..."
-msgstr ""
+msgstr "Cargando..."
 
 #: src/Admin/questionnaire-responses/QuestionnaireResponses.js:552
 msgid "— Select a group —"
-msgstr ""
+msgstr "— Seleccionar un grupo —"
 
 #: src/Admin/questionnaire-responses/QuestionnaireResponses.js:620
 msgid "Create group and add"
-msgstr ""
+msgstr "Crear grupo y añadir"
 
 #: src/Admin/questionnaire-responses/QuestionnaireResponses.js:621
 msgid "Add to group"
-msgstr ""
+msgstr "Añadir al grupo"
 
 #: src/Admin/timeline/TimelineItem.js:126
 #: src/Admin/timeline/TimelineItem.js:132
 msgid "submitted"
-msgstr ""
+msgstr "enviado"
 
 #: src/Admin/timeline/TimelineItem.js:127
 msgid "on"
-msgstr ""
+msgstr "en"
 
 #: src/Admin/timeline/TimelineItem.js:137
 msgid "View answers"
-msgstr ""
+msgstr "Ver respuestas"
 
 #: src/Admin/timeline/TimelineItem.js:165
 msgid "New participant:"
-msgstr ""
+msgstr "Nuevo participante:"
 
 #: src/Admin/timeline/TimelineItem.js:223
 msgid "fee payment on"
-msgstr ""
+msgstr "pago de cuota en"
 
 #: src/Admin/timeline/TimelineItem.js:224
 msgid "fee payments on"
-msgstr ""
+msgstr "pagos de cuota en"
 
 #: src/Admin/timeline/TimelineItem.js:228
 #: src/Admin/timeline/TimelineItem.js:291
 msgid "total:"
-msgstr ""
+msgstr "total:"
 
 #: src/Admin/timeline/TimelineItem.js:286
 msgid "ticket sale on"
-msgstr ""
+msgstr "venta de entradas en"
 
 #: src/Admin/timeline/TimelineItem.js:287
 msgid "ticket sales on"
-msgstr ""
+msgstr "ventas de entradas en"
 
 #: src/blocks/event-signup/editor.js:97
 msgid "Show activity option prices"
-msgstr ""
+msgstr "Mostrar precios de opciones de actividad"
 
 #: src/blocks/event-signup/editor.js:101
 msgid "Display the price of each activity option next to its label. The running total in the button always updates regardless of this setting."
-msgstr ""
+msgstr "Mostrar el precio de cada opción de actividad junto a su etiqueta. El total acumulado en el botón siempre se actualiza independientemente de esta configuración."
 
 #: src/blocks/event-signup/editor.js:111
 msgid "Show inviter name"
-msgstr ""
+msgstr "Mostrar nombre del invitador"
 
 #: src/blocks/event-signup/editor.js:112
 msgid "When a visitor arrives via an invitation link, show the name of the person who invited them."
-msgstr ""
+msgstr "Cuando un visitante llega a través de un enlace de invitación, mostrar el nombre de la persona que lo invitó."
 
 #: src/blocks/fair-form-phone/editor.js:52
 msgid "A unique identifier for this question (e.g. \"mobile_phone\"). Used internally."
-msgstr ""
+msgstr "Un identificador único para esta pregunta (p. ej. \"mobile_phone\"). Se utiliza internamente."
 
 #: src/blocks/fair-form-phone/editor.js:70
 msgid "Must include country code with leading \"+\" (e.g. +49170...)."
-msgstr ""
+msgstr "Debe incluir código de país con \"+\" inicial (p. ej. +49170...)."
 
 #: src/blocks/fair-form-phone/editor.js:99
 msgid "+49 170 1234567"
-msgstr ""
+msgstr "+49 170 1234567"
 
 #: src/blocks/fair-form/frontend.js:261
 msgid "Please enter a valid phone number with country code (e.g. +49170...): "
-msgstr ""
+msgstr "Por favor, ingrese un número de teléfono válido con código de país (p. ej. +49170...): "
 
 #: src/blocks/fair-form-phone/block.json
 msgctxt "block title"
 msgid "Phone Question"
-msgstr ""
+msgstr "Pregunta de Teléfono"
 
 #: src/blocks/fair-form-phone/block.json
 msgctxt "block description"
 msgid "A phone number input question with enforced country code for Fair Form"
-msgstr ""
+msgstr "Una pregunta de entrada de número de teléfono con código de país obligatorio para Fair Form"
 
 #: src/blocks/fair-form-phone/block.json
 msgctxt "block keyword"
 msgid "phone"
-msgstr ""
+msgstr "teléfono"
 
 #: src/blocks/fair-form-phone/block.json
 msgctxt "block keyword"
 msgid "tel"
-msgstr ""
+msgstr "tel"
+

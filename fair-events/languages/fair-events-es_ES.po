@@ -2914,37 +2914,37 @@ msgstr "Filtrar por tipo de ocurrencia."
 
 #. translators: %d: number of days
 #: src/blocks/event-info/render.php:161
-#, php-format,js-format
+#, php-format, js-format
 msgid "Every %d days"
 msgstr "Cada %d días"
 
 #. translators: %s: day of week
 #: src/blocks/event-info/render.php:168
-#, php-format,js-format
+#, php-format, js-format
 msgid "Every 2 weeks on %s"
 msgstr "Cada 2 semanas el %s"
 
 #. translators: 1: number of weeks, 2: day of week
 #: src/blocks/event-info/render.php:172
-#, php-format,js-format
+#, php-format, js-format
 msgid "Every %1$d weeks on %2$s"
 msgstr "Cada %1$d semanas el %2$s"
 
 #. translators: %s: day of week
 #: src/blocks/event-info/render.php:175
-#, php-format,js-format
+#, php-format, js-format
 msgid "Every %s"
 msgstr "Cada %s"
 
 #. translators: %d: number of months
 #: src/blocks/event-info/render.php:180
-#, php-format,js-format
+#, php-format, js-format
 msgid "Every %d months"
 msgstr "Cada %d meses"
 
 #. translators: %d: number of years
 #: src/blocks/event-info/render.php:187
-#, php-format,js-format
+#, php-format, js-format
 msgid "Every %d years"
 msgstr "Cada %d años"
 
@@ -2954,7 +2954,7 @@ msgstr "Anualmente"
 
 #. translators: %s: date of next occurrence
 #: src/blocks/event-info/render.php:262
-#, php-format,js-format
+#, php-format, js-format
 msgid "Next: %s"
 msgstr "Siguiente: %s"
 
@@ -3948,339 +3948,340 @@ msgstr "El bloque Event Info está deshabilitado — no hay ningún evento vincu
 #: src/Admin/manage-event/EventTickets.js:598
 #: src/Admin/manage-invitations/ManageInvitations.js:180
 msgid "Manage Invitations"
-msgstr ""
+msgstr "Gestionar invitaciones"
 
 #: src/API/EventDatesController.php:336
 msgid "Signup price (null = free)."
-msgstr ""
+msgstr "Precio de registro (nulo = gratis)."
 
 #: src/API/InvitationTokensController.php:177
 msgid "You do not have permission to view invitation tokens."
-msgstr ""
+msgstr "No tienes permiso para ver tokens de invitación."
 
 #: src/API/InvitationTokensController.php:208
 msgid "You must be logged in or have a valid participant link."
-msgstr ""
+msgstr "Debes estar conectado o tener un enlace de participante válido."
 
 #: src/API/InvitationTokensController.php:290
 msgid "This event has no invitation-only ticket types."
-msgstr ""
+msgstr "Este evento no tiene tipos de entradas solo por invitación."
 
 #: src/API/InvitationTokensController.php:316
 msgid "You are not in a group that can send invitations for this event."
-msgstr ""
+msgstr "No estás en un grupo que pueda enviar invitaciones para este evento."
 
 #: src/API/InvitationTokensController.php:331
 msgid "Failed to create invitation token."
-msgstr ""
+msgstr "Error al crear el token de invitación."
 
 #: src/API/InvitationTokensController.php:352
 msgid "This invitation link is not valid."
-msgstr ""
+msgstr "Este enlace de invitación no es válido."
 
 #: src/API/InvitationTokensController.php:360
 msgid "This invitation link has expired or has been fully used."
-msgstr ""
+msgstr "Este enlace de invitación ha expirado o se ha utilizado completamente."
 
 #: src/API/InvitationTokensController.php:403
 #: src/API/InvitationTokensController.php:472
 msgid "Fair Audience plugin is required."
-msgstr ""
+msgstr "Se requiere el complemento Fair Audience."
 
 #: src/API/InvitationTokensController.php:453
 msgid "Token not found."
-msgstr ""
+msgstr "Token no encontrado."
 
 #: src/API/InvitationTokensController.php:497
 msgid "Could not find your participant profile."
-msgstr ""
+msgstr "No se pudo encontrar tu perfil de participante."
 
 #: src/API/TicketsController.php:239
 msgid "Invalid import payload."
-msgstr ""
+msgstr "Carga útil de importación no válida."
 
 #: src/Admin/manage-event/DuplicateEventWizard.js:507
 msgid "Copying group rules…"
-msgstr ""
+msgstr "Copiando reglas de grupo…"
 
 #: src/Admin/manage-event/DuplicateEventWizard.js:1043
 msgid "No group rules found on source event."
-msgstr ""
+msgstr "No se encontraron reglas de grupo en el evento de origen."
 
 #: src/Admin/manage-event/DuplicateEventWizard.js:1082
 msgid "Select which groups to copy rules for."
-msgstr ""
+msgstr "Selecciona qué grupos copiar reglas."
 
 #: src/Admin/manage-event/DuplicateEventWizard.js:1137
 msgid "Permissions:"
-msgstr ""
+msgstr "Permisos:"
 
 #: src/Admin/manage-event/EventAudience.js:327
 #: src/Admin/manage-event/EventAudience.js:359
 msgid "Shown up"
-msgstr ""
+msgstr "Presentado"
 
 #: src/Admin/manage-event/EventAudience.js:417
 msgid "Forms"
-msgstr ""
+msgstr "Formularios"
 
 #: src/Admin/manage-event/EventAudience.js:427
 msgid "Form"
-msgstr ""
+msgstr "Formulario"
 
 #: src/Admin/manage-event/EventAudience.js:429
 msgid "Responses"
-msgstr ""
+msgstr "Respuestas"
 
 #: src/Admin/manage-event/EventAudience.js:454
 msgid "View Responses"
-msgstr ""
+msgstr "Ver respuestas"
 
 #: src/Admin/manage-event/EventAudience.js:466
 msgid "No form submissions yet."
-msgstr ""
+msgstr "Sin envíos de formulario aún."
 
 #: src/Admin/manage-event/EventFinance.js:231
 msgid "Payments"
-msgstr ""
+msgstr "Pagos"
 
 #: src/Admin/manage-event/EventFinance.js:247
 msgid "Participant"
-msgstr ""
+msgstr "Participante"
 
 #: src/Admin/manage-event/EventTickets.js:344
 msgid "Failed to export ticket configuration."
-msgstr ""
+msgstr "Error al exportar la configuración de entradas."
 
 #: src/Admin/manage-event/EventTickets.js:354
 msgid "Importing will replace all current ticket types, sale periods, prices, and settings for this event. Continue?"
-msgstr ""
+msgstr "La importación reemplazará todos los tipos de entradas actuales, períodos de venta, precios y configuración de este evento. ¿Continuar?"
 
 #: src/Admin/manage-event/EventTickets.js:378
 msgid "Invalid file format. Expected a fair-events-tickets export."
-msgstr ""
+msgstr "Formato de archivo inválido. Se esperaba una exportación de fair-events-tickets."
 
 #: src/Admin/manage-event/EventTickets.js:393
 msgid "Ticket configuration imported successfully."
-msgstr ""
+msgstr "Configuración de entradas importada correctamente."
 
 #: src/Admin/manage-event/EventTickets.js:401
 msgid "Failed to import ticket configuration."
-msgstr ""
+msgstr "Error al importar la configuración de entradas."
 
 #: src/Admin/manage-event/EventTickets.js:606
 msgid "Export ticket settings"
-msgstr ""
+msgstr "Exportar configuración de entradas"
 
 #: src/Admin/manage-event/EventTickets.js:614
 msgid "Import ticket settings"
-msgstr ""
+msgstr "Importar configuración de entradas"
 
 #: src/Admin/manage-event/EventTickets.js:628
 msgid "Signup price"
-msgstr ""
+msgstr "Precio de inscripción"
 
 #: src/Admin/manage-event/EventTickets.js:633
 msgid "Free signup. Enter a price below to charge for this event, or switch to advanced ticketing for multiple ticket types."
-msgstr ""
+msgstr "Inscripción gratuita. Ingresa un precio a continuación para cobrar por este evento, o cambia a venta de entradas avanzada para múltiples tipos de entradas."
 
 #. translators: %s: formatted price
 #: src/Admin/manage-event/EventTickets.js:639
 #, js-format
 msgid "Signup price: %s. Group discounts configured in the Groups tab still apply."
-msgstr ""
+msgstr "Precio de inscripción: %s. Los descuentos de grupo configurados en la pestaña Grupos aún se aplican."
 
 #. translators: 1: group name, 2: discount, 3: final price
 #: src/Admin/manage-event/EventTickets.js:668
 #, js-format
 msgid "%1$s: %2$s discount → %3$s"
-msgstr ""
+msgstr "%1$s: %2$s descuento → %3$s"
 
 #: src/Admin/manage-event/EventTickets.js:792
 msgid "Signup price (EUR)"
-msgstr ""
+msgstr "Precio de inscripción (EUR)"
 
 #: src/Admin/manage-event/EventTickets.js:796
 msgid "Leave empty for free signup. Group discounts (Groups tab) apply to this base price."
-msgstr ""
+msgstr "Déjalo vacío para inscripción gratuita. Los descuentos de grupo (pestaña Grupos) se aplican a este precio base."
 
 #: src/Admin/manage-event/EventTickets.js:808
 msgid "Need multiple ticket types or time-based pricing? Switch to advanced ticketing below."
-msgstr ""
+msgstr "¿Necesitas múltiples tipos de entradas o precios basados en tiempo? Cambia a venta de entradas avanzada a continuación."
 
 #: src/Admin/manage-event/EventTickets.js:821
 #: src/Admin/manage-event/EventTickets.js:1541
 msgid "Switch to advanced ticketing"
-msgstr ""
+msgstr "Cambiar a venta de entradas avanzada"
 
 #: src/Admin/manage-event/EventTickets.js:850
 msgid "Seats"
-msgstr ""
+msgstr "Asientos"
 
 #: src/Admin/manage-event/EventTickets.js:866
 msgid "Invitation only"
-msgstr ""
+msgstr "Solo por invitación"
 
 #: src/Admin/manage-event/EventTickets.js:1190
 msgid "How many capacity slots this ticket consumes (1 = single, 2 = pair/+1)."
-msgstr ""
+msgstr "Cuántos espacios de capacidad consume este ticket (1 = individual, 2 = pareja/+1)."
 
 #: src/Admin/manage-event/EventTickets.js:1239
 msgid "All participants"
-msgstr ""
+msgstr "Todos los participantes"
 
 #: src/Admin/manage-event/EventTickets.js:1462
 msgid "Per-ticket-type capacity"
-msgstr ""
+msgstr "Capacidad por tipo de ticket"
 
 #: src/Admin/manage-event/EventTickets.js:1466
 msgid "Show a Capacity input on each ticket type to cap how many can be sold of that type."
-msgstr ""
+msgstr "Mostrar un campo de Capacidad en cada tipo de ticket para limitar cuántos se pueden vender de ese tipo."
 
 #: src/Admin/manage-event/EventTickets.js:1479
 msgid "Multiple pricing periods"
-msgstr ""
+msgstr "Períodos de precios múltiples"
 
 #: src/Admin/manage-event/EventTickets.js:1483
 msgid "Enable time-based pricing with multiple sale periods (e.g. early bird, regular, late). When off, a single flat price applies for the whole sale window."
-msgstr ""
+msgstr "Habilitar precios basados en tiempo con múltiples períodos de venta (p. ej. early bird, regular, última hora). Cuando está desactivado, se aplica un precio único fijo para toda la ventana de venta."
 
 #: src/Admin/manage-event/EventTickets.js:1496
 msgid "Seats per ticket"
-msgstr ""
+msgstr "Asientos por ticket"
 
 #: src/Admin/manage-event/EventTickets.js:1497
 msgid "Show a Seats input on each ticket type to let one ticket consume more than one capacity slot (e.g. couples or +1 tickets). When off, every ticket counts as 1 seat."
-msgstr ""
+msgstr "Mostrar un campo de Asientos en cada tipo de ticket para permitir que un ticket consuma más de un espacio de capacidad (p. ej. parejas o tickets +1). Cuando está desactivado, cada ticket cuenta como 1 asiento."
 
 #: src/Admin/manage-event/EventTickets.js:1516
 msgid "Switching back to simple ticketing will remove all ticket types, sale periods, and prices. Continue?"
-msgstr ""
+msgstr "Cambiar a venta de tickets simple eliminará todos los tipos de tickets, períodos de venta y precios. ¿Continuar?"
 
 #: src/Admin/manage-event/EventTickets.js:1528
 msgid "Switch to simple ticketing"
-msgstr ""
+msgstr "Cambiar a venta de tickets simple"
 
 #: src/Admin/manage-event/EventTickets.js:1555
 msgid "Activity Options"
-msgstr ""
+msgstr "Opciones de Actividad"
 
 #: src/Admin/manage-event/EventTickets.js:1560
 msgid "Add selectable activity options (checkboxes) shown to participants at signup. Each option has its own price added on top of the base price."
-msgstr ""
+msgstr "Agregar opciones de actividad seleccionables (casillas de verificación) mostradas a los participantes en el registro. Cada opción tiene su propio precio agregado al precio base."
 
 #: src/Admin/manage-event/EventTickets.js:1573
 msgid "Activity name"
-msgstr ""
+msgstr "Nombre de la actividad"
 
 #: src/Admin/manage-event/EventTickets.js:1589
 msgid "Price (EUR)"
-msgstr ""
+msgstr "Precio (EUR)"
 
 #: src/Admin/manage-event/EventTickets.js:1641
 msgid "+ Add Option"
-msgstr ""
+msgstr "+ Agregar Opción"
 
 #: src/Admin/manage-event/ManageEventApp.js:1003
 msgid "View Entry"
-msgstr ""
+msgstr "Ver Entrada"
 
 #: src/Admin/manage-invitations/ManageInvitations.js:49
 msgid "Failed to load invitation tokens."
-msgstr ""
+msgstr "Error al cargar los tokens de invitación."
 
 #: src/Admin/manage-invitations/ManageInvitations.js:92
 msgid "Please select a group."
-msgstr ""
+msgstr "Por favor, selecciona un grupo."
 
 #. translators: %d: number of tokens created
 #: src/Admin/manage-invitations/ManageInvitations.js:118
 #, js-format
 msgid "%d invitation tokens created."
-msgstr ""
+msgstr "%d tokens de invitación creados."
 
 #: src/Admin/manage-invitations/ManageInvitations.js:125
 msgid "Failed to create tokens."
-msgstr ""
+msgstr "Error al crear tokens."
 
 #: src/Admin/manage-invitations/ManageInvitations.js:134
 msgid "Delete this invitation token?"
-msgstr ""
+msgstr "¿Eliminar este token de invitación?"
 
 #: src/Admin/manage-invitations/ManageInvitations.js:147
 msgid "Failed to delete token."
-msgstr ""
+msgstr "Error al eliminar el token."
 
 #: src/Admin/manage-invitations/ManageInvitations.js:162
 msgid "Link copied to clipboard."
-msgstr ""
+msgstr "Enlace copiado al portapapeles."
 
 #: src/Admin/manage-invitations/ManageInvitations.js:182
 msgid "← Back to Tickets"
-msgstr ""
+msgstr "← Volver a Entradas"
 
 #: src/Admin/manage-invitations/ManageInvitations.js:209
 msgid "Create Invitation Tokens"
-msgstr ""
+msgstr "Crear Tokens de Invitación"
 
 #: src/Admin/manage-invitations/ManageInvitations.js:220
 msgid "— Select group —"
-msgstr ""
+msgstr "— Seleccionar grupo —"
 
 #: src/Admin/manage-invitations/ManageInvitations.js:234
 msgid "Mode"
-msgstr ""
+msgstr "Modo"
 
 #: src/Admin/manage-invitations/ManageInvitations.js:239
 msgid "Unlinked tokens"
-msgstr ""
+msgstr "Tokens sin vincular"
 
 #: src/Admin/manage-invitations/ManageInvitations.js:246
 msgid "One per group member"
-msgstr ""
+msgstr "Uno por miembro del grupo"
 
 #: src/Admin/manage-invitations/ManageInvitations.js:257
 msgid "Count"
-msgstr ""
+msgstr "Cantidad"
 
 #: src/Admin/manage-invitations/ManageInvitations.js:267
 msgid "Max uses each"
-msgstr ""
+msgstr "Usos máximos cada uno"
 
 #: src/Admin/manage-invitations/ManageInvitations.js:280
 msgid "Create"
-msgstr ""
+msgstr "Crear"
 
 #. translators: %d: number of tokens
 #: src/Admin/manage-invitations/ManageInvitations.js:292
 #, js-format
 msgid "Invitation Tokens (%d)"
-msgstr ""
+msgstr "Tokens de Invitación (%d)"
 
 #: src/Admin/manage-invitations/ManageInvitations.js:299
 msgid "No invitation tokens yet."
-msgstr ""
+msgstr "Sin tokens de invitación aún."
 
 #: src/Admin/manage-invitations/ManageInvitations.js:305
 msgid "Token"
-msgstr ""
+msgstr "Token"
 
 #: src/Admin/manage-invitations/ManageInvitations.js:307
 msgid "Inviter"
-msgstr ""
+msgstr "Invitador"
 
 #: src/Admin/manage-invitations/ManageInvitations.js:308
 msgid "Invitee"
-msgstr ""
+msgstr "Invitado"
 
 #: src/Admin/manage-invitations/ManageInvitations.js:309
 msgid "Uses"
-msgstr ""
+msgstr "Usos"
 
 #: src/Admin/manage-invitations/ManageInvitations.js:310
 msgid "Created"
-msgstr ""
+msgstr "Creado"
 
 #: src/Admin/manage-invitations/ManageInvitations.js:371
 msgid "Copy link"
-msgstr ""
+msgstr "Copiar enlace"
+

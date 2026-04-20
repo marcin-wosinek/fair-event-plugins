@@ -21,7 +21,6 @@ msgstr ""
 msgid "Fair Payment"
 msgstr ""
 
-#. Plugin URI of the plugin
 #. Author URI of the plugin
 #: fair-payment.php
 msgid "https://fair-event-plugins.com"
@@ -1668,265 +1667,266 @@ msgstr "Einfacher Zahlungsblock für WordPress"
 #: src/Admin/reconciliation/ReconciliationApp.js:197
 #: src/Admin/reconciliation/ReconciliationApp.js:207
 msgid "Reconciliation"
-msgstr ""
+msgstr "Abstimmung"
 
 #: src/API/FinancialEntryController.php:190
 msgid "Single transaction ID to match."
-msgstr ""
+msgstr "Einzelne Transaktions-ID zum Abgleich."
 
 #: src/API/FinancialEntryController.php:194
 msgid "Array of transaction IDs to match."
-msgstr ""
+msgstr "Array von Transaktions-IDs zum Abgleich."
 
 #: src/API/FinancialEntryController.php:210
 msgid "Specific transaction ID to unmatch. If omitted, unmatches all."
-msgstr ""
+msgstr "Spezifische Transaktions-ID zum Aufheben der Zuordnung. Falls weggelassen, hebt alle auf."
 
 #: src/API/FinancialEntryController.php:250
 msgid "Exclude already matched transactions."
-msgstr ""
+msgstr "Bereits abgeglichene Transaktionen ausschließen."
 
 #: src/API/FinancialEntryController.php:274
 msgid "Amount tolerance for matching."
-msgstr ""
+msgstr "Toleranzbereich für den Abgleich."
 
 #: src/API/FinancialEntryController.php:279
 msgid "Number of days before entry date to search."
-msgstr ""
+msgstr "Anzahl der Tage vor dem Eingabedatum zum Durchsuchen."
 
 #: src/API/FinancialEntryController.php:923
 msgid "Either transaction_id or transaction_ids is required."
-msgstr ""
+msgstr "Entweder transaction_id oder transaction_ids ist erforderlich."
 
 #. translators: %d: transaction ID
 #: src/API/FinancialEntryController.php:935
 #, php-format
 msgid "Transaction %d not found."
-msgstr ""
+msgstr "Transaktion %d nicht gefunden."
 
 #: src/Admin/entries/EntriesApp.js:1103
 #, js-format
 msgid "Yes (%d)"
-msgstr ""
+msgstr "Ja (%d)"
 
 #: src/Admin/reconciliation/ReconciliationApp.js:70
 msgid "Failed to load reconciliation data."
-msgstr ""
+msgstr "Fehler beim Laden der Abstimmungsdaten."
 
 #: src/Admin/reconciliation/ReconciliationApp.js:124
 msgid "Transactions matched successfully."
-msgstr ""
+msgstr "Transaktionen erfolgreich abgeglichen."
 
 #: src/Admin/reconciliation/ReconciliationApp.js:133
 msgid "Failed to match transactions."
-msgstr ""
+msgstr "Fehler beim Abgleich von Transaktionen."
 
 #: src/Admin/reconciliation/ReconciliationApp.js:149
 msgid "Transaction unmatched successfully."
-msgstr ""
+msgstr "Transaktion erfolgreich aufgelöst."
 
 #: src/Admin/reconciliation/ReconciliationApp.js:155
 msgid "Failed to unmatch transaction."
-msgstr ""
+msgstr "Fehler beim Aufheben der Transaktionszuordnung."
 
 #: src/Admin/reconciliation/ReconciliationApp.js:168
 msgid "All transactions unmatched successfully."
-msgstr ""
+msgstr "Alle Transaktionen erfolgreich aufgelöst."
 
 #: src/Admin/reconciliation/ReconciliationApp.js:174
 msgid "Failed to unmatch transactions."
-msgstr ""
+msgstr "Fehler beim Aufheben der Transaktionszuordnungen."
 
 #: src/Admin/reconciliation/ReconciliationApp.js:242
 msgid "Unmatched Bank Entries"
-msgstr ""
+msgstr "Nicht abgeglichene Bankeinträge"
 
 #: src/Admin/reconciliation/ReconciliationApp.js:261
 msgid "All bank entries are matched."
-msgstr ""
+msgstr "Alle Bankeinträge sind abgeglichen."
 
 #: src/Admin/reconciliation/ReconciliationApp.js:340
 msgid "Selected"
-msgstr ""
+msgstr "Ausgewählt"
 
 #: src/Admin/reconciliation/ReconciliationApp.js:344
 msgid "Select"
-msgstr ""
+msgstr "Auswählen"
 
 #: src/Admin/reconciliation/ReconciliationApp.js:365
 #: src/Admin/reconciliation/ReconciliationApp.js:693
 msgid "Match Transactions"
-msgstr ""
+msgstr "Transaktionen abgleichen"
 
 #: src/Admin/reconciliation/ReconciliationApp.js:379
 msgid "Matching entry:"
-msgstr ""
+msgstr "Abgleichseintrag:"
 
 #: src/Admin/reconciliation/ReconciliationApp.js:397
 msgid "Finding suggestions..."
-msgstr ""
+msgstr "Vorschläge werden gesucht..."
 
 #: src/Admin/reconciliation/ReconciliationApp.js:409
 msgid "Suggestions:"
-msgstr ""
+msgstr "Vorschläge:"
 
 #: src/Admin/reconciliation/ReconciliationApp.js:438
 #: src/Admin/reconciliation/ReconciliationApp.js:502
 msgid "transactions"
-msgstr ""
+msgstr "Transaktionen"
 
 #: src/Admin/reconciliation/ReconciliationApp.js:443
 msgid "Net:"
-msgstr ""
+msgstr "Netto:"
 
 #: src/Admin/reconciliation/ReconciliationApp.js:451
 msgid "diff:"
-msgstr ""
+msgstr "Differenz:"
 
 #: src/Admin/reconciliation/ReconciliationApp.js:469
 msgid "Apply"
-msgstr ""
+msgstr "Anwenden"
 
 #: src/Admin/reconciliation/ReconciliationApp.js:494
 msgid "Selected:"
-msgstr ""
+msgstr "Ausgewählt:"
 
 #: src/Admin/reconciliation/ReconciliationApp.js:509
 msgid "Gross total:"
-msgstr ""
+msgstr "Bruttosumme:"
 
 #: src/Admin/reconciliation/ReconciliationApp.js:520
 msgid "Net total (after fees):"
-msgstr ""
+msgstr "Nettosumme (nach Gebühren):"
 
 #: src/Admin/reconciliation/ReconciliationApp.js:531
 msgid "Difference from entry:"
-msgstr ""
+msgstr "Differenz zum Eintrag:"
 
 #: src/Admin/reconciliation/ReconciliationApp.js:548
 msgid "Confirm Match"
-msgstr ""
+msgstr "Abgleich bestätigen"
 
 #: src/Admin/reconciliation/ReconciliationApp.js:560
 msgid "No unmatched transactions found."
-msgstr ""
+msgstr "Keine nicht abgeglichenen Transaktionen gefunden."
 
 #: src/Admin/reconciliation/ReconciliationApp.js:590
 msgid "Net"
-msgstr ""
+msgstr "Netto"
 
 #: src/Admin/reconciliation/ReconciliationApp.js:697
 msgid "Select a bank entry from the left panel to start matching."
-msgstr ""
+msgstr "Wählen Sie einen Bankeintrag aus dem linken Bereich aus, um mit dem Abgleich zu beginnen."
 
 #: src/Admin/reconciliation/ReconciliationApp.js:713
 msgid "Matched Entries"
-msgstr ""
+msgstr "Abgeglichene Einträge"
 
 #: src/Admin/reconciliation/ReconciliationApp.js:720
 msgid "No matched entries yet."
-msgstr ""
+msgstr "Noch keine abgeglichenen Einträge."
 
 #: src/Admin/reconciliation/ReconciliationApp.js:745
 msgid "matched transactions"
-msgstr ""
+msgstr "abgeglichene Transaktionen"
 
 #: src/Admin/reconciliation/ReconciliationApp.js:759
 msgid "Unmatch All"
-msgstr ""
+msgstr "Alle abgleichen"
 
 #. translators: %d is the number of exported transactions
 #: src/Admin/transactions/TransactionsApp.js:197
 #, js-format
 msgid "%d transaction(s) exported."
-msgstr ""
+msgstr "%d Transaktion(en) exportiert."
 
 #: src/Admin/transactions/TransactionsApp.js:223
 msgid "Invalid file format. Expected a JSON array."
-msgstr ""
+msgstr "Ungültiges Dateiformat. Ein JSON-Array wird erwartet."
 
 #: src/Admin/transactions/TransactionsApp.js:234
 msgid "No valid transactions found in the file."
-msgstr ""
+msgstr "Keine gültigen Transaktionen in der Datei gefunden."
 
 #: src/Admin/transactions/TransactionsApp.js:254
 msgid "Failed to import transactions."
-msgstr ""
+msgstr "Fehler beim Importieren von Transaktionen."
 
 #: src/Admin/transactions/TransactionsApp.js:330
 msgid "Export Selected"
-msgstr ""
+msgstr "Ausgewählte exportieren"
 
 #: src/API/TransactionAPI.php:294
 msgid "This transaction has no Mollie payment ID to sync."
-msgstr ""
+msgstr "Diese Transaktion hat keine Mollie-Zahlungs-ID zum Synchronisieren."
 
 #: src/API/TransactionsController.php:227
 msgid "Expected an array of transactions."
-msgstr ""
+msgstr "Ein Array von Transaktionen wird erwartet."
 
 #. translators: 1: created count, 2: updated count, 3: skipped count
 #: src/API/TransactionsController.php:260
 #, php-format
 msgid "Imported %1$d new, updated %2$d, skipped %3$d transaction(s)."
-msgstr ""
+msgstr "%1$d neue importiert, %2$d aktualisiert, %3$d Transaktion(en) übersprungen."
 
 #. translators: %s: error message
 #: src/Payment/MolliePaymentHandler.php:321
 #, php-format
 msgid "Failed to list balance transactions: %s"
-msgstr ""
+msgstr "Fehler beim Auflisten der Saldotransaktionen: %s"
 
 #: src/Admin/entries/components/EventUrlField.js:91
 #: src/Admin/entries/components/SplitModal.js:85
 msgid "Search events or paste a URL..."
-msgstr ""
+msgstr "Ereignisse durchsuchen oder URL einfügen..."
 
 #: src/Admin/entries/components/EventUrlField.js:107
 #: src/Admin/entries/components/SplitModal.js:101
 msgid "Use this URL"
-msgstr ""
+msgstr "Diese URL verwenden"
 
 #: src/Admin/reconciliation/ReconciliationApp.js:248
 msgid "Filter by description"
-msgstr ""
+msgstr "Nach Beschreibung filtern"
 
 #: src/Admin/reconciliation/ReconciliationApp.js:254
 msgid "Type to filter…"
-msgstr ""
+msgstr "Zum Filtern eingeben…"
 
 #: src/Admin/transaction/TransactionPage.js:110
 msgid "Synced with Mollie successfully."
-msgstr ""
+msgstr "Erfolgreich mit Mollie synchronisiert."
 
 #: src/Admin/transaction/TransactionPage.js:114
 msgid "Mollie responded but the settlement fee could not be extracted. See Mollie response below."
-msgstr ""
+msgstr "Mollie hat geantwortet, aber die Abrechnungsgebühr konnte nicht extrahiert werden. Siehe Mollie-Antwort unten."
 
 #: src/Admin/transaction/TransactionPage.js:126
 msgid "Failed to sync with Mollie."
-msgstr ""
+msgstr "Fehler beim Synchronisieren mit Mollie."
 
 #: src/Admin/transaction/TransactionPage.js:217
 msgid "Syncing…"
-msgstr ""
+msgstr "Wird synchronisiert…"
 
 #: src/Admin/transaction/TransactionPage.js:218
 msgid "Sync with Mollie"
-msgstr ""
+msgstr "Mit Mollie synchronisieren"
 
 #: src/Admin/transaction/TransactionPage.js:242
 msgid "See Mollie response"
-msgstr ""
+msgstr "Mollie-Antwort anzeigen"
 
 #: src/Admin/transaction/TransactionPage.js:447
 msgid "Person & Post"
-msgstr ""
+msgstr "Person & Beitrag"
 
 #: src/Admin/transaction/TransactionPage.js:454
 msgid "Participant"
-msgstr ""
+msgstr "Teilnehmer"
 
 #: src/Admin/transactions/TransactionsApp.js:425
 msgid "Person"
-msgstr ""
+msgstr "Person"
+
