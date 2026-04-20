@@ -9,6 +9,7 @@ import {
 	Modal,
 	TextControl,
 	TextareaControl,
+	SearchControl,
 	Notice,
 	Spinner,
 } from '@wordpress/components';
@@ -70,6 +71,15 @@ export default function FeeDetail() {
 
 	// Reminders state.
 	const [isSendingReminders, setIsSendingReminders] = useState(false);
+
+	// Add participant modal.
+	const [isAddModalOpen, setIsAddModalOpen] = useState(false);
+	const [groupMembers, setGroupMembers] = useState([]);
+	const [groupMembersLoading, setGroupMembersLoading] = useState(false);
+	const [addSearch, setAddSearch] = useState('');
+	const [selectedToAdd, setSelectedToAdd] = useState(null);
+	const [addAmount, setAddAmount] = useState('');
+	const [isAddingPayment, setIsAddingPayment] = useState(false);
 
 	const loadFee = useCallback(() => {
 		if (!feeId) return;
@@ -342,6 +352,65 @@ export default function FeeDetail() {
 			});
 	};
 
+	// Open add-participant modal.
+	const openAddModal = () => {
+		if (!fee || !fee.group_id) return;
+
+		setAddSearch('');
+		setSelectedToAdd(null);
+		setAddAmount(fee.amount ? String(fee.amount) : '');
+		setIsAddModalOpen(true);
+
+		setGroupMembersLoading(true);
+		apiFetch({
+			path: `/fair-audience/v1/groups/${fee.group_id}/participants`,
+		})
+			.then((data) => {
+				setGroupMembers(data);
+			})
+			.catch(() => {
+				setGroupMembers([]);
+			})
+			.finally(() => {
+				setGroupMembersLoading(false);
+			});
+	};
+
+	const handleAddPayment = () => {
+		if (!selectedToAdd) return;
+
+		setIsAddingPayment(true);
+
+		apiFetch({
+			path: `/fair-audience/v1/fees/${feeId}/payments`,
+			method: 'POST',
+			data: {
+				participant_id: selectedToAdd,
+				amount: parseFloat(addAmount),
+			},
+		})
+			.then(() => {
+				setIsAddModalOpen(false);
+				setSelectedToAdd(null);
+				loadPayments();
+				setNotice({
+					status: 'success',
+					message: __('Participant added to fee.', 'fair-audience'),
+				});
+			})
+			.catch((err) => {
+				// eslint-disable-next-line no-undef
+				alert(
+					__('Error: ', 'fair-audience') +
+						(err.message ||
+							__('Failed to add participant.', 'fair-audience'))
+				);
+			})
+			.finally(() => {
+				setIsAddingPayment(false);
+			});
+	};
+
 	// Send reminders.
 	const handleSendReminders = () => {
 		// eslint-disable-next-line no-undef
@@ -553,6 +622,13 @@ export default function FeeDetail() {
 						>
 							{__('Send Reminders', 'fair-audience')}
 						</Button>
+						<Button
+							variant="secondary"
+							onClick={openAddModal}
+							disabled={!fee}
+						>
+							{__('Add Participant', 'fair-audience')}
+						</Button>
 					</div>
 
 					<DataViews
@@ -568,6 +644,161 @@ export default function FeeDetail() {
 					/>
 				</CardBody>
 			</Card>
+
+			{/* Add Participant Modal */}
+			{isAddModalOpen && (
+				<Modal
+					title={__('Add Participant to Fee', 'fair-audience')}
+					onRequestClose={() => setIsAddModalOpen(false)}
+					style={{ maxWidth: '500px', width: '100%' }}
+				>
+					{(() => {
+						const existingParticipantIds = payments.map(
+							(p) => p.participant_id
+						);
+						const available = groupMembers.filter(
+							(m) => !existingParticipantIds.includes(m.id)
+						);
+						const term = addSearch.trim().toLowerCase();
+						const filtered = term
+							? available.filter((p) => {
+									const label = `${p.name || ''} ${
+										p.surname || ''
+									} ${p.email || ''}`.toLowerCase();
+									return label.includes(term);
+							  })
+							: available;
+
+						return (
+							<>
+								<SearchControl
+									value={addSearch}
+									onChange={setAddSearch}
+									placeholder={__(
+										'Search group members...',
+										'fair-audience'
+									)}
+								/>
+
+								<div
+									style={{
+										maxHeight: '280px',
+										overflowY: 'auto',
+										border: '1px solid #ddd',
+										borderRadius: '4px',
+										marginTop: '8px',
+										marginBottom: '16px',
+									}}
+								>
+									{groupMembersLoading ? (
+										<div
+											style={{
+												padding: '16px',
+												textAlign: 'center',
+											}}
+										>
+											<Spinner />
+										</div>
+									) : filtered.length === 0 ? (
+										<p style={{ padding: '12px' }}>
+											{available.length === 0
+												? __(
+														'All group members already have a payment for this fee.',
+														'fair-audience'
+												  )
+												: __(
+														'No matches.',
+														'fair-audience'
+												  )}
+										</p>
+									) : (
+										filtered.map((p) => {
+											const label = `${p.name || ''} ${
+												p.surname || ''
+											}`.trim();
+											const isSelected =
+												selectedToAdd === p.id;
+											return (
+												<div
+													key={p.id}
+													onClick={() =>
+														setSelectedToAdd(p.id)
+													}
+													style={{
+														padding: '8px 12px',
+														cursor: 'pointer',
+														background: isSelected
+															? '#e6f3ff'
+															: 'transparent',
+														borderBottom:
+															'1px solid #eee',
+													}}
+												>
+													<div>
+														{label ||
+															__(
+																'(unnamed)',
+																'fair-audience'
+															)}
+													</div>
+													{p.email && (
+														<div
+															style={{
+																fontSize:
+																	'12px',
+																color: '#666',
+															}}
+														>
+															{p.email}
+														</div>
+													)}
+												</div>
+											);
+										})
+									)}
+								</div>
+
+								<TextControl
+									label={__('Amount', 'fair-audience')}
+									type="number"
+									value={addAmount}
+									onChange={setAddAmount}
+									min="0"
+									step="0.01"
+								/>
+
+								<div
+									style={{
+										display: 'flex',
+										justifyContent: 'flex-end',
+										gap: '8px',
+										marginTop: '16px',
+									}}
+								>
+									<Button
+										variant="secondary"
+										onClick={() => setIsAddModalOpen(false)}
+									>
+										{__('Cancel', 'fair-audience')}
+									</Button>
+									<Button
+										variant="primary"
+										onClick={handleAddPayment}
+										disabled={
+											!selectedToAdd ||
+											isAddingPayment ||
+											!addAmount
+										}
+										isBusy={isAddingPayment}
+									>
+										{__('Add', 'fair-audience')}
+									</Button>
+								</div>
+							</>
+						);
+					})()}
+				</Modal>
+			)}
 
 			{/* Adjust Amount Modal */}
 			{isAdjustModalOpen && adjustingPayment && (

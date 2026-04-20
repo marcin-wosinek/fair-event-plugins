@@ -125,7 +125,7 @@ class FeesController extends WP_REST_Controller {
 			)
 		);
 
-		// GET /fees/{id}/payments.
+		// GET /fees/{id}/payments, POST /fees/{id}/payments.
 		register_rest_route(
 			$this->namespace,
 			'/' . $this->rest_base . '/(?P<id>\d+)/payments',
@@ -134,6 +134,11 @@ class FeesController extends WP_REST_Controller {
 					'methods'             => WP_REST_Server::READABLE,
 					'callback'            => array( $this, 'get_payments' ),
 					'permission_callback' => 'is_user_logged_in',
+				),
+				array(
+					'methods'             => WP_REST_Server::CREATABLE,
+					'callback'            => array( $this, 'add_payment' ),
+					'permission_callback' => array( $this, 'update_item_permissions_check' ),
 				),
 			)
 		);
@@ -476,6 +481,108 @@ class FeesController extends WP_REST_Controller {
 		$payments = $this->payment_repository->get_by_fee_with_participant_details( $fee_id );
 
 		return rest_ensure_response( $payments );
+	}
+
+	/**
+	 * Add a participant to a fee (manual addition).
+	 *
+	 * @param WP_REST_Request $request Request object.
+	 * @return WP_REST_Response|WP_Error Response object or error.
+	 */
+	public function add_payment( $request ) {
+		$fee_id = $request->get_param( 'id' );
+		$fee    = $this->fee_repository->get_by_id( $fee_id );
+
+		if ( ! $fee ) {
+			return new WP_Error(
+				'fee_not_found',
+				__( 'Fee not found.', 'fair-audience' ),
+				array( 'status' => 404 )
+			);
+		}
+
+		$participant_id = (int) $request->get_param( 'participant_id' );
+		if ( $participant_id <= 0 ) {
+			return new WP_Error(
+				'missing_participant',
+				__( 'Participant is required.', 'fair-audience' ),
+				array( 'status' => 400 )
+			);
+		}
+
+		$amount_param = $request->get_param( 'amount' );
+		$amount       = null !== $amount_param && '' !== $amount_param ? (float) $amount_param : (float) $fee->amount;
+
+		if ( ! is_numeric( $amount ) || $amount < 0 ) {
+			return new WP_Error(
+				'invalid_amount',
+				__( 'Amount must be a non-negative number.', 'fair-audience' ),
+				array( 'status' => 400 )
+			);
+		}
+
+		// Verify the participant is a member of the fee's group.
+		global $wpdb;
+		$group_participants_table = $wpdb->prefix . 'fair_audience_group_participants';
+		$is_member                = (int) $wpdb->get_var(
+			$wpdb->prepare(
+				'SELECT COUNT(*) FROM %i WHERE group_id = %d AND participant_id = %d',
+				$group_participants_table,
+				$fee->group_id,
+				$participant_id
+			)
+		);
+
+		if ( ! $is_member ) {
+			return new WP_Error(
+				'not_in_group',
+				__( 'Participant is not a member of this fee\'s group.', 'fair-audience' ),
+				array( 'status' => 400 )
+			);
+		}
+
+		// Skip if payment already exists for this participant.
+		$existing = $this->payment_repository->get_by_fee_and_participant( $fee_id, $participant_id );
+		if ( $existing ) {
+			return new WP_Error(
+				'payment_exists',
+				__( 'This participant already has a payment for this fee.', 'fair-audience' ),
+				array( 'status' => 409 )
+			);
+		}
+
+		$payment = new \FairAudience\Models\FeePayment();
+		$payment->populate(
+			array(
+				'fee_id'         => (int) $fee_id,
+				'participant_id' => $participant_id,
+				'amount'         => $amount,
+				'status'         => 'pending',
+			)
+		);
+
+		if ( ! $payment->save() ) {
+			return new WP_Error(
+				'creation_failed',
+				__( 'Failed to add participant to fee.', 'fair-audience' ),
+				array( 'status' => 500 )
+			);
+		}
+
+		$this->audit_log_repository->log_action(
+			$payment->id,
+			'payment_added',
+			null,
+			$amount,
+			__( 'Participant added manually.', 'fair-audience' )
+		);
+
+		return rest_ensure_response(
+			array(
+				'id'      => $payment->id,
+				'message' => __( 'Participant added to fee.', 'fair-audience' ),
+			)
+		);
 	}
 
 	/**
