@@ -21,7 +21,7 @@ import { __, sprintf } from '@wordpress/i18n';
 import apiFetch from '@wordpress/api-fetch';
 
 export default function ManageInvitations() {
-	const { eventDateId, manageEventUrl } =
+	const { eventDateId, manageEventUrl, signupPageUrl } =
 		window.fairEventsManageInvitationsData || {};
 
 	const [tokens, setTokens] = useState([]);
@@ -145,8 +145,11 @@ export default function ManageInvitations() {
 	};
 
 	const getSignupUrl = (token) => {
-		const siteUrl = window.location.origin;
-		return `${siteUrl}/?invitation=${token}`;
+		if (!signupPageUrl) {
+			return `${window.location.origin}/?invitation=${token}`;
+		}
+		const separator = signupPageUrl.includes('?') ? '&' : '?';
+		return `${signupPageUrl}${separator}invitation=${token}`;
 	};
 
 	const copyToClipboard = (text) => {

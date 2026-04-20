@@ -393,12 +393,21 @@ class AdminPages {
 			// phpcs:ignore WordPress.Security.NonceVerification.Recommended
 			$event_date_id = isset( $_GET['event_date_id'] ) ? absint( $_GET['event_date_id'] ) : 0;
 
+			$signup_page_url = '';
+			if ( $event_date_id ) {
+				$event_date = \FairEvents\Models\EventDates::get_by_id( $event_date_id );
+				if ( $event_date && $event_date->event_id ) {
+					$signup_page_url = get_permalink( $event_date->event_id );
+				}
+			}
+
 			wp_localize_script(
 				'fair-events-manage-invitations',
 				'fairEventsManageInvitationsData',
 				array(
 					'eventDateId'    => $event_date_id,
 					'manageEventUrl' => admin_url( 'admin.php?page=fair-events-manage-event' ),
+					'signupPageUrl'  => $signup_page_url,
 				)
 			);
 
