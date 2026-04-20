@@ -48,7 +48,7 @@ function parseArgs() {
 	const options = {
 		plugin: null,
 		locale: null,
-		provider: 'openai',
+		provider: 'claude',
 		yes: false,
 	};
 
@@ -73,9 +73,11 @@ function parseArgs() {
 function validateArgs(options) {
 	const errors = [];
 
-	if (!options.plugin) {
-		errors.push('Missing required argument: --plugin=PLUGIN_NAME');
-	} else if (!config.plugins.find((p) => p.name === options.plugin)) {
+	// Plugin is optional - if not provided, all plugins will be processed
+	if (
+		options.plugin &&
+		!config.plugins.find((p) => p.name === options.plugin)
+	) {
 		errors.push(`Invalid plugin: ${options.plugin}`);
 		errors.push(
 			`Available plugins: ${config.plugins.map((p) => p.name).join(', ')}`
@@ -298,44 +300,9 @@ async function aiTranslate(options) {
 }
 
 /**
- * Main execution
+ * Process translation for a single plugin (all locales or one locale)
  */
-async function main() {
-	const options = parseArgs();
-	const errors = validateArgs(options);
-
-	if (errors.length > 0) {
-		console.error('❌ Error: Invalid arguments\n');
-		errors.forEach((err) => console.error(`   ${err}`));
-		console.error('\nUsage:');
-		console.error(
-			'  node scripts/translation/ai-translate.js --plugin=PLUGIN [--locale=LOCALE] --provider=PROVIDER'
-		);
-		console.error('\nExample (single locale):');
-		console.error('  export OPENAI_API_KEY=your_key_here');
-		console.error(
-			'  node scripts/translation/ai-translate.js --plugin=fair-events --locale=fr_FR --provider=openai'
-		);
-		console.error('\nExample (all locales):');
-		console.error(
-			'  node scripts/translation/ai-translate.js --plugin=fair-events --provider=openai'
-		);
-		console.error('\nOptions:');
-		console.error(
-			'  --locale=LOCALE_CODE        Optional. If not provided, all locales will be translated'
-		);
-		console.error(
-			'  --provider=openai|claude    AI provider to use (default: openai)'
-		);
-		console.error(
-			'  --yes, -y                   Skip confirmation prompts (for automation)'
-		);
-		console.error(
-			'\nNote: This script always updates the .po file after translation.'
-		);
-		process.exit(1);
-	}
-
+async function processPlugin(options) {
 	try {
 		// If no locale specified, process all locales
 		if (!options.locale) {
@@ -483,6 +450,69 @@ async function main() {
 			console.error(error.stack);
 		}
 		process.exit(1);
+	}
+}
+
+/**
+ * Main execution
+ */
+async function main() {
+	const options = parseArgs();
+	const errors = validateArgs(options);
+
+	if (errors.length > 0) {
+		console.error('❌ Error: Invalid arguments\n');
+		errors.forEach((err) => console.error(`   ${err}`));
+		console.error('\nUsage:');
+		console.error(
+			'  node scripts/translation/ai-translate.js [--plugin=PLUGIN] [--locale=LOCALE] [--provider=PROVIDER]'
+		);
+		console.error('\nExample (single plugin + locale):');
+		console.error(
+			'  node scripts/translation/ai-translate.js --plugin=fair-events --locale=fr_FR --provider=openai'
+		);
+		console.error('\nExample (single plugin, all locales):');
+		console.error(
+			'  node scripts/translation/ai-translate.js --plugin=fair-events'
+		);
+		console.error('\nExample (all plugins, all locales, claude):');
+		console.error('  node scripts/translation/ai-translate.js');
+		console.error('\nOptions:');
+		console.error(
+			'  --plugin=PLUGIN_NAME        Optional. If not provided, all plugins will be translated'
+		);
+		console.error(
+			'  --locale=LOCALE_CODE        Optional. If not provided, all locales will be translated'
+		);
+		console.error(
+			'  --provider=openai|claude    AI provider to use (default: claude)'
+		);
+		console.error(
+			'  --yes, -y                   Skip confirmation prompts (for automation)'
+		);
+		console.error(
+			'\nNote: This script always updates the .po file after translation.'
+		);
+		process.exit(1);
+	}
+
+	// If no plugin specified, iterate over all plugins
+	if (!options.plugin) {
+		console.error(
+			`🔌 Processing all plugins: ${config.plugins
+				.map((p) => p.name)
+				.join(', ')}\n`
+		);
+
+		for (const plugin of config.plugins) {
+			console.error(`\n${'#'.repeat(60)}`);
+			console.error(`📦 Plugin: ${plugin.name}`);
+			console.error(`${'#'.repeat(60)}\n`);
+
+			await processPlugin({ ...options, plugin: plugin.name });
+		}
+	} else {
+		await processPlugin(options);
 	}
 }
 
