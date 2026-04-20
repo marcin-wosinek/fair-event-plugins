@@ -9,7 +9,7 @@ msgstr ""
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"POT-Creation-Date: 2026-04-20T12:38:53+00:00\n"
+"POT-Creation-Date: 2026-04-20T12:43:48+00:00\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "X-Generator: WP-CLI 2.12.0\n"
 "X-Domain: fair-audience\n"
@@ -305,8 +305,8 @@ msgid "Error"
 msgstr ""
 
 #: src/API/AudienceSignupController.php:222
-#: src/API/EventSignupController.php:875
-#: src/API/EventSignupController.php:959
+#: src/API/EventSignupController.php:940
+#: src/API/EventSignupController.php:1025
 #: src/API/FairFormController.php:256
 #: src/API/MailingSignupController.php:171
 #: templates/collaborator-profile.php:59
@@ -315,8 +315,8 @@ msgid "Please enter a valid email address."
 msgstr ""
 
 #: src/API/AudienceSignupController.php:231
-#: src/API/EventSignupController.php:884
-#: src/API/EventSignupController.php:977
+#: src/API/EventSignupController.php:949
+#: src/API/EventSignupController.php:1043
 #: src/API/FairFormController.php:265
 #: src/API/MailingSignupController.php:180
 msgid "Too many requests. Please try again later."
@@ -382,11 +382,11 @@ msgstr ""
 #: src/API/EventParticipantsController.php:298
 #: src/API/EventParticipantsController.php:375
 #: src/API/EventParticipantsController.php:787
-#: src/API/EventSignupController.php:335
-#: src/API/EventSignupController.php:429
-#: src/API/EventSignupController.php:866
-#: src/API/EventSignupController.php:941
-#: src/API/EventSignupController.php:1103
+#: src/API/EventSignupController.php:347
+#: src/API/EventSignupController.php:442
+#: src/API/EventSignupController.php:931
+#: src/API/EventSignupController.php:1007
+#: src/API/EventSignupController.php:1169
 #: src/API/GalleryAccessController.php:270
 #: src/API/GalleryAccessController.php:313
 #: src/Services/EmailService.php:326
@@ -469,77 +469,89 @@ msgstr ""
 msgid "Participant ID %d not found"
 msgstr ""
 
-#: src/API/EventSignupController.php:314
+#: src/API/EventSignupController.php:326
 msgid "You must be logged in or have a valid signup link."
 msgstr ""
 
-#: src/API/EventSignupController.php:458
-#: src/API/EventSignupController.php:1132
+#: src/API/EventSignupController.php:471
+#: src/API/EventSignupController.php:1198
 msgid "Could not find your participant profile."
 msgstr ""
 
-#: src/API/EventSignupController.php:486
-#: src/API/EventSignupController.php:1007
+#: src/API/EventSignupController.php:499
+#: src/API/EventSignupController.php:1073
 msgid "You are already signed up for this event."
 msgstr ""
 
-#: src/API/EventSignupController.php:515
-#: src/blocks/event-signup/editor.js:86
+#: src/API/EventSignupController.php:528
+#: src/blocks/event-signup/editor.js:87
 #: src/blocks/event-signup/frontend.js:223
-#: src/blocks/event-signup/frontend.js:475
+#: src/blocks/event-signup/frontend.js:480
 msgid "You have successfully signed up for the event!"
 msgstr ""
 
-#: src/API/EventSignupController.php:545
+#: src/API/EventSignupController.php:571
 msgid "This ticket type is not available for your account."
 msgstr ""
 
-#: src/API/EventSignupController.php:724
+#: src/API/EventSignupController.php:591
+msgid "This ticket type requires an invitation link."
+msgstr ""
+
+#: src/API/EventSignupController.php:600
+msgid "This invitation link is not valid."
+msgstr ""
+
+#: src/API/EventSignupController.php:608
+msgid "This invitation link has expired or has been fully used."
+msgstr ""
+
+#: src/API/EventSignupController.php:789
 msgid "Paid signup is not available because the payment plugin is missing."
 msgstr ""
 
-#: src/API/EventSignupController.php:738
+#: src/API/EventSignupController.php:803
 msgid "This event is fully booked."
 msgstr ""
 
 #. translators: %s: event title
-#: src/API/EventSignupController.php:773
+#: src/API/EventSignupController.php:838
 #, php-format
 msgid "Signup for %s"
 msgstr ""
 
-#: src/API/EventSignupController.php:841
-#: src/blocks/event-signup/frontend.js:310
-#: src/blocks/event-signup/frontend.js:531
+#: src/API/EventSignupController.php:906
+#: src/blocks/event-signup/frontend.js:315
+#: src/blocks/event-signup/frontend.js:541
 msgid "Redirecting to payment…"
 msgstr ""
 
-#: src/API/EventSignupController.php:916
+#: src/API/EventSignupController.php:981
 msgid "If your email is in our system, you will receive a signup link shortly. Please check your inbox."
 msgstr ""
 
-#: src/API/EventSignupController.php:968
+#: src/API/EventSignupController.php:1034
 msgid "Please enter your name."
 msgstr ""
 
-#: src/API/EventSignupController.php:1029
+#: src/API/EventSignupController.php:1095
 msgid "Failed to process registration. Please try again."
 msgstr ""
 
-#: src/API/EventSignupController.php:1072
+#: src/API/EventSignupController.php:1138
 msgid "You have been signed up for the event! Please check your email to confirm your subscription."
 msgstr ""
 
-#: src/API/EventSignupController.php:1081
+#: src/API/EventSignupController.php:1147
 msgid "You have successfully registered and signed up for the event!"
 msgstr ""
 
-#: src/API/EventSignupController.php:1153
+#: src/API/EventSignupController.php:1219
 msgid "You are not signed up for this event."
 msgstr ""
 
-#: src/API/EventSignupController.php:1168
-#: src/blocks/event-signup/frontend.js:655
+#: src/API/EventSignupController.php:1234
+#: src/blocks/event-signup/frontend.js:665
 msgid "You have been removed from this event."
 msgstr ""
 
@@ -1232,7 +1244,7 @@ msgstr[0] ""
 msgstr[1] ""
 
 #: src/blocks/audience-signup/render.php:147
-#: src/blocks/event-signup/render.php:420
+#: src/blocks/event-signup/render.php:477
 #: src/blocks/fair-form/render.php:40
 #: src/blocks/mailing-signup/render.php:61
 #: src/blocks/fair-form/editor.js:188
@@ -1240,7 +1252,7 @@ msgid "First Name"
 msgstr ""
 
 #: src/blocks/audience-signup/render.php:154
-#: src/blocks/event-signup/render.php:427
+#: src/blocks/event-signup/render.php:484
 #: src/blocks/fair-form/render.php:47
 #: src/blocks/mailing-signup/render.php:68
 msgid "Enter your first name"
@@ -1260,8 +1272,8 @@ msgid "Enter your last name"
 msgstr ""
 
 #: src/blocks/audience-signup/render.php:172
-#: src/blocks/event-signup/render.php:443
-#: src/blocks/event-signup/render.php:476
+#: src/blocks/event-signup/render.php:500
+#: src/blocks/event-signup/render.php:533
 #: src/blocks/fair-form/render.php:63
 #: src/blocks/mailing-signup/render.php:85
 #: templates/collaborator-profile.php:318
@@ -1282,8 +1294,8 @@ msgid "Email"
 msgstr ""
 
 #: src/blocks/audience-signup/render.php:179
-#: src/blocks/event-signup/render.php:450
-#: src/blocks/event-signup/render.php:483
+#: src/blocks/event-signup/render.php:507
+#: src/blocks/event-signup/render.php:540
 #: src/blocks/fair-form/render.php:70
 #: src/blocks/mailing-signup/render.php:92
 msgid "Enter your email"
@@ -1306,7 +1318,7 @@ msgid "Select..."
 msgstr ""
 
 #: src/blocks/audience-signup/render.php:341
-#: src/blocks/event-signup/render.php:456
+#: src/blocks/event-signup/render.php:513
 msgid "Keep me informed about future events"
 msgstr ""
 
@@ -1315,96 +1327,110 @@ msgid "Update Answers"
 msgstr ""
 
 #. translators: 1: base button label, 2: formatted price
-#: src/blocks/event-signup/render.php:221
-#: src/blocks/event-signup/render.php:227
+#: src/blocks/event-signup/render.php:251
+#: src/blocks/event-signup/render.php:257
 #, php-format
 msgid "%1$s — €%2$s"
 msgstr ""
 
-#: src/blocks/event-signup/render.php:232
+#: src/blocks/event-signup/render.php:262
 #: src/blocks/event-signup/frontend.js:101
 msgid "Sign up for free"
 msgstr ""
 
-#: src/blocks/event-signup/render.php:233
+#: src/blocks/event-signup/render.php:263
 #: src/blocks/event-signup/frontend.js:102
 msgid "Register for free"
 msgstr ""
 
-#: src/blocks/event-signup/render.php:246
+#. translators: %s: inviter's name
+#: src/blocks/event-signup/render.php:284
+#, php-format
+msgid "You have been invited by %s."
+msgstr ""
+
+#: src/blocks/event-signup/render.php:289
+msgid "You have been invited to this event."
+msgstr ""
+
+#: src/blocks/event-signup/render.php:295
 msgid "Choose ticket type"
 msgstr ""
 
-#: src/blocks/event-signup/render.php:254
-#: src/blocks/event-signup/render.php:293
+#: src/blocks/event-signup/render.php:303
+#: src/blocks/event-signup/render.php:349
 msgid "free"
 msgstr ""
 
 #. translators: %d: number of seats this ticket consumes
-#: src/blocks/event-signup/render.php:260
+#: src/blocks/event-signup/render.php:309
 #, php-format
 msgid "(%d seat)"
 msgid_plural "(%d seats)"
 msgstr[0] ""
 msgstr[1] ""
 
-#: src/blocks/event-signup/render.php:286
+#: src/blocks/event-signup/render.php:314
+msgid "invitation"
+msgstr ""
+
+#: src/blocks/event-signup/render.php:342
 msgid "Select activities"
 msgstr ""
 
-#: src/blocks/event-signup/render.php:328
+#: src/blocks/event-signup/render.php:385
 msgid "This block can only be used on event pages."
 msgstr ""
 
-#: src/blocks/event-signup/render.php:336
-#: src/blocks/event-signup/render.php:349
-#: src/blocks/event-signup/frontend.js:344
-#: src/blocks/event-signup/frontend.js:563
+#: src/blocks/event-signup/render.php:393
+#: src/blocks/event-signup/render.php:406
+#: src/blocks/event-signup/frontend.js:349
+#: src/blocks/event-signup/frontend.js:573
 msgid "You are signed up for this event!"
 msgstr ""
 
-#: src/blocks/event-signup/render.php:340
-#: src/blocks/event-signup/frontend.js:571
+#: src/blocks/event-signup/render.php:397
+#: src/blocks/event-signup/frontend.js:581
 msgid "Cancel signup"
 msgstr ""
 
 #. translators: %s: participant name
-#: src/blocks/event-signup/render.php:359
+#: src/blocks/event-signup/render.php:416
 #, php-format
 msgid "Hi %s! Click the button below to sign up for this event."
 msgstr ""
 
 #. translators: %s: participant name
-#: src/blocks/event-signup/render.php:381
-#: src/blocks/event-signup/frontend.js:675
+#: src/blocks/event-signup/render.php:438
+#: src/blocks/event-signup/frontend.js:685
 #, php-format,js-format
 msgid "Hi %s! You can sign up for this event."
 msgstr ""
 
-#: src/blocks/event-signup/render.php:399
+#: src/blocks/event-signup/render.php:456
 msgid "Your WordPress account is not linked to a participant profile. Please contact the site administrator."
 msgstr ""
 
-#: src/blocks/event-signup/render.php:407
+#: src/blocks/event-signup/render.php:464
 msgid "I'm new"
 msgstr ""
 
-#: src/blocks/event-signup/render.php:410
+#: src/blocks/event-signup/render.php:467
 msgid "I have an account"
 msgstr ""
 
-#: src/blocks/event-signup/render.php:432
+#: src/blocks/event-signup/render.php:489
 #: templates/collaborator-profile.php:305
 #: src/Admin/components/ParticipantEditModal.js:167
 #: src/Admin/edit-poll/EditPoll.js:248
 msgid "Surname"
 msgstr ""
 
-#: src/blocks/event-signup/render.php:438
+#: src/blocks/event-signup/render.php:495
 msgid "Enter your surname"
 msgstr ""
 
-#: src/blocks/event-signup/render.php:472
+#: src/blocks/event-signup/render.php:529
 msgid "Enter your email to receive a signup link."
 msgstr ""
 
@@ -2517,7 +2543,7 @@ msgstr ""
 #: src/Admin/event-participants/EventParticipants.js:806
 #: src/Admin/event-participants/EventParticipants.js:1256
 #: src/Admin/event-participants/EventParticipants.js:1536
-#: src/blocks/event-signup/frontend.js:416
+#: src/blocks/event-signup/frontend.js:421
 msgid "Sending..."
 msgstr ""
 
@@ -4397,7 +4423,7 @@ msgid "View post"
 msgstr ""
 
 #: src/blocks/audience-signup/editor.js:35
-#: src/blocks/event-signup/editor.js:32
+#: src/blocks/event-signup/editor.js:33
 #: src/blocks/fair-form/editor.js:133
 #: src/blocks/mailing-signup/editor.js:65
 msgid "Form Settings"
@@ -4414,7 +4440,7 @@ msgid "Register"
 msgstr ""
 
 #: src/blocks/audience-signup/editor.js:45
-#: src/blocks/event-signup/editor.js:81
+#: src/blocks/event-signup/editor.js:82
 #: src/blocks/fair-form/editor.js:143
 #: src/blocks/mailing-signup/editor.js:75
 msgid "Success Message"
@@ -4503,13 +4529,13 @@ msgstr ""
 
 #: src/blocks/audience-signup/frontend.js:252
 #: src/blocks/event-signup/frontend.js:250
-#: src/blocks/event-signup/frontend.js:396
+#: src/blocks/event-signup/frontend.js:401
 #: src/blocks/mailing-signup/frontend.js:97
 msgid "Please enter your email."
 msgstr ""
 
 #: src/blocks/audience-signup/frontend.js:318
-#: src/blocks/event-signup/frontend.js:291
+#: src/blocks/event-signup/frontend.js:296
 #: src/blocks/fair-form/frontend.js:331
 #: src/blocks/mailing-signup/frontend.js:123
 #: src/blocks/shared/form-utils.js:92
@@ -4591,80 +4617,88 @@ msgstr ""
 msgid "Add Question"
 msgstr ""
 
-#: src/blocks/event-signup/editor.js:34
+#: src/blocks/event-signup/editor.js:35
 msgid "Signup Button Text"
 msgstr ""
 
-#: src/blocks/event-signup/editor.js:39
+#: src/blocks/event-signup/editor.js:40
 #: src/blocks/event-signup/frontend.js:90
-#: src/blocks/event-signup/frontend.js:696
+#: src/blocks/event-signup/frontend.js:706
 msgid "Sign Up"
 msgstr ""
 
-#: src/blocks/event-signup/editor.js:40
+#: src/blocks/event-signup/editor.js:41
 msgid "Button text for authenticated users."
 msgstr ""
 
-#: src/blocks/event-signup/editor.js:46
+#: src/blocks/event-signup/editor.js:47
 msgid "Register Button Text"
 msgstr ""
 
-#: src/blocks/event-signup/editor.js:51
+#: src/blocks/event-signup/editor.js:52
 #: src/blocks/event-signup/frontend.js:93
 msgid "Register & Sign Up"
 msgstr ""
 
-#: src/blocks/event-signup/editor.js:55
+#: src/blocks/event-signup/editor.js:56
 msgid "Button text for new registrations."
 msgstr ""
 
-#: src/blocks/event-signup/editor.js:61
+#: src/blocks/event-signup/editor.js:62
 msgid "Request Link Button Text"
 msgstr ""
 
-#: src/blocks/event-signup/editor.js:71
+#: src/blocks/event-signup/editor.js:72
 msgid "Send Signup Link"
 msgstr ""
 
-#: src/blocks/event-signup/editor.js:75
+#: src/blocks/event-signup/editor.js:76
 msgid "Button text for existing participants."
 msgstr ""
 
-#: src/blocks/event-signup/editor.js:90
+#: src/blocks/event-signup/editor.js:91
 #: src/blocks/mailing-signup/editor.js:84
 msgid "Message shown after successful signup."
 msgstr ""
 
-#: src/blocks/event-signup/editor.js:96
+#: src/blocks/event-signup/editor.js:97
 msgid "Show activity option prices"
 msgstr ""
 
-#: src/blocks/event-signup/editor.js:100
+#: src/blocks/event-signup/editor.js:101
 msgid "Display the price of each activity option next to its label. The running total in the button always updates regardless of this setting."
 msgstr ""
 
-#: src/blocks/event-signup/frontend.js:358
-#: src/blocks/event-signup/frontend.js:590
+#: src/blocks/event-signup/editor.js:111
+msgid "Show inviter name"
+msgstr ""
+
+#: src/blocks/event-signup/editor.js:112
+msgid "When a visitor arrives via an invitation link, show the name of the person who invited them."
+msgstr ""
+
+#: src/blocks/event-signup/frontend.js:363
+#: src/blocks/event-signup/frontend.js:600
 msgid "Failed to sign up. Please try again."
 msgstr ""
 
-#: src/blocks/event-signup/frontend.js:441
+#: src/blocks/event-signup/frontend.js:446
 msgid "Failed to send link. Please try again."
 msgstr ""
 
-#: src/blocks/event-signup/frontend.js:512
+#: src/blocks/event-signup/frontend.js:522
 msgid "Signing up..."
 msgstr ""
 
-#: src/blocks/event-signup/frontend.js:643
+#: src/blocks/event-signup/frontend.js:653
 msgid "Cancelling..."
 msgstr ""
 
-#: src/blocks/event-signup/frontend.js:679
+#: src/blocks/event-signup/frontend.js:689
 msgid "You can sign up for this event."
 msgstr ""
 
-#: src/blocks/event-signup/frontend.js:715
+#: src/blocks/event-signup/frontend.js:725
 msgid "Failed to cancel signup. Please try again."
 msgstr ""
 

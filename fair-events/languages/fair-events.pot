@@ -9,7 +9,7 @@ msgstr ""
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"POT-Creation-Date: 2026-04-20T12:38:52+00:00\n"
+"POT-Creation-Date: 2026-04-20T12:43:46+00:00\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "X-Generator: WP-CLI 2.12.0\n"
 "X-Domain: fair-events\n"
@@ -72,7 +72,7 @@ msgid "Fair Events Settings"
 msgstr ""
 
 #: src/Admin/AdminPages.php:60
-#: src/Admin/manage-event/EventTickets.js:1387
+#: src/Admin/manage-event/EventTickets.js:1428
 msgid "Settings"
 msgstr ""
 
@@ -110,7 +110,7 @@ msgstr ""
 
 #: src/Admin/AdminPages.php:109
 #: src/Admin/AdminPages.php:110
-#: src/Admin/AdminPages.php:137
+#: src/Admin/AdminPages.php:147
 #: src/Hooks/AdminBarHooks.php:59
 #: src/Admin/calendar/CalendarApp.js:179
 #: src/Admin/manage-event/ManageEventApp.js:619
@@ -120,27 +120,35 @@ msgstr ""
 
 #: src/Admin/AdminPages.php:119
 #: src/Admin/AdminPages.php:120
-#: src/Admin/AdminPages.php:138
+#: src/Admin/AdminPages.php:148
 msgid "View Source"
 msgstr ""
 
 #: src/Admin/AdminPages.php:129
 #: src/Admin/AdminPages.php:130
+#: src/Admin/AdminPages.php:149
+#: src/Admin/manage-event/EventTickets.js:598
+#: src/Admin/manage-invitations/ManageInvitations.js:180
+msgid "Manage Invitations"
+msgstr ""
+
 #: src/Admin/AdminPages.php:139
+#: src/Admin/AdminPages.php:140
+#: src/Admin/AdminPages.php:150
 #: src/Admin/CopyEventPage.php:283
 msgid "Copy Event"
 msgstr ""
 
-#: src/Admin/AdminPages.php:706
+#: src/Admin/AdminPages.php:771
 msgid "Upcoming"
 msgstr ""
 
-#: src/Admin/AdminPages.php:821
+#: src/Admin/AdminPages.php:886
 #: src/PostTypes/Event.php:479
 msgid "Copy"
 msgstr ""
 
-#: src/Admin/AdminPages.php:824
+#: src/Admin/AdminPages.php:889
 msgid "Copy this event"
 msgstr ""
 
@@ -911,6 +919,47 @@ msgstr ""
 msgid "Failed to create attachment."
 msgstr ""
 
+#: src/API/InvitationTokensController.php:177
+msgid "You do not have permission to view invitation tokens."
+msgstr ""
+
+#: src/API/InvitationTokensController.php:208
+msgid "You must be logged in or have a valid participant link."
+msgstr ""
+
+#: src/API/InvitationTokensController.php:290
+msgid "This event has no invitation-only ticket types."
+msgstr ""
+
+#: src/API/InvitationTokensController.php:316
+msgid "You are not in a group that can send invitations for this event."
+msgstr ""
+
+#: src/API/InvitationTokensController.php:331
+msgid "Failed to create invitation token."
+msgstr ""
+
+#: src/API/InvitationTokensController.php:352
+msgid "This invitation link is not valid."
+msgstr ""
+
+#: src/API/InvitationTokensController.php:360
+msgid "This invitation link has expired or has been fully used."
+msgstr ""
+
+#: src/API/InvitationTokensController.php:403
+#: src/API/InvitationTokensController.php:472
+msgid "Fair Audience plugin is required."
+msgstr ""
+
+#: src/API/InvitationTokensController.php:453
+msgid "Token not found."
+msgstr ""
+
+#: src/API/InvitationTokensController.php:497
+msgid "Could not find your participant profile."
+msgstr ""
+
 #: src/API/MigrationController.php:182
 #: src/Admin/migration/MigrationApp.js:41
 msgid "All Categories"
@@ -1215,7 +1264,7 @@ msgstr ""
 msgid "Week %1$s, %2$s"
 msgstr ""
 
-#: src/Core/Plugin.php:303
+#: src/Core/Plugin.php:312
 msgid "Event associated with this image"
 msgstr ""
 
@@ -1492,8 +1541,8 @@ msgstr ""
 
 #: src/Admin/all-events/AllEvents.js:67
 #: src/Admin/manage-event/EventAudience.js:306
-#: src/Admin/manage-event/EventTickets.js:903
-#: src/Admin/manage-event/EventTickets.js:1531
+#: src/Admin/manage-event/EventTickets.js:925
+#: src/Admin/manage-event/EventTickets.js:1572
 #: src/Admin/sources/SourcesList.js:192
 #: src/Admin/venues/VenuesApp.js:380
 #: src/Admin/venues/VenuesApp.js:467
@@ -2014,6 +2063,7 @@ msgid "Responses"
 msgstr ""
 
 #: src/Admin/manage-event/EventAudience.js:431
+#: src/Admin/manage-invitations/ManageInvitations.js:311
 #: src/Admin/migration/MigrationApp.js:230
 #: src/Admin/sources/SourcesList.js:202
 #: src/Admin/venues/VenuesApp.js:382
@@ -2180,234 +2230,238 @@ msgstr ""
 msgid "Add New Photos"
 msgstr ""
 
-#: src/Admin/manage-event/EventTickets.js:108
+#: src/Admin/manage-event/EventTickets.js:112
 msgid "Failed to load tickets."
 msgstr ""
 
-#: src/Admin/manage-event/EventTickets.js:260
+#: src/Admin/manage-event/EventTickets.js:264
 msgid "Tickets saved successfully."
 msgstr ""
 
-#: src/Admin/manage-event/EventTickets.js:263
+#: src/Admin/manage-event/EventTickets.js:267
 msgid "Failed to save tickets."
 msgstr ""
 
-#: src/Admin/manage-event/EventTickets.js:339
+#: src/Admin/manage-event/EventTickets.js:344
 msgid "Failed to export ticket configuration."
 msgstr ""
 
-#: src/Admin/manage-event/EventTickets.js:349
+#: src/Admin/manage-event/EventTickets.js:354
 msgid "Importing will replace all current ticket types, sale periods, prices, and settings for this event. Continue?"
 msgstr ""
 
-#: src/Admin/manage-event/EventTickets.js:373
+#: src/Admin/manage-event/EventTickets.js:378
 msgid "Invalid file format. Expected a fair-events-tickets export."
 msgstr ""
 
-#: src/Admin/manage-event/EventTickets.js:388
+#: src/Admin/manage-event/EventTickets.js:393
 msgid "Ticket configuration imported successfully."
 msgstr ""
 
-#: src/Admin/manage-event/EventTickets.js:396
+#: src/Admin/manage-event/EventTickets.js:401
 msgid "Failed to import ticket configuration."
 msgstr ""
 
-#: src/Admin/manage-event/EventTickets.js:592
+#: src/Admin/manage-event/EventTickets.js:606
 msgid "Export ticket settings"
 msgstr ""
 
-#: src/Admin/manage-event/EventTickets.js:600
+#: src/Admin/manage-event/EventTickets.js:614
 msgid "Import ticket settings"
 msgstr ""
 
-#: src/Admin/manage-event/EventTickets.js:614
+#: src/Admin/manage-event/EventTickets.js:628
 msgid "Signup price"
 msgstr ""
 
-#: src/Admin/manage-event/EventTickets.js:619
+#: src/Admin/manage-event/EventTickets.js:633
 msgid "Free signup. Enter a price below to charge for this event, or switch to advanced ticketing for multiple ticket types."
 msgstr ""
 
 #. translators: %s: formatted price
-#: src/Admin/manage-event/EventTickets.js:625
+#: src/Admin/manage-event/EventTickets.js:639
 #, js-format
 msgid "Signup price: %s. Group discounts configured in the Groups tab still apply."
 msgstr ""
 
 #. translators: 1: group name, 2: discount, 3: final price
-#: src/Admin/manage-event/EventTickets.js:654
+#: src/Admin/manage-event/EventTickets.js:668
 #, js-format
 msgid "%1$s: %2$s discount → %3$s"
 msgstr ""
 
-#: src/Admin/manage-event/EventTickets.js:680
+#: src/Admin/manage-event/EventTickets.js:694
 msgid "Ticket Prices"
 msgstr ""
 
-#: src/Admin/manage-event/EventTickets.js:688
-#: src/Admin/manage-event/EventTickets.js:821
+#: src/Admin/manage-event/EventTickets.js:702
+#: src/Admin/manage-event/EventTickets.js:835
 msgid "Ticket Type"
 msgstr ""
 
-#: src/Admin/manage-event/EventTickets.js:698
-#: src/Admin/manage-event/EventTickets.js:715
+#: src/Admin/manage-event/EventTickets.js:712
+#: src/Admin/manage-event/EventTickets.js:729
 msgid "(unnamed)"
 msgstr ""
 
-#: src/Admin/manage-event/EventTickets.js:702
-#: src/Admin/manage-event/EventTickets.js:1048
-#: src/Admin/manage-event/EventTickets.js:1258
+#: src/Admin/manage-event/EventTickets.js:716
+#: src/Admin/manage-event/EventTickets.js:1070
+#: src/Admin/manage-event/EventTickets.js:1299
 msgid "Price"
 msgstr ""
 
-#: src/Admin/manage-event/EventTickets.js:760
+#: src/Admin/manage-event/EventTickets.js:774
 msgid "Edit tickets"
 msgstr ""
 
-#: src/Admin/manage-event/EventTickets.js:765
+#: src/Admin/manage-event/EventTickets.js:779
 msgid "Total capacity"
 msgstr ""
 
-#: src/Admin/manage-event/EventTickets.js:770
+#: src/Admin/manage-event/EventTickets.js:784
 msgid "Leave empty for unlimited capacity."
 msgstr ""
 
-#: src/Admin/manage-event/EventTickets.js:778
+#: src/Admin/manage-event/EventTickets.js:792
 msgid "Signup price (EUR)"
 msgstr ""
 
-#: src/Admin/manage-event/EventTickets.js:782
+#: src/Admin/manage-event/EventTickets.js:796
 msgid "Leave empty for free signup. Group discounts (Groups tab) apply to this base price."
 msgstr ""
 
-#: src/Admin/manage-event/EventTickets.js:794
+#: src/Admin/manage-event/EventTickets.js:808
 msgid "Need multiple ticket types or time-based pricing? Switch to advanced ticketing below."
 msgstr ""
 
-#: src/Admin/manage-event/EventTickets.js:807
-#: src/Admin/manage-event/EventTickets.js:1500
+#: src/Admin/manage-event/EventTickets.js:821
+#: src/Admin/manage-event/EventTickets.js:1541
 msgid "Switch to advanced ticketing"
 msgstr ""
 
-#: src/Admin/manage-event/EventTickets.js:828
+#: src/Admin/manage-event/EventTickets.js:842
 msgid "Capacity"
 msgstr ""
 
-#: src/Admin/manage-event/EventTickets.js:836
+#: src/Admin/manage-event/EventTickets.js:850
 msgid "Seats"
 msgstr ""
 
-#: src/Admin/manage-event/EventTickets.js:844
+#: src/Admin/manage-event/EventTickets.js:858
 #: src/Admin/manage-event/ManageEventApp.js:569
 msgid "Groups"
 msgstr ""
 
-#: src/Admin/manage-event/EventTickets.js:909
+#: src/Admin/manage-event/EventTickets.js:866
+msgid "Invitation only"
+msgstr ""
+
+#: src/Admin/manage-event/EventTickets.js:931
 msgid "Period name"
 msgstr ""
 
-#: src/Admin/manage-event/EventTickets.js:940
+#: src/Admin/manage-event/EventTickets.js:962
 msgid "From"
 msgstr ""
 
-#: src/Admin/manage-event/EventTickets.js:991
+#: src/Admin/manage-event/EventTickets.js:1013
 msgid "Until"
 msgstr ""
 
-#: src/Admin/manage-event/EventTickets.js:1040
-#: src/Admin/manage-event/EventTickets.js:1335
-#: src/Admin/manage-event/EventTickets.js:1582
+#: src/Admin/manage-event/EventTickets.js:1062
+#: src/Admin/manage-event/EventTickets.js:1376
+#: src/Admin/manage-event/EventTickets.js:1623
 #: src/Admin/manage-event/GroupRules.js:511
 #: src/Admin/manage-event/PhotoDetail.js:182
 #: src/Admin/sources/components/DataSourceItem.js:228
 msgid "Remove"
 msgstr ""
 
-#: src/Admin/manage-event/EventTickets.js:1067
+#: src/Admin/manage-event/EventTickets.js:1089
 msgid "+ Period"
 msgstr ""
 
-#: src/Admin/manage-event/EventTickets.js:1087
+#: src/Admin/manage-event/EventTickets.js:1109
 msgid "Type name"
 msgstr ""
 
-#: src/Admin/manage-event/EventTickets.js:1111
+#: src/Admin/manage-event/EventTickets.js:1133
 msgid "Unlimited"
 msgstr ""
 
-#: src/Admin/manage-event/EventTickets.js:1168
+#: src/Admin/manage-event/EventTickets.js:1190
 msgid "How many capacity slots this ticket consumes (1 = single, 2 = pair/+1)."
 msgstr ""
 
-#: src/Admin/manage-event/EventTickets.js:1217
+#: src/Admin/manage-event/EventTickets.js:1239
 msgid "All participants"
 msgstr ""
 
-#: src/Admin/manage-event/EventTickets.js:1295
+#: src/Admin/manage-event/EventTickets.js:1336
 msgid "Cap"
 msgstr ""
 
-#: src/Admin/manage-event/EventTickets.js:1367
+#: src/Admin/manage-event/EventTickets.js:1408
 msgid "+ Add Ticket Type"
 msgstr ""
 
-#: src/Admin/manage-event/EventTickets.js:1392
+#: src/Admin/manage-event/EventTickets.js:1433
 msgid "Continues pricing period"
 msgstr ""
 
-#: src/Admin/manage-event/EventTickets.js:1405
+#: src/Admin/manage-event/EventTickets.js:1446
 msgid "Unlimited tickets in pricing period"
 msgstr ""
 
-#: src/Admin/manage-event/EventTickets.js:1421
+#: src/Admin/manage-event/EventTickets.js:1462
 msgid "Per-ticket-type capacity"
 msgstr ""
 
-#: src/Admin/manage-event/EventTickets.js:1425
+#: src/Admin/manage-event/EventTickets.js:1466
 msgid "Show a Capacity input on each ticket type to cap how many can be sold of that type."
 msgstr ""
 
-#: src/Admin/manage-event/EventTickets.js:1438
+#: src/Admin/manage-event/EventTickets.js:1479
 msgid "Multiple pricing periods"
 msgstr ""
 
-#: src/Admin/manage-event/EventTickets.js:1442
+#: src/Admin/manage-event/EventTickets.js:1483
 msgid "Enable time-based pricing with multiple sale periods (e.g. early bird, regular, late). When off, a single flat price applies for the whole sale window."
 msgstr ""
 
-#: src/Admin/manage-event/EventTickets.js:1455
+#: src/Admin/manage-event/EventTickets.js:1496
 msgid "Seats per ticket"
 msgstr ""
 
-#: src/Admin/manage-event/EventTickets.js:1456
+#: src/Admin/manage-event/EventTickets.js:1497
 msgid "Show a Seats input on each ticket type to let one ticket consume more than one capacity slot (e.g. couples or +1 tickets). When off, every ticket counts as 1 seat."
 msgstr ""
 
-#: src/Admin/manage-event/EventTickets.js:1475
+#: src/Admin/manage-event/EventTickets.js:1516
 msgid "Switching back to simple ticketing will remove all ticket types, sale periods, and prices. Continue?"
 msgstr ""
 
-#: src/Admin/manage-event/EventTickets.js:1487
+#: src/Admin/manage-event/EventTickets.js:1528
 msgid "Switch to simple ticketing"
 msgstr ""
 
-#: src/Admin/manage-event/EventTickets.js:1514
+#: src/Admin/manage-event/EventTickets.js:1555
 msgid "Activity Options"
 msgstr ""
 
-#: src/Admin/manage-event/EventTickets.js:1519
+#: src/Admin/manage-event/EventTickets.js:1560
 msgid "Add selectable activity options (checkboxes) shown to participants at signup. Each option has its own price added on top of the base price."
 msgstr ""
 
-#: src/Admin/manage-event/EventTickets.js:1532
+#: src/Admin/manage-event/EventTickets.js:1573
 msgid "Activity name"
 msgstr ""
 
-#: src/Admin/manage-event/EventTickets.js:1548
+#: src/Admin/manage-event/EventTickets.js:1589
 msgid "Price (EUR)"
 msgstr ""
 
-#: src/Admin/manage-event/EventTickets.js:1600
+#: src/Admin/manage-event/EventTickets.js:1641
 msgid "+ Add Option"
 msgstr ""
 
@@ -2482,6 +2536,8 @@ msgid "Add Group"
 msgstr ""
 
 #: src/Admin/manage-event/GroupRules.js:595
+#: src/Admin/manage-invitations/ManageInvitations.js:215
+#: src/Admin/manage-invitations/ManageInvitations.js:306
 msgid "Group"
 msgstr ""
 
@@ -2541,6 +2597,7 @@ msgstr ""
 
 #: src/Admin/manage-event/ImageExports.js:267
 #: src/Admin/manage-event/MergeEventWizard.js:34
+#: src/Admin/manage-invitations/ManageInvitations.js:386
 #: src/Admin/migration-summary/MigrationSummaryApp.js:238
 #: src/Admin/sources/SourcesList.js:287
 #: src/Admin/venues/VenuesApp.js:438
@@ -2596,6 +2653,7 @@ msgid "Failed to toggle occurrence."
 msgstr ""
 
 #: src/Admin/manage-event/ManageEventApp.js:595
+#: src/Admin/manage-invitations/ManageInvitations.js:341
 msgid "Admin"
 msgstr ""
 
@@ -2901,6 +2959,106 @@ msgstr ""
 
 #: src/Admin/manage-event/RecurrenceCalendar.js:347
 msgid "Click to restore this occurrence"
+msgstr ""
+
+#: src/Admin/manage-invitations/ManageInvitations.js:49
+msgid "Failed to load invitation tokens."
+msgstr ""
+
+#: src/Admin/manage-invitations/ManageInvitations.js:92
+msgid "Please select a group."
+msgstr ""
+
+#. translators: %d: number of tokens created
+#: src/Admin/manage-invitations/ManageInvitations.js:118
+#, js-format
+msgid "%d invitation tokens created."
+msgstr ""
+
+#: src/Admin/manage-invitations/ManageInvitations.js:125
+msgid "Failed to create tokens."
+msgstr ""
+
+#: src/Admin/manage-invitations/ManageInvitations.js:134
+msgid "Delete this invitation token?"
+msgstr ""
+
+#: src/Admin/manage-invitations/ManageInvitations.js:147
+msgid "Failed to delete token."
+msgstr ""
+
+#: src/Admin/manage-invitations/ManageInvitations.js:162
+msgid "Link copied to clipboard."
+msgstr ""
+
+#: src/Admin/manage-invitations/ManageInvitations.js:182
+msgid "← Back to Tickets"
+msgstr ""
+
+#: src/Admin/manage-invitations/ManageInvitations.js:209
+msgid "Create Invitation Tokens"
+msgstr ""
+
+#: src/Admin/manage-invitations/ManageInvitations.js:220
+msgid "— Select group —"
+msgstr ""
+
+#: src/Admin/manage-invitations/ManageInvitations.js:234
+msgid "Mode"
+msgstr ""
+
+#: src/Admin/manage-invitations/ManageInvitations.js:239
+msgid "Unlinked tokens"
+msgstr ""
+
+#: src/Admin/manage-invitations/ManageInvitations.js:246
+msgid "One per group member"
+msgstr ""
+
+#: src/Admin/manage-invitations/ManageInvitations.js:257
+msgid "Count"
+msgstr ""
+
+#: src/Admin/manage-invitations/ManageInvitations.js:267
+msgid "Max uses each"
+msgstr ""
+
+#: src/Admin/manage-invitations/ManageInvitations.js:280
+msgid "Create"
+msgstr ""
+
+#. translators: %d: number of tokens
+#: src/Admin/manage-invitations/ManageInvitations.js:292
+#, js-format
+msgid "Invitation Tokens (%d)"
+msgstr ""
+
+#: src/Admin/manage-invitations/ManageInvitations.js:299
+msgid "No invitation tokens yet."
+msgstr ""
+
+#: src/Admin/manage-invitations/ManageInvitations.js:305
+msgid "Token"
+msgstr ""
+
+#: src/Admin/manage-invitations/ManageInvitations.js:307
+msgid "Inviter"
+msgstr ""
+
+#: src/Admin/manage-invitations/ManageInvitations.js:308
+msgid "Invitee"
+msgstr ""
+
+#: src/Admin/manage-invitations/ManageInvitations.js:309
+msgid "Uses"
+msgstr ""
+
+#: src/Admin/manage-invitations/ManageInvitations.js:310
+msgid "Created"
+msgstr ""
+
+#: src/Admin/manage-invitations/ManageInvitations.js:371
+msgid "Copy link"
 msgstr ""
 
 #: src/Admin/migration-summary/MigrationSummaryApp.js:27
