@@ -237,7 +237,9 @@ $has_priced_options = ! empty(
 // 0    = a price exists but the viewer gets it for free (e.g. 100% group
 // discount, or base price explicitly set to 0) → show "… for free"
 $signup_price = null;
-if ( ! $has_ticket_types && $pricing_event_date_id && class_exists( \FairEvents\Services\EventSignupPricing::class ) ) {
+if ( $has_ticket_types ) {
+	$signup_price = $ticket_types_for_display[0]['price'];
+} elseif ( $pricing_event_date_id && class_exists( \FairEvents\Services\EventSignupPricing::class ) ) {
 	$signup_price = \FairEvents\Services\EventSignupPricing::resolve_price(
 		(int) $pricing_event_date_id,
 		$participant ? (int) $participant->id : null
@@ -322,7 +324,7 @@ $render_ticket_types = static function () use ( $ticket_types_for_display, $has_
 			$classes .= ' fair-audience-ticket-type-invited';
 		}
 		echo '<label class="' . esc_attr( $classes ) . '" for="' . $radio_id . '">';
-		echo '<input type="radio" name="ticket_type_id" id="' . $radio_id . '" value="' . (int) $tt['id'] . '"';
+		echo '<input type="radio" name="ticket_type_id" id="' . $radio_id . '" value="' . (int) $tt['id'] . '" data-ticket-price="' . ( null !== $tt['price'] ? esc_attr( number_format( (float) $tt['price'], 2, '.', '' ) ) : '' ) . '"';
 		if ( $first ) {
 			echo ' checked';
 			$first = false;

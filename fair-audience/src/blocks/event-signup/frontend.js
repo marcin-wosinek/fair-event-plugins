@@ -75,7 +75,17 @@ const CSS_PREFIX = 'fair-audience-signup';
 			return;
 		}
 
-		const basePrice = parseFloat(basePriceStr);
+		let basePrice = parseFloat(basePriceStr);
+
+		const selectedTicketType = block.querySelector(
+			'input[name="ticket_type_id"]:checked'
+		);
+		if (
+			selectedTicketType &&
+			selectedTicketType.dataset.ticketPrice !== ''
+		) {
+			basePrice = parseFloat(selectedTicketType.dataset.ticketPrice || 0);
+		}
 
 		const checkedOptions = block.querySelectorAll(
 			'input[name="ticket_option_ids[]"]:checked'
@@ -121,6 +131,15 @@ const CSS_PREFIX = 'fair-audience-signup';
 	 * @param {HTMLElement} block The block element
 	 */
 	function initializeOptionTotals(block) {
+		const ticketTypeRadios = block.querySelectorAll(
+			'input[name="ticket_type_id"]'
+		);
+		ticketTypeRadios.forEach(function (radio) {
+			radio.addEventListener('change', function () {
+				updateButtonTotal(block);
+			});
+		});
+
 		const optionCheckboxes = block.querySelectorAll(
 			'input[name="ticket_option_ids[]"]'
 		);
