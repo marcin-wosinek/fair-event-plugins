@@ -6,8 +6,11 @@ import {
 	Card,
 	CardBody,
 	CardHeader,
+	Modal,
 	SearchControl,
 	CheckboxControl,
+	TextControl,
+	TextareaControl,
 	Spinner,
 	Notice,
 } from '@wordpress/components';
@@ -28,6 +31,12 @@ export default function GroupDetail() {
 	const [isLoading, setIsLoading] = useState(true);
 	const [membersLoading, setMembersLoading] = useState(true);
 	const [error, setError] = useState(null);
+
+	// Edit modal state.
+	const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+	const [editName, setEditName] = useState('');
+	const [editDescription, setEditDescription] = useState('');
+	const [isSaving, setIsSaving] = useState(false);
 
 	const [allParticipants, setAllParticipants] = useState([]);
 	const [participantsLoading, setParticipantsLoading] = useState(false);
@@ -149,6 +158,44 @@ export default function GroupDetail() {
 			});
 	};
 
+	const openEditModal = () => {
+		setEditName(group.name);
+		setEditDescription(group.description || '');
+		setIsEditModalOpen(true);
+	};
+
+	const handleSaveGroup = () => {
+		if (!editName.trim()) {
+			return;
+		}
+
+		setIsSaving(true);
+
+		apiFetch({
+			path: `/fair-audience/v1/groups/${groupId}`,
+			method: 'PUT',
+			data: {
+				name: editName.trim(),
+				description: editDescription.trim(),
+			},
+		})
+			.then(() => {
+				setIsEditModalOpen(false);
+				loadGroup();
+			})
+			.catch((err) => {
+				// eslint-disable-next-line no-undef
+				alert(
+					__('Error: ', 'fair-audience') +
+						(err.message ||
+							__('Failed to save group.', 'fair-audience'))
+				);
+			})
+			.finally(() => {
+				setIsSaving(false);
+			});
+	};
+
 	const handleRemoveMember = (participantId) => {
 		if (!groupId) {
 			return;
@@ -216,7 +263,18 @@ export default function GroupDetail() {
 				</a>
 			</p>
 
-			<h1>{group.name}</h1>
+			<div
+				style={{
+					display: 'flex',
+					alignItems: 'center',
+					gap: '8px',
+				}}
+			>
+				<h1 style={{ margin: 0 }}>{group.name}</h1>
+				<Button variant="secondary" icon="edit" onClick={openEditModal}>
+					{__('Edit', 'fair-audience')}
+				</Button>
+			</div>
 			{group.description && (
 				<p style={{ color: '#666' }}>{group.description}</p>
 			)}
@@ -358,6 +416,55 @@ export default function GroupDetail() {
 					</Button>
 				</CardBody>
 			</Card>
+
+			{isEditModalOpen && (
+				<Modal
+					title={__('Edit Group', 'fair-audience')}
+					onRequestClose={() => setIsEditModalOpen(false)}
+					style={{ maxWidth: '500px', width: '100%' }}
+				>
+					<TextControl
+						label={__('Name', 'fair-audience')}
+						value={editName}
+						onChange={setEditName}
+						placeholder={__('Enter group name...', 'fair-audience')}
+					/>
+
+					<TextareaControl
+						label={__('Description', 'fair-audience')}
+						value={editDescription}
+						onChange={setEditDescription}
+						placeholder={__(
+							'Enter group description (optional)...',
+							'fair-audience'
+						)}
+					/>
+
+					<div
+						style={{
+							display: 'flex',
+							justifyContent: 'flex-end',
+							gap: '8px',
+							marginTop: '16px',
+						}}
+					>
+						<Button
+							variant="secondary"
+							onClick={() => setIsEditModalOpen(false)}
+						>
+							{__('Cancel', 'fair-audience')}
+						</Button>
+						<Button
+							variant="primary"
+							onClick={handleSaveGroup}
+							disabled={!editName.trim() || isSaving}
+							isBusy={isSaving}
+						>
+							{__('Update', 'fair-audience')}
+						</Button>
+					</div>
+				</Modal>
+			)}
 		</div>
 	);
 }
