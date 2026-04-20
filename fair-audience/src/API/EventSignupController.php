@@ -839,9 +839,10 @@ class EventSignupController extends WP_REST_Controller {
 			get_the_title( $event_id )
 		);
 
-		// Build line items: base price (when positive) plus each selected option.
+		// Build line items: base price plus each selected option.
+		// Negative amounts represent discounts (e.g. solidarity tickets).
 		$line_items = array();
-		if ( null !== $final_price && $final_price > 0 ) {
+		if ( null !== $final_price && 0.0 !== (float) $final_price ) {
 			$line_items[] = array(
 				'name'     => $line_item_description,
 				'quantity' => 1,
@@ -849,11 +850,13 @@ class EventSignupController extends WP_REST_Controller {
 			);
 		}
 		foreach ( $option_items as $opt ) {
-			$line_items[] = array(
-				'name'     => $opt->name,
-				'quantity' => 1,
-				'amount'   => (float) $opt->price,
-			);
+			if ( 0.0 !== (float) $opt->price ) {
+				$line_items[] = array(
+					'name'     => $opt->name,
+					'quantity' => 1,
+					'amount'   => (float) $opt->price,
+				);
+			}
 		}
 
 		$transaction_id = \FairPayment\API\TransactionAPI::create_transaction(

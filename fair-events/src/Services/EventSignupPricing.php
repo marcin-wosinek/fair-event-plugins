@@ -26,7 +26,7 @@ class EventSignupPricing {
 	 * Resolve the effective signup price for a participant.
 	 *
 	 * Returns null when the event date has no signup price configured
-	 * (i.e. legacy free signups). Returns a float >= 0 otherwise.
+	 * (i.e. legacy free signups). Returns a float otherwise (may be negative).
 	 *
 	 * @param int      $event_date_id  Event date ID.
 	 * @param int|null $participant_id fair-audience participant ID, or null for anonymous.
@@ -57,8 +57,8 @@ class EventSignupPricing {
 
 		$base_price = (float) $event_date->signup_price;
 
-		if ( $base_price <= 0 || empty( $participant_id ) ) {
-			return max( 0.0, $base_price );
+		if ( empty( $participant_id ) ) {
+			return $base_price;
 		}
 
 		$rules = GroupPricingRule::get_all_by_event_date_id( $pricing_event_date_id );
@@ -85,7 +85,7 @@ class EventSignupPricing {
 			}
 		}
 
-		return max( 0.0, $best_price );
+		return $best_price;
 	}
 
 	/**
@@ -133,8 +133,8 @@ class EventSignupPricing {
 		}
 		$base_price = (float) $price_row->price;
 
-		if ( $base_price <= 0 || empty( $participant_id ) ) {
-			return max( 0.0, $base_price );
+		if ( empty( $participant_id ) ) {
+			return $base_price;
 		}
 
 		$rules = GroupPricingRule::get_all_by_event_date_id( $ticket_type->event_date_id );
@@ -155,7 +155,7 @@ class EventSignupPricing {
 			}
 		}
 
-		return max( 0.0, $best_price );
+		return $best_price;
 	}
 
 	/**

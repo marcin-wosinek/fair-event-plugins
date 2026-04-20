@@ -225,7 +225,7 @@ $has_priced_options = ! empty(
 	array_filter(
 		$ticket_options_for_display,
 		static function ( $opt ) {
-			return $opt['price'] > 0;
+			return 0 != $opt['price'];
 		}
 	)
 );
@@ -304,6 +304,8 @@ $render_ticket_types = static function () use ( $ticket_types_for_display, $has_
 		if ( $show_ticket_type_prices && null !== $tt['price'] ) {
 			if ( $tt['price'] > 0 ) {
 				$tt_label .= ' — €' . number_format_i18n( (float) $tt['price'], 2 );
+			} elseif ( $tt['price'] < 0 ) {
+				$tt_label .= ' — -€' . number_format_i18n( abs( (float) $tt['price'] ), 2 );
 			} else {
 				$tt_label .= ' — ' . __( 'free', 'fair-audience' );
 			}
@@ -350,6 +352,8 @@ $render_ticket_options = static function () use ( $ticket_options_for_display, $
 		if ( $show_option_prices ) {
 			if ( $opt['price'] > 0 ) {
 				$opt_label .= ' — €' . number_format_i18n( $opt['price'], 2 );
+			} elseif ( $opt['price'] < 0 ) {
+				$opt_label .= ' — -€' . number_format_i18n( abs( $opt['price'] ), 2 );
 			} else {
 				$opt_label .= ' — ' . __( 'free', 'fair-audience' );
 			}
