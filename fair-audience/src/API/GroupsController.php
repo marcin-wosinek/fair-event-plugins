@@ -141,6 +141,19 @@ class GroupsController extends WP_REST_Controller {
 			)
 		);
 
+		// POST /fair-audience/v1/groups/{id}/duplicate.
+		register_rest_route(
+			$this->namespace,
+			'/' . $this->rest_base . '/(?P<id>\d+)/duplicate',
+			array(
+				array(
+					'methods'             => WP_REST_Server::CREATABLE,
+					'callback'            => array( $this, 'duplicate_item' ),
+					'permission_callback' => array( $this, 'create_item_permissions_check' ),
+				),
+			)
+		);
+
 		// DELETE /fair-audience/v1/groups/{id}/participants/{participant_id}.
 		register_rest_route(
 			$this->namespace,
@@ -343,6 +356,71 @@ class GroupsController extends WP_REST_Controller {
 		return rest_ensure_response(
 			array(
 				'message' => __( 'Group deleted successfully.', 'fair-audience' ),
+			)
+		);
+	}
+
+	/**
+	 * Duplicate a group with all its members.
+	 *
+	 * @param WP_REST_Request $request Request object.
+	 * @return WP_REST_Response|WP_Error Response object or error.
+	 */
+	public function duplicate_item( $request ) {
+		$id    = $request->get_param( 'id' );
+		$group = $this->repository->get_by_id( $id );
+
+		if ( ! $group ) {
+			return new WP_Error(
+				'group_not_found',
+				__( 'Group not found.', 'fair-audience' ),
+				array( 'status' => 404 )
+			);
+		}
+
+		$copy_name = $request->get_param( 'name' );
+		if ( empty( $copy_name ) ) {
+			$copy_name = sprintf(
+				/* translators: %s: original group name */
+				__( '%s (copy)', 'fair-audience' ),
+				$group->name
+			);
+		}
+
+		$existing = $this->repository->get_by_name( $copy_name );
+		if ( $existing ) {
+			return new WP_Error(
+				'name_exists',
+				__( 'A group with this name already exists.', 'fair-audience' ),
+				array( 'status' => 400 )
+			);
+		}
+
+		$new_group = new Group();
+		$new_group->populate(
+			array(
+				'name'        => $copy_name,
+				'description' => $group->description,
+			)
+		);
+
+		if ( ! $new_group->save() ) {
+			return new WP_Error(
+				'duplication_failed',
+				__( 'Failed to duplicate group.', 'fair-audience' ),
+				array( 'status' => 500 )
+			);
+		}
+
+		$members = $this->group_participant_repository->get_by_group( $id );
+		foreach ( $members as $member ) {
+			$this->group_participant_repository->add_participant_to_group( $new_group->id, $member->participant_id );
+		}
+
+		return rest_ensure_response(
+			array(
+				'id'      => $new_group->id,
+				'message' => __( 'Group duplicated successfully.', 'fair-audience' ),
 			)
 		);
 	}

@@ -1,4 +1,4 @@
-import { __ } from '@wordpress/i18n';
+import { __, sprintf } from '@wordpress/i18n';
 import { useState, useEffect, useCallback, useMemo } from '@wordpress/element';
 import apiFetch from '@wordpress/api-fetch';
 import {
@@ -47,6 +47,12 @@ export default function Groups() {
 	const [groupName, setGroupName] = useState('');
 	const [groupDescription, setGroupDescription] = useState('');
 	const [isSaving, setIsSaving] = useState(false);
+
+	// Duplicate modal state.
+	const [isDuplicateModalOpen, setIsDuplicateModalOpen] = useState(false);
+	const [duplicatingGroup, setDuplicatingGroup] = useState(null);
+	const [duplicateName, setDuplicateName] = useState('');
+	const [isDuplicating, setIsDuplicating] = useState(false);
 
 	// Define fields configuration for DataViews.
 	const fields = useMemo(
@@ -184,6 +190,49 @@ export default function Groups() {
 			});
 	};
 
+	// Open duplicate modal.
+	const openDuplicateModal = (group) => {
+		setDuplicatingGroup(group);
+		setDuplicateName(
+			sprintf(
+				/* translators: %s: original group name */
+				__('%s (copy)', 'fair-audience'),
+				group.name
+			)
+		);
+		setIsDuplicateModalOpen(true);
+	};
+
+	// Handle duplicate group submission.
+	const handleDuplicateGroup = () => {
+		if (!duplicateName.trim()) {
+			return;
+		}
+
+		setIsDuplicating(true);
+
+		apiFetch({
+			path: `/fair-audience/v1/groups/${duplicatingGroup.id}/duplicate`,
+			method: 'POST',
+			data: { name: duplicateName.trim() },
+		})
+			.then(() => {
+				setIsDuplicateModalOpen(false);
+				loadGroups();
+			})
+			.catch((err) => {
+				// eslint-disable-next-line no-undef
+				alert(
+					__('Error: ', 'fair-audience') +
+						(err.message ||
+							__('Failed to duplicate group.', 'fair-audience'))
+				);
+			})
+			.finally(() => {
+				setIsDuplicating(false);
+			});
+	};
+
 	// Handle delete group.
 	const handleDeleteGroup = (group) => {
 		// eslint-disable-next-line no-undef
@@ -232,6 +281,13 @@ export default function Groups() {
 				label: __('Edit', 'fair-audience'),
 				icon: 'edit',
 				callback: ([item]) => openEditModal(item),
+				supportsBulk: false,
+			},
+			{
+				id: 'duplicate',
+				label: __('Duplicate', 'fair-audience'),
+				icon: 'admin-page',
+				callback: ([item]) => openDuplicateModal(item),
 				supportsBulk: false,
 			},
 			{
@@ -331,6 +387,46 @@ export default function Groups() {
 							{editingGroup
 								? __('Update', 'fair-audience')
 								: __('Create', 'fair-audience')}
+						</Button>
+					</div>
+				</Modal>
+			)}
+
+			{/* Duplicate Group Modal */}
+			{isDuplicateModalOpen && (
+				<Modal
+					title={__('Duplicate Group', 'fair-audience')}
+					onRequestClose={() => setIsDuplicateModalOpen(false)}
+					style={{ maxWidth: '500px', width: '100%' }}
+				>
+					<TextControl
+						label={__('New group name', 'fair-audience')}
+						value={duplicateName}
+						onChange={setDuplicateName}
+						placeholder={__('Enter group name...', 'fair-audience')}
+					/>
+
+					<div
+						style={{
+							display: 'flex',
+							justifyContent: 'flex-end',
+							gap: '8px',
+							marginTop: '16px',
+						}}
+					>
+						<Button
+							variant="secondary"
+							onClick={() => setIsDuplicateModalOpen(false)}
+						>
+							{__('Cancel', 'fair-audience')}
+						</Button>
+						<Button
+							variant="primary"
+							onClick={handleDuplicateGroup}
+							disabled={!duplicateName.trim() || isDuplicating}
+							isBusy={isDuplicating}
+						>
+							{__('Duplicate', 'fair-audience')}
 						</Button>
 					</div>
 				</Modal>
