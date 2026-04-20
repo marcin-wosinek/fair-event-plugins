@@ -219,6 +219,20 @@
 	flex-shrink: 0;
 }
 
+/* Invitation notice */
+.fair-audience-invitation-notice {
+	background-color: #d1ecf1;
+	color: #0c5460;
+	border: 1px solid #bee5eb;
+	border-radius: 4px;
+	padding: 12px 16px;
+	margin-bottom: 16px;
+}
+
+.fair-audience-invitation-notice p {
+	margin: 0;
+}
+
 /* Ticket types (radio buttons) */
 .fair-audience-ticket-types {
 	border: 1px solid #ccc;

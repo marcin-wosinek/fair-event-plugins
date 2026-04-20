@@ -37,6 +37,10 @@
 		"showOptionPrices": {
 			"type": "boolean",
 			"default": true
+		},
+		"showInviterName": {
+			"type": "boolean",
+			"default": false
 		}
 	},
 	"editorScript": "file:./editor.js",

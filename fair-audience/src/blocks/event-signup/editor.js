@@ -20,6 +20,7 @@ registerBlockType('fair-audience/event-signup', {
 			requestLinkButtonText,
 			successMessage,
 			showOptionPrices,
+			showInviterName,
 		} = attributes;
 
 		const blockProps = useBlockProps({
@@ -104,6 +105,17 @@ registerBlockType('fair-audience/event-signup', {
 							checked={showOptionPrices}
 							onChange={(value) =>
 								setAttributes({ showOptionPrices: value })
+							}
+						/>
+						<ToggleControl
+							label={__('Show inviter name', 'fair-audience')}
+							help={__(
+								'When a visitor arrives via an invitation link, show the name of the person who invited them.',
+								'fair-audience'
+							)}
+							checked={showInviterName}
+							onChange={(value) =>
+								setAttributes({ showInviterName: value })
 							}
 						/>
 					</PanelBody>

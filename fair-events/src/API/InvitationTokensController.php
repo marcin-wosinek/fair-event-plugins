@@ -102,9 +102,16 @@ class InvitationTokensController extends WP_REST_Controller {
 							'type'     => 'integer',
 							'required' => true,
 						),
+						'mode'          => array(
+							'type'     => 'string',
+							'required' => false,
+							'default'  => 'unlinked',
+							'enum'     => array( 'unlinked', 'per_member' ),
+						),
 						'count'         => array(
 							'type'     => 'integer',
-							'required' => true,
+							'required' => false,
+							'default'  => 5,
 							'minimum'  => 1,
 							'maximum'  => 100,
 						),
@@ -384,19 +391,46 @@ class InvitationTokensController extends WP_REST_Controller {
 	public function bulk_create( $request ) {
 		$event_date_id = (int) $request->get_param( 'event_date_id' );
 		$group_id      = (int) $request->get_param( 'group_id' );
-		$count         = min( 100, max( 1, (int) $request->get_param( 'count' ) ) );
+		$mode          = $request->get_param( 'mode' );
 		$max_uses      = max( 1, (int) $request->get_param( 'max_uses' ) );
 
 		$created = array();
-		for ( $i = 0; $i < $count; $i++ ) {
-			$token = InvitationToken::create(
-				$event_date_id,
-				$group_id,
-				0,
-				$max_uses
-			);
-			if ( $token ) {
-				$created[] = $token->to_array();
+
+		if ( 'per_member' === $mode ) {
+			if ( ! class_exists( \FairAudience\Database\GroupParticipantRepository::class ) ) {
+				return new WP_Error(
+					'missing_dependency',
+					__( 'Fair Audience plugin is required.', 'fair-events' ),
+					array( 'status' => 500 )
+				);
+			}
+
+			$group_participant_repo = new \FairAudience\Database\GroupParticipantRepository();
+			$memberships            = $group_participant_repo->get_by_group( $group_id );
+
+			foreach ( $memberships as $membership ) {
+				$token = InvitationToken::create(
+					$event_date_id,
+					$group_id,
+					(int) $membership->participant_id,
+					$max_uses
+				);
+				if ( $token ) {
+					$created[] = $token->to_array();
+				}
+			}
+		} else {
+			$count = min( 100, max( 1, (int) $request->get_param( 'count' ) ) );
+			for ( $i = 0; $i < $count; $i++ ) {
+				$token = InvitationToken::create(
+					$event_date_id,
+					$group_id,
+					0,
+					$max_uses
+				);
+				if ( $token ) {
+					$created[] = $token->to_array();
+				}
 			}
 		}
 

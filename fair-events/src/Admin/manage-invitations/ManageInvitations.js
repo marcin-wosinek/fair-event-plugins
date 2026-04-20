@@ -32,6 +32,7 @@ export default function ManageInvitations() {
 	const [success, setSuccess] = useState(null);
 
 	const [bulkGroupId, setBulkGroupId] = useState('');
+	const [bulkMode, setBulkMode] = useState('unlinked');
 	const [bulkCount, setBulkCount] = useState('5');
 	const [bulkMaxUses, setBulkMaxUses] = useState('1');
 	const [creating, setCreating] = useState(false);
@@ -97,14 +98,18 @@ export default function ManageInvitations() {
 		setSuccess(null);
 
 		try {
+			const requestData = {
+				group_id: parseInt(bulkGroupId, 10),
+				mode: bulkMode,
+				max_uses: parseInt(bulkMaxUses, 10) || 1,
+			};
+			if (bulkMode === 'unlinked') {
+				requestData.count = parseInt(bulkCount, 10) || 5;
+			}
 			const created = await apiFetch({
 				path: `/fair-events/v1/event-dates/${eventDateId}/invitation-tokens/bulk`,
 				method: 'POST',
-				data: {
-					group_id: parseInt(bulkGroupId, 10),
-					count: parseInt(bulkCount, 10) || 5,
-					max_uses: parseInt(bulkMaxUses, 10) || 1,
-				},
+				data: requestData,
 			});
 
 			setSuccess(
@@ -225,15 +230,39 @@ export default function ManageInvitations() {
 								]}
 								__nextHasNoMarginBottom
 							/>
-							<TextControl
-								label={__('Count', 'fair-events')}
-								type="number"
-								min="1"
-								max="100"
-								value={bulkCount}
-								onChange={setBulkCount}
+							<SelectControl
+								label={__('Mode', 'fair-events')}
+								value={bulkMode}
+								onChange={setBulkMode}
+								options={[
+									{
+										label: __(
+											'Unlinked tokens',
+											'fair-events'
+										),
+										value: 'unlinked',
+									},
+									{
+										label: __(
+											'One per group member',
+											'fair-events'
+										),
+										value: 'per_member',
+									},
+								]}
 								__nextHasNoMarginBottom
 							/>
+							{bulkMode === 'unlinked' && (
+								<TextControl
+									label={__('Count', 'fair-events')}
+									type="number"
+									min="1"
+									max="100"
+									value={bulkCount}
+									onChange={setBulkCount}
+									__nextHasNoMarginBottom
+								/>
+							)}
 							<TextControl
 								label={__('Max uses each', 'fair-events')}
 								type="number"

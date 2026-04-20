@@ -135,6 +135,19 @@ if ( ! empty( $invitation_token ) && class_exists( \FairEvents\Models\Invitation
 	}
 }
 
+// Resolve inviter name for display when invitation is valid.
+$inviter_name = '';
+$show_inviter = $attributes['showInviterName'] ?? false;
+if ( $valid_invitation_token && $show_inviter ) {
+	if ( class_exists( \FairAudience\Database\ParticipantRepository::class ) ) {
+		$inviter_repo = new \FairAudience\Database\ParticipantRepository();
+		$inviter      = $inviter_repo->get_by_id( $valid_invitation_token->inviter_participant_id );
+		if ( $inviter ) {
+			$inviter_name = trim( $inviter->name . ' ' . ( $inviter->surname ?? '' ) );
+		}
+	}
+}
+
 // Resolve ticket types for this event date, if any. When present, the
 // signup form switches from a single-price button to a radio picker of
 // ticket types, each with its own price and seat count.
@@ -181,6 +194,7 @@ if ( $pricing_event_date_id && class_exists( \FairEvents\Models\TicketType::clas
 			'name'             => $tt->name,
 			'price'            => $tt_price,
 			'seats_per_ticket' => (int) $tt->seats_per_ticket,
+			'invitation_only'  => (bool) $tt->invitation_only,
 		);
 	}
 }
@@ -254,10 +268,29 @@ if ( null !== $signup_price ) {
  * Render the ticket-type radio fieldset. No-op when the event date has no
  * ticket types configured. First enabled option is pre-selected.
  */
-$render_ticket_types = static function () use ( $ticket_types_for_display, $has_ticket_types, $form_id ) {
+$render_ticket_types = static function () use ( $ticket_types_for_display, $has_ticket_types, $form_id, $valid_invitation_token, $inviter_name ) {
 	if ( ! $has_ticket_types ) {
 		return;
 	}
+
+	// Show invitation notice above ticket types when arriving via invitation link.
+	if ( $valid_invitation_token ) {
+		echo '<div class="fair-audience-invitation-notice">';
+		if ( $inviter_name ) {
+			printf(
+				'<p>%s</p>',
+				sprintf(
+					/* translators: %s: inviter's name */
+					esc_html__( 'You have been invited by %s.', 'fair-audience' ),
+					'<strong>' . esc_html( $inviter_name ) . '</strong>'
+				)
+			);
+		} else {
+			echo '<p>' . esc_html__( 'You have been invited to this event.', 'fair-audience' ) . '</p>';
+		}
+		echo '</div>';
+	}
+
 	echo '<fieldset class="fair-audience-ticket-types">';
 	echo '<legend>' . esc_html__( 'Choose ticket type', 'fair-audience' ) . '</legend>';
 	$first = true;
@@ -277,8 +310,15 @@ $render_ticket_types = static function () use ( $ticket_types_for_display, $has_
 				$tt['seats_per_ticket']
 			);
 		}
+		if ( $tt['invitation_only'] ) {
+			$tt_label .= ' — ' . __( 'invitation', 'fair-audience' );
+		}
 		$radio_id = esc_attr( $form_id ) . '-tt-' . (int) $tt['id'];
-		echo '<label class="fair-audience-ticket-type-option" for="' . $radio_id . '">';
+		$classes  = 'fair-audience-ticket-type-option';
+		if ( $tt['invitation_only'] ) {
+			$classes .= ' fair-audience-ticket-type-invited';
+		}
+		echo '<label class="' . esc_attr( $classes ) . '" for="' . $radio_id . '">';
 		echo '<input type="radio" name="ticket_type_id" id="' . $radio_id . '" value="' . (int) $tt['id'] . '"';
 		if ( $first ) {
 			echo ' checked';
