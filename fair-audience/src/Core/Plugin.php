@@ -175,6 +175,7 @@ class Plugin {
 		$vars[] = 'fee_payment';
 		$vars[] = 'edit_audience_signup';
 		$vars[] = 'photo_upload';
+		$vars[] = 'invitation';
 		return $vars;
 	}
 

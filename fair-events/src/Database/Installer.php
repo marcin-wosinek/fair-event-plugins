@@ -71,6 +71,9 @@ class Installer {
 		$sql = Schema::get_ticket_type_group_restrictions_table_sql();
 		dbDelta( $sql );
 
+		$sql = Schema::get_invitation_tokens_table_sql();
+		dbDelta( $sql );
+
 		// Run migration if upgrading from pre-1.0.0
 		if ( version_compare( $current_version, '1.0.0', '<' ) ) {
 			self::migrate_to_1_0_0();
@@ -171,6 +174,13 @@ class Installer {
 
 		// Version 3.4.0 - Ticket type group restrictions table (no data migration needed, table created by dbDelta).
 
+		// Run migration if upgrading from pre-3.5.0 (add invitation_only to ticket_types).
+		if ( version_compare( $current_version, '3.5.0', '<' ) ) {
+			self::migrate_to_3_5_0();
+		}
+
+		// Version 3.5.0 - Invitation tokens table (no data migration needed, table created by dbDelta).
+
 		// Update database version
 		Schema::update_db_version( Schema::DB_VERSION );
 	}
@@ -266,6 +276,12 @@ class Installer {
 			// Version 3.3.0 - Ticket options table (no data migration needed, table created by dbDelta).
 
 			// Version 3.4.0 - Ticket type group restrictions table (no data migration needed, table created by dbDelta).
+
+			if ( version_compare( $current_version, '3.5.0', '<' ) ) {
+				self::migrate_to_3_5_0();
+			}
+
+			// Version 3.5.0 - Invitation tokens table (no data migration needed, table created by dbDelta).
 
 			// Install/update tables
 			self::install();
@@ -1085,6 +1101,33 @@ class Installer {
 			$wpdb->query(
 				$wpdb->prepare(
 					'ALTER TABLE %i ADD COLUMN seats_per_ticket INT UNSIGNED NOT NULL DEFAULT 1 AFTER capacity',
+					$table_name
+				)
+			);
+		}
+	}
+
+	/**
+	 * Migrate to version 3.5.0 - Add invitation_only column to ticket_types table.
+	 *
+	 * @return void
+	 */
+	private static function migrate_to_3_5_0() {
+		global $wpdb;
+
+		$table_name = $wpdb->prefix . 'fair_events_ticket_types';
+
+		$column_exists = $wpdb->get_results(
+			$wpdb->prepare(
+				"SHOW COLUMNS FROM %i LIKE 'invitation_only'",
+				$table_name
+			)
+		);
+
+		if ( empty( $column_exists ) ) {
+			$wpdb->query(
+				$wpdb->prepare(
+					'ALTER TABLE %i ADD COLUMN invitation_only TINYINT(1) NOT NULL DEFAULT 0 AFTER seats_per_ticket',
 					$table_name
 				)
 			);

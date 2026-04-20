@@ -70,6 +70,7 @@ $form_id = 'fair-audience-signup-' . wp_unique_id();
 
 // Determine user state.
 $participant_token = get_query_var( 'participant_token', '' );
+$invitation_token  = get_query_var( 'invitation', '' );
 $user_id           = get_current_user_id();
 
 $state            = 'anonymous';
@@ -125,6 +126,15 @@ if ( $is_valid_post_type ) {
 	}
 }
 
+// Validate invitation token if present.
+$valid_invitation_token = null;
+if ( ! empty( $invitation_token ) && class_exists( \FairEvents\Models\InvitationToken::class ) ) {
+	$invitation_obj = \FairEvents\Models\InvitationToken::get_by_token( $invitation_token );
+	if ( $invitation_obj && $invitation_obj->is_valid() ) {
+		$valid_invitation_token = $invitation_obj;
+	}
+}
+
 // Resolve ticket types for this event date, if any. When present, the
 // signup form switches from a single-price button to a radio picker of
 // ticket types, each with its own price and seat count.
@@ -145,9 +155,15 @@ if ( $pricing_event_date_id && class_exists( \FairEvents\Models\TicketType::clas
 	}
 
 	foreach ( $raw_types as $tt ) {
-		// Skip ticket types restricted to groups the participant doesn't belong to.
+		// Invitation-only ticket types: only show when a valid invitation token is present.
+		if ( $tt->invitation_only && ! $valid_invitation_token ) {
+			continue;
+		}
+
+		// Skip ticket types restricted to groups the participant doesn't belong to
+		// (but skip this check for invitation-only types unlocked by a valid token).
 		$allowed_groups = $tt_group_restrictions[ $tt->id ] ?? array();
-		if ( ! empty( $allowed_groups ) ) {
+		if ( ! empty( $allowed_groups ) && ! $tt->invitation_only ) {
 			if ( empty( $participant_group_ids ) || empty( array_intersect( $allowed_groups, $participant_group_ids ) ) ) {
 				continue;
 			}
@@ -316,6 +332,7 @@ $wrapper_attributes = get_block_wrapper_attributes(
 		'data-is-signed-up'       => $is_signed_up ? 'true' : 'false',
 		'data-participant-token'  => esc_attr( $participant_token ),
 		'data-success-message'    => esc_attr( $success_message ),
+		'data-invitation-token'   => esc_attr( $valid_invitation_token ? $invitation_token : '' ),
 		'data-base-price'         => null !== $signup_price ? esc_attr( (string) $signup_price ) : ( $has_priced_options ? '0' : '' ),
 		'data-signup-base-text'   => esc_attr( $base_signup_button_text ),
 		'data-register-base-text' => esc_attr( $base_register_button_text ),

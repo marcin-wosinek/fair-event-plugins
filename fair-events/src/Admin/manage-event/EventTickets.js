@@ -303,6 +303,7 @@ export default function EventTickets({
 						? t.capacity
 						: null,
 				seats_per_ticket: t.seats_per_ticket || 1,
+				invitation_only: t.invitation_only || false,
 				group_ids: t.group_ids || [],
 			})),
 			sale_periods: getEffectiveSalePeriods().map((p) => ({
@@ -412,6 +413,7 @@ export default function EventTickets({
 				name: '',
 				capacity: null,
 				seats_per_ticket: 1,
+				invitation_only: false,
 				group_ids: [],
 				sort_order: ticketTypes.length,
 			},
@@ -847,6 +849,14 @@ export default function EventTickets({
 															)}
 														</th>
 													)}
+													{hasGroups && (
+														<th>
+															{__(
+																'Invitation only',
+																'fair-events'
+															)}
+														</th>
+													)}
 													{salePeriods.map(
 														(period, pIndex) => {
 															const isContinuous =
@@ -1221,6 +1231,25 @@ export default function EventTickets({
 																	/>
 																</td>
 															)}
+															{hasGroups && (
+																<td>
+																	<CheckboxControl
+																		checked={
+																			type.invitation_only ||
+																			false
+																		}
+																		onChange={(
+																			v
+																		) =>
+																			updateTicketType(
+																				tIndex,
+																				'invitation_only',
+																				v
+																			)
+																		}
+																	/>
+																</td>
+															)}
 															{salePeriods.map(
 																(
 																	period,
@@ -1354,7 +1383,7 @@ export default function EventTickets({
 															(settings.show_seats_per_ticket
 																? 1
 																: 0) +
-															(hasGroups ? 1 : 0)
+															(hasGroups ? 2 : 0)
 														}
 													>
 														<Button

@@ -258,6 +258,15 @@ class Plugin {
 			}
 		);
 
+		// Invitation Tokens controller.
+		add_action(
+			'rest_api_init',
+			function () {
+				$controller = new \FairEvents\API\InvitationTokensController();
+				$controller->register_routes();
+			}
+		);
+
 		// Event Duplication controller.
 		add_action(
 			'rest_api_init',

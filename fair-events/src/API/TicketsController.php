@@ -283,8 +283,9 @@ class TicketsController extends WP_REST_Controller {
 				? absint( $item['capacity'] )
 				: null;
 			$seats_per_ticket = isset( $item['seats_per_ticket'] ) ? max( 1, absint( $item['seats_per_ticket'] ) ) : 1;
+			$invitation_only  = ! empty( $item['invitation_only'] );
 
-			$new_id = TicketType::create( $event_date_id, $name, $capacity, $index, $seats_per_ticket );
+			$new_id = TicketType::create( $event_date_id, $name, $capacity, $index, $seats_per_ticket, $invitation_only );
 			if ( $new_id ) {
 				$type_ids_by_index[ $index ] = (int) $new_id;
 
@@ -401,6 +402,7 @@ class TicketsController extends WP_REST_Controller {
 				? absint( $item['capacity'] )
 				: null;
 			$seats_per_ticket = isset( $item['seats_per_ticket'] ) ? max( 1, absint( $item['seats_per_ticket'] ) ) : 1;
+			$invitation_only  = ! empty( $item['invitation_only'] );
 			$sort_order       = $index;
 			$group_ids        = isset( $item['group_ids'] ) && is_array( $item['group_ids'] ) ? array_map( 'absint', $item['group_ids'] ) : array();
 
@@ -411,12 +413,13 @@ class TicketsController extends WP_REST_Controller {
 						'name'             => $name,
 						'capacity'         => $capacity,
 						'seats_per_ticket' => $seats_per_ticket,
+						'invitation_only'  => $invitation_only,
 						'sort_order'       => $sort_order,
 					)
 				);
 				TicketTypeGroupRestriction::sync_for_ticket_type( (int) $item['id'], $group_ids );
 			} else {
-				$new_id = TicketType::create( $event_date_id, $name, $capacity, $sort_order, $seats_per_ticket );
+				$new_id = TicketType::create( $event_date_id, $name, $capacity, $sort_order, $seats_per_ticket, $invitation_only );
 				if ( $new_id && ! empty( $group_ids ) ) {
 					TicketTypeGroupRestriction::sync_for_ticket_type( (int) $new_id, $group_ids );
 				}

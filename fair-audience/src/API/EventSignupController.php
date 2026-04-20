@@ -156,6 +156,12 @@ class EventSignupController extends WP_REST_Controller {
 							'required'          => false,
 							'sanitize_callback' => 'sanitize_text_field',
 						),
+						'invitation_token'  => array(
+							'type'              => 'string',
+							'required'          => false,
+							'default'           => '',
+							'sanitize_callback' => 'sanitize_text_field',
+						),
 					),
 				),
 			)
@@ -278,6 +284,12 @@ class EventSignupController extends WP_REST_Controller {
 							'required'          => false,
 							'default'           => false,
 							'sanitize_callback' => 'rest_sanitize_boolean',
+						),
+						'invitation_token'  => array(
+							'type'              => 'string',
+							'required'          => false,
+							'default'           => '',
+							'sanitize_callback' => 'sanitize_text_field',
 						),
 					),
 				),
@@ -418,6 +430,7 @@ class EventSignupController extends WP_REST_Controller {
 		$event_id          = $request->get_param( 'event_id' );
 		$participant_token = $request->get_param( 'participant_token' );
 		$ticket_type_id    = $request->get_param( 'ticket_type_id' ) ?: null;
+		$invitation_token  = $request->get_param( 'invitation_token' ) ?: '';
 		$user_id           = get_current_user_id();
 		$raw_option_ids    = $request->get_param( 'ticket_option_ids' ) ?: array();
 
@@ -460,8 +473,8 @@ class EventSignupController extends WP_REST_Controller {
 			);
 		}
 
-		// Validate ticket type group restrictions.
-		$group_error = $this->validate_ticket_type_group_restriction( $ticket_type_id, $participant->id );
+		// Validate ticket type group restrictions (and invitation tokens for invitation-only types).
+		$group_error = $this->validate_ticket_type_group_restriction( $ticket_type_id, $participant->id, $invitation_token );
 		if ( is_wp_error( $group_error ) ) {
 			return $group_error;
 		}
@@ -521,12 +534,25 @@ class EventSignupController extends WP_REST_Controller {
 	/**
 	 * Validate that a participant is allowed to use a group-restricted ticket type.
 	 *
-	 * @param int|null $ticket_type_id Ticket type ID, or null if none selected.
-	 * @param int      $participant_id Participant ID.
+	 * @param int|null $ticket_type_id   Ticket type ID, or null if none selected.
+	 * @param int      $participant_id   Participant ID.
+	 * @param string   $invitation_token Optional invitation token string.
 	 * @return WP_Error|null WP_Error if restricted, null if allowed.
 	 */
-	private function validate_ticket_type_group_restriction( $ticket_type_id, $participant_id ) {
-		if ( ! $ticket_type_id || ! class_exists( \FairEvents\Models\TicketTypeGroupRestriction::class ) ) {
+	private function validate_ticket_type_group_restriction( $ticket_type_id, $participant_id, $invitation_token = '' ) {
+		if ( ! $ticket_type_id ) {
+			return null;
+		}
+
+		// Check if this is an invitation-only ticket type.
+		if ( class_exists( \FairEvents\Models\TicketType::class ) ) {
+			$ticket_type = \FairEvents\Models\TicketType::get_by_id( $ticket_type_id );
+			if ( $ticket_type && $ticket_type->invitation_only ) {
+				return $this->validate_invitation_token( $invitation_token, $ticket_type_id, $participant_id );
+			}
+		}
+
+		if ( ! class_exists( \FairEvents\Models\TicketTypeGroupRestriction::class ) ) {
 			return null;
 		}
 
@@ -546,6 +572,45 @@ class EventSignupController extends WP_REST_Controller {
 				array( 'status' => 403 )
 			);
 		}
+
+		return null;
+	}
+
+	/**
+	 * Validate an invitation token for an invitation-only ticket type.
+	 *
+	 * @param string $invitation_token Invitation token string.
+	 * @param int    $ticket_type_id   Ticket type ID.
+	 * @param int    $participant_id   Participant ID (the invitee).
+	 * @return WP_Error|null WP_Error if invalid, null if valid.
+	 */
+	private function validate_invitation_token( $invitation_token, $ticket_type_id, $participant_id ) {
+		if ( empty( $invitation_token ) || ! class_exists( \FairEvents\Models\InvitationToken::class ) ) {
+			return new WP_Error(
+				'invitation_required',
+				__( 'This ticket type requires an invitation link.', 'fair-audience' ),
+				array( 'status' => 403 )
+			);
+		}
+
+		$token = \FairEvents\Models\InvitationToken::get_by_token( $invitation_token );
+		if ( ! $token ) {
+			return new WP_Error(
+				'invalid_invitation',
+				__( 'This invitation link is not valid.', 'fair-audience' ),
+				array( 'status' => 403 )
+			);
+		}
+
+		if ( ! $token->is_valid() ) {
+			return new WP_Error(
+				'invitation_expired',
+				__( 'This invitation link has expired or has been fully used.', 'fair-audience' ),
+				array( 'status' => 410 )
+			);
+		}
+
+		$token->record_use( $participant_id );
 
 		return null;
 	}
@@ -925,13 +990,14 @@ class EventSignupController extends WP_REST_Controller {
 	 * @return WP_REST_Response|WP_Error Response object or error.
 	 */
 	public function register_and_signup( $request ) {
-		$event_id       = $request->get_param( 'event_id' );
-		$name           = $request->get_param( 'name' );
-		$surname        = $request->get_param( 'surname' );
-		$email          = $request->get_param( 'email' );
-		$keep_informed  = $request->get_param( 'keep_informed' );
-		$ticket_type_id = $request->get_param( 'ticket_type_id' ) ?: null;
-		$raw_option_ids = $request->get_param( 'ticket_option_ids' ) ?: array();
+		$event_id         = $request->get_param( 'event_id' );
+		$name             = $request->get_param( 'name' );
+		$surname          = $request->get_param( 'surname' );
+		$email            = $request->get_param( 'email' );
+		$keep_informed    = $request->get_param( 'keep_informed' );
+		$ticket_type_id   = $request->get_param( 'ticket_type_id' ) ?: null;
+		$invitation_token = $request->get_param( 'invitation_token' ) ?: '';
+		$raw_option_ids   = $request->get_param( 'ticket_option_ids' ) ?: array();
 
 		// Validate event exists.
 		$event = get_post( $event_id );
@@ -1032,8 +1098,8 @@ class EventSignupController extends WP_REST_Controller {
 			}
 		}
 
-		// Validate ticket type group restrictions.
-		$group_error = $this->validate_ticket_type_group_restriction( $ticket_type_id, $participant->id );
+		// Validate ticket type group restrictions (and invitation tokens for invitation-only types).
+		$group_error = $this->validate_ticket_type_group_restriction( $ticket_type_id, $participant->id, $invitation_token );
 		if ( is_wp_error( $group_error ) ) {
 			return $group_error;
 		}
