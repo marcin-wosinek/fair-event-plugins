@@ -268,7 +268,10 @@ if ( null !== $signup_price ) {
  * Render the ticket-type radio fieldset. No-op when the event date has no
  * ticket types configured. First enabled option is pre-selected.
  */
-$render_ticket_types = static function () use ( $ticket_types_for_display, $has_ticket_types, $form_id, $valid_invitation_token, $inviter_name ) {
+// Read block attribute to control whether ticket type prices are displayed.
+$show_ticket_type_prices = $attributes['showTicketTypePrices'] ?? true;
+
+$render_ticket_types = static function () use ( $ticket_types_for_display, $has_ticket_types, $form_id, $valid_invitation_token, $inviter_name, $show_ticket_type_prices ) {
 	if ( ! $has_ticket_types ) {
 		return;
 	}
@@ -296,7 +299,7 @@ $render_ticket_types = static function () use ( $ticket_types_for_display, $has_
 	$first = true;
 	foreach ( $ticket_types_for_display as $tt ) {
 		$tt_label = $tt['name'];
-		if ( null !== $tt['price'] ) {
+		if ( $show_ticket_type_prices && null !== $tt['price'] ) {
 			if ( $tt['price'] > 0 ) {
 				$tt_label .= ' — €' . number_format_i18n( (float) $tt['price'], 2 );
 			} else {

@@ -20,6 +20,7 @@ registerBlockType('fair-audience/event-signup', {
 			requestLinkButtonText,
 			successMessage,
 			showOptionPrices,
+			showTicketTypePrices,
 			showInviterName,
 		} = attributes;
 
@@ -92,6 +93,22 @@ registerBlockType('fair-audience/event-signup', {
 								'Message shown after successful signup.',
 								'fair-audience'
 							)}
+						/>
+						<ToggleControl
+							label={__(
+								'Show ticket type prices',
+								'fair-audience'
+							)}
+							help={__(
+								'Display the price of each ticket type next to its label.',
+								'fair-audience'
+							)}
+							checked={showTicketTypePrices}
+							onChange={(value) =>
+								setAttributes({
+									showTicketTypePrices: value,
+								})
+							}
 						/>
 						<ToggleControl
 							label={__(

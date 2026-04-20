@@ -38,6 +38,10 @@
 			"type": "boolean",
 			"default": true
 		},
+		"showTicketTypePrices": {
+			"type": "boolean",
+			"default": true
+		},
 		"showInviterName": {
 			"type": "boolean",
 			"default": false
