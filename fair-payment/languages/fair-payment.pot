@@ -9,7 +9,7 @@ msgstr ""
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"POT-Creation-Date: 2026-03-31T18:25:54+00:00\n"
+"POT-Creation-Date: 2026-04-20T12:38:51+00:00\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "X-Generator: WP-CLI 2.12.0\n"
 "X-Domain: fair-payment\n"
@@ -62,15 +62,15 @@ msgstr ""
 
 #: src/Admin/AdminPages.php:77
 #: src/Admin/AdminPages.php:78
-#: src/Admin/reconciliation/ReconciliationApp.js:186
-#: src/Admin/reconciliation/ReconciliationApp.js:196
+#: src/Admin/reconciliation/ReconciliationApp.js:197
+#: src/Admin/reconciliation/ReconciliationApp.js:207
 msgid "Reconciliation"
 msgstr ""
 
 #: src/Admin/AdminPages.php:88
 #: src/Admin/AdminPages.php:89
 #: src/Admin/AdminPages.php:96
-#: src/Admin/transaction/TransactionPage.js:128
+#: src/Admin/transaction/TransactionPage.js:169
 msgid "Transaction Detail"
 msgstr ""
 
@@ -380,7 +380,7 @@ msgid "Total allocations must match the original entry amount."
 msgstr ""
 
 #: src/API/FinancialEntryController.php:1068
-#: src/Admin/entries/components/SplitModal.js:303
+#: src/Admin/entries/components/SplitModal.js:276
 msgid "Failed to split entry."
 msgstr ""
 
@@ -429,7 +429,7 @@ msgstr ""
 
 #: src/API/FinancialEntryController.php:1317
 #: src/API/FinancialEntryController.php:1415
-#: src/Admin/entries/components/TransferModal.js:371
+#: src/Admin/entries/components/TransferModal.js:188
 msgid "Source and target budgets must be different."
 msgstr ""
 
@@ -486,70 +486,85 @@ msgid "Payment of %1$s %2$s"
 msgstr ""
 
 #: src/API/PaymentEndpoint.php:231
-#: src/API/TransactionAPI.php:117
-#: src/API/TransactionsController.php:158
-#: src/Models/Transaction.php:295
+#: src/API/TransactionAPI.php:137
+#: src/API/TransactionsController.php:205
+#: src/API/TransactionsController.php:282
+#: src/Models/Transaction.php:372
 msgid "Transaction not found."
 msgstr ""
 
-#: src/API/TransactionAPI.php:77
+#: src/API/TransactionAPI.php:97
 msgid "Failed to create transaction."
 msgstr ""
 
-#: src/API/TransactionAPI.php:93
+#: src/API/TransactionAPI.php:113
 msgid "Failed to create line items."
 msgstr ""
 
-#: src/API/TransactionAPI.php:131
+#: src/API/TransactionAPI.php:151
 msgid "Redirect URL is required."
 msgstr ""
 
 #. translators: %d: transaction ID
-#: src/API/TransactionAPI.php:144
+#: src/API/TransactionAPI.php:164
 #, php-format
 msgid "Payment #%d"
 msgstr ""
 
-#: src/API/TransactionAPI.php:181
+#: src/API/TransactionAPI.php:204
 msgid "Failed to update transaction with payment details."
 msgstr ""
 
-#: src/API/TransactionAPI.php:338
+#: src/API/TransactionAPI.php:294
+msgid "This transaction has no Mollie payment ID to sync."
+msgstr ""
+
+#: src/API/TransactionAPI.php:472
 msgid "Line items must be an array."
 msgstr ""
 
-#: src/API/TransactionAPI.php:346
+#: src/API/TransactionAPI.php:480
 msgid "At least one line item is required."
 msgstr ""
 
 #. translators: %d: line item index
-#: src/API/TransactionAPI.php:358
+#: src/API/TransactionAPI.php:492
 #, php-format
 msgid "Line item at index %d must be an array."
 msgstr ""
 
 #. translators: %d: line item index
-#: src/API/TransactionAPI.php:370
+#: src/API/TransactionAPI.php:504
 #, php-format
 msgid "Line item at index %d is missing required \"name\" field."
 msgstr ""
 
 #. translators: %d: line item index
-#: src/API/TransactionAPI.php:382
+#: src/API/TransactionAPI.php:516
 #, php-format
 msgid "Line item at index %d has invalid \"amount\" field."
 msgstr ""
 
 #. translators: %d: line item index
-#: src/API/TransactionAPI.php:394
+#: src/API/TransactionAPI.php:528
 #, php-format
 msgid "Line item at index %d must have positive amount."
 msgstr ""
 
 #. translators: %d: line item index
-#: src/API/TransactionAPI.php:408
+#: src/API/TransactionAPI.php:542
 #, php-format
 msgid "Line item at index %d must have positive quantity."
+msgstr ""
+
+#: src/API/TransactionsController.php:227
+msgid "Expected an array of transactions."
+msgstr ""
+
+#. translators: 1: created count, 2: updated count, 3: skipped count
+#: src/API/TransactionsController.php:260
+#, php-format
+msgid "Imported %1$d new, updated %2$d, skipped %3$d transaction(s)."
 msgstr ""
 
 #: src/API/WebhookEndpoint.php:71
@@ -589,12 +604,12 @@ msgstr ""
 msgid "Payment gateway is not configured. Please configure your Mollie API keys."
 msgstr ""
 
-#: src/Models/Transaction.php:303
+#: src/Models/Transaction.php:380
 msgid "Payment has already been initiated for this transaction. Create a new transaction to retry."
 msgstr ""
 
 #. translators: %s: current transaction status
-#: src/Models/Transaction.php:313
+#: src/Models/Transaction.php:390
 #, php-format
 msgid "Transaction status must be \"draft\" to initiate payment. Current status: %s"
 msgstr ""
@@ -625,6 +640,12 @@ msgstr ""
 #: src/Payment/MolliePaymentHandler.php:295
 #, php-format
 msgid "Failed to retrieve payment: %s"
+msgstr ""
+
+#. translators: %s: error message
+#: src/Payment/MolliePaymentHandler.php:321
+#, php-format
+msgid "Failed to list balance transactions: %s"
 msgstr ""
 
 #: src/Settings/Settings.php:37
@@ -714,24 +735,24 @@ msgstr ""
 
 #: src/Admin/budgets/BudgetsApp.js:284
 #: src/Admin/budgets/BudgetsApp.js:479
-#: src/Admin/transaction/TransactionPage.js:310
+#: src/Admin/transaction/TransactionPage.js:409
 msgid "Name"
 msgstr ""
 
 #: src/Admin/budgets/BudgetsApp.js:287
 #: src/Admin/budgets/BudgetsApp.js:487
-#: src/Admin/entries/components/EntryForm.js:350
+#: src/Admin/entries/components/EntryForm.js:167
 #: src/Admin/entries/components/ImportModal.js:331
 #: src/Admin/entries/components/MatchModal.js:193
-#: src/Admin/entries/components/SplitModal.js:435
-#: src/Admin/entries/components/TransferModal.js:331
+#: src/Admin/entries/components/SplitModal.js:408
+#: src/Admin/entries/components/TransferModal.js:148
 #: src/Admin/entries/EntriesApp.js:821
-#: src/Admin/reconciliation/ReconciliationApp.js:260
-#: src/Admin/reconciliation/ReconciliationApp.js:569
-#: src/Admin/reconciliation/ReconciliationApp.js:757
-#: src/Admin/transaction/TransactionPage.js:262
-#: src/Admin/transaction/TransactionPage.js:312
-#: src/Admin/transactions/TransactionsApp.js:466
+#: src/Admin/reconciliation/ReconciliationApp.js:283
+#: src/Admin/reconciliation/ReconciliationApp.js:596
+#: src/Admin/reconciliation/ReconciliationApp.js:784
+#: src/Admin/transaction/TransactionPage.js:361
+#: src/Admin/transaction/TransactionPage.js:411
+#: src/Admin/transactions/TransactionsApp.js:423
 msgid "Description"
 msgstr ""
 
@@ -747,8 +768,8 @@ msgstr ""
 
 #: src/Admin/budgets/BudgetsApp.js:315
 #: src/Admin/entries/components/MatchModal.js:215
-#: src/Admin/reconciliation/ReconciliationApp.js:290
-#: src/Admin/reconciliation/ReconciliationApp.js:632
+#: src/Admin/reconciliation/ReconciliationApp.js:316
+#: src/Admin/reconciliation/ReconciliationApp.js:659
 msgid "No description"
 msgstr ""
 
@@ -779,7 +800,7 @@ msgid "Entries without a budget category"
 msgstr ""
 
 #: src/Admin/budgets/BudgetsApp.js:438
-#: src/Admin/transaction/TransactionPage.js:320
+#: src/Admin/transaction/TransactionPage.js:419
 msgid "Total"
 msgstr ""
 
@@ -792,11 +813,11 @@ msgid "Optional description for this budget category"
 msgstr ""
 
 #: src/Admin/budgets/BudgetsApp.js:506
-#: src/Admin/entries/components/EntryForm.js:392
+#: src/Admin/entries/components/EntryForm.js:209
 #: src/Admin/entries/components/ImportModal.js:390
 #: src/Admin/entries/components/MatchModal.js:252
-#: src/Admin/entries/components/SplitModal.js:526
-#: src/Admin/entries/components/TransferModal.js:398
+#: src/Admin/entries/components/SplitModal.js:499
+#: src/Admin/entries/components/TransferModal.js:215
 msgid "Cancel"
 msgstr ""
 
@@ -808,142 +829,119 @@ msgstr ""
 msgid "Create Budget"
 msgstr ""
 
-#: src/Admin/entries/components/EntryForm.js:59
-#: src/Admin/entries/components/EntryForm.js:86
-#: src/Admin/entries/components/SplitModal.js:455
-#: src/Admin/entries/components/TransferModal.js:59
-#: src/Admin/entries/components/TransferModal.js:86
-#: src/Admin/entries/EntriesApp.js:648
-#: src/Admin/entries/EntriesApp.js:672
-#: src/Admin/entries/EntriesApp.js:836
-msgid "Event"
-msgstr ""
-
-#: src/Admin/entries/components/EntryForm.js:76
-#: src/Admin/entries/components/SplitModal.js:73
-#: src/Admin/entries/components/TransferModal.js:76
-msgid "Clear"
-msgstr ""
-
-#: src/Admin/entries/components/EntryForm.js:94
-#: src/Admin/entries/components/MatchModal.js:138
-#: src/Admin/entries/components/MatchModal.js:153
-#: src/Admin/entries/components/SplitModal.js:87
-#: src/Admin/entries/components/TransferModal.js:94
-msgid "Search"
-msgstr ""
-
-#: src/Admin/entries/components/EntryForm.js:101
-#: src/Admin/entries/components/TransferModal.js:101
-msgid "Manual URL"
-msgstr ""
-
-#: src/Admin/entries/components/EntryForm.js:110
-#: src/Admin/entries/components/SplitModal.js:103
-#: src/Admin/entries/components/TransferModal.js:110
-msgid "Search events..."
-msgstr ""
-
-#: src/Admin/entries/components/EntryForm.js:185
-#: src/Admin/entries/components/SplitModal.js:179
-#: src/Admin/entries/components/TransferModal.js:185
-msgid "https://example.com/event"
-msgstr ""
-
-#: src/Admin/entries/components/EntryForm.js:190
-#: src/Admin/entries/components/TransferModal.js:190
-msgid "Enter the event URL and press Tab or click away"
-msgstr ""
-
-#: src/Admin/entries/components/EntryForm.js:272
+#: src/Admin/entries/components/EntryForm.js:89
 msgid "Failed to save entry."
 msgstr ""
 
-#: src/Admin/entries/components/EntryForm.js:280
-#: src/Admin/entries/components/SplitModal.js:237
+#: src/Admin/entries/components/EntryForm.js:97
+#: src/Admin/entries/components/SplitModal.js:210
 msgid "-- No Budget --"
 msgstr ""
 
-#: src/Admin/entries/components/EntryForm.js:291
+#: src/Admin/entries/components/EntryForm.js:108
 msgid "Edit Financial Entry"
 msgstr ""
 
-#: src/Admin/entries/components/EntryForm.js:292
+#: src/Admin/entries/components/EntryForm.js:109
 msgid "Add Financial Entry"
 msgstr ""
 
-#: src/Admin/entries/components/EntryForm.js:309
+#: src/Admin/entries/components/EntryForm.js:126
 #: src/Admin/entries/components/ImportModal.js:325
 #: src/Admin/entries/EntriesApp.js:684
 #: src/Admin/entries/EntriesApp.js:809
-#: src/Admin/reconciliation/ReconciliationApp.js:257
+#: src/Admin/reconciliation/ReconciliationApp.js:280
 msgid "Type"
 msgstr ""
 
-#: src/Admin/entries/components/EntryForm.js:313
+#: src/Admin/entries/components/EntryForm.js:130
 #: src/Admin/entries/components/ImportModal.js:352
-#: src/Admin/entries/components/SplitModal.js:345
+#: src/Admin/entries/components/SplitModal.js:318
 #: src/Admin/entries/EntriesApp.js:695
 #: src/Admin/entries/EntriesApp.js:909
 #: src/Admin/entries/EntriesApp.js:1337
 msgid "Cost"
 msgstr ""
 
-#: src/Admin/entries/components/EntryForm.js:317
+#: src/Admin/entries/components/EntryForm.js:134
 #: src/Admin/entries/components/ImportModal.js:356
-#: src/Admin/entries/components/SplitModal.js:346
+#: src/Admin/entries/components/SplitModal.js:319
 #: src/Admin/entries/EntriesApp.js:699
 #: src/Admin/entries/EntriesApp.js:913
 #: src/Admin/entries/EntriesApp.js:1341
 msgid "Income"
 msgstr ""
 
-#: src/Admin/entries/components/EntryForm.js:327
+#: src/Admin/entries/components/EntryForm.js:144
 #: src/Admin/entries/components/ImportModal.js:328
 #: src/Admin/entries/components/MatchModal.js:192
-#: src/Admin/entries/components/SplitModal.js:406
-#: src/Admin/entries/components/TransferModal.js:308
+#: src/Admin/entries/components/SplitModal.js:379
+#: src/Admin/entries/components/TransferModal.js:125
 #: src/Admin/entries/EntriesApp.js:815
-#: src/Admin/reconciliation/ReconciliationApp.js:254
-#: src/Admin/reconciliation/ReconciliationApp.js:557
-#: src/Admin/reconciliation/ReconciliationApp.js:751
-#: src/Admin/transaction/TransactionPage.js:171
-#: src/Admin/transactions/TransactionsApp.js:449
+#: src/Admin/reconciliation/ReconciliationApp.js:277
+#: src/Admin/reconciliation/ReconciliationApp.js:584
+#: src/Admin/reconciliation/ReconciliationApp.js:778
+#: src/Admin/transaction/TransactionPage.js:270
+#: src/Admin/transactions/TransactionsApp.js:406
 #: src/blocks/simple-payment/index.js:35
 msgid "Amount"
 msgstr ""
 
-#: src/Admin/entries/components/EntryForm.js:336
-#: src/Admin/entries/components/TransferModal.js:317
+#: src/Admin/entries/components/EntryForm.js:153
+#: src/Admin/entries/components/TransferModal.js:134
 msgid "Enter amount in EUR"
 msgstr ""
 
-#: src/Admin/entries/components/EntryForm.js:340
+#: src/Admin/entries/components/EntryForm.js:157
 #: src/Admin/entries/components/ImportModal.js:322
 #: src/Admin/entries/components/MatchModal.js:191
-#: src/Admin/entries/components/TransferModal.js:321
+#: src/Admin/entries/components/TransferModal.js:138
 #: src/Admin/entries/EntriesApp.js:803
-#: src/Admin/reconciliation/ReconciliationApp.js:251
-#: src/Admin/reconciliation/ReconciliationApp.js:551
-#: src/Admin/reconciliation/ReconciliationApp.js:745
-#: src/Admin/transactions/TransactionsApp.js:471
+#: src/Admin/reconciliation/ReconciliationApp.js:274
+#: src/Admin/reconciliation/ReconciliationApp.js:578
+#: src/Admin/reconciliation/ReconciliationApp.js:772
+#: src/Admin/transactions/TransactionsApp.js:428
 msgid "Date"
 msgstr ""
 
-#: src/Admin/entries/components/EntryForm.js:355
+#: src/Admin/entries/components/EntryForm.js:172
 msgid "Optional description for this entry"
 msgstr ""
 
-#: src/Admin/entries/components/EntryForm.js:363
+#: src/Admin/entries/components/EntryForm.js:180
 msgid "Budget Category"
 msgstr ""
 
-#: src/Admin/entries/components/EntryForm.js:405
+#: src/Admin/entries/components/EntryForm.js:222
 msgid "Update Entry"
 msgstr ""
 
-#: src/Admin/entries/components/EntryForm.js:406
+#: src/Admin/entries/components/EntryForm.js:223
 msgid "Create Entry"
+msgstr ""
+
+#: src/Admin/entries/components/EventUrlField.js:57
+#: src/Admin/entries/components/EventUrlField.js:84
+#: src/Admin/entries/components/SplitModal.js:428
+#: src/Admin/entries/EntriesApp.js:648
+#: src/Admin/entries/EntriesApp.js:672
+#: src/Admin/entries/EntriesApp.js:836
+msgid "Event"
+msgstr ""
+
+#: src/Admin/entries/components/EventUrlField.js:74
+#: src/Admin/entries/components/SplitModal.js:74
+msgid "Clear"
+msgstr ""
+
+#: src/Admin/entries/components/EventUrlField.js:91
+#: src/Admin/entries/components/SplitModal.js:85
+msgid "Search events or paste a URL..."
+msgstr ""
+
+#: src/Admin/entries/components/EventUrlField.js:107
+#: src/Admin/entries/components/SplitModal.js:101
+msgid "Use this URL"
 msgstr ""
 
 #: src/Admin/entries/components/ImportModal.js:47
@@ -1008,7 +1006,7 @@ msgstr ""
 
 #: src/Admin/entries/components/ImportModal.js:403
 #: src/Admin/entries/EntriesApp.js:607
-#: src/Admin/transactions/TransactionsApp.js:388
+#: src/Admin/transactions/TransactionsApp.js:345
 msgid "Import"
 msgstr ""
 
@@ -1033,6 +1031,11 @@ msgstr ""
 msgid "Entry:"
 msgstr ""
 
+#: src/Admin/entries/components/MatchModal.js:138
+#: src/Admin/entries/components/MatchModal.js:153
+msgid "Search"
+msgstr ""
+
 #: src/Admin/entries/components/MatchModal.js:141
 msgid "Search by description or Mollie ID..."
 msgstr ""
@@ -1046,15 +1049,15 @@ msgid "No matching transactions found. Try adjusting your search."
 msgstr ""
 
 #: src/Admin/entries/components/MatchModal.js:194
-#: src/Admin/reconciliation/ReconciliationApp.js:575
-#: src/Admin/reconciliation/ReconciliationApp.js:763
-#: src/Admin/transactions/TransactionsApp.js:445
+#: src/Admin/reconciliation/ReconciliationApp.js:602
+#: src/Admin/reconciliation/ReconciliationApp.js:790
+#: src/Admin/transactions/TransactionsApp.js:402
 msgid "Mollie ID"
 msgstr ""
 
 #: src/Admin/entries/components/MatchModal.js:196
-#: src/Admin/reconciliation/ReconciliationApp.js:266
-#: src/Admin/reconciliation/ReconciliationApp.js:773
+#: src/Admin/reconciliation/ReconciliationApp.js:289
+#: src/Admin/reconciliation/ReconciliationApp.js:800
 msgid "Action"
 msgstr ""
 
@@ -1063,100 +1066,96 @@ msgstr ""
 msgid "Match"
 msgstr ""
 
-#: src/Admin/entries/components/SplitModal.js:94
-msgid "URL"
-msgstr ""
-
-#: src/Admin/entries/components/SplitModal.js:321
+#: src/Admin/entries/components/SplitModal.js:294
 #: src/Admin/entries/EntriesApp.js:1157
 #: src/Admin/entries/EntriesApp.js:1232
 msgid "Edit Split"
 msgstr ""
 
-#: src/Admin/entries/components/SplitModal.js:322
-#: src/Admin/entries/components/SplitModal.js:540
+#: src/Admin/entries/components/SplitModal.js:295
+#: src/Admin/entries/components/SplitModal.js:513
 msgid "Split Entry"
 msgstr ""
 
-#: src/Admin/entries/components/SplitModal.js:339
+#: src/Admin/entries/components/SplitModal.js:312
 msgid "Amount:"
 msgstr ""
 
-#: src/Admin/entries/components/SplitModal.js:343
+#: src/Admin/entries/components/SplitModal.js:316
 msgid "Type:"
 msgstr ""
 
-#: src/Admin/entries/components/SplitModal.js:349
+#: src/Admin/entries/components/SplitModal.js:322
 msgid "Date:"
 msgstr ""
 
-#: src/Admin/entries/components/SplitModal.js:356
+#: src/Admin/entries/components/SplitModal.js:329
 msgid "Description:"
 msgstr ""
 
-#: src/Admin/entries/components/SplitModal.js:391
+#: src/Admin/entries/components/SplitModal.js:364
 #: src/Admin/entries/EntriesApp.js:634
 #: src/Admin/entries/EntriesApp.js:828
 msgid "Budget"
 msgstr ""
 
-#: src/Admin/entries/components/SplitModal.js:429
+#: src/Admin/entries/components/SplitModal.js:402
 msgid "Remove"
 msgstr ""
 
-#: src/Admin/entries/components/SplitModal.js:478
+#: src/Admin/entries/components/SplitModal.js:451
 msgid "+ Add Row"
 msgstr ""
 
-#: src/Admin/entries/components/SplitModal.js:490
+#: src/Admin/entries/components/SplitModal.js:463
 msgid "Allocated:"
 msgstr ""
 
-#: src/Admin/entries/components/SplitModal.js:500
+#: src/Admin/entries/components/SplitModal.js:473
 msgid "Remaining:"
 msgstr ""
 
-#: src/Admin/entries/components/SplitModal.js:517
+#: src/Admin/entries/components/SplitModal.js:490
 msgid "Unsplit"
 msgstr ""
 
-#: src/Admin/entries/components/SplitModal.js:539
+#: src/Admin/entries/components/SplitModal.js:512
 msgid "Update Split"
 msgstr ""
 
-#: src/Admin/entries/components/TransferModal.js:235
+#: src/Admin/entries/components/TransferModal.js:52
 msgid "-- Select Budget --"
 msgstr ""
 
-#: src/Admin/entries/components/TransferModal.js:279
+#: src/Admin/entries/components/TransferModal.js:96
 msgid "Failed to save transfer."
 msgstr ""
 
-#: src/Admin/entries/components/TransferModal.js:290
+#: src/Admin/entries/components/TransferModal.js:107
 msgid "Edit Transfer"
 msgstr ""
 
-#: src/Admin/entries/components/TransferModal.js:291
+#: src/Admin/entries/components/TransferModal.js:108
 msgid "New Transfer"
 msgstr ""
 
-#: src/Admin/entries/components/TransferModal.js:336
+#: src/Admin/entries/components/TransferModal.js:153
 msgid "Optional description for this transfer"
 msgstr ""
 
-#: src/Admin/entries/components/TransferModal.js:343
+#: src/Admin/entries/components/TransferModal.js:160
 msgid "From Budget (Source)"
 msgstr ""
 
-#: src/Admin/entries/components/TransferModal.js:355
+#: src/Admin/entries/components/TransferModal.js:172
 msgid "To Budget (Target)"
 msgstr ""
 
-#: src/Admin/entries/components/TransferModal.js:414
+#: src/Admin/entries/components/TransferModal.js:231
 msgid "Update Transfer"
 msgstr ""
 
-#: src/Admin/entries/components/TransferModal.js:415
+#: src/Admin/entries/components/TransferModal.js:232
 msgid "Create Transfer"
 msgstr ""
 
@@ -1337,12 +1336,12 @@ msgid "Split"
 msgstr ""
 
 #: src/Admin/entries/EntriesApp.js:1267
-#: src/Admin/reconciliation/ReconciliationApp.js:823
+#: src/Admin/reconciliation/ReconciliationApp.js:850
 msgid "Unmatch"
 msgstr ""
 
 #: src/Admin/entries/EntriesApp.js:1511
-#: src/Admin/transactions/TransactionsApp.js:595
+#: src/Admin/transactions/TransactionsApp.js:568
 msgid "Previous"
 msgstr ""
 
@@ -1352,133 +1351,141 @@ msgid "Page %1$d of %2$d"
 msgstr ""
 
 #: src/Admin/entries/EntriesApp.js:1539
-#: src/Admin/transactions/TransactionsApp.js:612
+#: src/Admin/transactions/TransactionsApp.js:585
 msgid "Next"
 msgstr ""
 
-#: src/Admin/reconciliation/ReconciliationApp.js:59
+#: src/Admin/reconciliation/ReconciliationApp.js:70
 msgid "Failed to load reconciliation data."
 msgstr ""
 
-#: src/Admin/reconciliation/ReconciliationApp.js:113
+#: src/Admin/reconciliation/ReconciliationApp.js:124
 msgid "Transactions matched successfully."
 msgstr ""
 
-#: src/Admin/reconciliation/ReconciliationApp.js:122
+#: src/Admin/reconciliation/ReconciliationApp.js:133
 msgid "Failed to match transactions."
 msgstr ""
 
-#: src/Admin/reconciliation/ReconciliationApp.js:138
+#: src/Admin/reconciliation/ReconciliationApp.js:149
 msgid "Transaction unmatched successfully."
 msgstr ""
 
-#: src/Admin/reconciliation/ReconciliationApp.js:144
+#: src/Admin/reconciliation/ReconciliationApp.js:155
 msgid "Failed to unmatch transaction."
 msgstr ""
 
-#: src/Admin/reconciliation/ReconciliationApp.js:157
+#: src/Admin/reconciliation/ReconciliationApp.js:168
 msgid "All transactions unmatched successfully."
 msgstr ""
 
-#: src/Admin/reconciliation/ReconciliationApp.js:163
+#: src/Admin/reconciliation/ReconciliationApp.js:174
 msgid "Failed to unmatch transactions."
 msgstr ""
 
-#: src/Admin/reconciliation/ReconciliationApp.js:231
+#: src/Admin/reconciliation/ReconciliationApp.js:242
 msgid "Unmatched Bank Entries"
 msgstr ""
 
-#: src/Admin/reconciliation/ReconciliationApp.js:238
+#: src/Admin/reconciliation/ReconciliationApp.js:248
+msgid "Filter by description"
+msgstr ""
+
+#: src/Admin/reconciliation/ReconciliationApp.js:254
+msgid "Type to filter…"
+msgstr ""
+
+#: src/Admin/reconciliation/ReconciliationApp.js:261
 msgid "All bank entries are matched."
 msgstr ""
 
-#: src/Admin/reconciliation/ReconciliationApp.js:314
+#: src/Admin/reconciliation/ReconciliationApp.js:340
 msgid "Selected"
 msgstr ""
 
-#: src/Admin/reconciliation/ReconciliationApp.js:318
+#: src/Admin/reconciliation/ReconciliationApp.js:344
 msgid "Select"
 msgstr ""
 
-#: src/Admin/reconciliation/ReconciliationApp.js:338
-#: src/Admin/reconciliation/ReconciliationApp.js:666
+#: src/Admin/reconciliation/ReconciliationApp.js:365
+#: src/Admin/reconciliation/ReconciliationApp.js:693
 msgid "Match Transactions"
 msgstr ""
 
-#: src/Admin/reconciliation/ReconciliationApp.js:352
+#: src/Admin/reconciliation/ReconciliationApp.js:379
 msgid "Matching entry:"
 msgstr ""
 
-#: src/Admin/reconciliation/ReconciliationApp.js:370
+#: src/Admin/reconciliation/ReconciliationApp.js:397
 msgid "Finding suggestions..."
 msgstr ""
 
-#: src/Admin/reconciliation/ReconciliationApp.js:382
+#: src/Admin/reconciliation/ReconciliationApp.js:409
 msgid "Suggestions:"
 msgstr ""
 
-#: src/Admin/reconciliation/ReconciliationApp.js:411
-#: src/Admin/reconciliation/ReconciliationApp.js:475
+#: src/Admin/reconciliation/ReconciliationApp.js:438
+#: src/Admin/reconciliation/ReconciliationApp.js:502
 msgid "transactions"
 msgstr ""
 
-#: src/Admin/reconciliation/ReconciliationApp.js:416
+#: src/Admin/reconciliation/ReconciliationApp.js:443
 msgid "Net:"
 msgstr ""
 
-#: src/Admin/reconciliation/ReconciliationApp.js:424
+#: src/Admin/reconciliation/ReconciliationApp.js:451
 msgid "diff:"
 msgstr ""
 
-#: src/Admin/reconciliation/ReconciliationApp.js:442
+#: src/Admin/reconciliation/ReconciliationApp.js:469
 msgid "Apply"
 msgstr ""
 
-#: src/Admin/reconciliation/ReconciliationApp.js:467
+#: src/Admin/reconciliation/ReconciliationApp.js:494
 msgid "Selected:"
 msgstr ""
 
-#: src/Admin/reconciliation/ReconciliationApp.js:482
+#: src/Admin/reconciliation/ReconciliationApp.js:509
 msgid "Gross total:"
 msgstr ""
 
-#: src/Admin/reconciliation/ReconciliationApp.js:493
+#: src/Admin/reconciliation/ReconciliationApp.js:520
 msgid "Net total (after fees):"
 msgstr ""
 
-#: src/Admin/reconciliation/ReconciliationApp.js:504
+#: src/Admin/reconciliation/ReconciliationApp.js:531
 msgid "Difference from entry:"
 msgstr ""
 
-#: src/Admin/reconciliation/ReconciliationApp.js:521
+#: src/Admin/reconciliation/ReconciliationApp.js:548
 msgid "Confirm Match"
 msgstr ""
 
-#: src/Admin/reconciliation/ReconciliationApp.js:533
+#: src/Admin/reconciliation/ReconciliationApp.js:560
 msgid "No unmatched transactions found."
 msgstr ""
 
-#: src/Admin/reconciliation/ReconciliationApp.js:563
+#: src/Admin/reconciliation/ReconciliationApp.js:590
 msgid "Net"
 msgstr ""
 
-#: src/Admin/reconciliation/ReconciliationApp.js:670
+#: src/Admin/reconciliation/ReconciliationApp.js:697
 msgid "Select a bank entry from the left panel to start matching."
 msgstr ""
 
-#: src/Admin/reconciliation/ReconciliationApp.js:686
+#: src/Admin/reconciliation/ReconciliationApp.js:713
 msgid "Matched Entries"
 msgstr ""
 
-#: src/Admin/reconciliation/ReconciliationApp.js:693
+#: src/Admin/reconciliation/ReconciliationApp.js:720
 msgid "No matched entries yet."
 msgstr ""
 
-#: src/Admin/reconciliation/ReconciliationApp.js:718
+#: src/Admin/reconciliation/ReconciliationApp.js:745
 msgid "matched transactions"
 msgstr ""
 
-#: src/Admin/reconciliation/ReconciliationApp.js:732
+#: src/Admin/reconciliation/ReconciliationApp.js:759
 msgid "Unmatch All"
 msgstr ""
 
@@ -1533,16 +1540,16 @@ msgid "Switched to %s mode."
 msgstr ""
 
 #: src/Admin/settings/ConnectionTab.js:173
-#: src/Admin/transaction/TransactionPage.js:211
+#: src/Admin/transaction/TransactionPage.js:310
 #: src/Admin/transactions/TransactionsApp.js:38
-#: src/Admin/transactions/TransactionsApp.js:560
+#: src/Admin/transactions/TransactionsApp.js:517
 msgid "Test"
 msgstr ""
 
 #: src/Admin/settings/ConnectionTab.js:174
-#: src/Admin/transaction/TransactionPage.js:212
+#: src/Admin/transaction/TransactionPage.js:311
 #: src/Admin/transactions/TransactionsApp.js:37
-#: src/Admin/transactions/TransactionsApp.js:564
+#: src/Admin/transactions/TransactionsApp.js:521
 msgid "Live"
 msgstr ""
 
@@ -1601,9 +1608,9 @@ msgid "Token expires: %s"
 msgstr ""
 
 #: src/Admin/settings/ConnectionTab.js:360
-#: src/Admin/transaction/TransactionPage.js:196
-#: src/Admin/transactions/TransactionsApp.js:351
-#: src/Admin/transactions/TransactionsApp.js:464
+#: src/Admin/transaction/TransactionPage.js:295
+#: src/Admin/transactions/TransactionsApp.js:308
+#: src/Admin/transactions/TransactionsApp.js:421
 msgid "Mode"
 msgstr ""
 
@@ -1679,105 +1686,132 @@ msgstr ""
 msgid "Advanced"
 msgstr ""
 
-#: src/Admin/transaction/TransactionPage.js:95
+#: src/Admin/transaction/TransactionPage.js:110
+msgid "Synced with Mollie successfully."
+msgstr ""
+
+#: src/Admin/transaction/TransactionPage.js:114
+msgid "Mollie responded but the settlement fee could not be extracted. See Mollie response below."
+msgstr ""
+
+#: src/Admin/transaction/TransactionPage.js:126
+msgid "Failed to sync with Mollie."
+msgstr ""
+
+#: src/Admin/transaction/TransactionPage.js:136
 msgid "No transaction ID provided."
 msgstr ""
 
-#: src/Admin/transaction/TransactionPage.js:109
+#: src/Admin/transaction/TransactionPage.js:150
 msgid "Failed to load transaction."
 msgstr ""
 
-#: src/Admin/transaction/TransactionPage.js:134
-#: src/Admin/transaction/TransactionPage.js:149
+#: src/Admin/transaction/TransactionPage.js:175
+#: src/Admin/transaction/TransactionPage.js:190
 msgid "Back to Transactions"
 msgstr ""
 
-#: src/Admin/transaction/TransactionPage.js:152
+#: src/Admin/transaction/TransactionPage.js:193
 msgid "Transaction"
 msgstr ""
 
-#: src/Admin/transaction/TransactionPage.js:165
+#: src/Admin/transaction/TransactionPage.js:207
 msgid "Payment Details"
 msgstr ""
 
-#: src/Admin/transaction/TransactionPage.js:176
-#: src/Admin/transactions/TransactionsApp.js:452
-msgid "Mollie Fee"
+#: src/Admin/transaction/TransactionPage.js:217
+msgid "Syncing…"
 msgstr ""
 
-#: src/Admin/transaction/TransactionPage.js:185
-#: src/Admin/transactions/TransactionsApp.js:455
-msgid "Integration Fee"
+#: src/Admin/transaction/TransactionPage.js:218
+msgid "Sync with Mollie"
 msgstr ""
 
-#: src/Admin/transaction/TransactionPage.js:223
-msgid "Status & Timing"
-msgstr ""
-
-#: src/Admin/transaction/TransactionPage.js:229
-#: src/Admin/transactions/TransactionsApp.js:335
-#: src/Admin/transactions/TransactionsApp.js:462
-msgid "Status"
-msgstr ""
-
-#: src/Admin/transaction/TransactionPage.js:236
-msgid "Created"
-msgstr ""
-
-#: src/Admin/transaction/TransactionPage.js:241
-msgid "Payment Initiated"
-msgstr ""
-
-#: src/Admin/transaction/TransactionPage.js:249
-msgid "Updated"
+#: src/Admin/transaction/TransactionPage.js:242
+msgid "See Mollie response"
 msgstr ""
 
 #: src/Admin/transaction/TransactionPage.js:275
-msgid "Metadata"
+#: src/Admin/transactions/TransactionsApp.js:409
+msgid "Mollie Fee"
 msgstr ""
 
-#: src/Admin/transaction/TransactionPage.js:303
-msgid "Line Items"
+#: src/Admin/transaction/TransactionPage.js:284
+#: src/Admin/transactions/TransactionsApp.js:412
+msgid "Integration Fee"
 msgstr ""
 
-#: src/Admin/transaction/TransactionPage.js:315
-msgid "Quantity"
+#: src/Admin/transaction/TransactionPage.js:322
+msgid "Status & Timing"
 msgstr ""
 
-#: src/Admin/transaction/TransactionPage.js:318
-msgid "Unit Amount"
+#: src/Admin/transaction/TransactionPage.js:328
+#: src/Admin/transactions/TransactionsApp.js:292
+#: src/Admin/transactions/TransactionsApp.js:419
+msgid "Status"
+msgstr ""
+
+#: src/Admin/transaction/TransactionPage.js:335
+msgid "Created"
+msgstr ""
+
+#: src/Admin/transaction/TransactionPage.js:340
+msgid "Payment Initiated"
 msgstr ""
 
 #: src/Admin/transaction/TransactionPage.js:348
-msgid "User & Post"
+msgid "Updated"
 msgstr ""
 
-#: src/Admin/transaction/TransactionPage.js:354
-#: src/Admin/transactions/TransactionsApp.js:468
+#: src/Admin/transaction/TransactionPage.js:374
+msgid "Metadata"
+msgstr ""
+
+#: src/Admin/transaction/TransactionPage.js:402
+msgid "Line Items"
+msgstr ""
+
+#: src/Admin/transaction/TransactionPage.js:414
+msgid "Quantity"
+msgstr ""
+
+#: src/Admin/transaction/TransactionPage.js:417
+msgid "Unit Amount"
+msgstr ""
+
+#: src/Admin/transaction/TransactionPage.js:447
+msgid "Person & Post"
+msgstr ""
+
+#: src/Admin/transaction/TransactionPage.js:454
+msgid "Participant"
+msgstr ""
+
+#: src/Admin/transaction/TransactionPage.js:466
 msgid "User"
 msgstr ""
 
-#: src/Admin/transaction/TransactionPage.js:365
+#: src/Admin/transaction/TransactionPage.js:477
 msgid "Post"
 msgstr ""
 
-#: src/Admin/transaction/TransactionPage.js:384
+#: src/Admin/transaction/TransactionPage.js:496
 msgid "URLs & Mollie"
 msgstr ""
 
-#: src/Admin/transaction/TransactionPage.js:391
+#: src/Admin/transaction/TransactionPage.js:503
 msgid "Mollie Payment ID"
 msgstr ""
 
-#: src/Admin/transaction/TransactionPage.js:415
+#: src/Admin/transaction/TransactionPage.js:527
 msgid "Redirect URL"
 msgstr ""
 
-#: src/Admin/transaction/TransactionPage.js:430
+#: src/Admin/transaction/TransactionPage.js:542
 msgid "Webhook URL"
 msgstr ""
 
-#: src/Admin/transaction/TransactionPage.js:445
+#: src/Admin/transaction/TransactionPage.js:557
 msgid "Checkout URL"
 msgstr ""
 
@@ -1822,48 +1856,52 @@ msgid "All modes"
 msgstr ""
 
 #. translators: %d is the number of exported transactions
-#: src/Admin/transactions/TransactionsApp.js:195
+#: src/Admin/transactions/TransactionsApp.js:197
 #, js-format
 msgid "%d transaction(s) exported."
 msgstr ""
 
-#: src/Admin/transactions/TransactionsApp.js:221
+#: src/Admin/transactions/TransactionsApp.js:223
 msgid "Invalid file format. Expected a JSON array."
 msgstr ""
 
-#: src/Admin/transactions/TransactionsApp.js:277
+#: src/Admin/transactions/TransactionsApp.js:234
 msgid "No valid transactions found in the file."
 msgstr ""
 
-#: src/Admin/transactions/TransactionsApp.js:297
+#: src/Admin/transactions/TransactionsApp.js:254
 msgid "Failed to import transactions."
 msgstr ""
 
-#: src/Admin/transactions/TransactionsApp.js:313
+#: src/Admin/transactions/TransactionsApp.js:270
 msgid "Payment Transactions"
 msgstr ""
 
-#: src/Admin/transactions/TransactionsApp.js:318
+#: src/Admin/transactions/TransactionsApp.js:275
 msgid "To enable direct links to Mollie transactions, please configure your Organization ID in the"
 msgstr ""
 
-#: src/Admin/transactions/TransactionsApp.js:323
+#: src/Admin/transactions/TransactionsApp.js:280
 msgid "settings"
 msgstr ""
 
-#: src/Admin/transactions/TransactionsApp.js:373
+#: src/Admin/transactions/TransactionsApp.js:330
 msgid "Export Selected"
 msgstr ""
 
-#: src/Admin/transactions/TransactionsApp.js:424
+#: src/Admin/transactions/TransactionsApp.js:381
 msgid "No transactions found."
 msgstr ""
 
-#: src/Admin/transactions/TransactionsApp.js:442
+#: src/Admin/transactions/TransactionsApp.js:399
 msgid "ID"
 msgstr ""
 
-#: src/Admin/transactions/TransactionsApp.js:506
+#: src/Admin/transactions/TransactionsApp.js:425
+msgid "Person"
+msgstr ""
+
+#: src/Admin/transactions/TransactionsApp.js:463
 msgid "View in Mollie Dashboard"
 msgstr ""
 
