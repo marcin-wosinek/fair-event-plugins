@@ -123,6 +123,16 @@ class AdminPages {
 			array( $this, 'render_source_view_page' )
 		);
 
+		// Manage Invitations page (hidden from menu, accessed via tickets tab)
+		$invitations_hookname = add_submenu_page(
+			'', // Hidden from menu (empty string instead of null for PHP 8.1+ compatibility)
+			__( 'Manage Invitations', 'fair-events' ),
+			__( 'Manage Invitations', 'fair-events' ),
+			'manage_options',
+			'fair-events-manage-invitations',
+			array( $this, 'render_manage_invitations_page' )
+		);
+
 		// Copy Event page (hidden from menu, accessed via row action)
 		$copy_hookname = add_submenu_page(
 			'', // Hidden from menu (empty string instead of null for PHP 8.1+ compatibility)
@@ -136,6 +146,7 @@ class AdminPages {
 		// Set page titles for hidden pages to prevent strip_tags() deprecation warning.
 		$this->set_hidden_page_title( $manage_hookname, __( 'Manage Event', 'fair-events' ) );
 		$this->set_hidden_page_title( $source_view_hookname, __( 'View Source', 'fair-events' ) );
+		$this->set_hidden_page_title( $invitations_hookname, __( 'Manage Invitations', 'fair-events' ) );
 		$this->set_hidden_page_title( $copy_hookname, __( 'Copy Event', 'fair-events' ) );
 
 		// Handle copy event form submission before page render
@@ -367,6 +378,40 @@ class AdminPages {
 			return;
 		}
 
+		// Manage Invitations page (hidden pages use 'admin_page_' prefix).
+		if ( 'admin_page_fair-events-manage-invitations' === $hook ) {
+			$asset_file = include FAIR_EVENTS_PLUGIN_DIR . 'build/admin/manage-invitations/index.asset.php';
+
+			wp_enqueue_script(
+				'fair-events-manage-invitations',
+				FAIR_EVENTS_PLUGIN_URL . 'build/admin/manage-invitations/index.js',
+				$asset_file['dependencies'],
+				$asset_file['version'],
+				true
+			);
+
+			// phpcs:ignore WordPress.Security.NonceVerification.Recommended
+			$event_date_id = isset( $_GET['event_date_id'] ) ? absint( $_GET['event_date_id'] ) : 0;
+
+			wp_localize_script(
+				'fair-events-manage-invitations',
+				'fairEventsManageInvitationsData',
+				array(
+					'eventDateId'    => $event_date_id,
+					'manageEventUrl' => admin_url( 'admin.php?page=fair-events-manage-event' ),
+				)
+			);
+
+			wp_set_script_translations(
+				'fair-events-manage-invitations',
+				'fair-events',
+				FAIR_EVENTS_PLUGIN_DIR . 'build/languages'
+			);
+
+			wp_enqueue_style( 'wp-components' );
+			return;
+		}
+
 		// Manage Event page (hidden pages use 'admin_page_' prefix).
 		if ( 'admin_page_fair-events-manage-event' === $hook ) {
 			wp_enqueue_media();
@@ -405,8 +450,9 @@ class AdminPages {
 
 			// Add audience URL and group pricing flag if fair-audience plugin is active.
 			if ( defined( 'FAIR_AUDIENCE_PLUGIN_DIR' ) ) {
-				$localized_data['audienceUrl']         = admin_url( 'admin.php?page=fair-audience-event-participants&event_date_id=' );
-				$localized_data['groupPricingEnabled'] = true;
+				$localized_data['audienceUrl']          = admin_url( 'admin.php?page=fair-audience-event-participants&event_date_id=' );
+				$localized_data['groupPricingEnabled']  = true;
+				$localized_data['manageInvitationsUrl'] = admin_url( 'admin.php?page=fair-events-manage-invitations&event_date_id=' );
 			}
 
 			// Add payment entries URL if fair-payment plugin is active.
@@ -572,6 +618,16 @@ class AdminPages {
 		?>
 		<div id="fair-events-source-view-root"></div>
 		<?php
+	}
+
+	/**
+	 * Render manage invitations page
+	 *
+	 * @return void
+	 */
+	public function render_manage_invitations_page() {
+		$manage_invitations_page = new ManageInvitationsPage();
+		$manage_invitations_page->render();
 	}
 
 	/**

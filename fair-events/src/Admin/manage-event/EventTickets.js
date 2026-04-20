@@ -54,7 +54,11 @@ export default function EventTickets({
 	const [groups, setGroups] = useState([]);
 	const fileInputRef = useRef(null);
 
+	const manageInvitationsUrl =
+		window.fairEventsManageEventData?.manageInvitationsUrl || '';
+
 	const hasAdvancedTickets = ticketTypes.length > 0 || salePeriods.length > 0;
+	const hasInvitationTickets = ticketTypes.some((t) => t.invitation_only);
 	const hasGroups = groups.length > 0;
 	const groupNameById = Object.fromEntries(groups.map((g) => [g.id, g.name]));
 	const groupIdByName = Object.fromEntries(groups.map((g) => [g.name, g.id]));
@@ -586,6 +590,14 @@ export default function EventTickets({
 			)}
 
 			<HStack spacing={2} justify="flex-end">
+				{hasInvitationTickets && manageInvitationsUrl && (
+					<Button
+						variant="secondary"
+						href={`${manageInvitationsUrl}${eventDateId}`}
+					>
+						{__('Manage Invitations', 'fair-events')}
+					</Button>
+				)}
 				<Button
 					variant="secondary"
 					onClick={handleExport}

@@ -84,6 +84,59 @@ class InvitationTokensController extends WP_REST_Controller {
 			)
 		);
 
+		// Admin: bulk create invitation tokens.
+		register_rest_route(
+			$this->namespace,
+			'/event-dates/(?P<event_date_id>\d+)/invitation-tokens/bulk',
+			array(
+				array(
+					'methods'             => WP_REST_Server::CREATABLE,
+					'callback'            => array( $this, 'bulk_create' ),
+					'permission_callback' => array( $this, 'admin_permissions_check' ),
+					'args'                => array(
+						'event_date_id' => array(
+							'type'     => 'integer',
+							'required' => true,
+						),
+						'group_id'      => array(
+							'type'     => 'integer',
+							'required' => true,
+						),
+						'count'         => array(
+							'type'     => 'integer',
+							'required' => true,
+							'minimum'  => 1,
+							'maximum'  => 100,
+						),
+						'max_uses'      => array(
+							'type'     => 'integer',
+							'required' => false,
+							'default'  => 1,
+						),
+					),
+				),
+			)
+		);
+
+		// Admin: delete an invitation token.
+		register_rest_route(
+			$this->namespace,
+			'/invitation-tokens/(?P<id>\d+)',
+			array(
+				array(
+					'methods'             => WP_REST_Server::DELETABLE,
+					'callback'            => array( $this, 'delete_token' ),
+					'permission_callback' => array( $this, 'admin_permissions_check' ),
+					'args'                => array(
+						'id' => array(
+							'type'     => 'integer',
+							'required' => true,
+						),
+					),
+				),
+			)
+		);
+
 		// Public: validate an invitation token.
 		register_rest_route(
 			$this->namespace,
@@ -160,9 +213,48 @@ class InvitationTokensController extends WP_REST_Controller {
 		$event_date_id = (int) $request->get_param( 'event_date_id' );
 		$tokens        = InvitationToken::get_all_by_event_date_id( $event_date_id );
 
-		return rest_ensure_response(
-			array_map( fn( $t ) => $t->to_array(), $tokens )
-		);
+		$participant_repo = null;
+		if ( class_exists( \FairAudience\Database\ParticipantRepository::class ) ) {
+			$participant_repo = new \FairAudience\Database\ParticipantRepository();
+		}
+
+		$group_repo = null;
+		if ( class_exists( \FairAudience\Database\GroupRepository::class ) ) {
+			$group_repo = new \FairAudience\Database\GroupRepository();
+		}
+
+		$items = array();
+		foreach ( $tokens as $token ) {
+			$data = $token->to_array();
+
+			$data['inviter_name'] = '';
+			if ( $participant_repo ) {
+				$inviter = $participant_repo->get_by_id( $token->inviter_participant_id );
+				if ( $inviter ) {
+					$data['inviter_name'] = trim( $inviter->name . ' ' . ( $inviter->surname ?? '' ) );
+				}
+			}
+
+			$data['invitee_name'] = '';
+			if ( $participant_repo && $token->invitee_participant_id ) {
+				$invitee = $participant_repo->get_by_id( $token->invitee_participant_id );
+				if ( $invitee ) {
+					$data['invitee_name'] = trim( $invitee->name . ' ' . ( $invitee->surname ?? '' ) );
+				}
+			}
+
+			$data['group_name'] = '';
+			if ( $group_repo ) {
+				$group = $group_repo->get_by_id( $token->group_id );
+				if ( $group ) {
+					$data['group_name'] = $group->name;
+				}
+			}
+
+			$items[] = $data;
+		}
+
+		return rest_ensure_response( $items );
 	}
 
 	/**
@@ -281,6 +373,56 @@ class InvitationTokensController extends WP_REST_Controller {
 				'uses_left'     => $token->max_uses - $token->uses_count,
 			)
 		);
+	}
+
+	/**
+	 * Bulk create invitation tokens (admin).
+	 *
+	 * @param WP_REST_Request $request Request.
+	 * @return WP_REST_Response|WP_Error
+	 */
+	public function bulk_create( $request ) {
+		$event_date_id = (int) $request->get_param( 'event_date_id' );
+		$group_id      = (int) $request->get_param( 'group_id' );
+		$count         = min( 100, max( 1, (int) $request->get_param( 'count' ) ) );
+		$max_uses      = max( 1, (int) $request->get_param( 'max_uses' ) );
+
+		$created = array();
+		for ( $i = 0; $i < $count; $i++ ) {
+			$token = InvitationToken::create(
+				$event_date_id,
+				$group_id,
+				0,
+				$max_uses
+			);
+			if ( $token ) {
+				$created[] = $token->to_array();
+			}
+		}
+
+		return rest_ensure_response( $created );
+	}
+
+	/**
+	 * Delete an invitation token (admin).
+	 *
+	 * @param WP_REST_Request $request Request.
+	 * @return WP_REST_Response|WP_Error
+	 */
+	public function delete_token( $request ) {
+		$id    = (int) $request->get_param( 'id' );
+		$token = InvitationToken::get_by_id( $id );
+
+		if ( ! $token ) {
+			return new WP_Error(
+				'not_found',
+				__( 'Token not found.', 'fair-events' ),
+				array( 'status' => 404 )
+			);
+		}
+
+		$token->delete();
+		return rest_ensure_response( array( 'deleted' => true ) );
 	}
 
 	/**
