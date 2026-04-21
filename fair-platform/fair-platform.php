@@ -20,7 +20,7 @@ namespace FairPlatform;
 defined( 'ABSPATH' ) || die;
 
 // Plugin constants.
-define( 'FAIR_PLATFORM_VERSION', '1.0.0' );
+define( 'FAIR_PLATFORM_VERSION', '1.1.0' );
 define( 'FAIR_PLATFORM_FILE', __FILE__ );
 define( 'FAIR_PLATFORM_DIR', plugin_dir_path( __FILE__ ) );
 define( 'FAIR_PLATFORM_URL', plugin_dir_url( __FILE__ ) );

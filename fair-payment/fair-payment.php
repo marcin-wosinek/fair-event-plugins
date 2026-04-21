@@ -15,7 +15,7 @@
 defined( 'WPINC' ) || die;
 
 // Define plugin constants.
-define( 'FAIR_PAYMENT_VERSION', '0.1.0' );
+define( 'FAIR_PAYMENT_VERSION', '1.0.0' );
 define( 'FAIR_PAYMENT_PLUGIN_DIR', plugin_dir_path( __FILE__ ) );
 define( 'FAIR_PAYMENT_PLUGIN_URL', plugin_dir_url( __FILE__ ) );
 

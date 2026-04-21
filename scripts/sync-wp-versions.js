@@ -22,7 +22,8 @@ const plugins = [
 		name: 'fair-payment',
 		packagePath: 'fair-payment/package.json',
 		phpFiles: ['fair-payment/fair-payment.php'],
-		readmeFiles: [],
+		readmeFiles: ['fair-payment/readme.txt'],
+		versionConstant: 'FAIR_PAYMENT_VERSION',
 	},
 	{
 		name: 'fair-events',
@@ -35,36 +36,34 @@ const plugins = [
 		packagePath: 'fair-platform/package.json',
 		phpFiles: ['fair-platform/fair-platform.php'],
 		readmeFiles: ['fair-platform/readme.txt'],
+		versionConstant: 'FAIR_PLATFORM_VERSION',
 	},
 	{
 		name: 'fair-audience',
 		packagePath: 'fair-audience/package.json',
 		phpFiles: ['fair-audience/fair-audience.php'],
 		readmeFiles: ['fair-audience/readme.txt'],
+		versionConstant: 'FAIR_AUDIENCE_VERSION',
 	},
 ];
 
 /**
- * Update WordPress plugin header version
- *
- * @param {string} content - PHP file content
- * @param {string} newVersion - New version to set
- * @returns {string} Updated content
+ * Update Stable tag in readme.txt
  */
-function updatePluginVersion(content, newVersion) {
-	// Match WordPress plugin header version patterns:
-	// Version: 1.0.0
-	// * Version: 1.0.0
-	const versionRegex = /(\*?\s*Version:\s*)([0-9]+\.[0-9]+\.[0-9]+)/gi;
-
-	// Match WordPress plugin header stable tag patterns:
-	// Stable tag: 1.0.0
+function updateStableTag(content, newVersion) {
 	const stableTagRegex = /(Stable tag:\s*)([0-9]+\.[0-9]+\.[0-9]+)/gi;
+	return content.replace(stableTagRegex, `$1${newVersion}`);
+}
 
-	let updatedContent = content.replace(versionRegex, `$1${newVersion}`);
-	updatedContent = updatedContent.replace(stableTagRegex, `$1${newVersion}`);
-
-	return updatedContent;
+/**
+ * Update PHP version constant: define( 'CONSTANT_NAME', '1.0.0' )
+ */
+function updateVersionConstant(content, constantName, newVersion) {
+	const regex = new RegExp(
+		`(define\\(\\s*'${constantName}'\\s*,\\s*')([0-9]+\\.[0-9]+\\.[0-9]+)('\\s*\\))`,
+		'g'
+	);
+	return content.replace(regex, `$1${newVersion}$3`);
 }
 
 /**
@@ -86,54 +85,56 @@ function syncVersions() {
 
 			console.log(`📦 ${plugin.name}: ${version}`);
 
-			// Update each PHP file
-			for (const phpFile of plugin.phpFiles) {
-				const phpFilePath = join(rootDir, phpFile);
+			// Update PHP version constant
+			if (plugin.versionConstant) {
+				for (const phpFile of plugin.phpFiles) {
+					const phpFilePath = join(rootDir, phpFile);
 
-				try {
-					// Read current content
-					const originalContent = readFileSync(phpFilePath, 'utf8');
+					try {
+						const originalContent = readFileSync(
+							phpFilePath,
+							'utf8'
+						);
+						const updatedContent = updateVersionConstant(
+							originalContent,
+							plugin.versionConstant,
+							version
+						);
 
-					// Update version
-					const updatedContent = updatePluginVersion(
-						originalContent,
-						version
-					);
-
-					// Only write if content changed
-					if (originalContent !== updatedContent) {
-						writeFileSync(phpFilePath, updatedContent, 'utf8');
-						console.log(`   ✅ Updated ${phpFile}`);
-						updatedCount++;
-					} else {
-						console.log(`   ⏭️  ${phpFile} already up to date`);
+						if (originalContent !== updatedContent) {
+							writeFileSync(phpFilePath, updatedContent, 'utf8');
+							console.log(
+								`   ✅ Updated ${plugin.versionConstant} in ${phpFile}`
+							);
+							updatedCount++;
+						} else {
+							console.log(
+								`   ⏭️  ${plugin.versionConstant} already up to date`
+							);
+						}
+					} catch (error) {
+						console.error(
+							`   ❌ Error updating ${phpFile}:`,
+							error.message
+						);
 					}
-				} catch (error) {
-					console.error(
-						`   ❌ Error updating ${phpFile}:`,
-						error.message
-					);
 				}
 			}
 
-			// Update each readme file
+			// Update Stable tag in readme files
 			for (const readmeFile of plugin.readmeFiles) {
 				const readmeFilePath = join(rootDir, readmeFile);
 
 				try {
-					// Read current content
 					const originalContent = readFileSync(
 						readmeFilePath,
 						'utf8'
 					);
-
-					// Update version
-					const updatedContent = updatePluginVersion(
+					const updatedContent = updateStableTag(
 						originalContent,
 						version
 					);
 
-					// Only write if content changed
 					if (originalContent !== updatedContent) {
 						writeFileSync(readmeFilePath, updatedContent, 'utf8');
 						console.log(`   ✅ Updated ${readmeFile}`);
