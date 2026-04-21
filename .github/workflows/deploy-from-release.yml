@@ -9,18 +9,30 @@ on:
                 description: 'Release tag to deploy (e.g., build-1.0.0)'
                 required: true
                 type: string
-            environment:
-                description: 'Environment to deploy to'
-                required: true
-                type: choice
-                options:
-                    - acroyoga-club.es
-                    - fair-event-plugins.com
-                    - lamutable.es
-                    - fusion-dance.es
-                    - acro-agenda.es
-                    - fusion-circus.com
-                    - all
+            acroyoga-club-es:
+                description: 'acroyoga-club.es'
+                type: boolean
+                default: false
+            fair-event-plugins-com:
+                description: 'fair-event-plugins.com'
+                type: boolean
+                default: false
+            lamutable-es:
+                description: 'lamutable.es'
+                type: boolean
+                default: false
+            fusion-dance-es:
+                description: 'fusion-dance.es'
+                type: boolean
+                default: false
+            acro-agenda-es:
+                description: 'acro-agenda.es'
+                type: boolean
+                default: false
+            fusion-circus-com:
+                description: 'fusion-circus.com'
+                type: boolean
+                default: false
 
 jobs:
     resolve:
@@ -58,7 +70,7 @@ jobs:
         needs: [resolve]
         if: |
             needs.resolve.outputs.is_clean_version == 'true' ||
-            (github.event_name == 'workflow_dispatch' && (inputs.environment == 'acroyoga-club.es' || inputs.environment == 'all'))
+            (github.event_name == 'workflow_dispatch' && inputs.acroyoga-club-es)
         uses: ./.github/workflows/deploy-to-environment.yml
         with:
             environment: acroyoga-club.es
@@ -70,7 +82,7 @@ jobs:
         needs: [resolve]
         if: |
             needs.resolve.outputs.is_clean_version == 'true' ||
-            (github.event_name == 'workflow_dispatch' && (inputs.environment == 'fair-event-plugins.com' || inputs.environment == 'all'))
+            (github.event_name == 'workflow_dispatch' && inputs.fair-event-plugins-com)
         uses: ./.github/workflows/deploy-to-environment.yml
         with:
             environment: fair-event-plugins.com
@@ -82,7 +94,7 @@ jobs:
         needs: [resolve]
         if: |
             needs.resolve.outputs.is_clean_version == 'true' ||
-            (github.event_name == 'workflow_dispatch' && (inputs.environment == 'lamutable.es' || inputs.environment == 'all'))
+            (github.event_name == 'workflow_dispatch' && inputs.lamutable-es)
         uses: ./.github/workflows/deploy-to-environment.yml
         with:
             environment: lamutable.es
@@ -94,7 +106,7 @@ jobs:
         needs: [resolve]
         if: |
             needs.resolve.outputs.is_clean_version == 'true' ||
-            (github.event_name == 'workflow_dispatch' && (inputs.environment == 'fusion-dance.es' || inputs.environment == 'all'))
+            (github.event_name == 'workflow_dispatch' && inputs.fusion-dance-es)
         uses: ./.github/workflows/deploy-to-environment.yml
         with:
             environment: fusion-dance.es
@@ -106,7 +118,7 @@ jobs:
         needs: [resolve]
         if: |
             needs.resolve.outputs.is_clean_version == 'true' ||
-            (github.event_name == 'workflow_dispatch' && (inputs.environment == 'acro-agenda.es' || inputs.environment == 'all'))
+            (github.event_name == 'workflow_dispatch' && inputs.acro-agenda-es)
         uses: ./.github/workflows/deploy-to-environment.yml
         with:
             environment: acro-agenda.es
@@ -118,7 +130,7 @@ jobs:
         needs: [resolve]
         if: |
             needs.resolve.outputs.is_clean_version == 'true' ||
-            (github.event_name == 'workflow_dispatch' && (inputs.environment == 'fusion-circus.com' || inputs.environment == 'all'))
+            (github.event_name == 'workflow_dispatch' && inputs.fusion-circus-com)
         uses: ./.github/workflows/deploy-to-environment.yml
         with:
             environment: fusion-circus.com
