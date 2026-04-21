@@ -7,10 +7,10 @@ on:
                 description: 'Environment to deploy to'
                 required: true
                 type: string
-        secrets:
-            SSH_PRIVATE_KEY:
-                description: 'SSH private key for deployment'
+            release_tag:
+                description: 'GitHub release tag to deploy (e.g., build-1.0.0)'
                 required: true
+                type: string
 
 permissions:
     contents: read
@@ -22,14 +22,17 @@ jobs:
         environment: ${{ inputs.environment }}
 
         steps:
-            - name: Checkout code
-              uses: actions/checkout@v6
-
-            - name: Download build artifacts
-              uses: actions/download-artifact@v8
-              with:
-                  name: plugins
-                  path: ./dist
+            - name: Download release assets
+              run: |
+                  mkdir -p dist
+                  gh release download "${{ inputs.release_tag }}" \
+                    --repo "$GITHUB_REPOSITORY" \
+                    --pattern "*.zip" \
+                    --dir ./dist
+                  echo "Downloaded assets:"
+                  ls -la ./dist/
+              env:
+                  GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
             - name: Extract plugin ZIPs
               run: |
@@ -75,6 +78,7 @@ jobs:
                   fi
 
                   echo "Deploying plugins: $PLUGINS"
+                  echo "Release: ${{ inputs.release_tag }}"
                   echo ""
 
                   # Deploy each plugin from extracted directory
@@ -116,6 +120,7 @@ jobs:
 
                   echo "========================================="
                   echo "Deployment Summary:"
+                  echo "  Release: ${{ inputs.release_tag }}"
                   echo "  Deployed: $DEPLOYED_COUNT plugin(s)"
                   echo "  Skipped: $SKIPPED_COUNT plugin(s)"
                   echo "  Target: ${{ vars.SSH_HOST }}"

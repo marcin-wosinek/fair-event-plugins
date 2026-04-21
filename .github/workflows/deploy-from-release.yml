@@ -1,0 +1,126 @@
+name: Deploy from release
+
+on:
+    release:
+        types: [published]
+    workflow_dispatch:
+        inputs:
+            release_tag:
+                description: 'Release tag to deploy (e.g., build-1.0.0)'
+                required: true
+                type: string
+            environment:
+                description: 'Environment to deploy to'
+                required: true
+                type: choice
+                options:
+                    - acroyoga-club.es
+                    - fair-event-plugins.com
+                    - lamutable.es
+                    - fusion-dance.es
+                    - acro-agenda.es
+                    - fusion-circus.com
+                    - all
+
+jobs:
+    resolve:
+        name: Resolve release
+        runs-on: ubuntu-latest
+        outputs:
+            release_tag: ${{ steps.resolve.outputs.release_tag }}
+            is_clean_version: ${{ steps.resolve.outputs.is_clean_version }}
+        steps:
+            - name: Resolve release tag and version type
+              id: resolve
+              run: |
+                  if [ "${{ github.event_name }}" = "release" ]; then
+                    TAG="${{ github.event.release.tag_name }}"
+                  else
+                    TAG="${{ inputs.release_tag }}"
+                  fi
+
+                  echo "release_tag=${TAG}" >> "$GITHUB_OUTPUT"
+
+                  # Strip "build-" prefix to get the version
+                  VERSION="${TAG#build-}"
+
+                  # Check if it's a clean semver (no -N-gHASH suffix)
+                  if echo "$VERSION" | grep -qE '^[0-9]+\.[0-9]+\.[0-9]+$'; then
+                    echo "is_clean_version=true" >> "$GITHUB_OUTPUT"
+                    echo "Clean version: ${VERSION}"
+                  else
+                    echo "is_clean_version=false" >> "$GITHUB_OUTPUT"
+                    echo "Dirty version: ${VERSION}"
+                  fi
+
+    deploy-acroyoga:
+        name: Deploy to acroyoga-club.es
+        needs: [resolve]
+        if: |
+            needs.resolve.outputs.is_clean_version == 'true' ||
+            (github.event_name == 'workflow_dispatch' && (inputs.environment == 'acroyoga-club.es' || inputs.environment == 'all'))
+        uses: ./.github/workflows/deploy-to-environment.yml
+        with:
+            environment: acroyoga-club.es
+            release_tag: ${{ needs.resolve.outputs.release_tag }}
+        secrets: inherit
+
+    deploy-fair-event-plugins:
+        name: Deploy to fair-event-plugins.com
+        needs: [resolve]
+        if: |
+            needs.resolve.outputs.is_clean_version == 'true' ||
+            (github.event_name == 'workflow_dispatch' && (inputs.environment == 'fair-event-plugins.com' || inputs.environment == 'all'))
+        uses: ./.github/workflows/deploy-to-environment.yml
+        with:
+            environment: fair-event-plugins.com
+            release_tag: ${{ needs.resolve.outputs.release_tag }}
+        secrets: inherit
+
+    deploy-lamutable:
+        name: Deploy to lamutable.es
+        needs: [resolve]
+        if: |
+            needs.resolve.outputs.is_clean_version == 'true' ||
+            (github.event_name == 'workflow_dispatch' && (inputs.environment == 'lamutable.es' || inputs.environment == 'all'))
+        uses: ./.github/workflows/deploy-to-environment.yml
+        with:
+            environment: lamutable.es
+            release_tag: ${{ needs.resolve.outputs.release_tag }}
+        secrets: inherit
+
+    deploy-fusion-dance:
+        name: Deploy to fusion-dance.es
+        needs: [resolve]
+        if: |
+            needs.resolve.outputs.is_clean_version == 'true' ||
+            (github.event_name == 'workflow_dispatch' && (inputs.environment == 'fusion-dance.es' || inputs.environment == 'all'))
+        uses: ./.github/workflows/deploy-to-environment.yml
+        with:
+            environment: fusion-dance.es
+            release_tag: ${{ needs.resolve.outputs.release_tag }}
+        secrets: inherit
+
+    deploy-acro-agenda:
+        name: Deploy to acro-agenda.es
+        needs: [resolve]
+        if: |
+            needs.resolve.outputs.is_clean_version == 'true' ||
+            (github.event_name == 'workflow_dispatch' && (inputs.environment == 'acro-agenda.es' || inputs.environment == 'all'))
+        uses: ./.github/workflows/deploy-to-environment.yml
+        with:
+            environment: acro-agenda.es
+            release_tag: ${{ needs.resolve.outputs.release_tag }}
+        secrets: inherit
+
+    deploy-fusion-circus:
+        name: Deploy to fusion-circus.com
+        needs: [resolve]
+        if: |
+            needs.resolve.outputs.is_clean_version == 'true' ||
+            (github.event_name == 'workflow_dispatch' && (inputs.environment == 'fusion-circus.com' || inputs.environment == 'all'))
+        uses: ./.github/workflows/deploy-to-environment.yml
+        with:
+            environment: fusion-circus.com
+            release_tag: ${{ needs.resolve.outputs.release_tag }}
+        secrets: inherit
