@@ -58,6 +58,7 @@ jobs:
                   echo "${{ vars.SSH_KNOWN_HOSTS }}" >> ~/.ssh/known_hosts
 
             - name: Deploy plugins via rsync
+              id: rsync
               run: |
                   MAX_ATTEMPTS=2
                   SSH_OPTS="-p ${{ vars.SSH_PORT }} -o ConnectTimeout=15 -o ServerAliveInterval=30 -o ServerAliveCountMax=3"
@@ -84,6 +85,7 @@ jobs:
                   # Deploy each plugin from extracted directory
                   DEPLOYED_COUNT=0
                   SKIPPED_COUNT=0
+                  DEPLOYED_PLUGINS=""
 
                   for plugin in $PLUGINS; do
                     if [ -d "extracted-plugins/$plugin" ]; then
@@ -110,6 +112,7 @@ jobs:
                       done
 
                       echo ""
+                      DEPLOYED_PLUGINS="${DEPLOYED_PLUGINS} ${plugin}"
                       DEPLOYED_COUNT=$((DEPLOYED_COUNT + 1))
                     else
                       echo "⚠ $plugin directory not found in extracted-plugins/, skipping..."
@@ -118,6 +121,8 @@ jobs:
                     fi
                   done
 
+                  echo "deployed_plugins=${DEPLOYED_PLUGINS}" >> "$GITHUB_OUTPUT"
+
                   echo "========================================="
                   echo "Deployment Summary:"
                   echo "  Release: ${{ inputs.release_tag }}"
@@ -125,3 +130,18 @@ jobs:
                   echo "  Skipped: $SKIPPED_COUNT plugin(s)"
                   echo "  Target: ${{ vars.SSH_HOST }}"
                   echo "========================================="
+
+            - name: Reactivate plugins via WP-CLI
+              run: |
+                  SSH_OPTS="-p ${{ vars.SSH_PORT }} -o ConnectTimeout=15 -o ServerAliveInterval=30 -o ServerAliveCountMax=3"
+                  REMOTE="${{ vars.SSH_USER }}@${{ vars.SSH_HOST }}"
+                  WP_PATH="${{ vars.WORDPRESS_PLUGINS_PATH }}/../.."
+
+                  for plugin in ${{ steps.rsync.outputs.deployed_plugins }}; do
+                    echo "Reactivating $plugin..."
+                    if ssh $SSH_OPTS "$REMOTE" "cd $WP_PATH && wp plugin deactivate $plugin && wp plugin activate $plugin"; then
+                      echo "✓ $plugin reactivated"
+                    else
+                      echo "⚠ Failed to reactivate $plugin (plugin may not have been active)"
+                    fi
+                  done
