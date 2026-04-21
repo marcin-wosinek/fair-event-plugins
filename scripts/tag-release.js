@@ -36,12 +36,16 @@ function tagExists(tag) {
 	}
 }
 
-function createTag(tag) {
+function createTag(tag, message) {
 	if (tagExists(tag)) {
 		console.log(`  ⏭️  Tag ${tag} already exists, skipping`);
 		return;
 	}
-	execSync(`git tag "${tag}"`, { stdio: 'inherit' });
+	if (message) {
+		execSync(`git tag -a "${tag}" -m "${message}"`, { stdio: 'inherit' });
+	} else {
+		execSync(`git tag "${tag}"`, { stdio: 'inherit' });
+	}
 	console.log(`  ✅ Created tag: ${tag}`);
 }
 
@@ -51,7 +55,7 @@ const sharedVersion = getVersion(FIXED_GROUP_PLUGIN);
 console.log(
 	`📦 Fixed group (fair-events, fair-payment, fair-audience): ${sharedVersion}`
 );
-createTag(sharedVersion);
+createTag(sharedVersion, `Release ${sharedVersion}`);
 
 for (const plugin of INDEPENDENT_PLUGINS) {
 	const version = getVersion(plugin);
