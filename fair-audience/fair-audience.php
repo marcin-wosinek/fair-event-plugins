@@ -21,7 +21,7 @@ namespace FairAudience;
 defined( 'ABSPATH' ) || die;
 
 // Plugin constants.
-define( 'FAIR_AUDIENCE_VERSION', '1.0.0' );
+define( 'FAIR_AUDIENCE_VERSION', '1.1.0' );
 define( 'FAIR_AUDIENCE_PLUGIN_DIR', plugin_dir_path( __FILE__ ) );
 define( 'FAIR_AUDIENCE_PLUGIN_URL', plugin_dir_url( __FILE__ ) );
 
