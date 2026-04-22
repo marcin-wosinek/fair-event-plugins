@@ -150,18 +150,20 @@ export default function EventTickets({
 		if (onDataRef) {
 			onDataRef.current = () => {
 				const pricesArray = [];
-				Object.entries(prices).forEach(([key, val]) => {
-					if (!val.enabled) return;
-					if (val.price === '' && val.capacity === '') return;
-					const [typeId, periodId] = key.split('-').map(Number);
-					pricesArray.push({
-						ticket_type_id: typeId,
-						sale_period_id: periodId,
-						price: parseFloat(val.price) || 0,
-						capacity:
-							val.capacity !== ''
-								? parseInt(val.capacity, 10)
-								: null,
+				ticketTypes.forEach((type, tIndex) => {
+					salePeriods.forEach((period, pIndex) => {
+						const val = getPrice(type, period);
+						if (!val.enabled) return;
+						if (val.price === '' && val.capacity === '') return;
+						pricesArray.push({
+							ticket_type_index: tIndex,
+							sale_period_index: pIndex,
+							price: parseFloat(val.price) || 0,
+							capacity:
+								val.capacity !== ''
+									? parseInt(val.capacity, 10)
+									: null,
+						});
 					});
 				});
 				return {
@@ -192,15 +194,18 @@ export default function EventTickets({
 		setSuccess(null);
 
 		const pricesArray = [];
-		Object.entries(prices).forEach(([key, val]) => {
-			if (val.price === '' && val.capacity === '') return;
-			const [typeId, periodId] = key.split('-').map(Number);
-			pricesArray.push({
-				ticket_type_id: typeId,
-				sale_period_id: periodId,
-				price: parseFloat(val.price) || 0,
-				capacity:
-					val.capacity !== '' ? parseInt(val.capacity, 10) : null,
+		ticketTypes.forEach((type, tIndex) => {
+			salePeriods.forEach((period, pIndex) => {
+				const val = getPrice(type, period);
+				if (!val.enabled) return;
+				if (val.price === '' && val.capacity === '') return;
+				pricesArray.push({
+					ticket_type_index: tIndex,
+					sale_period_index: pIndex,
+					price: parseFloat(val.price) || 0,
+					capacity:
+						val.capacity !== '' ? parseInt(val.capacity, 10) : null,
+				});
 			});
 		});
 

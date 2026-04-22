@@ -161,19 +161,19 @@ class TicketsController extends WP_REST_Controller {
 
 		// 2. Diff ticket types.
 		$incoming_types = $body['ticket_types'] ?? array();
-		$this->sync_ticket_types( $event_date_id, $incoming_types );
+		$type_ids       = $this->sync_ticket_types( $event_date_id, $incoming_types );
 
 		// 3. Diff sale periods.
 		$incoming_periods = $body['sale_periods'] ?? array();
-		$this->sync_sale_periods( $event_date_id, $incoming_periods );
+		$period_ids       = $this->sync_sale_periods( $event_date_id, $incoming_periods );
 
 		// 4. Delete all prices for this event and re-insert.
 		TicketPrice::delete_by_event_date_id( $event_date_id );
 
 		$incoming_prices = $body['prices'] ?? array();
 		foreach ( $incoming_prices as $price_data ) {
-			$type_id   = isset( $price_data['ticket_type_id'] ) ? (int) $price_data['ticket_type_id'] : 0;
-			$period_id = isset( $price_data['sale_period_id'] ) ? (int) $price_data['sale_period_id'] : 0;
+			$type_id   = $type_ids[ (int) ( $price_data['ticket_type_index'] ?? -1 ) ] ?? 0;
+			$period_id = $period_ids[ (int) ( $price_data['sale_period_index'] ?? -1 ) ] ?? 0;
 			$price     = isset( $price_data['price'] ) ? (float) $price_data['price'] : 0;
 			$cap       = isset( $price_data['capacity'] ) && null !== $price_data['capacity']
 				? absint( $price_data['capacity'] )
@@ -373,7 +373,7 @@ class TicketsController extends WP_REST_Controller {
 	 *
 	 * @param int   $event_date_id Event date ID.
 	 * @param array $incoming      Incoming ticket types from request.
-	 * @return void
+	 * @return int[] Array mapping incoming index to ticket type ID.
 	 */
 	private function sync_ticket_types( $event_date_id, $incoming ) {
 		$existing     = TicketType::get_all_by_event_date_id( $event_date_id );
@@ -396,6 +396,7 @@ class TicketsController extends WP_REST_Controller {
 		}
 
 		// Update existing / insert new.
+		$id_map = array();
 		foreach ( $incoming as $index => $item ) {
 			$name             = sanitize_text_field( $item['name'] ?? '' );
 			$capacity         = isset( $item['capacity'] ) && '' !== $item['capacity'] && null !== $item['capacity']
@@ -407,6 +408,7 @@ class TicketsController extends WP_REST_Controller {
 			$group_ids        = isset( $item['group_ids'] ) && is_array( $item['group_ids'] ) ? array_map( 'absint', $item['group_ids'] ) : array();
 
 			if ( ! empty( $item['id'] ) && in_array( (int) $item['id'], $existing_ids, true ) ) {
+				$id_map[ $index ] = (int) $item['id'];
 				TicketType::update(
 					(int) $item['id'],
 					array(
@@ -419,12 +421,14 @@ class TicketsController extends WP_REST_Controller {
 				);
 				TicketTypeGroupRestriction::sync_for_ticket_type( (int) $item['id'], $group_ids );
 			} else {
-				$new_id = TicketType::create( $event_date_id, $name, $capacity, $sort_order, $seats_per_ticket, $invitation_only );
+				$new_id           = TicketType::create( $event_date_id, $name, $capacity, $sort_order, $seats_per_ticket, $invitation_only );
+				$id_map[ $index ] = (int) $new_id;
 				if ( $new_id && ! empty( $group_ids ) ) {
 					TicketTypeGroupRestriction::sync_for_ticket_type( (int) $new_id, $group_ids );
 				}
 			}
 		}
+		return $id_map;
 	}
 
 	/**
@@ -432,7 +436,7 @@ class TicketsController extends WP_REST_Controller {
 	 *
 	 * @param int   $event_date_id Event date ID.
 	 * @param array $incoming      Incoming sale periods from request.
-	 * @return void
+	 * @return int[] Array mapping incoming index to sale period ID.
 	 */
 	private function sync_sale_periods( $event_date_id, $incoming ) {
 		$existing     = TicketSalePeriod::get_all_by_event_date_id( $event_date_id );
@@ -454,6 +458,7 @@ class TicketsController extends WP_REST_Controller {
 		}
 
 		// Update existing / insert new.
+		$id_map = array();
 		foreach ( $incoming as $index => $item ) {
 			$name       = isset( $item['name'] ) ? sanitize_text_field( $item['name'] ) : null;
 			$sale_start = sanitize_text_field( $item['sale_start'] ?? '' );
@@ -461,6 +466,7 @@ class TicketsController extends WP_REST_Controller {
 			$sort_order = $index;
 
 			if ( ! empty( $item['id'] ) && in_array( (int) $item['id'], $existing_ids, true ) ) {
+				$id_map[ $index ] = (int) $item['id'];
 				TicketSalePeriod::update(
 					(int) $item['id'],
 					array(
@@ -471,9 +477,11 @@ class TicketsController extends WP_REST_Controller {
 					)
 				);
 			} else {
-				TicketSalePeriod::create( $event_date_id, $name, $sale_start, $sale_end, $sort_order );
+				$new_id           = TicketSalePeriod::create( $event_date_id, $name, $sale_start, $sale_end, $sort_order );
+				$id_map[ $index ] = (int) $new_id;
 			}
 		}
+		return $id_map;
 	}
 
 	/**
