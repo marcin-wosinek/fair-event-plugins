@@ -893,7 +893,8 @@ export default function EventTickets({
 															const untilValue =
 																isContinuous &&
 																isLast
-																	? endDatetime
+																	? period.sale_end ||
+																	  endDatetime
 																	: period.sale_end ||
 																	  '';
 
@@ -1015,39 +1016,29 @@ export default function EventTickets({
 																						'fair-events'
 																					)}
 																				</span>
-																				{isContinuous &&
-																				isLast ? (
-																					<span>
-																						{untilValue.replace(
-																							'T',
-																							' '
-																						)}
-																					</span>
-																				) : (
-																					<TextControl
-																						type="datetime-local"
-																						value={
-																							untilValue
-																								? untilValue.replace(
-																										' ',
-																										'T'
-																								  )
-																								: ''
-																						}
-																						onChange={(
-																							v
-																						) =>
-																							updateSalePeriod(
-																								pIndex,
-																								'sale_end',
-																								v.replace(
-																									'T',
-																									' '
-																								)
+																				<TextControl
+																					type="datetime-local"
+																					value={
+																						untilValue
+																							? untilValue.replace(
+																									' ',
+																									'T'
+																							  )
+																							: ''
+																					}
+																					onChange={(
+																						v
+																					) =>
+																						updateSalePeriod(
+																							pIndex,
+																							'sale_end',
+																							v.replace(
+																								'T',
+																								' '
 																							)
-																						}
-																					/>
-																				)}
+																						)
+																					}
+																				/>
 																			</HStack>
 																			<Button
 																				variant="tertiary"
