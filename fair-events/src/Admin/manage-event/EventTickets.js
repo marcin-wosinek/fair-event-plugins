@@ -522,7 +522,7 @@ export default function EventTickets({
 			if (i > 0) {
 				updated.sale_start = salePeriods[i - 1].sale_end || '';
 			}
-			if (i === salePeriods.length - 1 && endDatetime) {
+			if (i === salePeriods.length - 1 && endDatetime && !p.sale_end) {
 				updated.sale_end = endDatetime;
 			}
 			return updated;
