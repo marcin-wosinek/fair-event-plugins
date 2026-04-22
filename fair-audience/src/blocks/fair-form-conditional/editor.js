@@ -33,6 +33,12 @@ const OPERATOR_OPTIONS = [
 	{ label: __('is not empty', 'fair-audience'), value: 'not_empty' },
 ];
 
+const OPTION_BLOCK_PARENTS = [
+	'fair-audience/fair-form-multiselect',
+	'fair-audience/fair-form-select-one',
+	'fair-audience/fair-form-radio',
+];
+
 function findQuestionBlocks(blocks) {
 	const questions = [];
 	for (const block of blocks) {
@@ -40,12 +46,20 @@ function findQuestionBlocks(blocks) {
 			block.attributes?.questionKey &&
 			block.name !== 'fair-audience/fair-form-conditional'
 		) {
-			questions.push({
+			const question = {
 				key: block.attributes.questionKey,
 				text:
 					block.attributes.questionText ||
 					block.attributes.questionKey,
-			});
+				blockName: block.name,
+			};
+			if (OPTION_BLOCK_PARENTS.includes(block.name)) {
+				question.options = (block.innerBlocks || [])
+					.filter((b) => b.name === 'fair-audience/fair-form-option')
+					.map((b) => b.attributes?.value)
+					.filter(Boolean);
+			}
+			questions.push(question);
 		}
 		if (block.innerBlocks?.length) {
 			questions.push(...findQuestionBlocks(block.innerBlocks));
@@ -90,6 +104,12 @@ registerBlockType('fair-audience/fair-form-conditional', {
 			})),
 		];
 
+		const selectedQuestion = questionOptions.find(
+			(q) => q.key === conditionQuestionKey
+		);
+		const hasOptions =
+			selectedQuestion?.options && selectedQuestion.options.length > 0;
+
 		const isConfigured = !!conditionQuestionKey;
 
 		const conditionLabel = isConfigured
@@ -126,9 +146,22 @@ registerBlockType('fair-audience/fair-form-conditional', {
 							label={__('Show when question', 'fair-audience')}
 							value={conditionQuestionKey}
 							options={questionSelectOptions}
-							onChange={(value) =>
-								setAttributes({ conditionQuestionKey: value })
-							}
+							onChange={(value) => {
+								const question = questionOptions.find(
+									(q) => q.key === value
+								);
+								const updates = {
+									conditionQuestionKey: value,
+									conditionValue: '',
+								};
+								if (
+									question?.blockName ===
+									'fair-audience/fair-form-multiselect'
+								) {
+									updates.conditionOperator = 'contains';
+								}
+								setAttributes(updates);
+							}}
 						/>
 						<SelectControl
 							label={__('Operator', 'fair-audience')}
@@ -138,19 +171,47 @@ registerBlockType('fair-audience/fair-form-conditional', {
 								setAttributes({ conditionOperator: value })
 							}
 						/>
-						{conditionOperator !== 'not_empty' && (
-							<TextControl
-								label={__('Value', 'fair-audience')}
-								value={conditionValue}
-								onChange={(value) =>
-									setAttributes({ conditionValue: value })
-								}
-								help={__(
-									'The value to compare against.',
-									'fair-audience'
-								)}
-							/>
-						)}
+						{conditionOperator !== 'not_empty' &&
+							(hasOptions ? (
+								<SelectControl
+									label={__('Value', 'fair-audience')}
+									value={conditionValue}
+									options={[
+										{
+											label: __(
+												'— Select a value —',
+												'fair-audience'
+											),
+											value: '',
+										},
+										...selectedQuestion.options.map(
+											(opt) => ({
+												label: opt,
+												value: opt,
+											})
+										),
+									]}
+									onChange={(value) =>
+										setAttributes({
+											conditionValue: value,
+										})
+									}
+								/>
+							) : (
+								<TextControl
+									label={__('Value', 'fair-audience')}
+									value={conditionValue}
+									onChange={(value) =>
+										setAttributes({
+											conditionValue: value,
+										})
+									}
+									help={__(
+										'The value to compare against.',
+										'fair-audience'
+									)}
+								/>
+							))}
 					</PanelBody>
 				</InspectorControls>
 
