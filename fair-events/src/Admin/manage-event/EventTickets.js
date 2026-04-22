@@ -90,6 +90,7 @@ export default function EventTickets({
 					p.capacity !== null && p.capacity !== undefined
 						? String(p.capacity)
 						: '',
+				enabled: true,
 			};
 		});
 		setPrices(priceMap);
@@ -150,6 +151,7 @@ export default function EventTickets({
 			onDataRef.current = () => {
 				const pricesArray = [];
 				Object.entries(prices).forEach(([key, val]) => {
+					if (!val.enabled) return;
 					if (val.price === '' && val.capacity === '') return;
 					const [typeId, periodId] = key.split('-').map(Number);
 					pricesArray.push({
@@ -252,6 +254,7 @@ export default function EventTickets({
 						p.capacity !== null && p.capacity !== undefined
 							? String(p.capacity)
 							: '',
+					enabled: true,
 				};
 			});
 			setPrices(priceMap);
@@ -528,7 +531,7 @@ export default function EventTickets({
 
 	const getPrice = (type, period) => {
 		const key = getPriceKey(type, period);
-		return prices[key] || { price: '', capacity: '' };
+		return prices[key] || { price: '', capacity: '', enabled: true };
 	};
 
 	const formatCurrency = (value) => {
@@ -1275,78 +1278,104 @@ export default function EventTickets({
 																					1
 																				}
 																			>
-																				<HStack
-																					alignment="center"
-																					spacing={
-																						2
+																				<CheckboxControl
+																					__nextHasNoMarginBottom
+																					label={__(
+																						'Available',
+																						'fair-events'
+																					)}
+																					checked={
+																						cell.enabled !==
+																						false
 																					}
-																				>
-																					<span
-																						style={{
-																							whiteSpace:
-																								'nowrap',
-																						}}
-																					>
-																						{__(
-																							'Price',
-																							'fair-events'
-																						)}
-																					</span>
-																					<TextControl
-																						type="number"
-																						step="0.01"
-																						min="0"
-																						value={
-																							cell.price
-																						}
-																						onChange={(
+																					onChange={(
+																						v
+																					) =>
+																						updatePrice(
+																							type,
+																							period,
+																							'enabled',
 																							v
-																						) =>
-																							updatePrice(
-																								type,
-																								period,
-																								'price',
-																								v
-																							)
-																						}
-																					/>
-																				</HStack>
-																				{!settings.unlimited_tickets_in_price_period && (
-																					<HStack
-																						alignment="center"
-																						spacing={
-																							2
-																						}
-																					>
-																						<span
-																							style={{
-																								whiteSpace:
-																									'nowrap',
-																							}}
+																						)
+																					}
+																				/>
+																				{cell.enabled !==
+																					false && (
+																					<>
+																						<HStack
+																							alignment="center"
+																							spacing={
+																								2
+																							}
 																						>
-																							{__(
-																								'Cap',
-																								'fair-events'
-																							)}
-																						</span>
-																						<TextControl
-																							type="number"
-																							min="0"
-																							value={
-																								cell.capacity
-																							}
-																							onChange={(
-																								v
-																							) =>
-																								updatePrice(
-																									type,
-																									period,
-																									'capacity',
+																							<span
+																								style={{
+																									whiteSpace:
+																										'nowrap',
+																								}}
+																							>
+																								{__(
+																									'Price',
+																									'fair-events'
+																								)}
+																							</span>
+																							<TextControl
+																								type="number"
+																								step="0.01"
+																								min="0"
+																								value={
+																									cell.price
+																								}
+																								onChange={(
 																									v
-																								)
-																							}
-																						/>
-																					</HStack>
+																								) =>
+																									updatePrice(
+																										type,
+																										period,
+																										'price',
+																										v
+																									)
+																								}
+																							/>
+																						</HStack>
+																						{!settings.unlimited_tickets_in_price_period && (
+																							<HStack
+																								alignment="center"
+																								spacing={
+																									2
+																								}
+																							>
+																								<span
+																									style={{
+																										whiteSpace:
+																											'nowrap',
+																									}}
+																								>
+																									{__(
+																										'Cap',
+																										'fair-events'
+																									)}
+																								</span>
+																								<TextControl
+																									type="number"
+																									min="0"
+																									value={
+																										cell.capacity
+																									}
+																									onChange={(
+																										v
+																									) =>
+																										updatePrice(
+																											type,
+																											period,
+																											'capacity',
+																											v
+																										)
+																									}
+																								/>
+																							</HStack>
+																						)}
+																					</>
 																				)}
 																			</VStack>
 																		</td>
