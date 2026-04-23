@@ -128,6 +128,9 @@ export default function FeeDetail() {
 	useEffect(() => {
 		loadFee();
 		loadPayments();
+		apiFetch({ path: '/fair-payment/v1/budgets' })
+			.then((data) => setBudgets(data))
+			.catch(() => {});
 	}, [loadFee, loadPayments]);
 
 	// Define fields configuration for DataViews.
@@ -440,12 +443,6 @@ export default function FeeDetail() {
 			target_budget_id: fee?.budget_id ? fee.budget_id.toString() : '',
 		});
 		setIsTransferModalOpen(true);
-
-		if (budgets.length === 0) {
-			apiFetch({ path: '/fair-payment/v1/budgets' })
-				.then((data) => setBudgets(data))
-				.catch(() => {});
-		}
 	};
 
 	const handleCreateTransfer = () => {
@@ -466,12 +463,19 @@ export default function FeeDetail() {
 			data,
 		})
 			.then(() => {
+				return apiFetch({
+					path: `/fair-audience/v1/fees/${feeId}/payments/${transferPayment.id}/mark-paid`,
+					method: 'POST',
+				});
+			})
+			.then(() => {
 				setIsTransferModalOpen(false);
 				setTransferPayment(null);
+				loadPayments();
 				setNotice({
 					status: 'success',
 					message: __(
-						'Transfer created successfully.',
+						'Transfer created and payment marked as paid.',
 						'fair-audience'
 					),
 				});
