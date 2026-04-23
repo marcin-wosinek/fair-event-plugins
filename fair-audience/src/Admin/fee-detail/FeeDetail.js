@@ -9,6 +9,7 @@ import {
 	Modal,
 	TextControl,
 	TextareaControl,
+	SelectControl,
 	SearchControl,
 	Notice,
 	Spinner,
@@ -80,6 +81,19 @@ export default function FeeDetail() {
 	const [selectedToAdd, setSelectedToAdd] = useState(null);
 	const [addAmount, setAddAmount] = useState('');
 	const [isAddingPayment, setIsAddingPayment] = useState(false);
+
+	// Transfer modal.
+	const [isTransferModalOpen, setIsTransferModalOpen] = useState(false);
+	const [transferPayment, setTransferPayment] = useState(null);
+	const [budgets, setBudgets] = useState([]);
+	const [transferData, setTransferData] = useState({
+		amount: '',
+		entry_date: '',
+		description: '',
+		source_budget_id: '',
+		target_budget_id: '',
+	});
+	const [isCreatingTransfer, setIsCreatingTransfer] = useState(false);
 
 	const loadFee = useCallback(() => {
 		if (!feeId) return;
@@ -411,6 +425,70 @@ export default function FeeDetail() {
 			});
 	};
 
+	// Transfer creation.
+	const openTransferModal = (payment) => {
+		setTransferPayment(payment);
+		setTransferData({
+			amount: parseFloat(payment.amount).toFixed(2),
+			entry_date: new Date().toISOString().split('T')[0],
+			description: fee
+				? `${fee.name} — ${payment.participant_name || ''} ${
+						payment.participant_surname || ''
+				  }`.trim()
+				: '',
+			source_budget_id: '',
+			target_budget_id: fee?.budget_id ? fee.budget_id.toString() : '',
+		});
+		setIsTransferModalOpen(true);
+
+		if (budgets.length === 0) {
+			apiFetch({ path: '/fair-payment/v1/budgets' })
+				.then((data) => setBudgets(data))
+				.catch(() => {});
+		}
+	};
+
+	const handleCreateTransfer = () => {
+		setIsCreatingTransfer(true);
+
+		const data = {
+			amount: parseFloat(transferData.amount),
+			entry_date: transferData.entry_date,
+			source_budget_id: parseInt(transferData.source_budget_id, 10),
+			target_budget_id: parseInt(transferData.target_budget_id, 10),
+			description: transferData.description || null,
+			participant_id: transferPayment.participant_id,
+		};
+
+		apiFetch({
+			path: '/fair-payment/v1/financial-entries/transfer',
+			method: 'POST',
+			data,
+		})
+			.then(() => {
+				setIsTransferModalOpen(false);
+				setTransferPayment(null);
+				setNotice({
+					status: 'success',
+					message: __(
+						'Transfer created successfully.',
+						'fair-audience'
+					),
+				});
+			})
+			.catch((err) => {
+				// eslint-disable-next-line no-undef
+				alert(
+					__('Error: ', 'fair-audience') +
+						(err.message ||
+							__('Failed to create transfer.', 'fair-audience'))
+				);
+			})
+			.finally(() => {
+				setIsCreatingTransfer(false);
+			});
+	};
+
 	// Send reminders.
 	const handleSendReminders = () => {
 		// eslint-disable-next-line no-undef
@@ -507,6 +585,14 @@ export default function FeeDetail() {
 				callback: ([item]) => openTransactionsModal(item),
 				supportsBulk: false,
 				isEligible: (item) => !!item.transaction_id,
+			},
+			{
+				id: 'create-transfer',
+				label: __('Create Transfer', 'fair-audience'),
+				icon: 'money-alt',
+				callback: ([item]) => openTransferModal(item),
+				supportsBulk: false,
+				isEligible: (item) => item.status === 'pending',
 			},
 			{
 				id: 'audit-log',
@@ -987,6 +1073,156 @@ export default function FeeDetail() {
 							onClick={() => setIsTransactionsModalOpen(false)}
 						>
 							{__('Close', 'fair-audience')}
+						</Button>
+					</div>
+				</Modal>
+			)}
+
+			{/* Create Transfer Modal */}
+			{isTransferModalOpen && transferPayment && (
+				<Modal
+					title={__('Create Transfer', 'fair-audience')}
+					onRequestClose={() => {
+						setIsTransferModalOpen(false);
+						setTransferPayment(null);
+					}}
+					style={{ maxWidth: '500px', width: '100%' }}
+				>
+					<p>
+						{__('Participant:', 'fair-audience')}{' '}
+						<strong>
+							{`${transferPayment.participant_name || ''} ${
+								transferPayment.participant_surname || ''
+							}`.trim()}
+						</strong>
+					</p>
+
+					<TextControl
+						label={__('Amount', 'fair-audience')}
+						value={transferData.amount}
+						onChange={(value) =>
+							setTransferData({ ...transferData, amount: value })
+						}
+						type="number"
+						step="0.01"
+						min="0.01"
+					/>
+
+					<TextControl
+						label={__('Date', 'fair-audience')}
+						value={transferData.entry_date}
+						onChange={(value) =>
+							setTransferData({
+								...transferData,
+								entry_date: value,
+							})
+						}
+						type="date"
+					/>
+
+					<TextareaControl
+						label={__('Description', 'fair-audience')}
+						value={transferData.description}
+						onChange={(value) =>
+							setTransferData({
+								...transferData,
+								description: value,
+							})
+						}
+					/>
+
+					<SelectControl
+						label={__('From Budget (Source)', 'fair-audience')}
+						value={transferData.source_budget_id}
+						options={[
+							{
+								label: __(
+									'-- Select Budget --',
+									'fair-audience'
+								),
+								value: '',
+							},
+							...budgets.map((b) => ({
+								label: b.name,
+								value: b.id.toString(),
+							})),
+						]}
+						onChange={(value) =>
+							setTransferData({
+								...transferData,
+								source_budget_id: value,
+							})
+						}
+					/>
+
+					<SelectControl
+						label={__('To Budget (Target)', 'fair-audience')}
+						value={transferData.target_budget_id}
+						options={[
+							{
+								label: __(
+									'-- Select Budget --',
+									'fair-audience'
+								),
+								value: '',
+							},
+							...budgets.map((b) => ({
+								label: b.name,
+								value: b.id.toString(),
+							})),
+						]}
+						onChange={(value) =>
+							setTransferData({
+								...transferData,
+								target_budget_id: value,
+							})
+						}
+					/>
+
+					{transferData.source_budget_id &&
+						transferData.target_budget_id &&
+						transferData.source_budget_id ===
+							transferData.target_budget_id && (
+							<Notice status="warning" isDismissible={false}>
+								{__(
+									'Source and target budgets must be different.',
+									'fair-audience'
+								)}
+							</Notice>
+						)}
+
+					<div
+						style={{
+							display: 'flex',
+							justifyContent: 'flex-end',
+							gap: '8px',
+							marginTop: '16px',
+						}}
+					>
+						<Button
+							variant="secondary"
+							onClick={() => {
+								setIsTransferModalOpen(false);
+								setTransferPayment(null);
+							}}
+						>
+							{__('Cancel', 'fair-audience')}
+						</Button>
+						<Button
+							variant="primary"
+							onClick={handleCreateTransfer}
+							disabled={
+								isCreatingTransfer ||
+								!transferData.amount ||
+								!transferData.entry_date ||
+								!transferData.source_budget_id ||
+								!transferData.target_budget_id ||
+								transferData.source_budget_id ===
+									transferData.target_budget_id
+							}
+							isBusy={isCreatingTransfer}
+						>
+							{__('Create Transfer', 'fair-audience')}
 						</Button>
 					</div>
 				</Modal>
