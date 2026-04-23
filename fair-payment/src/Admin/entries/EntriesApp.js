@@ -945,6 +945,44 @@ const EntriesApp = () => {
 																			-
 																		</em>
 																	)}
+																	{entry.participant && (
+																		<div
+																			style={{
+																				fontSize:
+																					'12px',
+																				color: '#757575',
+																				marginTop:
+																					'2px',
+																			}}
+																		>
+																			{entry
+																				.participant
+																				.admin_url ? (
+																				<a
+																					href={
+																						entry
+																							.participant
+																							.admin_url
+																					}
+																					style={{
+																						color: '#2271b1',
+																						textDecoration:
+																							'none',
+																					}}
+																				>
+																					{
+																						entry
+																							.participant
+																							.name
+																					}
+																				</a>
+																			) : (
+																				entry
+																					.participant
+																					.name
+																			)}
+																		</div>
+																	)}
 																</td>
 																{budgetingEnabled && (
 																	<td>

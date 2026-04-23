@@ -103,6 +103,13 @@ class FinancialEntry {
 	public $event_date_id;
 
 	/**
+	 * Participant ID (foreign key to fair_audience_participants table)
+	 *
+	 * @var int|null
+	 */
+	public $participant_id;
+
+	/**
 	 * Import source filename
 	 *
 	 * @var string|null
@@ -1040,7 +1047,7 @@ class FinancialEntry {
 	 * @param int|null    $event_date_id     Event date ID.
 	 * @return int|false The parent entry ID on success, false on failure.
 	 */
-	public static function create_transfer( $amount, $entry_date, $source_budget_id, $target_budget_id, $description = null, $event_url = null, $event_date_id = null ) {
+	public static function create_transfer( $amount, $entry_date, $source_budget_id, $target_budget_id, $description = null, $event_url = null, $event_date_id = null, $participant_id = null ) {
 		global $wpdb;
 
 		$table_name = self::get_table_name();
@@ -1051,13 +1058,14 @@ class FinancialEntry {
 
 		// Create parent entry (transfer).
 		$parent_data = array(
-			'amount'      => abs( (float) $amount ),
-			'entry_type'  => 'transfer',
-			'entry_date'  => $entry_date,
-			'description' => $description,
+			'amount'         => abs( (float) $amount ),
+			'entry_type'     => 'transfer',
+			'entry_date'     => $entry_date,
+			'description'    => $description,
+			'participant_id' => $participant_id ? (int) $participant_id : null,
 		);
 
-		$result = $wpdb->insert( $table_name, $parent_data, array( '%f', '%s', '%s', '%s' ) );
+		$result = $wpdb->insert( $table_name, $parent_data, array( '%f', '%s', '%s', '%s', '%d' ) );
 
 		if ( ! $result ) {
 			// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
@@ -1128,7 +1136,7 @@ class FinancialEntry {
 	 * @param int|null    $event_date_id     Event date ID.
 	 * @return bool True on success, false on failure.
 	 */
-	public static function update_transfer( $id, $amount, $entry_date, $source_budget_id, $target_budget_id, $description = null, $event_url = null, $event_date_id = null ) {
+	public static function update_transfer( $id, $amount, $entry_date, $source_budget_id, $target_budget_id, $description = null, $event_url = null, $event_date_id = null, $participant_id = null ) {
 		global $wpdb;
 
 		$table_name = self::get_table_name();
@@ -1152,12 +1160,13 @@ class FinancialEntry {
 		$parent_result = $wpdb->update(
 			$table_name,
 			array(
-				'amount'      => abs( (float) $amount ),
-				'entry_date'  => $entry_date,
-				'description' => $description,
+				'amount'         => abs( (float) $amount ),
+				'entry_date'     => $entry_date,
+				'description'    => $description,
+				'participant_id' => $participant_id ? (int) $participant_id : null,
 			),
 			array( 'id' => $id ),
-			array( '%f', '%s', '%s' ),
+			array( '%f', '%s', '%s', '%d' ),
 			array( '%d' )
 		);
 
@@ -1316,6 +1325,7 @@ class FinancialEntry {
 		$entry->parent_entry_id    = isset( $row->parent_entry_id ) && $row->parent_entry_id ? (int) $row->parent_entry_id : null;
 		$entry->event_url          = isset( $row->event_url ) ? $row->event_url : null;
 		$entry->event_date_id      = isset( $row->event_date_id ) && $row->event_date_id ? (int) $row->event_date_id : null;
+		$entry->participant_id     = isset( $row->participant_id ) && $row->participant_id ? (int) $row->participant_id : null;
 		$entry->import_source      = isset( $row->import_source ) ? $row->import_source : null;
 		$entry->imported_at        = isset( $row->imported_at ) ? $row->imported_at : null;
 		$entry->created_at         = $row->created_at;
@@ -1348,6 +1358,7 @@ class FinancialEntry {
 			'parent_entry_id'    => $this->parent_entry_id,
 			'event_url'          => $this->event_url,
 			'event_date_id'      => $this->event_date_id,
+			'participant_id'     => $this->participant_id,
 			'import_source'      => $this->import_source,
 			'imported_at'        => $this->imported_at,
 			'created_at'         => $this->created_at,

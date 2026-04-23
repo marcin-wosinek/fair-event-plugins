@@ -606,14 +606,12 @@ class FinancialEntryController extends WP_REST_Controller {
 		$data = array(
 			'entries' => array_map(
 				function ( $entry ) {
-					$entry_data = $entry->to_array();
+					$entry_data = $this->prepare_entry_data( $entry );
 
 					if ( $entry->parent_entry_id ) {
-						// This is a child entry (shown due to budget filter).
-						// Include parent with all children for Edit Split functionality.
 						$parent = FinancialEntry::get_by_id( $entry->parent_entry_id );
 						if ( $parent ) {
-							$parent_data             = $parent->to_array();
+							$parent_data             = $this->prepare_entry_data( $parent );
 							$parent_data['children'] = array_map(
 								function ( $child ) {
 									return $child->to_array();
@@ -623,7 +621,6 @@ class FinancialEntryController extends WP_REST_Controller {
 							$entry_data['parent'] = $parent_data;
 						}
 					} else {
-						// Include children for split parent entries.
 						$children = FinancialEntry::get_children( $entry->id );
 						if ( ! empty( $children ) ) {
 							$entry_data['children'] = array_map(
@@ -644,6 +641,22 @@ class FinancialEntryController extends WP_REST_Controller {
 		);
 
 		return new WP_REST_Response( $data, 200 );
+	}
+
+	/**
+	 * Prepare entry data with participant info
+	 *
+	 * @param FinancialEntry $entry Entry object.
+	 * @return array Entry data array with participant info.
+	 */
+	private function prepare_entry_data( $entry ) {
+		$entry_data = $entry->to_array();
+
+		if ( $entry->participant_id ) {
+			$entry_data['participant'] = apply_filters( 'fair_payment_prepare_participant', null, $entry->participant_id );
+		}
+
+		return $entry_data;
 	}
 
 	/**
@@ -1286,6 +1299,7 @@ class FinancialEntryController extends WP_REST_Controller {
 		$description      = $request->get_param( 'description' );
 		$event_url        = $request->get_param( 'event_url' );
 		$event_date_id    = $request->get_param( 'event_date_id' );
+		$participant_id   = $request->get_param( 'participant_id' );
 
 		if ( empty( $amount ) || $amount <= 0 ) {
 			return new WP_Error(
@@ -1326,7 +1340,8 @@ class FinancialEntryController extends WP_REST_Controller {
 			$target_budget_id,
 			$description,
 			! empty( $event_url ) ? $event_url : null,
-			! empty( $event_date_id ) ? $event_date_id : null
+			! empty( $event_date_id ) ? $event_date_id : null,
+			! empty( $participant_id ) ? (int) $participant_id : null
 		);
 
 		if ( ! $parent_id ) {
@@ -1340,7 +1355,7 @@ class FinancialEntryController extends WP_REST_Controller {
 		$entry    = FinancialEntry::get_by_id( $parent_id );
 		$children = FinancialEntry::get_children( $parent_id );
 
-		$entry_data             = $entry->to_array();
+		$entry_data             = $this->prepare_entry_data( $entry );
 		$entry_data['children'] = array_map(
 			function ( $child ) {
 				return $child->to_array();
@@ -1366,6 +1381,7 @@ class FinancialEntryController extends WP_REST_Controller {
 		$description      = $request->get_param( 'description' );
 		$event_url        = $request->get_param( 'event_url' );
 		$event_date_id    = $request->get_param( 'event_date_id' );
+		$participant_id   = $request->get_param( 'participant_id' );
 
 		// Check if entry exists and is a transfer.
 		$existing = FinancialEntry::get_by_id( $id );
@@ -1425,7 +1441,8 @@ class FinancialEntryController extends WP_REST_Controller {
 			$target_budget_id,
 			$description,
 			! empty( $event_url ) ? $event_url : null,
-			! empty( $event_date_id ) ? $event_date_id : null
+			! empty( $event_date_id ) ? $event_date_id : null,
+			! empty( $participant_id ) ? (int) $participant_id : null
 		);
 
 		if ( ! $success ) {
@@ -1439,7 +1456,7 @@ class FinancialEntryController extends WP_REST_Controller {
 		$entry    = FinancialEntry::get_by_id( $id );
 		$children = FinancialEntry::get_children( $id );
 
-		$entry_data             = $entry->to_array();
+		$entry_data             = $this->prepare_entry_data( $entry );
 		$entry_data['children'] = array_map(
 			function ( $child ) {
 				return $child->to_array();

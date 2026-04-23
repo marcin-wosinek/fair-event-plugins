@@ -18,6 +18,7 @@ import {
  * Internal dependencies
  */
 import EventUrlField from './EventUrlField.js';
+import ParticipantField from './ParticipantField.js';
 
 const TransferModal = ({ entry, budgets, eventsEnabled, onSave, onCancel }) => {
 	const isEditMode = !!entry;
@@ -44,7 +45,11 @@ const TransferModal = ({ entry, budgets, eventsEnabled, onSave, onCancel }) => {
 			: '',
 		event_url: costChild ? costChild.event_url || '' : '',
 		event_date_id: costChild ? costChild.event_date_id || null : null,
+		participant_id: isEditMode ? entry.participant_id || null : null,
 	});
+	const [participant, setParticipant] = useState(
+		isEditMode && entry.participant ? entry.participant : null
+	);
 	const [isSaving, setIsSaving] = useState(false);
 	const [error, setError] = useState(null);
 
@@ -75,6 +80,7 @@ const TransferModal = ({ entry, budgets, eventsEnabled, onSave, onCancel }) => {
 				description: formData.description || null,
 				event_url: formData.event_url || null,
 				event_date_id: formData.event_date_id || null,
+				participant_id: formData.participant_id || null,
 			};
 
 			if (isEditMode) {
@@ -205,6 +211,18 @@ const TransferModal = ({ entry, budgets, eventsEnabled, onSave, onCancel }) => {
 							}
 						/>
 					)}
+
+					<ParticipantField
+						participantId={formData.participant_id}
+						participant={participant}
+						onChange={(id, p) => {
+							setFormData({
+								...formData,
+								participant_id: id,
+							});
+							setParticipant(p);
+						}}
+					/>
 
 					<HStack justify="flex-end" spacing={2}>
 						<Button
