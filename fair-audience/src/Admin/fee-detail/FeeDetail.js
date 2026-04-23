@@ -606,7 +606,7 @@ export default function FeeDetail() {
 				supportsBulk: false,
 			},
 		],
-		[feeId]
+		[feeId, fee, budgets]
 	);
 
 	const paginationInfo = useMemo(
