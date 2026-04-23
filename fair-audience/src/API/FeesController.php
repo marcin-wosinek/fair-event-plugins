@@ -351,22 +351,6 @@ class FeesController extends WP_REST_Controller {
 		// Generate fee_payment records for all group members.
 		$created = $this->payment_repository->create_payments_for_group( $fee->id, $group_id, $amount );
 
-		// Auto-create financial entry if budget is linked.
-		if ( ! empty( $budget_id ) && $created > 0 && class_exists( FinancialEntry::class ) ) {
-			$total_amount = (float) $amount * $created;
-			$entry_date   = ! empty( $fee->due_date ) ? $fee->due_date : current_time( 'Y-m-d' );
-
-			FinancialEntry::create_with_external_reference(
-				$total_amount,
-				'income',
-				$entry_date,
-				'fee_' . $fee->id,
-				$fee->name,
-				(int) $budget_id,
-				'fair-audience-fees'
-			);
-		}
-
 		return rest_ensure_response(
 			array(
 				'id'               => $fee->id,
@@ -675,6 +659,9 @@ class FeesController extends WP_REST_Controller {
 			'paid'
 		);
 
+		// Create budget entry for this payment.
+		self::create_budget_entry_for_payment( $payment );
+
 		return rest_ensure_response(
 			array(
 				'message' => __( 'Payment marked as paid.', 'fair-audience' ),
@@ -881,5 +868,35 @@ class FeesController extends WP_REST_Controller {
 	 */
 	public function delete_item_permissions_check( $request ) {
 		return current_user_can( 'manage_options' );
+	}
+
+	/**
+	 * Create a budget entry when a fee payment is marked as paid.
+	 *
+	 * @param \FairAudience\Models\FeePayment $payment The paid fee payment.
+	 */
+	public static function create_budget_entry_for_payment( $payment ) {
+		if ( ! class_exists( FinancialEntry::class ) ) {
+			return;
+		}
+
+		$fee_repository = new FeeRepository();
+		$fee            = $fee_repository->get_by_id( $payment->fee_id );
+
+		if ( ! $fee || empty( $fee->budget_id ) ) {
+			return;
+		}
+
+		$entry_date = current_time( 'Y-m-d' );
+
+		FinancialEntry::create_with_external_reference(
+			(float) $payment->amount,
+			'income',
+			$entry_date,
+			'fee_payment_' . $payment->id,
+			$fee->name,
+			(int) $fee->budget_id,
+			'fair-audience-fees'
+		);
 	}
 }
