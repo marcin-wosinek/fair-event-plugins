@@ -302,6 +302,18 @@ class EventParticipantsController extends WP_REST_Controller {
 
 		$event_participants = $this->event_participant_repo->get_by_event_date( $event_date_id );
 
+		// Build ticket type name lookup.
+		$ticket_type_names = array();
+		$ticket_type_ids   = array_filter( array_unique( array_map( fn( $ep ) => $ep->ticket_type_id, $event_participants ) ) );
+		if ( ! empty( $ticket_type_ids ) && class_exists( '\FairEvents\Models\TicketType' ) ) {
+			foreach ( $ticket_type_ids as $tt_id ) {
+				$tt = \FairEvents\Models\TicketType::get_by_id( $tt_id );
+				if ( $tt ) {
+					$ticket_type_names[ $tt_id ] = $tt->name;
+				}
+			}
+		}
+
 		// Get likes received per participant (for photos they authored).
 		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
 		$likes_data = $wpdb->get_results(
@@ -320,7 +332,7 @@ class EventParticipantsController extends WP_REST_Controller {
 		);
 
 		$items = array_map(
-			function ( $ep ) use ( $likes_data ) {
+			function ( $ep ) use ( $likes_data, $ticket_type_names ) {
 				$participant = $this->participant_repo->get_by_id( $ep->participant_id );
 				return array(
 					'id'                   => $ep->id,
@@ -332,6 +344,9 @@ class EventParticipantsController extends WP_REST_Controller {
 					'participant_email'    => $participant ? $participant->email : '',
 					'instagram'            => $participant ? $participant->instagram : '',
 					'label'                => $ep->label,
+					'ticket_type_name'     => $ep->ticket_type_id && isset( $ticket_type_names[ $ep->ticket_type_id ] )
+						? $ticket_type_names[ $ep->ticket_type_id ]
+						: null,
 					'attended_at'          => $ep->attended_at,
 					'created_at'           => $ep->created_at,
 					'photo_likes_received' => isset( $likes_data[ $ep->participant_id ] )

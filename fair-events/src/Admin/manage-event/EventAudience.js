@@ -325,6 +325,12 @@ export default function EventAudience({ eventId, eventDateId, audienceUrl }) {
 													</th>
 													<th>
 														{__(
+															'Ticket type',
+															'fair-events'
+														)}
+													</th>
+													<th>
+														{__(
 															'Shown up',
 															'fair-events'
 														)}
@@ -352,6 +358,10 @@ export default function EventAudience({ eventId, eventDateId, audienceUrl }) {
 																{LABEL_DISPLAY[
 																	p.label
 																] || p.label}
+															</td>
+															<td>
+																{p.ticket_type_name ||
+																	'—'}
 															</td>
 															<td>
 																<input
