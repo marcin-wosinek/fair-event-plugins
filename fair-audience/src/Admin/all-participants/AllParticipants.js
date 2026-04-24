@@ -423,7 +423,7 @@ export default function AllParticipants() {
 			<h1>{__('All Participants', 'fair-audience')}</h1>
 
 			<Card>
-				<CardBody>
+				<CardBody style={{ overflowX: 'auto' }}>
 					<div style={{ marginBottom: '16px' }}>
 						<Button variant="primary" onClick={openAddModal}>
 							{__('Add Participant', 'fair-audience')}
