@@ -354,7 +354,7 @@ const TransactionsApp = () => {
 						</HStack>
 					</HStack>
 				</CardHeader>
-				<CardBody>
+				<CardBody style={{ overflowX: 'auto' }}>
 					{error && (
 						<Notice
 							status="error"
@@ -381,7 +381,7 @@ const TransactionsApp = () => {
 						<p>{__('No transactions found.', 'fair-payment')}</p>
 					) : (
 						<>
-							<table className="wp-list-table widefat fixed striped">
+							<table className="wp-list-table widefat striped" style={{ whiteSpace: 'nowrap' }}>
 								<thead>
 									<tr>
 										<td className="check-column">
