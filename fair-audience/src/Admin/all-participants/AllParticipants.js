@@ -25,6 +25,7 @@ const DEFAULT_VIEW = {
 	fields: [
 		'name',
 		'email',
+		'phone',
 		'instagram',
 		'email_profile',
 		'status',
@@ -94,6 +95,12 @@ export default function AllParticipants() {
 				label: __('Email', 'fair-audience'),
 				render: ({ item }) => item.email || '—',
 				enableSorting: true,
+			},
+			{
+				id: 'phone',
+				label: __('Phone', 'fair-audience'),
+				render: ({ item }) => item.phone || '—',
+				enableSorting: false,
 			},
 			{
 				id: 'instagram',

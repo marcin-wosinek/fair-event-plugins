@@ -218,6 +218,10 @@ export default function ParticipantDetail() {
 								</td>
 							</tr>
 							<tr>
+								<th>{__('Phone', 'fair-audience')}</th>
+								<td>{participant.phone || '—'}</td>
+							</tr>
+							<tr>
 								<th>{__('Instagram', 'fair-audience')}</th>
 								<td>
 									{participant.instagram ? (

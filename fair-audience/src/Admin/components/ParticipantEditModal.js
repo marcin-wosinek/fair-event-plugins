@@ -17,6 +17,7 @@ const EMPTY_FORM = {
 	name: '',
 	surname: '',
 	email: '',
+	phone: '',
 	instagram: '',
 	email_profile: 'minimal',
 	wp_user_id: null,
@@ -46,6 +47,7 @@ export default function ParticipantEditModal({
 				name: participant.name || '',
 				surname: participant.surname || '',
 				email: participant.email || '',
+				phone: participant.phone || '',
 				instagram: participant.instagram || '',
 				email_profile: participant.email_profile || 'minimal',
 				wp_user_id: participant.wp_user_id || null,
@@ -92,6 +94,7 @@ export default function ParticipantEditModal({
 			name: formData.name,
 			surname: formData.surname,
 			email: formData.email,
+			phone: formData.phone,
 			instagram: formData.instagram,
 			email_profile: formData.email_profile,
 			wp_user_id: formData.wp_user_id,
@@ -176,6 +179,14 @@ export default function ParticipantEditModal({
 						value={formData.email}
 						onChange={(value) =>
 							setFormData({ ...formData, email: value })
+						}
+					/>
+					<TextControl
+						label={__('Phone', 'fair-audience')}
+						type="tel"
+						value={formData.phone}
+						onChange={(value) =>
+							setFormData({ ...formData, phone: value })
 						}
 					/>
 					<TextControl

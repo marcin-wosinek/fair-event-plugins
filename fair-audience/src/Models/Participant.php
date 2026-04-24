@@ -43,6 +43,13 @@ class Participant {
 	public $email;
 
 	/**
+	 * Phone number.
+	 *
+	 * @var string
+	 */
+	public $phone;
+
+	/**
 	 * Instagram handle (without @).
 	 *
 	 * @var string
@@ -105,6 +112,7 @@ class Participant {
 		$this->name          = isset( $data['name'] ) ? sanitize_text_field( $data['name'] ) : '';
 		$this->surname       = isset( $data['surname'] ) ? sanitize_text_field( $data['surname'] ) : '';
 		$this->email         = isset( $data['email'] ) ? sanitize_email( $data['email'] ) : '';
+		$this->phone         = isset( $data['phone'] ) ? sanitize_text_field( $data['phone'] ) : '';
 		$this->instagram     = isset( $data['instagram'] ) ? sanitize_text_field( $data['instagram'] ) : '';
 		$this->email_profile = isset( $data['email_profile'] ) ? $data['email_profile'] : 'minimal';
 		$this->status        = isset( $data['status'] ) ? $data['status'] : 'confirmed';
@@ -147,10 +155,11 @@ class Participant {
 
 		if ( $this->id ) {
 			// Update existing - use raw query to properly handle NULL values.
-			$sql  = "UPDATE {$table_name} SET name = %s, surname = %s, instagram = %s, email_profile = %s, status = %s, {$email_sql}, {$wp_user_id_sql} WHERE id = %d";
+			$sql  = "UPDATE {$table_name} SET name = %s, surname = %s, phone = %s, instagram = %s, email_profile = %s, status = %s, {$email_sql}, {$wp_user_id_sql} WHERE id = %d";
 			$args = array(
 				$this->name,
 				$this->surname,
+				$this->phone,
 				$this->instagram,
 				$this->email_profile,
 				$this->status,
@@ -170,10 +179,11 @@ class Participant {
 			$email_col      = null === $email ? 'NULL' : '%s';
 			$wp_user_id_col = null === $this->wp_user_id ? 'NULL' : '%d';
 
-			$sql  = "INSERT INTO {$table_name} (name, surname, instagram, email_profile, status, email, wp_user_id) VALUES (%s, %s, %s, %s, %s, {$email_col}, {$wp_user_id_col})";
+			$sql  = "INSERT INTO {$table_name} (name, surname, phone, instagram, email_profile, status, email, wp_user_id) VALUES (%s, %s, %s, %s, %s, %s, {$email_col}, {$wp_user_id_col})";
 			$args = array(
 				$this->name,
 				$this->surname,
+				$this->phone,
 				$this->instagram,
 				$this->email_profile,
 				$this->status,

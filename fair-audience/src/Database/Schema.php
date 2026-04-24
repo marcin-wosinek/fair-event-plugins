@@ -30,6 +30,7 @@ class Schema {
 			name VARCHAR(255) NOT NULL,
 			surname VARCHAR(255) DEFAULT '',
 			email VARCHAR(255) DEFAULT NULL,
+			phone VARCHAR(50) DEFAULT '',
 			instagram VARCHAR(255) DEFAULT '' COMMENT 'Instagram handle without @',
 			email_profile ENUM('minimal', 'marketing') NOT NULL DEFAULT 'minimal',
 			status ENUM('pending', 'confirmed') NOT NULL DEFAULT 'confirmed',
