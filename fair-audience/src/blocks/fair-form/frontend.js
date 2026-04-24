@@ -357,6 +357,7 @@ function submitForm(form) {
 
 	const eventDateId = parseInt(wrapper?.dataset.eventDateId, 10) || 0;
 	const postId = parseInt(wrapper?.dataset.postId, 10) || 0;
+	const notificationEmail = wrapper?.dataset.notificationEmail || '';
 
 	let fetchOptions;
 
@@ -382,6 +383,9 @@ function submitForm(form) {
 		}
 		if (postId > 0) {
 			formData.append('post_id', postId);
+		}
+		if (notificationEmail) {
+			formData.append('notification_email', notificationEmail);
 		}
 
 		// Append file inputs (skip hidden ones).
@@ -423,6 +427,9 @@ function submitForm(form) {
 		}
 		if (postId > 0) {
 			requestData.post_id = postId;
+		}
+		if (notificationEmail) {
+			requestData.notification_email = notificationEmail;
 		}
 
 		fetchOptions = {

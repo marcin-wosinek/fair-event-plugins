@@ -171,6 +171,12 @@ class FairFormController extends WP_REST_Controller {
 							'required' => false,
 							'default'  => array(),
 						),
+						'notification_email'    => array(
+							'type'              => 'string',
+							'required'          => false,
+							'default'           => '',
+							'sanitize_callback' => 'sanitize_email',
+						),
 					),
 				),
 			)
@@ -331,6 +337,26 @@ class FairFormController extends WP_REST_Controller {
 
 		// Save questionnaire answers.
 		$this->save_questionnaire_answers( $participant->id, $questionnaire_answers, $event_date_id, $post_id );
+
+		// Send confirmation email to the submitter.
+		$this->email_service->send_form_confirmation(
+			$participant,
+			$questionnaire_answers,
+			$post_id
+		);
+
+		// Send admin notification email if configured.
+		$notification_email = $request->get_param( 'notification_email' );
+		if ( ! empty( $notification_email ) && is_email( $notification_email ) ) {
+			$this->email_service->send_form_notification(
+				$notification_email,
+				$name,
+				$surname,
+				$email,
+				$questionnaire_answers,
+				$post_id
+			);
+		}
 
 		return rest_ensure_response(
 			array(

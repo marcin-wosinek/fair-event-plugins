@@ -18,6 +18,7 @@ $submit_text        = ! empty( $attributes['submitButtonText'] ) ? $attributes['
 $success_message    = ! empty( $attributes['successMessage'] ) ? $attributes['successMessage'] : __( 'Thank you for your submission!', 'fair-audience' );
 $show_keep_informed = ! empty( $attributes['showKeepInformed'] );
 $event_date_id      = (int) ( $attributes['eventDateId'] ?? 0 );
+$notification_email = ! empty( $attributes['notificationEmail'] ) ? sanitize_email( $attributes['notificationEmail'] ) : '';
 
 // Generate unique ID for this form instance.
 $form_id = 'fair-form-' . wp_unique_id();
@@ -25,10 +26,11 @@ $form_id = 'fair-form-' . wp_unique_id();
 // Get wrapper attributes.
 $wrapper_attributes = get_block_wrapper_attributes(
 	array(
-		'class'                => 'fair-form',
-		'data-success-message' => esc_attr( $success_message ),
-		'data-event-date-id'   => esc_attr( $event_date_id ),
-		'data-post-id'         => esc_attr( get_the_ID() ),
+		'class'                   => 'fair-form',
+		'data-success-message'    => esc_attr( $success_message ),
+		'data-event-date-id'      => esc_attr( $event_date_id ),
+		'data-post-id'            => esc_attr( get_the_ID() ),
+		'data-notification-email' => esc_attr( $notification_email ),
 	)
 );
 ?>

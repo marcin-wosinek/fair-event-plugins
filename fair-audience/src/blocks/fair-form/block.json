@@ -33,6 +33,10 @@
 		"eventDateId": {
 			"type": "integer",
 			"default": 0
+		},
+		"notificationEmail": {
+			"type": "string",
+			"default": ""
 		}
 	},
 	"editorScript": "file:./editor.js",

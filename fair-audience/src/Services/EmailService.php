@@ -1720,6 +1720,302 @@ class EmailService {
 	}
 
 	/**
+	 * Send form submission notification to admin/configured email.
+	 *
+	 * @param string $to_email          Recipient email address.
+	 * @param string $submitter_name    Submitter's first name.
+	 * @param string $submitter_surname Submitter's surname.
+	 * @param string $submitter_email   Submitter's email.
+	 * @param array  $answers           Questionnaire answers.
+	 * @param int    $post_id           Post ID where the form was submitted.
+	 * @return bool Success.
+	 */
+	public function send_form_notification( $to_email, $submitter_name, $submitter_surname, $submitter_email, $answers, $post_id = 0 ) {
+		if ( empty( $to_email ) || ! is_email( $to_email ) ) {
+			return false;
+		}
+
+		$site_name = wp_specialchars_decode( get_option( 'blogname' ), ENT_QUOTES );
+
+		$page_title = '';
+		if ( $post_id > 0 ) {
+			$post = get_post( $post_id );
+			if ( $post ) {
+				$page_title = $post->post_title;
+			}
+		}
+
+		$subject = sprintf(
+			/* translators: %s: site name */
+			__( 'New form submission — %s', 'fair-audience' ),
+			$site_name
+		);
+
+		// Build submitter info rows.
+		$submitter_html = '<tr>
+			<td style="padding: 8px 12px; border-bottom: 1px solid #eeeeee; font-weight: bold; vertical-align: top; width: 40%;">' . esc_html__( 'Name', 'fair-audience' ) . '</td>
+			<td style="padding: 8px 12px; border-bottom: 1px solid #eeeeee;">' . esc_html( trim( $submitter_name . ' ' . $submitter_surname ) ) . '</td>
+		</tr>
+		<tr>
+			<td style="padding: 8px 12px; border-bottom: 1px solid #eeeeee; font-weight: bold; vertical-align: top; width: 40%;">' . esc_html__( 'Email', 'fair-audience' ) . '</td>
+			<td style="padding: 8px 12px; border-bottom: 1px solid #eeeeee;"><a href="mailto:' . esc_attr( $submitter_email ) . '" style="color: #0073aa;">' . esc_html( $submitter_email ) . '</a></td>
+		</tr>';
+
+		// Build answers table rows.
+		$answers_html = '';
+		foreach ( $answers as $answer ) {
+			if ( 'file_upload' === ( $answer['question_type'] ?? '' ) ) {
+				continue;
+			}
+
+			$question_text = esc_html( $answer['question_text'] ?? '' );
+			$answer_value  = $answer['answer_value'] ?? '';
+
+			$decoded = json_decode( $answer_value, true );
+			if ( is_array( $decoded ) ) {
+				$answer_value = implode( ', ', $decoded );
+			}
+
+			$answers_html .= '<tr>
+				<td style="padding: 8px 12px; border-bottom: 1px solid #eeeeee; font-weight: bold; vertical-align: top; width: 40%;">' . $question_text . '</td>
+				<td style="padding: 8px 12px; border-bottom: 1px solid #eeeeee;">' . esc_html( $answer_value ) . '</td>
+			</tr>';
+		}
+
+		$context_html = '';
+		if ( ! empty( $page_title ) ) {
+			$context_html = '<p style="margin: 0 0 20px 0; font-size: 16px;">'
+				. sprintf(
+					/* translators: %s: page title */
+					esc_html__( 'Page: %s', 'fair-audience' ),
+					'<strong>' . esc_html( $page_title ) . '</strong>'
+				)
+				. '</p>';
+		}
+
+		$message = '<!DOCTYPE html>
+<html>
+<head>
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+</head>
+<body style="margin: 0; padding: 0; font-family: Arial, sans-serif; font-size: 16px; line-height: 1.6; color: #333333; background-color: #f4f4f4;">
+	<table width="100%" cellpadding="0" cellspacing="0" style="background-color: #f4f4f4;">
+		<tr>
+			<td align="center" style="padding: 20px 0;">
+				<table width="600" cellpadding="0" cellspacing="0" style="background-color: #ffffff; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
+					<!-- Header -->
+					<tr>
+						<td style="background-color: #0073aa; color: #ffffff; padding: 30px; border-radius: 8px 8px 0 0; text-align: center;">
+							<h1 style="margin: 0; font-size: 24px; font-weight: bold;">' . esc_html( $site_name ) . '</h1>
+						</td>
+					</tr>
+
+					<!-- Content -->
+					<tr>
+						<td style="padding: 40px 30px;">
+							<p style="margin: 0 0 20px 0; font-size: 16px;">
+								' . esc_html__( 'A new form submission has been received.', 'fair-audience' ) . '
+							</p>
+
+							' . $context_html . '
+
+							<table width="100%" cellpadding="0" cellspacing="0" style="margin: 0 0 20px 0; border: 1px solid #eeeeee; border-radius: 4px;">
+								' . $submitter_html . $answers_html . '
+							</table>
+						</td>
+					</tr>
+
+					<!-- Footer -->
+					<tr>
+						<td style="background-color: #f8f8f8; padding: 20px 30px; border-radius: 0 0 8px 8px; text-align: center; font-size: 12px; color: #666666;">
+							<p style="margin: 0;">
+								' . esc_html( $site_name ) . '
+							</p>
+						</td>
+					</tr>
+				</table>
+			</td>
+		</tr>
+	</table>
+</body>
+</html>';
+
+		add_filter(
+			'wp_mail_content_type',
+			function () {
+				return 'text/html';
+			}
+		);
+
+		$result = wp_mail( $to_email, $subject, $message );
+
+		remove_filter(
+			'wp_mail_content_type',
+			function () {
+				return 'text/html';
+			}
+		);
+
+		return $result;
+	}
+
+	/**
+	 * Send form submission confirmation email to the submitter.
+	 *
+	 * @param Participant $participant Participant who submitted the form.
+	 * @param array       $answers     Questionnaire answers.
+	 * @param int         $post_id     Post ID where the form was submitted.
+	 * @return bool Success.
+	 */
+	public function send_form_confirmation( Participant $participant, array $answers, int $post_id = 0 ): bool {
+		if ( ! $this->has_valid_email( $participant ) ) {
+			return false;
+		}
+
+		$site_name = wp_specialchars_decode( get_option( 'blogname' ), ENT_QUOTES );
+
+		$page_title = '';
+		if ( $post_id > 0 ) {
+			$post = get_post( $post_id );
+			if ( $post ) {
+				$page_title = $post->post_title;
+			}
+		}
+
+		$subject = sprintf(
+			/* translators: %s: site name */
+			__( 'Your submission — %s', 'fair-audience' ),
+			$site_name
+		);
+
+		// Build answers table rows.
+		$answers_html = '';
+		foreach ( $answers as $answer ) {
+			if ( 'file_upload' === ( $answer['question_type'] ?? '' ) ) {
+				continue;
+			}
+
+			$question_text = esc_html( $answer['question_text'] ?? '' );
+			$answer_value  = $answer['answer_value'] ?? '';
+
+			$decoded = json_decode( $answer_value, true );
+			if ( is_array( $decoded ) ) {
+				$answer_value = implode( ', ', $decoded );
+			}
+
+			$answers_html .= '<tr>
+				<td style="padding: 8px 12px; border-bottom: 1px solid #eeeeee; font-weight: bold; vertical-align: top; width: 40%;">' . $question_text . '</td>
+				<td style="padding: 8px 12px; border-bottom: 1px solid #eeeeee;">' . esc_html( $answer_value ) . '</td>
+			</tr>';
+		}
+
+		$context_html = '';
+		if ( ! empty( $page_title ) ) {
+			$context_html = '<p style="margin: 0 0 20px 0; font-size: 16px;">'
+				. sprintf(
+					/* translators: %s: page title */
+					esc_html__( 'Form: %s', 'fair-audience' ),
+					'<strong>' . esc_html( $page_title ) . '</strong>'
+				)
+				. '</p>';
+		}
+
+		$answers_table = '';
+		if ( ! empty( $answers_html ) ) {
+			$answers_table = '
+							<p style="margin: 0 0 10px 0; font-size: 16px;">
+								' . esc_html__( 'Here are the answers you submitted:', 'fair-audience' ) . '
+							</p>
+
+							<table width="100%" cellpadding="0" cellspacing="0" style="margin: 0 0 20px 0; border: 1px solid #eeeeee; border-radius: 4px;">
+								' . $answers_html . '
+							</table>';
+		}
+
+		$message = '<!DOCTYPE html>
+<html>
+<head>
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+</head>
+<body style="margin: 0; padding: 0; font-family: Arial, sans-serif; font-size: 16px; line-height: 1.6; color: #333333; background-color: #f4f4f4;">
+	<table width="100%" cellpadding="0" cellspacing="0" style="background-color: #f4f4f4;">
+		<tr>
+			<td align="center" style="padding: 20px 0;">
+				<table width="600" cellpadding="0" cellspacing="0" style="background-color: #ffffff; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
+					<!-- Header -->
+					<tr>
+						<td style="background-color: #0073aa; color: #ffffff; padding: 30px; border-radius: 8px 8px 0 0; text-align: center;">
+							<h1 style="margin: 0; font-size: 24px; font-weight: bold;">' . esc_html( $site_name ) . '</h1>
+						</td>
+					</tr>
+
+					<!-- Content -->
+					<tr>
+						<td style="padding: 40px 30px;">
+							<p style="margin: 0 0 20px 0; font-size: 16px;">
+								' . sprintf(
+									/* translators: %s: participant first name */
+								esc_html__( 'Hi %s,', 'fair-audience' ),
+								'<strong>' . esc_html( $participant->name ) . '</strong>'
+							) . '
+							</p>
+
+							<p style="margin: 0 0 20px 0; font-size: 16px;">
+								' . esc_html__( 'Thank you for your submission! We have received your response.', 'fair-audience' ) . '
+							</p>
+
+							' . $context_html . '
+
+							' . $answers_table . '
+
+							<p style="margin: 20px 0 0 0; font-size: 14px; color: #666666;">
+								' . sprintf(
+									/* translators: %s: site name */
+								esc_html__( 'Thanks,%1$sThe %2$s Team', 'fair-audience' ),
+								'<br>',
+								esc_html( $site_name )
+							) . '
+							</p>
+						</td>
+					</tr>
+
+					<!-- Footer -->
+					<tr>
+						<td style="background-color: #f8f8f8; padding: 20px 30px; border-radius: 0 0 8px 8px; text-align: center; font-size: 12px; color: #666666;">
+							<p style="margin: 0;">
+								' . esc_html( $site_name ) . '
+							</p>
+						</td>
+					</tr>
+				</table>
+			</td>
+		</tr>
+	</table>
+</body>
+</html>';
+
+		add_filter(
+			'wp_mail_content_type',
+			function () {
+				return 'text/html';
+			}
+		);
+
+		$result = wp_mail( $participant->email, $subject, $message );
+
+		remove_filter(
+			'wp_mail_content_type',
+			function () {
+				return 'text/html';
+			}
+		);
+
+		return $result;
+	}
+
+	/**
 	 * Preview recipients for bulk custom mail to all audience.
 	 *
 	 * @param bool $is_marketing Whether to filter by marketing consent.

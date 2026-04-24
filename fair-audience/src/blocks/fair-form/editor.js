@@ -113,6 +113,7 @@ registerBlockType('fair-audience/fair-form', {
 			successMessage,
 			showKeepInformed,
 			eventDateId,
+			notificationEmail,
 		} = attributes;
 
 		const blockProps = useBlockProps({
@@ -173,6 +174,21 @@ registerBlockType('fair-audience/fair-form', {
 							onChange={(value) =>
 								setAttributes({ eventDateId: value })
 							}
+						/>
+						<TextControl
+							label={__('Notification Email', 'fair-audience')}
+							value={notificationEmail}
+							onChange={(value) =>
+								setAttributes({
+									notificationEmail: value,
+								})
+							}
+							type="email"
+							placeholder="admin@example.com"
+							help={__(
+								'Send a notification to this email when someone submits the form. Leave empty to disable.',
+								'fair-audience'
+							)}
 						/>
 					</PanelBody>
 				</InspectorControls>
