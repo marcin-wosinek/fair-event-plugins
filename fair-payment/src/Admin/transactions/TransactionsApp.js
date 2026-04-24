@@ -393,7 +393,12 @@ const TransactionsApp = () => {
 											__('Status', 'fair-payment')
 										)}
 										<th>{__('Mode', 'fair-payment')}</th>
-										<th>
+										<th
+											style={{
+												maxWidth: '200px',
+												whiteSpace: 'normal',
+											}}
+										>
 											{__('Description', 'fair-payment')}
 										</th>
 										<th>{__('Person', 'fair-payment')}</th>
@@ -475,7 +480,14 @@ const TransactionsApp = () => {
 														  )}
 												</span>
 											</td>
-											<td>{t.description}</td>
+											<td
+												style={{
+													maxWidth: '200px',
+													whiteSpace: 'normal',
+												}}
+											>
+												{t.description}
+											</td>
 											<td>
 												{t.participant ? (
 													<a
