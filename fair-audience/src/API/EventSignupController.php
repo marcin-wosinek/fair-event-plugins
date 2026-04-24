@@ -638,14 +638,21 @@ class EventSignupController extends WP_REST_Controller {
 			return;
 		}
 
-		$row = $this->event_participant_repository->get_by_event_date_and_participant( $event_date_id, $participant_id );
-		if ( ! $row ) {
-			return;
-		}
-
-		$row->ticket_type_id = (int) $ticket_type_id;
-		$row->seats          = max( 1, (int) $ticket_type->seats_per_ticket );
-		$row->save();
+		global $wpdb;
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+		$wpdb->update(
+			$wpdb->prefix . 'fair_audience_event_participants',
+			array(
+				'ticket_type_id' => (int) $ticket_type_id,
+				'seats'          => max( 1, (int) $ticket_type->seats_per_ticket ),
+			),
+			array(
+				'event_date_id'  => (int) $event_date_id,
+				'participant_id' => (int) $participant_id,
+			),
+			array( '%d', '%d' ),
+			array( '%d', '%d' )
+		);
 	}
 
 	/**
