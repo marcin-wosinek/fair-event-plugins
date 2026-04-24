@@ -15,9 +15,6 @@ import {
 	__experimentalHStack as HStack,
 } from '@wordpress/components';
 
-const organizationId = window.fairPaymentTransactions?.organizationId || '';
-const settingsUrl = 'admin.php?page=fair-payment-settings';
-
 const STATUS_OPTIONS = [
 	{ label: __('All statuses', 'fair-payment'), value: '' },
 	{ label: __('Paid', 'fair-payment'), value: 'paid' },
@@ -60,14 +57,6 @@ const getModeStyle = (testmode) => {
 	return testmode
 		? { color: '#996800', fontWeight: 'bold' }
 		: { color: '#007017', fontWeight: 'bold' };
-};
-
-const getMollieUrl = (molliePaymentId) => {
-	if (!molliePaymentId) return null;
-	if (organizationId) {
-		return `https://my.mollie.com/dashboard/${organizationId}/payments/${molliePaymentId}`;
-	}
-	return `https://www.mollie.com/dashboard/payments/${molliePaymentId}`;
 };
 
 const TransactionsApp = () => {
@@ -269,21 +258,6 @@ const TransactionsApp = () => {
 		<div className="wrap">
 			<h1>{__('Payment Transactions', 'fair-payment')}</h1>
 
-			{!organizationId && (
-				<Notice status="warning" isDismissible={false}>
-					<p>
-						{__(
-							'To enable direct links to Mollie transactions, please configure your Organization ID in the',
-							'fair-payment'
-						)}{' '}
-						<a href={settingsUrl}>
-							{__('settings', 'fair-payment')}
-						</a>
-						.
-					</p>
-				</Notice>
-			)}
-
 			<Card>
 				<CardHeader>
 					<HStack justify="space-between">
@@ -381,7 +355,10 @@ const TransactionsApp = () => {
 						<p>{__('No transactions found.', 'fair-payment')}</p>
 					) : (
 						<>
-							<table className="wp-list-table widefat striped" style={{ whiteSpace: 'nowrap' }}>
+							<table
+								className="wp-list-table widefat striped"
+								style={{ whiteSpace: 'nowrap' }}
+							>
 								<thead>
 									<tr>
 										<td className="check-column">
@@ -398,9 +375,6 @@ const TransactionsApp = () => {
 											'id',
 											__('ID', 'fair-payment')
 										)}
-										<th>
-											{__('Mollie ID', 'fair-payment')}
-										</th>
 										{sortableHeader(
 											'amount',
 											__('Amount', 'fair-payment')
@@ -451,29 +425,6 @@ const TransactionsApp = () => {
 												>
 													{t.id}
 												</a>
-											</td>
-											<td>
-												{t.mollie_payment_id ? (
-													<a
-														href={getMollieUrl(
-															t.mollie_payment_id
-														)}
-														target="_blank"
-														rel="noopener noreferrer"
-														title={__(
-															'View in Mollie Dashboard',
-															'fair-payment'
-														)}
-													>
-														<code>
-															{
-																t.mollie_payment_id
-															}
-														</code>
-													</a>
-												) : (
-													<code>-</code>
-												)}
 											</td>
 											<td>
 												<strong>
