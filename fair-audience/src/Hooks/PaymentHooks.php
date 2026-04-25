@@ -13,6 +13,7 @@ use FairAudience\Database\FeePaymentRepository;
 use FairAudience\Database\FeeAuditLogRepository;
 use FairAudience\Database\ParticipantRepository;
 use FairAudience\Database\EventParticipantRepository;
+use FairAudience\Services\EmailService;
 
 defined( 'WPINC' ) || die;
 
@@ -29,6 +30,8 @@ class PaymentHooks {
 		add_action( 'fair_payment_failed', array( static::class, 'handle_payment_failed' ), 10, 2 );
 		add_action( 'fair_payment_paid', array( static::class, 'handle_signup_paid' ), 10, 2 );
 		add_action( 'fair_payment_failed', array( static::class, 'handle_signup_failed' ), 10, 2 );
+
+		add_action( 'fair_audience_event_signup_paid', array( static::class, 'send_signup_confirmation_email' ), 10, 2 );
 
 		add_filter( 'fair_payment_resolve_participant_id', array( static::class, 'resolve_participant_id' ), 10, 2 );
 		add_filter( 'fair_payment_prepare_participant', array( static::class, 'prepare_participant' ), 10, 2 );
@@ -215,6 +218,26 @@ class PaymentHooks {
 		$event_participant->delete();
 
 		do_action( 'fair_audience_event_signup_failed', $event_participant, $transaction );
+	}
+
+	/**
+	 * Send confirmation email to buyer after paid event signup.
+	 *
+	 * @param object $event_participant EventParticipant row.
+	 * @param object $transaction       Transaction row from fair-payment.
+	 */
+	public static function send_signup_confirmation_email( $event_participant, $transaction ) {
+		$participant_repo = new ParticipantRepository();
+		$participant      = $participant_repo->get_by_id( (int) $event_participant->participant_id );
+
+		if ( ! $participant ) {
+			return;
+		}
+
+		$event = get_post( $event_participant->event_id );
+
+		$email_service = new EmailService();
+		$email_service->send_signup_payment_confirmation( $participant, $event, $transaction );
 	}
 
 	/**
