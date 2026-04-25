@@ -2016,14 +2016,14 @@ class EmailService {
 	}
 
 	/**
-	 * Send signup payment confirmation email to the buyer.
+	 * Send signup confirmation email to the participant.
 	 *
 	 * @param Participant   $participant Participant who signed up.
-	 * @param \WP_Post|null $event      Event post object (nullable).
-	 * @param object        $transaction Transaction row from fair-payment.
+	 * @param \WP_Post|null $event       Event post object (nullable).
+	 * @param object|null   $transaction Transaction row from fair-payment (null for free signups).
 	 * @return bool Success.
 	 */
-	public function send_signup_payment_confirmation( Participant $participant, $event, $transaction ): bool {
+	public function send_signup_payment_confirmation( Participant $participant, $event, $transaction = null ): bool {
 		if ( ! $this->has_valid_email( $participant ) ) {
 			return false;
 		}
@@ -2083,7 +2083,9 @@ class EmailService {
 							<p style="margin: 0 0 20px 0; font-size: 16px;">
 								' . sprintf(
 									/* translators: %s: event title */
-								esc_html__( 'Your signup for %s has been confirmed and your payment has been received.', 'fair-audience' ),
+								$transaction
+									? esc_html__( 'Your signup for %s has been confirmed and your payment has been received.', 'fair-audience' )
+									: esc_html__( 'Your signup for %s has been confirmed.', 'fair-audience' ),
 								'<strong>' . esc_html( $event_title ) . '</strong>'
 							) . '
 							</p>
