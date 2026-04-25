@@ -1,5 +1,11 @@
 # fair-events
 
+## 1.1.1
+
+### Patch Changes
+
+-   e22779c: Add email notification to form sign up & registrations
+
 ## 1.1.0
 
 ### Minor Changes

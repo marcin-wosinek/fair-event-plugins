@@ -1,5 +1,11 @@
 # fair-payment
 
+## 1.1.1
+
+### Patch Changes
+
+-   c8a6a54: Improve the mobile UI for transactions.
+
 ## 1.1.0
 
 ## 0.2.0

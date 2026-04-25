@@ -1,5 +1,12 @@
 # Changelog
 
+## 1.1.1
+
+### Patch Changes
+
+-   e22779c: Add email notification to form sign up & registrations
+-   c8a6a54: Add participant's import form kit.com
+
 ## 1.1.0
 
 ### Minor Changes
