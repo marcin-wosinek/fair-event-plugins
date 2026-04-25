@@ -21,7 +21,6 @@ msgstr ""
 msgid "Fair Payment"
 msgstr ""
 
-#. Plugin URI of the plugin
 #. Author URI of the plugin
 #: fair-payment.php
 msgid "https://fair-event-plugins.com"
@@ -251,12 +250,12 @@ msgid "Transaction ID."
 msgstr "ID de transacción."
 
 #: src/API/FinancialEntryController.php:528
-#: src/API/FinancialEntryController.php:1260
+#: src/API/FinancialEntryController.php:1273
 msgid "Event URL (local or external)."
 msgstr "URL del evento (local o externo)."
 
 #: src/API/FinancialEntryController.php:536
-#: src/API/FinancialEntryController.php:1268
+#: src/API/FinancialEntryController.php:1281
 msgid "Event date ID."
 msgstr "ID de fecha del evento."
 
@@ -264,46 +263,46 @@ msgstr "ID de fecha del evento."
 msgid "Array of budget allocations."
 msgstr "Array de asignaciones de presupuesto."
 
-#: src/API/FinancialEntryController.php:707
-#: src/API/FinancialEntryController.php:801
-#: src/API/FinancialEntryController.php:869
-#: src/API/FinancialEntryController.php:909
-#: src/API/FinancialEntryController.php:971
-#: src/API/FinancialEntryController.php:1010
-#: src/API/FinancialEntryController.php:1104
-#: src/API/FinancialEntryController.php:1197
-#: src/API/FinancialEntryController.php:1691
+#: src/API/FinancialEntryController.php:720
+#: src/API/FinancialEntryController.php:814
+#: src/API/FinancialEntryController.php:882
+#: src/API/FinancialEntryController.php:922
+#: src/API/FinancialEntryController.php:984
+#: src/API/FinancialEntryController.php:1023
+#: src/API/FinancialEntryController.php:1117
+#: src/API/FinancialEntryController.php:1210
+#: src/API/FinancialEntryController.php:1708
 msgid "Financial entry not found."
 msgstr "Entrada financiera no encontrada."
 
-#: src/API/FinancialEntryController.php:734
-#: src/API/FinancialEntryController.php:809
-#: src/API/FinancialEntryController.php:1293
-#: src/API/FinancialEntryController.php:1391
+#: src/API/FinancialEntryController.php:747
+#: src/API/FinancialEntryController.php:822
+#: src/API/FinancialEntryController.php:1307
+#: src/API/FinancialEntryController.php:1407
 msgid "Amount must be greater than zero."
 msgstr "La cantidad debe ser mayor que cero."
 
-#: src/API/FinancialEntryController.php:742
-#: src/API/FinancialEntryController.php:817
+#: src/API/FinancialEntryController.php:755
+#: src/API/FinancialEntryController.php:830
 msgid "Entry type must be cost or income."
 msgstr "El tipo de entrada debe ser costo o ingreso."
 
-#: src/API/FinancialEntryController.php:750
-#: src/API/FinancialEntryController.php:825
-#: src/API/FinancialEntryController.php:1301
-#: src/API/FinancialEntryController.php:1399
+#: src/API/FinancialEntryController.php:763
+#: src/API/FinancialEntryController.php:838
+#: src/API/FinancialEntryController.php:1315
+#: src/API/FinancialEntryController.php:1415
 msgid "Entry date is required."
 msgstr "La fecha de entrada es obligatoria."
 
-#: src/API/FinancialEntryController.php:769
+#: src/API/FinancialEntryController.php:782
 msgid "Failed to create financial entry."
 msgstr "Error al crear la entrada financiera."
 
-#: src/API/FinancialEntryController.php:845
+#: src/API/FinancialEntryController.php:858
 msgid "Failed to update financial entry."
 msgstr "Error al actualizar la entrada financiera."
 
-#: src/API/FinancialEntryController.php:879
+#: src/API/FinancialEntryController.php:892
 msgid "Failed to delete financial entry."
 msgstr "Error al eliminar la entrada financiera."
 
@@ -315,125 +314,125 @@ msgstr "Error al eliminar la entrada financiera."
 msgid "Transaction not found."
 msgstr "Transacción no encontrada."
 
-#: src/API/FinancialEntryController.php:946
+#: src/API/FinancialEntryController.php:959
 msgid "Failed to match entry to transaction."
 msgstr "Error al vincular la entrada a la transacción."
 
-#: src/API/FinancialEntryController.php:985
+#: src/API/FinancialEntryController.php:998
 msgid "Failed to unmatch entry from transaction."
 msgstr "Error al desvincular la entrada de la transacción."
 
-#: src/API/FinancialEntryController.php:1019
+#: src/API/FinancialEntryController.php:1032
 msgid "Cannot split a child entry."
 msgstr "No se puede dividir una entrada secundaria."
 
-#: src/API/FinancialEntryController.php:1028
+#: src/API/FinancialEntryController.php:1041
 msgid "Entry is already split."
 msgstr "La entrada ya está dividida."
 
-#: src/API/FinancialEntryController.php:1037
-#: src/API/FinancialEntryController.php:1131
+#: src/API/FinancialEntryController.php:1050
+#: src/API/FinancialEntryController.php:1144
 msgid "At least 2 allocations are required."
 msgstr "Se requieren al menos 2 asignaciones."
 
-#: src/API/FinancialEntryController.php:1047
-#: src/API/FinancialEntryController.php:1141
+#: src/API/FinancialEntryController.php:1060
+#: src/API/FinancialEntryController.php:1154
 msgid "Each allocation amount must be greater than zero."
 msgstr "Cada cantidad de asignación debe ser mayor que cero."
 
-#: src/API/FinancialEntryController.php:1058
-#: src/API/FinancialEntryController.php:1152
+#: src/API/FinancialEntryController.php:1071
+#: src/API/FinancialEntryController.php:1165
 msgid "Total allocations must match the original entry amount."
 msgstr "Las asignaciones totales deben coincidir con el monto de la entrada original."
 
-#: src/API/FinancialEntryController.php:1068
+#: src/API/FinancialEntryController.php:1081
 #: src/Admin/entries/components/SplitModal.js:276
 msgid "Failed to split entry."
 msgstr "Error al dividir la entrada."
 
-#: src/API/FinancialEntryController.php:1113
+#: src/API/FinancialEntryController.php:1126
 msgid "Cannot update split on a child entry."
 msgstr "No se puede actualizar la división en una entrada secundaria."
 
-#: src/API/FinancialEntryController.php:1122
-#: src/API/FinancialEntryController.php:1206
+#: src/API/FinancialEntryController.php:1135
+#: src/API/FinancialEntryController.php:1219
 msgid "Entry is not split."
 msgstr "La entrada no está dividida."
 
-#: src/API/FinancialEntryController.php:1162
+#: src/API/FinancialEntryController.php:1175
 msgid "Failed to update split."
 msgstr "Error al actualizar la división."
 
-#: src/API/FinancialEntryController.php:1216
+#: src/API/FinancialEntryController.php:1229
 #: src/Admin/entries/EntriesApp.js:417
 msgid "Failed to unsplit entry."
 msgstr "Error al deshacer la división de la entrada."
 
-#: src/API/FinancialEntryController.php:1232
+#: src/API/FinancialEntryController.php:1245
 msgid "Transfer amount (positive value)."
 msgstr "Monto de transferencia (valor positivo)."
 
-#: src/API/FinancialEntryController.php:1237
+#: src/API/FinancialEntryController.php:1250
 msgid "Transfer date (Y-m-d format)."
 msgstr "Fecha de transferencia (formato Y-m-d)."
 
-#: src/API/FinancialEntryController.php:1244
+#: src/API/FinancialEntryController.php:1257
 msgid "Source budget ID (money comes from)."
 msgstr "ID del presupuesto de origen (de donde viene el dinero)."
 
-#: src/API/FinancialEntryController.php:1249
+#: src/API/FinancialEntryController.php:1262
 msgid "Target budget ID (money goes to)."
 msgstr "ID del presupuesto de destino (a donde va el dinero)."
 
-#: src/API/FinancialEntryController.php:1254
+#: src/API/FinancialEntryController.php:1267
 msgid "Transfer description."
 msgstr "Descripción de la transferencia."
 
-#: src/API/FinancialEntryController.php:1309
-#: src/API/FinancialEntryController.php:1407
+#: src/API/FinancialEntryController.php:1323
+#: src/API/FinancialEntryController.php:1423
 msgid "Both source and target budgets are required."
 msgstr "Se requieren tanto el presupuesto de origen como el de destino."
 
-#: src/API/FinancialEntryController.php:1317
-#: src/API/FinancialEntryController.php:1415
-#: src/Admin/entries/components/TransferModal.js:188
+#: src/API/FinancialEntryController.php:1331
+#: src/API/FinancialEntryController.php:1431
+#: src/Admin/entries/components/TransferModal.js:194
 msgid "Source and target budgets must be different."
 msgstr "Los presupuestos de origen y destino deben ser diferentes."
 
-#: src/API/FinancialEntryController.php:1335
+#: src/API/FinancialEntryController.php:1350
 msgid "Failed to create transfer."
 msgstr "Error al crear la transferencia."
 
-#: src/API/FinancialEntryController.php:1375
+#: src/API/FinancialEntryController.php:1391
 msgid "Transfer entry not found."
 msgstr "Entrada de transferencia no encontrada."
 
-#: src/API/FinancialEntryController.php:1383
+#: src/API/FinancialEntryController.php:1399
 msgid "Entry is not a transfer."
 msgstr "La entrada no es una transferencia."
 
-#: src/API/FinancialEntryController.php:1434
+#: src/API/FinancialEntryController.php:1451
 msgid "Failed to update transfer."
 msgstr "Error al actualizar la transferencia."
 
-#: src/API/FinancialEntryController.php:1559
+#: src/API/FinancialEntryController.php:1576
 msgid "No entries provided for import."
 msgstr "No se proporcionaron entradas para importar."
 
 #. translators: %d: row number
-#: src/API/FinancialEntryController.php:1575
+#: src/API/FinancialEntryController.php:1592
 #, php-format
 msgid "Row %d: Missing required fields."
 msgstr "Fila %d: Faltan campos requeridos."
 
 #. translators: %d: row number
-#: src/API/FinancialEntryController.php:1586
+#: src/API/FinancialEntryController.php:1603
 #, php-format
 msgid "Row %d: Invalid entry type."
 msgstr "Fila %d: Tipo de entrada inválido."
 
 #. translators: 1: imported count, 2: skipped count
-#: src/API/FinancialEntryController.php:1617
+#: src/API/FinancialEntryController.php:1634
 #, php-format
 msgid "Imported %1$d entries, skipped %2$d (duplicates or errors)."
 msgstr "Se importaron %1$d entradas, se omitieron %2$d (duplicados o errores)."
@@ -684,14 +683,14 @@ msgstr "Nombre"
 #: src/Admin/entries/components/ImportModal.js:331
 #: src/Admin/entries/components/MatchModal.js:193
 #: src/Admin/entries/components/SplitModal.js:408
-#: src/Admin/entries/components/TransferModal.js:148
+#: src/Admin/entries/components/TransferModal.js:154
 #: src/Admin/entries/EntriesApp.js:821
 #: src/Admin/reconciliation/ReconciliationApp.js:283
 #: src/Admin/reconciliation/ReconciliationApp.js:596
 #: src/Admin/reconciliation/ReconciliationApp.js:784
 #: src/Admin/transaction/TransactionPage.js:361
 #: src/Admin/transaction/TransactionPage.js:411
-#: src/Admin/transactions/TransactionsApp.js:423
+#: src/Admin/transactions/TransactionsApp.js:402
 msgid "Description"
 msgstr "Descripción"
 
@@ -718,14 +717,14 @@ msgid "View"
 msgstr "Ver"
 
 #: src/Admin/budgets/BudgetsApp.js:360
-#: src/Admin/entries/EntriesApp.js:1178
-#: src/Admin/entries/EntriesApp.js:1217
+#: src/Admin/entries/EntriesApp.js:1216
+#: src/Admin/entries/EntriesApp.js:1255
 msgid "Edit"
 msgstr "Editar"
 
 #: src/Admin/budgets/BudgetsApp.js:375
-#: src/Admin/entries/EntriesApp.js:1193
-#: src/Admin/entries/EntriesApp.js:1301
+#: src/Admin/entries/EntriesApp.js:1231
+#: src/Admin/entries/EntriesApp.js:1339
 msgid "Delete"
 msgstr "Eliminar"
 
@@ -756,7 +755,7 @@ msgstr "Descripción opcional para esta categoría de presupuesto"
 #: src/Admin/entries/components/ImportModal.js:390
 #: src/Admin/entries/components/MatchModal.js:252
 #: src/Admin/entries/components/SplitModal.js:499
-#: src/Admin/entries/components/TransferModal.js:215
+#: src/Admin/entries/components/TransferModal.js:233
 msgid "Cancel"
 msgstr "Cancelar"
 
@@ -817,7 +816,7 @@ msgstr "Tipo"
 #: src/Admin/entries/components/SplitModal.js:318
 #: src/Admin/entries/EntriesApp.js:695
 #: src/Admin/entries/EntriesApp.js:909
-#: src/Admin/entries/EntriesApp.js:1337
+#: src/Admin/entries/EntriesApp.js:1375
 msgid "Cost"
 msgstr "Costo"
 
@@ -826,7 +825,7 @@ msgstr "Costo"
 #: src/Admin/entries/components/SplitModal.js:319
 #: src/Admin/entries/EntriesApp.js:699
 #: src/Admin/entries/EntriesApp.js:913
-#: src/Admin/entries/EntriesApp.js:1341
+#: src/Admin/entries/EntriesApp.js:1379
 msgid "Income"
 msgstr "Ingresos"
 
@@ -834,31 +833,31 @@ msgstr "Ingresos"
 #: src/Admin/entries/components/ImportModal.js:328
 #: src/Admin/entries/components/MatchModal.js:192
 #: src/Admin/entries/components/SplitModal.js:379
-#: src/Admin/entries/components/TransferModal.js:125
+#: src/Admin/entries/components/TransferModal.js:131
 #: src/Admin/entries/EntriesApp.js:815
 #: src/Admin/reconciliation/ReconciliationApp.js:277
 #: src/Admin/reconciliation/ReconciliationApp.js:584
 #: src/Admin/reconciliation/ReconciliationApp.js:778
 #: src/Admin/transaction/TransactionPage.js:270
-#: src/Admin/transactions/TransactionsApp.js:406
+#: src/Admin/transactions/TransactionsApp.js:380
 #: src/blocks/simple-payment/index.js:35
 msgid "Amount"
 msgstr "Cantidad"
 
 #: src/Admin/entries/components/EntryForm.js:153
-#: src/Admin/entries/components/TransferModal.js:134
+#: src/Admin/entries/components/TransferModal.js:140
 msgid "Enter amount in EUR"
 msgstr "Ingrese la cantidad en EUR"
 
 #: src/Admin/entries/components/EntryForm.js:157
 #: src/Admin/entries/components/ImportModal.js:322
 #: src/Admin/entries/components/MatchModal.js:191
-#: src/Admin/entries/components/TransferModal.js:138
+#: src/Admin/entries/components/TransferModal.js:144
 #: src/Admin/entries/EntriesApp.js:803
 #: src/Admin/reconciliation/ReconciliationApp.js:274
 #: src/Admin/reconciliation/ReconciliationApp.js:578
 #: src/Admin/reconciliation/ReconciliationApp.js:772
-#: src/Admin/transactions/TransactionsApp.js:428
+#: src/Admin/transactions/TransactionsApp.js:407
 msgid "Date"
 msgstr "Fecha"
 
@@ -940,12 +939,12 @@ msgstr "Entradas a importar:"
 
 #: src/Admin/entries/components/ImportModal.js:403
 #: src/Admin/entries/EntriesApp.js:607
-#: src/Admin/transactions/TransactionsApp.js:345
+#: src/Admin/transactions/TransactionsApp.js:319
 msgid "Import"
 msgstr "Importar"
 
 #: src/Admin/entries/components/MatchModal.js:45
-#: src/Admin/transactions/TransactionsApp.js:120
+#: src/Admin/transactions/TransactionsApp.js:109
 msgid "Failed to load transactions."
 msgstr "Error al cargar transacciones."
 
@@ -980,7 +979,6 @@ msgstr "No se encontraron transacciones coincidentes. Intenta ajustar tu búsque
 #: src/Admin/entries/components/MatchModal.js:194
 #: src/Admin/reconciliation/ReconciliationApp.js:602
 #: src/Admin/reconciliation/ReconciliationApp.js:790
-#: src/Admin/transactions/TransactionsApp.js:402
 msgid "Mollie ID"
 msgstr "ID de Mollie"
 
@@ -991,13 +989,13 @@ msgid "Action"
 msgstr "Acción"
 
 #: src/Admin/entries/components/MatchModal.js:237
-#: src/Admin/entries/EntriesApp.js:1282
+#: src/Admin/entries/EntriesApp.js:1320
 msgid "Match"
 msgstr "Coincidir"
 
 #: src/Admin/entries/components/SplitModal.js:294
-#: src/Admin/entries/EntriesApp.js:1157
-#: src/Admin/entries/EntriesApp.js:1232
+#: src/Admin/entries/EntriesApp.js:1195
+#: src/Admin/entries/EntriesApp.js:1270
 msgid "Edit Split"
 msgstr "Editar División"
 
@@ -1028,6 +1026,7 @@ msgstr "Descripción:"
 msgid "Budget"
 msgstr "Presupuesto"
 
+#: src/Admin/entries/components/ParticipantField.js:109
 #: src/Admin/entries/components/SplitModal.js:402
 msgid "Remove"
 msgstr "Eliminar"
@@ -1052,39 +1051,39 @@ msgstr "Sin dividir"
 msgid "Update Split"
 msgstr "Actualizar División"
 
-#: src/Admin/entries/components/TransferModal.js:52
+#: src/Admin/entries/components/TransferModal.js:57
 msgid "-- Select Budget --"
 msgstr "-- Seleccionar Presupuesto --"
 
-#: src/Admin/entries/components/TransferModal.js:96
+#: src/Admin/entries/components/TransferModal.js:102
 msgid "Failed to save transfer."
 msgstr "Error al guardar la transferencia."
 
-#: src/Admin/entries/components/TransferModal.js:107
+#: src/Admin/entries/components/TransferModal.js:113
 msgid "Edit Transfer"
 msgstr "Editar Transferencia"
 
-#: src/Admin/entries/components/TransferModal.js:108
+#: src/Admin/entries/components/TransferModal.js:114
 msgid "New Transfer"
 msgstr "Nueva Transferencia"
 
-#: src/Admin/entries/components/TransferModal.js:153
+#: src/Admin/entries/components/TransferModal.js:159
 msgid "Optional description for this transfer"
 msgstr "Descripción opcional para esta transferencia"
 
-#: src/Admin/entries/components/TransferModal.js:160
+#: src/Admin/entries/components/TransferModal.js:166
 msgid "From Budget (Source)"
 msgstr "Desde Presupuesto (Origen)"
 
-#: src/Admin/entries/components/TransferModal.js:172
+#: src/Admin/entries/components/TransferModal.js:178
 msgid "To Budget (Target)"
 msgstr "Hacia Presupuesto (Destino)"
 
-#: src/Admin/entries/components/TransferModal.js:231
+#: src/Admin/entries/components/TransferModal.js:249
 msgid "Update Transfer"
 msgstr "Actualizar Transferencia"
 
-#: src/Admin/entries/components/TransferModal.js:232
+#: src/Admin/entries/components/TransferModal.js:250
 msgid "Create Transfer"
 msgstr "Crear Transferencia"
 
@@ -1227,55 +1226,55 @@ msgstr "Importado"
 msgid "(split)"
 msgstr "(dividir)"
 
-#: src/Admin/entries/EntriesApp.js:967
-#: src/Admin/entries/EntriesApp.js:1045
+#: src/Admin/entries/EntriesApp.js:1005
+#: src/Admin/entries/EntriesApp.js:1083
 msgid "Transfer ▾"
 msgstr "Transferir ▾"
 
-#: src/Admin/entries/EntriesApp.js:971
-#: src/Admin/entries/EntriesApp.js:1049
+#: src/Admin/entries/EntriesApp.js:1009
+#: src/Admin/entries/EntriesApp.js:1087
 msgid "Transfer ▸"
 msgstr "Transferir ▸"
 
-#: src/Admin/entries/EntriesApp.js:992
-#: src/Admin/entries/EntriesApp.js:1070
+#: src/Admin/entries/EntriesApp.js:1030
+#: src/Admin/entries/EntriesApp.js:1108
 msgid "Split ▾"
 msgstr "Dividir ▾"
 
-#: src/Admin/entries/EntriesApp.js:996
-#: src/Admin/entries/EntriesApp.js:1074
+#: src/Admin/entries/EntriesApp.js:1034
+#: src/Admin/entries/EntriesApp.js:1112
 msgid "Split ▸"
 msgstr "Dividir ▸"
 
-#: src/Admin/entries/EntriesApp.js:1111
+#: src/Admin/entries/EntriesApp.js:1149
 msgid "Yes"
 msgstr "Sí"
 
-#: src/Admin/entries/EntriesApp.js:1122
+#: src/Admin/entries/EntriesApp.js:1160
 msgid "No"
 msgstr "No"
 
-#: src/Admin/entries/EntriesApp.js:1247
+#: src/Admin/entries/EntriesApp.js:1285
 msgid "Split"
 msgstr "Dividir"
 
-#: src/Admin/entries/EntriesApp.js:1267
+#: src/Admin/entries/EntriesApp.js:1305
 #: src/Admin/reconciliation/ReconciliationApp.js:850
 msgid "Unmatch"
 msgstr "Deshacer coincidencia"
 
-#: src/Admin/entries/EntriesApp.js:1511
-#: src/Admin/transactions/TransactionsApp.js:568
+#: src/Admin/entries/EntriesApp.js:1549
+#: src/Admin/transactions/TransactionsApp.js:531
 msgid "Previous"
 msgstr "Anterior"
 
-#: src/Admin/entries/EntriesApp.js:1514
+#: src/Admin/entries/EntriesApp.js:1552
 #, js-format
 msgid "Page %1$d of %2$d"
 msgstr "Página %1$d de %2$d"
 
-#: src/Admin/entries/EntriesApp.js:1539
-#: src/Admin/transactions/TransactionsApp.js:585
+#: src/Admin/entries/EntriesApp.js:1577
+#: src/Admin/transactions/TransactionsApp.js:548
 msgid "Next"
 msgstr "Siguiente"
 
@@ -1331,15 +1330,15 @@ msgstr "Cambiado a modo %s."
 
 #: src/Admin/settings/ConnectionTab.js:173
 #: src/Admin/transaction/TransactionPage.js:310
-#: src/Admin/transactions/TransactionsApp.js:38
-#: src/Admin/transactions/TransactionsApp.js:517
+#: src/Admin/transactions/TransactionsApp.js:35
+#: src/Admin/transactions/TransactionsApp.js:473
 msgid "Test"
 msgstr "Prueba"
 
 #: src/Admin/settings/ConnectionTab.js:174
 #: src/Admin/transaction/TransactionPage.js:311
-#: src/Admin/transactions/TransactionsApp.js:37
-#: src/Admin/transactions/TransactionsApp.js:521
+#: src/Admin/transactions/TransactionsApp.js:34
+#: src/Admin/transactions/TransactionsApp.js:477
 msgid "Live"
 msgstr "En vivo"
 
@@ -1399,8 +1398,8 @@ msgstr "Token expira: %s"
 
 #: src/Admin/settings/ConnectionTab.js:360
 #: src/Admin/transaction/TransactionPage.js:295
-#: src/Admin/transactions/TransactionsApp.js:308
-#: src/Admin/transactions/TransactionsApp.js:421
+#: src/Admin/transactions/TransactionsApp.js:282
+#: src/Admin/transactions/TransactionsApp.js:395
 msgid "Mode"
 msgstr "Modo"
 
@@ -1498,12 +1497,12 @@ msgid "Payment Details"
 msgstr "Detalles de Pago"
 
 #: src/Admin/transaction/TransactionPage.js:275
-#: src/Admin/transactions/TransactionsApp.js:409
+#: src/Admin/transactions/TransactionsApp.js:383
 msgid "Mollie Fee"
 msgstr "Comisión de Mollie"
 
 #: src/Admin/transaction/TransactionPage.js:284
-#: src/Admin/transactions/TransactionsApp.js:412
+#: src/Admin/transactions/TransactionsApp.js:386
 msgid "Integration Fee"
 msgstr "Comisión de Integración"
 
@@ -1512,8 +1511,8 @@ msgid "Status & Timing"
 msgstr "Estado y Tiempo"
 
 #: src/Admin/transaction/TransactionPage.js:328
-#: src/Admin/transactions/TransactionsApp.js:292
-#: src/Admin/transactions/TransactionsApp.js:419
+#: src/Admin/transactions/TransactionsApp.js:266
+#: src/Admin/transactions/TransactionsApp.js:393
 msgid "Status"
 msgstr "Estado"
 
@@ -1573,69 +1572,57 @@ msgstr "URL de Webhook"
 msgid "Checkout URL"
 msgstr "URL de Checkout"
 
-#: src/Admin/transactions/TransactionsApp.js:22
+#: src/Admin/transactions/TransactionsApp.js:19
 msgid "All statuses"
 msgstr "Todos los estados"
 
-#: src/Admin/transactions/TransactionsApp.js:23
+#: src/Admin/transactions/TransactionsApp.js:20
 msgid "Paid"
 msgstr "Pagado"
 
-#: src/Admin/transactions/TransactionsApp.js:24
+#: src/Admin/transactions/TransactionsApp.js:21
 msgid "Pending"
 msgstr "Pendiente"
 
-#: src/Admin/transactions/TransactionsApp.js:25
+#: src/Admin/transactions/TransactionsApp.js:22
 msgid "Open"
 msgstr "Abierto"
 
-#: src/Admin/transactions/TransactionsApp.js:26
+#: src/Admin/transactions/TransactionsApp.js:23
 msgid "Failed"
 msgstr "Fallido"
 
-#: src/Admin/transactions/TransactionsApp.js:27
+#: src/Admin/transactions/TransactionsApp.js:24
 msgid "Canceled"
 msgstr "Cancelado"
 
-#: src/Admin/transactions/TransactionsApp.js:28
+#: src/Admin/transactions/TransactionsApp.js:25
 msgid "Expired"
 msgstr "Expirado"
 
-#: src/Admin/transactions/TransactionsApp.js:29
+#: src/Admin/transactions/TransactionsApp.js:26
 msgid "Draft"
 msgstr "Borrador"
 
-#: src/Admin/transactions/TransactionsApp.js:31
+#: src/Admin/transactions/TransactionsApp.js:28
 msgid "Pending payment"
 msgstr "Pago pendiente"
 
-#: src/Admin/transactions/TransactionsApp.js:39
+#: src/Admin/transactions/TransactionsApp.js:36
 msgid "All modes"
 msgstr "Todos los modos"
 
-#: src/Admin/transactions/TransactionsApp.js:270
+#: src/Admin/transactions/TransactionsApp.js:259
 msgid "Payment Transactions"
 msgstr "Transacciones de Pago"
 
-#: src/Admin/transactions/TransactionsApp.js:275
-msgid "To enable direct links to Mollie transactions, please configure your Organization ID in the"
-msgstr "Para habilitar enlaces directos a transacciones de Mollie, configure su ID de Organización en la"
-
-#: src/Admin/transactions/TransactionsApp.js:280
-msgid "settings"
-msgstr "configuración"
-
-#: src/Admin/transactions/TransactionsApp.js:381
+#: src/Admin/transactions/TransactionsApp.js:355
 msgid "No transactions found."
 msgstr "No se encontraron transacciones."
 
-#: src/Admin/transactions/TransactionsApp.js:399
+#: src/Admin/transactions/TransactionsApp.js:376
 msgid "ID"
 msgstr "ID"
-
-#: src/Admin/transactions/TransactionsApp.js:463
-msgid "View in Mollie Dashboard"
-msgstr "Ver en Mollie Dashboard"
 
 #: src/blocks/simple-payment/index.js:33
 msgid "Simple Payment Block"
@@ -1694,17 +1681,17 @@ msgstr "Tolerancia de cantidad para emparejar."
 msgid "Number of days before entry date to search."
 msgstr "Número de días antes de la fecha de entrada para buscar."
 
-#: src/API/FinancialEntryController.php:923
+#: src/API/FinancialEntryController.php:936
 msgid "Either transaction_id or transaction_ids is required."
 msgstr "Se requiere transaction_id o transaction_ids."
 
 #. translators: %d: transaction ID
-#: src/API/FinancialEntryController.php:935
+#: src/API/FinancialEntryController.php:948
 #, php-format
 msgid "Transaction %d not found."
 msgstr "Transacción %d no encontrada."
 
-#: src/Admin/entries/EntriesApp.js:1103
+#: src/Admin/entries/EntriesApp.js:1141
 #, js-format
 msgid "Yes (%d)"
 msgstr "Sí (%d)"
@@ -1836,24 +1823,24 @@ msgid "Unmatch All"
 msgstr "Deshacer coincidencia de todos"
 
 #. translators: %d is the number of exported transactions
-#: src/Admin/transactions/TransactionsApp.js:197
+#: src/Admin/transactions/TransactionsApp.js:186
 #, js-format
 msgid "%d transaction(s) exported."
 msgstr "%d transacción(es) exportada(s)."
 
-#: src/Admin/transactions/TransactionsApp.js:223
+#: src/Admin/transactions/TransactionsApp.js:212
 msgid "Invalid file format. Expected a JSON array."
 msgstr "Formato de archivo inválido. Se esperaba un array JSON."
 
-#: src/Admin/transactions/TransactionsApp.js:234
+#: src/Admin/transactions/TransactionsApp.js:223
 msgid "No valid transactions found in the file."
 msgstr "No se encontraron transacciones válidas en el archivo."
 
-#: src/Admin/transactions/TransactionsApp.js:254
+#: src/Admin/transactions/TransactionsApp.js:243
 msgid "Failed to import transactions."
 msgstr "Error al importar transacciones."
 
-#: src/Admin/transactions/TransactionsApp.js:330
+#: src/Admin/transactions/TransactionsApp.js:304
 msgid "Export Selected"
 msgstr "Exportar seleccionados"
 
@@ -1923,10 +1910,25 @@ msgstr "Ver respuesta de Mollie"
 msgid "Person & Post"
 msgstr "Persona y Publicación"
 
+#: src/Admin/entries/components/ParticipantField.js:91
+#: src/Admin/entries/components/ParticipantField.js:119
 #: src/Admin/transaction/TransactionPage.js:454
 msgid "Participant"
 msgstr "Participante"
 
-#: src/Admin/transactions/TransactionsApp.js:425
+#: src/Admin/transactions/TransactionsApp.js:404
 msgid "Person"
 msgstr "Persona"
+
+#: src/Admin/entries/components/ParticipantField.js:122
+msgid "Search by name or email…"
+msgstr "Buscar por nombre o correo electrónico…"
+
+#: src/Admin/entries/components/ParticipantField.js:123
+msgid "Link this transfer to a participant"
+msgstr "Vincular esta transferencia a un participante"
+
+#: src/Admin/entries/components/ParticipantField.js:188
+msgid "No participants found."
+msgstr "No se encontraron participantes."
+
