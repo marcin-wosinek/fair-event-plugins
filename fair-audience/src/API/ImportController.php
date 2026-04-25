@@ -78,6 +78,19 @@ class ImportController extends WP_REST_Controller {
 			)
 		);
 
+		// POST /fair-audience/v1/import/kit.
+		register_rest_route(
+			$this->namespace,
+			'/' . $this->rest_base . '/kit',
+			array(
+				array(
+					'methods'             => WP_REST_Server::CREATABLE,
+					'callback'            => array( $this, 'import_kit' ),
+					'permission_callback' => array( $this, 'import_permissions_check' ),
+				),
+			)
+		);
+
 		// POST /fair-audience/v1/import/resolve-duplicates.
 		register_rest_route(
 			$this->namespace,
@@ -436,6 +449,192 @@ class ImportController extends WP_REST_Controller {
 					);
 				}
 			}
+
+			return rest_ensure_response( $results );
+
+		} catch ( \Exception $e ) {
+			return new WP_Error(
+				'import_failed',
+				sprintf(
+					/* translators: %s: error message */
+					__( 'Import failed: %s', 'fair-audience' ),
+					$e->getMessage()
+				),
+				array( 'status' => 500 )
+			);
+		}
+	}
+
+	/**
+	 * Import participants from Kit.com CSV export file.
+	 *
+	 * @param WP_REST_Request $request Request object.
+	 * @return WP_REST_Response|WP_Error Response object or error.
+	 */
+	public function import_kit( $request ) {
+		$files = $request->get_file_params();
+
+		if ( empty( $files['file'] ) ) {
+			return new WP_Error(
+				'no_file',
+				__( 'No file uploaded.', 'fair-audience' ),
+				array( 'status' => 400 )
+			);
+		}
+
+		$file = $files['file'];
+
+		if ( UPLOAD_ERR_OK !== $file['error'] ) {
+			return new WP_Error(
+				'upload_error',
+				__( 'File upload failed.', 'fair-audience' ),
+				array( 'status' => 400 )
+			);
+		}
+
+		$email_profile = $request->get_param( 'email_profile' );
+		if ( ! in_array( $email_profile, array( 'minimal', 'marketing' ), true ) ) {
+			$email_profile = 'minimal';
+		}
+
+		$event_id = $request->get_param( 'event_id' );
+		if ( ! empty( $event_id ) ) {
+			$event_id = absint( $event_id );
+			$event    = get_post( $event_id );
+			if ( ! $event || ! \FairEvents\Database\EventRepository::is_event( $event ) ) {
+				return new WP_Error(
+					'invalid_event',
+					__( 'Invalid event ID provided.', 'fair-audience' ),
+					array( 'status' => 400 )
+				);
+			}
+		} else {
+			$event_id = null;
+		}
+
+		try {
+			$handle = fopen( $file['tmp_name'], 'r' );
+			if ( false === $handle ) {
+				return new WP_Error(
+					'file_read_error',
+					__( 'Could not read the uploaded file.', 'fair-audience' ),
+					array( 'status' => 400 )
+				);
+			}
+
+			$headers = fgetcsv( $handle );
+			if ( false === $headers || empty( $headers ) ) {
+				fclose( $handle );
+				return new WP_Error(
+					'empty_file',
+					__( 'The uploaded file is empty.', 'fair-audience' ),
+					array( 'status' => 400 )
+				);
+			}
+
+			$headers = array_map( 'trim', $headers );
+
+			$name_col  = array_search( 'first_name', $headers, true );
+			$email_col = array_search( 'email', $headers, true );
+
+			if ( false === $email_col ) {
+				fclose( $handle );
+				return new WP_Error(
+					'invalid_format',
+					sprintf(
+						/* translators: %s: found headers list */
+						__( 'Invalid file format. Required column: email. Found columns: %s', 'fair-audience' ),
+						implode( ', ', array_filter( $headers ) )
+					),
+					array( 'status' => 400 )
+				);
+			}
+
+			$results = array(
+				'imported'        => 0,
+				'existing_linked' => 0,
+				'skipped'         => 0,
+				'errors'          => array(),
+			);
+
+			$row_number = 1;
+			while ( false !== ( $row = fgetcsv( $handle ) ) ) {
+				++$row_number;
+
+				$name  = ( false !== $name_col && isset( $row[ $name_col ] ) ) ? trim( (string) $row[ $name_col ] ) : '';
+				$email = isset( $row[ $email_col ] ) ? trim( (string) $row[ $email_col ] ) : '';
+
+				if ( empty( $email ) ) {
+					continue;
+				}
+
+				if ( ! is_email( $email ) ) {
+					$results['errors'][] = sprintf(
+						/* translators: 1: row number, 2: email address */
+						__( 'Row %1$d: Invalid email format: %2$s', 'fair-audience' ),
+						$row_number,
+						$email
+					);
+					continue;
+				}
+
+				$existing = $this->repository->get_by_email( $email );
+				if ( $existing ) {
+					if ( $event_id ) {
+						$link_result = $this->event_participant_repository->add_participant_to_event(
+							$event_id,
+							$existing->id,
+							'signed_up'
+						);
+						if ( false !== $link_result ) {
+							++$results['existing_linked'];
+						}
+					} else {
+						++$results['skipped'];
+					}
+					continue;
+				}
+
+				$participant = new Participant();
+				$participant->populate(
+					array(
+						'name'          => $name,
+						'surname'       => '',
+						'email'         => $email,
+						'instagram'     => '',
+						'email_profile' => $email_profile,
+					)
+				);
+
+				if ( $participant->save() ) {
+					++$results['imported'];
+
+					if ( $event_id ) {
+						$link_result = $this->event_participant_repository->add_participant_to_event(
+							$event_id,
+							$participant->id,
+							'signed_up'
+						);
+						if ( ! $link_result ) {
+							$results['errors'][] = sprintf(
+								/* translators: 1: row number, 2: email address */
+								__( 'Row %1$d: Failed to link participant to event: %2$s', 'fair-audience' ),
+								$row_number,
+								$email
+							);
+						}
+					}
+				} else {
+					$results['errors'][] = sprintf(
+						/* translators: 1: row number, 2: email address */
+						__( 'Row %1$d: Failed to save participant: %2$s', 'fair-audience' ),
+						$row_number,
+						$email
+					);
+				}
+			}
+
+			fclose( $handle );
 
 			return rest_ensure_response( $results );
 

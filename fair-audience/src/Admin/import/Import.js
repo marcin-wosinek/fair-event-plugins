@@ -11,6 +11,7 @@ import {
 	TabPanel,
 } from '@wordpress/components';
 import WordPressUsersImport from './WordPressUsersImport.js';
+import KitImport from './KitImport.js';
 
 export default function Import() {
 	const [file, setFile] = useState(null);
@@ -206,6 +207,10 @@ export default function Import() {
 					{
 						name: 'wordpress-users',
 						title: __('WordPress Users', 'fair-audience'),
+					},
+					{
+						name: 'kit',
+						title: __('Kit.com', 'fair-audience'),
 					},
 				]}
 			>
@@ -708,6 +713,7 @@ export default function Import() {
 						{tab.name === 'wordpress-users' && (
 							<WordPressUsersImport />
 						)}
+						{tab.name === 'kit' && <KitImport />}
 					</>
 				)}
 			</TabPanel>
