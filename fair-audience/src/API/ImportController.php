@@ -497,20 +497,23 @@ class ImportController extends WP_REST_Controller {
 			$email_profile = 'minimal';
 		}
 
-		$event_id = $request->get_param( 'event_id' );
-		if ( ! empty( $event_id ) ) {
-			$event_id = absint( $event_id );
-			$event    = get_post( $event_id );
-			if ( ! $event || ! \FairEvents\Database\EventRepository::is_event( $event ) ) {
+		$group_id = $request->get_param( 'group_id' );
+		if ( ! empty( $group_id ) ) {
+			$group_id   = absint( $group_id );
+			$group_repo = new \FairAudience\Database\GroupRepository();
+			$group      = $group_repo->get_by_id( $group_id );
+			if ( ! $group ) {
 				return new WP_Error(
-					'invalid_event',
-					__( 'Invalid event ID provided.', 'fair-audience' ),
+					'invalid_group',
+					__( 'Invalid group ID provided.', 'fair-audience' ),
 					array( 'status' => 400 )
 				);
 			}
 		} else {
-			$event_id = null;
+			$group_id = null;
 		}
+
+		$group_participant_repo = $group_id ? new \FairAudience\Database\GroupParticipantRepository() : null;
 
 		try {
 			$handle = fopen( $file['tmp_name'], 'r' );
@@ -551,10 +554,10 @@ class ImportController extends WP_REST_Controller {
 			}
 
 			$results = array(
-				'imported'        => 0,
-				'existing_linked' => 0,
-				'skipped'         => 0,
-				'errors'          => array(),
+				'imported'       => 0,
+				'added_to_group' => 0,
+				'skipped'        => 0,
+				'errors'         => array(),
 			);
 
 			$row_number = 1;
@@ -580,14 +583,13 @@ class ImportController extends WP_REST_Controller {
 
 				$existing = $this->repository->get_by_email( $email );
 				if ( $existing ) {
-					if ( $event_id ) {
-						$link_result = $this->event_participant_repository->add_participant_to_event(
-							$event_id,
-							$existing->id,
-							'signed_up'
+					if ( $group_id ) {
+						$link_result = $group_participant_repo->add_participant_to_group(
+							$group_id,
+							$existing->id
 						);
 						if ( false !== $link_result ) {
-							++$results['existing_linked'];
+							++$results['added_to_group'];
 						}
 					} else {
 						++$results['skipped'];
@@ -609,19 +611,13 @@ class ImportController extends WP_REST_Controller {
 				if ( $participant->save() ) {
 					++$results['imported'];
 
-					if ( $event_id ) {
-						$link_result = $this->event_participant_repository->add_participant_to_event(
-							$event_id,
-							$participant->id,
-							'signed_up'
+					if ( $group_id ) {
+						$link_result = $group_participant_repo->add_participant_to_group(
+							$group_id,
+							$participant->id
 						);
-						if ( ! $link_result ) {
-							$results['errors'][] = sprintf(
-								/* translators: 1: row number, 2: email address */
-								__( 'Row %1$d: Failed to link participant to event: %2$s', 'fair-audience' ),
-								$row_number,
-								$email
-							);
+						if ( false !== $link_result ) {
+							++$results['added_to_group'];
 						}
 					}
 				} else {

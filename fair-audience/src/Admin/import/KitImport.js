@@ -16,18 +16,18 @@ export default function KitImport() {
 	const [results, setResults] = useState(null);
 	const [error, setError] = useState(null);
 	const [emailProfile, setEmailProfile] = useState('minimal');
-	const [events, setEvents] = useState([]);
-	const [selectedEventId, setSelectedEventId] = useState('');
-	const [isLoadingEvents, setIsLoadingEvents] = useState(true);
+	const [groups, setGroups] = useState([]);
+	const [selectedGroupId, setSelectedGroupId] = useState('');
+	const [isLoadingGroups, setIsLoadingGroups] = useState(true);
 
 	useEffect(() => {
-		apiFetch({ path: '/fair-audience/v1/events' })
+		apiFetch({ path: '/fair-audience/v1/groups' })
 			.then((data) => {
-				setEvents(data);
-				setIsLoadingEvents(false);
+				setGroups(data);
+				setIsLoadingGroups(false);
 			})
 			.catch(() => {
-				setIsLoadingEvents(false);
+				setIsLoadingGroups(false);
 			});
 	}, []);
 
@@ -54,8 +54,8 @@ export default function KitImport() {
 			const formData = new FormData();
 			formData.append('file', file);
 			formData.append('email_profile', emailProfile);
-			if (selectedEventId) {
-				formData.append('event_id', selectedEventId);
+			if (selectedGroupId) {
+				formData.append('group_id', selectedGroupId);
 			}
 
 			const response = await apiFetch({
@@ -90,21 +90,21 @@ export default function KitImport() {
 
 				<div style={{ marginTop: '20px' }}>
 					<SelectControl
-						label={__('Related Event (Optional)', 'fair-audience')}
-						value={selectedEventId}
-						onChange={setSelectedEventId}
-						disabled={isLoadingEvents || isUploading}
+						label={__('Group (Optional)', 'fair-audience')}
+						value={selectedGroupId}
+						onChange={setSelectedGroupId}
+						disabled={isLoadingGroups || isUploading}
 						help={__(
-							'Select an event to associate imported participants with it. Leave empty to import without event association.',
+							'Select a group to add imported participants to it.',
 							'fair-audience'
 						)}
 					>
 						<option value="">
-							{__('No event association', 'fair-audience')}
+							{__('No group', 'fair-audience')}
 						</option>
-						{events.map((event) => (
-							<option key={event.event_id} value={event.event_id}>
-								{event.title}
+						{groups.map((group) => (
+							<option key={group.id} value={group.id}>
+								{group.name}
 							</option>
 						))}
 					</SelectControl>
@@ -189,13 +189,10 @@ export default function KitImport() {
 									{__('Imported:', 'fair-audience')}{' '}
 									{results.imported}
 								</li>
-								{results.existing_linked > 0 && (
+								{results.added_to_group > 0 && (
 									<li>
-										{__(
-											'Existing linked to event:',
-											'fair-audience'
-										)}{' '}
-										{results.existing_linked}
+										{__('Added to group:', 'fair-audience')}{' '}
+										{results.added_to_group}
 									</li>
 								)}
 								<li>
