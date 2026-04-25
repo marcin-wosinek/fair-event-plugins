@@ -987,30 +987,44 @@ const EntriesApp = () => {
 																{budgetingEnabled && (
 																	<td>
 																		{isTransfer ? (
-																			<Button
-																				variant="link"
-																				size="small"
-																				onClick={() =>
-																					toggleExpanded(
-																						entry.id
-																					)
-																				}
-																				style={{
-																					color: '#2271b1',
-																					fontWeight:
-																						'bold',
-																				}}
-																			>
-																				{isExpanded
-																					? __(
-																							'Transfer \u25BE',
-																							'fair-payment'
-																					  )
-																					: __(
-																							'Transfer \u25B8',
-																							'fair-payment'
-																					  )}
-																			</Button>
+																			(() => {
+																				const costChild =
+																					entry.children?.find(
+																						(
+																							c
+																						) =>
+																							c.entry_type ===
+																							'cost'
+																					);
+																				const incomeChild =
+																					entry.children?.find(
+																						(
+																							c
+																						) =>
+																							c.entry_type ===
+																							'income'
+																					);
+																				return (
+																					<span
+																						style={{
+																							fontSize:
+																								'12px',
+																							lineHeight:
+																								'1.4',
+																						}}
+																					>
+																						{getBudgetName(
+																							costChild?.budget_id
+																						)}
+																						<br />
+																						→
+																						<br />
+																						{getBudgetName(
+																							incomeChild?.budget_id
+																						)}
+																					</span>
+																				);
+																			})()
 																		) : isSplit ? (
 																			<Button
 																				variant="link"
