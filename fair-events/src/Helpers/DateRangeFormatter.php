@@ -51,12 +51,17 @@ class DateRangeFormatter {
 	 * @return string Formatted date range.
 	 */
 	private static function format_all_day( $start_timestamp, $end_timestamp ) {
-		$start_day   = wp_date( 'j', $start_timestamp );
-		$start_month = wp_date( 'F', $start_timestamp );
-		$start_year  = wp_date( 'Y', $start_timestamp );
+		$start_day    = wp_date( 'j', $start_timestamp );
+		$start_month  = wp_date( 'F', $start_timestamp );
+		$start_year   = wp_date( 'Y', $start_timestamp );
+		$current_year = wp_date( 'Y' );
 
 		if ( ! $end_timestamp ) {
-			return $start_day . ' ' . $start_month;
+			$single = $start_day . ' ' . $start_month;
+			if ( $start_year !== $current_year ) {
+				$single .= ' ' . $start_year;
+			}
+			return $single;
 		}
 
 		$end_day   = wp_date( 'j', $end_timestamp );
@@ -66,16 +71,28 @@ class DateRangeFormatter {
 		// Same month and year.
 		if ( $start_month === $end_month && $start_year === $end_year ) {
 			if ( $start_day === $end_day ) {
-				// Single day: "15 October".
-				return $start_day . ' ' . $start_month;
+				// Single day: "15 October" or "15 October 2027".
+				$single = $start_day . ' ' . $start_month;
+				if ( $start_year !== $current_year ) {
+					$single .= ' ' . $start_year;
+				}
+				return $single;
 			}
-			// Same month: "26–28 June".
-			return $start_day . '–' . $end_day . ' ' . $start_month;
+			// Same month: "26–28 June" or "26–28 June 2027".
+			$range = $start_day . '–' . $end_day . ' ' . $start_month;
+			if ( $start_year !== $current_year ) {
+				$range .= ' ' . $start_year;
+			}
+			return $range;
 		}
 
-		// Different months, same year: "31 October—2 November".
+		// Different months, same year: "31 October—2 November" or with year suffix.
 		if ( $start_year === $end_year ) {
-			return $start_day . ' ' . $start_month . '—' . $end_day . ' ' . $end_month;
+			$range = $start_day . ' ' . $start_month . '—' . $end_day . ' ' . $end_month;
+			if ( $start_year !== $current_year ) {
+				$range .= ' ' . $start_year;
+			}
+			return $range;
 		}
 
 		// Different years: "31 December 2024—2 January 2025".
