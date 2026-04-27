@@ -342,4 +342,22 @@ class GroupParticipantRepository {
 
 		return $groups;
 	}
+
+	/**
+	 * Delete all group memberships for a participant.
+	 *
+	 * @param int $participant_id Participant ID.
+	 * @return bool Success.
+	 */
+	public function delete_by_participant( $participant_id ) {
+		global $wpdb;
+
+		$table_name = $this->get_table_name();
+
+		return $wpdb->delete(
+			$table_name,
+			array( 'participant_id' => $participant_id ),
+			array( '%d' )
+		) !== false;
+	}
 }

@@ -11,6 +11,7 @@
 defined( 'WPINC' ) || die;
 
 use FairAudience\Services\ManageSubscriptionToken;
+use FairAudience\Services\ParticipantAnonymizationService;
 use FairAudience\Database\ParticipantRepository;
 use FairAudience\Database\ParticipantCategoryRepository;
 
@@ -46,7 +47,17 @@ if ( false === $participant_id ) {
 
 		// Handle form submission.
 		// phpcs:ignore WordPress.Security.NonceVerification.Missing -- Public form, token provides auth.
-		if ( 'POST' === $_SERVER['REQUEST_METHOD'] && isset( $_POST['email_profile'] ) ) {
+		if ( 'POST' === $_SERVER['REQUEST_METHOD'] && isset( $_POST['delete_my_data'] ) ) {
+			if ( ParticipantAnonymizationService::anonymize( $participant ) ) {
+				$result['type']    = 'success';
+				$result['message'] = __( 'Your data has been deleted. This page will no longer be accessible.', 'fair-audience' );
+				$result['deleted'] = true;
+			} else {
+				$result['type']    = 'error';
+				$result['message'] = __( 'Failed to delete your data. Please try again.', 'fair-audience' );
+			}
+			// phpcs:ignore WordPress.Security.NonceVerification.Missing -- Public form, token provides auth.
+		} elseif ( 'POST' === $_SERVER['REQUEST_METHOD'] && isset( $_POST['email_profile'] ) ) {
 			// phpcs:ignore WordPress.Security.NonceVerification.Missing -- Public form, token provides auth.
 			$new_profile = sanitize_text_field( wp_unslash( $_POST['email_profile'] ) );
 
@@ -268,6 +279,44 @@ $site_name_header = wp_specialchars_decode( get_option( 'blogname' ), ENT_QUOTES
 		color: #d63638;
 		margin-bottom: 20px;
 	}
+
+	.fair-audience-subscription-delete-section {
+		margin-top: 32px;
+		padding-top: 24px;
+		border-top: 1px solid #e0e0e0;
+	}
+
+	.fair-audience-subscription-delete-title {
+		font-size: 16px;
+		font-weight: 600;
+		color: #721c24;
+		margin: 0 0 8px 0;
+	}
+
+	.fair-audience-subscription-delete-description {
+		font-size: 14px;
+		color: #757575;
+		margin-bottom: 16px;
+		line-height: 1.5;
+	}
+
+	.fair-audience-subscription-delete-button {
+		display: block;
+		width: 100%;
+		background-color: #d63638;
+		color: #fff;
+		border: none;
+		padding: 14px 24px;
+		border-radius: 4px;
+		font-size: 16px;
+		font-weight: 500;
+		cursor: pointer;
+		transition: background-color 0.2s;
+	}
+
+	.fair-audience-subscription-delete-button:hover {
+		background-color: #b32d2e;
+	}
 </style>
 
 <div class="fair-audience-subscription-container">
@@ -289,9 +338,11 @@ $site_name_header = wp_specialchars_decode( get_option( 'blogname' ), ENT_QUOTES
 			<h1 class="fair-audience-subscription-title">
 				<?php echo esc_html__( 'Manage Your Subscription', 'fair-audience' ); ?>
 			</h1>
-			<p class="fair-audience-subscription-subtitle">
-				<?php echo esc_html( $result['participant']->email ); ?>
-			</p>
+			<?php if ( ! empty( $result['participant']->email ) ) : ?>
+				<p class="fair-audience-subscription-subtitle">
+					<?php echo esc_html( $result['participant']->email ); ?>
+				</p>
+			<?php endif; ?>
 
 			<?php if ( ! empty( $result['message'] ) ) : ?>
 				<div class="fair-audience-subscription-message <?php echo esc_attr( $result['type'] ); ?>">
@@ -299,62 +350,85 @@ $site_name_header = wp_specialchars_decode( get_option( 'blogname' ), ENT_QUOTES
 				</div>
 			<?php endif; ?>
 
-			<form method="post">
-				<div class="fair-audience-subscription-options">
-					<label class="fair-audience-subscription-option <?php echo 'marketing' === $result['participant']->email_profile ? 'selected' : ''; ?>">
-						<input type="radio" name="email_profile" value="marketing" <?php checked( $result['participant']->email_profile, 'marketing' ); ?>>
-						<div class="fair-audience-subscription-option-content">
-							<div class="fair-audience-subscription-option-title">
-								<?php echo esc_html__( 'All emails', 'fair-audience' ); ?>
+			<?php if ( empty( $result['deleted'] ) && 'Deleted' !== $result['participant']->name ) : ?>
+				<form method="post">
+					<div class="fair-audience-subscription-options">
+						<label class="fair-audience-subscription-option <?php echo 'marketing' === $result['participant']->email_profile ? 'selected' : ''; ?>">
+							<input type="radio" name="email_profile" value="marketing" <?php checked( $result['participant']->email_profile, 'marketing' ); ?>>
+							<div class="fair-audience-subscription-option-content">
+								<div class="fair-audience-subscription-option-title">
+									<?php echo esc_html__( 'All emails', 'fair-audience' ); ?>
+								</div>
+								<div class="fair-audience-subscription-option-description">
+									<?php echo esc_html__( 'Receive event invitations, photos, polls, and other updates.', 'fair-audience' ); ?>
+								</div>
 							</div>
-							<div class="fair-audience-subscription-option-description">
-								<?php echo esc_html__( 'Receive event invitations, photos, polls, and other updates.', 'fair-audience' ); ?>
-							</div>
-						</div>
-					</label>
+						</label>
 
-					<label class="fair-audience-subscription-option <?php echo 'minimal' === $result['participant']->email_profile ? 'selected' : ''; ?>">
-						<input type="radio" name="email_profile" value="minimal" <?php checked( $result['participant']->email_profile, 'minimal' ); ?>>
-						<div class="fair-audience-subscription-option-content">
-							<div class="fair-audience-subscription-option-title">
-								<?php echo esc_html__( 'Essential emails only', 'fair-audience' ); ?>
+						<label class="fair-audience-subscription-option <?php echo 'minimal' === $result['participant']->email_profile ? 'selected' : ''; ?>">
+							<input type="radio" name="email_profile" value="minimal" <?php checked( $result['participant']->email_profile, 'minimal' ); ?>>
+							<div class="fair-audience-subscription-option-content">
+								<div class="fair-audience-subscription-option-title">
+									<?php echo esc_html__( 'Essential emails only', 'fair-audience' ); ?>
+								</div>
+								<div class="fair-audience-subscription-option-description">
+									<?php echo esc_html__( 'Only receive emails about events you signed up for (photos, polls, confirmations). No promotional emails.', 'fair-audience' ); ?>
+								</div>
 							</div>
-							<div class="fair-audience-subscription-option-description">
-								<?php echo esc_html__( 'Only receive emails about events you signed up for (photos, polls, confirmations). No promotional emails.', 'fair-audience' ); ?>
-							</div>
+						</label>
+					</div>
+
+					<?php if ( ! empty( $mailing_categories ) ) : ?>
+						<div class="fair-audience-subscription-categories">
+							<h2 class="fair-audience-subscription-categories-title">
+								<?php echo esc_html__( 'I want to receive updates about:', 'fair-audience' ); ?>
+							</h2>
+							<?php foreach ( $mailing_categories as $category ) : ?>
+								<label class="fair-audience-subscription-category-label">
+									<input
+										type="checkbox"
+										name="mailing_categories[]"
+										value="<?php echo esc_attr( $category->term_id ); ?>"
+										<?php checked( in_array( (int) $category->term_id, $participant_cat_ids, true ) ); ?>
+									/>
+									<?php echo esc_html( $category->name ); ?>
+								</label>
+							<?php endforeach; ?>
 						</div>
-					</label>
+					<?php endif; ?>
+
+					<button type="submit" class="fair-audience-subscription-submit">
+						<?php echo esc_html__( 'Save Preferences', 'fair-audience' ); ?>
+					</button>
+				</form>
+
+				<div class="fair-audience-subscription-footer">
+					<a href="<?php echo esc_url( home_url( '/' ) ); ?>" class="fair-audience-subscription-link">
+						<?php echo esc_html__( 'Return to Homepage', 'fair-audience' ); ?>
+					</a>
 				</div>
 
-				<?php if ( ! empty( $mailing_categories ) ) : ?>
-					<div class="fair-audience-subscription-categories">
-						<h2 class="fair-audience-subscription-categories-title">
-							<?php echo esc_html__( 'I want to receive updates about:', 'fair-audience' ); ?>
-						</h2>
-						<?php foreach ( $mailing_categories as $category ) : ?>
-							<label class="fair-audience-subscription-category-label">
-								<input
-									type="checkbox"
-									name="mailing_categories[]"
-									value="<?php echo esc_attr( $category->term_id ); ?>"
-									<?php checked( in_array( (int) $category->term_id, $participant_cat_ids, true ) ); ?>
-								/>
-								<?php echo esc_html( $category->name ); ?>
-							</label>
-						<?php endforeach; ?>
-					</div>
-				<?php endif; ?>
-
-				<button type="submit" class="fair-audience-subscription-submit">
-					<?php echo esc_html__( 'Save Preferences', 'fair-audience' ); ?>
-				</button>
-			</form>
-
-			<div class="fair-audience-subscription-footer">
-				<a href="<?php echo esc_url( home_url( '/' ) ); ?>" class="fair-audience-subscription-link">
-					<?php echo esc_html__( 'Return to Homepage', 'fair-audience' ); ?>
-				</a>
-			</div>
+				<div class="fair-audience-subscription-delete-section">
+					<h2 class="fair-audience-subscription-delete-title">
+						<?php echo esc_html__( 'Delete My Data', 'fair-audience' ); ?>
+					</h2>
+					<p class="fair-audience-subscription-delete-description">
+						<?php echo esc_html__( 'Permanently remove your personal data. This action cannot be undone.', 'fair-audience' ); ?>
+					</p>
+					<form method="post" onsubmit="return confirm('<?php echo esc_js( __( 'Are you sure you want to delete all your personal data? This action cannot be undone.', 'fair-audience' ) ); ?>');">
+						<input type="hidden" name="delete_my_data" value="1">
+						<button type="submit" class="fair-audience-subscription-delete-button">
+							<?php echo esc_html__( 'Delete My Data', 'fair-audience' ); ?>
+						</button>
+					</form>
+				</div>
+			<?php else : ?>
+				<div class="fair-audience-subscription-footer">
+					<a href="<?php echo esc_url( home_url( '/' ) ); ?>" class="fair-audience-subscription-link">
+						<?php echo esc_html__( 'Return to Homepage', 'fair-audience' ); ?>
+					</a>
+				</div>
+			<?php endif; ?>
 		<?php endif; ?>
 	</div>
 </div>

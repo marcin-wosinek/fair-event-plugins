@@ -225,4 +225,25 @@ class Participant {
 			array( '%d' )
 		) !== false;
 	}
+
+	/**
+	 * Anonymize personal data while keeping the record.
+	 *
+	 * @return bool Success.
+	 */
+	public function anonymize() {
+		if ( ! $this->id ) {
+			return false;
+		}
+
+		$this->name          = 'Deleted';
+		$this->surname       = '';
+		$this->email         = '';
+		$this->phone         = '';
+		$this->instagram     = '';
+		$this->email_profile = 'minimal';
+		$this->wp_user_id    = null;
+
+		return $this->save();
+	}
 }
