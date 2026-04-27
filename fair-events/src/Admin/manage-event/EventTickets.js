@@ -512,7 +512,7 @@ export default function EventTickets({
 		setPrices((prev) => ({
 			...prev,
 			[key]: {
-				...(prev[key] || { price: '', capacity: '' }),
+				...(prev[key] || { price: '', capacity: '', enabled: true }),
 				[field]: value,
 			},
 		}));
