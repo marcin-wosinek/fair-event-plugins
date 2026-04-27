@@ -12,6 +12,7 @@ use FairAudience\Database\EventParticipantRepository;
 use FairAudience\Database\GroupParticipantRepository;
 use FairAudience\Database\QuestionnaireSubmissionRepository;
 use FairAudience\Models\Participant;
+use FairAudience\Services\ManageSubscriptionToken;
 use WP_REST_Controller;
 use WP_REST_Server;
 use WP_REST_Request;
@@ -162,6 +163,25 @@ class ParticipantsController extends WP_REST_Controller {
 				'methods'             => WP_REST_Server::READABLE,
 				'callback'            => array( $this, 'get_activity' ),
 				'permission_callback' => 'is_user_logged_in',
+				'args'                => array(
+					'id' => array(
+						'type'     => 'integer',
+						'required' => true,
+					),
+				),
+			)
+		);
+
+		// GET /fair-audience/v1/participants/{id}/subscription-url.
+		register_rest_route(
+			$this->namespace,
+			'/' . $this->rest_base . '/(?P<id>\d+)/subscription-url',
+			array(
+				'methods'             => WP_REST_Server::READABLE,
+				'callback'            => array( $this, 'get_subscription_url' ),
+				'permission_callback' => function () {
+					return current_user_can( 'manage_options' );
+				},
 				'args'                => array(
 					'id' => array(
 						'type'     => 'integer',
@@ -621,6 +641,31 @@ class ParticipantsController extends WP_REST_Controller {
 		return rest_ensure_response(
 			array(
 				'message' => __( 'Participant deleted successfully.', 'fair-audience' ),
+			)
+		);
+	}
+
+	/**
+	 * Get the manage subscription URL for a participant.
+	 *
+	 * @param WP_REST_Request $request Request object.
+	 * @return WP_REST_Response|WP_Error Response object or error.
+	 */
+	public function get_subscription_url( $request ) {
+		$id          = $request->get_param( 'id' );
+		$participant = $this->repository->get_by_id( $id );
+
+		if ( ! $participant ) {
+			return new WP_Error(
+				'participant_not_found',
+				__( 'Participant not found.', 'fair-audience' ),
+				array( 'status' => 404 )
+			);
+		}
+
+		return rest_ensure_response(
+			array(
+				'url' => ManageSubscriptionToken::get_url( $participant->id ),
 			)
 		);
 	}

@@ -9,7 +9,7 @@ import {
 	Popover,
 } from '@wordpress/components';
 import { DataViews, filterSortAndPaginate } from '@wordpress/dataviews';
-import { Icon, caution } from '@wordpress/icons';
+import { Icon, caution, link } from '@wordpress/icons';
 import ParticipantEditModal from '../components/ParticipantEditModal.js';
 
 const DEFAULT_VIEW = {
@@ -396,6 +396,22 @@ export default function AllParticipants() {
 				label: __('Edit', 'fair-audience'),
 				icon: 'edit',
 				callback: ([item]) => openEditModal(item),
+				supportsBulk: false,
+			},
+			{
+				id: 'copy-subscription-link',
+				label: __('Copy subscription link', 'fair-audience'),
+				icon: link,
+				callback: async ([item]) => {
+					try {
+						const response = await apiFetch({
+							path: `/fair-audience/v1/participants/${item.id}/subscription-url`,
+						});
+						await navigator.clipboard.writeText(response.url);
+					} catch (err) {
+						alert(__('Error: ', 'fair-audience') + err.message);
+					}
+				},
 				supportsBulk: false,
 			},
 			{
