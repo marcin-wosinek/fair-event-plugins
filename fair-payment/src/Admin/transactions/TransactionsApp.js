@@ -402,6 +402,7 @@ const TransactionsApp = () => {
 											{__('Description', 'fair-payment')}
 										</th>
 										<th>{__('Person', 'fair-payment')}</th>
+										<th>{__('Entry', 'fair-payment')}</th>
 										{sortableHeader(
 											'created_at',
 											__('Date', 'fair-payment')
@@ -504,6 +505,31 @@ const TransactionsApp = () => {
 												) : (
 													t.user_name || '-'
 												)}
+											</td>
+											<td>
+												{t.entry_ids &&
+												t.entry_ids.length > 0
+													? t.entry_ids.map(
+															(entryId, i) => (
+																<span
+																	key={
+																		entryId
+																	}
+																>
+																	{i > 0 &&
+																		', '}
+																	<a
+																		href={`admin.php?page=fair-payment-entries&entry_id=${entryId}`}
+																	>
+																		#
+																		{
+																			entryId
+																		}
+																	</a>
+																</span>
+															)
+													  )
+													: '-'}
 											</td>
 											<td>{t.created_at}</td>
 										</tr>

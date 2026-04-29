@@ -181,7 +181,11 @@ const ParticipantField = ({ participant, participantId, onSave }) => {
 				)}&per_page=10`,
 			})
 				.then((response) => {
-					setResults(Array.isArray(response) ? response : response.participants || []);
+					setResults(
+						Array.isArray(response)
+							? response
+							: response.participants || []
+					);
 				})
 				.catch(() => {
 					setResults([]);

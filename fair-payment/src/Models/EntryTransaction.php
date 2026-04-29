@@ -129,6 +129,42 @@ class EntryTransaction {
 	}
 
 	/**
+	 * Get entry IDs for multiple transactions in a single query.
+	 *
+	 * @param int[] $transaction_ids Array of transaction IDs.
+	 * @return array Associative array of transaction_id => int[] entry IDs.
+	 */
+	public static function get_entry_ids_for_transactions( $transaction_ids ) {
+		if ( empty( $transaction_ids ) ) {
+			return array();
+		}
+
+		global $wpdb;
+		$table_name = self::get_table_name();
+
+		$placeholders = implode( ',', array_fill( 0, count( $transaction_ids ), '%d' ) );
+
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.PreparedSQLPlaceholders.ReplacementsWrongNumber -- Dynamic placeholder count matches array size.
+		$results = $wpdb->get_results(
+			$wpdb->prepare(
+				"SELECT transaction_id, entry_id FROM %i WHERE transaction_id IN ($placeholders) ORDER BY id ASC",
+				array_merge( array( $table_name ), array_map( 'intval', $transaction_ids ) )
+			)
+		);
+
+		$map = array();
+		foreach ( $results as $row ) {
+			$tid = (int) $row->transaction_id;
+			if ( ! isset( $map[ $tid ] ) ) {
+				$map[ $tid ] = array();
+			}
+			$map[ $tid ][] = (int) $row->entry_id;
+		}
+
+		return $map;
+	}
+
+	/**
 	 * Check if a transaction is matched to any entry
 	 *
 	 * @param int $transaction_id Transaction ID.

@@ -11,6 +11,7 @@ defined( 'WPINC' ) || die;
 
 use FairPayment\Models\Transaction;
 use FairPayment\Models\LineItem;
+use FairPayment\Models\EntryTransaction;
 use WP_REST_Controller;
 use WP_REST_Server;
 use WP_REST_Request;
@@ -169,6 +170,14 @@ class TransactionsController extends WP_REST_Controller {
 			)
 		);
 
+		$transaction_ids  = array_map(
+			function ( $t ) {
+				return (int) $t->id;
+			},
+			$transactions
+		);
+		$entry_ids_by_txn = EntryTransaction::get_entry_ids_for_transactions( $transaction_ids );
+
 		$data = array();
 		foreach ( $transactions as $transaction ) {
 			$user_name = '';
@@ -198,6 +207,7 @@ class TransactionsController extends WP_REST_Controller {
 				'user_name'         => $user_name,
 				'participant_id'    => $participant_id,
 				'participant'       => $participant,
+				'entry_ids'         => $entry_ids_by_txn[ (int) $transaction->id ] ?? array(),
 				'created_at'        => $transaction->created_at ?? '',
 			);
 		}
