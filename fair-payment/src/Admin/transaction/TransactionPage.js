@@ -1,7 +1,7 @@
 /**
  * WordPress dependencies
  */
-import { useState, useEffect } from '@wordpress/element';
+import { useState, useEffect, useRef } from '@wordpress/element';
 import { __ } from '@wordpress/i18n';
 import apiFetch from '@wordpress/api-fetch';
 import {
@@ -158,6 +158,210 @@ const EditableField = ({ label, value, displayContent, fieldName, onSave }) => {
 	);
 };
 
+const ParticipantField = ({ participant, participantId, onSave }) => {
+	const [editing, setEditing] = useState(false);
+	const [search, setSearch] = useState('');
+	const [results, setResults] = useState([]);
+	const [searching, setSearching] = useState(false);
+	const [saving, setSaving] = useState(false);
+	const debounceRef = useRef(null);
+
+	useEffect(() => {
+		if (!editing || search.length < 2) {
+			setResults([]);
+			return;
+		}
+
+		clearTimeout(debounceRef.current);
+		debounceRef.current = setTimeout(() => {
+			setSearching(true);
+			apiFetch({
+				path: `/fair-audience/v1/participants?search=${encodeURIComponent(
+					search
+				)}&per_page=10`,
+			})
+				.then((response) => {
+					setResults(Array.isArray(response) ? response : response.participants || []);
+				})
+				.catch(() => {
+					setResults([]);
+				})
+				.finally(() => {
+					setSearching(false);
+				});
+		}, 300);
+
+		return () => clearTimeout(debounceRef.current);
+	}, [search, editing]);
+
+	const handleSelect = (selected) => {
+		setSaving(true);
+		onSave('participant_id', selected.id)
+			.then(() => {
+				setEditing(false);
+				setSearch('');
+				setResults([]);
+			})
+			.finally(() => {
+				setSaving(false);
+			});
+	};
+
+	const handleClear = () => {
+		setSaving(true);
+		onSave('participant_id', 0)
+			.then(() => {
+				setEditing(false);
+				setSearch('');
+				setResults([]);
+			})
+			.finally(() => {
+				setSaving(false);
+			});
+	};
+
+	const handleCancel = () => {
+		setEditing(false);
+		setSearch('');
+		setResults([]);
+	};
+
+	if (editing) {
+		return (
+			<DetailRow label={__('Participant', 'fair-payment')}>
+				<div style={{ position: 'relative' }}>
+					<HStack spacing={2} alignment="center" wrap>
+						<TextControl
+							value={search}
+							onChange={setSearch}
+							placeholder={__(
+								'Search by name or email…',
+								'fair-payment'
+							)}
+							style={{ width: '250px', margin: 0 }}
+							__nextHasNoMarginBottom
+						/>
+						{participantId > 0 && (
+							<Button
+								variant="tertiary"
+								size="small"
+								isDestructive
+								onClick={handleClear}
+								disabled={saving}
+							>
+								{__('Remove', 'fair-payment')}
+							</Button>
+						)}
+						<Button
+							variant="tertiary"
+							size="small"
+							onClick={handleCancel}
+							disabled={saving}
+						>
+							{__('Cancel', 'fair-payment')}
+						</Button>
+					</HStack>
+					{(results.length > 0 || searching) && (
+						<div
+							style={{
+								position: 'absolute',
+								top: '100%',
+								left: 0,
+								zIndex: 100,
+								background: '#fff',
+								border: '1px solid #ccc',
+								borderRadius: '4px',
+								boxShadow: '0 2px 8px rgba(0,0,0,0.12)',
+								width: '350px',
+								maxHeight: '250px',
+								overflowY: 'auto',
+							}}
+						>
+							{searching && (
+								<div style={{ padding: '8px 12px' }}>
+									<Spinner />
+								</div>
+							)}
+							{results.map((p) => (
+								<button
+									key={p.id}
+									type="button"
+									onClick={() => handleSelect(p)}
+									disabled={saving}
+									style={{
+										display: 'block',
+										width: '100%',
+										textAlign: 'left',
+										padding: '8px 12px',
+										border: 'none',
+										background: saving
+											? '#f0f0f0'
+											: 'transparent',
+										cursor: saving ? 'default' : 'pointer',
+										borderBottom: '1px solid #f0f0f0',
+									}}
+									onMouseEnter={(e) => {
+										if (!saving)
+											e.currentTarget.style.background =
+												'#f0f6fc';
+									}}
+									onMouseLeave={(e) => {
+										if (!saving)
+											e.currentTarget.style.background =
+												'transparent';
+									}}
+								>
+									<strong>
+										{p.name} {p.surname}
+									</strong>
+									{p.email && (
+										<span
+											style={{
+												color: '#646970',
+												marginLeft: '8px',
+											}}
+										>
+											{p.email}
+										</span>
+									)}
+								</button>
+							))}
+						</div>
+					)}
+				</div>
+			</DetailRow>
+		);
+	}
+
+	return (
+		<DetailRow label={__('Participant', 'fair-payment')}>
+			<HStack spacing={2} alignment="center">
+				<span>
+					{participant ? (
+						<a href={participant.admin_url}>
+							{participant.name ||
+								participant.email ||
+								`#${participant.id}`}
+						</a>
+					) : (
+						'-'
+					)}
+				</span>
+				<Button
+					variant="tertiary"
+					size="small"
+					onClick={() => setEditing(true)}
+					style={{ minWidth: 'auto' }}
+				>
+					{participantId
+						? __('Edit', 'fair-payment')
+						: __('Add', 'fair-payment')}
+				</Button>
+			</HStack>
+		</DetailRow>
+	);
+};
+
 const PersonPostCard = ({ transaction: t, onUpdate, transactionId }) => {
 	const [error, setError] = useState(null);
 
@@ -200,21 +404,9 @@ const PersonPostCard = ({ transaction: t, onUpdate, transactionId }) => {
 			<CardBody>
 				<table>
 					<tbody>
-						<EditableField
-							label={__('Participant', 'fair-payment')}
-							value={t.participant_id}
-							displayContent={
-								t.participant ? (
-									<a href={t.participant.admin_url}>
-										{t.participant.name ||
-											t.participant.email ||
-											`#${t.participant.id}`}
-									</a>
-								) : (
-									'-'
-								)
-							}
-							fieldName="participant_id"
+						<ParticipantField
+							participant={t.participant}
+							participantId={t.participant_id}
 							onSave={handleSave}
 						/>
 						<EditableField
