@@ -107,8 +107,9 @@ if ( false === $fee_payment_id ) {
 							__( 'Membership fee: %s', 'fair-audience' ),
 							$fee->name
 						),
-						'user_id'     => 0,
-						'metadata'    => array(
+						'user_id'        => 0,
+						'participant_id' => $fee_payment->participant_id,
+						'metadata'       => array(
 							'fee_payment_id' => $fee_payment->id,
 						),
 					)
