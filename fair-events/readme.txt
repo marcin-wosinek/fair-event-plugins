@@ -4,7 +4,7 @@ Tags: events, calendar, custom post type, gutenberg
 Requires at least: 6.7
 Tested up to: 6.8
 Requires PHP: 7.4
-Stable tag: 1.1.1
+Stable tag: 1.1.2
 License: GPLv3 or later
 License URI: https://www.gnu.org/licenses/gpl-3.0.html
 Text Domain: fair-events
@@ -116,6 +116,8 @@ In the Events Calendar block settings, use the "Event Display Pattern" dropdown 
 3. Single event display on frontend
 
 == Changelog ==
+
+## 1.1.2
 
 ## 1.1.1
 
