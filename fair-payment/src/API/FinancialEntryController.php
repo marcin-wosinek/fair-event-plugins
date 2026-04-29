@@ -1720,6 +1720,7 @@ class FinancialEntryController extends WP_REST_Controller {
 		$filters      = array(
 			'limit'  => 200,
 			'status' => 'paid',
+			'mode'   => 'live',
 		);
 		$transactions = Transaction::get_all( $filters );
 
@@ -1859,11 +1860,12 @@ class FinancialEntryController extends WP_REST_Controller {
 			$unmatched_entries_result['entries']
 		);
 
-		// Get unmatched paid transactions.
+		// Get unmatched paid live transactions.
 		$all_transactions       = Transaction::get_all(
 			array(
 				'limit'  => 200,
 				'status' => 'paid',
+				'mode'   => 'live',
 			)
 		);
 		$unmatched_transactions = array();
