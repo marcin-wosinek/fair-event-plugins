@@ -1,5 +1,11 @@
 # fair-payment
 
+## 1.1.2
+
+### Patch Changes
+
+-   d04f565: Improve transaction budget entry reconciliation.
+
 ## 1.1.1
 
 ### Patch Changes
