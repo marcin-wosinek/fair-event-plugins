@@ -151,6 +151,47 @@ class Transaction {
 	}
 
 	/**
+	 * Update specific fields on a transaction by ID.
+	 *
+	 * @param int   $transaction_id Transaction ID.
+	 * @param array $fields         Associative array of column => value.
+	 * @return bool True on success, false on failure.
+	 */
+	public static function update_fields( $transaction_id, $fields ) {
+		global $wpdb;
+		$table_name = \FairPayment\Database\Schema::get_payments_table_name();
+
+		$allowed = array(
+			'participant_id' => '%d',
+			'user_id'        => '%d',
+			'post_id'        => '%d',
+		);
+
+		$data    = array();
+		$formats = array();
+
+		foreach ( $fields as $column => $value ) {
+			if ( ! isset( $allowed[ $column ] ) ) {
+				continue;
+			}
+			$data[ $column ] = $value;
+			$formats[]       = $allowed[ $column ];
+		}
+
+		if ( empty( $data ) ) {
+			return false;
+		}
+
+		return (bool) $wpdb->update(
+			$table_name,
+			$data,
+			array( 'id' => $transaction_id ),
+			$formats,
+			array( '%d' )
+		);
+	}
+
+	/**
 	 * Update transaction status
 	 *
 	 * @param string $mollie_payment_id Mollie payment ID.

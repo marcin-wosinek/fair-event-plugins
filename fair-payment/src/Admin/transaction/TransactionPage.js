@@ -11,6 +11,7 @@ import {
 	CardBody,
 	Spinner,
 	Notice,
+	TextControl,
 	__experimentalHeading as Heading,
 	__experimentalHStack as HStack,
 	__experimentalVStack as VStack,
@@ -82,6 +83,180 @@ const DetailRow = ({ label, children }) => (
 		<td style={{ padding: '6px 0' }}>{children}</td>
 	</tr>
 );
+
+const EditableField = ({ label, value, displayContent, fieldName, onSave }) => {
+	const [editing, setEditing] = useState(false);
+	const [inputValue, setInputValue] = useState(String(value || ''));
+	const [saving, setSaving] = useState(false);
+
+	const handleSave = () => {
+		setSaving(true);
+		onSave(fieldName, inputValue ? parseInt(inputValue, 10) : 0)
+			.then(() => {
+				setEditing(false);
+			})
+			.finally(() => {
+				setSaving(false);
+			});
+	};
+
+	const handleCancel = () => {
+		setInputValue(String(value || ''));
+		setEditing(false);
+	};
+
+	if (editing) {
+		return (
+			<DetailRow label={label}>
+				<HStack spacing={2} alignment="center" wrap>
+					<TextControl
+						value={inputValue}
+						onChange={setInputValue}
+						type="number"
+						min="0"
+						style={{ width: '100px', margin: 0 }}
+						__nextHasNoMarginBottom
+					/>
+					<Button
+						variant="primary"
+						size="small"
+						onClick={handleSave}
+						isBusy={saving}
+						disabled={saving}
+					>
+						{__('Save', 'fair-payment')}
+					</Button>
+					<Button
+						variant="tertiary"
+						size="small"
+						onClick={handleCancel}
+						disabled={saving}
+					>
+						{__('Cancel', 'fair-payment')}
+					</Button>
+				</HStack>
+			</DetailRow>
+		);
+	}
+
+	return (
+		<DetailRow label={label}>
+			<HStack spacing={2} alignment="center">
+				<span>{displayContent}</span>
+				<Button
+					variant="tertiary"
+					size="small"
+					onClick={() => setEditing(true)}
+					style={{ minWidth: 'auto' }}
+				>
+					{value
+						? __('Edit', 'fair-payment')
+						: __('Add', 'fair-payment')}
+				</Button>
+			</HStack>
+		</DetailRow>
+	);
+};
+
+const PersonPostCard = ({ transaction: t, onUpdate, transactionId }) => {
+	const [error, setError] = useState(null);
+
+	const handleSave = (fieldName, value) => {
+		setError(null);
+		return apiFetch({
+			path: `/fair-payment/v1/transactions/${transactionId}`,
+			method: 'POST',
+			data: { [fieldName]: value },
+		})
+			.then((data) => {
+				onUpdate(data);
+			})
+			.catch((err) => {
+				setError(
+					err.message || __('Failed to update.', 'fair-payment')
+				);
+				throw err;
+			});
+	};
+
+	return (
+		<Card>
+			<CardHeader>
+				<Heading level={4}>
+					{__('Person & Post', 'fair-payment')}
+				</Heading>
+			</CardHeader>
+			{error && (
+				<CardBody style={{ paddingBottom: 0 }}>
+					<Notice
+						status="error"
+						isDismissible
+						onRemove={() => setError(null)}
+					>
+						{error}
+					</Notice>
+				</CardBody>
+			)}
+			<CardBody>
+				<table>
+					<tbody>
+						<EditableField
+							label={__('Participant', 'fair-payment')}
+							value={t.participant_id}
+							displayContent={
+								t.participant ? (
+									<a href={t.participant.admin_url}>
+										{t.participant.name ||
+											t.participant.email ||
+											`#${t.participant.id}`}
+									</a>
+								) : (
+									'-'
+								)
+							}
+							fieldName="participant_id"
+							onSave={handleSave}
+						/>
+						<EditableField
+							label={__('User', 'fair-payment')}
+							value={t.user_id}
+							displayContent={
+								t.user_id ? (
+									<a
+										href={`user-edit.php?user_id=${t.user_id}`}
+									>
+										{t.user_name || `#${t.user_id}`}
+									</a>
+								) : (
+									'-'
+								)
+							}
+							fieldName="user_id"
+							onSave={handleSave}
+						/>
+						<EditableField
+							label={__('Post', 'fair-payment')}
+							value={t.post_id}
+							displayContent={
+								t.post_id ? (
+									<a
+										href={`post.php?post=${t.post_id}&action=edit`}
+									>
+										{t.post_title || `#${t.post_id}`}
+									</a>
+								) : (
+									'-'
+								)
+							}
+							fieldName="post_id"
+							onSave={handleSave}
+						/>
+					</tbody>
+				</table>
+			</CardBody>
+		</Card>
+	);
+};
 
 const TransactionPage = () => {
 	const [transaction, setTransaction] = useState(null);
@@ -441,54 +616,11 @@ const TransactionPage = () => {
 					</Card>
 				)}
 
-				<Card>
-					<CardHeader>
-						<Heading level={4}>
-							{__('Person & Post', 'fair-payment')}
-						</Heading>
-					</CardHeader>
-					<CardBody>
-						<table>
-							<tbody>
-								<DetailRow
-									label={__('Participant', 'fair-payment')}
-								>
-									{t.participant ? (
-										<a href={t.participant.admin_url}>
-											{t.participant.name ||
-												t.participant.email ||
-												`#${t.participant.id}`}
-										</a>
-									) : (
-										'-'
-									)}
-								</DetailRow>
-								<DetailRow label={__('User', 'fair-payment')}>
-									{t.user_id ? (
-										<a
-											href={`user-edit.php?user_id=${t.user_id}`}
-										>
-											{t.user_name || `#${t.user_id}`}
-										</a>
-									) : (
-										'-'
-									)}
-								</DetailRow>
-								<DetailRow label={__('Post', 'fair-payment')}>
-									{t.post_id ? (
-										<a
-											href={`post.php?post=${t.post_id}&action=edit`}
-										>
-											{t.post_title || `#${t.post_id}`}
-										</a>
-									) : (
-										'-'
-									)}
-								</DetailRow>
-							</tbody>
-						</table>
-					</CardBody>
-				</Card>
+				<PersonPostCard
+					transaction={t}
+					onUpdate={setTransaction}
+					transactionId={transactionId}
+				/>
 
 				<Card>
 					<CardHeader>

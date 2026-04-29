@@ -64,6 +64,30 @@ class TransactionsController extends WP_REST_Controller {
 						),
 					),
 				),
+				array(
+					'methods'             => WP_REST_Server::EDITABLE,
+					'callback'            => array( $this, 'update_item' ),
+					'permission_callback' => array( $this, 'get_items_permissions_check' ),
+					'args'                => array(
+						'id'             => array(
+							'type'              => 'integer',
+							'required'          => true,
+							'sanitize_callback' => 'absint',
+						),
+						'participant_id' => array(
+							'type'              => 'integer',
+							'sanitize_callback' => 'absint',
+						),
+						'user_id'        => array(
+							'type'              => 'integer',
+							'sanitize_callback' => 'absint',
+						),
+						'post_id'        => array(
+							'type'              => 'integer',
+							'sanitize_callback' => 'absint',
+						),
+					),
+				),
 			)
 		);
 
@@ -206,6 +230,60 @@ class TransactionsController extends WP_REST_Controller {
 				array( 'status' => 404 )
 			);
 		}
+
+		return new WP_REST_Response( $this->prepare_transaction_response( $transaction ), 200 );
+	}
+
+	/**
+	 * Update editable fields on a transaction.
+	 *
+	 * @param WP_REST_Request $request Full data about the request.
+	 * @return WP_REST_Response|WP_Error
+	 */
+	public function update_item( $request ) {
+		$transaction = Transaction::get_by_id( $request->get_param( 'id' ) );
+
+		if ( ! $transaction ) {
+			return new WP_Error(
+				'not_found',
+				__( 'Transaction not found.', 'fair-payment' ),
+				array( 'status' => 404 )
+			);
+		}
+
+		$fields = array();
+
+		if ( null !== $request->get_param( 'participant_id' ) ) {
+			$fields['participant_id'] = $request->get_param( 'participant_id' ) ?: null;
+		}
+
+		if ( null !== $request->get_param( 'user_id' ) ) {
+			$fields['user_id'] = $request->get_param( 'user_id' ) ?: null;
+		}
+
+		if ( null !== $request->get_param( 'post_id' ) ) {
+			$fields['post_id'] = $request->get_param( 'post_id' ) ?: null;
+		}
+
+		if ( empty( $fields ) ) {
+			return new WP_Error(
+				'no_fields',
+				__( 'No fields to update.', 'fair-payment' ),
+				array( 'status' => 400 )
+			);
+		}
+
+		$updated = Transaction::update_fields( (int) $transaction->id, $fields );
+
+		if ( ! $updated ) {
+			return new WP_Error(
+				'update_failed',
+				__( 'Failed to update transaction.', 'fair-payment' ),
+				array( 'status' => 500 )
+			);
+		}
+
+		$transaction = Transaction::get_by_id( (int) $transaction->id );
 
 		return new WP_REST_Response( $this->prepare_transaction_response( $transaction ), 200 );
 	}
