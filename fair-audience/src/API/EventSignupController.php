@@ -784,9 +784,29 @@ class EventSignupController extends WP_REST_Controller {
 			}
 		}
 
+		// Apply group discount to option prices when the participant qualifies.
+		$best_discount_rule = null;
+		if ( $event_date_id && class_exists( \FairEvents\Services\EventSignupPricing::class ) ) {
+			$best_discount_rule = \FairEvents\Services\EventSignupPricing::resolve_best_discount_rule(
+				$event_date_id,
+				$participant->id
+			);
+		}
+
 		// Option prices count towards the total even when there is no base price.
-		$options_total = array_sum( array_column( $option_items, 'price' ) );
-		$total_amount  = (float) ( $final_price ?? 0 ) + $options_total;
+		$options_total = 0;
+		foreach ( $option_items as $opt ) {
+			$opt_price = (float) $opt->price;
+			if ( $best_discount_rule && $opt_price > 0 ) {
+				$opt_price = \FairEvents\Services\EventSignupPricing::apply_discount(
+					$opt_price,
+					$best_discount_rule->discount_type,
+					(float) $best_discount_rule->discount_value
+				);
+			}
+			$options_total += $opt_price;
+		}
+		$total_amount = (float) ( $final_price ?? 0 ) + $options_total;
 
 		if ( $total_amount <= 0 ) {
 			return null;
@@ -859,11 +879,19 @@ class EventSignupController extends WP_REST_Controller {
 			);
 		}
 		foreach ( $option_items as $opt ) {
-			if ( 0.0 !== (float) $opt->price ) {
+			$opt_price = (float) $opt->price;
+			if ( $best_discount_rule && $opt_price > 0 ) {
+				$opt_price = \FairEvents\Services\EventSignupPricing::apply_discount(
+					$opt_price,
+					$best_discount_rule->discount_type,
+					(float) $best_discount_rule->discount_value
+				);
+			}
+			if ( 0.0 !== $opt_price ) {
 				$line_items[] = array(
 					'name'     => $opt->name,
 					'quantity' => 1,
-					'amount'   => (float) $opt->price,
+					'amount'   => $opt_price,
 				);
 			}
 		}

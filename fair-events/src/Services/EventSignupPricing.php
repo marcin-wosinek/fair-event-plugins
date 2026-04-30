@@ -159,6 +159,44 @@ class EventSignupPricing {
 	}
 
 	/**
+	 * Resolve the best group discount rule for a participant on an event date.
+	 *
+	 * Returns the GroupPricingRule that yields the lowest price, or null
+	 * when no discount applies.
+	 *
+	 * @param int      $event_date_id  Event date ID.
+	 * @param int|null $participant_id fair-audience participant ID, or null for anonymous.
+	 * @return GroupPricingRule|null Best matching rule, or null.
+	 */
+	public static function resolve_best_discount_rule( $event_date_id, $participant_id = null ) {
+		if ( empty( $participant_id ) ) {
+			return null;
+		}
+
+		$rules = GroupPricingRule::get_all_by_event_date_id( $event_date_id );
+		if ( empty( $rules ) || ! class_exists( \FairAudience\Database\GroupParticipantRepository::class ) ) {
+			return null;
+		}
+
+		$group_repo = new \FairAudience\Database\GroupParticipantRepository();
+		$best_rule  = null;
+		$best_price = PHP_FLOAT_MAX;
+
+		foreach ( $rules as $rule ) {
+			if ( ! $group_repo->get_by_group_and_participant( $rule->group_id, $participant_id ) ) {
+				continue;
+			}
+			$candidate = self::apply_discount( 100.0, $rule->discount_type, (float) $rule->discount_value );
+			if ( $candidate < $best_price ) {
+				$best_price = $candidate;
+				$best_rule  = $rule;
+			}
+		}
+
+		return $best_rule;
+	}
+
+	/**
 	 * Apply a single discount rule to a base price.
 	 *
 	 * @param float  $base_price     Original price.

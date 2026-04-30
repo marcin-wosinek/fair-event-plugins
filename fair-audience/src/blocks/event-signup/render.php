@@ -208,11 +208,28 @@ $has_ticket_types = ! empty( $ticket_types_for_display );
 $ticket_options_for_display = array();
 if ( $pricing_event_date_id && class_exists( \FairEvents\Models\TicketOption::class ) ) {
 	$raw_options = \FairEvents\Models\TicketOption::get_all_by_event_date_id( (int) $pricing_event_date_id );
+
+	$best_discount_rule = null;
+	if ( $participant && class_exists( \FairEvents\Services\EventSignupPricing::class ) ) {
+		$best_discount_rule = \FairEvents\Services\EventSignupPricing::resolve_best_discount_rule(
+			(int) $pricing_event_date_id,
+			(int) $participant->id
+		);
+	}
+
 	foreach ( $raw_options as $opt ) {
+		$opt_price = (float) $opt->price;
+		if ( $best_discount_rule && $opt_price > 0 ) {
+			$opt_price = \FairEvents\Services\EventSignupPricing::apply_discount(
+				$opt_price,
+				$best_discount_rule->discount_type,
+				(float) $best_discount_rule->discount_value
+			);
+		}
 		$ticket_options_for_display[] = array(
 			'id'    => (int) $opt->id,
 			'name'  => $opt->name,
-			'price' => (float) $opt->price,
+			'price' => $opt_price,
 		);
 	}
 }
