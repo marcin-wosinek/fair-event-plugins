@@ -189,6 +189,9 @@ if ( $pricing_event_date_id && class_exists( \FairEvents\Models\TicketType::clas
 				$participant ? (int) $participant->id : null
 			);
 		}
+		if ( null === $tt_price ) {
+			continue;
+		}
 		$ticket_types_for_display[] = array(
 			'id'               => (int) $tt->id,
 			'name'             => $tt->name,
