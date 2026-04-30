@@ -82,6 +82,15 @@ export default function EventTickets({
 		setSalePeriods(data.sale_periods || []);
 
 		const priceMap = {};
+		(data.ticket_types || []).forEach((type) => {
+			(data.sale_periods || []).forEach((period) => {
+				priceMap[`${type.id}-${period.id}`] = {
+					price: '',
+					capacity: '',
+					enabled: false,
+				};
+			});
+		});
 		(data.prices || []).forEach((p) => {
 			const key = `${p.ticket_type_id}-${p.sale_period_id}`;
 			priceMap[key] = {
@@ -251,6 +260,15 @@ export default function EventTickets({
 			setSalePeriods(data.sale_periods || []);
 
 			const priceMap = {};
+			(data.ticket_types || []).forEach((type) => {
+				(data.sale_periods || []).forEach((period) => {
+					priceMap[`${type.id}-${period.id}`] = {
+						price: '',
+						capacity: '',
+						enabled: false,
+					};
+				});
+			});
 			(data.prices || []).forEach((p) => {
 				const key = `${p.ticket_type_id}-${p.sale_period_id}`;
 				priceMap[key] = {
