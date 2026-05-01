@@ -165,6 +165,35 @@ class TicketOption {
 	}
 
 	/**
+	 * Update an existing ticket option
+	 *
+	 * @param int    $id         Option ID.
+	 * @param string $name       Option name.
+	 * @param float  $price      Option price.
+	 * @param int    $sort_order Sort order.
+	 * @return bool True on success, false on failure.
+	 */
+	public static function update( $id, $name, $price, $sort_order ) {
+		global $wpdb;
+
+		$table_name = self::get_table_name();
+
+		$result = $wpdb->update(
+			$table_name,
+			array(
+				'name'       => $name,
+				'price'      => (float) $price,
+				'sort_order' => $sort_order,
+			),
+			array( 'id' => $id ),
+			array( '%s', '%f', '%d' ),
+			array( '%d' )
+		);
+
+		return false !== $result;
+	}
+
+	/**
 	 * Delete all ticket options for an event date
 	 *
 	 * @param int $event_date_id Event date ID.

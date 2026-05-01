@@ -314,24 +314,29 @@ class EventParticipantsController extends WP_REST_Controller {
 			}
 		}
 
-		// Build participant → ticket_option_ids lookup from junction table.
-		$participant_option_ids = array();
-		$ep_ids                 = array_map( fn( $ep ) => $ep->id, $event_participants );
+		// Build participant → ticket option names lookup from junction table.
+		// Use LEFT JOIN because ticket options may have been recreated with new IDs.
+		$participant_option_names = array();
+		$ep_ids                   = array_map( fn( $ep ) => $ep->id, $event_participants );
 		if ( ! empty( $ep_ids ) ) {
 			$placeholders = implode( ',', array_fill( 0, count( $ep_ids ), '%d' ) );
 			// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.PreparedSQLPlaceholders.UnfinishedPrepare
 			$option_rows = $wpdb->get_results(
 				$wpdb->prepare(
-					"SELECT event_participant_id, ticket_option_id FROM {$wpdb->prefix}fair_audience_event_participant_options WHERE event_participant_id IN ($placeholders)",
+					"SELECT epo.event_participant_id, topt.name
+					FROM {$wpdb->prefix}fair_audience_event_participant_options epo
+					LEFT JOIN {$wpdb->prefix}fair_events_ticket_options topt ON epo.ticket_option_id = topt.id
+					WHERE epo.event_participant_id IN ($placeholders)
+					AND topt.name IS NOT NULL",
 					...$ep_ids
 				)
 			);
 			foreach ( $option_rows as $row ) {
 				$ep_id = (int) $row->event_participant_id;
-				if ( ! isset( $participant_option_ids[ $ep_id ] ) ) {
-					$participant_option_ids[ $ep_id ] = array();
+				if ( ! isset( $participant_option_names[ $ep_id ] ) ) {
+					$participant_option_names[ $ep_id ] = array();
 				}
-				$participant_option_ids[ $ep_id ][] = (int) $row->ticket_option_id;
+				$participant_option_names[ $ep_id ][] = $row->name;
 			}
 		}
 
@@ -373,7 +378,7 @@ class EventParticipantsController extends WP_REST_Controller {
 					'photo_likes_received' => isset( $likes_data[ $ep->participant_id ] )
 						? (int) $likes_data[ $ep->participant_id ]->likes_count
 						: 0,
-					'ticket_option_ids'    => $participant_option_ids[ $ep->id ] ?? array(),
+					'ticket_option_names'  => $participant_option_names[ $ep->id ] ?? array(),
 				);
 			},
 			$event_participants

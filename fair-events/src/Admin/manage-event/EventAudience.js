@@ -497,10 +497,10 @@ export default function EventAudience({ eventId, eventDateId, audienceUrl }) {
 																		}}
 																	>
 																		{(
-																			p.ticket_option_ids ||
+																			p.ticket_option_names ||
 																			[]
 																		).includes(
-																			opt.id
+																			opt.name
 																		)
 																			? '✓'
 																			: ''}

@@ -193,15 +193,37 @@ class TicketsController extends WP_REST_Controller {
 			EventDateSetting::set_multiple( $event_date_id, $settings );
 		}
 
-		// 6. Sync ticket options (delete all and re-insert).
-		TicketOption::delete_by_event_date_id( $event_date_id );
+		// 6. Sync ticket options (update existing, create new, delete removed).
+		$existing_options = TicketOption::get_all_by_event_date_id( $event_date_id );
+		$existing_ids     = array_map( fn( $o ) => $o->id, $existing_options );
 		$incoming_options = $body['options'] ?? array();
+		$kept_ids         = array();
 		foreach ( $incoming_options as $index => $option_data ) {
 			$name  = sanitize_text_field( $option_data['name'] ?? '' );
 			$price = isset( $option_data['price'] ) ? (float) $option_data['price'] : 0.0;
-			if ( '' !== $name ) {
-				TicketOption::create( $event_date_id, $name, $price, $index );
+			if ( '' === $name ) {
+				continue;
 			}
+			$option_id = isset( $option_data['id'] ) ? (int) $option_data['id'] : 0;
+			if ( $option_id && in_array( $option_id, $existing_ids, true ) ) {
+				TicketOption::update( $option_id, $name, $price, $index );
+				$kept_ids[] = $option_id;
+			} else {
+				$new_id = TicketOption::create( $event_date_id, $name, $price, $index );
+				if ( $new_id ) {
+					$kept_ids[] = $new_id;
+				}
+			}
+		}
+		$to_delete = array_diff( $existing_ids, $kept_ids );
+		foreach ( $to_delete as $del_id ) {
+			global $wpdb;
+			// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+			$wpdb->delete(
+				$wpdb->prefix . 'fair_events_ticket_options',
+				array( 'id' => $del_id ),
+				array( '%d' )
+			);
 		}
 
 		// 7. Return refreshed response.
