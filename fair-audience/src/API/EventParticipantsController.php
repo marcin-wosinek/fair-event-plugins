@@ -113,22 +113,29 @@ class EventParticipantsController extends WP_REST_Controller {
 					'callback'            => array( $this, 'update_item' ),
 					'permission_callback' => array( $this, 'update_item_permissions_check' ),
 					'args'                => array(
-						'event_date_id'  => array(
+						'event_date_id'       => array(
 							'type'     => 'integer',
 							'required' => true,
 						),
-						'participant_id' => array(
+						'participant_id'      => array(
 							'type'     => 'integer',
 							'required' => true,
 						),
-						'label'          => array(
+						'label'               => array(
 							'type'     => 'string',
 							'enum'     => array( 'interested', 'signed_up', 'collaborator' ),
 							'required' => false,
 						),
-						'attended'       => array(
+						'attended'            => array(
 							'type'     => 'boolean',
 							'required' => false,
+						),
+						'ticket_option_names' => array(
+							'type'     => 'array',
+							'required' => false,
+							'items'    => array(
+								'type' => 'string',
+							),
 						),
 					),
 				),
@@ -452,15 +459,18 @@ class EventParticipantsController extends WP_REST_Controller {
 	 * @return WP_REST_Response|WP_Error Response object or error.
 	 */
 	public function update_item( $request ) {
-		$event_date_id  = $request->get_param( 'event_date_id' );
-		$participant_id = $request->get_param( 'participant_id' );
-		$label          = $request->get_param( 'label' );
-		$attended       = $request->get_param( 'attended' );
+		global $wpdb;
 
-		if ( null === $label && null === $attended ) {
+		$event_date_id       = $request->get_param( 'event_date_id' );
+		$participant_id      = $request->get_param( 'participant_id' );
+		$label               = $request->get_param( 'label' );
+		$attended            = $request->get_param( 'attended' );
+		$ticket_option_names = $request->get_param( 'ticket_option_names' );
+
+		if ( null === $label && null === $attended && null === $ticket_option_names ) {
 			return new WP_Error(
 				'missing_fields',
-				__( 'Provide at least one of: label, attended.', 'fair-audience' ),
+				__( 'Provide at least one of: label, attended, ticket_option_names.', 'fair-audience' ),
 				array( 'status' => 400 )
 			);
 		}
@@ -487,13 +497,56 @@ class EventParticipantsController extends WP_REST_Controller {
 			}
 		}
 
+		if ( null !== $ticket_option_names ) {
+			$updated_ep = $this->event_participant_repo->get_by_event_date_and_participant( $event_date_id, $participant_id );
+			if ( $updated_ep ) {
+				$ep_id      = (int) $updated_ep->id;
+				$table_name = $wpdb->prefix . 'fair_audience_event_participant_options';
+
+				// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+				$wpdb->delete( $table_name, array( 'event_participant_id' => $ep_id ), array( '%d' ) );
+
+				$lookup_event_date_id = $event_date_id;
+				if ( class_exists( \FairEvents\Models\EventDates::class ) ) {
+					$ed = \FairEvents\Models\EventDates::get_by_id( $event_date_id );
+					if ( $ed && 'generated' === $ed->occurrence_type && $ed->master_id ) {
+						$lookup_event_date_id = (int) $ed->master_id;
+					}
+				}
+
+				if ( ! empty( $ticket_option_names ) && class_exists( \FairEvents\Models\TicketOption::class ) ) {
+					$all_options = \FairEvents\Models\TicketOption::get_all_by_event_date_id( $lookup_event_date_id );
+					$by_name     = array();
+					foreach ( $all_options as $opt ) {
+						$by_name[ $opt->name ] = $opt;
+					}
+					foreach ( $ticket_option_names as $name ) {
+						$name = sanitize_text_field( $name );
+						if ( isset( $by_name[ $name ] ) ) {
+							// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery
+							$wpdb->replace(
+								$table_name,
+								array(
+									'event_participant_id' => $ep_id,
+									'ticket_option_id'     => $by_name[ $name ]->id,
+									'ticket_option_name'   => $name,
+								),
+								array( '%d', '%d', '%s' )
+							);
+						}
+					}
+				}
+			}
+		}
+
 		$updated = $this->event_participant_repo->get_by_event_date_and_participant( $event_date_id, $participant_id );
 
 		return rest_ensure_response(
 			array(
-				'message'     => __( 'Participant updated successfully.', 'fair-audience' ),
-				'label'       => $updated ? $updated->label : null,
-				'attended_at' => $updated ? $updated->attended_at : null,
+				'message'             => __( 'Participant updated successfully.', 'fair-audience' ),
+				'label'               => $updated ? $updated->label : null,
+				'attended_at'         => $updated ? $updated->attended_at : null,
+				'ticket_option_names' => $ticket_option_names ?? array(),
 			)
 		);
 	}

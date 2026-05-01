@@ -47,6 +47,11 @@ export default function EventAudience({ eventId, eventDateId, audienceUrl }) {
 	const [selectedToAdd, setSelectedToAdd] = useState(new Set());
 	const [isAdding, setIsAdding] = useState(false);
 
+	// Edit options modal state
+	const [editingParticipant, setEditingParticipant] = useState(null);
+	const [editOptionNames, setEditOptionNames] = useState([]);
+	const [isSavingOptions, setIsSavingOptions] = useState(false);
+
 	useEffect(() => {
 		if (!eventDateId) {
 			setLoadingParticipants(false);
@@ -320,6 +325,47 @@ export default function EventAudience({ eventId, eventDateId, audienceUrl }) {
 			});
 	};
 
+	const handleOpenEditOptions = (participant) => {
+		setEditingParticipant(participant);
+		setEditOptionNames([...(participant.ticket_option_names || [])]);
+	};
+
+	const handleToggleOptionName = (name) => {
+		setEditOptionNames((current) =>
+			current.includes(name)
+				? current.filter((n) => n !== name)
+				: [...current, name]
+		);
+	};
+
+	const handleSaveOptions = async () => {
+		if (!editingParticipant) return;
+		setIsSavingOptions(true);
+		try {
+			const response = await apiFetch({
+				path: `/fair-audience/v1/event-dates/${eventDateId}/participants/${editingParticipant.participant_id}`,
+				method: 'PUT',
+				data: { ticket_option_names: editOptionNames },
+			});
+			setParticipants((current) =>
+				current.map((p) =>
+					p.id === editingParticipant.id
+						? {
+								...p,
+								ticket_option_names:
+									response.ticket_option_names,
+						  }
+						: p
+				)
+			);
+			setEditingParticipant(null);
+		} catch (err) {
+			alert(__('Error saving options: ', 'fair-events') + err.message);
+		} finally {
+			setIsSavingOptions(false);
+		}
+	};
+
 	return (
 		<>
 			{eventId && (
@@ -457,6 +503,15 @@ export default function EventAudience({ eventId, eventDateId, audienceUrl }) {
 															'fair-events'
 														)}
 													</th>
+													{ticketOptions.length >
+														0 && (
+														<th>
+															{__(
+																'Actions',
+																'fair-events'
+															)}
+														</th>
+													)}
 												</tr>
 											</thead>
 											<tbody>
@@ -529,6 +584,24 @@ export default function EventAudience({ eventId, eventDateId, audienceUrl }) {
 																	}
 																/>
 															</td>
+															{ticketOptions.length >
+																0 && (
+																<td>
+																	<Button
+																		variant="link"
+																		onClick={() =>
+																			handleOpenEditOptions(
+																				p
+																			)
+																		}
+																	>
+																		{__(
+																			'Edit',
+																			'fair-events'
+																		)}
+																	</Button>
+																</td>
+															)}
 														</tr>
 													)
 												)}
@@ -874,6 +947,52 @@ export default function EventAudience({ eventId, eventDateId, audienceUrl }) {
 							</div>
 						</>
 					)}
+				</Modal>
+			)}
+
+			{editingParticipant && (
+				<Modal
+					title={sprintf(
+						/* translators: %s: participant name */
+						__('Edit options — %s', 'fair-events'),
+						editingParticipant.participant_name
+					)}
+					onRequestClose={() => setEditingParticipant(null)}
+					style={{ maxWidth: '480px', width: '100%' }}
+				>
+					<VStack spacing={3}>
+						{ticketOptions.map((opt) => (
+							<CheckboxControl
+								key={opt.id}
+								label={opt.name}
+								checked={editOptionNames.includes(opt.name)}
+								onChange={() =>
+									handleToggleOptionName(opt.name)
+								}
+								__nextHasNoMarginBottom
+							/>
+						))}
+						<HStack
+							spacing={3}
+							style={{ justifyContent: 'flex-end' }}
+						>
+							<Button
+								variant="secondary"
+								onClick={() => setEditingParticipant(null)}
+							>
+								{__('Cancel', 'fair-events')}
+							</Button>
+							<Button
+								variant="primary"
+								onClick={handleSaveOptions}
+								disabled={isSavingOptions}
+							>
+								{isSavingOptions
+									? __('Saving…', 'fair-events')
+									: __('Save', 'fair-events')}
+							</Button>
+						</HStack>
+					</VStack>
 				</Modal>
 			)}
 		</>
