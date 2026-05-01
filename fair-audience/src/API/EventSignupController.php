@@ -522,7 +522,8 @@ class EventSignupController extends WP_REST_Controller {
 		$this->snapshot_ticket_type_on_signup( $event_date_id, $participant->id, $ticket_type_id );
 		$this->snapshot_options_on_signup( $event_date_id, $participant->id, $option_items );
 
-		$this->email_service->send_signup_payment_confirmation( $participant, $event );
+		$option_names = array_map( fn( $o ) => $o->name, $option_items );
+		$this->email_service->send_signup_payment_confirmation( $participant, $event, null, $option_names );
 
 		return rest_ensure_response(
 			array(
@@ -1166,7 +1167,8 @@ class EventSignupController extends WP_REST_Controller {
 		$this->snapshot_ticket_type_on_signup( $event_date_id, $participant->id, $ticket_type_id );
 		$this->snapshot_options_on_signup( $event_date_id, $participant->id, $option_items );
 
-		$this->email_service->send_signup_payment_confirmation( $participant, $event );
+		$option_names = array_map( fn( $o ) => $o->name, $option_items );
+		$this->email_service->send_signup_payment_confirmation( $participant, $event, null, $option_names );
 
 		// If keep_informed, send confirmation email.
 		if ( $keep_informed ) {

@@ -227,6 +227,8 @@ class PaymentHooks {
 	 * @param object $transaction       Transaction row from fair-payment.
 	 */
 	public static function send_signup_confirmation_email( $event_participant, $transaction ) {
+		global $wpdb;
+
 		$participant_repo = new ParticipantRepository();
 		$participant      = $participant_repo->get_by_id( (int) $event_participant->participant_id );
 
@@ -236,8 +238,16 @@ class PaymentHooks {
 
 		$event = get_post( $event_participant->event_id );
 
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+		$option_names = $wpdb->get_col(
+			$wpdb->prepare(
+				"SELECT ticket_option_name FROM {$wpdb->prefix}fair_audience_event_participant_options WHERE event_participant_id = %d AND ticket_option_name != ''",
+				(int) $event_participant->id
+			)
+		);
+
 		$email_service = new EmailService();
-		$email_service->send_signup_payment_confirmation( $participant, $event, $transaction );
+		$email_service->send_signup_payment_confirmation( $participant, $event, $transaction, $option_names );
 	}
 
 	/**

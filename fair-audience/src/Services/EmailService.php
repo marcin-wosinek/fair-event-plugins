@@ -2023,7 +2023,7 @@ class EmailService {
 	 * @param object|null   $transaction Transaction row from fair-payment (null for free signups).
 	 * @return bool Success.
 	 */
-	public function send_signup_payment_confirmation( Participant $participant, $event, $transaction = null ): bool {
+	public function send_signup_payment_confirmation( Participant $participant, $event, $transaction = null, $option_names = array() ): bool {
 		if ( ! $this->has_valid_email( $participant ) ) {
 			return false;
 		}
@@ -2049,6 +2049,17 @@ class EmailService {
 									<td style="padding: 8px 0; border-bottom: 1px solid #eee;">' . esc_html( number_format( $amount, 2 ) . ' ' . $currency ) . '</td>
 								</tr>
 							</table>';
+		}
+
+		$options_html = '';
+		if ( ! empty( $option_names ) ) {
+			$options_list = '';
+			foreach ( $option_names as $name ) {
+				$options_list .= '<li style="padding: 4px 0;">' . esc_html( $name ) . '</li>';
+			}
+			$options_html = '
+							<p style="margin: 0 0 8px 0; font-size: 16px; font-weight: bold;">' . esc_html__( 'Selected options:', 'fair-audience' ) . '</p>
+							<ul style="margin: 0 0 20px 20px; padding: 0;">' . $options_list . '</ul>';
 		}
 
 		$message = '<!DOCTYPE html>
@@ -2091,6 +2102,8 @@ class EmailService {
 							</p>
 
 							' . $payment_html . '
+
+							' . $options_html . '
 
 							<p style="margin: 20px 0 0 0; font-size: 14px; color: #666666;">
 								' . sprintf(
