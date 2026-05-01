@@ -315,7 +315,6 @@ class EventParticipantsController extends WP_REST_Controller {
 		}
 
 		// Build participant → ticket option names lookup from junction table.
-		// Use LEFT JOIN because ticket options may have been recreated with new IDs.
 		$participant_option_names = array();
 		$ep_ids                   = array_map( fn( $ep ) => $ep->id, $event_participants );
 		if ( ! empty( $ep_ids ) ) {
@@ -323,11 +322,10 @@ class EventParticipantsController extends WP_REST_Controller {
 			// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.PreparedSQLPlaceholders.UnfinishedPrepare
 			$option_rows = $wpdb->get_results(
 				$wpdb->prepare(
-					"SELECT epo.event_participant_id, topt.name
-					FROM {$wpdb->prefix}fair_audience_event_participant_options epo
-					LEFT JOIN {$wpdb->prefix}fair_events_ticket_options topt ON epo.ticket_option_id = topt.id
-					WHERE epo.event_participant_id IN ($placeholders)
-					AND topt.name IS NOT NULL",
+					"SELECT event_participant_id, ticket_option_name
+					FROM {$wpdb->prefix}fair_audience_event_participant_options
+					WHERE event_participant_id IN ($placeholders)
+					AND ticket_option_name != ''",
 					...$ep_ids
 				)
 			);
@@ -336,7 +334,7 @@ class EventParticipantsController extends WP_REST_Controller {
 				if ( ! isset( $participant_option_names[ $ep_id ] ) ) {
 					$participant_option_names[ $ep_id ] = array();
 				}
-				$participant_option_names[ $ep_id ][] = $row->name;
+				$participant_option_names[ $ep_id ][] = $row->ticket_option_name;
 			}
 		}
 

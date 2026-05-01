@@ -71,7 +71,7 @@ function fair_audience_activate() {
 	dbDelta( \FairAudience\Database\Schema::get_event_participant_options_table_sql() );
 
 	// Update database version.
-	update_option( 'fair_audience_db_version', '1.31.0' );
+	update_option( 'fair_audience_db_version', '1.32.0' );
 }
 register_activation_hook( __FILE__, __NAMESPACE__ . '\\fair_audience_activate' );
 
@@ -595,6 +595,21 @@ function fair_audience_maybe_upgrade_db() {
 		require_once ABSPATH . 'wp-admin/includes/upgrade.php';
 		dbDelta( \FairAudience\Database\Schema::get_participants_table_sql() );
 		update_option( 'fair_audience_db_version', '1.31.0' );
+	}
+
+	if ( version_compare( $db_version, '1.32.0', '<' ) ) {
+		require_once ABSPATH . 'wp-admin/includes/upgrade.php';
+		dbDelta( \FairAudience\Database\Schema::get_event_participant_options_table_sql() );
+
+		// Backfill ticket_option_name from the ticket_options table where the FK still exists.
+		$wpdb->query(
+			"UPDATE {$wpdb->prefix}fair_audience_event_participant_options epo
+			INNER JOIN {$wpdb->prefix}fair_events_ticket_options topt ON epo.ticket_option_id = topt.id
+			SET epo.ticket_option_name = topt.name
+			WHERE epo.ticket_option_name = ''"
+		);
+
+		update_option( 'fair_audience_db_version', '1.32.0' );
 	}
 }
 add_action( 'plugins_loaded', __NAMESPACE__ . '\\fair_audience_maybe_upgrade_db' );

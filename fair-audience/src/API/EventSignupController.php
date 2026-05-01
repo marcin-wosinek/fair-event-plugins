@@ -743,8 +743,9 @@ class EventSignupController extends WP_REST_Controller {
 				array(
 					'event_participant_id' => $event_participant_id,
 					'ticket_option_id'     => $option->id,
+					'ticket_option_name'   => $option->name,
 				),
-				array( '%d', '%d' )
+				array( '%d', '%d', '%s' )
 			);
 		}
 	}

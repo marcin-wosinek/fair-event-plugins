@@ -605,6 +605,7 @@ class Schema {
 			id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
 			event_participant_id BIGINT UNSIGNED NOT NULL,
 			ticket_option_id BIGINT UNSIGNED NOT NULL,
+			ticket_option_name VARCHAR(255) NOT NULL DEFAULT '',
 			created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
 			PRIMARY KEY  (id),
 			UNIQUE KEY idx_participant_option (event_participant_id, ticket_option_id),
