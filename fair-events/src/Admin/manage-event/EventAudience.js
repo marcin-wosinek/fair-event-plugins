@@ -331,7 +331,7 @@ export default function EventAudience({ eventId, eventDateId, audienceUrl }) {
 						{loadingParticipants ? (
 							<Spinner />
 						) : (
-							<VStack spacing={4}>
+							<VStack spacing={4} style={{ maxWidth: '100%' }}>
 								<HStack spacing={4} wrap>
 									<span>
 										{__('Collaborators:', 'fair-events')}{' '}
@@ -401,7 +401,12 @@ export default function EventAudience({ eventId, eventDateId, audienceUrl }) {
 								</HStack>
 
 								{filteredParticipants.length > 0 ? (
-									<div style={{ overflowX: 'auto' }}>
+									<div
+										style={{
+											overflowX: 'auto',
+											width: '100%',
+										}}
+									>
 										<table className="wp-list-table widefat striped">
 											<thead>
 												<tr>
