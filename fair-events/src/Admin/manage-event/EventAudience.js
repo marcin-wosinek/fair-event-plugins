@@ -26,6 +26,7 @@ const LABEL_DISPLAY = {
 export default function EventAudience({ eventId, eventDateId, audienceUrl }) {
 	const [participants, setParticipants] = useState([]);
 	const [loadingParticipants, setLoadingParticipants] = useState(true);
+	const [ticketOptions, setTicketOptions] = useState([]);
 	const [questionnaireSummary, setQuestionnaireSummary] = useState(null);
 	const [loadingQuestionnaire, setLoadingQuestionnaire] = useState(true);
 	const [formsSummary, setFormsSummary] = useState([]);
@@ -61,6 +62,21 @@ export default function EventAudience({ eventId, eventDateId, audienceUrl }) {
 				setParticipants([]);
 			})
 			.finally(() => setLoadingParticipants(false));
+	}, [eventDateId]);
+
+	useEffect(() => {
+		if (!eventDateId) return;
+		apiFetch({
+			path: `/fair-events/v1/event-dates/${eventDateId}/tickets`,
+		})
+			.then((data) => {
+				setTicketOptions(
+					Array.isArray(data?.options) ? data.options : []
+				);
+			})
+			.catch(() => {
+				setTicketOptions([]);
+			});
 	}, [eventDateId]);
 
 	useEffect(() => {
@@ -423,6 +439,13 @@ export default function EventAudience({ eventId, eventDateId, audienceUrl }) {
 															'fair-events'
 														)}
 													</th>
+													{ticketOptions.map(
+														(opt) => (
+															<th key={opt.id}>
+																{opt.name}
+															</th>
+														)
+													)}
 													<th>
 														{__(
 															'Shown up',
@@ -457,6 +480,28 @@ export default function EventAudience({ eventId, eventDateId, audienceUrl }) {
 																{p.ticket_type_name ||
 																	'—'}
 															</td>
+															{ticketOptions.map(
+																(opt) => (
+																	<td
+																		key={
+																			opt.id
+																		}
+																		style={{
+																			textAlign:
+																				'center',
+																		}}
+																	>
+																		{(
+																			p.ticket_option_ids ||
+																			[]
+																		).includes(
+																			opt.id
+																		)
+																			? '✓'
+																			: ''}
+																	</td>
+																)
+															)}
 															<td>
 																<input
 																	type="checkbox"
