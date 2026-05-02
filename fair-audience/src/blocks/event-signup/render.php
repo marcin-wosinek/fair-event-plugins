@@ -217,9 +217,21 @@ if ( $pricing_event_date_id && class_exists( \FairEvents\Models\TicketOption::cl
 		);
 	}
 
+	$invitation_inviter_id = $valid_invitation_token ? (int) $valid_invitation_token->inviter_participant_id : null;
+
 	foreach ( $raw_options as $opt ) {
-		$opt_price = (float) $opt->price;
-		if ( $best_discount_rule && $opt_price > 0 ) {
+		$opt_price        = (float) $opt->price;
+		$invitation_price = null;
+		if ( $invitation_inviter_id && class_exists( \FairEvents\Services\EventSignupPricing::class ) ) {
+			$invitation_price = \FairEvents\Services\EventSignupPricing::resolve_option_invitation_price(
+				$opt,
+				(int) $pricing_event_date_id,
+				$invitation_inviter_id
+			);
+		}
+		if ( null !== $invitation_price ) {
+			$opt_price = (float) $invitation_price;
+		} elseif ( $best_discount_rule && $opt_price > 0 ) {
 			$opt_price = \FairEvents\Services\EventSignupPricing::apply_discount(
 				$opt_price,
 				$best_discount_rule->discount_type,

@@ -503,7 +503,7 @@ class EventSignupController extends WP_REST_Controller {
 		}
 
 		$option_items  = $this->load_valid_options( $event_date_id, $raw_option_ids );
-		$paid_response = $this->maybe_start_paid_signup( $event_id, $event_date_id, $participant, $existing, $user_id, $ticket_type_id, $option_items );
+		$paid_response = $this->maybe_start_paid_signup( $event_id, $event_date_id, $participant, $existing, $user_id, $ticket_type_id, $option_items, $invitation_token );
 		if ( null !== $paid_response ) {
 			return $paid_response;
 		}
@@ -721,6 +721,65 @@ class EventSignupController extends WP_REST_Controller {
 	}
 
 	/**
+	 * Resolve the inviter participant ID from a (possibly empty) invitation token.
+	 *
+	 * Does not record any token use — that is handled by validate_invitation_token
+	 * for invitation-only ticket types. Here we only need to read the inviter so
+	 * we can apply the activity collaborator discount when relevant.
+	 *
+	 * @param string $invitation_token Token string from the request.
+	 * @param int    $event_date_id    Event date ID for cross-checking the token scope.
+	 * @return int|null Inviter participant ID, or null if no valid token applies.
+	 */
+	private function resolve_invitation_inviter_id( $invitation_token, $event_date_id ) {
+		if ( empty( $invitation_token ) || ! class_exists( \FairEvents\Models\InvitationToken::class ) ) {
+			return null;
+		}
+		$token = \FairEvents\Models\InvitationToken::get_by_token( $invitation_token );
+		if ( ! $token || ! $token->is_valid() ) {
+			return null;
+		}
+		if ( $event_date_id && (int) $token->event_date_id !== (int) $event_date_id ) {
+			return null;
+		}
+		return (int) $token->inviter_participant_id;
+	}
+
+	/**
+	 * Compute the effective price for a ticket option, applying activity
+	 * collaborator discount first (if eligible) and falling back to the
+	 * group pricing rule when no per-activity discount applies.
+	 *
+	 * @param object      $option                 TicketOption object.
+	 * @param int         $event_date_id          Event date ID.
+	 * @param int|null    $inviter_participant_id Inviter participant ID resolved from the invitation token.
+	 * @param object|null $best_discount_rule     Best group pricing rule for the buyer, if any.
+	 * @return float Effective option price (>= 0 inputs assumed; may be 0).
+	 */
+	private function compute_option_price( $option, $event_date_id, $inviter_participant_id, $best_discount_rule ) {
+		if ( class_exists( \FairEvents\Services\EventSignupPricing::class ) ) {
+			$invitation_price = \FairEvents\Services\EventSignupPricing::resolve_option_invitation_price(
+				$option,
+				$event_date_id,
+				$inviter_participant_id
+			);
+			if ( null !== $invitation_price ) {
+				return (float) $invitation_price;
+			}
+		}
+
+		$opt_price = (float) $option->price;
+		if ( $best_discount_rule && $opt_price > 0 && class_exists( \FairEvents\Services\EventSignupPricing::class ) ) {
+			$opt_price = \FairEvents\Services\EventSignupPricing::apply_discount(
+				$opt_price,
+				$best_discount_rule->discount_type,
+				(float) $best_discount_rule->discount_value
+			);
+		}
+		return $opt_price;
+	}
+
+	/**
 	 * Insert rows into fair_audience_event_participant_options.
 	 *
 	 * phpcs:disable WordPress.DB.DirectDatabaseQuery
@@ -766,10 +825,11 @@ class EventSignupController extends WP_REST_Controller {
 	 * @param \FairAudience\Models\EventParticipant|null $existing       Existing row for (event_date, participant), if any.
 	 * @param int                                        $user_id        Current WP user ID (0 for anonymous).
 	 * @param int|null                                   $ticket_type_id Selected ticket type ID, or null when not using ticket types.
-	 * @param array                                      $option_items   Selected TicketOption objects.
+	 * @param array                                      $option_items     Selected TicketOption objects.
+	 * @param string                                     $invitation_token Optional invitation token presented by the buyer.
 	 * @return \WP_REST_Response|\WP_Error|null WP_REST_Response/WP_Error on paid path, null on free path.
 	 */
-	private function maybe_start_paid_signup( $event_id, $event_date_id, $participant, $existing, $user_id, $ticket_type_id = null, $option_items = array() ) {
+	private function maybe_start_paid_signup( $event_id, $event_date_id, $participant, $existing, $user_id, $ticket_type_id = null, $option_items = array(), $invitation_token = '' ) {
 		$final_price      = null;
 		$seats_per_ticket = 1;
 		if ( $event_date_id && class_exists( \FairEvents\Services\EventSignupPricing::class ) ) {
@@ -795,18 +855,17 @@ class EventSignupController extends WP_REST_Controller {
 			);
 		}
 
+		$invitation_inviter_id = $this->resolve_invitation_inviter_id( $invitation_token, $event_date_id );
+
 		// Option prices count towards the total even when there is no base price.
 		$options_total = 0;
 		foreach ( $option_items as $opt ) {
-			$opt_price = (float) $opt->price;
-			if ( $best_discount_rule && $opt_price > 0 ) {
-				$opt_price = \FairEvents\Services\EventSignupPricing::apply_discount(
-					$opt_price,
-					$best_discount_rule->discount_type,
-					(float) $best_discount_rule->discount_value
-				);
-			}
-			$options_total += $opt_price;
+			$options_total += $this->compute_option_price(
+				$opt,
+				$event_date_id,
+				$invitation_inviter_id,
+				$best_discount_rule
+			);
 		}
 		$total_amount = (float) ( $final_price ?? 0 ) + $options_total;
 
@@ -881,14 +940,12 @@ class EventSignupController extends WP_REST_Controller {
 			);
 		}
 		foreach ( $option_items as $opt ) {
-			$opt_price = (float) $opt->price;
-			if ( $best_discount_rule && $opt_price > 0 ) {
-				$opt_price = \FairEvents\Services\EventSignupPricing::apply_discount(
-					$opt_price,
-					$best_discount_rule->discount_type,
-					(float) $best_discount_rule->discount_value
-				);
-			}
+			$opt_price = $this->compute_option_price(
+				$opt,
+				$event_date_id,
+				$invitation_inviter_id,
+				$best_discount_rule
+			);
 			if ( 0.0 !== $opt_price ) {
 				$line_items[] = array(
 					'name'     => $opt->name,
@@ -1148,7 +1205,7 @@ class EventSignupController extends WP_REST_Controller {
 
 		// Paid path takes over when a positive price resolves for this participant.
 		$option_items  = $this->load_valid_options( $event_date_id, $raw_option_ids );
-		$paid_response = $this->maybe_start_paid_signup( $event_id, $event_date_id, $participant, $existing, 0, $ticket_type_id, $option_items );
+		$paid_response = $this->maybe_start_paid_signup( $event_id, $event_date_id, $participant, $existing, 0, $ticket_type_id, $option_items, $invitation_token );
 		if ( null !== $paid_response ) {
 			return $paid_response;
 		}

@@ -13,6 +13,7 @@ use FairEvents\Models\GroupPricingRule;
 use FairEvents\Models\TicketType;
 use FairEvents\Models\TicketSalePeriod;
 use FairEvents\Models\TicketPrice;
+use FairEvents\Models\TicketOptionCollaborator;
 
 defined( 'WPINC' ) || die;
 
@@ -209,5 +210,39 @@ class EventSignupPricing {
 			return $base_price * ( 1.0 - ( $discount_value / 100.0 ) );
 		}
 		return $base_price - $discount_value;
+	}
+
+	/**
+	 * Resolve the activity-collaborator discounted price for an option.
+	 *
+	 * Returns the option's discounted_price when:
+	 * - the per-event-date setting `activity_collaborator_discount` is on,
+	 * - the option has a non-null discounted_price,
+	 * - and the given inviter participant is linked as a collaborator on that option.
+	 *
+	 * Returns null when the discount does not apply.
+	 *
+	 * @param object   $option                 TicketOption-like object exposing id and discounted_price.
+	 * @param int      $event_date_id          Event date ID the option belongs to.
+	 * @param int|null $inviter_participant_id Inviter participant ID resolved from a valid invitation token.
+	 * @return float|null Discounted price if applicable, null otherwise.
+	 */
+	public static function resolve_option_invitation_price( $option, $event_date_id, $inviter_participant_id ) {
+		if ( ! $inviter_participant_id || ! $option || ! $event_date_id ) {
+			return null;
+		}
+		if ( ! isset( $option->discounted_price ) || null === $option->discounted_price ) {
+			return null;
+		}
+		if ( '1' !== (string) EventDateSetting::get( (int) $event_date_id, 'activity_collaborator_discount' ) ) {
+			return null;
+		}
+
+		$collaborator_ids = TicketOptionCollaborator::get_participant_ids_by_option_id( (int) $option->id );
+		if ( ! in_array( (int) $inviter_participant_id, $collaborator_ids, true ) ) {
+			return null;
+		}
+
+		return (float) $option->discounted_price;
 	}
 }
