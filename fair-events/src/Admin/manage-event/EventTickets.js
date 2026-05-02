@@ -52,6 +52,7 @@ export default function EventTickets({
 	const [success, setSuccess] = useState(null);
 	const [pricingRules, setPricingRules] = useState([]);
 	const [groups, setGroups] = useState([]);
+	const [participants, setParticipants] = useState([]);
 	const fileInputRef = useRef(null);
 
 	const manageInvitationsUrl =
@@ -63,6 +64,18 @@ export default function EventTickets({
 	const groupNameById = Object.fromEntries(groups.map((g) => [g.id, g.name]));
 	const groupIdByName = Object.fromEntries(groups.map((g) => [g.name, g.id]));
 	const groupSuggestions = groups.map((g) => g.name);
+
+	const formatParticipantLabel = (p) => {
+		const fullName = `${p.name || ''} ${p.surname || ''}`.trim();
+		return fullName || p.email || `#${p.id}`;
+	};
+	const participantLabelById = Object.fromEntries(
+		participants.map((p) => [p.id, formatParticipantLabel(p)])
+	);
+	const participantIdByLabel = Object.fromEntries(
+		participants.map((p) => [formatParticipantLabel(p), p.id])
+	);
+	const participantSuggestions = participants.map(formatParticipantLabel);
 
 	const populateFromData = useCallback((data) => {
 		setCapacity(
@@ -147,6 +160,12 @@ export default function EventTickets({
 		apiFetch({ path: '/fair-audience/v1/groups' })
 			.then((data) => setGroups(data || []))
 			.catch(() => setGroups([]));
+	}, []);
+
+	useEffect(() => {
+		apiFetch({ path: '/fair-audience/v1/participants?per_page=0' })
+			.then((data) => setParticipants(Array.isArray(data) ? data : []))
+			.catch(() => setParticipants([]));
 	}, []);
 
 	useEffect(() => {
@@ -344,7 +363,11 @@ export default function EventTickets({
 			prices: exportPrices,
 			options: options.map((o) => ({
 				name: o.name || '',
+				short_name: o.short_name || '',
 				price: o.price !== undefined ? o.price : 0,
+				collaborator_ids: Array.isArray(o.collaborator_ids)
+					? o.collaborator_ids
+					: [],
 			})),
 		};
 	};
@@ -1605,68 +1628,235 @@ export default function EventTickets({
 									'fair-events'
 								)}
 							</p>
-							{options.map((option, index) => (
-								<HStack
-									key={index}
-									spacing={2}
-									alignment="center"
-								>
-									<TextControl
-										label={__('Name', 'fair-events')}
-										placeholder={__(
-											'Activity name',
-											'fair-events'
-										)}
-										value={option.name || ''}
-										onChange={(v) => {
-											const updated = [...options];
-											updated[index] = {
-												...updated[index],
-												name: v,
-											};
-											setOptions(updated);
-										}}
-										__nextHasNoMarginBottom
-									/>
-									<TextControl
-										label={__('Price (EUR)', 'fair-events')}
-										type="number"
-										step="0.01"
-										min="0"
-										value={
-											option.price !== undefined
-												? String(option.price)
-												: '0'
-										}
-										onChange={(v) => {
-											const updated = [...options];
-											updated[index] = {
-												...updated[index],
-												price:
-													v !== ''
-														? parseFloat(v)
-														: 0,
-											};
-											setOptions(updated);
-										}}
-										__nextHasNoMarginBottom
-									/>
-									<Button
-										variant="tertiary"
-										isDestructive
-										size="small"
-										onClick={() => {
-											setOptions(
-												options.filter(
-													(_, i) => i !== index
-												)
-											);
-										}}
-									>
-										{__('Remove', 'fair-events')}
-									</Button>
-								</HStack>
-							))}
+							{options.length > 0 && (
+								<div style={{ overflowX: 'auto' }}>
+									<table className="wp-list-table widefat striped">
+										<thead>
+											<tr>
+												<th>
+													{__('Name', 'fair-events')}
+												</th>
+												<th>
+													{__(
+														'Short name',
+														'fair-events'
+													)}
+												</th>
+												<th>
+													{__(
+														'Price (EUR)',
+														'fair-events'
+													)}
+												</th>
+												<th>
+													{__(
+														'Collaborator(s)',
+														'fair-events'
+													)}
+												</th>
+												<th />
+											</tr>
+										</thead>
+										<tbody>
+											{options.map((option, index) => {
+												const collaboratorIds =
+													Array.isArray(
+														option.collaborator_ids
+													)
+														? option.collaborator_ids
+														: [];
+												return (
+													<tr key={index}>
+														<td>
+															<TextControl
+																placeholder={__(
+																	'Activity name',
+																	'fair-events'
+																)}
+																value={
+																	option.name ||
+																	''
+																}
+																onChange={(
+																	v
+																) => {
+																	const updated =
+																		[
+																			...options,
+																		];
+																	updated[
+																		index
+																	] = {
+																		...updated[
+																			index
+																		],
+																		name: v,
+																	};
+																	setOptions(
+																		updated
+																	);
+																}}
+																__nextHasNoMarginBottom
+															/>
+														</td>
+														<td>
+															<TextControl
+																placeholder={__(
+																	'Short name',
+																	'fair-events'
+																)}
+																value={
+																	option.short_name ||
+																	''
+																}
+																onChange={(
+																	v
+																) => {
+																	const updated =
+																		[
+																			...options,
+																		];
+																	updated[
+																		index
+																	] = {
+																		...updated[
+																			index
+																		],
+																		short_name:
+																			v,
+																	};
+																	setOptions(
+																		updated
+																	);
+																}}
+																__nextHasNoMarginBottom
+															/>
+														</td>
+														<td>
+															<TextControl
+																type="number"
+																step="0.01"
+																min="0"
+																value={
+																	option.price !==
+																	undefined
+																		? String(
+																				option.price
+																		  )
+																		: '0'
+																}
+																onChange={(
+																	v
+																) => {
+																	const updated =
+																		[
+																			...options,
+																		];
+																	updated[
+																		index
+																	] = {
+																		...updated[
+																			index
+																		],
+																		price:
+																			v !==
+																			''
+																				? parseFloat(
+																						v
+																				  )
+																				: 0,
+																	};
+																	setOptions(
+																		updated
+																	);
+																}}
+																__nextHasNoMarginBottom
+															/>
+														</td>
+														<td>
+															<FormTokenField
+																value={collaboratorIds.map(
+																	(id) =>
+																		participantLabelById[
+																			id
+																		] ||
+																		`#${id}`
+																)}
+																suggestions={
+																	participantSuggestions
+																}
+																onChange={(
+																	tokens
+																) => {
+																	const ids =
+																		tokens
+																			.map(
+																				(
+																					label
+																				) =>
+																					participantIdByLabel[
+																						label
+																					]
+																			)
+																			.filter(
+																				Boolean
+																			);
+																	const updated =
+																		[
+																			...options,
+																		];
+																	updated[
+																		index
+																	] = {
+																		...updated[
+																			index
+																		],
+																		collaborator_ids:
+																			ids,
+																	};
+																	setOptions(
+																		updated
+																	);
+																}}
+																__experimentalExpandOnFocus
+																__experimentalAutoSelectFirstMatch
+																placeholder={__(
+																	'Add participants',
+																	'fair-events'
+																)}
+															/>
+														</td>
+														<td>
+															<Button
+																variant="tertiary"
+																isDestructive
+																size="small"
+																onClick={() => {
+																	setOptions(
+																		options.filter(
+																			(
+																				_,
+																				i
+																			) =>
+																				i !==
+																				index
+																		)
+																	);
+																}}
+															>
+																{__(
+																	'Remove',
+																	'fair-events'
+																)}
+															</Button>
+														</td>
+													</tr>
+												);
+											})}
+										</tbody>
+									</table>
+								</div>
+							)}
 							<Button
 								variant="secondary"
 								size="small"
@@ -1675,7 +1865,9 @@ export default function EventTickets({
 										...options,
 										{
 											name: '',
+											short_name: '',
 											price: 0,
+											collaborator_ids: [],
 											sort_order: options.length,
 										},
 									]);

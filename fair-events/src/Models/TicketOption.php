@@ -38,6 +38,13 @@ class TicketOption {
 	public $name;
 
 	/**
+	 * Short name
+	 *
+	 * @var string|null
+	 */
+	public $short_name;
+
+	/**
 	 * Price per option
 	 *
 	 * @var float
@@ -135,13 +142,14 @@ class TicketOption {
 	/**
 	 * Create a new ticket option
 	 *
-	 * @param int    $event_date_id Event date ID.
-	 * @param string $name          Option name.
-	 * @param float  $price         Option price.
-	 * @param int    $sort_order    Sort order.
+	 * @param int         $event_date_id Event date ID.
+	 * @param string      $name          Option name.
+	 * @param float       $price         Option price.
+	 * @param int         $sort_order    Sort order.
+	 * @param string|null $short_name    Optional short name.
 	 * @return int|false The option ID on success, false on failure.
 	 */
-	public static function create( $event_date_id, $name, $price, $sort_order ) {
+	public static function create( $event_date_id, $name, $price, $sort_order, $short_name = null ) {
 		global $wpdb;
 
 		$table_name = self::get_table_name();
@@ -151,10 +159,11 @@ class TicketOption {
 			array(
 				'event_date_id' => $event_date_id,
 				'name'          => $name,
+				'short_name'    => $short_name,
 				'price'         => (float) $price,
 				'sort_order'    => $sort_order,
 			),
-			array( '%d', '%s', '%f', '%d' )
+			array( '%d', '%s', '%s', '%f', '%d' )
 		);
 
 		if ( $result ) {
@@ -167,13 +176,14 @@ class TicketOption {
 	/**
 	 * Update an existing ticket option
 	 *
-	 * @param int    $id         Option ID.
-	 * @param string $name       Option name.
-	 * @param float  $price      Option price.
-	 * @param int    $sort_order Sort order.
+	 * @param int         $id         Option ID.
+	 * @param string      $name       Option name.
+	 * @param float       $price      Option price.
+	 * @param int         $sort_order Sort order.
+	 * @param string|null $short_name Optional short name.
 	 * @return bool True on success, false on failure.
 	 */
-	public static function update( $id, $name, $price, $sort_order ) {
+	public static function update( $id, $name, $price, $sort_order, $short_name = null ) {
 		global $wpdb;
 
 		$table_name = self::get_table_name();
@@ -182,11 +192,12 @@ class TicketOption {
 			$table_name,
 			array(
 				'name'       => $name,
+				'short_name' => $short_name,
 				'price'      => (float) $price,
 				'sort_order' => $sort_order,
 			),
 			array( 'id' => $id ),
-			array( '%s', '%f', '%d' ),
+			array( '%s', '%s', '%f', '%d' ),
 			array( '%d' )
 		);
 
@@ -224,6 +235,7 @@ class TicketOption {
 		$item->id            = (int) $row->id;
 		$item->event_date_id = (int) $row->event_date_id;
 		$item->name          = $row->name;
+		$item->short_name    = isset( $row->short_name ) ? $row->short_name : null;
 		$item->price         = (float) $row->price;
 		$item->sort_order    = (int) $row->sort_order;
 		$item->created_at    = $row->created_at;
@@ -242,6 +254,7 @@ class TicketOption {
 			'id'            => $this->id,
 			'event_date_id' => $this->event_date_id,
 			'name'          => $this->name,
+			'short_name'    => $this->short_name,
 			'price'         => $this->price,
 			'sort_order'    => $this->sort_order,
 			'created_at'    => $this->created_at,

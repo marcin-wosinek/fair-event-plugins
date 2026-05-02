@@ -74,6 +74,9 @@ class Installer {
 		$sql = Schema::get_invitation_tokens_table_sql();
 		dbDelta( $sql );
 
+		$sql = Schema::get_ticket_option_collaborators_table_sql();
+		dbDelta( $sql );
+
 		// Run migration if upgrading from pre-1.0.0
 		if ( version_compare( $current_version, '1.0.0', '<' ) ) {
 			self::migrate_to_1_0_0();
@@ -181,6 +184,12 @@ class Installer {
 
 		// Version 3.5.0 - Invitation tokens table (no data migration needed, table created by dbDelta).
 
+		// Run migration if upgrading from pre-3.6.0 (add short_name to ticket_options).
+		// Version 3.6.0 - Ticket option collaborators junction table (no data migration needed, table created by dbDelta).
+		if ( version_compare( $current_version, '3.6.0', '<' ) ) {
+			self::migrate_to_3_6_0();
+		}
+
 		// Update database version
 		Schema::update_db_version( Schema::DB_VERSION );
 	}
@@ -282,6 +291,12 @@ class Installer {
 			}
 
 			// Version 3.5.0 - Invitation tokens table (no data migration needed, table created by dbDelta).
+
+			if ( version_compare( $current_version, '3.6.0', '<' ) ) {
+				self::migrate_to_3_6_0();
+			}
+
+			// Version 3.6.0 - Ticket option collaborators junction table (no data migration needed, table created by dbDelta).
 
 			// Install/update tables
 			self::install();
@@ -1128,6 +1143,33 @@ class Installer {
 			$wpdb->query(
 				$wpdb->prepare(
 					'ALTER TABLE %i ADD COLUMN invitation_only TINYINT(1) NOT NULL DEFAULT 0 AFTER seats_per_ticket',
+					$table_name
+				)
+			);
+		}
+	}
+
+	/**
+	 * Migrate to version 3.6.0 - Add short_name column to ticket_options table.
+	 *
+	 * @return void
+	 */
+	private static function migrate_to_3_6_0() {
+		global $wpdb;
+
+		$table_name = $wpdb->prefix . 'fair_events_ticket_options';
+
+		$column_exists = $wpdb->get_results(
+			$wpdb->prepare(
+				"SHOW COLUMNS FROM %i LIKE 'short_name'",
+				$table_name
+			)
+		);
+
+		if ( empty( $column_exists ) ) {
+			$wpdb->query(
+				$wpdb->prepare(
+					'ALTER TABLE %i ADD COLUMN short_name VARCHAR(255) DEFAULT NULL AFTER name',
 					$table_name
 				)
 			);

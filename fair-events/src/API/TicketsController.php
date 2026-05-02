@@ -15,6 +15,7 @@ use FairEvents\Models\TicketType;
 use FairEvents\Models\TicketSalePeriod;
 use FairEvents\Models\TicketPrice;
 use FairEvents\Models\TicketOption;
+use FairEvents\Models\TicketOptionCollaborator;
 use FairEvents\Models\TicketTypeGroupRestriction;
 use WP_REST_Controller;
 use WP_REST_Server;
@@ -199,24 +200,34 @@ class TicketsController extends WP_REST_Controller {
 		$incoming_options = $body['options'] ?? array();
 		$kept_ids         = array();
 		foreach ( $incoming_options as $index => $option_data ) {
-			$name  = sanitize_text_field( $option_data['name'] ?? '' );
-			$price = isset( $option_data['price'] ) ? (float) $option_data['price'] : 0.0;
+			$name             = sanitize_text_field( $option_data['name'] ?? '' );
+			$short_name_raw   = $option_data['short_name'] ?? null;
+			$short_name       = ( null !== $short_name_raw && '' !== $short_name_raw )
+				? sanitize_text_field( $short_name_raw )
+				: null;
+			$price            = isset( $option_data['price'] ) ? (float) $option_data['price'] : 0.0;
+			$collaborator_ids = isset( $option_data['collaborator_ids'] ) && is_array( $option_data['collaborator_ids'] )
+				? array_values( array_unique( array_filter( array_map( 'absint', $option_data['collaborator_ids'] ) ) ) )
+				: array();
 			if ( '' === $name ) {
 				continue;
 			}
 			$option_id = isset( $option_data['id'] ) ? (int) $option_data['id'] : 0;
 			if ( $option_id && in_array( $option_id, $existing_ids, true ) ) {
-				TicketOption::update( $option_id, $name, $price, $index );
+				TicketOption::update( $option_id, $name, $price, $index, $short_name );
+				TicketOptionCollaborator::sync_for_option( $option_id, $collaborator_ids );
 				$kept_ids[] = $option_id;
 			} else {
-				$new_id = TicketOption::create( $event_date_id, $name, $price, $index );
+				$new_id = TicketOption::create( $event_date_id, $name, $price, $index, $short_name );
 				if ( $new_id ) {
+					TicketOptionCollaborator::sync_for_option( (int) $new_id, $collaborator_ids );
 					$kept_ids[] = $new_id;
 				}
 			}
 		}
 		$to_delete = array_diff( $existing_ids, $kept_ids );
 		foreach ( $to_delete as $del_id ) {
+			TicketOptionCollaborator::delete_by_option_id( (int) $del_id );
 			global $wpdb;
 			// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
 			$wpdb->delete(
@@ -372,15 +383,31 @@ class TicketsController extends WP_REST_Controller {
 		}
 
 		// 7. Import ticket options (delete all and re-insert).
+		$existing_options_for_clear = TicketOption::get_all_by_event_date_id( $event_date_id );
+		foreach ( $existing_options_for_clear as $existing_option ) {
+			TicketOptionCollaborator::delete_by_option_id( (int) $existing_option->id );
+		}
 		TicketOption::delete_by_event_date_id( $event_date_id );
 		$incoming_options = isset( $body['options'] ) && is_array( $body['options'] )
 			? $body['options']
 			: array();
 		foreach ( $incoming_options as $index => $option_data ) {
-			$name  = sanitize_text_field( $option_data['name'] ?? '' );
-			$price = isset( $option_data['price'] ) ? (float) $option_data['price'] : 0.0;
+			$name           = sanitize_text_field( $option_data['name'] ?? '' );
+			$short_name_raw = $option_data['short_name'] ?? null;
+			$short_name     = ( null !== $short_name_raw && '' !== $short_name_raw )
+				? sanitize_text_field( $short_name_raw )
+				: null;
+			$price          = isset( $option_data['price'] ) ? (float) $option_data['price'] : 0.0;
 			if ( '' !== $name ) {
-				TicketOption::create( $event_date_id, $name, $price, $index );
+				$new_id = TicketOption::create( $event_date_id, $name, $price, $index, $short_name );
+				if ( $new_id && isset( $option_data['collaborator_ids'] ) && is_array( $option_data['collaborator_ids'] ) ) {
+					$collaborator_ids = array_values(
+						array_unique( array_filter( array_map( 'absint', $option_data['collaborator_ids'] ) ) )
+					);
+					if ( ! empty( $collaborator_ids ) ) {
+						TicketOptionCollaborator::sync_for_option( (int) $new_id, $collaborator_ids );
+					}
+				}
 			}
 		}
 
@@ -514,12 +541,13 @@ class TicketsController extends WP_REST_Controller {
 	 * @return array Response data.
 	 */
 	private function build_response( $event_date_id, $event_date ) {
-		$ticket_types = TicketType::get_all_by_event_date_id( $event_date_id );
-		$sale_periods = TicketSalePeriod::get_all_by_event_date_id( $event_date_id );
-		$prices       = TicketPrice::get_all_by_event_date_id( $event_date_id );
-		$raw_settings = EventDateSetting::get_all_for_event_date( $event_date_id );
-		$options      = TicketOption::get_all_by_event_date_id( $event_date_id );
-		$restrictions = TicketTypeGroupRestriction::get_all_by_event_date_id( $event_date_id );
+		$ticket_types  = TicketType::get_all_by_event_date_id( $event_date_id );
+		$sale_periods  = TicketSalePeriod::get_all_by_event_date_id( $event_date_id );
+		$prices        = TicketPrice::get_all_by_event_date_id( $event_date_id );
+		$raw_settings  = EventDateSetting::get_all_for_event_date( $event_date_id );
+		$options       = TicketOption::get_all_by_event_date_id( $event_date_id );
+		$restrictions  = TicketTypeGroupRestriction::get_all_by_event_date_id( $event_date_id );
+		$collaborators = TicketOptionCollaborator::get_all_by_event_date_id( $event_date_id );
 
 		$settings = array();
 		foreach ( $raw_settings as $key => $value ) {
@@ -541,7 +569,14 @@ class TicketsController extends WP_REST_Controller {
 			'sale_periods' => array_map( fn( $p ) => $p->to_array(), $sale_periods ),
 			'prices'       => array_map( fn( $pr ) => $pr->to_array(), $prices ),
 			'settings'     => $settings,
-			'options'      => array_map( fn( $o ) => $o->to_array(), $options ),
+			'options'      => array_map(
+				function ( $o ) use ( $collaborators ) {
+					$data                     = $o->to_array();
+					$data['collaborator_ids'] = $collaborators[ $o->id ] ?? array();
+					return $data;
+				},
+				$options
+			),
 		);
 	}
 }
