@@ -493,7 +493,8 @@ export default function EventAudience({ eventId, eventDateId, audienceUrl }) {
 													{ticketOptions.map(
 														(opt) => (
 															<th key={opt.id}>
-																{opt.name}
+																{opt.short_name ||
+																	opt.name}
 															</th>
 														)
 													)}
