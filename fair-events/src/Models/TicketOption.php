@@ -52,6 +52,13 @@ class TicketOption {
 	public $price;
 
 	/**
+	 * Discounted price (e.g. for collaborator-invited participants).
+	 *
+	 * @var float|null
+	 */
+	public $discounted_price;
+
+	/**
 	 * Sort order
 	 *
 	 * @var int
@@ -142,14 +149,15 @@ class TicketOption {
 	/**
 	 * Create a new ticket option
 	 *
-	 * @param int         $event_date_id Event date ID.
-	 * @param string      $name          Option name.
-	 * @param float       $price         Option price.
-	 * @param int         $sort_order    Sort order.
-	 * @param string|null $short_name    Optional short name.
+	 * @param int         $event_date_id    Event date ID.
+	 * @param string      $name             Option name.
+	 * @param float       $price            Option price.
+	 * @param int         $sort_order       Sort order.
+	 * @param string|null $short_name       Optional short name.
+	 * @param float|null  $discounted_price Optional discounted price.
 	 * @return int|false The option ID on success, false on failure.
 	 */
-	public static function create( $event_date_id, $name, $price, $sort_order, $short_name = null ) {
+	public static function create( $event_date_id, $name, $price, $sort_order, $short_name = null, $discounted_price = null ) {
 		global $wpdb;
 
 		$table_name = self::get_table_name();
@@ -157,13 +165,14 @@ class TicketOption {
 		$result = $wpdb->insert(
 			$table_name,
 			array(
-				'event_date_id' => $event_date_id,
-				'name'          => $name,
-				'short_name'    => $short_name,
-				'price'         => (float) $price,
-				'sort_order'    => $sort_order,
+				'event_date_id'    => $event_date_id,
+				'name'             => $name,
+				'short_name'       => $short_name,
+				'price'            => (float) $price,
+				'discounted_price' => null !== $discounted_price ? (float) $discounted_price : null,
+				'sort_order'       => $sort_order,
 			),
-			array( '%d', '%s', '%s', '%f', '%d' )
+			array( '%d', '%s', '%s', '%f', '%f', '%d' )
 		);
 
 		if ( $result ) {
@@ -176,14 +185,15 @@ class TicketOption {
 	/**
 	 * Update an existing ticket option
 	 *
-	 * @param int         $id         Option ID.
-	 * @param string      $name       Option name.
-	 * @param float       $price      Option price.
-	 * @param int         $sort_order Sort order.
-	 * @param string|null $short_name Optional short name.
+	 * @param int         $id               Option ID.
+	 * @param string      $name             Option name.
+	 * @param float       $price            Option price.
+	 * @param int         $sort_order       Sort order.
+	 * @param string|null $short_name       Optional short name.
+	 * @param float|null  $discounted_price Optional discounted price.
 	 * @return bool True on success, false on failure.
 	 */
-	public static function update( $id, $name, $price, $sort_order, $short_name = null ) {
+	public static function update( $id, $name, $price, $sort_order, $short_name = null, $discounted_price = null ) {
 		global $wpdb;
 
 		$table_name = self::get_table_name();
@@ -191,13 +201,14 @@ class TicketOption {
 		$result = $wpdb->update(
 			$table_name,
 			array(
-				'name'       => $name,
-				'short_name' => $short_name,
-				'price'      => (float) $price,
-				'sort_order' => $sort_order,
+				'name'             => $name,
+				'short_name'       => $short_name,
+				'price'            => (float) $price,
+				'discounted_price' => null !== $discounted_price ? (float) $discounted_price : null,
+				'sort_order'       => $sort_order,
 			),
 			array( 'id' => $id ),
-			array( '%s', '%s', '%f', '%d' ),
+			array( '%s', '%s', '%f', '%f', '%d' ),
 			array( '%d' )
 		);
 
@@ -231,15 +242,18 @@ class TicketOption {
 	 * @return TicketOption Ticket option object.
 	 */
 	private static function hydrate( $row ) {
-		$item                = new self();
-		$item->id            = (int) $row->id;
-		$item->event_date_id = (int) $row->event_date_id;
-		$item->name          = $row->name;
-		$item->short_name    = isset( $row->short_name ) ? $row->short_name : null;
-		$item->price         = (float) $row->price;
-		$item->sort_order    = (int) $row->sort_order;
-		$item->created_at    = $row->created_at;
-		$item->updated_at    = $row->updated_at;
+		$item                   = new self();
+		$item->id               = (int) $row->id;
+		$item->event_date_id    = (int) $row->event_date_id;
+		$item->name             = $row->name;
+		$item->short_name       = isset( $row->short_name ) ? $row->short_name : null;
+		$item->price            = (float) $row->price;
+		$item->discounted_price = isset( $row->discounted_price ) && null !== $row->discounted_price
+			? (float) $row->discounted_price
+			: null;
+		$item->sort_order       = (int) $row->sort_order;
+		$item->created_at       = $row->created_at;
+		$item->updated_at       = $row->updated_at;
 
 		return $item;
 	}
@@ -251,14 +265,15 @@ class TicketOption {
 	 */
 	public function to_array() {
 		return array(
-			'id'            => $this->id,
-			'event_date_id' => $this->event_date_id,
-			'name'          => $this->name,
-			'short_name'    => $this->short_name,
-			'price'         => $this->price,
-			'sort_order'    => $this->sort_order,
-			'created_at'    => $this->created_at,
-			'updated_at'    => $this->updated_at,
+			'id'               => $this->id,
+			'event_date_id'    => $this->event_date_id,
+			'name'             => $this->name,
+			'short_name'       => $this->short_name,
+			'price'            => $this->price,
+			'discounted_price' => $this->discounted_price,
+			'sort_order'       => $this->sort_order,
+			'created_at'       => $this->created_at,
+			'updated_at'       => $this->updated_at,
 		);
 	}
 }

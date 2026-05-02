@@ -71,6 +71,7 @@ class EventDateSetting {
 		'show_ticket_type_capacity'         => '0',
 		'multiple_pricing_periods'          => '0',
 		'show_seats_per_ticket'             => '0',
+		'activity_collaborator_discount'    => '0',
 	);
 
 	/**

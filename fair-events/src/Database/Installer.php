@@ -190,6 +190,11 @@ class Installer {
 			self::migrate_to_3_6_0();
 		}
 
+		// Run migration if upgrading from pre-3.7.0 (add discounted_price to ticket_options).
+		if ( version_compare( $current_version, '3.7.0', '<' ) ) {
+			self::migrate_to_3_7_0();
+		}
+
 		// Update database version
 		Schema::update_db_version( Schema::DB_VERSION );
 	}
@@ -297,6 +302,10 @@ class Installer {
 			}
 
 			// Version 3.6.0 - Ticket option collaborators junction table (no data migration needed, table created by dbDelta).
+
+			if ( version_compare( $current_version, '3.7.0', '<' ) ) {
+				self::migrate_to_3_7_0();
+			}
 
 			// Install/update tables
 			self::install();
@@ -1170,6 +1179,33 @@ class Installer {
 			$wpdb->query(
 				$wpdb->prepare(
 					'ALTER TABLE %i ADD COLUMN short_name VARCHAR(255) DEFAULT NULL AFTER name',
+					$table_name
+				)
+			);
+		}
+	}
+
+	/**
+	 * Migrate to version 3.7.0 - Add discounted_price column to ticket_options table.
+	 *
+	 * @return void
+	 */
+	private static function migrate_to_3_7_0() {
+		global $wpdb;
+
+		$table_name = $wpdb->prefix . 'fair_events_ticket_options';
+
+		$column_exists = $wpdb->get_results(
+			$wpdb->prepare(
+				"SHOW COLUMNS FROM %i LIKE 'discounted_price'",
+				$table_name
+			)
+		);
+
+		if ( empty( $column_exists ) ) {
+			$wpdb->query(
+				$wpdb->prepare(
+					'ALTER TABLE %i ADD COLUMN discounted_price DECIMAL(10,2) DEFAULT NULL AFTER price',
 					$table_name
 				)
 			);
