@@ -238,10 +238,17 @@ class PaymentHooks {
 
 		$event = get_post( $event_participant->event_id );
 
+		// Prefer the current option name (joined by ticket_option_id) so renames are reflected;
+		// fall back to the snapshotted name when the option was deleted.
 		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
 		$option_names = $wpdb->get_col(
 			$wpdb->prepare(
-				"SELECT ticket_option_name FROM {$wpdb->prefix}fair_audience_event_participant_options WHERE event_participant_id = %d AND ticket_option_name != ''",
+				"SELECT COALESCE(NULLIF(topt.name, ''), epo.ticket_option_name)
+				FROM {$wpdb->prefix}fair_audience_event_participant_options epo
+				LEFT JOIN {$wpdb->prefix}fair_events_ticket_options topt
+					ON topt.id = epo.ticket_option_id
+				WHERE epo.event_participant_id = %d
+					AND ( ( topt.name IS NOT NULL AND topt.name != '' ) OR epo.ticket_option_name != '' )",
 				(int) $event_participant->id
 			)
 		);

@@ -137,6 +137,13 @@ class EventParticipantsController extends WP_REST_Controller {
 								'type' => 'string',
 							),
 						),
+						'ticket_option_ids'   => array(
+							'type'     => 'array',
+							'required' => false,
+							'items'    => array(
+								'type' => 'integer',
+							),
+						),
 					),
 				),
 				array(
@@ -321,18 +328,18 @@ class EventParticipantsController extends WP_REST_Controller {
 			}
 		}
 
-		// Build participant → ticket option names lookup from junction table.
+		// Build participant → ticket option names + IDs lookup from junction table.
 		$participant_option_names = array();
+		$participant_option_ids   = array();
 		$ep_ids                   = array_map( fn( $ep ) => $ep->id, $event_participants );
 		if ( ! empty( $ep_ids ) ) {
 			$placeholders = implode( ',', array_fill( 0, count( $ep_ids ), '%d' ) );
 			// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.PreparedSQLPlaceholders.UnfinishedPrepare
 			$option_rows = $wpdb->get_results(
 				$wpdb->prepare(
-					"SELECT event_participant_id, ticket_option_name
+					"SELECT event_participant_id, ticket_option_id, ticket_option_name
 					FROM {$wpdb->prefix}fair_audience_event_participant_options
-					WHERE event_participant_id IN ($placeholders)
-					AND ticket_option_name != ''",
+					WHERE event_participant_id IN ($placeholders)",
 					...$ep_ids
 				)
 			);
@@ -340,8 +347,14 @@ class EventParticipantsController extends WP_REST_Controller {
 				$ep_id = (int) $row->event_participant_id;
 				if ( ! isset( $participant_option_names[ $ep_id ] ) ) {
 					$participant_option_names[ $ep_id ] = array();
+					$participant_option_ids[ $ep_id ]   = array();
 				}
-				$participant_option_names[ $ep_id ][] = $row->ticket_option_name;
+				if ( '' !== (string) $row->ticket_option_name ) {
+					$participant_option_names[ $ep_id ][] = $row->ticket_option_name;
+				}
+				if ( $row->ticket_option_id ) {
+					$participant_option_ids[ $ep_id ][] = (int) $row->ticket_option_id;
+				}
 			}
 		}
 
@@ -384,6 +397,7 @@ class EventParticipantsController extends WP_REST_Controller {
 						? (int) $likes_data[ $ep->participant_id ]->likes_count
 						: 0,
 					'ticket_option_names'  => $participant_option_names[ $ep->id ] ?? array(),
+					'ticket_option_ids'    => $participant_option_ids[ $ep->id ] ?? array(),
 				);
 			},
 			$event_participants
@@ -466,11 +480,13 @@ class EventParticipantsController extends WP_REST_Controller {
 		$label               = $request->get_param( 'label' );
 		$attended            = $request->get_param( 'attended' );
 		$ticket_option_names = $request->get_param( 'ticket_option_names' );
+		$ticket_option_ids   = $request->get_param( 'ticket_option_ids' );
+		$has_options_payload = null !== $ticket_option_names || null !== $ticket_option_ids;
 
-		if ( null === $label && null === $attended && null === $ticket_option_names ) {
+		if ( null === $label && null === $attended && ! $has_options_payload ) {
 			return new WP_Error(
 				'missing_fields',
-				__( 'Provide at least one of: label, attended, ticket_option_names.', 'fair-audience' ),
+				__( 'Provide at least one of: label, attended, ticket_option_ids.', 'fair-audience' ),
 				array( 'status' => 400 )
 			);
 		}
@@ -497,7 +513,9 @@ class EventParticipantsController extends WP_REST_Controller {
 			}
 		}
 
-		if ( null !== $ticket_option_names ) {
+		$saved_option_ids   = array();
+		$saved_option_names = array();
+		if ( $has_options_payload ) {
 			$updated_ep = $this->event_participant_repo->get_by_event_date_and_participant( $event_date_id, $participant_id );
 			if ( $updated_ep ) {
 				$ep_id      = (int) $updated_ep->id;
@@ -514,27 +532,48 @@ class EventParticipantsController extends WP_REST_Controller {
 					}
 				}
 
-				if ( ! empty( $ticket_option_names ) && class_exists( \FairEvents\Models\TicketOption::class ) ) {
+				$by_id   = array();
+				$by_name = array();
+				if ( class_exists( \FairEvents\Models\TicketOption::class ) ) {
 					$all_options = \FairEvents\Models\TicketOption::get_all_by_event_date_id( $lookup_event_date_id );
-					$by_name     = array();
 					foreach ( $all_options as $opt ) {
-						$by_name[ $opt->name ] = $opt;
+						$by_id[ (int) $opt->id ] = $opt;
+						$by_name[ $opt->name ]   = $opt;
 					}
-					foreach ( $ticket_option_names as $name ) {
-						$name = sanitize_text_field( $name );
-						if ( isset( $by_name[ $name ] ) ) {
-							// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery
-							$wpdb->replace(
-								$table_name,
-								array(
-									'event_participant_id' => $ep_id,
-									'ticket_option_id'     => $by_name[ $name ]->id,
-									'ticket_option_name'   => $name,
-								),
-								array( '%d', '%d', '%s' )
-							);
+				}
+
+				$resolved_ids = array();
+				if ( null !== $ticket_option_ids ) {
+					foreach ( (array) $ticket_option_ids as $oid ) {
+						$oid = (int) $oid;
+						if ( $oid && isset( $by_id[ $oid ] ) ) {
+							$resolved_ids[ $oid ] = true;
 						}
 					}
+				} elseif ( null !== $ticket_option_names ) {
+					// Backward-compat: resolve names to IDs.
+					foreach ( (array) $ticket_option_names as $name ) {
+						$name = sanitize_text_field( $name );
+						if ( isset( $by_name[ $name ] ) ) {
+							$resolved_ids[ (int) $by_name[ $name ]->id ] = true;
+						}
+					}
+				}
+
+				foreach ( array_keys( $resolved_ids ) as $oid ) {
+					$opt = $by_id[ $oid ];
+					// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery
+					$wpdb->replace(
+						$table_name,
+						array(
+							'event_participant_id' => $ep_id,
+							'ticket_option_id'     => (int) $opt->id,
+							'ticket_option_name'   => $opt->name,
+						),
+						array( '%d', '%d', '%s' )
+					);
+					$saved_option_ids[]   = (int) $opt->id;
+					$saved_option_names[] = $opt->name;
 				}
 			}
 		}
@@ -546,7 +585,8 @@ class EventParticipantsController extends WP_REST_Controller {
 				'message'             => __( 'Participant updated successfully.', 'fair-audience' ),
 				'label'               => $updated ? $updated->label : null,
 				'attended_at'         => $updated ? $updated->attended_at : null,
-				'ticket_option_names' => $ticket_option_names ?? array(),
+				'ticket_option_ids'   => $has_options_payload ? $saved_option_ids : null,
+				'ticket_option_names' => $has_options_payload ? $saved_option_names : null,
 			)
 		);
 	}

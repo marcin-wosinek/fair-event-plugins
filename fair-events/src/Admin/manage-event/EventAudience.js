@@ -49,7 +49,7 @@ export default function EventAudience({ eventId, eventDateId, audienceUrl }) {
 
 	// Edit options modal state
 	const [editingParticipant, setEditingParticipant] = useState(null);
-	const [editOptionNames, setEditOptionNames] = useState([]);
+	const [editOptionIds, setEditOptionIds] = useState([]);
 	const [isSavingOptions, setIsSavingOptions] = useState(false);
 
 	useEffect(() => {
@@ -327,14 +327,25 @@ export default function EventAudience({ eventId, eventDateId, audienceUrl }) {
 
 	const handleOpenEditOptions = (participant) => {
 		setEditingParticipant(participant);
-		setEditOptionNames([...(participant.ticket_option_names || [])]);
+		const initialIds = Array.isArray(participant.ticket_option_ids)
+			? participant.ticket_option_ids
+			: [];
+		// Backfill from names for any rows missing an id link.
+		const names = participant.ticket_option_names || [];
+		const namesAsIds = names
+			.map((name) => {
+				const match = ticketOptions.find((o) => o.name === name);
+				return match ? match.id : null;
+			})
+			.filter((id) => id !== null);
+		setEditOptionIds([...new Set([...initialIds, ...namesAsIds])]);
 	};
 
-	const handleToggleOptionName = (name) => {
-		setEditOptionNames((current) =>
-			current.includes(name)
-				? current.filter((n) => n !== name)
-				: [...current, name]
+	const handleToggleOptionId = (id) => {
+		setEditOptionIds((current) =>
+			current.includes(id)
+				? current.filter((n) => n !== id)
+				: [...current, id]
 		);
 	};
 
@@ -345,15 +356,18 @@ export default function EventAudience({ eventId, eventDateId, audienceUrl }) {
 			const response = await apiFetch({
 				path: `/fair-audience/v1/event-dates/${eventDateId}/participants/${editingParticipant.participant_id}`,
 				method: 'PUT',
-				data: { ticket_option_names: editOptionNames },
+				data: { ticket_option_ids: editOptionIds },
 			});
 			setParticipants((current) =>
 				current.map((p) =>
 					p.id === editingParticipant.id
 						? {
 								...p,
+								ticket_option_ids:
+									response.ticket_option_ids ?? editOptionIds,
 								ticket_option_names:
-									response.ticket_option_names,
+									response.ticket_option_names ??
+									p.ticket_option_names,
 						  }
 						: p
 				)
@@ -542,26 +556,36 @@ export default function EventAudience({ eventId, eventDateId, audienceUrl }) {
 																	'—'}
 															</td>
 															{ticketOptions.map(
-																(opt) => (
-																	<td
-																		key={
+																(opt) => {
+																	const ids =
+																		p.ticket_option_ids ||
+																		[];
+																	const names =
+																		p.ticket_option_names ||
+																		[];
+																	const hasOption =
+																		ids.includes(
 																			opt.id
-																		}
-																		style={{
-																			textAlign:
-																				'center',
-																		}}
-																	>
-																		{(
-																			p.ticket_option_names ||
-																			[]
-																		).includes(
+																		) ||
+																		names.includes(
 																			opt.name
-																		)
-																			? '✓'
-																			: ''}
-																	</td>
-																)
+																		);
+																	return (
+																		<td
+																			key={
+																				opt.id
+																			}
+																			style={{
+																				textAlign:
+																					'center',
+																			}}
+																		>
+																			{hasOption
+																				? '✓'
+																				: ''}
+																		</td>
+																	);
+																}
 															)}
 															<td>
 																<input
@@ -966,10 +990,8 @@ export default function EventAudience({ eventId, eventDateId, audienceUrl }) {
 							<CheckboxControl
 								key={opt.id}
 								label={opt.name}
-								checked={editOptionNames.includes(opt.name)}
-								onChange={() =>
-									handleToggleOptionName(opt.name)
-								}
+								checked={editOptionIds.includes(opt.id)}
+								onChange={() => handleToggleOptionId(opt.id)}
 								__nextHasNoMarginBottom
 							/>
 						))}
