@@ -376,7 +376,7 @@ class EventParticipantsController extends WP_REST_Controller {
 		);
 
 		$items = array_map(
-			function ( $ep ) use ( $likes_data, $ticket_type_names ) {
+			function ( $ep ) use ( $likes_data, $ticket_type_names, $participant_option_names, $participant_option_ids ) {
 				$participant = $this->participant_repo->get_by_id( $ep->participant_id );
 				return array(
 					'id'                   => $ep->id,
