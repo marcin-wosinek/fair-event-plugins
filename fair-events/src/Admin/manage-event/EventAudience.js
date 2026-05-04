@@ -27,6 +27,7 @@ export default function EventAudience({ eventId, eventDateId, audienceUrl }) {
 	const [participants, setParticipants] = useState([]);
 	const [loadingParticipants, setLoadingParticipants] = useState(true);
 	const [ticketOptions, setTicketOptions] = useState([]);
+	const [ticketTypes, setTicketTypes] = useState([]);
 	const [questionnaireSummary, setQuestionnaireSummary] = useState(null);
 	const [loadingQuestionnaire, setLoadingQuestionnaire] = useState(true);
 	const [formsSummary, setFormsSummary] = useState([]);
@@ -50,6 +51,7 @@ export default function EventAudience({ eventId, eventDateId, audienceUrl }) {
 	// Edit options modal state
 	const [editingParticipant, setEditingParticipant] = useState(null);
 	const [editOptionIds, setEditOptionIds] = useState([]);
+	const [editTicketTypeId, setEditTicketTypeId] = useState(null);
 	const [isSavingOptions, setIsSavingOptions] = useState(false);
 
 	useEffect(() => {
@@ -78,9 +80,13 @@ export default function EventAudience({ eventId, eventDateId, audienceUrl }) {
 				setTicketOptions(
 					Array.isArray(data?.options) ? data.options : []
 				);
+				setTicketTypes(
+					Array.isArray(data?.ticket_types) ? data.ticket_types : []
+				);
 			})
 			.catch(() => {
 				setTicketOptions([]);
+				setTicketTypes([]);
 			});
 	}, [eventDateId]);
 
@@ -339,6 +345,11 @@ export default function EventAudience({ eventId, eventDateId, audienceUrl }) {
 			})
 			.filter((id) => id !== null);
 		setEditOptionIds([...new Set([...initialIds, ...namesAsIds])]);
+		setEditTicketTypeId(
+			participant.ticket_type_id
+				? Number(participant.ticket_type_id)
+				: null
+		);
 	};
 
 	const handleToggleOptionId = (id) => {
@@ -356,7 +367,10 @@ export default function EventAudience({ eventId, eventDateId, audienceUrl }) {
 			const response = await apiFetch({
 				path: `/fair-audience/v1/event-dates/${eventDateId}/participants/${editingParticipant.participant_id}`,
 				method: 'PUT',
-				data: { ticket_option_ids: editOptionIds },
+				data: {
+					ticket_option_ids: editOptionIds,
+					ticket_type_id: editTicketTypeId,
+				},
 			});
 			setParticipants((current) =>
 				current.map((p) =>
@@ -368,6 +382,11 @@ export default function EventAudience({ eventId, eventDateId, audienceUrl }) {
 								ticket_option_names:
 									response.ticket_option_names ??
 									p.ticket_option_names,
+								ticket_type_id:
+									response.ticket_type_id ?? editTicketTypeId,
+								ticket_type_name:
+									response.ticket_type_name ??
+									p.ticket_type_name,
 						  }
 						: p
 				)
@@ -986,6 +1005,32 @@ export default function EventAudience({ eventId, eventDateId, audienceUrl }) {
 					style={{ maxWidth: '480px', width: '100%' }}
 				>
 					<VStack spacing={3}>
+						{ticketTypes.length > 0 && (
+							<SelectControl
+								label={__('Ticket type', 'fair-events')}
+								value={
+									editTicketTypeId === null
+										? ''
+										: String(editTicketTypeId)
+								}
+								options={[
+									{
+										label: __('— None —', 'fair-events'),
+										value: '',
+									},
+									...ticketTypes.map((tt) => ({
+										label: tt.name || `#${tt.id}`,
+										value: String(tt.id),
+									})),
+								]}
+								onChange={(value) =>
+									setEditTicketTypeId(
+										value === '' ? null : Number(value)
+									)
+								}
+								__nextHasNoMarginBottom
+							/>
+						)}
 						{ticketOptions.map((opt) => (
 							<CheckboxControl
 								key={opt.id}

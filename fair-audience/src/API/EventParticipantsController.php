@@ -144,6 +144,10 @@ class EventParticipantsController extends WP_REST_Controller {
 								'type' => 'integer',
 							),
 						),
+						'ticket_type_id'      => array(
+							'type'     => array( 'integer', 'null' ),
+							'required' => false,
+						),
 					),
 				),
 				array(
@@ -388,6 +392,7 @@ class EventParticipantsController extends WP_REST_Controller {
 					'participant_email'    => $participant ? $participant->email : '',
 					'instagram'            => $participant ? $participant->instagram : '',
 					'label'                => $ep->label,
+					'ticket_type_id'       => $ep->ticket_type_id ? (int) $ep->ticket_type_id : null,
 					'ticket_type_name'     => $ep->ticket_type_id && isset( $ticket_type_names[ $ep->ticket_type_id ] )
 						? $ticket_type_names[ $ep->ticket_type_id ]
 						: null,
@@ -481,12 +486,14 @@ class EventParticipantsController extends WP_REST_Controller {
 		$attended            = $request->get_param( 'attended' );
 		$ticket_option_names = $request->get_param( 'ticket_option_names' );
 		$ticket_option_ids   = $request->get_param( 'ticket_option_ids' );
+		$has_ticket_type_id  = $request->has_param( 'ticket_type_id' );
+		$ticket_type_id      = $request->get_param( 'ticket_type_id' );
 		$has_options_payload = null !== $ticket_option_names || null !== $ticket_option_ids;
 
-		if ( null === $label && null === $attended && ! $has_options_payload ) {
+		if ( null === $label && null === $attended && ! $has_options_payload && ! $has_ticket_type_id ) {
 			return new WP_Error(
 				'missing_fields',
-				__( 'Provide at least one of: label, attended, ticket_option_ids.', 'fair-audience' ),
+				__( 'Provide at least one of: label, attended, ticket_type_id, ticket_option_ids.', 'fair-audience' ),
 				array( 'status' => 400 )
 			);
 		}
@@ -511,6 +518,46 @@ class EventParticipantsController extends WP_REST_Controller {
 					array( 'status' => 400 )
 				);
 			}
+		}
+
+		if ( $has_ticket_type_id ) {
+			$ep_row = $this->event_participant_repo->get_by_event_date_and_participant( $event_date_id, $participant_id );
+			if ( ! $ep_row ) {
+				return new WP_Error(
+					'update_failed',
+					__( 'Participant row not found for this event date.', 'fair-audience' ),
+					array( 'status' => 404 )
+				);
+			}
+
+			$new_ticket_type_id = ( null === $ticket_type_id || '' === $ticket_type_id )
+				? null
+				: (int) $ticket_type_id;
+			$seats_per_ticket   = max( 1, (int) $ep_row->seats );
+
+			if ( $new_ticket_type_id && class_exists( \FairEvents\Models\TicketType::class ) ) {
+				$ticket_type = \FairEvents\Models\TicketType::get_by_id( $new_ticket_type_id );
+				if ( ! $ticket_type ) {
+					return new WP_Error(
+						'invalid_ticket_type',
+						__( 'Selected ticket type was not found.', 'fair-audience' ),
+						array( 'status' => 400 )
+					);
+				}
+				$seats_per_ticket = max( 1, (int) $ticket_type->seats_per_ticket );
+			}
+
+			// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+			$wpdb->update(
+				$wpdb->prefix . 'fair_audience_event_participants',
+				array(
+					'ticket_type_id' => $new_ticket_type_id,
+					'seats'          => $seats_per_ticket,
+				),
+				array( 'id' => (int) $ep_row->id ),
+				array( '%d', '%d' ),
+				array( '%d' )
+			);
 		}
 
 		$saved_option_ids   = array();
@@ -580,11 +627,21 @@ class EventParticipantsController extends WP_REST_Controller {
 
 		$updated = $this->event_participant_repo->get_by_event_date_and_participant( $event_date_id, $participant_id );
 
+		$updated_ticket_type_name = null;
+		if ( $updated && $updated->ticket_type_id && class_exists( \FairEvents\Models\TicketType::class ) ) {
+			$tt = \FairEvents\Models\TicketType::get_by_id( (int) $updated->ticket_type_id );
+			if ( $tt ) {
+				$updated_ticket_type_name = $tt->name;
+			}
+		}
+
 		return rest_ensure_response(
 			array(
 				'message'             => __( 'Participant updated successfully.', 'fair-audience' ),
 				'label'               => $updated ? $updated->label : null,
 				'attended_at'         => $updated ? $updated->attended_at : null,
+				'ticket_type_id'      => $updated && $updated->ticket_type_id ? (int) $updated->ticket_type_id : null,
+				'ticket_type_name'    => $updated_ticket_type_name,
 				'ticket_option_ids'   => $has_options_payload ? $saved_option_ids : null,
 				'ticket_option_names' => $has_options_payload ? $saved_option_names : null,
 			)
