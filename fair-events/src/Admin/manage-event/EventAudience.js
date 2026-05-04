@@ -169,6 +169,21 @@ export default function EventAudience({ eventId, eventDateId, audienceUrl }) {
 						b.participant_name || ''
 					);
 				}
+			} else if (sortBy === 'ticket_type') {
+				const ttA = a.ticket_type_name || '';
+				const ttB = b.ticket_type_name || '';
+				if (ttA === '' && ttB !== '') {
+					cmp = 1; // empty values sort to the end
+				} else if (ttA !== '' && ttB === '') {
+					cmp = -1;
+				} else {
+					cmp = ttA.localeCompare(ttB);
+				}
+				if (cmp === 0) {
+					cmp = (a.participant_name || '').localeCompare(
+						b.participant_name || ''
+					);
+				}
 			} else {
 				cmp = (a.participant_name || '').localeCompare(
 					b.participant_name || ''
@@ -329,6 +344,35 @@ export default function EventAudience({ eventId, eventDateId, audienceUrl }) {
 					)
 				);
 			});
+	};
+
+	const handleDeleteParticipant = (participant) => {
+		const confirmMessage = sprintf(
+			/* translators: %s: participant name */
+			__(
+				'Delete %s’s registration for this event date? This cannot be undone.',
+				'fair-events'
+			),
+			participant.participant_name ||
+				__('this participant', 'fair-events')
+		);
+		if (!window.confirm(confirmMessage)) {
+			return;
+		}
+
+		const previous = participants;
+		setParticipants((list) => list.filter((p) => p.id !== participant.id));
+
+		apiFetch({
+			path: `/fair-audience/v1/event-dates/${eventDateId}/participants/${participant.participant_id}`,
+			method: 'DELETE',
+		}).catch((err) => {
+			setParticipants(previous);
+			alert(
+				__('Error deleting registration: ', 'fair-events') +
+					(err.message || '')
+			);
+		});
 	};
 
 	const handleOpenEditOptions = (participant) => {
@@ -517,10 +561,22 @@ export default function EventAudience({ eventId, eventDateId, audienceUrl }) {
 														)}
 														{sortIndicator('role')}
 													</th>
-													<th>
+													<th
+														style={{
+															cursor: 'pointer',
+														}}
+														onClick={() =>
+															handleSort(
+																'ticket_type'
+															)
+														}
+													>
 														{__(
 															'Ticket type',
 															'fair-events'
+														)}
+														{sortIndicator(
+															'ticket_type'
 														)}
 													</th>
 													{ticketOptions.map(
@@ -537,15 +593,12 @@ export default function EventAudience({ eventId, eventDateId, audienceUrl }) {
 															'fair-events'
 														)}
 													</th>
-													{ticketOptions.length >
-														0 && (
-														<th>
-															{__(
-																'Actions',
-																'fair-events'
-															)}
-														</th>
-													)}
+													<th>
+														{__(
+															'Actions',
+															'fair-events'
+														)}
+													</th>
 												</tr>
 											</thead>
 											<tbody>
@@ -628,24 +681,43 @@ export default function EventAudience({ eventId, eventDateId, audienceUrl }) {
 																	}
 																/>
 															</td>
-															{ticketOptions.length >
-																0 && (
-																<td>
+															<td>
+																<HStack
+																	spacing={2}
+																	justify="flex-start"
+																>
+																	{ticketOptions.length >
+																		0 && (
+																		<Button
+																			variant="link"
+																			onClick={() =>
+																				handleOpenEditOptions(
+																					p
+																				)
+																			}
+																		>
+																			{__(
+																				'Edit',
+																				'fair-events'
+																			)}
+																		</Button>
+																	)}
 																	<Button
 																		variant="link"
+																		isDestructive
 																		onClick={() =>
-																			handleOpenEditOptions(
+																			handleDeleteParticipant(
 																				p
 																			)
 																		}
 																	>
 																		{__(
-																			'Edit',
+																			'Delete',
 																			'fair-events'
 																		)}
 																	</Button>
-																</td>
-															)}
+																</HStack>
+															</td>
 														</tr>
 													)
 												)}
