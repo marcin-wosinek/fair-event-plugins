@@ -44,5 +44,8 @@ class RestHooks {
 
 		$transactions_controller = new \FairPayment\API\TransactionsController();
 		$transactions_controller->register_routes();
+
+		$payment_log_controller = new \FairPayment\API\PaymentLogController();
+		$payment_log_controller->register_routes();
 	}
 }

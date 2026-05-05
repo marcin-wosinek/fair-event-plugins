@@ -9,6 +9,7 @@ namespace FairPayment\Payment;
 
 use Mollie\Api\MollieApiClient;
 use Mollie\Api\Exceptions\ApiException;
+use FairPayment\Database\PaymentLogRepository;
 
 defined( 'WPINC' ) || die;
 
@@ -226,6 +227,11 @@ class MolliePaymentHandler {
 
 		$args = wp_parse_args( $args, $defaults );
 
+		$logger         = new PaymentLogRepository();
+		$transaction_id = isset( $args['metadata']['transaction_id'] )
+			? (int) $args['metadata']['transaction_id']
+			: null;
+
 		try {
 			$payment_data = array(
 				'amount'      => array(
@@ -259,7 +265,40 @@ class MolliePaymentHandler {
 			$mode                     = get_option( 'fair_payment_mode', 'test' );
 			$payment_data['testmode'] = ( 'live' === $mode ) ? false : true;
 
+			$logger->log(
+				'mollie_call_started',
+				array(
+					'level'          => 'info',
+					'transaction_id' => $transaction_id,
+					'message'        => sprintf(
+						'Calling Mollie API to create payment (%s %s, testmode=%s)',
+						number_format( (float) $args['amount'], 2 ),
+						$args['currency'],
+						$payment_data['testmode'] ? 'true' : 'false'
+					),
+					'context'        => array(
+						'amount'      => $payment_data['amount'],
+						'description' => $args['description'],
+						'testmode'    => $payment_data['testmode'],
+						'has_profile' => (bool) $profile_id,
+					),
+				)
+			);
+
 			$payment = $this->mollie->payments->create( $payment_data );
+
+			$logger->log(
+				'mollie_call_succeeded',
+				array(
+					'level'          => 'info',
+					'transaction_id' => $transaction_id,
+					'message'        => sprintf( 'Mollie returned payment %s (status %s)', $payment->id, $payment->status ),
+					'context'        => array(
+						'mollie_payment_id' => $payment->id,
+						'status'            => $payment->status,
+					),
+				)
+			);
 
 			return array(
 				'mollie_payment_id' => $payment->id,
@@ -267,6 +306,24 @@ class MolliePaymentHandler {
 				'status'            => $payment->status,
 			);
 		} catch ( ApiException $e ) {
+			// At this point Mollie may or may not have created the payment — we never
+			// got a confirmed response. Log the request payload so an admin can search
+			// the Mollie dashboard for an orphan payment.
+			$logger->log(
+				'mollie_call_failed',
+				array(
+					'level'          => 'error',
+					'transaction_id' => $transaction_id,
+					'message'        => sprintf( 'Mollie API call failed: %s', $e->getMessage() ),
+					'context'        => array(
+						'exception_class'   => get_class( $e ),
+						'exception_message' => $e->getMessage(),
+						'amount'            => $args['amount'],
+						'currency'          => $args['currency'],
+						'description'       => $args['description'],
+					),
+				)
+			);
 			throw new \Exception(
 				sprintf(
 					/* translators: %s: error message */

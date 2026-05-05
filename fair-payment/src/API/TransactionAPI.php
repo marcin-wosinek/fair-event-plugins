@@ -10,6 +10,7 @@ namespace FairPayment\API;
 use FairPayment\Models\Transaction;
 use FairPayment\Models\LineItem;
 use FairPayment\Payment\MolliePaymentHandler;
+use FairPayment\Database\PaymentLogRepository;
 
 defined( 'WPINC' ) || die;
 
@@ -117,6 +118,29 @@ class TransactionAPI {
 		// 8. Fire action hook.
 		do_action( 'fair_payment_transaction_created', $transaction_id, $line_items, $args );
 
+		( new PaymentLogRepository() )->log(
+			'transaction_created',
+			array(
+				'level'          => 'info',
+				'transaction_id' => (int) $transaction_id,
+				'message'        => sprintf(
+					'Transaction #%d created with %d line item(s) (%s %s)',
+					(int) $transaction_id,
+					count( $line_items ),
+					number_format( $total, 2 ),
+					$args['currency']
+				),
+				'context'        => array(
+					'amount'         => $total,
+					'currency'       => $args['currency'],
+					'post_id'        => $args['post_id'],
+					'event_date_id'  => $args['event_date_id'],
+					'user_id'        => $args['user_id'],
+					'participant_id' => $args['participant_id'],
+				),
+			)
+		);
+
 		return $transaction_id;
 	}
 
@@ -180,6 +204,8 @@ class TransactionAPI {
 		// Allow filtering of payment arguments before Mollie call.
 		$payment_args = apply_filters( 'fair_payment_before_initiate_payment', $payment_args, $transaction );
 
+		$logger = new PaymentLogRepository();
+
 		// 5. Create Mollie payment.
 		try {
 			$handler        = new MolliePaymentHandler();
@@ -199,6 +225,27 @@ class TransactionAPI {
 		);
 
 		if ( ! $updated ) {
+			// Mollie has a payment, but our DB UPDATE failed. This is the orphan-payment
+			// branch — the customer will see an error and the Mollie payment will arrive
+			// without a matching transaction record. Log loudly with the Mollie ID so an
+			// admin can reconcile manually.
+			$logger->log(
+				'transaction_update_failed',
+				array(
+					'level'          => 'error',
+					'transaction_id' => (int) $transaction_id,
+					'message'        => sprintf(
+						'Failed to persist Mollie payment %s on transaction #%d (orphan payment risk)',
+						$mollie_payment['mollie_payment_id'],
+						(int) $transaction_id
+					),
+					'context'        => array(
+						'mollie_payment_id' => $mollie_payment['mollie_payment_id'],
+						'checkout_url'      => $mollie_payment['checkout_url'],
+						'status'            => $mollie_payment['status'],
+					),
+				)
+			);
 			return new \WP_Error(
 				'transaction_update_failed',
 				__( 'Failed to update transaction with payment details.', 'fair-payment' )

@@ -9,6 +9,7 @@ namespace FairPayment\API;
 
 use FairPayment\Payment\MolliePaymentHandler;
 use FairPayment\Models\Transaction;
+use FairPayment\Database\PaymentLogRepository;
 use WP_REST_Controller;
 use WP_REST_Server;
 use WP_REST_Request;
@@ -110,8 +111,37 @@ class PaymentEndpoint extends WP_REST_Controller {
 		// - Anonymous users: Require email
 		// See: REST_API_BACKEND.md for implementation guidance
 
+		$logger = new PaymentLogRepository();
+
+		$amount      = $request->get_param( 'amount' );
+		$currency    = $request->get_param( 'currency' );
+		$description = $request->get_param( 'description' );
+		$post_id     = $request->get_param( 'post_id' );
+
+		$logger->log(
+			'payment_creation_started',
+			array(
+				'level'   => 'info',
+				'message' => sprintf( 'Payment request received for post %d', (int) $post_id ),
+				'context' => array(
+					'amount'      => $amount,
+					'currency'    => $currency,
+					'description' => $description,
+					'post_id'     => $post_id,
+				),
+			)
+		);
+
 		// Check if Mollie is configured.
 		if ( ! MolliePaymentHandler::is_configured() ) {
+			$logger->log(
+				'payment_validation_failed',
+				array(
+					'level'   => 'warning',
+					'message' => 'Mollie not configured',
+					'context' => array( 'reason' => 'mollie_not_configured' ),
+				)
+			);
 			return new WP_Error(
 				'mollie_not_configured',
 				__( 'Mollie payment gateway is not configured. Please configure your API keys in settings.', 'fair-payment' ),
@@ -119,13 +149,19 @@ class PaymentEndpoint extends WP_REST_Controller {
 			);
 		}
 
-		$amount      = $request->get_param( 'amount' );
-		$currency    = $request->get_param( 'currency' );
-		$description = $request->get_param( 'description' );
-		$post_id     = $request->get_param( 'post_id' );
-
 		// Validate amount.
 		if ( ! is_numeric( $amount ) || $amount <= 0 ) {
+			$logger->log(
+				'payment_validation_failed',
+				array(
+					'level'   => 'warning',
+					'message' => 'Invalid payment amount',
+					'context' => array(
+						'reason' => 'invalid_amount',
+						'amount' => $amount,
+					),
+				)
+			);
 			return new WP_Error(
 				'invalid_amount',
 				__( 'Invalid payment amount.', 'fair-payment' ),
@@ -176,6 +212,16 @@ class PaymentEndpoint extends WP_REST_Controller {
 		);
 
 		if ( is_wp_error( $transaction_id ) ) {
+			$logger->log(
+				'transaction_creation_failed',
+				array(
+					'level'   => 'error',
+					'message' => $transaction_id->get_error_message(),
+					'context' => array(
+						'error_code' => $transaction_id->get_error_code(),
+					),
+				)
+			);
 			return new WP_Error(
 				'transaction_creation_failed',
 				$transaction_id->get_error_message(),
@@ -193,12 +239,39 @@ class PaymentEndpoint extends WP_REST_Controller {
 		);
 
 		if ( is_wp_error( $payment ) ) {
+			$logger->log(
+				'payment_initiation_failed',
+				array(
+					'level'          => 'error',
+					'transaction_id' => (int) $transaction_id,
+					'message'        => $payment->get_error_message(),
+					'context'        => array(
+						'error_code' => $payment->get_error_code(),
+					),
+				)
+			);
 			return new WP_Error(
 				'payment_initiation_failed',
 				$payment->get_error_message(),
 				array( 'status' => 500 )
 			);
 		}
+
+		$logger->log(
+			'payment_creation_succeeded',
+			array(
+				'level'          => 'info',
+				'transaction_id' => (int) $transaction_id,
+				'message'        => sprintf(
+					'Payment created successfully (Mollie %s)',
+					$payment['mollie_payment_id']
+				),
+				'context'        => array(
+					'mollie_payment_id' => $payment['mollie_payment_id'],
+					'status'            => $payment['status'],
+				),
+			)
+		);
 
 		// Return same response structure for backward compatibility.
 		return new WP_REST_Response(

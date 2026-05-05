@@ -9,6 +9,7 @@ namespace FairPayment\API;
 
 use FairPayment\Payment\MolliePaymentHandler;
 use FairPayment\Models\Transaction;
+use FairPayment\Database\PaymentLogRepository;
 use WP_REST_Controller;
 use WP_REST_Server;
 use WP_REST_Request;
@@ -62,10 +63,28 @@ class WebhookEndpoint extends WP_REST_Controller {
 	 * @return WP_REST_Response|WP_Error Response object or error.
 	 */
 	public function handle_webhook( WP_REST_Request $request ) {
+		$logger = new PaymentLogRepository();
+
 		// Get payment ID from webhook.
 		$mollie_payment_id = $request->get_param( 'id' );
 
+		$logger->log(
+			'webhook_received',
+			array(
+				'level'   => 'info',
+				'message' => sprintf( 'Webhook received for Mollie %s', $mollie_payment_id ? $mollie_payment_id : '(empty)' ),
+				'context' => array( 'mollie_payment_id' => $mollie_payment_id ),
+			)
+		);
+
 		if ( empty( $mollie_payment_id ) ) {
+			$logger->log(
+				'webhook_failed',
+				array(
+					'level'   => 'warning',
+					'message' => 'Webhook missing payment ID',
+				)
+			);
 			return new WP_Error(
 				'missing_payment_id',
 				__( 'Payment ID is missing from webhook.', 'fair-payment' ),
@@ -78,6 +97,14 @@ class WebhookEndpoint extends WP_REST_Controller {
 			$transaction = Transaction::get_by_mollie_id( $mollie_payment_id );
 
 			if ( ! $transaction ) {
+				$logger->log(
+					'webhook_failed',
+					array(
+						'level'   => 'error',
+						'message' => sprintf( 'Webhook for unknown Mollie payment %s (orphan)', $mollie_payment_id ),
+						'context' => array( 'mollie_payment_id' => $mollie_payment_id ),
+					)
+				);
 				return new WP_Error(
 					'transaction_not_found',
 					__( 'Transaction not found in database.', 'fair-payment' ),
@@ -96,12 +123,42 @@ class WebhookEndpoint extends WP_REST_Controller {
 			$updated = Transaction::update_status( $mollie_payment_id, $payment->status );
 
 			if ( ! $updated ) {
+				$logger->log(
+					'webhook_failed',
+					array(
+						'level'          => 'error',
+						'transaction_id' => (int) $transaction->id,
+						'message'        => 'Failed to update transaction status from webhook',
+						'context'        => array(
+							'mollie_payment_id' => $mollie_payment_id,
+							'mollie_status'     => $payment->status,
+						),
+					)
+				);
 				return new WP_Error(
 					'status_update_failed',
 					__( 'Failed to update transaction status.', 'fair-payment' ),
 					array( 'status' => 500 )
 				);
 			}
+
+			$logger->log(
+				'webhook_status_updated',
+				array(
+					'level'          => 'info',
+					'transaction_id' => (int) $transaction->id,
+					'message'        => sprintf(
+						'Status updated from %s to %s via webhook',
+						$transaction->status,
+						$payment->status
+					),
+					'context'        => array(
+						'mollie_payment_id' => $mollie_payment_id,
+						'old_status'        => $transaction->status,
+						'new_status'        => $payment->status,
+					),
+				)
+			);
 
 			// Handle payment status actions.
 			$this->handle_payment_status( $payment, $transaction );
@@ -116,8 +173,17 @@ class WebhookEndpoint extends WP_REST_Controller {
 			);
 
 		} catch ( \Exception $e ) {
-			// Log error but still return 200 to prevent webhook retries.
-			error_log( 'Fair Payment webhook error: ' . $e->getMessage() );
+			$logger->log(
+				'webhook_failed',
+				array(
+					'level'   => 'error',
+					'message' => sprintf( 'Webhook handler exception: %s', $e->getMessage() ),
+					'context' => array(
+						'exception_class'   => get_class( $e ),
+						'mollie_payment_id' => $mollie_payment_id,
+					),
+				)
+			);
 
 			return new WP_REST_Response(
 				array(

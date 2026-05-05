@@ -64,6 +64,16 @@ class Schema {
 	}
 
 	/**
+	 * Get the table name for the payment log
+	 *
+	 * @return string Full table name with prefix.
+	 */
+	public static function get_log_table_name() {
+		global $wpdb;
+		return $wpdb->prefix . 'fair_payment_log';
+	}
+
+	/**
 	 * Create database tables
 	 *
 	 * @return void
@@ -119,6 +129,9 @@ class Schema {
 		// Create entry-transaction junction table.
 		self::create_entry_transactions_table();
 
+		// Create log table.
+		self::create_log_table();
+
 		// Run migrations if needed.
 		self::migrate_to_v2();
 		self::migrate_to_v3();
@@ -136,9 +149,10 @@ class Schema {
 		self::migrate_to_v15();
 		self::migrate_to_v16();
 		self::migrate_to_v17();
+		self::migrate_to_v18();
 
 		// Store database version for future migrations.
-		update_option( 'fair_payment_db_version', '17.0' );
+		update_option( 'fair_payment_db_version', '18.0' );
 	}
 
 	/**
@@ -258,6 +272,40 @@ class Schema {
 			UNIQUE KEY entry_transaction (entry_id, transaction_id),
 			KEY entry_id (entry_id),
 			KEY transaction_id (transaction_id)
+		) $charset_collate;";
+
+		require_once ABSPATH . 'wp-admin/includes/upgrade.php';
+		dbDelta( $sql );
+	}
+
+	/**
+	 * Create payment log table
+	 *
+	 * @return void
+	 */
+	public static function create_log_table() {
+		global $wpdb;
+
+		$table_name      = self::get_log_table_name();
+		$charset_collate = $wpdb->get_charset_collate();
+
+		$sql = "CREATE TABLE $table_name (
+			id bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT,
+			transaction_id bigint(20) UNSIGNED DEFAULT NULL,
+			level varchar(10) NOT NULL DEFAULT 'info',
+			event varchar(50) NOT NULL,
+			message text DEFAULT NULL,
+			context longtext DEFAULT NULL,
+			user_id bigint(20) UNSIGNED DEFAULT NULL,
+			ip_address varchar(45) DEFAULT NULL,
+			request_id varchar(36) DEFAULT NULL,
+			created_at datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
+			PRIMARY KEY  (id),
+			KEY transaction_id (transaction_id),
+			KEY level (level),
+			KEY event (event),
+			KEY request_id (request_id),
+			KEY created_at (created_at)
 		) $charset_collate;";
 
 		require_once ABSPATH . 'wp-admin/includes/upgrade.php';
@@ -972,6 +1020,21 @@ class Schema {
 	}
 
 	/**
+	 * Migrate database from v17.0 to v18.0
+	 *
+	 * Adds the payment log table for structured per-transaction event logging.
+	 *
+	 * @return void
+	 */
+	public static function migrate_to_v18() {
+		$current_version = get_option( 'fair_payment_db_version', '1.0' );
+
+		if ( version_compare( $current_version, '18.0', '<' ) ) {
+			self::create_log_table();
+		}
+	}
+
+	/**
 	 * Drop database tables (used for uninstall)
 	 *
 	 * @return void
@@ -984,6 +1047,11 @@ class Schema {
 		$financial_entries_table  = self::get_financial_entries_table_name();
 		$budgets_table            = self::get_budgets_table_name();
 		$entry_transactions_table = self::get_entry_transactions_table_name();
+		$log_table                = self::get_log_table_name();
+
+		// Drop log table (references transactions but only via informational FK, drop first).
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.DirectDatabaseQuery.SchemaChange
+		$wpdb->query( $wpdb->prepare( 'DROP TABLE IF EXISTS %i', $log_table ) );
 
 		// Drop entry-transaction junction table first (references both entries and transactions).
 		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.DirectDatabaseQuery.SchemaChange

@@ -16,6 +16,7 @@ import {
 	__experimentalHStack as HStack,
 	__experimentalVStack as VStack,
 } from '@wordpress/components';
+import TransactionLog from './TransactionLog.js';
 
 const organizationId = window.fairPaymentTransactions?.organizationId || '';
 
@@ -903,6 +904,8 @@ const TransactionPage = () => {
 						</table>
 					</CardBody>
 				</Card>
+
+				<TransactionLog transactionId={transactionId} />
 			</VStack>
 		</div>
 	);
