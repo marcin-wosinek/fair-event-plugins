@@ -262,6 +262,7 @@ class TimelineRepository {
 				FROM %i t
 				LEFT JOIN %i p ON t.participant_id = p.id
 				WHERE t.status = 'paid'
+				AND t.testmode = 0
 				AND NOT EXISTS (
 					SELECT 1 FROM %i fpt WHERE fpt.transaction_id = t.id
 				)
