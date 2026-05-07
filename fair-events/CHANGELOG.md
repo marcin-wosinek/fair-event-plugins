@@ -1,5 +1,16 @@
 # fair-events
 
+## 1.2.0
+
+### Minor Changes
+
+-   41a295c: Improve event audience management. Edit ticket type and options on existing sign-ups via a popup, delete sign-ups, and store the chosen option name on the sign-up record. Audience table gains copy buttons, activity totals, side counter, ticket shortname, and a wider layout that shows the activity options purchased by each participant.
+-   41a295c: Link tickets to event activities. Tickets can now be assigned to specific activities by ID, with per-activity discounts (including facilitator-based discounts) applied at sign-up and at the option level. Ticket option table extended to support this.
+
+### Patch Changes
+
+-   41a295c: Fix free ticket error, ticket break in the editor, and price setting error.
+
 ## 1.1.1
 
 ### Patch Changes

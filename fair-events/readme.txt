@@ -4,7 +4,7 @@ Tags: events, calendar, custom post type, gutenberg
 Requires at least: 6.7
 Tested up to: 6.8
 Requires PHP: 7.4
-Stable tag: 1.1.1
+Stable tag: 1.2.0
 License: GPLv3 or later
 License URI: https://www.gnu.org/licenses/gpl-3.0.html
 Text Domain: fair-events
@@ -116,6 +116,17 @@ In the Events Calendar block settings, use the "Event Display Pattern" dropdown 
 3. Single event display on frontend
 
 == Changelog ==
+
+## 1.2.0
+
+### Minor Changes
+
+-   41a295c: Improve event audience management. Edit ticket type and options on existing sign-ups via a popup, delete sign-ups, and store the chosen option name on the sign-up record. Audience table gains copy buttons, activity totals, side counter, ticket shortname, and a wider layout that shows the activity options purchased by each participant.
+-   41a295c: Link tickets to event activities. Tickets can now be assigned to specific activities by ID, with per-activity discounts (including facilitator-based discounts) applied at sign-up and at the option level. Ticket option table extended to support this.
+
+### Patch Changes
+
+-   41a295c: Fix free ticket error, ticket break in the editor, and price setting error.
 
 ## 1.1.1
 

@@ -1,5 +1,12 @@
 # fair-payment
 
+## 1.2.0
+
+### Minor Changes
+
+-   d04f565: Transaction reconciliation improvements. Import Mollie transaction reports, display links from transactions to budget entries, link payments to participants via typeahead with an option to update missing participants, and limit reconciliation to live (production) mode.
+-   41a295c: Add payment error logging. New `PaymentLog` model with database schema, REST endpoint, and admin log viewer on the transaction page. Mollie webhook and payment endpoints record errors for troubleshooting.
+
 ## 1.1.1
 
 ### Patch Changes

@@ -3,7 +3,7 @@ Contributors: marcinwosinek
 Tags: events, participants, audience, management
 Requires at least: 6.7
 Tested up to: 6.7
-Stable tag: 1.1.1
+Stable tag: 1.2.0
 Requires PHP: 8.0
 License: GPLv3 or later
 License URI: https://www.gnu.org/licenses/gpl-3.0.html
@@ -38,6 +38,21 @@ WordPress 6.7 or higher.
 Yes, it integrates with the fair_event post type from the Fair Events plugin.
 
 == Changelog ==
+
+## 1.2.0
+
+### Minor Changes
+
+-   41a295c: Improve event audience management. Edit ticket type and options on existing sign-ups via a popup, delete sign-ups, and store the chosen option name on the sign-up record. Audience table gains copy buttons, activity totals, side counter, ticket shortname, and a wider layout that shows the activity options purchased by each participant.
+-   41a295c: Improve participant management. Add a link to edit a user's mailing settings, and a remove-user button that anonymizes the participant across groups, poll access keys, and poll responses.
+-   41a295c: Update the sign-up confirmation email and apply discount logic across activities and ticket options at sign-up time.
+-   41a295c: Link tickets to event activities. Tickets can now be assigned to specific activities by ID, with per-activity discounts (including facilitator-based discounts) applied at sign-up and at the option level. Ticket option table extended to support this.
+
+### Patch Changes
+
+-   41a295c: Fix missing link from membership payment to participant.
+-   41a295c: Fix free ticket error, ticket break in the editor, and price setting error.
+-   41a295c: Activity log improvements. Combine multiple user sign-ups into a single timeline entry, add event sign-up entries, and hide test payments from the activity log.
 
 ## 1.1.1
 
