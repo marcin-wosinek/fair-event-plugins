@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from '@wordpress/element';
+import { useState, useEffect, useMemo, useRef } from '@wordpress/element';
 import {
 	Card,
 	CardHeader,
@@ -53,6 +53,20 @@ export default function EventAudience({ eventId, eventDateId, audienceUrl }) {
 	const [editOptionIds, setEditOptionIds] = useState([]);
 	const [editTicketTypeId, setEditTicketTypeId] = useState(null);
 	const [isSavingOptions, setIsSavingOptions] = useState(false);
+
+	const [toast, setToast] = useState(null);
+	const toastTimerRef = useRef(null);
+	const showToast = (message, type = 'success') => {
+		if (toastTimerRef.current) clearTimeout(toastTimerRef.current);
+		setToast({ message, type });
+		toastTimerRef.current = setTimeout(() => setToast(null), 3500);
+	};
+	useEffect(
+		() => () => {
+			if (toastTimerRef.current) clearTimeout(toastTimerRef.current);
+		},
+		[]
+	);
 
 	useEffect(() => {
 		if (!eventDateId) {
@@ -299,8 +313,9 @@ export default function EventAudience({ eventId, eventDateId, audienceUrl }) {
 			handleCloseAddModal();
 			loadParticipants();
 		} catch (err) {
-			alert(
-				__('Error adding participants: ', 'fair-events') + err.message
+			showToast(
+				__('Error adding participants: ', 'fair-events') + err.message,
+				'error'
 			);
 		} finally {
 			setIsAdding(false);
@@ -368,9 +383,10 @@ export default function EventAudience({ eventId, eventDateId, audienceUrl }) {
 			method: 'DELETE',
 		}).catch((err) => {
 			setParticipants(previous);
-			alert(
+			showToast(
 				__('Error deleting registration: ', 'fair-events') +
-					(err.message || '')
+					(err.message || ''),
+				'error'
 			);
 		});
 	};
@@ -437,10 +453,88 @@ export default function EventAudience({ eventId, eventDateId, audienceUrl }) {
 			);
 			setEditingParticipant(null);
 		} catch (err) {
-			alert(__('Error saving options: ', 'fair-events') + err.message);
+			showToast(
+				__('Error saving options: ', 'fair-events') + err.message,
+				'error'
+			);
 		} finally {
 			setIsSavingOptions(false);
 		}
+	};
+
+	const copyToClipboard = async (text, successMessage) => {
+		try {
+			await navigator.clipboard.writeText(text);
+			showToast(successMessage, 'success');
+		} catch (err) {
+			showToast(
+				__('Error copying to clipboard: ', 'fair-events') + err.message,
+				'error'
+			);
+		}
+	};
+
+	const participantHasOption = (p, opt) => {
+		const ids = p.ticket_option_ids || [];
+		const names = p.ticket_option_names || [];
+		return ids.includes(opt.id) || names.includes(opt.name);
+	};
+
+	const buildCopyByTicketType = () => {
+		const groups = new Map();
+		filteredParticipants.forEach((p) => {
+			const key =
+				p.ticket_type_name || __('No ticket type', 'fair-events');
+			if (!groups.has(key)) groups.set(key, []);
+			groups.get(key).push(p.participant_name || '—');
+		});
+		const sortedKeys = Array.from(groups.keys()).sort((a, b) =>
+			a.localeCompare(b)
+		);
+		return sortedKeys
+			.map((key) => {
+				const names = groups
+					.get(key)
+					.sort((a, b) => a.localeCompare(b));
+				return `*${key}* (${names.length})\n${names
+					.map((n) => `- ${n}`)
+					.join('\n')}`;
+			})
+			.join('\n\n');
+	};
+
+	const buildCopyByActivity = () => {
+		if (ticketOptions.length === 0) return '';
+		return ticketOptions
+			.map((opt) => {
+				const names = filteredParticipants
+					.filter((p) => participantHasOption(p, opt))
+					.map((p) => p.participant_name || '—')
+					.sort((a, b) => a.localeCompare(b));
+				return `*${opt.name}* (${names.length})\n${
+					names.length > 0
+						? names.map((n) => `- ${n}`).join('\n')
+						: `- ${__('(none)', 'fair-events')}`
+				}`;
+			})
+			.join('\n\n');
+	};
+
+	const buildCopyByParticipant = () => {
+		const sorted = [...filteredParticipants].sort((a, b) =>
+			(a.participant_name || '').localeCompare(b.participant_name || '')
+		);
+		return sorted
+			.map((p) => {
+				const lines = [`*${p.participant_name || '—'}*`];
+				if (p.ticket_type_name) lines.push(p.ticket_type_name);
+				const activities = ticketOptions
+					.filter((opt) => participantHasOption(p, opt))
+					.map((opt) => `- ${opt.name}`);
+				if (activities.length > 0) lines.push(...activities);
+				return lines.join('\n');
+			})
+			.join('\n\n');
 	};
 
 	return (
@@ -828,7 +922,7 @@ export default function EventAudience({ eventId, eventDateId, audienceUrl }) {
 									</p>
 								)}
 
-								<HStack spacing={3}>
+								<HStack spacing={3} wrap>
 									<Button
 										variant="primary"
 										onClick={handleOpenAddModal}
@@ -845,6 +939,80 @@ export default function EventAudience({ eventId, eventDateId, audienceUrl }) {
 										)}
 									</Button>
 								</HStack>
+
+								<div
+									style={{
+										borderTop: '1px solid #e0e0e0',
+										paddingTop: '12px',
+									}}
+								>
+									<HStack spacing={3} wrap alignment="left">
+										<span
+											style={{
+												color: '#757575',
+												fontSize: '13px',
+												fontWeight: 500,
+											}}
+										>
+											{__('Copy lists:', 'fair-events')}
+										</span>
+										<Button
+											variant="secondary"
+											onClick={() =>
+												copyToClipboard(
+													buildCopyByTicketType(),
+													__(
+														'Copied list by ticket type',
+														'fair-events'
+													)
+												)
+											}
+											disabled={
+												filteredParticipants.length ===
+												0
+											}
+										>
+											{__('Ticket type', 'fair-events')}
+										</Button>
+										<Button
+											variant="secondary"
+											onClick={() =>
+												copyToClipboard(
+													buildCopyByActivity(),
+													__(
+														'Copied list by activity',
+														'fair-events'
+													)
+												)
+											}
+											disabled={
+												filteredParticipants.length ===
+													0 ||
+												ticketOptions.length === 0
+											}
+										>
+											{__('Activity', 'fair-events')}
+										</Button>
+										<Button
+											variant="secondary"
+											onClick={() =>
+												copyToClipboard(
+													buildCopyByParticipant(),
+													__(
+														'Copied list by participant',
+														'fair-events'
+													)
+												)
+											}
+											disabled={
+												filteredParticipants.length ===
+												0
+											}
+										>
+											{__('Participant', 'fair-events')}
+										</Button>
+									</HStack>
+								</div>
 							</VStack>
 						)}
 					</CardBody>
@@ -1219,6 +1387,31 @@ export default function EventAudience({ eventId, eventDateId, audienceUrl }) {
 						</HStack>
 					</VStack>
 				</Modal>
+			)}
+
+			{toast && (
+				<div
+					role="status"
+					aria-live="polite"
+					onClick={() => setToast(null)}
+					style={{
+						position: 'fixed',
+						bottom: '20px',
+						right: '20px',
+						padding: '12px 18px',
+						borderRadius: '4px',
+						color: 'white',
+						fontWeight: 500,
+						zIndex: 100000,
+						maxWidth: '400px',
+						boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
+						cursor: 'pointer',
+						backgroundColor:
+							toast.type === 'error' ? '#d63638' : '#00a32a',
+					}}
+				>
+					{toast.message}
+				</div>
 			)}
 		</>
 	);
