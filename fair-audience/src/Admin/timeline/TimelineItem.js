@@ -332,6 +332,30 @@ function TicketSalesDayContent({ item }) {
 }
 
 /**
+ * Signup content component.
+ *
+ * @param {Object} props      Props.
+ * @param {Object} props.item Timeline item with signup details.
+ * @return {JSX.Element} Signup summary linked to the event audience tab.
+ */
+function SignupContent({ item }) {
+	const eventDateId = item.details?.event_date_id;
+	const audienceUrl = eventDateId
+		? `admin.php?page=fair-events-manage-event&event_date_id=${eventDateId}&tab=audience`
+		: null;
+
+	return (
+		<div style={{ fontSize: '13px', lineHeight: '1.5' }}>
+			{audienceUrl ? (
+				<a href={audienceUrl}>{item.summary}</a>
+			) : (
+				item.summary
+			)}
+		</div>
+	);
+}
+
+/**
  * Timeline item component.
  *
  * @param {Object} props Props.
@@ -385,6 +409,8 @@ export default function TimelineItem({ item }) {
 							<FormSubmissionContent item={item} />
 						) : item.type === 'new_participant' ? (
 							<NewParticipantContent item={item} />
+						) : item.type === 'signup' ? (
+							<SignupContent item={item} />
 						) : (
 							<div
 								style={{
