@@ -535,6 +535,16 @@ export default function EventAudience({ eventId, eventDateId, audienceUrl }) {
 												<tr>
 													<th
 														style={{
+															width: '1%',
+															whiteSpace:
+																'nowrap',
+															textAlign: 'right',
+														}}
+													>
+														#
+													</th>
+													<th
+														style={{
 															cursor: 'pointer',
 														}}
 														onClick={() =>
@@ -603,8 +613,17 @@ export default function EventAudience({ eventId, eventDateId, audienceUrl }) {
 											</thead>
 											<tbody>
 												{filteredParticipants.map(
-													(p) => (
+													(p, index) => (
 														<tr key={p.id}>
+															<td
+																style={{
+																	textAlign:
+																		'right',
+																	color: '#666',
+																}}
+															>
+																{index + 1}
+															</td>
 															<td>
 																{p.participant_id ? (
 																	<a
