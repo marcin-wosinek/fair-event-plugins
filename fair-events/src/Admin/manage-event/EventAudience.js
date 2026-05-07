@@ -741,6 +741,72 @@ export default function EventAudience({ eventId, eventDateId, audienceUrl }) {
 													)
 												)}
 											</tbody>
+											{ticketOptions.length > 0 && (
+												<tfoot>
+													<tr>
+														<th />
+														<th
+															colSpan={3}
+															style={{
+																textAlign:
+																	'right',
+															}}
+														>
+															{__(
+																'Total',
+																'fair-events'
+															)}
+														</th>
+														{ticketOptions.map(
+															(opt) => {
+																const total =
+																	filteredParticipants.reduce(
+																		(
+																			acc,
+																			p
+																		) => {
+																			const ids =
+																				p.ticket_option_ids ||
+																				[];
+																			const names =
+																				p.ticket_option_names ||
+																				[];
+																			const hasOption =
+																				ids.includes(
+																					opt.id
+																				) ||
+																				names.includes(
+																					opt.name
+																				);
+																			return (
+																				acc +
+																				(hasOption
+																					? 1
+																					: 0)
+																			);
+																		},
+																		0
+																	);
+																return (
+																	<th
+																		key={
+																			opt.id
+																		}
+																		style={{
+																			textAlign:
+																				'center',
+																		}}
+																	>
+																		{total}
+																	</th>
+																);
+															}
+														)}
+														<th />
+														<th />
+													</tr>
+												</tfoot>
+											)}
 										</table>
 									</div>
 								) : (
