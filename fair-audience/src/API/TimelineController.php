@@ -420,20 +420,58 @@ class TimelineController extends WP_REST_Controller {
 			);
 		}
 
-		// New participants.
-		$participants = $this->repository->get_recent_participants( $fetch_limit );
+		// New participants – group by calendar day when multiple register the same day.
+		$participants       = $this->repository->get_recent_participants( $fetch_limit );
+		$participant_groups = array();
 		foreach ( $participants as $row ) {
-			$name = trim( $row['name'] . ' ' . $row['surname'] );
+			$day = substr( $row['created_at'], 0, 10 );
+			if ( ! isset( $participant_groups[ $day ] ) ) {
+				$participant_groups[ $day ] = array();
+			}
+			$participant_groups[ $day ][] = $row;
+		}
+
+		foreach ( $participant_groups as $day => $rows ) {
+			$first = $rows[0];
+			$count = count( $rows );
+
+			$participants_data = array_map(
+				function ( $r ) {
+					return array(
+						'participant_id' => (int) $r['id'],
+						'name'           => trim( $r['name'] . ' ' . $r['surname'] ),
+						'email'          => $r['email'],
+					);
+				},
+				$rows
+			);
+
+			$names = array_map(
+				function ( $p ) {
+					return $p['name'];
+				},
+				$participants_data
+			);
+
+			if ( $count > 1 ) {
+				$summary = sprintf( 'New participants: %s', implode( ', ', $names ) );
+				$id      = 'new_participants_day_' . $day;
+			} else {
+				$summary = sprintf( 'New participant: %s', $names[0] );
+				$id      = 'new_participant_' . $first['id'];
+			}
 
 			$items[] = array(
-				'id'         => 'new_participant_' . $row['id'],
+				'id'         => $id,
 				'type'       => 'new_participant',
-				'created_at' => $row['created_at'],
-				'summary'    => sprintf( 'New participant: %s', $name ),
+				'created_at' => $first['created_at'],
+				'summary'    => $summary,
 				'details'    => array(
-					'participant_id' => (int) $row['id'],
-					'name'           => $name,
-					'email'          => $row['email'],
+					'participant_id' => 1 === $count ? (int) $first['id'] : null,
+					'name'           => 1 === $count ? $names[0] : null,
+					'email'          => 1 === $count ? $first['email'] : null,
+					'count'          => $count,
+					'participants'   => $participants_data,
 				),
 			);
 		}

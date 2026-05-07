@@ -147,7 +147,35 @@ function FormSubmissionContent({ item }) {
  * @return {JSX.Element} Participant summary with linked name.
  */
 function NewParticipantContent({ item }) {
-	const { participant_id: participantId, name } = item.details;
+	const {
+		participant_id: participantId,
+		name,
+		participants = [],
+		count = 0,
+	} = item.details;
+
+	if (Array.isArray(participants) && participants.length > 1) {
+		return (
+			<div style={{ fontSize: '13px', lineHeight: '1.5' }}>
+				{__('New participants:', 'fair-audience')}{' '}
+				{participants.map((p, index) => (
+					<span key={p.participant_id}>
+						{index > 0 && ', '}
+						{p.participant_id ? (
+							<a
+								href={`admin.php?page=fair-audience-participant-detail&participant_id=${p.participant_id}`}
+							>
+								{p.name}
+							</a>
+						) : (
+							p.name
+						)}
+					</span>
+				))}
+			</div>
+		);
+	}
+
 	const displayName = name || item.summary;
 
 	if (!participantId) {
@@ -164,6 +192,7 @@ function NewParticipantContent({ item }) {
 		<div style={{ fontSize: '13px', lineHeight: '1.5' }}>
 			{__('New participant:', 'fair-audience')}{' '}
 			<a href={participantUrl}>{displayName}</a>
+			{count > 1 && ` (${count})`}
 		</div>
 	);
 }
