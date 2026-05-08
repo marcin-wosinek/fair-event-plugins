@@ -545,6 +545,70 @@ export default function EventAudience({ eventId, eventDateId, audienceUrl }) {
 						<h2>{__('Participants', 'fair-events')}</h2>
 					</CardHeader>
 					<CardBody>
+						<HStack
+							spacing={3}
+							wrap
+							alignment="left"
+							style={{ marginBottom: '16px' }}
+						>
+							<span
+								style={{
+									color: '#757575',
+									fontSize: '13px',
+									fontWeight: 500,
+								}}
+							>
+								{__('Copy lists:', 'fair-events')}
+							</span>
+							<Button
+								variant="secondary"
+								onClick={() =>
+									copyToClipboard(
+										buildCopyByTicketType(),
+										__(
+											'Copied list by ticket type',
+											'fair-events'
+										)
+									)
+								}
+								disabled={filteredParticipants.length === 0}
+							>
+								{__('Ticket type', 'fair-events')}
+							</Button>
+							<Button
+								variant="secondary"
+								onClick={() =>
+									copyToClipboard(
+										buildCopyByActivity(),
+										__(
+											'Copied list by activity',
+											'fair-events'
+										)
+									)
+								}
+								disabled={
+									filteredParticipants.length === 0 ||
+									ticketOptions.length === 0
+								}
+							>
+								{__('Activity', 'fair-events')}
+							</Button>
+							<Button
+								variant="secondary"
+								onClick={() =>
+									copyToClipboard(
+										buildCopyByParticipant(),
+										__(
+											'Copied list by participant',
+											'fair-events'
+										)
+									)
+								}
+								disabled={filteredParticipants.length === 0}
+							>
+								{__('Participant', 'fair-events')}
+							</Button>
+						</HStack>
 						{loadingParticipants ? (
 							<Spinner />
 						) : (
@@ -939,80 +1003,6 @@ export default function EventAudience({ eventId, eventDateId, audienceUrl }) {
 										)}
 									</Button>
 								</HStack>
-
-								<div
-									style={{
-										borderTop: '1px solid #e0e0e0',
-										paddingTop: '12px',
-									}}
-								>
-									<HStack spacing={3} wrap alignment="left">
-										<span
-											style={{
-												color: '#757575',
-												fontSize: '13px',
-												fontWeight: 500,
-											}}
-										>
-											{__('Copy lists:', 'fair-events')}
-										</span>
-										<Button
-											variant="secondary"
-											onClick={() =>
-												copyToClipboard(
-													buildCopyByTicketType(),
-													__(
-														'Copied list by ticket type',
-														'fair-events'
-													)
-												)
-											}
-											disabled={
-												filteredParticipants.length ===
-												0
-											}
-										>
-											{__('Ticket type', 'fair-events')}
-										</Button>
-										<Button
-											variant="secondary"
-											onClick={() =>
-												copyToClipboard(
-													buildCopyByActivity(),
-													__(
-														'Copied list by activity',
-														'fair-events'
-													)
-												)
-											}
-											disabled={
-												filteredParticipants.length ===
-													0 ||
-												ticketOptions.length === 0
-											}
-										>
-											{__('Activity', 'fair-events')}
-										</Button>
-										<Button
-											variant="secondary"
-											onClick={() =>
-												copyToClipboard(
-													buildCopyByParticipant(),
-													__(
-														'Copied list by participant',
-														'fair-events'
-													)
-												)
-											}
-											disabled={
-												filteredParticipants.length ===
-												0
-											}
-										>
-											{__('Participant', 'fair-events')}
-										</Button>
-									</HStack>
-								</div>
 							</VStack>
 						)}
 					</CardBody>
