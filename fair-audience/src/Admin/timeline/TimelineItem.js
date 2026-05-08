@@ -329,6 +329,12 @@ function TicketSalesDayContent({ item }) {
 						ticket.event_date_id && ticket.post_id
 							? `admin.php?page=fair-events-manage-event&event_date_id=${ticket.event_date_id}`
 							: null;
+					const transactionUrl = ticket.transaction_id
+						? `admin.php?page=fair-payment-transaction&transaction_id=${ticket.transaction_id}`
+						: null;
+					const amountText = `${Number(ticket.amount).toFixed(
+						2
+					)} ${currency}`;
 
 					return (
 						<li key={ticket.transaction_id}>
@@ -338,7 +344,11 @@ function TicketSalesDayContent({ item }) {
 								ticket.name
 							)}
 							{' — '}
-							{Number(ticket.amount).toFixed(2)} {currency}
+							{transactionUrl ? (
+								<a href={transactionUrl}>{amountText}</a>
+							) : (
+								amountText
+							)}
 							{ticket.event_title && (
 								<>
 									{' ('}

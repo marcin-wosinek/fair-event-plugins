@@ -275,12 +275,18 @@ export default function ParticipantDetail() {
 									<th>
 										{__('Signed up at', 'fair-audience')}
 									</th>
+									<th>
+										{__('Transaction', 'fair-audience')}
+									</th>
 								</tr>
 							</thead>
 							<tbody>
 								{events.map((ev) => {
 									const manageUrl = ev.event_date_id
 										? `admin.php?page=fair-events-manage-event&event_date_id=${ev.event_date_id}&tab=audience`
+										: null;
+									const transactionUrl = ev.transaction_id
+										? `admin.php?page=fair-payment-transaction&transaction_id=${ev.transaction_id}`
 										: null;
 									return (
 										<tr key={ev.id}>
@@ -308,6 +314,15 @@ export default function ParticipantDetail() {
 											</td>
 											<td>
 												{formatDateTime(ev.created_at)}
+											</td>
+											<td>
+												{transactionUrl ? (
+													<a href={transactionUrl}>
+														{`#${ev.transaction_id}`}
+													</a>
+												) : (
+													'—'
+												)}
 											</td>
 										</tr>
 									);

@@ -349,6 +349,7 @@ class ParticipantsController extends WP_REST_Controller {
 				'start_datetime' => $start_datetime,
 				'label'          => $rel->label,
 				'created_at'     => $rel->created_at,
+				'transaction_id' => $rel->transaction_id ? (int) $rel->transaction_id : null,
 			);
 		}
 
