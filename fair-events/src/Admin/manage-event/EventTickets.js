@@ -1500,152 +1500,6 @@ export default function EventTickets({
 			<Card>
 				<Panel>
 					<PanelBody
-						title={__('Settings', 'fair-events')}
-						initialOpen={false}
-					>
-						<VStack spacing={4}>
-							<CheckboxControl
-								label={__(
-									'Continues pricing period',
-									'fair-events'
-								)}
-								checked={settings.continues_pricing_period}
-								onChange={(value) =>
-									setSettings((prev) => ({
-										...prev,
-										continues_pricing_period: value,
-									}))
-								}
-							/>
-							<CheckboxControl
-								label={__(
-									'Unlimited tickets in pricing period',
-									'fair-events'
-								)}
-								checked={
-									settings.unlimited_tickets_in_price_period
-								}
-								onChange={(value) =>
-									setSettings((prev) => ({
-										...prev,
-										unlimited_tickets_in_price_period:
-											value,
-									}))
-								}
-							/>
-							<CheckboxControl
-								label={__(
-									'Per-ticket-type capacity',
-									'fair-events'
-								)}
-								help={__(
-									'Show a Capacity input on each ticket type to cap how many can be sold of that type.',
-									'fair-events'
-								)}
-								checked={settings.show_ticket_type_capacity}
-								onChange={(value) =>
-									setSettings((prev) => ({
-										...prev,
-										show_ticket_type_capacity: value,
-									}))
-								}
-							/>
-							<CheckboxControl
-								label={__(
-									'Multiple pricing periods',
-									'fair-events'
-								)}
-								help={__(
-									'Enable time-based pricing with multiple sale periods (e.g. early bird, regular, late). When off, a single flat price applies for the whole sale window.',
-									'fair-events'
-								)}
-								checked={settings.multiple_pricing_periods}
-								onChange={(value) =>
-									setSettings((prev) => ({
-										...prev,
-										multiple_pricing_periods: value,
-									}))
-								}
-							/>
-							<CheckboxControl
-								label={__('Seats per ticket', 'fair-events')}
-								help={__(
-									'Show a Seats input on each ticket type to let one ticket consume more than one capacity slot (e.g. couples or +1 tickets). When off, every ticket counts as 1 seat.',
-									'fair-events'
-								)}
-								checked={settings.show_seats_per_ticket}
-								onChange={(value) =>
-									setSettings((prev) => ({
-										...prev,
-										show_seats_per_ticket: value,
-									}))
-								}
-							/>
-							<CheckboxControl
-								label={__(
-									'Activity collaborator discount',
-									'fair-events'
-								)}
-								help={__(
-									'Allow a discounted price on each activity option for participants invited by a collaborator linked to that activity. Adds a second price column to the activity options table and enables Manage Invitations.',
-									'fair-events'
-								)}
-								checked={
-									settings.activity_collaborator_discount
-								}
-								onChange={(value) =>
-									setSettings((prev) => ({
-										...prev,
-										activity_collaborator_discount: value,
-									}))
-								}
-							/>
-							{hasAdvancedTickets ? (
-								<Button
-									variant="secondary"
-									isDestructive
-									onClick={() => {
-										if (
-											window.confirm(
-												__(
-													'Switching back to simple ticketing will remove all ticket types, sale periods, and prices. Continue?',
-													'fair-events'
-												)
-											)
-										) {
-											setTicketTypes([]);
-											setSalePeriods([]);
-											setPrices({});
-										}
-									}}
-								>
-									{__(
-										'Switch to simple ticketing',
-										'fair-events'
-									)}
-								</Button>
-							) : (
-								<Button
-									variant="secondary"
-									onClick={() => {
-										addTicketType();
-										addSalePeriod();
-									}}
-								>
-									{__(
-										'Switch to advanced ticketing',
-										'fair-events'
-									)}
-								</Button>
-							)}
-						</VStack>
-					</PanelBody>
-				</Panel>
-			</Card>
-
-			<Card>
-				<Panel>
-					<PanelBody
 						title={__('Activity Options', 'fair-events')}
 						initialOpen={false}
 					>
@@ -1963,6 +1817,152 @@ export default function EventTickets({
 							>
 								{__('+ Add Option', 'fair-events')}
 							</Button>
+						</VStack>
+					</PanelBody>
+				</Panel>
+			</Card>
+
+			<Card>
+				<Panel>
+					<PanelBody
+						title={__('Settings', 'fair-events')}
+						initialOpen={false}
+					>
+						<VStack spacing={4}>
+							<CheckboxControl
+								label={__(
+									'Continues pricing period',
+									'fair-events'
+								)}
+								checked={settings.continues_pricing_period}
+								onChange={(value) =>
+									setSettings((prev) => ({
+										...prev,
+										continues_pricing_period: value,
+									}))
+								}
+							/>
+							<CheckboxControl
+								label={__(
+									'Unlimited tickets in pricing period',
+									'fair-events'
+								)}
+								checked={
+									settings.unlimited_tickets_in_price_period
+								}
+								onChange={(value) =>
+									setSettings((prev) => ({
+										...prev,
+										unlimited_tickets_in_price_period:
+											value,
+									}))
+								}
+							/>
+							<CheckboxControl
+								label={__(
+									'Per-ticket-type capacity',
+									'fair-events'
+								)}
+								help={__(
+									'Show a Capacity input on each ticket type to cap how many can be sold of that type.',
+									'fair-events'
+								)}
+								checked={settings.show_ticket_type_capacity}
+								onChange={(value) =>
+									setSettings((prev) => ({
+										...prev,
+										show_ticket_type_capacity: value,
+									}))
+								}
+							/>
+							<CheckboxControl
+								label={__(
+									'Multiple pricing periods',
+									'fair-events'
+								)}
+								help={__(
+									'Enable time-based pricing with multiple sale periods (e.g. early bird, regular, late). When off, a single flat price applies for the whole sale window.',
+									'fair-events'
+								)}
+								checked={settings.multiple_pricing_periods}
+								onChange={(value) =>
+									setSettings((prev) => ({
+										...prev,
+										multiple_pricing_periods: value,
+									}))
+								}
+							/>
+							<CheckboxControl
+								label={__('Seats per ticket', 'fair-events')}
+								help={__(
+									'Show a Seats input on each ticket type to let one ticket consume more than one capacity slot (e.g. couples or +1 tickets). When off, every ticket counts as 1 seat.',
+									'fair-events'
+								)}
+								checked={settings.show_seats_per_ticket}
+								onChange={(value) =>
+									setSettings((prev) => ({
+										...prev,
+										show_seats_per_ticket: value,
+									}))
+								}
+							/>
+							<CheckboxControl
+								label={__(
+									'Activity collaborator discount',
+									'fair-events'
+								)}
+								help={__(
+									'Allow a discounted price on each activity option for participants invited by a collaborator linked to that activity. Adds a second price column to the activity options table and enables Manage Invitations.',
+									'fair-events'
+								)}
+								checked={
+									settings.activity_collaborator_discount
+								}
+								onChange={(value) =>
+									setSettings((prev) => ({
+										...prev,
+										activity_collaborator_discount: value,
+									}))
+								}
+							/>
+							{hasAdvancedTickets ? (
+								<Button
+									variant="secondary"
+									isDestructive
+									onClick={() => {
+										if (
+											window.confirm(
+												__(
+													'Switching back to simple ticketing will remove all ticket types, sale periods, and prices. Continue?',
+													'fair-events'
+												)
+											)
+										) {
+											setTicketTypes([]);
+											setSalePeriods([]);
+											setPrices({});
+										}
+									}}
+								>
+									{__(
+										'Switch to simple ticketing',
+										'fair-events'
+									)}
+								</Button>
+							) : (
+								<Button
+									variant="secondary"
+									onClick={() => {
+										addTicketType();
+										addSalePeriod();
+									}}
+								>
+									{__(
+										'Switch to advanced ticketing',
+										'fair-events'
+									)}
+								</Button>
+							)}
 						</VStack>
 					</PanelBody>
 				</Panel>
