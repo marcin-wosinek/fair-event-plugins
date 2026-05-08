@@ -492,12 +492,26 @@ export default function EventAudience({
 			: __('Event', 'fair-events');
 		const dateLabel = new Date().toLocaleDateString();
 
+		const optionLabelById = new Map(
+			ticketOptions.map((o) => [o.id, o.short_name || o.name || ''])
+		);
+		const optionLabelByName = new Map(
+			ticketOptions.map((o) => [o.name, o.short_name || o.name || ''])
+		);
+
 		const rows = filteredParticipants
 			.map((p) => {
 				const name = escape(p.participant_name || '');
-				const activities = escape(
-					(p.ticket_option_names || []).join(', ')
-				);
+				const ids = Array.isArray(p.ticket_option_ids)
+					? p.ticket_option_ids
+					: [];
+				const names = Array.isArray(p.ticket_option_names)
+					? p.ticket_option_names
+					: [];
+				const labels = ids.length
+					? ids.map((id) => optionLabelById.get(id) || '')
+					: names.map((n) => optionLabelByName.get(n) || n);
+				const activities = escape(labels.filter(Boolean).join(', '));
 				const comment = escape(p.admin_comment || '');
 				return `
 					<tr>
