@@ -24,7 +24,12 @@ const LABEL_DISPLAY = {
 	interested: __('Interested', 'fair-events'),
 };
 
-export default function EventAudience({ eventId, eventDateId, audienceUrl }) {
+export default function EventAudience({
+	eventId,
+	eventDateId,
+	audienceUrl,
+	eventTitle,
+}) {
 	const [participants, setParticipants] = useState([]);
 	const [loadingParticipants, setLoadingParticipants] = useState(true);
 	const [ticketOptions, setTicketOptions] = useState([]);
@@ -466,6 +471,130 @@ export default function EventAudience({ eventId, eventDateId, audienceUrl }) {
 		} finally {
 			setIsSavingOptions(false);
 		}
+	};
+
+	const handlePrintList = () => {
+		const escape = (str) =>
+			String(str ?? '').replace(
+				/[&<>"']/g,
+				(c) =>
+					({
+						'&': '&amp;',
+						'<': '&lt;',
+						'>': '&gt;',
+						'"': '&quot;',
+						"'": '&#39;',
+					}[c])
+			);
+
+		const headerTitle = eventTitle
+			? `${eventTitle}`
+			: __('Event', 'fair-events');
+		const dateLabel = new Date().toLocaleDateString();
+
+		const rows = filteredParticipants
+			.map((p) => {
+				const name = escape(p.participant_name || '');
+				const activities = escape(
+					(p.ticket_option_names || []).join(', ')
+				);
+				const comment = escape(p.admin_comment || '');
+				return `
+					<tr>
+						<td class="name">${name}</td>
+						<td class="activities">${activities}</td>
+						<td class="admin-comment">${comment}</td>
+						<td class="checkbox"></td>
+						<td class="checkbox"></td>
+						<td class="notes"></td>
+					</tr>`;
+			})
+			.join('');
+
+		const html = `<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="utf-8" />
+	<title>${escape(headerTitle)} — ${escape(
+			__('Participant list', 'fair-events')
+		)}</title>
+	<style>
+		* { box-sizing: border-box; }
+		body {
+			font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
+			margin: 24px;
+			color: #111;
+		}
+		header { margin-bottom: 16px; }
+		header h1 { margin: 0 0 4px; font-size: 18pt; }
+		header .meta { color: #555; font-size: 10pt; }
+		table { width: 100%; border-collapse: collapse; font-size: 10pt; }
+		th, td {
+			border: 1px solid #555;
+			padding: 6px 8px;
+			vertical-align: top;
+			text-align: left;
+		}
+		th { background: #eee; }
+		td.checkbox { width: 28px; text-align: center; }
+		td.notes { min-width: 140px; }
+		td.activities, td.admin-comment { width: 18%; }
+		td.name { width: 18%; font-weight: 600; }
+		tbody tr { page-break-inside: avoid; height: 38px; }
+		.toolbar { margin-bottom: 12px; }
+		.toolbar button {
+			padding: 6px 12px;
+			font-size: 11pt;
+			cursor: pointer;
+		}
+		@media print {
+			.toolbar { display: none; }
+			body { margin: 12mm; }
+		}
+	</style>
+</head>
+<body>
+	<div class="toolbar">
+		<button type="button" onclick="window.print()">${escape(
+			__('Print', 'fair-events')
+		)}</button>
+	</div>
+	<header>
+		<h1>${escape(headerTitle)}</h1>
+		<div class="meta">${escape(__('Participant list', 'fair-events'))} — ${escape(
+			dateLabel
+		)} (${filteredParticipants.length})</div>
+	</header>
+	<table>
+		<thead>
+			<tr>
+				<th>${escape(__('Name', 'fair-events'))}</th>
+				<th>${escape(__('Activities', 'fair-events'))}</th>
+				<th>${escape(__('Admin comment', 'fair-events'))}</th>
+				<th>${escape(__('Present', 'fair-events'))}</th>
+				<th>${escape(__('Mailing list', 'fair-events'))}</th>
+				<th>${escape(__('Notes', 'fair-events'))}</th>
+			</tr>
+		</thead>
+		<tbody>${rows}</tbody>
+	</table>
+</body>
+</html>`;
+
+		const printWindow = window.open('', '_blank');
+		if (!printWindow) {
+			showToast(
+				__(
+					'Could not open print window. Please allow pop-ups.',
+					'fair-events'
+				),
+				'error'
+			);
+			return;
+		}
+		printWindow.document.open();
+		printWindow.document.write(html);
+		printWindow.document.close();
 	};
 
 	const copyToClipboard = async (text, successMessage) => {
@@ -1037,6 +1166,15 @@ export default function EventAudience({ eventId, eventDateId, audienceUrl }) {
 											'Manage Participants',
 											'fair-events'
 										)}
+									</Button>
+									<Button
+										variant="secondary"
+										onClick={handlePrintList}
+										disabled={
+											filteredParticipants.length === 0
+										}
+									>
+										{__('Print list', 'fair-events')}
 									</Button>
 								</HStack>
 							</VStack>

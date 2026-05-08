@@ -1200,6 +1200,7 @@ export default function ManageEventApp() {
 								eventId={eventDate.event_id}
 								eventDateId={eventDateId}
 								audienceUrl={audienceUrl}
+								eventTitle={title}
 							/>
 						);
 					}
