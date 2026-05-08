@@ -148,6 +148,10 @@ class EventParticipantsController extends WP_REST_Controller {
 							'type'     => array( 'integer', 'null' ),
 							'required' => false,
 						),
+						'admin_comment'       => array(
+							'type'     => array( 'string', 'null' ),
+							'required' => false,
+						),
 					),
 				),
 				array(
@@ -403,6 +407,7 @@ class EventParticipantsController extends WP_REST_Controller {
 						: 0,
 					'ticket_option_names'  => $participant_option_names[ $ep->id ] ?? array(),
 					'ticket_option_ids'    => $participant_option_ids[ $ep->id ] ?? array(),
+					'admin_comment'        => isset( $ep->admin_comment ) && null !== $ep->admin_comment ? $ep->admin_comment : '',
 				);
 			},
 			$event_participants
@@ -488,12 +493,14 @@ class EventParticipantsController extends WP_REST_Controller {
 		$ticket_option_ids   = $request->get_param( 'ticket_option_ids' );
 		$has_ticket_type_id  = $request->has_param( 'ticket_type_id' );
 		$ticket_type_id      = $request->get_param( 'ticket_type_id' );
+		$has_admin_comment   = $request->has_param( 'admin_comment' );
+		$admin_comment       = $request->get_param( 'admin_comment' );
 		$has_options_payload = null !== $ticket_option_names || null !== $ticket_option_ids;
 
-		if ( null === $label && null === $attended && ! $has_options_payload && ! $has_ticket_type_id ) {
+		if ( null === $label && null === $attended && ! $has_options_payload && ! $has_ticket_type_id && ! $has_admin_comment ) {
 			return new WP_Error(
 				'missing_fields',
-				__( 'Provide at least one of: label, attended, ticket_type_id, ticket_option_ids.', 'fair-audience' ),
+				__( 'Provide at least one of: label, attended, ticket_type_id, ticket_option_ids, admin_comment.', 'fair-audience' ),
 				array( 'status' => 400 )
 			);
 		}
@@ -556,6 +563,30 @@ class EventParticipantsController extends WP_REST_Controller {
 				),
 				array( 'id' => (int) $ep_row->id ),
 				array( '%d', '%d' ),
+				array( '%d' )
+			);
+		}
+
+		if ( $has_admin_comment ) {
+			$ep_row = $this->event_participant_repo->get_by_event_date_and_participant( $event_date_id, $participant_id );
+			if ( ! $ep_row ) {
+				return new WP_Error(
+					'update_failed',
+					__( 'Participant row not found for this event date.', 'fair-audience' ),
+					array( 'status' => 404 )
+				);
+			}
+
+			$comment_value = ( null === $admin_comment || '' === $admin_comment )
+				? null
+				: sanitize_textarea_field( $admin_comment );
+
+			// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+			$wpdb->update(
+				$wpdb->prefix . 'fair_audience_event_participants',
+				array( 'admin_comment' => $comment_value ),
+				array( 'id' => (int) $ep_row->id ),
+				array( '%s' ),
 				array( '%d' )
 			);
 		}
@@ -644,6 +675,7 @@ class EventParticipantsController extends WP_REST_Controller {
 				'ticket_type_name'    => $updated_ticket_type_name,
 				'ticket_option_ids'   => $has_options_payload ? $saved_option_ids : null,
 				'ticket_option_names' => $has_options_payload ? $saved_option_names : null,
+				'admin_comment'       => $updated && null !== $updated->admin_comment ? $updated->admin_comment : '',
 			)
 		);
 	}

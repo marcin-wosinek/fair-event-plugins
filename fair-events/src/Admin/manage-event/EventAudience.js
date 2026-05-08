@@ -9,6 +9,7 @@ import {
 	Spinner,
 	SelectControl,
 	TextControl,
+	TextareaControl,
 	__experimentalVStack as VStack,
 	__experimentalHStack as HStack,
 } from '@wordpress/components';
@@ -52,6 +53,7 @@ export default function EventAudience({ eventId, eventDateId, audienceUrl }) {
 	const [editingParticipant, setEditingParticipant] = useState(null);
 	const [editOptionIds, setEditOptionIds] = useState([]);
 	const [editTicketTypeId, setEditTicketTypeId] = useState(null);
+	const [editAdminComment, setEditAdminComment] = useState('');
 	const [isSavingOptions, setIsSavingOptions] = useState(false);
 
 	const [toast, setToast] = useState(null);
@@ -410,6 +412,7 @@ export default function EventAudience({ eventId, eventDateId, audienceUrl }) {
 				? Number(participant.ticket_type_id)
 				: null
 		);
+		setEditAdminComment(participant.admin_comment || '');
 	};
 
 	const handleToggleOptionId = (id) => {
@@ -430,6 +433,7 @@ export default function EventAudience({ eventId, eventDateId, audienceUrl }) {
 				data: {
 					ticket_option_ids: editOptionIds,
 					ticket_type_id: editTicketTypeId,
+					admin_comment: editAdminComment,
 				},
 			});
 			setParticipants((current) =>
@@ -447,6 +451,8 @@ export default function EventAudience({ eventId, eventDateId, audienceUrl }) {
 								ticket_type_name:
 									response.ticket_type_name ??
 									p.ticket_type_name,
+								admin_comment:
+									response.admin_comment ?? editAdminComment,
 						  }
 						: p
 				)
@@ -1385,6 +1391,17 @@ export default function EventAudience({ eventId, eventDateId, audienceUrl }) {
 								__nextHasNoMarginBottom
 							/>
 						))}
+						<TextareaControl
+							label={__('Admin comment', 'fair-events')}
+							help={__(
+								'Internal note about this signup (e.g. "pending 10€ payment"). Only visible to admins.',
+								'fair-events'
+							)}
+							value={editAdminComment}
+							onChange={setEditAdminComment}
+							rows={3}
+							__nextHasNoMarginBottom
+						/>
 						<HStack
 							spacing={3}
 							style={{ justifyContent: 'flex-end' }}

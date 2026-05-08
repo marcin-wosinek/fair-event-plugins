@@ -71,7 +71,7 @@ function fair_audience_activate() {
 	dbDelta( \FairAudience\Database\Schema::get_event_participant_options_table_sql() );
 
 	// Update database version.
-	update_option( 'fair_audience_db_version', '1.32.0' );
+	update_option( 'fair_audience_db_version', '1.33.0' );
 }
 register_activation_hook( __FILE__, __NAMESPACE__ . '\\fair_audience_activate' );
 
@@ -610,6 +610,32 @@ function fair_audience_maybe_upgrade_db() {
 		);
 
 		update_option( 'fair_audience_db_version', '1.32.0' );
+	}
+
+	if ( version_compare( $db_version, '1.33.0', '<' ) ) {
+		global $wpdb;
+
+		$ep_table = $wpdb->prefix . 'fair_audience_event_participants';
+
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+		$column_exists = $wpdb->get_results(
+			$wpdb->prepare(
+				"SHOW COLUMNS FROM %i LIKE 'admin_comment'",
+				$ep_table
+			)
+		);
+
+		if ( empty( $column_exists ) ) {
+			// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.DirectDatabaseQuery.SchemaChange
+			$wpdb->query(
+				$wpdb->prepare(
+					'ALTER TABLE %i ADD COLUMN admin_comment TEXT DEFAULT NULL AFTER attended_at',
+					$ep_table
+				)
+			);
+		}
+
+		update_option( 'fair_audience_db_version', '1.33.0' );
 	}
 }
 add_action( 'plugins_loaded', __NAMESPACE__ . '\\fair_audience_maybe_upgrade_db' );

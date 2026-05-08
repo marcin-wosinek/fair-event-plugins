@@ -85,6 +85,13 @@ class EventParticipant {
 	public $attended_at;
 
 	/**
+	 * Free-form admin note about this signup (nullable TEXT).
+	 *
+	 * @var string|null
+	 */
+	public $admin_comment;
+
+	/**
 	 * Created timestamp.
 	 *
 	 * @var string
@@ -125,6 +132,7 @@ class EventParticipant {
 		$this->ticket_type_id     = isset( $data['ticket_type_id'] ) && $data['ticket_type_id'] ? (int) $data['ticket_type_id'] : null;
 		$this->seats              = isset( $data['seats'] ) ? max( 1, (int) $data['seats'] ) : 1;
 		$this->attended_at        = isset( $data['attended_at'] ) && $data['attended_at'] ? $data['attended_at'] : null;
+		$this->admin_comment      = isset( $data['admin_comment'] ) && '' !== $data['admin_comment'] ? $data['admin_comment'] : null;
 		$this->created_at         = isset( $data['created_at'] ) ? $data['created_at'] : '';
 		$this->updated_at         = isset( $data['updated_at'] ) ? $data['updated_at'] : '';
 	}
@@ -158,9 +166,10 @@ class EventParticipant {
 			'ticket_type_id'     => $this->ticket_type_id,
 			'seats'              => max( 1, (int) $this->seats ),
 			'attended_at'        => $this->attended_at,
+			'admin_comment'      => $this->admin_comment,
 		);
 
-		$format = array( '%d', '%d', '%d', '%s', '%s', '%d', '%d', '%d', '%s' );
+		$format = array( '%d', '%d', '%d', '%s', '%s', '%d', '%d', '%d', '%s', '%s' );
 
 		if ( $this->id ) {
 			// Update existing.
