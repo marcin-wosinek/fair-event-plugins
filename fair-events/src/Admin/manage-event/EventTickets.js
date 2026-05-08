@@ -539,10 +539,17 @@ export default function EventTickets({
 		const updated = [...salePeriods];
 		updated[index] = { ...updated[index], [field]: value };
 
-		if (settings.continues_pricing_period && field === 'sale_end') {
-			const next = index + 1;
-			if (next < updated.length) {
-				updated[next] = { ...updated[next], sale_start: value };
+		if (settings.continues_pricing_period) {
+			if (field === 'sale_end') {
+				const next = index + 1;
+				if (next < updated.length) {
+					updated[next] = { ...updated[next], sale_start: value };
+				}
+			} else if (field === 'sale_start') {
+				const prev = index - 1;
+				if (prev >= 0) {
+					updated[prev] = { ...updated[prev], sale_end: value };
+				}
 			}
 		}
 
@@ -828,231 +835,287 @@ export default function EventTickets({
 
 			{hasAdvancedTickets && (
 				<Card>
-					<CardHeader>
-						<strong>{__('Sale Periods', 'fair-events')}</strong>
-					</CardHeader>
-					<CardBody>
-						{settings.multiple_pricing_periods ? (
-							<VStack spacing={3}>
-								<div style={{ overflowX: 'auto' }}>
-									<table className="wp-list-table widefat striped">
-										<thead>
-											<tr>
-												<th>
-													{__('Name', 'fair-events')}
-												</th>
-												<th>
-													{__('From', 'fair-events')}
-												</th>
-												<th>
-													{__('Until', 'fair-events')}
-												</th>
-												<th />
-											</tr>
-										</thead>
-										<tbody>
-											{salePeriods.map(
-												(period, pIndex) => {
-													const isContinuous =
-														settings.continues_pricing_period;
-													const isFirst =
-														pIndex === 0;
-													const isLast =
-														pIndex ===
-														salePeriods.length - 1;
-													const fromValue =
-														isContinuous && !isFirst
-															? salePeriods[
-																	pIndex - 1
-															  ]?.sale_end || ''
-															: period.sale_start ||
-															  '';
-													const untilValue =
-														isContinuous && isLast
-															? period.sale_end ||
-															  endDatetime
-															: period.sale_end ||
-															  '';
+					<Panel>
+						<PanelBody
+							title={__('Sale Periods', 'fair-events')}
+							initialOpen={false}
+						>
+							<VStack spacing={4}>
+								{salePeriods.length > 0 && (
+									<HStack spacing={4} justify="flex-start">
+										<div>
+											<strong>
+												{__(
+													'Sale start at:',
+													'fair-events'
+												)}
+											</strong>{' '}
+											{salePeriods[0].sale_start
+												? salePeriods[0].sale_start.replace(
+														'T',
+														' '
+												  )
+												: __('—', 'fair-events')}
+										</div>
+										<div>
+											<strong>
+												{__(
+													'Sale end at:',
+													'fair-events'
+												)}
+											</strong>{' '}
+											{(() => {
+												const last =
+													salePeriods[
+														salePeriods.length - 1
+													];
+												const value =
+													last.sale_end ||
+													endDatetime;
+												return value
+													? value.replace('T', ' ')
+													: __('—', 'fair-events');
+											})()}
+										</div>
+									</HStack>
+								)}
+								{settings.multiple_pricing_periods ? (
+									<VStack spacing={3}>
+										<div style={{ overflowX: 'auto' }}>
+											<table className="wp-list-table widefat striped">
+												<thead>
+													<tr>
+														<th>
+															{__(
+																'Name',
+																'fair-events'
+															)}
+														</th>
+														<th>
+															{__(
+																'From',
+																'fair-events'
+															)}
+														</th>
+														<th>
+															{__(
+																'Until',
+																'fair-events'
+															)}
+														</th>
+														<th />
+													</tr>
+												</thead>
+												<tbody>
+													{salePeriods.map(
+														(period, pIndex) => {
+															const isContinuous =
+																settings.continues_pricing_period;
+															const isFirst =
+																pIndex === 0;
+															const isLast =
+																pIndex ===
+																salePeriods.length -
+																	1;
+															const fromValue =
+																isContinuous &&
+																!isFirst
+																	? salePeriods[
+																			pIndex -
+																				1
+																	  ]
+																			?.sale_end ||
+																	  ''
+																	: period.sale_start ||
+																	  '';
+															const untilValue =
+																isContinuous &&
+																isLast
+																	? period.sale_end ||
+																	  endDatetime
+																	: period.sale_end ||
+																	  '';
 
-													return (
-														<tr
-															key={
-																period.id ||
-																`new-${pIndex}`
-															}
-														>
-															<td>
-																<TextControl
-																	placeholder={__(
-																		'Period name',
-																		'fair-events'
-																	)}
-																	value={
-																		period.name ||
-																		''
-																	}
-																	onChange={(
-																		v
-																	) =>
-																		updateSalePeriod(
-																			pIndex,
-																			'name',
-																			v
-																		)
-																	}
-																	__nextHasNoMarginBottom
-																/>
-															</td>
-															<td>
-																{isContinuous &&
-																!isFirst ? (
-																	<span>
-																		{fromValue.replace(
-																			'T',
-																			' '
-																		)}
-																	</span>
-																) : (
-																	<TextControl
-																		type="datetime-local"
-																		value={
-																			fromValue
-																				? fromValue.replace(
-																						' ',
-																						'T'
-																				  )
-																				: ''
-																		}
-																		onChange={(
-																			v
-																		) =>
-																			updateSalePeriod(
-																				pIndex,
-																				'sale_start',
-																				v.replace(
-																					'T',
-																					' '
-																				)
-																			)
-																		}
-																		__nextHasNoMarginBottom
-																	/>
-																)}
-															</td>
-															<td>
-																<TextControl
-																	type="datetime-local"
-																	value={
-																		untilValue
-																			? untilValue.replace(
-																					' ',
-																					'T'
-																			  )
-																			: ''
-																	}
-																	onChange={(
-																		v
-																	) =>
-																		updateSalePeriod(
-																			pIndex,
-																			'sale_end',
-																			v.replace(
-																				'T',
-																				' '
-																			)
-																		)
-																	}
-																	__nextHasNoMarginBottom
-																/>
-															</td>
-															<td>
-																<Button
-																	variant="tertiary"
-																	isDestructive
-																	size="small"
-																	onClick={() =>
-																		removeSalePeriod(
-																			pIndex
-																		)
+															return (
+																<tr
+																	key={
+																		period.id ||
+																		`new-${pIndex}`
 																	}
 																>
-																	{__(
-																		'Remove',
-																		'fair-events'
-																	)}
-																</Button>
-															</td>
-														</tr>
-													);
+																	<td>
+																		<TextControl
+																			placeholder={__(
+																				'Period name',
+																				'fair-events'
+																			)}
+																			value={
+																				period.name ||
+																				''
+																			}
+																			onChange={(
+																				v
+																			) =>
+																				updateSalePeriod(
+																					pIndex,
+																					'name',
+																					v
+																				)
+																			}
+																			__nextHasNoMarginBottom
+																		/>
+																	</td>
+																	<td>
+																		<TextControl
+																			type="datetime-local"
+																			value={
+																				fromValue
+																					? fromValue.replace(
+																							' ',
+																							'T'
+																					  )
+																					: ''
+																			}
+																			onChange={(
+																				v
+																			) =>
+																				updateSalePeriod(
+																					pIndex,
+																					'sale_start',
+																					v.replace(
+																						'T',
+																						' '
+																					)
+																				)
+																			}
+																			__nextHasNoMarginBottom
+																		/>
+																	</td>
+																	<td>
+																		<TextControl
+																			type="datetime-local"
+																			value={
+																				untilValue
+																					? untilValue.replace(
+																							' ',
+																							'T'
+																					  )
+																					: ''
+																			}
+																			onChange={(
+																				v
+																			) =>
+																				updateSalePeriod(
+																					pIndex,
+																					'sale_end',
+																					v.replace(
+																						'T',
+																						' '
+																					)
+																				)
+																			}
+																			__nextHasNoMarginBottom
+																		/>
+																	</td>
+																	<td>
+																		<Button
+																			variant="tertiary"
+																			isDestructive
+																			size="small"
+																			onClick={() =>
+																				removeSalePeriod(
+																					pIndex
+																				)
+																			}
+																		>
+																			{__(
+																				'Remove',
+																				'fair-events'
+																			)}
+																		</Button>
+																	</td>
+																</tr>
+															);
+														}
+													)}
+												</tbody>
+											</table>
+										</div>
+										<HStack justify="flex-start">
+											<Button
+												variant="secondary"
+												size="small"
+												onClick={addSalePeriod}
+											>
+												{__(
+													'+ Add Period',
+													'fair-events'
+												)}
+											</Button>
+										</HStack>
+									</VStack>
+								) : (
+									salePeriods.length > 0 && (
+										<HStack
+											alignment="flex-end"
+											spacing={3}
+											justify="flex-start"
+										>
+											<TextControl
+												label={__(
+													'From',
+													'fair-events'
+												)}
+												type="datetime-local"
+												value={
+													salePeriods[0].sale_start
+														? salePeriods[0].sale_start.replace(
+																' ',
+																'T'
+														  )
+														: ''
 												}
-											)}
-										</tbody>
-									</table>
-								</div>
-								<HStack justify="flex-start">
-									<Button
-										variant="secondary"
-										size="small"
-										onClick={addSalePeriod}
-									>
-										{__('+ Add Period', 'fair-events')}
-									</Button>
-								</HStack>
+												onChange={(v) =>
+													updateSalePeriod(
+														0,
+														'sale_start',
+														v.replace('T', ' ')
+													)
+												}
+												__nextHasNoMarginBottom
+											/>
+											<TextControl
+												label={__(
+													'Until',
+													'fair-events'
+												)}
+												type="datetime-local"
+												value={
+													salePeriods[0].sale_end ||
+													endDatetime ||
+													''
+														? (
+																salePeriods[0]
+																	.sale_end ||
+																endDatetime
+														  ).replace(' ', 'T')
+														: ''
+												}
+												onChange={(v) =>
+													updateSalePeriod(
+														0,
+														'sale_end',
+														v.replace('T', ' ')
+													)
+												}
+												__nextHasNoMarginBottom
+											/>
+										</HStack>
+									)
+								)}
 							</VStack>
-						) : (
-							salePeriods.length > 0 && (
-								<HStack
-									alignment="flex-end"
-									spacing={3}
-									justify="flex-start"
-								>
-									<TextControl
-										label={__('From', 'fair-events')}
-										type="datetime-local"
-										value={
-											salePeriods[0].sale_start
-												? salePeriods[0].sale_start.replace(
-														' ',
-														'T'
-												  )
-												: ''
-										}
-										onChange={(v) =>
-											updateSalePeriod(
-												0,
-												'sale_start',
-												v.replace('T', ' ')
-											)
-										}
-										__nextHasNoMarginBottom
-									/>
-									<TextControl
-										label={__('Until', 'fair-events')}
-										type="datetime-local"
-										value={
-											salePeriods[0].sale_end ||
-											endDatetime ||
-											''
-												? (
-														salePeriods[0]
-															.sale_end ||
-														endDatetime
-												  ).replace(' ', 'T')
-												: ''
-										}
-										onChange={(v) =>
-											updateSalePeriod(
-												0,
-												'sale_end',
-												v.replace('T', ' ')
-											)
-										}
-										__nextHasNoMarginBottom
-									/>
-								</HStack>
-							)
-						)}
-					</CardBody>
+						</PanelBody>
+					</Panel>
 				</Card>
 			)}
 
