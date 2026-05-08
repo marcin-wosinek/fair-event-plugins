@@ -520,6 +520,18 @@ export default function EventAudience({ eventId, eventDateId, audienceUrl }) {
 			.join('\n\n');
 	};
 
+	const buildActivitySummary = () => {
+		if (ticketOptions.length === 0) return '';
+		return ticketOptions
+			.map((opt) => {
+				const count = filteredParticipants.filter((p) =>
+					participantHasOption(p, opt)
+				).length;
+				return `- ${opt.name}: ${count}`;
+			})
+			.join('\n');
+	};
+
 	const buildCopyByParticipant = () => {
 		const sorted = [...filteredParticipants].sort((a, b) =>
 			(a.participant_name || '').localeCompare(b.participant_name || '')
@@ -592,6 +604,24 @@ export default function EventAudience({ eventId, eventDateId, audienceUrl }) {
 								}
 							>
 								{__('Activity', 'fair-events')}
+							</Button>
+							<Button
+								variant="secondary"
+								onClick={() =>
+									copyToClipboard(
+										buildActivitySummary(),
+										__(
+											'Copied activity summary',
+											'fair-events'
+										)
+									)
+								}
+								disabled={
+									filteredParticipants.length === 0 ||
+									ticketOptions.length === 0
+								}
+							>
+								{__('Activity summary', 'fair-events')}
 							</Button>
 							<Button
 								variant="secondary"
