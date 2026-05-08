@@ -366,6 +366,44 @@ class EventParticipantRepository {
 	}
 
 	/**
+	 * Count active seats reserved for a specific ticket option (activity).
+	 *
+	 * Sums seats on event_participant rows that have an entry in the
+	 * fair_audience_event_participant_options junction table for the given
+	 * option, restricted to rows with label = 'signed_up' or unexpired
+	 * 'pending_payment'. Used for per-activity capacity enforcement.
+	 *
+	 * @param int $ticket_option_id Ticket option ID.
+	 * @return int Number of seats held against the option.
+	 */
+	public function count_seats_for_ticket_option( $ticket_option_id ) {
+		global $wpdb;
+
+		$participants_table = $this->get_table_name();
+		$options_table      = $wpdb->prefix . 'fair_audience_event_participant_options';
+		$now                = current_time( 'mysql' );
+
+		$count = $wpdb->get_var(
+			$wpdb->prepare(
+				"SELECT COALESCE(SUM(ep.seats), 0)
+				 FROM %i ep
+				 INNER JOIN %i epo ON epo.event_participant_id = ep.id
+				 WHERE epo.ticket_option_id = %d
+				 AND (
+				     ep.label = 'signed_up'
+				     OR ( ep.label = 'pending_payment' AND ep.payment_expires_at IS NOT NULL AND ep.payment_expires_at > %s )
+				 )",
+				$participants_table,
+				$options_table,
+				$ticket_option_id,
+				$now
+			)
+		);
+
+		return (int) $count;
+	}
+
+	/**
 	 * Find an event participant row by its fair-payment transaction ID.
 	 *
 	 * @param int $transaction_id fair-payment transaction ID.

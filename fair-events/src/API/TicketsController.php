@@ -210,6 +210,10 @@ class TicketsController extends WP_REST_Controller {
 			$discounted_price     = ( null === $discounted_price_raw || '' === $discounted_price_raw )
 				? null
 				: (float) $discounted_price_raw;
+			$capacity_raw         = $option_data['capacity'] ?? null;
+			$capacity             = ( null === $capacity_raw || '' === $capacity_raw )
+				? null
+				: absint( $capacity_raw );
 			$collaborator_ids     = isset( $option_data['collaborator_ids'] ) && is_array( $option_data['collaborator_ids'] )
 				? array_values( array_unique( array_filter( array_map( 'absint', $option_data['collaborator_ids'] ) ) ) )
 				: array();
@@ -218,11 +222,11 @@ class TicketsController extends WP_REST_Controller {
 			}
 			$option_id = isset( $option_data['id'] ) ? (int) $option_data['id'] : 0;
 			if ( $option_id && in_array( $option_id, $existing_ids, true ) ) {
-				TicketOption::update( $option_id, $name, $price, $index, $short_name, $discounted_price );
+				TicketOption::update( $option_id, $name, $price, $index, $short_name, $discounted_price, $capacity );
 				TicketOptionCollaborator::sync_for_option( $option_id, $collaborator_ids );
 				$kept_ids[] = $option_id;
 			} else {
-				$new_id = TicketOption::create( $event_date_id, $name, $price, $index, $short_name, $discounted_price );
+				$new_id = TicketOption::create( $event_date_id, $name, $price, $index, $short_name, $discounted_price, $capacity );
 				if ( $new_id ) {
 					TicketOptionCollaborator::sync_for_option( (int) $new_id, $collaborator_ids );
 					$kept_ids[] = $new_id;
@@ -406,8 +410,12 @@ class TicketsController extends WP_REST_Controller {
 			$discounted_price     = ( null === $discounted_price_raw || '' === $discounted_price_raw )
 				? null
 				: (float) $discounted_price_raw;
+			$capacity_raw         = $option_data['capacity'] ?? null;
+			$capacity             = ( null === $capacity_raw || '' === $capacity_raw )
+				? null
+				: absint( $capacity_raw );
 			if ( '' !== $name ) {
-				$new_id = TicketOption::create( $event_date_id, $name, $price, $index, $short_name, $discounted_price );
+				$new_id = TicketOption::create( $event_date_id, $name, $price, $index, $short_name, $discounted_price, $capacity );
 				if ( $new_id && isset( $option_data['collaborator_ids'] ) && is_array( $option_data['collaborator_ids'] ) ) {
 					$collaborator_ids = array_values(
 						array_unique( array_filter( array_map( 'absint', $option_data['collaborator_ids'] ) ) )

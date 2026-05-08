@@ -219,6 +219,15 @@
 	flex-shrink: 0;
 }
 
+.fair-audience-ticket-option-full {
+	opacity: 0.6;
+	cursor: not-allowed;
+}
+
+.fair-audience-ticket-option-full input[type="checkbox"] {
+	cursor: not-allowed;
+}
+
 /* Invitation notice */
 .fair-audience-invitation-notice {
 	background-color: #d1ecf1;

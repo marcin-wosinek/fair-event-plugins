@@ -372,6 +372,12 @@ export default function EventTickets({
 					o.discounted_price !== ''
 						? o.discounted_price
 						: null,
+				capacity:
+					o.capacity !== undefined &&
+					o.capacity !== null &&
+					o.capacity !== ''
+						? o.capacity
+						: null,
 				collaborator_ids: Array.isArray(o.collaborator_ids)
 					? o.collaborator_ids
 					: [],
@@ -1686,6 +1692,12 @@ export default function EventTickets({
 												)}
 												<th>
 													{__(
+														'Capacity',
+														'fair-events'
+													)}
+												</th>
+												<th>
+													{__(
 														'Collaborator(s)',
 														'fair-events'
 													)}
@@ -1861,6 +1873,55 @@ export default function EventTickets({
 															</td>
 														)}
 														<td>
+															<TextControl
+																type="number"
+																min="0"
+																placeholder={__(
+																	'Unlimited',
+																	'fair-events'
+																)}
+																value={
+																	option.capacity !==
+																		null &&
+																	option.capacity !==
+																		undefined &&
+																	option.capacity !==
+																		''
+																		? String(
+																				option.capacity
+																		  )
+																		: ''
+																}
+																onChange={(
+																	v
+																) => {
+																	const updated =
+																		[
+																			...options,
+																		];
+																	updated[
+																		index
+																	] = {
+																		...updated[
+																			index
+																		],
+																		capacity:
+																			v ===
+																			''
+																				? null
+																				: parseInt(
+																						v,
+																						10
+																				  ),
+																	};
+																	setOptions(
+																		updated
+																	);
+																}}
+																__nextHasNoMarginBottom
+															/>
+														</td>
+														<td>
 															<FormTokenField
 																value={collaboratorIds.map(
 																	(id) =>
@@ -1955,6 +2016,7 @@ export default function EventTickets({
 											short_name: '',
 											price: 0,
 											discounted_price: null,
+											capacity: null,
 											collaborator_ids: [],
 											sort_order: options.length,
 										},

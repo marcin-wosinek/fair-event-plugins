@@ -238,10 +238,20 @@ if ( $pricing_event_date_id && class_exists( \FairEvents\Models\TicketOption::cl
 				(float) $best_discount_rule->discount_value
 			);
 		}
+
+		$is_full = false;
+		if ( null !== $opt->capacity ) {
+			$reserved = $event_participant_repository->count_seats_for_ticket_option( (int) $opt->id );
+			if ( $reserved >= (int) $opt->capacity ) {
+				$is_full = true;
+			}
+		}
+
 		$ticket_options_for_display[] = array(
-			'id'    => (int) $opt->id,
-			'name'  => $opt->name,
-			'price' => $opt_price,
+			'id'      => (int) $opt->id,
+			'name'    => $opt->name,
+			'price'   => $opt_price,
+			'is_full' => $is_full,
 		);
 	}
 }
@@ -390,9 +400,21 @@ $render_ticket_options = static function () use ( $ticket_options_for_display, $
 				$opt_label .= ' — ' . __( 'free', 'fair-audience' );
 			}
 		}
+		$is_full = ! empty( $opt['is_full'] );
+		if ( $is_full ) {
+			$opt_label .= ' — ' . __( 'full', 'fair-audience' );
+		}
 		$checkbox_id = esc_attr( $form_id ) . '-opt-' . (int) $opt['id'];
-		echo '<label class="fair-audience-ticket-option-item" for="' . $checkbox_id . '">';
-		echo '<input type="checkbox" name="ticket_option_ids[]" id="' . $checkbox_id . '" value="' . (int) $opt['id'] . '" data-option-price="' . esc_attr( number_format( $opt['price'], 2, '.', '' ) ) . '" /> ';
+		$classes     = 'fair-audience-ticket-option-item';
+		if ( $is_full ) {
+			$classes .= ' fair-audience-ticket-option-full';
+		}
+		echo '<label class="' . esc_attr( $classes ) . '" for="' . $checkbox_id . '">';
+		echo '<input type="checkbox" name="ticket_option_ids[]" id="' . $checkbox_id . '" value="' . (int) $opt['id'] . '" data-option-price="' . esc_attr( number_format( $opt['price'], 2, '.', '' ) ) . '"';
+		if ( $is_full ) {
+			echo ' disabled';
+		}
+		echo ' /> ';
 		echo esc_html( $opt_label );
 		echo '</label>';
 	}

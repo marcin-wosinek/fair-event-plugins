@@ -59,6 +59,13 @@ class TicketOption {
 	public $discounted_price;
 
 	/**
+	 * Capacity (max signups for this option). Null = unlimited.
+	 *
+	 * @var int|null
+	 */
+	public $capacity;
+
+	/**
 	 * Sort order
 	 *
 	 * @var int
@@ -155,9 +162,10 @@ class TicketOption {
 	 * @param int         $sort_order       Sort order.
 	 * @param string|null $short_name       Optional short name.
 	 * @param float|null  $discounted_price Optional discounted price.
+	 * @param int|null    $capacity         Optional capacity (null = unlimited).
 	 * @return int|false The option ID on success, false on failure.
 	 */
-	public static function create( $event_date_id, $name, $price, $sort_order, $short_name = null, $discounted_price = null ) {
+	public static function create( $event_date_id, $name, $price, $sort_order, $short_name = null, $discounted_price = null, $capacity = null ) {
 		global $wpdb;
 
 		$table_name = self::get_table_name();
@@ -170,9 +178,10 @@ class TicketOption {
 				'short_name'       => $short_name,
 				'price'            => (float) $price,
 				'discounted_price' => null !== $discounted_price ? (float) $discounted_price : null,
+				'capacity'         => null !== $capacity ? (int) $capacity : null,
 				'sort_order'       => $sort_order,
 			),
-			array( '%d', '%s', '%s', '%f', '%f', '%d' )
+			array( '%d', '%s', '%s', '%f', '%f', '%d', '%d' )
 		);
 
 		if ( $result ) {
@@ -191,9 +200,10 @@ class TicketOption {
 	 * @param int         $sort_order       Sort order.
 	 * @param string|null $short_name       Optional short name.
 	 * @param float|null  $discounted_price Optional discounted price.
+	 * @param int|null    $capacity         Optional capacity (null = unlimited).
 	 * @return bool True on success, false on failure.
 	 */
-	public static function update( $id, $name, $price, $sort_order, $short_name = null, $discounted_price = null ) {
+	public static function update( $id, $name, $price, $sort_order, $short_name = null, $discounted_price = null, $capacity = null ) {
 		global $wpdb;
 
 		$table_name = self::get_table_name();
@@ -205,10 +215,11 @@ class TicketOption {
 				'short_name'       => $short_name,
 				'price'            => (float) $price,
 				'discounted_price' => null !== $discounted_price ? (float) $discounted_price : null,
+				'capacity'         => null !== $capacity ? (int) $capacity : null,
 				'sort_order'       => $sort_order,
 			),
 			array( 'id' => $id ),
-			array( '%s', '%s', '%f', '%f', '%d' ),
+			array( '%s', '%s', '%f', '%f', '%d', '%d' ),
 			array( '%d' )
 		);
 
@@ -251,6 +262,9 @@ class TicketOption {
 		$item->discounted_price = isset( $row->discounted_price ) && null !== $row->discounted_price
 			? (float) $row->discounted_price
 			: null;
+		$item->capacity         = isset( $row->capacity ) && null !== $row->capacity
+			? (int) $row->capacity
+			: null;
 		$item->sort_order       = (int) $row->sort_order;
 		$item->created_at       = $row->created_at;
 		$item->updated_at       = $row->updated_at;
@@ -271,6 +285,7 @@ class TicketOption {
 			'short_name'       => $this->short_name,
 			'price'            => $this->price,
 			'discounted_price' => $this->discounted_price,
+			'capacity'         => $this->capacity,
 			'sort_order'       => $this->sort_order,
 			'created_at'       => $this->created_at,
 			'updated_at'       => $this->updated_at,

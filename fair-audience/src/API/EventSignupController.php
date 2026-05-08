@@ -712,9 +712,17 @@ class EventSignupController extends WP_REST_Controller {
 
 		foreach ( $option_ids as $id ) {
 			$id = absint( $id );
-			if ( $id && isset( $available_by_id[ $id ] ) ) {
-				$valid_options[] = $available_by_id[ $id ];
+			if ( ! $id || ! isset( $available_by_id[ $id ] ) ) {
+				continue;
 			}
+			$opt = $available_by_id[ $id ];
+			if ( null !== $opt->capacity ) {
+				$reserved = $this->event_participant_repository->count_seats_for_ticket_option( (int) $opt->id );
+				if ( $reserved >= (int) $opt->capacity ) {
+					continue;
+				}
+			}
+			$valid_options[] = $opt;
 		}
 
 		return $valid_options;

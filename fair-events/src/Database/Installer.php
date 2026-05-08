@@ -195,6 +195,11 @@ class Installer {
 			self::migrate_to_3_7_0();
 		}
 
+		// Run migration if upgrading from pre-3.8.0 (add capacity to ticket_options).
+		if ( version_compare( $current_version, '3.8.0', '<' ) ) {
+			self::migrate_to_3_8_0();
+		}
+
 		// Update database version
 		Schema::update_db_version( Schema::DB_VERSION );
 	}
@@ -305,6 +310,10 @@ class Installer {
 
 			if ( version_compare( $current_version, '3.7.0', '<' ) ) {
 				self::migrate_to_3_7_0();
+			}
+
+			if ( version_compare( $current_version, '3.8.0', '<' ) ) {
+				self::migrate_to_3_8_0();
 			}
 
 			// Install/update tables
@@ -1206,6 +1215,33 @@ class Installer {
 			$wpdb->query(
 				$wpdb->prepare(
 					'ALTER TABLE %i ADD COLUMN discounted_price DECIMAL(10,2) DEFAULT NULL AFTER price',
+					$table_name
+				)
+			);
+		}
+	}
+
+	/**
+	 * Migrate to version 3.8.0 - Add capacity column to ticket_options table.
+	 *
+	 * @return void
+	 */
+	private static function migrate_to_3_8_0() {
+		global $wpdb;
+
+		$table_name = $wpdb->prefix . 'fair_events_ticket_options';
+
+		$column_exists = $wpdb->get_results(
+			$wpdb->prepare(
+				"SHOW COLUMNS FROM %i LIKE 'capacity'",
+				$table_name
+			)
+		);
+
+		if ( empty( $column_exists ) ) {
+			$wpdb->query(
+				$wpdb->prepare(
+					'ALTER TABLE %i ADD COLUMN capacity INT UNSIGNED DEFAULT NULL AFTER discounted_price',
 					$table_name
 				)
 			);

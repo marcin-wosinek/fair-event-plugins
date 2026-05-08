@@ -17,7 +17,7 @@ class Schema {
 	/**
 	 * Database version
 	 */
-	const DB_VERSION = '3.7.0';
+	const DB_VERSION = '3.8.0';
 
 	/**
 	 * Get the SQL for creating the fair_event_dates table
@@ -403,6 +403,7 @@ class Schema {
 			short_name VARCHAR(255) DEFAULT NULL,
 			price DECIMAL(10,2) NOT NULL DEFAULT 0.00,
 			discounted_price DECIMAL(10,2) DEFAULT NULL,
+			capacity INT UNSIGNED DEFAULT NULL,
 			sort_order INT UNSIGNED NOT NULL DEFAULT 0,
 			created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
 			updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
