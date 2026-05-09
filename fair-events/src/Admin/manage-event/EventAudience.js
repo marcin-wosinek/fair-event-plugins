@@ -77,6 +77,7 @@ export default function EventAudience({
 	const [editOptionIds, setEditOptionIds] = useState([]);
 	const [editTicketTypeId, setEditTicketTypeId] = useState(null);
 	const [editAdminComment, setEditAdminComment] = useState('');
+	const [editStaleDecision, setEditStaleDecision] = useState(null);
 	const [isSavingOptions, setIsSavingOptions] = useState(false);
 
 	const [toast, setToast] = useState(null);
@@ -421,72 +422,6 @@ export default function EventAudience({
 		});
 	};
 
-	const handleConfirmStale = async (participant) => {
-		try {
-			await apiFetch({
-				path: `/fair-audience/v1/event-dates/${eventDateId}/participants/${participant.participant_id}`,
-				method: 'PUT',
-				data: { label: 'signed_up' },
-			});
-			setParticipants((current) =>
-				current.map((p) =>
-					p.id === participant.id
-						? { ...p, label: 'signed_up', payment_expires_at: null }
-						: p
-				)
-			);
-			setEditingParticipant(null);
-			showToast(__('Signup confirmed.', 'fair-events'));
-		} catch (err) {
-			showToast(
-				__('Error confirming signup: ', 'fair-events') +
-					(err.message || ''),
-				'error'
-			);
-		}
-	};
-
-	const handleCancelStale = async (participant) => {
-		const confirmMessage = sprintf(
-			/* translators: %s: participant name */
-			__(
-				'Cancel %s’s expired signup? The seat will be freed and the record kept as Interested.',
-				'fair-events'
-			),
-			participant.participant_name ||
-				__('this participant', 'fair-events')
-		);
-		if (!window.confirm(confirmMessage)) {
-			return;
-		}
-		try {
-			await apiFetch({
-				path: `/fair-audience/v1/event-dates/${eventDateId}/participants/${participant.participant_id}`,
-				method: 'PUT',
-				data: { label: 'interested' },
-			});
-			setParticipants((current) =>
-				current.map((p) =>
-					p.id === participant.id
-						? {
-								...p,
-								label: 'interested',
-								payment_expires_at: null,
-						  }
-						: p
-				)
-			);
-			setEditingParticipant(null);
-			showToast(__('Expired signup moved to Interested.', 'fair-events'));
-		} catch (err) {
-			showToast(
-				__('Error cancelling signup: ', 'fair-events') +
-					(err.message || ''),
-				'error'
-			);
-		}
-	};
-
 	const handleOpenEditOptions = (participant) => {
 		setEditingParticipant(participant);
 		const initialIds = Array.isArray(participant.ticket_option_ids)
@@ -507,6 +442,7 @@ export default function EventAudience({
 				: null
 		);
 		setEditAdminComment(participant.admin_comment || '');
+		setEditStaleDecision(null);
 	};
 
 	const handleToggleOptionId = (id) => {
@@ -521,14 +457,24 @@ export default function EventAudience({
 		if (!editingParticipant) return;
 		setIsSavingOptions(true);
 		try {
+			const data = {
+				ticket_option_ids: editOptionIds,
+				ticket_type_id: editTicketTypeId,
+				admin_comment: editAdminComment,
+			};
+			const stalenessResolved =
+				isStalePendingPayment(editingParticipant) &&
+				editStaleDecision !== null;
+			if (stalenessResolved) {
+				data.label =
+					editStaleDecision === 'confirm'
+						? 'signed_up'
+						: 'interested';
+			}
 			const response = await apiFetch({
 				path: `/fair-audience/v1/event-dates/${eventDateId}/participants/${editingParticipant.participant_id}`,
 				method: 'PUT',
-				data: {
-					ticket_option_ids: editOptionIds,
-					ticket_type_id: editTicketTypeId,
-					admin_comment: editAdminComment,
-				},
+				data,
 			});
 			setParticipants((current) =>
 				current.map((p) =>
@@ -547,11 +493,27 @@ export default function EventAudience({
 									p.ticket_type_name,
 								admin_comment:
 									response.admin_comment ?? editAdminComment,
+								...(stalenessResolved
+									? {
+											label: data.label,
+											payment_expires_at: null,
+									  }
+									: {}),
 						  }
 						: p
 				)
 			);
 			setEditingParticipant(null);
+			if (stalenessResolved) {
+				showToast(
+					editStaleDecision === 'confirm'
+						? __('Signup confirmed.', 'fair-events')
+						: __(
+								'Expired signup moved to Interested.',
+								'fair-events'
+						  )
+				);
+			}
 		} catch (err) {
 			showToast(
 				__('Error saving options: ', 'fair-events') + err.message,
@@ -1767,28 +1729,52 @@ export default function EventAudience({
 										fontSize: '13px',
 									}}
 								>
-									{__(
-										'Confirm to keep this signup on the list and count it toward activity capacity (e.g. cash payment promised). Cancel to mark it as Interested and free the seat — the record is kept for history.',
-										'fair-events'
-									)}
+									{editStaleDecision === 'confirm'
+										? __(
+												'Will mark as Signed up and count toward activity capacity. Click Save to apply.',
+												'fair-events'
+										  )
+										: editStaleDecision === 'cancel'
+										? __(
+												'Will mark as Interested and free the seat (record kept for history). Click Save to apply.',
+												'fair-events'
+										  )
+										: __(
+												'Pick how to resolve this expired hold, edit any other fields below, then Save to apply everything in one go.',
+												'fair-events'
+										  )}
 								</p>
 								<HStack spacing={2}>
 									<Button
-										variant="primary"
+										variant={
+											editStaleDecision === 'confirm'
+												? 'primary'
+												: 'secondary'
+										}
 										onClick={() =>
-											handleConfirmStale(
-												editingParticipant
+											setEditStaleDecision(
+												editStaleDecision === 'confirm'
+													? null
+													: 'confirm'
 											)
 										}
 									>
 										{__('Confirm signup', 'fair-events')}
 									</Button>
 									<Button
-										variant="secondary"
-										isDestructive
+										variant={
+											editStaleDecision === 'cancel'
+												? 'primary'
+												: 'secondary'
+										}
+										isDestructive={
+											editStaleDecision !== 'cancel'
+										}
 										onClick={() =>
-											handleCancelStale(
-												editingParticipant
+											setEditStaleDecision(
+												editStaleDecision === 'cancel'
+													? null
+													: 'cancel'
 											)
 										}
 									>
