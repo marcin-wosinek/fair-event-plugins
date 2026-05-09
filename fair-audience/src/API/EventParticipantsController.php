@@ -402,6 +402,7 @@ class EventParticipantsController extends WP_REST_Controller {
 						: null,
 					'attended_at'          => $ep->attended_at,
 					'created_at'           => $ep->created_at,
+					'payment_expires_at'   => $ep->payment_expires_at,
 					'photo_likes_received' => isset( $likes_data[ $ep->participant_id ] )
 						? (int) $likes_data[ $ep->participant_id ]->likes_count
 						: 0,

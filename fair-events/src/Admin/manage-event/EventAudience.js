@@ -24,6 +24,24 @@ const LABEL_DISPLAY = {
 	interested: __('Interested', 'fair-events'),
 };
 
+// A pending_payment row is "stale" once its hold has lapsed: capacity counters
+// stop including it (matching the registration block) and the row needs admin
+// triage — confirm (cash payment etc.) or cancel.
+const isStalePendingPayment = (p) => {
+	if (!p || p.label !== 'pending_payment') return false;
+	if (!p.payment_expires_at) return true;
+	return new Date(p.payment_expires_at).getTime() <= Date.now();
+};
+
+// Whether a participant currently occupies a seat for capacity purposes.
+// Mirrors EventParticipantRepository::count_seats_for_ticket_option in PHP.
+const occupiesSeat = (p) => {
+	if (!p) return false;
+	if (p.label === 'signed_up') return true;
+	if (p.label === 'pending_payment') return !isStalePendingPayment(p);
+	return false;
+};
+
 export default function EventAudience({
 	eventId,
 	eventDateId,
@@ -231,6 +249,11 @@ export default function EventAudience({
 		return c;
 	}, [participants]);
 
+	const stalePending = useMemo(
+		() => participants.filter(isStalePendingPayment),
+		[participants]
+	);
+
 	const handleSort = (column) => {
 		if (sortBy === column) {
 			setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc');
@@ -396,6 +419,72 @@ export default function EventAudience({
 				'error'
 			);
 		});
+	};
+
+	const handleConfirmStale = async (participant) => {
+		try {
+			await apiFetch({
+				path: `/fair-audience/v1/event-dates/${eventDateId}/participants/${participant.participant_id}`,
+				method: 'PUT',
+				data: { label: 'signed_up' },
+			});
+			setParticipants((current) =>
+				current.map((p) =>
+					p.id === participant.id
+						? { ...p, label: 'signed_up', payment_expires_at: null }
+						: p
+				)
+			);
+			setEditingParticipant(null);
+			showToast(__('Signup confirmed.', 'fair-events'));
+		} catch (err) {
+			showToast(
+				__('Error confirming signup: ', 'fair-events') +
+					(err.message || ''),
+				'error'
+			);
+		}
+	};
+
+	const handleCancelStale = async (participant) => {
+		const confirmMessage = sprintf(
+			/* translators: %s: participant name */
+			__(
+				'Cancel %s’s expired signup? The seat will be freed and the record kept as Interested.',
+				'fair-events'
+			),
+			participant.participant_name ||
+				__('this participant', 'fair-events')
+		);
+		if (!window.confirm(confirmMessage)) {
+			return;
+		}
+		try {
+			await apiFetch({
+				path: `/fair-audience/v1/event-dates/${eventDateId}/participants/${participant.participant_id}`,
+				method: 'PUT',
+				data: { label: 'interested' },
+			});
+			setParticipants((current) =>
+				current.map((p) =>
+					p.id === participant.id
+						? {
+								...p,
+								label: 'interested',
+								payment_expires_at: null,
+						  }
+						: p
+				)
+			);
+			setEditingParticipant(null);
+			showToast(__('Expired signup moved to Interested.', 'fair-events'));
+		} catch (err) {
+			showToast(
+				__('Error cancelling signup: ', 'fair-events') +
+					(err.message || ''),
+				'error'
+			);
+		}
 	};
 
 	const handleOpenEditOptions = (participant) => {
@@ -673,8 +762,8 @@ export default function EventAudience({
 		if (ticketOptions.length === 0) return '';
 		return ticketOptions
 			.map((opt) => {
-				const count = filteredParticipants.filter((p) =>
-					participantHasOption(p, opt)
+				const count = filteredParticipants.filter(
+					(p) => participantHasOption(p, opt) && occupiesSeat(p)
 				).length;
 				return `- ${opt.name}: ${count}`;
 			})
@@ -698,8 +787,124 @@ export default function EventAudience({
 			.join('\n\n');
 	};
 
+	const formatExpiredAgo = (iso) => {
+		if (!iso) return __('no expiry set', 'fair-events');
+		const ts = new Date(iso).getTime();
+		if (Number.isNaN(ts)) return iso;
+		const diffMs = Date.now() - ts;
+		if (diffMs < 0) return new Date(iso).toLocaleString();
+		const minutes = Math.floor(diffMs / 60000);
+		if (minutes < 60) {
+			/* translators: %d: number of minutes */
+			return sprintf(__('expired %d min ago', 'fair-events'), minutes);
+		}
+		const hours = Math.floor(minutes / 60);
+		if (hours < 24) {
+			/* translators: %d: number of hours */
+			return sprintf(__('expired %d h ago', 'fair-events'), hours);
+		}
+		const days = Math.floor(hours / 24);
+		/* translators: %d: number of days */
+		return sprintf(__('expired %d d ago', 'fair-events'), days);
+	};
+
+	const renderActivitiesForParticipant = (p) => {
+		const ids = p.ticket_option_ids || [];
+		const names = p.ticket_option_names || [];
+		const labels = ticketOptions
+			.filter((opt) => ids.includes(opt.id) || names.includes(opt.name))
+			.map((opt) => opt.short_name || opt.name);
+		return labels.length > 0 ? labels.join(', ') : __('—', 'fair-events');
+	};
+
 	return (
 		<>
+			{eventId && stalePending.length > 0 && (
+				<Card style={{ marginTop: '16px' }}>
+					<CardHeader>
+						<h2>
+							{__('Pending review', 'fair-events')}{' '}
+							<span
+								style={{
+									display: 'inline-block',
+									marginLeft: '8px',
+									padding: '2px 8px',
+									borderRadius: '10px',
+									backgroundColor: '#fcf0d6',
+									color: '#8a6914',
+									fontSize: '12px',
+									fontWeight: 600,
+									verticalAlign: 'middle',
+								}}
+							>
+								{stalePending.length}
+							</span>
+						</h2>
+					</CardHeader>
+					<CardBody>
+						<p style={{ marginTop: 0 }}>
+							{__(
+								'These signups had a payment hold that expired. They are not counted toward activity capacity until reviewed. Open a row to confirm (e.g. cash payment promised) or cancel.',
+								'fair-events'
+							)}
+						</p>
+						<div style={{ overflowX: 'auto' }}>
+							<table className="wp-list-table widefat striped">
+								<thead>
+									<tr>
+										<th>
+											{__('Participant', 'fair-events')}
+										</th>
+										<th>
+											{__('Ticket type', 'fair-events')}
+										</th>
+										<th>
+											{__('Activities', 'fair-events')}
+										</th>
+										<th>{__('Status', 'fair-events')}</th>
+										<th />
+									</tr>
+								</thead>
+								<tbody>
+									{stalePending.map((p) => (
+										<tr key={p.id}>
+											<td>{p.participant_name || '—'}</td>
+											<td>
+												{p.ticket_type_name ||
+													__('—', 'fair-events')}
+											</td>
+											<td>
+												{renderActivitiesForParticipant(
+													p
+												)}
+											</td>
+											<td>
+												{formatExpiredAgo(
+													p.payment_expires_at
+												)}
+											</td>
+											<td>
+												<Button
+													variant="secondary"
+													onClick={() =>
+														handleOpenEditOptions(p)
+													}
+												>
+													{__(
+														'Review',
+														'fair-events'
+													)}
+												</Button>
+											</td>
+										</tr>
+									))}
+								</tbody>
+							</table>
+						</div>
+					</CardBody>
+				</Card>
+			)}
+
 			{eventId && (
 				<Card style={{ marginTop: '16px' }}>
 					<CardHeader>
@@ -809,6 +1014,31 @@ export default function EventAudience({
 										{__('Total:', 'fair-events')}{' '}
 										<strong>{participants.length}</strong>
 									</span>
+									{stalePending.length > 0 && (
+										<span
+											style={{
+												padding: '2px 8px',
+												borderRadius: '10px',
+												backgroundColor: '#fcf0d6',
+												color: '#8a6914',
+												fontSize: '12px',
+												fontWeight: 600,
+											}}
+											title={__(
+												'Pending_payment signups whose hold expired. They do not count toward activity capacity until reviewed.',
+												'fair-events'
+											)}
+										>
+											{sprintf(
+												/* translators: %d: number of stale pending_payment signups */
+												__(
+													'%d stale held',
+													'fair-events'
+												),
+												stalePending.length
+											)}
+										</span>
+									)}
 								</HStack>
 
 								<HStack spacing={4} wrap alignment="bottom">
@@ -1117,7 +1347,10 @@ export default function EventAudience({
 																				);
 																			return (
 																				acc +
-																				(hasOption
+																				(hasOption &&
+																				occupiesSeat(
+																					p
+																				)
 																					? 1
 																					: 0)
 																			);
@@ -1508,6 +1741,62 @@ export default function EventAudience({
 					style={{ maxWidth: '480px', width: '100%' }}
 				>
 					<VStack spacing={3}>
+						{isStalePendingPayment(editingParticipant) && (
+							<div
+								style={{
+									padding: '12px',
+									borderRadius: '4px',
+									backgroundColor: '#fcf0d6',
+									border: '1px solid #f0c33c',
+								}}
+							>
+								<p
+									style={{
+										margin: '0 0 8px 0',
+										fontWeight: 600,
+									}}
+								>
+									{__(
+										'Pending payment hold expired',
+										'fair-events'
+									)}
+								</p>
+								<p
+									style={{
+										margin: '0 0 12px 0',
+										fontSize: '13px',
+									}}
+								>
+									{__(
+										'Confirm to keep this signup on the list and count it toward activity capacity (e.g. cash payment promised). Cancel to mark it as Interested and free the seat — the record is kept for history.',
+										'fair-events'
+									)}
+								</p>
+								<HStack spacing={2}>
+									<Button
+										variant="primary"
+										onClick={() =>
+											handleConfirmStale(
+												editingParticipant
+											)
+										}
+									>
+										{__('Confirm signup', 'fair-events')}
+									</Button>
+									<Button
+										variant="secondary"
+										isDestructive
+										onClick={() =>
+											handleCancelStale(
+												editingParticipant
+											)
+										}
+									>
+										{__('Cancel signup', 'fair-events')}
+									</Button>
+								</HStack>
+							</div>
+						)}
 						{ticketTypes.length > 0 && (
 							<SelectControl
 								label={__('Ticket type', 'fair-events')}

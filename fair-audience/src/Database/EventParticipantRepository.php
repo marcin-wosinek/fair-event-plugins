@@ -247,6 +247,9 @@ class EventParticipantRepository {
 		}
 
 		$relationship->label = $label;
+		if ( 'pending_payment' !== $label ) {
+			$relationship->payment_expires_at = null;
+		}
 		return $relationship->save();
 	}
 
