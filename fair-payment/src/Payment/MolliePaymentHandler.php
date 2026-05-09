@@ -223,6 +223,7 @@ class MolliePaymentHandler {
 			'redirect_url'    => home_url(),
 			'webhook_url'     => '',
 			'metadata'        => array(),
+			'disable_methods' => array(),
 		);
 
 		$args = wp_parse_args( $args, $defaults );
@@ -264,6 +265,22 @@ class MolliePaymentHandler {
 			// Set test mode based on settings (required for OAuth)
 			$mode                     = get_option( 'fair_payment_mode', 'test' );
 			$payment_data['testmode'] = ( 'live' === $mode ) ? false : true;
+
+			// Build a method allowlist when callers want to suppress specific methods.
+			// Mollie has no "exclude" parameter; the supported way is to pass `method`
+			// as an allowlist. We fetch the currently active set so the allowlist
+			// stays in sync with the merchant's Mollie configuration.
+			if ( ! empty( $args['disable_methods'] ) && is_array( $args['disable_methods'] ) ) {
+				$allowed = $this->build_method_allowlist(
+					$payment_data['amount'],
+					$args['disable_methods'],
+					$profile_id,
+					$payment_data['testmode']
+				);
+				if ( ! empty( $allowed ) ) {
+					$payment_data['method'] = array_values( $allowed );
+				}
+			}
 
 			$logger->log(
 				'mollie_call_started',
@@ -332,6 +349,52 @@ class MolliePaymentHandler {
 				)
 			);
 		}
+	}
+
+	/**
+	 * Build a Mollie `method` allowlist that excludes the given method IDs.
+	 *
+	 * Queries Mollie for the currently active methods (scoped to the payment's
+	 * amount/currency, profile, and test mode) and returns their IDs minus the
+	 * disabled ones. Returns an empty array if the API call fails or filtering
+	 * would yield no methods — callers should treat that as "let Mollie decide".
+	 *
+	 * @param array       $amount          Mollie amount array with 'currency' and 'value'.
+	 * @param array       $disable_methods Method IDs to exclude (e.g. ['banktransfer']).
+	 * @param string|null $profile_id      Mollie profile ID (required under OAuth).
+	 * @param bool        $testmode        Whether the payment is created in test mode.
+	 * @return string[] Allowed method IDs, or empty array if no allowlist should be applied.
+	 */
+	private function build_method_allowlist( $amount, $disable_methods, $profile_id, $testmode ) {
+		try {
+			$parameters = array( 'amount' => $amount );
+			if ( $profile_id ) {
+				$parameters['profileId'] = $profile_id;
+				$parameters['testmode']  = $testmode ? 'true' : 'false';
+			}
+
+			$methods = $this->mollie->methods->allActive( $parameters );
+		} catch ( ApiException $e ) {
+			error_log( '[Fair Payment] Failed to list Mollie methods for filter: ' . $e->getMessage() );
+			return array();
+		}
+
+		$disable = array_map( 'strval', $disable_methods );
+		$allowed = array();
+		foreach ( $methods as $method ) {
+			if ( empty( $method->id ) || in_array( $method->id, $disable, true ) ) {
+				continue;
+			}
+			$allowed[] = $method->id;
+		}
+
+		// If filtering left us with nothing, fall back to letting Mollie show
+		// all enabled methods rather than passing an empty allowlist.
+		if ( count( $allowed ) === count( $methods ) || empty( $allowed ) ) {
+			return array();
+		}
+
+		return $allowed;
 	}
 
 	/**

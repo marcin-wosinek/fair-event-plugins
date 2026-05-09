@@ -10,6 +10,7 @@ namespace FairPayment\API;
 use FairPayment\Models\Transaction;
 use FairPayment\Models\LineItem;
 use FairPayment\Payment\MolliePaymentHandler;
+use FairPayment\Payment\WorkingDays;
 use FairPayment\Database\PaymentLogRepository;
 
 defined( 'WPINC' ) || die;
@@ -199,6 +200,7 @@ class TransactionAPI {
 					'participant_id' => ! empty( $transaction->participant_id ) ? (int) $transaction->participant_id : null,
 				)
 			),
+			'disable_methods' => self::resolve_disabled_methods( $transaction ),
 		);
 
 		// Allow filtering of payment arguments before Mollie call.
@@ -595,6 +597,54 @@ class TransactionAPI {
 		}
 
 		return true;
+	}
+
+	/**
+	 * Decide which payment methods to suppress on this transaction.
+	 *
+	 * Currently handles SEPA bank transfer: when the merchant has opted in and
+	 * fewer than the configured working days remain before the transaction's
+	 * key date (event start), exclude `banktransfer` so payments aren't chosen
+	 * that physically can't settle in time.
+	 *
+	 * @param object $transaction Transaction row from FairPayment\Models\Transaction.
+	 * @return string[] Mollie method IDs to disable, or empty array.
+	 */
+	private static function resolve_disabled_methods( $transaction ) {
+		if ( ! get_option( 'fair_payment_disable_banktransfer_near_date', false ) ) {
+			return array();
+		}
+
+		if ( empty( $transaction->event_date_id ) ) {
+			return array();
+		}
+
+		if ( ! class_exists( '\FairEvents\Models\EventDates' ) ) {
+			return array();
+		}
+
+		$event_date = \FairEvents\Models\EventDates::get_by_id( (int) $transaction->event_date_id );
+		if ( ! $event_date || empty( $event_date->start_datetime ) ) {
+			return array();
+		}
+
+		$tz = wp_timezone();
+		try {
+			$key_date = new \DateTimeImmutable( $event_date->start_datetime, $tz );
+		} catch ( \Exception $e ) {
+			error_log( '[Fair Payment] Invalid event start_datetime for event_date #' . (int) $transaction->event_date_id . ': ' . $e->getMessage() );
+			return array();
+		}
+
+		$now       = new \DateTimeImmutable( 'now', $tz );
+		$threshold = (int) get_option( 'fair_payment_banktransfer_threshold_days', 3 );
+		$remaining = WorkingDays::between( $now, $key_date );
+
+		if ( $remaining < $threshold ) {
+			return array( 'banktransfer' );
+		}
+
+		return array();
 	}
 
 	/**
