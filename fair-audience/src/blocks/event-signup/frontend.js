@@ -65,6 +65,32 @@ const CSS_PREFIX = 'fair-audience-signup';
 	}
 
 	/**
+	 * Enforce the minimum-activities requirement by disabling the signup
+	 * and registration buttons until enough options are checked.  No-op
+	 * when the block has no minimum configured.
+	 * @param {HTMLElement} block The block element
+	 */
+	function updateMinActivitiesGate(block) {
+		const minActivities = parseInt(block.dataset.minActivities || '0', 10);
+		if (!minActivities) {
+			return;
+		}
+
+		const checkedCount = block.querySelectorAll(
+			'input[name="ticket_option_ids[]"]:checked'
+		).length;
+		const meetsMin = checkedCount >= minActivities;
+
+		const buttons = block.querySelectorAll(
+			'.fair-audience-signup-button, .fair-audience-signup-submit-button'
+		);
+		buttons.forEach(function (btn) {
+			btn.disabled = !meetsMin;
+			btn.classList.toggle('is-disabled', !meetsMin);
+		});
+	}
+
+	/**
 	 * Update signup button text to reflect current base price + selected option prices.
 	 * No-op when no base price is configured on the block.
 	 * @param {HTMLElement} block The block element
@@ -146,8 +172,11 @@ const CSS_PREFIX = 'fair-audience-signup';
 		optionCheckboxes.forEach(function (checkbox) {
 			checkbox.addEventListener('change', function () {
 				updateButtonTotal(block);
+				updateMinActivitiesGate(block);
 			});
 		});
+
+		updateMinActivitiesGate(block);
 	}
 
 	/**

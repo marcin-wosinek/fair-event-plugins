@@ -44,6 +44,7 @@ export default function EventTickets({
 		multiple_pricing_periods: false,
 		show_seats_per_ticket: false,
 		activity_collaborator_discount: false,
+		minimum_activities: 0,
 	});
 	const [options, setOptions] = useState([]);
 	const [loading, setLoading] = useState(!initialData);
@@ -1656,6 +1657,32 @@ export default function EventTickets({
 						initialOpen={false}
 					>
 						<VStack spacing={3}>
+							<TextControl
+								label={__(
+									'Minimum number of activities',
+									'fair-events'
+								)}
+								help={__(
+									'Participants must select at least this many activities to sign up. Set to 0 to disable.',
+									'fair-events'
+								)}
+								type="number"
+								min="0"
+								value={String(settings.minimum_activities ?? 0)}
+								onChange={(value) =>
+									setSettings((prev) => ({
+										...prev,
+										minimum_activities:
+											value === ''
+												? 0
+												: Math.max(
+														0,
+														parseInt(value, 10) || 0
+												  ),
+									}))
+								}
+								__nextHasNoMarginBottom
+							/>
 							<p>
 								{__(
 									'Add selectable activity options (checkboxes) shown to participants at signup. Each option has its own price added on top of the base price.',

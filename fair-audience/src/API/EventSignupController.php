@@ -502,7 +502,13 @@ class EventSignupController extends WP_REST_Controller {
 			);
 		}
 
-		$option_items  = $this->load_valid_options( $event_date_id, $raw_option_ids );
+		$option_items = $this->load_valid_options( $event_date_id, $raw_option_ids );
+
+		$min_error = $this->validate_minimum_activities( $event_date_id, $option_items );
+		if ( is_wp_error( $min_error ) ) {
+			return $min_error;
+		}
+
 		$paid_response = $this->maybe_start_paid_signup( $event_id, $event_date_id, $participant, $existing, $user_id, $ticket_type_id, $option_items, $invitation_token );
 		if ( null !== $paid_response ) {
 			return $paid_response;
@@ -677,6 +683,52 @@ class EventSignupController extends WP_REST_Controller {
 		}
 
 		$this->save_participant_options( (int) $row->id, $option_items );
+	}
+
+	/**
+	 * Enforce the minimum-activities event setting.  When the event date has
+	 * no minimum configured (or no options at all), this is a no-op.
+	 *
+	 * @param int   $event_date_id Event date ID.
+	 * @param array $option_items  Validated TicketOption objects selected by the participant.
+	 * @return WP_Error|null WP_Error when the minimum is not met, null otherwise.
+	 */
+	private function validate_minimum_activities( $event_date_id, $option_items ) {
+		if ( ! $event_date_id || ! class_exists( \FairEvents\Models\EventDateSetting::class ) ) {
+			return null;
+		}
+
+		$lookup_id = (int) $event_date_id;
+		if ( class_exists( \FairEvents\Models\EventDates::class ) ) {
+			$ed = \FairEvents\Models\EventDates::get_by_id( $event_date_id );
+			if ( $ed && 'generated' === $ed->occurrence_type && $ed->master_id ) {
+				$lookup_id = (int) $ed->master_id;
+			}
+		}
+
+		$minimum = (int) \FairEvents\Models\EventDateSetting::get( $lookup_id, 'minimum_activities' );
+		if ( $minimum <= 0 ) {
+			return null;
+		}
+
+		if ( count( $option_items ) >= $minimum ) {
+			return null;
+		}
+
+		return new WP_Error(
+			'minimum_activities_not_met',
+			sprintf(
+				/* translators: %d: minimum number of activities required */
+				_n(
+					'Please select at least %d activity to sign up.',
+					'Please select at least %d activities to sign up.',
+					$minimum,
+					'fair-audience'
+				),
+				$minimum
+			),
+			array( 'status' => 400 )
+		);
 	}
 
 	/**
@@ -1212,7 +1264,13 @@ class EventSignupController extends WP_REST_Controller {
 		}
 
 		// Paid path takes over when a positive price resolves for this participant.
-		$option_items  = $this->load_valid_options( $event_date_id, $raw_option_ids );
+		$option_items = $this->load_valid_options( $event_date_id, $raw_option_ids );
+
+		$min_error = $this->validate_minimum_activities( $event_date_id, $option_items );
+		if ( is_wp_error( $min_error ) ) {
+			return $min_error;
+		}
+
 		$paid_response = $this->maybe_start_paid_signup( $event_id, $event_date_id, $participant, $existing, 0, $ticket_type_id, $option_items, $invitation_token );
 		if ( null !== $paid_response ) {
 			return $paid_response;

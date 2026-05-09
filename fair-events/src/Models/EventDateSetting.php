@@ -72,7 +72,14 @@ class EventDateSetting {
 		'multiple_pricing_periods'          => '0',
 		'show_seats_per_ticket'             => '0',
 		'activity_collaborator_discount'    => '0',
+		'minimum_activities'                => '0',
 	);
+
+	/**
+	 * Setting keys whose values are integers (not booleans).
+	 * All other settings in DEFAULTS are treated as boolean ('0' / '1').
+	 */
+	const NUMERIC_KEYS = array( 'minimum_activities' );
 
 	/**
 	 * Get table name

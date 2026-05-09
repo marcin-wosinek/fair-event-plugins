@@ -187,11 +187,7 @@ class TicketsController extends WP_REST_Controller {
 
 		// 5. Save settings.
 		if ( isset( $body['settings'] ) && is_array( $body['settings'] ) ) {
-			$settings = array();
-			foreach ( $body['settings'] as $key => $value ) {
-				$settings[ sanitize_key( $key ) ] = $value ? '1' : '0';
-			}
-			EventDateSetting::set_multiple( $event_date_id, $settings );
+			EventDateSetting::set_multiple( $event_date_id, $this->normalize_settings( $body['settings'] ) );
 		}
 
 		// 6. Sync ticket options (update existing, create new, delete removed).
@@ -383,11 +379,7 @@ class TicketsController extends WP_REST_Controller {
 
 		// 6. Save settings.
 		if ( isset( $body['settings'] ) && is_array( $body['settings'] ) ) {
-			$settings = array();
-			foreach ( $body['settings'] as $key => $value ) {
-				$settings[ sanitize_key( $key ) ] = $value ? '1' : '0';
-			}
-			EventDateSetting::set_multiple( $event_date_id, $settings );
+			EventDateSetting::set_multiple( $event_date_id, $this->normalize_settings( $body['settings'] ) );
 		}
 
 		// 7. Import ticket options (delete all and re-insert).
@@ -550,6 +542,27 @@ class TicketsController extends WP_REST_Controller {
 	}
 
 	/**
+	 * Normalize incoming settings payload into the string-typed values
+	 * EventDateSetting expects. Numeric keys are stored as the integer
+	 * value cast to string; all other keys are coerced to '0' / '1'.
+	 *
+	 * @param array $raw Raw settings array from request body.
+	 * @return array Normalized settings.
+	 */
+	private function normalize_settings( $raw ) {
+		$out = array();
+		foreach ( $raw as $key => $value ) {
+			$key = sanitize_key( $key );
+			if ( in_array( $key, EventDateSetting::NUMERIC_KEYS, true ) ) {
+				$out[ $key ] = (string) max( 0, (int) $value );
+			} else {
+				$out[ $key ] = $value ? '1' : '0';
+			}
+		}
+		return $out;
+	}
+
+	/**
 	 * Build the full response for ticket config
 	 *
 	 * @param int        $event_date_id Event date ID.
@@ -567,7 +580,11 @@ class TicketsController extends WP_REST_Controller {
 
 		$settings = array();
 		foreach ( $raw_settings as $key => $value ) {
-			$settings[ $key ] = '1' === $value;
+			if ( in_array( $key, EventDateSetting::NUMERIC_KEYS, true ) ) {
+				$settings[ $key ] = (int) $value;
+			} else {
+				$settings[ $key ] = '1' === $value;
+			}
 		}
 
 		return array(

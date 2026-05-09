@@ -17,6 +17,7 @@ use FairAudience\Database\ParticipantRepository;
 use FairAudience\Database\EventParticipantRepository;
 use FairAudience\Services\ParticipantToken;
 use FairEvents\Models\EventDates;
+use FairEvents\Models\EventDateSetting;
 
 // Get block attributes — translate defaults so stored English values get localized.
 $signup_button_text       = __( $attributes['signupButtonText'] ?? 'Sign Up', 'fair-audience' );
@@ -257,6 +258,15 @@ if ( $pricing_event_date_id && class_exists( \FairEvents\Models\TicketOption::cl
 }
 $has_ticket_options = ! empty( $ticket_options_for_display );
 
+// Minimum number of activities the participant must select.  Capped at the
+// number of options actually available so the requirement is never impossible
+// to satisfy, and only meaningful when at least one option exists.
+$minimum_activities = 0;
+if ( $has_ticket_options && $pricing_event_date_id && class_exists( EventDateSetting::class ) ) {
+	$minimum_activities = (int) EventDateSetting::get( (int) $pricing_event_date_id, 'minimum_activities' );
+	$minimum_activities = max( 0, min( $minimum_activities, count( $ticket_options_for_display ) ) );
+}
+
 // Read block attribute to control whether option prices are displayed.
 $show_option_prices = $attributes['showOptionPrices'] ?? true;
 
@@ -383,12 +393,29 @@ $render_ticket_types = static function () use ( $ticket_types_for_display, $has_
 /**
  * Render the ticket options checkbox fieldset. No-op when no options configured.
  */
-$render_ticket_options = static function () use ( $ticket_options_for_display, $has_ticket_options, $form_id, $show_option_prices ) {
+$render_ticket_options = static function () use ( $ticket_options_for_display, $has_ticket_options, $form_id, $show_option_prices, $minimum_activities ) {
 	if ( ! $has_ticket_options ) {
 		return;
 	}
 	echo '<fieldset class="fair-audience-ticket-options">';
 	echo '<legend>' . esc_html__( 'Select activities', 'fair-audience' ) . '</legend>';
+	if ( $minimum_activities > 0 ) {
+		printf(
+			'<p class="fair-audience-ticket-options-min-hint">%s</p>',
+			esc_html(
+				sprintf(
+					/* translators: %d: minimum number of activities required */
+					_n(
+						'Please select at least %d activity to sign up.',
+						'Please select at least %d activities to sign up.',
+						$minimum_activities,
+						'fair-audience'
+					),
+					$minimum_activities
+				)
+			)
+		);
+	}
 	foreach ( $ticket_options_for_display as $opt ) {
 		$opt_label = $opt['name'];
 		if ( $show_option_prices ) {
@@ -439,6 +466,7 @@ $wrapper_attributes = get_block_wrapper_attributes(
 		'data-base-price'         => null !== $signup_price ? esc_attr( (string) $signup_price ) : ( $has_priced_options ? '0' : '' ),
 		'data-signup-base-text'   => esc_attr( $base_signup_button_text ),
 		'data-register-base-text' => esc_attr( $base_register_button_text ),
+		'data-min-activities'     => esc_attr( (string) $minimum_activities ),
 	)
 );
 ?>
