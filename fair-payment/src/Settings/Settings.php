@@ -195,6 +195,42 @@ class Settings {
 				'default'           => '',
 			)
 		);
+
+		// Disable bank transfer when close to event date
+		register_setting(
+			'fair_payment_settings',
+			'fair_payment_disable_banktransfer_near_date',
+			array(
+				'type'              => 'boolean',
+				'description'       => __( 'Disable bank transfer when close to the key date of the sale', 'fair-payment' ),
+				'sanitize_callback' => 'rest_sanitize_boolean',
+				'show_in_rest'      => true,
+				'default'           => false,
+			)
+		);
+
+		// Bank transfer cutoff in working days
+		register_setting(
+			'fair_payment_settings',
+			'fair_payment_banktransfer_threshold_days',
+			array(
+				'type'              => 'integer',
+				'description'       => __( 'Working-day threshold for disabling bank transfer', 'fair-payment' ),
+				'sanitize_callback' => array( $this, 'sanitize_threshold_days' ),
+				'show_in_rest'      => true,
+				'default'           => 3,
+			)
+		);
+	}
+
+	/**
+	 * Sanitize working-day threshold setting
+	 *
+	 * @param mixed $value Threshold value.
+	 * @return int Sanitized non-negative integer.
+	 */
+	public function sanitize_threshold_days( $value ) {
+		return max( 0, (int) $value );
 	}
 
 	/**
