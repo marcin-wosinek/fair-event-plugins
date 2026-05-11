@@ -36,7 +36,7 @@ class GroupPermissionRulesController extends WP_REST_Controller {
 	 *
 	 * @var array
 	 */
-	const VALID_PERMISSION_TYPES = array( 'view_signups', 'manage_signups' );
+	const VALID_PERMISSION_TYPES = array( 'view_signups', 'manage_signups', 'invited' );
 
 	/**
 	 * Register the routes for group permission rules

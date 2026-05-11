@@ -1052,6 +1052,8 @@ export default function DuplicateEventWizard({
 
 		const permissionLabel = (type) => {
 			switch (type) {
+				case 'invited':
+					return __('Invited', 'fair-events');
 				case 'view_signups':
 					return __('View signups', 'fair-events');
 				case 'manage_signups':

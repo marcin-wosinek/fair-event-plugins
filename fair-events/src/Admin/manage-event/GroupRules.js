@@ -24,7 +24,7 @@ import {
 import { __ } from '@wordpress/i18n';
 import apiFetch from '@wordpress/api-fetch';
 
-const PERMISSION_TYPES = ['view_signups', 'manage_signups'];
+const PERMISSION_TYPES = ['invited', 'view_signups', 'manage_signups'];
 
 const discountTypeOptions = [
 	{
@@ -49,6 +49,8 @@ const formatDiscount = (type, value) => {
 
 const permissionLabel = (type) => {
 	switch (type) {
+		case 'invited':
+			return __('Invited', 'fair-events');
 		case 'view_signups':
 			return __('View signups', 'fair-events');
 		case 'manage_signups':

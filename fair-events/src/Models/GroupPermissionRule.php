@@ -38,7 +38,7 @@ class GroupPermissionRule {
 	public $group_id;
 
 	/**
-	 * Permission type (view_signups, manage_signups)
+	 * Permission type (view_signups, manage_signups, invited)
 	 *
 	 * @var string
 	 */
