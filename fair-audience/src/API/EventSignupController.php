@@ -1042,6 +1042,14 @@ class EventSignupController extends WP_REST_Controller {
 			}
 		}
 
+		// Persist the buyer's selection on the transaction so retry can
+		// rebuild the EventParticipant row (and its options) if the original
+		// row has already been cleaned up by the cron.
+		$selected_option_ids = array_map(
+			static fn( $opt ) => (int) $opt->id,
+			$option_items
+		);
+
 		$transaction_id = \FairPayment\API\TransactionAPI::create_transaction(
 			$line_items,
 			array(
@@ -1055,6 +1063,8 @@ class EventSignupController extends WP_REST_Controller {
 					'event_date_id'        => $event_date_id,
 					'event_participant_id' => $event_participant->id,
 					'participant_id'       => $participant->id,
+					'ticket_type_id'       => $ticket_type_id ? (int) $ticket_type_id : null,
+					'ticket_option_ids'    => $selected_option_ids,
 				),
 			)
 		);
@@ -1347,6 +1357,24 @@ class EventSignupController extends WP_REST_Controller {
 			);
 		}
 
+		// Recover the buyer's original selection from transaction metadata so
+		// the row + options are restored even when the cleanup cron deleted
+		// them since the failed attempt.
+		$retry_ticket_type_id = isset( $metadata['ticket_type_id'] ) && $metadata['ticket_type_id']
+			? (int) $metadata['ticket_type_id']
+			: null;
+		$retry_option_ids     = isset( $metadata['ticket_option_ids'] ) && is_array( $metadata['ticket_option_ids'] )
+			? array_map( 'intval', $metadata['ticket_option_ids'] )
+			: array();
+
+		$retry_seats = 1;
+		if ( $retry_ticket_type_id && class_exists( \FairEvents\Models\TicketType::class ) ) {
+			$retry_ticket_type = \FairEvents\Models\TicketType::get_by_id( $retry_ticket_type_id );
+			if ( $retry_ticket_type ) {
+				$retry_seats = max( 1, (int) $retry_ticket_type->seats_per_ticket );
+			}
+		}
+
 		// Refresh / acquire the 15-minute hold for this retry attempt.
 		$expires_at = gmdate( 'Y-m-d H:i:s', time() + 15 * MINUTE_IN_SECONDS );
 
@@ -1354,6 +1382,8 @@ class EventSignupController extends WP_REST_Controller {
 			$event_participant->label              = 'pending_payment';
 			$event_participant->payment_expires_at = $expires_at;
 			$event_participant->transaction_id     = null;
+			$event_participant->ticket_type_id     = $retry_ticket_type_id;
+			$event_participant->seats              = $retry_seats;
 			$event_participant->save();
 		} else {
 			$event_participant = new \FairAudience\Models\EventParticipant(
@@ -1363,11 +1393,19 @@ class EventSignupController extends WP_REST_Controller {
 					'participant_id'     => $participant_id,
 					'label'              => 'pending_payment',
 					'payment_expires_at' => $expires_at,
-					'ticket_type_id'     => isset( $old_transaction->ticket_type_id ) ? (int) $old_transaction->ticket_type_id : null,
-					'seats'              => 1,
+					'ticket_type_id'     => $retry_ticket_type_id,
+					'seats'              => $retry_seats,
 				)
 			);
 			$event_participant->save();
+		}
+
+		// Re-snapshot the selected options against this row id. Idempotent for
+		// the reuse path (replaces existing rows) and restorative for the
+		// recreate path. Filters out options that no longer exist or are full.
+		if ( ! empty( $retry_option_ids ) ) {
+			$retry_option_items = $this->load_valid_options( $event_date_id, $retry_option_ids );
+			$this->save_participant_options( (int) $event_participant->id, $retry_option_items );
 		}
 
 		$new_transaction_id = \FairPayment\API\TransactionAPI::create_transaction(
@@ -1383,6 +1421,8 @@ class EventSignupController extends WP_REST_Controller {
 					'event_date_id'           => $event_date_id,
 					'event_participant_id'    => (int) $event_participant->id,
 					'participant_id'          => $participant_id,
+					'ticket_type_id'          => $retry_ticket_type_id,
+					'ticket_option_ids'       => $retry_option_ids,
 					'retry_of_transaction_id' => $transaction_id,
 				),
 			)
