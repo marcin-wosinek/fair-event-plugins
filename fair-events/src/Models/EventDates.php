@@ -996,6 +996,43 @@ class EventDates {
 
 
 	/**
+	 * Get all upcoming occurrences for a recurring event (master + generated)
+	 *
+	 * Returns the master row (if its own start is upcoming) along with every
+	 * generated row whose start_datetime is at or after now, sorted ascending.
+	 *
+	 * @param int $master_id Master event date ID.
+	 * @return EventDates[] Array of EventDates objects, ordered by start_datetime ASC.
+	 */
+	public static function get_upcoming_by_master_id( $master_id ) {
+		global $wpdb;
+
+		$table_name = $wpdb->prefix . 'fair_event_dates';
+		$now        = current_time( 'mysql' );
+
+		$results = $wpdb->get_results(
+			$wpdb->prepare(
+				'SELECT * FROM %i WHERE (id = %d OR master_id = %d) AND start_datetime >= %s ORDER BY start_datetime ASC',
+				$table_name,
+				$master_id,
+				$master_id,
+				$now
+			)
+		);
+
+		if ( ! $results ) {
+			return array();
+		}
+
+		$dates = array();
+		foreach ( $results as $result ) {
+			$dates[] = self::hydrate( $result );
+		}
+
+		return $dates;
+	}
+
+	/**
 	 * Get the next upcoming generated occurrence by master ID
 	 *
 	 * Efficiently queries for the single next occurrence with start_datetime >= NOW().

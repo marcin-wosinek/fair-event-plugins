@@ -52,6 +52,29 @@ if ( $event_dates_obj
 	$pricing_event_date_id = (string) $event_dates_obj->master_id;
 }
 
+// For recurring posts, the resolved event date is the master row.  Load all
+// upcoming occurrences (master + generated children) so the user can pick a
+// specific date to sign up for.  Each entry carries its own id, formatted
+// label and (for logged-in viewers) signup status, populated below once the
+// participant is known.
+$occurrences_for_picker = array();
+if ( $event_dates_obj
+	&& 'master' === ( $event_dates_obj->occurrence_type ?? null )
+	&& class_exists( EventDates::class )
+) {
+	$upcoming = EventDates::get_upcoming_by_master_id( (int) $event_dates_obj->id );
+	foreach ( $upcoming as $occ ) {
+		$occurrences_for_picker[] = array(
+			'id'             => (int) $occ->id,
+			'start_datetime' => $occ->start_datetime,
+			'end_datetime'   => $occ->end_datetime,
+			'all_day'        => (bool) $occ->all_day,
+			'is_master'      => (int) $occ->id === (int) $event_dates_obj->id,
+			'signed_up'      => false,
+		);
+	}
+}
+
 // Determine the effective event ID for participant lookups and API calls.
 // For direct event posts: the current post IS the event.
 // For junction-linked pages: use event_date->event_id (the primary event post)
@@ -118,6 +141,15 @@ if ( $is_valid_post_type ) {
 			$is_signed_up = true;
 		}
 
+		// Populate per-occurrence signup state for the picker.
+		foreach ( $occurrences_for_picker as $idx => $occ_row ) {
+			$rel = $event_participant_repository->get_by_event_date_and_participant(
+				$occ_row['id'],
+				$participant->id
+			);
+			$occurrences_for_picker[ $idx ]['signed_up'] = ( $rel && 'signed_up' === $rel->label );
+		}
+
 		$participant_data = array(
 			'id'      => $participant->id,
 			'name'    => $participant->name,
@@ -125,6 +157,25 @@ if ( $is_valid_post_type ) {
 			'email'   => $participant->email,
 		);
 	}
+}
+
+// When the picker is shown, re-pivot the wrapper-level event_date_id and
+// is_signed_up to the occurrence the user is most likely to act on next:
+// the first not-yet-signed-up upcoming occurrence, or the first one if
+// they're already signed up for everything.
+$has_occurrence_picker = count( $occurrences_for_picker ) > 1;
+if ( $has_occurrence_picker ) {
+	$default_idx = 0;
+	foreach ( $occurrences_for_picker as $idx => $occ_row ) {
+		if ( ! $occ_row['signed_up'] ) {
+			$default_idx = $idx;
+			break;
+		}
+	}
+	$default_occ                            = $occurrences_for_picker[ $default_idx ];
+	$event_date_id                          = (string) $default_occ['id'];
+	$is_signed_up                           = (bool) $default_occ['signed_up'];
+	$occurrences_for_picker[ $default_idx ] = array_merge( $default_occ, array( 'is_default' => true ) );
 }
 
 // Validate invitation token if present.
@@ -448,6 +499,50 @@ $render_ticket_options = static function () use ( $ticket_options_for_display, $
 	echo '</fieldset>';
 };
 
+/**
+ * Render the upcoming-occurrence picker fieldset for recurring events.
+ *
+ * The picker is a no-op when fewer than two upcoming occurrences exist.
+ * Each radio carries data-event-date-id and data-signed-up so the frontend
+ * JS can re-target the submit and toggle between "Sign up" / "Cancel signup"
+ * as the user changes the selection.
+ */
+$render_occurrence_picker = static function () use ( $occurrences_for_picker, $has_occurrence_picker, $form_id, $state ) {
+	if ( ! $has_occurrence_picker ) {
+		return;
+	}
+	$can_cancel = ( 'linked' === $state || 'with_token' === $state );
+	echo '<fieldset class="fair-audience-occurrence-picker">';
+	echo '<legend>' . esc_html__( 'Choose a date', 'fair-audience' ) . '</legend>';
+	foreach ( $occurrences_for_picker as $occ_row ) {
+		$radio_id = esc_attr( $form_id ) . '-occ-' . (int) $occ_row['id'];
+		$label    = \FairEvents\Helpers\DateRangeFormatter::format(
+			$occ_row['start_datetime'],
+			$occ_row['end_datetime'],
+			$occ_row['all_day']
+		);
+		$classes  = 'fair-audience-occurrence-option';
+		if ( $occ_row['signed_up'] ) {
+			$classes .= ' fair-audience-occurrence-option-signed-up';
+			if ( $can_cancel ) {
+				/* translators: appended to a date label when the viewer is signed up — they can cancel from this row */
+				$label .= ' — ' . __( 'signed up (manage)', 'fair-audience' );
+			} else {
+				$label .= ' — ' . __( 'signed up', 'fair-audience' );
+			}
+		}
+		echo '<label class="' . esc_attr( $classes ) . '" for="' . $radio_id . '">';
+		echo '<input type="radio" name="event_date_id" id="' . $radio_id . '" value="' . (int) $occ_row['id'] . '" data-event-date-id="' . (int) $occ_row['id'] . '" data-signed-up="' . ( $occ_row['signed_up'] ? 'true' : 'false' ) . '"';
+		if ( ! empty( $occ_row['is_default'] ) ) {
+			echo ' checked';
+		}
+		echo ' /> ';
+		echo esc_html( $label );
+		echo '</label>';
+	}
+	echo '</fieldset>';
+};
+
 // Base button labels (without price suffix) for dynamic JS price updates.
 $base_signup_button_text   = __( $attributes['signupButtonText'] ?? 'Sign Up', 'fair-audience' );
 $base_register_button_text = __( $attributes['registerButtonText'] ?? 'Register & Sign Up', 'fair-audience' );
@@ -455,18 +550,19 @@ $base_register_button_text = __( $attributes['registerButtonText'] ?? 'Register 
 // Get wrapper attributes.
 $wrapper_attributes = get_block_wrapper_attributes(
 	array(
-		'class'                   => 'fair-audience-event-signup',
-		'data-event-id'           => esc_attr( (string) $event_id ),
-		'data-event-date-id'      => esc_attr( $event_date_id ),
-		'data-state'              => esc_attr( $state ),
-		'data-is-signed-up'       => $is_signed_up ? 'true' : 'false',
-		'data-participant-token'  => esc_attr( $participant_token ),
-		'data-success-message'    => esc_attr( $success_message ),
-		'data-invitation-token'   => esc_attr( $valid_invitation_token ? $invitation_token : '' ),
-		'data-base-price'         => null !== $signup_price ? esc_attr( (string) $signup_price ) : ( $has_priced_options ? '0' : '' ),
-		'data-signup-base-text'   => esc_attr( $base_signup_button_text ),
-		'data-register-base-text' => esc_attr( $base_register_button_text ),
-		'data-min-activities'     => esc_attr( (string) $minimum_activities ),
+		'class'                      => 'fair-audience-event-signup',
+		'data-event-id'              => esc_attr( (string) $event_id ),
+		'data-event-date-id'         => esc_attr( $event_date_id ),
+		'data-state'                 => esc_attr( $state ),
+		'data-is-signed-up'          => $is_signed_up ? 'true' : 'false',
+		'data-participant-token'     => esc_attr( $participant_token ),
+		'data-success-message'       => esc_attr( $success_message ),
+		'data-invitation-token'      => esc_attr( $valid_invitation_token ? $invitation_token : '' ),
+		'data-base-price'            => null !== $signup_price ? esc_attr( (string) $signup_price ) : ( $has_priced_options ? '0' : '' ),
+		'data-signup-base-text'      => esc_attr( $base_signup_button_text ),
+		'data-register-base-text'    => esc_attr( $base_register_button_text ),
+		'data-min-activities'        => esc_attr( (string) $minimum_activities ),
+		'data-has-occurrence-picker' => $has_occurrence_picker ? 'true' : 'false',
 	)
 );
 ?>
@@ -477,66 +573,53 @@ $wrapper_attributes = get_block_wrapper_attributes(
 </p>
 <?php else : ?>
 <div <?php echo wp_kses_data( $wrapper_attributes ); ?>>
-	<?php if ( $is_signed_up && ( 'with_token' === $state || 'linked' === $state ) ) : ?>
-		<!-- Signed up: authenticated user can cancel -->
-		<div class="fair-audience-signup-signed-up">
-			<div class="fair-audience-signup-status fair-audience-signup-status-success">
-				<p><?php echo esc_html__( 'You are signed up for this event!', 'fair-audience' ); ?></p>
-			</div>
-			<div class="wp-block-button fair-audience-unsignup-button-wrap">
-				<button type="button" class="wp-block-button__link wp-element-button fair-audience-unsignup-button is-style-outline">
-					<?php echo esc_html__( 'Cancel signup', 'fair-audience' ); ?>
-				</button>
-			</div>
-			<div class="fair-audience-signup-message" style="display: none;"></div>
-		</div>
-
-	<?php elseif ( $is_signed_up ) : ?>
+	<?php if ( $is_signed_up && 'anonymous' === $state ) : ?>
 		<!-- Signed up: anonymous user (no cancel option) -->
 		<div class="fair-audience-signup-status fair-audience-signup-status-success">
 			<p><?php echo esc_html__( 'You are signed up for this event!', 'fair-audience' ); ?></p>
 		</div>
 
-	<?php elseif ( 'with_token' === $state && $participant ) : ?>
-		<!-- Token-based: show pre-filled info and signup button -->
-		<div class="fair-audience-signup-token-form">
-			<p class="fair-audience-signup-greeting">
-				<?php
-				printf(
-					/* translators: %s: participant name */
-					esc_html__( 'Hi %s! Click the button below to sign up for this event.', 'fair-audience' ),
-					esc_html( $participant->name )
-				);
-				?>
-			</p>
+	<?php elseif ( ( 'with_token' === $state || 'linked' === $state ) && $participant ) : ?>
+		<?php
+		// Unified authenticated form: when a recurrence picker is present the
+		// signup and cancel buttons live in the same container so the JS can
+		// toggle which one is visible as the user selects a different date.
+		$form_class = 'with_token' === $state
+			? 'fair-audience-signup-token-form'
+			: 'fair-audience-signup-linked-form';
+		$greeting   = 'with_token' === $state
+			? sprintf(
+				/* translators: %s: participant name */
+				__( 'Hi %s! Click the button below to sign up for this event.', 'fair-audience' ),
+				$participant->name
+			)
+			: sprintf(
+				/* translators: %s: participant name */
+				__( 'Hi %s! You can sign up for this event.', 'fair-audience' ),
+				$participant->name
+			);
+		?>
+		<div class="<?php echo esc_attr( $form_class ); ?>">
+			<p class="fair-audience-signup-greeting"><?php echo esc_html( $greeting ); ?></p>
+			<?php $render_occurrence_picker(); ?>
 			<?php $render_ticket_types(); ?>
 			<?php $render_ticket_options(); ?>
-			<div class="wp-block-button">
-				<button type="button" class="wp-block-button__link wp-element-button fair-audience-signup-button" data-action="signup">
-					<?php echo esc_html( $signup_button_text ); ?>
-				</button>
+			<div class="fair-audience-signup-action-signup"<?php echo $is_signed_up ? ' style="display: none;"' : ''; ?>>
+				<div class="wp-block-button">
+					<button type="button" class="wp-block-button__link wp-element-button fair-audience-signup-button" data-action="signup">
+						<?php echo esc_html( $signup_button_text ); ?>
+					</button>
+				</div>
 			</div>
-			<div class="fair-audience-signup-message" style="display: none;"></div>
-		</div>
-
-	<?php elseif ( 'linked' === $state && $participant ) : ?>
-		<!-- Logged in with linked participant: show signup button -->
-		<div class="fair-audience-signup-linked-form">
-			<p class="fair-audience-signup-greeting">
-				<?php
-				printf(
-					/* translators: %s: participant name */
-					esc_html__( 'Hi %s! You can sign up for this event.', 'fair-audience' ),
-					esc_html( $participant->name )
-				);
-				?>
-			</p>
-			<?php $render_ticket_types(); ?>
-			<?php $render_ticket_options(); ?>
-			<div class="wp-block-button">
-				<button type="button" class="wp-block-button__link wp-element-button fair-audience-signup-button" data-action="signup">
-					<?php echo esc_html( $signup_button_text ); ?>
-				</button>
+			<div class="fair-audience-signup-action-cancel"<?php echo $is_signed_up ? '' : ' style="display: none;"'; ?>>
+				<div class="fair-audience-signup-status fair-audience-signup-status-success">
+					<p><?php echo esc_html__( 'You are signed up for this date.', 'fair-audience' ); ?></p>
+				</div>
+				<div class="wp-block-button fair-audience-unsignup-button-wrap">
+					<button type="button" class="wp-block-button__link wp-element-button fair-audience-unsignup-button is-style-outline">
+						<?php echo esc_html__( 'Cancel signup', 'fair-audience' ); ?>
+					</button>
+				</div>
 			</div>
 			<div class="fair-audience-signup-message" style="display: none;"></div>
 		</div>
@@ -550,6 +633,7 @@ $wrapper_attributes = get_block_wrapper_attributes(
 	<?php else : ?>
 		<!-- Anonymous: show tabs with forms -->
 		<div class="fair-audience-signup-anonymous">
+			<?php $render_occurrence_picker(); ?>
 			<div class="fair-audience-signup-tabs">
 				<button type="button" class="fair-audience-signup-tab active" data-tab="register">
 					<?php echo esc_html__( "I'm new", 'fair-audience' ); ?>

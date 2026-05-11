@@ -40,20 +40,28 @@ const CSS_PREFIX = 'fair-audience-signup';
 	function initializeBlock(block) {
 		const state = block.dataset.state;
 		const isSignedUp = block.dataset.isSignedUp === 'true';
+		const hasPicker = block.dataset.hasOccurrencePicker === 'true';
 
-		// Initialize unsignup button if present
-		const unsignupButton = block.querySelector(
+		// Initialize unsignup button(s) if present
+		const unsignupButtons = block.querySelectorAll(
 			'.fair-audience-unsignup-button'
 		);
-		if (unsignupButton) {
-			unsignupButton.addEventListener('click', function () {
+		unsignupButtons.forEach(function (btn) {
+			btn.addEventListener('click', function () {
 				submitUnsignup(block, this);
 			});
+		});
+
+		// When a recurrence picker is present, the user can switch between
+		// signed-up and not-signed-up occurrences inline — initialise the
+		// authenticated form even if the default selection is signed up.
+		if (isSignedUp && !hasPicker) {
+			return;
 		}
 
-		// Skip signup initialization if already signed up
-		if (isSignedUp) {
-			return;
+		// Always wire the picker so it stays interactive (also for anonymous).
+		if (hasPicker) {
+			initializeOccurrencePicker(block);
 		}
 
 		// Initialize based on state
@@ -61,6 +69,51 @@ const CSS_PREFIX = 'fair-audience-signup';
 			initializeAnonymousBlock(block);
 		} else if (state === 'with_token' || state === 'linked') {
 			initializeAuthenticatedBlock(block);
+		}
+	}
+
+	/**
+	 * Wire the recurrence occurrence picker.  Selecting a radio updates the
+	 * block-level event-date-id and toggles signup/cancel visibility so the
+	 * existing submit handlers continue to work without modification.
+	 * @param {HTMLElement} block The block element
+	 */
+	function initializeOccurrencePicker(block) {
+		const radios = block.querySelectorAll(
+			'.fair-audience-occurrence-picker input[name="event_date_id"]'
+		);
+		radios.forEach(function (radio) {
+			radio.addEventListener('change', function () {
+				if (!this.checked) return;
+				applyOccurrenceSelection(block, this);
+			});
+		});
+	}
+
+	/**
+	 * Apply a picker selection to the block: sync the event-date-id dataset
+	 * and reveal the signup or cancel action that matches the selection.
+	 * @param {HTMLElement} block The block element
+	 * @param {HTMLInputElement} radio The selected radio
+	 */
+	function applyOccurrenceSelection(block, radio) {
+		const eventDateId = radio.dataset.eventDateId || radio.value;
+		const signedUp = radio.dataset.signedUp === 'true';
+
+		block.dataset.eventDateId = eventDateId;
+		block.dataset.isSignedUp = signedUp ? 'true' : 'false';
+
+		const signupAction = block.querySelector(
+			'.fair-audience-signup-action-signup'
+		);
+		const cancelAction = block.querySelector(
+			'.fair-audience-signup-action-cancel'
+		);
+		if (signupAction) {
+			signupAction.style.display = signedUp ? 'none' : '';
+		}
+		if (cancelAction) {
+			cancelAction.style.display = signedUp ? '' : 'none';
 		}
 	}
 
@@ -379,6 +432,14 @@ const CSS_PREFIX = 'fair-audience-signup';
 						'success'
 					);
 
+					// Reload when the picker is in play so the next render
+					// reflects the just-signed-up date and re-defaults the
+					// picker.
+					if (block.dataset.hasOccurrencePicker === 'true') {
+						window.location.reload();
+						return;
+					}
+
 					// Hide form and show success state
 					form.style.display = 'none';
 					const tabs = block.querySelector(
@@ -605,6 +666,15 @@ const CSS_PREFIX = 'fair-audience-signup';
 						'success'
 					);
 
+					// With a recurrence picker the cleanest way to reflect the
+					// just-signed-up date and re-default the picker is a full
+					// reload — otherwise we'd have to keep the picker in sync
+					// with arbitrary follow-up actions.
+					if (block.dataset.hasOccurrencePicker === 'true') {
+						window.location.reload();
+						return;
+					}
+
 					// Replace form with signed-up state including cancel button
 					const formContainer =
 						block.querySelector(
@@ -716,6 +786,14 @@ const CSS_PREFIX = 'fair-audience-signup';
 							),
 						'success'
 					);
+
+					// Picker present: rerender from server so the cancelled
+					// date moves back to "available" and the default selection
+					// updates.
+					if (block.dataset.hasOccurrencePicker === 'true') {
+						window.location.reload();
+						return;
+					}
 
 					// Get participant name from greeting or fallback
 					const greetingEl = block.querySelector(
