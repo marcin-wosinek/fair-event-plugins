@@ -13,7 +13,7 @@ import {
 	__experimentalVStack as VStack,
 	__experimentalHStack as HStack,
 } from '@wordpress/components';
-import { __, sprintf } from '@wordpress/i18n';
+import { __, _n, sprintf } from '@wordpress/i18n';
 import apiFetch from '@wordpress/api-fetch';
 
 const LABEL_ORDER = { collaborator: 0, signed_up: 1, interested: 2 };
@@ -71,6 +71,11 @@ export default function EventAudience({
 	const [addSearch, setAddSearch] = useState('');
 	const [selectedToAdd, setSelectedToAdd] = useState(new Set());
 	const [isAdding, setIsAdding] = useState(false);
+
+	// Invite groups state
+	const [invitedGroups, setInvitedGroups] = useState([]);
+	const [inviteModalOpen, setInviteModalOpen] = useState(false);
+	const [isSendingInvitations, setIsSendingInvitations] = useState(false);
 
 	// Edit options modal state
 	const [editingParticipant, setEditingParticipant] = useState(null);
@@ -145,6 +150,27 @@ export default function EventAudience({
 				setFormsSummary([]);
 			})
 			.finally(() => setLoadingForms(false));
+	}, [eventDateId]);
+
+	useEffect(() => {
+		if (!eventDateId) return;
+		Promise.all([
+			apiFetch({
+				path: `/fair-events/v1/event-dates/${eventDateId}/group-permission-rules`,
+			}),
+			apiFetch({ path: '/fair-audience/v1/groups' }),
+		])
+			.then(([rules, groups]) => {
+				const invitedIds = new Set(
+					(rules || [])
+						.filter((r) => r.permission_type === 'invited')
+						.map((r) => r.group_id)
+				);
+				setInvitedGroups(
+					(groups || []).filter((g) => invitedIds.has(g.id))
+				);
+			})
+			.catch(() => setInvitedGroups([]));
 	}, [eventDateId]);
 
 	useEffect(() => {
@@ -350,6 +376,49 @@ export default function EventAudience({
 			);
 		} finally {
 			setIsAdding(false);
+		}
+	};
+
+	const totalInvitees = useMemo(
+		() => invitedGroups.reduce((acc, g) => acc + (g.member_count || 0), 0),
+		[invitedGroups]
+	);
+
+	const handleSendInvitations = async () => {
+		if (invitedGroups.length === 0) return;
+		setIsSendingInvitations(true);
+		try {
+			const response = await apiFetch({
+				path: `/fair-audience/v1/event-dates/${eventDateId}/event-invitations`,
+				method: 'POST',
+				data: { group_ids: invitedGroups.map((g) => g.id) },
+			});
+			setInviteModalOpen(false);
+			const sent = response.sent_count ?? 0;
+			const skipped = response.skipped_count ?? 0;
+			const failed = Array.isArray(response.failed)
+				? response.failed.length
+				: 0;
+			showToast(
+				sprintf(
+					/* translators: 1: number of sent invitations, 2: number of skipped recipients, 3: number of failures */
+					__(
+						'Sent %1$d invitation(s). Skipped %2$d, failed %3$d.',
+						'fair-events'
+					),
+					sent,
+					skipped,
+					failed
+				),
+				failed > 0 ? 'error' : 'success'
+			);
+		} catch (err) {
+			showToast(
+				__('Error sending invitations: ', 'fair-events') + err.message,
+				'error'
+			);
+		} finally {
+			setIsSendingInvitations(false);
 		}
 	};
 
@@ -1385,6 +1454,19 @@ export default function EventAudience({
 									>
 										{__('Print list', 'fair-events')}
 									</Button>
+									{invitedGroups.length > 0 && (
+										<Button
+											variant="secondary"
+											onClick={() =>
+												setInviteModalOpen(true)
+											}
+										>
+											{__(
+												'Send Invitations',
+												'fair-events'
+											)}
+										</Button>
+									)}
 								</HStack>
 							</VStack>
 						)}
@@ -1496,6 +1578,77 @@ export default function EventAudience({
 					)}
 				</CardBody>
 			</Card>
+
+			{inviteModalOpen && (
+				<Modal
+					title={__('Send Invitations', 'fair-events')}
+					onRequestClose={() => setInviteModalOpen(false)}
+					style={{ maxWidth: '480px', width: '100%' }}
+				>
+					<VStack spacing={3}>
+						<p style={{ margin: 0 }}>
+							{__(
+								'Send event invitation emails to members of the following groups? Participants who are already signed up will be skipped.',
+								'fair-events'
+							)}
+						</p>
+						<ul style={{ margin: 0, paddingLeft: '20px' }}>
+							{invitedGroups.map((g) => (
+								<li key={g.id}>
+									<strong>{g.name}</strong>
+									{' — '}
+									{sprintf(
+										/* translators: %d: number of group members */
+										_n(
+											'%d member',
+											'%d members',
+											g.member_count || 0,
+											'fair-events'
+										),
+										g.member_count || 0
+									)}
+								</li>
+							))}
+						</ul>
+						<p style={{ margin: 0 }}>
+							<strong>
+								{sprintf(
+									/* translators: %d: total number of potential invitees */
+									__(
+										'Total: up to %d invitations',
+										'fair-events'
+									),
+									totalInvitees
+								)}
+							</strong>
+						</p>
+						<HStack
+							spacing={3}
+							style={{ justifyContent: 'flex-end' }}
+						>
+							<Button
+								variant="secondary"
+								onClick={() => setInviteModalOpen(false)}
+								disabled={isSendingInvitations}
+							>
+								{__('Cancel', 'fair-events')}
+							</Button>
+							<Button
+								variant="primary"
+								onClick={handleSendInvitations}
+								isBusy={isSendingInvitations}
+								disabled={
+									isSendingInvitations || totalInvitees === 0
+								}
+							>
+								{isSendingInvitations
+									? __('Sending…', 'fair-events')
+									: __('Send Invitations', 'fair-events')}
+							</Button>
+						</HStack>
+					</VStack>
+				</Modal>
+			)}
 
 			{addModalOpen && (
 				<Modal
