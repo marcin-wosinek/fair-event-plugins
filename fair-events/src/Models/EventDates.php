@@ -744,7 +744,8 @@ class EventDates {
 	/**
 	 * Delete event date by ID
 	 *
-	 * Also cleans up junction table entries.
+	 * Cascades to generated occurrences (rows with master_id = $id) and
+	 * cleans up junction table entries.
 	 *
 	 * @param int $id Event date row ID.
 	 * @return bool True on success, false on failure.
@@ -754,6 +755,10 @@ class EventDates {
 
 		$table_name  = $wpdb->prefix . 'fair_event_dates';
 		$posts_table = $wpdb->prefix . 'fair_event_date_posts';
+
+		// Cascade-delete generated occurrences pointing at this row, so masters
+		// don't leave orphaned children behind.
+		self::delete_generated_by_master_id( $id );
 
 		// Clean up junction table entries.
 		$wpdb->delete(
