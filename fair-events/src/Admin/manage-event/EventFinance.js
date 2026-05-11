@@ -32,6 +32,7 @@ export default function EventFinance({ eventDateId, entriesUrl }) {
 	const [totals, setTotals] = useState(null);
 	const [entries, setEntries] = useState([]);
 	const [transactions, setTransactions] = useState([]);
+	const [failedTransactions, setFailedTransactions] = useState([]);
 	const [loading, setLoading] = useState(true);
 	const [error, setError] = useState(null);
 
@@ -48,23 +49,46 @@ export default function EventFinance({ eventDateId, entriesUrl }) {
 		setError(null);
 
 		try {
-			const [totalsData, entriesData, transactionsData] =
-				await Promise.all([
-					apiFetch({
-						path: `/fair-payment/v1/financial-entries/totals?event_date_id=${eventDateId}`,
-					}),
-					apiFetch({
-						path: `/fair-payment/v1/financial-entries?event_date_id=${eventDateId}&per_page=10`,
-					}),
-					apiFetch({
-						path: `/fair-payment/v1/transactions?event_date_id=${eventDateId}&status=paid&mode=live&per_page=100`,
-					}),
-				]);
+			const [
+				totalsData,
+				entriesData,
+				transactionsData,
+				failedData,
+				canceledData,
+				expiredData,
+			] = await Promise.all([
+				apiFetch({
+					path: `/fair-payment/v1/financial-entries/totals?event_date_id=${eventDateId}`,
+				}),
+				apiFetch({
+					path: `/fair-payment/v1/financial-entries?event_date_id=${eventDateId}&per_page=10`,
+				}),
+				apiFetch({
+					path: `/fair-payment/v1/transactions?event_date_id=${eventDateId}&status=paid&mode=live&per_page=100`,
+				}),
+				apiFetch({
+					path: `/fair-payment/v1/transactions?event_date_id=${eventDateId}&status=failed&mode=live&per_page=100`,
+				}),
+				apiFetch({
+					path: `/fair-payment/v1/transactions?event_date_id=${eventDateId}&status=canceled&mode=live&per_page=100`,
+				}),
+				apiFetch({
+					path: `/fair-payment/v1/transactions?event_date_id=${eventDateId}&status=expired&mode=live&per_page=100`,
+				}),
+			]);
 
 			const paidTransactions = transactionsData.transactions || [];
 			const transactionIncome = paidTransactions.reduce(
 				(sum, tx) => sum + (tx.amount || 0),
 				0
+			);
+
+			const failed = [
+				...(failedData.transactions || []),
+				...(canceledData.transactions || []),
+				...(expiredData.transactions || []),
+			].sort((a, b) =>
+				(b.created_at || '').localeCompare(a.created_at || '')
 			);
 
 			setTotals({
@@ -75,6 +99,7 @@ export default function EventFinance({ eventDateId, entriesUrl }) {
 			});
 			setEntries(entriesData.entries || []);
 			setTransactions(paidTransactions);
+			setFailedTransactions(failed);
 		} catch (err) {
 			setError(
 				err.message ||
@@ -295,8 +320,92 @@ export default function EventFinance({ eventDateId, entriesUrl }) {
 							</div>
 						)}
 
+						{failedTransactions.length > 0 && (
+							<div style={{ overflowX: 'auto' }}>
+								<h3 style={{ marginBottom: '8px' }}>
+									{__('Failed Payments', 'fair-events')}
+								</h3>
+								<table className="wp-list-table widefat striped">
+									<thead>
+										<tr>
+											<th>{__('Date', 'fair-events')}</th>
+											<th>
+												{__('Amount', 'fair-events')}
+											</th>
+											<th>
+												{__('Status', 'fair-events')}
+											</th>
+											<th>
+												{__(
+													'Description',
+													'fair-events'
+												)}
+											</th>
+											<th>
+												{__(
+													'Participant',
+													'fair-events'
+												)}
+											</th>
+										</tr>
+									</thead>
+									<tbody>
+										{failedTransactions.map((tx) => (
+											<tr key={tx.id}>
+												<td>
+													{tx.created_at
+														? tx.created_at.slice(
+																0,
+																10
+														  )
+														: '-'}
+												</td>
+												<td>
+													<a
+														href={`admin.php?page=fair-payment-transaction&transaction_id=${tx.id}`}
+													>
+														<strong
+															style={{
+																color: '#d63638',
+															}}
+														>
+															{formatAmount(
+																tx.amount
+															)}
+														</strong>
+													</a>
+												</td>
+												<td>
+													<span
+														style={{
+															color: '#d63638',
+															fontWeight: 'bold',
+														}}
+													>
+														{tx.status}
+													</span>
+												</td>
+												<td>
+													{tx.description || (
+														<em>-</em>
+													)}
+												</td>
+												<td>
+													{tx.participant?.name ||
+														tx.user_name || (
+															<em>-</em>
+														)}
+												</td>
+											</tr>
+										))}
+									</tbody>
+								</table>
+							</div>
+						)}
+
 						{entries.length === 0 &&
 							transactions.length === 0 &&
+							failedTransactions.length === 0 &&
 							!totals?.total_cost &&
 							!totals?.total_income && (
 								<p
