@@ -278,6 +278,43 @@ export default function DuplicateEventWizard({
 		}
 	};
 
+	// Shift end by the same delta the user applied to start, so the event
+	// length is preserved when the user moves the start of a duplicate.
+	const handleStartDateChange = (newStartDate) => {
+		if (startDate && endDate && newStartDate) {
+			const oldStart = new Date(startDate);
+			const nextStart = new Date(newStartDate);
+			const deltaDays = Math.round(
+				(nextStart - oldStart) / (1000 * 60 * 60 * 24)
+			);
+			if (deltaDays !== 0) {
+				const nextEnd = new Date(endDate);
+				nextEnd.setDate(nextEnd.getDate() + deltaDays);
+				setEndDate(formatDate(nextEnd));
+			}
+		}
+		setStartDate(newStartDate);
+	};
+
+	const handleStartTimeChange = (newStartTime) => {
+		if (startDate && startTime && endDate && endTime && newStartTime) {
+			const oldStart = new Date(`${startDate}T${startTime}`);
+			const nextStart = new Date(`${startDate}T${newStartTime}`);
+			const deltaMs = nextStart - oldStart;
+			if (deltaMs !== 0) {
+				const oldEnd = new Date(`${endDate}T${endTime}`);
+				const nextEnd = new Date(oldEnd.getTime() + deltaMs);
+				setEndDate(formatDate(nextEnd));
+				setEndTime(
+					`${String(nextEnd.getHours()).padStart(2, '0')}:${String(
+						nextEnd.getMinutes()
+					).padStart(2, '0')}`
+				);
+			}
+		}
+		setStartTime(newStartTime);
+	};
+
 	const venueOptions = [
 		{ label: __('— No venue —', 'fair-events'), value: '' },
 		...venues.map((v) => ({ label: v.name, value: String(v.id) })),
@@ -728,7 +765,7 @@ export default function DuplicateEventWizard({
 									label={__('Start date', 'fair-events')}
 									type="date"
 									value={startDate}
-									onChange={setStartDate}
+									onChange={handleStartDateChange}
 									required
 								/>
 								<TextControl
@@ -745,14 +782,14 @@ export default function DuplicateEventWizard({
 									label={__('Start date', 'fair-events')}
 									type="date"
 									value={startDate}
-									onChange={setStartDate}
+									onChange={handleStartDateChange}
 									required
 								/>
 								<TextControl
 									label={__('Start time', 'fair-events')}
 									type="time"
 									value={startTime}
-									onChange={setStartTime}
+									onChange={handleStartTimeChange}
 									required
 								/>
 								<TextControl
