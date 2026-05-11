@@ -263,15 +263,19 @@ export default function EventFinance({ eventDateId, entriesUrl }) {
 														: '-'}
 												</td>
 												<td>
-													<strong
-														style={{
-															color: '#007017',
-														}}
+													<a
+														href={`admin.php?page=fair-payment-transaction&transaction_id=${tx.id}`}
 													>
-														{formatAmount(
-															tx.amount
-														)}
-													</strong>
+														<strong
+															style={{
+																color: '#007017',
+															}}
+														>
+															{formatAmount(
+																tx.amount
+															)}
+														</strong>
+													</a>
 												</td>
 												<td>
 													{tx.description || (
