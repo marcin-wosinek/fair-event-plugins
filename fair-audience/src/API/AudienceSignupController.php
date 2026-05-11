@@ -13,6 +13,7 @@ use FairAudience\Database\QuestionnaireSubmissionRepository;
 use FairAudience\Database\QuestionnaireAnswerRepository;
 use FairAudience\Models\Participant;
 use FairAudience\Models\QuestionnaireSubmission;
+use FairAudience\Services\AudienceSession;
 use FairAudience\Services\EmailService;
 use WP_REST_Controller;
 use WP_REST_Server;
@@ -296,6 +297,8 @@ class AudienceSignupController extends WP_REST_Controller {
 		if ( $submission_id > 0 && ! empty( $questionnaire_answers ) ) {
 			$this->email_service->send_audience_signup_answers_email( $participant, $submission_id, $questionnaire_answers, $post_id );
 		}
+
+		AudienceSession::set( (int) $participant->id );
 
 		// If keep_informed, send confirmation email.
 		if ( $keep_informed ) {

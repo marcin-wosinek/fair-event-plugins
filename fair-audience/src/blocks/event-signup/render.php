@@ -15,6 +15,7 @@ defined( 'WPINC' ) || die;
 
 use FairAudience\Database\ParticipantRepository;
 use FairAudience\Database\EventParticipantRepository;
+use FairAudience\Services\AudienceSession;
 use FairAudience\Services\ParticipantToken;
 use FairEvents\Models\EventDates;
 use FairEvents\Models\EventDateSetting;
@@ -102,6 +103,16 @@ $participant      = null;
 $participant_data = array();
 $is_signed_up     = false;
 
+// Cookie-based pre-fill values for the anonymous registration form. Only
+// populated when the visitor has a valid fair_audience_session cookie *and*
+// no stronger identity (URL token / logged-in user) applies. The cookie is
+// NOT treated as authentication — fields are still editable, the form still
+// goes through register_and_signup, and the visitor can hit "Not you?".
+$session_prefill_name    = '';
+$session_prefill_surname = '';
+$session_prefill_email   = '';
+$has_session_prefill     = false;
+
 if ( $is_valid_post_type ) {
 	$participant_repository       = new ParticipantRepository();
 	$event_participant_repository = new EventParticipantRepository();
@@ -156,6 +167,21 @@ if ( $is_valid_post_type ) {
 			'surname' => $participant->surname,
 			'email'   => $participant->email,
 		);
+	}
+
+	// Anonymous viewer: fall back to the audience session cookie for pre-fill.
+	// Only applies when no URL token or logged-in user produced a participant.
+	if ( null === $participant ) {
+		$session_participant_id = AudienceSession::get_participant_id();
+		if ( $session_participant_id ) {
+			$session_participant = $participant_repository->get_by_id( $session_participant_id );
+			if ( $session_participant ) {
+				$session_prefill_name    = (string) $session_participant->name;
+				$session_prefill_surname = (string) ( $session_participant->surname ?? '' );
+				$session_prefill_email   = (string) $session_participant->email;
+				$has_session_prefill     = true;
+			}
+		}
 	}
 }
 
@@ -657,6 +683,7 @@ $wrapper_attributes = get_block_wrapper_attributes(
 						name="signup_name"
 						required
 						placeholder="<?php echo esc_attr__( 'Enter your first name', 'fair-audience' ); ?>"
+						value="<?php echo esc_attr( $session_prefill_name ); ?>"
 					/>
 				</p>
 				<p>
@@ -668,6 +695,7 @@ $wrapper_attributes = get_block_wrapper_attributes(
 						id="<?php echo esc_attr( $form_id ); ?>-surname"
 						name="signup_surname"
 						placeholder="<?php echo esc_attr__( 'Enter your surname', 'fair-audience' ); ?>"
+						value="<?php echo esc_attr( $session_prefill_surname ); ?>"
 					/>
 				</p>
 				<p>
@@ -680,6 +708,7 @@ $wrapper_attributes = get_block_wrapper_attributes(
 						name="signup_email"
 						required
 						placeholder="<?php echo esc_attr__( 'Enter your email', 'fair-audience' ); ?>"
+						value="<?php echo esc_attr( $session_prefill_email ); ?>"
 					/>
 				</p>
 				<p class="fair-audience-signup-checkbox">

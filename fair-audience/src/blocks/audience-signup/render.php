@@ -15,6 +15,7 @@
 defined( 'WPINC' ) || die;
 
 use FairEvents\Models\EventDates;
+use FairAudience\Services\AudienceSession;
 use FairAudience\Services\AudienceSignupToken;
 use FairAudience\Services\ParticipantToken;
 use FairAudience\Database\QuestionnaireSubmissionRepository;
@@ -100,6 +101,26 @@ if ( ! empty( $edit_token ) ) {
 	}
 }
 
+// Cookie-based pre-fill: when there's no URL token and we're not in edit
+// mode, fall back to the audience session cookie. Unlike the URL token case,
+// this does NOT set $linked_participant_id — the visitor hasn't proven they
+// own the identity, so we just pre-fill fields and let the controller go
+// through its normal flow.
+$has_session_prefill = false;
+if ( ! $linked_participant_id && ! $is_edit_mode ) {
+	$session_participant_id = AudienceSession::get_participant_id();
+	if ( $session_participant_id ) {
+		$session_repo        = new ParticipantRepository();
+		$session_participant = $session_repo->get_by_id( $session_participant_id );
+		if ( $session_participant ) {
+			$existing_name       = (string) $session_participant->name;
+			$existing_surname    = (string) ( $session_participant->surname ?? '' );
+			$existing_email      = (string) $session_participant->email;
+			$has_session_prefill = true;
+		}
+	}
+}
+
 // Generate unique ID for this form instance.
 $form_id = 'fair-audience-audience-' . wp_unique_id();
 
@@ -109,6 +130,13 @@ $wrapper_data = array(
 	'data-success-message' => esc_attr( $success_message ),
 	'data-questions'       => wp_json_encode( $questions ),
 );
+
+if ( $has_session_prefill ) {
+	$wrapper_data['data-session-prefill']  = '1';
+	$wrapper_data['data-existing-name']    = esc_attr( $existing_name );
+	$wrapper_data['data-existing-surname'] = esc_attr( $existing_surname );
+	$wrapper_data['data-existing-email']   = esc_attr( $existing_email );
+}
 
 if ( '' !== $event_date_id ) {
 	$wrapper_data['data-event-date-id'] = esc_attr( $event_date_id );

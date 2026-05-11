@@ -11,6 +11,7 @@ use FairAudience\Database\ParticipantRepository;
 use FairAudience\Database\ParticipantCategoryRepository;
 use FairAudience\Database\EmailConfirmationTokenRepository;
 use FairAudience\Models\Participant;
+use FairAudience\Services\AudienceSession;
 use FairAudience\Services\EmailService;
 use WP_REST_Controller;
 use WP_REST_Server;
@@ -276,6 +277,8 @@ class MailingSignupController extends WP_REST_Controller {
 			);
 		}
 
+		AudienceSession::set( (int) $participant->id );
+
 		return rest_ensure_response(
 			array(
 				'success' => true,
@@ -353,6 +356,8 @@ class MailingSignupController extends WP_REST_Controller {
 
 		// Delete the token (one-time use).
 		$token->delete();
+
+		AudienceSession::set( (int) $participant->id );
 
 		return rest_ensure_response(
 			array(

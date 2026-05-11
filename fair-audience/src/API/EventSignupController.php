@@ -11,6 +11,7 @@ use FairAudience\Database\ParticipantRepository;
 use FairAudience\Database\EventParticipantRepository;
 use FairAudience\Database\EmailConfirmationTokenRepository;
 use FairAudience\Models\Participant;
+use FairAudience\Services\AudienceSession;
 use FairAudience\Services\EmailService;
 use FairAudience\Services\ParticipantToken;
 use WP_REST_Controller;
@@ -493,6 +494,7 @@ class EventSignupController extends WP_REST_Controller {
 		}
 
 		if ( $existing && 'signed_up' === $existing->label ) {
+			AudienceSession::set( (int) $participant->id );
 			return rest_ensure_response(
 				array(
 					'success' => true,
@@ -511,6 +513,9 @@ class EventSignupController extends WP_REST_Controller {
 
 		$paid_response = $this->maybe_start_paid_signup( $event_id, $event_date_id, $participant, $existing, $user_id, $ticket_type_id, $option_items, $invitation_token );
 		if ( null !== $paid_response ) {
+			if ( ! is_wp_error( $paid_response ) ) {
+				AudienceSession::set( (int) $participant->id );
+			}
 			return $paid_response;
 		}
 
@@ -530,6 +535,8 @@ class EventSignupController extends WP_REST_Controller {
 
 		$option_names = array_map( fn( $o ) => $o->name, $option_items );
 		$this->email_service->send_signup_payment_confirmation( $participant, $event, null, $option_names );
+
+		AudienceSession::set( (int) $participant->id );
 
 		return rest_ensure_response(
 			array(
@@ -1208,8 +1215,9 @@ class EventSignupController extends WP_REST_Controller {
 		$this->increment_rate_limit( $email );
 
 		// Check if participant already exists.
-		$participant = $this->participant_repository->get_by_email( $email );
-		$existing    = null;
+		$participant        = $this->participant_repository->get_by_email( $email );
+		$existing           = null;
+		$is_new_participant = false;
 
 		if ( $participant ) {
 			// Participant exists - check if already signed up.
@@ -1255,6 +1263,8 @@ class EventSignupController extends WP_REST_Controller {
 					array( 'status' => 500 )
 				);
 			}
+
+			$is_new_participant = true;
 		}
 
 		// Validate ticket type group restrictions (and invitation tokens for invitation-only types).
@@ -1273,6 +1283,9 @@ class EventSignupController extends WP_REST_Controller {
 
 		$paid_response = $this->maybe_start_paid_signup( $event_id, $event_date_id, $participant, $existing, 0, $ticket_type_id, $option_items, $invitation_token );
 		if ( null !== $paid_response ) {
+			if ( $is_new_participant && ! is_wp_error( $paid_response ) ) {
+				AudienceSession::set( (int) $participant->id );
+			}
 			return $paid_response;
 		}
 
@@ -1292,6 +1305,10 @@ class EventSignupController extends WP_REST_Controller {
 
 		$option_names = array_map( fn( $o ) => $o->name, $option_items );
 		$this->email_service->send_signup_payment_confirmation( $participant, $event, null, $option_names );
+
+		if ( $is_new_participant ) {
+			AudienceSession::set( (int) $participant->id );
+		}
 
 		// If keep_informed, send confirmation email.
 		if ( $keep_informed ) {

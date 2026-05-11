@@ -14,12 +14,30 @@
 
 defined( 'WPINC' ) || die;
 
+use FairAudience\Database\ParticipantRepository;
+use FairAudience\Services\AudienceSession;
+
 // Get block attributes — translate defaults so stored English values get localized.
 $submit_text              = __( $attributes['submitButtonText'] ?? 'Subscribe', 'fair-audience' );
 $success_message          = __( $attributes['successMessage'] ?? 'Please check your email to confirm your subscription.', 'fair-audience' );
 $show_categories          = ! empty( $attributes['showCategories'] );
 $category_ids             = $attributes['categoryIds'] ?? array();
 $preselected_category_ids = $attributes['preselectedCategoryIds'] ?? array();
+
+// Cookie-based pre-fill from the audience session.
+$session_prefill_name    = '';
+$session_prefill_surname = '';
+$session_prefill_email   = '';
+$session_participant_id  = AudienceSession::get_participant_id();
+if ( $session_participant_id ) {
+	$session_repo        = new ParticipantRepository();
+	$session_participant = $session_repo->get_by_id( $session_participant_id );
+	if ( $session_participant ) {
+		$session_prefill_name    = (string) $session_participant->name;
+		$session_prefill_surname = (string) ( $session_participant->surname ?? '' );
+		$session_prefill_email   = (string) $session_participant->email;
+	}
+}
 
 // Generate unique ID for this form instance.
 $form_id = 'fair-audience-mailing-' . wp_unique_id();
@@ -66,6 +84,7 @@ $wrapper_attributes = get_block_wrapper_attributes(
 				name="mailing_name"
 				required
 				placeholder="<?php echo esc_attr__( 'Enter your first name', 'fair-audience' ); ?>"
+				value="<?php echo esc_attr( $session_prefill_name ); ?>"
 			/>
 		</p>
 		<p>
@@ -78,6 +97,7 @@ $wrapper_attributes = get_block_wrapper_attributes(
 				name="mailing_surname"
 				required
 				placeholder="<?php echo esc_attr__( 'Enter your last name', 'fair-audience' ); ?>"
+				value="<?php echo esc_attr( $session_prefill_surname ); ?>"
 			/>
 		</p>
 		<p>
@@ -90,6 +110,7 @@ $wrapper_attributes = get_block_wrapper_attributes(
 				name="mailing_email"
 				required
 				placeholder="<?php echo esc_attr__( 'Enter your email', 'fair-audience' ); ?>"
+				value="<?php echo esc_attr( $session_prefill_email ); ?>"
 			/>
 		</p>
 

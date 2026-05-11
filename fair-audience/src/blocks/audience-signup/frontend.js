@@ -46,14 +46,17 @@ const CSS_PREFIX = 'fair-audience-audience';
 	}
 
 	/**
-	 * Setup participant link UI (pre-filled form with "Not you?" button)
+	 * Setup participant link UI (pre-filled form with "Not you?" button).
+	 * Shown for either URL-token pre-fill (data-participant-id) or
+	 * cookie-based pre-fill (data-session-prefill).
 	 * @param {HTMLElement} form The form element
 	 */
 	function setupParticipantLink(form) {
 		const container = form.closest('.fair-audience-audience-signup');
 		const participantId = container?.dataset.participantId;
+		const hasSessionPrefill = container?.dataset.sessionPrefill === '1';
 
-		if (!participantId) return;
+		if (!participantId && !hasSessionPrefill) return;
 
 		// Create "Not you?" button
 		const notYouButton = document.createElement('button');
@@ -62,8 +65,9 @@ const CSS_PREFIX = 'fair-audience-audience';
 		notYouButton.textContent = __('Not you? Start fresh', 'fair-audience');
 
 		notYouButton.addEventListener('click', function () {
-			// Clear participant link
+			// Clear participant link and session-prefill marker
 			delete container.dataset.participantId;
+			delete container.dataset.sessionPrefill;
 
 			// Clear pre-filled fields
 			const nameInput = form.querySelector('input[name="audience_name"]');
@@ -85,6 +89,15 @@ const CSS_PREFIX = 'fair-audience-audience';
 			const url = new URL(window.location);
 			url.searchParams.delete('participant_token');
 			window.history.replaceState({}, '', url);
+
+			// Clear the audience session cookie on the server. Fire-and-forget;
+			// the cookie is HttpOnly so the browser alone cannot remove it.
+			apiFetch({
+				path: '/fair-audience/v1/session',
+				method: 'DELETE',
+			}).catch(function () {
+				// Best-effort: nothing useful to show the user if this fails.
+			});
 		});
 
 		// Insert before the submit button

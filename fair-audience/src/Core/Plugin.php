@@ -47,6 +47,7 @@ class Plugin {
 		load_plugin_textdomain( 'fair-audience', false, 'fair-audience/languages' );
 
 		add_action( 'rest_api_init', array( $this, 'register_api_endpoints' ) );
+		add_filter( 'rest_post_dispatch', array( $this, 'slide_audience_session_cookie' ), 10, 3 );
 		add_filter( 'query_vars', array( $this, 'add_query_vars' ) );
 		add_action( 'template_redirect', array( $this, 'handle_poll_response' ) );
 		add_action( 'template_redirect', array( $this, 'handle_email_confirmation' ) );
@@ -152,11 +153,50 @@ class Plugin {
 		$timeline_controller = new \FairAudience\API\TimelineController();
 		$timeline_controller->register_routes();
 
+		$session_controller = new \FairAudience\API\SessionController();
+		$session_controller->register_routes();
+
 		// Membership fees (only when fair-payment plugin is active).
 		if ( class_exists( 'FairPayment\Core\Plugin' ) ) {
 			$fees_controller = new \FairAudience\API\FeesController();
 			$fees_controller->register_routes();
 		}
+	}
+
+	/**
+	 * Slide the audience session cookie forward on every successful
+	 * fair-audience REST request that carried a valid session cookie.
+	 *
+	 * Hooked into rest_post_dispatch so it runs after the route handler.
+	 * Skipped when the response is an error or for routes outside the
+	 * fair-audience namespace.
+	 *
+	 * @param \WP_HTTP_Response $response Response object.
+	 * @param \WP_REST_Server   $server   REST server instance.
+	 * @param \WP_REST_Request  $request  Request object.
+	 * @return \WP_HTTP_Response Unmodified response.
+	 */
+	public function slide_audience_session_cookie( $response, $server, $request ) {
+		if ( ! $response instanceof \WP_HTTP_Response ) {
+			return $response;
+		}
+		if ( ! $request instanceof \WP_REST_Request ) {
+			return $response;
+		}
+
+		$route = $request->get_route();
+		if ( 0 !== strpos( $route, '/fair-audience/' ) ) {
+			return $response;
+		}
+
+		$status = $response->get_status();
+		if ( $status < 200 || $status >= 300 ) {
+			return $response;
+		}
+
+		\FairAudience\Services\AudienceSession::slide();
+
+		return $response;
 	}
 
 	/**
