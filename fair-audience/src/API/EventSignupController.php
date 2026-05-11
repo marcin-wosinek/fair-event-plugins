@@ -1202,22 +1202,33 @@ class EventSignupController extends WP_REST_Controller {
 			);
 		}
 
-		// Check rate limit.
-		if ( $this->is_rate_limited( $email ) ) {
-			return new WP_Error(
-				'rate_limited',
-				__( 'Too many requests. Please try again later.', 'fair-audience' ),
-				array( 'status' => 429 )
-			);
-		}
-
-		// Increment rate limit counter.
-		$this->increment_rate_limit( $email );
-
-		// Check if participant already exists.
-		$participant        = $this->participant_repository->get_by_email( $email );
+		// Logged-in WP users with a linked participant get to skip the email
+		// lookup entirely. Their wp_user_id is a stronger identity than the
+		// typed email — typing someone else's email shouldn't let them sign
+		// up under that participant. Rate limit is also bypassed because
+		// they've already authenticated.
+		$wp_user_id         = get_current_user_id();
+		$participant        = null;
 		$existing           = null;
 		$is_new_participant = false;
+
+		if ( $wp_user_id ) {
+			$participant = $this->participant_repository->get_by_user_id( $wp_user_id );
+		}
+
+		if ( ! $participant ) {
+			// Check rate limit only when going through the email-lookup flow.
+			if ( $this->is_rate_limited( $email ) ) {
+				return new WP_Error(
+					'rate_limited',
+					__( 'Too many requests. Please try again later.', 'fair-audience' ),
+					array( 'status' => 429 )
+				);
+			}
+			$this->increment_rate_limit( $email );
+
+			$participant = $this->participant_repository->get_by_email( $email );
+		}
 
 		if ( $participant ) {
 			// Participant exists - check if already signed up.
@@ -1281,7 +1292,7 @@ class EventSignupController extends WP_REST_Controller {
 			return $min_error;
 		}
 
-		$paid_response = $this->maybe_start_paid_signup( $event_id, $event_date_id, $participant, $existing, 0, $ticket_type_id, $option_items, $invitation_token );
+		$paid_response = $this->maybe_start_paid_signup( $event_id, $event_date_id, $participant, $existing, $wp_user_id, $ticket_type_id, $option_items, $invitation_token );
 		if ( null !== $paid_response ) {
 			if ( $is_new_participant && ! is_wp_error( $paid_response ) ) {
 				AudienceSession::set( (int) $participant->id );

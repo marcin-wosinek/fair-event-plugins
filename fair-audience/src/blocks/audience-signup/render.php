@@ -101,22 +101,42 @@ if ( ! empty( $edit_token ) ) {
 	}
 }
 
-// Cookie-based pre-fill: when there's no URL token and we're not in edit
-// mode, fall back to the audience session cookie. Unlike the URL token case,
-// this does NOT set $linked_participant_id — the visitor hasn't proven they
-// own the identity, so we just pre-fill fields and let the controller go
-// through its normal flow.
+// Logged-in WP user is the strongest pre-fill source: a wp_user_id link is
+// more durable than a cookie, and surviving across browsers / private modes.
+// Wins over both the cookie and the (absent) URL token. Does not set
+// $linked_participant_id because the visitor still goes through the regular
+// submit flow — the controller hijacks identity from wp_user_id on its end.
 $has_session_prefill = false;
+$has_wp_user_prefill = false;
 if ( ! $linked_participant_id && ! $is_edit_mode ) {
-	$session_participant_id = AudienceSession::get_participant_id();
-	if ( $session_participant_id ) {
-		$session_repo        = new ParticipantRepository();
-		$session_participant = $session_repo->get_by_id( $session_participant_id );
-		if ( $session_participant ) {
-			$existing_name       = (string) $session_participant->name;
-			$existing_surname    = (string) ( $session_participant->surname ?? '' );
-			$existing_email      = (string) $session_participant->email;
-			$has_session_prefill = true;
+	$wp_user_id = get_current_user_id();
+	if ( $wp_user_id ) {
+		$user_repo        = new ParticipantRepository();
+		$user_participant = $user_repo->get_by_user_id( $wp_user_id );
+		if ( $user_participant ) {
+			$existing_name       = (string) $user_participant->name;
+			$existing_surname    = (string) ( $user_participant->surname ?? '' );
+			$existing_email      = (string) $user_participant->email;
+			$has_wp_user_prefill = true;
+		}
+	}
+
+	// Cookie-based pre-fill: only when no logged-in WP user produced a
+	// participant. Unlike the URL token / wp_user_id cases, this does NOT
+	// set $linked_participant_id — the visitor hasn't proven they own the
+	// identity, so we just pre-fill fields and let the controller go
+	// through its normal flow.
+	if ( ! $has_wp_user_prefill ) {
+		$session_participant_id = AudienceSession::get_participant_id();
+		if ( $session_participant_id ) {
+			$session_repo        = new ParticipantRepository();
+			$session_participant = $session_repo->get_by_id( $session_participant_id );
+			if ( $session_participant ) {
+				$existing_name       = (string) $session_participant->name;
+				$existing_surname    = (string) ( $session_participant->surname ?? '' );
+				$existing_email      = (string) $session_participant->email;
+				$has_session_prefill = true;
+			}
 		}
 	}
 }
@@ -370,7 +390,7 @@ $wrapper_attributes = get_block_wrapper_attributes( $wrapper_data );
 		</div>
 		<?php endif; ?>
 
-		<?php if ( ( $linked_participant_id || $has_session_prefill ) && ! $is_edit_mode ) : ?>
+		<?php if ( ( $linked_participant_id || $has_session_prefill ) && ! $is_edit_mode && ! $has_wp_user_prefill ) : ?>
 		<button type="button" class="fair-audience-not-you">
 			<?php echo esc_html__( 'Not you? Start fresh', 'fair-audience' ); ?>
 		</button>

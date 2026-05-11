@@ -225,24 +225,33 @@ class AudienceSignupController extends WP_REST_Controller {
 			);
 		}
 
-		// Check rate limit.
-		if ( $this->is_rate_limited( $email ) ) {
-			return new WP_Error(
-				'rate_limited',
-				__( 'Too many requests. Please try again later.', 'fair-audience' ),
-				array( 'status' => 429 )
-			);
+		// Logged-in WP users with a linked participant skip the email lookup
+		// and rate limit. Their wp_user_id is a stronger identity than the
+		// typed email — typing someone else's email mustn't let them update
+		// that participant's record.
+		$existing   = null;
+		$wp_user_id = get_current_user_id();
+		if ( $wp_user_id ) {
+			$existing = $this->participant_repository->get_by_user_id( $wp_user_id );
 		}
 
-		// Increment rate limit counter.
-		$this->increment_rate_limit( $email );
+		if ( ! $existing ) {
+			if ( $this->is_rate_limited( $email ) ) {
+				return new WP_Error(
+					'rate_limited',
+					__( 'Too many requests. Please try again later.', 'fair-audience' ),
+					array( 'status' => 429 )
+				);
+			}
+			$this->increment_rate_limit( $email );
 
-		// If a participant_id was provided via token, use that participant directly.
-		if ( $participant_id > 0 ) {
-			$existing = $this->participant_repository->get_by_id( $participant_id );
-		} else {
-			// Check if email already exists.
-			$existing = $this->participant_repository->get_by_email( $email );
+			if ( $participant_id > 0 ) {
+				// If a participant_id was provided via token, use that participant directly.
+				$existing = $this->participant_repository->get_by_id( $participant_id );
+			} else {
+				// Check if email already exists.
+				$existing = $this->participant_repository->get_by_email( $email );
+			}
 		}
 
 		if ( $existing ) {

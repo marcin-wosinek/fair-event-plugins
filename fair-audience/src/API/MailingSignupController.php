@@ -174,6 +174,17 @@ class MailingSignupController extends WP_REST_Controller {
 			);
 		}
 
+		// Logged-in WP users with a linked participant skip the email
+		// confirmation dance: we already trust their identity, so just flip
+		// the email_profile to marketing and apply category selections.
+		$wp_user_id = get_current_user_id();
+		if ( $wp_user_id ) {
+			$wp_participant = $this->participant_repository->get_by_user_id( $wp_user_id );
+			if ( $wp_participant ) {
+				return $this->subscribe_wp_user( $wp_participant, $category_ids );
+			}
+		}
+
 		// Check rate limit.
 		if ( $this->is_rate_limited( $email ) ) {
 			return new WP_Error(
@@ -363,6 +374,50 @@ class MailingSignupController extends WP_REST_Controller {
 			array(
 				'success' => true,
 				'message' => __( 'Your email has been confirmed. Welcome!', 'fair-audience' ),
+				'status'  => 'confirmed',
+			)
+		);
+	}
+
+	/**
+	 * Subscribe a logged-in WP user directly, bypassing the email-confirmation
+	 * dance. The user's identity is already trusted by WordPress, so we just
+	 * flip email_profile to 'marketing' and apply category selections.
+	 *
+	 * @param \FairAudience\Models\Participant $participant  Participant linked to the WP user.
+	 * @param array                            $category_ids Selected category IDs.
+	 * @return \WP_REST_Response
+	 */
+	private function subscribe_wp_user( $participant, $category_ids ) {
+		$was_marketing = ( 'marketing' === $participant->email_profile && 'confirmed' === $participant->status );
+
+		if ( ! $was_marketing ) {
+			$participant->email_profile = 'marketing';
+			$participant->status        = 'confirmed';
+			$participant->save();
+		}
+
+		if ( ! empty( $category_ids ) ) {
+			$this->category_repository->set_categories(
+				$participant->id,
+				array_map( 'intval', $category_ids )
+			);
+		}
+
+		if ( $was_marketing ) {
+			return rest_ensure_response(
+				array(
+					'success' => true,
+					'message' => __( "You're already subscribed!", 'fair-audience' ),
+					'status'  => 'already_subscribed',
+				)
+			);
+		}
+
+		return rest_ensure_response(
+			array(
+				'success' => true,
+				'message' => __( 'You have been subscribed.', 'fair-audience' ),
 				'status'  => 'confirmed',
 			)
 		);
