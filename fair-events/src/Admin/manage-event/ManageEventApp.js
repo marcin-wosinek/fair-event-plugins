@@ -544,6 +544,8 @@ export default function ManageEventApp() {
 		window.history.replaceState(null, '', url.toString());
 	}, []);
 
+	const isGeneratedOccurrence = eventDate?.occurrence_type === 'generated';
+
 	const tabs = useMemo(
 		() => [
 			{
@@ -561,12 +563,14 @@ export default function ManageEventApp() {
 			{
 				name: 'tickets',
 				title: __('Tickets', 'fair-events'),
+				disabled: isGeneratedOccurrence,
 			},
 			...(audienceUrl
 				? [
 						{
 							name: 'groups',
 							title: __('Groups', 'fair-events'),
+							disabled: isGeneratedOccurrence,
 						},
 				  ]
 				: []),
@@ -595,7 +599,7 @@ export default function ManageEventApp() {
 				title: __('Admin', 'fair-events'),
 			},
 		],
-		[audienceUrl, paymentEntriesUrl]
+		[audienceUrl, paymentEntriesUrl, isGeneratedOccurrence]
 	);
 
 	const initialTab = useMemo(() => {
