@@ -7,6 +7,7 @@ import {
 	showMessage,
 	setButtonLoading,
 	onDomReady,
+	wireNotYouButton,
 } from '../shared/form-utils.js';
 
 /**
@@ -30,6 +31,7 @@ const CSS_PREFIX = 'fair-audience-mailing';
 
 		forms.forEach(function (form) {
 			setupFormSubmission(form);
+			wireNotYouButton(form.querySelector('.fair-audience-not-you'));
 		});
 	}
 

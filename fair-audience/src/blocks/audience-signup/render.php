@@ -132,7 +132,6 @@ $wrapper_data = array(
 );
 
 if ( $has_session_prefill ) {
-	$wrapper_data['data-session-prefill']  = '1';
 	$wrapper_data['data-existing-name']    = esc_attr( $existing_name );
 	$wrapper_data['data-existing-surname'] = esc_attr( $existing_surname );
 	$wrapper_data['data-existing-email']   = esc_attr( $existing_email );
@@ -369,6 +368,12 @@ $wrapper_attributes = get_block_wrapper_attributes( $wrapper_data );
 				<?php echo esc_html__( 'Keep me informed about future events', 'fair-audience' ); ?>
 			</label>
 		</div>
+		<?php endif; ?>
+
+		<?php if ( ( $linked_participant_id || $has_session_prefill ) && ! $is_edit_mode ) : ?>
+		<button type="button" class="fair-audience-not-you">
+			<?php echo esc_html__( 'Not you? Start fresh', 'fair-audience' ); ?>
+		</button>
 		<?php endif; ?>
 
 		<div class="wp-block-button">

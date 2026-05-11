@@ -7,6 +7,7 @@ import {
 	showMessage,
 	setButtonLoading,
 	onDomReady,
+	wireNotYouButton,
 } from '../shared/form-utils.js';
 
 /**
@@ -261,6 +262,8 @@ const CSS_PREFIX = 'fair-audience-signup';
 		});
 
 		initializeOptionTotals(block);
+
+		wireNotYouButton(block.querySelector('.fair-audience-not-you'));
 
 		// Setup registration form
 		const registerForm = block.querySelector(

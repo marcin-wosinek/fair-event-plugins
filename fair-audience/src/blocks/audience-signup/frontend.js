@@ -7,6 +7,7 @@ import {
 	showMessage,
 	setButtonLoading,
 	onDomReady,
+	wireNotYouButton,
 } from '../shared/form-utils.js';
 
 /**
@@ -30,7 +31,7 @@ const CSS_PREFIX = 'fair-audience-audience';
 
 		forms.forEach(function (form) {
 			setupFormSubmission(form);
-			setupParticipantLink(form);
+			wireNotYouButton(form.querySelector('.fair-audience-not-you'));
 		});
 	}
 
@@ -43,68 +44,6 @@ const CSS_PREFIX = 'fair-audience-audience';
 			e.preventDefault();
 			submitSignup(form);
 		});
-	}
-
-	/**
-	 * Setup participant link UI (pre-filled form with "Not you?" button).
-	 * Shown for either URL-token pre-fill (data-participant-id) or
-	 * cookie-based pre-fill (data-session-prefill).
-	 * @param {HTMLElement} form The form element
-	 */
-	function setupParticipantLink(form) {
-		const container = form.closest('.fair-audience-audience-signup');
-		const participantId = container?.dataset.participantId;
-		const hasSessionPrefill = container?.dataset.sessionPrefill === '1';
-
-		if (!participantId && !hasSessionPrefill) return;
-
-		// Create "Not you?" button
-		const notYouButton = document.createElement('button');
-		notYouButton.type = 'button';
-		notYouButton.className = 'fair-audience-audience-not-you';
-		notYouButton.textContent = __('Not you? Start fresh', 'fair-audience');
-
-		notYouButton.addEventListener('click', function () {
-			// Clear participant link and session-prefill marker
-			delete container.dataset.participantId;
-			delete container.dataset.sessionPrefill;
-
-			// Clear pre-filled fields
-			const nameInput = form.querySelector('input[name="audience_name"]');
-			const surnameInput = form.querySelector(
-				'input[name="audience_surname"]'
-			);
-			const emailInput = form.querySelector(
-				'input[name="audience_email"]'
-			);
-
-			if (nameInput) nameInput.value = '';
-			if (surnameInput) surnameInput.value = '';
-			if (emailInput) emailInput.value = '';
-
-			// Remove the "Not you?" button
-			notYouButton.remove();
-
-			// Clean the URL to remove the participant_token
-			const url = new URL(window.location);
-			url.searchParams.delete('participant_token');
-			window.history.replaceState({}, '', url);
-
-			// Clear the audience session cookie on the server. Fire-and-forget;
-			// the cookie is HttpOnly so the browser alone cannot remove it.
-			apiFetch({
-				path: '/fair-audience/v1/session',
-				method: 'DELETE',
-			}).catch(function () {
-				// Best-effort: nothing useful to show the user if this fails.
-			});
-		});
-
-		// Insert before the submit button
-		const submitWrapper = form.querySelector('.wp-block-button');
-		if (submitWrapper) {
-			form.insertBefore(notYouButton, submitWrapper);
-		}
 	}
 
 	/**

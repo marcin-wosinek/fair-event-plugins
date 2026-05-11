@@ -718,6 +718,12 @@ $wrapper_attributes = get_block_wrapper_attributes(
 					</label>
 				</p>
 
+				<?php if ( $has_session_prefill ) : ?>
+				<button type="button" class="fair-audience-not-you">
+					<?php echo esc_html__( 'Not you? Start fresh', 'fair-audience' ); ?>
+				</button>
+				<?php endif; ?>
+
 				<div class="wp-block-button">
 					<button type="submit" class="wp-block-button__link wp-element-button fair-audience-signup-submit-button">
 						<?php echo esc_html( $register_button_text ); ?>

@@ -28,6 +28,7 @@ $preselected_category_ids = $attributes['preselectedCategoryIds'] ?? array();
 $session_prefill_name    = '';
 $session_prefill_surname = '';
 $session_prefill_email   = '';
+$has_session_prefill     = false;
 $session_participant_id  = AudienceSession::get_participant_id();
 if ( $session_participant_id ) {
 	$session_repo        = new ParticipantRepository();
@@ -36,6 +37,7 @@ if ( $session_participant_id ) {
 		$session_prefill_name    = (string) $session_participant->name;
 		$session_prefill_surname = (string) ( $session_participant->surname ?? '' );
 		$session_prefill_email   = (string) $session_participant->email;
+		$has_session_prefill     = true;
 	}
 }
 
@@ -129,6 +131,12 @@ $wrapper_attributes = get_block_wrapper_attributes(
 			</label>
 			<?php endforeach; ?>
 		</fieldset>
+		<?php endif; ?>
+
+		<?php if ( $has_session_prefill ) : ?>
+		<button type="button" class="fair-audience-not-you">
+			<?php echo esc_html__( 'Not you? Start fresh', 'fair-audience' ); ?>
+		</button>
 		<?php endif; ?>
 
 		<div class="wp-block-button">

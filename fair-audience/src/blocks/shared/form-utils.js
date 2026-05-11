@@ -1,3 +1,4 @@
+import apiFetch from '@wordpress/api-fetch';
 import { __ } from '@wordpress/i18n';
 
 /**
@@ -5,6 +6,39 @@ import { __ } from '@wordpress/i18n';
  *
  * @package FairAudience
  */
+
+/**
+ * Wire a "Not you? Start fresh" button to clear the audience session cookie
+ * and reload the page with a blank form.
+ *
+ * The cookie is HttpOnly so the browser alone cannot remove it; we hit the
+ * DELETE endpoint to let the server clear it, then reload so render.php
+ * re-runs without pre-fill data.
+ *
+ * @param {HTMLElement|null} button The button element to wire up. No-op when null.
+ */
+export function wireNotYouButton(button) {
+	if (!button) {
+		return;
+	}
+	button.addEventListener('click', async function () {
+		button.disabled = true;
+		try {
+			await apiFetch({
+				path: '/fair-audience/v1/session',
+				method: 'DELETE',
+			});
+		} catch (e) {
+			// Best-effort: the cookie may not have been set at all (e.g.
+			// because the visitor is browsing without it but a parent has
+			// the same form). Reload anyway so the form renders blank.
+		}
+		// Strip any URL token so the reload doesn't re-prefill.
+		const url = new URL(window.location);
+		url.searchParams.delete('participant_token');
+		window.location.replace(url.toString());
+	});
+}
 
 /**
  * Extract error message from API error object.

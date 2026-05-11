@@ -97,3 +97,22 @@
 	color: #0c5460;
 	border: 1px solid #bee5eb;
 }
+
+/* "Not you? Start fresh" link — shown when fields are pre-filled from the
+   audience session cookie. Styled as a link, not a button. */
+.fair-audience-not-you {
+	background: none;
+	border: none;
+	color: #007cba;
+	cursor: pointer;
+	font: inherit;
+	padding: 0;
+	margin: 0 0 12px;
+	text-align: left;
+	text-decoration: underline;
+}
+
+.fair-audience-not-you:hover,
+.fair-audience-not-you:focus {
+	color: #005a87;
+}
