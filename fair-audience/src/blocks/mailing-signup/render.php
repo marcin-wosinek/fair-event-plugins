@@ -24,20 +24,38 @@ $show_categories          = ! empty( $attributes['showCategories'] );
 $category_ids             = $attributes['categoryIds'] ?? array();
 $preselected_category_ids = $attributes['preselectedCategoryIds'] ?? array();
 
-// Cookie-based pre-fill from the audience session.
+// Pre-fill resolution order:
+// 1. Logged-in WP user with a linked participant — strongest identity.
+// 2. Audience session cookie — weaker, browser-bound.
 $session_prefill_name    = '';
 $session_prefill_surname = '';
 $session_prefill_email   = '';
 $has_session_prefill     = false;
-$session_participant_id  = AudienceSession::get_participant_id();
-if ( $session_participant_id ) {
-	$session_repo        = new ParticipantRepository();
-	$session_participant = $session_repo->get_by_id( $session_participant_id );
-	if ( $session_participant ) {
-		$session_prefill_name    = (string) $session_participant->name;
-		$session_prefill_surname = (string) ( $session_participant->surname ?? '' );
-		$session_prefill_email   = (string) $session_participant->email;
-		$has_session_prefill     = true;
+$has_wp_user_prefill     = false;
+
+$wp_user_id = get_current_user_id();
+if ( $wp_user_id ) {
+	$user_repo        = new ParticipantRepository();
+	$user_participant = $user_repo->get_by_user_id( $wp_user_id );
+	if ( $user_participant ) {
+		$session_prefill_name    = (string) $user_participant->name;
+		$session_prefill_surname = (string) ( $user_participant->surname ?? '' );
+		$session_prefill_email   = (string) $user_participant->email;
+		$has_wp_user_prefill     = true;
+	}
+}
+
+if ( ! $has_wp_user_prefill ) {
+	$session_participant_id = AudienceSession::get_participant_id();
+	if ( $session_participant_id ) {
+		$session_repo        = new ParticipantRepository();
+		$session_participant = $session_repo->get_by_id( $session_participant_id );
+		if ( $session_participant ) {
+			$session_prefill_name    = (string) $session_participant->name;
+			$session_prefill_surname = (string) ( $session_participant->surname ?? '' );
+			$session_prefill_email   = (string) $session_participant->email;
+			$has_session_prefill     = true;
+		}
 	}
 }
 
@@ -133,7 +151,7 @@ $wrapper_attributes = get_block_wrapper_attributes(
 		</fieldset>
 		<?php endif; ?>
 
-		<?php if ( $has_session_prefill ) : ?>
+		<?php if ( $has_session_prefill && ! $has_wp_user_prefill ) : ?>
 		<button type="button" class="fair-audience-not-you">
 			<?php echo esc_html__( 'Not you? Start fresh', 'fair-audience' ); ?>
 		</button>

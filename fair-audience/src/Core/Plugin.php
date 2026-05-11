@@ -48,6 +48,7 @@ class Plugin {
 
 		add_action( 'rest_api_init', array( $this, 'register_api_endpoints' ) );
 		add_filter( 'rest_post_dispatch', array( $this, 'slide_audience_session_cookie' ), 10, 3 );
+		add_action( 'init', array( $this, 'sync_audience_session_with_logged_in_user' ), 20 );
 		add_filter( 'query_vars', array( $this, 'add_query_vars' ) );
 		add_action( 'template_redirect', array( $this, 'handle_poll_response' ) );
 		add_action( 'template_redirect', array( $this, 'handle_email_confirmation' ) );
@@ -197,6 +198,41 @@ class Plugin {
 		\FairAudience\Services\AudienceSession::slide();
 
 		return $response;
+	}
+
+	/**
+	 * Keep the audience session cookie in sync with the logged-in WP user.
+	 *
+	 * A logged-in user's wp_user_id link is a stronger identity than the
+	 * cookie, so when both are present and disagree the cookie is reissued
+	 * to match the WP-linked participant. When the user is not logged in,
+	 * or has no linked participant, the cookie is left alone.
+	 *
+	 * Runs on init priority 20 (after WP sets the current user) so that
+	 * setcookie() runs before any output.
+	 *
+	 * @return void
+	 */
+	public function sync_audience_session_with_logged_in_user() {
+		$user_id = get_current_user_id();
+		if ( ! $user_id ) {
+			return;
+		}
+
+		$repository         = new \FairAudience\Database\ParticipantRepository();
+		$linked_participant = $repository->get_by_user_id( $user_id );
+		if ( ! $linked_participant ) {
+			return;
+		}
+
+		$linked_id = (int) $linked_participant->id;
+		$cookie_id = \FairAudience\Services\AudienceSession::get_participant_id();
+
+		if ( $linked_id === $cookie_id ) {
+			return;
+		}
+
+		\FairAudience\Services\AudienceSession::set( $linked_id );
 	}
 
 	/**
