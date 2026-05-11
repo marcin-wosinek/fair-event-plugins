@@ -20,6 +20,29 @@ use FairAudience\Services\ParticipantToken;
 use FairEvents\Models\EventDates;
 use FairEvents\Models\EventDateSetting;
 
+// Detect a return-from-Mollie callback. When a fair_signup_tx is present we
+// short-circuit the regular signup UI and render a transaction-scoped state
+// (retry / success / processing) so the visitor sees an actionable message
+// instead of a blank signup form. See issue #554.
+$callback_tx_id     = 0;
+$callback_tx        = null;
+$callback_tx_status = '';
+// phpcs:ignore WordPress.Security.NonceVerification.Recommended
+if ( isset( $_GET['fair_payment_callback'] ) && 'true' === $_GET['fair_payment_callback'] ) {
+	// phpcs:ignore WordPress.Security.NonceVerification.Recommended
+	$callback_tx_id = isset( $_GET['fair_signup_tx'] ) ? absint( wp_unslash( $_GET['fair_signup_tx'] ) ) : 0;
+	if ( $callback_tx_id > 0 && class_exists( \FairPayment\API\TransactionAPI::class ) ) {
+		$callback_tx = \FairPayment\API\TransactionAPI::get_transaction( $callback_tx_id );
+		if ( $callback_tx ) {
+			$callback_tx_status = (string) $callback_tx->status;
+		}
+	}
+}
+$has_callback_state    = null !== $callback_tx;
+$callback_is_retriable = $has_callback_state && in_array( $callback_tx_status, array( 'failed', 'canceled', 'expired', 'draft' ), true );
+$callback_is_paid      = $has_callback_state && 'paid' === $callback_tx_status;
+$callback_is_pending   = $has_callback_state && 'pending' === $callback_tx_status;
+
 // Get block attributes — translate defaults so stored English values get localized.
 $signup_button_text       = __( $attributes['signupButtonText'] ?? 'Sign Up', 'fair-audience' );
 $register_button_text     = __( $attributes['registerButtonText'] ?? 'Register & Sign Up', 'fair-audience' );
@@ -599,7 +622,68 @@ $wrapper_attributes = get_block_wrapper_attributes(
 </p>
 <?php else : ?>
 <div <?php echo wp_kses_data( $wrapper_attributes ); ?>>
-	<?php if ( $is_signed_up && 'anonymous' === $state ) : ?>
+	<?php if ( $has_callback_state ) : ?>
+		<?php
+		$amount_display = sprintf( '%s %s', number_format_i18n( (float) $callback_tx->amount, 2 ), esc_html( $callback_tx->currency ) );
+		?>
+		<?php if ( $callback_is_paid ) : ?>
+			<div class="fair-audience-signup-status fair-audience-signup-status-success fair-audience-signup-callback">
+				<p>
+					<?php
+					printf(
+						/* translators: %s: formatted amount with currency */
+						esc_html__( 'Thank you! Your payment of %s has been received and your signup is confirmed.', 'fair-audience' ),
+						esc_html( $amount_display )
+					);
+					?>
+				</p>
+			</div>
+		<?php elseif ( $callback_is_pending ) : ?>
+			<div class="fair-audience-signup-status fair-audience-signup-callback">
+				<p><?php esc_html_e( 'Your payment is being processed. This page will reflect the final status once the bank confirms.', 'fair-audience' ); ?></p>
+			</div>
+		<?php elseif ( $callback_is_retriable ) : ?>
+			<div class="fair-audience-signup-callback fair-audience-signup-retry"
+				data-transaction-id="<?php echo esc_attr( (string) $callback_tx_id ); ?>">
+				<p class="fair-audience-signup-retry-heading">
+					<strong><?php esc_html_e( "Your payment didn't go through.", 'fair-audience' ); ?></strong>
+				</p>
+				<p class="fair-audience-signup-retry-amount">
+					<?php
+					printf(
+						/* translators: %s: formatted amount with currency */
+						esc_html__( 'Amount due: %s', 'fair-audience' ),
+						esc_html( $amount_display )
+					);
+					?>
+				</p>
+				<div class="wp-block-button">
+					<button type="button" class="wp-block-button__link wp-element-button fair-audience-signup-retry-button">
+						<?php esc_html_e( 'Retry payment', 'fair-audience' ); ?>
+					</button>
+				</div>
+				<p class="fair-audience-signup-retry-cancel">
+					<a href="<?php echo esc_url( remove_query_arg( array( 'fair_payment_callback', 'fair_signup_tx' ) ) ); ?>">
+						<?php esc_html_e( 'Cancel and start over', 'fair-audience' ); ?>
+					</a>
+				</p>
+				<div class="fair-audience-signup-message" style="display: none;"></div>
+			</div>
+		<?php else : ?>
+			<div class="fair-audience-signup-status fair-audience-signup-callback">
+				<p>
+					<?php
+					printf(
+						/* translators: %s: transaction status */
+						esc_html__( 'Payment status: %s', 'fair-audience' ),
+						esc_html( $callback_tx_status )
+					);
+					?>
+				</p>
+			</div>
+		<?php endif; ?>
+
+	<?php elseif ( $is_signed_up && 'anonymous' === $state ) : ?>
 		<!-- Signed up: anonymous user (no cancel option) -->
 		<div class="fair-audience-signup-status fair-audience-signup-status-success">
 			<p><?php echo esc_html__( 'You are signed up for this event!', 'fair-audience' ); ?></p>

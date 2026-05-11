@@ -198,6 +198,26 @@ class EventSignupController extends WP_REST_Controller {
 			)
 		);
 
+		// POST /fair-audience/v1/event-signup/retry-payment
+		register_rest_route(
+			$this->namespace,
+			'/' . $this->rest_base . '/retry-payment',
+			array(
+				array(
+					'methods'             => WP_REST_Server::CREATABLE,
+					'callback'            => array( $this, 'retry_payment' ),
+					'permission_callback' => array( $this, 'retry_payment_permissions_check' ),
+					'args'                => array(
+						'transaction_id' => array(
+							'type'              => 'integer',
+							'required'          => true,
+							'sanitize_callback' => 'absint',
+						),
+					),
+				),
+			)
+		);
+
 		// POST /fair-audience/v1/event-signup/request-link
 		register_rest_route(
 			$this->namespace,
@@ -1145,6 +1165,264 @@ class EventSignupController extends WP_REST_Controller {
 			array(
 				'success' => true,
 				'message' => __( 'If your email is in our system, you will receive a signup link shortly. Please check your inbox.', 'fair-audience' ),
+			)
+		);
+	}
+
+	/**
+	 * Permission check for retry-payment: visitor must own the failed
+	 * transaction, either via WP login or matching audience session cookie.
+	 *
+	 * @param WP_REST_Request $request Request object.
+	 * @return bool|WP_Error True if allowed, error otherwise.
+	 */
+	public function retry_payment_permissions_check( $request ) {
+		$transaction_id = (int) $request->get_param( 'transaction_id' );
+		if ( $transaction_id <= 0 ) {
+			return new WP_Error(
+				'invalid_transaction',
+				__( 'Invalid transaction.', 'fair-audience' ),
+				array( 'status' => 400 )
+			);
+		}
+
+		if ( ! class_exists( \FairPayment\API\TransactionAPI::class ) ) {
+			return new WP_Error(
+				'payment_unavailable',
+				__( 'Payment plugin is missing.', 'fair-audience' ),
+				array( 'status' => 503 )
+			);
+		}
+
+		$transaction = \FairPayment\API\TransactionAPI::get_transaction( $transaction_id );
+		if ( ! $transaction ) {
+			return new WP_Error(
+				'transaction_not_found',
+				__( 'Transaction not found.', 'fair-audience' ),
+				array( 'status' => 404 )
+			);
+		}
+
+		$wp_user_id        = get_current_user_id();
+		$tx_user_id        = isset( $transaction->user_id ) ? (int) $transaction->user_id : 0;
+		$tx_participant_id = isset( $transaction->participant_id ) ? (int) $transaction->participant_id : 0;
+
+		if ( $wp_user_id && $tx_user_id && $wp_user_id === $tx_user_id ) {
+			return true;
+		}
+
+		if ( $tx_participant_id > 0 ) {
+			if ( $wp_user_id ) {
+				$linked = $this->participant_repository->get_by_user_id( $wp_user_id );
+				if ( $linked && (int) $linked->id === $tx_participant_id ) {
+					return true;
+				}
+			}
+
+			$cookie_participant_id = \FairAudience\Services\AudienceSession::get_participant_id();
+			if ( $cookie_participant_id && (int) $cookie_participant_id === $tx_participant_id ) {
+				return true;
+			}
+		}
+
+		return new WP_Error(
+			'rest_forbidden',
+			__( 'You are not authorized to retry this payment.', 'fair-audience' ),
+			array( 'status' => 403 )
+		);
+	}
+
+	/**
+	 * Re-initiate payment for a previously failed/canceled/expired transaction.
+	 *
+	 * The existing EventParticipant.pending_payment row is reused when the
+	 * 15-minute hold has not yet elapsed; otherwise the hold is refreshed (or
+	 * the row recreated if a cleanup cron already removed it). A new
+	 * fair-payment transaction is always created since fair-payment refuses
+	 * to re-initiate a transaction once a Mollie payment has been attached.
+	 *
+	 * @param WP_REST_Request $request Request object.
+	 * @return WP_REST_Response|WP_Error Response object or error.
+	 */
+	public function retry_payment( $request ) {
+		$transaction_id = (int) $request->get_param( 'transaction_id' );
+
+		$old_transaction = \FairPayment\API\TransactionAPI::get_transaction( $transaction_id );
+		if ( ! $old_transaction ) {
+			return new WP_Error(
+				'transaction_not_found',
+				__( 'Transaction not found.', 'fair-audience' ),
+				array( 'status' => 404 )
+			);
+		}
+
+		// Reject obvious wrong states. 'draft' is allowed only when payment
+		// was never initiated (e.g., transient failure during initial signup);
+		// 'paid' and 'pending' mean retry does not apply.
+		$status = (string) $old_transaction->status;
+		if ( 'paid' === $status || 'pending' === $status ) {
+			return new WP_Error(
+				'invalid_retry_state',
+				__( 'This payment cannot be retried.', 'fair-audience' ),
+				array( 'status' => 409 )
+			);
+		}
+
+		$metadata = ! empty( $old_transaction->metadata ) ? json_decode( $old_transaction->metadata, true ) : array();
+		if ( empty( $metadata['source'] ) || 'fair-audience-signup' !== $metadata['source'] ) {
+			return new WP_Error(
+				'invalid_retry_source',
+				__( 'This payment is not retriable from this endpoint.', 'fair-audience' ),
+				array( 'status' => 400 )
+			);
+		}
+
+		$event_id       = isset( $metadata['post_id'] ) ? (int) $metadata['post_id'] : (int) $old_transaction->post_id;
+		$event_date_id  = isset( $metadata['event_date_id'] ) ? (int) $metadata['event_date_id'] : (int) $old_transaction->event_date_id;
+		$participant_id = isset( $metadata['participant_id'] ) ? (int) $metadata['participant_id'] : (int) $old_transaction->participant_id;
+		$user_id        = isset( $old_transaction->user_id ) ? (int) $old_transaction->user_id : 0;
+
+		if ( ! $event_id || ! $participant_id ) {
+			return new WP_Error(
+				'invalid_retry_state',
+				__( 'This payment is missing context needed to retry.', 'fair-audience' ),
+				array( 'status' => 409 )
+			);
+		}
+
+		$event = get_post( $event_id );
+		if ( ! $event ) {
+			return new WP_Error(
+				'invalid_event',
+				__( 'Event not found.', 'fair-audience' ),
+				array( 'status' => 404 )
+			);
+		}
+
+		// Look up the EventParticipant row. handle_signup_failed nulls out the
+		// transaction_id so get_by_transaction_id may miss; fall back to the
+		// (event_date_id, participant_id) pair which is the natural key.
+		$event_participant = null;
+		if ( $event_date_id ) {
+			$event_participant = $this->event_participant_repository->get_by_event_date_and_participant(
+				$event_date_id,
+				$participant_id
+			);
+		}
+		if ( ! $event_participant ) {
+			$event_participant = $this->event_participant_repository->get_by_event_and_participant(
+				$event_id,
+				$participant_id
+			);
+		}
+
+		// Reject when the slot is already paid for from another transaction.
+		if ( $event_participant && 'signed_up' === $event_participant->label ) {
+			return rest_ensure_response(
+				array(
+					'success' => true,
+					'status'  => 'already_signed_up',
+					'message' => __( 'You are already signed up for this event.', 'fair-audience' ),
+				)
+			);
+		}
+
+		// Build line items from the old transaction so the retry mirrors the
+		// original purchase exactly (same prices the visitor agreed to).
+		$old_line_items = \FairPayment\Models\LineItem::get_by_transaction_id( $transaction_id );
+		if ( empty( $old_line_items ) ) {
+			return new WP_Error(
+				'invalid_retry_state',
+				__( 'Original line items could not be loaded.', 'fair-audience' ),
+				array( 'status' => 500 )
+			);
+		}
+
+		$line_items = array();
+		foreach ( $old_line_items as $li ) {
+			$line_items[] = array(
+				'name'     => (string) $li->name,
+				'quantity' => (int) ( $li->quantity ?? 1 ),
+				'amount'   => (float) $li->amount,
+			);
+		}
+
+		// Refresh / acquire the 15-minute hold for this retry attempt.
+		$expires_at = gmdate( 'Y-m-d H:i:s', time() + 15 * MINUTE_IN_SECONDS );
+
+		if ( $event_participant ) {
+			$event_participant->label              = 'pending_payment';
+			$event_participant->payment_expires_at = $expires_at;
+			$event_participant->transaction_id     = null;
+			$event_participant->save();
+		} else {
+			$event_participant = new \FairAudience\Models\EventParticipant(
+				array(
+					'event_id'           => $event_id,
+					'event_date_id'      => $event_date_id,
+					'participant_id'     => $participant_id,
+					'label'              => 'pending_payment',
+					'payment_expires_at' => $expires_at,
+					'ticket_type_id'     => isset( $old_transaction->ticket_type_id ) ? (int) $old_transaction->ticket_type_id : null,
+					'seats'              => 1,
+				)
+			);
+			$event_participant->save();
+		}
+
+		$new_transaction_id = \FairPayment\API\TransactionAPI::create_transaction(
+			$line_items,
+			array(
+				'currency'      => $old_transaction->currency,
+				'description'   => $old_transaction->description,
+				'post_id'       => $event_id,
+				'event_date_id' => $event_date_id,
+				'user_id'       => $user_id ? $user_id : null,
+				'metadata'      => array(
+					'source'                  => 'fair-audience-signup',
+					'event_date_id'           => $event_date_id,
+					'event_participant_id'    => (int) $event_participant->id,
+					'participant_id'          => $participant_id,
+					'retry_of_transaction_id' => $transaction_id,
+				),
+			)
+		);
+
+		if ( is_wp_error( $new_transaction_id ) ) {
+			return $new_transaction_id;
+		}
+
+		$event_participant->transaction_id = (int) $new_transaction_id;
+		$event_participant->save();
+
+		$redirect_url = add_query_arg(
+			array(
+				'fair_payment_callback' => 'true',
+				'fair_signup_tx'        => $new_transaction_id,
+			),
+			get_permalink( $event_id )
+		);
+
+		$payment = \FairPayment\API\TransactionAPI::initiate_payment(
+			$new_transaction_id,
+			array(
+				'redirect_url' => $redirect_url,
+			)
+		);
+
+		if ( is_wp_error( $payment ) ) {
+			return $payment;
+		}
+
+		return rest_ensure_response(
+			array(
+				'success'        => true,
+				'status'         => 'payment_required',
+				'message'        => __( 'Redirecting to payment…', 'fair-audience' ),
+				'checkout_url'   => $payment['checkout_url'],
+				'transaction_id' => (int) $new_transaction_id,
+				'amount'         => $old_transaction->amount,
+				'currency'       => $old_transaction->currency,
 			)
 		);
 	}

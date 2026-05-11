@@ -315,3 +315,28 @@
 .fair-audience-not-you:focus {
 	color: #005a87;
 }
+
+/* Return-from-Mollie retry / success / pending callback container. */
+.fair-audience-signup-callback {
+	padding: 16px;
+	border-radius: 4px;
+	margin-bottom: 12px;
+}
+
+.fair-audience-signup-retry {
+	background: #fbeaea;
+	border: 1px solid #d63638;
+}
+
+.fair-audience-signup-retry-heading {
+	margin: 0 0 8px;
+}
+
+.fair-audience-signup-retry-amount {
+	margin: 0 0 12px;
+}
+
+.fair-audience-signup-retry-cancel {
+	margin: 12px 0 0;
+	font-size: 0.9em;
+}

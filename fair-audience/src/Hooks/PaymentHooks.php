@@ -197,8 +197,13 @@ class PaymentHooks {
 	}
 
 	/**
-	 * Release the slot held by a pending_payment event_participant row when
-	 * Mollie reports the payment failed/canceled/expired.
+	 * Detach the failed transaction from its pending_payment row so the buyer
+	 * can retry from the event page without losing their slot.
+	 *
+	 * The row stays pending_payment with payment_expires_at intact: the user
+	 * still holds capacity for the remainder of the original 15-minute window,
+	 * and the cleanup cron releases the slot when that hold expires (capacity
+	 * counts already filter out expired holds, so over-booking can't happen).
 	 *
 	 * @param object $payment     Mollie payment object.
 	 * @param object $transaction Transaction row from fair-payment.
@@ -215,7 +220,8 @@ class PaymentHooks {
 			return;
 		}
 
-		$event_participant->delete();
+		$event_participant->transaction_id = null;
+		$event_participant->save();
 
 		do_action( 'fair_audience_event_signup_failed', $event_participant, $transaction );
 	}

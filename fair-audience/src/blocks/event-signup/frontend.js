@@ -43,6 +43,23 @@ const CSS_PREFIX = 'fair-audience-signup';
 		const isSignedUp = block.dataset.isSignedUp === 'true';
 		const hasPicker = block.dataset.hasOccurrencePicker === 'true';
 
+		// Return-from-Mollie retry UI: the rest of the form is not rendered
+		// when the callback container is present, so we wire it and stop.
+		const retryContainer = block.querySelector(
+			'.fair-audience-signup-retry'
+		);
+		if (retryContainer) {
+			const retryButton = retryContainer.querySelector(
+				'.fair-audience-signup-retry-button'
+			);
+			if (retryButton) {
+				retryButton.addEventListener('click', function () {
+					submitRetryPayment(retryContainer, this);
+				});
+			}
+			return;
+		}
+
 		// Initialize unsignup button(s) if present
 		const unsignupButtons = block.querySelectorAll(
 			'.fair-audience-unsignup-button'
@@ -867,6 +884,81 @@ const CSS_PREFIX = 'fair-audience-signup';
 				showNotification(errorMessage, 'error');
 			})
 			.finally(function () {
+				restoreButton();
+			});
+	}
+
+	/**
+	 * Submit retry-payment for a previously failed transaction.
+	 * @param {HTMLElement} container The retry container element
+	 * @param {HTMLElement} button The retry button
+	 */
+	function submitRetryPayment(container, button) {
+		const transactionId = parseInt(container.dataset.transactionId, 10);
+		if (!transactionId) {
+			return;
+		}
+		const messageContainer = container.querySelector(
+			'.fair-audience-signup-message'
+		);
+
+		const restoreButton = setButtonLoading(
+			button,
+			__('Redirecting…', 'fair-audience')
+		);
+
+		apiFetch({
+			path: '/fair-audience/v1/event-signup/retry-payment',
+			method: 'POST',
+			data: { transaction_id: transactionId },
+		})
+			.then(function (response) {
+				if (
+					response &&
+					response.status === 'payment_required' &&
+					response.checkout_url
+				) {
+					window.location = response.checkout_url;
+					return;
+				}
+				if (response && response.status === 'already_signed_up') {
+					showMessage(
+						messageContainer,
+						response.message,
+						'success',
+						CSS_PREFIX
+					);
+					window.location = window.location.pathname;
+					return;
+				}
+				const fallback = __(
+					'Could not start the retry. Please try again.',
+					'fair-audience'
+				);
+				showMessage(
+					messageContainer,
+					(response && response.message) || fallback,
+					'error',
+					CSS_PREFIX
+				);
+				restoreButton();
+			})
+			.catch(function (error) {
+				console.error('Retry payment error:', error);
+				const errorMessage = extractErrorMessage(
+					error,
+					__(
+						'Could not start the retry. Please try again.',
+						'fair-audience'
+					)
+				);
+				showMessage(
+					messageContainer,
+					errorMessage,
+					'error',
+					CSS_PREFIX
+				);
+				showNotification(errorMessage, 'error');
 				restoreButton();
 			});
 	}
