@@ -57,7 +57,7 @@ export default function EventFinance({ eventDateId, entriesUrl }) {
 						path: `/fair-payment/v1/financial-entries?event_date_id=${eventDateId}&per_page=10`,
 					}),
 					apiFetch({
-						path: `/fair-payment/v1/transactions?event_date_id=${eventDateId}&status=paid&per_page=100`,
+						path: `/fair-payment/v1/transactions?event_date_id=${eventDateId}&status=paid&mode=live&per_page=100`,
 					}),
 				]);
 
