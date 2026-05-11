@@ -340,3 +340,78 @@
 	margin: 12px 0 0;
 	font-size: 0.9em;
 }
+
+/* Return-from-Mollie "paid" confirmation — visually prominent so users
+   leave the page sure the payment went through. */
+.fair-audience-signup-paid {
+	background: #f0faf3;
+	border: 1px solid #00a32a;
+	color: #0d2f17;
+	padding: 28px 24px;
+	text-align: center;
+}
+
+.fair-audience-signup-paid-icon {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	width: 56px;
+	height: 56px;
+	margin: 0 auto 12px;
+	border-radius: 50%;
+	background: #00a32a;
+	color: #fff;
+	font-size: 32px;
+	line-height: 1;
+}
+
+.fair-audience-signup-paid-heading {
+	margin: 0 0 12px;
+	font-size: 1.5em;
+	color: #0d2f17;
+}
+
+.fair-audience-signup-paid-event,
+.fair-audience-signup-paid-amount {
+	margin: 0 0 8px;
+}
+
+.fair-audience-signup-paid-email {
+	margin: 16px 0 0;
+	color: #2d4a37;
+	font-size: 0.95em;
+}
+
+/* Return-from-Mollie "pending" — reassuring while we wait for the webhook. */
+.fair-audience-signup-pending {
+	background: #fbf7e3;
+	border: 1px solid #dba617;
+	padding: 28px 24px;
+	text-align: center;
+}
+
+.fair-audience-signup-pending-spinner {
+	width: 36px;
+	height: 36px;
+	margin: 0 auto 12px;
+	border: 3px solid #dba617;
+	border-top-color: transparent;
+	border-radius: 50%;
+	animation: fair-audience-signup-spin 0.9s linear infinite;
+}
+
+@keyframes fair-audience-signup-spin {
+	to {
+		transform: rotate(360deg);
+	}
+}
+
+.fair-audience-signup-pending-heading {
+	margin: 0 0 12px;
+	font-size: 1.35em;
+}
+
+.fair-audience-signup-pending-status,
+.fair-audience-signup-pending-amount {
+	margin: 0 0 8px;
+}

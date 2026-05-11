@@ -32,6 +32,14 @@ if ( isset( $_GET['fair_payment_callback'] ) && 'true' === $_GET['fair_payment_c
 	// phpcs:ignore WordPress.Security.NonceVerification.Recommended
 	$callback_tx_id = isset( $_GET['fair_signup_tx'] ) ? absint( wp_unslash( $_GET['fair_signup_tx'] ) ) : 0;
 	if ( $callback_tx_id > 0 && class_exists( \FairPayment\API\TransactionAPI::class ) ) {
+		// Proactively pull the latest status from Mollie so the page reflects
+		// reality when the webhook hasn't landed yet. This is the same trick
+		// the fee-payment template uses to avoid the "is it paid or not?"
+		// confusion on the redirect race window.
+		if ( function_exists( 'fair_payment_sync_transaction_status' ) ) {
+			fair_payment_sync_transaction_status( $callback_tx_id );
+		}
+
 		$callback_tx = \FairPayment\API\TransactionAPI::get_transaction( $callback_tx_id );
 		if ( $callback_tx ) {
 			$callback_tx_status = (string) $callback_tx->status;
@@ -627,20 +635,51 @@ $wrapper_attributes = get_block_wrapper_attributes(
 		$amount_display = sprintf( '%s %s', number_format_i18n( (float) $callback_tx->amount, 2 ), esc_html( $callback_tx->currency ) );
 		?>
 		<?php if ( $callback_is_paid ) : ?>
-			<div class="fair-audience-signup-status fair-audience-signup-status-success fair-audience-signup-callback">
-				<p>
+			<div class="fair-audience-signup-callback fair-audience-signup-paid" data-transaction-id="<?php echo esc_attr( (string) $callback_tx_id ); ?>">
+				<div class="fair-audience-signup-paid-icon" aria-hidden="true">✓</div>
+				<h2 class="fair-audience-signup-paid-heading">
+					<?php esc_html_e( 'Payment confirmed', 'fair-audience' ); ?>
+				</h2>
+				<p class="fair-audience-signup-paid-event">
+					<?php
+					printf(
+						/* translators: %s: event title */
+						esc_html__( "You're signed up for %s.", 'fair-audience' ),
+						'<strong>' . esc_html( get_the_title( $event_id ) ) . '</strong>'
+					);
+					?>
+				</p>
+				<p class="fair-audience-signup-paid-amount">
 					<?php
 					printf(
 						/* translators: %s: formatted amount with currency */
-						esc_html__( 'Thank you! Your payment of %s has been received and your signup is confirmed.', 'fair-audience' ),
+						esc_html__( 'Amount paid: %s', 'fair-audience' ),
 						esc_html( $amount_display )
 					);
 					?>
 				</p>
+				<p class="fair-audience-signup-paid-email">
+					<?php esc_html_e( 'A confirmation email is on its way. You can close this page.', 'fair-audience' ); ?>
+				</p>
 			</div>
 		<?php elseif ( $callback_is_pending ) : ?>
-			<div class="fair-audience-signup-status fair-audience-signup-callback">
-				<p><?php esc_html_e( 'Your payment is being processed. This page will reflect the final status once the bank confirms.', 'fair-audience' ); ?></p>
+			<div class="fair-audience-signup-callback fair-audience-signup-pending" data-transaction-id="<?php echo esc_attr( (string) $callback_tx_id ); ?>">
+				<div class="fair-audience-signup-pending-spinner" aria-hidden="true"></div>
+				<h2 class="fair-audience-signup-pending-heading">
+					<?php esc_html_e( 'Thank you for your payment!', 'fair-audience' ); ?>
+				</h2>
+				<p class="fair-audience-signup-pending-status">
+					<?php esc_html_e( "We're confirming with your bank. This usually takes a few seconds — the page will update as soon as it's done.", 'fair-audience' ); ?>
+				</p>
+				<p class="fair-audience-signup-pending-amount">
+					<?php
+					printf(
+						/* translators: %s: formatted amount with currency */
+						esc_html__( 'Amount: %s', 'fair-audience' ),
+						esc_html( $amount_display )
+					);
+					?>
+				</p>
 			</div>
 		<?php elseif ( $callback_is_retriable ) : ?>
 			<div class="fair-audience-signup-callback fair-audience-signup-retry"

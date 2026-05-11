@@ -60,6 +60,21 @@ const CSS_PREFIX = 'fair-audience-signup';
 			return;
 		}
 
+		// Return-from-Mollie pending UI: poll for status until the webhook
+		// resolves the transaction, then swap to success in place.
+		const pendingContainer = block.querySelector(
+			'.fair-audience-signup-pending'
+		);
+		if (pendingContainer) {
+			startPendingPoll(pendingContainer);
+			return;
+		}
+
+		// Return-from-Mollie paid UI: nothing to wire, just bail.
+		if (block.querySelector('.fair-audience-signup-paid')) {
+			return;
+		}
+
 		// Initialize unsignup button(s) if present
 		const unsignupButtons = block.querySelectorAll(
 			'.fair-audience-unsignup-button'
@@ -886,6 +901,147 @@ const CSS_PREFIX = 'fair-audience-signup';
 			.finally(function () {
 				restoreButton();
 			});
+	}
+
+	/**
+	 * Poll the payment status endpoint while the transaction is still
+	 * pending. Swaps the container to the paid markup once Mollie reports
+	 * success, or to a retry-link message on terminal failure. Stops after
+	 * ~30 seconds to avoid hammering the API; the user can refresh manually
+	 * if the bank takes longer than that.
+	 * @param {HTMLElement} container The pending container element
+	 */
+	function startPendingPoll(container) {
+		const transactionId = parseInt(container.dataset.transactionId, 10);
+		if (!transactionId) {
+			return;
+		}
+
+		const POLL_INTERVAL_MS = 2000;
+		const MAX_ATTEMPTS = 15;
+		let attempts = 0;
+
+		const tick = function () {
+			attempts += 1;
+			apiFetch({
+				path: `/fair-payment/v1/payments/${transactionId}/status`,
+				method: 'GET',
+			})
+				.then(function (response) {
+					const status = response && response.status;
+					if (status === 'paid' || status === 'completed') {
+						swapPendingToPaid(container, response);
+						return;
+					}
+					if (
+						status === 'failed' ||
+						status === 'canceled' ||
+						status === 'expired'
+					) {
+						swapPendingToTerminal(container);
+						return;
+					}
+					if (attempts < MAX_ATTEMPTS) {
+						setTimeout(tick, POLL_INTERVAL_MS);
+					}
+				})
+				.catch(function () {
+					// Swallow polling errors silently; we'll try again on the
+					// next tick, and the user can always refresh.
+					if (attempts < MAX_ATTEMPTS) {
+						setTimeout(tick, POLL_INTERVAL_MS);
+					}
+				});
+		};
+
+		setTimeout(tick, POLL_INTERVAL_MS);
+	}
+
+	/**
+	 * Replace the pending container's contents with the paid confirmation.
+	 * @param {HTMLElement} container The pending container element
+	 * @param {Object} transaction Transaction status response
+	 */
+	function swapPendingToPaid(container, transaction) {
+		const amount =
+			transaction && transaction.amount
+				? `${transaction.amount} ${transaction.currency || ''}`.trim()
+				: '';
+
+		container.classList.remove('fair-audience-signup-pending');
+		container.classList.add('fair-audience-signup-paid');
+
+		container.innerHTML = '';
+		container.appendChild(
+			createElement('div', 'fair-audience-signup-paid-icon', '✓', {
+				'aria-hidden': 'true',
+			})
+		);
+		container.appendChild(
+			createElement(
+				'h2',
+				'fair-audience-signup-paid-heading',
+				__('Payment confirmed', 'fair-audience')
+			)
+		);
+		container.appendChild(
+			createElement(
+				'p',
+				'fair-audience-signup-paid-amount',
+				amount ? __('Amount paid:', 'fair-audience') + ' ' + amount : ''
+			)
+		);
+		container.appendChild(
+			createElement(
+				'p',
+				'fair-audience-signup-paid-email',
+				__(
+					'A confirmation email is on its way. You can close this page.',
+					'fair-audience'
+				)
+			)
+		);
+	}
+
+	/**
+	 * Replace the pending container's contents with a terminal-failure note
+	 * pointing the user back to the event page so they can retry.
+	 * @param {HTMLElement} container The pending container element
+	 */
+	function swapPendingToTerminal(container) {
+		container.classList.remove('fair-audience-signup-pending');
+		container.innerHTML = '';
+		const message = createElement(
+			'p',
+			'fair-audience-signup-pending-status',
+			__(
+				"Your payment didn't go through. Refresh this page to retry.",
+				'fair-audience'
+			)
+		);
+		container.appendChild(message);
+	}
+
+	/**
+	 * Tiny helper to build a DOM element with class + text.
+	 * @param {string} tag Element tag name
+	 * @param {string} className Class to apply
+	 * @param {string} text Text content
+	 * @param {Object} attrs Optional attributes
+	 * @return {HTMLElement} The created element
+	 */
+	function createElement(tag, className, text, attrs) {
+		const el = document.createElement(tag);
+		el.className = className;
+		if (text) {
+			el.textContent = text;
+		}
+		if (attrs) {
+			Object.keys(attrs).forEach(function (key) {
+				el.setAttribute(key, attrs[key]);
+			});
+		}
+		return el;
 	}
 
 	/**
