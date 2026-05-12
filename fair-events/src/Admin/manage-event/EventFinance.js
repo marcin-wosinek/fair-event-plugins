@@ -28,6 +28,20 @@ const formatAmount = (amount) => {
 	}).format(amount);
 };
 
+const renderParticipant = (tx) => {
+	const participant = tx.participant;
+	if (participant?.name && participant?.admin_url) {
+		return <a href={participant.admin_url}>{participant.name}</a>;
+	}
+	if (participant?.name) {
+		return participant.name;
+	}
+	if (tx.user_name) {
+		return tx.user_name;
+	}
+	return <em>-</em>;
+};
+
 export default function EventFinance({ eventDateId, entriesUrl }) {
 	const [totals, setTotals] = useState(null);
 	const [entries, setEntries] = useState([]);
@@ -307,12 +321,7 @@ export default function EventFinance({ eventDateId, entriesUrl }) {
 														<em>-</em>
 													)}
 												</td>
-												<td>
-													{tx.participant?.name ||
-														tx.user_name || (
-															<em>-</em>
-														)}
-												</td>
+												<td>{renderParticipant(tx)}</td>
 											</tr>
 										))}
 									</tbody>
@@ -390,12 +399,7 @@ export default function EventFinance({ eventDateId, entriesUrl }) {
 														<em>-</em>
 													)}
 												</td>
-												<td>
-													{tx.participant?.name ||
-														tx.user_name || (
-															<em>-</em>
-														)}
-												</td>
+												<td>{renderParticipant(tx)}</td>
 											</tr>
 										))}
 									</tbody>
