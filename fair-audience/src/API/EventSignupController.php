@@ -506,6 +506,14 @@ class EventSignupController extends WP_REST_Controller {
 			return $group_error;
 		}
 
+		// Reject sold-out tiers server-side too — the frontend disables them
+		// but a stale page or crafted request could still POST a full
+		// ticket_type_id.
+		$capacity_error = $this->validate_ticket_type_capacity( $ticket_type_id );
+		if ( is_wp_error( $capacity_error ) ) {
+			return $capacity_error;
+		}
+
 		// Check if already signed up.
 		if ( $event_date_id ) {
 			$existing = $this->event_participant_repository->get_by_event_date_and_participant(
@@ -612,6 +620,39 @@ class EventSignupController extends WP_REST_Controller {
 				'ticket_type_restricted',
 				__( 'This ticket type is not available for your account.', 'fair-audience' ),
 				array( 'status' => 403 )
+			);
+		}
+
+		return null;
+	}
+
+	/**
+	 * Reject a ticket type that's already reached its capacity.
+	 *
+	 * Mirrors the per-option capacity check in load_valid_options(): counts
+	 * seats from `signed_up` rows plus unexpired `pending_payment` holds, so
+	 * tiers like "Early Bird – first 10" close as soon as the tenth seat is
+	 * sold rather than after payment confirmation.
+	 *
+	 * @param int|null $ticket_type_id Ticket type ID, or null when none selected.
+	 * @return WP_Error|null WP_Error if the tier is full, null otherwise.
+	 */
+	private function validate_ticket_type_capacity( $ticket_type_id ) {
+		if ( ! $ticket_type_id || ! class_exists( \FairEvents\Models\TicketType::class ) ) {
+			return null;
+		}
+
+		$ticket_type = \FairEvents\Models\TicketType::get_by_id( $ticket_type_id );
+		if ( ! $ticket_type || null === $ticket_type->capacity ) {
+			return null;
+		}
+
+		$reserved = $this->event_participant_repository->count_seats_for_ticket_type( (int) $ticket_type_id );
+		if ( $reserved >= (int) $ticket_type->capacity ) {
+			return new WP_Error(
+				'ticket_type_sold_out',
+				__( 'This ticket type is sold out. Please pick another option.', 'fair-audience' ),
+				array( 'status' => 409 )
 			);
 		}
 
@@ -1628,6 +1669,14 @@ class EventSignupController extends WP_REST_Controller {
 		$group_error = $this->validate_ticket_type_group_restriction( $ticket_type_id, $participant->id, $invitation_token );
 		if ( is_wp_error( $group_error ) ) {
 			return $group_error;
+		}
+
+		// Reject sold-out tiers server-side too — the frontend disables them
+		// but a stale page or crafted request could still POST a full
+		// ticket_type_id.
+		$capacity_error = $this->validate_ticket_type_capacity( $ticket_type_id );
+		if ( is_wp_error( $capacity_error ) ) {
+			return $capacity_error;
 		}
 
 		// Paid path takes over when a positive price resolves for this participant.

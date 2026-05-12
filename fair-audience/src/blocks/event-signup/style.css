@@ -264,6 +264,15 @@
 	padding: 4px 0;
 }
 
+.fair-audience-ticket-type-full {
+	opacity: 0.6;
+	cursor: not-allowed;
+}
+
+.fair-audience-ticket-type-full input[type="radio"] {
+	cursor: not-allowed;
+}
+
 /* Disabled button state */
 .fair-audience-signup-submit-button:disabled,
 .fair-audience-signup-button:disabled {

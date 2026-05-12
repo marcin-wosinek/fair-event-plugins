@@ -379,12 +379,26 @@ if ( $pricing_event_date_id && class_exists( \FairEvents\Models\TicketType::clas
 		if ( null === $tt_price ) {
 			continue;
 		}
+
+		// Capacity check: limited-quantity tiers (e.g. "Early Bird – first
+		// 10") disappear once capacity is reached. We render them as a
+		// disabled "sold out" row instead of hiding so visitors understand
+		// why prices changed compared to what they saw earlier.
+		$tt_is_full = false;
+		if ( null !== $tt->capacity ) {
+			$tt_reserved = $event_participant_repository->count_seats_for_ticket_type( (int) $tt->id );
+			if ( $tt_reserved >= (int) $tt->capacity ) {
+				$tt_is_full = true;
+			}
+		}
+
 		$ticket_types_for_display[] = array(
 			'id'               => (int) $tt->id,
 			'name'             => $tt->name,
 			'price'            => $tt_price,
 			'seats_per_ticket' => (int) $tt->seats_per_ticket,
 			'invitation_only'  => (bool) $tt->invitation_only,
+			'is_full'          => $tt_is_full,
 		);
 	}
 }
@@ -476,7 +490,17 @@ $has_priced_options = ! empty(
 // discount, or base price explicitly set to 0) → show "… for free"
 $signup_price = null;
 if ( $has_ticket_types ) {
-	$signup_price = $ticket_types_for_display[0]['price'];
+	// Use the first not-sold-out tier so the button label matches the
+	// pre-selected radio rather than the (sold out) cheapest tier.
+	foreach ( $ticket_types_for_display as $tt_for_button ) {
+		if ( empty( $tt_for_button['is_full'] ) ) {
+			$signup_price = $tt_for_button['price'];
+			break;
+		}
+	}
+	if ( null === $signup_price ) {
+		$signup_price = $ticket_types_for_display[0]['price'];
+	}
 } elseif ( $pricing_event_date_id && class_exists( \FairEvents\Services\EventSignupPricing::class ) ) {
 	$signup_price = \FairEvents\Services\EventSignupPricing::resolve_price(
 		(int) $pricing_event_date_id,
@@ -536,9 +560,10 @@ $render_ticket_types = static function () use ( $ticket_types_for_display, $has_
 
 	echo '<fieldset class="fair-audience-ticket-types">';
 	echo '<legend>' . esc_html__( 'Choose ticket type', 'fair-audience' ) . '</legend>';
-	$first = true;
+	$default_selected = false;
 	foreach ( $ticket_types_for_display as $tt ) {
-		$tt_label = $tt['name'];
+		$tt_is_full = ! empty( $tt['is_full'] );
+		$tt_label   = $tt['name'];
 		if ( $show_ticket_type_prices && null !== $tt['price'] ) {
 			if ( $tt['price'] > 0 ) {
 				$tt_label .= ' — €' . number_format_i18n( (float) $tt['price'], 2 );
@@ -558,16 +583,24 @@ $render_ticket_types = static function () use ( $ticket_types_for_display, $has_
 		if ( $tt['invitation_only'] ) {
 			$tt_label .= ' — ' . __( 'invitation', 'fair-audience' );
 		}
+		if ( $tt_is_full ) {
+			$tt_label .= ' — ' . __( 'sold out', 'fair-audience' );
+		}
 		$radio_id = esc_attr( $form_id ) . '-tt-' . (int) $tt['id'];
 		$classes  = 'fair-audience-ticket-type-option';
 		if ( $tt['invitation_only'] ) {
 			$classes .= ' fair-audience-ticket-type-invited';
 		}
+		if ( $tt_is_full ) {
+			$classes .= ' fair-audience-ticket-type-full';
+		}
 		echo '<label class="' . esc_attr( $classes ) . '" for="' . $radio_id . '">';
 		echo '<input type="radio" name="ticket_type_id" id="' . $radio_id . '" value="' . (int) $tt['id'] . '" data-ticket-price="' . ( null !== $tt['price'] ? esc_attr( number_format( (float) $tt['price'], 2, '.', '' ) ) : '' ) . '"';
-		if ( $first ) {
+		if ( $tt_is_full ) {
+			echo ' disabled';
+		} elseif ( ! $default_selected ) {
 			echo ' checked';
-			$first = false;
+			$default_selected = true;
 		}
 		echo ' /> ';
 		echo esc_html( $tt_label );
