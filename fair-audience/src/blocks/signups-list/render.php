@@ -109,10 +109,12 @@ if ( ! function_exists( 'fair_audience_check_signup_permission' ) ) {
 	$event_participant_repo = new \FairAudience\Database\EventParticipantRepository();
 	$participant_repo       = new \FairAudience\Database\ParticipantRepository();
 
-	// Resolve event_date_id and get participants.
+	// Resolve event_date_id and get participants. Honors ?event_date=<id>
+	// so a viewer who picked a specific occurrence from the signup dropdown
+	// sees the signups for that occurrence instead of the master row.
 	$event_date_id = 0;
-	if ( class_exists( \FairEvents\Models\EventDates::class ) ) {
-		$event_date_obj = \FairEvents\Models\EventDates::get_by_event_id( $event_id );
+	if ( class_exists( \FairEvents\Helpers\SelectedOccurrence::class ) ) {
+		$event_date_obj = \FairEvents\Helpers\SelectedOccurrence::resolve( $event_id );
 		if ( $event_date_obj ) {
 			$event_date_id = (int) $event_date_obj->id;
 		}
