@@ -46,16 +46,9 @@ if ( isset( $_GET['fair_payment_callback'] ) && 'true' === $_GET['fair_payment_c
 		}
 	}
 }
-$has_callback_state    = null !== $callback_tx;
-$callback_is_retriable = $has_callback_state && in_array( $callback_tx_status, array( 'failed', 'canceled', 'expired', 'draft' ), true );
-$callback_is_paid      = $has_callback_state && 'paid' === $callback_tx_status;
-$callback_is_pending   = $has_callback_state && 'pending' === $callback_tx_status;
-// Mollie "open" means the payment was created but the buyer never finished
-// it (they probably closed the tab on the Mollie page). The existing
-// checkout_url is still valid — surface a button so they can pick it up.
-$callback_is_open = $has_callback_state
-	&& 'open' === $callback_tx_status
-	&& ! empty( $callback_tx->checkout_url );
+// Flag computation lives further down — after participant resolution — so
+// that when there's no URL-borne callback we can still surface a payment
+// already in progress for this visitor based on their session / login.
 
 // Get block attributes — translate defaults so stored English values get localized.
 $signup_button_text       = __( $attributes['signupButtonText'] ?? 'Sign Up', 'fair-audience' );
@@ -220,7 +213,68 @@ if ( $is_valid_post_type ) {
 			}
 		}
 	}
+
+	// No URL callback? Look up whether this visitor already has a payment in
+	// progress for this event date and synthesise a callback state from it,
+	// so the same retry / resume / pending UI shows for someone who navigated
+	// directly back to the event page instead of returning via Mollie's
+	// redirect.
+	if ( null === $callback_tx && class_exists( \FairPayment\API\TransactionAPI::class ) ) {
+		$owner_participant_id = 0;
+		if ( $participant ) {
+			$owner_participant_id = (int) $participant->id;
+		} elseif ( ! empty( $session_participant_id ) ) {
+			$owner_participant_id = (int) $session_participant_id;
+		}
+
+		if ( $owner_participant_id ) {
+			$pending_row = null;
+			if ( ! empty( $event_date_id ) ) {
+				$pending_row = $event_participant_repository->get_by_event_date_and_participant(
+					(int) $event_date_id,
+					$owner_participant_id
+				);
+			} else {
+				$pending_row = $event_participant_repository->get_by_event_and_participant(
+					$event_id,
+					$owner_participant_id
+				);
+			}
+
+			$within_hold = $pending_row
+				&& $pending_row->payment_expires_at
+				&& strtotime( $pending_row->payment_expires_at ) > time();
+
+			if ( $pending_row
+				&& 'pending_payment' === $pending_row->label
+				&& $pending_row->transaction_id
+				&& $within_hold
+			) {
+				$candidate_tx_id = (int) $pending_row->transaction_id;
+				if ( function_exists( 'fair_payment_sync_transaction_status' ) ) {
+					fair_payment_sync_transaction_status( $candidate_tx_id );
+				}
+				$candidate_tx = \FairPayment\API\TransactionAPI::get_transaction( $candidate_tx_id );
+				if ( $candidate_tx ) {
+					$callback_tx_id     = $candidate_tx_id;
+					$callback_tx        = $candidate_tx;
+					$callback_tx_status = (string) $candidate_tx->status;
+				}
+			}
+		}
+	}
 }
+
+$has_callback_state    = null !== $callback_tx;
+$callback_is_retriable = $has_callback_state && in_array( $callback_tx_status, array( 'failed', 'canceled', 'expired', 'draft' ), true );
+$callback_is_paid      = $has_callback_state && 'paid' === $callback_tx_status;
+$callback_is_pending   = $has_callback_state && 'pending' === $callback_tx_status;
+// Mollie "open" means the payment was created but the buyer never finished
+// it. The existing checkout_url is still valid — surface a button so they
+// can pick it up.
+$callback_is_open = $has_callback_state
+	&& 'open' === $callback_tx_status
+	&& ! empty( $callback_tx->checkout_url );
 
 // When the picker is shown, re-pivot the wrapper-level event_date_id and
 // is_signed_up to the occurrence the user is most likely to act on next:
