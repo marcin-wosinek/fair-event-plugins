@@ -12,6 +12,7 @@
 
 namespace FairEvents\Hooks;
 
+use FairEvents\Helpers\SelectedOccurrence;
 use FairEvents\Models\EventDates;
 use FairEvents\Models\Venue;
 use FairEvents\Settings\Settings;
@@ -87,8 +88,10 @@ class CalendarButtonHooks {
 			return $content;
 		}
 
-		// Get event dates from database.
-		$event_dates = EventDates::get_by_event_id( $post_id );
+		// Get event dates from database. Honors ?event_date=<id> so the
+		// calendar button reflects a viewer-picked occurrence (e.g. one
+		// specific date out of a recurring series) instead of the master.
+		$event_dates = SelectedOccurrence::resolve( $post_id );
 		if ( ! $event_dates ) {
 			return $content;
 		}

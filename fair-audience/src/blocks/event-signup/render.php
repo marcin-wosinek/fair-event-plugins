@@ -281,15 +281,30 @@ $callback_is_open = $has_callback_state
 
 // When the picker is shown, re-pivot the wrapper-level event_date_id and
 // is_signed_up to the occurrence the user is most likely to act on next:
-// the first not-yet-signed-up upcoming occurrence, or the first one if
-// they're already signed up for everything.
+// the URL-selected occurrence (?event_date=<id>) when it matches one of
+// the upcoming rows, otherwise the first not-yet-signed-up upcoming
+// occurrence, or the first one if they're already signed up for everything.
 $has_occurrence_picker = count( $occurrences_for_picker ) > 1;
 if ( $has_occurrence_picker ) {
-	$default_idx = 0;
-	foreach ( $occurrences_for_picker as $idx => $occ_row ) {
-		if ( ! $occ_row['signed_up'] ) {
-			$default_idx = $idx;
-			break;
+	// phpcs:ignore WordPress.Security.NonceVerification.Recommended
+	$url_selected_id = isset( $_GET['event_date'] ) ? absint( wp_unslash( $_GET['event_date'] ) ) : 0;
+
+	$default_idx = null;
+	if ( $url_selected_id > 0 ) {
+		foreach ( $occurrences_for_picker as $idx => $occ_row ) {
+			if ( (int) $occ_row['id'] === $url_selected_id ) {
+				$default_idx = $idx;
+				break;
+			}
+		}
+	}
+	if ( null === $default_idx ) {
+		$default_idx = 0;
+		foreach ( $occurrences_for_picker as $idx => $occ_row ) {
+			if ( ! $occ_row['signed_up'] ) {
+				$default_idx = $idx;
+				break;
+			}
 		}
 	}
 	$default_occ                            = $occurrences_for_picker[ $default_idx ];
@@ -620,30 +635,30 @@ $render_ticket_options = static function () use ( $ticket_options_for_display, $
 };
 
 /**
- * Render the upcoming-occurrence picker fieldset for recurring events.
+ * Render the upcoming-occurrence picker for recurring events.
  *
  * The picker is a no-op when fewer than two upcoming occurrences exist.
- * Each radio carries data-event-date-id and data-signed-up so the frontend
- * JS can re-target the submit and toggle between "Sign up" / "Cancel signup"
- * as the user changes the selection.
+ * Renders a <select> dropdown. Each option carries data-event-date-id and
+ * data-signed-up so the frontend JS can re-target the submit and toggle
+ * between "Sign up" / "Cancel signup" as the user changes the selection,
+ * and so the dropdown can sync the selection into the page URL.
  */
 $render_occurrence_picker = static function () use ( $occurrences_for_picker, $has_occurrence_picker, $form_id, $state ) {
 	if ( ! $has_occurrence_picker ) {
 		return;
 	}
 	$can_cancel = ( 'linked' === $state || 'with_token' === $state );
-	echo '<fieldset class="fair-audience-occurrence-picker">';
-	echo '<legend>' . esc_html__( 'Choose a date', 'fair-audience' ) . '</legend>';
+	$select_id  = esc_attr( $form_id ) . '-occ';
+	echo '<div class="fair-audience-occurrence-picker">';
+	echo '<label for="' . $select_id . '" class="fair-audience-occurrence-picker-label">' . esc_html__( 'Choose a date', 'fair-audience' ) . '</label>';
+	echo '<select id="' . $select_id . '" name="event_date_id" class="fair-audience-occurrence-select">';
 	foreach ( $occurrences_for_picker as $occ_row ) {
-		$radio_id = esc_attr( $form_id ) . '-occ-' . (int) $occ_row['id'];
-		$label    = \FairEvents\Helpers\DateRangeFormatter::format(
+		$label = \FairEvents\Helpers\DateRangeFormatter::format(
 			$occ_row['start_datetime'],
 			$occ_row['end_datetime'],
 			$occ_row['all_day']
 		);
-		$classes  = 'fair-audience-occurrence-option';
 		if ( $occ_row['signed_up'] ) {
-			$classes .= ' fair-audience-occurrence-option-signed-up';
 			if ( $can_cancel ) {
 				/* translators: appended to a date label when the viewer is signed up — they can cancel from this row */
 				$label .= ' — ' . __( 'signed up (manage)', 'fair-audience' );
@@ -651,16 +666,14 @@ $render_occurrence_picker = static function () use ( $occurrences_for_picker, $h
 				$label .= ' — ' . __( 'signed up', 'fair-audience' );
 			}
 		}
-		echo '<label class="' . esc_attr( $classes ) . '" for="' . $radio_id . '">';
-		echo '<input type="radio" name="event_date_id" id="' . $radio_id . '" value="' . (int) $occ_row['id'] . '" data-event-date-id="' . (int) $occ_row['id'] . '" data-signed-up="' . ( $occ_row['signed_up'] ? 'true' : 'false' ) . '"';
+		echo '<option value="' . (int) $occ_row['id'] . '" data-event-date-id="' . (int) $occ_row['id'] . '" data-signed-up="' . ( $occ_row['signed_up'] ? 'true' : 'false' ) . '"';
 		if ( ! empty( $occ_row['is_default'] ) ) {
-			echo ' checked';
+			echo ' selected';
 		}
-		echo ' /> ';
-		echo esc_html( $label );
-		echo '</label>';
+		echo '>' . esc_html( $label ) . '</option>';
 	}
-	echo '</fieldset>';
+	echo '</select>';
+	echo '</div>';
 };
 
 // Base button labels (without price suffix) for dynamic JS price updates.

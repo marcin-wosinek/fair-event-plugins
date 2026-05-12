@@ -19,8 +19,10 @@ if ( ! $post_id ) {
 	return '';
 }
 
-// Get event data from custom table.
-$event_dates = \FairEvents\Models\EventDates::get_by_event_id( $post_id );
+// Get event data from custom table. Honors ?event_date=<id> so a viewer
+// who picks a specific occurrence from the signup dropdown sees that
+// occurrence's date / venue here instead of the master series.
+$event_dates = \FairEvents\Helpers\SelectedOccurrence::resolve( $post_id );
 
 // Don't render if no event data.
 if ( ! $event_dates ) {

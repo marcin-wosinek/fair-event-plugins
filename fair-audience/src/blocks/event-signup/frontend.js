@@ -109,48 +109,34 @@ const CSS_PREFIX = 'fair-audience-signup';
 	}
 
 	/**
-	 * Wire the recurrence occurrence picker.  Selecting a radio updates the
-	 * block-level event-date-id and toggles signup/cancel visibility so the
-	 * existing submit handlers continue to work without modification.
+	 * Wire the recurrence occurrence picker. Changing the select navigates
+	 * the page to the same URL with ?event_date=<id>, so sibling event
+	 * blocks (event-info, event-dates, calendar-button) re-render for the
+	 * picked occurrence and the dropdown's own state is preserved via the
+	 * server-rendered default selection.
 	 * @param {HTMLElement} block The block element
 	 */
 	function initializeOccurrencePicker(block) {
-		const radios = block.querySelectorAll(
-			'.fair-audience-occurrence-picker input[name="event_date_id"]'
+		const select = block.querySelector(
+			'.fair-audience-occurrence-picker select[name="event_date_id"]'
 		);
-		radios.forEach(function (radio) {
-			radio.addEventListener('change', function () {
-				if (!this.checked) return;
-				applyOccurrenceSelection(block, this);
-			});
+		if (!select) return;
+		select.addEventListener('change', function () {
+			navigateToOccurrence(this.value);
 		});
 	}
 
 	/**
-	 * Apply a picker selection to the block: sync the event-date-id dataset
-	 * and reveal the signup or cancel action that matches the selection.
-	 * @param {HTMLElement} block The block element
-	 * @param {HTMLInputElement} radio The selected radio
+	 * Navigate the current page to the same URL with ?event_date=<id> set,
+	 * preserving any other query params (e.g. fair_payment_callback).
+	 * @param {string} eventDateId Selected occurrence id
 	 */
-	function applyOccurrenceSelection(block, radio) {
-		const eventDateId = radio.dataset.eventDateId || radio.value;
-		const signedUp = radio.dataset.signedUp === 'true';
-
-		block.dataset.eventDateId = eventDateId;
-		block.dataset.isSignedUp = signedUp ? 'true' : 'false';
-
-		const signupAction = block.querySelector(
-			'.fair-audience-signup-action-signup'
-		);
-		const cancelAction = block.querySelector(
-			'.fair-audience-signup-action-cancel'
-		);
-		if (signupAction) {
-			signupAction.style.display = signedUp ? 'none' : '';
-		}
-		if (cancelAction) {
-			cancelAction.style.display = signedUp ? '' : 'none';
-		}
+	function navigateToOccurrence(eventDateId) {
+		const id = parseInt(eventDateId, 10);
+		if (!id) return;
+		const url = new URL(window.location.href);
+		url.searchParams.set('event_date', String(id));
+		window.location.assign(url.toString());
 	}
 
 	/**

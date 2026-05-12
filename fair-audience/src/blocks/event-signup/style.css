@@ -279,22 +279,16 @@
 	margin-bottom: 20px;
 }
 
-.fair-audience-occurrence-picker legend {
+.fair-audience-occurrence-picker-label {
+	display: block;
 	font-weight: 500;
-	padding: 0 4px;
+	margin-bottom: 6px;
 }
 
-.fair-audience-occurrence-option {
-	display: flex;
-	align-items: center;
-	gap: 8px;
-	font-weight: normal;
-	cursor: pointer;
-	padding: 4px 0;
-}
-
-.fair-audience-occurrence-option-signed-up {
-	color: #2e7d32;
+.fair-audience-occurrence-select {
+	width: 100%;
+	padding: 6px 8px;
+	font: inherit;
 }
 
 /* "Not you? Start fresh" link — shown when fields are pre-filled from the
