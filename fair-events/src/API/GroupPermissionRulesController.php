@@ -148,7 +148,16 @@ class GroupPermissionRulesController extends WP_REST_Controller {
 			);
 		}
 
-		$rules = GroupPermissionRule::get_all_by_event_date_id( $event_date_id );
+		// Permission rules are stored on the master row for recurring series
+		// (the Groups tab is disabled on generated occurrences). Pivot to the
+		// master id so consumers on a generated occurrence — e.g. the
+		// Audience tab's "Send Invitations" button — see the same rules.
+		$lookup_id = $event_date_id;
+		if ( 'generated' === $event_date->occurrence_type && $event_date->master_id ) {
+			$lookup_id = (int) $event_date->master_id;
+		}
+
+		$rules = GroupPermissionRule::get_all_by_event_date_id( $lookup_id );
 
 		$data = array();
 		foreach ( $rules as $rule ) {
