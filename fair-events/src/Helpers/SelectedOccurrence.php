@@ -40,28 +40,36 @@ class SelectedOccurrence {
 
 		// phpcs:ignore WordPress.Security.NonceVerification.Recommended
 		$candidate_id = isset( $_GET['event_date'] ) ? absint( wp_unslash( $_GET['event_date'] ) ) : 0;
-		if ( $candidate_id <= 0 ) {
-			return $default;
+
+		if ( $candidate_id > 0 ) {
+			if ( $candidate_id === (int) $default->id ) {
+				return $default;
+			}
+
+			$candidate = EventDates::get_by_id( $candidate_id );
+			// Only accept candidates that belong to the same series as the
+			// default row, i.e. generated children whose master_id points
+			// to it. Prevents URL tampering from rendering an unrelated
+			// event on this post's page. Invalid candidate IDs fall
+			// through to the no-param default below.
+			if ( $candidate && (int) $candidate->master_id === (int) $default->id ) {
+				return $candidate;
+			}
 		}
 
-		// Same row as default: nothing to swap.
-		if ( $candidate_id === (int) $default->id ) {
-			return $default;
+		// No (valid) URL param: for recurring series, pivot to the closest
+		// upcoming occurrence (the master itself if its own date is still in
+		// the future, otherwise the next generated child) so all blocks on
+		// the page describe the next-in-sequence date instead of the
+		// abstract master row. Falls back to the master if no future
+		// occurrences exist (e.g. series has fully ended).
+		if ( 'master' === $default->occurrence_type ) {
+			$upcoming = EventDates::get_upcoming_by_master_id( (int) $default->id );
+			if ( ! empty( $upcoming ) ) {
+				return $upcoming[0];
+			}
 		}
 
-		$candidate = EventDates::get_by_id( $candidate_id );
-		if ( ! $candidate ) {
-			return $default;
-		}
-
-		// Only accept candidates that belong to the same series as the
-		// default row, i.e. generated children whose master_id points to it.
-		// This prevents URL tampering from rendering an unrelated event on
-		// this post's page.
-		if ( (int) $candidate->master_id !== (int) $default->id ) {
-			return $default;
-		}
-
-		return $candidate;
+		return $default;
 	}
 }
