@@ -2344,6 +2344,13 @@ class EmailService {
 	 * @param array  $participant_ids Participant IDs to send to.
 	 * @param array  $group_ids Group IDs to expand.
 	 * @param bool   $skip_signed_up Whether to skip already signed up participants.
+	 * @param int    $event_date_id Specific occurrence to scope to. When > 0,
+	 *                              already-signed-up skips and the token URL
+	 *                              both reference this occurrence rather than
+	 *                              the event's master row. Required when
+	 *                              inviting to one occurrence of a recurring
+	 *                              series so signups for sibling dates don't
+	 *                              suppress the invitation.
 	 * @return array Results array with 'sent', 'failed', and 'skipped' keys.
 	 */
 	public function send_bulk_event_invitations(
@@ -2351,7 +2358,8 @@ class EmailService {
 		$custom_message = '',
 		$participant_ids = array(),
 		$group_ids = array(),
-		$skip_signed_up = true
+		$skip_signed_up = true,
+		$event_date_id = 0
 	) {
 		// Increase time limit for bulk sending.
 		set_time_limit( 300 ); // 5 minutes.
@@ -2391,19 +2399,30 @@ class EmailService {
 			return $results;
 		}
 
-		// Resolve event_date_id once for this event.
-		$event_date_id = 0;
-		if ( class_exists( \FairEvents\Models\EventDates::class ) ) {
+		// Resolve event_date_id once for this event when the caller didn't
+		// provide one. The fallback (event's master row) is fine for single
+		// events, but recurring series should always be invited per
+		// occurrence — the caller passes the picked event_date_id then.
+		$event_date_id = (int) $event_date_id;
+		if ( $event_date_id <= 0 && class_exists( \FairEvents\Models\EventDates::class ) ) {
 			$event_dates_obj = \FairEvents\Models\EventDates::get_by_event_id( $event_id );
 			if ( $event_dates_obj ) {
-				$event_date_id = $event_dates_obj->id;
+				$event_date_id = (int) $event_dates_obj->id;
 			}
 		}
 
-		// Get already signed up participants if we need to skip them.
+		// Get already-signed-up participants. When we have a specific
+		// occurrence, scope the skip-list to that occurrence so a participant
+		// signed up to a different date in the same series still receives
+		// this invitation. Without an occurrence (single events / legacy
+		// callers) fall back to the event-wide list.
 		$signed_up_ids = array();
 		if ( $skip_signed_up ) {
-			$event_participants = $this->event_participant_repository->get_by_event( $event_id );
+			if ( $event_date_id > 0 ) {
+				$event_participants = $this->event_participant_repository->get_by_event_date( $event_date_id );
+			} else {
+				$event_participants = $this->event_participant_repository->get_by_event( $event_id );
+			}
 			foreach ( $event_participants as $ep ) {
 				if ( 'signed_up' === $ep->label ) {
 					$signed_up_ids[] = $ep->participant_id;

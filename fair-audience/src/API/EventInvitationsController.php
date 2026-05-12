@@ -154,13 +154,18 @@ class EventInvitationsController extends WP_REST_Controller {
 			);
 		}
 
-		// Send invitations.
+		// Send invitations. Pass the specific event_date_id so the
+		// "already signed up" skip filter — and the token URL embedded in
+		// the email — both scope to this occurrence. Without this, an
+		// invitation to one date in a recurring series would skip people
+		// already signed up to any sibling date in the same series.
 		$results = $this->email_service->send_bulk_event_invitations(
 			$event_id,
 			$custom_message,
 			$participant_ids,
 			$group_ids,
-			true // Skip already signed up.
+			true, // Skip already signed up.
+			(int) $event_date_id
 		);
 
 		return rest_ensure_response(
