@@ -50,6 +50,12 @@ $has_callback_state    = null !== $callback_tx;
 $callback_is_retriable = $has_callback_state && in_array( $callback_tx_status, array( 'failed', 'canceled', 'expired', 'draft' ), true );
 $callback_is_paid      = $has_callback_state && 'paid' === $callback_tx_status;
 $callback_is_pending   = $has_callback_state && 'pending' === $callback_tx_status;
+// Mollie "open" means the payment was created but the buyer never finished
+// it (they probably closed the tab on the Mollie page). The existing
+// checkout_url is still valid — surface a button so they can pick it up.
+$callback_is_open = $has_callback_state
+	&& 'open' === $callback_tx_status
+	&& ! empty( $callback_tx->checkout_url );
 
 // Get block attributes — translate defaults so stored English values get localized.
 $signup_button_text       = __( $attributes['signupButtonText'] ?? 'Sign Up', 'fair-audience' );
@@ -679,6 +685,34 @@ $wrapper_attributes = get_block_wrapper_attributes(
 						esc_html( $amount_display )
 					);
 					?>
+				</p>
+			</div>
+		<?php elseif ( $callback_is_open ) : ?>
+			<div class="fair-audience-signup-callback fair-audience-signup-resume">
+				<p class="fair-audience-signup-resume-heading">
+					<strong><?php esc_html_e( 'Your payment is waiting.', 'fair-audience' ); ?></strong>
+				</p>
+				<p class="fair-audience-signup-resume-status">
+					<?php esc_html_e( 'You can pick up where you left off on the secure payment page.', 'fair-audience' ); ?>
+				</p>
+				<p class="fair-audience-signup-resume-amount">
+					<?php
+					printf(
+						/* translators: %s: formatted amount with currency */
+						esc_html__( 'Amount due: %s', 'fair-audience' ),
+						esc_html( $amount_display )
+					);
+					?>
+				</p>
+				<div class="wp-block-button">
+					<a class="wp-block-button__link wp-element-button" href="<?php echo esc_url( $callback_tx->checkout_url ); ?>">
+						<?php esc_html_e( 'Continue payment', 'fair-audience' ); ?>
+					</a>
+				</div>
+				<p class="fair-audience-signup-resume-cancel">
+					<a href="<?php echo esc_url( remove_query_arg( array( 'fair_payment_callback', 'fair_signup_tx' ) ) ); ?>">
+						<?php esc_html_e( 'Cancel and start over', 'fair-audience' ); ?>
+					</a>
 				</p>
 			</div>
 		<?php elseif ( $callback_is_retriable ) : ?>

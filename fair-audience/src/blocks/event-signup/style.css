@@ -415,3 +415,25 @@
 .fair-audience-signup-pending-amount {
 	margin: 0 0 8px;
 }
+
+/* "open" Mollie state — payment was started but never finished. The
+   existing checkout URL is still valid; offer it as a primary action. */
+.fair-audience-signup-resume {
+	background: #eef5fb;
+	border: 1px solid #2271b1;
+	padding: 20px 20px;
+}
+
+.fair-audience-signup-resume-heading {
+	margin: 0 0 8px;
+}
+
+.fair-audience-signup-resume-status,
+.fair-audience-signup-resume-amount {
+	margin: 0 0 12px;
+}
+
+.fair-audience-signup-resume-cancel {
+	margin: 12px 0 0;
+	font-size: 0.9em;
+}
