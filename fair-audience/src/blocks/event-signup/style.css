@@ -437,3 +437,73 @@
 	margin: 12px 0 0;
 	font-size: 0.9em;
 }
+
+/* Thank-you popup overlay shown after a successful payment. The inline
+   confirmation card alone has not been enough to reassure all users; the
+   modal is an unmissable second signal that the purchase went through. */
+.fair-audience-thank-you-overlay {
+	position: fixed;
+	inset: 0;
+	background: rgba(0, 0, 0, 0.55);
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	z-index: 100000;
+	padding: 16px;
+	animation: fair-audience-thank-you-fade-in 0.18s ease-out;
+}
+
+@keyframes fair-audience-thank-you-fade-in {
+	from {
+		opacity: 0;
+	}
+	to {
+		opacity: 1;
+	}
+}
+
+.fair-audience-thank-you-card {
+	background: #fff;
+	border-radius: 8px;
+	box-shadow: 0 16px 48px rgba(0, 0, 0, 0.25);
+	padding: 32px 28px;
+	max-width: 440px;
+	width: 100%;
+	text-align: center;
+}
+
+.fair-audience-thank-you-icon {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	width: 64px;
+	height: 64px;
+	margin: 0 auto 16px;
+	border-radius: 50%;
+	background: #00a32a;
+	color: #fff;
+	font-size: 36px;
+	line-height: 1;
+}
+
+.fair-audience-thank-you-heading {
+	margin: 0 0 12px;
+	font-size: 1.6em;
+	color: #0d2f17;
+}
+
+.fair-audience-thank-you-message,
+.fair-audience-thank-you-amount,
+.fair-audience-thank-you-email {
+	margin: 0 0 8px;
+}
+
+.fair-audience-thank-you-email {
+	color: #4a4a4a;
+	font-size: 0.95em;
+	margin-bottom: 20px;
+}
+
+.fair-audience-thank-you-dismiss {
+	margin-top: 8px;
+}

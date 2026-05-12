@@ -70,8 +70,11 @@ const CSS_PREFIX = 'fair-audience-signup';
 			return;
 		}
 
-		// Return-from-Mollie paid UI: nothing to wire, just bail.
-		if (block.querySelector('.fair-audience-signup-paid')) {
+		// Return-from-Mollie paid UI: surface a thank-you popup so the user
+		// can't miss that the payment went through, then bail.
+		const paidContainer = block.querySelector('.fair-audience-signup-paid');
+		if (paidContainer) {
+			showThankYouPopup(readPaidAmount(paidContainer));
 			return;
 		}
 
@@ -1001,6 +1004,8 @@ const CSS_PREFIX = 'fair-audience-signup';
 				)
 			)
 		);
+
+		showThankYouPopup(amount);
 	}
 
 	/**
@@ -1042,6 +1047,112 @@ const CSS_PREFIX = 'fair-audience-signup';
 			});
 		}
 		return el;
+	}
+
+	/**
+	 * Read the formatted amount from a server-rendered paid container so the
+	 * popup can echo it back to the user.
+	 * @param {HTMLElement} container Paid container element
+	 * @return {string} Amount text including currency, or empty when absent
+	 */
+	function readPaidAmount(container) {
+		const amountEl = container.querySelector(
+			'.fair-audience-signup-paid-amount'
+		);
+		if (!amountEl) {
+			return '';
+		}
+		// "Amount paid: 10,00 EUR" → "10,00 EUR". Robust to translation: take
+		// everything after the last colon.
+		const text = (amountEl.textContent || '').trim();
+		const idx = text.lastIndexOf(':');
+		return idx >= 0 ? text.slice(idx + 1).trim() : text;
+	}
+
+	/**
+	 * Show a one-time modal overlay confirming a successful payment. Users
+	 * sometimes miss the inline confirmation card; an unmissable popup
+	 * removes any doubt that the purchase went through.
+	 * @param {string} amount Optional formatted amount with currency.
+	 */
+	function showThankYouPopup(amount) {
+		if (window.__fairAudienceThankYouShown) {
+			return;
+		}
+		window.__fairAudienceThankYouShown = true;
+
+		const overlay = createElement(
+			'div',
+			'fair-audience-thank-you-overlay',
+			'',
+			{ role: 'dialog', 'aria-modal': 'true' }
+		);
+
+		const card = createElement('div', 'fair-audience-thank-you-card');
+		card.appendChild(
+			createElement('div', 'fair-audience-thank-you-icon', '✓', {
+				'aria-hidden': 'true',
+			})
+		);
+		card.appendChild(
+			createElement(
+				'h2',
+				'fair-audience-thank-you-heading',
+				__('Thank you!', 'fair-audience')
+			)
+		);
+		card.appendChild(
+			createElement(
+				'p',
+				'fair-audience-thank-you-message',
+				__('Your payment was confirmed.', 'fair-audience')
+			)
+		);
+		if (amount) {
+			card.appendChild(
+				createElement(
+					'p',
+					'fair-audience-thank-you-amount',
+					__('Amount paid:', 'fair-audience') + ' ' + amount
+				)
+			);
+		}
+		card.appendChild(
+			createElement(
+				'p',
+				'fair-audience-thank-you-email',
+				__('A confirmation email is on its way.', 'fair-audience')
+			)
+		);
+
+		const dismissButton = document.createElement('button');
+		dismissButton.type = 'button';
+		dismissButton.className =
+			'wp-block-button__link wp-element-button fair-audience-thank-you-dismiss';
+		dismissButton.textContent = __('Got it', 'fair-audience');
+		card.appendChild(dismissButton);
+
+		overlay.appendChild(card);
+		document.body.appendChild(overlay);
+
+		const close = function () {
+			overlay.remove();
+			document.removeEventListener('keydown', onKeydown);
+		};
+		const onKeydown = function (e) {
+			if (e.key === 'Escape') {
+				close();
+			}
+		};
+		dismissButton.addEventListener('click', close);
+		overlay.addEventListener('click', function (e) {
+			if (e.target === overlay) {
+				close();
+			}
+		});
+		document.addEventListener('keydown', onKeydown);
+
+		dismissButton.focus();
 	}
 
 	/**
