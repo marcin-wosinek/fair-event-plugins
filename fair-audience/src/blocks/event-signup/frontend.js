@@ -1054,6 +1054,7 @@ const CSS_PREFIX = 'fair-audience-signup';
 		if (!transactionId) {
 			return;
 		}
+		const signature = container.dataset.signature || '';
 		const messageContainer = container.querySelector(
 			'.fair-audience-signup-message'
 		);
@@ -1063,10 +1064,15 @@ const CSS_PREFIX = 'fair-audience-signup';
 			__('Redirecting…', 'fair-audience')
 		);
 
+		const requestData = { transaction_id: transactionId };
+		if (signature) {
+			requestData.signature = signature;
+		}
+
 		apiFetch({
 			path: '/fair-audience/v1/event-signup/retry-payment',
 			method: 'POST',
-			data: { transaction_id: transactionId },
+			data: requestData,
 		})
 			.then(function (response) {
 				if (

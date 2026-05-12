@@ -213,6 +213,12 @@ class EventSignupController extends WP_REST_Controller {
 							'required'          => true,
 							'sanitize_callback' => 'absint',
 						),
+						'signature'      => array(
+							'type'              => 'string',
+							'required'          => false,
+							'default'           => '',
+							'sanitize_callback' => 'sanitize_text_field',
+						),
 					),
 				),
 			)
@@ -1080,6 +1086,10 @@ class EventSignupController extends WP_REST_Controller {
 			array(
 				'fair_payment_callback' => 'true',
 				'fair_signup_tx'        => $transaction_id,
+				'fst_sig'               => \FairAudience\Services\TransactionAccessToken::generate(
+					(int) $transaction_id,
+					(int) $participant->id
+				),
 			),
 			get_permalink( $event_id )
 		);
@@ -1181,7 +1191,9 @@ class EventSignupController extends WP_REST_Controller {
 
 	/**
 	 * Permission check for retry-payment: visitor must own the failed
-	 * transaction, either via WP login or matching audience session cookie.
+	 * transaction. Accepts (in order): a valid signature from the Mollie
+	 * redirect URL, WP login matching transaction.user_id, linked participant,
+	 * or audience session cookie.
 	 *
 	 * @param WP_REST_Request $request Request object.
 	 * @return bool|WP_Error True if allowed, error otherwise.
@@ -1216,6 +1228,18 @@ class EventSignupController extends WP_REST_Controller {
 		$wp_user_id        = get_current_user_id();
 		$tx_user_id        = isset( $transaction->user_id ) ? (int) $transaction->user_id : 0;
 		$tx_participant_id = isset( $transaction->participant_id ) ? (int) $transaction->participant_id : 0;
+
+		// Mollie-redirect signature: proves the visitor reached this from the
+		// link we generated. Lets the buyer retry after their 1h session
+		// cookie has expired, without exposing other people's transactions to
+		// enumeration.
+		$signature = (string) $request->get_param( 'signature' );
+		if ( '' !== $signature
+			&& $tx_participant_id > 0
+			&& \FairAudience\Services\TransactionAccessToken::verify( $signature, $transaction_id, $tx_participant_id )
+		) {
+			return true;
+		}
 
 		if ( $wp_user_id && $tx_user_id && $wp_user_id === $tx_user_id ) {
 			return true;
@@ -1352,8 +1376,8 @@ class EventSignupController extends WP_REST_Controller {
 		foreach ( $old_line_items as $li ) {
 			$line_items[] = array(
 				'name'     => (string) $li->name,
-				'quantity' => (int) ( $li->quantity ?? 1 ),
-				'amount'   => (float) $li->amount,
+				'quantity' => isset( $li->quantity ) ? (int) $li->quantity : 1,
+				'amount'   => (float) $li->unit_amount,
 			);
 		}
 
@@ -1439,6 +1463,10 @@ class EventSignupController extends WP_REST_Controller {
 			array(
 				'fair_payment_callback' => 'true',
 				'fair_signup_tx'        => $new_transaction_id,
+				'fst_sig'               => \FairAudience\Services\TransactionAccessToken::generate(
+					(int) $new_transaction_id,
+					(int) $participant_id
+				),
 			),
 			get_permalink( $event_id )
 		);

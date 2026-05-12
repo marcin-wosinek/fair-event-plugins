@@ -24,13 +24,16 @@ use FairEvents\Models\EventDateSetting;
 // short-circuit the regular signup UI and render a transaction-scoped state
 // (retry / success / processing) so the visitor sees an actionable message
 // instead of a blank signup form. See issue #554.
-$callback_tx_id     = 0;
-$callback_tx        = null;
-$callback_tx_status = '';
+$callback_tx_id        = 0;
+$callback_tx           = null;
+$callback_tx_status    = '';
+$callback_tx_signature = '';
 // phpcs:ignore WordPress.Security.NonceVerification.Recommended
 if ( isset( $_GET['fair_payment_callback'] ) && 'true' === $_GET['fair_payment_callback'] ) {
 	// phpcs:ignore WordPress.Security.NonceVerification.Recommended
 	$callback_tx_id = isset( $_GET['fair_signup_tx'] ) ? absint( wp_unslash( $_GET['fair_signup_tx'] ) ) : 0;
+	// phpcs:ignore WordPress.Security.NonceVerification.Recommended
+	$callback_tx_signature = isset( $_GET['fst_sig'] ) ? sanitize_text_field( wp_unslash( $_GET['fst_sig'] ) ) : '';
 	if ( $callback_tx_id > 0 && class_exists( \FairPayment\API\TransactionAPI::class ) ) {
 		// Proactively pull the latest status from Mollie so the page reflects
 		// reality when the webhook hasn't landed yet. This is the same trick
@@ -771,7 +774,8 @@ $wrapper_attributes = get_block_wrapper_attributes(
 			</div>
 		<?php elseif ( $callback_is_retriable ) : ?>
 			<div class="fair-audience-signup-callback fair-audience-signup-retry"
-				data-transaction-id="<?php echo esc_attr( (string) $callback_tx_id ); ?>">
+				data-transaction-id="<?php echo esc_attr( (string) $callback_tx_id ); ?>"
+				data-signature="<?php echo esc_attr( $callback_tx_signature ); ?>">
 				<p class="fair-audience-signup-retry-heading">
 					<strong><?php esc_html_e( "Your payment didn't go through.", 'fair-audience' ); ?></strong>
 				</p>
