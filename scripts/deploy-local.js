@@ -132,7 +132,9 @@ function gitDescribe() {
 		{ cwd: rootDir, encoding: 'utf8' }
 	);
 	if (result.status !== 0) {
-		console.warn('⚠ git describe failed; version will be marked "unknown".');
+		console.warn(
+			'⚠ git describe failed; version will be marked "unknown".'
+		);
 		return 'unknown';
 	}
 	return result.stdout.trim();
@@ -146,6 +148,12 @@ function writeVersionFile(plugin, extractDir, version) {
 }
 
 function build() {
+	const distDir = join(rootDir, 'dist');
+	if (existsSync(distDir)) {
+		for (const f of readdirSync(distDir)) {
+			if (f.endsWith('.zip')) rmSync(join(distDir, f));
+		}
+	}
 	console.log('▶ Building plugin ZIPs (npm run dist-archive)...');
 	run('npm', ['run', 'dist-archive']);
 }
