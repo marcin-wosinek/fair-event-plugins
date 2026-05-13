@@ -62,7 +62,7 @@ msgstr "Budżety"
 #: src/Admin/AdminPages.php:88
 #: src/Admin/AdminPages.php:89
 #: src/Admin/AdminPages.php:96
-#: src/Admin/transaction/TransactionPage.js:169
+#: src/Admin/transaction/TransactionPage.js:541
 msgid "Transaction Detail"
 msgstr "Szczegóły transakcji"
 
@@ -306,11 +306,12 @@ msgstr "Nie udało się zaktualizować wpisu finansowego."
 msgid "Failed to delete financial entry."
 msgstr "Nie udało się usunąć wpisu finansowego."
 
-#: src/API/PaymentEndpoint.php:231
-#: src/API/TransactionAPI.php:137
-#: src/API/TransactionsController.php:205
-#: src/API/TransactionsController.php:282
-#: src/Models/Transaction.php:372
+#: src/API/PaymentEndpoint.php:304
+#: src/API/TransactionAPI.php:162
+#: src/API/TransactionsController.php:239
+#: src/API/TransactionsController.php:259
+#: src/API/TransactionsController.php:370
+#: src/Models/Transaction.php:413
 msgid "Transaction not found."
 msgstr "Transakcja nie znaleziona."
 
@@ -437,89 +438,89 @@ msgstr "Wiersz %d: Nieprawidłowy typ wpisu."
 msgid "Imported %1$d entries, skipped %2$d (duplicates or errors)."
 msgstr "Zaimportowano %1$d wpisów, pominięto %2$d (duplikaty lub błędy)."
 
-#: src/API/PaymentEndpoint.php:117
+#: src/API/PaymentEndpoint.php:147
 msgid "Mollie payment gateway is not configured. Please configure your API keys in settings."
 msgstr "Brama płatności Mollie nie jest skonfigurowana. Skonfiguruj klucze API w ustawieniach."
 
-#: src/API/PaymentEndpoint.php:131
+#: src/API/PaymentEndpoint.php:167
 msgid "Invalid payment amount."
 msgstr "Nieprawidłowa kwota płatności."
 
 #. translators: %s: amount and currency
-#: src/API/PaymentEndpoint.php:139
+#: src/API/PaymentEndpoint.php:175
 #, php-format
 msgid "Payment of %1$s %2$s"
 msgstr "Płatność %1$s %2$s"
 
-#: src/API/TransactionAPI.php:97
+#: src/API/TransactionAPI.php:99
 msgid "Failed to create transaction."
 msgstr "Nie udało się utworzyć transakcji."
 
-#: src/API/TransactionAPI.php:113
+#: src/API/TransactionAPI.php:115
 msgid "Failed to create line items."
 msgstr "Nie udało się utworzyć pozycji linii."
 
-#: src/API/TransactionAPI.php:151
+#: src/API/TransactionAPI.php:176
 msgid "Redirect URL is required."
 msgstr "Adres URL przekierowania jest wymagany."
 
 #. translators: %d: transaction ID
-#: src/API/TransactionAPI.php:164
+#: src/API/TransactionAPI.php:189
 #, php-format
 msgid "Payment #%d"
 msgstr "Płatność #%d"
 
-#: src/API/TransactionAPI.php:204
+#: src/API/TransactionAPI.php:253
 msgid "Failed to update transaction with payment details."
 msgstr "Nie udało się zaktualizować transakcji szczegółami płatności."
 
-#: src/API/TransactionAPI.php:472
+#: src/API/TransactionAPI.php:521
 msgid "Line items must be an array."
 msgstr "Pozycje linii muszą być tablicą."
 
-#: src/API/TransactionAPI.php:480
+#: src/API/TransactionAPI.php:529
 msgid "At least one line item is required."
 msgstr "Wymagana jest co najmniej jedna pozycja linii."
 
 #. translators: %d: line item index
-#: src/API/TransactionAPI.php:492
+#: src/API/TransactionAPI.php:541
 #, php-format
 msgid "Line item at index %d must be an array."
 msgstr "Pozycja linii na indeksie %d musi być tablicą."
 
 #. translators: %d: line item index
-#: src/API/TransactionAPI.php:504
+#: src/API/TransactionAPI.php:553
 #, php-format
 msgid "Line item at index %d is missing required \"name\" field."
 msgstr "Pozycja linii na indeksie %d nie ma wymaganego pola \"name\"."
 
 #. translators: %d: line item index
-#: src/API/TransactionAPI.php:516
+#: src/API/TransactionAPI.php:565
 #, php-format
 msgid "Line item at index %d has invalid \"amount\" field."
 msgstr "Pozycja w indeksie %d ma nieprawidłowe pole \"amount\"."
 
 #. translators: %d: line item index
-#: src/API/TransactionAPI.php:528
+#: src/API/TransactionAPI.php:577
 #, php-format
 msgid "Line item at index %d must have positive amount."
 msgstr "Pozycja w indeksie %d musi mieć dodatnią kwotę."
 
 #. translators: %d: line item index
-#: src/API/TransactionAPI.php:542
+#: src/API/TransactionAPI.php:591
 #, php-format
 msgid "Line item at index %d must have positive quantity."
 msgstr "Pozycja w indeksie %d musi mieć dodatnią ilość."
 
-#: src/API/WebhookEndpoint.php:71
+#: src/API/WebhookEndpoint.php:90
 msgid "Payment ID is missing from webhook."
 msgstr "Identyfikator płatności brakuje w webhooku."
 
-#: src/API/WebhookEndpoint.php:83
+#: src/API/WebhookEndpoint.php:110
 msgid "Transaction not found in database."
 msgstr "Transakcja nie znaleziona w bazie danych."
 
-#: src/API/WebhookEndpoint.php:101
+#: src/API/WebhookEndpoint.php:140
 msgid "Failed to update transaction status."
 msgstr "Nie udało się zaktualizować statusu transakcji."
 
@@ -548,40 +549,40 @@ msgstr "Przetwarzanie płatności..."
 msgid "Payment gateway is not configured. Please configure your Mollie API keys."
 msgstr "Brama płatności nie jest skonfigurowana. Proszę skonfigurować klucze API Mollie."
 
-#: src/Models/Transaction.php:380
+#: src/Models/Transaction.php:421
 msgid "Payment has already been initiated for this transaction. Create a new transaction to retry."
 msgstr "Płatność została już zainicjowana dla tej transakcji. Utwórz nową transakcję, aby spróbować ponownie."
 
 #. translators: %s: current transaction status
-#: src/Models/Transaction.php:390
+#: src/Models/Transaction.php:431
 #, php-format
 msgid "Transaction status must be \"draft\" to initiate payment. Current status: %s"
 msgstr "Status transakcji musi być \"draft\" aby zainicjować płatność. Obecny status: %s"
 
-#: src/Payment/MolliePaymentHandler.php:55
+#: src/Payment/MolliePaymentHandler.php:56
 msgid "Mollie API key is not configured."
 msgstr "Klucz API Mollie nie jest skonfigurowany."
 
-#: src/Payment/MolliePaymentHandler.php:74
+#: src/Payment/MolliePaymentHandler.php:75
 msgid "Mollie is not connected. Please connect your Mollie account in settings."
 msgstr "Mollie nie jest połączony. Proszę połączyć swoje konto Mollie w ustawieniach."
 
-#: src/Payment/MolliePaymentHandler.php:221
+#: src/Payment/MolliePaymentHandler.php:222
 msgid "Payment"
 msgstr "Płatność"
 
-#: src/Payment/MolliePaymentHandler.php:248
+#: src/Payment/MolliePaymentHandler.php:255
 msgid "Application fee"
 msgstr "Opłata aplikacji"
 
 #. translators: %s: error message
-#: src/Payment/MolliePaymentHandler.php:273
+#: src/Payment/MolliePaymentHandler.php:347
 #, php-format
 msgid "Failed to create payment: %s"
 msgstr "Nie udało się utworzyć płatności: %s"
 
 #. translators: %s: error message
-#: src/Payment/MolliePaymentHandler.php:295
+#: src/Payment/MolliePaymentHandler.php:415
 #, php-format
 msgid "Failed to retrieve payment: %s"
 msgstr "Nie udało się pobrać płatności: %s"
@@ -673,7 +674,7 @@ msgstr "Nie znaleziono kategorii budżetu. Utwórz pierwszą kategorię budżetu
 
 #: src/Admin/budgets/BudgetsApp.js:284
 #: src/Admin/budgets/BudgetsApp.js:479
-#: src/Admin/transaction/TransactionPage.js:409
+#: src/Admin/transaction/TransactionPage.js:781
 msgid "Name"
 msgstr "Nazwa"
 
@@ -688,9 +689,9 @@ msgstr "Nazwa"
 #: src/Admin/reconciliation/ReconciliationApp.js:283
 #: src/Admin/reconciliation/ReconciliationApp.js:596
 #: src/Admin/reconciliation/ReconciliationApp.js:784
-#: src/Admin/transaction/TransactionPage.js:361
-#: src/Admin/transaction/TransactionPage.js:411
-#: src/Admin/transactions/TransactionsApp.js:402
+#: src/Admin/transaction/TransactionPage.js:733
+#: src/Admin/transaction/TransactionPage.js:783
+#: src/Admin/transactions/TransactionsApp.js:476
 msgid "Description"
 msgstr "Opis"
 
@@ -717,14 +718,16 @@ msgid "View"
 msgstr "Wyświetl"
 
 #: src/Admin/budgets/BudgetsApp.js:360
-#: src/Admin/entries/EntriesApp.js:1216
-#: src/Admin/entries/EntriesApp.js:1255
+#: src/Admin/entries/EntriesApp.js:1230
+#: src/Admin/entries/EntriesApp.js:1269
+#: src/Admin/transaction/TransactionPage.js:154
+#: src/Admin/transaction/TransactionPage.js:362
 msgid "Edit"
 msgstr "Edytuj"
 
 #: src/Admin/budgets/BudgetsApp.js:375
-#: src/Admin/entries/EntriesApp.js:1231
-#: src/Admin/entries/EntriesApp.js:1339
+#: src/Admin/entries/EntriesApp.js:1245
+#: src/Admin/entries/EntriesApp.js:1353
 msgid "Delete"
 msgstr "Usuń"
 
@@ -738,7 +741,7 @@ msgid "Entries without a budget category"
 msgstr "Wpisy bez kategorii budżetu"
 
 #: src/Admin/budgets/BudgetsApp.js:438
-#: src/Admin/transaction/TransactionPage.js:419
+#: src/Admin/transaction/TransactionPage.js:791
 msgid "Total"
 msgstr "Razem"
 
@@ -756,6 +759,8 @@ msgstr "Opcjonalny opis dla tej kategorii budżetu"
 #: src/Admin/entries/components/MatchModal.js:252
 #: src/Admin/entries/components/SplitModal.js:499
 #: src/Admin/entries/components/TransferModal.js:233
+#: src/Admin/transaction/TransactionPage.js:136
+#: src/Admin/transaction/TransactionPage.js:266
 msgid "Cancel"
 msgstr "Anuluj"
 
@@ -773,6 +778,7 @@ msgstr "Utwórz budżet"
 #: src/Admin/entries/EntriesApp.js:648
 #: src/Admin/entries/EntriesApp.js:672
 #: src/Admin/entries/EntriesApp.js:836
+#: src/Admin/transaction/TransactionLog.js:126
 msgid "Event"
 msgstr "Wydarzenie"
 
@@ -816,7 +822,7 @@ msgstr "Typ"
 #: src/Admin/entries/components/SplitModal.js:318
 #: src/Admin/entries/EntriesApp.js:695
 #: src/Admin/entries/EntriesApp.js:909
-#: src/Admin/entries/EntriesApp.js:1375
+#: src/Admin/entries/EntriesApp.js:1389
 msgid "Cost"
 msgstr "Koszt"
 
@@ -825,7 +831,7 @@ msgstr "Koszt"
 #: src/Admin/entries/components/SplitModal.js:319
 #: src/Admin/entries/EntriesApp.js:699
 #: src/Admin/entries/EntriesApp.js:913
-#: src/Admin/entries/EntriesApp.js:1379
+#: src/Admin/entries/EntriesApp.js:1393
 msgid "Income"
 msgstr "Przychód"
 
@@ -838,8 +844,8 @@ msgstr "Przychód"
 #: src/Admin/reconciliation/ReconciliationApp.js:277
 #: src/Admin/reconciliation/ReconciliationApp.js:584
 #: src/Admin/reconciliation/ReconciliationApp.js:778
-#: src/Admin/transaction/TransactionPage.js:270
-#: src/Admin/transactions/TransactionsApp.js:380
+#: src/Admin/transaction/TransactionPage.js:642
+#: src/Admin/transactions/TransactionsApp.js:454
 #: src/blocks/simple-payment/index.js:35
 msgid "Amount"
 msgstr "Kwota"
@@ -857,7 +863,7 @@ msgstr "Wpisz kwotę w EUR"
 #: src/Admin/reconciliation/ReconciliationApp.js:274
 #: src/Admin/reconciliation/ReconciliationApp.js:578
 #: src/Admin/reconciliation/ReconciliationApp.js:772
-#: src/Admin/transactions/TransactionsApp.js:407
+#: src/Admin/transactions/TransactionsApp.js:482
 msgid "Date"
 msgstr "Data"
 
@@ -939,7 +945,7 @@ msgstr "Wpisy do importu:"
 
 #: src/Admin/entries/components/ImportModal.js:403
 #: src/Admin/entries/EntriesApp.js:607
-#: src/Admin/transactions/TransactionsApp.js:319
+#: src/Admin/transactions/TransactionsApp.js:393
 msgid "Import"
 msgstr "Importuj"
 
@@ -989,13 +995,13 @@ msgid "Action"
 msgstr "Akcja"
 
 #: src/Admin/entries/components/MatchModal.js:237
-#: src/Admin/entries/EntriesApp.js:1320
+#: src/Admin/entries/EntriesApp.js:1334
 msgid "Match"
 msgstr "Dopasuj"
 
 #: src/Admin/entries/components/SplitModal.js:294
-#: src/Admin/entries/EntriesApp.js:1195
-#: src/Admin/entries/EntriesApp.js:1270
+#: src/Admin/entries/EntriesApp.js:1209
+#: src/Admin/entries/EntriesApp.js:1284
 msgid "Edit Split"
 msgstr "Edytuj podział"
 
@@ -1028,6 +1034,7 @@ msgstr "Budżet"
 
 #: src/Admin/entries/components/ParticipantField.js:109
 #: src/Admin/entries/components/SplitModal.js:402
+#: src/Admin/transaction/TransactionPage.js:257
 msgid "Remove"
 msgstr "Usuń"
 
@@ -1226,55 +1233,53 @@ msgstr "Zaimportowany"
 msgid "(split)"
 msgstr "(podziel)"
 
-#: src/Admin/entries/EntriesApp.js:1005
-#: src/Admin/entries/EntriesApp.js:1083
+#: src/Admin/entries/EntriesApp.js:1097
 msgid "Transfer ▾"
 msgstr "Przenieś ▾"
 
-#: src/Admin/entries/EntriesApp.js:1009
-#: src/Admin/entries/EntriesApp.js:1087
+#: src/Admin/entries/EntriesApp.js:1101
 msgid "Transfer ▸"
 msgstr "Przenieś ▸"
 
-#: src/Admin/entries/EntriesApp.js:1030
-#: src/Admin/entries/EntriesApp.js:1108
+#: src/Admin/entries/EntriesApp.js:1044
+#: src/Admin/entries/EntriesApp.js:1122
 msgid "Split ▾"
 msgstr "Podziel ▾"
 
-#: src/Admin/entries/EntriesApp.js:1034
-#: src/Admin/entries/EntriesApp.js:1112
+#: src/Admin/entries/EntriesApp.js:1048
+#: src/Admin/entries/EntriesApp.js:1126
 msgid "Split ▸"
 msgstr "Podziel ▸"
 
-#: src/Admin/entries/EntriesApp.js:1149
+#: src/Admin/entries/EntriesApp.js:1163
 msgid "Yes"
 msgstr "Tak"
 
-#: src/Admin/entries/EntriesApp.js:1160
+#: src/Admin/entries/EntriesApp.js:1174
 msgid "No"
 msgstr "Nie"
 
-#: src/Admin/entries/EntriesApp.js:1285
+#: src/Admin/entries/EntriesApp.js:1299
 msgid "Split"
 msgstr "Podziel"
 
-#: src/Admin/entries/EntriesApp.js:1305
+#: src/Admin/entries/EntriesApp.js:1319
 #: src/Admin/reconciliation/ReconciliationApp.js:850
 msgid "Unmatch"
 msgstr "Cofnij dopasowanie"
 
-#: src/Admin/entries/EntriesApp.js:1549
-#: src/Admin/transactions/TransactionsApp.js:531
+#: src/Admin/entries/EntriesApp.js:1563
+#: src/Admin/transactions/TransactionsApp.js:631
 msgid "Previous"
 msgstr "Poprzednia"
 
-#: src/Admin/entries/EntriesApp.js:1552
+#: src/Admin/entries/EntriesApp.js:1566
 #, js-format
 msgid "Page %1$d of %2$d"
 msgstr "Strona %1$d z %2$d"
 
-#: src/Admin/entries/EntriesApp.js:1577
-#: src/Admin/transactions/TransactionsApp.js:548
+#: src/Admin/entries/EntriesApp.js:1591
+#: src/Admin/transactions/TransactionsApp.js:648
 msgid "Next"
 msgstr "Następna"
 
@@ -1329,16 +1334,16 @@ msgid "Switched to %s mode."
 msgstr "Przełączono na tryb %s."
 
 #: src/Admin/settings/ConnectionTab.js:173
-#: src/Admin/transaction/TransactionPage.js:310
+#: src/Admin/transaction/TransactionPage.js:682
 #: src/Admin/transactions/TransactionsApp.js:35
-#: src/Admin/transactions/TransactionsApp.js:473
+#: src/Admin/transactions/TransactionsApp.js:548
 msgid "Test"
 msgstr "Test"
 
 #: src/Admin/settings/ConnectionTab.js:174
-#: src/Admin/transaction/TransactionPage.js:311
+#: src/Admin/transaction/TransactionPage.js:683
 #: src/Admin/transactions/TransactionsApp.js:34
-#: src/Admin/transactions/TransactionsApp.js:477
+#: src/Admin/transactions/TransactionsApp.js:552
 msgid "Live"
 msgstr "Na żywo"
 
@@ -1397,9 +1402,9 @@ msgid "Token expires: %s"
 msgstr "Token wygasa: %s"
 
 #: src/Admin/settings/ConnectionTab.js:360
-#: src/Admin/transaction/TransactionPage.js:295
-#: src/Admin/transactions/TransactionsApp.js:282
-#: src/Admin/transactions/TransactionsApp.js:395
+#: src/Admin/transaction/TransactionPage.js:667
+#: src/Admin/transactions/TransactionsApp.js:356
+#: src/Admin/transactions/TransactionsApp.js:469
 msgid "Mode"
 msgstr "Tryb"
 
@@ -1440,135 +1445,137 @@ msgid "Show budget categories, budget columns in entries, and budget assignment 
 msgstr "Pokaż kategorie budżetu, kolumny budżetu we wpisach i przypisanie budżetu w formularzach."
 
 #: src/Admin/settings/FeaturesTab.js:90
+#: src/Admin/settings/PaymentMethodsTab.js:145
+#: src/Admin/transaction/TransactionPage.js:128
 msgid "Save"
 msgstr "Zapisz"
 
-#: src/Admin/settings/SettingsApp.js:61
+#: src/Admin/settings/SettingsApp.js:62
 msgid "Authorization cancelled. Please try again."
 msgstr "Autoryzacja anulowana. Spróbuj ponownie."
 
-#: src/Admin/settings/SettingsApp.js:111
+#: src/Admin/settings/SettingsApp.js:112
 msgid "Successfully connected to Mollie!"
 msgstr "Pomyślnie połączono z Mollie!"
 
-#: src/Admin/settings/SettingsApp.js:129
+#: src/Admin/settings/SettingsApp.js:130
 msgid "Failed to save OAuth tokens: "
 msgstr "Nie udało się zapisać tokenów OAuth: "
 
-#: src/Admin/settings/SettingsApp.js:142
+#: src/Admin/settings/SettingsApp.js:143
 msgid "OAuth callback incomplete: refresh token not received from authorization server."
 msgstr "Callback OAuth niekompletny: token odświeżania nie został odebrany z serwera autoryzacji."
 
-#: src/Admin/settings/SettingsApp.js:184
+#: src/Admin/settings/SettingsApp.js:185
 msgid "Fair Payment Settings"
 msgstr "Fair Payment Settings"
 
-#: src/Admin/settings/SettingsApp.js:202
+#: src/Admin/settings/SettingsApp.js:203
 msgid "Connection"
 msgstr "Połączenie"
 
-#: src/Admin/settings/SettingsApp.js:206
+#: src/Admin/settings/SettingsApp.js:207
 msgid "Features"
 msgstr "Funkcje"
 
-#: src/Admin/settings/SettingsApp.js:210
+#: src/Admin/settings/SettingsApp.js:215
 msgid "Advanced"
 msgstr "Zaawansowane"
 
-#: src/Admin/transaction/TransactionPage.js:136
+#: src/Admin/transaction/TransactionPage.js:508
 msgid "No transaction ID provided."
 msgstr "Nie podano identyfikatora transakcji."
 
-#: src/Admin/transaction/TransactionPage.js:150
+#: src/Admin/transaction/TransactionPage.js:522
 msgid "Failed to load transaction."
 msgstr "Nie udało się załadować transakcji."
 
-#: src/Admin/transaction/TransactionPage.js:175
-#: src/Admin/transaction/TransactionPage.js:190
+#: src/Admin/transaction/TransactionPage.js:547
+#: src/Admin/transaction/TransactionPage.js:562
 msgid "Back to Transactions"
 msgstr "Powrót do transakcji"
 
-#: src/Admin/transaction/TransactionPage.js:193
+#: src/Admin/transaction/TransactionPage.js:565
 msgid "Transaction"
 msgstr "Transakcja"
 
-#: src/Admin/transaction/TransactionPage.js:207
+#: src/Admin/transaction/TransactionPage.js:579
 msgid "Payment Details"
 msgstr "Szczegóły płatności"
 
-#: src/Admin/transaction/TransactionPage.js:275
-#: src/Admin/transactions/TransactionsApp.js:383
+#: src/Admin/transaction/TransactionPage.js:647
+#: src/Admin/transactions/TransactionsApp.js:457
 msgid "Mollie Fee"
 msgstr "Opłata Mollie"
 
-#: src/Admin/transaction/TransactionPage.js:284
-#: src/Admin/transactions/TransactionsApp.js:386
+#: src/Admin/transaction/TransactionPage.js:656
+#: src/Admin/transactions/TransactionsApp.js:460
 msgid "Integration Fee"
 msgstr "Opłata integracji"
 
-#: src/Admin/transaction/TransactionPage.js:322
+#: src/Admin/transaction/TransactionPage.js:694
 msgid "Status & Timing"
 msgstr "Status i chronologia"
 
-#: src/Admin/transaction/TransactionPage.js:328
-#: src/Admin/transactions/TransactionsApp.js:266
-#: src/Admin/transactions/TransactionsApp.js:393
+#: src/Admin/transaction/TransactionPage.js:700
+#: src/Admin/transactions/TransactionsApp.js:340
+#: src/Admin/transactions/TransactionsApp.js:467
 msgid "Status"
 msgstr "Status"
 
-#: src/Admin/transaction/TransactionPage.js:335
+#: src/Admin/transaction/TransactionPage.js:707
 msgid "Created"
 msgstr "Utworzono"
 
-#: src/Admin/transaction/TransactionPage.js:340
+#: src/Admin/transaction/TransactionPage.js:712
 msgid "Payment Initiated"
 msgstr "Płatność zainicjowana"
 
-#: src/Admin/transaction/TransactionPage.js:348
+#: src/Admin/transaction/TransactionPage.js:720
 msgid "Updated"
 msgstr "Zaktualizowano"
 
-#: src/Admin/transaction/TransactionPage.js:374
+#: src/Admin/transaction/TransactionPage.js:746
 msgid "Metadata"
 msgstr "Metadane"
 
-#: src/Admin/transaction/TransactionPage.js:402
+#: src/Admin/transaction/TransactionPage.js:774
 msgid "Line Items"
 msgstr "Pozycje zamówienia"
 
-#: src/Admin/transaction/TransactionPage.js:414
+#: src/Admin/transaction/TransactionPage.js:786
 msgid "Quantity"
 msgstr "Ilość"
 
-#: src/Admin/transaction/TransactionPage.js:417
+#: src/Admin/transaction/TransactionPage.js:789
 msgid "Unit Amount"
 msgstr "Kwota jednostkowa"
 
-#: src/Admin/transaction/TransactionPage.js:466
+#: src/Admin/transaction/TransactionPage.js:418
 msgid "User"
 msgstr "Użytkownik"
 
-#: src/Admin/transaction/TransactionPage.js:477
+#: src/Admin/transaction/TransactionPage.js:435
 msgid "Post"
 msgstr "Wpis"
 
-#: src/Admin/transaction/TransactionPage.js:496
+#: src/Admin/transaction/TransactionPage.js:825
 msgid "URLs & Mollie"
 msgstr "Adresy URL i Mollie"
 
-#: src/Admin/transaction/TransactionPage.js:503
+#: src/Admin/transaction/TransactionPage.js:832
 msgid "Mollie Payment ID"
 msgstr "ID płatności Mollie"
 
-#: src/Admin/transaction/TransactionPage.js:527
+#: src/Admin/transaction/TransactionPage.js:856
 msgid "Redirect URL"
 msgstr "Adres URL przekierowania"
 
-#: src/Admin/transaction/TransactionPage.js:542
+#: src/Admin/transaction/TransactionPage.js:871
 msgid "Webhook URL"
 msgstr "Adres URL webhooka"
 
-#: src/Admin/transaction/TransactionPage.js:557
+#: src/Admin/transaction/TransactionPage.js:886
 msgid "Checkout URL"
 msgstr "Adres URL kasy"
 
@@ -1612,15 +1619,15 @@ msgstr "Oczekująca płatność"
 msgid "All modes"
 msgstr "Wszystkie tryby"
 
-#: src/Admin/transactions/TransactionsApp.js:259
+#: src/Admin/transactions/TransactionsApp.js:333
 msgid "Payment Transactions"
 msgstr "Transakcje płatności"
 
-#: src/Admin/transactions/TransactionsApp.js:355
+#: src/Admin/transactions/TransactionsApp.js:429
 msgid "No transactions found."
 msgstr "Nie znaleziono transakcji."
 
-#: src/Admin/transactions/TransactionsApp.js:376
+#: src/Admin/transactions/TransactionsApp.js:450
 msgid "ID"
 msgstr "ID"
 
@@ -1691,7 +1698,7 @@ msgstr "Wymagany jest transaction_id lub transaction_ids."
 msgid "Transaction %d not found."
 msgstr "Transakcja %d nie znaleziona."
 
-#: src/Admin/entries/EntriesApp.js:1141
+#: src/Admin/entries/EntriesApp.js:1155
 #, js-format
 msgid "Yes (%d)"
 msgstr "Tak (%d)"
@@ -1828,38 +1835,38 @@ msgstr "Usuń wszystkie dopasowania"
 msgid "%d transaction(s) exported."
 msgstr "%d transakcja(e) wyeksportowana(e)."
 
-#: src/Admin/transactions/TransactionsApp.js:212
+#: src/Admin/transactions/TransactionsApp.js:285
 msgid "Invalid file format. Expected a JSON array."
 msgstr "Nieprawidłowy format pliku. Oczekiwana tablica JSON."
 
-#: src/Admin/transactions/TransactionsApp.js:223
+#: src/Admin/transactions/TransactionsApp.js:297
 msgid "No valid transactions found in the file."
 msgstr "Nie znaleziono prawidłowych transakcji w pliku."
 
-#: src/Admin/transactions/TransactionsApp.js:243
+#: src/Admin/transactions/TransactionsApp.js:317
 msgid "Failed to import transactions."
 msgstr "Nie udało się zaimportować transakcji."
 
-#: src/Admin/transactions/TransactionsApp.js:304
+#: src/Admin/transactions/TransactionsApp.js:378
 msgid "Export Selected"
 msgstr "Eksportuj wybrane"
 
-#: src/API/TransactionAPI.php:294
+#: src/API/TransactionAPI.php:343
 msgid "This transaction has no Mollie payment ID to sync."
 msgstr "Ta transakcja nie ma identyfikatora płatności Mollie do synchronizacji."
 
-#: src/API/TransactionsController.php:227
+#: src/API/TransactionsController.php:315
 msgid "Expected an array of transactions."
 msgstr "Oczekiwana tablica transakcji."
 
 #. translators: 1: created count, 2: updated count, 3: skipped count
-#: src/API/TransactionsController.php:260
+#: src/API/TransactionsController.php:348
 #, php-format
 msgid "Imported %1$d new, updated %2$d, skipped %3$d transaction(s)."
 msgstr "Zaimportowano %1$d nowych, zaktualizowano %2$d, pominięto %3$d transakcja(e)."
 
 #. translators: %s: error message
-#: src/Payment/MolliePaymentHandler.php:321
+#: src/Payment/MolliePaymentHandler.php:441
 #, php-format
 msgid "Failed to list balance transactions: %s"
 msgstr "Nie udało się wyświetlić transakcji salda: %s"
@@ -1882,45 +1889,47 @@ msgstr "Filtruj według opisu"
 msgid "Type to filter…"
 msgstr "Wpisz, aby filtrować…"
 
-#: src/Admin/transaction/TransactionPage.js:110
+#: src/Admin/transaction/TransactionPage.js:482
 msgid "Synced with Mollie successfully."
 msgstr "Pomyślnie zsynchronizowano z Mollie."
 
-#: src/Admin/transaction/TransactionPage.js:114
+#: src/Admin/transaction/TransactionPage.js:486
 msgid "Mollie responded but the settlement fee could not be extracted. See Mollie response below."
 msgstr "Mollie odpowiedział, ale nie można było wyodrębnić opłaty za rozliczenie. Patrz odpowiedź Mollie poniżej."
 
-#: src/Admin/transaction/TransactionPage.js:126
+#: src/Admin/transaction/TransactionPage.js:498
 msgid "Failed to sync with Mollie."
 msgstr "Nie udało się zsynchronizować z Mollie."
 
-#: src/Admin/transaction/TransactionPage.js:217
+#: src/Admin/transaction/TransactionPage.js:589
 msgid "Syncing…"
 msgstr "Synchronizowanie…"
 
-#: src/Admin/transaction/TransactionPage.js:218
+#: src/Admin/transaction/TransactionPage.js:590
 msgid "Sync with Mollie"
 msgstr "Synchronizuj z Mollie"
 
-#: src/Admin/transaction/TransactionPage.js:242
+#: src/Admin/transaction/TransactionPage.js:614
 msgid "See Mollie response"
 msgstr "Patrz odpowiedź Mollie"
 
-#: src/Admin/transaction/TransactionPage.js:447
+#: src/Admin/transaction/TransactionPage.js:395
 msgid "Person & Post"
 msgstr "Osoba i post"
 
 #: src/Admin/entries/components/ParticipantField.js:91
 #: src/Admin/entries/components/ParticipantField.js:119
-#: src/Admin/transaction/TransactionPage.js:454
+#: src/Admin/transaction/TransactionPage.js:236
+#: src/Admin/transaction/TransactionPage.js:342
 msgid "Participant"
 msgstr "Uczestnik"
 
-#: src/Admin/transactions/TransactionsApp.js:404
+#: src/Admin/transactions/TransactionsApp.js:478
 msgid "Person"
 msgstr "Osoba"
 
 #: src/Admin/entries/components/ParticipantField.js:122
+#: src/Admin/transaction/TransactionPage.js:242
 msgid "Search by name or email…"
 msgstr "Szukaj po nazwie lub e-mailu…"
 
@@ -1931,4 +1940,109 @@ msgstr "Powiąż ten transfer z uczestnikiem"
 #: src/Admin/entries/components/ParticipantField.js:188
 msgid "No participants found."
 msgstr "Nie znaleziono uczestników."
+
+#: src/API/TransactionsController.php:281
+msgid "No fields to update."
+msgstr "Brak pól do aktualizacji."
+
+#: src/API/TransactionsController.php:291
+msgid "Failed to update transaction."
+msgstr "Nie udało się zaktualizować transakcji."
+
+#: src/Settings/Settings.php:205
+msgid "Disable bank transfer when close to the key date of the sale"
+msgstr "Wyłącz transfer bankowy w pobliżu kluczowej daty sprzedaży"
+
+#: src/Settings/Settings.php:218
+msgid "Working-day threshold for disabling bank transfer"
+msgstr "Próg dni roboczych dla wyłączenia transferu bankowego"
+
+#: src/Admin/settings/PaymentMethodsTab.js:56
+msgid "Failed to load payment method settings."
+msgstr "Nie udało się załadować ustawień metody płatności."
+
+#: src/Admin/settings/PaymentMethodsTab.js:74
+msgid "Payment method settings saved."
+msgstr "Ustawienia metody płatności zostały zapisane."
+
+#: src/Admin/settings/PaymentMethodsTab.js:81
+msgid "Failed to save payment method settings."
+msgstr "Nie udało się zapisać ustawień metody płatności."
+
+#: src/Admin/settings/PaymentMethodsTab.js:98
+msgid "Bank Transfer (SEPA)"
+msgstr "Transfer bankowy (SEPA)"
+
+#: src/Admin/settings/PaymentMethodsTab.js:100
+msgid "SEPA bank transfers can take 1–3 working days to settle. Disable this method when the sale is too close to its key date (e.g. event day) to ensure payments clear in time."
+msgstr "Transfery bankowe SEPA mogą trwać 1–3 dni robocze. Wyłącz tę metodę, gdy sprzedaż jest zbyt blisko swojej kluczowej daty (np. dzień imprezy), aby zapewnić, że płatności zostaną zrealizowane na czas."
+
+#: src/Admin/settings/PaymentMethodsTab.js:108
+msgid "Disable bank transfer near the key date"
+msgstr "Wyłącz transfer bankowy w pobliżu kluczowej daty"
+
+#: src/Admin/settings/PaymentMethodsTab.js:112
+msgid "Hide bank transfer as a payment option when the sale is within the threshold below."
+msgstr "Ukryj transfer bankowy jako opcję płatności, gdy sprzedaż mieści się w poniższym progu."
+
+#: src/Admin/settings/PaymentMethodsTab.js:122
+msgid "Working-day threshold"
+msgstr "Próg dni roboczych"
+
+#: src/Admin/settings/PaymentMethodsTab.js:123
+msgid "Disable bank transfer when fewer than this many working days remain before the key date."
+msgstr "Wyłącz transfer bankowy, gdy pozostało mniej niż ta liczba dni roboczych przed kluczową datą."
+
+#: src/Admin/settings/SettingsApp.js:211
+msgid "Payment Methods"
+msgstr "Metody płatności"
+
+#: src/Admin/transaction/TransactionLog.js:66
+msgid "Failed to load log entries."
+msgstr "Nie udało się załadować wpisów dziennika."
+
+#: src/Admin/transaction/TransactionLog.js:87
+msgid "Event Log"
+msgstr "Dziennik zdarzeń"
+
+#: src/Admin/transaction/TransactionLog.js:96
+msgid "Refresh"
+msgstr "Odśwież"
+
+#: src/Admin/transaction/TransactionLog.js:109
+msgid "No log entries for this transaction yet."
+msgstr "Brak wpisów dziennika dla tej transakcji."
+
+#: src/Admin/transaction/TransactionLog.js:120
+msgid "Time"
+msgstr "Czas"
+
+#: src/Admin/transaction/TransactionLog.js:123
+msgid "Level"
+msgstr "Poziom"
+
+#: src/Admin/transaction/TransactionLog.js:128
+msgid "Message"
+msgstr "Wiadomość"
+
+#: src/Admin/transaction/TransactionLog.js:130
+msgid "Request"
+msgstr "Żądanie"
+
+#: src/Admin/transaction/TransactionLog.js:175
+msgid "Context"
+msgstr "Kontekst"
+
+#: src/Admin/transaction/TransactionPage.js:155
+#: src/Admin/transaction/TransactionPage.js:363
+msgid "Add"
+msgstr "Dodaj"
+
+#: src/Admin/transaction/TransactionPage.js:385
+msgid "Failed to update."
+msgstr "Nie udało się zaktualizować."
+
+#: src/Admin/transactions/TransactionsApp.js:479
+msgid "Entry"
+msgstr "Wpis"
 
