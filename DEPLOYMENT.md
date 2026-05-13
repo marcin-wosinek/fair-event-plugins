@@ -102,3 +102,53 @@ The deployment logic is extracted into a reusable workflow that accepts an `envi
 ## Migration from Old Workflows
 
 The old workflows (`deploy-acroyoga.yml` and `deploy-fair-platform.yml`) have been removed. The new consolidated approach provides the same functionality with better maintainability.
+
+## Local Deploy (skips CI)
+
+For fast iteration or hotfixes you can build and deploy from your machine, bypassing the GitHub release+deploy pipeline. **This skips all CI checks (lint, tests)** — run them yourself before deploying.
+
+### Setup
+
+1. Copy the template and fill in real values:
+   ```bash
+   cp .deploy/example.env .deploy/staging.env
+   $EDITOR .deploy/staging.env
+   ```
+   Required keys: `SSH_HOST`, `SSH_PORT`, `SSH_USER`, `WORDPRESS_PLUGINS_PATH`, `PLUGINS_TO_DEPLOY`. Optional: `SSH_KEY_PATH` (defaults to ssh-agent identity).
+
+2. Ensure your SSH key is loaded (`ssh-add -l`) and the host is in `~/.ssh/known_hosts`.
+
+`.deploy/*.env` files are gitignored — only `.deploy/example.env` is committed.
+
+### Commands
+
+```bash
+# Build + deploy to staging
+npm run deploy:local -- --env=staging
+
+# Dry-run (rsync --dry-run, no WP-CLI reactivation)
+npm run deploy:local:dry -- --env=staging
+
+# Deploy a subset (overrides PLUGINS_TO_DEPLOY)
+npm run deploy:local -- --env=staging --plugins=fair-events,fair-payment
+
+# Reuse existing dist/*.zip; do not run dist-archive
+npm run deploy:local -- --env=staging --skip-build
+
+# Deploy without WP-CLI deactivate/activate
+npm run deploy:local -- --env=staging --skip-reactivate
+```
+
+### What it does
+
+Mirrors `.github/workflows/deploy-to-environment.yml`:
+
+1. Runs `npm run dist-archive` (unless `--skip-build`).
+2. Extracts each plugin ZIP to `dist/extracted/`.
+3. rsyncs each plugin with `-avz --delete` over SSH (2-attempt retry, same SSH keep-alive options as CI).
+4. SSHes to the host and runs `wp plugin deactivate <plugin> && wp plugin activate <plugin>` for each deployed plugin (unless `--dry-run` or `--skip-reactivate`).
+
+Each deployed plugin gets a `.deploy-version` file (written into the extracted plugin before rsync) containing `git describe --always --tags --dirty` and a UTC timestamp. A trailing `-dirty` suffix means the deploy included uncommitted local changes — useful when troubleshooting "what's actually on the server right now".
+
+The CI deploy path remains the canonical/recommended flow — local deploy is an additional, opt-in escape hatch.
+

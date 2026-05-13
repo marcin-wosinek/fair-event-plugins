@@ -20,6 +20,10 @@ dist
 */tests/screenshots/*.png
 */.env
 
+# Local deploy config (real values); template `.deploy/example.env` is committed
+.deploy/*.env
+!.deploy/example.env
+
 # Temporary files
 *.tmp
 *.log

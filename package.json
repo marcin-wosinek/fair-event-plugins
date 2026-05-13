@@ -45,6 +45,8 @@
 		"svn:tag:fair-audience": "node scripts/svn-tag.cjs fair-audience",
 		"svn:rm": "rm -fr fair-events/svn fair-payment/svn fair-audience/svn",
 		"release": "node scripts/tag-release.js",
+		"deploy:local": "node scripts/deploy-local.js",
+		"deploy:local:dry": "node scripts/deploy-local.js --dry-run",
 		"dist-archive": "npm-run-all dist-archive:*",
 		"dist-archive:fair-payment": "wp dist-archive fair-payment dist --create-target-dir",
 		"dist-archive:fair-events": "wp dist-archive fair-events dist --create-target-dir",
