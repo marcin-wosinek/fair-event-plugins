@@ -1374,9 +1374,9 @@ class EventSignupController extends WP_REST_Controller {
 			);
 		}
 
-		// Look up the EventParticipant row. handle_signup_failed nulls out the
-		// transaction_id so get_by_transaction_id may miss; fall back to the
-		// (event_date_id, participant_id) pair which is the natural key.
+		// Look up the EventParticipant row by (event_date_id, participant_id),
+		// the natural key, rather than by transaction_id: the row may already
+		// have been re-pointed to a newer retry transaction.
 		$event_participant = null;
 		if ( $event_date_id ) {
 			$event_participant = $this->event_participant_repository->get_by_event_date_and_participant(

@@ -198,13 +198,17 @@ class PaymentHooks {
 	}
 
 	/**
-	 * Detach the failed transaction from its pending_payment row so the buyer
-	 * can retry from the event page without losing their slot.
+	 * Mark a pending_payment row as having a failed transaction, while keeping
+	 * the link to that transaction so the resume-link flow can surface the
+	 * retry UI when the buyer returns via the email link.
 	 *
 	 * The row stays pending_payment with payment_expires_at intact: the user
 	 * still holds capacity for the remainder of the original 15-minute window,
 	 * and the cleanup cron releases the slot when that hold expires (capacity
 	 * counts already filter out expired holds, so over-booking can't happen).
+	 * The transaction_id is overwritten when retry_payment creates a fresh
+	 * transaction, so keeping the failed id here doesn't block subsequent
+	 * retries.
 	 *
 	 * @param object $payment     Mollie payment object.
 	 * @param object $transaction Transaction row from fair-payment.
@@ -220,9 +224,6 @@ class PaymentHooks {
 		if ( ! $event_participant || 'pending_payment' !== $event_participant->label ) {
 			return;
 		}
-
-		$event_participant->transaction_id = null;
-		$event_participant->save();
 
 		do_action( 'fair_audience_event_signup_failed', $event_participant, $transaction );
 	}
