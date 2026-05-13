@@ -83,6 +83,7 @@ export default function EventAudience({
 	const [editTicketTypeId, setEditTicketTypeId] = useState(null);
 	const [editAdminComment, setEditAdminComment] = useState('');
 	const [editStaleDecision, setEditStaleDecision] = useState(null);
+	const [editLabel, setEditLabel] = useState('signed_up');
 	const [isSavingOptions, setIsSavingOptions] = useState(false);
 
 	const [toast, setToast] = useState(null);
@@ -512,6 +513,16 @@ export default function EventAudience({
 		);
 		setEditAdminComment(participant.admin_comment || '');
 		setEditStaleDecision(null);
+		// Only the three editable roles are exposed here. Transient states
+		// such as pending_payment fall back to signed_up — the stale-payment
+		// resolver below takes over when applicable.
+		setEditLabel(
+			['collaborator', 'signed_up', 'interested'].includes(
+				participant.label
+			)
+				? participant.label
+				: 'signed_up'
+		);
 	};
 
 	const handleToggleOptionId = (id) => {
@@ -531,10 +542,16 @@ export default function EventAudience({
 				ticket_type_id: editTicketTypeId,
 				admin_comment: editAdminComment,
 			};
+			if (editLabel && editLabel !== editingParticipant.label) {
+				data.label = editLabel;
+			}
 			const stalenessResolved =
 				isStalePendingPayment(editingParticipant) &&
 				editStaleDecision !== null;
 			if (stalenessResolved) {
+				// Stale-payment resolver overrides any role pick — Confirm /
+				// Cancel signup map to the two terminal states for an
+				// expired hold.
 				data.label =
 					editStaleDecision === 'confirm'
 						? 'signed_up'
@@ -567,6 +584,8 @@ export default function EventAudience({
 											label: data.label,
 											payment_expires_at: null,
 									  }
+									: data.label
+									? { label: response.label ?? data.label }
 									: {}),
 						  }
 						: p
@@ -1935,6 +1954,28 @@ export default function EventAudience({
 									</Button>
 								</HStack>
 							</div>
+						)}
+						{!isStalePendingPayment(editingParticipant) && (
+							<SelectControl
+								label={__('Role', 'fair-events')}
+								value={editLabel}
+								options={[
+									{
+										label: LABEL_DISPLAY.collaborator,
+										value: 'collaborator',
+									},
+									{
+										label: LABEL_DISPLAY.signed_up,
+										value: 'signed_up',
+									},
+									{
+										label: LABEL_DISPLAY.interested,
+										value: 'interested',
+									},
+								]}
+								onChange={(value) => setEditLabel(value)}
+								__nextHasNoMarginBottom
+							/>
 						)}
 						{ticketTypes.length > 0 && (
 							<SelectControl
