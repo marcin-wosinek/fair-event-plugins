@@ -1,7 +1,14 @@
 ## Project Overview
 
 This is a WordPress plugin collection called "Fair Event Plugins" for event
-organization with fair pricing models. 
+organization with fair pricing models.
+
+## Commits & PRs
+
+**IMPORTANT**: Follow [COMMIT_GUIDE.md](./COMMIT_GUIDE.md) for commit messages
+and PR descriptions. Key rules: no `Co-Authored-By: Claude` trailer, no
+"Generated with Claude Code" footer in PR bodies, no tool/agent attribution
+anywhere in the permanent history.
 
 ## Development Commands
 
