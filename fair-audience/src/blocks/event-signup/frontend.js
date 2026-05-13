@@ -445,6 +445,24 @@ const CSS_PREFIX = 'fair-audience-signup';
 						return;
 					}
 
+					// Known email + no matching session: server sent a resume
+					// link instead of creating a signup. Surface the message,
+					// leave the form so a typo'd email can be corrected, and
+					// don't flip into the success UI.
+					if (response.status === 'email_recognized') {
+						showMessage(
+							messageContainer,
+							response.message ||
+								__(
+									'We recognise this email — check your inbox to continue.',
+									'fair-audience'
+								),
+							'info',
+							CSS_PREFIX
+						);
+						return;
+					}
+
 					showMessage(
 						messageContainer,
 						response.message || successMessage,

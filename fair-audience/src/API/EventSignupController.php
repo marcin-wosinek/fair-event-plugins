@@ -1615,6 +1615,31 @@ class EventSignupController extends WP_REST_Controller {
 			$this->increment_rate_limit( $email );
 
 			$participant = $this->participant_repository->get_by_email( $email );
+
+			// Known email + anonymous flow: if the browser doesn't already
+			// hold a session for *this* participant, don't act on their
+			// identity. A stranger guessing the email shouldn't sign someone
+			// up or trigger any pre-fill — send a resume link to the address
+			// instead so only the inbox owner can continue.
+			if ( $participant ) {
+				$session_pid = (int) AudienceSession::get_participant_id();
+				if ( $session_pid !== (int) $participant->id ) {
+					$token_url = ParticipantToken::get_url(
+						$participant->id,
+						(int) $event_date_id,
+						(int) $event->ID
+					);
+					$this->email_service->send_signup_link_email( $event, $participant, $token_url );
+
+					return rest_ensure_response(
+						array(
+							'success' => true,
+							'status'  => 'email_recognized',
+							'message' => __( 'We recognise this email — check your inbox to continue.', 'fair-audience' ),
+						)
+					);
+				}
+			}
 		}
 
 		if ( $participant ) {
