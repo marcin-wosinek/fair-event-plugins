@@ -196,7 +196,7 @@ export default function TelegramTab({ onNotice }) {
 					__nextHasNoMarginBottom
 					label={__('Message template', 'fair-payment')}
 					help={__(
-						'Placeholders: {site_domain}, {date}, {amount}, {currency}, {transaction_id}, {event_title}, {event_url}, {participant_name}, {participant_url}, {participant_email}, {ticket_label}, {activities}, {discounts}. HTML tags <b>, <i>, <a href> are allowed.',
+						'Placeholders: {test_label}, {site_domain}, {date}, {amount}, {currency}, {transaction_id}, {event_title}, {event_url}, {participant_name}, {participant_url}, {participant_email}, {ticket_label}, {activities}, {discounts}. HTML tags <b>, <i>, <a href> are allowed.',
 						'fair-payment'
 					)}
 					rows={5}

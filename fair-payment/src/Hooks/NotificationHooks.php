@@ -128,9 +128,12 @@ class NotificationHooks {
 			}
 		}
 
+		$is_test = ! empty( $transaction->testmode );
+
 		$base = array(
 			'transaction'       => $transaction,
 			'payment'           => $payment,
+			'test_label'        => $is_test ? '[TEST] ' : '',
 			'site_domain'       => (string) wp_parse_url( home_url(), PHP_URL_HOST ),
 			'amount'            => null !== $amount ? number_format( (float) $amount, 2, '.', '' ) : '',
 			'currency'          => $currency,
@@ -156,6 +159,7 @@ class NotificationHooks {
 	 */
 	public static function sample_context() {
 		return array(
+			'test_label'        => '[TEST] ',
 			'site_domain'       => (string) wp_parse_url( home_url(), PHP_URL_HOST ),
 			'amount'            => '10.00',
 			'currency'          => 'EUR',

@@ -30,7 +30,7 @@ logging into the WordPress admin.
 The default template renders as:
 
 ```
-<site domain>
+[TEST] <site domain>
 <event title link>
 <participant name link> (participant@example.com)
 Ticket: Regular
@@ -46,6 +46,7 @@ Available placeholders:
 
 | Placeholder            | Notes                                                |
 | ---------------------- | ---------------------------------------------------- |
+| `{test_label}`         | `[TEST] ` for Mollie test-mode transactions, empty otherwise. |
 | `{site_domain}`        | Host portion of the site URL (e.g. `example.com`).   |
 | `{date}`               | YYYY-MM-DD of the transaction.                       |
 | `{amount}`             | Numeric, two decimals.                               |

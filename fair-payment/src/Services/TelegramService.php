@@ -100,6 +100,7 @@ class TelegramService {
 
 		$replacements = array();
 		$placeholders = array(
+			'test_label',
 			'site_domain',
 			'event_title',
 			'event_url',
