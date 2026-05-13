@@ -2151,6 +2151,142 @@ class EmailService {
 	}
 
 	/**
+	 * Send payment-failure email with a resume link.
+	 *
+	 * Fires for Mollie failed/cancelled/expired transitions on signup
+	 * transactions. The resume link carries a participant_token so the user
+	 * can re-issue the session and land on the retry UI from any device.
+	 *
+	 * @param Participant $participant   Buyer.
+	 * @param \WP_Post    $event         Event post.
+	 * @param int         $event_date_id Event date row ID (occurrence).
+	 * @param object|null $transaction   Transaction row from fair-payment.
+	 * @return bool Success.
+	 */
+	public function send_signup_payment_failed( Participant $participant, $event, int $event_date_id, $transaction = null ): bool {
+		if ( ! $this->has_valid_email( $participant ) ) {
+			return false;
+		}
+
+		$site_name   = wp_specialchars_decode( get_option( 'blogname' ), ENT_QUOTES );
+		$event_title = $event ? $event->post_title : __( 'Event', 'fair-audience' );
+		$event_id    = $event ? (int) $event->ID : 0;
+
+		$resume_url = ParticipantToken::get_url( (int) $participant->id, $event_date_id, $event_id );
+
+		$subject = sprintf(
+			/* translators: %s: event title */
+			__( 'Payment didn’t go through — %s', 'fair-audience' ),
+			$event_title
+		);
+
+		$amount   = isset( $transaction->amount ) ? (float) $transaction->amount : 0;
+		$currency = ! empty( $transaction->currency ) ? $transaction->currency : 'EUR';
+
+		$amount_html = '';
+		if ( $amount > 0 ) {
+			$amount_html = '
+							<table style="width: 100%; border-collapse: collapse; margin: 0 0 20px 0;">
+								<tr>
+									<td style="padding: 8px 0; border-bottom: 1px solid #eee; font-weight: bold;">' . esc_html__( 'Amount:', 'fair-audience' ) . '</td>
+									<td style="padding: 8px 0; border-bottom: 1px solid #eee;">' . esc_html( number_format( $amount, 2 ) . ' ' . $currency ) . '</td>
+								</tr>
+							</table>';
+		}
+
+		$message = '<!DOCTYPE html>
+<html>
+<head>
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+</head>
+<body style="margin: 0; padding: 0; font-family: Arial, sans-serif; font-size: 16px; line-height: 1.6; color: #333333; background-color: #f4f4f4;">
+	<table width="100%" cellpadding="0" cellspacing="0" style="background-color: #f4f4f4;">
+		<tr>
+			<td align="center" style="padding: 20px 0;">
+				<table width="600" cellpadding="0" cellspacing="0" style="background-color: #ffffff; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
+					<tr>
+						<td style="background-color: #b32d2e; color: #ffffff; padding: 30px; border-radius: 8px 8px 0 0; text-align: center;">
+							<h1 style="margin: 0; font-size: 24px; font-weight: bold;">' . esc_html( $event_title ) . '</h1>
+						</td>
+					</tr>
+
+					<tr>
+						<td style="padding: 40px 30px;">
+							<p style="margin: 0 0 20px 0; font-size: 16px;">
+								' . sprintf(
+									/* translators: %s: participant first name */
+								esc_html__( 'Hi %s,', 'fair-audience' ),
+								'<strong>' . esc_html( $participant->name ) . '</strong>'
+							) . '
+							</p>
+
+							<p style="margin: 0 0 20px 0; font-size: 16px;">
+								' . sprintf(
+									/* translators: %s: event title */
+								esc_html__( 'Your payment for %s didn’t go through. Your spot is still held for a short while — pick up where you left off using the link below.', 'fair-audience' ),
+								'<strong>' . esc_html( $event_title ) . '</strong>'
+							) . '
+							</p>
+
+							' . $amount_html . '
+
+							<p style="margin: 30px 0; text-align: center;">
+								<a href="' . esc_url( $resume_url ) . '" style="display: inline-block; background-color: #0073aa; color: #ffffff; text-decoration: none; padding: 14px 28px; border-radius: 4px; font-weight: bold; font-size: 16px;">
+									' . esc_html__( 'Resume payment', 'fair-audience' ) . '
+								</a>
+							</p>
+
+							<p style="margin: 20px 0 0 0; font-size: 14px; color: #666666;">
+								' . esc_html__( 'If the button doesn’t work, copy and paste this link into your browser:', 'fair-audience' ) . '<br>
+								<a href="' . esc_url( $resume_url ) . '" style="color: #0073aa; word-break: break-all;">' . esc_html( $resume_url ) . '</a>
+							</p>
+
+							<p style="margin: 20px 0 0 0; font-size: 14px; color: #666666;">
+								' . sprintf(
+									/* translators: %s: site name */
+									esc_html__( 'See you soon,%1$sThe %2$s Team', 'fair-audience' ),
+									'<br>',
+									esc_html( $site_name )
+								) . '
+							</p>
+						</td>
+					</tr>
+
+					<tr>
+						<td style="background-color: #f8f8f8; padding: 20px 30px; border-radius: 0 0 8px 8px; text-align: center; font-size: 12px; color: #666666;">
+							<p style="margin: 0;">
+								' . esc_html( $site_name ) . '
+							</p>
+						</td>
+					</tr>
+				</table>
+			</td>
+		</tr>
+	</table>
+</body>
+</html>';
+
+		add_filter(
+			'wp_mail_content_type',
+			function () {
+				return 'text/html';
+			}
+		);
+
+		$result = wp_mail( $participant->email, $subject, $message );
+
+		remove_filter(
+			'wp_mail_content_type',
+			function () {
+				return 'text/html';
+			}
+		);
+
+		return $result;
+	}
+
+	/**
 	 * Preview recipients for bulk custom mail to all audience.
 	 *
 	 * @param bool $is_marketing Whether to filter by marketing consent.

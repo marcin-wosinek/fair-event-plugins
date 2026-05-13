@@ -32,6 +32,7 @@ class PaymentHooks {
 		add_action( 'fair_payment_failed', array( static::class, 'handle_signup_failed' ), 10, 2 );
 
 		add_action( 'fair_audience_event_signup_paid', array( static::class, 'send_signup_confirmation_email' ), 10, 2 );
+		add_action( 'fair_audience_event_signup_failed', array( static::class, 'send_signup_payment_failed_email' ), 10, 2 );
 
 		add_filter( 'fair_payment_resolve_participant_id', array( static::class, 'resolve_participant_id' ), 10, 2 );
 		add_filter( 'fair_payment_prepare_participant', array( static::class, 'prepare_participant' ), 10, 2 );
@@ -261,6 +262,44 @@ class PaymentHooks {
 
 		$email_service = new EmailService();
 		$email_service->send_signup_payment_confirmation( $participant, $event, $transaction, $option_names );
+	}
+
+	/**
+	 * Send a resume-link email when a signup payment transitions to
+	 * failed/cancelled/expired.
+	 *
+	 * Deduped via a 1-hour transient keyed on transaction ID so Mollie
+	 * webhook retries don't spam the buyer.
+	 *
+	 * @param object $event_participant EventParticipant row.
+	 * @param object $transaction       Transaction row from fair-payment.
+	 */
+	public static function send_signup_payment_failed_email( $event_participant, $transaction ) {
+		$dedupe_key = 'fair_audience_payment_failed_email_' . (int) $transaction->id;
+		if ( get_transient( $dedupe_key ) ) {
+			return;
+		}
+		set_transient( $dedupe_key, 1, HOUR_IN_SECONDS );
+
+		$participant_repo = new ParticipantRepository();
+		$participant      = $participant_repo->get_by_id( (int) $event_participant->participant_id );
+
+		if ( ! $participant ) {
+			return;
+		}
+
+		$event = get_post( $event_participant->event_id );
+		if ( ! $event ) {
+			return;
+		}
+
+		$email_service = new EmailService();
+		$email_service->send_signup_payment_failed(
+			$participant,
+			$event,
+			(int) $event_participant->event_date_id,
+			$transaction
+		);
 	}
 
 	/**
