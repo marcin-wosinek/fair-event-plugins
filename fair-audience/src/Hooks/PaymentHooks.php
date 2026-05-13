@@ -36,6 +36,7 @@ class PaymentHooks {
 
 		add_filter( 'fair_payment_resolve_participant_id', array( static::class, 'resolve_participant_id' ), 10, 2 );
 		add_filter( 'fair_payment_prepare_participant', array( static::class, 'prepare_participant' ), 10, 2 );
+		add_filter( 'fair_payment_notification_context', array( static::class, 'enrich_notification_context' ), 10, 3 );
 		add_action( 'fair_payment_backfill_participant_ids', array( static::class, 'backfill_participant_ids' ) );
 
 		// Expire pending signup rows whose payment never completed.
@@ -115,6 +116,220 @@ class PaymentHooks {
 			'email'     => $participant->email,
 			'admin_url' => admin_url( 'admin.php?page=fair-audience-participant-detail&participant_id=' . (int) $participant->id ),
 		);
+	}
+
+	/**
+	 * Enrich the fair-payment notification context with participant and event
+	 * details derived from the audience tables. Used by the Telegram notification
+	 * (and any future channel) so the rendered message can include human-friendly
+	 * names and admin links.
+	 *
+	 * @param array  $context     Default context from fair-payment.
+	 * @param object $transaction Transaction row.
+	 * @param object $payment     Mollie payment object.
+	 * @return array
+	 */
+	public static function enrich_notification_context( $context, $transaction, $payment ) {
+		global $wpdb;
+
+		$participant_id = isset( $transaction->participant_id ) ? (int) $transaction->participant_id : 0;
+		if ( $participant_id <= 0 ) {
+			return $context;
+		}
+
+		$participant_repo = new ParticipantRepository();
+		$participant      = $participant_repo->get_by_id( $participant_id );
+		if ( $participant ) {
+			$full_name                    = trim( $participant->name . ' ' . $participant->surname );
+			$context['participant_name']  = $full_name;
+			$context['participant_email'] = isset( $participant->email ) ? (string) $participant->email : '';
+			$context['participant_url']   = admin_url( 'admin.php?page=fair-audience-participant-detail&participant_id=' . (int) $participant->id );
+		}
+
+		$event_participant_repo = new EventParticipantRepository();
+		$event_participant      = $event_participant_repo->get_by_transaction_id( (int) $transaction->id );
+		if ( $event_participant ) {
+			$event = get_post( (int) $event_participant->event_id );
+			if ( $event ) {
+				$context['event_title'] = $event->post_title;
+				$edit_link              = get_edit_post_link( $event->ID, 'raw' );
+				$context['event_url']   = $edit_link ? $edit_link : get_permalink( $event->ID );
+			}
+
+			// Ticket type (Regular, Student, Early bird, ...).
+			if ( ! empty( $event_participant->ticket_type_id ) ) {
+				// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+				$ticket_type_name = $wpdb->get_var(
+					$wpdb->prepare(
+						"SELECT name FROM {$wpdb->prefix}fair_events_ticket_types WHERE id = %d",
+						(int) $event_participant->ticket_type_id
+					)
+				);
+				if ( $ticket_type_name ) {
+					$context['ticket_label'] = (string) $ticket_type_name;
+				}
+			}
+
+			// Activities — the ticket options selected at signup.
+			// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+			$option_names = $wpdb->get_col(
+				$wpdb->prepare(
+					"SELECT COALESCE(NULLIF(topt.name, ''), epo.ticket_option_name)
+					FROM {$wpdb->prefix}fair_audience_event_participant_options epo
+					LEFT JOIN {$wpdb->prefix}fair_events_ticket_options topt
+						ON topt.id = epo.ticket_option_id
+					WHERE epo.event_participant_id = %d
+						AND ( ( topt.name IS NOT NULL AND topt.name != '' ) OR epo.ticket_option_name != '' )",
+					(int) $event_participant->id
+				)
+			);
+			if ( ! empty( $option_names ) ) {
+				$context['activities'] = implode( ', ', $option_names );
+			}
+
+			// Applied discounts — group rule, plus any activity-collaborator
+			// discounts detected from the transaction line items.
+			$parts = array();
+
+			$group_label = self::format_applied_discount( $event_participant, $transaction );
+			if ( '' !== $group_label ) {
+				$parts[] = $group_label;
+			}
+
+			$collab_labels = self::detect_activity_collaborator_discounts( $event_participant, $transaction );
+			foreach ( $collab_labels as $label ) {
+				$parts[] = $label;
+			}
+
+			$context['discounts'] = implode( '; ', $parts );
+		}
+
+		return $context;
+	}
+
+	/**
+	 * Format the applied group-discount rule as a human-readable label.
+	 *
+	 * Re-resolves the best discount rule for the participant on the event date —
+	 * the same call EventSignupController uses at price-computation time — and
+	 * formats it as e.g. "Students -20%" or "Members -5.00 EUR".
+	 *
+	 * @param object $event_participant Event participant row.
+	 * @param object $transaction       Transaction row.
+	 * @return string Formatted label, or empty string when no discount applies.
+	 */
+	private static function format_applied_discount( $event_participant, $transaction ) {
+		if ( ! class_exists( \FairEvents\Services\EventSignupPricing::class ) ) {
+			return '';
+		}
+
+		$rule = \FairEvents\Services\EventSignupPricing::resolve_best_discount_rule(
+			(int) $event_participant->event_date_id,
+			(int) $event_participant->participant_id
+		);
+		if ( ! $rule ) {
+			return '';
+		}
+
+		$group_name = '';
+		$group_repo = new \FairAudience\Database\GroupRepository();
+		$group      = $group_repo->get_by_id( (int) $rule->group_id );
+		if ( $group && ! empty( $group->name ) ) {
+			$group_name = (string) $group->name;
+		}
+
+		if ( 'percentage' === $rule->discount_type ) {
+			$value = rtrim( rtrim( number_format( (float) $rule->discount_value, 2, '.', '' ), '0' ), '.' );
+			$label = '-' . $value . '%';
+		} else {
+			$currency = isset( $transaction->currency ) ? (string) $transaction->currency : '';
+			$value    = number_format( (float) $rule->discount_value, 2, '.', '' );
+			$label    = '-' . $value . ( '' !== $currency ? ' ' . $currency : '' );
+		}
+
+		return '' !== $group_name ? $group_name . ' ' . $label : $label;
+	}
+
+	/**
+	 * Detect activity-collaborator discounts from the transaction line items.
+	 *
+	 * The inviter is not persisted on the participant row, so we infer the
+	 * discount by comparing each option's actual charged amount (from
+	 * fair_payment_line_items) against its base price. When the option has a
+	 * non-null discounted_price, the event_date has activity_collaborator_discount
+	 * enabled, and the line item was charged at the discounted_price, we surface
+	 * it as an activity-collaborator discount.
+	 *
+	 * @param object $event_participant Event participant row.
+	 * @param object $transaction       Transaction row.
+	 * @return string[] Formatted labels, one per discounted option (possibly empty).
+	 */
+	private static function detect_activity_collaborator_discounts( $event_participant, $transaction ) {
+		global $wpdb;
+
+		if ( ! class_exists( \FairEvents\Models\EventDateSetting::class ) ) {
+			return array();
+		}
+
+		$setting = (string) \FairEvents\Models\EventDateSetting::get( (int) $event_participant->event_date_id, 'activity_collaborator_discount' );
+		if ( '1' !== $setting ) {
+			return array();
+		}
+
+		// Pull selected options with their base/discounted prices.
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+		$options = $wpdb->get_results(
+			$wpdb->prepare(
+				"SELECT COALESCE( NULLIF(topt.name, ''), epo.ticket_option_name ) AS name,
+					topt.price AS price,
+					topt.discounted_price AS discounted_price
+				FROM {$wpdb->prefix}fair_audience_event_participant_options epo
+				LEFT JOIN {$wpdb->prefix}fair_events_ticket_options topt
+					ON topt.id = epo.ticket_option_id
+				WHERE epo.event_participant_id = %d
+					AND topt.discounted_price IS NOT NULL",
+				(int) $event_participant->id
+			)
+		);
+		if ( empty( $options ) ) {
+			return array();
+		}
+
+		// Line items charged for this transaction, keyed by name for matching.
+		$line_items_table = $wpdb->prefix . 'fair_payment_line_items';
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+		$rows            = $wpdb->get_results(
+			$wpdb->prepare(
+				'SELECT name, unit_amount FROM %i WHERE transaction_id = %d',
+				$line_items_table,
+				(int) $transaction->id
+			)
+		);
+		$amounts_by_name = array();
+		foreach ( (array) $rows as $row ) {
+			$amounts_by_name[ (string) $row->name ] = (float) $row->unit_amount;
+		}
+
+		$currency = isset( $transaction->currency ) ? (string) $transaction->currency : '';
+		$labels   = array();
+
+		foreach ( $options as $opt ) {
+			$name             = (string) $opt->name;
+			$price            = (float) $opt->price;
+			$discounted_price = (float) $opt->discounted_price;
+			if ( $discounted_price >= $price || ! isset( $amounts_by_name[ $name ] ) ) {
+				continue;
+			}
+			// Charged at the discounted price → activity-collaborator discount applied.
+			if ( abs( $amounts_by_name[ $name ] - $discounted_price ) > 0.005 ) {
+				continue;
+			}
+
+			$delta    = number_format( $price - $discounted_price, 2, '.', '' );
+			$labels[] = $name . ' collaborator -' . $delta . ( '' !== $currency ? ' ' . $currency : '' );
+		}
+
+		return $labels;
 	}
 
 	/**

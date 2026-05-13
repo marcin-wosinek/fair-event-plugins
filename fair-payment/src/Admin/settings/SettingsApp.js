@@ -12,6 +12,7 @@ import ConnectionTab from './ConnectionTab';
 import AdvancedTab from './AdvancedTab';
 import FeaturesTab from './FeaturesTab.js';
 import PaymentMethodsTab from './PaymentMethodsTab.js';
+import TelegramTab from './TelegramTab.js';
 import { saveSettings } from './settings-api';
 
 /**
@@ -211,6 +212,10 @@ export default function SettingsApp() {
 						title: __('Payment Methods', 'fair-payment'),
 					},
 					{
+						name: 'telegram',
+						title: __('Telegram', 'fair-payment'),
+					},
+					{
 						name: 'advanced',
 						title: __('Advanced', 'fair-payment'),
 					},
@@ -230,6 +235,9 @@ export default function SettingsApp() {
 						)}
 						{tab.name === 'payment-methods' && (
 							<PaymentMethodsTab onNotice={setNotice} />
+						)}
+						{tab.name === 'telegram' && (
+							<TelegramTab onNotice={setNotice} />
 						)}
 						{tab.name === 'advanced' && (
 							<AdvancedTab onNotice={setNotice} />

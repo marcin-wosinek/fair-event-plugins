@@ -47,5 +47,8 @@ class RestHooks {
 
 		$payment_log_controller = new \FairPayment\API\PaymentLogController();
 		$payment_log_controller->register_routes();
+
+		$telegram_controller = new \FairPayment\API\TelegramSettingsController();
+		$telegram_controller->register_routes();
 	}
 }
