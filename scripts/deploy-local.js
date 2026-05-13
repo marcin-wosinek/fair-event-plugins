@@ -126,9 +126,10 @@ function run(cmd, args, opts = {}) {
 }
 
 function gitDescribe() {
+	// Matches scripts/stamp-build-version.js, plus --dirty for local builds.
 	const result = spawnSync(
 		'git',
-		['describe', '--always', '--tags', '--dirty'],
+		['describe', '--tags', '--match=[0-9]*', '--dirty', '--always'],
 		{ cwd: rootDir, encoding: 'utf8' }
 	);
 	if (result.status !== 0) {
@@ -140,6 +141,37 @@ function gitDescribe() {
 	return result.stdout.trim();
 }
 
+const PLUGIN_HEADER_FILES = {
+	'fair-events': 'fair-events/fair-events.php',
+	'fair-payment': 'fair-payment/fair-payment.php',
+	'fair-platform': 'fair-platform/fair-platform.php',
+	'fair-audience': 'fair-audience/fair-audience.php',
+};
+const VERSION_HEADER_RE = /(\*?\s*Version:\s*)([^\s\r\n*]+)/i;
+
+function stampPluginVersions(plugins, version) {
+	const originals = new Map();
+	for (const plugin of plugins) {
+		const rel = PLUGIN_HEADER_FILES[plugin];
+		if (!rel) continue;
+		const filePath = join(rootDir, rel);
+		if (!existsSync(filePath)) continue;
+		const original = readFileSync(filePath, 'utf8');
+		const updated = original.replace(VERSION_HEADER_RE, `$1${version}`);
+		if (updated !== original) {
+			writeFileSync(filePath, updated, 'utf8');
+			originals.set(filePath, original);
+		}
+	}
+	return originals;
+}
+
+function restorePluginVersions(originals) {
+	for (const [filePath, content] of originals) {
+		writeFileSync(filePath, content, 'utf8');
+	}
+}
+
 function writeVersionFile(plugin, extractDir, version) {
 	const pluginDir = join(extractDir, plugin);
 	if (!existsSync(pluginDir)) return;
@@ -147,15 +179,26 @@ function writeVersionFile(plugin, extractDir, version) {
 	writeFileSync(join(pluginDir, '.deploy-version'), payload);
 }
 
-function build() {
+function build(plugins, version) {
 	const distDir = join(rootDir, 'dist');
 	if (existsSync(distDir)) {
 		for (const f of readdirSync(distDir)) {
 			if (f.endsWith('.zip')) rmSync(join(distDir, f));
 		}
 	}
-	console.log('▶ Building plugin ZIPs (npm run dist-archive)...');
-	run('npm', ['run', 'dist-archive']);
+	console.log(`▶ Stamping plugin Version headers: ${version}`);
+	const originals = stampPluginVersions(plugins, version);
+	try {
+		console.log('▶ Building plugin ZIPs (npm run dist-archive)...');
+		run('npm', ['run', 'dist-archive']);
+	} finally {
+		restorePluginVersions(originals);
+		if (originals.size) {
+			console.log(
+				`▶ Restored ${originals.size} plugin file(s) to pre-stamp state.`
+			);
+		}
+	}
 }
 
 function extractZips(plugins, extractDir) {
@@ -282,7 +325,7 @@ function main() {
 	console.log('⚠  Local deploys skip CI checks (lint, tests).');
 	console.log('');
 
-	if (!args.skipBuild) build();
+	if (!args.skipBuild) build(plugins, version);
 	else console.log('▶ Skipping build (--skip-build).');
 
 	const extractDir = join(rootDir, 'dist', 'extracted');
