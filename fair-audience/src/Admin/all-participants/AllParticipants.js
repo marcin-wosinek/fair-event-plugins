@@ -415,6 +415,26 @@ export default function AllParticipants() {
 				supportsBulk: false,
 			},
 			{
+				id: 'resend-mailing-confirmation',
+				label: __('Resend mailing confirmation email', 'fair-audience'),
+				isEligible: (item) => 'pending' === item.status,
+				callback: async ([item]) => {
+					try {
+						const response = await apiFetch({
+							path: `/fair-audience/v1/participants/${item.id}/resend-mailing-confirmation`,
+							method: 'POST',
+						});
+						alert(
+							response.message ||
+								__('Confirmation email sent.', 'fair-audience')
+						);
+					} catch (err) {
+						alert(__('Error: ', 'fair-audience') + err.message);
+					}
+				},
+				supportsBulk: false,
+			},
+			{
 				id: 'delete',
 				label: __('Delete', 'fair-audience'),
 				icon: 'trash',

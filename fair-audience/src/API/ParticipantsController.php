@@ -11,7 +11,9 @@ use FairAudience\Database\ParticipantRepository;
 use FairAudience\Database\EventParticipantRepository;
 use FairAudience\Database\GroupParticipantRepository;
 use FairAudience\Database\QuestionnaireSubmissionRepository;
+use FairAudience\Database\EmailConfirmationTokenRepository;
 use FairAudience\Models\Participant;
+use FairAudience\Services\EmailService;
 use FairAudience\Services\ManageSubscriptionToken;
 use WP_REST_Controller;
 use WP_REST_Server;
@@ -179,6 +181,25 @@ class ParticipantsController extends WP_REST_Controller {
 			array(
 				'methods'             => WP_REST_Server::READABLE,
 				'callback'            => array( $this, 'get_subscription_url' ),
+				'permission_callback' => function () {
+					return current_user_can( 'manage_options' );
+				},
+				'args'                => array(
+					'id' => array(
+						'type'     => 'integer',
+						'required' => true,
+					),
+				),
+			)
+		);
+
+		// POST /fair-audience/v1/participants/{id}/resend-mailing-confirmation.
+		register_rest_route(
+			$this->namespace,
+			'/' . $this->rest_base . '/(?P<id>\d+)/resend-mailing-confirmation',
+			array(
+				'methods'             => WP_REST_Server::CREATABLE,
+				'callback'            => array( $this, 'resend_mailing_confirmation' ),
 				'permission_callback' => function () {
 					return current_user_can( 'manage_options' );
 				},
@@ -667,6 +688,62 @@ class ParticipantsController extends WP_REST_Controller {
 		return rest_ensure_response(
 			array(
 				'url' => ManageSubscriptionToken::get_url( $participant->id ),
+			)
+		);
+	}
+
+	/**
+	 * Resend the mailing-list confirmation email to a participant stuck in
+	 * 'pending' status — used to recover subscribers who slipped through the
+	 * paid-signup gap (where the original confirmation email was never sent).
+	 *
+	 * @param WP_REST_Request $request Request object.
+	 * @return WP_REST_Response|WP_Error
+	 */
+	public function resend_mailing_confirmation( $request ) {
+		$id          = (int) $request->get_param( 'id' );
+		$participant = $this->repository->get_by_id( $id );
+
+		if ( ! $participant ) {
+			return new WP_Error(
+				'participant_not_found',
+				__( 'Participant not found.', 'fair-audience' ),
+				array( 'status' => 404 )
+			);
+		}
+
+		if ( 'pending' !== $participant->status ) {
+			return new WP_Error(
+				'participant_not_pending',
+				__( 'Participant is not awaiting mailing-list confirmation.', 'fair-audience' ),
+				array( 'status' => 409 )
+			);
+		}
+
+		$token_repository = new EmailConfirmationTokenRepository();
+		$token            = $token_repository->create_token( $participant->id );
+		if ( ! $token ) {
+			return new WP_Error(
+				'token_creation_failed',
+				__( 'Failed to create confirmation token.', 'fair-audience' ),
+				array( 'status' => 500 )
+			);
+		}
+
+		$email_service = new EmailService();
+		$sent          = $email_service->send_confirmation_email( $participant, $token->token );
+		if ( ! $sent ) {
+			return new WP_Error(
+				'email_send_failed',
+				__( 'Failed to send confirmation email.', 'fair-audience' ),
+				array( 'status' => 502 )
+			);
+		}
+
+		return rest_ensure_response(
+			array(
+				'success' => true,
+				'message' => __( 'Confirmation email sent.', 'fair-audience' ),
 			)
 		);
 	}
