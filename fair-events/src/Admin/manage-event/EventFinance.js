@@ -104,6 +104,18 @@ export default function EventFinance({ eventDateId, entriesUrl }) {
 				(sum, tx) => sum + (tx.amount || 0),
 				0
 			);
+			// Sum nets only for transactions where Mollie fee data has been
+			// recorded — partial sums would mislead.
+			let transactionNet = 0;
+			let netComplete = paidTransactions.length > 0;
+			for (const tx of paidTransactions) {
+				const net = computeNetReceived(tx);
+				if (net === null) {
+					netComplete = false;
+				} else {
+					transactionNet += net;
+				}
+			}
 
 			const failed = [
 				...(failedData.transactions || []),
@@ -118,6 +130,8 @@ export default function EventFinance({ eventDateId, entriesUrl }) {
 				total_income:
 					(totalsData.total_income || 0) + transactionIncome,
 				balance: (totalsData.balance || 0) + transactionIncome,
+				total_net: transactionNet,
+				net_complete: netComplete,
 			});
 			setEntries(entriesData.entries || []);
 			setTransactions(paidTransactions);
@@ -186,6 +200,34 @@ export default function EventFinance({ eventDateId, entriesUrl }) {
 									</div>
 									<div style={{ color: '#666' }}>
 										{__('Total Income', 'fair-events')}
+									</div>
+								</div>
+								<div
+									style={{ textAlign: 'center' }}
+									title={
+										totals.net_complete
+											? __(
+													'Sum of online payments after Mollie and application fees.',
+													'fair-events'
+											  )
+											: __(
+													'Sum of online payments after fees, excluding transactions whose fee data has not been recorded yet.',
+													'fair-events'
+											  )
+									}
+								>
+									<div
+										style={{
+											fontSize: '24px',
+											fontWeight: 'bold',
+											color: '#007017',
+										}}
+									>
+										{formatAmount(totals.total_net || 0)}
+										{!totals.net_complete && '*'}
+									</div>
+									<div style={{ color: '#666' }}>
+										{__('Total Net', 'fair-events')}
 									</div>
 								</div>
 								<div style={{ textAlign: 'center' }}>
