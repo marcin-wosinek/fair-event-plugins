@@ -9,7 +9,7 @@ import {
 	Popover,
 } from '@wordpress/components';
 import { DataViews, filterSortAndPaginate } from '@wordpress/dataviews';
-import { Icon, caution, link } from '@wordpress/icons';
+import { Icon, caution, link, send } from '@wordpress/icons';
 import ParticipantEditModal from '../components/ParticipantEditModal.js';
 
 const DEFAULT_VIEW = {
@@ -417,6 +417,7 @@ export default function AllParticipants() {
 			{
 				id: 'resend-mailing-confirmation',
 				label: __('Resend mailing confirmation email', 'fair-audience'),
+				icon: send,
 				isEligible: (item) => 'pending' === item.status,
 				callback: async (items) => {
 					const results = await Promise.all(
