@@ -1688,6 +1688,20 @@ class EventSignupController extends WP_REST_Controller {
 			}
 
 			$is_new_participant = true;
+
+			// Mailing-list double opt-in: dispatch the confirmation email as
+			// soon as the participant lands in 'pending' status. Doing it here
+			// (rather than only in the free-signup tail below) ensures the
+			// paid-signup branch — which short-circuits with a payment URL —
+			// still triggers the email. Without this, paid signups with
+			// keep_informed=true left the subscriber stuck on 'pending' with
+			// no way to confirm.
+			if ( $keep_informed ) {
+				$token = $this->token_repository->create_token( $participant->id );
+				if ( $token ) {
+					$this->email_service->send_confirmation_email( $participant, $token->token );
+				}
+			}
 		}
 
 		// Validate ticket type group restrictions (and invitation tokens for invitation-only types).
@@ -1741,13 +1755,10 @@ class EventSignupController extends WP_REST_Controller {
 			AudienceSession::set( (int) $participant->id );
 		}
 
-		// If keep_informed, send confirmation email.
+		// The mailing-list confirmation email (when keep_informed=true) is
+		// dispatched at participant-creation time so both free and paid signup
+		// branches trigger it — see the participant-creation block above.
 		if ( $keep_informed ) {
-			$token = $this->token_repository->create_token( $participant->id );
-			if ( $token ) {
-				$this->email_service->send_confirmation_email( $participant, $token->token );
-			}
-
 			return rest_ensure_response(
 				array(
 					'success' => true,
