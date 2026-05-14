@@ -28,6 +28,14 @@ const formatAmount = (amount) => {
 	}).format(amount);
 };
 
+const computeNetReceived = (tx) => {
+	if (tx.mollie_fee === null || tx.mollie_fee === undefined) {
+		return null;
+	}
+	const fees = (tx.mollie_fee || 0) + (tx.application_fee || 0);
+	return (tx.amount || 0) - fees;
+};
+
 const renderParticipant = (tx) => {
 	const participant = tx.participant;
 	if (participant?.name && participant?.admin_url) {
@@ -276,6 +284,17 @@ export default function EventFinance({ eventDateId, entriesUrl }) {
 											<th>
 												{__('Amount', 'fair-events')}
 											</th>
+											<th
+												title={__(
+													'Amount paid minus Mollie and application fees.',
+													'fair-events'
+												)}
+											>
+												{__(
+													'Net received',
+													'fair-events'
+												)}
+											</th>
 											<th>
 												{__(
 													'Description',
@@ -291,39 +310,59 @@ export default function EventFinance({ eventDateId, entriesUrl }) {
 										</tr>
 									</thead>
 									<tbody>
-										{transactions.map((tx) => (
-											<tr key={tx.id}>
-												<td>
-													{tx.created_at
-														? tx.created_at.slice(
-																0,
-																10
-														  )
-														: '-'}
-												</td>
-												<td>
-													<a
-														href={`admin.php?page=fair-payment-transaction&transaction_id=${tx.id}`}
-													>
-														<strong
-															style={{
-																color: '#007017',
-															}}
+										{transactions.map((tx) => {
+											const net = computeNetReceived(tx);
+											return (
+												<tr key={tx.id}>
+													<td>
+														{tx.created_at
+															? tx.created_at.slice(
+																	0,
+																	10
+															  )
+															: '-'}
+													</td>
+													<td>
+														<a
+															href={`admin.php?page=fair-payment-transaction&transaction_id=${tx.id}`}
 														>
-															{formatAmount(
-																tx.amount
-															)}
-														</strong>
-													</a>
-												</td>
-												<td>
-													{tx.description || (
-														<em>-</em>
-													)}
-												</td>
-												<td>{renderParticipant(tx)}</td>
-											</tr>
-										))}
+															<strong
+																style={{
+																	color: '#007017',
+																}}
+															>
+																{formatAmount(
+																	tx.amount
+																)}
+															</strong>
+														</a>
+													</td>
+													<td>
+														{net === null ? (
+															<em>-</em>
+														) : (
+															<strong
+																style={{
+																	color: '#007017',
+																}}
+															>
+																{formatAmount(
+																	net
+																)}
+															</strong>
+														)}
+													</td>
+													<td>
+														{tx.description || (
+															<em>-</em>
+														)}
+													</td>
+													<td>
+														{renderParticipant(tx)}
+													</td>
+												</tr>
+											);
+										})}
 									</tbody>
 								</table>
 							</div>
