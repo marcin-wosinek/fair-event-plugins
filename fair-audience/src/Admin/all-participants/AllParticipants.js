@@ -418,21 +418,48 @@ export default function AllParticipants() {
 				id: 'resend-mailing-confirmation',
 				label: __('Resend mailing confirmation email', 'fair-audience'),
 				isEligible: (item) => 'pending' === item.status,
-				callback: async ([item]) => {
-					try {
-						const response = await apiFetch({
-							path: `/fair-audience/v1/participants/${item.id}/resend-mailing-confirmation`,
-							method: 'POST',
-						});
+				callback: async (items) => {
+					const results = await Promise.all(
+						items.map((item) =>
+							apiFetch({
+								path: `/fair-audience/v1/participants/${item.id}/resend-mailing-confirmation`,
+								method: 'POST',
+							})
+								.then(() => ({ ok: true, item }))
+								.catch((err) => ({ ok: false, item, err }))
+						)
+					);
+
+					const failures = results.filter((r) => !r.ok);
+					if (failures.length === 0) {
 						alert(
-							response.message ||
-								__('Confirmation email sent.', 'fair-audience')
+							/* translators: %d: number of confirmation emails sent. */
+							__(
+								'Sent %d confirmation email(s).',
+								'fair-audience'
+							).replace('%d', results.length)
 						);
-					} catch (err) {
-						alert(__('Error: ', 'fair-audience') + err.message);
+						return;
 					}
+
+					const summary = failures
+						.map(
+							(r) =>
+								`${r.item.name} ${r.item.surname}: ${
+									r.err?.message || 'error'
+								}`
+						)
+						.join('\n');
+					alert(
+						__(
+							'Some confirmation emails failed:',
+							'fair-audience'
+						) +
+							'\n' +
+							summary
+					);
 				},
-				supportsBulk: false,
+				supportsBulk: true,
 			},
 			{
 				id: 'delete',
