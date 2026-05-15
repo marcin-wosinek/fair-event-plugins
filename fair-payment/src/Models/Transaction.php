@@ -232,6 +232,39 @@ class Transaction {
 	}
 
 	/**
+	 * Get IDs of paid transactions that have a Mollie payment ID but no Mollie fee captured yet.
+	 *
+	 * @param string $mode Optional 'live'|'test'|'' for all.
+	 * @return int[]
+	 */
+	public static function get_ids_missing_mollie_fee( $mode = '' ) {
+		global $wpdb;
+		$table_name = \FairPayment\Database\Schema::get_payments_table_name();
+
+		$where_clauses = array(
+			"status = 'paid'",
+			'mollie_fee IS NULL',
+			"mollie_payment_id IS NOT NULL AND mollie_payment_id <> ''",
+		);
+
+		if ( '' !== $mode ) {
+			$testmode        = 'test' === $mode ? 1 : 0;
+			$where_clauses[] = $wpdb->prepare( 'testmode = %d', $testmode );
+		}
+
+		$where = implode( ' AND ', $where_clauses );
+
+		$ids = $wpdb->get_col(
+			$wpdb->prepare(
+				"SELECT id FROM %i WHERE {$where} ORDER BY created_at DESC",
+				$table_name
+			)
+		);
+
+		return array_map( 'intval', $ids );
+	}
+
+	/**
 	 * Get transaction by Mollie payment ID
 	 *
 	 * @param string $mollie_payment_id Mollie payment ID.

@@ -112,6 +112,26 @@ class TransactionsController extends WP_REST_Controller {
 
 		register_rest_route(
 			$this->namespace,
+			'/transactions/missing-mollie-fee',
+			array(
+				array(
+					'methods'             => WP_REST_Server::READABLE,
+					'callback'            => array( $this, 'get_missing_mollie_fee_ids' ),
+					'permission_callback' => array( $this, 'get_items_permissions_check' ),
+					'args'                => array(
+						'mode' => array(
+							'type'              => 'string',
+							'default'           => '',
+							'enum'              => array( '', 'live', 'test' ),
+							'sanitize_callback' => 'sanitize_text_field',
+						),
+					),
+				),
+			)
+		);
+
+		register_rest_route(
+			$this->namespace,
 			'/transactions/(?P<id>\d+)/sync-mollie',
 			array(
 				array(
@@ -350,6 +370,24 @@ class TransactionsController extends WP_REST_Controller {
 					$updated,
 					$skipped
 				),
+			),
+			200
+		);
+	}
+
+	/**
+	 * List IDs of paid transactions missing Mollie fee data.
+	 *
+	 * @param WP_REST_Request $request Full data about the request.
+	 * @return WP_REST_Response
+	 */
+	public function get_missing_mollie_fee_ids( $request ) {
+		$ids = Transaction::get_ids_missing_mollie_fee( (string) $request->get_param( 'mode' ) );
+
+		return new WP_REST_Response(
+			array(
+				'ids'   => $ids,
+				'total' => count( $ids ),
 			),
 			200
 		);
