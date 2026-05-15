@@ -961,6 +961,33 @@ class FinancialEntryController extends WP_REST_Controller {
 			);
 		}
 
+		// Auto-split the entry into one child per matched transaction so the
+		// user can later assign budgets per transaction. Only do this when the
+		// entry isn't already split and there are at least two transactions.
+		if ( count( $ids_to_match ) >= 2 && ! FinancialEntry::has_children( $id ) ) {
+			$allocations = array();
+			foreach ( $ids_to_match as $tid ) {
+				$transaction = Transaction::get_by_id( $tid );
+				if ( ! $transaction ) {
+					continue;
+				}
+
+				$net = (float) $transaction->amount
+					- (float) ( $transaction->application_fee ?? 0 )
+					- (float) ( $transaction->mollie_fee ?? 0 );
+
+				$allocations[] = array(
+					'amount'      => $net,
+					'description' => $transaction->description ?? '',
+					'budget_id'   => null,
+				);
+			}
+
+			if ( count( $allocations ) >= 2 ) {
+				FinancialEntry::split_entry( $id, $allocations );
+			}
+		}
+
 		$entry = FinancialEntry::get_by_id( $id );
 
 		return new WP_REST_Response( $entry->to_array(), 200 );
