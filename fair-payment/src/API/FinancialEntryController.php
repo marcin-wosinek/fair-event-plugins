@@ -1906,12 +1906,12 @@ class FinancialEntryController extends WP_REST_Controller {
 					continue;
 				}
 				$unmatched_transactions[] = array(
-					'id'                => $t->id,
+					'id'                => (int) $t->id,
 					'mollie_payment_id' => $t->mollie_payment_id,
-					'amount'            => $t->amount,
+					'amount'            => (float) $t->amount,
 					'currency'          => $t->currency,
-					'application_fee'   => $t->application_fee,
-					'mollie_fee'        => $t->mollie_fee,
+					'application_fee'   => null !== $t->application_fee ? (float) $t->application_fee : null,
+					'mollie_fee'        => null !== $t->mollie_fee ? (float) $t->mollie_fee : null,
 					'status'            => $t->status,
 					'description'       => $t->description,
 					'created_at'        => $t->created_at,
@@ -1943,12 +1943,12 @@ class FinancialEntryController extends WP_REST_Controller {
 					$t = Transaction::get_by_id( $tid );
 					if ( $t ) {
 						$entry_data['transactions'][] = array(
-							'id'                => $t->id,
+							'id'                => (int) $t->id,
 							'mollie_payment_id' => $t->mollie_payment_id,
-							'amount'            => $t->amount,
+							'amount'            => (float) $t->amount,
 							'currency'          => $t->currency,
-							'application_fee'   => $t->application_fee,
-							'mollie_fee'        => $t->mollie_fee,
+							'application_fee'   => null !== $t->application_fee ? (float) $t->application_fee : null,
+							'mollie_fee'        => null !== $t->mollie_fee ? (float) $t->mollie_fee : null,
 							'description'       => $t->description,
 							'created_at'        => $t->created_at,
 						);
