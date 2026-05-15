@@ -1081,14 +1081,15 @@ class FinancialEntryController extends WP_REST_Controller {
 
 		$total_allocated = 0;
 		foreach ( $allocations as $allocation ) {
-			if ( empty( $allocation['amount'] ) || (float) $allocation['amount'] <= 0 ) {
+			$amount = isset( $allocation['amount'] ) ? (float) $allocation['amount'] : 0;
+			if ( 0.0 === $amount ) {
 				return new WP_Error(
 					'rest_invalid_allocation_amount',
-					__( 'Each allocation amount must be greater than zero.', 'fair-payment' ),
+					__( 'Each allocation amount must be nonzero.', 'fair-payment' ),
 					array( 'status' => 400 )
 				);
 			}
-			$total_allocated += (float) $allocation['amount'];
+			$total_allocated += $amount;
 		}
 
 		// Check total matches original (with 0.01 tolerance).
@@ -1175,14 +1176,15 @@ class FinancialEntryController extends WP_REST_Controller {
 
 		$total_allocated = 0;
 		foreach ( $allocations as $allocation ) {
-			if ( empty( $allocation['amount'] ) || (float) $allocation['amount'] <= 0 ) {
+			$amount = isset( $allocation['amount'] ) ? (float) $allocation['amount'] : 0;
+			if ( 0.0 === $amount ) {
 				return new WP_Error(
 					'rest_invalid_allocation_amount',
-					__( 'Each allocation amount must be greater than zero.', 'fair-payment' ),
+					__( 'Each allocation amount must be nonzero.', 'fair-payment' ),
 					array( 'status' => 400 )
 				);
 			}
-			$total_allocated += (float) $allocation['amount'];
+			$total_allocated += $amount;
 		}
 
 		// Check total matches original (with 0.01 tolerance).

@@ -913,9 +913,18 @@ class FinancialEntry {
 		$child_ids = array();
 
 		foreach ( $allocations as $allocation ) {
+			$raw_amount = (float) $allocation['amount'];
+			// Negative allocations flip the entry type so abs() storage stays
+			// consistent with accounting sign (e.g. a -1.49 line on an income
+			// parent becomes a 1.49 cost child).
+			$child_entry_type = $entry->entry_type;
+			if ( $raw_amount < 0 && in_array( $entry->entry_type, array( 'cost', 'income' ), true ) ) {
+				$child_entry_type = 'cost' === $entry->entry_type ? 'income' : 'cost';
+			}
+
 			$data = array(
-				'amount'          => abs( (float) $allocation['amount'] ),
-				'entry_type'      => $entry->entry_type,
+				'amount'          => abs( $raw_amount ),
+				'entry_type'      => $child_entry_type,
 				'entry_date'      => $entry->entry_date,
 				'description'     => isset( $allocation['description'] ) ? $allocation['description'] : $entry->description,
 				'budget_id'       => ! empty( $allocation['budget_id'] ) ? (int) $allocation['budget_id'] : null,
@@ -1001,9 +1010,18 @@ class FinancialEntry {
 		$child_ids = array();
 
 		foreach ( $allocations as $allocation ) {
+			$raw_amount = (float) $allocation['amount'];
+			// Negative allocations flip the entry type so abs() storage stays
+			// consistent with accounting sign (e.g. a -1.49 line on an income
+			// parent becomes a 1.49 cost child).
+			$child_entry_type = $entry->entry_type;
+			if ( $raw_amount < 0 && in_array( $entry->entry_type, array( 'cost', 'income' ), true ) ) {
+				$child_entry_type = 'cost' === $entry->entry_type ? 'income' : 'cost';
+			}
+
 			$data = array(
-				'amount'          => abs( (float) $allocation['amount'] ),
-				'entry_type'      => $entry->entry_type,
+				'amount'          => abs( $raw_amount ),
+				'entry_type'      => $child_entry_type,
 				'entry_date'      => $entry->entry_date,
 				'description'     => isset( $allocation['description'] ) ? $allocation['description'] : $entry->description,
 				'budget_id'       => ! empty( $allocation['budget_id'] ) ? (int) $allocation['budget_id'] : null,
