@@ -199,12 +199,24 @@ class QuestionnaireResponsesController extends WP_REST_Controller {
 
 			$answers_data = array();
 			foreach ( $answers as $answer ) {
-				$answers_data[] = array(
+				$answer_item = array(
 					'question_key'  => $answer->question_key,
 					'question_text' => $answer->question_text,
 					'question_type' => $answer->question_type,
 					'answer_value'  => $answer->answer_value,
 				);
+
+				if ( 'file_upload' === $answer->question_type && is_numeric( $answer->answer_value ) ) {
+					$attachment_id  = (int) $answer->answer_value;
+					$attachment_url = wp_get_attachment_url( $attachment_id );
+					if ( $attachment_url ) {
+						$answer_item['file_url'] = $attachment_url;
+						$mime                    = get_post_mime_type( $attachment_id );
+						$answer_item['is_image'] = $mime && 0 === strpos( $mime, 'image/' );
+					}
+				}
+
+				$answers_data[] = $answer_item;
 			}
 
 			$participant_name    = '';
@@ -335,9 +347,12 @@ class QuestionnaireResponsesController extends WP_REST_Controller {
 
 			// For file uploads, include the attachment URL.
 			if ( 'file_upload' === $answer->question_type && is_numeric( $answer->answer_value ) ) {
-				$attachment_url = wp_get_attachment_url( (int) $answer->answer_value );
+				$attachment_id  = (int) $answer->answer_value;
+				$attachment_url = wp_get_attachment_url( $attachment_id );
 				if ( $attachment_url ) {
 					$answer_item['file_url'] = $attachment_url;
+					$mime                    = get_post_mime_type( $attachment_id );
+					$answer_item['is_image'] = $mime && 0 === strpos( $mime, 'image/' );
 				}
 			}
 

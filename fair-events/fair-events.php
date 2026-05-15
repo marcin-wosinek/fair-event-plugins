@@ -3,7 +3,7 @@
  * Plugin Name: Fair Events
  * Plugin URI: https://github.com/marcin-wosinek/fair-event-plugins
  * Description: Event management plugin.
- * Version: 1.2.0-54-g58bb29b
+ * Version: 1.2.0-71-gc03700d-dirty
  * Requires at least: 6.7
  * Requires PHP: 7.4
  * Author: Marcin Wosinek

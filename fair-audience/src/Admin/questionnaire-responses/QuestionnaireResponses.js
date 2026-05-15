@@ -35,6 +35,9 @@ export default function QuestionnaireResponses() {
 	const [isLoading, setIsLoading] = useState(true);
 	const [view, setView] = useState(DEFAULT_VIEW);
 
+	// Markdown export feedback state.
+	const [copyFeedback, setCopyFeedback] = useState(null);
+
 	// Add-to-group modal state.
 	const [isGroupModalOpen, setIsGroupModalOpen] = useState(false);
 	const [groupMode, setGroupMode] = useState('existing');
@@ -388,6 +391,94 @@ export default function QuestionnaireResponses() {
 		((groupMode === 'existing' && selectedGroupId) ||
 			(groupMode === 'new' && newGroupName.trim()));
 
+	const buildMarkdown = () => {
+		const lines = [];
+		const heading = title || __('Questionnaire Responses', 'fair-audience');
+		const exportedLabel = __('Exported', 'fair-audience');
+		const responsesLabel = __('Responses', 'fair-audience');
+		const adminLinkLabel = __('Admin link', 'fair-audience');
+		const submittedLabel = __('Submitted', 'fair-audience');
+
+		const adminBase = `${window.location.origin}${window.location.pathname}`;
+
+		const today = new Date().toISOString().split('T')[0];
+
+		lines.push(`# ${heading}`);
+		lines.push('');
+		lines.push(`_${exportedLabel} ${today}_`);
+		lines.push('');
+		lines.push(`- ${responsesLabel}: ${responses.length}`);
+		lines.push(`- ${adminLinkLabel}: ${window.location.href}`);
+		lines.push('');
+
+		responses.forEach((response) => {
+			const respondent =
+				response.participant_name ||
+				response.participant_email ||
+				`#${response.id}`;
+
+			lines.push('---');
+			lines.push('');
+			if (response.participant_id) {
+				const participantUrl = `${adminBase}?page=fair-audience-participant-detail&participant_id=${response.participant_id}`;
+				lines.push(`## [${respondent}](${participantUrl})`);
+			} else {
+				lines.push(`## ${respondent}`);
+			}
+			lines.push('');
+			if (response.created_at) {
+				lines.push(`_${submittedLabel} ${response.created_at}_`);
+				lines.push('');
+			}
+
+			(response.answers || []).forEach((answer) => {
+				lines.push(`### ${answer.question_text}`);
+				lines.push('');
+
+				if (answer.file_url) {
+					const alt = answer.question_text || '';
+					if (answer.is_image) {
+						lines.push(`![${alt}](${answer.file_url})`);
+					} else {
+						lines.push(`[${alt}](${answer.file_url})`);
+					}
+				} else {
+					lines.push(answer.answer_value || '');
+				}
+				lines.push('');
+			});
+		});
+
+		return lines.join('\n');
+	};
+
+	const copyMarkdown = () => {
+		if (!navigator.clipboard) {
+			setCopyFeedback({
+				status: 'error',
+				message: __('Clipboard not available.', 'fair-audience'),
+			});
+			return;
+		}
+		navigator.clipboard
+			.writeText(buildMarkdown())
+			.then(() => {
+				setCopyFeedback({
+					status: 'success',
+					message: __(
+						'Markdown copied to clipboard. Paste into Google Docs.',
+						'fair-audience'
+					),
+				});
+			})
+			.catch(() => {
+				setCopyFeedback({
+					status: 'error',
+					message: __('Failed to copy.', 'fair-audience'),
+				});
+			});
+	};
+
 	const exportCsv = () => {
 		if (responses.length === 0) {
 			return;
@@ -502,7 +593,23 @@ export default function QuestionnaireResponses() {
 				>
 					{__('Export CSV', 'fair-audience')}
 				</Button>
+				<Button
+					variant="secondary"
+					onClick={copyMarkdown}
+					disabled={responses.length === 0}
+				>
+					{__('Copy Markdown', 'fair-audience')}
+				</Button>
 			</div>
+
+			{copyFeedback && (
+				<Notice
+					status={copyFeedback.status}
+					onRemove={() => setCopyFeedback(null)}
+				>
+					{copyFeedback.message}
+				</Notice>
+			)}
 
 			{isGroupModalOpen && (
 				<Modal
