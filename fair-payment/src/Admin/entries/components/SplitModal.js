@@ -245,8 +245,8 @@ const SplitModal = ({
 	);
 	const remaining = entry.amount - totalAllocated;
 	const isBalanced = Math.abs(remaining) < 0.01;
-	const allAmountsPositive = allocations.every(
-		(a) => parseFloat(a.amount) > 0
+	const allAmountsNonzero = allocations.every(
+		(a) => !Number.isNaN(parseFloat(a.amount)) && parseFloat(a.amount) !== 0
 	);
 
 	const handleSubmit = async (e) => {
@@ -387,7 +387,6 @@ const SplitModal = ({
 										}
 										type="number"
 										step="0.01"
-										min="0.01"
 										required
 									/>
 								</div>
@@ -505,7 +504,7 @@ const SplitModal = ({
 								disabled={
 									isSaving ||
 									!isBalanced ||
-									!allAmountsPositive
+									!allAmountsNonzero
 								}
 							>
 								{isEditMode
