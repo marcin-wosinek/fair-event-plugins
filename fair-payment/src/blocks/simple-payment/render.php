@@ -24,11 +24,6 @@ $show_success = isset( $_GET['payment_redirect'] ) && '1' === $_GET['payment_red
 $is_configured = \FairPayment\Payment\MolliePaymentHandler::is_configured();
 
 $block_id = 'fair-payment-' . wp_unique_id();
-
-// Generate clean URL without callback parameters.
-if ( $is_callback ) {
-	$clean_url = remove_query_arg( array( 'fair_payment_callback', 'transaction_id' ) );
-}
 ?>
 
 <div <?php echo get_block_wrapper_attributes( array( 'id' => $block_id ) ); ?>>
@@ -38,9 +33,9 @@ if ( $is_callback ) {
 				<div class="fair-payment-success">
 					<p><?php esc_html_e( 'Thank you! Your payment has been received and is being processed.', 'fair-payment' ); ?></p>
 				</div>
-				<a href="<?php echo esc_url( $clean_url ); ?>" class="wp-element-button">
+				<button type="button" class="fair-payment-callback-dismiss wp-element-button">
 					<?php esc_html_e( 'Continue', 'fair-payment' ); ?>
-				</a>
+				</button>
 			</div>
 		<?php else : ?>
 			<?php if ( $show_success ) : ?>

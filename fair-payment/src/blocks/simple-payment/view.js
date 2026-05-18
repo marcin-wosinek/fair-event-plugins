@@ -11,9 +11,14 @@ import apiFetch from '@wordpress/api-fetch';
 
 	// Defensive: handle both scenarios (DOM loading or already loaded)
 	if (document.readyState === 'loading') {
-		document.addEventListener('DOMContentLoaded', initPaymentButtons);
+		document.addEventListener('DOMContentLoaded', init);
 	} else {
+		init();
+	}
+
+	function init() {
 		initPaymentButtons();
+		initCallbackDismiss();
 	}
 
 	function initPaymentButtons() {
@@ -22,6 +27,30 @@ import apiFetch from '@wordpress/api-fetch';
 		buttons.forEach(function (button) {
 			button.addEventListener('click', handlePaymentClick);
 		});
+	}
+
+	function initCallbackDismiss() {
+		const buttons = document.querySelectorAll(
+			'.fair-payment-callback-dismiss'
+		);
+
+		buttons.forEach(function (button) {
+			button.addEventListener('click', handleCallbackDismiss);
+		});
+	}
+
+	function handleCallbackDismiss(event) {
+		const button = event.currentTarget;
+		const callback = button.closest('.fair-payment-callback');
+
+		if (callback) {
+			callback.remove();
+		}
+
+		const url = new URL(window.location.href);
+		url.searchParams.delete('fair_payment_callback');
+		url.searchParams.delete('transaction_id');
+		window.history.replaceState({}, '', url.toString());
 	}
 
 	async function handlePaymentClick(event) {
