@@ -77,6 +77,9 @@ class Installer {
 		$sql = Schema::get_ticket_option_collaborators_table_sql();
 		dbDelta( $sql );
 
+		$sql = Schema::get_ticket_option_prices_table_sql();
+		dbDelta( $sql );
+
 		// Run migration if upgrading from pre-1.0.0
 		if ( version_compare( $current_version, '1.0.0', '<' ) ) {
 			self::migrate_to_1_0_0();
@@ -200,6 +203,12 @@ class Installer {
 			self::migrate_to_3_8_0();
 		}
 
+		// Run migration if upgrading from pre-3.9.0 (add derive_price_from_sale_period to ticket_options).
+		// Version 3.9.0 - Ticket option prices table (no data migration needed, table created by dbDelta).
+		if ( version_compare( $current_version, '3.9.0', '<' ) ) {
+			self::migrate_to_3_9_0();
+		}
+
 		// Update database version
 		Schema::update_db_version( Schema::DB_VERSION );
 	}
@@ -314,6 +323,10 @@ class Installer {
 
 			if ( version_compare( $current_version, '3.8.0', '<' ) ) {
 				self::migrate_to_3_8_0();
+			}
+
+			if ( version_compare( $current_version, '3.9.0', '<' ) ) {
+				self::migrate_to_3_9_0();
 			}
 
 			// Install/update tables
@@ -1242,6 +1255,33 @@ class Installer {
 			$wpdb->query(
 				$wpdb->prepare(
 					'ALTER TABLE %i ADD COLUMN capacity INT UNSIGNED DEFAULT NULL AFTER discounted_price',
+					$table_name
+				)
+			);
+		}
+	}
+
+	/**
+	 * Migrate to version 3.9.0 - Add derive_price_from_sale_period column to ticket_options table.
+	 *
+	 * @return void
+	 */
+	private static function migrate_to_3_9_0() {
+		global $wpdb;
+
+		$table_name = $wpdb->prefix . 'fair_events_ticket_options';
+
+		$column_exists = $wpdb->get_results(
+			$wpdb->prepare(
+				"SHOW COLUMNS FROM %i LIKE 'derive_price_from_sale_period'",
+				$table_name
+			)
+		);
+
+		if ( empty( $column_exists ) ) {
+			$wpdb->query(
+				$wpdb->prepare(
+					'ALTER TABLE %i ADD COLUMN derive_price_from_sale_period TINYINT(1) NOT NULL DEFAULT 0 AFTER capacity',
 					$table_name
 				)
 			);

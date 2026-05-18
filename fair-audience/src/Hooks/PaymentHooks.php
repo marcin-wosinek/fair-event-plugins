@@ -314,8 +314,13 @@ class PaymentHooks {
 		$labels   = array();
 
 		foreach ( $options as $opt ) {
-			$name             = (string) $opt->name;
-			$price            = (float) $opt->price;
+			$name = (string) $opt->name;
+			if ( class_exists( \FairEvents\Services\ActivityOptionPriceResolver::class ) ) {
+				$resolved = \FairEvents\Services\ActivityOptionPriceResolver::resolve( $opt );
+				$price    = null !== $resolved ? (float) $resolved : (float) $opt->price;
+			} else {
+				$price = (float) $opt->price;
+			}
 			$discounted_price = (float) $opt->discounted_price;
 			if ( $discounted_price >= $price || ! isset( $amounts_by_name[ $name ] ) ) {
 				continue;

@@ -122,7 +122,7 @@ export default function EventTickets({
 		if (data.settings) {
 			setSettings((prev) => ({ ...prev, ...data.settings }));
 		}
-		setOptions(data.options || []);
+		setOptions((data.options || []).map(normalizeOption));
 	}, []);
 
 	const loadTickets = useCallback(async () => {
@@ -260,10 +260,9 @@ export default function EventTickets({
 					})),
 					prices: pricesArray,
 					settings,
-					options: options.map((o, i) => ({
-						...o,
-						sort_order: i,
-					})),
+					options: options.map((o, i) =>
+						serializeOptionForSave(o, i)
+					),
 				},
 			});
 
@@ -306,7 +305,7 @@ export default function EventTickets({
 			if (data.settings) {
 				setSettings((prev) => ({ ...prev, ...data.settings }));
 			}
-			setOptions(data.options || []);
+			setOptions((data.options || []).map(normalizeOption));
 
 			setSuccess(__('Tickets saved successfully.', 'fair-events'));
 		} catch (err) {
@@ -379,6 +378,12 @@ export default function EventTickets({
 					o.capacity !== ''
 						? o.capacity
 						: null,
+				derive_price_from_sale_period:
+					!!o.derive_price_from_sale_period,
+				period_prices: serializeOptionPeriodPrices(o).map((pp) => ({
+					sale_period_index: pp.sale_period_index,
+					price: pp.price,
+				})),
 				collaborator_ids: Array.isArray(o.collaborator_ids)
 					? o.collaborator_ids
 					: [],
@@ -512,6 +517,57 @@ export default function EventTickets({
 		return `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(
 			now.getDate()
 		)} ${pad(now.getHours())}:${pad(now.getMinutes())}:00`;
+	};
+
+	const periodPriceKey = (period, pIndex) =>
+		period && period.id ? String(period.id) : `new-${pIndex}`;
+
+	const normalizeOption = (o) => {
+		const map = {};
+		(o.period_prices || []).forEach((pp) => {
+			if (
+				pp &&
+				pp.sale_period_id !== undefined &&
+				pp.sale_period_id !== null
+			) {
+				map[String(pp.sale_period_id)] = String(pp.price);
+			}
+		});
+		return {
+			...o,
+			derive_price_from_sale_period: !!o.derive_price_from_sale_period,
+			period_prices_map: map,
+		};
+	};
+
+	const serializeOptionPeriodPrices = (option) => {
+		if (!option.derive_price_from_sale_period) {
+			return [];
+		}
+		const out = [];
+		salePeriods.forEach((p, pIdx) => {
+			const key = periodPriceKey(p, pIdx);
+			const raw = option.period_prices_map?.[key];
+			if (raw === undefined || raw === '') return;
+			const entry = {
+				sale_period_index: pIdx,
+				price: parseFloat(raw) || 0,
+			};
+			if (p.id) entry.sale_period_id = p.id;
+			out.push(entry);
+		});
+		return out;
+	};
+
+	const serializeOptionForSave = (option, index) => {
+		const { period_prices_map: _unused, ...rest } = option;
+		return {
+			...rest,
+			sort_order: index,
+			derive_price_from_sale_period:
+				!!option.derive_price_from_sale_period,
+			period_prices: serializeOptionPeriodPrices(option),
+		};
 	};
 
 	const addSalePeriod = () => {
@@ -1725,6 +1781,12 @@ export default function EventTickets({
 												</th>
 												<th>
 													{__(
+														'Per-period pricing',
+														'fair-events'
+													)}
+												</th>
+												<th>
+													{__(
 														'Collaborator(s)',
 														'fair-events'
 													)}
@@ -1812,6 +1874,9 @@ export default function EventTickets({
 																type="number"
 																step="0.01"
 																min="0"
+																disabled={
+																	!!option.derive_price_from_sale_period
+																}
 																value={
 																	option.price !==
 																	undefined
@@ -1949,6 +2014,126 @@ export default function EventTickets({
 															/>
 														</td>
 														<td>
+															<CheckboxControl
+																label={__(
+																	'Per period',
+																	'fair-events'
+																)}
+																checked={
+																	!!option.derive_price_from_sale_period
+																}
+																onChange={(
+																	checked
+																) => {
+																	const updated =
+																		[
+																			...options,
+																		];
+																	updated[
+																		index
+																	] = {
+																		...updated[
+																			index
+																		],
+																		derive_price_from_sale_period:
+																			checked,
+																	};
+																	setOptions(
+																		updated
+																	);
+																}}
+																__nextHasNoMarginBottom
+															/>
+															{option.derive_price_from_sale_period && (
+																<VStack
+																	spacing={2}
+																>
+																	{salePeriods.length ===
+																	0 ? (
+																		<em>
+																			{__(
+																				'Add sale periods first.',
+																				'fair-events'
+																			)}
+																		</em>
+																	) : (
+																		salePeriods.map(
+																			(
+																				period,
+																				pIdx
+																			) => {
+																				const key =
+																					periodPriceKey(
+																						period,
+																						pIdx
+																					);
+																				const val =
+																					option
+																						.period_prices_map?.[
+																						key
+																					] ??
+																					'';
+																				return (
+																					<TextControl
+																						key={
+																							key
+																						}
+																						type="number"
+																						step="0.01"
+																						min="0"
+																						label={
+																							period.name ||
+																							__(
+																								'Period',
+																								'fair-events'
+																							) +
+																								' ' +
+																								(pIdx +
+																									1)
+																						}
+																						value={
+																							val
+																						}
+																						onChange={(
+																							v
+																						) => {
+																							const updated =
+																								[
+																									...options,
+																								];
+																							const prev =
+																								updated[
+																									index
+																								]
+																									.period_prices_map ||
+																								{};
+																							updated[
+																								index
+																							] =
+																								{
+																									...updated[
+																										index
+																									],
+																									period_prices_map:
+																										{
+																											...prev,
+																											[key]: v,
+																										},
+																								};
+																							setOptions(
+																								updated
+																							);
+																						}}
+																						__nextHasNoMarginBottom
+																					/>
+																				);
+																			}
+																		)
+																	)}
+																</VStack>
+															)}
+														</td>
+														<td>
 															<FormTokenField
 																value={collaboratorIds.map(
 																	(id) =>
@@ -2044,6 +2229,8 @@ export default function EventTickets({
 											price: 0,
 											discounted_price: null,
 											capacity: null,
+											derive_price_from_sale_period: false,
+											period_prices_map: {},
 											collaborator_ids: [],
 											sort_order: options.length,
 										},

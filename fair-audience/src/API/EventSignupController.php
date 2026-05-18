@@ -902,7 +902,12 @@ class EventSignupController extends WP_REST_Controller {
 			}
 		}
 
-		$opt_price = (float) $option->price;
+		if ( class_exists( \FairEvents\Services\ActivityOptionPriceResolver::class ) ) {
+			$resolved  = \FairEvents\Services\ActivityOptionPriceResolver::resolve( $option );
+			$opt_price = null !== $resolved ? (float) $resolved : 0.0;
+		} else {
+			$opt_price = (float) $option->price;
+		}
 		if ( $best_discount_rule && $opt_price > 0 && class_exists( \FairEvents\Services\EventSignupPricing::class ) ) {
 			$opt_price = \FairEvents\Services\EventSignupPricing::apply_discount(
 				$opt_price,

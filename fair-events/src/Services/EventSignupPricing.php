@@ -107,23 +107,7 @@ class EventSignupPricing {
 			return null;
 		}
 
-		$now           = current_time( 'mysql' );
-		$sale_periods  = TicketSalePeriod::get_all_by_event_date_id( $ticket_type->event_date_id );
-		$active_period = null;
-
-		$continues  = class_exists( EventDateSetting::class )
-			&& '1' === EventDateSetting::get( $ticket_type->event_date_id, 'continues_pricing_period' );
-		$last_index = count( $sale_periods ) - 1;
-
-		foreach ( $sale_periods as $index => $period ) {
-			if ( $period->sale_start <= $now && $period->sale_end >= $now ) {
-				$active_period = $period;
-				break;
-			}
-			if ( $continues && $index === $last_index && $period->sale_start <= $now ) {
-				$active_period = $period;
-			}
-		}
+		$active_period = self::resolve_active_sale_period( $ticket_type->event_date_id );
 		if ( ! $active_period ) {
 			return null;
 		}
@@ -157,6 +141,38 @@ class EventSignupPricing {
 		}
 
 		return $best_price;
+	}
+
+	/**
+	 * Resolve the currently active sale period for an event date.
+	 *
+	 * Matches the period whose [sale_start, sale_end] window covers
+	 * "now". When no period matches and the per-event-date
+	 * `continues_pricing_period` setting is on, falls back to the last
+	 * period whose start is already in the past.
+	 *
+	 * @param int $event_date_id Event date ID.
+	 * @return TicketSalePeriod|null Active period or null.
+	 */
+	public static function resolve_active_sale_period( $event_date_id ) {
+		$now           = current_time( 'mysql' );
+		$sale_periods  = TicketSalePeriod::get_all_by_event_date_id( $event_date_id );
+		$active_period = null;
+
+		$continues  = class_exists( EventDateSetting::class )
+			&& '1' === EventDateSetting::get( $event_date_id, 'continues_pricing_period' );
+		$last_index = count( $sale_periods ) - 1;
+
+		foreach ( $sale_periods as $index => $period ) {
+			if ( $period->sale_start <= $now && $period->sale_end >= $now ) {
+				return $period;
+			}
+			if ( $continues && $index === $last_index && $period->sale_start <= $now ) {
+				$active_period = $period;
+			}
+		}
+
+		return $active_period;
 	}
 
 	/**

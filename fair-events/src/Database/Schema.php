@@ -17,7 +17,7 @@ class Schema {
 	/**
 	 * Database version
 	 */
-	const DB_VERSION = '3.8.0';
+	const DB_VERSION = '3.9.0';
 
 	/**
 	 * Get the SQL for creating the fair_event_dates table
@@ -404,11 +404,38 @@ class Schema {
 			price DECIMAL(10,2) NOT NULL DEFAULT 0.00,
 			discounted_price DECIMAL(10,2) DEFAULT NULL,
 			capacity INT UNSIGNED DEFAULT NULL,
+			derive_price_from_sale_period TINYINT(1) NOT NULL DEFAULT 0,
 			sort_order INT UNSIGNED NOT NULL DEFAULT 0,
 			created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
 			updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
 			PRIMARY KEY (id),
 			KEY idx_event_date_id (event_date_id)
+		) ENGINE=InnoDB {$charset_collate};";
+	}
+
+	/**
+	 * Get the SQL for creating the fair_events_ticket_option_prices table
+	 *
+	 * Per-(option, sale_period) price store for activity options whose
+	 * `derive_price_from_sale_period` flag is on. Mirrors how `TicketPrice`
+	 * keys ticket-type prices to sale periods.
+	 *
+	 * @return string SQL statement for creating the table.
+	 */
+	public static function get_ticket_option_prices_table_sql() {
+		global $wpdb;
+
+		$table_name      = $wpdb->prefix . 'fair_events_ticket_option_prices';
+		$charset_collate = $wpdb->get_charset_collate();
+
+		return "CREATE TABLE {$table_name} (
+			ticket_option_id BIGINT UNSIGNED NOT NULL,
+			sale_period_id BIGINT UNSIGNED NOT NULL,
+			price DECIMAL(10,2) NOT NULL DEFAULT 0.00,
+			created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+			updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+			PRIMARY KEY (ticket_option_id, sale_period_id),
+			KEY idx_sale_period_id (sale_period_id)
 		) ENGINE=InnoDB {$charset_collate};";
 	}
 

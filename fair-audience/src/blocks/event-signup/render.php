@@ -421,7 +421,14 @@ if ( $pricing_event_date_id && class_exists( \FairEvents\Models\TicketOption::cl
 	$invitation_inviter_id = $valid_invitation_token ? (int) $valid_invitation_token->inviter_participant_id : null;
 
 	foreach ( $raw_options as $opt ) {
-		$opt_price        = (float) $opt->price;
+		$resolved_base = class_exists( \FairEvents\Services\ActivityOptionPriceResolver::class )
+			? \FairEvents\Services\ActivityOptionPriceResolver::resolve( $opt )
+			: (float) $opt->price;
+		if ( null === $resolved_base ) {
+			// Derived mode with no active period / no row → option not purchasable; skip.
+			continue;
+		}
+		$opt_price        = (float) $resolved_base;
 		$invitation_price = null;
 		if ( $invitation_inviter_id && class_exists( \FairEvents\Services\EventSignupPricing::class ) ) {
 			$invitation_price = \FairEvents\Services\EventSignupPricing::resolve_option_invitation_price(

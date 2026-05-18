@@ -66,6 +66,15 @@ class TicketOption {
 	public $capacity;
 
 	/**
+	 * When true, the effective price is resolved from the currently
+	 * active TicketSalePeriod via TicketOptionPrice rather than
+	 * the stored $price column.
+	 *
+	 * @var bool
+	 */
+	public $derive_price_from_sale_period = false;
+
+	/**
 	 * Sort order
 	 *
 	 * @var int
@@ -163,9 +172,10 @@ class TicketOption {
 	 * @param string|null $short_name       Optional short name.
 	 * @param float|null  $discounted_price Optional discounted price.
 	 * @param int|null    $capacity         Optional capacity (null = unlimited).
+	 * @param bool        $derive_price_from_sale_period Whether to derive price from active sale period.
 	 * @return int|false The option ID on success, false on failure.
 	 */
-	public static function create( $event_date_id, $name, $price, $sort_order, $short_name = null, $discounted_price = null, $capacity = null ) {
+	public static function create( $event_date_id, $name, $price, $sort_order, $short_name = null, $discounted_price = null, $capacity = null, $derive_price_from_sale_period = false ) {
 		global $wpdb;
 
 		$table_name = self::get_table_name();
@@ -173,15 +183,16 @@ class TicketOption {
 		$result = $wpdb->insert(
 			$table_name,
 			array(
-				'event_date_id'    => $event_date_id,
-				'name'             => $name,
-				'short_name'       => $short_name,
-				'price'            => (float) $price,
-				'discounted_price' => null !== $discounted_price ? (float) $discounted_price : null,
-				'capacity'         => null !== $capacity ? (int) $capacity : null,
-				'sort_order'       => $sort_order,
+				'event_date_id'                 => $event_date_id,
+				'name'                          => $name,
+				'short_name'                    => $short_name,
+				'price'                         => (float) $price,
+				'discounted_price'              => null !== $discounted_price ? (float) $discounted_price : null,
+				'capacity'                      => null !== $capacity ? (int) $capacity : null,
+				'derive_price_from_sale_period' => $derive_price_from_sale_period ? 1 : 0,
+				'sort_order'                    => $sort_order,
 			),
-			array( '%d', '%s', '%s', '%f', '%f', '%d', '%d' )
+			array( '%d', '%s', '%s', '%f', '%f', '%d', '%d', '%d' )
 		);
 
 		if ( $result ) {
@@ -201,9 +212,10 @@ class TicketOption {
 	 * @param string|null $short_name       Optional short name.
 	 * @param float|null  $discounted_price Optional discounted price.
 	 * @param int|null    $capacity         Optional capacity (null = unlimited).
+	 * @param bool        $derive_price_from_sale_period Whether to derive price from active sale period.
 	 * @return bool True on success, false on failure.
 	 */
-	public static function update( $id, $name, $price, $sort_order, $short_name = null, $discounted_price = null, $capacity = null ) {
+	public static function update( $id, $name, $price, $sort_order, $short_name = null, $discounted_price = null, $capacity = null, $derive_price_from_sale_period = false ) {
 		global $wpdb;
 
 		$table_name = self::get_table_name();
@@ -211,15 +223,16 @@ class TicketOption {
 		$result = $wpdb->update(
 			$table_name,
 			array(
-				'name'             => $name,
-				'short_name'       => $short_name,
-				'price'            => (float) $price,
-				'discounted_price' => null !== $discounted_price ? (float) $discounted_price : null,
-				'capacity'         => null !== $capacity ? (int) $capacity : null,
-				'sort_order'       => $sort_order,
+				'name'                          => $name,
+				'short_name'                    => $short_name,
+				'price'                         => (float) $price,
+				'discounted_price'              => null !== $discounted_price ? (float) $discounted_price : null,
+				'capacity'                      => null !== $capacity ? (int) $capacity : null,
+				'derive_price_from_sale_period' => $derive_price_from_sale_period ? 1 : 0,
+				'sort_order'                    => $sort_order,
 			),
 			array( 'id' => $id ),
-			array( '%s', '%s', '%f', '%f', '%d', '%d' ),
+			array( '%s', '%s', '%f', '%f', '%d', '%d', '%d' ),
 			array( '%d' )
 		);
 
@@ -253,21 +266,24 @@ class TicketOption {
 	 * @return TicketOption Ticket option object.
 	 */
 	private static function hydrate( $row ) {
-		$item                   = new self();
-		$item->id               = (int) $row->id;
-		$item->event_date_id    = (int) $row->event_date_id;
-		$item->name             = $row->name;
-		$item->short_name       = isset( $row->short_name ) ? $row->short_name : null;
-		$item->price            = (float) $row->price;
-		$item->discounted_price = isset( $row->discounted_price ) && null !== $row->discounted_price
+		$item                                = new self();
+		$item->id                            = (int) $row->id;
+		$item->event_date_id                 = (int) $row->event_date_id;
+		$item->name                          = $row->name;
+		$item->short_name                    = isset( $row->short_name ) ? $row->short_name : null;
+		$item->price                         = (float) $row->price;
+		$item->discounted_price              = isset( $row->discounted_price ) && null !== $row->discounted_price
 			? (float) $row->discounted_price
 			: null;
-		$item->capacity         = isset( $row->capacity ) && null !== $row->capacity
+		$item->capacity                      = isset( $row->capacity ) && null !== $row->capacity
 			? (int) $row->capacity
 			: null;
-		$item->sort_order       = (int) $row->sort_order;
-		$item->created_at       = $row->created_at;
-		$item->updated_at       = $row->updated_at;
+		$item->derive_price_from_sale_period = isset( $row->derive_price_from_sale_period )
+			? (bool) (int) $row->derive_price_from_sale_period
+			: false;
+		$item->sort_order                    = (int) $row->sort_order;
+		$item->created_at                    = $row->created_at;
+		$item->updated_at                    = $row->updated_at;
 
 		return $item;
 	}
@@ -279,16 +295,17 @@ class TicketOption {
 	 */
 	public function to_array() {
 		return array(
-			'id'               => $this->id,
-			'event_date_id'    => $this->event_date_id,
-			'name'             => $this->name,
-			'short_name'       => $this->short_name,
-			'price'            => $this->price,
-			'discounted_price' => $this->discounted_price,
-			'capacity'         => $this->capacity,
-			'sort_order'       => $this->sort_order,
-			'created_at'       => $this->created_at,
-			'updated_at'       => $this->updated_at,
+			'id'                            => $this->id,
+			'event_date_id'                 => $this->event_date_id,
+			'name'                          => $this->name,
+			'short_name'                    => $this->short_name,
+			'price'                         => $this->price,
+			'discounted_price'              => $this->discounted_price,
+			'capacity'                      => $this->capacity,
+			'derive_price_from_sale_period' => $this->derive_price_from_sale_period,
+			'sort_order'                    => $this->sort_order,
+			'created_at'                    => $this->created_at,
+			'updated_at'                    => $this->updated_at,
 		);
 	}
 }
