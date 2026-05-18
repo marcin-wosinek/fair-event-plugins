@@ -191,7 +191,7 @@ a.fair-events-calendar-event:visited {
 	border-radius: 3px 0 0 3px;
 }
 
-.fair-events-calendar-event-row .fair-events-calendar-participants-link {
+.fair-events-calendar-event-row .fair-events-calendar-destination-link {
 	display: flex;
 	align-items: center;
 	justify-content: center;
@@ -203,11 +203,11 @@ a.fair-events-calendar-event:visited {
 	flex-shrink: 0;
 }
 
-.fair-events-calendar-event-row .fair-events-calendar-participants-link:hover {
+.fair-events-calendar-event-row .fair-events-calendar-destination-link:hover {
 	background: #0e4a78;
 }
 
-.fair-events-calendar-event-row .fair-events-calendar-participants-link .dashicons {
+.fair-events-calendar-event-row .fair-events-calendar-destination-link .dashicons {
 	font-size: 12px;
 	width: 12px;
 	height: 12px;
@@ -217,7 +217,7 @@ a.fair-events-calendar-event:visited {
 	border-radius: 3px;
 }
 
-.fair-events-calendar-event-row:has(.fair-events-calendar-participants-link) .fair-events-calendar-event {
+.fair-events-calendar-event-row:has(.fair-events-calendar-destination-link) .fair-events-calendar-event {
 	border-radius: 3px 0 0 3px;
 }
 

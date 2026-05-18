@@ -101,7 +101,6 @@ export default function DayCell({
 	isPast,
 	onAddEvent,
 	manageEventUrl,
-	participantsUrl,
 }) {
 	const dayNumber = date.getDate();
 	const hasEvents = events.length > 0;
@@ -193,22 +192,29 @@ export default function DayCell({
 										)}
 									</span>
 								)}
-								{participantsUrl &&
-									getEventDateId(event.uid) && (
-										<a
-											href={`${participantsUrl}${getEventDateId(
-												event.uid
-											)}`}
-											className="fair-events-calendar-participants-link"
-											title={__(
-												'View Participants',
-												'fair-events'
-											)}
-											onClick={(e) => e.stopPropagation()}
-										>
-											<span className="dashicons dashicons-groups" />
-										</a>
-									)}
+								{event.url && (
+									<a
+										href={event.url}
+										className="fair-events-calendar-destination-link"
+										title={__(
+											'Open link destination',
+											'fair-events'
+										)}
+										target={
+											linkType === 'external'
+												? '_blank'
+												: undefined
+										}
+										rel={
+											linkType === 'external'
+												? 'noopener noreferrer'
+												: undefined
+										}
+										onClick={(e) => e.stopPropagation()}
+									>
+										<span className="dashicons dashicons-external" />
+									</a>
+								)}
 							</div>
 						);
 					})}

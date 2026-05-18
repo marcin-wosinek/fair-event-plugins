@@ -200,9 +200,6 @@ export default function CalendarApp() {
 					manageEventUrl={
 						window.fairEventsCalendarData?.manageEventUrl
 					}
-					participantsUrl={
-						window.fairEventsCalendarData?.participantsUrl
-					}
 				/>
 			)}
 

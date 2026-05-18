@@ -20,7 +20,6 @@ export default function CalendarGrid({
 	onAddEvent,
 	manageEventUrl,
 	startOfWeek: startOfWeekProp,
-	participantsUrl,
 }) {
 	// Get start_of_week setting (0 = Sunday, 1 = Monday)
 	const startOfWeek =
@@ -109,7 +108,6 @@ export default function CalendarGrid({
 							isPast={isPast}
 							onAddEvent={onAddEvent}
 							manageEventUrl={manageEventUrl}
-							participantsUrl={participantsUrl}
 						/>
 					);
 				})}
