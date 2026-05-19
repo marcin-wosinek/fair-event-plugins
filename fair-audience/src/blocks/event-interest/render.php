@@ -18,21 +18,30 @@ $success_message   = __( $attributes['successMessage'] ?? 'Thanks! Check your in
 $name_placeholder  = __( $attributes['namePlaceholder'] ?? 'Your name (optional)', 'fair-audience' );
 $email_placeholder = __( $attributes['emailPlaceholder'] ?? 'Your email', 'fair-audience' );
 
-// Resolve the event from the current post. The block only renders on event
-// pages — anywhere else it is silently skipped.
-$post_id  = get_the_ID();
-$event_id = 0;
-if ( $post_id && class_exists( EventRepository::class ) && EventRepository::is_event( $post_id ) ) {
-	$event_id = $post_id;
+// Resolve the event from the current post — same approach as event-signup so
+// the block works on event pages and on junction-linked pages.
+$current_post_id    = get_the_ID();
+$event_dates_obj    = null;
+$is_valid_post_type = false;
+$event_id           = 0;
+$event_date_id      = 0;
+
+if ( $current_post_id && class_exists( EventDates::class ) ) {
+	$event_dates_obj = EventDates::get_by_event_id( $current_post_id );
 }
 
-if ( $event_id <= 0 || ! class_exists( EventDates::class ) ) {
-	return '';
+if ( $current_post_id && class_exists( EventRepository::class ) ) {
+	$is_valid_post_type = EventRepository::is_event( $current_post_id ) || null !== $event_dates_obj;
 }
 
-$event_dates_obj = EventDates::get_by_event_id( $event_id );
-if ( ! $event_dates_obj ) {
-	return '';
+if ( $is_valid_post_type ) {
+	$event_id = $current_post_id;
+	if ( $event_dates_obj && $event_dates_obj->event_id && $event_dates_obj->event_id !== $current_post_id ) {
+		$event_id = (int) $event_dates_obj->event_id;
+	}
+	if ( $event_dates_obj ) {
+		$event_date_id = (int) $event_dates_obj->id;
+	}
 }
 
 $form_id = 'fair-audience-event-interest-' . wp_unique_id();
@@ -45,8 +54,14 @@ $wrapper_attributes = get_block_wrapper_attributes(
 	)
 );
 ?>
+
+<?php if ( ! $is_valid_post_type || $event_date_id <= 0 ) : ?>
+<p class="fair-audience-event-signup-error">
+	<?php echo esc_html__( 'This block can only be used on event pages.', 'fair-audience' ); ?>
+</p>
+<?php else : ?>
 <div <?php echo wp_kses_data( $wrapper_attributes ); ?>>
-	<form class="fair-audience-event-interest-form">
+	<form class="fair-audience-signup-form fair-audience-event-interest-form">
 		<p>
 			<label for="<?php echo esc_attr( $form_id ); ?>-email">
 				<?php echo esc_html__( 'Email', 'fair-audience' ); ?> <span class="required">*</span>
@@ -90,6 +105,7 @@ $wrapper_attributes = get_block_wrapper_attributes(
 			</button>
 		</div>
 
-		<div class="fair-audience-event-interest-message" style="display: none;"></div>
+		<div class="fair-audience-signup-message fair-audience-event-interest-message" style="display: none;"></div>
 	</form>
 </div>
+<?php endif; ?>

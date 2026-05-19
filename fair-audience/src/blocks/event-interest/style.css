@@ -1,29 +1,53 @@
-.fair-audience-event-interest {
-	max-width: 480px;
+/**
+ * Frontend styles for the Event Interest block.
+ *
+ * Mirrors the Event Signup block's form aesthetic so a page that uses one
+ * or both blocks renders consistently.
+ */
+
+.fair-audience-event-interest .fair-audience-signup-form p {
+	margin-bottom: 20px;
 }
 
-.fair-audience-event-interest-form p {
-	margin: 0 0 12px;
-}
-
-.fair-audience-event-interest-form label {
+.fair-audience-event-interest .fair-audience-signup-form label {
 	display: block;
-	font-size: 14px;
-	margin-bottom: 4px;
+	margin-bottom: 8px;
+	font-weight: 500;
 }
 
-.fair-audience-event-interest-form input[type='email'],
-.fair-audience-event-interest-form input[type='text'] {
-	width: 100%;
-	padding: 8px 10px;
-	box-sizing: border-box;
-}
-
-.fair-audience-event-interest-form .required {
+.fair-audience-event-interest .fair-audience-signup-form .required {
 	color: #d63638;
 }
 
-/* Honeypot: visually hidden but still rendered for bots. */
+.fair-audience-event-interest .fair-audience-signup-form input[type='text'],
+.fair-audience-event-interest .fair-audience-signup-form input[type='email'] {
+	width: 100%;
+	padding: 14px 16px;
+	border: 1px solid #ccc;
+	border-radius: 4px;
+	font-size: 1em;
+	background-color: #fafafa;
+	box-sizing: border-box;
+	transition: border-color 0.2s ease;
+}
+
+.fair-audience-event-interest
+	.fair-audience-signup-form
+	input[type='text']:focus,
+.fair-audience-event-interest
+	.fair-audience-signup-form
+	input[type='email']:focus {
+	outline: none;
+	border-color: #0073aa;
+	box-shadow: 0 0 0 1px #0073aa;
+	background-color: #fff;
+}
+
+.fair-audience-event-interest .wp-block-button {
+	margin-top: 24px;
+}
+
+/* Honeypot: rendered for bots, invisible to humans and screen readers. */
 .fair-audience-event-interest-honeypot {
 	position: absolute;
 	left: -9999px;
@@ -32,23 +56,38 @@
 	overflow: hidden;
 }
 
-.fair-audience-event-interest-message {
-	margin-top: 12px;
-	padding: 10px 12px;
+/* Inline form messages — same visual language as the event-signup block. */
+.fair-audience-event-interest .fair-audience-signup-message {
+	margin-top: 15px;
+	padding: 12px 16px;
 	border-radius: 4px;
+	font-size: 14px;
 }
 
-.fair-audience-event-interest-message-success {
-	background-color: #e6f4ea;
-	color: #1e6f3a;
+.fair-audience-event-interest .fair-audience-signup-message-success {
+	background-color: #d4edda;
+	color: #155724;
+	border: 1px solid #c3e6cb;
 }
 
-.fair-audience-event-interest-message-error {
-	background-color: #fde7e9;
-	color: #a02020;
+.fair-audience-event-interest .fair-audience-signup-message-error {
+	background-color: #f8d7da;
+	color: #721c24;
+	border: 1px solid #f5c6cb;
 }
 
-.fair-audience-event-interest-message-info {
-	background-color: #e8f0fe;
-	color: #0b3d91;
+.fair-audience-event-interest .fair-audience-signup-message-info {
+	background-color: #d1ecf1;
+	color: #0c5460;
+	border: 1px solid #bee5eb;
+}
+
+/* "Not on an event page" fallback — matches event-signup's variant. */
+.fair-audience-event-signup-error {
+	padding: 15px 20px;
+	background-color: #f8d7da;
+	color: #721c24;
+	border: 1px solid #f5c6cb;
+	border-radius: 4px;
+	text-align: center;
 }

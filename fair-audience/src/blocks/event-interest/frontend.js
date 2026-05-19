@@ -8,7 +8,10 @@ import {
 	onDomReady,
 } from '../shared/form-utils.js';
 
-const CSS_PREFIX = 'fair-audience-event-interest';
+// Use the shared signup CSS prefix so messages render with the same look as
+// the event-signup block. The message container in render.php carries the
+// matching class.
+const CSS_PREFIX = 'fair-audience-signup';
 
 (function () {
 	'use strict';
