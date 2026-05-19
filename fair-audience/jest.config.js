@@ -2,7 +2,12 @@ export default {
 	preset: '@wordpress/jest-preset-default',
 	testEnvironment: 'jsdom',
 	testMatch: ['**/__tests__/**/*.js', '**/?(*.)+(spec|test).js'],
-	testPathIgnorePatterns: ['/node_modules/', '/vendor/', '/e2e/'],
+	testPathIgnorePatterns: [
+		'/node_modules/',
+		'/vendor/',
+		'/e2e/',
+		'\\.api\\.spec\\.js$',
+	],
 	collectCoverageFrom: [
 		'src/**/*.js',
 		'!src/**/index.js',

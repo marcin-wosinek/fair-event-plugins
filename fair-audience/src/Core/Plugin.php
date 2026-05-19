@@ -56,6 +56,7 @@ class Plugin {
 		add_action( 'template_redirect', array( $this, 'handle_collaborator_profile' ) );
 		add_action( 'template_redirect', array( $this, 'handle_fee_payment' ) );
 		add_action( 'template_redirect', array( $this, 'handle_photo_upload' ) );
+		add_action( 'template_redirect', array( $this, 'handle_unsubscribe_event_interest' ) );
 
 		// Instagram token refresh cron.
 		add_action( 'fair_audience_refresh_instagram_token', array( $this, 'refresh_instagram_token' ) );
@@ -157,6 +158,9 @@ class Plugin {
 		$session_controller = new \FairAudience\API\SessionController();
 		$session_controller->register_routes();
 
+		$event_interest_controller = new \FairAudience\API\EventInterestController();
+		$event_interest_controller->register_routes();
+
 		// Membership fees (only when fair-payment plugin is active).
 		if ( class_exists( 'FairPayment\Core\Plugin' ) ) {
 			$fees_controller = new \FairAudience\API\FeesController();
@@ -252,7 +256,62 @@ class Plugin {
 		$vars[] = 'edit_audience_signup';
 		$vars[] = 'photo_upload';
 		$vars[] = 'invitation';
+		$vars[] = 'unsubscribe_event_interest';
 		return $vars;
+	}
+
+	/**
+	 * Handle one-click unsubscribe from event-interest signups.
+	 *
+	 * Triggered by the tokenized link in the confirmation email
+	 * (`?unsubscribe_event_interest=1&token=…`). Validates the token, removes
+	 * the EventParticipant row when it still carries the 'interested' label,
+	 * and renders a thank-you page. A relationship that has been upgraded to
+	 * signed_up / collaborator is preserved.
+	 */
+	public function handle_unsubscribe_event_interest() {
+		$flag = get_query_var( 'unsubscribe_event_interest' );
+
+		if ( empty( $flag ) ) {
+			return;
+		}
+
+		// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Authorization is the signed token below.
+		$token = isset( $_GET['token'] ) ? sanitize_text_field( wp_unslash( $_GET['token'] ) ) : '';
+
+		if ( empty( $token ) ) {
+			wp_die(
+				esc_html__( 'Missing unsubscribe token.', 'fair-audience' ),
+				esc_html__( 'Unsubscribe', 'fair-audience' ),
+				array( 'response' => 400 )
+			);
+		}
+
+		$parsed = \FairAudience\Services\ParticipantToken::verify( $token );
+
+		if ( ! $parsed ) {
+			wp_die(
+				esc_html__( 'This unsubscribe link is invalid or has expired.', 'fair-audience' ),
+				esc_html__( 'Unsubscribe', 'fair-audience' ),
+				array( 'response' => 400 )
+			);
+		}
+
+		$repository   = new \FairAudience\Database\EventParticipantRepository();
+		$relationship = $repository->get_by_event_date_and_participant(
+			$parsed['event_date_id'],
+			$parsed['participant_id']
+		);
+
+		if ( $relationship && 'interested' === $relationship->label ) {
+			$relationship->delete();
+		}
+
+		wp_die(
+			esc_html__( 'You will no longer receive updates about this event.', 'fair-audience' ),
+			esc_html__( 'Unsubscribed', 'fair-audience' ),
+			array( 'response' => 200 )
+		);
 	}
 
 	/**

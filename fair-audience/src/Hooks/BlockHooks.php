@@ -31,6 +31,7 @@ class BlockHooks {
 		register_block_type( FAIR_AUDIENCE_PLUGIN_DIR . 'build/blocks/event-signup' );
 		register_block_type( FAIR_AUDIENCE_PLUGIN_DIR . 'build/blocks/signups-list' );
 		register_block_type( FAIR_AUDIENCE_PLUGIN_DIR . 'build/blocks/audience-signup' );
+		register_block_type( FAIR_AUDIENCE_PLUGIN_DIR . 'build/blocks/event-interest' );
 		register_block_type( FAIR_AUDIENCE_PLUGIN_DIR . 'build/blocks/fair-form' );
 		register_block_type( FAIR_AUDIENCE_PLUGIN_DIR . 'build/blocks/fair-form-short-text' );
 		register_block_type( FAIR_AUDIENCE_PLUGIN_DIR . 'build/blocks/fair-form-long-text' );
@@ -88,6 +89,20 @@ class BlockHooks {
 		// Set script translations for audience-signup blocks (frontend scripts).
 		wp_set_script_translations(
 			'fair-audience-audience-signup-view-script',
+			'fair-audience',
+			FAIR_AUDIENCE_PLUGIN_DIR . 'build/languages'
+		);
+
+		// Set script translations for event-interest blocks (editor scripts).
+		wp_set_script_translations(
+			'fair-audience-event-interest-editor-script',
+			'fair-audience',
+			FAIR_AUDIENCE_PLUGIN_DIR . 'build/languages'
+		);
+
+		// Set script translations for event-interest blocks (frontend scripts).
+		wp_set_script_translations(
+			'fair-audience-event-interest-view-script',
 			'fair-audience',
 			FAIR_AUDIENCE_PLUGIN_DIR . 'build/languages'
 		);

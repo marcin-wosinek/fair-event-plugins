@@ -1,0 +1,43 @@
+{
+	"$schema": "https://schemas.wp.org/trunk/block.json",
+	"apiVersion": 3,
+	"name": "fair-audience/event-interest",
+	"version": "1.0.0",
+	"title": "Event Interest",
+	"category": "widgets",
+	"icon": "heart",
+	"description": "Let visitors register interest in an event without buying a ticket.",
+	"keywords": ["event", "interest", "signup", "audience"],
+	"textdomain": "fair-audience",
+	"supports": {
+		"html": false,
+		"align": ["wide", "full"],
+		"spacing": {
+			"padding": true,
+			"margin": ["top", "bottom"]
+		}
+	},
+	"attributes": {
+		"submitButtonText": {
+			"type": "string",
+			"default": "Register interest"
+		},
+		"successMessage": {
+			"type": "string",
+			"default": "Thanks! Check your inbox for confirmation."
+		},
+		"namePlaceholder": {
+			"type": "string",
+			"default": "Your name (optional)"
+		},
+		"emailPlaceholder": {
+			"type": "string",
+			"default": "Your email"
+		}
+	},
+	"editorScript": "file:./editor.js",
+	"viewScript": "file:./frontend.js",
+	"render": "file:./render.php",
+	"style": ["wp-block-button", "file:./style-frontend.css"],
+	"editorStyle": "file:./editor.css"
+}

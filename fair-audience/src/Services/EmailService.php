@@ -2628,4 +2628,101 @@ class EmailService {
 
 		return $results;
 	}
+
+	/**
+	 * Send confirmation for an anonymous event-interest signup.
+	 *
+	 * Includes a tokenized unsubscribe link so the recipient can pull out
+	 * without needing an account.
+	 *
+	 * @param Participant $participant   Participant who registered interest.
+	 * @param int         $event_id      Event post ID.
+	 * @param int         $event_date_id Event date ID (scopes the unsubscribe token).
+	 * @return bool True if mail dispatched.
+	 */
+	public function send_event_interest_confirmation( Participant $participant, int $event_id, int $event_date_id ): bool {
+		if ( ! $this->has_valid_email( $participant ) ) {
+			return false;
+		}
+
+		$site_name   = wp_specialchars_decode( get_option( 'blogname' ), ENT_QUOTES );
+		$event_title = get_the_title( $event_id );
+		if ( empty( $event_title ) ) {
+			$event_title = $site_name;
+		}
+
+		// Token encodes (participant_id, event_date_id) so the unsubscribe is
+		// scoped to this single event. The query var triggers a
+		// template_redirect handler that runs the same logic as the DELETE
+		// endpoint and renders a thank-you page.
+		$token           = ParticipantToken::generate( (int) $participant->id, $event_date_id );
+		$unsubscribe_url = add_query_arg(
+			array(
+				'unsubscribe_event_interest' => '1',
+				'token'                      => $token,
+			),
+			home_url( '/' )
+		);
+
+		$subject = sprintf(
+			/* translators: %s: event title */
+			__( 'Thanks for your interest in %s', 'fair-audience' ),
+			$event_title
+		);
+
+		$greeting_name = ! empty( $participant->name ) ? $participant->name : __( 'there', 'fair-audience' );
+
+		$message = '<!DOCTYPE html>
+<html>
+<head>
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+</head>
+<body style="margin: 0; padding: 0; font-family: Arial, sans-serif; font-size: 16px; line-height: 1.6; color: #333333; background-color: #f4f4f4;">
+	<table width="100%" cellpadding="0" cellspacing="0" style="background-color: #f4f4f4;">
+		<tr>
+			<td align="center" style="padding: 20px 0;">
+				<table width="600" cellpadding="0" cellspacing="0" style="background-color: #ffffff; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
+					<tr>
+						<td style="background-color: #0073aa; color: #ffffff; padding: 30px; border-radius: 8px 8px 0 0; text-align: center;">
+							<h1 style="margin: 0; font-size: 24px; font-weight: bold;">' . esc_html( $event_title ) . '</h1>
+						</td>
+					</tr>
+					<tr>
+						<td style="padding: 40px 30px;">
+							<p style="margin: 0 0 20px 0;">' . sprintf(
+								/* translators: %s: participant name */
+								esc_html__( 'Hi %s,', 'fair-audience' ),
+								'<strong>' . esc_html( $greeting_name ) . '</strong>'
+							) . '</p>
+							<p style="margin: 0 0 20px 0;">' . sprintf(
+								/* translators: %s: event title */
+								esc_html__( 'Thanks for registering your interest in %s. We will let you know when there are updates.', 'fair-audience' ),
+								'<strong>' . esc_html( $event_title ) . '</strong>'
+							) . '</p>
+							<p style="margin: 0 0 10px 0; font-size: 14px; color: #666666;">' . esc_html__( "If you didn't register your interest, you can safely ignore this email.", 'fair-audience' ) . '</p>
+						</td>
+					</tr>
+					<tr>
+						<td style="background-color: #f8f8f8; padding: 20px 30px; border-radius: 0 0 8px 8px; text-align: center; font-size: 12px; color: #666666;">
+							<p style="margin: 0 0 5px 0;">' . esc_html__( 'No longer interested?', 'fair-audience' ) . '</p>
+							<p style="margin: 0;"><a href="' . esc_url( $unsubscribe_url ) . '" style="color: #0073aa;">' . esc_html__( 'Unsubscribe from updates about this event', 'fair-audience' ) . '</a></p>
+						</td>
+					</tr>
+				</table>
+			</td>
+		</tr>
+	</table>
+</body>
+</html>';
+
+		$content_type_filter = function () {
+			return 'text/html';
+		};
+		add_filter( 'wp_mail_content_type', $content_type_filter );
+		$result = wp_mail( $participant->email, $subject, $message );
+		remove_filter( 'wp_mail_content_type', $content_type_filter );
+
+		return (bool) $result;
+	}
 }

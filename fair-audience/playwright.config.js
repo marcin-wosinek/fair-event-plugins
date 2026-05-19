@@ -4,7 +4,8 @@ import dotenv from 'dotenv';
 dotenv.config();
 
 export default defineConfig({
-	testDir: './e2e',
+	testDir: './',
+	testMatch: ['e2e/**/*.spec.js', 'src/API/__tests__/**/*.api.spec.js'],
 	fullyParallel: false,
 	forbidOnly: !!process.env.CI,
 	retries: process.env.CI ? 2 : 0,

@@ -1,0 +1,12 @@
+.fair-audience-event-interest-preview {
+	padding: 16px;
+	border: 1px dashed #ccc;
+	border-radius: 4px;
+	background: #fafafa;
+}
+
+.fair-audience-event-interest-preview input,
+.fair-audience-event-interest-preview button {
+	display: block;
+	margin-top: 8px;
+}

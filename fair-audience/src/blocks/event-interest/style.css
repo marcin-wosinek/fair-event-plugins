@@ -1,0 +1,54 @@
+.fair-audience-event-interest {
+	max-width: 480px;
+}
+
+.fair-audience-event-interest-form p {
+	margin: 0 0 12px;
+}
+
+.fair-audience-event-interest-form label {
+	display: block;
+	font-size: 14px;
+	margin-bottom: 4px;
+}
+
+.fair-audience-event-interest-form input[type='email'],
+.fair-audience-event-interest-form input[type='text'] {
+	width: 100%;
+	padding: 8px 10px;
+	box-sizing: border-box;
+}
+
+.fair-audience-event-interest-form .required {
+	color: #d63638;
+}
+
+/* Honeypot: visually hidden but still rendered for bots. */
+.fair-audience-event-interest-honeypot {
+	position: absolute;
+	left: -9999px;
+	width: 1px;
+	height: 1px;
+	overflow: hidden;
+}
+
+.fair-audience-event-interest-message {
+	margin-top: 12px;
+	padding: 10px 12px;
+	border-radius: 4px;
+}
+
+.fair-audience-event-interest-message-success {
+	background-color: #e6f4ea;
+	color: #1e6f3a;
+}
+
+.fair-audience-event-interest-message-error {
+	background-color: #fde7e9;
+	color: #a02020;
+}
+
+.fair-audience-event-interest-message-info {
+	background-color: #e8f0fe;
+	color: #0b3d91;
+}
