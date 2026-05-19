@@ -6,6 +6,7 @@ import {
 	showMessage,
 	setButtonLoading,
 	onDomReady,
+	wireNotYouButton,
 } from '../shared/form-utils.js';
 
 // Use the shared signup CSS prefix so messages render with the same look as
@@ -30,6 +31,7 @@ const CSS_PREFIX = 'fair-audience-signup';
 			e.preventDefault();
 			submitForm(form);
 		});
+		wireNotYouButton(form.querySelector('.fair-audience-not-you'));
 	}
 
 	function submitForm(form) {

@@ -10,6 +10,9 @@
 
 defined( 'WPINC' ) || die;
 
+use FairAudience\Database\ParticipantRepository;
+use FairAudience\Services\AudienceSession;
+use FairAudience\Services\ParticipantToken;
 use FairEvents\Database\EventRepository;
 use FairEvents\Models\EventDates;
 
@@ -44,15 +47,67 @@ if ( $is_valid_post_type ) {
 	}
 }
 
+// Resolve the visitor's identity in the same priority order as event-signup
+// and audience-signup: signed URL token > logged-in WP user > session cookie.
+// The first two are strong identities (we trust them to belong to the
+// visitor); the cookie is a softer pre-fill that lets the visitor edit
+// before submitting.
+$participant_token_value = get_query_var( 'participant_token', '' );
+$existing_name           = '';
+$existing_email          = '';
+$linked_participant_id   = 0;
+$has_session_prefill     = false;
+
+if ( $is_valid_post_type ) {
+	$participant_repo = new ParticipantRepository();
+	$participant      = null;
+
+	if ( ! empty( $participant_token_value ) ) {
+		$token_data = ParticipantToken::verify( $participant_token_value );
+		if ( $token_data ) {
+			$participant = $participant_repo->get_by_id( $token_data['participant_id'] );
+		}
+	}
+
+	if ( null === $participant ) {
+		$wp_user_id = get_current_user_id();
+		if ( $wp_user_id ) {
+			$participant = $participant_repo->get_by_user_id( $wp_user_id );
+		}
+	}
+
+	if ( $participant ) {
+		$existing_name         = (string) $participant->name;
+		$existing_email        = (string) $participant->email;
+		$linked_participant_id = (int) $participant->id;
+	} else {
+		// Anonymous viewer with a known browser session — pre-fill but don't
+		// claim identity. The form still submits through the regular flow.
+		$session_participant_id = AudienceSession::get_participant_id();
+		if ( $session_participant_id ) {
+			$session_participant = $participant_repo->get_by_id( $session_participant_id );
+			if ( $session_participant ) {
+				$existing_name       = (string) $session_participant->name;
+				$existing_email      = (string) $session_participant->email;
+				$has_session_prefill = true;
+			}
+		}
+	}
+}
+
 $form_id = 'fair-audience-event-interest-' . wp_unique_id();
 
-$wrapper_attributes = get_block_wrapper_attributes(
-	array(
-		'class'                => 'fair-audience-event-interest',
-		'data-event-id'        => (string) $event_id,
-		'data-success-message' => esc_attr( $success_message ),
-	)
+$wrapper_data = array(
+	'class'                => 'fair-audience-event-interest',
+	'data-event-id'        => (string) $event_id,
+	'data-success-message' => esc_attr( $success_message ),
 );
+
+if ( $linked_participant_id ) {
+	$wrapper_data['data-participant-id'] = (string) $linked_participant_id;
+}
+
+$wrapper_attributes = get_block_wrapper_attributes( $wrapper_data );
 ?>
 
 <?php if ( ! $is_valid_post_type || $event_date_id <= 0 ) : ?>
@@ -72,6 +127,7 @@ $wrapper_attributes = get_block_wrapper_attributes(
 				name="interest_email"
 				required
 				placeholder="<?php echo esc_attr( $email_placeholder ); ?>"
+				value="<?php echo esc_attr( $existing_email ); ?>"
 			/>
 		</p>
 		<p>
@@ -83,6 +139,7 @@ $wrapper_attributes = get_block_wrapper_attributes(
 				id="<?php echo esc_attr( $form_id ); ?>-name"
 				name="interest_name"
 				placeholder="<?php echo esc_attr( $name_placeholder ); ?>"
+				value="<?php echo esc_attr( $existing_name ); ?>"
 			/>
 		</p>
 
@@ -98,6 +155,12 @@ $wrapper_attributes = get_block_wrapper_attributes(
 				autocomplete="off"
 			/>
 		</p>
+
+		<?php if ( $has_session_prefill ) : ?>
+		<button type="button" class="fair-audience-not-you">
+			<?php echo esc_html__( 'Not you? Start fresh', 'fair-audience' ); ?>
+		</button>
+		<?php endif; ?>
 
 		<div class="wp-block-button">
 			<button type="submit" class="wp-block-button__link wp-element-button fair-audience-event-interest-submit-button">
