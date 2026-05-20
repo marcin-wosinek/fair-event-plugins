@@ -740,6 +740,8 @@ export default function EventAudience({
 		const rows = filteredParticipants
 			.map((p, index) => {
 				const name = escape(p.participant_name || '');
+				const role = escape(LABEL_DISPLAY[p.label] || p.label || '');
+				const ticketType = escape(p.ticket_type_name || '');
 				const ids = Array.isArray(p.ticket_option_ids)
 					? p.ticket_option_ids
 					: [];
@@ -755,6 +757,8 @@ export default function EventAudience({
 					<tr>
 						<td class="num">${index + 1}</td>
 						<td class="name">${name}</td>
+						<td class="role">${role}</td>
+						<td class="ticket-type">${ticketType}</td>
 						<td class="activities">${activities}</td>
 						<td class="admin-comment">${comment}</td>
 						<td class="checkbox"></td>
@@ -792,8 +796,9 @@ export default function EventAudience({
 		th.num, td.num { width: 28px; text-align: right; color: #555; }
 		td.checkbox { width: 28px; text-align: center; }
 		td.notes { min-width: 140px; }
-		td.activities, td.admin-comment { width: 18%; }
-		td.name { width: 18%; font-weight: 600; }
+		td.activities, td.admin-comment { width: 14%; }
+		td.role, td.ticket-type { width: 11%; }
+		td.name { width: 15%; font-weight: 600; }
 		tbody tr { page-break-inside: avoid; height: 38px; }
 		.toolbar { margin-bottom: 12px; }
 		.toolbar button {
@@ -824,6 +829,8 @@ export default function EventAudience({
 			<tr>
 				<th class="num">#</th>
 				<th>${escape(__('Name', 'fair-events'))}</th>
+				<th>${escape(__('Role', 'fair-events'))}</th>
+				<th>${escape(__('Ticket type', 'fair-events'))}</th>
 				<th>${escape(__('Activities', 'fair-events'))}</th>
 				<th>${escape(__('Admin comment', 'fair-events'))}</th>
 				<th>${escape(__('Present', 'fair-events'))}</th>
