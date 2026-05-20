@@ -58,13 +58,6 @@ class EventInterestController extends WP_REST_Controller {
 	private $event_participant_repository;
 
 	/**
-	 * Email service instance.
-	 *
-	 * @var EmailService
-	 */
-	private $email_service;
-
-	/**
 	 * Rate limit: max requests per email per hour.
 	 */
 	const RATE_LIMIT_MAX = 5;
@@ -80,7 +73,6 @@ class EventInterestController extends WP_REST_Controller {
 	public function __construct() {
 		$this->participant_repository       = new ParticipantRepository();
 		$this->event_participant_repository = new EventParticipantRepository();
-		$this->email_service                = new EmailService();
 	}
 
 	/**
@@ -224,12 +216,12 @@ class EventInterestController extends WP_REST_Controller {
 			$event_date_id
 		);
 
-		// Best-effort confirmation email. Don't fail the request if the mail
-		// transport hiccups — the row is already saved.
-		$this->email_service->send_event_interest_confirmation(
-			$participant,
-			$event_id,
-			$event_date_id
+		// Best-effort confirmation email, deferred to a cron tick so a slow or
+		// unreachable mail transport can't make this request time out — the row
+		// is already saved.
+		EmailService::defer(
+			'send_event_interest_confirmation',
+			array( $participant, $event_id, $event_date_id )
 		);
 
 		return $this->success_response();

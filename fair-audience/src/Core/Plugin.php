@@ -61,6 +61,16 @@ class Plugin {
 		// Instagram token refresh cron.
 		add_action( 'fair_audience_refresh_instagram_token', array( $this, 'refresh_instagram_token' ) );
 
+		// Deferred email dispatch: confirmation emails are scheduled rather than
+		// sent inline so a slow/unreachable mail transport can't make signup
+		// requests time out. See EmailService::defer().
+		add_action(
+			\FairAudience\Services\EmailService::DEFERRED_EMAIL_HOOK,
+			array( \FairAudience\Services\EmailService::class, 'run_deferred' ),
+			10,
+			2
+		);
+
 		// Initialize settings.
 		$settings = new \FairAudience\Settings\Settings();
 		$settings->init();

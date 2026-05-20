@@ -225,7 +225,7 @@ class MailingSignupController extends WP_REST_Controller {
 				}
 
 				if ( $token ) {
-					$this->email_service->send_confirmation_email( $existing, $token->token );
+					EmailService::defer( 'send_confirmation_email', array( $existing, $token->token ) );
 				}
 
 				return rest_ensure_response(
@@ -277,16 +277,13 @@ class MailingSignupController extends WP_REST_Controller {
 			);
 		}
 
-		// Send confirmation email.
-		$email_sent = $this->email_service->send_confirmation_email( $participant, $token->token );
-
-		if ( ! $email_sent ) {
-			return new WP_Error(
-				'email_failed',
-				__( 'Failed to send confirmation email. Please try again.', 'fair-audience' ),
-				array( 'status' => 500 )
-			);
-		}
+		// Send confirmation email, deferred to a cron tick so a slow or
+		// unreachable mail transport can't make this request time out. The
+		// pending participant + token are already persisted, so we report
+		// success optimistically; if delivery fails the visitor simply doesn't
+		// receive the mail and can sign up again (same outcome as the mail
+		// landing in spam). We can no longer surface a send failure here.
+		EmailService::defer( 'send_confirmation_email', array( $participant, $token->token ) );
 
 		AudienceSession::set( (int) $participant->id );
 

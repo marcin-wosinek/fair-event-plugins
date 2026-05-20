@@ -2820,4 +2820,64 @@ class EmailService {
 
 		return (bool) $result;
 	}
+
+	/**
+	 * Cron hook used to dispatch deferred emails.
+	 */
+	const DEFERRED_EMAIL_HOOK = 'fair_audience_send_deferred_email';
+
+	/**
+	 * Methods that may be invoked through the deferred-email cron hook.
+	 *
+	 * Acts as an allow-list so a tampered cron entry can't call arbitrary
+	 * EmailService methods.
+	 *
+	 * @var string[]
+	 */
+	const DEFERRABLE_METHODS = array(
+		'send_event_interest_confirmation',
+		'send_audience_signup_answers_email',
+		'send_confirmation_email',
+		'send_form_confirmation',
+		'send_form_notification',
+	);
+
+	/**
+	 * Queue an email to be sent after the current request, off the critical path.
+	 *
+	 * Front-end signup endpoints persist their row first, then send a
+	 * confirmation email. Sending it synchronously blocks the HTTP response on
+	 * the mail transport: a slow or unreachable SMTP server makes the request
+	 * hang until the socket times out, which surfaces in the browser as
+	 * net::ERR_TIMED_OUT even though the signup was already saved. Scheduling a
+	 * single cron event lets the REST response return immediately; the mail goes
+	 * out on the next cron tick regardless of transport health.
+	 *
+	 * @param string $method EmailService method name to invoke (must be in DEFERRABLE_METHODS).
+	 * @param array  $args   Positional arguments for that method.
+	 * @return void
+	 */
+	public static function defer( string $method, array $args ): void {
+		if ( ! in_array( $method, self::DEFERRABLE_METHODS, true ) ) {
+			return;
+		}
+
+		wp_schedule_single_event( time(), self::DEFERRED_EMAIL_HOOK, array( $method, $args ) );
+	}
+
+	/**
+	 * Cron callback: invoke a previously deferred EmailService method.
+	 *
+	 * @param string $method Method name.
+	 * @param array  $args   Positional arguments.
+	 * @return void
+	 */
+	public static function run_deferred( string $method, array $args ): void {
+		if ( ! in_array( $method, self::DEFERRABLE_METHODS, true ) ) {
+			return;
+		}
+
+		$service = new self();
+		call_user_func_array( array( $service, $method ), $args );
+	}
 }

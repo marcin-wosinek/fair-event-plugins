@@ -310,10 +310,11 @@ class FairFormController extends WP_REST_Controller {
 				$participant->status = 'pending';
 				$participant->save();
 
-				// Create confirmation token and send email.
+				// Create confirmation token and send email (deferred so a slow
+				// mail transport can't make this request time out).
 				$token = $this->token_repository->create_token( $participant->id );
 				if ( $token ) {
-					$this->email_service->send_confirmation_email( $participant, $token->token );
+					EmailService::defer( 'send_confirmation_email', array( $participant, $token->token ) );
 				}
 			}
 
@@ -338,23 +339,19 @@ class FairFormController extends WP_REST_Controller {
 		// Save questionnaire answers.
 		$this->save_questionnaire_answers( $participant->id, $questionnaire_answers, $event_date_id, $post_id );
 
-		// Send confirmation email to the submitter.
-		$this->email_service->send_form_confirmation(
-			$participant,
-			$questionnaire_answers,
-			$post_id
+		// Send confirmation email to the submitter (deferred so a slow mail
+		// transport can't make this request time out).
+		EmailService::defer(
+			'send_form_confirmation',
+			array( $participant, $questionnaire_answers, $post_id )
 		);
 
-		// Send admin notification email if configured.
+		// Send admin notification email if configured (also deferred).
 		$notification_email = $request->get_param( 'notification_email' );
 		if ( ! empty( $notification_email ) && is_email( $notification_email ) ) {
-			$this->email_service->send_form_notification(
-				$notification_email,
-				$name,
-				$surname,
-				$email,
-				$questionnaire_answers,
-				$post_id
+			EmailService::defer(
+				'send_form_notification',
+				array( $notification_email, $name, $surname, $email, $questionnaire_answers, $post_id )
 			);
 		}
 

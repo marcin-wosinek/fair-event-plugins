@@ -264,9 +264,13 @@ class AudienceSignupController extends WP_REST_Controller {
 			// Save questionnaire answers even for existing participants.
 			$submission_id = $this->save_questionnaire_answers( $existing->id, $questionnaire_answers, $event_date_id, $post_id );
 
-			// Send answers email if there are answers.
+			// Send answers email if there are answers (deferred so a slow mail
+			// transport can't make this request time out).
 			if ( $submission_id > 0 && ! empty( $questionnaire_answers ) ) {
-				$this->email_service->send_audience_signup_answers_email( $existing, $submission_id, $questionnaire_answers, $post_id );
+				EmailService::defer(
+					'send_audience_signup_answers_email',
+					array( $existing, $submission_id, $questionnaire_answers, $post_id )
+				);
 			}
 
 			return rest_ensure_response(
@@ -302,18 +306,23 @@ class AudienceSignupController extends WP_REST_Controller {
 		// Save questionnaire answers.
 		$submission_id = $this->save_questionnaire_answers( $participant->id, $questionnaire_answers, $event_date_id, $post_id );
 
-		// Send answers email if there are answers.
+		// Send answers email if there are answers (deferred so a slow mail
+		// transport can't make this request time out).
 		if ( $submission_id > 0 && ! empty( $questionnaire_answers ) ) {
-			$this->email_service->send_audience_signup_answers_email( $participant, $submission_id, $questionnaire_answers, $post_id );
+			EmailService::defer(
+				'send_audience_signup_answers_email',
+				array( $participant, $submission_id, $questionnaire_answers, $post_id )
+			);
 		}
 
 		AudienceSession::set( (int) $participant->id );
 
-		// If keep_informed, send confirmation email.
+		// If keep_informed, send confirmation email (deferred so a slow mail
+		// transport can't make this request time out).
 		if ( $keep_informed ) {
 			$token = $this->token_repository->create_token( $participant->id );
 			if ( $token ) {
-				$this->email_service->send_confirmation_email( $participant, $token->token );
+				EmailService::defer( 'send_confirmation_email', array( $participant, $token->token ) );
 			}
 
 			return rest_ensure_response(
