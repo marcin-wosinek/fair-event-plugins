@@ -213,10 +213,22 @@ class TransactionsController extends WP_REST_Controller {
 				: null;
 			$participant    = apply_filters( 'fair_payment_prepare_participant', null, $participant_id );
 
+			$event_url = '';
+			if ( $transaction->event_date_id && class_exists( '\\FairEvents\\Models\\EventDates' ) ) {
+				$event_date = \FairEvents\Models\EventDates::get_by_id( (int) $transaction->event_date_id );
+				if ( $event_date && ! empty( $event_date->event_id ) ) {
+					$permalink = get_permalink( (int) $event_date->event_id );
+					if ( $permalink ) {
+						$event_url = $permalink;
+					}
+				}
+			}
+
 			$data[] = array(
 				'id'                => (int) $transaction->id,
 				'mollie_payment_id' => $transaction->mollie_payment_id ?? '',
 				'event_date_id'     => $transaction->event_date_id ? (int) $transaction->event_date_id : null,
+				'event_url'         => $event_url,
 				'amount'            => (float) ( $transaction->amount ?? 0 ),
 				'currency'          => $transaction->currency ?? 'EUR',
 				'mollie_fee'        => null !== $transaction->mollie_fee ? (float) $transaction->mollie_fee : null,

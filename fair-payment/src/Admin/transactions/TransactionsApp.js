@@ -155,7 +155,6 @@ const TransactionsApp = () => {
 
 	const handleExport = () => {
 		const sourceDomain = window.location.hostname;
-		const siteUrl = window.location.origin;
 
 		const toExport = transactions
 			.filter((t) => selectedTransactions.has(t.id))
@@ -170,7 +169,7 @@ const TransactionsApp = () => {
 				created_at: t.created_at,
 				mollie_payment_id: t.mollie_payment_id,
 				source_domain: sourceDomain,
-				detail_url: `${siteUrl}/wp-admin/admin.php?page=fair-payment-transaction&transaction_id=${t.id}`,
+				detail_url: t.event_url || '',
 			}));
 
 		const blob = new Blob([JSON.stringify(toExport, null, 2)], {
