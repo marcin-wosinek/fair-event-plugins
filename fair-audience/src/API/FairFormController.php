@@ -210,6 +210,15 @@ class FairFormController extends WP_REST_Controller {
 	 * @return WP_REST_Response|WP_Error Response object or error.
 	 */
 	public function create_item( $request ) {
+		// TEMP DEBUG: trace where fair-form submissions hang. Remove once the
+		// upload-path timeout is diagnosed (branch debug-fair-form-upload-hang).
+		$debug_t0 = microtime( true );
+		$debug    = static function ( $marker ) use ( $debug_t0 ) {
+			// phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log -- intentional temporary debug tracing.
+			error_log( sprintf( 'FAIRFORM [+%.3fs] %s', microtime( true ) - $debug_t0, $marker ) );
+		};
+		$debug( 'start' );
+
 		$name          = $request->get_param( 'name' );
 		$surname       = $request->get_param( 'surname' );
 		$email         = $request->get_param( 'email' );
@@ -276,6 +285,8 @@ class FairFormController extends WP_REST_Controller {
 		// Increment rate limit counter.
 		$this->increment_rate_limit( $email );
 
+		$debug( 'validated, before participant lookup' );
+
 		// Find or create participant.
 		$existing = $this->participant_repository->get_by_email( $email );
 
@@ -301,6 +312,8 @@ class FairFormController extends WP_REST_Controller {
 				);
 			}
 		}
+
+		$debug( 'participant ready id=' . $participant->id );
 
 		// Handle mailing signup if opted in — trigger email confirmation workflow.
 		$mailing_signup = $request->get_param( 'mailing_signup' );
@@ -329,15 +342,22 @@ class FairFormController extends WP_REST_Controller {
 			}
 		}
 
+		$debug( 'before process_file_uploads' );
+
 		// Process file uploads and update answer values with attachment IDs.
-		$file_result = $this->process_file_uploads( $request, $questionnaire_answers, $event_date_id, $participant->id );
+		$file_result = $this->process_file_uploads( $request, $questionnaire_answers, $event_date_id, $participant->id, $debug );
 		if ( is_wp_error( $file_result ) ) {
+			$debug( 'process_file_uploads returned WP_Error: ' . $file_result->get_error_code() );
 			return $file_result;
 		}
 		$questionnaire_answers = $file_result;
 
+		$debug( 'after process_file_uploads, before save_questionnaire_answers' );
+
 		// Save questionnaire answers.
 		$this->save_questionnaire_answers( $participant->id, $questionnaire_answers, $event_date_id, $post_id );
+
+		$debug( 'after save_questionnaire_answers' );
 
 		// Send confirmation email to the submitter (deferred so a slow mail
 		// transport can't make this request time out).
@@ -355,6 +375,8 @@ class FairFormController extends WP_REST_Controller {
 			);
 		}
 
+		$debug( 'emails deferred, returning success' );
+
 		return rest_ensure_response(
 			array(
 				'success' => true,
@@ -370,13 +392,22 @@ class FairFormController extends WP_REST_Controller {
 	 * @param array           $answers        Questionnaire answers to update.
 	 * @param int             $event_date_id  Optional event date ID to link images to.
 	 * @param int             $participant_id Participant ID to set as photo author.
+	 * @param callable|null   $debug          TEMP DEBUG: optional logger callback.
 	 * @return array|WP_Error Updated answers array or error.
 	 */
-	private function process_file_uploads( $request, $answers, $event_date_id = 0, $participant_id = 0 ) {
+	private function process_file_uploads( $request, $answers, $event_date_id = 0, $participant_id = 0, $debug = null ) {
+		// TEMP DEBUG: no-op logger when called without one.
+		if ( ! is_callable( $debug ) ) {
+			$debug = static function ( $marker ) {};
+		}
+
 		$files = $request->get_file_params();
 		if ( empty( $files ) ) {
+			$debug( 'process_file_uploads: no files, returning' );
 			return $answers;
 		}
+
+		$debug( 'process_file_uploads: ' . count( $files ) . ' file param(s), loading wp file libs' );
 
 		// Required for wp_handle_upload().
 		require_once ABSPATH . 'wp-admin/includes/file.php';
@@ -395,6 +426,7 @@ class FairFormController extends WP_REST_Controller {
 			}
 
 			$file = $files[ $file_key ];
+			$debug( "file '$file_key': name=" . ( $file['name'] ?? '?' ) . ' size=' . ( $file['size'] ?? '?' ) . ' err=' . ( $file['error'] ?? '?' ) );
 
 			// Validate upload error.
 			if ( UPLOAD_ERR_OK !== $file['error'] ) {
@@ -425,6 +457,7 @@ class FairFormController extends WP_REST_Controller {
 			}
 
 			// Upload file.
+			$debug( "file '$file_key': before wp_handle_upload" );
 			$upload = wp_handle_upload(
 				$file,
 				array(
@@ -432,6 +465,7 @@ class FairFormController extends WP_REST_Controller {
 					'test_type' => true,
 				)
 			);
+			$debug( "file '$file_key': after wp_handle_upload" );
 
 			if ( isset( $upload['error'] ) ) {
 				return new WP_Error(
@@ -449,7 +483,9 @@ class FairFormController extends WP_REST_Controller {
 				'post_status'    => 'inherit',
 			);
 
+			$debug( "file '$file_key': before wp_insert_attachment" );
 			$attachment_id = wp_insert_attachment( $attachment_data, $upload['file'] );
+			$debug( "file '$file_key': after wp_insert_attachment id=" . ( is_wp_error( $attachment_id ) ? 'WP_Error' : $attachment_id ) );
 			if ( is_wp_error( $attachment_id ) ) {
 				return new WP_Error(
 					'attachment_failed',
@@ -459,25 +495,33 @@ class FairFormController extends WP_REST_Controller {
 			}
 
 			// Generate attachment metadata (thumbnails, etc.).
+			$debug( "file '$file_key': before wp_generate_attachment_metadata" );
 			$attachment_metadata = wp_generate_attachment_metadata( $attachment_id, $upload['file'] );
+			$debug( "file '$file_key': after wp_generate_attachment_metadata, before wp_update_attachment_metadata" );
 			wp_update_attachment_metadata( $attachment_id, $attachment_metadata );
+			$debug( "file '$file_key': after wp_update_attachment_metadata" );
 
 			// Link image to event if event_date_id is set and fair-events plugin is active.
 			if ( $event_date_id > 0 && class_exists( '\FairEvents\Database\EventPhotoRepository' ) ) {
+				$debug( "file '$file_key': before EventPhotoRepository::set_event_date" );
 				$photo_repo = new \FairEvents\Database\EventPhotoRepository();
 				$photo_repo->set_event_date( $attachment_id, $event_date_id );
+				$debug( "file '$file_key': after EventPhotoRepository::set_event_date" );
 			}
 
 			// Set participant as photo author.
 			if ( $participant_id > 0 ) {
+				$debug( "file '$file_key': before PhotoParticipantRepository::set_author" );
 				$photo_participant_repo = new \FairAudience\Database\PhotoParticipantRepository();
 				$photo_participant_repo->set_author( $attachment_id, $participant_id );
+				$debug( "file '$file_key': after PhotoParticipantRepository::set_author" );
 			}
 
 			// Store attachment ID as the answer value.
 			$answer['answer_value'] = (string) $attachment_id;
 		}
 
+		$debug( 'process_file_uploads: loop complete, returning' );
 		return $answers;
 	}
 
