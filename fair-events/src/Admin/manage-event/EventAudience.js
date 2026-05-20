@@ -753,6 +753,7 @@ export default function EventAudience({
 					: names.map((n) => optionLabelByName.get(n) || n);
 				const activities = escape(labels.filter(Boolean).join(', '));
 				const comment = escape(p.admin_comment || '');
+				const onMailingList = p.email_profile === 'marketing';
 				return `
 					<tr>
 						<td class="num">${index + 1}</td>
@@ -762,7 +763,7 @@ export default function EventAudience({
 						<td class="activities">${activities}</td>
 						<td class="admin-comment">${comment}</td>
 						<td class="checkbox"></td>
-						<td class="checkbox"></td>
+						<td class="checkbox">${onMailingList ? '✓' : ''}</td>
 						<td class="notes"></td>
 					</tr>`;
 			})
