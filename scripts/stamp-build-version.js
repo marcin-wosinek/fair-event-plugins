@@ -27,7 +27,7 @@ const pluginFiles = [
 	'fair-audience/fair-audience.php',
 ];
 
-const versionRegex = /(\*?\s*Version:\s*)([0-9]+\.[0-9]+\.[0-9]+)/gi;
+const versionRegex = /(\*?\s*Version:\s*)([0-9]+\.[0-9]+\.[0-9]+[^\s*]*)/gi;
 
 console.log(`🏷️  Stamping build version: ${buildVersion}\n`);
 
