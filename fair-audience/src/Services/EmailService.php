@@ -2725,4 +2725,99 @@ class EmailService {
 
 		return (bool) $result;
 	}
+
+	/**
+	 * Send a "welcome to the mailing list" email.
+	 *
+	 * Sent when an organizer records a participant's marketing consent (e.g. a
+	 * verbal/paper consent collected at an event). This is single opt-in: the
+	 * participant has already consented, so the email confirms the subscription
+	 * and provides a manage-subscription / unsubscribe link rather than asking
+	 * them to confirm.
+	 *
+	 * @param Participant $participant Participant who was added to the list.
+	 * @param int         $event_id    Event post ID where consent was given.
+	 * @return bool True if mail dispatched.
+	 */
+	public function send_mailing_list_welcome( Participant $participant, int $event_id ): bool {
+		if ( ! $this->has_valid_email( $participant ) ) {
+			return false;
+		}
+
+		$site_name   = wp_specialchars_decode( get_option( 'blogname' ), ENT_QUOTES );
+		$event_title = $event_id ? get_the_title( $event_id ) : '';
+
+		$manage_subscription_url = ManageSubscriptionToken::get_url( (int) $participant->id );
+
+		$subject = sprintf(
+			/* translators: %s: site name */
+			__( 'Welcome to the %s mailing list', 'fair-audience' ),
+			$site_name
+		);
+
+		$greeting_name = ! empty( $participant->name ) ? $participant->name : __( 'there', 'fair-audience' );
+
+		if ( ! empty( $event_title ) ) {
+			$intro = sprintf(
+				/* translators: 1: site name, 2: event title */
+				esc_html__( 'You\'ve been added to the %1$s mailing list following the consent you gave at %2$s. We\'ll keep you posted about upcoming events and news.', 'fair-audience' ),
+				'<strong>' . esc_html( $site_name ) . '</strong>',
+				'<strong>' . esc_html( $event_title ) . '</strong>'
+			);
+		} else {
+			$intro = sprintf(
+				/* translators: %s: site name */
+				esc_html__( 'You\'ve been added to the %s mailing list following the consent you gave. We\'ll keep you posted about upcoming events and news.', 'fair-audience' ),
+				'<strong>' . esc_html( $site_name ) . '</strong>'
+			);
+		}
+
+		$message = '<!DOCTYPE html>
+<html>
+<head>
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+</head>
+<body style="margin: 0; padding: 0; font-family: Arial, sans-serif; font-size: 16px; line-height: 1.6; color: #333333; background-color: #f4f4f4;">
+	<table width="100%" cellpadding="0" cellspacing="0" style="background-color: #f4f4f4;">
+		<tr>
+			<td align="center" style="padding: 20px 0;">
+				<table width="600" cellpadding="0" cellspacing="0" style="background-color: #ffffff; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
+					<tr>
+						<td style="background-color: #0073aa; color: #ffffff; padding: 30px; border-radius: 8px 8px 0 0; text-align: center;">
+							<h1 style="margin: 0; font-size: 24px; font-weight: bold;">' . esc_html( $site_name ) . '</h1>
+						</td>
+					</tr>
+					<tr>
+						<td style="padding: 40px 30px;">
+							<p style="margin: 0 0 20px 0;">' . sprintf(
+								/* translators: %s: participant name */
+								esc_html__( 'Hi %s,', 'fair-audience' ),
+								'<strong>' . esc_html( $greeting_name ) . '</strong>'
+							) . '</p>
+							<p style="margin: 0 0 20px 0;">' . $intro . '</p>
+						</td>
+					</tr>
+					<tr>
+						<td style="background-color: #f8f8f8; padding: 20px 30px; border-radius: 0 0 8px 8px; text-align: center; font-size: 12px; color: #666666;">
+							<p style="margin: 0 0 5px 0;">' . esc_html__( 'Changed your mind?', 'fair-audience' ) . '</p>
+							<p style="margin: 0;"><a href="' . esc_url( $manage_subscription_url ) . '" style="color: #0073aa;">' . esc_html__( 'Manage your subscription or unsubscribe', 'fair-audience' ) . '</a></p>
+						</td>
+					</tr>
+				</table>
+			</td>
+		</tr>
+	</table>
+</body>
+</html>';
+
+		$content_type_filter = function () {
+			return 'text/html';
+		};
+		add_filter( 'wp_mail_content_type', $content_type_filter );
+		$result = wp_mail( $participant->email, $subject, $message );
+		remove_filter( 'wp_mail_content_type', $content_type_filter );
+
+		return (bool) $result;
+	}
 }

@@ -72,6 +72,12 @@ export default function EventAudience({
 	const [selectedToAdd, setSelectedToAdd] = useState(new Set());
 	const [isAdding, setIsAdding] = useState(false);
 
+	// Mailing-list (verbal consent) modal state
+	const [mailingModalOpen, setMailingModalOpen] = useState(false);
+	const [mailingSearch, setMailingSearch] = useState('');
+	const [selectedForMailing, setSelectedForMailing] = useState(new Set());
+	const [isUpgrading, setIsUpgrading] = useState(false);
+
 	// Invite groups state
 	const [invitedGroups, setInvitedGroups] = useState([]);
 	const [inviteModalOpen, setInviteModalOpen] = useState(false);
@@ -377,6 +383,99 @@ export default function EventAudience({
 			);
 		} finally {
 			setIsAdding(false);
+		}
+	};
+
+	// Participants eligible for a marketing-list upgrade: currently on the
+	// "minimal" email profile and reachable (have an email address).
+	const mailingEligible = useMemo(
+		() =>
+			participants.filter(
+				(p) => p.email_profile === 'minimal' && p.participant_email
+			),
+		[participants]
+	);
+
+	const filteredMailingEligible = useMemo(() => {
+		if (!mailingSearch) return mailingEligible;
+		const term = mailingSearch.toLowerCase();
+		return mailingEligible.filter(
+			(p) =>
+				(p.name || '').toLowerCase().includes(term) ||
+				(p.surname || '').toLowerCase().includes(term) ||
+				(p.participant_email || '').toLowerCase().includes(term)
+		);
+	}, [mailingEligible, mailingSearch]);
+
+	const handleOpenMailingModal = () => {
+		setMailingModalOpen(true);
+		setSelectedForMailing(new Set());
+		setMailingSearch('');
+	};
+
+	const handleCloseMailingModal = () => {
+		setMailingModalOpen(false);
+		setSelectedForMailing(new Set());
+		setMailingSearch('');
+	};
+
+	const handleToggleMailing = (participantId) => {
+		const next = new Set(selectedForMailing);
+		if (next.has(participantId)) {
+			next.delete(participantId);
+		} else {
+			next.add(participantId);
+		}
+		setSelectedForMailing(next);
+	};
+
+	const handleSelectAllMailing = () => {
+		const shownIds = filteredMailingEligible.map((p) => p.participant_id);
+		const allSelected = shownIds.every((id) => selectedForMailing.has(id));
+		const next = new Set(selectedForMailing);
+		if (allSelected) {
+			shownIds.forEach((id) => next.delete(id));
+		} else {
+			shownIds.forEach((id) => next.add(id));
+		}
+		setSelectedForMailing(next);
+	};
+
+	const handleUpgradeToMarketing = async () => {
+		if (selectedForMailing.size === 0) return;
+		setIsUpgrading(true);
+		try {
+			const response = await apiFetch({
+				path: `/fair-audience/v1/event-dates/${eventDateId}/participants/marketing-upgrade`,
+				method: 'POST',
+				data: { participant_ids: Array.from(selectedForMailing) },
+			});
+			handleCloseMailingModal();
+			loadParticipants();
+			const upgraded = response.upgraded ?? 0;
+			const skipped = response.skipped ?? 0;
+			const emailFailed = response.email_failed ?? 0;
+			showToast(
+				sprintf(
+					/* translators: 1: number upgraded, 2: number skipped, 3: number of failed emails */
+					__(
+						'Added %1$d to the mailing list. Skipped %2$d, %3$d email(s) failed.',
+						'fair-events'
+					),
+					upgraded,
+					skipped,
+					emailFailed
+				),
+				emailFailed > 0 ? 'error' : 'success'
+			);
+		} catch (err) {
+			showToast(
+				__('Error updating mailing list: ', 'fair-events') +
+					err.message,
+				'error'
+			);
+		} finally {
+			setIsUpgrading(false);
 		}
 	};
 
@@ -1486,6 +1585,16 @@ export default function EventAudience({
 											)}
 										</Button>
 									)}
+									<Button
+										variant="secondary"
+										onClick={handleOpenMailingModal}
+										disabled={mailingEligible.length === 0}
+									>
+										{__(
+											'Add to mailing list (verbal consent)',
+											'fair-events'
+										)}
+									</Button>
 								</HStack>
 							</VStack>
 						)}
@@ -1856,6 +1965,190 @@ export default function EventAudience({
 													'fair-events'
 												),
 												selectedToAdd.size
+										  )}
+								</Button>
+							</div>
+						</>
+					)}
+				</Modal>
+			)}
+
+			{mailingModalOpen && (
+				<Modal
+					title={__(
+						'Add to mailing list (verbal consent)',
+						'fair-events'
+					)}
+					onRequestClose={handleCloseMailingModal}
+					style={{ maxWidth: '640px', width: '100%' }}
+				>
+					{mailingEligible.length === 0 ? (
+						<p>
+							{__(
+								'No participants are eligible. People are listed here when they have an email address and are not already on the marketing list.',
+								'fair-events'
+							)}
+						</p>
+					) : (
+						<>
+							<p style={{ marginTop: 0, color: '#666' }}>
+								{__(
+									'Tick the people who gave you their consent in person. They will be added to the marketing list and emailed a welcome message with an unsubscribe link.',
+									'fair-events'
+								)}
+							</p>
+
+							<div
+								style={{
+									display: 'flex',
+									gap: '10px',
+									marginBottom: '10px',
+									alignItems: 'center',
+								}}
+							>
+								<input
+									type="text"
+									placeholder={__(
+										'Search by name or email…',
+										'fair-events'
+									)}
+									value={mailingSearch}
+									onChange={(e) =>
+										setMailingSearch(e.target.value)
+									}
+									style={{
+										flex: 1,
+										padding: '8px 12px',
+										border: '1px solid #ddd',
+										borderRadius: '4px',
+									}}
+								/>
+								<Button
+									variant="link"
+									onClick={handleSelectAllMailing}
+									disabled={
+										filteredMailingEligible.length === 0
+									}
+								>
+									{filteredMailingEligible.length > 0 &&
+									filteredMailingEligible.every((p) =>
+										selectedForMailing.has(p.participant_id)
+									)
+										? __('Deselect all', 'fair-events')
+										: __('Select all', 'fair-events')}
+								</Button>
+							</div>
+
+							<div
+								style={{
+									marginBottom: '10px',
+									fontSize: '12px',
+									color: '#666',
+								}}
+							>
+								{sprintf(
+									/* translators: 1: selected count, 2: shown count */
+									__(
+										'%1$d selected, %2$d shown',
+										'fair-events'
+									),
+									selectedForMailing.size,
+									filteredMailingEligible.length
+								)}
+							</div>
+
+							<div
+								style={{
+									maxHeight: '400px',
+									overflowY: 'auto',
+									border: '1px solid #ddd',
+									borderRadius: '4px',
+								}}
+							>
+								{filteredMailingEligible.map((p) => (
+									<div
+										key={p.participant_id}
+										style={{
+											padding: '10px 15px',
+											borderBottom: '1px solid #eee',
+											display: 'flex',
+											alignItems: 'center',
+											gap: '10px',
+										}}
+									>
+										<CheckboxControl
+											checked={selectedForMailing.has(
+												p.participant_id
+											)}
+											onChange={() =>
+												handleToggleMailing(
+													p.participant_id
+												)
+											}
+											__nextHasNoMarginBottom
+										/>
+										<div>
+											<strong>
+												{p.name} {p.surname}
+											</strong>
+											<br />
+											<span
+												style={{
+													color: '#666',
+													fontSize: '12px',
+												}}
+											>
+												{p.participant_email}
+											</span>
+										</div>
+									</div>
+								))}
+								{filteredMailingEligible.length === 0 && (
+									<p
+										style={{
+											padding: '15px',
+											color: '#666',
+										}}
+									>
+										{__(
+											'No participants match your search.',
+											'fair-events'
+										)}
+									</p>
+								)}
+							</div>
+
+							<div
+								style={{
+									marginTop: '20px',
+									display: 'flex',
+									justifyContent: 'flex-end',
+									gap: '10px',
+								}}
+							>
+								<Button
+									variant="secondary"
+									onClick={handleCloseMailingModal}
+								>
+									{__('Cancel', 'fair-events')}
+								</Button>
+								<Button
+									variant="primary"
+									onClick={handleUpgradeToMarketing}
+									disabled={
+										selectedForMailing.size === 0 ||
+										isUpgrading
+									}
+								>
+									{isUpgrading
+										? __('Adding…', 'fair-events')
+										: sprintf(
+												/* translators: %d: number of selected participants */
+												__(
+													'Add %d to mailing list',
+													'fair-events'
+												),
+												selectedForMailing.size
 										  )}
 								</Button>
 							</div>

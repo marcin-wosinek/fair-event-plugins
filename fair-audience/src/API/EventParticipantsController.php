@@ -9,6 +9,8 @@ namespace FairAudience\API;
 
 use FairAudience\Database\EventParticipantRepository;
 use FairAudience\Database\ParticipantRepository;
+use FairAudience\Models\EmailConsentLog;
+use FairAudience\Services\EmailService;
 use WP_REST_Controller;
 use WP_REST_Server;
 use WP_REST_Request;
@@ -234,6 +236,38 @@ class EventParticipantsController extends WP_REST_Controller {
 			)
 		);
 
+		// POST /fair-audience/v1/event-dates/{event_date_id}/participants/marketing-upgrade.
+		register_rest_route(
+			$this->namespace,
+			'/' . $this->rest_base . '/marketing-upgrade',
+			array(
+				array(
+					'methods'             => WP_REST_Server::CREATABLE,
+					'callback'            => array( $this, 'upgrade_to_marketing_batch' ),
+					'permission_callback' => array( $this, 'create_item_permissions_check' ),
+					'args'                => array(
+						'event_date_id'   => array(
+							'type'              => 'integer',
+							'required'          => true,
+							'validate_callback' => function ( $param ) {
+								return is_numeric( $param );
+							},
+						),
+						'participant_ids' => array(
+							'type'              => 'array',
+							'required'          => true,
+							'items'             => array(
+								'type' => 'integer',
+							),
+							'validate_callback' => function ( $param ) {
+								return is_array( $param ) && ! empty( $param );
+							},
+						),
+					),
+				),
+			)
+		);
+
 		// GET /fair-audience/v1/events (list events with participant counts).
 		register_rest_route(
 			$this->namespace,
@@ -394,6 +428,7 @@ class EventParticipantsController extends WP_REST_Controller {
 					'name'                 => $participant ? $participant->name : '',
 					'surname'              => $participant ? $participant->surname : '',
 					'participant_email'    => $participant ? $participant->email : '',
+					'email_profile'        => $participant ? $participant->email_profile : '',
 					'instagram'            => $participant ? $participant->instagram : '',
 					'label'                => $ep->label,
 					'ticket_type_id'       => $ep->ticket_type_id ? (int) $ep->ticket_type_id : null,
@@ -834,6 +869,134 @@ class EventParticipantsController extends WP_REST_Controller {
 				++$results['skipped'];
 			} else {
 				++$results['added'];
+			}
+		}
+
+		return rest_ensure_response( $results );
+	}
+
+	/**
+	 * Upgrade selected participants of an event to the marketing email profile.
+	 *
+	 * Records the organizer's marketing consent (e.g. collected verbally / on a
+	 * paper list at the event), flips each eligible participant's email_profile
+	 * from "minimal" to "marketing", writes an audit-trail entry, and sends a
+	 * one-time "welcome to the mailing list" email. Already-marketing
+	 * participants and participants without an email are skipped (never
+	 * re-emailed), making the operation idempotent.
+	 *
+	 * @param WP_REST_Request $request Request object.
+	 * @return WP_REST_Response|WP_Error Response object or error.
+	 */
+	public function upgrade_to_marketing_batch( $request ) {
+		$event_date_id   = (int) $request['event_date_id'];
+		$participant_ids = $request->get_param( 'participant_ids' );
+
+		// Resolve event_id from event_date_id.
+		$event_date = \FairEvents\Models\EventDates::get_by_id( $event_date_id );
+		if ( ! $event_date ) {
+			return new WP_Error(
+				'invalid_event_date',
+				__( 'Event date not found.', 'fair-audience' ),
+				array( 'status' => 404 )
+			);
+		}
+		$event_id = (int) $event_date->event_id;
+
+		// Validate event exists.
+		$event = get_post( $event_id );
+		if ( ! $event || ! \FairEvents\Database\EventRepository::is_event( $event ) ) {
+			return new WP_Error(
+				'invalid_event',
+				__( 'Invalid event ID.', 'fair-audience' ),
+				array( 'status' => 404 )
+			);
+		}
+
+		$results = array(
+			'upgraded'     => 0,
+			'skipped'      => 0,
+			'failed'       => 0,
+			'emailed'      => 0,
+			'email_failed' => 0,
+			'errors'       => array(),
+		);
+
+		$email_service = new EmailService();
+
+		$performed_by = get_current_user_id();
+		$admin_user   = get_userdata( $performed_by );
+		$admin_name   = $admin_user ? $admin_user->display_name : '';
+		$event_title  = get_the_title( $event_id );
+
+		foreach ( $participant_ids as $participant_id ) {
+			$participant_id = (int) $participant_id;
+
+			$participant = $this->participant_repo->get_by_id( $participant_id );
+			if ( ! $participant ) {
+				++$results['failed'];
+				$results['errors'][] = sprintf(
+					/* translators: %d: participant ID */
+					__( 'Participant ID %d not found', 'fair-audience' ),
+					$participant_id
+				);
+				continue;
+			}
+
+			// Must be linked to this event date.
+			$ep_row = $this->event_participant_repo->get_by_event_date_and_participant( $event_date_id, $participant_id );
+			if ( ! $ep_row ) {
+				++$results['skipped'];
+				continue;
+			}
+
+			// Skip participants without an email or already on the marketing list
+			// (the latter guarantees we never re-email an already-subscribed person).
+			if ( empty( $participant->email ) || 'minimal' !== $participant->email_profile ) {
+				++$results['skipped'];
+				continue;
+			}
+
+			$old_profile                = $participant->email_profile;
+			$participant->email_profile = 'marketing';
+
+			if ( ! $participant->save() ) {
+				++$results['failed'];
+				$results['errors'][] = sprintf(
+					/* translators: %d: participant ID */
+					__( 'Failed to upgrade participant ID %d', 'fair-audience' ),
+					$participant_id
+				);
+				continue;
+			}
+
+			++$results['upgraded'];
+
+			// Audit trail.
+			EmailConsentLog::create(
+				array(
+					'participant_id' => $participant_id,
+					'event_id'       => $event_id,
+					'event_date_id'  => $event_date_id,
+					'old_profile'    => $old_profile,
+					'new_profile'    => 'marketing',
+					'source'         => 'verbal_admin',
+					'comment'        => sprintf(
+						/* translators: 1: admin display name, 2: date, 3: event title */
+						__( 'Verbal consent recorded by %1$s on %2$s at event %3$s', 'fair-audience' ),
+						$admin_name,
+						gmdate( 'Y-m-d' ),
+						$event_title
+					),
+					'performed_by'   => $performed_by,
+				)
+			);
+
+			// Welcome email (single opt-in: they already consented in person).
+			if ( $email_service->send_mailing_list_welcome( $participant, $event_id ) ) {
+				++$results['emailed'];
+			} else {
+				++$results['email_failed'];
 			}
 		}
 

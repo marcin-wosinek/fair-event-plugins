@@ -488,6 +488,37 @@ class Schema {
 	}
 
 	/**
+	 * Get SQL for creating the email consent log table.
+	 *
+	 * Insert-only audit trail of email_profile changes (e.g. an organizer
+	 * recording verbal/paper marketing consent at an event).
+	 *
+	 * @return string SQL statement.
+	 */
+	public static function get_email_consent_log_table_sql() {
+		global $wpdb;
+
+		$table_name      = $wpdb->prefix . 'fair_audience_email_consent_log';
+		$charset_collate = $wpdb->get_charset_collate();
+
+		return "CREATE TABLE $table_name (
+			id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
+			participant_id BIGINT UNSIGNED NOT NULL,
+			event_id BIGINT UNSIGNED DEFAULT NULL,
+			event_date_id BIGINT UNSIGNED DEFAULT NULL,
+			old_profile VARCHAR(20) DEFAULT NULL,
+			new_profile VARCHAR(20) NOT NULL,
+			source VARCHAR(50) NOT NULL,
+			comment TEXT,
+			performed_by BIGINT UNSIGNED NOT NULL,
+			created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+			PRIMARY KEY  (id),
+			KEY idx_participant_id (participant_id),
+			KEY idx_created_at (created_at)
+		) ENGINE=InnoDB $charset_collate;";
+	}
+
+	/**
 	 * Get SQL for creating the participant categories junction table.
 	 *
 	 * @return string SQL statement.
