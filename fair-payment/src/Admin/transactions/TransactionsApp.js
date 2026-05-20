@@ -170,6 +170,7 @@ const TransactionsApp = () => {
 				mollie_payment_id: t.mollie_payment_id,
 				source_domain: sourceDomain,
 				detail_url: t.event_url || '',
+				event_date_id: t.event_date_id ?? null,
 			}));
 
 		const blob = new Blob([JSON.stringify(toExport, null, 2)], {

@@ -111,6 +111,9 @@ class Transaction {
 		if ( ! empty( $data['detail_url'] ) ) {
 			$metadata['detail_url'] = (string) $data['detail_url'];
 		}
+		if ( isset( $data['event_date_id'] ) && null !== $data['event_date_id'] ) {
+			$metadata['source_event_date_id'] = (int) $data['event_date_id'];
+		}
 
 		$row = array(
 			'amount'          => isset( $data['amount'] ) ? (float) $data['amount'] : 0,
