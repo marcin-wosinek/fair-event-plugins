@@ -29,6 +29,7 @@ class QuestionnaireAnswer {
 		'date',
 		'multiselect',
 		'file_upload',
+		'phone',
 	);
 
 	/**
