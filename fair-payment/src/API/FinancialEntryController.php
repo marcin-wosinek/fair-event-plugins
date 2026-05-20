@@ -525,7 +525,7 @@ class FinancialEntryController extends WP_REST_Controller {
 				'required'    => false,
 			),
 			'event_url'      => array(
-				'description'       => __( 'Event URL (local or external).', 'fair-payment' ),
+				'description'       => __( 'Link URL (local or external).', 'fair-payment' ),
 				'type'              => array( 'string', 'null' ),
 				'required'          => false,
 				'sanitize_callback' => function ( $value ) {
@@ -533,7 +533,7 @@ class FinancialEntryController extends WP_REST_Controller {
 				},
 			),
 			'event_date_id'  => array(
-				'description' => __( 'Event date ID.', 'fair-payment' ),
+				'description' => __( 'Linked event date ID.', 'fair-payment' ),
 				'type'        => array( 'integer', 'null' ),
 				'required'    => false,
 			),
@@ -976,21 +976,84 @@ class FinancialEntryController extends WP_REST_Controller {
 					- (float) ( $transaction->application_fee ?? 0 )
 					- (float) ( $transaction->mollie_fee ?? 0 );
 
+				$link = self::get_transaction_link( $transaction );
+
 				$allocations[] = array(
-					'amount'      => $net,
-					'description' => $transaction->description ?? '',
-					'budget_id'   => null,
+					'amount'        => $net,
+					'description'   => $transaction->description ?? '',
+					'budget_id'     => null,
+					'event_url'     => $link['event_url'],
+					'event_date_id' => $link['event_date_id'],
 				);
 			}
 
 			if ( count( $allocations ) >= 2 ) {
 				FinancialEntry::split_entry( $id, $allocations );
 			}
+		} elseif ( 1 === count( $ids_to_match ) && empty( $entry->event_url ) ) {
+			// Single-transaction match: seed entry's link from the transaction
+			// if the user hasn't already set one.
+			$transaction = Transaction::get_by_id( $ids_to_match[0] );
+			if ( $transaction ) {
+				$link = self::get_transaction_link( $transaction );
+				if ( '' !== $link['event_url'] || null !== $link['event_date_id'] ) {
+					global $wpdb;
+					$wpdb->update(
+						\FairPayment\Database\Schema::get_financial_entries_table_name(),
+						array(
+							'event_url'     => '' !== $link['event_url'] ? $link['event_url'] : null,
+							'event_date_id' => $link['event_date_id'],
+						),
+						array( 'id' => $id ),
+						array( '%s', '%d' ),
+						array( '%d' )
+					);
+				}
+			}
 		}
 
 		$entry = FinancialEntry::get_by_id( $id );
 
 		return new WP_REST_Response( $entry->to_array(), 200 );
+	}
+
+	/**
+	 * Resolve the link (URL + event_date_id) for a transaction.
+	 *
+	 * Local transactions carry a real event_date_id whose permalink we can
+	 * derive; imported transactions (from another site) carry the link in
+	 * metadata.detail_url and the source side's event_date_id is not a valid
+	 * local FK, so only event_url is reused.
+	 *
+	 * @param object $transaction Transaction row.
+	 * @return array{event_url:string,event_date_id:?int}
+	 */
+	private static function get_transaction_link( $transaction ) {
+		$event_url     = '';
+		$event_date_id = null;
+
+		if ( ! empty( $transaction->event_date_id ) && class_exists( '\\FairEvents\\Models\\EventDates' ) ) {
+			$event_date = \FairEvents\Models\EventDates::get_by_id( (int) $transaction->event_date_id );
+			if ( $event_date && ! empty( $event_date->event_id ) ) {
+				$permalink = get_permalink( (int) $event_date->event_id );
+				if ( $permalink ) {
+					$event_url     = $permalink;
+					$event_date_id = (int) $transaction->event_date_id;
+				}
+			}
+		}
+
+		if ( '' === $event_url && ! empty( $transaction->metadata ) ) {
+			$meta = json_decode( (string) $transaction->metadata, true );
+			if ( is_array( $meta ) && ! empty( $meta['detail_url'] ) ) {
+				$event_url = (string) $meta['detail_url'];
+			}
+		}
+
+		return array(
+			'event_url'     => $event_url,
+			'event_date_id' => $event_date_id,
+		);
 	}
 
 	/**

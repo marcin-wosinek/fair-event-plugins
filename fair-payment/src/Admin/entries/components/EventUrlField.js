@@ -54,7 +54,7 @@ const EventUrlField = ({ value, eventDateId, onChange }) => {
 		return (
 			<div>
 				<div style={{ marginBottom: '4px', fontWeight: '600' }}>
-					{__('Event', 'fair-payment')}
+					{__('Link', 'fair-payment')}
 				</div>
 				<HStack spacing={2}>
 					<a
@@ -81,7 +81,7 @@ const EventUrlField = ({ value, eventDateId, onChange }) => {
 	return (
 		<div>
 			<div style={{ marginBottom: '4px', fontWeight: '600' }}>
-				{__('Event', 'fair-payment')}
+				{__('Link', 'fair-payment')}
 			</div>
 			{mode === 'search' && (
 				<div>

@@ -424,7 +424,7 @@ const SplitModal = ({
 											fontSize: '13px',
 										}}
 									>
-										{__('Event', 'fair-payment')}
+										{__('Link', 'fair-payment')}
 									</div>
 									<SplitEventUrlField
 										value={allocation.event_url}

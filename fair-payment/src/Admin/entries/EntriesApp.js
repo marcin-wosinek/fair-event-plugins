@@ -517,7 +517,7 @@ const EntriesApp = () => {
 	];
 
 	const eventUrlOptions = [
-		{ label: __('All Events', 'fair-payment'), value: '' },
+		{ label: __('All Links', 'fair-payment'), value: '' },
 		...eventUrls.map((url) => ({
 			label: getEventUrlLabel(url),
 			value: url,
@@ -645,12 +645,12 @@ const EntriesApp = () => {
 								{eventsEnabled &&
 									eventDateOptions.length > 0 && (
 										<SelectControl
-											label={__('Event', 'fair-payment')}
+											label={__('Link', 'fair-payment')}
 											value={filters.event_date_id}
 											options={[
 												{
 													label: __(
-														'All Events',
+														'All Links',
 														'fair-payment'
 													),
 													value: '',
@@ -669,7 +669,7 @@ const EntriesApp = () => {
 									eventDateOptions.length === 0 &&
 									eventUrls.length > 0 && (
 										<SelectControl
-											label={__('Event', 'fair-payment')}
+											label={__('Link', 'fair-payment')}
 											value={filters.event_url}
 											options={eventUrlOptions}
 											onChange={(value) =>
@@ -834,7 +834,7 @@ const EntriesApp = () => {
 													{eventsEnabled && (
 														<SortableHeader column="event_date_id">
 															{__(
-																'Event',
+																'Link',
 																'fair-payment'
 															)}
 														</SortableHeader>
