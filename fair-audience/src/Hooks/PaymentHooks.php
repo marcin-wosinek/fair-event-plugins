@@ -140,10 +140,13 @@ class PaymentHooks {
 		$participant_repo = new ParticipantRepository();
 		$participant      = $participant_repo->get_by_id( $participant_id );
 		if ( $participant ) {
-			$full_name                    = trim( $participant->name . ' ' . $participant->surname );
-			$context['participant_name']  = $full_name;
-			$context['participant_email'] = isset( $participant->email ) ? (string) $participant->email : '';
-			$context['participant_url']   = admin_url( 'admin.php?page=fair-audience-participant-detail&participant_id=' . (int) $participant->id );
+			$full_name                         = trim( $participant->name . ' ' . $participant->surname );
+			$surname                           = trim( (string) $participant->surname );
+			$surname_initial                   = '' !== $surname ? mb_strtoupper( mb_substr( $surname, 0, 1 ) ) . '.' : '';
+			$context['participant_name']       = $full_name;
+			$context['participant_name_short'] = trim( $participant->name . ' ' . $surname_initial );
+			$context['participant_email']      = isset( $participant->email ) ? (string) $participant->email : '';
+			$context['participant_url']        = admin_url( 'admin.php?page=fair-audience-participant-detail&participant_id=' . (int) $participant->id );
 		}
 
 		$event_participant_repo = new EventParticipantRepository();

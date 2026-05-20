@@ -301,7 +301,7 @@ class Settings {
 	public static function default_template() {
 		return '<b>{test_label}{site_domain}</b>' . "\n"
 			. '<a href="{event_url}">{event_title}</a>' . "\n"
-			. '<a href="{participant_url}">{participant_name}</a> ({participant_email})' . "\n"
+			. '<a href="{participant_url}">{participant_name}</a>' . "\n"
 			. 'Ticket: {ticket_label}' . "\n"
 			. 'Activities: {activities}' . "\n"
 			. 'Discounts: {discounts}' . "\n"

@@ -87,8 +87,10 @@ class TelegramService {
 	/**
 	 * Render a template by substituting placeholders.
 	 *
-	 * PII placeholders ({participant_name}, {participant_email}) substitute to an
-	 * empty string when $include_pii is false.
+	 * When $include_pii is false, {participant_email} renders empty and
+	 * {participant_name} falls back to an abbreviated form (first name + surname
+	 * initial, e.g. "Lucianna C.") so the channel still shows who paid without
+	 * exposing the full identity.
 	 *
 	 * @param string $template    Template string.
 	 * @param array  $context     Context with raw values (will be HTML-escaped on insertion).
@@ -96,8 +98,6 @@ class TelegramService {
 	 * @return string
 	 */
 	public function render_template( $template, array $context, $include_pii = true ) {
-		$pii_keys = array( 'participant_name', 'participant_email' );
-
 		$replacements = array();
 		$placeholders = array(
 			'test_label',
@@ -119,7 +119,18 @@ class TelegramService {
 		foreach ( $placeholders as $key ) {
 			$value = '';
 
-			if ( in_array( $key, $pii_keys, true ) && ! $include_pii ) {
+			if ( 'participant_name' === $key ) {
+				if ( $include_pii ) {
+					$value = esc_html( (string) ( $context['participant_name'] ?? '' ) );
+				} else {
+					// Prefer the pre-computed short name; fall back to abbreviating
+					// the full name when an enricher did not supply one.
+					$short = ( isset( $context['participant_name_short'] ) && '' !== $context['participant_name_short'] )
+						? (string) $context['participant_name_short']
+						: self::abbreviate_name( (string) ( $context['participant_name'] ?? '' ) );
+					$value = esc_html( $short );
+				}
+			} elseif ( 'participant_email' === $key && ! $include_pii ) {
 				$value = '';
 			} elseif ( isset( $context[ $key ] ) && null !== $context[ $key ] && '' !== $context[ $key ] ) {
 				// URLs use esc_url, everything else uses esc_html.
@@ -134,5 +145,32 @@ class TelegramService {
 		}
 
 		return strtr( (string) $template, $replacements );
+	}
+
+	/**
+	 * Abbreviate a full name to "First S." (first name + first surname initial).
+	 *
+	 * Used as a fallback when no pre-computed short name is available. Treats the
+	 * second whitespace-separated token as the surname start, matching how names
+	 * are stored (given name + surname).
+	 *
+	 * @param string $full_name Full name.
+	 * @return string Abbreviated name, or the input unchanged when it has one token.
+	 */
+	private static function abbreviate_name( $full_name ) {
+		$full_name = trim( (string) preg_replace( '/\s+/', ' ', (string) $full_name ) );
+		if ( '' === $full_name ) {
+			return '';
+		}
+
+		$parts = explode( ' ', $full_name );
+		if ( count( $parts ) < 2 ) {
+			return $full_name;
+		}
+
+		$first   = $parts[0];
+		$initial = mb_strtoupper( mb_substr( $parts[1], 0, 1 ) );
+
+		return $first . ' ' . $initial . '.';
 	}
 }

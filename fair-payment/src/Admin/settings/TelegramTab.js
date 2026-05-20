@@ -211,7 +211,7 @@ export default function TelegramTab({ onNotice }) {
 						'fair-payment'
 					)}
 					help={__(
-						'Disable to keep PII out of the Telegram channel. {participant_name} and {participant_email} render as empty.',
+						'Disable to keep PII out of the Telegram channel. {participant_email} renders as empty and {participant_name} is abbreviated (e.g. "Lucianna C.").',
 						'fair-payment'
 					)}
 					checked={includePii}
