@@ -56,5 +56,11 @@ class RestHooks {
 
 		$external_transactions = new \FairPayment\API\ExternalTransactionsController();
 		$external_transactions->register_routes();
+
+		$external_me = new \FairPayment\API\ExternalMeController();
+		$external_me->register_routes();
+
+		$connected_sites_controller = new \FairPayment\API\ConnectedSitesController();
+		$connected_sites_controller->register_routes();
 	}
 }

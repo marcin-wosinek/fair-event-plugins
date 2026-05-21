@@ -114,6 +114,16 @@ class AdminPages {
 			'fair-payment-api-tokens',
 			array( $this, 'render_api_tokens_page' )
 		);
+
+		// Connected Sites submenu.
+		add_submenu_page(
+			'fair-payment-transactions',
+			__( 'Connected Sites', 'fair-payment' ),
+			__( 'Connected Sites', 'fair-payment' ),
+			'manage_options',
+			'fair-payment-connected-sites',
+			array( $this, 'render_connected_sites_page' )
+		);
 	}
 
 	/**
@@ -145,6 +155,12 @@ class AdminPages {
 		// API Tokens page.
 		if ( false !== strpos( $hook, 'fair-payment-api-tokens' ) ) {
 			$this->enqueue_admin_page_script( 'api-tokens' );
+			return;
+		}
+
+		// Connected Sites page.
+		if ( false !== strpos( $hook, 'fair-payment-connected-sites' ) ) {
+			$this->enqueue_admin_page_script( 'connected-sites' );
 			return;
 		}
 
@@ -311,6 +327,17 @@ class AdminPages {
 	public function render_api_tokens_page() {
 		?>
 		<div id="fair-payment-api-tokens-root"></div>
+		<?php
+	}
+
+	/**
+	 * Render connected sites page
+	 *
+	 * @return void
+	 */
+	public function render_connected_sites_page() {
+		?>
+		<div id="fair-payment-connected-sites-root"></div>
 		<?php
 	}
 }

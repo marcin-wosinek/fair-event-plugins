@@ -26,10 +26,11 @@ class ApiTokenAuth {
 	 * `_fair_api_token` param and the token's last_used_at is updated.
 	 *
 	 * @param WP_REST_Request $request        Incoming request.
-	 * @param string          $required_scope Scope the endpoint requires.
+	 * @param string|null     $required_scope Scope the endpoint requires, or null
+	 *                                        to require only a valid active token.
 	 * @return true|WP_Error True when authorized, WP_Error otherwise.
 	 */
-	public static function authenticate( WP_REST_Request $request, $required_scope ) {
+	public static function authenticate( WP_REST_Request $request, $required_scope = null ) {
 		$header = $request->get_header( 'authorization' );
 
 		$token = self::parse_bearer_token( $header );
@@ -45,7 +46,7 @@ class ApiTokenAuth {
 			return self::unauthorized();
 		}
 
-		if ( ! ApiToken::has_scope( $row, $required_scope ) ) {
+		if ( null !== $required_scope && ! ApiToken::has_scope( $row, $required_scope ) ) {
 			return new WP_Error(
 				'rest_insufficient_scope',
 				__( 'This token does not have the required scope.', 'fair-payment' ),
@@ -68,6 +69,20 @@ class ApiTokenAuth {
 	public static function require_scope( $scope ) {
 		return function ( WP_REST_Request $request ) use ( $scope ) {
 			return self::authenticate( $request, $scope );
+		};
+	}
+
+	/**
+	 * Build a permission_callback that requires only a valid active token.
+	 *
+	 * Used by endpoints (e.g. /external/me) that any authenticated consumer may
+	 * call regardless of which scopes the token grants.
+	 *
+	 * @return callable permission_callback for register_rest_route().
+	 */
+	public static function require_token() {
+		return function ( WP_REST_Request $request ) {
+			return self::authenticate( $request );
 		};
 	}
 

@@ -41,6 +41,10 @@ module.exports = {
       process.cwd(),
       "src/Admin/api-tokens/index.js",
     ),
+    "admin/connected-sites/index": path.resolve(
+      process.cwd(),
+      "src/Admin/connected-sites/index.js",
+    ),
     "payment-callback": path.resolve(
       process.cwd(),
       "src/payment-callback.js",
