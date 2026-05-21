@@ -73,9 +73,23 @@ jobs:
                   sudo mv wp-cli.phar /usr/local/bin/wp
                   wp --info
 
+            - name: Cache WP-CLI packages
+              id: wp-cli-packages-cache
+              uses: actions/cache@v5
+              with:
+                  path: ~/.wp-cli/packages
+                  key: ${{ runner.os }}-wp-cli-dist-archive-3.1
+
             - name: Install WP-CLI dist-archive command
               run: |
-                  wp package install wp-cli/dist-archive-command:^3.1
+                  if ! wp dist-archive --help >/dev/null 2>&1; then
+                      for attempt in 1 2 3; do
+                          echo "Installing dist-archive-command (attempt ${attempt})..."
+                          wp package install wp-cli/dist-archive-command:^3.1 && break
+                          echo "Attempt ${attempt} failed; retrying in 15s..."
+                          sleep 15
+                      done
+                  fi
                   wp package list
                   wp dist-archive --help
 
