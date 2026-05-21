@@ -2,7 +2,7 @@
 Contributors: marcinwosinek
 Tags: mollie, oauth, payment, platform
 Requires at least: 6.7
-Tested up to: 6.8
+Tested up to: 7.0
 Requires PHP: 8.0
 Stable tag: 1.1.0
 License: Private

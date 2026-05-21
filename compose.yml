@@ -1,6 +1,6 @@
 services:
     wordpress:
-        image: wordpress
+        image: wordpress:beta-7.0-php8.5
         restart: always
         ports:
             - 8080:80
