@@ -50,5 +50,11 @@ class RestHooks {
 
 		$telegram_controller = new \FairPayment\API\TelegramSettingsController();
 		$telegram_controller->register_routes();
+
+		$api_tokens_controller = new \FairPayment\API\ApiTokensController();
+		$api_tokens_controller->register_routes();
+
+		$external_transactions = new \FairPayment\API\ExternalTransactionsController();
+		$external_transactions->register_routes();
 	}
 }

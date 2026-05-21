@@ -302,6 +302,8 @@ class Transaction {
 			'status'        => '',
 			'mode'          => '',
 			'event_date_id' => 0,
+			'date_from'     => '',
+			'date_to'       => '',
 			'orderby'       => 'created_at',
 			'order'         => 'DESC',
 		);
@@ -321,6 +323,14 @@ class Transaction {
 
 		if ( ! empty( $args['event_date_id'] ) ) {
 			$where_clauses[] = $wpdb->prepare( 'event_date_id = %d', (int) $args['event_date_id'] );
+		}
+
+		if ( ! empty( $args['date_from'] ) ) {
+			$where_clauses[] = $wpdb->prepare( 'created_at >= %s', $args['date_from'] );
+		}
+
+		if ( ! empty( $args['date_to'] ) ) {
+			$where_clauses[] = $wpdb->prepare( 'created_at <= %s', $args['date_to'] );
 		}
 
 		$where = '';
@@ -365,6 +375,14 @@ class Transaction {
 
 		if ( ! empty( $args['event_date_id'] ) ) {
 			$where_clauses[] = $wpdb->prepare( 'event_date_id = %d', (int) $args['event_date_id'] );
+		}
+
+		if ( ! empty( $args['date_from'] ) ) {
+			$where_clauses[] = $wpdb->prepare( 'created_at >= %s', $args['date_from'] );
+		}
+
+		if ( ! empty( $args['date_to'] ) ) {
+			$where_clauses[] = $wpdb->prepare( 'created_at <= %s', $args['date_to'] );
 		}
 
 		$where = '';

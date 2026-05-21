@@ -104,6 +104,16 @@ class AdminPages {
 			'fair-payment-settings',
 			array( $this, 'render_settings_page' )
 		);
+
+		// API Tokens submenu.
+		add_submenu_page(
+			'fair-payment-transactions',
+			__( 'API Tokens', 'fair-payment' ),
+			__( 'API Tokens', 'fair-payment' ),
+			'manage_options',
+			'fair-payment-api-tokens',
+			array( $this, 'render_api_tokens_page' )
+		);
 	}
 
 	/**
@@ -129,6 +139,12 @@ class AdminPages {
 		// Settings page.
 		if ( false !== strpos( $hook, 'fair-payment-settings' ) ) {
 			$this->enqueue_admin_page_script( 'settings' );
+			return;
+		}
+
+		// API Tokens page.
+		if ( false !== strpos( $hook, 'fair-payment-api-tokens' ) ) {
+			$this->enqueue_admin_page_script( 'api-tokens' );
 			return;
 		}
 
@@ -284,6 +300,17 @@ class AdminPages {
 	public function render_transactions_page() {
 		?>
 		<div id="fair-payment-transactions-root"></div>
+		<?php
+	}
+
+	/**
+	 * Render API tokens page
+	 *
+	 * @return void
+	 */
+	public function render_api_tokens_page() {
+		?>
+		<div id="fair-payment-api-tokens-root"></div>
 		<?php
 	}
 }

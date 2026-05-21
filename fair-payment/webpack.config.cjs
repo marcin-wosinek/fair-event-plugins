@@ -37,6 +37,10 @@ module.exports = {
       process.cwd(),
       "src/Admin/reconciliation/index.js",
     ),
+    "admin/api-tokens/index": path.resolve(
+      process.cwd(),
+      "src/Admin/api-tokens/index.js",
+    ),
     "payment-callback": path.resolve(
       process.cwd(),
       "src/payment-callback.js",

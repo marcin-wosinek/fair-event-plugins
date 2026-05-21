@@ -74,6 +74,16 @@ class Schema {
 	}
 
 	/**
+	 * Get the table name for API tokens
+	 *
+	 * @return string Full table name with prefix.
+	 */
+	public static function get_api_tokens_table_name() {
+		global $wpdb;
+		return $wpdb->prefix . 'fair_payment_api_tokens';
+	}
+
+	/**
 	 * Create database tables
 	 *
 	 * @return void
@@ -132,6 +142,9 @@ class Schema {
 		// Create log table.
 		self::create_log_table();
 
+		// Create API tokens table.
+		self::create_api_tokens_table();
+
 		// Run migrations if needed.
 		self::migrate_to_v2();
 		self::migrate_to_v3();
@@ -150,9 +163,10 @@ class Schema {
 		self::migrate_to_v16();
 		self::migrate_to_v17();
 		self::migrate_to_v18();
+		self::migrate_to_v19();
 
 		// Store database version for future migrations.
-		update_option( 'fair_payment_db_version', '18.0' );
+		update_option( 'fair_payment_db_version', '19.0' );
 	}
 
 	/**
@@ -306,6 +320,38 @@ class Schema {
 			KEY event (event),
 			KEY request_id (request_id),
 			KEY created_at (created_at)
+		) $charset_collate;";
+
+		require_once ABSPATH . 'wp-admin/includes/upgrade.php';
+		dbDelta( $sql );
+	}
+
+	/**
+	 * Create API tokens table
+	 *
+	 * Stores scoped API tokens issued to consumer sites for the data sharing API.
+	 * Only the SHA-256 hash of each token is stored; the plaintext is shown once
+	 * on creation and never persisted.
+	 *
+	 * @return void
+	 */
+	public static function create_api_tokens_table() {
+		global $wpdb;
+
+		$table_name      = self::get_api_tokens_table_name();
+		$charset_collate = $wpdb->get_charset_collate();
+
+		$sql = "CREATE TABLE $table_name (
+			id bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT,
+			label varchar(191) NOT NULL,
+			token_hash varchar(64) NOT NULL,
+			scopes text DEFAULT NULL,
+			created_at datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
+			last_used_at datetime DEFAULT NULL,
+			revoked_at datetime DEFAULT NULL,
+			PRIMARY KEY  (id),
+			UNIQUE KEY token_hash (token_hash),
+			KEY revoked_at (revoked_at)
 		) $charset_collate;";
 
 		require_once ABSPATH . 'wp-admin/includes/upgrade.php';
@@ -1035,6 +1081,21 @@ class Schema {
 	}
 
 	/**
+	 * Migrate database from v18.0 to v19.0
+	 *
+	 * Adds the API tokens table for the data sharing API.
+	 *
+	 * @return void
+	 */
+	public static function migrate_to_v19() {
+		$current_version = get_option( 'fair_payment_db_version', '1.0' );
+
+		if ( version_compare( $current_version, '19.0', '<' ) ) {
+			self::create_api_tokens_table();
+		}
+	}
+
+	/**
 	 * Drop database tables (used for uninstall)
 	 *
 	 * @return void
@@ -1048,6 +1109,11 @@ class Schema {
 		$budgets_table            = self::get_budgets_table_name();
 		$entry_transactions_table = self::get_entry_transactions_table_name();
 		$log_table                = self::get_log_table_name();
+		$api_tokens_table         = self::get_api_tokens_table_name();
+
+		// Drop API tokens table (standalone, no FK references).
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.DirectDatabaseQuery.SchemaChange
+		$wpdb->query( $wpdb->prepare( 'DROP TABLE IF EXISTS %i', $api_tokens_table ) );
 
 		// Drop log table (references transactions but only via informational FK, drop first).
 		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.DirectDatabaseQuery.SchemaChange
