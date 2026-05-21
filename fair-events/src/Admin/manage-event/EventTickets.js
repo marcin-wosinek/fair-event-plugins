@@ -354,6 +354,7 @@ export default function EventTickets({
 						: null,
 				seats_per_ticket: t.seats_per_ticket || 1,
 				invitation_only: t.invitation_only || false,
+				minimum_activities: t.minimum_activities || 0,
 				group_ids: t.group_ids || [],
 			})),
 			sale_periods: getEffectiveSalePeriods().map((p) => ({
@@ -486,6 +487,7 @@ export default function EventTickets({
 				capacity: null,
 				seats_per_ticket: 1,
 				invitation_only: false,
+				minimum_activities: 0,
 				group_ids: [],
 				sort_order: ticketTypes.length,
 			},
@@ -1283,6 +1285,14 @@ export default function EventTickets({
 															)}
 														</th>
 													)}
+													{options.length > 0 && (
+														<th>
+															{__(
+																'Min. activities',
+																'fair-events'
+															)}
+														</th>
+													)}
 													{salePeriods.map(
 														(period, pIndex) => {
 															const isContinuous =
@@ -1517,6 +1527,43 @@ export default function EventTickets({
 																				v
 																			)
 																		}
+																	/>
+																</td>
+															)}
+															{options.length >
+																0 && (
+																<td>
+																	<TextControl
+																		type="number"
+																		min="0"
+																		placeholder="0"
+																		value={String(
+																			type.minimum_activities ||
+																				0
+																		)}
+																		onChange={(
+																			v
+																		) =>
+																			updateTicketType(
+																				tIndex,
+																				'minimum_activities',
+																				v !==
+																					''
+																					? Math.max(
+																							0,
+																							parseInt(
+																								v,
+																								10
+																							) ||
+																								0
+																					  )
+																					: 0
+																			)
+																		}
+																		help={__(
+																			'Only raises the event-wide minimum for this ticket type. Leave 0 to inherit.',
+																			'fair-events'
+																		)}
 																	/>
 																</td>
 															)}

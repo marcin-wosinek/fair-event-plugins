@@ -540,7 +540,7 @@ class EventSignupController extends WP_REST_Controller {
 
 		$option_items = $this->load_valid_options( $event_date_id, $raw_option_ids );
 
-		$min_error = $this->validate_minimum_activities( $event_date_id, $option_items );
+		$min_error = $this->validate_minimum_activities( $event_date_id, $option_items, $ticket_type_id );
 		if ( is_wp_error( $min_error ) ) {
 			return $min_error;
 		}
@@ -763,11 +763,12 @@ class EventSignupController extends WP_REST_Controller {
 	 * Enforce the minimum-activities event setting.  When the event date has
 	 * no minimum configured (or no options at all), this is a no-op.
 	 *
-	 * @param int   $event_date_id Event date ID.
-	 * @param array $option_items  Validated TicketOption objects selected by the participant.
+	 * @param int      $event_date_id  Event date ID.
+	 * @param array    $option_items   Validated TicketOption objects selected by the participant.
+	 * @param int|null $ticket_type_id Selected ticket type ID, or null when none chosen.
 	 * @return WP_Error|null WP_Error when the minimum is not met, null otherwise.
 	 */
-	private function validate_minimum_activities( $event_date_id, $option_items ) {
+	private function validate_minimum_activities( $event_date_id, $option_items, $ticket_type_id = null ) {
 		if ( ! $event_date_id || ! class_exists( \FairEvents\Models\EventDateSetting::class ) ) {
 			return null;
 		}
@@ -781,6 +782,16 @@ class EventSignupController extends WP_REST_Controller {
 		}
 
 		$minimum = (int) \FairEvents\Models\EventDateSetting::get( $lookup_id, 'minimum_activities' );
+
+		// A ticket type can raise the requirement above the event-date global
+		// (issue #625). A per-type value below the global is ignored via max().
+		if ( $ticket_type_id && class_exists( \FairEvents\Models\TicketType::class ) ) {
+			$ticket_type = \FairEvents\Models\TicketType::get_by_id( $ticket_type_id );
+			if ( $ticket_type ) {
+				$minimum = max( $minimum, (int) $ticket_type->minimum_activities );
+			}
+		}
+
 		if ( $minimum <= 0 ) {
 			return null;
 		}
@@ -1726,7 +1737,7 @@ class EventSignupController extends WP_REST_Controller {
 		// Paid path takes over when a positive price resolves for this participant.
 		$option_items = $this->load_valid_options( $event_date_id, $raw_option_ids );
 
-		$min_error = $this->validate_minimum_activities( $event_date_id, $option_items );
+		$min_error = $this->validate_minimum_activities( $event_date_id, $option_items, $ticket_type_id );
 		if ( is_wp_error( $min_error ) ) {
 			return $min_error;
 		}

@@ -393,12 +393,13 @@ if ( $pricing_event_date_id && class_exists( \FairEvents\Models\TicketType::clas
 		}
 
 		$ticket_types_for_display[] = array(
-			'id'               => (int) $tt->id,
-			'name'             => $tt->name,
-			'price'            => $tt_price,
-			'seats_per_ticket' => (int) $tt->seats_per_ticket,
-			'invitation_only'  => (bool) $tt->invitation_only,
-			'is_full'          => $tt_is_full,
+			'id'                 => (int) $tt->id,
+			'name'               => $tt->name,
+			'price'              => $tt_price,
+			'seats_per_ticket'   => (int) $tt->seats_per_ticket,
+			'invitation_only'    => (bool) $tt->invitation_only,
+			'minimum_activities' => (int) $tt->minimum_activities,
+			'is_full'            => $tt_is_full,
 		);
 	}
 }
@@ -473,6 +474,27 @@ if ( $has_ticket_options && $pricing_event_date_id && class_exists( EventDateSet
 	$minimum_activities = (int) EventDateSetting::get( (int) $pricing_event_date_id, 'minimum_activities' );
 	$minimum_activities = max( 0, min( $minimum_activities, count( $ticket_options_for_display ) ) );
 }
+
+// A ticket type can raise the minimum above the event-date global (issue #625).
+// Determine whether any selectable type carries a higher requirement, and the
+// effective minimum for the type that's pre-selected on first paint (the first
+// not-sold-out type, mirroring the button price selection below). The frontend
+// recomputes this live as the buyer switches ticket type.
+$option_count            = count( $ticket_options_for_display );
+$any_ticket_type_min     = 0;
+$preselected_type_min    = 0;
+$preselected_type_chosen = false;
+if ( $has_ticket_options && $has_ticket_types ) {
+	foreach ( $ticket_types_for_display as $tt_for_min ) {
+		$tt_min              = (int) ( $tt_for_min['minimum_activities'] ?? 0 );
+		$any_ticket_type_min = max( $any_ticket_type_min, $tt_min );
+		if ( ! $preselected_type_chosen && empty( $tt_for_min['is_full'] ) ) {
+			$preselected_type_min    = $tt_min;
+			$preselected_type_chosen = true;
+		}
+	}
+}
+$initial_minimum_activities = min( $option_count, max( $minimum_activities, $preselected_type_min ) );
 
 // Read block attribute to control whether option prices are displayed.
 $show_option_prices = $attributes['showOptionPrices'] ?? true;
@@ -602,7 +624,7 @@ $render_ticket_types = static function () use ( $ticket_types_for_display, $has_
 			$classes .= ' fair-audience-ticket-type-full';
 		}
 		echo '<label class="' . esc_attr( $classes ) . '" for="' . $radio_id . '">';
-		echo '<input type="radio" name="ticket_type_id" id="' . $radio_id . '" value="' . (int) $tt['id'] . '" data-ticket-price="' . ( null !== $tt['price'] ? esc_attr( number_format( (float) $tt['price'], 2, '.', '' ) ) : '' ) . '"';
+		echo '<input type="radio" name="ticket_type_id" id="' . $radio_id . '" value="' . (int) $tt['id'] . '" data-ticket-price="' . ( null !== $tt['price'] ? esc_attr( number_format( (float) $tt['price'], 2, '.', '' ) ) : '' ) . '" data-min-activities="' . esc_attr( (string) ( $tt['minimum_activities'] ?? 0 ) ) . '"';
 		if ( $tt_is_full ) {
 			echo ' disabled';
 		} elseif ( ! $default_selected ) {
@@ -619,27 +641,35 @@ $render_ticket_types = static function () use ( $ticket_types_for_display, $has_
 /**
  * Render the ticket options checkbox fieldset. No-op when no options configured.
  */
-$render_ticket_options = static function () use ( $ticket_options_for_display, $has_ticket_options, $form_id, $show_option_prices, $minimum_activities ) {
+$render_ticket_options = static function () use ( $ticket_options_for_display, $has_ticket_options, $form_id, $show_option_prices, $minimum_activities, $any_ticket_type_min, $initial_minimum_activities ) {
 	if ( ! $has_ticket_options ) {
 		return;
 	}
 	echo '<fieldset class="fair-audience-ticket-options">';
 	echo '<legend>' . esc_html__( 'Select activities', 'fair-audience' ) . '</legend>';
-	if ( $minimum_activities > 0 ) {
-		printf(
-			'<p class="fair-audience-ticket-options-min-hint">%s</p>',
-			esc_html(
-				sprintf(
-					/* translators: %d: minimum number of activities required */
-					_n(
-						'Please select at least %d activity to sign up.',
-						'Please select at least %d activities to sign up.',
-						$minimum_activities,
-						'fair-audience'
-					),
-					$minimum_activities
-				)
+	// Render the hint whenever a minimum is possible — either the event-date
+	// global requires one, or a ticket type can raise it (issue #625). The
+	// element is always present so the frontend JS can rewrite/toggle it as the
+	// buyer switches ticket type; it starts hidden when the pre-selected type's
+	// effective minimum is 0.
+	if ( $minimum_activities > 0 || $any_ticket_type_min > 0 ) {
+		$hint_text = $initial_minimum_activities > 0
+			? sprintf(
+				/* translators: %d: minimum number of activities required */
+				_n(
+					'Please select at least %d activity to sign up.',
+					'Please select at least %d activities to sign up.',
+					$initial_minimum_activities,
+					'fair-audience'
+				),
+				$initial_minimum_activities
 			)
+			: '';
+		$hint_style = $initial_minimum_activities > 0 ? '' : ' style="display: none;"';
+		printf(
+			'<p class="fair-audience-ticket-options-min-hint"%s>%s</p>',
+			$hint_style, // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- static literal.
+			esc_html( $hint_text )
 		);
 	}
 	foreach ( $ticket_options_for_display as $opt ) {

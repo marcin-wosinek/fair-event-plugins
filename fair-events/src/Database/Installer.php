@@ -209,6 +209,11 @@ class Installer {
 			self::migrate_to_3_9_0();
 		}
 
+		// Run migration if upgrading from pre-3.10.0 (add minimum_activities to ticket_types).
+		if ( version_compare( $current_version, '3.10.0', '<' ) ) {
+			self::migrate_to_3_10_0();
+		}
+
 		// Update database version
 		Schema::update_db_version( Schema::DB_VERSION );
 	}
@@ -327,6 +332,10 @@ class Installer {
 
 			if ( version_compare( $current_version, '3.9.0', '<' ) ) {
 				self::migrate_to_3_9_0();
+			}
+
+			if ( version_compare( $current_version, '3.10.0', '<' ) ) {
+				self::migrate_to_3_10_0();
 			}
 
 			// Install/update tables
@@ -1282,6 +1291,33 @@ class Installer {
 			$wpdb->query(
 				$wpdb->prepare(
 					'ALTER TABLE %i ADD COLUMN derive_price_from_sale_period TINYINT(1) NOT NULL DEFAULT 0 AFTER capacity',
+					$table_name
+				)
+			);
+		}
+	}
+
+	/**
+	 * Migrate to version 3.10.0 - Add minimum_activities column to ticket_types table.
+	 *
+	 * @return void
+	 */
+	private static function migrate_to_3_10_0() {
+		global $wpdb;
+
+		$table_name = $wpdb->prefix . 'fair_events_ticket_types';
+
+		$column_exists = $wpdb->get_results(
+			$wpdb->prepare(
+				"SHOW COLUMNS FROM %i LIKE 'minimum_activities'",
+				$table_name
+			)
+		);
+
+		if ( empty( $column_exists ) ) {
+			$wpdb->query(
+				$wpdb->prepare(
+					'ALTER TABLE %i ADD COLUMN minimum_activities INT UNSIGNED NOT NULL DEFAULT 0 AFTER invitation_only',
 					$table_name
 				)
 			);

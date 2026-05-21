@@ -1,6 +1,6 @@
 import './style.css';
 import apiFetch from '@wordpress/api-fetch';
-import { __ } from '@wordpress/i18n';
+import { __, _n, sprintf } from '@wordpress/i18n';
 import {
 	extractErrorMessage,
 	showNotification,
@@ -146,19 +146,68 @@ const CSS_PREFIX = 'fair-audience-signup';
 	 * @param {HTMLElement} block The block element
 	 */
 	function updateMinActivitiesGate(block) {
-		const minActivities = parseInt(block.dataset.minActivities || '0', 10);
-		if (!minActivities) {
+		// Event-date global baseline.
+		const globalMin = parseInt(block.dataset.minActivities || '0', 10);
+
+		// A selected ticket type can raise the requirement (issue #625); a value
+		// below the global is ignored because we take the max.
+		const selectedTicketType = block.querySelector(
+			'input[name="ticket_type_id"]:checked'
+		);
+		const typeMin = selectedTicketType
+			? parseInt(selectedTicketType.dataset.minActivities || '0', 10)
+			: 0;
+
+		const optionInputs = block.querySelectorAll(
+			'input[name="ticket_option_ids[]"]'
+		);
+		// Cap at the number of options available so the requirement is never
+		// impossible to satisfy.
+		const effectiveMin = Math.min(
+			Math.max(globalMin, typeMin),
+			optionInputs.length
+		);
+
+		// Keep the hint paragraph in sync with the effective minimum.
+		const hint = block.querySelector(
+			'.fair-audience-ticket-options-min-hint'
+		);
+		if (hint) {
+			if (effectiveMin > 0) {
+				hint.textContent = sprintf(
+					/* translators: %d: minimum number of activities required */
+					_n(
+						'Please select at least %d activity to sign up.',
+						'Please select at least %d activities to sign up.',
+						effectiveMin,
+						'fair-audience'
+					),
+					effectiveMin
+				);
+				hint.style.display = '';
+			} else {
+				hint.style.display = 'none';
+			}
+		}
+
+		const buttons = block.querySelectorAll(
+			'.fair-audience-signup-button, .fair-audience-signup-submit-button'
+		);
+
+		if (!effectiveMin) {
+			// No minimum in effect: never leave a button disabled by this gate.
+			buttons.forEach(function (btn) {
+				btn.disabled = false;
+				btn.classList.remove('is-disabled');
+			});
 			return;
 		}
 
 		const checkedCount = block.querySelectorAll(
 			'input[name="ticket_option_ids[]"]:checked'
 		).length;
-		const meetsMin = checkedCount >= minActivities;
+		const meetsMin = checkedCount >= effectiveMin;
 
-		const buttons = block.querySelectorAll(
-			'.fair-audience-signup-button, .fair-audience-signup-submit-button'
-		);
 		buttons.forEach(function (btn) {
 			btn.disabled = !meetsMin;
 			btn.classList.toggle('is-disabled', !meetsMin);
@@ -238,6 +287,7 @@ const CSS_PREFIX = 'fair-audience-signup';
 		ticketTypeRadios.forEach(function (radio) {
 			radio.addEventListener('change', function () {
 				updateButtonTotal(block);
+				updateMinActivitiesGate(block);
 			});
 		});
 
