@@ -10,6 +10,7 @@ import {
 	Button,
 	SelectControl,
 } from '@wordpress/components';
+import { submissionToMarkdown } from '../utils/submission-markdown.js';
 
 function formatDate(dateString) {
 	if (!dateString) {
@@ -26,7 +27,7 @@ function AnswerDisplay({ answer }) {
 		return (
 			<div>
 				<a href={file_url} target="_blank" rel="noopener noreferrer">
-					{file_url.match(/\.(jpg|jpeg|png|gif|webp)$/i) ? (
+					{answer.is_image ? (
 						<img
 							src={file_url}
 							alt={answer.question_text}
@@ -169,6 +170,34 @@ export default function SubmissionDetail() {
 	const [submission, setSubmission] = useState(null);
 	const [isLoading, setIsLoading] = useState(true);
 	const [error, setError] = useState(null);
+	const [copyFeedback, setCopyFeedback] = useState(null);
+
+	const copyMarkdown = () => {
+		if (!navigator.clipboard) {
+			setCopyFeedback({
+				status: 'error',
+				message: __('Clipboard not available.', 'fair-audience'),
+			});
+			return;
+		}
+		navigator.clipboard
+			.writeText(submissionToMarkdown(submission))
+			.then(() => {
+				setCopyFeedback({
+					status: 'success',
+					message: __(
+						'Markdown copied to clipboard. Paste into Google Docs.',
+						'fair-audience'
+					),
+				});
+			})
+			.catch(() => {
+				setCopyFeedback({
+					status: 'error',
+					message: __('Failed to copy.', 'fair-audience'),
+				});
+			});
+	};
 
 	useEffect(() => {
 		if (!submissionId) {
@@ -215,9 +244,30 @@ export default function SubmissionDetail() {
 
 	return (
 		<div style={{ maxWidth: '800px', margin: '20px 0' }}>
-			<h1>
-				{submission.title || __('Form Submission', 'fair-audience')}
-			</h1>
+			<div
+				style={{
+					display: 'flex',
+					alignItems: 'center',
+					justifyContent: 'space-between',
+					gap: '16px',
+				}}
+			>
+				<h1>
+					{submission.title || __('Form Submission', 'fair-audience')}
+				</h1>
+				<Button variant="secondary" onClick={copyMarkdown}>
+					{__('Copy markdown', 'fair-audience')}
+				</Button>
+			</div>
+
+			{copyFeedback && (
+				<Notice
+					status={copyFeedback.status}
+					onRemove={() => setCopyFeedback(null)}
+				>
+					{copyFeedback.message}
+				</Notice>
+			)}
 
 			<Card style={{ marginBottom: '16px' }}>
 				<CardHeader>
