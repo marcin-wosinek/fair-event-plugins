@@ -46,13 +46,13 @@ fair-plugin-name/
 
 ## Required Files
 
-### Reference Plugin: fair-team
+### Reference Plugin: fair-audience
 
-The `fair-team` plugin provides a complete, minimal example of all required files. Use it as a template when creating new plugins.
+The `fair-audience` plugin contains every required file, so it is the reference used throughout this guide for what each file should look like. For a lighter starting structure you can copy `fair-platform` instead, but note it lacks the test-config files (`jest.config.js`, `playwright.config.js`, `__tests__/example.test.js`) — copy those from `fair-audience`.
 
 ### 1. Main Plugin File: `fair-plugin-name.php`
 
-**Reference**: `fair-team/fair-team.php`
+**Reference**: `fair-audience/fair-audience.php`
 
 **Key points:**
 - Version must match `package.json`
@@ -62,7 +62,7 @@ The `fair-team` plugin provides a complete, minimal example of all required file
 
 ### 2. package.json
 
-**Reference**: `fair-team/package.json`
+**Reference**: `fair-audience/package.json`
 
 **Key points:**
 - `"type": "module"` is required for ES modules
@@ -73,7 +73,7 @@ The `fair-team` plugin provides a complete, minimal example of all required file
 
 ### 3. composer.json
 
-**Reference**: `fair-team/composer.json`
+**Reference**: `fair-audience/composer.json`
 
 **Key points:**
 - PSR-4 autoloading: `FairPluginName\\` → `src/`
@@ -82,7 +82,7 @@ The `fair-team` plugin provides a complete, minimal example of all required file
 
 ### 4. webpack.config.cjs
 
-**Reference**: `fair-team/webpack.config.cjs`
+**Reference**: `fair-audience/webpack.config.cjs`
 
 **Key points:**
 - Extends `@wordpress/scripts` default configuration
@@ -93,14 +93,14 @@ The `fair-team` plugin provides a complete, minimal example of all required file
 ### 5. .gitignore and .distignore
 
 **References**:
-- `fair-team/.gitignore`
-- `fair-team/.distignore`
+- `fair-audience/.gitignore`
+- `fair-audience/.distignore`
 
 **Important**: Build artifacts (`build/`, `vendor/`) should be **included** in the distribution but **excluded** from git.
 
 ### 6. readme.txt (WordPress.org format)
 
-**Reference**: `fair-team/readme.txt`
+**Reference**: `fair-audience/readme.txt`
 
 **Key points:**
 - `Stable tag` must match version in `package.json` and main PHP file
@@ -109,7 +109,7 @@ The `fair-team` plugin provides a complete, minimal example of all required file
 
 ### 7. CHANGELOG.md
 
-**Reference**: `fair-team/CHANGELOG.md`
+**Reference**: `fair-audience/CHANGELOG.md`
 
 **Key points:**
 - Follow [Keep a Changelog](https://keepachangelog.com/en/1.0.0/) format
@@ -118,7 +118,7 @@ The `fair-team` plugin provides a complete, minimal example of all required file
 
 ### 8. src/Core/Plugin.php
 
-**Reference**: `fair-team/src/Core/Plugin.php`
+**Reference**: `fair-audience/src/Core/Plugin.php`
 
 **Key points:**
 - Singleton pattern for main plugin class
@@ -128,16 +128,16 @@ The `fair-team` plugin provides a complete, minimal example of all required file
 ### 9. Test Configuration Files
 
 **References**:
-- `fair-team/jest.config.js` - Jest configuration
-- `fair-team/__tests__/example.test.js` - Example test file
-- `fair-team/playwright.config.js` - Playwright configuration
+- `fair-audience/jest.config.js` - Jest configuration
+- `fair-audience/__tests__/example.test.js` - Example test file
+- `fair-audience/playwright.config.js` - Playwright configuration
 
 **Key points for Jest:**
 - Use `@wordpress/jest-preset-default` preset (included with `@wordpress/scripts`)
 - Set `setupFilesAfterEnv: []` (empty array, not referencing a setup file)
 - Configure `testMatch` to find test files in `__tests__/` directories
 - Add `testPathIgnorePatterns` to exclude `node_modules`, `vendor`, `e2e`
-- Create `__tests__/example.test.js` with a basic passing test (see `fair-rsvp` or `fair-user-import`)
+- Create `__tests__/example.test.js` with a basic passing test (see `fair-audience`)
 
 See [TESTING.md](./TESTING.md) for complete testing architecture.
 
@@ -165,7 +165,7 @@ Add plugin to:
 - Add `svn:tag:fair-plugin-name` script (after line ~46)
 - Update `svn:rm` script to include `fair-plugin-name/svn` (line ~48)
 
-**Example**: See the existing entries for `fair-team` in these sections.
+**Example**: See the existing entries for `fair-audience` in these sections.
 
 ### 2. GitHub CI Configuration
 
@@ -173,7 +173,7 @@ Add plugin to:
 
 Add `./fair-plugin-name/vendor` to composer cache paths (line ~27-42).
 
-**Example**: See `./fair-team/vendor` entry.
+**Example**: See `./fair-audience/vendor` entry.
 
 ### 3. Deployment Workflow (Optional)
 
@@ -181,7 +181,7 @@ Add `./fair-plugin-name/vendor` to composer cache paths (line ~27-42).
 
 Add plugin name to deployment list (line ~103) **only if** the plugin should be deployed to this environment.
 
-**Example**: See `fair-team` in the plugin list.
+**Example**: See `fair-audience` in the plugin list.
 
 ### 4. Docker Compose Configuration
 
@@ -191,7 +191,7 @@ Add plugin volume mount to **both** services:
 - `wordpress` service (line ~14-24)
 - `wpcli` service (line ~52-64)
 
-**Example**: See `./fair-team:/var/www/html/wp-content/plugins/fair-team` entries.
+**Example**: See `./fair-audience:/var/www/html/wp-content/plugins/fair-audience` entries.
 
 ### 5. Version Sync Script
 
@@ -199,7 +199,7 @@ Add plugin volume mount to **both** services:
 
 Add plugin configuration object to the `plugins` array (line ~20-81).
 
-**Example**: See `fair-team` configuration (lines ~81-86).
+**Example**: See `fair-audience` configuration (lines ~81-86).
 
 ### 6. Changelog Sync Script
 
@@ -207,7 +207,7 @@ Add plugin configuration object to the `plugins` array (line ~20-81).
 
 Add plugin configuration object to the `plugins` array (line ~20-56).
 
-**Example**: See `fair-team` configuration (lines ~51-55).
+**Example**: See `fair-audience` configuration (lines ~51-55).
 
 ## Build and Verification
 
@@ -252,7 +252,7 @@ The plugin uses WordPress's standard translation workflow with special handling 
 
 WordPress generates translation JSON hashes based on **source file paths** but loads them based on **build file paths**. The `webpack-bundle-output` plugin generates `build/map.json` to map source → build files, ensuring correct hashes.
 
-**Reference**: See `fair-team/webpack.config.cjs` for BundleOutputPlugin configuration.
+**Reference**: See `fair-audience/webpack.config.cjs` for BundleOutputPlugin configuration.
 
 ### Translation File Locations
 
@@ -305,9 +305,9 @@ Use this checklist when adding a new plugin:
 
 ### Plugin Files
 - [ ] Create plugin directory: `fair-plugin-name/`
-- [ ] Copy and adapt files from `fair-team/` reference plugin
-- [ ] Update all instances of "fair-team" to "fair-plugin-name"
-- [ ] Update all instances of "FairTeam" namespace to "FairPluginName"
+- [ ] Copy and adapt files from `fair-audience/` reference plugin
+- [ ] Update all instances of "fair-audience" to "fair-plugin-name"
+- [ ] Update all instances of "FairAudience" namespace to "FairPluginName"
 - [ ] Update plugin description and metadata
 - [ ] Set up directory structure (`src/`, `languages/`, `assets/`, `__tests__/`, `e2e/`)
 
@@ -336,7 +336,7 @@ Use this checklist when adding a new plugin:
 - [ ] Verify `build/languages/*.json` files are generated
 
 ### Testing
-- [ ] Create `__tests__/example.test.js` with basic passing test (copy from `fair-team`)
+- [ ] Create `__tests__/example.test.js` with basic passing test (copy from `fair-audience`)
 - [ ] Run `npm test --workspace=fair-plugin-name`
 - [ ] Verify test passes successfully
 
@@ -369,8 +369,8 @@ Use this checklist when adding a new plugin:
 **Problem**: JavaScript translations don't load (hash mismatch).
 
 **Solution**:
-1. Add `webpack-bundle-output` plugin to webpack config (see `fair-team/webpack.config.cjs`)
-2. Use `--use-map=build/map.json` in `makejson` script (see `fair-team/package.json`)
+1. Add `webpack-bundle-output` plugin to webpack config (see `fair-audience/webpack.config.cjs`)
+2. Use `--use-map=build/map.json` in `makejson` script (see `fair-audience/package.json`)
 3. Run `npm run build` after updating translations
 
 ### Missing Dependencies
@@ -402,4 +402,4 @@ Use this checklist when adding a new plugin:
 
 ---
 
-**Questions or issues?** Check the `fair-team` plugin for a complete reference implementation.
+**Questions or issues?** Check the `fair-audience` plugin for a complete reference implementation.

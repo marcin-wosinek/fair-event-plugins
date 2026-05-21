@@ -3,8 +3,7 @@
 This is a WordPress plugin collection called "Fair Event Plugins" for event
 organization with fair pricing models. It is a monorepo. npm workspaces:
 `fair-payment`, `fair-events`, `fair-audience`, `fair-platform`, and the shared
-`fair-events-shared` package (`fair-calendar-button` / `fair-timetable` /
-`fair-rsvp` also live here).
+`fair-events-shared` package.
 
 ## Reference Docs
 
@@ -104,7 +103,7 @@ Frontend:
   `@wordpress/components`; all data flows through `apiFetch`.
 - Layout: `src/Admin/{page-name}/` (entry `index.js` + component), controller in
   `src/API/`, built to `build/admin/{page-name}/`.
-- Canonical examples: **fair-rsvp** (most complete), fair-membership, fair-payment.
+- Canonical examples: **fair-audience** (most admin pages), fair-payment, fair-events.
 
 ### Frontend `viewScript`
 
@@ -112,7 +111,7 @@ Frontend:
 `document.readyState` and run immediately if not `'loading'`, otherwise wait for
 `DOMContentLoaded`. Relying on `DOMContentLoaded` alone fails under caching /
 deferred loading because the event may already have fired. Example:
-`fair-rsvp/src/blocks/rsvp-button/frontend.js`.
+`fair-events/src/blocks/calendar-button/frontend.js`.
 
 ### i18n — see [I18N_SETUP.md](./I18N_SETUP.md)
 
@@ -130,8 +129,8 @@ deferred loading because the event may already have fired. Example:
 
 ## Shared Package: fair-events-shared
 
-Private workspace package of shared JS utilities (used by fair-events,
-fair-calendar-button, fair-timetable). To consume: add
+Private workspace package of shared JS utilities used across the Fair Event
+plugins. To consume: add
 `"fair-events-shared": "*"` to the plugin's `dependencies`, export the utility
 from `fair-events-shared/src/index.js`, and import it
 `from 'fair-events-shared'`. Uses ES modules; tested with Jest + Babel.

@@ -1,13 +1,13 @@
 # Release Management with Changesets
 
-This project uses [Changesets](https://github.com/changesets/changesets) for independent versioning and releasing of each plugin (fair-payment, fair-calendar-button, fair-timetable).
+This project uses [Changesets](https://github.com/changesets/changesets) for independent versioning and releasing of each plugin (fair-payment, fair-events, fair-audience).
 
 ## 🎯 Overview
 
 Each plugin is versioned independently using semantic versioning:
 - `fair-payment@1.2.3`
-- `fair-calendar-button@2.0.1`
-- `fair-timetable@1.1.0`
+- `fair-events@2.0.1`
+- `fair-audience@1.1.0`
 
 Changes are tracked per-plugin and releases can be made for individual plugins or multiple plugins simultaneously.
 
@@ -56,8 +56,8 @@ npm run release
 
 Tags are automatically created in the format:
 - `fair-payment@1.2.3`
-- `fair-calendar-button@2.0.1`
-- `fair-timetable@1.1.0`
+- `fair-events@2.0.1`
+- `fair-audience@1.1.0`
 
 This allows you to easily track releases for each plugin individually.
 
@@ -73,14 +73,14 @@ This allows you to easily track releases for each plugin individually.
 
 ## 🔄 Example Workflow
 
-1. **Make changes** to `fair-calendar-button`
+1. **Make changes** to `fair-events`
 2. **Add changeset**: `npm run changeset:add`
-   - Select `fair-calendar-button`
+   - Select `fair-events`
    - Choose `minor` (new feature)
    - Write: "Add exception dates support for recurring events"
 3. **Commit and push** to `main`
 4. **GitHub Action** creates release PR
-5. **Merge PR** → Automatic tag creation: `fair-calendar-button@1.1.0`
+5. **Merge PR** → Automatic tag creation: `fair-events@1.1.0`
 
 ## ⚙️ WordPress Plugin Header Sync
 
@@ -89,21 +89,21 @@ The `sync-wp-versions` script automatically updates WordPress plugin headers:
 ```php
 // Before sync
 /*
-Plugin Name: Fair Calendar Button
+Plugin Name: Fair Events
 Version: 1.0.0
 */
 
 // After sync (when package.json shows 1.2.0)
 /*
-Plugin Name: Fair Calendar Button
+Plugin Name: Fair Events
 Version: 1.2.0  // ← Automatically updated!
 */
 ```
 
 ### Files Updated:
 - `fair-payment/fair-payment.php`
-- `fair-calendar-button/fair-calendar-button.php`
-- `fair-timetable/fair-timetable.php`
+- `fair-events/fair-events.php`
+- `fair-audience/fair-audience.php`
 
 The sync runs automatically when you use `npm run version-packages`.
 
