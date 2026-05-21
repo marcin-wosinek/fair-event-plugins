@@ -1,485 +1,145 @@
 ## Project Overview
 
 This is a WordPress plugin collection called "Fair Event Plugins" for event
-organization with fair pricing models.
+organization with fair pricing models. It is a monorepo. npm workspaces:
+`fair-payment`, `fair-events`, `fair-audience`, `fair-platform`, and the shared
+`fair-events-shared` package (`fair-calendar-button` / `fair-timetable` /
+`fair-rsvp` also live here).
 
-## Commits & PRs
+## Reference Docs
 
-**IMPORTANT**: Follow [COMMIT_GUIDE.md](./COMMIT_GUIDE.md) for commit messages
-and PR descriptions. Key rules: no `Co-Authored-By: Claude` trailer, no
-"Generated with Claude Code" footer in PR bodies, no tool/agent attribution
-anywhere in the permanent history.
+Detailed guides live next to this file. Load the relevant one **before** working
+in that area — this file only carries the always-true rules.
+
+| Topic | Doc |
+| --- | --- |
+| Commits & PR descriptions | [COMMIT_GUIDE.md](./COMMIT_GUIDE.md) |
+| Secure PHP patterns (DB, escaping, autoloading) | [PHP_PATTERNS.md](./PHP_PATTERNS.md) |
+| Adding a plugin to the monorepo | [ADDING_NEW_PLUGIN.md](./ADDING_NEW_PLUGIN.md) |
+| REST API — frontend | [REST_API_USAGE.md](./REST_API_USAGE.md) |
+| REST API — backend / security ⚠️ | [REST_API_BACKEND.md](./REST_API_BACKEND.md) |
+| React admin pages | [REACT_ADMIN_PATTERN.md](./REACT_ADMIN_PATTERN.md) |
+| Testing | [TESTING.md](./TESTING.md) |
+| i18n build setup (hash mapping) | [I18N_SETUP.md](./I18N_SETUP.md) |
+| Translation tooling (`npm run translation:*`) | [TRANSLATIONS.md](./TRANSLATIONS.md) |
+| Webpack config | [WEBPACK_CONFIG.md](./WEBPACK_CONFIG.md) |
+| Block creation | [BLOCK_CREATION.md](./BLOCK_CREATION.md) |
+| Deployment / releases | [DEPLOYMENT.md](./DEPLOYMENT.md), [RELEASES.md](./RELEASES.md) |
 
 ## Development Commands
 
-### Frontend Development
 ```bash
-cd fair-payment
-npm run start    # Start development server with hot reload
-npm run build    # Build production assets for blocks
-npm run format   # Format code
+# Per-plugin frontend (cd into the plugin first)
+npm run start            # Dev server with hot reload
+npm run build            # Build production assets
+
+# WordPress environment
+docker compose up                                   # WP :8080, MySQL, phpMyAdmin :8081
+docker compose --profile cli run wpcli wp --help    # WP-CLI
+
+# PHP quality (per plugin or from root)
+composer install
+vendor/bin/phpcs         # Sniff
+vendor/bin/phpcbf        # Auto-fix
 ```
 
-### WordPress Development Environment
-```bash
-docker compose up        # Start WordPress (localhost:8080), MySQL, and phpMyAdmin (localhost:8081)
-docker compose --profile cli run wpcli wp --help    # Run WP-CLI commands
-```
-
-### PHP Code Quality
-```bash
-cd fair-payment  # or fair-calendar-button or fair-schedule
-composer install         # Install PHP dependencies
-vendor/bin/phpcs        # Run PHP code sniffer (if configured)
-```
-
-### Code Quality Automation
-**For Claude Code**: Automatically run formatting and building after making code changes:
-- Run `npm run format` after code changes to ensure consistent formatting
-- Run `npm run build` in the affected plugin directory after changes to JavaScript/CSS files
-
-### Code Formatter Ignore Patterns
-The following directories are automatically excluded from code formatting:
-- `**/svn/` - WordPress.org SVN repository copies (excluded in `.prettierignore` and `phpcs.xml`)
-- `**/build/` - Built assets
-- `**/vendor/` - PHP dependencies
-- `**/node_modules/` - JavaScript dependencies
-
-**Configuration files**:
-- `.prettierignore` - Excludes directories from JavaScript/CSS formatting (Prettier)
-- `phpcs.xml` - Excludes directories from PHP formatting (PHP_CodeSniffer)
-
-These ignore patterns ensure that only source files are formatted, not generated files or SVN copies.
-
-## Architecture
-
-### PHP Architecture
-- Uses PHP 8.0+ with PSR-4 autoloading standards
-- Namespace: `FairPayment` with sub-namespaces for components
-- WordPress hooks: `init` for block registration, `admin_menu` for admin interface
-
-### Development Environment
-- Docker Compose setup with WordPress, MySQL, and phpMyAdmin
-- Plugin mounted directly into WordPress plugins directory
-- WP-CLI available via Docker profile for WordPress management
-
-### PHP Best Practices
-
-**IMPORTANT**: Follow secure PHP coding patterns documented in [PHP_PATTERNS.md](./PHP_PATTERNS.md).
-
-**Key patterns include:**
-- **Database queries**: Use `wpdb::prepare()` with `%i` for table/column names, `%s`/`%d`/`%f` for values
-- **Security**: Prevent direct file access, verify nonces, sanitize input, escape output
-- **PSR-4 autoloading**: Match namespace casing to directory structure (case-sensitive on Linux)
-
-See [PHP_PATTERNS.md](./PHP_PATTERNS.md) for complete examples and anti-patterns to avoid.
-
-#### WordPress Admin Menus - PHP 8.1+ Compatibility
-
-**Hidden Menu Pages**: Use empty string `''` instead of `null` for the parent slug parameter:
-
-```php
-// ❌ WRONG - Causes PHP 8.1+ deprecation warnings
-add_submenu_page(
-    null,  // Triggers strpos(): Passing null to parameter #1 deprecation
-    __( 'Hidden Page', 'plugin-name' ),
-    __( 'Hidden Page', 'plugin-name' ),
-    'manage_options',
-    'plugin-name-hidden',
-    array( $this, 'render_page' )
-);
-
-// ✅ CORRECT - PHP 8.1+ compatible
-add_submenu_page(
-    '',  // Empty string hides page from menu without deprecation warnings
-    __( 'Hidden Page', 'plugin-name' ),
-    __( 'Hidden Page', 'plugin-name' ),
-    'manage_options',
-    'plugin-name-hidden',
-    array( $this, 'render_page' )
-);
-```
-
-**Why**: WordPress passes the parent slug through `wp_normalize_path()` which uses `strpos()` and `str_replace()`. In PHP 8.1+, these functions reject `null` values, causing deprecation warnings. Empty string achieves the same result (hidden page) without warnings.
-
-## Key Integration Points
-
-- Block registration happens in `fair-calendar-button.php:register_simple_payment_block()`
-- Admin page registered via `FairPayment\Admin\register_admin_menu()`
-- Frontend rendering handled by `FairPayment\render_simple_payment_block()`
-- Block editor scripts built from `src/blocks/simple-payment/index.js` to `build/index.js`
-
-## Adding New Plugins to the Monorepo
-
-**IMPORTANT**: For complete instructions on adding a new plugin to the monorepo, see [ADDING_NEW_PLUGIN.md](./ADDING_NEW_PLUGIN.md).
-
-The guide covers:
-- Complete directory structure and required files
-- Configuration templates (package.json, composer.json, webpack, etc.)
-- Root monorepo updates (package.json, compose.yml, CI, sync script)
-- Translation setup with build/map.json
-- Testing configuration
-- Versioning and WordPress.org deployment workflow
-- Comprehensive checklist and common pitfalls
-
-**Quick reference** - files to update in monorepo root:
-1. `/package.json` - Add to workspaces, scripts (start, format:php, dist-archive, svn:tag, svn:rm)
-2. `/.github/workflows/php-ci.yml` - Add vendor cache path
-3. `/.github/workflows/deploy-acroyoga.yml` - Add to deployment plugin list (if applicable)
-4. `/compose.yml` - Add plugin volume mounts (wordpress and wpcli services)
-5. `/scripts/sync-wp-versions.js` - Add plugin configuration
-6. `/scripts/sync-changelog.js` - Add plugin configuration
-
-## Shared Code Package
-
-### fair-events-shared
-A workspace package containing shared JavaScript utilities used across multiple Fair Event plugins:
-- **fair-events**: Event post type and blocks
-- **fair-calendar-button**: Calendar button block
-- **fair-timetable**: Event timetable functionality
-
-**Location**: `fair-events-shared/`
-**Type**: Private workspace package (not published)
-**Usage**: Add `"fair-events-shared": "*"` to plugin's `dependencies` in package.json
-
-**Structure**:
-- `src/index.js` - Main entry point
-- `__tests__/` - Jest test files
-- Uses ES modules (`"type": "module"`)
-- Configured with Jest + Babel for testing
-
-**Adding utilities**:
-1. Create utility file in `src/`
-2. Export from `src/index.js`
-3. Import in consuming plugins: `import { utility } from 'fair-events-shared'`
-
-## Translation (i18n) Setup
-
-### The Problem
-WordPress generates translation JSON files with MD5 hashes based on source file paths (`src/blocks/*/editor.js`), but loads them based on build file paths (`build/blocks/*/editor.js`). This causes hash mismatch and translations fail to load.
-
-### Solution: Official WordPress --use-map Approach
-
-**Reference**: [WP-CLI i18n make-json documentation](https://developer.wordpress.org/cli/commands/i18n/make-json/)
-
-#### 1. Install webpack-bundle-output Plugin
-```bash
-npm install --save-dev webpack-bundle-output
-```
-
-#### 2. Update webpack.config.cjs
-```javascript
-const BundleOutputPlugin = require('webpack-bundle-output');
-
-module.exports = {
-  ...defaultConfig,
-  plugins: [
-    ...defaultConfig.plugins,
-    new BundleOutputPlugin({
-      cwd: process.cwd(),
-      output: 'map.json',
-    }),
-  ],
-};
-```
-
-This generates `build/map.json` mapping source files to build files.
-
-#### 3. Update package.json Scripts
-```json
-{
-  "makepot": "wp i18n make-pot . languages/plugin-name.pot --exclude=node_modules,vendor,tests,build",
-  "makejson": "wp i18n make-json languages ./build/languages --domain=plugin-name --pretty-print --no-purge --use-map=build/map.json",
-  "makemo": "wp i18n make-mo languages/",
-  "updatepo": "wp i18n update-po languages/plugin-name.pot languages/"
-}
-```
-
-Key change: Add `--use-map=build/map.json` to makejson script.
-
-#### 4. Set Translation Paths in PHP
-```php
-// In BlockHooks.php or similar
-wp_set_script_translations(
-    'plugin-name-block-name-editor-script',
-    'plugin-name',
-    dirname( __DIR__, 2 ) . '/build/languages'  // Note: build/languages for JSON
-);
-```
-
-**Important**:
-- PHP `.mo` files: `languages/`
-- JavaScript `.json` files: `build/languages/`
-
-#### Translation Workflow
-```bash
-npm run makepot     # Generate .pot from source
-npm run updatepo    # Update .po files from .pot
-# Translate .po files (manually or with tools)
-npm run makemo      # Generate .mo files (PHP)
-npm run build       # Builds JS and runs makejson (generates JSON with correct hashes)
-```
-
-#### `load_plugin_textdomain()` Required for Bundled Translations
-
-**Important**: `load_plugin_textdomain()` **IS REQUIRED** to load `.mo` files bundled in the plugin's own `languages/` directory. WordPress only auto-loads translations from `wp-content/languages/plugins/` (downloaded from translate.wordpress.org).
-
-**Pattern** (add in Plugin::init or equivalent):
-```php
-load_plugin_textdomain( 'fair-audience', false, 'fair-audience/languages' );
-```
-
-**For this project:**
-- All plugins call `load_plugin_textdomain()` in their `Plugin::init()` method
-- PHP `.mo` files are in the plugin's `languages/` directory
-- JavaScript translations use `wp_set_script_translations()` pointing to `build/languages/`
-
-**Reference**: [WordPress Plugin Internationalization Handbook](https://developer.wordpress.org/plugins/internationalization/how-to-internationalize-your-plugin/#loading-text-domain)
-
-- Don't use php templates.
-
-## Frontend JavaScript Best Practices
-
-### Defensive DOM Ready Pattern
-
-When using `viewScript` in block.json for frontend JavaScript, WordPress loads scripts after block markup is rendered. However, with caching plugins or deferred script loading, the DOM might already be ready when the script executes.
-
-**Problem**: Using only `DOMContentLoaded` event listener fails if the script loads after DOM is ready (the event has already fired).
-
-**Solution**: Use a defensive pattern that handles both scenarios:
-
-```javascript
-(function () {
-	'use strict';
-
-	// Defensive: handle both scenarios (DOM loading or already loaded)
-	if (document.readyState === 'loading') {
-		document.addEventListener('DOMContentLoaded', initializeFunction);
-	} else {
-		initializeFunction();
-	}
-
-	function initializeFunction() {
-		// Your initialization code here
-	}
-})();
-```
-
-**How it works**:
-- Checks `document.readyState` to determine if DOM is still loading
-- If loading: waits for `DOMContentLoaded` event
-- If already loaded ('interactive' or 'complete'): executes immediately
-
-**When to use**: All `viewScript` files that need to manipulate the DOM or attach event handlers to block elements.
-
-**Example**: See `fair-rsvp/src/blocks/rsvp-button/frontend.js`
-
-## WordPress REST API Integration
-
-**IMPORTANT**: When implementing WordPress REST API functionality, you MUST follow the guidelines documented in:
-- **Frontend**: [REST_API_USAGE.md](./REST_API_USAGE.md) - JavaScript/Frontend implementation
-- **Backend**: [REST_API_BACKEND.md](./REST_API_BACKEND.md) - PHP/Security standards ⚠️ **CRITICAL**
-
-### Quick Reference - Frontend
-
-**Always use `apiFetch()` for WordPress REST APIs:**
-
-```javascript
-import apiFetch from '@wordpress/api-fetch';
-
-// Use hardcoded paths - they are preferred
-const data = await apiFetch({
-    path: '/plugin-name/v1/endpoint',
-    method: 'POST',
-    data: { key: 'value' },
-});
-```
-
-**Key Requirements:**
-- ✅ Use `@wordpress/api-fetch` for all WordPress REST API calls
-- ✅ Use hardcoded paths (e.g., `/fair-payment/v1/payments`)
-- ✅ Always start paths with `/`
-- ✅ Add viewScript to webpack config entries
-- ✅ Register blocks from `build/` directory, not `src/`
-- ❌ Never use raw `fetch()` for WordPress REST APIs
-- ❌ Never use dynamic URL construction with `rest_url()`
-
-**Complete Documentation:**
-- Implementation patterns: See [REST_API_USAGE.md#best-practices](./REST_API_USAGE.md#best-practices-for-wordpress-rest-api-calls)
-- Testing strategy: See [REST_API_USAGE.md#testing-strategy](./REST_API_USAGE.md#testing-strategy-for-rest-api-calls)
-- Error handling: See [REST_API_USAGE.md#error-handling](./REST_API_USAGE.md#best-practices-for-wordpress-rest-api-calls)
-
-### Quick Reference - Backend (PHP)
-
-**WordPress handles nonces AUTOMATICALLY - never verify manually:**
-
-```php
-// ❌ WRONG - Do NOT manually verify nonces
-public function create_item( $request ) {
-    if ( ! wp_verify_nonce( ... ) ) {  // ❌ NEVER DO THIS
-        return new WP_Error( ... );
-    }
-}
-
-// ✅ CORRECT - WordPress verifies nonce automatically, just check permissions
-public function create_item_permissions_check( $request ) {
-    return is_user_logged_in();  // ✅ This is enough
-}
-```
-
-**NEVER use `__return_true` for authenticated endpoints:**
-
-```php
-// ❌ WRONG - Security vulnerability for authenticated operations
-'permission_callback' => '__return_true'
-
-// ✅ CORRECT - Require logged in user
-'permission_callback' => 'is_user_logged_in'
-
-// ✅ CORRECT - Require admin capability
-'permission_callback' => function() {
-    return current_user_can( 'manage_options' );
-}
-
-// ✅ OK - For truly public endpoints (webhooks, anonymous forms)
-'permission_callback' => '__return_true'  // Must document why
-```
-
-**Always extend `WP_REST_Controller`** and implement proper permission callbacks.
-
-See [REST_API_BACKEND.md](./REST_API_BACKEND.md) for complete security standards and templates.
-
-### Standard Directory Structure
-
-**ALL plugins MUST use `src/API/` (uppercase "API") for REST API controllers:**
-
-```
-fair-plugin-name/
-├── src/
-│   └── API/                           # REST API directory (uppercase "API")
-│       ├── PluginNameController.php   # Main resource controller
-│       └── OtherController.php        # Additional controllers
-```
-
-**Why uppercase "API"?**
-- Case sensitivity: Linux (production) is case-sensitive, macOS (development) is not
-- PSR-4 autoloading: Clear mapping between namespace `PluginName\API` and directory `src/API/`
-- Common convention: Uppercase acronyms in namespaces
-
-**Registration pattern:**
-
-```php
-<?php
-// In src/Core/Plugin.php
-
-namespace FairPluginName\Core;
-
-use FairPluginName\API\PluginNameController;
-
-class Plugin {
-    public function __construct() {
-        add_action( 'rest_api_init', array( $this, 'register_api_endpoints' ) );
-    }
-
-    public function register_api_endpoints() {
-        $controller = new PluginNameController();
-        $controller->register_routes();
-    }
-}
-```
-
-See [REST_API_BACKEND.md#file-organization-and-project-structure](./REST_API_BACKEND.md#file-organization-and-project-structure) for complete templates.
-
-### Implementation Checklist
-
-When adding a new REST API integration:
-
-1. **Backend (PHP)** - See [REST_API_BACKEND.md](./REST_API_BACKEND.md):
-   - [ ] Create controller in `src/API/` directory (uppercase "API")
-   - [ ] Extend `WP_REST_Controller` base class
-   - [ ] Register routes in `rest_api_init` hook
-   - [ ] **CRITICAL**: Add proper permission callbacks (NEVER `__return_true` for authenticated endpoints)
-   - [ ] Validate and sanitize all inputs
-   - [ ] Return proper HTTP status codes (401, 403, 404, 500)
-
-2. **Frontend (JavaScript)** - See [REST_API_USAGE.md](./REST_API_USAGE.md):
-   - [ ] Import `apiFetch` from `@wordpress/api-fetch`
-   - [ ] Use hardcoded path starting with `/`
-   - [ ] Add to webpack config if viewScript
-   - [ ] Handle errors with nested message extraction
-   - [ ] Show loading states during requests
-
-3. **Testing** (see REST_API_USAGE.md for details):
-   - [ ] PHP integration tests for endpoints
-   - [ ] Frontend unit tests for error handling
-   - [ ] E2E tests for critical flows (optional)
-
-**Why apiFetch()?**
-- Automatically handles pretty vs plain permalinks
-- Includes WordPress nonce authentication
-- Standardized error handling
-- No manual URL construction needed
-
-## React Admin Pages Pattern
-
-**IMPORTANT**: All admin pages should be built with React and use REST API for data management. Follow the guidelines documented in [REACT_ADMIN_PATTERN.md](./REACT_ADMIN_PATTERN.md).
-
-### Quick Reference
-
-**Standard Architecture**:
-1. **PHP**: Admin menu registration + page wrapper (renders `<div id="root">`)
-2. **React**: Admin component using `@wordpress/components`
-3. **REST API**: Backend controller extending `WP_REST_Controller`
-4. **Communication**: `apiFetch` for all API calls
-
-**Directory Structure**:
-```
-plugin-name/
-├── src/
-│   ├── Admin/
-│   │   ├── AdminHooks.php           # Menu + script enqueue
-│   │   ├── PageNamePage.php         # PHP wrapper
-│   │   └── page-name/
-│   │       ├── index.js             # React entry point
-│   │       └── PageName.js          # React component
-│   └── API/
-│       ├── RestHooks.php            # REST registration
-│       └── ResourceController.php   # REST controller
-└── build/admin/page-name/           # Built files
-```
-
-**Example Implementations**:
-- **fair-rsvp**: Events List, Invitations, Attendance (most complete)
-- **fair-membership**: Membership Matrix
-- **fair-payment**: Settings Page
-
-See [REACT_ADMIN_PATTERN.md](./REACT_ADMIN_PATTERN.md) for complete templates and best practices.
-
-- Make sure to pay attention to case in file & folder names. I'm programming on MacOs (that is case insensitive), but I'm building at Linux (case sensitive system)
-
-## Testing Architecture
-
-**IMPORTANT**: This project follows a unified testing architecture documented in [TESTING.md](./TESTING.md).
-
-### Quick Reference
-
-**Test Types and Locations**:
-- **Unit Tests**: `src/**/__tests__/*.test.js` - Jest for utilities and functions
-- **Component Tests**: `src/**/components/__tests__/*.test.jsx` - Jest + React Testing Library
-- **API Tests**: `src/API/__tests__/*.api.spec.js` - Playwright for REST endpoints
-- **E2E Tests**: `e2e/**/*.spec.js` - Playwright for user flows
-
-**Running Tests**:
-```bash
-npm test              # Run all tests
-npm run test:js       # Jest (unit + component)
-npm run test:api      # Playwright API tests
-npm run test:e2e      # Playwright E2E tests
-```
-
-**Complete Documentation**: See [TESTING.md](./TESTING.md) for:
-- Directory structure and naming conventions
-- Configuration templates (jest.config.js, playwright.config.js)
-- Test discovery rules and best practices
-- Migration guide for existing plugins
-- Rollout strategy
+## Formatting & Build
+
+- **Formatting is automatic.** A PostToolUse hook
+  (`.claude/hooks/format-edited-file.sh`, wired in `.claude/settings.json`)
+  runs `wp-scripts format` (JS/CSS/JSON) or `phpcbf` (PHP) on each file you
+  edit. Do **not** run `npm run format` manually after edits.
+- **Build is not automatic** (it is slow). After changing JS/CSS, run
+  `npm run build` in the affected plugin so generated assets land before
+  committing.
+- Formatters ignore `**/svn/`, `**/build/`, `**/vendor/`, `**/node_modules/`
+  (see `.prettierignore` and `phpcs.xml`).
+
+## Critical Rules
+
+These are cross-cutting and must never be violated. Each links to the doc with
+full examples.
+
+### Case sensitivity
+
+macOS dev is case-insensitive; the Linux build is **case-sensitive**. Match
+namespace casing to directory casing exactly, and watch file/folder name case.
+
+### PHP / WordPress — see [PHP_PATTERNS.md](./PHP_PATTERNS.md)
+
+- PHP 8.0+, PSR-4 autoloading, namespace `FairPayment` (and per-plugin equivalents).
+- DB queries: `wpdb::prepare()` with `%i` for table/column names, `%s`/`%d`/`%f`
+  for values.
+- Always prevent direct file access, sanitize input, escape output.
+- Hidden admin pages: pass `''` (not `null`) as the parent slug to
+  `add_submenu_page()`. `null` triggers PHP 8.1+ deprecation warnings because
+  WordPress runs the slug through `wp_normalize_path()` (`strpos`/`str_replace`).
+- **Don't use PHP templates.**
+
+### REST API — see [REST_API_BACKEND.md](./REST_API_BACKEND.md) ⚠️ & [REST_API_USAGE.md](./REST_API_USAGE.md)
+
+Backend:
+
+- Controllers extend `WP_REST_Controller` and live in `src/API/` (uppercase
+  "API"). Register routes on `rest_api_init`.
+- **Never verify nonces manually** — WordPress does it automatically for
+  `apiFetch`. Implement `*_permissions_check` instead.
+- **Never use `__return_true` for authenticated endpoints.** Use
+  `is_user_logged_in` or a `current_user_can(...)` check. `__return_true` is
+  only for genuinely public endpoints (webhooks, anonymous forms), with a
+  comment saying why.
+- Validate/sanitize all input; return proper status codes (401/403/404/500).
+
+Frontend:
+
+- Always use `apiFetch()` from `@wordpress/api-fetch` with **hardcoded paths**
+  starting with `/` (e.g. `/fair-payment/v1/payments`). Never raw `fetch()`,
+  never `rest_url()` URL construction.
+- Register blocks from `build/`, not `src/`. Add `viewScript` files to the
+  webpack entries.
+
+### React admin pages — see [REACT_ADMIN_PATTERN.md](./REACT_ADMIN_PATTERN.md)
+
+- PHP registers the menu and renders `<div id="root">`; React uses
+  `@wordpress/components`; all data flows through `apiFetch`.
+- Layout: `src/Admin/{page-name}/` (entry `index.js` + component), controller in
+  `src/API/`, built to `build/admin/{page-name}/`.
+- Canonical examples: **fair-rsvp** (most complete), fair-membership, fair-payment.
+
+### Frontend `viewScript`
+
+`viewScript` files must use the defensive DOM-ready pattern: check
+`document.readyState` and run immediately if not `'loading'`, otherwise wait for
+`DOMContentLoaded`. Relying on `DOMContentLoaded` alone fails under caching /
+deferred loading because the event may already have fired. Example:
+`fair-rsvp/src/blocks/rsvp-button/frontend.js`.
+
+### i18n — see [I18N_SETUP.md](./I18N_SETUP.md)
+
+- PHP `.mo` files live in `languages/`; JS `.json` files in `build/languages/`.
+  `wp_set_script_translations()` must point at `build/languages/`.
+- Every plugin calls `load_plugin_textdomain()` in `Plugin::init()` — required
+  to load the bundled `.mo` files.
+
+### Testing — see [TESTING.md](./TESTING.md)
+
+- Unit: `src/**/__tests__/*.test.js` (Jest). Component: `*.test.jsx` (Jest +
+  RTL). API: `src/API/__tests__/*.api.spec.js` (Playwright). E2E:
+  `e2e/**/*.spec.js` (Playwright).
+- Run: `npm test` (all), `npm run test:js`, `npm run test:api`, `npm run test:e2e`.
+
+## Shared Package: fair-events-shared
+
+Private workspace package of shared JS utilities (used by fair-events,
+fair-calendar-button, fair-timetable). To consume: add
+`"fair-events-shared": "*"` to the plugin's `dependencies`, export the utility
+from `fair-events-shared/src/index.js`, and import it
+`from 'fair-events-shared'`. Uses ES modules; tested with Jest + Babel.
+
+## Adding a New Plugin
+
+Follow [ADDING_NEW_PLUGIN.md](./ADDING_NEW_PLUGIN.md). Root files to update:
+`package.json` (workspaces + scripts), `.github/workflows/php-ci.yml` (vendor
+cache), `.github/workflows/deploy-acroyoga.yml` (deploy list, if applicable),
+`compose.yml` (volume mounts), `scripts/sync-wp-versions.js`,
+`scripts/sync-changelog.js`.
