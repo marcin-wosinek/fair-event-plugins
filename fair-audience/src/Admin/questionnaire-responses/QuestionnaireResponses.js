@@ -13,6 +13,7 @@ import {
 	Notice,
 } from '@wordpress/components';
 import { DataViews } from '@wordpress/dataviews';
+import { submissionToMarkdown } from '../utils/submission-markdown.js';
 
 const DEFAULT_VIEW = {
 	type: 'table',
@@ -397,9 +398,6 @@ export default function QuestionnaireResponses() {
 		const exportedLabel = __('Exported', 'fair-audience');
 		const responsesLabel = __('Responses', 'fair-audience');
 		const adminLinkLabel = __('Admin link', 'fair-audience');
-		const submittedLabel = __('Submitted', 'fair-audience');
-
-		const adminBase = `${window.location.origin}${window.location.pathname}`;
 
 		const today = new Date().toISOString().split('T')[0];
 
@@ -412,41 +410,9 @@ export default function QuestionnaireResponses() {
 		lines.push('');
 
 		responses.forEach((response) => {
-			const respondent =
-				response.participant_name ||
-				response.participant_email ||
-				`#${response.id}`;
-
 			lines.push('---');
 			lines.push('');
-			if (response.participant_id) {
-				const participantUrl = `${adminBase}?page=fair-audience-participant-detail&participant_id=${response.participant_id}`;
-				lines.push(`## [${respondent}](${participantUrl})`);
-			} else {
-				lines.push(`## ${respondent}`);
-			}
-			lines.push('');
-			if (response.created_at) {
-				lines.push(`_${submittedLabel} ${response.created_at}_`);
-				lines.push('');
-			}
-
-			(response.answers || []).forEach((answer) => {
-				lines.push(`### ${answer.question_text}`);
-				lines.push('');
-
-				if (answer.file_url) {
-					const alt = answer.question_text || '';
-					if (answer.is_image) {
-						lines.push(`![${alt}](${answer.file_url})`);
-					} else {
-						lines.push(`[${alt}](${answer.file_url})`);
-					}
-				} else {
-					lines.push(answer.answer_value || '');
-				}
-				lines.push('');
-			});
+			lines.push(submissionToMarkdown(response));
 		});
 
 		return lines.join('\n');
