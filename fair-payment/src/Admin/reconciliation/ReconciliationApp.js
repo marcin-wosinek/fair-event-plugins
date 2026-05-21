@@ -17,6 +17,11 @@ import {
 	TextControl,
 } from '@wordpress/components';
 
+/**
+ * Internal dependencies
+ */
+import SettlementImportModal from './components/SettlementImportModal';
+
 const formatAmount = (amount, currency = 'EUR') => {
 	return new Intl.NumberFormat('en-US', {
 		style: 'currency',
@@ -46,6 +51,7 @@ const ReconciliationApp = () => {
 	const [descriptionFilter, setDescriptionFilter] = useState(
 		'trf. stichting mollie payments'
 	);
+	const [showSettlementModal, setShowSettlementModal] = useState(false);
 
 	const filteredUnmatchedEntries = unmatchedEntries.filter((entry) => {
 		if (!descriptionFilter) return true;
@@ -204,7 +210,31 @@ const ReconciliationApp = () => {
 
 	return (
 		<div className="wrap">
-			<h1>{__('Reconciliation', 'fair-payment')}</h1>
+			<HStack justify="space-between" alignment="center">
+				<h1>{__('Reconciliation', 'fair-payment')}</h1>
+				<Button
+					variant="secondary"
+					onClick={() => setShowSettlementModal(true)}
+				>
+					{__('Import settlement CSV', 'fair-payment')}
+				</Button>
+			</HStack>
+
+			{showSettlementModal && (
+				<SettlementImportModal
+					onImport={() => {
+						setShowSettlementModal(false);
+						setSuccess(
+							__(
+								'Settlement matched successfully.',
+								'fair-payment'
+							)
+						);
+						loadData();
+					}}
+					onCancel={() => setShowSettlementModal(false)}
+				/>
+			)}
 
 			{error && (
 				<Notice
