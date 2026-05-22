@@ -126,6 +126,12 @@ deferred loading because the event may already have fired. Example:
   RTL). API: `src/API/__tests__/*.api.spec.js` (Playwright). E2E:
   `e2e/**/*.spec.js` (Playwright).
 - Run: `npm test` (all), `npm run test:js`, `npm run test:api`, `npm run test:e2e`.
+- To verify live-WordPress behavior (rendered block output, hook side-effects,
+  DB/repo calls) without a permanent test, use the **WP-CLI `eval-file` manual
+  check** recipe in [TESTING.md](./TESTING.md#manual-integration-checks-wp-cli-eval-file).
+  Copy a `.tmp-` script into a mounted plugin dir, run it via the `wpcli`
+  service, then delete it. **Use absolute paths — never `cd … && cp/rm`**, which
+  forces an approval prompt every run.
 
 ## Shared Package: fair-events-shared
 

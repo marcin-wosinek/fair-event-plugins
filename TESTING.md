@@ -171,6 +171,54 @@ fair-{plugin-name}/
 - Capture specific states for documentation
 - Save to `assets/` directory
 
+### Manual Integration Checks (WP-CLI `eval-file`)
+
+**Purpose**: One-off verification of behavior that needs a fully bootstrapped
+WordPress (DB, plugins, hooks loaded) but isn't worth a permanent test — e.g.
+server-rendered block output, hook side-effects, repository/model calls against
+real tables.
+
+**Runner**: WP-CLI inside the Docker container (`wpcli` service)
+**Lifetime**: Throwaway — written, run, and deleted in the same step. Never
+committed.
+
+**How it works**: `compose.yml` mounts each plugin dir into the container at
+`wp-content/plugins/<plugin>/`. A loose file at the repo root is **not**
+mounted, so a scratch script must be copied *into a mounted plugin dir* to be
+visible to `wp eval-file`, then removed afterward.
+
+**Recipe** (assumes the repo root is
+`/Users/marcinwosinek/workspace/fair-event-plugins`; adjust to your checkout):
+
+```bash
+# 1. Write the scratch script at the repo root (a real WordPress bootstrap is
+#    available; assert PASS/FAIL and clean up its own test data).
+#    e.g. /Users/.../fair-event-plugins/.tmp-check.php
+
+# 2. Copy it into the mounted plugin dir — use ABSOLUTE paths, never `cd`.
+cp /Users/marcinwosinek/workspace/fair-event-plugins/.tmp-check.php \
+   /Users/marcinwosinek/workspace/fair-event-plugins/fair-audience/.tmp-check.php
+
+# 3. Run it inside the container (path is container-relative here).
+docker compose --profile cli run --rm wpcli \
+  wp eval-file wp-content/plugins/fair-audience/.tmp-check.php 2>&1 | grep -E "PASS|FAIL|done"
+
+# 4. Remove both copies — again ABSOLUTE paths, no `cd`.
+rm -f /Users/marcinwosinek/workspace/fair-event-plugins/fair-audience/.tmp-check.php \
+      /Users/marcinwosinek/workspace/fair-event-plugins/.tmp-check.php
+```
+
+> **Always use absolute paths, never `cd … && cp/rm`.** Chaining `cd` into a
+> write (`cp`/`rm`) makes the working directory unverifiable, so Claude Code
+> forces a manual approval prompt on *every* run. Absolute paths run the exact
+> same thing with no prompt.
+
+**Guidelines**:
+- The script must clean up any rows/posts/users it creates.
+- Prefix scratch files with `.tmp-` so they're obvious and easy to sweep.
+- If you find yourself reaching for this repeatedly for the same scenario,
+  promote it to a real Playwright API or E2E test instead.
+
 ## Test Discovery Rules
 
 ### Jest Discovery
