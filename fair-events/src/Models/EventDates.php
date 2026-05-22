@@ -738,6 +738,18 @@ class EventDates {
 			array( '%d' )
 		);
 
+		if ( false !== $result ) {
+			/**
+			 * Fires after an event date row is updated.
+			 *
+			 * Consumers (e.g. fair-audience scheduled mailings) recompute any
+			 * send times anchored to this date.
+			 *
+			 * @param int $id Event date row ID.
+			 */
+			do_action( 'fair_events_event_date_updated', (int) $id );
+		}
+
 		return $result !== false;
 	}
 
@@ -772,6 +784,18 @@ class EventDates {
 			array( 'id' => $id ),
 			array( '%d' )
 		);
+
+		if ( false !== $result ) {
+			/**
+			 * Fires after an event date row is deleted.
+			 *
+			 * Consumers (e.g. fair-audience scheduled mailings) cancel any
+			 * messages anchored to this date.
+			 *
+			 * @param int $id Event date row ID.
+			 */
+			do_action( 'fair_events_event_date_deleted', (int) $id );
+		}
 
 		return $result !== false;
 	}

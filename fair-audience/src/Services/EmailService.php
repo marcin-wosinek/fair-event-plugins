@@ -23,6 +23,7 @@ use FairAudience\Services\AudienceSignupToken;
 use FairAudience\Services\ManageSubscriptionToken;
 use FairAudience\Services\ParticipantToken;
 use FairAudience\Services\FeePaymentToken;
+use FairAudience\Services\RecipientResolver;
 
 defined( 'WPINC' ) || die;
 
@@ -81,6 +82,13 @@ class EmailService {
 	private $active_extra_messages_cache = array();
 
 	/**
+	 * Recipient resolver instance.
+	 *
+	 * @var RecipientResolver
+	 */
+	private $recipient_resolver;
+
+	/**
 	 * Constructor.
 	 */
 	public function __construct() {
@@ -90,6 +98,7 @@ class EmailService {
 		$this->event_participant_repository  = new EventParticipantRepository();
 		$this->participant_repository        = new ParticipantRepository();
 		$this->group_participant_repository  = new GroupParticipantRepository();
+		$this->recipient_resolver            = new RecipientResolver();
 	}
 
 	/**
@@ -114,13 +123,7 @@ class EmailService {
 	 * @return bool True if the participant can receive the email.
 	 */
 	private function can_receive_email( Participant $participant, string $email_type ): bool {
-		// Minimal emails are always allowed.
-		if ( EmailType::MINIMAL === $email_type ) {
-			return true;
-		}
-
-		// Marketing emails require explicit opt-in.
-		return 'marketing' === $participant->email_profile;
+		return $this->recipient_resolver->can_receive_email( $participant, $email_type );
 	}
 
 	/**
@@ -130,7 +133,7 @@ class EmailService {
 	 * @return bool True if the participant has a non-empty email.
 	 */
 	private function has_valid_email( Participant $participant ): bool {
-		return ! empty( $participant->email );
+		return $this->recipient_resolver->has_valid_email( $participant );
 	}
 
 	/**
@@ -140,19 +143,7 @@ class EmailService {
 	 * @return array Array of unique participant IDs.
 	 */
 	private function get_participant_ids_for_groups( $group_ids ) {
-		if ( empty( $group_ids ) ) {
-			return array();
-		}
-
-		$participant_ids = array();
-		foreach ( $group_ids as $group_id ) {
-			$members = $this->group_participant_repository->get_by_group( $group_id );
-			foreach ( $members as $member ) {
-				$participant_ids[] = $member->participant_id;
-			}
-		}
-
-		return array_unique( $participant_ids );
+		return $this->recipient_resolver->get_participant_ids_for_groups( $group_ids );
 	}
 
 	/**
@@ -1023,9 +1014,10 @@ class EmailService {
 	 * @param string      $content       Email content (HTML).
 	 * @param Participant $participant   Participant object.
 	 * @param int         $event_date_id Event date ID (0 if not linked to an event date).
+	 * @param array       $context       Per-message context: event_name, event_date.
 	 * @return string Processed content.
 	 */
-	private function replace_placeholders( $content, $participant, $event_date_id = 0 ) {
+	private function replace_placeholders( $content, $participant, $event_date_id = 0, $context = array() ) {
 		if ( false !== strpos( $content, '{photo_upload_url}' ) ) {
 			$token = ParticipantToken::generate( $participant->id, $event_date_id );
 			$url   = add_query_arg( 'participant_token', $token, home_url( '/' ) );
@@ -1040,6 +1032,25 @@ class EmailService {
 			$content = str_replace( '{manage_subscription_url}', esc_url( $url ), $content );
 		}
 
+		if ( false !== strpos( $content, '{unsubscribe_link}' ) ) {
+			$url     = ManageSubscriptionToken::get_url( $participant->id );
+			$content = str_replace( '{unsubscribe_link}', esc_url( $url ), $content );
+		}
+
+		if ( false !== strpos( $content, '{participant_name}' ) ) {
+			$content = str_replace( '{participant_name}', esc_html( $participant->name ), $content );
+		}
+
+		if ( false !== strpos( $content, '{event_name}' ) ) {
+			$event_name = isset( $context['event_name'] ) ? $context['event_name'] : '';
+			$content    = str_replace( '{event_name}', esc_html( $event_name ), $content );
+		}
+
+		if ( false !== strpos( $content, '{event_date}' ) ) {
+			$event_date = isset( $context['event_date'] ) ? $context['event_date'] : '';
+			$content    = str_replace( '{event_date}', esc_html( $event_date ), $content );
+		}
+
 		if ( preg_match_all( '/\{token_link_(\d+)\}/', $content, $matches ) ) {
 			foreach ( $matches[1] as $index => $post_id ) {
 				$url     = ParticipantToken::get_url( $participant->id, $event_date_id, (int) $post_id );
@@ -1048,6 +1059,119 @@ class EmailService {
 		}
 
 		return $content;
+	}
+
+	/**
+	 * Build the branded HTML email body wrapping custom-mail content.
+	 *
+	 * Shared by the ad-hoc custom-mail flow and scheduled event mailings.
+	 *
+	 * @param Participant $participant Participant the email greets.
+	 * @param string      $content     Inner HTML content (placeholders resolved).
+	 * @return string Full HTML document.
+	 */
+	private function build_custom_mail_html( $participant, $content ) {
+		$site_name               = wp_specialchars_decode( get_option( 'blogname' ), ENT_QUOTES );
+		$manage_subscription_url = ManageSubscriptionToken::get_url( $participant->id );
+
+		return '<!DOCTYPE html>
+<html>
+<head>
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+</head>
+<body style="margin: 0; padding: 0; font-family: Arial, sans-serif; font-size: 16px; line-height: 1.6; color: #333333; background-color: #f4f4f4;">
+	<table width="100%" cellpadding="0" cellspacing="0" style="background-color: #f4f4f4;">
+		<tr>
+			<td align="center" style="padding: 20px 0;">
+				<table width="600" cellpadding="0" cellspacing="0" style="background-color: #ffffff; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
+					<tr>
+						<td style="background-color: #0073aa; color: #ffffff; padding: 30px; border-radius: 8px 8px 0 0; text-align: center;">
+							<h1 style="margin: 0; font-size: 24px; font-weight: bold;">' . esc_html( $site_name ) . '</h1>
+						</td>
+					</tr>
+					<tr>
+						<td style="padding: 40px 30px;">
+							<p style="margin: 0 0 20px 0; font-size: 16px;">
+								' . sprintf(
+									/* translators: %s: participant first name */
+								esc_html__( 'Hi %s,', 'fair-audience' ),
+								'<strong>' . esc_html( $participant->name ) . '</strong>'
+							) . '
+							</p>
+							<div style="margin: 0 0 20px 0; font-size: 16px;">
+								' . wp_kses_post( $content ) . '
+							</div>
+							<p style="margin: 20px 0 0 0; font-size: 14px; color: #666666;">
+								' . sprintf(
+									/* translators: 1: line break, 2: site name */
+									esc_html__( 'Thanks,%1$sThe %2$s Team', 'fair-audience' ),
+									'<br>',
+									esc_html( $site_name )
+								) . '
+							</p>
+						</td>
+					</tr>
+					<tr>
+						<td style="background-color: #f8f8f8; padding: 20px 30px; border-radius: 0 0 8px 8px; text-align: center; font-size: 12px; color: #666666;">
+							<p style="margin: 0;">
+								' . esc_html__( "Don't want to receive these emails?", 'fair-audience' ) . '
+								<a href="' . esc_url( $manage_subscription_url ) . '" style="color: #0073aa;">' . esc_html__( 'Manage your preferences', 'fair-audience' ) . '</a>
+							</p>
+						</td>
+					</tr>
+				</table>
+			</td>
+		</tr>
+	</table>
+</body>
+</html>';
+	}
+
+	/**
+	 * Dispatch an HTML email, toggling the content-type filter around the send.
+	 *
+	 * @param string $to      Recipient email address.
+	 * @param string $subject Email subject.
+	 * @param string $message Full HTML body.
+	 * @return bool Whether wp_mail() accepted the message.
+	 */
+	private function dispatch_html_mail( $to, $subject, $message ) {
+		$content_type = static function () {
+			return 'text/html';
+		};
+
+		add_filter( 'wp_mail_content_type', $content_type );
+		$result = wp_mail( $to, $subject, $message );
+		remove_filter( 'wp_mail_content_type', $content_type );
+
+		return $result;
+	}
+
+	/**
+	 * Render and send a scheduled-message body to one participant.
+	 *
+	 * Resolves placeholders (including {event_name}/{event_date} from the
+	 * per-message context), wraps the content in the shared template, and
+	 * dispatches the email. Caller is responsible for recipient eligibility
+	 * (valid email, marketing consent).
+	 *
+	 * @param Participant $participant   Recipient.
+	 * @param string      $subject       Email subject.
+	 * @param string      $content       Body HTML with placeholders.
+	 * @param int         $event_date_id Event date ID for tokenized links.
+	 * @param array       $context       Per-message context: event_name, event_date.
+	 * @return bool Success.
+	 */
+	public function send_custom_mail_rendered( $participant, $subject, $content, $event_date_id = 0, $context = array() ) {
+		if ( ! $this->has_valid_email( $participant ) ) {
+			return false;
+		}
+
+		$content = $this->replace_placeholders( $content, $participant, $event_date_id, $context );
+		$message = $this->build_custom_mail_html( $participant, $content );
+
+		return $this->dispatch_html_mail( $participant->email, $subject, $message );
 	}
 
 	/**
@@ -1449,45 +1573,14 @@ class EmailService {
 	 * @return array List of recipient info arrays.
 	 */
 	public function preview_custom_mail_recipients( $event_id, $is_marketing = true, $labels = array( 'signed_up', 'collaborator' ), $group_ids = array() ) {
-		$recipients = array();
-
-		$event = get_post( $event_id );
-		if ( ! $event ) {
-			return $recipients;
-		}
-
-		$group_participant_ids = $this->get_participant_ids_for_groups( $group_ids );
-
-		$event_participants = $this->event_participant_repository->get_by_event( $event_id );
-
-		foreach ( $event_participants as $ep ) {
-			if ( ! in_array( $ep->label, $labels, true ) ) {
-				continue;
-			}
-
-			if ( ! empty( $group_ids ) && ! in_array( $ep->participant_id, $group_participant_ids, true ) ) {
-				continue;
-			}
-
-			$participant = $this->participant_repository->get_by_id( $ep->participant_id );
-			if ( ! $participant ) {
-				continue;
-			}
-
-			$would_skip_marketing = $is_marketing && ! $this->can_receive_email( $participant, EmailType::MARKETING );
-
-			$recipients[] = array(
-				'participant_id'       => $participant->id,
-				'name'                 => $participant->name,
-				'surname'              => $participant->surname,
-				'email'                => $participant->email,
-				'label'                => $ep->label,
-				'has_valid_email'      => $this->has_valid_email( $participant ),
-				'would_skip_marketing' => $would_skip_marketing,
-			);
-		}
-
-		return $recipients;
+		return $this->recipient_resolver->resolve(
+			array(
+				'labels'       => $labels,
+				'group_ids'    => $group_ids,
+				'is_marketing' => $is_marketing,
+			),
+			$event_id
+		);
 	}
 
 	/**
@@ -2293,30 +2386,13 @@ class EmailService {
 	 * @return array List of recipient info arrays.
 	 */
 	public function preview_custom_mail_recipients_all( $is_marketing = true, $group_ids = array() ) {
-		$recipients   = array();
-		$participants = $this->participant_repository->get_all();
-
-		$group_participant_ids = $this->get_participant_ids_for_groups( $group_ids );
-
-		foreach ( $participants as $participant ) {
-			if ( ! empty( $group_ids ) && ! in_array( $participant->id, $group_participant_ids, true ) ) {
-				continue;
-			}
-
-			$would_skip_marketing = $is_marketing && ! $this->can_receive_email( $participant, EmailType::MARKETING );
-
-			$recipients[] = array(
-				'participant_id'       => $participant->id,
-				'name'                 => $participant->name,
-				'surname'              => $participant->surname,
-				'email'                => $participant->email,
-				'label'                => '',
-				'has_valid_email'      => $this->has_valid_email( $participant ),
-				'would_skip_marketing' => $would_skip_marketing,
-			);
-		}
-
-		return $recipients;
+		return $this->recipient_resolver->resolve(
+			array(
+				'group_ids'    => $group_ids,
+				'is_marketing' => $is_marketing,
+			),
+			null
+		);
 	}
 
 	/**

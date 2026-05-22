@@ -90,6 +90,7 @@ class Plugin {
 
 		// Initialize payment hooks (for fair-payment webhook integration).
 		\FairAudience\Hooks\PaymentHooks::init();
+		\FairAudience\Hooks\ScheduledMessageHooks::init();
 
 		// Initialize blocks.
 		$block_hooks = new \FairAudience\Hooks\BlockHooks();
@@ -149,6 +150,9 @@ class Plugin {
 
 		$custom_mail_controller = new \FairAudience\API\CustomMailController();
 		$custom_mail_controller->register_routes();
+
+		$scheduled_messages_controller = new \FairAudience\API\ScheduledMessagesController();
+		$scheduled_messages_controller->register_routes();
 
 		$questionnaire_responses_controller = new \FairAudience\API\QuestionnaireResponsesController();
 		$questionnaire_responses_controller->register_routes();

@@ -570,6 +570,49 @@ class Schema {
 	}
 
 	/**
+	 * Get SQL for creating the event scheduled messages table.
+	 *
+	 * Backs scheduled per-event mailings. Generalizes the ad-hoc
+	 * custom_mail_messages flow: the same recipient filter, templating, and
+	 * preview power scheduled sends. A row is claimed and sent by the
+	 * recurring cron once scheduled_for elapses.
+	 *
+	 * @return string SQL statement.
+	 */
+	public static function get_event_scheduled_messages_table_sql() {
+		global $wpdb;
+
+		$table_name      = $wpdb->prefix . 'fair_audience_event_scheduled_messages';
+		$charset_collate = $wpdb->get_charset_collate();
+
+		return "CREATE TABLE $table_name (
+			id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
+			event_id BIGINT UNSIGNED NOT NULL COMMENT 'Denormalized for indexing / reschedule lookups',
+			event_date_id BIGINT UNSIGNED DEFAULT NULL COMMENT 'Anchor for event_date_* anchor types',
+			subject VARCHAR(255) NOT NULL,
+			body LONGTEXT NOT NULL,
+			anchor_type ENUM('event_date_start', 'event_date_end', 'sale_period_start', 'sale_period_end') NOT NULL,
+			anchor_ref_id BIGINT UNSIGNED DEFAULT NULL COMMENT 'Id of the anchor row (event_date id, or sale period id once #617 lands)',
+			offset_minutes INT NOT NULL DEFAULT 0 COMMENT 'Signed; negative = before anchor, positive = after',
+			recipients_filter LONGTEXT NOT NULL COMMENT 'JSON: {labels, group_ids, is_marketing}',
+			scheduled_for DATETIME DEFAULT NULL COMMENT 'Computed anchor_time + offset_minutes; recomputed on anchor change',
+			status ENUM('scheduled', 'sending', 'sent', 'canceled', 'failed') NOT NULL DEFAULT 'scheduled',
+			sent_count INT NOT NULL DEFAULT 0,
+			failed_count INT NOT NULL DEFAULT 0,
+			skipped_count INT NOT NULL DEFAULT 0,
+			sent_at DATETIME DEFAULT NULL,
+			last_error TEXT DEFAULT NULL,
+			created_by BIGINT UNSIGNED DEFAULT NULL,
+			created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+			updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+			PRIMARY KEY  (id),
+			KEY idx_status_scheduled_for (status, scheduled_for),
+			KEY idx_event_id (event_id),
+			KEY idx_anchor (anchor_type, anchor_ref_id)
+		) ENGINE=InnoDB $charset_collate;";
+	}
+
+	/**
 	 * Get SQL for creating the questionnaire submissions table.
 	 *
 	 * @return string SQL statement.
