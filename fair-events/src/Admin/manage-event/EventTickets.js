@@ -1811,12 +1811,6 @@ export default function EventTickets({
 												</th>
 												<th>
 													{__(
-														'Short name',
-														'fair-events'
-													)}
-												</th>
-												<th>
-													{__(
 														'Price (EUR)',
 														'fair-events'
 													)}
@@ -1861,69 +1855,79 @@ export default function EventTickets({
 												return (
 													<tr key={index}>
 														<td>
-															<TextControl
-																placeholder={__(
-																	'Activity name',
-																	'fair-events'
-																)}
-																value={
-																	option.name ||
-																	''
-																}
-																onChange={(
-																	v
-																) => {
-																	const updated =
-																		[
-																			...options,
-																		];
-																	updated[
-																		index
-																	] = {
-																		...updated[
+															<VStack spacing={2}>
+																<TextControl
+																	label={__(
+																		'Name',
+																		'fair-events'
+																	)}
+																	hideLabelFromVision
+																	placeholder={__(
+																		'Activity name',
+																		'fair-events'
+																	)}
+																	value={
+																		option.name ||
+																		''
+																	}
+																	onChange={(
+																		v
+																	) => {
+																		const updated =
+																			[
+																				...options,
+																			];
+																		updated[
 																			index
-																		],
-																		name: v,
-																	};
-																	setOptions(
-																		updated
-																	);
-																}}
-																__nextHasNoMarginBottom
-															/>
-														</td>
-														<td>
-															<TextControl
-																placeholder={__(
-																	'Short name',
-																	'fair-events'
-																)}
-																value={
-																	option.short_name ||
-																	''
-																}
-																onChange={(
-																	v
-																) => {
-																	const updated =
-																		[
-																			...options,
-																		];
-																	updated[
-																		index
-																	] = {
-																		...updated[
+																		] = {
+																			...updated[
+																				index
+																			],
+																			name: v,
+																		};
+																		setOptions(
+																			updated
+																		);
+																	}}
+																	__nextHasNoMarginBottom
+																/>
+																<TextControl
+																	label={__(
+																		'Short name',
+																		'fair-events'
+																	)}
+																	hideLabelFromVision
+																	placeholder={__(
+																		'Short name',
+																		'fair-events'
+																	)}
+																	value={
+																		option.short_name ||
+																		''
+																	}
+																	onChange={(
+																		v
+																	) => {
+																		const updated =
+																			[
+																				...options,
+																			];
+																		updated[
 																			index
-																		],
-																		short_name:
-																			v,
-																	};
-																	setOptions(
-																		updated
-																	);
-																}}
-																__nextHasNoMarginBottom
-															/>
+																		] = {
+																			...updated[
+																				index
+																			],
+																			short_name:
+																				v,
+																		};
+																		setOptions(
+																			updated
+																		);
+																	}}
+																	__nextHasNoMarginBottom
+																/>
+															</VStack>
 														</td>
 														<td>
 															<TextControl
