@@ -511,15 +511,30 @@ $has_priced_options = ! empty(
 	)
 );
 
-// Activities the signed-up viewer can still add: every (non-full) option for
-// this event date that isn't already on their subscription (issue #611).
-$addable_options = array();
-if ( $is_signed_up && $participant && $has_ticket_options && ! empty( $event_date_id ) && isset( $event_participant_repository ) ) {
+// For a signed-up viewer, summarise their current registration (ticket type +
+// chosen activities) and compute which activities they can still add — every
+// non-full option for this event date that isn't already on their
+// subscription (issue #611).
+$addable_options        = array();
+$current_activity_names = array();
+$current_ticket_label   = '';
+if ( $is_signed_up && $participant && ! empty( $event_date_id ) && isset( $event_participant_repository ) ) {
 	$signed_row = $event_participant_repository->get_by_event_date_and_participant( (int) $event_date_id, (int) $participant->id );
 	if ( $signed_row ) {
+		if ( ! empty( $signed_row->ticket_type_id ) && class_exists( \FairEvents\Models\TicketType::class ) ) {
+			$current_ticket_type = \FairEvents\Models\TicketType::get_by_id( (int) $signed_row->ticket_type_id );
+			if ( $current_ticket_type ) {
+				$current_ticket_label = (string) $current_ticket_type->name;
+			}
+		}
+
 		$selected_option_ids = $event_participant_repository->get_option_ids_for_event_participant( (int) $signed_row->id );
 		foreach ( $ticket_options_for_display as $opt ) {
-			if ( ! empty( $opt['is_full'] ) || in_array( (int) $opt['id'], $selected_option_ids, true ) ) {
+			if ( in_array( (int) $opt['id'], $selected_option_ids, true ) ) {
+				$current_activity_names[] = $opt['name'];
+				continue;
+			}
+			if ( ! empty( $opt['is_full'] ) ) {
 				continue;
 			}
 			$addable_options[] = $opt;
@@ -965,24 +980,32 @@ $wrapper_attributes = get_block_wrapper_attributes(
 		$form_class = 'with_token' === $state
 			? 'fair-audience-signup-token-form'
 			: 'fair-audience-signup-linked-form';
-		$greeting   = 'with_token' === $state
-			? sprintf(
+		if ( $is_signed_up ) {
+			$greeting = sprintf(
+				/* translators: %s: participant name */
+				__( 'Hi %s! Here is your registration for this event.', 'fair-audience' ),
+				$participant->name
+			);
+		} elseif ( 'with_token' === $state ) {
+			$greeting = sprintf(
 				/* translators: %s: participant name */
 				__( 'Hi %s! Click the button below to sign up for this event.', 'fair-audience' ),
 				$participant->name
-			)
-			: sprintf(
+			);
+		} else {
+			$greeting = sprintf(
 				/* translators: %s: participant name */
 				__( 'Hi %s! You can sign up for this event.', 'fair-audience' ),
 				$participant->name
 			);
+		}
 		?>
 		<div class="<?php echo esc_attr( $form_class ); ?>">
 			<p class="fair-audience-signup-greeting"><?php echo esc_html( $greeting ); ?></p>
 			<?php $render_occurrence_picker(); ?>
-			<?php $render_ticket_types(); ?>
-			<?php $render_ticket_options(); ?>
 			<div class="fair-audience-signup-action-signup"<?php echo $is_signed_up ? ' style="display: none;"' : ''; ?>>
+				<?php $render_ticket_types(); ?>
+				<?php $render_ticket_options(); ?>
 				<div class="wp-block-button">
 					<button type="button" class="wp-block-button__link wp-element-button fair-audience-signup-button" data-action="signup">
 						<?php echo esc_html( $signup_button_text ); ?>
@@ -993,6 +1016,27 @@ $wrapper_attributes = get_block_wrapper_attributes(
 				<div class="fair-audience-signup-status fair-audience-signup-status-success">
 					<p><?php echo esc_html__( 'You are signed up for this date.', 'fair-audience' ); ?></p>
 				</div>
+				<?php if ( '' !== $current_ticket_label ) : ?>
+					<p class="fair-audience-signup-current-ticket">
+						<?php
+						printf(
+							/* translators: %s: ticket type name */
+							esc_html__( 'Your ticket: %s', 'fair-audience' ),
+							'<strong>' . esc_html( $current_ticket_label ) . '</strong>'
+						);
+						?>
+					</p>
+				<?php endif; ?>
+				<?php if ( ! empty( $current_activity_names ) ) : ?>
+					<div class="fair-audience-signup-current-activities">
+						<p><?php echo esc_html__( 'Your activities:', 'fair-audience' ); ?></p>
+						<ul>
+							<?php foreach ( $current_activity_names as $current_activity_name ) : ?>
+								<li><?php echo esc_html( $current_activity_name ); ?></li>
+							<?php endforeach; ?>
+						</ul>
+					</div>
+				<?php endif; ?>
 				<?php $render_add_activities(); ?>
 				<div class="wp-block-button fair-audience-unsignup-button-wrap">
 					<button type="button" class="wp-block-button__link wp-element-button fair-audience-unsignup-button is-style-outline">
