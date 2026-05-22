@@ -4338,8 +4338,8 @@ msgstr "Übermittlung konnte nicht aktualisiert werden."
 #, php-format
 msgid "%1$d person signed up %2$s"
 msgid_plural "%1$d people signed up %2$s"
-msgstr[0] ""
-msgstr[1] ""
+msgstr[0] "%1$d Person hat sich %2$s angemeldet"
+msgstr[1] "%1$d Personen haben sich %2$s angemeldet"
 
 #. translators: %d: maximum file size in megabytes
 #: src/blocks/fair-form-file-upload/render.php:67
@@ -5083,16 +5083,16 @@ msgstr "Unbekannt"
 #, php-format
 msgid "%1$d fee payment on %2$s"
 msgid_plural "%1$d fee payments on %2$s"
-msgstr[0] ""
-msgstr[1] ""
+msgstr[0] "%1$d Gebührenzahlung am %2$s"
+msgstr[1] "%1$d Gebührenzahlungen am %2$s"
 
 #. translators: 1: number of sales, 2: day
 #: src/API/TimelineController.php:354
 #, php-format
 msgid "%1$d ticket sale on %2$s"
 msgid_plural "%1$d ticket sales on %2$s"
-msgstr[0] ""
-msgstr[1] ""
+msgstr[0] "%1$d Ticketverkauf am %2$s"
+msgstr[1] "%1$d Ticketverkäufe am %2$s"
 
 #. translators: 1: base button label, 2: formatted price
 #: src/blocks/event-signup/render.php:575
@@ -5136,8 +5136,8 @@ msgstr "kostenlos"
 #, php-format
 msgid "(%d seat)"
 msgid_plural "(%d seats)"
-msgstr[0] ""
-msgstr[1] ""
+msgstr[0] "(%d Platz)"
+msgstr[1] "(%d Plätze)"
 
 #: src/blocks/event-signup/render.php:644
 msgid "invitation"
@@ -5590,8 +5590,8 @@ msgstr "Dieser Tickettyp ist ausverkauft. Bitte wählen Sie eine andere Option."
 #, php-format, js-format
 msgid "Please select at least %d activity to sign up."
 msgid_plural "Please select at least %d activities to sign up."
-msgstr[0] ""
-msgstr[1] ""
+msgstr[0] "Bitte wählen Sie mindestens %d Aktivität aus, um sich anzumelden."
+msgstr[1] "Bitte wählen Sie mindestens %d Aktivitäten aus, um sich anzumelden."
 
 #: src/API/EventSignupController.php:1530
 msgid "Invalid transaction."

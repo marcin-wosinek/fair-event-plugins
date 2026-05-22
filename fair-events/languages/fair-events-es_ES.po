@@ -4561,8 +4561,8 @@ msgstr "¿Enviar correos de invitación del evento a miembros de los siguientes 
 #, js-format
 msgid "%d member"
 msgid_plural "%d members"
-msgstr[0] ""
-msgstr[1] ""
+msgstr[0] "%d miembro"
+msgstr[1] "%d miembros"
 
 #. translators: %d: total number of potential invitees
 #: src/Admin/manage-event/EventAudience.js:1756

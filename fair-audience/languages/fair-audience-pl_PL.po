@@ -4342,8 +4342,9 @@ msgstr "Nie udało się zaktualizować zgłoszenia."
 #, php-format
 msgid "%1$d person signed up %2$s"
 msgid_plural "%1$d people signed up %2$s"
-msgstr[0] ""
-msgstr[1] ""
+msgstr[0] "%1$d osoba zarejestrowała się %2$s"
+msgstr[1] "%1$d osoby zarejestrowały się %2$s"
+msgstr[2] "%1$d osób zarejestrowało się %2$s"
 
 #. translators: %d: maximum file size in megabytes
 #: src/blocks/fair-form-file-upload/render.php:67
@@ -5087,16 +5088,18 @@ msgstr "Nieznany"
 #, php-format
 msgid "%1$d fee payment on %2$s"
 msgid_plural "%1$d fee payments on %2$s"
-msgstr[0] ""
-msgstr[1] ""
+msgstr[0] "%1$d opłata %2$s"
+msgstr[1] "%1$d opłaty %2$s"
+msgstr[2] "%1$d opłat %2$s"
 
 #. translators: 1: number of sales, 2: day
 #: src/API/TimelineController.php:354
 #, php-format
 msgid "%1$d ticket sale on %2$s"
 msgid_plural "%1$d ticket sales on %2$s"
-msgstr[0] ""
-msgstr[1] ""
+msgstr[0] "%1$d sprzedaż biletów %2$s"
+msgstr[1] "%1$d sprzedaże biletów %2$s"
+msgstr[2] "%1$d sprzedaży biletów %2$s"
 
 #. translators: 1: base button label, 2: formatted price
 #: src/blocks/event-signup/render.php:575
@@ -5140,8 +5143,9 @@ msgstr "bezpłatnie"
 #, php-format
 msgid "(%d seat)"
 msgid_plural "(%d seats)"
-msgstr[0] ""
-msgstr[1] ""
+msgstr[0] "(%d miejsce)"
+msgstr[1] "(%d miejsca)"
+msgstr[2] "(%d miejsc)"
 
 #: src/blocks/event-signup/render.php:644
 msgid "invitation"
@@ -5594,8 +5598,9 @@ msgstr "Ten typ biletu jest wyprzedany. Proszę wybrać inną opcję."
 #, php-format, js-format
 msgid "Please select at least %d activity to sign up."
 msgid_plural "Please select at least %d activities to sign up."
-msgstr[0] ""
-msgstr[1] ""
+msgstr[0] "Proszę wybrać co najmniej %d aktywność do zarejestowania."
+msgstr[1] "Proszę wybrać co najmniej %d aktywności do zarejestowania."
+msgstr[2] "Proszę wybrać co najmniej %d aktywności do zarejestowania."
 
 #: src/API/EventSignupController.php:1530
 msgid "Invalid transaction."
