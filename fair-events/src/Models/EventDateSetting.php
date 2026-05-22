@@ -74,6 +74,7 @@ class EventDateSetting {
 		'activity_collaborator_discount'      => '0',
 		'minimum_activities'                  => '0',
 		'show_ticket_type_minimum_activities' => '0',
+		'activity_period_pricing'             => '0',
 	);
 
 	/**

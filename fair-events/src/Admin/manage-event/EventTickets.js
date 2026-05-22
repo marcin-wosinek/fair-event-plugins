@@ -46,6 +46,7 @@ export default function EventTickets({
 		activity_collaborator_discount: false,
 		minimum_activities: 0,
 		show_ticket_type_minimum_activities: false,
+		activity_period_pricing: false,
 	});
 	const [options, setOptions] = useState([]);
 	const [loading, setLoading] = useState(!initialData);
@@ -381,7 +382,7 @@ export default function EventTickets({
 						? o.capacity
 						: null,
 				derive_price_from_sale_period:
-					!!o.derive_price_from_sale_period,
+					!!settings.activity_period_pricing,
 				period_prices: serializeOptionPeriodPrices(o).map((pp) => ({
 					sale_period_index: pp.sale_period_index,
 					price: pp.price,
@@ -544,7 +545,7 @@ export default function EventTickets({
 	};
 
 	const serializeOptionPeriodPrices = (option) => {
-		if (!option.derive_price_from_sale_period) {
+		if (!settings.activity_period_pricing) {
 			return [];
 		}
 		const out = [];
@@ -567,10 +568,53 @@ export default function EventTickets({
 		return {
 			...rest,
 			sort_order: index,
-			derive_price_from_sale_period:
-				!!option.derive_price_from_sale_period,
+			derive_price_from_sale_period: !!settings.activity_period_pricing,
 			period_prices: serializeOptionPeriodPrices(option),
 		};
+	};
+
+	// Per-period price inputs for an activity option. Shown in the Pricing
+	// column for every option when the `activity_period_pricing` setting is
+	// on (replacing the single flat-price input).
+	const renderOptionPeriodPrices = (option, index) => {
+		if (salePeriods.length === 0) {
+			return <em>{__('Add sale periods first.', 'fair-events')}</em>;
+		}
+		return (
+			<VStack spacing={2}>
+				{salePeriods.map((period, pIdx) => {
+					const key = periodPriceKey(period, pIdx);
+					const val = option.period_prices_map?.[key] ?? '';
+					return (
+						<TextControl
+							key={key}
+							type="number"
+							step="0.01"
+							min="0"
+							label={
+								period.name ||
+								__('Period', 'fair-events') + ' ' + (pIdx + 1)
+							}
+							value={val}
+							onChange={(v) => {
+								const updated = [...options];
+								const prev =
+									updated[index].period_prices_map || {};
+								updated[index] = {
+									...updated[index],
+									period_prices_map: {
+										...prev,
+										[key]: v,
+									},
+								};
+								setOptions(updated);
+							}}
+							__nextHasNoMarginBottom
+						/>
+					);
+				})}
+			</VStack>
+		);
 	};
 
 	const addSalePeriod = () => {
@@ -1831,12 +1875,6 @@ export default function EventTickets({
 												</th>
 												<th>
 													{__(
-														'Per-period pricing',
-														'fair-events'
-													)}
-												</th>
-												<th>
-													{__(
 														'Collaborator(s)',
 														'fair-events'
 													)}
@@ -1930,48 +1968,52 @@ export default function EventTickets({
 															</VStack>
 														</td>
 														<td>
-															<TextControl
-																type="number"
-																step="0.01"
-																min="0"
-																disabled={
-																	!!option.derive_price_from_sale_period
-																}
-																value={
-																	option.price !==
-																	undefined
-																		? String(
-																				option.price
-																		  )
-																		: '0'
-																}
-																onChange={(
-																	v
-																) => {
-																	const updated =
-																		[
-																			...options,
-																		];
-																	updated[
-																		index
-																	] = {
-																		...updated[
+															{settings.activity_period_pricing ? (
+																renderOptionPeriodPrices(
+																	option,
+																	index
+																)
+															) : (
+																<TextControl
+																	type="number"
+																	step="0.01"
+																	min="0"
+																	value={
+																		option.price !==
+																		undefined
+																			? String(
+																					option.price
+																			  )
+																			: '0'
+																	}
+																	onChange={(
+																		v
+																	) => {
+																		const updated =
+																			[
+																				...options,
+																			];
+																		updated[
 																			index
-																		],
-																		price:
-																			v !==
-																			''
-																				? parseFloat(
-																						v
-																				  )
-																				: 0,
-																	};
-																	setOptions(
-																		updated
-																	);
-																}}
-																__nextHasNoMarginBottom
-															/>
+																		] = {
+																			...updated[
+																				index
+																			],
+																			price:
+																				v !==
+																				''
+																					? parseFloat(
+																							v
+																					  )
+																					: 0,
+																		};
+																		setOptions(
+																			updated
+																		);
+																	}}
+																	__nextHasNoMarginBottom
+																/>
+															)}
 														</td>
 														{settings.activity_collaborator_discount && (
 															<td>
@@ -2072,126 +2114,6 @@ export default function EventTickets({
 																}}
 																__nextHasNoMarginBottom
 															/>
-														</td>
-														<td>
-															<CheckboxControl
-																label={__(
-																	'Per period',
-																	'fair-events'
-																)}
-																checked={
-																	!!option.derive_price_from_sale_period
-																}
-																onChange={(
-																	checked
-																) => {
-																	const updated =
-																		[
-																			...options,
-																		];
-																	updated[
-																		index
-																	] = {
-																		...updated[
-																			index
-																		],
-																		derive_price_from_sale_period:
-																			checked,
-																	};
-																	setOptions(
-																		updated
-																	);
-																}}
-																__nextHasNoMarginBottom
-															/>
-															{option.derive_price_from_sale_period && (
-																<VStack
-																	spacing={2}
-																>
-																	{salePeriods.length ===
-																	0 ? (
-																		<em>
-																			{__(
-																				'Add sale periods first.',
-																				'fair-events'
-																			)}
-																		</em>
-																	) : (
-																		salePeriods.map(
-																			(
-																				period,
-																				pIdx
-																			) => {
-																				const key =
-																					periodPriceKey(
-																						period,
-																						pIdx
-																					);
-																				const val =
-																					option
-																						.period_prices_map?.[
-																						key
-																					] ??
-																					'';
-																				return (
-																					<TextControl
-																						key={
-																							key
-																						}
-																						type="number"
-																						step="0.01"
-																						min="0"
-																						label={
-																							period.name ||
-																							__(
-																								'Period',
-																								'fair-events'
-																							) +
-																								' ' +
-																								(pIdx +
-																									1)
-																						}
-																						value={
-																							val
-																						}
-																						onChange={(
-																							v
-																						) => {
-																							const updated =
-																								[
-																									...options,
-																								];
-																							const prev =
-																								updated[
-																									index
-																								]
-																									.period_prices_map ||
-																								{};
-																							updated[
-																								index
-																							] =
-																								{
-																									...updated[
-																										index
-																									],
-																									period_prices_map:
-																										{
-																											...prev,
-																											[key]: v,
-																										},
-																								};
-																							setOptions(
-																								updated
-																							);
-																						}}
-																						__nextHasNoMarginBottom
-																					/>
-																				);
-																			}
-																		)
-																	)}
-																</VStack>
-															)}
 														</td>
 														<td>
 															<FormTokenField
@@ -2424,6 +2346,20 @@ export default function EventTickets({
 									setSettings((prev) => ({
 										...prev,
 										activity_collaborator_discount: value,
+									}))
+								}
+							/>
+							<CheckboxControl
+								label={__('Per-period pricing', 'fair-events')}
+								help={__(
+									'Price every activity option per sale period instead of a single flat price. The Pricing column in the activity options table becomes one input per sale period. Requires sale periods to be defined.',
+									'fair-events'
+								)}
+								checked={settings.activity_period_pricing}
+								onChange={(value) =>
+									setSettings((prev) => ({
+										...prev,
+										activity_period_pricing: value,
 									}))
 								}
 							/>
