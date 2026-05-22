@@ -84,6 +84,18 @@ class ScheduledMessagesController extends WP_REST_Controller {
 
 		register_rest_route(
 			$this->namespace,
+			'/events/(?P<event_id>[\d]+)/event-dates',
+			array(
+				array(
+					'methods'             => WP_REST_Server::READABLE,
+					'callback'            => array( $this, 'get_event_dates' ),
+					'permission_callback' => array( $this, 'admin_permissions_check' ),
+				),
+			)
+		);
+
+		register_rest_route(
+			$this->namespace,
 			'/events/(?P<event_id>[\d]+)/scheduled-messages/preview-recipients',
 			array(
 				array(
@@ -333,6 +345,46 @@ class ScheduledMessagesController extends WP_REST_Controller {
 		$recipients = $this->resolver->resolve( $message->recipients_filter, $message->event_id );
 
 		return rest_ensure_response( $recipients );
+	}
+
+	/**
+	 * List an event's dates for the anchor picker.
+	 *
+	 * @param WP_REST_Request $request Request object.
+	 * @return \WP_REST_Response Response object.
+	 */
+	public function get_event_dates( $request ) {
+		global $wpdb;
+
+		$event_id = (int) $request->get_param( 'event_id' );
+		$table    = $wpdb->prefix . 'fair_event_dates';
+
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+		$rows = $wpdb->get_results(
+			$wpdb->prepare(
+				'SELECT id, start_datetime, end_datetime, all_day FROM %i WHERE event_id = %d ORDER BY start_datetime ASC',
+				$table,
+				$event_id
+			),
+			ARRAY_A
+		);
+
+		$data = array_map(
+			static function ( $row ) {
+				$start_display = empty( $row['start_datetime'] ) ? '' : wp_date( 'Y-m-d H:i', strtotime( $row['start_datetime'] ) );
+
+				return array(
+					'id'             => (int) $row['id'],
+					'start_datetime' => $row['start_datetime'],
+					'end_datetime'   => $row['end_datetime'],
+					'all_day'        => ! empty( $row['all_day'] ),
+					'display_label'  => $start_display,
+				);
+			},
+			$rows
+		);
+
+		return rest_ensure_response( $data );
 	}
 
 	/**
