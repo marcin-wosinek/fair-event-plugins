@@ -142,7 +142,6 @@ async function countUntranslated(plugin, locale) {
 		const untranslated = parsed.translations.filter((entry) => {
 			if (entry.isHeader) return false;
 			if (!isUntranslated(entry)) return false;
-			if (entry.msgidPlural) return false;
 			if (isIntentionallyUntranslated(entry.msgid)) return false;
 			return true;
 		});
@@ -173,8 +172,6 @@ async function aiTranslate(options) {
 	const untranslated = parsed.translations.filter((entry) => {
 		if (entry.isHeader) return false;
 		if (!isUntranslated(entry)) return false;
-		// Skip plural forms (they need special handling)
-		if (entry.msgidPlural) return false;
 		// Skip intentionally untranslated
 		if (isIntentionallyUntranslated(entry.msgid)) return false;
 		return true;
@@ -229,50 +226,71 @@ async function aiTranslate(options) {
 		console.error('✓ Proceeding (confirmed for all locales)\n');
 	}
 
-	// Process in batches
+	// Singular and plural entries take different code paths: plurals need one
+	// array of N forms per string, so they go through translatePluralBatch.
+	const singularEntries = untranslated.filter((e) => !e.msgidPlural);
+	const pluralEntries = untranslated.filter((e) => e.msgidPlural);
+
 	const batchSize = config.ai.batchSize;
 	const results = [];
 	let totalCost = 0;
+	let aborted = false;
 
-	for (let i = 0; i < untranslated.length; i += batchSize) {
-		const batch = untranslated.slice(i, i + batchSize);
-		const batchNum = Math.floor(i / batchSize) + 1;
-		const totalBatches = Math.ceil(untranslated.length / batchSize);
+	/**
+	 * Run one kind of entry through the provider in batches.
+	 *
+	 * @param {Array<Object>} entries - Entries to translate
+	 * @param {string} kind - 'string' or 'plural' (for logging)
+	 * @param {Function} translate - provider method returning { translations, usage }
+	 */
+	const processBatches = async (entries, kind, translate) => {
+		for (let i = 0; i < entries.length && !aborted; i += batchSize) {
+			const batch = entries.slice(i, i + batchSize);
+			const batchNum = Math.floor(i / batchSize) + 1;
+			const totalBatches = Math.ceil(entries.length / batchSize);
 
-		console.error(
-			`🔄 Processing batch ${batchNum}/${totalBatches} (${batch.length} strings)...`
-		);
-
-		try {
-			const result = await provider.translateBatch(
-				batch,
-				options.locale,
-				{}
-			);
-
-			for (let j = 0; j < batch.length; j++) {
-				results.push({
-					entry: batch[j],
-					translation: result.translations[j],
-				});
-			}
-
-			totalCost += result.usage.cost;
 			console.error(
-				`   ✅ Done (cost: $${result.usage.cost.toFixed(4)}, tokens: ${
-					result.usage.totalTokens
-				})`
+				`🔄 Processing ${kind} batch ${batchNum}/${totalBatches} (${batch.length} strings)...`
 			);
-		} catch (error) {
-			console.error(`   ❌ Error: ${error.message}`);
 
-			// Ask if should continue (unless --yes flag is used)
-			if (!options.yes) {
-				const cont = await confirm('Continue with remaining batches?');
-				if (!cont) break;
+			try {
+				const result = await translate(batch);
+
+				for (let j = 0; j < batch.length; j++) {
+					results.push({
+						entry: batch[j],
+						translation: result.translations[j],
+					});
+				}
+
+				totalCost += result.usage.cost;
+				console.error(
+					`   ✅ Done (cost: $${result.usage.cost.toFixed(
+						4
+					)}, tokens: ${result.usage.totalTokens})`
+				);
+			} catch (error) {
+				console.error(`   ❌ Error: ${error.message}`);
+
+				// Ask if should continue (unless --yes flag is used)
+				if (!options.yes) {
+					const cont = await confirm(
+						'Continue with remaining batches?'
+					);
+					if (!cont) {
+						aborted = true;
+					}
+				}
 			}
 		}
-	}
+	};
+
+	await processBatches(singularEntries, 'string', (batch) =>
+		provider.translateBatch(batch, options.locale, {})
+	);
+	await processBatches(pluralEntries, 'plural', (batch) =>
+		provider.translatePluralBatch(batch, options.locale)
+	);
 
 	console.error(`\n💰 Total cost: $${totalCost.toFixed(4)}`);
 	console.error(

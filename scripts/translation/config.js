@@ -56,6 +56,32 @@ export const config = {
 		],
 	},
 
+	// Plural-form rules per locale (standard gettext). `nplurals` is how many
+	// msgstr[n] slots a plural entry has; `forms` describes when each index
+	// applies so the AI knows which translation goes in which slot.
+	pluralForms: {
+		de_DE: {
+			nplurals: 2,
+			forms: ['n == 1 (singular)', 'n != 1 (plural)'],
+		},
+		es_ES: {
+			nplurals: 2,
+			forms: ['n == 1 (singular)', 'n != 1 (plural)'],
+		},
+		fr_FR: {
+			nplurals: 2,
+			forms: ['n <= 1 (singular)', 'n > 1 (plural)'],
+		},
+		pl_PL: {
+			nplurals: 3,
+			forms: [
+				'n == 1',
+				'n%10 in 2..4 and n%100 not in 12..14 (e.g. 2, 3, 4, 22)',
+				'everything else (e.g. 0, 5, 11, 25)',
+			],
+		},
+	},
+
 	// AI provider configurations
 	ai: {
 		providers: {

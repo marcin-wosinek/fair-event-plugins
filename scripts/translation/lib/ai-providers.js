@@ -39,6 +39,20 @@ class AIProvider {
 	}
 
 	/**
+	 * Translate a batch of plural-form strings
+	 *
+	 * @param {Array<Object>} strings - Entries with msgid + msgidPlural
+	 * @param {string} targetLocale - Target locale code
+	 * @returns {Promise<Object>} { translations: string[][], usage } where
+	 *   each inner array holds the locale's plural forms for one entry
+	 */
+	async translatePluralBatch(strings, targetLocale) {
+		throw new Error(
+			`Plural translation is not supported by the ${this.config.model} provider`
+		);
+	}
+
+	/**
 	 * Estimate cost for translation
 	 *
 	 * @param {number} inputTokens - Number of input tokens
@@ -141,6 +155,106 @@ Return format: {"translations": ["translation 1", "translation 2", ...]}`;
 
 		return {
 			translations,
+			usage: {
+				inputTokens: data.usage.prompt_tokens,
+				outputTokens: data.usage.completion_tokens,
+				totalTokens: data.usage.total_tokens,
+				cost: this.estimateCost(
+					data.usage.prompt_tokens,
+					data.usage.completion_tokens
+				),
+			},
+		};
+	}
+
+	async translatePluralBatch(strings, targetLocale) {
+		const systemPrompt = config.ai.systemPrompt(targetLocale, {
+			localeName: config.localeNames[targetLocale],
+		});
+
+		const pluralForm = config.pluralForms[targetLocale] || {
+			nplurals: 2,
+			forms: ['singular', 'plural'],
+		};
+		const nplurals = pluralForm.nplurals;
+
+		const inputStrings = strings.map((s, idx) => ({
+			index: idx,
+			singular: s.msgid,
+			plural: s.msgidPlural,
+			context: s.msgctxt || null,
+		}));
+
+		const formGuide = pluralForm.forms
+			.map((f, i) => `   [${i}] used when ${f}`)
+			.join('\n');
+
+		const userPrompt = `Translate the following WordPress plural strings to ${
+			config.localeNames[targetLocale]
+		}.
+This language has ${nplurals} plural forms. For each input string return an
+array of exactly ${nplurals} translations, one per form, in this order:
+${formGuide}
+Preserve every printf placeholder (%d, %s, %1$d, etc.) in all forms.
+
+Input strings (each has the English singular and plural):
+${JSON.stringify(inputStrings, null, 2)}
+
+Return a JSON object: {"translations": [["form 0", "form 1", ...], ...]} with
+one inner array of exactly ${nplurals} strings per input string, in order.`;
+
+		const response = await fetch(this.config.apiEndpoint, {
+			method: 'POST',
+			headers: {
+				'Content-Type': 'application/json',
+				Authorization: `Bearer ${this.apiKey}`,
+			},
+			body: JSON.stringify({
+				model: this.config.model,
+				messages: [
+					{ role: 'system', content: systemPrompt },
+					{ role: 'user', content: userPrompt },
+				],
+				response_format: { type: 'json_object' },
+				temperature: 0.3,
+			}),
+		});
+
+		if (!response.ok) {
+			const errorText = await response.text();
+			throw new Error(
+				`OpenAI API error (${response.status}): ${errorText}`
+			);
+		}
+
+		const data = await response.json();
+		const result = JSON.parse(data.choices[0].message.content);
+		const translations = result.translations;
+
+		if (
+			!Array.isArray(translations) ||
+			translations.length !== strings.length
+		) {
+			throw new Error(
+				`OpenAI returned invalid response: expected ${
+					strings.length
+				} entries, got ${translations?.length || 0}`
+			);
+		}
+		for (const forms of translations) {
+			if (!Array.isArray(forms) || forms.length !== nplurals) {
+				throw new Error(
+					`Expected ${nplurals} plural forms per string, got ${
+						Array.isArray(forms) ? forms.length : typeof forms
+					}`
+				);
+			}
+		}
+
+		return {
+			translations: translations.map((forms) =>
+				forms.map((f) => String(f))
+			),
 			usage: {
 				inputTokens: data.usage.prompt_tokens,
 				outputTokens: data.usage.completion_tokens,
@@ -306,6 +420,152 @@ Return format: {"translations": ["translation 1", "translation 2", ...]}`;
 
 				return {
 					translations,
+					usage: {
+						inputTokens: data.usage.input_tokens,
+						outputTokens: data.usage.output_tokens,
+						totalTokens:
+							data.usage.input_tokens + data.usage.output_tokens,
+						cost: this.estimateCost(
+							data.usage.input_tokens,
+							data.usage.output_tokens
+						),
+					},
+				};
+			} catch (error) {
+				lastError = error;
+				if (attempt < maxAttempts) {
+					console.error(
+						`   ⚠️  Attempt ${attempt}/${maxAttempts} failed (${error.message}); retrying...`
+					);
+				}
+			}
+		}
+
+		throw lastError;
+	}
+
+	async translatePluralBatch(strings, targetLocale) {
+		const systemPrompt = config.ai.systemPrompt(targetLocale, {
+			localeName: config.localeNames[targetLocale],
+		});
+
+		const pluralForm = config.pluralForms[targetLocale] || {
+			nplurals: 2,
+			forms: ['singular', 'plural'],
+		};
+		const nplurals = pluralForm.nplurals;
+
+		const inputStrings = strings.map((s, idx) => ({
+			index: idx,
+			singular: s.msgid,
+			plural: s.msgidPlural,
+			context: s.msgctxt || null,
+		}));
+
+		const formGuide = pluralForm.forms
+			.map((f, i) => `   [${i}] used when ${f}`)
+			.join('\n');
+
+		const userPrompt = `Translate the following WordPress plural strings to ${
+			config.localeNames[targetLocale]
+		}.
+This language has ${nplurals} plural forms. For each input string return an
+array of exactly ${nplurals} translations, one per form, in this order:
+${formGuide}
+Preserve every printf placeholder (%d, %s, %1$d, etc.) in all forms.
+
+Input strings (each has the English singular and plural):
+${JSON.stringify(inputStrings, null, 2)}
+
+Return a JSON object whose "translations" is an array with one entry per input
+string, and each entry is an array of exactly ${nplurals} translated strings.`;
+
+		const translationTool = {
+			name: 'return_plural_translations',
+			description: `Return plural translations: one array of exactly ${nplurals} forms per input string.`,
+			input_schema: {
+				type: 'object',
+				properties: {
+					translations: {
+						type: 'array',
+						items: {
+							type: 'array',
+							items: { type: 'string' },
+						},
+						description: `One array of ${nplurals} translated forms per input string, in input order.`,
+					},
+				},
+				required: ['translations'],
+			},
+		};
+
+		const maxAttempts = 3;
+		let lastError;
+		for (let attempt = 1; attempt <= maxAttempts; attempt++) {
+			try {
+				const response = await fetch(this.config.apiEndpoint, {
+					method: 'POST',
+					headers: {
+						'Content-Type': 'application/json',
+						'x-api-key': this.apiKey,
+						'anthropic-version': '2023-06-01',
+					},
+					body: JSON.stringify({
+						model: this.config.model,
+						max_tokens: 8192,
+						system: systemPrompt,
+						messages: [{ role: 'user', content: userPrompt }],
+						temperature: 0.3,
+						tools: [translationTool],
+						tool_choice: {
+							type: 'tool',
+							name: 'return_plural_translations',
+						},
+					}),
+				});
+
+				if (!response.ok) {
+					const errorText = await response.text();
+					throw new Error(
+						`Claude API error (${response.status}): ${errorText}`
+					);
+				}
+
+				const data = await response.json();
+				const toolUse = data.content?.find(
+					(b) => b.type === 'tool_use'
+				);
+				if (!toolUse || !toolUse.input) {
+					throw new Error('Claude returned no structured output');
+				}
+
+				const translations = toolUse.input.translations;
+				if (
+					!Array.isArray(translations) ||
+					translations.length !== strings.length
+				) {
+					throw new Error(
+						`Claude returned invalid response: expected ${
+							strings.length
+						} entries, got ${translations?.length || 0}`
+					);
+				}
+				for (const forms of translations) {
+					if (!Array.isArray(forms) || forms.length !== nplurals) {
+						throw new Error(
+							`Expected ${nplurals} plural forms per string, got ${
+								Array.isArray(forms)
+									? forms.length
+									: typeof forms
+							}`
+						);
+					}
+				}
+
+				return {
+					translations: translations.map((forms) =>
+						forms.map((f) => String(f))
+					),
 					usage: {
 						inputTokens: data.usage.input_tokens,
 						outputTokens: data.usage.output_tokens,
