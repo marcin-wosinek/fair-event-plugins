@@ -66,13 +66,14 @@ class EventDateSetting {
 	 * Settings at their default value do not need a DB row.
 	 */
 	const DEFAULTS = array(
-		'continues_pricing_period'          => '1',
-		'unlimited_tickets_in_price_period' => '1',
-		'show_ticket_type_capacity'         => '0',
-		'multiple_pricing_periods'          => '0',
-		'show_seats_per_ticket'             => '0',
-		'activity_collaborator_discount'    => '0',
-		'minimum_activities'                => '0',
+		'continues_pricing_period'            => '1',
+		'unlimited_tickets_in_price_period'   => '1',
+		'show_ticket_type_capacity'           => '0',
+		'multiple_pricing_periods'            => '0',
+		'show_seats_per_ticket'               => '0',
+		'activity_collaborator_discount'      => '0',
+		'minimum_activities'                  => '0',
+		'show_ticket_type_minimum_activities' => '0',
 	);
 
 	/**

@@ -45,6 +45,7 @@ export default function EventTickets({
 		show_seats_per_ticket: false,
 		activity_collaborator_discount: false,
 		minimum_activities: 0,
+		show_ticket_type_minimum_activities: false,
 	});
 	const [options, setOptions] = useState([]);
 	const [loading, setLoading] = useState(!initialData);
@@ -1285,14 +1286,15 @@ export default function EventTickets({
 															)}
 														</th>
 													)}
-													{options.length > 0 && (
-														<th>
-															{__(
-																'Min. activities',
-																'fair-events'
-															)}
-														</th>
-													)}
+													{settings.show_ticket_type_minimum_activities &&
+														options.length > 0 && (
+															<th>
+																{__(
+																	'Min. activities',
+																	'fair-events'
+																)}
+															</th>
+														)}
 													{salePeriods.map(
 														(period, pIndex) => {
 															const isContinuous =
@@ -1530,43 +1532,44 @@ export default function EventTickets({
 																	/>
 																</td>
 															)}
-															{options.length >
-																0 && (
-																<td>
-																	<TextControl
-																		type="number"
-																		min="0"
-																		placeholder="0"
-																		value={String(
-																			type.minimum_activities ||
-																				0
-																		)}
-																		onChange={(
-																			v
-																		) =>
-																			updateTicketType(
-																				tIndex,
-																				'minimum_activities',
-																				v !==
-																					''
-																					? Math.max(
-																							0,
-																							parseInt(
-																								v,
-																								10
-																							) ||
-																								0
-																					  )
-																					: 0
-																			)
-																		}
-																		help={__(
-																			'Only raises the event-wide minimum for this ticket type. Leave 0 to inherit.',
-																			'fair-events'
-																		)}
-																	/>
-																</td>
-															)}
+															{settings.show_ticket_type_minimum_activities &&
+																options.length >
+																	0 && (
+																	<td>
+																		<TextControl
+																			type="number"
+																			min="0"
+																			placeholder="0"
+																			value={String(
+																				type.minimum_activities ||
+																					0
+																			)}
+																			onChange={(
+																				v
+																			) =>
+																				updateTicketType(
+																					tIndex,
+																					'minimum_activities',
+																					v !==
+																						''
+																						? Math.max(
+																								0,
+																								parseInt(
+																									v,
+																									10
+																								) ||
+																									0
+																						  )
+																						: 0
+																				)
+																			}
+																			help={__(
+																				'Only raises the event-wide minimum for this ticket type. Leave 0 to inherit.',
+																				'fair-events'
+																			)}
+																		/>
+																	</td>
+																)}
 															{salePeriods.map(
 																(
 																	period,
@@ -1726,7 +1729,13 @@ export default function EventTickets({
 															(settings.show_seats_per_ticket
 																? 1
 																: 0) +
-															(hasGroups ? 2 : 0)
+															(hasGroups
+																? 2
+																: 0) +
+															(settings.show_ticket_type_minimum_activities &&
+															options.length > 0
+																? 1
+																: 0)
 														}
 													>
 														<Button
@@ -2372,6 +2381,26 @@ export default function EventTickets({
 									setSettings((prev) => ({
 										...prev,
 										show_seats_per_ticket: value,
+									}))
+								}
+							/>
+							<CheckboxControl
+								label={__(
+									'Per-ticket-type minimum activities',
+									'fair-events'
+								)}
+								help={__(
+									'Show a Min. activities input on each ticket type to require more activities than the event-wide minimum (it only ever raises it). When off, every ticket type uses the event-wide minimum.',
+									'fair-events'
+								)}
+								checked={
+									settings.show_ticket_type_minimum_activities
+								}
+								onChange={(value) =>
+									setSettings((prev) => ({
+										...prev,
+										show_ticket_type_minimum_activities:
+											value,
 									}))
 								}
 							/>
