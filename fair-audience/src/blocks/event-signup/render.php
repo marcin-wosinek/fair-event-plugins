@@ -534,9 +534,8 @@ if ( $is_signed_up && $participant && ! empty( $event_date_id ) && isset( $event
 				$current_activity_names[] = $opt['name'];
 				continue;
 			}
-			if ( ! empty( $opt['is_full'] ) ) {
-				continue;
-			}
+			// Full options are kept in the list but rendered disabled, so the
+			// section stays discoverable and explains why they can't be added.
 			$addable_options[] = $opt;
 		}
 	}
@@ -759,9 +758,21 @@ $render_add_activities = static function () use ( $addable_options, $has_addable
 				$opt_label .= ' — ' . __( 'free', 'fair-audience' );
 			}
 		}
+		$is_full = ! empty( $opt['is_full'] );
+		if ( $is_full ) {
+			$opt_label .= ' — ' . __( 'full', 'fair-audience' );
+		}
 		$checkbox_id = esc_attr( $form_id ) . '-add-opt-' . (int) $opt['id'];
-		echo '<label class="fair-audience-ticket-option-item" for="' . $checkbox_id . '">';
-		echo '<input type="checkbox" name="add_option_ids[]" id="' . $checkbox_id . '" value="' . (int) $opt['id'] . '" data-option-price="' . esc_attr( number_format( $opt['price'], 2, '.', '' ) ) . '" /> ';
+		$classes     = 'fair-audience-ticket-option-item';
+		if ( $is_full ) {
+			$classes .= ' fair-audience-ticket-option-full';
+		}
+		echo '<label class="' . esc_attr( $classes ) . '" for="' . $checkbox_id . '">';
+		echo '<input type="checkbox" name="add_option_ids[]" id="' . $checkbox_id . '" value="' . (int) $opt['id'] . '" data-option-price="' . esc_attr( number_format( $opt['price'], 2, '.', '' ) ) . '"';
+		if ( $is_full ) {
+			echo ' disabled';
+		}
+		echo ' /> ';
 		echo esc_html( $opt_label );
 		echo '</label>';
 	}
