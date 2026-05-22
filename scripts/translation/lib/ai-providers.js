@@ -186,92 +186,148 @@ ${JSON.stringify(inputStrings, null, 2)}
 
 Return format: {"translations": ["translation 1", "translation 2", ...]}`;
 
-		const response = await fetch(this.config.apiEndpoint, {
-			method: 'POST',
-			headers: {
-				'Content-Type': 'application/json',
-				'x-api-key': this.apiKey,
-				'anthropic-version': '2023-06-01',
-			},
-			body: JSON.stringify({
-				model: this.config.model,
-				max_tokens: 4096,
-				system: systemPrompt,
-				messages: [{ role: 'user', content: userPrompt }],
-				temperature: 0.3,
-			}),
-		});
-
-		if (!response.ok) {
-			const errorText = await response.text();
-			throw new Error(
-				`Claude API error (${response.status}): ${errorText}\n\n` +
-					`   💡 To fix:\n` +
-					`      1. Check your API key is valid\n` +
-					`      2. Check your API quota: https://console.anthropic.com/\n` +
-					`      3. If rate limited, wait a few minutes and retry`
-			);
-		}
-
-		const data = await response.json();
-		const contentText = data.content[0].text;
-
-		// Try to extract JSON from the response
-		let result;
-		try {
-			result = JSON.parse(contentText);
-		} catch (e) {
-			// Sometimes Claude wraps JSON in markdown code blocks
-			const jsonMatch = contentText.match(
-				/```(?:json)?\s*([\s\S]*?)\s*```/
-			);
-			if (jsonMatch) {
-				result = JSON.parse(jsonMatch[1]);
-			} else {
-				throw new Error(
-					`Claude returned invalid JSON: ${contentText.substring(
-						0,
-						200
-					)}...`
-				);
-			}
-		}
-
-		let translations = result.translations;
-
-		if (
-			!Array.isArray(translations) ||
-			translations.length !== strings.length
-		) {
-			throw new Error(
-				`Claude returned invalid response: expected ${
-					strings.length
-				} translations, got ${translations?.length || 0}`
-			);
-		}
-
-		// Normalize translations to strings (in case AI returns objects)
-		translations = translations.map((t) => {
-			if (typeof t === 'string') return t;
-			if (typeof t === 'object' && t !== null) {
-				// If it's an object, try to extract the translation field
-				return t.translation || t.msgstr || String(t);
-			}
-			return String(t);
-		});
-
-		return {
-			translations,
-			usage: {
-				inputTokens: data.usage.input_tokens,
-				outputTokens: data.usage.output_tokens,
-				totalTokens: data.usage.input_tokens + data.usage.output_tokens,
-				cost: this.estimateCost(
-					data.usage.input_tokens,
-					data.usage.output_tokens
-				),
+		// Use tool-use (structured output) so the API returns a validated
+		// JSON object instead of free-form text. This avoids parse failures
+		// from unescaped quotes/newlines that Claude occasionally emits,
+		// especially for longer locales like German.
+		const translationTool = {
+			name: 'return_translations',
+			description:
+				'Return the translated strings in the same order and count as the input.',
+			input_schema: {
+				type: 'object',
+				properties: {
+					translations: {
+						type: 'array',
+						items: { type: 'string' },
+						description:
+							'Translated strings, one per input string, in the same order.',
+					},
+				},
+				required: ['translations'],
 			},
 		};
+
+		// Claude occasionally returns a malformed or wrong-shaped response
+		// (e.g. translations as one concatenated string). Retry a few times
+		// before giving up — each attempt re-samples the model.
+		const maxAttempts = 3;
+		let lastError;
+		for (let attempt = 1; attempt <= maxAttempts; attempt++) {
+			try {
+				const response = await fetch(this.config.apiEndpoint, {
+					method: 'POST',
+					headers: {
+						'Content-Type': 'application/json',
+						'x-api-key': this.apiKey,
+						'anthropic-version': '2023-06-01',
+					},
+					body: JSON.stringify({
+						model: this.config.model,
+						max_tokens: 8192,
+						system: systemPrompt,
+						messages: [{ role: 'user', content: userPrompt }],
+						temperature: 0.3,
+						tools: [translationTool],
+						tool_choice: {
+							type: 'tool',
+							name: 'return_translations',
+						},
+					}),
+				});
+
+				if (!response.ok) {
+					const errorText = await response.text();
+					throw new Error(
+						`Claude API error (${response.status}): ${errorText}\n\n` +
+							`   💡 To fix:\n` +
+							`      1. Check your API key is valid\n` +
+							`      2. Check your API quota: https://console.anthropic.com/\n` +
+							`      3. If rate limited, wait a few minutes and retry`
+					);
+				}
+
+				const data = await response.json();
+
+				// Prefer the structured tool_use output (parsed JSON object).
+				let result;
+				const toolUse = data.content?.find(
+					(b) => b.type === 'tool_use'
+				);
+				if (toolUse && toolUse.input) {
+					result = toolUse.input;
+				} else {
+					// Fallback: parse JSON from a text block (older behavior).
+					const contentText =
+						data.content?.find((b) => b.type === 'text')?.text ||
+						'';
+					try {
+						result = JSON.parse(contentText);
+					} catch (e) {
+						// Sometimes Claude wraps JSON in markdown code blocks
+						const jsonMatch = contentText.match(
+							/```(?:json)?\s*([\s\S]*?)\s*```/
+						);
+						if (jsonMatch) {
+							result = JSON.parse(jsonMatch[1]);
+						} else {
+							throw new Error(
+								`Claude returned invalid JSON: ${contentText.substring(
+									0,
+									200
+								)}...`
+							);
+						}
+					}
+				}
+
+				let translations = result.translations;
+
+				if (
+					!Array.isArray(translations) ||
+					translations.length !== strings.length
+				) {
+					throw new Error(
+						`Claude returned invalid response: expected ${
+							strings.length
+						} translations, got ${translations?.length || 0}`
+					);
+				}
+
+				// Normalize translations to strings (AI may return objects)
+				translations = translations.map((t) => {
+					if (typeof t === 'string') return t;
+					if (typeof t === 'object' && t !== null) {
+						// If it's an object, extract the translation field
+						return t.translation || t.msgstr || String(t);
+					}
+					return String(t);
+				});
+
+				return {
+					translations,
+					usage: {
+						inputTokens: data.usage.input_tokens,
+						outputTokens: data.usage.output_tokens,
+						totalTokens:
+							data.usage.input_tokens + data.usage.output_tokens,
+						cost: this.estimateCost(
+							data.usage.input_tokens,
+							data.usage.output_tokens
+						),
+					},
+				};
+			} catch (error) {
+				lastError = error;
+				if (attempt < maxAttempts) {
+					console.error(
+						`   ⚠️  Attempt ${attempt}/${maxAttempts} failed (${error.message}); retrying...`
+					);
+				}
+			}
+		}
+
+		throw lastError;
 	}
 }
 
