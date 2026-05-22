@@ -258,6 +258,47 @@ class EventSignupController extends WP_REST_Controller {
 			)
 		);
 
+		// POST /fair-audience/v1/event-signup/add-activities
+		register_rest_route(
+			$this->namespace,
+			'/' . $this->rest_base . '/add-activities',
+			array(
+				array(
+					'methods'             => WP_REST_Server::CREATABLE,
+					'callback'            => array( $this, 'add_activities' ),
+					'permission_callback' => array( $this, 'create_signup_permissions_check' ),
+					'args'                => array(
+						'event_id'          => array(
+							'type'              => 'integer',
+							'required'          => true,
+							'sanitize_callback' => 'absint',
+						),
+						'event_date_id'     => array(
+							'type'              => 'integer',
+							'required'          => false,
+							'sanitize_callback' => 'absint',
+						),
+						'ticket_option_ids' => array(
+							'type'     => 'array',
+							'required' => true,
+							'items'    => array( 'type' => 'integer' ),
+						),
+						'participant_token' => array(
+							'type'              => 'string',
+							'required'          => false,
+							'sanitize_callback' => 'sanitize_text_field',
+						),
+						'invitation_token'  => array(
+							'type'              => 'string',
+							'required'          => false,
+							'default'           => '',
+							'sanitize_callback' => 'sanitize_text_field',
+						),
+					),
+				),
+			)
+		);
+
 		// POST /fair-audience/v1/event-signup/register
 		register_rest_route(
 			$this->namespace,
@@ -577,6 +618,252 @@ class EventSignupController extends WP_REST_Controller {
 				'success' => true,
 				'message' => __( 'You have successfully signed up for the event!', 'fair-audience' ),
 				'status'  => 'signed_up',
+			)
+		);
+	}
+
+	/**
+	 * Add one or more activity options to an existing (already signed-up)
+	 * subscription. Free additions attach immediately; priced additions route
+	 * the buyer through payment for just the delta and only attach on success
+	 * (see PaymentHooks::handle_activities_added_paid).
+	 *
+	 * @param WP_REST_Request $request Request object.
+	 * @return WP_REST_Response|WP_Error Response object or error.
+	 */
+	public function add_activities( $request ) {
+		$event_id          = $request->get_param( 'event_id' );
+		$participant_token = $request->get_param( 'participant_token' );
+		$invitation_token  = $request->get_param( 'invitation_token' ) ?: '';
+		$user_id           = get_current_user_id();
+		$raw_option_ids    = $request->get_param( 'ticket_option_ids' ) ?: array();
+
+		// Validate event exists.
+		$event = get_post( $event_id );
+		if ( ! $event || ! \FairEvents\Database\EventRepository::is_event( $event ) ) {
+			return new WP_Error(
+				'invalid_event',
+				__( 'Event not found.', 'fair-audience' ),
+				array( 'status' => 404 )
+			);
+		}
+
+		// Resolve event_date_id.
+		$event_date_id = $request->get_param( 'event_date_id' ) ?: 0;
+		if ( empty( $event_date_id ) && class_exists( \FairEvents\Models\EventDates::class ) ) {
+			$event_dates_obj = \FairEvents\Models\EventDates::get_by_event_id( $event_id );
+			if ( $event_dates_obj ) {
+				$event_date_id = (int) $event_dates_obj->id;
+			}
+		}
+
+		// Resolve participant from token or logged-in user.
+		$participant = null;
+		if ( ! empty( $participant_token ) ) {
+			$token_data = ParticipantToken::verify( $participant_token );
+			if ( $token_data ) {
+				$participant = $this->participant_repository->get_by_id( $token_data['participant_id'] );
+			}
+		} elseif ( $user_id ) {
+			$participant = $this->participant_repository->get_by_user_id( $user_id );
+		}
+
+		if ( ! $participant ) {
+			return new WP_Error(
+				'no_participant',
+				__( 'Could not find your participant profile.', 'fair-audience' ),
+				array( 'status' => 400 )
+			);
+		}
+
+		// The subscription must already exist and be signed up — adding
+		// activities to a non-existent or pending signup is out of scope.
+		if ( $event_date_id ) {
+			$existing = $this->event_participant_repository->get_by_event_date_and_participant(
+				$event_date_id,
+				$participant->id
+			);
+		} else {
+			$existing = $this->event_participant_repository->get_by_event_and_participant(
+				$event_id,
+				$participant->id
+			);
+		}
+
+		if ( ! $existing || 'signed_up' !== $existing->label ) {
+			return new WP_Error(
+				'not_signed_up',
+				__( 'You need an active signup before you can add activities.', 'fair-audience' ),
+				array( 'status' => 400 )
+			);
+		}
+
+		// Validate the requested options (exist for the event date, have capacity).
+		$requested = $this->load_valid_options( $event_date_id, $raw_option_ids );
+
+		// Drop options already on the subscription — the duplicate-add guard.
+		$already_ids = $this->event_participant_repository->get_option_ids_for_event_participant( (int) $existing->id );
+		$new_options = array_values(
+			array_filter(
+				$requested,
+				static function ( $opt ) use ( $already_ids ) {
+					return ! in_array( (int) $opt->id, $already_ids, true );
+				}
+			)
+		);
+
+		if ( empty( $new_options ) ) {
+			return new WP_Error(
+				'no_new_activities',
+				__( 'No new activities to add.', 'fair-audience' ),
+				array( 'status' => 400 )
+			);
+		}
+
+		$paid_response = $this->maybe_start_addon_payment( $event_id, $event_date_id, $participant, $existing, $user_id, $new_options, $invitation_token );
+		if ( null !== $paid_response ) {
+			if ( ! is_wp_error( $paid_response ) ) {
+				AudienceSession::set( (int) $participant->id );
+			}
+			return $paid_response;
+		}
+
+		// Free path: attach immediately and notify.
+		$this->save_participant_options( (int) $existing->id, $new_options );
+
+		$new_option_ids = array_map( static fn( $opt ) => (int) $opt->id, $new_options );
+		do_action( 'fair_audience_event_activities_added', $existing, null, $new_option_ids );
+
+		AudienceSession::set( (int) $participant->id );
+
+		return rest_ensure_response(
+			array(
+				'success' => true,
+				'status'  => 'activities_added',
+				'message' => __( 'Your activities have been added!', 'fair-audience' ),
+			)
+		);
+	}
+
+	/**
+	 * Start the paid flow for added activities when the new options carry a
+	 * positive total. Returns null for the free path so the caller can attach
+	 * immediately.
+	 *
+	 * Unlike maybe_start_paid_signup, this never mutates the existing
+	 * (signed_up) row: the subscription stays valid regardless of whether the
+	 * add-on payment succeeds. The selected option IDs ride along on the
+	 * transaction metadata; PaymentHooks attaches them only once Mollie
+	 * confirms the payment.
+	 *
+	 * @param int                                   $event_id          Event post ID.
+	 * @param int                                   $event_date_id     Event date ID.
+	 * @param \FairAudience\Models\Participant      $participant       Participant adding activities.
+	 * @param \FairAudience\Models\EventParticipant $event_participant Existing signed-up row.
+	 * @param int                                   $user_id           Current WP user ID (0 for anonymous).
+	 * @param array                                 $new_options       New TicketOption objects to add.
+	 * @param string                                $invitation_token  Optional invitation token.
+	 * @return \WP_REST_Response|\WP_Error|null Response/error on paid path, null on free path.
+	 */
+	private function maybe_start_addon_payment( $event_id, $event_date_id, $participant, $event_participant, $user_id, $new_options, $invitation_token = '' ) {
+		$best_discount_rule = null;
+		if ( $event_date_id && class_exists( \FairEvents\Services\EventSignupPricing::class ) ) {
+			$best_discount_rule = \FairEvents\Services\EventSignupPricing::resolve_best_discount_rule(
+				$event_date_id,
+				$participant->id
+			);
+		}
+
+		$invitation_inviter_id = $this->resolve_invitation_inviter_id( $invitation_token, $event_date_id );
+
+		$line_items   = array();
+		$total_amount = 0;
+		foreach ( $new_options as $opt ) {
+			$opt_price     = $this->compute_option_price( $opt, $event_date_id, $invitation_inviter_id, $best_discount_rule );
+			$total_amount += $opt_price;
+			if ( 0.0 !== (float) $opt_price ) {
+				$line_items[] = array(
+					'name'     => $opt->name,
+					'quantity' => 1,
+					'amount'   => $opt_price,
+				);
+			}
+		}
+
+		if ( $total_amount <= 0 ) {
+			return null;
+		}
+
+		if ( ! class_exists( \FairPayment\API\TransactionAPI::class ) ) {
+			return new WP_Error(
+				'payment_unavailable',
+				__( 'Paid activities are not available because the payment plugin is missing.', 'fair-audience' ),
+				array( 'status' => 503 )
+			);
+		}
+
+		$description = sprintf(
+			/* translators: %s: event title */
+			__( 'Added activities for %s', 'fair-audience' ),
+			get_the_title( $event_id )
+		);
+
+		$new_option_ids = array_map( static fn( $opt ) => (int) $opt->id, $new_options );
+
+		$transaction_id = \FairPayment\API\TransactionAPI::create_transaction(
+			$line_items,
+			array(
+				'currency'      => 'EUR',
+				'description'   => $description,
+				'post_id'       => $event_id,
+				'event_date_id' => $event_date_id,
+				'user_id'       => $user_id ? $user_id : null,
+				'metadata'      => array(
+					'source'               => 'fair-audience-activity-addon',
+					'event_date_id'        => $event_date_id,
+					'event_participant_id' => (int) $event_participant->id,
+					'participant_id'       => (int) $participant->id,
+					'ticket_option_ids'    => $new_option_ids,
+				),
+			)
+		);
+
+		if ( is_wp_error( $transaction_id ) ) {
+			return $transaction_id;
+		}
+
+		$redirect_url = add_query_arg(
+			array(
+				'fair_payment_callback' => 'true',
+				'fair_signup_tx'        => $transaction_id,
+				'fst_sig'               => \FairAudience\Services\TransactionAccessToken::generate(
+					(int) $transaction_id,
+					(int) $participant->id
+				),
+			),
+			get_permalink( $event_id )
+		);
+
+		$payment = \FairPayment\API\TransactionAPI::initiate_payment(
+			$transaction_id,
+			array(
+				'redirect_url' => $redirect_url,
+			)
+		);
+
+		if ( is_wp_error( $payment ) ) {
+			return $payment;
+		}
+
+		return rest_ensure_response(
+			array(
+				'success'        => true,
+				'status'         => 'payment_required',
+				'message'        => __( 'Redirecting to payment…', 'fair-audience' ),
+				'checkout_url'   => $payment['checkout_url'],
+				'transaction_id' => $transaction_id,
+				'amount'         => $total_amount,
+				'currency'       => 'EUR',
 			)
 		);
 	}
@@ -932,32 +1219,12 @@ class EventSignupController extends WP_REST_Controller {
 	/**
 	 * Insert rows into fair_audience_event_participant_options.
 	 *
-	 * phpcs:disable WordPress.DB.DirectDatabaseQuery
-	 *
 	 * @param int   $event_participant_id Event participant record ID.
 	 * @param array $option_items         Array of TicketOption objects.
 	 * @return void
 	 */
 	private function save_participant_options( $event_participant_id, $option_items ) {
-		global $wpdb;
-
-		if ( empty( $option_items ) ) {
-			return;
-		}
-
-		$table_name = $wpdb->prefix . 'fair_audience_event_participant_options';
-
-		foreach ( $option_items as $option ) {
-			$wpdb->replace(
-				$table_name,
-				array(
-					'event_participant_id' => $event_participant_id,
-					'ticket_option_id'     => $option->id,
-					'ticket_option_name'   => $option->name,
-				),
-				array( '%d', '%d', '%s' )
-			);
-		}
+		$this->event_participant_repository->add_options( $event_participant_id, $option_items );
 	}
 
 	/**
@@ -1360,7 +1627,16 @@ class EventSignupController extends WP_REST_Controller {
 		}
 
 		$metadata = ! empty( $old_transaction->metadata ) ? json_decode( $old_transaction->metadata, true ) : array();
-		if ( empty( $metadata['source'] ) || 'fair-audience-signup' !== $metadata['source'] ) {
+		$source   = $metadata['source'] ?? '';
+
+		// Added-activities add-ons retry along a separate path: the base signup
+		// row must not be touched, so they don't go through the row-mutation
+		// logic below.
+		if ( 'fair-audience-activity-addon' === $source ) {
+			return $this->retry_addon_payment( $old_transaction, $metadata );
+		}
+
+		if ( 'fair-audience-signup' !== $source ) {
 			return new WP_Error(
 				'invalid_retry_source',
 				__( 'This payment is not retriable from this endpoint.', 'fair-audience' ),
@@ -1515,6 +1791,147 @@ class EventSignupController extends WP_REST_Controller {
 
 		$event_participant->transaction_id = (int) $new_transaction_id;
 		$event_participant->save();
+
+		$redirect_url = add_query_arg(
+			array(
+				'fair_payment_callback' => 'true',
+				'fair_signup_tx'        => $new_transaction_id,
+				'fst_sig'               => \FairAudience\Services\TransactionAccessToken::generate(
+					(int) $new_transaction_id,
+					(int) $participant_id
+				),
+			),
+			get_permalink( $event_id )
+		);
+
+		$payment = \FairPayment\API\TransactionAPI::initiate_payment(
+			$new_transaction_id,
+			array(
+				'redirect_url' => $redirect_url,
+			)
+		);
+
+		if ( is_wp_error( $payment ) ) {
+			return $payment;
+		}
+
+		return rest_ensure_response(
+			array(
+				'success'        => true,
+				'status'         => 'payment_required',
+				'message'        => __( 'Redirecting to payment…', 'fair-audience' ),
+				'checkout_url'   => $payment['checkout_url'],
+				'transaction_id' => (int) $new_transaction_id,
+				'amount'         => $old_transaction->amount,
+				'currency'       => $old_transaction->currency,
+			)
+		);
+	}
+
+	/**
+	 * Retry a failed added-activities (add-on) payment. Mirrors the original
+	 * line items into a fresh transaction without touching the still-valid
+	 * signed_up row. The activities only attach once Mollie confirms (see
+	 * PaymentHooks::handle_activities_added_paid), so a previously failed
+	 * attempt left nothing attached.
+	 *
+	 * @param object $old_transaction The failed/expired add-on transaction.
+	 * @param array  $metadata        Decoded metadata from the old transaction.
+	 * @return WP_REST_Response|WP_Error Response object or error.
+	 */
+	private function retry_addon_payment( $old_transaction, $metadata ) {
+		$transaction_id       = (int) $old_transaction->id;
+		$event_id             = isset( $metadata['post_id'] ) ? (int) $metadata['post_id'] : (int) $old_transaction->post_id;
+		$event_date_id        = isset( $metadata['event_date_id'] ) ? (int) $metadata['event_date_id'] : (int) $old_transaction->event_date_id;
+		$participant_id       = isset( $metadata['participant_id'] ) ? (int) $metadata['participant_id'] : (int) $old_transaction->participant_id;
+		$event_participant_id = isset( $metadata['event_participant_id'] ) ? (int) $metadata['event_participant_id'] : 0;
+		$option_ids           = isset( $metadata['ticket_option_ids'] ) && is_array( $metadata['ticket_option_ids'] )
+			? array_map( 'intval', $metadata['ticket_option_ids'] )
+			: array();
+		$user_id              = isset( $old_transaction->user_id ) ? (int) $old_transaction->user_id : 0;
+
+		if ( ! $event_id || ! $participant_id || ! $event_participant_id || empty( $option_ids ) ) {
+			return new WP_Error(
+				'invalid_retry_state',
+				__( 'This payment is missing context needed to retry.', 'fair-audience' ),
+				array( 'status' => 409 )
+			);
+		}
+
+		$event = get_post( $event_id );
+		if ( ! $event ) {
+			return new WP_Error(
+				'invalid_event',
+				__( 'Event not found.', 'fair-audience' ),
+				array( 'status' => 404 )
+			);
+		}
+
+		$event_participant = $this->event_participant_repository->get_by_id( $event_participant_id );
+		if ( ! $event_participant || 'signed_up' !== $event_participant->label ) {
+			return new WP_Error(
+				'not_signed_up',
+				__( 'Your signup is no longer active.', 'fair-audience' ),
+				array( 'status' => 409 )
+			);
+		}
+
+		// Already attached (e.g. the original payment landed after all)? Nothing
+		// to retry.
+		$already_ids   = $this->event_participant_repository->get_option_ids_for_event_participant( $event_participant_id );
+		$remaining_ids = array_values( array_diff( $option_ids, $already_ids ) );
+		if ( empty( $remaining_ids ) ) {
+			return rest_ensure_response(
+				array(
+					'success' => true,
+					'status'  => 'activities_added',
+					'message' => __( 'These activities are already on your signup.', 'fair-audience' ),
+				)
+			);
+		}
+
+		// Rebuild line items from the original transaction so the retry charges
+		// exactly what the buyer agreed to.
+		$old_line_items = \FairPayment\Models\LineItem::get_by_transaction_id( $transaction_id );
+		if ( empty( $old_line_items ) ) {
+			return new WP_Error(
+				'invalid_retry_state',
+				__( 'Original line items could not be loaded.', 'fair-audience' ),
+				array( 'status' => 500 )
+			);
+		}
+
+		$line_items = array();
+		foreach ( $old_line_items as $li ) {
+			$line_items[] = array(
+				'name'     => (string) $li->name,
+				'quantity' => isset( $li->quantity ) ? (int) $li->quantity : 1,
+				'amount'   => (float) $li->unit_amount,
+			);
+		}
+
+		$new_transaction_id = \FairPayment\API\TransactionAPI::create_transaction(
+			$line_items,
+			array(
+				'currency'      => $old_transaction->currency,
+				'description'   => $old_transaction->description,
+				'post_id'       => $event_id,
+				'event_date_id' => $event_date_id,
+				'user_id'       => $user_id ? $user_id : null,
+				'metadata'      => array(
+					'source'                  => 'fair-audience-activity-addon',
+					'event_date_id'           => $event_date_id,
+					'event_participant_id'    => $event_participant_id,
+					'participant_id'          => $participant_id,
+					'ticket_option_ids'       => $option_ids,
+					'retry_of_transaction_id' => $transaction_id,
+				),
+			)
+		);
+
+		if ( is_wp_error( $new_transaction_id ) ) {
+			return $new_transaction_id;
+		}
 
 		$redirect_url = add_query_arg(
 			array(

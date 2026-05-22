@@ -88,6 +88,10 @@ const CSS_PREFIX = 'fair-audience-signup';
 			});
 		});
 
+		// Wire the "add activities" section (issue #611) for signed-up viewers.
+		// No-op when the section isn't rendered (nothing left to add).
+		wireAddActivities(block);
+
 		// When a recurrence picker is present, the user can switch between
 		// signed-up and not-signed-up occurrences inline — initialise the
 		// authenticated form even if the default selection is signed up.
@@ -818,6 +822,150 @@ const CSS_PREFIX = 'fair-audience-signup';
 				showNotification(errorMessage, 'error');
 			})
 			.finally(function () {
+				restoreButton();
+			});
+	}
+
+	/**
+	 * Wire the "add activities" section shown to a signed-up viewer: keep the
+	 * Add button's total in sync with the checked options and submit on click.
+	 * No-op when the section isn't present.
+	 * @param {HTMLElement} block The block element
+	 */
+	function wireAddActivities(block) {
+		const section = block.querySelector('.fair-audience-add-activities');
+		if (!section) {
+			return;
+		}
+		const button = section.querySelector(
+			'.fair-audience-add-activities-button'
+		);
+		if (!button) {
+			return;
+		}
+		const checkboxes = section.querySelectorAll(
+			'input[name="add_option_ids[]"]'
+		);
+
+		const baseText = __('Add activities', 'fair-audience');
+		const updateButton = function () {
+			let total = 0;
+			let anyChecked = false;
+			checkboxes.forEach(function (cb) {
+				if (cb.checked) {
+					anyChecked = true;
+					total += parseFloat(cb.dataset.optionPrice || 0);
+				}
+			});
+			button.disabled = !anyChecked;
+			button.textContent =
+				total > 0 ? baseText + ' — €' + total.toFixed(2) : baseText;
+		};
+
+		checkboxes.forEach(function (cb) {
+			cb.addEventListener('change', updateButton);
+		});
+		button.addEventListener('click', function () {
+			submitAddActivities(block, this);
+		});
+
+		updateButton();
+	}
+
+	/**
+	 * Submit the add-activities request. Redirects to checkout when the added
+	 * activities are priced; otherwise reloads to reflect the updated list.
+	 * @param {HTMLElement} block The block element
+	 * @param {HTMLElement} button The add-activities button
+	 */
+	function submitAddActivities(block, button) {
+		const eventId = parseInt(block.dataset.eventId, 10);
+		const eventDateId = block.dataset.eventDateId
+			? parseInt(block.dataset.eventDateId, 10)
+			: null;
+		const token = block.dataset.participantToken || '';
+		const section = block.querySelector('.fair-audience-add-activities');
+		const messageContainer = block.querySelector(
+			'.fair-audience-signup-message'
+		);
+
+		const checked = section.querySelectorAll(
+			'input[name="add_option_ids[]"]:checked'
+		);
+		if (checked.length === 0) {
+			return;
+		}
+
+		const requestData = {
+			event_id: eventId,
+			ticket_option_ids: Array.from(checked).map((i) =>
+				parseInt(i.value, 10)
+			),
+		};
+		if (eventDateId) {
+			requestData.event_date_id = eventDateId;
+		}
+		if (token) {
+			requestData.participant_token = token;
+		}
+		const invitationToken = block.dataset.invitationToken || '';
+		if (invitationToken) {
+			requestData.invitation_token = invitationToken;
+		}
+
+		const restoreButton = setButtonLoading(
+			button,
+			__('Adding…', 'fair-audience')
+		);
+
+		apiFetch({
+			path: '/fair-audience/v1/event-signup/add-activities',
+			method: 'POST',
+			data: requestData,
+		})
+			.then(function (response) {
+				// Paid add: redirect to Mollie checkout for the delta.
+				if (
+					response &&
+					response.status === 'payment_required' &&
+					response.checkout_url
+				) {
+					window.location = response.checkout_url;
+					return;
+				}
+				if (response && response.success) {
+					showNotification(
+						response.message ||
+							__(
+								'Your activities have been added!',
+								'fair-audience'
+							),
+						'success'
+					);
+					// Reload so the list reflects the just-added activities.
+					window.location.reload();
+					return;
+				}
+				restoreButton();
+			})
+			.catch(function (error) {
+				console.error('Add activities error:', error);
+				const errorMessage = extractErrorMessage(
+					error,
+					__(
+						'Failed to add activities. Please try again.',
+						'fair-audience'
+					)
+				);
+				if (messageContainer) {
+					showMessage(
+						messageContainer,
+						errorMessage,
+						'error',
+						CSS_PREFIX
+					);
+				}
+				showNotification(errorMessage, 'error');
 				restoreButton();
 			});
 	}

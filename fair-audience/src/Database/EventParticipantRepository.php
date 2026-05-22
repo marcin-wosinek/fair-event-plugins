@@ -430,6 +430,84 @@ class EventParticipantRepository {
 	}
 
 	/**
+	 * Find an event participant row by its primary key.
+	 *
+	 * @param int $id Event participant row ID.
+	 * @return EventParticipant|null Relationship or null.
+	 */
+	public function get_by_id( $id ) {
+		global $wpdb;
+
+		$result = $wpdb->get_row(
+			$wpdb->prepare(
+				'SELECT * FROM %i WHERE id = %d LIMIT 1',
+				$this->get_table_name(),
+				$id
+			),
+			ARRAY_A
+		);
+
+		return $result ? new EventParticipant( $result ) : null;
+	}
+
+	/**
+	 * Get the ticket option IDs currently attached to an event participant.
+	 *
+	 * @param int $event_participant_id Event participant row ID.
+	 * @return int[] Attached ticket option IDs.
+	 */
+	public function get_option_ids_for_event_participant( $event_participant_id ) {
+		global $wpdb;
+
+		$options_table = $wpdb->prefix . 'fair_audience_event_participant_options';
+
+		$ids = $wpdb->get_col(
+			$wpdb->prepare(
+				'SELECT ticket_option_id FROM %i WHERE event_participant_id = %d',
+				$options_table,
+				$event_participant_id
+			)
+		);
+
+		return array_map( 'intval', (array) $ids );
+	}
+
+	/**
+	 * Attach ticket options to an event participant. Idempotent: uses REPLACE
+	 * so re-attaching an existing option only refreshes its snapshotted name.
+	 *
+	 * @param int   $event_participant_id Event participant row ID.
+	 * @param array $options              Array of objects/arrays with `id` and `name`.
+	 * @return void
+	 */
+	public function add_options( $event_participant_id, $options ) {
+		global $wpdb;
+
+		if ( empty( $options ) ) {
+			return;
+		}
+
+		$options_table = $wpdb->prefix . 'fair_audience_event_participant_options';
+
+		foreach ( $options as $option ) {
+			$option_id   = is_array( $option ) ? ( $option['id'] ?? 0 ) : ( $option->id ?? 0 );
+			$option_name = is_array( $option ) ? ( $option['name'] ?? '' ) : ( $option->name ?? '' );
+			if ( ! $option_id ) {
+				continue;
+			}
+			$wpdb->replace(
+				$options_table,
+				array(
+					'event_participant_id' => (int) $event_participant_id,
+					'ticket_option_id'     => (int) $option_id,
+					'ticket_option_name'   => (string) $option_name,
+				),
+				array( '%d', '%d', '%s' )
+			);
+		}
+	}
+
+	/**
 	 * Delete pending_payment rows whose payment_expires_at has passed.
 	 *
 	 * @return int Number of rows deleted.

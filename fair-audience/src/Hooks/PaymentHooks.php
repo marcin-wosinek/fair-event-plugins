@@ -30,9 +30,11 @@ class PaymentHooks {
 		add_action( 'fair_payment_failed', array( static::class, 'handle_payment_failed' ), 10, 2 );
 		add_action( 'fair_payment_paid', array( static::class, 'handle_signup_paid' ), 10, 2 );
 		add_action( 'fair_payment_failed', array( static::class, 'handle_signup_failed' ), 10, 2 );
+		add_action( 'fair_payment_paid', array( static::class, 'handle_activities_added_paid' ), 10, 2 );
 
 		add_action( 'fair_audience_event_signup_paid', array( static::class, 'send_signup_confirmation_email' ), 10, 2 );
 		add_action( 'fair_audience_event_signup_failed', array( static::class, 'send_signup_payment_failed_email' ), 10, 2 );
+		add_action( 'fair_audience_event_activities_added', array( static::class, 'send_activities_added_email' ), 10, 3 );
 
 		add_filter( 'fair_payment_resolve_participant_id', array( static::class, 'resolve_participant_id' ), 10, 2 );
 		add_filter( 'fair_payment_prepare_participant', array( static::class, 'prepare_participant' ), 10, 2 );
@@ -452,6 +454,98 @@ class PaymentHooks {
 	}
 
 	/**
+	 * Attach added activities to an existing signed-up subscription once Mollie
+	 * confirms the add-on payment. The base signup row is never touched: a
+	 * failed add-on simply leaves nothing attached.
+	 *
+	 * Idempotent — Mollie retries the webhook, so a per-transaction transient
+	 * guards against attaching (and emailing) twice.
+	 *
+	 * @param object $payment     Mollie payment object.
+	 * @param object $transaction Transaction row from fair-payment.
+	 */
+	public static function handle_activities_added_paid( $payment, $transaction ) {
+		$metadata = ! empty( $transaction->metadata ) ? json_decode( $transaction->metadata, true ) : array();
+		if ( empty( $metadata['source'] ) || 'fair-audience-activity-addon' !== $metadata['source'] ) {
+			return;
+		}
+
+		$dedupe_key = 'fair_audience_activities_added_' . (int) $transaction->id;
+		if ( get_transient( $dedupe_key ) ) {
+			return;
+		}
+
+		$event_participant_id = isset( $metadata['event_participant_id'] ) ? (int) $metadata['event_participant_id'] : 0;
+		$option_ids           = isset( $metadata['ticket_option_ids'] ) && is_array( $metadata['ticket_option_ids'] )
+			? array_map( 'intval', $metadata['ticket_option_ids'] )
+			: array();
+
+		if ( ! $event_participant_id || empty( $option_ids ) ) {
+			return;
+		}
+
+		$repo              = new EventParticipantRepository();
+		$event_participant = $repo->get_by_id( $event_participant_id );
+		if ( ! $event_participant || 'signed_up' !== $event_participant->label ) {
+			return;
+		}
+
+		// Resolve option names from the live ticket_options table, keyed by id.
+		$options = self::resolve_option_rows( $option_ids );
+		if ( empty( $options ) ) {
+			return;
+		}
+
+		set_transient( $dedupe_key, 1, DAY_IN_SECONDS );
+
+		$repo->add_options( $event_participant_id, $options );
+
+		do_action( 'fair_audience_event_activities_added', $event_participant, $transaction, $option_ids );
+	}
+
+	/**
+	 * Load ticket option id + name rows for the given IDs, preserving order.
+	 *
+	 * @param int[] $option_ids Ticket option IDs.
+	 * @return array[] Array of [ 'id' => int, 'name' => string ].
+	 */
+	private static function resolve_option_rows( $option_ids ) {
+		global $wpdb;
+
+		$option_ids = array_values( array_filter( array_map( 'intval', $option_ids ) ) );
+		if ( empty( $option_ids ) ) {
+			return array();
+		}
+
+		$placeholders = implode( ', ', array_fill( 0, count( $option_ids ), '%d' ) );
+		// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+		$rows = $wpdb->get_results(
+			$wpdb->prepare(
+				// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+				"SELECT id, name FROM {$wpdb->prefix}fair_events_ticket_options WHERE id IN ( $placeholders )",
+				...$option_ids
+			)
+		);
+
+		$names_by_id = array();
+		foreach ( (array) $rows as $row ) {
+			$names_by_id[ (int) $row->id ] = (string) $row->name;
+		}
+
+		$options = array();
+		foreach ( $option_ids as $id ) {
+			if ( isset( $names_by_id[ $id ] ) ) {
+				$options[] = array(
+					'id'   => $id,
+					'name' => $names_by_id[ $id ],
+				);
+			}
+		}
+
+		return $options;
+	}
+
+	/**
 	 * Send confirmation email to buyer after paid event signup.
 	 *
 	 * @param object $event_participant EventParticipant row.
@@ -486,6 +580,34 @@ class PaymentHooks {
 
 		$email_service = new EmailService();
 		$email_service->send_signup_payment_confirmation( $participant, $event, $transaction, $option_names );
+	}
+
+	/**
+	 * Send a confirmation email after activities are added to an existing
+	 * subscription. Lists only the newly added activities.
+	 *
+	 * @param object      $event_participant EventParticipant row.
+	 * @param object|null $transaction      Transaction row (null for free adds).
+	 * @param int[]       $added_option_ids  IDs of the activities that were added.
+	 */
+	public static function send_activities_added_email( $event_participant, $transaction, $added_option_ids ) {
+		$participant_repo = new ParticipantRepository();
+		$participant      = $participant_repo->get_by_id( (int) $event_participant->participant_id );
+
+		if ( ! $participant ) {
+			return;
+		}
+
+		$event = get_post( $event_participant->event_id );
+		if ( ! $event ) {
+			return;
+		}
+
+		$option_rows = self::resolve_option_rows( (array) $added_option_ids );
+		$added_names = array_map( static fn( $row ) => $row['name'], $option_rows );
+
+		$email_service = new EmailService();
+		$email_service->send_activities_added_confirmation( $participant, $event, $transaction, $added_names );
 	}
 
 	/**

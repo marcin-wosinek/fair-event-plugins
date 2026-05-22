@@ -511,6 +511,23 @@ $has_priced_options = ! empty(
 	)
 );
 
+// Activities the signed-up viewer can still add: every (non-full) option for
+// this event date that isn't already on their subscription (issue #611).
+$addable_options = array();
+if ( $is_signed_up && $participant && $has_ticket_options && ! empty( $event_date_id ) && isset( $event_participant_repository ) ) {
+	$signed_row = $event_participant_repository->get_by_event_date_and_participant( (int) $event_date_id, (int) $participant->id );
+	if ( $signed_row ) {
+		$selected_option_ids = $event_participant_repository->get_option_ids_for_event_participant( (int) $signed_row->id );
+		foreach ( $ticket_options_for_display as $opt ) {
+			if ( ! empty( $opt['is_full'] ) || in_array( (int) $opt['id'], $selected_option_ids, true ) ) {
+				continue;
+			}
+			$addable_options[] = $opt;
+		}
+	}
+}
+$has_addable_options = ! empty( $addable_options );
+
 // Resolve effective signup price for the current viewer so we can reflect it
 // in the button label.
 // null = no price configured at all → keep the default button text
@@ -701,6 +718,43 @@ $render_ticket_options = static function () use ( $ticket_options_for_display, $
 		echo esc_html( $opt_label );
 		echo '</label>';
 	}
+	echo '</fieldset>';
+};
+
+/**
+ * Render the "add activities" checkbox fieldset shown to a signed-up viewer,
+ * listing only the activities they don't yet have (issue #611). No-op when
+ * there's nothing left to add. The Add button total is kept in sync by the
+ * frontend JS from the checked options' data-option-price.
+ */
+$render_add_activities = static function () use ( $addable_options, $has_addable_options, $form_id, $show_option_prices ) {
+	if ( ! $has_addable_options ) {
+		return;
+	}
+	echo '<fieldset class="fair-audience-add-activities">';
+	echo '<legend>' . esc_html__( 'Add activities', 'fair-audience' ) . '</legend>';
+	foreach ( $addable_options as $opt ) {
+		$opt_label = $opt['name'];
+		if ( $show_option_prices ) {
+			if ( $opt['price'] > 0 ) {
+				$opt_label .= ' — €' . number_format_i18n( $opt['price'], 2 );
+			} elseif ( $opt['price'] < 0 ) {
+				$opt_label .= ' — -€' . number_format_i18n( abs( $opt['price'] ), 2 );
+			} else {
+				$opt_label .= ' — ' . __( 'free', 'fair-audience' );
+			}
+		}
+		$checkbox_id = esc_attr( $form_id ) . '-add-opt-' . (int) $opt['id'];
+		echo '<label class="fair-audience-ticket-option-item" for="' . $checkbox_id . '">';
+		echo '<input type="checkbox" name="add_option_ids[]" id="' . $checkbox_id . '" value="' . (int) $opt['id'] . '" data-option-price="' . esc_attr( number_format( $opt['price'], 2, '.', '' ) ) . '" /> ';
+		echo esc_html( $opt_label );
+		echo '</label>';
+	}
+	echo '<div class="wp-block-button">';
+	echo '<button type="button" class="wp-block-button__link wp-element-button fair-audience-add-activities-button" disabled>';
+	echo esc_html__( 'Add activities', 'fair-audience' );
+	echo '</button>';
+	echo '</div>';
 	echo '</fieldset>';
 };
 
@@ -939,6 +993,7 @@ $wrapper_attributes = get_block_wrapper_attributes(
 				<div class="fair-audience-signup-status fair-audience-signup-status-success">
 					<p><?php echo esc_html__( 'You are signed up for this date.', 'fair-audience' ); ?></p>
 				</div>
+				<?php $render_add_activities(); ?>
 				<div class="wp-block-button fair-audience-unsignup-button-wrap">
 					<button type="button" class="wp-block-button__link wp-element-button fair-audience-unsignup-button is-style-outline">
 						<?php echo esc_html__( 'Cancel signup', 'fair-audience' ); ?>
