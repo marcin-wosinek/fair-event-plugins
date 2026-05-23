@@ -13,15 +13,15 @@ dotenv.config();
  * This config is E2E-only; per-plugin API tests keep their own
  * `playwright.config.js` (e.g. fair-audience).
  */
-export default defineConfig( {
+export default defineConfig({
 	testDir: './e2e',
-	testMatch: [ '**/*.spec.js' ],
+	testMatch: ['**/*.spec.js'],
 
 	fullyParallel: false,
-	forbidOnly: !! process.env.CI,
+	forbidOnly: !!process.env.CI,
 	retries: process.env.CI ? 2 : 0,
 	workers: 1,
-	reporter: process.env.CI ? [ [ 'github' ], [ 'html' ] ] : 'html',
+	reporter: process.env.CI ? [['github'], ['html']] : 'html',
 
 	timeout: 60 * 1000,
 	expect: { timeout: 10 * 1000 },
@@ -36,7 +36,7 @@ export default defineConfig( {
 	projects: [
 		{
 			name: 'chromium',
-			use: { ...devices[ 'Desktop Chrome' ] },
+			use: { ...devices['Desktop Chrome'] },
 		},
 	],
-} );
+});
