@@ -566,6 +566,59 @@ A plugin migration is complete when:
 - Use `npm run test:e2e` and `npm run test:api` for integration tests
 - Consider running E2E/API tests only on main branch or PRs
 
+## Isolated E2E Harness (`@wordpress/env`)
+
+E2E specs in the repo-root `e2e/` directory run against a clean, throwaway
+WordPress instance provisioned by [`@wordpress/env`](https://www.npmjs.com/package/@wordpress/env)
+— **not** the dev `docker compose` stack. The two never collide:
+
+| Stack | Tool | Port |
+| --- | --- | --- |
+| Dev environment | `docker compose up` | 8080 |
+| E2E `tests` instance | `@wordpress/env` | **8889** |
+
+wp-env auto-installs WordPress, creates an `admin` / `password` user, and mounts +
+activates the four plugins listed in `.wp-env.json`. The root
+`playwright.config.js` is E2E-only (`testDir: ./e2e`); per-plugin API tests keep
+their own configs.
+
+### Running E2E locally
+
+A clean clone needs only `docker` + `node`:
+
+```bash
+npm run test:e2e:setup      # build assets, install composer deps, boot wp-env, set permalinks
+npm run test:e2e            # run the Playwright specs against :8889
+npm run test:e2e:teardown   # stop wp-env
+```
+
+The dev stack on 8080 can keep running the whole time. `npm test` runs only unit
+tests — E2E is opt-in via the scripts above.
+
+Useful extras:
+
+```bash
+npm run test:e2e -- --ui            # Playwright UI mode
+npx wp-env run tests-cli wp ...     # WP-CLI against the tests instance
+WP_BASE_URL=http://localhost:8889 npm run test:e2e   # override base URL
+```
+
+### Adding a new E2E test
+
+1. Drop a `*.spec.js` file under `e2e/` (subdirectories like `e2e/user-flows/`
+   are fine — `testMatch` is recursive).
+2. Import from `@playwright/test`; use relative paths (`page.goto('/wp-admin')`) —
+   `baseURL` is already set.
+3. For admin flows, log in via `/wp-login.php` with `WP_ADMIN_USER` /
+   `WP_ADMIN_PASSWORD` (default `admin` / `password`). See `e2e/smoke.spec.js`.
+
+### CI
+
+`.github/workflows/e2e.yml` runs on PRs touching plugin source, `e2e/`,
+`playwright.config.js`, or `.wp-env.json`. It boots the same wp-env env, installs
+the Chromium browser, runs the suite, and uploads the HTML report + traces as
+artifacts on failure.
+
 ## Questions?
 
 For questions or suggestions about the testing architecture:

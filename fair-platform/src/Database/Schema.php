@@ -32,7 +32,7 @@ class Schema {
 		$table_name      = $wpdb->prefix . 'fair_platform_connections';
 
 		$sql = "CREATE TABLE {$table_name} (
-			id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+			id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
 			site_id VARCHAR(255) NOT NULL,
 			site_name VARCHAR(255),
 			site_url VARCHAR(255),
@@ -47,17 +47,18 @@ class Schema {
 			last_token_refresh DATETIME,
 			ip_address VARCHAR(45),
 			user_agent TEXT,
-			INDEX idx_site_id (site_id),
-			INDEX idx_organization (mollie_organization_id),
-			INDEX idx_status (status),
-			INDEX idx_connected_at (connected_at)
+			PRIMARY KEY  (id),
+			KEY idx_site_id (site_id),
+			KEY idx_organization (mollie_organization_id),
+			KEY idx_status (status),
+			KEY idx_connected_at (connected_at)
 		) {$charset_collate};";
 
 		// Instagram connections table.
 		$instagram_table_name = $wpdb->prefix . 'fair_platform_instagram_connections';
 
 		$instagram_sql = "CREATE TABLE {$instagram_table_name} (
-			id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+			id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
 			site_id VARCHAR(255) NOT NULL,
 			site_name VARCHAR(255),
 			site_url VARCHAR(255),
@@ -71,10 +72,11 @@ class Schema {
 			last_token_refresh DATETIME,
 			ip_address VARCHAR(45),
 			user_agent TEXT,
-			INDEX idx_site_id (site_id),
-			INDEX idx_instagram_user (instagram_user_id),
-			INDEX idx_status (status),
-			INDEX idx_connected_at (connected_at)
+			PRIMARY KEY  (id),
+			KEY idx_site_id (site_id),
+			KEY idx_instagram_user (instagram_user_id),
+			KEY idx_status (status),
+			KEY idx_connected_at (connected_at)
 		) {$charset_collate};";
 
 		require_once ABSPATH . 'wp-admin/includes/upgrade.php';
