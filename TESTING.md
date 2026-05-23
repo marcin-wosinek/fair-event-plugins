@@ -620,6 +620,14 @@ WP_BASE_URL=http://localhost:8889 npm run test:e2e   # override base URL
 3. For admin flows, log in via `/wp-login.php` with `WP_ADMIN_USER` /
    `WP_ADMIN_PASSWORD` (default `admin` / `password`). See `e2e/smoke.spec.js`.
 
+### Capturing email & intercepting external services
+
+Specs that need to assert on outgoing mail, or drive flows that hit external
+services (e.g. Mollie payments), rely on a test-only support layer mounted into
+wp-env from `e2e/mu-plugins/` (mail is captured via `pre_wp_mail`; Mollie's HTTP
+transport is replaced by a double, with no change to plugin code). See
+[`e2e/README.md`](./e2e/README.md) for how it works and how to reuse it.
+
 ### CI
 
 `.github/workflows/e2e.yml` runs on PRs touching plugin source, `e2e/`,
