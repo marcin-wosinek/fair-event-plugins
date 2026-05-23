@@ -16,8 +16,24 @@
 - Body (when needed): wrap ~72 chars, explain **why** the change exists and what
   user-visible behaviour shifts. Skip restating the diff.
 - Reference issues with `Refs #NNN` or `Closes #NNN` on their own line at the
-  bottom of the body.
+  bottom of the body (see [Referencing & closing issues](#referencing--closing-issues)).
 - No trailers other than `Refs:` / `Closes:` / `Reverts:`.
+
+## Referencing & closing issues
+
+When work relates to a GitHub issue (e.g. one written per [TICKETS.md](./TICKETS.md)),
+link it so the history and the tracker stay connected:
+
+- **`Closes #NNN`** when the commit/PR fully resolves the issue — GitHub
+  auto-closes it on merge to the default branch. Use this for the change that
+  completes the ticket's acceptance criteria.
+- **`Refs #NNN`** when the change relates to but does not finish the issue
+  (partial work, one of several PRs, or a follow-up). It links without closing.
+- Put the keyword on its own line at the bottom of the commit body. In PRs,
+  also put `Closes #NNN` in the **Summary** so the link is visible in the UI.
+- Find the issue number with `gh issue list` / `gh issue view` when unsure.
+- Don't invent or guess issue numbers — only reference an issue that exists and
+  actually matches the work. If none does, omit the trailer.
 
 Example:
 

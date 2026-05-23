@@ -13,6 +13,7 @@ in that area — this file only carries the always-true rules.
 | Topic | Doc |
 | --- | --- |
 | Commits & PR descriptions | [COMMIT_GUIDE.md](./COMMIT_GUIDE.md) |
+| Writing tickets (GitHub issues) | [TICKETS.md](./TICKETS.md) |
 | Secure PHP patterns (DB, escaping, autoloading) | [PHP_PATTERNS.md](./PHP_PATTERNS.md) |
 | Adding a plugin to the monorepo | [ADDING_NEW_PLUGIN.md](./ADDING_NEW_PLUGIN.md) |
 | REST API — frontend | [REST_API_USAGE.md](./REST_API_USAGE.md) |
