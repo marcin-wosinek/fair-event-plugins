@@ -6,5 +6,8 @@
 		"./fair-events",
 		"./fair-audience",
 		"./fair-platform"
-	]
+	],
+	"mappings": {
+		"wp-content/mu-plugins": "./e2e/mu-plugins"
+	}
 }
