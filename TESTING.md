@@ -595,10 +595,18 @@ npm run test:e2e:teardown   # stop wp-env
 The dev stack on 8080 can keep running the whole time. `npm test` runs only unit
 tests — E2E is opt-in via the scripts above.
 
+Interactive / headed runs for development (the opposite of the default
+headless run):
+
+```bash
+npm run test:e2e:headed     # run with a visible browser window
+npm run test:e2e:ui         # Playwright UI mode: pick, watch, and step through tests
+```
+
 Useful extras:
 
 ```bash
-npm run test:e2e -- --ui            # Playwright UI mode
+npm run test:e2e -- --debug         # Playwright Inspector (step debugger)
 npx wp-env run tests-cli wp ...     # WP-CLI against the tests instance
 WP_BASE_URL=http://localhost:8889 npm run test:e2e   # override base URL
 ```
