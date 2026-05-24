@@ -1175,8 +1175,13 @@ class EventParticipantsController extends WP_REST_Controller {
 			);
 		}
 
-		// Get event date metadata.
-		$event_date = get_post_meta( $event_id, 'event_start', true );
+		// Get event date metadata. Prefer the authoritative start_datetime from
+		// the fair_event_dates row; fall back to legacy post meta for events
+		// whose meta predates the event-dates table.
+		$event_date = $event_date_obj->start_datetime;
+		if ( empty( $event_date ) ) {
+			$event_date = get_post_meta( $event_id, 'event_start', true );
+		}
 		if ( empty( $event_date ) ) {
 			$event_date = get_post_meta( $event_id, 'event_date', true );
 		}
