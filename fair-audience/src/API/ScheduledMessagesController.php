@@ -19,7 +19,7 @@ use WP_Error;
 defined( 'WPINC' ) || die;
 
 /**
- * REST API controller for scheduled per-event mailings.
+ * REST API controller for scheduled per-event-date mailings.
  */
 class ScheduledMessagesController extends WP_REST_Controller {
 
@@ -66,7 +66,7 @@ class ScheduledMessagesController extends WP_REST_Controller {
 	public function register_routes() {
 		register_rest_route(
 			$this->namespace,
-			'/events/(?P<event_id>[\d]+)/scheduled-messages',
+			'/event-dates/(?P<event_date_id>[\d]+)/scheduled-messages',
 			array(
 				array(
 					'methods'             => WP_REST_Server::READABLE,
@@ -84,19 +84,7 @@ class ScheduledMessagesController extends WP_REST_Controller {
 
 		register_rest_route(
 			$this->namespace,
-			'/events/(?P<event_id>[\d]+)/event-dates',
-			array(
-				array(
-					'methods'             => WP_REST_Server::READABLE,
-					'callback'            => array( $this, 'get_event_dates' ),
-					'permission_callback' => array( $this, 'admin_permissions_check' ),
-				),
-			)
-		);
-
-		register_rest_route(
-			$this->namespace,
-			'/events/(?P<event_id>[\d]+)/scheduled-messages/preview-recipients',
+			'/event-dates/(?P<event_date_id>[\d]+)/scheduled-messages/preview-recipients',
 			array(
 				array(
 					'methods'             => WP_REST_Server::CREATABLE,
@@ -198,14 +186,14 @@ class ScheduledMessagesController extends WP_REST_Controller {
 	}
 
 	/**
-	 * List scheduled messages for an event.
+	 * List scheduled messages for an event date.
 	 *
 	 * @param WP_REST_Request $request Request object.
 	 * @return \WP_REST_Response Response object.
 	 */
 	public function get_items( $request ) {
-		$event_id = (int) $request->get_param( 'event_id' );
-		$messages = $this->repository->get_by_event( $event_id );
+		$event_date_id = (int) $request->get_param( 'event_date_id' );
+		$messages      = $this->repository->get_by_event_date( $event_date_id );
 
 		$data = array_map(
 			function ( $message ) {
@@ -218,26 +206,21 @@ class ScheduledMessagesController extends WP_REST_Controller {
 	}
 
 	/**
-	 * Create a scheduled message for an event.
+	 * Create a scheduled message for an event date.
 	 *
 	 * @param WP_REST_Request $request Request object.
 	 * @return \WP_REST_Response|WP_Error Response object.
 	 */
 	public function create_item( $request ) {
-		$event_id = (int) $request->get_param( 'event_id' );
+		$event_date_id = (int) $request->get_param( 'event_date_id' );
 
-		if ( ! get_post( $event_id ) ) {
-			return new WP_Error( 'invalid_event', __( 'Event not found.', 'fair-audience' ), array( 'status' => 404 ) );
-		}
-
-		$anchor = $this->validate_anchor( $request, $event_id );
+		$anchor = $this->validate_anchor( $request, $event_date_id );
 		if ( is_wp_error( $anchor ) ) {
 			return $anchor;
 		}
 
 		$message                    = new ScheduledMessage();
-		$message->event_id          = $event_id;
-		$message->event_date_id     = $anchor['event_date_id'];
+		$message->event_date_id     = $event_date_id;
 		$message->subject           = $request->get_param( 'subject' );
 		$message->body              = wp_kses_post( $request->get_param( 'body' ) );
 		$message->anchor_type       = $request->get_param( 'anchor_type' );
@@ -279,12 +262,11 @@ class ScheduledMessagesController extends WP_REST_Controller {
 			);
 		}
 
-		$anchor = $this->validate_anchor( $request, $message->event_id );
+		$anchor = $this->validate_anchor( $request, $message->event_date_id );
 		if ( is_wp_error( $anchor ) ) {
 			return $anchor;
 		}
 
-		$message->event_date_id     = $anchor['event_date_id'];
 		$message->subject           = $request->get_param( 'subject' );
 		$message->body              = wp_kses_post( $request->get_param( 'body' ) );
 		$message->anchor_type       = $request->get_param( 'anchor_type' );
@@ -342,49 +324,9 @@ class ScheduledMessagesController extends WP_REST_Controller {
 			return new WP_Error( 'not_found', __( 'Scheduled message not found.', 'fair-audience' ), array( 'status' => 404 ) );
 		}
 
-		$recipients = $this->resolver->resolve( $message->recipients_filter, $message->event_id );
+		$recipients = $this->resolver->resolve_by_event_date( $message->recipients_filter, $message->event_date_id );
 
 		return rest_ensure_response( $recipients );
-	}
-
-	/**
-	 * List an event's dates for the anchor picker.
-	 *
-	 * @param WP_REST_Request $request Request object.
-	 * @return \WP_REST_Response Response object.
-	 */
-	public function get_event_dates( $request ) {
-		global $wpdb;
-
-		$event_id = (int) $request->get_param( 'event_id' );
-		$table    = $wpdb->prefix . 'fair_event_dates';
-
-		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
-		$rows = $wpdb->get_results(
-			$wpdb->prepare(
-				'SELECT id, start_datetime, end_datetime, all_day FROM %i WHERE event_id = %d ORDER BY start_datetime ASC',
-				$table,
-				$event_id
-			),
-			ARRAY_A
-		);
-
-		$data = array_map(
-			static function ( $row ) {
-				$start_display = empty( $row['start_datetime'] ) ? '' : wp_date( 'Y-m-d H:i', strtotime( $row['start_datetime'] ) );
-
-				return array(
-					'id'             => (int) $row['id'],
-					'start_datetime' => $row['start_datetime'],
-					'end_datetime'   => $row['end_datetime'],
-					'all_day'        => ! empty( $row['all_day'] ),
-					'display_label'  => $start_display,
-				);
-			},
-			$rows
-		);
-
-		return rest_ensure_response( $data );
 	}
 
 	/**
@@ -394,10 +336,10 @@ class ScheduledMessagesController extends WP_REST_Controller {
 	 * @return \WP_REST_Response Response object.
 	 */
 	public function preview_draft_recipients( $request ) {
-		$event_id = (int) $request->get_param( 'event_id' );
-		$filter   = $request->get_param( 'recipients_filter' );
+		$event_date_id = (int) $request->get_param( 'event_date_id' );
+		$filter        = $request->get_param( 'recipients_filter' );
 
-		$recipients = $this->resolver->resolve( $filter, $event_id );
+		$recipients = $this->resolver->resolve_by_event_date( $filter, $event_date_id );
 
 		return rest_ensure_response( $recipients );
 	}
@@ -405,16 +347,16 @@ class ScheduledMessagesController extends WP_REST_Controller {
 	/**
 	 * Validate the anchor for a create/update request.
 	 *
-	 * Rejects sale-period anchors (until #617) and verifies the referenced
-	 * event date belongs to the event.
+	 * Rejects sale-period anchors (until #617). A mailing is scoped to one event
+	 * date, so the anchor always refers to that date: the anchor row is forced to
+	 * the scoping event date and verified to exist.
 	 *
-	 * @param WP_REST_Request $request  Request object.
-	 * @param int             $event_id Event post ID.
+	 * @param WP_REST_Request $request       Request object.
+	 * @param int             $event_date_id Event date the mailing is scoped to.
 	 * @return array|WP_Error {anchor_ref_id, event_date_id} or error.
 	 */
-	private function validate_anchor( $request, $event_id ) {
-		$anchor_type   = $request->get_param( 'anchor_type' );
-		$anchor_ref_id = (int) $request->get_param( 'anchor_ref_id' );
+	private function validate_anchor( $request, $event_date_id ) {
+		$anchor_type = $request->get_param( 'anchor_type' );
 
 		if ( ! ScheduledMessageScheduler::is_supported_anchor( $anchor_type ) ) {
 			return new WP_Error(
@@ -428,22 +370,21 @@ class ScheduledMessagesController extends WP_REST_Controller {
 		$table = $wpdb->prefix . 'fair_event_dates';
 
 		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
-		$event_date = $wpdb->get_row(
-			$wpdb->prepare( 'SELECT id, event_id FROM %i WHERE id = %d', $table, $anchor_ref_id ),
-			ARRAY_A
+		$exists = $wpdb->get_var(
+			$wpdb->prepare( 'SELECT id FROM %i WHERE id = %d', $table, $event_date_id )
 		);
 
-		if ( ! $event_date || (int) $event_date['event_id'] !== $event_id ) {
+		if ( ! $exists ) {
 			return new WP_Error(
-				'invalid_anchor',
-				__( 'The chosen event date does not belong to this event.', 'fair-audience' ),
-				array( 'status' => 400 )
+				'invalid_event_date',
+				__( 'Event date not found.', 'fair-audience' ),
+				array( 'status' => 404 )
 			);
 		}
 
 		return array(
-			'anchor_ref_id' => $anchor_ref_id,
-			'event_date_id' => $anchor_ref_id,
+			'anchor_ref_id' => $event_date_id,
+			'event_date_id' => $event_date_id,
 		);
 	}
 
@@ -456,7 +397,6 @@ class ScheduledMessagesController extends WP_REST_Controller {
 	private function prepare_message( $message ) {
 		return array(
 			'id'                => $message->id,
-			'event_id'          => $message->event_id,
 			'event_date_id'     => $message->event_date_id,
 			'subject'           => $message->subject,
 			'body'              => $message->body,

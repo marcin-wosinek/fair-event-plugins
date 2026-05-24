@@ -12,39 +12,27 @@
 import apiFetch from '@wordpress/api-fetch';
 
 /**
- * List scheduled messages for an event.
+ * List scheduled messages for an event date.
  *
- * @param {number} eventId Event post ID.
+ * @param {number} eventDateId Event date ID.
  * @return {Promise<Array>} Promise resolving to the message list.
  */
-export function loadScheduledMessages(eventId) {
+export function loadScheduledMessages(eventDateId) {
 	return apiFetch({
-		path: `/fair-audience/v1/events/${eventId}/scheduled-messages`,
-	});
-}
-
-/**
- * List an event's dates for the anchor picker.
- *
- * @param {number} eventId Event post ID.
- * @return {Promise<Array>} Promise resolving to the event-date list.
- */
-export function loadEventDates(eventId) {
-	return apiFetch({
-		path: `/fair-audience/v1/events/${eventId}/event-dates`,
+		path: `/fair-audience/v1/event-dates/${eventDateId}/scheduled-messages`,
 	});
 }
 
 /**
  * Create a scheduled message.
  *
- * @param {number} eventId Event post ID.
- * @param {Object} data    Message payload.
+ * @param {number} eventDateId Event date ID.
+ * @param {Object} data        Message payload.
  * @return {Promise<Object>} Promise resolving to the created message.
  */
-export function createScheduledMessage(eventId, data) {
+export function createScheduledMessage(eventDateId, data) {
 	return apiFetch({
-		path: `/fair-audience/v1/events/${eventId}/scheduled-messages`,
+		path: `/fair-audience/v1/event-dates/${eventDateId}/scheduled-messages`,
 		method: 'POST',
 		data,
 	});
@@ -94,13 +82,13 @@ export function previewRecipients(id) {
 /**
  * Resolve recipients for an unsaved draft from a filter.
  *
- * @param {number} eventId          Event post ID.
+ * @param {number} eventDateId      Event date ID.
  * @param {Object} recipientsFilter Filter: { labels, group_ids, is_marketing }.
  * @return {Promise<Array>} Promise resolving to the recipient list.
  */
-export function previewDraftRecipients(eventId, recipientsFilter) {
+export function previewDraftRecipients(eventDateId, recipientsFilter) {
 	return apiFetch({
-		path: `/fair-audience/v1/events/${eventId}/scheduled-messages/preview-recipients`,
+		path: `/fair-audience/v1/event-dates/${eventDateId}/scheduled-messages/preview-recipients`,
 		method: 'POST',
 		data: { recipients_filter: recipientsFilter },
 	});

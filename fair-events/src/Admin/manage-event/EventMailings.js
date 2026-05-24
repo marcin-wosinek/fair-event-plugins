@@ -33,7 +33,6 @@ import AnchorOffsetPicker, {
 } from './AnchorOffsetPicker.js';
 import {
 	loadScheduledMessages,
-	loadEventDates,
 	loadGroups,
 	createScheduledMessage,
 	updateScheduledMessage,
@@ -72,18 +71,42 @@ const emptyForm = (defaultAnchorRefId) => ({
 /**
  * Mailings tab.
  *
- * @param {Object} props             Component props.
- * @param {number} props.eventId      Event post ID.
- * @param {number} props.eventDateId  The event date currently being managed.
+ * Mailings are scoped to the single event date being managed; the anchor is
+ * always that date (start or end), so there is no cross-date picker.
+ *
+ * @param {Object} props               Component props.
+ * @param {number} props.eventDateId    The event date being managed.
+ * @param {string} props.startDatetime  The date's start datetime (for the send-time preview).
+ * @param {string} props.endDatetime    The date's end datetime (for the send-time preview).
+ * @param {boolean} props.allDay         Whether the date is all-day.
  * @return {JSX.Element} The tab.
  */
-export default function EventMailings({ eventId, eventDateId }) {
+export default function EventMailings({
+	eventDateId,
+	startDatetime,
+	endDatetime,
+	allDay,
+}) {
 	const [messages, setMessages] = useState([]);
-	const [eventDates, setEventDates] = useState([]);
 	const [groups, setGroups] = useState([]);
 	const [loading, setLoading] = useState(true);
 	const [notice, setNotice] = useState(null);
 	const [isSaving, setIsSaving] = useState(false);
+
+	// The single date this tab manages, shaped for AnchorOffsetPicker. With one
+	// entry the picker hides its "which date" dropdown and just uses it for the
+	// send-time preview.
+	const eventDates = useMemo(
+		() => [
+			{
+				id: eventDateId,
+				start_datetime: startDatetime,
+				end_datetime: endDatetime,
+				all_day: allDay,
+			},
+		],
+		[eventDateId, startDatetime, endDatetime, allDay]
+	);
 
 	const [form, setForm] = useState(emptyForm(eventDateId));
 
@@ -99,30 +122,22 @@ export default function EventMailings({ eventId, eventDateId }) {
 	}, []);
 
 	const reloadMessages = useCallback(() => {
-		return loadScheduledMessages(eventId).then(setMessages);
-	}, [eventId]);
+		return loadScheduledMessages(eventDateId).then(setMessages);
+	}, [eventDateId]);
 
 	// Initial data load.
 	useEffect(() => {
 		let active = true;
 		Promise.all([
-			loadScheduledMessages(eventId),
-			loadEventDates(eventId),
+			loadScheduledMessages(eventDateId),
 			loadGroups().catch(() => []),
 		])
-			.then(([msgs, dates, grps]) => {
+			.then(([msgs, grps]) => {
 				if (!active) {
 					return;
 				}
 				setMessages(msgs);
-				setEventDates(dates);
 				setGroups(grps);
-				// Default the anchor to the managed date when present.
-				const hasManaged = dates.some((d) => d.id === eventDateId);
-				const fallback = dates.length > 0 ? dates[0].id : eventDateId;
-				updateForm({
-					anchorRefId: hasManaged ? eventDateId : fallback,
-				});
 			})
 			.catch(() => {
 				if (active) {
@@ -136,7 +151,7 @@ export default function EventMailings({ eventId, eventDateId }) {
 		return () => {
 			active = false;
 		};
-	}, [eventId, eventDateId, updateForm]);
+	}, [eventDateId]);
 
 	const selectedLabels = useMemo(
 		() => LABEL_OPTIONS.filter((o) => form.labels[o.key]).map((o) => o.key),
@@ -160,7 +175,7 @@ export default function EventMailings({ eventId, eventDateId }) {
 			return undefined;
 		}
 		const handle = setTimeout(() => {
-			previewDraftRecipients(eventId, recipientsFilter)
+			previewDraftRecipients(eventDateId, recipientsFilter)
 				.then((list) => {
 					setRecipientCount(list.length);
 					setRecipientList(list);
@@ -171,13 +186,11 @@ export default function EventMailings({ eventId, eventDateId }) {
 				});
 		}, 400);
 		return () => clearTimeout(handle);
-	}, [eventId, recipientsFilter, selectedLabels.length]);
+	}, [eventDateId, recipientsFilter, selectedLabels.length]);
 
 	const resetForm = useCallback(() => {
-		const hasManaged = eventDates.some((d) => d.id === eventDateId);
-		const fallback = eventDates.length > 0 ? eventDates[0].id : eventDateId;
-		setForm(emptyForm(hasManaged ? eventDateId : fallback));
-	}, [eventDates, eventDateId]);
+		setForm(emptyForm(eventDateId));
+	}, [eventDateId]);
 
 	const startEdit = (message) => {
 		const decomposed = fromOffsetMinutes(message.offset_minutes);
@@ -252,7 +265,7 @@ export default function EventMailings({ eventId, eventDateId }) {
 		setNotice(null);
 		const request = form.editingId
 			? updateScheduledMessage(form.editingId, payload)
-			: createScheduledMessage(eventId, payload);
+			: createScheduledMessage(eventDateId, payload);
 
 		request
 			.then(() => reloadMessages())

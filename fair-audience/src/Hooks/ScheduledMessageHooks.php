@@ -52,11 +52,11 @@ class ScheduledMessageHooks {
 		}
 
 		// Reschedule when the underlying anchor moves; cancel when it disappears.
+		// A mailing is scoped to a single event date, so deleting that date
+		// (which fires for every date when the parent event is deleted) cancels
+		// its mailings — no separate post-deletion hook is needed.
 		add_action( 'fair_events_event_date_updated', array( static::class, 'handle_event_date_changed' ) );
 		add_action( 'fair_events_event_date_deleted', array( static::class, 'handle_event_date_deleted' ) );
-
-		// Cancel an event's scheduled messages when the event is deleted.
-		add_action( 'before_delete_post', array( static::class, 'handle_event_deleted' ) );
 	}
 
 	/**
@@ -113,7 +113,7 @@ class ScheduledMessageHooks {
 
 		try {
 			$context    = self::build_context( $message );
-			$recipients = $resolver->resolve( $message->recipients_filter, $message->event_id );
+			$recipients = $resolver->resolve_by_event_date( $message->recipients_filter, $message->event_date_id );
 
 			foreach ( $recipients as $recipient ) {
 				if ( empty( $recipient['has_valid_email'] ) ) {
@@ -172,23 +172,30 @@ class ScheduledMessageHooks {
 	 */
 	private static function build_context( ScheduledMessage $message ) {
 		$event_name = '';
-		$event      = get_post( $message->event_id );
-		if ( $event ) {
-			$event_name = $event->post_title;
-		}
-
 		$event_date = '';
+
 		if ( $message->event_date_id ) {
 			global $wpdb;
 			$table = $wpdb->prefix . 'fair_event_dates';
 
 			// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
-			$start = $wpdb->get_var(
-				$wpdb->prepare( 'SELECT start_datetime FROM %i WHERE id = %d', $table, $message->event_date_id )
+			$row = $wpdb->get_row(
+				$wpdb->prepare( 'SELECT start_datetime, event_id FROM %i WHERE id = %d', $table, $message->event_date_id ),
+				ARRAY_A
 			);
 
-			if ( ! empty( $start ) ) {
-				$event_date = wp_date( 'Y-m-d H:i', strtotime( $start ) );
+			if ( $row ) {
+				if ( ! empty( $row['start_datetime'] ) ) {
+					$event_date = wp_date( 'Y-m-d H:i', strtotime( $row['start_datetime'] ) );
+				}
+
+				// Resolve the event name from the date's linked post, when present.
+				if ( ! empty( $row['event_id'] ) ) {
+					$event = get_post( (int) $row['event_id'] );
+					if ( $event ) {
+						$event_name = $event->post_title;
+					}
+				}
 			}
 		}
 
@@ -230,18 +237,5 @@ class ScheduledMessageHooks {
 				$message->save();
 			}
 		}
-	}
-
-	/**
-	 * Cancel all scheduled messages for a deleted event.
-	 *
-	 * Fires for every post deletion; the targeted UPDATE simply matches nothing
-	 * when the deleted post is not an event with scheduled messages.
-	 *
-	 * @param int $post_id Post being deleted.
-	 */
-	public static function handle_event_deleted( $post_id ) {
-		$repository = new ScheduledMessageRepository();
-		$repository->cancel_for_event( (int) $post_id );
 	}
 }

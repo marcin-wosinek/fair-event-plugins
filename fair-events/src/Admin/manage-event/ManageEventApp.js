@@ -1221,8 +1221,10 @@ export default function ManageEventApp() {
 					if (tab.name === 'mailings') {
 						return (
 							<EventMailings
-								eventId={eventDate.event_id}
 								eventDateId={eventDateId}
+								startDatetime={eventDate.start_datetime}
+								endDatetime={eventDate.end_datetime}
+								allDay={eventDate.all_day}
 							/>
 						);
 					}

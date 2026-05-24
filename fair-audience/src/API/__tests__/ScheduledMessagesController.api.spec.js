@@ -1,10 +1,10 @@
 /**
  * Playwright API tests for the ScheduledMessagesController.
  *
- * Exercises the scheduled per-event mailing endpoints against a live WordPress
- * instance:
- *   GET/POST  /fair-audience/v1/events/{event_id}/scheduled-messages
- *   POST      /fair-audience/v1/events/{event_id}/scheduled-messages/preview-recipients
+ * Exercises the scheduled per-event-date mailing endpoints against a live
+ * WordPress instance:
+ *   GET/POST  /fair-audience/v1/event-dates/{event_date_id}/scheduled-messages
+ *   POST      /fair-audience/v1/event-dates/{event_date_id}/scheduled-messages/preview-recipients
  *   PUT/DELETE /fair-audience/v1/scheduled-messages/{id}
  *   POST      /fair-audience/v1/scheduled-messages/{id}/preview-recipients
  *
@@ -147,7 +147,7 @@ test.describe('ScheduledMessagesController', () => {
 
 	test('unauthenticated create is rejected', async () => {
 		const res = await api.post(
-			`/wp-json/fair-audience/v1/events/${eventId}/scheduled-messages`,
+			`/wp-json/fair-audience/v1/event-dates/${eventDateId}/scheduled-messages`,
 			{ data: baseMessage(eventDateId) }
 		);
 		expect(res.status()).toBeGreaterThanOrEqual(401);
@@ -156,7 +156,7 @@ test.describe('ScheduledMessagesController', () => {
 
 	test('create schedules a message with a computed send time', async () => {
 		const res = await api.post(
-			`/wp-json/fair-audience/v1/events/${eventId}/scheduled-messages`,
+			`/wp-json/fair-audience/v1/event-dates/${eventDateId}/scheduled-messages`,
 			{ headers: authHeaders, data: baseMessage(eventDateId) }
 		);
 		expect(res.status()).toBe(200);
@@ -176,7 +176,7 @@ test.describe('ScheduledMessagesController', () => {
 
 	test('sale-period anchors are rejected until #617', async () => {
 		const res = await api.post(
-			`/wp-json/fair-audience/v1/events/${eventId}/scheduled-messages`,
+			`/wp-json/fair-audience/v1/event-dates/${eventDateId}/scheduled-messages`,
 			{
 				headers: authHeaders,
 				data: baseMessage(eventDateId, {
@@ -187,26 +187,18 @@ test.describe('ScheduledMessagesController', () => {
 		expect(res.status()).toBe(400);
 	});
 
-	test('anchor from a different event is rejected', async () => {
-		const otherEventId = await publishEvent(
-			api,
-			`Other Event ${Date.now()}`
-		);
-		const otherDateId = await resolveEventDateId(api, otherEventId);
-
+	test('create on a nonexistent event date is rejected', async () => {
 		const res = await api.post(
-			`/wp-json/fair-audience/v1/events/${eventId}/scheduled-messages`,
-			{ headers: authHeaders, data: baseMessage(otherDateId) }
+			`/wp-json/fair-audience/v1/event-dates/999999999/scheduled-messages`,
+			{ headers: authHeaders, data: baseMessage(999999999) }
 		);
-		expect(res.status()).toBe(400);
-
-		await deleteEvent(api, otherEventId);
+		expect(res.status()).toBe(404);
 	});
 
 	test('list, edit, preview, and cancel lifecycle', async () => {
 		// Create.
 		const createRes = await api.post(
-			`/wp-json/fair-audience/v1/events/${eventId}/scheduled-messages`,
+			`/wp-json/fair-audience/v1/event-dates/${eventDateId}/scheduled-messages`,
 			{ headers: authHeaders, data: baseMessage(eventDateId) }
 		);
 		expect(createRes.ok()).toBeTruthy();
@@ -215,7 +207,7 @@ test.describe('ScheduledMessagesController', () => {
 
 		// List includes it.
 		const listRes = await api.get(
-			`/wp-json/fair-audience/v1/events/${eventId}/scheduled-messages`,
+			`/wp-json/fair-audience/v1/event-dates/${eventDateId}/scheduled-messages`,
 			{ headers: authHeaders }
 		);
 		expect(listRes.ok()).toBeTruthy();
@@ -277,7 +269,7 @@ test.describe('ScheduledMessagesController', () => {
 
 	test('draft preview honors label filters without saving', async () => {
 		const res = await api.post(
-			`/wp-json/fair-audience/v1/events/${eventId}/scheduled-messages/preview-recipients`,
+			`/wp-json/fair-audience/v1/event-dates/${eventDateId}/scheduled-messages/preview-recipients`,
 			{
 				headers: authHeaders,
 				data: {
@@ -296,22 +288,28 @@ test.describe('ScheduledMessagesController', () => {
 		expect(ids).not.toContain(signedUpId);
 	});
 
-	test('deleting the event cancels its scheduled messages', async () => {
+	test('deleting the event date cancels its scheduled messages', async () => {
 		const tempEventId = await publishEvent(api, `Temp Event ${Date.now()}`);
 		const tempDateId = await resolveEventDateId(api, tempEventId);
 
 		const createRes = await api.post(
-			`/wp-json/fair-audience/v1/events/${tempEventId}/scheduled-messages`,
+			`/wp-json/fair-audience/v1/event-dates/${tempDateId}/scheduled-messages`,
 			{ headers: authHeaders, data: baseMessage(tempDateId) }
 		);
 		expect(createRes.ok()).toBeTruthy();
 		const messageId = (await createRes.json()).id;
 
-		// Force-delete the event post; before_delete_post cascades the cancel.
-		await deleteEvent(api, tempEventId);
+		// Delete the event date; fair_events_event_date_deleted cascades the
+		// cancel onto its anchored mailings.
+		const delRes = await api.delete(
+			`/wp-json/fair-events/v1/event-dates/${tempDateId}`,
+			{ headers: authHeaders }
+		);
+		expect(delRes.ok()).toBeTruthy();
 
+		// The message row survives the date deletion but is now canceled.
 		const listRes = await api.get(
-			`/wp-json/fair-audience/v1/events/${tempEventId}/scheduled-messages`,
+			`/wp-json/fair-audience/v1/event-dates/${tempDateId}/scheduled-messages`,
 			{ headers: authHeaders }
 		);
 		expect(listRes.ok()).toBeTruthy();
@@ -319,8 +317,10 @@ test.describe('ScheduledMessagesController', () => {
 		const message = list.find((m) => m.id === messageId);
 		expect(
 			message,
-			'scheduled message row survives event deletion'
+			'scheduled message row survives event-date deletion'
 		).toBeTruthy();
 		expect(message.status).toBe('canceled');
+
+		await deleteEvent(api, tempEventId);
 	});
 });

@@ -587,15 +587,14 @@ class Schema {
 
 		return "CREATE TABLE $table_name (
 			id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
-			event_id BIGINT UNSIGNED NOT NULL COMMENT 'Denormalized for indexing / reschedule lookups',
-			event_date_id BIGINT UNSIGNED DEFAULT NULL COMMENT 'Anchor for event_date_* anchor types',
+			event_date_id BIGINT UNSIGNED NOT NULL COMMENT 'Event date the mailing is scoped to',
 			subject VARCHAR(255) NOT NULL,
 			body LONGTEXT NOT NULL,
 			anchor_type ENUM('event_date_start', 'event_date_end', 'sale_period_start', 'sale_period_end') NOT NULL,
 			anchor_ref_id BIGINT UNSIGNED DEFAULT NULL COMMENT 'Id of the anchor row (event_date id, or sale period id once #617 lands)',
-			offset_minutes INT NOT NULL DEFAULT 0 COMMENT 'Signed; negative = before anchor, positive = after',
+			offset_minutes INT NOT NULL DEFAULT 0 COMMENT 'Signed offset, negative = before anchor, positive = after',
 			recipients_filter LONGTEXT NOT NULL COMMENT 'JSON: {labels, group_ids, is_marketing}',
-			scheduled_for DATETIME DEFAULT NULL COMMENT 'Computed anchor_time + offset_minutes; recomputed on anchor change',
+			scheduled_for DATETIME DEFAULT NULL COMMENT 'Computed anchor_time + offset_minutes, recomputed on anchor change',
 			status ENUM('scheduled', 'sending', 'sent', 'canceled', 'failed') NOT NULL DEFAULT 'scheduled',
 			sent_count INT NOT NULL DEFAULT 0,
 			failed_count INT NOT NULL DEFAULT 0,
@@ -607,7 +606,7 @@ class Schema {
 			updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
 			PRIMARY KEY  (id),
 			KEY idx_status_scheduled_for (status, scheduled_for),
-			KEY idx_event_id (event_id),
+			KEY idx_event_date_id (event_date_id),
 			KEY idx_anchor (anchor_type, anchor_ref_id)
 		) ENGINE=InnoDB $charset_collate;";
 	}
