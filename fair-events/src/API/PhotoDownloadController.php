@@ -148,8 +148,11 @@ class PhotoDownloadController extends WP_REST_Controller {
 		header( 'Content-Length: ' . filesize( $tmp_file ) );
 		header( 'Pragma: no-cache' );
 
+		// Stream the binary ZIP to the client. WP_Filesystem has no streaming
+		// equivalent; get_contents() would buffer the whole archive in memory.
+		// phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_readfile -- Streaming a download.
 		readfile( $tmp_file );
-		unlink( $tmp_file );
+		wp_delete_file( $tmp_file );
 		exit;
 	}
 }
