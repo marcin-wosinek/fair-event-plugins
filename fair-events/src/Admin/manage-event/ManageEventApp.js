@@ -40,6 +40,7 @@ import GroupRules from './GroupRules.js';
 import EventTickets from './EventTickets.js';
 import EventPhotos from './EventPhotos.js';
 import EventMailings from './EventMailings.js';
+import EventStatistics from './EventStatistics.js';
 import DuplicateEventWizard from './DuplicateEventWizard.js';
 import MergeEventWizard from './MergeEventWizard.js';
 import RecurrenceCalendar from './RecurrenceCalendar.js';
@@ -588,6 +589,10 @@ export default function ManageEventApp() {
 						{
 							name: 'mailings',
 							title: __('Mailings', 'fair-events'),
+						},
+						{
+							name: 'statistics',
+							title: __('Statistics', 'fair-events'),
 						},
 				  ]
 				: []),
@@ -1218,6 +1223,14 @@ export default function ManageEventApp() {
 							<EventMailings
 								eventId={eventDate.event_id}
 								eventDateId={eventDateId}
+							/>
+						);
+					}
+					if (tab.name === 'statistics') {
+						return (
+							<EventStatistics
+								eventDateId={eventDateId}
+								eventId={eventDate.event_id}
 							/>
 						);
 					}
