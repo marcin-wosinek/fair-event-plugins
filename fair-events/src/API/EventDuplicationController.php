@@ -7,6 +7,8 @@
 
 namespace FairEvents\API;
 
+defined( 'ABSPATH' ) || die;
+
 use FairEvents\Core\Plugin;
 use FairEvents\Models\EventDates;
 use WP_REST_Controller;

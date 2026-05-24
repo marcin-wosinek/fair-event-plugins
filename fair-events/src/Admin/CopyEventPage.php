@@ -7,6 +7,8 @@
 
 namespace FairEvents\Admin;
 
+defined( 'ABSPATH' ) || die;
+
 use FairEvents\Models\EventDates;
 use FairEvents\PostTypes\Event;
 
