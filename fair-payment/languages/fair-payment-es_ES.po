@@ -21,6 +21,7 @@ msgstr ""
 msgid "Fair Payment"
 msgstr ""
 
+#. Plugin URI of the plugin
 #. Author URI of the plugin
 #: fair-payment.php
 msgid "https://fair-event-plugins.com"
@@ -51,7 +52,7 @@ msgid "Entries"
 msgstr "Entradas"
 
 #: src/Admin/AdminPages.php:67
-#: src/Admin/budgets/BudgetsApp.js:228
+#: src/Admin/budgets/BudgetsApp.js:236
 msgid "Budget Categories"
 msgstr "Categorías de Presupuesto"
 
@@ -644,35 +645,39 @@ msgstr "Presupuesto actualizado correctamente."
 msgid "Budget created successfully."
 msgstr "Presupuesto creado correctamente."
 
-#: src/Admin/budgets/BudgetsApp.js:201
+#: src/Admin/budgets/BudgetsApp.js:209
 msgid "Unbudgeted Costs"
 msgstr "Costos sin presupuesto"
 
-#: src/Admin/budgets/BudgetsApp.js:216
+#: src/Admin/budgets/BudgetsApp.js:224
 msgid "Unbudgeted Income"
 msgstr "Ingresos sin presupuesto"
 
-#: src/Admin/budgets/BudgetsApp.js:230
-#: src/Admin/budgets/BudgetsApp.js:471
+#: src/Admin/budgets/BudgetsApp.js:238
+#: src/Admin/budgets/BudgetsApp.js:527
 msgid "Add New Budget"
 msgstr "Agregar nuevo presupuesto"
 
-#: src/Admin/budgets/BudgetsApp.js:260
+#: src/Admin/budgets/BudgetsApp.js:268
 msgid "Loading budgets..."
 msgstr "Cargando presupuestos..."
 
-#: src/Admin/budgets/BudgetsApp.js:271
+#: src/Admin/budgets/BudgetsApp.js:279
 msgid "No budget categories found. Create your first budget category to organize your costs and income."
 msgstr "No se encontraron categorías de presupuesto. Crea tu primera categoría de presupuesto para organizar tus costos e ingresos."
 
-#: src/Admin/budgets/BudgetsApp.js:284
-#: src/Admin/budgets/BudgetsApp.js:479
+#: src/Admin/budgets/BudgetsApp.js:292
+#: src/Admin/budgets/BudgetsApp.js:316
+#: src/Admin/budgets/BudgetsApp.js:419
+#: src/Admin/budgets/BudgetsApp.js:535
 #: src/Admin/transaction/TransactionPage.js:781
 msgid "Name"
 msgstr "Nombre"
 
-#: src/Admin/budgets/BudgetsApp.js:287
-#: src/Admin/budgets/BudgetsApp.js:487
+#: src/Admin/budgets/BudgetsApp.js:295
+#: src/Admin/budgets/BudgetsApp.js:326
+#: src/Admin/budgets/BudgetsApp.js:432
+#: src/Admin/budgets/BudgetsApp.js:543
 #: src/Admin/entries/components/EntryForm.js:167
 #: src/Admin/entries/components/ImportModal.js:331
 #: src/Admin/entries/components/MatchModal.js:193
@@ -688,32 +693,36 @@ msgstr "Nombre"
 msgid "Description"
 msgstr "Descripción"
 
-#: src/Admin/budgets/BudgetsApp.js:293
+#: src/Admin/budgets/BudgetsApp.js:301
+#: src/Admin/budgets/BudgetsApp.js:341
+#: src/Admin/budgets/BudgetsApp.js:445
 #: src/Admin/entries/EntriesApp.js:576
 msgid "Balance"
 msgstr "Saldo"
 
 #: src/Admin/api-tokens/ApiTokensApp.js:225
-#: src/Admin/budgets/BudgetsApp.js:296
+#: src/Admin/budgets/BudgetsApp.js:304
+#: src/Admin/budgets/BudgetsApp.js:363
+#: src/Admin/budgets/BudgetsApp.js:466
 #: src/Admin/connected-sites/ConnectedSitesApp.js:273
 #: src/Admin/entries/EntriesApp.js:855
 #: src/Admin/transactions/components/ImportTransactionsModal.js:242
 msgid "Actions"
 msgstr "Acciones"
 
-#: src/Admin/budgets/BudgetsApp.js:315
+#: src/Admin/budgets/BudgetsApp.js:333
 #: src/Admin/entries/components/MatchModal.js:215
 #: src/Admin/reconciliation/ReconciliationApp.js:346
 #: src/Admin/reconciliation/ReconciliationApp.js:689
 msgid "No description"
 msgstr "Sin descripción"
 
-#: src/Admin/budgets/BudgetsApp.js:346
-#: src/Admin/budgets/BudgetsApp.js:425
+#: src/Admin/budgets/BudgetsApp.js:377
+#: src/Admin/budgets/BudgetsApp.js:476
 msgid "View"
 msgstr "Ver"
 
-#: src/Admin/budgets/BudgetsApp.js:360
+#: src/Admin/budgets/BudgetsApp.js:391
 #: src/Admin/connected-sites/ConnectedSitesApp.js:342
 #: src/Admin/entries/EntriesApp.js:1230
 #: src/Admin/entries/EntriesApp.js:1269
@@ -722,36 +731,37 @@ msgstr "Ver"
 msgid "Edit"
 msgstr "Editar"
 
-#: src/Admin/budgets/BudgetsApp.js:375
+#: src/Admin/budgets/BudgetsApp.js:406
 #: src/Admin/entries/EntriesApp.js:1245
 #: src/Admin/entries/EntriesApp.js:1353
 msgid "Delete"
 msgstr "Eliminar"
 
-#: src/Admin/budgets/BudgetsApp.js:389
+#: src/Admin/budgets/BudgetsApp.js:425
 #: src/Admin/entries/EntriesApp.js:516
 msgid "Unbudgeted"
 msgstr "Sin presupuestar"
 
-#: src/Admin/budgets/BudgetsApp.js:397
+#: src/Admin/budgets/BudgetsApp.js:438
 msgid "Entries without a budget category"
 msgstr "Entradas sin una categoría de presupuesto"
 
-#: src/Admin/budgets/BudgetsApp.js:438
+#: src/Admin/budgets/BudgetsApp.js:489
+#: src/Admin/budgets/BudgetsApp.js:492
 #: src/Admin/transaction/TransactionPage.js:791
 msgid "Total"
 msgstr "Total"
 
-#: src/Admin/budgets/BudgetsApp.js:470
+#: src/Admin/budgets/BudgetsApp.js:526
 msgid "Edit Budget"
 msgstr "Editar Presupuesto"
 
-#: src/Admin/budgets/BudgetsApp.js:495
+#: src/Admin/budgets/BudgetsApp.js:551
 msgid "Optional description for this budget category"
 msgstr "Descripción opcional para esta categoría de presupuesto"
 
 #: src/Admin/api-tokens/ApiTokensApp.js:395
-#: src/Admin/budgets/BudgetsApp.js:506
+#: src/Admin/budgets/BudgetsApp.js:562
 #: src/Admin/connected-sites/ConnectedSitesApp.js:431
 #: src/Admin/entries/components/EntryForm.js:209
 #: src/Admin/entries/components/ImportModal.js:390
@@ -764,11 +774,11 @@ msgstr "Descripción opcional para esta categoría de presupuesto"
 msgid "Cancel"
 msgstr "Cancelar"
 
-#: src/Admin/budgets/BudgetsApp.js:515
+#: src/Admin/budgets/BudgetsApp.js:571
 msgid "Update Budget"
 msgstr "Actualizar Presupuesto"
 
-#: src/Admin/budgets/BudgetsApp.js:516
+#: src/Admin/budgets/BudgetsApp.js:572
 msgid "Create Budget"
 msgstr "Crear Presupuesto"
 
@@ -2699,4 +2709,3 @@ msgstr "Cargar comisiones de Mollie faltantes"
 #, js-format
 msgid "Syncing Mollie fees: %1$d / %2$d (updated: %3$d, failed: %4$d)"
 msgstr "Sincronizando comisiones de Mollie: %1$d / %2$d (actualizado: %3$d, fallido: %4$d)"
-
