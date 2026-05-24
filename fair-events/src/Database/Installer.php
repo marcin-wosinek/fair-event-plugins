@@ -533,8 +533,9 @@ class Installer {
 		// Check if column already exists.
 		$column_exists = $wpdb->get_results(
 			$wpdb->prepare(
-				"SHOW COLUMNS FROM %i LIKE 'participant_id'",
-				$table_name
+				'SHOW COLUMNS FROM %i LIKE %s',
+				$table_name,
+				$wpdb->esc_like( 'participant_id' )
 			)
 		);
 
@@ -578,8 +579,9 @@ class Installer {
 		// Check if occurrence_type column already exists.
 		$occurrence_type_exists = $wpdb->get_results(
 			$wpdb->prepare(
-				"SHOW COLUMNS FROM %i LIKE 'occurrence_type'",
-				$table_name
+				'SHOW COLUMNS FROM %i LIKE %s',
+				$table_name,
+				$wpdb->esc_like( 'occurrence_type' )
 			)
 		);
 
@@ -604,8 +606,9 @@ class Installer {
 		// Check if master_id column already exists.
 		$master_id_exists = $wpdb->get_results(
 			$wpdb->prepare(
-				"SHOW COLUMNS FROM %i LIKE 'master_id'",
-				$table_name
+				'SHOW COLUMNS FROM %i LIKE %s',
+				$table_name,
+				$wpdb->esc_like( 'master_id' )
 			)
 		);
 
@@ -641,8 +644,9 @@ class Installer {
 		// Check if rrule column already exists.
 		$rrule_exists = $wpdb->get_results(
 			$wpdb->prepare(
-				"SHOW COLUMNS FROM %i LIKE 'rrule'",
-				$table_name
+				'SHOW COLUMNS FROM %i LIKE %s',
+				$table_name,
+				$wpdb->esc_like( 'rrule' )
 			)
 		);
 
@@ -716,8 +720,9 @@ class Installer {
 		// Check if venue_id column already exists.
 		$venue_id_exists = $wpdb->get_results(
 			$wpdb->prepare(
-				"SHOW COLUMNS FROM %i LIKE 'venue_id'",
-				$table_name
+				'SHOW COLUMNS FROM %i LIKE %s',
+				$table_name,
+				$wpdb->esc_like( 'venue_id' )
 			)
 		);
 
@@ -753,8 +758,9 @@ class Installer {
 		// Check if google_maps_link column already exists.
 		$google_maps_link_exists = $wpdb->get_results(
 			$wpdb->prepare(
-				"SHOW COLUMNS FROM %i LIKE 'google_maps_link'",
-				$table_name
+				'SHOW COLUMNS FROM %i LIKE %s',
+				$table_name,
+				$wpdb->esc_like( 'google_maps_link' )
 			)
 		);
 
@@ -770,8 +776,9 @@ class Installer {
 		// Check if latitude column already exists.
 		$latitude_exists = $wpdb->get_results(
 			$wpdb->prepare(
-				"SHOW COLUMNS FROM %i LIKE 'latitude'",
-				$table_name
+				'SHOW COLUMNS FROM %i LIKE %s',
+				$table_name,
+				$wpdb->esc_like( 'latitude' )
 			)
 		);
 
@@ -787,8 +794,9 @@ class Installer {
 		// Check if longitude column already exists.
 		$longitude_exists = $wpdb->get_results(
 			$wpdb->prepare(
-				"SHOW COLUMNS FROM %i LIKE 'longitude'",
-				$table_name
+				'SHOW COLUMNS FROM %i LIKE %s',
+				$table_name,
+				$wpdb->esc_like( 'longitude' )
 			)
 		);
 
@@ -804,8 +812,9 @@ class Installer {
 		// Check if facebook_page_link column already exists.
 		$facebook_page_link_exists = $wpdb->get_results(
 			$wpdb->prepare(
-				"SHOW COLUMNS FROM %i LIKE 'facebook_page_link'",
-				$table_name
+				'SHOW COLUMNS FROM %i LIKE %s',
+				$table_name,
+				$wpdb->esc_like( 'facebook_page_link' )
 			)
 		);
 
@@ -832,8 +841,9 @@ class Installer {
 		// Check if instagram_handle column already exists.
 		$instagram_handle_exists = $wpdb->get_results(
 			$wpdb->prepare(
-				"SHOW COLUMNS FROM %i LIKE 'instagram_handle'",
-				$table_name
+				'SHOW COLUMNS FROM %i LIKE %s',
+				$table_name,
+				$wpdb->esc_like( 'instagram_handle' )
 			)
 		);
 
@@ -889,8 +899,9 @@ class Installer {
 		// Check if title column already exists.
 		$title_exists = $wpdb->get_results(
 			$wpdb->prepare(
-				"SHOW COLUMNS FROM %i LIKE 'title'",
-				$table_name
+				'SHOW COLUMNS FROM %i LIKE %s',
+				$table_name,
+				$wpdb->esc_like( 'title' )
 			)
 		);
 
@@ -906,8 +917,9 @@ class Installer {
 		// Check if external_url column already exists.
 		$external_url_exists = $wpdb->get_results(
 			$wpdb->prepare(
-				"SHOW COLUMNS FROM %i LIKE 'external_url'",
-				$table_name
+				'SHOW COLUMNS FROM %i LIKE %s',
+				$table_name,
+				$wpdb->esc_like( 'external_url' )
 			)
 		);
 
@@ -923,8 +935,9 @@ class Installer {
 		// Check if link_type column already exists.
 		$link_type_exists = $wpdb->get_results(
 			$wpdb->prepare(
-				"SHOW COLUMNS FROM %i LIKE 'link_type'",
-				$table_name
+				'SHOW COLUMNS FROM %i LIKE %s',
+				$table_name,
+				$wpdb->esc_like( 'link_type' )
 			)
 		);
 
@@ -959,8 +972,9 @@ class Installer {
 		// Check if website_url column already exists.
 		$website_url_exists = $wpdb->get_results(
 			$wpdb->prepare(
-				"SHOW COLUMNS FROM %i LIKE 'website_url'",
-				$table_name
+				'SHOW COLUMNS FROM %i LIKE %s',
+				$table_name,
+				$wpdb->esc_like( 'website_url' )
 			)
 		);
 
@@ -987,8 +1001,9 @@ class Installer {
 		// Check if page_id column already exists.
 		$page_id_exists = $wpdb->get_results(
 			$wpdb->prepare(
-				"SHOW COLUMNS FROM %i LIKE 'page_id'",
-				$table_name
+				'SHOW COLUMNS FROM %i LIKE %s',
+				$table_name,
+				$wpdb->esc_like( 'page_id' )
 			)
 		);
 
@@ -1015,8 +1030,9 @@ class Installer {
 		// Check if capacity column already exists.
 		$capacity_exists = $wpdb->get_results(
 			$wpdb->prepare(
-				"SHOW COLUMNS FROM %i LIKE 'capacity'",
-				$table_name
+				'SHOW COLUMNS FROM %i LIKE %s',
+				$table_name,
+				$wpdb->esc_like( 'capacity' )
 			)
 		);
 
@@ -1043,8 +1059,9 @@ class Installer {
 		// Check if exdates column already exists.
 		$exdates_exists = $wpdb->get_results(
 			$wpdb->prepare(
-				"SHOW COLUMNS FROM %i LIKE 'exdates'",
-				$table_name
+				'SHOW COLUMNS FROM %i LIKE %s',
+				$table_name,
+				$wpdb->esc_like( 'exdates' )
 			)
 		);
 
@@ -1071,8 +1088,9 @@ class Installer {
 		// Check if event_date_id column already exists.
 		$column_exists = $wpdb->get_results(
 			$wpdb->prepare(
-				"SHOW COLUMNS FROM %i LIKE 'event_date_id'",
-				$table_name
+				'SHOW COLUMNS FROM %i LIKE %s',
+				$table_name,
+				$wpdb->esc_like( 'event_date_id' )
 			)
 		);
 
@@ -1120,8 +1138,9 @@ class Installer {
 
 		$column_exists = $wpdb->get_results(
 			$wpdb->prepare(
-				"SHOW COLUMNS FROM %i LIKE 'signup_price'",
-				$table_name
+				'SHOW COLUMNS FROM %i LIKE %s',
+				$table_name,
+				$wpdb->esc_like( 'signup_price' )
 			)
 		);
 
@@ -1147,8 +1166,9 @@ class Installer {
 
 		$column_exists = $wpdb->get_results(
 			$wpdb->prepare(
-				"SHOW COLUMNS FROM %i LIKE 'seats_per_ticket'",
-				$table_name
+				'SHOW COLUMNS FROM %i LIKE %s',
+				$table_name,
+				$wpdb->esc_like( 'seats_per_ticket' )
 			)
 		);
 
@@ -1174,8 +1194,9 @@ class Installer {
 
 		$column_exists = $wpdb->get_results(
 			$wpdb->prepare(
-				"SHOW COLUMNS FROM %i LIKE 'invitation_only'",
-				$table_name
+				'SHOW COLUMNS FROM %i LIKE %s',
+				$table_name,
+				$wpdb->esc_like( 'invitation_only' )
 			)
 		);
 
@@ -1201,8 +1222,9 @@ class Installer {
 
 		$column_exists = $wpdb->get_results(
 			$wpdb->prepare(
-				"SHOW COLUMNS FROM %i LIKE 'short_name'",
-				$table_name
+				'SHOW COLUMNS FROM %i LIKE %s',
+				$table_name,
+				$wpdb->esc_like( 'short_name' )
 			)
 		);
 
@@ -1228,8 +1250,9 @@ class Installer {
 
 		$column_exists = $wpdb->get_results(
 			$wpdb->prepare(
-				"SHOW COLUMNS FROM %i LIKE 'discounted_price'",
-				$table_name
+				'SHOW COLUMNS FROM %i LIKE %s',
+				$table_name,
+				$wpdb->esc_like( 'discounted_price' )
 			)
 		);
 
@@ -1255,8 +1278,9 @@ class Installer {
 
 		$column_exists = $wpdb->get_results(
 			$wpdb->prepare(
-				"SHOW COLUMNS FROM %i LIKE 'capacity'",
-				$table_name
+				'SHOW COLUMNS FROM %i LIKE %s',
+				$table_name,
+				$wpdb->esc_like( 'capacity' )
 			)
 		);
 
@@ -1282,8 +1306,9 @@ class Installer {
 
 		$column_exists = $wpdb->get_results(
 			$wpdb->prepare(
-				"SHOW COLUMNS FROM %i LIKE 'derive_price_from_sale_period'",
-				$table_name
+				'SHOW COLUMNS FROM %i LIKE %s',
+				$table_name,
+				$wpdb->esc_like( 'derive_price_from_sale_period' )
 			)
 		);
 
@@ -1309,8 +1334,9 @@ class Installer {
 
 		$column_exists = $wpdb->get_results(
 			$wpdb->prepare(
-				"SHOW COLUMNS FROM %i LIKE 'minimum_activities'",
-				$table_name
+				'SHOW COLUMNS FROM %i LIKE %s',
+				$table_name,
+				$wpdb->esc_like( 'minimum_activities' )
 			)
 		);
 
