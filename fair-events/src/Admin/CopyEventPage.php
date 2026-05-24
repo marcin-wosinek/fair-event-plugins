@@ -389,7 +389,7 @@ class CopyEventPage {
 						class="button button-primary"
 						value="<?php esc_attr_e( 'Create Copy', 'fair-events' ); ?>"
 					/>
-					<a href="<?php echo esc_url( admin_url( 'edit.php?post_type=fair_event' ) ); ?>" class="button">
+					<a href="<?php echo esc_url( post_type_exists( 'fair_event' ) ? admin_url( 'edit.php?post_type=fair_event' ) : admin_url( 'admin.php?page=fair-events-all-events' ) ); ?>" class="button">
 						<?php esc_html_e( 'Cancel', 'fair-events' ); ?>
 					</a>
 				</p>
