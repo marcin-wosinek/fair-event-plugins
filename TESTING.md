@@ -171,6 +171,27 @@ fair-{plugin-name}/
 - Capture specific states for documentation
 - Save to `assets/` directory
 
+### Ad-hoc page screenshots (`npm run screenshot`)
+
+**Purpose**: Grab a one-off screenshot of any admin/public page — e.g. a
+before/after for a PR — without writing a spec.
+
+**Runner**: `scripts/screenshot.js` (headless Playwright, reuses the e2e
+login + `WP_BASE_URL` convention; defaults to the dev wp-env on `:8888`,
+`admin` / `password`).
+
+```bash
+# npm run screenshot -- <path> <dimensions> <filename>
+npm run screenshot -- "/wp-admin/admin.php?page=fair-payment-budgets" mobile budgets-mobile.png
+
+# dimensions: desktop | tablet | mobile | WIDTHxHEIGHT (e.g. 414x900)
+# options: --viewport (visible area only), --wait <ms>, --wait-for <selector>, --no-login
+```
+
+The file is written **relative to the current working directory**, so run it
+from wherever you want the image. Point it elsewhere with
+`WP_BASE_URL=http://localhost:8889 npm run screenshot -- …`.
+
 ### Manual Integration Checks (WP-CLI `eval-file`)
 
 **Purpose**: One-off verification of behavior that needs a fully bootstrapped
