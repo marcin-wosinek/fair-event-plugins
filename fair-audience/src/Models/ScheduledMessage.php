@@ -22,16 +22,9 @@ class ScheduledMessage {
 	public $id;
 
 	/**
-	 * Event post ID (denormalized for indexing / reschedule lookups).
+	 * Event date ID — the event date this mailing is scoped to.
 	 *
 	 * @var int
-	 */
-	public $event_id;
-
-	/**
-	 * Event date ID — anchor for event_date_* anchor types.
-	 *
-	 * @var int|null
 	 */
 	public $event_date_id;
 
@@ -156,9 +149,9 @@ class ScheduledMessage {
 	 * @param array $data Optional data to populate.
 	 */
 	public function __construct( $data = array() ) {
-		if ( ! empty( $data ) ) {
-			$this->populate( $data );
-		}
+		// Always populate so numeric/status fields get their defaults (0 / 'scheduled')
+		// instead of null; an empty array yields a fully-initialized blank record.
+		$this->populate( $data );
 	}
 
 	/**
@@ -168,8 +161,7 @@ class ScheduledMessage {
 	 */
 	public function populate( $data ) {
 		$this->id             = isset( $data['id'] ) ? (int) $data['id'] : null;
-		$this->event_id       = isset( $data['event_id'] ) ? (int) $data['event_id'] : 0;
-		$this->event_date_id  = isset( $data['event_date_id'] ) && $data['event_date_id'] ? (int) $data['event_date_id'] : null;
+		$this->event_date_id  = isset( $data['event_date_id'] ) ? (int) $data['event_date_id'] : 0;
 		$this->subject        = isset( $data['subject'] ) ? sanitize_text_field( $data['subject'] ) : '';
 		$this->body           = isset( $data['body'] ) ? wp_kses_post( $data['body'] ) : '';
 		$this->anchor_type    = isset( $data['anchor_type'] ) ? sanitize_key( $data['anchor_type'] ) : '';
@@ -206,12 +198,11 @@ class ScheduledMessage {
 
 		$table_name = $wpdb->prefix . 'fair_audience_event_scheduled_messages';
 
-		if ( empty( $this->subject ) || empty( $this->body ) || empty( $this->anchor_type ) ) {
+		if ( empty( $this->subject ) || empty( $this->body ) || empty( $this->anchor_type ) || empty( $this->event_date_id ) ) {
 			return false;
 		}
 
 		$data = array(
-			'event_id'          => $this->event_id,
 			'event_date_id'     => $this->event_date_id,
 			'subject'           => $this->subject,
 			'body'              => $this->body,
@@ -229,7 +220,7 @@ class ScheduledMessage {
 			'created_by'        => $this->created_by,
 		);
 
-		$format = array( '%d', '%d', '%s', '%s', '%s', '%d', '%d', '%s', '%s', '%s', '%d', '%d', '%d', '%s', '%s', '%d' );
+		$format = array( '%d', '%s', '%s', '%s', '%d', '%d', '%s', '%s', '%s', '%d', '%d', '%d', '%s', '%s', '%d' );
 
 		if ( $this->id ) {
 			// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching

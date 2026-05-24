@@ -73,7 +73,7 @@ function fair_audience_activate() {
 	dbDelta( \FairAudience\Database\Schema::get_event_scheduled_messages_table_sql() );
 
 	// Update database version.
-	update_option( 'fair_audience_db_version', '1.35.0' );
+	update_option( 'fair_audience_db_version', '1.36.0' );
 }
 register_activation_hook( __FILE__, __NAMESPACE__ . '\\fair_audience_activate' );
 
@@ -650,6 +650,71 @@ function fair_audience_maybe_upgrade_db() {
 		require_once ABSPATH . 'wp-admin/includes/upgrade.php';
 		dbDelta( \FairAudience\Database\Schema::get_event_scheduled_messages_table_sql() );
 		update_option( 'fair_audience_db_version', '1.35.0' );
+	}
+
+	if ( version_compare( $db_version, '1.36.0', '<' ) ) {
+		global $wpdb;
+		$table_name = $wpdb->prefix . 'fair_audience_event_scheduled_messages';
+
+		// Re-scope scheduled mailings from the event (post) to the event date.
+		// MySQL 8 (unlike MariaDB) has no IF [NOT] EXISTS for columns/indexes,
+		// so each schema change is guarded with an information_schema check.
+
+		// Backfill event_date_id from the anchor where missing; anchor_ref_id has
+		// always held the event-date id, so it is a safe source for legacy rows.
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+		$wpdb->query(
+			"UPDATE {$table_name}
+			 SET event_date_id = anchor_ref_id
+			 WHERE event_date_id IS NULL AND anchor_ref_id IS NOT NULL"
+		);
+
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.DirectDatabaseQuery.SchemaChange
+		$wpdb->query(
+			"ALTER TABLE {$table_name}
+			 MODIFY COLUMN event_date_id BIGINT UNSIGNED NOT NULL COMMENT 'Event date the mailing is scoped to'"
+		);
+
+		$has_event_id_index = $wpdb->get_var(
+			$wpdb->prepare(
+				'SELECT COUNT(*) FROM information_schema.STATISTICS
+				 WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = %s AND INDEX_NAME = %s',
+				$table_name,
+				'idx_event_id'
+			)
+		);
+		if ( $has_event_id_index ) {
+			// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.DirectDatabaseQuery.SchemaChange
+			$wpdb->query( "ALTER TABLE {$table_name} DROP INDEX idx_event_id" );
+		}
+
+		$has_event_id_column = $wpdb->get_var(
+			$wpdb->prepare(
+				'SELECT COUNT(*) FROM information_schema.COLUMNS
+				 WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = %s AND COLUMN_NAME = %s',
+				$table_name,
+				'event_id'
+			)
+		);
+		if ( $has_event_id_column ) {
+			// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.DirectDatabaseQuery.SchemaChange
+			$wpdb->query( "ALTER TABLE {$table_name} DROP COLUMN event_id" );
+		}
+
+		$has_event_date_index = $wpdb->get_var(
+			$wpdb->prepare(
+				'SELECT COUNT(*) FROM information_schema.STATISTICS
+				 WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = %s AND INDEX_NAME = %s',
+				$table_name,
+				'idx_event_date_id'
+			)
+		);
+		if ( ! $has_event_date_index ) {
+			// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.DirectDatabaseQuery.SchemaChange
+			$wpdb->query( "ALTER TABLE {$table_name} ADD INDEX idx_event_date_id (event_date_id)" );
+		}
+
+		update_option( 'fair_audience_db_version', '1.36.0' );
 	}
 }
 add_action( 'plugins_loaded', __NAMESPACE__ . '\\fair_audience_maybe_upgrade_db' );

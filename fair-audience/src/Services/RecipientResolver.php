@@ -110,6 +110,22 @@ class RecipientResolver {
 	}
 
 	/**
+	 * Resolve a recipient filter scoped to a single event date.
+	 *
+	 * Recipients are the participants of that specific date whose label is in
+	 * the filter; group and marketing filters apply as usual.
+	 *
+	 * @param array $filter        Recipient filter (normalized or raw).
+	 * @param int   $event_date_id Event date ID.
+	 * @return array[] Recipient rows.
+	 */
+	public function resolve_by_event_date( $filter, $event_date_id ) {
+		$filter = $this->normalize_filter( $filter );
+
+		return $this->resolve_for_event_date( (int) $event_date_id, $filter );
+	}
+
+	/**
 	 * Resolve recipients scoped to a single event.
 	 *
 	 * @param int   $event_id Event post ID.
@@ -123,8 +139,38 @@ class RecipientResolver {
 			return $recipients;
 		}
 
+		$event_participants = $this->event_participant_repository->get_by_event( $event_id );
+
+		return $this->rows_from_event_participants( $event_participants, $filter );
+	}
+
+	/**
+	 * Resolve recipients scoped to a single event date.
+	 *
+	 * @param int   $event_date_id Event date ID.
+	 * @param array $filter        Normalized filter.
+	 * @return array[] Recipient rows.
+	 */
+	private function resolve_for_event_date( $event_date_id, $filter ) {
+		if ( empty( $event_date_id ) ) {
+			return array();
+		}
+
+		$event_participants = $this->event_participant_repository->get_by_event_date( $event_date_id );
+
+		return $this->rows_from_event_participants( $event_participants, $filter );
+	}
+
+	/**
+	 * Build recipient rows from a set of event-participant relationships.
+	 *
+	 * @param object[] $event_participants Event-participant rows (have label, participant_id).
+	 * @param array    $filter             Normalized filter.
+	 * @return array[] Recipient rows.
+	 */
+	private function rows_from_event_participants( $event_participants, $filter ) {
+		$recipients            = array();
 		$group_participant_ids = $this->get_participant_ids_for_groups( $filter['group_ids'] );
-		$event_participants    = $this->event_participant_repository->get_by_event( $event_id );
 
 		foreach ( $event_participants as $ep ) {
 			if ( ! in_array( $ep->label, $filter['labels'], true ) ) {

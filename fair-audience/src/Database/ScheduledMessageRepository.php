@@ -50,19 +50,19 @@ class ScheduledMessageRepository {
 	}
 
 	/**
-	 * Get all scheduled messages for an event, newest first.
+	 * Get all scheduled messages for an event date, newest first.
 	 *
-	 * @param int $event_id Event post ID.
+	 * @param int $event_date_id Event date ID.
 	 * @return ScheduledMessage[] Array of messages.
 	 */
-	public function get_by_event( $event_id ) {
+	public function get_by_event_date( $event_date_id ) {
 		global $wpdb;
 
 		$results = $wpdb->get_results(
 			$wpdb->prepare(
-				'SELECT * FROM %i WHERE event_id = %d ORDER BY created_at DESC',
+				'SELECT * FROM %i WHERE event_date_id = %d ORDER BY created_at DESC',
 				$this->get_table_name(),
-				$event_id
+				$event_date_id
 			),
 			ARRAY_A
 		);
@@ -185,19 +185,19 @@ class ScheduledMessageRepository {
 	}
 
 	/**
-	 * Cancel all still-scheduled messages for an event.
+	 * Cancel all still-scheduled messages for an event date.
 	 *
-	 * @param int $event_id Event post ID.
+	 * @param int $event_date_id Event date ID.
 	 * @return int Number of rows canceled.
 	 */
-	public function cancel_for_event( $event_id ) {
+	public function cancel_for_event_date( $event_date_id ) {
 		global $wpdb;
 
 		return (int) $wpdb->query(
 			$wpdb->prepare(
-				"UPDATE %i SET status = 'canceled' WHERE event_id = %d AND status = 'scheduled'",
+				"UPDATE %i SET status = 'canceled' WHERE event_date_id = %d AND status = 'scheduled'",
 				$this->get_table_name(),
-				$event_id
+				$event_date_id
 			)
 		);
 	}
