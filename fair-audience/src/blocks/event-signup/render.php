@@ -676,6 +676,13 @@ $render_ticket_options = static function () use ( $ticket_options_for_display, $
 	if ( ! $has_ticket_options ) {
 		return;
 	}
+	// When a minimum-activities requirement is in play (globally or because a
+	// ticket type can raise it), option prices are shown only past the minimum
+	// as a per-option "(+€X.XX)" add-on tag toggled by the frontend JS, instead
+	// of the always-on inline price. Feature-inactive events keep the inline
+	// price (today's behavior). See issue #644.
+	$feature_active = ( $minimum_activities > 0 || $any_ticket_type_min > 0 );
+
 	echo '<fieldset class="fair-audience-ticket-options">';
 	echo '<legend>' . esc_html__( 'Select activities', 'fair-audience' ) . '</legend>';
 	// Render the hint whenever a minimum is possible — either the event-date
@@ -705,7 +712,9 @@ $render_ticket_options = static function () use ( $ticket_options_for_display, $
 	}
 	foreach ( $ticket_options_for_display as $opt ) {
 		$opt_label = $opt['name'];
-		if ( $show_option_prices ) {
+		// Inline price only when the minimum-activities feature is inactive; the
+		// feature-active case uses the toggled "(+price)" tag emitted below.
+		if ( ! $feature_active && $show_option_prices ) {
 			if ( $opt['price'] > 0 ) {
 				$opt_label .= ' — €' . number_format_i18n( $opt['price'], 2 );
 			} elseif ( $opt['price'] < 0 ) {
@@ -730,6 +739,20 @@ $render_ticket_options = static function () use ( $ticket_options_for_display, $
 		}
 		echo ' /> ';
 		echo esc_html( $opt_label );
+		// Hidden add-on tag, revealed by frontend.js on unchecked options once
+		// the minimum is reached. Positive prices only (no "(+€0.00)").
+		if ( $feature_active && $show_option_prices && $opt['price'] > 0 ) {
+			printf(
+				'<span class="fair-audience-ticket-option-addon" style="display: none;"> %s</span>',
+				esc_html(
+					sprintf(
+						/* translators: %s: formatted add-on price */
+						__( '(+€%s)', 'fair-audience' ),
+						number_format_i18n( $opt['price'], 2 )
+					)
+				)
+			);
+		}
 		echo '</label>';
 	}
 	echo '</fieldset>';

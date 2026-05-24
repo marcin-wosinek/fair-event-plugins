@@ -144,17 +144,18 @@ const CSS_PREFIX = 'fair-audience-signup';
 	}
 
 	/**
-	 * Enforce the minimum-activities requirement by disabling the signup
-	 * and registration buttons until enough options are checked.  No-op
-	 * when the block has no minimum configured.
+	 * Compute the effective minimum number of activities for the block: the
+	 * event-date global baseline, possibly raised by the selected ticket type
+	 * (issue #625), capped at the number of options available so the requirement
+	 * is never impossible to satisfy.
 	 * @param {HTMLElement} block The block element
+	 * @return {number} The effective minimum (0 when no minimum applies)
 	 */
-	function updateMinActivitiesGate(block) {
-		// Event-date global baseline.
+	function getEffectiveMinimum(block) {
 		const globalMin = parseInt(block.dataset.minActivities || '0', 10);
 
-		// A selected ticket type can raise the requirement (issue #625); a value
-		// below the global is ignored because we take the max.
+		// A selected ticket type can raise the requirement; a value below the
+		// global is ignored because we take the max.
 		const selectedTicketType = block.querySelector(
 			'input[name="ticket_type_id"]:checked'
 		);
@@ -162,15 +163,21 @@ const CSS_PREFIX = 'fair-audience-signup';
 			? parseInt(selectedTicketType.dataset.minActivities || '0', 10)
 			: 0;
 
-		const optionInputs = block.querySelectorAll(
+		const optionCount = block.querySelectorAll(
 			'input[name="ticket_option_ids[]"]'
-		);
-		// Cap at the number of options available so the requirement is never
-		// impossible to satisfy.
-		const effectiveMin = Math.min(
-			Math.max(globalMin, typeMin),
-			optionInputs.length
-		);
+		).length;
+
+		return Math.min(Math.max(globalMin, typeMin), optionCount);
+	}
+
+	/**
+	 * Enforce the minimum-activities requirement by disabling the signup
+	 * and registration buttons until enough options are checked.  No-op
+	 * when the block has no minimum configured.
+	 * @param {HTMLElement} block The block element
+	 */
+	function updateMinActivitiesGate(block) {
+		const effectiveMin = getEffectiveMinimum(block);
 
 		// Keep the hint paragraph in sync with the effective minimum.
 		const hint = block.querySelector(
@@ -256,6 +263,26 @@ const CSS_PREFIX = 'fair-audience-signup';
 			block.dataset.registerBaseText ||
 			__('Register & Sign Up', 'fair-audience');
 
+		// Below the minimum-activities requirement the button is disabled and
+		// the price is meaningless, so show only the bare action label until the
+		// selection is valid (issue #644).
+		const effectiveMin = getEffectiveMinimum(block);
+		if (effectiveMin > 0 && checkedOptions.length < effectiveMin) {
+			const signupBtnBare = block.querySelector(
+				'.fair-audience-signup-button'
+			);
+			if (signupBtnBare) {
+				signupBtnBare.textContent = signupBaseText;
+			}
+			const submitBtnBare = block.querySelector(
+				'.fair-audience-signup-submit-button'
+			);
+			if (submitBtnBare) {
+				submitBtnBare.textContent = registerBaseText;
+			}
+			return;
+		}
+
 		let signupText, registerText;
 		if (total > 0) {
 			const formatted = total.toFixed(2);
@@ -280,6 +307,42 @@ const CSS_PREFIX = 'fair-audience-signup';
 	}
 
 	/**
+	 * Show or hide the per-option "(+price)" add-on tags. Tags reveal what
+	 * adding an option would cost and only appear once the minimum-activities
+	 * requirement is met, on options that are not yet checked (issue #644).
+	 * No-op when the block has no add-on tags (feature-inactive events).
+	 * @param {HTMLElement} block The block element
+	 */
+	function updateOptionAddons(block) {
+		// Scope to the signup options fieldset so the separate "add activities"
+		// fieldset (for already-signed-up viewers) is never touched.
+		const fieldset = block.querySelector('.fair-audience-ticket-options');
+		if (!fieldset) {
+			return;
+		}
+
+		const effectiveMin = getEffectiveMinimum(block);
+		const checkedCount = fieldset.querySelectorAll(
+			'input[name="ticket_option_ids[]"]:checked'
+		).length;
+		const meetsMin = effectiveMin === 0 || checkedCount >= effectiveMin;
+
+		const optionInputs = fieldset.querySelectorAll(
+			'input[name="ticket_option_ids[]"]'
+		);
+		optionInputs.forEach(function (input) {
+			const label = input.closest('label');
+			const addon = label
+				? label.querySelector('.fair-audience-ticket-option-addon')
+				: null;
+			if (!addon) {
+				return;
+			}
+			addon.style.display = meetsMin && !input.checked ? '' : 'none';
+		});
+	}
+
+	/**
 	 * Attach change listeners to ticket option checkboxes so the button total
 	 * stays in sync as the user checks/unchecks options.
 	 * @param {HTMLElement} block The block element
@@ -292,6 +355,7 @@ const CSS_PREFIX = 'fair-audience-signup';
 			radio.addEventListener('change', function () {
 				updateButtonTotal(block);
 				updateMinActivitiesGate(block);
+				updateOptionAddons(block);
 			});
 		});
 
@@ -302,10 +366,13 @@ const CSS_PREFIX = 'fair-audience-signup';
 			checkbox.addEventListener('change', function () {
 				updateButtonTotal(block);
 				updateMinActivitiesGate(block);
+				updateOptionAddons(block);
 			});
 		});
 
+		updateButtonTotal(block);
 		updateMinActivitiesGate(block);
+		updateOptionAddons(block);
 	}
 
 	/**
