@@ -1155,7 +1155,11 @@ export default function ManageEventApp() {
 				{`.fair-events-manage-event .components-card > div:first-child { height: auto; }
 .fair-events-manage-event .components-card__body > * { max-width: 600px; }
 .fair-events-manage-event .fair-events-tickets .components-card__body > * { max-width: none; }
-.fair-events-manage-event .fair-events-photos .components-card__body > * { max-width: none; }`}
+.fair-events-manage-event .fair-events-photos .components-card__body > * { max-width: none; }
+/* Let the tab bar wrap onto multiple rows instead of overflowing the
+   viewport on narrow screens. Harmless on desktop, where the tabs fit on
+   one row. */
+.fair-events-manage-event .components-tab-panel__tabs { flex-wrap: wrap; row-gap: 4px; }`}
 			</style>
 			<h1>
 				{__('Manage Event', 'fair-events')}
