@@ -192,6 +192,28 @@ The file is written **relative to the current working directory**, so run it
 from wherever you want the image. Point it elsewhere with
 `WP_BASE_URL=http://localhost:8889 npm run screenshot -- …`.
 
+### Plugin Check reporting (`e2e/plugin-check.spec.js`)
+
+**Purpose**: Install the official [Plugin Check](https://wordpress.org/plugins/plugin-check/)
+plugin on the wp-env `tests` instance, run the **complete** scan
+(`--include-experimental --severity=0`, all checks) against each Fair Event
+plugin, and report the error / warning counts exactly as Plugin Check returns
+them.
+
+**Runner**: Playwright (e2e harness). It shells out via
+`npx wp-env run tests-cli wp plugin check …`; it does not drive a browser.
+
+**Special considerations**:
+- It's a **reporting** suite — it does not fail on findings, only if Plugin
+  Check can't run or its output can't be parsed. Flip the per-plugin assertion
+  to `expect(result.errors)` to make it a CI gate.
+- Needs the `tests` instance running (`npm run test:e2e:setup`) and **network
+  access** (Plugin Check is fetched from wordpress.org on first run).
+- Slow (full scan of every plugin); the spec sets generous per-test timeouts.
+- `node_modules` / `vendor` are excluded by Plugin Check's defaults; `build/`
+  is included, since that is what ships.
+- Counts print per-plugin and as a combined summary table in the test output.
+
 ### Manual Integration Checks (WP-CLI `eval-file`)
 
 **Purpose**: One-off verification of behavior that needs a fully bootstrapped
