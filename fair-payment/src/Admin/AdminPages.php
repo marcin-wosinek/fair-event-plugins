@@ -251,6 +251,19 @@ class AdminPages {
 		);
 
 		wp_enqueue_style( 'wp-components' );
+
+		// Enqueue the page's stylesheet when one was emitted by the build.
+		// wp-scripts writes style-index.css when index.js imports a stylesheet.
+		$style_file_path = FAIR_PAYMENT_PLUGIN_DIR . 'build/admin/' . $page . '/style-index.css';
+
+		if ( file_exists( $style_file_path ) ) {
+			wp_enqueue_style(
+				'fair-payment-' . $page,
+				FAIR_PAYMENT_PLUGIN_URL . 'build/admin/' . $page . '/style-index.css',
+				array( 'wp-components' ),
+				$asset_file['version']
+			);
+		}
 	}
 
 	/**

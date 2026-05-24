@@ -182,6 +182,14 @@ const BudgetsApp = () => {
 
 	return (
 		<div className="wrap fair-payment-budgets-page">
+			{/*
+			 * Anchor for WordPress admin notices. Core's common.js inserts
+			 * .notice elements right after `.wp-header-end` (or, lacking it,
+			 * after the first h1 — which here is buried in the card header,
+			 * making notices overlap it). Keeping this marker at the top of
+			 * the wrap pins notices to the top of the page.
+			 */}
+			<hr className="wp-header-end" />
 			<VStack spacing={4}>
 				{/* Unbudgeted Summary */}
 				<Card>
@@ -304,12 +312,22 @@ const BudgetsApp = () => {
 											);
 											return (
 												<tr key={budget.id}>
-													<td>
+													<td
+														data-label={__(
+															'Name',
+															'fair-payment'
+														)}
+													>
 														<strong>
 															{budget.name}
 														</strong>
 													</td>
-													<td>
+													<td
+														data-label={__(
+															'Description',
+															'fair-payment'
+														)}
+													>
 														{budget.description || (
 															<em>
 																{__(
@@ -319,7 +337,12 @@ const BudgetsApp = () => {
 															</em>
 														)}
 													</td>
-													<td>
+													<td
+														data-label={__(
+															'Balance',
+															'fair-payment'
+														)}
+													>
 														<span
 															style={{
 																color:
@@ -336,8 +359,16 @@ const BudgetsApp = () => {
 															)}
 														</span>
 													</td>
-													<td>
-														<HStack spacing={2}>
+													<td
+														data-label={__(
+															'Actions',
+															'fair-payment'
+														)}
+													>
+														<HStack
+															spacing={2}
+															className="fair-payment-budget-actions"
+														>
 															<Button
 																variant="secondary"
 																size="small"
@@ -384,7 +415,12 @@ const BudgetsApp = () => {
 										})}
 										{/* Unbudgeted row */}
 										<tr>
-											<td>
+											<td
+												data-label={__(
+													'Name',
+													'fair-payment'
+												)}
+											>
 												<em>
 													{__(
 														'Unbudgeted',
@@ -392,7 +428,12 @@ const BudgetsApp = () => {
 													)}
 												</em>
 											</td>
-											<td>
+											<td
+												data-label={__(
+													'Description',
+													'fair-payment'
+												)}
+											>
 												<em>
 													{__(
 														'Entries without a budget category',
@@ -400,7 +441,12 @@ const BudgetsApp = () => {
 													)}
 												</em>
 											</td>
-											<td>
+											<td
+												data-label={__(
+													'Balance',
+													'fair-payment'
+												)}
+											>
 												<span
 													style={{
 														color:
@@ -416,7 +462,12 @@ const BudgetsApp = () => {
 													)}
 												</span>
 											</td>
-											<td>
+											<td
+												data-label={__(
+													'Actions',
+													'fair-payment'
+												)}
+											>
 												<Button
 													variant="secondary"
 													size="small"
@@ -437,7 +488,12 @@ const BudgetsApp = () => {
 											<td colSpan={2}>
 												{__('Total', 'fair-payment')}
 											</td>
-											<td>
+											<td
+												data-label={__(
+													'Total',
+													'fair-payment'
+												)}
+											>
 												<span
 													style={{
 														color:

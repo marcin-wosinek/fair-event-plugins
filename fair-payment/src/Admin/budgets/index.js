@@ -8,6 +8,7 @@ import { createRoot } from '@wordpress/element';
  * Internal dependencies
  */
 import BudgetsApp from './BudgetsApp.js';
+import './style.scss';
 
 /**
  * Initialize the budgets page

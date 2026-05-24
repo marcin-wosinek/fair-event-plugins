@@ -1,0 +1,93 @@
+/**
+ * Budgets admin page styles.
+ *
+ * The Budget Categories table uses the WordPress `fixed` table layout, which
+ * splits width evenly across columns. On narrow / mobile screens that forces
+ * the Name and Description text to wrap one character per line. Below the
+ * mobile breakpoint we drop the table grid and render each row as a stacked
+ * card with label/value pairs so the content stays readable.
+ *
+ * Everything is scoped under `.fair-payment-budgets-page` so other
+ * `wp-list-table`s in the admin are untouched, and lives inside a media query
+ * so the desktop layout is unchanged.
+ *
+ * The selectors deliberately stack `.wrap.fair-payment-budgets-page` and
+ * `.wp-list-table.widefat` to outweigh WordPress core's responsive list-table
+ * rules (`...td::before { content: attr(data-colname); }`, active below 782px),
+ * which would otherwise blank out our `data-label` text.
+ */
+
+.wrap.fair-payment-budgets-page {
+	@media screen and (max-width: 600px) {
+		.wp-list-table.widefat {
+			display: block;
+			border: none;
+
+			// Column headers are replaced by per-cell labels on mobile.
+			thead {
+				display: none;
+			}
+
+			tbody,
+			tfoot,
+			tr,
+			td {
+				display: block;
+			}
+
+			// Each row becomes a self-contained card.
+			tr {
+				margin: 0 0 1em;
+				padding: 0.25em 0.75em;
+				border: 1px solid #c3c4c7;
+				border-radius: 4px;
+				background: #fff;
+			}
+
+			td {
+				width: auto !important;
+				padding: 0.45em 0;
+				border: none;
+				text-align: right;
+
+				// Label/value pairs: the column name sits on the left,
+				// the value on the right, and long values wrap normally.
+				&[data-label] {
+					display: flex;
+					gap: 1em;
+					align-items: baseline;
+					justify-content: space-between;
+
+					&::before {
+						content: attr(data-label);
+						// Core's responsive list-table absolutely positions
+						// this pseudo-element; keep it in the flex flow so the
+						// label sits beside the value instead of over it.
+						position: static;
+						flex: 0 0 35%;
+						padding: 0;
+						text-align: left;
+						font-weight: 600;
+						color: #1e1e1e;
+					}
+				}
+			}
+
+			// The empty actions cell on the totals row and the spanning
+			// "Total" label cell would otherwise show as blank lines.
+			td:empty {
+				display: none;
+			}
+
+			tfoot td[colspan] {
+				display: none;
+			}
+
+			// Let the View / Edit / Delete buttons wrap and stay right-aligned.
+			.fair-payment-budget-actions {
+				flex-wrap: wrap;
+				justify-content: flex-end;
+			}
+		}
+	}
+}
