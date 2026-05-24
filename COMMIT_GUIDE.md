@@ -60,6 +60,54 @@ Closes #557
   on merge.
 - No emoji footer, no tool attribution.
 
+## Responsive-UI tickets (`responsive-ui` label)
+
+When a PR resolves an issue carrying the **`responsive-ui`** label, the
+description must show the change works across all three viewports.
+
+**Detect it.** Before opening the PR, read the linked issue's labels:
+
+```bash
+gh issue view <NNN> --json labels --jq '.labels[].name'
+```
+
+If `responsive-ui` is among them, this section applies.
+
+**Capture _before_ first — at the start of the task, not the end.** The "before"
+state is the base branch, so grab it *before* touching any code (rebuilding the
+old state later means a branch switch + extra `npm run build`). For each changed
+page, run the screenshot helper at all three presets against the running dev
+instance (`docker compose up` must be live):
+
+```bash
+npm run screenshot -- "<admin-or-public-path>" desktop before-<page>-desktop.png
+npm run screenshot -- "<admin-or-public-path>" tablet  before-<page>-tablet.png
+npm run screenshot -- "<admin-or-public-path>" mobile  before-<page>-mobile.png
+```
+
+**Capture _after_** once the change is built (`npm run build` in the affected
+plugin), repeating the three presets with `after-` filenames.
+
+The presets are `desktop` (1280×900), `tablet` (768×1024), `mobile` (375×812) —
+see [TESTING.md](./TESTING.md) and `scripts/screenshot.js`.
+
+**Deliver the files, don't embed paths.** GitHub PR bodies can't reference local
+files. Leave the six PNGs in the repo working dir and report their names so the
+human can upload them. In the PR description, add a **Screenshots** section with
+a before/after row per viewport, e.g.:
+
+```markdown
+## Screenshots
+
+| Viewport | Before | After |
+| --- | --- | --- |
+| Desktop | _(upload before-desktop)_ | _(upload after-desktop)_ |
+| Tablet  | _(upload before-tablet)_  | _(upload after-tablet)_  |
+| Mobile  | _(upload before-mobile)_  | _(upload after-mobile)_  |
+```
+
+Don't commit the PNGs — they belong in the PR, not the history.
+
 ## Things to keep doing
 
 - Use `HEREDOC` for multi-line commit messages and PR bodies so formatting
