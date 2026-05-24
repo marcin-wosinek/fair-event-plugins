@@ -26,12 +26,22 @@
  *   --wait <ms>         Extra settle time after load (default 600)
  *   --wait-for <sel>    Wait for a CSS selector before capturing
  *   --no-login          Skip the wp-login step (for public pages)
+ *   --upload <target>   After saving, upload the PNG and print a public URL +
+ *                       markdown snippet. Currently supports `imgbb` (needs
+ *                       IMGBB_API_KEY in .env). Opt-in: the local file is
+ *                       always written; upload is in addition to it. imgbb is
+ *                       PUBLIC — synthetic/demo data only.
+ *   --expiry <seconds>  Upload TTL for hosts that support it (default 2592000
+ *                       = 30 days; 0 keeps it indefinitely). imgbb accepts
+ *                       60–15552000.
  *
  * Examples:
  *   node scripts/screenshot.js "/wp-admin/admin.php?page=fair-payment-budgets" mobile budgets-mobile.png
  *   WP_BASE_URL=http://localhost:8889 node scripts/screenshot.js "/" desktop home.png --no-login
+ *   node scripts/screenshot.js "/" desktop home.png --no-login --upload imgbb
  */
 
+import { readFile } from 'fs/promises';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import { chromium } from '@playwright/test';
@@ -55,9 +65,114 @@ const PRESETS = {
 	mobile: { width: 375, height: 812, deviceScaleFactor: 2 },
 };
 
+/** Default upload TTL: 30 days, so stale PR screenshots self-clean. */
+const DEFAULT_EXPIRY = 2592000;
+
+/**
+ * Upload a PNG buffer to imgbb and return the public link.
+ *
+ * Mirrors the shape of InstagramPostsController::upload_image() — POST the
+ * image to a host, read the public URL back, surface the API error body on
+ * failure. imgbb takes the API key (and optional expiration) as query params
+ * and the image as a base64 form field. Unlike imgur it still issues free API
+ * keys, which is why this replaces the imgur design from #653.
+ *
+ * @param {Buffer} buffer PNG bytes.
+ * @param {number} expiry Seconds until imgbb deletes it (0 = keep forever).
+ * @returns {Promise<string>} The public `i.ibb.co` link.
+ */
+async function uploadToImgbb(buffer, expiry) {
+	const apiKey = process.env.IMGBB_API_KEY;
+	if (!apiKey) {
+		throw new Error(
+			'IMGBB_API_KEY is not set. Add it to the repo .env as ' +
+				'`IMGBB_API_KEY=<your key>` (get a free key at ' +
+				'https://api.imgbb.com/). Never commit the key.'
+		);
+	}
+
+	const params = new URLSearchParams({ key: apiKey });
+	if (expiry > 0) {
+		params.set('expiration', String(expiry));
+	}
+
+	const form = new FormData();
+	form.append('image', buffer.toString('base64'));
+
+	const response = await fetch(`https://api.imgbb.com/1/upload?${params}`, {
+		method: 'POST',
+		body: form,
+	});
+
+	const text = await response.text();
+	let data;
+	try {
+		data = JSON.parse(text);
+	} catch {
+		data = null;
+	}
+
+	if (!response.ok || !data?.data?.url) {
+		throw new Error(
+			`imgbb upload failed (HTTP ${response.status}).\n${text}`
+		);
+	}
+
+	return data.data.url;
+}
+
+/**
+ * Swappable upload targets. A future durable/private host (S3, Cloudinary)
+ * slots in here behind `--upload <target>` without touching the CLI. `public`
+ * gates the exposure warning.
+ */
+const UPLOADERS = {
+	imgbb: { label: 'imgbb', public: true, upload: uploadToImgbb },
+};
+
+/**
+ * Read the just-written PNG, hand it to the selected uploader, and print the
+ * public URL plus a paste-ready markdown snippet. Throws on an unknown target
+ * or upload failure — the caller turns that into a non-zero exit, but the
+ * local PNG is already on disk by then.
+ */
+async function uploadScreenshot(target, outFile, expiry) {
+	const uploader = UPLOADERS[target];
+	if (!uploader) {
+		throw new Error(
+			`unknown --upload target "${target}". Supported: ${Object.keys(
+				UPLOADERS
+			).join(', ')}`
+		);
+	}
+
+	if (uploader.public) {
+		console.error(
+			`\n⚠️  Uploading to ${uploader.label}, a PUBLIC host: anyone with the ` +
+				'link can view it and GitHub caches it. Upload synthetic/demo data ' +
+				'only — admin captures can leak participant names, emails, or finance ' +
+				'figures. For real-data pages keep using the pr-assets branch.\n'
+		);
+	}
+
+	const buffer = await readFile(outFile);
+	const link = await uploader.upload(buffer, expiry);
+	const alt = path.basename(outFile, path.extname(outFile));
+
+	console.log(`Uploaded: ${link}`);
+	console.log(`Markdown:  ![${alt}](${link})`);
+}
+
 function parseArgs(argv) {
 	const positional = [];
-	const opts = { fullPage: true, wait: 600, waitFor: null, login: true };
+	const opts = {
+		fullPage: true,
+		wait: 600,
+		waitFor: null,
+		login: true,
+		upload: null,
+		expiry: DEFAULT_EXPIRY,
+	};
 
 	for (let i = 0; i < argv.length; i++) {
 		const arg = argv[i];
@@ -73,6 +188,12 @@ function parseArgs(argv) {
 				break;
 			case '--wait-for':
 				opts.waitFor = argv[++i];
+				break;
+			case '--upload':
+				opts.upload = argv[++i];
+				break;
+			case '--expiry':
+				opts.expiry = Number(argv[++i]);
 				break;
 			default:
 				positional.push(arg);
@@ -110,7 +231,10 @@ function usage(message) {
 			`  <dimensions>: ${Object.keys(PRESETS).join(
 				' | '
 			)} | WIDTHxHEIGHT\n` +
-			'  options: --viewport, --wait <ms>, --wait-for <selector>, --no-login'
+			'  options: --viewport, --wait <ms>, --wait-for <selector>, --no-login,\n' +
+			`           --upload <${Object.keys(UPLOADERS).join(
+				' | '
+			)}>, --expiry <seconds>`
 	);
 	process.exit(1);
 }
@@ -140,6 +264,16 @@ async function main() {
 	const viewport = resolveViewport(dimensions);
 	if (!viewport) {
 		usage(`unknown dimensions "${dimensions}"`);
+	}
+
+	// Validate the upload target before launching the browser so a typo fails
+	// fast instead of after a full capture.
+	if (opts.upload && !UPLOADERS[opts.upload]) {
+		usage(
+			`unknown --upload target "${opts.upload}". Supported: ${Object.keys(
+				UPLOADERS
+			).join(', ')}`
+		);
 	}
 
 	const outFile = path.resolve(process.cwd(), filename);
@@ -177,6 +311,12 @@ async function main() {
 		);
 	} finally {
 		await browser.close();
+	}
+
+	// Upload last, with the browser already closed and the PNG on disk: an
+	// upload failure exits non-zero but never costs the local file.
+	if (opts.upload) {
+		await uploadScreenshot(opts.upload, outFile, opts.expiry);
 	}
 }
 
