@@ -173,7 +173,6 @@
 	margin-top: 24px;
 }
 
-
 /* Cancel signup button */
 .fair-audience-unsignup-button-wrap {
 	margin-top: 15px;
@@ -217,6 +216,16 @@
 	height: 18px;
 	cursor: pointer;
 	flex-shrink: 0;
+}
+
+/* Name + "(+price)" tag live in one flex item so the price wraps with the
+   name as a single text flow rather than landing on its own line. */
+.fair-audience-ticket-option-text {
+	min-width: 0;
+}
+
+.fair-audience-ticket-option-addon {
+	white-space: nowrap;
 }
 
 .fair-audience-ticket-option-full {

@@ -738,6 +738,10 @@ $render_ticket_options = static function () use ( $ticket_options_for_display, $
 			echo ' disabled';
 		}
 		echo ' /> ';
+		// Name + add-on tag share one inline span so the "(+price)" flows with
+		// the (potentially wrapping) activity name instead of being stranded on
+		// its own line by the flex layout.
+		echo '<span class="fair-audience-ticket-option-text">';
 		echo esc_html( $opt_label );
 		// Hidden add-on tag, revealed by frontend.js on unchecked options once
 		// the minimum is reached. Positive prices only (no "(+€0.00)").
@@ -753,6 +757,7 @@ $render_ticket_options = static function () use ( $ticket_options_for_display, $
 				)
 			);
 		}
+		echo '</span>';
 		echo '</label>';
 	}
 	echo '</fieldset>';
