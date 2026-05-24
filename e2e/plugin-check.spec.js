@@ -22,6 +22,7 @@
 
 import { test, expect } from '@playwright/test';
 import { execSync } from 'node:child_process';
+import { appendFileSync } from 'node:fs';
 
 /** Plugin directory slugs (mirrors `.wp-env.json` `plugins`). */
 const PLUGINS = [
@@ -232,5 +233,24 @@ test.describe('Plugin Check', () => {
 
 		// eslint-disable-next-line no-console
 		console.log(lines.join('\n'));
+
+		// Surface the same table prominently on the GitHub Actions run/job page
+		// via the Job Summary. `GITHUB_STEP_SUMMARY` points at a Markdown file
+		// the runner renders; it's only set in CI, so local runs just log.
+		if (process.env.GITHUB_STEP_SUMMARY) {
+			const md = [
+				'### 🔌 Plugin Check summary (complete scan)',
+				'',
+				'| Plugin | Errors | Warnings | Total |',
+				'| --- | ---: | ---: | ---: |',
+				...rows.map(
+					(r) =>
+						`| ${r.plugin} | ${r.errors} | ${r.warnings} | ${r.total} |`
+				),
+				`| **TOTAL** | **${totals.errors}** | **${totals.warnings}** | **${totals.total}** |`,
+				'',
+			].join('\n');
+			appendFileSync(process.env.GITHUB_STEP_SUMMARY, `${md}\n`);
+		}
 	});
 });
