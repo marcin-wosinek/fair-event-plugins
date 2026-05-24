@@ -14,6 +14,51 @@ defined( 'WPINC' ) || die;
  */
 class AdminPages {
 	/**
+	 * Map of page slug => admin page hook name, captured at registration.
+	 *
+	 * WordPress derives admin page hook names from the parent slug, so the
+	 * enqueue logic must look them up here rather than hardcoding strings like
+	 * `fair_event_page_*` (which break the moment the parent slug changes).
+	 *
+	 * @var array<string,string>
+	 */
+	private $page_hooks = array();
+
+	/**
+	 * The top-level menu slug all Fair Events pages parent under.
+	 *
+	 * Single source of truth shared by the submenu registrations, the menu
+	 * reorder logic, and internal links — independent of the `fair_event` CPT.
+	 *
+	 * @return string
+	 */
+	private function get_menu_parent_slug() {
+		return 'fair-events-calendar';
+	}
+
+	/**
+	 * URL for creating a new event.
+	 *
+	 * Points at the `fair_event` CPT when it is registered (today's default),
+	 * otherwise the first enabled post type's add-new screen.
+	 *
+	 * @return string
+	 */
+	private function get_new_event_url() {
+		if ( post_type_exists( 'fair_event' ) ) {
+			return admin_url( 'post-new.php?post_type=fair_event' );
+		}
+
+		foreach ( \FairEvents\Settings\Settings::get_enabled_post_types() as $slug ) {
+			if ( post_type_exists( $slug ) ) {
+				return admin_url( 'post-new.php?post_type=' . $slug );
+			}
+		}
+
+		return admin_url( 'post-new.php' );
+	}
+
+	/**
 	 * Initialize admin pages
 	 *
 	 * @return void
@@ -33,9 +78,30 @@ class AdminPages {
 	 * @return void
 	 */
 	public function register_admin_pages() {
-		// Calendar page
+		$parent = $this->get_menu_parent_slug();
+
+		// Self-owned top-level menu, independent of the fair_event CPT. The
+		// landing page is Calendar (works with or without the CPT). add_menu_page
+		// auto-creates a first submenu duplicating the parent slug, labelled with
+		// the menu title; reorder_admin_menu() relabels it to "Calendar".
+		$this->page_hooks['fair-events-calendar'] = add_menu_page(
+			__( 'Events Calendar', 'fair-events' ),
+			// Not translatable - "Fair Events" is the brand name.
+			'Fair Events',
+			'edit_posts',
+			$parent,
+			array( $this, 'render_calendar_page' ),
+			'dashicons-calendar-alt',
+			20
+		);
+
+		// Calendar landing submenu. Registering a submenu whose slug matches the
+		// parent gives the first row a proper "Calendar" label (the add_menu_page
+		// entry above is otherwise labelled with the brand name) without creating
+		// a second top-level entry. Not captured in $page_hooks: the active hook
+		// for this page is the top-level toplevel_page_* from add_menu_page().
 		add_submenu_page(
-			'edit.php?post_type=fair_event',
+			$parent,
 			__( 'Events Calendar', 'fair-events' ),
 			__( 'Calendar', 'fair-events' ),
 			'edit_posts',
@@ -44,8 +110,8 @@ class AdminPages {
 		);
 
 		// All Events page
-		add_submenu_page(
-			'edit.php?post_type=fair_event',
+		$this->page_hooks['fair-events-all-events'] = add_submenu_page(
+			$parent,
 			__( 'All Events', 'fair-events' ),
 			__( 'All Events', 'fair-events' ),
 			'edit_posts',
@@ -54,8 +120,8 @@ class AdminPages {
 		);
 
 		// Settings page
-		add_submenu_page(
-			'edit.php?post_type=fair_event',
+		$this->page_hooks['fair-events-settings'] = add_submenu_page(
+			$parent,
 			__( 'Fair Events Settings', 'fair-events' ),
 			__( 'Settings', 'fair-events' ),
 			'manage_options',
@@ -63,29 +129,32 @@ class AdminPages {
 			array( $this, 'render_settings_page' )
 		);
 
-		// Migration page
-		add_submenu_page(
-			'edit.php?post_type=fair_event',
-			__( 'Migrate Posts to Events', 'fair-events' ),
-			__( 'Migrate Posts', 'fair-events' ),
-			'manage_options',
-			'fair-events-migration',
-			array( $this, 'render_migration_page' )
-		);
+		// Migration pages only make sense when the CPT exists (migration targets it).
+		if ( post_type_exists( 'fair_event' ) ) {
+			// Migration page
+			$this->page_hooks['fair-events-migration'] = add_submenu_page(
+				$parent,
+				__( 'Migrate Posts to Events', 'fair-events' ),
+				__( 'Migrate Posts', 'fair-events' ),
+				'manage_options',
+				'fair-events-migration',
+				array( $this, 'render_migration_page' )
+			);
 
-		// Migration Summary page
-		add_submenu_page(
-			'edit.php?post_type=fair_event',
-			__( 'Migration Summary', 'fair-events' ),
-			__( 'Migration Summary', 'fair-events' ),
-			'manage_options',
-			'fair-events-migration-summary',
-			array( $this, 'render_migration_summary_page' )
-		);
+			// Migration Summary page
+			$this->page_hooks['fair-events-migration-summary'] = add_submenu_page(
+				$parent,
+				__( 'Migration Summary', 'fair-events' ),
+				__( 'Migration Summary', 'fair-events' ),
+				'manage_options',
+				'fair-events-migration-summary',
+				array( $this, 'render_migration_summary_page' )
+			);
+		}
 
 		// Event Sources page
-		add_submenu_page(
-			'edit.php?post_type=fair_event',
+		$this->page_hooks['fair-events-sources'] = add_submenu_page(
+			$parent,
 			__( 'Event Sources', 'fair-events' ),
 			__( 'Event Sources', 'fair-events' ),
 			'manage_options',
@@ -94,8 +163,8 @@ class AdminPages {
 		);
 
 		// Venues page
-		add_submenu_page(
-			'edit.php?post_type=fair_event',
+		$this->page_hooks['fair-events-venues'] = add_submenu_page(
+			$parent,
 			__( 'Venues', 'fair-events' ),
 			__( 'Venues', 'fair-events' ),
 			'manage_options',
@@ -104,7 +173,7 @@ class AdminPages {
 		);
 
 		// Manage Event page (hidden from menu, accessed via calendar)
-		$manage_hookname = add_submenu_page(
+		$this->page_hooks['fair-events-manage-event'] = add_submenu_page(
 			'', // Hidden from menu (empty string instead of null for PHP 8.1+ compatibility)
 			__( 'Manage Event', 'fair-events' ),
 			__( 'Manage Event', 'fair-events' ),
@@ -114,7 +183,7 @@ class AdminPages {
 		);
 
 		// Source View page (hidden from menu, accessed via sources list)
-		$source_view_hookname = add_submenu_page(
+		$this->page_hooks['fair-events-source-view'] = add_submenu_page(
 			'', // Hidden from menu (empty string instead of null for PHP 8.1+ compatibility)
 			__( 'View Source', 'fair-events' ),
 			__( 'View Source', 'fair-events' ),
@@ -124,7 +193,7 @@ class AdminPages {
 		);
 
 		// Manage Invitations page (hidden from menu, accessed via tickets tab)
-		$invitations_hookname = add_submenu_page(
+		$this->page_hooks['fair-events-manage-invitations'] = add_submenu_page(
 			'', // Hidden from menu (empty string instead of null for PHP 8.1+ compatibility)
 			__( 'Manage Invitations', 'fair-events' ),
 			__( 'Manage Invitations', 'fair-events' ),
@@ -134,7 +203,7 @@ class AdminPages {
 		);
 
 		// Copy Event page (hidden from menu, accessed via row action)
-		$copy_hookname = add_submenu_page(
+		$this->page_hooks['fair-events-copy'] = add_submenu_page(
 			'', // Hidden from menu (empty string instead of null for PHP 8.1+ compatibility)
 			__( 'Copy Event', 'fair-events' ),
 			__( 'Copy Event', 'fair-events' ),
@@ -144,13 +213,13 @@ class AdminPages {
 		);
 
 		// Set page titles for hidden pages to prevent strip_tags() deprecation warning.
-		$this->set_hidden_page_title( $manage_hookname, __( 'Manage Event', 'fair-events' ) );
-		$this->set_hidden_page_title( $source_view_hookname, __( 'View Source', 'fair-events' ) );
-		$this->set_hidden_page_title( $invitations_hookname, __( 'Manage Invitations', 'fair-events' ) );
-		$this->set_hidden_page_title( $copy_hookname, __( 'Copy Event', 'fair-events' ) );
+		$this->set_hidden_page_title( $this->page_hooks['fair-events-manage-event'], __( 'Manage Event', 'fair-events' ) );
+		$this->set_hidden_page_title( $this->page_hooks['fair-events-source-view'], __( 'View Source', 'fair-events' ) );
+		$this->set_hidden_page_title( $this->page_hooks['fair-events-manage-invitations'], __( 'Manage Invitations', 'fair-events' ) );
+		$this->set_hidden_page_title( $this->page_hooks['fair-events-copy'], __( 'Copy Event', 'fair-events' ) );
 
 		// Handle copy event form submission before page render
-		add_action( 'load-' . $copy_hookname, array( $this, 'handle_copy_event_submission' ) );
+		add_action( 'load-' . $this->page_hooks['fair-events-copy'], array( $this, 'handle_copy_event_submission' ) );
 	}
 
 	/**
@@ -182,8 +251,16 @@ class AdminPages {
 	 * @return void
 	 */
 	public function enqueue_admin_scripts( $hook ) {
+		// Resolve the current page to our slug via the captured hook map, so
+		// enqueuing is immune to the parent-derived hook prefix (which differs
+		// between CPT-on and CPT-off). Bail on any non-Fair-Events page.
+		$slug = array_search( $hook, $this->page_hooks, true );
+		if ( false === $slug ) {
+			return;
+		}
+
 		// Calendar page
-		if ( 'fair_event_page_fair-events-calendar' === $hook ) {
+		if ( 'fair-events-calendar' === $slug ) {
 			$asset_file = include FAIR_EVENTS_PLUGIN_DIR . 'build/admin/calendar/index.asset.php';
 
 			wp_enqueue_script(
@@ -203,7 +280,7 @@ class AdminPages {
 
 			$calendar_data = array(
 				'startOfWeek'    => (int) get_option( 'start_of_week', 1 ),
-				'newEventUrl'    => admin_url( 'post-new.php?post_type=fair_event' ),
+				'newEventUrl'    => $this->get_new_event_url(),
 				'editEventUrl'   => admin_url( 'post.php?action=edit&post=' ),
 				'manageEventUrl' => admin_url( 'admin.php?page=fair-events-manage-event' ),
 			);
@@ -229,7 +306,7 @@ class AdminPages {
 		}
 
 		// All Events page
-		if ( 'fair_event_page_fair-events-all-events' === $hook ) {
+		if ( 'fair-events-all-events' === $slug ) {
 			$asset_file = include FAIR_EVENTS_PLUGIN_DIR . 'build/admin/all-events/index.asset.php';
 
 			wp_enqueue_script(
@@ -259,7 +336,7 @@ class AdminPages {
 		}
 
 		// Event Sources page
-		if ( 'fair_event_page_fair-events-sources' === $hook ) {
+		if ( 'fair-events-sources' === $slug ) {
 			$asset_file = include FAIR_EVENTS_PLUGIN_DIR . 'build/admin/sources/index.asset.php';
 
 			wp_enqueue_script(
@@ -290,7 +367,7 @@ class AdminPages {
 		}
 
 		// Migration page
-		if ( 'fair_event_page_fair-events-migration' === $hook ) {
+		if ( 'fair-events-migration' === $slug ) {
 			$asset_file = include FAIR_EVENTS_PLUGIN_DIR . 'build/admin/migration/index.asset.php';
 
 			wp_enqueue_script(
@@ -312,7 +389,7 @@ class AdminPages {
 		}
 
 		// Migration Summary page
-		if ( 'fair_event_page_fair-events-migration-summary' === $hook ) {
+		if ( 'fair-events-migration-summary' === $slug ) {
 			$asset_file = include FAIR_EVENTS_PLUGIN_DIR . 'build/admin/migration-summary/index.asset.php';
 
 			wp_enqueue_script(
@@ -333,8 +410,8 @@ class AdminPages {
 			return;
 		}
 
-		// Source View page (hidden pages use 'admin_page_' prefix).
-		if ( 'admin_page_fair-events-source-view' === $hook ) {
+		// Source View page
+		if ( 'fair-events-source-view' === $slug ) {
 			$asset_file = include FAIR_EVENTS_PLUGIN_DIR . 'build/admin/source-view/index.asset.php';
 
 			wp_enqueue_script(
@@ -378,8 +455,8 @@ class AdminPages {
 			return;
 		}
 
-		// Manage Invitations page (hidden pages use 'admin_page_' prefix).
-		if ( 'admin_page_fair-events-manage-invitations' === $hook ) {
+		// Manage Invitations page
+		if ( 'fair-events-manage-invitations' === $slug ) {
 			$asset_file = include FAIR_EVENTS_PLUGIN_DIR . 'build/admin/manage-invitations/index.asset.php';
 
 			wp_enqueue_script(
@@ -421,8 +498,8 @@ class AdminPages {
 			return;
 		}
 
-		// Manage Event page (hidden pages use 'admin_page_' prefix).
-		if ( 'admin_page_fair-events-manage-event' === $hook ) {
+		// Manage Event page
+		if ( 'fair-events-manage-event' === $slug ) {
 			wp_enqueue_media();
 
 			$asset_file = include FAIR_EVENTS_PLUGIN_DIR . 'build/admin/manage-event/index.asset.php';
@@ -486,7 +563,7 @@ class AdminPages {
 		}
 
 		// Venues page
-		if ( 'fair_event_page_fair-events-venues' === $hook ) {
+		if ( 'fair-events-venues' === $slug ) {
 			$asset_file = include FAIR_EVENTS_PLUGIN_DIR . 'build/admin/venues/index.asset.php';
 
 			wp_enqueue_script(
@@ -507,14 +584,14 @@ class AdminPages {
 			return;
 		}
 
-		// Only load on Fair Events admin pages.
-		if ( 'fair_event_page_fair-events-settings' !== $hook ) {
+		// Settings page (the only remaining slug at this point).
+		if ( 'fair-events-settings' !== $slug ) {
 			return;
 		}
 
 		$asset_file = include FAIR_EVENTS_PLUGIN_DIR . 'build/admin/settings/index.asset.php';
 
-		if ( 'fair_event_page_fair-events-settings' === $hook ) {
+		if ( 'fair-events-settings' === $slug ) {
 			wp_enqueue_script(
 				'fair-events-settings',
 				FAIR_EVENTS_PLUGIN_URL . 'build/admin/settings/index.js',
@@ -682,7 +759,7 @@ class AdminPages {
 	public function reorder_admin_menu() {
 		global $submenu;
 
-		$parent_slug = 'edit.php?post_type=fair_event';
+		$parent_slug = $this->get_menu_parent_slug();
 
 		if ( ! isset( $submenu[ $parent_slug ] ) ) {
 			return;
@@ -843,6 +920,11 @@ class AdminPages {
 	public function add_copy_button_to_admin_bar( $wp_admin_bar ) {
 		// Only show on event edit pages in admin
 		if ( ! is_admin() ) {
+			return;
+		}
+
+		// Copy targets the fair_event CPT; nothing to copy when it's not registered.
+		if ( ! post_type_exists( 'fair_event' ) ) {
 			return;
 		}
 

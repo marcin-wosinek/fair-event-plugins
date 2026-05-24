@@ -64,7 +64,10 @@ class Event {
 			'public'             => true,
 			'publicly_queryable' => true,
 			'show_ui'            => true,
-			'show_in_menu'       => true,
+			// Nest under the self-owned Fair Events menu (AdminPages) instead of
+			// creating a second top-level entry. The menu is registered
+			// independently of this CPT so it survives the CPT being turned off.
+			'show_in_menu'       => 'fair-events-calendar',
 			'query_var'          => true,
 			'rewrite'            => array( 'slug' => $slug ),
 			'capability_type'    => 'post',
