@@ -2,17 +2,19 @@
  * WordPress dependencies
  */
 import { useBlockProps } from '@wordpress/block-editor';
-import { useSelect } from '@wordpress/data';
+import { useState, useEffect } from '@wordpress/element';
 import { __ } from '@wordpress/i18n';
+import apiFetch from '@wordpress/api-fetch';
 import ServerSideRender from '@wordpress/server-side-render';
 
 /**
- * Internal dependencies — import store to ensure it is registered
- */
-import { STORE_NAME } from '../../../Admin/event-meta-box/store.js';
-
-/**
- * Edit component for Event Info block
+ * Edit component for Event Info block.
+ *
+ * Linkage is resolved the same way the server does (by post ID, not post type):
+ * an event-date is linked to this post if its primary `event_id` matches, or if
+ * the post appears in the date's junction-linked posts. This mirrors
+ * SelectedOccurrence::resolve() in render.php, so the editor preview matches the
+ * published output for any enabled post type — including pages.
  *
  * @param {Object} props            - Component props
  * @param {Object} props.attributes - Block attributes
@@ -21,23 +23,48 @@ import { STORE_NAME } from '../../../Admin/event-meta-box/store.js';
  */
 export default function EditComponent({ attributes, context }) {
 	const blockProps = useBlockProps();
-	const { postId, postType } = context;
+	const { postId } = context;
 
-	const eventData = useSelect(
-		(select) => {
-			if (postType !== 'fair_event' || !postId) {
-				return null;
-			}
-			return select(STORE_NAME).getEventData();
-		},
-		[postId, postType]
-	);
+	// null = still resolving, true/false = resolved linkage.
+	const [linked, setLinked] = useState(null);
 
-	const isLinked = eventData && eventData.id;
+	useEffect(() => {
+		if (!postId) {
+			setLinked(false);
+			return undefined;
+		}
+
+		let cancelled = false;
+		const currentPostId = parseInt(postId, 10);
+
+		apiFetch({ path: '/fair-events/v1/event-dates?include_linked=true' })
+			.then((eventDates) => {
+				if (cancelled) {
+					return;
+				}
+				const isLinked = (eventDates || []).some(
+					(ed) =>
+						ed.event_id === currentPostId ||
+						(ed.linked_posts || []).some(
+							(p) => p.id === currentPostId
+						)
+				);
+				setLinked(isLinked);
+			})
+			.catch(() => {
+				if (!cancelled) {
+					setLinked(false);
+				}
+			});
+
+		return () => {
+			cancelled = true;
+		};
+	}, [postId]);
 
 	return (
 		<div {...blockProps}>
-			{isLinked ? (
+			{linked === null ? null : linked ? (
 				<ServerSideRender
 					block="fair-events/event-info"
 					attributes={attributes}
