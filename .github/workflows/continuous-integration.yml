@@ -81,6 +81,13 @@ jobs:
                   key: ${{ runner.os }}-wp-cli-dist-archive-3.1
 
             - name: Install WP-CLI dist-archive command
+              # Hide the github-oauth token that setup-php exports via
+              # COMPOSER_AUTH: WP-CLI's bundled Composer validates it with an
+              # older, stricter rule and rejects modern ghs_ tokens ("invalid
+              # characters"). The dist-archive package is public and the loop
+              # below retries, so no auth is needed here.
+              env:
+                  COMPOSER_AUTH: '{}'
               run: |
                   if ! wp dist-archive --help >/dev/null 2>&1; then
                       for attempt in 1 2 3; do
@@ -103,6 +110,10 @@ jobs:
               run: node scripts/stamp-build-version.js
 
             - name: Create plugin ZIP files using wp dist-archive
+              # Same reason as the install step: keep WP-CLI's bundled Composer
+              # away from the github-oauth token setup-php exports.
+              env:
+                  COMPOSER_AUTH: '{}'
               run: |
                   npm run dist-archive
                   echo "Contents of dist directory:"
