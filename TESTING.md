@@ -185,12 +185,43 @@ login + `WP_BASE_URL` convention; defaults to the dev wp-env on `:8888`,
 npm run screenshot -- "/wp-admin/admin.php?page=fair-payment-budgets" mobile budgets-mobile.png
 
 # dimensions: desktop | tablet | mobile | WIDTHxHEIGHT (e.g. 414x900)
-# options: --viewport (visible area only), --wait <ms>, --wait-for <selector>, --no-login
+# options: --viewport (visible area only), --wait <ms>, --wait-for <selector>,
+#          --no-login, --upload imgbb, --expiry <seconds>
 ```
 
 The file is written **relative to the current working directory**, so run it
 from wherever you want the image. Point it elsewhere with
 `WP_BASE_URL=http://localhost:8889 npm run screenshot -- …`.
+
+#### Embedding in a PR (`--upload imgbb`)
+
+To turn a capture into a PR-embeddable link in one command, add
+`--upload imgbb`. The local PNG is still written; the upload is **in addition**
+to it. The script prints the public URL and a paste-ready markdown snippet:
+
+```bash
+npm run screenshot -- "/" desktop home.png --no-login --upload imgbb
+# Saved desktop (1280x900) screenshot of http://localhost:8888/
+#   → /…/home.png
+# Uploaded: https://i.ibb.co/abc123/home.png
+# Markdown:  ![home](https://i.ibb.co/abc123/home.png)
+```
+
+**Setup**: get a free API key at <https://api.imgbb.com/> and add it to the repo
+`.env` as `IMGBB_API_KEY=<key>` (gitignored — never commit it). Without it the
+command errors and exits non-zero rather than silently skipping the upload.
+
+Uploads default to a **30-day expiry** so stale PR images self-clean; override
+with `--expiry <seconds>` (imgbb accepts `60`–`15552000`; `0` keeps it
+indefinitely).
+
+> ⚠️ **Public exposure, synthetic data only.** imgbb is a public host: anyone
+> with the link can view the image and GitHub caches it via camo. Admin captures
+> can leak participant names, emails, or finance figures — only upload
+> synthetic/demo pages. For real-data screenshots keep using the `pr-assets/<n>`
+> branch + authenticated `…?raw=true` embeds. imgbb is also not a durable
+> archive (hence the default expiry), so for long-lived PRs prefer the
+> `pr-assets` branch or a manual GitHub drag-drop attachment.
 
 ### Plugin Check reporting (`e2e/plugin-check.spec.js`)
 
