@@ -28,9 +28,8 @@ export function loadGeneralSettings() {
 	return apiFetch({ path: '/wp/v2/settings' }).then((settings) => {
 		return {
 			slug: settings.fair_events_slug || 'fair-events',
-			enabledPostTypes: settings.fair_events_enabled_post_types || [
-				'fair_event',
-			],
+			enabledPostTypes: settings.fair_events_enabled_post_types || [],
+			registerPostType: settings.fair_events_register_post_type ?? true,
 		};
 	});
 }

@@ -7,8 +7,9 @@
  * decoupling — every page must mount its React root **whether or not the CPT is
  * registered**, and with the CPT on the menu must look unchanged.
  *
- * The CPT-off state is produced by the `fair_e2e_unregister_fair_event` toggle in
- * e2e/mu-plugins/fair-e2e-support.php (a stand-in for #655's real setting).
+ * The CPT-off state is produced by the real `fair_events_register_post_type`
+ * setting (#655): `wp option update fair_events_register_post_type 0`. This suite
+ * also asserts which menu elements appear/disappear based on that setting.
  *
  * Run: `npm run test:e2e -- fair-events-admin-menu`.
  */
@@ -79,14 +80,17 @@ async function expectRootMounts(page, slug, root) {
 	).toBeAttached({ timeout: 15000 });
 }
 
+/** CPT submenu link (the fair_event post list) lives under the top-level menu. */
+const CPT_LINK =
+	'#toplevel_page_fair-events-calendar a[href*="post_type=fair_event"]';
+/** Migration page link — a CPT-only affordance. */
+const MIGRATION_LINK =
+	'#toplevel_page_fair-events-calendar a[href*="page=fair-events-migration"]';
+
 test.describe('Fair Events admin menu — CPT registered (regression)', () => {
 	test.beforeAll(() => {
-		// Default state: CPT registered. Clear any leftover toggle.
-		try {
-			wpCli('option delete fair_e2e_unregister_fair_event');
-		} catch {
-			// Not set — fine.
-		}
+		// Default state: Events post type on.
+		wpCli('option update fair_events_register_post_type 1');
 	});
 
 	test('one top-level Fair Events menu, Calendar first and Settings last', async ({
@@ -112,6 +116,22 @@ test.describe('Fair Events admin menu — CPT registered (regression)', () => {
 		expect(labels[labels.length - 1]).toBe('Settings');
 	});
 
+	test('CPT-only menu items are present when the Events post type is on', async ({
+		page,
+	}) => {
+		await login(page);
+		await page.goto('/wp-admin/admin.php?page=fair-events-calendar');
+
+		await expect(
+			page.locator(CPT_LINK),
+			'Events post type submenu link should be visible with the CPT on'
+		).toHaveCount(1);
+		await expect(
+			page.locator(MIGRATION_LINK).first(),
+			'Migrate Posts link should be visible with the CPT on'
+		).toBeVisible();
+	});
+
 	test('every page mounts its React root', async ({ page }) => {
 		await login(page);
 		for (const { slug, root } of PAGES) {
@@ -120,27 +140,24 @@ test.describe('Fair Events admin menu — CPT registered (regression)', () => {
 	});
 });
 
-test.describe('Fair Events admin menu — CPT unregistered', () => {
+test.describe('Fair Events admin menu — Events post type off', () => {
 	test.beforeAll(() => {
-		wpCli('option update fair_e2e_unregister_fair_event 1');
+		wpCli('option update fair_events_register_post_type 0');
 	});
 
 	test.afterAll(() => {
-		try {
-			wpCli('option delete fair_e2e_unregister_fair_event');
-		} catch {
-			// Already gone — fine.
-		}
+		// Restore the default so other suites see the CPT registered.
+		wpCli('option update fair_events_register_post_type 1');
 	});
 
-	test('top-level menu and every page still mount without the CPT', async ({
+	test('top-level menu and every non-CPT page still mount', async ({
 		page,
 	}) => {
 		await login(page);
 
 		await expect(
 			page.locator('#toplevel_page_fair-events-calendar'),
-			'top-level menu disappeared when the CPT was unregistered'
+			'top-level menu disappeared when the CPT was turned off'
 		).toHaveCount(1);
 
 		for (const { slug, root, cptOnly } of PAGES) {
@@ -149,5 +166,21 @@ test.describe('Fair Events admin menu — CPT unregistered', () => {
 			}
 			await expectRootMounts(page, slug, root);
 		}
+	});
+
+	test('CPT-only menu items are hidden when the Events post type is off', async ({
+		page,
+	}) => {
+		await login(page);
+		await page.goto('/wp-admin/admin.php?page=fair-events-calendar');
+
+		await expect(
+			page.locator(CPT_LINK),
+			'Events post type submenu link should be gone with the CPT off'
+		).toHaveCount(0);
+		await expect(
+			page.locator(MIGRATION_LINK),
+			'Migration links should be gone with the CPT off'
+		).toHaveCount(0);
 	});
 });
