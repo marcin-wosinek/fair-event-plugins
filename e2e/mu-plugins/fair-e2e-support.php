@@ -78,22 +78,3 @@ add_filter(
 	10,
 	2
 );
-
-/*
- * 4. Optionally unregister the fair_event CPT.
- *
- * Stand-in for the `fair_events_register_post_type` setting that arrives in #655,
- * so the admin menu's "CPT off" path can be exercised today. Runs on `init` at a
- * late priority (after FairEvents\Core\Plugin registers the CPT) so the admin
- * menu, built later on `admin_menu`, sees `post_type_exists( 'fair_event' )`
- * as false. Toggle with: `wp option update fair_e2e_unregister_fair_event 1`.
- */
-add_action(
-	'init',
-	static function () {
-		if ( get_option( 'fair_e2e_unregister_fair_event' ) && post_type_exists( 'fair_event' ) ) {
-			unregister_post_type( 'fair_event' );
-		}
-	},
-	99
-);

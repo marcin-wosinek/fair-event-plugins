@@ -28,6 +28,24 @@ class Event {
 	 * @return void
 	 */
 	public static function register() {
+		// Skip the post type itself when the switch is off, but still register
+		// meta / meta box / admin columns below for the other enabled post types.
+		if ( Settings::should_register_post_type() ) {
+			self::register_post_type();
+		}
+
+		self::register_meta();
+		self::register_meta_box();
+		self::register_clone_support();
+		self::register_admin_columns();
+	}
+
+	/**
+	 * Register the fair_event post type with WordPress.
+	 *
+	 * @return void
+	 */
+	private static function register_post_type() {
 		$labels = array(
 			'name'                  => _x( 'Events', 'Post type general name', 'fair-events' ),
 			'singular_name'         => _x( 'Event', 'Post type singular name', 'fair-events' ),
@@ -81,11 +99,6 @@ class Event {
 		);
 
 		register_post_type( self::POST_TYPE, $args );
-
-		self::register_meta();
-		self::register_meta_box();
-		self::register_clone_support();
-		self::register_admin_columns();
 	}
 
 	/**

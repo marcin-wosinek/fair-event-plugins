@@ -7,6 +7,7 @@ import {
 	Button,
 	TextControl,
 	CheckboxControl,
+	ToggleControl,
 	PanelBody,
 	ExternalLink,
 	Card,
@@ -31,7 +32,8 @@ import CopyUrlButton from '../components/CopyUrlButton.js';
  */
 export default function GeneralTab({ onNotice }) {
 	const [slug, setSlug] = useState('');
-	const [enabledPostTypes, setEnabledPostTypes] = useState(['fair_event']);
+	const [enabledPostTypes, setEnabledPostTypes] = useState([]);
+	const [registerPostType, setRegisterPostType] = useState(true);
 	const [availablePostTypes, setAvailablePostTypes] = useState([]);
 	const [isLoading, setIsLoading] = useState(true);
 	const [isSaving, setIsSaving] = useState(false);
@@ -42,6 +44,7 @@ export default function GeneralTab({ onNotice }) {
 			.then(([settings, postTypes]) => {
 				setSlug(settings.slug);
 				setEnabledPostTypes(settings.enabledPostTypes);
+				setRegisterPostType(settings.registerPostType);
 
 				// Filter to get content post types that make sense for events.
 				// Exclude system types that shouldn't have event data.
@@ -85,11 +88,28 @@ export default function GeneralTab({ onNotice }) {
 
 	// Save settings.
 	const handleSave = () => {
+		const otherPostTypes = enabledPostTypes.filter(
+			(t) => t !== 'fair_event'
+		);
+
+		// With the Events post type off, at least one other type must be chosen.
+		if (!registerPostType && otherPostTypes.length === 0) {
+			onNotice({
+				status: 'error',
+				message: __(
+					'Select at least one post type, or enable the Events post type.',
+					'fair-events'
+				),
+			});
+			return;
+		}
+
 		setIsSaving(true);
 
 		saveSettings({
 			fair_events_slug: slug,
-			fair_events_enabled_post_types: enabledPostTypes,
+			fair_events_register_post_type: registerPostType,
+			fair_events_enabled_post_types: otherPostTypes,
 		})
 			.then(() => {
 				return loadGeneralSettings();
@@ -97,6 +117,7 @@ export default function GeneralTab({ onNotice }) {
 			.then((settings) => {
 				setSlug(settings.slug);
 				setEnabledPostTypes(settings.enabledPostTypes);
+				setRegisterPostType(settings.registerPostType);
 				onNotice({
 					status: 'success',
 					message: __('Settings saved successfully.', 'fair-events'),
@@ -148,19 +169,23 @@ export default function GeneralTab({ onNotice }) {
 					>
 						<p className="description">
 							{__(
-								'Select which post types can have event data (dates, location). The Events post type is always enabled.',
+								'Select which post types can have event data (dates, location).',
 								'fair-events'
 							)}
 						</p>
 
-						<CheckboxControl
-							label={__('Events', 'fair-events')}
-							checked={true}
-							disabled={true}
-							help={__(
-								'The Events post type is always enabled.',
+						<ToggleControl
+							label={__(
+								'Use the Events post type',
 								'fair-events'
 							)}
+							checked={registerPostType}
+							onChange={(value) => setRegisterPostType(value)}
+							help={__(
+								'Register the dedicated Events post type. Turn off to attach events only to the post types selected below.',
+								'fair-events'
+							)}
+							disabled={isSaving}
 						/>
 
 						{availablePostTypes.map((postType) => (

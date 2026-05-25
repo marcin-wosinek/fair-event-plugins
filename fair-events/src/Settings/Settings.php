@@ -23,6 +23,9 @@ class Settings {
 		add_action( 'add_option_fair_events_slug', array( $this, 'flush_rewrite_rules_on_slug_change' ), 10, 2 );
 		add_action( 'update_option_fair_events_slug', array( $this, 'flush_rewrite_rules_on_slug_change' ), 10, 2 );
 		add_action( 'delete_option_fair_events_slug', array( $this, 'flush_rewrite_rules_on_slug_change' ) );
+		// Toggling CPT registration changes which rewrite rules exist.
+		add_action( 'add_option_fair_events_register_post_type', array( $this, 'flush_rewrite_rules_on_slug_change' ) );
+		add_action( 'update_option_fair_events_register_post_type', array( $this, 'flush_rewrite_rules_on_slug_change' ) );
 		add_filter( 'rest_pre_update_setting', array( $this, 'handle_empty_slug_via_rest' ), 10, 3 );
 	}
 
@@ -59,9 +62,33 @@ class Settings {
 						'items' => array( 'type' => 'string' ),
 					),
 				),
-				'default'           => array( 'fair_event' ),
+				'default'           => array(),
 			)
 		);
+
+		// Register the Events post type toggle. This single switch controls both
+		// whether the fair_event CPT is registered and its membership in the
+		// enabled post types, so the two can never contradict each other.
+		register_setting(
+			'fair_events_settings',
+			'fair_events_register_post_type',
+			array(
+				'type'              => 'boolean',
+				'description'       => __( 'Register the Events post type', 'fair-events' ),
+				'sanitize_callback' => 'rest_sanitize_boolean',
+				'show_in_rest'      => true,
+				'default'           => true,
+			)
+		);
+	}
+
+	/**
+	 * Whether the fair_event custom post type should be registered.
+	 *
+	 * @return bool True when the Events post type is enabled.
+	 */
+	public static function should_register_post_type() {
+		return (bool) get_option( 'fair_events_register_post_type', true );
 	}
 
 	/**
@@ -70,7 +97,23 @@ class Settings {
 	 * @return array Array of post type slugs.
 	 */
 	public static function get_enabled_post_types() {
-		return get_option( 'fair_events_enabled_post_types', array( 'fair_event' ) );
+		$types = get_option( 'fair_events_enabled_post_types', array() );
+		if ( ! is_array( $types ) ) {
+			$types = array();
+		}
+
+		// fair_event membership is owned by the registration switch, never the
+		// stored list, so resolve it here regardless of how the options were saved.
+		$types = array_values( array_diff( $types, array( 'fair_event' ) ) );
+
+		if ( self::should_register_post_type() ) {
+			array_unshift( $types, 'fair_event' );
+		} elseif ( empty( $types ) ) {
+			// Guarantee at least one type so queries/blocks keep working with the CPT off.
+			$types = array( 'page' );
+		}
+
+		return array_values( array_unique( $types ) );
 	}
 
 	/**
@@ -81,16 +124,15 @@ class Settings {
 	 */
 	public function sanitize_enabled_post_types( $value ) {
 		if ( ! is_array( $value ) ) {
-			return array( 'fair_event' );
+			$value = array();
 		}
 
-		// Sanitize each post type slug
-		$sanitized = array_map( 'sanitize_key', $value );
+		// Sanitize each post type slug, dropping empties.
+		$sanitized = array_filter( array_map( 'sanitize_key', $value ) );
 
-		// Ensure fair_event is always included
-		if ( ! in_array( 'fair_event', $sanitized, true ) ) {
-			array_unshift( $sanitized, 'fair_event' );
-		}
+		// fair_event is never stored here; its membership is driven by the
+		// registration switch and resolved in get_enabled_post_types().
+		$sanitized = array_diff( $sanitized, array( 'fair_event' ) );
 
 		return array_values( array_unique( $sanitized ) );
 	}
