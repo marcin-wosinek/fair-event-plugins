@@ -521,30 +521,30 @@ $next_url = add_query_arg( 'schedule_week', sprintf( '%04d-W%02d', $next['year']
 						<?php if ( $event_data['is_ical'] ) : ?>
 							<?php
 							// iCal event rendering
-							$event_title = esc_html( $event_data['title'] );
+							$event_title = $event_data['title'];
 							$event_url   = $event_data['permalink'] ?? '';
-							$event_desc  = esc_attr( $event_data['description'] ?? '' );
+							$event_desc  = $event_data['description'] ?? '';
 							?>
 							<div class="schedule-event is-ical"
 								data-event-id="<?php echo esc_attr( $event_data['id'] ); ?>"
 								style="--event-bg-color: <?php echo esc_attr( $event_data['color'] ); ?>; --event-text-color: #ffffff;">
 								<?php if ( ! empty( $event_url ) ) : ?>
 									<a href="<?php echo esc_url( $event_url ); ?>"
-										title="<?php echo $event_desc; ?>"
+										title="<?php echo esc_attr( $event_desc ); ?>"
 										target="_blank"
 										rel="noopener noreferrer">
-										<?php echo $event_title; ?>
+										<?php echo esc_html( $event_title ); ?>
 									</a>
 								<?php else : ?>
-									<span title="<?php echo $event_desc; ?>">
-										<?php echo $event_title; ?>
+									<span title="<?php echo esc_attr( $event_desc ); ?>">
+										<?php echo esc_html( $event_title ); ?>
 									</span>
 								<?php endif; ?>
 							</div>
 						<?php elseif ( ! empty( $event_data['is_standalone'] ) ) : ?>
 							<?php
 							// Standalone event rendering (external/unlinked)
-							$event_title  = esc_html( $event_data['title'] ?? '' );
+							$event_title  = $event_data['title'] ?? '';
 							$event_url    = $event_data['url'] ?? '';
 							$is_external  = 'external' === $event_data['link_type'];
 							$item_classes = array( 'schedule-event', 'is-standalone' );
@@ -561,10 +561,10 @@ $next_url = add_query_arg( 'schedule_week', sprintf( '%04d-W%02d', $next['year']
 									<a href="<?php echo esc_url( $event_url ); ?>"
 										target="_blank"
 										rel="noopener noreferrer">
-										<?php echo $event_title; ?>
+										<?php echo esc_html( $event_title ); ?>
 									</a>
 								<?php else : ?>
-									<span><?php echo $event_title; ?></span>
+									<span><?php echo esc_html( $event_title ); ?></span>
 								<?php endif; ?>
 							</div>
 						<?php else : ?>
@@ -580,7 +580,13 @@ $next_url = add_query_arg( 'schedule_week', sprintf( '%04d-W%02d', $next['year']
 							<div class="<?php echo esc_attr( implode( ' ', $item_classes ) ); ?>"
 								data-event-id="<?php echo esc_attr( $event_data['id'] ); ?>"
 								style="--event-bg-color: <?php echo esc_attr( $bg_color_value ); ?>; --event-text-color: <?php echo esc_attr( $text_color_value ); ?>;">
-								<?php echo fair_events_render_schedule_pattern( $display_pattern, $event_data['id'] ); ?>
+								<?php
+								// fair_events_render_schedule_pattern() returns already-rendered,
+								// trusted block markup from render_block() (plus injected event-time
+								// data attributes); escaping it would corrupt the HTML output.
+								// phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
+								echo fair_events_render_schedule_pattern( $display_pattern, $event_data['id'] );
+								?>
 							</div>
 						<?php endif; ?>
 					<?php endforeach; ?>

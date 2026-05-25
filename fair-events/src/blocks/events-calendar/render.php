@@ -106,9 +106,9 @@ if ( ! function_exists( 'fair_events_render_calendar_event_item' ) ) {
 
 		if ( $is_ical ) {
 			// iCal event rendering
-			$event_title = esc_html( $event_data['title'] );
+			$event_title = $event_data['title'];
 			$event_url   = $event_data['permalink'] ?? '';
-			$event_desc  = esc_attr( $event_data['description'] ?? '' );
+			$event_desc  = $event_data['description'] ?? '';
 
 			$item_classes = array( 'event-item', 'is-ical' );
 			?>
@@ -118,21 +118,21 @@ if ( ! function_exists( 'fair_events_render_calendar_event_item' ) ) {
 				<?php if ( ! empty( $event_url ) ) : ?>
 					<a href="<?php echo esc_url( $event_url ); ?>"
 						class="ical-event-title"
-						title="<?php echo $event_desc; ?>"
+						title="<?php echo esc_attr( $event_desc ); ?>"
 						target="_blank"
 						rel="noopener noreferrer">
-						<?php echo $event_title; ?>
+						<?php echo esc_html( $event_title ); ?>
 					</a>
 				<?php else : ?>
-					<span class="ical-event-title" title="<?php echo $event_desc; ?>">
-						<?php echo $event_title; ?>
+					<span class="ical-event-title" title="<?php echo esc_attr( $event_desc ); ?>">
+						<?php echo esc_html( $event_title ); ?>
 					</span>
 				<?php endif; ?>
 			</div>
 			<?php
 		} elseif ( $is_standalone ) {
 			// Standalone event rendering (external/unlinked)
-			$event_title = esc_html( $event_data['title'] ?? '' );
+			$event_title = $event_data['title'] ?? '';
 			$event_url   = $event_data['permalink'] ?? '';
 			$link_type   = $event_data['link_type'] ?? 'none';
 			$is_external = 'external' === $link_type;
@@ -152,10 +152,10 @@ if ( ! function_exists( 'fair_events_render_calendar_event_item' ) ) {
 						class="event-title"
 						target="_blank"
 						rel="noopener noreferrer">
-						<?php echo $event_title; ?>
+						<?php echo esc_html( $event_title ); ?>
 					</a>
 				<?php else : ?>
-					<span class="event-title"><?php echo $event_title; ?></span>
+					<span class="event-title"><?php echo esc_html( $event_title ); ?></span>
 				<?php endif; ?>
 			</div>
 			<?php

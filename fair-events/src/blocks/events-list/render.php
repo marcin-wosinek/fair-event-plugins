@@ -366,7 +366,7 @@ if ( ! empty( $event_source_slugs ) && is_array( $event_source_slugs ) ) {
 					$bg_color_value = 'var(--wp--preset--color--' . esc_attr( $event_color ) . ')';
 				}
 
-				$event_style = 'style="--event-bg-color: ' . esc_attr( $bg_color_value ) . '; --event-text-color: #ffffff;"';
+				$event_style = '--event-bg-color: ' . $bg_color_value . '; --event-text-color: #ffffff;';
 			} elseif ( 'standalone' === $event_type ) {
 				// Standalone event (external/unlinked)
 				$event_classes[] = 'is-standalone';
@@ -382,7 +382,7 @@ if ( ! empty( $event_source_slugs ) && is_array( $event_source_slugs ) ) {
 			}
 
 			// Open event wrapper
-			echo '<div class="' . esc_attr( implode( ' ', $event_classes ) ) . '" ' . $event_style . '>';
+			echo '<div class="' . esc_attr( implode( ' ', $event_classes ) ) . '"' . ( '' !== $event_style ? ' style="' . esc_attr( $event_style ) . '"' : '' ) . '>';
 
 			if ( 'ical' === $event_type ) {
 				// Create a temporary context for pattern rendering

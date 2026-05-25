@@ -127,7 +127,7 @@ class MediaLibraryHooks {
 			$label = $ed->title ?: $ed->start_datetime;
 			printf(
 				'<option value="%d"%s>%s</option>',
-				$ed->id,
+				absint( $ed->id ),
 				selected( $selected, (int) $ed->id, false ),
 				esc_html( $label )
 			);
