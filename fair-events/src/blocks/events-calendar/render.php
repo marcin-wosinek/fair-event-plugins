@@ -230,8 +230,8 @@ if ( ! preg_match( '/^\d{4}$/', $current_year ) || $current_year < 1900 || $curr
 
 // Calculate grid structure early (needed for query range)
 $first_day_of_month_ts = strtotime( "{$current_year}-{$current_month}-01" );
-$days_in_month         = (int) date( 't', $first_day_of_month_ts );
-$first_weekday         = (int) date( 'w', $first_day_of_month_ts ); // 0=Sunday, 6=Saturday
+$days_in_month         = (int) gmdate( 't', $first_day_of_month_ts );
+$first_weekday         = (int) gmdate( 'w', $first_day_of_month_ts ); // 0=Sunday, 6=Saturday
 
 // Adjust for Monday start (startOfWeek attribute)
 if ( 1 === $start_of_week ) {
@@ -243,9 +243,9 @@ $total_cells     = $leading_blanks + $days_in_month;
 $trailing_blanks = ( 0 === $total_cells % 7 ) ? 0 : 7 - ( $total_cells % 7 );
 
 // Calculate extended query range including adjacent month days
-$query_start          = date( 'Y-m-d 00:00:00', strtotime( "-{$leading_blanks} days", $first_day_of_month_ts ) );
+$query_start          = gmdate( 'Y-m-d 00:00:00', strtotime( "-{$leading_blanks} days", $first_day_of_month_ts ) );
 $last_day_of_month_ts = strtotime( "{$current_year}-{$current_month}-{$days_in_month}" );
-$query_end            = date( 'Y-m-d 23:59:59', strtotime( "+{$trailing_blanks} days", $last_day_of_month_ts ) );
+$query_end            = gmdate( 'Y-m-d 23:59:59', strtotime( "+{$trailing_blanks} days", $last_day_of_month_ts ) );
 
 // Keep original month boundaries for display logic
 $month_start = "{$current_year}-{$current_month}-01";
@@ -461,15 +461,15 @@ $next_month_timestamp = strtotime( '+1 month', $first_day_of_month_ts );
 
 $prev_url = add_query_arg(
 	array(
-		'calendar_month' => date( 'm', $prev_month_timestamp ),
-		'calendar_year'  => date( 'Y', $prev_month_timestamp ),
+		'calendar_month' => gmdate( 'm', $prev_month_timestamp ),
+		'calendar_year'  => gmdate( 'Y', $prev_month_timestamp ),
 	)
 );
 
 $next_url = add_query_arg(
 	array(
-		'calendar_month' => date( 'm', $next_month_timestamp ),
-		'calendar_year'  => date( 'Y', $next_month_timestamp ),
+		'calendar_month' => gmdate( 'm', $next_month_timestamp ),
+		'calendar_year'  => gmdate( 'Y', $next_month_timestamp ),
 	)
 );
 
@@ -522,8 +522,8 @@ $today = current_time( 'Y-m-d' );
 			for ( $i = 0; $i < $leading_blanks; $i++ ) :
 				$day_offset   = $leading_blanks - $i;
 				$date_ts      = strtotime( "-{$day_offset} days", $first_day_of_month_ts );
-				$current_date = date( 'Y-m-d', $date_ts );
-				$day_num      = date( 'j', $date_ts );
+				$current_date = gmdate( 'Y-m-d', $date_ts );
+				$day_num      = gmdate( 'j', $date_ts );
 				$day_events   = $events_by_date[ $current_date ] ?? array();
 				$is_past      = strtotime( $current_date ) < strtotime( $today );
 
@@ -595,8 +595,8 @@ $today = current_time( 'Y-m-d' );
 			for ( $i = 0; $i < $trailing_blanks; $i++ ) :
 				$day_offset   = $i + 1;
 				$date_ts      = strtotime( "+{$day_offset} days", $last_day_of_month_ts );
-				$current_date = date( 'Y-m-d', $date_ts );
-				$day_num      = date( 'j', $date_ts );
+				$current_date = gmdate( 'Y-m-d', $date_ts );
+				$day_num      = gmdate( 'j', $date_ts );
 				$day_events   = $events_by_date[ $current_date ] ?? array();
 				$is_past      = strtotime( $current_date ) < strtotime( $today );
 
