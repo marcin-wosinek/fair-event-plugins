@@ -147,8 +147,8 @@ When adding a new plugin, you must update these files in the monorepo root:
 
 **Quick reference** - files to update:
 1. `/package.json` - Add to workspaces, scripts (start, format:php, dist-archive, svn:tag, svn:rm)
-2. `/.github/workflows/php-ci.yml` - Add vendor cache path
-3. `/.github/workflows/deploy-acroyoga.yml` - Add to deployment plugin list (if applicable)
+2. `/.github/workflows/continuous-integration.yml` - Add vendor cache path
+3. `/.github/workflows/deploy-to-environment.yml` - Add to deployment plugin list (if applicable)
 4. `/compose.yml` - Add plugin volume mounts (wordpress and wpcli services)
 5. `/scripts/sync-wp-versions.js` - Add plugin configuration
 6. `/scripts/sync-changelog.js` - Add plugin configuration
@@ -169,19 +169,19 @@ Add plugin to:
 
 ### 2. GitHub CI Configuration
 
-**Location**: `/.github/workflows/php-ci.yml`
+**Location**: `/.github/workflows/continuous-integration.yml`
 
-Add `./fair-plugin-name/vendor` to composer cache paths (line ~27-42).
+Add `./fair-plugin-name/vendor` to the composer cache `path:` list (line ~36-41).
 
 **Example**: See `./fair-audience/vendor` entry.
 
 ### 3. Deployment Workflow (Optional)
 
-**Location**: `/.github/workflows/deploy-acroyoga.yml`
+**Location**: `/.github/workflows/deploy-to-environment.yml`
 
-Add plugin name to deployment list (line ~103) **only if** the plugin should be deployed to this environment.
+Add the plugin to the default `PLUGINS` list (line ~75) **only if** the plugin should be deployed to this environment.
 
-**Example**: See `fair-audience` in the plugin list.
+**Example**: See `fair-audience` in the `PLUGINS="fair-events fair-payment fair-audience"` list.
 
 ### 4. Docker Compose Configuration
 
@@ -318,8 +318,8 @@ Use this checklist when adding a new plugin:
 - [ ] Add dist-archive script to `/package.json`
 - [ ] Add svn:tag script to `/package.json`
 - [ ] Add to svn:rm script in `/package.json`
-- [ ] Add to `/.github/workflows/php-ci.yml` cache paths
-- [ ] Add to `/.github/workflows/deploy-acroyoga.yml` plugin list (if deploying to this environment)
+- [ ] Add to `/.github/workflows/continuous-integration.yml` cache paths
+- [ ] Add to `/.github/workflows/deploy-to-environment.yml` plugin list (if deploying to this environment)
 - [ ] Add to `/compose.yml` wordpress service volumes
 - [ ] Add to `/compose.yml` wpcli service volumes
 - [ ] Add to `/scripts/sync-wp-versions.js` plugins array
