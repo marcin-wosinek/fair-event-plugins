@@ -7,6 +7,13 @@ import {
 	setButtonLoading,
 	onDomReady,
 } from '../shared/form-utils.js';
+import {
+	collectQuestionAnswers,
+	validateQuestions,
+	hasFileUploads,
+	appendQuestionFiles,
+	setupQuestionnaire,
+} from '../shared/questionnaire.js';
 
 onDomReady(initializeFairForms);
 
@@ -21,172 +28,8 @@ function setupFormSubmission(form) {
 		submitForm(form);
 	});
 
-	// Set up file upload previews.
-	const fileInputs = form.querySelectorAll(
-		'[data-question-type="file_upload"] input[type="file"]'
-	);
-	fileInputs.forEach((input) => {
-		input.addEventListener('change', () => handleFilePreview(input));
-	});
-
-	// Evaluate conditionals on load and on any input change.
-	evaluateConditionals(form);
-	form.addEventListener('input', () => evaluateConditionals(form));
-	form.addEventListener('change', () => evaluateConditionals(form));
-}
-
-function handleFilePreview(input) {
-	const wrapper = input.closest('[data-fair-form-question]');
-	// Remove existing preview.
-	const existing = wrapper.querySelector('.fair-form-file-preview');
-	if (existing) {
-		existing.remove();
-	}
-
-	if (!input.files || input.files.length === 0) {
-		return;
-	}
-
-	const file = input.files[0];
-	if (!file.type.startsWith('image/')) {
-		return;
-	}
-
-	const preview = document.createElement('div');
-	preview.className = 'fair-form-file-preview';
-
-	const img = document.createElement('img');
-	img.alt = file.name;
-	img.src = URL.createObjectURL(file);
-	img.onload = () => URL.revokeObjectURL(img.src);
-
-	preview.appendChild(img);
-	wrapper.appendChild(preview);
-}
-
-function getQuestionValue(questionEl) {
-	const questionType = questionEl.dataset.questionType;
-
-	if (questionType === 'multiselect') {
-		const checked = questionEl.querySelectorAll(
-			'input[type="checkbox"]:checked'
-		);
-		return JSON.stringify(Array.from(checked).map((cb) => cb.value));
-	}
-
-	const input = questionEl.querySelector(
-		'input:checked, select, input, textarea'
-	);
-	return input ? input.value : '';
-}
-
-function evaluateCondition(currentValue, operator, expectedValue) {
-	switch (operator) {
-		case 'equals':
-			return currentValue === expectedValue;
-		case 'not_equals':
-			return currentValue !== expectedValue;
-		case 'contains':
-			return currentValue.includes(expectedValue);
-		case 'not_empty':
-			return currentValue.trim() !== '';
-		default:
-			return false;
-	}
-}
-
-function evaluateConditionals(form) {
-	const conditionals = form.querySelectorAll('[data-fair-form-conditional]');
-	conditionals.forEach((section) => {
-		const questionKey = section.dataset.conditionQuestionKey;
-		const operator = section.dataset.conditionOperator;
-		const expectedValue = section.dataset.conditionValue;
-
-		const questionEl = form.querySelector(
-			`[data-fair-form-question][data-question-key="${questionKey}"]`
-		);
-		if (!questionEl) {
-			section.classList.remove('fair-form-conditional-visible');
-			return;
-		}
-
-		// If the question itself is inside a hidden conditional, hide this section too.
-		if (!isQuestionVisible(questionEl)) {
-			section.classList.remove('fair-form-conditional-visible');
-			return;
-		}
-
-		const currentValue = getQuestionValue(questionEl);
-		const visible = evaluateCondition(
-			currentValue,
-			operator,
-			expectedValue
-		);
-		section.classList.toggle('fair-form-conditional-visible', visible);
-	});
-}
-
-function isQuestionVisible(el) {
-	const conditional = el.closest('[data-fair-form-conditional]');
-	if (!conditional) {
-		return true;
-	}
-	if (!conditional.classList.contains('fair-form-conditional-visible')) {
-		return false;
-	}
-	// Check parent conditionals (nested case).
-	return isQuestionVisible(conditional.parentElement);
-}
-
-function collectQuestionAnswers(form) {
-	const questionElements = form.querySelectorAll('[data-fair-form-question]');
-	const answers = [];
-
-	questionElements.forEach((el, index) => {
-		// Skip questions inside hidden conditional sections.
-		if (!isQuestionVisible(el)) {
-			return;
-		}
-
-		const questionType = el.dataset.questionType;
-		let answerValue = '';
-
-		if (questionType === 'file_upload') {
-			// File uploads are handled separately via FormData.
-			// Store a placeholder that will be replaced with attachment ID by the server.
-			const fileInput = el.querySelector('input[type="file"]');
-			answerValue =
-				fileInput && fileInput.files.length > 0
-					? '__file_pending__'
-					: '';
-		} else if (questionType === 'multiselect') {
-			// Collect all checked checkboxes and JSON-encode.
-			const checked = el.querySelectorAll(
-				'input[type="checkbox"]:checked'
-			);
-			const values = Array.from(checked).map((cb) => cb.value);
-			answerValue = JSON.stringify(values);
-		} else {
-			// For select, radio, text, textarea - get value from first input/select/textarea.
-			const input = el.querySelector(
-				'input:checked, select, input, textarea'
-			);
-			if (!input) {
-				return;
-			}
-			answerValue = input.value;
-		}
-
-		answers.push({
-			question_key: el.dataset.questionKey,
-			question_text: el.dataset.questionText,
-			question_type: questionType,
-			answer_value: answerValue,
-			display_order: index,
-		});
-	});
-
-	return answers;
+	// Wire up file previews and conditional logic for nested questions.
+	setupQuestionnaire(form);
 }
 
 function validateForm(form) {
@@ -207,111 +50,8 @@ function validateForm(form) {
 		return __('Please enter a valid email address.', 'fair-audience');
 	}
 
-	// Validate required questions (skip those inside hidden conditional sections).
-	const requiredQuestions = form.querySelectorAll(
-		'[data-fair-form-question][data-required="1"]'
-	);
-	for (const el of requiredQuestions) {
-		if (!isQuestionVisible(el)) {
-			continue;
-		}
-
-		const questionType = el.dataset.questionType;
-		let hasValue = false;
-
-		if (questionType === 'file_upload') {
-			const fileInput = el.querySelector('input[type="file"]');
-			hasValue = fileInput && fileInput.files.length > 0;
-		} else if (questionType === 'multiselect') {
-			hasValue =
-				el.querySelectorAll('input[type="checkbox"]:checked').length >
-				0;
-		} else if (el.querySelector('input[type="radio"]')) {
-			hasValue = !!el.querySelector('input[type="radio"]:checked');
-		} else {
-			const input = el.querySelector('input, textarea, select');
-			hasValue = input && input.value.trim() !== '';
-		}
-
-		if (!hasValue) {
-			const questionText = el.dataset.questionText || '';
-			return (
-				__('Please answer the required question: ', 'fair-audience') +
-				questionText
-			);
-		}
-	}
-
-	// Validate phone questions (E.164 format with country code).
-	const phoneQuestions = form.querySelectorAll(
-		'[data-fair-form-question][data-question-type="phone"]'
-	);
-	for (const el of phoneQuestions) {
-		if (!isQuestionVisible(el)) {
-			continue;
-		}
-		const input = el.querySelector('input[type="tel"]');
-		const value = input ? input.value.trim() : '';
-		if (!value) {
-			continue;
-		}
-		if (!/^\+[1-9]\d{6,14}$/.test(value)) {
-			const questionText = el.dataset.questionText || '';
-			return (
-				__(
-					'Please enter a valid phone number with country code (e.g. +49170...): ',
-					'fair-audience'
-				) + questionText
-			);
-		}
-	}
-
-	// Validate file upload constraints (size and type), skip hidden ones.
-	const fileUploadQuestions = form.querySelectorAll(
-		'[data-fair-form-question][data-question-type="file_upload"]'
-	);
-	for (const el of fileUploadQuestions) {
-		if (!isQuestionVisible(el)) {
-			continue;
-		}
-		const fileInput = el.querySelector('input[type="file"]');
-		if (!fileInput || fileInput.files.length === 0) {
-			continue;
-		}
-
-		const file = fileInput.files[0];
-		const maxSizeMB = parseInt(el.dataset.maxFileSize, 10) || 5;
-		const maxSizeBytes = maxSizeMB * 1024 * 1024;
-
-		if (file.size > maxSizeBytes) {
-			const questionText = el.dataset.questionText || '';
-			return (
-				questionText +
-				': ' +
-				__('File is too large. Maximum size is ', 'fair-audience') +
-				maxSizeMB +
-				' MB.'
-			);
-		}
-	}
-
-	return null;
-}
-
-function hasFileUploads(form) {
-	const fileQuestions = form.querySelectorAll(
-		'[data-fair-form-question][data-question-type="file_upload"]'
-	);
-	for (const el of fileQuestions) {
-		if (!isQuestionVisible(el)) {
-			continue;
-		}
-		const fileInput = el.querySelector('input[type="file"]');
-		if (fileInput && fileInput.files.length > 0) {
-			return true;
-		}
-	}
-	return false;
+	// Validate the nested question blocks (required/phone/file constraints).
+	return validateQuestions(form);
 }
 
 function submitForm(form) {
@@ -388,22 +128,8 @@ function submitForm(form) {
 			formData.append('notification_email', notificationEmail);
 		}
 
-		// Append file inputs (skip hidden ones).
-		const fileQuestions = form.querySelectorAll(
-			'[data-fair-form-question][data-question-type="file_upload"]'
-		);
-		fileQuestions.forEach((el) => {
-			if (!isQuestionVisible(el)) {
-				return;
-			}
-			const fileInput = el.querySelector('input[type="file"]');
-			if (fileInput && fileInput.files.length > 0) {
-				formData.append(
-					'fair_form_file_' + el.dataset.questionKey,
-					fileInput.files[0]
-				);
-			}
-		});
+		// Append selected files (skip hidden questions).
+		appendQuestionFiles(form, formData);
 
 		fetchOptions = {
 			path: '/fair-audience/v1/fair-form-submit',

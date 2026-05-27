@@ -9,6 +9,13 @@ import {
 	onDomReady,
 	wireNotYouButton,
 } from '../shared/form-utils.js';
+import {
+	collectQuestionAnswers,
+	validateQuestions,
+	hasFileUploads,
+	appendQuestionFiles,
+	setupQuestionnaire,
+} from '../shared/questionnaire.js';
 
 /**
  * Frontend JavaScript for Fair Audience Event Signup
@@ -412,6 +419,7 @@ const CSS_PREFIX = 'fair-audience-signup';
 			'.fair-audience-signup-register'
 		);
 		if (registerForm) {
+			setupQuestionnaire(registerForm);
 			registerForm.addEventListener('submit', function (e) {
 				e.preventDefault();
 				submitRegistration(block, registerForm);
@@ -437,6 +445,13 @@ const CSS_PREFIX = 'fair-audience-signup';
 	function initializeAuthenticatedBlock(block) {
 		initializeOptionTotals(block);
 
+		const signupAction = block.querySelector(
+			'.fair-audience-signup-action-signup'
+		);
+		if (signupAction) {
+			setupQuestionnaire(signupAction);
+		}
+
 		const signupButton = block.querySelector(
 			'.fair-audience-signup-button'
 		);
@@ -446,6 +461,50 @@ const CSS_PREFIX = 'fair-audience-signup';
 				submitSignup(block, this);
 			});
 		}
+	}
+
+	/**
+	 * Build apiFetch options for a signup request, attaching the custom
+	 * question answers. When the scope has pending file uploads the request is
+	 * sent as multipart FormData (matching the Fair Form convention), otherwise
+	 * as JSON.
+	 *
+	 * @param {string}      path                The REST path.
+	 * @param {Object}      requestData         Scalar/array signup fields.
+	 * @param {Array}       questionnaireAnswers Collected question answers.
+	 * @param {HTMLElement} scope               Element containing the question blocks.
+	 * @return {Object} apiFetch options.
+	 */
+	function buildSignupFetch(path, requestData, questionnaireAnswers, scope) {
+		if (!hasFileUploads(scope)) {
+			return {
+				path,
+				method: 'POST',
+				data: {
+					...requestData,
+					questionnaire_answers: questionnaireAnswers,
+				},
+			};
+		}
+
+		const formData = new FormData();
+		Object.keys(requestData).forEach(function (key) {
+			const value = requestData[key];
+			if (Array.isArray(value)) {
+				value.forEach((v) => formData.append(key + '[]', v));
+			} else if (typeof value === 'boolean') {
+				formData.append(key, value ? '1' : '0');
+			} else if (value !== null && value !== undefined) {
+				formData.append(key, value);
+			}
+		});
+		formData.append(
+			'questionnaire_answers',
+			JSON.stringify(questionnaireAnswers)
+		);
+		appendQuestionFiles(scope, formData);
+
+		return { path, method: 'POST', body: formData };
 	}
 
 	/**
@@ -500,6 +559,13 @@ const CSS_PREFIX = 'fair-audience-signup';
 			return;
 		}
 
+		// Validate custom question blocks (required/phone/file constraints).
+		const questionError = validateQuestions(form);
+		if (questionError) {
+			showMessage(messageContainer, questionError, 'error', CSS_PREFIX);
+			return;
+		}
+
 		// Build request data
 		const requestData = {
 			event_id: eventId,
@@ -536,6 +602,9 @@ const CSS_PREFIX = 'fair-audience-signup';
 			);
 		}
 
+		// Collect custom question answers.
+		const questionnaireAnswers = collectQuestionAnswers(form);
+
 		// Disable button and show loading state
 		const restoreButton = setButtonLoading(
 			submitButton,
@@ -543,11 +612,14 @@ const CSS_PREFIX = 'fair-audience-signup';
 		);
 
 		// Submit to API
-		apiFetch({
-			path: '/fair-audience/v1/event-signup/register',
-			method: 'POST',
-			data: requestData,
-		})
+		apiFetch(
+			buildSignupFetch(
+				'/fair-audience/v1/event-signup/register',
+				requestData,
+				questionnaireAnswers,
+				form
+			)
+		)
 			.then(function (response) {
 				if (response.success) {
 					// Paid signup: redirect to Mollie checkout.
@@ -788,6 +860,19 @@ const CSS_PREFIX = 'fair-audience-signup';
 			);
 		}
 
+		// Custom questions live inside the signup action container.
+		const questionScope =
+			block.querySelector('.fair-audience-signup-action-signup') || block;
+
+		// Validate custom question blocks (required/phone/file constraints).
+		const questionError = validateQuestions(questionScope);
+		if (questionError) {
+			showMessage(messageContainer, questionError, 'error', CSS_PREFIX);
+			return;
+		}
+
+		const questionnaireAnswers = collectQuestionAnswers(questionScope);
+
 		// Disable button and show loading state
 		const restoreButton = setButtonLoading(
 			button,
@@ -795,11 +880,14 @@ const CSS_PREFIX = 'fair-audience-signup';
 		);
 
 		// Submit to API
-		apiFetch({
-			path: '/fair-audience/v1/event-signup',
-			method: 'POST',
-			data: requestData,
-		})
+		apiFetch(
+			buildSignupFetch(
+				'/fair-audience/v1/event-signup',
+				requestData,
+				questionnaireAnswers,
+				questionScope
+			)
+		)
 			.then(function (response) {
 				if (response.success) {
 					// Paid signup: redirect to Mollie checkout.

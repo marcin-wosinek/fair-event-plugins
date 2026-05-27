@@ -1045,6 +1045,11 @@ $wrapper_attributes = get_block_wrapper_attributes(
 			<div class="fair-audience-signup-action-signup"<?php echo $is_signed_up ? ' style="display: none;"' : ''; ?>>
 				<?php $render_ticket_types(); ?>
 				<?php $render_ticket_options(); ?>
+				<?php if ( '' !== trim( $content ) ) : ?>
+					<div class="fair-audience-signup-questions">
+						<?php echo $content; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Inner blocks content is already escaped by WordPress. ?>
+					</div>
+				<?php endif; ?>
 				<div class="wp-block-button">
 					<button type="button" class="wp-block-button__link wp-element-button fair-audience-signup-button" data-action="signup">
 						<?php echo esc_html( $signup_button_text ); ?>
@@ -1153,6 +1158,12 @@ $wrapper_attributes = get_block_wrapper_attributes(
 						<?php echo esc_html__( 'Keep me informed about future events', 'fair-audience' ); ?>
 					</label>
 				</p>
+
+				<?php if ( '' !== trim( $content ) ) : ?>
+					<div class="fair-audience-signup-questions">
+						<?php echo $content; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Inner blocks content is already escaped by WordPress. ?>
+					</div>
+				<?php endif; ?>
 
 				<?php if ( $has_session_prefill ) : ?>
 				<button type="button" class="fair-audience-not-you">
