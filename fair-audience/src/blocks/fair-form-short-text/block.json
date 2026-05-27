@@ -9,7 +9,7 @@
 	"description": "A short text input question for Fair Form",
 	"keywords": ["question", "text", "input"],
 	"textdomain": "fair-audience",
-	"parent": ["fair-audience/fair-form"],
+	"ancestor": ["fair-audience/fair-form", "fair-audience/event-signup"],
 	"supports": {
 		"html": false
 	},

@@ -9,7 +9,7 @@
 	"description": "A long text (textarea) question for Fair Form",
 	"keywords": ["question", "textarea", "long text"],
 	"textdomain": "fair-audience",
-	"parent": ["fair-audience/fair-form"],
+	"ancestor": ["fair-audience/fair-form", "fair-audience/event-signup"],
 	"supports": {
 		"html": false
 	},

@@ -9,7 +9,7 @@
 	"description": "Show or hide a group of fields based on an answer to a previous question",
 	"keywords": ["conditional", "show", "hide", "section", "logic"],
 	"textdomain": "fair-audience",
-	"parent": ["fair-audience/fair-form"],
+	"ancestor": ["fair-audience/fair-form", "fair-audience/event-signup"],
 	"supports": {
 		"html": false
 	},
