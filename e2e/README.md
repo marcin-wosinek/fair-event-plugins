@@ -12,14 +12,19 @@ any production plugin code.
 ```
 e2e/
 ├── smoke.spec.js                         # harness sanity check
+├── support/                              # Playwright fixtures + WP-CLI plumbing (Node side)
+│   ├── fixtures.js                       # `seedEvent` fixture with per-test cleanup
+│   └── wp-cli.js                         # wpCli / runScript / resetCapturedMail / loginAsAdmin
 ├── user-flows/                           # functional specs
 │   └── ticket-purchase-confirmation.spec.js
 └── mu-plugins/                           # mounted into wp-env only (see .wp-env.json)
     ├── fair-e2e-support.php              # auto-loaded mu-plugin (mail capture + Mollie test creds + loads the double)
     ├── lib/
+    │   ├── event-factory.php             # composable event-seeding builders
     │   └── mollie-http-double.php        # fake Mollie HTTP transport
     └── scripts/                          # WP-CLI eval-file helpers (NOT auto-loaded — subdir)
-        ├── seed-paid-event.php
+        ├── seed-event.php
+        ├── cleanup-event.php
         └── signup-state.php
 ```
 
@@ -97,16 +102,51 @@ redirect path does it.
 Run against the tests instance, e.g.:
 
 ```bash
-npx wp-env run tests-cli wp eval-file wp-content/mu-plugins/scripts/seed-paid-event.php
+npx wp-env run tests-cli wp eval-file wp-content/mu-plugins/scripts/seed-event.php paid
 npx wp-env run tests-cli wp eval-file wp-content/mu-plugins/scripts/signup-state.php buyer@example.test 12
+npx wp-env run tests-cli wp eval-file wp-content/mu-plugins/scripts/cleanup-event.php 41 12
 ```
 
-Each prints a single `MARKER:{json}` line (`E2E_SEED`, `E2E_STATE`) that the
-spec parses.
+Each prints a single `MARKER:{json}` line (`E2E_SEED`, `E2E_STATE`,
+`E2E_CLEANUP`) that the spec parses.
 
-- **`seed-paid-event.php`** — creates a published `fair_event` (with the
-  event-signup block in its content), an event date, an active sale period, one
-  paid ticket type, and its price. Emits the event permalink + ids.
+- **`seed-event.php <flavour> [json-overrides]`** — creates a published
+  `fair_event` (with the event-signup block in its content), an event date, an
+  active sale period, and a ticket type in the requested **flavour**. Presets
+  compose `lib/event-factory.php`:
+  - `free` — a ticket type with no price row.
+  - `paid` — adds a `TicketPrice` (default `25.00`; override `{"price":40}`).
+  - `paid-with-options` — `paid` plus `TicketOption` rows (override
+    `{"options":["dinner","tshirt"]}`).
+  - `capacity-1` — a paid ticket type with capacity 1 (sold-out/waitlist).
+
+  Emits the event permalink + ids: `flavour`, `eventId`, `eventDateId`,
+  `salePeriodId`, `ticketTypeId`, `optionIds`, `price`.
+- **`cleanup-event.php <eventId> <eventDateId>`** — deletes a seeded event and
+  everything off it (signed-up participants + their option rows, the
+  event-participant rows, ticket types/prices/options/sale periods/dates, and
+  the post), by id. Emits `E2E_CLEANUP` row counts.
 - **`signup-state.php <email> <event_date_id>`** — reports the participant's
   `email_profile`/`status`, the event-participant `label`, and the mail captured
   for that buyer.
+
+## Playwright fixture: `seedEvent`
+
+Specs import the fixture instead of inlining WP-CLI helpers:
+
+```js
+import { test, expect } from '../support/fixtures.js';
+
+test('…', async ({ page, seedEvent }) => {
+	const event = seedEvent('paid-with-options', { options: ['dinner'] });
+	await page.goto(event.pageUrl);
+	// …
+});
+```
+
+`seedEvent(flavour, overrides)` runs `seed-event.php` and returns the parsed
+`E2E_SEED` payload. It records every event it creates and, in **per-test
+teardown**, runs `cleanup-event.php` for each and resets captured mail. So each
+call yields a fresh, isolated event — specs run in any order, any number of
+times, without colliding or accumulating rows. `support/wp-cli.js` also exports
+`loginAsAdmin(page)` for specs that need to drive wp-admin.
