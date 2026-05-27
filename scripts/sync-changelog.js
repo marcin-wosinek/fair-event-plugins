@@ -28,6 +28,11 @@ const plugins = [
 		changelogPath: 'fair-audience/CHANGELOG.md',
 		readmeFiles: ['fair-audience/readme.txt'],
 	},
+	{
+		name: 'fair-timetable',
+		changelogPath: 'fair-timetable/CHANGELOG.md',
+		readmeFiles: ['fair-timetable/readme.txt'],
+	},
 ];
 
 /**

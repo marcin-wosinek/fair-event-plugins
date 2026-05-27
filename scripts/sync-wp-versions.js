@@ -45,6 +45,12 @@ const plugins = [
 		readmeFiles: ['fair-audience/readme.txt'],
 		versionConstant: 'FAIR_AUDIENCE_VERSION',
 	},
+	{
+		name: 'fair-timetable',
+		packagePath: 'fair-timetable/package.json',
+		phpFiles: ['fair-timetable/fair-timetable.php'],
+		readmeFiles: ['fair-timetable/readme.txt'],
+	},
 ];
 
 /**
