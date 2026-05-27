@@ -14,6 +14,10 @@
 		"html": false
 	},
 	"attributes": {
+		"conditionSource": {
+			"type": "string",
+			"default": "question"
+		},
 		"conditionQuestionKey": {
 			"type": "string",
 			"default": ""
@@ -23,6 +27,10 @@
 			"default": "equals"
 		},
 		"conditionValue": {
+			"type": "string",
+			"default": ""
+		},
+		"conditionOptionShortName": {
 			"type": "string",
 			"default": ""
 		}
