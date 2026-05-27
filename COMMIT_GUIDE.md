@@ -1,5 +1,28 @@
 # Commit & PR Guide
 
+## Branch & PR workflow
+
+The default loop while working a ticket:
+
+1. **Branch.** Do the work on a topic branch off `main` — never commit ticket
+   work directly to `main`.
+2. **Open a PR when the code is ready.** Once the change satisfies the ticket
+   and the relevant builds/tests pass, push the branch and open a PR by default
+   (no need to ask first). Link the issue with `Closes #NNN` per
+   [Referencing & closing issues](#referencing--closing-issues).
+3. **Clean up after merge.** When the PR is merged, delete the source branch
+   both remotely and locally:
+
+   ```bash
+   git push origin --delete <branch>      # remote (GitHub may already do this)
+   git checkout main && git pull           # get the merge, mark the branch [gone]
+   git branch -d <branch>                  # local
+   ```
+
+   To sweep every branch the remote has already deleted, run the
+   `/clean_gone` command, which prunes all local branches marked `[gone]`
+   (and their worktrees).
+
 ## Attribution
 
 - **Do not** add a `Co-Authored-By: Claude …` trailer to commits.
