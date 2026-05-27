@@ -9,7 +9,7 @@
 	"description": "A file upload question for Fair Form",
 	"keywords": ["question", "file", "upload", "image"],
 	"textdomain": "fair-audience",
-	"parent": ["fair-audience/fair-form"],
+	"ancestor": ["fair-audience/fair-form", "fair-audience/event-signup"],
 	"supports": {
 		"html": false
 	},

@@ -9,6 +9,8 @@ namespace FairAudience\API;
 
 use FairAudience\Database\EventParticipantRepository;
 use FairAudience\Database\ParticipantRepository;
+use FairAudience\Database\QuestionnaireSubmissionRepository;
+use FairAudience\Database\QuestionnaireAnswerRepository;
 use FairAudience\Models\EmailConsentLog;
 use FairAudience\Services\EmailService;
 use WP_REST_Controller;
@@ -417,39 +419,101 @@ class EventParticipantsController extends WP_REST_Controller {
 			OBJECT_K
 		);
 
+		// Custom question answers captured during signup (Event Signup block).
+		// Stored as questionnaire submissions keyed by participant + event date,
+		// indexed here so each signup row can carry its answers inline.
+		$participant_questionnaire = $this->get_signup_answers_by_participant( $event_date_id );
+
 		$items = array_map(
-			function ( $ep ) use ( $likes_data, $ticket_type_names, $participant_option_names, $participant_option_ids ) {
+			function ( $ep ) use ( $likes_data, $ticket_type_names, $participant_option_names, $participant_option_ids, $participant_questionnaire ) {
 				$participant = $this->participant_repo->get_by_id( $ep->participant_id );
 				return array(
-					'id'                   => $ep->id,
-					'participant_id'       => $ep->participant_id,
-					'event_date_id'        => $ep->event_date_id,
-					'participant_name'     => $participant ? $participant->name . ' ' . $participant->surname : '',
-					'name'                 => $participant ? $participant->name : '',
-					'surname'              => $participant ? $participant->surname : '',
-					'participant_email'    => $participant ? $participant->email : '',
-					'email_profile'        => $participant ? $participant->email_profile : '',
-					'instagram'            => $participant ? $participant->instagram : '',
-					'label'                => $ep->label,
-					'ticket_type_id'       => $ep->ticket_type_id ? (int) $ep->ticket_type_id : null,
-					'ticket_type_name'     => $ep->ticket_type_id && isset( $ticket_type_names[ $ep->ticket_type_id ] )
+					'id'                    => $ep->id,
+					'participant_id'        => $ep->participant_id,
+					'event_date_id'         => $ep->event_date_id,
+					'participant_name'      => $participant ? $participant->name . ' ' . $participant->surname : '',
+					'name'                  => $participant ? $participant->name : '',
+					'surname'               => $participant ? $participant->surname : '',
+					'participant_email'     => $participant ? $participant->email : '',
+					'email_profile'         => $participant ? $participant->email_profile : '',
+					'instagram'             => $participant ? $participant->instagram : '',
+					'label'                 => $ep->label,
+					'ticket_type_id'        => $ep->ticket_type_id ? (int) $ep->ticket_type_id : null,
+					'ticket_type_name'      => $ep->ticket_type_id && isset( $ticket_type_names[ $ep->ticket_type_id ] )
 						? $ticket_type_names[ $ep->ticket_type_id ]
 						: null,
-					'attended_at'          => $ep->attended_at,
-					'created_at'           => $ep->created_at,
-					'payment_expires_at'   => $ep->payment_expires_at,
-					'photo_likes_received' => isset( $likes_data[ $ep->participant_id ] )
+					'attended_at'           => $ep->attended_at,
+					'created_at'            => $ep->created_at,
+					'payment_expires_at'    => $ep->payment_expires_at,
+					'photo_likes_received'  => isset( $likes_data[ $ep->participant_id ] )
 						? (int) $likes_data[ $ep->participant_id ]->likes_count
 						: 0,
-					'ticket_option_names'  => $participant_option_names[ $ep->id ] ?? array(),
-					'ticket_option_ids'    => $participant_option_ids[ $ep->id ] ?? array(),
-					'admin_comment'        => isset( $ep->admin_comment ) && null !== $ep->admin_comment ? $ep->admin_comment : '',
+					'ticket_option_names'   => $participant_option_names[ $ep->id ] ?? array(),
+					'ticket_option_ids'     => $participant_option_ids[ $ep->id ] ?? array(),
+					'admin_comment'         => isset( $ep->admin_comment ) && null !== $ep->admin_comment ? $ep->admin_comment : '',
+					'questionnaire_answers' => $participant_questionnaire[ $ep->participant_id ] ?? array(),
 				);
 			},
 			$event_participants
 		);
 
 		return rest_ensure_response( $items );
+	}
+
+	/**
+	 * Build a map of participant ID → custom question answers for the signups
+	 * on an event date. Answers come from "Event Signup" questionnaire
+	 * submissions (created by the Event Signup block). File-upload answers gain
+	 * a resolved URL, mirroring QuestionnaireResponsesController.
+	 *
+	 * @param int $event_date_id Event date ID.
+	 * @return array Map of participant_id => array of answer arrays.
+	 */
+	private function get_signup_answers_by_participant( $event_date_id ) {
+		$submission_repo = new QuestionnaireSubmissionRepository();
+		$answer_repo     = new QuestionnaireAnswerRepository();
+
+		$submissions = $submission_repo->get_by_filters(
+			array(
+				'event_date_id' => $event_date_id,
+				'title'         => __( 'Event Signup', 'fair-audience' ),
+			)
+		);
+
+		$by_participant = array();
+		foreach ( $submissions as $submission ) {
+			// One signup submission per participant; get_by_filters orders by
+			// created_at DESC, so the first seen is the newest — keep that.
+			if ( isset( $by_participant[ $submission->participant_id ] ) ) {
+				continue;
+			}
+
+			$answers_data = array();
+			foreach ( $answer_repo->get_by_submission( $submission->id ) as $answer ) {
+				$answer_item = array(
+					'question_key'  => $answer->question_key,
+					'question_text' => $answer->question_text,
+					'question_type' => $answer->question_type,
+					'answer_value'  => $answer->answer_value,
+				);
+
+				if ( 'file_upload' === $answer->question_type && is_numeric( $answer->answer_value ) ) {
+					$attachment_id  = (int) $answer->answer_value;
+					$attachment_url = wp_get_attachment_url( $attachment_id );
+					if ( $attachment_url ) {
+						$answer_item['file_url'] = $attachment_url;
+						$mime                    = get_post_mime_type( $attachment_id );
+						$answer_item['is_image'] = $mime && 0 === strpos( $mime, 'image/' );
+					}
+				}
+
+				$answers_data[] = $answer_item;
+			}
+
+			$by_participant[ $submission->participant_id ] = $answers_data;
+		}
+
+		return $by_participant;
 	}
 
 	/**

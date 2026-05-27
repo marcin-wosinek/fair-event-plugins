@@ -4,11 +4,79 @@
 
 .fair-audience-event-signup {
 	margin: 2rem 0;
+	border: 1px solid #ddd;
+	border-radius: 4px;
+	padding: 16px;
 }
 
-/* Prevent interaction with SSR form in editor */
-.fair-audience-event-signup input,
-.fair-audience-event-signup button,
-.fair-audience-event-signup .wp-block-button__link {
+.fair-audience-event-signup-editor-header {
+	margin-bottom: 12px;
+	padding-bottom: 8px;
+	border-bottom: 1px solid #eee;
+}
+
+.fair-audience-event-signup-editor-label {
+	font-weight: 600;
+	font-size: 14px;
+	color: #1e1e1e;
+}
+
+.fair-audience-event-signup-editor-fields {
+	margin-bottom: 12px;
+	padding: 12px;
+	background: #f9f9f9;
+	border-radius: 4px;
+}
+
+.fair-audience-event-signup-editor-field {
+	margin-bottom: 8px;
+}
+
+.fair-audience-event-signup-editor-field:last-child {
+	margin-bottom: 0;
+}
+
+.fair-audience-event-signup-editor-field label {
+	display: block;
+	font-size: 13px;
+	margin-bottom: 4px;
+}
+
+.fair-audience-event-signup-editor-field input {
+	width: 100%;
+	padding: 4px 8px;
+	border: 1px solid #ddd;
+	border-radius: 2px;
+	background: #fff;
+	pointer-events: none;
+}
+
+.fair-audience-event-signup-editor-note {
+	margin: 0 0 12px;
+	font-size: 12px;
+	font-style: italic;
+	color: #757575;
+}
+
+.fair-audience-event-signup-editor-questions-label {
+	font-weight: 600;
+	font-size: 13px;
+	color: #1e1e1e;
+	margin-bottom: 4px;
+}
+
+.fair-audience-event-signup-questions {
+	min-height: 40px;
+	margin: 4px 0 16px;
+	padding: 8px;
+	border: 1px dashed #ccc;
+	border-radius: 4px;
+}
+
+.fair-audience-event-signup-editor-footer {
+	margin-top: 12px;
+}
+
+.fair-audience-event-signup-editor-footer .wp-block-button__link {
 	pointer-events: none;
 }

@@ -9,7 +9,7 @@
 	"description": "A single-choice radio button question for Fair Form",
 	"keywords": ["question", "radio", "choice", "button"],
 	"textdomain": "fair-audience",
-	"parent": ["fair-audience/fair-form"],
+	"ancestor": ["fair-audience/fair-form", "fair-audience/event-signup"],
 	"supports": {
 		"html": false
 	},

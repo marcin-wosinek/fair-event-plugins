@@ -2,7 +2,12 @@ import './style.css';
 import './editor.css';
 
 import { registerBlockType } from '@wordpress/blocks';
-import { useBlockProps, InspectorControls } from '@wordpress/block-editor';
+import {
+	useBlockProps,
+	useInnerBlocksProps,
+	InspectorControls,
+	InnerBlocks,
+} from '@wordpress/block-editor';
 import {
 	PanelBody,
 	TextControl,
@@ -10,7 +15,25 @@ import {
 	ToggleControl,
 } from '@wordpress/components';
 import { __ } from '@wordpress/i18n';
-import ServerSideRender from '@wordpress/server-side-render';
+
+// Custom question blocks that can be nested inside the signup form. Mirrors the
+// Fair Form block's set (see fair-form/editor.js) so organizers collect the same
+// extra information during event registration. `fair-form-option` is omitted
+// because it is a child of the select/radio/multiselect blocks, not a top-level
+// question.
+const ALLOWED_BLOCKS = [
+	'core/heading',
+	'core/paragraph',
+	'core/list',
+	'fair-audience/fair-form-short-text',
+	'fair-audience/fair-form-long-text',
+	'fair-audience/fair-form-phone',
+	'fair-audience/fair-form-select-one',
+	'fair-audience/fair-form-radio',
+	'fair-audience/fair-form-multiselect',
+	'fair-audience/fair-form-file-upload',
+	'fair-audience/fair-form-conditional',
+];
 
 registerBlockType('fair-audience/event-signup', {
 	edit: ({ attributes, setAttributes }) => {
@@ -27,6 +50,14 @@ registerBlockType('fair-audience/event-signup', {
 		const blockProps = useBlockProps({
 			className: 'fair-audience-event-signup',
 		});
+
+		const innerBlocksProps = useInnerBlocksProps(
+			{ className: 'fair-audience-event-signup-questions' },
+			{
+				allowedBlocks: ALLOWED_BLOCKS,
+				renderAppender: InnerBlocks.ButtonBlockAppender,
+			}
+		);
 
 		return (
 			<>
@@ -139,15 +170,61 @@ registerBlockType('fair-audience/event-signup', {
 				</InspectorControls>
 
 				<div {...blockProps}>
-					<ServerSideRender
-						block="fair-audience/event-signup"
-						attributes={attributes}
-					/>
+					<div className="fair-audience-event-signup-editor-header">
+						<span className="fair-audience-event-signup-editor-label">
+							{__('Event Signup', 'fair-audience')}
+						</span>
+					</div>
+					<div className="fair-audience-event-signup-editor-fields">
+						<div className="fair-audience-event-signup-editor-field">
+							<label>{__('First Name', 'fair-audience')} *</label>
+							<input type="text" disabled />
+						</div>
+						<div className="fair-audience-event-signup-editor-field">
+							<label>{__('Surname', 'fair-audience')}</label>
+							<input type="text" disabled />
+						</div>
+						<div className="fair-audience-event-signup-editor-field">
+							<label>{__('Email', 'fair-audience')} *</label>
+							<input type="email" disabled />
+						</div>
+					</div>
+					<p className="fair-audience-event-signup-editor-note">
+						{__(
+							'Ticket types, activity options and pricing are rendered on the published page based on the event.',
+							'fair-audience'
+						)}
+					</p>
+					<div className="fair-audience-event-signup-editor-questions-label">
+						{__('Custom questions', 'fair-audience')}
+					</div>
+					<div {...innerBlocksProps} />
+					<div className="fair-audience-event-signup-editor-footer">
+						<div className="wp-block-button">
+							<button
+								className="wp-block-button__link wp-element-button"
+								disabled
+							>
+								{registerButtonText ||
+									__('Register & Sign Up', 'fair-audience')}
+							</button>
+						</div>
+					</div>
 				</div>
 			</>
 		);
 	},
 	save: () => {
-		return null; // Dynamic block, rendered via PHP
+		// Dynamic block (rendered via render.php), but the nested question
+		// blocks must be serialized so render.php receives them as $content.
+		return <InnerBlocks.Content />;
 	},
+	deprecated: [
+		{
+			// Previously a pure dynamic block with no saved markup. Existing
+			// instances have no inner blocks, so migrating them to the
+			// InnerBlocks.Content save is a no-op that avoids block recovery.
+			save: () => null,
+		},
+	],
 });

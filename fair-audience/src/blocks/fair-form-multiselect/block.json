@@ -9,7 +9,7 @@
 	"description": "A multiple-choice checkbox question for Fair Form",
 	"keywords": ["question", "checkbox", "multiselect", "multiple"],
 	"textdomain": "fair-audience",
-	"parent": ["fair-audience/fair-form"],
+	"ancestor": ["fair-audience/fair-form", "fair-audience/event-signup"],
 	"supports": {
 		"html": false
 	},

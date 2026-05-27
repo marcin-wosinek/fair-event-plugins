@@ -26,12 +26,74 @@ const DEFAULT_VIEW = {
 	},
 	search: '',
 	filters: [],
-	fields: ['name', 'role', 'photo_likes'],
+	fields: ['name', 'role', 'photo_likes', 'questions'],
 };
 
 const DEFAULT_LAYOUTS = {
 	table: {},
 };
+
+/**
+ * Format a single questionnaire answer value for display.
+ *
+ * @param {Object} answer The answer record.
+ * @return {string} Human-readable value.
+ */
+function formatAnswerValue(answer) {
+	if (answer.question_type === 'multiselect') {
+		try {
+			const values = JSON.parse(answer.answer_value);
+			if (Array.isArray(values)) {
+				return values.join(', ');
+			}
+		} catch (e) {
+			// Fall through to the raw value.
+		}
+	}
+	return answer.answer_value || '';
+}
+
+/**
+ * Render the custom question answers captured during signup as a compact list.
+ *
+ * @param {Array} answers Answer records from the REST response.
+ * @return {JSX.Element|null} The rendered list, or null when there are none.
+ */
+function renderQuestionnaireAnswers(answers) {
+	if (!answers || answers.length === 0) {
+		return null;
+	}
+
+	return (
+		<dl
+			className="fair-audience-signup-answers"
+			style={{ margin: 0, fontSize: '12px' }}
+		>
+			{answers.map((answer, index) => (
+				<div
+					key={answer.question_key || index}
+					className="fair-audience-signup-answer"
+					style={{ marginBottom: '4px' }}
+				>
+					<dt style={{ fontWeight: 600 }}>{answer.question_text}</dt>
+					<dd style={{ margin: 0 }}>
+						{answer.file_url ? (
+							<a
+								href={answer.file_url}
+								target="_blank"
+								rel="noreferrer"
+							>
+								{__('View file', 'fair-audience')}
+							</a>
+						) : (
+							formatAnswerValue(answer)
+						)}
+					</dd>
+				</div>
+			))}
+		</dl>
+	);
+}
 
 export default function EventParticipants() {
 	const [participants, setParticipants] = useState([]);
@@ -588,6 +650,15 @@ export default function EventParticipants() {
 				),
 				enableSorting: true,
 				getValue: ({ item }) => item.photo_likes_received || 0,
+			},
+			{
+				id: 'questions',
+				label: __('Questions', 'fair-audience'),
+				render: ({ item }) =>
+					renderQuestionnaireAnswers(item.questionnaire_answers),
+				enableSorting: false,
+				getValue: ({ item }) =>
+					(item.questionnaire_answers || []).length,
 			},
 		],
 		[]

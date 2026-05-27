@@ -9,7 +9,7 @@
 	"description": "A single-choice question (select or radio) for Fair Form",
 	"keywords": ["question", "select", "radio", "choice"],
 	"textdomain": "fair-audience",
-	"parent": ["fair-audience/fair-form"],
+	"ancestor": ["fair-audience/fair-form", "fair-audience/event-signup"],
 	"supports": {
 		"html": false
 	},

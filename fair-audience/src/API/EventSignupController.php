@@ -14,6 +14,7 @@ use FairAudience\Models\Participant;
 use FairAudience\Services\AudienceSession;
 use FairAudience\Services\EmailService;
 use FairAudience\Services\ParticipantToken;
+use FairAudience\Services\QuestionnaireService;
 use WP_REST_Controller;
 use WP_REST_Server;
 use WP_REST_Request;
@@ -70,6 +71,13 @@ class EventSignupController extends WP_REST_Controller {
 	private $token_repository;
 
 	/**
+	 * Questionnaire service instance.
+	 *
+	 * @var QuestionnaireService
+	 */
+	private $questionnaire_service;
+
+	/**
 	 * Rate limit: max requests per email per hour.
 	 */
 	const RATE_LIMIT_MAX = 3;
@@ -87,6 +95,7 @@ class EventSignupController extends WP_REST_Controller {
 		$this->event_participant_repository = new EventParticipantRepository();
 		$this->email_service                = new EmailService();
 		$this->token_repository             = new EmailConfirmationTokenRepository();
+		$this->questionnaire_service        = new QuestionnaireService();
 	}
 
 	/**
@@ -133,35 +142,42 @@ class EventSignupController extends WP_REST_Controller {
 					'callback'            => array( $this, 'create_signup' ),
 					'permission_callback' => array( $this, 'create_signup_permissions_check' ),
 					'args'                => array(
-						'event_id'          => array(
+						'event_id'              => array(
 							'type'              => 'integer',
 							'required'          => true,
 							'sanitize_callback' => 'absint',
 						),
-						'event_date_id'     => array(
+						'event_date_id'         => array(
 							'type'              => 'integer',
 							'required'          => false,
 							'sanitize_callback' => 'absint',
 						),
-						'ticket_type_id'    => array(
+						'ticket_type_id'        => array(
 							'type'              => 'integer',
 							'required'          => false,
 							'sanitize_callback' => 'absint',
 						),
-						'ticket_option_ids' => array(
+						'ticket_option_ids'     => array(
 							'type'  => 'array',
 							'items' => array( 'type' => 'integer' ),
 						),
-						'participant_token' => array(
+						'participant_token'     => array(
 							'type'              => 'string',
 							'required'          => false,
 							'sanitize_callback' => 'sanitize_text_field',
 						),
-						'invitation_token'  => array(
+						'invitation_token'      => array(
 							'type'              => 'string',
 							'required'          => false,
 							'default'           => '',
 							'sanitize_callback' => 'sanitize_text_field',
+						),
+						// No 'type' declared: a JSON string sent via FormData would
+						// otherwise be mangled. The QuestionnaireService parse/sanitize
+						// helpers handle both raw JSON strings and decoded arrays.
+						'questionnaire_answers' => array(
+							'required' => false,
+							'default'  => array(),
 						),
 					),
 				),
@@ -309,37 +325,37 @@ class EventSignupController extends WP_REST_Controller {
 					'callback'            => array( $this, 'register_and_signup' ),
 					'permission_callback' => '__return_true',
 					'args'                => array(
-						'event_id'          => array(
+						'event_id'              => array(
 							'type'              => 'integer',
 							'required'          => true,
 							'sanitize_callback' => 'absint',
 						),
-						'event_date_id'     => array(
+						'event_date_id'         => array(
 							'type'              => 'integer',
 							'required'          => false,
 							'sanitize_callback' => 'absint',
 						),
-						'ticket_type_id'    => array(
+						'ticket_type_id'        => array(
 							'type'              => 'integer',
 							'required'          => false,
 							'sanitize_callback' => 'absint',
 						),
-						'ticket_option_ids' => array(
+						'ticket_option_ids'     => array(
 							'type'  => 'array',
 							'items' => array( 'type' => 'integer' ),
 						),
-						'name'              => array(
+						'name'                  => array(
 							'type'              => 'string',
 							'required'          => true,
 							'sanitize_callback' => 'sanitize_text_field',
 						),
-						'surname'           => array(
+						'surname'               => array(
 							'type'              => 'string',
 							'required'          => false,
 							'default'           => '',
 							'sanitize_callback' => 'sanitize_text_field',
 						),
-						'email'             => array(
+						'email'                 => array(
 							'type'              => 'string',
 							'required'          => true,
 							'sanitize_callback' => 'sanitize_email',
@@ -347,17 +363,24 @@ class EventSignupController extends WP_REST_Controller {
 								return is_email( $value );
 							},
 						),
-						'keep_informed'     => array(
+						'keep_informed'         => array(
 							'type'              => 'boolean',
 							'required'          => false,
 							'default'           => false,
 							'sanitize_callback' => 'rest_sanitize_boolean',
 						),
-						'invitation_token'  => array(
+						'invitation_token'      => array(
 							'type'              => 'string',
 							'required'          => false,
 							'default'           => '',
 							'sanitize_callback' => 'sanitize_text_field',
+						),
+						// No 'type' declared: a JSON string sent via FormData would
+						// otherwise be mangled. The QuestionnaireService parse/sanitize
+						// helpers handle both raw JSON strings and decoded arrays.
+						'questionnaire_answers' => array(
+							'required' => false,
+							'default'  => array(),
 						),
 					),
 				),
@@ -541,6 +564,12 @@ class EventSignupController extends WP_REST_Controller {
 			);
 		}
 
+		// Parse and validate custom question answers before any mutation.
+		$questionnaire_answers = $this->prepare_questionnaire_answers( $request );
+		if ( is_wp_error( $questionnaire_answers ) ) {
+			return $questionnaire_answers;
+		}
+
 		// Validate ticket type group restrictions (and invitation tokens for invitation-only types).
 		$group_error = $this->validate_ticket_type_group_restriction( $ticket_type_id, $participant->id, $invitation_token );
 		if ( is_wp_error( $group_error ) ) {
@@ -584,6 +613,13 @@ class EventSignupController extends WP_REST_Controller {
 		$min_error = $this->validate_minimum_activities( $event_date_id, $option_items, $ticket_type_id );
 		if ( is_wp_error( $min_error ) ) {
 			return $min_error;
+		}
+
+		// Persist custom question answers up front so they survive the paid
+		// flow (the signup row may be only pending_payment at this point).
+		$save_error = $this->save_signup_questionnaire( $request, $questionnaire_answers, $participant->id, $event_date_id, $event_id );
+		if ( is_wp_error( $save_error ) ) {
+			return $save_error;
 		}
 
 		$paid_response = $this->maybe_start_paid_signup( $event_id, $event_date_id, $participant, $existing, $user_id, $ticket_type_id, $option_items, $invitation_token );
@@ -1225,6 +1261,57 @@ class EventSignupController extends WP_REST_Controller {
 	 */
 	private function save_participant_options( $event_participant_id, $option_items ) {
 		$this->event_participant_repository->add_options( $event_participant_id, $option_items );
+	}
+
+	/**
+	 * Parse and sanitize the custom question answers from a signup request.
+	 *
+	 * Validation runs before any signup mutation so bad input (e.g. malformed
+	 * phone numbers) is rejected with a 400 without creating a participant or
+	 * signup row.
+	 *
+	 * @param WP_REST_Request $request Request object.
+	 * @return array|WP_Error Sanitized answers, or WP_Error on invalid input.
+	 */
+	private function prepare_questionnaire_answers( $request ) {
+		$answers = $this->questionnaire_service->parse_answers( $request->get_param( 'questionnaire_answers' ) );
+		return $this->questionnaire_service->sanitize_answers( $answers );
+	}
+
+	/**
+	 * Process uploads for and persist the custom question answers tied to a
+	 * signup. Answers are stored as a questionnaire submission keyed by
+	 * participant + event date (title "Event Signup"), so they survive the
+	 * paid-signup flow and surface in the admin signups list and Form Answers
+	 * view. The save is idempotent per participant + event date.
+	 *
+	 * @param WP_REST_Request $request        Request object.
+	 * @param array           $answers        Sanitized answers.
+	 * @param int             $participant_id Participant ID.
+	 * @param int             $event_date_id  Event date ID.
+	 * @param int             $event_id       Event post ID.
+	 * @return void|WP_Error WP_Error on file-upload failure.
+	 */
+	private function save_signup_questionnaire( $request, $answers, $participant_id, $event_date_id, $event_id ) {
+		// Nothing to persist for signups without custom questions — avoids
+		// creating empty submissions (and any regression for plain signups).
+		if ( empty( $answers ) ) {
+			return;
+		}
+
+		$answers = $this->questionnaire_service->process_file_uploads( $request, $answers, $event_date_id, $participant_id );
+		if ( is_wp_error( $answers ) ) {
+			return $answers;
+		}
+
+		$this->questionnaire_service->save_answers(
+			$participant_id,
+			$answers,
+			$event_date_id,
+			$event_id,
+			__( 'Event Signup', 'fair-audience' ),
+			true
+		);
 	}
 
 	/**
@@ -2022,6 +2109,12 @@ class EventSignupController extends WP_REST_Controller {
 			);
 		}
 
+		// Parse and validate custom question answers before any mutation.
+		$questionnaire_answers = $this->prepare_questionnaire_answers( $request );
+		if ( is_wp_error( $questionnaire_answers ) ) {
+			return $questionnaire_answers;
+		}
+
 		// Logged-in WP users with a linked participant get to skip the email
 		// lookup entirely. Their wp_user_id is a stronger identity than the
 		// typed email — typing someone else's email shouldn't let them sign
@@ -2157,6 +2250,13 @@ class EventSignupController extends WP_REST_Controller {
 		$min_error = $this->validate_minimum_activities( $event_date_id, $option_items, $ticket_type_id );
 		if ( is_wp_error( $min_error ) ) {
 			return $min_error;
+		}
+
+		// Persist custom question answers up front so they survive the paid
+		// flow (the signup row may be only pending_payment at this point).
+		$save_error = $this->save_signup_questionnaire( $request, $questionnaire_answers, $participant->id, $event_date_id, $event_id );
+		if ( is_wp_error( $save_error ) ) {
+			return $save_error;
 		}
 
 		$paid_response = $this->maybe_start_paid_signup( $event_id, $event_date_id, $participant, $existing, $wp_user_id, $ticket_type_id, $option_items, $invitation_token );

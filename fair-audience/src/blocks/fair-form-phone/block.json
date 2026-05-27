@@ -9,7 +9,7 @@
 	"description": "A phone number input question with enforced country code for Fair Form",
 	"keywords": ["question", "phone", "tel"],
 	"textdomain": "fair-audience",
-	"parent": ["fair-audience/fair-form"],
+	"ancestor": ["fair-audience/fair-form", "fair-audience/event-signup"],
 	"supports": {
 		"html": false
 	},
