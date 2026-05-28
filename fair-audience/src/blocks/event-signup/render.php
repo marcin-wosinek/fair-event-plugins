@@ -162,9 +162,24 @@ if ( $is_valid_post_type ) {
 		$participant = $participant_repository->get_by_user_id( $user_id );
 		if ( $participant ) {
 			$state = 'linked';
-		} else {
-			$state = 'not_linked';
 		}
+		// Else: leave $state as 'anonymous' so the visitor falls through to
+		// the self-service registration form. The new participant is linked
+		// to the WP account in EventSignupController::register_and_signup,
+		// so the next page load resolves to 'linked'.
+	}
+
+	// Pre-fill the register form from the WP account when the visitor is
+	// logged in but has no participant yet. Fields remain editable. We
+	// deliberately don't set $has_session_prefill — the "Not you? Start
+	// fresh" button is for cookie-based identity, not WP auth.
+	if ( $user_id && null === $participant ) {
+		$wp_user                 = wp_get_current_user();
+		$session_prefill_name    = $wp_user->first_name
+			? (string) $wp_user->first_name
+			: (string) $wp_user->display_name;
+		$session_prefill_surname = (string) $wp_user->last_name;
+		$session_prefill_email   = (string) $wp_user->user_email;
 	}
 
 	// Check if already signed up (prefer event_date_id if available).
@@ -879,7 +894,9 @@ $wrapper_attributes = get_block_wrapper_attributes(
 );
 ?>
 
-<?php if ( ! $is_valid_post_type ) : ?>
+<?php
+if ( ! $is_valid_post_type ) :
+	?>
 <p class="fair-audience-event-signup-error">
 	<?php echo esc_html__( 'This block can only be used on event pages.', 'fair-audience' ); ?>
 </p>
@@ -1092,16 +1109,11 @@ $wrapper_attributes = get_block_wrapper_attributes(
 			<div class="fair-audience-signup-message" style="display: none;"></div>
 		</div>
 
-	<?php elseif ( 'not_linked' === $state ) : ?>
-		<!-- Logged in but no linked participant -->
-		<div class="fair-audience-signup-not-linked">
-			<p><?php echo esc_html__( 'Your WordPress account is not linked to a participant profile. Please contact the site administrator.', 'fair-audience' ); ?></p>
-		</div>
-
 	<?php else : ?>
-		<!-- Anonymous: show tabs with forms -->
+		<!-- Anonymous (or logged-in but unlinked): self-service form. -->
 		<div class="fair-audience-signup-anonymous">
 			<?php $render_occurrence_picker(); ?>
+			<?php if ( ! $user_id ) : ?>
 			<div class="fair-audience-signup-tabs">
 				<button type="button" class="fair-audience-signup-tab active" data-tab="register">
 					<?php echo esc_html__( "I'm new", 'fair-audience' ); ?>
@@ -1110,6 +1122,7 @@ $wrapper_attributes = get_block_wrapper_attributes(
 					<?php echo esc_html__( 'I have an account', 'fair-audience' ); ?>
 				</button>
 			</div>
+			<?php endif; ?>
 
 			<!-- Registration form (new participant) -->
 			<form class="fair-audience-signup-form fair-audience-signup-register" data-tab-content="register">
@@ -1181,7 +1194,10 @@ $wrapper_attributes = get_block_wrapper_attributes(
 				<div class="fair-audience-signup-message" style="display: none;"></div>
 			</form>
 
-			<!-- Request link form (existing participant) -->
+			<!-- Request link form (existing participant). Hidden for
+				logged-in users — they're already authenticated, so the
+				resume-by-email path is redundant. -->
+			<?php if ( ! $user_id ) : ?>
 			<form class="fair-audience-signup-form fair-audience-signup-request-link" data-tab-content="request-link" style="display: none;">
 				<p class="fair-audience-signup-info">
 					<?php echo esc_html__( 'Enter your email to receive a signup link.', 'fair-audience' ); ?>
@@ -1207,6 +1223,7 @@ $wrapper_attributes = get_block_wrapper_attributes(
 
 				<div class="fair-audience-signup-message" style="display: none;"></div>
 			</form>
+			<?php endif; ?>
 		</div>
 	<?php endif; ?>
 </div>
