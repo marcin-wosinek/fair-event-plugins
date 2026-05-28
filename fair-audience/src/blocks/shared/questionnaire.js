@@ -58,13 +58,64 @@ function evaluateCondition(currentValue, operator, expectedValue) {
 }
 
 /**
- * Show/hide conditional sections based on their controlling question's value.
+ * Whether an event ticket option (identified by its short name) is currently
+ * checked, across both the main options and the post-signup "add activities"
+ * fieldsets.
+ *
+ * @param {HTMLElement} form      The form (or container) element.
+ * @param {string}      shortName The option's short name.
+ * @return {boolean} Whether a matching option checkbox is checked.
+ */
+function isEventOptionSelected(form, shortName) {
+	const escaped =
+		typeof CSS !== 'undefined' && CSS.escape
+			? CSS.escape(shortName)
+			: shortName;
+	return !!form.querySelector(
+		`input[name="ticket_option_ids[]"][data-option-short-name="${escaped}"]:checked,` +
+			`input[name="add_option_ids[]"][data-option-short-name="${escaped}"]:checked`
+	);
+}
+
+/**
+ * Resolve whether a conditional section keyed on an event option should show,
+ * honoring the selected/not_selected operator and an empty short name.
+ *
+ * @param {HTMLElement} form    The form (or container) element.
+ * @param {HTMLElement} section The conditional section element.
+ * @return {boolean} Whether the section's own condition is met.
+ */
+function evaluateEventOptionCondition(form, section) {
+	const shortName = section.dataset.conditionOptionShortName;
+	if (!shortName) {
+		return false;
+	}
+	const selected = isEventOptionSelected(form, shortName);
+	return section.dataset.conditionOperator === 'not_selected'
+		? !selected
+		: selected;
+}
+
+/**
+ * Show/hide conditional sections based on their controlling question's value
+ * (the default "question" source) or whether an event option is selected (the
+ * "eventOption" source).
  *
  * @param {HTMLElement} form The form (or container) element.
  */
 export function evaluateConditionals(form) {
 	const conditionals = form.querySelectorAll('[data-fair-form-conditional]');
 	conditionals.forEach((section) => {
+		if (section.dataset.conditionSource === 'eventOption') {
+			// A section nested inside a hidden conditional stays hidden
+			// regardless of its own condition.
+			const visible =
+				isQuestionVisible(section.parentElement) &&
+				evaluateEventOptionCondition(form, section);
+			section.classList.toggle('fair-form-conditional-visible', visible);
+			return;
+		}
+
 		const questionKey = section.dataset.conditionQuestionKey;
 		const operator = section.dataset.conditionOperator;
 		const expectedValue = section.dataset.conditionValue;

@@ -457,10 +457,11 @@ if ( $pricing_event_date_id && class_exists( \FairEvents\Models\TicketOption::cl
 		}
 
 		$ticket_options_for_display[] = array(
-			'id'      => (int) $opt->id,
-			'name'    => $opt->name,
-			'price'   => $opt_price,
-			'is_full' => $is_full,
+			'id'         => (int) $opt->id,
+			'name'       => $opt->name,
+			'short_name' => $opt->short_name ?? null,
+			'price'      => $opt_price,
+			'is_full'    => $is_full,
 		);
 	}
 }
@@ -733,7 +734,7 @@ $render_ticket_options = static function () use ( $ticket_options_for_display, $
 			$classes .= ' fair-audience-ticket-option-full';
 		}
 		echo '<label class="' . esc_attr( $classes ) . '" for="' . $checkbox_id . '">';
-		echo '<input type="checkbox" name="ticket_option_ids[]" id="' . $checkbox_id . '" value="' . (int) $opt['id'] . '" data-option-price="' . esc_attr( number_format( $opt['price'], 2, '.', '' ) ) . '"';
+		echo '<input type="checkbox" name="ticket_option_ids[]" id="' . $checkbox_id . '" value="' . (int) $opt['id'] . '" data-option-price="' . esc_attr( number_format( $opt['price'], 2, '.', '' ) ) . '" data-option-short-name="' . esc_attr( $opt['short_name'] ?? '' ) . '"';
 		if ( $is_full ) {
 			echo ' disabled';
 		}
@@ -796,7 +797,7 @@ $render_add_activities = static function () use ( $addable_options, $has_addable
 			$classes .= ' fair-audience-ticket-option-full';
 		}
 		echo '<label class="' . esc_attr( $classes ) . '" for="' . $checkbox_id . '">';
-		echo '<input type="checkbox" name="add_option_ids[]" id="' . $checkbox_id . '" value="' . (int) $opt['id'] . '" data-option-price="' . esc_attr( number_format( $opt['price'], 2, '.', '' ) ) . '"';
+		echo '<input type="checkbox" name="add_option_ids[]" id="' . $checkbox_id . '" value="' . (int) $opt['id'] . '" data-option-price="' . esc_attr( number_format( $opt['price'], 2, '.', '' ) ) . '" data-option-short-name="' . esc_attr( $opt['short_name'] ?? '' ) . '"';
 		if ( $is_full ) {
 			echo ' disabled';
 		}
