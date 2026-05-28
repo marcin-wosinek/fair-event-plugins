@@ -579,7 +579,7 @@ class PaymentHooks {
 		);
 
 		$email_service = new EmailService();
-		$email_service->send_signup_payment_confirmation( $participant, $event, $transaction, $option_names );
+		$email_service->send_signup_payment_confirmation( $participant, $event, $transaction, $option_names, (int) $event_participant->event_date_id );
 	}
 
 	/**
