@@ -32,7 +32,12 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 const rootDir = resolve(__dirname, '..');
 
-const ALL_PLUGINS = ['fair-events', 'fair-payment', 'fair-audience'];
+const ALL_PLUGINS = [
+	'fair-events',
+	'fair-payment',
+	'fair-audience',
+	'fair-timetable',
+];
 const MAX_ATTEMPTS = 2;
 
 function parseArgs(argv) {
@@ -146,6 +151,7 @@ const PLUGIN_HEADER_FILES = {
 	'fair-payment': 'fair-payment/fair-payment.php',
 	'fair-platform': 'fair-platform/fair-platform.php',
 	'fair-audience': 'fair-audience/fair-audience.php',
+	'fair-timetable': 'fair-timetable/fair-timetable.php',
 };
 const VERSION_HEADER_RE = /(\*?\s*Version:\s*)([^\s\r\n*]+)/i;
 
