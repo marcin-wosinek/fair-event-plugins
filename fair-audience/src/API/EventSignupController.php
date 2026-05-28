@@ -2202,6 +2202,11 @@ class EventSignupController extends WP_REST_Controller {
 					'email'         => $email,
 					'email_profile' => $keep_informed ? 'marketing' : 'minimal',
 					'status'        => $keep_informed ? 'pending' : 'confirmed',
+					// Link to the WP account when the caller is logged in.
+					// Only set on new-participant creation — never claim an
+					// existing-email participant for the current WP user, the
+					// email_recognized branch above guards that case.
+					'wp_user_id'    => $wp_user_id ? $wp_user_id : null,
 				)
 			);
 
