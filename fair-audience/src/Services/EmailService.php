@@ -1032,6 +1032,18 @@ class EmailService {
 			$content = str_replace( '{manage_subscription_url}', esc_url( $url ), $content );
 		}
 
+		if ( false !== strpos( $content, '{event_page_url}' ) ) {
+			$post_id = 0;
+			if ( $event_date_id > 0 && class_exists( \FairEvents\Models\EventDates::class ) ) {
+				$event_date = \FairEvents\Models\EventDates::get_by_id( $event_date_id );
+				if ( $event_date && ! empty( $event_date->event_id ) ) {
+					$post_id = (int) $event_date->event_id;
+				}
+			}
+			$url     = ParticipantToken::get_url( $participant->id, $event_date_id, $post_id );
+			$content = str_replace( '{event_page_url}', esc_url( $url ), $content );
+		}
+
 		if ( false !== strpos( $content, '{unsubscribe_link}' ) ) {
 			$url     = ManageSubscriptionToken::get_url( $participant->id );
 			$content = str_replace( '{unsubscribe_link}', esc_url( $url ), $content );

@@ -156,13 +156,13 @@ export default function MailBodyEditor({ value, onChange, disabled }) {
 					isSmall
 					onClick={() =>
 						insertPlaceholderLink(
-							'{manage_subscription_url}',
-							__('Manage your preferences', 'fair-events')
+							'{event_page_url}',
+							__('Open event page', 'fair-events')
 						)
 					}
 					disabled={disabled}
 				>
-					{__('Insert subscription link', 'fair-events')}
+					{__('Insert event page link', 'fair-events')}
 				</Button>
 
 				<span
