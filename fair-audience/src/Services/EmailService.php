@@ -17,6 +17,8 @@ use FairAudience\Database\ExtraMessageRepository;
 use FairAudience\Database\FeeRepository;
 use FairAudience\Database\FeePaymentRepository;
 use FairAudience\Database\FeeAuditLogRepository;
+use FairAudience\Database\QuestionnaireSubmissionRepository;
+use FairAudience\Database\QuestionnaireAnswerRepository;
 use FairAudience\Models\Participant;
 use FairAudience\Services\EmailType;
 use FairAudience\Services\AudienceSignupToken;
@@ -763,23 +765,7 @@ class EmailService {
 			$site_name
 		);
 
-		// Build answers table rows.
-		$answers_html = '';
-		foreach ( $answers as $answer ) {
-			$question_text = esc_html( $answer['question_text'] ?? '' );
-			$answer_value  = $answer['answer_value'] ?? '';
-
-			// Checkbox values are JSON-encoded arrays — display comma-separated.
-			$decoded = json_decode( $answer_value, true );
-			if ( is_array( $decoded ) ) {
-				$answer_value = implode( ', ', $decoded );
-			}
-
-			$answers_html .= '<tr>
-				<td style="padding: 8px 12px; border-bottom: 1px solid #eeeeee; font-weight: bold; vertical-align: top; width: 40%;">' . $question_text . '</td>
-				<td style="padding: 8px 12px; border-bottom: 1px solid #eeeeee;">' . esc_html( $answer_value ) . '</td>
-			</tr>';
-		}
+		$answers_html = $this->render_answer_rows( $answers );
 
 		// Build HTML message body.
 		$message = '<!DOCTYPE html>
@@ -1866,26 +1852,7 @@ class EmailService {
 			<td style="padding: 8px 12px; border-bottom: 1px solid #eeeeee;"><a href="mailto:' . esc_attr( $submitter_email ) . '" style="color: #0073aa;">' . esc_html( $submitter_email ) . '</a></td>
 		</tr>';
 
-		// Build answers table rows.
-		$answers_html = '';
-		foreach ( $answers as $answer ) {
-			if ( 'file_upload' === ( $answer['question_type'] ?? '' ) ) {
-				continue;
-			}
-
-			$question_text = esc_html( $answer['question_text'] ?? '' );
-			$answer_value  = $answer['answer_value'] ?? '';
-
-			$decoded = json_decode( $answer_value, true );
-			if ( is_array( $decoded ) ) {
-				$answer_value = implode( ', ', $decoded );
-			}
-
-			$answers_html .= '<tr>
-				<td style="padding: 8px 12px; border-bottom: 1px solid #eeeeee; font-weight: bold; vertical-align: top; width: 40%;">' . $question_text . '</td>
-				<td style="padding: 8px 12px; border-bottom: 1px solid #eeeeee;">' . esc_html( $answer_value ) . '</td>
-			</tr>';
-		}
+		$answers_html = $this->render_answer_rows( $answers );
 
 		$context_html = '';
 		if ( ! empty( $page_title ) ) {
@@ -1966,6 +1933,66 @@ class EmailService {
 	}
 
 	/**
+	 * Render questionnaire answers as `<tr>` rows for the email tables.
+	 *
+	 * Shared by signup-answers, form-confirmation, form-notification and signup
+	 * confirmation emails so the formatting stays in one place.
+	 *
+	 * Accepts both array-shaped answers (as produced by the REST request) and
+	 * QuestionnaireAnswer model objects (as returned by the repository).
+	 * `multiselect` values arrive JSON-encoded — those are decoded to a
+	 * comma-joined list. `file_upload` values are the attachment ID; resolve
+	 * to a clickable link when possible, otherwise render the raw value.
+	 *
+	 * @param array $answers Array of answer arrays or QuestionnaireAnswer objects.
+	 * @return string `<tr>...</tr>` markup, or '' when nothing renderable.
+	 */
+	private function render_answer_rows( array $answers ): string {
+		$rows = '';
+		foreach ( $answers as $answer ) {
+			$question_text = is_object( $answer ) ? ( $answer->question_text ?? '' ) : ( $answer['question_text'] ?? '' );
+			$question_type = is_object( $answer ) ? ( $answer->question_type ?? '' ) : ( $answer['question_type'] ?? '' );
+			$answer_value  = is_object( $answer ) ? ( $answer->answer_value ?? '' ) : ( $answer['answer_value'] ?? '' );
+
+			if ( 'file_upload' === $question_type ) {
+				$value_html = '';
+				if ( is_numeric( $answer_value ) ) {
+					$attachment_id  = (int) $answer_value;
+					$attachment_url = wp_get_attachment_url( $attachment_id );
+					if ( $attachment_url ) {
+						$label      = get_the_title( $attachment_id );
+						$value_html = '<a href="' . esc_url( $attachment_url ) . '" style="color: #0073aa;">'
+							. esc_html( $label ? $label : basename( $attachment_url ) )
+							. '</a>';
+					}
+				}
+				if ( '' === $value_html ) {
+					// No resolvable attachment — skip rather than show a stray ID.
+					continue;
+				}
+
+				$rows .= '<tr>
+					<td style="padding: 8px 12px; border-bottom: 1px solid #eeeeee; font-weight: bold; vertical-align: top; width: 40%;">' . esc_html( $question_text ) . '</td>
+					<td style="padding: 8px 12px; border-bottom: 1px solid #eeeeee;">' . $value_html . '</td>
+				</tr>';
+				continue;
+			}
+
+			$decoded = json_decode( (string) $answer_value, true );
+			if ( is_array( $decoded ) ) {
+				$answer_value = implode( ', ', $decoded );
+			}
+
+			$rows .= '<tr>
+				<td style="padding: 8px 12px; border-bottom: 1px solid #eeeeee; font-weight: bold; vertical-align: top; width: 40%;">' . esc_html( $question_text ) . '</td>
+				<td style="padding: 8px 12px; border-bottom: 1px solid #eeeeee;">' . esc_html( $answer_value ) . '</td>
+			</tr>';
+		}
+
+		return $rows;
+	}
+
+	/**
 	 * Send form submission confirmation email to the submitter.
 	 *
 	 * @param Participant $participant Participant who submitted the form.
@@ -1994,26 +2021,7 @@ class EmailService {
 			$site_name
 		);
 
-		// Build answers table rows.
-		$answers_html = '';
-		foreach ( $answers as $answer ) {
-			if ( 'file_upload' === ( $answer['question_type'] ?? '' ) ) {
-				continue;
-			}
-
-			$question_text = esc_html( $answer['question_text'] ?? '' );
-			$answer_value  = $answer['answer_value'] ?? '';
-
-			$decoded = json_decode( $answer_value, true );
-			if ( is_array( $decoded ) ) {
-				$answer_value = implode( ', ', $decoded );
-			}
-
-			$answers_html .= '<tr>
-				<td style="padding: 8px 12px; border-bottom: 1px solid #eeeeee; font-weight: bold; vertical-align: top; width: 40%;">' . $question_text . '</td>
-				<td style="padding: 8px 12px; border-bottom: 1px solid #eeeeee;">' . esc_html( $answer_value ) . '</td>
-			</tr>';
-		}
+		$answers_html = $this->render_answer_rows( $answers );
 
 		$context_html = '';
 		if ( ! empty( $page_title ) ) {
@@ -2123,12 +2131,16 @@ class EmailService {
 	/**
 	 * Send signup confirmation email to the participant.
 	 *
-	 * @param Participant   $participant Participant who signed up.
-	 * @param \WP_Post|null $event       Event post object (nullable).
-	 * @param object|null   $transaction Transaction row from fair-payment (null for free signups).
+	 * @param Participant   $participant   Participant who signed up.
+	 * @param \WP_Post|null $event         Event post object (nullable).
+	 * @param object|null   $transaction   Transaction row from fair-payment (null for free signups).
+	 * @param array         $option_names  Names of the selected ticket-activity options.
+	 * @param int           $event_date_id Event date ID — used to load the signup
+	 *                                     questionnaire answers so they can be
+	 *                                     included in the email. Pass 0 to skip.
 	 * @return bool Success.
 	 */
-	public function send_signup_payment_confirmation( Participant $participant, $event, $transaction = null, $option_names = array() ): bool {
+	public function send_signup_payment_confirmation( Participant $participant, $event, $transaction = null, $option_names = array(), int $event_date_id = 0 ): bool {
 		if ( ! $this->has_valid_email( $participant ) ) {
 			return false;
 		}
@@ -2165,6 +2177,31 @@ class EmailService {
 			$options_html = '
 							<p style="margin: 0 0 8px 0; font-size: 16px; font-weight: bold;">' . esc_html__( 'Selected options:', 'fair-audience' ) . '</p>
 							<ul style="margin: 0 0 20px 20px; padding: 0;">' . $options_list . '</ul>';
+		}
+
+		// Custom signup question answers (Event Signup questionnaire submission).
+		$answers_html = '';
+		if ( $event_date_id > 0 ) {
+			$submission_repo = new QuestionnaireSubmissionRepository();
+			$submissions     = $submission_repo->get_by_filters(
+				array(
+					'participant_id' => (int) $participant->id,
+					'event_date_id'  => $event_date_id,
+					'title'          => __( 'Event Signup', 'fair-audience' ),
+				)
+			);
+
+			if ( ! empty( $submissions ) ) {
+				$answer_repo = new QuestionnaireAnswerRepository();
+				$rows_html   = $this->render_answer_rows( $answer_repo->get_by_submission( $submissions[0]->id ) );
+				if ( '' !== $rows_html ) {
+					$answers_html = '
+							<p style="margin: 0 0 8px 0; font-size: 16px; font-weight: bold;">' . esc_html__( 'Your answers:', 'fair-audience' ) . '</p>
+							<table width="100%" cellpadding="0" cellspacing="0" style="margin: 0 0 20px 0; border: 1px solid #eeeeee; border-radius: 4px;">'
+						. $rows_html
+						. '</table>';
+				}
+			}
 		}
 
 		$message = '<!DOCTYPE html>
@@ -2209,6 +2246,8 @@ class EmailService {
 							' . $payment_html . '
 
 							' . $options_html . '
+
+							' . $answers_html . '
 
 							<p style="margin: 20px 0 0 0; font-size: 14px; color: #666666;">
 								' . sprintf(

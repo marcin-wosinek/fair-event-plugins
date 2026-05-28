@@ -645,7 +645,7 @@ class EventSignupController extends WP_REST_Controller {
 		$this->snapshot_options_on_signup( $event_date_id, $participant->id, $option_items );
 
 		$option_names = array_map( fn( $o ) => $o->name, $option_items );
-		$this->email_service->send_signup_payment_confirmation( $participant, $event, null, $option_names );
+		$this->email_service->send_signup_payment_confirmation( $participant, $event, null, $option_names, (int) $event_date_id );
 
 		AudienceSession::set( (int) $participant->id );
 
@@ -2282,7 +2282,7 @@ class EventSignupController extends WP_REST_Controller {
 		$this->snapshot_options_on_signup( $event_date_id, $participant->id, $option_items );
 
 		$option_names = array_map( fn( $o ) => $o->name, $option_items );
-		$this->email_service->send_signup_payment_confirmation( $participant, $event, null, $option_names );
+		$this->email_service->send_signup_payment_confirmation( $participant, $event, null, $option_names, (int) $event_date_id );
 
 		if ( $is_new_participant ) {
 			AudienceSession::set( (int) $participant->id );
