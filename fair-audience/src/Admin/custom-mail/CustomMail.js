@@ -594,18 +594,26 @@ export default function CustomMail() {
 									isSmall
 									onClick={() =>
 										insertPlaceholderLink(
-											'{manage_subscription_url}',
+											'{event_page_url}',
 											__(
-												'Manage your preferences',
+												'Open event page',
 												'fair-audience'
 											)
 										)
 									}
-									disabled={isSending}
+									disabled={isSending || !eventDateId}
 									style={{ marginLeft: '8px' }}
+									title={
+										!eventDateId
+											? __(
+													'Select an event below to enable this link.',
+													'fair-audience'
+											  )
+											: undefined
+									}
 								>
 									{__(
-										'Insert subscription link',
+										'Insert event page link',
 										'fair-audience'
 									)}
 								</Button>
