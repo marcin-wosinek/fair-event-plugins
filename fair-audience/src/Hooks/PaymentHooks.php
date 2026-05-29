@@ -175,16 +175,22 @@ class PaymentHooks {
 				}
 			}
 
-			// Activities — the ticket options selected at signup.
+			// Activities — the ticket options selected at signup. Telegram
+			// notifications stay readable on mobile, so prefer the curated
+			// `short_name` when set; fall back to the full `name`, then the
+			// snapshot `epo.ticket_option_name` for options whose row was
+			// deleted after signup.
 			// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
 			$option_names = $wpdb->get_col(
 				$wpdb->prepare(
-					"SELECT COALESCE(NULLIF(topt.name, ''), epo.ticket_option_name)
+					"SELECT COALESCE(NULLIF(topt.short_name, ''), NULLIF(topt.name, ''), epo.ticket_option_name)
 					FROM {$wpdb->prefix}fair_audience_event_participant_options epo
 					LEFT JOIN {$wpdb->prefix}fair_events_ticket_options topt
 						ON topt.id = epo.ticket_option_id
 					WHERE epo.event_participant_id = %d
-						AND ( ( topt.name IS NOT NULL AND topt.name != '' ) OR epo.ticket_option_name != '' )",
+						AND ( ( topt.short_name IS NOT NULL AND topt.short_name != '' )
+							OR ( topt.name IS NOT NULL AND topt.name != '' )
+							OR epo.ticket_option_name != '' )",
 					(int) $event_participant->id
 				)
 			);
