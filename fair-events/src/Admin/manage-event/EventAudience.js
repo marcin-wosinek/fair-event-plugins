@@ -879,7 +879,12 @@ export default function EventAudience({
 		return ticketOptions
 			.map((opt) => {
 				const names = filteredParticipants
-					.filter((p) => participantHasOption(p, opt))
+					.filter(
+						(p) =>
+							(p.label === 'signed_up' ||
+								p.label === 'collaborator') &&
+							participantHasOption(p, opt)
+					)
 					.map((p) => p.participant_name || '—')
 					.sort((a, b) => a.localeCompare(b));
 				return `*${opt.name}* (${names.length})\n${
