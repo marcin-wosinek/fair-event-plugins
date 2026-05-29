@@ -129,6 +129,17 @@ class Plugin {
 			}
 		);
 
+		// Public events controller — registers `/fair-events/v1/events`,
+		// which the core calendar admin page consumes. Despite the
+		// "cross-site JSON" framing in the ticket, this is a core endpoint.
+		add_action(
+			'rest_api_init',
+			function () {
+				$controller = new \FairEvents\API\PublicEventsController();
+				$controller->register_routes();
+			}
+		);
+
 		// `sources` bundle — external sources, feeds, proposals, weekly schedule.
 		if ( Features::is_enabled( 'sources' ) ) {
 			add_action(
@@ -143,14 +154,6 @@ class Plugin {
 				'rest_api_init',
 				function () {
 					$controller = new \FairEvents\API\EventProposalController();
-					$controller->register_routes();
-				}
-			);
-
-			add_action(
-				'rest_api_init',
-				function () {
-					$controller = new \FairEvents\API\PublicEventsController();
 					$controller->register_routes();
 				}
 			);
@@ -226,16 +229,16 @@ class Plugin {
 			);
 		}
 
-		// `venues` bundle.
-		if ( Features::is_enabled( 'venues' ) ) {
-			add_action(
-				'rest_api_init',
-				function () {
-					$controller = new \FairEvents\API\VenueController();
-					$controller->register_routes();
-				}
-			);
-		}
+		// Venues controller — registered unconditionally so the core
+		// calendar/manage-event venue dropdowns keep working. Only the
+		// dedicated Venues admin page is hidden by the `venues` bundle.
+		add_action(
+			'rest_api_init',
+			function () {
+				$controller = new \FairEvents\API\VenueController();
+				$controller->register_routes();
+			}
+		);
 
 		// `ticketing` bundle — composes with the existing fair-audience
 		// dependency check inside each controller (e.g.
