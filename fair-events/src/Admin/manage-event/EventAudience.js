@@ -24,13 +24,27 @@ const LABEL_DISPLAY = {
 	interested: __('Interested', 'fair-events'),
 };
 
+// payment_expires_at is stored as UTC via PHP gmdate() in the form
+// "YYYY-MM-DD HH:MM:SS" (no timezone suffix). new Date() parses that shape as
+// *local* time on most engines, which on non-UTC servers shifts the expiry by
+// the local offset and falsely flags in-progress holds as expired. Normalize
+// to ISO-8601 with a trailing "Z" so it is interpreted as UTC.
+const parsePaymentExpiresAt = (iso) => {
+	if (!iso) return NaN;
+	const normalized =
+		typeof iso === 'string' && !/[zZ]|[+-]\d{2}:?\d{2}$/.test(iso)
+			? iso.replace(' ', 'T') + 'Z'
+			: iso;
+	return new Date(normalized).getTime();
+};
+
 // A pending_payment row is "stale" once its hold has lapsed: capacity counters
 // stop including it (matching the registration block) and the row needs admin
 // triage — confirm (cash payment etc.) or cancel.
 const isStalePendingPayment = (p) => {
 	if (!p || p.label !== 'pending_payment') return false;
 	if (!p.payment_expires_at) return true;
-	return new Date(p.payment_expires_at).getTime() <= Date.now();
+	return parsePaymentExpiresAt(p.payment_expires_at) <= Date.now();
 };
 
 // Whether a participant currently occupies a seat for capacity purposes.
@@ -908,10 +922,10 @@ export default function EventAudience({
 
 	const formatExpiredAgo = (iso) => {
 		if (!iso) return __('no expiry set', 'fair-events');
-		const ts = new Date(iso).getTime();
+		const ts = parsePaymentExpiresAt(iso);
 		if (Number.isNaN(ts)) return iso;
 		const diffMs = Date.now() - ts;
-		if (diffMs < 0) return new Date(iso).toLocaleString();
+		if (diffMs < 0) return new Date(ts).toLocaleString();
 		const minutes = Math.floor(diffMs / 60000);
 		if (minutes < 60) {
 			/* translators: %d: number of minutes */
