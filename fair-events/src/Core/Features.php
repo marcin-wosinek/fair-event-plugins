@@ -47,44 +47,50 @@ class Features {
 	/**
 	 * Canonical bundle registry.
 	 *
+	 * Labels/descriptions are intentionally untranslated here: `registry()` is
+	 * consulted by `is_enabled()` during plugin bootstrap (before WordPress's
+	 * `init` action fires), and calling `__()` that early triggers the
+	 * `_load_textdomain_just_in_time` notice in WP 6.7+. Translation is
+	 * applied in {@see self::all()}, which only runs in admin REST contexts.
+	 *
 	 * @return array<string,array{label:string,description:string,default:bool,always_on?:bool}>
 	 */
 	public static function registry() {
 		return array(
 			'core'        => array(
-				'label'       => __( 'Core', 'fair-events' ),
-				'description' => __( 'Events, calendar, all-events, settings, core blocks. Always on.', 'fair-events' ),
+				'label'       => 'Core',
+				'description' => 'Events, calendar, all-events, settings, core blocks. Always on.',
 				'default'     => true,
 				'always_on'   => true,
 			),
 			'venues'      => array(
-				'label'       => __( 'Venues', 'fair-events' ),
-				'description' => __( 'Venues admin page and REST controller.', 'fair-events' ),
+				'label'       => 'Venues',
+				'description' => 'Venues admin page and REST controller.',
 				'default'     => false,
 			),
 			'sources'     => array(
-				'label'       => __( 'Event sources & feeds', 'fair-events' ),
-				'description' => __( 'External event sources, Facebook import, iCal/JSON feeds, event proposals, weekly schedule.', 'fair-events' ),
+				'label'       => 'Event sources & feeds',
+				'description' => 'External event sources, Facebook import, iCal/JSON feeds, event proposals, weekly schedule.',
 				'default'     => false,
 			),
 			'galleries'   => array(
-				'label'       => __( 'Galleries', 'fair-events' ),
-				'description' => __( 'Per-event photo galleries, photo likes/downloads, image exports, media library hooks.', 'fair-events' ),
+				'label'       => 'Galleries',
+				'description' => 'Per-event photo galleries, photo likes/downloads, image exports, media library hooks.',
 				'default'     => false,
 			),
 			'ticketing'   => array(
-				'label'       => __( 'Ticketing', 'fair-events' ),
-				'description' => __( 'Tickets, group pricing/permission rules, invitations. Requires fair-audience.', 'fair-events' ),
+				'label'       => 'Ticketing',
+				'description' => 'Tickets, group pricing/permission rules, invitations. Requires fair-audience.',
 				'default'     => false,
 			),
 			'event-tools' => array(
-				'label'       => __( 'Event tools', 'fair-events' ),
-				'description' => __( 'Event duplication, merge, and admin-bar Copy button.', 'fair-events' ),
+				'label'       => 'Event tools',
+				'description' => 'Event duplication, merge, and admin-bar Copy button.',
 				'default'     => false,
 			),
 			'migration'   => array(
-				'label'       => __( 'Migration', 'fair-events' ),
-				'description' => __( 'One-time post → event migration tooling.', 'fair-events' ),
+				'label'       => 'Migration',
+				'description' => 'One-time post → event migration tooling.',
 				'default'     => false,
 			),
 		);
@@ -162,10 +168,45 @@ class Features {
 	 */
 	public static function all() {
 		$out = array();
+		// Translation happens here (not in `registry()`) so the textdomain is
+		// only loaded when a consumer needs labels — by then `init` has fired.
+		// Literal strings are required for makepot extraction; the registry's
+		// raw values are kept in sync with these and serve as fallback.
+		$translated = array(
+			'core'        => array(
+				'label'       => __( 'Core', 'fair-events' ),
+				'description' => __( 'Events, calendar, all-events, settings, core blocks. Always on.', 'fair-events' ),
+			),
+			'venues'      => array(
+				'label'       => __( 'Venues', 'fair-events' ),
+				'description' => __( 'Venues admin page and REST controller.', 'fair-events' ),
+			),
+			'sources'     => array(
+				'label'       => __( 'Event sources & feeds', 'fair-events' ),
+				'description' => __( 'External event sources, Facebook import, iCal/JSON feeds, event proposals, weekly schedule.', 'fair-events' ),
+			),
+			'galleries'   => array(
+				'label'       => __( 'Galleries', 'fair-events' ),
+				'description' => __( 'Per-event photo galleries, photo likes/downloads, image exports, media library hooks.', 'fair-events' ),
+			),
+			'ticketing'   => array(
+				'label'       => __( 'Ticketing', 'fair-events' ),
+				'description' => __( 'Tickets, group pricing/permission rules, invitations. Requires fair-audience.', 'fair-events' ),
+			),
+			'event-tools' => array(
+				'label'       => __( 'Event tools', 'fair-events' ),
+				'description' => __( 'Event duplication, merge, and admin-bar Copy button.', 'fair-events' ),
+			),
+			'migration'   => array(
+				'label'       => __( 'Migration', 'fair-events' ),
+				'description' => __( 'One-time post → event migration tooling.', 'fair-events' ),
+			),
+		);
+
 		foreach ( self::registry() as $key => $entry ) {
 			$out[ $key ] = array(
-				'label'       => $entry['label'],
-				'description' => $entry['description'],
+				'label'       => $translated[ $key ]['label'] ?? $entry['label'],
+				'description' => $translated[ $key ]['description'] ?? $entry['description'],
 				'default'     => (bool) $entry['default'],
 				'always_on'   => ! empty( $entry['always_on'] ),
 				'enabled'     => self::is_enabled( $key ),
