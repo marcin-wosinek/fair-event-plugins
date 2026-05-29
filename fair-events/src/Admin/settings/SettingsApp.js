@@ -10,6 +10,7 @@ import { Notice, TabPanel } from '@wordpress/components';
  */
 import GeneralTab from './GeneralTab.js';
 import FacebookTab from './FacebookTab.js';
+import FeaturesTab from './FeaturesTab.js';
 
 /**
  * Settings App Component
@@ -44,6 +45,10 @@ export default function SettingsApp() {
 						title: __('General', 'fair-events'),
 					},
 					{
+						name: 'features',
+						title: __('Features', 'fair-events'),
+					},
+					{
 						name: 'facebook',
 						title: __('Facebook', 'fair-events'),
 					},
@@ -53,6 +58,9 @@ export default function SettingsApp() {
 					<div style={{ marginTop: '1rem' }}>
 						{tab.name === 'general' && (
 							<GeneralTab onNotice={setNotice} />
+						)}
+						{tab.name === 'features' && (
+							<FeaturesTab onNotice={setNotice} />
 						)}
 						{tab.name === 'facebook' && (
 							<FacebookTab onNotice={setNotice} />

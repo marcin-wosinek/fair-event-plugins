@@ -29,6 +29,27 @@ function wpCli(args) {
 	});
 }
 
+/**
+ * Turn every #654 feature bundle on. This suite covers the #656 menu/CPT
+ * decoupling, which assumes the full page inventory exists — bundle gating
+ * lives in `fair-events-feature-flags.spec.js`.
+ */
+const ALL_BUNDLES_ON = {
+	venues: true,
+	sources: true,
+	galleries: true,
+	ticketing: true,
+	'event-tools': true,
+	migration: true,
+};
+function enableAllBundles() {
+	const json = JSON.stringify(ALL_BUNDLES_ON).replace(/'/g, "'\\''");
+	wpCli(`option update fair_events_features '${json}' --format=json`);
+}
+function clearBundles() {
+	wpCli('option delete fair_events_features');
+}
+
 /** Every Fair Events admin page and its React root element id. */
 const PAGES = [
 	{ slug: 'fair-events-calendar', root: 'fair-events-calendar-root' },
@@ -89,8 +110,14 @@ const MIGRATION_LINK =
 
 test.describe('Fair Events admin menu — CPT registered (regression)', () => {
 	test.beforeAll(() => {
-		// Default state: Events post type on.
+		// Default state: Events post type on, all bundles on (so every page
+		// in PAGES is registered — bundle gating is covered separately).
 		wpCli('option update fair_events_register_post_type 1');
+		enableAllBundles();
+	});
+
+	test.afterAll(() => {
+		clearBundles();
 	});
 
 	test('one top-level Fair Events menu, Calendar first and Settings last', async ({
@@ -143,11 +170,13 @@ test.describe('Fair Events admin menu — CPT registered (regression)', () => {
 test.describe('Fair Events admin menu — Events post type off', () => {
 	test.beforeAll(() => {
 		wpCli('option update fair_events_register_post_type 0');
+		enableAllBundles();
 	});
 
 	test.afterAll(() => {
 		// Restore the default so other suites see the CPT registered.
 		wpCli('option update fair_events_register_post_type 1');
+		clearBundles();
 	});
 
 	test('top-level menu and every non-CPT page still mount', async ({

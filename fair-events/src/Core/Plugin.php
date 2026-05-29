@@ -87,8 +87,12 @@ class Plugin {
 			$admin = new \FairEvents\Admin\AdminPages();
 			$admin->init();
 
-			\FairEvents\Admin\MediaLibraryHooks::init();
-			\FairEvents\Admin\MediaBatchActions::init();
+			// Media library integrations only fire when galleries are on —
+			// they tag attachments with event metadata and bulk-attach photos.
+			if ( Features::is_enabled( 'galleries' ) ) {
+				\FairEvents\Admin\MediaLibraryHooks::init();
+				\FairEvents\Admin\MediaBatchActions::init();
+			}
 		}
 	}
 
@@ -111,80 +115,10 @@ class Plugin {
 	 * @return void
 	 */
 	private function load_rest_api() {
+		// Core endpoints — always on. Manage-event UI and EventDates schema
+		// depend on these; they belong to `core`.
 		new \FairEvents\API\DateOptionsEndpoint();
 		new \FairEvents\API\UserGroupOptionsEndpoint();
-
-		// Event Sources controller.
-		add_action(
-			'rest_api_init',
-			function () {
-				$controller = new \FairEvents\API\EventSourceController();
-				$controller->register_routes();
-			}
-		);
-
-		// Event Proposal controller.
-		add_action(
-			'rest_api_init',
-			function () {
-				$controller = new \FairEvents\API\EventProposalController();
-				$controller->register_routes();
-			}
-		);
-
-		// Event Gallery endpoint.
-		add_action(
-			'rest_api_init',
-			function () {
-				$controller = new \FairEvents\API\EventGalleryEndpoint();
-				$controller->register_routes();
-			}
-		);
-
-		// Photo Likes controller.
-		add_action(
-			'rest_api_init',
-			function () {
-				$controller = new \FairEvents\API\PhotoLikesController();
-				$controller->register_routes();
-			}
-		);
-
-		// Photo Download controller.
-		add_action(
-			'rest_api_init',
-			function () {
-				$controller = new \FairEvents\API\PhotoDownloadController();
-				$controller->register_routes();
-			}
-		);
-
-		// Migration controller.
-		add_action(
-			'rest_api_init',
-			function () {
-				$controller = new \FairEvents\API\MigrationController();
-				$controller->register_routes();
-			}
-		);
-
-		// Migration summary controller.
-		add_action(
-			'rest_api_init',
-			function () {
-				$controller = new \FairEvents\API\MigrationSummaryController();
-				$controller->register_routes();
-			}
-		);
-
-		// Public Events controller (JSON export for cross-site sharing).
-		add_action(
-			'rest_api_init',
-			function () {
-				$controller = new \FairEvents\API\PublicEventsController();
-				$controller->register_routes();
-			}
-		);
 
 		// Event Dates controller.
 		add_action(
@@ -195,16 +129,109 @@ class Plugin {
 			}
 		);
 
-		// Image Export controller.
+		// Public events controller — registers `/fair-events/v1/events`,
+		// which the core calendar admin page consumes. Despite the
+		// "cross-site JSON" framing in the ticket, this is a core endpoint.
 		add_action(
 			'rest_api_init',
 			function () {
-				$controller = new \FairEvents\API\ImageExportController();
+				$controller = new \FairEvents\API\PublicEventsController();
 				$controller->register_routes();
 			}
 		);
 
-		// Venue controller.
+		// `sources` bundle — external sources, feeds, proposals, weekly schedule.
+		if ( Features::is_enabled( 'sources' ) ) {
+			add_action(
+				'rest_api_init',
+				function () {
+					$controller = new \FairEvents\API\EventSourceController();
+					$controller->register_routes();
+				}
+			);
+
+			add_action(
+				'rest_api_init',
+				function () {
+					$controller = new \FairEvents\API\EventProposalController();
+					$controller->register_routes();
+				}
+			);
+
+			add_action(
+				'rest_api_init',
+				function () {
+					$controller = new \FairEvents\API\WeeklyEventsController();
+					$controller->register_routes();
+				}
+			);
+
+			add_action(
+				'rest_api_init',
+				function () {
+					$controller = new \FairEvents\API\FacebookController();
+					$controller->register_routes();
+				}
+			);
+		}
+
+		// `galleries` bundle — per-event photo galleries + image export.
+		if ( Features::is_enabled( 'galleries' ) ) {
+			add_action(
+				'rest_api_init',
+				function () {
+					$controller = new \FairEvents\API\EventGalleryEndpoint();
+					$controller->register_routes();
+				}
+			);
+
+			add_action(
+				'rest_api_init',
+				function () {
+					$controller = new \FairEvents\API\PhotoLikesController();
+					$controller->register_routes();
+				}
+			);
+
+			add_action(
+				'rest_api_init',
+				function () {
+					$controller = new \FairEvents\API\PhotoDownloadController();
+					$controller->register_routes();
+				}
+			);
+
+			add_action(
+				'rest_api_init',
+				function () {
+					$controller = new \FairEvents\API\ImageExportController();
+					$controller->register_routes();
+				}
+			);
+		}
+
+		// `migration` bundle — one-time post → event migration tooling.
+		if ( Features::is_enabled( 'migration' ) ) {
+			add_action(
+				'rest_api_init',
+				function () {
+					$controller = new \FairEvents\API\MigrationController();
+					$controller->register_routes();
+				}
+			);
+
+			add_action(
+				'rest_api_init',
+				function () {
+					$controller = new \FairEvents\API\MigrationSummaryController();
+					$controller->register_routes();
+				}
+			);
+		}
+
+		// Venues controller — registered unconditionally so the core
+		// calendar/manage-event venue dropdowns keep working. Only the
+		// dedicated Venues admin page is hidden by the `venues` bundle.
 		add_action(
 			'rest_api_init',
 			function () {
@@ -213,77 +240,61 @@ class Plugin {
 			}
 		);
 
-		// Weekly Events controller.
-		add_action(
-			'rest_api_init',
-			function () {
-				$controller = new \FairEvents\API\WeeklyEventsController();
-				$controller->register_routes();
-			}
-		);
+		// `ticketing` bundle — composes with the existing fair-audience
+		// dependency check inside each controller (e.g.
+		// GroupPricingRulesController guards on FAIR_AUDIENCE_PLUGIN_DIR).
+		if ( Features::is_enabled( 'ticketing' ) ) {
+			add_action(
+				'rest_api_init',
+				function () {
+					$controller = new \FairEvents\API\GroupPricingRulesController();
+					$controller->register_routes();
+				}
+			);
 
-		// Facebook controller.
-		add_action(
-			'rest_api_init',
-			function () {
-				$controller = new \FairEvents\API\FacebookController();
-				$controller->register_routes();
-			}
-		);
+			add_action(
+				'rest_api_init',
+				function () {
+					$controller = new \FairEvents\API\GroupPermissionRulesController();
+					$controller->register_routes();
+				}
+			);
 
-		// Group Pricing Rules controller.
-		add_action(
-			'rest_api_init',
-			function () {
-				$controller = new \FairEvents\API\GroupPricingRulesController();
-				$controller->register_routes();
-			}
-		);
+			add_action(
+				'rest_api_init',
+				function () {
+					$controller = new \FairEvents\API\TicketsController();
+					$controller->register_routes();
+				}
+			);
 
-		// Group Permission Rules controller.
-		add_action(
-			'rest_api_init',
-			function () {
-				$controller = new \FairEvents\API\GroupPermissionRulesController();
-				$controller->register_routes();
-			}
-		);
+			add_action(
+				'rest_api_init',
+				function () {
+					$controller = new \FairEvents\API\InvitationTokensController();
+					$controller->register_routes();
+				}
+			);
+		}
 
-		// Tickets controller.
-		add_action(
-			'rest_api_init',
-			function () {
-				$controller = new \FairEvents\API\TicketsController();
-				$controller->register_routes();
-			}
-		);
+		// `event-tools` bundle — duplication / merge.
+		if ( Features::is_enabled( 'event-tools' ) ) {
+			add_action(
+				'rest_api_init',
+				function () {
+					$controller = new \FairEvents\API\EventDuplicationController();
+					$controller->register_routes();
+				}
+			);
 
-		// Invitation Tokens controller.
-		add_action(
-			'rest_api_init',
-			function () {
-				$controller = new \FairEvents\API\InvitationTokensController();
-				$controller->register_routes();
-			}
-		);
-
-		// Event Duplication controller.
-		add_action(
-			'rest_api_init',
-			function () {
-				$controller = new \FairEvents\API\EventDuplicationController();
-				$controller->register_routes();
-			}
-		);
-
-		// Event Merge controller.
-		add_action(
-			'rest_api_init',
-			function () {
-				$controller = new \FairEvents\API\EventMergeController();
-				$controller->register_routes();
-			}
-		);
+			add_action(
+				'rest_api_init',
+				function () {
+					$controller = new \FairEvents\API\EventMergeController();
+					$controller->register_routes();
+				}
+			);
+		}
 
 		// Add event relationship to attachment REST responses.
 		add_action(
@@ -324,7 +335,9 @@ class Plugin {
 	 * @return void
 	 */
 	private function load_frontend() {
-		\FairEvents\Frontend\EventGalleryPage::init();
+		if ( Features::is_enabled( 'galleries' ) ) {
+			\FairEvents\Frontend\EventGalleryPage::init();
+		}
 	}
 
 	/**

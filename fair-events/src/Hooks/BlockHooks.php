@@ -28,12 +28,18 @@ class BlockHooks {
 	 * @return void
 	 */
 	public function register_blocks() {
+		// Core blocks — always available in the inserter.
 		register_block_type( __DIR__ . '/../../build/blocks/events-list' );
 		register_block_type( __DIR__ . '/../../build/blocks/event-dates' );
 		register_block_type( __DIR__ . '/../../build/blocks/events-calendar' );
-		register_block_type( __DIR__ . '/../../build/blocks/weekly-schedule' );
-		register_block_type( __DIR__ . '/../../build/blocks/event-proposal' );
 		register_block_type( __DIR__ . '/../../build/blocks/event-info' );
+
+		// `sources` bundle — weekly schedule renders feed events; the
+		// event-proposal block writes to EventProposalController.
+		if ( \FairEvents\Core\Features::is_enabled( 'sources' ) ) {
+			register_block_type( __DIR__ . '/../../build/blocks/weekly-schedule' );
+			register_block_type( __DIR__ . '/../../build/blocks/event-proposal' );
+		}
 	}
 
 	/**
