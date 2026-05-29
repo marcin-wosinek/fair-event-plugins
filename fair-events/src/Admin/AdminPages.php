@@ -129,8 +129,9 @@ class AdminPages {
 			array( $this, 'render_settings_page' )
 		);
 
-		// Migration pages only make sense when the CPT exists (migration targets it).
-		if ( post_type_exists( 'fair_event' ) ) {
+		// Migration pages only make sense when the CPT exists (migration
+		// targets it) AND the `migration` feature bundle is enabled.
+		if ( \FairEvents\Core\Features::is_enabled( 'migration' ) && post_type_exists( 'fair_event' ) ) {
 			// Migration page
 			$this->page_hooks['fair-events-migration'] = add_submenu_page(
 				$parent,
@@ -152,25 +153,41 @@ class AdminPages {
 			);
 		}
 
-		// Event Sources page
-		$this->page_hooks['fair-events-sources'] = add_submenu_page(
-			$parent,
-			__( 'Event Sources', 'fair-events' ),
-			__( 'Event Sources', 'fair-events' ),
-			'manage_options',
-			'fair-events-sources',
-			array( $this, 'render_sources_page' )
-		);
+		// Event Sources page — `sources` bundle.
+		if ( \FairEvents\Core\Features::is_enabled( 'sources' ) ) {
+			$this->page_hooks['fair-events-sources'] = add_submenu_page(
+				$parent,
+				__( 'Event Sources', 'fair-events' ),
+				__( 'Event Sources', 'fair-events' ),
+				'manage_options',
+				'fair-events-sources',
+				array( $this, 'render_sources_page' )
+			);
 
-		// Venues page
-		$this->page_hooks['fair-events-venues'] = add_submenu_page(
-			$parent,
-			__( 'Venues', 'fair-events' ),
-			__( 'Venues', 'fair-events' ),
-			'manage_options',
-			'fair-events-venues',
-			array( $this, 'render_venues_page' )
-		);
+			// Source View page (hidden from menu, accessed via sources list).
+			$this->page_hooks['fair-events-source-view'] = add_submenu_page(
+				'',
+				__( 'View Source', 'fair-events' ),
+				__( 'View Source', 'fair-events' ),
+				'manage_options',
+				'fair-events-source-view',
+				array( $this, 'render_source_view_page' )
+			);
+
+			$this->set_hidden_page_title( $this->page_hooks['fair-events-source-view'], __( 'View Source', 'fair-events' ) );
+		}
+
+		// Venues page — `venues` bundle.
+		if ( \FairEvents\Core\Features::is_enabled( 'venues' ) ) {
+			$this->page_hooks['fair-events-venues'] = add_submenu_page(
+				$parent,
+				__( 'Venues', 'fair-events' ),
+				__( 'Venues', 'fair-events' ),
+				'manage_options',
+				'fair-events-venues',
+				array( $this, 'render_venues_page' )
+			);
+		}
 
 		// Manage Event page (hidden from menu, accessed via calendar)
 		$this->page_hooks['fair-events-manage-event'] = add_submenu_page(
@@ -182,44 +199,41 @@ class AdminPages {
 			array( $this, 'render_manage_event_page' )
 		);
 
-		// Source View page (hidden from menu, accessed via sources list)
-		$this->page_hooks['fair-events-source-view'] = add_submenu_page(
-			'', // Hidden from menu (empty string instead of null for PHP 8.1+ compatibility)
-			__( 'View Source', 'fair-events' ),
-			__( 'View Source', 'fair-events' ),
-			'manage_options',
-			'fair-events-source-view',
-			array( $this, 'render_source_view_page' )
-		);
+		// Manage Invitations page — `ticketing` bundle (hidden, linked from
+		// the tickets tab).
+		if ( \FairEvents\Core\Features::is_enabled( 'ticketing' ) ) {
+			$this->page_hooks['fair-events-manage-invitations'] = add_submenu_page(
+				'',
+				__( 'Manage Invitations', 'fair-events' ),
+				__( 'Manage Invitations', 'fair-events' ),
+				'manage_options',
+				'fair-events-manage-invitations',
+				array( $this, 'render_manage_invitations_page' )
+			);
 
-		// Manage Invitations page (hidden from menu, accessed via tickets tab)
-		$this->page_hooks['fair-events-manage-invitations'] = add_submenu_page(
-			'', // Hidden from menu (empty string instead of null for PHP 8.1+ compatibility)
-			__( 'Manage Invitations', 'fair-events' ),
-			__( 'Manage Invitations', 'fair-events' ),
-			'manage_options',
-			'fair-events-manage-invitations',
-			array( $this, 'render_manage_invitations_page' )
-		);
+			$this->set_hidden_page_title( $this->page_hooks['fair-events-manage-invitations'], __( 'Manage Invitations', 'fair-events' ) );
+		}
 
-		// Copy Event page (hidden from menu, accessed via row action)
-		$this->page_hooks['fair-events-copy'] = add_submenu_page(
-			'', // Hidden from menu (empty string instead of null for PHP 8.1+ compatibility)
-			__( 'Copy Event', 'fair-events' ),
-			__( 'Copy Event', 'fair-events' ),
-			'edit_posts',
-			'fair-events-copy',
-			array( $this, 'render_copy_event_page' )
-		);
+		// Copy Event page — `event-tools` bundle (hidden, linked from row
+		// action / admin bar).
+		if ( \FairEvents\Core\Features::is_enabled( 'event-tools' ) ) {
+			$this->page_hooks['fair-events-copy'] = add_submenu_page(
+				'',
+				__( 'Copy Event', 'fair-events' ),
+				__( 'Copy Event', 'fair-events' ),
+				'edit_posts',
+				'fair-events-copy',
+				array( $this, 'render_copy_event_page' )
+			);
 
-		// Set page titles for hidden pages to prevent strip_tags() deprecation warning.
+			$this->set_hidden_page_title( $this->page_hooks['fair-events-copy'], __( 'Copy Event', 'fair-events' ) );
+
+			// Handle copy event form submission before page render.
+			add_action( 'load-' . $this->page_hooks['fair-events-copy'], array( $this, 'handle_copy_event_submission' ) );
+		}
+
+		// Manage Event hidden-page title (always on; the page itself is core).
 		$this->set_hidden_page_title( $this->page_hooks['fair-events-manage-event'], __( 'Manage Event', 'fair-events' ) );
-		$this->set_hidden_page_title( $this->page_hooks['fair-events-source-view'], __( 'View Source', 'fair-events' ) );
-		$this->set_hidden_page_title( $this->page_hooks['fair-events-manage-invitations'], __( 'Manage Invitations', 'fair-events' ) );
-		$this->set_hidden_page_title( $this->page_hooks['fair-events-copy'], __( 'Copy Event', 'fair-events' ) );
-
-		// Handle copy event form submission before page render
-		add_action( 'load-' . $this->page_hooks['fair-events-copy'], array( $this, 'handle_copy_event_submission' ) );
 	}
 
 	/**
@@ -532,13 +546,20 @@ class AdminPages {
 				'calendarUrl'      => admin_url( 'admin.php?page=fair-events-calendar' ),
 				'manageEventUrl'   => admin_url( 'admin.php?page=fair-events-manage-event' ),
 				'enabledPostTypes' => $enabled_post_types,
+				// Resolved feature map — React reads this to hide tabs whose
+				// bundle is off (mirroring the existing audienceUrl /
+				// paymentEntriesUrl conditionals).
+				'enabledFeatures'  => \FairEvents\Core\Features::public_map(),
 			);
 
-			// Add audience URL and group pricing flag if fair-audience plugin is active.
+			// Audience-dependent URLs require both the sibling plugin AND the
+			// ticketing/invitations bundle (manage-invitations page lives there).
 			if ( defined( 'FAIR_AUDIENCE_PLUGIN_DIR' ) ) {
-				$localized_data['audienceUrl']          = admin_url( 'admin.php?page=fair-audience-event-participants&event_date_id=' );
-				$localized_data['groupPricingEnabled']  = true;
-				$localized_data['manageInvitationsUrl'] = admin_url( 'admin.php?page=fair-events-manage-invitations&event_date_id=' );
+				$localized_data['audienceUrl']         = admin_url( 'admin.php?page=fair-audience-event-participants&event_date_id=' );
+				$localized_data['groupPricingEnabled'] = \FairEvents\Core\Features::is_enabled( 'ticketing' );
+				if ( \FairEvents\Core\Features::is_enabled( 'ticketing' ) ) {
+					$localized_data['manageInvitationsUrl'] = admin_url( 'admin.php?page=fair-events-manage-invitations&event_date_id=' );
+				}
 			}
 
 			// Add payment entries URL if fair-payment plugin is active.
@@ -605,6 +626,11 @@ class AdminPages {
 				'fairEventsSettingsData',
 				array(
 					'eventsApiUrl' => rest_url( 'fair-events/v1/events' ),
+					// Feature registry (labels/descriptions/forced state) for the
+					// Features tab; resolved enabled state comes via the stored
+					// option once toggles are saved, but the registry itself is
+					// PHP-owned.
+					'features'     => \FairEvents\Core\Features::all(),
 				)
 			);
 
@@ -920,6 +946,12 @@ class AdminPages {
 	public function add_copy_button_to_admin_bar( $wp_admin_bar ) {
 		// Only show on event edit pages in admin
 		if ( ! is_admin() ) {
+			return;
+		}
+
+		// The Copy flow lives in the `event-tools` bundle — without it
+		// enabled the target admin page is not registered.
+		if ( ! \FairEvents\Core\Features::is_enabled( 'event-tools' ) ) {
 			return;
 		}
 

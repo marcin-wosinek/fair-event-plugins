@@ -26,6 +26,9 @@ class Settings {
 		// Toggling CPT registration changes which rewrite rules exist.
 		add_action( 'add_option_fair_events_register_post_type', array( $this, 'flush_rewrite_rules_on_slug_change' ) );
 		add_action( 'update_option_fair_events_register_post_type', array( $this, 'flush_rewrite_rules_on_slug_change' ) );
+		// Feature toggles can register/unregister rewrite rules (galleries).
+		add_action( 'add_option_' . \FairEvents\Core\Features::OPTION, array( $this, 'flush_rewrite_rules_on_slug_change' ) );
+		add_action( 'update_option_' . \FairEvents\Core\Features::OPTION, array( $this, 'flush_rewrite_rules_on_slug_change' ) );
 		add_filter( 'rest_pre_update_setting', array( $this, 'handle_empty_slug_via_rest' ), 10, 3 );
 	}
 
@@ -60,6 +63,25 @@ class Settings {
 					'schema' => array(
 						'type'  => 'array',
 						'items' => array( 'type' => 'string' ),
+					),
+				),
+				'default'           => array(),
+			)
+		);
+
+		// Feature flag bundle toggles — UI state only, never overrides a
+		// wp-config constant (see Features::sanitize_option()).
+		register_setting(
+			'fair_events_settings',
+			\FairEvents\Core\Features::OPTION,
+			array(
+				'type'              => 'object',
+				'description'       => __( 'Per-bundle feature toggles', 'fair-events' ),
+				'sanitize_callback' => array( \FairEvents\Core\Features::class, 'sanitize_option' ),
+				'show_in_rest'      => array(
+					'schema' => array(
+						'type'                 => 'object',
+						'additionalProperties' => array( 'type' => 'boolean' ),
 					),
 				),
 				'default'           => array(),

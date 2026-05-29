@@ -55,6 +55,12 @@ export default function ManageEventApp() {
 	const audienceUrl = window.fairEventsManageEventData?.audienceUrl || '';
 	const paymentEntriesUrl =
 		window.fairEventsManageEventData?.paymentEntriesUrl || '';
+	// Per-bundle feature gates from the PHP registry. Empty object → treat
+	// every bundle as off (fail-closed) on a misconfigured page.
+	const enabledFeatures =
+		window.fairEventsManageEventData?.enabledFeatures || {};
+	const galleriesEnabled = !!enabledFeatures.galleries;
+	const ticketingEnabled = !!enabledFeatures.ticketing;
 
 	const [eventDate, setEventDate] = useState(null);
 	const [loading, setLoading] = useState(true);
@@ -562,12 +568,16 @@ export default function ManageEventApp() {
 				name: 'links',
 				title: __('Links', 'fair-events'),
 			},
-			{
-				name: 'tickets',
-				title: __('Tickets', 'fair-events'),
-				disabled: isGeneratedOccurrence,
-			},
-			...(audienceUrl
+			...(ticketingEnabled
+				? [
+						{
+							name: 'tickets',
+							title: __('Tickets', 'fair-events'),
+							disabled: isGeneratedOccurrence,
+						},
+				  ]
+				: []),
+			...(ticketingEnabled && audienceUrl
 				? [
 						{
 							name: 'groups',
@@ -576,10 +586,14 @@ export default function ManageEventApp() {
 						},
 				  ]
 				: []),
-			{
-				name: 'photos',
-				title: __('Photos', 'fair-events'),
-			},
+			...(galleriesEnabled
+				? [
+						{
+							name: 'photos',
+							title: __('Photos', 'fair-events'),
+						},
+				  ]
+				: []),
 			...(audienceUrl
 				? [
 						{
@@ -609,7 +623,13 @@ export default function ManageEventApp() {
 				title: __('Admin', 'fair-events'),
 			},
 		],
-		[audienceUrl, paymentEntriesUrl, isGeneratedOccurrence]
+		[
+			audienceUrl,
+			paymentEntriesUrl,
+			isGeneratedOccurrence,
+			galleriesEnabled,
+			ticketingEnabled,
+		]
 	);
 
 	const initialTab = useMemo(() => {
@@ -958,12 +978,14 @@ export default function ManageEventApp() {
 				</CardBody>
 			</Card>
 
-			<ImageExports
-				eventDateId={eventDateId}
-				themeImageId={themeImageId}
-				themeImageUrl={themeImageUrl}
-				initialExports={eventDate?.image_exports || []}
-			/>
+			{galleriesEnabled && (
+				<ImageExports
+					eventDateId={eventDateId}
+					themeImageId={themeImageId}
+					themeImageUrl={themeImageUrl}
+					initialExports={eventDate?.image_exports || []}
+				/>
+			)}
 		</>
 	);
 
