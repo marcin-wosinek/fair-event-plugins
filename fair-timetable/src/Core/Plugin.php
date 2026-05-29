@@ -38,7 +38,12 @@ class Plugin {
 	 * @return void
 	 */
 	public function init() {
-		load_plugin_textdomain( 'fair-timetable', false, 'fair-timetable/languages' );
+		add_action(
+			'init',
+			function () {
+				load_plugin_textdomain( 'fair-timetable', false, 'fair-timetable/languages' );
+			}
+		);
 
 		$this->load_hooks();
 	}

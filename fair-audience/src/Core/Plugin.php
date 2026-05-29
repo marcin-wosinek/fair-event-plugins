@@ -44,7 +44,12 @@ class Plugin {
 	 * Initialize the plugin.
 	 */
 	public function init() {
-		load_plugin_textdomain( 'fair-audience', false, 'fair-audience/languages' );
+		add_action(
+			'init',
+			function () {
+				load_plugin_textdomain( 'fair-audience', false, 'fair-audience/languages' );
+			}
+		);
 
 		add_action( 'rest_api_init', array( $this, 'register_api_endpoints' ) );
 		add_filter( 'rest_post_dispatch', array( $this, 'slide_audience_session_cookie' ), 10, 3 );
