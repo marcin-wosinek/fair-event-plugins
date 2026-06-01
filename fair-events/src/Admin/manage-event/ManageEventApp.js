@@ -563,10 +563,6 @@ export default function ManageEventApp() {
 				name: 'images',
 				title: __('Images', 'fair-events'),
 			},
-			{
-				name: 'links',
-				title: __('Links', 'fair-events'),
-			},
 			...(ticketingEnabled
 				? [
 						{
@@ -960,6 +956,8 @@ export default function ManageEventApp() {
 						</CardBody>
 					</Card>
 				)}
+
+				{renderLinksTab()}
 			</div>
 
 			{eventDate.occurrence_type === 'generated' && eventDate.master && (
@@ -1029,7 +1027,7 @@ export default function ManageEventApp() {
 	);
 
 	const renderLinksTab = () => (
-		<Card>
+		<Card className="fair-events-event-details-card">
 			<CardHeader>
 				<h2>{__('Link Options', 'fair-events')}</h2>
 			</CardHeader>
@@ -1275,9 +1273,6 @@ export default function ManageEventApp() {
 					if (tab.name === 'images') {
 						return renderImagesTab();
 					}
-					if (tab.name === 'links') {
-						return renderLinksTab();
-					}
 					if (tab.name === 'tickets') {
 						return (
 							<EventTickets
@@ -1424,9 +1419,7 @@ export default function ManageEventApp() {
 					}
 					isBusy={saving}
 					disabled={
-						activeTab === 'event-details' ||
-						activeTab === 'images' ||
-						activeTab === 'links'
+						activeTab === 'event-details' || activeTab === 'images'
 							? saving || !title
 							: saving
 					}
