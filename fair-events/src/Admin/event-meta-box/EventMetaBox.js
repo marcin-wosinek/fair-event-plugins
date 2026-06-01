@@ -2,7 +2,7 @@
  * WordPress dependencies
  */
 import { useState, useEffect } from '@wordpress/element';
-import { Button, Spinner } from '@wordpress/components';
+import { Spinner } from '@wordpress/components';
 import { __ } from '@wordpress/i18n';
 import apiFetch from '@wordpress/api-fetch';
 import { useDispatch } from '@wordpress/data';
@@ -120,30 +120,14 @@ export default function EventMetaBox({
 	// For fair_event posts or linked posts: show edit form.
 	if (isLinked) {
 		return (
-			<>
-				<EventEditForm
-					eventDateId={eventDateId}
-					manageEventUrl={manageEventUrl}
-					postId={postId}
-					postType={postType}
-				/>
-				{!isFairEvent && (
-					<Button
-						variant="tertiary"
-						isDestructive
-						onClick={handleUnlink}
-						isBusy={unlinking}
-						disabled={unlinking}
-						style={{
-							width: '100%',
-							justifyContent: 'center',
-							marginTop: '8px',
-						}}
-					>
-						{__('Unlink from event', 'fair-events')}
-					</Button>
-				)}
-			</>
+			<EventEditForm
+				eventDateId={eventDateId}
+				manageEventUrl={manageEventUrl}
+				postId={postId}
+				postType={postType}
+				onUnlink={!isFairEvent ? handleUnlink : undefined}
+				unlinking={unlinking}
+			/>
 		);
 	}
 
