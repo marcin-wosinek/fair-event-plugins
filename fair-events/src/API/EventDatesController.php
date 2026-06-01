@@ -327,11 +327,6 @@ class EventDatesController extends WP_REST_Controller {
 				'required'          => false,
 				'sanitize_callback' => 'esc_url_raw',
 			),
-			'theme_image_id' => array(
-				'description' => __( 'Theme image attachment ID.', 'fair-events' ),
-				'type'        => array( 'integer', 'null' ),
-				'required'    => false,
-			),
 			'signup_price'   => array(
 				'description' => __( 'Signup price (null = free).', 'fair-events' ),
 				'type'        => array( 'number', 'null' ),
@@ -753,11 +748,6 @@ class EventDatesController extends WP_REST_Controller {
 		$external_url = $request->get_param( 'external_url' );
 		if ( null !== $external_url ) {
 			$update_data['external_url'] = $external_url;
-		}
-
-		$theme_image_id = $request->get_param( 'theme_image_id' );
-		if ( null !== $theme_image_id ) {
-			$update_data['theme_image_id'] = $theme_image_id ? absint( $theme_image_id ) : null;
 		}
 
 		if ( $request->has_param( 'signup_price' ) ) {
@@ -1344,10 +1334,6 @@ class EventDatesController extends WP_REST_Controller {
 			'external_url'    => $event_date->external_url,
 			'display_url'     => $event_date->get_display_url(),
 			'rrule'           => $event_date->rrule,
-			'theme_image_id'  => $event_date->theme_image_id ? (int) $event_date->theme_image_id : null,
-			'theme_image_url' => $event_date->theme_image_id
-				? wp_get_attachment_image_url( $event_date->theme_image_id, 'full' )
-				: null,
 			'signup_price'    => null !== $event_date->signup_price ? (float) $event_date->signup_price : null,
 		);
 

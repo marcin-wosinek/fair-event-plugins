@@ -108,13 +108,6 @@ class EventDates {
 	public $link_type = 'post';
 
 	/**
-	 * Theme image attachment ID
-	 *
-	 * @var int|null
-	 */
-	public $theme_image_id;
-
-	/**
 	 * Event capacity
 	 *
 	 * @var int|null
@@ -195,7 +188,6 @@ class EventDates {
 		$event_dates->title           = $result->title ?? null;
 		$event_dates->external_url    = $result->external_url ?? null;
 		$event_dates->link_type       = $result->link_type ?? 'post';
-		$event_dates->theme_image_id  = isset( $result->theme_image_id ) && $result->theme_image_id ? (int) $result->theme_image_id : null;
 		$event_dates->capacity        = isset( $result->capacity ) && null !== $result->capacity ? (int) $result->capacity : null;
 		$event_dates->signup_price    = isset( $result->signup_price ) && null !== $result->signup_price ? (float) $result->signup_price : null;
 
@@ -711,7 +703,6 @@ class EventDates {
 			'title'           => '%s',
 			'external_url'    => '%s',
 			'link_type'       => '%s',
-			'theme_image_id'  => '%d',
 			'capacity'        => '%d',
 			'signup_price'    => '%f',
 		);
@@ -911,10 +902,9 @@ class EventDates {
 			'external_url'    => $data['external_url'] ?? null,
 			'link_type'       => $data['link_type'] ?? 'none',
 			'venue_id'        => $data['venue_id'] ?? null,
-			'theme_image_id'  => $data['theme_image_id'] ?? null,
 		);
 
-		$format = array( '%d', '%s', '%s', '%d', '%s', '%d', '%s', '%s', '%s', '%s', '%d', '%d' );
+		$format = array( '%d', '%s', '%s', '%d', '%s', '%d', '%s', '%s', '%s', '%s', '%d' );
 
 		$result = $wpdb->insert( $table_name, $insert_data, $format );
 

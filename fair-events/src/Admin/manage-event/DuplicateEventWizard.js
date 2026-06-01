@@ -63,14 +63,6 @@ export default function DuplicateEventWizard({
 	const [recurrenceCount, setRecurrenceCount] = useState(10);
 	const [recurrenceUntil, setRecurrenceUntil] = useState('');
 
-	// Image state
-	const [themeImageId, setThemeImageId] = useState(
-		sourceEventDate.theme_image_id || null
-	);
-	const [themeImageUrl, setThemeImageUrl] = useState(
-		sourceEventDate.theme_image_url || null
-	);
-
 	// Links state
 	const [linksOption, setLinksOption] = useState('clone');
 
@@ -384,28 +376,6 @@ export default function DuplicateEventWizard({
 		return ruleParts.join(';');
 	};
 
-	const handleSelectImage = () => {
-		const frame = window.wp.media({
-			title: __('Select Theme Image', 'fair-events'),
-			button: { text: __('Use this image', 'fair-events') },
-			multiple: false,
-			library: { type: 'image' },
-		});
-
-		frame.on('select', () => {
-			const attachment = frame.state().get('selection').first().toJSON();
-			setThemeImageId(attachment.id);
-			setThemeImageUrl(attachment.url);
-		});
-
-		frame.open();
-	};
-
-	const handleRemoveImage = () => {
-		setThemeImageId(null);
-		setThemeImageUrl(null);
-	};
-
 	// Build new start datetime string
 	const getNewStartDatetime = () => {
 		if (allDay) return `${startDate} 00:00:00`;
@@ -447,18 +417,7 @@ export default function DuplicateEventWizard({
 			setNewEventDateId(createdEventDateId);
 			setCompletedSteps((prev) => [...prev, 'create']);
 
-			// Step 2: Set theme image
-			if (themeImageId) {
-				setProgress(__('Setting theme image…', 'fair-events'));
-				await apiFetch({
-					path: `/fair-events/v1/event-dates/${createdEventDateId}`,
-					method: 'PUT',
-					data: { theme_image_id: themeImageId },
-				});
-			}
-			setCompletedSteps((prev) => [...prev, 'image']);
-
-			// Step 3: Handle links
+			// Step 2: Handle links
 			const linkedPosts = sourceEventDate.linked_posts || [];
 			if (linksOption === 'clone' && linkedPosts.length > 0) {
 				setProgress(__('Cloning posts…', 'fair-events'));
@@ -597,10 +556,6 @@ export default function DuplicateEventWizard({
 				name: 'event-details',
 				title: __('Event Details', 'fair-events'),
 			},
-			{
-				name: 'images',
-				title: __('Images', 'fair-events'),
-			},
 		];
 		if (linkedPosts.length > 0) {
 			s.push({
@@ -633,8 +588,6 @@ export default function DuplicateEventWizard({
 		switch (currentStep.name) {
 			case 'event-details':
 				return renderEventDetailsTab();
-			case 'images':
-				return renderImagesTab();
 			case 'links':
 				return renderLinksTab();
 			case 'tickets':
@@ -930,49 +883,6 @@ export default function DuplicateEventWizard({
 								)}
 							</VStack>
 						)}
-					</VStack>
-				</CardBody>
-			</Card>
-		);
-	}
-
-	function renderImagesTab() {
-		return (
-			<Card style={{ marginTop: '16px' }}>
-				<CardHeader>
-					<h2>{__('Theme Image', 'fair-events')}</h2>
-				</CardHeader>
-				<CardBody>
-					<VStack spacing={4}>
-						{themeImageUrl && (
-							<img
-								src={themeImageUrl}
-								alt={__('Theme image preview', 'fair-events')}
-								style={{
-									maxWidth: '300px',
-									height: 'auto',
-								}}
-							/>
-						)}
-						<HStack spacing={2}>
-							<Button
-								variant="secondary"
-								onClick={handleSelectImage}
-							>
-								{themeImageId
-									? __('Change Image', 'fair-events')
-									: __('Select Image', 'fair-events')}
-							</Button>
-							{themeImageId && (
-								<Button
-									variant="tertiary"
-									isDestructive
-									onClick={handleRemoveImage}
-								>
-									{__('Remove Image', 'fair-events')}
-								</Button>
-							)}
-						</HStack>
 					</VStack>
 				</CardBody>
 			</Card>
@@ -1275,7 +1185,6 @@ function hasTicketData(data) {
 function getNextStep(completedSteps) {
 	const allSteps = [
 		'create',
-		'image',
 		'links',
 		'tickets',
 		'collaborators',

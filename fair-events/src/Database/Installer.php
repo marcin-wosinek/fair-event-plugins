@@ -214,6 +214,11 @@ class Installer {
 			self::migrate_to_3_10_0();
 		}
 
+		// Run migration if upgrading from pre-3.11.0 (drop theme_image_id from event_dates).
+		if ( version_compare( $current_version, '3.11.0', '<' ) ) {
+			self::migrate_to_3_11_0();
+		}
+
 		// Update database version
 		Schema::update_db_version( Schema::DB_VERSION );
 	}
@@ -336,6 +341,10 @@ class Installer {
 
 			if ( version_compare( $current_version, '3.10.0', '<' ) ) {
 				self::migrate_to_3_10_0();
+			}
+
+			if ( version_compare( $current_version, '3.11.0', '<' ) ) {
+				self::migrate_to_3_11_0();
 			}
 
 			// Install/update tables
@@ -1344,6 +1353,34 @@ class Installer {
 			$wpdb->query(
 				$wpdb->prepare(
 					'ALTER TABLE %i ADD COLUMN minimum_activities INT UNSIGNED NOT NULL DEFAULT 0 AFTER invitation_only',
+					$table_name
+				)
+			);
+		}
+	}
+
+	/**
+	 * Migrate to version 3.11.0 - Drop theme_image_id column from event_dates table.
+	 *
+	 * @return void
+	 */
+	private static function migrate_to_3_11_0() {
+		global $wpdb;
+
+		$table_name = $wpdb->prefix . 'fair_event_dates';
+
+		$column_exists = $wpdb->get_results(
+			$wpdb->prepare(
+				'SHOW COLUMNS FROM %i LIKE %s',
+				$table_name,
+				$wpdb->esc_like( 'theme_image_id' )
+			)
+		);
+
+		if ( ! empty( $column_exists ) ) {
+			$wpdb->query(
+				$wpdb->prepare(
+					'ALTER TABLE %i DROP COLUMN theme_image_id',
 					$table_name
 				)
 			);

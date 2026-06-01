@@ -359,7 +359,6 @@ class RecurrenceService {
 					'link_type'      => $master->link_type,
 					'external_url'   => $master->external_url,
 					'venue_id'       => $master->venue_id,
-					'theme_image_id' => $master->theme_image_id,
 				)
 			);
 
