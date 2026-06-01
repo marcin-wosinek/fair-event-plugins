@@ -1106,10 +1106,10 @@ export default function ManageEventApp() {
 								options={[
 									{
 										label: __(
-											'No link (standalone event)',
+											'WordPress Post (entry)',
 											'fair-events'
 										),
-										value: 'none',
+										value: 'post',
 									},
 									{
 										label: __(
@@ -1120,10 +1120,10 @@ export default function ManageEventApp() {
 									},
 									{
 										label: __(
-											'WordPress Post',
+											'No link (standalone event)',
 											'fair-events'
 										),
-										value: 'post',
+										value: 'none',
 									},
 								]}
 								onChange={setLinkType}
@@ -1158,51 +1158,65 @@ export default function ManageEventApp() {
 									>
 										{__('Create New Post', 'fair-events')}
 									</Button>
+
+									<VStack spacing={2}>
+										<h3 style={{ margin: 0 }}>
+											{__(
+												'Link Additional Post',
+												'fair-events'
+											)}
+										</h3>
+										<TextControl
+											label={__(
+												'Search posts by title',
+												'fair-events'
+											)}
+											onChange={handleSearchPosts}
+											placeholder={__(
+												'Start typing to search...',
+												'fair-events'
+											)}
+										/>
+										{searchResults.length > 0 && (
+											<SelectControl
+												label={__(
+													'Select a post',
+													'fair-events'
+												)}
+												value={linkPostId}
+												options={[
+													{
+														label: __(
+															'Select...',
+															'fair-events'
+														),
+														value: '',
+													},
+													...searchResults.map(
+														(r) => ({
+															label: r.title,
+															value: String(r.id),
+														})
+													),
+												]}
+												onChange={setLinkPostId}
+											/>
+										)}
+										{linkPostId && (
+											<Button
+												variant="primary"
+												onClick={handleLinkPost}
+												isBusy={linkingPost}
+												disabled={linkingPost}
+											>
+												{__('Link Post', 'fair-events')}
+											</Button>
+										)}
+									</VStack>
 								</>
 							)}
 						</>
 					)}
-
-					<VStack spacing={2}>
-						<h3 style={{ margin: 0 }}>
-							{__('Link Additional Post', 'fair-events')}
-						</h3>
-						<TextControl
-							label={__('Search posts by title', 'fair-events')}
-							onChange={handleSearchPosts}
-							placeholder={__(
-								'Start typing to search...',
-								'fair-events'
-							)}
-						/>
-						{searchResults.length > 0 && (
-							<SelectControl
-								label={__('Select a post', 'fair-events')}
-								value={linkPostId}
-								options={[
-									{
-										label: __('Select...', 'fair-events'),
-										value: '',
-									},
-									...searchResults.map((r) => ({
-										label: r.title,
-										value: String(r.id),
-									})),
-								]}
-								onChange={setLinkPostId}
-							/>
-						)}
-						{linkPostId && (
-							<Button
-								variant="primary"
-								onClick={handleLinkPost}
-								isBusy={linkingPost}
-								disabled={linkingPost}
-							>
-								{__('Link Post', 'fair-events')}
-							</Button>
-						)}
-					</VStack>
 				</VStack>
 			</CardBody>
 		</Card>
