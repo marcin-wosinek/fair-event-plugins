@@ -63,7 +63,7 @@ class OpenGraphHooks {
 		$this->output_meta_tag( 'og:type', 'website' );
 		$this->output_meta_tag( 'og:site_name', get_bloginfo( 'name' ) );
 
-		$image_url = $this->get_image_url( $post_id, $event_date );
+		$image_url = $this->get_image_url( $post_id );
 		if ( $image_url ) {
 			$this->output_meta_tag( 'og:image', $image_url );
 		}
@@ -107,7 +107,7 @@ class OpenGraphHooks {
 		}
 
 		$post      = get_post( $post_id );
-		$image_url = $this->get_image_url( $post_id, $event_date );
+		$image_url = $this->get_image_url( $post_id );
 
 		$this->output_name_meta_tag( 'twitter:card', $image_url ? 'summary_large_image' : 'summary' );
 		$this->output_name_meta_tag( 'twitter:title', $this->get_title( $post, $event_date ) );
@@ -165,7 +165,7 @@ class OpenGraphHooks {
 			$data['description'] = $description;
 		}
 
-		$image_url = $this->get_image_url( $post_id, $event_date );
+		$image_url = $this->get_image_url( $post_id );
 		if ( $image_url ) {
 			$data['image'] = $image_url;
 		}
@@ -267,31 +267,17 @@ class OpenGraphHooks {
 	/**
 	 * Get the image URL for OG tag
 	 *
-	 * Checks theme_image_id first, then falls back to post featured image.
-	 *
-	 * @param int        $post_id    Post ID.
-	 * @param EventDates $event_date Event date object.
+	 * @param int $post_id Post ID.
 	 * @return string|null Image URL or null.
 	 */
-	private function get_image_url( $post_id, $event_date ) {
-		// Try theme image first.
-		if ( ! empty( $event_date->theme_image_id ) ) {
-			$url = wp_get_attachment_url( $event_date->theme_image_id );
-			if ( $url ) {
-				return $url;
-			}
-		}
-
-		// Fall back to post featured image.
+	private function get_image_url( $post_id ) {
 		$thumbnail_id = get_post_thumbnail_id( $post_id );
-		if ( $thumbnail_id ) {
-			$url = wp_get_attachment_url( $thumbnail_id );
-			if ( $url ) {
-				return $url;
-			}
+		if ( ! $thumbnail_id ) {
+			return null;
 		}
 
-		return null;
+		$url = wp_get_attachment_url( $thumbnail_id );
+		return $url ? $url : null;
 	}
 
 	/**
