@@ -1388,9 +1388,6 @@ class EventDatesController extends WP_REST_Controller {
 		// Add categories.
 		$data['categories'] = $this->get_event_date_categories( $event_date );
 
-		// Add image exports.
-		$data['image_exports'] = ImageExportController::get_exports_for_event_date( $event_date->id );
-
 		// Add all linked posts from junction table.
 		// Generated occurrences inherit linked posts from their master event date.
 		$link_source = $event_date;

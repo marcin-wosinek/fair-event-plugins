@@ -33,7 +33,6 @@ import {
 import { __ } from '@wordpress/i18n';
 import apiFetch from '@wordpress/api-fetch';
 import { DurationOptions, calculateDuration } from 'fair-events-shared';
-import ImageExports from './ImageExports.js';
 import EventFinance from './EventFinance.js';
 import EventAudience from './EventAudience.js';
 import GroupRules from './GroupRules.js';
@@ -977,15 +976,6 @@ export default function ManageEventApp() {
 					</VStack>
 				</CardBody>
 			</Card>
-
-			{galleriesEnabled && (
-				<ImageExports
-					eventDateId={eventDateId}
-					themeImageId={themeImageId}
-					themeImageUrl={themeImageUrl}
-					initialExports={eventDate?.image_exports || []}
-				/>
-			)}
 		</>
 	);
 

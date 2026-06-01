@@ -169,7 +169,7 @@ class Plugin {
 			);
 		}
 
-		// `galleries` bundle — per-event photo galleries + image export.
+		// `galleries` bundle — per-event photo galleries.
 		if ( Features::is_enabled( 'galleries' ) ) {
 			add_action(
 				'rest_api_init',
@@ -191,14 +191,6 @@ class Plugin {
 				'rest_api_init',
 				function () {
 					$controller = new \FairEvents\API\PhotoDownloadController();
-					$controller->register_routes();
-				}
-			);
-
-			add_action(
-				'rest_api_init',
-				function () {
-					$controller = new \FairEvents\API\ImageExportController();
 					$controller->register_routes();
 				}
 			);
