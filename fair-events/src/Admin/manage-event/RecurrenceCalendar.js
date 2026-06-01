@@ -7,7 +7,7 @@
  * @package FairEvents
  */
 
-import { useState, useMemo } from '@wordpress/element';
+import { useState, useMemo, useEffect } from '@wordpress/element';
 import {
 	Button,
 	Card,
@@ -78,9 +78,19 @@ export default function RecurrenceCalendar({
 		return result;
 	}, [allDates]);
 
-	// Navigation state: show months in pages
+	// Navigation state: show months in pages, sized to viewport width.
 	const [startIndex, setStartIndex] = useState(0);
-	const visibleCount = 3;
+	const [visibleCount, setVisibleCount] = useState(() =>
+		computeVisibleMonths(
+			typeof window !== 'undefined' ? window.innerWidth : 1280
+		)
+	);
+	useEffect(() => {
+		const onResize = () =>
+			setVisibleCount(computeVisibleMonths(window.innerWidth));
+		window.addEventListener('resize', onResize);
+		return () => window.removeEventListener('resize', onResize);
+	}, []);
 	const visibleMonths = months.slice(startIndex, startIndex + visibleCount);
 	const canGoBack = startIndex > 0;
 	const canGoForward = startIndex + visibleCount < months.length;
@@ -408,4 +418,12 @@ function MiniMonth({
 			</div>
 		</div>
 	);
+}
+
+function computeVisibleMonths(width) {
+	if (width < 600) return 1;
+	if (width < 900) return 2;
+	if (width < 1200) return 3;
+	if (width < 1500) return 4;
+	return 5;
 }
