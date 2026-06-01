@@ -104,9 +104,6 @@ class Plugin {
 	private function load_settings() {
 		$settings = new \FairEvents\Settings\Settings();
 		$settings->init();
-
-		$facebook_settings = new \FairEvents\Settings\FacebookSettings();
-		$facebook_settings->init();
 	}
 
 	/**
@@ -162,14 +159,6 @@ class Plugin {
 				'rest_api_init',
 				function () {
 					$controller = new \FairEvents\API\WeeklyEventsController();
-					$controller->register_routes();
-				}
-			);
-
-			add_action(
-				'rest_api_init',
-				function () {
-					$controller = new \FairEvents\API\FacebookController();
 					$controller->register_routes();
 				}
 			);
