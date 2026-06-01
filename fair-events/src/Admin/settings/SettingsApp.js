@@ -9,13 +9,12 @@ import { Notice, TabPanel } from '@wordpress/components';
  * Internal dependencies
  */
 import GeneralTab from './GeneralTab.js';
-import FacebookTab from './FacebookTab.js';
 import FeaturesTab from './FeaturesTab.js';
 
 /**
  * Settings App Component
  *
- * Main settings page with tabs for General and Facebook settings.
+ * Main settings page with tabs for General and Features settings.
  *
  * @return {JSX.Element} The Settings app component
  */
@@ -48,10 +47,6 @@ export default function SettingsApp() {
 						name: 'features',
 						title: __('Features', 'fair-events'),
 					},
-					{
-						name: 'facebook',
-						title: __('Facebook', 'fair-events'),
-					},
 				]}
 			>
 				{(tab) => (
@@ -61,9 +56,6 @@ export default function SettingsApp() {
 						)}
 						{tab.name === 'features' && (
 							<FeaturesTab onNotice={setNotice} />
-						)}
-						{tab.name === 'facebook' && (
-							<FacebookTab onNotice={setNotice} />
 						)}
 					</div>
 				)}
