@@ -691,214 +691,276 @@ export default function ManageEventApp() {
 
 	const renderEventDetailsTab = () => (
 		<>
-			<Card>
-				<CardHeader>
-					<h2>{__('Event Details', 'fair-events')}</h2>
-				</CardHeader>
-				<CardBody>
-					<VStack spacing={4}>
-						<TextControl
-							label={__('Title', 'fair-events')}
-							value={title}
-							onChange={setTitle}
-							required
-						/>
-
-						<CheckboxControl
-							label={__('All day', 'fair-events')}
-							checked={allDay}
-							onChange={setAllDay}
-						/>
-
-						{allDay ? (
-							<HStack spacing={4} alignment="top" wrap>
+			<div className="fair-events-event-details-grid">
+				<Card className="fair-events-event-details-card">
+					<CardHeader>
+						<h2>{__('Details', 'fair-events')}</h2>
+					</CardHeader>
+					<CardBody>
+						<div className="fair-events-event-details-columns">
+							<VStack spacing={4}>
 								<TextControl
-									label={__('Start date', 'fair-events')}
-									type="date"
-									value={startDate}
-									onChange={setStartDate}
+									label={__('Title', 'fair-events')}
+									value={title}
+									onChange={setTitle}
 									required
 								/>
-								<TextControl
-									label={__('End date', 'fair-events')}
-									type="date"
-									value={endDate}
-									onChange={setEndDate}
-									required
-								/>
-							</HStack>
-						) : (
-							<HStack spacing={4} alignment="top" wrap>
-								<TextControl
-									label={__('Start date', 'fair-events')}
-									type="date"
-									value={startDate}
-									onChange={setStartDate}
-									required
-								/>
-								<TextControl
-									label={__('Start time', 'fair-events')}
-									type="time"
-									value={startTime}
-									onChange={setStartTime}
-									required
-								/>
-								<TextControl
-									label={__('End date', 'fair-events')}
-									type="date"
-									value={endDate}
-									onChange={setEndDate}
-									required
-								/>
-								<TextControl
-									label={__('End time', 'fair-events')}
-									type="time"
-									value={endTime}
-									onChange={setEndTime}
-									required
-								/>
-							</HStack>
-						)}
 
-						<SelectControl
-							label={__('Event length', 'fair-events')}
-							value={String(durationValue)}
-							options={durationOptions.map((opt) => ({
-								label: opt.label,
-								value: String(opt.value),
-							}))}
-							onChange={handleDurationChange}
-						/>
+								<CheckboxControl
+									label={__('All day', 'fair-events')}
+									checked={allDay}
+									onChange={setAllDay}
+								/>
 
-						<SelectControl
-							label={__('Venue', 'fair-events')}
-							value={venueId}
-							options={venueOptions}
-							onChange={setVenueId}
-						/>
-
-						<FormTokenField
-							label={__('Categories', 'fair-events')}
-							value={categories.map((id) => {
-								const cat = availableCategories.find(
-									(c) => c.id === id
-								);
-								return cat ? cat.name : '';
-							})}
-							suggestions={availableCategories.map((c) => c.name)}
-							onChange={(tokens) => {
-								const ids = tokens
-									.map((token) => {
-										const cat = availableCategories.find(
-											(c) => c.name === token
-										);
-										return cat ? cat.id : null;
-									})
-									.filter(Boolean);
-								setCategories(ids);
-							}}
-							__experimentalExpandOnFocus
-						/>
-
-						{eventDate.occurrence_type !== 'generated' && (
-							<CheckboxControl
-								label={__('Repeat this event', 'fair-events')}
-								checked={recurrenceEnabled}
-								onChange={setRecurrenceEnabled}
-							/>
-						)}
-
-						{recurrenceEnabled &&
-							eventDate.occurrence_type !== 'generated' && (
-								<VStack spacing={3}>
-									<SelectControl
-										label={__('Frequency', 'fair-events')}
-										value={recurrenceFrequency}
-										options={[
-											{
-												label: __(
-													'Daily',
-													'fair-events'
-												),
-												value: 'daily',
-											},
-											{
-												label: __(
-													'Weekly',
-													'fair-events'
-												),
-												value: 'weekly',
-											},
-											{
-												label: __(
-													'Biweekly',
-													'fair-events'
-												),
-												value: 'biweekly',
-											},
-											{
-												label: __(
-													'Monthly',
-													'fair-events'
-												),
-												value: 'monthly',
-											},
-										]}
-										onChange={setRecurrenceFrequency}
-									/>
-									<SelectControl
-										label={__('Ends', 'fair-events')}
-										value={recurrenceEndType}
-										options={[
-											{
-												label: __(
-													'After number of occurrences',
-													'fair-events'
-												),
-												value: 'count',
-											},
-											{
-												label: __(
-													'On a specific date',
-													'fair-events'
-												),
-												value: 'until',
-											},
-										]}
-										onChange={setRecurrenceEndType}
-									/>
-									{recurrenceEndType === 'count' && (
-										<NumberControl
+								{allDay ? (
+									<HStack spacing={4} alignment="top" wrap>
+										<TextControl
 											label={__(
-												'Number of occurrences',
+												'Start date',
 												'fair-events'
 											)}
-											value={recurrenceCount}
-											onChange={(val) =>
-												setRecurrenceCount(
-													parseInt(val, 10) || 1
-												)
-											}
-											min={1}
-											max={365}
+											type="date"
+											value={startDate}
+											onChange={setStartDate}
+											required
 										/>
-									)}
-									{recurrenceEndType === 'until' && (
 										<TextControl
 											label={__(
 												'End date',
 												'fair-events'
 											)}
 											type="date"
-											value={recurrenceUntil}
-											onChange={setRecurrenceUntil}
+											value={endDate}
+											onChange={setEndDate}
+											required
+										/>
+									</HStack>
+								) : (
+									<HStack spacing={4} alignment="top" wrap>
+										<TextControl
+											label={__(
+												'Start date',
+												'fair-events'
+											)}
+											type="date"
+											value={startDate}
+											onChange={setStartDate}
+											required
+										/>
+										<TextControl
+											label={__(
+												'Start time',
+												'fair-events'
+											)}
+											type="time"
+											value={startTime}
+											onChange={setStartTime}
+											required
+										/>
+										<TextControl
+											label={__(
+												'End date',
+												'fair-events'
+											)}
+											type="date"
+											value={endDate}
+											onChange={setEndDate}
+											required
+										/>
+										<TextControl
+											label={__(
+												'End time',
+												'fair-events'
+											)}
+											type="time"
+											value={endTime}
+											onChange={setEndTime}
+											required
+										/>
+									</HStack>
+								)}
+
+								<SelectControl
+									label={__('Event length', 'fair-events')}
+									value={String(durationValue)}
+									options={durationOptions.map((opt) => ({
+										label: opt.label,
+										value: String(opt.value),
+									}))}
+									onChange={handleDurationChange}
+								/>
+							</VStack>
+
+							<VStack spacing={4}>
+								<FormTokenField
+									label={__('Categories', 'fair-events')}
+									value={categories.map((id) => {
+										const cat = availableCategories.find(
+											(c) => c.id === id
+										);
+										return cat ? cat.name : '';
+									})}
+									suggestions={availableCategories.map(
+										(c) => c.name
+									)}
+									onChange={(tokens) => {
+										const ids = tokens
+											.map((token) => {
+												const cat =
+													availableCategories.find(
+														(c) => c.name === token
+													);
+												return cat ? cat.id : null;
+											})
+											.filter(Boolean);
+										setCategories(ids);
+									}}
+									__experimentalExpandOnFocus
+								/>
+
+								<SelectControl
+									label={__('Venue', 'fair-events')}
+									value={venueId}
+									options={venueOptions}
+									onChange={setVenueId}
+								/>
+							</VStack>
+						</div>
+					</CardBody>
+				</Card>
+
+				{eventDate.occurrence_type !== 'generated' && (
+					<Card className="fair-events-event-details-card">
+						<CardHeader>
+							<h2>{__('Recurrence', 'fair-events')}</h2>
+						</CardHeader>
+						<CardBody>
+							<VStack spacing={4}>
+								<CheckboxControl
+									label={__(
+										'Repeat this event',
+										'fair-events'
+									)}
+									checked={recurrenceEnabled}
+									onChange={setRecurrenceEnabled}
+								/>
+
+								{recurrenceEnabled && (
+									<VStack spacing={3}>
+										<SelectControl
+											label={__(
+												'Frequency',
+												'fair-events'
+											)}
+											value={recurrenceFrequency}
+											options={[
+												{
+													label: __(
+														'Daily',
+														'fair-events'
+													),
+													value: 'daily',
+												},
+												{
+													label: __(
+														'Weekly',
+														'fair-events'
+													),
+													value: 'weekly',
+												},
+												{
+													label: __(
+														'Biweekly',
+														'fair-events'
+													),
+													value: 'biweekly',
+												},
+												{
+													label: __(
+														'Monthly',
+														'fair-events'
+													),
+													value: 'monthly',
+												},
+											]}
+											onChange={setRecurrenceFrequency}
+										/>
+										<SelectControl
+											label={__('Ends', 'fair-events')}
+											value={recurrenceEndType}
+											options={[
+												{
+													label: __(
+														'After number of occurrences',
+														'fair-events'
+													),
+													value: 'count',
+												},
+												{
+													label: __(
+														'On a specific date',
+														'fair-events'
+													),
+													value: 'until',
+												},
+											]}
+											onChange={setRecurrenceEndType}
+										/>
+										{recurrenceEndType === 'count' && (
+											<NumberControl
+												label={__(
+													'Number of occurrences',
+													'fair-events'
+												)}
+												value={recurrenceCount}
+												onChange={(val) =>
+													setRecurrenceCount(
+														parseInt(val, 10) || 1
+													)
+												}
+												min={1}
+												max={365}
+											/>
+										)}
+										{recurrenceEndType === 'until' && (
+											<TextControl
+												label={__(
+													'End date',
+													'fair-events'
+												)}
+												type="date"
+												value={recurrenceUntil}
+												onChange={setRecurrenceUntil}
+											/>
+										)}
+									</VStack>
+								)}
+
+								{eventDate.occurrence_type === 'master' &&
+									(eventDate.generated_occurrences?.length >
+										0 ||
+										eventDate.exdates?.length > 0) && (
+										<RecurrenceCalendar
+											generatedOccurrences={
+												eventDate.generated_occurrences
+											}
+											exdates={eventDate.exdates}
+											masterDate={
+												eventDate.start_datetime?.split(
+													' '
+												)[0]
+											}
+											manageEventUrl={`${manageEventUrl}&event_date_id=${eventDateId}`}
+											onToggleExdate={handleToggleExdate}
+											togglingExdate={togglingExdate}
+											embedded
 										/>
 									)}
-								</VStack>
-							)}
-					</VStack>
-				</CardBody>
-			</Card>
+							</VStack>
+						</CardBody>
+					</Card>
+				)}
+			</div>
 
 			{eventDate.occurrence_type === 'generated' && eventDate.master && (
 				<Card style={{ marginTop: '16px' }}>
@@ -920,19 +982,6 @@ export default function ManageEventApp() {
 					</CardBody>
 				</Card>
 			)}
-
-			{eventDate.occurrence_type === 'master' &&
-				(eventDate.generated_occurrences?.length > 0 ||
-					eventDate.exdates?.length > 0) && (
-					<RecurrenceCalendar
-						generatedOccurrences={eventDate.generated_occurrences}
-						exdates={eventDate.exdates}
-						masterDate={eventDate.start_datetime?.split(' ')[0]}
-						manageEventUrl={`${manageEventUrl}&event_date_id=${eventDateId}`}
-						onToggleExdate={handleToggleExdate}
-						togglingExdate={togglingExdate}
-					/>
-				)}
 		</>
 	);
 
@@ -1168,6 +1217,25 @@ export default function ManageEventApp() {
 .fair-events-manage-event .components-card__body > * { max-width: 600px; }
 .fair-events-manage-event .fair-events-tickets .components-card__body > * { max-width: none; }
 .fair-events-manage-event .fair-events-photos .components-card__body > * { max-width: none; }
+.fair-events-manage-event .fair-events-event-details-card .components-card__body > * { max-width: none; }
+/* Stack the event-details cards vertically, each spanning the full
+   available width — matches the Audience tab idiom. */
+.fair-events-manage-event .fair-events-event-details-grid {
+	display: flex;
+	flex-direction: column;
+	gap: 16px;
+}
+.fair-events-manage-event .fair-events-event-details-columns {
+	display: grid;
+	grid-template-columns: 1fr;
+	gap: 24px;
+	align-items: start;
+}
+@media (min-width: 960px) {
+	.fair-events-manage-event .fair-events-event-details-columns {
+		grid-template-columns: 1fr 1fr;
+	}
+}
 /* Let the tab bar wrap onto multiple rows instead of overflowing the
    viewport on narrow screens. Harmless on desktop, where the tabs fit on
    one row. */

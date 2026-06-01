@@ -30,6 +30,7 @@ export default function RecurrenceCalendar({
 	manageEventUrl,
 	onToggleExdate,
 	togglingExdate,
+	embedded = false,
 }) {
 	const occurrences = generatedOccurrences || [];
 	const cancelledDates = exdates || [];
@@ -92,121 +93,131 @@ export default function RecurrenceCalendar({
 
 	if (allDates.length === 0) return null;
 
+	const navControls = months.length > visibleCount && (
+		<HStack spacing={1}>
+			<Button
+				icon="arrow-left-alt2"
+				size="small"
+				disabled={!canGoBack}
+				label={__('Previous months', 'fair-events')}
+				onClick={() =>
+					setStartIndex(Math.max(0, startIndex - visibleCount))
+				}
+			/>
+			<Button
+				icon="arrow-right-alt2"
+				size="small"
+				disabled={!canGoForward}
+				label={__('Next months', 'fair-events')}
+				onClick={() =>
+					setStartIndex(
+						Math.min(months.length - 1, startIndex + visibleCount)
+					)
+				}
+			/>
+		</HStack>
+	);
+
+	const calendarBody = (
+		<>
+			{navControls && (
+				<HStack
+					alignment="center"
+					style={{ marginBottom: '12px', justifyContent: 'flex-end' }}
+				>
+					{navControls}
+				</HStack>
+			)}
+			<div
+				style={{
+					display: 'flex',
+					gap: '24px',
+					flexWrap: 'wrap',
+				}}
+			>
+				{visibleMonths.map((monthDate) => (
+					<MiniMonth
+						key={`${monthDate.getFullYear()}-${monthDate.getMonth()}`}
+						monthDate={monthDate}
+						weekdayLabels={weekdayLabels}
+						occurrenceByDate={occurrenceByDate}
+						cancelledSet={cancelledSet}
+						masterDate={masterDate}
+						todayStr={todayStr}
+						manageEventUrl={manageEventUrl}
+						onToggleExdate={onToggleExdate}
+						togglingExdate={togglingExdate}
+					/>
+				))}
+			</div>
+			<div
+				style={{
+					marginTop: '16px',
+					display: 'flex',
+					gap: '16px',
+					fontSize: '12px',
+					color: '#757575',
+				}}
+			>
+				<span>
+					<span
+						style={{
+							display: 'inline-block',
+							width: '12px',
+							height: '12px',
+							background: '#007cba',
+							borderRadius: '2px',
+							verticalAlign: 'middle',
+							marginRight: '4px',
+						}}
+					/>
+					{__('Master', 'fair-events')}
+				</span>
+				<span>
+					<span
+						style={{
+							display: 'inline-block',
+							width: '12px',
+							height: '12px',
+							background: '#4ab866',
+							borderRadius: '2px',
+							verticalAlign: 'middle',
+							marginRight: '4px',
+						}}
+					/>
+					{__('Active', 'fair-events')}
+				</span>
+				<span>
+					<span
+						style={{
+							display: 'inline-block',
+							width: '12px',
+							height: '12px',
+							background: '#cc1818',
+							borderRadius: '2px',
+							verticalAlign: 'middle',
+							marginRight: '4px',
+							opacity: 0.6,
+						}}
+					/>
+					{__('Cancelled', 'fair-events')}
+				</span>
+			</div>
+		</>
+	);
+
+	if (embedded) {
+		return calendarBody;
+	}
+
 	return (
 		<Card style={{ marginTop: '16px' }}>
 			<CardHeader>
-				<HStack alignment="center">
-					<h2 style={{ margin: 0, flex: 1 }}>
-						{__('Recurring Occurrences', 'fair-events')}
-					</h2>
-					{months.length > visibleCount && (
-						<HStack spacing={1}>
-							<Button
-								icon="arrow-left-alt2"
-								size="small"
-								disabled={!canGoBack}
-								label={__('Previous months', 'fair-events')}
-								onClick={() =>
-									setStartIndex(
-										Math.max(0, startIndex - visibleCount)
-									)
-								}
-							/>
-							<Button
-								icon="arrow-right-alt2"
-								size="small"
-								disabled={!canGoForward}
-								label={__('Next months', 'fair-events')}
-								onClick={() =>
-									setStartIndex(
-										Math.min(
-											months.length - 1,
-											startIndex + visibleCount
-										)
-									)
-								}
-							/>
-						</HStack>
-					)}
-				</HStack>
+				<h2 style={{ margin: 0 }}>
+					{__('Recurring Occurrences', 'fair-events')}
+				</h2>
 			</CardHeader>
-			<CardBody>
-				<div
-					style={{
-						display: 'flex',
-						gap: '24px',
-						flexWrap: 'wrap',
-					}}
-				>
-					{visibleMonths.map((monthDate) => (
-						<MiniMonth
-							key={`${monthDate.getFullYear()}-${monthDate.getMonth()}`}
-							monthDate={monthDate}
-							weekdayLabels={weekdayLabels}
-							occurrenceByDate={occurrenceByDate}
-							cancelledSet={cancelledSet}
-							masterDate={masterDate}
-							todayStr={todayStr}
-							manageEventUrl={manageEventUrl}
-							onToggleExdate={onToggleExdate}
-							togglingExdate={togglingExdate}
-						/>
-					))}
-				</div>
-				<div
-					style={{
-						marginTop: '16px',
-						display: 'flex',
-						gap: '16px',
-						fontSize: '12px',
-						color: '#757575',
-					}}
-				>
-					<span>
-						<span
-							style={{
-								display: 'inline-block',
-								width: '12px',
-								height: '12px',
-								background: '#007cba',
-								borderRadius: '2px',
-								verticalAlign: 'middle',
-								marginRight: '4px',
-							}}
-						/>
-						{__('Master', 'fair-events')}
-					</span>
-					<span>
-						<span
-							style={{
-								display: 'inline-block',
-								width: '12px',
-								height: '12px',
-								background: '#4ab866',
-								borderRadius: '2px',
-								verticalAlign: 'middle',
-								marginRight: '4px',
-							}}
-						/>
-						{__('Active', 'fair-events')}
-					</span>
-					<span>
-						<span
-							style={{
-								display: 'inline-block',
-								width: '12px',
-								height: '12px',
-								background: '#cc1818',
-								borderRadius: '2px',
-								verticalAlign: 'middle',
-								marginRight: '4px',
-								opacity: 0.6,
-							}}
-						/>
-						{__('Cancelled', 'fair-events')}
-					</span>
-				</div>
-			</CardBody>
+			<CardBody>{calendarBody}</CardBody>
 		</Card>
 	);
 }
