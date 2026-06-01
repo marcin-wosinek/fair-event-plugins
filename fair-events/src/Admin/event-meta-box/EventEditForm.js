@@ -36,6 +36,8 @@ export default function EventEditForm({
 	manageEventUrl,
 	postId,
 	postType,
+	onUnlink,
+	unlinking,
 }) {
 	const [loading, setLoading] = useState(true);
 	const [saving, setSaving] = useState(false);
@@ -501,31 +503,38 @@ export default function EventEditForm({
 				</VStack>
 			)}
 
-			<Button
-				variant="primary"
-				onClick={handleSave}
-				isBusy={saving}
-				disabled={saving}
+			<div
 				style={{
-					width: '100%',
-					justifyContent: 'center',
+					display: 'flex',
+					gap: '8px',
+					flexWrap: 'wrap',
 				}}
 			>
-				{__('Save Event', 'fair-events')}
-			</Button>
-
-			{manageEventUrl && (
 				<Button
-					variant="secondary"
-					href={manageEventUrl}
-					style={{
-						width: '100%',
-						justifyContent: 'center',
-					}}
+					variant="primary"
+					onClick={handleSave}
+					isBusy={saving}
+					disabled={saving || unlinking}
 				>
-					{__('Edit Full Details', 'fair-events')}
+					{__('Save Event', 'fair-events')}
 				</Button>
-			)}
+				{manageEventUrl && (
+					<Button variant="secondary" href={manageEventUrl}>
+						{__('Edit Full Details', 'fair-events')}
+					</Button>
+				)}
+				{onUnlink && (
+					<Button
+						variant="tertiary"
+						isDestructive
+						onClick={onUnlink}
+						isBusy={unlinking}
+						disabled={saving || unlinking}
+					>
+						{__('Unlink from event', 'fair-events')}
+					</Button>
+				)}
+			</div>
 		</VStack>
 	);
 }
