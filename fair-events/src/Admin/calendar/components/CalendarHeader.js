@@ -27,7 +27,7 @@ export default function CalendarHeader({
 				<Button variant="secondary" onClick={onPrevMonth}>
 					{__('Previous', 'fair-events')}
 				</Button>
-				<Button variant="secondary" onClick={onToday}>
+				<Button variant="primary" onClick={onToday}>
 					{__('Today', 'fair-events')}
 				</Button>
 				<Button variant="secondary" onClick={onNextMonth}>
