@@ -81,6 +81,7 @@ This allows you to easily track releases for each plugin individually.
 3. **Commit and push** to `main`
 4. **GitHub Action** creates release PR
 5. **Merge PR** → Automatic tag creation: `fair-events@1.1.0`
+6. **Publish to wordpress.org** → Run the [Publish to WordPress.org SVN](./DEPLOYMENT.md#publishing-to-wordpressorg-svn) workflow with the new tag (dry-run first, then live)
 
 ## ⚙️ WordPress Plugin Header Sync
 

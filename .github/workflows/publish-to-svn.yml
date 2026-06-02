@@ -1,0 +1,126 @@
+name: Publish to WordPress.org SVN
+
+permissions:
+    contents: read
+
+on:
+    workflow_dispatch:
+        inputs:
+            plugin:
+                description: Plugin to publish
+                required: true
+                type: choice
+                options:
+                    - fair-events
+                    - fair-audience
+                    - fair-timetable
+            version:
+                description: Version to publish (semver, e.g. 1.2.3)
+                required: true
+                type: string
+            dry_run:
+                description: Dry run (skip svn ci, only print svn status)
+                required: true
+                type: boolean
+                default: true
+
+jobs:
+    publish:
+        name: Publish ${{ inputs.plugin }} ${{ inputs.version }}
+        runs-on: ubuntu-latest
+
+        steps:
+            - name: Validate version input
+              run: |
+                  if [[ ! "${{ inputs.version }}" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+                      echo "::error::version '${{ inputs.version }}' is not valid semver (expected MAJOR.MINOR.PATCH)"
+                      exit 1
+                  fi
+
+            - name: Checkout tag ${{ inputs.plugin }}@${{ inputs.version }}
+              uses: actions/checkout@v6
+              with:
+                  ref: ${{ inputs.plugin }}@${{ inputs.version }}
+                  fetch-depth: 1
+
+            - name: Setup PHP
+              uses: shivammathur/setup-php@fcafdd6392932010c2bd5094439b8e33be2a8a09 # 2.37.0
+              with:
+                  php-version: '8.3'
+                  extensions: mbstring, intl, zip
+                  coverage: none
+
+            - name: Setup Node.js
+              uses: actions/setup-node@v6
+              with:
+                  node-version: '24'
+
+            - name: Install Subversion
+              run: sudo apt-get update && sudo apt-get install -y subversion
+
+            - name: Install npm dependencies
+              run: npm ci --prefer-offline
+
+            - name: Install production PHP dependencies in all plugins
+              run: npm run composer:install:prod
+
+            - name: Install WP-CLI
+              run: |
+                  curl -L -o wp-cli.phar https://github.com/wp-cli/wp-cli/releases/download/v2.12.0/wp-cli-2.12.0.phar
+                  echo "be928f6b8ca1e8dfb9d2f4b75a13aa4aee0896f8a9a0a1c45cd5d2c98605e6172e6d014dda2e27f88c98befc16c040cbb2bd1bfa121510ea5cdf5f6a30fe8832  wp-cli.phar" | sha512sum -c -
+                  chmod +x wp-cli.phar
+                  sudo mv wp-cli.phar /usr/local/bin/wp
+                  wp --info
+
+            - name: Install WP-CLI dist-archive command
+              env:
+                  COMPOSER_HOME: ${{ runner.temp }}/wp-cli-composer
+              run: |
+                  if ! wp dist-archive --help >/dev/null 2>&1; then
+                      for attempt in 1 2 3; do
+                          echo "Installing dist-archive-command (attempt ${attempt})..."
+                          wp package install wp-cli/dist-archive-command:^3.1 && break
+                          echo "Attempt ${attempt} failed; retrying in 15s..."
+                          sleep 15
+                      done
+                  fi
+                  wp dist-archive --help
+
+            - name: Build plugin assets
+              run: npm run build -w ${{ inputs.plugin }}
+
+            - name: Checkout WordPress.org SVN repo
+              run: npm run svn:checkout -w ${{ inputs.plugin }}
+
+            - name: Create SVN tag from dist archive
+              env:
+                  COMPOSER_HOME: ${{ runner.temp }}/wp-cli-composer
+              run: npm run svn:tag:${{ inputs.plugin }}
+
+            - name: Refresh trunk and assets
+              run: npm run svn:copy -w ${{ inputs.plugin }}
+
+            - name: Stage SVN changes
+              working-directory: ${{ inputs.plugin }}/svn
+              run: |
+                  svn add --force trunk assets "tags/${{ inputs.version }}"
+                  echo "=== svn status ==="
+                  svn status
+
+            - name: Commit to WordPress.org SVN
+              if: ${{ inputs.dry_run == false }}
+              working-directory: ${{ inputs.plugin }}/svn
+              env:
+                  SVN_USER: ${{ secrets.WPORG_SVN_USERNAME }}
+                  SVN_PASS: ${{ secrets.WPORG_SVN_PASSWORD }}
+              run: |
+                  svn ci \
+                      -m "Release ${{ inputs.plugin }} ${{ inputs.version }}" \
+                      --username "$SVN_USER" \
+                      --password "$SVN_PASS" \
+                      --non-interactive \
+                      --no-auth-cache
+
+            - name: Dry-run notice
+              if: ${{ inputs.dry_run == true }}
+              run: echo "::notice::dry_run=true — skipped 'svn ci'. Re-run with dry_run=false to publish."
