@@ -111,9 +111,12 @@ In the Events Calendar block settings, use the "Event Display Pattern" dropdown 
 
 == Screenshots ==
 
-1. Event list in WordPress admin
-2. Event editor with meta box for times
-3. Single event display on frontend
+1. Events Calendar admin page with seeded events across the month
+2. All Events admin list with linked posts and link types
+3. Manage Event admin page (Details, Recurrence, Link Options cards)
+4. Events Calendar block on a public page
+5. Event Info block on a single event post (date and venue address)
+6. Add to Calendar block on a single event post
 
 == Changelog ==
 
