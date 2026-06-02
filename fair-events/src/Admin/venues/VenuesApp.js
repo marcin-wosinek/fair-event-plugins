@@ -282,69 +282,64 @@ const VenuesApp = () => {
 	};
 
 	return (
-		<div className="fair-events-venues-page">
-			<Card>
+		<div className="wrap fair-events-venues">
+			<h1>{__('Venues', 'fair-events')}</h1>
+
+			{error && (
+				<Notice
+					status="error"
+					isDismissible
+					onRemove={() => setError(null)}
+				>
+					{error}
+				</Notice>
+			)}
+
+			{success && (
+				<Notice
+					status="success"
+					isDismissible
+					onRemove={() => setSuccess(null)}
+				>
+					{success}
+				</Notice>
+			)}
+
+			<Card style={{ marginTop: '16px' }}>
 				<CardHeader>
-					<HStack justify="space-between">
-						<h1>{__('Venues', 'fair-events')}</h1>
-						<HStack spacing={2} expanded={false}>
-							{selectedVenues.size > 0 && (
-								<Button
-									variant="secondary"
-									onClick={handleExport}
-								>
-									{__('Export Selected', 'fair-events')}
-								</Button>
-							)}
-							<Button
-								variant="secondary"
-								onClick={() =>
-									document
-										.getElementById(
-											'fair-events-venue-import'
-										)
-										.click()
-								}
-								isBusy={isImporting}
-								disabled={isImporting}
-							>
-								{__('Import', 'fair-events')}
+					<h2>{__('All Venues', 'fair-events')}</h2>
+					<HStack spacing={2} expanded={false}>
+						{selectedVenues.size > 0 && (
+							<Button variant="secondary" onClick={handleExport}>
+								{__('Export Selected', 'fair-events')}
 							</Button>
-							<input
-								id="fair-events-venue-import"
-								type="file"
-								accept=".json"
-								style={{ display: 'none' }}
-								onChange={handleImport}
-							/>
-							<Button variant="primary" onClick={handleCreate}>
-								{__('Add New Venue', 'fair-events')}
-							</Button>
-						</HStack>
+						)}
+						<Button
+							variant="secondary"
+							onClick={() =>
+								document
+									.getElementById('fair-events-venue-import')
+									.click()
+							}
+							isBusy={isImporting}
+							disabled={isImporting}
+						>
+							{__('Import', 'fair-events')}
+						</Button>
+						<input
+							id="fair-events-venue-import"
+							type="file"
+							accept=".json"
+							style={{ display: 'none' }}
+							onChange={handleImport}
+						/>
+						<Button variant="primary" onClick={handleCreate}>
+							{__('Add New Venue', 'fair-events')}
+						</Button>
 					</HStack>
 				</CardHeader>
 				<CardBody>
 					<VStack spacing={4}>
-						{error && (
-							<Notice
-								status="error"
-								isDismissible
-								onRemove={() => setError(null)}
-							>
-								{error}
-							</Notice>
-						)}
-
-						{success && (
-							<Notice
-								status="success"
-								isDismissible
-								onRemove={() => setSuccess(null)}
-							>
-								{success}
-							</Notice>
-						)}
-
 						{loading && (
 							<div className="venues-loading">
 								<Spinner />
