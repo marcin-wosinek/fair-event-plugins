@@ -314,6 +314,12 @@ class EventDatesController extends WP_REST_Controller {
 				'type'        => array( 'integer', 'null' ),
 				'required'    => false,
 			),
+			'address'        => array(
+				'description'       => __( 'Free-text address (used when Venues feature is disabled).', 'fair-events' ),
+				'type'              => array( 'string', 'null' ),
+				'required'          => false,
+				'sanitize_callback' => 'sanitize_textarea_field',
+			),
 			'link_type'      => array(
 				'description' => __( 'Link type (post, external, none).', 'fair-events' ),
 				'type'        => 'string',
@@ -738,6 +744,11 @@ class EventDatesController extends WP_REST_Controller {
 
 		if ( $request->has_param( 'venue_id' ) ) {
 			$update_data['venue_id'] = $request->get_param( 'venue_id' );
+		}
+
+		if ( $request->has_param( 'address' ) ) {
+			$address                = $request->get_param( 'address' );
+			$update_data['address'] = ( null === $address || '' === $address ) ? null : $address;
 		}
 
 		$link_type = $request->get_param( 'link_type' );
@@ -1330,6 +1341,7 @@ class EventDatesController extends WP_REST_Controller {
 			'occurrence_type' => $event_date->occurrence_type,
 			'master_id'       => $event_date->master_id,
 			'venue_id'        => $event_date->venue_id,
+			'address'         => $event_date->address,
 			'link_type'       => $event_date->link_type,
 			'external_url'    => $event_date->external_url,
 			'display_url'     => $event_date->get_display_url(),

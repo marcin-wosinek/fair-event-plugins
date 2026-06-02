@@ -16,7 +16,8 @@ domReady(() => {
 	}
 
 	const config = window.fairEventsMetaBox || {};
-	const { postId, postType, eventDateId, manageEventUrl } = config;
+	const { postId, postType, eventDateId, manageEventUrl, enabledFeatures } =
+		config;
 
 	const root = createRoot(container);
 	root.render(
@@ -25,6 +26,7 @@ domReady(() => {
 			postType={postType}
 			eventDateId={eventDateId}
 			manageEventUrl={manageEventUrl}
+			enabledFeatures={enabledFeatures || {}}
 		/>
 	);
 });

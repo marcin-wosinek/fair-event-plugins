@@ -219,6 +219,11 @@ class Installer {
 			self::migrate_to_3_11_0();
 		}
 
+		// Run migration if upgrading from pre-3.12.0 (add address column to event_dates).
+		if ( version_compare( $current_version, '3.12.0', '<' ) ) {
+			self::migrate_to_3_12_0();
+		}
+
 		// Update database version
 		Schema::update_db_version( Schema::DB_VERSION );
 	}
@@ -345,6 +350,10 @@ class Installer {
 
 			if ( version_compare( $current_version, '3.11.0', '<' ) ) {
 				self::migrate_to_3_11_0();
+			}
+
+			if ( version_compare( $current_version, '3.12.0', '<' ) ) {
+				self::migrate_to_3_12_0();
 			}
 
 			// Install/update tables
@@ -1381,6 +1390,38 @@ class Installer {
 			$wpdb->query(
 				$wpdb->prepare(
 					'ALTER TABLE %i DROP COLUMN theme_image_id',
+					$table_name
+				)
+			);
+		}
+	}
+
+	/**
+	 * Migrate to version 3.12.0 - Add address column to event_dates table.
+	 *
+	 * Used as a fallback location for an event's address when the Venues
+	 * feature bundle is disabled, so editors get a simple inline field
+	 * instead of the venue dropdown.
+	 *
+	 * @return void
+	 */
+	private static function migrate_to_3_12_0() {
+		global $wpdb;
+
+		$table_name = $wpdb->prefix . 'fair_event_dates';
+
+		$column_exists = $wpdb->get_results(
+			$wpdb->prepare(
+				'SHOW COLUMNS FROM %i LIKE %s',
+				$table_name,
+				$wpdb->esc_like( 'address' )
+			)
+		);
+
+		if ( empty( $column_exists ) ) {
+			$wpdb->query(
+				$wpdb->prepare(
+					'ALTER TABLE %i ADD COLUMN address TEXT DEFAULT NULL AFTER signup_price',
 					$table_name
 				)
 			);

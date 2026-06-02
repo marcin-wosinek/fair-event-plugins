@@ -38,6 +38,7 @@ export default function EventEditForm({
 	postType,
 	onUnlink,
 	unlinking,
+	venuesEnabled = false,
 }) {
 	const [loading, setLoading] = useState(true);
 	const [saving, setSaving] = useState(false);
@@ -52,6 +53,7 @@ export default function EventEditForm({
 	const [endDate, setEndDate] = useState('');
 	const [endTime, setEndTime] = useState('');
 	const [venueId, setVenueId] = useState('');
+	const [address, setAddress] = useState('');
 
 	// Recurrence state.
 	const [recurrenceEnabled, setRecurrenceEnabled] = useState(false);
@@ -64,7 +66,9 @@ export default function EventEditForm({
 
 	useEffect(() => {
 		loadEventDate();
-		loadVenues();
+		if (venuesEnabled) {
+			loadVenues();
+		}
 	}, [eventDateId]);
 
 	const loadEventDate = async () => {
@@ -100,6 +104,7 @@ export default function EventEditForm({
 	const populateForm = (data) => {
 		setAllDay(data.all_day || false);
 		setVenueId(data.venue_id ? String(data.venue_id) : '');
+		setAddress(data.address || '');
 
 		if (data.start_datetime) {
 			const [sDate, sTime] = data.start_datetime.split(' ');
@@ -291,7 +296,12 @@ export default function EventEditForm({
 					start_datetime: startDate ? startDatetime : null,
 					end_datetime: endDatetime,
 					all_day: allDay,
-					venue_id: venueId ? parseInt(venueId, 10) : null,
+					venue_id: venuesEnabled
+						? venueId
+							? parseInt(venueId, 10)
+							: null
+						: undefined,
+					address: venuesEnabled ? undefined : address,
 					rrule: buildRRule(),
 				},
 			});
@@ -328,6 +338,7 @@ export default function EventEditForm({
 			end_datetime: endDatetime,
 			all_day: allDay,
 			venue_id: venueId ? parseInt(venueId, 10) : null,
+			address,
 			rrule: buildRRule(),
 			occurrence_type: recurrenceEnabled ? 'master' : 'single',
 		});
@@ -338,6 +349,7 @@ export default function EventEditForm({
 		endTime,
 		allDay,
 		venueId,
+		address,
 		recurrenceEnabled,
 		recurrenceFrequency,
 		recurrenceEndType,
@@ -424,12 +436,20 @@ export default function EventEditForm({
 				/>
 			)}
 
-			<SelectControl
-				label={__('Venue', 'fair-events')}
-				value={venueId}
-				options={venueOptions}
-				onChange={setVenueId}
-			/>
+			{venuesEnabled ? (
+				<SelectControl
+					label={__('Venue', 'fair-events')}
+					value={venueId}
+					options={venueOptions}
+					onChange={setVenueId}
+				/>
+			) : (
+				<TextControl
+					label={__('Address', 'fair-events')}
+					value={address}
+					onChange={setAddress}
+				/>
+			)}
 
 			<CheckboxControl
 				label={__('Repeat this event', 'fair-events')}

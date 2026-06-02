@@ -122,6 +122,13 @@ class EventDates {
 	public $signup_price;
 
 	/**
+	 * Free-text address (used when the Venues feature bundle is disabled).
+	 *
+	 * @var string|null
+	 */
+	public $address;
+
+	/**
 	 * Get event dates by event ID
 	 *
 	 * Checks the direct event_id column first (primary post), then falls back
@@ -190,6 +197,7 @@ class EventDates {
 		$event_dates->link_type       = $result->link_type ?? 'post';
 		$event_dates->capacity        = isset( $result->capacity ) && null !== $result->capacity ? (int) $result->capacity : null;
 		$event_dates->signup_price    = isset( $result->signup_price ) && null !== $result->signup_price ? (float) $result->signup_price : null;
+		$event_dates->address         = isset( $result->address ) ? $result->address : null;
 
 		return $event_dates;
 	}
@@ -705,6 +713,7 @@ class EventDates {
 			'link_type'       => '%s',
 			'capacity'        => '%d',
 			'signup_price'    => '%f',
+			'address'         => '%s',
 		);
 
 		$update_data   = array();
