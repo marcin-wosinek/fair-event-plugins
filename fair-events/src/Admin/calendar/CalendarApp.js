@@ -5,7 +5,13 @@
  */
 
 import { useState, useEffect, useCallback, useRef } from '@wordpress/element';
-import { Spinner, Notice } from '@wordpress/components';
+import {
+	Spinner,
+	Notice,
+	Card,
+	CardHeader,
+	CardBody,
+} from '@wordpress/components';
 import { __, sprintf } from '@wordpress/i18n';
 import apiFetch from '@wordpress/api-fetch';
 import { formatLocalDate, calculateLeadingDays } from 'fair-events-shared';
@@ -156,13 +162,6 @@ export default function CalendarApp() {
 		<div className="wrap fair-events-calendar-wrap">
 			<h1>{__('Events Calendar', 'fair-events')}</h1>
 
-			<CalendarHeader
-				currentDate={currentDate}
-				onPrevMonth={handlePrevMonth}
-				onNextMonth={handleNextMonth}
-				onToday={handleToday}
-			/>
-
 			{successNotice && (
 				<Notice
 					status="success"
@@ -188,20 +187,32 @@ export default function CalendarApp() {
 				</div>
 			)}
 
-			{loading ? (
-				<div className="fair-events-calendar-loading">
-					<Spinner />
-				</div>
-			) : (
-				<CalendarGrid
-					currentDate={currentDate}
-					events={events}
-					onAddEvent={handleAddEvent}
-					manageEventUrl={
-						window.fairEventsCalendarData?.manageEventUrl
-					}
-				/>
-			)}
+			<Card style={{ marginTop: '16px' }}>
+				<CardHeader>
+					<CalendarHeader
+						currentDate={currentDate}
+						onPrevMonth={handlePrevMonth}
+						onNextMonth={handleNextMonth}
+						onToday={handleToday}
+					/>
+				</CardHeader>
+				<CardBody className="fair-events-calendar-card-body">
+					{loading ? (
+						<div className="fair-events-calendar-loading">
+							<Spinner />
+						</div>
+					) : (
+						<CalendarGrid
+							currentDate={currentDate}
+							events={events}
+							onAddEvent={handleAddEvent}
+							manageEventUrl={
+								window.fairEventsCalendarData?.manageEventUrl
+							}
+						/>
+					)}
+				</CardBody>
+			</Card>
 
 			{modalDate && (
 				<QuickEventModal

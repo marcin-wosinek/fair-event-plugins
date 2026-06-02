@@ -21,7 +21,8 @@ export default function CalendarHeader({
 	});
 
 	return (
-		<div className="fair-events-calendar-header">
+		<>
+			<h2 className="fair-events-calendar-title">{monthYear}</h2>
 			<div className="fair-events-calendar-nav">
 				<Button variant="secondary" onClick={onPrevMonth}>
 					{__('Previous', 'fair-events')}
@@ -33,7 +34,6 @@ export default function CalendarHeader({
 					{__('Next', 'fair-events')}
 				</Button>
 			</div>
-			<h2 className="fair-events-calendar-title">{monthYear}</h2>
-		</div>
+		</>
 	);
 }
