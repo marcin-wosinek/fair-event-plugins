@@ -152,3 +152,37 @@ Each deployed plugin gets a `.deploy-version` file (written into the extracted p
 
 The CI deploy path remains the canonical/recommended flow — local deploy is an additional, opt-in escape hatch.
 
+## Publishing to WordPress.org SVN
+
+The `.github/workflows/publish-to-svn.yml` workflow publishes a tagged release of a plugin to its [WordPress.org SVN repository](https://plugins.svn.wordpress.org/). It replaces the previous laptop-only flow that ran `npm run svn:checkout` / `svn:tag:*` / `svn:copy` by hand.
+
+### Trigger
+
+Manual only — **Actions → Publish to WordPress.org SVN → Run workflow**. Inputs:
+
+- `plugin` — one of `fair-events`, `fair-audience`, `fair-timetable`.
+- `version` — semver string (e.g. `1.2.3`). Validated against `^[0-9]+\.[0-9]+\.[0-9]+$`; the workflow fails fast on anything else.
+- `dry_run` — defaults to `true`. When `true`, the workflow performs every step except the final `svn ci` and prints `svn status` so you can confirm the staged changes.
+
+The workflow checks out the matching git tag (`<plugin>@<version>`) so the build matches the released commit, not whatever is on `main`.
+
+### Required secrets
+
+Configure these as **repository secrets** (Settings → Secrets and variables → Actions):
+
+- `WPORG_SVN_USERNAME` — WordPress.org committer username.
+- `WPORG_SVN_PASSWORD` — committer password (or app password, if configured on wordpress.org).
+
+The password is only exposed as an env var on the `svn ci` step; it is never passed through workflow `with:` inputs.
+
+### Typical flow
+
+1. Merge a Changesets release PR. This produces a git tag like `fair-events@1.2.3` (see [RELEASES.md](./RELEASES.md)).
+2. Run the workflow with `plugin=fair-events`, `version=1.2.3`, `dry_run=true`.
+3. Inspect the `svn status` output in the job log. Confirm the new `tags/<version>/` directory and any updated `trunk/` / `assets/` files look right.
+4. Re-run with `dry_run=false` to commit to wordpress.org.
+
+### Optional hardening
+
+The commit step can be gated behind a dedicated GitHub Environment (e.g. `wordpress.org`) with required reviewers. Add `environment: wordpress.org` to the `publish` job and move the two secrets onto that environment if you want a second-pair-of-eyes prompt before the live commit.
+
