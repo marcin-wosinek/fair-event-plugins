@@ -825,6 +825,25 @@ class EventDatesController extends WP_REST_Controller {
 				}
 			}
 
+			// Propagate venue/address changes from a master to its existing
+			// generated children. Without this, edits to inherited location
+			// fields would only reach children when the series is fully
+			// regenerated (rrule or dates change).
+			if ( 'master' === $existing->occurrence_type
+				&& ( array_key_exists( 'venue_id', $update_data ) || array_key_exists( 'address', $update_data ) )
+			) {
+				$propagate = array();
+				if ( array_key_exists( 'venue_id', $update_data ) ) {
+					$propagate['venue_id'] = $update_data['venue_id'];
+				}
+				if ( array_key_exists( 'address', $update_data ) ) {
+					$propagate['address'] = $update_data['address'];
+				}
+				foreach ( EventDates::get_generated_by_master_id( $id ) as $child ) {
+					EventDates::update_by_id( $child->id, $propagate );
+				}
+			}
+
 			// When linking a standalone event to a post, copy categories to post taxonomy.
 			if ( $newly_linked ) {
 				$standalone_cat_ids = $this->get_standalone_category_ids( $id );

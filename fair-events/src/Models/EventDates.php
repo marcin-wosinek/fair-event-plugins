@@ -911,9 +911,10 @@ class EventDates {
 			'external_url'    => $data['external_url'] ?? null,
 			'link_type'       => $data['link_type'] ?? 'none',
 			'venue_id'        => $data['venue_id'] ?? null,
+			'address'         => $data['address'] ?? null,
 		);
 
-		$format = array( '%d', '%s', '%s', '%d', '%s', '%d', '%s', '%s', '%s', '%s', '%d' );
+		$format = array( '%d', '%s', '%s', '%d', '%s', '%d', '%s', '%s', '%s', '%s', '%d', '%s' );
 
 		$result = $wpdb->insert( $table_name, $insert_data, $format );
 

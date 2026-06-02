@@ -359,6 +359,7 @@ class RecurrenceService {
 					'link_type'      => $master->link_type,
 					'external_url'   => $master->external_url,
 					'venue_id'       => $master->venue_id,
+					'address'        => $master->address,
 				)
 			);
 
