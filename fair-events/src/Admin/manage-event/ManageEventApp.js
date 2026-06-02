@@ -1162,6 +1162,7 @@ export default function ManageEventApp() {
 	display: flex;
 	flex-direction: column;
 	gap: 16px;
+	margin-top: 16px;
 }
 .fair-events-manage-event .fair-events-event-details-columns {
 	display: grid;
