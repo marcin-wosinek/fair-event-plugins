@@ -190,5 +190,11 @@ if ( $is_recurring ) {
 				</div>
 			<?php endif; ?>
 		</div>
+	<?php elseif ( ! empty( $event_dates->address ) ) : ?>
+		<div class="wp-block-fair-events-event-info__venue">
+			<div class="wp-block-fair-events-event-info__venue-address">
+				<?php echo nl2br( esc_html( $event_dates->address ) ); ?>
+			</div>
+		</div>
 	<?php endif; ?>
 </div>

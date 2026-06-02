@@ -60,6 +60,7 @@ export default function ManageEventApp() {
 		window.fairEventsManageEventData?.enabledFeatures || {};
 	const galleriesEnabled = !!enabledFeatures.galleries;
 	const ticketingEnabled = !!enabledFeatures.ticketing;
+	const venuesEnabled = !!enabledFeatures.venues;
 
 	const [eventDate, setEventDate] = useState(null);
 	const [loading, setLoading] = useState(true);
@@ -76,6 +77,7 @@ export default function ManageEventApp() {
 	const [endDate, setEndDate] = useState('');
 	const [endTime, setEndTime] = useState('');
 	const [venueId, setVenueId] = useState('');
+	const [address, setAddress] = useState('');
 	const [linkType, setLinkType] = useState('none');
 	const [externalUrl, setExternalUrl] = useState('');
 	const [categories, setCategories] = useState([]);
@@ -115,7 +117,9 @@ export default function ManageEventApp() {
 			return;
 		}
 		loadEventDate();
-		loadVenues();
+		if (venuesEnabled) {
+			loadVenues();
+		}
 		loadCategories();
 	}, []);
 
@@ -162,6 +166,7 @@ export default function ManageEventApp() {
 		setLinkType(data.link_type || 'none');
 		setExternalUrl(data.external_url || '');
 		setVenueId(data.venue_id ? String(data.venue_id) : '');
+		setAddress(data.address || '');
 		setCategories(data.categories?.map((c) => c.id) || []);
 
 		if (data.start_datetime) {
@@ -347,7 +352,12 @@ export default function ManageEventApp() {
 					start_datetime: startDatetime,
 					end_datetime: endDatetime,
 					all_day: allDay,
-					venue_id: venueId ? parseInt(venueId, 10) : null,
+					venue_id: venuesEnabled
+						? venueId
+							? parseInt(venueId, 10)
+							: null
+						: undefined,
+					address: venuesEnabled ? undefined : address,
 					link_type: linkType,
 					external_url: linkType === 'external' ? externalUrl : null,
 					rrule: buildRRule(),
@@ -783,12 +793,20 @@ export default function ManageEventApp() {
 									__experimentalExpandOnFocus
 								/>
 
-								<SelectControl
-									label={__('Venue', 'fair-events')}
-									value={venueId}
-									options={venueOptions}
-									onChange={setVenueId}
-								/>
+								{venuesEnabled ? (
+									<SelectControl
+										label={__('Venue', 'fair-events')}
+										value={venueId}
+										options={venueOptions}
+										onChange={setVenueId}
+									/>
+								) : (
+									<TextControl
+										label={__('Address', 'fair-events')}
+										value={address}
+										onChange={setAddress}
+									/>
+								)}
 							</VStack>
 						</div>
 					</CardBody>

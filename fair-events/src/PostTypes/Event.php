@@ -104,7 +104,7 @@ class Event {
 	/**
 	 * Register custom meta fields for all enabled post types
 	 *
-	 * Only registers event_location (legacy, used by CalendarButtonHooks as fallback).
+	 * Only registers event_location (legacy, still read by OpenGraphHooks as a fallback).
 	 * Event dates are now stored exclusively in the fair_event_dates custom table.
 	 *
 	 * @return void
@@ -190,10 +190,11 @@ class Event {
 			'fair-events-event-meta-box',
 			'fairEventsMetaBox',
 			array(
-				'postId'         => $post_id,
-				'postType'       => $screen->post_type,
-				'eventDateId'    => $event_date_id,
-				'manageEventUrl' => $manage_event_url,
+				'postId'          => $post_id,
+				'postType'        => $screen->post_type,
+				'eventDateId'     => $event_date_id,
+				'manageEventUrl'  => $manage_event_url,
+				'enabledFeatures' => \FairEvents\Core\Features::public_map(),
 			)
 		);
 

@@ -314,6 +314,12 @@ class EventDatesController extends WP_REST_Controller {
 				'type'        => array( 'integer', 'null' ),
 				'required'    => false,
 			),
+			'address'        => array(
+				'description'       => __( 'Free-text address (used when Venues feature is disabled).', 'fair-events' ),
+				'type'              => array( 'string', 'null' ),
+				'required'          => false,
+				'sanitize_callback' => 'sanitize_textarea_field',
+			),
 			'link_type'      => array(
 				'description' => __( 'Link type (post, external, none).', 'fair-events' ),
 				'type'        => 'string',
@@ -740,6 +746,11 @@ class EventDatesController extends WP_REST_Controller {
 			$update_data['venue_id'] = $request->get_param( 'venue_id' );
 		}
 
+		if ( $request->has_param( 'address' ) ) {
+			$address                = $request->get_param( 'address' );
+			$update_data['address'] = ( null === $address || '' === $address ) ? null : $address;
+		}
+
 		$link_type = $request->get_param( 'link_type' );
 		if ( null !== $link_type ) {
 			$update_data['link_type'] = $link_type;
@@ -811,6 +822,25 @@ class EventDatesController extends WP_REST_Controller {
 					RecurrenceService::regenerate_event_occurrences( $effective_event_id, $effective_rrule );
 				} else {
 					RecurrenceService::regenerate_standalone_occurrences( $id, $effective_rrule );
+				}
+			}
+
+			// Propagate venue/address changes from a master to its existing
+			// generated children. Without this, edits to inherited location
+			// fields would only reach children when the series is fully
+			// regenerated (rrule or dates change).
+			if ( 'master' === $existing->occurrence_type
+				&& ( array_key_exists( 'venue_id', $update_data ) || array_key_exists( 'address', $update_data ) )
+			) {
+				$propagate = array();
+				if ( array_key_exists( 'venue_id', $update_data ) ) {
+					$propagate['venue_id'] = $update_data['venue_id'];
+				}
+				if ( array_key_exists( 'address', $update_data ) ) {
+					$propagate['address'] = $update_data['address'];
+				}
+				foreach ( EventDates::get_generated_by_master_id( $id ) as $child ) {
+					EventDates::update_by_id( $child->id, $propagate );
 				}
 			}
 
@@ -1330,6 +1360,7 @@ class EventDatesController extends WP_REST_Controller {
 			'occurrence_type' => $event_date->occurrence_type,
 			'master_id'       => $event_date->master_id,
 			'venue_id'        => $event_date->venue_id,
+			'address'         => $event_date->address,
 			'link_type'       => $event_date->link_type,
 			'external_url'    => $event_date->external_url,
 			'display_url'     => $event_date->get_display_url(),
