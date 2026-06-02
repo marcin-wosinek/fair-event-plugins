@@ -14,15 +14,7 @@
 	padding: 40px;
 }
 
-/* Header */
-.fair-events-calendar-header {
-	display: flex;
-	align-items: center;
-	justify-content: space-between;
-	margin-bottom: 20px;
-	padding: 10px 0;
-}
-
+/* Header (rendered inside CardHeader, so no outer spacing of its own) */
 .fair-events-calendar-nav {
 	display: flex;
 	gap: 8px;
@@ -34,11 +26,14 @@
 	font-weight: 600;
 }
 
-/* Calendar Grid */
+/* CardBody hugs the grid edges so the grid borders align with the Card */
+.fair-events-calendar-card-body {
+	padding: 0 !important;
+}
+
+/* Calendar Grid (sits inside a Card, so no outer border/radius of its own) */
 .fair-events-calendar-grid {
 	background: #fff;
-	border: 1px solid #c3c4c7;
-	border-radius: 4px;
 }
 
 .fair-events-calendar-weekdays {
@@ -207,7 +202,9 @@ a.fair-events-calendar-event:visited {
 	background: #0e4a78;
 }
 
-.fair-events-calendar-event-row .fair-events-calendar-destination-link .dashicons {
+.fair-events-calendar-event-row
+	.fair-events-calendar-destination-link
+	.dashicons {
 	font-size: 12px;
 	width: 12px;
 	height: 12px;
@@ -217,7 +214,8 @@ a.fair-events-calendar-event:visited {
 	border-radius: 3px;
 }
 
-.fair-events-calendar-event-row:has(.fair-events-calendar-destination-link) .fair-events-calendar-event {
+.fair-events-calendar-event-row:has(.fair-events-calendar-destination-link)
+	.fair-events-calendar-event {
 	border-radius: 3px 0 0 3px;
 }
 
@@ -245,7 +243,8 @@ a.fair-events-calendar-event:visited {
 	background: #8c6e1a;
 }
 
-.fair-events-calendar-event-row.link-type-external .fair-events-calendar-event:hover {
+.fair-events-calendar-event-row.link-type-external
+	.fair-events-calendar-event:hover {
 	background: #6e5614;
 }
 
@@ -253,7 +252,8 @@ a.fair-events-calendar-event:visited {
 	background: #646970;
 }
 
-.fair-events-calendar-event-row.link-type-unlinked .fair-events-calendar-event:hover {
+.fair-events-calendar-event-row.link-type-unlinked
+	.fair-events-calendar-event:hover {
 	background: #4e5157;
 }
 
@@ -265,12 +265,6 @@ a.fair-events-calendar-event:visited {
 
 /* Responsive */
 @media screen and (max-width: 782px) {
-	.fair-events-calendar-header {
-		flex-direction: column;
-		gap: 10px;
-		align-items: flex-start;
-	}
-
 	.fair-events-calendar-day {
 		min-height: 60px;
 	}

@@ -8,10 +8,11 @@ import {
 	TextControl,
 	CheckboxControl,
 	ToggleControl,
-	PanelBody,
 	ExternalLink,
 	Card,
+	CardHeader,
 	CardBody,
+	__experimentalVStack as VStack,
 } from '@wordpress/components';
 import apiFetch from '@wordpress/api-fetch';
 
@@ -135,7 +136,7 @@ export default function GeneralTab({ onNotice }) {
 
 	if (isLoading) {
 		return (
-			<Card>
+			<Card style={{ marginTop: '16px' }}>
 				<CardBody>
 					<p>{__('Loading settings...', 'fair-events')}</p>
 				</CardBody>
@@ -144,29 +145,37 @@ export default function GeneralTab({ onNotice }) {
 	}
 
 	return (
-		<Card>
-			<CardBody>
-				<form
-					onSubmit={(e) => {
-						e.preventDefault();
-						handleSave();
-					}}
-				>
-					<TextControl
-						label={__('Event URL Slug', 'fair-events')}
-						help={__(
-							'The URL slug used for event permalinks (e.g., /fair-events/event-name)',
-							'fair-events'
-						)}
-						value={slug}
-						onChange={(value) => setSlug(value)}
-						disabled={isSaving}
-					/>
+		<form
+			onSubmit={(e) => {
+				e.preventDefault();
+				handleSave();
+			}}
+		>
+			<VStack spacing={4} style={{ marginTop: '16px' }}>
+				<Card>
+					<CardHeader>
+						<h2>{__('Event URL Slug', 'fair-events')}</h2>
+					</CardHeader>
+					<CardBody>
+						<TextControl
+							label={__('Event URL Slug', 'fair-events')}
+							hideLabelFromVision
+							help={__(
+								'The URL slug used for event permalinks (e.g., /fair-events/event-name)',
+								'fair-events'
+							)}
+							value={slug}
+							onChange={(value) => setSlug(value)}
+							disabled={isSaving}
+						/>
+					</CardBody>
+				</Card>
 
-					<PanelBody
-						title={__('Enabled Post Types', 'fair-events')}
-						initialOpen={true}
-					>
+				<Card>
+					<CardHeader>
+						<h2>{__('Enabled Post Types', 'fair-events')}</h2>
+					</CardHeader>
+					<CardBody>
 						<p className="description">
 							{__(
 								'Select which post types can have event data (dates, location).',
@@ -204,12 +213,14 @@ export default function GeneralTab({ onNotice }) {
 								disabled={isSaving}
 							/>
 						))}
-					</PanelBody>
+					</CardBody>
+				</Card>
 
-					<PanelBody
-						title={__('Events API', 'fair-events')}
-						initialOpen={true}
-					>
+				<Card>
+					<CardHeader>
+						<h2>{__('Events API', 'fair-events')}</h2>
+					</CardHeader>
+					<CardBody>
 						<p className="description">
 							{__(
 								'Share your events with other Fair Events sites using the public JSON API.',
@@ -253,8 +264,10 @@ export default function GeneralTab({ onNotice }) {
 								'fair-events'
 							)}
 						</p>
-					</PanelBody>
+					</CardBody>
+				</Card>
 
+				<div>
 					<Button
 						variant="primary"
 						type="submit"
@@ -265,8 +278,8 @@ export default function GeneralTab({ onNotice }) {
 							? __('Saving...', 'fair-events')
 							: __('Save Settings', 'fair-events')}
 					</Button>
-				</form>
-			</CardBody>
-		</Card>
+				</div>
+			</VStack>
+		</form>
 	);
 }

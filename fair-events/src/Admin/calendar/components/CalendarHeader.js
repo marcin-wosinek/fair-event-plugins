@@ -21,19 +21,19 @@ export default function CalendarHeader({
 	});
 
 	return (
-		<div className="fair-events-calendar-header">
+		<>
+			<h2 className="fair-events-calendar-title">{monthYear}</h2>
 			<div className="fair-events-calendar-nav">
 				<Button variant="secondary" onClick={onPrevMonth}>
 					{__('Previous', 'fair-events')}
 				</Button>
-				<Button variant="secondary" onClick={onToday}>
+				<Button variant="primary" onClick={onToday}>
 					{__('Today', 'fair-events')}
 				</Button>
 				<Button variant="secondary" onClick={onNextMonth}>
 					{__('Next', 'fair-events')}
 				</Button>
 			</div>
-			<h2 className="fair-events-calendar-title">{monthYear}</h2>
-		</div>
+		</>
 	);
 }
