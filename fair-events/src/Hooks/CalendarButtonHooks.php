@@ -101,7 +101,9 @@ class CalendarButtonHooks {
 		$url         = get_permalink( $post_id );
 		$description = get_the_excerpt( $post_id );
 
-		// Get location from venue if available, otherwise fall back to event_location meta.
+		// Get location from venue if available, otherwise fall back to the
+		// event date's inline address (used when Venues is disabled), then
+		// the legacy event_location post meta.
 		$location = '';
 		if ( ! empty( $event_dates->venue_id ) ) {
 			$venue = Venue::get_by_id( $event_dates->venue_id );
@@ -113,7 +115,10 @@ class CalendarButtonHooks {
 			}
 		}
 
-		// Fall back to event_location meta if no venue location.
+		if ( empty( $location ) && ! empty( $event_dates->address ) ) {
+			$location = $event_dates->address;
+		}
+
 		if ( empty( $location ) ) {
 			$location = get_post_meta( $post_id, 'event_location', true );
 		}
