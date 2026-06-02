@@ -7,6 +7,7 @@ import {
 	Button,
 	ToggleControl,
 	Card,
+	CardHeader,
 	CardBody,
 	Notice,
 } from '@wordpress/components';
@@ -103,7 +104,7 @@ export default function FeaturesTab({ onNotice }) {
 
 	if (isLoading) {
 		return (
-			<Card>
+			<Card style={{ marginTop: '16px' }}>
 				<CardBody>
 					<p>{__('Loading features...', 'fair-events')}</p>
 				</CardBody>
@@ -114,7 +115,10 @@ export default function FeaturesTab({ onNotice }) {
 	const entries = Object.entries(registry);
 
 	return (
-		<Card>
+		<Card style={{ marginTop: '16px' }}>
+			<CardHeader>
+				<h2>{__('Feature Bundles', 'fair-events')}</h2>
+			</CardHeader>
 			<CardBody>
 				<p className="description">
 					{__(
