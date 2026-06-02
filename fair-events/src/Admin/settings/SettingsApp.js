@@ -54,7 +54,12 @@ export default function SettingsApp() {
 	}, []);
 
 	return (
-		<div className="wrap">
+		<div className="wrap fair-events-settings">
+			<style>
+				{`/* The 1.5px height of the active-tab indicator anti-aliases to a thin
+   darker top edge at 1x DPI. Round to 2px so the bar renders crisp. */
+.fair-events-settings .components-tab-panel__tabs-item.is-active::after { height: 2px; }`}
+			</style>
 			<h1>{__('Fair Events Settings', 'fair-events')}</h1>
 
 			{notice && (
