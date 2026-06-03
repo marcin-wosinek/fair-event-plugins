@@ -1,5 +1,27 @@
 # Changelog
 
+## 1.3.0
+
+### Minor Changes
+
+-   7f6ab85: Let signed-up users add activities to their existing subscription: once signed up they see a registration view instead of the signup form, with the full activity list kept visible (already-booked ones shown disabled).
+-   7f6ab85: Add an anonymous event-interest signup block, styled to match the event-signup block and pre-filled from a known identity when available.
+-   6b8f010: Add scheduled per-event mailings: queue an email anchored to an event date's start/end with a signed offset, sent automatically by a recurring cron, managed from a new "Mailings" tab in the event admin.
+-   7f6ab85: Send a mailing-list confirmation email for paid event signups, with an admin action to resend it for pending participants (single and bulk, surfaced in the selection footer). Signup confirmation emails are now deferred off the request path.
+-   7682a28: Robust Mollie payment retry flow and signup identity handling. Resume links in payment-failure emails, a "Continue payment" UI for open Mollie status, recovery after cookie expiry, and preserved ticket selection across retries. Signup identity now prefers the logged-in WP user over the session cookie, with a 1-hour pre-fill cookie and a "start fresh" escape hatch. Ticket quantity limits are enforced.
+-   7f6ab85: Make per-period activity pricing a global setting; activity option prices are derived from the active sale period.
+-   3f8fdb4: Add an optional per-ticket-type minimum activities requirement that can raise the event-date-wide minimum (e.g. an "Early bird" ticket requiring at least 2 activities). The per-type value only ever increases the requirement; a value below the global minimum is ignored. Enforced both in the signup form (the gate updates live as the buyer switches ticket type) and server-side.
+-   7f6ab85: Export questionnaire responses to Markdown, sharing one submission-markdown template between the submission detail and responses pages. Phone answers now persist in questionnaire submissions.
+-   7682a28: Recurring events and sign-up management. Sign up for recurring events with synced date pickers, master-group inheritance, and orphan cleanup. New printable sign-up lists with comments, capacity limits, and in-popup role editing. Ticket settings reorganized with sales periods moved out of the ticket table. Finance tab filters failed/live transactions and deep-links to transactions and participants. Group invitations added.
+-   7f6ab85: Record verbal marketing consent directly from the Audience tab.
+
+### Patch Changes
+
+-   7f6ab85: Miscellaneous fixes: link to the event page from the admin calendar, close the payment callback popup without a page reload, integrate the confirm & save buttons in the edit popup, keep a cancelled signup registered as "interested", remove the email from the purchase message, and stop nulling transactions.
+-   ca7cc51: Include the attendee's custom signup question answers in the signup confirmation email (free and paid signups). File-upload answers render as a link to the attachment; multiselect answers render as a readable list. Answer formatting is shared with the form-confirmation and form-notification emails.
+-   c41b5bc: Use ticket option short names in Telegram sale notifications. Falls back to the full name and then to the snapshot name when no short name is set, so existing configurations keep working unchanged.
+-   7f6ab85: Update the local Docker environment and "Tested up to" headers to WordPress 7.
+
 ## 1.2.0
 
 ### Minor Changes

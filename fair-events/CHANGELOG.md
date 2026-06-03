@@ -1,5 +1,35 @@
 # fair-events
 
+## 1.3.0
+
+### Minor Changes
+
+-   7f6ab85: Show net amounts in the event finance tab: net received per payment, plus a "Total Net" summary tile.
+-   6b8f010: Add scheduled per-event mailings: queue an email anchored to an event date's start/end with a signed offset, sent automatically by a recurring cron, managed from a new "Mailings" tab in the event admin.
+-   2ed7435: Introduce a feature-flag registry (`FairEvents\Core\Features`) that splits the
+    plugin into bundles — `venues`, `sources`, `galleries`, `ticketing`,
+    `event-tools`, `migration` — defaulting **off** for a clean public install.
+    Define `FAIR_EVENTS_INTERNAL` (or a per-bundle `FAIR_EVENTS_FEATURE_*`
+    constant) in `wp-config.php` to opt back into the full build; otherwise toggle
+    bundles from the new **Settings → Features** tab. REST controllers, admin
+    pages, blocks, frontend rewrites, and manage-event tabs all consult the
+    registry, so disabled bundles register no routes and surface no UI.
+-   7f6ab85: Enhance the participant list printout with row numbers, role and ticket-type columns, and a mailing-list column pre-checked for consented participants.
+-   7f6ab85: Make per-period activity pricing a global setting; activity option prices are derived from the active sale period.
+-   3f8fdb4: Add an optional per-ticket-type minimum activities requirement that can raise the event-date-wide minimum (e.g. an "Early bird" ticket requiring at least 2 activities). The per-type value only ever increases the requirement; a value below the global minimum is ignored. Enforced both in the signup form (the gate updates live as the buyer switches ticket type) and server-side.
+-   7f6ab85: Export questionnaire responses to Markdown, sharing one submission-markdown template between the submission detail and responses pages. Phone answers now persist in questionnaire submissions.
+-   7682a28: Recurring events and sign-up management. Sign up for recurring events with synced date pickers, master-group inheritance, and orphan cleanup. New printable sign-up lists with comments, capacity limits, and in-popup role editing. Ticket settings reorganized with sales periods moved out of the ticket table. Finance tab filters failed/live transactions and deep-links to transactions and participants. Group invitations added.
+
+### Patch Changes
+
+-   461b792: Stack the activity option Name and Short name inputs in a single column (one above the other) instead of two side-by-side columns, narrowing the activity options table.
+-   0a4fe6c: Fit the Event meta box action buttons into the available sidebar width: "Edit Full Details" and "Unlink from event" now share one row beneath the full-width "Save Event" button, so longer translated labels no longer wrap awkwardly.
+-   6f50483: Fix `payment_expires_at` being parsed as local time in the Manage Event audience tab, which falsely flagged in-progress payment holds as expired on non-UTC browsers (e.g. CEST).
+-   be4ad94: Hide the per-ticket-type "Min. activities" field behind a new "Per-ticket-type minimum activities" setting in the ticket Configuración panel (off by default). When the setting is off, every ticket type uses the event-wide minimum; turning it on reveals the per-type input, which still only ever raises the global.
+-   fa588db: Reorganize the Manage Event "Event details" tab into stacked full-width cards (Basics, Categorization, Recurrence) so it uses the available desktop width like the Audience tab.
+-   7f6ab85: Miscellaneous fixes: link to the event page from the admin calendar, close the payment callback popup without a page reload, integrate the confirm & save buttons in the edit popup, keep a cancelled signup registered as "interested", remove the email from the purchase message, and stop nulling transactions.
+-   7f6ab85: Update the local Docker environment and "Tested up to" headers to WordPress 7.
+
 ## 1.2.0
 
 ### Minor Changes

@@ -1,5 +1,20 @@
 # fair-payment
 
+## 1.3.0
+
+### Minor Changes
+
+-   7f6ab85: Add Connected Sites for cross-site transaction data sharing: a data-sharing API exposing transactions to authorised sites, a consumer side that pulls from connected sites, and a Mollie settlement CSV import. Transaction import now lets you choose a connected-site or file source.
+-   7682a28: Add a setting to disable bank-transfer payment close to the event date.
+-   7f6ab85: Overhaul reconciliation splitting and allocations: auto-split a matched entry into one child per transaction, allow negative and adjustment allocations, store allocation amounts with their original sign, allow nonzero amounts when editing a split, tick the transaction on automatic matching, and add a bulk "Load Missing Mollie Fees" action to the transactions list.
+-   7f6ab85: Send Telegram notifications for successful transactions, with test-mode payments clearly marked.
+-   7f6ab85: Enrich transaction export: include the event URL as `detail_url`, carry the source `event_date_id`, and rename the entry "event" label to "link" so it is inherited on match.
+
+### Patch Changes
+
+-   7f6ab85: Miscellaneous fixes: link to the event page from the admin calendar, close the payment callback popup without a page reload, integrate the confirm & save buttons in the edit popup, keep a cancelled signup registered as "interested", remove the email from the purchase message, and stop nulling transactions.
+-   7f6ab85: Update the local Docker environment and "Tested up to" headers to WordPress 7.
+
 ## 1.2.0
 
 ### Minor Changes
