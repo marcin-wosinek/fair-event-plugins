@@ -678,6 +678,7 @@ msgstr "Encuesta eliminada con éxito."
 msgid "Quick question about %s"
 msgstr "Pregunta rápida sobre %s"
 
+#. translators: %s: participant first name
 #. translators: %s: participant name
 #: src/Services/EmailService.php:203
 #: src/Services/EmailService.php:429
@@ -696,7 +697,7 @@ msgstr "Pregunta rápida sobre %s"
 #: src/Services/EmailService.php:2958
 #: src/Services/EmailService.php:3058
 #: src/Admin/event-participants/EventParticipants.js:1193
-#, php-format, js-format
+#, php-format,js-format
 msgid "Hi %s,"
 msgstr "Hola %s,"
 
@@ -714,6 +715,7 @@ msgstr "Por favor, tómate un momento para responder nuestra breve encuesta:"
 msgid "Answer Poll"
 msgstr "Responder Encuesta"
 
+#. translators: %s: site name
 #. translators: 1: line break, 2: site name
 #: src/Services/EmailService.php:237
 #: src/Services/EmailService.php:481
@@ -1299,7 +1301,7 @@ msgstr "¡Las fotos de %s están listas!"
 #. translators: %s: event title
 #: src/Services/EmailService.php:437
 #: src/Admin/event-participants/EventParticipants.js:1205
-#, php-format, js-format
+#, php-format,js-format
 msgid "The photos from %s are now available for you to view and like!"
 msgstr "¡Las fotos de %s ya están disponibles para que las veas y te gusten!"
 
@@ -1842,7 +1844,7 @@ msgstr "¡Hola %s! Haz clic en el botón de abajo para inscribirte en este event
 #. translators: %s: participant name
 #: src/blocks/event-signup/render.php:1055
 #: src/blocks/event-signup/frontend.js:1206
-#, php-format, js-format
+#, php-format,js-format
 msgid "Hi %s! You can sign up for this event."
 msgstr "¡Hola %s! Puedes inscribirte en este evento."
 
@@ -2680,12 +2682,12 @@ msgstr "Error al cargar la imagen: %s"
 msgid "Failed to upload image to temporary storage."
 msgstr "Error al cargar la imagen en almacenamiento temporal."
 
-#: src/Hooks/PaymentHooks.php:694
+#: src/Hooks/PaymentHooks.php:700
 msgid "Paid online via Mollie"
 msgstr "Pagado en línea a través de Mollie"
 
 #. translators: %1$s: Mollie status, %2$d: transaction ID
-#: src/Hooks/PaymentHooks.php:734
+#: src/Hooks/PaymentHooks.php:740
 #, php-format
 msgid "Online payment %1$s (transaction #%2$d)"
 msgstr "Pago en línea %1$s (transacción #%2$d)"
@@ -3932,6 +3934,7 @@ msgstr "Tenemos un nuevo evento próximo: %s."
 msgid "Would you like to join? Click the button below to sign up:"
 msgstr "¿Te gustaría participar? Haz clic en el botón de abajo para inscribirte:"
 
+#. translators: %s: site name
 #. translators: 1: line break, 2: site name
 #: src/Services/EmailService.php:2255
 #: src/Services/EmailService.php:2391
@@ -5151,7 +5154,7 @@ msgstr "Selecciona actividades"
 msgid "Include country code with leading \"+\" (e.g. +49170...)."
 msgstr "Incluye código de país con \"+\" al inicio (p. ej. +49170...)."
 
-#: src/Hooks/PaymentHooks.php:381
+#: src/Hooks/PaymentHooks.php:387
 #: src/Hooks/ScheduledMessageHooks.php:75
 msgid "Every 5 minutes (fair-audience)"
 msgstr "Cada 5 minutos (fair-audience)"
@@ -5433,7 +5436,7 @@ msgstr "Mostrar el precio de cada tipo de entrada junto a su etiqueta."
 #. translators: %s: original group name
 #: src/API/GroupsController.php:385
 #: src/Admin/groups/Groups.js:199
-#, php-format, js-format
+#, php-format,js-format
 msgid "%s (copy)"
 msgstr "%s (copia)"
 
@@ -5587,7 +5590,7 @@ msgstr "Este tipo de entrada está agotado. Por favor, elija otra opción."
 #: src/API/EventSignupController.php:1130
 #: src/blocks/event-signup/render.php:713
 #: src/blocks/event-signup/frontend.js:197
-#, php-format, js-format
+#, php-format,js-format
 msgid "Please select at least %d activity to sign up."
 msgid_plural "Please select at least %d activities to sign up."
 msgstr[0] "Por favor, selecciona al menos %d actividad para registrarte."
@@ -5884,7 +5887,7 @@ msgid "Invalid or expired unsubscribe link."
 msgstr "Enlace de cancelación de suscripción inválido o expirado."
 
 #: src/API/EventInterestController.php:266
-#: src/Core/Plugin.php:325
+#: src/Core/Plugin.php:330
 msgid "You will no longer receive updates about this event."
 msgstr "Ya no recibirás actualizaciones sobre este evento."
 
@@ -6007,20 +6010,20 @@ msgstr "Tu entrada: %s"
 msgid "Your activities:"
 msgstr "Tus actividades:"
 
-#: src/Core/Plugin.php:298
+#: src/Core/Plugin.php:303
 msgid "Missing unsubscribe token."
 msgstr "Token de desuscripción faltante."
 
-#: src/Core/Plugin.php:299
-#: src/Core/Plugin.php:309
+#: src/Core/Plugin.php:304
+#: src/Core/Plugin.php:314
 msgid "Unsubscribe"
 msgstr "Desuscribirse"
 
-#: src/Core/Plugin.php:308
+#: src/Core/Plugin.php:313
 msgid "This unsubscribe link is invalid or has expired."
 msgstr "Este enlace de desuscripción no es válido o ha expirado."
 
-#: src/Core/Plugin.php:326
+#: src/Core/Plugin.php:331
 msgid "Unsubscribed"
 msgstr "Desuscrito"
 
@@ -6258,4 +6261,3 @@ msgstr "Nombre corto de la opción"
 #: src/blocks/fair-form-conditional/editor.js:222
 msgid "Enter the option's short name (set it in the event's Tickets tab). Options can't be listed here because they come from the selected event date at render time."
 msgstr "Introduce el nombre corto de la opción (configúralo en la pestaña Entradas del evento). Las opciones no se pueden listar aquí porque provienen de la fecha del evento seleccionada en el momento de renderización."
-

@@ -40,7 +40,7 @@ msgid "https://github.com/marcin-wosinek"
 msgstr ""
 
 #: src/Admin/AdminPages.php:125
-#: src/Admin/settings/SettingsApp.js:27
+#: src/Admin/settings/SettingsApp.js:63
 msgid "Fair Events Settings"
 msgstr "Paramètres Fair Events"
 
@@ -179,11 +179,10 @@ msgstr "Liste d'événements"
 msgid "Event location"
 msgstr "Lieu de l'événement"
 
-#: src/PostTypes/Event.php:218
-#: src/Admin/manage-event/DuplicateEventWizard.js:598
-#: src/Admin/manage-event/DuplicateEventWizard.js:745
-#: src/Admin/manage-event/ManageEventApp.js:561
-#: src/Admin/manage-event/ManageEventApp.js:697
+#: src/PostTypes/Event.php:219
+#: src/Admin/manage-event/DuplicateEventWizard.js:557
+#: src/Admin/manage-event/DuplicateEventWizard.js:698
+#: src/Admin/manage-event/ManageEventApp.js:543
 msgid "Event Details"
 msgstr "Détails de l'événement"
 
@@ -200,43 +199,41 @@ msgstr "Lieu"
 msgid "URL slug for events"
 msgstr "Slug d'URL pour les événements"
 
-#: src/Admin/settings/FacebookTab.js:78
-#: src/Admin/settings/GeneralTab.js:72
+#: src/Admin/settings/GeneralTab.js:73
 msgid "Failed to load settings."
 msgstr "Échec du chargement des paramètres."
 
-#: src/Admin/settings/GeneralTab.js:123
+#: src/Admin/settings/GeneralTab.js:124
 msgid "Settings saved successfully."
 msgstr "Paramètres enregistrés avec succès."
 
-#: src/Admin/settings/GeneralTab.js:130
+#: src/Admin/settings/GeneralTab.js:131
 msgid "Failed to save settings."
 msgstr "Échec de l'enregistrement des paramètres."
 
 #: src/Frontend/EventGalleryPage.php:228
-#: src/PostTypes/Event.php:238
+#: src/PostTypes/Event.php:239
 #: src/Frontend/event-gallery/index.js:537
 msgid "Loading..."
 msgstr "Chargement..."
 
-#: src/Admin/settings/GeneralTab.js:156
+#: src/Admin/settings/GeneralTab.js:157
+#: src/Admin/settings/GeneralTab.js:161
 msgid "Event URL Slug"
 msgstr "Slug d'URL de l'événement"
 
-#: src/Admin/settings/GeneralTab.js:157
+#: src/Admin/settings/GeneralTab.js:163
 msgid "The URL slug used for event permalinks (e.g., /fair-events/event-name)"
 msgstr "Le slug d'URL utilisé pour les permaliens d'événements (ex. /fair-events/nom-evenement)"
 
 #: src/Admin/MediaLibraryHooks.php:285
-#: src/Admin/settings/FacebookTab.js:302
-#: src/Admin/settings/FacebookTab.js:452
-#: src/Admin/settings/FeaturesTab.js:165
-#: src/Admin/settings/GeneralTab.js:265
+#: src/Admin/settings/FeaturesTab.js:169
+#: src/Admin/settings/GeneralTab.js:278
 #: src/Admin/sources/components/SourceForm.js:237
 msgid "Saving..."
 msgstr "Enregistrement..."
 
-#: src/Admin/settings/GeneralTab.js:266
+#: src/Admin/settings/GeneralTab.js:279
 msgid "Save Settings"
 msgstr "Enregistrer les paramètres"
 
@@ -287,8 +284,8 @@ msgstr "Filtrer les événements par temps relatif à maintenant"
 #: src/Admin/CopyEventPage.php:371
 #: src/blocks/event-proposal/render.php:156
 #: src/Admin/all-events/AllEvents.js:92
-#: src/Admin/manage-event/DuplicateEventWizard.js:830
-#: src/Admin/manage-event/ManageEventApp.js:782
+#: src/Admin/manage-event/DuplicateEventWizard.js:783
+#: src/Admin/manage-event/ManageEventApp.js:771
 #: src/blocks/events-calendar/components/EditComponent.js:172
 #: src/blocks/events-list/components/EditComponent.js:142
 #: src/blocks/weekly-schedule/components/EditComponent.js:172
@@ -393,7 +390,7 @@ msgstr "liste"
 msgid "Upcoming"
 msgstr "À venir"
 
-#: src/PostTypes/Event.php:506
+#: src/PostTypes/Event.php:507
 msgid "Confirm Attendance"
 msgstr "Confirmer la Présence"
 
@@ -434,7 +431,7 @@ msgid "Event not found."
 msgstr "Événement non trouvé."
 
 #: src/Admin/CopyEventPage.php:58
-#: src/API/EventDatesController.php:393
+#: src/API/EventDatesController.php:394
 msgid "Event title is required."
 msgstr "Le titre de l'événement est obligatoire."
 
@@ -460,8 +457,8 @@ msgstr "Option de date invalide sélectionnée."
 
 #: src/Admin/CopyEventPage.php:344
 #: src/Admin/calendar/components/QuickEventModal.js:102
-#: src/Admin/manage-event/DuplicateEventWizard.js:750
-#: src/Admin/manage-event/ManageEventApp.js:702
+#: src/Admin/manage-event/DuplicateEventWizard.js:703
+#: src/Admin/manage-event/ManageEventApp.js:678
 #: src/Admin/migration/MigrationApp.js:218
 msgid "Title"
 msgstr "Titre"
@@ -498,17 +495,16 @@ msgstr "Créer une copie"
 #: src/Admin/CopyEventPage.php:395
 #: src/Admin/MediaBatchActions.php:254
 #: src/Admin/calendar/components/QuickEventModal.js:182
-#: src/Admin/manage-event/DuplicateEventWizard.js:734
-#: src/Admin/manage-event/EventAudience.js:1697
-#: src/Admin/manage-event/EventAudience.js:1885
-#: src/Admin/manage-event/EventAudience.js:2068
-#: src/Admin/manage-event/EventAudience.js:2262
+#: src/Admin/manage-event/DuplicateEventWizard.js:687
+#: src/Admin/manage-event/EventAudience.js:1702
+#: src/Admin/manage-event/EventAudience.js:1890
+#: src/Admin/manage-event/EventAudience.js:2073
+#: src/Admin/manage-event/EventAudience.js:2267
 #: src/Admin/manage-event/EventMailings.js:609
 #: src/Admin/manage-event/GroupRules.js:471
-#: src/Admin/manage-event/ImageCropModal.js:72
 #: src/Admin/manage-event/MergeEventWizard.js:444
 #: src/Admin/sources/components/SourceForm.js:231
-#: src/Admin/venues/VenuesApp.js:578
+#: src/Admin/venues/VenuesApp.js:573
 msgid "Cancel"
 msgstr "Annuler"
 
@@ -517,7 +513,7 @@ msgid "Event Length"
 msgstr "Durée de l'événement"
 
 #: src/Admin/AdminPages.php:1000
-#: src/PostTypes/Event.php:495
+#: src/PostTypes/Event.php:496
 msgid "Copy"
 msgstr "Copier"
 
@@ -547,14 +543,14 @@ msgstr "Le nouvel événement sera créé en tant que brouillon. Tous les détai
 
 #: src/blocks/events-calendar/render.php:497
 #: src/blocks/weekly-schedule/render.php:489
-#: src/Admin/calendar/components/CalendarHeader.js:27
+#: src/Admin/calendar/components/CalendarHeader.js:28
 msgid "Previous"
 msgstr "Précédent"
 
 #: src/blocks/events-calendar/render.php:503
 #: src/blocks/weekly-schedule/render.php:498
-#: src/Admin/calendar/components/CalendarHeader.js:33
-#: src/Admin/manage-event/DuplicateEventWizard.js:721
+#: src/Admin/calendar/components/CalendarHeader.js:34
+#: src/Admin/manage-event/DuplicateEventWizard.js:674
 #: src/Admin/manage-event/MergeEventWizard.js:431
 #: src/Admin/manage-event/MergeEventWizard.js:440
 msgid "Next"
@@ -607,7 +603,7 @@ msgstr "Afficher la navigation des mois précédent/suivant"
 
 #: src/Admin/AdminPages.php:88
 #: src/Admin/AdminPages.php:105
-#: src/Admin/calendar/CalendarApp.js:157
+#: src/Admin/calendar/CalendarApp.js:163
 #: src/blocks/events-calendar/components/EditComponent.js:291
 msgid "Events Calendar"
 msgstr "Calendrier des événements"
@@ -751,7 +747,7 @@ msgstr "Format d'URL invalide à l'index %d."
 msgid "Unknown source type at index %d."
 msgstr "Type de source inconnu à l'index %d."
 
-#: src/PostTypes/Event.php:350
+#: src/PostTypes/Event.php:351
 msgid "Date & Time"
 msgstr "Date & Heure"
 
@@ -924,14 +920,14 @@ msgstr "Aucune source trouvée. Créez votre première source pour commencer."
 
 #: src/Admin/all-events/AllEvents.js:67
 #: src/Admin/manage-event/EventAudience.js:805
-#: src/Admin/manage-event/EventAudience.js:1254
+#: src/Admin/manage-event/EventAudience.js:1259
 #: src/Admin/manage-event/EventTickets.js:999
 #: src/Admin/manage-event/EventTickets.js:1854
 #: src/Admin/manage-event/EventTickets.js:1898
 #: src/Admin/manage-event/MailBodyEditor.js:24
 #: src/Admin/sources/SourcesList.js:192
-#: src/Admin/venues/VenuesApp.js:380
-#: src/Admin/venues/VenuesApp.js:467
+#: src/Admin/venues/VenuesApp.js:375
+#: src/Admin/venues/VenuesApp.js:462
 msgid "Name"
 msgstr "Nom"
 
@@ -939,19 +935,19 @@ msgstr "Nom"
 msgid "iCal Feed"
 msgstr "Flux iCal"
 
-#: src/Admin/manage-event/EventAudience.js:997
+#: src/Admin/manage-event/EventAudience.js:1002
 #: src/Admin/manage-event/EventFinance.js:426
 #: src/Admin/source-view/SourceViewApp.js:242
 #: src/Admin/sources/SourcesList.js:201
 msgid "Status"
 msgstr "Statut"
 
-#: src/Admin/manage-event/EventAudience.js:1307
-#: src/Admin/manage-event/EventAudience.js:1605
+#: src/Admin/manage-event/EventAudience.js:1312
+#: src/Admin/manage-event/EventAudience.js:1610
 #: src/Admin/manage-invitations/ManageInvitations.js:311
 #: src/Admin/migration/MigrationApp.js:230
 #: src/Admin/sources/SourcesList.js:202
-#: src/Admin/venues/VenuesApp.js:382
+#: src/Admin/venues/VenuesApp.js:377
 msgid "Actions"
 msgstr "Actions"
 
@@ -970,21 +966,20 @@ msgid "Copy URL"
 msgstr "Copier l'URL"
 
 #: src/Admin/all-events/AllEvents.js:229
-#: src/Admin/manage-event/EventAudience.js:1418
+#: src/Admin/manage-event/EventAudience.js:1423
 #: src/Admin/manage-event/EventMailings.js:599
 #: src/Admin/manage-event/GroupRules.js:498
 #: src/Admin/sources/SourcesList.js:272
-#: src/Admin/venues/VenuesApp.js:423
+#: src/Admin/venues/VenuesApp.js:418
 msgid "Edit"
 msgstr "Modifier"
 
-#: src/Admin/manage-event/EventAudience.js:1433
-#: src/Admin/manage-event/ImageExports.js:267
+#: src/Admin/manage-event/EventAudience.js:1438
 #: src/Admin/manage-event/MergeEventWizard.js:34
 #: src/Admin/manage-invitations/ManageInvitations.js:386
 #: src/Admin/migration-summary/MigrationSummaryApp.js:238
 #: src/Admin/sources/SourcesList.js:287
-#: src/Admin/venues/VenuesApp.js:438
+#: src/Admin/venues/VenuesApp.js:433
 msgid "Delete"
 msgstr "Supprimer"
 
@@ -1333,8 +1328,8 @@ msgstr "Migrer les articles"
 
 #: src/Admin/AdminPages.php:184
 #: src/Admin/AdminPages.php:185
-#: src/Core/Features.php:61
-#: src/Admin/venues/VenuesApp.js:289
+#: src/Core/Features.php:181
+#: src/Admin/venues/VenuesApp.js:286
 msgid "Venues"
 msgstr "Lieux"
 
@@ -1342,9 +1337,9 @@ msgstr "Lieux"
 #: src/Admin/AdminPages.php:196
 #: src/Admin/AdminPages.php:236
 #: src/Hooks/AdminBarHooks.php:59
-#: src/Admin/calendar/CalendarApp.js:179
-#: src/Admin/manage-event/ManageEventApp.js:653
-#: src/Admin/manage-event/ManageEventApp.js:1187
+#: src/Admin/calendar/CalendarApp.js:178
+#: src/Admin/manage-event/ManageEventApp.js:627
+#: src/Admin/manage-event/ManageEventApp.js:1205
 msgid "Manage Event"
 msgstr "Gérer l'événement"
 
@@ -1470,9 +1465,6 @@ msgstr "Statut de la nouvelle publication."
 #: src/API/GroupPricingRulesController.php:68
 #: src/API/GroupPricingRulesController.php:109
 #: src/API/GroupPricingRulesController.php:139
-#: src/API/ImageExportController.php:80
-#: src/API/ImageExportController.php:93
-#: src/API/ImageExportController.php:144
 #: src/API/TicketsController.php:57
 #: src/API/TicketsController.php:69
 #: src/API/TicketsController.php:88
@@ -1511,81 +1503,74 @@ msgstr "Si c'est un événement sur toute la journée."
 msgid "Venue ID."
 msgstr "ID du lieu."
 
-#: src/API/EventDatesController.php:318
+#: src/API/EventDatesController.php:324
 msgid "Link type (post, external, none)."
 msgstr "Type de lien (article, externe, aucun)."
 
-#: src/API/EventDatesController.php:325
+#: src/API/EventDatesController.php:331
 msgid "External URL for the event."
 msgstr "URL externe pour l'événement."
 
-#: src/API/EventDatesController.php:331
-msgid "Theme image attachment ID."
-msgstr "ID de pièce jointe d'image de thème."
-
-#: src/API/EventDatesController.php:341
+#: src/API/EventDatesController.php:342
 msgid "Linked post ID."
 msgstr "ID de l'article lié."
 
-#: src/API/EventDatesController.php:346
+#: src/API/EventDatesController.php:347
 msgid "Recurrence rule in RRULE format."
 msgstr "Règle de récurrence au format RRULE."
 
-#: src/API/EventDatesController.php:352
+#: src/API/EventDatesController.php:353
 msgid "Category term IDs."
 msgstr "IDs des termes de catégorie."
 
-#: src/API/EventDatesController.php:401
+#: src/API/EventDatesController.php:402
 msgid "Start date/time is required."
 msgstr "La date/heure de début est requise."
 
-#: src/API/EventDatesController.php:420
+#: src/API/EventDatesController.php:421
 msgid "Failed to create event date."
 msgstr "Échec de la création de la date d'événement."
 
-#: src/API/EventDatesController.php:666
-#: src/API/EventDatesController.php:717
-#: src/API/EventDatesController.php:890
-#: src/API/EventDatesController.php:930
-#: src/API/EventDatesController.php:1008
-#: src/API/EventDatesController.php:1075
-#: src/API/EventDatesController.php:1133
+#: src/API/EventDatesController.php:667
+#: src/API/EventDatesController.php:718
+#: src/API/EventDatesController.php:910
+#: src/API/EventDatesController.php:950
+#: src/API/EventDatesController.php:1028
+#: src/API/EventDatesController.php:1095
+#: src/API/EventDatesController.php:1153
 #: src/API/EventMergeController.php:109
 #: src/API/GroupPermissionRulesController.php:146
 #: src/API/GroupPermissionRulesController.php:183
 #: src/API/GroupPricingRulesController.php:177
 #: src/API/GroupPricingRulesController.php:207
-#: src/API/ImageExportController.php:184
-#: src/API/ImageExportController.php:209
-#: src/API/ImageExportController.php:278
 #: src/API/TicketsController.php:121
 #: src/API/TicketsController.php:142
 #: src/API/TicketsController.php:295
 msgid "Event date not found."
 msgstr "Date d'événement non trouvée."
 
-#: src/API/EventDatesController.php:795
+#: src/API/EventDatesController.php:796
 msgid "Failed to update event date."
 msgstr "Échec de la mise à jour de la date d'événement."
 
-#: src/API/EventDatesController.php:900
+#: src/API/EventDatesController.php:920
 msgid "Failed to delete event date."
 msgstr "Échec de la suppression de la date d'événement."
 
-#: src/API/EventDatesController.php:940
+#: src/API/EventDatesController.php:960
 msgid "The specified post type is not enabled."
 msgstr "Le type de publication spécifié n'est pas activé."
 
-#: src/API/EventDatesController.php:948
+#: src/API/EventDatesController.php:968
 #: src/Admin/event-meta-box/LinkOptions.js:37
 msgid "Untitled Event"
 msgstr "Événement sans titre"
 
-#: src/API/EventDatesController.php:1017
+#: src/API/EventDatesController.php:1037
 msgid "Post not found."
 msgstr "Article non trouvé."
 
-#: src/API/EventDatesController.php:1036
+#: src/API/EventDatesController.php:1056
 msgid "This post is already linked to another event."
 msgstr "Cet article est déjà lié à un autre événement."
 
@@ -1594,86 +1579,6 @@ msgstr "Cet article est déjà lié à un autre événement."
 #, php-format
 msgid "Fair Events API source at index %d requires url field."
 msgstr "La source de l'API Fair Events à l'index %d nécessite un champ url."
-
-#: src/API/FacebookController.php:67
-msgid "No Facebook access token configured."
-msgstr "Aucun jeton d'accès Facebook configuré."
-
-#: src/API/FacebookController.php:106
-msgid "Failed to connect to Facebook API."
-msgstr "Échec de la connexion à l'API Facebook."
-
-#: src/API/FacebookController.php:120
-msgid "The access token is invalid."
-msgstr "Le jeton d'accès est invalide."
-
-#: src/API/FacebookController.php:133
-msgid "The access token is no longer valid."
-msgstr "Le jeton d'accès n'est plus valide."
-
-#: src/API/FacebookController.php:189
-msgid "Token is valid!"
-msgstr "Le jeton est valide !"
-
-#: src/API/ImageExportController.php:98
-#: src/API/ImageExportController.php:149
-msgid "Export format."
-msgstr "Format d'export."
-
-#: src/API/ImageExportController.php:105
-msgid "Crop area X offset in pixels."
-msgstr "Décalage X de la zone de recadrage en pixels."
-
-#: src/API/ImageExportController.php:111
-msgid "Crop area Y offset in pixels."
-msgstr "Décalage Y de la zone de recadrage en pixels."
-
-#: src/API/ImageExportController.php:117
-msgid "Crop area width in pixels."
-msgstr "Largeur de la zone de recadrage en pixels."
-
-#: src/API/ImageExportController.php:123
-msgid "Crop area height in pixels."
-msgstr "Hauteur de la zone de recadrage en pixels."
-
-#: src/API/ImageExportController.php:217
-#: src/API/ImageExportController.php:286
-msgid "Invalid export format."
-msgstr "Format d'export invalide."
-
-#: src/API/ImageExportController.php:227
-msgid "No theme image set for this event date."
-msgstr "Aucune image de thème définie pour cette date d'événement."
-
-#: src/API/ImageExportController.php:313
-msgid "Source image file not found."
-msgstr "Fichier image source introuvable."
-
-#: src/API/ImageExportController.php:323
-msgid "Failed to load image editor."
-msgstr "Échec du chargement de l'éditeur d'images."
-
-#: src/API/ImageExportController.php:367
-msgid "Failed to crop image."
-msgstr "Échec du recadrage de l'image."
-
-#: src/API/ImageExportController.php:380
-msgid "Failed to resize image."
-msgstr "Échec du redimensionnement de l'image."
-
-#: src/API/ImageExportController.php:398
-msgid "Failed to save cropped image."
-msgstr "Échec de l'enregistrement de l'image recadrée."
-
-#. translators: 1: original filename, 2: format label
-#: src/API/ImageExportController.php:408
-#, php-format
-msgid "%1$s - %2$s"
-msgstr "%1$s - %2$s"
-
-#: src/API/ImageExportController.php:421
-msgid "Failed to create attachment."
-msgstr "Échec de la création de la pièce jointe."
 
 #: src/API/MigrationController.php:182
 #: src/Admin/migration/MigrationApp.js:41
@@ -1793,7 +1698,7 @@ msgstr "Impossible de supprimer le lieu."
 msgid "Event source not found."
 msgstr "Source d'événement introuvable."
 
-#: src/Core/Plugin.php:323
+#: src/Core/Plugin.php:309
 msgid "Event associated with this image"
 msgstr "Événement associé à cette image"
 
@@ -1839,42 +1744,21 @@ msgstr "Vous n'avez pas la permission de modifier cet article."
 msgid "Failed to create event post."
 msgstr "Échec de la création de l'article d'événement."
 
-#: src/Settings/FacebookSettings.php:37
-msgid "Facebook Page Access Token"
-msgstr "Jeton d'accès à la page Facebook"
-
-#: src/Settings/FacebookSettings.php:55
-#: src/Admin/settings/FacebookTab.js:407
-msgid "Facebook Page ID"
-msgstr "ID de la page Facebook"
-
-#: src/Settings/FacebookSettings.php:68
-msgid "Facebook Page Name"
-msgstr "Nom de la page Facebook"
-
-#: src/Settings/FacebookSettings.php:81
-msgid "Facebook Connection Status"
-msgstr "Statut de connexion Facebook"
-
-#: src/Settings/FacebookSettings.php:94
-msgid "Facebook Token Expiration (Unix timestamp)"
-msgstr "Expiration du jeton Facebook (horodatage Unix)"
-
 #: src/Settings/Settings.php:60
 msgid "Post types that can have event data"
 msgstr "Types de publications qui peuvent avoir des données d'événement"
 
-#: src/Admin/calendar/CalendarApp.js:86
+#: src/Admin/calendar/CalendarApp.js:92
 msgid "Failed to load events."
 msgstr "Échec du chargement des événements."
 
 #. translators: %s: event title
-#: src/Admin/calendar/CalendarApp.js:174
+#: src/Admin/calendar/CalendarApp.js:173
 #, js-format
 msgid "Event \"%s\" created."
 msgstr "Événement « %s » créé."
 
-#: src/Admin/calendar/components/CalendarHeader.js:30
+#: src/Admin/calendar/components/CalendarHeader.js:31
 msgid "Today"
 msgstr "Aujourd'hui"
 
@@ -1894,9 +1778,9 @@ msgid "Failed to create event."
 msgstr "Échec de la création de l'événement."
 
 #: src/Admin/calendar/components/QuickEventModal.js:83
-#: src/Admin/event-meta-box/EventEditForm.js:347
-#: src/Admin/manage-event/DuplicateEventWizard.js:319
-#: src/Admin/manage-event/ManageEventApp.js:532
+#: src/Admin/event-meta-box/EventEditForm.js:361
+#: src/Admin/manage-event/DuplicateEventWizard.js:311
+#: src/Admin/manage-event/ManageEventApp.js:514
 msgid "— No venue —"
 msgstr "— Aucun lieu —"
 
@@ -1905,53 +1789,53 @@ msgid "Quick Add Event"
 msgstr "Ajout rapide d'événement"
 
 #: src/Admin/calendar/components/QuickEventModal.js:110
-#: src/Admin/event-meta-box/EventEditForm.js:378
-#: src/Admin/manage-event/DuplicateEventWizard.js:757
-#: src/Admin/manage-event/ManageEventApp.js:709
+#: src/Admin/event-meta-box/EventEditForm.js:392
+#: src/Admin/manage-event/DuplicateEventWizard.js:710
+#: src/Admin/manage-event/ManageEventApp.js:685
 msgid "All day"
 msgstr "Toute la journée"
 
 #: src/Admin/calendar/components/QuickEventModal.js:118
 #: src/Admin/calendar/components/QuickEventModal.js:136
-#: src/Admin/event-meta-box/EventEditForm.js:384
-#: src/Admin/manage-event/DuplicateEventWizard.js:765
-#: src/Admin/manage-event/DuplicateEventWizard.js:782
-#: src/Admin/manage-event/ManageEventApp.js:717
-#: src/Admin/manage-event/ManageEventApp.js:734
+#: src/Admin/event-meta-box/EventEditForm.js:398
+#: src/Admin/manage-event/DuplicateEventWizard.js:718
+#: src/Admin/manage-event/DuplicateEventWizard.js:735
+#: src/Admin/manage-event/ManageEventApp.js:693
+#: src/Admin/manage-event/ManageEventApp.js:716
 msgid "Start date"
 msgstr "Date de début"
 
 #: src/Admin/calendar/components/QuickEventModal.js:125
 #: src/Admin/calendar/components/QuickEventModal.js:152
-#: src/Admin/event-meta-box/EventEditForm.js:410
-#: src/Admin/event-meta-box/EventEditForm.js:495
-#: src/Admin/manage-event/DuplicateEventWizard.js:772
-#: src/Admin/manage-event/DuplicateEventWizard.js:796
-#: src/Admin/manage-event/DuplicateEventWizard.js:925
-#: src/Admin/manage-event/ManageEventApp.js:724
-#: src/Admin/manage-event/ManageEventApp.js:748
-#: src/Admin/manage-event/ManageEventApp.js:889
+#: src/Admin/event-meta-box/EventEditForm.js:424
+#: src/Admin/event-meta-box/EventEditForm.js:517
+#: src/Admin/manage-event/DuplicateEventWizard.js:725
+#: src/Admin/manage-event/DuplicateEventWizard.js:749
+#: src/Admin/manage-event/DuplicateEventWizard.js:878
+#: src/Admin/manage-event/ManageEventApp.js:703
+#: src/Admin/manage-event/ManageEventApp.js:736
+#: src/Admin/manage-event/ManageEventApp.js:910
 msgid "End date"
 msgstr "Date de fin"
 
 #: src/Admin/calendar/components/QuickEventModal.js:143
-#: src/Admin/event-meta-box/EventEditForm.js:392
-#: src/Admin/manage-event/DuplicateEventWizard.js:789
-#: src/Admin/manage-event/ManageEventApp.js:741
+#: src/Admin/event-meta-box/EventEditForm.js:406
+#: src/Admin/manage-event/DuplicateEventWizard.js:742
+#: src/Admin/manage-event/ManageEventApp.js:726
 msgid "Start time"
 msgstr "Heure de début"
 
 #: src/Admin/calendar/components/QuickEventModal.js:159
-#: src/Admin/event-meta-box/EventEditForm.js:418
-#: src/Admin/manage-event/DuplicateEventWizard.js:803
-#: src/Admin/manage-event/ManageEventApp.js:755
+#: src/Admin/event-meta-box/EventEditForm.js:432
+#: src/Admin/manage-event/DuplicateEventWizard.js:756
+#: src/Admin/manage-event/ManageEventApp.js:746
 msgid "End time"
 msgstr "Heure de fin"
 
 #: src/Admin/calendar/components/QuickEventModal.js:170
-#: src/Admin/event-meta-box/EventEditForm.js:426
-#: src/Admin/manage-event/DuplicateEventWizard.js:823
-#: src/Admin/manage-event/ManageEventApp.js:775
+#: src/Admin/event-meta-box/EventEditForm.js:441
+#: src/Admin/manage-event/DuplicateEventWizard.js:776
+#: src/Admin/manage-event/ManageEventApp.js:798
 msgid "Venue"
 msgstr "Lieu"
 
@@ -1967,103 +1851,103 @@ msgstr "Copier l'URL dans le presse-papiers"
 msgid "Copied!"
 msgstr "Copié !"
 
-#: src/Admin/event-meta-box/EventEditForm.js:82
+#: src/Admin/event-meta-box/EventEditForm.js:88
 msgid "Failed to load event data."
 msgstr "Échec du chargement des données de l'événement."
 
-#: src/Admin/event-meta-box/EventEditForm.js:297
+#: src/Admin/event-meta-box/EventEditForm.js:309
 msgid "Event saved."
 msgstr "Événement enregistré."
 
-#: src/Admin/event-meta-box/EventEditForm.js:299
+#: src/Admin/event-meta-box/EventEditForm.js:311
 msgid "Failed to save event."
 msgstr "Échec de l'enregistrement de l'événement."
 
-#: src/Admin/event-meta-box/EventEditForm.js:400
-#: src/Admin/manage-event/DuplicateEventWizard.js:813
-#: src/Admin/manage-event/ManageEventApp.js:765
+#: src/Admin/event-meta-box/EventEditForm.js:414
+#: src/Admin/manage-event/DuplicateEventWizard.js:766
+#: src/Admin/manage-event/ManageEventApp.js:759
 msgid "Event length"
 msgstr "Durée de l'événement"
 
-#: src/Admin/event-meta-box/EventEditForm.js:433
-#: src/Admin/manage-event/DuplicateEventWizard.js:853
-#: src/Admin/manage-event/ManageEventApp.js:806
+#: src/Admin/event-meta-box/EventEditForm.js:455
+#: src/Admin/manage-event/DuplicateEventWizard.js:806
+#: src/Admin/manage-event/ManageEventApp.js:823
 msgid "Repeat this event"
 msgstr "Répéter cet événement"
 
-#: src/Admin/event-meta-box/EventEditForm.js:441
-#: src/Admin/manage-event/DuplicateEventWizard.js:861
-#: src/Admin/manage-event/ManageEventApp.js:816
+#: src/Admin/event-meta-box/EventEditForm.js:463
+#: src/Admin/manage-event/DuplicateEventWizard.js:814
+#: src/Admin/manage-event/ManageEventApp.js:834
 msgid "Frequency"
 msgstr "Fréquence"
 
 #: src/blocks/event-info/render.php:68
-#: src/Admin/event-meta-box/EventEditForm.js:445
-#: src/Admin/manage-event/DuplicateEventWizard.js:865
-#: src/Admin/manage-event/ManageEventApp.js:820
+#: src/Admin/event-meta-box/EventEditForm.js:467
+#: src/Admin/manage-event/DuplicateEventWizard.js:818
+#: src/Admin/manage-event/ManageEventApp.js:841
 msgid "Daily"
 msgstr "Quotidien"
 
-#: src/Admin/event-meta-box/EventEditForm.js:449
-#: src/Admin/manage-event/DuplicateEventWizard.js:869
-#: src/Admin/manage-event/ManageEventApp.js:827
+#: src/Admin/event-meta-box/EventEditForm.js:471
+#: src/Admin/manage-event/DuplicateEventWizard.js:822
+#: src/Admin/manage-event/ManageEventApp.js:848
 msgid "Weekly"
 msgstr "Hebdomadaire"
 
-#: src/Admin/event-meta-box/EventEditForm.js:453
-#: src/Admin/manage-event/DuplicateEventWizard.js:873
-#: src/Admin/manage-event/ManageEventApp.js:834
+#: src/Admin/event-meta-box/EventEditForm.js:475
+#: src/Admin/manage-event/DuplicateEventWizard.js:826
+#: src/Admin/manage-event/ManageEventApp.js:855
 msgid "Biweekly"
 msgstr "Bihebdomadaire"
 
 #: src/blocks/event-info/render.php:87
-#: src/Admin/event-meta-box/EventEditForm.js:457
-#: src/Admin/manage-event/DuplicateEventWizard.js:880
-#: src/Admin/manage-event/ManageEventApp.js:841
+#: src/Admin/event-meta-box/EventEditForm.js:479
+#: src/Admin/manage-event/DuplicateEventWizard.js:833
+#: src/Admin/manage-event/ManageEventApp.js:862
 msgid "Monthly"
 msgstr "Mensuel"
 
-#: src/Admin/event-meta-box/EventEditForm.js:464
-#: src/Admin/manage-event/DuplicateEventWizard.js:887
-#: src/Admin/manage-event/ManageEventApp.js:851
+#: src/Admin/event-meta-box/EventEditForm.js:486
+#: src/Admin/manage-event/DuplicateEventWizard.js:840
+#: src/Admin/manage-event/ManageEventApp.js:872
 msgid "Ends"
 msgstr "Se termine"
 
-#: src/Admin/event-meta-box/EventEditForm.js:468
-#: src/Admin/manage-event/DuplicateEventWizard.js:891
-#: src/Admin/manage-event/ManageEventApp.js:855
+#: src/Admin/event-meta-box/EventEditForm.js:490
+#: src/Admin/manage-event/DuplicateEventWizard.js:844
+#: src/Admin/manage-event/ManageEventApp.js:876
 msgid "After number of occurrences"
 msgstr "Après un nombre d'occurrences"
 
-#: src/Admin/event-meta-box/EventEditForm.js:475
-#: src/Admin/manage-event/DuplicateEventWizard.js:898
-#: src/Admin/manage-event/ManageEventApp.js:862
+#: src/Admin/event-meta-box/EventEditForm.js:497
+#: src/Admin/manage-event/DuplicateEventWizard.js:851
+#: src/Admin/manage-event/ManageEventApp.js:883
 msgid "On a specific date"
 msgstr "À une date spécifique"
 
-#: src/Admin/event-meta-box/EventEditForm.js:483
-#: src/Admin/manage-event/DuplicateEventWizard.js:909
-#: src/Admin/manage-event/ManageEventApp.js:873
+#: src/Admin/event-meta-box/EventEditForm.js:505
+#: src/Admin/manage-event/DuplicateEventWizard.js:862
+#: src/Admin/manage-event/ManageEventApp.js:894
 msgid "Number of occurrences"
 msgstr "Nombre d'occurrences"
 
-#: src/Admin/event-meta-box/EventEditForm.js:514
+#: src/Admin/event-meta-box/EventEditForm.js:539
 msgid "Save Event"
 msgstr "Enregistrer l'événement"
 
-#: src/Admin/event-meta-box/EventEditForm.js:526
+#: src/Admin/event-meta-box/EventEditForm.js:543
 msgid "Edit Full Details"
 msgstr "Modifier les détails complets"
 
-#: src/Admin/event-meta-box/EventMetaBox.js:105
+#: src/Admin/event-meta-box/EventMetaBox.js:107
 msgid "Failed to unlink event."
 msgstr "Échec de la dissociation de l'événement."
 
-#: src/Admin/event-meta-box/EventMetaBox.js:143
+#: src/Admin/event-meta-box/EventEditForm.js:554
 msgid "Unlink from event"
 msgstr "Dissocier de l'événement"
 
-#: src/Admin/event-meta-box/EventMetaBox.js:164
+#: src/Admin/event-meta-box/EventMetaBox.js:151
 msgid "No event data found. Please save the post and reload."
 msgstr "Aucune donnée d'événement trouvée. Veuillez enregistrer le message et recharger."
 
@@ -2148,226 +2032,153 @@ msgstr "Aucune entrée financière pour cet événement pour le moment."
 msgid "View All Entries"
 msgstr "Afficher toutes les entrées"
 
-#: src/Admin/manage-event/ImageCropModal.js:43
-msgid "Crop for"
-msgstr "Recadrer pour"
-
-#: src/Admin/manage-event/ImageCropModal.js:79
-#: src/Admin/manage-event/ImageExports.js:231
-msgid "Generate"
-msgstr "Générer"
-
-#: src/Admin/manage-event/ImageExports.js:74
-#: src/Admin/manage-event/ImageExports.js:117
-msgid "Failed to generate image export."
-msgstr "Échec de la génération de l'export d'image."
-
-#: src/Admin/manage-event/ImageExports.js:94
-msgid "Failed to delete image export."
-msgstr "Échec de la suppression de l'export d'image."
-
-#: src/Admin/manage-event/ImageExports.js:143
-msgid "Image Exports"
-msgstr "Exports d'images"
-
-#: src/Admin/manage-event/ImageExports.js:151
-msgid "Generate All"
-msgstr "Générer tout"
-
-#: src/Admin/manage-event/ImageExports.js:227
-msgid "Regenerate"
-msgstr "Régénérer"
-
-#: src/Admin/manage-event/ImageExports.js:245
-msgid "Download"
-msgstr "Télécharger"
-
-#: src/Admin/manage-event/ManageEventApp.js:117
+#: src/Admin/manage-event/ManageEventApp.js:116
 msgid "No event date ID specified."
 msgstr "Aucun ID de date d'événement spécifié."
 
-#: src/Admin/manage-event/ManageEventApp.js:135
+#: src/Admin/manage-event/ManageEventApp.js:136
 msgid "Failed to load event date."
 msgstr "Échec du chargement de la date d'événement."
 
-#: src/Admin/manage-event/ManageEventApp.js:364
+#: src/Admin/manage-event/ManageEventApp.js:368
 msgid "Event updated successfully."
 msgstr "Événement mis à jour avec succès."
 
-#: src/Admin/manage-event/ManageEventApp.js:367
+#: src/Admin/manage-event/ManageEventApp.js:371
 msgid "Failed to update event."
 msgstr "Échec de la mise à jour de l'événement."
 
-#: src/Admin/manage-event/ManageEventApp.js:377
+#: src/Admin/manage-event/ManageEventApp.js:381
 msgid "Are you sure you want to delete this event?"
 msgstr "Êtes-vous sûr de vouloir supprimer cet événement ?"
 
-#: src/Admin/manage-event/ManageEventApp.js:391
+#: src/Admin/manage-event/ManageEventApp.js:395
 msgid "Failed to delete event."
 msgstr "Échec de la suppression de l'événement."
 
-#: src/Admin/manage-event/ManageEventApp.js:415
+#: src/Admin/manage-event/ManageEventApp.js:419
 msgid "Failed to create post."
 msgstr "Échec de la création de l'article."
 
-#: src/Admin/manage-event/ManageEventApp.js:436
+#: src/Admin/manage-event/ManageEventApp.js:440
 msgid "Post unlinked successfully."
 msgstr "Article dissocié avec succès."
 
-#: src/Admin/manage-event/ManageEventApp.js:439
+#: src/Admin/manage-event/ManageEventApp.js:443
 msgid "Failed to unlink post."
 msgstr "Échec de la dissociation de l'article."
 
-#: src/Admin/manage-event/ManageEventApp.js:463
+#: src/Admin/manage-event/ManageEventApp.js:467
 msgid "Post linked successfully."
 msgstr "Article associé avec succès."
 
-#: src/Admin/manage-event/ManageEventApp.js:465
+#: src/Admin/manage-event/ManageEventApp.js:469
 msgid "Failed to link post."
 msgstr "Échec de l'association de l'article."
 
-#: src/Admin/manage-event/DuplicateEventWizard.js:389
-#: src/Admin/manage-event/ManageEventApp.js:491
-msgid "Select Theme Image"
-msgstr "Sélectionner l'image du thème"
-
-#: src/Admin/manage-event/DuplicateEventWizard.js:390
-#: src/Admin/manage-event/ManageEventApp.js:492
-msgid "Use this image"
-msgstr "Utiliser cette image"
-
-#: src/Admin/manage-event/ManageEventApp.js:661
-#: src/Admin/manage-event/ManageEventApp.js:1379
+#: src/Admin/manage-event/ManageEventApp.js:635
+#: src/Admin/manage-event/ManageEventApp.js:1389
 msgid "Back to Calendar"
 msgstr "Retour au calendrier"
 
-#: src/Admin/manage-event/ManageEventApp.js:908
+#: src/Admin/manage-event/ManageEventApp.js:954
 msgid "This is a recurring occurrence of:"
 msgstr "Ceci est une occurrence récurrente de :"
 
-#: src/Admin/manage-event/RecurrenceCalendar.js:100
+#: src/Admin/manage-event/RecurrenceCalendar.js:227
 msgid "Recurring Occurrences"
 msgstr "Occurrences récurrentes"
-
-#: src/Admin/manage-event/DuplicateEventWizard.js:943
-#: src/Admin/manage-event/ManageEventApp.js:944
-msgid "Theme Image"
-msgstr "Image du thème"
-
-#: src/Admin/manage-event/DuplicateEventWizard.js:950
-#: src/Admin/manage-event/ManageEventApp.js:951
-msgid "Theme image preview"
-msgstr "Aperçu de l'image du thème"
-
-#: src/Admin/manage-event/DuplicateEventWizard.js:963
-#: src/Admin/manage-event/ManageEventApp.js:964
-msgid "Change Image"
-msgstr "Modifier l'image"
-
-#: src/Admin/manage-event/DuplicateEventWizard.js:964
-#: src/Admin/manage-event/ManageEventApp.js:965
-msgid "Select Image"
-msgstr "Sélectionner une image"
-
-#: src/Admin/manage-event/DuplicateEventWizard.js:972
-#: src/Admin/manage-event/ManageEventApp.js:973
-msgid "Remove Image"
-msgstr "Supprimer l'image"
 
 #: src/Admin/manage-event/EventPhotos.js:423
 msgid "View Gallery"
 msgstr "Voir la galerie"
 
-#: src/Admin/manage-event/DuplicateEventWizard.js:618
-#: src/Admin/manage-event/ManageEventApp.js:601
+#: src/Admin/manage-event/DuplicateEventWizard.js:573
+#: src/Admin/manage-event/ManageEventApp.js:575
 msgid "Audience"
 msgstr "Audience"
 
-#: src/Admin/manage-event/ManageEventApp.js:995
+#: src/Admin/manage-event/ManageEventApp.js:976
 msgid "Link Options"
 msgstr "Options de lien"
 
-#: src/Admin/manage-event/ManageEventApp.js:1003
+#: src/Admin/manage-event/ManageEventApp.js:984
 msgid "This event is linked to 1 post."
 msgstr "Cet événement est lié à 1 article."
 
-#: src/Admin/manage-event/ManageEventApp.js:1007
+#: src/Admin/manage-event/ManageEventApp.js:988
 msgid "This event is linked to"
 msgstr "Cet événement est lié à"
 
-#: src/Admin/manage-event/ManageEventApp.js:1010
+#: src/Admin/manage-event/ManageEventApp.js:991
 msgid "posts."
 msgstr "articles."
 
-#: src/Admin/manage-event/DuplicateEventWizard.js:1036
-#: src/Admin/manage-event/ManageEventApp.js:1028
+#: src/Admin/manage-event/DuplicateEventWizard.js:946
+#: src/Admin/manage-event/ManageEventApp.js:1009
 msgid "Primary"
 msgstr "Principal"
 
-#: src/Admin/manage-event/ManageEventApp.js:1048
+#: src/Admin/manage-event/ManageEventApp.js:1029
 msgid "Edit Post"
 msgstr "Modifier l'article"
 
-#: src/Admin/manage-event/ManageEventApp.js:1057
+#: src/Admin/manage-event/ManageEventApp.js:1038
 msgid "Unlink"
 msgstr "Dissocier"
 
-#: src/Admin/manage-event/ManageEventApp.js:1067
+#: src/Admin/manage-event/ManageEventApp.js:1048
 msgid "Link type"
 msgstr "Type de lien"
 
-#: src/Admin/manage-event/ManageEventApp.js:1071
+#: src/Admin/manage-event/ManageEventApp.js:1066
 msgid "No link (standalone event)"
 msgstr "Aucun lien (événement autonome)"
 
+#: src/Admin/manage-event/ManageEventApp.js:1059
 #: src/Admin/manage-event/ManageEventApp.js:1078
-#: src/Admin/manage-event/ManageEventApp.js:1097
 msgid "External URL"
 msgstr "URL externe"
 
-#: src/Admin/manage-event/ManageEventApp.js:1085
-msgid "WordPress Post"
-msgstr "Article WordPress"
-
-#: src/Admin/manage-event/ManageEventApp.js:1108
+#: src/Admin/manage-event/ManageEventApp.js:1089
 msgid "Post type"
 msgstr "Type d'article"
 
-#: src/Admin/manage-event/ManageEventApp.js:1122
+#: src/Admin/manage-event/ManageEventApp.js:1103
 msgid "Create New Post"
 msgstr "Créer un nouvel article"
 
-#: src/Admin/manage-event/ManageEventApp.js:1131
+#: src/Admin/manage-event/ManageEventApp.js:1108
 msgid "Link Additional Post"
 msgstr "Lier un article supplémentaire"
 
-#: src/Admin/manage-event/ManageEventApp.js:1134
+#: src/Admin/manage-event/ManageEventApp.js:1114
 msgid "Search posts by title"
 msgstr "Rechercher des articles par titre"
 
-#: src/Admin/manage-event/ManageEventApp.js:1136
+#: src/Admin/manage-event/ManageEventApp.js:1119
 #: src/Admin/manage-event/MergeEventWizard.js:170
 msgid "Start typing to search..."
 msgstr "Commencez à taper pour rechercher..."
 
-#: src/Admin/manage-event/ManageEventApp.js:1143
+#: src/Admin/manage-event/ManageEventApp.js:1126
 msgid "Select a post"
 msgstr "Sélectionner un article"
 
-#: src/Admin/manage-event/ManageEventApp.js:1147
+#: src/Admin/manage-event/ManageEventApp.js:1133
 #: src/Admin/manage-event/MergeEventWizard.js:182
 msgid "Select..."
 msgstr "Sélectionner..."
 
-#: src/Admin/manage-event/ManageEventApp.js:1165
+#: src/Admin/manage-event/ManageEventApp.js:1156
 msgid "Link Post"
 msgstr "Lier l'article"
 
-#: src/Admin/manage-event/ManageEventApp.js:1376
+#: src/Admin/manage-event/ManageEventApp.js:1386
 msgid "Save Changes"
 msgstr "Enregistrer les modifications"
 
-#: src/Admin/manage-event/ManageEventApp.js:1343
+#: src/Admin/manage-event/ManageEventApp.js:1355
 msgid "Delete Event"
 msgstr "Supprimer l'événement"
 
@@ -2419,228 +2230,49 @@ msgstr "Migration en cours..."
 msgid "Migrate"
 msgstr "Migrer"
 
-#: src/Admin/settings/FacebookTab.js:98
-msgid "Please enter an access token."
-msgstr "Veuillez entrer un jeton d'accès."
-
-#: src/Admin/settings/FacebookTab.js:117
-msgid "Facebook token saved successfully."
-msgstr "Jeton Facebook enregistré avec succès."
-
-#: src/Admin/settings/FacebookTab.js:127
-msgid "Failed to save token."
-msgstr "Échec de l'enregistrement du jeton."
-
-#: src/Admin/settings/FacebookTab.js:152
-msgid "Connection successful!"
-msgstr "Connexion réussie !"
-
-#: src/Admin/settings/FacebookTab.js:160
-msgid "Connection test failed."
-msgstr "Échec du test de connexion."
-
-#: src/Admin/settings/FacebookTab.js:189
-msgid "Facebook Page ID saved successfully."
-msgstr "ID de page Facebook enregistré avec succès."
-
-#: src/Admin/settings/FacebookTab.js:199
-msgid "Failed to save Page ID."
-msgstr "Échec de l'enregistrement de l'ID de page."
-
-#: src/Admin/settings/FacebookTab.js:211
-msgid "Are you sure you want to disconnect from Facebook?"
-msgstr "Êtes-vous sûr de vouloir vous déconnecter de Facebook ?"
-
-#: src/Admin/settings/FacebookTab.js:234
-msgid "Disconnected from Facebook."
-msgstr "Déconnecté de Facebook."
-
-#: src/Admin/settings/FacebookTab.js:241
-msgid "Failed to disconnect."
-msgstr "Échec de la déconnexion."
-
-#: src/Admin/settings/FacebookTab.js:251
-msgid "Loading Facebook settings..."
-msgstr "Chargement des paramètres Facebook..."
-
-#: src/Admin/settings/FacebookTab.js:260
-msgid "Facebook Connection"
-msgstr "Connexion Facebook"
-
-#: src/Admin/settings/FacebookTab.js:265
-msgid "Connect your Facebook Page to publish events directly to Facebook."
-msgstr "Connectez votre page Facebook pour publier des événements directement sur Facebook."
-
-#: src/Admin/settings/FacebookTab.js:272
-msgid "Manual Token Entry"
-msgstr "Entrée manuelle du jeton"
-
-#: src/Admin/settings/FacebookTab.js:280
-msgid "Enter your Facebook Page access token manually. You can obtain this from the Meta Developer Portal."
-msgstr "Entrez manuellement votre jeton d'accès à la page Facebook. Vous pouvez l'obtenir à partir du portail des développeurs Meta."
-
-#: src/Admin/settings/FacebookTab.js:286
-msgid "Page Access Token"
-msgstr "Jeton d'accès à la page"
-
-#: src/Admin/settings/FacebookTab.js:289
-msgid "Enter Facebook Page access token..."
-msgstr "Entrez le jeton d'accès à la page Facebook..."
-
-#: src/Admin/settings/FacebookTab.js:303
-msgid "Save Token"
-msgstr "Enregistrer le jeton"
-
-#: src/Admin/settings/FacebookTab.js:314
-msgid "How to Get a Page Access Token"
-msgstr "Comment obtenir un jeton d'accès à la page"
-
-#: src/Admin/settings/FacebookTab.js:327
-msgid "Go to the Meta Developer Portal and create or select an app."
-msgstr "Accédez au portail des développeurs Meta et créez ou sélectionnez une application."
-
-#: src/Admin/settings/FacebookTab.js:333
-msgid "Navigate to Graph API Explorer."
-msgstr "Accédez à l'explorateur d'API Graph."
-
-#: src/Admin/settings/FacebookTab.js:339
-msgid "Select your app and generate a User Access Token with pages_manage_posts and pages_read_engagement permissions."
-msgstr "Sélectionnez votre application et générez un jeton d'accès utilisateur avec les permissions pages_manage_posts et pages_read_engagement."
-
-#: src/Admin/settings/FacebookTab.js:345
-msgid "Exchange it for a long-lived token and then get the Page Access Token."
-msgstr "Échangez-le contre un jeton de longue durée, puis obtenez le jeton d'accès à la page."
-
-#: src/Admin/settings/FacebookTab.js:353
-msgid "Open Graph API Explorer"
-msgstr "Explorateur de l'API Open Graph"
-
-#: src/Admin/settings/FacebookTab.js:364
-msgid "Connected to Facebook"
-msgstr "Connecté à Facebook"
-
-#: src/Admin/settings/FacebookTab.js:371
-msgid "Page:"
-msgstr "Page :"
-
-#. translators: %s: expiration date
-#: src/Admin/settings/FacebookTab.js:388
-#, js-format
-msgid "Token expires: %s"
-msgstr "Le jeton expire : %s"
-
-#: src/Admin/settings/FacebookTab.js:416
-msgid "The Page ID is used for publishing events. You can find it by testing the connection or from your Facebook Page settings."
-msgstr "L'ID de page est utilisé pour publier des événements. Vous pouvez le trouver en testant la connexion ou dans les paramètres de votre page Facebook."
-
-#: src/Admin/settings/FacebookTab.js:424
-msgid "Current Page ID:"
-msgstr "ID de page actuel :"
-
-#: src/Admin/settings/FacebookTab.js:430
-msgid "Page ID"
-msgstr "ID de page"
-
-#: src/Admin/settings/FacebookTab.js:433
-msgid "Enter Facebook Page ID..."
-msgstr "Entrez l'ID de la page Facebook..."
-
-#: src/Admin/settings/FacebookTab.js:438
-msgid "The numeric ID of your Facebook Page"
-msgstr "L'ID numérique de votre page Facebook"
-
-#: src/Admin/settings/FacebookTab.js:453
-msgid "Save Page ID"
-msgstr "Enregistrer l'ID de page"
-
-#: src/Admin/settings/FacebookTab.js:467
-#: src/Admin/settings/FacebookTab.js:494
-msgid "Test Connection"
-msgstr "Tester la connexion"
-
-#: src/Admin/settings/FacebookTab.js:476
-msgid "Verify your Facebook connection is working and discover available Pages."
-msgstr "Vérifiez que votre connexion Facebook fonctionne et découvrez les pages disponibles."
-
-#: src/Admin/settings/FacebookTab.js:491
-msgid "Testing..."
-msgstr "Test en cours..."
-
-#: src/Admin/settings/FacebookTab.js:528
-msgid "Token Info"
-msgstr "Informations sur le jeton"
-
-#: src/Admin/settings/FacebookTab.js:541
-msgid "Expires:"
-msgstr "Expire :"
-
-#: src/Admin/settings/FacebookTab.js:565
-msgid "Scopes:"
-msgstr "Portées :"
-
-#: src/Admin/settings/FacebookTab.js:599
-msgid "Available Facebook Pages"
-msgstr "Pages Facebook disponibles"
-
-#: src/Admin/settings/FacebookTab.js:642
-msgid "(Active)"
-msgstr "(Actif)"
-
-#: src/Admin/settings/FacebookTab.js:657
-msgid "Page ID:"
-msgstr "ID de la page :"
-
-#: src/Admin/settings/FacebookTab.js:696
+#: src/Admin/manage-event/ManageEventApp.js:672
 msgid "Details"
 msgstr "Détails"
 
-#: src/Admin/settings/FacebookTab.js:732
-msgid "Disconnect"
-msgstr "Déconnecter"
-
-#: src/Admin/settings/GeneralTab.js:140
+#: src/Admin/settings/GeneralTab.js:141
 msgid "Loading settings..."
 msgstr "Chargement des paramètres..."
 
-#: src/Admin/settings/GeneralTab.js:167
+#: src/Admin/settings/GeneralTab.js:176
 msgid "Enabled Post Types"
 msgstr "Types de publication activés"
 
-#: src/Admin/settings/GeneralTab.js:210
+#: src/Admin/settings/GeneralTab.js:221
 msgid "Events API"
 msgstr "API Événements"
 
-#: src/Admin/settings/GeneralTab.js:214
+#: src/Admin/settings/GeneralTab.js:225
 msgid "Share your events with other Fair Events sites using the public JSON API."
 msgstr "Partagez vos événements avec d'autres sites Fair Events en utilisant l'API JSON publique."
 
-#: src/Admin/settings/GeneralTab.js:222
+#: src/Admin/settings/GeneralTab.js:233
 msgid "Events API URL:"
 msgstr "URL de l'API Événements :"
 
-#: src/Admin/settings/GeneralTab.js:235
+#: src/Admin/settings/GeneralTab.js:246
 msgid "Copy API URL"
 msgstr "Copier l'URL de l'API"
 
-#: src/Admin/settings/GeneralTab.js:236
+#: src/Admin/settings/GeneralTab.js:247
 msgid "Copy Events API URL to clipboard"
 msgstr "Copier l'URL de l'API Événements dans le presse-papiers"
 
-#: src/Admin/settings/GeneralTab.js:246
+#: src/Admin/settings/GeneralTab.js:257
 msgid "Open Events API"
 msgstr "Ouvrir l'API Événements"
 
-#: src/Admin/settings/GeneralTab.js:251
+#: src/Admin/settings/GeneralTab.js:262
 msgid "Optional parameters: start_date, end_date (Y-m-d format), categories (comma-separated slugs), per_page, page."
 msgstr "Paramètres optionnels : start_date, end_date (format Y-m-d), categories (slugs séparés par des virgules), per_page, page."
 
-#: src/Admin/settings/SettingsApp.js:45
+#: src/Admin/settings/SettingsApp.js:28
 msgid "General"
 msgstr "Général"
-
-#: src/Admin/settings/SettingsApp.js:53
-msgid "Facebook"
-msgstr "Facebook"
 
 #: src/Admin/source-view/SourceViewApp.js:73
 msgid "Failed to load source."
@@ -2726,89 +2358,91 @@ msgstr "Lieu mis à jour avec succès."
 msgid "Venue created successfully."
 msgstr "Lieu créé avec succès."
 
-#: src/Admin/venues/VenuesApp.js:321
-#: src/Admin/venues/VenuesApp.js:459
+#: src/Admin/venues/VenuesApp.js:337
+#: src/Admin/venues/VenuesApp.js:454
 msgid "Add New Venue"
 msgstr "Ajouter un nouveau lieu"
 
-#: src/Admin/venues/VenuesApp.js:351
+#: src/Admin/venues/VenuesApp.js:346
 msgid "Loading venues..."
 msgstr "Chargement des lieux..."
 
-#: src/Admin/venues/VenuesApp.js:358
+#: src/Admin/venues/VenuesApp.js:353
 msgid "No venues found. Create your first venue to get started."
 msgstr "Aucun lieu trouvé. Créez votre premier lieu pour commencer."
 
-#: src/Admin/venues/VenuesApp.js:381
-#: src/Admin/venues/VenuesApp.js:475
+#: src/Admin/event-meta-box/EventEditForm.js:448
+#: src/Admin/manage-event/ManageEventApp.js:805
+#: src/Admin/venues/VenuesApp.js:376
+#: src/Admin/venues/VenuesApp.js:470
 msgid "Address"
 msgstr "Adresse"
 
-#: src/Admin/venues/VenuesApp.js:407
+#: src/Admin/venues/VenuesApp.js:402
 msgid "No address"
 msgstr "Aucune adresse"
 
-#: src/Admin/venues/VenuesApp.js:458
+#: src/Admin/venues/VenuesApp.js:453
 msgid "Edit Venue"
 msgstr "Modifier le lieu"
 
-#: src/Admin/venues/VenuesApp.js:483
+#: src/Admin/venues/VenuesApp.js:478
 msgid "Full address of the venue"
 msgstr "Adresse complète du lieu"
 
-#: src/Admin/venues/VenuesApp.js:489
+#: src/Admin/venues/VenuesApp.js:484
 msgid "Google Maps Link"
 msgstr "Lien Google Maps"
 
-#: src/Admin/venues/VenuesApp.js:498
+#: src/Admin/venues/VenuesApp.js:493
 msgid "URL to Google Maps location"
 msgstr "URL vers la localisation Google Maps"
 
-#: src/Admin/venues/VenuesApp.js:504
+#: src/Admin/venues/VenuesApp.js:499
 msgid "Latitude"
 msgstr "Latitude"
 
-#: src/Admin/venues/VenuesApp.js:512
+#: src/Admin/venues/VenuesApp.js:507
 msgid "Latitude coordinate (e.g., 39.4878023)"
 msgstr "Coordonnée de latitude (par exemple, 39.4878023)"
 
-#: src/Admin/venues/VenuesApp.js:518
+#: src/Admin/venues/VenuesApp.js:513
 msgid "Longitude"
 msgstr "Longitude"
 
-#: src/Admin/venues/VenuesApp.js:526
+#: src/Admin/venues/VenuesApp.js:521
 msgid "Longitude coordinate (e.g., -0.3613204)"
 msgstr "Coordonnée de longitude (par exemple, -0.3613204)"
 
-#: src/Admin/venues/VenuesApp.js:532
+#: src/Admin/venues/VenuesApp.js:527
 msgid "Facebook Page Link"
 msgstr "Lien de la page Facebook"
 
-#: src/Admin/venues/VenuesApp.js:541
+#: src/Admin/venues/VenuesApp.js:536
 msgid "URL to Facebook page"
 msgstr "URL vers la page Facebook"
 
-#: src/Admin/venues/VenuesApp.js:544
+#: src/Admin/venues/VenuesApp.js:539
 msgid "Instagram Handle"
 msgstr "Identifiant Instagram"
 
-#: src/Admin/venues/VenuesApp.js:552
+#: src/Admin/venues/VenuesApp.js:547
 msgid "Instagram username without @ (e.g., venue_name)"
 msgstr "Nom d'utilisateur Instagram sans @ (par exemple, venue_name)"
 
-#: src/Admin/venues/VenuesApp.js:558
+#: src/Admin/venues/VenuesApp.js:553
 msgid "Website URL"
 msgstr "URL du site web"
 
-#: src/Admin/venues/VenuesApp.js:567
+#: src/Admin/venues/VenuesApp.js:562
 msgid "Website URL of the venue"
 msgstr "URL du site web du lieu"
 
-#: src/Admin/venues/VenuesApp.js:587
+#: src/Admin/venues/VenuesApp.js:582
 msgid "Update Venue"
 msgstr "Mettre à jour le lieu"
 
-#: src/Admin/venues/VenuesApp.js:588
+#: src/Admin/venues/VenuesApp.js:583
 msgid "Create Venue"
 msgstr "Créer un lieu"
 
@@ -2989,7 +2623,7 @@ msgid "Single"
 msgstr "Unique"
 
 #: src/Admin/all-events/AllEvents.js:18
-#: src/Admin/manage-event/RecurrenceCalendar.js:177
+#: src/Admin/manage-event/RecurrenceCalendar.js:184
 msgid "Master"
 msgstr "Principal"
 
@@ -3071,20 +2705,20 @@ msgstr "Impossible de mettre à jour la règle de tarification."
 msgid "Failed to delete pricing rule."
 msgstr "Impossible de supprimer la règle de tarification."
 
-#: src/Admin/manage-event/EventAudience.js:1044
+#: src/Admin/manage-event/EventAudience.js:1049
 #: src/Admin/manage-event/MergeEventWizard.js:28
 msgid "Participants"
 msgstr "Participants"
 
-#: src/Admin/manage-event/EventAudience.js:1139
+#: src/Admin/manage-event/EventAudience.js:1144
 msgid "Signed up:"
 msgstr "Inscrits :"
 
-#: src/Admin/manage-event/EventAudience.js:1135
+#: src/Admin/manage-event/EventAudience.js:1140
 msgid "Collaborators:"
 msgstr "Collaborateurs :"
 
-#: src/Admin/manage-event/EventAudience.js:1143
+#: src/Admin/manage-event/EventAudience.js:1148
 msgid "Interested:"
 msgstr "Intéressés :"
 
@@ -3111,7 +2745,7 @@ msgstr "Groupe"
 msgid "Discount Type"
 msgstr "Type de remise"
 
-#: src/Admin/manage-event/EventAudience.js:2271
+#: src/Admin/manage-event/EventAudience.js:2276
 #: src/Admin/manage-event/GroupRules.js:459
 msgid "Save"
 msgstr "Enregistrer"
@@ -3165,11 +2799,11 @@ msgstr "ID de date d'événement maître."
 msgid "Date to toggle (Y-m-d format)."
 msgstr "Date à basculer (format Y-m-d)."
 
-#: src/API/EventDatesController.php:1141
+#: src/API/EventDatesController.php:1161
 msgid "Exdates can only be set on master events."
 msgstr "Les dates d'exclusion ne peuvent être définies que sur les événements maîtres."
 
-#: src/API/EventDatesController.php:1151
+#: src/API/EventDatesController.php:1171
 msgid "Cannot exclude the master event date."
 msgstr "Impossible d'exclure la date d'événement maître."
 
@@ -3251,162 +2885,152 @@ msgstr "Contexte de la requête. Utilisez « edit » pour inclure les événemen
 msgid "(no name)"
 msgstr "(sans nom)"
 
-#: src/Admin/manage-event/DuplicateEventWizard.js:432
+#: src/Admin/manage-event/DuplicateEventWizard.js:402
 msgid "Creating event…"
 msgstr "Création de l'événement…"
 
-#: src/Admin/manage-event/DuplicateEventWizard.js:452
-msgid "Setting theme image…"
-msgstr "Définition de l'image du thème…"
-
-#: src/Admin/manage-event/DuplicateEventWizard.js:464
+#: src/Admin/manage-event/DuplicateEventWizard.js:423
 msgid "Cloning posts…"
 msgstr "Clonage des articles…"
 
-#: src/Admin/manage-event/DuplicateEventWizard.js:479
+#: src/Admin/manage-event/DuplicateEventWizard.js:438
 msgid "Saving tickets…"
 msgstr "Enregistrement des billets…"
 
-#: src/Admin/manage-event/DuplicateEventWizard.js:494
+#: src/Admin/manage-event/DuplicateEventWizard.js:453
 msgid "Adding collaborators…"
 msgstr "Ajout de collaborateurs…"
 
-#: src/Admin/manage-event/DuplicateEventWizard.js:579
+#: src/Admin/manage-event/DuplicateEventWizard.js:538
 msgid "Done! Redirecting…"
 msgstr "Terminé ! Redirection…"
 
-#: src/Admin/manage-event/DuplicateEventWizard.js:586
+#: src/Admin/manage-event/DuplicateEventWizard.js:545
 msgid "Failed to create duplicate event."
 msgstr "Échec de la création de l'événement en double."
 
-#: src/Admin/manage-event/DuplicateEventWizard.js:602
-#: src/Admin/manage-event/ManageEventApp.js:565
-msgid "Images"
-msgstr "Images"
-
-#: src/Admin/manage-event/DuplicateEventWizard.js:608
-#: src/Admin/manage-event/ManageEventApp.js:569
+#: src/Admin/manage-event/DuplicateEventWizard.js:563
 msgid "Links"
 msgstr "Liens"
 
-#: src/Admin/manage-event/DuplicateEventWizard.js:613
+#: src/Admin/manage-event/DuplicateEventWizard.js:568
 #: src/Admin/manage-event/EventStatistics.js:281
-#: src/Admin/manage-event/ManageEventApp.js:575
+#: src/Admin/manage-event/ManageEventApp.js:549
 msgid "Tickets"
 msgstr "Billets"
 
-#: src/Admin/manage-event/DuplicateEventWizard.js:659
-#: src/Admin/manage-event/ManageEventApp.js:1300
+#: src/Admin/manage-event/DuplicateEventWizard.js:612
+#: src/Admin/manage-event/ManageEventApp.js:1312
 msgid "Duplicate Event"
 msgstr "Événement en double"
 
-#: src/Admin/manage-event/DuplicateEventWizard.js:675
+#: src/Admin/manage-event/DuplicateEventWizard.js:628
 msgid "View partially created event"
 msgstr "Afficher l'événement partiellement créé"
 
-#: src/Admin/manage-event/DuplicateEventWizard.js:697
+#: src/Admin/manage-event/DuplicateEventWizard.js:650
 #: src/Admin/manage-event/MergeEventWizard.js:407
 msgid "Step"
 msgstr "Étape"
 
-#: src/Admin/manage-event/DuplicateEventWizard.js:712
+#: src/Admin/manage-event/DuplicateEventWizard.js:665
 #: src/Admin/manage-event/MergeEventWizard.js:422
 msgid "Back"
 msgstr "Retour"
 
-#: src/Admin/manage-event/DuplicateEventWizard.js:730
+#: src/Admin/manage-event/DuplicateEventWizard.js:683
 msgid "Create Duplicate"
 msgstr "Créer un doublon"
 
-#: src/Admin/manage-event/DuplicateEventWizard.js:986
+#: src/Admin/manage-event/DuplicateEventWizard.js:896
 msgid "Linked Posts"
 msgstr "Articles liés"
 
-#: src/Admin/manage-event/DuplicateEventWizard.js:991
+#: src/Admin/manage-event/DuplicateEventWizard.js:901
 msgid "How to handle linked posts"
 msgstr "Comment gérer les articles liés"
 
-#: src/Admin/manage-event/DuplicateEventWizard.js:998
+#: src/Admin/manage-event/DuplicateEventWizard.js:908
 msgid "Clone linked posts — create draft copies"
 msgstr "Cloner les articles liés — créer des brouillons"
 
-#: src/Admin/manage-event/DuplicateEventWizard.js:1005
+#: src/Admin/manage-event/DuplicateEventWizard.js:915
 msgid "Leave empty — no links"
 msgstr "Laisser vide — aucun lien"
 
-#: src/Admin/manage-event/DuplicateEventWizard.js:1018
+#: src/Admin/manage-event/DuplicateEventWizard.js:928
 msgid "Source event linked posts:"
 msgstr "Articles liés de l'événement source :"
 
-#: src/Admin/manage-event/DuplicateEventWizard.js:1210
+#: src/Admin/manage-event/DuplicateEventWizard.js:1120
 msgid "No collaborators found on source event."
 msgstr "Aucun collaborateur trouvé sur l'événement source."
 
-#: src/Admin/manage-event/DuplicateEventWizard.js:1223
+#: src/Admin/manage-event/DuplicateEventWizard.js:1133
 #: src/Admin/manage-event/EventMailings.js:46
 msgid "Collaborators"
 msgstr "Collaborateurs"
 
-#: src/Admin/manage-event/DuplicateEventWizard.js:1228
+#: src/Admin/manage-event/DuplicateEventWizard.js:1138
 msgid "Select which collaborators to copy to the new event."
 msgstr "Sélectionnez les collaborateurs à copier vers le nouvel événement."
 
 #: src/Admin/manage-event/EventAudience.js:22
-#: src/Admin/manage-event/EventAudience.js:1200
-#: src/Admin/manage-event/EventAudience.js:1768
+#: src/Admin/manage-event/EventAudience.js:1205
+#: src/Admin/manage-event/EventAudience.js:1773
 msgid "Collaborator"
 msgstr "Collaborateur"
 
 #: src/Admin/manage-event/EventAudience.js:23
-#: src/Admin/manage-event/EventAudience.js:1207
-#: src/Admin/manage-event/EventAudience.js:1761
+#: src/Admin/manage-event/EventAudience.js:1212
+#: src/Admin/manage-event/EventAudience.js:1766
 msgid "Signed up"
 msgstr "Inscrit"
 
 #: src/Admin/manage-event/EventAudience.js:24
-#: src/Admin/manage-event/EventAudience.js:1214
-#: src/Admin/manage-event/EventAudience.js:1775
+#: src/Admin/manage-event/EventAudience.js:1219
+#: src/Admin/manage-event/EventAudience.js:1780
 #: src/Admin/manage-event/EventMailings.js:45
 msgid "Interested"
 msgstr "Intéressé"
 
-#: src/Admin/manage-event/EventAudience.js:1147
+#: src/Admin/manage-event/EventAudience.js:1152
 msgid "Total:"
 msgstr "Total :"
 
-#: src/Admin/manage-event/EventAudience.js:1179
+#: src/Admin/manage-event/EventAudience.js:1184
 msgid "Search"
 msgstr "Rechercher"
 
-#: src/Admin/manage-event/EventAudience.js:1182
+#: src/Admin/manage-event/EventAudience.js:1187
 msgid "Filter by name…"
 msgstr "Filtrer par nom…"
 
 #: src/Admin/manage-event/EventAudience.js:806
-#: src/Admin/manage-event/EventAudience.js:1189
-#: src/Admin/manage-event/EventAudience.js:1268
-#: src/Admin/manage-event/EventAudience.js:2188
+#: src/Admin/manage-event/EventAudience.js:1194
+#: src/Admin/manage-event/EventAudience.js:1273
+#: src/Admin/manage-event/EventAudience.js:2193
 msgid "Role"
 msgstr "Rôle"
 
-#: src/Admin/manage-event/EventAudience.js:1193
+#: src/Admin/manage-event/EventAudience.js:1198
 msgid "All roles"
 msgstr "Tous les rôles"
 
-#: src/Admin/manage-event/EventAudience.js:1523
+#: src/Admin/manage-event/EventAudience.js:1528
 msgid "No participants yet."
 msgstr "Aucun participant pour le moment."
 
-#: src/Admin/manage-event/EventAudience.js:1527
+#: src/Admin/manage-event/EventAudience.js:1532
 msgid "No participants match the current filters."
 msgstr "Aucun participant ne correspond aux filtres actuels."
 
-#: src/Admin/manage-event/EventAudience.js:1545
+#: src/Admin/manage-event/EventAudience.js:1550
 msgid "Manage Participants"
 msgstr "Gérer les participants"
 
 #: src/Admin/manage-event/EventFinance.js:154
-#: src/Admin/manage-event/ManageEventApp.js:617
+#: src/Admin/manage-event/ManageEventApp.js:591
 msgid "Finance"
 msgstr "Finance"
 
@@ -3420,7 +3044,7 @@ msgstr "Non étiqueté"
 
 #: src/Admin/manage-event/EventPhotos.js:330
 #: src/Admin/manage-event/EventPhotos.js:348
-#: src/Admin/manage-event/ManageEventApp.js:593
+#: src/Admin/manage-event/ManageEventApp.js:567
 msgid "Photos"
 msgstr "Photos"
 
@@ -3570,12 +3194,12 @@ msgstr "Période de tarification continue"
 msgid "Unlimited tickets in pricing period"
 msgstr "Billets illimités dans la période de tarification"
 
-#: src/Admin/manage-event/DuplicateEventWizard.js:1095
+#: src/Admin/manage-event/DuplicateEventWizard.js:1005
 #: src/Admin/manage-event/GroupRules.js:55
 msgid "View signups"
 msgstr "Afficher les inscriptions"
 
-#: src/Admin/manage-event/DuplicateEventWizard.js:1097
+#: src/Admin/manage-event/DuplicateEventWizard.js:1007
 #: src/Admin/manage-event/GroupRules.js:57
 msgid "Manage signups"
 msgstr "Gérer les inscriptions"
@@ -3616,8 +3240,8 @@ msgstr "Règles de groupe supprimées."
 msgid "Failed to remove group rules."
 msgstr "Échec de la suppression des règles de groupe."
 
-#: src/Admin/manage-event/DuplicateEventWizard.js:622
-#: src/Admin/manage-event/DuplicateEventWizard.js:1116
+#: src/Admin/manage-event/DuplicateEventWizard.js:577
+#: src/Admin/manage-event/DuplicateEventWizard.js:1026
 #: src/Admin/manage-event/GroupRules.js:357
 msgid "Group Rules"
 msgstr "Règles de groupe"
@@ -3626,7 +3250,7 @@ msgstr "Règles de groupe"
 msgid "0 = no discount"
 msgstr "0 = pas de réduction"
 
-#: src/Admin/manage-event/DuplicateEventWizard.js:1164
+#: src/Admin/manage-event/DuplicateEventWizard.js:1074
 #: src/Admin/manage-event/GroupRules.js:526
 msgid "Discount:"
 msgstr "Réduction :"
@@ -3647,38 +3271,38 @@ msgstr "Ajouter"
 msgid "All groups already have rules for this event."
 msgstr "Tous les groupes ont déjà des règles pour cet événement."
 
-#: src/Admin/manage-event/ManageEventApp.js:524
+#: src/Admin/manage-event/ManageEventApp.js:506
 msgid "Failed to toggle occurrence."
 msgstr "Échec du basculement de l'occurrence."
 
 #: src/Admin/manage-event/EventTickets.js:1319
-#: src/Admin/manage-event/ManageEventApp.js:584
+#: src/Admin/manage-event/ManageEventApp.js:558
 msgid "Groups"
 msgstr "Groupes"
 
-#: src/Admin/manage-event/ManageEventApp.js:623
+#: src/Admin/manage-event/ManageEventApp.js:597
 #: src/Admin/manage-invitations/ManageInvitations.js:341
 msgid "Admin"
 msgstr "Admin"
 
-#: src/Admin/manage-event/ManageEventApp.js:1278
+#: src/Admin/manage-event/ManageEventApp.js:1290
 msgid "Event Administration"
 msgstr "Administration des événements"
 
-#: src/Admin/manage-event/ManageEventApp.js:1288
+#: src/Admin/manage-event/ManageEventApp.js:1300
 msgid "Create a copy of this event with the same details, links, and settings."
 msgstr "Créez une copie de cet événement avec les mêmes détails, liens et paramètres."
 
-#: src/Admin/manage-event/ManageEventApp.js:1310
+#: src/Admin/manage-event/ManageEventApp.js:1322
 msgid "Merge this event into another event date, moving or cleaning up all linked data."
 msgstr "Fusionnez cet événement avec une autre date d'événement, en déplaçant ou en nettoyant toutes les données liées."
 
-#: src/Admin/manage-event/ManageEventApp.js:1322
+#: src/Admin/manage-event/ManageEventApp.js:1334
 #: src/Admin/manage-event/MergeEventWizard.js:381
 msgid "Merge Event"
 msgstr "Fusionner l'événement"
 
-#: src/Admin/manage-event/ManageEventApp.js:1332
+#: src/Admin/manage-event/ManageEventApp.js:1344
 msgid "Permanently delete this event and all associated data. This action cannot be undone."
 msgstr "Supprimez définitivement cet événement et toutes les données associées. Cette action ne peut pas être annulée."
 
@@ -3827,31 +3451,31 @@ msgstr "Rechercher des participants..."
 msgid "No participants found."
 msgstr "Aucun participant trouvé."
 
-#: src/Admin/manage-event/RecurrenceCalendar.js:108
+#: src/Admin/manage-event/RecurrenceCalendar.js:112
 msgid "Previous months"
 msgstr "Mois précédents"
 
-#: src/Admin/manage-event/RecurrenceCalendar.js:119
+#: src/Admin/manage-event/RecurrenceCalendar.js:121
 msgid "Next months"
 msgstr "Mois suivants"
 
-#: src/Admin/manage-event/RecurrenceCalendar.js:191
+#: src/Admin/manage-event/RecurrenceCalendar.js:198
 msgid "Active"
 msgstr "Actif"
 
-#: src/Admin/manage-event/RecurrenceCalendar.js:206
+#: src/Admin/manage-event/RecurrenceCalendar.js:213
 msgid "Cancelled"
 msgstr "Annulé"
 
-#: src/Admin/manage-event/RecurrenceCalendar.js:325
+#: src/Admin/manage-event/RecurrenceCalendar.js:346
 msgid "Master event"
 msgstr "Événement principal"
 
-#: src/Admin/manage-event/RecurrenceCalendar.js:338
+#: src/Admin/manage-event/RecurrenceCalendar.js:359
 msgid "Click to cancel this occurrence"
 msgstr "Cliquez pour annuler cette occurrence"
 
-#: src/Admin/manage-event/RecurrenceCalendar.js:347
+#: src/Admin/manage-event/RecurrenceCalendar.js:368
 msgid "Click to restore this occurrence"
 msgstr "Cliquez pour restaurer cette occurrence"
 
@@ -3933,11 +3557,11 @@ msgstr "%d lieu(x) importé(s)."
 msgid "Failed to import venues."
 msgstr "Échec de l'importation des lieux."
 
-#: src/Admin/venues/VenuesApp.js:296
+#: src/Admin/venues/VenuesApp.js:314
 msgid "Export Selected"
 msgstr "Exporter la sélection"
 
-#: src/Admin/venues/VenuesApp.js:311
+#: src/Admin/venues/VenuesApp.js:327
 msgid "Import"
 msgstr "Importer"
 
@@ -3953,7 +3577,7 @@ msgstr "Le bloc Informations sur l'événement est désactivé — aucun événe
 msgid "Manage Invitations"
 msgstr "Gérer les invitations"
 
-#: src/API/EventDatesController.php:336
+#: src/API/EventDatesController.php:337
 msgid "Signup price (null = free)."
 msgstr "Prix d'inscription (null = gratuit)."
 
@@ -4002,44 +3626,44 @@ msgstr "Impossible de trouver votre profil de participant."
 msgid "Invalid import payload."
 msgstr "Charge utile d'importation invalide."
 
-#: src/Admin/manage-event/DuplicateEventWizard.js:544
+#: src/Admin/manage-event/DuplicateEventWizard.js:503
 msgid "Copying group rules…"
 msgstr "Copie des règles de groupe…"
 
-#: src/Admin/manage-event/DuplicateEventWizard.js:1080
+#: src/Admin/manage-event/DuplicateEventWizard.js:990
 msgid "No group rules found on source event."
 msgstr "Aucune règle de groupe trouvée sur l'événement source."
 
-#: src/Admin/manage-event/DuplicateEventWizard.js:1121
+#: src/Admin/manage-event/DuplicateEventWizard.js:1031
 msgid "Select which groups to copy rules for."
 msgstr "Sélectionnez les groupes pour lesquels copier les règles."
 
-#: src/Admin/manage-event/DuplicateEventWizard.js:1176
+#: src/Admin/manage-event/DuplicateEventWizard.js:1086
 msgid "Permissions:"
 msgstr "Permissions :"
 
-#: src/Admin/manage-event/EventAudience.js:1301
-#: src/Admin/manage-event/EventAudience.js:1384
+#: src/Admin/manage-event/EventAudience.js:1306
+#: src/Admin/manage-event/EventAudience.js:1389
 msgid "Shown up"
 msgstr "Présent"
 
-#: src/Admin/manage-event/EventAudience.js:1591
+#: src/Admin/manage-event/EventAudience.js:1596
 msgid "Forms"
 msgstr "Formulaires"
 
-#: src/Admin/manage-event/EventAudience.js:1601
+#: src/Admin/manage-event/EventAudience.js:1606
 msgid "Form"
 msgstr "Formulaire"
 
-#: src/Admin/manage-event/EventAudience.js:1603
+#: src/Admin/manage-event/EventAudience.js:1608
 msgid "Responses"
 msgstr "Réponses"
 
-#: src/Admin/manage-event/EventAudience.js:1628
+#: src/Admin/manage-event/EventAudience.js:1633
 msgid "View Responses"
 msgstr "Afficher les réponses"
 
-#: src/Admin/manage-event/EventAudience.js:1640
+#: src/Admin/manage-event/EventAudience.js:1645
 msgid "No form submissions yet."
 msgstr "Aucune soumission de formulaire pour le moment."
 
@@ -4047,8 +3671,8 @@ msgstr "Aucune soumission de formulaire pour le moment."
 msgid "Payments"
 msgstr "Paiements"
 
-#: src/Admin/manage-event/EventAudience.js:989
-#: src/Admin/manage-event/EventAudience.js:1126
+#: src/Admin/manage-event/EventAudience.js:994
+#: src/Admin/manage-event/EventAudience.js:1131
 #: src/Admin/manage-event/EventFinance.js:347
 #: src/Admin/manage-event/EventFinance.js:435
 msgid "Participant"
@@ -4187,7 +3811,7 @@ msgstr "Prix (EUR)"
 msgid "+ Add Option"
 msgstr "+ Ajouter une option"
 
-#: src/Admin/manage-event/ManageEventApp.js:1039
+#: src/Admin/manage-event/ManageEventApp.js:1020
 msgid "View Entry"
 msgstr "Afficher l'entrée"
 
@@ -4296,52 +3920,52 @@ msgid "Error adding participants: "
 msgstr "Erreur lors de l'ajout de participants : "
 
 #: src/Admin/manage-event/EventAudience.js:807
-#: src/Admin/manage-event/EventAudience.js:992
-#: src/Admin/manage-event/EventAudience.js:1075
-#: src/Admin/manage-event/EventAudience.js:1284
-#: src/Admin/manage-event/EventAudience.js:2210
+#: src/Admin/manage-event/EventAudience.js:997
+#: src/Admin/manage-event/EventAudience.js:1080
+#: src/Admin/manage-event/EventAudience.js:1289
+#: src/Admin/manage-event/EventAudience.js:2215
 msgid "Ticket type"
 msgstr "Type de billet"
 
-#: src/Admin/manage-event/EventAudience.js:1539
-#: src/Admin/manage-event/EventAudience.js:1718
+#: src/Admin/manage-event/EventAudience.js:1544
+#: src/Admin/manage-event/EventAudience.js:1723
 msgid "Add Participants"
 msgstr "Ajouter des participants"
 
-#: src/Admin/manage-event/EventAudience.js:1726
+#: src/Admin/manage-event/EventAudience.js:1731
 msgid "All participants are already added to this event."
 msgstr "Tous les participants sont déjà ajoutés à cet événement."
 
-#: src/Admin/manage-event/EventAudience.js:1742
-#: src/Admin/manage-event/EventAudience.js:1946
+#: src/Admin/manage-event/EventAudience.js:1747
+#: src/Admin/manage-event/EventAudience.js:1951
 msgid "Search by name or email…"
 msgstr "Rechercher par nom ou e-mail…"
 
 #. translators: 1: selected count, 2: shown count
-#: src/Admin/manage-event/EventAudience.js:1797
-#: src/Admin/manage-event/EventAudience.js:1986
+#: src/Admin/manage-event/EventAudience.js:1802
+#: src/Admin/manage-event/EventAudience.js:1991
 #, js-format
 msgid "%1$d selected, %2$d shown"
 msgstr "%1$d sélectionné(s), %2$d affiché(s)"
 
 #. translators: %d: number of available participants
-#: src/Admin/manage-event/EventAudience.js:1806
+#: src/Admin/manage-event/EventAudience.js:1811
 #, js-format
 msgid "%d participant(s) available"
 msgstr "%d participant(s) disponible(s)"
 
-#: src/Admin/manage-event/EventAudience.js:1865
-#: src/Admin/manage-event/EventAudience.js:2048
+#: src/Admin/manage-event/EventAudience.js:1870
+#: src/Admin/manage-event/EventAudience.js:2053
 msgid "No participants match your search."
 msgstr "Aucun participant ne correspond à votre recherche."
 
-#: src/Admin/manage-event/EventAudience.js:1895
-#: src/Admin/manage-event/EventAudience.js:2079
+#: src/Admin/manage-event/EventAudience.js:1900
+#: src/Admin/manage-event/EventAudience.js:2084
 msgid "Adding…"
 msgstr "Ajout en cours…"
 
 #. translators: %d: number of selected participants
-#: src/Admin/manage-event/EventAudience.js:1898
+#: src/Admin/manage-event/EventAudience.js:1903
 #, js-format
 msgid "Add %d Selected"
 msgstr "Ajouter %d sélectionné(s)"
@@ -4350,7 +3974,7 @@ msgstr "Ajouter %d sélectionné(s)"
 msgid "Available"
 msgstr "Disponible"
 
-#: src/Admin/manage-event/DuplicateEventWizard.js:1093
+#: src/Admin/manage-event/DuplicateEventWizard.js:1003
 #: src/Admin/manage-event/GroupRules.js:53
 msgid "Invited"
 msgstr "Invité"
@@ -4401,13 +4025,13 @@ msgid "Print"
 msgstr "Imprimer"
 
 #: src/Admin/manage-event/EventAudience.js:808
-#: src/Admin/manage-event/EventAudience.js:995
+#: src/Admin/manage-event/EventAudience.js:1000
 #: src/Admin/manage-event/EventStatistics.js:233
 msgid "Activities"
 msgstr "Activités"
 
 #: src/Admin/manage-event/EventAudience.js:809
-#: src/Admin/manage-event/EventAudience.js:2244
+#: src/Admin/manage-event/EventAudience.js:2249
 msgid "Admin comment"
 msgstr "Commentaire administrateur"
 
@@ -4435,109 +4059,109 @@ msgstr "Erreur lors de la copie dans le presse-papiers : "
 msgid "No ticket type"
 msgstr "Aucun type de billet"
 
-#: src/Admin/manage-event/EventAudience.js:888
+#: src/Admin/manage-event/EventAudience.js:893
 msgid "(none)"
 msgstr "(aucun)"
 
-#: src/Admin/manage-event/EventAudience.js:924
+#: src/Admin/manage-event/EventAudience.js:929
 msgid "no expiry set"
 msgstr "aucune expiration définie"
 
 #. translators: %d: number of minutes
-#: src/Admin/manage-event/EventAudience.js:932
+#: src/Admin/manage-event/EventAudience.js:937
 #, js-format
 msgid "expired %d min ago"
 msgstr "expiré il y a %d min"
 
 #. translators: %d: number of hours
-#: src/Admin/manage-event/EventAudience.js:937
+#: src/Admin/manage-event/EventAudience.js:942
 #, js-format
 msgid "expired %d h ago"
 msgstr "expiré il y a %d h"
 
 #. translators: %d: number of days
-#: src/Admin/manage-event/EventAudience.js:941
+#: src/Admin/manage-event/EventAudience.js:946
 #, js-format
 msgid "expired %d d ago"
 msgstr "expiré il y a %d j"
 
-#: src/Admin/manage-event/EventAudience.js:950
-#: src/Admin/manage-event/EventAudience.js:1007
+#: src/Admin/manage-event/EventAudience.js:955
+#: src/Admin/manage-event/EventAudience.js:1012
 #: src/Admin/manage-event/EventTickets.js:968
 #: src/Admin/manage-event/EventTickets.js:987
 msgid "—"
 msgstr "—"
 
-#: src/Admin/manage-event/EventAudience.js:959
+#: src/Admin/manage-event/EventAudience.js:964
 msgid "Pending review"
 msgstr "En attente d'examen"
 
-#: src/Admin/manage-event/EventAudience.js:979
+#: src/Admin/manage-event/EventAudience.js:984
 msgid "These signups had a payment hold that expired. They are not counted toward activity capacity until reviewed. Open a row to confirm (e.g. cash payment promised) or cancel."
 msgstr "Ces inscriptions avaient une retenue de paiement qui a expiré. Elles ne sont pas comptabilisées dans la capacité d'activité jusqu'à examen. Ouvrez une ligne pour confirmer (par exemple, paiement en espèces promis) ou annuler."
 
-#: src/Admin/manage-event/EventAudience.js:1026
+#: src/Admin/manage-event/EventAudience.js:1031
 msgid "Review"
 msgstr "Examiner"
 
-#: src/Admin/manage-event/EventAudience.js:1060
+#: src/Admin/manage-event/EventAudience.js:1065
 msgid "Copy lists:"
 msgstr "Copier les listes :"
 
-#: src/Admin/manage-event/EventAudience.js:1067
+#: src/Admin/manage-event/EventAudience.js:1072
 msgid "Copied list by ticket type"
 msgstr "Liste copiée par type de billet"
 
-#: src/Admin/manage-event/EventAudience.js:1082
+#: src/Admin/manage-event/EventAudience.js:1087
 msgid "Copied list by activity"
 msgstr "Liste copiée par activité"
 
-#: src/Admin/manage-event/EventAudience.js:1093
+#: src/Admin/manage-event/EventAudience.js:1098
 msgid "Activity"
 msgstr "Activité"
 
-#: src/Admin/manage-event/EventAudience.js:1100
+#: src/Admin/manage-event/EventAudience.js:1105
 msgid "Copied activity summary"
 msgstr "Résumé d'activité copié"
 
-#: src/Admin/manage-event/EventAudience.js:1111
+#: src/Admin/manage-event/EventAudience.js:1116
 msgid "Activity summary"
 msgstr "Résumé d'activité"
 
-#: src/Admin/manage-event/EventAudience.js:1118
+#: src/Admin/manage-event/EventAudience.js:1123
 msgid "Copied list by participant"
 msgstr "Liste copiée par participant"
 
-#: src/Admin/manage-event/EventAudience.js:1160
+#: src/Admin/manage-event/EventAudience.js:1165
 msgid "Pending_payment signups whose hold expired. They do not count toward activity capacity until reviewed."
 msgstr "Inscriptions en attente de paiement dont la retenue a expiré. Elles ne sont pas comptabilisées dans la capacité d'activité jusqu'à examen."
 
 #. translators: %d: number of stale pending_payment signups
-#: src/Admin/manage-event/EventAudience.js:1167
+#: src/Admin/manage-event/EventAudience.js:1172
 #, js-format
 msgid "%d stale held"
 msgstr "%d retenues obsolètes"
 
-#: src/Admin/manage-event/EventAudience.js:1455
+#: src/Admin/manage-event/EventAudience.js:1460
 msgid "Total"
 msgstr "Total"
 
-#: src/Admin/manage-event/EventAudience.js:1557
+#: src/Admin/manage-event/EventAudience.js:1562
 msgid "Print list"
 msgstr "Imprimer la liste"
 
-#: src/Admin/manage-event/EventAudience.js:1566
-#: src/Admin/manage-event/EventAudience.js:1647
-#: src/Admin/manage-event/EventAudience.js:1709
+#: src/Admin/manage-event/EventAudience.js:1571
+#: src/Admin/manage-event/EventAudience.js:1652
+#: src/Admin/manage-event/EventAudience.js:1714
 msgid "Send Invitations"
 msgstr "Envoyer des invitations"
 
-#: src/Admin/manage-event/EventAudience.js:1653
+#: src/Admin/manage-event/EventAudience.js:1658
 msgid "Send event invitation emails to members of the following groups? Participants who are already signed up will be skipped."
 msgstr "Envoyer des e-mails d'invitation à l'événement aux membres des groupes suivants ? Les participants déjà inscrits seront ignorés."
 
 #. translators: %d: number of group members
-#: src/Admin/manage-event/EventAudience.js:1665
+#: src/Admin/manage-event/EventAudience.js:1670
 #, js-format
 msgid "%d member"
 msgid_plural "%d members"
@@ -4545,54 +4169,54 @@ msgstr[0] "%d membre"
 msgstr[1] "%d membres"
 
 #. translators: %d: total number of potential invitees
-#: src/Admin/manage-event/EventAudience.js:1680
+#: src/Admin/manage-event/EventAudience.js:1685
 #, js-format
 msgid "Total: up to %d invitations"
 msgstr "Total : jusqu'à %d invitations"
 
-#: src/Admin/manage-event/EventAudience.js:1708
+#: src/Admin/manage-event/EventAudience.js:1713
 msgid "Sending…"
 msgstr "Envoi en cours…"
 
 #. translators: %s: participant name
-#: src/Admin/manage-event/EventAudience.js:2099
+#: src/Admin/manage-event/EventAudience.js:2104
 #, js-format
 msgid "Edit options — %s"
 msgstr "Modifier les options — %s"
 
-#: src/Admin/manage-event/EventAudience.js:2121
+#: src/Admin/manage-event/EventAudience.js:2126
 msgid "Pending payment hold expired"
 msgstr "L'attente de paiement a expiré"
 
-#: src/Admin/manage-event/EventAudience.js:2133
+#: src/Admin/manage-event/EventAudience.js:2138
 msgid "Will mark as Signed up and count toward activity capacity. Click Save to apply."
 msgstr "Marquera comme Inscrit et comptera vers la capacité de l'activité. Cliquez sur Enregistrer pour appliquer."
 
-#: src/Admin/manage-event/EventAudience.js:2138
+#: src/Admin/manage-event/EventAudience.js:2143
 msgid "Will mark as Interested and free the seat (record kept for history). Click Save to apply."
 msgstr "Marquera comme Intéressé et libérera la place (enregistrement conservé pour l'historique). Cliquez sur Enregistrer pour appliquer."
 
-#: src/Admin/manage-event/EventAudience.js:2142
+#: src/Admin/manage-event/EventAudience.js:2147
 msgid "Pick how to resolve this expired hold, edit any other fields below, then Save to apply everything in one go."
 msgstr "Choisissez comment résoudre cette attente expirée, modifiez les autres champs ci-dessous, puis Enregistrez pour tout appliquer en une seule fois."
 
-#: src/Admin/manage-event/EventAudience.js:2162
+#: src/Admin/manage-event/EventAudience.js:2167
 msgid "Confirm signup"
 msgstr "Confirmer l'inscription"
 
-#: src/Admin/manage-event/EventAudience.js:2181
+#: src/Admin/manage-event/EventAudience.js:2186
 msgid "Cancel signup"
 msgstr "Annuler l'inscription"
 
-#: src/Admin/manage-event/EventAudience.js:2218
+#: src/Admin/manage-event/EventAudience.js:2223
 msgid "— None —"
 msgstr "— Aucun —"
 
-#: src/Admin/manage-event/EventAudience.js:2245
+#: src/Admin/manage-event/EventAudience.js:2250
 msgid "Internal note about this signup (e.g. \"pending 10€ payment\"). Only visible to admins."
 msgstr "Note interne sur cette inscription (par ex. « paiement de 10 € en attente »). Visible uniquement par les administrateurs."
 
-#: src/Admin/manage-event/EventAudience.js:2270
+#: src/Admin/manage-event/EventAudience.js:2275
 msgid "Saving…"
 msgstr "Enregistrement en cours…"
 
@@ -4721,29 +4345,29 @@ msgstr "%1$d ajouté(s) à la liste de diffusion. %2$d ignoré(s), %3$d email(s)
 msgid "Error updating mailing list: "
 msgstr "Erreur lors de la mise à jour de la liste de diffusion : "
 
-#: src/Admin/manage-event/EventAudience.js:1577
-#: src/Admin/manage-event/EventAudience.js:1913
+#: src/Admin/manage-event/EventAudience.js:1582
+#: src/Admin/manage-event/EventAudience.js:1918
 msgid "Add to mailing list (verbal consent)"
 msgstr "Ajouter à la liste de diffusion (consentement verbal)"
 
-#: src/Admin/manage-event/EventAudience.js:1922
+#: src/Admin/manage-event/EventAudience.js:1927
 msgid "No participants are eligible. People are listed here when they have an email address and are not already on the marketing list."
 msgstr "Aucun participant n'est éligible. Les personnes sont listées ici lorsqu'elles ont une adresse e-mail et ne sont pas déjà sur la liste de marketing."
 
-#: src/Admin/manage-event/EventAudience.js:1930
+#: src/Admin/manage-event/EventAudience.js:1935
 msgid "Tick the people who gave you their consent in person. They will be added to the marketing list and emailed a welcome message with an unsubscribe link."
 msgstr "Cochez les personnes qui vous ont donné leur consentement en personne. Elles seront ajoutées à la liste de marketing et recevront un message de bienvenue par e-mail avec un lien de désinscription."
 
-#: src/Admin/manage-event/EventAudience.js:1972
+#: src/Admin/manage-event/EventAudience.js:1977
 msgid "Deselect all"
 msgstr "Désélectionner tout"
 
-#: src/Admin/manage-event/EventAudience.js:1973
+#: src/Admin/manage-event/EventAudience.js:1978
 msgid "Select all"
 msgstr "Sélectionner tout"
 
 #. translators: %d: number of selected participants
-#: src/Admin/manage-event/EventAudience.js:2082
+#: src/Admin/manage-event/EventAudience.js:2087
 #, js-format
 msgid "Add %d to mailing list"
 msgstr "Ajouter %d à la liste de diffusion"
@@ -5000,7 +4624,7 @@ msgstr "Insérer le lien de jeton"
 msgid "Insert token:"
 msgstr "Insérer le jeton :"
 
-#: src/Admin/manage-event/ManageEventApp.js:605
+#: src/Admin/manage-event/ManageEventApp.js:579
 msgid "Mailings"
 msgstr "Envois de courrier"
 
@@ -5043,7 +4667,7 @@ msgstr "Le délai est indisponible (date d'événement ou horodatages d'inscript
 msgid "Days before event"
 msgstr "Jours avant l'événement"
 
-#: src/Admin/manage-event/ManageEventApp.js:609
+#: src/Admin/manage-event/ManageEventApp.js:583
 msgid "Statistics"
 msgstr "Statistiques"
 
@@ -5051,55 +4675,55 @@ msgstr "Statistiques"
 msgid "Submit Event Proposal"
 msgstr "Soumettre une proposition d'événement"
 
-#: src/Core/Features.php:55
+#: src/Core/Features.php:177
 msgid "Core"
 msgstr "Cœur"
 
-#: src/Core/Features.php:56
+#: src/Core/Features.php:178
 msgid "Events, calendar, all-events, settings, core blocks. Always on."
 msgstr "Événements, calendrier, tous les événements, paramètres, blocs principaux. Toujours activé."
 
-#: src/Core/Features.php:62
+#: src/Core/Features.php:182
 msgid "Venues admin page and REST controller."
 msgstr "Page d'administration des lieux et contrôleur REST."
 
-#: src/Core/Features.php:66
+#: src/Core/Features.php:185
 msgid "Event sources & feeds"
 msgstr "Sources d'événements et flux"
 
-#: src/Core/Features.php:67
+#: src/Core/Features.php:186
 msgid "External event sources, Facebook import, iCal/JSON feeds, event proposals, weekly schedule."
 msgstr "Sources d'événements externes, importation Facebook, flux iCal/JSON, propositions d'événements, calendrier hebdomadaire."
 
-#: src/Core/Features.php:71
+#: src/Core/Features.php:189
 msgid "Galleries"
 msgstr "Galeries"
 
-#: src/Core/Features.php:72
+#: src/Core/Features.php:190
 msgid "Per-event photo galleries, photo likes/downloads, image exports, media library hooks."
 msgstr "Galeries de photos par événement, j'aime/téléchargements de photos, exports d'images, crochets de la bibliothèque multimédia."
 
-#: src/Core/Features.php:76
+#: src/Core/Features.php:193
 msgid "Ticketing"
 msgstr "Billetterie"
 
-#: src/Core/Features.php:77
+#: src/Core/Features.php:194
 msgid "Tickets, group pricing/permission rules, invitations. Requires fair-audience."
 msgstr "Billets, règles de tarification/permission de groupe, invitations. Nécessite fair-audience."
 
-#: src/Core/Features.php:81
+#: src/Core/Features.php:197
 msgid "Event tools"
 msgstr "Outils d'événement"
 
-#: src/Core/Features.php:82
+#: src/Core/Features.php:198
 msgid "Event duplication, merge, and admin-bar Copy button."
 msgstr "Duplication d'événement, fusion et bouton Copier dans la barre d'administration."
 
-#: src/Core/Features.php:86
+#: src/Core/Features.php:201
 msgid "Migration"
 msgstr "Migration"
 
-#: src/Core/Features.php:87
+#: src/Core/Features.php:202
 msgid "One-time post → event migration tooling."
 msgstr "Outil de migration unique post → événement."
 
@@ -5119,55 +4743,75 @@ msgstr "Ouvrir la page d'événement"
 msgid "Insert event page link"
 msgstr "Insérer le lien de la page d'événement"
 
-#: src/Admin/settings/FeaturesTab.js:54
+#: src/Admin/settings/FeaturesTab.js:55
 msgid "Failed to load features."
 msgstr "Échec du chargement des fonctionnalités."
 
-#: src/Admin/settings/FeaturesTab.js:88
+#: src/Admin/settings/FeaturesTab.js:89
 msgid "Features saved. Reload the page to see admin-menu changes."
 msgstr "Fonctionnalités enregistrées. Rechargez la page pour voir les modifications du menu d'administration."
 
-#: src/Admin/settings/FeaturesTab.js:98
+#: src/Admin/settings/FeaturesTab.js:99
 msgid "Failed to save features."
 msgstr "Impossible d'enregistrer les fonctionnalités."
 
-#: src/Admin/settings/FeaturesTab.js:108
+#: src/Admin/settings/FeaturesTab.js:109
 msgid "Loading features..."
 msgstr "Chargement des fonctionnalités..."
 
-#: src/Admin/settings/FeaturesTab.js:120
+#: src/Admin/settings/FeaturesTab.js:124
 msgid "Toggle optional feature bundles. Bundles fixed in wp-config (FAIR_EVENTS_INTERNAL or FAIR_EVENTS_FEATURE_*) are read-only here."
 msgstr "Basculer les bundles de fonctionnalités optionnels. Les bundles fixés dans wp-config (FAIR_EVENTS_INTERNAL ou FAIR_EVENTS_FEATURE_*) sont en lecture seule ici."
 
-#: src/Admin/settings/FeaturesTab.js:128
+#: src/Admin/settings/FeaturesTab.js:132
 msgid "Forced by a wp-config constant — change it there."
 msgstr "Forcé par une constante wp-config — modifiez-le là."
 
-#: src/Admin/settings/FeaturesTab.js:151
+#: src/Admin/settings/FeaturesTab.js:155
 msgid "One or more bundles are forced by wp-config and cannot be toggled here."
 msgstr "Un ou plusieurs bundles sont forcés par wp-config et ne peuvent pas être basculés ici."
 
-#: src/Admin/settings/FeaturesTab.js:166
+#: src/Admin/settings/FeaturesTab.js:170
 msgid "Save Features"
 msgstr "Enregistrer les fonctionnalités"
 
-#: src/Admin/settings/GeneralTab.js:99
+#: src/Admin/settings/GeneralTab.js:100
 msgid "Select at least one post type, or enable the Events post type."
 msgstr "Sélectionnez au moins un type de publication, ou activez le type de publication Événements."
 
-#: src/Admin/settings/GeneralTab.js:171
+#: src/Admin/settings/GeneralTab.js:180
 msgid "Select which post types can have event data (dates, location)."
 msgstr "Sélectionnez les types de publication qui peuvent avoir des données d'événement (dates, localisation)."
 
-#: src/Admin/settings/GeneralTab.js:178
+#: src/Admin/settings/GeneralTab.js:187
 msgid "Use the Events post type"
 msgstr "Utiliser le type de publication Événements"
 
-#: src/Admin/settings/GeneralTab.js:184
+#: src/Admin/settings/GeneralTab.js:193
 msgid "Register the dedicated Events post type. Turn off to attach events only to the post types selected below."
 msgstr "Enregistrez le type de publication Événements dédié. Désactivez cette option pour joindre les événements uniquement aux types de publication sélectionnés ci-dessous."
 
-#: src/Admin/settings/SettingsApp.js:49
+#: src/Admin/settings/SettingsApp.js:32
 msgid "Features"
 msgstr "Fonctionnalités"
+
+#: src/API/EventDatesController.php:318
+msgid "Free-text address (used when Venues feature is disabled)."
+msgstr "Adresse en texte libre (utilisée lorsque la fonctionnalité Lieux est désactivée)."
+
+#: src/Admin/manage-event/ManageEventApp.js:818
+msgid "Recurrence"
+msgstr "Récurrence"
+
+#: src/Admin/manage-event/ManageEventApp.js:1052
+msgid "WordPress Post (entry)"
+msgstr "Article WordPress (entrée)"
+
+#: src/Admin/settings/FeaturesTab.js:120
+msgid "Feature Bundles"
+msgstr "Packs de fonctionnalités"
+
+#: src/Admin/venues/VenuesApp.js:310
+msgid "All Venues"
+msgstr "Tous les lieux"
 
