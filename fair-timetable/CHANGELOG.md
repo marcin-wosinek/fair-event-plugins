@@ -1,39 +1,45 @@
 # fair-timetable
 
+## 0.6.2
+
+### Patch Changes
+
+-   9cb93a0: Wire fair-timetable into release tooling: stamp build version in PHP header during CI build, and include `languages/` in the SVN trunk copy so bundled translations ship to WordPress.org.
+
 ## 0.6.1
 
 ### Patch Changes
 
-- 7e7ea9c: Update version tested up to version to 6.9.
+-   7e7ea9c: Update version tested up to version to 6.9.
 
 ## 0.6.0
 
 ### Minor Changes
 
-- 769be6b: Add automated hour as adding new time-slots
+-   769be6b: Add automated hour as adding new time-slots
 
 ## 0.5.0
 
 ### Minor Changes
 
-- 45729b3: Improve edition UX
-- 29d5b69: Rename the block attributes (Hour->Time)
+-   45729b3: Improve edition UX
+-   29d5b69: Rename the block attributes (Hour->Time)
 
 ## 0.4.0
 
 ### Minor Changes
 
-- 094cb00: Improve the block styling
+-   094cb00: Improve the block styling
 
 ## 0.3.0
 
 ### Minor Changes
 
-- 905f4e4: Refactor timetable blocks
+-   905f4e4: Refactor timetable blocks
 
 ### Patch Changes
 
-- 84fe629: Set correctly supported version
+-   84fe629: Set correctly supported version
 
 ## 0.2.0
 

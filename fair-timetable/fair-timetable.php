@@ -3,7 +3,7 @@
  * Plugin Name: Fair Timetable
  * Plugin URI: https://github.com/marcin-wosinek/fair-event-plugins
  * Description: Timetable management plugin for events & weekly activities.
- * Version: 0.6.1
+ * Version: 0.6.2
  * Requires at least: 6.7
  * Requires PHP: 8.0
  * Author: Marcin Wosinek

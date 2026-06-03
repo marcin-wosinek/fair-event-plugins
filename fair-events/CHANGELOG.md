@@ -1,5 +1,11 @@
 # fair-events
 
+## 1.3.1
+
+### Patch Changes
+
+-   518b6eb: Fix release tooling: sync plugin header Version with package.json so SVN tag publishing finds the dist archive
+
 ## 1.3.0
 
 ### Minor Changes
