@@ -73,6 +73,15 @@ function updateVersionConstant(content, constantName, newVersion) {
 }
 
 /**
+ * Update plugin header Version line: " * Version: 1.0.0"
+ * wp dist-archive reads this to name the zip, so it must match package.json.
+ */
+function updatePluginHeaderVersion(content, newVersion) {
+	const regex = /^(\s*\*\s*Version:\s*)([0-9]+\.[0-9]+\.[0-9]+)\s*$/m;
+	return content.replace(regex, `$1${newVersion}`);
+}
+
+/**
  * Main sync function
  */
 function syncVersions() {
@@ -91,39 +100,36 @@ function syncVersions() {
 
 			console.log(`📦 ${plugin.name}: ${version}`);
 
-			// Update PHP version constant
-			if (plugin.versionConstant) {
-				for (const phpFile of plugin.phpFiles) {
-					const phpFilePath = join(rootDir, phpFile);
+			// Update PHP plugin header Version + optional version constant
+			for (const phpFile of plugin.phpFiles) {
+				const phpFilePath = join(rootDir, phpFile);
 
-					try {
-						const originalContent = readFileSync(
-							phpFilePath,
-							'utf8'
-						);
-						const updatedContent = updateVersionConstant(
-							originalContent,
+				try {
+					const originalContent = readFileSync(phpFilePath, 'utf8');
+					let updatedContent = updatePluginHeaderVersion(
+						originalContent,
+						version
+					);
+					if (plugin.versionConstant) {
+						updatedContent = updateVersionConstant(
+							updatedContent,
 							plugin.versionConstant,
 							version
 						);
-
-						if (originalContent !== updatedContent) {
-							writeFileSync(phpFilePath, updatedContent, 'utf8');
-							console.log(
-								`   ✅ Updated ${plugin.versionConstant} in ${phpFile}`
-							);
-							updatedCount++;
-						} else {
-							console.log(
-								`   ⏭️  ${plugin.versionConstant} already up to date`
-							);
-						}
-					} catch (error) {
-						console.error(
-							`   ❌ Error updating ${phpFile}:`,
-							error.message
-						);
 					}
+
+					if (originalContent !== updatedContent) {
+						writeFileSync(phpFilePath, updatedContent, 'utf8');
+						console.log(`   ✅ Updated ${phpFile}`);
+						updatedCount++;
+					} else {
+						console.log(`   ⏭️  ${phpFile} already up to date`);
+					}
+				} catch (error) {
+					console.error(
+						`   ❌ Error updating ${phpFile}:`,
+						error.message
+					);
 				}
 			}
 
