@@ -25,6 +25,7 @@ const pluginFiles = [
 	'fair-payment/fair-payment.php',
 	'fair-platform/fair-platform.php',
 	'fair-audience/fair-audience.php',
+	'fair-timetable/fair-timetable.php',
 ];
 
 const versionRegex = /(\*?\s*Version:\s*)([0-9]+\.[0-9]+\.[0-9]+[^\s*]*)/gi;
