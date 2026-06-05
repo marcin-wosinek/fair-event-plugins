@@ -1,5 +1,12 @@
 # fair-payment
 
+## 1.3.2
+
+### Patch Changes
+
+-   c309dcf: Add `defined( 'ABSPATH' ) || exit;` guard to the simple-payment block's `render.php` so Plugin Check's `missing_direct_file_access_protection` error is cleared.
+-   eb53475: Bump minimum WordPress version to 6.2 so the `%i` identifier placeholder used in `$wpdb->prepare()` is supported on the declared floor, clearing Plugin Check `UnsupportedIdentifierPlaceholder` errors before publishing.
+
 ## 1.3.1
 
 ## 1.3.0
