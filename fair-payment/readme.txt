@@ -1,7 +1,7 @@
 === Fair Payment ===
 Contributors: faireventplugins
 Tags: payment, gutenberg, block
-Requires at least: 6.0
+Requires at least: 6.2
 Tested up to: 7.0
 Stable tag: 1.3.1
 Requires PHP: 7.4
