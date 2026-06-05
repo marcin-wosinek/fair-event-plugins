@@ -9,6 +9,8 @@
  * @var WP_Block $block      Block instance.
  */
 
+defined( 'ABSPATH' ) || exit;
+
 $amount          = isset( $attributes['amount'] ) ? $attributes['amount'] : '10';
 $currency        = isset( $attributes['currency'] ) ? $attributes['currency'] : 'EUR';
 $description     = isset( $attributes['description'] ) ? $attributes['description'] : '';
