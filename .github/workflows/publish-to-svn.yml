@@ -43,13 +43,6 @@ jobs:
                   ref: ${{ inputs.plugin }}@${{ inputs.version }}
                   fetch-depth: 1
 
-            - name: Setup PHP
-              uses: shivammathur/setup-php@fcafdd6392932010c2bd5094439b8e33be2a8a09 # 2.37.0
-              with:
-                  php-version: '8.3'
-                  extensions: mbstring, intl, zip
-                  coverage: none
-
             - name: Setup Node.js
               uses: actions/setup-node@v6
               with:
@@ -61,10 +54,42 @@ jobs:
             - name: Install npm dependencies
               run: npm ci --prefer-offline
 
+            # Prefer the ZIP CI already built, stamped and tested (the
+            # `build-<version>` release asset) over rebuilding from the source
+            # tag. Ships exactly what CI tested and sidesteps the stale source
+            # header bug (#728). Falls back to a source rebuild when no matching
+            # release asset exists. See #729.
+            - name: Try to reuse pre-built release artifact
+              id: reuse
+              env:
+                  GH_TOKEN: ${{ github.token }}
+              run: |
+                  mkdir -p dist
+                  if gh release download "build-${{ inputs.version }}" \
+                      --repo "$GITHUB_REPOSITORY" \
+                      --pattern "${{ inputs.plugin }}.${{ inputs.version }}.zip" \
+                      --dir dist; then
+                      echo "reuse=true" >> "$GITHUB_OUTPUT"
+                      echo "::notice::Reusing ${{ inputs.plugin }}.${{ inputs.version }}.zip from release build-${{ inputs.version }}."
+                  else
+                      echo "reuse=false" >> "$GITHUB_OUTPUT"
+                      echo "::notice::No matching release asset; rebuilding ${{ inputs.plugin }} ${{ inputs.version }} from source."
+                  fi
+
+            - name: Setup PHP
+              if: ${{ steps.reuse.outputs.reuse != 'true' }}
+              uses: shivammathur/setup-php@fcafdd6392932010c2bd5094439b8e33be2a8a09 # 2.37.0
+              with:
+                  php-version: '8.3'
+                  extensions: mbstring, intl, zip
+                  coverage: none
+
             - name: Install production PHP dependencies in all plugins
+              if: ${{ steps.reuse.outputs.reuse != 'true' }}
               run: npm run composer:install:prod
 
             - name: Install WP-CLI
+              if: ${{ steps.reuse.outputs.reuse != 'true' }}
               run: |
                   curl -L -o wp-cli.phar https://github.com/wp-cli/wp-cli/releases/download/v2.12.0/wp-cli-2.12.0.phar
                   echo "be928f6b8ca1e8dfb9d2f4b75a13aa4aee0896f8a9a0a1c45cd5d2c98605e6172e6d014dda2e27f88c98befc16c040cbb2bd1bfa121510ea5cdf5f6a30fe8832  wp-cli.phar" | sha512sum -c -
@@ -73,6 +98,7 @@ jobs:
                   wp --info
 
             - name: Install WP-CLI dist-archive command
+              if: ${{ steps.reuse.outputs.reuse != 'true' }}
               env:
                   COMPOSER_HOME: ${{ runner.temp }}/wp-cli-composer
               run: |
@@ -87,6 +113,7 @@ jobs:
                   wp dist-archive --help
 
             - name: Build plugin assets
+              if: ${{ steps.reuse.outputs.reuse != 'true' }}
               run: npm run build -w ${{ inputs.plugin }}
 
             - name: Checkout WordPress.org SVN repo
@@ -95,10 +122,23 @@ jobs:
             - name: Create SVN tag from dist archive
               env:
                   COMPOSER_HOME: ${{ runner.temp }}/wp-cli-composer
+                  SVN_TAG_REUSE_ZIP: ${{ steps.reuse.outputs.reuse == 'true' && '1' || '0' }}
               run: npm run svn:tag:${{ inputs.plugin }}
 
+            # Rebuild path: refresh trunk + assets from source. Reuse path: trunk
+            # is already populated from the extracted build by svn:tag, so only
+            # the wordpress.org assets (banners/screenshots) need copying.
             - name: Refresh trunk and assets
+              if: ${{ steps.reuse.outputs.reuse != 'true' }}
               run: npm run svn:copy -w ${{ inputs.plugin }}
+
+            - name: Refresh assets
+              if: ${{ steps.reuse.outputs.reuse == 'true' }}
+              working-directory: ${{ inputs.plugin }}
+              run: |
+                  if [ -d assets ]; then
+                      cp assets/* svn/assets/
+                  fi
 
             - name: Stage SVN changes
               working-directory: ${{ inputs.plugin }}/svn

@@ -54,37 +54,55 @@ console.log(`Creating SVN tag for ${pluginName} version ${version}...`);
 const distDir = path.join(__dirname, '..', 'dist');
 const zipFile = path.join(distDir, `${pluginName}.${version}.zip`);
 const tagDir = path.join(svnDir, 'tags', version);
+const trunkDir = path.join(svnDir, 'trunk');
+
+// Reuse mode: when SVN_TAG_REUSE_ZIP=1, ship the pre-built dist ZIP that CI
+// already created, stamped and tested (the `build-<version>` release asset)
+// instead of rebuilding it from the source tag. This ships exactly what CI
+// tested and sidesteps the stale source-tag header bug (#728). See ticket #729.
+const reuseZip = process.env.SVN_TAG_REUSE_ZIP === '1';
+
+const composerJsonPath = path.join(pluginDir, 'composer.json');
 
 try {
-	// 1. Install production-only dependencies
-	const composerJsonPath = path.join(pluginDir, 'composer.json');
-	if (fs.existsSync(composerJsonPath)) {
-		console.log(
-			'Installing production dependencies (--no-dev) in plugin...'
-		);
-		try {
-			execSync('composer install --no-dev --optimize-autoloader', {
-				cwd: pluginDir,
-				stdio: 'inherit',
-			});
-		} catch (error) {
-			console.warn(
-				'Warning: composer install failed, continuing anyway...'
+	if (reuseZip) {
+		if (!fs.existsSync(zipFile)) {
+			console.error(
+				`Error: SVN_TAG_REUSE_ZIP=1 but no pre-built archive found at ${zipFile}`
 			);
+			process.exit(1);
 		}
-	}
+		console.log(`Reusing pre-built dist archive: ${zipFile}`);
+	} else {
+		// 1. Install production-only dependencies
+		if (fs.existsSync(composerJsonPath)) {
+			console.log(
+				'Installing production dependencies (--no-dev) in plugin...'
+			);
+			try {
+				execSync('composer install --no-dev --optimize-autoloader', {
+					cwd: pluginDir,
+					stdio: 'inherit',
+				});
+			} catch (error) {
+				console.warn(
+					'Warning: composer install failed, continuing anyway...'
+				);
+			}
+		}
 
-	// 2. Always rebuild dist archive to ensure .distignore is respected
-	if (fs.existsSync(zipFile)) {
-		console.log('Removing old dist archive to ensure fresh build...');
-		fs.unlinkSync(zipFile);
-	}
+		// 2. Always rebuild dist archive to ensure .distignore is respected
+		if (fs.existsSync(zipFile)) {
+			console.log('Removing old dist archive to ensure fresh build...');
+			fs.unlinkSync(zipFile);
+		}
 
-	console.log('Creating dist archive...');
-	execSync(`wp dist-archive ${pluginName} dist --create-target-dir`, {
-		cwd: path.join(__dirname, '..'),
-		stdio: 'inherit',
-	});
+		console.log('Creating dist archive...');
+		execSync(`wp dist-archive ${pluginName} dist --create-target-dir`, {
+			cwd: path.join(__dirname, '..'),
+			stdio: 'inherit',
+		});
+	}
 
 	// 2. Create tags directory if it doesn't exist
 	if (!fs.existsSync(tagDir)) {
@@ -118,8 +136,37 @@ try {
 		console.log('Moved files to tag root');
 	}
 
-	// 5. Restore dev dependencies for local development
-	if (fs.existsSync(composerJsonPath)) {
+	// 5. In reuse mode, also populate trunk/ from the same extracted build so
+	// trunk matches exactly what we tag (includes build/, honours .distignore).
+	// This resolves the src-vs-build trunk concern from #727. In the rebuild
+	// path, trunk is still refreshed from source by the `svn:copy` step.
+	if (reuseZip) {
+		console.log('Refreshing trunk/ from the extracted build...');
+		if (fs.existsSync(trunkDir)) {
+			for (const entry of fs.readdirSync(trunkDir)) {
+				if (entry === '.svn') {
+					continue;
+				}
+				fs.rmSync(path.join(trunkDir, entry), {
+					recursive: true,
+					force: true,
+				});
+			}
+		} else {
+			fs.mkdirSync(trunkDir, { recursive: true });
+		}
+		for (const entry of fs.readdirSync(tagDir)) {
+			fs.cpSync(
+				path.join(tagDir, entry),
+				path.join(trunkDir, entry),
+				{ recursive: true }
+			);
+		}
+	}
+
+	// 6. Restore dev dependencies for local development (only the rebuild path
+	// switches to --no-dev; reuse mode never touched composer).
+	if (!reuseZip && fs.existsSync(composerJsonPath)) {
 		console.log('\nRestoring dev dependencies for local development...');
 		try {
 			execSync('composer install', {
@@ -141,9 +188,8 @@ try {
 } catch (error) {
 	console.error('Error:', error.message);
 
-	// Try to restore dev dependencies even on error
-	const composerJsonPath = path.join(pluginDir, 'composer.json');
-	if (fs.existsSync(composerJsonPath)) {
+	// Try to restore dev dependencies even on error (rebuild path only).
+	if (!reuseZip && fs.existsSync(composerJsonPath)) {
 		console.log('\nRestoring dev dependencies...');
 		try {
 			execSync('composer install', {
