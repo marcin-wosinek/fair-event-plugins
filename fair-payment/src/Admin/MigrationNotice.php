@@ -28,26 +28,26 @@ class MigrationNotice {
 	 * @return void
 	 */
 	public function show_migration_notice() {
-		// Only show on admin pages
+		// Only show on admin pages.
 		if ( ! is_admin() ) {
 			return;
 		}
 
-		// Only show on Fair Event Plugins admin pages
+		// Only show on Fair Event Plugins admin pages.
 		// phpcs:ignore WordPress.Security.NonceVerification.Recommended
 		$current_page = isset( $_GET['page'] ) ? sanitize_text_field( wp_unslash( $_GET['page'] ) ) : '';
 		if ( empty( $current_page ) || strpos( $current_page, 'fair' ) !== 0 ) {
 			return;
 		}
 
-		// Check if user has API keys configured
+		// Check if user has API keys configured.
 		$has_api_keys = ! empty( get_option( 'fair_payment_test_api_key' ) ) ||
 						! empty( get_option( 'fair_payment_live_api_key' ) );
 
-		// Check if OAuth is connected
+		// Check if OAuth is connected.
 		$has_oauth = get_option( 'fair_payment_mollie_connected', false );
 
-		// Show notice only if API keys exist but OAuth is not connected
+		// Show notice only if API keys exist but OAuth is not connected.
 		if ( $has_api_keys && ! $has_oauth ) {
 			$this->render_migration_notice();
 		}

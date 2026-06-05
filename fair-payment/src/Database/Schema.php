@@ -3,6 +3,8 @@
  * Database schema for Fair Payment
  *
  * @package FairPayment
+ *
+ * phpcs:disable WordPress.DB.DirectDatabaseQuery -- schema migrations and uninstall drops legitimately bypass dbDelta and caching.
  */
 
 namespace FairPayment\Database;
@@ -372,7 +374,6 @@ class Schema {
 			$table_name = self::get_payments_table_name();
 
 			// Check if payment_initiated_at column already exists.
-			// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
 			$column_exists = $wpdb->get_results(
 				$wpdb->prepare(
 					'SHOW COLUMNS FROM %i LIKE %s',
@@ -383,7 +384,6 @@ class Schema {
 
 			// Add payment_initiated_at column if it doesn't exist.
 			if ( empty( $column_exists ) ) {
-				// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.DirectDatabaseQuery.SchemaChange
 				$wpdb->query(
 					$wpdb->prepare(
 						'ALTER TABLE %i ADD COLUMN payment_initiated_at datetime DEFAULT NULL AFTER status',
@@ -393,7 +393,6 @@ class Schema {
 			}
 
 			// Update existing transactions: if they have mollie_payment_id, set status to 'pending_payment'.
-			// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
 			$wpdb->query(
 				$wpdb->prepare(
 					"UPDATE %i
@@ -421,7 +420,6 @@ class Schema {
 			$table_name = self::get_payments_table_name();
 
 			// Check if testmode column already exists.
-			// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
 			$column_exists = $wpdb->get_results(
 				$wpdb->prepare(
 					'SHOW COLUMNS FROM %i LIKE %s',
@@ -432,7 +430,6 @@ class Schema {
 
 			// Add testmode column if it doesn't exist.
 			if ( empty( $column_exists ) ) {
-				// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.DirectDatabaseQuery.SchemaChange
 				$wpdb->query(
 					$wpdb->prepare(
 						'ALTER TABLE %i ADD COLUMN testmode tinyint(1) NOT NULL DEFAULT 1 AFTER payment_initiated_at',
@@ -444,7 +441,6 @@ class Schema {
 				$current_mode = get_option( 'fair_payment_mode', 'test' );
 				$testmode     = ( 'live' === $current_mode ) ? 0 : 1;
 
-				// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
 				$wpdb->query(
 					$wpdb->prepare(
 						'UPDATE %i SET testmode = %d WHERE mollie_payment_id != %s',
@@ -473,7 +469,6 @@ class Schema {
 			$table_name = self::get_payments_table_name();
 
 			// Check if application_fee column already exists.
-			// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
 			$column_exists = $wpdb->get_results(
 				$wpdb->prepare(
 					'SHOW COLUMNS FROM %i LIKE %s',
@@ -484,7 +479,6 @@ class Schema {
 
 			// Add application_fee column if it doesn't exist.
 			if ( empty( $column_exists ) ) {
-				// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.DirectDatabaseQuery.SchemaChange
 				$wpdb->query(
 					$wpdb->prepare(
 						'ALTER TABLE %i ADD COLUMN application_fee decimal(10,2) DEFAULT NULL AFTER currency',
@@ -511,7 +505,6 @@ class Schema {
 			$table_name = self::get_payments_table_name();
 
 			// Check if old platform_fee_amount column exists.
-			// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
 			$old_column_exists = $wpdb->get_results(
 				$wpdb->prepare(
 					'SHOW COLUMNS FROM %i LIKE %s',
@@ -521,7 +514,6 @@ class Schema {
 			);
 
 			// Check if new application_fee column already exists.
-			// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
 			$new_column_exists = $wpdb->get_results(
 				$wpdb->prepare(
 					'SHOW COLUMNS FROM %i LIKE %s',
@@ -532,7 +524,6 @@ class Schema {
 
 			// Rename column if old exists and new doesn't.
 			if ( ! empty( $old_column_exists ) && empty( $new_column_exists ) ) {
-				// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.DirectDatabaseQuery.SchemaChange
 				$wpdb->query(
 					$wpdb->prepare(
 						'ALTER TABLE %i CHANGE COLUMN platform_fee_amount application_fee decimal(10,2) DEFAULT NULL',
@@ -577,7 +568,6 @@ class Schema {
 			$table_name = self::get_financial_entries_table_name();
 
 			// Check if external_reference column already exists.
-			// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
 			$column_exists = $wpdb->get_results(
 				$wpdb->prepare(
 					'SHOW COLUMNS FROM %i LIKE %s',
@@ -588,7 +578,6 @@ class Schema {
 
 			// Add external_reference column if it doesn't exist.
 			if ( empty( $column_exists ) ) {
-				// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.DirectDatabaseQuery.SchemaChange
 				$wpdb->query(
 					$wpdb->prepare(
 						'ALTER TABLE %i ADD COLUMN external_reference varchar(255) DEFAULT NULL AFTER transaction_id',
@@ -597,7 +586,6 @@ class Schema {
 				);
 
 				// Add unique index on external_reference.
-				// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.DirectDatabaseQuery.SchemaChange
 				$wpdb->query(
 					$wpdb->prepare(
 						'ALTER TABLE %i ADD UNIQUE KEY external_reference (external_reference)',
@@ -624,7 +612,6 @@ class Schema {
 			$table_name = self::get_financial_entries_table_name();
 
 			// Check if import_source column already exists.
-			// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
 			$column_exists = $wpdb->get_results(
 				$wpdb->prepare(
 					'SHOW COLUMNS FROM %i LIKE %s',
@@ -635,7 +622,6 @@ class Schema {
 
 			// Add import_source column if it doesn't exist.
 			if ( empty( $column_exists ) ) {
-				// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.DirectDatabaseQuery.SchemaChange
 				$wpdb->query(
 					$wpdb->prepare(
 						'ALTER TABLE %i ADD COLUMN import_source varchar(255) DEFAULT NULL AFTER external_reference',
@@ -645,7 +631,6 @@ class Schema {
 			}
 
 			// Check if imported_at column already exists.
-			// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
 			$imported_at_exists = $wpdb->get_results(
 				$wpdb->prepare(
 					'SHOW COLUMNS FROM %i LIKE %s',
@@ -656,7 +641,6 @@ class Schema {
 
 			// Add imported_at column if it doesn't exist.
 			if ( empty( $imported_at_exists ) ) {
-				// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.DirectDatabaseQuery.SchemaChange
 				$wpdb->query(
 					$wpdb->prepare(
 						'ALTER TABLE %i ADD COLUMN imported_at datetime DEFAULT NULL AFTER import_source',
@@ -683,7 +667,6 @@ class Schema {
 			$table_name = self::get_financial_entries_table_name();
 
 			// Check if parent_entry_id column already exists.
-			// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
 			$column_exists = $wpdb->get_results(
 				$wpdb->prepare(
 					'SHOW COLUMNS FROM %i LIKE %s',
@@ -694,7 +677,6 @@ class Schema {
 
 			// Add parent_entry_id column if it doesn't exist.
 			if ( empty( $column_exists ) ) {
-				// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.DirectDatabaseQuery.SchemaChange
 				$wpdb->query(
 					$wpdb->prepare(
 						'ALTER TABLE %i ADD COLUMN parent_entry_id bigint(20) UNSIGNED DEFAULT NULL AFTER import_source',
@@ -703,7 +685,6 @@ class Schema {
 				);
 
 				// Add index on parent_entry_id.
-				// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.DirectDatabaseQuery.SchemaChange
 				$wpdb->query(
 					$wpdb->prepare(
 						'ALTER TABLE %i ADD KEY parent_entry_id (parent_entry_id)',
@@ -730,7 +711,6 @@ class Schema {
 			$table_name = self::get_financial_entries_table_name();
 
 			// Check if event_url column already exists.
-			// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
 			$column_exists = $wpdb->get_results(
 				$wpdb->prepare(
 					'SHOW COLUMNS FROM %i LIKE %s',
@@ -741,7 +721,6 @@ class Schema {
 
 			// Add event_url column if it doesn't exist.
 			if ( empty( $column_exists ) ) {
-				// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.DirectDatabaseQuery.SchemaChange
 				$wpdb->query(
 					$wpdb->prepare(
 						'ALTER TABLE %i ADD COLUMN event_url varchar(500) DEFAULT NULL AFTER parent_entry_id',
@@ -750,7 +729,6 @@ class Schema {
 				);
 
 				// Add index on event_url.
-				// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.DirectDatabaseQuery.SchemaChange
 				$wpdb->query(
 					$wpdb->prepare(
 						'ALTER TABLE %i ADD KEY event_url (event_url)',
@@ -777,7 +755,6 @@ class Schema {
 			$table_name = self::get_financial_entries_table_name();
 
 			// Check if event_date_id column already exists.
-			// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
 			$column_exists = $wpdb->get_results(
 				$wpdb->prepare(
 					'SHOW COLUMNS FROM %i LIKE %s',
@@ -788,7 +765,6 @@ class Schema {
 
 			// Add event_date_id column if it doesn't exist.
 			if ( empty( $column_exists ) ) {
-				// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.DirectDatabaseQuery.SchemaChange
 				$wpdb->query(
 					$wpdb->prepare(
 						'ALTER TABLE %i ADD COLUMN event_date_id bigint(20) UNSIGNED DEFAULT NULL AFTER event_url',
@@ -797,7 +773,6 @@ class Schema {
 				);
 
 				// Add index on event_date_id.
-				// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.DirectDatabaseQuery.SchemaChange
 				$wpdb->query(
 					$wpdb->prepare(
 						'ALTER TABLE %i ADD KEY event_date_id (event_date_id)',
@@ -824,7 +799,6 @@ class Schema {
 			$table_name = self::get_payments_table_name();
 
 			// Check if mollie_fee column already exists.
-			// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
 			$column_exists = $wpdb->get_results(
 				$wpdb->prepare(
 					'SHOW COLUMNS FROM %i LIKE %s',
@@ -835,7 +809,6 @@ class Schema {
 
 			// Add mollie_fee column if it doesn't exist.
 			if ( empty( $column_exists ) ) {
-				// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.DirectDatabaseQuery.SchemaChange
 				$wpdb->query(
 					$wpdb->prepare(
 						'ALTER TABLE %i ADD COLUMN mollie_fee decimal(10,2) DEFAULT NULL AFTER application_fee',
@@ -862,7 +835,6 @@ class Schema {
 			$table_name = self::get_payments_table_name();
 
 			// Check if event_date_id column already exists.
-			// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
 			$column_exists = $wpdb->get_results(
 				$wpdb->prepare(
 					'SHOW COLUMNS FROM %i LIKE %s',
@@ -873,7 +845,6 @@ class Schema {
 
 			// Add event_date_id column if it doesn't exist.
 			if ( empty( $column_exists ) ) {
-				// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.DirectDatabaseQuery.SchemaChange
 				$wpdb->query(
 					$wpdb->prepare(
 						'ALTER TABLE %i ADD COLUMN event_date_id bigint(20) UNSIGNED DEFAULT NULL AFTER post_id',
@@ -882,7 +853,6 @@ class Schema {
 				);
 
 				// Add index on event_date_id.
-				// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.DirectDatabaseQuery.SchemaChange
 				$wpdb->query(
 					$wpdb->prepare(
 						'ALTER TABLE %i ADD KEY event_date_id (event_date_id)',
@@ -913,7 +883,6 @@ class Schema {
 			$entries_table  = self::get_financial_entries_table_name();
 
 			// Migrate existing 1:1 matches into the junction table.
-			// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
 			$wpdb->query(
 				$wpdb->prepare(
 					'INSERT IGNORE INTO %i (entry_id, transaction_id) SELECT id, transaction_id FROM %i WHERE transaction_id IS NOT NULL',
@@ -941,7 +910,6 @@ class Schema {
 			$table_name = self::get_payments_table_name();
 
 			// Check if participant_id column already exists.
-			// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
 			$column_exists = $wpdb->get_results(
 				$wpdb->prepare(
 					'SHOW COLUMNS FROM %i LIKE %s',
@@ -952,7 +920,6 @@ class Schema {
 
 			// Add participant_id column if it doesn't exist.
 			if ( empty( $column_exists ) ) {
-				// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.DirectDatabaseQuery.SchemaChange
 				$wpdb->query(
 					$wpdb->prepare(
 						'ALTER TABLE %i ADD COLUMN participant_id bigint(20) UNSIGNED DEFAULT NULL AFTER user_id',
@@ -961,7 +928,6 @@ class Schema {
 				);
 
 				// Add index on participant_id.
-				// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.DirectDatabaseQuery.SchemaChange
 				$wpdb->query(
 					$wpdb->prepare(
 						'ALTER TABLE %i ADD KEY participant_id (participant_id)',
@@ -993,7 +959,6 @@ class Schema {
 		if ( version_compare( $current_version, '16.0', '<' ) ) {
 			$table_name = self::get_payments_table_name();
 
-			// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
 			$rows = $wpdb->get_results(
 				$wpdb->prepare(
 					"SELECT id, metadata FROM %i WHERE event_date_id IS NULL AND metadata IS NOT NULL AND metadata != ''",
@@ -1008,7 +973,6 @@ class Schema {
 						continue;
 					}
 
-					// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
 					$wpdb->update(
 						$table_name,
 						array( 'event_date_id' => (int) $metadata['event_date_id'] ),
@@ -1036,7 +1000,6 @@ class Schema {
 		if ( version_compare( $current_version, '17.0', '<' ) ) {
 			$table_name = self::get_financial_entries_table_name();
 
-			// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
 			$column_exists = $wpdb->get_results(
 				$wpdb->prepare(
 					'SHOW COLUMNS FROM %i LIKE %s',
@@ -1046,7 +1009,6 @@ class Schema {
 			);
 
 			if ( empty( $column_exists ) ) {
-				// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.DirectDatabaseQuery.SchemaChange
 				$wpdb->query(
 					$wpdb->prepare(
 						'ALTER TABLE %i ADD COLUMN participant_id bigint(20) UNSIGNED DEFAULT NULL AFTER event_date_id',
@@ -1054,7 +1016,6 @@ class Schema {
 					)
 				);
 
-				// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.DirectDatabaseQuery.SchemaChange
 				$wpdb->query(
 					$wpdb->prepare(
 						'ALTER TABLE %i ADD KEY participant_id (participant_id)',
@@ -1112,31 +1073,24 @@ class Schema {
 		$api_tokens_table         = self::get_api_tokens_table_name();
 
 		// Drop API tokens table (standalone, no FK references).
-		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.DirectDatabaseQuery.SchemaChange
 		$wpdb->query( $wpdb->prepare( 'DROP TABLE IF EXISTS %i', $api_tokens_table ) );
 
 		// Drop log table (references transactions but only via informational FK, drop first).
-		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.DirectDatabaseQuery.SchemaChange
 		$wpdb->query( $wpdb->prepare( 'DROP TABLE IF EXISTS %i', $log_table ) );
 
 		// Drop entry-transaction junction table first (references both entries and transactions).
-		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.DirectDatabaseQuery.SchemaChange
 		$wpdb->query( $wpdb->prepare( 'DROP TABLE IF EXISTS %i', $entry_transactions_table ) );
 
 		// Drop financial entries (references transactions and budgets).
-		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.DirectDatabaseQuery.SchemaChange
 		$wpdb->query( $wpdb->prepare( 'DROP TABLE IF EXISTS %i', $financial_entries_table ) );
 
 		// Drop budgets table.
-		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.DirectDatabaseQuery.SchemaChange
 		$wpdb->query( $wpdb->prepare( 'DROP TABLE IF EXISTS %i', $budgets_table ) );
 
 		// Drop line items (foreign key reference to transactions).
-		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.DirectDatabaseQuery.SchemaChange
 		$wpdb->query( $wpdb->prepare( 'DROP TABLE IF EXISTS %i', $line_items_table ) );
 
 		// Drop transactions table.
-		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.DirectDatabaseQuery.SchemaChange
 		$wpdb->query( $wpdb->prepare( 'DROP TABLE IF EXISTS %i', $transactions_table ) );
 
 		delete_option( 'fair_payment_db_version' );

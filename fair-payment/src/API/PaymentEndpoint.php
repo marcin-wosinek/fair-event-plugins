@@ -106,10 +106,10 @@ class PaymentEndpoint extends WP_REST_Controller {
 	 * @return WP_REST_Response|WP_Error Response object or error.
 	 */
 	public function create_payment( WP_REST_Request $request ) {
-		// TODO: Implement different behavior for logged-in vs anonymous users
-		// - Logged-in users: Track in user profile
-		// - Anonymous users: Require email
-		// See: REST_API_BACKEND.md for implementation guidance
+		// TODO: Implement different behavior for logged-in vs anonymous users.
+		// - Logged-in users: Track in user profile.
+		// - Anonymous users: Require email.
+		// See: REST_API_BACKEND.md for implementation guidance.
 
 		$logger = new PaymentLogRepository();
 

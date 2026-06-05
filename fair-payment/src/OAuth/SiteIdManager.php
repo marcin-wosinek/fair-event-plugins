@@ -26,8 +26,8 @@ class SiteIdManager {
 		$site_id = get_option( 'fair_payment_mollie_site_id' );
 
 		if ( empty( $site_id ) ) {
-			// Generate unique ID from home URL and absolute path
-			// This ensures the ID remains stable across requests
+			// Generate unique ID from home URL and absolute path.
+			// This ensures the ID remains stable across requests.
 			$site_id = hash( 'sha256', home_url() . ABSPATH );
 			update_option( 'fair_payment_mollie_site_id', $site_id );
 		}

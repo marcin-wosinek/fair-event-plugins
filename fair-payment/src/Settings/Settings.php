@@ -28,7 +28,7 @@ class Settings {
 	 * @return void
 	 */
 	public function register_settings() {
-		// Test API Key
+		// Test API Key.
 		register_setting(
 			'fair_payment_settings',
 			'fair_payment_test_api_key',
@@ -41,7 +41,7 @@ class Settings {
 			)
 		);
 
-		// Live API Key
+		// Live API Key.
 		register_setting(
 			'fair_payment_settings',
 			'fair_payment_live_api_key',
@@ -54,7 +54,7 @@ class Settings {
 			)
 		);
 
-		// Mode (test or live)
+		// Mode (test or live).
 		register_setting(
 			'fair_payment_settings',
 			'fair_payment_mode',
@@ -67,7 +67,7 @@ class Settings {
 			)
 		);
 
-		// Organization ID
+		// Organization ID.
 		register_setting(
 			'fair_payment_settings',
 			'fair_payment_organization_id',
@@ -80,7 +80,7 @@ class Settings {
 			)
 		);
 
-		// OAuth Access Token
+		// OAuth Access Token.
 		register_setting(
 			'fair_payment_settings',
 			'fair_payment_mollie_access_token',
@@ -98,7 +98,7 @@ class Settings {
 			)
 		);
 
-		// OAuth Refresh Token
+		// OAuth Refresh Token.
 		register_setting(
 			'fair_payment_settings',
 			'fair_payment_mollie_refresh_token',
@@ -116,7 +116,7 @@ class Settings {
 			)
 		);
 
-		// OAuth Token Expiration
+		// OAuth Token Expiration.
 		register_setting(
 			'fair_payment_settings',
 			'fair_payment_mollie_token_expires',
@@ -134,7 +134,7 @@ class Settings {
 			)
 		);
 
-		// OAuth Site ID
+		// OAuth Site ID.
 		register_setting(
 			'fair_payment_settings',
 			'fair_payment_mollie_site_id',
@@ -152,7 +152,7 @@ class Settings {
 			)
 		);
 
-		// OAuth Connection Status
+		// OAuth Connection Status.
 		register_setting(
 			'fair_payment_settings',
 			'fair_payment_mollie_connected',
@@ -170,7 +170,7 @@ class Settings {
 			)
 		);
 
-		// Enable Budgets Feature
+		// Enable Budgets Feature.
 		register_setting(
 			'fair_payment_settings',
 			'fair_payment_enable_budgets',
@@ -183,7 +183,7 @@ class Settings {
 			)
 		);
 
-		// Mollie Profile ID (cached for OAuth)
+		// Mollie Profile ID (cached for OAuth).
 		register_setting(
 			'fair_payment_settings',
 			'fair_payment_mollie_profile_id',
@@ -196,7 +196,7 @@ class Settings {
 			)
 		);
 
-		// Disable bank transfer when close to event date
+		// Disable bank transfer when close to event date.
 		register_setting(
 			'fair_payment_settings',
 			'fair_payment_disable_banktransfer_near_date',
@@ -209,7 +209,7 @@ class Settings {
 			)
 		);
 
-		// Bank transfer cutoff in working days
+		// Bank transfer cutoff in working days.
 		register_setting(
 			'fair_payment_settings',
 			'fair_payment_banktransfer_threshold_days',
@@ -222,7 +222,7 @@ class Settings {
 			)
 		);
 
-		// Telegram: enabled
+		// Telegram: enabled.
 		register_setting(
 			'fair_payment_settings',
 			'fair_payment_telegram_enabled',
@@ -235,7 +235,7 @@ class Settings {
 			)
 		);
 
-		// Telegram: bot token (sensitive — edit context only)
+		// Telegram: bot token (sensitive — edit context only).
 		register_setting(
 			'fair_payment_settings',
 			'fair_payment_telegram_bot_token',
@@ -253,7 +253,7 @@ class Settings {
 			)
 		);
 
-		// Telegram: chat IDs (comma-separated)
+		// Telegram: chat IDs (comma-separated).
 		register_setting(
 			'fair_payment_settings',
 			'fair_payment_telegram_chat_ids',
@@ -266,7 +266,7 @@ class Settings {
 			)
 		);
 
-		// Telegram: message template
+		// Telegram: message template.
 		register_setting(
 			'fair_payment_settings',
 			'fair_payment_telegram_template',
@@ -279,7 +279,7 @@ class Settings {
 			)
 		);
 
-		// Telegram: include PII placeholders
+		// Telegram: include PII placeholders.
 		register_setting(
 			'fair_payment_settings',
 			'fair_payment_telegram_include_pii',

@@ -76,7 +76,7 @@ class Plugin {
 	 * @return void
 	 */
 	public function register_blocks() {
-		// Register simple-payment block from build directory
+		// Register simple-payment block from build directory.
 		register_block_type(
 			FAIR_PAYMENT_PLUGIN_DIR . 'build/blocks/simple-payment'
 		);

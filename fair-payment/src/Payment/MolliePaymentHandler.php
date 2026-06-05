@@ -30,7 +30,7 @@ class MolliePaymentHandler {
 	public function __construct() {
 		$this->mollie = new MollieApiClient();
 
-		// Prefer OAuth if connected, otherwise fall back to API keys
+		// Prefer OAuth if connected, otherwise fall back to API keys.
 		if ( get_option( 'fair_payment_mollie_connected', false ) ) {
 			$this->set_access_token();
 		} else {
@@ -42,6 +42,7 @@ class MolliePaymentHandler {
 	 * Set API key based on mode
 	 *
 	 * @return void
+	 * @throws \Exception If no API key is configured.
 	 */
 	private function set_api_key() {
 		$mode = get_option( 'fair_payment_mode', 'test' );
@@ -53,7 +54,7 @@ class MolliePaymentHandler {
 		}
 
 		if ( empty( $api_key ) ) {
-			throw new \Exception( __( 'Mollie API key is not configured.', 'fair-payment' ) );
+			throw new \Exception( esc_html__( 'Mollie API key is not configured.', 'fair-payment' ) );
 		}
 
 		$this->mollie->setApiKey( $api_key );
@@ -72,7 +73,7 @@ class MolliePaymentHandler {
 		$access_token = $this->get_valid_access_token();
 
 		if ( empty( $access_token ) ) {
-			throw new \Exception( __( 'Mollie is not connected. Please connect your Mollie account in settings.', 'fair-payment' ) );
+			throw new \Exception( esc_html__( 'Mollie is not connected. Please connect your Mollie account in settings.', 'fair-payment' ) );
 		}
 
 		$this->mollie->setAccessToken( $access_token );
@@ -89,12 +90,12 @@ class MolliePaymentHandler {
 		$token   = get_option( 'fair_payment_mollie_access_token' );
 		$expires = get_option( 'fair_payment_mollie_token_expires', 0 );
 
-		// Token valid if not expired (5 min buffer)
+		// Token valid if not expired (5 min buffer).
 		if ( $token && time() < ( $expires - 300 ) ) {
 			return $token;
 		}
 
-		// Expired - refresh it
+		// Expired - refresh it.
 		return $this->refresh_access_token();
 	}
 
@@ -106,17 +107,16 @@ class MolliePaymentHandler {
 	 * @return string|false New access token or false if refresh failed.
 	 */
 	private function refresh_access_token() {
-		error_log( '[Fair Payment] Token refresh started' );
-
 		$refresh_token = get_option( 'fair_payment_mollie_refresh_token' );
 
 		if ( empty( $refresh_token ) ) {
-			error_log( '[Fair Payment] Token refresh failed: No refresh token found in database' );
+			if ( defined( 'WP_DEBUG' ) && WP_DEBUG ) {
+				// phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
+				error_log( '[Fair Payment] Token refresh failed: No refresh token found in database' );
+			}
 			update_option( 'fair_payment_mollie_connected', false );
 			return false;
 		}
-
-		error_log( '[Fair Payment] Sending refresh request to fair-event-plugins.com with token: ' . substr( $refresh_token, 0, 15 ) . '...' );
 
 		$response = wp_remote_post(
 			'https://fair-event-plugins.com/oauth/refresh',
@@ -127,49 +127,48 @@ class MolliePaymentHandler {
 		);
 
 		if ( is_wp_error( $response ) ) {
-			error_log( '[Fair Payment] Token refresh failed: HTTP error - ' . $response->get_error_message() );
-			error_log( '[Fair Payment] Error code: ' . $response->get_error_code() );
+			if ( defined( 'WP_DEBUG' ) && WP_DEBUG ) {
+				// phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
+				error_log( '[Fair Payment] Token refresh failed: HTTP error - ' . $response->get_error_message() . ' (code: ' . $response->get_error_code() . ')' );
+			}
 			return false;
 		}
 
-		$http_code     = wp_remote_retrieve_response_code( $response );
 		$response_body = wp_remote_retrieve_body( $response );
-
-		error_log( '[Fair Payment] OAuth server responded with HTTP ' . $http_code );
-		error_log( '[Fair Payment] Response body: ' . $response_body );
-
-		$body = json_decode( $response_body, true );
+		$body          = json_decode( $response_body, true );
 
 		if ( json_last_error() !== JSON_ERROR_NONE ) {
-			error_log( '[Fair Payment] Token refresh failed: Invalid JSON response - ' . json_last_error_msg() );
+			if ( defined( 'WP_DEBUG' ) && WP_DEBUG ) {
+				// phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
+				error_log( '[Fair Payment] Token refresh failed: Invalid JSON response - ' . json_last_error_msg() );
+			}
 			return false;
 		}
 
 		if ( empty( $body['success'] ) ) {
 			update_option( 'fair_payment_mollie_connected', false );
-			$error_message = isset( $body['message'] ) ? $body['message'] : 'Unknown error';
-			error_log( '[Fair Payment] Token refresh failed: Server returned success=false - ' . $error_message );
-			error_log( '[Fair Payment] Full response: ' . wp_json_encode( $body ) );
+			if ( defined( 'WP_DEBUG' ) && WP_DEBUG ) {
+				$error_message = isset( $body['message'] ) ? $body['message'] : 'Unknown error';
+				// phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
+				error_log( '[Fair Payment] Token refresh failed: Server returned success=false - ' . $error_message );
+			}
 			return false;
 		}
 
-		// Verify required keys exist in response (nested under data.data)
+		// Verify required keys exist in response (nested under data.data).
 		if ( ! isset( $body['data']['data']['access_token'] ) || ! isset( $body['data']['data']['expires_in'] ) ) {
 			update_option( 'fair_payment_mollie_connected', false );
-			error_log( '[Fair Payment] Token refresh failed: Missing required fields in response' );
-			error_log( '[Fair Payment] Has data.data.access_token: ' . ( isset( $body['data']['data']['access_token'] ) ? 'yes' : 'no' ) );
-			error_log( '[Fair Payment] Has data.data.expires_in: ' . ( isset( $body['data']['data']['expires_in'] ) ? 'yes' : 'no' ) );
-			error_log( '[Fair Payment] Full response: ' . wp_json_encode( $body ) );
+			if ( defined( 'WP_DEBUG' ) && WP_DEBUG ) {
+				// phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
+				error_log( '[Fair Payment] Token refresh failed: Missing required fields in response' );
+			}
 			return false;
 		}
 
-		// Store new token
 		$new_token  = $body['data']['data']['access_token'];
 		$expires_in = $body['data']['data']['expires_in'];
 		update_option( 'fair_payment_mollie_access_token', $new_token );
 		update_option( 'fair_payment_mollie_token_expires', time() + $expires_in );
-
-		error_log( '[Fair Payment] Token refresh successful. New token: ' . substr( $new_token, 0, 15 ) . '... (expires in ' . $expires_in . ' seconds)' );
 
 		return $new_token;
 	}
@@ -182,18 +181,18 @@ class MolliePaymentHandler {
 	 * @return string|false Profile ID or false if unavailable.
 	 */
 	private function get_profile_id() {
-		// Not needed for API key authentication
+		// Not needed for API key authentication.
 		if ( ! get_option( 'fair_payment_mollie_connected', false ) ) {
 			return false;
 		}
 
-		// Check cached profile ID
+		// Check cached profile ID.
 		$profile_id = get_option( 'fair_payment_mollie_profile_id' );
 		if ( ! empty( $profile_id ) ) {
 			return $profile_id;
 		}
 
-		// Fetch current profile from Mollie
+		// Fetch current profile from Mollie.
 		try {
 			$profile = $this->mollie->profiles->get( 'me' );
 			if ( $profile && ! empty( $profile->id ) ) {
@@ -201,7 +200,10 @@ class MolliePaymentHandler {
 				return $profile->id;
 			}
 		} catch ( \Exception $e ) {
-			error_log( 'Failed to fetch Mollie profile: ' . $e->getMessage() );
+			if ( defined( 'WP_DEBUG' ) && WP_DEBUG ) {
+				// phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
+				error_log( 'Failed to fetch Mollie profile: ' . $e->getMessage() );
+			}
 		}
 
 		return false;
@@ -212,7 +214,7 @@ class MolliePaymentHandler {
 	 *
 	 * @param array $args Payment arguments.
 	 * @return array Payment data including mollie_payment_id and checkout_url.
-	 * @throws ApiException If payment creation fails.
+	 * @throws \Exception If the underlying Mollie call fails.
 	 */
 	public function create_payment( $args ) {
 		$defaults = array(
@@ -256,19 +258,19 @@ class MolliePaymentHandler {
 				);
 			}
 
-			// Add profile ID for OAuth authentication
+			// Add profile ID for OAuth authentication.
 			$profile_id = $this->get_profile_id();
 			if ( $profile_id ) {
 				$payment_data['profileId'] = $profile_id;
 			}
 
-			// Set test mode based on settings (required for OAuth)
+			// Set test mode based on settings (required for OAuth).
 			$mode                     = get_option( 'fair_payment_mode', 'test' );
 			$payment_data['testmode'] = ( 'live' === $mode ) ? false : true;
 
 			// Build a method allowlist when callers want to suppress specific methods.
 			// Mollie has no "exclude" parameter; the supported way is to pass `method`
-			// as an allowlist. We fetch the currently active set so the allowlist
+			// as an allowlist. We fetch the currently active set so the allowlist.
 			// stays in sync with the merchant's Mollie configuration.
 			if ( ! empty( $args['disable_methods'] ) && is_array( $args['disable_methods'] ) ) {
 				$allowed = $this->build_method_allowlist(
@@ -323,8 +325,8 @@ class MolliePaymentHandler {
 				'status'            => $payment->status,
 			);
 		} catch ( ApiException $e ) {
-			// At this point Mollie may or may not have created the payment — we never
-			// got a confirmed response. Log the request payload so an admin can search
+			// At this point Mollie may or may not have created the payment — we never.
+			// got a confirmed response. Log the request payload so an admin can search.
 			// the Mollie dashboard for an orphan payment.
 			$logger->log(
 				'mollie_call_failed',
@@ -342,10 +344,12 @@ class MolliePaymentHandler {
 				)
 			);
 			throw new \Exception(
-				sprintf(
-					/* translators: %s: error message */
-					__( 'Failed to create payment: %s', 'fair-payment' ),
-					$e->getMessage()
+				esc_html(
+					sprintf(
+						/* translators: %s: error message */
+						__( 'Failed to create payment: %s', 'fair-payment' ),
+						$e->getMessage()
+					)
 				)
 			);
 		}
@@ -375,7 +379,10 @@ class MolliePaymentHandler {
 
 			$methods = $this->mollie->methods->allActive( $parameters );
 		} catch ( ApiException $e ) {
-			error_log( '[Fair Payment] Failed to list Mollie methods for filter: ' . $e->getMessage() );
+			if ( defined( 'WP_DEBUG' ) && WP_DEBUG ) {
+				// phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
+				error_log( '[Fair Payment] Failed to list Mollie methods for filter: ' . $e->getMessage() );
+			}
 			return array();
 		}
 
@@ -388,7 +395,7 @@ class MolliePaymentHandler {
 			$allowed[] = $method->id;
 		}
 
-		// If filtering left us with nothing, fall back to letting Mollie show
+		// If filtering left us with nothing, fall back to letting Mollie show.
 		// all enabled methods rather than passing an empty allowlist.
 		if ( count( $allowed ) === count( $methods ) || empty( $allowed ) ) {
 			return array();
@@ -403,17 +410,19 @@ class MolliePaymentHandler {
 	 * @param string $mollie_payment_id Mollie payment ID.
 	 * @param array  $options Options for retrieving payment (e.g., testmode).
 	 * @return object Payment object from Mollie.
-	 * @throws ApiException If payment retrieval fails.
+	 * @throws \Exception If the underlying Mollie call fails.
 	 */
 	public function get_payment( $mollie_payment_id, $options = array() ) {
 		try {
 			return $this->mollie->payments->get( $mollie_payment_id, $options );
 		} catch ( ApiException $e ) {
 			throw new \Exception(
-				sprintf(
-					/* translators: %s: error message */
-					__( 'Failed to retrieve payment: %s', 'fair-payment' ),
-					$e->getMessage()
+				esc_html(
+					sprintf(
+						/* translators: %s: error message */
+						__( 'Failed to retrieve payment: %s', 'fair-payment' ),
+						$e->getMessage()
+					)
 				)
 			);
 		}
@@ -436,10 +445,12 @@ class MolliePaymentHandler {
 			return $this->mollie->balanceTransactions->iteratorForPrimary( $parameters );
 		} catch ( ApiException $e ) {
 			throw new \Exception(
-				sprintf(
-					/* translators: %s: error message */
-					__( 'Failed to list balance transactions: %s', 'fair-payment' ),
-					$e->getMessage()
+				esc_html(
+					sprintf(
+						/* translators: %s: error message */
+						__( 'Failed to list balance transactions: %s', 'fair-payment' ),
+						$e->getMessage()
+					)
 				)
 			);
 		}
@@ -454,12 +465,12 @@ class MolliePaymentHandler {
 	 * @return bool True if OAuth is connected or API key is set.
 	 */
 	public static function is_configured() {
-		// Check OAuth connection first
+		// Check OAuth connection first.
 		if ( get_option( 'fair_payment_mollie_connected', false ) ) {
 			return true;
 		}
 
-		// Fall back to API key check
+		// Fall back to API key check.
 		$mode = get_option( 'fair_payment_mode', 'test' );
 
 		if ( 'live' === $mode ) {

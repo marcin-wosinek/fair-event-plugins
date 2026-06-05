@@ -385,8 +385,10 @@ class TransactionAPI {
 
 			$transaction->sync_debug = self::build_mollie_debug( $payment );
 		} catch ( \Exception $e ) {
-			// phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
-			error_log( 'Fair Payment sync error: ' . $e->getMessage() );
+			if ( defined( 'WP_DEBUG' ) && WP_DEBUG ) {
+				// phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
+				error_log( 'Fair Payment sync error: ' . $e->getMessage() );
+			}
 
 			if ( $force ) {
 				return new \WP_Error(
@@ -423,7 +425,9 @@ class TransactionAPI {
 			'amount'            => $to_amount( $payment->amount ?? null ),
 			// phpcs:ignore WordPress.NamingConventions.ValidVariableName.UsedPropertyNotSnakeCase -- Mollie API field.
 			'settlement_amount' => $to_amount( $payment->settlementAmount ?? null ),
+			// phpcs:ignore WordPress.NamingConventions.ValidVariableName.UsedPropertyNotSnakeCase -- Mollie API field.
 			'application_fee'   => isset( $payment->applicationFee->amount )
+				// phpcs:ignore WordPress.NamingConventions.ValidVariableName.UsedPropertyNotSnakeCase -- Mollie API field.
 				? $to_amount( $payment->applicationFee->amount )
 				: null,
 			// phpcs:ignore WordPress.NamingConventions.ValidVariableName.UsedPropertyNotSnakeCase -- Mollie API field.
@@ -465,9 +469,11 @@ class TransactionAPI {
 				++$debug['scanned'];
 
 				if ( isset( $txn->context->paymentId ) && $txn->context->paymentId === $payment->id ) {
-					$debug['match_found']    = true;
-					$debug['deductions']     = isset( $txn->deductions ) ? (array) $txn->deductions : null;
-					$debug['result_amount']  = isset( $txn->resultAmount ) ? (array) $txn->resultAmount : null;
+					$debug['match_found'] = true;
+					$debug['deductions']  = isset( $txn->deductions ) ? (array) $txn->deductions : null;
+					// phpcs:ignore WordPress.NamingConventions.ValidVariableName.UsedPropertyNotSnakeCase -- Mollie API field.
+					$debug['result_amount'] = isset( $txn->resultAmount ) ? (array) $txn->resultAmount : null;
+					// phpcs:ignore WordPress.NamingConventions.ValidVariableName.UsedPropertyNotSnakeCase -- Mollie API field.
 					$debug['initial_amount'] = isset( $txn->initialAmount ) ? (array) $txn->initialAmount : null;
 
 					if ( isset( $txn->deductions->value ) ) {
@@ -500,8 +506,10 @@ class TransactionAPI {
 			}
 		} catch ( \Exception $e ) {
 			$debug['error'] = $e->getMessage();
-			// phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
-			error_log( 'Fair Payment balance lookup error: ' . $e->getMessage() );
+			if ( defined( 'WP_DEBUG' ) && WP_DEBUG ) {
+				// phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
+				error_log( 'Fair Payment balance lookup error: ' . $e->getMessage() );
+			}
 		}
 
 		return $debug;
@@ -632,7 +640,10 @@ class TransactionAPI {
 		try {
 			$key_date = new \DateTimeImmutable( $event_date->start_datetime, $tz );
 		} catch ( \Exception $e ) {
-			error_log( '[Fair Payment] Invalid event start_datetime for event_date #' . (int) $transaction->event_date_id . ': ' . $e->getMessage() );
+			if ( defined( 'WP_DEBUG' ) && WP_DEBUG ) {
+				// phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
+				error_log( '[Fair Payment] Invalid event start_datetime for event_date #' . (int) $transaction->event_date_id . ': ' . $e->getMessage() );
+			}
 			return array();
 		}
 

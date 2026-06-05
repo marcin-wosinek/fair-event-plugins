@@ -998,6 +998,7 @@ class FinancialEntryController extends WP_REST_Controller {
 				$link = self::get_transaction_link( $transaction );
 				if ( '' !== $link['event_url'] || null !== $link['event_date_id'] ) {
 					global $wpdb;
+					// phpcs:ignore WordPress.DB.DirectDatabaseQuery -- writing a back-link onto our own table; no caching layer.
 					$wpdb->update(
 						\FairPayment\Database\Schema::get_financial_entries_table_name(),
 						array(
