@@ -825,22 +825,27 @@ class EventDatesController extends WP_REST_Controller {
 				}
 			}
 
-			// Propagate venue/address changes from a master to its existing
-			// generated children. Without this, edits to inherited location
-			// fields would only reach children when the series is fully
-			// regenerated (rrule or dates change).
-			if ( 'master' === $existing->occurrence_type
-				&& ( array_key_exists( 'venue_id', $update_data ) || array_key_exists( 'address', $update_data ) )
-			) {
+			// Propagate inherited fields (event_id, venue_id, address) from a
+			// master to its existing generated children. Without this, edits to
+			// these fields would only reach children when the series is fully
+			// regenerated (rrule or dates change). event_id propagation matters
+			// when a standalone recurring series is linked to a post after its
+			// children were already generated.
+			if ( 'master' === $existing->occurrence_type ) {
 				$propagate = array();
+				if ( array_key_exists( 'event_id', $update_data ) ) {
+					$propagate['event_id'] = $update_data['event_id'];
+				}
 				if ( array_key_exists( 'venue_id', $update_data ) ) {
 					$propagate['venue_id'] = $update_data['venue_id'];
 				}
 				if ( array_key_exists( 'address', $update_data ) ) {
 					$propagate['address'] = $update_data['address'];
 				}
-				foreach ( EventDates::get_generated_by_master_id( $id ) as $child ) {
-					EventDates::update_by_id( $child->id, $propagate );
+				if ( ! empty( $propagate ) ) {
+					foreach ( EventDates::get_generated_by_master_id( $id ) as $child ) {
+						EventDates::update_by_id( $child->id, $propagate );
+					}
 				}
 			}
 
