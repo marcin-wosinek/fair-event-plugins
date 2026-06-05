@@ -3,6 +3,8 @@
  * Transaction Model
  *
  * @package FairPayment
+ *
+ * phpcs:disable WordPress.DB.DirectDatabaseQuery -- model layer reads/writes a custom table directly; caching is left to callers.
  */
 
 namespace FairPayment\Models;
@@ -259,6 +261,7 @@ class Transaction {
 
 		$ids = $wpdb->get_col(
 			$wpdb->prepare(
+				// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- $where is an AND-join of clauses already individually run through $wpdb->prepare() above.
 				"SELECT id FROM %i WHERE {$where} ORDER BY created_at DESC",
 				$table_name
 			)
@@ -344,6 +347,7 @@ class Transaction {
 
 		return $wpdb->get_results(
 			$wpdb->prepare(
+				// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- $where joins clauses already prepared above; $orderby/$order are validated against allowlists.
 				"SELECT * FROM %i{$where} ORDER BY {$orderby} {$order} LIMIT %d OFFSET %d",
 				$table_name,
 				$args['limit'],
@@ -392,6 +396,7 @@ class Transaction {
 
 		return (int) $wpdb->get_var(
 			$wpdb->prepare(
+				// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- $where joins clauses already prepared above.
 				"SELECT COUNT(*) FROM %i{$where}",
 				$table_name
 			)

@@ -296,15 +296,18 @@ class TransactionsController extends WP_REST_Controller {
 		$fields = array();
 
 		if ( null !== $request->get_param( 'participant_id' ) ) {
-			$fields['participant_id'] = $request->get_param( 'participant_id' ) ?: null;
+			$participant_id           = $request->get_param( 'participant_id' );
+			$fields['participant_id'] = $participant_id ? $participant_id : null;
 		}
 
 		if ( null !== $request->get_param( 'user_id' ) ) {
-			$fields['user_id'] = $request->get_param( 'user_id' ) ?: null;
+			$user_id           = $request->get_param( 'user_id' );
+			$fields['user_id'] = $user_id ? $user_id : null;
 		}
 
 		if ( null !== $request->get_param( 'post_id' ) ) {
-			$fields['post_id'] = $request->get_param( 'post_id' ) ?: null;
+			$post_id           = $request->get_param( 'post_id' );
+			$fields['post_id'] = $post_id ? $post_id : null;
 		}
 
 		if ( empty( $fields ) ) {

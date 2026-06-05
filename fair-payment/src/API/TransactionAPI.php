@@ -425,7 +425,9 @@ class TransactionAPI {
 			'amount'            => $to_amount( $payment->amount ?? null ),
 			// phpcs:ignore WordPress.NamingConventions.ValidVariableName.UsedPropertyNotSnakeCase -- Mollie API field.
 			'settlement_amount' => $to_amount( $payment->settlementAmount ?? null ),
+			// phpcs:ignore WordPress.NamingConventions.ValidVariableName.UsedPropertyNotSnakeCase -- Mollie API field.
 			'application_fee'   => isset( $payment->applicationFee->amount )
+				// phpcs:ignore WordPress.NamingConventions.ValidVariableName.UsedPropertyNotSnakeCase -- Mollie API field.
 				? $to_amount( $payment->applicationFee->amount )
 				: null,
 			// phpcs:ignore WordPress.NamingConventions.ValidVariableName.UsedPropertyNotSnakeCase -- Mollie API field.
@@ -467,9 +469,11 @@ class TransactionAPI {
 				++$debug['scanned'];
 
 				if ( isset( $txn->context->paymentId ) && $txn->context->paymentId === $payment->id ) {
-					$debug['match_found']    = true;
-					$debug['deductions']     = isset( $txn->deductions ) ? (array) $txn->deductions : null;
-					$debug['result_amount']  = isset( $txn->resultAmount ) ? (array) $txn->resultAmount : null;
+					$debug['match_found'] = true;
+					$debug['deductions']  = isset( $txn->deductions ) ? (array) $txn->deductions : null;
+					// phpcs:ignore WordPress.NamingConventions.ValidVariableName.UsedPropertyNotSnakeCase -- Mollie API field.
+					$debug['result_amount'] = isset( $txn->resultAmount ) ? (array) $txn->resultAmount : null;
+					// phpcs:ignore WordPress.NamingConventions.ValidVariableName.UsedPropertyNotSnakeCase -- Mollie API field.
 					$debug['initial_amount'] = isset( $txn->initialAmount ) ? (array) $txn->initialAmount : null;
 
 					if ( isset( $txn->deductions->value ) ) {

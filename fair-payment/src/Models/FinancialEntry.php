@@ -3,6 +3,8 @@
  * Financial Entry model for Fair Payment
  *
  * @package FairPayment
+ *
+ * phpcs:disable WordPress.DB.DirectDatabaseQuery -- model layer reads/writes a custom table directly; caching is left to callers.
  */
 
 namespace FairPayment\Models;
@@ -258,9 +260,10 @@ class FinancialEntry {
 
 		// When filtering by a specific budget, event_url, or event_date_id, include child entries matching that filter.
 		// Otherwise, exclude child entries (they are shown under their parent).
-		if ( ( ! empty( $filters['budget_id'] ) && 'none' !== $filters['budget_id'] ) || ! empty( $filters['event_url'] ) || ! empty( $filters['event_date_id'] ) ) {
-			// No parent_entry_id restriction — filter will match both parents and children.
-		} else {
+		$include_children = ( ! empty( $filters['budget_id'] ) && 'none' !== $filters['budget_id'] )
+			|| ! empty( $filters['event_url'] )
+			|| ! empty( $filters['event_date_id'] );
+		if ( ! $include_children ) {
 			$where_clauses[] = 'parent_entry_id IS NULL';
 		}
 
@@ -301,6 +304,7 @@ class FinancialEntry {
 		if ( ! empty( $filters['unmatched'] ) ) {
 			$junction_table  = Schema::get_entry_transactions_table_name();
 			$where_clauses[] = $wpdb->prepare(
+				// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared,WordPress.DB.PreparedSQL.NotPrepared -- $table_name comes from Schema::get_*_table_name() and is not user input.
 				'NOT EXISTS (SELECT 1 FROM %i WHERE entry_id = ' . $table_name . '.id)',
 				$junction_table
 			);
@@ -314,7 +318,7 @@ class FinancialEntry {
 		// Get total count.
 		$count_sql = $wpdb->prepare( 'SELECT COUNT(*) FROM %i', $table_name );
 		if ( ! empty( $where_values ) ) {
-			// phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared
+			// phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared,WordPress.DB.PreparedSQLPlaceholders.ReplacementsWrongNumber -- placeholder count is dynamic (one per $where_values entry).
 			$count_sql .= ' ' . $wpdb->prepare( str_replace( '%i', '%%i', $where_sql ), ...$where_values );
 		} elseif ( ! empty( $where_sql ) ) {
 			$count_sql .= ' ' . $where_sql;
@@ -332,7 +336,7 @@ class FinancialEntry {
 		// Get entries.
 		$query = $wpdb->prepare( 'SELECT * FROM %i', $table_name );
 		if ( ! empty( $where_values ) ) {
-			// phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared
+			// phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared,WordPress.DB.PreparedSQLPlaceholders.ReplacementsWrongNumber -- placeholder count is dynamic (one per $where_values entry).
 			$query .= ' ' . $wpdb->prepare( str_replace( '%i', '%%i', $where_sql ), ...$where_values );
 		} elseif ( ! empty( $where_sql ) ) {
 			$query .= ' ' . $where_sql;
@@ -343,7 +347,7 @@ class FinancialEntry {
 			: 'entry_date';
 		$order           = ! empty( $filters['order'] ) && 'asc' === strtolower( $filters['order'] ) ? 'ASC' : 'DESC';
 
-		// phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared
+		// phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared,WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- $order is validated against an ASC/DESC allowlist above.
 		$query .= $wpdb->prepare( " ORDER BY %i $order, id DESC LIMIT %d OFFSET %d", $orderby, $per_page, $offset );
 
 		// phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared
@@ -418,6 +422,7 @@ class FinancialEntry {
 		if ( ! empty( $filters['unmatched'] ) ) {
 			$junction_table  = Schema::get_entry_transactions_table_name();
 			$where_clauses[] = $wpdb->prepare(
+				// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared,WordPress.DB.PreparedSQL.NotPrepared -- $table_name comes from Schema::get_*_table_name() and is not user input.
 				'NOT EXISTS (SELECT 1 FROM %i WHERE entry_id = ' . $table_name . '.id)',
 				$junction_table
 			);
@@ -431,7 +436,7 @@ class FinancialEntry {
 		// Get cost total.
 		$cost_sql = $wpdb->prepare( 'SELECT COALESCE(SUM(amount), 0) FROM %i', $table_name );
 		if ( ! empty( $where_values ) ) {
-			// phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared
+			// phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared,WordPress.DB.PreparedSQLPlaceholders.ReplacementsWrongNumber -- placeholder count is dynamic (one per $where_values entry).
 			$cost_where = $wpdb->prepare( str_replace( '%i', '%%i', $where_sql ), ...$where_values );
 			$cost_sql  .= ' ' . $cost_where . " AND entry_type = 'cost'";
 		} elseif ( ! empty( $where_sql ) ) {
@@ -445,7 +450,7 @@ class FinancialEntry {
 		// Get income total.
 		$income_sql = $wpdb->prepare( 'SELECT COALESCE(SUM(amount), 0) FROM %i', $table_name );
 		if ( ! empty( $where_values ) ) {
-			// phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared
+			// phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared,WordPress.DB.PreparedSQLPlaceholders.ReplacementsWrongNumber -- placeholder count is dynamic (one per $where_values entry).
 			$income_where = $wpdb->prepare( str_replace( '%i', '%%i', $where_sql ), ...$where_values );
 			$income_sql  .= ' ' . $income_where . " AND entry_type = 'income'";
 		} elseif ( ! empty( $where_sql ) ) {
@@ -525,6 +530,8 @@ class FinancialEntry {
 	 * @param string|null $description    Entry description.
 	 * @param int|null    $budget_id      Budget ID.
 	 * @param int|null    $transaction_id Transaction ID.
+	 * @param string|null $event_url      Event URL.
+	 * @param int|null    $event_date_id  Event date ID.
 	 * @return int|false The entry ID on success, false on failure.
 	 */
 	public static function create( $amount, $entry_type, $entry_date, $description = null, $budget_id = null, $transaction_id = null, $event_url = null, $event_date_id = null ) {
@@ -569,6 +576,8 @@ class FinancialEntry {
 	 * @param string|null $description    Entry description.
 	 * @param int|null    $budget_id      Budget ID.
 	 * @param int|null    $transaction_id Transaction ID.
+	 * @param string|null $event_url      Event URL.
+	 * @param int|null    $event_date_id  Event date ID.
 	 * @return bool True on success, false on failure.
 	 */
 	public static function update( $id, $amount, $entry_type, $entry_date, $description = null, $budget_id = null, $transaction_id = null, $event_url = null, $event_date_id = null ) {
@@ -1045,6 +1054,7 @@ class FinancialEntry {
 	 * @param string|null $description       Transfer description.
 	 * @param string|null $event_url         Event URL.
 	 * @param int|null    $event_date_id     Event date ID.
+	 * @param int|null    $participant_id    Participant ID.
 	 * @return int|false The parent entry ID on success, false on failure.
 	 */
 	public static function create_transfer( $amount, $entry_date, $source_budget_id, $target_budget_id, $description = null, $event_url = null, $event_date_id = null, $participant_id = null ) {
@@ -1134,6 +1144,7 @@ class FinancialEntry {
 	 * @param string|null $description       Transfer description.
 	 * @param string|null $event_url         Event URL.
 	 * @param int|null    $event_date_id     Event date ID.
+	 * @param int|null    $participant_id    Participant ID.
 	 * @return bool True on success, false on failure.
 	 */
 	public static function update_transfer( $id, $amount, $entry_date, $source_budget_id, $target_budget_id, $description = null, $event_url = null, $event_date_id = null, $participant_id = null ) {

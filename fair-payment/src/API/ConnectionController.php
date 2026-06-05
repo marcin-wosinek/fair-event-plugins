@@ -42,7 +42,7 @@ class ConnectionController extends \WP_REST_Controller {
 	 */
 	public function test_connection() {
 		try {
-			// Check if OAuth is configured
+			// Check if OAuth is configured.
 			if ( ! get_option( 'fair_payment_mollie_connected', false ) ) {
 				return new \WP_Error(
 					'not_connected',
@@ -51,17 +51,17 @@ class ConnectionController extends \WP_REST_Controller {
 				);
 			}
 
-			// Get current token expiration
+			// Get current token expiration.
 			$token_expires = get_option( 'fair_payment_mollie_token_expires', 0 );
 
-			// Try to create payment handler (will trigger token refresh if needed)
+			// Try to create payment handler (will trigger token refresh if needed).
 			$handler = new MolliePaymentHandler();
 
-			// If we get here, connection is working
+			// If we get here, connection is working.
 			$new_token_expires = get_option( 'fair_payment_mollie_token_expires', 0 );
 			$new_expires_at    = $new_token_expires > 0 ? gmdate( 'Y-m-d H:i:s', $new_token_expires ) : 'unknown';
 
-			// Check if token was refreshed
+			// Check if token was refreshed.
 			$was_refreshed = $new_token_expires !== $token_expires;
 
 			return new \WP_REST_Response(

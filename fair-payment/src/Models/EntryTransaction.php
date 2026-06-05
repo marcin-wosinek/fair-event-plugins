@@ -144,9 +144,10 @@ class EntryTransaction {
 
 		$placeholders = implode( ',', array_fill( 0, count( $transaction_ids ), '%d' ) );
 
-		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.PreparedSQLPlaceholders.ReplacementsWrongNumber -- Dynamic placeholder count matches array size.
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQLPlaceholders.ReplacementsWrongNumber -- Dynamic placeholder count matches array size.
 		$results = $wpdb->get_results(
 			$wpdb->prepare(
+				// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- $placeholders is a generated string of %d placeholders only.
 				"SELECT transaction_id, entry_id FROM %i WHERE transaction_id IN ($placeholders) ORDER BY id ASC",
 				array_merge( array( $table_name ), array_map( 'intval', $transaction_ids ) )
 			)

@@ -3,6 +3,8 @@
  * LineItem Model
  *
  * @package FairPayment
+ *
+ * phpcs:disable WordPress.DB.DirectDatabaseQuery -- model layer reads/writes a custom table directly; caching is left to callers.
  */
 
 namespace FairPayment\Models;

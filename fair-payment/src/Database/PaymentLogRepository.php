@@ -193,6 +193,7 @@ class PaymentLogRepository {
 
 		$results = $wpdb->get_results(
 			$wpdb->prepare(
+				// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- $where joins clauses already individually prepared above.
 				"SELECT * FROM %i{$where} ORDER BY id DESC LIMIT %d OFFSET %d",
 				$table_name,
 				(int) $args['limit'],
