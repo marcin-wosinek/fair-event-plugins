@@ -385,8 +385,10 @@ class TransactionAPI {
 
 			$transaction->sync_debug = self::build_mollie_debug( $payment );
 		} catch ( \Exception $e ) {
-			// phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
-			error_log( 'Fair Payment sync error: ' . $e->getMessage() );
+			if ( defined( 'WP_DEBUG' ) && WP_DEBUG ) {
+				// phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
+				error_log( 'Fair Payment sync error: ' . $e->getMessage() );
+			}
 
 			if ( $force ) {
 				return new \WP_Error(
@@ -500,8 +502,10 @@ class TransactionAPI {
 			}
 		} catch ( \Exception $e ) {
 			$debug['error'] = $e->getMessage();
-			// phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
-			error_log( 'Fair Payment balance lookup error: ' . $e->getMessage() );
+			if ( defined( 'WP_DEBUG' ) && WP_DEBUG ) {
+				// phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
+				error_log( 'Fair Payment balance lookup error: ' . $e->getMessage() );
+			}
 		}
 
 		return $debug;
@@ -632,7 +636,10 @@ class TransactionAPI {
 		try {
 			$key_date = new \DateTimeImmutable( $event_date->start_datetime, $tz );
 		} catch ( \Exception $e ) {
-			error_log( '[Fair Payment] Invalid event start_datetime for event_date #' . (int) $transaction->event_date_id . ': ' . $e->getMessage() );
+			if ( defined( 'WP_DEBUG' ) && WP_DEBUG ) {
+				// phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
+				error_log( '[Fair Payment] Invalid event start_datetime for event_date #' . (int) $transaction->event_date_id . ': ' . $e->getMessage() );
+			}
 			return array();
 		}
 

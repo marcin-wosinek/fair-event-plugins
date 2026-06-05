@@ -60,7 +60,10 @@ class TelegramService {
 		);
 
 		if ( is_wp_error( $response ) ) {
-			error_log( '[Fair Payment] Telegram send failed: ' . $response->get_error_message() );
+			if ( defined( 'WP_DEBUG' ) && WP_DEBUG ) {
+				// phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
+				error_log( '[Fair Payment] Telegram send failed: ' . $response->get_error_message() );
+			}
 			return $response;
 		}
 
@@ -70,7 +73,10 @@ class TelegramService {
 
 		if ( $code < 200 || $code >= 300 || empty( $data['ok'] ) ) {
 			$description = is_array( $data ) && ! empty( $data['description'] ) ? $data['description'] : 'HTTP ' . $code;
-			error_log( '[Fair Payment] Telegram send returned non-OK: ' . $description );
+			if ( defined( 'WP_DEBUG' ) && WP_DEBUG ) {
+				// phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
+				error_log( '[Fair Payment] Telegram send returned non-OK: ' . $description );
+			}
 			return new \WP_Error(
 				'fair_payment_telegram_api_error',
 				$description,

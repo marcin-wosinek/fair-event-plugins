@@ -236,7 +236,10 @@ class AdminPages {
 		$asset_file_path = FAIR_PAYMENT_PLUGIN_DIR . 'build/admin/' . $page . '/index.asset.php';
 
 		if ( ! file_exists( $asset_file_path ) ) {
-			error_log( 'Fair Payment: Asset file not found at ' . $asset_file_path );
+			if ( defined( 'WP_DEBUG' ) && WP_DEBUG ) {
+				// phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
+				error_log( 'Fair Payment: Asset file not found at ' . $asset_file_path );
+			}
 			return;
 		}
 
