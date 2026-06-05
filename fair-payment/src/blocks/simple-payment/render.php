@@ -9,15 +9,16 @@
  * @var WP_Block $block      Block instance.
  */
 
-$amount      = isset( $attributes['amount'] ) ? $attributes['amount'] : '10';
-$currency    = isset( $attributes['currency'] ) ? $attributes['currency'] : 'EUR';
-$description = isset( $attributes['description'] ) ? $attributes['description'] : '';
-$post_id     = get_the_ID();
+$amount          = isset( $attributes['amount'] ) ? $attributes['amount'] : '10';
+$currency        = isset( $attributes['currency'] ) ? $attributes['currency'] : 'EUR';
+$description     = isset( $attributes['description'] ) ? $attributes['description'] : '';
+$current_post_id = get_the_ID();
 
-// Check if payment callback (return from payment gateway).
+// Read-only flags from URL params signalling a return from the payment gateway. No state change; nonce not applicable.
+// phpcs:ignore WordPress.Security.NonceVerification.Recommended
 $is_callback = isset( $_GET['fair_payment_callback'] ) && 'true' === $_GET['fair_payment_callback'];
 
-// Check if payment redirect with success message.
+// phpcs:ignore WordPress.Security.NonceVerification.Recommended
 $show_success = isset( $_GET['payment_redirect'] ) && '1' === $_GET['payment_redirect'];
 
 // Check if Mollie is configured.
@@ -26,7 +27,12 @@ $is_configured = \FairPayment\Payment\MolliePaymentHandler::is_configured();
 $block_id = 'fair-payment-' . wp_unique_id();
 ?>
 
-<div <?php echo get_block_wrapper_attributes( array( 'id' => $block_id ) ); ?>>
+<div 
+<?php
+	// phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- get_block_wrapper_attributes() returns pre-escaped HTML attributes.
+	echo get_block_wrapper_attributes( array( 'id' => $block_id ) );
+?>
+>
 	<div class="fair-payment-block">
 		<?php if ( $is_callback ) : ?>
 			<div class="fair-payment-callback">
@@ -57,7 +63,7 @@ $block_id = 'fair-payment-' . wp_unique_id();
 					data-amount="<?php echo esc_attr( $amount ); ?>"
 					data-currency="<?php echo esc_attr( $currency ); ?>"
 					data-description="<?php echo esc_attr( $description ); ?>"
-					data-post-id="<?php echo esc_attr( $post_id ); ?>"
+					data-post-id="<?php echo esc_attr( $current_post_id ); ?>"
 				>
 					<?php esc_html_e( 'Pay Now', 'fair-payment' ); ?>
 				</button>
