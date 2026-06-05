@@ -1,5 +1,5 @@
 === Fair Payment ===
-Contributors: faireventplugins
+Contributors: marcinwosinek
 Tags: payment, gutenberg, block
 Requires at least: 6.2
 Tested up to: 7.0

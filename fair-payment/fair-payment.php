@@ -1,12 +1,12 @@
 <?php
 /**
  * Plugin Name: Fair Payment
- * Plugin URI: https://fair-event-plugins.com
+ * Plugin URI: https://github.com/marcin-wosinek/fair-event-plugins
  * Description: Simple payment block for WordPress
  * Version: 1.3.2
  * Requires at least: 6.2
- * Author: Fair Event Plugins
- * Author URI: https://fair-event-plugins.com
+ * Author: Marcin Wosinek
+ * Author URI: https://github.com/marcin-wosinek
  * License: GPL-2.0-or-later
  * Text Domain: fair-payment
  *
