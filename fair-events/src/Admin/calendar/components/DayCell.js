@@ -39,12 +39,12 @@ function getStandaloneId(uid) {
 /**
  * Get event link type from uid and url.
  *
- * @param {Object} event Event object with uid and url.
- * @return {string} 'post', 'external', or 'unlinked'.
+ * @param {Object} event Event object with uid, url, and occurrence_type.
+ * @return {string} 'instance', 'post', 'external', or 'unlinked'.
  */
 function getEventLinkType(event) {
 	if (getEventPostId(event.uid)) {
-		return 'post';
+		return event.occurrence_type === 'generated' ? 'instance' : 'post';
 	}
 	return event.url ? 'external' : 'unlinked';
 }
@@ -146,6 +146,8 @@ export default function DayCell({
 						const linkTypeIcon =
 							linkType === 'post'
 								? 'dashicons-admin-post'
+								: linkType === 'instance'
+								? 'dashicons-update'
 								: linkType === 'external'
 								? 'dashicons-admin-links'
 								: 'dashicons-editor-unlink';

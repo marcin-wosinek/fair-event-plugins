@@ -248,6 +248,17 @@ a.fair-events-calendar-event:visited {
 	background: #6e5614;
 }
 
+.fair-events-calendar-event-row.link-type-instance .fair-events-calendar-event {
+	background: #3858e9;
+	opacity: 0.85;
+}
+
+.fair-events-calendar-event-row.link-type-instance
+	.fair-events-calendar-event:hover {
+	background: #2645c7;
+	opacity: 1;
+}
+
 .fair-events-calendar-event-row.link-type-unlinked .fair-events-calendar-event {
 	background: #646970;
 }

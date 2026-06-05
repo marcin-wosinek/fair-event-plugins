@@ -164,11 +164,16 @@ if ( ! function_exists( 'fair_events_render_calendar_event_item' ) ) {
 			$event_post  = get_post( $event_data['id'] );
 			$is_draft    = $event_post && 'draft' === $event_post->post_status;
 			$event_title = get_the_title( $event_data['id'] );
-			$event_url   = get_permalink( $event_data['id'] );
+			$event_url   = ! empty( $event_data['event_date_id'] )
+				? add_query_arg( 'event_date', (int) $event_data['event_date_id'], get_permalink( $event_data['id'] ) )
+				: get_permalink( $event_data['id'] );
 
 			$item_classes = array( 'event-item' );
 			if ( $is_draft ) {
 				$item_classes[] = 'is-draft';
+			}
+			if ( ! empty( $event_data['occurrence_type'] ) && 'generated' === $event_data['occurrence_type'] ) {
+				$item_classes[] = 'is-instance';
 			}
 			?>
 			<div class="<?php echo esc_attr( implode( ' ', $item_classes ) ); ?>"
@@ -381,13 +386,15 @@ if ( $events_query->have_posts() ) {
 				}
 
 				$events_by_date[ $loop_date ][] = array(
-					'id'           => $event_id,
-					'is_first_day' => $loop_date === $start_date,
-					'is_last_day'  => $loop_date === $end_date,
-					'is_ical'      => false,
-					'title'        => get_the_title( $event_id ),
-					'permalink'    => get_permalink( $event_id ),
-					'link_type'    => 'post',
+					'id'              => $event_id,
+					'event_date_id'   => (int) $event_dates->id,
+					'occurrence_type' => $event_dates->occurrence_type,
+					'is_first_day'    => $loop_date === $start_date,
+					'is_last_day'     => $loop_date === $end_date,
+					'is_ical'         => false,
+					'title'           => get_the_title( $event_id ),
+					'permalink'       => add_query_arg( 'event_date', (int) $event_dates->id, get_permalink( $event_id ) ),
+					'link_type'       => 'post',
 				);
 
 				$loop_date = DateHelper::next_date( $loop_date );

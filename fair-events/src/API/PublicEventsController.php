@@ -453,7 +453,7 @@ class PublicEventsController extends WP_REST_Controller {
 		} else {
 			$uid   = 'fair_event_' . $row->event_id . '_' . $row->occurrence_id . '@' . $site_host;
 			$title = $row->post_title;
-			$url   = get_permalink( $row->event_id );
+			$url   = add_query_arg( 'event_date', (int) $row->occurrence_id, get_permalink( $row->event_id ) );
 		}
 
 		// Get categories.
@@ -474,15 +474,16 @@ class PublicEventsController extends WP_REST_Controller {
 		}
 
 		return array(
-			'uid'           => $uid,
-			'event_date_id' => (int) $row->occurrence_id,
-			'title'         => $title,
-			'description'   => $description,
-			'start'         => $start_datetime ? DateHelper::local_to_iso8601( $start_datetime ) : '',
-			'end'           => $end_datetime ? DateHelper::local_to_iso8601( $end_datetime ) : '',
-			'all_day'       => $all_day,
-			'url'           => $url,
-			'categories'    => $categories,
+			'uid'             => $uid,
+			'event_date_id'   => (int) $row->occurrence_id,
+			'occurrence_type' => $row->occurrence_type ?? 'single',
+			'title'           => $title,
+			'description'     => $description,
+			'start'           => $start_datetime ? DateHelper::local_to_iso8601( $start_datetime ) : '',
+			'end'             => $end_datetime ? DateHelper::local_to_iso8601( $end_datetime ) : '',
+			'all_day'         => $all_day,
+			'url'             => $url,
+			'categories'      => $categories,
 		);
 	}
 
