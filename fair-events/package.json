@@ -26,6 +26,7 @@
 		"test": "npm-run-all test:js",
 		"test:js": "jest",
 		"test:php": "vendor/bin/phpunit",
+		"test:api": "playwright test src/API/__tests__/",
 		"test:e2e": "playwright test",
 		"screenshots": "playwright test e2e/wordpress-org.spec.js",
 		"playwright:run": "playwright test --headed",
