@@ -90,6 +90,13 @@ jobs:
                       npx playwright install --with-deps chromium
                   fi
 
+            - name: Cache wp-env
+              uses: actions/cache@v5
+              with:
+                  path: ~/wp-env
+                  key: ${{ runner.os }}-wp-env-${{ hashFiles('.wp-env.json') }}
+                  restore-keys: ${{ runner.os }}-wp-env-
+
             - name: Boot isolated WordPress env
               run: npm run test:e2e:setup
 
