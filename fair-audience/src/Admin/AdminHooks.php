@@ -688,6 +688,13 @@ class AdminHooks {
 		// Settings page.
 		if ( 'fair-audience_page_fair-audience-settings' === $hook ) {
 			$this->enqueue_page_script( 'settings', $plugin_dir );
+			wp_localize_script(
+				'fair-audience-settings',
+				'fairAudienceSettingsData',
+				array(
+					'features' => \FairAudience\Core\Features::all(),
+				)
+			);
 		}
 	}
 
@@ -714,7 +721,7 @@ class AdminHooks {
 			wp_set_script_translations(
 				"fair-audience-{$page_name}",
 				'fair-audience',
-				$plugin_dir . 'build/languages'
+				\FairAudience\Core\Features::script_translations_path()
 			);
 
 			wp_enqueue_style( 'wp-components' );

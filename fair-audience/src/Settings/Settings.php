@@ -137,5 +137,24 @@ class Settings {
 				'default'           => array(),
 			)
 		);
+
+		// Feature flag bundle toggles — UI state only, never overrides a
+		// wp-config constant (see Features::sanitize_option()).
+		register_setting(
+			'fair_audience_settings',
+			\FairAudience\Core\Features::OPTION,
+			array(
+				'type'              => 'object',
+				'description'       => __( 'Per-bundle feature toggles', 'fair-audience' ),
+				'sanitize_callback' => array( \FairAudience\Core\Features::class, 'sanitize_option' ),
+				'show_in_rest'      => array(
+					'schema' => array(
+						'type'                 => 'object',
+						'additionalProperties' => array( 'type' => 'boolean' ),
+					),
+				),
+				'default'           => array(),
+			)
+		);
 	}
 }

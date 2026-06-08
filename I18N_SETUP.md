@@ -80,22 +80,57 @@ npm run makemo      # Generate .mo files (PHP)
 npm run build       # Builds JS and runs makejson (generates JSON with correct hashes)
 ```
 
-## `load_plugin_textdomain()` Required for Bundled Translations
+## Default: WordPress.org language packs (no `load_plugin_textdomain()`)
 
-`load_plugin_textdomain()` **IS REQUIRED** to load `.mo` files bundled in the
-plugin's own `languages/` directory. WordPress only auto-loads translations from
-`wp-content/languages/plugins/` (downloaded from translate.wordpress.org).
+Since WordPress 4.6, core auto-loads language packs for plugins hosted on
+WordPress.org under the plugin slug (`wp-content/languages/plugins/{slug}-{locale}.mo`
+/ `.json`). Since WP 6.7 it does so just-in-time. Calling
+`load_plugin_textdomain()` is unnecessary for the standard case and was flagged
+by the WordPress.org plugin review team.
 
-**Pattern** (add in `Plugin::init` or equivalent):
+For each of our plugins, the **default** is therefore:
+
+- No `load_plugin_textdomain()` call.
+- `wp_set_script_translations( $handle, '{slug}' )` is called **without a path
+  argument**, so core resolves the JSON from the language-pack location.
+
+Translated strings come from `wp-content/languages/plugins/` once the locale's
+language pack is installed.
+
+## Opt-in: `bundled-translations` feature flag
+
+Each plugin (`fair-events`, `fair-payment`, `fair-audience`, `fair-platform`,
+`fair-timetable`) exposes a `bundled-translations` flag through its `Features`
+registry. When the flag is **on**:
+
+- `load_plugin_textdomain( '{slug}', false, '{slug}/languages' )` is invoked on
+  `init`, so the bundled `.mo` files in `languages/` are loaded.
+- `wp_set_script_translations()` is passed the bundled `build/languages/` path,
+  so JS strings resolve from there too.
+
+This is useful while a locale is below the 90% publish threshold on
+translate.wordpress.org, or when iterating on strings that have not yet been
+uploaded.
+
+**Resolution order** (first match wins; mirrors the existing Fair Events
+features pattern):
+
+1. Per-feature constant `FAIR_{PLUGIN}_FEATURE_BUNDLED_TRANSLATIONS`
+2. Master switch `FAIR_{PLUGIN}_INTERNAL`
+3. `fair_{plugin}_feature_enabled` filter
+4. Stored option `fair_{plugin}_features` (Settings → Features tab)
+5. Hardcoded default (`false`)
+
+**Helper.** Each plugin's `Features` class exposes
+`Features::script_translations_path()` returning either the bundled path or
+`null`. Call sites pass the helper directly:
 
 ```php
-load_plugin_textdomain( 'fair-audience', false, 'fair-audience/languages' );
+wp_set_script_translations(
+    'fair-events-manage-event',
+    'fair-events',
+    \FairEvents\Core\Features::script_translations_path()
+);
 ```
 
-**For this project:**
-
-- All plugins call `load_plugin_textdomain()` in their `Plugin::init()` method
-- PHP `.mo` files are in the plugin's `languages/` directory
-- JavaScript translations use `wp_set_script_translations()` pointing to `build/languages/`
-
-**Reference**: [WordPress Plugin Internationalization Handbook](https://developer.wordpress.org/plugins/internationalization/how-to-internationalize-your-plugin/#loading-text-domain)
+**Reference**: [I18n improvements in WordPress 6.7](https://make.wordpress.org/core/2024/10/21/i18n-improvements-6-7/)

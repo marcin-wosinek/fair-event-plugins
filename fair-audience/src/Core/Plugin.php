@@ -44,10 +44,14 @@ class Plugin {
 	 * Initialize the plugin.
 	 */
 	public function init() {
+		// Default: rely on WordPress.org language packs. The `bundled-translations`
+		// feature flag opts into loading the .mo files we ship in `languages/`.
 		add_action(
 			'init',
 			function () {
-				load_plugin_textdomain( 'fair-audience', false, 'fair-audience/languages' );
+				if ( Features::is_enabled( 'bundled-translations' ) ) {
+					load_plugin_textdomain( 'fair-audience', false, 'fair-audience/languages' );
+				}
 			}
 		);
 

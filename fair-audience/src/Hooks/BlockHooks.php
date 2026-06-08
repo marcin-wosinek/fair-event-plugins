@@ -48,147 +48,147 @@ class BlockHooks {
 		wp_set_script_translations(
 			'fair-audience-mailing-signup-editor-script',
 			'fair-audience',
-			FAIR_AUDIENCE_PLUGIN_DIR . 'build/languages'
+			\FairAudience\Core\Features::script_translations_path()
 		);
 
 		// Set script translations for mailing-signup blocks (frontend scripts).
 		wp_set_script_translations(
 			'fair-audience-mailing-signup-view-script',
 			'fair-audience',
-			FAIR_AUDIENCE_PLUGIN_DIR . 'build/languages'
+			\FairAudience\Core\Features::script_translations_path()
 		);
 
 		// Set script translations for event-signup blocks (editor scripts).
 		wp_set_script_translations(
 			'fair-audience-event-signup-editor-script',
 			'fair-audience',
-			FAIR_AUDIENCE_PLUGIN_DIR . 'build/languages'
+			\FairAudience\Core\Features::script_translations_path()
 		);
 
 		// Set script translations for event-signup blocks (frontend scripts).
 		wp_set_script_translations(
 			'fair-audience-event-signup-view-script',
 			'fair-audience',
-			FAIR_AUDIENCE_PLUGIN_DIR . 'build/languages'
+			\FairAudience\Core\Features::script_translations_path()
 		);
 
 		// Set script translations for signups-list blocks (editor scripts).
 		wp_set_script_translations(
 			'fair-audience-signups-list-editor-script',
 			'fair-audience',
-			FAIR_AUDIENCE_PLUGIN_DIR . 'build/languages'
+			\FairAudience\Core\Features::script_translations_path()
 		);
 
 		// Set script translations for audience-signup blocks (editor scripts).
 		wp_set_script_translations(
 			'fair-audience-audience-signup-editor-script',
 			'fair-audience',
-			FAIR_AUDIENCE_PLUGIN_DIR . 'build/languages'
+			\FairAudience\Core\Features::script_translations_path()
 		);
 
 		// Set script translations for audience-signup blocks (frontend scripts).
 		wp_set_script_translations(
 			'fair-audience-audience-signup-view-script',
 			'fair-audience',
-			FAIR_AUDIENCE_PLUGIN_DIR . 'build/languages'
+			\FairAudience\Core\Features::script_translations_path()
 		);
 
 		// Set script translations for event-interest blocks (editor scripts).
 		wp_set_script_translations(
 			'fair-audience-event-interest-editor-script',
 			'fair-audience',
-			FAIR_AUDIENCE_PLUGIN_DIR . 'build/languages'
+			\FairAudience\Core\Features::script_translations_path()
 		);
 
 		// Set script translations for event-interest blocks (frontend scripts).
 		wp_set_script_translations(
 			'fair-audience-event-interest-view-script',
 			'fair-audience',
-			FAIR_AUDIENCE_PLUGIN_DIR . 'build/languages'
+			\FairAudience\Core\Features::script_translations_path()
 		);
 
 		// Set script translations for fair-form blocks (editor scripts).
 		wp_set_script_translations(
 			'fair-audience-fair-form-editor-script',
 			'fair-audience',
-			FAIR_AUDIENCE_PLUGIN_DIR . 'build/languages'
+			\FairAudience\Core\Features::script_translations_path()
 		);
 
 		// Set script translations for fair-form blocks (frontend scripts).
 		wp_set_script_translations(
 			'fair-audience-fair-form-view-script',
 			'fair-audience',
-			FAIR_AUDIENCE_PLUGIN_DIR . 'build/languages'
+			\FairAudience\Core\Features::script_translations_path()
 		);
 
 		// Set script translations for fair-form-short-text blocks (editor scripts).
 		wp_set_script_translations(
 			'fair-audience-fair-form-short-text-editor-script',
 			'fair-audience',
-			FAIR_AUDIENCE_PLUGIN_DIR . 'build/languages'
+			\FairAudience\Core\Features::script_translations_path()
 		);
 
 		// Set script translations for fair-form-long-text blocks (editor scripts).
 		wp_set_script_translations(
 			'fair-audience-fair-form-long-text-editor-script',
 			'fair-audience',
-			FAIR_AUDIENCE_PLUGIN_DIR . 'build/languages'
+			\FairAudience\Core\Features::script_translations_path()
 		);
 
 		// Set script translations for fair-form-phone blocks (editor scripts).
 		wp_set_script_translations(
 			'fair-audience-fair-form-phone-editor-script',
 			'fair-audience',
-			FAIR_AUDIENCE_PLUGIN_DIR . 'build/languages'
+			\FairAudience\Core\Features::script_translations_path()
 		);
 
 		// Set script translations for fair-form-select-one blocks (editor scripts).
 		wp_set_script_translations(
 			'fair-audience-fair-form-select-one-editor-script',
 			'fair-audience',
-			FAIR_AUDIENCE_PLUGIN_DIR . 'build/languages'
+			\FairAudience\Core\Features::script_translations_path()
 		);
 
 		// Set script translations for fair-form-multiselect blocks (editor scripts).
 		wp_set_script_translations(
 			'fair-audience-fair-form-multiselect-editor-script',
 			'fair-audience',
-			FAIR_AUDIENCE_PLUGIN_DIR . 'build/languages'
+			\FairAudience\Core\Features::script_translations_path()
 		);
 
 		// Set script translations for fair-form-radio blocks (editor scripts).
 		wp_set_script_translations(
 			'fair-audience-fair-form-radio-editor-script',
 			'fair-audience',
-			FAIR_AUDIENCE_PLUGIN_DIR . 'build/languages'
+			\FairAudience\Core\Features::script_translations_path()
 		);
 
 		// Set script translations for fair-form-option blocks (editor scripts).
 		wp_set_script_translations(
 			'fair-audience-fair-form-option-editor-script',
 			'fair-audience',
-			FAIR_AUDIENCE_PLUGIN_DIR . 'build/languages'
+			\FairAudience\Core\Features::script_translations_path()
 		);
 
 		// Set script translations for fair-form-file-upload blocks (editor scripts).
 		wp_set_script_translations(
 			'fair-audience-fair-form-file-upload-editor-script',
 			'fair-audience',
-			FAIR_AUDIENCE_PLUGIN_DIR . 'build/languages'
+			\FairAudience\Core\Features::script_translations_path()
 		);
 
 		// Set script translations for fair-form-conditional blocks (editor scripts).
 		wp_set_script_translations(
 			'fair-audience-fair-form-conditional-editor-script',
 			'fair-audience',
-			FAIR_AUDIENCE_PLUGIN_DIR . 'build/languages'
+			\FairAudience\Core\Features::script_translations_path()
 		);
 
 		// Set script translations for fair-form-mailing-signup blocks (editor scripts).
 		wp_set_script_translations(
 			'fair-audience-fair-form-mailing-signup-editor-script',
 			'fair-audience',
-			FAIR_AUDIENCE_PLUGIN_DIR . 'build/languages'
+			\FairAudience\Core\Features::script_translations_path()
 		);
 	}
 }

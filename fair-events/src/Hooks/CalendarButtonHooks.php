@@ -194,7 +194,7 @@ class CalendarButtonHooks {
 		wp_set_script_translations(
 			'fair-events-calendar-button-editor',
 			'fair-events',
-			FAIR_EVENTS_PLUGIN_DIR . 'build/languages'
+			\FairEvents\Core\Features::script_translations_path()
 		);
 	}
 
@@ -264,7 +264,7 @@ class CalendarButtonHooks {
 		wp_set_script_translations(
 			'fair-events-calendar-button-frontend',
 			'fair-events',
-			FAIR_EVENTS_PLUGIN_DIR . 'build/languages'
+			\FairEvents\Core\Features::script_translations_path()
 		);
 	}
 }
