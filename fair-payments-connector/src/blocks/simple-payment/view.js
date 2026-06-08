@@ -22,7 +22,9 @@ import apiFetch from '@wordpress/api-fetch';
 	}
 
 	function initPaymentButtons() {
-		const buttons = document.querySelectorAll('.fair-payments-connector-button');
+		const buttons = document.querySelectorAll(
+			'.fair-payments-connector-button'
+		);
 
 		buttons.forEach(function (button) {
 			button.addEventListener('click', handlePaymentClick);
@@ -56,8 +58,12 @@ import apiFetch from '@wordpress/api-fetch';
 	async function handlePaymentClick(event) {
 		const button = event.target;
 		const paymentBlock = button.closest('.fair-payments-connector-block');
-		const loadingEl = paymentBlock.querySelector('.fair-payments-connector-loading');
-		const errorEl = paymentBlock.querySelector('.fair-payments-connector-error');
+		const loadingEl = paymentBlock.querySelector(
+			'.fair-payments-connector-loading'
+		);
+		const errorEl = paymentBlock.querySelector(
+			'.fair-payments-connector-error'
+		);
 
 		// Get payment data from button attributes
 		const amount = button.getAttribute('data-amount');

@@ -273,7 +273,8 @@ const SplitModal = ({
 			onSplit();
 		} catch (err) {
 			setError(
-				err.message || __('Failed to split entry.', 'fair-payments-connector')
+				err.message ||
+					__('Failed to split entry.', 'fair-payments-connector')
 			);
 		} finally {
 			setIsSaving(false);
@@ -309,24 +310,33 @@ const SplitModal = ({
 					>
 						<HStack spacing={4}>
 							<div>
-								<strong>{__('Amount:', 'fair-payments-connector')}</strong>{' '}
+								<strong>
+									{__('Amount:', 'fair-payments-connector')}
+								</strong>{' '}
 								{formatAmount(entry.amount)}
 							</div>
 							<div>
-								<strong>{__('Type:', 'fair-payments-connector')}</strong>{' '}
+								<strong>
+									{__('Type:', 'fair-payments-connector')}
+								</strong>{' '}
 								{entry.entry_type === 'cost'
 									? __('Cost', 'fair-payments-connector')
 									: __('Income', 'fair-payments-connector')}
 							</div>
 							<div>
-								<strong>{__('Date:', 'fair-payments-connector')}</strong>{' '}
+								<strong>
+									{__('Date:', 'fair-payments-connector')}
+								</strong>{' '}
 								{entry.entry_date}
 							</div>
 						</HStack>
 						{entry.description && (
 							<div style={{ marginTop: '4px' }}>
 								<strong>
-									{__('Description:', 'fair-payments-connector')}
+									{__(
+										'Description:',
+										'fair-payments-connector'
+									)}
 								</strong>{' '}
 								{entry.description}
 							</div>
@@ -361,7 +371,10 @@ const SplitModal = ({
 										}}
 									>
 										<SelectControl
-											label={__('Budget', 'fair-payments-connector')}
+											label={__(
+												'Budget',
+												'fair-payments-connector'
+											)}
 											value={allocation.budget_id}
 											options={budgetOptions}
 											onChange={(value) =>
@@ -376,7 +389,10 @@ const SplitModal = ({
 								)}
 								<div style={{ width: '120px' }}>
 									<TextControl
-										label={__('Amount', 'fair-payments-connector')}
+										label={__(
+											'Amount',
+											'fair-payments-connector'
+										)}
 										value={allocation.amount}
 										onChange={(value) =>
 											updateAllocation(
@@ -398,13 +414,19 @@ const SplitModal = ({
 											size="small"
 											onClick={() => removeRow(index)}
 										>
-											{__('Remove', 'fair-payments-connector')}
+											{__(
+												'Remove',
+												'fair-payments-connector'
+											)}
 										</Button>
 									</div>
 								)}
 							</HStack>
 							<TextareaControl
-								label={__('Description', 'fair-payments-connector')}
+								label={__(
+									'Description',
+									'fair-payments-connector'
+								)}
 								value={allocation.description}
 								onChange={(value) =>
 									updateAllocation(
@@ -508,8 +530,14 @@ const SplitModal = ({
 								}
 							>
 								{isEditMode
-									? __('Update Split', 'fair-payments-connector')
-									: __('Split Entry', 'fair-payments-connector')}
+									? __(
+											'Update Split',
+											'fair-payments-connector'
+									  )
+									: __(
+											'Split Entry',
+											'fair-payments-connector'
+									  )}
 							</Button>
 						</HStack>
 					</HStack>

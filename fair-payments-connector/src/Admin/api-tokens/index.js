@@ -13,7 +13,9 @@ import ApiTokensApp from './ApiTokensApp.js';
  * Initialize the API tokens page
  */
 domReady(() => {
-	const root = document.getElementById('fair-payments-connector-api-tokens-root');
+	const root = document.getElementById(
+		'fair-payments-connector-api-tokens-root'
+	);
 	if (root) {
 		createRoot(root).render(<ApiTokensApp />);
 	}

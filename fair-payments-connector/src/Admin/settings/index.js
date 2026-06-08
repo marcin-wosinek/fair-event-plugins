@@ -13,7 +13,9 @@ import SettingsApp from './SettingsApp.js';
  * Initialize the settings page
  */
 domReady(() => {
-	const root = document.getElementById('fair-payments-connector-settings-root');
+	const root = document.getElementById(
+		'fair-payments-connector-settings-root'
+	);
 	if (root) {
 		render(<SettingsApp />, root);
 	}

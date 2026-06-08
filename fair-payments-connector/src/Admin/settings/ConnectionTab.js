@@ -65,10 +65,16 @@ export default function ConnectionTab({ onNotice, shouldReload }) {
 				setIsLoading(false);
 			})
 			.catch((error) => {
-				console.error('[Fair Payments Connector] Failed to load settings:', error);
+				console.error(
+					'[Fair Payments Connector] Failed to load settings:',
+					error
+				);
 				onNotice({
 					status: 'error',
-					message: __('Failed to load settings.', 'fair-payments-connector'),
+					message: __(
+						'Failed to load settings.',
+						'fair-payments-connector'
+					),
 				});
 				setIsLoading(false);
 			});
@@ -96,7 +102,8 @@ export default function ConnectionTab({ onNotice, shouldReload }) {
 	const handleConnect = () => {
 		const siteId = btoa(window.location.hostname);
 		const returnUrl =
-			window.location.href.split('?')[0] + '?page=fair-payments-connector-settings';
+			window.location.href.split('?')[0] +
+			'?page=fair-payments-connector-settings';
 		const siteName = document.title;
 		const siteUrl = window.location.origin;
 
@@ -138,14 +145,20 @@ export default function ConnectionTab({ onNotice, shouldReload }) {
 				loadSettings();
 				onNotice({
 					status: 'success',
-					message: __('Disconnected from Mollie.', 'fair-payments-connector'),
+					message: __(
+						'Disconnected from Mollie.',
+						'fair-payments-connector'
+					),
 				});
 				setIsSaving(false);
 			})
 			.catch(() => {
 				onNotice({
 					status: 'error',
-					message: __('Failed to disconnect.', 'fair-payments-connector'),
+					message: __(
+						'Failed to disconnect.',
+						'fair-payments-connector'
+					),
 				});
 				setIsSaving(false);
 			});
@@ -179,7 +192,10 @@ export default function ConnectionTab({ onNotice, shouldReload }) {
 			.catch(() => {
 				onNotice({
 					status: 'error',
-					message: __('Failed to change mode.', 'fair-payments-connector'),
+					message: __(
+						'Failed to change mode.',
+						'fair-payments-connector'
+					),
 				});
 				setIsSaving(false);
 			});
@@ -207,7 +223,10 @@ export default function ConnectionTab({ onNotice, shouldReload }) {
 			})
 			.catch((error) => {
 				// Log detailed error for troubleshooting
-				console.error('[Fair Payments Connector] Connection test failed:', error);
+				console.error(
+					'[Fair Payments Connector] Connection test failed:',
+					error
+				);
 				console.error('[Fair Payments Connector] Error details:', {
 					message: error.message,
 					code: error.code,
@@ -216,7 +235,10 @@ export default function ConnectionTab({ onNotice, shouldReload }) {
 
 				// Build detailed error message for admin
 				let errorMessage =
-					__('Failed to refresh connection.', 'fair-payments-connector') + ' ';
+					__(
+						'Failed to refresh connection.',
+						'fair-payments-connector'
+					) + ' ';
 
 				if (error.message) {
 					errorMessage += error.message;
@@ -263,7 +285,10 @@ export default function ConnectionTab({ onNotice, shouldReload }) {
 			<Card>
 				<CardBody>
 					<p>
-						{__('Loading connection settings...', 'fair-payments-connector')}
+						{__(
+							'Loading connection settings...',
+							'fair-payments-connector'
+						)}
 					</p>
 				</CardBody>
 			</Card>
@@ -284,20 +309,29 @@ export default function ConnectionTab({ onNotice, shouldReload }) {
 							)}
 						</p>
 						<Button isPrimary onClick={handleConnect}>
-							{__('Connect with Mollie', 'fair-payments-connector')}
+							{__(
+								'Connect with Mollie',
+								'fair-payments-connector'
+							)}
 						</Button>
 					</>
 				) : (
 					<>
 						<Notice status="success" isDismissible={false}>
-							{__('Connected to Mollie', 'fair-payments-connector')}
+							{__(
+								'Connected to Mollie',
+								'fair-payments-connector'
+							)}
 						</Notice>
 
 						{organizationId && (
 							<div style={{ marginTop: '1rem' }}>
 								<p>
 									<strong>
-										{__('Organization ID:', 'fair-payments-connector')}
+										{__(
+											'Organization ID:',
+											'fair-payments-connector'
+										)}
 									</strong>{' '}
 									<code>{organizationId}</code>
 								</p>
@@ -307,7 +341,10 @@ export default function ConnectionTab({ onNotice, shouldReload }) {
 						<div style={{ marginTop: '0.5rem' }}>
 							<p>
 								<strong>
-									{__('Profile ID:', 'fair-payments-connector')}
+									{__(
+										'Profile ID:',
+										'fair-payments-connector'
+									)}
 								</strong>{' '}
 								{profileId ? (
 									<code>{profileId}</code>
@@ -346,7 +383,10 @@ export default function ConnectionTab({ onNotice, shouldReload }) {
 								>
 									{sprintf(
 										/* translators: %s: expiration date */
-										__('Token expires: %s', 'fair-payments-connector'),
+										__(
+											'Token expires: %s',
+											'fair-payments-connector'
+										),
 										new Date(
 											tokenExpires * 1000
 										).toLocaleString()
@@ -361,11 +401,17 @@ export default function ConnectionTab({ onNotice, shouldReload }) {
 								selected={mode}
 								options={[
 									{
-										label: __('Test Mode', 'fair-payments-connector'),
+										label: __(
+											'Test Mode',
+											'fair-payments-connector'
+										),
 										value: 'test',
 									},
 									{
-										label: __('Live Mode', 'fair-payments-connector'),
+										label: __(
+											'Live Mode',
+											'fair-payments-connector'
+										),
 										value: 'live',
 									},
 								]}
@@ -381,7 +427,10 @@ export default function ConnectionTab({ onNotice, shouldReload }) {
 									onClick={handleDisconnect}
 									disabled={isSaving}
 								>
-									{__('Disconnect', 'fair-payments-connector')}
+									{__(
+										'Disconnect',
+										'fair-payments-connector'
+									)}
 								</Button>
 								<Button
 									isSecondary
@@ -390,7 +439,10 @@ export default function ConnectionTab({ onNotice, shouldReload }) {
 									disabled={isRefreshing}
 								>
 									{isRefreshing
-										? __('Refreshing...', 'fair-payments-connector')
+										? __(
+												'Refreshing...',
+												'fair-payments-connector'
+										  )
 										: __(
 												'Refresh Connection',
 												'fair-payments-connector'

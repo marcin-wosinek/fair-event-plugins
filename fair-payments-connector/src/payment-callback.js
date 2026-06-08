@@ -26,7 +26,9 @@ import './payment-callback.css';
 		const token = urlParams.get('token') || '';
 
 		if (!transactionId) {
-			console.error('Fair Payments Connector: No transaction_id found in URL');
+			console.error(
+				'Fair Payments Connector: No transaction_id found in URL'
+			);
 			return;
 		}
 
@@ -145,7 +147,8 @@ import './payment-callback.css';
 		// Create dismiss button
 		const dismissButton = document.createElement('button');
 		dismissButton.textContent = '×';
-		dismissButton.className = 'fair-payments-connector-notification__dismiss';
+		dismissButton.className =
+			'fair-payments-connector-notification__dismiss';
 		dismissButton.setAttribute('aria-label', 'Dismiss notification');
 		dismissButton.addEventListener('click', () => {
 			notification.remove();

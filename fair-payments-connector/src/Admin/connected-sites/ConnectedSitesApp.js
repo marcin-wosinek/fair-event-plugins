@@ -18,9 +18,15 @@ import {
 } from '@wordpress/components';
 
 const STATUS_LABELS = {
-	connected: { text: __('Connected', 'fair-payments-connector'), color: '#007017' },
+	connected: {
+		text: __('Connected', 'fair-payments-connector'),
+		color: '#007017',
+	},
 	error: { text: __('Error', 'fair-payments-connector'), color: '#d63638' },
-	unverified: { text: __('Unverified', 'fair-payments-connector'), color: '#946800' },
+	unverified: {
+		text: __('Unverified', 'fair-payments-connector'),
+		color: '#946800',
+	},
 };
 
 const ConnectedSitesApp = () => {
@@ -52,7 +58,10 @@ const ConnectedSitesApp = () => {
 		} catch (err) {
 			setError(
 				err.message ||
-					__('Failed to load connected sites.', 'fair-payments-connector')
+					__(
+						'Failed to load connected sites.',
+						'fair-payments-connector'
+					)
 			);
 		} finally {
 			setLoading(false);
@@ -99,21 +108,28 @@ const ConnectedSitesApp = () => {
 					method: 'PUT',
 					data,
 				});
-				setSuccess(__('Connected site updated.', 'fair-payments-connector'));
+				setSuccess(
+					__('Connected site updated.', 'fair-payments-connector')
+				);
 			} else {
 				await apiFetch({
 					path: '/fair-payments-connector/v1/admin/connected-sites',
 					method: 'POST',
 					data: { label, base_url: baseUrl, token },
 				});
-				setSuccess(__('Connected site added.', 'fair-payments-connector'));
+				setSuccess(
+					__('Connected site added.', 'fair-payments-connector')
+				);
 			}
 			handleCloseForm();
 			loadSites();
 		} catch (err) {
 			setError(
 				err.message ||
-					__('Failed to save connected site.', 'fair-payments-connector')
+					__(
+						'Failed to save connected site.',
+						'fair-payments-connector'
+					)
 			);
 		} finally {
 			setIsSaving(false);
@@ -135,13 +151,16 @@ const ConnectedSitesApp = () => {
 					? result.scopes.join(', ')
 					: __('no scopes', 'fair-payments-connector');
 			setSuccess(
-				__('Connection succeeded. Granted scopes: ', 'fair-payments-connector') +
-					scopes
+				__(
+					'Connection succeeded. Granted scopes: ',
+					'fair-payments-connector'
+				) + scopes
 			);
 			loadSites();
 		} catch (err) {
 			setError(
-				err.message || __('Connection test failed.', 'fair-payments-connector')
+				err.message ||
+					__('Connection test failed.', 'fair-payments-connector')
 			);
 			loadSites();
 		} finally {
@@ -169,12 +188,17 @@ const ConnectedSitesApp = () => {
 				path: `/fair-payments-connector/v1/admin/connected-sites/${id}`,
 				method: 'DELETE',
 			});
-			setSuccess(__('Connected site removed.', 'fair-payments-connector'));
+			setSuccess(
+				__('Connected site removed.', 'fair-payments-connector')
+			);
 			loadSites();
 		} catch (err) {
 			setError(
 				err.message ||
-					__('Failed to remove connected site.', 'fair-payments-connector')
+					__(
+						'Failed to remove connected site.',
+						'fair-payments-connector'
+					)
 			);
 		}
 	};
@@ -194,7 +218,12 @@ const ConnectedSitesApp = () => {
 				<Card>
 					<CardHeader>
 						<HStack justify="space-between">
-							<h1>{__('Connected Sites', 'fair-payments-connector')}</h1>
+							<h1>
+								{__(
+									'Connected Sites',
+									'fair-payments-connector'
+								)}
+							</h1>
 							<Button variant="primary" onClick={handleOpenAdd}>
 								{__('Add Site', 'fair-payments-connector')}
 							</Button>
@@ -233,7 +262,10 @@ const ConnectedSitesApp = () => {
 								<div>
 									<Spinner />
 									<p>
-										{__('Loading sites…', 'fair-payments-connector')}
+										{__(
+											'Loading sites…',
+											'fair-payments-connector'
+										)}
 									</p>
 								</div>
 							)}
@@ -252,16 +284,28 @@ const ConnectedSitesApp = () => {
 									<thead>
 										<tr>
 											<th>
-												{__('Label', 'fair-payments-connector')}
+												{__(
+													'Label',
+													'fair-payments-connector'
+												)}
 											</th>
 											<th>
-												{__('Base URL', 'fair-payments-connector')}
+												{__(
+													'Base URL',
+													'fair-payments-connector'
+												)}
 											</th>
 											<th>
-												{__('Scopes', 'fair-payments-connector')}
+												{__(
+													'Scopes',
+													'fair-payments-connector'
+												)}
 											</th>
 											<th>
-												{__('Status', 'fair-payments-connector')}
+												{__(
+													'Status',
+													'fair-payments-connector'
+												)}
 											</th>
 											<th>
 												{__(
@@ -270,7 +314,10 @@ const ConnectedSitesApp = () => {
 												)}
 											</th>
 											<th style={{ width: '220px' }}>
-												{__('Actions', 'fair-payments-connector')}
+												{__(
+													'Actions',
+													'fair-payments-connector'
+												)}
 											</th>
 										</tr>
 									</thead>
@@ -375,8 +422,14 @@ const ConnectedSitesApp = () => {
 				<Modal
 					title={
 						editingId
-							? __('Edit Connected Site', 'fair-payments-connector')
-							: __('Add Connected Site', 'fair-payments-connector')
+							? __(
+									'Edit Connected Site',
+									'fair-payments-connector'
+							  )
+							: __(
+									'Add Connected Site',
+									'fair-payments-connector'
+							  )
 					}
 					onRequestClose={handleCloseForm}
 					style={{ maxWidth: '500px', width: '100%' }}
@@ -394,7 +447,10 @@ const ConnectedSitesApp = () => {
 								required
 							/>
 							<TextControl
-								label={__('Base URL', 'fair-payments-connector')}
+								label={__(
+									'Base URL',
+									'fair-payments-connector'
+								)}
 								type="url"
 								value={baseUrl}
 								onChange={setBaseUrl}
@@ -443,7 +499,10 @@ const ConnectedSitesApp = () => {
 								>
 									{editingId
 										? __('Save', 'fair-payments-connector')
-										: __('Add Site', 'fair-payments-connector')}
+										: __(
+												'Add Site',
+												'fair-payments-connector'
+										  )}
 								</Button>
 							</HStack>
 						</VStack>

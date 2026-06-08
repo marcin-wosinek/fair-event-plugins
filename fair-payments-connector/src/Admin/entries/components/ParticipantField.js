@@ -119,8 +119,14 @@ const ParticipantField = ({ participantId, participant, onChange }) => {
 				label={__('Participant', 'fair-payments-connector')}
 				value={search}
 				onChange={setSearch}
-				placeholder={__('Search by name or email…', 'fair-payments-connector')}
-				help={__('Link this transfer to a participant', 'fair-payments-connector')}
+				placeholder={__(
+					'Search by name or email…',
+					'fair-payments-connector'
+				)}
+				help={__(
+					'Link this transfer to a participant',
+					'fair-payments-connector'
+				)}
 				autoComplete="off"
 			/>
 			{isSearching && (

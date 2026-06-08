@@ -13,7 +13,9 @@ import EntriesApp from './EntriesApp.js';
  * Initialize the entries page
  */
 domReady(() => {
-	const root = document.getElementById('fair-payments-connector-entries-root');
+	const root = document.getElementById(
+		'fair-payments-connector-entries-root'
+	);
 	if (root) {
 		createRoot(root).render(<EntriesApp />);
 	}

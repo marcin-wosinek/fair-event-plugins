@@ -77,7 +77,8 @@ describe('TelegramTab', () => {
 
 		await waitFor(() => {
 			const testCall = apiFetch.mock.calls.find(
-				([opts]) => opts.path === '/fair-payments-connector/v1/telegram/test'
+				([opts]) =>
+					opts.path === '/fair-payments-connector/v1/telegram/test'
 			);
 			expect(testCall).toBeTruthy();
 			expect(testCall[0].method).toBe('POST');

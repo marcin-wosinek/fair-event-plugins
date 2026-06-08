@@ -77,7 +77,9 @@ export default function AdvancedTab({ onNotice }) {
 				</p>
 
 				{isLoading ? (
-					<p>{__('Loading settings...', 'fair-payments-connector')}</p>
+					<p>
+						{__('Loading settings...', 'fair-payments-connector')}
+					</p>
 				) : (
 					<table
 						className="widefat fixed striped"
@@ -86,9 +88,14 @@ export default function AdvancedTab({ onNotice }) {
 						<thead>
 							<tr>
 								<th style={{ width: '40%' }}>
-									{__('Setting Name', 'fair-payments-connector')}
+									{__(
+										'Setting Name',
+										'fair-payments-connector'
+									)}
 								</th>
-								<th>{__('Value', 'fair-payments-connector')}</th>
+								<th>
+									{__('Value', 'fair-payments-connector')}
+								</th>
 							</tr>
 						</thead>
 						<tbody>

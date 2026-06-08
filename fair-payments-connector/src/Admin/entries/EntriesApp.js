@@ -207,7 +207,8 @@ const EntriesApp = () => {
 			}));
 		} catch (err) {
 			setError(
-				err.message || __('Failed to load entries.', 'fair-payments-connector')
+				err.message ||
+					__('Failed to load entries.', 'fair-payments-connector')
 			);
 		} finally {
 			setLoading(false);
@@ -268,7 +269,9 @@ const EntriesApp = () => {
 				path: `/fair-payments-connector/v1/financial-entries/${id}`,
 				method: 'DELETE',
 			});
-			setSuccess(__('Entry deleted successfully.', 'fair-payments-connector'));
+			setSuccess(
+				__('Entry deleted successfully.', 'fair-payments-connector')
+			);
 			loadEntries();
 			loadTotals();
 			if (eventsEnabled) {
@@ -277,7 +280,8 @@ const EntriesApp = () => {
 			}
 		} catch (err) {
 			setError(
-				err.message || __('Failed to delete entry.', 'fair-payments-connector')
+				err.message ||
+					__('Failed to delete entry.', 'fair-payments-connector')
 			);
 		}
 	};
@@ -324,18 +328,23 @@ const EntriesApp = () => {
 				path: `/fair-payments-connector/v1/financial-entries/${id}/match`,
 				method: 'DELETE',
 			});
-			setSuccess(__('Entry unmatched successfully.', 'fair-payments-connector'));
+			setSuccess(
+				__('Entry unmatched successfully.', 'fair-payments-connector')
+			);
 			loadEntries();
 		} catch (err) {
 			setError(
-				err.message || __('Failed to unmatch entry.', 'fair-payments-connector')
+				err.message ||
+					__('Failed to unmatch entry.', 'fair-payments-connector')
 			);
 		}
 	};
 
 	const handleMatchComplete = () => {
 		setMatchingEntry(null);
-		setSuccess(__('Entry matched to transaction.', 'fair-payments-connector'));
+		setSuccess(
+			__('Entry matched to transaction.', 'fair-payments-connector')
+		);
 		loadEntries();
 	};
 
@@ -349,7 +358,9 @@ const EntriesApp = () => {
 
 	const handleImportComplete = () => {
 		setIsImportOpen(false);
-		setSuccess(__('Entries imported successfully.', 'fair-payments-connector'));
+		setSuccess(
+			__('Entries imported successfully.', 'fair-payments-connector')
+		);
 		loadEntries();
 		loadTotals();
 		if (eventsEnabled) {
@@ -405,7 +416,9 @@ const EntriesApp = () => {
 				method: 'DELETE',
 			});
 			setSplittingEntry(null);
-			setSuccess(__('Entry unsplit successfully.', 'fair-payments-connector'));
+			setSuccess(
+				__('Entry unsplit successfully.', 'fair-payments-connector')
+			);
 			loadEntries();
 			loadTotals();
 			if (eventsEnabled) {
@@ -414,7 +427,8 @@ const EntriesApp = () => {
 			}
 		} catch (err) {
 			setError(
-				err.message || __('Failed to unsplit entry.', 'fair-payments-connector')
+				err.message ||
+					__('Failed to unsplit entry.', 'fair-payments-connector')
 			);
 		}
 	};
@@ -434,8 +448,14 @@ const EntriesApp = () => {
 		setTransferEntry(null);
 		setSuccess(
 			transferEntry
-				? __('Transfer updated successfully.', 'fair-payments-connector')
-				: __('Transfer created successfully.', 'fair-payments-connector')
+				? __(
+						'Transfer updated successfully.',
+						'fair-payments-connector'
+				  )
+				: __(
+						'Transfer created successfully.',
+						'fair-payments-connector'
+				  )
 		);
 		loadEntries();
 		loadTotals();
@@ -542,7 +562,10 @@ const EntriesApp = () => {
 									{formatAmount(totals.total_cost)}
 								</div>
 								<div style={{ color: '#666' }}>
-									{__('Total Costs', 'fair-payments-connector')}
+									{__(
+										'Total Costs',
+										'fair-payments-connector'
+									)}
 								</div>
 							</div>
 							<div style={{ textAlign: 'center' }}>
@@ -556,7 +579,10 @@ const EntriesApp = () => {
 									{formatAmount(totals.total_income)}
 								</div>
 								<div style={{ color: '#666' }}>
-									{__('Total Income', 'fair-payments-connector')}
+									{__(
+										'Total Income',
+										'fair-payments-connector'
+									)}
 								</div>
 							</div>
 							<div style={{ textAlign: 'center' }}>
@@ -584,7 +610,12 @@ const EntriesApp = () => {
 				<Card>
 					<CardHeader>
 						<HStack justify="space-between">
-							<h1>{__('Financial Entries', 'fair-payments-connector')}</h1>
+							<h1>
+								{__(
+									'Financial Entries',
+									'fair-payments-connector'
+								)}
+							</h1>
 							<div style={{ display: 'flex', gap: '8px' }}>
 								<Button
 									variant="primary"
@@ -597,7 +628,10 @@ const EntriesApp = () => {
 										variant="secondary"
 										onClick={handleTransfer}
 									>
-										{__('Transfer', 'fair-payments-connector')}
+										{__(
+											'Transfer',
+											'fair-payments-connector'
+										)}
 									</Button>
 								)}
 								<Button
@@ -614,7 +648,10 @@ const EntriesApp = () => {
 							{/* Filters */}
 							<HStack spacing={3} wrap>
 								<TextControl
-									label={__('From Date', 'fair-payments-connector')}
+									label={__(
+										'From Date',
+										'fair-payments-connector'
+									)}
 									value={filters.date_from}
 									onChange={(value) =>
 										handleFilterChange('date_from', value)
@@ -622,7 +659,10 @@ const EntriesApp = () => {
 									type="date"
 								/>
 								<TextControl
-									label={__('To Date', 'fair-payments-connector')}
+									label={__(
+										'To Date',
+										'fair-payments-connector'
+									)}
 									value={filters.date_to}
 									onChange={(value) =>
 										handleFilterChange('date_to', value)
@@ -631,7 +671,10 @@ const EntriesApp = () => {
 								/>
 								{budgetingEnabled && (
 									<SelectControl
-										label={__('Budget', 'fair-payments-connector')}
+										label={__(
+											'Budget',
+											'fair-payments-connector'
+										)}
 										value={filters.budget_id}
 										options={budgetOptions}
 										onChange={(value) =>
@@ -645,7 +688,10 @@ const EntriesApp = () => {
 								{eventsEnabled &&
 									eventDateOptions.length > 0 && (
 										<SelectControl
-											label={__('Link', 'fair-payments-connector')}
+											label={__(
+												'Link',
+												'fair-payments-connector'
+											)}
 											value={filters.event_date_id}
 											options={[
 												{
@@ -669,7 +715,10 @@ const EntriesApp = () => {
 									eventDateOptions.length === 0 &&
 									eventUrls.length > 0 && (
 										<SelectControl
-											label={__('Link', 'fair-payments-connector')}
+											label={__(
+												'Link',
+												'fair-payments-connector'
+											)}
 											value={filters.event_url}
 											options={eventUrlOptions}
 											onChange={(value) =>
@@ -681,7 +730,10 @@ const EntriesApp = () => {
 										/>
 									)}
 								<SelectControl
-									label={__('Type', 'fair-payments-connector')}
+									label={__(
+										'Type',
+										'fair-payments-connector'
+									)}
 									value={filters.entry_type}
 									options={[
 										{
@@ -692,11 +744,17 @@ const EntriesApp = () => {
 											value: '',
 										},
 										{
-											label: __('Cost', 'fair-payments-connector'),
+											label: __(
+												'Cost',
+												'fair-payments-connector'
+											),
 											value: 'cost',
 										},
 										{
-											label: __('Income', 'fair-payments-connector'),
+											label: __(
+												'Income',
+												'fair-payments-connector'
+											),
 											value: 'income',
 										},
 										{
@@ -712,11 +770,17 @@ const EntriesApp = () => {
 									}
 								/>
 								<SelectControl
-									label={__('Matching', 'fair-payments-connector')}
+									label={__(
+										'Matching',
+										'fair-payments-connector'
+									)}
 									value={filters.unmatched ? 'unmatched' : ''}
 									options={[
 										{
-											label: __('All', 'fair-payments-connector'),
+											label: __(
+												'All',
+												'fair-payments-connector'
+											),
 											value: '',
 										},
 										{
@@ -1560,7 +1624,10 @@ const EntriesApp = () => {
 													)
 												}
 											>
-												{__('Previous', 'fair-payments-connector')}
+												{__(
+													'Previous',
+													'fair-payments-connector'
+												)}
 											</Button>
 											<span>
 												{__(
@@ -1588,7 +1655,10 @@ const EntriesApp = () => {
 													)
 												}
 											>
-												{__('Next', 'fair-payments-connector')}
+												{__(
+													'Next',
+													'fair-payments-connector'
+												)}
 											</Button>
 										</HStack>
 									)}

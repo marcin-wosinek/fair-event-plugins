@@ -23,7 +23,10 @@ const AVAILABLE_SCOPES = [
 		value: 'transactions:read',
 		label: __('Read transactions', 'fair-payments-connector'),
 	},
-	{ value: 'locations:read', label: __('Read locations', 'fair-payments-connector') },
+	{
+		value: 'locations:read',
+		label: __('Read locations', 'fair-payments-connector'),
+	},
 ];
 
 const ApiTokensApp = () => {
@@ -53,7 +56,8 @@ const ApiTokensApp = () => {
 			setTokens(data);
 		} catch (err) {
 			setError(
-				err.message || __('Failed to load API tokens.', 'fair-payments-connector')
+				err.message ||
+					__('Failed to load API tokens.', 'fair-payments-connector')
 			);
 		} finally {
 			setLoading(false);
@@ -91,7 +95,8 @@ const ApiTokensApp = () => {
 			loadTokens();
 		} catch (err) {
 			setError(
-				err.message || __('Failed to create API token.', 'fair-payments-connector')
+				err.message ||
+					__('Failed to create API token.', 'fair-payments-connector')
 			);
 		} finally {
 			setIsSaving(false);
@@ -122,7 +127,8 @@ const ApiTokensApp = () => {
 			loadTokens();
 		} catch (err) {
 			setError(
-				err.message || __('Failed to revoke API token.', 'fair-payments-connector')
+				err.message ||
+					__('Failed to revoke API token.', 'fair-payments-connector')
 			);
 		}
 	};
@@ -146,9 +152,14 @@ const ApiTokensApp = () => {
 				<Card>
 					<CardHeader>
 						<HStack justify="space-between">
-							<h1>{__('API Tokens', 'fair-payments-connector')}</h1>
+							<h1>
+								{__('API Tokens', 'fair-payments-connector')}
+							</h1>
 							<Button variant="primary" onClick={handleOpenForm}>
-								{__('Generate Token', 'fair-payments-connector')}
+								{__(
+									'Generate Token',
+									'fair-payments-connector'
+								)}
 							</Button>
 						</HStack>
 					</CardHeader>
@@ -185,7 +196,10 @@ const ApiTokensApp = () => {
 								<div>
 									<Spinner />
 									<p>
-										{__('Loading tokens…', 'fair-payments-connector')}
+										{__(
+											'Loading tokens…',
+											'fair-payments-connector'
+										)}
 									</p>
 								</div>
 							)}
@@ -204,13 +218,22 @@ const ApiTokensApp = () => {
 									<thead>
 										<tr>
 											<th>
-												{__('Label', 'fair-payments-connector')}
+												{__(
+													'Label',
+													'fair-payments-connector'
+												)}
 											</th>
 											<th>
-												{__('Scopes', 'fair-payments-connector')}
+												{__(
+													'Scopes',
+													'fair-payments-connector'
+												)}
 											</th>
 											<th>
-												{__('Created', 'fair-payments-connector')}
+												{__(
+													'Created',
+													'fair-payments-connector'
+												)}
 											</th>
 											<th>
 												{__(
@@ -219,10 +242,16 @@ const ApiTokensApp = () => {
 												)}
 											</th>
 											<th>
-												{__('Status', 'fair-payments-connector')}
+												{__(
+													'Status',
+													'fair-payments-connector'
+												)}
 											</th>
 											<th style={{ width: '120px' }}>
-												{__('Actions', 'fair-payments-connector')}
+												{__(
+													'Actions',
+													'fair-payments-connector'
+												)}
 											</th>
 										</tr>
 									</thead>
@@ -306,7 +335,10 @@ const ApiTokensApp = () => {
 					title={
 						newToken
 							? __('Token created', 'fair-payments-connector')
-							: __('Generate API Token', 'fair-payments-connector')
+							: __(
+									'Generate API Token',
+									'fair-payments-connector'
+							  )
 					}
 					onRequestClose={handleCloseForm}
 					style={{ maxWidth: '500px', width: '100%' }}
@@ -335,8 +367,14 @@ const ApiTokensApp = () => {
 									onClick={handleCopy}
 								>
 									{copied
-										? __('Copied!', 'fair-payments-connector')
-										: __('Copy token', 'fair-payments-connector')}
+										? __(
+												'Copied!',
+												'fair-payments-connector'
+										  )
+										: __(
+												'Copy token',
+												'fair-payments-connector'
+										  )}
 								</Button>
 								<Button
 									variant="primary"
@@ -350,7 +388,10 @@ const ApiTokensApp = () => {
 						<form onSubmit={handleCreate}>
 							<VStack spacing={4}>
 								<TextControl
-									label={__('Label', 'fair-payments-connector')}
+									label={__(
+										'Label',
+										'fair-payments-connector'
+									)}
 									value={label}
 									onChange={setLabel}
 									help={__(
@@ -366,7 +407,10 @@ const ApiTokensApp = () => {
 											marginBottom: '8px',
 										}}
 									>
-										{__('Scopes', 'fair-payments-connector')}
+										{__(
+											'Scopes',
+											'fair-payments-connector'
+										)}
 									</legend>
 									<VStack spacing={2}>
 										{AVAILABLE_SCOPES.map((scope) => (
@@ -392,7 +436,10 @@ const ApiTokensApp = () => {
 										onClick={handleCloseForm}
 										disabled={isSaving}
 									>
-										{__('Cancel', 'fair-payments-connector')}
+										{__(
+											'Cancel',
+											'fair-payments-connector'
+										)}
 									</Button>
 									<Button
 										variant="primary"
@@ -404,7 +451,10 @@ const ApiTokensApp = () => {
 											scopes.length === 0
 										}
 									>
-										{__('Generate', 'fair-payments-connector')}
+										{__(
+											'Generate',
+											'fair-payments-connector'
+										)}
 									</Button>
 								</HStack>
 							</VStack>

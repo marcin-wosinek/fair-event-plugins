@@ -86,7 +86,8 @@ const EntryForm = ({
 			onSave();
 		} catch (err) {
 			setError(
-				err.message || __('Failed to save entry.', 'fair-payments-connector')
+				err.message ||
+					__('Failed to save entry.', 'fair-payments-connector')
 			);
 		} finally {
 			setIsSaving(false);
@@ -150,7 +151,10 @@ const EntryForm = ({
 						step="0.01"
 						min="0.01"
 						required
-						help={__('Enter amount in EUR', 'fair-payments-connector')}
+						help={__(
+							'Enter amount in EUR',
+							'fair-payments-connector'
+						)}
 					/>
 
 					<TextControl
@@ -177,7 +181,10 @@ const EntryForm = ({
 
 					{budgetingEnabled && (
 						<SelectControl
-							label={__('Budget Category', 'fair-payments-connector')}
+							label={__(
+								'Budget Category',
+								'fair-payments-connector'
+							)}
 							value={formData.budget_id}
 							options={budgetOptions}
 							onChange={(value) =>

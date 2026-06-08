@@ -50,7 +50,10 @@ const ImportTransactionsModal = ({ onClose, onImported }) => {
 			} catch (err) {
 				setError(
 					err.message ||
-						__('Failed to load connected sites.', 'fair-payments-connector')
+						__(
+							'Failed to load connected sites.',
+							'fair-payments-connector'
+						)
 				);
 			} finally {
 				setLoadingSites(false);
@@ -112,7 +115,10 @@ const ImportTransactionsModal = ({ onClose, onImported }) => {
 		} catch (err) {
 			setError(
 				err.message ||
-					__('Failed to import transactions.', 'fair-payments-connector')
+					__(
+						'Failed to import transactions.',
+						'fair-payments-connector'
+					)
 			);
 		} finally {
 			setIsImporting(false);
@@ -219,7 +225,9 @@ const ImportTransactionsModal = ({ onClose, onImported }) => {
 			{loadingSites && (
 				<HStack justify="flex-start" spacing={2}>
 					<Spinner />
-					<span>{__('Loading sites…', 'fair-payments-connector')}</span>
+					<span>
+						{__('Loading sites…', 'fair-payments-connector')}
+					</span>
 				</HStack>
 			)}
 
@@ -273,7 +281,10 @@ const ImportTransactionsModal = ({ onClose, onImported }) => {
 										disabled={busySiteId !== null}
 										onClick={() => handleSiteImport(site)}
 									>
-										{__('Import', 'fair-payments-connector')}
+										{__(
+											'Import',
+											'fair-payments-connector'
+										)}
 									</Button>
 								</td>
 							</tr>

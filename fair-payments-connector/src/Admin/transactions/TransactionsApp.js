@@ -112,7 +112,10 @@ const TransactionsApp = () => {
 		} catch (err) {
 			setError(
 				err.message ||
-					__('Failed to load transactions.', 'fair-payments-connector')
+					__(
+						'Failed to load transactions.',
+						'fair-payments-connector'
+					)
 			);
 		} finally {
 			setLoading(false);
@@ -189,10 +192,10 @@ const TransactionsApp = () => {
 		URL.revokeObjectURL(url);
 		setSuccess(
 			// translators: %d is the number of exported transactions
-			__('%d transaction(s) exported.', 'fair-payments-connector').replace(
-				'%d',
-				toExport.length
-			)
+			__(
+				'%d transaction(s) exported.',
+				'fair-payments-connector'
+			).replace('%d', toExport.length)
 		);
 	};
 
@@ -279,7 +282,10 @@ const TransactionsApp = () => {
 			setFeeSync(null);
 			setError(
 				err.message ||
-					__('Failed to load missing Mollie fees.', 'fair-payments-connector')
+					__(
+						'Failed to load missing Mollie fees.',
+						'fair-payments-connector'
+					)
 			);
 		}
 	};
@@ -348,7 +354,10 @@ const TransactionsApp = () => {
 									onClick={handleExport}
 									style={{ flexShrink: 0, width: 'auto' }}
 								>
-									{__('Export Selected', 'fair-payments-connector')}
+									{__(
+										'Export Selected',
+										'fair-payments-connector'
+									)}
 								</Button>
 							)}
 							<Button
@@ -419,7 +428,12 @@ const TransactionsApp = () => {
 					{loading ? (
 						<Spinner />
 					) : transactions.length === 0 ? (
-						<p>{__('No transactions found.', 'fair-payments-connector')}</p>
+						<p>
+							{__(
+								'No transactions found.',
+								'fair-payments-connector'
+							)}
+						</p>
 					) : (
 						<>
 							<table
@@ -444,10 +458,16 @@ const TransactionsApp = () => {
 										)}
 										{sortableHeader(
 											'amount',
-											__('Amount', 'fair-payments-connector')
+											__(
+												'Amount',
+												'fair-payments-connector'
+											)
 										)}
 										<th>
-											{__('Mollie Fee', 'fair-payments-connector')}
+											{__(
+												'Mollie Fee',
+												'fair-payments-connector'
+											)}
 										</th>
 										<th>
 											{__(
@@ -457,22 +477,46 @@ const TransactionsApp = () => {
 										</th>
 										{sortableHeader(
 											'status',
-											__('Status', 'fair-payments-connector')
+											__(
+												'Status',
+												'fair-payments-connector'
+											)
 										)}
-										<th>{__('Mode', 'fair-payments-connector')}</th>
+										<th>
+											{__(
+												'Mode',
+												'fair-payments-connector'
+											)}
+										</th>
 										<th
 											style={{
 												maxWidth: '200px',
 												whiteSpace: 'normal',
 											}}
 										>
-											{__('Description', 'fair-payments-connector')}
+											{__(
+												'Description',
+												'fair-payments-connector'
+											)}
 										</th>
-										<th>{__('Person', 'fair-payments-connector')}</th>
-										<th>{__('Entry', 'fair-payments-connector')}</th>
+										<th>
+											{__(
+												'Person',
+												'fair-payments-connector'
+											)}
+										</th>
+										<th>
+											{__(
+												'Entry',
+												'fair-payments-connector'
+											)}
+										</th>
 										{sortableHeader(
 											'created_at',
-											__('Date', 'fair-payments-connector')
+											__(
+												'Date',
+												'fair-payments-connector'
+											)
 										)}
 									</tr>
 								</thead>
@@ -621,7 +665,10 @@ const TransactionsApp = () => {
 											}))
 										}
 									>
-										{__('Previous', 'fair-payments-connector')}
+										{__(
+											'Previous',
+											'fair-payments-connector'
+										)}
 									</Button>
 									<span>
 										{pagination.page} / {pagination.pages}

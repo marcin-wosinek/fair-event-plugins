@@ -42,7 +42,10 @@ const MatchModal = ({ entry, onMatch, onCancel }) => {
 		} catch (err) {
 			setError(
 				err.message ||
-					__('Failed to load transactions.', 'fair-payments-connector')
+					__(
+						'Failed to load transactions.',
+						'fair-payments-connector'
+					)
 			);
 		} finally {
 			setLoading(false);
@@ -69,7 +72,10 @@ const MatchModal = ({ entry, onMatch, onCancel }) => {
 		} catch (err) {
 			setError(
 				err.message ||
-					__('Failed to search transactions.', 'fair-payments-connector')
+					__(
+						'Failed to search transactions.',
+						'fair-payments-connector'
+					)
 			);
 		} finally {
 			setLoading(false);
@@ -93,7 +99,10 @@ const MatchModal = ({ entry, onMatch, onCancel }) => {
 		} catch (err) {
 			setError(
 				err.message ||
-					__('Failed to match transaction.', 'fair-payments-connector')
+					__(
+						'Failed to match transaction.',
+						'fair-payments-connector'
+					)
 			);
 			setMatching(false);
 		}
@@ -126,7 +135,9 @@ const MatchModal = ({ entry, onMatch, onCancel }) => {
 					}}
 				>
 					<p style={{ margin: 0 }}>
-						<strong>{__('Entry:', 'fair-payments-connector')}</strong>{' '}
+						<strong>
+							{__('Entry:', 'fair-payments-connector')}
+						</strong>{' '}
 						{formatAmount(entry.amount)} ({entry.entry_type}) -{' '}
 						{entry.entry_date}
 						{entry.description && ` - ${entry.description}`}
@@ -166,7 +177,12 @@ const MatchModal = ({ entry, onMatch, onCancel }) => {
 				{loading && (
 					<div style={{ textAlign: 'center', padding: '20px' }}>
 						<Spinner />
-						<p>{__('Loading transactions...', 'fair-payments-connector')}</p>
+						<p>
+							{__(
+								'Loading transactions...',
+								'fair-payments-connector'
+							)}
+						</p>
 					</div>
 				)}
 
@@ -189,9 +205,18 @@ const MatchModal = ({ entry, onMatch, onCancel }) => {
 						<thead>
 							<tr>
 								<th>{__('Date', 'fair-payments-connector')}</th>
-								<th>{__('Amount', 'fair-payments-connector')}</th>
-								<th>{__('Description', 'fair-payments-connector')}</th>
-								<th>{__('Mollie ID', 'fair-payments-connector')}</th>
+								<th>
+									{__('Amount', 'fair-payments-connector')}
+								</th>
+								<th>
+									{__(
+										'Description',
+										'fair-payments-connector'
+									)}
+								</th>
+								<th>
+									{__('Mollie ID', 'fair-payments-connector')}
+								</th>
 								<th style={{ width: '100px' }}>
 									{__('Action', 'fair-payments-connector')}
 								</th>
@@ -234,7 +259,10 @@ const MatchModal = ({ entry, onMatch, onCancel }) => {
 											disabled={matching}
 											isBusy={matching}
 										>
-											{__('Match', 'fair-payments-connector')}
+											{__(
+												'Match',
+												'fair-payments-connector'
+											)}
 										</Button>
 									</td>
 								</tr>

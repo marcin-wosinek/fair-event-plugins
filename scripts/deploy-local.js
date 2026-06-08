@@ -148,7 +148,8 @@ function gitDescribe() {
 
 const PLUGIN_HEADER_FILES = {
 	'fair-events': 'fair-events/fair-events.php',
-	'fair-payments-connector': 'fair-payments-connector/fair-payments-connector.php',
+	'fair-payments-connector':
+		'fair-payments-connector/fair-payments-connector.php',
 	'fair-platform': 'fair-platform/fair-platform.php',
 	'fair-audience': 'fair-audience/fair-audience.php',
 	'fair-timetable': 'fair-timetable/fair-timetable.php',

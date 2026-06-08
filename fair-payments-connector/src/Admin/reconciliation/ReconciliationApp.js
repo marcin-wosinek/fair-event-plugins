@@ -73,7 +73,10 @@ const ReconciliationApp = () => {
 		} catch (err) {
 			setError(
 				err.message ||
-					__('Failed to load reconciliation data.', 'fair-payments-connector')
+					__(
+						'Failed to load reconciliation data.',
+						'fair-payments-connector'
+					)
 			);
 		} finally {
 			setLoading(false);
@@ -127,7 +130,10 @@ const ReconciliationApp = () => {
 				data: { transaction_ids: selectedTransactionIds },
 			});
 			setSuccess(
-				__('Transactions matched successfully.', 'fair-payments-connector')
+				__(
+					'Transactions matched successfully.',
+					'fair-payments-connector'
+				)
 			);
 			setSelectedEntry(null);
 			setSelectedTransactionIds([]);
@@ -136,7 +142,10 @@ const ReconciliationApp = () => {
 		} catch (err) {
 			setError(
 				err.message ||
-					__('Failed to match transactions.', 'fair-payments-connector')
+					__(
+						'Failed to match transactions.',
+						'fair-payments-connector'
+					)
 			);
 		} finally {
 			setMatching(false);
@@ -152,13 +161,19 @@ const ReconciliationApp = () => {
 				data: { transaction_id: transactionId },
 			});
 			setSuccess(
-				__('Transaction unmatched successfully.', 'fair-payments-connector')
+				__(
+					'Transaction unmatched successfully.',
+					'fair-payments-connector'
+				)
 			);
 			await loadData();
 		} catch (err) {
 			setError(
 				err.message ||
-					__('Failed to unmatch transaction.', 'fair-payments-connector')
+					__(
+						'Failed to unmatch transaction.',
+						'fair-payments-connector'
+					)
 			);
 		}
 	};
@@ -171,13 +186,19 @@ const ReconciliationApp = () => {
 				method: 'DELETE',
 			});
 			setSuccess(
-				__('All transactions unmatched successfully.', 'fair-payments-connector')
+				__(
+					'All transactions unmatched successfully.',
+					'fair-payments-connector'
+				)
 			);
 			await loadData();
 		} catch (err) {
 			setError(
 				err.message ||
-					__('Failed to unmatch transactions.', 'fair-payments-connector')
+					__(
+						'Failed to unmatch transactions.',
+						'fair-payments-connector'
+					)
 			);
 		}
 	};
@@ -269,7 +290,10 @@ const ReconciliationApp = () => {
 					<Panel>
 						<PanelBody
 							title={
-								__('Unmatched Bank Entries', 'fair-payments-connector') +
+								__(
+									'Unmatched Bank Entries',
+									'fair-payments-connector'
+								) +
 								` (${filteredUnmatchedEntries.length}/${unmatchedEntries.length})`
 							}
 							initialOpen={true}
@@ -301,13 +325,22 @@ const ReconciliationApp = () => {
 									<thead>
 										<tr>
 											<th>
-												{__('Date', 'fair-payments-connector')}
+												{__(
+													'Date',
+													'fair-payments-connector'
+												)}
 											</th>
 											<th>
-												{__('Amount', 'fair-payments-connector')}
+												{__(
+													'Amount',
+													'fair-payments-connector'
+												)}
 											</th>
 											<th>
-												{__('Type', 'fair-payments-connector')}
+												{__(
+													'Type',
+													'fair-payments-connector'
+												)}
 											</th>
 											<th>
 												{__(
@@ -316,7 +349,10 @@ const ReconciliationApp = () => {
 												)}
 											</th>
 											<th style={{ width: '80px' }}>
-												{__('Action', 'fair-payments-connector')}
+												{__(
+													'Action',
+													'fair-payments-connector'
+												)}
 											</th>
 										</tr>
 									</thead>
@@ -392,7 +428,10 @@ const ReconciliationApp = () => {
 					{selectedEntry && (
 						<Panel>
 							<PanelBody
-								title={__('Match Transactions', 'fair-payments-connector')}
+								title={__(
+									'Match Transactions',
+									'fair-payments-connector'
+								)}
 								initialOpen={true}
 							>
 								<VStack spacing={4}>
@@ -720,7 +759,10 @@ const ReconciliationApp = () => {
 					{!selectedEntry && (
 						<Panel>
 							<PanelBody
-								title={__('Match Transactions', 'fair-payments-connector')}
+								title={__(
+									'Match Transactions',
+									'fair-payments-connector'
+								)}
 								initialOpen={true}
 							>
 								<p>
@@ -747,7 +789,10 @@ const ReconciliationApp = () => {
 					>
 						{matchedEntries.length === 0 ? (
 							<p>
-								{__('No matched entries yet.', 'fair-payments-connector')}
+								{__(
+									'No matched entries yet.',
+									'fair-payments-connector'
+								)}
 							</p>
 						) : (
 							matchedEntries.map((entry) => (
@@ -786,7 +831,10 @@ const ReconciliationApp = () => {
 												handleUnmatchAll(entry.id)
 											}
 										>
-											{__('Unmatch All', 'fair-payments-connector')}
+											{__(
+												'Unmatch All',
+												'fair-payments-connector'
+											)}
 										</Button>
 									</HStack>
 

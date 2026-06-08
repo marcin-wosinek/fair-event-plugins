@@ -13,7 +13,9 @@ import TransactionsApp from './TransactionsApp.js';
  * Initialize the transactions page
  */
 domReady(() => {
-	const root = document.getElementById('fair-payments-connector-transactions-root');
+	const root = document.getElementById(
+		'fair-payments-connector-transactions-root'
+	);
 	if (root) {
 		createRoot(root).render(<TransactionsApp />);
 	}

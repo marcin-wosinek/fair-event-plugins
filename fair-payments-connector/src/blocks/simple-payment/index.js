@@ -30,7 +30,9 @@ registerBlockType(metadata.name, {
 		return (
 			<div {...blockProps}>
 				<div className="fair-payments-connector-block">
-					<h3>{__('Simple Payment Block', 'fair-payments-connector')}</h3>
+					<h3>
+						{__('Simple Payment Block', 'fair-payments-connector')}
+					</h3>
 					<TextControl
 						label={__('Amount', 'fair-payments-connector')}
 						value={amount}
@@ -45,7 +47,10 @@ registerBlockType(metadata.name, {
 						onChange={(value) => setAttributes({ currency: value })}
 					/>
 					<TextControl
-						label={__('Description (optional)', 'fair-payments-connector')}
+						label={__(
+							'Description (optional)',
+							'fair-payments-connector'
+						)}
 						value={description}
 						onChange={(value) =>
 							setAttributes({ description: value })

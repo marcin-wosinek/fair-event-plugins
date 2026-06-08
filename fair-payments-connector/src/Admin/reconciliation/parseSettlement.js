@@ -90,7 +90,10 @@ function findHeader(rows) {
 export function parseSettlementRows(rows) {
 	if (!Array.isArray(rows) || rows.length === 0) {
 		throw new Error(
-			__('The file is empty or could not be read.', 'fair-payments-connector')
+			__(
+				'The file is empty or could not be read.',
+				'fair-payments-connector'
+			)
 		);
 	}
 
@@ -187,7 +190,10 @@ export function parseSettlementRows(rows) {
 
 	if (references.size === 0) {
 		throw new Error(
-			__('No settlement reference found in the file.', 'fair-payments-connector')
+			__(
+				'No settlement reference found in the file.',
+				'fair-payments-connector'
+			)
 		);
 	}
 	if (references.size > 1) {
@@ -209,7 +215,10 @@ export function parseSettlementRows(rows) {
 
 	if (paymentRows.length === 0) {
 		throw new Error(
-			__('No payment rows found in the settlement file.', 'fair-payments-connector')
+			__(
+				'No payment rows found in the settlement file.',
+				'fair-payments-connector'
+			)
 		);
 	}
 

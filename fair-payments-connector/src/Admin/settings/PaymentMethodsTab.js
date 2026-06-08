@@ -71,7 +71,10 @@ export default function PaymentMethodsTab({ onNotice }) {
 			});
 			onNotice({
 				status: 'success',
-				message: __('Payment method settings saved.', 'fair-payments-connector'),
+				message: __(
+					'Payment method settings saved.',
+					'fair-payments-connector'
+				),
 			});
 		} catch (err) {
 			onNotice({
@@ -119,7 +122,10 @@ export default function PaymentMethodsTab({ onNotice }) {
 
 				<div style={{ marginTop: '16px', maxWidth: '320px' }}>
 					<NumberControl
-						label={__('Working-day threshold', 'fair-payments-connector')}
+						label={__(
+							'Working-day threshold',
+							'fair-payments-connector'
+						)}
 						help={__(
 							'Disable bank transfer when fewer than this many working days remain before the key date.',
 							'fair-payments-connector'

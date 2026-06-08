@@ -49,7 +49,8 @@ const BudgetsApp = () => {
 			setStats(statsData);
 		} catch (err) {
 			setError(
-				err.message || __('Failed to load budgets.', 'fair-payments-connector')
+				err.message ||
+					__('Failed to load budgets.', 'fair-payments-connector')
 			);
 		} finally {
 			setLoading(false);
@@ -94,11 +95,14 @@ const BudgetsApp = () => {
 				path: `/fair-payments-connector/v1/budgets/${id}`,
 				method: 'DELETE',
 			});
-			setSuccess(__('Budget deleted successfully.', 'fair-payments-connector'));
+			setSuccess(
+				__('Budget deleted successfully.', 'fair-payments-connector')
+			);
 			loadData();
 		} catch (err) {
 			setError(
-				err.message || __('Failed to delete budget.', 'fair-payments-connector')
+				err.message ||
+					__('Failed to delete budget.', 'fair-payments-connector')
 			);
 		}
 	};
@@ -115,14 +119,24 @@ const BudgetsApp = () => {
 					method: 'PUT',
 					data: formData,
 				});
-				setSuccess(__('Budget updated successfully.', 'fair-payments-connector'));
+				setSuccess(
+					__(
+						'Budget updated successfully.',
+						'fair-payments-connector'
+					)
+				);
 			} else {
 				await apiFetch({
 					path: '/fair-payments-connector/v1/budgets',
 					method: 'POST',
 					data: formData,
 				});
-				setSuccess(__('Budget created successfully.', 'fair-payments-connector'));
+				setSuccess(
+					__(
+						'Budget created successfully.',
+						'fair-payments-connector'
+					)
+				);
 			}
 			setIsFormOpen(false);
 			setEditingBudget(null);
@@ -131,8 +145,14 @@ const BudgetsApp = () => {
 			setError(
 				err.message ||
 					(editingBudget
-						? __('Failed to update budget.', 'fair-payments-connector')
-						: __('Failed to create budget.', 'fair-payments-connector'))
+						? __(
+								'Failed to update budget.',
+								'fair-payments-connector'
+						  )
+						: __(
+								'Failed to create budget.',
+								'fair-payments-connector'
+						  ))
 			);
 		} finally {
 			setIsSaving(false);
@@ -206,8 +226,11 @@ const BudgetsApp = () => {
 									{formatAmount(unbudgeted.total_cost)}
 								</div>
 								<div style={{ color: '#666' }}>
-									{__('Unbudgeted Costs', 'fair-payments-connector')} (
-									{unbudgeted.cost_count || 0})
+									{__(
+										'Unbudgeted Costs',
+										'fair-payments-connector'
+									)}{' '}
+									({unbudgeted.cost_count || 0})
 								</div>
 							</div>
 							<div style={{ textAlign: 'center' }}>
@@ -221,8 +244,11 @@ const BudgetsApp = () => {
 									{formatAmount(unbudgeted.total_income)}
 								</div>
 								<div style={{ color: '#666' }}>
-									{__('Unbudgeted Income', 'fair-payments-connector')} (
-									{unbudgeted.income_count || 0})
+									{__(
+										'Unbudgeted Income',
+										'fair-payments-connector'
+									)}{' '}
+									({unbudgeted.income_count || 0})
 								</div>
 							</div>
 						</HStack>
@@ -233,9 +259,17 @@ const BudgetsApp = () => {
 				<Card>
 					<CardHeader>
 						<HStack justify="space-between">
-							<h1>{__('Budget Categories', 'fair-payments-connector')}</h1>
+							<h1>
+								{__(
+									'Budget Categories',
+									'fair-payments-connector'
+								)}
+							</h1>
 							<Button variant="primary" onClick={handleCreate}>
-								{__('Add New Budget', 'fair-payments-connector')}
+								{__(
+									'Add New Budget',
+									'fair-payments-connector'
+								)}
 							</Button>
 						</HStack>
 					</CardHeader>
@@ -289,7 +323,10 @@ const BudgetsApp = () => {
 									<thead>
 										<tr>
 											<th>
-												{__('Name', 'fair-payments-connector')}
+												{__(
+													'Name',
+													'fair-payments-connector'
+												)}
 											</th>
 											<th>
 												{__(
@@ -298,10 +335,16 @@ const BudgetsApp = () => {
 												)}
 											</th>
 											<th style={{ width: '120px' }}>
-												{__('Balance', 'fair-payments-connector')}
+												{__(
+													'Balance',
+													'fair-payments-connector'
+												)}
 											</th>
 											<th style={{ width: '180px' }}>
-												{__('Actions', 'fair-payments-connector')}
+												{__(
+													'Actions',
+													'fair-payments-connector'
+												)}
 											</th>
 										</tr>
 									</thead>
@@ -473,7 +516,10 @@ const BudgetsApp = () => {
 													size="small"
 													href="admin.php?page=fair-payments-connector-entries&budget_id=none"
 												>
-													{__('View', 'fair-payments-connector')}
+													{__(
+														'View',
+														'fair-payments-connector'
+													)}
 												</Button>
 											</td>
 										</tr>
@@ -486,7 +532,10 @@ const BudgetsApp = () => {
 											}}
 										>
 											<td colSpan={2}>
-												{__('Total', 'fair-payments-connector')}
+												{__(
+													'Total',
+													'fair-payments-connector'
+												)}
 											</td>
 											<td
 												data-label={__(
@@ -540,7 +589,10 @@ const BudgetsApp = () => {
 								required
 							/>
 							<TextareaControl
-								label={__('Description', 'fair-payments-connector')}
+								label={__(
+									'Description',
+									'fair-payments-connector'
+								)}
 								value={formData.description}
 								onChange={(value) =>
 									setFormData({
@@ -568,8 +620,14 @@ const BudgetsApp = () => {
 									disabled={isSaving || !formData.name}
 								>
 									{editingBudget
-										? __('Update Budget', 'fair-payments-connector')
-										: __('Create Budget', 'fair-payments-connector')}
+										? __(
+												'Update Budget',
+												'fair-payments-connector'
+										  )
+										: __(
+												'Create Budget',
+												'fair-payments-connector'
+										  )}
 								</Button>
 							</HStack>
 						</VStack>

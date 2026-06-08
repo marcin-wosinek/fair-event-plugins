@@ -14,7 +14,9 @@ import './style.scss';
  * Initialize the budgets page
  */
 domReady(() => {
-	const root = document.getElementById('fair-payments-connector-budgets-root');
+	const root = document.getElementById(
+		'fair-payments-connector-budgets-root'
+	);
 	if (root) {
 		createRoot(root).render(<BudgetsApp />);
 	}

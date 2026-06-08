@@ -382,7 +382,8 @@ const PersonPostCard = ({ transaction: t, onUpdate, transactionId }) => {
 			})
 			.catch((err) => {
 				setError(
-					err.message || __('Failed to update.', 'fair-payments-connector')
+					err.message ||
+						__('Failed to update.', 'fair-payments-connector')
 				);
 				throw err;
 			});
@@ -495,7 +496,10 @@ const TransactionPage = () => {
 					status: 'error',
 					message:
 						err.message ||
-						__('Failed to sync with Mollie.', 'fair-payments-connector'),
+						__(
+							'Failed to sync with Mollie.',
+							'fair-payments-connector'
+						),
 				});
 			})
 			.finally(() => {
@@ -505,7 +509,9 @@ const TransactionPage = () => {
 
 	useEffect(() => {
 		if (!transactionId) {
-			setError(__('No transaction ID provided.', 'fair-payments-connector'));
+			setError(
+				__('No transaction ID provided.', 'fair-payments-connector')
+			);
 			setLoading(false);
 			return;
 		}
@@ -519,7 +525,10 @@ const TransactionPage = () => {
 			.catch((err) => {
 				setError(
 					err.message ||
-						__('Failed to load transaction.', 'fair-payments-connector')
+						__(
+							'Failed to load transaction.',
+							'fair-payments-connector'
+						)
 				);
 			})
 			.finally(() => {
@@ -544,7 +553,8 @@ const TransactionPage = () => {
 				</Notice>
 				<p>
 					<a href="admin.php?page=fair-payments-connector-transactions">
-						&larr; {__('Back to Transactions', 'fair-payments-connector')}
+						&larr;{' '}
+						{__('Back to Transactions', 'fair-payments-connector')}
 					</a>
 				</p>
 			</div>
@@ -559,7 +569,8 @@ const TransactionPage = () => {
 			<HStack style={{ marginBottom: '16px', alignItems: 'center' }}>
 				<div>
 					<a href="admin.php?page=fair-payments-connector-transactions">
-						&larr; {__('Back to Transactions', 'fair-payments-connector')}
+						&larr;{' '}
+						{__('Back to Transactions', 'fair-payments-connector')}
 					</a>
 					<h1 style={{ margin: '8px 0 0' }}>
 						{__('Transaction', 'fair-payments-connector')} #{t.id}{' '}
@@ -576,7 +587,10 @@ const TransactionPage = () => {
 					<CardHeader>
 						<HStack justify="space-between" alignment="center">
 							<Heading level={4}>
-								{__('Payment Details', 'fair-payments-connector')}
+								{__(
+									'Payment Details',
+									'fair-payments-connector'
+								)}
 							</Heading>
 							{t.mollie_payment_id && (
 								<Button
@@ -586,7 +600,10 @@ const TransactionPage = () => {
 									disabled={syncing}
 								>
 									{syncing
-										? __('Syncing…', 'fair-payments-connector')
+										? __(
+												'Syncing…',
+												'fair-payments-connector'
+										  )
 										: __(
 												'Sync with Mollie',
 												'fair-payments-connector'
@@ -639,12 +656,20 @@ const TransactionPage = () => {
 					<CardBody>
 						<table>
 							<tbody>
-								<DetailRow label={__('Amount', 'fair-payments-connector')}>
+								<DetailRow
+									label={__(
+										'Amount',
+										'fair-payments-connector'
+									)}
+								>
 									<strong>{t.amount.toFixed(2)}</strong>{' '}
 									{t.currency}
 								</DetailRow>
 								<DetailRow
-									label={__('Mollie Fee', 'fair-payments-connector')}
+									label={__(
+										'Mollie Fee',
+										'fair-payments-connector'
+									)}
 								>
 									{t.mollie_fee !== null
 										? `${t.mollie_fee.toFixed(2)} ${
@@ -664,7 +689,12 @@ const TransactionPage = () => {
 										  }`
 										: '-'}
 								</DetailRow>
-								<DetailRow label={__('Mode', 'fair-payments-connector')}>
+								<DetailRow
+									label={__(
+										'Mode',
+										'fair-payments-connector'
+									)}
+								>
 									<span
 										style={
 											t.testmode
@@ -679,8 +709,14 @@ const TransactionPage = () => {
 										}
 									>
 										{t.testmode
-											? __('Test', 'fair-payments-connector')
-											: __('Live', 'fair-payments-connector')}
+											? __(
+													'Test',
+													'fair-payments-connector'
+											  )
+											: __(
+													'Live',
+													'fair-payments-connector'
+											  )}
 									</span>
 								</DetailRow>
 							</tbody>
@@ -697,14 +733,22 @@ const TransactionPage = () => {
 					<CardBody>
 						<table>
 							<tbody>
-								<DetailRow label={__('Status', 'fair-payments-connector')}>
+								<DetailRow
+									label={__(
+										'Status',
+										'fair-payments-connector'
+									)}
+								>
 									<span style={getStatusStyle(t.status)}>
 										{t.status.charAt(0).toUpperCase() +
 											t.status.slice(1)}
 									</span>
 								</DetailRow>
 								<DetailRow
-									label={__('Created', 'fair-payments-connector')}
+									label={__(
+										'Created',
+										'fair-payments-connector'
+									)}
 								>
 									{t.created_at || '-'}
 								</DetailRow>
@@ -717,7 +761,10 @@ const TransactionPage = () => {
 									{t.payment_initiated_at || '-'}
 								</DetailRow>
 								<DetailRow
-									label={__('Updated', 'fair-payments-connector')}
+									label={__(
+										'Updated',
+										'fair-payments-connector'
+									)}
 								>
 									{t.updated_at || '-'}
 								</DetailRow>
@@ -778,17 +825,36 @@ const TransactionPage = () => {
 							<table className="wp-list-table widefat fixed striped">
 								<thead>
 									<tr>
-										<th>{__('Name', 'fair-payments-connector')}</th>
 										<th>
-											{__('Description', 'fair-payments-connector')}
+											{__(
+												'Name',
+												'fair-payments-connector'
+											)}
 										</th>
 										<th>
-											{__('Quantity', 'fair-payments-connector')}
+											{__(
+												'Description',
+												'fair-payments-connector'
+											)}
 										</th>
 										<th>
-											{__('Unit Amount', 'fair-payments-connector')}
+											{__(
+												'Quantity',
+												'fair-payments-connector'
+											)}
 										</th>
-										<th>{__('Total', 'fair-payments-connector')}</th>
+										<th>
+											{__(
+												'Unit Amount',
+												'fair-payments-connector'
+											)}
+										</th>
+										<th>
+											{__(
+												'Total',
+												'fair-payments-connector'
+											)}
+										</th>
 									</tr>
 								</thead>
 								<tbody>
@@ -853,7 +919,10 @@ const TransactionPage = () => {
 									)}
 								</DetailRow>
 								<DetailRow
-									label={__('Redirect URL', 'fair-payments-connector')}
+									label={__(
+										'Redirect URL',
+										'fair-payments-connector'
+									)}
 								>
 									{t.redirect_url ? (
 										<code
@@ -868,7 +937,10 @@ const TransactionPage = () => {
 									)}
 								</DetailRow>
 								<DetailRow
-									label={__('Webhook URL', 'fair-payments-connector')}
+									label={__(
+										'Webhook URL',
+										'fair-payments-connector'
+									)}
 								>
 									{t.webhook_url ? (
 										<code
@@ -883,7 +955,10 @@ const TransactionPage = () => {
 									)}
 								</DetailRow>
 								<DetailRow
-									label={__('Checkout URL', 'fair-payments-connector')}
+									label={__(
+										'Checkout URL',
+										'fair-payments-connector'
+									)}
 								>
 									{t.checkout_url ? (
 										<a

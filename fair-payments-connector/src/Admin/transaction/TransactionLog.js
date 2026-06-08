@@ -63,7 +63,10 @@ const TransactionLog = ({ transactionId }) => {
 			.catch((err) => {
 				setError(
 					err.message ||
-						__('Failed to load log entries.', 'fair-payments-connector')
+						__(
+							'Failed to load log entries.',
+							'fair-payments-connector'
+						)
 				);
 			})
 			.finally(() => {
@@ -125,7 +128,9 @@ const TransactionLog = ({ transactionId }) => {
 								<th style={{ width: '180px' }}>
 									{__('Event', 'fair-payments-connector')}
 								</th>
-								<th>{__('Message', 'fair-payments-connector')}</th>
+								<th>
+									{__('Message', 'fair-payments-connector')}
+								</th>
 								<th style={{ width: '110px' }}>
 									{__('Request', 'fair-payments-connector')}
 								</th>

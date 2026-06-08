@@ -54,7 +54,10 @@ const TransferModal = ({ entry, budgets, eventsEnabled, onSave, onCancel }) => {
 	const [error, setError] = useState(null);
 
 	const budgetOptions = [
-		{ label: __('-- Select Budget --', 'fair-payments-connector'), value: '' },
+		{
+			label: __('-- Select Budget --', 'fair-payments-connector'),
+			value: '',
+		},
 		...budgets.map((budget) => ({
 			label: budget.name,
 			value: budget.id.toString(),
@@ -99,7 +102,8 @@ const TransferModal = ({ entry, budgets, eventsEnabled, onSave, onCancel }) => {
 			onSave();
 		} catch (err) {
 			setError(
-				err.message || __('Failed to save transfer.', 'fair-payments-connector')
+				err.message ||
+					__('Failed to save transfer.', 'fair-payments-connector')
 			);
 		} finally {
 			setIsSaving(false);
@@ -137,7 +141,10 @@ const TransferModal = ({ entry, budgets, eventsEnabled, onSave, onCancel }) => {
 						step="0.01"
 						min="0.01"
 						required
-						help={__('Enter amount in EUR', 'fair-payments-connector')}
+						help={__(
+							'Enter amount in EUR',
+							'fair-payments-connector'
+						)}
 					/>
 
 					<TextControl
@@ -163,7 +170,10 @@ const TransferModal = ({ entry, budgets, eventsEnabled, onSave, onCancel }) => {
 					/>
 
 					<SelectControl
-						label={__('From Budget (Source)', 'fair-payments-connector')}
+						label={__(
+							'From Budget (Source)',
+							'fair-payments-connector'
+						)}
 						value={formData.source_budget_id}
 						options={budgetOptions}
 						onChange={(value) =>
@@ -175,7 +185,10 @@ const TransferModal = ({ entry, budgets, eventsEnabled, onSave, onCancel }) => {
 					/>
 
 					<SelectControl
-						label={__('To Budget (Target)', 'fair-payments-connector')}
+						label={__(
+							'To Budget (Target)',
+							'fair-payments-connector'
+						)}
 						value={formData.target_budget_id}
 						options={budgetOptions}
 						onChange={(value) =>
@@ -246,8 +259,14 @@ const TransferModal = ({ entry, budgets, eventsEnabled, onSave, onCancel }) => {
 							}
 						>
 							{isEditMode
-								? __('Update Transfer', 'fair-payments-connector')
-								: __('Create Transfer', 'fair-payments-connector')}
+								? __(
+										'Update Transfer',
+										'fair-payments-connector'
+								  )
+								: __(
+										'Create Transfer',
+										'fair-payments-connector'
+								  )}
 						</Button>
 					</HStack>
 				</VStack>

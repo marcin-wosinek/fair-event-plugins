@@ -84,7 +84,10 @@ export default function TelegramTab({ onNotice }) {
 			.then(() => {
 				onNotice({
 					status: 'success',
-					message: __('Telegram settings saved.', 'fair-payments-connector'),
+					message: __(
+						'Telegram settings saved.',
+						'fair-payments-connector'
+					),
 				});
 				setIsSaving(false);
 			})
@@ -142,7 +145,12 @@ export default function TelegramTab({ onNotice }) {
 		return (
 			<Card>
 				<CardBody>
-					<p>{__('Loading Telegram settings…', 'fair-payments-connector')}</p>
+					<p>
+						{__(
+							'Loading Telegram settings…',
+							'fair-payments-connector'
+						)}
+					</p>
 				</CardBody>
 			</Card>
 		);
@@ -151,7 +159,9 @@ export default function TelegramTab({ onNotice }) {
 	return (
 		<Card>
 			<CardBody>
-				<h2>{__('Telegram Notifications', 'fair-payments-connector')}</h2>
+				<h2>
+					{__('Telegram Notifications', 'fair-payments-connector')}
+				</h2>
 				<p style={{ color: '#666', marginBottom: '1.5rem' }}>
 					{__(
 						'Post a message to a Telegram chat or channel when a transaction is paid.',
@@ -161,7 +171,10 @@ export default function TelegramTab({ onNotice }) {
 
 				<ToggleControl
 					__nextHasNoMarginBottom
-					label={__('Enable Telegram notifications', 'fair-payments-connector')}
+					label={__(
+						'Enable Telegram notifications',
+						'fair-payments-connector'
+					)}
 					checked={enabled}
 					onChange={setEnabled}
 				/>

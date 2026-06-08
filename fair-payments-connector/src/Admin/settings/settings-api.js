@@ -62,7 +62,10 @@ export function loadAdvancedSettings() {
  * @return {Promise<Object>} Promise resolving to saved settings
  */
 export function saveSettings(data) {
-	console.log('[Fair Payments Connector] Saving settings:', Object.keys(data));
+	console.log(
+		'[Fair Payments Connector] Saving settings:',
+		Object.keys(data)
+	);
 
 	return apiFetch({
 		path: '/wp/v2/settings',
@@ -86,7 +89,10 @@ export function testConnection() {
 		path: '/fair-payments-connector/v1/test-connection',
 		method: 'POST',
 	}).then((response) => {
-		console.log('[Fair Payments Connector] Connection test successful:', response);
+		console.log(
+			'[Fair Payments Connector] Connection test successful:',
+			response
+		);
 		return response;
 	});
 }

@@ -43,17 +43,20 @@ export default function SettingsApp() {
 
 		// Debug: Log received OAuth parameters
 		if (accessToken || refreshToken || error) {
-			console.log('[Fair Payments Connector OAuth] Callback parameters:', {
-				hasAccessToken: !!accessToken,
-				accessTokenLength: accessToken ? accessToken.length : 0,
-				hasRefreshToken: !!refreshToken,
-				refreshTokenLength: refreshToken ? refreshToken.length : 0,
-				expiresIn,
-				orgId,
-				profileId,
-				testMode,
-				error,
-			});
+			console.log(
+				'[Fair Payments Connector OAuth] Callback parameters:',
+				{
+					hasAccessToken: !!accessToken,
+					accessTokenLength: accessToken ? accessToken.length : 0,
+					hasRefreshToken: !!refreshToken,
+					refreshTokenLength: refreshToken ? refreshToken.length : 0,
+					expiresIn,
+					orgId,
+					profileId,
+					testMode,
+					error,
+				}
+			);
 		}
 
 		// Handle OAuth errors
@@ -69,7 +72,8 @@ export default function SettingsApp() {
 			window.history.replaceState(
 				{},
 				'',
-				window.location.pathname + '?page=fair-payments-connector-settings'
+				window.location.pathname +
+					'?page=fair-payments-connector-settings'
 			);
 			return;
 		}
@@ -88,7 +92,10 @@ export default function SettingsApp() {
 			};
 
 			// Debug: Log data being sent to API
-			console.log('[Fair Payments Connector OAuth] Saving settings:', settingsData);
+			console.log(
+				'[Fair Payments Connector OAuth] Saving settings:',
+				settingsData
+			);
 
 			saveSettings(settingsData)
 				.then((response) => {
@@ -102,7 +109,8 @@ export default function SettingsApp() {
 					window.history.replaceState(
 						{},
 						'',
-						window.location.pathname + '?page=fair-payments-connector-settings'
+						window.location.pathname +
+							'?page=fair-payments-connector-settings'
 					);
 
 					// Trigger reload in ConnectionTab
@@ -118,7 +126,10 @@ export default function SettingsApp() {
 				})
 				.catch((error) => {
 					// Debug: Log API error
-					console.error('[Fair Payments Connector OAuth] Save error:', error);
+					console.error(
+						'[Fair Payments Connector OAuth] Save error:',
+						error
+					);
 					console.error(
 						'[Fair Payments Connector OAuth] Error details:',
 						error.message,
@@ -183,7 +194,12 @@ export default function SettingsApp() {
 
 	return (
 		<div className="wrap">
-			<h1>{__('Fair Payments Connector Settings', 'fair-payments-connector')}</h1>
+			<h1>
+				{__(
+					'Fair Payments Connector Settings',
+					'fair-payments-connector'
+				)}
+			</h1>
 
 			{notice && (
 				<Notice

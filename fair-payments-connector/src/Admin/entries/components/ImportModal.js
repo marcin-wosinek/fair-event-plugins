@@ -44,7 +44,8 @@ const ImportModal = ({ onImport, onCancel }) => {
 			setParsedEntries(entries);
 		} catch (err) {
 			setError(
-				err.message || __('Failed to parse file.', 'fair-payments-connector')
+				err.message ||
+					__('Failed to parse file.', 'fair-payments-connector')
 			);
 		} finally {
 			setIsParsing(false);
@@ -152,7 +153,11 @@ const ImportModal = ({ onImport, onCancel }) => {
 			};
 
 			reader.onerror = () => {
-				reject(new Error(__('Failed to read file.', 'fair-payments-connector')));
+				reject(
+					new Error(
+						__('Failed to read file.', 'fair-payments-connector')
+					)
+				);
 			};
 
 			reader.readAsArrayBuffer(file);
@@ -188,7 +193,8 @@ const ImportModal = ({ onImport, onCancel }) => {
 			}
 		} catch (err) {
 			setError(
-				err.message || __('Failed to import entries.', 'fair-payments-connector')
+				err.message ||
+					__('Failed to import entries.', 'fair-payments-connector')
 			);
 		} finally {
 			setIsLoading(false);
@@ -261,7 +267,9 @@ const ImportModal = ({ onImport, onCancel }) => {
 				{isParsing && (
 					<HStack justify="center">
 						<Spinner />
-						<span>{__('Parsing file...', 'fair-payments-connector')}</span>
+						<span>
+							{__('Parsing file...', 'fair-payments-connector')}
+						</span>
 					</HStack>
 				)}
 
@@ -278,20 +286,29 @@ const ImportModal = ({ onImport, onCancel }) => {
 						</h4>
 						<p>
 							<strong>
-								{__('Total entries:', 'fair-payments-connector')}
+								{__(
+									'Total entries:',
+									'fair-payments-connector'
+								)}
 							</strong>{' '}
 							{parsedEntries.length}
 						</p>
 						<p>
-							<strong>{__('Costs:', 'fair-payments-connector')}</strong>{' '}
+							<strong>
+								{__('Costs:', 'fair-payments-connector')}
+							</strong>{' '}
 							{costEntries.length} ({formatAmount(totalCosts)})
 						</p>
 						<p>
-							<strong>{__('Income:', 'fair-payments-connector')}</strong>{' '}
+							<strong>
+								{__('Income:', 'fair-payments-connector')}
+							</strong>{' '}
 							{incomeEntries.length} ({formatAmount(totalIncome)})
 						</p>
 						<p>
-							<strong>{__('Balance:', 'fair-payments-connector')}</strong>{' '}
+							<strong>
+								{__('Balance:', 'fair-payments-connector')}
+							</strong>{' '}
 							<span
 								style={{
 									color:
@@ -307,7 +324,10 @@ const ImportModal = ({ onImport, onCancel }) => {
 						{parsedEntries.length <= 10 && (
 							<div style={{ marginTop: '16px' }}>
 								<strong>
-									{__('Entries to import:', 'fair-payments-connector')}
+									{__(
+										'Entries to import:',
+										'fair-payments-connector'
+									)}
 								</strong>
 								<table
 									style={{
@@ -319,13 +339,22 @@ const ImportModal = ({ onImport, onCancel }) => {
 									<thead>
 										<tr>
 											<th style={{ textAlign: 'left' }}>
-												{__('Date', 'fair-payments-connector')}
+												{__(
+													'Date',
+													'fair-payments-connector'
+												)}
 											</th>
 											<th style={{ textAlign: 'left' }}>
-												{__('Type', 'fair-payments-connector')}
+												{__(
+													'Type',
+													'fair-payments-connector'
+												)}
 											</th>
 											<th style={{ textAlign: 'right' }}>
-												{__('Amount', 'fair-payments-connector')}
+												{__(
+													'Amount',
+													'fair-payments-connector'
+												)}
 											</th>
 											<th style={{ textAlign: 'left' }}>
 												{__(

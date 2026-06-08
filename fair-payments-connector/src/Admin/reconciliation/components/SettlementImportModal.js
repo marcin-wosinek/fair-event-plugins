@@ -67,7 +67,11 @@ const SettlementImportModal = ({ onImport, onCancel }) => {
 				}
 			};
 			reader.onerror = () =>
-				reject(new Error(__('Failed to read file.', 'fair-payments-connector')));
+				reject(
+					new Error(
+						__('Failed to read file.', 'fair-payments-connector')
+					)
+				);
 			reader.readAsArrayBuffer(selectedFile);
 		});
 	};
@@ -88,7 +92,8 @@ const SettlementImportModal = ({ onImport, onCancel }) => {
 			parsed = await readFile(selectedFile);
 		} catch (err) {
 			setError(
-				err.message || __('Failed to parse file.', 'fair-payments-connector')
+				err.message ||
+					__('Failed to parse file.', 'fair-payments-connector')
 			);
 			setIsParsing(false);
 			return;
@@ -105,7 +110,8 @@ const SettlementImportModal = ({ onImport, onCancel }) => {
 			setReport(response);
 		} catch (err) {
 			setError(
-				err.message || __('Failed to match settlement.', 'fair-payments-connector')
+				err.message ||
+					__('Failed to match settlement.', 'fair-payments-connector')
 			);
 		} finally {
 			setIsLoading(false);
@@ -125,14 +131,22 @@ const SettlementImportModal = ({ onImport, onCancel }) => {
 				method: 'POST',
 				data: { transaction_ids: report.resolved_transaction_ids },
 			});
-			setSuccess(__('Settlement matched successfully.', 'fair-payments-connector'));
+			setSuccess(
+				__(
+					'Settlement matched successfully.',
+					'fair-payments-connector'
+				)
+			);
 			setTimeout(() => {
 				onImport();
 			}, 1500);
 		} catch (err) {
 			setError(
 				err.message ||
-					__('Failed to match transactions.', 'fair-payments-connector')
+					__(
+						'Failed to match transactions.',
+						'fair-payments-connector'
+					)
 			);
 		} finally {
 			setIsConfirming(false);
@@ -187,7 +201,10 @@ const SettlementImportModal = ({ onImport, onCancel }) => {
 
 	return (
 		<Modal
-			title={__('Import Mollie Settlement CSV', 'fair-payments-connector')}
+			title={__(
+				'Import Mollie Settlement CSV',
+				'fair-payments-connector'
+			)}
 			onRequestClose={onCancel}
 			style={{ maxWidth: '720px', width: '100%' }}
 		>
@@ -226,7 +243,10 @@ const SettlementImportModal = ({ onImport, onCancel }) => {
 						<span>
 							{isParsing
 								? __('Parsing file…', 'fair-payments-connector')
-								: __('Matching settlement…', 'fair-payments-connector')}
+								: __(
+										'Matching settlement…',
+										'fair-payments-connector'
+								  )}
 						</span>
 					</HStack>
 				)}
@@ -248,13 +268,19 @@ const SettlementImportModal = ({ onImport, onCancel }) => {
 						</h4>
 						<p>
 							<strong>
-								{__('Payments matched:', 'fair-payments-connector')}
+								{__(
+									'Payments matched:',
+									'fair-payments-connector'
+								)}
 							</strong>{' '}
 							{report.matched.length} / {report.payment_count}
 						</p>
 						<p>
 							<strong>
-								{__('Settlement total:', 'fair-payments-connector')}
+								{__(
+									'Settlement total:',
+									'fair-payments-connector'
+								)}
 							</strong>{' '}
 							{formatAmount(
 								report.settlement_total,
@@ -262,7 +288,9 @@ const SettlementImportModal = ({ onImport, onCancel }) => {
 							)}
 						</p>
 						<p>
-							<strong>{__('Fees total:', 'fair-payments-connector')}</strong>{' '}
+							<strong>
+								{__('Fees total:', 'fair-payments-connector')}
+							</strong>{' '}
 							{formatAmount(report.fees_total, report.currency)}
 							{hasFeeDiscrepancy && (
 								<span style={{ color: '#d63638' }}>
