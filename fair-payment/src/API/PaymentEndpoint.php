@@ -86,12 +86,20 @@ class PaymentEndpoint extends WP_REST_Controller {
 				array(
 					'methods'             => WP_REST_Server::READABLE,
 					'callback'            => array( $this, 'get_transaction_status' ),
-					'permission_callback' => '__return_true',
+					// Anonymous read is intentional (post-Mollie redirect flow); ownership is enforced
+					// by a per-transaction access token. Permission failures return WP_Error 404 to
+					// avoid confirming which transaction IDs exist.
+					'permission_callback' => array( $this, 'get_transaction_status_permissions_check' ),
 					'args'                => array(
 						'transaction_id' => array(
 							'required'          => true,
 							'type'              => 'integer',
 							'sanitize_callback' => 'absint',
+						),
+						'token'          => array(
+							'required'          => false,
+							'type'              => 'string',
+							'sanitize_callback' => 'sanitize_text_field',
 						),
 					),
 				),
@@ -201,16 +209,6 @@ class PaymentEndpoint extends WP_REST_Controller {
 			)
 		);
 
-		// Prepare redirect URL.
-		$redirect_url = add_query_arg(
-			array(
-				'fair_payment_callback' => 'true',
-				'transaction_id'        => $transaction_id,
-				'post_id'               => $post_id,
-			),
-			$post_id ? get_permalink( $post_id ) : home_url()
-		);
-
 		if ( is_wp_error( $transaction_id ) ) {
 			$logger->log(
 				'transaction_creation_failed',
@@ -228,6 +226,21 @@ class PaymentEndpoint extends WP_REST_Controller {
 				array( 'status' => 500 )
 			);
 		}
+
+		// Load freshly created transaction so we can attach its access token to the
+		// post-Mollie redirect URL. The token gates the /status endpoint.
+		$transaction = Transaction::get_by_id( $transaction_id );
+
+		// Prepare redirect URL.
+		$redirect_url = add_query_arg(
+			array(
+				'fair_payment_callback' => 'true',
+				'transaction_id'        => $transaction_id,
+				'post_id'               => $post_id,
+				'token'                 => $transaction ? $transaction->access_token : '',
+			),
+			$post_id ? get_permalink( $post_id ) : home_url()
+		);
 
 		// Initiate payment immediately.
 		$payment = TransactionAPI::initiate_payment(
@@ -318,5 +331,60 @@ class PaymentEndpoint extends WP_REST_Controller {
 		);
 
 		return new WP_REST_Response( $response_data, 200 );
+	}
+
+	/**
+	 * Permission check for the transaction status endpoint.
+	 *
+	 * Returns a 404 WP_Error on any failure so anonymous callers cannot enumerate
+	 * transaction IDs by distinguishing missing rows from token mismatches.
+	 *
+	 * Allowed without a token:
+	 * - Site admins (manage_options) — support / debugging.
+	 * - The transaction's owner when logged in (user_id matches).
+	 *
+	 * Otherwise the request must carry a `token` query arg that constant-time
+	 * matches the row's access_token.
+	 *
+	 * @param WP_REST_Request $request Request object.
+	 * @return true|WP_Error True if allowed, WP_Error (404) otherwise.
+	 */
+	public function get_transaction_status_permissions_check( WP_REST_Request $request ) {
+		$not_found = new WP_Error(
+			'transaction_not_found',
+			__( 'Transaction not found.', 'fair-payment' ),
+			array( 'status' => 404 )
+		);
+
+		$transaction = Transaction::get_by_id( $request->get_param( 'transaction_id' ) );
+
+		if ( ! $transaction ) {
+			return $not_found;
+		}
+
+		if ( current_user_can( 'manage_options' ) ) {
+			return true;
+		}
+
+		if (
+			is_user_logged_in()
+			&& ! empty( $transaction->user_id )
+			&& (int) $transaction->user_id === get_current_user_id()
+		) {
+			return true;
+		}
+
+		$provided = (string) $request->get_param( 'token' );
+		$expected = (string) ( $transaction->access_token ?? '' );
+
+		if ( '' === $expected || '' === $provided ) {
+			return $not_found;
+		}
+
+		if ( hash_equals( $expected, $provided ) ) {
+			return true;
+		}
+
+		return $not_found;
 	}
 }

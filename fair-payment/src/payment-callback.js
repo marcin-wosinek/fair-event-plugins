@@ -20,9 +20,10 @@ import './payment-callback.css';
 	}
 
 	function initializeCallback() {
-		// Get transaction_id from URL parameters
+		// Get transaction_id and token from URL parameters
 		const urlParams = new URLSearchParams(window.location.search);
 		const transactionId = urlParams.get('transaction_id');
+		const token = urlParams.get('token') || '';
 
 		if (!transactionId) {
 			console.error('Fair Payment: No transaction_id found in URL');
@@ -30,17 +31,24 @@ import './payment-callback.css';
 		}
 
 		// Fetch transaction status from API
-		fetchTransactionStatus(transactionId);
+		fetchTransactionStatus(transactionId, token);
 	}
 
 	/**
 	 * Fetch transaction status from REST API
 	 *
 	 * @param {string} transactionId Transaction ID
+	 * @param {string} token         Per-transaction access token from the redirect URL
 	 */
-	function fetchTransactionStatus(transactionId) {
+	function fetchTransactionStatus(transactionId, token) {
+		const path = token
+			? `/fair-payment/v1/payments/${transactionId}/status?token=${encodeURIComponent(
+					token
+			  )}`
+			: `/fair-payment/v1/payments/${transactionId}/status`;
+
 		apiFetch({
-			path: `/fair-payment/v1/payments/${transactionId}/status`,
+			path,
 			method: 'GET',
 		})
 			.then((response) => {
