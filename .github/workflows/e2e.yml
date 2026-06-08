@@ -74,8 +74,21 @@ jobs:
                   sudo mv wp-cli.phar /usr/local/bin/wp
                   wp --info
 
+            - name: Cache Playwright browsers
+              id: playwright-cache
+              uses: actions/cache@v5
+              with:
+                  path: ~/.cache/ms-playwright
+                  key: ${{ runner.os }}-playwright-${{ hashFiles('package-lock.json') }}
+                  restore-keys: ${{ runner.os }}-playwright-
+
             - name: Install Playwright browser
-              run: npx playwright install --with-deps chromium
+              run: |
+                  if [ "${{ steps.playwright-cache.outputs.cache-hit }}" = "true" ]; then
+                      npx playwright install-deps chromium
+                  else
+                      npx playwright install --with-deps chromium
+                  fi
 
             - name: Boot isolated WordPress env
               run: npm run test:e2e:setup
