@@ -720,7 +720,8 @@ class EventDatesController extends WP_REST_Controller {
 			);
 		}
 
-		$update_data = array();
+		$update_data  = array();
+		$newly_linked = false;
 
 		$title = $request->get_param( 'title' );
 		if ( null !== $title ) {
@@ -772,6 +773,7 @@ class EventDatesController extends WP_REST_Controller {
 		if ( null !== $event_id ) {
 			$new_event_id            = $event_id ? absint( $event_id ) : null;
 			$update_data['event_id'] = $new_event_id;
+			$newly_linked            = $new_event_id && ! $existing->event_id;
 
 			// Keep junction table in sync.
 			if ( $new_event_id ) {
