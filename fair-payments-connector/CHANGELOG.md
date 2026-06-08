@@ -1,5 +1,23 @@
 # fair-payments-connector
 
+## 1.0.0
+
+### Major Changes
+
+-   9fd5497: Rename the `fair-payment` plugin to `fair-payments-connector`. WordPress.org review flagged "Fair Payment" as too generic; the new name positions it accurately as a connector to external payment providers and stays consistent with the `fair-*` family.
+
+    Renamed (code-level): directory `fair-payment/` → `fair-payments-connector/`, main file, plugin slug, text domain, REST namespace `/fair-payment/v1/` → `/fair-payments-connector/v1/`, PHP namespace `FairPayment` → `FairPaymentsConnector`, constants `FAIR_PAYMENT_*` → `FAIR_PAYMENTS_CONNECTOR_*`, init function, display name.
+
+    Preserved (to avoid destructive migrations / breaking existing content): block name `fair-payment/simple-payment`, all DB option keys (`fair_payment_*`), custom table names, post meta keys, and the `fair_payment_callback` URL parameter consumed by Mollie callbacks. Cross-plugin REST calls and PHP function references in sibling plugins are tracked in a separate ticket.
+
+### Patch Changes
+
+-   02cf7b6: Default to WordPress.org language packs; gate `load_plugin_textdomain()` and the
+    `wp_set_script_translations()` path behind a new per-plugin `bundled-translations`
+    feature flag (resolved through the same constant / master / filter / option /
+    default chain as the existing Fair Events features). The flag is exposed in
+    each plugin's Settings → Features tab (or Features submenu) and defaults to off.
+
 ## 1.3.3
 
 ### Patch Changes

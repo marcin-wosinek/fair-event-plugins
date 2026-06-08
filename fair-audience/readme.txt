@@ -3,7 +3,7 @@ Contributors: marcinwosinek
 Tags: events, participants, audience, management
 Requires at least: 6.7
 Tested up to: 7.0
-Stable tag: 1.3.3
+Stable tag: 1.3.4
 Requires PHP: 8.0
 License: GPLv3 or later
 License URI: https://www.gnu.org/licenses/gpl-3.0.html
@@ -38,6 +38,16 @@ WordPress 6.7 or higher.
 Yes, it integrates with the fair_event post type from the Fair Events plugin.
 
 == Changelog ==
+
+## 1.3.4
+
+### Patch Changes
+
+-   02cf7b6: Default to WordPress.org language packs; gate `load_plugin_textdomain()` and the
+    `wp_set_script_translations()` path behind a new per-plugin `bundled-translations`
+    feature flag (resolved through the same constant / master / filter / option /
+    default chain as the existing Fair Events features). The flag is exposed in
+    each plugin's Settings → Features tab (or Features submenu) and defaults to off.
 
 ## 1.3.3
 

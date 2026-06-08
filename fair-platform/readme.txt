@@ -4,7 +4,7 @@ Tags: mollie, oauth, payment, platform
 Requires at least: 6.7
 Tested up to: 7.0
 Requires PHP: 8.0
-Stable tag: 1.1.2
+Stable tag: 1.1.3
 License: Private
 License URI: https://fair-event-plugins.com
 

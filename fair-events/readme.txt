@@ -4,7 +4,7 @@ Tags: events, calendar, custom post type, gutenberg
 Requires at least: 6.7
 Tested up to: 7.0
 Requires PHP: 7.4
-Stable tag: 1.3.3
+Stable tag: 1.3.4
 License: GPLv3 or later
 License URI: https://www.gnu.org/licenses/gpl-3.0.html
 Text Domain: fair-events
@@ -119,6 +119,16 @@ In the Events Calendar block settings, use the "Event Display Pattern" dropdown 
 6. Add to Calendar block on a single event post
 
 == Changelog ==
+
+## 1.3.4
+
+### Patch Changes
+
+-   02cf7b6: Default to WordPress.org language packs; gate `load_plugin_textdomain()` and the
+    `wp_set_script_translations()` path behind a new per-plugin `bundled-translations`
+    feature flag (resolved through the same constant / master / filter / option /
+    default chain as the existing Fair Events features). The flag is exposed in
+    each plugin's Settings → Features tab (or Features submenu) and defaults to off.
 
 ## 1.3.3
 
