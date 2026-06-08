@@ -156,7 +156,7 @@ class AdminHooks {
 			'fair-audience',
 			array( $this, 'render_timeline_page' ),
 			'dashicons-groups',
-			'82.1'
+			'20.3'
 		);
 
 		// Override first submenu item label (same slug as parent).

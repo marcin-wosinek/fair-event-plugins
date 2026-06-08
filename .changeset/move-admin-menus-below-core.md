@@ -5,8 +5,8 @@
 'fair-platform': patch
 ---
 
-Move admin menus below core WordPress menus
+Group admin menus with string positions to avoid overwriting core menus
 
-Each plugin's top-level admin menu now registers in the `>= 80` range (string
-positions `80.1`–`83.1`) so they sit below Settings instead of crowding the core
-Pages/Comments group, per wp.org plugin review feedback.
+Each plugin's top-level admin menu now registers with a unique string decimal
+position (`20.1`–`20.4`) so the four menus cluster together in order without
+colliding with each other or with core WordPress menu items.
