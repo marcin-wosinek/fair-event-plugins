@@ -39,7 +39,7 @@ class AdminHooks {
 			'fair-platform-settings',
 			array( $this, 'render_settings_page' ),
 			'dashicons-admin-plugins',
-			23
+			'20.4'
 		);
 
 		add_submenu_page(

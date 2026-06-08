@@ -91,7 +91,7 @@ class Event {
 			'capability_type'    => 'post',
 			'has_archive'        => true,
 			'hierarchical'       => false,
-			'menu_position'      => 20,
+			'menu_position'      => '20.1',
 			'menu_icon'          => 'dashicons-calendar-alt',
 			'supports'           => array( 'title', 'editor', 'author', 'thumbnail', 'excerpt', 'custom-fields' ),
 			'show_in_rest'       => true,
