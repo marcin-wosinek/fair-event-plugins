@@ -181,7 +181,7 @@ Add `./fair-plugin-name/vendor` to the composer cache `path:` list (line ~36-41)
 
 Add the plugin to the default `PLUGINS` list (line ~75) **only if** the plugin should be deployed to this environment.
 
-**Example**: See `fair-audience` in the `PLUGINS="fair-events fair-payment fair-audience"` list.
+**Example**: See `fair-audience` in the `PLUGINS="fair-events fair-payments-connector fair-audience"` list.
 
 ### 4. Docker Compose Configuration
 

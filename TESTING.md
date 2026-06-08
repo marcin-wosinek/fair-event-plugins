@@ -182,7 +182,7 @@ login + `WP_BASE_URL` convention; defaults to the dev wp-env on `:8888`,
 
 ```bash
 # npm run screenshot -- <path> <dimensions> <filename>
-npm run screenshot -- "/wp-admin/admin.php?page=fair-payment-budgets" mobile budgets-mobile.png
+npm run screenshot -- "/wp-admin/admin.php?page=fair-payments-connector-budgets" mobile budgets-mobile.png
 
 # dimensions: desktop | tablet | mobile | WIDTHxHEIGHT (e.g. 414x900)
 # options: --viewport (visible area only), --wait <ms>, --wait-for <selector>,
@@ -461,7 +461,7 @@ npm run test:api            # All API tests
 
 # Run tests for specific plugin
 npm run test --workspace=fair-rsvp
-npm run test:js --workspace=fair-payment
+npm run test:js --workspace=fair-payments-connector
 ```
 
 ### Required package.json Scripts
@@ -577,7 +577,7 @@ Start with **fair-rsvp** as the reference implementation because:
 
 1. **fair-rsvp** - Pilot implementation, validate architecture
 2. **fair-timetable** - Already has comprehensive tests, easier migration
-3. **fair-payment** - REST API critical for business logic
+3. **fair-payments-connector** - REST API critical for business logic
 4. **fair-membership** - REST API + admin pages
 5. **fair-calendar-button** - E2E tests to consolidate
 6. **fair-schedule-blocks** - E2E tests to consolidate

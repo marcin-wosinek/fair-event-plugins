@@ -4,7 +4,7 @@
  * Custom Tag Release Script
  *
  * Creates git tags after changesets version bump:
- * - Single shared tag (e.g., "1.0.0") for the fixed group: fair-events, fair-payment, fair-audience
+ * - Single shared tag (e.g., "1.0.0") for the fixed group: fair-events, fair-payments-connector, fair-audience
  * - Individual tag (e.g., "fair-platform@1.1.0") for fair-platform
  */
 
@@ -53,7 +53,7 @@ console.log('🏷️  Creating release tags...\n');
 
 const sharedVersion = getVersion(FIXED_GROUP_PLUGIN);
 console.log(
-	`📦 Fixed group (fair-events, fair-payment, fair-audience): ${sharedVersion}`
+	`📦 Fixed group (fair-events, fair-payments-connector, fair-audience): ${sharedVersion}`
 );
 createTag(sharedVersion, `Release ${sharedVersion}`);
 

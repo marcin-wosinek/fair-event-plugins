@@ -11,7 +11,7 @@ services:
             WORDPRESS_DB_NAME: exampledb
         volumes:
             - wordpress:/var/www/html
-            - ./fair-payment:/var/www/html/wp-content/plugins/fair-payment
+            - ./fair-payments-connector:/var/www/html/wp-content/plugins/fair-payments-connector
             - ./fair-events:/var/www/html/wp-content/plugins/fair-events
             - ./fair-platform:/var/www/html/wp-content/plugins/fair-platform
             - ./fair-audience:/var/www/html/wp-content/plugins/fair-audience
@@ -46,7 +46,7 @@ services:
         command: tail -f /dev/null # Keeps container running
         volumes:
             - wordpress:/var/www/html
-            - ./fair-payment:/var/www/html/wp-content/plugins/fair-payment
+            - ./fair-payments-connector:/var/www/html/wp-content/plugins/fair-payments-connector
             - ./fair-events:/var/www/html/wp-content/plugins/fair-events
             - ./fair-platform:/var/www/html/wp-content/plugins/fair-platform
             - ./fair-audience:/var/www/html/wp-content/plugins/fair-audience

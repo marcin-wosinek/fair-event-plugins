@@ -26,7 +26,7 @@ This document lists all JavaScript files that make REST API calls and whether th
 ```javascript
 // ✅ GOOD - Hardcoded path
 await apiFetch({
-    path: '/fair-payment/v1/payments',
+    path: '/fair-payments-connector/v1/payments',
     method: 'POST',
     data: {
         amount: '10.00',
@@ -78,10 +78,10 @@ The build process will automatically:
 
 ```javascript
 // ✅ GOOD
-path: '/fair-payment/v1/payments'
+path: '/fair-payments-connector/v1/payments'
 
 // ❌ BAD - Missing leading slash
-path: 'fair-payment/v1/payments'
+path: 'fair-payments-connector/v1/payments'
 ```
 
 **Format:** `/{plugin-namespace}/{version}/{endpoint}`
@@ -93,7 +93,7 @@ path: 'fair-payment/v1/payments'
 ```javascript
 try {
     const data = await apiFetch({
-        path: '/fair-payment/v1/payments',
+        path: '/fair-payments-connector/v1/payments',
         method: 'POST',
         data: { amount: '10.00' },
     });
@@ -118,7 +118,7 @@ await apiFetch({
 
 // POST request with data
 await apiFetch({
-    path: '/fair-payment/v1/payments',
+    path: '/fair-payments-connector/v1/payments',
     method: 'POST',
     data: {
         amount: '10.00',
@@ -178,7 +178,7 @@ We recommend a **three-layer testing strategy** for REST API functionality:
 class PaymentEndpointTest extends WP_REST_TestCase {
 
     public function test_create_payment_requires_authentication() {
-        $request = new WP_REST_Request('POST', '/fair-payment/v1/payments');
+        $request = new WP_REST_Request('POST', '/fair-payments-connector/v1/payments');
         $request->set_body_params([
             'amount' => '10.00',
             'currency' => 'EUR',
@@ -192,7 +192,7 @@ class PaymentEndpointTest extends WP_REST_TestCase {
     public function test_create_payment_validates_amount() {
         wp_set_current_user($this->factory->user->create(['role' => 'subscriber']));
 
-        $request = new WP_REST_Request('POST', '/fair-payment/v1/payments');
+        $request = new WP_REST_Request('POST', '/fair-payments-connector/v1/payments');
         $request->set_body_params([
             'amount' => 'invalid',
             'currency' => 'EUR',
@@ -207,7 +207,7 @@ class PaymentEndpointTest extends WP_REST_TestCase {
     public function test_create_payment_success() {
         wp_set_current_user($this->factory->user->create(['role' => 'subscriber']));
 
-        $request = new WP_REST_Request('POST', '/fair-payment/v1/payments');
+        $request = new WP_REST_Request('POST', '/fair-payments-connector/v1/payments');
         $request->set_body_params([
             'amount' => '10.00',
             'currency' => 'EUR',
@@ -237,7 +237,7 @@ class PaymentEndpointTest extends WP_REST_TestCase {
     }
 
     private function endpoint_is_accessible() {
-        $request = new WP_REST_Request('POST', '/fair-payment/v1/payments');
+        $request = new WP_REST_Request('POST', '/fair-payments-connector/v1/payments');
         $request->set_body_params([
             'amount' => '10.00',
             'currency' => 'EUR',

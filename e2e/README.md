@@ -46,7 +46,7 @@ mail). No real mail leaves the host, and no MailHog/Mailpit container is needed.
 ## Intercepting Mollie (the key decision)
 
 Driving a *real* purchase in the isolated env is the hard part, and we
-explicitly **do not modify the fair-payment Mollie integration to make it
+explicitly **do not modify the fair-payments-connector Mollie integration to make it
 testable**. The constraints that rule out the obvious approaches:
 
 - The Mollie PHP SDK talks to the network through a raw-cURL adapter that pins
@@ -65,7 +65,7 @@ The clean interception point is the SDK's HTTP transport itself.
 picker instantiates) **before** the vendored `final` class autoloads, so PHP
 never loads the real one. The double returns canned responses; the rest of the
 SDK — URL building, response decoding, resource hydration — and **all** of the
-fair-payment / fair-audience purchase code run unchanged.
+fair-payments-connector / fair-audience purchase code run unchanged.
 
 Canned behaviour, enough to complete a purchase:
 

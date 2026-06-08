@@ -26,7 +26,7 @@ import { appendFileSync } from 'node:fs';
 
 /** Plugin directory slugs (mirrors `.wp-env.json` `plugins`). */
 const PLUGINS = [
-	'fair-payment',
+	'fair-payments-connector',
 	'fair-events',
 	'fair-audience',
 	'fair-platform',

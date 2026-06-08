@@ -6,7 +6,7 @@
  * HTTP client is injected. By declaring that exact class here — before the
  * vendored `final class` is autoloaded — every Mollie API call is served by this
  * double instead of hitting the network. The rest of the SDK (URL building,
- * response decoding, resource hydration) and ALL of the fair-payment /
+ * response decoding, resource hydration) and ALL of the fair-payments-connector /
  * fair-audience code runs unchanged.
  *
  * Canned behaviour, enough to drive the ticket-purchase flow:

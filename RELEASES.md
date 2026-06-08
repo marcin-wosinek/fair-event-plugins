@@ -1,11 +1,11 @@
 # Release Management with Changesets
 
-This project uses [Changesets](https://github.com/changesets/changesets) for independent versioning and releasing of each plugin (fair-payment, fair-events, fair-audience).
+This project uses [Changesets](https://github.com/changesets/changesets) for independent versioning and releasing of each plugin (fair-payments-connector, fair-events, fair-audience).
 
 ## 🎯 Overview
 
 Each plugin is versioned independently using semantic versioning:
-- `fair-payment@1.2.3`
+- `fair-payments-connector@1.2.3`
 - `fair-events@2.0.1`
 - `fair-audience@1.1.0`
 
@@ -41,7 +41,7 @@ This will:
 #### Option A: Automatic Release (Recommended)
 Push to `main` branch and the GitHub Action will:
 1. Create a PR with version bumps and changelog updates
-2. When you merge the PR, it will automatically create git tags like `fair-payment@1.2.3`
+2. When you merge the PR, it will automatically create git tags like `fair-payments-connector@1.2.3`
 
 #### Option B: Manual Release
 ```bash
@@ -55,7 +55,7 @@ npm run release
 ## 🏷️ Git Tags
 
 Tags are automatically created in the format:
-- `fair-payment@1.2.3`
+- `fair-payments-connector@1.2.3`
 - `fair-events@2.0.1`
 - `fair-audience@1.1.0`
 
@@ -102,7 +102,7 @@ Version: 1.2.0  // ← Automatically updated!
 ```
 
 ### Files Updated:
-- `fair-payment/fair-payment.php`
+- `fair-payments-connector/fair-payments-connector.php`
 - `fair-events/fair-events.php`
 - `fair-audience/fair-audience.php`
 
@@ -120,7 +120,7 @@ Changesets is configured in `.changeset/config.json`:
 
 - ✅ **Independent versioning**: Release plugins separately
 - ✅ **Semantic versioning**: Automatic version bumps
-- ✅ **Git tags**: Easy release tracking (`fair-payment@1.2.3`)
+- ✅ **Git tags**: Easy release tracking (`fair-payments-connector@1.2.3`)
 - ✅ **Changelogs**: Auto-generated per plugin
 - ✅ **GitHub integration**: Automated release PRs
 - ✅ **Flexibility**: Release one or all plugins as needed

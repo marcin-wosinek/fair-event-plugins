@@ -7,7 +7,7 @@ on:
     pull_request:
         branches: [main]
         paths:
-            - 'fair-payment/**'
+            - 'fair-payments-connector/**'
             - 'fair-events/**'
             - 'fair-audience/**'
             - 'fair-platform/**'
@@ -35,7 +35,7 @@ jobs:
               uses: actions/cache@v5
               with:
                   path: |
-                      ./fair-payment/vendor
+                      ./fair-payments-connector/vendor
                       ./fair-events/vendor
                       ./fair-platform/vendor
                       ./fair-audience/vendor
@@ -56,7 +56,7 @@ jobs:
                   path: |
                       ./node_modules
                       ./fair-events/node_modules
-                      ./fair-payment/node_modules
+                      ./fair-payments-connector/node_modules
                       ./fair-platform/node_modules
                       ./fair-audience/node_modules
                       ./fair-events-shared/node_modules

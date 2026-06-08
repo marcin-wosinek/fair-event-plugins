@@ -14,7 +14,7 @@ You need to configure two environments in GitHub:
 ### Environment: `acroyoga-club.es`
 
 **Variables:**
-- `PLUGINS_TO_DEPLOY` = `all` (or comma-separated list: `fair-rsvp,fair-events,fair-payment`)
+- `PLUGINS_TO_DEPLOY` = `all` (or comma-separated list: `fair-rsvp,fair-events,fair-payments-connector`)
 - `SSH_HOST` - SSH hostname (e.g., `acroyoga-club.es`)
 - `SSH_PORT` - SSH port (e.g., `22`)
 - `SSH_USER` - SSH username
@@ -55,13 +55,13 @@ You need to configure two environments in GitHub:
 ### 3. Plugin Selection
    - Set `PLUGINS_TO_DEPLOY` variable in each environment
    - Use `all` to deploy all plugins
-   - Or provide comma-separated list: `fair-rsvp,fair-events,fair-payment`
+   - Or provide comma-separated list: `fair-rsvp,fair-events,fair-payments-connector`
    - Spaces are automatically trimmed
 
 ### 4. Available Plugins
    - fair-rsvp
    - fair-events
-   - fair-payment
+   - fair-payments-connector
    - fair-calendar-button
    - fair-schedule
    - fair-timetable
@@ -130,7 +130,7 @@ npm run deploy:local -- --env=staging
 npm run deploy:local:dry -- --env=staging
 
 # Deploy a subset (overrides PLUGINS_TO_DEPLOY)
-npm run deploy:local -- --env=staging --plugins=fair-events,fair-payment
+npm run deploy:local -- --env=staging --plugins=fair-events,fair-payments-connector
 
 # Reuse existing dist/*.zip; do not run dist-archive
 npm run deploy:local -- --env=staging --skip-build
