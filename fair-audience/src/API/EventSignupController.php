@@ -830,7 +830,7 @@ class EventSignupController extends WP_REST_Controller {
 			return null;
 		}
 
-		if ( ! class_exists( \FairPayment\API\TransactionAPI::class ) ) {
+		if ( ! class_exists( \FairPaymentsConnector\API\TransactionAPI::class ) ) {
 			return new WP_Error(
 				'payment_unavailable',
 				__( 'Paid activities are not available because the payment plugin is missing.', 'fair-audience' ),
@@ -846,7 +846,7 @@ class EventSignupController extends WP_REST_Controller {
 
 		$new_option_ids = array_map( static fn( $opt ) => (int) $opt->id, $new_options );
 
-		$transaction_id = \FairPayment\API\TransactionAPI::create_transaction(
+		$transaction_id = \FairPaymentsConnector\API\TransactionAPI::create_transaction(
 			$line_items,
 			array(
 				'currency'      => 'EUR',
@@ -880,7 +880,7 @@ class EventSignupController extends WP_REST_Controller {
 			get_permalink( $event_id )
 		);
 
-		$payment = \FairPayment\API\TransactionAPI::initiate_payment(
+		$payment = \FairPaymentsConnector\API\TransactionAPI::initiate_payment(
 			$transaction_id,
 			array(
 				'redirect_url' => $redirect_url,
@@ -1320,7 +1320,7 @@ class EventSignupController extends WP_REST_Controller {
 	 * can continue with its normal success response.
 	 *
 	 * On paid: upserts a `pending_payment` participant row holding a 15-minute
-	 * slot, creates a fair-payment transaction linked back to that row via
+	 * slot, creates a fair-payments-connector transaction linked back to that row via
 	 * metadata + transaction_id, and returns the Mollie checkout URL.
 	 *
 	 * @param int                                        $event_id       Event post ID.
@@ -1377,7 +1377,7 @@ class EventSignupController extends WP_REST_Controller {
 			return null;
 		}
 
-		if ( ! class_exists( \FairPayment\API\TransactionAPI::class ) ) {
+		if ( ! class_exists( \FairPaymentsConnector\API\TransactionAPI::class ) ) {
 			return new WP_Error(
 				'payment_unavailable',
 				__( 'Paid signup is not available because the payment plugin is missing.', 'fair-audience' ),
@@ -1467,7 +1467,7 @@ class EventSignupController extends WP_REST_Controller {
 			$option_items
 		);
 
-		$transaction_id = \FairPayment\API\TransactionAPI::create_transaction(
+		$transaction_id = \FairPaymentsConnector\API\TransactionAPI::create_transaction(
 			$line_items,
 			array(
 				'currency'      => 'EUR',
@@ -1505,7 +1505,7 @@ class EventSignupController extends WP_REST_Controller {
 			get_permalink( $event_id )
 		);
 
-		$payment = \FairPayment\API\TransactionAPI::initiate_payment(
+		$payment = \FairPaymentsConnector\API\TransactionAPI::initiate_payment(
 			$transaction_id,
 			array(
 				'redirect_url' => $redirect_url,
@@ -1619,7 +1619,7 @@ class EventSignupController extends WP_REST_Controller {
 			);
 		}
 
-		if ( ! class_exists( \FairPayment\API\TransactionAPI::class ) ) {
+		if ( ! class_exists( \FairPaymentsConnector\API\TransactionAPI::class ) ) {
 			return new WP_Error(
 				'payment_unavailable',
 				__( 'Payment plugin is missing.', 'fair-audience' ),
@@ -1627,7 +1627,7 @@ class EventSignupController extends WP_REST_Controller {
 			);
 		}
 
-		$transaction = \FairPayment\API\TransactionAPI::get_transaction( $transaction_id );
+		$transaction = \FairPaymentsConnector\API\TransactionAPI::get_transaction( $transaction_id );
 		if ( ! $transaction ) {
 			return new WP_Error(
 				'transaction_not_found',
@@ -1683,7 +1683,7 @@ class EventSignupController extends WP_REST_Controller {
 	 * The existing EventParticipant.pending_payment row is reused when the
 	 * 15-minute hold has not yet elapsed; otherwise the hold is refreshed (or
 	 * the row recreated if a cleanup cron already removed it). A new
-	 * fair-payment transaction is always created since fair-payment refuses
+	 * fair-payments-connector transaction is always created since fair-payments-connector refuses
 	 * to re-initiate a transaction once a Mollie payment has been attached.
 	 *
 	 * @param WP_REST_Request $request Request object.
@@ -1692,7 +1692,7 @@ class EventSignupController extends WP_REST_Controller {
 	public function retry_payment( $request ) {
 		$transaction_id = (int) $request->get_param( 'transaction_id' );
 
-		$old_transaction = \FairPayment\API\TransactionAPI::get_transaction( $transaction_id );
+		$old_transaction = \FairPaymentsConnector\API\TransactionAPI::get_transaction( $transaction_id );
 		if ( ! $old_transaction ) {
 			return new WP_Error(
 				'transaction_not_found',
@@ -1783,7 +1783,7 @@ class EventSignupController extends WP_REST_Controller {
 
 		// Build line items from the old transaction so the retry mirrors the
 		// original purchase exactly (same prices the visitor agreed to).
-		$old_line_items = \FairPayment\Models\LineItem::get_by_transaction_id( $transaction_id );
+		$old_line_items = \FairPaymentsConnector\Models\LineItem::get_by_transaction_id( $transaction_id );
 		if ( empty( $old_line_items ) ) {
 			return new WP_Error(
 				'invalid_retry_state',
@@ -1852,7 +1852,7 @@ class EventSignupController extends WP_REST_Controller {
 			$this->save_participant_options( (int) $event_participant->id, $retry_option_items );
 		}
 
-		$new_transaction_id = \FairPayment\API\TransactionAPI::create_transaction(
+		$new_transaction_id = \FairPaymentsConnector\API\TransactionAPI::create_transaction(
 			$line_items,
 			array(
 				'currency'      => $old_transaction->currency,
@@ -1891,7 +1891,7 @@ class EventSignupController extends WP_REST_Controller {
 			get_permalink( $event_id )
 		);
 
-		$payment = \FairPayment\API\TransactionAPI::initiate_payment(
+		$payment = \FairPaymentsConnector\API\TransactionAPI::initiate_payment(
 			$new_transaction_id,
 			array(
 				'redirect_url' => $redirect_url,
@@ -1979,7 +1979,7 @@ class EventSignupController extends WP_REST_Controller {
 
 		// Rebuild line items from the original transaction so the retry charges
 		// exactly what the buyer agreed to.
-		$old_line_items = \FairPayment\Models\LineItem::get_by_transaction_id( $transaction_id );
+		$old_line_items = \FairPaymentsConnector\Models\LineItem::get_by_transaction_id( $transaction_id );
 		if ( empty( $old_line_items ) ) {
 			return new WP_Error(
 				'invalid_retry_state',
@@ -1997,7 +1997,7 @@ class EventSignupController extends WP_REST_Controller {
 			);
 		}
 
-		$new_transaction_id = \FairPayment\API\TransactionAPI::create_transaction(
+		$new_transaction_id = \FairPaymentsConnector\API\TransactionAPI::create_transaction(
 			$line_items,
 			array(
 				'currency'      => $old_transaction->currency,
@@ -2032,7 +2032,7 @@ class EventSignupController extends WP_REST_Controller {
 			get_permalink( $event_id )
 		);
 
-		$payment = \FairPayment\API\TransactionAPI::initiate_payment(
+		$payment = \FairPaymentsConnector\API\TransactionAPI::initiate_payment(
 			$new_transaction_id,
 			array(
 				'redirect_url' => $redirect_url,

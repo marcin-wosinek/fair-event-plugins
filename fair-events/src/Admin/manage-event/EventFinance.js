@@ -2,7 +2,7 @@
  * Event Finance Component
  *
  * Shows financial totals and recent entries for the current event date.
- * Only rendered when fair-payment plugin is active.
+ * Only rendered when fair-payments-connector plugin is active.
  *
  * @package FairEvents
  */
@@ -80,22 +80,22 @@ export default function EventFinance({ eventDateId, entriesUrl }) {
 				expiredData,
 			] = await Promise.all([
 				apiFetch({
-					path: `/fair-payment/v1/financial-entries/totals?event_date_id=${eventDateId}`,
+					path: `/fair-payments-connector/v1/financial-entries/totals?event_date_id=${eventDateId}`,
 				}),
 				apiFetch({
-					path: `/fair-payment/v1/financial-entries?event_date_id=${eventDateId}&per_page=10`,
+					path: `/fair-payments-connector/v1/financial-entries?event_date_id=${eventDateId}&per_page=10`,
 				}),
 				apiFetch({
-					path: `/fair-payment/v1/transactions?event_date_id=${eventDateId}&status=paid&mode=live&per_page=100`,
+					path: `/fair-payments-connector/v1/transactions?event_date_id=${eventDateId}&status=paid&mode=live&per_page=100`,
 				}),
 				apiFetch({
-					path: `/fair-payment/v1/transactions?event_date_id=${eventDateId}&status=failed&mode=live&per_page=100`,
+					path: `/fair-payments-connector/v1/transactions?event_date_id=${eventDateId}&status=failed&mode=live&per_page=100`,
 				}),
 				apiFetch({
-					path: `/fair-payment/v1/transactions?event_date_id=${eventDateId}&status=canceled&mode=live&per_page=100`,
+					path: `/fair-payments-connector/v1/transactions?event_date_id=${eventDateId}&status=canceled&mode=live&per_page=100`,
 				}),
 				apiFetch({
-					path: `/fair-payment/v1/transactions?event_date_id=${eventDateId}&status=expired&mode=live&per_page=100`,
+					path: `/fair-payments-connector/v1/transactions?event_date_id=${eventDateId}&status=expired&mode=live&per_page=100`,
 				}),
 			]);
 
@@ -366,7 +366,7 @@ export default function EventFinance({ eventDateId, entriesUrl }) {
 													</td>
 													<td>
 														<a
-															href={`admin.php?page=fair-payment-transaction&transaction_id=${tx.id}`}
+															href={`admin.php?page=fair-payments-connector-transaction&transaction_id=${tx.id}`}
 														>
 															<strong
 																style={{
@@ -452,7 +452,7 @@ export default function EventFinance({ eventDateId, entriesUrl }) {
 												</td>
 												<td>
 													<a
-														href={`admin.php?page=fair-payment-transaction&transaction_id=${tx.id}`}
+														href={`admin.php?page=fair-payments-connector-transaction&transaction_id=${tx.id}`}
 													>
 														<strong
 															style={{

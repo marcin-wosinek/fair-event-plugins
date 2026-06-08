@@ -2,7 +2,7 @@
 /**
  * Payment Hooks
  *
- * Listens to fair-payment webhook actions to update fee payment status.
+ * Listens to fair-payments-connector webhook actions to update fee payment status.
  *
  * @package FairAudience
  */
@@ -18,7 +18,7 @@ use FairAudience\Services\EmailService;
 defined( 'WPINC' ) || die;
 
 /**
- * Hooks into fair-payment webhook to handle fee payment completion.
+ * Hooks into fair-payments-connector webhook to handle fee payment completion.
  */
 class PaymentHooks {
 
@@ -53,7 +53,7 @@ class PaymentHooks {
 	 * Resolve a participant ID from transaction creation context.
 	 *
 	 * Resolution order: explicit metadata → email lookup → wp_user_id lookup.
-	 * Returns null when no participant matches; fair-payment then falls back
+	 * Returns null when no participant matches; fair-payments-connector then falls back
 	 * to storing only user_id on the transaction row.
 	 *
 	 * @param int|null $participant_id Current value (null if not yet resolved).
@@ -121,12 +121,12 @@ class PaymentHooks {
 	}
 
 	/**
-	 * Enrich the fair-payment notification context with participant and event
+	 * Enrich the fair-payments-connector notification context with participant and event
 	 * details derived from the audience tables. Used by the Telegram notification
 	 * (and any future channel) so the rendered message can include human-friendly
 	 * names and admin links.
 	 *
-	 * @param array  $context     Default context from fair-payment.
+	 * @param array  $context     Default context from fair-payments-connector.
 	 * @param object $transaction Transaction row.
 	 * @param object $payment     Mollie payment object.
 	 * @return array
@@ -351,7 +351,7 @@ class PaymentHooks {
 	/**
 	 * Backfill participant_id on transactions that only have user_id.
 	 *
-	 * Triggered by fair-payment's v15 migration. Idempotent: only touches rows
+	 * Triggered by fair-payments-connector's v15 migration. Idempotent: only touches rows
 	 * where participant_id IS NULL AND user_id IS NOT NULL, matching against
 	 * the participants table by wp_user_id in a single UPDATE ... JOIN.
 	 */
@@ -407,7 +407,7 @@ class PaymentHooks {
 	 * confirms the payment.
 	 *
 	 * @param object $payment     Mollie payment object.
-	 * @param object $transaction Transaction row from fair-payment.
+	 * @param object $transaction Transaction row from fair-payments-connector.
 	 */
 	public static function handle_signup_paid( $payment, $transaction ) {
 		$metadata = ! empty( $transaction->metadata ) ? json_decode( $transaction->metadata, true ) : array();
@@ -442,7 +442,7 @@ class PaymentHooks {
 	 * retries.
 	 *
 	 * @param object $payment     Mollie payment object.
-	 * @param object $transaction Transaction row from fair-payment.
+	 * @param object $transaction Transaction row from fair-payments-connector.
 	 */
 	public static function handle_signup_failed( $payment, $transaction ) {
 		$metadata = ! empty( $transaction->metadata ) ? json_decode( $transaction->metadata, true ) : array();
@@ -468,7 +468,7 @@ class PaymentHooks {
 	 * guards against attaching (and emailing) twice.
 	 *
 	 * @param object $payment     Mollie payment object.
-	 * @param object $transaction Transaction row from fair-payment.
+	 * @param object $transaction Transaction row from fair-payments-connector.
 	 */
 	public static function handle_activities_added_paid( $payment, $transaction ) {
 		$metadata = ! empty( $transaction->metadata ) ? json_decode( $transaction->metadata, true ) : array();
@@ -555,7 +555,7 @@ class PaymentHooks {
 	 * Send confirmation email to buyer after paid event signup.
 	 *
 	 * @param object $event_participant EventParticipant row.
-	 * @param object $transaction       Transaction row from fair-payment.
+	 * @param object $transaction       Transaction row from fair-payments-connector.
 	 */
 	public static function send_signup_confirmation_email( $event_participant, $transaction ) {
 		global $wpdb;
@@ -624,7 +624,7 @@ class PaymentHooks {
 	 * webhook retries don't spam the buyer.
 	 *
 	 * @param object $event_participant EventParticipant row.
-	 * @param object $transaction       Transaction row from fair-payment.
+	 * @param object $transaction       Transaction row from fair-payments-connector.
 	 */
 	public static function send_signup_payment_failed_email( $event_participant, $transaction ) {
 		$dedupe_key = 'fair_audience_payment_failed_email_' . (int) $transaction->id;

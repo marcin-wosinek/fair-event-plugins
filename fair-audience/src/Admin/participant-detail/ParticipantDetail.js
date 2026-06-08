@@ -286,7 +286,7 @@ export default function ParticipantDetail() {
 										? `admin.php?page=fair-events-manage-event&event_date_id=${ev.event_date_id}&tab=audience`
 										: null;
 									const transactionUrl = ev.transaction_id
-										? `admin.php?page=fair-payment-transaction&transaction_id=${ev.transaction_id}`
+										? `admin.php?page=fair-payments-connector-transaction&transaction_id=${ev.transaction_id}`
 										: null;
 									return (
 										<tr key={ev.id}>

@@ -240,7 +240,7 @@ class TimelineRepository {
 	}
 
 	/**
-	 * Get recent paid ticket sales (transactions from fair-payment).
+	 * Get recent paid ticket sales (transactions from fair-payments-connector).
 	 *
 	 * Returns paid transactions ordered by created_at descending, joined with
 	 * participants so the timeline can group them by day.

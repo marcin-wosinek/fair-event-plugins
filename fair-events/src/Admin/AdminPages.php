@@ -562,9 +562,9 @@ class AdminPages {
 				}
 			}
 
-			// Add payment entries URL if fair-payment plugin is active.
-			if ( class_exists( 'FairPayment\Core\Plugin' ) ) {
-				$localized_data['paymentEntriesUrl'] = admin_url( 'admin.php?page=fair-payment-entries' );
+			// Add payment entries URL if fair-payments-connector plugin is active.
+			if ( class_exists( 'FairPaymentsConnector\Core\Plugin' ) ) {
+				$localized_data['paymentEntriesUrl'] = admin_url( 'admin.php?page=fair-payments-connector-entries' );
 			}
 
 			wp_localize_script(

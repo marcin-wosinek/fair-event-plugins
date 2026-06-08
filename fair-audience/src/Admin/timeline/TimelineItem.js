@@ -330,7 +330,7 @@ function TicketSalesDayContent({ item }) {
 							? `admin.php?page=fair-events-manage-event&event_date_id=${ticket.event_date_id}`
 							: null;
 					const transactionUrl = ticket.transaction_id
-						? `admin.php?page=fair-payment-transaction&transaction_id=${ticket.transaction_id}`
+						? `admin.php?page=fair-payments-connector-transaction&transaction_id=${ticket.transaction_id}`
 						: null;
 					const amountText = `${Number(ticket.amount).toFixed(
 						2

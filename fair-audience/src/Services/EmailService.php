@@ -1658,7 +1658,7 @@ class EmailService {
 		$message .= '
 							</table>';
 
-		// Add "Pay Now" button if fair-payment plugin is active.
+		// Add "Pay Now" button if fair-payments-connector plugin is active.
 		if ( function_exists( 'fair_payment_create_transaction' ) ) {
 			$payment_url = FeePaymentToken::get_url( $fee_payment->id );
 			$message    .= '
@@ -2133,7 +2133,7 @@ class EmailService {
 	 *
 	 * @param Participant   $participant   Participant who signed up.
 	 * @param \WP_Post|null $event         Event post object (nullable).
-	 * @param object|null   $transaction   Transaction row from fair-payment (null for free signups).
+	 * @param object|null   $transaction   Transaction row from fair-payments-connector (null for free signups).
 	 * @param array         $option_names  Names of the selected ticket-activity options.
 	 * @param int           $event_date_id Event date ID — used to load the signup
 	 *                                     questionnaire answers so they can be
@@ -2440,7 +2440,7 @@ class EmailService {
 	 * @param Participant $participant   Buyer.
 	 * @param \WP_Post    $event         Event post.
 	 * @param int         $event_date_id Event date row ID (occurrence).
-	 * @param object|null $transaction   Transaction row from fair-payment.
+	 * @param object|null $transaction   Transaction row from fair-payments-connector.
 	 * @return bool Success.
 	 */
 	public function send_signup_payment_failed( Participant $participant, $event, int $event_date_id, $transaction = null ): bool {

@@ -87,7 +87,7 @@ class TimelineController extends WP_REST_Controller {
 		$per_page = $request->get_param( 'per_page' );
 		$page     = $request->get_param( 'page' );
 
-		$include_payments = class_exists( 'FairPayment\Core\Plugin' );
+		$include_payments = class_exists( 'FairPaymentsConnector\Core\Plugin' );
 
 		// Fetch enough rows from each source to cover the requested page.
 		$fetch_limit = $per_page * $page;
@@ -300,7 +300,7 @@ class TimelineController extends WP_REST_Controller {
 			}
 		}
 
-		// Ticket sales (paid transactions from fair-payment) – group by calendar day.
+		// Ticket sales (paid transactions from fair-payments-connector) – group by calendar day.
 		if ( $include_payments ) {
 			$ticket_rows   = $this->repository->get_recent_ticket_sales( $fetch_limit );
 			$ticket_groups = array();
