@@ -99,7 +99,7 @@ language pack is installed.
 
 ## Opt-in: `bundled-translations` feature flag
 
-Each plugin (`fair-events`, `fair-payment`, `fair-audience`, `fair-platform`,
+Each plugin (`fair-events`, `fair-payments-connector`, `fair-audience`, `fair-platform`,
 `fair-timetable`) exposes a `bundled-translations` flag through its `Features`
 registry. When the flag is **on**:
 

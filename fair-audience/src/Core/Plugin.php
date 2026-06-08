@@ -97,7 +97,7 @@ class Plugin {
 		// Initialize SVG upload support.
 		\FairAudience\Hooks\SvgUploadHooks::init();
 
-		// Initialize payment hooks (for fair-payment webhook integration).
+		// Initialize payment hooks (for fair-payments-connector webhook integration).
 		\FairAudience\Hooks\PaymentHooks::init();
 		\FairAudience\Hooks\ScheduledMessageHooks::init();
 
@@ -184,8 +184,8 @@ class Plugin {
 		$event_interest_controller = new \FairAudience\API\EventInterestController();
 		$event_interest_controller->register_routes();
 
-		// Membership fees (only when fair-payment plugin is active).
-		if ( class_exists( 'FairPayment\Core\Plugin' ) ) {
+		// Membership fees (only when fair-payments-connector plugin is active).
+		if ( class_exists( 'FairPaymentsConnector\Core\Plugin' ) ) {
 			$fees_controller = new \FairAudience\API\FeesController();
 			$fees_controller->register_routes();
 		}

@@ -875,8 +875,8 @@ import {
 - **REST API**: `fair-membership/src/API/RestAPI.php`
 - **Features**: Grid UI with checkboxes, optimistic updates
 
-### fair-payment
-- **Location**: `fair-payment/src/Admin/settings/`
+### fair-payments-connector
+- **Location**: `fair-payments-connector/src/Admin/settings/`
 - **Page**: Settings (Mollie API configuration)
 - **Features**: Form with validation, uses WordPress settings endpoint
 

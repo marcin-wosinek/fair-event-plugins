@@ -74,7 +74,7 @@ See IMPLEMENTATION.md for detailed setup instructions.
 
 = Can I install this on my WordPress site? =
 
-No. This plugin is designed to run exclusively on fair-event-plugins.com as an OAuth proxy. Client sites should use the fair-payment plugin instead.
+No. This plugin is designed to run exclusively on fair-event-plugins.com as an OAuth proxy. Client sites should use the fair-payments-connector plugin instead.
 
 = How do platform fees work? =
 

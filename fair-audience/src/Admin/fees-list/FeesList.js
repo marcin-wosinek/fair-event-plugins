@@ -221,7 +221,7 @@ export default function FeesList() {
 	}, []);
 
 	const loadBudgets = useCallback(() => {
-		apiFetch({ path: '/fair-payment/v1/budgets' })
+		apiFetch({ path: '/fair-payments-connector/v1/budgets' })
 			.then((data) => {
 				setBudgets(data);
 			})

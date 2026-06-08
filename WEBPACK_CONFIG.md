@@ -33,7 +33,7 @@ Without `--config`, wp-scripts will use its default entry discovery (looking for
 
 ### Pattern 1: Static Entries (RECOMMENDED)
 
-**Used in**: All plugins (`fair-payment`, `fair-events`, `fair-membership`, `fair-rsvp`, `fair-user-import`, `fair-platform`)
+**Used in**: All plugins (`fair-payments-connector`, `fair-events`, `fair-membership`, `fair-rsvp`, `fair-user-import`, `fair-platform`)
 
 ```javascript
 module.exports = {
@@ -64,7 +64,7 @@ module.exports = {
 
 ### Pattern 2: Dynamic Entries with File Existence Check (NOT RECOMMENDED)
 
-**Previously used in**: `fair-payment`, `fair-events` *(refactored to Pattern 1)*
+**Previously used in**: `fair-payments-connector`, `fair-events` *(refactored to Pattern 1)*
 
 ```javascript
 const fs = require('fs');
@@ -160,7 +160,7 @@ module.exports = {
 - ❌ Server-side only plugin (no JavaScript)
 
 **Plugins using it**: `fair-events`, `fair-membership`, `fair-rsvp`, `fair-user-import`
-**Plugins NOT using it**: `fair-payment` (should probably add it), `fair-platform` (server-side only, doesn't need it yet)
+**Plugins NOT using it**: `fair-payments-connector` (should probably add it), `fair-platform` (server-side only, doesn't need it yet)
 
 ## Path Resolution
 

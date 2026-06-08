@@ -100,7 +100,7 @@ WordPress Site → fair-event-plugins.com → Mollie OAuth → WordPress Site
 
 ## Usage
 
-Client plugins (like fair-payment) connect by redirecting users to:
+Client plugins (like fair-payments-connector) connect by redirecting users to:
 
 ```
 https://fair-event-plugins.com/oauth/authorize?

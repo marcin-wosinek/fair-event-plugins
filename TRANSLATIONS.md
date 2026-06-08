@@ -128,7 +128,7 @@ npm run translation:validate -- --all
 
 - `fair-audience`
 - `fair-events`
-- `fair-payment`
+- `fair-payments-connector`
 - `fair-platform`
 - `fair-calendar-button`
 - `fair-rsvp`
@@ -345,7 +345,7 @@ node scripts/translation/get-untranslated.js --plugin=fair-events --locale=fr_FR
 node scripts/translation/get-untranslated.js --plugin=invalid --locale=fr_FR
 
 # Test with missing file (should show helpful error)
-node scripts/translation/get-untranslated.js --plugin=fair-payment --locale=fr_FR
+node scripts/translation/get-untranslated.js --plugin=fair-payments-connector --locale=fr_FR
 ```
 
 ## Troubleshooting

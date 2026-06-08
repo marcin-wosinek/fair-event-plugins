@@ -2,7 +2,7 @@
 
 This is a WordPress plugin collection called "Fair Event Plugins" for event
 organization with fair pricing models. It is a monorepo. npm workspaces:
-`fair-payment`, `fair-events`, `fair-audience`, `fair-platform`, and the shared
+`fair-payments-connector`, `fair-events`, `fair-audience`, `fair-platform`, and the shared
 `fair-events-shared` package.
 
 ## Reference Docs
@@ -67,7 +67,7 @@ namespace casing to directory casing exactly, and watch file/folder name case.
 
 ### PHP / WordPress — see [PHP_PATTERNS.md](./PHP_PATTERNS.md)
 
-- PHP 8.0+, PSR-4 autoloading, namespace `FairPayment` (and per-plugin equivalents).
+- PHP 8.0+, PSR-4 autoloading, namespace `FairPaymentsConnector` (and per-plugin equivalents).
 - DB queries: `wpdb::prepare()` with `%i` for table/column names, `%s`/`%d`/`%f`
   for values.
 - Always prevent direct file access, sanitize input, escape output.
@@ -93,7 +93,7 @@ Backend:
 Frontend:
 
 - Always use `apiFetch()` from `@wordpress/api-fetch` with **hardcoded paths**
-  starting with `/` (e.g. `/fair-payment/v1/payments`). Never raw `fetch()`,
+  starting with `/` (e.g. `/fair-payments-connector/v1/payments`). Never raw `fetch()`,
   never `rest_url()` URL construction.
 - Register blocks from `build/`, not `src/`. Add `viewScript` files to the
   webpack entries.
@@ -104,7 +104,7 @@ Frontend:
   `@wordpress/components`; all data flows through `apiFetch`.
 - Layout: `src/Admin/{page-name}/` (entry `index.js` + component), controller in
   `src/API/`, built to `build/admin/{page-name}/`.
-- Canonical examples: **fair-audience** (most admin pages), fair-payment, fair-events.
+- Canonical examples: **fair-audience** (most admin pages), fair-payments-connector, fair-events.
 
 ### Frontend `viewScript`
 

@@ -10,7 +10,7 @@
  *
  * Usage:
  *   npm run deploy:local -- --env=staging
- *   npm run deploy:local -- --env=staging --plugins=fair-events,fair-payment
+ *   npm run deploy:local -- --env=staging --plugins=fair-events,fair-payments-connector
  *   npm run deploy:local -- --env=staging --dry-run
  *   npm run deploy:local -- --env=staging --skip-build --skip-reactivate
  */
@@ -34,7 +34,7 @@ const rootDir = resolve(__dirname, '..');
 
 const ALL_PLUGINS = [
 	'fair-events',
-	'fair-payment',
+	'fair-payments-connector',
 	'fair-audience',
 	'fair-timetable',
 ];
@@ -148,7 +148,8 @@ function gitDescribe() {
 
 const PLUGIN_HEADER_FILES = {
 	'fair-events': 'fair-events/fair-events.php',
-	'fair-payment': 'fair-payment/fair-payment.php',
+	'fair-payments-connector':
+		'fair-payments-connector/fair-payments-connector.php',
 	'fair-platform': 'fair-platform/fair-platform.php',
 	'fair-audience': 'fair-audience/fair-audience.php',
 	'fair-timetable': 'fair-timetable/fair-timetable.php',

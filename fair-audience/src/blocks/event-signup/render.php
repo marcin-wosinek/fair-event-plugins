@@ -34,7 +34,7 @@ if ( isset( $_GET['fair_payment_callback'] ) && 'true' === $_GET['fair_payment_c
 	$callback_tx_id = isset( $_GET['fair_signup_tx'] ) ? absint( wp_unslash( $_GET['fair_signup_tx'] ) ) : 0;
 	// phpcs:ignore WordPress.Security.NonceVerification.Recommended
 	$callback_tx_signature = isset( $_GET['fst_sig'] ) ? sanitize_text_field( wp_unslash( $_GET['fst_sig'] ) ) : '';
-	if ( $callback_tx_id > 0 && class_exists( \FairPayment\API\TransactionAPI::class ) ) {
+	if ( $callback_tx_id > 0 && class_exists( \FairPaymentsConnector\API\TransactionAPI::class ) ) {
 		// Proactively pull the latest status from Mollie so the page reflects
 		// reality when the webhook hasn't landed yet. This is the same trick
 		// the fee-payment template uses to avoid the "is it paid or not?"
@@ -43,7 +43,7 @@ if ( isset( $_GET['fair_payment_callback'] ) && 'true' === $_GET['fair_payment_c
 			fair_payment_sync_transaction_status( $callback_tx_id );
 		}
 
-		$callback_tx = \FairPayment\API\TransactionAPI::get_transaction( $callback_tx_id );
+		$callback_tx = \FairPaymentsConnector\API\TransactionAPI::get_transaction( $callback_tx_id );
 		if ( $callback_tx ) {
 			$callback_tx_status = (string) $callback_tx->status;
 		}
@@ -237,7 +237,7 @@ if ( $is_valid_post_type ) {
 	// so the same retry / resume / pending UI shows for someone who navigated
 	// directly back to the event page instead of returning via Mollie's
 	// redirect.
-	if ( null === $callback_tx && class_exists( \FairPayment\API\TransactionAPI::class ) ) {
+	if ( null === $callback_tx && class_exists( \FairPaymentsConnector\API\TransactionAPI::class ) ) {
 		$owner_participant_id = 0;
 		if ( $participant ) {
 			$owner_participant_id = (int) $participant->id;
@@ -272,7 +272,7 @@ if ( $is_valid_post_type ) {
 				if ( function_exists( 'fair_payment_sync_transaction_status' ) ) {
 					fair_payment_sync_transaction_status( $candidate_tx_id );
 				}
-				$candidate_tx = \FairPayment\API\TransactionAPI::get_transaction( $candidate_tx_id );
+				$candidate_tx = \FairPaymentsConnector\API\TransactionAPI::get_transaction( $candidate_tx_id );
 				if ( $candidate_tx ) {
 					$callback_tx_id     = $candidate_tx_id;
 					$callback_tx        = $candidate_tx;

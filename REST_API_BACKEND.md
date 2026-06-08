@@ -19,8 +19,8 @@ This document defines security standards and best practices for implementing Wor
 
 | Plugin | Endpoint | Enhancement | Priority |
 |--------|----------|-------------|----------|
-| fair-payment | `/payments` | Differentiate logged-in vs anonymous user behavior | 🟡 **TODO** |
-| fair-payment | `/webhook` | Add Mollie webhook signature verification | 🟡 **MEDIUM** |
+| fair-payments-connector | `/payments` | Differentiate logged-in vs anonymous user behavior | 🟡 **TODO** |
+| fair-payments-connector | `/webhook` | Add Mollie webhook signature verification | 🟡 **MEDIUM** |
 | **ALL plugins** | All endpoints | **Nonce verification handled automatically by WordPress when using `apiFetch()`** | ✅ **OK** |
 
 ### WP_REST_Controller Compliance
@@ -36,7 +36,7 @@ This document defines security standards and best practices for implementing Wor
 ✅ **fair-membership**: Consistent `check_permission()` method checking `manage_options`
 ✅ **fair-rsvp**: Checks `is_user_logged_in()` for user-specific endpoints
 ✅ **fair-registration**: Full implementation of collection and resource patterns
-✅ **fair-payment**: Proper separation of Payment and Webhook endpoints
+✅ **fair-payments-connector**: Proper separation of Payment and Webhook endpoints
 
 ---
 
@@ -129,13 +129,13 @@ class PluginNameController extends WP_REST_Controller {
 1. **Case sensitivity**: Linux (production) is case-sensitive, macOS (development) is not. Uppercase "API" is a common acronym convention that avoids confusion
 2. **Consistency**: Matches other namespace patterns in WordPress ecosystem
 3. **PSR-4 Autoloading**: Clear mapping between namespace `PluginName\API` and directory `src/API/`
-4. **Existing adoption**: Already used by fair-payment, fair-membership, fair-user-import
+4. **Existing adoption**: Already used by fair-payments-connector, fair-membership, fair-user-import
 
 ### Current Plugin Status
 
 | Plugin | Directory | Status |
 |--------|-----------|--------|
-| fair-payment | `src/API/` | ✅ Compliant |
+| fair-payments-connector | `src/API/` | ✅ Compliant |
 | fair-membership | `src/API/` | ✅ Compliant |
 | fair-user-import | `src/API/` | ✅ Compliant |
 | fair-registration | `src/API/` | ✅ Compliant |
@@ -617,7 +617,7 @@ class ResourceController extends WP_REST_Controller {
 
 ### HIGH Priority
 
-1. **fair-payment/PaymentEndpoint.php:69** - Differentiate logged-in vs anonymous users
+1. **fair-payments-connector/PaymentEndpoint.php:69** - Differentiate logged-in vs anonymous users
    ```php
    // Current: Treats all users the same
    public function create_payment( WP_REST_Request $request ) {
@@ -666,7 +666,7 @@ class ResourceController extends WP_REST_Controller {
 
 ### MEDIUM Priority
 
-3. **fair-payment/WebhookEndpoint.php** - Add webhook signature verification
+3. **fair-payments-connector/WebhookEndpoint.php** - Add webhook signature verification
    - Research Mollie webhook signature verification
    - Implement signature validation in `handle_webhook()`
    - See: https://docs.mollie.com/overview/webhooks
@@ -685,13 +685,13 @@ class ResourceController extends WP_REST_Controller {
 
 ```bash
 # Test without authentication (should fail for protected endpoints)
-curl -X POST http://localhost:8080/wp-json/fair-payment/v1/payments \
+curl -X POST http://localhost:8080/wp-json/fair-payments-connector/v1/payments \
   -H "Content-Type: application/json" \
   -d '{"amount":"10.00","currency":"EUR"}'
 
 # Test with valid nonce (should succeed)
 # Get nonce from browser console: wp.apiFetch.nonceMiddleware.nonce
-curl -X POST http://localhost:8080/wp-json/fair-payment/v1/payments \
+curl -X POST http://localhost:8080/wp-json/fair-payments-connector/v1/payments \
   -H "Content-Type: application/json" \
   -H "X-WP-Nonce: YOUR_NONCE_HERE" \
   -H "Cookie: YOUR_COOKIES_HERE" \

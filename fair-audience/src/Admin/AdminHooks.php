@@ -202,8 +202,8 @@ class AdminHooks {
 		// Hidden submenu page - Group Detail.
 		$this->register_hidden_page( 'fair-audience-group-detail' );
 
-		// Submenu page - Membership Fees (only when fair-payment is active).
-		if ( class_exists( 'FairPayment\Core\Plugin' ) ) {
+		// Submenu page - Membership Fees (only when fair-payments-connector is active).
+		if ( class_exists( 'FairPaymentsConnector\Core\Plugin' ) ) {
 			add_submenu_page(
 				'fair-audience',
 				__( 'Membership Fees', 'fair-audience' ),

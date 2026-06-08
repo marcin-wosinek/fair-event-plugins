@@ -2,7 +2,7 @@
 /**
  * Transaction Access Token Service
  *
- * Generates and verifies HMAC signatures that bind a fair-payment transaction
+ * Generates and verifies HMAC signatures that bind a fair-payments-connector transaction
  * id to its participant id. The signature is appended to Mollie redirect URLs
  * so the buyer can retry payment from the original link even after the
  * audience session cookie has expired, without exposing other people's

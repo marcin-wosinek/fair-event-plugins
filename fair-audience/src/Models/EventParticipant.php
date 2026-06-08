@@ -57,7 +57,7 @@ class EventParticipant {
 	public $payment_expires_at;
 
 	/**
-	 * fair-payment transaction ID, when the signup requires payment.
+	 * fair-payments-connector transaction ID, when the signup requires payment.
 	 *
 	 * @var int|null
 	 */

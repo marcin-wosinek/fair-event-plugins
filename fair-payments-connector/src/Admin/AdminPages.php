@@ -1,0 +1,366 @@
+<?php
+/**
+ * Admin Pages for Fair Payments Connector
+ *
+ * @package FairPaymentsConnector
+ */
+
+namespace FairPaymentsConnector\Admin;
+
+defined( 'WPINC' ) || die;
+
+/**
+ * Admin Pages class for registering admin menu pages
+ */
+class AdminPages {
+	/**
+	 * Initialize admin pages
+	 *
+	 * @return void
+	 */
+	public function init() {
+		add_action( 'admin_menu', array( $this, 'register_admin_pages' ) );
+		add_action( 'admin_enqueue_scripts', array( $this, 'enqueue_admin_scripts' ) );
+	}
+
+	/**
+	 * Register admin menu pages
+	 *
+	 * @return void
+	 */
+	public function register_admin_pages() {
+		// Main transactions page.
+		add_menu_page(
+			__( 'Fair Payments Connector', 'fair-payments-connector' ),
+			__( 'Fair Payments Connector', 'fair-payments-connector' ),
+			'manage_options',
+			'fair-payments-connector-transactions',
+			array( $this, 'render_transactions_page' ),
+			'dashicons-money-alt',
+			'20.2'
+		);
+
+		// Transactions submenu (duplicate to rename main menu item).
+		add_submenu_page(
+			'fair-payments-connector-transactions',
+			__( 'Transactions', 'fair-payments-connector' ),
+			__( 'Transactions', 'fair-payments-connector' ),
+			'manage_options',
+			'fair-payments-connector-transactions'
+		);
+
+		// Budgeting submenus (only if budgeting is enabled).
+		if ( get_option( 'fair_payment_enable_budgets', false ) ) {
+			// Financial Entries submenu.
+			add_submenu_page(
+				'fair-payments-connector-transactions',
+				__( 'Financial Entries', 'fair-payments-connector' ),
+				__( 'Entries', 'fair-payments-connector' ),
+				'manage_options',
+				'fair-payments-connector-entries',
+				array( $this, 'render_entries_page' )
+			);
+
+			// Budget Categories submenu.
+			add_submenu_page(
+				'fair-payments-connector-transactions',
+				__( 'Budget Categories', 'fair-payments-connector' ),
+				__( 'Budgets', 'fair-payments-connector' ),
+				'manage_options',
+				'fair-payments-connector-budgets',
+				array( $this, 'render_budgets_page' )
+			);
+
+			// Reconciliation submenu.
+			add_submenu_page(
+				'fair-payments-connector-transactions',
+				__( 'Reconciliation', 'fair-payments-connector' ),
+				__( 'Reconciliation', 'fair-payments-connector' ),
+				'manage_options',
+				'fair-payments-connector-reconciliation',
+				array( $this, 'render_reconciliation_page' )
+			);
+		}
+
+		// Hidden transaction detail page.
+		$transaction_hookname = add_submenu_page(
+			'',
+			__( 'Transaction Detail', 'fair-payments-connector' ),
+			__( 'Transaction Detail', 'fair-payments-connector' ),
+			'manage_options',
+			'fair-payments-connector-transaction',
+			array( $this, 'render_transaction_page' )
+		);
+
+		// Set page title for hidden page to prevent strip_tags() deprecation warning.
+		$this->set_hidden_page_title( $transaction_hookname, __( 'Transaction Detail', 'fair-payments-connector' ) );
+
+		// Settings submenu.
+		add_submenu_page(
+			'fair-payments-connector-transactions',
+			__( 'Settings', 'fair-payments-connector' ),
+			__( 'Settings', 'fair-payments-connector' ),
+			'manage_options',
+			'fair-payments-connector-settings',
+			array( $this, 'render_settings_page' )
+		);
+
+		// API Tokens submenu.
+		add_submenu_page(
+			'fair-payments-connector-transactions',
+			__( 'API Tokens', 'fair-payments-connector' ),
+			__( 'API Tokens', 'fair-payments-connector' ),
+			'manage_options',
+			'fair-payments-connector-api-tokens',
+			array( $this, 'render_api_tokens_page' )
+		);
+
+		// Connected Sites submenu.
+		add_submenu_page(
+			'fair-payments-connector-transactions',
+			__( 'Connected Sites', 'fair-payments-connector' ),
+			__( 'Connected Sites', 'fair-payments-connector' ),
+			'manage_options',
+			'fair-payments-connector-connected-sites',
+			array( $this, 'render_connected_sites_page' )
+		);
+	}
+
+	/**
+	 * Enqueue admin scripts
+	 *
+	 * @param string $hook Current admin page hook.
+	 * @return void
+	 */
+	public function enqueue_admin_scripts( $hook ) {
+		// Transactions page.
+		if ( 'toplevel_page_fair-payments-connector-transactions' === $hook ) {
+			$this->enqueue_admin_page_script( 'transactions' );
+			wp_localize_script(
+				'fair-payments-connector-transactions',
+				'fairPaymentTransactions',
+				array(
+					'organizationId' => get_option( 'fair_payment_organization_id', '' ),
+				)
+			);
+			return;
+		}
+
+		// Settings page.
+		if ( false !== strpos( $hook, 'fair-payments-connector-settings' ) ) {
+			$this->enqueue_admin_page_script( 'settings' );
+			wp_localize_script(
+				'fair-payments-connector-settings',
+				'fairPaymentSettingsData',
+				array(
+					'features' => \FairPaymentsConnector\Core\Features::all(),
+				)
+			);
+			return;
+		}
+
+		// API Tokens page.
+		if ( false !== strpos( $hook, 'fair-payments-connector-api-tokens' ) ) {
+			$this->enqueue_admin_page_script( 'api-tokens' );
+			return;
+		}
+
+		// Connected Sites page.
+		if ( false !== strpos( $hook, 'fair-payments-connector-connected-sites' ) ) {
+			$this->enqueue_admin_page_script( 'connected-sites' );
+			return;
+		}
+
+		// Budgets page.
+		if ( false !== strpos( $hook, 'fair-payments-connector-budgets' ) ) {
+			$this->enqueue_admin_page_script( 'budgets' );
+			return;
+		}
+
+		// Transaction detail page.
+		if ( 'admin_page_fair-payments-connector-transaction' === $hook ) {
+			$this->enqueue_admin_page_script( 'transaction' );
+			wp_localize_script(
+				'fair-payments-connector-transaction',
+				'fairPaymentTransactions',
+				array(
+					'organizationId' => get_option( 'fair_payment_organization_id', '' ),
+				)
+			);
+			return;
+		}
+
+		// Reconciliation page.
+		if ( false !== strpos( $hook, 'fair-payments-connector-reconciliation' ) ) {
+			$this->enqueue_admin_page_script( 'reconciliation' );
+			return;
+		}
+
+		// Entries page.
+		if ( false !== strpos( $hook, 'fair-payments-connector-entries' ) ) {
+			$this->enqueue_admin_page_script( 'entries' );
+			wp_localize_script(
+				'fair-payments-connector-entries',
+				'fairPaymentSettings',
+				array(
+					'budgetingEnabled' => (bool) get_option( 'fair_payment_enable_budgets', false ),
+					'eventsEnabled'    => class_exists( 'FairEvents\Core\Plugin' ),
+				)
+			);
+			return;
+		}
+	}
+
+	/**
+	 * Set the page title for a hidden admin page.
+	 *
+	 * Hidden pages (registered with empty parent slug) are not in the submenu array,
+	 * so WordPress cannot find their title. This causes $title to be null when
+	 * admin-header.php calls strip_tags(), triggering a PHP 8.1+ deprecation warning.
+	 *
+	 * @param string $hookname The page hook name returned by add_submenu_page().
+	 * @param string $page_title The title to set.
+	 * @return void
+	 */
+	private function set_hidden_page_title( $hookname, $page_title ) {
+		add_action(
+			'load-' . $hookname,
+			static function () use ( $page_title ) {
+				global $title;
+				// phpcs:ignore WordPress.WP.GlobalVariablesOverride.Prohibited
+				$title = $page_title;
+			}
+		);
+	}
+
+	/**
+	 * Enqueue script for an admin page
+	 *
+	 * @param string $page Page name (settings, budgets, entries).
+	 * @return void
+	 */
+	private function enqueue_admin_page_script( $page ) {
+		$asset_file_path = FAIR_PAYMENTS_CONNECTOR_PLUGIN_DIR . 'build/admin/' . $page . '/index.asset.php';
+
+		if ( ! file_exists( $asset_file_path ) ) {
+			if ( defined( 'WP_DEBUG' ) && WP_DEBUG ) {
+				// phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
+				error_log( 'Fair Payments Connector: Asset file not found at ' . $asset_file_path );
+			}
+			return;
+		}
+
+		$asset_file = include $asset_file_path;
+
+		wp_enqueue_script(
+			'fair-payments-connector-' . $page,
+			FAIR_PAYMENTS_CONNECTOR_PLUGIN_URL . 'build/admin/' . $page . '/index.js',
+			$asset_file['dependencies'],
+			$asset_file['version'],
+			true
+		);
+
+		wp_enqueue_style( 'wp-components' );
+
+		// Enqueue the page's stylesheet when one was emitted by the build.
+		// wp-scripts writes style-index.css when index.js imports a stylesheet.
+		$style_file_path = FAIR_PAYMENTS_CONNECTOR_PLUGIN_DIR . 'build/admin/' . $page . '/style-index.css';
+
+		if ( file_exists( $style_file_path ) ) {
+			wp_enqueue_style(
+				'fair-payments-connector-' . $page,
+				FAIR_PAYMENTS_CONNECTOR_PLUGIN_URL . 'build/admin/' . $page . '/style-index.css',
+				array( 'wp-components' ),
+				$asset_file['version']
+			);
+		}
+	}
+
+	/**
+	 * Render settings page
+	 *
+	 * @return void
+	 */
+	public function render_settings_page() {
+		?>
+		<div id="fair-payments-connector-settings-root"></div>
+		<?php
+	}
+
+	/**
+	 * Render budgets page
+	 *
+	 * @return void
+	 */
+	public function render_budgets_page() {
+		?>
+		<div id="fair-payments-connector-budgets-root"></div>
+		<?php
+	}
+
+	/**
+	 * Render entries page
+	 *
+	 * @return void
+	 */
+	public function render_entries_page() {
+		?>
+		<div id="fair-payments-connector-entries-root"></div>
+		<?php
+	}
+
+	/**
+	 * Render reconciliation page
+	 *
+	 * @return void
+	 */
+	public function render_reconciliation_page() {
+		?>
+		<div id="fair-payments-connector-reconciliation-root"></div>
+		<?php
+	}
+
+	/**
+	 * Render transaction detail page
+	 *
+	 * @return void
+	 */
+	public function render_transaction_page() {
+		?>
+		<div id="fair-payments-connector-transaction-root"></div>
+		<?php
+	}
+
+	/**
+	 * Render transactions page
+	 *
+	 * @return void
+	 */
+	public function render_transactions_page() {
+		?>
+		<div id="fair-payments-connector-transactions-root"></div>
+		<?php
+	}
+
+	/**
+	 * Render API tokens page
+	 *
+	 * @return void
+	 */
+	public function render_api_tokens_page() {
+		?>
+		<div id="fair-payments-connector-api-tokens-root"></div>
+		<?php
+	}
+
+	/**
+	 * Render connected sites page
+	 *
+	 * @return void
+	 */
+	public function render_connected_sites_page() {
+		?>
+		<div id="fair-payments-connector-connected-sites-root"></div>
+		<?php
+	}
+}

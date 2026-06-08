@@ -19,11 +19,11 @@ const rootDir = join(__dirname, '..');
 // Plugin configurations
 const plugins = [
 	{
-		name: 'fair-payment',
-		packagePath: 'fair-payment/package.json',
-		phpFiles: ['fair-payment/fair-payment.php'],
-		readmeFiles: ['fair-payment/readme.txt'],
-		versionConstant: 'FAIR_PAYMENT_VERSION',
+		name: 'fair-payments-connector',
+		packagePath: 'fair-payments-connector/package.json',
+		phpFiles: ['fair-payments-connector/fair-payments-connector.php'],
+		readmeFiles: ['fair-payments-connector/readme.txt'],
+		versionConstant: 'FAIR_PAYMENTS_CONNECTOR_VERSION',
 	},
 	{
 		name: 'fair-events',

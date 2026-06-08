@@ -91,7 +91,7 @@ if ( false === $fee_payment_id ) {
 			// Handle "Pay Now" form submission.
 			// phpcs:ignore WordPress.Security.NonceVerification.Missing -- Public form, token provides auth.
 			if ( 'POST' === $_SERVER['REQUEST_METHOD'] && isset( $_POST['pay_fee'] ) && 'pending' === $fee_payment->status ) {
-				// Create a fair-payment transaction.
+				// Create a fair-payments-connector transaction.
 				$transaction_id = fair_payment_create_transaction(
 					array(
 						array(

@@ -30,7 +30,7 @@ class FeePaymentTransactionRepository {
 	 * Record a transaction attempt for a fee payment.
 	 *
 	 * @param int $fee_payment_id Fee payment ID.
-	 * @param int $transaction_id Transaction ID from fair-payment.
+	 * @param int $transaction_id Transaction ID from fair-payments-connector.
 	 * @return bool Success.
 	 */
 	public function record_attempt( $fee_payment_id, $transaction_id ) {
@@ -51,7 +51,7 @@ class FeePaymentTransactionRepository {
 	/**
 	 * Get all transaction attempts for a fee payment.
 	 *
-	 * Joins with fair-payment transactions table to include status and amount details.
+	 * Joins with fair-payments-connector transactions table to include status and amount details.
 	 *
 	 * @param int $fee_payment_id Fee payment ID.
 	 * @return array Array of transaction attempt data.

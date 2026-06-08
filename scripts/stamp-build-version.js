@@ -22,7 +22,7 @@ const buildVersion = execSync('git describe --tags --match="[0-9]*"', {
 
 const pluginFiles = [
 	'fair-events/fair-events.php',
-	'fair-payment/fair-payment.php',
+	'fair-payments-connector/fair-payments-connector.php',
 	'fair-platform/fair-platform.php',
 	'fair-audience/fair-audience.php',
 	'fair-timetable/fair-timetable.php',

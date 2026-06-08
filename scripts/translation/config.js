@@ -9,7 +9,10 @@ export const config = {
 	plugins: [
 		{ name: 'fair-audience', textDomain: 'fair-audience' },
 		{ name: 'fair-events', textDomain: 'fair-events' },
-		{ name: 'fair-payment', textDomain: 'fair-payment' },
+		{
+			name: 'fair-payments-connector',
+			textDomain: 'fair-payments-connector',
+		},
 		{ name: 'fair-platform', textDomain: 'fair-platform' },
 	],
 
@@ -51,7 +54,7 @@ export const config = {
 			/^Fair Membership$/, // Plugin name
 			/^Fair Team$/, // Plugin name
 			/^Fair Audience$/, // Plugin name
-			/^Fair Payment$/, // Plugin name
+			/^Fair Payments Connector$/, // Plugin name
 			/^Fair Platform$/, // Plugin name
 		],
 	},

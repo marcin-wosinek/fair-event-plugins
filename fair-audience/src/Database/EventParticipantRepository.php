@@ -407,9 +407,9 @@ class EventParticipantRepository {
 	}
 
 	/**
-	 * Find an event participant row by its fair-payment transaction ID.
+	 * Find an event participant row by its fair-payments-connector transaction ID.
 	 *
-	 * @param int $transaction_id fair-payment transaction ID.
+	 * @param int $transaction_id fair-payments-connector transaction ID.
 	 * @return EventParticipant|null Relationship or null.
 	 */
 	public function get_by_transaction_id( $transaction_id ) {

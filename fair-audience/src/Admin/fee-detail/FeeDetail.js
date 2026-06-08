@@ -128,7 +128,7 @@ export default function FeeDetail() {
 	useEffect(() => {
 		loadFee();
 		loadPayments();
-		apiFetch({ path: '/fair-payment/v1/budgets' })
+		apiFetch({ path: '/fair-payments-connector/v1/budgets' })
 			.then((data) => setBudgets(data))
 			.catch(() => {});
 	}, [loadFee, loadPayments]);
@@ -458,7 +458,7 @@ export default function FeeDetail() {
 		};
 
 		apiFetch({
-			path: '/fair-payment/v1/financial-entries/transfer',
+			path: '/fair-payments-connector/v1/financial-entries/transfer',
 			method: 'POST',
 			data,
 		})

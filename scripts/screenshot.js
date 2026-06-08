@@ -36,7 +36,7 @@
  *                       60–15552000.
  *
  * Examples:
- *   node scripts/screenshot.js "/wp-admin/admin.php?page=fair-payment-budgets" mobile budgets-mobile.png
+ *   node scripts/screenshot.js "/wp-admin/admin.php?page=fair-payments-connector-budgets" mobile budgets-mobile.png
  *   WP_BASE_URL=http://localhost:8889 node scripts/screenshot.js "/" desktop home.png --no-login
  *   node scripts/screenshot.js "/" desktop home.png --no-login --upload imgbb
  */

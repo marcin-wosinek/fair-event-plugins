@@ -1284,7 +1284,7 @@ const CSS_PREFIX = 'fair-audience-signup';
 		const tick = function () {
 			attempts += 1;
 			apiFetch({
-				path: `/fair-payment/v1/payments/${transactionId}/status`,
+				path: `/fair-payments-connector/v1/payments/${transactionId}/status`,
 				method: 'GET',
 			})
 				.then(function (response) {

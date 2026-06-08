@@ -11,7 +11,7 @@ This plugin provides a minimal OAuth proxy for Mollie Connect integration. It en
 ```
 ┌─────────────────────────────────────────────────────────┐
 │ WordPress Site (Customer)                               │
-│ - fair-payment plugin installed                         │
+│ - fair-payments-connector plugin installed                         │
 │ - Stores OAuth access/refresh tokens                    │
 │ - Makes direct API calls to Mollie                      │
 └────────────┬────────────────────────────────────────────┘
@@ -410,7 +410,7 @@ function handle_mollie_webhook($request) {
 
 ## WordPress Integration (Client Plugin)
 
-This is how the fair-payment plugin should integrate:
+This is how the fair-payments-connector plugin should integrate:
 
 ### Connection Button
 
@@ -547,7 +547,7 @@ Test these scenarios:
 - [ ] Install fair-platform plugin
 - [ ] Configure environment variables (client_id, client_secret)
 - [ ] Test OAuth flow in test mode
-- [ ] Update fair-payment plugin with OAuth integration
+- [ ] Update fair-payments-connector plugin with OAuth integration
 - [ ] Test end-to-end: Connect → Create payment → Verify fee
 - [ ] Document platform fee in plugin description
 - [ ] Go live with production credentials
