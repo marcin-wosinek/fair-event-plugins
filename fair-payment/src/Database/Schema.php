@@ -115,6 +115,7 @@ class Schema {
 			webhook_url text DEFAULT NULL,
 			checkout_url text DEFAULT NULL,
 			metadata longtext DEFAULT NULL,
+			access_token char(64) DEFAULT NULL,
 			created_at datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
 			updated_at datetime NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
 			PRIMARY KEY  (id),
@@ -123,7 +124,8 @@ class Schema {
 			KEY user_id (user_id),
 			KEY participant_id (participant_id),
 			KEY post_id (post_id),
-			KEY event_date_id (event_date_id)
+			KEY event_date_id (event_date_id),
+			KEY access_token (access_token)
 		) $charset_collate;";
 
 		require_once ABSPATH . 'wp-admin/includes/upgrade.php';
@@ -166,9 +168,10 @@ class Schema {
 		self::migrate_to_v17();
 		self::migrate_to_v18();
 		self::migrate_to_v19();
+		self::migrate_to_v20();
 
 		// Store database version for future migrations.
-		update_option( 'fair_payment_db_version', '19.0' );
+		update_option( 'fair_payment_db_version', '20.0' );
 	}
 
 	/**
@@ -1053,6 +1056,71 @@ class Schema {
 
 		if ( version_compare( $current_version, '19.0', '<' ) ) {
 			self::create_api_tokens_table();
+		}
+	}
+
+	/**
+	 * Migrate database from v19.0 to v20.0
+	 *
+	 * Adds access_token column to transactions and backfills tokens for existing rows.
+	 * The token gates anonymous reads of the /payments/{id}/status endpoint so
+	 * transaction IDs cannot be enumerated. See issue #749.
+	 *
+	 * @return void
+	 */
+	public static function migrate_to_v20() {
+		global $wpdb;
+
+		$current_version = get_option( 'fair_payment_db_version', '1.0' );
+
+		if ( version_compare( $current_version, '20.0', '<' ) ) {
+			$table_name = self::get_payments_table_name();
+
+			$column_exists = $wpdb->get_results(
+				$wpdb->prepare(
+					'SHOW COLUMNS FROM %i LIKE %s',
+					$table_name,
+					'access_token'
+				)
+			);
+
+			if ( empty( $column_exists ) ) {
+				$wpdb->query(
+					$wpdb->prepare(
+						'ALTER TABLE %i ADD COLUMN access_token char(64) DEFAULT NULL AFTER metadata',
+						$table_name
+					)
+				);
+
+				$wpdb->query(
+					$wpdb->prepare(
+						'ALTER TABLE %i ADD KEY access_token (access_token)',
+						$table_name
+					)
+				);
+			}
+
+			// Backfill tokens for legacy rows so the status endpoint can enforce
+			// ownership uniformly. Old in-flight Mollie callback URLs will fail
+			// after this — acceptable since the post-redirect window is short.
+			$rows = $wpdb->get_results(
+				$wpdb->prepare(
+					'SELECT id FROM %i WHERE access_token IS NULL',
+					$table_name
+				)
+			);
+
+			if ( ! empty( $rows ) ) {
+				foreach ( $rows as $row ) {
+					$wpdb->update(
+						$table_name,
+						array( 'access_token' => wp_generate_password( 64, false ) ),
+						array( 'id' => (int) $row->id ),
+						array( '%s' ),
+						array( '%d' )
+					);
+				}
+			}
 		}
 	}
 

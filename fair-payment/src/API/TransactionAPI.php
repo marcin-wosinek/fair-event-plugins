@@ -85,6 +85,7 @@ class TransactionAPI {
 			'webhook_url'       => '',
 			'checkout_url'      => '',
 			'metadata'          => $args['metadata'],
+			'access_token'      => wp_generate_password( 64, false ),
 		);
 
 		// Allow filtering of transaction data before creation.

@@ -44,6 +44,7 @@ class Transaction {
 			'webhook_url'       => '',
 			'checkout_url'      => '',
 			'metadata'          => '',
+			'access_token'      => null,
 		);
 
 		$data = wp_parse_args( $data, $defaults );
@@ -79,8 +80,9 @@ class Transaction {
 				'webhook_url'       => $data['webhook_url'],
 				'checkout_url'      => $data['checkout_url'],
 				'metadata'          => $data['metadata'],
+				'access_token'      => $data['access_token'],
 			),
-			array( '%s', '%d', '%d', '%d', '%d', '%f', '%s', '%f', '%s', '%d', '%s', '%s', '%s', '%s', '%s' )
+			array( '%s', '%d', '%d', '%d', '%d', '%f', '%s', '%f', '%s', '%d', '%s', '%s', '%s', '%s', '%s', '%s' )
 		);
 
 		return $inserted ? $wpdb->insert_id : false;
