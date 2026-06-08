@@ -3,7 +3,7 @@
  * Plugin Name: Fair Audience
  * Plugin URI: https://github.com/marcin-wosinek/fair-event-plugins
  * Description: Manage event participants with custom profiles and many-to-many event relationships
- * Version: 1.3.2
+ * Version: 1.3.3
  * Author: Marcin Wosinek
  * Author URI: https://github.com/marcin-wosinek
  * License: GPL-3.0-or-later
@@ -21,7 +21,7 @@ namespace FairAudience;
 defined( 'ABSPATH' ) || die;
 
 // Plugin constants.
-define( 'FAIR_AUDIENCE_VERSION', '1.3.2' );
+define( 'FAIR_AUDIENCE_VERSION', '1.3.3' );
 define( 'FAIR_AUDIENCE_PLUGIN_DIR', plugin_dir_path( __FILE__ ) );
 define( 'FAIR_AUDIENCE_PLUGIN_URL', plugin_dir_url( __FILE__ ) );
 

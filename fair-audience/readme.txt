@@ -3,7 +3,7 @@ Contributors: marcinwosinek
 Tags: events, participants, audience, management
 Requires at least: 6.7
 Tested up to: 7.0
-Stable tag: 1.3.2
+Stable tag: 1.3.3
 Requires PHP: 8.0
 License: GPLv3 or later
 License URI: https://www.gnu.org/licenses/gpl-3.0.html
@@ -38,6 +38,16 @@ WordPress 6.7 or higher.
 Yes, it integrates with the fair_event post type from the Fair Events plugin.
 
 == Changelog ==
+
+## 1.3.3
+
+### Patch Changes
+
+-   0ebaea4: Group admin menus with string positions to avoid overwriting core menus
+
+    Each plugin's top-level admin menu now registers with a unique string decimal
+    position (`20.1`–`20.4`) so the four menus cluster together in order without
+    colliding with each other or with core WordPress menu items.
 
 ## 1.3.2
 

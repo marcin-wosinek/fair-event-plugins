@@ -3,7 +3,7 @@
  * Plugin Name: Fair Payment
  * Plugin URI: https://github.com/marcin-wosinek/fair-event-plugins
  * Description: Simple payment block for WordPress
- * Version: 1.3.2
+ * Version: 1.3.3
  * Requires at least: 6.2
  * Author: Marcin Wosinek
  * Author URI: https://github.com/marcin-wosinek
@@ -16,7 +16,7 @@
 defined( 'WPINC' ) || die;
 
 // Define plugin constants.
-define( 'FAIR_PAYMENT_VERSION', '1.3.2' );
+define( 'FAIR_PAYMENT_VERSION', '1.3.3' );
 define( 'FAIR_PAYMENT_PLUGIN_DIR', plugin_dir_path( __FILE__ ) );
 define( 'FAIR_PAYMENT_PLUGIN_URL', plugin_dir_url( __FILE__ ) );
 

@@ -4,7 +4,7 @@ Tags: events, calendar, custom post type, gutenberg
 Requires at least: 6.7
 Tested up to: 7.0
 Requires PHP: 7.4
-Stable tag: 1.3.2
+Stable tag: 1.3.3
 License: GPLv3 or later
 License URI: https://www.gnu.org/licenses/gpl-3.0.html
 Text Domain: fair-events
@@ -119,6 +119,24 @@ In the Events Calendar block settings, use the "Event Display Pattern" dropdown 
 6. Add to Calendar block on a single event post
 
 == Changelog ==
+
+## 1.3.3
+
+### Patch Changes
+
+-   9ffc5a8: Calendar: link each recurring instance to its own date
+
+    Per-occurrence URLs now include `?event_date={id}` in the events-calendar block,
+    the weekly-schedule block, and the public events REST API, so visitors land on
+    the specific instance rather than the bare event permalink. The admin calendar
+    distinguishes generated recurring instances visually (own icon and color) instead
+    of styling them like unlinked events.
+
+-   0ebaea4: Group admin menus with string positions to avoid overwriting core menus
+
+    Each plugin's top-level admin menu now registers with a unique string decimal
+    position (`20.1`–`20.4`) so the four menus cluster together in order without
+    colliding with each other or with core WordPress menu items.
 
 ## 1.3.2
 

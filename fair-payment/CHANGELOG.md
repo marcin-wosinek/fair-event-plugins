@@ -1,5 +1,17 @@
 # fair-payment
 
+## 1.3.3
+
+### Patch Changes
+
+-   9dadc92: Document external services (Mollie API, Fair Event Plugins OAuth proxy, Telegram Bot API) in readme.txt per WordPress.org plugin review requirements.
+-   59a6d62: Gate `/payments/{id}/status` with a per-transaction access token so transaction IDs cannot be enumerated. The token is generated at creation time, propagated through the Mollie redirect URL, and required for anonymous reads. Logged-in admins and the transaction's owner can still read without a token.
+-   0ebaea4: Group admin menus with string positions to avoid overwriting core menus
+
+    Each plugin's top-level admin menu now registers with a unique string decimal
+    position (`20.1`–`20.4`) so the four menus cluster together in order without
+    colliding with each other or with core WordPress menu items.
+
 ## 1.3.2
 
 ### Patch Changes
