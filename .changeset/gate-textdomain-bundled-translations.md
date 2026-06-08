@@ -1,6 +1,6 @@
 ---
 "fair-events": patch
-"fair-payment": patch
+"fair-payments-connector": patch
 "fair-audience": patch
 "fair-platform": patch
 "fair-timetable": patch
