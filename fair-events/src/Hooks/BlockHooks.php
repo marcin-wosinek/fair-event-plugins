@@ -56,49 +56,49 @@ class BlockHooks {
 		wp_set_script_translations(
 			'fair-events-events-list-editor-script',
 			'fair-events',
-			$plugin_dir . 'build/languages'
+			\FairEvents\Core\Features::script_translations_path()
 		);
 
 		// Event dates block editor script
 		wp_set_script_translations(
 			'fair-events-event-dates-editor-script',
 			'fair-events',
-			$plugin_dir . 'build/languages'
+			\FairEvents\Core\Features::script_translations_path()
 		);
 
 		// Events calendar block editor script
 		wp_set_script_translations(
 			'fair-events-events-calendar-editor-script',
 			'fair-events',
-			$plugin_dir . 'build/languages'
+			\FairEvents\Core\Features::script_translations_path()
 		);
 
 		// Weekly schedule block editor script
 		wp_set_script_translations(
 			'fair-events-weekly-schedule-editor-script',
 			'fair-events',
-			$plugin_dir . 'build/languages'
+			\FairEvents\Core\Features::script_translations_path()
 		);
 
 		// Event proposal block editor script
 		wp_set_script_translations(
 			'fair-events-event-proposal-editor-script',
 			'fair-events',
-			$plugin_dir . 'build/languages'
+			\FairEvents\Core\Features::script_translations_path()
 		);
 
 		// Event proposal block view script (frontend)
 		wp_set_script_translations(
 			'fair-events-event-proposal-view-script',
 			'fair-events',
-			$plugin_dir . 'build/languages'
+			\FairEvents\Core\Features::script_translations_path()
 		);
 
 		// Event info block editor script
 		wp_set_script_translations(
 			'fair-events-event-info-editor-script',
 			'fair-events',
-			$plugin_dir . 'build/languages'
+			\FairEvents\Core\Features::script_translations_path()
 		);
 	}
 }

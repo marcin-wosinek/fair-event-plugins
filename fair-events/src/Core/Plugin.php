@@ -38,10 +38,15 @@ class Plugin {
 	 * @return void
 	 */
 	public function init() {
+		// Default: rely on WordPress.org language packs. The `bundled-translations`
+		// feature flag opts into loading the .mo files we ship in `languages/`,
+		// which is useful while a locale is below the WP.org publish threshold.
 		add_action(
 			'init',
 			function () {
-				load_plugin_textdomain( 'fair-events', false, 'fair-events/languages' );
+				if ( Features::is_enabled( 'bundled-translations' ) ) {
+					load_plugin_textdomain( 'fair-events', false, 'fair-events/languages' );
+				}
 			}
 		);
 

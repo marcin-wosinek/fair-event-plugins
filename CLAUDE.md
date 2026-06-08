@@ -116,10 +116,16 @@ deferred loading because the event may already have fired. Example:
 
 ### i18n — see [I18N_SETUP.md](./I18N_SETUP.md)
 
-- PHP `.mo` files live in `languages/`; JS `.json` files in `build/languages/`.
-  `wp_set_script_translations()` must point at `build/languages/`.
-- Every plugin calls `load_plugin_textdomain()` in `Plugin::init()` — required
-  to load the bundled `.mo` files.
+- **Default:** rely on WordPress.org language packs. Do **not** call
+  `load_plugin_textdomain()`. Call
+  `wp_set_script_translations( $handle, '{slug}' )` without a path argument so
+  core resolves JSON from `wp-content/languages/plugins/`.
+- **Opt-in (`bundled-translations` feature flag):** when the flag is on, gate
+  `load_plugin_textdomain( '{slug}', false, '{slug}/languages' )` behind
+  `Features::is_enabled( 'bundled-translations' )` and pass
+  `Features::script_translations_path()` as the third argument of
+  `wp_set_script_translations()` — it returns the bundled `build/languages/`
+  path when on, `null` when off.
 
 ### Testing — see [TESTING.md](./TESTING.md)
 

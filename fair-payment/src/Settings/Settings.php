@@ -279,6 +279,25 @@ class Settings {
 			)
 		);
 
+		// Feature flag bundle toggles — UI state only, never overrides a
+		// wp-config constant (see Features::sanitize_option()).
+		register_setting(
+			'fair_payment_settings',
+			\FairPayment\Core\Features::OPTION,
+			array(
+				'type'              => 'object',
+				'description'       => __( 'Per-bundle feature toggles', 'fair-payment' ),
+				'sanitize_callback' => array( \FairPayment\Core\Features::class, 'sanitize_option' ),
+				'show_in_rest'      => array(
+					'schema' => array(
+						'type'                 => 'object',
+						'additionalProperties' => array( 'type' => 'boolean' ),
+					),
+				),
+				'default'           => array(),
+			)
+		);
+
 		// Telegram: include PII placeholders.
 		register_setting(
 			'fair_payment_settings',

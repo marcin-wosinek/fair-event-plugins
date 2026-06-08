@@ -42,8 +42,9 @@ class BlockHooks {
 	public function set_script_translations() {
 		// WordPress auto-generates script handles based on block name and file.
 		// Format: {namespace}-{block-name}-{editor|view}-script.
-		$plugin_dir = plugin_dir_path( __DIR__ . '/../../fair-timetable.php' );
-		$languages  = $plugin_dir . 'build/languages';
+		// Path is null unless `bundled-translations` is on, so by default core
+		// resolves JSON from the WP.org language-pack location.
+		$languages = \FairTimetable\Core\Features::script_translations_path();
 
 		$blocks = array( 'timetable', 'time-slot', 'time-column-body', 'time-column' );
 

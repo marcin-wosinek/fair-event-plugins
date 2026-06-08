@@ -76,10 +76,30 @@ class Plugin {
 	 * @return void
 	 */
 	private function init_hooks() {
+		// Default: rely on WordPress.org language packs. The `bundled-translations`
+		// feature flag opts into loading the .mo files we ship in `languages/`.
 		add_action(
 			'init',
 			function () {
-				load_plugin_textdomain( 'fair-platform', false, 'fair-platform/languages' );
+				if ( Features::is_enabled( 'bundled-translations' ) ) {
+					load_plugin_textdomain( 'fair-platform', false, 'fair-platform/languages' );
+				}
+			}
+		);
+
+		// Register feature flag option (used by Features admin page).
+		add_action(
+			'admin_init',
+			function () {
+				register_setting(
+					'fair_platform_settings',
+					Features::OPTION,
+					array(
+						'type'              => 'object',
+						'sanitize_callback' => array( Features::class, 'sanitize_option' ),
+						'default'           => array(),
+					)
+				);
 			}
 		);
 

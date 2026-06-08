@@ -313,7 +313,7 @@ class AdminPages {
 			wp_set_script_translations(
 				'fair-events-calendar',
 				'fair-events',
-				FAIR_EVENTS_PLUGIN_DIR . 'build/languages'
+				\FairEvents\Core\Features::script_translations_path()
 			);
 
 			return;
@@ -342,7 +342,7 @@ class AdminPages {
 			wp_set_script_translations(
 				'fair-events-all-events',
 				'fair-events',
-				FAIR_EVENTS_PLUGIN_DIR . 'build/languages'
+				\FairEvents\Core\Features::script_translations_path()
 			);
 
 			wp_enqueue_style( 'wp-components' );
@@ -373,7 +373,7 @@ class AdminPages {
 			wp_set_script_translations(
 				'fair-events-sources',
 				'fair-events',
-				FAIR_EVENTS_PLUGIN_DIR . 'build/languages'
+				\FairEvents\Core\Features::script_translations_path()
 			);
 
 			wp_enqueue_style( 'wp-components' );
@@ -395,7 +395,7 @@ class AdminPages {
 			wp_set_script_translations(
 				'fair-events-migration',
 				'fair-events',
-				FAIR_EVENTS_PLUGIN_DIR . 'build/languages'
+				\FairEvents\Core\Features::script_translations_path()
 			);
 
 			wp_enqueue_style( 'wp-components' );
@@ -417,7 +417,7 @@ class AdminPages {
 			wp_set_script_translations(
 				'fair-events-migration-summary',
 				'fair-events',
-				FAIR_EVENTS_PLUGIN_DIR . 'build/languages'
+				\FairEvents\Core\Features::script_translations_path()
 			);
 
 			wp_enqueue_style( 'wp-components' );
@@ -463,7 +463,7 @@ class AdminPages {
 			wp_set_script_translations(
 				'fair-events-source-view',
 				'fair-events',
-				FAIR_EVENTS_PLUGIN_DIR . 'build/languages'
+				\FairEvents\Core\Features::script_translations_path()
 			);
 
 			return;
@@ -505,7 +505,7 @@ class AdminPages {
 			wp_set_script_translations(
 				'fair-events-manage-invitations',
 				'fair-events',
-				FAIR_EVENTS_PLUGIN_DIR . 'build/languages'
+				\FairEvents\Core\Features::script_translations_path()
 			);
 
 			wp_enqueue_style( 'wp-components' );
@@ -576,7 +576,7 @@ class AdminPages {
 			wp_set_script_translations(
 				'fair-events-manage-event',
 				'fair-events',
-				FAIR_EVENTS_PLUGIN_DIR . 'build/languages'
+				\FairEvents\Core\Features::script_translations_path()
 			);
 
 			wp_enqueue_style( 'wp-components' );
@@ -598,7 +598,7 @@ class AdminPages {
 			wp_set_script_translations(
 				'fair-events-venues',
 				'fair-events',
-				FAIR_EVENTS_PLUGIN_DIR . 'build/languages'
+				\FairEvents\Core\Features::script_translations_path()
 			);
 
 			wp_enqueue_style( 'wp-components' );
@@ -637,7 +637,7 @@ class AdminPages {
 			wp_set_script_translations(
 				'fair-events-settings',
 				'fair-events',
-				FAIR_EVENTS_PLUGIN_DIR . 'build/languages'
+				\FairEvents\Core\Features::script_translations_path()
 			);
 
 			wp_enqueue_style( 'wp-components' );

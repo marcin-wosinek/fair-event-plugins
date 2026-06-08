@@ -38,10 +38,14 @@ class Plugin {
 	 * @return void
 	 */
 	public function init() {
+		// Default: rely on WordPress.org language packs. The `bundled-translations`
+		// feature flag opts into loading the .mo files we ship in `languages/`.
 		add_action(
 			'init',
 			function () {
-				load_plugin_textdomain( 'fair-payment', false, 'fair-payment/languages' );
+				if ( Features::is_enabled( 'bundled-translations' ) ) {
+					load_plugin_textdomain( 'fair-payment', false, 'fair-payment/languages' );
+				}
 			}
 		);
 

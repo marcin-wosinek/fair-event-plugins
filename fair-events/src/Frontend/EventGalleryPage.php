@@ -248,7 +248,7 @@ class EventGalleryPage {
 		wp_set_script_translations(
 			'fair-events-gallery',
 			'fair-events',
-			FAIR_EVENTS_PLUGIN_DIR . 'build/languages'
+			\FairEvents\Core\Features::script_translations_path()
 		);
 	}
 
