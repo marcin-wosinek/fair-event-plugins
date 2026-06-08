@@ -92,7 +92,7 @@ class AdminPages {
 			$parent,
 			array( $this, 'render_calendar_page' ),
 			'dashicons-calendar-alt',
-			20
+			'80.1'
 		);
 
 		// Calendar landing submenu. Registering a submenu whose slug matches the
