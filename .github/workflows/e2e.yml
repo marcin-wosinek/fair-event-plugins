@@ -4,6 +4,18 @@ permissions:
     contents: read
 
 on:
+    push:
+        branches: [main]
+        paths:
+            - 'fair-payments-connector/**'
+            - 'fair-events/**'
+            - 'fair-audience/**'
+            - 'fair-platform/**'
+            - 'fair-events-shared/**'
+            - 'e2e/**'
+            - 'playwright.config.js'
+            - '.wp-env.json'
+            - '.github/workflows/e2e.yml'
     pull_request:
         branches: [main]
         paths:
