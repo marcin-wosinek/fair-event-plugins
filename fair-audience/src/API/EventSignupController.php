@@ -584,6 +584,12 @@ class EventSignupController extends WP_REST_Controller {
 			return $capacity_error;
 		}
 
+		// Reject expired ticket types server-side.
+		$disable_at_error = $this->validate_ticket_type_disable_at( $ticket_type_id );
+		if ( is_wp_error( $disable_at_error ) ) {
+			return $disable_at_error;
+		}
+
 		// Check if already signed up.
 		if ( $event_date_id ) {
 			$existing = $this->event_participant_repository->get_by_event_date_and_participant(
@@ -975,6 +981,33 @@ class EventSignupController extends WP_REST_Controller {
 			return new WP_Error(
 				'ticket_type_sold_out',
 				__( 'This ticket type is sold out. Please pick another option.', 'fair-audience' ),
+				array( 'status' => 409 )
+			);
+		}
+
+		return null;
+	}
+
+	/**
+	 * Reject purchases of ticket types whose end date has passed.
+	 *
+	 * @param int|null $ticket_type_id Ticket type ID.
+	 * @return WP_Error|null WP_Error if expired, null if valid.
+	 */
+	private function validate_ticket_type_disable_at( $ticket_type_id ) {
+		if ( ! $ticket_type_id || ! class_exists( \FairEvents\Models\TicketType::class ) ) {
+			return null;
+		}
+
+		$ticket_type = \FairEvents\Models\TicketType::get_by_id( $ticket_type_id );
+		if ( ! $ticket_type || ! $ticket_type->disable_at ) {
+			return null;
+		}
+
+		if ( strtotime( $ticket_type->disable_at ) <= time() ) {
+			return new WP_Error(
+				'ticket_type_disabled',
+				__( 'This ticket type is no longer available. Please pick another option.', 'fair-audience' ),
 				array( 'status' => 409 )
 			);
 		}
@@ -2247,6 +2280,12 @@ class EventSignupController extends WP_REST_Controller {
 		$capacity_error = $this->validate_ticket_type_capacity( $ticket_type_id );
 		if ( is_wp_error( $capacity_error ) ) {
 			return $capacity_error;
+		}
+
+		// Reject expired ticket types server-side.
+		$disable_at_error = $this->validate_ticket_type_disable_at( $ticket_type_id );
+		if ( is_wp_error( $disable_at_error ) ) {
+			return $disable_at_error;
 		}
 
 		// Paid path takes over when a positive price resolves for this participant.

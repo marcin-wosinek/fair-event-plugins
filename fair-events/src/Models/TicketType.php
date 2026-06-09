@@ -69,6 +69,13 @@ class TicketType {
 	public $minimum_activities = 0;
 
 	/**
+	 * Date/time after which this ticket type is no longer available (null = no end date)
+	 *
+	 * @var string|null
+	 */
+	public $disable_at;
+
+	/**
 	 * Sort order
 	 *
 	 * @var int
@@ -159,16 +166,17 @@ class TicketType {
 	/**
 	 * Create a new ticket type
 	 *
-	 * @param int      $event_date_id   Event date ID.
-	 * @param string   $name            Name.
-	 * @param int|null $capacity        Capacity (null = no limit).
-	 * @param int      $sort_order      Sort order.
-	 * @param int      $seats_per_ticket Seats consumed per ticket (default 1).
-	 * @param bool     $invitation_only Whether this ticket requires an invitation token.
-	 * @param int      $minimum_activities Minimum activities this type requires (0 = inherit global).
+	 * @param int         $event_date_id   Event date ID.
+	 * @param string      $name            Name.
+	 * @param int|null    $capacity        Capacity (null = no limit).
+	 * @param int         $sort_order      Sort order.
+	 * @param int         $seats_per_ticket Seats consumed per ticket (default 1).
+	 * @param bool        $invitation_only Whether this ticket requires an invitation token.
+	 * @param int         $minimum_activities Minimum activities this type requires (0 = inherit global).
+	 * @param string|null $disable_at Date/time after which this ticket type is unavailable (null = no end date).
 	 * @return int|false The ticket type ID on success, false on failure.
 	 */
-	public static function create( $event_date_id, $name, $capacity, $sort_order, $seats_per_ticket = 1, $invitation_only = false, $minimum_activities = 0 ) {
+	public static function create( $event_date_id, $name, $capacity, $sort_order, $seats_per_ticket = 1, $invitation_only = false, $minimum_activities = 0, $disable_at = null ) {
 		global $wpdb;
 
 		$table_name = self::get_table_name();
@@ -182,9 +190,10 @@ class TicketType {
 				'seats_per_ticket'   => max( 1, (int) $seats_per_ticket ),
 				'invitation_only'    => $invitation_only ? 1 : 0,
 				'minimum_activities' => max( 0, (int) $minimum_activities ),
+				'disable_at'         => $disable_at,
 				'sort_order'         => $sort_order,
 			),
-			array( '%d', '%s', '%d', '%d', '%d', '%d', '%d' )
+			array( '%d', '%s', '%d', '%d', '%d', '%d', '%s', '%d' )
 		);
 
 		if ( $result ) {
@@ -232,6 +241,11 @@ class TicketType {
 		if ( array_key_exists( 'minimum_activities', $data ) ) {
 			$update_data['minimum_activities'] = max( 0, (int) $data['minimum_activities'] );
 			$update_format[]                   = '%d';
+		}
+
+		if ( array_key_exists( 'disable_at', $data ) ) {
+			$update_data['disable_at'] = $data['disable_at'];
+			$update_format[]           = '%s';
 		}
 
 		if ( isset( $data['sort_order'] ) ) {
@@ -309,6 +323,7 @@ class TicketType {
 		$item->seats_per_ticket   = isset( $row->seats_per_ticket ) ? max( 1, (int) $row->seats_per_ticket ) : 1;
 		$item->invitation_only    = isset( $row->invitation_only ) && (int) $row->invitation_only === 1;
 		$item->minimum_activities = isset( $row->minimum_activities ) ? (int) $row->minimum_activities : 0;
+		$item->disable_at         = $row->disable_at ?? null;
 		$item->sort_order         = (int) $row->sort_order;
 		$item->created_at         = $row->created_at;
 		$item->updated_at         = $row->updated_at;
@@ -330,6 +345,7 @@ class TicketType {
 			'seats_per_ticket'   => $this->seats_per_ticket,
 			'invitation_only'    => $this->invitation_only,
 			'minimum_activities' => $this->minimum_activities,
+			'disable_at'         => $this->disable_at,
 			'sort_order'         => $this->sort_order,
 			'created_at'         => $this->created_at,
 			'updated_at'         => $this->updated_at,

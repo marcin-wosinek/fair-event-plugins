@@ -47,6 +47,7 @@ export default function EventTickets({
 		minimum_activities: 0,
 		show_ticket_type_minimum_activities: false,
 		activity_period_pricing: false,
+		show_ticket_type_end_date: false,
 	});
 	const [options, setOptions] = useState([]);
 	const [loading, setLoading] = useState(!initialData);
@@ -357,6 +358,7 @@ export default function EventTickets({
 				seats_per_ticket: t.seats_per_ticket || 1,
 				invitation_only: t.invitation_only || false,
 				minimum_activities: t.minimum_activities || 0,
+				disable_at: t.disable_at || null,
 				group_ids: t.group_ids || [],
 			})),
 			sale_periods: getEffectiveSalePeriods().map((p) => ({
@@ -490,6 +492,7 @@ export default function EventTickets({
 				seats_per_ticket: 1,
 				invitation_only: false,
 				minimum_activities: 0,
+				disable_at: null,
 				group_ids: [],
 				sort_order: ticketTypes.length,
 			},
@@ -1339,6 +1342,14 @@ export default function EventTickets({
 																)}
 															</th>
 														)}
+													{settings.show_ticket_type_end_date && (
+														<th>
+															{__(
+																'End date',
+																'fair-events'
+															)}
+														</th>
+													)}
 													{salePeriods.map(
 														(period, pIndex) => {
 															const isContinuous =
@@ -1614,6 +1625,35 @@ export default function EventTickets({
 																		/>
 																	</td>
 																)}
+															{settings.show_ticket_type_end_date && (
+																<td>
+																	<TextControl
+																		type="datetime-local"
+																		value={
+																			type.disable_at
+																				? type.disable_at.replace(
+																					' ',
+																					'T'
+																				)
+																				: ''
+																		}
+																		onChange={(
+																			v
+																		) =>
+																			updateTicketType(
+																				tIndex,
+																				'disable_at',
+																				v
+																					? v.replace(
+																						'T',
+																						' '
+																					)
+																					: null
+																			)
+																		}
+																	/>
+																</td>
+															)}
 															{salePeriods.map(
 																(
 																	period,
@@ -1778,6 +1818,10 @@ export default function EventTickets({
 																: 0) +
 															(settings.show_ticket_type_minimum_activities &&
 															options.length > 0
+																? 1
+																: 0)
+															+
+															(settings.show_ticket_type_end_date
 																? 1
 																: 0)
 														}
@@ -2327,6 +2371,23 @@ export default function EventTickets({
 										...prev,
 										show_ticket_type_minimum_activities:
 											value,
+									}))
+								}
+							/>
+							<CheckboxControl
+								label={__(
+									'Per-ticket-type end date',
+									'fair-events'
+								)}
+								help={__(
+									'Show a date/time input on each ticket type to stop selling it after a fixed date, regardless of remaining capacity.',
+									'fair-events'
+								)}
+								checked={settings.show_ticket_type_end_date}
+								onChange={(value) =>
+									setSettings((prev) => ({
+										...prev,
+										show_ticket_type_end_date: value,
 									}))
 								}
 							/>
