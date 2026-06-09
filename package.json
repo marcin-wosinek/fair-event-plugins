@@ -20,7 +20,7 @@
 		"test:e2e": "playwright test --config=playwright.config.js",
 		"test:e2e:headed": "playwright test --config=playwright.config.js --headed",
 		"test:e2e:ui": "playwright test --config=playwright.config.js --ui",
-		"test:e2e:setup": "npm run build && npm run composer:install:prod && wp-env start && wp-env run tests-cli wp rewrite structure '/%postname%/' --hard",
+		"test:e2e:setup": "bash scripts/e2e-setup.sh",
 		"test:e2e:teardown": "wp-env stop",
 		"screenshot": "node scripts/screenshot.js",
 		"build": "npm run build --workspaces --if-present",
