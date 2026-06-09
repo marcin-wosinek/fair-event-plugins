@@ -313,6 +313,15 @@ class Settings {
 	}
 
 	/**
+	 * Label shown in test mode contexts (admin notice, Telegram template).
+	 *
+	 * @return string
+	 */
+	public static function test_label() {
+		return __( '[TEST] ', 'fair-payments-connector' );
+	}
+
+	/**
 	 * Default Telegram message template.
 	 *
 	 * @return string

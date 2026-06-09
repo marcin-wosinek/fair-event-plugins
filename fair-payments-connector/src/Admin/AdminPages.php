@@ -21,6 +21,7 @@ class AdminPages {
 	public function init() {
 		add_action( 'admin_menu', array( $this, 'register_admin_pages' ) );
 		add_action( 'admin_enqueue_scripts', array( $this, 'enqueue_admin_scripts' ) );
+		add_action( 'admin_notices', array( $this, 'render_test_mode_notice' ) );
 	}
 
 	/**
@@ -141,6 +142,7 @@ class AdminPages {
 				'fairPaymentTransactions',
 				array(
 					'organizationId' => get_option( 'fair_payment_organization_id', '' ),
+					'testMode'       => 'test' === get_option( 'fair_payment_mode', 'test' ),
 				)
 			);
 			return;
@@ -154,6 +156,7 @@ class AdminPages {
 				'fairPaymentSettingsData',
 				array(
 					'features' => \FairPaymentsConnector\Core\Features::all(),
+					'testMode' => 'test' === get_option( 'fair_payment_mode', 'test' ),
 				)
 			);
 			return;
@@ -209,6 +212,42 @@ class AdminPages {
 			);
 			return;
 		}
+	}
+
+	/**
+	 * Render a non-dismissible warning notice on all admin pages when in test mode.
+	 *
+	 * @return void
+	 */
+	public function render_test_mode_notice() {
+		if ( 'test' !== get_option( 'fair_payment_mode', 'test' ) ) {
+			return;
+		}
+
+		if ( ! current_user_can( 'manage_options' ) ) {
+			return;
+		}
+
+		$settings_url = add_query_arg( 'page', 'fair-payments-connector-settings', admin_url( 'admin.php' ) );
+		?>
+		<div class="notice notice-warning">
+			<p>
+				<?php
+				printf(
+					/* translators: %s: link to settings page */
+					wp_kses(
+						__( 'Fair Payment is in <strong>Test mode</strong> — no real payments are being processed. <a href="%s">Switch to Live mode</a>.', 'fair-payments-connector' ),
+						array(
+							'strong' => array(),
+							'a'      => array( 'href' => array() ),
+						)
+					),
+					esc_url( $settings_url )
+				);
+				?>
+			</p>
+		</div>
+		<?php
 	}
 
 	/**
