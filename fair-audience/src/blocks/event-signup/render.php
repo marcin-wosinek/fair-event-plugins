@@ -375,6 +375,11 @@ if ( $pricing_event_date_id && class_exists( \FairEvents\Models\TicketType::clas
 			continue;
 		}
 
+		// Hide ticket types whose end date has passed.
+		if ( $tt->disable_at && strtotime( $tt->disable_at ) <= time() ) {
+			continue;
+		}
+
 		// Skip ticket types restricted to groups the participant doesn't belong to
 		// (but skip this check for invitation-only types unlocked by a valid token).
 		$allowed_groups = $tt_group_restrictions[ $tt->id ] ?? array();
