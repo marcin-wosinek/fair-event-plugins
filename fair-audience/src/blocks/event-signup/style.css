@@ -118,6 +118,14 @@
 	border: 1px solid #c3e6cb;
 }
 
+/* Group discount note */
+.fair-audience-signup-discount-note {
+	font-size: 0.875em;
+	color: #2e7d32;
+	margin: 0 0 0.75em;
+	text-align: center;
+}
+
 /* Form messages */
 .fair-audience-signup-message {
 	margin-top: 15px;
