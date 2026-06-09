@@ -420,19 +420,20 @@ if ( $pricing_event_date_id && class_exists( \FairEvents\Models\TicketType::clas
 }
 $has_ticket_types = ! empty( $ticket_types_for_display );
 
+// Resolve best group discount rule; used for both option pricing and the discount note.
+$best_discount_rule = null;
+if ( $pricing_event_date_id && $participant && class_exists( \FairEvents\Services\EventSignupPricing::class ) ) {
+	$best_discount_rule = \FairEvents\Services\EventSignupPricing::resolve_best_discount_rule(
+		(int) $pricing_event_date_id,
+		(int) $participant->id
+	);
+}
+
 // Resolve ticket options for this event date, if any. Options are displayed
 // as checkboxes — participants can select zero or more at signup.
 $ticket_options_for_display = array();
 if ( $pricing_event_date_id && class_exists( \FairEvents\Models\TicketOption::class ) ) {
 	$raw_options = \FairEvents\Models\TicketOption::get_all_by_event_date_id( (int) $pricing_event_date_id );
-
-	$best_discount_rule = null;
-	if ( $participant && class_exists( \FairEvents\Services\EventSignupPricing::class ) ) {
-		$best_discount_rule = \FairEvents\Services\EventSignupPricing::resolve_best_discount_rule(
-			(int) $pricing_event_date_id,
-			(int) $participant->id
-		);
-	}
 
 	$invitation_inviter_id = $valid_invitation_token ? (int) $valid_invitation_token->inviter_participant_id : null;
 
@@ -602,6 +603,37 @@ if ( null !== $signup_price ) {
 		$signup_button_text   = __( 'Sign up for free', 'fair-audience' );
 		$register_button_text = __( 'Register for free', 'fair-audience' );
 	}
+}
+
+// Build a group discount note to render near the signup button.
+$discount_note_html = '';
+if ( $best_discount_rule ) {
+	$group_name = '';
+	$group_repo = new \FairAudience\Database\GroupRepository();
+	$group      = $group_repo->get_by_id( (int) $best_discount_rule->group_id );
+	if ( $group ) {
+		$group_name = $group->name;
+	}
+
+	if ( 'percentage' === $best_discount_rule->discount_type ) {
+		$discount_label = sprintf(
+			/* translators: 1: discount percentage, 2: group name */
+			__( '%1$s%% discount applied (%2$s)', 'fair-audience' ),
+			number_format_i18n( (float) $best_discount_rule->discount_value ),
+			$group_name
+		);
+	} else {
+		$discount_label = sprintf(
+			/* translators: 1: discount amount in euros, 2: group name */
+			__( '€%1$s discount applied (%2$s)', 'fair-audience' ),
+			number_format_i18n( (float) $best_discount_rule->discount_value, 2 ),
+			$group_name
+		);
+	}
+
+	$discount_note_html = '<p class="fair-audience-signup-discount-note">'
+		. esc_html( $discount_label )
+		. '</p>';
 }
 
 /**
@@ -1067,6 +1099,9 @@ if ( ! $is_valid_post_type ) :
 					<div class="fair-audience-signup-questions">
 						<?php echo $content; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Inner blocks content is already escaped by WordPress. ?>
 					</div>
+				<?php endif; ?>
+				<?php if ( '' !== $discount_note_html ) : ?>
+					<?php echo wp_kses_post( $discount_note_html ); ?>
 				<?php endif; ?>
 				<div class="wp-block-button">
 					<button type="button" class="wp-block-button__link wp-element-button fair-audience-signup-button" data-action="signup">
