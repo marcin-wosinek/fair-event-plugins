@@ -1632,9 +1632,9 @@ export default function EventTickets({
 																		value={
 																			type.disable_at
 																				? type.disable_at.replace(
-																					' ',
-																					'T'
-																				)
+																						' ',
+																						'T'
+																				  )
 																				: ''
 																		}
 																		onChange={(
@@ -1645,9 +1645,9 @@ export default function EventTickets({
 																				'disable_at',
 																				v
 																					? v.replace(
-																						'T',
-																						' '
-																					)
+																							'T',
+																							' '
+																					  )
 																					: null
 																			)
 																		}
@@ -1819,8 +1819,7 @@ export default function EventTickets({
 															(settings.show_ticket_type_minimum_activities &&
 															options.length > 0
 																? 1
-																: 0)
-															+
+																: 0) +
 															(settings.show_ticket_type_end_date
 																? 1
 																: 0)
