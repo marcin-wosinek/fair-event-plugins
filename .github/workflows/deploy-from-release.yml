@@ -75,6 +75,7 @@ jobs:
         with:
             environment: acroyoga-club.es
             release_tag: ${{ needs.resolve.outputs.release_tag }}
+            is_clean_version: ${{ needs.resolve.outputs.is_clean_version }}
         secrets: inherit
 
     deploy-fair-event-plugins:
@@ -87,6 +88,7 @@ jobs:
         with:
             environment: fair-event-plugins.com
             release_tag: ${{ needs.resolve.outputs.release_tag }}
+            is_clean_version: ${{ needs.resolve.outputs.is_clean_version }}
         secrets: inherit
 
     deploy-lamutable:
@@ -99,6 +101,7 @@ jobs:
         with:
             environment: lamutable.es
             release_tag: ${{ needs.resolve.outputs.release_tag }}
+            is_clean_version: ${{ needs.resolve.outputs.is_clean_version }}
         secrets: inherit
 
     deploy-fusion-dance:
@@ -111,6 +114,7 @@ jobs:
         with:
             environment: fusion-dance.es
             release_tag: ${{ needs.resolve.outputs.release_tag }}
+            is_clean_version: ${{ needs.resolve.outputs.is_clean_version }}
         secrets: inherit
 
     deploy-acro-agenda:
@@ -123,6 +127,7 @@ jobs:
         with:
             environment: acro-agenda.es
             release_tag: ${{ needs.resolve.outputs.release_tag }}
+            is_clean_version: ${{ needs.resolve.outputs.is_clean_version }}
         secrets: inherit
 
     deploy-fusion-circus:
@@ -135,4 +140,5 @@ jobs:
         with:
             environment: fusion-circus.com
             release_tag: ${{ needs.resolve.outputs.release_tag }}
+            is_clean_version: ${{ needs.resolve.outputs.is_clean_version }}
         secrets: inherit

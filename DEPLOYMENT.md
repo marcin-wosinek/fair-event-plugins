@@ -8,32 +8,37 @@ This approach eliminates matrix complexity while maintaining code reusability. I
 
 ## GitHub Environment Configuration
 
-You need to configure two environments in GitHub:
+You need to configure environments in GitHub:
 - **Settings** → **Environments** → **New environment**
 
-### Environment: `acroyoga-club.es`
+### Required variables (all environments)
 
-**Variables:**
-- `PLUGINS_TO_DEPLOY` = `all` (or comma-separated list: `fair-rsvp,fair-events,fair-payments-connector`)
-- `SSH_HOST` - SSH hostname (e.g., `acroyoga-club.es`)
-- `SSH_PORT` - SSH port (e.g., `22`)
-- `SSH_USER` - SSH username
-- `WORDPRESS_PLUGINS_PATH` - Path to WordPress plugins directory (e.g., `/var/www/html/wp-content/plugins`)
+- `PLUGINS_TO_DEPLOY` — `all` or a comma-separated list (e.g. `fair-events,fair-payments-connector`)
+- `SSH_HOST` — SSH hostname
+- `SSH_PORT` — SSH port (e.g. `22`)
+- `SSH_KNOWN_HOSTS` — SSH known hosts entry for the server
+- `SSH_USER` — SSH username
+- `WORDPRESS_PLUGINS_PATH` — absolute path to the WordPress plugins directory
 
-**Secrets:**
-- `SSH_PRIVATE_KEY` - SSH private key for deployment
+### Optional variable: `AUTO_DEPLOY_ON_RELEASE`
 
-### Environment: `fair-event-plugins.com`
+Set `AUTO_DEPLOY_ON_RELEASE=true` on any environment that should receive automatic deploys when a clean `build-X.Y.Z` release is published.
 
-**Variables:**
-- `PLUGINS_TO_DEPLOY` = `fair-platform` (or comma-separated list, or `all`)
-- `SSH_HOST` - SSH hostname
-- `SSH_PORT` - SSH port (e.g., `22`)
-- `SSH_USER` - SSH username
-- `WORDPRESS_PLUGINS_PATH` - Path to WordPress plugins directory (e.g., `/var/www/html/wp-content/plugins`)
+**Currently opted in:** `fair-event-plugins.com`
 
-**Secrets:**
-- `SSH_PRIVATE_KEY` - SSH private key for deployment
+Leave this variable unset (or set it to any value other than `true`) on client sites to require a manual `workflow_dispatch` for every deploy. Manual dispatch always works regardless of this setting.
+
+### Secrets (all environments)
+
+- `SSH_PRIVATE_KEY` — SSH private key for deployment
+
+### Per-environment notes
+
+**`acroyoga-club.es`** — `PLUGINS_TO_DEPLOY=all`. No `AUTO_DEPLOY_ON_RELEASE` — deploys on manual dispatch only.
+
+**`fair-event-plugins.com`** — `PLUGINS_TO_DEPLOY=fair-platform` (or `all`). `AUTO_DEPLOY_ON_RELEASE=true`.
+
+**`lamutable.es`**, **`fusion-dance.es`**, **`acro-agenda.es`**, **`fusion-circus.com`** — set `PLUGINS_TO_DEPLOY` as appropriate. No `AUTO_DEPLOY_ON_RELEASE` — deploys on manual dispatch only.
 
 ## How It Works
 

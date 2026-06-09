@@ -11,13 +11,37 @@ on:
                 description: 'GitHub release tag to deploy (e.g., build-1.0.0)'
                 required: true
                 type: string
+            is_clean_version:
+                description: 'Whether the release tag is a clean semver (no pre-release suffix)'
+                required: false
+                type: string
+                default: 'false'
 
 permissions:
     contents: read
 
 jobs:
+    check:
+        name: Auto-deploy gate for ${{ inputs.environment }}
+        runs-on: ubuntu-latest
+        environment: ${{ inputs.environment }}
+        outputs:
+            should_deploy: ${{ steps.gate.outputs.should_deploy }}
+        steps:
+            - name: Check AUTO_DEPLOY_ON_RELEASE
+              id: gate
+              run: |
+                  if [ "${{ inputs.is_clean_version }}" = "true" ] && [ "${{ vars.AUTO_DEPLOY_ON_RELEASE }}" != "true" ]; then
+                    echo "should_deploy=false" >> "$GITHUB_OUTPUT"
+                    echo "Skipping: AUTO_DEPLOY_ON_RELEASE is not set to 'true' for ${{ inputs.environment }}"
+                  else
+                    echo "should_deploy=true" >> "$GITHUB_OUTPUT"
+                  fi
+
     deploy:
         name: Deploy to ${{ inputs.environment }}
+        needs: [check]
+        if: needs.check.outputs.should_deploy == 'true'
         runs-on: ubuntu-latest
         environment: ${{ inputs.environment }}
 
