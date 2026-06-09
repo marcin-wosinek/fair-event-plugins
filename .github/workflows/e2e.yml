@@ -1,5 +1,5 @@
 name: E2E
-# benchmark: hot Docker cache measurement for #761
+# benchmark run 2: hot Docker cache measurement for #761
 
 permissions:
     contents: read
