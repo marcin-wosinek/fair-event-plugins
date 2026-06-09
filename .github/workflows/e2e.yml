@@ -90,6 +90,26 @@ jobs:
                       npx playwright install --with-deps chromium
                   fi
 
+            - name: Cache Docker images
+              id: docker-cache
+              uses: actions/cache@v5
+              with:
+                  path: /tmp/docker-images.tar
+                  key: ${{ runner.os }}-docker-${{ hashFiles('.wp-env.json') }}
+                  restore-keys: ${{ runner.os }}-docker-
+
+            - name: Load cached Docker images
+              if: steps.docker-cache.outputs.cache-hit == 'true'
+              run: docker load -i /tmp/docker-images.tar
+
+            - name: Pull Docker images
+              if: steps.docker-cache.outputs.cache-hit != 'true'
+              run: docker pull wordpress:latest && docker pull mariadb:lts && docker pull wordpress:cli
+
+            - name: Save Docker images to cache
+              if: steps.docker-cache.outputs.cache-hit != 'true'
+              run: docker save wordpress:latest mariadb:lts wordpress:cli -o /tmp/docker-images.tar
+
             - name: Boot isolated WordPress env
               run: npm run test:e2e:setup
 
