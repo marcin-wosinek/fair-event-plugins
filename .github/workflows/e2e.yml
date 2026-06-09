@@ -102,6 +102,10 @@ jobs:
                       npx playwright install --with-deps chromium
                   fi
 
+            - name: Read PHP version from wp-env config
+              id: wp-env-config
+              run: echo "php_version=$(jq -r '.phpVersion' .wp-env.json)" >> $GITHUB_OUTPUT
+
             - name: Cache Docker images
               id: docker-cache
               uses: actions/cache@v5
@@ -116,11 +120,14 @@ jobs:
 
             - name: Pull Docker images
               if: steps.docker-cache.outputs.cache-hit != 'true'
-              run: docker pull wordpress:php8.3 && docker pull wordpress:cli-php8.3 && docker pull mariadb:lts
+              run: |
+                  docker pull wordpress:php${{ steps.wp-env-config.outputs.php_version }}
+                  docker pull wordpress:cli-php${{ steps.wp-env-config.outputs.php_version }}
+                  docker pull mariadb:lts
 
             - name: Save Docker images to cache
               if: steps.docker-cache.outputs.cache-hit != 'true'
-              run: docker save wordpress:php8.3 wordpress:cli-php8.3 mariadb:lts -o /tmp/docker-images.tar
+              run: docker save wordpress:php${{ steps.wp-env-config.outputs.php_version }} wordpress:cli-php${{ steps.wp-env-config.outputs.php_version }} mariadb:lts -o /tmp/docker-images.tar
 
             - name: Boot isolated WordPress env
               run: npm run test:e2e:setup
