@@ -39,6 +39,7 @@ jobs:
                       ./fair-platform/vendor
                       ./fair-audience/vendor
                       ./fair-timetable/vendor
+                      ./fair-finance/vendor
                       ./vendor
                   key: ${{ runner.os }}-php-${{ hashFiles('**/composer.lock') }}
                   restore-keys: |
@@ -60,6 +61,7 @@ jobs:
                       ./fair-platform/node_modules
                       ./fair-audience/node_modules
                       ./fair-timetable/node_modules
+                      ./fair-finance/node_modules
                       ./fair-events-shared/node_modules
                   key: ${{ runner.os }}-node-${{ hashFiles('package-lock.json') }}
 
@@ -164,6 +166,7 @@ jobs:
                       ./fair-platform/node_modules
                       ./fair-audience/node_modules
                       ./fair-timetable/node_modules
+                      ./fair-finance/node_modules
                       ./fair-events-shared/node_modules
                   key: ${{ runner.os }}-node-${{ hashFiles('package-lock.json') }}
 

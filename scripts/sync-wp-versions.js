@@ -51,6 +51,13 @@ const plugins = [
 		phpFiles: ['fair-timetable/fair-timetable.php'],
 		readmeFiles: ['fair-timetable/readme.txt'],
 	},
+	{
+		name: 'fair-finance',
+		packagePath: 'fair-finance/package.json',
+		phpFiles: ['fair-finance/fair-finance.php'],
+		readmeFiles: ['fair-finance/readme.txt'],
+		versionConstant: 'FAIR_FINANCE_VERSION',
+	},
 ];
 
 /**
