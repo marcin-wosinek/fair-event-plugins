@@ -13,9 +13,7 @@ import ReconciliationApp from './ReconciliationApp.js';
  * Initialize the reconciliation page
  */
 domReady(() => {
-	const root = document.getElementById(
-		'fair-payments-connector-reconciliation-root'
-	);
+	const root = document.getElementById('fair-finance-reconciliation-root');
 	if (root) {
 		createRoot(root).render(<ReconciliationApp />);
 	}

@@ -7,16 +7,15 @@ import { createRoot } from '@wordpress/element';
 /**
  * Internal dependencies
  */
-import EntriesApp from './EntriesApp.js';
+import BudgetsApp from './BudgetsApp.js';
+import './style.scss';
 
 /**
- * Initialize the entries page
+ * Initialize the budgets page
  */
 domReady(() => {
-	const root = document.getElementById(
-		'fair-payments-connector-entries-root'
-	);
+	const root = document.getElementById('fair-finance-budgets-root');
 	if (root) {
-		createRoot(root).render(<EntriesApp />);
+		createRoot(root).render(<BudgetsApp />);
 	}
 });

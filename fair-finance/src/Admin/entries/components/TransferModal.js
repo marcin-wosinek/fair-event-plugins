@@ -88,13 +88,13 @@ const TransferModal = ({ entry, budgets, eventsEnabled, onSave, onCancel }) => {
 
 			if (isEditMode) {
 				await apiFetch({
-					path: `/fair-payments-connector/v1/financial-entries/transfer/${entry.id}`,
+					path: `/fair-finance/v1/financial-entries/transfer/${entry.id}`,
 					method: 'PUT',
 					data,
 				});
 			} else {
 				await apiFetch({
-					path: '/fair-payments-connector/v1/financial-entries/transfer',
+					path: '/fair-finance/v1/financial-entries/transfer',
 					method: 'POST',
 					data,
 				});

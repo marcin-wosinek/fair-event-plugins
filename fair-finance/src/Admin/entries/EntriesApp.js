@@ -115,7 +115,7 @@ const EntriesApp = () => {
 	const loadBudgets = async () => {
 		try {
 			const data = await apiFetch({
-				path: '/fair-payments-connector/v1/budgets',
+				path: '/fair-finance/v1/budgets',
 			});
 			setBudgets(data);
 		} catch (err) {
@@ -126,7 +126,7 @@ const EntriesApp = () => {
 	const loadEventUrls = async () => {
 		try {
 			const data = await apiFetch({
-				path: '/fair-payments-connector/v1/financial-entries/event-urls',
+				path: '/fair-finance/v1/financial-entries/event-urls',
 			});
 			setEventUrls(data);
 		} catch (err) {
@@ -137,7 +137,7 @@ const EntriesApp = () => {
 	const loadEventDateOptions = async () => {
 		try {
 			const ids = await apiFetch({
-				path: '/fair-payments-connector/v1/financial-entries/event-date-ids',
+				path: '/fair-finance/v1/financial-entries/event-date-ids',
 			});
 			if (ids.length === 0) {
 				setEventDateOptions([]);
@@ -196,7 +196,7 @@ const EntriesApp = () => {
 			params.append('order', sort.order);
 
 			const data = await apiFetch({
-				path: `/fair-payments-connector/v1/financial-entries?${params.toString()}`,
+				path: `/fair-finance/v1/financial-entries?${params.toString()}`,
 			});
 
 			setEntries(data.entries);
@@ -230,7 +230,7 @@ const EntriesApp = () => {
 			if (filters.unmatched) params.append('unmatched', 'true');
 
 			const data = await apiFetch({
-				path: `/fair-payments-connector/v1/financial-entries/totals?${params.toString()}`,
+				path: `/fair-finance/v1/financial-entries/totals?${params.toString()}`,
 			});
 
 			setTotals(data);
@@ -266,7 +266,7 @@ const EntriesApp = () => {
 
 		try {
 			await apiFetch({
-				path: `/fair-payments-connector/v1/financial-entries/${id}`,
+				path: `/fair-finance/v1/financial-entries/${id}`,
 				method: 'DELETE',
 			});
 			setSuccess(
@@ -325,7 +325,7 @@ const EntriesApp = () => {
 
 		try {
 			await apiFetch({
-				path: `/fair-payments-connector/v1/financial-entries/${id}/match`,
+				path: `/fair-finance/v1/financial-entries/${id}/match`,
 				method: 'DELETE',
 			});
 			setSuccess(
@@ -412,7 +412,7 @@ const EntriesApp = () => {
 
 		try {
 			await apiFetch({
-				path: `/fair-payments-connector/v1/financial-entries/${id}/split`,
+				path: `/fair-finance/v1/financial-entries/${id}/split`,
 				method: 'DELETE',
 			});
 			setSplittingEntry(null);

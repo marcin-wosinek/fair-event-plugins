@@ -48,6 +48,9 @@ class Plugin {
 	 */
 	private function init_hooks() {
 		new \FairFinance\API\RestHooks();
+		if ( is_admin() ) {
+			( new \FairFinance\Admin\AdminPages() )->init();
+		}
 	}
 
 	/**

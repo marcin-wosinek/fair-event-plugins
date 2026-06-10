@@ -72,13 +72,13 @@ const EntryForm = ({
 
 			if (entry) {
 				await apiFetch({
-					path: `/fair-payments-connector/v1/financial-entries/${entry.id}`,
+					path: `/fair-finance/v1/financial-entries/${entry.id}`,
 					method: 'PUT',
 					data,
 				});
 			} else {
 				await apiFetch({
-					path: '/fair-payments-connector/v1/financial-entries',
+					path: '/fair-finance/v1/financial-entries',
 					method: 'POST',
 					data,
 				});

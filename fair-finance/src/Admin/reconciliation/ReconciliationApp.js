@@ -20,7 +20,7 @@ import {
 /**
  * Internal dependencies
  */
-import SettlementImportModal from './components/SettlementImportModal';
+import SettlementImportModal from './components/SettlementImportModal.js';
 
 const formatAmount = (amount, currency = 'EUR') => {
 	return new Intl.NumberFormat('en-US', {
@@ -65,7 +65,7 @@ const ReconciliationApp = () => {
 		setError(null);
 		try {
 			const data = await apiFetch({
-				path: '/fair-payments-connector/v1/reconciliation',
+				path: '/fair-finance/v1/reconciliation',
 			});
 			setUnmatchedEntries(data.unmatched_entries);
 			setUnmatchedTransactions(data.unmatched_transactions);
@@ -95,7 +95,7 @@ const ReconciliationApp = () => {
 
 		try {
 			const data = await apiFetch({
-				path: `/fair-payments-connector/v1/financial-entries/${entry.id}/suggest-matches`,
+				path: `/fair-finance/v1/financial-entries/${entry.id}/suggest-matches`,
 			});
 			setSuggestions(data);
 		} catch (err) {
@@ -125,7 +125,7 @@ const ReconciliationApp = () => {
 		setError(null);
 		try {
 			await apiFetch({
-				path: `/fair-payments-connector/v1/financial-entries/${selectedEntry.id}/match`,
+				path: `/fair-finance/v1/financial-entries/${selectedEntry.id}/match`,
 				method: 'POST',
 				data: { transaction_ids: selectedTransactionIds },
 			});
@@ -156,7 +156,7 @@ const ReconciliationApp = () => {
 		setError(null);
 		try {
 			await apiFetch({
-				path: `/fair-payments-connector/v1/financial-entries/${entryId}/match`,
+				path: `/fair-finance/v1/financial-entries/${entryId}/match`,
 				method: 'DELETE',
 				data: { transaction_id: transactionId },
 			});
@@ -182,7 +182,7 @@ const ReconciliationApp = () => {
 		setError(null);
 		try {
 			await apiFetch({
-				path: `/fair-payments-connector/v1/financial-entries/${entryId}/match`,
+				path: `/fair-finance/v1/financial-entries/${entryId}/match`,
 				method: 'DELETE',
 			});
 			setSuccess(
