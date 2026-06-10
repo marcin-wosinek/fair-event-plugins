@@ -30,11 +30,11 @@ function wpCli(args) {
 }
 
 /**
- * Turn every #654 feature bundle on. This suite covers the #656 menu/CPT
- * decoupling, which assumes the full page inventory exists — bundle gating
- * lives in `fair-events-feature-flags.spec.js`.
+ * Turn every feature bundle on. These bundles now live in fair-events-experimental.
+ * This suite covers the #656 menu/CPT decoupling — bundle gating lives in
+ * `fair-events-feature-flags.spec.js`.
  */
-const ALL_BUNDLES_ON = {
+const ALL_EXPERIMENTAL_BUNDLES_ON = {
 	venues: true,
 	sources: true,
 	galleries: true,
@@ -43,11 +43,16 @@ const ALL_BUNDLES_ON = {
 	migration: true,
 };
 function enableAllBundles() {
-	const json = JSON.stringify(ALL_BUNDLES_ON).replace(/'/g, "'\\''");
-	wpCli(`option update fair_events_features '${json}' --format=json`);
+	const json = JSON.stringify(ALL_EXPERIMENTAL_BUNDLES_ON).replace(
+		/'/g,
+		"'\\''"
+	);
+	wpCli(
+		`option update fair_events_experimental_features '${json}' --format=json`
+	);
 }
 function clearBundles() {
-	wpCli('option delete fair_events_features');
+	wpCli('option delete fair_events_experimental_features');
 }
 
 /** Every Fair Events admin page and its React root element id. */
@@ -120,7 +125,7 @@ test.describe('Fair Events admin menu — CPT registered (regression)', () => {
 		clearBundles();
 	});
 
-	test('one top-level Fair Events menu, Calendar first and Settings last', async ({
+	test('one top-level Fair Events menu, Calendar first and Settings present', async ({
 		page,
 	}) => {
 		await login(page);
@@ -140,7 +145,7 @@ test.describe('Fair Events admin menu — CPT registered (regression)', () => {
 			.filter(Boolean);
 
 		expect(labels[0]).toBe('Calendar');
-		expect(labels[labels.length - 1]).toBe('Settings');
+		expect(labels).toContain('Settings');
 	});
 
 	test('CPT-only menu items are present when the Events post type is on', async ({

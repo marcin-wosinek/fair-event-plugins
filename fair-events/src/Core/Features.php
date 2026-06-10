@@ -63,36 +63,6 @@ class Features {
 				'default'     => true,
 				'always_on'   => true,
 			),
-			'venues'               => array(
-				'label'       => 'Venues',
-				'description' => 'Venues admin page and REST controller.',
-				'default'     => false,
-			),
-			'sources'              => array(
-				'label'       => 'Event sources & feeds',
-				'description' => 'External event sources, Facebook import, iCal/JSON feeds, event proposals, weekly schedule.',
-				'default'     => false,
-			),
-			'galleries'            => array(
-				'label'       => 'Galleries',
-				'description' => 'Per-event photo galleries, photo likes/downloads, image exports, media library hooks.',
-				'default'     => false,
-			),
-			'ticketing'            => array(
-				'label'       => 'Ticketing',
-				'description' => 'Tickets, group pricing/permission rules, invitations. Requires fair-audience.',
-				'default'     => false,
-			),
-			'event-tools'          => array(
-				'label'       => 'Event tools',
-				'description' => 'Event duplication, merge, and admin-bar Copy button.',
-				'default'     => false,
-			),
-			'migration'            => array(
-				'label'       => 'Migration',
-				'description' => 'One-time post → event migration tooling.',
-				'default'     => false,
-			),
 			'bundled-translations' => array(
 				'label'       => 'Bundled translations',
 				'description' => 'Load .mo/.json files shipped with the plugin instead of relying on WordPress.org language packs. Useful while a locale is below the 90% threshold on translate.wordpress.org or for in-progress strings.',
@@ -194,30 +164,6 @@ class Features {
 			'core'                 => array(
 				'label'       => __( 'Core', 'fair-events' ),
 				'description' => __( 'Events, calendar, all-events, settings, core blocks. Always on.', 'fair-events' ),
-			),
-			'venues'               => array(
-				'label'       => __( 'Venues', 'fair-events' ),
-				'description' => __( 'Venues admin page and REST controller.', 'fair-events' ),
-			),
-			'sources'              => array(
-				'label'       => __( 'Event sources & feeds', 'fair-events' ),
-				'description' => __( 'External event sources, Facebook import, iCal/JSON feeds, event proposals, weekly schedule.', 'fair-events' ),
-			),
-			'galleries'            => array(
-				'label'       => __( 'Galleries', 'fair-events' ),
-				'description' => __( 'Per-event photo galleries, photo likes/downloads, image exports, media library hooks.', 'fair-events' ),
-			),
-			'ticketing'            => array(
-				'label'       => __( 'Ticketing', 'fair-events' ),
-				'description' => __( 'Tickets, group pricing/permission rules, invitations. Requires fair-audience.', 'fair-events' ),
-			),
-			'event-tools'          => array(
-				'label'       => __( 'Event tools', 'fair-events' ),
-				'description' => __( 'Event duplication, merge, and admin-bar Copy button.', 'fair-events' ),
-			),
-			'migration'            => array(
-				'label'       => __( 'Migration', 'fair-events' ),
-				'description' => __( 'One-time post → event migration tooling.', 'fair-events' ),
 			),
 			'bundled-translations' => array(
 				'label'       => __( 'Bundled translations', 'fair-events' ),

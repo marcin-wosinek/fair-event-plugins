@@ -40,6 +40,7 @@ jobs:
                       ./fair-audience/vendor
                       ./fair-timetable/vendor
                       ./fair-finance/vendor
+                      ./fair-events-experimental/vendor
                       ./vendor
                   key: ${{ runner.os }}-php-${{ hashFiles('**/composer.lock') }}
                   restore-keys: |
@@ -62,6 +63,7 @@ jobs:
                       ./fair-audience/node_modules
                       ./fair-timetable/node_modules
                       ./fair-finance/node_modules
+                      ./fair-events-experimental/node_modules
                       ./fair-events-shared/node_modules
                   key: ${{ runner.os }}-node-${{ hashFiles('package-lock.json') }}
 

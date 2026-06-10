@@ -68,7 +68,6 @@ class AdminPages {
 		add_action( 'admin_menu', array( $this, 'reorder_admin_menu' ), 999 );
 		add_action( 'admin_enqueue_scripts', array( $this, 'enqueue_admin_scripts' ) );
 		add_action( 'pre_get_posts', array( $this, 'filter_upcoming_events' ) );
-		add_action( 'admin_bar_menu', array( $this, 'add_copy_button_to_admin_bar' ), 100 );
 		add_filter( 'views_edit-fair_event', array( $this, 'add_upcoming_view_link' ) );
 	}
 
@@ -129,66 +128,6 @@ class AdminPages {
 			array( $this, 'render_settings_page' )
 		);
 
-		// Migration pages only make sense when the CPT exists (migration
-		// targets it) AND the `migration` feature bundle is enabled.
-		if ( \FairEvents\Core\Features::is_enabled( 'migration' ) && post_type_exists( 'fair_event' ) ) {
-			// Migration page
-			$this->page_hooks['fair-events-migration'] = add_submenu_page(
-				$parent,
-				__( 'Migrate Posts to Events', 'fair-events' ),
-				__( 'Migrate Posts', 'fair-events' ),
-				'manage_options',
-				'fair-events-migration',
-				array( $this, 'render_migration_page' )
-			);
-
-			// Migration Summary page
-			$this->page_hooks['fair-events-migration-summary'] = add_submenu_page(
-				$parent,
-				__( 'Migration Summary', 'fair-events' ),
-				__( 'Migration Summary', 'fair-events' ),
-				'manage_options',
-				'fair-events-migration-summary',
-				array( $this, 'render_migration_summary_page' )
-			);
-		}
-
-		// Event Sources page — `sources` bundle.
-		if ( \FairEvents\Core\Features::is_enabled( 'sources' ) ) {
-			$this->page_hooks['fair-events-sources'] = add_submenu_page(
-				$parent,
-				__( 'Event Sources', 'fair-events' ),
-				__( 'Event Sources', 'fair-events' ),
-				'manage_options',
-				'fair-events-sources',
-				array( $this, 'render_sources_page' )
-			);
-
-			// Source View page (hidden from menu, accessed via sources list).
-			$this->page_hooks['fair-events-source-view'] = add_submenu_page(
-				'',
-				__( 'View Source', 'fair-events' ),
-				__( 'View Source', 'fair-events' ),
-				'manage_options',
-				'fair-events-source-view',
-				array( $this, 'render_source_view_page' )
-			);
-
-			$this->set_hidden_page_title( $this->page_hooks['fair-events-source-view'], __( 'View Source', 'fair-events' ) );
-		}
-
-		// Venues page — `venues` bundle.
-		if ( \FairEvents\Core\Features::is_enabled( 'venues' ) ) {
-			$this->page_hooks['fair-events-venues'] = add_submenu_page(
-				$parent,
-				__( 'Venues', 'fair-events' ),
-				__( 'Venues', 'fair-events' ),
-				'manage_options',
-				'fair-events-venues',
-				array( $this, 'render_venues_page' )
-			);
-		}
-
 		// Manage Event page (hidden from menu, accessed via calendar)
 		$this->page_hooks['fair-events-manage-event'] = add_submenu_page(
 			'', // Hidden from menu (empty string instead of null for PHP 8.1+ compatibility)
@@ -198,39 +137,6 @@ class AdminPages {
 			'fair-events-manage-event',
 			array( $this, 'render_manage_event_page' )
 		);
-
-		// Manage Invitations page — `ticketing` bundle (hidden, linked from
-		// the tickets tab).
-		if ( \FairEvents\Core\Features::is_enabled( 'ticketing' ) ) {
-			$this->page_hooks['fair-events-manage-invitations'] = add_submenu_page(
-				'',
-				__( 'Manage Invitations', 'fair-events' ),
-				__( 'Manage Invitations', 'fair-events' ),
-				'manage_options',
-				'fair-events-manage-invitations',
-				array( $this, 'render_manage_invitations_page' )
-			);
-
-			$this->set_hidden_page_title( $this->page_hooks['fair-events-manage-invitations'], __( 'Manage Invitations', 'fair-events' ) );
-		}
-
-		// Copy Event page — `event-tools` bundle (hidden, linked from row
-		// action / admin bar).
-		if ( \FairEvents\Core\Features::is_enabled( 'event-tools' ) ) {
-			$this->page_hooks['fair-events-copy'] = add_submenu_page(
-				'',
-				__( 'Copy Event', 'fair-events' ),
-				__( 'Copy Event', 'fair-events' ),
-				'edit_posts',
-				'fair-events-copy',
-				array( $this, 'render_copy_event_page' )
-			);
-
-			$this->set_hidden_page_title( $this->page_hooks['fair-events-copy'], __( 'Copy Event', 'fair-events' ) );
-
-			// Handle copy event form submission before page render.
-			add_action( 'load-' . $this->page_hooks['fair-events-copy'], array( $this, 'handle_copy_event_submission' ) );
-		}
 
 		// Manage Event hidden-page title (always on; the page itself is core).
 		$this->set_hidden_page_title( $this->page_hooks['fair-events-manage-event'], __( 'Manage Event', 'fair-events' ) );
@@ -349,169 +255,6 @@ class AdminPages {
 			return;
 		}
 
-		// Event Sources page
-		if ( 'fair-events-sources' === $slug ) {
-			$asset_file = include FAIR_EVENTS_PLUGIN_DIR . 'build/admin/sources/index.asset.php';
-
-			wp_enqueue_script(
-				'fair-events-sources',
-				FAIR_EVENTS_PLUGIN_URL . 'build/admin/sources/index.js',
-				$asset_file['dependencies'],
-				$asset_file['version'],
-				true
-			);
-
-			wp_localize_script(
-				'fair-events-sources',
-				'fairEventsSourcesData',
-				array(
-					'icalUrlTemplate' => rest_url( 'fair-events/v1/sources/{slug}/ical' ),
-					'jsonUrlTemplate' => rest_url( 'fair-events/v1/sources/{slug}/json' ),
-				)
-			);
-
-			wp_set_script_translations(
-				'fair-events-sources',
-				'fair-events',
-				\FairEvents\Core\Features::script_translations_path()
-			);
-
-			wp_enqueue_style( 'wp-components' );
-			return;
-		}
-
-		// Migration page
-		if ( 'fair-events-migration' === $slug ) {
-			$asset_file = include FAIR_EVENTS_PLUGIN_DIR . 'build/admin/migration/index.asset.php';
-
-			wp_enqueue_script(
-				'fair-events-migration',
-				FAIR_EVENTS_PLUGIN_URL . 'build/admin/migration/index.js',
-				$asset_file['dependencies'],
-				$asset_file['version'],
-				true
-			);
-
-			wp_set_script_translations(
-				'fair-events-migration',
-				'fair-events',
-				\FairEvents\Core\Features::script_translations_path()
-			);
-
-			wp_enqueue_style( 'wp-components' );
-			return;
-		}
-
-		// Migration Summary page
-		if ( 'fair-events-migration-summary' === $slug ) {
-			$asset_file = include FAIR_EVENTS_PLUGIN_DIR . 'build/admin/migration-summary/index.asset.php';
-
-			wp_enqueue_script(
-				'fair-events-migration-summary',
-				FAIR_EVENTS_PLUGIN_URL . 'build/admin/migration-summary/index.js',
-				$asset_file['dependencies'],
-				$asset_file['version'],
-				true
-			);
-
-			wp_set_script_translations(
-				'fair-events-migration-summary',
-				'fair-events',
-				\FairEvents\Core\Features::script_translations_path()
-			);
-
-			wp_enqueue_style( 'wp-components' );
-			return;
-		}
-
-		// Source View page
-		if ( 'fair-events-source-view' === $slug ) {
-			$asset_file = include FAIR_EVENTS_PLUGIN_DIR . 'build/admin/source-view/index.asset.php';
-
-			wp_enqueue_script(
-				'fair-events-source-view',
-				FAIR_EVENTS_PLUGIN_URL . 'build/admin/source-view/index.js',
-				$asset_file['dependencies'],
-				$asset_file['version'],
-				true
-			);
-
-			// Reuse the calendar stylesheet (shared CSS for calendar grid components).
-			$calendar_asset = include FAIR_EVENTS_PLUGIN_DIR . 'build/admin/calendar/index.asset.php';
-			wp_enqueue_style(
-				'fair-events-calendar',
-				FAIR_EVENTS_PLUGIN_URL . 'build/admin/calendar/style-index.css',
-				array( 'wp-components' ),
-				$calendar_asset['version']
-			);
-
-			// phpcs:ignore WordPress.Security.NonceVerification.Recommended
-			$source_id = isset( $_GET['source_id'] ) ? absint( $_GET['source_id'] ) : 0;
-
-			wp_localize_script(
-				'fair-events-source-view',
-				'fairEventsSourceViewData',
-				array(
-					'sourceId'        => $source_id,
-					'startOfWeek'     => (int) get_option( 'start_of_week', 1 ),
-					'sourcesListUrl'  => admin_url( 'admin.php?page=fair-events-sources' ),
-					'icalUrlTemplate' => rest_url( 'fair-events/v1/sources/{slug}/ical' ),
-					'jsonUrlTemplate' => rest_url( 'fair-events/v1/sources/{slug}/json' ),
-				)
-			);
-
-			wp_set_script_translations(
-				'fair-events-source-view',
-				'fair-events',
-				\FairEvents\Core\Features::script_translations_path()
-			);
-
-			return;
-		}
-
-		// Manage Invitations page
-		if ( 'fair-events-manage-invitations' === $slug ) {
-			$asset_file = include FAIR_EVENTS_PLUGIN_DIR . 'build/admin/manage-invitations/index.asset.php';
-
-			wp_enqueue_script(
-				'fair-events-manage-invitations',
-				FAIR_EVENTS_PLUGIN_URL . 'build/admin/manage-invitations/index.js',
-				$asset_file['dependencies'],
-				$asset_file['version'],
-				true
-			);
-
-			// phpcs:ignore WordPress.Security.NonceVerification.Recommended
-			$event_date_id = isset( $_GET['event_date_id'] ) ? absint( $_GET['event_date_id'] ) : 0;
-
-			$signup_page_url = '';
-			if ( $event_date_id ) {
-				$event_date = \FairEvents\Models\EventDates::get_by_id( $event_date_id );
-				if ( $event_date && $event_date->event_id ) {
-					$signup_page_url = get_permalink( $event_date->event_id );
-				}
-			}
-
-			wp_localize_script(
-				'fair-events-manage-invitations',
-				'fairEventsManageInvitationsData',
-				array(
-					'eventDateId'    => $event_date_id,
-					'manageEventUrl' => admin_url( 'admin.php?page=fair-events-manage-event' ),
-					'signupPageUrl'  => $signup_page_url,
-				)
-			);
-
-			wp_set_script_translations(
-				'fair-events-manage-invitations',
-				'fair-events',
-				\FairEvents\Core\Features::script_translations_path()
-			);
-
-			wp_enqueue_style( 'wp-components' );
-			return;
-		}
-
 		// Manage Event page
 		if ( 'fair-events-manage-event' === $slug ) {
 			wp_enqueue_media();
@@ -549,7 +292,9 @@ class AdminPages {
 				// Resolved feature map — React reads this to hide tabs whose
 				// bundle is off (mirroring the existing audienceUrl /
 				// paymentEntriesUrl conditionals).
-				'enabledFeatures'  => \FairEvents\Core\Features::public_map(),
+				// Extensions (e.g. fair-events-experimental) can merge their
+				// feature states into this map via the filter.
+				'enabledFeatures'  => apply_filters( 'fair_events_enabled_features_map', \FairEvents\Core\Features::public_map() ),
 			);
 
 			// Audience-dependent URLs require both the sibling plugin AND the
@@ -575,28 +320,6 @@ class AdminPages {
 
 			wp_set_script_translations(
 				'fair-events-manage-event',
-				'fair-events',
-				\FairEvents\Core\Features::script_translations_path()
-			);
-
-			wp_enqueue_style( 'wp-components' );
-			return;
-		}
-
-		// Venues page
-		if ( 'fair-events-venues' === $slug ) {
-			$asset_file = include FAIR_EVENTS_PLUGIN_DIR . 'build/admin/venues/index.asset.php';
-
-			wp_enqueue_script(
-				'fair-events-venues',
-				FAIR_EVENTS_PLUGIN_URL . 'build/admin/venues/index.js',
-				$asset_file['dependencies'],
-				$asset_file['version'],
-				true
-			);
-
-			wp_set_script_translations(
-				'fair-events-venues',
 				'fair-events',
 				\FairEvents\Core\Features::script_translations_path()
 			);
@@ -935,74 +658,5 @@ class AdminPages {
 		remove_filter( 'posts_clauses', array( $this, 'upcoming_events_clauses' ), 10 );
 
 		return $clauses;
-	}
-
-	/**
-	 * Add Copy button to admin bar on event edit pages
-	 *
-	 * @param \WP_Admin_Bar $wp_admin_bar The admin bar object.
-	 * @return void
-	 */
-	public function add_copy_button_to_admin_bar( $wp_admin_bar ) {
-		// Only show on event edit pages in admin
-		if ( ! is_admin() ) {
-			return;
-		}
-
-		// The Copy flow lives in the `event-tools` bundle — without it
-		// enabled the target admin page is not registered.
-		if ( ! \FairEvents\Core\Features::is_enabled( 'event-tools' ) ) {
-			return;
-		}
-
-		// Copy targets the fair_event CPT; nothing to copy when it's not registered.
-		if ( ! post_type_exists( 'fair_event' ) ) {
-			return;
-		}
-
-		$screen = get_current_screen();
-		if ( ! $screen || 'fair_event' !== $screen->post_type || 'post' !== $screen->base ) {
-			return;
-		}
-
-		// Get current post ID
-		// phpcs:ignore WordPress.Security.NonceVerification.Recommended
-		$post_id = isset( $_GET['post'] ) ? absint( $_GET['post'] ) : 0;
-		if ( ! $post_id ) {
-			return;
-		}
-
-		// Verify it's a fair_event post
-		$post = get_post( $post_id );
-		if ( ! $post || 'fair_event' !== $post->post_type ) {
-			return;
-		}
-
-		// Check user permissions
-		if ( ! current_user_can( 'edit_posts' ) ) {
-			return;
-		}
-
-		// Build copy URL with nonce
-		$copy_url = add_query_arg(
-			array(
-				'page'     => 'fair-events-copy',
-				'event_id' => $post_id,
-				'_wpnonce' => wp_create_nonce( 'copy_fair_event_' . $post_id ),
-			),
-			admin_url( 'admin.php' )
-		);
-
-		// Add the Copy button
-		$wp_admin_bar->add_node(
-			array(
-				'id'    => 'copy-event',
-				'title' => __( 'Copy', 'fair-events' ),
-				'href'  => $copy_url,
-				'meta'  => array(
-					'title' => __( 'Copy this event', 'fair-events' ),
-				),
-			)
-		);
 	}
 }

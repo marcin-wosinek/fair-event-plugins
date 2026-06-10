@@ -38,6 +38,7 @@ const ALL_PLUGINS = [
 	'fair-audience',
 	'fair-timetable',
 	'fair-finance',
+	'fair-events-experimental',
 ];
 const MAX_ATTEMPTS = 2;
 

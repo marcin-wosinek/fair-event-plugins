@@ -1,0 +1,41 @@
+{
+	"name": "fair-events-experimental",
+	"version": "0.1.0",
+	"description": "Fair Events Experimental WordPress plugin",
+	"license": "GPL-3.0-or-later",
+	"author": "Marcin Wosinek",
+	"type": "module",
+	"main": "build/index.js",
+	"scripts": {
+		"build": "wp-scripts build --config webpack.config.cjs; npm run makejson || true",
+		"clean": "rm -rf build",
+		"prebuild": "npm run clean",
+		"start": "wp-scripts start",
+		"format": "wp-scripts format",
+		"composer:install": "composer install",
+		"composer:install:prod": "composer install --no-dev",
+		"composer:update": "composer update",
+		"composer:validate": "composer validate --strict",
+		"makepot": "wp i18n make-pot . languages/fair-events-experimental.pot --exclude=node_modules,vendor,tests,build,svn",
+		"makejson": "wp i18n make-json languages ./build/languages --domain=fair-events-experimental --pretty-print --no-purge --use-map=build/map.json",
+		"makemo": "wp i18n make-mo languages/",
+		"updatepo": "wp i18n update-po languages/fair-events-experimental.pot languages/",
+		"test": "npm-run-all test:js",
+		"test:js": "jest --passWithNoTests"
+	},
+	"dependencies": {
+		"@wordpress/api-fetch": "^7.2.0",
+		"@wordpress/components": "^30.2.0",
+		"@wordpress/element": "^6.2.0",
+		"@wordpress/i18n": "^6.2.0"
+	},
+	"devDependencies": {
+		"@babel/core": "^7.28.3",
+		"@babel/preset-env": "^7.28.3",
+		"@wordpress/scripts": "^32.4.0",
+		"babel-jest": "^30.0.5",
+		"jest": "^30.0.0",
+		"npm-run-all": "^4.1.5",
+		"webpack-bundle-output": "^1.1.0"
+	}
+}

@@ -37,6 +37,7 @@ namespace FairEvents {
 	defined( 'WPINC' ) || die;
 
 	// Define plugin constants.
+	define( 'FAIR_EVENTS_VERSION', '1.3.4' );
 	define( 'FAIR_EVENTS_PLUGIN_DIR', plugin_dir_path( __FILE__ ) );
 	define( 'FAIR_EVENTS_PLUGIN_URL', plugin_dir_url( __FILE__ ) );
 
