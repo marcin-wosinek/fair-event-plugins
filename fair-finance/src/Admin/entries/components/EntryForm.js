@@ -18,12 +18,14 @@ import {
  * Internal dependencies
  */
 import EventUrlField from './EventUrlField.js';
+import TagField from './TagField.js';
 
 const EntryForm = ({
 	entry,
 	budgets,
 	budgetingEnabled,
 	eventsEnabled,
+	tags,
 	onSave,
 	onCancel,
 }) => {
@@ -35,6 +37,7 @@ const EntryForm = ({
 		budget_id: '',
 		event_url: '',
 		event_date_id: null,
+		tag: '',
 	});
 	const [isSaving, setIsSaving] = useState(false);
 	const [error, setError] = useState(null);
@@ -50,6 +53,7 @@ const EntryForm = ({
 				budget_id: entry.budget_id?.toString() || '',
 				event_url: entry.event_url || '',
 				event_date_id: entry.event_date_id || null,
+				tag: entry.tag || '',
 			});
 		}
 	}, [entry]);
@@ -68,6 +72,7 @@ const EntryForm = ({
 					: null,
 				event_url: formData.event_url || null,
 				event_date_id: formData.event_date_id || null,
+				tag: formData.tag || null,
 			};
 
 			if (entry) {
@@ -206,6 +211,14 @@ const EntryForm = ({
 							}
 						/>
 					)}
+
+					<TagField
+						value={formData.tag}
+						tags={tags}
+						onChange={(value) =>
+							setFormData({ ...formData, tag: value })
+						}
+					/>
 
 					<HStack justify="flex-end" spacing={2}>
 						<Button
