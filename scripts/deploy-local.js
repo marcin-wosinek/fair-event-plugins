@@ -37,6 +37,7 @@ const ALL_PLUGINS = [
 	'fair-payments-connector',
 	'fair-audience',
 	'fair-timetable',
+	'fair-finance',
 ];
 const MAX_ATTEMPTS = 2;
 
