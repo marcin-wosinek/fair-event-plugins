@@ -21,8 +21,7 @@ import apiFetch from '@wordpress/api-fetch';
 /**
  * Features Tab Component
  *
- * Displays feature toggles for the plugin. Budgeting stays in its existing
- * standalone option; the rest of the toggles come from the
+ * Displays feature toggles for the plugin. Toggles come from the
  * `fair_payment_features` registry (currently just `bundled-translations`).
  *
  * @param {Object}   props          Props
@@ -31,15 +30,12 @@ import apiFetch from '@wordpress/api-fetch';
  */
 export default function FeaturesTab({ onNotice }) {
 	const registry = window.fairPaymentSettingsData?.features || {};
-	const [budgetingEnabled, setBudgetingEnabled] = useState(false);
 	const [featureValues, setFeatureValues] = useState({});
 	const [loading, setLoading] = useState(true);
 	const [isSaving, setIsSaving] = useState(false);
 
 	useEffect(() => {
 		apiFetch({ path: '/wp/v2/settings' }).then((settings) => {
-			setBudgetingEnabled(settings.fair_payment_enable_budgets || false);
-
 			const stored = settings.fair_payment_features || {};
 			const next = {};
 			Object.entries(registry).forEach(([key, meta]) => {
@@ -59,9 +55,6 @@ export default function FeaturesTab({ onNotice }) {
 	}, []);
 
 	const handleSave = async () => {
-		const payload = {
-			fair_payment_enable_budgets: budgetingEnabled,
-		};
 		const featuresPayload = {};
 		Object.entries(registry).forEach(([key, meta]) => {
 			if (meta.always_on || meta.forced) {
@@ -69,7 +62,7 @@ export default function FeaturesTab({ onNotice }) {
 			}
 			featuresPayload[key] = !!featureValues[key];
 		});
-		payload.fair_payment_features = featuresPayload;
+		const payload = { fair_payment_features: featuresPayload };
 
 		setIsSaving(true);
 		try {
@@ -104,17 +97,6 @@ export default function FeaturesTab({ onNotice }) {
 	return (
 		<Card>
 			<CardBody>
-				<ToggleControl
-					__nextHasNoMarginBottom
-					label={__('Enable Budgeting', 'fair-payments-connector')}
-					help={__(
-						'Show budget categories, budget columns in entries, and budget assignment in forms.',
-						'fair-payments-connector'
-					)}
-					checked={budgetingEnabled}
-					onChange={setBudgetingEnabled}
-				/>
-
 				{registryEntries.map(([key, meta]) => {
 					const help = meta.forced
 						? __(

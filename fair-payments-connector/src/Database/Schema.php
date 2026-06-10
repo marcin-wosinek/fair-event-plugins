@@ -1161,5 +1161,6 @@ class Schema {
 		$wpdb->query( $wpdb->prepare( 'DROP TABLE IF EXISTS %i', $transactions_table ) );
 
 		delete_option( 'fair_payment_db_version' );
+		delete_option( 'fair_payment_enable_budgets' );
 	}
 }
