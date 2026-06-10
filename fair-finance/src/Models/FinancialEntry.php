@@ -1,15 +1,15 @@
 <?php
 /**
- * Financial Entry model for Fair Payments Connector
+ * Financial Entry model for Fair Finance
  *
- * @package FairPaymentsConnector
+ * @package FairFinance
  *
  * phpcs:disable WordPress.DB.DirectDatabaseQuery -- model layer reads/writes a custom table directly; caching is left to callers.
  */
 
-namespace FairPaymentsConnector\Models;
+namespace FairFinance\Models;
 
-use FairPaymentsConnector\Database\Schema;
+use FairFinance\Database\Schema;
 
 defined( 'WPINC' ) || die;
 
@@ -301,8 +301,8 @@ class FinancialEntry {
 			$where_values[]  = $filters['entry_type'];
 		}
 
-		if ( ! empty( $filters['unmatched'] ) ) {
-			$junction_table  = Schema::get_entry_transactions_table_name();
+		if ( ! empty( $filters['unmatched'] ) && class_exists( '\\FairPaymentsConnector\\Database\\Schema' ) ) {
+			$junction_table  = \FairPaymentsConnector\Database\Schema::get_entry_transactions_table_name();
 			$where_clauses[] = $wpdb->prepare(
 				// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared,WordPress.DB.PreparedSQL.NotPrepared -- $table_name comes from Schema::get_*_table_name() and is not user input.
 				'NOT EXISTS (SELECT 1 FROM %i WHERE entry_id = ' . $table_name . '.id)',
@@ -419,8 +419,8 @@ class FinancialEntry {
 			$where_values[]  = (int) $filters['event_date_id'];
 		}
 
-		if ( ! empty( $filters['unmatched'] ) ) {
-			$junction_table  = Schema::get_entry_transactions_table_name();
+		if ( ! empty( $filters['unmatched'] ) && class_exists( '\\FairPaymentsConnector\\Database\\Schema' ) ) {
+			$junction_table  = \FairPaymentsConnector\Database\Schema::get_entry_transactions_table_name();
 			$where_clauses[] = $wpdb->prepare(
 				// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared,WordPress.DB.PreparedSQL.NotPrepared -- $table_name comes from Schema::get_*_table_name() and is not user input.
 				'NOT EXISTS (SELECT 1 FROM %i WHERE entry_id = ' . $table_name . '.id)',
@@ -653,8 +653,10 @@ class FinancialEntry {
 
 		$table_name = self::get_table_name();
 
-		// Write to junction table (source of truth).
-		EntryTransaction::link( $id, $transaction_id );
+		// Write to junction table (source of truth) when connector is active.
+		if ( class_exists( '\\FairPaymentsConnector\\Models\\EntryTransaction' ) ) {
+			\FairPaymentsConnector\Models\EntryTransaction::link( $id, $transaction_id );
+		}
 
 		// Also update legacy column for backward compatibility.
 		$result = $wpdb->update(
@@ -676,8 +678,10 @@ class FinancialEntry {
 	 * @return bool True on success, false on failure.
 	 */
 	public static function match_transactions( $id, $transaction_ids ) {
-		foreach ( $transaction_ids as $transaction_id ) {
-			EntryTransaction::link( $id, (int) $transaction_id );
+		if ( class_exists( '\\FairPaymentsConnector\\Models\\EntryTransaction' ) ) {
+			foreach ( $transaction_ids as $transaction_id ) {
+				\FairPaymentsConnector\Models\EntryTransaction::link( $id, (int) $transaction_id );
+			}
 		}
 
 		// Update legacy column with the first transaction ID.
@@ -708,8 +712,10 @@ class FinancialEntry {
 
 		$table_name = self::get_table_name();
 
-		// Clear junction table.
-		EntryTransaction::unlink_all_for_entry( $id );
+		// Clear junction table when connector is active.
+		if ( class_exists( '\\FairPaymentsConnector\\Models\\EntryTransaction' ) ) {
+			\FairPaymentsConnector\Models\EntryTransaction::unlink_all_for_entry( $id );
+		}
 
 		// Clear legacy column.
 		$result = $wpdb->update(
@@ -731,14 +737,18 @@ class FinancialEntry {
 	 * @return bool True on success, false on failure.
 	 */
 	public static function unmatch_single_transaction( $id, $transaction_id ) {
-		EntryTransaction::unlink( $id, $transaction_id );
-
-		// Update legacy column: set to first remaining linked transaction or null.
-		$remaining = EntryTransaction::get_transaction_ids_for_entry( $id );
-
 		global $wpdb;
+
 		$table_name = self::get_table_name();
 
+		$remaining = array();
+
+		if ( class_exists( '\\FairPaymentsConnector\\Models\\EntryTransaction' ) ) {
+			\FairPaymentsConnector\Models\EntryTransaction::unlink( $id, $transaction_id );
+			$remaining = \FairPaymentsConnector\Models\EntryTransaction::get_transaction_ids_for_entry( $id );
+		}
+
+		// Update legacy column: set to first remaining linked transaction or null.
 		$wpdb->update(
 			$table_name,
 			array( 'transaction_id' => ! empty( $remaining ) ? $remaining[0] : null ),
@@ -1342,9 +1352,9 @@ class FinancialEntry {
 		$entry->created_at         = $row->created_at;
 		$entry->updated_at         = $row->updated_at;
 
-		// Load transaction IDs from junction table.
-		if ( $entry->id ) {
-			$entry->transaction_ids = EntryTransaction::get_transaction_ids_for_entry( $entry->id );
+		// Load transaction IDs from junction table when connector is active.
+		if ( $entry->id && class_exists( '\\FairPaymentsConnector\\Models\\EntryTransaction' ) ) {
+			$entry->transaction_ids = \FairPaymentsConnector\Models\EntryTransaction::get_transaction_ids_for_entry( $entry->id );
 		}
 
 		return $entry;

@@ -7,6 +7,8 @@
 
 namespace FairFinance\Core;
 
+use FairFinance\Database\Schema;
+
 defined( 'ABSPATH' ) || die;
 
 /**
@@ -53,6 +55,7 @@ class Plugin {
 	 * @return void
 	 */
 	public static function activate() {
+		Schema::create_tables();
 	}
 
 	/**

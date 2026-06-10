@@ -1,13 +1,13 @@
 <?php
 /**
- * Budget model for Fair Payments Connector
+ * Budget model for Fair Finance
  *
- * @package FairPaymentsConnector
+ * @package FairFinance
  */
 
-namespace FairPaymentsConnector\Models;
+namespace FairFinance\Models;
 
-use FairPaymentsConnector\Database\Schema;
+use FairFinance\Database\Schema;
 
 defined( 'WPINC' ) || die;
 
