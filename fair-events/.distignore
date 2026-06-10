@@ -3,6 +3,7 @@ __tests__
 assets
 package*.json
 webpack.config.js
+webpack.config.cjs
 composer.lock
 vendor/composer/installers
 .*

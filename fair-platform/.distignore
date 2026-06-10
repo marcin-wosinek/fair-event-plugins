@@ -15,6 +15,7 @@ composer.lock
 package.json
 package-lock.json
 phpcs.xml
+webpack.config.cjs
 *.md
 !CHANGELOG.md
 
