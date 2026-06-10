@@ -94,6 +94,7 @@ class Schema {
 			event_url varchar(500) DEFAULT NULL,
 			event_date_id bigint(20) UNSIGNED DEFAULT NULL,
 			participant_id bigint(20) UNSIGNED DEFAULT NULL,
+			tag varchar(100) DEFAULT NULL,
 			imported_at datetime DEFAULT NULL,
 			created_at datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
 			updated_at datetime NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
@@ -105,7 +106,8 @@ class Schema {
 			KEY transaction_id (transaction_id),
 			KEY parent_entry_id (parent_entry_id),
 			KEY event_date_id (event_date_id),
-			KEY participant_id (participant_id)
+			KEY participant_id (participant_id),
+			KEY tag (tag)
 		) $charset_collate;";
 
 		require_once ABSPATH . 'wp-admin/includes/upgrade.php';

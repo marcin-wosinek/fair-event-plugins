@@ -25,10 +25,8 @@ import MatchModal from './components/MatchModal.js';
 import ImportModal from './components/ImportModal.js';
 import SplitModal from './components/SplitModal.js';
 import TransferModal from './components/TransferModal.js';
-import {
-	buildEntriesCsv,
-	downloadCsv,
-} from './exportEntriesCsv.js';
+import TagChart from './components/TagChart.js';
+import { buildEntriesCsv, downloadCsv } from './exportEntriesCsv.js';
 
 const budgetingEnabled = window.fairPaymentSettings?.budgetingEnabled === '1';
 const eventsEnabled = window.fairPaymentSettings?.eventsEnabled === '1';
@@ -49,6 +47,8 @@ const EntriesApp = () => {
 	const [budgets, setBudgets] = useState([]);
 	const [eventUrls, setEventUrls] = useState([]);
 	const [eventDateOptions, setEventDateOptions] = useState([]);
+	const [tags, setTags] = useState([]);
+	const [tagTotals, setTagTotals] = useState({});
 	const [totals, setTotals] = useState({
 		total_cost: 0,
 		total_income: 0,
@@ -65,6 +65,7 @@ const EntriesApp = () => {
 		budget_id: '',
 		event_url: '',
 		event_date_id: '',
+		tag: '',
 		entry_type: '',
 		unmatched: false,
 	});
@@ -110,11 +111,13 @@ const EntriesApp = () => {
 				}));
 			}
 		}
+		loadTags();
 	}, []);
 
 	useEffect(() => {
 		loadEntries();
 		loadTotals();
+		loadTagTotals();
 	}, [filters, pagination.page, sort]);
 
 	const loadBudgets = async () => {
@@ -176,6 +179,28 @@ const EntriesApp = () => {
 		}
 	};
 
+	const loadTags = async () => {
+		try {
+			const data = await apiFetch({
+				path: '/fair-finance/v1/financial-entries/tags',
+			});
+			setTags(Array.isArray(data) ? data : []);
+		} catch (err) {
+			console.error('Failed to load tags:', err);
+		}
+	};
+
+	const loadTagTotals = async () => {
+		try {
+			const data = await apiFetch({
+				path: '/fair-finance/v1/financial-entries/totals-by-tag',
+			});
+			setTagTotals(data || {});
+		} catch (err) {
+			console.error('Failed to load tag totals:', err);
+		}
+	};
+
 	const loadEntries = async () => {
 		setLoading(true);
 		setError(null);
@@ -194,6 +219,7 @@ const EntriesApp = () => {
 				params.append('event_url', filters.event_url);
 			if (filters.event_date_id)
 				params.append('event_date_id', filters.event_date_id);
+			if (filters.tag) params.append('tag', filters.tag);
 			if (filters.entry_type)
 				params.append('entry_type', filters.entry_type);
 			if (filters.unmatched) params.append('unmatched', 'true');
@@ -232,6 +258,7 @@ const EntriesApp = () => {
 				params.append('event_url', filters.event_url);
 			if (filters.event_date_id)
 				params.append('event_date_id', filters.event_date_id);
+			if (filters.tag) params.append('tag', filters.tag);
 			if (filters.unmatched) params.append('unmatched', 'true');
 
 			const data = await apiFetch({
@@ -257,6 +284,7 @@ const EntriesApp = () => {
 				params.append('event_url', filters.event_url);
 			if (filters.event_date_id)
 				params.append('event_date_id', filters.event_date_id);
+			if (filters.tag) params.append('tag', filters.tag);
 			if (filters.entry_type)
 				params.append('entry_type', filters.entry_type);
 			if (filters.unmatched) params.append('unmatched', 'true');
@@ -349,6 +377,7 @@ const EntriesApp = () => {
 		);
 		loadEntries();
 		loadTotals();
+		loadTags();
 		if (eventsEnabled) {
 			loadEventUrls();
 			loadEventDateOptions();
@@ -659,6 +688,15 @@ const EntriesApp = () => {
 					</CardBody>
 				</Card>
 
+				{/* Tag Chart */}
+				{Object.keys(tagTotals).length > 0 && (
+					<Card>
+						<CardBody>
+							<TagChart data={tagTotals} />
+						</CardBody>
+					</Card>
+				)}
+
 				{/* Main Entries Card */}
 				<Card>
 					<CardHeader>
@@ -697,8 +735,7 @@ const EntriesApp = () => {
 									variant="secondary"
 									onClick={exportCsv}
 									disabled={
-										exportLoading ||
-										entries.length === 0
+										exportLoading || entries.length === 0
 									}
 									isBusy={exportLoading}
 								>
@@ -796,6 +833,28 @@ const EntriesApp = () => {
 											}
 										/>
 									)}
+								{tags.length > 0 && (
+									<SelectControl
+										label={__('Tag', 'fair-finance')}
+										value={filters.tag}
+										options={[
+											{
+												label: __(
+													'All Tags',
+													'fair-finance'
+												),
+												value: '',
+											},
+											...tags.map((tag) => ({
+												label: tag,
+												value: tag,
+											})),
+										]}
+										onChange={(value) =>
+											handleFilterChange('tag', value)
+										}
+									/>
+								)}
 								<SelectControl
 									label={__(
 										'Type',
@@ -1743,6 +1802,7 @@ const EntriesApp = () => {
 					budgets={budgets}
 					budgetingEnabled={budgetingEnabled}
 					eventsEnabled={eventsEnabled}
+					tags={tags}
 					onSave={handleFormSave}
 					onCancel={handleFormCancel}
 				/>

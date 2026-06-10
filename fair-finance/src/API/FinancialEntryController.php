@@ -84,6 +84,32 @@ class FinancialEntryController extends WP_REST_Controller {
 			)
 		);
 
+		// GET /fair-finance/v1/financial-entries/tags - Get distinct tags.
+		register_rest_route(
+			$this->namespace,
+			'/financial-entries/tags',
+			array(
+				array(
+					'methods'             => WP_REST_Server::READABLE,
+					'callback'            => array( $this, 'get_tags' ),
+					'permission_callback' => array( $this, 'get_items_permissions_check' ),
+				),
+			)
+		);
+
+		// GET /fair-finance/v1/financial-entries/totals-by-tag - Get totals grouped by tag.
+		register_rest_route(
+			$this->namespace,
+			'/financial-entries/totals-by-tag',
+			array(
+				array(
+					'methods'             => WP_REST_Server::READABLE,
+					'callback'            => array( $this, 'get_totals_by_tag' ),
+					'permission_callback' => array( $this, 'get_items_permissions_check' ),
+				),
+			)
+		);
+
 		// GET /fair-finance/v1/financial-entries/event-date-ids - Get distinct event date IDs.
 		register_rest_route(
 			$this->namespace,
@@ -439,6 +465,11 @@ class FinancialEntryController extends WP_REST_Controller {
 				'description' => __( 'Filter to only unmatched entries.', 'fair-finance' ),
 				'type'        => 'boolean',
 			),
+			'tag'           => array(
+				'description'       => __( 'Filter by tag, or "none" for untagged.', 'fair-finance' ),
+				'type'              => 'string',
+				'sanitize_callback' => 'sanitize_text_field',
+			),
 		);
 	}
 
@@ -537,6 +568,12 @@ class FinancialEntryController extends WP_REST_Controller {
 				'type'        => array( 'integer', 'null' ),
 				'required'    => false,
 			),
+			'tag'            => array(
+				'description'       => __( 'Optional tag label for cross-cutting categorization.', 'fair-finance' ),
+				'type'              => array( 'string', 'null' ),
+				'required'          => false,
+				'sanitize_callback' => 'sanitize_text_field',
+			),
 		);
 	}
 
@@ -593,6 +630,7 @@ class FinancialEntryController extends WP_REST_Controller {
 			'budget_id'     => $request->get_param( 'budget_id' ),
 			'event_url'     => $request->get_param( 'event_url' ),
 			'event_date_id' => $request->get_param( 'event_date_id' ),
+			'tag'           => $request->get_param( 'tag' ),
 			'entry_type'    => $request->get_param( 'entry_type' ),
 			'unmatched'     => $request->get_param( 'unmatched' ),
 			'per_page'      => $request->get_param( 'per_page' ),
@@ -672,6 +710,7 @@ class FinancialEntryController extends WP_REST_Controller {
 			'budget_id'     => $request->get_param( 'budget_id' ),
 			'event_url'     => $request->get_param( 'event_url' ),
 			'event_date_id' => $request->get_param( 'event_date_id' ),
+			'tag'           => $request->get_param( 'tag' ),
 			'unmatched'     => $request->get_param( 'unmatched' ),
 		);
 
@@ -690,6 +729,30 @@ class FinancialEntryController extends WP_REST_Controller {
 		$urls = FinancialEntry::get_distinct_event_urls();
 
 		return new WP_REST_Response( $urls, 200 );
+	}
+
+	/**
+	 * Get distinct tags used in entries
+	 *
+	 * @param WP_REST_Request $request Full data about the request.
+	 * @return WP_REST_Response Response object.
+	 */
+	public function get_tags( $request ) {
+		$tags = FinancialEntry::get_distinct_tags();
+
+		return new WP_REST_Response( $tags, 200 );
+	}
+
+	/**
+	 * Get totals grouped by tag
+	 *
+	 * @param WP_REST_Request $request Full data about the request.
+	 * @return WP_REST_Response Response object.
+	 */
+	public function get_totals_by_tag( $request ) {
+		$stats = FinancialEntry::get_totals_by_tag();
+
+		return new WP_REST_Response( $stats, 200 );
 	}
 
 	/**
@@ -740,6 +803,7 @@ class FinancialEntryController extends WP_REST_Controller {
 		$transaction_id = $request->get_param( 'transaction_id' );
 		$event_url      = $request->get_param( 'event_url' );
 		$event_date_id  = $request->get_param( 'event_date_id' );
+		$tag            = $request->get_param( 'tag' );
 
 		if ( empty( $amount ) || $amount <= 0 ) {
 			return new WP_Error(
@@ -773,7 +837,8 @@ class FinancialEntryController extends WP_REST_Controller {
 			! empty( $budget_id ) ? $budget_id : null,
 			! empty( $transaction_id ) ? $transaction_id : null,
 			! empty( $event_url ) ? $event_url : null,
-			! empty( $event_date_id ) ? $event_date_id : null
+			! empty( $event_date_id ) ? $event_date_id : null,
+			! empty( $tag ) ? $tag : null
 		);
 
 		if ( ! $entry_id ) {
@@ -805,6 +870,7 @@ class FinancialEntryController extends WP_REST_Controller {
 		$transaction_id = $request->get_param( 'transaction_id' );
 		$event_url      = $request->get_param( 'event_url' );
 		$event_date_id  = $request->get_param( 'event_date_id' );
+		$tag            = $request->get_param( 'tag' );
 
 		// Check if entry exists.
 		$existing = FinancialEntry::get_by_id( $id );
@@ -849,7 +915,8 @@ class FinancialEntryController extends WP_REST_Controller {
 			! empty( $budget_id ) ? $budget_id : null,
 			! empty( $transaction_id ) ? $transaction_id : null,
 			! empty( $event_url ) ? $event_url : null,
-			! empty( $event_date_id ) ? $event_date_id : null
+			! empty( $event_date_id ) ? $event_date_id : null,
+			! empty( $tag ) ? $tag : null
 		);
 
 		if ( ! $success ) {
@@ -1375,6 +1442,12 @@ class FinancialEntryController extends WP_REST_Controller {
 				'type'        => array( 'integer', 'null' ),
 				'required'    => false,
 			),
+			'tag'              => array(
+				'description'       => __( 'Optional tag label for cross-cutting categorization.', 'fair-finance' ),
+				'type'              => array( 'string', 'null' ),
+				'required'          => false,
+				'sanitize_callback' => 'sanitize_text_field',
+			),
 		);
 	}
 
@@ -1393,6 +1466,7 @@ class FinancialEntryController extends WP_REST_Controller {
 		$event_url        = $request->get_param( 'event_url' );
 		$event_date_id    = $request->get_param( 'event_date_id' );
 		$participant_id   = $request->get_param( 'participant_id' );
+		$tag              = $request->get_param( 'tag' );
 
 		if ( empty( $amount ) || $amount <= 0 ) {
 			return new WP_Error(
@@ -1434,7 +1508,8 @@ class FinancialEntryController extends WP_REST_Controller {
 			$description,
 			! empty( $event_url ) ? $event_url : null,
 			! empty( $event_date_id ) ? $event_date_id : null,
-			! empty( $participant_id ) ? (int) $participant_id : null
+			! empty( $participant_id ) ? (int) $participant_id : null,
+			! empty( $tag ) ? $tag : null
 		);
 
 		if ( ! $parent_id ) {
@@ -1475,6 +1550,7 @@ class FinancialEntryController extends WP_REST_Controller {
 		$event_url        = $request->get_param( 'event_url' );
 		$event_date_id    = $request->get_param( 'event_date_id' );
 		$participant_id   = $request->get_param( 'participant_id' );
+		$tag              = $request->get_param( 'tag' );
 
 		// Check if entry exists and is a transfer.
 		$existing = FinancialEntry::get_by_id( $id );
@@ -1535,7 +1611,8 @@ class FinancialEntryController extends WP_REST_Controller {
 			$description,
 			! empty( $event_url ) ? $event_url : null,
 			! empty( $event_date_id ) ? $event_date_id : null,
-			! empty( $participant_id ) ? (int) $participant_id : null
+			! empty( $participant_id ) ? (int) $participant_id : null,
+			! empty( $tag ) ? $tag : null
 		);
 
 		if ( ! $success ) {
