@@ -1,5 +1,11 @@
 # fair-payments-connector
 
+## 1.0.1
+
+### Patch Changes
+
+-   3f6c9e2: Fix WordPress.org build review issues: stamp Stable tag in readme.txt to match plugin version, exclude webpack.config.cjs from dist archive, and lower admin menu position to 56.
+
 ## 1.0.0
 
 ### Major Changes
