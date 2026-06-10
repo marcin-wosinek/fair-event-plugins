@@ -1,5 +1,5 @@
 ---
-"fair-finance": patch
+"fair-finance": minor
 ---
 
 Scaffold fair-finance plugin (empty shell).
