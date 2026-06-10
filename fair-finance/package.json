@@ -1,0 +1,38 @@
+{
+	"name": "fair-finance",
+	"version": "0.1.0",
+	"description": "Budgeting, financial entries, and reconciliation for Fair Event Plugins",
+	"license": "GPL-2.0-or-later",
+	"author": "Marcin Wosinek",
+	"type": "module",
+	"main": "build/index.js",
+	"scripts": {
+		"build": "wp-scripts build --config webpack.config.cjs",
+		"clean": "rm -rf build",
+		"start": "wp-scripts start --config webpack.config.cjs",
+		"format": "wp-scripts format",
+		"composer:install": "composer install",
+		"composer:install:prod": "composer install --no-dev",
+		"composer:update": "composer update",
+		"composer:validate": "composer validate --strict",
+		"makepot": "wp i18n make-pot . languages/fair-finance.pot --exclude=node_modules,vendor,tests,build,svn",
+		"makejson": "wp i18n make-json languages ./build/languages --domain=fair-finance --pretty-print --no-purge --use-map=build/map.json",
+		"makemo": "wp i18n make-mo languages/",
+		"updatepo": "wp i18n update-po languages/fair-finance.pot languages/",
+		"test": "jest",
+		"test:js": "jest",
+		"test:php": "vendor/bin/phpunit",
+		"svn:checkout": "svn co https://plugins.svn.wordpress.org/fair-finance svn",
+		"svn:copy": "cp -r readme.txt fair-finance.php composer* languages CHANGELOG.md svn/trunk"
+	},
+	"devDependencies": {
+		"@wordpress/scripts": "^32.4.0",
+		"webpack-bundle-output": "^1.1.0"
+	},
+	"dependencies": {
+		"@wordpress/api-fetch": "^7.12.0",
+		"@wordpress/components": "^31.0.0",
+		"@wordpress/element": "^6.12.0",
+		"@wordpress/i18n": "^5.12.0"
+	}
+}

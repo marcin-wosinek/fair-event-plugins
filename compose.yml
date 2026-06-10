@@ -16,6 +16,7 @@ services:
             - ./fair-platform:/var/www/html/wp-content/plugins/fair-platform
             - ./fair-audience:/var/www/html/wp-content/plugins/fair-audience
             - ./fair-timetable:/var/www/html/wp-content/plugins/fair-timetable
+            - ./fair-finance:/var/www/html/wp-content/plugins/fair-finance
             - ./uploads.ini:/usr/local/etc/php/conf.d/uploads.ini
 
     db:
@@ -51,6 +52,7 @@ services:
             - ./fair-platform:/var/www/html/wp-content/plugins/fair-platform
             - ./fair-audience:/var/www/html/wp-content/plugins/fair-audience
             - ./fair-timetable:/var/www/html/wp-content/plugins/fair-timetable
+            - ./fair-finance:/var/www/html/wp-content/plugins/fair-finance
 
         environment:
             WORDPRESS_DB_HOST: db
