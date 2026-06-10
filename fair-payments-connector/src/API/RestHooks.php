@@ -36,12 +36,6 @@ class RestHooks {
 		$connection_controller = new \FairPaymentsConnector\API\ConnectionController();
 		$connection_controller->register_routes();
 
-		$budget_controller = new \FairPaymentsConnector\API\BudgetController();
-		$budget_controller->register_routes();
-
-		$financial_entry_controller = new \FairPaymentsConnector\API\FinancialEntryController();
-		$financial_entry_controller->register_routes();
-
 		$transactions_controller = new \FairPaymentsConnector\API\TransactionsController();
 		$transactions_controller->register_routes();
 
@@ -62,8 +56,5 @@ class RestHooks {
 
 		$connected_sites_controller = new \FairPaymentsConnector\API\ConnectedSitesController();
 		$connected_sites_controller->register_routes();
-
-		$settlement_controller = new \FairPaymentsConnector\API\SettlementController();
-		$settlement_controller->register_routes();
 	}
 }

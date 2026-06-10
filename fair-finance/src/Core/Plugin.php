@@ -47,6 +47,7 @@ class Plugin {
 	 * @return void
 	 */
 	private function init_hooks() {
+		new \FairFinance\API\RestHooks();
 	}
 
 	/**

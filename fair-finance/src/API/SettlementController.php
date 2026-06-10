@@ -2,15 +2,15 @@
 /**
  * REST API Controller for Mollie settlement reconciliation
  *
- * @package FairPaymentsConnector
+ * @package FairFinance
  */
 
-namespace FairPaymentsConnector\API;
+namespace FairFinance\API;
 
 defined( 'WPINC' ) || die;
 
 use FairPaymentsConnector\Models\EntryTransaction;
-use FairPaymentsConnector\Models\FinancialEntry;
+use FairFinance\Models\FinancialEntry;
 use FairPaymentsConnector\Models\Transaction;
 use WP_REST_Controller;
 use WP_REST_Server;
@@ -34,7 +34,7 @@ class SettlementController extends WP_REST_Controller {
 	 *
 	 * @var string
 	 */
-	protected $namespace = 'fair-payments-connector/v1';
+	protected $namespace = 'fair-finance/v1';
 
 	/**
 	 * Amount tolerance (in currency units) for matching the settlement total
@@ -50,7 +50,7 @@ class SettlementController extends WP_REST_Controller {
 	 * @return void
 	 */
 	public function register_routes() {
-		// POST /fair-payments-connector/v1/reconciliation/settlement/preview - Match a parsed settlement.
+		// POST /fair-finance/v1/reconciliation/settlement/preview - Match a parsed settlement.
 		register_rest_route(
 			$this->namespace,
 			'/reconciliation/settlement/preview',
@@ -61,24 +61,24 @@ class SettlementController extends WP_REST_Controller {
 					'permission_callback' => array( $this, 'preview_permissions_check' ),
 					'args'                => array(
 						'settlement_reference' => array(
-							'description'       => __( 'Mollie settlement reference shared by all rows.', 'fair-payments-connector' ),
+							'description'       => __( 'Mollie settlement reference shared by all rows.', 'fair-finance' ),
 							'type'              => 'string',
 							'required'          => true,
 							'sanitize_callback' => 'sanitize_text_field',
 						),
 						'currency'             => array(
-							'description'       => __( 'Settlement currency.', 'fair-payments-connector' ),
+							'description'       => __( 'Settlement currency.', 'fair-finance' ),
 							'type'              => 'string',
 							'required'          => false,
 							'sanitize_callback' => 'sanitize_text_field',
 						),
 						'settlement_total'     => array(
-							'description' => __( 'Sum of all settlement amount cells.', 'fair-payments-connector' ),
+							'description' => __( 'Sum of all settlement amount cells.', 'fair-finance' ),
 							'type'        => 'number',
 							'required'    => false,
 						),
 						'payment_rows'         => array(
-							'description' => __( 'Parsed payment rows from the settlement CSV.', 'fair-payments-connector' ),
+							'description' => __( 'Parsed payment rows from the settlement CSV.', 'fair-finance' ),
 							'type'        => 'array',
 							'required'    => true,
 							'items'       => array(
@@ -104,7 +104,7 @@ class SettlementController extends WP_REST_Controller {
 							),
 						),
 						'fee_rows'             => array(
-							'description' => __( 'Parsed aggregate fee rows from the settlement CSV.', 'fair-payments-connector' ),
+							'description' => __( 'Parsed aggregate fee rows from the settlement CSV.', 'fair-finance' ),
 							'type'        => 'array',
 							'required'    => false,
 							'items'       => array(
@@ -142,6 +142,14 @@ class SettlementController extends WP_REST_Controller {
 	 * @return WP_REST_Response|WP_Error Report object on success, WP_Error on failure.
 	 */
 	public function preview_settlement( $request ) {
+		if ( ! class_exists( 'FairPaymentsConnector\Models\Transaction' ) ) {
+			return new WP_Error(
+				'rest_fair_payments_connector_required',
+				__( 'Reconciliation requires the Fair Payments Connector plugin.', 'fair-finance' ),
+				array( 'status' => 503 )
+			);
+		}
+
 		$settlement_reference = sanitize_text_field( (string) $request->get_param( 'settlement_reference' ) );
 		$currency             = sanitize_text_field( (string) $request->get_param( 'currency' ) );
 		$payment_rows         = $request->get_param( 'payment_rows' );
@@ -151,7 +159,7 @@ class SettlementController extends WP_REST_Controller {
 		if ( '' === $settlement_reference ) {
 			return new WP_Error(
 				'rest_settlement_invalid',
-				__( 'Missing settlement reference. This does not look like a Mollie settlement export.', 'fair-payments-connector' ),
+				__( 'Missing settlement reference. This does not look like a Mollie settlement export.', 'fair-finance' ),
 				array( 'status' => 400 )
 			);
 		}
@@ -159,7 +167,7 @@ class SettlementController extends WP_REST_Controller {
 		if ( empty( $payment_rows ) || ! is_array( $payment_rows ) ) {
 			return new WP_Error(
 				'rest_settlement_invalid',
-				__( 'No payment rows found. This does not look like a Mollie settlement export.', 'fair-payments-connector' ),
+				__( 'No payment rows found. This does not look like a Mollie settlement export.', 'fair-finance' ),
 				array( 'status' => 400 )
 			);
 		}

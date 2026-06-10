@@ -2,15 +2,15 @@
 /**
  * REST API Controller for Financial Entries
  *
- * @package FairPaymentsConnector
+ * @package FairFinance
  */
 
-namespace FairPaymentsConnector\API;
+namespace FairFinance\API;
 
 defined( 'WPINC' ) || die;
 
 use FairPaymentsConnector\Models\EntryTransaction;
-use FairPaymentsConnector\Models\FinancialEntry;
+use FairFinance\Models\FinancialEntry;
 use FairPaymentsConnector\Models\Transaction;
 use WP_REST_Controller;
 use WP_REST_Server;
@@ -28,7 +28,7 @@ class FinancialEntryController extends WP_REST_Controller {
 	 *
 	 * @var string
 	 */
-	protected $namespace = 'fair-payments-connector/v1';
+	protected $namespace = 'fair-finance/v1';
 
 	/**
 	 * Register the routes for financial entries
@@ -36,8 +36,8 @@ class FinancialEntryController extends WP_REST_Controller {
 	 * @return void
 	 */
 	public function register_routes() {
-		// GET /fair-payments-connector/v1/financial-entries - Get all entries (with filters).
-		// POST /fair-payments-connector/v1/financial-entries - Create entry.
+		// GET /fair-finance/v1/financial-entries - Get all entries (with filters).
+		// POST /fair-finance/v1/financial-entries - Create entry.
 		register_rest_route(
 			$this->namespace,
 			'/financial-entries',
@@ -57,7 +57,7 @@ class FinancialEntryController extends WP_REST_Controller {
 			)
 		);
 
-		// GET /fair-payments-connector/v1/financial-entries/totals - Get totals.
+		// GET /fair-finance/v1/financial-entries/totals - Get totals.
 		register_rest_route(
 			$this->namespace,
 			'/financial-entries/totals',
@@ -71,7 +71,7 @@ class FinancialEntryController extends WP_REST_Controller {
 			)
 		);
 
-		// GET /fair-payments-connector/v1/financial-entries/event-urls - Get distinct event URLs.
+		// GET /fair-finance/v1/financial-entries/event-urls - Get distinct event URLs.
 		register_rest_route(
 			$this->namespace,
 			'/financial-entries/event-urls',
@@ -84,7 +84,7 @@ class FinancialEntryController extends WP_REST_Controller {
 			)
 		);
 
-		// GET /fair-payments-connector/v1/financial-entries/event-date-ids - Get distinct event date IDs.
+		// GET /fair-finance/v1/financial-entries/event-date-ids - Get distinct event date IDs.
 		register_rest_route(
 			$this->namespace,
 			'/financial-entries/event-date-ids',
@@ -97,8 +97,8 @@ class FinancialEntryController extends WP_REST_Controller {
 			)
 		);
 
-		// POST /fair-payments-connector/v1/financial-entries/transfer - Create transfer.
-		// PUT /fair-payments-connector/v1/financial-entries/transfer/{id} - Update transfer.
+		// POST /fair-finance/v1/financial-entries/transfer - Create transfer.
+		// PUT /fair-finance/v1/financial-entries/transfer/{id} - Update transfer.
 		register_rest_route(
 			$this->namespace,
 			'/financial-entries/transfer',
@@ -123,7 +123,7 @@ class FinancialEntryController extends WP_REST_Controller {
 					'args'                => array_merge(
 						array(
 							'id' => array(
-								'description' => __( 'Unique identifier for the transfer entry.', 'fair-payments-connector' ),
+								'description' => __( 'Unique identifier for the transfer entry.', 'fair-finance' ),
 								'type'        => 'integer',
 							),
 						),
@@ -133,9 +133,9 @@ class FinancialEntryController extends WP_REST_Controller {
 			)
 		);
 
-		// GET /fair-payments-connector/v1/financial-entries/{id} - Get single entry.
-		// PUT /fair-payments-connector/v1/financial-entries/{id} - Update entry.
-		// DELETE /fair-payments-connector/v1/financial-entries/{id} - Delete entry.
+		// GET /fair-finance/v1/financial-entries/{id} - Get single entry.
+		// PUT /fair-finance/v1/financial-entries/{id} - Update entry.
+		// DELETE /fair-finance/v1/financial-entries/{id} - Delete entry.
 		register_rest_route(
 			$this->namespace,
 			'/financial-entries/(?P<id>\d+)',
@@ -146,7 +146,7 @@ class FinancialEntryController extends WP_REST_Controller {
 					'permission_callback' => array( $this, 'get_item_permissions_check' ),
 					'args'                => array(
 						'id' => array(
-							'description' => __( 'Unique identifier for the financial entry.', 'fair-payments-connector' ),
+							'description' => __( 'Unique identifier for the financial entry.', 'fair-finance' ),
 							'type'        => 'integer',
 						),
 					),
@@ -163,7 +163,7 @@ class FinancialEntryController extends WP_REST_Controller {
 					'permission_callback' => array( $this, 'delete_item_permissions_check' ),
 					'args'                => array(
 						'id' => array(
-							'description' => __( 'Unique identifier for the financial entry.', 'fair-payments-connector' ),
+							'description' => __( 'Unique identifier for the financial entry.', 'fair-finance' ),
 							'type'        => 'integer',
 						),
 					),
@@ -171,8 +171,8 @@ class FinancialEntryController extends WP_REST_Controller {
 			)
 		);
 
-		// POST /fair-payments-connector/v1/financial-entries/{id}/match - Match entry to transaction(s).
-		// DELETE /fair-payments-connector/v1/financial-entries/{id}/match - Unmatch entry from transaction(s).
+		// POST /fair-finance/v1/financial-entries/{id}/match - Match entry to transaction(s).
+		// DELETE /fair-finance/v1/financial-entries/{id}/match - Unmatch entry from transaction(s).
 		register_rest_route(
 			$this->namespace,
 			'/financial-entries/(?P<id>\d+)/match',
@@ -183,15 +183,15 @@ class FinancialEntryController extends WP_REST_Controller {
 					'permission_callback' => array( $this, 'update_item_permissions_check' ),
 					'args'                => array(
 						'id'              => array(
-							'description' => __( 'Unique identifier for the financial entry.', 'fair-payments-connector' ),
+							'description' => __( 'Unique identifier for the financial entry.', 'fair-finance' ),
 							'type'        => 'integer',
 						),
 						'transaction_id'  => array(
-							'description' => __( 'Single transaction ID to match.', 'fair-payments-connector' ),
+							'description' => __( 'Single transaction ID to match.', 'fair-finance' ),
 							'type'        => 'integer',
 						),
 						'transaction_ids' => array(
-							'description' => __( 'Array of transaction IDs to match.', 'fair-payments-connector' ),
+							'description' => __( 'Array of transaction IDs to match.', 'fair-finance' ),
 							'type'        => 'array',
 							'items'       => array( 'type' => 'integer' ),
 						),
@@ -203,11 +203,11 @@ class FinancialEntryController extends WP_REST_Controller {
 					'permission_callback' => array( $this, 'update_item_permissions_check' ),
 					'args'                => array(
 						'id'             => array(
-							'description' => __( 'Unique identifier for the financial entry.', 'fair-payments-connector' ),
+							'description' => __( 'Unique identifier for the financial entry.', 'fair-finance' ),
 							'type'        => 'integer',
 						),
 						'transaction_id' => array(
-							'description' => __( 'Specific transaction ID to unmatch. If omitted, unmatches all.', 'fair-payments-connector' ),
+							'description' => __( 'Specific transaction ID to unmatch. If omitted, unmatches all.', 'fair-finance' ),
 							'type'        => 'integer',
 						),
 					),
@@ -215,7 +215,7 @@ class FinancialEntryController extends WP_REST_Controller {
 			)
 		);
 
-		// GET /fair-payments-connector/v1/transactions/search - Search transactions for matching.
+		// GET /fair-finance/v1/transactions/search - Search transactions for matching.
 		register_rest_route(
 			$this->namespace,
 			'/transactions/search',
@@ -226,28 +226,28 @@ class FinancialEntryController extends WP_REST_Controller {
 					'permission_callback' => array( $this, 'get_items_permissions_check' ),
 					'args'                => array(
 						'amount'          => array(
-							'description' => __( 'Filter by amount.', 'fair-payments-connector' ),
+							'description' => __( 'Filter by amount.', 'fair-finance' ),
 							'type'        => 'number',
 						),
 						'date_from'       => array(
-							'description'       => __( 'Filter by start date.', 'fair-payments-connector' ),
+							'description'       => __( 'Filter by start date.', 'fair-finance' ),
 							'type'              => 'string',
 							'format'            => 'date',
 							'sanitize_callback' => 'sanitize_text_field',
 						),
 						'date_to'         => array(
-							'description'       => __( 'Filter by end date.', 'fair-payments-connector' ),
+							'description'       => __( 'Filter by end date.', 'fair-finance' ),
 							'type'              => 'string',
 							'format'            => 'date',
 							'sanitize_callback' => 'sanitize_text_field',
 						),
 						'search'          => array(
-							'description'       => __( 'Search term.', 'fair-payments-connector' ),
+							'description'       => __( 'Search term.', 'fair-finance' ),
 							'type'              => 'string',
 							'sanitize_callback' => 'sanitize_text_field',
 						),
 						'exclude_matched' => array(
-							'description' => __( 'Exclude already matched transactions.', 'fair-payments-connector' ),
+							'description' => __( 'Exclude already matched transactions.', 'fair-finance' ),
 							'type'        => 'boolean',
 							'default'     => false,
 						),
@@ -256,7 +256,7 @@ class FinancialEntryController extends WP_REST_Controller {
 			)
 		);
 
-		// GET /fair-payments-connector/v1/financial-entries/{id}/suggest-matches - Suggest transaction matches.
+		// GET /fair-finance/v1/financial-entries/{id}/suggest-matches - Suggest transaction matches.
 		register_rest_route(
 			$this->namespace,
 			'/financial-entries/(?P<id>\d+)/suggest-matches',
@@ -267,16 +267,16 @@ class FinancialEntryController extends WP_REST_Controller {
 					'permission_callback' => array( $this, 'get_items_permissions_check' ),
 					'args'                => array(
 						'id'              => array(
-							'description' => __( 'Unique identifier for the financial entry.', 'fair-payments-connector' ),
+							'description' => __( 'Unique identifier for the financial entry.', 'fair-finance' ),
 							'type'        => 'integer',
 						),
 						'tolerance'       => array(
-							'description' => __( 'Amount tolerance for matching.', 'fair-payments-connector' ),
+							'description' => __( 'Amount tolerance for matching.', 'fair-finance' ),
 							'type'        => 'number',
 							'default'     => 0.10,
 						),
 						'date_range_days' => array(
-							'description' => __( 'Number of days before entry date to search.', 'fair-payments-connector' ),
+							'description' => __( 'Number of days before entry date to search.', 'fair-finance' ),
 							'type'        => 'integer',
 							'default'     => 30,
 						),
@@ -285,7 +285,7 @@ class FinancialEntryController extends WP_REST_Controller {
 			)
 		);
 
-		// GET /fair-payments-connector/v1/reconciliation - Get reconciliation data.
+		// GET /fair-finance/v1/reconciliation - Get reconciliation data.
 		register_rest_route(
 			$this->namespace,
 			'/reconciliation',
@@ -296,13 +296,13 @@ class FinancialEntryController extends WP_REST_Controller {
 					'permission_callback' => array( $this, 'get_items_permissions_check' ),
 					'args'                => array(
 						'date_from' => array(
-							'description'       => __( 'Filter by start date.', 'fair-payments-connector' ),
+							'description'       => __( 'Filter by start date.', 'fair-finance' ),
 							'type'              => 'string',
 							'format'            => 'date',
 							'sanitize_callback' => 'sanitize_text_field',
 						),
 						'date_to'   => array(
-							'description'       => __( 'Filter by end date.', 'fair-payments-connector' ),
+							'description'       => __( 'Filter by end date.', 'fair-finance' ),
 							'type'              => 'string',
 							'format'            => 'date',
 							'sanitize_callback' => 'sanitize_text_field',
@@ -312,9 +312,9 @@ class FinancialEntryController extends WP_REST_Controller {
 			)
 		);
 
-		// POST /fair-payments-connector/v1/financial-entries/{id}/split - Split entry into multiple budgets.
-		// PUT /fair-payments-connector/v1/financial-entries/{id}/split - Update an existing split.
-		// DELETE /fair-payments-connector/v1/financial-entries/{id}/split - Unsplit entry.
+		// POST /fair-finance/v1/financial-entries/{id}/split - Split entry into multiple budgets.
+		// PUT /fair-finance/v1/financial-entries/{id}/split - Update an existing split.
+		// DELETE /fair-finance/v1/financial-entries/{id}/split - Unsplit entry.
 		register_rest_route(
 			$this->namespace,
 			'/financial-entries/(?P<id>\d+)/split',
@@ -337,7 +337,7 @@ class FinancialEntryController extends WP_REST_Controller {
 					'permission_callback' => array( $this, 'update_item_permissions_check' ),
 					'args'                => array(
 						'id' => array(
-							'description' => __( 'Unique identifier for the financial entry.', 'fair-payments-connector' ),
+							'description' => __( 'Unique identifier for the financial entry.', 'fair-finance' ),
 							'type'        => 'integer',
 						),
 					),
@@ -345,7 +345,7 @@ class FinancialEntryController extends WP_REST_Controller {
 			)
 		);
 
-		// POST /fair-payments-connector/v1/financial-entries/import - Import entries from parsed data.
+		// POST /fair-finance/v1/financial-entries/import - Import entries from parsed data.
 		register_rest_route(
 			$this->namespace,
 			'/financial-entries/import',
@@ -356,7 +356,7 @@ class FinancialEntryController extends WP_REST_Controller {
 					'permission_callback' => array( $this, 'create_item_permissions_check' ),
 					'args'                => array(
 						'entries'       => array(
-							'description' => __( 'Array of entries to import.', 'fair-payments-connector' ),
+							'description' => __( 'Array of entries to import.', 'fair-finance' ),
 							'type'        => 'array',
 							'required'    => true,
 							'items'       => array(
@@ -385,7 +385,7 @@ class FinancialEntryController extends WP_REST_Controller {
 							),
 						),
 						'import_source' => array(
-							'description'       => __( 'Source filename of the import.', 'fair-payments-connector' ),
+							'description'       => __( 'Source filename of the import.', 'fair-finance' ),
 							'type'              => 'string',
 							'required'          => false,
 							'sanitize_callback' => 'sanitize_file_name',
@@ -404,39 +404,39 @@ class FinancialEntryController extends WP_REST_Controller {
 	private function get_filter_params() {
 		return array(
 			'date_from'     => array(
-				'description'       => __( 'Filter by start date (Y-m-d format).', 'fair-payments-connector' ),
+				'description'       => __( 'Filter by start date (Y-m-d format).', 'fair-finance' ),
 				'type'              => 'string',
 				'format'            => 'date',
 				'sanitize_callback' => 'sanitize_text_field',
 			),
 			'date_to'       => array(
-				'description'       => __( 'Filter by end date (Y-m-d format).', 'fair-payments-connector' ),
+				'description'       => __( 'Filter by end date (Y-m-d format).', 'fair-finance' ),
 				'type'              => 'string',
 				'format'            => 'date',
 				'sanitize_callback' => 'sanitize_text_field',
 			),
 			'budget_id'     => array(
-				'description'       => __( 'Filter by budget ID, or "none" for unbudgeted.', 'fair-payments-connector' ),
+				'description'       => __( 'Filter by budget ID, or "none" for unbudgeted.', 'fair-finance' ),
 				'type'              => 'string',
 				'sanitize_callback' => 'sanitize_text_field',
 			),
 			'event_url'     => array(
-				'description'       => __( 'Filter by event URL.', 'fair-payments-connector' ),
+				'description'       => __( 'Filter by event URL.', 'fair-finance' ),
 				'type'              => 'string',
 				'sanitize_callback' => 'sanitize_text_field',
 			),
 			'event_date_id' => array(
-				'description' => __( 'Filter by event date ID.', 'fair-payments-connector' ),
+				'description' => __( 'Filter by event date ID.', 'fair-finance' ),
 				'type'        => 'integer',
 			),
 			'entry_type'    => array(
-				'description'       => __( 'Filter by entry type: cost, income, or transfer.', 'fair-payments-connector' ),
+				'description'       => __( 'Filter by entry type: cost, income, or transfer.', 'fair-finance' ),
 				'type'              => 'string',
 				'enum'              => array( 'cost', 'income', 'transfer' ),
 				'sanitize_callback' => 'sanitize_text_field',
 			),
 			'unmatched'     => array(
-				'description' => __( 'Filter to only unmatched entries.', 'fair-payments-connector' ),
+				'description' => __( 'Filter to only unmatched entries.', 'fair-finance' ),
 				'type'        => 'boolean',
 			),
 		);
@@ -452,27 +452,27 @@ class FinancialEntryController extends WP_REST_Controller {
 			$this->get_filter_params(),
 			array(
 				'per_page' => array(
-					'description' => __( 'Maximum number of items per page.', 'fair-payments-connector' ),
+					'description' => __( 'Maximum number of items per page.', 'fair-finance' ),
 					'type'        => 'integer',
 					'default'     => 50,
 					'minimum'     => 1,
 					'maximum'     => 100,
 				),
 				'page'     => array(
-					'description' => __( 'Current page number.', 'fair-payments-connector' ),
+					'description' => __( 'Current page number.', 'fair-finance' ),
 					'type'        => 'integer',
 					'default'     => 1,
 					'minimum'     => 1,
 				),
 				'orderby'  => array(
-					'description'       => __( 'Sort by column.', 'fair-payments-connector' ),
+					'description'       => __( 'Sort by column.', 'fair-finance' ),
 					'type'              => 'string',
 					'default'           => 'entry_date',
 					'enum'              => array( 'entry_date', 'amount', 'budget_id', 'event_date_id', 'imported_at' ),
 					'sanitize_callback' => 'sanitize_text_field',
 				),
 				'order'    => array(
-					'description'       => __( 'Sort direction.', 'fair-payments-connector' ),
+					'description'       => __( 'Sort direction.', 'fair-finance' ),
 					'type'              => 'string',
 					'default'           => 'desc',
 					'enum'              => array( 'asc', 'desc' ),
@@ -490,42 +490,42 @@ class FinancialEntryController extends WP_REST_Controller {
 	private function get_create_update_args() {
 		return array(
 			'amount'         => array(
-				'description' => __( 'Entry amount (positive value).', 'fair-payments-connector' ),
+				'description' => __( 'Entry amount (positive value).', 'fair-finance' ),
 				'type'        => 'number',
 				'required'    => true,
 			),
 			'entry_type'     => array(
-				'description'       => __( 'Entry type: cost or income.', 'fair-payments-connector' ),
+				'description'       => __( 'Entry type: cost or income.', 'fair-finance' ),
 				'type'              => 'string',
 				'required'          => true,
 				'enum'              => array( 'cost', 'income' ),
 				'sanitize_callback' => 'sanitize_text_field',
 			),
 			'entry_date'     => array(
-				'description'       => __( 'Entry date (Y-m-d format).', 'fair-payments-connector' ),
+				'description'       => __( 'Entry date (Y-m-d format).', 'fair-finance' ),
 				'type'              => 'string',
 				'required'          => true,
 				'format'            => 'date',
 				'sanitize_callback' => 'sanitize_text_field',
 			),
 			'description'    => array(
-				'description'       => __( 'Entry description.', 'fair-payments-connector' ),
+				'description'       => __( 'Entry description.', 'fair-finance' ),
 				'type'              => 'string',
 				'required'          => false,
 				'sanitize_callback' => 'sanitize_textarea_field',
 			),
 			'budget_id'      => array(
-				'description' => __( 'Budget ID.', 'fair-payments-connector' ),
+				'description' => __( 'Budget ID.', 'fair-finance' ),
 				'type'        => array( 'integer', 'null' ),
 				'required'    => false,
 			),
 			'transaction_id' => array(
-				'description' => __( 'Transaction ID.', 'fair-payments-connector' ),
+				'description' => __( 'Transaction ID.', 'fair-finance' ),
 				'type'        => 'integer',
 				'required'    => false,
 			),
 			'event_url'      => array(
-				'description'       => __( 'Link URL (local or external).', 'fair-payments-connector' ),
+				'description'       => __( 'Link URL (local or external).', 'fair-finance' ),
 				'type'              => array( 'string', 'null' ),
 				'required'          => false,
 				'sanitize_callback' => function ( $value ) {
@@ -533,7 +533,7 @@ class FinancialEntryController extends WP_REST_Controller {
 				},
 			),
 			'event_date_id'  => array(
-				'description' => __( 'Linked event date ID.', 'fair-payments-connector' ),
+				'description' => __( 'Linked event date ID.', 'fair-finance' ),
 				'type'        => array( 'integer', 'null' ),
 				'required'    => false,
 			),
@@ -548,11 +548,11 @@ class FinancialEntryController extends WP_REST_Controller {
 	private function get_split_args() {
 		return array(
 			'id'          => array(
-				'description' => __( 'Unique identifier for the financial entry.', 'fair-payments-connector' ),
+				'description' => __( 'Unique identifier for the financial entry.', 'fair-finance' ),
 				'type'        => 'integer',
 			),
 			'allocations' => array(
-				'description' => __( 'Array of budget allocations.', 'fair-payments-connector' ),
+				'description' => __( 'Array of budget allocations.', 'fair-finance' ),
 				'type'        => 'array',
 				'required'    => true,
 				'items'       => array(
@@ -717,7 +717,7 @@ class FinancialEntryController extends WP_REST_Controller {
 		if ( ! $entry ) {
 			return new WP_Error(
 				'rest_entry_not_found',
-				__( 'Financial entry not found.', 'fair-payments-connector' ),
+				__( 'Financial entry not found.', 'fair-finance' ),
 				array( 'status' => 404 )
 			);
 		}
@@ -744,7 +744,7 @@ class FinancialEntryController extends WP_REST_Controller {
 		if ( empty( $amount ) || $amount <= 0 ) {
 			return new WP_Error(
 				'rest_invalid_amount',
-				__( 'Amount must be greater than zero.', 'fair-payments-connector' ),
+				__( 'Amount must be greater than zero.', 'fair-finance' ),
 				array( 'status' => 400 )
 			);
 		}
@@ -752,7 +752,7 @@ class FinancialEntryController extends WP_REST_Controller {
 		if ( ! in_array( $entry_type, array( 'cost', 'income' ), true ) ) {
 			return new WP_Error(
 				'rest_invalid_entry_type',
-				__( 'Entry type must be cost or income.', 'fair-payments-connector' ),
+				__( 'Entry type must be cost or income.', 'fair-finance' ),
 				array( 'status' => 400 )
 			);
 		}
@@ -760,7 +760,7 @@ class FinancialEntryController extends WP_REST_Controller {
 		if ( empty( $entry_date ) ) {
 			return new WP_Error(
 				'rest_invalid_entry_date',
-				__( 'Entry date is required.', 'fair-payments-connector' ),
+				__( 'Entry date is required.', 'fair-finance' ),
 				array( 'status' => 400 )
 			);
 		}
@@ -779,7 +779,7 @@ class FinancialEntryController extends WP_REST_Controller {
 		if ( ! $entry_id ) {
 			return new WP_Error(
 				'rest_entry_creation_failed',
-				__( 'Failed to create financial entry.', 'fair-payments-connector' ),
+				__( 'Failed to create financial entry.', 'fair-finance' ),
 				array( 'status' => 500 )
 			);
 		}
@@ -811,7 +811,7 @@ class FinancialEntryController extends WP_REST_Controller {
 		if ( ! $existing ) {
 			return new WP_Error(
 				'rest_entry_not_found',
-				__( 'Financial entry not found.', 'fair-payments-connector' ),
+				__( 'Financial entry not found.', 'fair-finance' ),
 				array( 'status' => 404 )
 			);
 		}
@@ -819,7 +819,7 @@ class FinancialEntryController extends WP_REST_Controller {
 		if ( empty( $amount ) || $amount <= 0 ) {
 			return new WP_Error(
 				'rest_invalid_amount',
-				__( 'Amount must be greater than zero.', 'fair-payments-connector' ),
+				__( 'Amount must be greater than zero.', 'fair-finance' ),
 				array( 'status' => 400 )
 			);
 		}
@@ -827,7 +827,7 @@ class FinancialEntryController extends WP_REST_Controller {
 		if ( ! in_array( $entry_type, array( 'cost', 'income' ), true ) ) {
 			return new WP_Error(
 				'rest_invalid_entry_type',
-				__( 'Entry type must be cost or income.', 'fair-payments-connector' ),
+				__( 'Entry type must be cost or income.', 'fair-finance' ),
 				array( 'status' => 400 )
 			);
 		}
@@ -835,7 +835,7 @@ class FinancialEntryController extends WP_REST_Controller {
 		if ( empty( $entry_date ) ) {
 			return new WP_Error(
 				'rest_invalid_entry_date',
-				__( 'Entry date is required.', 'fair-payments-connector' ),
+				__( 'Entry date is required.', 'fair-finance' ),
 				array( 'status' => 400 )
 			);
 		}
@@ -855,7 +855,7 @@ class FinancialEntryController extends WP_REST_Controller {
 		if ( ! $success ) {
 			return new WP_Error(
 				'rest_entry_update_failed',
-				__( 'Failed to update financial entry.', 'fair-payments-connector' ),
+				__( 'Failed to update financial entry.', 'fair-finance' ),
 				array( 'status' => 500 )
 			);
 		}
@@ -879,7 +879,7 @@ class FinancialEntryController extends WP_REST_Controller {
 		if ( ! $existing ) {
 			return new WP_Error(
 				'rest_entry_not_found',
-				__( 'Financial entry not found.', 'fair-payments-connector' ),
+				__( 'Financial entry not found.', 'fair-finance' ),
 				array( 'status' => 404 )
 			);
 		}
@@ -889,7 +889,7 @@ class FinancialEntryController extends WP_REST_Controller {
 		if ( ! $success ) {
 			return new WP_Error(
 				'rest_entry_delete_failed',
-				__( 'Failed to delete financial entry.', 'fair-payments-connector' ),
+				__( 'Failed to delete financial entry.', 'fair-finance' ),
 				array( 'status' => 500 )
 			);
 		}
@@ -919,7 +919,7 @@ class FinancialEntryController extends WP_REST_Controller {
 		if ( ! $entry ) {
 			return new WP_Error(
 				'rest_entry_not_found',
-				__( 'Financial entry not found.', 'fair-payments-connector' ),
+				__( 'Financial entry not found.', 'fair-finance' ),
 				array( 'status' => 404 )
 			);
 		}
@@ -933,7 +933,7 @@ class FinancialEntryController extends WP_REST_Controller {
 		} else {
 			return new WP_Error(
 				'rest_missing_param',
-				__( 'Either transaction_id or transaction_ids is required.', 'fair-payments-connector' ),
+				__( 'Either transaction_id or transaction_ids is required.', 'fair-finance' ),
 				array( 'status' => 400 )
 			);
 		}
@@ -945,7 +945,7 @@ class FinancialEntryController extends WP_REST_Controller {
 				return new WP_Error(
 					'rest_transaction_not_found',
 					/* translators: %d: transaction ID */
-					sprintf( __( 'Transaction %d not found.', 'fair-payments-connector' ), $tid ),
+					sprintf( __( 'Transaction %d not found.', 'fair-finance' ), $tid ),
 					array( 'status' => 404 )
 				);
 			}
@@ -956,7 +956,7 @@ class FinancialEntryController extends WP_REST_Controller {
 		if ( ! $success ) {
 			return new WP_Error(
 				'rest_match_failed',
-				__( 'Failed to match entry to transaction.', 'fair-payments-connector' ),
+				__( 'Failed to match entry to transaction.', 'fair-finance' ),
 				array( 'status' => 500 )
 			);
 		}
@@ -1000,7 +1000,7 @@ class FinancialEntryController extends WP_REST_Controller {
 					global $wpdb;
 					// phpcs:ignore WordPress.DB.DirectDatabaseQuery -- writing a back-link onto our own table; no caching layer.
 					$wpdb->update(
-						\FairPaymentsConnector\Database\Schema::get_financial_entries_table_name(),
+						\FairFinance\Database\Schema::get_financial_entries_table_name(),
 						array(
 							'event_url'     => '' !== $link['event_url'] ? $link['event_url'] : null,
 							'event_date_id' => $link['event_date_id'],
@@ -1072,7 +1072,7 @@ class FinancialEntryController extends WP_REST_Controller {
 		if ( ! $entry ) {
 			return new WP_Error(
 				'rest_entry_not_found',
-				__( 'Financial entry not found.', 'fair-payments-connector' ),
+				__( 'Financial entry not found.', 'fair-finance' ),
 				array( 'status' => 404 )
 			);
 		}
@@ -1086,7 +1086,7 @@ class FinancialEntryController extends WP_REST_Controller {
 		if ( ! $success ) {
 			return new WP_Error(
 				'rest_unmatch_failed',
-				__( 'Failed to unmatch entry from transaction.', 'fair-payments-connector' ),
+				__( 'Failed to unmatch entry from transaction.', 'fair-finance' ),
 				array( 'status' => 500 )
 			);
 		}
@@ -1111,7 +1111,7 @@ class FinancialEntryController extends WP_REST_Controller {
 		if ( ! $entry ) {
 			return new WP_Error(
 				'rest_entry_not_found',
-				__( 'Financial entry not found.', 'fair-payments-connector' ),
+				__( 'Financial entry not found.', 'fair-finance' ),
 				array( 'status' => 404 )
 			);
 		}
@@ -1120,7 +1120,7 @@ class FinancialEntryController extends WP_REST_Controller {
 		if ( $entry->parent_entry_id ) {
 			return new WP_Error(
 				'rest_entry_is_child',
-				__( 'Cannot split a child entry.', 'fair-payments-connector' ),
+				__( 'Cannot split a child entry.', 'fair-finance' ),
 				array( 'status' => 400 )
 			);
 		}
@@ -1129,7 +1129,7 @@ class FinancialEntryController extends WP_REST_Controller {
 		if ( FinancialEntry::has_children( $id ) ) {
 			return new WP_Error(
 				'rest_entry_already_split',
-				__( 'Entry is already split.', 'fair-payments-connector' ),
+				__( 'Entry is already split.', 'fair-finance' ),
 				array( 'status' => 400 )
 			);
 		}
@@ -1138,7 +1138,7 @@ class FinancialEntryController extends WP_REST_Controller {
 		if ( empty( $allocations ) || ! is_array( $allocations ) || count( $allocations ) < 2 ) {
 			return new WP_Error(
 				'rest_invalid_allocations',
-				__( 'At least 2 allocations are required.', 'fair-payments-connector' ),
+				__( 'At least 2 allocations are required.', 'fair-finance' ),
 				array( 'status' => 400 )
 			);
 		}
@@ -1149,7 +1149,7 @@ class FinancialEntryController extends WP_REST_Controller {
 			if ( 0.0 === $amount ) {
 				return new WP_Error(
 					'rest_invalid_allocation_amount',
-					__( 'Each allocation amount must be nonzero.', 'fair-payments-connector' ),
+					__( 'Each allocation amount must be nonzero.', 'fair-finance' ),
 					array( 'status' => 400 )
 				);
 			}
@@ -1160,7 +1160,7 @@ class FinancialEntryController extends WP_REST_Controller {
 		if ( abs( $total_allocated - $entry->amount ) > 0.01 ) {
 			return new WP_Error(
 				'rest_allocation_mismatch',
-				__( 'Total allocations must match the original entry amount.', 'fair-payments-connector' ),
+				__( 'Total allocations must match the original entry amount.', 'fair-finance' ),
 				array( 'status' => 400 )
 			);
 		}
@@ -1170,7 +1170,7 @@ class FinancialEntryController extends WP_REST_Controller {
 		if ( ! $child_ids ) {
 			return new WP_Error(
 				'rest_split_failed',
-				__( 'Failed to split entry.', 'fair-payments-connector' ),
+				__( 'Failed to split entry.', 'fair-finance' ),
 				array( 'status' => 500 )
 			);
 		}
@@ -1206,7 +1206,7 @@ class FinancialEntryController extends WP_REST_Controller {
 		if ( ! $entry ) {
 			return new WP_Error(
 				'rest_entry_not_found',
-				__( 'Financial entry not found.', 'fair-payments-connector' ),
+				__( 'Financial entry not found.', 'fair-finance' ),
 				array( 'status' => 404 )
 			);
 		}
@@ -1215,7 +1215,7 @@ class FinancialEntryController extends WP_REST_Controller {
 		if ( $entry->parent_entry_id ) {
 			return new WP_Error(
 				'rest_entry_is_child',
-				__( 'Cannot update split on a child entry.', 'fair-payments-connector' ),
+				__( 'Cannot update split on a child entry.', 'fair-finance' ),
 				array( 'status' => 400 )
 			);
 		}
@@ -1224,7 +1224,7 @@ class FinancialEntryController extends WP_REST_Controller {
 		if ( ! FinancialEntry::has_children( $id ) ) {
 			return new WP_Error(
 				'rest_entry_not_split',
-				__( 'Entry is not split.', 'fair-payments-connector' ),
+				__( 'Entry is not split.', 'fair-finance' ),
 				array( 'status' => 400 )
 			);
 		}
@@ -1233,7 +1233,7 @@ class FinancialEntryController extends WP_REST_Controller {
 		if ( empty( $allocations ) || ! is_array( $allocations ) || count( $allocations ) < 2 ) {
 			return new WP_Error(
 				'rest_invalid_allocations',
-				__( 'At least 2 allocations are required.', 'fair-payments-connector' ),
+				__( 'At least 2 allocations are required.', 'fair-finance' ),
 				array( 'status' => 400 )
 			);
 		}
@@ -1244,7 +1244,7 @@ class FinancialEntryController extends WP_REST_Controller {
 			if ( 0.0 === $amount ) {
 				return new WP_Error(
 					'rest_invalid_allocation_amount',
-					__( 'Each allocation amount must be nonzero.', 'fair-payments-connector' ),
+					__( 'Each allocation amount must be nonzero.', 'fair-finance' ),
 					array( 'status' => 400 )
 				);
 			}
@@ -1255,7 +1255,7 @@ class FinancialEntryController extends WP_REST_Controller {
 		if ( abs( $total_allocated - $entry->amount ) > 0.01 ) {
 			return new WP_Error(
 				'rest_allocation_mismatch',
-				__( 'Total allocations must match the original entry amount.', 'fair-payments-connector' ),
+				__( 'Total allocations must match the original entry amount.', 'fair-finance' ),
 				array( 'status' => 400 )
 			);
 		}
@@ -1265,7 +1265,7 @@ class FinancialEntryController extends WP_REST_Controller {
 		if ( ! $child_ids ) {
 			return new WP_Error(
 				'rest_update_split_failed',
-				__( 'Failed to update split.', 'fair-payments-connector' ),
+				__( 'Failed to update split.', 'fair-finance' ),
 				array( 'status' => 500 )
 			);
 		}
@@ -1300,7 +1300,7 @@ class FinancialEntryController extends WP_REST_Controller {
 		if ( ! $entry ) {
 			return new WP_Error(
 				'rest_entry_not_found',
-				__( 'Financial entry not found.', 'fair-payments-connector' ),
+				__( 'Financial entry not found.', 'fair-finance' ),
 				array( 'status' => 404 )
 			);
 		}
@@ -1309,7 +1309,7 @@ class FinancialEntryController extends WP_REST_Controller {
 		if ( ! FinancialEntry::has_children( $id ) ) {
 			return new WP_Error(
 				'rest_entry_not_split',
-				__( 'Entry is not split.', 'fair-payments-connector' ),
+				__( 'Entry is not split.', 'fair-finance' ),
 				array( 'status' => 400 )
 			);
 		}
@@ -1319,7 +1319,7 @@ class FinancialEntryController extends WP_REST_Controller {
 		if ( ! $success ) {
 			return new WP_Error(
 				'rest_unsplit_failed',
-				__( 'Failed to unsplit entry.', 'fair-payments-connector' ),
+				__( 'Failed to unsplit entry.', 'fair-finance' ),
 				array( 'status' => 500 )
 			);
 		}
@@ -1335,35 +1335,35 @@ class FinancialEntryController extends WP_REST_Controller {
 	private function get_transfer_args() {
 		return array(
 			'amount'           => array(
-				'description' => __( 'Transfer amount (positive value).', 'fair-payments-connector' ),
+				'description' => __( 'Transfer amount (positive value).', 'fair-finance' ),
 				'type'        => 'number',
 				'required'    => true,
 			),
 			'entry_date'       => array(
-				'description'       => __( 'Transfer date (Y-m-d format).', 'fair-payments-connector' ),
+				'description'       => __( 'Transfer date (Y-m-d format).', 'fair-finance' ),
 				'type'              => 'string',
 				'required'          => true,
 				'format'            => 'date',
 				'sanitize_callback' => 'sanitize_text_field',
 			),
 			'source_budget_id' => array(
-				'description' => __( 'Source budget ID (money comes from).', 'fair-payments-connector' ),
+				'description' => __( 'Source budget ID (money comes from).', 'fair-finance' ),
 				'type'        => 'integer',
 				'required'    => true,
 			),
 			'target_budget_id' => array(
-				'description' => __( 'Target budget ID (money goes to).', 'fair-payments-connector' ),
+				'description' => __( 'Target budget ID (money goes to).', 'fair-finance' ),
 				'type'        => 'integer',
 				'required'    => true,
 			),
 			'description'      => array(
-				'description'       => __( 'Transfer description.', 'fair-payments-connector' ),
+				'description'       => __( 'Transfer description.', 'fair-finance' ),
 				'type'              => 'string',
 				'required'          => false,
 				'sanitize_callback' => 'sanitize_textarea_field',
 			),
 			'event_url'        => array(
-				'description'       => __( 'Event URL (local or external).', 'fair-payments-connector' ),
+				'description'       => __( 'Event URL (local or external).', 'fair-finance' ),
 				'type'              => array( 'string', 'null' ),
 				'required'          => false,
 				'sanitize_callback' => function ( $value ) {
@@ -1371,7 +1371,7 @@ class FinancialEntryController extends WP_REST_Controller {
 				},
 			),
 			'event_date_id'    => array(
-				'description' => __( 'Event date ID.', 'fair-payments-connector' ),
+				'description' => __( 'Event date ID.', 'fair-finance' ),
 				'type'        => array( 'integer', 'null' ),
 				'required'    => false,
 			),
@@ -1397,7 +1397,7 @@ class FinancialEntryController extends WP_REST_Controller {
 		if ( empty( $amount ) || $amount <= 0 ) {
 			return new WP_Error(
 				'rest_invalid_amount',
-				__( 'Amount must be greater than zero.', 'fair-payments-connector' ),
+				__( 'Amount must be greater than zero.', 'fair-finance' ),
 				array( 'status' => 400 )
 			);
 		}
@@ -1405,7 +1405,7 @@ class FinancialEntryController extends WP_REST_Controller {
 		if ( empty( $entry_date ) ) {
 			return new WP_Error(
 				'rest_invalid_entry_date',
-				__( 'Entry date is required.', 'fair-payments-connector' ),
+				__( 'Entry date is required.', 'fair-finance' ),
 				array( 'status' => 400 )
 			);
 		}
@@ -1413,7 +1413,7 @@ class FinancialEntryController extends WP_REST_Controller {
 		if ( empty( $source_budget_id ) || empty( $target_budget_id ) ) {
 			return new WP_Error(
 				'rest_invalid_budgets',
-				__( 'Both source and target budgets are required.', 'fair-payments-connector' ),
+				__( 'Both source and target budgets are required.', 'fair-finance' ),
 				array( 'status' => 400 )
 			);
 		}
@@ -1421,7 +1421,7 @@ class FinancialEntryController extends WP_REST_Controller {
 		if ( (int) $source_budget_id === (int) $target_budget_id ) {
 			return new WP_Error(
 				'rest_same_budget',
-				__( 'Source and target budgets must be different.', 'fair-payments-connector' ),
+				__( 'Source and target budgets must be different.', 'fair-finance' ),
 				array( 'status' => 400 )
 			);
 		}
@@ -1440,7 +1440,7 @@ class FinancialEntryController extends WP_REST_Controller {
 		if ( ! $parent_id ) {
 			return new WP_Error(
 				'rest_transfer_creation_failed',
-				__( 'Failed to create transfer.', 'fair-payments-connector' ),
+				__( 'Failed to create transfer.', 'fair-finance' ),
 				array( 'status' => 500 )
 			);
 		}
@@ -1481,7 +1481,7 @@ class FinancialEntryController extends WP_REST_Controller {
 		if ( ! $existing ) {
 			return new WP_Error(
 				'rest_entry_not_found',
-				__( 'Transfer entry not found.', 'fair-payments-connector' ),
+				__( 'Transfer entry not found.', 'fair-finance' ),
 				array( 'status' => 404 )
 			);
 		}
@@ -1489,7 +1489,7 @@ class FinancialEntryController extends WP_REST_Controller {
 		if ( 'transfer' !== $existing->entry_type ) {
 			return new WP_Error(
 				'rest_not_a_transfer',
-				__( 'Entry is not a transfer.', 'fair-payments-connector' ),
+				__( 'Entry is not a transfer.', 'fair-finance' ),
 				array( 'status' => 400 )
 			);
 		}
@@ -1497,7 +1497,7 @@ class FinancialEntryController extends WP_REST_Controller {
 		if ( empty( $amount ) || $amount <= 0 ) {
 			return new WP_Error(
 				'rest_invalid_amount',
-				__( 'Amount must be greater than zero.', 'fair-payments-connector' ),
+				__( 'Amount must be greater than zero.', 'fair-finance' ),
 				array( 'status' => 400 )
 			);
 		}
@@ -1505,7 +1505,7 @@ class FinancialEntryController extends WP_REST_Controller {
 		if ( empty( $entry_date ) ) {
 			return new WP_Error(
 				'rest_invalid_entry_date',
-				__( 'Entry date is required.', 'fair-payments-connector' ),
+				__( 'Entry date is required.', 'fair-finance' ),
 				array( 'status' => 400 )
 			);
 		}
@@ -1513,7 +1513,7 @@ class FinancialEntryController extends WP_REST_Controller {
 		if ( empty( $source_budget_id ) || empty( $target_budget_id ) ) {
 			return new WP_Error(
 				'rest_invalid_budgets',
-				__( 'Both source and target budgets are required.', 'fair-payments-connector' ),
+				__( 'Both source and target budgets are required.', 'fair-finance' ),
 				array( 'status' => 400 )
 			);
 		}
@@ -1521,7 +1521,7 @@ class FinancialEntryController extends WP_REST_Controller {
 		if ( (int) $source_budget_id === (int) $target_budget_id ) {
 			return new WP_Error(
 				'rest_same_budget',
-				__( 'Source and target budgets must be different.', 'fair-payments-connector' ),
+				__( 'Source and target budgets must be different.', 'fair-finance' ),
 				array( 'status' => 400 )
 			);
 		}
@@ -1541,7 +1541,7 @@ class FinancialEntryController extends WP_REST_Controller {
 		if ( ! $success ) {
 			return new WP_Error(
 				'rest_transfer_update_failed',
-				__( 'Failed to update transfer.', 'fair-payments-connector' ),
+				__( 'Failed to update transfer.', 'fair-finance' ),
 				array( 'status' => 500 )
 			);
 		}
@@ -1666,7 +1666,7 @@ class FinancialEntryController extends WP_REST_Controller {
 		if ( empty( $entries ) || ! is_array( $entries ) ) {
 			return new WP_Error(
 				'rest_invalid_entries',
-				__( 'No entries provided for import.', 'fair-payments-connector' ),
+				__( 'No entries provided for import.', 'fair-finance' ),
 				array( 'status' => 400 )
 			);
 		}
@@ -1682,7 +1682,7 @@ class FinancialEntryController extends WP_REST_Controller {
 				++$skipped;
 				$errors[] = sprintf(
 					/* translators: %d: row number */
-					__( 'Row %d: Missing required fields.', 'fair-payments-connector' ),
+					__( 'Row %d: Missing required fields.', 'fair-finance' ),
 					$index + 1
 				);
 				continue;
@@ -1693,7 +1693,7 @@ class FinancialEntryController extends WP_REST_Controller {
 				++$skipped;
 				$errors[] = sprintf(
 					/* translators: %d: row number */
-					__( 'Row %d: Invalid entry type.', 'fair-payments-connector' ),
+					__( 'Row %d: Invalid entry type.', 'fair-finance' ),
 					$index + 1
 				);
 				continue;
@@ -1724,7 +1724,7 @@ class FinancialEntryController extends WP_REST_Controller {
 				'errors'   => $errors,
 				'message'  => sprintf(
 					/* translators: 1: imported count, 2: skipped count */
-					__( 'Imported %1$d entries, skipped %2$d (duplicates or errors).', 'fair-payments-connector' ),
+					__( 'Imported %1$d entries, skipped %2$d (duplicates or errors).', 'fair-finance' ),
 					$imported,
 					$skipped
 				),
@@ -1798,7 +1798,7 @@ class FinancialEntryController extends WP_REST_Controller {
 		if ( ! $entry ) {
 			return new WP_Error(
 				'rest_entry_not_found',
-				__( 'Financial entry not found.', 'fair-payments-connector' ),
+				__( 'Financial entry not found.', 'fair-finance' ),
 				array( 'status' => 404 )
 			);
 		}
