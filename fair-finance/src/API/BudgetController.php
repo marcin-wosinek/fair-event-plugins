@@ -2,14 +2,14 @@
 /**
  * REST API Controller for Budgets
  *
- * @package FairPaymentsConnector
+ * @package FairFinance
  */
 
-namespace FairPaymentsConnector\API;
+namespace FairFinance\API;
 
 defined( 'WPINC' ) || die;
 
-use FairPaymentsConnector\Models\Budget;
+use FairFinance\Models\Budget;
 use WP_REST_Controller;
 use WP_REST_Server;
 use WP_REST_Request;
@@ -26,7 +26,7 @@ class BudgetController extends WP_REST_Controller {
 	 *
 	 * @var string
 	 */
-	protected $namespace = 'fair-payments-connector/v1';
+	protected $namespace = 'fair-finance/v1';
 
 	/**
 	 * Register the routes for budgets
@@ -34,8 +34,8 @@ class BudgetController extends WP_REST_Controller {
 	 * @return void
 	 */
 	public function register_routes() {
-		// GET /fair-payments-connector/v1/budgets - Get all budgets.
-		// POST /fair-payments-connector/v1/budgets - Create budget.
+		// GET /fair-finance/v1/budgets - Get all budgets.
+		// POST /fair-finance/v1/budgets - Create budget.
 		register_rest_route(
 			$this->namespace,
 			'/budgets',
@@ -54,9 +54,9 @@ class BudgetController extends WP_REST_Controller {
 			)
 		);
 
-		// GET /fair-payments-connector/v1/budgets/{id} - Get single budget.
-		// PUT /fair-payments-connector/v1/budgets/{id} - Update budget.
-		// DELETE /fair-payments-connector/v1/budgets/{id} - Delete budget.
+		// GET /fair-finance/v1/budgets/{id} - Get single budget.
+		// PUT /fair-finance/v1/budgets/{id} - Update budget.
+		// DELETE /fair-finance/v1/budgets/{id} - Delete budget.
 		register_rest_route(
 			$this->namespace,
 			'/budgets/(?P<id>\d+)',
@@ -67,7 +67,7 @@ class BudgetController extends WP_REST_Controller {
 					'permission_callback' => array( $this, 'get_item_permissions_check' ),
 					'args'                => array(
 						'id' => array(
-							'description' => __( 'Unique identifier for the budget.', 'fair-payments-connector' ),
+							'description' => __( 'Unique identifier for the budget.', 'fair-finance' ),
 							'type'        => 'integer',
 						),
 					),
@@ -84,7 +84,7 @@ class BudgetController extends WP_REST_Controller {
 					'permission_callback' => array( $this, 'delete_item_permissions_check' ),
 					'args'                => array(
 						'id' => array(
-							'description' => __( 'Unique identifier for the budget.', 'fair-payments-connector' ),
+							'description' => __( 'Unique identifier for the budget.', 'fair-finance' ),
 							'type'        => 'integer',
 						),
 					),
@@ -92,7 +92,7 @@ class BudgetController extends WP_REST_Controller {
 			)
 		);
 
-		// GET /fair-payments-connector/v1/budgets/stats - Get budget statistics.
+		// GET /fair-finance/v1/budgets/stats - Get budget statistics.
 		register_rest_route(
 			$this->namespace,
 			'/budgets/stats',
@@ -114,13 +114,13 @@ class BudgetController extends WP_REST_Controller {
 	private function get_create_update_args() {
 		return array(
 			'name'        => array(
-				'description'       => __( 'Budget name.', 'fair-payments-connector' ),
+				'description'       => __( 'Budget name.', 'fair-finance' ),
 				'type'              => 'string',
 				'required'          => true,
 				'sanitize_callback' => 'sanitize_text_field',
 			),
 			'description' => array(
-				'description'       => __( 'Budget description.', 'fair-payments-connector' ),
+				'description'       => __( 'Budget description.', 'fair-finance' ),
 				'type'              => 'string',
 				'required'          => false,
 				'sanitize_callback' => 'sanitize_textarea_field',
@@ -154,7 +154,7 @@ class BudgetController extends WP_REST_Controller {
 	 * @return WP_REST_Response|WP_Error Response object on success, or WP_Error on failure.
 	 */
 	public function get_stats( $request ) {
-		$stats = \FairPaymentsConnector\Models\FinancialEntry::get_totals_by_budget();
+		$stats = \FairFinance\Models\FinancialEntry::get_totals_by_budget();
 
 		return new WP_REST_Response( $stats, 200 );
 	}
@@ -172,7 +172,7 @@ class BudgetController extends WP_REST_Controller {
 		if ( ! $budget ) {
 			return new WP_Error(
 				'rest_budget_not_found',
-				__( 'Budget not found.', 'fair-payments-connector' ),
+				__( 'Budget not found.', 'fair-finance' ),
 				array( 'status' => 404 )
 			);
 		}
@@ -193,7 +193,7 @@ class BudgetController extends WP_REST_Controller {
 		if ( empty( $name ) ) {
 			return new WP_Error(
 				'rest_invalid_name',
-				__( 'Budget name is required.', 'fair-payments-connector' ),
+				__( 'Budget name is required.', 'fair-finance' ),
 				array( 'status' => 400 )
 			);
 		}
@@ -203,7 +203,7 @@ class BudgetController extends WP_REST_Controller {
 		if ( ! $budget_id ) {
 			return new WP_Error(
 				'rest_budget_creation_failed',
-				__( 'Failed to create budget.', 'fair-payments-connector' ),
+				__( 'Failed to create budget.', 'fair-finance' ),
 				array( 'status' => 500 )
 			);
 		}
@@ -229,7 +229,7 @@ class BudgetController extends WP_REST_Controller {
 		if ( ! $existing ) {
 			return new WP_Error(
 				'rest_budget_not_found',
-				__( 'Budget not found.', 'fair-payments-connector' ),
+				__( 'Budget not found.', 'fair-finance' ),
 				array( 'status' => 404 )
 			);
 		}
@@ -237,7 +237,7 @@ class BudgetController extends WP_REST_Controller {
 		if ( empty( $name ) ) {
 			return new WP_Error(
 				'rest_invalid_name',
-				__( 'Budget name is required.', 'fair-payments-connector' ),
+				__( 'Budget name is required.', 'fair-finance' ),
 				array( 'status' => 400 )
 			);
 		}
@@ -247,7 +247,7 @@ class BudgetController extends WP_REST_Controller {
 		if ( ! $success ) {
 			return new WP_Error(
 				'rest_budget_update_failed',
-				__( 'Failed to update budget.', 'fair-payments-connector' ),
+				__( 'Failed to update budget.', 'fair-finance' ),
 				array( 'status' => 500 )
 			);
 		}
@@ -271,7 +271,7 @@ class BudgetController extends WP_REST_Controller {
 		if ( ! $existing ) {
 			return new WP_Error(
 				'rest_budget_not_found',
-				__( 'Budget not found.', 'fair-payments-connector' ),
+				__( 'Budget not found.', 'fair-finance' ),
 				array( 'status' => 404 )
 			);
 		}
@@ -281,7 +281,7 @@ class BudgetController extends WP_REST_Controller {
 		if ( ! $success ) {
 			return new WP_Error(
 				'rest_budget_delete_failed',
-				__( 'Failed to delete budget.', 'fair-payments-connector' ),
+				__( 'Failed to delete budget.', 'fair-finance' ),
 				array( 'status' => 500 )
 			);
 		}
