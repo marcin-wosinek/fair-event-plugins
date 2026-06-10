@@ -30,6 +30,7 @@ const plugins = [
 		packagePath: 'fair-events/package.json',
 		phpFiles: ['fair-events/fair-events.php'],
 		readmeFiles: ['fair-events/readme.txt'],
+		versionConstant: 'FAIR_EVENTS_VERSION',
 	},
 	{
 		name: 'fair-platform',
@@ -57,6 +58,13 @@ const plugins = [
 		phpFiles: ['fair-finance/fair-finance.php'],
 		readmeFiles: ['fair-finance/readme.txt'],
 		versionConstant: 'FAIR_FINANCE_VERSION',
+	},
+	{
+		name: 'fair-events-experimental',
+		packagePath: 'fair-events-experimental/package.json',
+		phpFiles: ['fair-events-experimental/fair-events-experimental.php'],
+		readmeFiles: ['fair-events-experimental/readme.txt'],
+		versionConstant: 'FAIR_EVENTS_EXPERIMENTAL_VERSION',
 	},
 ];
 

@@ -4,6 +4,7 @@
 	"plugins": [
 		"./fair-payments-connector",
 		"./fair-events",
+		"./fair-events-experimental",
 		"./fair-audience",
 		"./fair-platform"
 	],

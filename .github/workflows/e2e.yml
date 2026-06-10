@@ -9,6 +9,7 @@ on:
         paths:
             - 'fair-payments-connector/**'
             - 'fair-events/**'
+            - 'fair-events-experimental/**'
             - 'fair-audience/**'
             - 'fair-platform/**'
             - 'fair-events-shared/**'
@@ -21,6 +22,7 @@ on:
         paths:
             - 'fair-payments-connector/**'
             - 'fair-events/**'
+            - 'fair-events-experimental/**'
             - 'fair-audience/**'
             - 'fair-platform/**'
             - 'fair-events-shared/**'
@@ -49,6 +51,7 @@ jobs:
                   path: |
                       ./fair-payments-connector/vendor
                       ./fair-events/vendor
+                      ./fair-events-experimental/vendor
                       ./fair-platform/vendor
                       ./fair-audience/vendor
                       ./vendor
@@ -68,6 +71,7 @@ jobs:
                   path: |
                       ./node_modules
                       ./fair-events/node_modules
+                      ./fair-events-experimental/node_modules
                       ./fair-payments-connector/node_modules
                       ./fair-platform/node_modules
                       ./fair-audience/node_modules

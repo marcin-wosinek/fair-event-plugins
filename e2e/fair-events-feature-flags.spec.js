@@ -36,18 +36,20 @@ function wpCli(args) {
 	});
 }
 
-/** Set the `fair_events_features` option to a `{bundle: bool}` map. */
-function setFeatures(map) {
+/** Set the `fair_events_experimental_features` option to a `{bundle: bool}` map. */
+function setExperimentalFeatures(map) {
 	const json = JSON.stringify(map).replace(/'/g, "'\\''");
-	wpCli(`option update fair_events_features '${json}' --format=json`);
+	wpCli(
+		`option update fair_events_experimental_features '${json}' --format=json`
+	);
 }
 
-/** Clear the option entirely — minimal-public defaults. */
-function clearFeatures() {
-	wpCli('option delete fair_events_features');
+/** Clear the experimental features option — restores all-on defaults. */
+function clearExperimentalFeatures() {
+	wpCli('option delete fair_events_experimental_features');
 }
 
-/** Bundle keys mirror FairEvents\\Core\\Features::registry(). */
+/** Bundle keys mirror FairEventsExperimental\\Core\\Features::registry(). */
 const ALL_BUNDLES_ON = {
 	venues: true,
 	sources: true,
@@ -55,6 +57,15 @@ const ALL_BUNDLES_ON = {
 	ticketing: true,
 	'event-tools': true,
 	migration: true,
+};
+
+const ALL_BUNDLES_OFF = {
+	venues: false,
+	sources: false,
+	galleries: false,
+	ticketing: false,
+	'event-tools': false,
+	migration: false,
 };
 
 /**
@@ -151,7 +162,11 @@ async function routeIsRegistered(request, path) {
 
 test.describe('Fair Events — simplified public build (no bundles set)', () => {
 	test.beforeAll(() => {
-		clearFeatures();
+		setExperimentalFeatures(ALL_BUNDLES_OFF);
+	});
+
+	test.afterAll(() => {
+		clearExperimentalFeatures();
 	});
 
 	test('only core admin pages mount; bundle pages are gone', async ({
@@ -204,13 +219,13 @@ test.describe('Fair Events — simplified public build (no bundles set)', () => 
 
 test.describe('Fair Events — full internal build (all bundles on)', () => {
 	test.beforeAll(() => {
-		setFeatures(ALL_BUNDLES_ON);
+		setExperimentalFeatures(ALL_BUNDLES_ON);
 	});
 
 	test.afterAll(() => {
 		// Leave the suite in the minimal-public default so other suites
 		// inherit a clean baseline.
-		clearFeatures();
+		clearExperimentalFeatures();
 	});
 
 	test('every bundle page mounts its React root', async ({ page }) => {
