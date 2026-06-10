@@ -175,7 +175,7 @@ const ImportModal = ({ onImport, onCancel }) => {
 
 		try {
 			const response = await apiFetch({
-				path: '/fair-payments-connector/v1/financial-entries/import',
+				path: '/fair-finance/v1/financial-entries/import',
 				method: 'POST',
 				data: {
 					entries: parsedEntries,

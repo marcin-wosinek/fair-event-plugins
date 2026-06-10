@@ -42,8 +42,8 @@ const BudgetsApp = () => {
 
 		try {
 			const [budgetsData, statsData] = await Promise.all([
-				apiFetch({ path: '/fair-payments-connector/v1/budgets' }),
-				apiFetch({ path: '/fair-payments-connector/v1/budgets/stats' }),
+				apiFetch({ path: '/fair-finance/v1/budgets' }),
+				apiFetch({ path: '/fair-finance/v1/budgets/stats' }),
 			]);
 			setBudgets(budgetsData);
 			setStats(statsData);
@@ -92,7 +92,7 @@ const BudgetsApp = () => {
 
 		try {
 			await apiFetch({
-				path: `/fair-payments-connector/v1/budgets/${id}`,
+				path: `/fair-finance/v1/budgets/${id}`,
 				method: 'DELETE',
 			});
 			setSuccess(
@@ -115,7 +115,7 @@ const BudgetsApp = () => {
 		try {
 			if (editingBudget) {
 				await apiFetch({
-					path: `/fair-payments-connector/v1/budgets/${editingBudget.id}`,
+					path: `/fair-finance/v1/budgets/${editingBudget.id}`,
 					method: 'PUT',
 					data: formData,
 				});
@@ -127,7 +127,7 @@ const BudgetsApp = () => {
 				);
 			} else {
 				await apiFetch({
-					path: '/fair-payments-connector/v1/budgets',
+					path: '/fair-finance/v1/budgets',
 					method: 'POST',
 					data: formData,
 				});

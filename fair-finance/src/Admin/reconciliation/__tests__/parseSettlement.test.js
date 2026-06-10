@@ -1,7 +1,7 @@
 /**
  * Internal dependencies
  */
-import { parseSettlementRows } from '../parseSettlement';
+import { parseSettlementRows } from '../parseSettlement.js';
 
 const HEADER = [
 	'ID',

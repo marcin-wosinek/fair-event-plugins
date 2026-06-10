@@ -22,7 +22,7 @@ import * as XLSX from 'xlsx';
 /**
  * Internal dependencies
  */
-import { parseSettlementRows } from '../parseSettlement';
+import { parseSettlementRows } from '../parseSettlement.js';
 
 const formatAmount = (amount, currency = 'EUR') => {
 	return new Intl.NumberFormat('en-US', {
@@ -103,7 +103,7 @@ const SettlementImportModal = ({ onImport, onCancel }) => {
 		setIsLoading(true);
 		try {
 			const response = await apiFetch({
-				path: '/fair-payments-connector/v1/reconciliation/settlement/preview',
+				path: '/fair-finance/v1/reconciliation/settlement/preview',
 				method: 'POST',
 				data: parsed,
 			});
@@ -127,7 +127,7 @@ const SettlementImportModal = ({ onImport, onCancel }) => {
 		setError(null);
 		try {
 			await apiFetch({
-				path: `/fair-payments-connector/v1/financial-entries/${selectedEntryId}/match`,
+				path: `/fair-finance/v1/financial-entries/${selectedEntryId}/match`,
 				method: 'POST',
 				data: { transaction_ids: report.resolved_transaction_ids },
 			});

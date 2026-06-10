@@ -50,39 +50,6 @@ class AdminPages {
 			'fair-payments-connector-transactions'
 		);
 
-		// Budgeting submenus (only if budgeting is enabled).
-		if ( get_option( 'fair_payment_enable_budgets', false ) ) {
-			// Financial Entries submenu.
-			add_submenu_page(
-				'fair-payments-connector-transactions',
-				__( 'Financial Entries', 'fair-payments-connector' ),
-				__( 'Entries', 'fair-payments-connector' ),
-				'manage_options',
-				'fair-payments-connector-entries',
-				array( $this, 'render_entries_page' )
-			);
-
-			// Budget Categories submenu.
-			add_submenu_page(
-				'fair-payments-connector-transactions',
-				__( 'Budget Categories', 'fair-payments-connector' ),
-				__( 'Budgets', 'fair-payments-connector' ),
-				'manage_options',
-				'fair-payments-connector-budgets',
-				array( $this, 'render_budgets_page' )
-			);
-
-			// Reconciliation submenu.
-			add_submenu_page(
-				'fair-payments-connector-transactions',
-				__( 'Reconciliation', 'fair-payments-connector' ),
-				__( 'Reconciliation', 'fair-payments-connector' ),
-				'manage_options',
-				'fair-payments-connector-reconciliation',
-				array( $this, 'render_reconciliation_page' )
-			);
-		}
-
 		// Hidden transaction detail page.
 		$transaction_hookname = add_submenu_page(
 			'',
@@ -174,12 +141,6 @@ class AdminPages {
 			return;
 		}
 
-		// Budgets page.
-		if ( false !== strpos( $hook, 'fair-payments-connector-budgets' ) ) {
-			$this->enqueue_admin_page_script( 'budgets' );
-			return;
-		}
-
 		// Transaction detail page.
 		if ( 'admin_page_fair-payments-connector-transaction' === $hook ) {
 			$this->enqueue_admin_page_script( 'transaction' );
@@ -188,26 +149,6 @@ class AdminPages {
 				'fairPaymentTransactions',
 				array(
 					'organizationId' => get_option( 'fair_payment_organization_id', '' ),
-				)
-			);
-			return;
-		}
-
-		// Reconciliation page.
-		if ( false !== strpos( $hook, 'fair-payments-connector-reconciliation' ) ) {
-			$this->enqueue_admin_page_script( 'reconciliation' );
-			return;
-		}
-
-		// Entries page.
-		if ( false !== strpos( $hook, 'fair-payments-connector-entries' ) ) {
-			$this->enqueue_admin_page_script( 'entries' );
-			wp_localize_script(
-				'fair-payments-connector-entries',
-				'fairPaymentSettings',
-				array(
-					'budgetingEnabled' => (bool) get_option( 'fair_payment_enable_budgets', false ),
-					'eventsEnabled'    => class_exists( 'FairEvents\Core\Plugin' ),
 				)
 			);
 			return;
@@ -275,7 +216,7 @@ class AdminPages {
 	/**
 	 * Enqueue script for an admin page
 	 *
-	 * @param string $page Page name (settings, budgets, entries).
+	 * @param string $page Page name (transactions, transaction, settings, api-tokens, connected-sites).
 	 * @return void
 	 */
 	private function enqueue_admin_page_script( $page ) {
@@ -323,39 +264,6 @@ class AdminPages {
 	public function render_settings_page() {
 		?>
 		<div id="fair-payments-connector-settings-root"></div>
-		<?php
-	}
-
-	/**
-	 * Render budgets page
-	 *
-	 * @return void
-	 */
-	public function render_budgets_page() {
-		?>
-		<div id="fair-payments-connector-budgets-root"></div>
-		<?php
-	}
-
-	/**
-	 * Render entries page
-	 *
-	 * @return void
-	 */
-	public function render_entries_page() {
-		?>
-		<div id="fair-payments-connector-entries-root"></div>
-		<?php
-	}
-
-	/**
-	 * Render reconciliation page
-	 *
-	 * @return void
-	 */
-	public function render_reconciliation_page() {
-		?>
-		<div id="fair-payments-connector-reconciliation-root"></div>
 		<?php
 	}
 

@@ -256,7 +256,7 @@ const SplitModal = ({
 
 		try {
 			await apiFetch({
-				path: `/fair-payments-connector/v1/financial-entries/${entry.id}/split`,
+				path: `/fair-finance/v1/financial-entries/${entry.id}/split`,
 				method: isEditMode ? 'PUT' : 'POST',
 				data: {
 					allocations: allocations.map((a) => ({

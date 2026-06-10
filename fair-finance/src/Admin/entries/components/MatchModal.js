@@ -36,7 +36,7 @@ const MatchModal = ({ entry, onMatch, onCancel }) => {
 			}
 
 			const data = await apiFetch({
-				path: `/fair-payments-connector/v1/transactions/search?${params.toString()}`,
+				path: `/fair-finance/v1/transactions/search?${params.toString()}`,
 			});
 			setTransactions(data);
 		} catch (err) {
@@ -66,7 +66,7 @@ const MatchModal = ({ entry, onMatch, onCancel }) => {
 			}
 
 			const data = await apiFetch({
-				path: `/fair-payments-connector/v1/transactions/search?${params.toString()}`,
+				path: `/fair-finance/v1/transactions/search?${params.toString()}`,
 			});
 			setTransactions(data);
 		} catch (err) {
@@ -88,7 +88,7 @@ const MatchModal = ({ entry, onMatch, onCancel }) => {
 
 		try {
 			await apiFetch({
-				path: `/fair-payments-connector/v1/financial-entries/${entry.id}/match`,
+				path: `/fair-finance/v1/financial-entries/${entry.id}/match`,
 				method: 'POST',
 				data: {
 					transaction_id: transactionId,
