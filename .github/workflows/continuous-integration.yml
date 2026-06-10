@@ -200,7 +200,7 @@ jobs:
 
             - name: Create GitHub release
               run: |
-                  BUILD_ID="$(git -C repo describe --tags --match='[0-9]*')"
+                  BUILD_ID="$(git -C repo describe --tags --match='fair-events@*' | sed 's/^fair-events@//')"
                   if gh release view "build-${BUILD_ID}" --repo "$GITHUB_REPOSITORY" &>/dev/null; then
                     echo "Release build-${BUILD_ID} already exists, skipping."
                   else
