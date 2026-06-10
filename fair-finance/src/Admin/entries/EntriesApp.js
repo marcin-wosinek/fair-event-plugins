@@ -25,6 +25,10 @@ import MatchModal from './components/MatchModal.js';
 import ImportModal from './components/ImportModal.js';
 import SplitModal from './components/SplitModal.js';
 import TransferModal from './components/TransferModal.js';
+import {
+	buildEntriesCsv,
+	downloadCsv,
+} from './exportEntriesCsv.js';
 
 const budgetingEnabled = window.fairPaymentSettings?.budgetingEnabled === '1';
 const eventsEnabled = window.fairPaymentSettings?.eventsEnabled === '1';
@@ -69,6 +73,7 @@ const EntriesApp = () => {
 		order: 'desc',
 	});
 	const [loading, setLoading] = useState(true);
+	const [exportLoading, setExportLoading] = useState(false);
 	const [error, setError] = useState(null);
 	const [success, setSuccess] = useState(null);
 
@@ -236,6 +241,54 @@ const EntriesApp = () => {
 			setTotals(data);
 		} catch (err) {
 			console.error('Failed to load totals:', err);
+		}
+	};
+
+	const exportCsv = async () => {
+		setExportLoading(true);
+		try {
+			const params = new URLSearchParams();
+			if (filters.date_from)
+				params.append('date_from', filters.date_from);
+			if (filters.date_to) params.append('date_to', filters.date_to);
+			if (filters.budget_id)
+				params.append('budget_id', filters.budget_id);
+			if (filters.event_url)
+				params.append('event_url', filters.event_url);
+			if (filters.event_date_id)
+				params.append('event_date_id', filters.event_date_id);
+			if (filters.entry_type)
+				params.append('entry_type', filters.entry_type);
+			if (filters.unmatched) params.append('unmatched', 'true');
+			params.append('orderby', sort.orderby);
+			params.append('order', sort.order);
+			params.append('per_page', 100);
+
+			let allEntries = [];
+			let page = 1;
+			let totalPages = 1;
+			do {
+				params.set('page', page);
+				const data = await apiFetch({
+					path: `/fair-finance/v1/financial-entries?${params.toString()}`,
+				});
+				allEntries = allEntries.concat(data.entries);
+				totalPages = data.pages;
+				page++;
+			} while (page <= totalPages);
+
+			const scope = filters.budget_id
+				? `budget-${filters.budget_id}`
+				: 'all';
+			const filename = `fair-finance-entries-${scope}.csv`;
+			downloadCsv(buildEntriesCsv(allEntries, budgets), filename);
+		} catch (err) {
+			setError(
+				err.message ||
+					__('Failed to export entries.', 'fair-payments-connector')
+			);
+		} finally {
+			setExportLoading(false);
 		}
 	};
 
@@ -639,6 +692,20 @@ const EntriesApp = () => {
 									onClick={handleImport}
 								>
 									{__('Import', 'fair-payments-connector')}
+								</Button>
+								<Button
+									variant="secondary"
+									onClick={exportCsv}
+									disabled={
+										exportLoading ||
+										entries.length === 0
+									}
+									isBusy={exportLoading}
+								>
+									{__(
+										'Export CSV',
+										'fair-payments-connector'
+									)}
 								</Button>
 							</div>
 						</HStack>
