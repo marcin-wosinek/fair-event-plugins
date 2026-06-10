@@ -234,8 +234,8 @@ class AdminPages {
 			<p>
 				<?php
 				printf(
-					/* translators: %s: link to settings page */
 					wp_kses(
+						/* translators: %s: link to settings page */
 						__( 'Fair Payment is in <strong>Test mode</strong> — no real payments are being processed. <a href="%s">Switch to Live mode</a>.', 'fair-payments-connector' ),
 						array(
 							'strong' => array(),
