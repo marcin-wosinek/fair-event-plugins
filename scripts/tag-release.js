@@ -3,9 +3,8 @@
 /**
  * Custom Tag Release Script
  *
- * Creates git tags after changesets version bump:
- * - Single shared tag (e.g., "1.0.0") for the fixed group: fair-events, fair-payments-connector, fair-audience
- * - Individual tag (e.g., "fair-platform@1.1.0") for fair-platform
+ * Creates per-plugin git tags after changesets version bump:
+ * e.g., "fair-events@1.3.4", "fair-audience@1.3.4", "fair-platform@1.1.0"
  */
 
 import { readFileSync } from 'fs';
@@ -18,8 +17,13 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 const rootDir = join(__dirname, '..');
 
-const FIXED_GROUP_PLUGIN = 'fair-events';
-const INDEPENDENT_PLUGINS = ['fair-platform'];
+const ALL_PLUGINS = [
+	'fair-events',
+	'fair-audience',
+	'fair-payments-connector',
+	'fair-platform',
+	'fair-timetable',
+];
 
 function getVersion(pluginName) {
 	const packagePath = join(rootDir, pluginName, 'package.json');
@@ -36,28 +40,18 @@ function tagExists(tag) {
 	}
 }
 
-function createTag(tag, message) {
+function createTag(tag) {
 	if (tagExists(tag)) {
 		console.log(`  ⏭️  Tag ${tag} already exists, skipping`);
 		return;
 	}
-	if (message) {
-		execSync(`git tag -a "${tag}" -m "${message}"`, { stdio: 'inherit' });
-	} else {
-		execSync(`git tag "${tag}"`, { stdio: 'inherit' });
-	}
+	execSync(`git tag "${tag}"`, { stdio: 'inherit' });
 	console.log(`  ✅ Created tag: ${tag}`);
 }
 
 console.log('🏷️  Creating release tags...\n');
 
-const sharedVersion = getVersion(FIXED_GROUP_PLUGIN);
-console.log(
-	`📦 Fixed group (fair-events, fair-payments-connector, fair-audience): ${sharedVersion}`
-);
-createTag(sharedVersion, `Release ${sharedVersion}`);
-
-for (const plugin of INDEPENDENT_PLUGINS) {
+for (const plugin of ALL_PLUGINS) {
 	const version = getVersion(plugin);
 	const tag = `${plugin}@${version}`;
 	console.log(`📦 ${plugin}: ${version}`);
