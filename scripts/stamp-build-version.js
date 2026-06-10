@@ -28,7 +28,16 @@ const pluginFiles = [
 	'fair-timetable/fair-timetable.php',
 ];
 
+const readmeFiles = [
+	'fair-events/readme.txt',
+	'fair-payments-connector/readme.txt',
+	'fair-platform/readme.txt',
+	'fair-audience/readme.txt',
+	'fair-timetable/readme.txt',
+];
+
 const versionRegex = /(\*?\s*Version:\s*)([0-9]+\.[0-9]+\.[0-9]+[^\s*]*)/gi;
+const stableTagRegex = /(Stable tag:\s*)([0-9]+\.[0-9]+\.[0-9]+[^\s]*)/gi;
 
 console.log(`🏷️  Stamping build version: ${buildVersion}\n`);
 
@@ -43,6 +52,23 @@ for (const file of pluginFiles) {
 			console.log(`  ✅ ${file}`);
 		} else {
 			console.log(`  ⏭️  ${file} (no Version header found)`);
+		}
+	} catch (error) {
+		console.error(`  ❌ ${file}: ${error.message}`);
+	}
+}
+
+for (const file of readmeFiles) {
+	const filePath = join(rootDir, file);
+	try {
+		const original = readFileSync(filePath, 'utf8');
+		const updated = original.replace(stableTagRegex, `$1${buildVersion}`);
+
+		if (original !== updated) {
+			writeFileSync(filePath, updated, 'utf8');
+			console.log(`  ✅ ${file}`);
+		} else {
+			console.log(`  ⏭️  ${file} (no Stable tag found)`);
 		}
 	} catch (error) {
 		console.error(`  ❌ ${file}: ${error.message}`);
