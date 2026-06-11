@@ -88,12 +88,13 @@ class DashboardController extends WP_REST_Controller {
 
 		return new WP_REST_Response(
 			array(
-				'month'         => $month,
-				'total_volume'  => $total_volume,
-				'total_fees'    => MonthlyFeeCapService::get_month_total(),
-				'fee_cap'       => MonthlyFeeCapService::get_cap(),
-				'cap_remaining' => MonthlyFeeCapService::get_remaining(),
-				'testmode'      => (bool) $testmode,
+				'month'          => $month,
+				'total_volume'   => $total_volume,
+				'total_fees'     => MonthlyFeeCapService::get_month_total(),
+				'fee_cap'        => MonthlyFeeCapService::get_cap(),
+				'cap_remaining'  => MonthlyFeeCapService::get_remaining(),
+				'testmode'       => (bool) $testmode,
+				'plan_breakdown' => MonthlyFeeCapService::plugin_price_map(),
 			),
 			200
 		);
