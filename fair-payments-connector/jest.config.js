@@ -9,6 +9,9 @@ module.exports = {
 		'/e2e/',
 		'\\.api\\.spec\\.js$',
 	],
+	transformIgnorePatterns: [
+		'/node_modules/(?!(uuid|@wordpress/components)/)',
+	],
 	transform: {
 		'^.+\\.[jt]sx?$': [
 			'babel-jest',
