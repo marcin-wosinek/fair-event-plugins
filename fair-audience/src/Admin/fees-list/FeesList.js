@@ -392,7 +392,6 @@ export default function FeesList() {
 				icon: 'trash',
 				callback: ([item]) => handleDeleteFee(item),
 				supportsBulk: false,
-				isDestructive: true,
 			},
 		],
 		[]

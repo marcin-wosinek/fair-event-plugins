@@ -681,7 +681,6 @@ export default function EventParticipants() {
 			{
 				id: 'remove',
 				label: __('Remove', 'fair-audience'),
-				isDestructive: true,
 				callback: handleRemove,
 				supportsBulk: true,
 			},

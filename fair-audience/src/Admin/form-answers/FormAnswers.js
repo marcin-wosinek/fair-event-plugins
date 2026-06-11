@@ -223,7 +223,6 @@ export default function FormAnswers() {
 				icon: 'trash',
 				callback: ([item]) => handleDelete(item),
 				supportsBulk: false,
-				isDestructive: true,
 			},
 		],
 		[]
