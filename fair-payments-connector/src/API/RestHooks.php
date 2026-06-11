@@ -56,5 +56,8 @@ class RestHooks {
 
 		$connected_sites_controller = new \FairPaymentsConnector\API\ConnectedSitesController();
 		$connected_sites_controller->register_routes();
+
+		$dashboard_controller = new \FairPaymentsConnector\API\DashboardController();
+		$dashboard_controller->register_routes();
 	}
 }

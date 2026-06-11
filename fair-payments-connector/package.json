@@ -16,6 +16,7 @@
 		"format": "wp-scripts format",
 		"test": "npm-run-all test:js",
 		"test:js": "jest",
+		"test:api": "playwright test",
 		"test:php": "vendor/bin/phpunit",
 		"makepot": "wp i18n make-pot . languages/fair-payments-connector.pot --exclude=node_modules,vendor,tests,build,svn",
 		"makejson": "wp i18n make-json languages ./build/languages --domain=fair-payments-connector --pretty-print --no-purge --use-map=build/map.json",
@@ -31,9 +32,11 @@
 	"author": "Fair Event Plugins",
 	"license": "GPL-2.0-or-later",
 	"devDependencies": {
+		"@playwright/test": "^1.40.0",
 		"@testing-library/jest-dom": "^6.9.1",
 		"@testing-library/react": "^14.3.1",
 		"@wordpress/scripts": "^32.4.0",
+		"dotenv": "^16.3.1",
 		"webpack-bundle-output": "^1.1.0"
 	},
 	"dependencies": {

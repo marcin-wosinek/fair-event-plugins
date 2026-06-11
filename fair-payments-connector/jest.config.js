@@ -2,7 +2,13 @@ module.exports = {
 	preset: '@wordpress/jest-preset-default',
 	testEnvironment: 'jsdom',
 	testMatch: ['**/__tests__/**/*.js', '**/?(*.)+(spec|test).js'],
-	testPathIgnorePatterns: ['/node_modules/', '/vendor/', '/build/', '/e2e/'],
+	testPathIgnorePatterns: [
+		'/node_modules/',
+		'/vendor/',
+		'/build/',
+		'/e2e/',
+		'\\.api\\.spec\\.js$',
+	],
 	transform: {
 		'^.+\\.[jt]sx?$': [
 			'babel-jest',
