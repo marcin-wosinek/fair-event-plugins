@@ -33,11 +33,15 @@ test.describe('DashboardController — monthly-summary', () => {
 		expect(body).toHaveProperty('month');
 		expect(body).toHaveProperty('total_volume');
 		expect(body).toHaveProperty('total_fees');
+		expect(body).toHaveProperty('fee_cap');
+		expect(body).toHaveProperty('cap_remaining');
 		expect(body).toHaveProperty('testmode');
 		expect(typeof body.month).toBe('string');
 		expect(/^\d{4}-\d{2}$/.test(body.month)).toBe(true);
 		expect(typeof body.total_volume).toBe('number');
 		expect(typeof body.total_fees).toBe('number');
+		expect(typeof body.fee_cap).toBe('number');
+		expect(typeof body.cap_remaining).toBe('number');
 		expect(typeof body.testmode).toBe('boolean');
 	});
 
