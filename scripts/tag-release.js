@@ -23,6 +23,8 @@ const ALL_PLUGINS = [
 	'fair-payments-connector',
 	'fair-platform',
 	'fair-timetable',
+	'fair-finance',
+	'fair-events-experimental',
 ];
 
 function getVersion(pluginName) {
