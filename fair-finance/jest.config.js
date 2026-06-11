@@ -8,6 +8,9 @@ export default {
 		'/e2e/',
 		'\\.api\\.spec\\.js$',
 	],
+	transformIgnorePatterns: [
+		'/node_modules/(?!(uuid|@wordpress/components)/)',
+	],
 	collectCoverageFrom: [
 		'src/**/*.js',
 		'!src/**/index.js',
