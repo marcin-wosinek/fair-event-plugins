@@ -271,7 +271,6 @@ export default function QuestionnaireResponses() {
 				icon: 'trash',
 				callback: ([item]) => handleDelete(item),
 				supportsBulk: false,
-				isDestructive: true,
 			},
 		],
 		[]

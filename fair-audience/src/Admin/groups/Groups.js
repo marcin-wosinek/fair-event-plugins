@@ -296,7 +296,6 @@ export default function Groups() {
 				icon: 'trash',
 				callback: ([item]) => handleDeleteGroup(item),
 				supportsBulk: false,
-				isDestructive: true,
 			},
 		],
 		[]

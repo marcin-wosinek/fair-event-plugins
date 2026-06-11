@@ -466,7 +466,6 @@ export default function AllParticipants() {
 				id: 'delete',
 				label: __('Delete', 'fair-audience'),
 				icon: 'trash',
-				isDestructive: true,
 				callback: handleDelete,
 				supportsBulk: true,
 			},

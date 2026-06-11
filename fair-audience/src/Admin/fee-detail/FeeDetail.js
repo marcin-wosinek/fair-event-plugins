@@ -571,7 +571,6 @@ export default function FeeDetail() {
 				icon: 'dismiss',
 				callback: ([item]) => handleCancel(item),
 				supportsBulk: false,
-				isDestructive: true,
 				isEligible: (item) => item.status === 'pending',
 			},
 			{
