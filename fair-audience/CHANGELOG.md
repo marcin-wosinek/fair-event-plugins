@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.4.0
+
+### Minor Changes
+
+-   d0daed8: Show group discount note on event-signup block
+
 ## 1.3.4
 
 ### Patch Changes

@@ -1,5 +1,12 @@
 # fair-payments-connector
 
+## 1.1.0
+
+### Minor Changes
+
+-   17770eb: Split budgets, financial entries, and reconciliation out of fair-payments-connector into a new fair-finance plugin. fair-finance introduces the plugin from scratch (major); fair-payments-connector loses the extracted functionality (minor).
+-   f9e4993: Add Fee Dashboard admin page with monthly-summary REST endpoint, MonthlyFeeCapService, fee cap fields in dashboard summary, and lower platform fee to 1% with updated monthly caps.
+
 ## 1.0.1
 
 ### Patch Changes

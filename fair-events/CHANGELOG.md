@@ -1,5 +1,11 @@
 # fair-events
 
+## 1.4.0
+
+### Minor Changes
+
+-   d0daed8: Add optional per-ticket-type end date (disable_at) and fix undefined variable in event update
+
 ## 1.3.4
 
 ### Patch Changes
