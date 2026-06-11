@@ -29,11 +29,11 @@ class MonthlyFeeCapService {
 	 */
 	public static function plugin_price_map(): array {
 		$prices = array(
-			'fair-payments-connector' => 5.0,
+			'fair-payments-connector' => 4.0,
 		);
 
 		if ( defined( 'FAIR_EVENTS_VERSION' ) ) {
-			$prices['fair-events'] = 10.0;
+			$prices['fair-events'] = 8.0;
 		}
 
 		return (array) apply_filters( 'fair_payment_active_plugin_prices', $prices );

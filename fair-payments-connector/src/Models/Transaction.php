@@ -49,10 +49,10 @@ class Transaction {
 
 		$data = wp_parse_args( $data, $defaults );
 
-		// Calculate application fee (2% of transaction amount).
+		// Calculate application fee (1% of transaction amount).
 		$application_fee = null;
 		if ( $data['amount'] > 0 ) {
-			$application_fee = round( $data['amount'] * 0.02, 2 );
+			$application_fee = round( $data['amount'] * 0.01, 2 );
 		}
 
 		$data['application_fee'] = $application_fee;
