@@ -1,5 +1,11 @@
 # fair-events
 
+## 1.4.1
+
+### Patch Changes
+
+-   3d0e399: Fix npm dependencies
+
 ## 1.4.0
 
 ### Minor Changes
