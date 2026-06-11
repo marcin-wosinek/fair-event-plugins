@@ -92,6 +92,16 @@ class AdminPages {
 			'fair-payments-connector-connected-sites',
 			array( $this, 'render_connected_sites_page' )
 		);
+
+		// Fee Dashboard submenu.
+		add_submenu_page(
+			'fair-payments-connector-transactions',
+			__( 'Fee Dashboard', 'fair-payments-connector' ),
+			__( 'Fee Dashboard', 'fair-payments-connector' ),
+			'manage_options',
+			'fair-payments-connector-fee-dashboard',
+			array( $this, 'render_fee_dashboard_page' )
+		);
 	}
 
 	/**
@@ -138,6 +148,12 @@ class AdminPages {
 		// Connected Sites page.
 		if ( false !== strpos( $hook, 'fair-payments-connector-connected-sites' ) ) {
 			$this->enqueue_admin_page_script( 'connected-sites' );
+			return;
+		}
+
+		// Fee Dashboard page.
+		if ( false !== strpos( $hook, 'fair-payments-connector-fee-dashboard' ) ) {
+			$this->enqueue_admin_page_script( 'fee-dashboard' );
 			return;
 		}
 
@@ -308,6 +324,17 @@ class AdminPages {
 	public function render_connected_sites_page() {
 		?>
 		<div id="fair-payments-connector-connected-sites-root"></div>
+		<?php
+	}
+
+	/**
+	 * Render fee dashboard page
+	 *
+	 * @return void
+	 */
+	public function render_fee_dashboard_page() {
+		?>
+		<div id="fair-payments-connector-fee-dashboard-root"></div>
 		<?php
 	}
 }

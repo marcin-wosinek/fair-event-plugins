@@ -27,7 +27,7 @@ class MonthlyFeeCapService {
 	 *
 	 * @return array<string,float>
 	 */
-	private static function plugin_price_map(): array {
+	public static function plugin_price_map(): array {
 		$prices = array(
 			'fair-payments-connector' => 5.0,
 		);
