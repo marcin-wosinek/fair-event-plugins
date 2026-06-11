@@ -16,6 +16,11 @@ on:
                 required: false
                 type: string
                 default: 'false'
+            is_manual_deploy:
+                description: 'Whether this was triggered manually (workflow_dispatch) — skips AUTO_DEPLOY_ON_RELEASE gate'
+                required: false
+                type: boolean
+                default: false
 
 permissions:
     contents: read
@@ -31,7 +36,10 @@ jobs:
             - name: Check AUTO_DEPLOY_ON_RELEASE
               id: gate
               run: |
-                  if [ "${{ inputs.is_clean_version }}" = "true" ] && [ "${{ vars.AUTO_DEPLOY_ON_RELEASE }}" != "true" ]; then
+                  if [ "${{ inputs.is_manual_deploy }}" = "true" ]; then
+                    echo "should_deploy=true" >> "$GITHUB_OUTPUT"
+                    echo "Manual deploy — skipping AUTO_DEPLOY_ON_RELEASE gate"
+                  elif [ "${{ inputs.is_clean_version }}" = "true" ] && [ "${{ vars.AUTO_DEPLOY_ON_RELEASE }}" != "true" ]; then
                     echo "should_deploy=false" >> "$GITHUB_OUTPUT"
                     echo "Skipping: AUTO_DEPLOY_ON_RELEASE is not set to 'true' for ${{ inputs.environment }}"
                   else

@@ -76,6 +76,7 @@ jobs:
             environment: acroyoga-club.es
             release_tag: ${{ needs.resolve.outputs.release_tag }}
             is_clean_version: ${{ needs.resolve.outputs.is_clean_version }}
+            is_manual_deploy: ${{ github.event_name == 'workflow_dispatch' }}
         secrets: inherit
 
     deploy-fair-event-plugins:
@@ -89,6 +90,7 @@ jobs:
             environment: fair-event-plugins.com
             release_tag: ${{ needs.resolve.outputs.release_tag }}
             is_clean_version: ${{ needs.resolve.outputs.is_clean_version }}
+            is_manual_deploy: ${{ github.event_name == 'workflow_dispatch' }}
         secrets: inherit
 
     deploy-lamutable:
@@ -102,6 +104,7 @@ jobs:
             environment: lamutable.es
             release_tag: ${{ needs.resolve.outputs.release_tag }}
             is_clean_version: ${{ needs.resolve.outputs.is_clean_version }}
+            is_manual_deploy: ${{ github.event_name == 'workflow_dispatch' }}
         secrets: inherit
 
     deploy-fusion-dance:
@@ -115,6 +118,7 @@ jobs:
             environment: fusion-dance.es
             release_tag: ${{ needs.resolve.outputs.release_tag }}
             is_clean_version: ${{ needs.resolve.outputs.is_clean_version }}
+            is_manual_deploy: ${{ github.event_name == 'workflow_dispatch' }}
         secrets: inherit
 
     deploy-acro-agenda:
@@ -128,6 +132,7 @@ jobs:
             environment: acro-agenda.es
             release_tag: ${{ needs.resolve.outputs.release_tag }}
             is_clean_version: ${{ needs.resolve.outputs.is_clean_version }}
+            is_manual_deploy: ${{ github.event_name == 'workflow_dispatch' }}
         secrets: inherit
 
     deploy-fusion-circus:
@@ -141,4 +146,5 @@ jobs:
             environment: fusion-circus.com
             release_tag: ${{ needs.resolve.outputs.release_tag }}
             is_clean_version: ${{ needs.resolve.outputs.is_clean_version }}
+            is_manual_deploy: ${{ github.event_name == 'workflow_dispatch' }}
         secrets: inherit
