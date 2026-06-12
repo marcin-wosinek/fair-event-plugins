@@ -139,17 +139,6 @@ class Plugin {
 				$controller->register_routes();
 			}
 		);
-
-		// Venues controller — registered unconditionally so the core
-		// calendar/manage-event venue dropdowns keep working. The dedicated
-		// Venues admin page is provided by fair-events-experimental.
-		add_action(
-			'rest_api_init',
-			function () {
-				$controller = new \FairEvents\API\VenueController();
-				$controller->register_routes();
-			}
-		);
 	}
 
 	/**

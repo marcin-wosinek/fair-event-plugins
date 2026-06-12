@@ -226,6 +226,16 @@ class Plugin {
 			);
 		}
 
+		if ( Features::is_enabled( 'venues' ) ) {
+			add_action(
+				'rest_api_init',
+				function () {
+					$controller = new \FairEventsExperimental\API\VenueController();
+					$controller->register_routes();
+				}
+			);
+		}
+
 		if ( Features::is_enabled( 'event-tools' ) ) {
 			add_action(
 				'rest_api_init',

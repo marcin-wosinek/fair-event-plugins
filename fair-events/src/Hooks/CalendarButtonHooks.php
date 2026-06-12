@@ -14,7 +14,6 @@ namespace FairEvents\Hooks;
 
 use FairEvents\Helpers\SelectedOccurrence;
 use FairEvents\Models\EventDates;
-use FairEvents\Models\Venue;
 use FairEvents\Settings\Settings;
 
 defined( 'WPINC' ) || die;
@@ -104,8 +103,9 @@ class CalendarButtonHooks {
 		// Get location from venue if available, otherwise fall back to the
 		// event date's inline address (used when Venues is disabled).
 		$location = '';
-		if ( ! empty( $event_dates->venue_id ) ) {
-			$venue = Venue::get_by_id( $event_dates->venue_id );
+		if ( ! empty( $event_dates->venue_id )
+			&& class_exists( \FairEventsExperimental\Models\Venue::class ) ) {
+			$venue = \FairEventsExperimental\Models\Venue::get_by_id( $event_dates->venue_id );
 			if ( $venue ) {
 				$location = $venue->name;
 				if ( ! empty( $venue->address ) ) {
