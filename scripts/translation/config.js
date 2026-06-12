@@ -107,12 +107,15 @@ export const config = {
 
 		// Per-locale style notes injected into the system prompt
 		localeConventions: {
-			es_ES: `Spanish (es_ES) WordPress conventions:
-- Use sentence case, NOT title case. Only the first word and proper nouns are capitalised. "Guardar evento" not "Guardar Evento".
-- Use the informal second person (tú), not usted. Imperatives: "selecciona", "elige", "define", "guarda" — never "seleccione", "elija", "defina", "guarde".
-- Possessives follow the same rule: "tu correo" not "su correo".
-- Use established WordPress Spanish UI terms: "Ajustes" (Settings), "Escritorio" (Dashboard), "Entrada" (Post), "Página" (Page), "Tema" (Theme), "Calendario" (Calendar).
-- Use inverted opening punctuation where required: "¿…?" and "¡…!".`,
+			es_ES: `Spanish (es_ES) WordPress conventions (aligned with the official es_ES community at translate.wordpress.org):
+- Sentence case, NOT title case. Only the first word and proper nouns are capitalised. "Guardar evento" not "Guardar Evento".
+- Informal second person (tú). Imperatives: "selecciona", "elige", "define", "guarda" — never "seleccione", "elija", "defina", "guarde". Possessives: "tu correo" not "su correo".
+- Inverted opening punctuation: "¿…?" and "¡…!".
+- Use «guillemets» when quoting a UI element name inside a longer sentence. Examples: "en la pestaña «Grupos»", "en el panel «Detalles del evento»". Do NOT use them for standalone labels or button text.
+- "URL" is feminine: "la URL", "una URL". Adjectives and past participles agree accordingly: "la URL usada", not "el URL usado".
+- Abbreviate "e.g." as "p. ej." (with spaces and both periods).
+- "Query Loop" → "el bucle de consulta". Prefer "mediante" over "usando" when describing a WordPress mechanism: "mediante el bucle de consulta", not "usando Query Loop".
+- Established WordPress Spanish terms: "Ajustes" (Settings), "Escritorio" (Dashboard), "Entrada" (Post), "Página" (Page), "Tema" (Theme), "Calendario" (Calendar), "Slug" (Slug, kept in English).`,
 		},
 
 		// System prompt template
