@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.5.0
+
+### Minor Changes
+
+-   76c23f7: Upgrade @wordpress/dataviews from v4 to v16 for admin list views.
+
 ## 1.4.0
 
 ### Minor Changes
