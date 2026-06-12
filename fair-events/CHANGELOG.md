@@ -1,5 +1,12 @@
 # fair-events
 
+## 1.5.0
+
+### Minor Changes
+
+-   82e6f21: Move Venue model and VenueController from fair-events to fair-events-experimental. The venues REST API (`/fair-events/v1/venues`) is now registered by the experimental plugin under its `venues` feature flag.
+-   76c23f7: Upgrade @wordpress/dataviews from v4 to v16 for admin list views.
+
 ## 1.4.1
 
 ### Patch Changes
