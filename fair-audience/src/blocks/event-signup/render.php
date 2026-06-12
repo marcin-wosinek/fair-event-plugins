@@ -354,14 +354,14 @@ if ( $valid_invitation_token && $show_inviter ) {
 // signup form switches from a single-price button to a radio picker of
 // ticket types, each with its own price and seat count.
 $ticket_types_for_display = array();
-if ( $pricing_event_date_id && class_exists( \FairEvents\Models\TicketType::class ) ) {
-	$raw_types = \FairEvents\Models\TicketType::get_all_by_event_date_id( (int) $pricing_event_date_id );
+if ( $pricing_event_date_id && class_exists( \FairEventsExperimental\Models\TicketType::class ) ) {
+	$raw_types = \FairEventsExperimental\Models\TicketType::get_all_by_event_date_id( (int) $pricing_event_date_id );
 
 	// Load group restrictions and participant's groups for filtering.
 	$tt_group_restrictions = array();
 	$participant_group_ids = array();
-	if ( class_exists( \FairEvents\Models\TicketTypeGroupRestriction::class ) ) {
-		$tt_group_restrictions = \FairEvents\Models\TicketTypeGroupRestriction::get_all_by_event_date_id( (int) $pricing_event_date_id );
+	if ( class_exists( \FairEventsExperimental\Models\TicketTypeGroupRestriction::class ) ) {
+		$tt_group_restrictions = \FairEventsExperimental\Models\TicketTypeGroupRestriction::get_all_by_event_date_id( (int) $pricing_event_date_id );
 	}
 	if ( $participant && ! empty( $tt_group_restrictions ) ) {
 		$group_participant_repo = new \FairAudience\Database\GroupParticipantRepository();
@@ -390,8 +390,8 @@ if ( $pricing_event_date_id && class_exists( \FairEvents\Models\TicketType::clas
 		}
 
 		$tt_price = null;
-		if ( class_exists( \FairEvents\Services\EventSignupPricing::class ) ) {
-			$tt_price = \FairEvents\Services\EventSignupPricing::resolve_price_for_ticket_type(
+		if ( class_exists( \FairEventsExperimental\Services\EventSignupPricing::class ) ) {
+			$tt_price = \FairEventsExperimental\Services\EventSignupPricing::resolve_price_for_ticket_type(
 				$tt->id,
 				$participant ? (int) $participant->id : null
 			);
@@ -427,8 +427,8 @@ $has_ticket_types = ! empty( $ticket_types_for_display );
 
 // Resolve best group discount rule; used for both option pricing and the discount note.
 $best_discount_rule = null;
-if ( $pricing_event_date_id && $participant && class_exists( \FairEvents\Services\EventSignupPricing::class ) ) {
-	$best_discount_rule = \FairEvents\Services\EventSignupPricing::resolve_best_discount_rule(
+if ( $pricing_event_date_id && $participant && class_exists( \FairEventsExperimental\Services\EventSignupPricing::class ) ) {
+	$best_discount_rule = \FairEventsExperimental\Services\EventSignupPricing::resolve_best_discount_rule(
 		(int) $pricing_event_date_id,
 		(int) $participant->id
 	);
@@ -437,14 +437,14 @@ if ( $pricing_event_date_id && $participant && class_exists( \FairEvents\Service
 // Resolve ticket options for this event date, if any. Options are displayed
 // as checkboxes — participants can select zero or more at signup.
 $ticket_options_for_display = array();
-if ( $pricing_event_date_id && class_exists( \FairEvents\Models\TicketOption::class ) ) {
-	$raw_options = \FairEvents\Models\TicketOption::get_all_by_event_date_id( (int) $pricing_event_date_id );
+if ( $pricing_event_date_id && class_exists( \FairEventsExperimental\Models\TicketOption::class ) ) {
+	$raw_options = \FairEventsExperimental\Models\TicketOption::get_all_by_event_date_id( (int) $pricing_event_date_id );
 
 	$invitation_inviter_id = $valid_invitation_token ? (int) $valid_invitation_token->inviter_participant_id : null;
 
 	foreach ( $raw_options as $opt ) {
-		$resolved_base = class_exists( \FairEvents\Services\ActivityOptionPriceResolver::class )
-			? \FairEvents\Services\ActivityOptionPriceResolver::resolve( $opt )
+		$resolved_base = class_exists( \FairEventsExperimental\Services\ActivityOptionPriceResolver::class )
+			? \FairEventsExperimental\Services\ActivityOptionPriceResolver::resolve( $opt )
 			: (float) $opt->price;
 		if ( null === $resolved_base ) {
 			// Derived mode with no active period / no row → option not purchasable; skip.
@@ -452,8 +452,8 @@ if ( $pricing_event_date_id && class_exists( \FairEvents\Models\TicketOption::cl
 		}
 		$opt_price        = (float) $resolved_base;
 		$invitation_price = null;
-		if ( $invitation_inviter_id && class_exists( \FairEvents\Services\EventSignupPricing::class ) ) {
-			$invitation_price = \FairEvents\Services\EventSignupPricing::resolve_option_invitation_price(
+		if ( $invitation_inviter_id && class_exists( \FairEventsExperimental\Services\EventSignupPricing::class ) ) {
+			$invitation_price = \FairEventsExperimental\Services\EventSignupPricing::resolve_option_invitation_price(
 				$opt,
 				(int) $pricing_event_date_id,
 				$invitation_inviter_id
@@ -462,7 +462,7 @@ if ( $pricing_event_date_id && class_exists( \FairEvents\Models\TicketOption::cl
 		if ( null !== $invitation_price ) {
 			$opt_price = (float) $invitation_price;
 		} elseif ( $best_discount_rule && $opt_price > 0 ) {
-			$opt_price = \FairEvents\Services\EventSignupPricing::apply_discount(
+			$opt_price = \FairEventsExperimental\Services\EventSignupPricing::apply_discount(
 				$opt_price,
 				$best_discount_rule->discount_type,
 				(float) $best_discount_rule->discount_value
@@ -543,8 +543,8 @@ $current_ticket_label   = '';
 if ( $is_signed_up && $participant && ! empty( $event_date_id ) && isset( $event_participant_repository ) ) {
 	$signed_row = $event_participant_repository->get_by_event_date_and_participant( (int) $event_date_id, (int) $participant->id );
 	if ( $signed_row ) {
-		if ( ! empty( $signed_row->ticket_type_id ) && class_exists( \FairEvents\Models\TicketType::class ) ) {
-			$current_ticket_type = \FairEvents\Models\TicketType::get_by_id( (int) $signed_row->ticket_type_id );
+		if ( ! empty( $signed_row->ticket_type_id ) && class_exists( \FairEventsExperimental\Models\TicketType::class ) ) {
+			$current_ticket_type = \FairEventsExperimental\Models\TicketType::get_by_id( (int) $signed_row->ticket_type_id );
 			if ( $current_ticket_type ) {
 				$current_ticket_label = (string) $current_ticket_type->name;
 			}
@@ -583,8 +583,8 @@ if ( $has_ticket_types ) {
 	if ( null === $signup_price ) {
 		$signup_price = $ticket_types_for_display[0]['price'];
 	}
-} elseif ( $pricing_event_date_id && class_exists( \FairEvents\Services\EventSignupPricing::class ) ) {
-	$signup_price = \FairEvents\Services\EventSignupPricing::resolve_price(
+} elseif ( $pricing_event_date_id && class_exists( \FairEventsExperimental\Services\EventSignupPricing::class ) ) {
+	$signup_price = \FairEventsExperimental\Services\EventSignupPricing::resolve_price(
 		(int) $pricing_event_date_id,
 		$participant ? (int) $participant->id : null
 	);

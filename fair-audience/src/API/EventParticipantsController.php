@@ -363,9 +363,9 @@ class EventParticipantsController extends WP_REST_Controller {
 		// Build ticket type name lookup.
 		$ticket_type_names = array();
 		$ticket_type_ids   = array_filter( array_unique( array_map( fn( $ep ) => $ep->ticket_type_id, $event_participants ) ) );
-		if ( ! empty( $ticket_type_ids ) && class_exists( '\FairEvents\Models\TicketType' ) ) {
+		if ( ! empty( $ticket_type_ids ) && class_exists( '\FairEventsExperimental\Models\TicketType' ) ) {
 			foreach ( $ticket_type_ids as $tt_id ) {
-				$tt = \FairEvents\Models\TicketType::get_by_id( $tt_id );
+				$tt = \FairEventsExperimental\Models\TicketType::get_by_id( $tt_id );
 				if ( $tt ) {
 					$ticket_type_names[ $tt_id ] = $tt->name;
 				}
@@ -642,8 +642,8 @@ class EventParticipantsController extends WP_REST_Controller {
 				: (int) $ticket_type_id;
 			$seats_per_ticket   = max( 1, (int) $ep_row->seats );
 
-			if ( $new_ticket_type_id && class_exists( \FairEvents\Models\TicketType::class ) ) {
-				$ticket_type = \FairEvents\Models\TicketType::get_by_id( $new_ticket_type_id );
+			if ( $new_ticket_type_id && class_exists( \FairEventsExperimental\Models\TicketType::class ) ) {
+				$ticket_type = \FairEventsExperimental\Models\TicketType::get_by_id( $new_ticket_type_id );
 				if ( ! $ticket_type ) {
 					return new WP_Error(
 						'invalid_ticket_type',
@@ -712,8 +712,8 @@ class EventParticipantsController extends WP_REST_Controller {
 
 				$by_id   = array();
 				$by_name = array();
-				if ( class_exists( \FairEvents\Models\TicketOption::class ) ) {
-					$all_options = \FairEvents\Models\TicketOption::get_all_by_event_date_id( $lookup_event_date_id );
+				if ( class_exists( \FairEventsExperimental\Models\TicketOption::class ) ) {
+					$all_options = \FairEventsExperimental\Models\TicketOption::get_all_by_event_date_id( $lookup_event_date_id );
 					foreach ( $all_options as $opt ) {
 						$by_id[ (int) $opt->id ] = $opt;
 						$by_name[ $opt->name ]   = $opt;
@@ -759,8 +759,8 @@ class EventParticipantsController extends WP_REST_Controller {
 		$updated = $this->event_participant_repo->get_by_event_date_and_participant( $event_date_id, $participant_id );
 
 		$updated_ticket_type_name = null;
-		if ( $updated && $updated->ticket_type_id && class_exists( \FairEvents\Models\TicketType::class ) ) {
-			$tt = \FairEvents\Models\TicketType::get_by_id( (int) $updated->ticket_type_id );
+		if ( $updated && $updated->ticket_type_id && class_exists( \FairEventsExperimental\Models\TicketType::class ) ) {
+			$tt = \FairEventsExperimental\Models\TicketType::get_by_id( (int) $updated->ticket_type_id );
 			if ( $tt ) {
 				$updated_ticket_type_name = $tt->name;
 			}
