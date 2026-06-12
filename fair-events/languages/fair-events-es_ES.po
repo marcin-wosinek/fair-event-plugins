@@ -36,7 +36,7 @@ msgstr "Configuración"
 
 #: src/blocks/events-list/render.php:447
 msgid "No events found. Please select a valid display pattern."
-msgstr "No se encontraron eventos. Por favor seleccione un patrón de visualización válido."
+msgstr "No se encontraron eventos. Por favor, selecciona un patrón de visualización válido."
 
 #: src/Patterns/Patterns.php:50
 msgid "Event List - With Dates"
@@ -213,7 +213,7 @@ msgstr "Guardar configuración"
 
 #: src/blocks/event-dates/components/EditComponent.js:205
 msgid "No event dates set. Add dates in the Event Details panel."
-msgstr "No se han establecido fechas del evento. Añada fechas en el panel Detalles del evento."
+msgstr "No se han establecido fechas del evento. Añade fechas en el panel Detalles del evento."
 
 #: src/blocks/event-dates/components/EditComponent.js:214
 msgid "Event Dates block: Only displays in event post context."
@@ -233,7 +233,7 @@ msgstr "Patrón de visualización"
 
 #: src/blocks/events-list/components/EditComponent.js:107
 msgid "Choose a pattern for displaying events"
-msgstr "Elija un patrón para mostrar eventos"
+msgstr "Elige un patrón para mostrar eventos"
 
 #: src/blocks/events-list/components/EditComponent.js:113
 msgid "Time Filter"
@@ -269,7 +269,7 @@ msgstr "Categorías"
 #: src/blocks/events-list/components/EditComponent.js:150
 #: src/blocks/weekly-schedule/components/EditComponent.js:180
 msgid "Define more categories if you want to use category filtering"
-msgstr "Defina más categorías si desea usar filtrado por categorías"
+msgstr "Define más categorías si deseas usar filtrado por categorías"
 
 #: src/blocks/events-list/components/EditComponent.js:199
 msgid "Events List"
@@ -372,7 +372,7 @@ msgstr "Evento"
 #: src/blocks/events-list/block.json
 msgctxt "block title"
 msgid "Events List"
-msgstr "Lista de Eventos"
+msgstr "Lista de eventos"
 
 #: src/blocks/events-list/block.json
 msgctxt "block description"
@@ -385,7 +385,7 @@ msgstr "Próximos"
 
 #: src/PostTypes/Event.php:507
 msgid "Confirm Attendance"
-msgstr "Confirmar Asistencia"
+msgstr "Confirmar asistencia"
 
 #: fair-events.php:150
 msgid "Fair Event: Start Date"
@@ -442,7 +442,7 @@ msgstr "Siguiente"
 
 #: src/Patterns/Patterns.php:90
 msgid "Calendar Event - Simple"
-msgstr "Evento de Calendario - Simple"
+msgstr "Evento de calendario - simple"
 
 #: src/Patterns/Patterns.php:91
 msgid "Display event title only (compact for calendar cells)"
@@ -450,21 +450,21 @@ msgstr "Mostrar solo el título del evento (compacto para celdas de calendario)"
 
 #: src/blocks/events-calendar/components/EditComponent.js:113
 msgid "Calendar Settings"
-msgstr "Configuración del Calendario"
+msgstr "Configuración del calendario"
 
 #: src/blocks/events-calendar/components/EditComponent.js:117
 #: src/blocks/weekly-schedule/components/EditComponent.js:117
 msgid "Event Display Pattern"
-msgstr "Patrón de Visualización de Eventos"
+msgstr "Patrón de visualización de eventos"
 
 #: src/blocks/events-calendar/components/EditComponent.js:123
 msgid "Choose how events are displayed in calendar cells"
-msgstr "Elija cómo se mostrarán los eventos en las celdas del calendario"
+msgstr "Elige cómo se mostrarán los eventos en las celdas del calendario"
 
 #: src/blocks/events-calendar/components/EditComponent.js:130
 #: src/blocks/weekly-schedule/components/EditComponent.js:130
 msgid "Start of Week"
-msgstr "Inicio de Semana"
+msgstr "Inicio de semana"
 
 #: src/blocks/events-calendar/components/EditComponent.js:134
 #: src/blocks/weekly-schedule/components/EditComponent.js:134
@@ -479,7 +479,7 @@ msgstr "Domingo"
 #: src/blocks/events-calendar/components/EditComponent.js:148
 #: src/blocks/weekly-schedule/components/EditComponent.js:148
 msgid "Show Navigation"
-msgstr "Mostrar Navegación"
+msgstr "Mostrar navegación"
 
 #: src/blocks/events-calendar/components/EditComponent.js:153
 msgid "Display previous/next month navigation"
@@ -490,7 +490,7 @@ msgstr "Mostrar navegación de mes anterior/siguiente"
 #: src/Admin/calendar/CalendarApp.js:163
 #: src/blocks/events-calendar/components/EditComponent.js:291
 msgid "Events Calendar"
-msgstr "Calendario de Eventos"
+msgstr "Calendario de eventos"
 
 #: src/blocks/events-calendar/components/EditComponent.js:294
 msgid "Calendar will be displayed on the frontend"
@@ -520,7 +520,7 @@ msgstr "cuadrícula"
 #: src/blocks/events-list/components/EditComponent.js:176
 #: src/blocks/weekly-schedule/components/EditComponent.js:243
 msgid "Event Sources"
-msgstr "Fuentes de Eventos"
+msgstr "Fuentes de eventos"
 
 #: src/API/PublicEventsController.php:103
 msgid "Unique slug identifier for the source."
@@ -536,7 +536,7 @@ msgstr "Esta fuente está deshabilitada."
 
 #: src/PostTypes/Event.php:351
 msgid "Date & Time"
-msgstr "Fecha y Hora"
+msgstr "Fecha y hora"
 
 #: src/Admin/manage-event/EventTickets.js:1144
 #: src/Admin/manage-event/EventTickets.js:1794
@@ -585,7 +585,7 @@ msgstr "Eliminar"
 #: src/blocks/events-calendar/components/EditComponent.js:160
 #: src/blocks/weekly-schedule/components/EditComponent.js:160
 msgid "Show Draft Events"
-msgstr "Mostrar Eventos Borrador"
+msgstr "Mostrar eventos borrador"
 
 #: src/blocks/events-calendar/components/EditComponent.js:165
 msgid "Display draft events in the calendar"
@@ -618,16 +618,16 @@ msgstr "Fuentes de eventos:"
 
 #: src/blocks/events-calendar/components/EditComponent.js:247
 msgid "Select event sources to display in the calendar."
-msgstr "Seleccione las fuentes de eventos para mostrar en el calendario."
+msgstr "Selecciona las fuentes de eventos para mostrar en el calendario."
 
 #: src/blocks/events-calendar/components/EditComponent.js:255
 #: src/blocks/weekly-schedule/components/EditComponent.js:255
 msgid "Event sources format has changed. Please re-select your event sources."
-msgstr "El formato de las fuentes de eventos ha cambiado. Por favor, vuelva a seleccionar sus fuentes de eventos."
+msgstr "El formato de las fuentes de eventos ha cambiado. Por favor, vuelve a seleccionar tus fuentes de eventos."
 
 #: src/blocks/events-list/components/EditComponent.js:180
 msgid "Select event sources to display in the list."
-msgstr "Seleccione las fuentes de eventos para mostrar en la lista."
+msgstr "Selecciona las fuentes de eventos para mostrar en la lista."
 
 #: src/blocks/events-list/components/EditComponent.js:222
 msgid "selected"
@@ -659,15 +659,15 @@ msgstr "4 horas"
 
 #: src/blocks/event-proposal/render.php:58
 msgid "Your Name"
-msgstr "Su Nombre"
+msgstr "Tu nombre"
 
 #: src/blocks/event-proposal/render.php:73
 msgid "Your Email"
-msgstr "Su Correo Electrónico"
+msgstr "Tu correo electrónico"
 
 #: src/blocks/event-proposal/render.php:88
 msgid "Event Title"
-msgstr "Título del Evento"
+msgstr "Título del evento"
 
 #: src/blocks/event-proposal/render.php:128
 msgid "Select duration..."
@@ -675,7 +675,7 @@ msgstr "Seleccionar duración..."
 
 #: src/blocks/event-proposal/render.php:178
 msgid "Event Description"
-msgstr "Descripción del Evento"
+msgstr "Descripción del evento"
 
 #. translators: %1$s is the week number, %2$s is the year
 #: src/blocks/weekly-schedule/render.php:496
@@ -685,7 +685,7 @@ msgstr "Semana %1$s, %2$s"
 
 #: src/Patterns/Patterns.php:103
 msgid "Schedule Event - Simple"
-msgstr "Programar Evento - Simple"
+msgstr "Programar evento - simple"
 
 #: src/Patterns/Patterns.php:104
 msgid "Display event title only (no time)"
@@ -693,7 +693,7 @@ msgstr "Mostrar solo el título del evento (sin hora)"
 
 #: src/Patterns/Patterns.php:118
 msgid "Schedule Event - With Time"
-msgstr "Programar Evento - Con Hora"
+msgstr "Programar evento - con hora"
 
 #: src/Patterns/Patterns.php:119
 msgid "Display event with start time and title"
@@ -701,7 +701,7 @@ msgstr "Mostrar evento con hora de inicio y título"
 
 #: src/Patterns/Patterns.php:140
 msgid "Schedule Event - With Time Range"
-msgstr "Programar Evento - Con Rango de Tiempo"
+msgstr "Programar evento - con rango de tiempo"
 
 #: src/Patterns/Patterns.php:141
 msgid "Display event with time range and title"
@@ -709,11 +709,11 @@ msgstr "Mostrar evento con rango de tiempo y título"
 
 #: src/blocks/event-proposal/editor.js:21
 msgid "Form Settings"
-msgstr "Configuraciones del Formulario"
+msgstr "Configuración del formulario"
 
 #: src/blocks/event-proposal/editor.js:23
 msgid "Enable Categories"
-msgstr "Habilitar Categorías"
+msgstr "Habilitar categorías"
 
 #: src/blocks/event-proposal/editor.js:28
 msgid "Allow users to select event categories"
@@ -721,7 +721,7 @@ msgstr "Permitir a los usuarios seleccionar categorías de eventos"
 
 #: src/blocks/event-proposal/editor.js:34
 msgid "Enable Description"
-msgstr "Habilitar Descripción"
+msgstr "Habilitar descripción"
 
 #: src/blocks/event-proposal/editor.js:39
 msgid "Include a description field in the form"
@@ -729,7 +729,7 @@ msgstr "Incluir un campo de descripción en el formulario"
 
 #: src/blocks/event-proposal/editor.js:45
 msgid "Enable Admin Notifications"
-msgstr "Habilitar Notificaciones de Administrador"
+msgstr "Habilitar notificaciones de administrador"
 
 #: src/blocks/event-proposal/editor.js:53
 msgid "Send email when new proposals are submitted"
@@ -737,7 +737,7 @@ msgstr "Enviar correo electrónico cuando se envíen nuevas propuestas"
 
 #: src/blocks/event-proposal/editor.js:60
 msgid "Notification Email"
-msgstr "Correo de Notificación"
+msgstr "Correo de notificación"
 
 #: src/blocks/event-proposal/editor.js:68
 msgid "Email address for notifications"
@@ -745,11 +745,11 @@ msgstr "Dirección de correo electrónico para notificaciones"
 
 #: src/blocks/event-proposal/editor.js:75
 msgid "Submit Button Text"
-msgstr "Texto del Botón de Envío"
+msgstr "Texto del botón de envío"
 
 #: src/blocks/event-proposal/editor.js:82
 msgid "Success Message"
-msgstr "Mensaje de Éxito"
+msgstr "Mensaje de éxito"
 
 #: src/blocks/event-proposal/editor.js:87
 msgid "Message shown after successful submission"
@@ -757,7 +757,7 @@ msgstr "Mensaje mostrado después del envío exitoso"
 
 #: src/blocks/event-proposal/editor.js:97
 msgid "Event Proposal Form"
-msgstr "Formulario de Propuesta de Evento"
+msgstr "Formulario de propuesta de evento"
 
 #: src/blocks/event-proposal/editor.js:99
 msgid "Form will be displayed on the frontend"
@@ -777,7 +777,7 @@ msgstr "Notificaciones habilitadas"
 
 #: src/blocks/weekly-schedule/components/EditComponent.js:113
 msgid "Schedule Settings"
-msgstr "Configuración de Horario"
+msgstr "Configuración de horario"
 
 #: src/blocks/weekly-schedule/components/EditComponent.js:123
 msgid "Use \"With Time\" patterns to show event start times"
@@ -797,7 +797,7 @@ msgstr "Seleccionar fuentes de eventos para mostrar en el horario."
 
 #: src/blocks/weekly-schedule/components/EditComponent.js:274
 msgid "Weekly Schedule"
-msgstr "Horario Semanal"
+msgstr "Horario semanal"
 
 #: src/blocks/weekly-schedule/components/EditComponent.js:276
 msgid "Schedule will be displayed on the frontend"
@@ -814,7 +814,7 @@ msgstr "fuentes de eventos configuradas"
 #: src/blocks/event-proposal/block.json
 msgctxt "block title"
 msgid "Event Proposal Form"
-msgstr "Formulario de Propuesta de Evento"
+msgstr "Formulario de propuesta de evento"
 
 #: src/blocks/event-proposal/block.json
 msgctxt "block description"
@@ -824,7 +824,7 @@ msgstr "Permitir a los usuarios enviar propuestas de eventos para revisión"
 #: src/blocks/weekly-schedule/block.json
 msgctxt "block title"
 msgid "Weekly Schedule"
-msgstr "Horario Semanal"
+msgstr "Horario semanal"
 
 #: src/blocks/weekly-schedule/block.json
 msgctxt "block description"
@@ -1070,7 +1070,7 @@ msgstr "— Sin lugar —"
 
 #: src/Admin/calendar/components/QuickEventModal.js:89
 msgid "Quick Add Event"
-msgstr "Agregar Evento Rápido"
+msgstr "Agregar evento rápido"
 
 #: src/Admin/calendar/components/QuickEventModal.js:110
 #: src/Admin/event-meta-box/EventEditForm.js:392
@@ -1126,7 +1126,7 @@ msgstr "Lugar"
 
 #: src/Admin/calendar/components/QuickEventModal.js:190
 msgid "Create Event"
-msgstr "Crear Evento"
+msgstr "Crear evento"
 
 #: src/Admin/components/CopyUrlButton.js:25
 msgid "Copy URL to clipboard"
@@ -1218,11 +1218,11 @@ msgstr "Número de ocurrencias"
 
 #: src/Admin/event-meta-box/EventEditForm.js:539
 msgid "Save Event"
-msgstr "Guardar Evento"
+msgstr "Guardar evento"
 
 #: src/Admin/event-meta-box/EventEditForm.js:543
 msgid "Edit Full Details"
-msgstr "Editar Detalles Completos"
+msgstr "Editar detalles completos"
 
 #: src/Admin/event-meta-box/EventMetaBox.js:107
 msgid "Failed to unlink event."
@@ -1234,7 +1234,7 @@ msgstr "Desvincularse del evento"
 
 #: src/Admin/event-meta-box/EventMetaBox.js:151
 msgid "No event data found. Please save the post and reload."
-msgstr "No se encontraron datos del evento. Por favor, guarde la entrada y recargue."
+msgstr "No se encontraron datos del evento. Por favor, guarda la entrada y recarga."
 
 #: src/Admin/event-meta-box/LinkOptions.js:84
 msgid "Failed to link event."
@@ -1246,7 +1246,7 @@ msgstr "Selecciona un evento..."
 
 #: src/Admin/event-meta-box/LinkOptions.js:122
 msgid "Create New Event"
-msgstr "Crear Nuevo Evento"
+msgstr "Crear nuevo evento"
 
 #: src/Admin/event-meta-box/LinkOptions.js:132
 msgid "or"
@@ -1254,11 +1254,11 @@ msgstr "o"
 
 #: src/Admin/event-meta-box/LinkOptions.js:136
 msgid "Link Existing Event"
-msgstr "Vincular Evento Existente"
+msgstr "Vincular evento existente"
 
 #: src/Admin/event-meta-box/LinkOptions.js:153
 msgid "Link Event"
-msgstr "Vincular Evento"
+msgstr "Vincular evento"
 
 #: src/Admin/manage-event/EventFinance.js:142
 msgid "Failed to load financial data."
@@ -1266,11 +1266,11 @@ msgstr "Error al cargar los datos financieros."
 
 #: src/Admin/manage-event/EventFinance.js:188
 msgid "Total Costs"
-msgstr "Costos Totales"
+msgstr "Costos totales"
 
 #: src/Admin/manage-event/EventFinance.js:202
 msgid "Total Income"
-msgstr "Ingresos Totales"
+msgstr "Ingresos totales"
 
 #: src/Admin/manage-event/EventFinance.js:247
 msgid "Balance"
@@ -1313,7 +1313,7 @@ msgstr "No hay entradas financieras para este evento aún."
 
 #: src/Admin/manage-event/EventFinance.js:510
 msgid "View All Entries"
-msgstr "Ver Todas las Entradas"
+msgstr "Ver todas las entradas"
 
 #: src/Admin/manage-event/ManageEventApp.js:116
 msgid "No event date ID specified."
@@ -1524,7 +1524,7 @@ msgstr "Dirección"
 #: src/blocks/calendar-button/index.js:130
 #: src/blocks/calendar-button/index.js:185
 msgid "Add to Calendar"
-msgstr "Añadir al Calendario"
+msgstr "Añadir al calendario"
 
 #: src/blocks/calendar-button/index.js:54
 #: src/blocks/calendar-button/index.js:123
@@ -1732,7 +1732,7 @@ msgstr "Guardar"
 
 #: src/Admin/manage-event/GroupRules.js:601
 msgid "Select a group..."
-msgstr "Seleccione un grupo..."
+msgstr "Selecciona un grupo..."
 
 #: src/Admin/manage-event/GroupRules.js:427
 #: src/Admin/manage-event/GroupRules.js:625
@@ -1913,7 +1913,7 @@ msgstr "Ningún participante coincide con los filtros actuales."
 
 #: src/Admin/manage-event/EventAudience.js:1550
 msgid "Manage Participants"
-msgstr "Gestionar Participantes"
+msgstr "Gestionar participantes"
 
 #: src/Admin/manage-event/EventFinance.js:154
 #: src/Admin/manage-event/ManageEventApp.js:591
@@ -1941,7 +1941,7 @@ msgstr "No hay fotos para este evento."
 #: src/Admin/manage-event/EventPhotos.js:335
 #: src/Admin/manage-event/EventPhotos.js:426
 msgid "Media Library"
-msgstr "Biblioteca de Medios"
+msgstr "Biblioteca de medios"
 
 #: src/Admin/manage-event/EventPhotos.js:360
 msgid "Default order"
@@ -1969,27 +1969,27 @@ msgstr "Agrupar por etiquetado"
 
 #: src/Admin/manage-event/EventPhotos.js:399
 msgid "Tag Person"
-msgstr "Etiquetar Persona"
+msgstr "Etiquetar persona"
 
 #: src/Admin/manage-event/EventPhotos.js:404
 msgid "Download Selected"
-msgstr "Descargar Seleccionados"
+msgstr "Descargar seleccionados"
 
 #: src/Admin/manage-event/EventPhotos.js:405
 msgid "Download All"
-msgstr "Descargar Todo"
+msgstr "Descargar todo"
 
 #: src/Admin/manage-event/EventPhotos.js:415
 msgid "Cancel Selection"
-msgstr "Cancelar Selección"
+msgstr "Cancelar selección"
 
 #: src/Admin/manage-event/EventPhotos.js:416
 msgid "Select Photos"
-msgstr "Seleccionar Fotos"
+msgstr "Seleccionar fotos"
 
 #: src/Admin/manage-event/EventPhotos.js:471
 msgid "Add New Photos"
-msgstr "Añadir Nuevas Fotos"
+msgstr "Añadir nuevas fotos"
 
 #: src/Admin/manage-event/EventTickets.js:140
 msgid "Failed to load tickets."
@@ -2130,7 +2130,7 @@ msgstr "Error al eliminar reglas de grupo."
 #: src/Admin/manage-event/DuplicateEventWizard.js:1026
 #: src/Admin/manage-event/GroupRules.js:357
 msgid "Group Rules"
-msgstr "Reglas de Grupo"
+msgstr "Reglas de grupo"
 
 #: src/Admin/manage-event/GroupRules.js:440
 msgid "0 = no discount"
@@ -2147,7 +2147,7 @@ msgstr "Sin reglas de grupo aún. Añade una abajo."
 
 #: src/Admin/manage-event/GroupRules.js:594
 msgid "Add Group"
-msgstr "Añadir Grupo"
+msgstr "Añadir grupo"
 
 #: src/Admin/manage-event/GroupRules.js:680
 msgid "Add"
@@ -2246,15 +2246,15 @@ msgstr "Destino:"
 #: src/Admin/manage-event/MergeEventWizard.js:225
 #: src/Admin/manage-event/MergeEventWizard.js:355
 msgid "Review & Configure"
-msgstr "Revisar y Configurar"
+msgstr "Revisar y configurar"
 
 #: src/Admin/manage-event/MergeEventWizard.js:230
 msgid "Review the linked data counts and choose what to do with each type."
-msgstr "Revise los recuentos de datos vinculados y elija qué hacer con cada tipo."
+msgstr "Revisa los recuentos de datos vinculados y elige qué hacer con cada tipo."
 
 #: src/Admin/manage-event/MergeEventWizard.js:242
 msgid "Data Type"
-msgstr "Tipo de Datos"
+msgstr "Tipo de datos"
 
 #: src/Admin/manage-event/MergeEventWizard.js:244
 msgid "Source"
@@ -2274,7 +2274,7 @@ msgstr "Eliminar evento de origen después de la fusión"
 
 #: src/Admin/manage-event/MergeEventWizard.js:299
 msgid "Confirm Merge"
-msgstr "Confirmar Fusión"
+msgstr "Confirmar fusión"
 
 #: src/Admin/manage-event/MergeEventWizard.js:304
 msgid "Source:"
@@ -2294,11 +2294,11 @@ msgstr "La fecha del evento de origen se eliminará después de la fusión."
 
 #: src/Admin/manage-event/MergeEventWizard.js:345
 msgid "Execute Merge"
-msgstr "Ejecutar Fusión"
+msgstr "Ejecutar fusión"
 
 #: src/Admin/manage-event/MergeEventWizard.js:354
 msgid "Select Target"
-msgstr "Seleccionar Destino"
+msgstr "Seleccionar destino"
 
 #: src/Admin/manage-event/MergeEventWizard.js:356
 msgid "Confirm"
@@ -2306,7 +2306,7 @@ msgstr "Confirmar"
 
 #: src/Admin/manage-event/PhotoDetail.js:79
 msgid "Photo Details"
-msgstr "Detalles de Foto"
+msgstr "Detalles de foto"
 
 #: src/Admin/manage-event/PhotoDetail.js:147
 msgid "Author:"
@@ -2314,7 +2314,7 @@ msgstr "Autor:"
 
 #: src/Admin/manage-event/PhotoDetail.js:156
 msgid "Tagged People"
-msgstr "Personas Etiquetadas"
+msgstr "Personas etiquetadas"
 
 #: src/Admin/manage-event/PhotoDetail.js:161
 msgid "No one tagged yet."
@@ -2543,7 +2543,7 @@ msgstr "Cambiar a venta de tickets simple"
 
 #: src/Admin/manage-event/EventTickets.js:1855
 msgid "Activity Options"
-msgstr "Opciones de Actividad"
+msgstr "Opciones de actividad"
 
 #: src/Admin/manage-event/EventTickets.js:1886
 msgid "Add selectable activity options (checkboxes) shown to participants at signup. Each option has its own price added on top of the base price."
@@ -2559,11 +2559,11 @@ msgstr "Precio (EUR)"
 
 #: src/Admin/manage-event/EventTickets.js:2265
 msgid "+ Add Option"
-msgstr "+ Agregar Opción"
+msgstr "+ Agregar opción"
 
 #: src/Admin/manage-event/ManageEventApp.js:1020
 msgid "View Entry"
-msgstr "Ver Entrada"
+msgstr "Ver entrada"
 
 #: src/Admin/manage-event/EventAudience.js:354
 msgid "Error adding participants: "
@@ -2872,11 +2872,11 @@ msgstr "Guardando…"
 
 #: src/Admin/manage-event/EventFinance.js:416
 msgid "Failed Payments"
-msgstr "Pagos Fallidos"
+msgstr "Pagos fallidos"
 
 #: src/Admin/manage-event/EventTickets.js:953
 msgid "Sale Periods"
-msgstr "Períodos de Venta"
+msgstr "Períodos de venta"
 
 #: src/Admin/manage-event/EventTickets.js:961
 msgid "Sale start at:"
@@ -2888,7 +2888,7 @@ msgstr "Fin de venta:"
 
 #: src/Admin/manage-event/EventTickets.js:1163
 msgid "+ Add Period"
-msgstr "+ Agregar Período"
+msgstr "+ Agregar período"
 
 #: src/Admin/manage-event/EventTickets.js:1860
 msgid "Minimum number of activities"
@@ -3032,7 +3032,7 @@ msgstr "Suma de pagos en línea después de comisiones, excluyendo transacciones
 
 #: src/Admin/manage-event/EventFinance.js:230
 msgid "Total Net"
-msgstr "Total Neto"
+msgstr "Total neto"
 
 #: src/Admin/manage-event/EventFinance.js:330
 msgid "Amount paid minus Mollie and application fees."
@@ -3355,7 +3355,7 @@ msgstr "Error al cargar las características."
 
 #: src/Admin/settings/FeaturesTab.js:89
 msgid "Features saved. Reload the page to see admin-menu changes."
-msgstr "Características guardadas. Recargue la página para ver los cambios del menú de administración."
+msgstr "Características guardadas. Recarga la página para ver los cambios del menú de administración."
 
 #: src/Admin/settings/FeaturesTab.js:99
 msgid "Failed to save features."

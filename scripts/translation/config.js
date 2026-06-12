@@ -105,14 +105,28 @@ export const config = {
 		// Batch size for API calls
 		batchSize: 20,
 
+		// Per-locale style notes injected into the system prompt
+		localeConventions: {
+			es_ES: `Spanish (es_ES) WordPress conventions:
+- Use sentence case, NOT title case. Only the first word and proper nouns are capitalised. "Guardar evento" not "Guardar Evento".
+- Use the informal second person (tú), not usted. Imperatives: "selecciona", "elige", "define", "guarda" — never "seleccione", "elija", "defina", "guarde".
+- Possessives follow the same rule: "tu correo" not "su correo".
+- Use established WordPress Spanish UI terms: "Ajustes" (Settings), "Escritorio" (Dashboard), "Entrada" (Post), "Página" (Page), "Tema" (Theme), "Calendario" (Calendar).
+- Use inverted opening punctuation where required: "¿…?" and "¡…!".`,
+		},
+
 		// System prompt template
-		systemPrompt: (locale, context) =>
-			`You are a professional translator.
+		systemPrompt: (locale, context) => {
+			const conventionNote = config.ai.localeConventions[locale]
+				? `\n\n${config.ai.localeConventions[locale]}`
+				: '';
+			return `You are a professional translator.
 Translate WordPress plugin strings from English to ${context.localeName} (${locale}).
 Maintain formatting, placeholders (%s, %d, {{variable}}), and HTML tags.
 Consider WordPress conventions and the plugin context.
 IMPORTANT: Keep "Fair Event:" prefix untranslated - it's a product name. Only translate the part after the colon.
 Example: "Fair Event: Start Date" → "Fair Event: Startdatum" (German), "Fair Event: Fecha de inicio" (Spanish).
-Return translations in the same order as the input.`,
+Return translations in the same order as the input.${conventionNote}`;
+		},
 	},
 };
