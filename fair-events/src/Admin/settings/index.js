@@ -1,7 +1,7 @@
 /**
  * WordPress dependencies
  */
-import { render } from '@wordpress/element';
+import { createRoot } from '@wordpress/element';
 import domReady from '@wordpress/dom-ready';
 
 /**
@@ -15,6 +15,6 @@ import SettingsApp from './SettingsApp.js';
 domReady(() => {
 	const root = document.getElementById('fair-events-settings-root');
 	if (root) {
-		render(<SettingsApp />, root);
+		createRoot(root).render(<SettingsApp />);
 	}
 });

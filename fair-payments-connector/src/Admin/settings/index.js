@@ -2,7 +2,7 @@
  * WordPress dependencies
  */
 import domReady from '@wordpress/dom-ready';
-import { render } from '@wordpress/element';
+import { createRoot } from '@wordpress/element';
 
 /**
  * Internal dependencies
@@ -17,6 +17,6 @@ domReady(() => {
 		'fair-payments-connector-settings-root'
 	);
 	if (root) {
-		render(<SettingsApp />, root);
+		createRoot(root).render(<SettingsApp />);
 	}
 });

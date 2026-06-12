@@ -1,7 +1,7 @@
 /**
  * WordPress dependencies
  */
-import { render } from '@wordpress/element';
+import { createRoot } from '@wordpress/element';
 import domReady from '@wordpress/dom-ready';
 
 /**
@@ -14,6 +14,6 @@ domReady(() => {
 		'fair-events-experimental-settings-root'
 	);
 	if (root) {
-		render(<SettingsApp />, root);
+		createRoot(root).render(<SettingsApp />);
 	}
 });

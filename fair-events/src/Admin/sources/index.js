@@ -2,7 +2,7 @@
  * WordPress dependencies
  */
 import domReady from '@wordpress/dom-ready';
-import { render } from '@wordpress/element';
+import { createRoot } from '@wordpress/element';
 
 /**
  * Internal dependencies
@@ -13,6 +13,6 @@ import SourcesList from './SourcesList.js';
 domReady(() => {
 	const rootElement = document.getElementById('fair-events-sources-root');
 	if (rootElement) {
-		render(<SourcesList />, rootElement);
+		createRoot(rootElement).render(<SourcesList />);
 	}
 });
