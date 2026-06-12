@@ -67,8 +67,8 @@ class Plugin {
 			$admin->init();
 
 			if ( Features::is_enabled( 'galleries' ) ) {
-				\FairEvents\Admin\MediaLibraryHooks::init();
-				\FairEvents\Admin\MediaBatchActions::init();
+				\FairEventsExperimental\Admin\MediaLibraryHooks::init();
+				\FairEventsExperimental\Admin\MediaBatchActions::init();
 			}
 		}
 	}
@@ -93,7 +93,7 @@ class Plugin {
 			add_action(
 				'rest_api_init',
 				function () {
-					$controller = new \FairEvents\API\EventSourceController();
+					$controller = new \FairEventsExperimental\API\EventSourceController();
 					$controller->register_routes();
 				}
 			);
@@ -101,7 +101,7 @@ class Plugin {
 			add_action(
 				'rest_api_init',
 				function () {
-					$controller = new \FairEvents\API\EventProposalController();
+					$controller = new \FairEventsExperimental\API\EventProposalController();
 					$controller->register_routes();
 				}
 			);
@@ -109,7 +109,7 @@ class Plugin {
 			add_action(
 				'rest_api_init',
 				function () {
-					$controller = new \FairEvents\API\WeeklyEventsController();
+					$controller = new \FairEventsExperimental\API\WeeklyEventsController();
 					$controller->register_routes();
 				}
 			);
@@ -119,7 +119,7 @@ class Plugin {
 			add_action(
 				'rest_api_init',
 				function () {
-					$controller = new \FairEvents\API\EventGalleryEndpoint();
+					$controller = new \FairEventsExperimental\API\EventGalleryEndpoint();
 					$controller->register_routes();
 				}
 			);
@@ -127,7 +127,7 @@ class Plugin {
 			add_action(
 				'rest_api_init',
 				function () {
-					$controller = new \FairEvents\API\PhotoLikesController();
+					$controller = new \FairEventsExperimental\API\PhotoLikesController();
 					$controller->register_routes();
 				}
 			);
@@ -135,8 +135,41 @@ class Plugin {
 			add_action(
 				'rest_api_init',
 				function () {
-					$controller = new \FairEvents\API\PhotoDownloadController();
+					$controller = new \FairEventsExperimental\API\PhotoDownloadController();
 					$controller->register_routes();
+				}
+			);
+
+			// Attach event relationship to WP media REST responses so the
+			// media library filter can show which event an image belongs to.
+			add_action(
+				'rest_api_init',
+				function () {
+					register_rest_field(
+						'attachment',
+						'fair_event',
+						array(
+							'get_callback' => function ( $object ) {
+								$repository  = new \FairEvents\Database\EventPhotoRepository();
+								$event_photo = $repository->get_event_for_attachment( $object['id'] );
+
+								if ( ! $event_photo || ! $event_photo->event_date_id ) {
+									return null;
+								}
+
+								$event_date = \FairEvents\Models\EventDates::get_by_id( $event_photo->event_date_id );
+
+								return $event_date ? array(
+									'event_date_id' => (int) $event_date->id,
+									'title'         => $event_date->title,
+								) : null;
+							},
+							'schema'       => array(
+								'description' => __( 'Event associated with this image', 'fair-events-experimental' ),
+								'type'        => array( 'object', 'null' ),
+							),
+						)
+					);
 				}
 			);
 		}
@@ -145,7 +178,7 @@ class Plugin {
 			add_action(
 				'rest_api_init',
 				function () {
-					$controller = new \FairEvents\API\MigrationController();
+					$controller = new \FairEventsExperimental\API\MigrationController();
 					$controller->register_routes();
 				}
 			);
@@ -153,7 +186,7 @@ class Plugin {
 			add_action(
 				'rest_api_init',
 				function () {
-					$controller = new \FairEvents\API\MigrationSummaryController();
+					$controller = new \FairEventsExperimental\API\MigrationSummaryController();
 					$controller->register_routes();
 				}
 			);
@@ -163,7 +196,7 @@ class Plugin {
 			add_action(
 				'rest_api_init',
 				function () {
-					$controller = new \FairEvents\API\GroupPricingRulesController();
+					$controller = new \FairEventsExperimental\API\GroupPricingRulesController();
 					$controller->register_routes();
 				}
 			);
@@ -171,7 +204,7 @@ class Plugin {
 			add_action(
 				'rest_api_init',
 				function () {
-					$controller = new \FairEvents\API\GroupPermissionRulesController();
+					$controller = new \FairEventsExperimental\API\GroupPermissionRulesController();
 					$controller->register_routes();
 				}
 			);
@@ -179,7 +212,7 @@ class Plugin {
 			add_action(
 				'rest_api_init',
 				function () {
-					$controller = new \FairEvents\API\TicketsController();
+					$controller = new \FairEventsExperimental\API\TicketsController();
 					$controller->register_routes();
 				}
 			);
@@ -187,7 +220,7 @@ class Plugin {
 			add_action(
 				'rest_api_init',
 				function () {
-					$controller = new \FairEvents\API\InvitationTokensController();
+					$controller = new \FairEventsExperimental\API\InvitationTokensController();
 					$controller->register_routes();
 				}
 			);
@@ -197,7 +230,7 @@ class Plugin {
 			add_action(
 				'rest_api_init',
 				function () {
-					$controller = new \FairEvents\API\EventDuplicationController();
+					$controller = new \FairEventsExperimental\API\EventDuplicationController();
 					$controller->register_routes();
 				}
 			);
@@ -205,7 +238,7 @@ class Plugin {
 			add_action(
 				'rest_api_init',
 				function () {
-					$controller = new \FairEvents\API\EventMergeController();
+					$controller = new \FairEventsExperimental\API\EventMergeController();
 					$controller->register_routes();
 				}
 			);

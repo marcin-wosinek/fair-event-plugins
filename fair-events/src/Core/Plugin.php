@@ -150,38 +150,6 @@ class Plugin {
 				$controller->register_routes();
 			}
 		);
-
-		// Add event relationship to attachment REST responses.
-		add_action(
-			'rest_api_init',
-			function () {
-				register_rest_field(
-					'attachment',
-					'fair_event',
-					array(
-						'get_callback' => function ( $object ) {
-							$repository  = new \FairEvents\Database\EventPhotoRepository();
-							$event_photo = $repository->get_event_for_attachment( $object['id'] );
-
-							if ( ! $event_photo || ! $event_photo->event_date_id ) {
-								return null;
-							}
-
-							$event_date = \FairEvents\Models\EventDates::get_by_id( $event_photo->event_date_id );
-
-							return $event_date ? array(
-								'event_date_id' => (int) $event_date->id,
-								'title'         => $event_date->title,
-							) : null;
-						},
-						'schema'       => array(
-							'description' => __( 'Event associated with this image', 'fair-events' ),
-							'type'        => array( 'object', 'null' ),
-						),
-					)
-				);
-			}
-		);
 	}
 
 	/**

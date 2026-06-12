@@ -230,11 +230,11 @@ class PaymentHooks {
 	 * @return string Formatted label, or empty string when no discount applies.
 	 */
 	private static function format_applied_discount( $event_participant, $transaction ) {
-		if ( ! class_exists( \FairEvents\Services\EventSignupPricing::class ) ) {
+		if ( ! class_exists( \FairEventsExperimental\Services\EventSignupPricing::class ) ) {
 			return '';
 		}
 
-		$rule = \FairEvents\Services\EventSignupPricing::resolve_best_discount_rule(
+		$rule = \FairEventsExperimental\Services\EventSignupPricing::resolve_best_discount_rule(
 			(int) $event_participant->event_date_id,
 			(int) $event_participant->participant_id
 		);
@@ -326,8 +326,8 @@ class PaymentHooks {
 
 		foreach ( $options as $opt ) {
 			$name = (string) $opt->name;
-			if ( class_exists( \FairEvents\Services\ActivityOptionPriceResolver::class ) ) {
-				$resolved = \FairEvents\Services\ActivityOptionPriceResolver::resolve( $opt );
+			if ( class_exists( \FairEventsExperimental\Services\ActivityOptionPriceResolver::class ) ) {
+				$resolved = \FairEventsExperimental\Services\ActivityOptionPriceResolver::resolve( $opt );
 				$price    = null !== $resolved ? (float) $resolved : (float) $opt->price;
 			} else {
 				$price = (float) $opt->price;

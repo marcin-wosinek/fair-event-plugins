@@ -1,0 +1,194 @@
+# Copyright (C) 2026 Marcin Wosinek
+# This file is distributed under the GPLv3 or later.
+msgid ""
+msgstr ""
+"Project-Id-Version: Fair Events Experimental 1.0.0\n"
+"Report-Msgid-Bugs-To: https://wordpress.org/support/plugin/fair-events-experimental\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language-Team: LANGUAGE <LL@li.org>\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"POT-Creation-Date: 2026-06-12T06:53:43+00:00\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"X-Generator: WP-CLI 2.12.0\n"
+"X-Domain: fair-events-experimental\n"
+
+#. Plugin Name of the plugin
+#: fair-events-experimental.php
+msgid "Fair Events Experimental"
+msgstr ""
+
+#. Plugin URI of the plugin
+#: fair-events-experimental.php
+msgid "https://github.com/marcin-wosinek/fair-event-plugins"
+msgstr ""
+
+#. Description of the plugin
+#: fair-events-experimental.php
+msgid "Activates advanced feature bundles for Fair Events (galleries, sources, ticketing, event-tools, migration, venues). Requires fair-events."
+msgstr ""
+
+#. Author of the plugin
+#: fair-events-experimental.php
+msgid "Marcin Wosinek"
+msgstr ""
+
+#. Author URI of the plugin
+#: fair-events-experimental.php
+msgid "https://github.com/marcin-wosinek"
+msgstr ""
+
+#: fair-events-experimental.php:37
+msgid "Fair Events Experimental requires the Fair Events plugin to be active."
+msgstr ""
+
+#: src/Admin/AdminPages.php:58
+msgid "Experimental Settings"
+msgstr ""
+
+#: src/Admin/AdminPages.php:59
+msgid "Experimental"
+msgstr ""
+
+#: src/Admin/AdminPages.php:69
+msgid "Migrate Posts to Events"
+msgstr ""
+
+#: src/Admin/AdminPages.php:70
+msgid "Migrate Posts"
+msgstr ""
+
+#: src/Admin/AdminPages.php:78
+#: src/Admin/AdminPages.php:79
+msgid "Migration Summary"
+msgstr ""
+
+#: src/Admin/AdminPages.php:90
+#: src/Admin/AdminPages.php:91
+msgid "Event Sources"
+msgstr ""
+
+#: src/Admin/AdminPages.php:99
+#: src/Admin/AdminPages.php:100
+#: src/Admin/AdminPages.php:106
+msgid "View Source"
+msgstr ""
+
+#: src/Admin/AdminPages.php:113
+#: src/Admin/AdminPages.php:114
+#: src/Core/Features.php:163
+msgid "Venues"
+msgstr ""
+
+#: src/Admin/AdminPages.php:125
+#: src/Admin/AdminPages.php:126
+#: src/Admin/AdminPages.php:132
+msgid "Manage Invitations"
+msgstr ""
+
+#: src/Admin/AdminPages.php:139
+#: src/Admin/AdminPages.php:140
+#: src/Admin/AdminPages.php:146
+msgid "Copy Event"
+msgstr ""
+
+#: src/Admin/AdminPages.php:446
+msgid "Copy"
+msgstr ""
+
+#: src/Admin/AdminPages.php:449
+msgid "Copy this event"
+msgstr ""
+
+#: src/Core/Features.php:143
+msgid "Galleries"
+msgstr ""
+
+#: src/Core/Features.php:144
+msgid "Per-event photo galleries, photo likes/downloads, image exports, media library hooks."
+msgstr ""
+
+#: src/Core/Features.php:147
+msgid "Event sources & feeds"
+msgstr ""
+
+#: src/Core/Features.php:148
+msgid "External event sources, Facebook import, iCal/JSON feeds, event proposals, weekly schedule."
+msgstr ""
+
+#: src/Core/Features.php:151
+msgid "Ticketing"
+msgstr ""
+
+#: src/Core/Features.php:152
+msgid "Tickets, group pricing/permission rules, invitations. Requires fair-audience."
+msgstr ""
+
+#: src/Core/Features.php:155
+msgid "Event tools"
+msgstr ""
+
+#: src/Core/Features.php:156
+msgid "Event duplication, merge, and admin-bar Copy button."
+msgstr ""
+
+#: src/Core/Features.php:159
+msgid "Migration"
+msgstr ""
+
+#: src/Core/Features.php:160
+msgid "One-time post → event migration tooling."
+msgstr ""
+
+#: src/Core/Features.php:164
+msgid "Venues admin page and REST controller."
+msgstr ""
+
+#: src/Settings/Settings.php:36
+msgid "Per-bundle feature toggles for experimental features"
+msgstr ""
+
+#: src/Admin/settings/FeaturesTab.js:52
+msgid "Failed to load features."
+msgstr ""
+
+#: src/Admin/settings/FeaturesTab.js:84
+msgid "Features saved. Reload the page to see admin-menu changes."
+msgstr ""
+
+#: src/Admin/settings/FeaturesTab.js:94
+msgid "Failed to save features."
+msgstr ""
+
+#: src/Admin/settings/FeaturesTab.js:108
+msgid "Loading features..."
+msgstr ""
+
+#: src/Admin/settings/FeaturesTab.js:120
+msgid "Feature Bundles"
+msgstr ""
+
+#: src/Admin/settings/FeaturesTab.js:124
+msgid "Toggle optional experimental feature bundles. Bundles fixed in wp-config (FAIR_EVENTS_EXPERIMENTAL_INTERNAL or FAIR_EVENTS_EXPERIMENTAL_FEATURE_*) are read-only here."
+msgstr ""
+
+#: src/Admin/settings/FeaturesTab.js:132
+msgid "Forced by a wp-config constant — change it there."
+msgstr ""
+
+#: src/Admin/settings/FeaturesTab.js:155
+msgid "One or more bundles are forced by wp-config and cannot be toggled here."
+msgstr ""
+
+#: src/Admin/settings/FeaturesTab.js:169
+msgid "Saving..."
+msgstr ""
+
+#: src/Admin/settings/FeaturesTab.js:170
+msgid "Save Features"
+msgstr ""
+
+#: src/Admin/settings/SettingsApp.js:26
+msgid "Fair Events Experimental Settings"
+msgstr ""

@@ -379,39 +379,6 @@ class AdminPages {
 	}
 
 	/**
-	 * Render migration page
-	 *
-	 * @return void
-	 */
-	public function render_migration_page() {
-		?>
-		<div id="fair-events-migration-root"></div>
-		<?php
-	}
-
-	/**
-	 * Render migration summary page
-	 *
-	 * @return void
-	 */
-	public function render_migration_summary_page() {
-		?>
-		<div id="fair-events-migration-summary-root"></div>
-		<?php
-	}
-
-	/**
-	 * Render event sources page
-	 *
-	 * @return void
-	 */
-	public function render_sources_page() {
-		?>
-		<div id="fair-events-sources-root"></div>
-		<?php
-	}
-
-	/**
 	 * Render calendar page
 	 *
 	 * @return void
@@ -434,38 +401,6 @@ class AdminPages {
 	}
 
 	/**
-	 * Render venues page
-	 *
-	 * @return void
-	 */
-	public function render_venues_page() {
-		?>
-		<div id="fair-events-venues-root"></div>
-		<?php
-	}
-
-	/**
-	 * Render source view page
-	 *
-	 * @return void
-	 */
-	public function render_source_view_page() {
-		?>
-		<div id="fair-events-source-view-root"></div>
-		<?php
-	}
-
-	/**
-	 * Render manage invitations page
-	 *
-	 * @return void
-	 */
-	public function render_manage_invitations_page() {
-		$manage_invitations_page = new ManageInvitationsPage();
-		$manage_invitations_page->render();
-	}
-
-	/**
 	 * Render manage event page
 	 *
 	 * @return void
@@ -473,31 +408,6 @@ class AdminPages {
 	public function render_manage_event_page() {
 		$manage_event_page = new ManageEventPage();
 		$manage_event_page->render();
-	}
-
-	/**
-	 * Handle copy event form submission
-	 *
-	 * @return void
-	 */
-	public function handle_copy_event_submission() {
-		// Only process if form was submitted
-		if ( ! isset( $_POST['copy_event_submit'] ) ) {
-			return;
-		}
-
-		$copy_page = new CopyEventPage();
-		$copy_page->handle_submission();
-	}
-
-	/**
-	 * Render copy event page
-	 *
-	 * @return void
-	 */
-	public function render_copy_event_page() {
-		$copy_page = new CopyEventPage();
-		$copy_page->render();
 	}
 
 	/**
