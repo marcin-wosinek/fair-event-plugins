@@ -76,7 +76,8 @@ jobs:
                       ./fair-platform/node_modules
                       ./fair-audience/node_modules
                       ./fair-events-shared/node_modules
-                  key: ${{ runner.os }}-node-${{ hashFiles('package-lock.json') }}
+                      ./fair-timetable/node_modules
+                  key: ${{ runner.os }}-node-v2-${{ hashFiles('package-lock.json') }}
 
             - name: Install npm dependencies
               if: steps.npm-cache.outputs.cache-hit != 'true'
