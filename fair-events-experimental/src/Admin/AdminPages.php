@@ -206,28 +206,28 @@ class AdminPages {
 			return;
 		}
 
-		// All other pages load JS from the fair-events build directory.
-		$fe_url = FAIR_EVENTS_PLUGIN_URL;
-		$fe_dir = FAIR_EVENTS_PLUGIN_DIR;
+		// All other pages load JS from this plugin's own build directory.
+		$exp_url = FAIR_EVENTS_EXPERIMENTAL_PLUGIN_URL;
+		$exp_dir = FAIR_EVENTS_EXPERIMENTAL_PLUGIN_DIR;
 
 		switch ( $slug ) {
 			case 'fair-events-migration':
-				$asset_file = include $fe_dir . 'build/admin/migration/index.asset.php';
-				wp_enqueue_script( 'fair-events-migration', $fe_url . 'build/admin/migration/index.js', $asset_file['dependencies'], $asset_file['version'], true );
-				wp_set_script_translations( 'fair-events-migration', 'fair-events', \FairEvents\Core\Features::script_translations_path() );
+				$asset_file = include $exp_dir . 'build/admin/migration/index.asset.php';
+				wp_enqueue_script( 'fair-events-migration', $exp_url . 'build/admin/migration/index.js', $asset_file['dependencies'], $asset_file['version'], true );
+				wp_set_script_translations( 'fair-events-migration', 'fair-events-experimental' );
 				wp_enqueue_style( 'wp-components' );
 				break;
 
 			case 'fair-events-migration-summary':
-				$asset_file = include $fe_dir . 'build/admin/migration-summary/index.asset.php';
-				wp_enqueue_script( 'fair-events-migration-summary', $fe_url . 'build/admin/migration-summary/index.js', $asset_file['dependencies'], $asset_file['version'], true );
-				wp_set_script_translations( 'fair-events-migration-summary', 'fair-events', \FairEvents\Core\Features::script_translations_path() );
+				$asset_file = include $exp_dir . 'build/admin/migration-summary/index.asset.php';
+				wp_enqueue_script( 'fair-events-migration-summary', $exp_url . 'build/admin/migration-summary/index.js', $asset_file['dependencies'], $asset_file['version'], true );
+				wp_set_script_translations( 'fair-events-migration-summary', 'fair-events-experimental' );
 				wp_enqueue_style( 'wp-components' );
 				break;
 
 			case 'fair-events-sources':
-				$asset_file = include $fe_dir . 'build/admin/sources/index.asset.php';
-				wp_enqueue_script( 'fair-events-sources', $fe_url . 'build/admin/sources/index.js', $asset_file['dependencies'], $asset_file['version'], true );
+				$asset_file = include $exp_dir . 'build/admin/sources/index.asset.php';
+				wp_enqueue_script( 'fair-events-sources', $exp_url . 'build/admin/sources/index.js', $asset_file['dependencies'], $asset_file['version'], true );
 				wp_localize_script(
 					'fair-events-sources',
 					'fairEventsSourcesData',
@@ -236,15 +236,15 @@ class AdminPages {
 						'jsonUrlTemplate' => rest_url( 'fair-events/v1/sources/{slug}/json' ),
 					)
 				);
-				wp_set_script_translations( 'fair-events-sources', 'fair-events', \FairEvents\Core\Features::script_translations_path() );
+				wp_set_script_translations( 'fair-events-sources', 'fair-events-experimental' );
 				wp_enqueue_style( 'wp-components' );
 				break;
 
 			case 'fair-events-source-view':
-				$asset_file     = include $fe_dir . 'build/admin/source-view/index.asset.php';
-				$calendar_asset = include $fe_dir . 'build/admin/calendar/index.asset.php';
-				wp_enqueue_script( 'fair-events-source-view', $fe_url . 'build/admin/source-view/index.js', $asset_file['dependencies'], $asset_file['version'], true );
-				wp_enqueue_style( 'fair-events-calendar', $fe_url . 'build/admin/calendar/style-index.css', array( 'wp-components' ), $calendar_asset['version'] );
+				$asset_file     = include $exp_dir . 'build/admin/source-view/index.asset.php';
+				$calendar_asset = include FAIR_EVENTS_PLUGIN_DIR . 'build/admin/calendar/index.asset.php';
+				wp_enqueue_script( 'fair-events-source-view', $exp_url . 'build/admin/source-view/index.js', $asset_file['dependencies'], $asset_file['version'], true );
+				wp_enqueue_style( 'fair-events-calendar', FAIR_EVENTS_PLUGIN_URL . 'build/admin/calendar/style-index.css', array( 'wp-components' ), $calendar_asset['version'] );
 				// phpcs:ignore WordPress.Security.NonceVerification.Recommended
 				$source_id = isset( $_GET['source_id'] ) ? absint( $_GET['source_id'] ) : 0;
 				wp_localize_script(
@@ -258,19 +258,19 @@ class AdminPages {
 						'jsonUrlTemplate' => rest_url( 'fair-events/v1/sources/{slug}/json' ),
 					)
 				);
-				wp_set_script_translations( 'fair-events-source-view', 'fair-events', \FairEvents\Core\Features::script_translations_path() );
+				wp_set_script_translations( 'fair-events-source-view', 'fair-events-experimental' );
 				break;
 
 			case 'fair-events-venues':
-				$asset_file = include $fe_dir . 'build/admin/venues/index.asset.php';
-				wp_enqueue_script( 'fair-events-venues', $fe_url . 'build/admin/venues/index.js', $asset_file['dependencies'], $asset_file['version'], true );
-				wp_set_script_translations( 'fair-events-venues', 'fair-events', \FairEvents\Core\Features::script_translations_path() );
+				$asset_file = include $exp_dir . 'build/admin/venues/index.asset.php';
+				wp_enqueue_script( 'fair-events-venues', $exp_url . 'build/admin/venues/index.js', $asset_file['dependencies'], $asset_file['version'], true );
+				wp_set_script_translations( 'fair-events-venues', 'fair-events-experimental' );
 				wp_enqueue_style( 'wp-components' );
 				break;
 
 			case 'fair-events-manage-invitations':
-				$asset_file = include $fe_dir . 'build/admin/manage-invitations/index.asset.php';
-				wp_enqueue_script( 'fair-events-manage-invitations', $fe_url . 'build/admin/manage-invitations/index.js', $asset_file['dependencies'], $asset_file['version'], true );
+				$asset_file = include $exp_dir . 'build/admin/manage-invitations/index.asset.php';
+				wp_enqueue_script( 'fair-events-manage-invitations', $exp_url . 'build/admin/manage-invitations/index.js', $asset_file['dependencies'], $asset_file['version'], true );
 				// phpcs:ignore WordPress.Security.NonceVerification.Recommended
 				$event_date_id   = isset( $_GET['event_date_id'] ) ? absint( $_GET['event_date_id'] ) : 0;
 				$signup_page_url = '';
@@ -289,7 +289,7 @@ class AdminPages {
 						'signupPageUrl'  => $signup_page_url,
 					)
 				);
-				wp_set_script_translations( 'fair-events-manage-invitations', 'fair-events', \FairEvents\Core\Features::script_translations_path() );
+				wp_set_script_translations( 'fair-events-manage-invitations', 'fair-events-experimental' );
 				wp_enqueue_style( 'wp-components' );
 				break;
 		}
@@ -367,7 +367,7 @@ class AdminPages {
 	 * @return void
 	 */
 	public function render_manage_invitations_page() {
-		$manage_invitations_page = new \FairEvents\Admin\ManageInvitationsPage();
+		$manage_invitations_page = new \FairEventsExperimental\Admin\ManageInvitationsPage();
 		$manage_invitations_page->render();
 	}
 
@@ -382,7 +382,7 @@ class AdminPages {
 			return;
 		}
 
-		$copy_page = new \FairEvents\Admin\CopyEventPage();
+		$copy_page = new \FairEventsExperimental\Admin\CopyEventPage();
 		$copy_page->handle_submission();
 	}
 
@@ -392,7 +392,7 @@ class AdminPages {
 	 * @return void
 	 */
 	public function render_copy_event_page() {
-		$copy_page = new \FairEvents\Admin\CopyEventPage();
+		$copy_page = new \FairEventsExperimental\Admin\CopyEventPage();
 		$copy_page->render();
 	}
 
