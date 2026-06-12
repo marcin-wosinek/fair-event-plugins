@@ -1,11 +1,11 @@
 <?php
 /**
- * Venue model for Fair Events
+ * Venue model for Fair Events Experimental
  *
- * @package FairEvents
+ * @package FairEventsExperimental
  */
 
-namespace FairEvents\Models;
+namespace FairEventsExperimental\Models;
 
 defined( 'WPINC' ) || die;
 
@@ -250,7 +250,7 @@ class Venue {
 			array( '%d' )
 		);
 
-		return $result !== false;
+		return false !== $result;
 	}
 
 	/**
@@ -281,7 +281,7 @@ class Venue {
 			array( '%d' )
 		);
 
-		return $result !== false;
+		return false !== $result;
 	}
 
 	/**
