@@ -39,13 +39,13 @@ msgstr ""
 msgid "https://github.com/marcin-wosinek"
 msgstr ""
 
-#: src/Admin/AdminPages.php:125
+#: src/Admin/AdminPages.php:124
 #: src/Admin/settings/SettingsApp.js:63
 msgid "Fair Events Settings"
 msgstr "Ustawienia Fair Events"
 
-#: src/Admin/AdminPages.php:126
-#: src/Admin/manage-event/EventTickets.js:2232
+#: src/Admin/AdminPages.php:125
+#: src/Admin/manage-event/EventTickets.js:2275
 msgid "Settings"
 msgstr "Ustawienia"
 
@@ -100,9 +100,8 @@ msgstr "Edytuj wydarzenie"
 msgid "View Event"
 msgstr "Zobacz wydarzenie"
 
+#: src/Admin/AdminPages.php:114
 #: src/Admin/AdminPages.php:115
-#: src/Admin/AdminPages.php:116
-#: src/Admin/MediaLibraryHooks.php:125
 #: src/Admin/all-events/AllEvents.js:249
 #: src/blocks/events-list/components/EditComponent.js:117
 msgid "All Events"
@@ -174,7 +173,6 @@ msgctxt "Screen reader text for the items list"
 msgid "Events list"
 msgstr "Lista wydarzeń"
 
-#: src/API/EventProposalController.php:240
 #: src/PostTypes/Event.php:121
 msgid "Event location"
 msgstr "Miejsce wydarzenia"
@@ -190,7 +188,6 @@ msgstr "Szczegóły wydarzenia"
 msgid "Start Date & Time"
 msgstr "Data i godzina rozpoczęcia"
 
-#: src/Admin/CopyEventPage.php:359
 #: src/blocks/event-proposal/render.php:139
 msgid "Location"
 msgstr "Miejsce"
@@ -213,7 +210,6 @@ msgstr "Nie udało się zapisać ustawień."
 
 #: src/Frontend/EventGalleryPage.php:228
 #: src/PostTypes/Event.php:239
-#: src/Frontend/event-gallery/index.js:537
 msgid "Loading..."
 msgstr "Ładowanie..."
 
@@ -226,10 +222,8 @@ msgstr "Slug URL wydarzenia"
 msgid "The URL slug used for event permalinks (e.g., /fair-events/event-name)"
 msgstr "Slug URL używany w permalinkach wydarzeń (np. /fair-events/nazwa-wydarzenia)"
 
-#: src/Admin/MediaLibraryHooks.php:285
 #: src/Admin/settings/FeaturesTab.js:169
 #: src/Admin/settings/GeneralTab.js:278
-#: src/Admin/sources/components/SourceForm.js:237
 msgid "Saving..."
 msgstr "Zapisywanie..."
 
@@ -281,7 +275,6 @@ msgstr "Trwające wydarzenia"
 msgid "Filter events by time relative to now"
 msgstr "Filtruj wydarzenia według czasu względem teraźniejszości"
 
-#: src/Admin/CopyEventPage.php:371
 #: src/blocks/event-proposal/render.php:156
 #: src/Admin/all-events/AllEvents.js:92
 #: src/Admin/manage-event/DuplicateEventWizard.js:783
@@ -386,7 +379,7 @@ msgctxt "block keyword"
 msgid "list"
 msgstr "lista"
 
-#: src/Admin/AdminPages.php:874
+#: src/Admin/AdminPages.php:507
 msgid "Upcoming"
 msgstr "Nadchodzące"
 
@@ -394,106 +387,24 @@ msgstr "Nadchodzące"
 msgid "Confirm Attendance"
 msgstr "Potwierdź Obecność"
 
-#: fair-events.php:149
+#: fair-events.php:150
 msgid "Fair Event: Start Date"
 msgstr "Fair Event: Data rozpoczęcia"
 
-#: fair-events.php:153
+#: fair-events.php:154
 msgid "Fair Event: End Date"
 msgstr "Fair Event: Data zakończenia"
 
-#: src/Admin/AdminPages.php:222
-#: src/Admin/AdminPages.php:223
-#: src/Admin/AdminPages.php:229
-#: src/Admin/CopyEventPage.php:285
-msgid "Copy Event"
-msgstr "Kopiuj wydarzenie"
-
-#: src/Admin/CopyEventPage.php:31
-msgid "You do not have permission to create events."
-msgstr "Nie masz uprawnień do tworzenia wydarzeń."
-
-#: src/Admin/CopyEventPage.php:36
-#: src/Admin/CopyEventPage.php:153
-msgid "Security check failed. Please try again."
-msgstr "Sprawdzenie bezpieczeństwa nie powiodło się. Spróbuj ponownie."
-
-#: src/Admin/CopyEventPage.php:42
-#: src/Admin/CopyEventPage.php:148
-msgid "Invalid event ID."
-msgstr "Nieprawidłowe ID wydarzenia."
-
-#: src/Admin/CopyEventPage.php:48
-#: src/Admin/CopyEventPage.php:159
-#: src/API/EventGalleryEndpoint.php:78
-#: src/API/PhotoDownloadController.php:83
-msgid "Event not found."
-msgstr "Nie znaleziono wydarzenia."
-
-#: src/Admin/CopyEventPage.php:58
 #: src/API/EventDatesController.php:394
 msgid "Event title is required."
 msgstr "Tytuł wydarzenia jest wymagany."
 
-#: src/Admin/CopyEventPage.php:64
-msgid "Could not retrieve event dates."
-msgstr "Nie można pobrać dat wydarzenia."
-
-#: src/Admin/CopyEventPage.php:83
-msgid "Failed to create new event."
-msgstr "Nie udało się utworzyć nowego wydarzenia."
-
-#: src/Admin/CopyEventPage.php:142
-msgid "You do not have permission to copy events."
-msgstr "Nie masz uprawnień do kopiowania wydarzeń."
-
-#: src/Admin/CopyEventPage.php:194
-msgid "Custom date is required."
-msgstr "Niestandardowa data jest wymagana."
-
-#: src/Admin/CopyEventPage.php:212
-msgid "Invalid date option selected."
-msgstr "Wybrano nieprawidłową opcję daty."
-
-#: src/Admin/CopyEventPage.php:344
 #: src/Admin/calendar/components/QuickEventModal.js:102
 #: src/Admin/manage-event/DuplicateEventWizard.js:703
 #: src/Admin/manage-event/ManageEventApp.js:678
-#: src/Admin/migration/MigrationApp.js:218
 msgid "Title"
 msgstr "Tytuł"
 
-#: src/Admin/CopyEventPage.php:294
-msgid "New Event Title"
-msgstr "Tytuł nowego wydarzenia"
-
-#: src/Admin/CopyEventPage.php:301
-#: src/Admin/CopyEventPage.php:345
-msgid "(Copy)"
-msgstr "(Kopia)"
-
-#: src/Admin/CopyEventPage.php:310
-msgid "Event Date"
-msgstr "Data wydarzenia"
-
-#: src/Admin/CopyEventPage.php:316
-msgid "A week later"
-msgstr "Tydzień później"
-
-#: src/Admin/CopyEventPage.php:320
-msgid "Custom date"
-msgstr "Niestandardowa data"
-
-#: src/Admin/CopyEventPage.php:333
-msgid "Select the new start date. The event duration and time will be preserved."
-msgstr "Wybierz nową datę rozpoczęcia. Czas trwania i godzina wydarzenia zostaną zachowane."
-
-#: src/Admin/CopyEventPage.php:392
-msgid "Create Copy"
-msgstr "Utwórz kopię"
-
-#: src/Admin/CopyEventPage.php:395
-#: src/Admin/MediaBatchActions.php:254
 #: src/Admin/calendar/components/QuickEventModal.js:182
 #: src/Admin/manage-event/DuplicateEventWizard.js:687
 #: src/Admin/manage-event/EventAudience.js:1702
@@ -503,8 +414,6 @@ msgstr "Utwórz kopię"
 #: src/Admin/manage-event/EventMailings.js:609
 #: src/Admin/manage-event/GroupRules.js:471
 #: src/Admin/manage-event/MergeEventWizard.js:444
-#: src/Admin/sources/components/SourceForm.js:231
-#: src/Admin/venues/VenuesApp.js:573
 msgid "Cancel"
 msgstr "Anuluj"
 
@@ -512,43 +421,18 @@ msgstr "Anuluj"
 msgid "Event Length"
 msgstr "Czas trwania wydarzenia"
 
-#: src/Admin/AdminPages.php:1000
 #: src/PostTypes/Event.php:496
 msgid "Copy"
 msgstr "Kopiuj"
 
-#: src/Admin/CopyEventPage.php:341
-msgid "What Will Be Created"
-msgstr "Co zostanie utworzone"
-
-#: src/Admin/CopyEventPage.php:348
-msgid "Start Date"
-msgstr "Data rozpoczęcia"
-
-#: src/Admin/CopyEventPage.php:353
-msgid "Duration"
-msgstr "Czas trwania"
-
-#: src/Admin/CopyEventPage.php:365
-msgid "Featured Image"
-msgstr "Obraz wyróżniający"
-
-#: src/Admin/CopyEventPage.php:377
-msgid "Tags"
-msgstr "Tagi"
-
-#: src/Admin/CopyEventPage.php:383
-msgid "The new event will be created as a draft. All event details will be copied from the original event."
-msgstr "Nowe wydarzenie zostanie utworzone jako szkic. Wszystkie szczegóły wydarzenia zostaną skopiowane z oryginalnego wydarzenia."
-
-#: src/blocks/events-calendar/render.php:497
-#: src/blocks/weekly-schedule/render.php:489
+#: src/blocks/events-calendar/render.php:504
+#: src/blocks/weekly-schedule/render.php:491
 #: src/Admin/calendar/components/CalendarHeader.js:28
 msgid "Previous"
 msgstr "Poprzedni"
 
-#: src/blocks/events-calendar/render.php:503
-#: src/blocks/weekly-schedule/render.php:498
+#: src/blocks/events-calendar/render.php:510
+#: src/blocks/weekly-schedule/render.php:500
 #: src/Admin/calendar/components/CalendarHeader.js:34
 #: src/Admin/manage-event/DuplicateEventWizard.js:674
 #: src/Admin/manage-event/MergeEventWizard.js:431
@@ -601,8 +485,8 @@ msgstr "Pokaż nawigację"
 msgid "Display previous/next month navigation"
 msgstr "Wyświetl nawigację poprzedni/następny miesiąc"
 
-#: src/Admin/AdminPages.php:88
-#: src/Admin/AdminPages.php:105
+#: src/Admin/AdminPages.php:87
+#: src/Admin/AdminPages.php:104
 #: src/Admin/calendar/CalendarApp.js:163
 #: src/blocks/events-calendar/components/EditComponent.js:291
 msgid "Events Calendar"
@@ -632,334 +516,55 @@ msgctxt "block keyword"
 msgid "grid"
 msgstr "siatka"
 
-#: src/Admin/AdminPages.php:160
-#: src/Admin/AdminPages.php:161
-#: src/Admin/sources/SourcesList.js:142
 #: src/blocks/events-calendar/components/EditComponent.js:243
 #: src/blocks/events-list/components/EditComponent.js:176
 #: src/blocks/weekly-schedule/components/EditComponent.js:243
 msgid "Event Sources"
 msgstr "Źródła Wydarzeń"
 
-#: src/Admin/AdminPages.php:1003
-msgid "Copy this event"
-msgstr "Skopiuj to wydarzenie"
-
-#: src/API/EventSourceController.php:64
-msgid "Fetch only enabled sources."
-msgstr "Pobierz tylko włączone źródła."
-
-#: src/API/EventSourceController.php:91
-#: src/API/EventSourceController.php:107
-msgid "Unique identifier for the source."
-msgstr "Unikalny identyfikator źródła."
-
-#: src/API/EventSourceController.php:139
 #: src/API/PublicEventsController.php:103
 msgid "Unique slug identifier for the source."
 msgstr "Unikalny identyfikator slug źródła."
 
-#: src/API/EventSourceController.php:176
-#: src/API/EventSourceController.php:258
-#: src/API/EventSourceController.php:319
-#: src/API/EventSourceController.php:390
 #: src/API/PublicEventsController.php:189
 msgid "Source not found."
 msgstr "Nie znaleziono źródła."
 
-#: src/API/EventSourceController.php:210
-#: src/API/EventSourceController.php:275
-msgid "A source with this slug already exists."
-msgstr "Źródło o tym slugu już istnieje."
-
-#: src/API/EventSourceController.php:229
-msgid "Failed to create source."
-msgstr "Nie udało się utworzyć źródła."
-
-#: src/API/EventSourceController.php:294
-msgid "Failed to update source."
-msgstr "Nie udało się zaktualizować źródła."
-
-#: src/API/EventSourceController.php:329
-#: src/Admin/sources/SourcesList.js:90
-msgid "Failed to delete source."
-msgstr "Nie udało się usunąć źródła."
-
-#: src/API/EventSourceController.php:398
 #: src/API/PublicEventsController.php:197
 msgid "This source is disabled."
 msgstr "To źródło jest wyłączone."
-
-#: src/API/EventSourceController.php:523
-msgid "Data sources must be an array."
-msgstr "Źródła danych muszą być tablicą."
-
-#: src/API/EventSourceController.php:531
-msgid "At least one data source is required."
-msgstr "Wymagane jest co najmniej jedno źródło danych."
-
-#. translators: %d: Data source index
-#: src/API/EventSourceController.php:541
-#, php-format
-msgid "Data source at index %d is missing source_type or config."
-msgstr "Źródło danych pod indeksem %d nie posiada source_type lub konfiguracji."
-
-#. translators: %d: Data source index
-#: src/API/EventSourceController.php:569
-#, php-format
-msgid "Invalid source type at index %d."
-msgstr "Nieprawidłowy typ źródła pod indeksem %d."
-
-#. translators: %d: Data source index
-#: src/API/EventSourceController.php:578
-#, php-format
-msgid "Config at index %d must be an object."
-msgstr "Konfiguracja pod indeksem %d musi być obiektem."
-
-#. translators: %d: Data source index
-#: src/API/EventSourceController.php:589
-#, php-format
-msgid "Categories source at index %d requires category_ids array."
-msgstr "Źródło kategorii o indeksie %d wymaga tablicy category_ids."
-
-#. translators: 1: Category ID, 2: Data source index
-#: src/API/EventSourceController.php:600
-#, php-format
-msgid "Category ID %1$d does not exist (data source index %2$d)."
-msgstr "Identyfikator kategorii %1$d nie istnieje (indeks źródła danych %2$d)."
-
-#. translators: %d: Data source index
-#: src/API/EventSourceController.php:612
-#, php-format
-msgid "iCal source at index %d requires url field."
-msgstr "Źródło iCal o indeksie %d wymaga pola url."
-
-#. translators: %d: Data source index
-#: src/API/EventSourceController.php:622
-#: src/API/EventSourceController.php:643
-#, php-format
-msgid "Invalid URL format at index %d."
-msgstr "Nieprawidłowy format adresu URL o indeksie %d."
-
-#. translators: %d: Data source index
-#: src/API/EventSourceController.php:657
-#, php-format
-msgid "Unknown source type at index %d."
-msgstr "Nieznany typ źródła o indeksie %d."
 
 #: src/PostTypes/Event.php:351
 msgid "Date & Time"
 msgstr "Data i godzina"
 
-#: src/Admin/sources/components/DataSourceItem.js:43
-#: src/Admin/sources/components/SourceTypeConfig.js:37
-msgid "Failed to load categories."
-msgstr "Nie udało się załadować kategorii."
-
-#: src/Admin/sources/components/DataSourceItem.js:78
-msgid "Event Categories"
-msgstr "Kategorie wydarzeń"
-
-#: src/Admin/sources/components/DataSourceItem.js:79
-msgid "iCal URL"
-msgstr "Adres URL iCal"
-
-#: src/Admin/sources/components/DataSourceItem.js:85
-msgid "Meetup API (Coming Soon)"
-msgstr "Interfejs API Meetup (Wkrótce)"
-
-#: src/Admin/sources/components/DataSourceItem.js:95
-#: src/Admin/sources/components/SourceTypeConfig.js:61
-msgid "Select Event Categories"
-msgstr "Wybierz Kategorie Wydarzeń"
-
-#: src/Admin/sources/components/DataSourceItem.js:104
-#: src/Admin/sources/components/SourceTypeConfig.js:70
-msgid "Loading categories..."
-msgstr "Ładowanie kategorii..."
-
-#: src/Admin/sources/components/DataSourceItem.js:111
-#: src/Admin/sources/components/SourceTypeConfig.js:77
-msgid "No categories found. Create categories first."
-msgstr "Nie znaleziono kategorii. Utwórz najpierw kategorie."
-
-#: src/Admin/sources/components/DataSourceItem.js:147
-#: src/Admin/sources/components/SourceTypeConfig.js:110
-msgid "Events from these categories will be included in this source."
-msgstr "Wydarzenia z tych kategorii zostaną uwzględnione w tym źródle."
-
-#: src/Admin/sources/components/DataSourceItem.js:160
-#: src/Admin/sources/components/SourceTypeConfig.js:123
-msgid "iCal Feed URL"
-msgstr "URL Kanału iCal"
-
-#: src/Admin/sources/components/DataSourceItem.js:166
-#: src/Admin/sources/components/SourceTypeConfig.js:129
-msgid "Enter the URL of the iCal feed to import events from."
-msgstr "Wprowadź URL kanału iCal, z którego mają być importowane wydarzenia."
-
-#: src/Admin/sources/components/DataSourceItem.js:197
-#: src/Admin/sources/components/SourceTypeConfig.js:160
-msgid "Meetup API integration is coming soon."
-msgstr "Integracja z API Meetup będzie wkrótce dostępna."
-
-#: src/Admin/sources/components/DataSourceItem.js:220
-msgid "Data Source"
-msgstr "Źródło Danych"
-
-#: src/Admin/manage-event/EventTickets.js:1141
-#: src/Admin/manage-event/EventTickets.js:1754
-#: src/Admin/manage-event/EventTickets.js:2189
+#: src/Admin/manage-event/EventTickets.js:1144
+#: src/Admin/manage-event/EventTickets.js:1794
+#: src/Admin/manage-event/EventTickets.js:2232
 #: src/Admin/manage-event/GroupRules.js:513
 #: src/Admin/manage-event/PhotoDetail.js:182
-#: src/Admin/sources/components/DataSourceItem.js:228
 msgid "Remove"
 msgstr "Usuń"
-
-#: src/Admin/sources/components/DataSourceItem.js:233
-msgid "Source Type"
-msgstr "Typ źródła"
-
-#: src/Admin/sources/components/DataSourceItem.js:237
-msgid "Select the type of event source."
-msgstr "Wybierz typ źródła wydarzeń."
-
-#: src/Admin/sources/components/SourceForm.js:132
-msgid "Source Name"
-msgstr "Nazwa Źródła"
-
-#: src/Admin/sources/components/SourceForm.js:136
-msgid "A descriptive name for this event source."
-msgstr "Opisowa nazwa dla tego źródła wydarzeń."
-
-#: src/Admin/source-view/SourceViewApp.js:238
-#: src/Admin/sources/components/SourceForm.js:143
-#: src/Admin/sources/SourcesList.js:193
-msgid "Slug"
-msgstr "Slug"
-
-#: src/Admin/sources/components/SourceForm.js:149
-msgid "URL-friendly identifier for this source."
-msgstr "Identyfikator przyjazny dla URL dla tego źródła."
-
-#: src/Admin/sources/components/SourceForm.js:153
-msgid "Auto-generated from name. Can be customized."
-msgstr "Generowany automatycznie z nazwy. Można dostosować."
-
-#: src/Admin/source-view/SourceViewApp.js:250
-#: src/Admin/sources/components/SourceForm.js:183
-#: src/Admin/sources/SourcesList.js:195
-msgid "Data Sources"
-msgstr "Źródła Danych"
-
-#: src/Admin/sources/components/SourceForm.js:190
-msgid "Add Data Source"
-msgstr "Dodaj Źródło Danych"
-
-#: src/Admin/sources/components/SourceForm.js:194
-msgid "Configure one or more data sources to aggregate events from."
-msgstr "Skonfiguruj jedno lub więcej źródeł danych do agregacji wydarzeń."
-
-#: src/Admin/sources/components/SourceForm.js:216
-msgid "Enable this source"
-msgstr "Włącz to źródło"
-
-#: src/Admin/sources/components/SourceForm.js:219
-msgid "Disabled sources will not be used for event imports."
-msgstr "Wyłączone źródła nie będą używane do importu wydarzeń."
-
-#: src/Admin/sources/components/SourceForm.js:240
-msgid "Update Source"
-msgstr "Aktualizuj Źródło"
-
-#: src/Admin/sources/components/SourceForm.js:242
-msgid "Create Source"
-msgstr "Utwórz Źródło"
-
-#: src/Admin/sources/SourcesList.js:49
-msgid "Failed to load sources."
-msgstr "Nie udało się wczytać źródeł."
-
-#: src/Admin/sources/SourcesList.js:69
-msgid "Are you sure you want to delete this source?"
-msgstr "Czy na pewno chcesz usunąć to źródło?"
-
-#: src/Admin/sources/SourcesList.js:86
-msgid "Source deleted successfully."
-msgstr "Źródło usunięte pomyślnie."
-
-#: src/Admin/sources/SourcesList.js:100
-msgid "Source updated successfully."
-msgstr "Źródło zaktualizowane pomyślnie."
-
-#: src/Admin/sources/SourcesList.js:101
-msgid "Source created successfully."
-msgstr "Źródło utworzone pomyślnie."
-
-#: src/Admin/source-view/SourceViewApp.js:245
-#: src/Admin/sources/SourcesList.js:114
-msgid "Enabled"
-msgstr "Włączony"
-
-#: src/Admin/source-view/SourceViewApp.js:246
-#: src/Admin/sources/SourcesList.js:118
-msgid "Disabled"
-msgstr "Wyłączony"
-
-#: src/Admin/sources/SourcesList.js:144
-msgid "Add New Source"
-msgstr "Dodaj Nowe Źródło"
-
-#: src/Admin/sources/SourcesList.js:173
-msgid "Loading sources..."
-msgstr "Ładowanie źródeł..."
-
-#: src/Admin/sources/SourcesList.js:180
-msgid "No sources found. Create your first source to get started."
-msgstr "Nie znaleziono źródeł. Utwórz pierwsze źródło, aby rozpocząć."
 
 #: src/Admin/all-events/AllEvents.js:67
 #: src/Admin/manage-event/EventAudience.js:805
 #: src/Admin/manage-event/EventAudience.js:1259
-#: src/Admin/manage-event/EventTickets.js:999
-#: src/Admin/manage-event/EventTickets.js:1854
-#: src/Admin/manage-event/EventTickets.js:1898
+#: src/Admin/manage-event/EventTickets.js:1002
+#: src/Admin/manage-event/EventTickets.js:1897
+#: src/Admin/manage-event/EventTickets.js:1941
 #: src/Admin/manage-event/MailBodyEditor.js:24
-#: src/Admin/sources/SourcesList.js:192
-#: src/Admin/venues/VenuesApp.js:375
-#: src/Admin/venues/VenuesApp.js:462
 msgid "Name"
 msgstr "Nazwa"
 
-#: src/Admin/sources/SourcesList.js:198
-msgid "iCal Feed"
-msgstr "Kanał iCal"
-
 #: src/Admin/manage-event/EventAudience.js:1002
 #: src/Admin/manage-event/EventFinance.js:426
-#: src/Admin/source-view/SourceViewApp.js:242
-#: src/Admin/sources/SourcesList.js:201
 msgid "Status"
 msgstr "Status"
 
 #: src/Admin/manage-event/EventAudience.js:1312
 #: src/Admin/manage-event/EventAudience.js:1610
-#: src/Admin/manage-invitations/ManageInvitations.js:311
-#: src/Admin/migration/MigrationApp.js:230
-#: src/Admin/sources/SourcesList.js:202
-#: src/Admin/venues/VenuesApp.js:377
 msgid "Actions"
 msgstr "Akcje"
-
-#: src/Admin/source-view/SourceViewApp.js:253
-#: src/Admin/sources/SourcesList.js:223
-msgid "data source(s)"
-msgstr "źródło/źródła danych"
-
-#: src/Admin/source-view/SourceViewApp.js:276
-#: src/Admin/sources/SourcesList.js:233
-msgid "Copy iCal feed URL"
-msgstr "Kopiuj URL kanału iCal"
 
 #: src/Admin/components/CopyUrlButton.js:24
 msgid "Copy URL"
@@ -969,28 +574,13 @@ msgstr "Kopiuj URL"
 #: src/Admin/manage-event/EventAudience.js:1423
 #: src/Admin/manage-event/EventMailings.js:599
 #: src/Admin/manage-event/GroupRules.js:498
-#: src/Admin/sources/SourcesList.js:272
-#: src/Admin/venues/VenuesApp.js:418
 msgid "Edit"
 msgstr "Edytuj"
 
 #: src/Admin/manage-event/EventAudience.js:1438
 #: src/Admin/manage-event/MergeEventWizard.js:34
-#: src/Admin/manage-invitations/ManageInvitations.js:386
-#: src/Admin/migration-summary/MigrationSummaryApp.js:238
-#: src/Admin/sources/SourcesList.js:287
-#: src/Admin/venues/VenuesApp.js:433
 msgid "Delete"
 msgstr "Usuń"
-
-#: src/Admin/source-view/SourceViewApp.js:328
-#: src/Admin/sources/SourcesList.js:307
-msgid "Edit Event Source"
-msgstr "Edytuj Źródło Wydarzeń"
-
-#: src/Admin/sources/SourcesList.js:308
-msgid "Add New Event Source"
-msgstr "Dodaj Nowe Źródło Wydarzeń"
 
 #: src/blocks/events-calendar/components/EditComponent.js:160
 #: src/blocks/weekly-schedule/components/EditComponent.js:160
@@ -1043,68 +633,6 @@ msgstr "Wybierz źródła wydarzeń do wyświetlenia na liście."
 msgid "selected"
 msgstr "wybrano"
 
-#: src/API/EventProposalController.php:98
-msgid "Name and email are required for anonymous submissions."
-msgstr "Nazwa i adres e-mail są wymagane w przypadku zgłoszeń anonimowych."
-
-#: src/API/EventProposalController.php:107
-msgid "Please provide a valid email address."
-msgstr "Proszę podać prawidłowy adres e-mail."
-
-#: src/API/EventProposalController.php:118
-msgid "Event start date must be in the future."
-msgstr "Data rozpoczęcia wydarzenia musi być w przyszłości."
-
-#: src/API/EventProposalController.php:150
-msgid "Failed to create event proposal."
-msgstr "Nie udało się utworzyć propozycji wydarzenia."
-
-#: src/API/EventProposalController.php:188
-msgid "Event proposal submitted successfully."
-msgstr "Propozycja wydarzenia została pomyślnie przesłana."
-
-#: src/API/EventProposalController.php:219
-msgid "Event title"
-msgstr "Tytuł wydarzenia"
-
-#: src/API/EventProposalController.php:227
-msgid "Event start date and time in ISO 8601 format"
-msgstr "Data i godzina rozpoczęcia wydarzenia w formacie ISO 8601"
-
-#: src/API/EventProposalController.php:233
-msgid "Event duration in minutes"
-msgstr "Czas trwania wydarzenia w minutach"
-
-#: src/API/EventProposalController.php:248
-msgid "Array of category IDs"
-msgstr "Tablica identyfikatorów kategorii"
-
-#: src/API/EventProposalController.php:256
-msgid "Event description"
-msgstr "Opis wydarzenia"
-
-#: src/API/EventProposalController.php:263
-msgid "Submitter name (required for anonymous users)"
-msgstr "Nazwa zgłaszającego (wymagana dla użytkowników anonimowych)"
-
-#: src/API/EventProposalController.php:270
-msgid "Submitter email (required for anonymous users)"
-msgstr "Adres e-mail zgłaszającego (wymagany dla użytkowników anonimowych)"
-
-#: src/API/EventProposalController.php:276
-msgid "Honeypot field (must be empty)"
-msgstr "Pole pułapkowe (musi być puste)"
-
-#: src/API/EventProposalController.php:296
-msgid "Your submission could not be processed. Please try again."
-msgstr "Nie można przetworzyć Twojego zgłoszenia. Proszę spróbować ponownie."
-
-#. translators: %d is the number of seconds to wait
-#: src/API/EventProposalController.php:324
-#, php-format
-msgid "Please wait %d seconds before submitting another proposal."
-msgstr "Proszę zaczekać %d sekund przed przesłaniem kolejnej propozycji."
-
 #: src/blocks/event-proposal/render.php:40
 msgid "30 minutes"
 msgstr "30 minut"
@@ -1150,7 +678,7 @@ msgid "Event Description"
 msgstr "Opis wydarzenia"
 
 #. translators: %1$s is the week number, %2$s is the year
-#: src/blocks/weekly-schedule/render.php:494
+#: src/blocks/weekly-schedule/render.php:496
 #, php-format
 msgid "Week %1$s, %2$s"
 msgstr "Tydzień %1$s, %2$s"
@@ -1313,29 +841,13 @@ msgctxt "block keyword"
 msgid "weekly"
 msgstr "tygodniowy"
 
-#: src/Admin/AdminPages.php:106
+#: src/Admin/AdminPages.php:105
 msgid "Calendar"
 msgstr "Kalendarz"
 
-#: src/Admin/AdminPages.php:138
-#: src/Admin/migration/MigrationApp.js:163
-msgid "Migrate Posts to Events"
-msgstr "Migruj posty do zdarzeń"
-
-#: src/Admin/AdminPages.php:139
-msgid "Migrate Posts"
-msgstr "Migruj posty"
-
-#: src/Admin/AdminPages.php:184
-#: src/Admin/AdminPages.php:185
-#: src/Core/Features.php:181
-#: src/Admin/venues/VenuesApp.js:286
-msgid "Venues"
-msgstr "Miejsca"
-
-#: src/Admin/AdminPages.php:195
-#: src/Admin/AdminPages.php:196
-#: src/Admin/AdminPages.php:236
+#: src/Admin/AdminPages.php:134
+#: src/Admin/AdminPages.php:135
+#: src/Admin/AdminPages.php:142
 #: src/Hooks/AdminBarHooks.php:59
 #: src/Admin/calendar/CalendarApp.js:178
 #: src/Admin/manage-event/ManageEventApp.js:627
@@ -1343,103 +855,13 @@ msgstr "Miejsca"
 msgid "Manage Event"
 msgstr "Zarządzaj zdarzeniem"
 
-#: src/Admin/AdminPages.php:170
-#: src/Admin/AdminPages.php:171
-#: src/Admin/AdminPages.php:177
-msgid "View Source"
-msgstr "Wyświetl źródło"
-
-#: src/API/MigrationSummaryController.php:116
 #: src/Admin/manage-event/MergeEventWizard.js:27
 msgid "Event Photos"
 msgstr "Zdjęcia zdarzenia"
 
-#: src/Admin/MediaBatchActions.php:37
-msgid "Set Event"
-msgstr "Ustaw zdarzenie"
-
-#: src/Admin/MediaBatchActions.php:83
-#: src/Admin/MediaBatchActions.php:84
-#: src/Admin/MediaBatchActions.php:190
-msgid "Assign Photos to Event"
-msgstr "Przypisz zdjęcia do zdarzenia"
-
-#: src/Admin/MediaBatchActions.php:107
-#: src/Admin/MediaBatchActions.php:169
-msgid "Security check failed."
-msgstr "Sprawdzenie bezpieczeństwa nie powiodło się."
-
-#: src/Admin/MediaBatchActions.php:112
-#: src/Admin/MediaBatchActions.php:174
-msgid "You do not have permission to access this page."
-msgstr "Nie masz uprawnień dostępu do tej strony."
-
-#: src/Admin/MediaBatchActions.php:119
-msgid "Please select an event."
-msgstr "Proszę wybrać zdarzenie."
-
-#: src/Admin/MediaBatchActions.php:125
-msgid "Invalid event selected."
-msgstr "Wybrano nieprawidłowe zdarzenie."
-
-#: src/Admin/MediaBatchActions.php:133
-msgid "No photos to assign."
-msgstr "Brak zdjęć do przypisania."
-
-#: src/Admin/MediaBatchActions.php:182
-msgid "No photos selected."
-msgstr "Nie wybrano żadnych zdjęć."
-
-#. translators: %d: number of photos
-#: src/Admin/MediaBatchActions.php:201
-#, php-format
-msgid "%d photo selected:"
-msgid_plural "%d photos selected:"
-msgstr[0] "%d zdjęcie wybrane:"
-msgstr[1] "%d zdjęcia wybrane:"
-msgstr[2] "%d zdjęć wybranych:"
-
-#: src/Admin/MediaBatchActions.php:234
-#: src/Admin/MediaLibraryHooks.php:76
-#: src/Admin/MediaLibraryHooks.php:174
 #: src/Admin/manage-event/EventAudience.js:703
 msgid "Event"
 msgstr "Zdarzenie"
-
-#: src/Admin/MediaBatchActions.php:238
-#: src/Admin/MediaLibraryHooks.php:63
-#: src/Admin/MediaLibraryHooks.php:231
-msgid "— Select Event —"
-msgstr "— Wybierz zdarzenie —"
-
-#: src/Admin/MediaBatchActions.php:246
-msgid "All selected photos will be linked to this event."
-msgstr "Wszystkie wybrane zdjęcia będą powiązane z tym zdarzeniem."
-
-#: src/Admin/MediaBatchActions.php:257
-msgid "Assign Photos"
-msgstr "Przypisz zdjęcia"
-
-#. translators: 1: number of photos, 2: event title
-#: src/Admin/MediaBatchActions.php:281
-#, php-format
-msgid "%1$d photo assigned to \"%2$s\"."
-msgid_plural "%1$d photos assigned to \"%2$s\"."
-msgstr[0] "%1$d zdjęcie przypisane do „%2$s\"."
-msgstr[1] "%1$d zdjęcia przypisane do „%2$s\"."
-msgstr[2] "%1$d zdjęć przypisanych do „%2$s\"."
-
-#: src/Admin/MediaLibraryHooks.php:84
-msgid "Link this image to an event"
-msgstr "Powiąż ten obraz z wydarzeniem"
-
-#: src/Admin/MediaLibraryHooks.php:228
-msgid "Event:"
-msgstr "Wydarzenie:"
-
-#: src/Admin/MediaLibraryHooks.php:404
-msgid "Event: "
-msgstr "Wydarzenie: "
 
 #: src/API/EventDatesController.php:77
 #: src/API/EventDatesController.php:94
@@ -1460,16 +882,6 @@ msgstr "Status dla nowego postu."
 
 #: src/API/EventDatesController.php:142
 #: src/API/EventDatesController.php:166
-#: src/API/GroupPermissionRulesController.php:63
-#: src/API/GroupPermissionRulesController.php:75
-#: src/API/GroupPermissionRulesController.php:108
-#: src/API/GroupPricingRulesController.php:56
-#: src/API/GroupPricingRulesController.php:68
-#: src/API/GroupPricingRulesController.php:109
-#: src/API/GroupPricingRulesController.php:139
-#: src/API/TicketsController.php:57
-#: src/API/TicketsController.php:69
-#: src/API/TicketsController.php:88
 msgid "Event date ID."
 msgstr "ID daty wydarzenia."
 
@@ -1535,79 +947,38 @@ msgstr "Nie udało się utworzyć daty wydarzenia."
 
 #: src/API/EventDatesController.php:667
 #: src/API/EventDatesController.php:718
-#: src/API/EventDatesController.php:910
-#: src/API/EventDatesController.php:950
-#: src/API/EventDatesController.php:1028
-#: src/API/EventDatesController.php:1095
-#: src/API/EventDatesController.php:1153
-#: src/API/EventMergeController.php:109
-#: src/API/GroupPermissionRulesController.php:146
-#: src/API/GroupPermissionRulesController.php:183
-#: src/API/GroupPricingRulesController.php:177
-#: src/API/GroupPricingRulesController.php:207
-#: src/API/TicketsController.php:121
-#: src/API/TicketsController.php:142
-#: src/API/TicketsController.php:295
+#: src/API/EventDatesController.php:917
+#: src/API/EventDatesController.php:957
+#: src/API/EventDatesController.php:1035
+#: src/API/EventDatesController.php:1102
+#: src/API/EventDatesController.php:1160
 msgid "Event date not found."
 msgstr "Data wydarzenia nie znaleziona."
 
-#: src/API/EventDatesController.php:796
+#: src/API/EventDatesController.php:798
 msgid "Failed to update event date."
 msgstr "Nie udało się zaktualizować daty wydarzenia."
 
-#: src/API/EventDatesController.php:920
+#: src/API/EventDatesController.php:927
 msgid "Failed to delete event date."
 msgstr "Nie udało się usunąć datę wydarzenia."
 
-#: src/API/EventDatesController.php:960
+#: src/API/EventDatesController.php:967
 msgid "The specified post type is not enabled."
 msgstr "Określony typ postu nie jest włączony."
 
-#: src/API/EventDatesController.php:968
+#: src/API/EventDatesController.php:975
 #: src/Admin/event-meta-box/LinkOptions.js:37
 msgid "Untitled Event"
 msgstr "Wydarzenie bez tytułu"
 
-#: src/API/EventDatesController.php:1037
+#: src/API/EventDatesController.php:1044
 msgid "Post not found."
 msgstr "Post nie znaleziony."
 
-#: src/API/EventDatesController.php:1056
+#: src/API/EventDatesController.php:1063
 msgid "This post is already linked to another event."
 msgstr "Ten post jest już połączony z innym wydarzeniem."
-
-#. translators: %d: Data source index
-#: src/API/EventSourceController.php:633
-#, php-format
-msgid "Fair Events API source at index %d requires url field."
-msgstr "Źródło Fair Events API w indeksie %d wymaga pola url."
-
-#: src/API/MigrationController.php:182
-#: src/Admin/migration/MigrationApp.js:41
-msgid "All Categories"
-msgstr "Wszystkie kategorie"
-
-#: src/API/MigrationController.php:310
-msgid "Post migrated successfully to event."
-msgstr "Post został pomyślnie przeniesiony do wydarzenia."
-
-#: src/API/PhotoLikesController.php:116
-msgid "You must be logged in to like photos."
-msgstr "Musisz być zalogowany, aby polubić zdjęcia."
-
-#: src/API/PhotoLikesController.php:142
-msgid "You must be logged in to unlike photos."
-msgstr "Musisz być zalogowany, aby usunąć polubienie zdjęć."
-
-#: src/API/PhotoLikesController.php:165
-#: src/API/PhotoLikesController.php:205
-#: src/API/PhotoLikesController.php:255
-msgid "Photo not found."
-msgstr "Zdjęcie nie znalezione."
-
-#: src/API/PhotoLikesController.php:223
-msgid "Failed to like photo."
-msgstr "Nie udało się polubić zdjęcia."
 
 #: src/API/PublicEventsController.php:55
 #: src/API/PublicEventsController.php:108
@@ -1633,84 +1004,11 @@ msgstr "Liczba wydarzeń na stronie."
 msgid "Page number."
 msgstr "Numer strony."
 
-#: src/API/VenueController.php:70
-#: src/API/VenueController.php:87
-msgid "Unique identifier for the venue."
-msgstr "Unikalny identyfikator dla miejsca."
-
-#: src/API/VenueController.php:104
-msgid "Venue name."
-msgstr "Nazwa miejsca."
-
-#: src/API/VenueController.php:110
-msgid "Venue address."
-msgstr "Adres miejsca."
-
-#: src/API/VenueController.php:116
-msgid "Google Maps URL."
-msgstr "Adres URL Mapy Google."
-
-#: src/API/VenueController.php:122
-msgid "Latitude coordinate."
-msgstr "Współrzędna szerokości geograficznej."
-
-#: src/API/VenueController.php:128
-msgid "Longitude coordinate."
-msgstr "Współrzędna długości geograficznej."
-
-#: src/API/VenueController.php:134
-msgid "Facebook page URL."
-msgstr "Adres URL strony Facebook."
-
-#: src/API/VenueController.php:140
-msgid "Instagram handle (without @)."
-msgstr "Uchwyt Instagram (bez @)."
-
-#: src/API/VenueController.php:146
-msgid "Website URL."
-msgstr "Adres URL strony internetowej."
-
-#: src/API/VenueController.php:186
-#: src/API/VenueController.php:255
-#: src/API/VenueController.php:297
-msgid "Venue not found."
-msgstr "Miejsce nie znalezione."
-
-#: src/API/VenueController.php:213
-#: src/API/VenueController.php:263
-msgid "Venue name is required."
-msgstr "Nazwa miejsca jest wymagana."
-
-#: src/API/VenueController.php:223
-#: src/Admin/venues/VenuesApp.js:159
-msgid "Failed to create venue."
-msgstr "Nie udało się utworzyć miejsca."
-
-#: src/API/VenueController.php:273
-#: src/Admin/venues/VenuesApp.js:158
-msgid "Failed to update venue."
-msgstr "Nie udało się zaktualizować miejsca."
-
-#: src/API/VenueController.php:307
-#: src/Admin/venues/VenuesApp.js:125
-msgid "Failed to delete venue."
-msgstr "Nie udało się usunąć miejsca."
-
-#: src/API/WeeklyEventsController.php:91
-msgid "Event source not found."
-msgstr "Źródło wydarzenia nie znalezione."
-
-#: src/Core/Plugin.php:309
-msgid "Event associated with this image"
-msgstr "Wydarzenie powiązane z tym obrazem"
-
 #: src/Frontend/EventGalleryPage.php:229
-#: src/Frontend/event-gallery/index.js:374
 msgid "Failed to load photos."
 msgstr "Nie udało się załadować zdjęć."
 
 #: src/Frontend/EventGalleryPage.php:230
-#: src/Frontend/event-gallery/index.js:565
 msgid "No photos available for this event."
 msgstr "Brak dostępnych zdjęć dla tego wydarzenia."
 
@@ -1730,22 +1028,6 @@ msgid_plural "Review Event's Photos (%d photos)"
 msgstr[0] "Przejrzyj zdjęcia wydarzenia (%d zdjęcie)"
 msgstr[1] "Przejrzyj zdjęcia wydarzenia (%d zdjęcia)"
 msgstr[2] "Przejrzyj zdjęcia wydarzenia (%d zdjęć)"
-
-#: src/Services/PostMigrationService.php:32
-msgid "Source post not found."
-msgstr "Post źródłowy nie znaleziony."
-
-#: src/Services/PostMigrationService.php:41
-msgid "Post is already an event."
-msgstr "Post jest już wydarzeniem."
-
-#: src/Services/PostMigrationService.php:50
-msgid "You do not have permission to edit this post."
-msgstr "Nie masz uprawnień do edycji tego posta."
-
-#: src/Services/PostMigrationService.php:70
-msgid "Failed to create event post."
-msgstr "Nie udało się utworzyć posta wydarzenia."
 
 #: src/Settings/Settings.php:60
 msgid "Post types that can have event data"
@@ -1770,7 +1052,7 @@ msgid "Add event"
 msgstr "Dodaj wydarzenie"
 
 #. translators: %d: number of additional events
-#: src/Admin/calendar/components/DayCell.js:225
+#: src/Admin/calendar/components/DayCell.js:227
 #, js-format
 msgid "+%d more"
 msgstr "+%d więcej"
@@ -1815,6 +1097,7 @@ msgstr "Data rozpoczęcia"
 #: src/Admin/manage-event/DuplicateEventWizard.js:725
 #: src/Admin/manage-event/DuplicateEventWizard.js:749
 #: src/Admin/manage-event/DuplicateEventWizard.js:878
+#: src/Admin/manage-event/EventTickets.js:1347
 #: src/Admin/manage-event/ManageEventApp.js:703
 #: src/Admin/manage-event/ManageEventApp.js:736
 #: src/Admin/manage-event/ManageEventApp.js:910
@@ -1998,12 +1281,10 @@ msgstr "Saldo"
 #: src/Admin/manage-event/EventFinance.js:258
 #: src/Admin/manage-event/EventFinance.js:325
 #: src/Admin/manage-event/EventFinance.js:421
-#: src/Admin/migration/MigrationApp.js:227
 msgid "Date"
 msgstr "Data"
 
 #: src/Admin/manage-event/EventFinance.js:259
-#: src/Admin/migration/MigrationApp.js:221
 msgid "Type"
 msgstr "Typ"
 
@@ -2185,54 +1466,6 @@ msgstr "Zapisz zmiany"
 msgid "Delete Event"
 msgstr "Usuń wydarzenie"
 
-#: src/Admin/migration/MigrationApp.js:57
-msgid "All Post Types"
-msgstr "Wszystkie typy postów"
-
-#: src/Admin/migration/MigrationApp.js:66
-msgid "Failed to load post types."
-msgstr "Nie udało się załadować typów postów."
-
-#: src/Admin/migration/MigrationApp.js:109
-msgid "Failed to load posts."
-msgstr "Nie udało się załadować postów."
-
-#: src/Admin/migration/MigrationApp.js:143
-msgid "Post migrated successfully!"
-msgstr "Post został pomyślnie zmigrowany!"
-
-#: src/Admin/migration/MigrationApp.js:154
-msgid "Failed to migrate post."
-msgstr "Nie udało się zmigrować postu."
-
-#: src/Admin/migration/MigrationApp.js:182
-msgid "Post Type"
-msgstr "Typ postu"
-
-#: src/Admin/migration/MigrationApp.js:192
-msgid "Category"
-msgstr "Kategoria"
-
-#: src/Admin/migration/MigrationApp.js:208
-msgid "No posts found. Try changing the filters or create some posts first."
-msgstr "Nie znaleziono postów. Spróbuj zmienić filtry lub najpierw utwórz kilka postów."
-
-#: src/Admin/migration/MigrationApp.js:224
-msgid "Author"
-msgstr "Autor"
-
-#: src/Admin/migration/MigrationApp.js:245
-msgid "(no title)"
-msgstr "(bez tytułu)"
-
-#: src/Admin/migration/MigrationApp.js:261
-msgid "Migrating..."
-msgstr "Migrowanie..."
-
-#: src/Admin/migration/MigrationApp.js:262
-msgid "Migrate"
-msgstr "Migruj"
-
 #: src/Admin/manage-event/ManageEventApp.js:672
 msgid "Details"
 msgstr "Szczegóły"
@@ -2277,177 +1510,14 @@ msgstr "Parametry opcjonalne: start_date, end_date (format Y-m-d), categories (p
 msgid "General"
 msgstr "Ogólne"
 
-#: src/Admin/source-view/SourceViewApp.js:73
-msgid "Failed to load source."
-msgstr "Nie udało się załadować źródła."
-
-#: src/Admin/source-view/SourceViewApp.js:83
-msgid "No source ID provided."
-msgstr "Nie podano ID źródła."
-
-#: src/Admin/source-view/SourceViewApp.js:201
-#: src/Admin/source-view/SourceViewApp.js:215
-msgid "Back to Event Sources"
-msgstr "Powrót do źródeł zdarzeń"
-
-#. translators: %s: source name
-#: src/Admin/source-view/SourceViewApp.js:222
-#, js-format
-msgid "Source: %s"
-msgstr "Źródło: %s"
-
-#: src/Admin/source-view/SourceViewApp.js:271
-msgid "Feed URLs"
-msgstr "Adresy URL kanałów"
-
-#: src/Admin/source-view/SourceViewApp.js:275
-msgid "iCal"
-msgstr "iCal"
-
-#: src/Admin/source-view/SourceViewApp.js:283
-msgid "JSON"
-msgstr "JSON"
-
-#: src/Admin/source-view/SourceViewApp.js:284
-#: src/Admin/sources/SourcesList.js:244
-msgid "Copy JSON API URL"
-msgstr "Skopiuj adres URL API JSON"
-
-#: src/Admin/source-view/SourceViewApp.js:293
-#: src/Admin/source-view/SourceViewApp.js:303
-msgid "Edit Source"
-msgstr "Edytuj źródło"
-
-#: src/Admin/sources/components/DataSourceItem.js:81
-msgid "Fair Events API"
-msgstr "Fair Events API"
-
-#: src/Admin/sources/components/DataSourceItem.js:179
-#: src/Admin/sources/components/SourceTypeConfig.js:142
-msgid "Fair Events API URL"
-msgstr "Adres URL Fair Events API"
-
-#: src/Admin/sources/components/DataSourceItem.js:185
-#: src/Admin/sources/components/SourceTypeConfig.js:148
-msgid "Enter the JSON API URL from another Fair Events site. Use /wp-json/fair-events/v1/events for all events, or /wp-json/fair-events/v1/sources/{slug}/json for a specific source."
-msgstr "Wprowadź adres URL API JSON z innej witryny Fair Events. Użyj /wp-json/fair-events/v1/events dla wszystkich wydarzeń lub /wp-json/fair-events/v1/sources/{slug}/json dla konkretnego źródła."
-
-#: src/Admin/sources/SourcesList.js:200
-msgid "JSON API"
-msgstr "API JSON"
-
 #: src/Admin/manage-event/EventMailings.js:626
-#: src/Admin/sources/SourcesList.js:260
 msgid "View"
 msgstr "Wyświetl"
 
-#: src/Admin/venues/VenuesApp.js:68
-msgid "Failed to load venues."
-msgstr "Nie udało się załadować miejsc."
-
-#: src/Admin/venues/VenuesApp.js:107
-msgid "Are you sure you want to delete this venue?"
-msgstr "Czy na pewno chcesz usunąć to miejsce?"
-
-#: src/Admin/venues/VenuesApp.js:121
-msgid "Venue deleted successfully."
-msgstr "Miejsce zostało usunięte pomyślnie."
-
-#: src/Admin/venues/VenuesApp.js:142
-msgid "Venue updated successfully."
-msgstr "Miejsce zostało zaktualizowane pomyślnie."
-
-#: src/Admin/venues/VenuesApp.js:149
-msgid "Venue created successfully."
-msgstr "Miejsce zostało utworzone pomyślnie."
-
-#: src/Admin/venues/VenuesApp.js:337
-#: src/Admin/venues/VenuesApp.js:454
-msgid "Add New Venue"
-msgstr "Dodaj nowe miejsce"
-
-#: src/Admin/venues/VenuesApp.js:346
-msgid "Loading venues..."
-msgstr "Ładowanie miejsc..."
-
-#: src/Admin/venues/VenuesApp.js:353
-msgid "No venues found. Create your first venue to get started."
-msgstr "Nie znaleziono miejsc. Utwórz swoje pierwsze miejsce, aby rozpocząć."
-
 #: src/Admin/event-meta-box/EventEditForm.js:448
 #: src/Admin/manage-event/ManageEventApp.js:805
-#: src/Admin/venues/VenuesApp.js:376
-#: src/Admin/venues/VenuesApp.js:470
 msgid "Address"
 msgstr "Adres"
-
-#: src/Admin/venues/VenuesApp.js:402
-msgid "No address"
-msgstr "Brak adresu"
-
-#: src/Admin/venues/VenuesApp.js:453
-msgid "Edit Venue"
-msgstr "Edytuj Venue"
-
-#: src/Admin/venues/VenuesApp.js:478
-msgid "Full address of the venue"
-msgstr "Pełny adres venue"
-
-#: src/Admin/venues/VenuesApp.js:484
-msgid "Google Maps Link"
-msgstr "Link Google Maps"
-
-#: src/Admin/venues/VenuesApp.js:493
-msgid "URL to Google Maps location"
-msgstr "URL do lokalizacji Google Maps"
-
-#: src/Admin/venues/VenuesApp.js:499
-msgid "Latitude"
-msgstr "Szerokość geograficzna"
-
-#: src/Admin/venues/VenuesApp.js:507
-msgid "Latitude coordinate (e.g., 39.4878023)"
-msgstr "Współrzędna szerokości geograficznej (np. 39.4878023)"
-
-#: src/Admin/venues/VenuesApp.js:513
-msgid "Longitude"
-msgstr "Długość geograficzna"
-
-#: src/Admin/venues/VenuesApp.js:521
-msgid "Longitude coordinate (e.g., -0.3613204)"
-msgstr "Współrzędna długości geograficznej (np. -0.3613204)"
-
-#: src/Admin/venues/VenuesApp.js:527
-msgid "Facebook Page Link"
-msgstr "Link strony Facebook"
-
-#: src/Admin/venues/VenuesApp.js:536
-msgid "URL to Facebook page"
-msgstr "URL strony Facebook"
-
-#: src/Admin/venues/VenuesApp.js:539
-msgid "Instagram Handle"
-msgstr "Nazwa użytkownika Instagram"
-
-#: src/Admin/venues/VenuesApp.js:547
-msgid "Instagram username without @ (e.g., venue_name)"
-msgstr "Nazwa użytkownika Instagram bez @ (np. venue_name)"
-
-#: src/Admin/venues/VenuesApp.js:553
-msgid "Website URL"
-msgstr "URL strony internetowej"
-
-#: src/Admin/venues/VenuesApp.js:562
-msgid "Website URL of the venue"
-msgstr "URL strony internetowej venue"
-
-#: src/Admin/venues/VenuesApp.js:582
-msgid "Update Venue"
-msgstr "Aktualizuj Venue"
-
-#: src/Admin/venues/VenuesApp.js:583
-msgid "Create Venue"
-msgstr "Utwórz Venue"
 
 #: src/blocks/calendar-button/index.js:53
 #: src/blocks/calendar-button/index.js:61
@@ -2466,41 +1536,13 @@ msgstr "Przycisk do dodania tego wydarzenia do kalendarza"
 msgid "Download ICS"
 msgstr "Pobierz ICS"
 
-#: src/Frontend/event-gallery/index.js:190
-msgid "Photo viewer"
-msgstr "Przeglądarka zdjęć"
-
-#: src/Frontend/event-gallery/index.js:195
-msgid "Close"
-msgstr "Zamknij"
-
 #: src/Admin/manage-event/PhotoDetail.js:108
-#: src/Frontend/event-gallery/index.js:204
 msgid "Previous photo"
 msgstr "Poprzednie zdjęcie"
 
 #: src/Admin/manage-event/PhotoDetail.js:138
-#: src/Frontend/event-gallery/index.js:222
 msgid "Next photo"
 msgstr "Następne zdjęcie"
-
-#: src/Frontend/event-gallery/index.js:236
-#: src/Frontend/event-gallery/index.js:314
-msgid "Unlike this photo"
-msgstr "Usuń polubienie tego zdjęcia"
-
-#: src/Frontend/event-gallery/index.js:237
-#: src/Frontend/event-gallery/index.js:315
-msgid "Like this photo"
-msgstr "Polub to zdjęcie"
-
-#: src/Frontend/event-gallery/index.js:298
-msgid "View photo fullscreen"
-msgstr "Wyświetl zdjęcie na pełnym ekranie"
-
-#: src/Frontend/event-gallery/index.js:348
-msgid "Event ID not found."
-msgstr "Nie znaleziono identyfikatora wydarzenia."
 
 #: src/blocks/event-info/block.json
 msgctxt "block title"
@@ -2646,68 +1688,6 @@ msgstr "Połączony post / URL"
 msgid "Occurrence"
 msgstr "Wystąpienie"
 
-#: src/Admin/source-view/SourceViewApp.js:258
-msgid "Page"
-msgstr "Strona"
-
-#: src/Admin/source-view/SourceViewApp.js:265
-msgid "View page"
-msgstr "Wyświetl stronę"
-
-#: src/Admin/sources/components/SourceForm.js:161
-msgid "Linked Page"
-msgstr "Połączona strona"
-
-#: src/Admin/sources/components/SourceForm.js:166
-msgid "— No page —"
-msgstr "— Brak strony —"
-
-#: src/Admin/sources/components/SourceForm.js:174
-msgid "Optional page that displays events from this source."
-msgstr "Opcjonalna strona wyświetlająca wydarzenia z tego źródła."
-
-#: src/API/GroupPermissionRulesController.php:80
-#: src/API/GroupPricingRulesController.php:73
-msgid "Group ID."
-msgstr "ID grupy."
-
-#: src/API/GroupPricingRulesController.php:79
-#: src/API/GroupPricingRulesController.php:119
-msgid "Discount type."
-msgstr "Typ rabatu."
-
-#: src/API/GroupPricingRulesController.php:86
-#: src/API/GroupPricingRulesController.php:125
-msgid "Discount value."
-msgstr "Wartość rabatu."
-
-#: src/API/GroupPermissionRulesController.php:113
-#: src/API/GroupPricingRulesController.php:114
-#: src/API/GroupPricingRulesController.php:144
-msgid "Rule ID."
-msgstr "ID reguły."
-
-#: src/API/GroupPricingRulesController.php:221
-msgid "Failed to create pricing rule. The group may already have a rule for this event."
-msgstr "Nie udało się utworzyć reguły cenowej. Grupa może już mieć regułę dla tego wydarzenia."
-
-#: src/API/GroupPricingRulesController.php:248
-#: src/API/GroupPricingRulesController.php:305
-msgid "Pricing rule not found."
-msgstr "Reguła cenowa nie znaleziona."
-
-#: src/API/GroupPricingRulesController.php:268
-msgid "No data to update."
-msgstr "Brak danych do aktualizacji."
-
-#: src/API/GroupPricingRulesController.php:278
-msgid "Failed to update pricing rule."
-msgstr "Nie udało się zaktualizować reguły cenowej."
-
-#: src/API/GroupPricingRulesController.php:315
-msgid "Failed to delete pricing rule."
-msgstr "Nie udało się usunąć reguły cenowej."
-
 #: src/Admin/manage-event/EventAudience.js:1049
 #: src/Admin/manage-event/MergeEventWizard.js:28
 msgid "Participants"
@@ -2738,8 +1718,6 @@ msgid "Fixed amount"
 msgstr "Stała kwota"
 
 #: src/Admin/manage-event/GroupRules.js:597
-#: src/Admin/manage-invitations/ManageInvitations.js:215
-#: src/Admin/manage-invitations/ManageInvitations.js:306
 msgid "Group"
 msgstr "Grupa"
 
@@ -2770,30 +1748,6 @@ msgstr "np. 10"
 msgid "e.g. 5.00"
 msgstr "np. 5.00"
 
-#: src/Admin/AdminPages.php:148
-#: src/Admin/AdminPages.php:149
-#: src/Admin/migration-summary/MigrationSummaryApp.js:42
-#: src/Admin/migration-summary/MigrationSummaryApp.js:51
-#: src/Admin/migration-summary/MigrationSummaryApp.js:70
-msgid "Migration Summary"
-msgstr "Podsumowanie migracji"
-
-#: src/Admin/MediaLibraryHooks.php:266
-msgid "Auto-fill photo details on upload"
-msgstr "Automatyczne wypełnianie szczegółów zdjęcia przy przesyłaniu"
-
-#: src/Admin/MediaLibraryHooks.php:294
-msgid "Saved."
-msgstr "Zapisano."
-
-#: src/Admin/MediaLibraryHooks.php:299
-msgid "Error saving selection"
-msgstr "Błąd podczas zapisywania wyboru"
-
-#: src/Admin/MediaLibraryHooks.php:302
-msgid "Error:"
-msgstr "Błąd:"
-
 #: src/API/EventDatesController.php:190
 msgid "Master event date ID."
 msgstr "Identyfikator daty głównego wydarzenia."
@@ -2802,83 +1756,13 @@ msgstr "Identyfikator daty głównego wydarzenia."
 msgid "Date to toggle (Y-m-d format)."
 msgstr "Data do przełączenia (format Y-m-d)."
 
-#: src/API/EventDatesController.php:1161
+#: src/API/EventDatesController.php:1168
 msgid "Exdates can only be set on master events."
 msgstr "Daty wyjątkowe można ustawiać tylko dla głównych wydarzeń."
 
-#: src/API/EventDatesController.php:1171
+#: src/API/EventDatesController.php:1178
 msgid "Cannot exclude the master event date."
 msgstr "Nie można wykluczyć daty głównego wydarzenia."
-
-#: src/API/EventDuplicationController.php:81
-#: src/API/EventMergeController.php:143
-msgid "Target event date not found."
-msgstr "Docelowa data wydarzenia nie znaleziona."
-
-#: src/API/EventDuplicationController.php:91
-#: src/API/EventMergeController.php:152
-msgid "Source event date not found."
-msgstr "Data źródłowego wydarzenia nie znaleziona."
-
-#: src/API/EventDuplicationController.php:101
-msgid "Source event has no linked posts to clone."
-msgstr "Źródłowe wydarzenie nie ma powiązanych postów do sklonowania."
-
-#: src/API/EventMergeController.php:160
-msgid "Cannot merge an event date into itself."
-msgstr "Nie można scalić daty wydarzenia z samą sobą."
-
-#: src/API/GroupPermissionRulesController.php:86
-msgid "Permission type."
-msgstr "Typ uprawnień."
-
-#: src/API/GroupPermissionRulesController.php:196
-msgid "Failed to create permission rule. The group may already have this permission for this event."
-msgstr "Nie udało się utworzyć reguły uprawnień. Grupa może już mieć to uprawnienie dla tego wydarzenia."
-
-#: src/API/GroupPermissionRulesController.php:221
-msgid "Permission rule not found."
-msgstr "Reguła uprawnień nie znaleziona."
-
-#: src/API/GroupPermissionRulesController.php:231
-msgid "Failed to delete permission rule."
-msgstr "Nie udało się usunąć reguły uprawnień."
-
-#: src/API/MigrationSummaryController.php:120
-msgid "Event Participants"
-msgstr "Uczestnicy wydarzenia"
-
-#: src/API/MigrationSummaryController.php:124
-msgid "Polls"
-msgstr "Ankiety"
-
-#: src/API/MigrationSummaryController.php:128
-msgid "Gallery Access Keys"
-msgstr "Klucze dostępu do galerii"
-
-#: src/API/MigrationSummaryController.php:132
-msgid "Custom Mail Messages"
-msgstr "Niestandardowe wiadomości e-mail"
-
-#: src/API/MigrationSummaryController.php:273
-msgid "Invalid table name."
-msgstr "Nieprawidłowa nazwa tabeli."
-
-#: src/API/MigrationSummaryController.php:287
-msgid "Table does not exist."
-msgstr "Tabela nie istnieje."
-
-#: src/API/PhotoDownloadController.php:101
-msgid "No photos to download."
-msgstr "Brak zdjęć do pobrania."
-
-#: src/API/PhotoDownloadController.php:118
-msgid "No photo files found."
-msgstr "Nie znaleziono plików zdjęć."
-
-#: src/API/PhotoDownloadController.php:130
-msgid "Failed to create ZIP file."
-msgstr "Nie udało się utworzyć pliku ZIP."
 
 #: src/API/PublicEventsController.php:82
 msgid "Request context. Use \"edit\" to include events linked to non-published posts (requires edit_posts capability)."
@@ -3108,92 +1992,92 @@ msgstr "Wybierz zdjęcia"
 msgid "Add New Photos"
 msgstr "Dodaj nowe zdjęcia"
 
-#: src/Admin/manage-event/EventTickets.js:139
+#: src/Admin/manage-event/EventTickets.js:140
 msgid "Failed to load tickets."
 msgstr "Nie udało się załadować biletów."
 
-#: src/Admin/manage-event/EventTickets.js:312
+#: src/Admin/manage-event/EventTickets.js:313
 msgid "Tickets saved successfully."
 msgstr "Bilety zapisane pomyślnie."
 
-#: src/Admin/manage-event/EventTickets.js:315
+#: src/Admin/manage-event/EventTickets.js:316
 msgid "Failed to save tickets."
 msgstr "Nie udało się zapisać biletów."
 
-#: src/Admin/manage-event/EventTickets.js:869
+#: src/Admin/manage-event/EventTickets.js:872
 msgid "Ticket Prices"
 msgstr "Ceny biletów"
 
-#: src/Admin/manage-event/EventTickets.js:877
-#: src/Admin/manage-event/EventTickets.js:1296
+#: src/Admin/manage-event/EventTickets.js:880
+#: src/Admin/manage-event/EventTickets.js:1299
 msgid "Ticket Type"
 msgstr "Typ biletu"
 
-#: src/Admin/manage-event/EventTickets.js:887
-#: src/Admin/manage-event/EventTickets.js:904
-#: src/Admin/manage-event/EventTickets.js:1398
+#: src/Admin/manage-event/EventTickets.js:890
+#: src/Admin/manage-event/EventTickets.js:907
+#: src/Admin/manage-event/EventTickets.js:1409
 msgid "(unnamed)"
 msgstr "(bez nazwy)"
 
-#: src/Admin/manage-event/EventTickets.js:1235
+#: src/Admin/manage-event/EventTickets.js:1238
 msgid "Edit tickets"
 msgstr "Edytuj bilety"
 
-#: src/Admin/manage-event/EventTickets.js:1240
+#: src/Admin/manage-event/EventTickets.js:1243
 msgid "Total capacity"
 msgstr "Całkowita pojemność"
 
-#: src/Admin/manage-event/EventTickets.js:1245
+#: src/Admin/manage-event/EventTickets.js:1248
 msgid "Leave empty for unlimited capacity."
 msgstr "Pozostaw puste, aby uzyskać nieograniczoną pojemność."
 
-#: src/Admin/manage-event/EventTickets.js:1792
+#: src/Admin/manage-event/EventTickets.js:1835
 msgid "+ Add Ticket Type"
 msgstr "+ Dodaj typ biletu"
 
-#: src/Admin/manage-event/EventTickets.js:1303
-#: src/Admin/manage-event/EventTickets.js:1871
+#: src/Admin/manage-event/EventTickets.js:1306
+#: src/Admin/manage-event/EventTickets.js:1914
 msgid "Capacity"
 msgstr "Pojemność"
 
-#: src/Admin/manage-event/EventTickets.js:1058
+#: src/Admin/manage-event/EventTickets.js:1061
 msgid "Period name"
 msgstr "Nazwa okresu"
 
-#: src/Admin/manage-event/EventTickets.js:1005
-#: src/Admin/manage-event/EventTickets.js:1175
+#: src/Admin/manage-event/EventTickets.js:1008
+#: src/Admin/manage-event/EventTickets.js:1178
 msgid "From"
 msgstr "Od"
 
-#: src/Admin/manage-event/EventTickets.js:1011
-#: src/Admin/manage-event/EventTickets.js:1198
+#: src/Admin/manage-event/EventTickets.js:1014
+#: src/Admin/manage-event/EventTickets.js:1201
 msgid "Until"
 msgstr "Do"
 
-#: src/Admin/manage-event/EventTickets.js:1423
+#: src/Admin/manage-event/EventTickets.js:1434
 msgid "Type name"
 msgstr "Nazwa typu"
 
-#: src/Admin/manage-event/EventTickets.js:1447
-#: src/Admin/manage-event/EventTickets.js:2073
+#: src/Admin/manage-event/EventTickets.js:1458
+#: src/Admin/manage-event/EventTickets.js:2116
 msgid "Unlimited"
 msgstr "Nieograniczone"
 
-#: src/Admin/manage-event/EventTickets.js:891
-#: src/Admin/manage-event/EventTickets.js:1402
-#: src/Admin/manage-event/EventTickets.js:1675
+#: src/Admin/manage-event/EventTickets.js:894
+#: src/Admin/manage-event/EventTickets.js:1413
+#: src/Admin/manage-event/EventTickets.js:1715
 msgid "Price"
 msgstr "Cena"
 
-#: src/Admin/manage-event/EventTickets.js:1712
+#: src/Admin/manage-event/EventTickets.js:1752
 msgid "Cap"
 msgstr "Limit"
 
-#: src/Admin/manage-event/EventTickets.js:2237
+#: src/Admin/manage-event/EventTickets.js:2280
 msgid "Continues pricing period"
 msgstr "Kontynuuje okres cenowy"
 
-#: src/Admin/manage-event/EventTickets.js:2250
+#: src/Admin/manage-event/EventTickets.js:2293
 msgid "Unlimited tickets in pricing period"
 msgstr "Nieograniczone bilety w okresie cenowym"
 
@@ -3278,13 +2162,12 @@ msgstr "Wszystkie grupy mają już reguły dla tego wydarzenia."
 msgid "Failed to toggle occurrence."
 msgstr "Nie udało się przełączyć wystąpienia."
 
-#: src/Admin/manage-event/EventTickets.js:1319
+#: src/Admin/manage-event/EventTickets.js:1322
 #: src/Admin/manage-event/ManageEventApp.js:558
 msgid "Groups"
 msgstr "Grupy"
 
 #: src/Admin/manage-event/ManageEventApp.js:597
-#: src/Admin/manage-invitations/ManageInvitations.js:341
 msgid "Admin"
 msgstr "Administrator"
 
@@ -3482,152 +2365,17 @@ msgstr "Kliknij, aby anulować to wystąpienie"
 msgid "Click to restore this occurrence"
 msgstr "Kliknij, aby przywrócić to wystąpienie"
 
-#: src/Admin/migration-summary/MigrationSummaryApp.js:27
-msgid "Failed to load data."
-msgstr "Nie udało się załadować danych."
-
-#: src/Admin/migration-summary/MigrationSummaryApp.js:73
-msgid "tables fully migrated"
-msgstr "tabele w pełni migrowane"
-
-#: src/Admin/migration-summary/MigrationSummaryApp.js:106
-msgid "Table not found (plugin not active)"
-msgstr "Tabela nie znaleziona (wtyczka nieaktywna)"
-
-#: src/Admin/migration-summary/MigrationSummaryApp.js:132
-msgid "Total rows"
-msgstr "Łączna liczba wierszy"
-
-#: src/Admin/migration-summary/MigrationSummaryApp.js:136
-msgid "Migrated"
-msgstr "Migrowane"
-
-#: src/Admin/migration-summary/MigrationSummaryApp.js:141
-msgid "Pending"
-msgstr "Oczekujące"
-
-#: src/Admin/migration-summary/MigrationSummaryApp.js:146
-msgid "Orphaned event_id"
-msgstr "Osieroczone event_id"
-
-#: src/Admin/migration-summary/MigrationSummaryApp.js:153
-msgid "Orphaned event_date_id"
-msgstr "Osieroczone event_date_id"
-
-#: src/Admin/migration-summary/MigrationSummaryApp.js:183
-#, js-format
-msgid "Updated %d rows"
-msgstr "Zaktualizowano %d wierszy"
-
-#: src/Admin/migration-summary/MigrationSummaryApp.js:184
-#, js-format
-msgid "Deleted %d rows"
-msgstr "Usunięto %d wierszy"
-
-#: src/Admin/migration-summary/MigrationSummaryApp.js:189
-msgid "Operation failed"
-msgstr "Operacja nie powiodła się"
-
-#: src/Admin/migration-summary/MigrationSummaryApp.js:225
-msgid "Updating..."
-msgstr "Aktualizowanie..."
-
-#: src/Admin/migration-summary/MigrationSummaryApp.js:226
-msgid "Update"
-msgstr "Aktualizuj"
-
-#: src/Admin/migration-summary/MigrationSummaryApp.js:237
-msgid "Deleting..."
-msgstr "Usuwanie..."
-
-#. translators: %d is the number of exported venues
-#: src/Admin/venues/VenuesApp.js:215
-#, js-format
-msgid "%d venue(s) exported."
-msgstr "%d miejsce(a) wyeksportowane."
-
-#: src/Admin/venues/VenuesApp.js:241
-msgid "Invalid file format. Expected a JSON array."
-msgstr "Nieprawidłowy format pliku. Oczekiwana tablica JSON."
-
-#. translators: %d is the number of imported venues
-#: src/Admin/venues/VenuesApp.js:269
-#, js-format
-msgid "%d venue(s) imported."
-msgstr "%d miejsce(a) zaimportowane."
-
-#: src/Admin/venues/VenuesApp.js:277
-msgid "Failed to import venues."
-msgstr "Nie udało się zaimportować miejsc."
-
-#: src/Admin/venues/VenuesApp.js:314
-msgid "Export Selected"
-msgstr "Eksportuj wybrane"
-
-#: src/Admin/venues/VenuesApp.js:327
-msgid "Import"
-msgstr "Importuj"
-
 #: src/blocks/event-info/components/EditComponent.js:74
 msgid "Event Info block is disabled — no event is linked to this post."
 msgstr "Blok Informacje o zdarzeniu jest wyłączony — żadne zdarzenie nie jest powiązane z tym postem."
 
-#: src/Admin/AdminPages.php:207
-#: src/Admin/AdminPages.php:208
-#: src/Admin/AdminPages.php:214
-#: src/Admin/manage-event/EventTickets.js:773
-#: src/Admin/manage-invitations/ManageInvitations.js:180
+#: src/Admin/manage-event/EventTickets.js:776
 msgid "Manage Invitations"
 msgstr "Zarządzaj zaproszeniami"
 
 #: src/API/EventDatesController.php:337
 msgid "Signup price (null = free)."
 msgstr "Cena rejestracji (null = bezpłatnie)."
-
-#: src/API/InvitationTokensController.php:177
-msgid "You do not have permission to view invitation tokens."
-msgstr "Nie masz uprawnień do przeglądania tokenów zaproszenia."
-
-#: src/API/InvitationTokensController.php:208
-msgid "You must be logged in or have a valid participant link."
-msgstr "Musisz być zalogowany lub mieć ważny link uczestnika."
-
-#: src/API/InvitationTokensController.php:290
-msgid "This event has no invitation-only ticket types."
-msgstr "To wydarzenie nie ma typów biletów tylko na zaproszenie."
-
-#: src/API/InvitationTokensController.php:316
-msgid "You are not in a group that can send invitations for this event."
-msgstr "Nie jesteś w grupie, która może wysyłać zaproszenia na to wydarzenie."
-
-#: src/API/InvitationTokensController.php:331
-msgid "Failed to create invitation token."
-msgstr "Nie udało się utworzyć tokenu zaproszenia."
-
-#: src/API/InvitationTokensController.php:352
-msgid "This invitation link is not valid."
-msgstr "Ten link zaproszenia jest nieprawidłowy."
-
-#: src/API/InvitationTokensController.php:360
-msgid "This invitation link has expired or has been fully used."
-msgstr "Ten link zaproszenia wygasł lub został w pełni wykorzystany."
-
-#: src/API/InvitationTokensController.php:403
-#: src/API/InvitationTokensController.php:472
-msgid "Fair Audience plugin is required."
-msgstr "Wymagana jest wtyczka Fair Audience."
-
-#: src/API/InvitationTokensController.php:453
-msgid "Token not found."
-msgstr "Token nie znaleziony."
-
-#: src/API/InvitationTokensController.php:497
-msgid "Could not find your participant profile."
-msgstr "Nie można znaleźć Twojego profilu uczestnika."
-
-#: src/API/TicketsController.php:304
-msgid "Invalid import payload."
-msgstr "Nieprawidłowy ładunek importu."
 
 #: src/Admin/manage-event/DuplicateEventWizard.js:503
 msgid "Copying group rules…"
@@ -3681,242 +2429,142 @@ msgstr "Płatności"
 msgid "Participant"
 msgstr "Uczestnik"
 
-#: src/Admin/manage-event/EventTickets.js:415
+#: src/Admin/manage-event/EventTickets.js:417
 msgid "Failed to export ticket configuration."
 msgstr "Nie udało się wyeksportować konfiguracji biletów."
 
-#: src/Admin/manage-event/EventTickets.js:425
+#: src/Admin/manage-event/EventTickets.js:427
 msgid "Importing will replace all current ticket types, sale periods, prices, and settings for this event. Continue?"
 msgstr "Importowanie zastąpi wszystkie bieżące typy biletów, okresy sprzedaży, ceny i ustawienia tego wydarzenia. Kontynuować?"
 
-#: src/Admin/manage-event/EventTickets.js:449
+#: src/Admin/manage-event/EventTickets.js:451
 msgid "Invalid file format. Expected a fair-events-tickets export."
 msgstr "Nieprawidłowy format pliku. Oczekiwano eksportu fair-events-tickets."
 
-#: src/Admin/manage-event/EventTickets.js:464
+#: src/Admin/manage-event/EventTickets.js:466
 msgid "Ticket configuration imported successfully."
 msgstr "Konfiguracja biletów zaimportowana pomyślnie."
 
-#: src/Admin/manage-event/EventTickets.js:472
+#: src/Admin/manage-event/EventTickets.js:474
 msgid "Failed to import ticket configuration."
 msgstr "Nie udało się zaimportować konfiguracji biletów."
 
-#: src/Admin/manage-event/EventTickets.js:781
+#: src/Admin/manage-event/EventTickets.js:784
 msgid "Export ticket settings"
 msgstr "Eksportuj ustawienia biletów"
 
-#: src/Admin/manage-event/EventTickets.js:789
+#: src/Admin/manage-event/EventTickets.js:792
 msgid "Import ticket settings"
 msgstr "Importuj ustawienia biletów"
 
-#: src/Admin/manage-event/EventTickets.js:803
+#: src/Admin/manage-event/EventTickets.js:806
 msgid "Signup price"
 msgstr "Cena rejestracji"
 
-#: src/Admin/manage-event/EventTickets.js:808
+#: src/Admin/manage-event/EventTickets.js:811
 msgid "Free signup. Enter a price below to charge for this event, or switch to advanced ticketing for multiple ticket types."
 msgstr "Bezpłatna rejestracja. Wprowadź poniżej cenę, aby pobierać opłatę za to wydarzenie, lub przełącz się na zaawansowaną sprzedaż biletów, aby uzyskać wiele typów biletów."
 
 #. translators: %s: formatted price
-#: src/Admin/manage-event/EventTickets.js:814
+#: src/Admin/manage-event/EventTickets.js:817
 #, js-format
 msgid "Signup price: %s. Group discounts configured in the Groups tab still apply."
 msgstr "Cena rejestracji: %s. Rabaty grupowe skonfigurowane w karcie Grupy nadal obowiązują."
 
 #. translators: 1: group name, 2: discount, 3: final price
-#: src/Admin/manage-event/EventTickets.js:843
+#: src/Admin/manage-event/EventTickets.js:846
 #, js-format
 msgid "%1$s: %2$s discount → %3$s"
 msgstr "%1$s: %2$s rabat → %3$s"
 
-#: src/Admin/manage-event/EventTickets.js:1253
+#: src/Admin/manage-event/EventTickets.js:1256
 msgid "Signup price (EUR)"
 msgstr "Cena rejestracji (EUR)"
 
-#: src/Admin/manage-event/EventTickets.js:1257
+#: src/Admin/manage-event/EventTickets.js:1260
 msgid "Leave empty for free signup. Group discounts (Groups tab) apply to this base price."
 msgstr "Pozostaw puste dla bezpłatnej rejestracji. Rabaty grupowe (karta Grupy) dotyczą tej ceny bazowej."
 
-#: src/Admin/manage-event/EventTickets.js:1269
+#: src/Admin/manage-event/EventTickets.js:1272
 msgid "Need multiple ticket types or time-based pricing? Switch to advanced ticketing below."
 msgstr "Potrzebujesz wielu typów biletów lub cen zależnych od czasu? Przełącz się na zaawansowaną sprzedaż biletów poniżej."
 
-#: src/Admin/manage-event/EventTickets.js:1282
-#: src/Admin/manage-event/EventTickets.js:2398
+#: src/Admin/manage-event/EventTickets.js:1285
+#: src/Admin/manage-event/EventTickets.js:2458
 msgid "Switch to advanced ticketing"
 msgstr "Przełącz na zaawansowaną sprzedaż biletów"
 
-#: src/Admin/manage-event/EventTickets.js:1311
+#: src/Admin/manage-event/EventTickets.js:1314
 msgid "Seats"
 msgstr "Miejsca"
 
-#: src/Admin/manage-event/EventTickets.js:1327
+#: src/Admin/manage-event/EventTickets.js:1330
 msgid "Invitation only"
 msgstr "Tylko na zaproszenie"
 
-#: src/Admin/manage-event/EventTickets.js:1504
+#: src/Admin/manage-event/EventTickets.js:1515
 msgid "How many capacity slots this ticket consumes (1 = single, 2 = pair/+1)."
 msgstr "Ile miejsc zajmuje ten bilet (1 = jedno, 2 = para/+1)."
 
-#: src/Admin/manage-event/EventTickets.js:1553
+#: src/Admin/manage-event/EventTickets.js:1564
 msgid "All participants"
 msgstr "Wszyscy uczestnicy"
 
-#: src/Admin/manage-event/EventTickets.js:2266
+#: src/Admin/manage-event/EventTickets.js:2309
 msgid "Per-ticket-type capacity"
 msgstr "Pojemność dla każdego typu biletu"
 
-#: src/Admin/manage-event/EventTickets.js:2270
+#: src/Admin/manage-event/EventTickets.js:2313
 msgid "Show a Capacity input on each ticket type to cap how many can be sold of that type."
 msgstr "Pokaż pole Pojemność dla każdego typu biletu, aby ograniczyć, ile można sprzedać tego typu."
 
-#: src/Admin/manage-event/EventTickets.js:2283
+#: src/Admin/manage-event/EventTickets.js:2326
 msgid "Multiple pricing periods"
 msgstr "Wiele okresów cenowych"
 
-#: src/Admin/manage-event/EventTickets.js:2287
+#: src/Admin/manage-event/EventTickets.js:2330
 msgid "Enable time-based pricing with multiple sale periods (e.g. early bird, regular, late). When off, a single flat price applies for the whole sale window."
 msgstr "Włącz cenę opartą na czasie z wieloma okresami sprzedaży (np. early bird, regularna, ostatnia szansa). Gdy wyłączone, jedna stała cena obowiązuje dla całego okresu sprzedaży."
 
-#: src/Admin/manage-event/EventTickets.js:2300
+#: src/Admin/manage-event/EventTickets.js:2343
 msgid "Seats per ticket"
 msgstr "Miejsca na bilet"
 
-#: src/Admin/manage-event/EventTickets.js:2301
+#: src/Admin/manage-event/EventTickets.js:2344
 msgid "Show a Seats input on each ticket type to let one ticket consume more than one capacity slot (e.g. couples or +1 tickets). When off, every ticket counts as 1 seat."
 msgstr "Pokaż pole Miejsca dla każdego typu biletu, aby jeden bilet zajmował więcej niż jedno miejsce (np. bilety dla par lub +1). Gdy wyłączone, każdy bilet liczy się jako 1 miejsce."
 
-#: src/Admin/manage-event/EventTickets.js:2373
+#: src/Admin/manage-event/EventTickets.js:2433
 msgid "Switching back to simple ticketing will remove all ticket types, sale periods, and prices. Continue?"
 msgstr "Przełączenie na proste bilety usunie wszystkie typy biletów, okresy sprzedaży i ceny. Kontynuować?"
 
-#: src/Admin/manage-event/EventTickets.js:2385
+#: src/Admin/manage-event/EventTickets.js:2445
 msgid "Switch to simple ticketing"
 msgstr "Przełącz na proste bilety"
 
-#: src/Admin/manage-event/EventTickets.js:1812
+#: src/Admin/manage-event/EventTickets.js:1855
 msgid "Activity Options"
 msgstr "Opcje Aktywności"
 
-#: src/Admin/manage-event/EventTickets.js:1843
+#: src/Admin/manage-event/EventTickets.js:1886
 msgid "Add selectable activity options (checkboxes) shown to participants at signup. Each option has its own price added on top of the base price."
 msgstr "Dodaj wybieralne opcje aktywności (pola wyboru) wyświetlane uczestnikom podczas rejestracji. Każda opcja ma własną cenę dodaną do ceny podstawowej."
 
-#: src/Admin/manage-event/EventTickets.js:1903
+#: src/Admin/manage-event/EventTickets.js:1946
 msgid "Activity name"
 msgstr "Nazwa aktywności"
 
-#: src/Admin/manage-event/EventTickets.js:1857
+#: src/Admin/manage-event/EventTickets.js:1900
 msgid "Price (EUR)"
 msgstr "Cena (EUR)"
 
-#: src/Admin/manage-event/EventTickets.js:2222
+#: src/Admin/manage-event/EventTickets.js:2265
 msgid "+ Add Option"
 msgstr "+ Dodaj opcję"
 
 #: src/Admin/manage-event/ManageEventApp.js:1020
 msgid "View Entry"
 msgstr "Wyświetl wpis"
-
-#: src/Admin/manage-invitations/ManageInvitations.js:49
-msgid "Failed to load invitation tokens."
-msgstr "Nie udało się załadować tokenów zaproszenia."
-
-#: src/Admin/manage-invitations/ManageInvitations.js:92
-msgid "Please select a group."
-msgstr "Proszę wybrać grupę."
-
-#. translators: %d: number of tokens created
-#: src/Admin/manage-invitations/ManageInvitations.js:118
-#, js-format
-msgid "%d invitation tokens created."
-msgstr "%d tokenów zaproszenia utworzonych."
-
-#: src/Admin/manage-invitations/ManageInvitations.js:125
-msgid "Failed to create tokens."
-msgstr "Nie udało się utworzyć tokenów."
-
-#: src/Admin/manage-invitations/ManageInvitations.js:134
-msgid "Delete this invitation token?"
-msgstr "Usunąć ten token zaproszenia?"
-
-#: src/Admin/manage-invitations/ManageInvitations.js:147
-msgid "Failed to delete token."
-msgstr "Nie udało się usunąć tokenu."
-
-#: src/Admin/manage-invitations/ManageInvitations.js:162
-msgid "Link copied to clipboard."
-msgstr "Link skopiowany do schowka."
-
-#: src/Admin/manage-invitations/ManageInvitations.js:182
-msgid "← Back to Tickets"
-msgstr "← Powrót do Biletów"
-
-#: src/Admin/manage-invitations/ManageInvitations.js:209
-msgid "Create Invitation Tokens"
-msgstr "Utwórz tokeny zaproszenia"
-
-#: src/Admin/manage-invitations/ManageInvitations.js:220
-msgid "— Select group —"
-msgstr "— Wybierz grupę —"
-
-#: src/Admin/manage-invitations/ManageInvitations.js:234
-msgid "Mode"
-msgstr "Tryb"
-
-#: src/Admin/manage-invitations/ManageInvitations.js:239
-msgid "Unlinked tokens"
-msgstr "Tokeny niepowiązane"
-
-#: src/Admin/manage-invitations/ManageInvitations.js:246
-msgid "One per group member"
-msgstr "Jeden na członka grupy"
-
-#: src/Admin/manage-invitations/ManageInvitations.js:257
-msgid "Count"
-msgstr "Liczba"
-
-#: src/Admin/manage-invitations/ManageInvitations.js:267
-msgid "Max uses each"
-msgstr "Maksymalne użycia każdy"
-
-#: src/Admin/manage-invitations/ManageInvitations.js:280
-msgid "Create"
-msgstr "Utwórz"
-
-#. translators: %d: number of tokens
-#: src/Admin/manage-invitations/ManageInvitations.js:292
-#, js-format
-msgid "Invitation Tokens (%d)"
-msgstr "Tokeny zaproszenia (%d)"
-
-#: src/Admin/manage-invitations/ManageInvitations.js:299
-msgid "No invitation tokens yet."
-msgstr "Brak tokenów zaproszenia."
-
-#: src/Admin/manage-invitations/ManageInvitations.js:305
-msgid "Token"
-msgstr "Token"
-
-#: src/Admin/manage-invitations/ManageInvitations.js:307
-msgid "Inviter"
-msgstr "Zapraszający"
-
-#: src/Admin/manage-invitations/ManageInvitations.js:308
-msgid "Invitee"
-msgstr "Zaproszony"
-
-#: src/Admin/manage-invitations/ManageInvitations.js:309
-msgid "Uses"
-msgstr "Użycia"
-
-#: src/Admin/manage-invitations/ManageInvitations.js:310
-msgid "Created"
-msgstr "Utworzono"
-
-#: src/Admin/manage-invitations/ManageInvitations.js:371
-msgid "Copy link"
-msgstr "Kopiuj link"
 
 #: src/Admin/manage-event/EventAudience.js:354
 msgid "Error adding participants: "
@@ -3973,7 +2621,7 @@ msgstr "Dodawanie…"
 msgid "Add %d Selected"
 msgstr "Dodaj %d wybranych"
 
-#: src/Admin/manage-event/EventTickets.js:1641
+#: src/Admin/manage-event/EventTickets.js:1681
 msgid "Available"
 msgstr "Dostępne"
 
@@ -4090,8 +2738,8 @@ msgstr "wygasło %d dni temu"
 
 #: src/Admin/manage-event/EventAudience.js:955
 #: src/Admin/manage-event/EventAudience.js:1012
-#: src/Admin/manage-event/EventTickets.js:968
-#: src/Admin/manage-event/EventTickets.js:987
+#: src/Admin/manage-event/EventTickets.js:971
+#: src/Admin/manage-event/EventTickets.js:990
 msgid "—"
 msgstr "—"
 
@@ -4228,60 +2876,60 @@ msgstr "Zapisywanie…"
 msgid "Failed Payments"
 msgstr "Nieudane płatności"
 
-#: src/Admin/manage-event/EventTickets.js:950
+#: src/Admin/manage-event/EventTickets.js:953
 msgid "Sale Periods"
 msgstr "Okresy sprzedaży"
 
-#: src/Admin/manage-event/EventTickets.js:958
+#: src/Admin/manage-event/EventTickets.js:961
 msgid "Sale start at:"
 msgstr "Sprzedaż rozpoczyna się o:"
 
-#: src/Admin/manage-event/EventTickets.js:972
+#: src/Admin/manage-event/EventTickets.js:975
 msgid "Sale end at:"
 msgstr "Sprzedaż kończy się o:"
 
-#: src/Admin/manage-event/EventTickets.js:1160
+#: src/Admin/manage-event/EventTickets.js:1163
 msgid "+ Add Period"
 msgstr "+ Dodaj okres"
 
-#: src/Admin/manage-event/EventTickets.js:1817
+#: src/Admin/manage-event/EventTickets.js:1860
 msgid "Minimum number of activities"
 msgstr "Minimalna liczba aktywności"
 
-#: src/Admin/manage-event/EventTickets.js:1821
+#: src/Admin/manage-event/EventTickets.js:1864
 msgid "Participants must select at least this many activities to sign up. Set to 0 to disable."
 msgstr "Uczestnicy muszą wybrać co najmniej tyle aktywności, aby się zarejestrować. Ustaw na 0, aby wyłączyć."
 
-#: src/Admin/manage-event/EventTickets.js:1933
-#: src/Admin/manage-event/EventTickets.js:1938
+#: src/Admin/manage-event/EventTickets.js:1976
+#: src/Admin/manage-event/EventTickets.js:1981
 msgid "Short name"
 msgstr "Krótka nazwa"
 
-#: src/Admin/manage-event/EventTickets.js:1864
+#: src/Admin/manage-event/EventTickets.js:1907
 msgid "Discounted price (EUR)"
 msgstr "Cena ze zniżką (EUR)"
 
-#: src/Admin/manage-event/EventTickets.js:1877
+#: src/Admin/manage-event/EventTickets.js:1920
 msgid "Collaborator(s)"
 msgstr "Współpracownik(cy)"
 
-#: src/Admin/manage-event/EventTickets.js:2036
+#: src/Admin/manage-event/EventTickets.js:2079
 msgid "No discount"
 msgstr "Bez zniżki"
 
-#: src/Admin/manage-event/EventTickets.js:2165
+#: src/Admin/manage-event/EventTickets.js:2208
 msgid "Add participants"
 msgstr "Dodaj uczestników"
 
-#: src/Admin/manage-event/EventTickets.js:2334
+#: src/Admin/manage-event/EventTickets.js:2394
 msgid "Activity collaborator discount"
 msgstr "Zniżka dla współpracownika aktywności"
 
-#: src/Admin/manage-event/EventTickets.js:2338
+#: src/Admin/manage-event/EventTickets.js:2398
 msgid "Allow a discounted price on each activity option for participants invited by a collaborator linked to that activity. Adds a second price column to the activity options table and enables Manage Invitations."
 msgstr "Pozwól na obniżoną cenę dla każdej opcji aktywności dla uczestników zaproszonych przez współpracownika powiązanego z tą aktywnością. Dodaje drugą kolumnę ceny do tabeli opcji aktywności i włącza Zarządzanie zaproszeniami."
 
-#: src/Admin/calendar/components/DayCell.js:199
+#: src/Admin/calendar/components/DayCell.js:201
 msgid "Open link destination"
 msgstr "Otwórz miejsce docelowe linku"
 
@@ -4560,35 +3208,35 @@ msgstr "Status: %1$s · %2$s"
 msgid "Sent %1$d · failed %2$d · skipped %3$d"
 msgstr "Wysłano %1$d · nie powiodło się %2$d · pominięto %3$d"
 
-#: src/Admin/manage-event/EventTickets.js:581
+#: src/Admin/manage-event/EventTickets.js:584
 msgid "Add sale periods first."
 msgstr "Najpierw dodaj okresy sprzedaży."
 
-#: src/Admin/manage-event/EventTickets.js:596
+#: src/Admin/manage-event/EventTickets.js:599
 msgid "Period"
 msgstr "Okres"
 
-#: src/Admin/manage-event/EventTickets.js:1336
+#: src/Admin/manage-event/EventTickets.js:1339
 msgid "Min. activities"
 msgstr "Min. aktywności"
 
-#: src/Admin/manage-event/EventTickets.js:1610
+#: src/Admin/manage-event/EventTickets.js:1621
 msgid "Only raises the event-wide minimum for this ticket type. Leave 0 to inherit."
 msgstr "Tylko podnosi minimum dla całego wydarzenia dla tego typu biletu. Pozostaw 0, aby dziedziczyć."
 
-#: src/Admin/manage-event/EventTickets.js:2314
+#: src/Admin/manage-event/EventTickets.js:2357
 msgid "Per-ticket-type minimum activities"
 msgstr "Minimalne aktywności dla każdego typu biletu"
 
-#: src/Admin/manage-event/EventTickets.js:2318
+#: src/Admin/manage-event/EventTickets.js:2361
 msgid "Show a Min. activities input on each ticket type to require more activities than the event-wide minimum (it only ever raises it). When off, every ticket type uses the event-wide minimum."
 msgstr "Pokaż pole wprowadzania Min. aktywności dla każdego typu biletu, aby wymagać więcej aktywności niż minimum dla całego wydarzenia (zawsze je tylko podnosi). Gdy wyłączone, każdy typ biletu używa minimum dla całego wydarzenia."
 
-#: src/Admin/manage-event/EventTickets.js:2353
+#: src/Admin/manage-event/EventTickets.js:2413
 msgid "Per-period pricing"
 msgstr "Ceny zależne od okresu"
 
-#: src/Admin/manage-event/EventTickets.js:2354
+#: src/Admin/manage-event/EventTickets.js:2414
 msgid "Price every activity option per sale period instead of a single flat price. The Pricing column in the activity options table becomes one input per sale period. Requires sale periods to be defined."
 msgstr "Ustal cenę każdej opcji aktywności na okres sprzedaży zamiast jednej stałej ceny. Kolumna Cena w tabeli opcji aktywności staje się jednym polem wprowadzania na okres sprzedaży. Wymaga zdefiniowania okresów sprzedaży."
 
@@ -4679,57 +3327,13 @@ msgstr "Statystyki"
 msgid "Submit Event Proposal"
 msgstr "Prześlij propozycję wydarzenia"
 
-#: src/Core/Features.php:177
+#: src/Core/Features.php:165
 msgid "Core"
 msgstr "Główne"
 
-#: src/Core/Features.php:178
+#: src/Core/Features.php:166
 msgid "Events, calendar, all-events, settings, core blocks. Always on."
 msgstr "Wydarzenia, kalendarz, wszystkie wydarzenia, ustawienia, bloki główne. Zawsze włączone."
-
-#: src/Core/Features.php:182
-msgid "Venues admin page and REST controller."
-msgstr "Strona administracyjna miejsc i kontroler REST."
-
-#: src/Core/Features.php:185
-msgid "Event sources & feeds"
-msgstr "Źródła i kanały wydarzeń"
-
-#: src/Core/Features.php:186
-msgid "External event sources, Facebook import, iCal/JSON feeds, event proposals, weekly schedule."
-msgstr "Zewnętrzne źródła wydarzeń, import z Facebooka, kanały iCal/JSON, propozycje wydarzeń, harmonogram tygodniowy."
-
-#: src/Core/Features.php:189
-msgid "Galleries"
-msgstr "Galerie"
-
-#: src/Core/Features.php:190
-msgid "Per-event photo galleries, photo likes/downloads, image exports, media library hooks."
-msgstr "Galerie zdjęć dla każdego wydarzenia, polubienia/pobieranie zdjęć, eksport obrazów, haki biblioteki mediów."
-
-#: src/Core/Features.php:193
-msgid "Ticketing"
-msgstr "Sprzedaż biletów"
-
-#: src/Core/Features.php:194
-msgid "Tickets, group pricing/permission rules, invitations. Requires fair-audience."
-msgstr "Bilety, reguły cen grupowych/uprawnień, zaproszenia. Wymaga fair-audience."
-
-#: src/Core/Features.php:197
-msgid "Event tools"
-msgstr "Narzędzia do obsługi wydarzeń"
-
-#: src/Core/Features.php:198
-msgid "Event duplication, merge, and admin-bar Copy button."
-msgstr "Duplikowanie wydarzeń, scalanie i przycisk Kopiuj na pasku administracyjnym."
-
-#: src/Core/Features.php:201
-msgid "Migration"
-msgstr "Migracja"
-
-#: src/Core/Features.php:202
-msgid "One-time post → event migration tooling."
-msgstr "Jednorazowe narzędzia migracji post → event."
 
 #: src/Settings/Settings.php:79
 msgid "Per-bundle feature toggles"
@@ -4815,7 +3419,19 @@ msgstr "Wpis WordPress (wpis)"
 msgid "Feature Bundles"
 msgstr "Pakiety funkcji"
 
-#: src/Admin/venues/VenuesApp.js:310
-msgid "All Venues"
-msgstr "Wszystkie miejsca"
+#: src/Core/Features.php:169
+msgid "Bundled translations"
+msgstr "Tłumaczenia dołączone"
+
+#: src/Core/Features.php:170
+msgid "Load .mo/.json files shipped with the plugin instead of relying on WordPress.org language packs. Useful while a locale is below the 90% threshold on translate.wordpress.org or for in-progress strings."
+msgstr "Załaduj pliki .mo/.json dostarczone z wtyczką zamiast polegać na pakietach języków z WordPress.org. Przydatne, gdy lokalizacja jest poniżej progu 90% na translate.wordpress.org lub dla ciągów w trakcie opracowywania."
+
+#: src/Admin/manage-event/EventTickets.js:2377
+msgid "Per-ticket-type end date"
+msgstr "Data końcowa dla każdego typu biletu"
+
+#: src/Admin/manage-event/EventTickets.js:2381
+msgid "Show a date/time input on each ticket type to stop selling it after a fixed date, regardless of remaining capacity."
+msgstr "Pokaż wejście daty/godziny dla każdego typu biletu, aby zatrzymać jego sprzedaż po ustalonym dniu, niezależnie od pozostałej pojemności."
 
