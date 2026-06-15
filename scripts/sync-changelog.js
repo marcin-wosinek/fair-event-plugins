@@ -38,6 +38,11 @@ const plugins = [
 		changelogPath: 'fair-finance/CHANGELOG.md',
 		readmeFiles: ['fair-finance/readme.txt'],
 	},
+	{
+		name: 'fair-payments-connector-experimental',
+		changelogPath: 'fair-payments-connector-experimental/CHANGELOG.md',
+		readmeFiles: ['fair-payments-connector-experimental/readme.txt'],
+	},
 ];
 
 /**

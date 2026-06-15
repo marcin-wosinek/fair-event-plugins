@@ -66,6 +66,15 @@ const plugins = [
 		readmeFiles: ['fair-events-experimental/readme.txt'],
 		versionConstant: 'FAIR_EVENTS_EXPERIMENTAL_VERSION',
 	},
+	{
+		name: 'fair-payments-connector-experimental',
+		packagePath: 'fair-payments-connector-experimental/package.json',
+		phpFiles: [
+			'fair-payments-connector-experimental/fair-payments-connector-experimental.php',
+		],
+		readmeFiles: ['fair-payments-connector-experimental/readme.txt'],
+		versionConstant: 'FAIR_PAYMENTS_CONNECTOR_EXPERIMENTAL_VERSION',
+	},
 ];
 
 /**

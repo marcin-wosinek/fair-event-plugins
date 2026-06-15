@@ -1,0 +1,39 @@
+{
+	"name": "fair-payments-connector-experimental",
+	"version": "0.1.0",
+	"description": "Experimental features for Fair Payments Connector",
+	"license": "proprietary",
+	"author": "Marcin Wosinek",
+	"type": "module",
+	"main": "build/index.js",
+	"scripts": {
+		"build": "wp-scripts build --config webpack.config.cjs",
+		"clean": "rm -rf build",
+		"start": "wp-scripts start --config webpack.config.cjs",
+		"format": "wp-scripts format",
+		"composer:install": "composer install",
+		"composer:install:prod": "composer install --no-dev",
+		"composer:update": "composer update",
+		"composer:validate": "composer validate --strict",
+		"makepot": "wp i18n make-pot . languages/fair-payments-connector-experimental.pot --exclude=node_modules,vendor,tests,build,svn",
+		"makejson": "wp i18n make-json languages ./build/languages --domain=fair-payments-connector-experimental --pretty-print --no-purge --use-map=build/map.json",
+		"makemo": "wp i18n make-mo languages/",
+		"updatepo": "wp i18n update-po languages/fair-payments-connector-experimental.pot languages/",
+		"test": "wp-scripts test-unit-js --config jest.config.js",
+		"test:js": "wp-scripts test-unit-js --config jest.config.js",
+		"test:php": "vendor/bin/phpunit",
+		"svn:checkout": "svn co https://plugins.svn.wordpress.org/fair-payments-connector-experimental svn",
+		"svn:copy": "cp -r readme.txt fair-payments-connector-experimental.php composer* languages CHANGELOG.md svn/trunk"
+	},
+	"devDependencies": {
+		"@wordpress/scripts": "^32.4.0",
+		"webpack-bundle-output": "^1.1.0"
+	},
+	"dependencies": {
+		"@wordpress/api-fetch": "^7.12.0",
+		"@wordpress/components": "^35.0.0",
+		"@wordpress/dom-ready": "^4.12.0",
+		"@wordpress/element": "^8.0.0",
+		"@wordpress/i18n": "^5.12.0"
+	}
+}

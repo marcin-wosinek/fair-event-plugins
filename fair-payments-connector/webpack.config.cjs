@@ -25,14 +25,6 @@ module.exports = {
       process.cwd(),
       "src/Admin/settings/index.js",
     ),
-    "admin/api-tokens/index": path.resolve(
-      process.cwd(),
-      "src/Admin/api-tokens/index.js",
-    ),
-    "admin/connected-sites/index": path.resolve(
-      process.cwd(),
-      "src/Admin/connected-sites/index.js",
-    ),
     "admin/fee-dashboard/index": path.resolve(
       process.cwd(),
       "src/Admin/fee-dashboard/index.js",
