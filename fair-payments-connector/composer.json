@@ -19,7 +19,7 @@
 	],
 	"require": {
 		"php": ">=7.4",
-		"mollie/mollie-api-php": "^2.0",
+		"mollie/mollie-api-php": "^3.0",
 		"fair-events/shared": "^0.1"
 	},
 	"require-dev": {
