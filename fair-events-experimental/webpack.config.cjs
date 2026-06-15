@@ -37,6 +37,14 @@ module.exports = {
       process.cwd(),
       "src/Admin/manage-invitations/index.js",
     ),
+    "admin/duplicate-event/index": path.resolve(
+      process.cwd(),
+      "src/Admin/duplicate-event/index.js",
+    ),
+    "admin/merge-event/index": path.resolve(
+      process.cwd(),
+      "src/Admin/merge-event/index.js",
+    ),
     "admin/event-gallery": path.resolve(
       process.cwd(),
       "src/Admin/event-gallery.js",

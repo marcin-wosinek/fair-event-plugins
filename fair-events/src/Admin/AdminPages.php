@@ -310,6 +310,11 @@ class AdminPages {
 				}
 			}
 
+			if ( class_exists( 'FairEventsExperimental\Core\Features' ) && \FairEventsExperimental\Core\Features::is_enabled( 'event-tools' ) ) {
+				$localized_data['duplicateEventUrl'] = admin_url( 'admin.php?page=fair-events-duplicate-event&event_date_id=' );
+				$localized_data['mergeEventUrl']     = admin_url( 'admin.php?page=fair-events-merge-event&event_date_id=' );
+			}
+
 			// Add finance entries URL if fair-finance plugin is active.
 			if ( class_exists( 'FairFinance\Core\Plugin' ) ) {
 				$localized_data['paymentEntriesUrl'] = admin_url( 'admin.php?page=fair-finance-entries' );

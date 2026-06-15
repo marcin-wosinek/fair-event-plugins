@@ -3,7 +3,7 @@
  *
  * Multi-step wizard for merging one event_date into another.
  *
- * @package FairEvents
+ * @package FairEventsExperimental
  */
 
 import { useState, useEffect } from '@wordpress/element';
@@ -24,15 +24,18 @@ import { __ } from '@wordpress/i18n';
 import apiFetch from '@wordpress/api-fetch';
 
 const RELATIONSHIP_LABELS = {
-	event_photos: __('Event Photos', 'fair-events'),
-	participants: __('Participants', 'fair-events'),
-	questionnaire_submissions: __('Questionnaire Responses', 'fair-events'),
+	event_photos: __('Event Photos', 'fair-events-experimental'),
+	participants: __('Participants', 'fair-events-experimental'),
+	questionnaire_submissions: __(
+		'Questionnaire Responses',
+		'fair-events-experimental'
+	),
 };
 
 const ACTION_OPTIONS = [
-	{ label: __('Move', 'fair-events'), value: 'move' },
-	{ label: __('Delete', 'fair-events'), value: 'delete' },
-	{ label: __('Skip', 'fair-events'), value: 'skip' },
+	{ label: __('Move', 'fair-events-experimental'), value: 'move' },
+	{ label: __('Delete', 'fair-events-experimental'), value: 'delete' },
+	{ label: __('Skip', 'fair-events-experimental'), value: 'skip' },
 ];
 
 export default function MergeEventWizard({
@@ -109,7 +112,8 @@ export default function MergeEventWizard({
 			setActions(initialActions);
 		} catch (err) {
 			setError(
-				err.message || __('Failed to load preview.', 'fair-events')
+				err.message ||
+					__('Failed to load preview.', 'fair-events-experimental')
 			);
 		} finally {
 			setLoadingPreview(false);
@@ -124,7 +128,7 @@ export default function MergeEventWizard({
 	const handleExecute = async () => {
 		setExecuting(true);
 		setError(null);
-		setProgress(__('Merging events...', 'fair-events'));
+		setProgress(__('Merging events...', 'fair-events-experimental'));
 
 		try {
 			await apiFetch({
@@ -136,11 +140,12 @@ export default function MergeEventWizard({
 					delete_source: deleteSource,
 				},
 			});
-			setProgress(__('Done! Redirecting...', 'fair-events'));
+			setProgress(__('Done! Redirecting...', 'fair-events-experimental'));
 			window.location.href = `${manageEventUrl}&event_date_id=${targetEventDateId}`;
 		} catch (err) {
 			setError(
-				err.message || __('Failed to merge events.', 'fair-events')
+				err.message ||
+					__('Failed to merge events.', 'fair-events-experimental')
 			);
 			setExecuting(false);
 		}
@@ -153,39 +158,51 @@ export default function MergeEventWizard({
 	const renderStep1 = () => (
 		<Card style={{ marginTop: '16px' }}>
 			<CardHeader>
-				<h2>{__('Select Target Event', 'fair-events')}</h2>
+				<h2>{__('Select Target Event', 'fair-events-experimental')}</h2>
 			</CardHeader>
 			<CardBody>
 				<VStack spacing={4}>
 					<p style={{ color: '#666' }}>
 						{__(
 							'Search for the event date you want to merge this event into. All data from the current event (source) will be moved to the target.',
-							'fair-events'
+							'fair-events-experimental'
 						)}
 					</p>
 					<TextControl
-						label={__('Search events by title', 'fair-events')}
+						label={__(
+							'Search events by title',
+							'fair-events-experimental'
+						)}
 						value={searchTerm}
 						onChange={handleSearch}
 						placeholder={__(
 							'Start typing to search...',
-							'fair-events'
+							'fair-events-experimental'
 						)}
 					/>
 					{searching && <Spinner />}
 					{searchResults.length > 0 && (
 						<SelectControl
-							label={__('Select target event', 'fair-events')}
+							label={__(
+								'Select target event',
+								'fair-events-experimental'
+							)}
 							value={targetEventDateId}
 							options={[
 								{
-									label: __('Select...', 'fair-events'),
+									label: __(
+										'Select...',
+										'fair-events-experimental'
+									),
 									value: '',
 								},
 								...searchResults.map((r) => ({
 									label: `${
 										r.title ||
-										__('(No title)', 'fair-events')
+										__(
+											'(No title)',
+											'fair-events-experimental'
+										)
 									} — ${r.start_datetime || ''}`,
 									value: String(r.id),
 								})),
@@ -195,10 +212,13 @@ export default function MergeEventWizard({
 					)}
 					{selectedTarget && (
 						<Notice status="info" isDismissible={false}>
-							{__('Target:', 'fair-events')}{' '}
+							{__('Target:', 'fair-events-experimental')}{' '}
 							<strong>
 								{selectedTarget.title ||
-									__('(No title)', 'fair-events')}
+									__(
+										'(No title)',
+										'fair-events-experimental'
+									)}
 							</strong>{' '}
 							({selectedTarget.start_datetime || ''})
 						</Notice>
@@ -222,14 +242,16 @@ export default function MergeEventWizard({
 		return (
 			<Card style={{ marginTop: '16px' }}>
 				<CardHeader>
-					<h2>{__('Review & Configure', 'fair-events')}</h2>
+					<h2>
+						{__('Review & Configure', 'fair-events-experimental')}
+					</h2>
 				</CardHeader>
 				<CardBody>
 					<VStack spacing={4}>
 						<p style={{ color: '#666' }}>
 							{__(
 								'Review the linked data counts and choose what to do with each type.',
-								'fair-events'
+								'fair-events-experimental'
 							)}
 						</p>
 
@@ -239,14 +261,30 @@ export default function MergeEventWizard({
 						>
 							<thead>
 								<tr>
-									<th>{__('Data Type', 'fair-events')}</th>
-									<th style={{ textAlign: 'center' }}>
-										{__('Source', 'fair-events')}
+									<th>
+										{__(
+											'Data Type',
+											'fair-events-experimental'
+										)}
 									</th>
 									<th style={{ textAlign: 'center' }}>
-										{__('Target', 'fair-events')}
+										{__(
+											'Source',
+											'fair-events-experimental'
+										)}
 									</th>
-									<th>{__('Action', 'fair-events')}</th>
+									<th style={{ textAlign: 'center' }}>
+										{__(
+											'Target',
+											'fair-events-experimental'
+										)}
+									</th>
+									<th>
+										{__(
+											'Action',
+											'fair-events-experimental'
+										)}
+									</th>
 								</tr>
 							</thead>
 							<tbody>
@@ -282,7 +320,7 @@ export default function MergeEventWizard({
 						<CheckboxControl
 							label={__(
 								'Delete source event after merge',
-								'fair-events'
+								'fair-events-experimental'
 							)}
 							checked={deleteSource}
 							onChange={setDeleteSource}
@@ -296,20 +334,24 @@ export default function MergeEventWizard({
 	const renderStep3 = () => (
 		<Card style={{ marginTop: '16px' }}>
 			<CardHeader>
-				<h2>{__('Confirm Merge', 'fair-events')}</h2>
+				<h2>{__('Confirm Merge', 'fair-events-experimental')}</h2>
 			</CardHeader>
 			<CardBody>
 				<VStack spacing={4}>
 					<p>
-						<strong>{__('Source:', 'fair-events')}</strong>{' '}
+						<strong>
+							{__('Source:', 'fair-events-experimental')}
+						</strong>{' '}
 						{sourceEventDate.title ||
-							__('(No title)', 'fair-events')}{' '}
+							__('(No title)', 'fair-events-experimental')}{' '}
 						({sourceEventDate.start_datetime || ''})
 					</p>
 					<p>
-						<strong>{__('Target:', 'fair-events')}</strong>{' '}
+						<strong>
+							{__('Target:', 'fair-events-experimental')}
+						</strong>{' '}
 						{selectedTarget?.title ||
-							__('(No title)', 'fair-events')}{' '}
+							__('(No title)', 'fair-events-experimental')}{' '}
 						({selectedTarget?.start_datetime || ''})
 					</p>
 
@@ -321,8 +363,8 @@ export default function MergeEventWizard({
 								<strong>{action}</strong> (
 								{sourcePreview?.counts[key] || 0}{' '}
 								{sourcePreview?.counts[key] === 1
-									? __('item', 'fair-events')
-									: __('items', 'fair-events')}
+									? __('item', 'fair-events-experimental')
+									: __('items', 'fair-events-experimental')}
 								)
 							</p>
 						))}
@@ -331,7 +373,7 @@ export default function MergeEventWizard({
 						<Notice status="warning" isDismissible={false}>
 							{__(
 								'The source event date will be deleted after merge.',
-								'fair-events'
+								'fair-events-experimental'
 							)}
 						</Notice>
 					)}
@@ -342,7 +384,7 @@ export default function MergeEventWizard({
 							onClick={handleExecute}
 							isDestructive
 						>
-							{__('Execute Merge', 'fair-events')}
+							{__('Execute Merge', 'fair-events-experimental')}
 						</Button>
 					)}
 				</VStack>
@@ -351,9 +393,15 @@ export default function MergeEventWizard({
 	);
 
 	const steps = [
-		{ name: 'select-target', title: __('Select Target', 'fair-events') },
-		{ name: 'review', title: __('Review & Configure', 'fair-events') },
-		{ name: 'confirm', title: __('Confirm', 'fair-events') },
+		{
+			name: 'select-target',
+			title: __('Select Target', 'fair-events-experimental'),
+		},
+		{
+			name: 'review',
+			title: __('Review & Configure', 'fair-events-experimental'),
+		},
+		{ name: 'confirm', title: __('Confirm', 'fair-events-experimental') },
 	];
 
 	const currentStep = steps[activeStep];
@@ -378,7 +426,7 @@ export default function MergeEventWizard({
 .fair-events-manage-event .components-card__body > * { max-width: 700px; }`}
 			</style>
 			<h1>
-				{__('Merge Event', 'fair-events')}
+				{__('Merge Event', 'fair-events-experimental')}
 				{sourceEventDate.title && `: ${sourceEventDate.title}`}
 			</h1>
 
@@ -404,9 +452,9 @@ export default function MergeEventWizard({
 			{!executing && (
 				<>
 					<p style={{ color: '#666' }}>
-						{`${__('Step', 'fair-events')} ${activeStep + 1} / ${
-							steps.length
-						}: ${currentStep?.title}`}
+						{`${__('Step', 'fair-events-experimental')} ${
+							activeStep + 1
+						} / ${steps.length}: ${currentStep?.title}`}
 					</p>
 					{renderCurrentStep()}
 				</>
@@ -419,7 +467,7 @@ export default function MergeEventWizard({
 							variant="secondary"
 							onClick={() => setActiveStep((s) => s - 1)}
 						>
-							{__('Back', 'fair-events')}
+							{__('Back', 'fair-events-experimental')}
 						</Button>
 					)}
 					{activeStep === 0 && (
@@ -428,7 +476,7 @@ export default function MergeEventWizard({
 							onClick={handleGoToStep2}
 							disabled={!targetEventDateId}
 						>
-							{__('Next', 'fair-events')}
+							{__('Next', 'fair-events-experimental')}
 						</Button>
 					)}
 					{activeStep === 1 && (
@@ -437,11 +485,11 @@ export default function MergeEventWizard({
 							onClick={() => setActiveStep(2)}
 							disabled={loadingPreview}
 						>
-							{__('Next', 'fair-events')}
+							{__('Next', 'fair-events-experimental')}
 						</Button>
 					)}
 					<Button variant="tertiary" onClick={onCancel}>
-						{__('Cancel', 'fair-events')}
+						{__('Cancel', 'fair-events-experimental')}
 					</Button>
 				</HStack>
 			)}

@@ -39,8 +39,6 @@ import GroupRules from './GroupRules.js';
 import EventTickets from './EventTickets.js';
 import EventPhotos from './EventPhotos.js';
 import EventMailings from './EventMailings.js';
-import DuplicateEventWizard from './DuplicateEventWizard.js';
-import MergeEventWizard from './MergeEventWizard.js';
 import RecurrenceCalendar from './RecurrenceCalendar.js';
 
 export default function ManageEventApp() {
@@ -52,6 +50,9 @@ export default function ManageEventApp() {
 		window.fairEventsManageEventData?.enabledPostTypes || [];
 	const audienceUrl = window.fairEventsManageEventData?.audienceUrl || '';
 	const statisticsUrl = window.fairEventsManageEventData?.statisticsUrl || '';
+	const duplicateEventUrl =
+		window.fairEventsManageEventData?.duplicateEventUrl || '';
+	const mergeEventUrl = window.fairEventsManageEventData?.mergeEventUrl || '';
 	const paymentEntriesUrl =
 		window.fairEventsManageEventData?.paymentEntriesUrl || '';
 	// Per-bundle feature gates from the PHP registry. Empty object → treat
@@ -107,8 +108,6 @@ export default function ManageEventApp() {
 			'event-details'
 	);
 	const ticketSaveRef = useRef(null);
-	const [duplicateMode, setDuplicateMode] = useState(false);
-	const [mergeMode, setMergeMode] = useState(false);
 	const [togglingExdate, setTogglingExdate] = useState(null);
 
 	useEffect(() => {
@@ -647,29 +646,6 @@ export default function ManageEventApp() {
 					</a>
 				</p>
 			</div>
-		);
-	}
-
-	if (duplicateMode) {
-		return (
-			<DuplicateEventWizard
-				sourceEventDate={eventDate}
-				sourceEventDateId={eventDateId}
-				audienceUrl={audienceUrl}
-				onCancel={() => setDuplicateMode(false)}
-				manageEventUrl={manageEventUrl}
-			/>
-		);
-	}
-
-	if (mergeMode) {
-		return (
-			<MergeEventWizard
-				sourceEventDate={eventDate}
-				sourceEventDateId={eventDateId}
-				onCancel={() => setMergeMode(false)}
-				manageEventUrl={manageEventUrl}
-			/>
 		);
 	}
 
@@ -1302,49 +1278,49 @@ export default function ManageEventApp() {
 								</CardHeader>
 								<CardBody>
 									<VStack spacing={6}>
-										<VStack spacing={2}>
-											<p style={{ color: '#666' }}>
-												{__(
-													'Create a copy of this event with the same details, links, and settings.',
-													'fair-events'
-												)}
-											</p>
-											<div>
-												<Button
-													variant="secondary"
-													onClick={() =>
-														setDuplicateMode(true)
-													}
-												>
+										{duplicateEventUrl && (
+											<VStack spacing={2}>
+												<p style={{ color: '#666' }}>
 													{__(
-														'Duplicate Event',
+														'Create a copy of this event with the same details, links, and settings.',
 														'fair-events'
 													)}
-												</Button>
-											</div>
-										</VStack>
+												</p>
+												<div>
+													<Button
+														variant="secondary"
+														href={`${duplicateEventUrl}${eventDateId}`}
+													>
+														{__(
+															'Duplicate Event',
+															'fair-events'
+														)}
+													</Button>
+												</div>
+											</VStack>
+										)}
 
-										<VStack spacing={2}>
-											<p style={{ color: '#666' }}>
-												{__(
-													'Merge this event into another event date, moving or cleaning up all linked data.',
-													'fair-events'
-												)}
-											</p>
-											<div>
-												<Button
-													variant="secondary"
-													onClick={() =>
-														setMergeMode(true)
-													}
-												>
+										{mergeEventUrl && (
+											<VStack spacing={2}>
+												<p style={{ color: '#666' }}>
 													{__(
-														'Merge Event',
+														'Merge this event into another event date, moving or cleaning up all linked data.',
 														'fair-events'
 													)}
-												</Button>
-											</div>
-										</VStack>
+												</p>
+												<div>
+													<Button
+														variant="secondary"
+														href={`${mergeEventUrl}${eventDateId}`}
+													>
+														{__(
+															'Merge Event',
+															'fair-events'
+														)}
+													</Button>
+												</div>
+											</VStack>
+										)}
 
 										<VStack spacing={2}>
 											<p style={{ color: '#666' }}>

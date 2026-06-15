@@ -3,7 +3,7 @@
  *
  * Multi-step wizard for duplicating an event with customizable options.
  *
- * @package FairEvents
+ * @package FairEventsExperimental
  */
 
 import {
@@ -211,7 +211,7 @@ export default function DuplicateEventWizard({
 			new DurationOptions({
 				values: [30, 60, 90, 120, 150, 180, 240, 360, 480],
 				unit: 'minutes',
-				textDomain: 'fair-events',
+				textDomain: 'fair-events-experimental',
 			}),
 		[]
 	);
@@ -221,7 +221,7 @@ export default function DuplicateEventWizard({
 			new DurationOptions({
 				values: [1, 2, 3, 4, 5, 6, 7],
 				unit: 'days',
-				textDomain: 'fair-events',
+				textDomain: 'fair-events-experimental',
 			}),
 		[]
 	);
@@ -308,7 +308,7 @@ export default function DuplicateEventWizard({
 	};
 
 	const venueOptions = [
-		{ label: __('— No venue —', 'fair-events'), value: '' },
+		{ label: __('— No venue —', 'fair-events-experimental'), value: '' },
 		...venues.map((v) => ({ label: v.name, value: String(v.id) })),
 	];
 
@@ -399,7 +399,7 @@ export default function DuplicateEventWizard({
 
 		try {
 			// Step 1: Create event
-			setProgress(__('Creating event…', 'fair-events'));
+			setProgress(__('Creating event…', 'fair-events-experimental'));
 			const newEvent = await apiFetch({
 				path: '/fair-events/v1/event-dates',
 				method: 'POST',
@@ -420,7 +420,7 @@ export default function DuplicateEventWizard({
 			// Step 2: Handle links
 			const linkedPosts = sourceEventDate.linked_posts || [];
 			if (linksOption === 'clone' && linkedPosts.length > 0) {
-				setProgress(__('Cloning posts…', 'fair-events'));
+				setProgress(__('Cloning posts…', 'fair-events-experimental'));
 				const cloneResult = await apiFetch({
 					path: `/fair-events/v1/event-dates/${createdEventDateId}/clone-posts`,
 					method: 'POST',
@@ -435,7 +435,7 @@ export default function DuplicateEventWizard({
 			// Step 4: Save tickets
 			const currentTickets = ticketDataRef.current?.();
 			if (currentTickets && hasTicketData(currentTickets)) {
-				setProgress(__('Saving tickets…', 'fair-events'));
+				setProgress(__('Saving tickets…', 'fair-events-experimental'));
 				await apiFetch({
 					path: `/fair-events/v1/event-dates/${createdEventDateId}/tickets`,
 					method: 'PUT',
@@ -450,7 +450,9 @@ export default function DuplicateEventWizard({
 				.map(([id]) => parseInt(id, 10));
 
 			if (audienceUrl && selectedIds.length > 0) {
-				setProgress(__('Adding collaborators…', 'fair-events'));
+				setProgress(
+					__('Adding collaborators…', 'fair-events-experimental')
+				);
 
 				// We need an event_id (WP post) to add participants.
 				// If links option was "reuse" or "clone", we should have one.
@@ -500,7 +502,9 @@ export default function DuplicateEventWizard({
 				.map(([id]) => parseInt(id, 10));
 
 			if (selectedGroupIds.length > 0) {
-				setProgress(__('Copying group rules…', 'fair-events'));
+				setProgress(
+					__('Copying group rules…', 'fair-events-experimental')
+				);
 
 				const pricingToCopy = sourcePricingRules.filter((r) =>
 					selectedGroupIds.includes(r.group_id)
@@ -535,14 +539,17 @@ export default function DuplicateEventWizard({
 			setCompletedSteps((prev) => [...prev, 'group-rules']);
 
 			// Success - redirect
-			setProgress(__('Done! Redirecting…', 'fair-events'));
+			setProgress(__('Done! Redirecting…', 'fair-events-experimental'));
 			window.location.href = `${manageEventUrl}&event_date_id=${createdEventDateId}`;
 		} catch (err) {
 			const currentStep = getNextStep(completedSteps);
 			setFailedStep(currentStep);
 			setError(
 				err.message ||
-					__('Failed to create duplicate event.', 'fair-events')
+					__(
+						'Failed to create duplicate event.',
+						'fair-events-experimental'
+					)
 			);
 			setCreating(false);
 		}
@@ -554,27 +561,27 @@ export default function DuplicateEventWizard({
 		const s = [
 			{
 				name: 'event-details',
-				title: __('Event Details', 'fair-events'),
+				title: __('Event Details', 'fair-events-experimental'),
 			},
 		];
 		if (linkedPosts.length > 0) {
 			s.push({
 				name: 'links',
-				title: __('Links', 'fair-events'),
+				title: __('Links', 'fair-events-experimental'),
 			});
 		}
 		s.push({
 			name: 'tickets',
-			title: __('Tickets', 'fair-events'),
+			title: __('Tickets', 'fair-events-experimental'),
 		});
 		if (audienceUrl && sourceEventDateId) {
 			s.push({
 				name: 'audience',
-				title: __('Audience', 'fair-events'),
+				title: __('Audience', 'fair-events-experimental'),
 			});
 			s.push({
 				name: 'group-rules',
-				title: __('Group Rules', 'fair-events'),
+				title: __('Group Rules', 'fair-events-experimental'),
 			});
 		}
 		return s;
@@ -609,7 +616,7 @@ export default function DuplicateEventWizard({
 .fair-events-manage-event .fair-events-tickets .components-card__body > * { max-width: none; }`}
 			</style>
 			<h1>
-				{__('Duplicate Event', 'fair-events')}
+				{__('Duplicate Event', 'fair-events-experimental')}
 				{sourceEventDate.title && `: ${sourceEventDate.title}`}
 			</h1>
 
@@ -627,7 +634,7 @@ export default function DuplicateEventWizard({
 							>
 								{__(
 									'View partially created event',
-									'fair-events'
+									'fair-events-experimental'
 								)}
 							</a>
 						</p>
@@ -647,9 +654,9 @@ export default function DuplicateEventWizard({
 			{!creating && (
 				<>
 					<p style={{ color: '#666' }}>
-						{`${__('Step', 'fair-events')} ${activeStep + 1} / ${
-							steps.length
-						}: ${currentStep?.title}`}
+						{`${__('Step', 'fair-events-experimental')} ${
+							activeStep + 1
+						} / ${steps.length}: ${currentStep?.title}`}
 					</p>
 					{renderCurrentStep()}
 				</>
@@ -662,7 +669,7 @@ export default function DuplicateEventWizard({
 							variant="secondary"
 							onClick={() => setActiveStep((s) => s - 1)}
 						>
-							{__('Back', 'fair-events')}
+							{__('Back', 'fair-events-experimental')}
 						</Button>
 					)}
 					{!isLastStep && (
@@ -671,7 +678,7 @@ export default function DuplicateEventWizard({
 							onClick={() => setActiveStep((s) => s + 1)}
 							disabled={!title || !startDate}
 						>
-							{__('Next', 'fair-events')}
+							{__('Next', 'fair-events-experimental')}
 						</Button>
 					)}
 					{isLastStep && (
@@ -680,11 +687,11 @@ export default function DuplicateEventWizard({
 							onClick={handleCreate}
 							disabled={!title || !startDate}
 						>
-							{__('Create Duplicate', 'fair-events')}
+							{__('Create Duplicate', 'fair-events-experimental')}
 						</Button>
 					)}
 					<Button variant="tertiary" onClick={onCancel}>
-						{__('Cancel', 'fair-events')}
+						{__('Cancel', 'fair-events-experimental')}
 					</Button>
 				</HStack>
 			)}
@@ -695,19 +702,19 @@ export default function DuplicateEventWizard({
 		return (
 			<Card style={{ marginTop: '16px' }}>
 				<CardHeader>
-					<h2>{__('Event Details', 'fair-events')}</h2>
+					<h2>{__('Event Details', 'fair-events-experimental')}</h2>
 				</CardHeader>
 				<CardBody>
 					<VStack spacing={4}>
 						<TextControl
-							label={__('Title', 'fair-events')}
+							label={__('Title', 'fair-events-experimental')}
 							value={title}
 							onChange={setTitle}
 							required
 						/>
 
 						<CheckboxControl
-							label={__('All day', 'fair-events')}
+							label={__('All day', 'fair-events-experimental')}
 							checked={allDay}
 							onChange={setAllDay}
 						/>
@@ -715,14 +722,20 @@ export default function DuplicateEventWizard({
 						{allDay ? (
 							<HStack spacing={4} alignment="top" wrap>
 								<TextControl
-									label={__('Start date', 'fair-events')}
+									label={__(
+										'Start date',
+										'fair-events-experimental'
+									)}
 									type="date"
 									value={startDate}
 									onChange={handleStartDateChange}
 									required
 								/>
 								<TextControl
-									label={__('End date', 'fair-events')}
+									label={__(
+										'End date',
+										'fair-events-experimental'
+									)}
 									type="date"
 									value={endDate}
 									onChange={setEndDate}
@@ -732,28 +745,40 @@ export default function DuplicateEventWizard({
 						) : (
 							<HStack spacing={4} alignment="top" wrap>
 								<TextControl
-									label={__('Start date', 'fair-events')}
+									label={__(
+										'Start date',
+										'fair-events-experimental'
+									)}
 									type="date"
 									value={startDate}
 									onChange={handleStartDateChange}
 									required
 								/>
 								<TextControl
-									label={__('Start time', 'fair-events')}
+									label={__(
+										'Start time',
+										'fair-events-experimental'
+									)}
 									type="time"
 									value={startTime}
 									onChange={handleStartTimeChange}
 									required
 								/>
 								<TextControl
-									label={__('End date', 'fair-events')}
+									label={__(
+										'End date',
+										'fair-events-experimental'
+									)}
 									type="date"
 									value={endDate}
 									onChange={setEndDate}
 									required
 								/>
 								<TextControl
-									label={__('End time', 'fair-events')}
+									label={__(
+										'End time',
+										'fair-events-experimental'
+									)}
 									type="time"
 									value={endTime}
 									onChange={setEndTime}
@@ -763,7 +788,10 @@ export default function DuplicateEventWizard({
 						)}
 
 						<SelectControl
-							label={__('Event length', 'fair-events')}
+							label={__(
+								'Event length',
+								'fair-events-experimental'
+							)}
 							value={String(durationValue)}
 							options={durationOptions.map((opt) => ({
 								label: opt.label,
@@ -773,14 +801,14 @@ export default function DuplicateEventWizard({
 						/>
 
 						<SelectControl
-							label={__('Venue', 'fair-events')}
+							label={__('Venue', 'fair-events-experimental')}
 							value={venueId}
 							options={venueOptions}
 							onChange={setVenueId}
 						/>
 
 						<FormTokenField
-							label={__('Categories', 'fair-events')}
+							label={__('Categories', 'fair-events-experimental')}
 							value={categories.map((id) => {
 								const cat = availableCategories.find(
 									(c) => c.id === id
@@ -803,7 +831,10 @@ export default function DuplicateEventWizard({
 						/>
 
 						<CheckboxControl
-							label={__('Repeat this event', 'fair-events')}
+							label={__(
+								'Repeat this event',
+								'fair-events-experimental'
+							)}
 							checked={recurrenceEnabled}
 							onChange={setRecurrenceEnabled}
 						/>
@@ -811,46 +842,61 @@ export default function DuplicateEventWizard({
 						{recurrenceEnabled && (
 							<VStack spacing={3}>
 								<SelectControl
-									label={__('Frequency', 'fair-events')}
+									label={__(
+										'Frequency',
+										'fair-events-experimental'
+									)}
 									value={recurrenceFrequency}
 									options={[
 										{
-											label: __('Daily', 'fair-events'),
+											label: __(
+												'Daily',
+												'fair-events-experimental'
+											),
 											value: 'daily',
 										},
 										{
-											label: __('Weekly', 'fair-events'),
+											label: __(
+												'Weekly',
+												'fair-events-experimental'
+											),
 											value: 'weekly',
 										},
 										{
 											label: __(
 												'Biweekly',
-												'fair-events'
+												'fair-events-experimental'
 											),
 											value: 'biweekly',
 										},
 										{
-											label: __('Monthly', 'fair-events'),
+											label: __(
+												'Monthly',
+												'fair-events-experimental'
+											),
 											value: 'monthly',
 										},
 									]}
 									onChange={setRecurrenceFrequency}
 								/>
 								<SelectControl
-									label={__('Ends', 'fair-events')}
+									label={__(
+										'Ends',
+										'fair-events-experimental'
+									)}
 									value={recurrenceEndType}
 									options={[
 										{
 											label: __(
 												'After number of occurrences',
-												'fair-events'
+												'fair-events-experimental'
 											),
 											value: 'count',
 										},
 										{
 											label: __(
 												'On a specific date',
-												'fair-events'
+												'fair-events-experimental'
 											),
 											value: 'until',
 										},
@@ -861,7 +907,7 @@ export default function DuplicateEventWizard({
 									<NumberControl
 										label={__(
 											'Number of occurrences',
-											'fair-events'
+											'fair-events-experimental'
 										)}
 										value={recurrenceCount}
 										onChange={(val) =>
@@ -875,7 +921,10 @@ export default function DuplicateEventWizard({
 								)}
 								{recurrenceEndType === 'until' && (
 									<TextControl
-										label={__('End date', 'fair-events')}
+										label={__(
+											'End date',
+											'fair-events-experimental'
+										)}
 										type="date"
 										value={recurrenceUntil}
 										onChange={setRecurrenceUntil}
@@ -893,28 +942,28 @@ export default function DuplicateEventWizard({
 		return (
 			<Card style={{ marginTop: '16px' }}>
 				<CardHeader>
-					<h2>{__('Linked Posts', 'fair-events')}</h2>
+					<h2>{__('Linked Posts', 'fair-events-experimental')}</h2>
 				</CardHeader>
 				<CardBody>
 					<VStack spacing={4}>
 						<RadioControl
 							label={__(
 								'How to handle linked posts',
-								'fair-events'
+								'fair-events-experimental'
 							)}
 							selected={linksOption}
 							options={[
 								{
 									label: __(
 										'Clone linked posts — create draft copies',
-										'fair-events'
+										'fair-events-experimental'
 									),
 									value: 'clone',
 								},
 								{
 									label: __(
 										'Leave empty — no links',
-										'fair-events'
+										'fair-events-experimental'
 									),
 									value: 'empty',
 								},
@@ -927,7 +976,7 @@ export default function DuplicateEventWizard({
 								<h3 style={{ margin: 0 }}>
 									{__(
 										'Source event linked posts:',
-										'fair-events'
+										'fair-events-experimental'
 									)}
 								</h3>
 								{linkedPosts.map((lp) => (
@@ -945,7 +994,7 @@ export default function DuplicateEventWizard({
 												>
 													{__(
 														'Primary',
-														'fair-events'
+														'fair-events-experimental'
 													)}
 												</span>
 											)}
@@ -989,7 +1038,7 @@ export default function DuplicateEventWizard({
 						<p>
 							{__(
 								'No group rules found on source event.',
-								'fair-events'
+								'fair-events-experimental'
 							)}
 						</p>
 					</CardBody>
@@ -1000,11 +1049,11 @@ export default function DuplicateEventWizard({
 		const permissionLabel = (type) => {
 			switch (type) {
 				case 'invited':
-					return __('Invited', 'fair-events');
+					return __('Invited', 'fair-events-experimental');
 				case 'view_signups':
-					return __('View signups', 'fair-events');
+					return __('View signups', 'fair-events-experimental');
 				case 'manage_signups':
-					return __('Manage signups', 'fair-events');
+					return __('Manage signups', 'fair-events-experimental');
 				default:
 					return type;
 			}
@@ -1023,14 +1072,14 @@ export default function DuplicateEventWizard({
 		return (
 			<Card style={{ marginTop: '16px' }}>
 				<CardHeader>
-					<h2>{__('Group Rules', 'fair-events')}</h2>
+					<h2>{__('Group Rules', 'fair-events-experimental')}</h2>
 				</CardHeader>
 				<CardBody>
 					<VStack spacing={3}>
 						<p style={{ color: '#666' }}>
 							{__(
 								'Select which groups to copy rules for.',
-								'fair-events'
+								'fair-events-experimental'
 							)}
 						</p>
 						{Array.from(groupIds).map((groupId) => {
@@ -1073,7 +1122,7 @@ export default function DuplicateEventWizard({
 												<p style={{ margin: '4px 0' }}>
 													{__(
 														'Discount:',
-														'fair-events'
+														'fair-events-experimental'
 													)}{' '}
 													{formatDiscount(
 														pricing.discount_type,
@@ -1085,7 +1134,7 @@ export default function DuplicateEventWizard({
 												<p style={{ margin: '4px 0' }}>
 													{__(
 														'Permissions:',
-														'fair-events'
+														'fair-events-experimental'
 													)}{' '}
 													{permissions
 														.map((p) =>
@@ -1119,7 +1168,7 @@ export default function DuplicateEventWizard({
 						<p>
 							{__(
 								'No collaborators found on source event.',
-								'fair-events'
+								'fair-events-experimental'
 							)}
 						</p>
 					</CardBody>
@@ -1130,14 +1179,14 @@ export default function DuplicateEventWizard({
 		return (
 			<Card style={{ marginTop: '16px' }}>
 				<CardHeader>
-					<h2>{__('Collaborators', 'fair-events')}</h2>
+					<h2>{__('Collaborators', 'fair-events-experimental')}</h2>
 				</CardHeader>
 				<CardBody>
 					<VStack spacing={3}>
 						<p style={{ color: '#666' }}>
 							{__(
 								'Select which collaborators to copy to the new event.',
-								'fair-events'
+								'fair-events-experimental'
 							)}
 						</p>
 						{collaborators.map((collab) => (
