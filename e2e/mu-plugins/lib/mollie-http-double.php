@@ -26,6 +26,23 @@
 
 namespace Mollie\Api\Http\Adapter;
 
+// During the initial wp-env setup pass WordPress may load before
+// fair-payments-connector is activated (and its Composer autoloader registered).
+// Explicitly require the autoloader so the Mollie SDK traits are resolvable.
+// If neither path works, bail silently — no Mollie API calls happen during
+// initial setup anyway, so the double isn't needed at that point.
+$_fpc_autoload = defined( 'WP_PLUGIN_DIR' )
+	? WP_PLUGIN_DIR . '/fair-payments-connector/vendor/autoload.php'
+	: null;
+if ( $_fpc_autoload && file_exists( $_fpc_autoload ) ) {
+	require_once $_fpc_autoload;
+}
+unset( $_fpc_autoload );
+
+if ( ! trait_exists( 'Mollie\\Api\\Traits\\HasDefaultFactories', true ) ) {
+	return;
+}
+
 use Mollie\Api\Contracts\HttpAdapterContract;
 use Mollie\Api\Http\PendingRequest;
 use Mollie\Api\Http\Response;
@@ -63,7 +80,7 @@ class CurlMollieHttpAdapter implements HttpAdapterContract {
 		$data = $this->canned_response( $method, $path, $payload );
 		$json = \wp_json_encode( $data );
 
-		$fc          = $pending_request->getFactoryCollection();
+		$fc           = $pending_request->getFactoryCollection();
 		$psr_response = $fc->responseFactory
 			->createResponse( 200 )
 			->withHeader( 'Content-Type', 'application/json' )
