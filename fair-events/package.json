@@ -33,9 +33,9 @@
 		"playwright:up": "playwright test --headed --ui"
 	},
 	"dependencies": {
-		"@fortawesome/fontawesome-svg-core": "^6.0.0",
-		"@fortawesome/free-brands-svg-icons": "^6.0.0",
-		"@fortawesome/free-solid-svg-icons": "^6.0.0",
+		"@fortawesome/fontawesome-svg-core": "^7.0.0",
+		"@fortawesome/free-brands-svg-icons": "^7.0.0",
+		"@fortawesome/free-solid-svg-icons": "^7.0.0",
 		"@wordpress/api-fetch": "^7.2.0",
 		"@wordpress/block-editor": "^15.2.0",
 		"@wordpress/blocks": "^15.2.0",
