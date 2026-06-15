@@ -168,7 +168,7 @@ export default function EventStatistics({ eventDateId }) {
 			<Notice status="info" isDismissible={false}>
 				{__(
 					'No confirmed participants yet. Statistics appear once people sign up.',
-					'fair-events'
+					'fair-events-experimental'
 				)}
 			</Notice>
 		);
@@ -181,18 +181,20 @@ export default function EventStatistics({ eventDateId }) {
 					/* translators: %d: number of excluded participant rows. */
 					__(
 						'Confirmed participants only (signed up). %d excluded (pending payment, interested, collaborators).',
-						'fair-events'
+						'fair-events-experimental'
 					),
 					excludedCount
 				)}
 			</Notice>
 
-			<ChartCard title={__('People per activity', 'fair-events')}>
+			<ChartCard
+				title={__('People per activity', 'fair-events-experimental')}
+			>
 				{activityData.length === 0 ? (
 					<p>
 						{__(
 							'No activities recorded for confirmed participants.',
-							'fair-events'
+							'fair-events-experimental'
 						)}
 					</p>
 				) : (
@@ -211,7 +213,7 @@ export default function EventStatistics({ eventDateId }) {
 							<Tooltip />
 							<Bar
 								dataKey="count"
-								name={__('People', 'fair-events')}
+								name={__('People', 'fair-events-experimental')}
 								fill={BAR_COLOR}
 							/>
 						</BarChart>
@@ -219,7 +221,9 @@ export default function EventStatistics({ eventDateId }) {
 				)}
 			</ChartCard>
 
-			<ChartCard title={__('Activities per person', 'fair-events')}>
+			<ChartCard
+				title={__('Activities per person', 'fair-events-experimental')}
+			>
 				<ResponsiveContainer width="100%" height={280}>
 					<BarChart
 						data={distributionData}
@@ -230,7 +234,10 @@ export default function EventStatistics({ eventDateId }) {
 							dataKey="activities"
 							allowDecimals={false}
 							label={{
-								value: __('Activities', 'fair-events'),
+								value: __(
+									'Activities',
+									'fair-events-experimental'
+								),
 								position: 'insideBottom',
 								offset: -4,
 							}}
@@ -239,19 +246,21 @@ export default function EventStatistics({ eventDateId }) {
 						<Tooltip />
 						<Bar
 							dataKey="people"
-							name={__('People', 'fair-events')}
+							name={__('People', 'fair-events-experimental')}
 							fill={BAR_COLOR}
 						/>
 					</BarChart>
 				</ResponsiveContainer>
 			</ChartCard>
 
-			<ChartCard title={__('Sales lead time', 'fair-events')}>
+			<ChartCard
+				title={__('Sales lead time', 'fair-events-experimental')}
+			>
 				{leadTimeData.length === 0 ? (
 					<p>
 						{__(
 							'Lead time is unavailable (missing event date or signup timestamps).',
-							'fair-events'
+							'fair-events-experimental'
 						)}
 					</p>
 				) : (
@@ -268,7 +277,7 @@ export default function EventStatistics({ eventDateId }) {
 								label={{
 									value: __(
 										'Days before event',
-										'fair-events'
+										'fair-events-experimental'
 									),
 									position: 'insideBottom',
 									offset: -4,
@@ -278,7 +287,7 @@ export default function EventStatistics({ eventDateId }) {
 							<Tooltip />
 							<Bar
 								dataKey="count"
-								name={__('Tickets', 'fair-events')}
+								name={__('Tickets', 'fair-events-experimental')}
 								fill={BAR_COLOR}
 							/>
 						</BarChart>

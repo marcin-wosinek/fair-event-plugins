@@ -305,6 +305,9 @@ class AdminPages {
 				if ( \FairEvents\Core\Features::is_enabled( 'ticketing' ) ) {
 					$localized_data['manageInvitationsUrl'] = admin_url( 'admin.php?page=fair-events-manage-invitations&event_date_id=' );
 				}
+				if ( class_exists( 'FairEventsExperimental\Core\Features' ) && \FairEventsExperimental\Core\Features::is_enabled( 'audience-statistics' ) ) {
+					$localized_data['statisticsUrl'] = admin_url( 'admin.php?page=fair-events-event-statistics&event_date_id=' );
+				}
 			}
 
 			// Add payment entries URL if fair-payments-connector plugin is active.

@@ -46,34 +46,39 @@ class Features {
 	 */
 	public static function registry() {
 		return array(
-			'galleries'   => array(
+			'galleries'           => array(
 				'label'       => 'Galleries',
 				'description' => 'Per-event photo galleries, photo likes/downloads, image exports, media library hooks.',
 				'default'     => true,
 			),
-			'sources'     => array(
+			'sources'             => array(
 				'label'       => 'Event sources & feeds',
 				'description' => 'External event sources, Facebook import, iCal/JSON feeds, event proposals, weekly schedule.',
 				'default'     => true,
 			),
-			'ticketing'   => array(
+			'ticketing'           => array(
 				'label'       => 'Ticketing',
 				'description' => 'Tickets, group pricing/permission rules, invitations. Requires fair-audience.',
 				'default'     => true,
 			),
-			'event-tools' => array(
+			'event-tools'         => array(
 				'label'       => 'Event tools',
 				'description' => 'Event duplication, merge, and admin-bar Copy button.',
 				'default'     => true,
 			),
-			'migration'   => array(
+			'migration'           => array(
 				'label'       => 'Migration',
 				'description' => 'One-time post → event migration tooling.',
 				'default'     => true,
 			),
-			'venues'      => array(
+			'venues'              => array(
 				'label'       => 'Venues',
 				'description' => 'Venues admin page and REST controller.',
+				'default'     => true,
+			),
+			'audience-statistics' => array(
+				'label'       => 'Audience statistics',
+				'description' => 'Per-event statistics charts (activity breakdown, sales lead time). Requires fair-audience.',
 				'default'     => true,
 			),
 		);
@@ -139,29 +144,33 @@ class Features {
 	public static function all() {
 		$out        = array();
 		$translated = array(
-			'galleries'   => array(
+			'galleries'           => array(
 				'label'       => __( 'Galleries', 'fair-events-experimental' ),
 				'description' => __( 'Per-event photo galleries, photo likes/downloads, image exports, media library hooks.', 'fair-events-experimental' ),
 			),
-			'sources'     => array(
+			'sources'             => array(
 				'label'       => __( 'Event sources & feeds', 'fair-events-experimental' ),
 				'description' => __( 'External event sources, Facebook import, iCal/JSON feeds, event proposals, weekly schedule.', 'fair-events-experimental' ),
 			),
-			'ticketing'   => array(
+			'ticketing'           => array(
 				'label'       => __( 'Ticketing', 'fair-events-experimental' ),
 				'description' => __( 'Tickets, group pricing/permission rules, invitations. Requires fair-audience.', 'fair-events-experimental' ),
 			),
-			'event-tools' => array(
+			'event-tools'         => array(
 				'label'       => __( 'Event tools', 'fair-events-experimental' ),
 				'description' => __( 'Event duplication, merge, and admin-bar Copy button.', 'fair-events-experimental' ),
 			),
-			'migration'   => array(
+			'migration'           => array(
 				'label'       => __( 'Migration', 'fair-events-experimental' ),
 				'description' => __( 'One-time post → event migration tooling.', 'fair-events-experimental' ),
 			),
-			'venues'      => array(
+			'venues'              => array(
 				'label'       => __( 'Venues', 'fair-events-experimental' ),
 				'description' => __( 'Venues admin page and REST controller.', 'fair-events-experimental' ),
+			),
+			'audience-statistics' => array(
+				'label'       => __( 'Audience statistics', 'fair-events-experimental' ),
+				'description' => __( 'Per-event statistics charts (activity breakdown, sales lead time). Requires fair-audience.', 'fair-events-experimental' ),
 			),
 		);
 

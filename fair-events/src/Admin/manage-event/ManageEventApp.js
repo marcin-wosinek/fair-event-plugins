@@ -39,7 +39,6 @@ import GroupRules from './GroupRules.js';
 import EventTickets from './EventTickets.js';
 import EventPhotos from './EventPhotos.js';
 import EventMailings from './EventMailings.js';
-import EventStatistics from './EventStatistics.js';
 import DuplicateEventWizard from './DuplicateEventWizard.js';
 import MergeEventWizard from './MergeEventWizard.js';
 import RecurrenceCalendar from './RecurrenceCalendar.js';
@@ -52,6 +51,7 @@ export default function ManageEventApp() {
 	const enabledPostTypes =
 		window.fairEventsManageEventData?.enabledPostTypes || [];
 	const audienceUrl = window.fairEventsManageEventData?.audienceUrl || '';
+	const statisticsUrl = window.fairEventsManageEventData?.statisticsUrl || '';
 	const paymentEntriesUrl =
 		window.fairEventsManageEventData?.paymentEntriesUrl || '';
 	// Per-bundle feature gates from the PHP registry. Empty object → treat
@@ -578,6 +578,10 @@ export default function ManageEventApp() {
 							name: 'mailings',
 							title: __('Mailings', 'fair-events'),
 						},
+				  ]
+				: []),
+			...(statisticsUrl
+				? [
 						{
 							name: 'statistics',
 							title: __('Statistics', 'fair-events'),
@@ -599,6 +603,7 @@ export default function ManageEventApp() {
 		],
 		[
 			audienceUrl,
+			statisticsUrl,
 			paymentEntriesUrl,
 			isGeneratedOccurrence,
 			galleriesEnabled,
@@ -1267,12 +1272,8 @@ export default function ManageEventApp() {
 						);
 					}
 					if (tab.name === 'statistics') {
-						return (
-							<EventStatistics
-								eventDateId={eventDateId}
-								eventId={eventDate.event_id}
-							/>
-						);
+						window.location.href = `${statisticsUrl}${eventDateId}`;
+						return null;
 					}
 					if (tab.name === 'finance') {
 						return (
