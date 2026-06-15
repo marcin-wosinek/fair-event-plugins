@@ -310,9 +310,9 @@ class AdminPages {
 				}
 			}
 
-			// Add payment entries URL if fair-payments-connector plugin is active.
-			if ( class_exists( 'FairPaymentsConnector\Core\Plugin' ) ) {
-				$localized_data['paymentEntriesUrl'] = admin_url( 'admin.php?page=fair-payments-connector-entries' );
+			// Add finance entries URL if fair-finance plugin is active.
+			if ( class_exists( 'FairFinance\Core\Plugin' ) ) {
+				$localized_data['paymentEntriesUrl'] = admin_url( 'admin.php?page=fair-finance-entries' );
 			}
 
 			wp_localize_script(
