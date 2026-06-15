@@ -377,7 +377,7 @@ class MolliePaymentHandler {
 				$parameters['testmode']  = $testmode ? 'true' : 'false';
 			}
 
-			$methods = $this->mollie->methods->allActive( $parameters );
+			$methods = $this->mollie->methods->allEnabled( $parameters );
 		} catch ( ApiException $e ) {
 			if ( defined( 'WP_DEBUG' ) && WP_DEBUG ) {
 				// phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
