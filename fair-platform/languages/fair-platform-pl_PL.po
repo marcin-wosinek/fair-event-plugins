@@ -19,11 +19,6 @@ msgstr ""
 msgid "Fair Platform - Mollie OAuth Integration"
 msgstr "Fair Platform - Integracja Mollie OAuth"
 
-#. Plugin URI of the plugin
-#: fair-platform.php
-msgid "https://fair-event-plugins.com"
-msgstr ""
-
 #. Description of the plugin
 #: fair-platform.php
 msgid "Minimal OAuth proxy for Mollie Connect integration. Enables WordPress sites to connect Mollie accounts with platform fees."
@@ -39,32 +34,33 @@ msgstr ""
 msgid "https://github.com/marcin-wosinek"
 msgstr ""
 
-#: src/Admin/AdminHooks.php:36
+#: src/Admin/AdminHooks.php:37
 msgid "Fair Platform Settings"
 msgstr "Ustawienia Fair Platform"
 
-#: src/Admin/AdminHooks.php:37
+#: src/Admin/AdminHooks.php:38
 msgid "Fair Platform"
 msgstr ""
 
-#: src/Admin/AdminHooks.php:47
+#: src/Admin/AdminHooks.php:48
 #: src/Admin/connections/ConnectionsPage.js:163
 msgid "Connection Logs"
 msgstr "Dzienniki połączeń"
 
-#: src/Admin/AdminHooks.php:48
+#: src/Admin/AdminHooks.php:49
 msgid "Connections"
 msgstr "Połączenia"
 
-#: src/Admin/AdminHooks.php:56
+#: src/Admin/AdminHooks.php:57
 msgid "Instagram Connections"
 msgstr "Połączenia Instagram"
 
-#: src/Admin/AdminHooks.php:57
+#: src/Admin/AdminHooks.php:58
 msgid "Instagram"
 msgstr "Instagram"
 
-#: src/Admin/AdminHooks.php:145
+#: src/Admin/AdminHooks.php:81
+#: src/Admin/AdminHooks.php:217
 #: src/Admin/ConnectionsPage.php:24
 #: src/Admin/InstagramConnectionsPage.php:24
 msgid "You do not have sufficient permissions to access this page."
@@ -291,21 +287,21 @@ msgstr "Usunięto %d starych dzienników połączeń Instagram."
 msgid "You do not have permission to view Instagram connection logs."
 msgstr "Nie masz uprawnień do przeglądania dzienników połączeń Instagram."
 
-#: src/Core/Plugin.php:1419
-#: src/Core/Plugin.php:1440
-#: src/Core/Plugin.php:1461
+#: src/Core/Plugin.php:1439
+#: src/Core/Plugin.php:1460
+#: src/Core/Plugin.php:1481
 msgid "Fair Platform:"
 msgstr "Fair Platform:"
 
-#: src/Core/Plugin.php:1421
+#: src/Core/Plugin.php:1441
 msgid "Instagram OAuth credentials not configured. Please add INSTAGRAM_APP_ID and INSTAGRAM_APP_SECRET to wp-config.php for Instagram integration."
 msgstr "Poświadczenia OAuth Instagram nie są skonfigurowane. Dodaj INSTAGRAM_APP_ID i INSTAGRAM_APP_SECRET do wp-config.php, aby włączyć integrację z Instagramem."
 
-#: src/Core/Plugin.php:1442
+#: src/Core/Plugin.php:1462
 msgid "Mollie OAuth credentials not configured. Please add MOLLIE_CLIENT_ID and MOLLIE_CLIENT_SECRET to wp-config.php"
 msgstr "Poświadczenia OAuth Mollie nie są skonfigurowane. Dodaj MOLLIE_CLIENT_ID i MOLLIE_CLIENT_SECRET do wp-config.php"
 
-#: src/Core/Plugin.php:1463
+#: src/Core/Plugin.php:1483
 msgid "Mollie PHP library not installed. Please run: composer require mollie/mollie-api-php"
 msgstr "Biblioteka Mollie PHP nie jest zainstalowana. Uruchom: composer require mollie/mollie-api-php"
 
@@ -510,3 +506,45 @@ msgstr "Nazwa użytkownika IG"
 #: src/Admin/instagram-connections/InstagramConnectionsPage.js:394
 msgid "IG User ID"
 msgstr "ID użytkownika IG"
+
+#. Plugin URI of the plugin
+#: fair-platform.php
+msgid "https://github.com/marcin-wosinek/fair-event-plugins"
+msgstr ""
+
+#: src/Admin/AdminHooks.php:66
+#: src/Admin/AdminHooks.php:67
+msgid "Features"
+msgstr ""
+
+#: src/Admin/AdminHooks.php:90
+msgid "Features saved."
+msgstr ""
+
+#: src/Admin/AdminHooks.php:96
+msgid "Fair Platform - Features"
+msgstr ""
+
+#: src/Admin/AdminHooks.php:122
+msgid "Forced by a wp-config constant — change it there."
+msgstr ""
+
+#: src/Admin/AdminHooks.php:130
+msgid "Save Features"
+msgstr ""
+
+#: src/Core/Features.php:115
+msgid "Core"
+msgstr ""
+
+#: src/Core/Features.php:116
+msgid "OAuth proxy endpoints and connection logging. Always on."
+msgstr ""
+
+#: src/Core/Features.php:119
+msgid "Bundled translations"
+msgstr ""
+
+#: src/Core/Features.php:120
+msgid "Load .mo/.json files shipped with the plugin instead of relying on WordPress.org language packs. Useful while a locale is below the 90% threshold on translate.wordpress.org or for in-progress strings."
+msgstr ""

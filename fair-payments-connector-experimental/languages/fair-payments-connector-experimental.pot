@@ -1,0 +1,392 @@
+# Copyright (C) 2026 Marcin Wosinek
+# This file is distributed under the Private.
+msgid ""
+msgstr ""
+"Project-Id-Version: Fair Payments Connector Experimental 0.1.0\n"
+"Report-Msgid-Bugs-To: https://wordpress.org/support/plugin/fair-payments-connector-experimental\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language-Team: LANGUAGE <LL@li.org>\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"POT-Creation-Date: 2026-06-15T10:58:47+00:00\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"X-Generator: WP-CLI 2.12.0\n"
+"X-Domain: fair-payments-connector-experimental\n"
+
+#. Plugin Name of the plugin
+#: fair-payments-connector-experimental.php
+msgid "Fair Payments Connector Experimental"
+msgstr ""
+
+#. Plugin URI of the plugin
+#: fair-payments-connector-experimental.php
+msgid "https://github.com/marcin-wosinek/fair-event-plugins"
+msgstr ""
+
+#. Description of the plugin
+#: fair-payments-connector-experimental.php
+msgid "Experimental features for Fair Payments Connector: API tokens, connected sites, and Telegram notifications."
+msgstr ""
+
+#. Author of the plugin
+#: fair-payments-connector-experimental.php
+msgid "Marcin Wosinek"
+msgstr ""
+
+#. Author URI of the plugin
+#: fair-payments-connector-experimental.php
+msgid "https://github.com/marcin-wosinek"
+msgstr ""
+
+#: src/Admin/AdminPages.php:35
+#: src/Admin/AdminPages.php:36
+#: src/Admin/api-tokens/ApiTokensApp.js:169
+msgid "API Tokens"
+msgstr ""
+
+#: src/Admin/AdminPages.php:45
+#: src/Admin/AdminPages.php:46
+#: src/Admin/connected-sites/ConnectedSitesApp.js:236
+msgid "Connected Sites"
+msgstr ""
+
+#: src/API/ApiTokenAuth.php:46
+msgid "This token does not have the required scope."
+msgstr ""
+
+#: src/API/ApiTokenAuth.php:106
+msgid "Invalid or missing API token."
+msgstr ""
+
+#: src/API/ApiTokensController.php:127
+msgid "A label is required."
+msgstr ""
+
+#: src/API/ApiTokensController.php:137
+msgid "At least one valid scope is required."
+msgstr ""
+
+#: src/API/ApiTokensController.php:147
+#: src/Admin/api-tokens/ApiTokensApp.js:104
+msgid "Failed to create API token."
+msgstr ""
+
+#: src/API/ApiTokensController.php:174
+msgid "API token not found."
+msgstr ""
+
+#: src/API/ConnectedSitesController.php:151
+msgid "Label, base URL and token are all required."
+msgstr ""
+
+#: src/API/ConnectedSitesController.php:245
+#: src/API/ConnectedSitesController.php:326
+msgid "Could not reach the remote site."
+msgstr ""
+
+#: src/API/ConnectedSitesController.php:257
+msgid "The remote site rejected the token."
+msgstr ""
+
+#: src/API/ConnectedSitesController.php:258
+#: src/API/ConnectedSitesController.php:339
+msgid "The remote site returned an unexpected response."
+msgstr ""
+
+#: src/API/ConnectedSitesController.php:338
+msgid "The remote site rejected the token, or it lacks the transactions:read scope."
+msgstr ""
+
+#. translators: 1: created count, 2: updated count, 3: skipped count, 4: connected site label
+#: src/API/ConnectedSitesController.php:394
+#, php-format
+msgid "Imported %1$d new, updated %2$d, skipped %3$d transaction(s) from %4$s."
+msgstr ""
+
+#: src/API/ConnectedSitesController.php:413
+msgid "Connected site not found."
+msgstr ""
+
+#: src/API/ExternalTransactionsController.php:85
+msgid "Filter by transaction date (created_at) from this date, e.g. 2026-01-01."
+msgstr ""
+
+#: src/API/ExternalTransactionsController.php:92
+msgid "Filter by transaction date (created_at) up to this date, e.g. 2026-12-31."
+msgstr ""
+
+#: src/API/TelegramSettingsController.php:100
+msgid "Bot token is required."
+msgstr ""
+
+#: src/API/TelegramSettingsController.php:109
+msgid "At least one chat ID is required."
+msgstr ""
+
+#: src/API/TelegramSettingsController.php:142
+msgid "Telegram test message failed for all chat IDs."
+msgstr ""
+
+#: src/API/TelegramSettingsController.php:153
+msgid "Telegram test message sent."
+msgstr ""
+
+#: src/Services/TelegramService.php:38
+msgid "Telegram bot token is not configured."
+msgstr ""
+
+#: src/Services/TelegramService.php:41
+msgid "Telegram chat ID is empty."
+msgstr ""
+
+#: src/Admin/api-tokens/ApiTokensApp.js:24
+msgid "Read transactions"
+msgstr ""
+
+#: src/Admin/api-tokens/ApiTokensApp.js:28
+msgid "Read locations"
+msgstr ""
+
+#: src/Admin/api-tokens/ApiTokensApp.js:60
+msgid "Failed to load API tokens."
+msgstr ""
+
+#: src/Admin/api-tokens/ApiTokensApp.js:98
+msgid "API token created."
+msgstr ""
+
+#: src/Admin/api-tokens/ApiTokensApp.js:117
+msgid "Revoke this token? Any site using it will immediately lose access."
+msgstr ""
+
+#: src/Admin/api-tokens/ApiTokensApp.js:135
+msgid "API token revoked."
+msgstr ""
+
+#: src/Admin/api-tokens/ApiTokensApp.js:141
+msgid "Failed to revoke API token."
+msgstr ""
+
+#: src/Admin/api-tokens/ApiTokensApp.js:175
+msgid "Generate Token"
+msgstr ""
+
+#: src/Admin/api-tokens/ApiTokensApp.js:185
+msgid "Issue scoped tokens so other sites can read this site's data over the data sharing API."
+msgstr ""
+
+#: src/Admin/api-tokens/ApiTokensApp.js:215
+msgid "Loading tokens…"
+msgstr ""
+
+#: src/Admin/api-tokens/ApiTokensApp.js:225
+msgid "No API tokens yet. Generate one to share data with another site."
+msgstr ""
+
+#: src/Admin/api-tokens/ApiTokensApp.js:237
+#: src/Admin/api-tokens/ApiTokensApp.js:413
+#: src/Admin/connected-sites/ConnectedSitesApp.js:304
+#: src/Admin/connected-sites/ConnectedSitesApp.js:457
+msgid "Label"
+msgstr ""
+
+#: src/Admin/api-tokens/ApiTokensApp.js:243
+#: src/Admin/api-tokens/ApiTokensApp.js:432
+#: src/Admin/connected-sites/ConnectedSitesApp.js:316
+msgid "Scopes"
+msgstr ""
+
+#: src/Admin/api-tokens/ApiTokensApp.js:249
+msgid "Created"
+msgstr ""
+
+#: src/Admin/api-tokens/ApiTokensApp.js:255
+msgid "Last used"
+msgstr ""
+
+#: src/Admin/api-tokens/ApiTokensApp.js:261
+#: src/Admin/connected-sites/ConnectedSitesApp.js:322
+msgid "Status"
+msgstr ""
+
+#: src/Admin/api-tokens/ApiTokensApp.js:267
+#: src/Admin/connected-sites/ConnectedSitesApp.js:334
+msgid "Actions"
+msgstr ""
+
+#: src/Admin/api-tokens/ApiTokensApp.js:289
+#: src/Admin/connected-sites/ConnectedSitesApp.js:363
+msgid "Never"
+msgstr ""
+
+#: src/Admin/api-tokens/ApiTokensApp.js:309
+msgid "Active"
+msgstr ""
+
+#: src/Admin/api-tokens/ApiTokensApp.js:313
+msgid "Revoked"
+msgstr ""
+
+#: src/Admin/api-tokens/ApiTokensApp.js:332
+msgid "Revoke"
+msgstr ""
+
+#: src/Admin/api-tokens/ApiTokensApp.js:353
+msgid "Token created"
+msgstr ""
+
+#: src/Admin/api-tokens/ApiTokensApp.js:357
+msgid "Generate API Token"
+msgstr ""
+
+#: src/Admin/api-tokens/ApiTokensApp.js:368
+msgid "Copy this token now. For security it will not be shown again."
+msgstr ""
+
+#: src/Admin/api-tokens/ApiTokensApp.js:389
+msgid "Copied!"
+msgstr ""
+
+#: src/Admin/api-tokens/ApiTokensApp.js:393
+msgid "Copy token"
+msgstr ""
+
+#: src/Admin/api-tokens/ApiTokensApp.js:402
+msgid "Done"
+msgstr ""
+
+#: src/Admin/api-tokens/ApiTokensApp.js:419
+msgid "A name to identify who this token is for, e.g. lamutable.es"
+msgstr ""
+
+#: src/Admin/api-tokens/ApiTokensApp.js:461
+#: src/Admin/connected-sites/ConnectedSitesApp.js:510
+msgid "Cancel"
+msgstr ""
+
+#: src/Admin/api-tokens/ApiTokensApp.js:476
+msgid "Generate"
+msgstr ""
+
+#: src/Admin/connected-sites/ConnectedSitesApp.js:22
+msgid "Connected"
+msgstr ""
+
+#: src/Admin/connected-sites/ConnectedSitesApp.js:26
+msgid "Error"
+msgstr ""
+
+#: src/Admin/connected-sites/ConnectedSitesApp.js:30
+msgid "Unverified"
+msgstr ""
+
+#: src/Admin/connected-sites/ConnectedSitesApp.js:64
+msgid "Failed to load connected sites."
+msgstr ""
+
+#: src/Admin/connected-sites/ConnectedSitesApp.js:114
+msgid "Connected site updated."
+msgstr ""
+
+#: src/Admin/connected-sites/ConnectedSitesApp.js:126
+msgid "Connected site added."
+msgstr ""
+
+#: src/Admin/connected-sites/ConnectedSitesApp.js:137
+msgid "Failed to save connected site."
+msgstr ""
+
+#: src/Admin/connected-sites/ConnectedSitesApp.js:160
+msgid "no scopes"
+msgstr ""
+
+#: src/Admin/connected-sites/ConnectedSitesApp.js:162
+msgid "Connection succeeded. Granted scopes: "
+msgstr ""
+
+#: src/Admin/connected-sites/ConnectedSitesApp.js:171
+msgid "Connection test failed."
+msgstr ""
+
+#: src/Admin/connected-sites/ConnectedSitesApp.js:185
+msgid "Remove this connected site? Stored token will be deleted."
+msgstr ""
+
+#: src/Admin/connected-sites/ConnectedSitesApp.js:203
+msgid "Connected site removed."
+msgstr ""
+
+#: src/Admin/connected-sites/ConnectedSitesApp.js:212
+msgid "Failed to remove connected site."
+msgstr ""
+
+#: src/Admin/connected-sites/ConnectedSitesApp.js:242
+#: src/Admin/connected-sites/ConnectedSitesApp.js:531
+msgid "Add Site"
+msgstr ""
+
+#: src/Admin/connected-sites/ConnectedSitesApp.js:252
+msgid "Register other sites this site pulls data from. Paste a token generated on the other site’s API Tokens page."
+msgstr ""
+
+#: src/Admin/connected-sites/ConnectedSitesApp.js:282
+msgid "Loading sites…"
+msgstr ""
+
+#: src/Admin/connected-sites/ConnectedSitesApp.js:292
+msgid "No connected sites yet. Add one to pull data from another site."
+msgstr ""
+
+#: src/Admin/connected-sites/ConnectedSitesApp.js:310
+#: src/Admin/connected-sites/ConnectedSitesApp.js:470
+msgid "Base URL"
+msgstr ""
+
+#: src/Admin/connected-sites/ConnectedSitesApp.js:328
+msgid "Last sync"
+msgstr ""
+
+#: src/Admin/connected-sites/ConnectedSitesApp.js:392
+msgid "Test"
+msgstr ""
+
+#: src/Admin/connected-sites/ConnectedSitesApp.js:406
+msgid "Edit"
+msgstr ""
+
+#: src/Admin/connected-sites/ConnectedSitesApp.js:421
+msgid "Remove"
+msgstr ""
+
+#: src/Admin/connected-sites/ConnectedSitesApp.js:442
+msgid "Edit Connected Site"
+msgstr ""
+
+#: src/Admin/connected-sites/ConnectedSitesApp.js:446
+msgid "Add Connected Site"
+msgstr ""
+
+#: src/Admin/connected-sites/ConnectedSitesApp.js:463
+msgid "A name to identify this site, e.g. acroyoga-club.es"
+msgstr ""
+
+#: src/Admin/connected-sites/ConnectedSitesApp.js:477
+msgid "The other site’s address, e.g. https://acroyoga-club.es"
+msgstr ""
+
+#: src/Admin/connected-sites/ConnectedSitesApp.js:484
+msgid "Token"
+msgstr ""
+
+#: src/Admin/connected-sites/ConnectedSitesApp.js:493
+msgid "Leave blank to keep the existing token."
+msgstr ""
+
+#: src/Admin/connected-sites/ConnectedSitesApp.js:497
+msgid "Paste the token from the other site’s API Tokens page."
+msgstr ""
+
+#: src/Admin/connected-sites/ConnectedSitesApp.js:527
+msgid "Save"
+msgstr ""
