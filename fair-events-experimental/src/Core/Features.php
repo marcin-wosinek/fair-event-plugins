@@ -2,8 +2,8 @@
 /**
  * Feature flag registry for Fair Events Experimental.
  *
- * Manages the six advanced bundles moved out of fair-events:
- * galleries, sources, ticketing, event-tools, migration, venues.
+ * Manages the advanced bundles moved out of fair-events:
+ * galleries, sources, ticketing, event-tools, migration, venues, mailings.
  * All default to true — installing this plugin signals intent to use the full
  * internal feature set.
  *
@@ -79,6 +79,11 @@ class Features {
 			'audience-statistics' => array(
 				'label'       => 'Audience statistics',
 				'description' => 'Per-event statistics charts (activity breakdown, sales lead time). Requires fair-audience.',
+				'default'     => true,
+			),
+			'mailings'    => array(
+				'label'       => 'Mailings',
+				'description' => 'Scheduled email mailings for event attendees. Requires fair-audience.',
 				'default'     => true,
 			),
 		);
@@ -171,6 +176,10 @@ class Features {
 			'audience-statistics' => array(
 				'label'       => __( 'Audience statistics', 'fair-events-experimental' ),
 				'description' => __( 'Per-event statistics charts (activity breakdown, sales lead time). Requires fair-audience.', 'fair-events-experimental' ),
+			),
+			'mailings'    => array(
+				'label'       => __( 'Mailings', 'fair-events-experimental' ),
+				'description' => __( 'Scheduled email mailings for event attendees. Requires fair-audience.', 'fair-events-experimental' ),
 			),
 		);
 
