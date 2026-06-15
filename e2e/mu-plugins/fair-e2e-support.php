@@ -26,12 +26,19 @@ defined( 'ABSPATH' ) || exit;
 /*
  * 1. Intercept the Mollie HTTP transport.
  *
- * Declared at mu-plugin load time — before fair-payments-connector's Composer autoloader
- * gets a chance to load the vendored CurlMollieHttpAdapter — so the SDK's
- * adapter picker instantiates our double instead. The real MollieApiClient
- * (URL building, response parsing, resource hydration) is untouched.
+ * Hooks into plugins_loaded (priority 1) — after fair-payments-connector has
+ * registered its Composer autoloader (so SDK traits/interfaces are resolvable)
+ * but before any REST request triggers new MollieApiClient() (which is the
+ * earliest the adapter picker could instantiate the vendored class). Declaring
+ * our double at that point is enough to shadow the final class.
  */
-require_once __DIR__ . '/lib/mollie-http-double.php';
+\add_action(
+	'plugins_loaded',
+	static function () {
+		require_once __DIR__ . '/lib/mollie-http-double.php';
+	},
+	1
+);
 
 /*
  * 2. Force fair-payments-connector into test mode with a syntactically valid dummy key.
