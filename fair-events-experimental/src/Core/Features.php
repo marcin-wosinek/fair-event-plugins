@@ -81,7 +81,7 @@ class Features {
 				'description' => 'Per-event statistics charts (activity breakdown, sales lead time). Requires fair-audience.',
 				'default'     => true,
 			),
-			'mailings'    => array(
+			'mailings'            => array(
 				'label'       => 'Mailings',
 				'description' => 'Scheduled email mailings for event attendees. Requires fair-audience.',
 				'default'     => true,
@@ -177,7 +177,7 @@ class Features {
 				'label'       => __( 'Audience statistics', 'fair-events-experimental' ),
 				'description' => __( 'Per-event statistics charts (activity breakdown, sales lead time). Requires fair-audience.', 'fair-events-experimental' ),
 			),
-			'mailings'    => array(
+			'mailings'            => array(
 				'label'       => __( 'Mailings', 'fair-events-experimental' ),
 				'description' => __( 'Scheduled email mailings for event attendees. Requires fair-audience.', 'fair-events-experimental' ),
 			),
