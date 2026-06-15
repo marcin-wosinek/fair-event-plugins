@@ -29,6 +29,10 @@ module.exports = {
       process.cwd(),
       "src/Admin/venues/index.js",
     ),
+    "admin/event-statistics/index": path.resolve(
+      process.cwd(),
+      "src/Admin/event-statistics/index.js",
+    ),
     "admin/manage-invitations/index": path.resolve(
       process.cwd(),
       "src/Admin/manage-invitations/index.js",

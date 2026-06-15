@@ -132,6 +132,20 @@ class AdminPages {
 			$this->set_hidden_page_title( $this->page_hooks['fair-events-manage-invitations'], __( 'Manage Invitations', 'fair-events-experimental' ) );
 		}
 
+		// Event Statistics page — `audience-statistics` bundle (hidden).
+		if ( \FairEventsExperimental\Core\Features::is_enabled( 'audience-statistics' ) ) {
+			$this->page_hooks['fair-events-event-statistics'] = add_submenu_page(
+				'',
+				__( 'Event Statistics', 'fair-events-experimental' ),
+				__( 'Event Statistics', 'fair-events-experimental' ),
+				'manage_options',
+				'fair-events-event-statistics',
+				array( $this, 'render_event_statistics_page' )
+			);
+
+			$this->set_hidden_page_title( $this->page_hooks['fair-events-event-statistics'], __( 'Event Statistics', 'fair-events-experimental' ) );
+		}
+
 		// Copy Event page — `event-tools` bundle (hidden).
 		if ( \FairEventsExperimental\Core\Features::is_enabled( 'event-tools' ) ) {
 			$this->page_hooks['fair-events-copy'] = add_submenu_page(
@@ -268,6 +282,23 @@ class AdminPages {
 				wp_enqueue_style( 'wp-components' );
 				break;
 
+			case 'fair-events-event-statistics':
+				$asset_file = include $exp_dir . 'build/admin/event-statistics/index.asset.php';
+				wp_enqueue_script( 'fair-events-event-statistics', $exp_url . 'build/admin/event-statistics/index.js', $asset_file['dependencies'], $asset_file['version'], true );
+				// phpcs:ignore WordPress.Security.NonceVerification.Recommended
+				$event_date_id = isset( $_GET['event_date_id'] ) ? absint( $_GET['event_date_id'] ) : 0;
+				wp_localize_script(
+					'fair-events-event-statistics',
+					'fairEventsEventStatisticsData',
+					array(
+						'eventDateId'    => $event_date_id,
+						'manageEventUrl' => admin_url( 'admin.php?page=fair-events-manage-event' ),
+					)
+				);
+				wp_set_script_translations( 'fair-events-event-statistics', 'fair-events-experimental' );
+				wp_enqueue_style( 'wp-components' );
+				break;
+
 			case 'fair-events-manage-invitations':
 				$asset_file = include $exp_dir . 'build/admin/manage-invitations/index.asset.php';
 				wp_enqueue_script( 'fair-events-manage-invitations', $exp_url . 'build/admin/manage-invitations/index.js', $asset_file['dependencies'], $asset_file['version'], true );
@@ -359,6 +390,16 @@ class AdminPages {
 		?>
 		<div id="fair-events-venues-root"></div>
 		<?php
+	}
+
+	/**
+	 * Render event statistics page
+	 *
+	 * @return void
+	 */
+	public function render_event_statistics_page() {
+		$page = new \FairEventsExperimental\Admin\EventStatisticsPage();
+		$page->render();
 	}
 
 	/**
