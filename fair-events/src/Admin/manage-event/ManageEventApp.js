@@ -1051,7 +1051,7 @@ export default function ManageEventApp() {
 									},
 									{
 										label: __(
-											'No link (standalone event)',
+											'Event placeholder',
 											'fair-events'
 										),
 										value: 'none',
