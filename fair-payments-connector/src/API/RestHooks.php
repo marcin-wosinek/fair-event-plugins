@@ -42,21 +42,6 @@ class RestHooks {
 		$payment_log_controller = new \FairPaymentsConnector\API\PaymentLogController();
 		$payment_log_controller->register_routes();
 
-		$telegram_controller = new \FairPaymentsConnector\API\TelegramSettingsController();
-		$telegram_controller->register_routes();
-
-		$api_tokens_controller = new \FairPaymentsConnector\API\ApiTokensController();
-		$api_tokens_controller->register_routes();
-
-		$external_transactions = new \FairPaymentsConnector\API\ExternalTransactionsController();
-		$external_transactions->register_routes();
-
-		$external_me = new \FairPaymentsConnector\API\ExternalMeController();
-		$external_me->register_routes();
-
-		$connected_sites_controller = new \FairPaymentsConnector\API\ConnectedSitesController();
-		$connected_sites_controller->register_routes();
-
 		$dashboard_controller = new \FairPaymentsConnector\API\DashboardController();
 		$dashboard_controller->register_routes();
 	}

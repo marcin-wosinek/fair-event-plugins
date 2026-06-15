@@ -34,10 +34,10 @@
 		"composer:update": "npm run composer:update --workspaces --if-present",
 		"composer:update:shared": "npm run composer:update:shared --workspaces --if-present",
 		"composer:validate": "npm run composer:validate --workspaces --if-present",
-		"start": "npm run start --workspace=fair-payments-connector & npm run start --workspace=fair-events & npm run start --workspace=fair-audience & npm run start --workspace=fair-timetable & npm run start --workspace=fair-finance & npm run start --workspace=fair-events-experimental & wait",
+		"start": "npm run start --workspace=fair-payments-connector & npm run start --workspace=fair-events & npm run start --workspace=fair-audience & npm run start --workspace=fair-timetable & npm run start --workspace=fair-finance & npm run start --workspace=fair-events-experimental & npm run start --workspace=fair-payments-connector-experimental & wait",
 		"format": "npm-run-all format:*",
 		"format:js": "wp-scripts format",
-		"format:php": "vendor/bin/phpcbf --standard=WordPress --extensions=php fair-payments-connector/src/ fair-events/src/ fair-events/__tests__/ fair-platform/src/ fair-audience/src/ fair-audience/__tests__/ fair-timetable/src/ fair-timetable/__tests__/ fair-finance/src/ fair-finance/__tests__/ fair-events-experimental/src/",
+		"format:php": "vendor/bin/phpcbf --standard=WordPress --extensions=php fair-payments-connector/src/ fair-events/src/ fair-events/__tests__/ fair-platform/src/ fair-audience/src/ fair-audience/__tests__/ fair-timetable/src/ fair-timetable/__tests__/ fair-finance/src/ fair-finance/__tests__/ fair-events-experimental/src/ fair-payments-connector-experimental/src/",
 		"prepare": "husky",
 		"changeset": "changeset",
 		"changeset:add": "changeset add",
@@ -63,6 +63,7 @@
 		"dist-archive:fair-timetable": "wp dist-archive fair-timetable dist --create-target-dir",
 		"dist-archive:fair-finance": "wp dist-archive fair-finance dist --create-target-dir",
 		"dist-archive:fair-events-experimental": "wp dist-archive fair-events-experimental dist --create-target-dir",
+		"dist-archive:fair-payments-connector-experimental": "wp dist-archive fair-payments-connector-experimental dist --create-target-dir",
 		"translation:update": "node scripts/translation/update-translations.js",
 		"translation:untranslated": "node scripts/translation/get-untranslated.js",
 		"translation:coverage": "node scripts/translation/coverage-report.js",
@@ -966,7 +967,8 @@
 		"fair-audience",
 		"fair-timetable",
 		"fair-finance",
-		"fair-events-experimental"
+		"fair-events-experimental",
+		"fair-payments-connector-experimental"
 	],
 	"devDependencies": {
 		"@changesets/cli": "^2.29.6",

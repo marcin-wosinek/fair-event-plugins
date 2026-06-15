@@ -61,17 +61,6 @@ class Plugin {
 		$this->load_admin();
 		$this->load_settings();
 		$this->load_migration_notice();
-		$this->load_notifications();
-	}
-
-	/**
-	 * Load and initialize notification hooks (Telegram, etc.)
-	 *
-	 * @return void
-	 */
-	private function load_notifications() {
-		$notifications = new \FairPaymentsConnector\Hooks\NotificationHooks();
-		$notifications->init();
 	}
 
 	/**

@@ -73,26 +73,6 @@ class AdminPages {
 			array( $this, 'render_settings_page' )
 		);
 
-		// API Tokens submenu.
-		add_submenu_page(
-			'fair-payments-connector-transactions',
-			__( 'API Tokens', 'fair-payments-connector' ),
-			__( 'API Tokens', 'fair-payments-connector' ),
-			'manage_options',
-			'fair-payments-connector-api-tokens',
-			array( $this, 'render_api_tokens_page' )
-		);
-
-		// Connected Sites submenu.
-		add_submenu_page(
-			'fair-payments-connector-transactions',
-			__( 'Connected Sites', 'fair-payments-connector' ),
-			__( 'Connected Sites', 'fair-payments-connector' ),
-			'manage_options',
-			'fair-payments-connector-connected-sites',
-			array( $this, 'render_connected_sites_page' )
-		);
-
 		// Fee Dashboard submenu.
 		add_submenu_page(
 			'fair-payments-connector-transactions',
@@ -136,18 +116,6 @@ class AdminPages {
 					'testMode' => 'test' === get_option( 'fair_payment_mode', 'test' ),
 				)
 			);
-			return;
-		}
-
-		// API Tokens page.
-		if ( false !== strpos( $hook, 'fair-payments-connector-api-tokens' ) ) {
-			$this->enqueue_admin_page_script( 'api-tokens' );
-			return;
-		}
-
-		// Connected Sites page.
-		if ( false !== strpos( $hook, 'fair-payments-connector-connected-sites' ) ) {
-			$this->enqueue_admin_page_script( 'connected-sites' );
 			return;
 		}
 
@@ -232,7 +200,7 @@ class AdminPages {
 	/**
 	 * Enqueue script for an admin page
 	 *
-	 * @param string $page Page name (transactions, transaction, settings, api-tokens, connected-sites).
+	 * @param string $page Page name (transactions, transaction, settings, fee-dashboard).
 	 * @return void
 	 */
 	private function enqueue_admin_page_script( $page ) {
@@ -302,28 +270,6 @@ class AdminPages {
 	public function render_transactions_page() {
 		?>
 		<div id="fair-payments-connector-transactions-root"></div>
-		<?php
-	}
-
-	/**
-	 * Render API tokens page
-	 *
-	 * @return void
-	 */
-	public function render_api_tokens_page() {
-		?>
-		<div id="fair-payments-connector-api-tokens-root"></div>
-		<?php
-	}
-
-	/**
-	 * Render connected sites page
-	 *
-	 * @return void
-	 */
-	public function render_connected_sites_page() {
-		?>
-		<div id="fair-payments-connector-connected-sites-root"></div>
 		<?php
 	}
 
