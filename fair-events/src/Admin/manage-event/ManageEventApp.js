@@ -61,6 +61,7 @@ export default function ManageEventApp() {
 	const galleriesEnabled = !!enabledFeatures.galleries;
 	const ticketingEnabled = !!enabledFeatures.ticketing;
 	const venuesEnabled = !!enabledFeatures.venues;
+	const mailingsEnabled = !!enabledFeatures.mailings;
 
 	const [eventDate, setEventDate] = useState(null);
 	const [loading, setLoading] = useState(true);
@@ -574,10 +575,14 @@ export default function ManageEventApp() {
 							name: 'audience',
 							title: __('Audience', 'fair-events'),
 						},
-						{
-							name: 'mailings',
-							title: __('Mailings', 'fair-events'),
-						},
+						...(mailingsEnabled
+							? [
+									{
+										name: 'mailings',
+										title: __('Mailings', 'fair-events'),
+									},
+							  ]
+							: []),
 				  ]
 				: []),
 			...(statisticsUrl
@@ -607,6 +612,7 @@ export default function ManageEventApp() {
 			paymentEntriesUrl,
 			isGeneratedOccurrence,
 			galleriesEnabled,
+			mailingsEnabled,
 			ticketingEnabled,
 		]
 	);
