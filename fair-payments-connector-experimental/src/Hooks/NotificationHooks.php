@@ -54,7 +54,7 @@ class NotificationHooks {
 
 		$context = $this->build_context( $payment, $transaction );
 
-		$template    = (string) get_option( 'fair_payment_telegram_template', \FairPaymentsConnector\Settings\Settings::default_template() );
+		$template    = (string) get_option( 'fair_payment_telegram_template', \FairPaymentsConnectorExperimental\Settings\Settings::default_template() );
 		$include_pii = (bool) get_option( 'fair_payment_telegram_include_pii', true );
 
 		$service = new TelegramService();

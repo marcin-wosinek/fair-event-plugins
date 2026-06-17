@@ -53,14 +53,14 @@ export default function TelegramTab({ onNotice }) {
 			})
 			.catch((error) => {
 				console.error(
-					'[Fair Payments Connector] Failed to load Telegram settings:',
+					'[Fair Payments Connector Experimental] Failed to load Telegram settings:',
 					error
 				);
 				onNotice({
 					status: 'error',
 					message: __(
 						'Failed to load Telegram settings.',
-						'fair-payments-connector'
+						'fair-payments-connector-experimental'
 					),
 				});
 				setIsLoading(false);
@@ -86,14 +86,14 @@ export default function TelegramTab({ onNotice }) {
 					status: 'success',
 					message: __(
 						'Telegram settings saved.',
-						'fair-payments-connector'
+						'fair-payments-connector-experimental'
 					),
 				});
 				setIsSaving(false);
 			})
 			.catch((error) => {
 				console.error(
-					'[Fair Payments Connector] Failed to save Telegram settings:',
+					'[Fair Payments Connector Experimental] Failed to save Telegram settings:',
 					error
 				);
 				onNotice({
@@ -101,7 +101,7 @@ export default function TelegramTab({ onNotice }) {
 					message:
 						__(
 							'Failed to save Telegram settings: ',
-							'fair-payments-connector'
+							'fair-payments-connector-experimental'
 						) + (error.message || 'Unknown error'),
 				});
 				setIsSaving(false);
@@ -126,7 +126,10 @@ export default function TelegramTab({ onNotice }) {
 					status: 'success',
 					message:
 						response.message ||
-						__('Test message sent.', 'fair-payments-connector'),
+						__(
+							'Test message sent.',
+							'fair-payments-connector-experimental'
+						),
 				});
 				setIsTesting(false);
 			})
@@ -135,7 +138,10 @@ export default function TelegramTab({ onNotice }) {
 					status: 'error',
 					message:
 						error.message ||
-						__('Test message failed.', 'fair-payments-connector'),
+						__(
+							'Test message failed.',
+							'fair-payments-connector-experimental'
+						),
 				});
 				setIsTesting(false);
 			});
@@ -148,7 +154,7 @@ export default function TelegramTab({ onNotice }) {
 					<p>
 						{__(
 							'Loading Telegram settings…',
-							'fair-payments-connector'
+							'fair-payments-connector-experimental'
 						)}
 					</p>
 				</CardBody>
@@ -160,12 +166,15 @@ export default function TelegramTab({ onNotice }) {
 		<Card>
 			<CardBody>
 				<h2>
-					{__('Telegram Notifications', 'fair-payments-connector')}
+					{__(
+						'Telegram Notifications',
+						'fair-payments-connector-experimental'
+					)}
 				</h2>
 				<p style={{ color: '#666', marginBottom: '1.5rem' }}>
 					{__(
 						'Post a message to a Telegram chat or channel when a transaction is paid.',
-						'fair-payments-connector'
+						'fair-payments-connector-experimental'
 					)}
 				</p>
 
@@ -173,7 +182,7 @@ export default function TelegramTab({ onNotice }) {
 					__nextHasNoMarginBottom
 					label={__(
 						'Enable Telegram notifications',
-						'fair-payments-connector'
+						'fair-payments-connector-experimental'
 					)}
 					checked={enabled}
 					onChange={setEnabled}
@@ -182,10 +191,13 @@ export default function TelegramTab({ onNotice }) {
 				<TextControl
 					__nextHasNoMarginBottom
 					__next40pxDefaultSize
-					label={__('Bot token', 'fair-payments-connector')}
+					label={__(
+						'Bot token',
+						'fair-payments-connector-experimental'
+					)}
 					help={__(
 						'From @BotFather. Stored as plain text in wp_options — anyone with admin access can read it.',
-						'fair-payments-connector'
+						'fair-payments-connector-experimental'
 					)}
 					type="password"
 					value={botToken}
@@ -196,10 +208,13 @@ export default function TelegramTab({ onNotice }) {
 				<TextControl
 					__nextHasNoMarginBottom
 					__next40pxDefaultSize
-					label={__('Chat IDs', 'fair-payments-connector')}
+					label={__(
+						'Chat IDs',
+						'fair-payments-connector-experimental'
+					)}
 					help={__(
 						'Comma-separated. Use a numeric user/chat/channel ID, or @channelname for public channels.',
-						'fair-payments-connector'
+						'fair-payments-connector-experimental'
 					)}
 					value={chatIds}
 					onChange={setChatIds}
@@ -207,10 +222,13 @@ export default function TelegramTab({ onNotice }) {
 
 				<TextareaControl
 					__nextHasNoMarginBottom
-					label={__('Message template', 'fair-payments-connector')}
+					label={__(
+						'Message template',
+						'fair-payments-connector-experimental'
+					)}
 					help={__(
 						'Placeholders: {test_label}, {site_domain}, {date}, {amount}, {currency}, {transaction_id}, {event_title}, {event_url}, {participant_name}, {participant_url}, {participant_email}, {ticket_label}, {activities}, {discounts}. HTML tags <b>, <i>, <a href> are allowed.',
-						'fair-payments-connector'
+						'fair-payments-connector-experimental'
 					)}
 					rows={5}
 					value={template}
@@ -221,11 +239,11 @@ export default function TelegramTab({ onNotice }) {
 					__nextHasNoMarginBottom
 					label={__(
 						'Include participant name and email',
-						'fair-payments-connector'
+						'fair-payments-connector-experimental'
 					)}
 					help={__(
 						'Disable to keep PII out of the Telegram channel. {participant_email} renders as empty and {participant_name} is abbreviated (e.g. "Lucianna C.").',
-						'fair-payments-connector'
+						'fair-payments-connector-experimental'
 					)}
 					checked={includePii}
 					onChange={setIncludePii}
@@ -244,7 +262,10 @@ export default function TelegramTab({ onNotice }) {
 						isBusy={isSaving}
 						disabled={isSaving}
 					>
-						{__('Save settings', 'fair-payments-connector')}
+						{__(
+							'Save settings',
+							'fair-payments-connector-experimental'
+						)}
 					</Button>
 					<Button
 						variant="secondary"
@@ -252,7 +273,10 @@ export default function TelegramTab({ onNotice }) {
 						isBusy={isTesting}
 						disabled={isTesting || !botToken || !chatIds}
 					>
-						{__('Send test message', 'fair-payments-connector')}
+						{__(
+							'Send test message',
+							'fair-payments-connector-experimental'
+						)}
 					</Button>
 				</div>
 

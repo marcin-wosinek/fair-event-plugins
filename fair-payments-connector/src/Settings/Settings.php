@@ -209,63 +209,6 @@ class Settings {
 			)
 		);
 
-		// Telegram: enabled.
-		register_setting(
-			'fair_payment_settings',
-			'fair_payment_telegram_enabled',
-			array(
-				'type'              => 'boolean',
-				'description'       => __( 'Enable Telegram notifications on successful transactions', 'fair-payments-connector' ),
-				'sanitize_callback' => 'rest_sanitize_boolean',
-				'show_in_rest'      => true,
-				'default'           => false,
-			)
-		);
-
-		// Telegram: bot token (sensitive — edit context only).
-		register_setting(
-			'fair_payment_settings',
-			'fair_payment_telegram_bot_token',
-			array(
-				'type'              => 'string',
-				'description'       => __( 'Telegram bot token (from @BotFather)', 'fair-payments-connector' ),
-				'sanitize_callback' => 'sanitize_text_field',
-				'show_in_rest'      => array(
-					'schema' => array(
-						'type'    => 'string',
-						'context' => array( 'edit' ),
-					),
-				),
-				'default'           => '',
-			)
-		);
-
-		// Telegram: chat IDs (comma-separated).
-		register_setting(
-			'fair_payment_settings',
-			'fair_payment_telegram_chat_ids',
-			array(
-				'type'              => 'string',
-				'description'       => __( 'Telegram chat IDs (comma-separated)', 'fair-payments-connector' ),
-				'sanitize_callback' => 'sanitize_text_field',
-				'show_in_rest'      => true,
-				'default'           => '',
-			)
-		);
-
-		// Telegram: message template.
-		register_setting(
-			'fair_payment_settings',
-			'fair_payment_telegram_template',
-			array(
-				'type'              => 'string',
-				'description'       => __( 'Telegram message template (HTML, supports placeholders)', 'fair-payments-connector' ),
-				'sanitize_callback' => array( $this, 'sanitize_template' ),
-				'show_in_rest'      => true,
-				'default'           => self::default_template(),
-			)
-		);
-
 		// Feature flag bundle toggles — UI state only, never overrides a
 		// wp-config constant (see Features::sanitize_option()).
 		register_setting(
@@ -282,65 +225,6 @@ class Settings {
 					),
 				),
 				'default'           => array(),
-			)
-		);
-
-		// Telegram: include PII placeholders.
-		register_setting(
-			'fair_payment_settings',
-			'fair_payment_telegram_include_pii',
-			array(
-				'type'              => 'boolean',
-				'description'       => __( 'Allow participant name/email in Telegram messages', 'fair-payments-connector' ),
-				'sanitize_callback' => 'rest_sanitize_boolean',
-				'show_in_rest'      => true,
-				'default'           => true,
-			)
-		);
-	}
-
-	/**
-	 * Label shown in test mode contexts (admin notice, Telegram template).
-	 *
-	 * @return string
-	 */
-	public static function test_label() {
-		return __( '[TEST] ', 'fair-payments-connector' );
-	}
-
-	/**
-	 * Default Telegram message template.
-	 *
-	 * @return string
-	 */
-	public static function default_template() {
-		return '<b>{test_label}{site_domain}</b>' . "\n"
-			. '<a href="{event_url}">{event_title}</a>' . "\n"
-			. '<a href="{participant_url}">{participant_name}</a>' . "\n"
-			. 'Ticket: {ticket_label}' . "\n"
-			. 'Activities: {activities}' . "\n"
-			. 'Discounts: {discounts}' . "\n"
-			. 'Total: {amount} {currency}';
-	}
-
-	/**
-	 * Sanitize template — preserve newlines, strip dangerous tags.
-	 *
-	 * @param string $value Template value.
-	 * @return string
-	 */
-	public function sanitize_template( $value ) {
-		return wp_kses(
-			(string) $value,
-			array(
-				'b'      => array(),
-				'strong' => array(),
-				'i'      => array(),
-				'em'     => array(),
-				'u'      => array(),
-				'a'      => array( 'href' => array() ),
-				'br'     => array(),
-				'code'   => array(),
 			)
 		);
 	}
