@@ -36,6 +36,9 @@ class RestHooks {
 		$connection_controller = new \FairPaymentsConnector\API\ConnectionController();
 		$connection_controller->register_routes();
 
+		$oauth_callback_controller = new \FairPaymentsConnector\API\OAuthCallbackController();
+		$oauth_callback_controller->register_routes();
+
 		$transactions_controller = new \FairPaymentsConnector\API\TransactionsController();
 		$transactions_controller->register_routes();
 
