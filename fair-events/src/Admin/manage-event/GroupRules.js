@@ -37,13 +37,15 @@ const discountTypeOptions = [
 	},
 ];
 
+const siteCurrency = window.fairPaymentsConnector?.currency || 'EUR';
+
 const formatDiscount = (type, value) => {
 	if (type === 'percentage') {
 		return `${value}%`;
 	}
 	return new Intl.NumberFormat('en-US', {
 		style: 'currency',
-		currency: 'EUR',
+		currency: siteCurrency,
 	}).format(value);
 };
 

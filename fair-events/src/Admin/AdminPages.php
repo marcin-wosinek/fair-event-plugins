@@ -326,6 +326,14 @@ class AdminPages {
 				$localized_data
 			);
 
+			wp_localize_script(
+				'fair-events-manage-event',
+				'fairPaymentsConnector',
+				array(
+					'currency' => get_option( 'fair_payment_currency', 'EUR' ),
+				)
+			);
+
 			wp_set_script_translations(
 				'fair-events-manage-event',
 				'fair-events',

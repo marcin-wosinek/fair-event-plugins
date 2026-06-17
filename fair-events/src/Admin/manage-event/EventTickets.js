@@ -707,10 +707,12 @@ export default function EventTickets({
 		return prices[key] || { price: '', capacity: '', enabled: true };
 	};
 
+	const siteCurrency = window.fairPaymentsConnector?.currency || 'EUR';
+
 	const formatCurrency = (value) => {
 		return new Intl.NumberFormat('en-US', {
 			style: 'currency',
-			currency: 'EUR',
+			currency: siteCurrency,
 		}).format(value);
 	};
 
@@ -1253,9 +1255,13 @@ export default function EventTickets({
 							{!hasAdvancedTickets ? (
 								<VStack spacing={3}>
 									<TextControl
-										label={__(
-											'Signup price (EUR)',
-											'fair-events'
+										/* translators: %s: currency code, e.g. EUR */
+										label={sprintf(
+											__(
+												'Signup price (%s)',
+												'fair-events'
+											),
+											siteCurrency
 										)}
 										help={__(
 											'Leave empty for free signup. Group discounts (Groups tab) apply to this base price.',
@@ -1897,16 +1903,25 @@ export default function EventTickets({
 													{__('Name', 'fair-events')}
 												</th>
 												<th>
-													{__(
-														'Price (EUR)',
-														'fair-events'
+													{/* translators: %s: currency code */}
+													{sprintf(
+														__(
+															'Price (%s)',
+															'fair-events'
+														),
+														siteCurrency
 													)}
 												</th>
 												{settings.activity_collaborator_discount && (
 													<th>
-														{__(
-															'Discounted price (EUR)',
-															'fair-events'
+														{/* translators: %s: currency code */}
+														{sprintf(
+															__(
+																'Discounted price (%s)',
+																'fair-events'
+															),
+															siteCurrency
+														)}
 														)}
 													</th>
 												)}
