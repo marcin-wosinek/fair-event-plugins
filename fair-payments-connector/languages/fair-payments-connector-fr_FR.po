@@ -1307,4 +1307,3 @@ msgstr "Un ou plusieurs bundles sont forcés par wp-config et ne peuvent pas êt
 #: src/Admin/settings/SettingsApp.js:196
 msgid "Fair Payments Connector Settings"
 msgstr "Paramètres Fair Payments Connector"
-

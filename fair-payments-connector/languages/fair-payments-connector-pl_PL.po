@@ -1307,4 +1307,3 @@ msgstr "Jeden lub więcej pakietów jest wymuszonych przez wp-config i nie możn
 #: src/Admin/settings/SettingsApp.js:196
 msgid "Fair Payments Connector Settings"
 msgstr "Ustawienia Fair Payments Connector"
-

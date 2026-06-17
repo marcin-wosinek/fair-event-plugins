@@ -1,57 +1,143 @@
 msgid ""
 msgstr ""
-"Project-Id-Version: Fair Payment 0.2.0\n"
+"Project-Id-Version: Fair Payments Connector 1.2.0\n"
 "Report-Msgid-Bugs-To: https://wordpress.org/support/plugin/fair-payments-connector\n"
-"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
-"Language-Team: LANGUAGE <LL@li.org>\n"
+"POT-Creation-Date: 2026-06-17T14:13:54+00:00\n"
+"PO-Revision-Date: 2026-06-17 16:26+0200\n"
+"Last-Translator: \n"
+"Language-Team: \n"
+"Language: es_ES\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"POT-Creation-Date: 2026-03-17T10:37:21+00:00\n"
-"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
-"Language: es_ES\n"
-"X-Generator: WP-CLI 2.12.0\n"
-"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+"X-Generator: Poedit 3.9\n"
 "X-Domain: fair-payments-connector\n"
+
+#. Plugin Name of the plugin
+#: fair-payments-connector.php src/Admin/AdminPages.php:35
+#: src/Admin/AdminPages.php:36
+msgid "Fair Payments Connector"
+msgstr ""
+
+#. Plugin URI of the plugin
+#: fair-payments-connector.php
+msgid "https://github.com/marcin-wosinek/fair-event-plugins"
+msgstr ""
 
 #. Description of the plugin
 #: fair-payments-connector.php
 msgid "Simple payment block for WordPress"
-msgstr "Bloque de pago simple para WordPress"
+msgstr "Bloque de pago sencillo para WordPress"
 
-#: src/Admin/AdminPages.php:47
-#: src/Admin/AdminPages.php:48
+#. Author of the plugin
+#: fair-payments-connector.php
+msgid "Marcin Wosinek"
+msgstr ""
+
+#. Author URI of the plugin
+#: fair-payments-connector.php
+msgid "https://github.com/marcin-wosinek"
+msgstr ""
+
+#: src/Admin/AdminPages.php:47 src/Admin/AdminPages.php:48
 msgid "Transactions"
 msgstr "Transacciones"
 
-#: src/Admin/AdminPages.php:56
-#: src/Admin/AdminPages.php:57
-#: src/Admin/AdminPages.php:64
-#: src/Admin/transaction/TransactionPage.js:550
+#: src/Admin/AdminPages.php:56 src/Admin/AdminPages.php:57
+#: src/Admin/AdminPages.php:64 src/Admin/transaction/TransactionPage.js:550
 msgid "Transaction Detail"
-msgstr "Detalle de Transacción"
+msgstr "Detalle de transacción"
 
-#: src/Admin/AdminPages.php:80
-#: src/Admin/AdminPages.php:81
+#: src/Admin/AdminPages.php:69 src/Admin/AdminPages.php:70
+#: src/Admin/fee-dashboard/FeeDashboardApp.js:101
+msgid "Fee Dashboard"
+msgstr "Panel de comisiones"
+
+#: src/Admin/AdminPages.php:80 src/Admin/AdminPages.php:81
 msgid "Settings"
-msgstr "Configuración"
+msgstr "Ajustes"
+
+#. translators: %s: link to settings page
+#: src/Admin/AdminPages.php:166
+#, php-format
+msgid "Fair Payment is in <strong>Test mode</strong> — no real payments are being processed. <a href=\"%s\">Switch to Live mode</a>."
+msgstr "Fair Payment está en <strong>modo de prueba</strong> — no se están procesando pagos reales. <a href=\"%s\">Cambiar a modo en vivo</a>."
+
+#: src/Admin/MigrationNotice.php:66
+msgid "Fair Payments Connector:"
+msgstr "Fair Payments Connector:"
 
 #: src/Admin/MigrationNotice.php:67
 msgid "Please migrate to OAuth authentication."
-msgstr "Por favor, migra a autenticación OAuth."
+msgstr "Migra a autenticación OAuth."
 
-#: src/Admin/MigrationNotice.php:69
-#: src/Admin/settings/ConnectionTab.js:312
+#: src/Admin/MigrationNotice.php:69 src/Admin/settings/ConnectionTab.js:312
 msgid "Connect with Mollie"
 msgstr "Conectar con Mollie"
 
+#: src/API/ApiTokenAuth.php:52
+msgid "This token does not have the required scope."
+msgstr "Este token no tiene el alcance requerido."
+
+#: src/API/ApiTokenAuth.php:115
+msgid "Invalid or missing API token."
+msgstr "Token de API inválido o faltante."
+
+#: src/API/ApiTokensController.php:129
+msgid "A label is required."
+msgstr "Se requiere una etiqueta."
+
+#: src/API/ApiTokensController.php:139
+msgid "At least one valid scope is required."
+msgstr "Se requiere al menos un alcance válido."
+
+#: src/API/ApiTokensController.php:149 src/Admin/api-tokens/ApiTokensApp.js:99
+msgid "Failed to create API token."
+msgstr "No se pudo crear el token de API."
+
+#: src/API/ApiTokensController.php:176
+msgid "API token not found."
+msgstr "Token de API no encontrado."
+
+#: src/API/ConnectedSitesController.php:154
+msgid "Label, base URL and token are all required."
+msgstr "Se requieren etiqueta, URL base y token."
+
+#: src/API/ConnectedSitesController.php:248
+#: src/API/ConnectedSitesController.php:333
+msgid "Could not reach the remote site."
+msgstr "No se pudo alcanzar el sitio remoto."
+
+#: src/API/ConnectedSitesController.php:260
+msgid "The remote site rejected the token."
+msgstr "El sitio remoto rechazó el token."
+
+#: src/API/ConnectedSitesController.php:261
+#: src/API/ConnectedSitesController.php:346
+msgid "The remote site returned an unexpected response."
+msgstr "El sitio remoto devolvió una respuesta inesperada."
+
+#: src/API/ConnectedSitesController.php:345
+msgid "The remote site rejected the token, or it lacks the transactions:read scope."
+msgstr "El sitio remoto rechazó el token, o carece del alcance transactions:read."
+
+#. translators: 1: created count, 2: updated count, 3: skipped count, 4: connected site label
+#: src/API/ConnectedSitesController.php:401
+#, php-format
+msgid "Imported %1$d new, updated %2$d, skipped %3$d transaction(s) from %4$s."
+msgstr "Se importaron %1$d nuevas, se actualizaron %2$d, se omitieron %3$d transacción(es) de %4$s."
+
+#: src/API/ConnectedSitesController.php:420
+msgid "Connected site not found."
+msgstr "Sitio conectado no encontrado."
+
 #: src/API/ConnectionController.php:49
 msgid "Mollie is not connected. Please connect your Mollie account first."
-msgstr "Mollie no está conectado. Por favor, conecta tu cuenta de Mollie primero."
+msgstr "Mollie no está conectado. Conecta tu cuenta de Mollie primero."
 
 #: src/API/ConnectionController.php:71
 msgid "Connection test successful. Token was refreshed."
-msgstr "Prueba de conexión exitosa. El token fue actualizado."
+msgstr "Prueba de conexión exitosa. El token se actualizó."
 
 #: src/API/ConnectionController.php:72
 msgid "Connection test successful. Token is still valid."
@@ -63,23 +149,21 @@ msgstr "Prueba de conexión exitosa. El token sigue siendo válido."
 msgid "Connection test failed: %s"
 msgstr "Prueba de conexión fallida: %s"
 
-#: src/API/PaymentEndpoint.php:317
-#: src/API/PaymentEndpoint.php:355
-#: src/API/TransactionAPI.php:163
-#: src/API/TransactionsController.php:271
-#: src/API/TransactionsController.php:291
-#: src/API/TransactionsController.php:423
-#: src/Models/Transaction.php:474
-msgid "Transaction not found."
-msgstr "Transacción no encontrada."
+#: src/API/ExternalTransactionsController.php:88
+msgid "Filter by transaction date (created_at) from this date, e.g. 2026-01-01."
+msgstr "Filtra por fecha de transacción (created_at) desde esta fecha, p. ej. 2026-01-01."
+
+#: src/API/ExternalTransactionsController.php:95
+msgid "Filter by transaction date (created_at) up to this date, e.g. 2026-12-31."
+msgstr "Filtra por fecha de transacción (created_at) hasta esta fecha, p. ej. 2026-12-31."
 
 #: src/API/PaymentEndpoint.php:155
 msgid "Mollie payment gateway is not configured. Please configure your API keys in settings."
-msgstr "La pasarela de pago Mollie no está configurada. Por favor, configure sus claves API en la configuración."
+msgstr "La pasarela de pago Mollie no está configurada. Configura tus claves de API en ajustes."
 
 #: src/API/PaymentEndpoint.php:175
 msgid "Invalid payment amount."
-msgstr "Monto de pago inválido."
+msgstr "Importe de pago inválido."
 
 #. translators: %s: amount and currency
 #: src/API/PaymentEndpoint.php:183
@@ -87,17 +171,24 @@ msgstr "Monto de pago inválido."
 msgid "Payment of %1$s %2$s"
 msgstr "Pago de %1$s %2$s"
 
+#: src/API/PaymentEndpoint.php:317 src/API/PaymentEndpoint.php:355
+#: src/API/TransactionAPI.php:163 src/API/TransactionsController.php:271
+#: src/API/TransactionsController.php:291
+#: src/API/TransactionsController.php:423 src/Models/Transaction.php:474
+msgid "Transaction not found."
+msgstr "Transacción no encontrada."
+
 #: src/API/TransactionAPI.php:100
 msgid "Failed to create transaction."
 msgstr "Error al crear la transacción."
 
 #: src/API/TransactionAPI.php:116
 msgid "Failed to create line items."
-msgstr "Error al crear elementos de línea."
+msgstr "Error al crear los elementos de línea."
 
 #: src/API/TransactionAPI.php:177
 msgid "Redirect URL is required."
-msgstr "Se requiere URL de redirección."
+msgstr "La URL de redirección es obligatoria."
 
 #. translators: %d: transaction ID
 #: src/API/TransactionAPI.php:190
@@ -107,7 +198,11 @@ msgstr "Pago #%d"
 
 #: src/API/TransactionAPI.php:254
 msgid "Failed to update transaction with payment details."
-msgstr "Error al actualizar la transacción con detalles de pago."
+msgstr "Error al actualizar la transacción con los detalles del pago."
+
+#: src/API/TransactionAPI.php:344
+msgid "This transaction has no Mollie payment ID to sync."
+msgstr "Esta transacción no tiene un ID de pago de Mollie para sincronizar."
 
 #: src/API/TransactionAPI.php:530
 msgid "Line items must be an array."
@@ -121,19 +216,19 @@ msgstr "Se requiere al menos un elemento de línea."
 #: src/API/TransactionAPI.php:550
 #, php-format
 msgid "Line item at index %d must be an array."
-msgstr "El elemento de línea en el índice %d debe ser una matriz."
+msgstr "El elemento de línea en el índice %d debe ser un array."
 
 #. translators: %d: line item index
 #: src/API/TransactionAPI.php:562
 #, php-format
 msgid "Line item at index %d is missing required \"name\" field."
-msgstr "El elemento de línea en el índice %d no tiene el campo requerido \"nombre\"."
+msgstr "El elemento de línea en el índice %d no tiene el campo requerido «name»."
 
 #. translators: %d: line item index
 #: src/API/TransactionAPI.php:574
 #, php-format
 msgid "Line item at index %d has invalid \"amount\" field."
-msgstr "El elemento de línea en el índice %d tiene un campo \"amount\" inválido."
+msgstr "El elemento de línea en el índice %d tiene un campo «amount» inválido."
 
 #. translators: %d: line item index
 #: src/API/TransactionAPI.php:586
@@ -147,9 +242,27 @@ msgstr "El elemento de línea en el índice %d debe tener una cantidad positiva.
 msgid "Line item at index %d must have positive quantity."
 msgstr "El elemento de línea en el índice %d debe tener una cantidad positiva."
 
+#: src/API/TransactionsController.php:316
+msgid "No fields to update."
+msgstr "No hay campos para actualizar."
+
+#: src/API/TransactionsController.php:326
+msgid "Failed to update transaction."
+msgstr "No se pudo actualizar la transacción."
+
+#: src/API/TransactionsController.php:350
+msgid "Expected an array of transactions."
+msgstr "Se esperaba un array de transacciones."
+
+#. translators: 1: created count, 2: updated count, 3: skipped count
+#: src/API/TransactionsController.php:383
+#, php-format
+msgid "Imported %1$d new, updated %2$d, skipped %3$d transaction(s)."
+msgstr "Se importaron %1$d nuevas, se actualizaron %2$d, se omitieron %3$d transacción(es)."
+
 #: src/API/WebhookEndpoint.php:90
 msgid "Payment ID is missing from webhook."
-msgstr "El ID de pago falta en el webhook."
+msgstr "Falta el ID de pago en el webhook."
 
 #: src/API/WebhookEndpoint.php:110
 msgid "Transaction not found in database."
@@ -157,7 +270,7 @@ msgstr "Transacción no encontrada en la base de datos."
 
 #: src/API/WebhookEndpoint.php:140
 msgid "Failed to update transaction status."
-msgstr "Error al actualizar el estado de la transacción."
+msgstr "No se pudo actualizar el estado de la transacción."
 
 #: src/blocks/simple-payment/render.php:42
 msgid "Thank you! Your payment has been received and is being processed."
@@ -184,6 +297,22 @@ msgstr "Procesando pago..."
 msgid "Payment gateway is not configured. Please configure your Mollie API keys."
 msgstr "La pasarela de pago no está configurada. Por favor, configura tus claves de API de Mollie."
 
+#: src/Core/Features.php:122
+msgid "Core"
+msgstr "Core"
+
+#: src/Core/Features.php:123
+msgid "Transactions, settings, payment blocks. Always on."
+msgstr "Transacciones, ajustes, bloques de pago. Siempre activo."
+
+#: src/Core/Features.php:126
+msgid "Bundled translations"
+msgstr "Traducciones incluidas"
+
+#: src/Core/Features.php:127
+msgid "Load .mo/.json files shipped with the plugin instead of relying on WordPress.org language packs. Useful while a locale is below the 90% threshold on translate.wordpress.org or for in-progress strings."
+msgstr "Carga archivos .mo/.json incluidos en el plugin en lugar de depender de los paquetes de idiomas de WordPress.org. Útil cuando una región está por debajo del umbral del 90% en translate.wordpress.org o para cadenas en progreso."
+
 #: src/Models/Transaction.php:482
 msgid "Payment has already been initiated for this transaction. Create a new transaction to retry."
 msgstr "El pago ya ha sido iniciado para esta transacción. Crea una nueva transacción para reintentar."
@@ -192,7 +321,7 @@ msgstr "El pago ya ha sido iniciado para esta transacción. Crea una nueva trans
 #: src/Models/Transaction.php:492
 #, php-format
 msgid "Transaction status must be \"draft\" to initiate payment. Current status: %s"
-msgstr "El estado de la transacción debe ser \"draft\" para iniciar el pago. Estado actual: %s"
+msgstr "El estado de la transacción debe ser «borrador» para iniciar el pago. Estado actual: %s"
 
 #: src/Payment/MolliePaymentHandler.php:57
 msgid "Mollie API key is not configured."
@@ -200,7 +329,7 @@ msgstr "La clave de API de Mollie no está configurada."
 
 #: src/Payment/MolliePaymentHandler.php:76
 msgid "Mollie is not connected. Please connect your Mollie account in settings."
-msgstr "Mollie no está conectado. Por favor, conecta tu cuenta de Mollie en la configuración."
+msgstr "Mollie no está conectado. Conecta tu cuenta de Mollie en los ajustes."
 
 #: src/Payment/MolliePaymentHandler.php:224
 msgid "Payment"
@@ -208,7 +337,7 @@ msgstr "Pago"
 
 #: src/Payment/MolliePaymentHandler.php:257
 msgid "Application fee"
-msgstr "Tarifa de aplicación"
+msgstr "Comisión de la aplicación"
 
 #. translators: %s: error message
 #: src/Payment/MolliePaymentHandler.php:350
@@ -222,13 +351,19 @@ msgstr "Error al crear el pago: %s"
 msgid "Failed to retrieve payment: %s"
 msgstr "Error al recuperar el pago: %s"
 
+#. translators: %s: error message
+#: src/Payment/MolliePaymentHandler.php:451
+#, php-format
+msgid "Failed to list balance transactions: %s"
+msgstr "Error al listar las transacciones de saldo: %s"
+
 #: src/Settings/Settings.php:37
 msgid "Mollie Test API Key"
-msgstr "Clave API de prueba de Mollie"
+msgstr "Clave de API de prueba de Mollie"
 
 #: src/Settings/Settings.php:50
 msgid "Mollie Live API Key"
-msgstr "Clave API en vivo de Mollie"
+msgstr "Clave de API en vivo de Mollie"
 
 #: src/Settings/Settings.php:63
 msgid "Payment mode (test or live)"
@@ -262,15 +397,97 @@ msgstr "Estado de conexión OAuth de Mollie"
 msgid "Mollie Profile ID (cached)"
 msgstr "ID de perfil de Mollie (en caché)"
 
-#: src/Admin/transaction/TransactionPage.js:829
-msgid "Name"
-msgstr "Nombre"
+#: src/Settings/Settings.php:192
+msgid "Disable bank transfer when close to the key date of the sale"
+msgstr "Desactivar transferencia bancaria cuando se acerca la fecha clave de la venta"
 
-#: src/Admin/transaction/TransactionPage.js:780
-#: src/Admin/transaction/TransactionPage.js:835
-#: src/Admin/transactions/TransactionsApp.js:497
-msgid "Description"
-msgstr "Descripción"
+#: src/Settings/Settings.php:205
+msgid "Working-day threshold for disabling bank transfer"
+msgstr "Umbral de días laborales para desactivar transferencia bancaria"
+
+#: src/Settings/Settings.php:219
+msgid "Per-bundle feature toggles"
+msgstr "Alternadores de funciones por paquete"
+
+#: src/Admin/api-tokens/ApiTokensApp.js:24
+msgid "Read transactions"
+msgstr "Leer transacciones"
+
+#: src/Admin/api-tokens/ApiTokensApp.js:28
+msgid "Read locations"
+msgstr "Leer ubicaciones"
+
+#: src/Admin/api-tokens/ApiTokensApp.js:60
+msgid "Failed to load API tokens."
+msgstr "No se pudieron cargar los tokens de API."
+
+#: src/Admin/api-tokens/ApiTokensApp.js:94
+msgid "API token created."
+msgstr "Token de API creado."
+
+#: src/Admin/api-tokens/ApiTokensApp.js:109
+msgid "Revoke this token? Any site using it will immediately lose access."
+msgstr "¿Revocar este token? Cualquier sitio que lo use perderá acceso inmediatamente."
+
+#: src/Admin/api-tokens/ApiTokensApp.js:126
+msgid "API token revoked."
+msgstr "Token de API revocado."
+
+#: src/Admin/api-tokens/ApiTokensApp.js:131
+msgid "Failed to revoke API token."
+msgstr "No se pudo revocar el token de API."
+
+#: src/Admin/api-tokens/ApiTokensApp.js:156
+msgid "API Tokens"
+msgstr "Tokens de API"
+
+#: src/Admin/api-tokens/ApiTokensApp.js:159
+msgid "Generate Token"
+msgstr "Generar token"
+
+#: src/Admin/api-tokens/ApiTokensApp.js:169
+msgid "Issue scoped tokens so other sites can read this site’s data over the data sharing API."
+msgstr "Emite tokens con alcance para que otros sitios puedan leer los datos de este sitio mediante la API de intercambio de datos."
+
+#: src/Admin/api-tokens/ApiTokensApp.js:199
+msgid "Loading tokens…"
+msgstr "Cargando tokens…"
+
+#: src/Admin/api-tokens/ApiTokensApp.js:209
+msgid "No API tokens yet. Generate one to share data with another site."
+msgstr "Sin tokens de API aún. Genera uno para compartir datos con otro sitio."
+
+#: src/Admin/api-tokens/ApiTokensApp.js:221
+#: src/Admin/api-tokens/ApiTokensApp.js:391
+#: src/Admin/connected-sites/ConnectedSitesApp.js:287
+#: src/Admin/connected-sites/ConnectedSitesApp.js:440
+#: src/Admin/transactions/components/ImportTransactionsModal.js:247
+msgid "Label"
+msgstr "Etiqueta"
+
+#: src/Admin/api-tokens/ApiTokensApp.js:227
+#: src/Admin/api-tokens/ApiTokensApp.js:410
+#: src/Admin/connected-sites/ConnectedSitesApp.js:299
+msgid "Scopes"
+msgstr "Alcances"
+
+#: src/Admin/api-tokens/ApiTokensApp.js:233
+#: src/Admin/transaction/TransactionPage.js:748
+msgid "Created"
+msgstr "Creado"
+
+#: src/Admin/api-tokens/ApiTokensApp.js:239
+msgid "Last used"
+msgstr "Último uso"
+
+#: src/Admin/api-tokens/ApiTokensApp.js:245
+#: src/Admin/connected-sites/ConnectedSitesApp.js:305
+#: src/Admin/transaction/TransactionPage.js:737
+#: src/Admin/transactions/components/ImportTransactionsModal.js:248
+#: src/Admin/transactions/TransactionsApp.js:313
+#: src/Admin/transactions/TransactionsApp.js:480
+msgid "Status"
+msgstr "Estado"
 
 #: src/Admin/api-tokens/ApiTokensApp.js:251
 #: src/Admin/connected-sites/ConnectedSitesApp.js:317
@@ -278,15 +495,50 @@ msgstr "Descripción"
 msgid "Actions"
 msgstr "Acciones"
 
-#: src/Admin/connected-sites/ConnectedSitesApp.js:389
-#: src/Admin/transaction/TransactionPage.js:154
-#: src/Admin/transaction/TransactionPage.js:362
-msgid "Edit"
-msgstr "Editar"
+#: src/Admin/api-tokens/ApiTokensApp.js:273
+#: src/Admin/connected-sites/ConnectedSitesApp.js:346
+msgid "Never"
+msgstr "Nunca"
 
-#: src/Admin/transaction/TransactionPage.js:853
-msgid "Total"
-msgstr "Total"
+#: src/Admin/api-tokens/ApiTokensApp.js:293
+msgid "Active"
+msgstr "Activo"
+
+#: src/Admin/api-tokens/ApiTokensApp.js:297
+msgid "Revoked"
+msgstr "Revocado"
+
+#: src/Admin/api-tokens/ApiTokensApp.js:316
+msgid "Revoke"
+msgstr "Revocar"
+
+#: src/Admin/api-tokens/ApiTokensApp.js:337
+msgid "Token created"
+msgstr "Token creado"
+
+#: src/Admin/api-tokens/ApiTokensApp.js:338
+msgid "Generate API Token"
+msgstr "Generar token de API"
+
+#: src/Admin/api-tokens/ApiTokensApp.js:349
+msgid "Copy this token now. For security it will not be shown again."
+msgstr "Copia este token ahora. Por seguridad no se mostrará de nuevo."
+
+#: src/Admin/api-tokens/ApiTokensApp.js:370
+msgid "Copied!"
+msgstr "¡Copiado!"
+
+#: src/Admin/api-tokens/ApiTokensApp.js:374
+msgid "Copy token"
+msgstr "Copiar token"
+
+#: src/Admin/api-tokens/ApiTokensApp.js:383
+msgid "Done"
+msgstr "Hecho"
+
+#: src/Admin/api-tokens/ApiTokensApp.js:397
+msgid "A name to identify who this token is for, e.g. lamutable.es"
+msgstr "Un nombre para identificar para quién es este token, p. ej. lamutable.es"
 
 #: src/Admin/api-tokens/ApiTokensApp.js:439
 #: src/Admin/connected-sites/ConnectedSitesApp.js:487
@@ -295,63 +547,94 @@ msgstr "Total"
 msgid "Cancel"
 msgstr "Cancelar"
 
-#: src/Admin/transaction/TransactionLog.js:129
-msgid "Event"
-msgstr "Evento"
+#: src/Admin/api-tokens/ApiTokensApp.js:454
+msgid "Generate"
+msgstr "Generar"
 
-#: src/Admin/transaction/TransactionPage.js:660
-#: src/Admin/transactions/TransactionsApp.js:461
-#: src/blocks/simple-payment/index.js:37
-msgid "Amount"
-msgstr "Cantidad"
+#: src/Admin/connected-sites/ConnectedSitesApp.js:22
+msgid "Connected"
+msgstr "Conectado"
 
-#: src/Admin/transactions/TransactionsApp.js:516
-msgid "Date"
-msgstr "Fecha"
+#: src/Admin/connected-sites/ConnectedSitesApp.js:25
+msgid "Error"
+msgstr "Error"
 
-#: src/Admin/transactions/components/ImportTransactionsModal.js:284
-#: src/Admin/transactions/TransactionsApp.js:386
-msgid "Import"
-msgstr "Importar"
+#: src/Admin/connected-sites/ConnectedSitesApp.js:27
+msgid "Unverified"
+msgstr "Sin verificar"
 
-#: src/Admin/transactions/TransactionsApp.js:115
-msgid "Failed to load transactions."
-msgstr "Error al cargar transacciones."
+#: src/Admin/connected-sites/ConnectedSitesApp.js:61
+#: src/Admin/transactions/components/ImportTransactionsModal.js:53
+msgid "Failed to load connected sites."
+msgstr "Error al cargar los sitios conectados."
 
-#: src/Admin/connected-sites/ConnectedSitesApp.js:404
-#: src/Admin/transaction/TransactionPage.js:257
-msgid "Remove"
-msgstr "Eliminar"
+#: src/Admin/connected-sites/ConnectedSitesApp.js:112
+msgid "Connected site updated."
+msgstr "Sitio conectado actualizado."
 
-#: src/Admin/transactions/TransactionsApp.js:668
-msgid "Previous"
-msgstr "Anterior"
+#: src/Admin/connected-sites/ConnectedSitesApp.js:121
+msgid "Connected site added."
+msgstr "Sitio conectado añadido."
 
-#: src/Admin/transactions/TransactionsApp.js:688
-msgid "Next"
-msgstr "Siguiente"
+#: src/Admin/connected-sites/ConnectedSitesApp.js:129
+msgid "Failed to save connected site."
+msgstr "Error al guardar el sitio conectado."
 
-#: src/Admin/settings/ConnectionTab.js:74
-msgid "Failed to load settings."
-msgstr "Error al cargar la configuración."
+#: src/Admin/connected-sites/ConnectedSitesApp.js:152
+msgid "no scopes"
+msgstr "sin permisos"
 
-#: src/Admin/settings/ConnectionTab.js:127
-msgid "Are you sure you want to disconnect from Mollie? You will need to reconnect to accept payments."
-msgstr "¿Estás seguro de que deseas desconectarte de Mollie? Necesitarás reconectarte para aceptar pagos."
+#: src/Admin/connected-sites/ConnectedSitesApp.js:154
+msgid "Connection succeeded. Granted scopes: "
+msgstr "Conexión exitosa. Permisos concedidos: "
 
-#: src/Admin/settings/ConnectionTab.js:148
-msgid "Disconnected from Mollie."
-msgstr "Desconectado de Mollie."
+#: src/Admin/connected-sites/ConnectedSitesApp.js:163
+msgid "Connection test failed."
+msgstr "Error en la prueba de conexión."
 
-#: src/Admin/settings/ConnectionTab.js:158
-msgid "Failed to disconnect."
-msgstr "Error al desconectar."
+#: src/Admin/connected-sites/ConnectedSitesApp.js:174
+msgid "Remove this connected site? Stored token will be deleted."
+msgstr "¿Eliminar este sitio conectado? Se borrará el token almacenado."
 
-#. translators: %s: mode name (Test or Live)
-#: src/Admin/settings/ConnectionTab.js:184
-#, js-format
-msgid "Switched to %s mode."
-msgstr "Cambiado a modo %s."
+#: src/Admin/connected-sites/ConnectedSitesApp.js:192
+msgid "Connected site removed."
+msgstr "Sitio conectado eliminado."
+
+#: src/Admin/connected-sites/ConnectedSitesApp.js:198
+msgid "Failed to remove connected site."
+msgstr "Error al eliminar el sitio conectado."
+
+#: src/Admin/connected-sites/ConnectedSitesApp.js:222
+#: src/Admin/transactions/components/ImportTransactionsModal.js:168
+msgid "Connected Sites"
+msgstr "Sitios conectados"
+
+#: src/Admin/connected-sites/ConnectedSitesApp.js:228
+#: src/Admin/connected-sites/ConnectedSitesApp.js:502
+msgid "Add Site"
+msgstr "Añadir sitio"
+
+#: src/Admin/connected-sites/ConnectedSitesApp.js:235
+msgid "Register other sites this site pulls data from. Paste a token generated on the other site’s API Tokens page."
+msgstr "Registra otros sitios de los que este sitio extrae datos. Pega un token generado en la página de tokens de API del otro sitio."
+
+#: src/Admin/connected-sites/ConnectedSitesApp.js:265
+#: src/Admin/transactions/components/ImportTransactionsModal.js:229
+msgid "Loading sites…"
+msgstr "Cargando sitios…"
+
+#: src/Admin/connected-sites/ConnectedSitesApp.js:275
+msgid "No connected sites yet. Add one to pull data from another site."
+msgstr "Sin sitios conectados aún. Añade uno para extraer datos de otro sitio."
+
+#: src/Admin/connected-sites/ConnectedSitesApp.js:293
+#: src/Admin/connected-sites/ConnectedSitesApp.js:450
+msgid "Base URL"
+msgstr "URL base"
+
+#: src/Admin/connected-sites/ConnectedSitesApp.js:311
+msgid "Last sync"
+msgstr "Última sincronización"
 
 #: src/Admin/connected-sites/ConnectedSitesApp.js:375
 #: src/Admin/settings/ConnectionTab.js:186
@@ -359,18 +642,113 @@ msgstr "Cambiado a modo %s."
 #: src/Admin/transactions/TransactionsApp.js:40
 #: src/Admin/transactions/TransactionsApp.js:585
 msgid "Test"
-msgstr "Prueba"
+msgstr "Probar"
+
+#: src/Admin/connected-sites/ConnectedSitesApp.js:389
+#: src/Admin/transaction/TransactionPage.js:154
+#: src/Admin/transaction/TransactionPage.js:362
+msgid "Edit"
+msgstr "Editar"
+
+#: src/Admin/connected-sites/ConnectedSitesApp.js:404
+#: src/Admin/transaction/TransactionPage.js:257
+msgid "Remove"
+msgstr "Eliminar"
+
+#: src/Admin/connected-sites/ConnectedSitesApp.js:425
+msgid "Edit Connected Site"
+msgstr "Editar sitio conectado"
+
+#: src/Admin/connected-sites/ConnectedSitesApp.js:429
+msgid "Add Connected Site"
+msgstr "Añadir sitio conectado"
+
+#: src/Admin/connected-sites/ConnectedSitesApp.js:443
+msgid "A name to identify this site, e.g. acroyoga-club.es"
+msgstr "Un nombre para identificar este sitio, p. ej. acroyoga-club.es"
+
+#: src/Admin/connected-sites/ConnectedSitesApp.js:457
+msgid "The other site’s address, e.g. https://acroyoga-club.es"
+msgstr "La dirección del otro sitio, p. ej. https://acroyoga-club.es"
+
+#: src/Admin/connected-sites/ConnectedSitesApp.js:464
+msgid "Token"
+msgstr "Token"
+
+#: src/Admin/connected-sites/ConnectedSitesApp.js:470
+msgid "Leave blank to keep the existing token."
+msgstr "Deja en blanco para mantener el token existente."
+
+#: src/Admin/connected-sites/ConnectedSitesApp.js:474
+msgid "Paste the token from the other site’s API Tokens page."
+msgstr "Pega el token de la página de tokens de API del otro sitio."
+
+#: src/Admin/connected-sites/ConnectedSitesApp.js:501
+#: src/Admin/settings/FeaturesTab.js:143
+#: src/Admin/settings/PaymentMethodsTab.js:151
+#: src/Admin/transaction/TransactionPage.js:128
+msgid "Save"
+msgstr "Guardar"
+
+#: src/Admin/fee-dashboard/FeeDashboardApp.js:75
+msgid "Failed to load dashboard data."
+msgstr "No se pudieron cargar los datos del escritorio."
+
+#: src/Admin/fee-dashboard/FeeDashboardApp.js:110
+msgid "Test mode — these figures reflect test transactions only."
+msgstr "Modo de prueba — estas cifras reflejan solo transacciones de prueba."
+
+#: src/Admin/fee-dashboard/FeeDashboardApp.js:136
+msgid "Total payment volume this month"
+msgstr "Volumen de pago total este mes"
+
+#: src/Admin/fee-dashboard/FeeDashboardApp.js:147
+msgid "Integration fees this month"
+msgstr "Comisiones de integración este mes"
+
+#: src/Admin/fee-dashboard/FeeDashboardApp.js:158
+msgid "Monthly fee cap"
+msgstr "Límite de cuota mensual"
+
+#: src/Admin/fee-dashboard/FeeDashboardApp.js:170
+msgid "remaining"
+msgstr "restante"
+
+#: src/Admin/fee-dashboard/FeeDashboardApp.js:177
+msgid "Active plan"
+msgstr "Plan activo"
+
+#: src/Admin/settings/ConnectionTab.js:74
+msgid "Failed to load settings."
+msgstr "No se pudieron cargar los ajustes."
+
+#: src/Admin/settings/ConnectionTab.js:127
+msgid "Are you sure you want to disconnect from Mollie? You will need to reconnect to accept payments."
+msgstr "¿Estás seguro de que quieres desconectarte de Mollie? Necesitarás reconectarte para aceptar pagos."
+
+#: src/Admin/settings/ConnectionTab.js:148
+msgid "Disconnected from Mollie."
+msgstr "Desconectado de Mollie."
+
+#: src/Admin/settings/ConnectionTab.js:158
+msgid "Failed to disconnect."
+msgstr "No se pudo desconectar."
+
+#. translators: %s: mode name (Test or Live)
+#: src/Admin/settings/ConnectionTab.js:184
+msgid "Switched to %s mode."
+msgstr "Cambiado a modo %s."
 
 #: src/Admin/settings/ConnectionTab.js:187
 #: src/Admin/transaction/TransactionPage.js:716
 #: src/Admin/transactions/TransactionsApp.js:39
 #: src/Admin/transactions/TransactionsApp.js:589
 msgid "Live"
-msgstr "En vivo"
+msgstr "En directo"
 
 #: src/Admin/settings/ConnectionTab.js:195
 msgid "Failed to change mode."
-msgstr "Error al cambiar el modo."
+msgstr "No se pudo cambiar el modo."
 
 #: src/Admin/settings/ConnectionTab.js:217
 msgid "Connection refreshed successfully."
@@ -382,19 +760,19 @@ msgstr "Error al actualizar la conexión."
 
 #: src/Admin/settings/ConnectionTab.js:270
 msgid "Please check the error log for more details or try reconnecting to Mollie."
-msgstr "Por favor, comprueba el registro de errores para más detalles o intenta reconectarte a Mollie."
+msgstr "Comprueba el registro de errores para más detalles o intenta reconectarte a Mollie."
 
 #: src/Admin/settings/ConnectionTab.js:288
 msgid "Loading connection settings..."
-msgstr "Cargando configuración de conexión..."
+msgstr "Cargando ajustes de conexión..."
 
 #: src/Admin/settings/ConnectionTab.js:301
 msgid "Mollie Connection"
-msgstr "Conexión Mollie"
+msgstr "Conexión con Mollie"
 
 #: src/Admin/settings/ConnectionTab.js:306
 msgid "Connect your Mollie account to accept payments. This uses secure OAuth authentication."
-msgstr "Conecta tu cuenta de Mollie para aceptar pagos. Esto utiliza autenticación OAuth segura."
+msgstr "Conecta tu cuenta de Mollie para aceptar pagos. Utiliza autenticación OAuth segura."
 
 #: src/Admin/settings/ConnectionTab.js:321
 msgid "Connected to Mollie"
@@ -414,13 +792,12 @@ msgstr "Falta (requerido para pagos)"
 
 #: src/Admin/settings/ConnectionTab.js:368
 msgid "Please reconnect to Mollie to fetch the profile ID."
-msgstr "Por favor, reconéctate a Mollie para obtener el ID de perfil."
+msgstr "Reconéctate a Mollie para obtener el ID de perfil."
 
 #. translators: %s: expiration date
 #: src/Admin/settings/ConnectionTab.js:386
-#, js-format
 msgid "Token expires: %s"
-msgstr "Token expira: %s"
+msgstr "El token expira: %s"
 
 #: src/Admin/settings/ConnectionTab.js:400
 #: src/Admin/transaction/TransactionPage.js:693
@@ -457,12 +834,49 @@ msgstr "Características guardadas. Recarga la página para ver los cambios en e
 msgid "Failed to save features."
 msgstr "Error al guardar las características."
 
-#: src/Admin/connected-sites/ConnectedSitesApp.js:501
-#: src/Admin/settings/FeaturesTab.js:143
-#: src/Admin/settings/PaymentMethodsTab.js:151
-#: src/Admin/transaction/TransactionPage.js:128
-msgid "Save"
-msgstr "Guardar"
+#: src/Admin/settings/FeaturesTab.js:102
+msgid "Forced by a wp-config constant — change it there."
+msgstr "Forzado por una constante de wp-config — cámbialo allí."
+
+#: src/Admin/settings/FeaturesTab.js:129
+msgid "One or more bundles are forced by wp-config and cannot be toggled here."
+msgstr "Una o más funcionalidades están forzadas por wp-config y no se pueden cambiar aquí."
+
+#: src/Admin/settings/PaymentMethodsTab.js:56
+msgid "Failed to load payment method settings."
+msgstr "No se pudieron cargar los ajustes del método de pago."
+
+#: src/Admin/settings/PaymentMethodsTab.js:74
+msgid "Payment method settings saved."
+msgstr "Ajustes del método de pago guardados."
+
+#: src/Admin/settings/PaymentMethodsTab.js:84
+msgid "Failed to save payment method settings."
+msgstr "No se pudieron guardar los ajustes del método de pago."
+
+#: src/Admin/settings/PaymentMethodsTab.js:101
+msgid "Bank Transfer (SEPA)"
+msgstr "Transferencia bancaria (SEPA)"
+
+#: src/Admin/settings/PaymentMethodsTab.js:103
+msgid "SEPA bank transfers can take 1–3 working days to settle. Disable this method when the sale is too close to its key date (e.g. event day) to ensure payments clear in time."
+msgstr "Las transferencias bancarias SEPA pueden tardar entre 1 y 3 días hábiles en procesarse. Desactiva este método cuando la venta esté demasiado cerca de su fecha clave (p. ej. día del evento) para asegurar que los pagos se procesen a tiempo."
+
+#: src/Admin/settings/PaymentMethodsTab.js:111
+msgid "Disable bank transfer near the key date"
+msgstr "Desactiva la transferencia bancaria cerca de la fecha clave"
+
+#: src/Admin/settings/PaymentMethodsTab.js:115
+msgid "Hide bank transfer as a payment option when the sale is within the threshold below."
+msgstr "Oculta la transferencia bancaria como opción de pago cuando la venta esté dentro del umbral indicado a continuación."
+
+#: src/Admin/settings/PaymentMethodsTab.js:125
+msgid "Working-day threshold"
+msgstr "Umbral de días hábiles"
+
+#: src/Admin/settings/PaymentMethodsTab.js:129
+msgid "Disable bank transfer when fewer than this many working days remain before the key date."
+msgstr "Desactiva la transferencia bancaria cuando queden menos de este número de días hábiles antes de la fecha clave."
 
 #: src/Admin/settings/SettingsApp.js:64
 msgid "Authorization cancelled. Please try again."
@@ -470,15 +884,19 @@ msgstr "Autorización cancelada. Por favor, inténtalo de nuevo."
 
 #: src/Admin/settings/SettingsApp.js:119
 msgid "Successfully connected to Mollie!"
-msgstr "¡Conectado exitosamente a Mollie!"
+msgstr "¡Conectado correctamente a Mollie!"
 
 #: src/Admin/settings/SettingsApp.js:140
 msgid "Failed to save OAuth tokens: "
-msgstr "Error al guardar los tokens OAuth: "
+msgstr "No se pudieron guardar los tokens de OAuth: "
 
 #: src/Admin/settings/SettingsApp.js:153
 msgid "OAuth callback incomplete: refresh token not received from authorization server."
-msgstr "Devolución de llamada OAuth incompleta: token de actualización no recibido del servidor de autorización."
+msgstr "Devolución de llamada de OAuth incompleta: el servidor de autorización no devolvió el token de actualización."
+
+#: src/Admin/settings/SettingsApp.js:196
+msgid "Fair Payments Connector Settings"
+msgstr "Ajustes de Fair Payments Connector"
 
 #: src/Admin/settings/SettingsApp.js:218
 msgid "Connection"
@@ -486,80 +904,73 @@ msgstr "Conexión"
 
 #: src/Admin/settings/SettingsApp.js:222
 msgid "Features"
-msgstr "Características"
+msgstr "Funcionalidades"
 
-#: src/Admin/transaction/TransactionPage.js:513
-msgid "No transaction ID provided."
-msgstr "No se proporcionó ID de transacción."
+#: src/Admin/settings/SettingsApp.js:226
+msgid "Payment Methods"
+msgstr "Métodos de pago"
 
-#: src/Admin/transaction/TransactionPage.js:528
-msgid "Failed to load transaction."
-msgstr "Error al cargar la transacción."
+#: src/Admin/transaction/TransactionLog.js:66
+msgid "Failed to load log entries."
+msgstr "No se pudieron cargar los registros de transacciones."
 
-#: src/Admin/transaction/TransactionPage.js:557
-#: src/Admin/transaction/TransactionPage.js:573
-msgid "Back to Transactions"
-msgstr "Volver a Transacciones"
+#: src/Admin/transaction/TransactionLog.js:90
+msgid "Event Log"
+msgstr "Registro de eventos"
 
-#: src/Admin/transaction/TransactionPage.js:576
-msgid "Transaction"
-msgstr "Transacción"
+#: src/Admin/transaction/TransactionLog.js:99
+msgid "Refresh"
+msgstr "Actualizar"
 
-#: src/Admin/transaction/TransactionPage.js:590
-msgid "Payment Details"
-msgstr "Detalles de Pago"
+#: src/Admin/transaction/TransactionLog.js:112
+msgid "No log entries for this transaction yet."
+msgstr "Aún no hay entradas de registro para esta transacción."
 
-#: src/Admin/transaction/TransactionPage.js:669
-#: src/Admin/transactions/TransactionsApp.js:467
-msgid "Mollie Fee"
-msgstr "Comisión de Mollie"
+#: src/Admin/transaction/TransactionLog.js:123
+msgid "Time"
+msgstr "Hora"
 
-#: src/Admin/transaction/TransactionPage.js:681
-#: src/Admin/transactions/TransactionsApp.js:473
-msgid "Integration Fee"
-msgstr "Comisión de Integración"
+#: src/Admin/transaction/TransactionLog.js:126
+msgid "Level"
+msgstr "Nivel"
 
-#: src/Admin/transaction/TransactionPage.js:730
-msgid "Status & Timing"
-msgstr "Estado y Tiempo"
+#: src/Admin/transaction/TransactionLog.js:129
+msgid "Event"
+msgstr "Evento"
 
-#: src/Admin/api-tokens/ApiTokensApp.js:245
-#: src/Admin/connected-sites/ConnectedSitesApp.js:305
-#: src/Admin/transaction/TransactionPage.js:737
-#: src/Admin/transactions/components/ImportTransactionsModal.js:248
-#: src/Admin/transactions/TransactionsApp.js:313
-#: src/Admin/transactions/TransactionsApp.js:480
-msgid "Status"
-msgstr "Estado"
+#: src/Admin/transaction/TransactionLog.js:132
+msgid "Message"
+msgstr "Mensaje"
 
-#: src/Admin/api-tokens/ApiTokensApp.js:233
-#: src/Admin/transaction/TransactionPage.js:748
-msgid "Created"
-msgstr "Creado"
+#: src/Admin/transaction/TransactionLog.js:135
+msgid "Request"
+msgstr "Solicitud"
 
-#: src/Admin/transaction/TransactionPage.js:756
-msgid "Payment Initiated"
-msgstr "Pago Iniciado"
+#: src/Admin/transaction/TransactionLog.js:180
+msgid "Context"
+msgstr "Contexto"
 
-#: src/Admin/transaction/TransactionPage.js:764
-msgid "Updated"
-msgstr "Actualizado"
+#: src/Admin/transaction/TransactionPage.js:155
+#: src/Admin/transaction/TransactionPage.js:363
+msgid "Add"
+msgstr "Añadir"
 
-#: src/Admin/transaction/TransactionPage.js:793
-msgid "Metadata"
-msgstr "Metadatos"
+#: src/Admin/transaction/TransactionPage.js:236
+#: src/Admin/transaction/TransactionPage.js:342
+msgid "Participant"
+msgstr "Participante"
 
-#: src/Admin/transaction/TransactionPage.js:821
-msgid "Line Items"
-msgstr "Artículos de Línea"
+#: src/Admin/transaction/TransactionPage.js:242
+msgid "Search by name or email…"
+msgstr "Buscar por nombre o correo electrónico…"
 
-#: src/Admin/transaction/TransactionPage.js:841
-msgid "Quantity"
-msgstr "Cantidad"
+#: src/Admin/transaction/TransactionPage.js:386
+msgid "Failed to update."
+msgstr "No se pudo actualizar."
 
-#: src/Admin/transaction/TransactionPage.js:847
-msgid "Unit Amount"
-msgstr "Cantidad Unitaria"
+#: src/Admin/transaction/TransactionPage.js:396
+msgid "Person & Post"
+msgstr "Persona y entrada"
 
 #: src/Admin/transaction/TransactionPage.js:419
 msgid "User"
@@ -569,25 +980,183 @@ msgstr "Usuario"
 msgid "Post"
 msgstr "Entrada"
 
+#: src/Admin/transaction/TransactionPage.js:483
+msgid "Synced with Mollie successfully."
+msgstr "Sincronizado con Mollie correctamente."
+
+#: src/Admin/transaction/TransactionPage.js:487
+msgid "Mollie responded but the settlement fee could not be extracted. See Mollie response below."
+msgstr "Mollie respondió pero no se pudo extraer la comisión de liquidación. Consulta la respuesta de Mollie a continuación."
+
+#: src/Admin/transaction/TransactionPage.js:499
+msgid "Failed to sync with Mollie."
+msgstr "No se pudo sincronizar con Mollie."
+
+#: src/Admin/transaction/TransactionPage.js:513
+msgid "No transaction ID provided."
+msgstr "No se proporcionó ningún ID de transacción."
+
+#: src/Admin/transaction/TransactionPage.js:528
+msgid "Failed to load transaction."
+msgstr "No se pudo cargar la transacción."
+
+#: src/Admin/transaction/TransactionPage.js:557
+#: src/Admin/transaction/TransactionPage.js:573
+msgid "Back to Transactions"
+msgstr "Volver a transacciones"
+
+#: src/Admin/transaction/TransactionPage.js:576
+msgid "Transaction"
+msgstr "Transacción"
+
+#: src/Admin/transaction/TransactionPage.js:590
+msgid "Payment Details"
+msgstr "Detalles de pago"
+
+#: src/Admin/transaction/TransactionPage.js:603
+#: src/Admin/transactions/TransactionsApp.js:375
+msgid "Syncing…"
+msgstr "Sincronizando…"
+
+#: src/Admin/transaction/TransactionPage.js:607
+msgid "Sync with Mollie"
+msgstr "Sincronizar con Mollie"
+
+#: src/Admin/transaction/TransactionPage.js:631
+msgid "See Mollie response"
+msgstr "Ver respuesta de Mollie"
+
+#: src/Admin/transaction/TransactionPage.js:660
+#: src/Admin/transactions/TransactionsApp.js:461
+#: src/blocks/simple-payment/index.js:37
+msgid "Amount"
+msgstr "Importe"
+
+#: src/Admin/transaction/TransactionPage.js:669
+#: src/Admin/transactions/TransactionsApp.js:467
+msgid "Mollie Fee"
+msgstr "Comisión de Mollie"
+
+#: src/Admin/transaction/TransactionPage.js:681
+#: src/Admin/transactions/TransactionsApp.js:473
+msgid "Integration Fee"
+msgstr "Comisión de integración"
+
+#: src/Admin/transaction/TransactionPage.js:730
+msgid "Status & Timing"
+msgstr "Estado y cronología"
+
+#: src/Admin/transaction/TransactionPage.js:756
+msgid "Payment Initiated"
+msgstr "Pago iniciado"
+
+#: src/Admin/transaction/TransactionPage.js:764
+msgid "Updated"
+msgstr "Actualizado"
+
+#: src/Admin/transaction/TransactionPage.js:780
+#: src/Admin/transaction/TransactionPage.js:835
+#: src/Admin/transactions/TransactionsApp.js:497
+msgid "Description"
+msgstr "Descripción"
+
+#: src/Admin/transaction/TransactionPage.js:793
+msgid "Metadata"
+msgstr "Metadatos"
+
+#: src/Admin/transaction/TransactionPage.js:821
+msgid "Line Items"
+msgstr "Artículos de línea"
+
+#: src/Admin/transaction/TransactionPage.js:829
+msgid "Name"
+msgstr "Nombre"
+
+#: src/Admin/transaction/TransactionPage.js:841
+msgid "Quantity"
+msgstr "Cantidad"
+
+#: src/Admin/transaction/TransactionPage.js:847
+msgid "Unit Amount"
+msgstr "Importe unitario"
+
+#: src/Admin/transaction/TransactionPage.js:853
+msgid "Total"
+msgstr "Total"
+
 #: src/Admin/transaction/TransactionPage.js:891
 msgid "URLs & Mollie"
 msgstr "URLs y Mollie"
 
 #: src/Admin/transaction/TransactionPage.js:898
 msgid "Mollie Payment ID"
-msgstr "ID de Pago de Mollie"
+msgstr "ID de pago de Mollie"
 
 #: src/Admin/transaction/TransactionPage.js:922
 msgid "Redirect URL"
-msgstr "URL de Redirección"
+msgstr "URL de redirección"
 
 #: src/Admin/transaction/TransactionPage.js:940
 msgid "Webhook URL"
-msgstr "URL de Webhook"
+msgstr "URL de webhook"
 
 #: src/Admin/transaction/TransactionPage.js:958
 msgid "Checkout URL"
-msgstr "URL de Checkout"
+msgstr "URL de pago"
+
+#: src/Admin/transactions/components/ImportTransactionsModal.js:89
+msgid "Invalid file format. Expected a JSON array."
+msgstr "Formato de archivo no válido. Se esperaba un array JSON."
+
+#: src/Admin/transactions/components/ImportTransactionsModal.js:101
+msgid "No valid transactions found in the file."
+msgstr "No se encontraron transacciones válidas en el archivo."
+
+#: src/Admin/transactions/components/ImportTransactionsModal.js:118
+msgid "Failed to import transactions."
+msgstr "Error al importar transacciones."
+
+#: src/Admin/transactions/components/ImportTransactionsModal.js:142
+msgid "Failed to import transactions from the connected site."
+msgstr "Error al importar transacciones del sitio conectado."
+
+#: src/Admin/transactions/components/ImportTransactionsModal.js:155
+msgid "Where do you want to import transactions from?"
+msgstr "¿De dónde quieres importar transacciones?"
+
+#: src/Admin/transactions/components/ImportTransactionsModal.js:177
+msgid "From File"
+msgstr "Desde archivo"
+
+#: src/Admin/transactions/components/ImportTransactionsModal.js:186
+msgid "Select a JSON file exported from another site, or a Mollie payments CSV export."
+msgstr "Selecciona un archivo JSON exportado desde otro sitio o una exportación CSV de pagos de Mollie."
+
+#: src/Admin/transactions/components/ImportTransactionsModal.js:201
+msgid "Importing…"
+msgstr "Importando…"
+
+#: src/Admin/transactions/components/ImportTransactionsModal.js:210
+#: src/Admin/transactions/components/ImportTransactionsModal.js:302
+msgid "Back"
+msgstr "Atrás"
+
+#: src/Admin/transactions/components/ImportTransactionsModal.js:219
+msgid "Pull transactions from a registered connected site. Existing transactions are matched by payment ID and updated rather than duplicated."
+msgstr "Extrae transacciones de un sitio conectado registrado. Las transacciones existentes se cotejan por ID de pago y se actualizan en lugar de duplicarse."
+
+#: src/Admin/transactions/components/ImportTransactionsModal.js:236
+msgid "No connected sites yet. Add one on the Connected Sites page first."
+msgstr "Aún no hay sitios conectados. Añade uno primero en la página de sitios conectados."
+
+#: src/Admin/transactions/components/ImportTransactionsModal.js:284
+#: src/Admin/transactions/TransactionsApp.js:386
+msgid "Import"
+msgstr "Importar"
+
+#: src/Admin/transactions/components/ImportTransactionsModal.js:310
+msgid "Import Transactions"
+msgstr "Importar transacciones"
 
 #: src/Admin/transactions/TransactionsApp.js:24
 msgid "All statuses"
@@ -629,9 +1198,44 @@ msgstr "Pago pendiente"
 msgid "All modes"
 msgstr "Todos los modos"
 
+#: src/Admin/transactions/TransactionsApp.js:115
+msgid "Failed to load transactions."
+msgstr "No se pudieron cargar las transacciones."
+
+#. translators: %d is the number of exported transactions
+#: src/Admin/transactions/TransactionsApp.js:195
+msgid "%d transaction(s) exported."
+msgstr "%d transacción(es) exportada(s)."
+
+#: src/Admin/transactions/TransactionsApp.js:233
+msgid "No paid transactions are missing Mollie fee data."
+msgstr "No hay transacciones pagadas sin datos de comisión de Mollie."
+
+#. translators: 1: synced count, 2: failed count, 3: total count
+#: src/Admin/transactions/TransactionsApp.js:272
+msgid "Mollie fee sync complete: %1$d updated, %2$d failed (out of %3$d)."
+msgstr "Sincronización de comisión de Mollie completada: %1$d actualizada(s), %2$d fallida(s) (de %3$d)."
+
+#: src/Admin/transactions/TransactionsApp.js:285
+msgid "Failed to load missing Mollie fees."
+msgstr "No se pudieron cargar las comisiones de Mollie faltantes."
+
 #: src/Admin/transactions/TransactionsApp.js:302
 msgid "Payment Transactions"
-msgstr "Transacciones de Pago"
+msgstr "Transacciones de pago"
+
+#: src/Admin/transactions/TransactionsApp.js:357
+msgid "Export Selected"
+msgstr "Exportar seleccionados"
+
+#: src/Admin/transactions/TransactionsApp.js:376
+msgid "Load Missing Mollie Fees"
+msgstr "Cargar comisiones de Mollie faltantes"
+
+#. translators: 1: processed count, 2: total count, 3: succeeded count, 4: failed count
+#: src/Admin/transactions/TransactionsApp.js:416
+msgid "Syncing Mollie fees: %1$d / %2$d (updated: %3$d, failed: %4$d)"
+msgstr "Sincronizando comisiones de Mollie: %1$d / %2$d (actualizadas: %3$d, fallidas: %4$d)"
 
 #: src/Admin/transactions/TransactionsApp.js:432
 msgid "No transactions found."
@@ -641,9 +1245,29 @@ msgstr "No se encontraron transacciones."
 msgid "ID"
 msgstr "ID"
 
+#: src/Admin/transactions/TransactionsApp.js:503
+msgid "Person"
+msgstr "Persona"
+
+#: src/Admin/transactions/TransactionsApp.js:509
+msgid "Entry"
+msgstr "Entrada"
+
+#: src/Admin/transactions/TransactionsApp.js:516
+msgid "Date"
+msgstr "Fecha"
+
+#: src/Admin/transactions/TransactionsApp.js:668
+msgid "Previous"
+msgstr "Anterior"
+
+#: src/Admin/transactions/TransactionsApp.js:688
+msgid "Next"
+msgstr "Siguiente"
+
 #: src/blocks/simple-payment/index.js:34
 msgid "Simple Payment Block"
-msgstr "Bloque de Pago Simple"
+msgstr "Bloque de pago sencillo"
 
 #: src/blocks/simple-payment/index.js:45
 msgid "Currency"
@@ -660,651 +1284,9 @@ msgstr "Descripción opcional para el pago"
 #: src/blocks/simple-payment/block.json
 msgctxt "block title"
 msgid "Simple Payment"
-msgstr "Pago Simple"
+msgstr "Pago sencillo"
 
 #: src/blocks/simple-payment/block.json
 msgctxt "block description"
 msgid "Simple payment block for WordPress"
-msgstr "Bloque de pago simple para WordPress"
-
-#. translators: %d is the number of exported transactions
-#: src/Admin/transactions/TransactionsApp.js:195
-#, js-format
-msgid "%d transaction(s) exported."
-msgstr "%d transacción(es) exportada(s)."
-
-#: src/Admin/transactions/components/ImportTransactionsModal.js:89
-msgid "Invalid file format. Expected a JSON array."
-msgstr "Formato de archivo inválido. Se esperaba un array JSON."
-
-#: src/Admin/transactions/components/ImportTransactionsModal.js:101
-msgid "No valid transactions found in the file."
-msgstr "No se encontraron transacciones válidas en el archivo."
-
-#: src/Admin/transactions/components/ImportTransactionsModal.js:118
-msgid "Failed to import transactions."
-msgstr "Error al importar transacciones."
-
-#: src/Admin/transactions/TransactionsApp.js:357
-msgid "Export Selected"
-msgstr "Exportar seleccionados"
-
-#: src/API/TransactionAPI.php:344
-msgid "This transaction has no Mollie payment ID to sync."
-msgstr "Esta transacción no tiene un ID de pago de Mollie para sincronizar."
-
-#: src/API/TransactionsController.php:350
-msgid "Expected an array of transactions."
-msgstr "Se esperaba un array de transacciones."
-
-#. translators: 1: created count, 2: updated count, 3: skipped count
-#: src/API/TransactionsController.php:383
-#, php-format
-msgid "Imported %1$d new, updated %2$d, skipped %3$d transaction(s)."
-msgstr "Importadas %1$d nuevas, actualizadas %2$d, omitidas %3$d transacción(es)."
-
-#. translators: %s: error message
-#: src/Payment/MolliePaymentHandler.php:451
-#, php-format
-msgid "Failed to list balance transactions: %s"
-msgstr "Error al listar transacciones de saldo: %s"
-
-#: src/Admin/transaction/TransactionPage.js:483
-msgid "Synced with Mollie successfully."
-msgstr "Sincronizado con Mollie correctamente."
-
-#: src/Admin/transaction/TransactionPage.js:487
-msgid "Mollie responded but the settlement fee could not be extracted. See Mollie response below."
-msgstr "Mollie respondió pero la comisión de liquidación no pudo ser extraída. Ver respuesta de Mollie abajo."
-
-#: src/Admin/transaction/TransactionPage.js:499
-msgid "Failed to sync with Mollie."
-msgstr "Error al sincronizar con Mollie."
-
-#: src/Admin/transaction/TransactionPage.js:603
-#: src/Admin/transactions/TransactionsApp.js:375
-msgid "Syncing…"
-msgstr "Sincronizando…"
-
-#: src/Admin/transaction/TransactionPage.js:607
-msgid "Sync with Mollie"
-msgstr "Sincronizar con Mollie"
-
-#: src/Admin/transaction/TransactionPage.js:631
-msgid "See Mollie response"
-msgstr "Ver respuesta de Mollie"
-
-#: src/Admin/transaction/TransactionPage.js:396
-msgid "Person & Post"
-msgstr "Persona y Publicación"
-
-#: src/Admin/transaction/TransactionPage.js:236
-#: src/Admin/transaction/TransactionPage.js:342
-msgid "Participant"
-msgstr "Participante"
-
-#: src/Admin/transactions/TransactionsApp.js:503
-msgid "Person"
-msgstr "Persona"
-
-#: src/Admin/transaction/TransactionPage.js:242
-msgid "Search by name or email…"
-msgstr "Buscar por nombre o correo electrónico…"
-
-#: src/API/TransactionsController.php:316
-msgid "No fields to update."
-msgstr "No hay campos para actualizar."
-
-#: src/API/TransactionsController.php:326
-msgid "Failed to update transaction."
-msgstr "Error al actualizar la transacción."
-
-#: src/Settings/Settings.php:192
-msgid "Disable bank transfer when close to the key date of the sale"
-msgstr "Desactivar transferencia bancaria cuando se aproxima la fecha clave de la venta"
-
-#: src/Settings/Settings.php:205
-msgid "Working-day threshold for disabling bank transfer"
-msgstr "Umbral de días laborales para desactivar transferencia bancaria"
-
-#: src/Admin/settings/PaymentMethodsTab.js:56
-msgid "Failed to load payment method settings."
-msgstr "Error al cargar la configuración del método de pago."
-
-#: src/Admin/settings/PaymentMethodsTab.js:74
-msgid "Payment method settings saved."
-msgstr "Configuración del método de pago guardada."
-
-#: src/Admin/settings/PaymentMethodsTab.js:84
-msgid "Failed to save payment method settings."
-msgstr "Error al guardar la configuración del método de pago."
-
-#: src/Admin/settings/PaymentMethodsTab.js:101
-msgid "Bank Transfer (SEPA)"
-msgstr "Transferencia Bancaria (SEPA)"
-
-#: src/Admin/settings/PaymentMethodsTab.js:103
-msgid "SEPA bank transfers can take 1–3 working days to settle. Disable this method when the sale is too close to its key date (e.g. event day) to ensure payments clear in time."
-msgstr "Las transferencias bancarias SEPA pueden tardar 1–3 días laborales en liquidarse. Desactiva este método cuando la venta está demasiado cerca de su fecha clave (p. ej., día del evento) para asegurar que los pagos se procesen a tiempo."
-
-#: src/Admin/settings/PaymentMethodsTab.js:111
-msgid "Disable bank transfer near the key date"
-msgstr "Desactivar transferencia bancaria cerca de la fecha clave"
-
-#: src/Admin/settings/PaymentMethodsTab.js:115
-msgid "Hide bank transfer as a payment option when the sale is within the threshold below."
-msgstr "Ocultar transferencia bancaria como opción de pago cuando la venta está dentro del umbral siguiente."
-
-#: src/Admin/settings/PaymentMethodsTab.js:125
-msgid "Working-day threshold"
-msgstr "Umbral de días laborales"
-
-#: src/Admin/settings/PaymentMethodsTab.js:129
-msgid "Disable bank transfer when fewer than this many working days remain before the key date."
-msgstr "Desactiva la transferencia bancaria cuando queden menos de este número de días laborales antes de la fecha clave."
-
-#: src/Admin/settings/SettingsApp.js:226
-msgid "Payment Methods"
-msgstr "Métodos de Pago"
-
-#: src/Admin/transaction/TransactionLog.js:66
-msgid "Failed to load log entries."
-msgstr "Error al cargar los registros de eventos."
-
-#: src/Admin/transaction/TransactionLog.js:90
-msgid "Event Log"
-msgstr "Registro de Eventos"
-
-#: src/Admin/transaction/TransactionLog.js:99
-msgid "Refresh"
-msgstr "Actualizar"
-
-#: src/Admin/transaction/TransactionLog.js:112
-msgid "No log entries for this transaction yet."
-msgstr "Aún no hay registros de eventos para esta transacción."
-
-#: src/Admin/transaction/TransactionLog.js:123
-msgid "Time"
-msgstr "Hora"
-
-#: src/Admin/transaction/TransactionLog.js:126
-msgid "Level"
-msgstr "Nivel"
-
-#: src/Admin/transaction/TransactionLog.js:132
-msgid "Message"
-msgstr "Mensaje"
-
-#: src/Admin/transaction/TransactionLog.js:135
-msgid "Request"
-msgstr "Solicitud"
-
-#: src/Admin/transaction/TransactionLog.js:180
-msgid "Context"
-msgstr "Contexto"
-
-#: src/Admin/transaction/TransactionPage.js:155
-#: src/Admin/transaction/TransactionPage.js:363
-msgid "Add"
-msgstr "Añadir"
-
-#: src/Admin/transaction/TransactionPage.js:386
-msgid "Failed to update."
-msgstr "Error al actualizar."
-
-#: src/Admin/transactions/TransactionsApp.js:509
-msgid "Entry"
-msgstr "Entrada"
-
-#: src/Admin/api-tokens/ApiTokensApp.js:156
-msgid "API Tokens"
-msgstr "Tokens API"
-
-#: src/Admin/connected-sites/ConnectedSitesApp.js:222
-#: src/Admin/transactions/components/ImportTransactionsModal.js:168
-msgid "Connected Sites"
-msgstr "Sitios Conectados"
-
-#: src/API/ApiTokenAuth.php:52
-msgid "This token does not have the required scope."
-msgstr "Este token no tiene el alcance requerido."
-
-#: src/API/ApiTokenAuth.php:115
-msgid "Invalid or missing API token."
-msgstr "Token API inválido o faltante."
-
-#: src/API/ApiTokensController.php:129
-msgid "A label is required."
-msgstr "Se requiere una etiqueta."
-
-#: src/API/ApiTokensController.php:139
-msgid "At least one valid scope is required."
-msgstr "Se requiere al menos un alcance válido."
-
-#: src/API/ApiTokensController.php:149
-#: src/Admin/api-tokens/ApiTokensApp.js:99
-msgid "Failed to create API token."
-msgstr "Error al crear el token API."
-
-#: src/API/ApiTokensController.php:176
-msgid "API token not found."
-msgstr "Token API no encontrado."
-
-#: src/API/ConnectedSitesController.php:154
-msgid "Label, base URL and token are all required."
-msgstr "Etiqueta, URL base y token son todos obligatorios."
-
-#: src/API/ConnectedSitesController.php:248
-#: src/API/ConnectedSitesController.php:333
-msgid "Could not reach the remote site."
-msgstr "No se pudo alcanzar el sitio remoto."
-
-#: src/API/ConnectedSitesController.php:260
-msgid "The remote site rejected the token."
-msgstr "El sitio remoto rechazó el token."
-
-#: src/API/ConnectedSitesController.php:261
-#: src/API/ConnectedSitesController.php:346
-msgid "The remote site returned an unexpected response."
-msgstr "El sitio remoto devolvió una respuesta inesperada."
-
-#: src/API/ConnectedSitesController.php:345
-msgid "The remote site rejected the token, or it lacks the transactions:read scope."
-msgstr "El sitio remoto rechazó el token, o carece del alcance transactions:read."
-
-#. translators: 1: created count, 2: updated count, 3: skipped count, 4: connected site label
-#: src/API/ConnectedSitesController.php:401
-#, php-format
-msgid "Imported %1$d new, updated %2$d, skipped %3$d transaction(s) from %4$s."
-msgstr "Se importaron %1$d nuevas, se actualizaron %2$d, se omitieron %3$d transacción(es) de %4$s."
-
-#: src/API/ConnectedSitesController.php:420
-msgid "Connected site not found."
-msgstr "Sitio conectado no encontrado."
-
-#: src/API/ExternalTransactionsController.php:88
-msgid "Filter by transaction date (created_at) from this date, e.g. 2026-01-01."
-msgstr "Filtrar por fecha de transacción (created_at) desde esta fecha, p. ej. 2026-01-01."
-
-#: src/API/ExternalTransactionsController.php:95
-msgid "Filter by transaction date (created_at) up to this date, e.g. 2026-12-31."
-msgstr "Filtrar por fecha de transacción (created_at) hasta esta fecha, p. ej. 2026-12-31."
-
-#: src/Admin/api-tokens/ApiTokensApp.js:24
-msgid "Read transactions"
-msgstr "Leer transacciones"
-
-#: src/Admin/api-tokens/ApiTokensApp.js:28
-msgid "Read locations"
-msgstr "Leer ubicaciones"
-
-#: src/Admin/api-tokens/ApiTokensApp.js:60
-msgid "Failed to load API tokens."
-msgstr "Error al cargar los tokens de API."
-
-#: src/Admin/api-tokens/ApiTokensApp.js:94
-msgid "API token created."
-msgstr "Token de API creado."
-
-#: src/Admin/api-tokens/ApiTokensApp.js:109
-msgid "Revoke this token? Any site using it will immediately lose access."
-msgstr "¿Revocar este token? Cualquier sitio que lo use perderá acceso inmediatamente."
-
-#: src/Admin/api-tokens/ApiTokensApp.js:126
-msgid "API token revoked."
-msgstr "Token de API revocado."
-
-#: src/Admin/api-tokens/ApiTokensApp.js:131
-msgid "Failed to revoke API token."
-msgstr "Error al revocar el token de API."
-
-#: src/Admin/api-tokens/ApiTokensApp.js:159
-msgid "Generate Token"
-msgstr "Generar Token"
-
-#: src/Admin/api-tokens/ApiTokensApp.js:169
-msgid "Issue scoped tokens so other sites can read this site’s data over the data sharing API."
-msgstr "Emite tokens con alcance para que otros sitios puedan leer los datos de este sitio a través de la API de intercambio de datos."
-
-#: src/Admin/api-tokens/ApiTokensApp.js:199
-msgid "Loading tokens…"
-msgstr "Cargando tokens…"
-
-#: src/Admin/api-tokens/ApiTokensApp.js:209
-msgid "No API tokens yet. Generate one to share data with another site."
-msgstr "Sin tokens de API aún. Genera uno para compartir datos con otro sitio."
-
-#: src/Admin/api-tokens/ApiTokensApp.js:221
-#: src/Admin/api-tokens/ApiTokensApp.js:391
-#: src/Admin/connected-sites/ConnectedSitesApp.js:287
-#: src/Admin/connected-sites/ConnectedSitesApp.js:440
-#: src/Admin/transactions/components/ImportTransactionsModal.js:247
-msgid "Label"
-msgstr "Etiqueta"
-
-#: src/Admin/api-tokens/ApiTokensApp.js:227
-#: src/Admin/api-tokens/ApiTokensApp.js:410
-#: src/Admin/connected-sites/ConnectedSitesApp.js:299
-msgid "Scopes"
-msgstr "Alcances"
-
-#: src/Admin/api-tokens/ApiTokensApp.js:239
-msgid "Last used"
-msgstr "Último uso"
-
-#: src/Admin/api-tokens/ApiTokensApp.js:273
-#: src/Admin/connected-sites/ConnectedSitesApp.js:346
-msgid "Never"
-msgstr "Nunca"
-
-#: src/Admin/api-tokens/ApiTokensApp.js:293
-msgid "Active"
-msgstr "Activo"
-
-#: src/Admin/api-tokens/ApiTokensApp.js:297
-msgid "Revoked"
-msgstr "Revocado"
-
-#: src/Admin/api-tokens/ApiTokensApp.js:316
-msgid "Revoke"
-msgstr "Revocar"
-
-#: src/Admin/api-tokens/ApiTokensApp.js:337
-msgid "Token created"
-msgstr "Token creado"
-
-#: src/Admin/api-tokens/ApiTokensApp.js:338
-msgid "Generate API Token"
-msgstr "Generar Token de API"
-
-#: src/Admin/api-tokens/ApiTokensApp.js:349
-msgid "Copy this token now. For security it will not be shown again."
-msgstr "Copia este token ahora. Por seguridad no se mostrará de nuevo."
-
-#: src/Admin/api-tokens/ApiTokensApp.js:370
-msgid "Copied!"
-msgstr "¡Copiado!"
-
-#: src/Admin/api-tokens/ApiTokensApp.js:374
-msgid "Copy token"
-msgstr "Copiar token"
-
-#: src/Admin/api-tokens/ApiTokensApp.js:383
-msgid "Done"
-msgstr "Hecho"
-
-#: src/Admin/api-tokens/ApiTokensApp.js:397
-msgid "A name to identify who this token is for, e.g. lamutable.es"
-msgstr "Un nombre para identificar para quién es este token, p. ej. lamutable.es"
-
-#: src/Admin/api-tokens/ApiTokensApp.js:454
-msgid "Generate"
-msgstr "Generar"
-
-#: src/Admin/connected-sites/ConnectedSitesApp.js:22
-msgid "Connected"
-msgstr "Conectado"
-
-#: src/Admin/connected-sites/ConnectedSitesApp.js:25
-msgid "Error"
-msgstr "Error"
-
-#: src/Admin/connected-sites/ConnectedSitesApp.js:27
-msgid "Unverified"
-msgstr "No verificado"
-
-#: src/Admin/connected-sites/ConnectedSitesApp.js:61
-#: src/Admin/transactions/components/ImportTransactionsModal.js:53
-msgid "Failed to load connected sites."
-msgstr "Error al cargar los sitios conectados."
-
-#: src/Admin/connected-sites/ConnectedSitesApp.js:112
-msgid "Connected site updated."
-msgstr "Sitio conectado actualizado."
-
-#: src/Admin/connected-sites/ConnectedSitesApp.js:121
-msgid "Connected site added."
-msgstr "Sitio conectado añadido."
-
-#: src/Admin/connected-sites/ConnectedSitesApp.js:129
-msgid "Failed to save connected site."
-msgstr "Error al guardar el sitio conectado."
-
-#: src/Admin/connected-sites/ConnectedSitesApp.js:152
-msgid "no scopes"
-msgstr "sin permisos"
-
-#: src/Admin/connected-sites/ConnectedSitesApp.js:154
-msgid "Connection succeeded. Granted scopes: "
-msgstr "Conexión exitosa. Permisos otorgados: "
-
-#: src/Admin/connected-sites/ConnectedSitesApp.js:163
-msgid "Connection test failed."
-msgstr "Error en la prueba de conexión."
-
-#: src/Admin/connected-sites/ConnectedSitesApp.js:174
-msgid "Remove this connected site? Stored token will be deleted."
-msgstr "¿Eliminar este sitio conectado? El token almacenado será eliminado."
-
-#: src/Admin/connected-sites/ConnectedSitesApp.js:192
-msgid "Connected site removed."
-msgstr "Sitio conectado eliminado."
-
-#: src/Admin/connected-sites/ConnectedSitesApp.js:198
-msgid "Failed to remove connected site."
-msgstr "Error al eliminar el sitio conectado."
-
-#: src/Admin/connected-sites/ConnectedSitesApp.js:228
-#: src/Admin/connected-sites/ConnectedSitesApp.js:502
-msgid "Add Site"
-msgstr "Añadir sitio"
-
-#: src/Admin/connected-sites/ConnectedSitesApp.js:235
-msgid "Register other sites this site pulls data from. Paste a token generated on the other site’s API Tokens page."
-msgstr "Registra otros sitios de los que este sitio extrae datos. Pega un token generado en la página de Tokens API del otro sitio."
-
-#: src/Admin/connected-sites/ConnectedSitesApp.js:265
-#: src/Admin/transactions/components/ImportTransactionsModal.js:229
-msgid "Loading sites…"
-msgstr "Cargando sitios…"
-
-#: src/Admin/connected-sites/ConnectedSitesApp.js:275
-msgid "No connected sites yet. Add one to pull data from another site."
-msgstr "Ningún sitio conectado aún. Añade uno para extraer datos de otro sitio."
-
-#: src/Admin/connected-sites/ConnectedSitesApp.js:293
-#: src/Admin/connected-sites/ConnectedSitesApp.js:450
-msgid "Base URL"
-msgstr "URL base"
-
-#: src/Admin/connected-sites/ConnectedSitesApp.js:311
-msgid "Last sync"
-msgstr "Última sincronización"
-
-#: src/Admin/connected-sites/ConnectedSitesApp.js:425
-msgid "Edit Connected Site"
-msgstr "Editar sitio conectado"
-
-#: src/Admin/connected-sites/ConnectedSitesApp.js:429
-msgid "Add Connected Site"
-msgstr "Añadir sitio conectado"
-
-#: src/Admin/connected-sites/ConnectedSitesApp.js:443
-msgid "A name to identify this site, e.g. acroyoga-club.es"
-msgstr "Un nombre para identificar este sitio, p. ej. acroyoga-club.es"
-
-#: src/Admin/connected-sites/ConnectedSitesApp.js:457
-msgid "The other site’s address, e.g. https://acroyoga-club.es"
-msgstr "La dirección del otro sitio, p. ej. https://acroyoga-club.es"
-
-#: src/Admin/connected-sites/ConnectedSitesApp.js:464
-msgid "Token"
-msgstr "Token"
-
-#: src/Admin/connected-sites/ConnectedSitesApp.js:470
-msgid "Leave blank to keep the existing token."
-msgstr "Déjalo en blanco para mantener el token existente."
-
-#: src/Admin/connected-sites/ConnectedSitesApp.js:474
-msgid "Paste the token from the other site’s API Tokens page."
-msgstr "Pega el token de la página de tokens API del otro sitio."
-
-#: src/Admin/transactions/components/ImportTransactionsModal.js:142
-msgid "Failed to import transactions from the connected site."
-msgstr "Error al importar transacciones del sitio conectado."
-
-#: src/Admin/transactions/components/ImportTransactionsModal.js:155
-msgid "Where do you want to import transactions from?"
-msgstr "¿De dónde deseas importar transacciones?"
-
-#: src/Admin/transactions/components/ImportTransactionsModal.js:177
-msgid "From File"
-msgstr "Desde archivo"
-
-#: src/Admin/transactions/components/ImportTransactionsModal.js:186
-msgid "Select a JSON file exported from another site, or a Mollie payments CSV export."
-msgstr "Selecciona un archivo JSON exportado desde otro sitio o una exportación CSV de pagos de Mollie."
-
-#: src/Admin/transactions/components/ImportTransactionsModal.js:201
-msgid "Importing…"
-msgstr "Importando…"
-
-#: src/Admin/transactions/components/ImportTransactionsModal.js:210
-#: src/Admin/transactions/components/ImportTransactionsModal.js:302
-msgid "Back"
-msgstr "Atrás"
-
-#: src/Admin/transactions/components/ImportTransactionsModal.js:219
-msgid "Pull transactions from a registered connected site. Existing transactions are matched by payment ID and updated rather than duplicated."
-msgstr "Extrae transacciones de un sitio conectado registrado. Las transacciones existentes se cotejan por ID de pago y se actualizan en lugar de duplicarse."
-
-#: src/Admin/transactions/components/ImportTransactionsModal.js:236
-msgid "No connected sites yet. Add one on the Connected Sites page first."
-msgstr "Aún no hay sitios conectados. Añade uno primero en la página Sitios conectados."
-
-#: src/Admin/transactions/components/ImportTransactionsModal.js:310
-msgid "Import Transactions"
-msgstr "Importar transacciones"
-
-#: src/Admin/transactions/TransactionsApp.js:233
-msgid "No paid transactions are missing Mollie fee data."
-msgstr "Ninguna transacción pagada carece de datos de comisión de Mollie."
-
-#. translators: 1: synced count, 2: failed count, 3: total count
-#: src/Admin/transactions/TransactionsApp.js:272
-#, js-format
-msgid "Mollie fee sync complete: %1$d updated, %2$d failed (out of %3$d)."
-msgstr "Sincronización de comisión de Mollie completada: %1$d actualizado, %2$d fallido (de %3$d)."
-
-#: src/Admin/transactions/TransactionsApp.js:285
-msgid "Failed to load missing Mollie fees."
-msgstr "Error al cargar las comisiones de Mollie faltantes."
-
-#: src/Admin/transactions/TransactionsApp.js:376
-msgid "Load Missing Mollie Fees"
-msgstr "Cargar comisiones de Mollie faltantes"
-
-#. translators: 1: processed count, 2: total count, 3: succeeded count, 4: failed count
-#: src/Admin/transactions/TransactionsApp.js:416
-#, js-format
-msgid "Syncing Mollie fees: %1$d / %2$d (updated: %3$d, failed: %4$d)"
-msgstr "Sincronizando comisiones de Mollie: %1$d / %2$d (actualizado: %3$d, fallido: %4$d)"
-
-#. Plugin Name of the plugin
-#: fair-payments-connector.php
-#: src/Admin/AdminPages.php:35
-#: src/Admin/AdminPages.php:36
-msgid "Fair Payments Connector"
-msgstr ""
-
-#. Plugin URI of the plugin
-#: fair-payments-connector.php
-msgid "https://github.com/marcin-wosinek/fair-event-plugins"
-msgstr ""
-
-#. Author of the plugin
-#: fair-payments-connector.php
-msgid "Marcin Wosinek"
-msgstr ""
-
-#. Author URI of the plugin
-#: fair-payments-connector.php
-msgid "https://github.com/marcin-wosinek"
-msgstr ""
-
-#: src/Admin/AdminPages.php:69
-#: src/Admin/AdminPages.php:70
-#: src/Admin/fee-dashboard/FeeDashboardApp.js:101
-msgid "Fee Dashboard"
-msgstr "Panel de comisiones"
-
-#. translators: %s: link to settings page
-#: src/Admin/AdminPages.php:166
-#, php-format
-msgid "Fair Payment is in <strong>Test mode</strong> — no real payments are being processed. <a href=\"%s\">Switch to Live mode</a>."
-msgstr "Fair Payment está en <strong>modo de prueba</strong> — no se están procesando pagos reales. <a href=\"%s\">Cambiar a modo en vivo</a>."
-
-#: src/Admin/MigrationNotice.php:66
-msgid "Fair Payments Connector:"
-msgstr "Conector de Fair Payments:"
-
-#: src/Core/Features.php:122
-msgid "Core"
-msgstr "Núcleo"
-
-#: src/Core/Features.php:123
-msgid "Transactions, settings, payment blocks. Always on."
-msgstr "Transacciones, ajustes, bloques de pago. Siempre activo."
-
-#: src/Core/Features.php:126
-msgid "Bundled translations"
-msgstr "Traducciones incluidas"
-
-#: src/Core/Features.php:127
-msgid "Load .mo/.json files shipped with the plugin instead of relying on WordPress.org language packs. Useful while a locale is below the 90% threshold on translate.wordpress.org or for in-progress strings."
-msgstr "Carga archivos .mo/.json incluidos en el plugin en lugar de depender de los paquetes de idioma de WordPress.org. Útil cuando una configuración regional está por debajo del umbral del 90 % en translate.wordpress.org o para cadenas en progreso."
-
-#: src/Settings/Settings.php:219
-msgid "Per-bundle feature toggles"
-msgstr "Alternadores de funciones por paquete"
-
-#: src/Admin/fee-dashboard/FeeDashboardApp.js:75
-msgid "Failed to load dashboard data."
-msgstr "No se pudieron cargar los datos del panel."
-
-#: src/Admin/fee-dashboard/FeeDashboardApp.js:110
-msgid "Test mode — these figures reflect test transactions only."
-msgstr "Modo de prueba — estas cifras reflejan solo transacciones de prueba."
-
-#: src/Admin/fee-dashboard/FeeDashboardApp.js:136
-msgid "Total payment volume this month"
-msgstr "Volumen de pago total este mes"
-
-#: src/Admin/fee-dashboard/FeeDashboardApp.js:147
-msgid "Integration fees this month"
-msgstr "Comisiones de integración este mes"
-
-#: src/Admin/fee-dashboard/FeeDashboardApp.js:158
-msgid "Monthly fee cap"
-msgstr "Límite de comisión mensual"
-
-#: src/Admin/fee-dashboard/FeeDashboardApp.js:170
-msgid "remaining"
-msgstr "restante"
-
-#: src/Admin/fee-dashboard/FeeDashboardApp.js:177
-msgid "Active plan"
-msgstr "Plan activo"
-
-#: src/Admin/settings/FeaturesTab.js:102
-msgid "Forced by a wp-config constant — change it there."
-msgstr "Forzado por una constante wp-config — cámbialo allí."
-
-#: src/Admin/settings/FeaturesTab.js:129
-msgid "One or more bundles are forced by wp-config and cannot be toggled here."
-msgstr "Uno o más paquetes están forzados por wp-config y no se pueden alternar aquí."
-
-#: src/Admin/settings/SettingsApp.js:196
-msgid "Fair Payments Connector Settings"
-msgstr "Ajustes del conector de Fair Payments"
-
+msgstr "Bloque de pago sencillo para WordPress"
