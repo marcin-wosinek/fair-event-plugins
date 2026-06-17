@@ -112,6 +112,35 @@ class WebhookEndpoint extends WP_REST_Controller {
 				);
 			}
 
+			// Skip terminal-state transactions — re-processing would re-fire hooks and
+			// re-run the balance fee scan. `authorized` is excluded: it can still move
+			// to `paid` so a follow-up webhook must be handled normally.
+			$terminal_states = array( 'paid', 'failed', 'canceled', 'expired' );
+			if ( in_array( $transaction->status, $terminal_states, true ) ) {
+				$logger->log(
+					'webhook_skipped',
+					array(
+						'level'          => 'info',
+						'transaction_id' => (int) $transaction->id,
+						'message'        => sprintf(
+							'Webhook skipped — transaction already in terminal state "%s"',
+							$transaction->status
+						),
+						'context'        => array(
+							'mollie_payment_id' => $mollie_payment_id,
+							'status'            => $transaction->status,
+						),
+					)
+				);
+				return new WP_REST_Response(
+					array(
+						'success' => true,
+						'status'  => $transaction->status,
+					),
+					200
+				);
+			}
+
 			// Retrieve payment status from Mollie using correct testmode.
 			$handler = new MolliePaymentHandler();
 			$options = array(
