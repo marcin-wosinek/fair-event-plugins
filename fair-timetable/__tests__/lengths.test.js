@@ -3,9 +3,14 @@
  */
 import { LengthOptions } from '../src/models/LengthOptions.js';
 
-// Mock WordPress i18n function
+// Mock WordPress i18n functions
 jest.mock('@wordpress/i18n', () => ({
-	__: (text) => text, // Return the text as-is for testing
+	__: (text) => text,
+	sprintf: (fmt, ...args) =>
+		fmt.replace(/%(\d+\$)?d/g, (_, pos) => {
+			const idx = pos ? parseInt(pos) - 1 : 0;
+			return args[idx];
+		}),
 }));
 
 describe('LengthOptions.formatLengthLabel', () => {
