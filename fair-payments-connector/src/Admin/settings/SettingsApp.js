@@ -9,7 +9,6 @@ import { Notice, TabPanel } from '@wordpress/components';
  * Internal dependencies
  */
 import ConnectionTab from './ConnectionTab';
-import AdvancedTab from './AdvancedTab';
 import FeaturesTab from './FeaturesTab.js';
 import PaymentMethodsTab from './PaymentMethodsTab.js';
 import { saveSettings } from './settings-api';
@@ -226,10 +225,6 @@ export default function SettingsApp() {
 						name: 'payment-methods',
 						title: __('Payment Methods', 'fair-payments-connector'),
 					},
-					{
-						name: 'advanced',
-						title: __('Advanced', 'fair-payments-connector'),
-					},
 				]}
 				onSelect={handleTabSelect}
 			>
@@ -246,9 +241,6 @@ export default function SettingsApp() {
 						)}
 						{tab.name === 'payment-methods' && (
 							<PaymentMethodsTab onNotice={setNotice} />
-						)}
-						{tab.name === 'advanced' && (
-							<AdvancedTab onNotice={setNotice} />
 						)}
 					</div>
 				)}
