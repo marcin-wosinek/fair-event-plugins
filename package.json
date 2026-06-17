@@ -51,6 +51,7 @@
 		"svn:tag:fair-audience": "node scripts/svn-tag.cjs fair-audience",
 		"svn:tag:fair-timetable": "node scripts/svn-tag.cjs fair-timetable",
 		"svn:tag:fair-finance": "node scripts/svn-tag.cjs fair-finance",
+		"svn:tag:fair-payments-connector": "node scripts/svn-tag.cjs fair-payments-connector",
 		"svn:rm": "rm -fr fair-events/svn fair-payments-connector/svn fair-audience/svn fair-timetable/svn fair-finance/svn",
 		"release": "node scripts/tag-release.js",
 		"deploy:local": "node scripts/deploy-local.js",

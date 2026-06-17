@@ -37,6 +37,7 @@ fair-timetable/svn
 fair-schedule-blocks/svn
 fair-events/svn
 fair-rsvp/svn
+fair-payments-connector/svn
 .vim/coc-settings.json
 deployment-config.txt
 fair-platform-deployment-config.txt

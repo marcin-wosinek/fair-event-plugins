@@ -14,6 +14,7 @@ on:
                     - fair-events
                     - fair-audience
                     - fair-timetable
+                    - fair-payments-connector
             version:
                 description: Version to publish (semver, e.g. 1.2.3)
                 required: true
