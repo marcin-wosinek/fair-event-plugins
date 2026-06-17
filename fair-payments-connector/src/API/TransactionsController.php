@@ -240,7 +240,7 @@ class TransactionsController extends WP_REST_Controller {
 				'participant_id'    => $participant_id,
 				'participant'       => $participant,
 				'entry_ids'         => $entry_ids_by_txn[ (int) $transaction->id ] ?? array(),
-				'created_at'        => $transaction->created_at ?? '',
+				'created_at'        => $transaction->created_at ? get_date_from_gmt( $transaction->created_at ) : '',
 			);
 		}
 
@@ -501,9 +501,9 @@ class TransactionsController extends WP_REST_Controller {
 			'webhook_url'          => $transaction->webhook_url ?? '',
 			'checkout_url'         => $transaction->checkout_url ?? '',
 			'metadata'             => $metadata,
-			'created_at'           => $transaction->created_at ?? '',
-			'payment_initiated_at' => $transaction->payment_initiated_at ?? '',
-			'updated_at'           => $transaction->updated_at ?? '',
+			'created_at'           => $transaction->created_at ? get_date_from_gmt( $transaction->created_at ) : '',
+			'payment_initiated_at' => $transaction->payment_initiated_at ? get_date_from_gmt( $transaction->payment_initiated_at ) : '',
+			'updated_at'           => $transaction->updated_at ? get_date_from_gmt( $transaction->updated_at ) : '',
 			'line_items'           => $line_item_data,
 		);
 

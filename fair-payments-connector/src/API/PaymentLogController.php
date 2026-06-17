@@ -159,7 +159,7 @@ class PaymentLogController extends WP_REST_Controller {
 			'user_id'        => null === $entry->user_id ? null : (int) $entry->user_id,
 			'ip_address'     => $entry->ip_address,
 			'request_id'     => $entry->request_id,
-			'created_at'     => $entry->created_at,
+			'created_at'     => $entry->created_at ? get_date_from_gmt( $entry->created_at ) : '',
 		);
 	}
 }
