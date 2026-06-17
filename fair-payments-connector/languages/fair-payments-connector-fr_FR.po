@@ -155,7 +155,7 @@ msgstr "L'ID de paiement est manquant du webhook."
 msgid "Transaction not found in database."
 msgstr "Transaction introuvable dans la base de données."
 
-#: src/API/WebhookEndpoint.php:140
+#: src/API/WebhookEndpoint.php:169
 msgid "Failed to update transaction status."
 msgstr "Échec de la mise à jour du statut de la transaction."
 
@@ -272,13 +272,10 @@ msgstr "Nom"
 msgid "Description"
 msgstr "Description"
 
-#: src/Admin/api-tokens/ApiTokensApp.js:251
-#: src/Admin/connected-sites/ConnectedSitesApp.js:317
 #: src/Admin/transactions/components/ImportTransactionsModal.js:250
 msgid "Actions"
 msgstr "Actions"
 
-#: src/Admin/connected-sites/ConnectedSitesApp.js:389
 #: src/Admin/transaction/TransactionPage.js:154
 #: src/Admin/transaction/TransactionPage.js:362
 msgid "Edit"
@@ -288,8 +285,6 @@ msgstr "Modifier"
 msgid "Total"
 msgstr "Total"
 
-#: src/Admin/api-tokens/ApiTokensApp.js:439
-#: src/Admin/connected-sites/ConnectedSitesApp.js:487
 #: src/Admin/transaction/TransactionPage.js:136
 #: src/Admin/transaction/TransactionPage.js:266
 msgid "Cancel"
@@ -318,7 +313,6 @@ msgstr "Importer"
 msgid "Failed to load transactions."
 msgstr "Impossible de charger les transactions."
 
-#: src/Admin/connected-sites/ConnectedSitesApp.js:404
 #: src/Admin/transaction/TransactionPage.js:257
 msgid "Remove"
 msgstr "Supprimer"
@@ -353,7 +347,6 @@ msgstr "Échec de la déconnexion."
 msgid "Switched to %s mode."
 msgstr "Passage en mode %s."
 
-#: src/Admin/connected-sites/ConnectedSitesApp.js:375
 #: src/Admin/settings/ConnectionTab.js:186
 #: src/Admin/transaction/TransactionPage.js:712
 #: src/Admin/transactions/TransactionsApp.js:40
@@ -457,7 +450,6 @@ msgstr "Fonctionnalités enregistrées. Rechargez la page pour voir les modifica
 msgid "Failed to save features."
 msgstr "Échec de l'enregistrement des fonctionnalités."
 
-#: src/Admin/connected-sites/ConnectedSitesApp.js:501
 #: src/Admin/settings/FeaturesTab.js:143
 #: src/Admin/settings/PaymentMethodsTab.js:151
 #: src/Admin/transaction/TransactionPage.js:128
@@ -523,8 +515,6 @@ msgstr "Frais d'Intégration"
 msgid "Status & Timing"
 msgstr "Statut et Timing"
 
-#: src/Admin/api-tokens/ApiTokensApp.js:245
-#: src/Admin/connected-sites/ConnectedSitesApp.js:305
 #: src/Admin/transaction/TransactionPage.js:737
 #: src/Admin/transactions/components/ImportTransactionsModal.js:248
 #: src/Admin/transactions/TransactionsApp.js:313
@@ -532,7 +522,6 @@ msgstr "Statut et Timing"
 msgid "Status"
 msgstr "Statut"
 
-#: src/Admin/api-tokens/ApiTokensApp.js:233
 #: src/Admin/transaction/TransactionPage.js:748
 msgid "Created"
 msgstr "Créé"
@@ -856,298 +845,21 @@ msgstr "Échec de la mise à jour."
 msgid "Entry"
 msgstr "Entrée"
 
-#: src/Admin/api-tokens/ApiTokensApp.js:156
-msgid "API Tokens"
-msgstr "Jetons API"
-
-#: src/Admin/connected-sites/ConnectedSitesApp.js:222
 #: src/Admin/transactions/components/ImportTransactionsModal.js:168
 msgid "Connected Sites"
 msgstr "Sites connectés"
 
-#: src/API/ApiTokenAuth.php:52
-msgid "This token does not have the required scope."
-msgstr "Ce jeton n'a pas la portée requise."
-
-#: src/API/ApiTokenAuth.php:115
-msgid "Invalid or missing API token."
-msgstr "Jeton API invalide ou manquant."
-
-#: src/API/ApiTokensController.php:129
-msgid "A label is required."
-msgstr "Un libellé est requis."
-
-#: src/API/ApiTokensController.php:139
-msgid "At least one valid scope is required."
-msgstr "Au moins une portée valide est requise."
-
-#: src/API/ApiTokensController.php:149
-#: src/Admin/api-tokens/ApiTokensApp.js:99
-msgid "Failed to create API token."
-msgstr "Impossible de créer le jeton API."
-
-#: src/API/ApiTokensController.php:176
-msgid "API token not found."
-msgstr "Jeton API introuvable."
-
-#: src/API/ConnectedSitesController.php:154
-msgid "Label, base URL and token are all required."
-msgstr "Le libellé, l'URL de base et le jeton sont tous requis."
-
-#: src/API/ConnectedSitesController.php:248
-#: src/API/ConnectedSitesController.php:333
-msgid "Could not reach the remote site."
-msgstr "Impossible d'accéder au site distant."
-
-#: src/API/ConnectedSitesController.php:260
-msgid "The remote site rejected the token."
-msgstr "Le site distant a rejeté le jeton."
-
-#: src/API/ConnectedSitesController.php:261
-#: src/API/ConnectedSitesController.php:346
-msgid "The remote site returned an unexpected response."
-msgstr "Le site distant a renvoyé une réponse inattendue."
-
-#: src/API/ConnectedSitesController.php:345
-msgid "The remote site rejected the token, or it lacks the transactions:read scope."
-msgstr "Le site distant a rejeté le jeton, ou il n'a pas la portée transactions:read."
-
-#. translators: 1: created count, 2: updated count, 3: skipped count, 4: connected site label
-#: src/API/ConnectedSitesController.php:401
-#, php-format
-msgid "Imported %1$d new, updated %2$d, skipped %3$d transaction(s) from %4$s."
-msgstr "Importé %1$d nouveau(x), mis à jour %2$d, ignoré %3$d transaction(s) de %4$s."
-
-#: src/API/ConnectedSitesController.php:420
-msgid "Connected site not found."
-msgstr "Site connecté introuvable."
-
-#: src/API/ExternalTransactionsController.php:88
-msgid "Filter by transaction date (created_at) from this date, e.g. 2026-01-01."
-msgstr "Filtrer par date de transaction (created_at) à partir de cette date, par exemple 2026-01-01."
-
-#: src/API/ExternalTransactionsController.php:95
-msgid "Filter by transaction date (created_at) up to this date, e.g. 2026-12-31."
-msgstr "Filtrer par date de transaction (created_at) jusqu'à cette date, par exemple 2026-12-31."
-
-#: src/Admin/api-tokens/ApiTokensApp.js:24
-msgid "Read transactions"
-msgstr "Lire les transactions"
-
-#: src/Admin/api-tokens/ApiTokensApp.js:28
-msgid "Read locations"
-msgstr "Lire les emplacements"
-
-#: src/Admin/api-tokens/ApiTokensApp.js:60
-msgid "Failed to load API tokens."
-msgstr "Échec du chargement des jetons API."
-
-#: src/Admin/api-tokens/ApiTokensApp.js:94
-msgid "API token created."
-msgstr "Jeton API créé."
-
-#: src/Admin/api-tokens/ApiTokensApp.js:109
-msgid "Revoke this token? Any site using it will immediately lose access."
-msgstr "Révoquer ce jeton ? Tout site l'utilisant perdra immédiatement l'accès."
-
-#: src/Admin/api-tokens/ApiTokensApp.js:126
-msgid "API token revoked."
-msgstr "Jeton API révoqué."
-
-#: src/Admin/api-tokens/ApiTokensApp.js:131
-msgid "Failed to revoke API token."
-msgstr "Échec de la révocation du jeton API."
-
-#: src/Admin/api-tokens/ApiTokensApp.js:159
-msgid "Generate Token"
-msgstr "Générer un jeton"
-
-#: src/Admin/api-tokens/ApiTokensApp.js:169
-msgid "Issue scoped tokens so other sites can read this site’s data over the data sharing API."
-msgstr "Émettez des jetons limités pour que d'autres sites puissent lire les données de ce site via l'API de partage de données."
-
-#: src/Admin/api-tokens/ApiTokensApp.js:199
-msgid "Loading tokens…"
-msgstr "Chargement des jetons…"
-
-#: src/Admin/api-tokens/ApiTokensApp.js:209
-msgid "No API tokens yet. Generate one to share data with another site."
-msgstr "Aucun jeton API pour le moment. Générez-en un pour partager des données avec un autre site."
-
-#: src/Admin/api-tokens/ApiTokensApp.js:221
-#: src/Admin/api-tokens/ApiTokensApp.js:391
-#: src/Admin/connected-sites/ConnectedSitesApp.js:287
-#: src/Admin/connected-sites/ConnectedSitesApp.js:440
 #: src/Admin/transactions/components/ImportTransactionsModal.js:247
 msgid "Label"
 msgstr "Étiquette"
 
-#: src/Admin/api-tokens/ApiTokensApp.js:227
-#: src/Admin/api-tokens/ApiTokensApp.js:410
-#: src/Admin/connected-sites/ConnectedSitesApp.js:299
-msgid "Scopes"
-msgstr "Portées"
-
-#: src/Admin/api-tokens/ApiTokensApp.js:239
-msgid "Last used"
-msgstr "Dernière utilisation"
-
-#: src/Admin/api-tokens/ApiTokensApp.js:273
-#: src/Admin/connected-sites/ConnectedSitesApp.js:346
-msgid "Never"
-msgstr "Jamais"
-
-#: src/Admin/api-tokens/ApiTokensApp.js:293
-msgid "Active"
-msgstr "Actif"
-
-#: src/Admin/api-tokens/ApiTokensApp.js:297
-msgid "Revoked"
-msgstr "Révoqué"
-
-#: src/Admin/api-tokens/ApiTokensApp.js:316
-msgid "Revoke"
-msgstr "Révoquer"
-
-#: src/Admin/api-tokens/ApiTokensApp.js:337
-msgid "Token created"
-msgstr "Jeton créé"
-
-#: src/Admin/api-tokens/ApiTokensApp.js:338
-msgid "Generate API Token"
-msgstr "Générer un jeton API"
-
-#: src/Admin/api-tokens/ApiTokensApp.js:349
-msgid "Copy this token now. For security it will not be shown again."
-msgstr "Copiez ce jeton maintenant. Pour des raisons de sécurité, il ne sera plus affiché."
-
-#: src/Admin/api-tokens/ApiTokensApp.js:370
-msgid "Copied!"
-msgstr "Copié !"
-
-#: src/Admin/api-tokens/ApiTokensApp.js:374
-msgid "Copy token"
-msgstr "Copier le token"
-
-#: src/Admin/api-tokens/ApiTokensApp.js:383
-msgid "Done"
-msgstr "Terminé"
-
-#: src/Admin/api-tokens/ApiTokensApp.js:397
-msgid "A name to identify who this token is for, e.g. lamutable.es"
-msgstr "Un nom pour identifier à qui ce token est destiné, par exemple lamutable.es"
-
-#: src/Admin/api-tokens/ApiTokensApp.js:454
-msgid "Generate"
-msgstr "Générer"
-
-#: src/Admin/connected-sites/ConnectedSitesApp.js:22
-msgid "Connected"
-msgstr "Connecté"
-
-#: src/Admin/connected-sites/ConnectedSitesApp.js:25
-msgid "Error"
-msgstr "Erreur"
-
-#: src/Admin/connected-sites/ConnectedSitesApp.js:27
-msgid "Unverified"
-msgstr "Non vérifié"
-
-#: src/Admin/connected-sites/ConnectedSitesApp.js:61
 #: src/Admin/transactions/components/ImportTransactionsModal.js:53
 msgid "Failed to load connected sites."
 msgstr "Échec du chargement des sites connectés."
 
-#: src/Admin/connected-sites/ConnectedSitesApp.js:112
-msgid "Connected site updated."
-msgstr "Site connecté mis à jour."
-
-#: src/Admin/connected-sites/ConnectedSitesApp.js:121
-msgid "Connected site added."
-msgstr "Site connecté ajouté."
-
-#: src/Admin/connected-sites/ConnectedSitesApp.js:129
-msgid "Failed to save connected site."
-msgstr "Échec de l'enregistrement du site connecté."
-
-#: src/Admin/connected-sites/ConnectedSitesApp.js:152
-msgid "no scopes"
-msgstr "aucune portée"
-
-#: src/Admin/connected-sites/ConnectedSitesApp.js:154
-msgid "Connection succeeded. Granted scopes: "
-msgstr "Connexion réussie. Portées accordées : "
-
-#: src/Admin/connected-sites/ConnectedSitesApp.js:163
-msgid "Connection test failed."
-msgstr "Le test de connexion a échoué."
-
-#: src/Admin/connected-sites/ConnectedSitesApp.js:174
-msgid "Remove this connected site? Stored token will be deleted."
-msgstr "Supprimer ce site connecté ? Le token stocké sera supprimé."
-
-#: src/Admin/connected-sites/ConnectedSitesApp.js:192
-msgid "Connected site removed."
-msgstr "Site connecté supprimé."
-
-#: src/Admin/connected-sites/ConnectedSitesApp.js:198
-msgid "Failed to remove connected site."
-msgstr "Échec de la suppression du site connecté."
-
-#: src/Admin/connected-sites/ConnectedSitesApp.js:228
-#: src/Admin/connected-sites/ConnectedSitesApp.js:502
-msgid "Add Site"
-msgstr "Ajouter un site"
-
-#: src/Admin/connected-sites/ConnectedSitesApp.js:235
-msgid "Register other sites this site pulls data from. Paste a token generated on the other site’s API Tokens page."
-msgstr "Enregistrez les autres sites à partir desquels ce site extrait des données. Collez un token généré sur la page Tokens API de l'autre site."
-
-#: src/Admin/connected-sites/ConnectedSitesApp.js:265
 #: src/Admin/transactions/components/ImportTransactionsModal.js:229
 msgid "Loading sites…"
 msgstr "Chargement des sites…"
-
-#: src/Admin/connected-sites/ConnectedSitesApp.js:275
-msgid "No connected sites yet. Add one to pull data from another site."
-msgstr "Aucun site connecté pour le moment. Ajoutez-en un pour extraire des données d'un autre site."
-
-#: src/Admin/connected-sites/ConnectedSitesApp.js:293
-#: src/Admin/connected-sites/ConnectedSitesApp.js:450
-msgid "Base URL"
-msgstr "URL de base"
-
-#: src/Admin/connected-sites/ConnectedSitesApp.js:311
-msgid "Last sync"
-msgstr "Dernière synchronisation"
-
-#: src/Admin/connected-sites/ConnectedSitesApp.js:425
-msgid "Edit Connected Site"
-msgstr "Modifier le site connecté"
-
-#: src/Admin/connected-sites/ConnectedSitesApp.js:429
-msgid "Add Connected Site"
-msgstr "Ajouter un site connecté"
-
-#: src/Admin/connected-sites/ConnectedSitesApp.js:443
-msgid "A name to identify this site, e.g. acroyoga-club.es"
-msgstr "Un nom pour identifier ce site, par exemple acroyoga-club.fr"
-
-#: src/Admin/connected-sites/ConnectedSitesApp.js:457
-msgid "The other site’s address, e.g. https://acroyoga-club.es"
-msgstr "L'adresse de l'autre site, par exemple https://acroyoga-club.fr"
-
-#: src/Admin/connected-sites/ConnectedSitesApp.js:464
-msgid "Token"
-msgstr "Jeton"
-
-#: src/Admin/connected-sites/ConnectedSitesApp.js:470
-msgid "Leave blank to keep the existing token."
-msgstr "Laissez vide pour conserver le jeton existant."
-
-#: src/Admin/connected-sites/ConnectedSitesApp.js:474
-msgid "Paste the token from the other site’s API Tokens page."
-msgstr "Collez le jeton de la page Jetons API de l'autre site."
 
 #: src/Admin/transactions/components/ImportTransactionsModal.js:142
 msgid "Failed to import transactions from the connected site."

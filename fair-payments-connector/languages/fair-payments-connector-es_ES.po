@@ -2,19 +2,20 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Fair Payments Connector 1.2.0\n"
 "Report-Msgid-Bugs-To: https://wordpress.org/support/plugin/fair-payments-connector\n"
-"POT-Creation-Date: 2026-06-17T14:13:54+00:00\n"
-"PO-Revision-Date: 2026-06-17 16:26+0200\n"
 "Last-Translator: \n"
 "Language-Team: \n"
-"Language: es_ES\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
+"POT-Creation-Date: 2026-06-17T14:13:54+00:00\n"
+"PO-Revision-Date: 2026-06-17 16:26+0200\n"
+"Language: es_ES\n"
 "X-Generator: Poedit 3.9\n"
 "X-Domain: fair-payments-connector\n"
 
 #. Plugin Name of the plugin
-#: fair-payments-connector.php src/Admin/AdminPages.php:35
+#: fair-payments-connector.php
+#: src/Admin/AdminPages.php:35
 #: src/Admin/AdminPages.php:36
 msgid "Fair Payments Connector"
 msgstr ""
@@ -39,21 +40,26 @@ msgstr ""
 msgid "https://github.com/marcin-wosinek"
 msgstr ""
 
-#: src/Admin/AdminPages.php:47 src/Admin/AdminPages.php:48
+#: src/Admin/AdminPages.php:47
+#: src/Admin/AdminPages.php:48
 msgid "Transactions"
 msgstr "Transacciones"
 
-#: src/Admin/AdminPages.php:56 src/Admin/AdminPages.php:57
-#: src/Admin/AdminPages.php:64 src/Admin/transaction/TransactionPage.js:550
+#: src/Admin/AdminPages.php:56
+#: src/Admin/AdminPages.php:57
+#: src/Admin/AdminPages.php:64
+#: src/Admin/transaction/TransactionPage.js:550
 msgid "Transaction Detail"
 msgstr "Detalle de transacción"
 
-#: src/Admin/AdminPages.php:69 src/Admin/AdminPages.php:70
+#: src/Admin/AdminPages.php:69
+#: src/Admin/AdminPages.php:70
 #: src/Admin/fee-dashboard/FeeDashboardApp.js:101
 msgid "Fee Dashboard"
 msgstr "Panel de comisiones"
 
-#: src/Admin/AdminPages.php:80 src/Admin/AdminPages.php:81
+#: src/Admin/AdminPages.php:80
+#: src/Admin/AdminPages.php:81
 msgid "Settings"
 msgstr "Ajustes"
 
@@ -71,65 +77,10 @@ msgstr "Fair Payments Connector:"
 msgid "Please migrate to OAuth authentication."
 msgstr "Migra a autenticación OAuth."
 
-#: src/Admin/MigrationNotice.php:69 src/Admin/settings/ConnectionTab.js:312
+#: src/Admin/MigrationNotice.php:69
+#: src/Admin/settings/ConnectionTab.js:312
 msgid "Connect with Mollie"
 msgstr "Conectar con Mollie"
-
-#: src/API/ApiTokenAuth.php:52
-msgid "This token does not have the required scope."
-msgstr "Este token no tiene el alcance requerido."
-
-#: src/API/ApiTokenAuth.php:115
-msgid "Invalid or missing API token."
-msgstr "Token de API inválido o faltante."
-
-#: src/API/ApiTokensController.php:129
-msgid "A label is required."
-msgstr "Se requiere una etiqueta."
-
-#: src/API/ApiTokensController.php:139
-msgid "At least one valid scope is required."
-msgstr "Se requiere al menos un alcance válido."
-
-#: src/API/ApiTokensController.php:149 src/Admin/api-tokens/ApiTokensApp.js:99
-msgid "Failed to create API token."
-msgstr "No se pudo crear el token de API."
-
-#: src/API/ApiTokensController.php:176
-msgid "API token not found."
-msgstr "Token de API no encontrado."
-
-#: src/API/ConnectedSitesController.php:154
-msgid "Label, base URL and token are all required."
-msgstr "Se requieren etiqueta, URL base y token."
-
-#: src/API/ConnectedSitesController.php:248
-#: src/API/ConnectedSitesController.php:333
-msgid "Could not reach the remote site."
-msgstr "No se pudo alcanzar el sitio remoto."
-
-#: src/API/ConnectedSitesController.php:260
-msgid "The remote site rejected the token."
-msgstr "El sitio remoto rechazó el token."
-
-#: src/API/ConnectedSitesController.php:261
-#: src/API/ConnectedSitesController.php:346
-msgid "The remote site returned an unexpected response."
-msgstr "El sitio remoto devolvió una respuesta inesperada."
-
-#: src/API/ConnectedSitesController.php:345
-msgid "The remote site rejected the token, or it lacks the transactions:read scope."
-msgstr "El sitio remoto rechazó el token, o carece del alcance transactions:read."
-
-#. translators: 1: created count, 2: updated count, 3: skipped count, 4: connected site label
-#: src/API/ConnectedSitesController.php:401
-#, php-format
-msgid "Imported %1$d new, updated %2$d, skipped %3$d transaction(s) from %4$s."
-msgstr "Se importaron %1$d nuevas, se actualizaron %2$d, se omitieron %3$d transacción(es) de %4$s."
-
-#: src/API/ConnectedSitesController.php:420
-msgid "Connected site not found."
-msgstr "Sitio conectado no encontrado."
 
 #: src/API/ConnectionController.php:49
 msgid "Mollie is not connected. Please connect your Mollie account first."
@@ -149,14 +100,6 @@ msgstr "Prueba de conexión exitosa. El token sigue siendo válido."
 msgid "Connection test failed: %s"
 msgstr "Prueba de conexión fallida: %s"
 
-#: src/API/ExternalTransactionsController.php:88
-msgid "Filter by transaction date (created_at) from this date, e.g. 2026-01-01."
-msgstr "Filtra por fecha de transacción (created_at) desde esta fecha, p. ej. 2026-01-01."
-
-#: src/API/ExternalTransactionsController.php:95
-msgid "Filter by transaction date (created_at) up to this date, e.g. 2026-12-31."
-msgstr "Filtra por fecha de transacción (created_at) hasta esta fecha, p. ej. 2026-12-31."
-
 #: src/API/PaymentEndpoint.php:155
 msgid "Mollie payment gateway is not configured. Please configure your API keys in settings."
 msgstr "La pasarela de pago Mollie no está configurada. Configura tus claves de API en ajustes."
@@ -171,10 +114,13 @@ msgstr "Importe de pago inválido."
 msgid "Payment of %1$s %2$s"
 msgstr "Pago de %1$s %2$s"
 
-#: src/API/PaymentEndpoint.php:317 src/API/PaymentEndpoint.php:355
-#: src/API/TransactionAPI.php:163 src/API/TransactionsController.php:271
+#: src/API/PaymentEndpoint.php:317
+#: src/API/PaymentEndpoint.php:355
+#: src/API/TransactionAPI.php:163
+#: src/API/TransactionsController.php:271
 #: src/API/TransactionsController.php:291
-#: src/API/TransactionsController.php:423 src/Models/Transaction.php:474
+#: src/API/TransactionsController.php:423
+#: src/Models/Transaction.php:474
 msgid "Transaction not found."
 msgstr "Transacción no encontrada."
 
@@ -268,7 +214,7 @@ msgstr "Falta el ID de pago en el webhook."
 msgid "Transaction not found in database."
 msgstr "Transacción no encontrada en la base de datos."
 
-#: src/API/WebhookEndpoint.php:140
+#: src/API/WebhookEndpoint.php:169
 msgid "Failed to update transaction status."
 msgstr "No se pudo actualizar el estado de la transacción."
 
@@ -409,79 +355,14 @@ msgstr "Umbral de días laborales para desactivar transferencia bancaria"
 msgid "Per-bundle feature toggles"
 msgstr "Alternadores de funciones por paquete"
 
-#: src/Admin/api-tokens/ApiTokensApp.js:24
-msgid "Read transactions"
-msgstr "Leer transacciones"
-
-#: src/Admin/api-tokens/ApiTokensApp.js:28
-msgid "Read locations"
-msgstr "Leer ubicaciones"
-
-#: src/Admin/api-tokens/ApiTokensApp.js:60
-msgid "Failed to load API tokens."
-msgstr "No se pudieron cargar los tokens de API."
-
-#: src/Admin/api-tokens/ApiTokensApp.js:94
-msgid "API token created."
-msgstr "Token de API creado."
-
-#: src/Admin/api-tokens/ApiTokensApp.js:109
-msgid "Revoke this token? Any site using it will immediately lose access."
-msgstr "¿Revocar este token? Cualquier sitio que lo use perderá acceso inmediatamente."
-
-#: src/Admin/api-tokens/ApiTokensApp.js:126
-msgid "API token revoked."
-msgstr "Token de API revocado."
-
-#: src/Admin/api-tokens/ApiTokensApp.js:131
-msgid "Failed to revoke API token."
-msgstr "No se pudo revocar el token de API."
-
-#: src/Admin/api-tokens/ApiTokensApp.js:156
-msgid "API Tokens"
-msgstr "Tokens de API"
-
-#: src/Admin/api-tokens/ApiTokensApp.js:159
-msgid "Generate Token"
-msgstr "Generar token"
-
-#: src/Admin/api-tokens/ApiTokensApp.js:169
-msgid "Issue scoped tokens so other sites can read this site’s data over the data sharing API."
-msgstr "Emite tokens con alcance para que otros sitios puedan leer los datos de este sitio mediante la API de intercambio de datos."
-
-#: src/Admin/api-tokens/ApiTokensApp.js:199
-msgid "Loading tokens…"
-msgstr "Cargando tokens…"
-
-#: src/Admin/api-tokens/ApiTokensApp.js:209
-msgid "No API tokens yet. Generate one to share data with another site."
-msgstr "Sin tokens de API aún. Genera uno para compartir datos con otro sitio."
-
-#: src/Admin/api-tokens/ApiTokensApp.js:221
-#: src/Admin/api-tokens/ApiTokensApp.js:391
-#: src/Admin/connected-sites/ConnectedSitesApp.js:287
-#: src/Admin/connected-sites/ConnectedSitesApp.js:440
 #: src/Admin/transactions/components/ImportTransactionsModal.js:247
 msgid "Label"
 msgstr "Etiqueta"
 
-#: src/Admin/api-tokens/ApiTokensApp.js:227
-#: src/Admin/api-tokens/ApiTokensApp.js:410
-#: src/Admin/connected-sites/ConnectedSitesApp.js:299
-msgid "Scopes"
-msgstr "Alcances"
-
-#: src/Admin/api-tokens/ApiTokensApp.js:233
 #: src/Admin/transaction/TransactionPage.js:748
 msgid "Created"
 msgstr "Creado"
 
-#: src/Admin/api-tokens/ApiTokensApp.js:239
-msgid "Last used"
-msgstr "Último uso"
-
-#: src/Admin/api-tokens/ApiTokensApp.js:245
-#: src/Admin/connected-sites/ConnectedSitesApp.js:305
 #: src/Admin/transaction/TransactionPage.js:737
 #: src/Admin/transactions/components/ImportTransactionsModal.js:248
 #: src/Admin/transactions/TransactionsApp.js:313
@@ -489,154 +370,27 @@ msgstr "Último uso"
 msgid "Status"
 msgstr "Estado"
 
-#: src/Admin/api-tokens/ApiTokensApp.js:251
-#: src/Admin/connected-sites/ConnectedSitesApp.js:317
 #: src/Admin/transactions/components/ImportTransactionsModal.js:250
 msgid "Actions"
 msgstr "Acciones"
 
-#: src/Admin/api-tokens/ApiTokensApp.js:273
-#: src/Admin/connected-sites/ConnectedSitesApp.js:346
-msgid "Never"
-msgstr "Nunca"
-
-#: src/Admin/api-tokens/ApiTokensApp.js:293
-msgid "Active"
-msgstr "Activo"
-
-#: src/Admin/api-tokens/ApiTokensApp.js:297
-msgid "Revoked"
-msgstr "Revocado"
-
-#: src/Admin/api-tokens/ApiTokensApp.js:316
-msgid "Revoke"
-msgstr "Revocar"
-
-#: src/Admin/api-tokens/ApiTokensApp.js:337
-msgid "Token created"
-msgstr "Token creado"
-
-#: src/Admin/api-tokens/ApiTokensApp.js:338
-msgid "Generate API Token"
-msgstr "Generar token de API"
-
-#: src/Admin/api-tokens/ApiTokensApp.js:349
-msgid "Copy this token now. For security it will not be shown again."
-msgstr "Copia este token ahora. Por seguridad no se mostrará de nuevo."
-
-#: src/Admin/api-tokens/ApiTokensApp.js:370
-msgid "Copied!"
-msgstr "¡Copiado!"
-
-#: src/Admin/api-tokens/ApiTokensApp.js:374
-msgid "Copy token"
-msgstr "Copiar token"
-
-#: src/Admin/api-tokens/ApiTokensApp.js:383
-msgid "Done"
-msgstr "Hecho"
-
-#: src/Admin/api-tokens/ApiTokensApp.js:397
-msgid "A name to identify who this token is for, e.g. lamutable.es"
-msgstr "Un nombre para identificar para quién es este token, p. ej. lamutable.es"
-
-#: src/Admin/api-tokens/ApiTokensApp.js:439
-#: src/Admin/connected-sites/ConnectedSitesApp.js:487
 #: src/Admin/transaction/TransactionPage.js:136
 #: src/Admin/transaction/TransactionPage.js:266
 msgid "Cancel"
 msgstr "Cancelar"
 
-#: src/Admin/api-tokens/ApiTokensApp.js:454
-msgid "Generate"
-msgstr "Generar"
-
-#: src/Admin/connected-sites/ConnectedSitesApp.js:22
-msgid "Connected"
-msgstr "Conectado"
-
-#: src/Admin/connected-sites/ConnectedSitesApp.js:25
-msgid "Error"
-msgstr "Error"
-
-#: src/Admin/connected-sites/ConnectedSitesApp.js:27
-msgid "Unverified"
-msgstr "Sin verificar"
-
-#: src/Admin/connected-sites/ConnectedSitesApp.js:61
 #: src/Admin/transactions/components/ImportTransactionsModal.js:53
 msgid "Failed to load connected sites."
 msgstr "Error al cargar los sitios conectados."
 
-#: src/Admin/connected-sites/ConnectedSitesApp.js:112
-msgid "Connected site updated."
-msgstr "Sitio conectado actualizado."
-
-#: src/Admin/connected-sites/ConnectedSitesApp.js:121
-msgid "Connected site added."
-msgstr "Sitio conectado añadido."
-
-#: src/Admin/connected-sites/ConnectedSitesApp.js:129
-msgid "Failed to save connected site."
-msgstr "Error al guardar el sitio conectado."
-
-#: src/Admin/connected-sites/ConnectedSitesApp.js:152
-msgid "no scopes"
-msgstr "sin permisos"
-
-#: src/Admin/connected-sites/ConnectedSitesApp.js:154
-msgid "Connection succeeded. Granted scopes: "
-msgstr "Conexión exitosa. Permisos concedidos: "
-
-#: src/Admin/connected-sites/ConnectedSitesApp.js:163
-msgid "Connection test failed."
-msgstr "Error en la prueba de conexión."
-
-#: src/Admin/connected-sites/ConnectedSitesApp.js:174
-msgid "Remove this connected site? Stored token will be deleted."
-msgstr "¿Eliminar este sitio conectado? Se borrará el token almacenado."
-
-#: src/Admin/connected-sites/ConnectedSitesApp.js:192
-msgid "Connected site removed."
-msgstr "Sitio conectado eliminado."
-
-#: src/Admin/connected-sites/ConnectedSitesApp.js:198
-msgid "Failed to remove connected site."
-msgstr "Error al eliminar el sitio conectado."
-
-#: src/Admin/connected-sites/ConnectedSitesApp.js:222
 #: src/Admin/transactions/components/ImportTransactionsModal.js:168
 msgid "Connected Sites"
 msgstr "Sitios conectados"
 
-#: src/Admin/connected-sites/ConnectedSitesApp.js:228
-#: src/Admin/connected-sites/ConnectedSitesApp.js:502
-msgid "Add Site"
-msgstr "Añadir sitio"
-
-#: src/Admin/connected-sites/ConnectedSitesApp.js:235
-msgid "Register other sites this site pulls data from. Paste a token generated on the other site’s API Tokens page."
-msgstr "Registra otros sitios de los que este sitio extrae datos. Pega un token generado en la página de tokens de API del otro sitio."
-
-#: src/Admin/connected-sites/ConnectedSitesApp.js:265
 #: src/Admin/transactions/components/ImportTransactionsModal.js:229
 msgid "Loading sites…"
 msgstr "Cargando sitios…"
 
-#: src/Admin/connected-sites/ConnectedSitesApp.js:275
-msgid "No connected sites yet. Add one to pull data from another site."
-msgstr "Sin sitios conectados aún. Añade uno para extraer datos de otro sitio."
-
-#: src/Admin/connected-sites/ConnectedSitesApp.js:293
-#: src/Admin/connected-sites/ConnectedSitesApp.js:450
-msgid "Base URL"
-msgstr "URL base"
-
-#: src/Admin/connected-sites/ConnectedSitesApp.js:311
-msgid "Last sync"
-msgstr "Última sincronización"
-
-#: src/Admin/connected-sites/ConnectedSitesApp.js:375
 #: src/Admin/settings/ConnectionTab.js:186
 #: src/Admin/transaction/TransactionPage.js:712
 #: src/Admin/transactions/TransactionsApp.js:40
@@ -644,46 +398,15 @@ msgstr "Última sincronización"
 msgid "Test"
 msgstr "Probar"
 
-#: src/Admin/connected-sites/ConnectedSitesApp.js:389
 #: src/Admin/transaction/TransactionPage.js:154
 #: src/Admin/transaction/TransactionPage.js:362
 msgid "Edit"
 msgstr "Editar"
 
-#: src/Admin/connected-sites/ConnectedSitesApp.js:404
 #: src/Admin/transaction/TransactionPage.js:257
 msgid "Remove"
 msgstr "Eliminar"
 
-#: src/Admin/connected-sites/ConnectedSitesApp.js:425
-msgid "Edit Connected Site"
-msgstr "Editar sitio conectado"
-
-#: src/Admin/connected-sites/ConnectedSitesApp.js:429
-msgid "Add Connected Site"
-msgstr "Añadir sitio conectado"
-
-#: src/Admin/connected-sites/ConnectedSitesApp.js:443
-msgid "A name to identify this site, e.g. acroyoga-club.es"
-msgstr "Un nombre para identificar este sitio, p. ej. acroyoga-club.es"
-
-#: src/Admin/connected-sites/ConnectedSitesApp.js:457
-msgid "The other site’s address, e.g. https://acroyoga-club.es"
-msgstr "La dirección del otro sitio, p. ej. https://acroyoga-club.es"
-
-#: src/Admin/connected-sites/ConnectedSitesApp.js:464
-msgid "Token"
-msgstr "Token"
-
-#: src/Admin/connected-sites/ConnectedSitesApp.js:470
-msgid "Leave blank to keep the existing token."
-msgstr "Deja en blanco para mantener el token existente."
-
-#: src/Admin/connected-sites/ConnectedSitesApp.js:474
-msgid "Paste the token from the other site’s API Tokens page."
-msgstr "Pega el token de la página de tokens de API del otro sitio."
-
-#: src/Admin/connected-sites/ConnectedSitesApp.js:501
 #: src/Admin/settings/FeaturesTab.js:143
 #: src/Admin/settings/PaymentMethodsTab.js:151
 #: src/Admin/transaction/TransactionPage.js:128
@@ -736,6 +459,7 @@ msgstr "No se pudo desconectar."
 
 #. translators: %s: mode name (Test or Live)
 #: src/Admin/settings/ConnectionTab.js:184
+#, js-format
 msgid "Switched to %s mode."
 msgstr "Cambiado a modo %s."
 
@@ -796,6 +520,7 @@ msgstr "Reconéctate a Mollie para obtener el ID de perfil."
 
 #. translators: %s: expiration date
 #: src/Admin/settings/ConnectionTab.js:386
+#, js-format
 msgid "Token expires: %s"
 msgstr "El token expira: %s"
 
@@ -1204,6 +929,7 @@ msgstr "No se pudieron cargar las transacciones."
 
 #. translators: %d is the number of exported transactions
 #: src/Admin/transactions/TransactionsApp.js:195
+#, js-format
 msgid "%d transaction(s) exported."
 msgstr "%d transacción(es) exportada(s)."
 
@@ -1213,6 +939,7 @@ msgstr "No hay transacciones pagadas sin datos de comisión de Mollie."
 
 #. translators: 1: synced count, 2: failed count, 3: total count
 #: src/Admin/transactions/TransactionsApp.js:272
+#, js-format
 msgid "Mollie fee sync complete: %1$d updated, %2$d failed (out of %3$d)."
 msgstr "Sincronización de comisión de Mollie completada: %1$d actualizada(s), %2$d fallida(s) (de %3$d)."
 
@@ -1234,6 +961,7 @@ msgstr "Cargar comisiones de Mollie faltantes"
 
 #. translators: 1: processed count, 2: total count, 3: succeeded count, 4: failed count
 #: src/Admin/transactions/TransactionsApp.js:416
+#, js-format
 msgid "Syncing Mollie fees: %1$d / %2$d (updated: %3$d, failed: %4$d)"
 msgstr "Sincronizando comisiones de Mollie: %1$d / %2$d (actualizadas: %3$d, fallidas: %4$d)"
 
