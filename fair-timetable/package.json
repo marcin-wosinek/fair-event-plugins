@@ -37,7 +37,7 @@
 		"@wordpress/block-editor": "^15.2.0",
 		"@wordpress/blocks": "^15.2.0",
 		"@wordpress/components": "^35.0.0",
-		"@wordpress/i18n": "^6.2.0",
+		"@wordpress/i18n": "^6.21.0",
 		"date-fns": "^4.4.0"
 	},
 	"devDependencies": {
