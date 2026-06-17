@@ -36,7 +36,12 @@ class Settings {
 				'type'              => 'string',
 				'description'       => __( 'Mollie Test API Key', 'fair-payments-connector' ),
 				'sanitize_callback' => 'sanitize_text_field',
-				'show_in_rest'      => true,
+				'show_in_rest'      => array(
+					'schema' => array(
+						'type'    => 'string',
+						'context' => array( 'edit' ),
+					),
+				),
 				'default'           => '',
 			)
 		);
@@ -49,7 +54,12 @@ class Settings {
 				'type'              => 'string',
 				'description'       => __( 'Mollie Live API Key', 'fair-payments-connector' ),
 				'sanitize_callback' => 'sanitize_text_field',
-				'show_in_rest'      => true,
+				'show_in_rest'      => array(
+					'schema' => array(
+						'type'    => 'string',
+						'context' => array( 'edit' ),
+					),
+				),
 				'default'           => '',
 			)
 		);
