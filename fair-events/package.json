@@ -45,7 +45,7 @@
 		"@wordpress/date": "^5.2.0",
 		"@wordpress/dom-ready": "^4.2.0",
 		"@wordpress/element": "^8.0.0",
-		"@wordpress/i18n": "^6.2.0",
+		"@wordpress/i18n": "^6.21.0",
 		"calendar-link": "^2.11.0",
 		"fair-events-shared": "*",
 		"react-easy-crop": "^5.5.6"
