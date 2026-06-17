@@ -400,6 +400,19 @@ Use this checklist when adding a new plugin:
 2. Run `npm run build` before `dist-archive`
 3. Verify `.distignore` includes `!/build/` and `!/vendor/` (negated patterns)
 
+### Experimental plugin admin submenus show 404
+
+**Problem**: An `*-experimental` plugin adds submenus under the main plugin's top-level menu, but clicking them shows "Sorry, you are not allowed to access this page." The URLs in the menu look like `wp-admin/fair-plugin-name-api-tokens` instead of `admin.php?page=fair-plugin-name-api-tokens`.
+
+**Cause**: WordPress plugin load order is determined by the `active_plugins` database option (activation order), not alphabetically. If the experimental plugin was activated first, its `admin_menu` callback runs before the main plugin has called `add_menu_page()`. WordPress calculates the page hook name from `$admin_page_hooks`, which isn't populated yet, so the wrong hook name is stored in `$_registered_pages`. At render time the hook name doesn't match, `get_plugin_page_hook()` returns null, and WordPress falls back to using the slug as a bare relative URL.
+
+**Solution**: Register the experimental plugin's `admin_menu` callback at priority `11` (one after the default `10`) so it always runs after the main plugin, regardless of activation order:
+
+```php
+// In the experimental plugin's AdminPages::init()
+add_action( 'admin_menu', array( $this, 'register_admin_pages' ), 11 );
+```
+
 ### Rewrite Rules
 
 **Problem**: Custom endpoints (OAuth, REST API) return 404.

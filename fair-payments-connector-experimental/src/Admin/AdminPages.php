@@ -19,7 +19,7 @@ class AdminPages {
 	 * @return void
 	 */
 	public function init() {
-		add_action( 'admin_menu', array( $this, 'register_admin_pages' ) );
+		add_action( 'admin_menu', array( $this, 'register_admin_pages' ), 11 );
 		add_action( 'admin_enqueue_scripts', array( $this, 'enqueue_admin_scripts' ) );
 	}
 
