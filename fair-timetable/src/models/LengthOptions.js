@@ -2,7 +2,7 @@
  * LengthOptions class for managing time duration options
  */
 
-import { __ } from '@wordpress/i18n';
+import { __, sprintf } from '@wordpress/i18n';
 
 /**
  * LengthOptions class for generating and managing time duration options
@@ -41,11 +41,18 @@ export class LengthOptions {
 		const minutes = Math.round((lengthInHours - hours) * 60);
 
 		if (minutes === 0) {
-			return __(`${hours} hours`, 'fair-timetable');
+			/* translators: %d: number of hours */
+			return sprintf(__('%d hours', 'fair-timetable'), hours);
 		} else if (hours === 0) {
-			return __(`${minutes} minutes`, 'fair-timetable');
+			/* translators: %d: number of minutes */
+			return sprintf(__('%d minutes', 'fair-timetable'), minutes);
 		} else {
-			return __(`${hours} hours, ${minutes} minutes`, 'fair-timetable');
+			return sprintf(
+				/* translators: %1$d: number of hours, %2$d: number of minutes */
+				__('%1$d hours, %2$d minutes', 'fair-timetable'),
+				hours,
+				minutes
+			);
 		}
 	}
 
