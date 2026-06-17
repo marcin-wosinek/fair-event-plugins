@@ -120,7 +120,7 @@ class Fee {
 		$this->description = isset( $data['description'] ) ? sanitize_textarea_field( $data['description'] ) : '';
 		$this->group_id    = isset( $data['group_id'] ) ? (int) $data['group_id'] : 0;
 		$this->amount      = isset( $data['amount'] ) ? $data['amount'] : '0.00';
-		$this->currency    = isset( $data['currency'] ) ? sanitize_text_field( $data['currency'] ) : 'EUR';
+		$this->currency    = isset( $data['currency'] ) ? sanitize_text_field( $data['currency'] ) : get_option( 'fair_payment_currency', 'EUR' );
 		$this->budget_id   = isset( $data['budget_id'] ) ? ( ! empty( $data['budget_id'] ) ? (int) $data['budget_id'] : null ) : null;
 		$this->due_date    = isset( $data['due_date'] ) ? sanitize_text_field( $data['due_date'] ) : '';
 		$this->status      = isset( $data['status'] ) ? sanitize_text_field( $data['status'] ) : 'draft';

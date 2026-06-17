@@ -855,7 +855,7 @@ class EventSignupController extends WP_REST_Controller {
 		$transaction_id = \FairPaymentsConnector\API\TransactionAPI::create_transaction(
 			$line_items,
 			array(
-				'currency'      => 'EUR',
+				'currency'      => get_option( 'fair_payment_currency', 'EUR' ),
 				'description'   => $description,
 				'post_id'       => $event_id,
 				'event_date_id' => $event_date_id,
@@ -905,7 +905,7 @@ class EventSignupController extends WP_REST_Controller {
 				'checkout_url'   => $payment['checkout_url'],
 				'transaction_id' => $transaction_id,
 				'amount'         => $total_amount,
-				'currency'       => 'EUR',
+				'currency'       => get_option( 'fair_payment_currency', 'EUR' ),
 			)
 		);
 	}
@@ -1503,7 +1503,7 @@ class EventSignupController extends WP_REST_Controller {
 		$transaction_id = \FairPaymentsConnector\API\TransactionAPI::create_transaction(
 			$line_items,
 			array(
-				'currency'      => 'EUR',
+				'currency'      => get_option( 'fair_payment_currency', 'EUR' ),
 				'description'   => $line_item_description,
 				'post_id'       => $event_id,
 				'event_date_id' => $event_date_id,
@@ -1557,7 +1557,7 @@ class EventSignupController extends WP_REST_Controller {
 				'checkout_url'   => $payment['checkout_url'],
 				'transaction_id' => $transaction_id,
 				'amount'         => $total_amount,
-				'currency'       => 'EUR',
+				'currency'       => get_option( 'fair_payment_currency', 'EUR' ),
 			)
 		);
 	}

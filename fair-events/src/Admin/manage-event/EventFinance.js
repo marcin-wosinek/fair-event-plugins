@@ -21,10 +21,12 @@ import {
 import { __ } from '@wordpress/i18n';
 import apiFetch from '@wordpress/api-fetch';
 
+const siteCurrency = window.fairPaymentsConnector?.currency || 'EUR';
+
 const formatAmount = (amount) => {
 	return new Intl.NumberFormat('en-US', {
 		style: 'currency',
-		currency: 'EUR',
+		currency: siteCurrency,
 	}).format(amount);
 };
 

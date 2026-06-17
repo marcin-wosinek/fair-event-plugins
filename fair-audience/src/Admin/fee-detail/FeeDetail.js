@@ -1039,7 +1039,11 @@ export default function FeeDetail() {
 													{parseFloat(
 														entry.amount
 													).toFixed(2)}{' '}
-													{entry.currency || 'EUR'}
+													{entry.currency ||
+														window
+															.fairPaymentsConnector
+															?.currency ||
+														'EUR'}
 												</>
 											)}
 										</div>

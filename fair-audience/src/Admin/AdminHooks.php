@@ -621,6 +621,13 @@ class AdminHooks {
 		// Fee Detail page.
 		if ( 'admin_page_fair-audience-fee-detail' === $hook ) {
 			$this->enqueue_page_script( 'fee-detail', $plugin_dir );
+			wp_localize_script(
+				'fair-audience-fee-detail',
+				'fairPaymentsConnector',
+				array(
+					'currency' => get_option( 'fair_payment_currency', 'EUR' ),
+				)
+			);
 		}
 
 		// Submission Detail page.

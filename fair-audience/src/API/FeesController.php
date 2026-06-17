@@ -331,7 +331,7 @@ class FeesController extends WP_REST_Controller {
 				'description' => $request->get_param( 'description' ) ?? '',
 				'group_id'    => $group_id,
 				'amount'      => $amount,
-				'currency'    => $request->get_param( 'currency' ) ?? 'EUR',
+				'currency'    => $request->get_param( 'currency' ) ?? get_option( 'fair_payment_currency', 'EUR' ),
 				'budget_id'   => $budget_id,
 				'due_date'    => $request->get_param( 'due_date' ) ?? '',
 				'status'      => $request->get_param( 'status' ) ?? 'active',
