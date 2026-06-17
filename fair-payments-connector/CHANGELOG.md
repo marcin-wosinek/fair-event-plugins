@@ -1,5 +1,11 @@
 # fair-payments-connector
 
+## 1.2.0
+
+### Minor Changes
+
+-   ead4d69: Upgrade Mollie API client v2→v3; fix transaction timestamp timezone display; reorder admin menu to Transactions, Fee Dashboard, Settings; remove Advanced Settings tab; defer Mollie registration to plugins_loaded
+
 ## 1.1.0
 
 ### Minor Changes

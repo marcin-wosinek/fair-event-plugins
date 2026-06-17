@@ -1,5 +1,11 @@
 # fair-timetable
 
+## 0.6.4
+
+### Patch Changes
+
+-   ead4d69: Upgrade composer/installers from v1 to v2
+
 ## 0.6.3
 
 ### Patch Changes

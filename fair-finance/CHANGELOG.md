@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.0.1
+
+### Patch Changes
+
+-   ead4d69: Fix Finance tab API paths and gate the tab on the fair-finance plugin being active
+
 ## 1.0.0
 
 ### Major Changes

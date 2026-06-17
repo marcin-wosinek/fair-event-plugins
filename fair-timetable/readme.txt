@@ -4,7 +4,7 @@ Tags: timetable, schedule, events, gutenberg, calendar
 Requires at least: 6.7
 Tested up to: 6.8
 Requires PHP: 8.0
-Stable tag: 0.6.3
+Stable tag: 0.6.4
 License: GPLv3 or later
 License URI: https://www.gnu.org/licenses/gpl-3.0.html
 
@@ -87,6 +87,12 @@ Time slots calculate their position automatically based on the timetable's start
 2. Frontend display of multi-column timetable
 
 == Changelog ==
+
+## 0.6.4
+
+### Patch Changes
+
+-   ead4d69: Upgrade composer/installers from v1 to v2
 
 ## 0.6.3
 

@@ -1,6 +1,6 @@
 {
 	"name": "fair-payments-connector-experimental",
-	"version": "0.1.0",
+	"version": "0.2.0",
 	"description": "Experimental features for Fair Payments Connector",
 	"license": "proprietary",
 	"author": "Marcin Wosinek",

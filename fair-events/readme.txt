@@ -4,7 +4,7 @@ Tags: events, calendar, custom post type, gutenberg
 Requires at least: 6.7
 Tested up to: 7.0
 Requires PHP: 7.4
-Stable tag: 1.4.1
+Stable tag: 1.5.0
 License: GPLv3 or later
 License URI: https://www.gnu.org/licenses/gpl-3.0.html
 Text Domain: fair-events
@@ -119,6 +119,17 @@ In the Events Calendar block settings, use the "Event Display Pattern" dropdown 
 6. Add to Calendar block on a single event post
 
 == Changelog ==
+
+## 1.5.0
+
+### Minor Changes
+
+-   82e6f21: Move Venue model and VenueController from fair-events to fair-events-experimental. The venues REST API (`/fair-events/v1/venues`) is now registered by the experimental plugin under its `venues` feature flag.
+-   76c23f7: Upgrade @wordpress/dataviews from v4 to v16 for admin list views.
+
+### Patch Changes
+
+-   ead4d69: Move Duplicate Event, Merge Event, and Mailings tab to fair-events-experimental; rename linking option "No link (standalone event)" to "Event placeholder"; fix Finance tab gating behind fair-finance plugin
 
 ## 1.4.1
 
