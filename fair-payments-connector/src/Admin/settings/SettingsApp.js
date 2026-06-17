@@ -11,7 +11,7 @@ import { Notice, TabPanel } from '@wordpress/components';
 import ConnectionTab from './ConnectionTab';
 import FeaturesTab from './FeaturesTab.js';
 import PaymentMethodsTab from './PaymentMethodsTab.js';
-import { saveSettings } from './settings-api';
+import { saveOAuthCallback } from './settings-api';
 
 /**
  * Settings App Component
@@ -37,25 +37,8 @@ export default function SettingsApp() {
 		const orgId = params.get('mollie_organization_id');
 		const profileId = params.get('mollie_profile_id');
 		const testMode = params.get('mollie_test_mode');
+		const state = params.get('state');
 		const error = params.get('error');
-
-		// Debug: Log received OAuth parameters
-		if (accessToken || refreshToken || error) {
-			console.log(
-				'[Fair Payments Connector OAuth] Callback parameters:',
-				{
-					hasAccessToken: !!accessToken,
-					accessTokenLength: accessToken ? accessToken.length : 0,
-					hasRefreshToken: !!refreshToken,
-					refreshTokenLength: refreshToken ? refreshToken.length : 0,
-					expiresIn,
-					orgId,
-					profileId,
-					testMode,
-					error,
-				}
-			);
-		}
 
 		// Handle OAuth errors
 		if (error === 'access_denied') {
@@ -76,33 +59,40 @@ export default function SettingsApp() {
 			return;
 		}
 
-		// Handle successful OAuth callback
+		if (accessToken && !refreshToken) {
+			setNotice({
+				status: 'warning',
+				message: __(
+					'OAuth callback incomplete: refresh token not received from authorization server.',
+					'fair-payments-connector'
+				),
+			});
+			return;
+		}
+
+		// Handle successful OAuth callback — validate state server-side before saving.
 		if (accessToken && refreshToken) {
-			const settingsData = {
-				fair_payment_mollie_access_token: accessToken,
-				fair_payment_mollie_refresh_token: refreshToken,
-				fair_payment_mollie_token_expires:
-					Math.floor(Date.now() / 1000) + parseInt(expiresIn),
-				fair_payment_organization_id: orgId || '',
-				fair_payment_mollie_profile_id: profileId || '',
-				fair_payment_mollie_connected: true,
-				fair_payment_mode: testMode === '1' ? 'test' : 'live',
-			};
+			if (!state) {
+				setNotice({
+					status: 'error',
+					message: __(
+						'OAuth callback is missing the state parameter. Please try connecting again.',
+						'fair-payments-connector'
+					),
+				});
+				return;
+			}
 
-			// Debug: Log data being sent to API
-			console.log(
-				'[Fair Payments Connector OAuth] Saving settings:',
-				settingsData
-			);
-
-			saveSettings(settingsData)
-				.then((response) => {
-					// Debug: Log successful save
-					console.log(
-						'[Fair Payments Connector OAuth] Settings saved successfully:',
-						response
-					);
-
+			saveOAuthCallback({
+				state,
+				access_token: accessToken,
+				refresh_token: refreshToken,
+				expires_in: parseInt(expiresIn, 10) || 0,
+				organization_id: orgId || '',
+				profile_id: profileId || '',
+				test_mode: testMode === '1',
+			})
+				.then(() => {
 					// Clean URL (remove tokens from address bar)
 					window.history.replaceState(
 						{},
@@ -122,39 +112,16 @@ export default function SettingsApp() {
 						),
 					});
 				})
-				.catch((error) => {
-					// Debug: Log API error
-					console.error(
-						'[Fair Payments Connector OAuth] Save error:',
-						error
-					);
-					console.error(
-						'[Fair Payments Connector OAuth] Error details:',
-						error.message,
-						error.data
-					);
-
+				.catch((err) => {
 					setNotice({
 						status: 'error',
 						message:
 							__(
 								'Failed to save OAuth tokens: ',
 								'fair-payments-connector'
-							) + (error.message || 'Unknown error'),
+							) + (err.message || 'Unknown error'),
 					});
 				});
-		} else if (accessToken && !refreshToken) {
-			// Debug: Access token received but no refresh token
-			console.warn(
-				'[Fair Payments Connector OAuth] Access token received but refresh token is missing!'
-			);
-			setNotice({
-				status: 'warning',
-				message: __(
-					'OAuth callback incomplete: refresh token not received from authorization server.',
-					'fair-payments-connector'
-				),
-			});
 		}
 	}, []);
 

@@ -19,6 +19,7 @@ import {
 	loadConnectionSettings,
 	saveSettings,
 	testConnection,
+	fetchOAuthState,
 } from './settings-api';
 
 /**
@@ -97,25 +98,38 @@ export default function ConnectionTab({ onNotice, shouldReload }) {
 	}, [shouldReload]);
 
 	/**
-	 * Handle Connect button click
+	 * Handle Connect button click — fetches a CSRF state token first, then redirects.
 	 */
 	const handleConnect = () => {
-		const siteId = btoa(window.location.hostname);
-		const returnUrl =
-			window.location.href.split('?')[0] +
-			'?page=fair-payments-connector-settings';
-		const siteName = document.title;
-		const siteUrl = window.location.origin;
+		fetchOAuthState()
+			.then((state) => {
+				const siteId = btoa(window.location.hostname);
+				const returnUrl =
+					window.location.href.split('?')[0] +
+					'?page=fair-payments-connector-settings';
+				const siteName = document.title;
+				const siteUrl = window.location.origin;
 
-		const authorizeUrl = new URL(
-			'https://fair-event-plugins.com/oauth/authorize'
-		);
-		authorizeUrl.searchParams.set('site_id', siteId);
-		authorizeUrl.searchParams.set('return_url', returnUrl);
-		authorizeUrl.searchParams.set('site_name', siteName);
-		authorizeUrl.searchParams.set('site_url', siteUrl);
+				const authorizeUrl = new URL(
+					'https://fair-event-plugins.com/oauth/authorize'
+				);
+				authorizeUrl.searchParams.set('site_id', siteId);
+				authorizeUrl.searchParams.set('return_url', returnUrl);
+				authorizeUrl.searchParams.set('site_name', siteName);
+				authorizeUrl.searchParams.set('site_url', siteUrl);
+				authorizeUrl.searchParams.set('state', state);
 
-		window.location.href = authorizeUrl.toString();
+				window.location.href = authorizeUrl.toString();
+			})
+			.catch(() => {
+				onNotice({
+					status: 'error',
+					message: __(
+						'Failed to initiate Mollie connection. Please try again.',
+						'fair-payments-connector'
+					),
+				});
+			});
 	};
 
 	/**

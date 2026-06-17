@@ -46,6 +46,32 @@ export function saveSettings(data) {
 }
 
 /**
+ * Generate and retrieve a one-time OAuth state token from the server.
+ *
+ * @return {Promise<string>} Promise resolving to the state string
+ */
+export function fetchOAuthState() {
+	return apiFetch({
+		path: '/fair-payments-connector/v1/oauth/state',
+		method: 'POST',
+	}).then((response) => response.state);
+}
+
+/**
+ * Complete OAuth callback: validate state server-side and persist credentials.
+ *
+ * @param {Object} data Callback payload (state + token fields)
+ * @return {Promise<Object>} Promise resolving to the API response
+ */
+export function saveOAuthCallback(data) {
+	return apiFetch({
+		path: '/fair-payments-connector/v1/oauth/callback',
+		method: 'POST',
+		data,
+	});
+}
+
+/**
  * Test Mollie connection and trigger token refresh if needed
  *
  * @return {Promise<Object>} Promise resolving to connection test result
