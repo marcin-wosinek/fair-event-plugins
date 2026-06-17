@@ -63,24 +63,26 @@ class AdminPages {
 		// Set page title for hidden page to prevent strip_tags() deprecation warning.
 		$this->set_hidden_page_title( $transaction_hookname, __( 'Transaction Detail', 'fair-payments-connector' ) );
 
-		// Settings submenu.
-		add_submenu_page(
-			'fair-payments-connector-transactions',
-			__( 'Settings', 'fair-payments-connector' ),
-			__( 'Settings', 'fair-payments-connector' ),
-			'manage_options',
-			'fair-payments-connector-settings',
-			array( $this, 'render_settings_page' )
-		);
-
-		// Fee Dashboard submenu.
+		// Fee Dashboard submenu (position 10 — gaps reserved for experimental plugin).
 		add_submenu_page(
 			'fair-payments-connector-transactions',
 			__( 'Fee Dashboard', 'fair-payments-connector' ),
 			__( 'Fee Dashboard', 'fair-payments-connector' ),
 			'manage_options',
 			'fair-payments-connector-fee-dashboard',
-			array( $this, 'render_fee_dashboard_page' )
+			array( $this, 'render_fee_dashboard_page' ),
+			10
+		);
+
+		// Settings submenu (position 20 — gaps reserved for experimental plugin).
+		add_submenu_page(
+			'fair-payments-connector-transactions',
+			__( 'Settings', 'fair-payments-connector' ),
+			__( 'Settings', 'fair-payments-connector' ),
+			'manage_options',
+			'fair-payments-connector-settings',
+			array( $this, 'render_settings_page' ),
+			20
 		);
 	}
 
