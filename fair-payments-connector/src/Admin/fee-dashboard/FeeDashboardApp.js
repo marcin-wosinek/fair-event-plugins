@@ -14,10 +14,12 @@ import {
 	__experimentalHStack as HStack,
 } from '@wordpress/components';
 
+const siteCurrency = window.fairPaymentsConnector?.currency || 'EUR';
+
 const formatEur = (amount) =>
 	new Intl.NumberFormat('de-DE', {
 		style: 'currency',
-		currency: 'EUR',
+		currency: siteCurrency,
 	}).format(amount ?? 0);
 
 const ProgressBar = ({ value, max }) => {

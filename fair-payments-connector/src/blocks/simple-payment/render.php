@@ -13,7 +13,7 @@ defined( 'ABSPATH' ) || exit;
 
 $block_id        = isset( $attributes['blockId'] ) ? $attributes['blockId'] : '';
 $amount          = isset( $attributes['amount'] ) ? $attributes['amount'] : '10';
-$currency        = isset( $attributes['currency'] ) ? $attributes['currency'] : 'EUR';
+$currency        = ! empty( $attributes['currency'] ) ? $attributes['currency'] : get_option( 'fair_payment_currency', 'EUR' );
 $description     = isset( $attributes['description'] ) ? $attributes['description'] : '';
 $current_post_id = get_the_ID();
 

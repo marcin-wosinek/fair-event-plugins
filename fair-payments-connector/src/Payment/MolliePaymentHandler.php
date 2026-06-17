@@ -219,7 +219,7 @@ class MolliePaymentHandler {
 	public function create_payment( $args ) {
 		$defaults = array(
 			'amount'          => '10.00',
-			'currency'        => 'EUR',
+			'currency'        => get_option( 'fair_payment_currency', 'EUR' ),
 			'application_fee' => null,
 			'description'     => __( 'Payment', 'fair-payments-connector' ),
 			'redirect_url'    => home_url(),

@@ -73,7 +73,7 @@ class PaymentEndpoint extends WP_REST_Controller {
 						'currency'    => array(
 							'required'          => false,
 							'type'              => 'string',
-							'default'           => 'EUR',
+							'default'           => get_option( 'fair_payment_currency', 'EUR' ),
 							'sanitize_callback' => 'sanitize_text_field',
 						),
 						'description' => array(

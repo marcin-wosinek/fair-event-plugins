@@ -219,6 +219,19 @@ class Settings {
 			)
 		);
 
+		// Default currency for all transactions.
+		register_setting(
+			'fair_payment_settings',
+			'fair_payment_currency',
+			array(
+				'type'              => 'string',
+				'description'       => __( 'Default currency for all transactions', 'fair-payments-connector' ),
+				'sanitize_callback' => array( $this, 'sanitize_currency' ),
+				'show_in_rest'      => true,
+				'default'           => 'EUR',
+			)
+		);
+
 		// Feature flag bundle toggles — UI state only, never overrides a
 		// wp-config constant (see Features::sanitize_option()).
 		register_setting(
@@ -257,5 +270,18 @@ class Settings {
 	 */
 	public function sanitize_mode( $value ) {
 		return in_array( $value, array( 'test', 'live' ), true ) ? $value : 'test';
+	}
+
+	/**
+	 * Sanitize currency setting
+	 *
+	 * Allowlist of ISO 4217 codes supported by Mollie.
+	 *
+	 * @param string $value Currency code.
+	 * @return string Validated currency code, or 'EUR' as fallback.
+	 */
+	public function sanitize_currency( $value ) {
+		$allowed = array( 'EUR', 'USD', 'GBP', 'CHF', 'DKK', 'NOK', 'SEK', 'PLN', 'CZK', 'HUF' );
+		return in_array( strtoupper( (string) $value ), $allowed, true ) ? strtoupper( (string) $value ) : 'EUR';
 	}
 }

@@ -163,9 +163,10 @@ class Schema {
 		self::migrate_to_v18();
 		self::migrate_to_v19();
 		self::migrate_to_v20();
+		self::migrate_to_v21();
 
 		// Store database version for future migrations.
-		update_option( 'fair_payment_db_version', '20.0' );
+		update_option( 'fair_payment_db_version', '21.0' );
 	}
 
 	/**
@@ -1121,6 +1122,23 @@ class Schema {
 				}
 			}
 		}
+	}
+
+	/**
+	 * Migrate database from v20.0 to v21.0
+	 *
+	 * Bookkeeping migration for the introduction of the fair_payment_currency
+	 * site setting. No schema change is needed — the currency column already
+	 * exists on the transactions table and existing rows correctly store 'EUR',
+	 * the only value that was ever written. This migration simply records the
+	 * version bump so future migrations can gate on it.
+	 *
+	 * @return void
+	 */
+	public static function migrate_to_v21() {
+		// No schema changes required — the currency column exists since the initial
+		// schema and existing rows correctly store 'EUR'. The fair_payment_currency
+		// site option now drives the default for all new transactions.
 	}
 
 	/**
