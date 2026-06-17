@@ -12,6 +12,10 @@
 	"render": "file:./render.php",
 	"viewScript": "file:./view.js",
 	"attributes": {
+		"blockId": {
+			"type": "string",
+			"default": ""
+		},
 		"amount": {
 			"type": "string",
 			"default": "10"
