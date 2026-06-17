@@ -678,7 +678,6 @@ msgstr "Umfrage erfolgreich gelöscht."
 msgid "Quick question about %s"
 msgstr "Kurze Frage zu %s"
 
-#. translators: %s: participant first name
 #. translators: %s: participant name
 #: src/Services/EmailService.php:203
 #: src/Services/EmailService.php:429
@@ -697,7 +696,7 @@ msgstr "Kurze Frage zu %s"
 #: src/Services/EmailService.php:2958
 #: src/Services/EmailService.php:3058
 #: src/Admin/event-participants/EventParticipants.js:1192
-#, php-format,js-format
+#, php-format, js-format
 msgid "Hi %s,"
 msgstr "Hallo %s,"
 
@@ -715,7 +714,6 @@ msgstr "Bitte nehmen Sie sich einen Moment Zeit, unsere kurze Umfrage zu beantwo
 msgid "Answer Poll"
 msgstr "Umfrage beantworten"
 
-#. translators: %s: site name
 #. translators: 1: line break, 2: site name
 #: src/Services/EmailService.php:237
 #: src/Services/EmailService.php:481
@@ -1302,7 +1300,7 @@ msgstr "Fotos von %s sind fertig!"
 #. translators: %s: event title
 #: src/Services/EmailService.php:437
 #: src/Admin/event-participants/EventParticipants.js:1204
-#, php-format,js-format
+#, php-format, js-format
 msgid "The photos from %s are now available for you to view and like!"
 msgstr "Die Fotos von %s sind jetzt für Sie zum Ansehen und Liken verfügbar!"
 
@@ -1845,7 +1843,7 @@ msgstr "Hallo %s! Klicken Sie auf die Schaltfläche unten, um sich für dieses E
 #. translators: %s: participant name
 #: src/blocks/event-signup/render.php:1092
 #: src/blocks/event-signup/frontend.js:1206
-#, php-format,js-format
+#, php-format, js-format
 msgid "Hi %s! You can sign up for this event."
 msgstr "Hallo %s! Sie können sich für dieses Ereignis anmelden."
 
@@ -3935,7 +3933,6 @@ msgstr "Wir haben eine neue Veranstaltung: %s."
 msgid "Would you like to join? Click the button below to sign up:"
 msgstr "Möchten Sie teilnehmen? Klicken Sie auf die Schaltfläche unten, um sich anzumelden:"
 
-#. translators: %s: site name
 #. translators: 1: line break, 2: site name
 #: src/Services/EmailService.php:2255
 #: src/Services/EmailService.php:2391
@@ -5437,7 +5434,7 @@ msgstr "Zeigt den Preis jedes Tickettyps neben seinem Label an."
 #. translators: %s: original group name
 #: src/API/GroupsController.php:385
 #: src/Admin/groups/Groups.js:199
-#, php-format,js-format
+#, php-format, js-format
 msgid "%s (copy)"
 msgstr "%s (Kopie)"
 
@@ -5591,7 +5588,7 @@ msgstr "Dieser Tickettyp ist ausverkauft. Bitte wählen Sie eine andere Option."
 #: src/API/EventSignupController.php:1163
 #: src/blocks/event-signup/render.php:750
 #: src/blocks/event-signup/frontend.js:197
-#, php-format,js-format
+#, php-format, js-format
 msgid "Please select at least %d activity to sign up."
 msgid_plural "Please select at least %d activities to sign up."
 msgstr[0] "Bitte wählen Sie mindestens %d Aktivität aus, um sich anzumelden."
@@ -6265,76 +6262,77 @@ msgstr "Geben Sie den Kurznamen der Option ein (legen Sie ihn auf der Registerka
 
 #: src/API/EventSignupController.php:1010
 msgid "This ticket type is no longer available. Please pick another option."
-msgstr ""
+msgstr "Dieser Tickettyp ist nicht mehr verfügbar. Bitte wählen Sie eine andere Option."
 
 #. translators: 1: discount percentage, 2: group name
 #: src/blocks/event-signup/render.php:626
 #, php-format
 msgid "%1$s%% discount applied (%2$s)"
-msgstr ""
+msgstr "%1$s%% Rabatt angewendet (%2$s)"
 
 #. translators: 1: discount amount in euros, 2: group name
 #: src/blocks/event-signup/render.php:633
 #, php-format
 msgid "€%1$s discount applied (%2$s)"
-msgstr ""
+msgstr "€%1$s Rabatt angewendet (%2$s)"
 
 #: src/Core/Features.php:115
 msgid "Core"
-msgstr ""
+msgstr "Core"
 
 #: src/Core/Features.php:116
 msgid "Participants, polls, signups, blocks. Always on."
-msgstr ""
+msgstr "Teilnehmer, Umfragen, Anmeldungen, Blöcke. Immer aktiviert."
 
 #: src/Core/Features.php:119
 msgid "Bundled translations"
-msgstr ""
+msgstr "Gebündelte Übersetzungen"
 
 #: src/Core/Features.php:120
 msgid "Load .mo/.json files shipped with the plugin instead of relying on WordPress.org language packs. Useful while a locale is below the 90% threshold on translate.wordpress.org or for in-progress strings."
-msgstr ""
+msgstr "Laden Sie .mo/.json-Dateien, die mit dem Plugin ausgeliefert werden, anstatt sich auf WordPress.org-Sprachpakete zu verlassen. Nützlich, wenn ein Gebietsschema unter der 90%-Schwelle auf translate.wordpress.org liegt oder für laufende Zeichenketten."
 
 #: src/Settings/Settings.php:148
 msgid "Per-bundle feature toggles"
-msgstr ""
+msgstr "Funktionsschalter pro Bundle"
 
 #: src/Admin/settings/FeaturesTab.js:52
 msgid "Failed to load features."
-msgstr ""
+msgstr "Fehler beim Laden der Funktionen."
 
 #: src/Admin/settings/FeaturesTab.js:77
 msgid "Features saved."
-msgstr ""
+msgstr "Funktionen gespeichert."
 
 #: src/Admin/settings/FeaturesTab.js:84
 msgid "Failed to save features."
-msgstr ""
+msgstr "Fehler beim Speichern der Funktionen."
 
 #: src/Admin/settings/FeaturesTab.js:94
 msgid "Loading features..."
-msgstr ""
+msgstr "Funktionen werden geladen..."
 
 #: src/Admin/settings/FeaturesTab.js:105
 msgid "Feature Bundles"
-msgstr ""
+msgstr "Feature Bundles"
 
 #: src/Admin/settings/FeaturesTab.js:109
 msgid "Toggle optional feature bundles. Bundles fixed in wp-config (FAIR_AUDIENCE_INTERNAL or FAIR_AUDIENCE_FEATURE_*) are read-only here."
-msgstr ""
+msgstr "Schalten Sie optionale Feature Bundles um. Bundles, die in wp-config (FAIR_AUDIENCE_INTERNAL oder FAIR_AUDIENCE_FEATURE_*) festgelegt sind, sind hier schreibgeschützt."
 
 #: src/Admin/settings/FeaturesTab.js:117
 msgid "Forced by a wp-config constant — change it there."
-msgstr ""
+msgstr "Erzwungen durch eine wp-config-Konstante — ändern Sie sie dort."
 
 #: src/Admin/settings/FeaturesTab.js:142
 msgid "One or more bundles are forced by wp-config and cannot be toggled here."
-msgstr ""
+msgstr "Ein oder mehrere Bundles werden durch wp-config erzwungen und können hier nicht umgeschaltet werden."
 
 #: src/Admin/settings/FeaturesTab.js:157
 msgid "Save Features"
-msgstr ""
+msgstr "Funktionen speichern"
 
 #: src/Admin/settings/SettingsApp.js:144
 msgid "Features"
-msgstr ""
+msgstr "Funktionen"
+

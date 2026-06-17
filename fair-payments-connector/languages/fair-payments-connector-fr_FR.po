@@ -31,8 +31,8 @@ msgstr "Transactions"
 msgid "Transaction Detail"
 msgstr "Détail de la transaction"
 
-#: src/Admin/AdminPages.php:69
-#: src/Admin/AdminPages.php:70
+#: src/Admin/AdminPages.php:80
+#: src/Admin/AdminPages.php:81
 msgid "Settings"
 msgstr "Paramètres"
 
@@ -331,34 +331,6 @@ msgstr "Précédent"
 msgid "Next"
 msgstr "Suivant"
 
-#: src/Admin/settings/AdvancedTab.js:52
-msgid "Failed to load advanced settings."
-msgstr "Échec du chargement des paramètres avancés."
-
-#: src/Admin/settings/AdvancedTab.js:71
-msgid "Advanced Settings"
-msgstr "Paramètres avancés"
-
-#: src/Admin/settings/AdvancedTab.js:73
-msgid "All Mollie-related settings stored in the database. For troubleshooting purposes only."
-msgstr "Tous les paramètres liés à Mollie stockés dans la base de données. À des fins de dépannage uniquement."
-
-#: src/Admin/settings/AdvancedTab.js:81
-msgid "Loading settings..."
-msgstr "Chargement des paramètres..."
-
-#: src/Admin/settings/AdvancedTab.js:91
-msgid "Setting Name"
-msgstr "Nom du paramètre"
-
-#: src/Admin/settings/AdvancedTab.js:97
-msgid "Value"
-msgstr "Valeur"
-
-#: src/Admin/settings/AdvancedTab.js:126
-msgid "(empty)"
-msgstr "(vide)"
-
 #: src/Admin/settings/ConnectionTab.js:74
 msgid "Failed to load settings."
 msgstr "Échec du chargement des paramètres."
@@ -492,33 +464,29 @@ msgstr "Échec de l'enregistrement des fonctionnalités."
 msgid "Save"
 msgstr "Enregistrer"
 
-#: src/Admin/settings/SettingsApp.js:66
+#: src/Admin/settings/SettingsApp.js:64
 msgid "Authorization cancelled. Please try again."
 msgstr "Autorisation annulée. Veuillez réessayer."
 
-#: src/Admin/settings/SettingsApp.js:121
+#: src/Admin/settings/SettingsApp.js:119
 msgid "Successfully connected to Mollie!"
 msgstr "Connecté avec succès à Mollie !"
 
-#: src/Admin/settings/SettingsApp.js:142
+#: src/Admin/settings/SettingsApp.js:140
 msgid "Failed to save OAuth tokens: "
 msgstr "Échec de l'enregistrement des jetons OAuth : "
 
-#: src/Admin/settings/SettingsApp.js:155
+#: src/Admin/settings/SettingsApp.js:153
 msgid "OAuth callback incomplete: refresh token not received from authorization server."
 msgstr "Rappel OAuth incomplet : le jeton d'actualisation n'a pas été reçu du serveur d'autorisation."
 
-#: src/Admin/settings/SettingsApp.js:220
+#: src/Admin/settings/SettingsApp.js:218
 msgid "Connection"
 msgstr "Connexion"
 
-#: src/Admin/settings/SettingsApp.js:224
+#: src/Admin/settings/SettingsApp.js:222
 msgid "Features"
 msgstr "Fonctionnalités"
-
-#: src/Admin/settings/SettingsApp.js:236
-msgid "Advanced"
-msgstr "Avancé"
 
 #: src/Admin/transaction/TransactionPage.js:513
 msgid "No transaction ID provided."
@@ -835,7 +803,7 @@ msgstr "Seuil de jours ouvrables"
 msgid "Disable bank transfer when fewer than this many working days remain before the key date."
 msgstr "Désactiver le virement bancaire lorsque moins de ce nombre de jours ouvrables restent avant la date clé."
 
-#: src/Admin/settings/SettingsApp.js:228
+#: src/Admin/settings/SettingsApp.js:226
 msgid "Payment Methods"
 msgstr "Modes de paiement"
 
@@ -961,50 +929,6 @@ msgstr "Filtrer par date de transaction (created_at) à partir de cette date, pa
 #: src/API/ExternalTransactionsController.php:95
 msgid "Filter by transaction date (created_at) up to this date, e.g. 2026-12-31."
 msgstr "Filtrer par date de transaction (created_at) jusqu'à cette date, par exemple 2026-12-31."
-
-#: src/API/TelegramSettingsController.php:100
-msgid "Bot token is required."
-msgstr "Le jeton du bot est requis."
-
-#: src/API/TelegramSettingsController.php:109
-msgid "At least one chat ID is required."
-msgstr "Au moins un ID de chat est requis."
-
-#: src/API/TelegramSettingsController.php:142
-msgid "Telegram test message failed for all chat IDs."
-msgstr "Le message de test Telegram a échoué pour tous les ID de chat."
-
-#: src/API/TelegramSettingsController.php:153
-msgid "Telegram test message sent."
-msgstr "Message de test Telegram envoyé."
-
-#: src/Services/TelegramService.php:38
-msgid "Telegram bot token is not configured."
-msgstr "Le jeton du bot Telegram n'est pas configuré."
-
-#: src/Services/TelegramService.php:41
-msgid "Telegram chat ID is empty."
-msgstr "L'ID de chat Telegram est vide."
-
-#: src/Settings/Settings.php:218
-msgid "Enable Telegram notifications on successful transactions"
-msgstr "Activer les notifications Telegram sur les transactions réussies"
-
-#: src/Settings/Settings.php:231
-msgid "Telegram bot token (from @BotFather)"
-msgstr "Jeton du bot Telegram (de @BotFather)"
-
-#: src/Settings/Settings.php:249
-msgid "Telegram chat IDs (comma-separated)"
-msgstr "ID de chat Telegram (séparés par des virgules)"
-
-#: src/Settings/Settings.php:262
-msgid "Telegram message template (HTML, supports placeholders)"
-msgstr "Modèle de message Telegram (HTML, supporte les espaces réservés)"
-
-#: src/Settings/Settings.php:294
-msgid "Allow participant name/email in Telegram messages"
-msgstr "Autoriser le nom/email du participant dans les messages Telegram"
 
 #: src/Admin/api-tokens/ApiTokensApp.js:24
 msgid "Read transactions"
@@ -1225,86 +1149,6 @@ msgstr "Laissez vide pour conserver le jeton existant."
 msgid "Paste the token from the other site’s API Tokens page."
 msgstr "Collez le jeton de la page Jetons API de l'autre site."
 
-#: src/Admin/settings/SettingsApp.js:232
-msgid "Telegram"
-msgstr "Telegram"
-
-#: src/Admin/settings/TelegramTab.js:61
-msgid "Failed to load Telegram settings."
-msgstr "Échec du chargement des paramètres Telegram."
-
-#: src/Admin/settings/TelegramTab.js:87
-msgid "Telegram settings saved."
-msgstr "Paramètres Telegram enregistrés."
-
-#: src/Admin/settings/TelegramTab.js:102
-msgid "Failed to save Telegram settings: "
-msgstr "Échec de l'enregistrement des paramètres Telegram : "
-
-#: src/Admin/settings/TelegramTab.js:129
-msgid "Test message sent."
-msgstr "Message de test envoyé."
-
-#: src/Admin/settings/TelegramTab.js:138
-msgid "Test message failed."
-msgstr "Échec de l'envoi du message de test."
-
-#: src/Admin/settings/TelegramTab.js:149
-msgid "Loading Telegram settings…"
-msgstr "Chargement des paramètres Telegram…"
-
-#: src/Admin/settings/TelegramTab.js:163
-msgid "Telegram Notifications"
-msgstr "Notifications Telegram"
-
-#: src/Admin/settings/TelegramTab.js:166
-msgid "Post a message to a Telegram chat or channel when a transaction is paid."
-msgstr "Publiez un message dans un chat ou un canal Telegram lorsqu'une transaction est payée."
-
-#: src/Admin/settings/TelegramTab.js:174
-msgid "Enable Telegram notifications"
-msgstr "Activer les notifications Telegram"
-
-#: src/Admin/settings/TelegramTab.js:185
-msgid "Bot token"
-msgstr "Jeton du bot"
-
-#: src/Admin/settings/TelegramTab.js:186
-msgid "From @BotFather. Stored as plain text in wp_options — anyone with admin access can read it."
-msgstr "De @BotFather. Stocké en texte brut dans wp_options — toute personne ayant accès administrateur peut le lire."
-
-#: src/Admin/settings/TelegramTab.js:199
-msgid "Chat IDs"
-msgstr "ID de chat"
-
-#: src/Admin/settings/TelegramTab.js:200
-msgid "Comma-separated. Use a numeric user/chat/channel ID, or @channelname for public channels."
-msgstr "Séparés par des virgules. Utilisez un ID numérique d'utilisateur/chat/canal, ou @nomducanal pour les canaux publics."
-
-#: src/Admin/settings/TelegramTab.js:210
-msgid "Message template"
-msgstr "Modèle de message"
-
-#: src/Admin/settings/TelegramTab.js:211
-msgid "Placeholders: {test_label}, {site_domain}, {date}, {amount}, {currency}, {transaction_id}, {event_title}, {event_url}, {participant_name}, {participant_url}, {participant_email}, {ticket_label}, {activities}, {discounts}. HTML tags <b>, <i>, <a href> are allowed."
-msgstr "Espaces réservés : {test_label}, {site_domain}, {date}, {amount}, {currency}, {transaction_id}, {event_title}, {event_url}, {participant_name}, {participant_url}, {participant_email}, {ticket_label}, {activities}, {discounts}. Les balises HTML <b>, <i>, <a href> sont autorisées."
-
-#: src/Admin/settings/TelegramTab.js:222
-msgid "Include participant name and email"
-msgstr "Inclure le nom et l'e-mail du participant"
-
-#: src/Admin/settings/TelegramTab.js:226
-msgid "Disable to keep PII out of the Telegram channel. {participant_email} renders as empty and {participant_name} is abbreviated (e.g. \"Lucianna C.\")."
-msgstr "Désactivez cette option pour exclure les données personnelles du canal Telegram. {participant_email} s'affiche vide et {participant_name} est abrégé (par exemple « Lucianna C. »)."
-
-#: src/Admin/settings/TelegramTab.js:247
-msgid "Save settings"
-msgstr "Enregistrer les paramètres"
-
-#: src/Admin/settings/TelegramTab.js:255
-msgid "Send test message"
-msgstr "Envoyer un message de test"
-
 #: src/Admin/transactions/components/ImportTransactionsModal.js:142
 msgid "Failed to import transactions from the connected site."
 msgstr "Échec de l'importation des transactions depuis le site connecté."
@@ -1388,82 +1232,79 @@ msgstr ""
 msgid "https://github.com/marcin-wosinek"
 msgstr ""
 
-#: src/Admin/AdminPages.php:79
-#: src/Admin/AdminPages.php:80
+#: src/Admin/AdminPages.php:69
+#: src/Admin/AdminPages.php:70
 #: src/Admin/fee-dashboard/FeeDashboardApp.js:101
 msgid "Fee Dashboard"
-msgstr ""
+msgstr "Tableau de bord des frais"
 
 #. translators: %s: link to settings page
-#: src/Admin/AdminPages.php:164
+#: src/Admin/AdminPages.php:166
 #, php-format
 msgid "Fair Payment is in <strong>Test mode</strong> — no real payments are being processed. <a href=\"%s\">Switch to Live mode</a>."
-msgstr ""
+msgstr "Fair Payment est en <strong>mode Test</strong> — aucun paiement réel n'est traité. <a href=\"%s\">Passer en mode Live</a>."
 
 #: src/Admin/MigrationNotice.php:66
 msgid "Fair Payments Connector:"
-msgstr ""
+msgstr "Fair Payments Connector :"
 
 #: src/Core/Features.php:122
 msgid "Core"
-msgstr ""
+msgstr "Cœur"
 
 #: src/Core/Features.php:123
 msgid "Transactions, settings, payment blocks. Always on."
-msgstr ""
+msgstr "Transactions, paramètres, blocs de paiement. Toujours actif."
 
 #: src/Core/Features.php:126
 msgid "Bundled translations"
-msgstr ""
+msgstr "Traductions groupées"
 
 #: src/Core/Features.php:127
 msgid "Load .mo/.json files shipped with the plugin instead of relying on WordPress.org language packs. Useful while a locale is below the 90% threshold on translate.wordpress.org or for in-progress strings."
-msgstr ""
+msgstr "Charger les fichiers .mo/.json fournis avec le plugin au lieu de dépendre des packs de langue WordPress.org. Utile lorsqu'une locale est en dessous du seuil de 90 % sur translate.wordpress.org ou pour les chaînes en cours."
 
-#: src/Settings/Settings.php:276
+#: src/Settings/Settings.php:219
 msgid "Per-bundle feature toggles"
-msgstr ""
-
-#: src/Settings/Settings.php:308
-msgid "[TEST] "
-msgstr ""
+msgstr "Bascules de fonctionnalités par bundle"
 
 #: src/Admin/fee-dashboard/FeeDashboardApp.js:75
 msgid "Failed to load dashboard data."
-msgstr ""
+msgstr "Impossible de charger les données du tableau de bord."
 
 #: src/Admin/fee-dashboard/FeeDashboardApp.js:110
 msgid "Test mode — these figures reflect test transactions only."
-msgstr ""
+msgstr "Mode test — ces chiffres reflètent uniquement les transactions de test."
 
 #: src/Admin/fee-dashboard/FeeDashboardApp.js:136
 msgid "Total payment volume this month"
-msgstr ""
+msgstr "Volume de paiement total ce mois-ci"
 
 #: src/Admin/fee-dashboard/FeeDashboardApp.js:147
 msgid "Integration fees this month"
-msgstr ""
+msgstr "Frais d'intégration ce mois-ci"
 
 #: src/Admin/fee-dashboard/FeeDashboardApp.js:158
 msgid "Monthly fee cap"
-msgstr ""
+msgstr "Plafond mensuel des frais"
 
 #: src/Admin/fee-dashboard/FeeDashboardApp.js:170
 msgid "remaining"
-msgstr ""
+msgstr "restant"
 
 #: src/Admin/fee-dashboard/FeeDashboardApp.js:177
 msgid "Active plan"
-msgstr ""
+msgstr "Plan actif"
 
 #: src/Admin/settings/FeaturesTab.js:102
 msgid "Forced by a wp-config constant — change it there."
-msgstr ""
+msgstr "Forcé par une constante wp-config — modifiez-la là."
 
 #: src/Admin/settings/FeaturesTab.js:129
 msgid "One or more bundles are forced by wp-config and cannot be toggled here."
-msgstr ""
+msgstr "Un ou plusieurs bundles sont forcés par wp-config et ne peuvent pas être basculés ici."
 
-#: src/Admin/settings/SettingsApp.js:198
+#: src/Admin/settings/SettingsApp.js:196
 msgid "Fair Payments Connector Settings"
-msgstr ""
+msgstr "Paramètres Fair Payments Connector"
+

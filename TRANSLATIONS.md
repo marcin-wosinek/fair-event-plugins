@@ -126,14 +126,19 @@ npm run translation:validate -- --all
 
 ### Available Plugins
 
+Fully translated (`.po` files exist for all locales):
+
 - `fair-audience`
 - `fair-events`
 - `fair-payments-connector`
 - `fair-platform`
-- `fair-calendar-button`
-- `fair-rsvp`
-- `fair-membership`
-- `fair-team`
+
+POT only (translations not started yet):
+
+- `fair-events-experimental`
+- `fair-finance`
+- `fair-payments-connector-experimental`
+- `fair-timetable`
 
 ### Available Locales
 
@@ -264,7 +269,7 @@ msgstr[1] "%d eventos"
 ❌ Error: Invalid arguments
    Invalid plugin: fair-eventss
 
-Available plugins: fair-events, fair-calendar-button, fair-rsvp, fair-membership, fair-team
+Available plugins: fair-audience, fair-events, fair-payments-connector, fair-platform, fair-events-experimental, fair-finance, fair-payments-connector-experimental, fair-timetable
 ```
 
 ## Coming Soon

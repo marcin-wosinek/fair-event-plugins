@@ -9,7 +9,7 @@ msgstr ""
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"POT-Creation-Date: 2026-06-15T10:58:47+00:00\n"
+"POT-Creation-Date: 2026-06-17T06:17:09+00:00\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "X-Generator: WP-CLI 2.12.0\n"
 "X-Domain: fair-payments-connector-experimental\n"
@@ -49,6 +49,11 @@ msgstr ""
 #: src/Admin/AdminPages.php:46
 #: src/Admin/connected-sites/ConnectedSitesApp.js:236
 msgid "Connected Sites"
+msgstr ""
+
+#: src/Admin/AdminPages.php:55
+#: src/Admin/AdminPages.php:56
+msgid "Telegram"
 msgstr ""
 
 #: src/API/ApiTokenAuth.php:46
@@ -138,6 +143,26 @@ msgstr ""
 
 #: src/Services/TelegramService.php:41
 msgid "Telegram chat ID is empty."
+msgstr ""
+
+#: src/Settings/Settings.php:36
+msgid "Enable Telegram notifications on successful transactions"
+msgstr ""
+
+#: src/Settings/Settings.php:48
+msgid "Telegram bot token (from @BotFather)"
+msgstr ""
+
+#: src/Settings/Settings.php:65
+msgid "Telegram chat IDs (comma-separated)"
+msgstr ""
+
+#: src/Settings/Settings.php:77
+msgid "Telegram message template (HTML, supports placeholders)"
+msgstr ""
+
+#: src/Settings/Settings.php:89
+msgid "Allow participant name/email in Telegram messages"
 msgstr ""
 
 #: src/Admin/api-tokens/ApiTokensApp.js:24
@@ -389,4 +414,81 @@ msgstr ""
 
 #: src/Admin/connected-sites/ConnectedSitesApp.js:527
 msgid "Save"
+msgstr ""
+
+#: src/Admin/telegram/TelegramApp.js:24
+#: src/Admin/telegram/TelegramTab.js:169
+msgid "Telegram Notifications"
+msgstr ""
+
+#: src/Admin/telegram/TelegramTab.js:61
+msgid "Failed to load Telegram settings."
+msgstr ""
+
+#: src/Admin/telegram/TelegramTab.js:87
+msgid "Telegram settings saved."
+msgstr ""
+
+#: src/Admin/telegram/TelegramTab.js:102
+msgid "Failed to save Telegram settings: "
+msgstr ""
+
+#: src/Admin/telegram/TelegramTab.js:129
+msgid "Test message sent."
+msgstr ""
+
+#: src/Admin/telegram/TelegramTab.js:141
+msgid "Test message failed."
+msgstr ""
+
+#: src/Admin/telegram/TelegramTab.js:155
+msgid "Loading Telegram settings…"
+msgstr ""
+
+#: src/Admin/telegram/TelegramTab.js:175
+msgid "Post a message to a Telegram chat or channel when a transaction is paid."
+msgstr ""
+
+#: src/Admin/telegram/TelegramTab.js:183
+msgid "Enable Telegram notifications"
+msgstr ""
+
+#: src/Admin/telegram/TelegramTab.js:194
+msgid "Bot token"
+msgstr ""
+
+#: src/Admin/telegram/TelegramTab.js:198
+msgid "From @BotFather. Stored as plain text in wp_options — anyone with admin access can read it."
+msgstr ""
+
+#: src/Admin/telegram/TelegramTab.js:211
+msgid "Chat IDs"
+msgstr ""
+
+#: src/Admin/telegram/TelegramTab.js:215
+msgid "Comma-separated. Use a numeric user/chat/channel ID, or @channelname for public channels."
+msgstr ""
+
+#: src/Admin/telegram/TelegramTab.js:225
+msgid "Message template"
+msgstr ""
+
+#: src/Admin/telegram/TelegramTab.js:229
+msgid "Placeholders: {test_label}, {site_domain}, {date}, {amount}, {currency}, {transaction_id}, {event_title}, {event_url}, {participant_name}, {participant_url}, {participant_email}, {ticket_label}, {activities}, {discounts}. HTML tags <b>, <i>, <a href> are allowed."
+msgstr ""
+
+#: src/Admin/telegram/TelegramTab.js:240
+msgid "Include participant name and email"
+msgstr ""
+
+#: src/Admin/telegram/TelegramTab.js:244
+msgid "Disable to keep PII out of the Telegram channel. {participant_email} renders as empty and {participant_name} is abbreviated (e.g. \"Lucianna C.\")."
+msgstr ""
+
+#: src/Admin/telegram/TelegramTab.js:265
+msgid "Save settings"
+msgstr ""
+
+#: src/Admin/telegram/TelegramTab.js:276
+msgid "Send test message"
 msgstr ""

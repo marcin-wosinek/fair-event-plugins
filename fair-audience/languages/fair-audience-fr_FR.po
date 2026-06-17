@@ -678,7 +678,6 @@ msgstr "Sondage supprimé avec succès."
 msgid "Quick question about %s"
 msgstr "Une petite question à propos de %s"
 
-#. translators: %s: participant first name
 #. translators: %s: participant name
 #: src/Services/EmailService.php:203
 #: src/Services/EmailService.php:429
@@ -697,7 +696,7 @@ msgstr "Une petite question à propos de %s"
 #: src/Services/EmailService.php:2958
 #: src/Services/EmailService.php:3058
 #: src/Admin/event-participants/EventParticipants.js:1192
-#, php-format,js-format
+#, php-format, js-format
 msgid "Hi %s,"
 msgstr "Bonjour %s,"
 
@@ -715,7 +714,6 @@ msgstr "Prenez un moment pour répondre à notre sondage rapide :"
 msgid "Answer Poll"
 msgstr "Répondre au sondage"
 
-#. translators: %s: site name
 #. translators: 1: line break, 2: site name
 #: src/Services/EmailService.php:237
 #: src/Services/EmailService.php:481
@@ -1302,7 +1300,7 @@ msgstr "Les photos de %s sont prêtes !"
 #. translators: %s: event title
 #: src/Services/EmailService.php:437
 #: src/Admin/event-participants/EventParticipants.js:1204
-#, php-format,js-format
+#, php-format, js-format
 msgid "The photos from %s are now available for you to view and like!"
 msgstr "Les photos de %s sont maintenant disponibles pour que vous puissiez les consulter et les aimer !"
 
@@ -1845,7 +1843,7 @@ msgstr "Bonjour %s ! Cliquez sur le bouton ci-dessous pour vous inscrire à cet 
 #. translators: %s: participant name
 #: src/blocks/event-signup/render.php:1092
 #: src/blocks/event-signup/frontend.js:1206
-#, php-format,js-format
+#, php-format, js-format
 msgid "Hi %s! You can sign up for this event."
 msgstr "Bonjour %s ! Vous pouvez vous inscrire à cet événement."
 
@@ -3935,7 +3933,6 @@ msgstr "Nous avons un nouvel événement à venir : %s."
 msgid "Would you like to join? Click the button below to sign up:"
 msgstr "Aimeriez-vous participer ? Cliquez sur le bouton ci-dessous pour vous inscrire :"
 
-#. translators: %s: site name
 #. translators: 1: line break, 2: site name
 #: src/Services/EmailService.php:2255
 #: src/Services/EmailService.php:2391
@@ -5437,7 +5434,7 @@ msgstr "Afficher le prix de chaque type de billet à côté de son libellé."
 #. translators: %s: original group name
 #: src/API/GroupsController.php:385
 #: src/Admin/groups/Groups.js:199
-#, php-format,js-format
+#, php-format, js-format
 msgid "%s (copy)"
 msgstr "%s (copie)"
 
@@ -5591,7 +5588,7 @@ msgstr "Ce type de billet est épuisé. Veuillez choisir une autre option."
 #: src/API/EventSignupController.php:1163
 #: src/blocks/event-signup/render.php:750
 #: src/blocks/event-signup/frontend.js:197
-#, php-format,js-format
+#, php-format, js-format
 msgid "Please select at least %d activity to sign up."
 msgid_plural "Please select at least %d activities to sign up."
 msgstr[0] "Veuillez sélectionner au moins %d activité pour vous inscrire."
@@ -6265,76 +6262,77 @@ msgstr "Entrez le nom court de l'option (définissez-le dans l'onglet Billets de
 
 #: src/API/EventSignupController.php:1010
 msgid "This ticket type is no longer available. Please pick another option."
-msgstr ""
+msgstr "Ce type de billet n'est plus disponible. Veuillez choisir une autre option."
 
 #. translators: 1: discount percentage, 2: group name
 #: src/blocks/event-signup/render.php:626
 #, php-format
 msgid "%1$s%% discount applied (%2$s)"
-msgstr ""
+msgstr "%1$s%% de réduction appliquée (%2$s)"
 
 #. translators: 1: discount amount in euros, 2: group name
 #: src/blocks/event-signup/render.php:633
 #, php-format
 msgid "€%1$s discount applied (%2$s)"
-msgstr ""
+msgstr "€%1$s de réduction appliquée (%2$s)"
 
 #: src/Core/Features.php:115
 msgid "Core"
-msgstr ""
+msgstr "Cœur"
 
 #: src/Core/Features.php:116
 msgid "Participants, polls, signups, blocks. Always on."
-msgstr ""
+msgstr "Participants, sondages, inscriptions, blocs. Toujours activé."
 
 #: src/Core/Features.php:119
 msgid "Bundled translations"
-msgstr ""
+msgstr "Traductions intégrées"
 
 #: src/Core/Features.php:120
 msgid "Load .mo/.json files shipped with the plugin instead of relying on WordPress.org language packs. Useful while a locale is below the 90% threshold on translate.wordpress.org or for in-progress strings."
-msgstr ""
+msgstr "Charger les fichiers .mo/.json fournis avec l'extension au lieu de dépendre des packs de langue WordPress.org. Utile lorsqu'une locale est en dessous du seuil de 90 % sur translate.wordpress.org ou pour les chaînes en cours."
 
 #: src/Settings/Settings.php:148
 msgid "Per-bundle feature toggles"
-msgstr ""
+msgstr "Bascules de fonctionnalités par bundle"
 
 #: src/Admin/settings/FeaturesTab.js:52
 msgid "Failed to load features."
-msgstr ""
+msgstr "Impossible de charger les fonctionnalités."
 
 #: src/Admin/settings/FeaturesTab.js:77
 msgid "Features saved."
-msgstr ""
+msgstr "Fonctionnalités enregistrées."
 
 #: src/Admin/settings/FeaturesTab.js:84
 msgid "Failed to save features."
-msgstr ""
+msgstr "Impossible d'enregistrer les fonctionnalités."
 
 #: src/Admin/settings/FeaturesTab.js:94
 msgid "Loading features..."
-msgstr ""
+msgstr "Chargement des fonctionnalités..."
 
 #: src/Admin/settings/FeaturesTab.js:105
 msgid "Feature Bundles"
-msgstr ""
+msgstr "Bundles de fonctionnalités"
 
 #: src/Admin/settings/FeaturesTab.js:109
 msgid "Toggle optional feature bundles. Bundles fixed in wp-config (FAIR_AUDIENCE_INTERNAL or FAIR_AUDIENCE_FEATURE_*) are read-only here."
-msgstr ""
+msgstr "Basculez les bundles de fonctionnalités optionnels. Les bundles fixés dans wp-config (FAIR_AUDIENCE_INTERNAL ou FAIR_AUDIENCE_FEATURE_*) sont en lecture seule ici."
 
 #: src/Admin/settings/FeaturesTab.js:117
 msgid "Forced by a wp-config constant — change it there."
-msgstr ""
+msgstr "Forcé par une constante wp-config — modifiez-le là."
 
 #: src/Admin/settings/FeaturesTab.js:142
 msgid "One or more bundles are forced by wp-config and cannot be toggled here."
-msgstr ""
+msgstr "Un ou plusieurs bundles sont forcés par wp-config et ne peuvent pas être basculés ici."
 
 #: src/Admin/settings/FeaturesTab.js:157
 msgid "Save Features"
-msgstr ""
+msgstr "Enregistrer les fonctionnalités"
 
 #: src/Admin/settings/SettingsApp.js:144
 msgid "Features"
-msgstr ""
+msgstr "Fonctionnalités"
+

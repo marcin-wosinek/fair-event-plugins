@@ -515,36 +515,37 @@ msgstr ""
 #: src/Admin/AdminHooks.php:66
 #: src/Admin/AdminHooks.php:67
 msgid "Features"
-msgstr ""
+msgstr "Fonctionnalités"
 
 #: src/Admin/AdminHooks.php:90
 msgid "Features saved."
-msgstr ""
+msgstr "Fonctionnalités enregistrées."
 
 #: src/Admin/AdminHooks.php:96
 msgid "Fair Platform - Features"
-msgstr ""
+msgstr "Fair Platform - Fonctionnalités"
 
 #: src/Admin/AdminHooks.php:122
 msgid "Forced by a wp-config constant — change it there."
-msgstr ""
+msgstr "Forcé par une constante wp-config — modifiez-la là-bas."
 
 #: src/Admin/AdminHooks.php:130
 msgid "Save Features"
-msgstr ""
+msgstr "Enregistrer les fonctionnalités"
 
 #: src/Core/Features.php:115
 msgid "Core"
-msgstr ""
+msgstr "Cœur"
 
 #: src/Core/Features.php:116
 msgid "OAuth proxy endpoints and connection logging. Always on."
-msgstr ""
+msgstr "Points de terminaison du proxy OAuth et journalisation des connexions. Toujours activé."
 
 #: src/Core/Features.php:119
 msgid "Bundled translations"
-msgstr ""
+msgstr "Traductions intégrées"
 
 #: src/Core/Features.php:120
 msgid "Load .mo/.json files shipped with the plugin instead of relying on WordPress.org language packs. Useful while a locale is below the 90% threshold on translate.wordpress.org or for in-progress strings."
-msgstr ""
+msgstr "Charger les fichiers .mo/.json fournis avec l'extension au lieu de dépendre des packs de langue WordPress.org. Utile lorsqu'une locale est en dessous du seuil de 90 % sur translate.wordpress.org ou pour les chaînes en cours."
+
