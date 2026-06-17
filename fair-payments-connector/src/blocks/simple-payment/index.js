@@ -5,6 +5,7 @@ import { registerBlockType } from '@wordpress/blocks';
 import { useBlockProps } from '@wordpress/block-editor';
 import { TextControl } from '@wordpress/components';
 import { __ } from '@wordpress/i18n';
+import { useEffect } from '@wordpress/element';
 
 /**
  * Block metadata
@@ -25,7 +26,13 @@ registerBlockType(metadata.name, {
 	 */
 	edit: ({ attributes, setAttributes }) => {
 		const blockProps = useBlockProps();
-		const { amount, currency, description } = attributes;
+		const { blockId, amount, currency, description } = attributes;
+
+		useEffect(() => {
+			if (!blockId) {
+				setAttributes({ blockId: crypto.randomUUID() });
+			}
+		}, []);
 
 		return (
 			<div {...blockProps}>

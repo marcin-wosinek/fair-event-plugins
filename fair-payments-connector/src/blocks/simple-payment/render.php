@@ -11,6 +11,7 @@
 
 defined( 'ABSPATH' ) || exit;
 
+$block_id        = isset( $attributes['blockId'] ) ? $attributes['blockId'] : '';
 $amount          = isset( $attributes['amount'] ) ? $attributes['amount'] : '10';
 $currency        = isset( $attributes['currency'] ) ? $attributes['currency'] : 'EUR';
 $description     = isset( $attributes['description'] ) ? $attributes['description'] : '';
@@ -66,6 +67,7 @@ $block_id = 'fair-payments-connector-' . wp_unique_id();
 					data-currency="<?php echo esc_attr( $currency ); ?>"
 					data-description="<?php echo esc_attr( $description ); ?>"
 					data-post-id="<?php echo esc_attr( $current_post_id ); ?>"
+					data-block-id="<?php echo esc_attr( $block_id ); ?>"
 				>
 					<?php esc_html_e( 'Pay Now', 'fair-payments-connector' ); ?>
 				</button>

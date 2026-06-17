@@ -27,7 +27,15 @@ import apiFetch from '@wordpress/api-fetch';
 		);
 
 		buttons.forEach(function (button) {
-			button.addEventListener('click', handlePaymentClick);
+			// Fetch a fresh nonce per button instance on page load so cached pages
+			// don't embed a stale nonce in static HTML.
+			const noncePromise = apiFetch({
+				path: '/fair-payments-connector/v1/nonce',
+			}).then((res) => res.nonce);
+
+			button.addEventListener('click', (event) =>
+				handlePaymentClick(event, noncePromise)
+			);
 		});
 	}
 
@@ -55,7 +63,7 @@ import apiFetch from '@wordpress/api-fetch';
 		window.history.replaceState({}, '', url.toString());
 	}
 
-	async function handlePaymentClick(event) {
+	async function handlePaymentClick(event, noncePromise) {
 		const button = event.target;
 		const paymentBlock = button.closest('.fair-payments-connector-block');
 		const loadingEl = paymentBlock.querySelector(
@@ -70,6 +78,7 @@ import apiFetch from '@wordpress/api-fetch';
 		const currency = button.getAttribute('data-currency');
 		const description = button.getAttribute('data-description');
 		const postId = button.getAttribute('data-post-id');
+		const blockId = button.getAttribute('data-block-id');
 
 		// Hide error, show loading
 		if (errorEl) {
@@ -81,6 +90,8 @@ import apiFetch from '@wordpress/api-fetch';
 		button.disabled = true;
 
 		try {
+			const nonce = await noncePromise;
+
 			// Create payment via REST API using WordPress apiFetch
 			const data = await apiFetch({
 				path: '/fair-payments-connector/v1/payments',
@@ -90,6 +101,8 @@ import apiFetch from '@wordpress/api-fetch';
 					currency: currency,
 					description: description,
 					post_id: postId,
+					block_id: blockId,
+					nonce: nonce,
 				},
 			});
 

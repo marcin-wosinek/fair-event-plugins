@@ -45,6 +45,19 @@ class PaymentEndpoint extends WP_REST_Controller {
 	public function register_routes() {
 		register_rest_route(
 			$this->namespace,
+			'/nonce',
+			array(
+				array(
+					'methods'             => WP_REST_Server::READABLE,
+					'callback'            => array( $this, 'get_nonce' ),
+					// Public — generates a nonce for anonymous payment forms; reads no data.
+					'permission_callback' => '__return_true',
+				),
+			)
+		);
+
+		register_rest_route(
+			$this->namespace,
 			'/' . $this->rest_base,
 			array(
 				array(
@@ -73,6 +86,16 @@ class PaymentEndpoint extends WP_REST_Controller {
 							'required'          => false,
 							'type'              => 'integer',
 							'sanitize_callback' => 'absint',
+						),
+						'block_id'    => array(
+							'required'          => true,
+							'type'              => 'string',
+							'sanitize_callback' => 'sanitize_text_field',
+						),
+						'nonce'       => array(
+							'required'          => true,
+							'type'              => 'string',
+							'sanitize_callback' => 'sanitize_text_field',
 						),
 					),
 				),
@@ -108,6 +131,37 @@ class PaymentEndpoint extends WP_REST_Controller {
 	}
 
 	/**
+	 * Return a fresh nonce for the payment form.
+	 *
+	 * @return WP_REST_Response
+	 */
+	public function get_nonce() {
+		return new WP_REST_Response( array( 'nonce' => wp_create_nonce( 'fpc_payment_form' ) ) );
+	}
+
+	/**
+	 * Find a block in a parsed block tree by its blockId attribute.
+	 *
+	 * @param array  $blocks   Parsed blocks array.
+	 * @param string $block_id UUID to search for.
+	 * @return array|null Matching block or null.
+	 */
+	private function find_block_by_id( array $blocks, string $block_id ): ?array {
+		foreach ( $blocks as $block ) {
+			if ( isset( $block['attrs']['blockId'] ) && $block['attrs']['blockId'] === $block_id ) {
+				return $block;
+			}
+			if ( ! empty( $block['innerBlocks'] ) ) {
+				$found = $this->find_block_by_id( $block['innerBlocks'], $block_id );
+				if ( null !== $found ) {
+					return $found;
+				}
+			}
+		}
+		return null;
+	}
+
+	/**
 	 * Create a new payment
 	 *
 	 * @param WP_REST_Request $request Request object.
@@ -119,12 +173,57 @@ class PaymentEndpoint extends WP_REST_Controller {
 		// - Anonymous users: Require email.
 		// See: REST_API_BACKEND.md for implementation guidance.
 
+		// Manual nonce check — apiFetch nonce auto-verification only applies to authenticated
+		// requests; public endpoints must verify manually. See REST_API_BACKEND.md.
+		if ( ! wp_verify_nonce( $request->get_param( 'nonce' ), 'fpc_payment_form' ) ) {
+			return new WP_Error(
+				'invalid_nonce',
+				__( 'Invalid request.', 'fair-payments-connector' ),
+				array( 'status' => 403 )
+			);
+		}
+
 		$logger = new PaymentLogRepository();
 
-		$amount      = $request->get_param( 'amount' );
 		$currency    = $request->get_param( 'currency' );
 		$description = $request->get_param( 'description' );
 		$post_id     = $request->get_param( 'post_id' );
+		$block_id    = $request->get_param( 'block_id' );
+
+		// Derive authoritative amount from saved block content.
+		$post = $post_id ? get_post( $post_id ) : null;
+		if ( ! $post ) {
+			return new WP_Error(
+				'invalid_block',
+				__( 'Block not found.', 'fair-payments-connector' ),
+				array( 'status' => 403 )
+			);
+		}
+
+		$blocks        = parse_blocks( $post->post_content );
+		$matched_block = $this->find_block_by_id( $blocks, $block_id );
+
+		if ( ! $matched_block ) {
+			return new WP_Error(
+				'invalid_block',
+				__( 'Block not found.', 'fair-payments-connector' ),
+				array( 'status' => 403 )
+			);
+		}
+
+		$expected_amount  = floatval( $matched_block['attrs']['amount'] ?? 0 );
+		$submitted_amount = floatval( $request->get_param( 'amount' ) );
+
+		if ( $submitted_amount < $expected_amount ) {
+			return new WP_Error(
+				'amount_too_low',
+				__( 'Amount does not match block configuration.', 'fair-payments-connector' ),
+				array( 'status' => 422 )
+			);
+		}
+
+		// Use the server-derived amount, not the client value.
+		$amount = (string) $expected_amount;
 
 		$logger->log(
 			'payment_creation_started',
