@@ -50,6 +50,7 @@ class Plugin {
 		);
 
 		add_action( 'init', array( $this, 'register_blocks' ) );
+		add_action( 'enqueue_block_editor_assets', array( $this, 'localize_block_editor_data' ) );
 		add_action( 'wp_enqueue_scripts', array( $this, 'enqueue_callback_script' ) );
 
 		// Initialize REST API hooks.
@@ -61,6 +62,22 @@ class Plugin {
 		$this->load_admin();
 		$this->load_settings();
 		$this->load_migration_notice();
+	}
+
+	/**
+	 * Expose site-wide payment settings to the block editor via a JS global.
+	 *
+	 * Allows block editor scripts to read the configured currency without an
+	 * extra REST round-trip (e.g. to seed the simple-payment block default).
+	 *
+	 * @return void
+	 */
+	public function localize_block_editor_data() {
+		wp_add_inline_script(
+			'fair-payment-simple-payment-editor-script',
+			'window.fairPaymentsConnector = window.fairPaymentsConnector || {}; window.fairPaymentsConnector.currency = ' . wp_json_encode( get_option( 'fair_payment_currency', 'EUR' ) ) . ';',
+			'before'
+		);
 	}
 
 	/**

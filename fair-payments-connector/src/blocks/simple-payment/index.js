@@ -32,6 +32,11 @@ registerBlockType(metadata.name, {
 			if (!blockId) {
 				setAttributes({ blockId: crypto.randomUUID() });
 			}
+			if (!currency) {
+				setAttributes({
+					currency: window.fairPaymentsConnector?.currency || 'EUR',
+				});
+			}
 		}, []);
 
 		return (
