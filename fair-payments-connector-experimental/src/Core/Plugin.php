@@ -52,6 +52,9 @@ class Plugin {
 		$notifications = new \FairPaymentsConnectorExperimental\Hooks\NotificationHooks();
 		$notifications->init();
 
+		$settings = new \FairPaymentsConnectorExperimental\Settings\Settings();
+		$settings->init();
+
 		if ( is_admin() ) {
 			$admin = new \FairPaymentsConnectorExperimental\Admin\AdminPages();
 			$admin->init();

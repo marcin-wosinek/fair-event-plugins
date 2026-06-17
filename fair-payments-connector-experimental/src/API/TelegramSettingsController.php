@@ -9,7 +9,7 @@ namespace FairPaymentsConnectorExperimental\API;
 
 use FairPaymentsConnectorExperimental\Hooks\NotificationHooks;
 use FairPaymentsConnectorExperimental\Services\TelegramService;
-use FairPaymentsConnector\Settings\Settings;
+use FairPaymentsConnectorExperimental\Settings\Settings;
 
 defined( 'WPINC' ) || die;
 

@@ -13,6 +13,10 @@ module.exports = {
       process.cwd(),
       "src/Admin/connected-sites/index.js",
     ),
+    "admin/telegram/index": path.resolve(
+      process.cwd(),
+      "src/Admin/telegram/index.js",
+    ),
   },
   plugins: [
     ...defaultConfig.plugins,
