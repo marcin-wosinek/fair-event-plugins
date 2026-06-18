@@ -26,7 +26,7 @@ class CurrencyRates {
 		'USD' => 1.1,
 		'GBP' => 0.85,
 		'CHF' => 0.95,
-		'DKK' => 0.746,
+		'DKK' => 7.46,
 		'NOK' => 12.0,
 		'SEK' => 11.0,
 		'PLN' => 4.25,
