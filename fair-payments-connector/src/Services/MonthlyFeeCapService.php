@@ -12,6 +12,7 @@ namespace FairPaymentsConnector\Services;
 defined( 'WPINC' ) || die;
 
 use FairPaymentsConnector\Database\Schema;
+use FairPaymentsConnector\Services\CurrencyRates;
 
 /**
  * Computes the configured monthly fee cap and the current month's accumulated fees.
@@ -19,28 +20,31 @@ use FairPaymentsConnector\Database\Schema;
 class MonthlyFeeCapService {
 
 	/**
-	 * Return the active-plugin price map filtered through `fair_payment_active_plugin_prices`.
+	 * Return the active-plugin price map in the configured site currency.
 	 *
-	 * Keys are plugin slugs; values are their EUR contribution to the monthly cap.
-	 * fair-payments-connector is always included. fair-events is added when its
-	 * bootstrap constant is defined (i.e. the plugin is active).
+	 * Base prices are defined in EUR and converted using CurrencyRates.
+	 * Keys are plugin slugs; values are their contribution to the monthly cap
+	 * in the current site currency. fair-payments-connector is always included;
+	 * fair-events is added when its bootstrap constant is defined.
 	 *
 	 * @return array<string,float>
 	 */
 	public static function plugin_price_map(): array {
+		$currency = get_option( 'fair_payment_currency', 'EUR' );
+
 		$prices = array(
-			'fair-payments-connector' => 4.0,
+			'fair-payments-connector' => CurrencyRates::from_eur( 4.0, $currency ),
 		);
 
 		if ( defined( 'FAIR_EVENTS_VERSION' ) ) {
-			$prices['fair-events'] = 8.0;
+			$prices['fair-events'] = CurrencyRates::from_eur( 8.0, $currency );
 		}
 
 		return (array) apply_filters( 'fair_payment_active_plugin_prices', $prices );
 	}
 
 	/**
-	 * Return the configured monthly cap in EUR.
+	 * Return the configured monthly cap in the site currency.
 	 *
 	 * Sums the per-plugin prices for every currently active Fair Event plugin.
 	 *
