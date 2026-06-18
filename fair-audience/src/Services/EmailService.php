@@ -269,7 +269,7 @@ class EmailService {
 		);
 
 		// Send email.
-		$result = wp_mail( $participant->email, $subject, $message );
+		$result = wp_mail( $participant->email, $subject, $this->append_branding_footer( $message ) );
 
 		// Reset content type to avoid conflicts.
 		remove_filter(
@@ -513,7 +513,7 @@ class EmailService {
 		);
 
 		// Send email.
-		$result = wp_mail( $participant->email, $subject, $message );
+		$result = wp_mail( $participant->email, $subject, $this->append_branding_footer( $message ) );
 
 		// Reset content type to avoid conflicts.
 		remove_filter(
@@ -726,7 +726,7 @@ class EmailService {
 		);
 
 		// Send email.
-		$result = wp_mail( $participant->email, $subject, $message );
+		$result = wp_mail( $participant->email, $subject, $this->append_branding_footer( $message ) );
 
 		// Reset content type to avoid conflicts.
 		remove_filter(
@@ -849,7 +849,7 @@ class EmailService {
 		);
 
 		// Send email.
-		$result = wp_mail( $participant->email, $subject, $message );
+		$result = wp_mail( $participant->email, $subject, $this->append_branding_footer( $message ) );
 
 		// Reset content type to avoid conflicts.
 		remove_filter(
@@ -981,7 +981,7 @@ class EmailService {
 		);
 
 		// Send email.
-		$result = wp_mail( $participant->email, $subject, $message );
+		$result = wp_mail( $participant->email, $subject, $this->append_branding_footer( $message ) );
 
 		// Reset content type to avoid conflicts.
 		remove_filter(
@@ -1140,10 +1140,34 @@ class EmailService {
 		};
 
 		add_filter( 'wp_mail_content_type', $content_type );
-		$result = wp_mail( $to, $subject, $message );
+		$result = wp_mail( $to, $subject, $this->append_branding_footer( $message ) );
 		remove_filter( 'wp_mail_content_type', $content_type );
 
 		return $result;
+	}
+
+	/**
+	 * Append the opt-in "Powered by Fair Event Plugins" footer to an HTML body.
+	 *
+	 * Inserts the inline-styled line just before </body> so it sits at the very
+	 * bottom of every participant email. A no-op (returns the message unchanged)
+	 * when the branding setting is off, so disabling it removes the markup
+	 * entirely rather than merely hiding it.
+	 *
+	 * @param string $message Full HTML email body.
+	 * @return string Message with the footer injected, or unchanged when off.
+	 */
+	private function append_branding_footer( $message ) {
+		$footer = \FairAudience\Services\Branding::email_footer_html();
+		if ( '' === $footer ) {
+			return $message;
+		}
+
+		if ( false === strpos( $message, '</body>' ) ) {
+			return $message . $footer;
+		}
+
+		return str_replace( '</body>', $footer . '</body>', $message );
 	}
 
 	/**
@@ -1265,7 +1289,7 @@ class EmailService {
 		);
 
 		// Send email.
-		$result = wp_mail( $participant->email, $subject, $message );
+		$result = wp_mail( $participant->email, $subject, $this->append_branding_footer( $message ) );
 
 		// Reset content type to avoid conflicts.
 		remove_filter(
@@ -1549,7 +1573,7 @@ class EmailService {
 		);
 
 		// Send email.
-		$result = wp_mail( $participant->email, $subject, $message );
+		$result = wp_mail( $participant->email, $subject, $this->append_branding_footer( $message ) );
 
 		// Reset content type to avoid conflicts.
 		remove_filter(
@@ -1717,7 +1741,7 @@ class EmailService {
 		);
 
 		// Send email.
-		$result = wp_mail( $participant->email, $subject, $message );
+		$result = wp_mail( $participant->email, $subject, $this->append_branding_footer( $message ) );
 
 		// Reset content type to avoid conflicts.
 		remove_filter(
@@ -1920,7 +1944,7 @@ class EmailService {
 			}
 		);
 
-		$result = wp_mail( $to_email, $subject, $message );
+		$result = wp_mail( $to_email, $subject, $this->append_branding_footer( $message ) );
 
 		remove_filter(
 			'wp_mail_content_type',
@@ -2116,7 +2140,7 @@ class EmailService {
 			}
 		);
 
-		$result = wp_mail( $participant->email, $subject, $message );
+		$result = wp_mail( $participant->email, $subject, $this->append_branding_footer( $message ) );
 
 		remove_filter(
 			'wp_mail_content_type',
@@ -2282,7 +2306,7 @@ class EmailService {
 			}
 		);
 
-		$result = wp_mail( $participant->email, $subject, $message );
+		$result = wp_mail( $participant->email, $subject, $this->append_branding_footer( $message ) );
 
 		remove_filter(
 			'wp_mail_content_type',
@@ -2418,7 +2442,7 @@ class EmailService {
 			}
 		);
 
-		$result = wp_mail( $participant->email, $subject, $message );
+		$result = wp_mail( $participant->email, $subject, $this->append_branding_footer( $message ) );
 
 		remove_filter(
 			'wp_mail_content_type',
@@ -2554,7 +2578,7 @@ class EmailService {
 			}
 		);
 
-		$result = wp_mail( $participant->email, $subject, $message );
+		$result = wp_mail( $participant->email, $subject, $this->append_branding_footer( $message ) );
 
 		remove_filter(
 			'wp_mail_content_type',
@@ -2722,7 +2746,7 @@ class EmailService {
 		);
 
 		// Send email.
-		$result = wp_mail( $participant->email, $subject, $message );
+		$result = wp_mail( $participant->email, $subject, $this->append_branding_footer( $message ) );
 
 		// Reset content type to avoid conflicts.
 		remove_filter(
@@ -2983,7 +3007,7 @@ class EmailService {
 			return 'text/html';
 		};
 		add_filter( 'wp_mail_content_type', $content_type_filter );
-		$result = wp_mail( $participant->email, $subject, $message );
+		$result = wp_mail( $participant->email, $subject, $this->append_branding_footer( $message ) );
 		remove_filter( 'wp_mail_content_type', $content_type_filter );
 
 		return (bool) $result;
@@ -3078,7 +3102,7 @@ class EmailService {
 			return 'text/html';
 		};
 		add_filter( 'wp_mail_content_type', $content_type_filter );
-		$result = wp_mail( $participant->email, $subject, $message );
+		$result = wp_mail( $participant->email, $subject, $this->append_branding_footer( $message ) );
 		remove_filter( 'wp_mail_content_type', $content_type_filter );
 
 		return (bool) $result;

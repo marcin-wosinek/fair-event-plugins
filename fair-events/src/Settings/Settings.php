@@ -102,6 +102,22 @@ class Settings {
 				'default'           => true,
 			)
 		);
+
+		// Opt-in "Powered by Fair Event Plugins" attribution. Read cross-plugin
+		// by fair-audience (signup blocks + participant emails); lives here so it
+		// sits with the rest of the public-facing event configuration. Off by
+		// default so existing installs are unchanged until an admin opts in.
+		register_setting(
+			'fair_events_settings',
+			'fair_events_powered_by_branding',
+			array(
+				'type'              => 'boolean',
+				'description'       => __( 'Show a "Powered by Fair Event Plugins" line on signup forms and participant emails', 'fair-events' ),
+				'sanitize_callback' => 'rest_sanitize_boolean',
+				'show_in_rest'      => true,
+				'default'           => false,
+			)
+		);
 	}
 
 	/**
