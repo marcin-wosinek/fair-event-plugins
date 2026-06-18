@@ -36,6 +36,7 @@ export default function GeneralTab({ onNotice }) {
 	const [enabledPostTypes, setEnabledPostTypes] = useState([]);
 	const [registerPostType, setRegisterPostType] = useState(true);
 	const [availablePostTypes, setAvailablePostTypes] = useState([]);
+	const [poweredByBranding, setPoweredByBranding] = useState(false);
 	const [isLoading, setIsLoading] = useState(true);
 	const [isSaving, setIsSaving] = useState(false);
 
@@ -46,6 +47,7 @@ export default function GeneralTab({ onNotice }) {
 				setSlug(settings.slug);
 				setEnabledPostTypes(settings.enabledPostTypes);
 				setRegisterPostType(settings.registerPostType);
+				setPoweredByBranding(settings.poweredByBranding);
 
 				// Filter to get content post types that make sense for events.
 				// Exclude system types that shouldn't have event data.
@@ -111,6 +113,7 @@ export default function GeneralTab({ onNotice }) {
 			fair_events_slug: slug,
 			fair_events_register_post_type: registerPostType,
 			fair_events_enabled_post_types: otherPostTypes,
+			fair_events_powered_by_branding: poweredByBranding,
 		})
 			.then(() => {
 				return loadGeneralSettings();
@@ -119,6 +122,7 @@ export default function GeneralTab({ onNotice }) {
 				setSlug(settings.slug);
 				setEnabledPostTypes(settings.enabledPostTypes);
 				setRegisterPostType(settings.registerPostType);
+				setPoweredByBranding(settings.poweredByBranding);
 				onNotice({
 					status: 'success',
 					message: __('Settings saved successfully.', 'fair-events'),
@@ -264,6 +268,27 @@ export default function GeneralTab({ onNotice }) {
 								'fair-events'
 							)}
 						</p>
+					</CardBody>
+				</Card>
+
+				<Card>
+					<CardHeader>
+						<h2>{__('Branding', 'fair-events')}</h2>
+					</CardHeader>
+					<CardBody>
+						<ToggleControl
+							label={__(
+								"Show 'Powered by Fair Event Plugins'",
+								'fair-events'
+							)}
+							checked={poweredByBranding}
+							onChange={(value) => setPoweredByBranding(value)}
+							help={__(
+								'Adds a subtle attribution line under public signup forms and at the bottom of participant emails. Off by default.',
+								'fair-events'
+							)}
+							disabled={isSaving}
+						/>
 					</CardBody>
 				</Card>
 

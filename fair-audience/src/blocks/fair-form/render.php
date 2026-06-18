@@ -92,4 +92,5 @@ $wrapper_attributes = get_block_wrapper_attributes(
 
 		<div class="fair-form-message" style="display: none;"></div>
 	</form>
+	<?php echo wp_kses_post( \FairAudience\Services\Branding::block_html() ); ?>
 </div>

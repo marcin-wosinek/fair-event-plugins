@@ -404,4 +404,5 @@ $wrapper_attributes = get_block_wrapper_attributes( $wrapper_data );
 
 		<div class="fair-audience-audience-message" style="display: none;"></div>
 	</form>
+	<?php echo wp_kses_post( \FairAudience\Services\Branding::block_html() ); ?>
 </div>

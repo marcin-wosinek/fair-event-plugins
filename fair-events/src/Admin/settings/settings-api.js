@@ -14,6 +14,8 @@ export function loadGeneralSettings() {
 			slug: settings.fair_events_slug || 'fair-events',
 			enabledPostTypes: settings.fair_events_enabled_post_types || [],
 			registerPostType: settings.fair_events_register_post_type ?? true,
+			poweredByBranding:
+				settings.fair_events_powered_by_branding ?? false,
 		};
 	});
 }

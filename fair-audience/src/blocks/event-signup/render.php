@@ -1266,5 +1266,6 @@ if ( ! $is_valid_post_type ) :
 			<?php endif; ?>
 		</div>
 	<?php endif; ?>
+	<?php echo wp_kses_post( \FairAudience\Services\Branding::block_html() ); ?>
 </div>
 <?php endif; ?>

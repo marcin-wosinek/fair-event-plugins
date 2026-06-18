@@ -108,7 +108,6 @@
 	margin-top: 24px;
 }
 
-
 /* Disabled button state */
 .fair-audience-audience-submit-button:disabled {
 	opacity: 0.6;
@@ -158,4 +157,16 @@
 .fair-audience-not-you:hover,
 .fair-audience-not-you:focus {
 	color: #005a87;
+}
+
+/* "Powered by Fair Event Plugins" attribution (opt-in, issue #864). */
+.fair-audience-powered-by {
+	margin: 16px 0 0;
+	text-align: center;
+	font-size: 0.75em;
+	color: #999;
+}
+
+.fair-audience-powered-by a {
+	color: inherit;
 }
