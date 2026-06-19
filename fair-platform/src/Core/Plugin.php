@@ -263,10 +263,11 @@ class Plugin {
 	 */
 	private function handle_authorize() {
 		// Get and validate parameters.
-		$site_id    = sanitize_text_field( $_GET['site_id'] ?? '' );
-		$return_url = esc_url_raw( $_GET['return_url'] ?? '' );
-		$site_name  = sanitize_text_field( $_GET['site_name'] ?? '' );
-		$site_url   = esc_url_raw( $_GET['site_url'] ?? '' );
+		$site_id      = sanitize_text_field( $_GET['site_id'] ?? '' );
+		$return_url   = esc_url_raw( $_GET['return_url'] ?? '' );
+		$site_name    = sanitize_text_field( $_GET['site_name'] ?? '' );
+		$site_url     = esc_url_raw( $_GET['site_url'] ?? '' );
+		$client_state = sanitize_text_field( $_GET['state'] ?? '' );
 
 		if ( empty( $site_id ) || empty( $return_url ) ) {
 			wp_die( 'Missing required parameters: site_id and return_url' );
@@ -286,11 +287,12 @@ class Plugin {
 		set_transient(
 			"mollie_oauth_{$state}",
 			array(
-				'site_id'    => $site_id,
-				'return_url' => $return_url,
-				'site_name'  => $site_name,
-				'site_url'   => $site_url,
-				'timestamp'  => time(),
+				'site_id'      => $site_id,
+				'return_url'   => $return_url,
+				'site_name'    => $site_name,
+				'site_url'     => $site_url,
+				'client_state' => $client_state,
+				'timestamp'    => time(),
 			),
 			600
 		);
@@ -905,6 +907,7 @@ class Plugin {
 				'mollie_organization_id' => $session_data['organization_id'] ?? '',
 				'mollie_profile_id'      => $profile_id,
 				'mollie_test_mode'       => $session_data['testmode'] ?? 0,
+				'state'                  => $site_data['client_state'] ?? '',
 			),
 			$site_data['return_url']
 		);
