@@ -220,6 +220,16 @@ export default function SettingsApp() {
 					</div>
 				)}
 			</TabPanel>
+
+			<p style={{ marginTop: '2rem' }}>
+				<a
+					href="https://fair-event-plugins.com/contact/"
+					target="_blank"
+					rel="noreferrer"
+				>
+					{__('Need help?', 'fair-payments-connector')}
+				</a>
+			</p>
 		</div>
 	);
 }
