@@ -710,7 +710,14 @@ export default function EventAudience({
 			ticketOptions.map((o) => [o.name, o.short_name || o.name || ''])
 		);
 
-		const rows = filteredParticipants
+		// The printed list is the on-site roster: only collaborators and
+		// signed-up (registered) participants. "Interested" and transient
+		// states (e.g. pending_payment) are intentionally excluded.
+		const printParticipants = filteredParticipants.filter(
+			(p) => p.label === 'collaborator' || p.label === 'signed_up'
+		);
+
+		const rows = printParticipants
 			.map((p, index) => {
 				const name = escape(p.participant_name || '');
 				const role = escape(LABEL_DISPLAY[p.label] || p.label || '');
@@ -796,7 +803,7 @@ export default function EventAudience({
 		<h1>${escape(headerTitle)}</h1>
 		<div class="meta">${escape(__('Participant list', 'fair-events'))} — ${escape(
 			dateLabel
-		)} (${filteredParticipants.length})</div>
+		)} (${printParticipants.length})</div>
 	</header>
 	<table>
 		<thead>
