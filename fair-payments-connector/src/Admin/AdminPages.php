@@ -22,6 +22,7 @@ class AdminPages {
 		add_action( 'admin_menu', array( $this, 'register_admin_pages' ) );
 		add_action( 'admin_enqueue_scripts', array( $this, 'enqueue_admin_scripts' ) );
 		add_action( 'admin_notices', array( $this, 'render_test_mode_notice' ) );
+		add_filter( 'plugin_action_links_fair-payments-connector/fair-payments-connector.php', array( $this, 'add_plugin_action_links' ) );
 	}
 
 	/**
@@ -182,6 +183,30 @@ class AdminPages {
 			</p>
 		</div>
 		<?php
+	}
+
+	/**
+	 * Add action links on the plugins list page.
+	 *
+	 * Shows a "Set up" link when Mollie is not yet configured (no OAuth connection
+	 * and no API keys stored), so admins are guided to the settings page.
+	 *
+	 * @param string[] $links Existing action links.
+	 * @return string[] Modified action links.
+	 */
+	public function add_plugin_action_links( $links ) {
+		$connected     = get_option( 'fair_payment_mollie_connected', false );
+		$test_key      = get_option( 'fair_payment_test_api_key', '' );
+		$live_key      = get_option( 'fair_payment_live_api_key', '' );
+		$is_configured = $connected || $test_key || $live_key;
+
+		if ( ! $is_configured ) {
+			$settings_url = add_query_arg( 'page', 'fair-payments-connector-settings', admin_url( 'admin.php' ) );
+			$setup_link   = '<a href="' . esc_url( $settings_url ) . '">' . esc_html__( 'Set up', 'fair-payments-connector' ) . '</a>';
+			array_unshift( $links, $setup_link );
+		}
+
+		return $links;
 	}
 
 	/**
