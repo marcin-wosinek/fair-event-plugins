@@ -223,12 +223,16 @@ function extractZips(plugins, extractDir) {
 	if (zips.length === 0) fail('No ZIPs found in dist/.');
 
 	for (const plugin of plugins) {
-		const zip = zips.find(
-			(f) =>
-				f === `${plugin}.zip` ||
-				f.startsWith(`${plugin}.`) ||
-				f.startsWith(`${plugin}-`)
-		);
+		const zip = zips.find((f) => {
+			if (f === `${plugin}.zip`) return true;
+			// The slug must be followed by a version separator, never another
+			// slug segment — otherwise `fair-payments-connector` would also
+			// match a sibling like `fair-payments-connector-experimental`.
+			if (f.startsWith(`${plugin}.`)) return true;
+			if (f.startsWith(`${plugin}-`))
+				return /^\d/.test(f.slice(plugin.length + 1));
+			return false;
+		});
 		if (!zip) {
 			console.warn(
 				`⚠ No ZIP found for ${plugin} in dist/, will be skipped during deploy.`
