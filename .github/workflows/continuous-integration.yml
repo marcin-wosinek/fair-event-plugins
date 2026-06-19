@@ -213,6 +213,7 @@ jobs:
                   else
                     gh release create "build-${BUILD_ID}" ./dist/*.zip \
                       --repo "$GITHUB_REPOSITORY" \
+                      --target "$GITHUB_SHA" \
                       --title "Build ${BUILD_ID}" \
                       --notes "Automated build from commit ${GITHUB_SHA}" \
                       --prerelease
