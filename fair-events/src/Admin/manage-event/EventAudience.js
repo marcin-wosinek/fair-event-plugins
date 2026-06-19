@@ -535,14 +535,19 @@ export default function EventAudience({
 	};
 
 	const handleDeleteParticipant = (participant) => {
+		const baseName =
+			participant.participant_name ||
+			__('this participant', 'fair-events');
+		const nameWithEmail = participant.participant_email
+			? `${baseName} (${participant.participant_email})`
+			: baseName;
 		const confirmMessage = sprintf(
-			/* translators: %s: participant name */
+			/* translators: %s: participant name or "name (email)" */
 			__(
 				'Delete %s’s registration for this event date? This cannot be undone.',
 				'fair-events'
 			),
-			participant.participant_name ||
-				__('this participant', 'fair-events')
+			nameWithEmail
 		);
 		if (!window.confirm(confirmMessage)) {
 			return;
