@@ -29,6 +29,7 @@ const EditComponent = ({ attributes, setAttributes }) => {
 		backgroundColor,
 		textColor,
 		eventSources,
+		showCopySummary,
 	} = attributes;
 
 	const blockProps = useBlockProps({
@@ -88,6 +89,18 @@ const EditComponent = ({ attributes, setAttributes }) => {
 						onChange={(value) =>
 							setAttributes({ showDrafts: value })
 						}
+					/>
+
+					<ToggleControl
+						label={__('Show Copy Summary Button', 'fair-events')}
+						checked={showCopySummary}
+						onChange={(value) =>
+							setAttributes({ showCopySummary: value })
+						}
+						help={__(
+							'Displays a button to copy week summary as text',
+							'fair-events'
+						)}
 					/>
 
 					<div style={{ marginTop: '16px' }}>

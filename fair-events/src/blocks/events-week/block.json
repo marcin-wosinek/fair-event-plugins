@@ -39,6 +39,10 @@
 			"items": {
 				"type": "string"
 			}
+		},
+		"showCopySummary": {
+			"type": "boolean",
+			"default": false
 		}
 	},
 	"supports": {
@@ -49,5 +53,6 @@
 	"editorScript": "file:./editor.js",
 	"editorStyle": "file:./editor.css",
 	"style": "file:./style-editor.css",
+	"viewScript": "file:./frontend.js",
 	"render": "file:./render.php"
 }

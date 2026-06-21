@@ -94,11 +94,12 @@ if ( $parsed ) {
 }
 
 // Block attributes.
-$start_of_week   = Settings::get_start_of_week();
-$show_navigation = $attributes['showNavigation'] ?? true;
-$categories      = $attributes['categories'] ?? array();
-$show_drafts     = $attributes['showDrafts'] ?? false;
-$event_sources   = $attributes['eventSources'] ?? array();
+$start_of_week     = Settings::get_start_of_week();
+$show_navigation   = $attributes['showNavigation'] ?? true;
+$categories        = $attributes['categories'] ?? array();
+$show_drafts       = $attributes['showDrafts'] ?? false;
+$event_sources     = $attributes['eventSources'] ?? array();
+$show_copy_summary = $attributes['showCopySummary'] ?? false;
 
 $bg_color   = $attributes['backgroundColor'] ?? 'primary';
 $text_color = $attributes['textColor'] ?? '#ffffff';
@@ -384,6 +385,29 @@ $next     = fair_events_offset_week( $year, $week, 1 );
 $prev_url = add_query_arg( 'week_view', sprintf( '%04d-W%02d', $prev['year'], $prev['week'] ) );
 $next_url = add_query_arg( 'week_view', sprintf( '%04d-W%02d', $next['year'], $next['week'] ) );
 
+// Build copy summary text.
+$summary_text = '';
+if ( $show_copy_summary ) {
+	$page_title    = get_the_title( get_queried_object_id() );
+	$summary_lines = array( $page_title . ', ' . $nav_title . ':' );
+
+	foreach ( $days as $day ) {
+		foreach ( $day['events'] as $ev ) {
+			$line = '* ' . $day['weekday'];
+			if ( ! $ev['all_day'] && ! empty( $ev['start_time'] ) ) {
+				$line .= ', ' . $ev['start_time'];
+			}
+			$line .= ', ' . $ev['title'];
+			if ( ! empty( $ev['permalink'] ) ) {
+				$line .= ': ' . $ev['permalink'];
+			}
+			$summary_lines[] = $line;
+		}
+	}
+
+	$summary_text = implode( "\n", $summary_lines );
+}
+
 ?>
 <div <?php echo wp_kses_post( get_block_wrapper_attributes( array( 'class' => 'wp-block-fair-events-events-week' ) ) ); ?>>
 
@@ -458,6 +482,18 @@ $next_url = add_query_arg( 'week_view', sprintf( '%04d-W%02d', $next['year'], $n
 		</div>
 		<?php endforeach; ?>
 	</div>
+
+	<?php if ( $show_copy_summary && '' !== $summary_text ) : ?>
+	<div class="fair-events-copy-summary">
+		<button
+			class="fair-events-copy-summary-btn"
+			data-summary="<?php echo esc_attr( $summary_text ); ?>"
+			type="button"
+		>
+			<?php esc_html_e( 'Copy summary', 'fair-events' ); ?>
+		</button>
+	</div>
+	<?php endif; ?>
 
 	<?php if ( class_exists( \FairAudience\Services\Branding::class ) ) : ?>
 		<?php echo wp_kses_post( \FairAudience\Services\Branding::block_html() ); ?>
