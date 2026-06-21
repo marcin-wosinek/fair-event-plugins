@@ -1,13 +1,6 @@
 /**
  * Events Calendar Block - Edit Component
  *
- * Provides the block editor interface for the Events Calendar block.
- * Allows users to configure:
- * - Display pattern (how events appear in calendar cells)
- * - Start of week (Monday or Sunday)
- * - Show/hide navigation
- * - Category filtering (editor-side only)
- *
  * @package FairEvents
  */
 
@@ -22,11 +15,10 @@ import {
 	ToggleControl,
 	CheckboxControl,
 	SelectControl,
-	Icon,
 	Notice,
 } from '@wordpress/components';
 import { useSelect } from '@wordpress/data';
-import { calendar } from '@wordpress/icons';
+import ServerSideRender from '@wordpress/server-side-render';
 import { EventSourceSelector } from 'fair-events-shared';
 
 const EditComponent = ({ attributes, setAttributes }) => {
@@ -40,11 +32,8 @@ const EditComponent = ({ attributes, setAttributes }) => {
 		eventSources,
 	} = attributes;
 
-	const blockProps = useBlockProps({
-		className: 'fair-events-calendar-placeholder',
-	});
+	const blockProps = useBlockProps();
 
-	// Get all categories
 	const allCategories = useSelect((select) => {
 		const cats = select('core').getEntityRecords('taxonomy', 'category', {
 			per_page: -1,
@@ -52,7 +41,6 @@ const EditComponent = ({ attributes, setAttributes }) => {
 		return cats || [];
 	}, []);
 
-	// Get calendar-specific patterns
 	const calendarPatterns = useSelect((select) => {
 		const patterns = select('core').getBlockPatterns?.() || [];
 		return patterns.filter(
@@ -62,43 +50,23 @@ const EditComponent = ({ attributes, setAttributes }) => {
 		);
 	}, []);
 
-	// Combine patterns for the dropdown
 	const patternOptions = calendarPatterns.map((pattern) => ({
 		label: pattern.title,
 		value: pattern.name,
 	}));
 
-	// Get theme colors
-	const themeColors = useSelect((select) => {
-		const settings = select('core/block-editor').getSettings();
-		return settings?.colors || [];
-	}, []);
-
-	// Check if there are multiple categories (more than just "Uncategorized")
 	const meaningfulCategories = allCategories.filter(
 		(cat) => cat.slug !== 'uncategorized'
 	);
 	const hasCategories = meaningfulCategories.length > 0;
 
-	// Handle category checkbox toggle
 	const handleCategoryToggle = (categoryId, checked) => {
-		let newCategories;
-		if (checked) {
-			// Add category
-			newCategories = [...categories, categoryId];
-		} else {
-			// Remove category
-			newCategories = categories.filter((id) => id !== categoryId);
-		}
+		const newCategories = checked
+			? [...categories, categoryId]
+			: categories.filter((id) => id !== categoryId);
 		setAttributes({ categories: newCategories });
 	};
 
-	// Get selected category names for display
-	const selectedCategoryNames = allCategories
-		.filter((cat) => categories.includes(cat.id))
-		.map((cat) => cat.name);
-
-	// Check for old eventSources format (migration notice)
 	const hasOldFormat =
 		eventSources.length > 0 &&
 		typeof eventSources[0] === 'object' &&
@@ -250,45 +218,10 @@ const EditComponent = ({ attributes, setAttributes }) => {
 			</InspectorControls>
 
 			<div {...blockProps}>
-				<div
-					style={{
-						padding: '40px',
-						textAlign: 'center',
-						border: '2px dashed #ddd',
-						borderRadius: '4px',
-						background: '#f9f9f9',
-					}}
-				>
-					<Icon
-						icon={calendar}
-						style={{
-							width: '48px',
-							height: '48px',
-							opacity: 0.5,
-						}}
-					/>
-					<h3 style={{ marginTop: '16px', color: '#666' }}>
-						{__('Events Calendar', 'fair-events')}
-					</h3>
-					<p style={{ color: '#999', marginTop: '8px' }}>
-						{__(
-							'Calendar will be displayed on the frontend',
-							'fair-events'
-						)}
-					</p>
-					{categories.length > 0 && (
-						<p style={{ color: '#666', marginTop: '8px' }}>
-							{__('Categories:', 'fair-events')}{' '}
-							<strong>{selectedCategoryNames.join(', ')}</strong>
-						</p>
-					)}
-					{eventSources.length > 0 && (
-						<p style={{ color: '#666', marginTop: '8px' }}>
-							{__('Event Sources:', 'fair-events')}{' '}
-							<strong>{eventSources.length}</strong>
-						</p>
-					)}
-				</div>
+				<ServerSideRender
+					block="fair-events/events-calendar"
+					attributes={attributes}
+				/>
 			</div>
 		</>
 	);

@@ -14,11 +14,10 @@ import {
 	PanelBody,
 	ToggleControl,
 	CheckboxControl,
-	Icon,
 	Notice,
 } from '@wordpress/components';
 import { useSelect } from '@wordpress/data';
-import { calendar } from '@wordpress/icons';
+import ServerSideRender from '@wordpress/server-side-render';
 import { EventSourceSelector } from 'fair-events-shared';
 
 const EditComponent = ({ attributes, setAttributes }) => {
@@ -32,9 +31,7 @@ const EditComponent = ({ attributes, setAttributes }) => {
 		showCopySummary,
 	} = attributes;
 
-	const blockProps = useBlockProps({
-		className: 'events-week-placeholder',
-	});
+	const blockProps = useBlockProps();
 
 	const allCategories = useSelect((select) => {
 		const cats = select('core').getEntityRecords('taxonomy', 'category', {
@@ -54,10 +51,6 @@ const EditComponent = ({ attributes, setAttributes }) => {
 			: categories.filter((id) => id !== categoryId);
 		setAttributes({ categories: newCategories });
 	};
-
-	const selectedCategoryNames = allCategories
-		.filter((cat) => categories.includes(cat.id))
-		.map((cat) => cat.name);
 
 	const hasOldFormat =
 		eventSources.length > 0 &&
@@ -177,29 +170,10 @@ const EditComponent = ({ attributes, setAttributes }) => {
 			</InspectorControls>
 
 			<div {...blockProps}>
-				<Icon
-					icon={calendar}
-					style={{ width: '40px', height: '40px', opacity: 0.4 }}
+				<ServerSideRender
+					block="fair-events/events-week"
+					attributes={attributes}
 				/>
-				<h3>{__('Events Week View', 'fair-events')}</h3>
-				<p>
-					{__(
-						'Current week will be displayed on the frontend',
-						'fair-events'
-					)}
-				</p>
-				{categories.length > 0 && (
-					<p style={{ marginTop: '8px', color: '#666' }}>
-						{__('Categories:', 'fair-events')}{' '}
-						<strong>{selectedCategoryNames.join(', ')}</strong>
-					</p>
-				)}
-				{eventSources.length > 0 && (
-					<p style={{ marginTop: '4px', color: '#666' }}>
-						{__('Event Sources:', 'fair-events')}{' '}
-						<strong>{eventSources.length}</strong>
-					</p>
-				)}
 			</div>
 		</>
 	);
