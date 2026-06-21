@@ -1,5 +1,17 @@
 # fair-payments-connector
 
+## 1.3.0
+
+### Minor Changes
+
+-   f46e6ec: Add UX improvements for unconfigured Mollie state: show a "not set up" admin notice, a "Set up" link on the plugins list page, and a "Need help?" link on the settings page.
+-   aec8208: Add OAuth state parameter to prevent CSRF credential replacement in the Mollie connection flow.
+-   fb3165c: Add a site-wide default currency setting. Admins can now choose the currency (EUR, USD, GBP, CHF, DKK, NOK, SEK, PLN, CZK, HUF) in Fair Payments Connector → Settings → Currency; all new transactions, fees, and price displays across the plugins inherit this setting instead of being hard-coded to EUR.
+
+### Patch Changes
+
+-   f46e6ec: Security hardening: protect the payment endpoint with a block nonce and a server-side amount floor, restrict Mollie API keys to edit context in the REST API, and guard the webhook handler against terminal-state replays.
+
 ## 1.2.0
 
 ### Minor Changes

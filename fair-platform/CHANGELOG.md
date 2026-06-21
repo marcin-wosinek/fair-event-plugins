@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.2.0
+
+### Minor Changes
+
+-   aec8208: Add OAuth state parameter to prevent CSRF credential replacement in the Mollie connection flow.
+
 ## 1.1.3
 
 ### Patch Changes

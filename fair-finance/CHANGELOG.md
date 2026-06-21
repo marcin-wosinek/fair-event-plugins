@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.0.2
+
+### Patch Changes
+
+-   f46e6ec: Remove budgetingEnabled feature flag — budgeting is now always active.
+
 ## 1.0.1
 
 ### Patch Changes

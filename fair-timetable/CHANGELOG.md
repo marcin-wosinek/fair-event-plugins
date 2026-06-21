@@ -1,5 +1,11 @@
 # fair-timetable
 
+## 0.6.5
+
+### Patch Changes
+
+-   f46e6ec: Fix duration labels to be extractable for translation.
+
 ## 0.6.4
 
 ### Patch Changes
