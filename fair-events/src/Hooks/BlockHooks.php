@@ -35,10 +35,8 @@ class BlockHooks {
 		register_block_type( __DIR__ . '/../../build/blocks/events-week' );
 		register_block_type( __DIR__ . '/../../build/blocks/event-info' );
 
-		// `sources` bundle — weekly schedule renders feed events; the
-		// event-proposal block writes to EventProposalController.
+		// `sources` bundle — event-proposal block writes to EventProposalController.
 		if ( \FairEvents\Core\Features::is_enabled( 'sources' ) ) {
-			register_block_type( __DIR__ . '/../../build/blocks/weekly-schedule' );
 			register_block_type( __DIR__ . '/../../build/blocks/event-proposal' );
 		}
 	}
@@ -77,13 +75,6 @@ class BlockHooks {
 		// Events week view block editor script
 		wp_set_script_translations(
 			'fair-events-events-week-editor-script',
-			'fair-events',
-			\FairEvents\Core\Features::script_translations_path()
-		);
-
-		// Weekly schedule block editor script
-		wp_set_script_translations(
-			'fair-events-weekly-schedule-editor-script',
 			'fair-events',
 			\FairEvents\Core\Features::script_translations_path()
 		);

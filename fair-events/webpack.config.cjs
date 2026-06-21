@@ -21,11 +21,7 @@ module.exports = {
       process.cwd(),
       "src/blocks/events-week/editor.js",
     ),
-    "blocks/weekly-schedule/editor": path.resolve(
-      process.cwd(),
-      "src/blocks/weekly-schedule/editor.js",
-    ),
-    "blocks/event-proposal/editor": path.resolve(
+"blocks/event-proposal/editor": path.resolve(
       process.cwd(),
       "src/blocks/event-proposal/editor.js",
     ),
