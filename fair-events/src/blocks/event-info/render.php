@@ -34,10 +34,12 @@ $event_end     = $event_dates->end_datetime;
 $event_all_day = $event_dates->all_day;
 $venue_id      = $event_dates->venue_id;
 
-// Get venue data if available.
+// Get venue data if available. The Venue model lives in the optional
+// fair-events-experimental plugin, so guard with class_exists() in case it
+// is not active.
 $venue = null;
-if ( $venue_id ) {
-	$venue = \FairEvents\Models\Venue::get_by_id( $venue_id );
+if ( $venue_id && class_exists( \FairEventsExperimental\Models\Venue::class ) ) {
+	$venue = \FairEventsExperimental\Models\Venue::get_by_id( $venue_id );
 }
 
 $formatted_date = \FairEvents\Helpers\DateRangeFormatter::format( $event_start, $event_end, $event_all_day );
