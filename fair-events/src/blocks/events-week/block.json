@@ -17,11 +17,6 @@
 				"type": "number"
 			}
 		},
-		"startOfWeek": {
-			"type": "number",
-			"default": 1,
-			"enum": [0, 1]
-		},
 		"showNavigation": {
 			"type": "boolean",
 			"default": true

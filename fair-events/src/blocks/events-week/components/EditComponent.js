@@ -13,7 +13,6 @@ import {
 import {
 	PanelBody,
 	ToggleControl,
-	RadioControl,
 	CheckboxControl,
 	Icon,
 	Notice,
@@ -24,7 +23,6 @@ import { EventSourceSelector } from 'fair-events-shared';
 
 const EditComponent = ({ attributes, setAttributes }) => {
 	const {
-		startOfWeek,
 		showNavigation,
 		categories,
 		showDrafts,
@@ -72,18 +70,6 @@ const EditComponent = ({ attributes, setAttributes }) => {
 					title={__('Week View Settings', 'fair-events')}
 					initialOpen={true}
 				>
-					<RadioControl
-						label={__('Start of Week', 'fair-events')}
-						selected={startOfWeek}
-						options={[
-							{ label: __('Monday', 'fair-events'), value: 1 },
-							{ label: __('Sunday', 'fair-events'), value: 0 },
-						]}
-						onChange={(value) =>
-							setAttributes({ startOfWeek: parseInt(value) })
-						}
-					/>
-
 					<ToggleControl
 						label={__('Show Navigation', 'fair-events')}
 						checked={showNavigation}

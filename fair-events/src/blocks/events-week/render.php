@@ -94,7 +94,7 @@ if ( $parsed ) {
 }
 
 // Block attributes.
-$start_of_week   = $attributes['startOfWeek'] ?? 1;
+$start_of_week   = Settings::get_start_of_week();
 $show_navigation = $attributes['showNavigation'] ?? true;
 $categories      = $attributes['categories'] ?? array();
 $show_drafts     = $attributes['showDrafts'] ?? false;

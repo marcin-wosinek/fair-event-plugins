@@ -8,6 +8,7 @@ import {
 	TextControl,
 	CheckboxControl,
 	ToggleControl,
+	RadioControl,
 	ExternalLink,
 	Card,
 	CardHeader,
@@ -37,6 +38,7 @@ export default function GeneralTab({ onNotice }) {
 	const [registerPostType, setRegisterPostType] = useState(true);
 	const [availablePostTypes, setAvailablePostTypes] = useState([]);
 	const [poweredByBranding, setPoweredByBranding] = useState(false);
+	const [startOfWeek, setStartOfWeek] = useState(1);
 	const [isLoading, setIsLoading] = useState(true);
 	const [isSaving, setIsSaving] = useState(false);
 
@@ -48,6 +50,7 @@ export default function GeneralTab({ onNotice }) {
 				setEnabledPostTypes(settings.enabledPostTypes);
 				setRegisterPostType(settings.registerPostType);
 				setPoweredByBranding(settings.poweredByBranding);
+				setStartOfWeek(settings.startOfWeek);
 
 				// Filter to get content post types that make sense for events.
 				// Exclude system types that shouldn't have event data.
@@ -114,6 +117,7 @@ export default function GeneralTab({ onNotice }) {
 			fair_events_register_post_type: registerPostType,
 			fair_events_enabled_post_types: otherPostTypes,
 			fair_events_powered_by_branding: poweredByBranding,
+			fair_events_start_of_week: startOfWeek,
 		})
 			.then(() => {
 				return loadGeneralSettings();
@@ -123,6 +127,7 @@ export default function GeneralTab({ onNotice }) {
 				setEnabledPostTypes(settings.enabledPostTypes);
 				setRegisterPostType(settings.registerPostType);
 				setPoweredByBranding(settings.poweredByBranding);
+				setStartOfWeek(settings.startOfWeek);
 				onNotice({
 					status: 'success',
 					message: __('Settings saved successfully.', 'fair-events'),
@@ -287,6 +292,36 @@ export default function GeneralTab({ onNotice }) {
 								'Adds a subtle attribution line under public signup forms and at the bottom of participant emails. Off by default.',
 								'fair-events'
 							)}
+							disabled={isSaving}
+						/>
+					</CardBody>
+				</Card>
+
+				<Card>
+					<CardHeader>
+						<h2>{__('Calendar Display', 'fair-events')}</h2>
+					</CardHeader>
+					<CardBody>
+						<RadioControl
+							label={__('Start of Week', 'fair-events')}
+							help={__(
+								'First day of the week shown in the Events Calendar and Events Week View blocks.',
+								'fair-events'
+							)}
+							selected={startOfWeek}
+							options={[
+								{
+									label: __('Monday', 'fair-events'),
+									value: 1,
+								},
+								{
+									label: __('Sunday', 'fair-events'),
+									value: 0,
+								},
+							]}
+							onChange={(value) =>
+								setStartOfWeek(parseInt(value, 10))
+							}
 							disabled={isSaving}
 						/>
 					</CardBody>

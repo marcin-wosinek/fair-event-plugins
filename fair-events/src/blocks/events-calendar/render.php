@@ -203,7 +203,7 @@ if ( ! function_exists( 'fair_events_render_calendar_event_item' ) ) {
  */
 
 // Get block attributes
-$start_of_week   = $attributes['startOfWeek'] ?? 1;
+$start_of_week   = Settings::get_start_of_week();
 $show_navigation = $attributes['showNavigation'] ?? true;
 $categories      = $attributes['categories'] ?? array();
 $display_pattern = $attributes['displayPattern'] ?? 'fair-events/calendar-event-simple';
