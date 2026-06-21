@@ -636,4 +636,7 @@ $today = current_time( 'Y-m-d' );
 			?>
 		</div>
 	</div>
+	<?php if ( class_exists( \FairAudience\Services\Branding::class ) ) : ?>
+		<?php echo wp_kses_post( \FairAudience\Services\Branding::block_html() ); ?>
+	<?php endif; ?>
 </div>
