@@ -389,7 +389,9 @@ $next_url = add_query_arg( 'week_view', sprintf( '%04d-W%02d', $next['year'], $n
 $summary_text = '';
 if ( $show_copy_summary ) {
 	$page_title    = get_the_title( get_queried_object_id() );
-	$summary_lines = array( $page_title . ', ' . $nav_title . ':' );
+	$page_url      = get_permalink( get_queried_object_id() );
+	$page_label    = $page_url ? $page_title . ' (' . $page_url . ')' : $page_title;
+	$summary_lines = array( $page_label . ', ' . $nav_title . ':' );
 
 	foreach ( $days as $day ) {
 		foreach ( $day['events'] as $ev ) {
