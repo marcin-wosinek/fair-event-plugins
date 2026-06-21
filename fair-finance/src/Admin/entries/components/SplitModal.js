@@ -168,7 +168,6 @@ const SplitEventUrlField = ({ value, eventDateId, onChange }) => {
 const SplitModal = ({
 	entry,
 	budgets,
-	budgetingEnabled,
 	eventsEnabled,
 	onSplit,
 	onCancel,
@@ -363,30 +362,28 @@ const SplitModal = ({
 							}}
 						>
 							<HStack spacing={2} alignment="top" wrap>
-								{budgetingEnabled && (
-									<div
-										style={{
-											flex: 1,
-											minWidth: '150px',
-										}}
-									>
-										<SelectControl
-											label={__(
-												'Budget',
-												'fair-payments-connector'
-											)}
-											value={allocation.budget_id}
-											options={budgetOptions}
-											onChange={(value) =>
-												updateAllocation(
-													index,
-													'budget_id',
-													value
-												)
-											}
-										/>
-									</div>
-								)}
+								<div
+									style={{
+										flex: 1,
+										minWidth: '150px',
+									}}
+								>
+									<SelectControl
+										label={__(
+											'Budget',
+											'fair-payments-connector'
+										)}
+										value={allocation.budget_id}
+										options={budgetOptions}
+										onChange={(value) =>
+											updateAllocation(
+												index,
+												'budget_id',
+												value
+											)
+										}
+									/>
+								</div>
 								<div style={{ width: '120px' }}>
 									<TextControl
 										label={__(
