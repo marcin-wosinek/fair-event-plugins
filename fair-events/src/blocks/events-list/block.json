@@ -40,6 +40,7 @@
 		"align": true
 	},
 	"editorScript": "file:./editor.js",
+	"editorStyle": "file:./editor.css",
 	"style": "file:./style-editor.css",
 	"render": "file:./render.php"
 }

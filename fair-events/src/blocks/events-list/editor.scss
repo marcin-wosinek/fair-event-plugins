@@ -1,0 +1,13 @@
+/**
+ * Events List Block - Editor Styles
+ *
+ * @package FairEvents
+ */
+
+.wp-block-fair-events-events-list {
+	a,
+	button {
+		pointer-events: none;
+		cursor: default;
+	}
+}

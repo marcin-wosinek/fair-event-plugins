@@ -8,8 +8,8 @@ import {
 	CheckboxControl,
 } from '@wordpress/components';
 import { useSelect } from '@wordpress/data';
-import { useEffect } from '@wordpress/element';
 import { __ } from '@wordpress/i18n';
+import ServerSideRender from '@wordpress/server-side-render';
 import { EventSourceSelector } from 'fair-events-shared';
 
 /**
@@ -18,15 +18,13 @@ import { EventSourceSelector } from 'fair-events-shared';
  * @param {Object}   props               - Component props
  * @param {Object}   props.attributes    - Block attributes
  * @param {Function} props.setAttributes - Function to set attributes
- * @param {string}   props.clientId      - Block client ID
  * @return {JSX.Element} The edit component
  */
-export default function EditComponent({ attributes, setAttributes, clientId }) {
+export default function EditComponent({ attributes, setAttributes }) {
 	const { timeFilter, categories, displayPattern, eventSources } = attributes;
 
 	const blockProps = useBlockProps();
 
-	// Get all categories
 	const allCategories = useSelect((select) => {
 		const cats = select('core').getEntityRecords('taxonomy', 'category', {
 			per_page: -1,
@@ -34,7 +32,6 @@ export default function EditComponent({ attributes, setAttributes, clientId }) {
 		return cats || [];
 	}, []);
 
-	// Get all block patterns from Fair Events category (PHP-registered)
 	const fairEventsPatterns = useSelect((select) => {
 		const patterns = select('core').getBlockPatterns?.() || [];
 		return patterns.filter((pattern) =>
@@ -42,7 +39,6 @@ export default function EditComponent({ attributes, setAttributes, clientId }) {
 		);
 	}, []);
 
-	// Get user-created patterns (reusable blocks / synced patterns)
 	const userPatterns = useSelect((select) => {
 		const patterns = select('core').getEntityRecords(
 			'postType',
@@ -54,7 +50,6 @@ export default function EditComponent({ attributes, setAttributes, clientId }) {
 		return patterns || [];
 	}, []);
 
-	// Combine all patterns for the dropdown
 	const allPatterns = [
 		...fairEventsPatterns.map((pattern) => ({
 			label: pattern.title,
@@ -69,29 +64,17 @@ export default function EditComponent({ attributes, setAttributes, clientId }) {
 		})),
 	];
 
-	// Check if there are multiple categories (more than just "Uncategorized")
 	const meaningfulCategories = allCategories.filter(
 		(cat) => cat.slug !== 'uncategorized'
 	);
 	const hasCategories = meaningfulCategories.length > 0;
 
-	// Handle category checkbox toggle
 	const handleCategoryToggle = (categoryId, checked) => {
-		let newCategories;
-		if (checked) {
-			// Add category
-			newCategories = [...categories, categoryId];
-		} else {
-			// Remove category
-			newCategories = categories.filter((id) => id !== categoryId);
-		}
+		const newCategories = checked
+			? [...categories, categoryId]
+			: categories.filter((id) => id !== categoryId);
 		setAttributes({ categories: newCategories });
 	};
-
-	// Get selected category names for display
-	const selectedCategoryNames = allCategories
-		.filter((cat) => categories.includes(cat.id))
-		.map((cat) => cat.name);
 
 	return (
 		<>
@@ -194,44 +177,10 @@ export default function EditComponent({ attributes, setAttributes, clientId }) {
 			</InspectorControls>
 
 			<div {...blockProps}>
-				<div className="events-list-placeholder">
-					<p>
-						<strong>{__('Events List', 'fair-events')}</strong>
-					</p>
-					<p>
-						{__('Display Pattern:', 'fair-events')}{' '}
-						<code>{displayPattern}</code>
-					</p>
-					<p>
-						{__('Time Filter:', 'fair-events')}{' '}
-						<code>{timeFilter}</code>
-					</p>
-					<p>
-						{__('Categories:', 'fair-events')}{' '}
-						{categories.length === 0 ? (
-							<code>{__('All', 'fair-events')}</code>
-						) : (
-							<code>{selectedCategoryNames.join(', ')}</code>
-						)}
-					</p>
-					{eventSources.length > 0 && (
-						<p>
-							{__('Event Sources:', 'fair-events')}{' '}
-							<code>
-								{eventSources.length}{' '}
-								{__('selected', 'fair-events')}
-							</code>
-						</p>
-					)}
-					<p>
-						<em>
-							{__(
-								'Event list will appear here on the frontend.',
-								'fair-events'
-							)}
-						</em>
-					</p>
-				</div>
+				<ServerSideRender
+					block="fair-events/events-list"
+					attributes={attributes}
+				/>
 			</div>
 		</>
 	);
