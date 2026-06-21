@@ -183,17 +183,14 @@ const EntryForm = ({
 						)}
 					/>
 
-											<SelectControl
-							label={__(
-								'Budget Category',
-								'fair-payments-connector'
-							)}
-							value={formData.budget_id}
-							options={budgetOptions}
-							onChange={(value) =>
-								setFormData({ ...formData, budget_id: value })
-							}
-						/>
+					<SelectControl
+						label={__('Budget Category', 'fair-payments-connector')}
+						value={formData.budget_id}
+						options={budgetOptions}
+						onChange={(value) =>
+							setFormData({ ...formData, budget_id: value })
+						}
+					/>
 
 					{eventsEnabled && (
 						<EventUrlField

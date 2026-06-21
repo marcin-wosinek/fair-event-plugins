@@ -1159,78 +1159,78 @@ const EntriesApp = () => {
 																		</div>
 																	)}
 																</td>
-																																	<td>
-																		{isTransfer ? (
-																			(() => {
-																				const costChild =
-																					entry.children?.find(
-																						(
-																							c
-																						) =>
-																							c.entry_type ===
-																							'cost'
-																					);
-																				const incomeChild =
-																					entry.children?.find(
-																						(
-																							c
-																						) =>
-																							c.entry_type ===
-																							'income'
-																					);
-																				return (
-																					<span
-																						style={{
-																							fontSize:
-																								'12px',
-																							lineHeight:
-																								'1.4',
-																						}}
-																					>
-																						{getBudgetName(
-																							costChild?.budget_id
-																						)}
-																						<br />
-																						→
-																						<br />
-																						{getBudgetName(
-																							incomeChild?.budget_id
-																						)}
-																					</span>
+																<td>
+																	{isTransfer ? (
+																		(() => {
+																			const costChild =
+																				entry.children?.find(
+																					(
+																						c
+																					) =>
+																						c.entry_type ===
+																						'cost'
 																				);
-																			})()
-																		) : isSplit ? (
-																			<Button
-																				variant="link"
-																				size="small"
-																				onClick={() =>
-																					toggleExpanded(
-																						entry.id
-																					)
-																				}
-																				style={{
-																					color: '#2271b1',
-																					fontWeight:
-																						'bold',
-																				}}
-																			>
-																				{isExpanded
-																					? __(
-																							'Split \u25BE',
-																							'fair-payments-connector'
-																					  )
-																					: __(
-																							'Split \u25B8',
-																							'fair-payments-connector'
-																					  )}
-																			</Button>
-																		) : (
-																			getBudgetName(
-																				entry.budget_id
-																			)
-																		)}
-																	</td>
-																
+																			const incomeChild =
+																				entry.children?.find(
+																					(
+																						c
+																					) =>
+																						c.entry_type ===
+																						'income'
+																				);
+																			return (
+																				<span
+																					style={{
+																						fontSize:
+																							'12px',
+																						lineHeight:
+																							'1.4',
+																					}}
+																				>
+																					{getBudgetName(
+																						costChild?.budget_id
+																					)}
+																					<br />
+																					→
+																					<br />
+																					{getBudgetName(
+																						incomeChild?.budget_id
+																					)}
+																				</span>
+																			);
+																		})()
+																	) : isSplit ? (
+																		<Button
+																			variant="link"
+																			size="small"
+																			onClick={() =>
+																				toggleExpanded(
+																					entry.id
+																				)
+																			}
+																			style={{
+																				color: '#2271b1',
+																				fontWeight:
+																					'bold',
+																			}}
+																		>
+																			{isExpanded
+																				? __(
+																						'Split \u25BE',
+																						'fair-payments-connector'
+																				  )
+																				: __(
+																						'Split \u25B8',
+																						'fair-payments-connector'
+																				  )}
+																		</Button>
+																	) : (
+																		getBudgetName(
+																			entry.budget_id
+																		)
+																	)}
+																</td>
+
 																{eventsEnabled && (
 																	<td>
 																		{entry.event_url ? (
@@ -1593,12 +1593,12 @@ const EntriesApp = () => {
 																					</em>
 																				)}
 																			</td>
-																																							<td>
-																					{getBudgetName(
-																						child.budget_id
-																					)}
-																				</td>
-																			
+																			<td>
+																				{getBudgetName(
+																					child.budget_id
+																				)}
+																			</td>
+
 																			{eventsEnabled && (
 																				<td>
 																					{child.event_url ? (
@@ -1671,12 +1671,12 @@ const EntriesApp = () => {
 																					</em>
 																				)}
 																			</td>
-																																							<td>
-																					{getBudgetName(
-																						child.budget_id
-																					)}
-																				</td>
-																			
+																			<td>
+																				{getBudgetName(
+																					child.budget_id
+																				)}
+																			</td>
+
 																			{eventsEnabled && (
 																				<td>
 																					{child.event_url ? (
