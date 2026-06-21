@@ -61,6 +61,7 @@
 		display: flex;
 		flex-direction: column;
 		min-height: 120px;
+		min-width: 0; // Allow grid cell to shrink below content size
 
 		&:last-child {
 			border-right: none;
@@ -129,6 +130,7 @@
 		flex-direction: column;
 		gap: 2px;
 		flex: 1;
+		min-width: 0; // Allow shrinking below content size
 	}
 
 	// Event chip — shared base
@@ -137,6 +139,7 @@
 		font-size: 0.75rem;
 		line-height: 1.35;
 		text-decoration: none;
+		min-width: 0; // Allow shrinking below content size
 
 		.week-event-time {
 			font-weight: 700;
