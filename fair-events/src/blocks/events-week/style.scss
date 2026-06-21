@@ -1,0 +1,204 @@
+/**
+ * Events Week View Block - Frontend Styles
+ *
+ * @package FairEvents
+ */
+
+.wp-block-fair-events-events-week {
+	// Navigation
+	.fair-events-navigation {
+		display: flex;
+		justify-content: space-between;
+		align-items: center;
+		margin-bottom: 1rem;
+		padding: 0.5rem 1rem;
+		background: #f9f9f9;
+		border-radius: 4px;
+
+		.navigation-title {
+			margin: 0;
+			font-size: 1rem;
+			font-weight: 600;
+			color: #1e1e1e;
+		}
+
+		.nav-prev,
+		.nav-next {
+			padding: 0.375rem 0.75rem;
+			background: #fff;
+			border: 1px solid #ddd;
+			border-radius: 4px;
+			text-decoration: none;
+			color: #1e1e1e;
+			transition: all 0.2s ease;
+
+			&:hover {
+				background: #2271b1;
+				color: #fff;
+				border-color: #2271b1;
+			}
+		}
+	}
+
+	// 7-column grid
+	.week-grid {
+		display: grid;
+		grid-template-columns: repeat(7, 1fr);
+		gap: 0;
+		border: 1px solid #ddd;
+
+		@media (max-width: 600px) {
+			display: flex;
+			flex-direction: column;
+			border: none;
+			gap: 0.5rem;
+		}
+	}
+
+	// Day column
+	.week-day {
+		border-right: 1px solid #ddd;
+		display: flex;
+		flex-direction: column;
+		min-height: 120px;
+
+		&:last-child {
+			border-right: none;
+		}
+
+		// Today: border + body background only, header stays neutral
+		&.is-today {
+			outline: 2px solid #2271b1;
+			outline-offset: -1px;
+
+			.week-day-events {
+				background: #e7f5ff;
+			}
+		}
+
+		// Past days: dim day number and events
+		&.is-past {
+			.week-day-num {
+				color: #aaa;
+			}
+
+			.week-event {
+				opacity: 0.45;
+			}
+		}
+
+		@media (max-width: 600px) {
+			border-right: none;
+			border: 1px solid #ddd;
+			border-radius: 4px;
+			min-height: auto;
+
+			&:not(:has(.week-day-events > *)) {
+				display: none;
+			}
+		}
+	}
+
+	.week-day-header {
+		display: flex;
+		justify-content: center;
+		align-items: center;
+		gap: 0.375rem;
+		padding: 0.5rem 0.25rem;
+		background: #f0f0f0;
+		border-bottom: 1px solid #ddd;
+		text-align: center;
+
+		.week-day-name {
+			font-size: 0.875rem;
+			font-weight: 400;
+			color: #1e1e1e;
+		}
+
+		.week-day-num {
+			font-size: 0.875rem;
+			font-weight: 700;
+			color: #1e1e1e;
+			line-height: 1;
+		}
+	}
+
+	.week-day-events {
+		padding: 0.25rem;
+		display: flex;
+		flex-direction: column;
+		gap: 2px;
+		flex: 1;
+	}
+
+	// Event chip — shared base
+	.week-event {
+		display: block;
+		font-size: 0.75rem;
+		line-height: 1.35;
+		text-decoration: none;
+
+		.week-event-time {
+			font-weight: 700;
+			font-size: 0.6875rem;
+			display: block;
+			margin-bottom: 1px;
+		}
+
+		.week-event-title {
+			display: block;
+			overflow: hidden;
+			text-overflow: ellipsis;
+			white-space: nowrap;
+		}
+	}
+
+	// Linked events: colored button (same as calendar's <a> treatment)
+	a.week-event {
+		padding: 0.25rem 0.375rem;
+		background: var(
+			--event-bg-color,
+			var(--wp--preset--color--primary, #2271b1)
+		);
+		color: var(--event-text-color, #ffffff);
+		border-radius: 3px;
+		border: 1px solid transparent;
+
+		.week-event-time {
+			opacity: 0.9;
+		}
+
+		&:hover {
+			opacity: 0.8;
+		}
+
+		&.is-draft {
+			background: transparent;
+			border-color: var(
+				--event-bg-color,
+				var(--wp--preset--color--primary, #2271b1)
+			);
+			color: var(
+				--event-bg-color,
+				var(--wp--preset--color--primary, #2271b1)
+			);
+		}
+	}
+
+	// Unlinked placeholder events: plain text, matching calendar's span.event-title
+	span.week-event {
+		color: #1e1e1e;
+		padding: 0.125rem 0;
+	}
+
+	.fair-audience-powered-by {
+		margin-top: 0.75rem;
+		text-align: center;
+		font-size: 0.75rem;
+		color: #757575;
+
+		a {
+			color: inherit;
+		}
+	}
+}

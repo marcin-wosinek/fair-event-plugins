@@ -32,6 +32,7 @@ class BlockHooks {
 		register_block_type( __DIR__ . '/../../build/blocks/events-list' );
 		register_block_type( __DIR__ . '/../../build/blocks/event-dates' );
 		register_block_type( __DIR__ . '/../../build/blocks/events-calendar' );
+		register_block_type( __DIR__ . '/../../build/blocks/events-week' );
 		register_block_type( __DIR__ . '/../../build/blocks/event-info' );
 
 		// `sources` bundle — weekly schedule renders feed events; the
@@ -69,6 +70,13 @@ class BlockHooks {
 		// Events calendar block editor script
 		wp_set_script_translations(
 			'fair-events-events-calendar-editor-script',
+			'fair-events',
+			\FairEvents\Core\Features::script_translations_path()
+		);
+
+		// Events week view block editor script
+		wp_set_script_translations(
+			'fair-events-events-week-editor-script',
 			'fair-events',
 			\FairEvents\Core\Features::script_translations_path()
 		);
