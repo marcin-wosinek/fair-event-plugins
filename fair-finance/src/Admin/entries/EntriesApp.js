@@ -28,7 +28,6 @@ import TransferModal from './components/TransferModal.js';
 import TagChart from './components/TagChart.js';
 import { buildEntriesCsv, downloadCsv } from './exportEntriesCsv.js';
 
-const budgetingEnabled = window.fairPaymentSettings?.budgetingEnabled === '1';
 const eventsEnabled = window.fairPaymentSettings?.eventsEnabled === '1';
 
 const getEventUrlLabel = (url) => {
@@ -89,14 +88,12 @@ const EntriesApp = () => {
 	const [expandedEntries, setExpandedEntries] = useState({});
 
 	useEffect(() => {
-		if (budgetingEnabled) {
-			loadBudgets();
+		loadBudgets();
 
-			const params = new URLSearchParams(window.location.search);
-			const budgetId = params.get('budget_id');
-			if (budgetId) {
-				setFilters((prev) => ({ ...prev, budget_id: budgetId }));
-			}
+		const params = new URLSearchParams(window.location.search);
+		const budgetId = params.get('budget_id');
+		if (budgetId) {
+			setFilters((prev) => ({ ...prev, budget_id: budgetId }));
 		}
 		if (eventsEnabled) {
 			loadEventUrls();
@@ -714,17 +711,12 @@ const EntriesApp = () => {
 								>
 									{__('Add Entry', 'fair-payments-connector')}
 								</Button>
-								{budgetingEnabled && (
-									<Button
-										variant="secondary"
-										onClick={handleTransfer}
-									>
-										{__(
-											'Transfer',
-											'fair-payments-connector'
-										)}
-									</Button>
-								)}
+								<Button
+									variant="secondary"
+									onClick={handleTransfer}
+								>
+									{__('Transfer', 'fair-payments-connector')}
+								</Button>
 								<Button
 									variant="secondary"
 									onClick={handleImport}
@@ -773,22 +765,17 @@ const EntriesApp = () => {
 									}
 									type="date"
 								/>
-								{budgetingEnabled && (
-									<SelectControl
-										label={__(
-											'Budget',
-											'fair-payments-connector'
-										)}
-										value={filters.budget_id}
-										options={budgetOptions}
-										onChange={(value) =>
-											handleFilterChange(
-												'budget_id',
-												value
-											)
-										}
-									/>
-								)}
+								<SelectControl
+									label={__(
+										'Budget',
+										'fair-payments-connector'
+									)}
+									value={filters.budget_id}
+									options={budgetOptions}
+									onChange={(value) =>
+										handleFilterChange('budget_id', value)
+									}
+								/>
 								{eventsEnabled &&
 									eventDateOptions.length > 0 && (
 										<SelectControl
@@ -1013,14 +1000,12 @@ const EntriesApp = () => {
 															'fair-payments-connector'
 														)}
 													</th>
-													{budgetingEnabled && (
-														<SortableHeader column="budget_id">
-															{__(
-																'Budget',
-																'fair-payments-connector'
-															)}
-														</SortableHeader>
-													)}
+													<SortableHeader column="budget_id">
+														{__(
+															'Budget',
+															'fair-payments-connector'
+														)}
+													</SortableHeader>
 													{eventsEnabled && (
 														<SortableHeader column="event_date_id">
 															{__(
@@ -1174,8 +1159,7 @@ const EntriesApp = () => {
 																		</div>
 																	)}
 																</td>
-																{budgetingEnabled && (
-																	<td>
+																																	<td>
 																		{isTransfer ? (
 																			(() => {
 																				const costChild =
@@ -1246,7 +1230,7 @@ const EntriesApp = () => {
 																			)
 																		)}
 																	</td>
-																)}
+																
 																{eventsEnabled && (
 																	<td>
 																		{entry.event_url ? (
@@ -1609,13 +1593,12 @@ const EntriesApp = () => {
 																					</em>
 																				)}
 																			</td>
-																			{budgetingEnabled && (
-																				<td>
+																																							<td>
 																					{getBudgetName(
 																						child.budget_id
 																					)}
 																				</td>
-																			)}
+																			
 																			{eventsEnabled && (
 																				<td>
 																					{child.event_url ? (
@@ -1688,13 +1671,12 @@ const EntriesApp = () => {
 																					</em>
 																				)}
 																			</td>
-																			{budgetingEnabled && (
-																				<td>
+																																							<td>
 																					{getBudgetName(
 																						child.budget_id
 																					)}
 																				</td>
-																			)}
+																			
 																			{eventsEnabled && (
 																				<td>
 																					{child.event_url ? (
@@ -1800,7 +1782,6 @@ const EntriesApp = () => {
 				<EntryForm
 					entry={editingEntry}
 					budgets={budgets}
-					budgetingEnabled={budgetingEnabled}
 					eventsEnabled={eventsEnabled}
 					tags={tags}
 					onSave={handleFormSave}
@@ -1830,7 +1811,6 @@ const EntriesApp = () => {
 				<SplitModal
 					entry={splittingEntry}
 					budgets={budgets}
-					budgetingEnabled={budgetingEnabled}
 					eventsEnabled={eventsEnabled}
 					onSplit={handleSplitComplete}
 					onCancel={handleSplitCancel}

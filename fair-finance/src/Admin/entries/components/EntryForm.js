@@ -23,7 +23,6 @@ import TagField from './TagField.js';
 const EntryForm = ({
 	entry,
 	budgets,
-	budgetingEnabled,
 	eventsEnabled,
 	tags,
 	onSave,
@@ -184,8 +183,7 @@ const EntryForm = ({
 						)}
 					/>
 
-					{budgetingEnabled && (
-						<SelectControl
+											<SelectControl
 							label={__(
 								'Budget Category',
 								'fair-payments-connector'
@@ -196,7 +194,6 @@ const EntryForm = ({
 								setFormData({ ...formData, budget_id: value })
 							}
 						/>
-					)}
 
 					{eventsEnabled && (
 						<EventUrlField
