@@ -131,12 +131,29 @@ a before/after row per viewport, e.g.:
 
 Don't commit the PNGs — they belong in the PR, not the history.
 
+## Before committing
+
+Run format and build in the affected plugin so every committed file has
+correct styling and up-to-date generated assets:
+
+```bash
+# From inside the affected plugin directory
+npm run format   # JS/CSS/JSON via wp-scripts; PHP via phpcbf
+npm run build    # Rebuild generated assets after JS/CSS changes
+```
+
+The PostToolUse hook auto-formats each file as you edit it, but running
+`npm run format` explicitly before staging catches any files that were
+touched outside the hook (e.g. manual shell edits, generated files, or
+files edited across multiple sessions).
+
+Only stage the resulting clean files — never commit formatting noise
+mixed with logic changes.
+
 ## Things to keep doing
 
 - Use `HEREDOC` for multi-line commit messages and PR bodies so formatting
   survives the shell.
-- Run `npm run format` and the relevant `npm run build` before committing
-  generated assets land cleanly.
 - Stage files explicitly (`git add path/...`); avoid `git add -A` / `git add .`
   to keep stray edits out of commits.
 - Never `--amend` a pushed commit or push to `main` without explicit ask.
