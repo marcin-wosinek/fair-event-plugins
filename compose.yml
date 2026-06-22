@@ -19,6 +19,7 @@ services:
             - ./fair-finance:/var/www/html/wp-content/plugins/fair-finance
             - ./fair-events-experimental:/var/www/html/wp-content/plugins/fair-events-experimental
             - ./fair-payments-connector-experimental:/var/www/html/wp-content/plugins/fair-payments-connector-experimental
+            - ./fair-form:/var/www/html/wp-content/plugins/fair-form
             - ./uploads.ini:/usr/local/etc/php/conf.d/uploads.ini
 
     db:
@@ -57,6 +58,7 @@ services:
             - ./fair-finance:/var/www/html/wp-content/plugins/fair-finance
             - ./fair-events-experimental:/var/www/html/wp-content/plugins/fair-events-experimental
             - ./fair-payments-connector-experimental:/var/www/html/wp-content/plugins/fair-payments-connector-experimental
+            - ./fair-form:/var/www/html/wp-content/plugins/fair-form
 
         environment:
             WORDPRESS_DB_HOST: db

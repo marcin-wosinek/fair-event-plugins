@@ -75,6 +75,13 @@ const plugins = [
 		readmeFiles: ['fair-payments-connector-experimental/readme.txt'],
 		versionConstant: 'FAIR_PAYMENTS_CONNECTOR_EXPERIMENTAL_VERSION',
 	},
+	{
+		name: 'fair-form',
+		packagePath: 'fair-form/package.json',
+		phpFiles: ['fair-form/fair-form.php'],
+		readmeFiles: ['fair-form/readme.txt'],
+		versionConstant: 'FAIR_FORM_VERSION',
+	},
 ];
 
 /**

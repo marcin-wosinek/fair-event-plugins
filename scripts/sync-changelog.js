@@ -43,6 +43,11 @@ const plugins = [
 		changelogPath: 'fair-payments-connector-experimental/CHANGELOG.md',
 		readmeFiles: ['fair-payments-connector-experimental/readme.txt'],
 	},
+	{
+		name: 'fair-form',
+		changelogPath: 'fair-form/CHANGELOG.md',
+		readmeFiles: ['fair-form/readme.txt'],
+	},
 ];
 
 /**
