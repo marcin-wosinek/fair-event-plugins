@@ -164,9 +164,10 @@ class Schema {
 		self::migrate_to_v19();
 		self::migrate_to_v20();
 		self::migrate_to_v21();
+		self::migrate_to_v22();
 
 		// Store database version for future migrations.
-		update_option( 'fair_payment_db_version', '21.0' );
+		update_option( 'fair_payment_db_version', '22.0' );
 	}
 
 	/**
@@ -1120,6 +1121,42 @@ class Schema {
 						array( '%d' )
 					);
 				}
+			}
+		}
+	}
+
+	/**
+	 * Migrate database from v21.0 to v22.0
+	 *
+	 * Adds a composite index on (status, testmode, created_at) to the payments table
+	 * so the MonthlyFeeCapService::get_month_total() aggregation query is fully covered
+	 * by an index rather than falling back to the single-column status key.
+	 *
+	 * @return void
+	 */
+	public static function migrate_to_v22() {
+		global $wpdb;
+
+		$current_version = get_option( 'fair_payment_db_version', '1.0' );
+
+		if ( version_compare( $current_version, '22.0', '<' ) ) {
+			$table_name = self::get_payments_table_name();
+
+			$index_exists = $wpdb->get_results(
+				$wpdb->prepare(
+					'SHOW INDEX FROM %i WHERE Key_name = %s',
+					$table_name,
+					'fee_cap_month'
+				)
+			);
+
+			if ( empty( $index_exists ) ) {
+				$wpdb->query(
+					$wpdb->prepare(
+						'ALTER TABLE %i ADD KEY fee_cap_month (status, testmode, created_at)',
+						$table_name
+					)
+				);
 			}
 		}
 	}
