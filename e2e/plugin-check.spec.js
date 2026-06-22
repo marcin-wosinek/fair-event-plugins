@@ -21,8 +21,8 @@
  */
 
 import { test, expect } from '@playwright/test';
-import { execSync } from 'node:child_process';
 import { appendFileSync } from 'node:fs';
+import { wpCli } from './support/wp-cli.js';
 
 /** Plugin directory slugs (mirrors `.wp-env.json` `plugins`). */
 const PLUGINS = [
@@ -40,31 +40,6 @@ const PLUGINS = [
  * since that is what the plugin actually ships.
  */
 const CHECK_FLAGS = '--include-experimental --severity=0 --format=json';
-
-/**
- * Run a WP-CLI command against the wp-env `tests` instance and return stdout.
- *
- * @param {string}  args                 WP-CLI arguments (everything after `wp`).
- * @param {object}  [options]
- * @param {boolean} [options.allowFailure] Return stdout instead of throwing on
- *                                          a non-zero exit (Plugin Check exits
- *                                          non-zero when it finds errors).
- * @return {string} Command stdout.
- */
-function wpCli(args, { allowFailure = false } = {}) {
-	try {
-		return execSync(`npx wp-env run tests-cli wp ${args}`, {
-			cwd: process.cwd(),
-			encoding: 'utf8',
-			stdio: ['ignore', 'pipe', 'pipe'],
-		});
-	} catch (err) {
-		if (allowFailure) {
-			return `${err.stdout || ''}`;
-		}
-		throw err;
-	}
-}
 
 /** Ensure the Plugin Check plugin is installed and active (idempotent). */
 function ensurePluginCheck() {
