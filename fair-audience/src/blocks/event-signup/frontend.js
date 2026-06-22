@@ -1190,23 +1190,26 @@ const CSS_PREFIX = 'fair-audience-signup';
 						return;
 					}
 
-					// Get participant name from greeting or fallback
-					const greetingEl = block.querySelector(
-						'.fair-audience-signup-greeting'
+					// Get participant name from the highlighted name element
+					const nameEl = block.querySelector(
+						'.fair-audience-signup-greeting-name'
 					);
-					const participantName = greetingEl
-						? greetingEl.textContent.match(
-								/(?:Hi|Hola|Salut|Ciao)\s+(.+?)!/
-						  )?.[1] || ''
+					const participantName = nameEl
+						? nameEl.textContent.trim()
 						: '';
 
 					// Replace with signup form
 					if (container) {
-						const greetingText = participantName
+						const nameHtml = participantName
+							? '<strong class="fair-audience-signup-greeting-name">' +
+							  participantName +
+							  '</strong>'
+							: '';
+						const greetingHtml = nameHtml
 							? __(
 									'Hi %s! You can sign up for this event.',
 									'fair-audience'
-							  ).replace('%s', participantName)
+							  ).replace('%s', nameHtml)
 							: __(
 									'You can sign up for this event.',
 									'fair-audience'
@@ -1220,7 +1223,7 @@ const CSS_PREFIX = 'fair-audience-signup';
 						container.className = wrapClass;
 						container.innerHTML =
 							'<p class="fair-audience-signup-greeting">' +
-							greetingText +
+							greetingHtml +
 							'</p>' +
 							'<div class="wp-block-button">' +
 							'<button type="button" class="wp-block-button__link wp-element-button fair-audience-signup-button" data-action="signup">' +

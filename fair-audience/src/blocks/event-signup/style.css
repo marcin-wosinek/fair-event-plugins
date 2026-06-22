@@ -101,6 +101,11 @@
 	margin-bottom: 20px;
 }
 
+.fair-audience-signup-greeting-name {
+	font-weight: 700;
+	color: #0073aa;
+}
+
 /* Status messages */
 .fair-audience-signup-status {
 	padding: 15px 20px;
