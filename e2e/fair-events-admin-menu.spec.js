@@ -15,19 +15,7 @@
  */
 
 import { test, expect } from '@playwright/test';
-import { execSync } from 'node:child_process';
-
-const ADMIN_USER = process.env.WP_ADMIN_USER || 'admin';
-const ADMIN_PASSWORD = process.env.WP_ADMIN_PASSWORD || 'password';
-
-/** Run a WP-CLI command against the wp-env `tests` instance. */
-function wpCli(args) {
-	return execSync(`npx wp-env run tests-cli wp ${args}`, {
-		cwd: process.cwd(),
-		encoding: 'utf8',
-		stdio: ['ignore', 'pipe', 'pipe'],
-	});
-}
+import { wpCli, loginAsAdmin } from './support/wp-cli.js';
 
 /**
  * Turn every feature bundle on. These bundles now live in fair-events-experimental.
@@ -81,14 +69,6 @@ const PAGES = [
 	},
 ];
 
-async function login(page) {
-	await page.goto('/wp-login.php');
-	await page.fill('#user_login', ADMIN_USER);
-	await page.fill('#user_pass', ADMIN_PASSWORD);
-	await page.click('#wp-submit');
-	await expect(page).toHaveURL(/\/wp-admin\/?/);
-}
-
 /**
  * Assert a page's React root is present AND something mounted into it. An empty
  * root with no children is the exact failure mode of a broken enqueue (the page
@@ -128,7 +108,7 @@ test.describe('Fair Events admin menu — CPT registered (regression)', () => {
 	test('one top-level Fair Events menu, Calendar first and Settings present', async ({
 		page,
 	}) => {
-		await login(page);
+		await loginAsAdmin(page);
 		await page.goto('/wp-admin/admin.php?page=fair-events-calendar');
 
 		const topLevel = page.locator('#toplevel_page_fair-events-calendar');
@@ -151,7 +131,7 @@ test.describe('Fair Events admin menu — CPT registered (regression)', () => {
 	test('CPT-only menu items are present when the Events post type is on', async ({
 		page,
 	}) => {
-		await login(page);
+		await loginAsAdmin(page);
 		await page.goto('/wp-admin/admin.php?page=fair-events-calendar');
 
 		await expect(
@@ -165,7 +145,7 @@ test.describe('Fair Events admin menu — CPT registered (regression)', () => {
 	});
 
 	test('every page mounts its React root', async ({ page }) => {
-		await login(page);
+		await loginAsAdmin(page);
 		for (const { slug, root } of PAGES) {
 			await expectRootMounts(page, slug, root);
 		}
@@ -187,7 +167,7 @@ test.describe('Fair Events admin menu — Events post type off', () => {
 	test('top-level menu and every non-CPT page still mount', async ({
 		page,
 	}) => {
-		await login(page);
+		await loginAsAdmin(page);
 
 		await expect(
 			page.locator('#toplevel_page_fair-events-calendar'),
@@ -205,7 +185,7 @@ test.describe('Fair Events admin menu — Events post type off', () => {
 	test('CPT-only menu items are hidden when the Events post type is off', async ({
 		page,
 	}) => {
-		await login(page);
+		await loginAsAdmin(page);
 		await page.goto('/wp-admin/admin.php?page=fair-events-calendar');
 
 		await expect(

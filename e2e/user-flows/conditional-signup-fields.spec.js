@@ -13,40 +13,7 @@
  */
 
 import { test, expect } from '@playwright/test';
-import { execSync } from 'node:child_process';
-
-/**
- * Run a WP-CLI command against the wp-env `tests` instance and return stdout.
- *
- * @param {string} args WP-CLI arguments (everything after `wp`).
- * @return {string} Command stdout.
- */
-function wpCli(args) {
-	return execSync(`npx wp-env run tests-cli wp ${args}`, {
-		cwd: process.cwd(),
-		encoding: 'utf8',
-		stdio: ['ignore', 'pipe', 'pipe'],
-	});
-}
-
-/**
- * Run a seed/state eval-file script and parse its `MARKER:{json}` output.
- *
- * @param {string} file      Script filename under mu-plugins/scripts/.
- * @param {string} marker    Output marker (e.g. 'E2E_SEED').
- * @param {string} extraArgs Positional args passed to the script.
- * @return {object} Parsed JSON payload.
- */
-function runScript(file, marker, extraArgs = '') {
-	const out = wpCli(
-		`eval-file wp-content/mu-plugins/scripts/${file} ${extraArgs}`.trim()
-	);
-	const match = out.match(new RegExp(`${marker}:(\\{.*\\})`));
-	if (!match) {
-		throw new Error(`Expected ${marker} in WP-CLI output, got:\n${out}`);
-	}
-	return JSON.parse(match[1]);
-}
+import { runScript } from '../support/wp-cli.js';
 
 let event;
 

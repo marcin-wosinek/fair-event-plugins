@@ -15,15 +15,25 @@ export const ADMIN_PASSWORD = process.env.WP_ADMIN_PASSWORD || 'password';
 /**
  * Run a WP-CLI command against the wp-env `tests` instance and return stdout.
  *
- * @param {string} args WP-CLI arguments (everything after `wp`).
+ * @param {string}  args                   WP-CLI arguments (everything after `wp`).
+ * @param {object}  [options]
+ * @param {boolean} [options.allowFailure]  Return stdout instead of throwing on
+ *                                          a non-zero exit code.
  * @return {string} Command stdout.
  */
-export function wpCli(args) {
-	return execSync(`npx wp-env run tests-cli wp ${args}`, {
-		cwd: process.cwd(),
-		encoding: 'utf8',
-		stdio: ['ignore', 'pipe', 'pipe'],
-	});
+export function wpCli(args, { allowFailure = false } = {}) {
+	try {
+		return execSync(`npx wp-env run tests-cli wp ${args}`, {
+			cwd: process.cwd(),
+			encoding: 'utf8',
+			stdio: ['ignore', 'pipe', 'pipe'],
+		});
+	} catch (err) {
+		if (allowFailure) {
+			return `${err.stdout || ''}`;
+		}
+		throw err;
+	}
 }
 
 /**

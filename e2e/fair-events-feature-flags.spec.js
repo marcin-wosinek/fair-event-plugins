@@ -22,19 +22,7 @@
  */
 
 import { test, expect } from '@playwright/test';
-import { execSync } from 'node:child_process';
-
-const ADMIN_USER = process.env.WP_ADMIN_USER || 'admin';
-const ADMIN_PASSWORD = process.env.WP_ADMIN_PASSWORD || 'password';
-
-/** Run a WP-CLI command against the wp-env `tests` instance. */
-function wpCli(args) {
-	return execSync(`npx wp-env run tests-cli wp ${args}`, {
-		cwd: process.cwd(),
-		encoding: 'utf8',
-		stdio: ['ignore', 'pipe', 'pipe'],
-	});
-}
+import { wpCli, loginAsAdmin } from './support/wp-cli.js';
 
 /** Set the `fair_events_experimental_features` option to a `{bundle: bool}` map. */
 function setExperimentalFeatures(map) {
@@ -111,14 +99,6 @@ const BUNDLE_PROBE_ROUTES = {
 	migration: '/fair-events/v1/migration/post-types',
 };
 
-async function login(page) {
-	await page.goto('/wp-login.php');
-	await page.fill('#user_login', ADMIN_USER);
-	await page.fill('#user_pass', ADMIN_PASSWORD);
-	await page.click('#wp-submit');
-	await expect(page).toHaveURL(/\/wp-admin\/?/);
-}
-
 async function expectRootMounts(page, slug, root) {
 	await page.goto(`/wp-admin/admin.php?page=${slug}`);
 	await expect(
@@ -172,7 +152,7 @@ test.describe('Fair Events — simplified public build (no bundles set)', () => 
 	test('only core admin pages mount; bundle pages are gone', async ({
 		page,
 	}) => {
-		await login(page);
+		await loginAsAdmin(page);
 
 		// Core pages stay available regardless of feature state.
 		await expectRootMounts(
@@ -208,7 +188,7 @@ test.describe('Fair Events — simplified public build (no bundles set)', () => 
 	});
 
 	test('Settings page exposes the Features tab', async ({ page }) => {
-		await login(page);
+		await loginAsAdmin(page);
 		await page.goto('/wp-admin/admin.php?page=fair-events-settings');
 		await expect(
 			page.getByRole('tab', { name: 'Features' }),
@@ -229,7 +209,7 @@ test.describe('Fair Events — full internal build (all bundles on)', () => {
 	});
 
 	test('every bundle page mounts its React root', async ({ page }) => {
-		await login(page);
+		await loginAsAdmin(page);
 		for (const pages of Object.values(BUNDLE_PAGES)) {
 			for (const { slug, root } of pages) {
 				await expectRootMounts(page, slug, root);
@@ -247,7 +227,7 @@ test.describe('Fair Events — full internal build (all bundles on)', () => {
 	});
 
 	test('Settings page still exposes the Features tab', async ({ page }) => {
-		await login(page);
+		await loginAsAdmin(page);
 		await page.goto('/wp-admin/admin.php?page=fair-events-settings');
 		await expect(page.getByRole('tab', { name: 'Features' })).toBeVisible();
 	});
