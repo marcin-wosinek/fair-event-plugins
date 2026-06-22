@@ -26,6 +26,8 @@
 		"svn:copy": "cp -r readme.txt fair-finance.php composer* languages CHANGELOG.md svn/trunk"
 	},
 	"devDependencies": {
+		"@testing-library/jest-dom": "^6.9.1",
+		"@testing-library/react": "^16.3.2",
 		"@wordpress/scripts": "^32.4.0",
 		"webpack-bundle-output": "^1.1.0"
 	},
