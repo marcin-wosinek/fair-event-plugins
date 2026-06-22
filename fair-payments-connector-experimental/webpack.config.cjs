@@ -13,9 +13,9 @@ module.exports = {
       process.cwd(),
       "src/Admin/connected-sites/index.js",
     ),
-    "admin/telegram/index": path.resolve(
+    "admin/notifications/index": path.resolve(
       process.cwd(),
-      "src/Admin/telegram/index.js",
+      "src/Admin/notifications/index.js",
     ),
   },
   plugins: [
