@@ -140,6 +140,7 @@
 		line-height: 1.35;
 		text-decoration: none;
 		min-width: 0; // Allow shrinking below content size
+		overflow: hidden; // Prevent chip from overflowing the column
 
 		.week-event-time {
 			font-weight: 700;
