@@ -49,14 +49,14 @@ class AdminPages {
 			array( $this, 'render_connected_sites_page' )
 		);
 
-		// Telegram submenu under the fair-payments-connector menu.
+		// Notifications submenu under the fair-payments-connector menu.
 		add_submenu_page(
 			'fair-payments-connector-transactions',
-			__( 'Telegram', 'fair-payments-connector-experimental' ),
-			__( 'Telegram', 'fair-payments-connector-experimental' ),
+			__( 'Notifications', 'fair-payments-connector-experimental' ),
+			__( 'Notifications', 'fair-payments-connector-experimental' ),
 			'manage_options',
-			'fair-payments-connector-telegram',
-			array( $this, 'render_telegram_page' )
+			'fair-payments-connector-notifications',
+			array( $this, 'render_notifications_page' )
 		);
 	}
 
@@ -77,8 +77,8 @@ class AdminPages {
 			return;
 		}
 
-		if ( false !== strpos( $hook, 'fair-payments-connector-telegram' ) ) {
-			$this->enqueue_admin_page_script( 'telegram' );
+		if ( false !== strpos( $hook, 'fair-payments-connector-notifications' ) ) {
+			$this->enqueue_admin_page_script( 'notifications' );
 			return;
 		}
 	}
@@ -147,13 +147,13 @@ class AdminPages {
 	}
 
 	/**
-	 * Render Telegram settings page
+	 * Render notifications settings page
 	 *
 	 * @return void
 	 */
-	public function render_telegram_page() {
+	public function render_notifications_page() {
 		?>
-		<div id="fair-payments-connector-experimental-telegram-root"></div>
+		<div id="fair-payments-connector-experimental-notifications-root"></div>
 		<?php
 	}
 }

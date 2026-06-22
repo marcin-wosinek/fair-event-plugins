@@ -40,5 +40,8 @@ class RestHooks {
 
 		$telegram_controller = new \FairPaymentsConnectorExperimental\API\TelegramSettingsController();
 		$telegram_controller->register_routes();
+
+		$notifications_controller = new \FairPaymentsConnectorExperimental\API\NotificationsController();
+		$notifications_controller->register_routes();
 	}
 }

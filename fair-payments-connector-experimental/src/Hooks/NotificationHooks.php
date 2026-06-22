@@ -2,8 +2,9 @@
 /**
  * Notification hooks for Fair Payments Connector Experimental
  *
- * Listens to fair_payment_paid and dispatches Telegram notifications asynchronously
- * via wp_schedule_single_event so the Mollie webhook is never blocked.
+ * Listens to fair_payment_paid and dispatches notifications per configured route.
+ * Immediate routes fire asynchronously via wp_schedule_single_event.
+ * Digest routes (hourly/daily/weekly) insert a row into the queue table.
  *
  * @package FairPaymentsConnectorExperimental
  */
@@ -11,15 +12,18 @@
 namespace FairPaymentsConnectorExperimental\Hooks;
 
 use FairPaymentsConnectorExperimental\Services\TelegramService;
+use FairPaymentsConnectorExperimental\Services\TelegramChannel;
+use FairPaymentsConnectorExperimental\Services\EmailChannel;
+use FairPaymentsConnectorExperimental\Settings\Settings;
 
 defined( 'WPINC' ) || die;
 
 /**
- * Wires Telegram notifications to successful-transaction events.
+ * Wires multi-channel notifications to successful-transaction events.
  */
 class NotificationHooks {
 
-	const CRON_HOOK = 'fair_payment_send_telegram_notification';
+	const CRON_HOOK = 'fair_payment_send_notification';
 
 	/**
 	 * Register hooks.
@@ -27,65 +31,126 @@ class NotificationHooks {
 	 * @return void
 	 */
 	public function init() {
-		// Run after fair-audience handle_signup_paid (priority 10) so any
-		// label/flip side effects are complete before we build the message.
+		// Run after fair-audience handle_signup_paid (priority 10).
 		add_action( 'fair_payment_paid', array( $this, 'on_payment_paid' ), 20, 2 );
-		add_action( self::CRON_HOOK, array( $this, 'dispatch_messages' ), 10, 1 );
+		add_action( self::CRON_HOOK, array( $this, 'dispatch_route' ), 10, 1 );
 	}
 
 	/**
-	 * Build the notification context and schedule async sending.
+	 * Build notification context and schedule/queue per enabled route.
+	 *
+	 * The fair_payment_notification_context filter contract is unchanged —
+	 * fair-audience enriches this in PaymentHooks without needing modification.
 	 *
 	 * @param object $payment     Mollie payment object.
 	 * @param object $transaction Transaction row.
 	 * @return void
 	 */
 	public function on_payment_paid( $payment, $transaction ) {
-		if ( ! get_option( 'fair_payment_telegram_enabled', false ) ) {
+		$routes = (array) get_option( Settings::ROUTES_OPTION, array() );
+		if ( empty( $routes ) ) {
 			return;
 		}
 
-		$bot_token = (string) get_option( 'fair_payment_telegram_bot_token', '' );
-		$chat_ids  = $this->parse_chat_ids( (string) get_option( 'fair_payment_telegram_chat_ids', '' ) );
+		$context  = $this->build_context( $payment, $transaction );
+		$service  = new TelegramService();
+		$template = Settings::default_template();
 
-		if ( '' === $bot_token || empty( $chat_ids ) ) {
-			return;
+		foreach ( $routes as $route ) {
+			if ( empty( $route['enabled'] ) ) {
+				continue;
+			}
+
+			$channel     = isset( $route['channel'] ) ? (string) $route['channel'] : '';
+			$destination = isset( $route['destination'] ) ? (string) $route['destination'] : '';
+			$frequency   = isset( $route['frequency'] ) ? (string) $route['frequency'] : 'immediate';
+			$include_pii = isset( $route['include_pii'] ) ? (bool) $route['include_pii'] : true;
+			$route_id    = isset( $route['id'] ) ? (string) $route['id'] : '';
+
+			if ( '' === $channel || '' === $destination ) {
+				continue;
+			}
+
+			$text = $service->render_template( $template, $context, $include_pii );
+
+			if ( 'immediate' === $frequency ) {
+				$payload = array(
+					'channel'     => $channel,
+					'destination' => $destination,
+					'text'        => $text,
+				);
+				wp_schedule_single_event( time(), self::CRON_HOOK, array( $payload ) );
+			} else {
+				$this->queue_row( $route_id, $channel, $destination, $text, $context );
+			}
 		}
-
-		$context = $this->build_context( $payment, $transaction );
-
-		$template    = (string) get_option( 'fair_payment_telegram_template', \FairPaymentsConnectorExperimental\Settings\Settings::default_template() );
-		$include_pii = (bool) get_option( 'fair_payment_telegram_include_pii', true );
-
-		$service = new TelegramService();
-		$text    = $service->render_template( $template, $context, $include_pii );
-
-		$payload = array(
-			'bot_token' => $bot_token,
-			'chat_ids'  => $chat_ids,
-			'text'      => $text,
-		);
-
-		wp_schedule_single_event( time(), self::CRON_HOOK, array( $payload ) );
 	}
 
 	/**
-	 * Cron handler — fans out the message to all configured chats.
+	 * Cron handler for immediate routes — dispatches a single pre-rendered message.
 	 *
-	 * @param array $payload Payload with bot_token, chat_ids[], text.
+	 * @param array $payload Array with channel, destination, text.
 	 * @return void
 	 */
-	public function dispatch_messages( $payload ) {
-		if ( ! is_array( $payload ) || empty( $payload['chat_ids'] ) || empty( $payload['text'] ) ) {
+	public function dispatch_route( $payload ) {
+		if ( ! is_array( $payload ) || empty( $payload['channel'] ) || empty( $payload['text'] ) || empty( $payload['destination'] ) ) {
 			return;
 		}
 
-		$service   = new TelegramService();
-		$bot_token = ! empty( $payload['bot_token'] ) ? $payload['bot_token'] : (string) get_option( 'fair_payment_telegram_bot_token', '' );
-
-		foreach ( (array) $payload['chat_ids'] as $chat_id ) {
-			$service->send( $bot_token, (string) $chat_id, (string) $payload['text'] );
+		$channel_obj = $this->make_channel( (string) $payload['channel'] );
+		if ( null === $channel_obj ) {
+			return;
 		}
+
+		$channel_obj->send( (string) $payload['destination'], (string) $payload['text'] );
+	}
+
+	/**
+	 * Insert a queue row for digest delivery.
+	 *
+	 * @param string $route_id    Route ID.
+	 * @param string $channel     Channel name.
+	 * @param string $destination Destination address/ID.
+	 * @param string $text        Pre-rendered message body.
+	 * @param array  $context     Notification context (for amount/currency).
+	 * @return void
+	 */
+	private function queue_row( $route_id, $channel, $destination, $text, array $context ) {
+		global $wpdb;
+
+		$table = $wpdb->prefix . 'fair_payment_notification_queue';
+
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery
+		$wpdb->insert(
+			$table,
+			array(
+				'route_id'      => $route_id,
+				'channel'       => $channel,
+				'destination'   => $destination,
+				'rendered_text' => $text,
+				'amount'        => isset( $context['amount'] ) ? (string) $context['amount'] : '',
+				'currency'      => isset( $context['currency'] ) ? (string) $context['currency'] : '',
+				'created_at'    => current_time( 'mysql', true ),
+				'sent_at'       => null,
+			),
+			array( '%s', '%s', '%s', '%s', '%s', '%s', '%s', null )
+		);
+	}
+
+	/**
+	 * Instantiate the channel object for a given channel name.
+	 *
+	 * @param string $channel Channel name.
+	 * @return \FairPaymentsConnectorExperimental\Services\NotificationChannel|null
+	 */
+	public static function make_channel( string $channel ) {
+		if ( 'telegram' === $channel ) {
+			return new TelegramChannel( new TelegramService() );
+		}
+		if ( 'email' === $channel ) {
+			return new EmailChannel();
+		}
+		return null;
 	}
 
 	/**
@@ -106,8 +171,7 @@ class NotificationHooks {
 	 * Assemble the notification context for template rendering.
 	 *
 	 * Other plugins (fair-audience) hook `fair_payment_notification_context` to
-	 * fill in participant/event details. Defaults degrade gracefully when no
-	 * enrichment is available.
+	 * fill in participant/event details.
 	 *
 	 * @param object $payment     Mollie payment object.
 	 * @param object $transaction Transaction row.
