@@ -1071,31 +1071,32 @@ if ( ! $is_valid_post_type ) :
 		// Unified authenticated form: when a recurrence picker is present the
 		// signup and cancel buttons live in the same container so the JS can
 		// toggle which one is visible as the user selects a different date.
-		$form_class = 'with_token' === $state
+		$form_class            = 'with_token' === $state
 			? 'fair-audience-signup-token-form'
 			: 'fair-audience-signup-linked-form';
+		$participant_name_html = '<strong class="fair-audience-signup-greeting-name">' . esc_html( $participant->name ) . '</strong>';
 		if ( $is_signed_up ) {
-			$greeting = sprintf(
+			$greeting_html = sprintf(
 				/* translators: %s: participant name */
 				__( 'Hi %s! Here is your registration for this event.', 'fair-audience' ),
-				$participant->name
+				$participant_name_html
 			);
 		} elseif ( 'with_token' === $state ) {
-			$greeting = sprintf(
+			$greeting_html = sprintf(
 				/* translators: %s: participant name */
 				__( 'Hi %s! Click the button below to sign up for this event.', 'fair-audience' ),
-				$participant->name
+				$participant_name_html
 			);
 		} else {
-			$greeting = sprintf(
+			$greeting_html = sprintf(
 				/* translators: %s: participant name */
 				__( 'Hi %s! You can sign up for this event.', 'fair-audience' ),
-				$participant->name
+				$participant_name_html
 			);
 		}
 		?>
 		<div class="<?php echo esc_attr( $form_class ); ?>">
-			<p class="fair-audience-signup-greeting"><?php echo esc_html( $greeting ); ?></p>
+			<p class="fair-audience-signup-greeting"><?php echo wp_kses( $greeting_html, array( 'strong' => array( 'class' => array() ) ) ); ?></p>
 			<?php $render_occurrence_picker(); ?>
 			<div class="fair-audience-signup-action-signup"<?php echo $is_signed_up ? ' style="display: none;"' : ''; ?>>
 				<?php $render_ticket_types(); ?>
