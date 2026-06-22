@@ -66,6 +66,7 @@ class MonthlyFeeCapService {
 		$table    = Schema::get_payments_table_name();
 		$testmode = 'test' === get_option( 'fair_payment_mode', 'test' ) ? 1 : 0;
 
+		// gmdate() returns UTC; assumes the DB session timezone is also UTC (WordPress default).
 		$month_start = gmdate( 'Y-m-01 00:00:00' );
 		$month_end   = gmdate( 'Y-m-t 23:59:59' );
 

@@ -49,4 +49,66 @@ test.describe('DashboardController — monthly-summary', () => {
 		const res = await api.get(ENDPOINT);
 		expect(res.status()).toBe(401);
 	});
+
+	test('fee_cap reflects at least the base connector price (4 EUR)', async () => {
+		const res = await api.get(ENDPOINT, {
+			headers: {
+				Authorization:
+					'Basic ' +
+					Buffer.from(`${ADMIN_USER}:${ADMIN_PASSWORD}`).toString(
+						'base64'
+					),
+			},
+		});
+		const body = await res.json();
+		// fair-payments-connector base price is 4 EUR; site currency defaults to EUR.
+		// With fair-events also active the cap is 12 EUR (4 + 8).
+		expect(body.fee_cap).toBeGreaterThanOrEqual(4);
+	});
+
+	test('cap_remaining equals max(0, fee_cap - total_fees)', async () => {
+		const res = await api.get(ENDPOINT, {
+			headers: {
+				Authorization:
+					'Basic ' +
+					Buffer.from(`${ADMIN_USER}:${ADMIN_PASSWORD}`).toString(
+						'base64'
+					),
+			},
+		});
+		const body = await res.json();
+		const expected = Math.max(0, body.fee_cap - body.total_fees);
+		// Allow 0.01 rounding tolerance from decimal arithmetic.
+		expect(Math.abs(body.cap_remaining - expected)).toBeLessThanOrEqual(
+			0.01
+		);
+	});
+
+	test('cap_remaining is never negative', async () => {
+		const res = await api.get(ENDPOINT, {
+			headers: {
+				Authorization:
+					'Basic ' +
+					Buffer.from(`${ADMIN_USER}:${ADMIN_PASSWORD}`).toString(
+						'base64'
+					),
+			},
+		});
+		const body = await res.json();
+		expect(body.cap_remaining).toBeGreaterThanOrEqual(0);
+	});
+
+	test('total_fees is non-negative', async () => {
+		const res = await api.get(ENDPOINT, {
+			headers: {
+				Authorization:
+					'Basic ' +
+					Buffer.from(`${ADMIN_USER}:${ADMIN_PASSWORD}`).toString(
+						'base64'
+					),
+			},
+		});
+		const body = await res.json();
+		expect(body.total_fees).toBeGreaterThanOrEqual(0);
+	});
 });
