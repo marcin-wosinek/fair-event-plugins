@@ -27,7 +27,7 @@ if ( ! function_exists( 'fair_audience_check_signup_permission' ) ) {
 	function fair_audience_check_signup_permission( $event_id, $participant_repo ) {
 		// Need fair-events for event_date lookup and group permission rules.
 		if ( ! class_exists( \FairEvents\Models\EventDates::class ) ||
-		! class_exists( \FairEvents\Models\GroupPermissionRule::class ) ) {
+		! class_exists( \FairEventsExperimental\Models\GroupPermissionRule::class ) ) {
 			return false;
 		}
 
@@ -40,7 +40,7 @@ if ( ! function_exists( 'fair_audience_check_signup_permission' ) ) {
 		$event_date_id = (int) $event_date->id;
 
 		// Get permission rules for this event date.
-		$permission_rules = \FairEvents\Models\GroupPermissionRule::get_all_by_event_date_id( $event_date_id );
+		$permission_rules = \FairEventsExperimental\Models\GroupPermissionRule::get_all_by_event_date_id( $event_date_id );
 		if ( empty( $permission_rules ) ) {
 			return false;
 		}
