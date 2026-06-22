@@ -452,8 +452,8 @@ if ( $show_copy_summary ) {
 						$classes[] = 'is-draft';
 					}
 
-					$ev_bg   = $ev['color'] ?? $bg_color_value;
-					$ev_text = $ev['color'] ? '#ffffff' : $text_color_value;
+					$ev_bg   = $bg_color_value;
+					$ev_text = $text_color_value;
 					$style   = sprintf(
 						'--event-bg-color: %s; --event-text-color: %s;',
 						esc_attr( $ev_bg ),
