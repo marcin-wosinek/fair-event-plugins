@@ -9,6 +9,8 @@
 
 namespace FairPaymentsConnector\Models;
 
+use FairPaymentsConnector\Services\MonthlyFeeCapService;
+
 defined( 'WPINC' ) || die;
 
 /**
@@ -49,10 +51,12 @@ class Transaction {
 
 		$data = wp_parse_args( $data, $defaults );
 
-		// Calculate application fee (1% of transaction amount).
+		// Calculate application fee (1% of transaction amount), capped at the monthly allowance.
 		$application_fee = null;
 		if ( $data['amount'] > 0 ) {
 			$application_fee = round( $data['amount'] * 0.01, 2 );
+			$remaining       = MonthlyFeeCapService::get_remaining();
+			$application_fee = min( $application_fee, $remaining );
 		}
 
 		$data['application_fee'] = $application_fee;
