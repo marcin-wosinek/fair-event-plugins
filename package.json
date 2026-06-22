@@ -976,7 +976,7 @@
 	"devDependencies": {
 		"@changesets/cli": "^2.29.6",
 		"@playwright/test": "^1.60.0",
-		"@wordpress/env": "^10.39.0",
+		"@wordpress/env": "^11.8.1",
 		"baseline-browser-mapping": "^2.9.19",
 		"dotenv": "^17.2.3"
 	}
