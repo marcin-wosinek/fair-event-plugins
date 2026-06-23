@@ -45,6 +45,11 @@ const plugins = [
 		phpFile: 'fair-timetable/fair-timetable.php',
 		readmeFile: 'fair-timetable/readme.txt',
 	},
+	{
+		name: 'fair-finance',
+		phpFile: 'fair-finance/fair-finance.php',
+		readmeFile: 'fair-finance/readme.txt',
+	},
 ];
 
 function getBuildVersion(pluginName) {
