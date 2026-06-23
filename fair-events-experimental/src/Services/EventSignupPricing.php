@@ -10,9 +10,9 @@ namespace FairEventsExperimental\Services;
 use FairEvents\Models\EventDates;
 use FairEvents\Models\EventDateSetting;
 use FairEventsExperimental\Models\GroupPricingRule;
-use FairEventsExperimental\Models\TicketType;
-use FairEventsExperimental\Models\TicketSalePeriod;
-use FairEventsExperimental\Models\TicketPrice;
+use FairEvents\Models\TicketType;
+use FairEvents\Models\TicketSalePeriod;
+use FairEvents\Models\TicketPrice;
 use FairEventsExperimental\Models\TicketOptionCollaborator;
 
 defined( 'WPINC' ) || die;
@@ -146,10 +146,13 @@ class EventSignupPricing {
 	/**
 	 * Resolve the currently active sale period for an event date.
 	 *
-	 * Matches the period whose [sale_start, sale_end] window covers
-	 * "now". When no period matches and the per-event-date
-	 * `continues_pricing_period` setting is on, falls back to the last
-	 * period whose start is already in the past.
+	 * Periods use a half-open day range [sale_start, sale_end) in the site
+	 * timezone: sale_start is the first day on sale (00:00:00 site time) and
+	 * sale_end is the first day no longer on sale (00:00:00 site time).
+	 *
+	 * When no period matches and the per-event-date `continues_pricing_period`
+	 * setting is on, falls back to the last period whose start is already in
+	 * the past.
 	 *
 	 * @param int $event_date_id Event date ID.
 	 * @return TicketSalePeriod|null Active period or null.
@@ -164,7 +167,8 @@ class EventSignupPricing {
 		$last_index = count( $sale_periods ) - 1;
 
 		foreach ( $sale_periods as $index => $period ) {
-			if ( $period->sale_start <= $now && $period->sale_end >= $now ) {
+			// Half-open interval: sale_start <= now < sale_end.
+			if ( $period->sale_start <= $now && $period->sale_end > $now ) {
 				return $period;
 			}
 			if ( $continues && $index === $last_index && $period->sale_start <= $now ) {

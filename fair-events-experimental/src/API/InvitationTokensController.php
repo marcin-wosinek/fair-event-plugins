@@ -8,7 +8,7 @@
 namespace FairEventsExperimental\API;
 
 use FairEventsExperimental\Models\InvitationToken;
-use FairEventsExperimental\Models\TicketType;
+use FairEvents\Models\TicketType;
 use FairEventsExperimental\Models\TicketTypeGroupRestriction;
 use WP_REST_Controller;
 use WP_REST_Server;

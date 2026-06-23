@@ -354,14 +354,14 @@ if ( $valid_invitation_token && $show_inviter ) {
 // signup form switches from a single-price button to a radio picker of
 // ticket types, each with its own price and seat count.
 $ticket_types_for_display = array();
-if ( $pricing_event_date_id && class_exists( \FairEventsExperimental\Models\TicketType::class ) ) {
-	$raw_types = \FairEventsExperimental\Models\TicketType::get_all_by_event_date_id( (int) $pricing_event_date_id );
+if ( $pricing_event_date_id && class_exists( \FairEvents\Models\TicketType::class ) ) {
+	$raw_types = \FairEvents\Models\TicketType::get_all_by_event_date_id( (int) $pricing_event_date_id );
 
 	// Load group restrictions and participant's groups for filtering.
 	$tt_group_restrictions = array();
 	$participant_group_ids = array();
-	if ( class_exists( \FairEventsExperimental\Models\TicketTypeGroupRestriction::class ) ) {
-		$tt_group_restrictions = \FairEventsExperimental\Models\TicketTypeGroupRestriction::get_all_by_event_date_id( (int) $pricing_event_date_id );
+	if ( class_exists( \FairEvents\Models\TicketTypeGroupRestriction::class ) ) {
+		$tt_group_restrictions = \FairEvents\Models\TicketTypeGroupRestriction::get_all_by_event_date_id( (int) $pricing_event_date_id );
 	}
 	if ( $participant && ! empty( $tt_group_restrictions ) ) {
 		$group_participant_repo = new \FairAudience\Database\GroupParticipantRepository();
@@ -543,8 +543,8 @@ $current_ticket_label   = '';
 if ( $is_signed_up && $participant && ! empty( $event_date_id ) && isset( $event_participant_repository ) ) {
 	$signed_row = $event_participant_repository->get_by_event_date_and_participant( (int) $event_date_id, (int) $participant->id );
 	if ( $signed_row ) {
-		if ( ! empty( $signed_row->ticket_type_id ) && class_exists( \FairEventsExperimental\Models\TicketType::class ) ) {
-			$current_ticket_type = \FairEventsExperimental\Models\TicketType::get_by_id( (int) $signed_row->ticket_type_id );
+		if ( ! empty( $signed_row->ticket_type_id ) && class_exists( \FairEvents\Models\TicketType::class ) ) {
+			$current_ticket_type = \FairEvents\Models\TicketType::get_by_id( (int) $signed_row->ticket_type_id );
 			if ( $current_ticket_type ) {
 				$current_ticket_label = (string) $current_ticket_type->name;
 			}

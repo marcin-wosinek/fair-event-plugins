@@ -2,10 +2,10 @@
 /**
  * Ticket Sale Period model for Fair Events
  *
- * @package FairEventsExperimental
+ * @package FairEvents
  */
 
-namespace FairEventsExperimental\Models;
+namespace FairEvents\Models;
 
 defined( 'WPINC' ) || die;
 

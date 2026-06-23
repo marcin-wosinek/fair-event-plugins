@@ -139,6 +139,16 @@ class Plugin {
 				$controller->register_routes();
 			}
 		);
+
+		if ( Features::is_enabled( 'ticketing' ) ) {
+			add_action(
+				'rest_api_init',
+				function () {
+					$controller = new \FairEvents\API\TicketsController();
+					$controller->register_routes();
+				}
+			);
+		}
 	}
 
 	/**

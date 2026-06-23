@@ -924,18 +924,18 @@ class EventSignupController extends WP_REST_Controller {
 		}
 
 		// Check if this is an invitation-only ticket type.
-		if ( class_exists( \FairEventsExperimental\Models\TicketType::class ) ) {
-			$ticket_type = \FairEventsExperimental\Models\TicketType::get_by_id( $ticket_type_id );
+		if ( class_exists( \FairEvents\Models\TicketType::class ) ) {
+			$ticket_type = \FairEvents\Models\TicketType::get_by_id( $ticket_type_id );
 			if ( $ticket_type && $ticket_type->invitation_only ) {
 				return $this->validate_invitation_token( $invitation_token, $ticket_type_id, $participant_id );
 			}
 		}
 
-		if ( ! class_exists( \FairEventsExperimental\Models\TicketTypeGroupRestriction::class ) ) {
+		if ( ! class_exists( \FairEvents\Models\TicketTypeGroupRestriction::class ) ) {
 			return null;
 		}
 
-		$allowed_group_ids = \FairEventsExperimental\Models\TicketTypeGroupRestriction::get_group_ids_by_ticket_type_id( $ticket_type_id );
+		$allowed_group_ids = \FairEvents\Models\TicketTypeGroupRestriction::get_group_ids_by_ticket_type_id( $ticket_type_id );
 		if ( empty( $allowed_group_ids ) ) {
 			return null;
 		}
@@ -967,11 +967,11 @@ class EventSignupController extends WP_REST_Controller {
 	 * @return WP_Error|null WP_Error if the tier is full, null otherwise.
 	 */
 	private function validate_ticket_type_capacity( $ticket_type_id ) {
-		if ( ! $ticket_type_id || ! class_exists( \FairEventsExperimental\Models\TicketType::class ) ) {
+		if ( ! $ticket_type_id || ! class_exists( \FairEvents\Models\TicketType::class ) ) {
 			return null;
 		}
 
-		$ticket_type = \FairEventsExperimental\Models\TicketType::get_by_id( $ticket_type_id );
+		$ticket_type = \FairEvents\Models\TicketType::get_by_id( $ticket_type_id );
 		if ( ! $ticket_type || null === $ticket_type->capacity ) {
 			return null;
 		}
@@ -995,11 +995,11 @@ class EventSignupController extends WP_REST_Controller {
 	 * @return WP_Error|null WP_Error if expired, null if valid.
 	 */
 	private function validate_ticket_type_disable_at( $ticket_type_id ) {
-		if ( ! $ticket_type_id || ! class_exists( \FairEventsExperimental\Models\TicketType::class ) ) {
+		if ( ! $ticket_type_id || ! class_exists( \FairEvents\Models\TicketType::class ) ) {
 			return null;
 		}
 
-		$ticket_type = \FairEventsExperimental\Models\TicketType::get_by_id( $ticket_type_id );
+		$ticket_type = \FairEvents\Models\TicketType::get_by_id( $ticket_type_id );
 		if ( ! $ticket_type || ! $ticket_type->disable_at ) {
 			return null;
 		}
@@ -1068,11 +1068,11 @@ class EventSignupController extends WP_REST_Controller {
 		if ( ! $ticket_type_id || ! $event_date_id ) {
 			return;
 		}
-		if ( ! class_exists( \FairEventsExperimental\Models\TicketType::class ) ) {
+		if ( ! class_exists( \FairEvents\Models\TicketType::class ) ) {
 			return;
 		}
 
-		$ticket_type = \FairEventsExperimental\Models\TicketType::get_by_id( $ticket_type_id );
+		$ticket_type = \FairEvents\Models\TicketType::get_by_id( $ticket_type_id );
 		if ( ! $ticket_type ) {
 			return;
 		}
@@ -1141,8 +1141,8 @@ class EventSignupController extends WP_REST_Controller {
 
 		// A ticket type can raise the requirement above the event-date global
 		// (issue #625). A per-type value below the global is ignored via max().
-		if ( $ticket_type_id && class_exists( \FairEventsExperimental\Models\TicketType::class ) ) {
-			$ticket_type = \FairEventsExperimental\Models\TicketType::get_by_id( $ticket_type_id );
+		if ( $ticket_type_id && class_exists( \FairEvents\Models\TicketType::class ) ) {
+			$ticket_type = \FairEvents\Models\TicketType::get_by_id( $ticket_type_id );
 			if ( $ticket_type ) {
 				$minimum = max( $minimum, (int) $ticket_type->minimum_activities );
 			}
@@ -1372,8 +1372,8 @@ class EventSignupController extends WP_REST_Controller {
 		if ( $event_date_id && class_exists( \FairEventsExperimental\Services\EventSignupPricing::class ) ) {
 			if ( $ticket_type_id ) {
 				$final_price = \FairEventsExperimental\Services\EventSignupPricing::resolve_price_for_ticket_type( $ticket_type_id, $participant->id );
-				if ( class_exists( \FairEventsExperimental\Models\TicketType::class ) ) {
-					$ticket_type = \FairEventsExperimental\Models\TicketType::get_by_id( $ticket_type_id );
+				if ( class_exists( \FairEvents\Models\TicketType::class ) ) {
+					$ticket_type = \FairEvents\Models\TicketType::get_by_id( $ticket_type_id );
 					if ( $ticket_type ) {
 						$seats_per_ticket = max( 1, (int) $ticket_type->seats_per_ticket );
 					}
@@ -1845,8 +1845,8 @@ class EventSignupController extends WP_REST_Controller {
 			: array();
 
 		$retry_seats = 1;
-		if ( $retry_ticket_type_id && class_exists( \FairEventsExperimental\Models\TicketType::class ) ) {
-			$retry_ticket_type = \FairEventsExperimental\Models\TicketType::get_by_id( $retry_ticket_type_id );
+		if ( $retry_ticket_type_id && class_exists( \FairEvents\Models\TicketType::class ) ) {
+			$retry_ticket_type = \FairEvents\Models\TicketType::get_by_id( $retry_ticket_type_id );
 			if ( $retry_ticket_type ) {
 				$retry_seats = max( 1, (int) $retry_ticket_type->seats_per_ticket );
 			}

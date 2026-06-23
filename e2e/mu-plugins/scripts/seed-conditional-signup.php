@@ -16,9 +16,9 @@
  */
 
 use FairEvents\Models\EventDates;
-use FairEventsExperimental\Models\TicketSalePeriod;
-use FairEventsExperimental\Models\TicketType;
-use FairEventsExperimental\Models\TicketPrice;
+use FairEvents\Models\TicketSalePeriod;
+use FairEvents\Models\TicketType;
+use FairEvents\Models\TicketPrice;
 use FairEventsExperimental\Models\TicketOption;
 
 // Nested block content: the conditional reveals the "diet" question only when

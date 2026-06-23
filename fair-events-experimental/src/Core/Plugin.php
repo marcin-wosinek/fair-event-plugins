@@ -212,14 +212,6 @@ class Plugin {
 			add_action(
 				'rest_api_init',
 				function () {
-					$controller = new \FairEventsExperimental\API\TicketsController();
-					$controller->register_routes();
-				}
-			);
-
-			add_action(
-				'rest_api_init',
-				function () {
 					$controller = new \FairEventsExperimental\API\InvitationTokensController();
 					$controller->register_routes();
 				}

@@ -1224,6 +1224,8 @@ export default function ManageEventApp() {
 							<EventTickets
 								eventDateId={eventDateId}
 								onSaveRef={ticketSaveRef}
+								startDatetime={eventDate.start_datetime}
+								endDatetime={eventDate.end_datetime}
 							/>
 						);
 					}
