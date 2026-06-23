@@ -26,7 +26,11 @@ test.describe('Budget "View" buttons link to fair-finance-entries', () => {
 
 	test.afterAll(() => {
 		if (budgetId) {
-			runScript('cleanup-budget.php', 'E2E_BUDGET_CLEANUP', `${budgetId}`);
+			runScript(
+				'cleanup-budget.php',
+				'E2E_BUDGET_CLEANUP',
+				`${budgetId}`
+			);
 		}
 	});
 
