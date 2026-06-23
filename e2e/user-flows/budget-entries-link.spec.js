@@ -13,48 +13,25 @@
  *     shows the expected heading.
  */
 
-import { test, expect, request } from '@playwright/test';
-
-const BASE_URL = process.env.WP_BASE_URL || 'http://localhost:8889';
-const ADMIN_USER = process.env.WP_ADMIN_USER || 'admin';
-const ADMIN_PASSWORD = process.env.WP_ADMIN_PASSWORD || 'password';
-
-const adminAuth = Buffer.from(`${ADMIN_USER}:${ADMIN_PASSWORD}`).toString(
-	'base64'
-);
+import { test, expect } from '@playwright/test';
+import { runScript, loginAsAdmin } from '../support/wp-cli.js';
 
 test.describe('Budget "View" buttons link to fair-finance-entries', () => {
-	let api;
 	let budgetId;
 
-	test.beforeAll(async () => {
-		api = await request.newContext({ baseURL: BASE_URL });
-
-		const res = await api.post('/wp-json/fair-finance/v1/budgets', {
-			headers: { Authorization: `Basic ${adminAuth}` },
-			data: { name: 'E2E Test Budget', description: 'Created by e2e test' },
-		});
-		expect(res.ok()).toBeTruthy();
-		const body = await res.json();
-		budgetId = body.id;
-		expect(budgetId).toBeTruthy();
+	test.beforeAll(() => {
+		const seed = runScript('seed-budget.php', 'E2E_BUDGET_SEED');
+		budgetId = seed.budgetId;
 	});
 
-	test.afterAll(async () => {
+	test.afterAll(() => {
 		if (budgetId) {
-			await api.delete(`/wp-json/fair-finance/v1/budgets/${budgetId}`, {
-				headers: { Authorization: `Basic ${adminAuth}` },
-			});
+			runScript('cleanup-budget.php', 'E2E_BUDGET_CLEANUP', `${budgetId}`);
 		}
-		await api.dispose();
 	});
 
 	test.beforeEach(async ({ page }) => {
-		await page.goto('/wp-login.php');
-		await page.fill('#user_login', ADMIN_USER);
-		await page.fill('#user_pass', ADMIN_PASSWORD);
-		await page.click('#wp-submit');
-		await expect(page).toHaveURL(/\/wp-admin\/?/);
+		await loginAsAdmin(page);
 	});
 
 	test('View button for a named budget links to fair-finance-entries', async ({
