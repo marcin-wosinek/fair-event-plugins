@@ -68,6 +68,11 @@ class Features {
 				'description' => 'Load .mo/.json files shipped with the plugin instead of relying on WordPress.org language packs. Useful while a locale is below the 90% threshold on translate.wordpress.org or for in-progress strings.',
 				'default'     => false,
 			),
+			'ticketing'            => array(
+				'label'       => 'Ticketing',
+				'description' => 'Ticket types, sale periods, and pricing.',
+				'default'     => true,
+			),
 		);
 	}
 
@@ -168,6 +173,10 @@ class Features {
 			'bundled-translations' => array(
 				'label'       => __( 'Bundled translations', 'fair-events' ),
 				'description' => __( 'Load .mo/.json files shipped with the plugin instead of relying on WordPress.org language packs. Useful while a locale is below the 90% threshold on translate.wordpress.org or for in-progress strings.', 'fair-events' ),
+			),
+			'ticketing'            => array(
+				'label'       => __( 'Ticketing', 'fair-events' ),
+				'description' => __( 'Ticket types, sale periods, and pricing.', 'fair-events' ),
 			),
 		);
 

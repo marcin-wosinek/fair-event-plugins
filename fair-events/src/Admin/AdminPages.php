@@ -295,6 +295,8 @@ class AdminPages {
 				// Extensions (e.g. fair-events-experimental) can merge their
 				// feature states into this map via the filter.
 				'enabledFeatures'  => apply_filters( 'fair_events_enabled_features_map', \FairEvents\Core\Features::public_map() ),
+				// Current date in the site timezone (YYYY-MM-DD) for sale-period defaults.
+				'siteToday'        => wp_date( 'Y-m-d' ),
 			);
 
 			// Audience-dependent URLs require both the sibling plugin AND the

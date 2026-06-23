@@ -30,10 +30,14 @@ export default function EventTickets({
 	onSaveRef,
 	initialData,
 	onDataRef,
+	startDatetime,
+	endDatetime: endDatetimeProp,
 }) {
 	const [capacity, setCapacity] = useState('');
 	const [signupPrice, setSignupPrice] = useState('');
-	const [endDatetime, setEndDatetime] = useState('');
+	const [endDatetime, setEndDatetime] = useState(
+		endDatetimeProp ? endDatetimeProp.split(' ')[0].split('T')[0] : ''
+	);
 	const [ticketTypes, setTicketTypes] = useState([]);
 	const [salePeriods, setSalePeriods] = useState([]);
 	const [prices, setPrices] = useState({});
@@ -94,10 +98,20 @@ export default function EventTickets({
 				: ''
 		);
 		if (data.end_datetime) {
-			setEndDatetime(data.end_datetime);
+			setEndDatetime(data.end_datetime.split(' ')[0].split('T')[0]);
 		}
 		setTicketTypes(data.ticket_types || []);
-		setSalePeriods(data.sale_periods || []);
+		setSalePeriods(
+			(data.sale_periods || []).map((p) => ({
+				...p,
+				sale_start: p.sale_start
+					? p.sale_start.split(' ')[0].split('T')[0]
+					: '',
+				sale_end: p.sale_end
+					? p.sale_end.split(' ')[0].split('T')[0]
+					: '',
+			}))
+		);
 
 		const priceMap = {};
 		(data.ticket_types || []).forEach((type) => {
@@ -280,7 +294,17 @@ export default function EventTickets({
 					: ''
 			);
 			setTicketTypes(data.ticket_types || []);
-			setSalePeriods(data.sale_periods || []);
+			setSalePeriods(
+				(data.sale_periods || []).map((p) => ({
+					...p,
+					sale_start: p.sale_start
+						? p.sale_start.split(' ')[0].split('T')[0]
+						: '',
+					sale_end: p.sale_end
+						? p.sale_end.split(' ')[0].split('T')[0]
+						: '',
+				}))
+			);
 
 			const priceMap = {};
 			(data.ticket_types || []).forEach((type) => {
@@ -518,12 +542,60 @@ export default function EventTickets({
 		setTicketTypes(updated);
 	};
 
-	const formatNow = () => {
-		const now = new Date();
-		const pad = (n) => String(n).padStart(2, '0');
-		return `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(
-			now.getDate()
-		)} ${pad(now.getHours())}:${pad(now.getMinutes())}:00`;
+	const getSiteToday = () =>
+		window.fairEventsManageEventData?.siteToday || '';
+
+	const dayAfterDate = (dateStr) => {
+		if (!dateStr) return '';
+		const d = new Date(dateStr + 'T00:00:00');
+		d.setDate(d.getDate() + 1);
+		return d.toISOString().slice(0, 10);
+	};
+
+	const formatSaleDateLabel = (dateStr) => {
+		if (!dateStr) return __('—', 'fair-events');
+		const dateOnly = dateStr.split(' ')[0].split('T')[0];
+		const d = new Date(dateOnly + 'T00:00:00');
+		return new Intl.DateTimeFormat(undefined, {
+			weekday: 'long',
+			day: 'numeric',
+			month: 'long',
+		}).format(d);
+	};
+
+	const daysBeforeEvent = (dateStr) => {
+		const eventStart = startDatetime
+			? startDatetime.split(' ')[0].split('T')[0]
+			: null;
+		if (!eventStart || !dateStr) return null;
+		const eventDay = new Date(eventStart + 'T00:00:00');
+		const saleDay = new Date(dateStr + 'T00:00:00');
+		const diff = Math.round((eventDay - saleDay) / (1000 * 60 * 60 * 24));
+		return diff > 0 ? diff : null;
+	};
+
+	const seedDefaultSalePeriods = () => {
+		const today = getSiteToday();
+		const eventFirstDay = startDatetime
+			? startDatetime.split(' ')[0].split('T')[0]
+			: today;
+		const afterEventEnd = endDatetime
+			? dayAfterDate(endDatetime)
+			: dayAfterDate(eventFirstDay);
+		setSalePeriods([
+			{
+				name: '',
+				sale_start: today,
+				sale_end: eventFirstDay,
+				sort_order: 0,
+			},
+			{
+				name: '',
+				sale_start: eventFirstDay,
+				sale_end: afterEventEnd,
+				sort_order: 1,
+			},
+		]);
 	};
 
 	const periodPriceKey = (period, pIndex) =>
@@ -623,7 +695,9 @@ export default function EventTickets({
 	const addSalePeriod = () => {
 		const lastPeriod = salePeriods[salePeriods.length - 1];
 		const isFirst = salePeriods.length === 0;
-		const defaultStart = isFirst ? formatNow() : lastPeriod?.sale_end || '';
+		const defaultStart = isFirst
+			? getSiteToday()
+			: lastPeriod?.sale_end || '';
 		setSalePeriods([
 			...salePeriods,
 			{
@@ -686,20 +760,30 @@ export default function EventTickets({
 		}));
 	};
 
+	const appendTime = (dateStr) =>
+		dateStr && !dateStr.includes(' ') && !dateStr.includes('T')
+			? dateStr + ' 00:00:00'
+			: dateStr;
+
 	const getEffectiveSalePeriods = () => {
-		if (!settings.continues_pricing_period) {
-			return salePeriods;
-		}
-		return salePeriods.map((p, i) => {
+		const periods = salePeriods.map((p, i) => {
 			const updated = { ...p };
-			if (i > 0) {
+			if (settings.continues_pricing_period && i > 0) {
 				updated.sale_start = salePeriods[i - 1].sale_end || '';
 			}
-			if (i === salePeriods.length - 1 && endDatetime && !p.sale_end) {
-				updated.sale_end = endDatetime;
+			if (
+				settings.continues_pricing_period &&
+				i === salePeriods.length - 1 &&
+				endDatetime &&
+				!p.sale_end
+			) {
+				updated.sale_end = dayAfterDate(endDatetime);
 			}
+			updated.sale_start = appendTime(updated.sale_start);
+			updated.sale_end = appendTime(updated.sale_end);
 			return updated;
 		});
+		return periods;
 	};
 
 	const getPrice = (type, period) => {
@@ -965,12 +1049,34 @@ export default function EventTickets({
 													'fair-events'
 												)}
 											</strong>{' '}
-											{salePeriods[0].sale_start
-												? salePeriods[0].sale_start.replace(
-														'T',
-														' '
-												  )
-												: __('—', 'fair-events')}
+											{(() => {
+												const start =
+													salePeriods[0].sale_start;
+												const days =
+													daysBeforeEvent(start);
+												const label =
+													formatSaleDateLabel(start);
+												return start
+													? days !== null
+														? sprintf(
+																/* translators: 1: formatted date, 2: number of days */
+																__(
+																	'From %1$s (%2$d days before event)',
+																	'fair-events'
+																),
+																label,
+																days
+														  )
+														: sprintf(
+																/* translators: %s: formatted date */
+																__(
+																	'From %s',
+																	'fair-events'
+																),
+																label
+														  )
+													: __('—', 'fair-events');
+											})()}
 										</div>
 										<div>
 											<strong>
@@ -984,11 +1090,24 @@ export default function EventTickets({
 													salePeriods[
 														salePeriods.length - 1
 													];
-												const value =
+												const end =
 													last.sale_end ||
-													endDatetime;
-												return value
-													? value.replace('T', ' ')
+													(endDatetime
+														? dayAfterDate(
+																endDatetime
+														  )
+														: '');
+												return end
+													? sprintf(
+															/* translators: %s: formatted date */
+															__(
+																'until %s',
+																'fair-events'
+															),
+															formatSaleDateLabel(
+																end
+															)
+													  )
 													: __('—', 'fair-events');
 											})()}
 										</div>
@@ -1082,14 +1201,10 @@ export default function EventTickets({
 																	</td>
 																	<td>
 																		<TextControl
-																			type="datetime-local"
+																			type="date"
 																			value={
-																				fromValue
-																					? fromValue.replace(
-																							' ',
-																							'T'
-																					  )
-																					: ''
+																				fromValue ||
+																				''
 																			}
 																			onChange={(
 																				v
@@ -1097,10 +1212,7 @@ export default function EventTickets({
 																				updateSalePeriod(
 																					pIndex,
 																					'sale_start',
-																					v.replace(
-																						'T',
-																						' '
-																					)
+																					v
 																				)
 																			}
 																			__nextHasNoMarginBottom
@@ -1108,14 +1220,10 @@ export default function EventTickets({
 																	</td>
 																	<td>
 																		<TextControl
-																			type="datetime-local"
+																			type="date"
 																			value={
-																				untilValue
-																					? untilValue.replace(
-																							' ',
-																							'T'
-																					  )
-																					: ''
+																				untilValue ||
+																				''
 																			}
 																			onChange={(
 																				v
@@ -1123,10 +1231,7 @@ export default function EventTickets({
 																				updateSalePeriod(
 																					pIndex,
 																					'sale_end',
-																					v.replace(
-																						'T',
-																						' '
-																					)
+																					v
 																				)
 																			}
 																			__nextHasNoMarginBottom
@@ -1181,20 +1286,16 @@ export default function EventTickets({
 													'From',
 													'fair-events'
 												)}
-												type="datetime-local"
+												type="date"
 												value={
-													salePeriods[0].sale_start
-														? salePeriods[0].sale_start.replace(
-																' ',
-																'T'
-														  )
-														: ''
+													salePeriods[0].sale_start ||
+													''
 												}
 												onChange={(v) =>
 													updateSalePeriod(
 														0,
 														'sale_start',
-														v.replace('T', ' ')
+														v
 													)
 												}
 												__nextHasNoMarginBottom
@@ -1204,23 +1305,21 @@ export default function EventTickets({
 													'Until',
 													'fair-events'
 												)}
-												type="datetime-local"
+												type="date"
 												value={
 													salePeriods[0].sale_end ||
-													endDatetime ||
-													''
-														? (
-																salePeriods[0]
-																	.sale_end ||
+													(endDatetime
+														? dayAfterDate(
 																endDatetime
-														  ).replace(' ', 'T')
-														: ''
+														  )
+														: '') ||
+													''
 												}
 												onChange={(v) =>
 													updateSalePeriod(
 														0,
 														'sale_end',
-														v.replace('T', ' ')
+														v
 													)
 												}
 												__nextHasNoMarginBottom
@@ -1285,7 +1384,7 @@ export default function EventTickets({
 											variant="secondary"
 											onClick={() => {
 												addTicketType();
-												addSalePeriod();
+												seedDefaultSalePeriods();
 											}}
 										>
 											{__(
@@ -1381,23 +1480,18 @@ export default function EventTickets({
 																isContinuous &&
 																isLast
 																	? period.sale_end ||
-																	  endDatetime
+																	  (endDatetime
+																			? dayAfterDate(
+																					endDatetime
+																			  )
+																			: '')
 																	: period.sale_end ||
 																	  '';
 															const dateTooltip = `${
-																fromValue
-																	? fromValue.replace(
-																			'T',
-																			' '
-																	  )
-																	: '?'
+																fromValue || '?'
 															} → ${
-																untilValue
-																	? untilValue.replace(
-																			'T',
-																			' '
-																	  )
-																	: '?'
+																untilValue ||
+																'?'
 															}`;
 
 															return (
@@ -2467,7 +2561,7 @@ export default function EventTickets({
 									variant="secondary"
 									onClick={() => {
 										addTicketType();
-										addSalePeriod();
+										seedDefaultSalePeriods();
 									}}
 								>
 									{__(

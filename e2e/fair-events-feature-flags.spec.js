@@ -95,7 +95,6 @@ const BUNDLE_PAGES = {
 const BUNDLE_PROBE_ROUTES = {
 	sources: '/fair-events/v1/sources/categories',
 	galleries: '/fair-events/v1/event-dates/1/gallery',
-	ticketing: '/fair-events/v1/event-dates/1/tickets',
 	migration: '/fair-events/v1/migration/post-types',
 };
 
