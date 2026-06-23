@@ -229,6 +229,11 @@ class Installer {
 			self::migrate_to_3_13_0();
 		}
 
+		// Run migration if upgrading from pre-3.14.0 (add recurrence_scope to ticket_types).
+		if ( version_compare( $current_version, '3.14.0', '<' ) ) {
+			self::migrate_to_3_14_0();
+		}
+
 		// Update database version
 		Schema::update_db_version( Schema::DB_VERSION );
 	}
@@ -1423,6 +1428,36 @@ class Installer {
 			$wpdb->query(
 				$wpdb->prepare(
 					'ALTER TABLE %i ADD COLUMN disable_at DATETIME DEFAULT NULL AFTER minimum_activities',
+					$table_name
+				)
+			);
+		}
+	}
+
+	/**
+	 * Migrate to version 3.14.0 - Add recurrence_scope column to ticket_types table.
+	 *
+	 * Defaults all existing rows to 'single_instance' so behaviour is unchanged.
+	 *
+	 * @return void
+	 */
+	private static function migrate_to_3_14_0() {
+		global $wpdb;
+
+		$table_name = $wpdb->prefix . 'fair_events_ticket_types';
+
+		$column_exists = $wpdb->get_results(
+			$wpdb->prepare(
+				'SHOW COLUMNS FROM %i LIKE %s',
+				$table_name,
+				$wpdb->esc_like( 'recurrence_scope' )
+			)
+		);
+
+		if ( empty( $column_exists ) ) {
+			$wpdb->query(
+				$wpdb->prepare(
+					"ALTER TABLE %i ADD COLUMN recurrence_scope ENUM('single_instance','whole_series') NOT NULL DEFAULT 'single_instance' AFTER disable_at",
 					$table_name
 				)
 			);

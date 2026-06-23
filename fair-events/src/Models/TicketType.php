@@ -76,6 +76,13 @@ class TicketType {
 	public $disable_at;
 
 	/**
+	 * Whether this ticket type covers a single occurrence or the whole recurring series
+	 *
+	 * @var string 'single_instance'|'whole_series'
+	 */
+	public $recurrence_scope = 'single_instance';
+
+	/**
 	 * Sort order
 	 *
 	 * @var int
@@ -164,22 +171,32 @@ class TicketType {
 	}
 
 	/**
+	 * Valid values for the recurrence_scope column.
+	 */
+	const RECURRENCE_SCOPES = array( 'single_instance', 'whole_series' );
+
+	/**
 	 * Create a new ticket type
 	 *
-	 * @param int         $event_date_id   Event date ID.
-	 * @param string      $name            Name.
-	 * @param int|null    $capacity        Capacity (null = no limit).
-	 * @param int         $sort_order      Sort order.
-	 * @param int         $seats_per_ticket Seats consumed per ticket (default 1).
-	 * @param bool        $invitation_only Whether this ticket requires an invitation token.
+	 * @param int         $event_date_id      Event date ID.
+	 * @param string      $name               Name.
+	 * @param int|null    $capacity           Capacity (null = no limit).
+	 * @param int         $sort_order         Sort order.
+	 * @param int         $seats_per_ticket   Seats consumed per ticket (default 1).
+	 * @param bool        $invitation_only    Whether this ticket requires an invitation token.
 	 * @param int         $minimum_activities Minimum activities this type requires (0 = inherit global).
-	 * @param string|null $disable_at Date/time after which this ticket type is unavailable (null = no end date).
+	 * @param string|null $disable_at         Date/time after which this ticket type is unavailable (null = no end date).
+	 * @param string      $recurrence_scope   'single_instance' or 'whole_series'.
 	 * @return int|false The ticket type ID on success, false on failure.
 	 */
-	public static function create( $event_date_id, $name, $capacity, $sort_order, $seats_per_ticket = 1, $invitation_only = false, $minimum_activities = 0, $disable_at = null ) {
+	public static function create( $event_date_id, $name, $capacity, $sort_order, $seats_per_ticket = 1, $invitation_only = false, $minimum_activities = 0, $disable_at = null, $recurrence_scope = 'single_instance' ) {
 		global $wpdb;
 
 		$table_name = self::get_table_name();
+
+		if ( ! in_array( $recurrence_scope, self::RECURRENCE_SCOPES, true ) ) {
+			$recurrence_scope = 'single_instance';
+		}
 
 		$result = $wpdb->insert(
 			$table_name,
@@ -191,9 +208,10 @@ class TicketType {
 				'invitation_only'    => $invitation_only ? 1 : 0,
 				'minimum_activities' => max( 0, (int) $minimum_activities ),
 				'disable_at'         => $disable_at,
+				'recurrence_scope'   => $recurrence_scope,
 				'sort_order'         => $sort_order,
 			),
-			array( '%d', '%s', '%d', '%d', '%d', '%d', '%s', '%d' )
+			array( '%d', '%s', '%d', '%d', '%d', '%d', '%s', '%s', '%d' )
 		);
 
 		if ( $result ) {
@@ -246,6 +264,14 @@ class TicketType {
 		if ( array_key_exists( 'disable_at', $data ) ) {
 			$update_data['disable_at'] = $data['disable_at'];
 			$update_format[]           = '%s';
+		}
+
+		if ( isset( $data['recurrence_scope'] ) ) {
+			$scope                           = in_array( $data['recurrence_scope'], self::RECURRENCE_SCOPES, true )
+				? $data['recurrence_scope']
+				: 'single_instance';
+			$update_data['recurrence_scope'] = $scope;
+			$update_format[]                 = '%s';
 		}
 
 		if ( isset( $data['sort_order'] ) ) {
@@ -324,11 +350,22 @@ class TicketType {
 		$item->invitation_only    = isset( $row->invitation_only ) && (int) $row->invitation_only === 1;
 		$item->minimum_activities = isset( $row->minimum_activities ) ? (int) $row->minimum_activities : 0;
 		$item->disable_at         = $row->disable_at ?? null;
+		$raw_scope                = $row->recurrence_scope ?? 'single_instance';
+		$item->recurrence_scope   = in_array( $raw_scope, self::RECURRENCE_SCOPES, true ) ? $raw_scope : 'single_instance';
 		$item->sort_order         = (int) $row->sort_order;
 		$item->created_at         = $row->created_at;
 		$item->updated_at         = $row->updated_at;
 
 		return $item;
+	}
+
+	/**
+	 * Whether this ticket type covers the whole recurring series.
+	 *
+	 * @return bool
+	 */
+	public function is_whole_series() {
+		return 'whole_series' === $this->recurrence_scope;
 	}
 
 	/**
@@ -346,6 +383,7 @@ class TicketType {
 			'invitation_only'    => $this->invitation_only,
 			'minimum_activities' => $this->minimum_activities,
 			'disable_at'         => $this->disable_at,
+			'recurrence_scope'   => $this->recurrence_scope,
 			'sort_order'         => $this->sort_order,
 			'created_at'         => $this->created_at,
 			'updated_at'         => $this->updated_at,

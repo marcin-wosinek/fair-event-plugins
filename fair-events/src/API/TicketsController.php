@@ -357,8 +357,11 @@ class TicketsController extends WP_REST_Controller {
 			$disable_at         = isset( $item['disable_at'] ) && '' !== $item['disable_at'] && null !== $item['disable_at']
 				? sanitize_text_field( $item['disable_at'] )
 				: null;
+			$recurrence_scope   = in_array( $item['recurrence_scope'] ?? '', TicketType::RECURRENCE_SCOPES, true )
+				? $item['recurrence_scope']
+				: 'single_instance';
 
-			$new_id = TicketType::create( $event_date_id, $name, $capacity, $index, $seats_per_ticket, $invitation_only, $minimum_activities, $disable_at );
+			$new_id = TicketType::create( $event_date_id, $name, $capacity, $index, $seats_per_ticket, $invitation_only, $minimum_activities, $disable_at, $recurrence_scope );
 			if ( $new_id ) {
 				$type_ids_by_index[ $index ] = (int) $new_id;
 
@@ -523,6 +526,9 @@ class TicketsController extends WP_REST_Controller {
 			$disable_at         = isset( $item['disable_at'] ) && '' !== $item['disable_at'] && null !== $item['disable_at']
 				? sanitize_text_field( $item['disable_at'] )
 				: null;
+			$recurrence_scope   = in_array( $item['recurrence_scope'] ?? '', TicketType::RECURRENCE_SCOPES, true )
+				? $item['recurrence_scope']
+				: 'single_instance';
 			$sort_order         = $index;
 			$group_ids          = isset( $item['group_ids'] ) && is_array( $item['group_ids'] ) ? array_map( 'absint', $item['group_ids'] ) : array();
 
@@ -537,6 +543,7 @@ class TicketsController extends WP_REST_Controller {
 						'invitation_only'    => $invitation_only,
 						'minimum_activities' => $minimum_activities,
 						'disable_at'         => $disable_at,
+						'recurrence_scope'   => $recurrence_scope,
 						'sort_order'         => $sort_order,
 					)
 				);
@@ -544,7 +551,7 @@ class TicketsController extends WP_REST_Controller {
 					\FairEventsExperimental\Models\TicketTypeGroupRestriction::sync_for_ticket_type( (int) $item['id'], $group_ids );
 				}
 			} else {
-				$new_id           = TicketType::create( $event_date_id, $name, $capacity, $sort_order, $seats_per_ticket, $invitation_only, $minimum_activities, $disable_at );
+				$new_id           = TicketType::create( $event_date_id, $name, $capacity, $sort_order, $seats_per_ticket, $invitation_only, $minimum_activities, $disable_at, $recurrence_scope );
 				$id_map[ $index ] = (int) $new_id;
 				if ( $new_id && ! empty( $group_ids ) && class_exists( \FairEventsExperimental\Models\TicketTypeGroupRestriction::class ) ) {
 					\FairEventsExperimental\Models\TicketTypeGroupRestriction::sync_for_ticket_type( (int) $new_id, $group_ids );

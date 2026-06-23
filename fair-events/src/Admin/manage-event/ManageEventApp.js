@@ -1226,6 +1226,7 @@ export default function ManageEventApp() {
 								onSaveRef={ticketSaveRef}
 								startDatetime={eventDate.start_datetime}
 								endDatetime={eventDate.end_datetime}
+								isRecurring={recurrenceEnabled}
 							/>
 						);
 					}

@@ -16,6 +16,7 @@ import {
 	FormTokenField,
 	Panel,
 	PanelBody,
+	SelectControl,
 	Spinner,
 	Notice,
 	TextControl,
@@ -32,6 +33,7 @@ export default function EventTickets({
 	onDataRef,
 	startDatetime,
 	endDatetime: endDatetimeProp,
+	isRecurring,
 }) {
 	const [capacity, setCapacity] = useState('');
 	const [signupPrice, setSignupPrice] = useState('');
@@ -383,6 +385,7 @@ export default function EventTickets({
 				invitation_only: t.invitation_only || false,
 				minimum_activities: t.minimum_activities || 0,
 				disable_at: t.disable_at || null,
+				recurrence_scope: t.recurrence_scope || 'single_instance',
 				group_ids: t.group_ids || [],
 			})),
 			sale_periods: getEffectiveSalePeriods().map((p) => ({
@@ -517,6 +520,7 @@ export default function EventTickets({
 				invitation_only: false,
 				minimum_activities: 0,
 				disable_at: null,
+				recurrence_scope: 'single_instance',
 				group_ids: [],
 				sort_order: ticketTypes.length,
 			},
@@ -1455,6 +1459,14 @@ export default function EventTickets({
 															)}
 														</th>
 													)}
+													{isRecurring && (
+														<th>
+															{__(
+																'Scope',
+																'fair-events'
+															)}
+														</th>
+													)}
 													{salePeriods.map(
 														(period, pIndex) => {
 															const isContinuous =
@@ -1751,6 +1763,42 @@ export default function EventTickets({
 																					: null
 																			)
 																		}
+																	/>
+																</td>
+															)}
+															{isRecurring && (
+																<td>
+																	<SelectControl
+																		value={
+																			type.recurrence_scope ||
+																			'single_instance'
+																		}
+																		options={[
+																			{
+																				value: 'single_instance',
+																				label: __(
+																					'This instance',
+																					'fair-events'
+																				),
+																			},
+																			{
+																				value: 'whole_series',
+																				label: __(
+																					'Whole series',
+																					'fair-events'
+																				),
+																			},
+																		]}
+																		onChange={(
+																			v
+																		) =>
+																			updateTicketType(
+																				tIndex,
+																				'recurrence_scope',
+																				v
+																			)
+																		}
+																		__nextHasNoMarginBottom
 																	/>
 																</td>
 															)}
