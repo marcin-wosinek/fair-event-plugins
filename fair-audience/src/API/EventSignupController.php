@@ -14,7 +14,6 @@ use FairAudience\Models\Participant;
 use FairAudience\Services\AudienceSession;
 use FairAudience\Services\EmailService;
 use FairAudience\Services\ParticipantToken;
-use FairAudience\Services\QuestionnaireService;
 use WP_REST_Controller;
 use WP_REST_Server;
 use WP_REST_Request;
@@ -71,13 +70,6 @@ class EventSignupController extends WP_REST_Controller {
 	private $token_repository;
 
 	/**
-	 * Questionnaire service instance.
-	 *
-	 * @var QuestionnaireService
-	 */
-	private $questionnaire_service;
-
-	/**
 	 * Rate limit: max requests per email per hour.
 	 */
 	const RATE_LIMIT_MAX = 3;
@@ -95,7 +87,6 @@ class EventSignupController extends WP_REST_Controller {
 		$this->event_participant_repository = new EventParticipantRepository();
 		$this->email_service                = new EmailService();
 		$this->token_repository             = new EmailConfirmationTokenRepository();
-		$this->questionnaire_service        = new QuestionnaireService();
 	}
 
 	/**
@@ -1307,8 +1298,12 @@ class EventSignupController extends WP_REST_Controller {
 	 * @return array|WP_Error Sanitized answers, or WP_Error on invalid input.
 	 */
 	private function prepare_questionnaire_answers( $request ) {
-		$answers = $this->questionnaire_service->parse_answers( $request->get_param( 'questionnaire_answers' ) );
-		return $this->questionnaire_service->sanitize_answers( $answers );
+		if ( ! class_exists( '\FairForm\Services\QuestionnaireService' ) ) {
+			return array();
+		}
+		$service = new \FairForm\Services\QuestionnaireService();
+		$answers = $service->parse_answers( $request->get_param( 'questionnaire_answers' ) );
+		return $service->sanitize_answers( $answers );
 	}
 
 	/**
@@ -1332,12 +1327,17 @@ class EventSignupController extends WP_REST_Controller {
 			return;
 		}
 
-		$answers = $this->questionnaire_service->process_file_uploads( $request, $answers, $event_date_id, $participant_id );
+		if ( ! class_exists( '\FairForm\Services\QuestionnaireService' ) ) {
+			return;
+		}
+
+		$service = new \FairForm\Services\QuestionnaireService();
+		$answers = $service->process_file_uploads( $request, $answers, $event_date_id, $participant_id );
 		if ( is_wp_error( $answers ) ) {
 			return $answers;
 		}
 
-		$this->questionnaire_service->save_answers(
+		$service->save_answers(
 			$participant_id,
 			$answers,
 			$event_date_id,

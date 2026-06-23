@@ -36,6 +36,9 @@ Plugin::instance();
  * Activation hook.
  */
 function fair_form_activate() {
+	require_once ABSPATH . 'wp-admin/includes/upgrade.php';
+	dbDelta( \FairForm\Database\Schema::get_questionnaire_submissions_table_sql() );
+	dbDelta( \FairForm\Database\Schema::get_questionnaire_answers_table_sql() );
 	Plugin::activate();
 }
 register_activation_hook( __FILE__, __NAMESPACE__ . '\\fair_form_activate' );

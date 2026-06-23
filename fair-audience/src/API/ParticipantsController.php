@@ -10,7 +10,6 @@ namespace FairAudience\API;
 use FairAudience\Database\ParticipantRepository;
 use FairAudience\Database\EventParticipantRepository;
 use FairAudience\Database\GroupParticipantRepository;
-use FairAudience\Database\QuestionnaireSubmissionRepository;
 use FairAudience\Database\EmailConfirmationTokenRepository;
 use FairAudience\Models\Participant;
 use FairAudience\Services\EmailService;
@@ -375,9 +374,10 @@ class ParticipantsController extends WP_REST_Controller {
 		}
 
 		// Build form submissions list.
-		$submissions     = array();
-		$submission_repo = new QuestionnaireSubmissionRepository();
-		$rows            = $submission_repo->get_by_participant( $id );
+		$submissions = array();
+		$rows        = class_exists( '\FairForm\Database\QuestionnaireSubmissionRepository' )
+			? ( new \FairForm\Database\QuestionnaireSubmissionRepository() )->get_by_participant( $id )
+			: array();
 		foreach ( $rows as $row ) {
 			$page_title     = $row->post_id ? get_the_title( (int) $row->post_id ) : '';
 			$event_title    = '';

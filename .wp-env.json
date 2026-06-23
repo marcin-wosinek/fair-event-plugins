@@ -6,6 +6,7 @@
 		"./fair-events",
 		"./fair-events-experimental",
 		"./fair-audience",
+		"./fair-form",
 		"./fair-platform"
 	],
 	"mappings": {

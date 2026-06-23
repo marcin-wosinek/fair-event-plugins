@@ -17,8 +17,6 @@ use FairAudience\Database\ExtraMessageRepository;
 use FairAudience\Database\FeeRepository;
 use FairAudience\Database\FeePaymentRepository;
 use FairAudience\Database\FeeAuditLogRepository;
-use FairAudience\Database\QuestionnaireSubmissionRepository;
-use FairAudience\Database\QuestionnaireAnswerRepository;
 use FairAudience\Models\Participant;
 use FairAudience\Services\EmailType;
 use FairAudience\Services\AudienceSignupToken;
@@ -2205,8 +2203,8 @@ class EmailService {
 
 		// Custom signup question answers (Event Signup questionnaire submission).
 		$answers_html = '';
-		if ( $event_date_id > 0 ) {
-			$submission_repo = new QuestionnaireSubmissionRepository();
+		if ( $event_date_id > 0 && class_exists( '\FairForm\Database\QuestionnaireSubmissionRepository' ) ) {
+			$submission_repo = new \FairForm\Database\QuestionnaireSubmissionRepository();
 			$submissions     = $submission_repo->get_by_filters(
 				array(
 					'participant_id' => (int) $participant->id,
@@ -2216,7 +2214,7 @@ class EmailService {
 			);
 
 			if ( ! empty( $submissions ) ) {
-				$answer_repo = new QuestionnaireAnswerRepository();
+				$answer_repo = new \FairForm\Database\QuestionnaireAnswerRepository();
 				$rows_html   = $this->render_answer_rows( $answer_repo->get_by_submission( $submissions[0]->id ) );
 				if ( '' !== $rows_html ) {
 					$answers_html = '

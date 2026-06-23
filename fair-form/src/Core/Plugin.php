@@ -53,6 +53,23 @@ class Plugin {
 				}
 			}
 		);
+
+		add_action( 'rest_api_init', array( $this, 'register_api_endpoints' ) );
+
+		$block_hooks = new \FairForm\Hooks\BlockHooks();
+	}
+
+	/**
+	 * Register REST API endpoints.
+	 *
+	 * @return void
+	 */
+	public function register_api_endpoints() {
+		$fair_form_controller = new \FairForm\API\FairFormController();
+		$fair_form_controller->register_routes();
+
+		$questionnaire_responses_controller = new \FairForm\API\QuestionnaireResponsesController();
+		$questionnaire_responses_controller->register_routes();
 	}
 
 	/**

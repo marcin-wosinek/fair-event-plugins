@@ -9,8 +9,6 @@ namespace FairAudience\API;
 
 use FairAudience\Database\EventParticipantRepository;
 use FairAudience\Database\ParticipantRepository;
-use FairAudience\Database\QuestionnaireSubmissionRepository;
-use FairAudience\Database\QuestionnaireAnswerRepository;
 use FairAudience\Models\EmailConsentLog;
 use FairAudience\Services\EmailService;
 use WP_REST_Controller;
@@ -470,8 +468,12 @@ class EventParticipantsController extends WP_REST_Controller {
 	 * @return array Map of participant_id => array of answer arrays.
 	 */
 	private function get_signup_answers_by_participant( $event_date_id ) {
-		$submission_repo = new QuestionnaireSubmissionRepository();
-		$answer_repo     = new QuestionnaireAnswerRepository();
+		if ( ! class_exists( '\FairForm\Database\QuestionnaireSubmissionRepository' ) ) {
+			return array();
+		}
+
+		$submission_repo = new \FairForm\Database\QuestionnaireSubmissionRepository();
+		$answer_repo     = new \FairForm\Database\QuestionnaireAnswerRepository();
 
 		$submissions = $submission_repo->get_by_filters(
 			array(

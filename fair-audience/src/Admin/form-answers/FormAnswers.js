@@ -40,7 +40,7 @@ export default function FormAnswers() {
 	useEffect(() => {
 		setIsLoading(true);
 		apiFetch({
-			path: '/fair-audience/v1/questionnaire-responses/all',
+			path: '/fair-form/v1/questionnaire-responses/all',
 		})
 			.then((data) => {
 				setSubmissions(data);
@@ -82,7 +82,7 @@ export default function FormAnswers() {
 
 		setIsSaving(true);
 		apiFetch({
-			path: `/fair-audience/v1/questionnaire-responses/${editingItem.id}`,
+			path: `/fair-form/v1/questionnaire-responses/${editingItem.id}`,
 			method: 'PUT',
 			data: {
 				event_date_id: selectedEventDateId
@@ -183,7 +183,7 @@ export default function FormAnswers() {
 		}
 
 		apiFetch({
-			path: `/fair-audience/v1/questionnaire-responses/${item.id}`,
+			path: `/fair-form/v1/questionnaire-responses/${item.id}`,
 			method: 'DELETE',
 		})
 			.then(() => {

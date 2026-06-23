@@ -8,14 +8,14 @@ import {
 	setButtonLoading,
 	onDomReady,
 	wireNotYouButton,
-} from '../shared/form-utils.js';
+} from 'fair-events-shared';
 import {
 	collectQuestionAnswers,
 	validateQuestions,
 	hasFileUploads,
 	appendQuestionFiles,
 	setupQuestionnaire,
-} from '../shared/questionnaire.js';
+} from 'fair-events-shared';
 
 /**
  * Frontend JavaScript for Fair Audience Event Signup

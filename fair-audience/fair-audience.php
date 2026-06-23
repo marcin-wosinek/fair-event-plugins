@@ -65,8 +65,6 @@ function fair_audience_activate() {
 	}
 
 	dbDelta( \FairAudience\Database\Schema::get_fee_payment_transactions_table_sql() );
-	dbDelta( \FairAudience\Database\Schema::get_questionnaire_submissions_table_sql() );
-	dbDelta( \FairAudience\Database\Schema::get_questionnaire_answers_table_sql() );
 	dbDelta( \FairAudience\Database\Schema::get_participant_categories_table_sql() );
 	dbDelta( \FairAudience\Database\Schema::get_event_participant_options_table_sql() );
 	dbDelta( \FairAudience\Database\Schema::get_email_consent_log_table_sql() );
@@ -380,11 +378,9 @@ function fair_audience_maybe_upgrade_db() {
 	}
 
 	if ( version_compare( $db_version, '1.21.0', '<' ) ) {
-		require_once ABSPATH . 'wp-admin/includes/upgrade.php';
-
-		dbDelta( \FairAudience\Database\Schema::get_questionnaire_submissions_table_sql() );
-		dbDelta( \FairAudience\Database\Schema::get_questionnaire_answers_table_sql() );
-
+		// Questionnaire tables now created by fair-form plugin activation.
+		// dbDelta is idempotent so existing installs are unaffected if fair-form
+		// has already created the tables.
 		update_option( 'fair_audience_db_version', '1.21.0' );
 	}
 

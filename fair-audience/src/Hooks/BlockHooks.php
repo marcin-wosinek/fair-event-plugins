@@ -32,18 +32,6 @@ class BlockHooks {
 		register_block_type( FAIR_AUDIENCE_PLUGIN_DIR . 'build/blocks/signups-list' );
 		register_block_type( FAIR_AUDIENCE_PLUGIN_DIR . 'build/blocks/audience-signup' );
 		register_block_type( FAIR_AUDIENCE_PLUGIN_DIR . 'build/blocks/event-interest' );
-		register_block_type( FAIR_AUDIENCE_PLUGIN_DIR . 'build/blocks/fair-form' );
-		register_block_type( FAIR_AUDIENCE_PLUGIN_DIR . 'build/blocks/fair-form-short-text' );
-		register_block_type( FAIR_AUDIENCE_PLUGIN_DIR . 'build/blocks/fair-form-long-text' );
-		register_block_type( FAIR_AUDIENCE_PLUGIN_DIR . 'build/blocks/fair-form-phone' );
-		register_block_type( FAIR_AUDIENCE_PLUGIN_DIR . 'build/blocks/fair-form-select-one' );
-		register_block_type( FAIR_AUDIENCE_PLUGIN_DIR . 'build/blocks/fair-form-multiselect' );
-		register_block_type( FAIR_AUDIENCE_PLUGIN_DIR . 'build/blocks/fair-form-radio' );
-		register_block_type( FAIR_AUDIENCE_PLUGIN_DIR . 'build/blocks/fair-form-option' );
-		register_block_type( FAIR_AUDIENCE_PLUGIN_DIR . 'build/blocks/fair-form-file-upload' );
-		register_block_type( FAIR_AUDIENCE_PLUGIN_DIR . 'build/blocks/fair-form-conditional' );
-		register_block_type( FAIR_AUDIENCE_PLUGIN_DIR . 'build/blocks/fair-form-mailing-signup' );
-
 		// Set script translations for mailing-signup blocks (editor scripts).
 		wp_set_script_translations(
 			'fair-audience-mailing-signup-editor-script',
@@ -103,90 +91,6 @@ class BlockHooks {
 		// Set script translations for event-interest blocks (frontend scripts).
 		wp_set_script_translations(
 			'fair-audience-event-interest-view-script',
-			'fair-audience',
-			\FairAudience\Core\Features::script_translations_path()
-		);
-
-		// Set script translations for fair-form blocks (editor scripts).
-		wp_set_script_translations(
-			'fair-audience-fair-form-editor-script',
-			'fair-audience',
-			\FairAudience\Core\Features::script_translations_path()
-		);
-
-		// Set script translations for fair-form blocks (frontend scripts).
-		wp_set_script_translations(
-			'fair-audience-fair-form-view-script',
-			'fair-audience',
-			\FairAudience\Core\Features::script_translations_path()
-		);
-
-		// Set script translations for fair-form-short-text blocks (editor scripts).
-		wp_set_script_translations(
-			'fair-audience-fair-form-short-text-editor-script',
-			'fair-audience',
-			\FairAudience\Core\Features::script_translations_path()
-		);
-
-		// Set script translations for fair-form-long-text blocks (editor scripts).
-		wp_set_script_translations(
-			'fair-audience-fair-form-long-text-editor-script',
-			'fair-audience',
-			\FairAudience\Core\Features::script_translations_path()
-		);
-
-		// Set script translations for fair-form-phone blocks (editor scripts).
-		wp_set_script_translations(
-			'fair-audience-fair-form-phone-editor-script',
-			'fair-audience',
-			\FairAudience\Core\Features::script_translations_path()
-		);
-
-		// Set script translations for fair-form-select-one blocks (editor scripts).
-		wp_set_script_translations(
-			'fair-audience-fair-form-select-one-editor-script',
-			'fair-audience',
-			\FairAudience\Core\Features::script_translations_path()
-		);
-
-		// Set script translations for fair-form-multiselect blocks (editor scripts).
-		wp_set_script_translations(
-			'fair-audience-fair-form-multiselect-editor-script',
-			'fair-audience',
-			\FairAudience\Core\Features::script_translations_path()
-		);
-
-		// Set script translations for fair-form-radio blocks (editor scripts).
-		wp_set_script_translations(
-			'fair-audience-fair-form-radio-editor-script',
-			'fair-audience',
-			\FairAudience\Core\Features::script_translations_path()
-		);
-
-		// Set script translations for fair-form-option blocks (editor scripts).
-		wp_set_script_translations(
-			'fair-audience-fair-form-option-editor-script',
-			'fair-audience',
-			\FairAudience\Core\Features::script_translations_path()
-		);
-
-		// Set script translations for fair-form-file-upload blocks (editor scripts).
-		wp_set_script_translations(
-			'fair-audience-fair-form-file-upload-editor-script',
-			'fair-audience',
-			\FairAudience\Core\Features::script_translations_path()
-		);
-
-		// Set script translations for fair-form-conditional blocks (editor scripts).
-		wp_set_script_translations(
-			'fair-audience-fair-form-conditional-editor-script',
-			'fair-audience',
-			\FairAudience\Core\Features::script_translations_path()
-		);
-
-		// Set script translations for fair-form-mailing-signup blocks (editor scripts).
-		wp_set_script_translations(
-			'fair-audience-fair-form-mailing-signup-editor-script',
 			'fair-audience',
 			\FairAudience\Core\Features::script_translations_path()
 		);

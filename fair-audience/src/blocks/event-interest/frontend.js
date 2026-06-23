@@ -7,7 +7,7 @@ import {
 	setButtonLoading,
 	onDomReady,
 	wireNotYouButton,
-} from '../shared/form-utils.js';
+} from 'fair-events-shared';
 
 // Use the shared signup CSS prefix so messages render with the same look as
 // the event-signup block. The message container in render.php carries the

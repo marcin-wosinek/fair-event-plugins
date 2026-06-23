@@ -90,7 +90,7 @@ function EventField({ submission, onUpdate }) {
 	const handleSave = () => {
 		setIsSaving(true);
 		apiFetch({
-			path: `/fair-audience/v1/questionnaire-responses/${submission.id}`,
+			path: `/fair-form/v1/questionnaire-responses/${submission.id}`,
 			method: 'PUT',
 			data: {
 				event_date_id: selectedEventDateId
@@ -207,7 +207,7 @@ export default function SubmissionDetail() {
 		}
 
 		apiFetch({
-			path: `/fair-audience/v1/questionnaire-responses/${submissionId}`,
+			path: `/fair-form/v1/questionnaire-responses/${submissionId}`,
 		})
 			.then((data) => {
 				setSubmission(data);

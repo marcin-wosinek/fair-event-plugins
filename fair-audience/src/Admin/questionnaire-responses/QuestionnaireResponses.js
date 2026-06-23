@@ -61,7 +61,7 @@ export default function QuestionnaireResponses() {
 			return;
 		}
 
-		let apiPath = `/fair-audience/v1/questionnaire-responses?event_date_id=${eventDateId}`;
+		let apiPath = `/fair-form/v1/questionnaire-responses?event_date_id=${eventDateId}`;
 		if (postId) {
 			apiPath += `&post_id=${postId}`;
 		}
@@ -247,7 +247,7 @@ export default function QuestionnaireResponses() {
 		}
 
 		apiFetch({
-			path: `/fair-audience/v1/questionnaire-responses/${item.id}`,
+			path: `/fair-form/v1/questionnaire-responses/${item.id}`,
 			method: 'DELETE',
 		})
 			.then(() => {

@@ -18,8 +18,6 @@ use FairEvents\Models\EventDates;
 use FairAudience\Services\AudienceSession;
 use FairAudience\Services\AudienceSignupToken;
 use FairAudience\Services\ParticipantToken;
-use FairAudience\Database\QuestionnaireSubmissionRepository;
-use FairAudience\Database\QuestionnaireAnswerRepository;
 use FairAudience\Database\ParticipantRepository;
 
 // Get block attributes — translate defaults so stored English values get localized.
@@ -72,11 +70,11 @@ $edit_token = get_query_var( 'edit_audience_signup', '' );
 
 if ( ! empty( $edit_token ) ) {
 	$submission_id = AudienceSignupToken::verify( $edit_token );
-	if ( $submission_id ) {
-		$submission_repo = new QuestionnaireSubmissionRepository();
+	if ( $submission_id && class_exists( '\FairForm\Database\QuestionnaireSubmissionRepository' ) ) {
+		$submission_repo = new \FairForm\Database\QuestionnaireSubmissionRepository();
 		$submission      = $submission_repo->get_by_id( $submission_id );
 		if ( $submission ) {
-			$answer_repo = new QuestionnaireAnswerRepository();
+			$answer_repo = new \FairForm\Database\QuestionnaireAnswerRepository();
 			$answers     = $answer_repo->get_by_submission( $submission_id );
 
 			foreach ( $answers as $answer ) {

@@ -9,10 +9,7 @@ namespace FairAudience\API;
 
 use FairAudience\Database\ParticipantRepository;
 use FairAudience\Database\EmailConfirmationTokenRepository;
-use FairAudience\Database\QuestionnaireSubmissionRepository;
-use FairAudience\Database\QuestionnaireAnswerRepository;
 use FairAudience\Models\Participant;
-use FairAudience\Models\QuestionnaireSubmission;
 use FairAudience\Services\AudienceSession;
 use FairAudience\Services\EmailService;
 use WP_REST_Controller;
@@ -64,20 +61,6 @@ class AudienceSignupController extends WP_REST_Controller {
 	private $email_service;
 
 	/**
-	 * Questionnaire submission repository instance.
-	 *
-	 * @var QuestionnaireSubmissionRepository
-	 */
-	private $submission_repository;
-
-	/**
-	 * Questionnaire answer repository instance.
-	 *
-	 * @var QuestionnaireAnswerRepository
-	 */
-	private $answer_repository;
-
-	/**
 	 * Rate limit: max requests per email per hour.
 	 */
 	const RATE_LIMIT_MAX = 3;
@@ -94,8 +77,6 @@ class AudienceSignupController extends WP_REST_Controller {
 		$this->participant_repository = new ParticipantRepository();
 		$this->token_repository       = new EmailConfirmationTokenRepository();
 		$this->email_service          = new EmailService();
-		$this->submission_repository  = new QuestionnaireSubmissionRepository();
-		$this->answer_repository      = new QuestionnaireAnswerRepository();
 	}
 
 	/**
@@ -357,6 +338,10 @@ class AudienceSignupController extends WP_REST_Controller {
 			return 0;
 		}
 
+		if ( ! class_exists( '\FairForm\Database\QuestionnaireSubmissionRepository' ) ) {
+			return 0;
+		}
+
 		$submission_data = array(
 			'participant_id' => $participant_id,
 			'title'          => __( 'Audience Signup', 'fair-audience' ),
@@ -370,14 +355,14 @@ class AudienceSignupController extends WP_REST_Controller {
 			$submission_data['post_id'] = $post_id;
 		}
 
-		$submission = new QuestionnaireSubmission();
+		$submission = new \FairForm\Models\QuestionnaireSubmission();
 		$submission->populate( $submission_data );
 
 		if ( ! $submission->save() ) {
 			return 0;
 		}
 
-		$this->answer_repository->save_answers( $submission->id, $answers );
+		( new \FairForm\Database\QuestionnaireAnswerRepository() )->save_answers( $submission->id, $answers );
 
 		return $submission->id;
 	}
