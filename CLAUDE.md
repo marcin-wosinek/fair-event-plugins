@@ -49,6 +49,9 @@ vendor/bin/phpcbf        # Auto-fix
   (`.claude/hooks/format-edited-file.sh`, wired in `.claude/settings.json`)
   runs `wp-scripts format` (JS/CSS/JSON) or `phpcbf` (PHP) on each file you
   edit. Do **not** run `npm run format` manually after edits.
+- **Before committing**, run `npm run format` in the affected plugin to catch
+  any files touched outside the hook (manual shell edits, generated files, or
+  cross-session edits). Only stage clean, formatted files.
 - **Build is not automatic** (it is slow). After changing JS/CSS, run
   `npm run build` in the affected plugin so generated assets land before
   committing.

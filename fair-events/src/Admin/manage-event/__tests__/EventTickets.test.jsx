@@ -122,14 +122,16 @@ describe('EventTickets — recurrence scope selector', () => {
 		fireEvent.click(addButton);
 
 		// A second Scope combobox should appear (one per ticket type row).
-		const scopeSelects = screen.getAllByRole('combobox').filter(
-			(el) => el.value === 'single_instance' || el.value === 'whole_series'
-		);
+		const scopeSelects = screen
+			.getAllByRole('combobox')
+			.filter(
+				(el) =>
+					el.value === 'single_instance' ||
+					el.value === 'whole_series'
+			);
 		// Both rows (original + new) should be single_instance.
 		expect(scopeSelects.length).toBeGreaterThanOrEqual(2);
-		scopeSelects.forEach((el) =>
-			expect(el.value).toBe('single_instance')
-		);
+		scopeSelects.forEach((el) => expect(el.value).toBe('single_instance'));
 	});
 
 	it('changing scope selector to whole_series updates the combobox value', () => {
@@ -141,7 +143,8 @@ describe('EventTickets — recurrence scope selector', () => {
 
 		const selects = screen.getAllByRole('combobox');
 		const scopeSelect = selects.find(
-			(el) => el.value === 'single_instance' || el.value === 'whole_series'
+			(el) =>
+				el.value === 'single_instance' || el.value === 'whole_series'
 		);
 		expect(scopeSelect).toBeTruthy();
 		expect(scopeSelect.value).toBe('single_instance');
@@ -160,7 +163,8 @@ describe('EventTickets — recurrence scope selector', () => {
 		// Change scope to whole_series.
 		const selects = screen.getAllByRole('combobox');
 		const scopeSelect = selects.find(
-			(el) => el.value === 'single_instance' || el.value === 'whole_series'
+			(el) =>
+				el.value === 'single_instance' || el.value === 'whole_series'
 		);
 		fireEvent.change(scopeSelect, { target: { value: 'whole_series' } });
 

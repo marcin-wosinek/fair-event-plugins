@@ -25,7 +25,9 @@ const authHeaders = {
 };
 
 function uniqueEmail(prefix) {
-	return `${prefix}+${Date.now()}-${Math.floor(Math.random() * 1e6)}@example.test`;
+	return `${prefix}+${Date.now()}-${Math.floor(
+		Math.random() * 1e6
+	)}@example.test`;
 }
 
 async function createEventWithDates(api, title) {
@@ -89,9 +91,12 @@ async function createParticipant(api, adminUserId, label) {
 
 async function deleteParticipant(api, participantId) {
 	if (!participantId) return;
-	await api.delete(`/wp-json/fair-audience/v1/participants/${participantId}`, {
-		headers: authHeaders,
-	});
+	await api.delete(
+		`/wp-json/fair-audience/v1/participants/${participantId}`,
+		{
+			headers: authHeaders,
+		}
+	);
 }
 
 test.describe('Recurrence-scope ticket types — signup semantics', () => {
@@ -134,7 +139,11 @@ test.describe('Recurrence-scope ticket types — signup semantics', () => {
 			'single_instance'
 		);
 
-		participantId = await createParticipant(api, adminUserId, 'Scope Tester');
+		participantId = await createParticipant(
+			api,
+			adminUserId,
+			'Scope Tester'
+		);
 	});
 
 	test.afterAll(async () => {
@@ -179,7 +188,9 @@ test.describe('Recurrence-scope ticket types — signup semantics', () => {
 		);
 		expect(participantsRes.ok()).toBeTruthy();
 		const participants = await participantsRes.json();
-		const row = participants.find((p) => p.participant_id === participantId);
+		const row = participants.find(
+			(p) => p.participant_id === participantId
+		);
 		expect(row, 'signup row on master event-date').toBeTruthy();
 		expect(row.label).toBe('signed_up');
 	});
@@ -222,7 +233,9 @@ test.describe('Recurrence-scope ticket types — signup semantics', () => {
 		);
 		expect(participantsRes.ok()).toBeTruthy();
 		const participants = await participantsRes.json();
-		const row = participants.find((p) => p.participant_id === participantId);
+		const row = participants.find(
+			(p) => p.participant_id === participantId
+		);
 		expect(row, 'signup row on the event-date').toBeTruthy();
 		expect(row.label).toBe('signed_up');
 	});
