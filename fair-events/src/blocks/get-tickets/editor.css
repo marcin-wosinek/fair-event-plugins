@@ -1,0 +1,9 @@
+.wp-block-fair-events-get-tickets {
+	a,
+	button,
+	input,
+	select {
+		pointer-events: none;
+		cursor: default;
+	}
+}

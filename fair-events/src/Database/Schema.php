@@ -17,7 +17,7 @@ class Schema {
 	/**
 	 * Database version
 	 */
-	const DB_VERSION = '3.14.0';
+	const DB_VERSION = '3.15.0';
 
 	/**
 	 * Get the SQL for creating the fair_event_dates table
@@ -493,6 +493,38 @@ class Schema {
 			KEY idx_group_id (group_id),
 			KEY idx_inviter (inviter_participant_id),
 			KEY idx_invitee (invitee_participant_id)
+		) ENGINE=InnoDB {$charset_collate};";
+	}
+
+	/**
+	 * Get the SQL for creating the fair_events_signups table
+	 *
+	 * @return string SQL statement for creating the table.
+	 */
+	public static function get_signups_table_sql() {
+		global $wpdb;
+
+		$table_name      = $wpdb->prefix . 'fair_events_signups';
+		$charset_collate = $wpdb->get_charset_collate();
+
+		return "CREATE TABLE {$table_name} (
+			id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
+			event_date_id BIGINT UNSIGNED NOT NULL,
+			ticket_type_id BIGINT UNSIGNED DEFAULT NULL,
+			name VARCHAR(255) NOT NULL,
+			email VARCHAR(255) NOT NULL,
+			quantity INT UNSIGNED NOT NULL DEFAULT 1,
+			mailing_opt_in TINYINT(1) NOT NULL DEFAULT 0,
+			amount DECIMAL(10,2) NOT NULL DEFAULT 0.00,
+			status VARCHAR(20) NOT NULL DEFAULT 'confirmed',
+			transaction_id BIGINT UNSIGNED DEFAULT NULL,
+			payment_expires_at DATETIME DEFAULT NULL,
+			created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+			PRIMARY KEY (id),
+			KEY idx_event_date_id (event_date_id),
+			KEY idx_email (email(100)),
+			KEY idx_transaction_id (transaction_id),
+			KEY idx_payment_expires_at (payment_expires_at)
 		) ENGINE=InnoDB {$charset_collate};";
 	}
 

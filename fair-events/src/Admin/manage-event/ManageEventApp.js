@@ -40,6 +40,7 @@ import EventTickets from './EventTickets.js';
 import EventPhotos from './EventPhotos.js';
 import EventMailings from './EventMailings.js';
 import RecurrenceCalendar from './RecurrenceCalendar.js';
+import EventSignups from './EventSignups.js';
 
 export default function ManageEventApp() {
 	const eventDateId = window.fairEventsManageEventData?.eventDateId;
@@ -557,6 +558,14 @@ export default function ManageEventApp() {
 							name: 'groups',
 							title: __('Groups', 'fair-events'),
 							disabled: isGeneratedOccurrence,
+						},
+				  ]
+				: []),
+			...(!audienceUrl && ticketingEnabled
+				? [
+						{
+							name: 'signups',
+							title: __('Signups', 'fair-events'),
 						},
 				  ]
 				: []),
@@ -1232,6 +1241,9 @@ export default function ManageEventApp() {
 					}
 					if (tab.name === 'groups') {
 						return <GroupRules eventDateId={eventDateId} />;
+					}
+					if (tab.name === 'signups') {
+						return <EventSignups eventDateId={eventDateId} />;
 					}
 					if (tab.name === 'photos') {
 						return <EventPhotos eventDateId={eventDateId} />;

@@ -39,6 +39,11 @@ class BlockHooks {
 		if ( \FairEvents\Core\Features::is_enabled( 'sources' ) ) {
 			register_block_type( __DIR__ . '/../../build/blocks/event-proposal' );
 		}
+
+		// `get-tickets` block — step aside when fair-audience is active (it has the full Event Signup flow).
+		if ( ! class_exists( \FairAudience\API\EventSignupController::class ) ) {
+			register_block_type( __DIR__ . '/../../build/blocks/get-tickets' );
+		}
 	}
 
 	/**
@@ -96,6 +101,20 @@ class BlockHooks {
 		// Event info block editor script
 		wp_set_script_translations(
 			'fair-events-event-info-editor-script',
+			'fair-events',
+			\FairEvents\Core\Features::script_translations_path()
+		);
+
+		// Get tickets block editor script
+		wp_set_script_translations(
+			'fair-events-get-tickets-editor-script',
+			'fair-events',
+			\FairEvents\Core\Features::script_translations_path()
+		);
+
+		// Get tickets block view script (frontend)
+		wp_set_script_translations(
+			'fair-events-get-tickets-view-script',
 			'fair-events',
 			\FairEvents\Core\Features::script_translations_path()
 		);

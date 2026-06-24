@@ -415,7 +415,7 @@ const BudgetsApp = () => {
 															<Button
 																variant="secondary"
 																size="small"
-																href={`admin.php?page=fair-finance-entries&budget_id=${budget.id}`}
+																href={`admin.php?page=fair-payments-connector-entries&budget_id=${budget.id}`}
 															>
 																{__(
 																	'View',
@@ -514,7 +514,7 @@ const BudgetsApp = () => {
 												<Button
 													variant="secondary"
 													size="small"
-													href="admin.php?page=fair-finance-entries&budget_id=none"
+													href="admin.php?page=fair-payments-connector-entries&budget_id=none"
 												>
 													{__(
 														'View',

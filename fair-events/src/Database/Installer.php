@@ -80,6 +80,10 @@ class Installer {
 		$sql = Schema::get_ticket_option_prices_table_sql();
 		dbDelta( $sql );
 
+		// Version 3.15.0 - Signups table (no data migration needed, table created by dbDelta).
+		$sql = Schema::get_signups_table_sql();
+		dbDelta( $sql );
+
 		// Run migration if upgrading from pre-1.0.0
 		if ( version_compare( $current_version, '1.0.0', '<' ) ) {
 			self::migrate_to_1_0_0();
@@ -233,6 +237,8 @@ class Installer {
 		if ( version_compare( $current_version, '3.14.0', '<' ) ) {
 			self::migrate_to_3_14_0();
 		}
+
+		// Version 3.15.0 - Signups table (no data migration needed, table created by dbDelta).
 
 		// Update database version
 		Schema::update_db_version( Schema::DB_VERSION );
