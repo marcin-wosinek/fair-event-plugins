@@ -46,7 +46,7 @@ class QuestionnaireResponsesController extends WP_REST_Controller {
 					'permission_callback' => array( $this, 'get_items_permissions_check' ),
 					'args'                => array(
 						'event_date_id' => array(
-							'required'          => true,
+							'required'          => false,
 							'type'              => 'integer',
 							'sanitize_callback' => 'absint',
 						),
@@ -54,6 +54,11 @@ class QuestionnaireResponsesController extends WP_REST_Controller {
 							'required'          => false,
 							'type'              => 'integer',
 							'sanitize_callback' => 'absint',
+						),
+						'form_id'       => array(
+							'required'          => false,
+							'type'              => 'string',
+							'sanitize_callback' => 'sanitize_text_field',
 						),
 						'title'         => array(
 							'required'          => false,
@@ -78,6 +83,25 @@ class QuestionnaireResponsesController extends WP_REST_Controller {
 							'required'          => true,
 							'type'              => 'integer',
 							'sanitize_callback' => 'absint',
+						),
+					),
+				),
+			)
+		);
+
+		register_rest_route(
+			$this->namespace,
+			'/' . $this->rest_base . '/grouped',
+			array(
+				array(
+					'methods'             => WP_REST_Server::READABLE,
+					'callback'            => array( $this, 'get_groups' ),
+					'permission_callback' => array( $this, 'get_items_permissions_check' ),
+					'args'                => array(
+						'by' => array(
+							'required' => true,
+							'type'     => 'string',
+							'enum'     => array( 'page', 'event', 'form' ),
 						),
 					),
 				),
@@ -144,14 +168,21 @@ class QuestionnaireResponsesController extends WP_REST_Controller {
 	public function get_items( $request ) {
 		$event_date_id = $request->get_param( 'event_date_id' );
 		$post_id       = $request->get_param( 'post_id' );
+		$form_id       = $request->get_param( 'form_id' );
 		$title         = $request->get_param( 'title' );
 
 		$submission_repo = new QuestionnaireSubmissionRepository();
 		$answer_repo     = new QuestionnaireAnswerRepository();
 
-		$filters = array( 'event_date_id' => $event_date_id );
+		$filters = array();
+		if ( ! empty( $event_date_id ) ) {
+			$filters['event_date_id'] = $event_date_id;
+		}
 		if ( $post_id ) {
 			$filters['post_id'] = $post_id;
+		}
+		if ( $form_id ) {
+			$filters['form_id'] = $form_id;
 		}
 		if ( $title ) {
 			$filters['title'] = $title;
@@ -262,6 +293,83 @@ class QuestionnaireResponsesController extends WP_REST_Controller {
 		$forms = $submission_repo->get_forms_summary_by_event_date( $event_date_id );
 
 		return new WP_REST_Response( $forms, 200 );
+	}
+
+	/**
+	 * Get submission counts grouped by page, event, or form.
+	 *
+	 * @param WP_REST_Request $request Request.
+	 * @return WP_REST_Response Response.
+	 */
+	public function get_groups( $request ) {
+		$by              = $request->get_param( 'by' );
+		$submission_repo = new QuestionnaireSubmissionRepository();
+		$rows            = $submission_repo->get_groups( $by );
+
+		$data = array();
+		foreach ( $rows as $row ) {
+			$group_key = $row['group_key'];
+			$count     = (int) $row['count'];
+			$label     = '';
+
+			if ( 'page' === $by ) {
+				if ( ! empty( $group_key ) ) {
+					$post = get_post( (int) $group_key );
+					if ( $post ) {
+						$label = $post->post_title;
+					} else {
+						// translators: %d: WordPress post ID.
+						$label = sprintf( __( 'Post #%d', 'fair-form' ), (int) $group_key );
+					}
+				} else {
+					$label = __( 'No page', 'fair-form' );
+				}
+				$data[] = array(
+					'post_id' => $group_key ? (int) $group_key : null,
+					'label'   => $label,
+					'count'   => $count,
+				);
+			} elseif ( 'event' === $by ) {
+				if ( ! empty( $group_key ) && class_exists( '\FairEvents\Models\EventDates' ) ) {
+					$event_date = \FairEvents\Models\EventDates::get_by_id( (int) $group_key );
+					if ( $event_date ) {
+						$event = get_post( (int) $event_date->event_id );
+						if ( $event ) {
+							$label = $event->post_title;
+						}
+					}
+				}
+				if ( empty( $label ) ) {
+					if ( $group_key ) {
+						// translators: %d: event date ID.
+						$label = sprintf( __( 'Event date #%d', 'fair-form' ), (int) $group_key );
+					} else {
+						$label = __( 'No event', 'fair-form' );
+					}
+				}
+				$data[] = array(
+					'event_date_id' => $group_key ? (int) $group_key : null,
+					'label'         => $label,
+					'count'         => $count,
+				);
+			} elseif ( 'form' === $by ) {
+				if ( null === $group_key || '' === $group_key ) {
+					$label = __( 'Legacy (no form id)', 'fair-form' );
+				} else {
+					$label = ! empty( $row['form_title'] ) ? $row['form_title'] : '';
+					if ( empty( $label ) ) {
+						$label = $group_key;
+					}
+				}
+				$data[] = array(
+					'form_id' => $group_key ? $group_key : null,
+					'label'   => $label,
+					'count'   => $count,
+				);
+			}
+		}
+
+		return new WP_REST_Response( $data, 200 );
 	}
 
 	/**

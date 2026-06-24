@@ -124,24 +124,34 @@ class AdminHooks {
 	 * Register admin menu pages.
 	 */
 	public function register_admin_menu() {
-		// Main menu page.
+		// Main menu page — landing is the Answers Overview.
 		add_menu_page(
 			__( 'Fair Form', 'fair-form' ),
 			__( 'Fair Form', 'fair-form' ),
 			'manage_options',
 			'fair-form',
-			array( $this, 'render_form_answers_page' ),
+			array( $this, 'render_answers_overview_page' ),
 			'dashicons-feedback',
 			'20.4'
 		);
 
-		// Visible submenu page - Form Answers (overrides the auto-generated first item).
+		// First visible submenu overrides the auto-generated duplicate.
 		add_submenu_page(
 			'fair-form',
-			__( 'Form Answers', 'fair-form' ),
-			__( 'Form Answers', 'fair-form' ),
+			__( 'Answers Overview', 'fair-form' ),
+			__( 'Answers Overview', 'fair-form' ),
 			'manage_options',
 			'fair-form',
+			array( $this, 'render_answers_overview_page' )
+		);
+
+		// Visible submenu — flat list of all answers.
+		add_submenu_page(
+			'fair-form',
+			__( 'All Answers', 'fair-form' ),
+			__( 'All Answers', 'fair-form' ),
+			'manage_options',
+			'fair-form-form-answers',
 			array( $this, 'render_form_answers_page' )
 		);
 
@@ -150,6 +160,14 @@ class AdminHooks {
 
 		// Hidden submenu page - Submission Detail.
 		$this->register_hidden_page( 'fair-form-submission-detail' );
+	}
+
+	/**
+	 * Render Answers Overview page.
+	 */
+	public function render_answers_overview_page() {
+		$page = new AnswersOverviewPage();
+		$page->render();
 	}
 
 	/**
@@ -184,8 +202,13 @@ class AdminHooks {
 	public function enqueue_admin_scripts( $hook ) {
 		$plugin_dir = plugin_dir_path( dirname( __DIR__ ) );
 
-		// Form Answers page (top-level, hook is toplevel_page_fair-form).
+		// Answers Overview page (top-level, hook is toplevel_page_fair-form).
 		if ( 'toplevel_page_fair-form' === $hook ) {
+			$this->enqueue_page_script( 'answers-overview', $plugin_dir );
+		}
+
+		// All Answers flat list page.
+		if ( 'fair-form_page_fair-form-form-answers' === $hook ) {
 			$this->enqueue_page_script( 'form-answers', $plugin_dir );
 		}
 

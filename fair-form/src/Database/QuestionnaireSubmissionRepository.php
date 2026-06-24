@@ -238,6 +238,11 @@ class QuestionnaireSubmissionRepository {
 			$values[] = $filters['participant_id'];
 		}
 
+		if ( ! empty( $filters['form_id'] ) ) {
+			$where[]  = 'form_id = %s';
+			$values[] = $filters['form_id'];
+		}
+
 		$sql = 'SELECT * FROM %i';
 
 		if ( ! empty( $where ) ) {
@@ -298,6 +303,46 @@ class QuestionnaireSubmissionRepository {
 			},
 			$results
 		);
+	}
+
+	/**
+	 * Get submission counts grouped by a dimension.
+	 *
+	 * @param string $by Grouping dimension: 'page', 'event', or 'form'.
+	 * @return array[] Each row: group_key (int|string|null), count (int), plus extra label columns depending on $by.
+	 */
+	public function get_groups( string $by ): array {
+		global $wpdb;
+
+		$table_name = $this->get_table_name();
+
+		$column_map = array(
+			'page'  => 'post_id',
+			'event' => 'event_date_id',
+			'form'  => 'form_id',
+		);
+
+		if ( ! isset( $column_map[ $by ] ) ) {
+			return array();
+		}
+
+		$group_column = $column_map[ $by ];
+
+		$extra_select = '';
+		if ( 'form' === $by ) {
+			$extra_select = ', form_title';
+		}
+
+		$results = $wpdb->get_results(
+			$wpdb->prepare(
+				// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+				"SELECT {$group_column} AS group_key, COUNT(*) AS count{$extra_select} FROM %i GROUP BY {$group_column} ORDER BY count DESC",
+				$table_name
+			),
+			ARRAY_A
+		);
+
+		return $results;
 	}
 
 	/**

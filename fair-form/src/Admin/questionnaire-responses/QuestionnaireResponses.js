@@ -53,21 +53,27 @@ export default function QuestionnaireResponses() {
 	const params = new URLSearchParams(window.location.search);
 	const eventDateId = params.get('event_date_id');
 	const postId = params.get('post_id');
+	const formId = params.get('form_id');
 	const title = params.get('title');
 
 	useEffect(() => {
-		if (!eventDateId) {
-			setIsLoading(false);
-			return;
+		const parts = [];
+		if (eventDateId) {
+			parts.push(`event_date_id=${eventDateId}`);
 		}
-
-		let apiPath = `/fair-form/v1/questionnaire-responses?event_date_id=${eventDateId}`;
 		if (postId) {
-			apiPath += `&post_id=${postId}`;
+			parts.push(`post_id=${postId}`);
+		}
+		if (formId) {
+			parts.push(`form_id=${encodeURIComponent(formId)}`);
 		}
 		if (title) {
-			apiPath += `&title=${encodeURIComponent(title)}`;
+			parts.push(`title=${encodeURIComponent(title)}`);
 		}
+
+		const apiPath = `/fair-form/v1/questionnaire-responses${
+			parts.length ? '?' + parts.join('&') : ''
+		}`;
 
 		setIsLoading(true);
 		apiFetch({
@@ -82,7 +88,7 @@ export default function QuestionnaireResponses() {
 				console.error('Error loading questionnaire responses:', err);
 				setIsLoading(false);
 			});
-	}, [eventDateId]);
+	}, [eventDateId, postId, formId]);
 
 	// Derive dynamic question columns from all responses.
 	const questionColumns = useMemo(() => {
@@ -498,39 +504,35 @@ export default function QuestionnaireResponses() {
 		const url = URL.createObjectURL(blob);
 		const link = document.createElement('a');
 		link.href = url;
-		link.download = `questionnaire-responses-${eventDateId}.csv`;
+		const contextId = eventDateId || postId || formId || 'all';
+		link.download = `questionnaire-responses-${contextId}.csv`;
 		link.click();
 		URL.revokeObjectURL(url);
 	};
-
-	if (!eventDateId) {
-		return (
-			<div className="wrap">
-				<p>{__('No event date ID provided.', 'fair-form')}</p>
-			</div>
-		);
-	}
 
 	return (
 		<div className="wrap">
 			<h1>{__('Questionnaire Responses', 'fair-form')}</h1>
 
 			<p>
-				{/* TODO(phase-3): retarget back-link to fair-form grouped page once it exists. */}
-				<a href="admin.php?page=fair-audience-by-event">
-					&larr; {__('Back to Events', 'fair-form')}
+				<a href="admin.php?page=fair-form">
+					&larr; {__('Back to Answers Overview', 'fair-form')}
 				</a>
-				{' | '}
-				<a
-					href={`admin.php?page=fair-events-manage-event&event_date_id=${eventDateId}`}
-				>
-					{__('Event edit page', 'fair-form')}
-				</a>
+				{eventDateId && (
+					<>
+						{' | '}
+						<a
+							href={`admin.php?page=fair-events-manage-event&event_date_id=${eventDateId}`}
+						>
+							{__('Event edit page', 'fair-form')}
+						</a>
+					</>
+				)}
 				{postId && (
 					<>
 						{' | '}
 						<a href={`post.php?post=${postId}&action=edit`}>
-							{__('Event entry', 'fair-form')}
+							{__('Post entry', 'fair-form')}
 						</a>
 					</>
 				)}

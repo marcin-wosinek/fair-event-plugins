@@ -12,6 +12,10 @@ module.exports = {
 	entry: () => ({
 		...defaultEntries,
 		// Admin scripts
+		'admin/answers-overview/index': path.resolve(
+			process.cwd(),
+			'src/Admin/answers-overview/index.js',
+		),
 		'admin/form-answers/index': path.resolve(
 			process.cwd(),
 			'src/Admin/form-answers/index.js',

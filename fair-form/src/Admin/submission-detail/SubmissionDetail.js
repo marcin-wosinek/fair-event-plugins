@@ -72,8 +72,9 @@ function EventField({ submission, onUpdate }) {
 		if (eventDates.length > 0) {
 			return;
 		}
-		// TODO(phase-2): replace with data-derived event source once available in fair-form.
-		apiFetch({ path: '/fair-audience/v1/custom-mail/events' })
+		apiFetch({
+			path: '/fair-form/v1/questionnaire-responses/grouped?by=event',
+		})
 			.then((data) => {
 				setEventDates(data);
 			})
@@ -117,10 +118,12 @@ function EventField({ submission, onUpdate }) {
 
 	const eventDateOptions = [
 		{ label: __('— None —', 'fair-form'), value: '' },
-		...eventDates.map((ed) => ({
-			label: ed.display_label,
-			value: String(ed.id),
-		})),
+		...eventDates
+			.filter((ed) => ed.event_date_id)
+			.map((ed) => ({
+				label: `${ed.label} (${ed.count})`,
+				value: String(ed.event_date_id),
+			})),
 	];
 
 	if (!isEditing) {
