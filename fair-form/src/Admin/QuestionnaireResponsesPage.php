@@ -2,10 +2,10 @@
 /**
  * Questionnaire Responses Page
  *
- * @package FairAudience
+ * @package FairForm
  */
 
-namespace FairAudience\Admin;
+namespace FairForm\Admin;
 
 defined( 'WPINC' ) || die;
 
@@ -17,6 +17,6 @@ class QuestionnaireResponsesPage {
 	 * Render page.
 	 */
 	public function render() {
-		echo '<div id="fair-audience-questionnaire-responses-root"></div>';
+		echo '<div id="fair-form-questionnaire-responses-root"></div>';
 	}
 }

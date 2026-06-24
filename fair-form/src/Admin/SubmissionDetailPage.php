@@ -2,10 +2,10 @@
 /**
  * Submission Detail Page
  *
- * @package FairAudience
+ * @package FairForm
  */
 
-namespace FairAudience\Admin;
+namespace FairForm\Admin;
 
 defined( 'WPINC' ) || die;
 
@@ -17,6 +17,6 @@ class SubmissionDetailPage {
 	 * Render page.
 	 */
 	public function render() {
-		echo '<div id="fair-audience-submission-detail-root"></div>';
+		echo '<div id="fair-form-submission-detail-root"></div>';
 	}
 }

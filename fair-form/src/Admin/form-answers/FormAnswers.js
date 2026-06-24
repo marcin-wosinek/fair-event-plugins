@@ -57,6 +57,7 @@ export default function FormAnswers() {
 		if (eventDates.length > 0) {
 			return;
 		}
+		// TODO(phase-2): replace with data-derived event source once available in fair-form.
 		apiFetch({ path: '/fair-audience/v1/custom-mail/events' })
 			.then((data) => {
 				setEventDates(data);
@@ -107,9 +108,9 @@ export default function FormAnswers() {
 			.catch((err) => {
 				// eslint-disable-next-line no-undef
 				alert(
-					__('Error: ', 'fair-audience') +
+					__('Error: ', 'fair-form') +
 						(err.message ||
-							__('Failed to update submission.', 'fair-audience'))
+							__('Failed to update submission.', 'fair-form'))
 				);
 			})
 			.finally(() => {
@@ -121,12 +122,12 @@ export default function FormAnswers() {
 		() => [
 			{
 				id: 'participant_name',
-				label: __('Name', 'fair-audience'),
+				label: __('Name', 'fair-form'),
 				enableSorting: true,
 				enableHiding: false,
 				render: ({ item }) => (
 					<a
-						href={`admin.php?page=fair-audience-submission-detail&submission_id=${item.id}`}
+						href={`admin.php?page=fair-form-submission-detail&submission_id=${item.id}`}
 					>
 						{item.participant_name || '—'}
 					</a>
@@ -135,25 +136,25 @@ export default function FormAnswers() {
 			},
 			{
 				id: 'participant_email',
-				label: __('Email', 'fair-audience'),
+				label: __('Email', 'fair-form'),
 				enableSorting: true,
 				getValue: ({ item }) => item.participant_email || '',
 			},
 			{
 				id: 'title',
-				label: __('Form', 'fair-audience'),
+				label: __('Form', 'fair-form'),
 				enableSorting: true,
 				getValue: ({ item }) => item.title || '',
 			},
 			{
 				id: 'event_name',
-				label: __('Event', 'fair-audience'),
+				label: __('Event', 'fair-form'),
 				enableSorting: true,
 				getValue: ({ item }) => item.event_name || '',
 			},
 			{
 				id: 'created_at',
-				label: __('Date', 'fair-audience'),
+				label: __('Date', 'fair-form'),
 				enableSorting: true,
 				getValue: ({ item }) => item.created_at || '',
 			},
@@ -175,7 +176,7 @@ export default function FormAnswers() {
 			!confirm(
 				__(
 					'Are you sure you want to delete this submission?',
-					'fair-audience'
+					'fair-form'
 				)
 			)
 		) {
@@ -192,9 +193,9 @@ export default function FormAnswers() {
 			.catch((err) => {
 				// eslint-disable-next-line no-undef
 				alert(
-					__('Error: ', 'fair-audience') +
+					__('Error: ', 'fair-form') +
 						(err.message ||
-							__('Failed to delete submission.', 'fair-audience'))
+							__('Failed to delete submission.', 'fair-form'))
 				);
 			});
 	};
@@ -203,23 +204,23 @@ export default function FormAnswers() {
 		() => [
 			{
 				id: 'edit',
-				label: __('Edit', 'fair-audience'),
+				label: __('Edit', 'fair-form'),
 				icon: 'edit',
 				callback: ([item]) => openEdit(item),
 				supportsBulk: false,
 			},
 			{
 				id: 'view',
-				label: __('View', 'fair-audience'),
+				label: __('View', 'fair-form'),
 				icon: 'visibility',
 				callback: ([item]) => {
-					window.location.href = `admin.php?page=fair-audience-submission-detail&submission_id=${item.id}`;
+					window.location.href = `admin.php?page=fair-form-submission-detail&submission_id=${item.id}`;
 				},
 				supportsBulk: false,
 			},
 			{
 				id: 'delete',
-				label: __('Delete', 'fair-audience'),
+				label: __('Delete', 'fair-form'),
 				icon: 'trash',
 				callback: ([item]) => handleDelete(item),
 				supportsBulk: false,
@@ -230,7 +231,7 @@ export default function FormAnswers() {
 
 	const eventDateOptions = useMemo(
 		() => [
-			{ label: __('— None —', 'fair-audience'), value: '' },
+			{ label: __('— None —', 'fair-form'), value: '' },
 			...eventDates.map((ed) => ({
 				label: ed.display_label,
 				value: String(ed.id),
@@ -241,7 +242,7 @@ export default function FormAnswers() {
 
 	return (
 		<div className="wrap">
-			<h1>{__('Form Answers', 'fair-audience')}</h1>
+			<h1>{__('Form Answers', 'fair-form')}</h1>
 
 			<Card>
 				<CardBody>
@@ -261,11 +262,11 @@ export default function FormAnswers() {
 
 			{editingItem && (
 				<Modal
-					title={__('Edit Submission', 'fair-audience')}
+					title={__('Edit Submission', 'fair-form')}
 					onRequestClose={() => setEditingItem(null)}
 				>
 					<SelectControl
-						label={__('Event', 'fair-audience')}
+						label={__('Event', 'fair-form')}
 						value={selectedEventDateId}
 						options={eventDateOptions}
 						onChange={setSelectedEventDateId}
@@ -282,7 +283,7 @@ export default function FormAnswers() {
 							variant="tertiary"
 							onClick={() => setEditingItem(null)}
 						>
-							{__('Cancel', 'fair-audience')}
+							{__('Cancel', 'fair-form')}
 						</Button>
 						<Button
 							variant="primary"
@@ -290,11 +291,7 @@ export default function FormAnswers() {
 							isBusy={isSaving}
 							disabled={isSaving}
 						>
-							{isSaving ? (
-								<Spinner />
-							) : (
-								__('Save', 'fair-audience')
-							)}
+							{isSaving ? <Spinner /> : __('Save', 'fair-form')}
 						</Button>
 					</div>
 				</Modal>

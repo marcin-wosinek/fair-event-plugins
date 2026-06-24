@@ -105,12 +105,13 @@ export default function QuestionnaireResponses() {
 		const baseFields = [
 			{
 				id: 'participant_name',
-				label: __('Name', 'fair-audience'),
+				label: __('Name', 'fair-form'),
 				enableSorting: true,
 				enableHiding: false,
 				getValue: ({ item }) => item.participant_name || '',
 				render: ({ item }) =>
 					item.participant_id ? (
+						// TODO(phase-3): retarget to fair-form participant detail once it exists.
 						<a
 							href={`admin.php?page=fair-audience-participant-detail&participant_id=${item.participant_id}`}
 						>
@@ -122,19 +123,19 @@ export default function QuestionnaireResponses() {
 			},
 			{
 				id: 'participant_email',
-				label: __('Email', 'fair-audience'),
+				label: __('Email', 'fair-form'),
 				enableSorting: true,
 				getValue: ({ item }) => item.participant_email || '',
 			},
 			{
 				id: 'participant_status',
-				label: __('Status', 'fair-audience'),
+				label: __('Status', 'fair-form'),
 				enableSorting: true,
 				getValue: ({ item }) => item.participant_status || '',
 				render: ({ item }) => {
 					const labels = {
-						pending: __('Pending', 'fair-audience'),
-						confirmed: __('Confirmed', 'fair-audience'),
+						pending: __('Pending', 'fair-form'),
+						confirmed: __('Confirmed', 'fair-form'),
 					};
 					return (
 						labels[item.participant_status] ||
@@ -143,23 +144,23 @@ export default function QuestionnaireResponses() {
 					);
 				},
 				elements: [
-					{ value: 'pending', label: __('Pending', 'fair-audience') },
+					{ value: 'pending', label: __('Pending', 'fair-form') },
 					{
 						value: 'confirmed',
-						label: __('Confirmed', 'fair-audience'),
+						label: __('Confirmed', 'fair-form'),
 					},
 				],
 				filterBy: { operators: ['is'] },
 			},
 			{
 				id: 'participant_mailing',
-				label: __('Mailing', 'fair-audience'),
+				label: __('Mailing', 'fair-form'),
 				enableSorting: true,
 				getValue: ({ item }) => item.participant_mailing || '',
 				render: ({ item }) => {
 					const labels = {
-						minimal: __('Minimal', 'fair-audience'),
-						marketing: __('Marketing', 'fair-audience'),
+						minimal: __('Minimal', 'fair-form'),
+						marketing: __('Marketing', 'fair-form'),
 					};
 					return (
 						labels[item.participant_mailing] ||
@@ -168,17 +169,17 @@ export default function QuestionnaireResponses() {
 					);
 				},
 				elements: [
-					{ value: 'minimal', label: __('Minimal', 'fair-audience') },
+					{ value: 'minimal', label: __('Minimal', 'fair-form') },
 					{
 						value: 'marketing',
-						label: __('Marketing', 'fair-audience'),
+						label: __('Marketing', 'fair-form'),
 					},
 				],
 				filterBy: { operators: ['is'] },
 			},
 			{
 				id: 'participant_categories',
-				label: __('Subscribed Categories', 'fair-audience'),
+				label: __('Subscribed Categories', 'fair-form'),
 				enableSorting: false,
 				getValue: ({ item }) =>
 					(item.participant_categories || [])
@@ -194,7 +195,7 @@ export default function QuestionnaireResponses() {
 			},
 			{
 				id: 'created_at',
-				label: __('Date', 'fair-audience'),
+				label: __('Date', 'fair-form'),
 				enableSorting: true,
 				getValue: ({ item }) => item.created_at || '',
 			},
@@ -239,7 +240,7 @@ export default function QuestionnaireResponses() {
 			!confirm(
 				__(
 					'Are you sure you want to delete this response?',
-					'fair-audience'
+					'fair-form'
 				)
 			)
 		) {
@@ -256,9 +257,9 @@ export default function QuestionnaireResponses() {
 			.catch((err) => {
 				// eslint-disable-next-line no-undef
 				alert(
-					__('Error: ', 'fair-audience') +
+					__('Error: ', 'fair-form') +
 						(err.message ||
-							__('Failed to delete response.', 'fair-audience'))
+							__('Failed to delete response.', 'fair-form'))
 				);
 			});
 	};
@@ -267,7 +268,7 @@ export default function QuestionnaireResponses() {
 		() => [
 			{
 				id: 'delete',
-				label: __('Delete', 'fair-audience'),
+				label: __('Delete', 'fair-form'),
 				icon: 'trash',
 				callback: ([item]) => handleDelete(item),
 				supportsBulk: false,
@@ -362,7 +363,7 @@ export default function QuestionnaireResponses() {
 						// translators: 1: number added, 2: number already in group
 						__(
 							'%1$d participant(s) added, %2$d already in group.',
-							'fair-audience'
+							'fair-form'
 						),
 						added,
 						skipped
@@ -374,10 +375,7 @@ export default function QuestionnaireResponses() {
 					status: 'error',
 					message:
 						err.message ||
-						__(
-							'Failed to add participants to group.',
-							'fair-audience'
-						),
+						__('Failed to add participants to group.', 'fair-form'),
 				});
 			})
 			.finally(() => {
@@ -393,10 +391,10 @@ export default function QuestionnaireResponses() {
 
 	const buildMarkdown = () => {
 		const lines = [];
-		const heading = title || __('Questionnaire Responses', 'fair-audience');
-		const exportedLabel = __('Exported', 'fair-audience');
-		const responsesLabel = __('Responses', 'fair-audience');
-		const adminLinkLabel = __('Admin link', 'fair-audience');
+		const heading = title || __('Questionnaire Responses', 'fair-form');
+		const exportedLabel = __('Exported', 'fair-form');
+		const responsesLabel = __('Responses', 'fair-form');
+		const adminLinkLabel = __('Admin link', 'fair-form');
 
 		const today = new Date().toISOString().split('T')[0];
 
@@ -421,7 +419,7 @@ export default function QuestionnaireResponses() {
 		if (!navigator.clipboard) {
 			setCopyFeedback({
 				status: 'error',
-				message: __('Clipboard not available.', 'fair-audience'),
+				message: __('Clipboard not available.', 'fair-form'),
 			});
 			return;
 		}
@@ -432,14 +430,14 @@ export default function QuestionnaireResponses() {
 					status: 'success',
 					message: __(
 						'Markdown copied to clipboard. Paste into Google Docs.',
-						'fair-audience'
+						'fair-form'
 					),
 				});
 			})
 			.catch(() => {
 				setCopyFeedback({
 					status: 'error',
-					message: __('Failed to copy.', 'fair-audience'),
+					message: __('Failed to copy.', 'fair-form'),
 				});
 			});
 	};
@@ -450,12 +448,12 @@ export default function QuestionnaireResponses() {
 		}
 
 		const headers = [
-			__('Name', 'fair-audience'),
-			__('Email', 'fair-audience'),
-			__('Status', 'fair-audience'),
-			__('Mailing', 'fair-audience'),
-			__('Subscribed Categories', 'fair-audience'),
-			__('Date', 'fair-audience'),
+			__('Name', 'fair-form'),
+			__('Email', 'fair-form'),
+			__('Status', 'fair-form'),
+			__('Mailing', 'fair-form'),
+			__('Subscribed Categories', 'fair-form'),
+			__('Date', 'fair-form'),
 			...questionColumns.map((col) => col.text),
 		];
 
@@ -493,7 +491,7 @@ export default function QuestionnaireResponses() {
 		].join('\n');
 
 		// BOM for UTF-8 Excel compatibility.
-		const bom = '\uFEFF';
+		const bom = '﻿';
 		const blob = new Blob([bom + csvContent], {
 			type: 'text/csv;charset=utf-8;',
 		});
@@ -508,30 +506,31 @@ export default function QuestionnaireResponses() {
 	if (!eventDateId) {
 		return (
 			<div className="wrap">
-				<p>{__('No event date ID provided.', 'fair-audience')}</p>
+				<p>{__('No event date ID provided.', 'fair-form')}</p>
 			</div>
 		);
 	}
 
 	return (
 		<div className="wrap">
-			<h1>{__('Questionnaire Responses', 'fair-audience')}</h1>
+			<h1>{__('Questionnaire Responses', 'fair-form')}</h1>
 
 			<p>
+				{/* TODO(phase-3): retarget back-link to fair-form grouped page once it exists. */}
 				<a href="admin.php?page=fair-audience-by-event">
-					&larr; {__('Back to Events', 'fair-audience')}
+					&larr; {__('Back to Events', 'fair-form')}
 				</a>
 				{' | '}
 				<a
 					href={`admin.php?page=fair-events-manage-event&event_date_id=${eventDateId}`}
 				>
-					{__('Event edit page', 'fair-audience')}
+					{__('Event edit page', 'fair-form')}
 				</a>
 				{postId && (
 					<>
 						{' | '}
 						<a href={`post.php?post=${postId}&action=edit`}>
-							{__('Event entry', 'fair-audience')}
+							{__('Event entry', 'fair-form')}
 						</a>
 					</>
 				)}
@@ -549,21 +548,21 @@ export default function QuestionnaireResponses() {
 					onClick={openGroupModal}
 					disabled={uniqueParticipantIds.length === 0}
 				>
-					{__('Add participants to group', 'fair-audience')}
+					{__('Add participants to group', 'fair-form')}
 				</Button>
 				<Button
 					variant="secondary"
 					onClick={exportCsv}
 					disabled={responses.length === 0}
 				>
-					{__('Export CSV', 'fair-audience')}
+					{__('Export CSV', 'fair-form')}
 				</Button>
 				<Button
 					variant="secondary"
 					onClick={copyMarkdown}
 					disabled={responses.length === 0}
 				>
-					{__('Copy Markdown', 'fair-audience')}
+					{__('Copy Markdown', 'fair-form')}
 				</Button>
 			</div>
 
@@ -578,7 +577,7 @@ export default function QuestionnaireResponses() {
 
 			{isGroupModalOpen && (
 				<Modal
-					title={__('Add participants to group', 'fair-audience')}
+					title={__('Add participants to group', 'fair-form')}
 					onRequestClose={() => setIsGroupModalOpen(false)}
 					style={{ maxWidth: '500px', width: '100%' }}
 				>
@@ -587,25 +586,22 @@ export default function QuestionnaireResponses() {
 							// translators: %d: number of unique participants
 							__(
 								'%d unique participant(s) will be added.',
-								'fair-audience'
+								'fair-form'
 							),
 							uniqueParticipantIds.length
 						)}
 					</p>
 
 					<RadioControl
-						label={__('Target group', 'fair-audience')}
+						label={__('Target group', 'fair-form')}
 						selected={groupMode}
 						options={[
 							{
-								label: __(
-									'Use existing group',
-									'fair-audience'
-								),
+								label: __('Use existing group', 'fair-form'),
 								value: 'existing',
 							},
 							{
-								label: __('Create new group', 'fair-audience'),
+								label: __('Create new group', 'fair-form'),
 								value: 'new',
 							},
 						]}
@@ -614,17 +610,14 @@ export default function QuestionnaireResponses() {
 
 					{groupMode === 'existing' && (
 						<SelectControl
-							label={__('Group', 'fair-audience')}
+							label={__('Group', 'fair-form')}
 							value={selectedGroupId}
 							onChange={setSelectedGroupId}
 							options={[
 								{
 									label: groupsLoading
-										? __('Loading...', 'fair-audience')
-										: __(
-												'— Select a group —',
-												'fair-audience'
-										  ),
+										? __('Loading...', 'fair-form')
+										: __('— Select a group —', 'fair-form'),
 									value: '',
 								},
 								...availableGroups.map((group) => ({
@@ -639,21 +632,21 @@ export default function QuestionnaireResponses() {
 					{groupMode === 'new' && (
 						<>
 							<TextControl
-								label={__('Name', 'fair-audience')}
+								label={__('Name', 'fair-form')}
 								value={newGroupName}
 								onChange={setNewGroupName}
 								placeholder={__(
 									'Enter group name...',
-									'fair-audience'
+									'fair-form'
 								)}
 							/>
 							<TextareaControl
-								label={__('Description', 'fair-audience')}
+								label={__('Description', 'fair-form')}
 								value={newGroupDescription}
 								onChange={setNewGroupDescription}
 								placeholder={__(
 									'Enter group description (optional)...',
-									'fair-audience'
+									'fair-form'
 								)}
 							/>
 						</>
@@ -680,7 +673,7 @@ export default function QuestionnaireResponses() {
 							variant="secondary"
 							onClick={() => setIsGroupModalOpen(false)}
 						>
-							{__('Close', 'fair-audience')}
+							{__('Close', 'fair-form')}
 						</Button>
 						<Button
 							variant="primary"
@@ -689,8 +682,8 @@ export default function QuestionnaireResponses() {
 							isBusy={isSubmittingGroup}
 						>
 							{groupMode === 'new'
-								? __('Create group and add', 'fair-audience')
-								: __('Add to group', 'fair-audience')}
+								? __('Create group and add', 'fair-form')
+								: __('Add to group', 'fair-form')}
 						</Button>
 					</div>
 				</Modal>

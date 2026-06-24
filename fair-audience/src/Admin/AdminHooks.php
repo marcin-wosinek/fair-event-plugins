@@ -26,35 +26,27 @@ class AdminHooks {
 	 * @var array<string, array{title: string, callback: string}>
 	 */
 	private const HIDDEN_PAGES = array(
-		'fair-audience-event-participants'      => array(
+		'fair-audience-event-participants' => array(
 			'title'    => 'Event Participants',
 			'callback' => 'render_event_participants_page',
 		),
-		'fair-audience-edit-poll'               => array(
+		'fair-audience-edit-poll'          => array(
 			'title'    => 'Edit Poll',
 			'callback' => 'render_edit_poll_page',
 		),
-		'fair-audience-edit-extra-message'      => array(
+		'fair-audience-edit-extra-message' => array(
 			'title'    => 'Edit Extra Message',
 			'callback' => 'render_edit_extra_message_page',
 		),
-		'fair-audience-fee-detail'              => array(
+		'fair-audience-fee-detail'         => array(
 			'title'    => 'Fee Detail',
 			'callback' => 'render_fee_detail_page',
 		),
-		'fair-audience-questionnaire-responses' => array(
-			'title'    => 'Questionnaire Responses',
-			'callback' => 'render_questionnaire_responses_page',
-		),
-		'fair-audience-submission-detail'       => array(
-			'title'    => 'Submission Detail',
-			'callback' => 'render_submission_detail_page',
-		),
-		'fair-audience-participant-detail'      => array(
+		'fair-audience-participant-detail' => array(
 			'title'    => 'Participant Detail',
 			'callback' => 'render_participant_detail_page',
 		),
-		'fair-audience-group-detail'            => array(
+		'fair-audience-group-detail'       => array(
 			'title'    => 'Group Detail',
 			'callback' => 'render_group_detail_page',
 		),
@@ -217,16 +209,6 @@ class AdminHooks {
 			$this->register_hidden_page( 'fair-audience-fee-detail' );
 		}
 
-		// Submenu page - Form Answers.
-		add_submenu_page(
-			'fair-audience',
-			__( 'Form Answers', 'fair-audience' ),
-			__( 'Form Answers', 'fair-audience' ),
-			'manage_options',
-			'fair-audience-form-answers',
-			array( $this, 'render_form_answers_page' )
-		);
-
 		// Submenu page - By Event.
 		add_submenu_page(
 			'fair-audience',
@@ -239,12 +221,6 @@ class AdminHooks {
 
 		// Hidden submenu page - Event Participants.
 		$this->register_hidden_page( 'fair-audience-event-participants' );
-
-		// Hidden submenu page - Questionnaire Responses.
-		$this->register_hidden_page( 'fair-audience-questionnaire-responses' );
-
-		// Hidden submenu page - Submission Detail.
-		$this->register_hidden_page( 'fair-audience-submission-detail' );
 
 		// Hidden submenu page - Participant Detail.
 		$this->register_hidden_page( 'fair-audience-participant-detail' );
@@ -483,34 +459,10 @@ class AdminHooks {
 	}
 
 	/**
-	 * Render Submission Detail page.
-	 */
-	public function render_submission_detail_page() {
-		$page = new SubmissionDetailPage();
-		$page->render();
-	}
-
-	/**
 	 * Render Participant Detail page.
 	 */
 	public function render_participant_detail_page() {
 		$page = new ParticipantDetailPage();
-		$page->render();
-	}
-
-	/**
-	 * Render Form Answers page.
-	 */
-	public function render_form_answers_page() {
-		$page = new FormAnswersPage();
-		$page->render();
-	}
-
-	/**
-	 * Render Questionnaire Responses page.
-	 */
-	public function render_questionnaire_responses_page() {
-		$page = new QuestionnaireResponsesPage();
 		$page->render();
 	}
 
@@ -630,24 +582,9 @@ class AdminHooks {
 			);
 		}
 
-		// Submission Detail page.
-		if ( 'admin_page_fair-audience-submission-detail' === $hook ) {
-			$this->enqueue_page_script( 'submission-detail', $plugin_dir );
-		}
-
 		// Participant Detail page.
 		if ( 'admin_page_fair-audience-participant-detail' === $hook ) {
 			$this->enqueue_page_script( 'participant-detail', $plugin_dir );
-		}
-
-		// Form Answers page.
-		if ( 'fair-audience_page_fair-audience-form-answers' === $hook ) {
-			$this->enqueue_page_script( 'form-answers', $plugin_dir );
-		}
-
-		// Questionnaire Responses page.
-		if ( 'admin_page_fair-audience-questionnaire-responses' === $hook ) {
-			$this->enqueue_page_script( 'questionnaire-responses', $plugin_dir );
 		}
 
 		// Instagram Posts page.

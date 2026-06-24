@@ -39,7 +39,7 @@ function AnswerDisplay({ answer }) {
 							}}
 						/>
 					) : (
-						__('View file', 'fair-audience')
+						__('View file', 'fair-form')
 					)}
 				</a>
 			</div>
@@ -72,6 +72,7 @@ function EventField({ submission, onUpdate }) {
 		if (eventDates.length > 0) {
 			return;
 		}
+		// TODO(phase-2): replace with data-derived event source once available in fair-form.
 		apiFetch({ path: '/fair-audience/v1/custom-mail/events' })
 			.then((data) => {
 				setEventDates(data);
@@ -105,9 +106,8 @@ function EventField({ submission, onUpdate }) {
 			.catch((err) => {
 				// eslint-disable-next-line no-undef
 				alert(
-					__('Error: ', 'fair-audience') +
-						(err.message ||
-							__('Failed to update.', 'fair-audience'))
+					__('Error: ', 'fair-form') +
+						(err.message || __('Failed to update.', 'fair-form'))
 				);
 			})
 			.finally(() => {
@@ -116,7 +116,7 @@ function EventField({ submission, onUpdate }) {
 	};
 
 	const eventDateOptions = [
-		{ label: __('— None —', 'fair-audience'), value: '' },
+		{ label: __('— None —', 'fair-form'), value: '' },
 		...eventDates.map((ed) => ({
 			label: ed.display_label,
 			value: String(ed.id),
@@ -132,7 +132,7 @@ function EventField({ submission, onUpdate }) {
 					onClick={handleEdit}
 					style={{ marginLeft: '8px' }}
 				>
-					{__('Edit', 'fair-audience')}
+					{__('Edit', 'fair-form')}
 				</Button>
 			</td>
 		);
@@ -153,10 +153,10 @@ function EventField({ submission, onUpdate }) {
 					isBusy={isSaving}
 					disabled={isSaving}
 				>
-					{__('Save', 'fair-audience')}
+					{__('Save', 'fair-form')}
 				</Button>
 				<Button variant="tertiary" onClick={() => setIsEditing(false)}>
-					{__('Cancel', 'fair-audience')}
+					{__('Cancel', 'fair-form')}
 				</Button>
 			</div>
 		</td>
@@ -176,7 +176,7 @@ export default function SubmissionDetail() {
 		if (!navigator.clipboard) {
 			setCopyFeedback({
 				status: 'error',
-				message: __('Clipboard not available.', 'fair-audience'),
+				message: __('Clipboard not available.', 'fair-form'),
 			});
 			return;
 		}
@@ -187,14 +187,14 @@ export default function SubmissionDetail() {
 					status: 'success',
 					message: __(
 						'Markdown copied to clipboard. Paste into Google Docs.',
-						'fair-audience'
+						'fair-form'
 					),
 				});
 			})
 			.catch(() => {
 				setCopyFeedback({
 					status: 'error',
-					message: __('Failed to copy.', 'fair-audience'),
+					message: __('Failed to copy.', 'fair-form'),
 				});
 			});
 	};
@@ -202,7 +202,7 @@ export default function SubmissionDetail() {
 	useEffect(() => {
 		if (!submissionId) {
 			setIsLoading(false);
-			setError(__('No submission ID provided.', 'fair-audience'));
+			setError(__('No submission ID provided.', 'fair-form'));
 			return;
 		}
 
@@ -213,7 +213,7 @@ export default function SubmissionDetail() {
 				setSubmission(data);
 			})
 			.catch(() => {
-				setError(__('Submission not found.', 'fair-audience'));
+				setError(__('Submission not found.', 'fair-form'));
 			})
 			.finally(() => {
 				setIsLoading(false);
@@ -253,10 +253,10 @@ export default function SubmissionDetail() {
 				}}
 			>
 				<h1>
-					{submission.title || __('Form Submission', 'fair-audience')}
+					{submission.title || __('Form Submission', 'fair-form')}
 				</h1>
 				<Button variant="secondary" onClick={copyMarkdown}>
-					{__('Copy markdown', 'fair-audience')}
+					{__('Copy markdown', 'fair-form')}
 				</Button>
 			</div>
 
@@ -272,7 +272,7 @@ export default function SubmissionDetail() {
 			<Card style={{ marginBottom: '16px' }}>
 				<CardHeader>
 					<h2 style={{ margin: 0 }}>
-						{__('Submission Info', 'fair-audience')}
+						{__('Submission Info', 'fair-form')}
 					</h2>
 				</CardHeader>
 				<CardBody>
@@ -283,10 +283,11 @@ export default function SubmissionDetail() {
 						<tbody>
 							<tr>
 								<th style={{ width: '200px' }}>
-									{__('Submitted by', 'fair-audience')}
+									{__('Submitted by', 'fair-form')}
 								</th>
 								<td>
 									{submission.participant_id ? (
+										// TODO(phase-3): retarget to fair-form participant detail once it exists.
 										<a
 											href={`admin.php?page=fair-audience-participant-detail&participant_id=${submission.participant_id}`}
 										>
@@ -298,15 +299,15 @@ export default function SubmissionDetail() {
 								</td>
 							</tr>
 							<tr>
-								<th>{__('Email', 'fair-audience')}</th>
+								<th>{__('Email', 'fair-form')}</th>
 								<td>{submission.participant_email}</td>
 							</tr>
 							<tr>
-								<th>{__('Date', 'fair-audience')}</th>
+								<th>{__('Date', 'fair-form')}</th>
 								<td>{formatDate(submission.created_at)}</td>
 							</tr>
 							<tr>
-								<th>{__('Event', 'fair-audience')}</th>
+								<th>{__('Event', 'fair-form')}</th>
 								<EventField
 									submission={submission}
 									onUpdate={setSubmission}
@@ -319,13 +320,11 @@ export default function SubmissionDetail() {
 
 			<Card>
 				<CardHeader>
-					<h2 style={{ margin: 0 }}>
-						{__('Answers', 'fair-audience')}
-					</h2>
+					<h2 style={{ margin: 0 }}>{__('Answers', 'fair-form')}</h2>
 				</CardHeader>
 				<CardBody>
 					{submission.answers.length === 0 ? (
-						<p>{__('No answers recorded.', 'fair-audience')}</p>
+						<p>{__('No answers recorded.', 'fair-form')}</p>
 					) : (
 						<table
 							className="widefat striped"
@@ -334,9 +333,9 @@ export default function SubmissionDetail() {
 							<thead>
 								<tr>
 									<th style={{ width: '40%' }}>
-										{__('Question', 'fair-audience')}
+										{__('Question', 'fair-form')}
 									</th>
-									<th>{__('Answer', 'fair-audience')}</th>
+									<th>{__('Answer', 'fair-form')}</th>
 								</tr>
 							</thead>
 							<tbody>

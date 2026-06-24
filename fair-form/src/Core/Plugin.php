@@ -56,6 +56,8 @@ class Plugin {
 
 		add_action( 'rest_api_init', array( $this, 'register_api_endpoints' ) );
 
+		new \FairForm\Admin\AdminHooks();
+
 		$block_hooks = new \FairForm\Hooks\BlockHooks();
 	}
 
