@@ -508,6 +508,35 @@ class EventParticipantRepository {
 	}
 
 	/**
+	 * Get the signed_up row on a master event-date for a participant, if one exists.
+	 *
+	 * Used by the series-pass resolver to check whether a participant holds a
+	 * whole-series pass. The caller is responsible for verifying that the
+	 * returned row's ticket_type has recurrence_scope = 'whole_series'.
+	 *
+	 * @param int $master_event_date_id Master event-date ID.
+	 * @param int $participant_id       Participant ID.
+	 * @return EventParticipant|null Signed-up row on the master, or null.
+	 */
+	public function get_series_pass_for_participant( $master_event_date_id, $participant_id ) {
+		global $wpdb;
+
+		$table_name = $this->get_table_name();
+
+		$result = $wpdb->get_row(
+			$wpdb->prepare(
+				"SELECT * FROM %i WHERE event_date_id = %d AND participant_id = %d AND label = 'signed_up' LIMIT 1",
+				$table_name,
+				$master_event_date_id,
+				$participant_id
+			),
+			ARRAY_A
+		);
+
+		return $result ? new EventParticipant( $result ) : null;
+	}
+
+	/**
 	 * Delete pending_payment rows whose payment_expires_at has passed.
 	 *
 	 * @return int Number of rows deleted.

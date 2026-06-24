@@ -478,6 +478,13 @@ class EventSignupController extends WP_REST_Controller {
 			if ( $event_participant && 'signed_up' === $event_participant->label ) {
 				$is_signed_up = true;
 			}
+
+			// Also check for a whole-series pass on the master event-date. A
+			// participant holding a series pass is considered signed up for every
+			// occurrence from the purchase date forward.
+			if ( ! $is_signed_up && $event_date_id && class_exists( \FairEvents\Models\EventDates::class ) ) {
+				$is_signed_up = $this->is_occurrence_covered_by_series_pass( $event_date_id, $participant->id );
+			}
 		}
 
 		$response_data = array(
@@ -553,6 +560,18 @@ class EventSignupController extends WP_REST_Controller {
 				__( 'Could not find your participant profile.', 'fair-audience' ),
 				array( 'status' => 400 )
 			);
+		}
+
+		// For whole-series ticket types, retarget event_date_id to the master so one
+		// row covers every occurrence in the series. Single-instance path is unchanged.
+		if ( $ticket_type_id && $event_date_id && class_exists( \FairEvents\Models\TicketType::class ) ) {
+			$tt_for_scope = \FairEvents\Models\TicketType::get_by_id( $ticket_type_id );
+			if ( $tt_for_scope && $tt_for_scope->is_whole_series() && class_exists( \FairEvents\Models\EventDates::class ) ) {
+				$ed_for_scope = \FairEvents\Models\EventDates::get_by_id( $event_date_id );
+				if ( $ed_for_scope && 'generated' === $ed_for_scope->occurrence_type && $ed_for_scope->master_id ) {
+					$event_date_id = (int) $ed_for_scope->master_id;
+				}
+			}
 		}
 
 		// Parse and validate custom question answers before any mutation.
@@ -944,6 +963,76 @@ class EventSignupController extends WP_REST_Controller {
 		}
 
 		return null;
+	}
+
+	/**
+	 * Resolve the master event-date ID for a given event-date.
+	 *
+	 * Returns the master_id if the event-date is a generated occurrence, the
+	 * event-date's own id if it is the master, or null for non-recurring dates
+	 * or when EventDates is unavailable.
+	 *
+	 * @param int $event_date_id Event-date ID (master or generated occurrence).
+	 * @return int|null Master event-date ID, or null.
+	 */
+	private function resolve_master_event_date_id( $event_date_id ) {
+		if ( ! $event_date_id || ! class_exists( \FairEvents\Models\EventDates::class ) ) {
+			return null;
+		}
+		$ed = \FairEvents\Models\EventDates::get_by_id( $event_date_id );
+		if ( ! $ed ) {
+			return null;
+		}
+		if ( 'generated' === $ed->occurrence_type && $ed->master_id ) {
+			return (int) $ed->master_id;
+		}
+		if ( 'master' === $ed->occurrence_type ) {
+			return (int) $ed->id;
+		}
+		return null;
+	}
+
+	/**
+	 * Check whether a participant holds a whole-series pass that covers a given
+	 * occurrence.
+	 *
+	 * A whole-series pass is a signed_up row on the master event-date whose
+	 * ticket type has recurrence_scope = 'whole_series'. An occurrence is covered
+	 * when its start_datetime is on or after the pass's created_at (mid-series
+	 * purchase semantics).
+	 *
+	 * @param int $event_date_id  Occurrence (or master) event-date ID.
+	 * @param int $participant_id Participant ID.
+	 * @return bool True if the participant's series pass covers this occurrence.
+	 */
+	private function is_occurrence_covered_by_series_pass( $event_date_id, $participant_id ) {
+		$master_id = $this->resolve_master_event_date_id( $event_date_id );
+		if ( ! $master_id ) {
+			return false;
+		}
+
+		$pass_row = $this->event_participant_repository->get_series_pass_for_participant( $master_id, $participant_id );
+		if ( ! $pass_row || ! $pass_row->ticket_type_id ) {
+			return false;
+		}
+
+		if ( ! class_exists( \FairEvents\Models\TicketType::class ) ) {
+			return false;
+		}
+		$tt = \FairEvents\Models\TicketType::get_by_id( (int) $pass_row->ticket_type_id );
+		if ( ! $tt || ! $tt->is_whole_series() ) {
+			return false;
+		}
+
+		// Mid-series: pass covers occurrences starting on or after the purchase date.
+		if ( $event_date_id !== $master_id && class_exists( \FairEvents\Models\EventDates::class ) ) {
+			$occ = \FairEvents\Models\EventDates::get_by_id( $event_date_id );
+			if ( $occ && $occ->start_datetime && $pass_row->created_at ) {
+				return strtotime( $occ->start_datetime ) >= strtotime( $pass_row->created_at );
+			}
+		}
+
+		return true;
 	}
 
 	/**
