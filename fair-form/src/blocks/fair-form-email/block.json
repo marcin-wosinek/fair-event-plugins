@@ -1,0 +1,37 @@
+{
+	"$schema": "https://schemas.wp.org/trunk/block.json",
+	"apiVersion": 3,
+	"name": "fair-audience/fair-form-email",
+	"version": "1.0.0",
+	"title": "Email Question",
+	"category": "widgets",
+	"icon": "email",
+	"description": "An email input question with built-in format validation for Fair Form",
+	"keywords": ["question", "email", "input"],
+	"textdomain": "fair-audience",
+	"ancestor": ["fair-audience/fair-form", "fair-audience/event-signup"],
+	"supports": {
+		"html": false
+	},
+	"attributes": {
+		"questionText": {
+			"type": "string",
+			"default": ""
+		},
+		"questionKey": {
+			"type": "string",
+			"default": ""
+		},
+		"required": {
+			"type": "boolean",
+			"default": false
+		},
+		"placeholder": {
+			"type": "string",
+			"default": ""
+		}
+	},
+	"editorScript": "file:./editor.js",
+	"render": "file:./render.php",
+	"style": "file:./style-editor.css"
+}

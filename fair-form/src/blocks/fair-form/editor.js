@@ -27,6 +27,8 @@ const ALLOWED_BLOCKS = [
 	'core/list',
 	'fair-audience/fair-form-short-text',
 	'fair-audience/fair-form-long-text',
+	'fair-audience/fair-form-email',
+	'fair-audience/fair-form-phone',
 	'fair-audience/fair-form-select-one',
 	'fair-audience/fair-form-multiselect',
 	'fair-audience/fair-form-radio',
@@ -111,7 +113,6 @@ registerBlockType('fair-audience/fair-form', {
 		const {
 			submitButtonText,
 			successMessage,
-			showKeepInformed,
 			eventDateId,
 			notificationEmail,
 			formId,
@@ -177,20 +178,6 @@ registerBlockType('fair-audience/fair-form', {
 								'fair-audience'
 							)}
 						/>
-						<ToggleControl
-							label={__(
-								'Show "Keep me informed" checkbox',
-								'fair-audience'
-							)}
-							checked={showKeepInformed}
-							onChange={(value) =>
-								setAttributes({ showKeepInformed: value })
-							}
-							help={__(
-								'Adds a marketing opt-in checkbox to the form.',
-								'fair-audience'
-							)}
-						/>
 						<EventDateSelect
 							eventDateId={eventDateId}
 							onChange={(value) =>
@@ -231,33 +218,6 @@ registerBlockType('fair-audience/fair-form', {
 				</InspectorControls>
 
 				<div {...blockProps}>
-					<div className="fair-form-editor-header">
-						<span className="fair-form-editor-label">
-							{__('Fair Form', 'fair-audience')}
-						</span>
-					</div>
-					<div className="fair-form-editor-fields">
-						<div className="fair-form-editor-field">
-							<label>{__('First Name', 'fair-audience')} *</label>
-							<input type="text" disabled />
-						</div>
-						<div className="fair-form-editor-field">
-							<label>{__('Last Name', 'fair-audience')}</label>
-							<input type="text" disabled />
-						</div>
-						<div className="fair-form-editor-field">
-							<label>{__('Email', 'fair-audience')} *</label>
-							<input type="email" disabled />
-						</div>
-						{showKeepInformed && (
-							<div className="fair-form-editor-field">
-								<label>
-									<input type="checkbox" disabled />
-									{__('Keep me informed', 'fair-audience')}
-								</label>
-							</div>
-						)}
-					</div>
 					<div {...innerBlocksProps} />
 					<div className="fair-form-editor-footer">
 						<div className="wp-block-button">
