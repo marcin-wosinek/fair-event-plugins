@@ -32,35 +32,13 @@ function setupFormSubmission(form) {
 	setupQuestionnaire(form);
 }
 
-function validateForm(form) {
-	const name = form.querySelector('input[name="fair_form_name"]');
-	const email = form.querySelector('input[name="fair_form_email"]');
-
-	if (!name || !name.value.trim()) {
-		return __('Please enter your first name.', 'fair-audience');
-	}
-
-	if (!email || !email.value.trim()) {
-		return __('Please enter your email address.', 'fair-audience');
-	}
-
-	// Basic email validation.
-	const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-	if (!emailPattern.test(email.value.trim())) {
-		return __('Please enter a valid email address.', 'fair-audience');
-	}
-
-	// Validate the nested question blocks (required/phone/file constraints).
-	return validateQuestions(form);
-}
-
 function submitForm(form) {
 	const wrapper = form.closest('.fair-form');
 	const messageContainer = form.querySelector('.fair-form-message');
 	const submitButton = form.querySelector('.fair-form-submit-button');
 
-	// Validate.
-	const validationError = validateForm(form);
+	// Validate all question blocks (required, phone format, file sizes, email format).
+	const validationError = validateQuestions(form);
 	if (validationError) {
 		showMessage(messageContainer, validationError, 'error', 'fair-form');
 		return;
@@ -71,18 +49,6 @@ function submitForm(form) {
 		__('Submitting...', 'fair-audience')
 	);
 
-	const nameValue = form
-		.querySelector('input[name="fair_form_name"]')
-		.value.trim();
-	const surnameValue = (
-		form.querySelector('input[name="fair_form_surname"]')?.value || ''
-	).trim();
-	const emailValue = form
-		.querySelector('input[name="fair_form_email"]')
-		.value.trim();
-	const keepInformed =
-		form.querySelector('input[name="fair_form_keep_informed"]')?.checked ||
-		false;
 	const mailingSignup =
 		form.querySelector('input[name="fair_form_mailing_signup"]')?.checked ||
 		false;
@@ -106,10 +72,6 @@ function submitForm(form) {
 	if (hasFileUploads(form)) {
 		// Use FormData for multipart submission with files.
 		const formData = new FormData();
-		formData.append('name', nameValue);
-		formData.append('surname', surnameValue);
-		formData.append('email', emailValue);
-		formData.append('keep_informed', keepInformed ? '1' : '0');
 		formData.append('mailing_signup', mailingSignup ? '1' : '0');
 		formData.append(
 			'mailing_category_ids',
@@ -147,10 +109,6 @@ function submitForm(form) {
 	} else {
 		// Use JSON for submissions without files.
 		const requestData = {
-			name: nameValue,
-			surname: surnameValue,
-			email: emailValue,
-			keep_informed: keepInformed,
 			mailing_signup: mailingSignup,
 			mailing_category_ids: mailingCategories,
 			questionnaire_answers: questionnaireAnswers,

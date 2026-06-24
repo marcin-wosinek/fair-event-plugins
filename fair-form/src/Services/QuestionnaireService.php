@@ -50,7 +50,7 @@ class QuestionnaireService {
 	 *
 	 * @var array
 	 */
-	const VALID_TYPES = array( 'radio', 'checkbox', 'short_text', 'long_text', 'select', 'number', 'date', 'multiselect', 'file_upload', 'phone' );
+	const VALID_TYPES = array( 'radio', 'checkbox', 'short_text', 'long_text', 'select', 'number', 'date', 'multiselect', 'file_upload', 'phone', 'email' );
 
 	/**
 	 * Questionnaire submission repository instance.
@@ -113,6 +113,21 @@ class QuestionnaireService {
 			$question_type = in_array( $answer['question_type'] ?? '', self::VALID_TYPES, true ) ? $answer['question_type'] : 'short_text';
 			$answer_value  = sanitize_text_field( $answer['answer_value'] ?? '' );
 			$question_text = sanitize_text_field( $answer['question_text'] ?? '' );
+
+			if ( 'email' === $question_type && '' !== $answer_value ) {
+				$answer_value = sanitize_email( $answer_value );
+				if ( '' !== $answer_value && ! is_email( $answer_value ) ) {
+					return new WP_Error(
+						'invalid_email',
+						sprintf(
+							/* translators: %s: question text */
+							__( 'Please enter a valid email address for: %s', 'fair-form' ),
+							$question_text
+						),
+						array( 'status' => 400 )
+					);
+				}
+			}
 
 			if ( 'phone' === $question_type && '' !== $answer_value && ! preg_match( '/^\+[1-9][0-9]{6,14}$/', $answer_value ) ) {
 				return new WP_Error(
@@ -260,17 +275,17 @@ class QuestionnaireService {
 	/**
 	 * Save questionnaire answers for a participant.
 	 *
-	 * @param int    $participant_id Participant ID.
-	 * @param array  $answers        Questionnaire answers to persist.
-	 * @param int    $event_date_id  Optional event date ID.
-	 * @param int    $post_id        Optional post ID.
-	 * @param string $title          Submission title (e.g. "Fair Form", "Event Signup").
-	 * @param bool   $reuse_existing When true, an existing submission with the same
-	 *                               participant, event date and title is reused
-	 *                               (its answers replaced) instead of inserting a
-	 *                               new one. Keeps re-submits/payment retries idempotent.
-	 * @param string $form_id        Stable UUID from the block attribute (empty for non-block submissions).
-	 * @param string $form_title     Human-readable form label from the block attribute.
+	 * @param int|null $participant_id Participant ID, or null for anonymous submissions.
+	 * @param array    $answers        Questionnaire answers to persist.
+	 * @param int      $event_date_id  Optional event date ID.
+	 * @param int      $post_id        Optional post ID.
+	 * @param string   $title          Submission title (e.g. "Fair Form", "Event Signup").
+	 * @param bool     $reuse_existing When true, an existing submission with the same
+	 *                                 participant, event date and title is reused
+	 *                                 (its answers replaced) instead of inserting a
+	 *                                 new one. Keeps re-submits/payment retries idempotent.
+	 * @param string   $form_id        Stable UUID from the block attribute (empty for non-block submissions).
+	 * @param string   $form_title     Human-readable form label from the block attribute.
 	 * @return int Submission ID, or 0 on failure.
 	 */
 	public function save_answers( $participant_id, $answers, $event_date_id = 0, $post_id = 0, $title = '', $reuse_existing = false, $form_id = '', $form_title = '' ) {
@@ -278,7 +293,8 @@ class QuestionnaireService {
 
 		$submission = null;
 
-		if ( $reuse_existing && $event_date_id > 0 ) {
+		// Reuse is only possible when we have a participant to match against.
+		if ( $reuse_existing && $event_date_id > 0 && null !== $participant_id ) {
 			$existing = $this->submission_repository->get_by_filters(
 				array(
 					'participant_id' => $participant_id,

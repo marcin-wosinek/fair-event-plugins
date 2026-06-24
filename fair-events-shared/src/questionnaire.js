@@ -292,6 +292,30 @@ export function validateQuestions(form) {
 		}
 	}
 
+	// Validate email questions (format check).
+	const emailQuestions = form.querySelectorAll(
+		'[data-fair-form-question][data-question-type="email"]'
+	);
+	for (const el of emailQuestions) {
+		if (!isQuestionVisible(el)) {
+			continue;
+		}
+		const input = el.querySelector('input[type="email"]');
+		const value = input ? input.value.trim() : '';
+		if (!value) {
+			continue;
+		}
+		if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value)) {
+			const questionText = el.dataset.questionText || '';
+			return (
+				__(
+					'Please enter a valid email address for: ',
+					'fair-audience'
+				) + questionText
+			);
+		}
+	}
+
 	// Validate file upload constraints (size), skip hidden ones.
 	const fileUploadQuestions = form.querySelectorAll(
 		'[data-fair-form-question][data-question-type="file_upload"]'

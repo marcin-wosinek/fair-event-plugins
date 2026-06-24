@@ -22,9 +22,9 @@ class QuestionnaireSubmission {
 	public $id;
 
 	/**
-	 * Participant ID.
+	 * Participant ID (nullable — submissions without a linked participant are allowed).
 	 *
-	 * @var int
+	 * @var int|null
 	 */
 	public $participant_id;
 
@@ -87,14 +87,21 @@ class QuestionnaireSubmission {
 	 * @param array $data Data array.
 	 */
 	public function populate( $data ) {
-		$this->id             = isset( $data['id'] ) ? (int) $data['id'] : null;
-		$this->participant_id = isset( $data['participant_id'] ) ? (int) $data['participant_id'] : 0;
-		$this->event_date_id  = isset( $data['event_date_id'] ) ? (int) $data['event_date_id'] : null;
-		$this->post_id        = isset( $data['post_id'] ) ? (int) $data['post_id'] : null;
-		$this->title          = isset( $data['title'] ) ? $data['title'] : '';
-		$this->form_id        = isset( $data['form_id'] ) ? $data['form_id'] : null;
-		$this->form_title     = isset( $data['form_title'] ) ? $data['form_title'] : null;
-		$this->created_at     = isset( $data['created_at'] ) ? $data['created_at'] : '';
+		$this->id = isset( $data['id'] ) ? (int) $data['id'] : null;
+
+		// Participant ID is nullable: null means no linked participant.
+		if ( array_key_exists( 'participant_id', $data ) ) {
+			$this->participant_id = null !== $data['participant_id'] ? (int) $data['participant_id'] : null;
+		} else {
+			$this->participant_id = null;
+		}
+
+		$this->event_date_id = isset( $data['event_date_id'] ) ? (int) $data['event_date_id'] : null;
+		$this->post_id       = isset( $data['post_id'] ) ? (int) $data['post_id'] : null;
+		$this->title         = isset( $data['title'] ) ? $data['title'] : '';
+		$this->form_id       = isset( $data['form_id'] ) ? $data['form_id'] : null;
+		$this->form_title    = isset( $data['form_title'] ) ? $data['form_title'] : null;
+		$this->created_at    = isset( $data['created_at'] ) ? $data['created_at'] : '';
 	}
 
 	/**
@@ -107,21 +114,35 @@ class QuestionnaireSubmission {
 
 		$table_name = $wpdb->prefix . 'fair_audience_questionnaire_submissions';
 
-		// Validate required fields.
-		if ( empty( $this->participant_id ) ) {
-			return false;
+		// Build data array, omitting participant_id when null so the DB
+		// stores NULL (the column default after the 0.2.0 migration).
+		$data   = array( 'title' => $this->title );
+		$format = array( '%s' );
+
+		if ( null !== $this->participant_id ) {
+			$data   = array_merge( array( 'participant_id' => (int) $this->participant_id ), $data );
+			$format = array_merge( array( '%d' ), $format );
 		}
 
-		$data = array(
-			'participant_id' => $this->participant_id,
-			'event_date_id'  => $this->event_date_id,
-			'post_id'        => $this->post_id,
-			'title'          => $this->title,
-			'form_id'        => $this->form_id,
-			'form_title'     => $this->form_title,
-		);
+		if ( null !== $this->event_date_id ) {
+			$data['event_date_id'] = (int) $this->event_date_id;
+			$format[]              = '%d';
+		}
 
-		$format = array( '%d', '%d', '%d', '%s', '%s', '%s' );
+		if ( null !== $this->post_id ) {
+			$data['post_id'] = (int) $this->post_id;
+			$format[]        = '%d';
+		}
+
+		if ( null !== $this->form_id ) {
+			$data['form_id'] = $this->form_id;
+			$format[]        = '%s';
+		}
+
+		if ( null !== $this->form_title ) {
+			$data['form_title'] = $this->form_title;
+			$format[]           = '%s';
+		}
 
 		if ( $this->id ) {
 			// Update existing.

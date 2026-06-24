@@ -26,10 +26,6 @@
 			"type": "string",
 			"default": "Thank you for your submission!"
 		},
-		"showKeepInformed": {
-			"type": "boolean",
-			"default": false
-		},
 		"eventDateId": {
 			"type": "integer",
 			"default": 0
