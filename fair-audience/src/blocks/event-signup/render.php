@@ -200,13 +200,43 @@ if ( $is_valid_post_type ) {
 			$is_signed_up = true;
 		}
 
+		// Resolve a whole-series pass on the master once so we can apply it
+		// to the occurrence picker loop without a per-occurrence DB query.
+		$series_pass_row = null;
+		if ( $event_dates_obj && class_exists( \FairEvents\Models\TicketType::class ) ) {
+			$master_id_for_pass = null;
+			if ( 'master' === ( $event_dates_obj->occurrence_type ?? null ) ) {
+				$master_id_for_pass = (int) $event_dates_obj->id;
+			} elseif ( 'generated' === ( $event_dates_obj->occurrence_type ?? null ) && $event_dates_obj->master_id ) {
+				$master_id_for_pass = (int) $event_dates_obj->master_id;
+			}
+			if ( $master_id_for_pass ) {
+				$candidate_pass = $event_participant_repository->get_series_pass_for_participant( $master_id_for_pass, $participant->id );
+				if ( $candidate_pass && $candidate_pass->ticket_type_id ) {
+					$pass_tt = \FairEvents\Models\TicketType::get_by_id( (int) $candidate_pass->ticket_type_id );
+					if ( $pass_tt && $pass_tt->is_whole_series() ) {
+						$series_pass_row = $candidate_pass;
+					}
+				}
+			}
+		}
+
 		// Populate per-occurrence signup state for the picker.
 		foreach ( $occurrences_for_picker as $idx => $occ_row ) {
-			$rel = $event_participant_repository->get_by_event_date_and_participant(
+			$rel           = $event_participant_repository->get_by_event_date_and_participant(
 				$occ_row['id'],
 				$participant->id
 			);
-			$occurrences_for_picker[ $idx ]['signed_up'] = ( $rel && 'signed_up' === $rel->label );
+			$occ_signed_up = ( $rel && 'signed_up' === $rel->label );
+
+			// Also check whether the series pass (stored on master) covers this
+			// occurrence. A pass covers occurrences starting on or after its
+			// purchase date (mid-series semantics).
+			if ( ! $occ_signed_up && $series_pass_row && $occ_row['start_datetime'] ) {
+				$occ_signed_up = strtotime( $occ_row['start_datetime'] ) >= strtotime( $series_pass_row->created_at );
+			}
+
+			$occurrences_for_picker[ $idx ]['signed_up'] = $occ_signed_up;
 		}
 
 		$participant_data = array(
