@@ -7,7 +7,8 @@
 		"./fair-events-experimental",
 		"./fair-audience",
 		"./fair-form",
-		"./fair-platform"
+		"./fair-platform",
+		"./fair-finance"
 	],
 	"mappings": {
 		"wp-content/mu-plugins": "./e2e/mu-plugins"
