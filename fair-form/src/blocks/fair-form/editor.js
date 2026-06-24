@@ -107,14 +107,36 @@ function EventDateSelect({ eventDateId, onChange }) {
 }
 
 registerBlockType('fair-audience/fair-form', {
-	edit: ({ attributes, setAttributes }) => {
+	edit: ({ attributes, setAttributes, clientId }) => {
 		const {
 			submitButtonText,
 			successMessage,
 			showKeepInformed,
 			eventDateId,
 			notificationEmail,
+			formId,
+			formTitle,
 		} = attributes;
+
+		const allBlocks = useSelect(
+			(select) => select('core/block-editor').getBlocks(),
+			[]
+		);
+
+		// Mint a stable UUID on first insert; regenerate on paste/duplicate collision.
+		useEffect(() => {
+			const isDuplicate =
+				formId &&
+				allBlocks.some(
+					(b) =>
+						b.attributes.formId === formId &&
+						b.clientId !== clientId
+				);
+
+			if (!formId || isDuplicate) {
+				setAttributes({ formId: crypto.randomUUID() });
+			}
+		}, [formId, clientId, allBlocks, setAttributes]);
 
 		const blockProps = useBlockProps({
 			className: 'fair-form',
@@ -187,6 +209,21 @@ registerBlockType('fair-audience/fair-form', {
 							placeholder="admin@example.com"
 							help={__(
 								'Send a notification to this email when someone submits the form. Leave empty to disable.',
+								'fair-audience'
+							)}
+						/>
+						<TextControl
+							label={__('Form Title', 'fair-audience')}
+							value={formTitle}
+							onChange={(value) =>
+								setAttributes({ formTitle: value })
+							}
+							placeholder={__(
+								'e.g. Volunteer signup',
+								'fair-audience'
+							)}
+							help={__(
+								'Internal label for grouping submissions by form. Does not appear on the frontend.',
 								'fair-audience'
 							)}
 						/>

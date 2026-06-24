@@ -269,9 +269,11 @@ class QuestionnaireService {
 	 *                               participant, event date and title is reused
 	 *                               (its answers replaced) instead of inserting a
 	 *                               new one. Keeps re-submits/payment retries idempotent.
+	 * @param string $form_id        Stable UUID from the block attribute (empty for non-block submissions).
+	 * @param string $form_title     Human-readable form label from the block attribute.
 	 * @return int Submission ID, or 0 on failure.
 	 */
-	public function save_answers( $participant_id, $answers, $event_date_id = 0, $post_id = 0, $title = '', $reuse_existing = false ) {
+	public function save_answers( $participant_id, $answers, $event_date_id = 0, $post_id = 0, $title = '', $reuse_existing = false, $form_id = '', $form_title = '' ) {
 		$title = '' !== $title ? $title : __( 'Fair Form', 'fair-form' );
 
 		$submission = null;
@@ -301,6 +303,14 @@ class QuestionnaireService {
 
 			if ( $post_id > 0 ) {
 				$submission_data['post_id'] = $post_id;
+			}
+
+			if ( '' !== $form_id ) {
+				$submission_data['form_id'] = $form_id;
+			}
+
+			if ( '' !== $form_title ) {
+				$submission_data['form_title'] = $form_title;
 			}
 
 			$submission = new QuestionnaireSubmission();

@@ -50,6 +50,20 @@ class QuestionnaireSubmission {
 	public $title;
 
 	/**
+	 * Stable form identity UUID (from block attribute).
+	 *
+	 * @var string|null
+	 */
+	public $form_id;
+
+	/**
+	 * Human-readable form label (from block attribute).
+	 *
+	 * @var string|null
+	 */
+	public $form_title;
+
+	/**
 	 * Created timestamp.
 	 *
 	 * @var string
@@ -78,6 +92,8 @@ class QuestionnaireSubmission {
 		$this->event_date_id  = isset( $data['event_date_id'] ) ? (int) $data['event_date_id'] : null;
 		$this->post_id        = isset( $data['post_id'] ) ? (int) $data['post_id'] : null;
 		$this->title          = isset( $data['title'] ) ? $data['title'] : '';
+		$this->form_id        = isset( $data['form_id'] ) ? $data['form_id'] : null;
+		$this->form_title     = isset( $data['form_title'] ) ? $data['form_title'] : null;
 		$this->created_at     = isset( $data['created_at'] ) ? $data['created_at'] : '';
 	}
 
@@ -101,9 +117,11 @@ class QuestionnaireSubmission {
 			'event_date_id'  => $this->event_date_id,
 			'post_id'        => $this->post_id,
 			'title'          => $this->title,
+			'form_id'        => $this->form_id,
+			'form_title'     => $this->form_title,
 		);
 
-		$format = array( '%d', '%d', '%d', '%s' );
+		$format = array( '%d', '%d', '%d', '%s', '%s', '%s' );
 
 		if ( $this->id ) {
 			// Update existing.
