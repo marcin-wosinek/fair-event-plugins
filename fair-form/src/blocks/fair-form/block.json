@@ -37,6 +37,14 @@
 		"notificationEmail": {
 			"type": "string",
 			"default": ""
+		},
+		"formId": {
+			"type": "string",
+			"default": ""
+		},
+		"formTitle": {
+			"type": "string",
+			"default": ""
 		}
 	},
 	"editorScript": "file:./editor.js",

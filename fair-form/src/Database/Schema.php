@@ -35,11 +35,14 @@ class Schema {
 			event_date_id BIGINT UNSIGNED DEFAULT NULL,
 			post_id BIGINT UNSIGNED DEFAULT NULL,
 			title VARCHAR(255) DEFAULT '',
+			form_id VARCHAR(64) DEFAULT NULL,
+			form_title VARCHAR(255) DEFAULT NULL,
 			created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
 			PRIMARY KEY  (id),
 			KEY idx_participant_id (participant_id),
 			KEY idx_event_date_id (event_date_id),
-			KEY idx_post_id (post_id)
+			KEY idx_post_id (post_id),
+			KEY idx_form_id (form_id)
 		) ENGINE=InnoDB $charset_collate;";
 	}
 

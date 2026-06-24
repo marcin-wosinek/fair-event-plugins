@@ -19,20 +19,30 @@ $success_message    = ! empty( $attributes['successMessage'] ) ? $attributes['su
 $show_keep_informed = ! empty( $attributes['showKeepInformed'] );
 $event_date_id      = (int) ( $attributes['eventDateId'] ?? 0 );
 $notification_email = ! empty( $attributes['notificationEmail'] ) ? sanitize_email( $attributes['notificationEmail'] ) : '';
+$block_form_id      = ! empty( $attributes['formId'] ) ? sanitize_text_field( $attributes['formId'] ) : '';
+$block_form_title   = ! empty( $attributes['formTitle'] ) ? sanitize_text_field( $attributes['formTitle'] ) : '';
 
 // Generate unique ID for this form instance.
 $form_id = 'fair-form-' . wp_unique_id();
 
 // Get wrapper attributes.
-$wrapper_attributes = get_block_wrapper_attributes(
-	array(
-		'class'                   => 'fair-form',
-		'data-success-message'    => esc_attr( $success_message ),
-		'data-event-date-id'      => esc_attr( $event_date_id ),
-		'data-post-id'            => esc_attr( get_the_ID() ),
-		'data-notification-email' => esc_attr( $notification_email ),
-	)
+$wrapper_data = array(
+	'class'                   => 'fair-form',
+	'data-success-message'    => esc_attr( $success_message ),
+	'data-event-date-id'      => esc_attr( $event_date_id ),
+	'data-post-id'            => esc_attr( get_the_ID() ),
+	'data-notification-email' => esc_attr( $notification_email ),
 );
+
+if ( '' !== $block_form_id ) {
+	$wrapper_data['data-form-id'] = esc_attr( $block_form_id );
+}
+
+if ( '' !== $block_form_title ) {
+	$wrapper_data['data-form-title'] = esc_attr( $block_form_title );
+}
+
+$wrapper_attributes = get_block_wrapper_attributes( $wrapper_data );
 ?>
 
 <div <?php echo wp_kses_data( $wrapper_attributes ); ?>>

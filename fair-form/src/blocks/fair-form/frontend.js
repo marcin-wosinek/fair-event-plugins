@@ -98,6 +98,8 @@ function submitForm(form) {
 	const eventDateId = parseInt(wrapper?.dataset.eventDateId, 10) || 0;
 	const postId = parseInt(wrapper?.dataset.postId, 10) || 0;
 	const notificationEmail = wrapper?.dataset.notificationEmail || '';
+	const blockFormId = wrapper?.dataset.formId || '';
+	const blockFormTitle = wrapper?.dataset.formTitle || '';
 
 	let fetchOptions;
 
@@ -126,6 +128,12 @@ function submitForm(form) {
 		}
 		if (notificationEmail) {
 			formData.append('notification_email', notificationEmail);
+		}
+		if (blockFormId) {
+			formData.append('form_id', blockFormId);
+		}
+		if (blockFormTitle) {
+			formData.append('form_title', blockFormTitle);
 		}
 
 		// Append selected files (skip hidden questions).
@@ -156,6 +164,12 @@ function submitForm(form) {
 		}
 		if (notificationEmail) {
 			requestData.notification_email = notificationEmail;
+		}
+		if (blockFormId) {
+			requestData.form_id = blockFormId;
+		}
+		if (blockFormTitle) {
+			requestData.form_title = blockFormTitle;
 		}
 
 		fetchOptions = {

@@ -131,6 +131,18 @@ class FairFormController extends WP_REST_Controller {
 							'default'           => '',
 							'sanitize_callback' => 'sanitize_email',
 						),
+						'form_id'               => array(
+							'type'              => 'string',
+							'required'          => false,
+							'default'           => '',
+							'sanitize_callback' => 'sanitize_text_field',
+						),
+						'form_title'            => array(
+							'type'              => 'string',
+							'required'          => false,
+							'default'           => '',
+							'sanitize_callback' => 'sanitize_text_field',
+						),
 					),
 				),
 			)
@@ -259,7 +271,10 @@ class FairFormController extends WP_REST_Controller {
 			$questionnaire_answers,
 			$event_date_id,
 			$post_id,
-			__( 'Fair Form', 'fair-form' )
+			__( 'Fair Form', 'fair-form' ),
+			false,
+			$request->get_param( 'form_id' ),
+			$request->get_param( 'form_title' )
 		);
 
 		// Send confirmation email to the submitter (deferred so a slow mail
