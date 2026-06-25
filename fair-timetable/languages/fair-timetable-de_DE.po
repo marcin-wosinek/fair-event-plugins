@@ -1,16 +1,15 @@
-# Copyright (C) 2026 Marcin Wosinek
-# This file is distributed under the GPLv3 or later.
 msgid ""
 msgstr ""
 "Project-Id-Version: Fair Timetable 0.6.5\n"
 "Report-Msgid-Bugs-To: https://wordpress.org/support/plugin/fair-timetable\n"
-"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
-"Language-Team: LANGUAGE <LL@li.org>\n"
+"Last-Translator: Marcin Wosinek <marcin.wosinek@gmail.com>\n"
+"Language-Team: German\n"
+"Language: de_DE\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "POT-Creation-Date: 2026-06-25T10:53:22+00:00\n"
-"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"PO-Revision-Date: 2026-06-25 00:00+0000\n"
 "X-Generator: WP-CLI 2.12.0\n"
 "X-Domain: fair-timetable\n"
 
@@ -29,7 +28,7 @@ msgstr ""
 #. Description of the plugin
 #: fair-timetable.php
 msgid "Timetable management plugin for events & weekly activities."
-msgstr ""
+msgstr "Timetable-Management-Plugin für Events und wöchentliche Aktivitäten."
 
 #. Author of the plugin
 #: fair-timetable.php
@@ -43,155 +42,156 @@ msgstr ""
 
 #: src/Core/Features.php:115
 msgid "Core"
-msgstr ""
+msgstr "Kern"
 
 #: src/Core/Features.php:116
 msgid "Timetable blocks. Always on."
-msgstr ""
+msgstr "Timetable-Blöcke. Immer aktiv."
 
 #: src/Core/Features.php:119
 msgid "Bundled translations"
-msgstr ""
+msgstr "Gebündelte Übersetzungen"
 
 #: src/Core/Features.php:120
 msgid "Load .mo/.json files shipped with the plugin instead of relying on WordPress.org language packs. Useful while a locale is below the 90% threshold on translate.wordpress.org or for in-progress strings."
-msgstr ""
+msgstr "Laden Sie .mo/.json-Dateien, die mit dem Plugin geliefert werden, anstatt sich auf WordPress.org-Sprachpakete zu verlassen. Nützlich, wenn ein Gebietsschema unter der 90%-Schwelle auf translate.wordpress.org liegt oder für laufende Strings."
 
 #: src/Core/Plugin.php:96
 msgid "You do not have sufficient permissions to access this page."
-msgstr ""
+msgstr "Sie haben keine ausreichenden Berechtigungen, um auf diese Seite zuzugreifen."
 
 #: src/Core/Plugin.php:105
 msgid "Features saved."
-msgstr ""
+msgstr "Funktionen gespeichert."
 
 #: src/Core/Plugin.php:111
 msgid "Fair Timetable - Features"
-msgstr ""
+msgstr "Fair Timetable - Funktionen"
 
 #: src/Core/Plugin.php:138
 msgid "Forced by a wp-config constant — change it there."
-msgstr ""
+msgstr "Erzwungen durch eine wp-config-Konstante — ändern Sie sie dort."
 
 #: src/Core/Plugin.php:146
 msgid "Save Features"
-msgstr ""
+msgstr "Funktionen speichern"
 
 #: src/blocks/time-column/components/EditComponent.js:27
 msgid "Column Title"
-msgstr ""
+msgstr "Spaltentitel"
 
 #: src/blocks/time-column/components/EditComponent.js:28
 msgid "Enter column title..."
-msgstr ""
+msgstr "Spaltentitel eingeben..."
 
 #: src/blocks/time-slot/components/EditComponent.js:159
 msgid "Event Title"
-msgstr ""
+msgstr "Event-Titel"
 
 #: src/blocks/time-slot/components/EditComponent.js:178
 msgid "Time Slot Settings"
-msgstr ""
+msgstr "Zeitfenster-Einstellungen"
 
 #: src/blocks/time-slot/components/EditComponent.js:180
 #: src/blocks/timetable/components/EditComponent.js:179
 msgid "Start Time"
-msgstr ""
+msgstr "Startzeit"
 
 #: src/blocks/time-slot/components/EditComponent.js:192
 #: src/blocks/timetable/components/EditComponent.js:192
 msgid "Start time in HH:MM format (24-hour)"
-msgstr ""
+msgstr "Startzeit im Format HH:MM (24-Stunden)"
 
 #: src/blocks/time-slot/components/EditComponent.js:198
 #: src/blocks/timetable/components/EditComponent.js:198
 msgid "Length"
-msgstr ""
+msgstr "Dauer"
 
 #: src/blocks/time-slot/components/EditComponent.js:202
 msgid "Duration of the time slot"
-msgstr ""
+msgstr "Dauer des Zeitfensters"
 
 #: src/blocks/time-slot/components/EditComponent.js:205
 #: src/blocks/timetable/components/EditComponent.js:208
 msgid "End Time"
-msgstr ""
+msgstr "Endzeit"
 
 #: src/blocks/time-slot/components/EditComponent.js:215
 #: src/blocks/timetable/components/EditComponent.js:219
 msgid "End time in HH:MM format. If before start time, assumes next day."
-msgstr ""
+msgstr "Endzeit im Format HH:MM. Wenn vor der Startzeit, wird der nächste Tag angenommen."
 
 #: src/blocks/timetable/components/EditComponent.js:177
 msgid "Timetable Settings"
-msgstr ""
+msgstr "Zeitplantabelle-Einstellungen"
 
 #: src/blocks/timetable/components/EditComponent.js:202
 msgid "Duration of the timetable in hours"
-msgstr ""
+msgstr "Dauer der Zeitplantabelle in Stunden"
 
 #: src/blocks/timetable/components/EditComponent.js:225
 msgid "Hour Height"
-msgstr ""
+msgstr "Stundenhöhe"
 
 #: src/blocks/timetable/components/EditComponent.js:231
 msgid "Visual height multiplier for each hour (2-8)"
-msgstr ""
+msgstr "Visuelle Höhenmultiplikator für jede Stunde (2-8)"
 
 #. translators: %d: number of hours
 #: src/models/LengthOptions.js:45
 #, js-format
 msgid "%d hours"
-msgstr ""
+msgstr "%d Stunden"
 
 #. translators: %d: number of minutes
 #: src/models/LengthOptions.js:48
 #, js-format
 msgid "%d minutes"
-msgstr ""
+msgstr "%d Minuten"
 
 #. translators: %1$d: number of hours, %2$d: number of minutes
 #: src/models/LengthOptions.js:52
 #, js-format
 msgid "%1$d hours, %2$d minutes"
-msgstr ""
+msgstr "%1$d Stunden, %2$d Minuten"
 
 #: src/blocks/time-column-body/block.json
 msgctxt "block title"
 msgid "Time Column Body"
-msgstr ""
+msgstr "Zeitspalten-Body"
 
 #: src/blocks/time-column-body/block.json
 msgctxt "block description"
 msgid "A time column body container for organizing time slots"
-msgstr ""
+msgstr "Ein Zeitspalten-Body-Container zur Organisation von Zeitfenstern"
 
 #: src/blocks/time-column/block.json
 msgctxt "block title"
 msgid "Time Column"
-msgstr ""
+msgstr "Zeitspalte"
 
 #: src/blocks/time-column/block.json
 msgctxt "block description"
 msgid "A time column with header and body for organizing timetable content"
-msgstr ""
+msgstr "Eine Zeitspalte mit Kopfzeile und Body zur Organisation von Zeitplantabellen-Inhalten"
 
 #: src/blocks/time-slot/block.json
 msgctxt "block title"
 msgid "Time Slot"
-msgstr ""
+msgstr "Zeitfenster"
 
 #: src/blocks/time-slot/block.json
 msgctxt "block description"
 msgid "A time slot block for timetable events"
-msgstr ""
+msgstr "Ein Zeitfenster-Block für Zeitplantabellen-Ereignisse"
 
 #: src/blocks/timetable/block.json
 msgctxt "block title"
 msgid "Timetable"
-msgstr ""
+msgstr "Zeitplantabelle"
 
 #: src/blocks/timetable/block.json
 msgctxt "block description"
 msgid "A timetable block for displaying scheduled events"
-msgstr ""
+msgstr "Ein Zeitplantabellen-Block zur Anzeige geplanter Ereignisse"
+

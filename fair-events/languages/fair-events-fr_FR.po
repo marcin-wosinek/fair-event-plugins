@@ -1497,37 +1497,37 @@ msgstr "Filtrer par type d'occurrence."
 
 #. translators: %d: number of days
 #: src/blocks/event-info/render.php:68
-#, php-format,js-format
+#, php-format, js-format
 msgid "Every %d days"
 msgstr "Tous les %d jours"
 
 #. translators: %s: day of week
 #: src/blocks/event-info/render.php:75
-#, php-format,js-format
+#, php-format, js-format
 msgid "Every 2 weeks on %s"
 msgstr "Tous les 2 semaines le %s"
 
 #. translators: 1: number of weeks, 2: day of week
 #: src/blocks/event-info/render.php:79
-#, php-format,js-format
+#, php-format, js-format
 msgid "Every %1$d weeks on %2$s"
 msgstr "Tous les %1$d semaines le %2$s"
 
 #. translators: %s: day of week
 #: src/blocks/event-info/render.php:82
-#, php-format,js-format
+#, php-format, js-format
 msgid "Every %s"
 msgstr "Tous les %s"
 
 #. translators: %d: number of months
 #: src/blocks/event-info/render.php:87
-#, php-format,js-format
+#, php-format, js-format
 msgid "Every %d months"
 msgstr "Tous les %d mois"
 
 #. translators: %d: number of years
 #: src/blocks/event-info/render.php:94
-#, php-format,js-format
+#, php-format, js-format
 msgid "Every %d years"
 msgstr "Tous les %d ans"
 
@@ -1537,7 +1537,7 @@ msgstr "Annuellement"
 
 #. translators: %s: date of next occurrence
 #: src/blocks/event-info/render.php:169
-#, php-format,js-format
+#, php-format, js-format
 msgid "Next: %s"
 msgstr "Suivant : %s"
 
@@ -3067,85 +3067,86 @@ msgstr "Espace réservé à l'événement"
 
 #: src/blocks/events-week/render.php:493
 msgid "Copy summary"
-msgstr ""
+msgstr "Copier le résumé"
 
 #: src/Settings/Settings.php:115
 msgid "Show a \"Powered by Fair Event Plugins\" line on signup forms and participant emails"
-msgstr ""
+msgstr "Afficher une ligne \"Powered by Fair Event Plugins\" sur les formulaires d'inscription et les e-mails des participants"
 
 #: src/Settings/Settings.php:128
 msgid "First day of the week shown in calendar and week-view blocks"
-msgstr ""
+msgstr "Premier jour de la semaine affiché dans les blocs calendrier et vue semaine"
 
 #: src/Admin/manage-event/EventTickets.js:1260
 #, js-format
 msgid "Signup price (%s)"
-msgstr ""
+msgstr "Prix d'inscription (%s)"
 
 #: src/Admin/manage-event/EventTickets.js:1908
 #, js-format
 msgid "Price (%s)"
-msgstr ""
+msgstr "Prix (%s)"
 
 #: src/Admin/manage-event/EventTickets.js:1919
 #, js-format
 msgid "Discounted price (%s)"
-msgstr ""
+msgstr "Prix réduit (%s)"
 
 #: src/Admin/settings/GeneralTab.js:281
 msgid "Branding"
-msgstr ""
+msgstr "Marque"
 
 #: src/Admin/settings/GeneralTab.js:285
 msgid "Show 'Powered by Fair Event Plugins'"
-msgstr ""
+msgstr "Afficher 'Powered by Fair Event Plugins'"
 
 #: src/Admin/settings/GeneralTab.js:291
 msgid "Adds a subtle attribution line under public signup forms and at the bottom of participant emails. Off by default."
-msgstr ""
+msgstr "Ajoute une ligne d'attribution subtile sous les formulaires d'inscription publics et au bas des e-mails des participants. Désactivé par défaut."
 
 #: src/Admin/settings/GeneralTab.js:302
 msgid "Calendar Display"
-msgstr ""
+msgstr "Affichage du calendrier"
 
 #: src/Admin/settings/GeneralTab.js:307
 msgid "First day of the week shown in the Events Calendar and Events Week View blocks."
-msgstr ""
+msgstr "Premier jour de la semaine affiché dans les blocs Calendrier des événements et Vue semaine des événements."
 
 #: src/blocks/events-week/components/EditComponent.js:71
 msgid "Week View Settings"
-msgstr ""
+msgstr "Paramètres de la vue semaine"
 
 #: src/blocks/events-week/components/EditComponent.js:95
 msgid "Show Copy Summary Button"
-msgstr ""
+msgstr "Afficher le bouton Copier le résumé"
 
 #: src/blocks/events-week/components/EditComponent.js:100
 msgid "Displays a button to copy week summary as text"
-msgstr ""
+msgstr "Affiche un bouton pour copier le résumé de la semaine sous forme de texte"
 
 #: src/blocks/events-week/components/EditComponent.js:144
 msgid "Event Background"
-msgstr ""
+msgstr "Arrière-plan de l'événement"
 
 #: src/blocks/events-week/components/EditComponent.js:152
 msgid "Event Text"
-msgstr ""
+msgstr "Texte de l'événement"
 
 #: src/blocks/events-week/components/EditComponent.js:184
 msgid "Events Week View"
-msgstr ""
+msgstr "Vue semaine des événements"
 
 #: src/blocks/events-week/components/EditComponent.js:186
 msgid "Current week will be displayed on the frontend"
-msgstr ""
+msgstr "La semaine actuelle s'affichera sur le frontend"
 
 #: src/blocks/events-week/block.json
 msgctxt "block title"
 msgid "Events Week View"
-msgstr ""
+msgstr "Vue semaine des événements"
 
 #: src/blocks/events-week/block.json
 msgctxt "block description"
 msgid "Display events for the current week in a 7-day grid."
-msgstr ""
+msgstr "Affiche les événements de la semaine actuelle dans une grille de 7 jours."
+

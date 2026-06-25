@@ -1,16 +1,15 @@
-# Copyright (C) 2026 Marcin Wosinek
-# This file is distributed under the GPL-2.0-or-later.
 msgid ""
 msgstr ""
 "Project-Id-Version: Fair Finance 1.0.2\n"
 "Report-Msgid-Bugs-To: https://wordpress.org/support/plugin/fair-finance\n"
-"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
-"Language-Team: LANGUAGE <LL@li.org>\n"
+"Last-Translator: Marcin Wosinek <marcin.wosinek@gmail.com>\n"
+"Language-Team: Spanish\n"
+"Language: es_ES\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "POT-Creation-Date: 2026-06-25T10:53:23+00:00\n"
-"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"PO-Revision-Date: 2026-06-25 00:00+0000\n"
 "X-Generator: WP-CLI 2.12.0\n"
 "X-Domain: fair-finance\n"
 
@@ -29,7 +28,7 @@ msgstr ""
 #. Description of the plugin
 #: fair-finance.php
 msgid "Budgeting, financial entries, and reconciliation for fair event management."
-msgstr ""
+msgstr "Presupuestos, entradas financieras y conciliación para la gestión de eventos feriales."
 
 #. Author of the plugin
 #: fair-finance.php
@@ -43,64 +42,64 @@ msgstr ""
 
 #: src/Admin/AdminPages.php:45
 msgid "Financial Entries"
-msgstr ""
+msgstr "Entradas financieras"
 
 #: src/Admin/AdminPages.php:46
 msgid "Entries"
-msgstr ""
+msgstr "Entradas"
 
 #: src/Admin/AdminPages.php:54
 msgid "Budget Categories"
-msgstr ""
+msgstr "Categorías de presupuesto"
 
 #: src/Admin/AdminPages.php:55
 msgid "Budgets"
-msgstr ""
+msgstr "Presupuestos"
 
 #: src/Admin/AdminPages.php:64
 #: src/Admin/AdminPages.php:65
 msgid "Reconciliation"
-msgstr ""
+msgstr "Conciliación"
 
 #: src/API/BudgetController.php:70
 #: src/API/BudgetController.php:87
 msgid "Unique identifier for the budget."
-msgstr ""
+msgstr "Identificador único del presupuesto."
 
 #: src/API/BudgetController.php:117
 msgid "Budget name."
-msgstr ""
+msgstr "Nombre del presupuesto."
 
 #: src/API/BudgetController.php:123
 msgid "Budget description."
-msgstr ""
+msgstr "Descripción del presupuesto."
 
 #: src/API/BudgetController.php:175
 #: src/API/BudgetController.php:232
 #: src/API/BudgetController.php:274
 msgid "Budget not found."
-msgstr ""
+msgstr "Presupuesto no encontrado."
 
 #: src/API/BudgetController.php:196
 #: src/API/BudgetController.php:240
 msgid "Budget name is required."
-msgstr ""
+msgstr "El nombre del presupuesto es obligatorio."
 
 #: src/API/BudgetController.php:206
 msgid "Failed to create budget."
-msgstr ""
+msgstr "No se pudo crear el presupuesto."
 
 #: src/API/BudgetController.php:250
 msgid "Failed to update budget."
-msgstr ""
+msgstr "No se pudo actualizar el presupuesto."
 
 #: src/API/BudgetController.php:284
 msgid "Failed to delete budget."
-msgstr ""
+msgstr "No se pudo eliminar el presupuesto."
 
 #: src/API/FinancialEntryController.php:152
 msgid "Unique identifier for the transfer entry."
-msgstr ""
+msgstr "Identificador único de la entrada de transferencia."
 
 #: src/API/FinancialEntryController.php:175
 #: src/API/FinancialEntryController.php:192
@@ -110,146 +109,146 @@ msgstr ""
 #: src/API/FinancialEntryController.php:366
 #: src/API/FinancialEntryController.php:588
 msgid "Unique identifier for the financial entry."
-msgstr ""
+msgstr "Identificador único de la entrada financiera."
 
 #: src/API/FinancialEntryController.php:216
 msgid "Single transaction ID to match."
-msgstr ""
+msgstr "ID de transacción único para coincidir."
 
 #: src/API/FinancialEntryController.php:220
 msgid "Array of transaction IDs to match."
-msgstr ""
+msgstr "Matriz de IDs de transacción para coincidir."
 
 #: src/API/FinancialEntryController.php:236
 msgid "Specific transaction ID to unmatch. If omitted, unmatches all."
-msgstr ""
+msgstr "ID de transacción específico para desemparejar. Si se omite, desempareja todos."
 
 #: src/API/FinancialEntryController.php:255
 msgid "Filter by amount."
-msgstr ""
+msgstr "Filtrar por cantidad."
 
 #: src/API/FinancialEntryController.php:259
 #: src/API/FinancialEntryController.php:325
 msgid "Filter by start date."
-msgstr ""
+msgstr "Filtrar por fecha de inicio."
 
 #: src/API/FinancialEntryController.php:265
 #: src/API/FinancialEntryController.php:331
 msgid "Filter by end date."
-msgstr ""
+msgstr "Filtrar por fecha de fin."
 
 #: src/API/FinancialEntryController.php:271
 msgid "Search term."
-msgstr ""
+msgstr "Término de búsqueda."
 
 #: src/API/FinancialEntryController.php:276
 msgid "Exclude already matched transactions."
-msgstr ""
+msgstr "Excluir transacciones ya coincidentes."
 
 #: src/API/FinancialEntryController.php:300
 msgid "Amount tolerance for matching."
-msgstr ""
+msgstr "Tolerancia de cantidad para la coincidencia."
 
 #: src/API/FinancialEntryController.php:305
 msgid "Number of days before entry date to search."
-msgstr ""
+msgstr "Número de días antes de la fecha de entrada para buscar."
 
 #: src/API/FinancialEntryController.php:385
 msgid "Array of entries to import."
-msgstr ""
+msgstr "Matriz de entradas a importar."
 
 #: src/API/FinancialEntryController.php:414
 msgid "Source filename of the import."
-msgstr ""
+msgstr "Nombre de archivo de origen de la importación."
 
 #: src/API/FinancialEntryController.php:433
 msgid "Filter by start date (Y-m-d format)."
-msgstr ""
+msgstr "Filtrar por fecha de inicio (formato Y-m-d)."
 
 #: src/API/FinancialEntryController.php:439
 msgid "Filter by end date (Y-m-d format)."
-msgstr ""
+msgstr "Filtrar por fecha de fin (formato Y-m-d)."
 
 #: src/API/FinancialEntryController.php:445
 msgid "Filter by budget ID, or \"none\" for unbudgeted."
-msgstr ""
+msgstr "Filtrar por ID de presupuesto, o «ninguno» para sin presupuesto."
 
 #: src/API/FinancialEntryController.php:450
 msgid "Filter by event URL."
-msgstr ""
+msgstr "Filtrar por URL del evento."
 
 #: src/API/FinancialEntryController.php:455
 msgid "Filter by event date ID."
-msgstr ""
+msgstr "Filtrar por ID de fecha del evento."
 
 #: src/API/FinancialEntryController.php:459
 msgid "Filter by entry type: cost, income, or transfer."
-msgstr ""
+msgstr "Filtrar por tipo de entrada: coste, ingreso o transferencia."
 
 #: src/API/FinancialEntryController.php:465
 msgid "Filter to only unmatched entries."
-msgstr ""
+msgstr "Filtrar solo entradas sin coincidencia."
 
 #: src/API/FinancialEntryController.php:469
 msgid "Filter by tag, or \"none\" for untagged."
-msgstr ""
+msgstr "Filtrar por etiqueta, o «ninguno» para sin etiquetar."
 
 #: src/API/FinancialEntryController.php:486
 msgid "Maximum number of items per page."
-msgstr ""
+msgstr "Número máximo de elementos por página."
 
 #: src/API/FinancialEntryController.php:493
 msgid "Current page number."
-msgstr ""
+msgstr "Número de página actual."
 
 #: src/API/FinancialEntryController.php:499
 msgid "Sort by column."
-msgstr ""
+msgstr "Ordenar por columna."
 
 #: src/API/FinancialEntryController.php:506
 msgid "Sort direction."
-msgstr ""
+msgstr "Dirección de ordenación."
 
 #: src/API/FinancialEntryController.php:524
 msgid "Entry amount (positive value)."
-msgstr ""
+msgstr "Importe de la entrada (valor positivo)."
 
 #: src/API/FinancialEntryController.php:529
 msgid "Entry type: cost or income."
-msgstr ""
+msgstr "Tipo de entrada: gasto o ingreso."
 
 #: src/API/FinancialEntryController.php:536
 msgid "Entry date (Y-m-d format)."
-msgstr ""
+msgstr "Fecha de la entrada (formato Y-m-d)."
 
 #: src/API/FinancialEntryController.php:543
 msgid "Entry description."
-msgstr ""
+msgstr "Descripción de la entrada."
 
 #: src/API/FinancialEntryController.php:549
 msgid "Budget ID."
-msgstr ""
+msgstr "ID del presupuesto."
 
 #: src/API/FinancialEntryController.php:554
 msgid "Transaction ID."
-msgstr ""
+msgstr "ID de la transacción."
 
 #: src/API/FinancialEntryController.php:559
 msgid "Link URL (local or external)."
-msgstr ""
+msgstr "URL del enlace (local o externo)."
 
 #: src/API/FinancialEntryController.php:567
 msgid "Linked event date ID."
-msgstr ""
+msgstr "ID de fecha de evento vinculado."
 
 #: src/API/FinancialEntryController.php:572
 #: src/API/FinancialEntryController.php:1446
 msgid "Optional tag label for cross-cutting categorization."
-msgstr ""
+msgstr "Etiqueta opcional para categorización transversal."
 
 #: src/API/FinancialEntryController.php:592
 msgid "Array of budget allocations."
-msgstr ""
+msgstr "Matriz de asignaciones presupuestarias."
 
 #: src/API/FinancialEntryController.php:783
 #: src/API/FinancialEntryController.php:880
@@ -261,242 +260,243 @@ msgstr ""
 #: src/API/FinancialEntryController.php:1370
 #: src/API/FinancialEntryController.php:1878
 msgid "Financial entry not found."
-msgstr ""
+msgstr "Entrada financiera no encontrada."
 
 #: src/API/FinancialEntryController.php:811
 #: src/API/FinancialEntryController.php:888
 #: src/API/FinancialEntryController.php:1474
 #: src/API/FinancialEntryController.php:1576
 msgid "Amount must be greater than zero."
-msgstr ""
+msgstr "El importe debe ser mayor que cero."
 
 #: src/API/FinancialEntryController.php:819
 #: src/API/FinancialEntryController.php:896
 msgid "Entry type must be cost or income."
-msgstr ""
+msgstr "El tipo de entrada debe ser gasto o ingreso."
 
 #: src/API/FinancialEntryController.php:827
 #: src/API/FinancialEntryController.php:904
 #: src/API/FinancialEntryController.php:1482
 #: src/API/FinancialEntryController.php:1584
 msgid "Entry date is required."
-msgstr ""
+msgstr "La fecha de la entrada es obligatoria."
 
 #: src/API/FinancialEntryController.php:847
 msgid "Failed to create financial entry."
-msgstr ""
+msgstr "Error al crear la entrada financiera."
 
 #: src/API/FinancialEntryController.php:925
 msgid "Failed to update financial entry."
-msgstr ""
+msgstr "Error al actualizar la entrada financiera."
 
 #: src/API/FinancialEntryController.php:959
 msgid "Failed to delete financial entry."
-msgstr ""
+msgstr "Error al eliminar la entrada financiera."
 
 #: src/API/FinancialEntryController.php:1003
 msgid "Either transaction_id or transaction_ids is required."
-msgstr ""
+msgstr "Se requiere transaction_id o transaction_ids."
 
 #. translators: %d: transaction ID
 #: src/API/FinancialEntryController.php:1015
 #, php-format
 msgid "Transaction %d not found."
-msgstr ""
+msgstr "Transacción %d no encontrada."
 
 #: src/API/FinancialEntryController.php:1026
 msgid "Failed to match entry to transaction."
-msgstr ""
+msgstr "Error al vincular la entrada a la transacción."
 
 #: src/API/FinancialEntryController.php:1156
 msgid "Failed to unmatch entry from transaction."
-msgstr ""
+msgstr "No se pudo deshacer la coincidencia de la entrada de la transacción."
 
 #: src/API/FinancialEntryController.php:1190
 msgid "Cannot split a child entry."
-msgstr ""
+msgstr "No se puede dividir una entrada secundaria."
 
 #: src/API/FinancialEntryController.php:1199
 msgid "Entry is already split."
-msgstr ""
+msgstr "La entrada ya está dividida."
 
 #: src/API/FinancialEntryController.php:1208
 #: src/API/FinancialEntryController.php:1303
 msgid "At least 2 allocations are required."
-msgstr ""
+msgstr "Se requieren al menos 2 asignaciones."
 
 #: src/API/FinancialEntryController.php:1219
 #: src/API/FinancialEntryController.php:1314
 msgid "Each allocation amount must be nonzero."
-msgstr ""
+msgstr "Cada cantidad de asignación debe ser distinta de cero."
 
 #: src/API/FinancialEntryController.php:1230
 #: src/API/FinancialEntryController.php:1325
 msgid "Total allocations must match the original entry amount."
-msgstr ""
+msgstr "Las asignaciones totales deben coincidir con el importe de la entrada original."
 
 #: src/API/FinancialEntryController.php:1240
 msgid "Failed to split entry."
-msgstr ""
+msgstr "No se pudo dividir la entrada."
 
 #: src/API/FinancialEntryController.php:1285
 msgid "Cannot update split on a child entry."
-msgstr ""
+msgstr "No se puede actualizar la división en una entrada secundaria."
 
 #: src/API/FinancialEntryController.php:1294
 #: src/API/FinancialEntryController.php:1379
 msgid "Entry is not split."
-msgstr ""
+msgstr "La entrada no está dividida."
 
 #: src/API/FinancialEntryController.php:1335
 msgid "Failed to update split."
-msgstr ""
+msgstr "No se pudo actualizar la división."
 
 #: src/API/FinancialEntryController.php:1389
 msgid "Failed to unsplit entry."
-msgstr ""
+msgstr "No se pudo deshacer la división de la entrada."
 
 #: src/API/FinancialEntryController.php:1405
 msgid "Transfer amount (positive value)."
-msgstr ""
+msgstr "Importe de transferencia (valor positivo)."
 
 #: src/API/FinancialEntryController.php:1410
 msgid "Transfer date (Y-m-d format)."
-msgstr ""
+msgstr "Fecha de transferencia (formato Y-m-d)."
 
 #: src/API/FinancialEntryController.php:1417
 msgid "Source budget ID (money comes from)."
-msgstr ""
+msgstr "ID de presupuesto de origen (de dónde viene el dinero)."
 
 #: src/API/FinancialEntryController.php:1422
 msgid "Target budget ID (money goes to)."
-msgstr ""
+msgstr "ID de presupuesto de destino (a dónde va el dinero)."
 
 #: src/API/FinancialEntryController.php:1427
 msgid "Transfer description."
-msgstr ""
+msgstr "Descripción de la transferencia."
 
 #: src/API/FinancialEntryController.php:1433
 msgid "Event URL (local or external)."
-msgstr ""
+msgstr "URL del evento (local o externa)."
 
 #: src/API/FinancialEntryController.php:1441
 msgid "Event date ID."
-msgstr ""
+msgstr "ID de fecha del evento."
 
 #: src/API/FinancialEntryController.php:1490
 #: src/API/FinancialEntryController.php:1592
 msgid "Both source and target budgets are required."
-msgstr ""
+msgstr "Se requieren tanto el presupuesto de origen como el de destino."
 
 #: src/API/FinancialEntryController.php:1498
 #: src/API/FinancialEntryController.php:1600
 msgid "Source and target budgets must be different."
-msgstr ""
+msgstr "Los presupuestos de origen y destino deben ser diferentes."
 
 #: src/API/FinancialEntryController.php:1518
 msgid "Failed to create transfer."
-msgstr ""
+msgstr "No se pudo crear la transferencia."
 
 #: src/API/FinancialEntryController.php:1560
 msgid "Transfer entry not found."
-msgstr ""
+msgstr "Entrada de transferencia no encontrada."
 
 #: src/API/FinancialEntryController.php:1568
 msgid "Entry is not a transfer."
-msgstr ""
+msgstr "La entrada no es una transferencia."
 
 #: src/API/FinancialEntryController.php:1621
 msgid "Failed to update transfer."
-msgstr ""
+msgstr "No se pudo actualizar la transferencia."
 
 #: src/API/FinancialEntryController.php:1746
 msgid "No entries provided for import."
-msgstr ""
+msgstr "No se proporcionaron entradas para importar."
 
 #. translators: %d: row number
 #: src/API/FinancialEntryController.php:1762
 #, php-format
 msgid "Row %d: Missing required fields."
-msgstr ""
+msgstr "Fila %d: faltan campos obligatorios."
 
 #. translators: %d: row number
 #: src/API/FinancialEntryController.php:1773
 #, php-format
 msgid "Row %d: Invalid entry type."
-msgstr ""
+msgstr "Fila %d: tipo de entrada no válido."
 
 #. translators: 1: imported count, 2: skipped count
 #: src/API/FinancialEntryController.php:1804
 #, php-format
 msgid "Imported %1$d entries, skipped %2$d (duplicates or errors)."
-msgstr ""
+msgstr "Se importaron %1$d entradas, se omitieron %2$d (duplicados o errores)."
 
 #: src/API/SettlementController.php:64
 msgid "Mollie settlement reference shared by all rows."
-msgstr ""
+msgstr "Referencia de liquidación de Mollie compartida por todas las filas."
 
 #: src/API/SettlementController.php:70
 msgid "Settlement currency."
-msgstr ""
+msgstr "Moneda de liquidación."
 
 #: src/API/SettlementController.php:76
 msgid "Sum of all settlement amount cells."
-msgstr ""
+msgstr "Suma de todas las celdas de importe de liquidación."
 
 #: src/API/SettlementController.php:81
 msgid "Parsed payment rows from the settlement CSV."
-msgstr ""
+msgstr "Filas de pago analizadas de la liquidación CSV."
 
 #: src/API/SettlementController.php:107
 msgid "Parsed aggregate fee rows from the settlement CSV."
-msgstr ""
+msgstr "Filas de comisión agregada analizadas de la liquidación CSV."
 
 #: src/API/SettlementController.php:148
 msgid "Reconciliation requires the Fair Payments Connector plugin."
-msgstr ""
+msgstr "La reconciliación requiere el complemento Fair Payments Connector."
 
 #: src/API/SettlementController.php:162
 msgid "Missing settlement reference. This does not look like a Mollie settlement export."
-msgstr ""
+msgstr "Falta la referencia de liquidación. Esto no parece una exportación de liquidación de Mollie."
 
 #: src/API/SettlementController.php:170
 msgid "No payment rows found. This does not look like a Mollie settlement export."
-msgstr ""
+msgstr "No se encontraron filas de pago. Esto no parece una exportación de liquidación de Mollie."
 
 #: src/Admin/entries/components/TagChart.js:47
 msgid "Income vs. Expense by Tag"
-msgstr ""
+msgstr "Ingresos frente a gastos por etiqueta"
 
 #: src/Admin/entries/components/TagChart.js:53
 msgid "Tag chart"
-msgstr ""
+msgstr "Gráfico de etiquetas"
 
 #: src/Admin/entries/components/TagChart.js:79
 msgid "cost"
-msgstr ""
+msgstr "gasto"
 
 #: src/Admin/entries/components/TagChart.js:97
 msgid "income"
-msgstr ""
+msgstr "ingreso"
 
 #: src/Admin/entries/components/TagChart.js:131
 msgid "Cost"
-msgstr ""
+msgstr "Coste"
 
 #: src/Admin/entries/components/TagChart.js:147
 msgid "Income"
-msgstr ""
+msgstr "Ingresos"
 
 #: src/Admin/entries/components/TagField.js:23
 #: src/Admin/entries/EntriesApp.js:825
 msgid "Tag"
-msgstr ""
+msgstr "Etiqueta"
 
 #: src/Admin/entries/components/TagField.js:31
 msgid "e.g. venue, catering, travel"
-msgstr ""
+msgstr "p. ej. lugar, catering, viajes"
 
 #: src/Admin/entries/EntriesApp.js:829
 msgid "All Tags"
-msgstr ""
+msgstr "Todas las etiquetas"
+

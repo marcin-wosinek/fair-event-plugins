@@ -15,6 +15,16 @@ export const config = {
 		},
 		{ name: 'fair-platform', textDomain: 'fair-platform' },
 		{ name: 'fair-timetable', textDomain: 'fair-timetable' },
+		{
+			name: 'fair-events-experimental',
+			textDomain: 'fair-events-experimental',
+		},
+		{ name: 'fair-finance', textDomain: 'fair-finance' },
+		{ name: 'fair-form', textDomain: 'fair-form' },
+		{
+			name: 'fair-payments-connector-experimental',
+			textDomain: 'fair-payments-connector-experimental',
+		},
 	],
 
 	// Supported locales
@@ -58,6 +68,8 @@ export const config = {
 			/^Fair Payments Connector$/, // Plugin name
 			/^Fair Platform$/, // Plugin name
 			/^Fair Timetable$/, // Plugin name
+			/^Fair Finance$/, // Plugin name
+			/^Fair Form$/, // Plugin name
 		],
 	},
 

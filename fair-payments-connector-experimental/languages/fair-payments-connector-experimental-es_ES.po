@@ -1,23 +1,22 @@
-# Copyright (C) 2026 Marcin Wosinek
-# This file is distributed under the Private.
 msgid ""
 msgstr ""
 "Project-Id-Version: Fair Payments Connector Experimental 0.2.0\n"
 "Report-Msgid-Bugs-To: https://wordpress.org/support/plugin/fair-payments-connector-experimental\n"
-"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
-"Language-Team: LANGUAGE <LL@li.org>\n"
+"Last-Translator: Marcin Wosinek <marcin.wosinek@gmail.com>\n"
+"Language-Team: Spanish\n"
+"Language: es_ES\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "POT-Creation-Date: 2026-06-25T10:53:24+00:00\n"
-"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"PO-Revision-Date: 2026-06-25 00:00+0000\n"
 "X-Generator: WP-CLI 2.12.0\n"
 "X-Domain: fair-payments-connector-experimental\n"
 
 #. Plugin Name of the plugin
 #: fair-payments-connector-experimental.php
 msgid "Fair Payments Connector Experimental"
-msgstr ""
+msgstr "Conector de pagos Fair Experimental"
 
 #. Plugin URI of the plugin
 #: fair-payments-connector-experimental.php
@@ -27,7 +26,7 @@ msgstr ""
 #. Description of the plugin
 #: fair-payments-connector-experimental.php
 msgid "Experimental features for Fair Payments Connector: API tokens, connected sites, and Telegram notifications."
-msgstr ""
+msgstr "Características experimentales para el conector de pagos Fair: tokens de API, sitios conectados y notificaciones de Telegram."
 
 #. Author of the plugin
 #: fair-payments-connector-experimental.php
@@ -43,581 +42,582 @@ msgstr ""
 #: src/Admin/AdminPages.php:36
 #: src/Admin/api-tokens/ApiTokensApp.js:169
 msgid "API Tokens"
-msgstr ""
+msgstr "Tokens de API"
 
 #: src/Admin/AdminPages.php:45
 #: src/Admin/AdminPages.php:46
 #: src/Admin/connected-sites/ConnectedSitesApp.js:236
 msgid "Connected Sites"
-msgstr ""
+msgstr "Sitios conectados"
 
 #: src/Admin/AdminPages.php:55
 #: src/Admin/AdminPages.php:56
 #: src/Admin/notifications/NotificationsApp.js:24
 msgid "Notifications"
-msgstr ""
+msgstr "Notificaciones"
 
 #: src/API/ApiTokenAuth.php:46
 msgid "This token does not have the required scope."
-msgstr ""
+msgstr "Este token no tiene el alcance requerido."
 
 #: src/API/ApiTokenAuth.php:106
 msgid "Invalid or missing API token."
-msgstr ""
+msgstr "Token de API inválido o faltante."
 
 #: src/API/ApiTokensController.php:127
 msgid "A label is required."
-msgstr ""
+msgstr "Se requiere una etiqueta."
 
 #: src/API/ApiTokensController.php:137
 msgid "At least one valid scope is required."
-msgstr ""
+msgstr "Se requiere al menos un alcance válido."
 
 #: src/API/ApiTokensController.php:147
 #: src/Admin/api-tokens/ApiTokensApp.js:104
 msgid "Failed to create API token."
-msgstr ""
+msgstr "No se pudo crear el token de API."
 
 #: src/API/ApiTokensController.php:174
 msgid "API token not found."
-msgstr ""
+msgstr "Token de API no encontrado."
 
 #: src/API/ConnectedSitesController.php:151
 msgid "Label, base URL and token are all required."
-msgstr ""
+msgstr "Se requieren etiqueta, URL base y token."
 
 #: src/API/ConnectedSitesController.php:245
 #: src/API/ConnectedSitesController.php:326
 msgid "Could not reach the remote site."
-msgstr ""
+msgstr "No se pudo alcanzar el sitio remoto."
 
 #: src/API/ConnectedSitesController.php:257
 msgid "The remote site rejected the token."
-msgstr ""
+msgstr "El sitio remoto rechazó el token."
 
 #: src/API/ConnectedSitesController.php:258
 #: src/API/ConnectedSitesController.php:339
 msgid "The remote site returned an unexpected response."
-msgstr ""
+msgstr "El sitio remoto devolvió una respuesta inesperada."
 
 #: src/API/ConnectedSitesController.php:338
 msgid "The remote site rejected the token, or it lacks the transactions:read scope."
-msgstr ""
+msgstr "El sitio remoto rechazó el token, o carece del alcance transactions:read."
 
 #. translators: 1: created count, 2: updated count, 3: skipped count, 4: connected site label
 #: src/API/ConnectedSitesController.php:394
 #, php-format
 msgid "Imported %1$d new, updated %2$d, skipped %3$d transaction(s) from %4$s."
-msgstr ""
+msgstr "Se importaron %1$d nuevas, se actualizaron %2$d, se omitieron %3$d transacción(es) de %4$s."
 
 #: src/API/ConnectedSitesController.php:413
 msgid "Connected site not found."
-msgstr ""
+msgstr "Sitio conectado no encontrado."
 
 #: src/API/ExternalTransactionsController.php:85
 msgid "Filter by transaction date (created_at) from this date, e.g. 2026-01-01."
-msgstr ""
+msgstr "Filtra por fecha de transacción (created_at) desde esta fecha, p. ej. 2026-01-01."
 
 #: src/API/ExternalTransactionsController.php:92
 msgid "Filter by transaction date (created_at) up to this date, e.g. 2026-12-31."
-msgstr ""
+msgstr "Filtra por fecha de transacción (created_at) hasta esta fecha, p. ej. 2026-12-31."
 
 #: src/API/NotificationsController.php:78
 msgid "Destination is required."
-msgstr ""
+msgstr "El destino es obligatorio."
 
 #: src/API/NotificationsController.php:88
 #: src/Services/TelegramService.php:38
 msgid "Telegram bot token is not configured."
-msgstr ""
+msgstr "El token del bot de Telegram no está configurado."
 
 #: src/API/NotificationsController.php:102
 msgid "Unknown notification channel."
-msgstr ""
+msgstr "Canal de notificación desconocido."
 
 #: src/API/NotificationsController.php:112
 msgid "Test notification failed to send."
-msgstr ""
+msgstr "La notificación de prueba no se pudo enviar."
 
 #: src/API/NotificationsController.php:120
 #: src/Admin/notifications/NotificationsTab.js:89
 msgid "Test notification sent."
-msgstr ""
+msgstr "Notificación de prueba enviada."
 
 #: src/API/TelegramSettingsController.php:100
 msgid "Bot token is required."
-msgstr ""
+msgstr "El token del bot es obligatorio."
 
 #: src/API/TelegramSettingsController.php:109
 msgid "At least one chat ID is required."
-msgstr ""
+msgstr "Se requiere al menos un ID de chat."
 
 #: src/API/TelegramSettingsController.php:142
 msgid "Telegram test message failed for all chat IDs."
-msgstr ""
+msgstr "El mensaje de prueba de Telegram falló para todos los ID de chat."
 
 #: src/API/TelegramSettingsController.php:153
 msgid "Telegram test message sent."
-msgstr ""
+msgstr "Mensaje de prueba de Telegram enviado."
 
 #: src/Hooks/DigestHooks.php:58
 msgid "Every hour (fair-payments digest)"
-msgstr ""
+msgstr "Cada hora (resumen de fair-payments)"
 
 #: src/Hooks/DigestHooks.php:64
 msgid "Every day (fair-payments digest)"
-msgstr ""
+msgstr "Cada día (resumen de fair-payments)"
 
 #: src/Hooks/DigestHooks.php:70
 msgid "Every week (fair-payments digest)"
-msgstr ""
+msgstr "Cada semana (resumen de fair-payments)"
 
 #. translators: %s: site name
 #: src/Services/EmailChannel.php:33
 #, php-format
 msgid "Payment notification — %s"
-msgstr ""
+msgstr "Notificación de pago — %s"
 
 #: src/Services/TelegramService.php:41
 msgid "Telegram chat ID is empty."
-msgstr ""
+msgstr "El ID de chat de Telegram está vacío."
 
 #: src/Settings/Settings.php:43
 msgid "Telegram bot token (from @BotFather)"
-msgstr ""
+msgstr "Token del bot de Telegram (de @BotFather)"
 
 #: src/Settings/Settings.php:60
 msgid "Notification routes configuration"
-msgstr ""
+msgstr "Configuración de rutas de notificación"
 
 #: src/Admin/api-tokens/ApiTokensApp.js:24
 msgid "Read transactions"
-msgstr ""
+msgstr "Leer transacciones"
 
 #: src/Admin/api-tokens/ApiTokensApp.js:28
 msgid "Read locations"
-msgstr ""
+msgstr "Leer ubicaciones"
 
 #: src/Admin/api-tokens/ApiTokensApp.js:60
 msgid "Failed to load API tokens."
-msgstr ""
+msgstr "No se pudieron cargar los tokens de API."
 
 #: src/Admin/api-tokens/ApiTokensApp.js:98
 msgid "API token created."
-msgstr ""
+msgstr "Token de API creado."
 
 #: src/Admin/api-tokens/ApiTokensApp.js:117
 msgid "Revoke this token? Any site using it will immediately lose access."
-msgstr ""
+msgstr "¿Revocar este token? Cualquier sitio que lo use perderá acceso inmediatamente."
 
 #: src/Admin/api-tokens/ApiTokensApp.js:135
 msgid "API token revoked."
-msgstr ""
+msgstr "Token de API revocado."
 
 #: src/Admin/api-tokens/ApiTokensApp.js:141
 msgid "Failed to revoke API token."
-msgstr ""
+msgstr "No se pudo revocar el token de API."
 
 #: src/Admin/api-tokens/ApiTokensApp.js:175
 msgid "Generate Token"
-msgstr ""
+msgstr "Generar token"
 
 #: src/Admin/api-tokens/ApiTokensApp.js:185
 msgid "Issue scoped tokens so other sites can read this site's data over the data sharing API."
-msgstr ""
+msgstr "Emite tokens con alcance limitado para que otros sitios puedan leer los datos de este sitio a través de la API de intercambio de datos."
 
 #: src/Admin/api-tokens/ApiTokensApp.js:215
 msgid "Loading tokens…"
-msgstr ""
+msgstr "Cargando tokens…"
 
 #: src/Admin/api-tokens/ApiTokensApp.js:225
 msgid "No API tokens yet. Generate one to share data with another site."
-msgstr ""
+msgstr "Sin tokens de API aún. Genera uno para compartir datos con otro sitio."
 
 #: src/Admin/api-tokens/ApiTokensApp.js:237
 #: src/Admin/api-tokens/ApiTokensApp.js:413
 #: src/Admin/connected-sites/ConnectedSitesApp.js:304
 #: src/Admin/connected-sites/ConnectedSitesApp.js:457
 msgid "Label"
-msgstr ""
+msgstr "Etiqueta"
 
 #: src/Admin/api-tokens/ApiTokensApp.js:243
 #: src/Admin/api-tokens/ApiTokensApp.js:432
 #: src/Admin/connected-sites/ConnectedSitesApp.js:316
 msgid "Scopes"
-msgstr ""
+msgstr "Alcances"
 
 #: src/Admin/api-tokens/ApiTokensApp.js:249
 msgid "Created"
-msgstr ""
+msgstr "Creado"
 
 #: src/Admin/api-tokens/ApiTokensApp.js:255
 msgid "Last used"
-msgstr ""
+msgstr "Último uso"
 
 #: src/Admin/api-tokens/ApiTokensApp.js:261
 #: src/Admin/connected-sites/ConnectedSitesApp.js:322
 msgid "Status"
-msgstr ""
+msgstr "Estado"
 
 #: src/Admin/api-tokens/ApiTokensApp.js:267
 #: src/Admin/connected-sites/ConnectedSitesApp.js:334
 msgid "Actions"
-msgstr ""
+msgstr "Acciones"
 
 #: src/Admin/api-tokens/ApiTokensApp.js:289
 #: src/Admin/connected-sites/ConnectedSitesApp.js:363
 msgid "Never"
-msgstr ""
+msgstr "Nunca"
 
 #: src/Admin/api-tokens/ApiTokensApp.js:309
 msgid "Active"
-msgstr ""
+msgstr "Activo"
 
 #: src/Admin/api-tokens/ApiTokensApp.js:313
 msgid "Revoked"
-msgstr ""
+msgstr "Revocado"
 
 #: src/Admin/api-tokens/ApiTokensApp.js:332
 msgid "Revoke"
-msgstr ""
+msgstr "Revocar"
 
 #: src/Admin/api-tokens/ApiTokensApp.js:353
 msgid "Token created"
-msgstr ""
+msgstr "Token creado"
 
 #: src/Admin/api-tokens/ApiTokensApp.js:357
 msgid "Generate API Token"
-msgstr ""
+msgstr "Generar token de API"
 
 #: src/Admin/api-tokens/ApiTokensApp.js:368
 msgid "Copy this token now. For security it will not be shown again."
-msgstr ""
+msgstr "Copia este token ahora. Por seguridad no se mostrará de nuevo."
 
 #: src/Admin/api-tokens/ApiTokensApp.js:389
 msgid "Copied!"
-msgstr ""
+msgstr "¡Copiado!"
 
 #: src/Admin/api-tokens/ApiTokensApp.js:393
 msgid "Copy token"
-msgstr ""
+msgstr "Copiar token"
 
 #: src/Admin/api-tokens/ApiTokensApp.js:402
 msgid "Done"
-msgstr ""
+msgstr "Hecho"
 
 #: src/Admin/api-tokens/ApiTokensApp.js:419
 msgid "A name to identify who this token is for, e.g. lamutable.es"
-msgstr ""
+msgstr "Un nombre para identificar para quién es este token, p. ej. lamutable.es"
 
 #: src/Admin/api-tokens/ApiTokensApp.js:461
 #: src/Admin/connected-sites/ConnectedSitesApp.js:510
 msgid "Cancel"
-msgstr ""
+msgstr "Cancelar"
 
 #: src/Admin/api-tokens/ApiTokensApp.js:476
 msgid "Generate"
-msgstr ""
+msgstr "Generar"
 
 #: src/Admin/connected-sites/ConnectedSitesApp.js:22
 msgid "Connected"
-msgstr ""
+msgstr "Conectado"
 
 #: src/Admin/connected-sites/ConnectedSitesApp.js:26
 msgid "Error"
-msgstr ""
+msgstr "Error"
 
 #: src/Admin/connected-sites/ConnectedSitesApp.js:30
 msgid "Unverified"
-msgstr ""
+msgstr "No verificado"
 
 #: src/Admin/connected-sites/ConnectedSitesApp.js:64
 msgid "Failed to load connected sites."
-msgstr ""
+msgstr "No se pudieron cargar los sitios conectados."
 
 #: src/Admin/connected-sites/ConnectedSitesApp.js:114
 msgid "Connected site updated."
-msgstr ""
+msgstr "Sitio conectado actualizado."
 
 #: src/Admin/connected-sites/ConnectedSitesApp.js:126
 msgid "Connected site added."
-msgstr ""
+msgstr "Sitio conectado añadido."
 
 #: src/Admin/connected-sites/ConnectedSitesApp.js:137
 msgid "Failed to save connected site."
-msgstr ""
+msgstr "No se pudo guardar el sitio conectado."
 
 #: src/Admin/connected-sites/ConnectedSitesApp.js:160
 msgid "no scopes"
-msgstr ""
+msgstr "sin permisos"
 
 #: src/Admin/connected-sites/ConnectedSitesApp.js:162
 msgid "Connection succeeded. Granted scopes: "
-msgstr ""
+msgstr "Conexión exitosa. Permisos concedidos: "
 
 #: src/Admin/connected-sites/ConnectedSitesApp.js:171
 msgid "Connection test failed."
-msgstr ""
+msgstr "La prueba de conexión falló."
 
 #: src/Admin/connected-sites/ConnectedSitesApp.js:185
 msgid "Remove this connected site? Stored token will be deleted."
-msgstr ""
+msgstr "¿Eliminar este sitio conectado? Se eliminará el token almacenado."
 
 #: src/Admin/connected-sites/ConnectedSitesApp.js:203
 msgid "Connected site removed."
-msgstr ""
+msgstr "Sitio conectado eliminado."
 
 #: src/Admin/connected-sites/ConnectedSitesApp.js:212
 msgid "Failed to remove connected site."
-msgstr ""
+msgstr "No se pudo eliminar el sitio conectado."
 
 #: src/Admin/connected-sites/ConnectedSitesApp.js:242
 #: src/Admin/connected-sites/ConnectedSitesApp.js:531
 msgid "Add Site"
-msgstr ""
+msgstr "Añadir sitio"
 
 #: src/Admin/connected-sites/ConnectedSitesApp.js:252
 msgid "Register other sites this site pulls data from. Paste a token generated on the other site’s API Tokens page."
-msgstr ""
+msgstr "Registra otros sitios de los que este sitio extrae datos. Pega un token generado en la página de tokens de API del otro sitio."
 
 #: src/Admin/connected-sites/ConnectedSitesApp.js:282
 msgid "Loading sites…"
-msgstr ""
+msgstr "Cargando sitios…"
 
 #: src/Admin/connected-sites/ConnectedSitesApp.js:292
 msgid "No connected sites yet. Add one to pull data from another site."
-msgstr ""
+msgstr "Aún no hay sitios conectados. Añade uno para extraer datos de otro sitio."
 
 #: src/Admin/connected-sites/ConnectedSitesApp.js:310
 #: src/Admin/connected-sites/ConnectedSitesApp.js:470
 msgid "Base URL"
-msgstr ""
+msgstr "URL base"
 
 #: src/Admin/connected-sites/ConnectedSitesApp.js:328
 msgid "Last sync"
-msgstr ""
+msgstr "Última sincronización"
 
 #: src/Admin/connected-sites/ConnectedSitesApp.js:392
 msgid "Test"
-msgstr ""
+msgstr "Probar"
 
 #: src/Admin/connected-sites/ConnectedSitesApp.js:406
 msgid "Edit"
-msgstr ""
+msgstr "Editar"
 
 #: src/Admin/connected-sites/ConnectedSitesApp.js:421
 #: src/Admin/notifications/NotificationsTab.js:228
 msgid "Remove"
-msgstr ""
+msgstr "Eliminar"
 
 #: src/Admin/connected-sites/ConnectedSitesApp.js:442
 msgid "Edit Connected Site"
-msgstr ""
+msgstr "Editar sitio conectado"
 
 #: src/Admin/connected-sites/ConnectedSitesApp.js:446
 msgid "Add Connected Site"
-msgstr ""
+msgstr "Añadir sitio conectado"
 
 #: src/Admin/connected-sites/ConnectedSitesApp.js:463
 msgid "A name to identify this site, e.g. acroyoga-club.es"
-msgstr ""
+msgstr "Un nombre para identificar este sitio, p. ej. acroyoga-club.es"
 
 #: src/Admin/connected-sites/ConnectedSitesApp.js:477
 msgid "The other site’s address, e.g. https://acroyoga-club.es"
-msgstr ""
+msgstr "La dirección del otro sitio, p. ej. https://acroyoga-club.es"
 
 #: src/Admin/connected-sites/ConnectedSitesApp.js:484
 msgid "Token"
-msgstr ""
+msgstr "Token"
 
 #: src/Admin/connected-sites/ConnectedSitesApp.js:493
 msgid "Leave blank to keep the existing token."
-msgstr ""
+msgstr "Déjalo en blanco para mantener el token existente."
 
 #: src/Admin/connected-sites/ConnectedSitesApp.js:497
 msgid "Paste the token from the other site’s API Tokens page."
-msgstr ""
+msgstr "Pega el token de la página de tokens de API del otro sitio."
 
 #: src/Admin/connected-sites/ConnectedSitesApp.js:527
 msgid "Save"
-msgstr ""
+msgstr "Guardar"
 
 #: src/Admin/notifications/NotificationsTab.js:19
 msgid "Telegram"
-msgstr ""
+msgstr "Telegram"
 
 #: src/Admin/notifications/NotificationsTab.js:23
 msgid "Email"
-msgstr ""
+msgstr "Correo electrónico"
 
 #: src/Admin/notifications/NotificationsTab.js:30
 msgid "Immediate"
-msgstr ""
+msgstr "Inmediato"
 
 #: src/Admin/notifications/NotificationsTab.js:34
 msgid "Hourly digest"
-msgstr ""
+msgstr "Resumen por hora"
 
 #: src/Admin/notifications/NotificationsTab.js:38
 msgid "Daily digest"
-msgstr ""
+msgstr "Resumen diario"
 
 #: src/Admin/notifications/NotificationsTab.js:42
 msgid "Weekly digest"
-msgstr ""
+msgstr "Resumen semanal"
 
 #: src/Admin/notifications/NotificationsTab.js:101
 msgid "Test notification failed."
-msgstr ""
+msgstr "La notificación de prueba falló."
 
 #: src/Admin/notifications/NotificationsTab.js:124
 msgid "Enabled"
-msgstr ""
+msgstr "Habilitado"
 
 #: src/Admin/notifications/NotificationsTab.js:139
 msgid "Channel"
-msgstr ""
+msgstr "Canal"
 
 #: src/Admin/notifications/NotificationsTab.js:157
 msgid "Email address"
-msgstr ""
+msgstr "Dirección de correo"
 
 #: src/Admin/notifications/NotificationsTab.js:161
 msgid "Chat ID"
-msgstr ""
+msgstr "ID de chat"
 
 #: src/Admin/notifications/NotificationsTab.js:168
 msgid "Numeric user/chat/channel ID, or @channelname."
-msgstr ""
+msgstr "ID numérico de usuario/chat/canal, o @nombredel canal."
 
 #: src/Admin/notifications/NotificationsTab.js:185
 msgid "Frequency"
-msgstr ""
+msgstr "Frecuencia"
 
 #: src/Admin/notifications/NotificationsTab.js:200
 msgid "Include PII"
-msgstr ""
+msgstr "Incluir PII"
 
 #: src/Admin/notifications/NotificationsTab.js:204
 msgid "Name & email in messages."
-msgstr ""
+msgstr "Nombre y correo en los mensajes."
 
 #: src/Admin/notifications/NotificationsTab.js:236
 msgid "Send test"
-msgstr ""
+msgstr "Enviar prueba"
 
 #: src/Admin/notifications/NotificationsTab.js:287
 msgid "Failed to load notification settings."
-msgstr ""
+msgstr "No se pudieron cargar los ajustes de notificaciones."
 
 #: src/Admin/notifications/NotificationsTab.js:309
 msgid "Notification settings saved."
-msgstr ""
+msgstr "Ajustes de notificaciones guardados."
 
 #: src/Admin/notifications/NotificationsTab.js:324
 msgid "Failed to save notification settings: "
-msgstr ""
+msgstr "No se pudieron guardar los ajustes de notificaciones: "
 
 #: src/Admin/notifications/NotificationsTab.js:350
 msgid "Loading notification settings…"
-msgstr ""
+msgstr "Cargando ajustes de notificaciones…"
 
 #: src/Admin/notifications/NotificationsTab.js:365
 msgid "Telegram Bot Token"
-msgstr ""
+msgstr "Token del bot de Telegram"
 
 #: src/Admin/notifications/NotificationsTab.js:371
 msgid "Required for any Telegram notification routes."
-msgstr ""
+msgstr "Requerido para cualquier ruta de notificación de Telegram."
 
 #: src/Admin/notifications/NotificationsTab.js:379
 #: src/Admin/telegram/TelegramTab.js:194
 msgid "Bot token"
-msgstr ""
+msgstr "Token del bot"
 
 #: src/Admin/notifications/NotificationsTab.js:383
 #: src/Admin/telegram/TelegramTab.js:198
 msgid "From @BotFather. Stored as plain text in wp_options — anyone with admin access can read it."
-msgstr ""
+msgstr "De @BotFather. Se almacena como texto sin formato en wp_options — cualquiera con acceso de administrador puede leerlo."
 
 #: src/Admin/notifications/NotificationsTab.js:396
 msgid "Notification Routes"
-msgstr ""
+msgstr "Rutas de notificación"
 
 #: src/Admin/notifications/NotificationsTab.js:402
 msgid "Each route sends a notification on a transaction paid event. Immediate routes fire at once; digest routes batch transactions into a single periodic message."
-msgstr ""
+msgstr "Cada ruta envía una notificación en un evento de transacción pagada. Las rutas inmediatas se activan al instante; las rutas de resumen agrupan transacciones en un único mensaje periódico."
 
 #: src/Admin/notifications/NotificationsTab.js:420
 msgid "Add route"
-msgstr ""
+msgstr "Añadir ruta"
 
 #: src/Admin/notifications/NotificationsTab.js:428
 #: src/Admin/telegram/TelegramTab.js:265
 msgid "Save settings"
-msgstr ""
+msgstr "Guardar ajustes"
 
 #: src/Admin/telegram/TelegramApp.js:24
 #: src/Admin/telegram/TelegramTab.js:169
 msgid "Telegram Notifications"
-msgstr ""
+msgstr "Notificaciones de Telegram"
 
 #: src/Admin/telegram/TelegramTab.js:61
 msgid "Failed to load Telegram settings."
-msgstr ""
+msgstr "Error al cargar los ajustes de Telegram."
 
 #: src/Admin/telegram/TelegramTab.js:87
 msgid "Telegram settings saved."
-msgstr ""
+msgstr "Ajustes de Telegram guardados."
 
 #: src/Admin/telegram/TelegramTab.js:102
 msgid "Failed to save Telegram settings: "
-msgstr ""
+msgstr "Error al guardar los ajustes de Telegram: "
 
 #: src/Admin/telegram/TelegramTab.js:129
 msgid "Test message sent."
-msgstr ""
+msgstr "Mensaje de prueba enviado."
 
 #: src/Admin/telegram/TelegramTab.js:141
 msgid "Test message failed."
-msgstr ""
+msgstr "Error al enviar el mensaje de prueba."
 
 #: src/Admin/telegram/TelegramTab.js:155
 msgid "Loading Telegram settings…"
-msgstr ""
+msgstr "Cargando ajustes de Telegram…"
 
 #: src/Admin/telegram/TelegramTab.js:175
 msgid "Post a message to a Telegram chat or channel when a transaction is paid."
-msgstr ""
+msgstr "Publica un mensaje en un chat o canal de Telegram cuando se pague una transacción."
 
 #: src/Admin/telegram/TelegramTab.js:183
 msgid "Enable Telegram notifications"
-msgstr ""
+msgstr "Activar notificaciones de Telegram"
 
 #: src/Admin/telegram/TelegramTab.js:211
 msgid "Chat IDs"
-msgstr ""
+msgstr "IDs de chat"
 
 #: src/Admin/telegram/TelegramTab.js:215
 msgid "Comma-separated. Use a numeric user/chat/channel ID, or @channelname for public channels."
-msgstr ""
+msgstr "Separados por comas. Usa un ID numérico de usuario/chat/canal, o @nombredel canal para canales públicos."
 
 #: src/Admin/telegram/TelegramTab.js:225
 msgid "Message template"
-msgstr ""
+msgstr "Plantilla de mensaje"
 
 #: src/Admin/telegram/TelegramTab.js:229
 msgid "Placeholders: {test_label}, {site_domain}, {date}, {amount}, {currency}, {transaction_id}, {event_title}, {event_url}, {participant_name}, {participant_url}, {participant_email}, {ticket_label}, {activities}, {discounts}. HTML tags <b>, <i>, <a href> are allowed."
-msgstr ""
+msgstr "Marcadores de posición: {test_label}, {site_domain}, {date}, {amount}, {currency}, {transaction_id}, {event_title}, {event_url}, {participant_name}, {participant_url}, {participant_email}, {ticket_label}, {activities}, {discounts}. Se permiten etiquetas HTML <b>, <i>, <a href>."
 
 #: src/Admin/telegram/TelegramTab.js:240
 msgid "Include participant name and email"
-msgstr ""
+msgstr "Incluir nombre y correo del participante"
 
 #: src/Admin/telegram/TelegramTab.js:244
 msgid "Disable to keep PII out of the Telegram channel. {participant_email} renders as empty and {participant_name} is abbreviated (e.g. \"Lucianna C.\")."
-msgstr ""
+msgstr "Desactívalo para mantener los datos personales fuera del canal de Telegram. {participant_email} se muestra vacío y {participant_name} se abrevia (p. ej. «Lucianna C.\")."
 
 #: src/Admin/telegram/TelegramTab.js:276
 msgid "Send test message"
-msgstr ""
+msgstr "Enviar mensaje de prueba"
+
