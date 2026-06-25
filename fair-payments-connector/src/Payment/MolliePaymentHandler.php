@@ -265,8 +265,9 @@ class MolliePaymentHandler {
 			}
 
 			// Set test mode based on settings (required for OAuth).
-			$mode                     = get_option( 'fair_payment_mode', 'test' );
-			$payment_data['testmode'] = ( 'live' === $mode ) ? false : true;
+			// SDK v3: testmode must go in the query/third arg, not the payload.
+			$mode     = get_option( 'fair_payment_mode', 'test' );
+			$testmode = ( 'live' !== $mode );
 
 			// Build a method allowlist when callers want to suppress specific methods.
 			// Mollie has no "exclude" parameter; the supported way is to pass `method`
@@ -277,7 +278,7 @@ class MolliePaymentHandler {
 					$payment_data['amount'],
 					$args['disable_methods'],
 					$profile_id,
-					$payment_data['testmode']
+					$testmode
 				);
 				if ( ! empty( $allowed ) ) {
 					$payment_data['method'] = array_values( $allowed );
@@ -293,18 +294,18 @@ class MolliePaymentHandler {
 						'Calling Mollie API to create payment (%s %s, testmode=%s)',
 						number_format( (float) $args['amount'], 2 ),
 						$args['currency'],
-						$payment_data['testmode'] ? 'true' : 'false'
+						$testmode ? 'true' : 'false'
 					),
 					'context'        => array(
 						'amount'      => $payment_data['amount'],
 						'description' => $args['description'],
-						'testmode'    => $payment_data['testmode'],
+						'testmode'    => $testmode,
 						'has_profile' => (bool) $profile_id,
 					),
 				)
 			);
 
-			$payment = $this->mollie->payments->create( $payment_data );
+			$payment = $this->mollie->payments->create( $payment_data, array(), $testmode );
 
 			$logger->log(
 				'mollie_call_succeeded',
