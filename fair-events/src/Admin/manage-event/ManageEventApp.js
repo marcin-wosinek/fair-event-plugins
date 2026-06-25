@@ -1199,7 +1199,27 @@ export default function ManageEventApp() {
 			</style>
 			<h1>
 				{__('Manage Event', 'fair-events')}
-				{title && `: ${title}`}
+				{title && (
+					<>
+						{': '}
+						{eventDate.display_url ? (
+							<a
+								href={eventDate.display_url}
+								target="_blank"
+								rel="noreferrer"
+								style={{
+									color: 'inherit',
+									textDecoration: 'none',
+									borderBottom: '1px dotted currentColor',
+								}}
+							>
+								{title}
+							</a>
+						) : (
+							title
+						)}
+					</>
+				)}
 			</h1>
 
 			{error && (
