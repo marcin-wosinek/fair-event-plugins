@@ -496,6 +496,11 @@ export default function EventAudience({
 	};
 
 	const handleToggleAttended = (participant, attended) => {
+		// Series-pass rows live on the master event-date; there is no
+		// per-occurrence row here to record attendance against.
+		if (participant.is_series_pass) {
+			return;
+		}
 		setParticipants((current) =>
 			current.map((p) =>
 				p.id === participant.id
@@ -535,6 +540,11 @@ export default function EventAudience({
 	};
 
 	const handleDeleteParticipant = (participant) => {
+		// A series pass is held on the master event-date; deleting it from one
+		// occurrence is not supported (and the row isn't on this occurrence).
+		if (participant.is_series_pass) {
+			return;
+		}
 		const baseName =
 			participant.participant_name ||
 			__('this participant', 'fair-events');
@@ -570,6 +580,10 @@ export default function EventAudience({
 	};
 
 	const handleOpenEditOptions = (participant) => {
+		// Edits apply to the master row; editing from an occurrence is disabled.
+		if (participant.is_series_pass) {
+			return;
+		}
 		setEditingParticipant(participant);
 		const initialIds = Array.isArray(participant.ticket_option_ids)
 			? participant.ticket_option_ids
@@ -1353,6 +1367,31 @@ export default function EventAudience({
 																	p.participant_name ||
 																	'—'
 																)}
+																{p.is_series_pass && (
+																	<span
+																		title={__(
+																			'Holds a whole-series pass. Attendance and edits are managed on the series’ master date.',
+																			'fair-events'
+																		)}
+																		style={{
+																			marginLeft: 6,
+																			padding:
+																				'1px 6px',
+																			fontSize: 11,
+																			borderRadius: 3,
+																			background:
+																				'#e0e7ff',
+																			color: '#3730a3',
+																			whiteSpace:
+																				'nowrap',
+																		}}
+																	>
+																		{__(
+																			'Series pass',
+																			'fair-events'
+																		)}
+																	</span>
+																)}
 															</td>
 															<td>
 																{LABEL_DISPLAY[
@@ -1405,6 +1444,17 @@ export default function EventAudience({
 																	checked={
 																		!!p.attended_at
 																	}
+																	disabled={
+																		p.is_series_pass
+																	}
+																	title={
+																		p.is_series_pass
+																			? __(
+																					'Attendance for series-pass holders is managed on the series’ master date.',
+																					'fair-events'
+																			  )
+																			: undefined
+																	}
 																	onChange={(
 																		e
 																	) =>
@@ -1418,41 +1468,58 @@ export default function EventAudience({
 																/>
 															</td>
 															<td>
-																<HStack
-																	spacing={2}
-																	justify="flex-start"
-																>
-																	{ticketOptions.length >
-																		0 && (
+																{p.is_series_pass ? (
+																	<span
+																		style={{
+																			color: '#666',
+																			fontStyle:
+																				'italic',
+																		}}
+																	>
+																		{__(
+																			'Managed on series date',
+																			'fair-events'
+																		)}
+																	</span>
+																) : (
+																	<HStack
+																		spacing={
+																			2
+																		}
+																		justify="flex-start"
+																	>
+																		{ticketOptions.length >
+																			0 && (
+																			<Button
+																				variant="link"
+																				onClick={() =>
+																					handleOpenEditOptions(
+																						p
+																					)
+																				}
+																			>
+																				{__(
+																					'Edit',
+																					'fair-events'
+																				)}
+																			</Button>
+																		)}
 																		<Button
 																			variant="link"
+																			isDestructive
 																			onClick={() =>
-																				handleOpenEditOptions(
+																				handleDeleteParticipant(
 																					p
 																				)
 																			}
 																		>
 																			{__(
-																				'Edit',
+																				'Delete',
 																				'fair-events'
 																			)}
 																		</Button>
-																	)}
-																	<Button
-																		variant="link"
-																		isDestructive
-																		onClick={() =>
-																			handleDeleteParticipant(
-																				p
-																			)
-																		}
-																	>
-																		{__(
-																			'Delete',
-																			'fair-events'
-																		)}
-																	</Button>
-																</HStack>
+																	</HStack>
+																)}
 															</td>
 														</tr>
 													)

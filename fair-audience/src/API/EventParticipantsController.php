@@ -358,6 +358,10 @@ class EventParticipantsController extends WP_REST_Controller {
 
 		$event_participants = $this->event_participant_repo->get_by_event_date( $event_date_id );
 
+		// Whole-series pass holders are stored once on the master event-date, so a
+		// plain occurrence lookup misses them. Surface them on each covered occurrence.
+		$event_participants = $this->append_series_pass_participants( $event_participants, $event_date );
+
 		// Build ticket type name lookup.
 		$ticket_type_names = array();
 		$ticket_type_ids   = array_filter( array_unique( array_map( fn( $ep ) => $ep->ticket_type_id, $event_participants ) ) );
@@ -423,12 +427,15 @@ class EventParticipantsController extends WP_REST_Controller {
 		$participant_questionnaire = $this->get_signup_answers_by_participant( $event_date_id );
 
 		$items = array_map(
-			function ( $ep ) use ( $likes_data, $ticket_type_names, $participant_option_names, $participant_option_ids, $participant_questionnaire ) {
+			function ( $ep ) use ( $likes_data, $ticket_type_names, $participant_option_names, $participant_option_ids, $participant_questionnaire, $event_date_id ) {
 				$participant = $this->participant_repo->get_by_id( $ep->participant_id );
 				return array(
 					'id'                    => $ep->id,
 					'participant_id'        => $ep->participant_id,
 					'event_date_id'         => $ep->event_date_id,
+					// A row whose event_date_id differs from the requested occurrence
+					// is a whole-series pass surfaced from the master event-date.
+					'is_series_pass'        => (int) $ep->event_date_id !== (int) $event_date_id,
 					'participant_name'      => $participant ? $participant->name . ' ' . $participant->surname : '',
 					'name'                  => $participant ? $participant->name : '',
 					'surname'               => $participant ? $participant->surname : '',
@@ -456,6 +463,68 @@ class EventParticipantsController extends WP_REST_Controller {
 		);
 
 		return rest_ensure_response( $items );
+	}
+
+	/**
+	 * Append whole-series pass holders to a generated occurrence's list.
+	 *
+	 * Whole-series signups are stored once against the master event-date (see the
+	 * retarget logic in EventSignupController), so a generated occurrence never
+	 * sees them through a plain event_date_id lookup. This rebuilds that coverage
+	 * for the admin list, applying the same mid-series rule used elsewhere: a pass
+	 * covers occurrences starting on or after the pass's created_at.
+	 *
+	 * @param \FairAudience\Models\EventParticipant[] $occurrence_rows Rows already found on the occurrence.
+	 * @param \FairEvents\Models\EventDates           $event_date      The requested event date.
+	 * @return \FairAudience\Models\EventParticipant[] Occurrence rows plus any covering series-pass rows.
+	 */
+	private function append_series_pass_participants( $occurrence_rows, $event_date ) {
+		// Only generated occurrences need this: the master already lists its own
+		// series-pass rows, and standalone dates have no series.
+		if ( 'generated' !== $event_date->occurrence_type || ! $event_date->master_id ) {
+			return $occurrence_rows;
+		}
+		if ( ! class_exists( \FairEvents\Models\TicketType::class ) ) {
+			return $occurrence_rows;
+		}
+
+		$master_id     = (int) $event_date->master_id;
+		$occurrence_ts = $event_date->start_datetime ? strtotime( $event_date->start_datetime ) : null;
+
+		$already_listed = array();
+		foreach ( $occurrence_rows as $row ) {
+			$already_listed[ (int) $row->participant_id ] = true;
+		}
+
+		$is_series_scope = array();
+		foreach ( $this->event_participant_repo->get_by_event_date( $master_id ) as $master_row ) {
+			if ( 'signed_up' !== $master_row->label || ! $master_row->ticket_type_id ) {
+				continue;
+			}
+			if ( isset( $already_listed[ (int) $master_row->participant_id ] ) ) {
+				continue;
+			}
+
+			$tt_id = (int) $master_row->ticket_type_id;
+			if ( ! isset( $is_series_scope[ $tt_id ] ) ) {
+				$tt                        = \FairEvents\Models\TicketType::get_by_id( $tt_id );
+				$is_series_scope[ $tt_id ] = $tt && $tt->is_whole_series();
+			}
+			if ( ! $is_series_scope[ $tt_id ] ) {
+				continue;
+			}
+
+			// Mid-series purchase: a pass only covers occurrences on or after its date.
+			if ( $occurrence_ts && $master_row->created_at
+				&& $occurrence_ts < strtotime( $master_row->created_at ) ) {
+				continue;
+			}
+
+			$already_listed[ (int) $master_row->participant_id ] = true;
+			$occurrence_rows[]                                   = $master_row;
+		}
+
+		return $occurrence_rows;
 	}
 
 	/**
