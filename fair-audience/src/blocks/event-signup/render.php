@@ -640,6 +640,29 @@ if ( null !== $signup_price ) {
 	}
 }
 
+// Detect when payment is configured but the connector is not ready.
+// Covers both: plugin missing (class_exists false) and plugin active but
+// unconfigured (no Mollie API key / OAuth). When true, signup buttons are
+// disabled and a notice replaces the "Sign up for free" label so a paid
+// event is never presented as free to the visitor.
+$payment_unavailable = false;
+if ( null !== $signup_price ) {
+	$connector_ready = class_exists( \FairPaymentsConnector\API\TransactionAPI::class )
+		&& \FairPaymentsConnector\API\TransactionAPI::is_configured();
+	if ( ! $connector_ready ) {
+		if ( $signup_price > 0 ) {
+			// Resolved price is positive — connector required.
+			$payment_unavailable = true;
+		} elseif ( class_exists( \FairEventsExperimental\Services\EventSignupPricing::class ) ) {
+			// Resolved price is zero but event may carry a paid base price
+			// (e.g. 100%-discounted or pricing-service glitch).
+			$payment_unavailable = \FairEventsExperimental\Services\EventSignupPricing::has_paid_price_configured(
+				(int) $pricing_event_date_id
+			);
+		}
+	}
+}
+
 // Build a group discount note to render near the signup button.
 $discount_note_html = '';
 if ( $best_discount_rule ) {
@@ -1139,8 +1162,13 @@ if ( ! $is_valid_post_type ) :
 				<?php if ( '' !== $discount_note_html ) : ?>
 					<?php echo wp_kses_post( $discount_note_html ); ?>
 				<?php endif; ?>
+				<?php if ( $payment_unavailable ) : ?>
+					<p class="fair-audience-payment-unavailable-notice">
+						<?php echo esc_html__( 'Online payment is not available for this event at the moment. Please contact the organiser.', 'fair-audience' ); ?>
+					</p>
+				<?php endif; ?>
 				<div class="wp-block-button">
-					<button type="button" class="wp-block-button__link wp-element-button fair-audience-signup-button" data-action="signup">
+					<button type="button" class="wp-block-button__link wp-element-button fair-audience-signup-button" data-action="signup"<?php echo $payment_unavailable ? ' disabled' : ''; ?>>
 						<?php echo esc_html( $signup_button_text ); ?>
 					</button>
 				</div>
@@ -1256,8 +1284,14 @@ if ( ! $is_valid_post_type ) :
 				</button>
 				<?php endif; ?>
 
+				<?php if ( $payment_unavailable ) : ?>
+					<p class="fair-audience-payment-unavailable-notice">
+						<?php echo esc_html__( 'Online payment is not available for this event at the moment. Please contact the organiser.', 'fair-audience' ); ?>
+					</p>
+				<?php endif; ?>
+
 				<div class="wp-block-button">
-					<button type="submit" class="wp-block-button__link wp-element-button fair-audience-signup-submit-button">
+					<button type="submit" class="wp-block-button__link wp-element-button fair-audience-signup-submit-button"<?php echo $payment_unavailable ? ' disabled' : ''; ?>>
 						<?php echo esc_html( $register_button_text ); ?>
 					</button>
 				</div>

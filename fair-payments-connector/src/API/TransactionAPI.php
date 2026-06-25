@@ -267,6 +267,18 @@ class TransactionAPI {
 	}
 
 	/**
+	 * Check whether the payment connector is ready to process payments.
+	 *
+	 * Returns true when either OAuth is connected or a Mollie API key is configured.
+	 * Use this before attempting to route a signup through paid flow.
+	 *
+	 * @return bool
+	 */
+	public static function is_configured(): bool {
+		return MolliePaymentHandler::is_configured();
+	}
+
+	/**
 	 * Get transaction by ID with line items
 	 *
 	 * @param int $transaction_id Transaction ID.

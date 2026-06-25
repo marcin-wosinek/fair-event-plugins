@@ -144,6 +144,55 @@ class EventSignupPricing {
 	}
 
 	/**
+	 * Check whether a positive price is configured for an event date or ticket type,
+	 * ignoring discount rules and sale-period timing.
+	 *
+	 * Used to determine if payment is *intended* even when the resolved price
+	 * comes back as zero (e.g. because a discount rule brings it to zero or the
+	 * pricing service was unavailable during resolution).
+	 *
+	 * Returns false when:
+	 * - No TicketPrice / signup_price row exists.
+	 * - The configured base price is 0 (genuinely free event).
+	 * - The event date doesn't exist.
+	 *
+	 * @param int      $event_date_id  Event date ID.
+	 * @param int|null $ticket_type_id Ticket type ID, or null for event-date pricing.
+	 * @return bool True when a price > 0 is configured.
+	 */
+	public static function has_paid_price_configured( int $event_date_id, ?int $ticket_type_id = null ): bool {
+		if ( $ticket_type_id ) {
+			$ticket_type = TicketType::get_by_id( $ticket_type_id );
+			if ( ! $ticket_type ) {
+				return false;
+			}
+			$active_period = self::resolve_active_sale_period( (int) $ticket_type->event_date_id );
+			if ( ! $active_period ) {
+				return false;
+			}
+			$price_row = TicketPrice::get_by_type_and_period( $ticket_type_id, $active_period->id );
+			return $price_row && (float) $price_row->price > 0;
+		}
+
+		$event_date = EventDates::get_by_id( $event_date_id );
+		if ( ! $event_date ) {
+			return false;
+		}
+
+		// Generated occurrences inherit signup_price from master.
+		if ( null === $event_date->signup_price
+			&& 'generated' === $event_date->occurrence_type
+			&& $event_date->master_id ) {
+			$master = EventDates::get_by_id( $event_date->master_id );
+			if ( $master ) {
+				$event_date = $master;
+			}
+		}
+
+		return null !== $event_date->signup_price && (float) $event_date->signup_price > 0;
+	}
+
+	/**
 	 * Resolve the currently active sale period for an event date.
 	 *
 	 * Periods use a half-open day range [sale_start, sale_end) in the site
