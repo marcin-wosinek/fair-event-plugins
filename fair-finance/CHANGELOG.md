@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.0.3
+
+### Patch Changes
+
+-   c60efeb: Fix the Budget Movements link in the Budgets admin page — it was pointing to the wrong route and now correctly navigates to the fair-finance-entries view for the selected budget.
+
 ## 1.0.2
 
 ### Patch Changes

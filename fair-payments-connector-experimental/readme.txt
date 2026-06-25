@@ -4,7 +4,7 @@ Tags: payments, mollie, telegram
 Requires at least: 6.7
 Tested up to: 7.0
 Requires PHP: 8.0
-Stable tag: 0.2.0
+Stable tag: 0.3.0
 License: Private
 License URI: https://fair-event-plugins.com
 
@@ -23,6 +23,14 @@ This plugin houses features that are under active development and not yet ready 
 == Changelog ==
 
 ## 0.1.0
+
+## 0.3.0
+
+### Minor Changes
+
+-   c60efeb: Replace the Telegram-only single-route notification system with a flexible multi-channel setup. Operators configure independent routes, each with a channel (email or Telegram), destination, frequency (immediate / hourly / daily / weekly), and PII inclusion toggle.
+
+    Key additions: `NotificationChannel` interface with `TelegramChannel` and `EmailChannel` implementations; a `fair_payment_notification_queue` table with `DigestHooks` cron flush; a `DigestBuilder` that prepends count and per-currency totals to batched bodies; a new `POST /fair-payments-connector/v1/notifications/test` REST endpoint; and a React route-list admin UI. Existing Telegram config is migrated automatically to an immediate route.
 
 ## 0.2.0
 

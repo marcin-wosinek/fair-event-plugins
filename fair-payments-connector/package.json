@@ -1,6 +1,6 @@
 {
 	"name": "fair-payments-connector",
-	"version": "1.3.0",
+	"version": "1.4.0",
 	"description": "Simple payment block for WordPress",
 	"main": "build/index.js",
 	"scripts": {

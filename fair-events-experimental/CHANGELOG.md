@@ -1,5 +1,11 @@
 # fair-events-experimental
 
+## 1.2.0
+
+### Minor Changes
+
+-   efb62fa: Move TicketSalePeriod, TicketType, and TicketPrice models from fair-events-experimental into fair-events (namespace FairEvents\Models), and refactor sale periods to half-open day ranges [sale_start, sale_end) in the site timezone with two seeded defaults (before / during the event).
+
 ## 1.1.0
 
 ### Minor Changes

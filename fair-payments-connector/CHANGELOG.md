@@ -1,5 +1,19 @@
 # fair-payments-connector
 
+## 1.4.0
+
+### Minor Changes
+
+-   c60efeb: Cap the 1 % application fee at the operator's monthly allowance: once the cap is reached, the fee drops to zero for the remainder of the month.
+
+    Fix testmode payments: Mollie PHP SDK v3 reads `testmode` from the third argument of `payments->create()`, not from the payload body. Placing it in the payload was silently ignored, causing every payment to be created live regardless of the `fair_payment_mode` setting.
+
+### Patch Changes
+
+-   c60efeb: Block paid-event signup when the payment connector is not configured. Previously `maybe_start_paid_signup()` and `maybe_start_addon_payment()` fell through to the free path whenever the resolved total reached zero — which happened when the EventSignupPricing service was unavailable or unconfigured, silently granting free access to paid events.
+
+    Adds `TransactionAPI::is_configured()` (delegating to `MolliePaymentHandler::is_configured()`) and `EventSignupPricing::has_paid_price_configured()` so both conditions are checked before allowing a zero-total signup to proceed.
+
 ## 1.3.0
 
 ### Minor Changes

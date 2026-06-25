@@ -1,6 +1,6 @@
 {
 	"name": "fair-finance",
-	"version": "1.0.2",
+	"version": "1.0.3",
 	"description": "Budgeting, financial entries, and reconciliation for Fair Event Plugins",
 	"license": "GPL-2.0-or-later",
 	"author": "Marcin Wosinek",
