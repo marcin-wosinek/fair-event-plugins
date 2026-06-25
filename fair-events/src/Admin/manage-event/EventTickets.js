@@ -981,8 +981,13 @@ export default function EventTickets({
 															'(unnamed)',
 															'fair-events'
 													  )
+													: pIndex === 0
+													? __(
+															'Advance ticket',
+															'fair-events'
+													  )
 													: __(
-															'Price',
+															'Day of event',
 															'fair-events'
 													  )}
 											</th>
@@ -1522,8 +1527,14 @@ export default function EventTickets({
 																				'(unnamed)',
 																				'fair-events'
 																		  )
+																		: pIndex ===
+																		  0
+																		? __(
+																				'Advance ticket',
+																				'fair-events'
+																		  )
 																		: __(
-																				'Price',
+																				'Day of event',
 																				'fair-events'
 																		  )}
 																</th>
