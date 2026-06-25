@@ -842,14 +842,34 @@ class EventSignupController extends WP_REST_Controller {
 			}
 		}
 
+		// Any option with a raw price > 0 means payment is configured for that option.
+		$any_option_paid = array_reduce(
+			$new_options,
+			static fn( $carry, $opt ) => $carry || (float) $opt->price > 0,
+			false
+		);
+
 		if ( $total_amount <= 0 ) {
+			// Guard: if any option carries a paid price the connector must be ready,
+			// even when a discount reduced the resolved total to zero.
+			if ( $any_option_paid ) {
+				if ( ! class_exists( \FairPaymentsConnector\API\TransactionAPI::class )
+					|| ! \FairPaymentsConnector\API\TransactionAPI::is_configured() ) {
+					return new WP_Error(
+						'payment_unavailable',
+						__( 'Paid activities are not available because the payment plugin is not configured.', 'fair-audience' ),
+						array( 'status' => 503 )
+					);
+				}
+			}
 			return null;
 		}
 
-		if ( ! class_exists( \FairPaymentsConnector\API\TransactionAPI::class ) ) {
+		if ( ! class_exists( \FairPaymentsConnector\API\TransactionAPI::class )
+			|| ! \FairPaymentsConnector\API\TransactionAPI::is_configured() ) {
 			return new WP_Error(
 				'payment_unavailable',
-				__( 'Paid activities are not available because the payment plugin is missing.', 'fair-audience' ),
+				__( 'Paid activities are not available because the payment plugin is not configured.', 'fair-audience' ),
 				array( 'status' => 503 )
 			);
 		}
@@ -1495,14 +1515,35 @@ class EventSignupController extends WP_REST_Controller {
 		}
 		$total_amount = (float) ( $final_price ?? 0 ) + $options_total;
 
+		// Determine whether a price is configured for this event regardless of
+		// how the resolution turned out (discount-to-zero, service unavailable, etc.).
+		$has_paid_price_configured = $event_date_id
+			&& class_exists( \FairEventsExperimental\Services\EventSignupPricing::class )
+			&& \FairEventsExperimental\Services\EventSignupPricing::has_paid_price_configured(
+				(int) $event_date_id,
+				$ticket_type_id
+			);
+
 		if ( $total_amount <= 0 ) {
+			// A paid event must never slip through as free when the connector isn't ready.
+			if ( $has_paid_price_configured ) {
+				if ( ! class_exists( \FairPaymentsConnector\API\TransactionAPI::class )
+					|| ! \FairPaymentsConnector\API\TransactionAPI::is_configured() ) {
+					return new WP_Error(
+						'payment_unavailable',
+						__( 'Paid signup is not available because the payment plugin is not configured.', 'fair-audience' ),
+						array( 'status' => 503 )
+					);
+				}
+			}
 			return null;
 		}
 
-		if ( ! class_exists( \FairPaymentsConnector\API\TransactionAPI::class ) ) {
+		if ( ! class_exists( \FairPaymentsConnector\API\TransactionAPI::class )
+			|| ! \FairPaymentsConnector\API\TransactionAPI::is_configured() ) {
 			return new WP_Error(
 				'payment_unavailable',
-				__( 'Paid signup is not available because the payment plugin is missing.', 'fair-audience' ),
+				__( 'Paid signup is not available because the payment plugin is not configured.', 'fair-audience' ),
 				array( 'status' => 503 )
 			);
 		}
