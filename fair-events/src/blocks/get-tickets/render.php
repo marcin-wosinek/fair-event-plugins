@@ -93,8 +93,6 @@ if ( class_exists( \FairEvents\Models\TicketSalePeriod::class ) && class_exists(
 	}
 }
 
-// Soft capacity display.
-$capacity        = $event_date ? $event_date->capacity : null;
 $currency_symbol = 'EUR' === get_option( 'fair_payment_currency', 'EUR' ) ? '€' : get_option( 'fair_payment_currency', 'EUR' );
 $powered_by      = (bool) get_option( 'fair_events_powered_by_branding', false );
 
@@ -118,18 +116,6 @@ $form_id = 'fair-events-get-tickets-' . wp_unique_id();
 <?php endif; ?>
 
 <?php if ( 'confirmed' !== $callback_status ) : ?>
-	<?php if ( null !== $capacity ) : ?>
-		<p class="fair-events-capacity-info">
-			<?php
-			printf(
-				/* translators: %d: number of remaining spots */
-				esc_html__( 'Capacity: %d spots', 'fair-events' ),
-				(int) $capacity
-			);
-			?>
-		</p>
-	<?php endif; ?>
-
 	<form
 		id="<?php echo esc_attr( $form_id ); ?>"
 		class="fair-events-get-tickets-form"
