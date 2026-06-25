@@ -64,6 +64,7 @@ export default function EventTickets({
 	const [pricingRules, setPricingRules] = useState([]);
 	const [groups, setGroups] = useState([]);
 	const [participants, setParticipants] = useState([]);
+	const [hasFairAudience, setHasFairAudience] = useState(false);
 	const fileInputRef = useRef(null);
 
 	const manageInvitationsUrl =
@@ -179,7 +180,10 @@ export default function EventTickets({
 
 	useEffect(() => {
 		apiFetch({ path: '/fair-audience/v1/groups' })
-			.then((data) => setGroups(data || []))
+			.then((data) => {
+				setGroups(data || []);
+				setHasFairAudience(true);
+			})
 			.catch(() => setGroups([]));
 	}, []);
 
@@ -902,12 +906,20 @@ export default function EventTickets({
 										'Free signup. Enter a price below to charge for this event, or switch to advanced ticketing for multiple ticket types.',
 										'fair-events'
 								  )
-								: sprintf(
+								: hasFairAudience
+								? sprintf(
 										/* translators: %s: formatted price */
 										__(
 											'Signup price: %s. Group discounts configured in the Groups tab still apply.',
 											'fair-events'
 										),
+										formatCurrency(
+											parseFloat(signupPrice) || 0
+										)
+								  )
+								: sprintf(
+										/* translators: %s: formatted price */
+										__('Signup price: %s.', 'fair-events'),
 										formatCurrency(
 											parseFloat(signupPrice) || 0
 										)
@@ -1371,10 +1383,17 @@ export default function EventTickets({
 											),
 											siteCurrency
 										)}
-										help={__(
-											'Leave empty for free signup. Group discounts (Groups tab) apply to this base price.',
-											'fair-events'
-										)}
+										help={
+											hasFairAudience
+												? __(
+														'Leave empty for free signup. Group discounts (Groups tab) apply to this base price.',
+														'fair-events'
+												  )
+												: __(
+														'Leave empty for free signup.',
+														'fair-events'
+												  )
+										}
 										type="number"
 										min="0"
 										step="0.01"
