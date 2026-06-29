@@ -14,8 +14,10 @@ import {
 	Button,
 	CheckboxControl,
 	FormTokenField,
+	Modal,
 	Panel,
 	PanelBody,
+	RadioControl,
 	SelectControl,
 	Spinner,
 	Notice,
@@ -63,6 +65,8 @@ export default function EventTickets({
 	const [success, setSuccess] = useState(null);
 	const [pricingRules, setPricingRules] = useState([]);
 	const [groups, setGroups] = useState([]);
+	const [showScopeModal, setShowScopeModal] = useState(false);
+	const [pendingScope, setPendingScope] = useState('single_instance');
 	const [participants, setParticipants] = useState([]);
 	const [hasFairAudience, setHasFairAudience] = useState(false);
 	const fileInputRef = useRef(null);
@@ -514,7 +518,7 @@ export default function EventTickets({
 		}
 	};
 
-	const addTicketType = () => {
+	const addTicketType = (scope = 'single_instance') => {
 		setTicketTypes([
 			...ticketTypes,
 			{
@@ -524,11 +528,20 @@ export default function EventTickets({
 				invitation_only: false,
 				minimum_activities: 0,
 				disable_at: null,
-				recurrence_scope: 'single_instance',
+				recurrence_scope: scope,
 				group_ids: [],
 				sort_order: ticketTypes.length,
 			},
 		]);
+	};
+
+	const openAddTicketModal = () => {
+		if (isRecurring) {
+			setPendingScope('single_instance');
+			setShowScopeModal(true);
+		} else {
+			addTicketType();
+		}
 	};
 
 	const removeTicketType = (index) => {
@@ -1798,38 +1811,53 @@ export default function EventTickets({
 															)}
 															{isRecurring && (
 																<td>
-																	<SelectControl
-																		value={
-																			type.recurrence_scope ||
-																			'single_instance'
-																		}
-																		options={[
-																			{
-																				value: 'single_instance',
-																				label: __(
-																					'This instance',
-																					'fair-events'
-																				),
-																			},
-																			{
-																				value: 'whole_series',
-																				label: __(
-																					'Whole series',
-																					'fair-events'
-																				),
-																			},
-																		]}
-																		onChange={(
-																			v
-																		) =>
-																			updateTicketType(
-																				tIndex,
-																				'recurrence_scope',
+																	{type.has_sales ? (
+																		<span>
+																			{type.recurrence_scope ===
+																			'whole_series'
+																				? __(
+																						'Whole series',
+																						'fair-events'
+																				  )
+																				: __(
+																						'This instance',
+																						'fair-events'
+																				  )}
+																		</span>
+																	) : (
+																		<SelectControl
+																			value={
+																				type.recurrence_scope ||
+																				'single_instance'
+																			}
+																			options={[
+																				{
+																					value: 'single_instance',
+																					label: __(
+																						'This instance',
+																						'fair-events'
+																					),
+																				},
+																				{
+																					value: 'whole_series',
+																					label: __(
+																						'Whole series',
+																						'fair-events'
+																					),
+																				},
+																			]}
+																			onChange={(
 																				v
-																			)
-																		}
-																		__nextHasNoMarginBottom
-																	/>
+																			) =>
+																				updateTicketType(
+																					tIndex,
+																					'recurrence_scope',
+																					v
+																				)
+																			}
+																			__nextHasNoMarginBottom
+																		/>
+																	)}
 																</td>
 															)}
 															{salePeriods.map(
@@ -2007,7 +2035,7 @@ export default function EventTickets({
 															variant="secondary"
 															size="small"
 															onClick={
-																addTicketType
+																openAddTicketModal
 															}
 														>
 															{__(
@@ -2652,6 +2680,42 @@ export default function EventTickets({
 					</PanelBody>
 				</Panel>
 			</Card>
+			{showScopeModal && (
+				<Modal
+					title={__('Choose ticket scope', 'fair-events')}
+					onRequestClose={() => setShowScopeModal(false)}
+				>
+					<RadioControl
+						selected={pendingScope}
+						options={[
+							{
+								value: 'single_instance',
+								label: __(
+									'This instance — a separate ticket is needed for each date',
+									'fair-events'
+								),
+							},
+							{
+								value: 'whole_series',
+								label: __(
+									'Whole series — one purchase covers every occurrence',
+									'fair-events'
+								),
+							},
+						]}
+						onChange={(v) => setPendingScope(v)}
+					/>
+					<Button
+						variant="primary"
+						onClick={() => {
+							addTicketType(pendingScope);
+							setShowScopeModal(false);
+						}}
+					>
+						{__('Add ticket type', 'fair-events')}
+					</Button>
+				</Modal>
+			)}
 		</VStack>
 	);
 }

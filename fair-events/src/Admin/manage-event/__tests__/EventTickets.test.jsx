@@ -1,11 +1,14 @@
 /**
  * @jest-environment jsdom
  *
- * Component tests for the recurrence-scope selector in EventTickets (#663).
+ * Component tests for the recurrence-scope selector in EventTickets (#663, #935).
  *
  * Exercises:
  *   - Scope column is visible only when isRecurring={true}.
- *   - A new ticket type is seeded with recurrence_scope 'single_instance'.
+ *   - "+ Add Ticket Type" on a recurring event opens a scope-choice modal.
+ *   - A new ticket type is seeded with the scope chosen in the modal.
+ *   - Scope cell is read-only text when has_sales is true.
+ *   - Scope cell is an editable SelectControl when has_sales is false.
  *   - Changing the selector updates the save payload's recurrence_scope.
  */
 import '@testing-library/jest-dom';
@@ -121,6 +124,12 @@ describe('EventTickets — recurrence scope selector', () => {
 		});
 		fireEvent.click(addButton);
 
+		// On a recurring event the button opens the scope-choice modal.
+		const confirmButton = screen.getByRole('button', {
+			name: /add ticket type/i,
+		});
+		fireEvent.click(confirmButton);
+
 		// A second Scope combobox should appear (one per ticket type row).
 		const scopeSelects = screen
 			.getAllByRole('combobox')
@@ -190,5 +199,121 @@ describe('EventTickets — recurrence scope selector', () => {
 		const savedType = savedPayload.ticket_types?.[0];
 		expect(savedType).toBeTruthy();
 		expect(savedType.recurrence_scope).toBe('whole_series');
+	});
+});
+
+describe('EventTickets — scope-choice modal', () => {
+	it('opens a modal when "+ Add Ticket Type" is clicked on a recurring event', () => {
+		renderTickets({
+			isRecurring: true,
+			initialData: initialDataWithTicketType,
+		});
+		openEditTicketsPanel();
+
+		fireEvent.click(
+			screen.getByRole('button', { name: '+ Add Ticket Type' })
+		);
+
+		expect(screen.getByText('Choose ticket scope')).toBeInTheDocument();
+		expect(screen.getByLabelText(/This instance/i)).toBeInTheDocument();
+		expect(screen.getByLabelText(/Whole series/i)).toBeInTheDocument();
+	});
+
+	it('does not open a modal on a non-recurring event', () => {
+		renderTickets({
+			isRecurring: false,
+			initialData: initialDataWithTicketType,
+		});
+		openEditTicketsPanel();
+
+		fireEvent.click(
+			screen.getByRole('button', { name: '+ Add Ticket Type' })
+		);
+
+		expect(
+			screen.queryByText('Choose ticket scope')
+		).not.toBeInTheDocument();
+	});
+
+	it('adds a whole_series ticket when that option is chosen in the modal', () => {
+		renderTickets({
+			isRecurring: true,
+			initialData: initialDataWithTicketType,
+		});
+		openEditTicketsPanel();
+
+		fireEvent.click(
+			screen.getByRole('button', { name: '+ Add Ticket Type' })
+		);
+
+		fireEvent.click(screen.getByLabelText(/Whole series/i));
+		fireEvent.click(
+			screen.getByRole('button', { name: /add ticket type/i })
+		);
+
+		const scopeSelects = screen
+			.getAllByRole('combobox')
+			.filter(
+				(el) =>
+					el.value === 'single_instance' ||
+					el.value === 'whole_series'
+			);
+		const newRow = scopeSelects[scopeSelects.length - 1];
+		expect(newRow.value).toBe('whole_series');
+	});
+});
+
+const initialDataWithSoldTicketType = {
+	...emptyInitialData,
+	ticket_types: [
+		{
+			id: 1,
+			name: 'General',
+			capacity: null,
+			seats_per_ticket: 1,
+			invitation_only: false,
+			minimum_activities: 0,
+			disable_at: null,
+			recurrence_scope: 'whole_series',
+			sort_order: 0,
+			has_sales: true,
+		},
+	],
+};
+
+describe('EventTickets — scope lock when has_sales', () => {
+	it('renders scope as read-only text when has_sales is true', () => {
+		renderTickets({
+			isRecurring: true,
+			initialData: initialDataWithSoldTicketType,
+		});
+		openEditTicketsPanel();
+
+		expect(screen.getByText('Whole series')).toBeInTheDocument();
+		const scopeSelects = screen
+			.queryAllByRole('combobox')
+			.filter(
+				(el) =>
+					el.value === 'single_instance' ||
+					el.value === 'whole_series'
+			);
+		expect(scopeSelects.length).toBe(0);
+	});
+
+	it('renders scope as SelectControl when has_sales is false', () => {
+		renderTickets({
+			isRecurring: true,
+			initialData: initialDataWithTicketType,
+		});
+		openEditTicketsPanel();
+
+		const scopeSelects = screen
+			.getAllByRole('combobox')
+			.filter(
+				(el) =>
+					el.value === 'single_instance' ||
+					el.value === 'whole_series'
+			);
+		expect(scopeSelects.length).toBeGreaterThanOrEqual(1);
 	});
 });
