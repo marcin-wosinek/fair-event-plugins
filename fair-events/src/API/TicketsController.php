@@ -496,6 +496,10 @@ class TicketsController extends WP_REST_Controller {
 		$existing_ids = array_map( fn( $t ) => $t->id, $existing );
 		$incoming_ids = array();
 
+		$participant_repo = class_exists( \FairAudience\Database\EventParticipantRepository::class )
+			? new \FairAudience\Database\EventParticipantRepository()
+			: null;
+
 		foreach ( $incoming as $index => $item ) {
 			if ( ! empty( $item['id'] ) ) {
 				$incoming_ids[] = (int) $item['id'];
@@ -534,19 +538,22 @@ class TicketsController extends WP_REST_Controller {
 
 			if ( ! empty( $item['id'] ) && in_array( (int) $item['id'], $existing_ids, true ) ) {
 				$id_map[ $index ] = (int) $item['id'];
-				TicketType::update(
-					(int) $item['id'],
-					array(
-						'name'               => $name,
-						'capacity'           => $capacity,
-						'seats_per_ticket'   => $seats_per_ticket,
-						'invitation_only'    => $invitation_only,
-						'minimum_activities' => $minimum_activities,
-						'disable_at'         => $disable_at,
-						'recurrence_scope'   => $recurrence_scope,
-						'sort_order'         => $sort_order,
-					)
+				$has_sales        = $participant_repo
+					? $participant_repo->count_seats_for_ticket_type( (int) $item['id'] ) > 0
+					: false;
+				$update           = array(
+					'name'               => $name,
+					'capacity'           => $capacity,
+					'seats_per_ticket'   => $seats_per_ticket,
+					'invitation_only'    => $invitation_only,
+					'minimum_activities' => $minimum_activities,
+					'disable_at'         => $disable_at,
+					'sort_order'         => $sort_order,
 				);
+				if ( ! $has_sales ) {
+					$update['recurrence_scope'] = $recurrence_scope;
+				}
+				TicketType::update( (int) $item['id'], $update );
 				if ( class_exists( \FairEventsExperimental\Models\TicketTypeGroupRestriction::class ) ) {
 					\FairEventsExperimental\Models\TicketTypeGroupRestriction::sync_for_ticket_type( (int) $item['id'], $group_ids );
 				}
@@ -683,14 +690,19 @@ class TicketsController extends WP_REST_Controller {
 			}
 		}
 
+		$participant_repo = class_exists( \FairAudience\Database\EventParticipantRepository::class )
+			? new \FairAudience\Database\EventParticipantRepository()
+			: null;
+
 		return array(
 			'capacity'     => $event_date->capacity,
 			'signup_price' => null !== $event_date->signup_price ? (float) $event_date->signup_price : null,
 			'end_datetime' => $event_date->end_datetime,
 			'ticket_types' => array_map(
-				function ( $t ) use ( $restrictions ) {
+				function ( $t ) use ( $restrictions, $participant_repo ) {
 					$data              = $t->to_array();
 					$data['group_ids'] = $restrictions[ $t->id ] ?? array();
+					$data['has_sales'] = $participant_repo ? $participant_repo->count_seats_for_ticket_type( $t->id ) > 0 : false;
 					return $data;
 				},
 				$ticket_types
