@@ -1028,6 +1028,22 @@ export default function EventTickets({
 														'(unnamed)',
 														'fair-events'
 													)}
+												{isRecurring && (
+													<>
+														{'  ('}
+														{type.recurrence_scope ===
+														'whole_series'
+															? __(
+																	'Whole series',
+																	'fair-events'
+															  )
+															: __(
+																	'This instance',
+																	'fair-events'
+															  )}
+														{')'}
+													</>
+												)}
 											</td>
 											{salePeriods.map(
 												(period, pIndex) => {
