@@ -18,6 +18,23 @@ defined( 'WPINC' ) || die;
  */
 class Transaction {
 	/**
+	 * UTC datetime after which the launch fee waiver ends and the 1% rate resumes.
+	 * Delete this constant (and get_fee_rate()) after 2027-01-01.
+	 */
+	private const FEE_WAIVER_END_TS = '2027-01-01 00:00:00';
+
+	/**
+	 * Returns the current platform fee rate (0.0 during the launch waiver, 0.01 after).
+	 *
+	 * @param int|null $now Unix timestamp to evaluate against; defaults to current site time.
+	 * @return float
+	 */
+	private static function get_fee_rate( ?int $now = null ): float {
+		$now    = $now ?? current_time( 'timestamp' ); // phpcs:ignore WordPress.DateTime.CurrentTimeTimestamp.Requested -- site TZ intentional; cutoff is midnight local time.
+		$cutoff = strtotime( self::FEE_WAIVER_END_TS );
+		return $now < $cutoff ? 0.0 : 0.01;
+	}
+	/**
 	 * Create a new transaction record
 	 *
 	 * @param array $data Transaction data.
@@ -51,10 +68,10 @@ class Transaction {
 
 		$data = wp_parse_args( $data, $defaults );
 
-		// Calculate application fee (1% of transaction amount), capped at the monthly allowance.
+		// Calculate application fee (capped at the monthly allowance). Rate is 0 during the launch waiver.
 		$application_fee = null;
 		if ( $data['amount'] > 0 ) {
-			$application_fee = round( $data['amount'] * 0.01, 2 );
+			$application_fee = round( $data['amount'] * self::get_fee_rate(), 2 );
 			$remaining       = MonthlyFeeCapService::get_remaining();
 			$application_fee = min( $application_fee, $remaining );
 		}
