@@ -362,6 +362,22 @@ function TicketSalesDayContent({ item }) {
 									{')'}
 								</>
 							)}
+							{ticket.testmode && (
+								<>
+									{' '}
+									<span
+										style={{
+											fontSize: '11px',
+											color: '#757575',
+											border: '1px solid #bdbdbd',
+											borderRadius: '3px',
+											padding: '0 3px',
+										}}
+									>
+										{__('Test', 'fair-audience')}
+									</span>
+								</>
+							)}
 						</li>
 					);
 				})}

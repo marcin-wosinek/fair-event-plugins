@@ -302,8 +302,9 @@ class TimelineController extends WP_REST_Controller {
 
 		// Ticket sales (paid transactions from fair-payments-connector) – group by calendar day.
 		if ( $include_payments ) {
-			$ticket_rows   = $this->repository->get_recent_ticket_sales( $fetch_limit );
-			$ticket_groups = array();
+			$include_testmode = ( 'test' === get_option( 'fair_payment_mode', 'test' ) );
+			$ticket_rows      = $this->repository->get_recent_ticket_sales( $fetch_limit, $include_testmode );
+			$ticket_groups    = array();
 			foreach ( $ticket_rows as $row ) {
 				$day = substr( (string) $row['created_at'], 0, 10 ); // YYYY-MM-DD.
 				if ( '' === $day ) {
@@ -319,7 +320,11 @@ class TimelineController extends WP_REST_Controller {
 					);
 				}
 
-				$ticket_groups[ $day ]['total_amount'] += (float) $row['amount'];
+				$is_testmode = ! empty( $row['testmode'] );
+				// Exclude test sales from the revenue total; they still count toward the row count.
+				if ( ! $is_testmode ) {
+					$ticket_groups[ $day ]['total_amount'] += (float) $row['amount'];
+				}
 				if ( strcmp( $row['created_at'], $ticket_groups[ $day ]['latest_at'] ) > 0 ) {
 					$ticket_groups[ $day ]['latest_at'] = $row['created_at'];
 				}
@@ -338,8 +343,9 @@ class TimelineController extends WP_REST_Controller {
 					'name'           => $name,
 					'amount'         => (float) $row['amount'],
 					'event_date_id'  => ! empty( $row['event_date_id'] ) ? (int) $row['event_date_id'] : null,
-					'post_id'        => $post_id ?: null,
+					'post_id'        => $post_id ? $post_id : null,
 					'event_title'    => $event_title,
+					'testmode'       => $is_testmode,
 				);
 			}
 
