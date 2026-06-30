@@ -71,7 +71,7 @@ function fair_audience_activate() {
 	dbDelta( \FairAudience\Database\Schema::get_event_scheduled_messages_table_sql() );
 
 	// Update database version.
-	update_option( 'fair_audience_db_version', '1.36.0' );
+	update_option( 'fair_audience_db_version', '1.37.0' );
 }
 register_activation_hook( __FILE__, __NAMESPACE__ . '\\fair_audience_activate' );
 
@@ -711,6 +711,21 @@ function fair_audience_maybe_upgrade_db() {
 		}
 
 		update_option( 'fair_audience_db_version', '1.36.0' );
+	}
+
+	if ( version_compare( $db_version, '1.37.0', '<' ) ) {
+		global $wpdb;
+		$participants_table = $wpdb->prefix . 'fair_audience_participants';
+
+		// Add 'declined' to the email_profile ENUM so organizers can record
+		// that a participant was asked and explicitly refused.
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.DirectDatabaseQuery.SchemaChange
+		$wpdb->query(
+			"ALTER TABLE {$participants_table}
+			 MODIFY COLUMN email_profile ENUM('minimal', 'marketing', 'declined') NOT NULL DEFAULT 'minimal'"
+		);
+
+		update_option( 'fair_audience_db_version', '1.37.0' );
 	}
 }
 add_action( 'plugins_loaded', __NAMESPACE__ . '\\fair_audience_maybe_upgrade_db' );

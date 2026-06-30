@@ -212,6 +212,10 @@ export default function ParticipantEditModal({
 								label: __('Marketing', 'fair-audience'),
 								value: 'marketing',
 							},
+							{
+								label: __('No marketing', 'fair-audience'),
+								value: 'declined',
+							},
 						]}
 						onChange={(value) =>
 							setFormData({ ...formData, email_profile: value })

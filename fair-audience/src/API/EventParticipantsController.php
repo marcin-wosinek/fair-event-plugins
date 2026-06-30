@@ -236,32 +236,36 @@ class EventParticipantsController extends WP_REST_Controller {
 			)
 		);
 
-		// POST /fair-audience/v1/event-dates/{event_date_id}/participants/marketing-upgrade.
+		// POST /fair-audience/v1/event-dates/{event_date_id}/participants/marketing-consent.
 		register_rest_route(
 			$this->namespace,
-			'/' . $this->rest_base . '/marketing-upgrade',
+			'/' . $this->rest_base . '/marketing-consent',
 			array(
 				array(
 					'methods'             => WP_REST_Server::CREATABLE,
-					'callback'            => array( $this, 'upgrade_to_marketing_batch' ),
+					'callback'            => array( $this, 'record_marketing_consent_batch' ),
 					'permission_callback' => array( $this, 'create_item_permissions_check' ),
 					'args'                => array(
-						'event_date_id'   => array(
+						'event_date_id' => array(
 							'type'              => 'integer',
 							'required'          => true,
 							'validate_callback' => function ( $param ) {
 								return is_numeric( $param );
 							},
 						),
-						'participant_ids' => array(
-							'type'              => 'array',
-							'required'          => true,
-							'items'             => array(
+						'marketing_ids' => array(
+							'type'    => 'array',
+							'default' => array(),
+							'items'   => array(
 								'type' => 'integer',
 							),
-							'validate_callback' => function ( $param ) {
-								return is_array( $param ) && ! empty( $param );
-							},
+						),
+						'declined_ids'  => array(
+							'type'    => 'array',
+							'default' => array(),
+							'items'   => array(
+								'type' => 'integer',
+							),
 						),
 					),
 				),
@@ -1011,21 +1015,23 @@ class EventParticipantsController extends WP_REST_Controller {
 	}
 
 	/**
-	 * Upgrade selected participants of an event to the marketing email profile.
+	 * Record email consent for selected participants at an event.
 	 *
-	 * Records the organizer's marketing consent (e.g. collected verbally / on a
-	 * paper list at the event), flips each eligible participant's email_profile
-	 * from "minimal" to "marketing", writes an audit-trail entry, and sends a
-	 * one-time "welcome to the mailing list" email. Already-marketing
-	 * participants and participants without an email are skipped (never
-	 * re-emailed), making the operation idempotent.
+	 * Handles two directions in one request:
+	 * - marketing_ids: flip minimal → marketing, write audit row, send welcome email.
+	 * - declined_ids:  flip minimal → declined, write audit row, no email.
+	 *
+	 * Participants already on marketing or declined are skipped automatically
+	 * because both paths require email_profile === 'minimal'. An already-declined
+	 * participant passed in marketing_ids is therefore never silently re-upgraded.
 	 *
 	 * @param WP_REST_Request $request Request object.
 	 * @return WP_REST_Response|WP_Error Response object or error.
 	 */
-	public function upgrade_to_marketing_batch( $request ) {
-		$event_date_id   = (int) $request['event_date_id'];
-		$participant_ids = $request->get_param( 'participant_ids' );
+	public function record_marketing_consent_batch( $request ) {
+		$event_date_id = (int) $request['event_date_id'];
+		$marketing_ids = array_map( 'intval', (array) $request->get_param( 'marketing_ids' ) );
+		$declined_ids  = array_map( 'intval', (array) $request->get_param( 'declined_ids' ) );
 
 		// Resolve event_id from event_date_id.
 		$event_date = \FairEvents\Models\EventDates::get_by_id( $event_date_id );
@@ -1050,6 +1056,7 @@ class EventParticipantsController extends WP_REST_Controller {
 
 		$results = array(
 			'upgraded'     => 0,
+			'declined'     => 0,
 			'skipped'      => 0,
 			'failed'       => 0,
 			'emailed'      => 0,
@@ -1063,10 +1070,10 @@ class EventParticipantsController extends WP_REST_Controller {
 		$admin_user   = get_userdata( $performed_by );
 		$admin_name   = $admin_user ? $admin_user->display_name : '';
 		$event_title  = get_the_title( $event_id );
+		$today        = gmdate( 'Y-m-d' );
 
-		foreach ( $participant_ids as $participant_id ) {
-			$participant_id = (int) $participant_id;
-
+		// Process marketing upgrades (minimal → marketing).
+		foreach ( $marketing_ids as $participant_id ) {
 			$participant = $this->participant_repo->get_by_id( $participant_id );
 			if ( ! $participant ) {
 				++$results['failed'];
@@ -1078,15 +1085,15 @@ class EventParticipantsController extends WP_REST_Controller {
 				continue;
 			}
 
-			// Must be linked to this event date.
 			$ep_row = $this->event_participant_repo->get_by_event_date_and_participant( $event_date_id, $participant_id );
 			if ( ! $ep_row ) {
 				++$results['skipped'];
 				continue;
 			}
 
-			// Skip participants without an email or already on the marketing list
-			// (the latter guarantees we never re-email an already-subscribed person).
+			// Skip participants without an email or not on minimal
+			// (guarantees we never re-email an already-subscribed person and
+			// never upgrade a declined participant by mistake).
 			if ( empty( $participant->email ) || 'minimal' !== $participant->email_profile ) {
 				++$results['skipped'];
 				continue;
@@ -1107,7 +1114,6 @@ class EventParticipantsController extends WP_REST_Controller {
 
 			++$results['upgraded'];
 
-			// Audit trail.
 			EmailConsentLog::create(
 				array(
 					'participant_id' => $participant_id,
@@ -1120,7 +1126,7 @@ class EventParticipantsController extends WP_REST_Controller {
 						/* translators: 1: admin display name, 2: date, 3: event title */
 						__( 'Verbal consent recorded by %1$s on %2$s at event %3$s', 'fair-audience' ),
 						$admin_name,
-						gmdate( 'Y-m-d' ),
+						$today,
 						$event_title
 					),
 					'performed_by'   => $performed_by,
@@ -1133,6 +1139,66 @@ class EventParticipantsController extends WP_REST_Controller {
 			} else {
 				++$results['email_failed'];
 			}
+		}
+
+		// Process declines (minimal → declined).
+		foreach ( $declined_ids as $participant_id ) {
+			$participant = $this->participant_repo->get_by_id( $participant_id );
+			if ( ! $participant ) {
+				++$results['failed'];
+				$results['errors'][] = sprintf(
+					/* translators: %d: participant ID */
+					__( 'Participant ID %d not found', 'fair-audience' ),
+					$participant_id
+				);
+				continue;
+			}
+
+			$ep_row = $this->event_participant_repo->get_by_event_date_and_participant( $event_date_id, $participant_id );
+			if ( ! $ep_row ) {
+				++$results['skipped'];
+				continue;
+			}
+
+			// Only act on minimal — never silently flip a marketing subscriber.
+			if ( 'minimal' !== $participant->email_profile ) {
+				++$results['skipped'];
+				continue;
+			}
+
+			$old_profile                = $participant->email_profile;
+			$participant->email_profile = 'declined';
+
+			if ( ! $participant->save() ) {
+				++$results['failed'];
+				$results['errors'][] = sprintf(
+					/* translators: %d: participant ID */
+					__( 'Failed to record decline for participant ID %d', 'fair-audience' ),
+					$participant_id
+				);
+				continue;
+			}
+
+			++$results['declined'];
+
+			EmailConsentLog::create(
+				array(
+					'participant_id' => $participant_id,
+					'event_id'       => $event_id,
+					'event_date_id'  => $event_date_id,
+					'old_profile'    => $old_profile,
+					'new_profile'    => 'declined',
+					'source'         => 'verbal_admin',
+					'comment'        => sprintf(
+						/* translators: 1: admin display name, 2: date, 3: event title */
+						__( 'Decline recorded by %1$s on %2$s at event %3$s', 'fair-audience' ),
+						$admin_name,
+						$today,
+						$event_title
+					),
+					'performed_by'   => $performed_by,
+				)
+			);
 		}
 
 		return rest_ensure_response( $results );

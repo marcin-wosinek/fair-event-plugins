@@ -126,6 +126,7 @@ export default function AllParticipants() {
 					const labels = {
 						minimal: __('Minimal', 'fair-audience'),
 						marketing: __('Marketing', 'fair-audience'),
+						declined: __('No', 'fair-audience'),
 					};
 					return labels[item.email_profile] || item.email_profile;
 				},
@@ -137,6 +138,10 @@ export default function AllParticipants() {
 					{
 						value: 'marketing',
 						label: __('Marketing', 'fair-audience'),
+					},
+					{
+						value: 'declined',
+						label: __('No', 'fair-audience'),
 					},
 				],
 				filterBy: {

@@ -137,7 +137,7 @@ class Participant {
 		}
 
 		// Validate email_profile enum.
-		if ( ! in_array( $this->email_profile, array( 'minimal', 'marketing' ), true ) ) {
+		if ( ! in_array( $this->email_profile, array( 'minimal', 'marketing', 'declined' ), true ) ) {
 			$this->email_profile = 'minimal';
 		}
 

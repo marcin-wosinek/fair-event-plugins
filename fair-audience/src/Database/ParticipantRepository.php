@@ -185,7 +185,7 @@ class ParticipantRepository {
 		}
 
 		// Email profile filter.
-		$allowed_email_profiles = array( 'minimal', 'marketing' );
+		$allowed_email_profiles = array( 'minimal', 'marketing', 'declined' );
 		if ( ! empty( $args['email_profile'] ) && in_array( $args['email_profile'], $allowed_email_profiles, true ) ) {
 			$where_clauses[] = 'email_profile = %s';
 			$prepare_args[]  = $args['email_profile'];
