@@ -84,11 +84,11 @@ export default function EventAudience({
 	const [selectedToAdd, setSelectedToAdd] = useState(new Set());
 	const [isAdding, setIsAdding] = useState(false);
 
-	// Mailing-list (verbal consent) modal state
+	// Consent modal state: maps participant_id → 'yes' | 'no' | null (null = skip)
 	const [mailingModalOpen, setMailingModalOpen] = useState(false);
 	const [mailingSearch, setMailingSearch] = useState('');
-	const [selectedForMailing, setSelectedForMailing] = useState(new Set());
-	const [isUpgrading, setIsUpgrading] = useState(false);
+	const [consentChoices, setConsentChoices] = useState({});
+	const [isRecordingConsent, setIsRecordingConsent] = useState(false);
 
 	// Invite groups state
 	const [invitedGroups, setInvitedGroups] = useState([]);
@@ -359,13 +359,11 @@ export default function EventAudience({
 		}
 	};
 
-	// Participants eligible for a marketing-list upgrade: currently on the
-	// "minimal" email profile and reachable (have an email address).
+	// Participants eligible for the consent modal: currently on "minimal".
+	// Yes (upgrade) is only available for those with an email; No (decline) is
+	// always available so we can record that they were asked and refused.
 	const mailingEligible = useMemo(
-		() =>
-			participants.filter(
-				(p) => p.email_profile === 'minimal' && p.participant_email
-			),
+		() => participants.filter((p) => p.email_profile === 'minimal'),
 		[participants]
 	);
 
@@ -382,60 +380,56 @@ export default function EventAudience({
 
 	const handleOpenMailingModal = () => {
 		setMailingModalOpen(true);
-		setSelectedForMailing(new Set());
+		setConsentChoices({});
 		setMailingSearch('');
 	};
 
 	const handleCloseMailingModal = () => {
 		setMailingModalOpen(false);
-		setSelectedForMailing(new Set());
+		setConsentChoices({});
 		setMailingSearch('');
 	};
 
-	const handleToggleMailing = (participantId) => {
-		const next = new Set(selectedForMailing);
-		if (next.has(participantId)) {
-			next.delete(participantId);
-		} else {
-			next.add(participantId);
-		}
-		setSelectedForMailing(next);
+	const handleConsentChoice = (participantId, choice) => {
+		setConsentChoices((prev) => ({
+			...prev,
+			[participantId]: prev[participantId] === choice ? null : choice,
+		}));
 	};
 
-	const handleSelectAllMailing = () => {
-		const shownIds = filteredMailingEligible.map((p) => p.participant_id);
-		const allSelected = shownIds.every((id) => selectedForMailing.has(id));
-		const next = new Set(selectedForMailing);
-		if (allSelected) {
-			shownIds.forEach((id) => next.delete(id));
-		} else {
-			shownIds.forEach((id) => next.add(id));
-		}
-		setSelectedForMailing(next);
-	};
-
-	const handleUpgradeToMarketing = async () => {
-		if (selectedForMailing.size === 0) return;
-		setIsUpgrading(true);
+	const handleRecordConsent = async () => {
+		const marketingIds = Object.entries(consentChoices)
+			.filter(([, v]) => v === 'yes')
+			.map(([id]) => parseInt(id, 10));
+		const declinedIds = Object.entries(consentChoices)
+			.filter(([, v]) => v === 'no')
+			.map(([id]) => parseInt(id, 10));
+		if (marketingIds.length === 0 && declinedIds.length === 0) return;
+		setIsRecordingConsent(true);
 		try {
 			const response = await apiFetch({
-				path: `/fair-audience/v1/event-dates/${eventDateId}/participants/marketing-upgrade`,
+				path: `/fair-audience/v1/event-dates/${eventDateId}/participants/marketing-consent`,
 				method: 'POST',
-				data: { participant_ids: Array.from(selectedForMailing) },
+				data: {
+					marketing_ids: marketingIds,
+					declined_ids: declinedIds,
+				},
 			});
 			handleCloseMailingModal();
 			loadParticipants();
 			const upgraded = response.upgraded ?? 0;
+			const declined = response.declined ?? 0;
 			const skipped = response.skipped ?? 0;
 			const emailFailed = response.email_failed ?? 0;
 			showToast(
 				sprintf(
-					/* translators: 1: number upgraded, 2: number skipped, 3: number of failed emails */
+					/* translators: 1: number upgraded, 2: number declined, 3: number skipped, 4: number of failed emails */
 					__(
-						'Added %1$d to the mailing list. Skipped %2$d, %3$d email(s) failed.',
+						'Added %1$d to the mailing list, recorded %2$d as declined. Skipped %3$d, %4$d email(s) failed.',
 						'fair-events'
 					),
 					upgraded,
+					declined,
 					skipped,
 					emailFailed
 				),
@@ -443,12 +437,11 @@ export default function EventAudience({
 			);
 		} catch (err) {
 			showToast(
-				__('Error updating mailing list: ', 'fair-events') +
-					err.message,
+				__('Error recording consent: ', 'fair-events') + err.message,
 				'error'
 			);
 		} finally {
-			setIsUpgrading(false);
+			setIsRecordingConsent(false);
 		}
 	};
 
@@ -752,7 +745,12 @@ export default function EventAudience({
 					: names.map((n) => optionLabelByName.get(n) || n);
 				const activities = escape(labels.filter(Boolean).join(', '));
 				const comment = escape(p.admin_comment || '');
-				const onMailingList = p.email_profile === 'marketing';
+				const emailProfileMark =
+					p.email_profile === 'marketing'
+						? '✓'
+						: p.email_profile === 'declined'
+						? '✗'
+						: '';
 				return `
 					<tr>
 						<td class="num">${index + 1}</td>
@@ -762,7 +760,7 @@ export default function EventAudience({
 						<td class="activities">${activities}</td>
 						<td class="admin-comment">${comment}</td>
 						<td class="checkbox"></td>
-						<td class="checkbox">${onMailingList ? '✓' : ''}</td>
+						<td class="checkbox">${emailProfileMark}</td>
 						<td class="notes"></td>
 					</tr>`;
 			})
@@ -1659,7 +1657,7 @@ export default function EventAudience({
 										disabled={mailingEligible.length === 0}
 									>
 										{__(
-											'Add to mailing list (verbal consent)',
+											'Record email consent',
 											'fair-events'
 										)}
 									</Button>
@@ -1994,17 +1992,14 @@ export default function EventAudience({
 
 			{mailingModalOpen && (
 				<Modal
-					title={__(
-						'Add to mailing list (verbal consent)',
-						'fair-events'
-					)}
+					title={__('Record email consent', 'fair-events')}
 					onRequestClose={handleCloseMailingModal}
 					style={{ maxWidth: '640px', width: '100%' }}
 				>
 					{mailingEligible.length === 0 ? (
 						<p>
 							{__(
-								'No participants are eligible. People are listed here when they have an email address and are not already on the marketing list.',
+								'No participants are eligible. People are listed here when they are on the minimal email profile.',
 								'fair-events'
 							)}
 						</p>
@@ -2012,7 +2007,7 @@ export default function EventAudience({
 						<>
 							<p style={{ marginTop: 0, color: '#666' }}>
 								{__(
-									'Tick the people who gave you their consent in person. They will be added to the marketing list and emailed a welcome message with an unsubscribe link.',
+									'Record each person\'s answer. "Yes" adds them to the mailing list and sends a welcome email. "No" records that they declined — they will not be asked again.',
 									'fair-events'
 								)}
 							</p>
@@ -2042,38 +2037,6 @@ export default function EventAudience({
 										borderRadius: '4px',
 									}}
 								/>
-								<Button
-									variant="link"
-									onClick={handleSelectAllMailing}
-									disabled={
-										filteredMailingEligible.length === 0
-									}
-								>
-									{filteredMailingEligible.length > 0 &&
-									filteredMailingEligible.every((p) =>
-										selectedForMailing.has(p.participant_id)
-									)
-										? __('Deselect all', 'fair-events')
-										: __('Select all', 'fair-events')}
-								</Button>
-							</div>
-
-							<div
-								style={{
-									marginBottom: '10px',
-									fontSize: '12px',
-									color: '#666',
-								}}
-							>
-								{sprintf(
-									/* translators: 1: selected count, 2: shown count */
-									__(
-										'%1$d selected, %2$d shown',
-										'fair-events'
-									),
-									selectedForMailing.size,
-									filteredMailingEligible.length
-								)}
 							</div>
 
 							<div
@@ -2084,44 +2047,96 @@ export default function EventAudience({
 									borderRadius: '4px',
 								}}
 							>
-								{filteredMailingEligible.map((p) => (
-									<div
-										key={p.participant_id}
-										style={{
-											padding: '10px 15px',
-											borderBottom: '1px solid #eee',
-											display: 'flex',
-											alignItems: 'center',
-											gap: '10px',
-										}}
-									>
-										<CheckboxControl
-											checked={selectedForMailing.has(
-												p.participant_id
-											)}
-											onChange={() =>
-												handleToggleMailing(
-													p.participant_id
-												)
-											}
-											__nextHasNoMarginBottom
-										/>
-										<div>
-											<strong>
-												{p.name} {p.surname}
-											</strong>
-											<br />
-											<span
+								{filteredMailingEligible.map((p) => {
+									const choice =
+										consentChoices[p.participant_id] ??
+										null;
+									const hasEmail = !!p.participant_email;
+									return (
+										<div
+											key={p.participant_id}
+											style={{
+												padding: '10px 15px',
+												borderBottom: '1px solid #eee',
+												display: 'flex',
+												alignItems: 'center',
+												justifyContent: 'space-between',
+												gap: '10px',
+											}}
+										>
+											<div>
+												<strong>
+													{p.name} {p.surname}
+												</strong>
+												{p.participant_email && (
+													<>
+														<br />
+														<span
+															style={{
+																color: '#666',
+																fontSize:
+																	'12px',
+															}}
+														>
+															{
+																p.participant_email
+															}
+														</span>
+													</>
+												)}
+											</div>
+											<div
 												style={{
-													color: '#666',
-													fontSize: '12px',
+													display: 'flex',
+													gap: '4px',
+													flexShrink: 0,
 												}}
 											>
-												{p.participant_email}
-											</span>
+												<Button
+													variant={
+														choice === 'yes'
+															? 'primary'
+															: 'secondary'
+													}
+													size="small"
+													disabled={!hasEmail}
+													onClick={() =>
+														handleConsentChoice(
+															p.participant_id,
+															'yes'
+														)
+													}
+													title={
+														!hasEmail
+															? __(
+																	'No email — cannot add to mailing list',
+																	'fair-events'
+															  )
+															: undefined
+													}
+												>
+													{__('Yes', 'fair-events')}
+												</Button>
+												<Button
+													variant={
+														choice === 'no'
+															? 'primary'
+															: 'secondary'
+													}
+													size="small"
+													onClick={() =>
+														handleConsentChoice(
+															p.participant_id,
+															'no'
+														)
+													}
+												>
+													{__('No', 'fair-events')}
+												</Button>
+											</div>
 										</div>
-									</div>
-								))}
+									);
+								})}
 								{filteredMailingEligible.length === 0 && (
 									<p
 										style={{
@@ -2153,22 +2168,16 @@ export default function EventAudience({
 								</Button>
 								<Button
 									variant="primary"
-									onClick={handleUpgradeToMarketing}
+									onClick={handleRecordConsent}
 									disabled={
-										selectedForMailing.size === 0 ||
-										isUpgrading
+										Object.values(consentChoices).every(
+											(v) => v === null
+										) || isRecordingConsent
 									}
 								>
-									{isUpgrading
-										? __('Adding…', 'fair-events')
-										: sprintf(
-												/* translators: %d: number of selected participants */
-												__(
-													'Add %d to mailing list',
-													'fair-events'
-												),
-												selectedForMailing.size
-										  )}
+									{isRecordingConsent
+										? __('Saving…', 'fair-events')
+										: __('Save consent', 'fair-events')}
 								</Button>
 							</div>
 						</>

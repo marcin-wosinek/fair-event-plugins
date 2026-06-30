@@ -39,6 +39,7 @@ const LABEL_DISPLAY = {
 const EMAIL_PROFILE_DISPLAY = {
 	minimal: __('Minimal', 'fair-audience'),
 	marketing: __('Marketing', 'fair-audience'),
+	declined: __('No marketing', 'fair-audience'),
 };
 
 const STATUS_DISPLAY = {

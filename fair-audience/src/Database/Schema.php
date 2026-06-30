@@ -32,7 +32,7 @@ class Schema {
 			email VARCHAR(255) DEFAULT NULL,
 			phone VARCHAR(50) DEFAULT '',
 			instagram VARCHAR(255) DEFAULT '' COMMENT 'Instagram handle without @',
-			email_profile ENUM('minimal', 'marketing') NOT NULL DEFAULT 'minimal',
+			email_profile ENUM('minimal', 'marketing', 'declined') NOT NULL DEFAULT 'minimal',
 			status ENUM('pending', 'confirmed') NOT NULL DEFAULT 'confirmed',
 			wp_user_id BIGINT UNSIGNED DEFAULT NULL,
 			created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
