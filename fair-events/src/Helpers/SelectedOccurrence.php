@@ -53,7 +53,7 @@ class SelectedOccurrence {
 			// event on this post's page. Invalid candidate IDs fall
 			// through to the no-param default below.
 			if ( $candidate && (int) $candidate->master_id === (int) $default->id ) {
-				return $candidate;
+				return self::with_master_venue_fallback( $candidate, $default );
 			}
 		}
 
@@ -66,10 +66,37 @@ class SelectedOccurrence {
 		if ( 'master' === $default->occurrence_type ) {
 			$upcoming = EventDates::get_upcoming_by_master_id( (int) $default->id );
 			if ( ! empty( $upcoming ) ) {
-				return $upcoming[0];
+				return self::with_master_venue_fallback( $upcoming[0], $default );
 			}
 		}
 
 		return $default;
+	}
+
+	/**
+	 * Hydrate venue fields on a generated child from its master when both
+	 * venue_id and address are empty on the child.
+	 *
+	 * Generated children may lack venue_id/address when a venue was assigned
+	 * to the master after the children were created, or before propagation
+	 * logic existed. Patching the returned object here fixes all four render
+	 * sites (event-info block, CalendarButtonHooks, OpenGraphHooks) without
+	 * touching the underlying row.
+	 *
+	 * @param EventDates $child  Generated child occurrence.
+	 * @param EventDates $master Master occurrence (already loaded).
+	 * @return EventDates The child, with venue fields copied from master if absent.
+	 */
+	private static function with_master_venue_fallback( EventDates $child, EventDates $master ): EventDates {
+		if ( 'generated' !== $child->occurrence_type ) {
+			return $child;
+		}
+
+		if ( empty( $child->venue_id ) && empty( $child->address ) ) {
+			$child->venue_id = $master->venue_id;
+			$child->address  = $master->address;
+		}
+
+		return $child;
 	}
 }

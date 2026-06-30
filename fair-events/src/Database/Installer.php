@@ -250,6 +250,11 @@ class Installer {
 			self::migrate_to_3_17_0();
 		}
 
+		// Run migration if upgrading from pre-3.18.0 (backfill venue_id/address on generated occurrences).
+		if ( version_compare( $current_version, '3.18.0', '<' ) ) {
+			self::migrate_to_3_18_0();
+		}
+
 		// Update database version
 		Schema::update_db_version( Schema::DB_VERSION );
 	}
@@ -388,6 +393,10 @@ class Installer {
 
 			if ( version_compare( $current_version, '3.17.0', '<' ) ) {
 				self::migrate_to_3_17_0();
+			}
+
+			if ( version_compare( $current_version, '3.18.0', '<' ) ) {
+				self::migrate_to_3_18_0();
 			}
 
 			// Install/update tables
@@ -1544,6 +1553,54 @@ class Installer {
 				)
 			);
 		}
+	}
+
+	/**
+	 * Migrate to version 3.18.0 - Backfill venue_id/address on generated children.
+	 *
+	 * Generated children created before venue propagation existed (pre-fd19c2b5,
+	 * 2026-06-05), or whose master had a venue assigned after the children were
+	 * created, may have venue_id = NULL even when the master has a venue. The
+	 * read-time fallback in SelectedOccurrence handles display going forward;
+	 * this backfill makes the stored data consistent for any code that queries
+	 * children directly without going through SelectedOccurrence.
+	 *
+	 * @return void
+	 */
+	private static function migrate_to_3_18_0() {
+		global $wpdb;
+
+		$table = $wpdb->prefix . 'fair_event_dates';
+
+		// Copy venue_id from master to generated children where child value is NULL.
+		$wpdb->query(
+			$wpdb->prepare(
+				'UPDATE %i c
+				JOIN %i m ON c.master_id = m.id
+				SET c.venue_id = m.venue_id
+				WHERE c.occurrence_type = %s
+				  AND c.venue_id IS NULL
+				  AND m.venue_id IS NOT NULL',
+				$table,
+				$table,
+				'generated'
+			)
+		);
+
+		// Copy address from master to generated children where child value is NULL.
+		$wpdb->query(
+			$wpdb->prepare(
+				'UPDATE %i c
+				JOIN %i m ON c.master_id = m.id
+				SET c.address = m.address
+				WHERE c.occurrence_type = %s
+				  AND c.address IS NULL
+				  AND m.address IS NOT NULL',
+				$table,
+				$table,
+				'generated'
+			)
+		);
 	}
 
 	/**
