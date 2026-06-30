@@ -304,3 +304,224 @@ test.describe('EventDatesController — recurrence reconciliation', () => {
 		expect(starts.every((s) => s.includes('14:00:00'))).toBe(true);
 	});
 });
+
+test.describe('EventDatesController — impact classification (PR 2)', () => {
+	let api;
+	let masterEventDateId;
+	let eventPostId;
+
+	test.beforeAll(async () => {
+		api = await request.newContext({ baseURL: BASE_URL });
+	});
+
+	test.afterEach(async () => {
+		if (masterEventDateId) {
+			await api.delete(
+				`/wp-json/fair-events/v1/event-dates/${masterEventDateId}`,
+				{ headers: adminHeaders }
+			);
+			masterEventDateId = null;
+		}
+		if (eventPostId) {
+			await api.delete(
+				`/wp-json/wp/v2/fair_event/${eventPostId}?force=true`,
+				{ headers: adminHeaders }
+			);
+			eventPostId = null;
+		}
+	});
+
+	async function createRecurringEventWithTicket(api, rrule) {
+		const postRes = await api.post('/wp-json/wp/v2/fair_event', {
+			headers: adminHeaders,
+			data: { title: `Impact test ${Date.now()}`, status: 'publish' },
+		});
+		expect(postRes.ok()).toBeTruthy();
+		eventPostId = (await postRes.json()).id;
+
+		const edRes = await api.post('/wp-json/fair-events/v1/event-dates', {
+			headers: adminHeaders,
+			data: {
+				event_id: eventPostId,
+				start_datetime: '2035-06-01 10:00:00',
+				end_datetime: '2035-06-01 12:00:00',
+				rrule,
+			},
+		});
+		expect(edRes.ok()).toBeTruthy();
+		const edBody = await edRes.json();
+		masterEventDateId = edBody.id;
+
+		// Get the generated occurrences and attach a ticket type to the last one.
+		const occRes = await api.get(
+			`/wp-json/fair-events/v1/event-dates?event_id=${eventPostId}`,
+			{ headers: adminHeaders }
+		);
+		expect(occRes.ok()).toBeTruthy();
+		const occurrences = await occRes.json();
+		// Sort ascending and pick the last generated occurrence.
+		const sorted = [...occurrences].sort((a, b) =>
+			a.start_datetime < b.start_datetime ? -1 : 1
+		);
+		const lastOccurrence = sorted[sorted.length - 1];
+
+		// Create a ticket type on the last occurrence (makes it a "dependent").
+		const ttRes = await api.post(
+			`/wp-json/fair-events/v1/event-dates/${lastOccurrence.id}/ticket-types`,
+			{
+				headers: adminHeaders,
+				data: { name: 'General', capacity: 10, sort_order: 0 },
+			}
+		);
+		// If tickets endpoint doesn't exist in this context just skip the dependent.
+		const ticketCreated = ttRes.ok();
+
+		return { occurrences: sorted, lastOccurrence, ticketCreated };
+	}
+
+	test('time shift returns 200 with recurrence_impact summary', async ({
+		request: req,
+	}) => {
+		const localApi = await req.newContext({ baseURL: BASE_URL });
+
+		const postRes = await localApi.post('/wp-json/wp/v2/fair_event', {
+			headers: adminHeaders,
+			data: {
+				title: `Shift impact test ${Date.now()}`,
+				status: 'publish',
+			},
+		});
+		expect(postRes.ok()).toBeTruthy();
+		eventPostId = (await postRes.json()).id;
+
+		const edRes = await localApi.post(
+			'/wp-json/fair-events/v1/event-dates',
+			{
+				headers: adminHeaders,
+				data: {
+					event_id: eventPostId,
+					start_datetime: '2035-07-01 10:00:00',
+					end_datetime: '2035-07-01 12:00:00',
+					rrule: 'FREQ=WEEKLY;COUNT=3',
+				},
+			}
+		);
+		expect(edRes.ok()).toBeTruthy();
+		masterEventDateId = (await edRes.json()).id;
+
+		// Shift start time by one hour.
+		const putRes = await localApi.put(
+			`/wp-json/fair-events/v1/event-dates/${masterEventDateId}`,
+			{
+				headers: adminHeaders,
+				data: {
+					start_datetime: '2035-07-01 11:00:00',
+					end_datetime: '2035-07-01 13:00:00',
+				},
+			}
+		);
+		expect(putRes.ok()).toBeTruthy();
+		const body = await putRes.json();
+
+		// Response must include a recurrence_impact summary.
+		expect(body).toHaveProperty('recurrence_impact');
+		const impact = body.recurrence_impact;
+		expect(impact).toHaveProperty('unchanged');
+		expect(impact).toHaveProperty('shifted');
+		expect(impact).toHaveProperty('added');
+		expect(impact).toHaveProperty('removed');
+		// A pure time shift with no RRULE change: all children are shifted, none removed.
+		expect(impact.removed).toHaveLength(0);
+		expect(impact.shifted.length + impact.unchanged.length).toBeGreaterThan(
+			0
+		);
+	});
+
+	test('shortening RRULE to remove an occurrence with a ticket type returns 409', async ({
+		request: req,
+	}) => {
+		const localApi = await req.newContext({ baseURL: BASE_URL });
+		const { occurrences, lastOccurrence, ticketCreated } =
+			await createRecurringEventWithTicket(
+				localApi,
+				'FREQ=WEEKLY;COUNT=3'
+			);
+
+		if (!ticketCreated) {
+			// Ticket type endpoint unavailable in this environment — skip dependent check.
+			test.skip();
+			return;
+		}
+
+		// Try to shorten to COUNT=2 — this would remove the last occurrence that has a ticket type.
+		const putRes = await localApi.put(
+			`/wp-json/fair-events/v1/event-dates/${masterEventDateId}`,
+			{
+				headers: adminHeaders,
+				data: { rrule: 'FREQ=WEEKLY;COUNT=2' },
+			}
+		);
+
+		expect(putRes.status()).toBe(409);
+		const body = await putRes.json();
+		expect(body.data.status).toBe(409);
+		expect(body.data).toHaveProperty('impact');
+		const impact = body.data.impact;
+		expect(impact.removed.length).toBeGreaterThan(0);
+		expect(impact.removed[0].dependents).toBeGreaterThan(0);
+		expect(impact.removed[0]).toHaveProperty('id');
+		expect(impact.removed[0].id).toBe(lastOccurrence.id);
+	});
+
+	test('shortening RRULE to remove an occurrence without dependents returns 200', async ({
+		request: req,
+	}) => {
+		const localApi = await req.newContext({ baseURL: BASE_URL });
+
+		const postRes = await localApi.post('/wp-json/wp/v2/fair_event', {
+			headers: adminHeaders,
+			data: { title: `Safe shorten ${Date.now()}`, status: 'publish' },
+		});
+		expect(postRes.ok()).toBeTruthy();
+		eventPostId = (await postRes.json()).id;
+
+		const edRes = await localApi.post(
+			'/wp-json/fair-events/v1/event-dates',
+			{
+				headers: adminHeaders,
+				data: {
+					event_id: eventPostId,
+					start_datetime: '2035-08-01 10:00:00',
+					end_datetime: '2035-08-01 12:00:00',
+					rrule: 'FREQ=WEEKLY;COUNT=3',
+				},
+			}
+		);
+		expect(edRes.ok()).toBeTruthy();
+		masterEventDateId = (await edRes.json()).id;
+
+		// Shorten to COUNT=2 — last occurrence has no dependents, so it should succeed.
+		const putRes = await localApi.put(
+			`/wp-json/fair-events/v1/event-dates/${masterEventDateId}`,
+			{
+				headers: adminHeaders,
+				data: { rrule: 'FREQ=WEEKLY;COUNT=2' },
+			}
+		);
+		expect(putRes.ok()).toBeTruthy();
+		const body = await putRes.json();
+
+		expect(body).toHaveProperty('recurrence_impact');
+		const impact = body.recurrence_impact;
+		expect(impact.removed).toHaveLength(1);
+		expect(impact.removed[0].dependents).toBe(0);
+
+		// Confirm only 2 occurrences remain.
+		const occRes = await localApi.get(
+			`/wp-json/fair-events/v1/event-dates?event_id=${eventPostId}`,
+			{ headers: adminHeaders }
+		);
+		const remaining = await occRes.json();
+		expect(remaining).toHaveLength(2);
+	});
+});
