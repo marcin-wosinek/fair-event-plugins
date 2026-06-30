@@ -83,6 +83,13 @@ class TicketType {
 	public $recurrence_scope = 'single_instance';
 
 	/**
+	 * Whether this ticket type has been manually disabled by an admin
+	 *
+	 * @var bool
+	 */
+	public $disabled = false;
+
+	/**
 	 * Sort order
 	 *
 	 * @var int
@@ -187,9 +194,10 @@ class TicketType {
 	 * @param int         $minimum_activities Minimum activities this type requires (0 = inherit global).
 	 * @param string|null $disable_at         Date/time after which this ticket type is unavailable (null = no end date).
 	 * @param string      $recurrence_scope   'single_instance' or 'whole_series'.
+	 * @param bool        $disabled           Whether this ticket type is manually disabled.
 	 * @return int|false The ticket type ID on success, false on failure.
 	 */
-	public static function create( $event_date_id, $name, $capacity, $sort_order, $seats_per_ticket = 1, $invitation_only = false, $minimum_activities = 0, $disable_at = null, $recurrence_scope = 'single_instance' ) {
+	public static function create( $event_date_id, $name, $capacity, $sort_order, $seats_per_ticket = 1, $invitation_only = false, $minimum_activities = 0, $disable_at = null, $recurrence_scope = 'single_instance', $disabled = false ) {
 		global $wpdb;
 
 		$table_name = self::get_table_name();
@@ -209,9 +217,10 @@ class TicketType {
 				'minimum_activities' => max( 0, (int) $minimum_activities ),
 				'disable_at'         => $disable_at,
 				'recurrence_scope'   => $recurrence_scope,
+				'disabled'           => $disabled ? 1 : 0,
 				'sort_order'         => $sort_order,
 			),
-			array( '%d', '%s', '%d', '%d', '%d', '%d', '%s', '%s', '%d' )
+			array( '%d', '%s', '%d', '%d', '%d', '%d', '%s', '%s', '%d', '%d' )
 		);
 
 		if ( $result ) {
@@ -272,6 +281,11 @@ class TicketType {
 				: 'single_instance';
 			$update_data['recurrence_scope'] = $scope;
 			$update_format[]                 = '%s';
+		}
+
+		if ( array_key_exists( 'disabled', $data ) ) {
+			$update_data['disabled'] = $data['disabled'] ? 1 : 0;
+			$update_format[]         = '%d';
 		}
 
 		if ( isset( $data['sort_order'] ) ) {
@@ -352,6 +366,7 @@ class TicketType {
 		$item->disable_at         = $row->disable_at ?? null;
 		$raw_scope                = $row->recurrence_scope ?? 'single_instance';
 		$item->recurrence_scope   = in_array( $raw_scope, self::RECURRENCE_SCOPES, true ) ? $raw_scope : 'single_instance';
+		$item->disabled           = ! empty( $row->disabled );
 		$item->sort_order         = (int) $row->sort_order;
 		$item->created_at         = $row->created_at;
 		$item->updated_at         = $row->updated_at;
@@ -384,6 +399,7 @@ class TicketType {
 			'minimum_activities' => $this->minimum_activities,
 			'disable_at'         => $this->disable_at,
 			'recurrence_scope'   => $this->recurrence_scope,
+			'disabled'           => (bool) $this->disabled,
 			'sort_order'         => $this->sort_order,
 			'created_at'         => $this->created_at,
 			'updated_at'         => $this->updated_at,

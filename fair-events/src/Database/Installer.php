@@ -245,6 +245,11 @@ class Installer {
 			self::migrate_to_3_16_0();
 		}
 
+		// Run migration if upgrading from pre-3.17.0 (add disabled to ticket_types).
+		if ( version_compare( $current_version, '3.17.0', '<' ) ) {
+			self::migrate_to_3_17_0();
+		}
+
 		// Update database version
 		Schema::update_db_version( Schema::DB_VERSION );
 	}
@@ -379,6 +384,10 @@ class Installer {
 
 			if ( version_compare( $current_version, '3.16.0', '<' ) ) {
 				self::migrate_to_3_16_0();
+			}
+
+			if ( version_compare( $current_version, '3.17.0', '<' ) ) {
+				self::migrate_to_3_17_0();
 			}
 
 			// Install/update tables
@@ -1503,6 +1512,34 @@ class Installer {
 			$wpdb->query(
 				$wpdb->prepare(
 					'ALTER TABLE %i DROP COLUMN google_maps_link',
+					$table_name
+				)
+			);
+		}
+	}
+
+	/**
+	 * Migrate to version 3.17.0 - Add disabled column to ticket_types table.
+	 *
+	 * @return void
+	 */
+	private static function migrate_to_3_17_0() {
+		global $wpdb;
+
+		$table_name = $wpdb->prefix . 'fair_events_ticket_types';
+
+		$column_exists = $wpdb->get_results(
+			$wpdb->prepare(
+				'SHOW COLUMNS FROM %i LIKE %s',
+				$table_name,
+				$wpdb->esc_like( 'disabled' )
+			)
+		);
+
+		if ( empty( $column_exists ) ) {
+			$wpdb->query(
+				$wpdb->prepare(
+					'ALTER TABLE %i ADD COLUMN disabled TINYINT(1) NOT NULL DEFAULT 0 AFTER recurrence_scope',
 					$table_name
 				)
 			);

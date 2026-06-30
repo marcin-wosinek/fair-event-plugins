@@ -317,3 +317,74 @@ describe('EventTickets — scope lock when has_sales', () => {
 		expect(scopeSelects.length).toBeGreaterThanOrEqual(1);
 	});
 });
+
+describe('EventTickets — disable/enable when has_sales', () => {
+	it('shows Remove button when has_sales is false', () => {
+		renderTickets({ initialData: initialDataWithTicketType });
+		openEditTicketsPanel();
+		expect(
+			screen.getByRole('button', { name: /Remove/i })
+		).toBeInTheDocument();
+	});
+
+	it('shows toggle instead of Remove when has_sales is true', () => {
+		renderTickets({ initialData: initialDataWithSoldTicketType });
+		openEditTicketsPanel();
+		expect(
+			screen.queryByRole('button', { name: /Remove/i })
+		).not.toBeInTheDocument();
+		expect(screen.getByRole('checkbox')).toBeInTheDocument();
+	});
+
+	it('shows disabled label when ticket type is disabled', () => {
+		const disabledData = {
+			...emptyInitialData,
+			ticket_types: [
+				{
+					...initialDataWithSoldTicketType.ticket_types[0],
+					disabled: true,
+				},
+			],
+		};
+		renderTickets({ initialData: disabledData });
+		openEditTicketsPanel();
+		expect(
+			screen.getByText('Disabled — no longer on sale')
+		).toBeInTheDocument();
+	});
+
+	it('does not show disabled label when ticket type is enabled', () => {
+		renderTickets({ initialData: initialDataWithSoldTicketType });
+		openEditTicketsPanel();
+		expect(
+			screen.queryByText('Disabled — no longer on sale')
+		).not.toBeInTheDocument();
+	});
+
+	it('toggling disable updates the disabled field in the save payload', async () => {
+		const { onSaveRef } = renderTickets({
+			initialData: initialDataWithSoldTicketType,
+		});
+		openEditTicketsPanel();
+		const toggle = screen.getByRole('checkbox');
+		fireEvent.click(toggle);
+
+		let savedPayload = null;
+		apiFetch.mockImplementation(({ method, data }) => {
+			if (method === 'PUT') {
+				savedPayload = data;
+				return Promise.resolve({
+					...initialDataWithSoldTicketType,
+					ticket_types: [],
+				});
+			}
+			return new Promise(() => {});
+		});
+
+		await act(async () => {
+			await onSaveRef.current();
+		});
+
+		expect(savedPayload?.ticket_types?.[0]?.disabled).toBe(true);
+	});
+});
