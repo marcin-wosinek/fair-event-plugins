@@ -1,0 +1,15 @@
+{
+	"steps": [
+		{
+			"step": "installPlugin",
+			"pluginData": {
+				"resource": "wordpress.org/plugins",
+				"slug": "fair-events"
+			}
+		},
+		{
+			"step": "activatePlugin",
+			"pluginPath": "fair-events/fair-events.php"
+		}
+	]
+}
