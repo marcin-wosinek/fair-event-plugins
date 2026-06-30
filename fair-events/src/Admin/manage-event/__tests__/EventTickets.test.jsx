@@ -36,7 +36,6 @@ afterEach(() => {
 
 const emptyInitialData = {
 	capacity: null,
-	signup_price: null,
 	ticket_types: [],
 	sale_periods: [],
 	prices: [],
@@ -81,6 +80,53 @@ function openEditTicketsPanel() {
 	});
 	fireEvent.click(panelButton);
 }
+
+describe('EventTickets — empty state (no advanced tickets)', () => {
+	it('renders the empty state with a "+ Add Ticket Type" button', () => {
+		renderTickets({ initialData: emptyInitialData });
+		expect(
+			screen.getByText(/No ticket types configured yet/i)
+		).toBeInTheDocument();
+		// The empty-state card and the (collapsed) Edit tickets table footer
+		// both expose a "+ Add Ticket Type" affordance.
+		expect(
+			screen.getAllByRole('button', { name: '+ Add Ticket Type' }).length
+		).toBeGreaterThanOrEqual(1);
+	});
+
+	it('does not render a Signup price field', () => {
+		renderTickets({ initialData: emptyInitialData });
+		expect(screen.queryByText(/Signup price/i)).not.toBeInTheDocument();
+	});
+
+	it('does not render a simple/advanced ticketing toggle', () => {
+		renderTickets({ initialData: emptyInitialData });
+		expect(
+			screen.queryByRole('button', {
+				name: /Switch to simple ticketing/i,
+			})
+		).not.toBeInTheDocument();
+		expect(
+			screen.queryByRole('button', {
+				name: /Switch to advanced ticketing/i,
+			})
+		).not.toBeInTheDocument();
+	});
+
+	it('opens the advanced editor when "+ Add Ticket Type" is clicked from the empty state', () => {
+		renderTickets({ initialData: emptyInitialData });
+		const addButton = screen.getByRole('button', {
+			name: '+ Add Ticket Type',
+		});
+		fireEvent.click(addButton);
+		// Adding a ticket type flips hasAdvancedTickets true: the empty-state
+		// message is gone and the pricing grid header appears.
+		expect(
+			screen.queryByText(/No ticket types configured yet/i)
+		).not.toBeInTheDocument();
+		expect(screen.getByText('Ticket Prices')).toBeInTheDocument();
+	});
+});
 
 describe('EventTickets — recurrence scope selector', () => {
 	it('shows Scope column when isRecurring is true', () => {

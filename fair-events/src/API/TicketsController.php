@@ -142,16 +142,10 @@ class TicketsController extends WP_REST_Controller {
 
 		$body = $request->get_json_params();
 
-		// 1. Update capacity + signup_price on event_dates row.
+		// 1. Update capacity on event_dates row.
 		$event_date_updates = array();
 		if ( array_key_exists( 'capacity', $body ) ) {
 			$event_date_updates['capacity'] = null !== $body['capacity'] ? absint( $body['capacity'] ) : null;
-		}
-		if ( array_key_exists( 'signup_price', $body ) ) {
-			$raw_price                          = $body['signup_price'];
-			$event_date_updates['signup_price'] = ( null === $raw_price || '' === $raw_price )
-				? null
-				: (float) $raw_price;
 		}
 		if ( ! empty( $event_date_updates ) ) {
 			EventDates::update_by_id( $event_date_id, $event_date_updates );
@@ -308,18 +302,12 @@ class TicketsController extends WP_REST_Controller {
 			);
 		}
 
-		// 1. Update capacity + signup_price on event_dates row.
+		// 1. Update capacity on event_dates row.
 		$event_date_updates = array();
 		if ( array_key_exists( 'capacity', $body ) ) {
 			$event_date_updates['capacity'] = null !== $body['capacity'] && '' !== $body['capacity']
 				? absint( $body['capacity'] )
 				: null;
-		}
-		if ( array_key_exists( 'signup_price', $body ) ) {
-			$raw_price                          = $body['signup_price'];
-			$event_date_updates['signup_price'] = ( null === $raw_price || '' === $raw_price )
-				? null
-				: (float) $raw_price;
 		}
 		if ( ! empty( $event_date_updates ) ) {
 			EventDates::update_by_id( $event_date_id, $event_date_updates );
@@ -703,7 +691,6 @@ class TicketsController extends WP_REST_Controller {
 
 		return array(
 			'capacity'     => $event_date->capacity,
-			'signup_price' => null !== $event_date->signup_price ? (float) $event_date->signup_price : null,
 			'end_datetime' => $event_date->end_datetime,
 			'ticket_types' => array_map(
 				function ( $t ) use ( $restrictions, $participant_repo ) {

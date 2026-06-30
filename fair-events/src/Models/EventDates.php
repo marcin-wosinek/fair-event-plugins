@@ -115,13 +115,6 @@ class EventDates {
 	public $capacity;
 
 	/**
-	 * Signup price (null = free, 0.00+ = paid)
-	 *
-	 * @var float|null
-	 */
-	public $signup_price;
-
-	/**
 	 * Free-text address (used when the Venues feature bundle is disabled).
 	 *
 	 * @var string|null
@@ -196,7 +189,6 @@ class EventDates {
 		$event_dates->external_url    = $result->external_url ?? null;
 		$event_dates->link_type       = $result->link_type ?? 'post';
 		$event_dates->capacity        = isset( $result->capacity ) && null !== $result->capacity ? (int) $result->capacity : null;
-		$event_dates->signup_price    = isset( $result->signup_price ) && null !== $result->signup_price ? (float) $result->signup_price : null;
 		$event_dates->address         = isset( $result->address ) ? $result->address : null;
 
 		return $event_dates;
@@ -712,7 +704,6 @@ class EventDates {
 			'external_url'    => '%s',
 			'link_type'       => '%s',
 			'capacity'        => '%d',
-			'signup_price'    => '%f',
 			'address'         => '%s',
 		);
 
