@@ -17,7 +17,7 @@ class Schema {
 	/**
 	 * Database version
 	 */
-	const DB_VERSION = '3.17.0';
+	const DB_VERSION = '3.18.0';
 
 	/**
 	 * Get the SQL for creating the fair_event_dates table
