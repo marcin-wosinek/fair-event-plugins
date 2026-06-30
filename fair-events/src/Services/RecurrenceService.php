@@ -438,6 +438,136 @@ class RecurrenceService {
 	}
 
 	/**
+	 * Classify the impact of a proposed recurrence regeneration on generated children.
+	 *
+	 * Compares the desired generated occurrence set against existing DB rows (keyed
+	 * by anchor) and returns a partition into unchanged / shifted / added / removed.
+	 * Each entry in 'shifted' and 'removed' includes a 'dependents' count (ticket
+	 * types + active signups) and an 'is_past' flag.
+	 *
+	 * Only classifies generated children — the master row is always preserved.
+	 *
+	 * @param int   $master_id         Master event date row ID.
+	 * @param array $proposed_generated Desired generated occurrences (slice after first);
+	 *                                  each entry has 'start' and 'end' keys.
+	 * @return array {
+	 *     @type array $unchanged  Rows that would remain identical.
+	 *     @type array $shifted    Rows that would be updated in place (anchor matches, times differ).
+	 *     @type array $added      New anchors with no existing row.
+	 *     @type array $removed    Existing rows whose anchor is no longer desired.
+	 * }
+	 */
+	public static function classify_change( $master_id, $proposed_generated ) {
+		$desired_by_anchor = array();
+		foreach ( $proposed_generated as $occ ) {
+			$anchor                       = ( new \DateTime( $occ['start'] ) )->format( 'Y-m-d' );
+			$desired_by_anchor[ $anchor ] = $occ;
+		}
+
+		$all_existing  = EventDates::get_all_by_master_id( $master_id );
+		$master_row    = EventDates::get_by_id( $master_id );
+		$master_anchor = $master_row->recurrence_anchor
+			?? ( new \DateTime( $master_row->start_datetime ) )->format( 'Y-m-d' );
+		unset( $all_existing[ $master_anchor ] );
+
+		$now = current_time( 'mysql' );
+
+		$result = array(
+			'unchanged' => array(),
+			'shifted'   => array(),
+			'added'     => array(),
+			'removed'   => array(),
+		);
+
+		foreach ( $desired_by_anchor as $anchor => $occ ) {
+			if ( isset( $all_existing[ $anchor ] ) ) {
+				$row            = $all_existing[ $anchor ];
+				$existing_start = ( new \DateTime( $row->start_datetime ) )->format( 'Y-m-d\TH:i:s' );
+				$proposed_start = ( new \DateTime( $occ['start'] ) )->format( 'Y-m-d\TH:i:s' );
+
+				if ( $existing_start === $proposed_start ) {
+					$result['unchanged'][] = array(
+						'id'             => $row->id,
+						'start_datetime' => $row->start_datetime,
+					);
+				} else {
+					$result['shifted'][] = array(
+						'id'                 => $row->id,
+						'start_datetime'     => $row->start_datetime,
+						'new_start_datetime' => $occ['start'],
+						'is_past'            => $row->start_datetime < $now,
+						'dependents'         => self::count_dependents( $row->id ),
+					);
+				}
+				unset( $all_existing[ $anchor ] );
+			} else {
+				$result['added'][] = array(
+					'start_datetime' => $occ['start'],
+				);
+			}
+		}
+
+		foreach ( $all_existing as $stale_row ) {
+			$result['removed'][] = array(
+				'id'             => $stale_row->id,
+				'start_datetime' => $stale_row->start_datetime,
+				'is_past'        => $stale_row->start_datetime < $now,
+				'dependents'     => self::count_dependents( $stale_row->id ),
+			);
+		}
+
+		return $result;
+	}
+
+	/**
+	 * Count active dependents for an event date.
+	 *
+	 * Counts ticket types and active signups (status not 'cancelled') that
+	 * reference the given event date. Passes the raw count through the
+	 * 'fair_events_event_date_dependents' filter so other plugins
+	 * (fair-audience, fair-payments) can add their own references.
+	 *
+	 * @param int $event_date_id Event date row ID.
+	 * @return int Total dependent count.
+	 *
+	 * phpcs:disable WordPress.DB.DirectDatabaseQuery
+	 */
+	public static function count_dependents( $event_date_id ) {
+		global $wpdb;
+
+		$tt_count = (int) $wpdb->get_var(
+			$wpdb->prepare(
+				'SELECT COUNT(*) FROM %i WHERE event_date_id = %d',
+				$wpdb->prefix . 'fair_events_ticket_types',
+				(int) $event_date_id
+			)
+		);
+
+		$signup_count = (int) $wpdb->get_var(
+			$wpdb->prepare(
+				"SELECT COUNT(*) FROM %i WHERE event_date_id = %d AND status != 'cancelled'",
+				$wpdb->prefix . 'fair_events_signups',
+				(int) $event_date_id
+			)
+		);
+
+		$count = $tt_count + $signup_count;
+
+		/**
+		 * Filters the dependent count for an event date.
+		 *
+		 * Allows other plugins (fair-audience for participant/mailing counts,
+		 * fair-payments for transaction counts) to register their own references
+		 * so the impact classifier can detect all dependents without a hard
+		 * cross-plugin dependency.
+		 *
+		 * @param int $count         Raw count from fair-events own tables.
+		 * @param int $event_date_id Event date row ID.
+		 */
+		return (int) apply_filters( 'fair_events_event_date_dependents', $count, (int) $event_date_id );
+	}
+
+	/**
 	 * Parse exdates string into an array of Y-m-d date strings
 	 *
 	 * @param string|null $exdates Comma-separated date string.

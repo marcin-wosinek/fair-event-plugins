@@ -715,8 +715,9 @@ class EventDatesController extends WP_REST_Controller {
 			);
 		}
 
-		$update_data  = array();
-		$newly_linked = false;
+		$update_data       = array();
+		$newly_linked      = false;
+		$recurrence_impact = null;
 
 		$title = $request->get_param( 'title' );
 		if ( null !== $title ) {
@@ -814,6 +815,37 @@ class EventDatesController extends WP_REST_Controller {
 			if ( $rrule_changed || $dates_changed_on_recurring ) {
 				$effective_rrule = $update_data['rrule'] ?? $existing->rrule;
 
+				// Classify the impact before applying, so we can reject destructive
+				// changes (removing occurrences that have dependents or are in the past).
+				$recurrence_impact = null;
+				if ( ! empty( $effective_rrule ) ) {
+					$proposed_start = $update_data['start_datetime'] ?? $existing->start_datetime;
+					$proposed_end   = $update_data['end_datetime'] ?? $existing->end_datetime;
+					$exdates        = RecurrenceService::parse_exdates( $existing->exdates );
+					$all_proposed   = RecurrenceService::generate_occurrences( $proposed_start, $proposed_end, $effective_rrule, null, $exdates );
+					$proposed_gen   = array_slice( $all_proposed, 1 );
+
+					$classify_master_id = ( 'generated' === $existing->occurrence_type && $existing->master_id )
+						? $existing->master_id
+						: $id;
+
+					$recurrence_impact = RecurrenceService::classify_change( $classify_master_id, $proposed_gen );
+
+					// A removal is destructive when the row has dependents or is in the past.
+					foreach ( $recurrence_impact['removed'] as $removed_row ) {
+						if ( $removed_row['dependents'] > 0 || $removed_row['is_past'] ) {
+							return new WP_Error(
+								'rest_destructive_recurrence_change',
+								__( 'Cannot remove occurrences that have dependents or are in the past.', 'fair-events' ),
+								array(
+									'status' => 409,
+									'impact' => $recurrence_impact,
+								)
+							);
+						}
+					}
+				}
+
 				if ( $effective_event_id ) {
 					RecurrenceService::regenerate_event_occurrences( $effective_event_id, $effective_rrule );
 				} else {
@@ -892,7 +924,12 @@ class EventDatesController extends WP_REST_Controller {
 
 		$event_date = EventDates::get_by_id( $id );
 
-		return new WP_REST_Response( $this->prepare_event_date( $event_date ), 200 );
+		$response_data = $this->prepare_event_date( $event_date );
+		if ( null !== $recurrence_impact ) {
+			$response_data['recurrence_impact'] = $recurrence_impact;
+		}
+
+		return new WP_REST_Response( $response_data, 200 );
 	}
 
 	/**
@@ -1194,6 +1231,34 @@ class EventDatesController extends WP_REST_Controller {
 			$exdates
 		);
 
+		// Classify the impact of this exdate change before applying it.
+		// An exdate addition removes one occurrence; check for dependents/past rows.
+		$recurrence_impact = null;
+		if ( ! empty( $event_date->rrule ) ) {
+			$new_proposed      = RecurrenceService::generate_occurrences(
+				$event_date->start_datetime,
+				$event_date->end_datetime,
+				$event_date->rrule,
+				null,
+				$exdates
+			);
+			$proposed_gen      = array_slice( $new_proposed, 1 );
+			$recurrence_impact = RecurrenceService::classify_change( $id, $proposed_gen );
+
+			foreach ( $recurrence_impact['removed'] as $removed_row ) {
+				if ( $removed_row['dependents'] > 0 || $removed_row['is_past'] ) {
+					return new WP_Error(
+						'rest_destructive_recurrence_change',
+						__( 'Cannot remove occurrences that have dependents or are in the past.', 'fair-events' ),
+						array(
+							'status' => 409,
+							'impact' => $recurrence_impact,
+						)
+					);
+				}
+			}
+		}
+
 		// Save exdates.
 		$exdates_string = ! empty( $exdates ) ? implode( ',', $exdates ) : null;
 		EventDates::update_by_id( $id, array( 'exdates' => $exdates_string ) );
@@ -1206,9 +1271,13 @@ class EventDatesController extends WP_REST_Controller {
 		}
 
 		// Return updated event date.
-		$updated = EventDates::get_by_id( $id );
+		$updated       = EventDates::get_by_id( $id );
+		$response_data = $this->prepare_event_date( $updated );
+		if ( null !== $recurrence_impact ) {
+			$response_data['recurrence_impact'] = $recurrence_impact;
+		}
 
-		return new WP_REST_Response( $this->prepare_event_date( $updated ), 200 );
+		return new WP_REST_Response( $response_data, 200 );
 	}
 
 	/**
