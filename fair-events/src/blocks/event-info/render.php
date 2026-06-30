@@ -178,8 +178,9 @@ if ( $is_recurring ) {
 	<?php if ( $venue ) : ?>
 		<div class="wp-block-fair-events-event-info__venue">
 			<div class="wp-block-fair-events-event-info__venue-name">
-				<?php if ( $venue->google_maps_link ) : ?>
-					<a href="<?php echo esc_url( $venue->google_maps_link ); ?>" target="_blank" rel="noopener noreferrer">
+				<?php $maps_url = $venue->get_maps_url(); ?>
+				<?php if ( $maps_url ) : ?>
+					<a href="<?php echo esc_url( $maps_url ); ?>" target="_blank" rel="noopener noreferrer">
 						<?php echo esc_html( $venue->name ); ?>
 					</a>
 				<?php else : ?>

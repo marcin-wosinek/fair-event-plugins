@@ -17,7 +17,7 @@ class Schema {
 	/**
 	 * Database version
 	 */
-	const DB_VERSION = '3.15.0';
+	const DB_VERSION = '3.16.0';
 
 	/**
 	 * Get the SQL for creating the fair_event_dates table
@@ -154,7 +154,6 @@ class Schema {
 			id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
 			name VARCHAR(255) NOT NULL,
 			address TEXT,
-			google_maps_link TEXT,
 			latitude VARCHAR(20) DEFAULT NULL,
 			longitude VARCHAR(20) DEFAULT NULL,
 			facebook_page_link TEXT,

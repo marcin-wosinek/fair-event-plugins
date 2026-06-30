@@ -38,13 +38,6 @@ class Venue {
 	public $address;
 
 	/**
-	 * Google Maps link
-	 *
-	 * @var string|null
-	 */
-	public $google_maps_link;
-
-	/**
 	 * Latitude coordinate
 	 *
 	 * @var string|null
@@ -142,7 +135,7 @@ class Venue {
 		$table_name = self::get_table_name();
 
 		// Validate order_by to prevent SQL injection.
-		$allowed_columns = array( 'id', 'name', 'address', 'google_maps_link', 'latitude', 'longitude', 'facebook_page_link', 'instagram_handle', 'website_url', 'created_at', 'updated_at' );
+		$allowed_columns = array( 'id', 'name', 'address', 'latitude', 'longitude', 'facebook_page_link', 'instagram_handle', 'website_url', 'created_at', 'updated_at' );
 		if ( ! in_array( $order_by, $allowed_columns, true ) ) {
 			$order_by = 'name';
 		}
@@ -175,7 +168,6 @@ class Venue {
 	 *
 	 * @param string      $name               Venue name.
 	 * @param string|null $address            Venue address.
-	 * @param string|null $google_maps_link   Google Maps URL.
 	 * @param string|null $latitude           Latitude coordinate.
 	 * @param string|null $longitude          Longitude coordinate.
 	 * @param string|null $facebook_page_link Facebook page URL.
@@ -183,7 +175,7 @@ class Venue {
 	 * @param string|null $website_url        Website URL.
 	 * @return int|false The venue ID on success, false on failure.
 	 */
-	public static function create( $name, $address = null, $google_maps_link = null, $latitude = null, $longitude = null, $facebook_page_link = null, $instagram_handle = null, $website_url = null ) {
+	public static function create( $name, $address = null, $latitude = null, $longitude = null, $facebook_page_link = null, $instagram_handle = null, $website_url = null ) {
 		global $wpdb;
 
 		$table_name = self::get_table_name();
@@ -191,7 +183,6 @@ class Venue {
 		$data = array(
 			'name'               => $name,
 			'address'            => $address,
-			'google_maps_link'   => $google_maps_link,
 			'latitude'           => $latitude,
 			'longitude'          => $longitude,
 			'facebook_page_link' => $facebook_page_link,
@@ -199,7 +190,7 @@ class Venue {
 			'website_url'        => $website_url,
 		);
 
-		$format = array( '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s' );
+		$format = array( '%s', '%s', '%s', '%s', '%s', '%s', '%s' );
 
 		$result = $wpdb->insert( $table_name, $data, $format );
 
@@ -216,7 +207,6 @@ class Venue {
 	 * @param int         $id                 Venue ID.
 	 * @param string      $name               Venue name.
 	 * @param string|null $address            Venue address.
-	 * @param string|null $google_maps_link   Google Maps URL.
 	 * @param string|null $latitude           Latitude coordinate.
 	 * @param string|null $longitude          Longitude coordinate.
 	 * @param string|null $facebook_page_link Facebook page URL.
@@ -224,7 +214,7 @@ class Venue {
 	 * @param string|null $website_url        Website URL.
 	 * @return bool True on success, false on failure.
 	 */
-	public static function update( $id, $name, $address = null, $google_maps_link = null, $latitude = null, $longitude = null, $facebook_page_link = null, $instagram_handle = null, $website_url = null ) {
+	public static function update( $id, $name, $address = null, $latitude = null, $longitude = null, $facebook_page_link = null, $instagram_handle = null, $website_url = null ) {
 		global $wpdb;
 
 		$table_name = self::get_table_name();
@@ -232,7 +222,6 @@ class Venue {
 		$data = array(
 			'name'               => $name,
 			'address'            => $address,
-			'google_maps_link'   => $google_maps_link,
 			'latitude'           => $latitude,
 			'longitude'          => $longitude,
 			'facebook_page_link' => $facebook_page_link,
@@ -240,7 +229,7 @@ class Venue {
 			'website_url'        => $website_url,
 		);
 
-		$format = array( '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s' );
+		$format = array( '%s', '%s', '%s', '%s', '%s', '%s', '%s' );
 
 		$result = $wpdb->update(
 			$table_name,
@@ -295,7 +284,6 @@ class Venue {
 		$venue->id                 = (int) $row->id;
 		$venue->name               = $row->name;
 		$venue->address            = $row->address;
-		$venue->google_maps_link   = $row->google_maps_link;
 		$venue->latitude           = $row->latitude;
 		$venue->longitude          = $row->longitude;
 		$venue->facebook_page_link = $row->facebook_page_link;
@@ -312,12 +300,44 @@ class Venue {
 	 *
 	 * @return array Venue data as array.
 	 */
+	/**
+	 * Build a Google Maps search URL from coordinates or address.
+	 *
+	 * Uses the keyless /maps/search/ scheme so no API key is required.
+	 *
+	 * @param string|null $latitude  Latitude.
+	 * @param string|null $longitude Longitude.
+	 * @param string|null $address   Address text.
+	 * @return string|null URL or null when no location data is available.
+	 */
+	public static function build_maps_url( $latitude, $longitude, $address ) {
+		if ( ! empty( $latitude ) && ! empty( $longitude ) ) {
+			$query = rawurlencode( $latitude . ',' . $longitude );
+			return 'https://www.google.com/maps/search/?api=1&query=' . $query;
+		}
+
+		if ( ! empty( $address ) ) {
+			return 'https://www.google.com/maps/search/?api=1&query=' . rawurlencode( $address );
+		}
+
+		return null;
+	}
+
+	/**
+	 * Get the Google Maps URL for this venue.
+	 *
+	 * @return string|null URL or null when no location data is available.
+	 */
+	public function get_maps_url() {
+		return self::build_maps_url( $this->latitude, $this->longitude, $this->address );
+	}
+
 	public function to_array() {
 		return array(
 			'id'                 => $this->id,
 			'name'               => $this->name,
 			'address'            => $this->address,
-			'google_maps_link'   => $this->google_maps_link,
+			'maps_url'           => $this->get_maps_url(),
 			'latitude'           => $this->latitude,
 			'longitude'          => $this->longitude,
 			'facebook_page_link' => $this->facebook_page_link,
