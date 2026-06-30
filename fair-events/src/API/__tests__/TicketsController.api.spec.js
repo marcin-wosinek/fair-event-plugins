@@ -154,3 +154,134 @@ test.describe('TicketsController — recurrence_scope preserved when type has sa
 		);
 	});
 });
+
+test.describe('TicketsController — disabled flag and delete guard', () => {
+	let api;
+	let eventDateId;
+	let ticketTypeId;
+
+	test.beforeAll(async () => {
+		api = await request.newContext({ baseURL: BASE_URL });
+
+		const edRes = await api.post('/wp-json/fair-events/v1/event-dates', {
+			headers: adminHeaders,
+			data: {
+				title: `Disabled-flag test ${Date.now()}`,
+				start_datetime: '2030-07-01 10:00:00',
+				end_datetime: '2030-07-01 12:00:00',
+			},
+		});
+		expect(edRes.ok()).toBeTruthy();
+		eventDateId = (await edRes.json()).id;
+
+		const putRes = await api.put(
+			`/wp-json/fair-events/v1/event-dates/${eventDateId}/tickets`,
+			{
+				headers: adminHeaders,
+				data: {
+					ticket_types: [
+						{
+							name: 'Standard',
+							capacity: null,
+							seats_per_ticket: 1,
+							invitation_only: false,
+							minimum_activities: 0,
+							disable_at: null,
+							recurrence_scope: 'single_instance',
+							disabled: false,
+							group_ids: [],
+						},
+					],
+					sale_periods: [],
+					prices: [],
+					settings: {},
+				},
+			}
+		);
+		expect(putRes.ok()).toBeTruthy();
+		ticketTypeId = (await putRes.json()).ticket_types?.[0]?.id;
+		expect(ticketTypeId).toBeTruthy();
+	});
+
+	test.afterAll(async () => {
+		if (eventDateId) {
+			await api.delete(
+				`/wp-json/fair-events/v1/event-dates/${eventDateId}`,
+				{ headers: adminHeaders }
+			);
+		}
+	});
+
+	test('disabled defaults to false on creation', async () => {
+		const res = await api.get(
+			`/wp-json/fair-events/v1/event-dates/${eventDateId}/tickets`,
+			{ headers: adminHeaders }
+		);
+		expect(res.ok()).toBeTruthy();
+		const type = (await res.json()).ticket_types?.find(
+			(t) => t.id === ticketTypeId
+		);
+		expect(type).toBeTruthy();
+		expect(type.disabled).toBe(false);
+	});
+
+	test('setting disabled:true persists and is returned', async () => {
+		const putRes = await api.put(
+			`/wp-json/fair-events/v1/event-dates/${eventDateId}/tickets`,
+			{
+				headers: adminHeaders,
+				data: {
+					ticket_types: [
+						{
+							id: ticketTypeId,
+							name: 'Standard',
+							capacity: null,
+							seats_per_ticket: 1,
+							invitation_only: false,
+							minimum_activities: 0,
+							disable_at: null,
+							recurrence_scope: 'single_instance',
+							disabled: true,
+							group_ids: [],
+						},
+					],
+					sale_periods: [],
+					prices: [],
+					settings: {},
+				},
+			}
+		);
+		expect(putRes.ok()).toBeTruthy();
+		const type = (await putRes.json()).ticket_types?.find(
+			(t) => t.id === ticketTypeId
+		);
+		expect(type?.disabled).toBe(true);
+
+		// Re-enable for cleanup.
+		await api.put(
+			`/wp-json/fair-events/v1/event-dates/${eventDateId}/tickets`,
+			{
+				headers: adminHeaders,
+				data: {
+					ticket_types: [
+						{
+							id: ticketTypeId,
+							name: 'Standard',
+							capacity: null,
+							seats_per_ticket: 1,
+							invitation_only: false,
+							minimum_activities: 0,
+							disable_at: null,
+							recurrence_scope: 'single_instance',
+							disabled: false,
+							group_ids: [],
+						},
+					],
+					sale_periods: [],
+					prices: [],
+					settings: {},
+				},
+			}
+		);
+	});
+});

@@ -205,7 +205,7 @@ class GetTicketsController extends WP_REST_Controller {
 					array( 'status' => 400 )
 				);
 			}
-			if ( $ticket_type->disable_at && strtotime( $ticket_type->disable_at ) <= time() ) {
+			if ( $ticket_type->disabled || ( $ticket_type->disable_at && strtotime( $ticket_type->disable_at ) <= time() ) ) {
 				return new WP_Error(
 					'ticket_type_disabled',
 					__( 'This ticket type is no longer available.', 'fair-events' ),

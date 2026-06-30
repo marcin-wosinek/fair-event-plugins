@@ -22,6 +22,7 @@ import {
 	Spinner,
 	Notice,
 	TextControl,
+	ToggleControl,
 	__experimentalVStack as VStack,
 	__experimentalHStack as HStack,
 } from '@wordpress/components';
@@ -1620,6 +1621,20 @@ export default function EventTickets({
 																		)
 																	}
 																/>
+																{type.disabled && (
+																	<span
+																		style={{
+																			color: '#757575',
+																			fontSize:
+																				'0.85em',
+																		}}
+																	>
+																		{__(
+																			'Disabled — no longer on sale',
+																			'fair-events'
+																		)}
+																	</span>
+																)}
 															</td>
 															{settings.show_ticket_type_capacity && (
 																<td>
@@ -2003,21 +2018,49 @@ export default function EventTickets({
 																}
 															)}
 															<td>
-																<Button
-																	variant="tertiary"
-																	isDestructive
-																	size="small"
-																	onClick={() =>
-																		removeTicketType(
-																			tIndex
-																		)
-																	}
-																>
-																	{__(
-																		'Remove',
-																		'fair-events'
-																	)}
-																</Button>
+																{type.has_sales ? (
+																	<ToggleControl
+																		label={
+																			type.disabled
+																				? __(
+																						'Disabled',
+																						'fair-events'
+																				  )
+																				: __(
+																						'Enabled',
+																						'fair-events'
+																				  )
+																		}
+																		checked={
+																			!type.disabled
+																		}
+																		onChange={(
+																			v
+																		) =>
+																			updateTicketType(
+																				tIndex,
+																				'disabled',
+																				!v
+																			)
+																		}
+																	/>
+																) : (
+																	<Button
+																		variant="tertiary"
+																		isDestructive
+																		size="small"
+																		onClick={() =>
+																			removeTicketType(
+																				tIndex
+																			)
+																		}
+																	>
+																		{__(
+																			'Remove',
+																			'fair-events'
+																		)}
+																	</Button>
+																)}
 															</td>
 														</tr>
 													)

@@ -405,8 +405,8 @@ if ( $pricing_event_date_id && class_exists( \FairEvents\Models\TicketType::clas
 			continue;
 		}
 
-		// Hide ticket types whose end date has passed.
-		if ( $tt->disable_at && strtotime( $tt->disable_at ) <= time() ) {
+		// Hide ticket types whose end date has passed or that have been manually disabled.
+		if ( $tt->disabled || ( $tt->disable_at && strtotime( $tt->disable_at ) <= time() ) ) {
 			continue;
 		}
 

@@ -509,6 +509,12 @@ class TicketsController extends WP_REST_Controller {
 		// Delete removed.
 		foreach ( $existing_ids as $eid ) {
 			if ( ! in_array( $eid, $incoming_ids, true ) ) {
+				$has_sales = $participant_repo
+					? $participant_repo->count_seats_for_ticket_type( $eid ) > 0
+					: false;
+				if ( $has_sales ) {
+					continue;
+				}
 				TicketPrice::delete_by_ticket_type_id( $eid );
 				if ( class_exists( \FairEventsExperimental\Models\TicketTypeGroupRestriction::class ) ) {
 					\FairEventsExperimental\Models\TicketTypeGroupRestriction::delete_by_ticket_type_id( $eid );
@@ -548,6 +554,7 @@ class TicketsController extends WP_REST_Controller {
 					'invitation_only'    => $invitation_only,
 					'minimum_activities' => $minimum_activities,
 					'disable_at'         => $disable_at,
+					'disabled'           => ! empty( $item['disabled'] ),
 					'sort_order'         => $sort_order,
 				);
 				if ( ! $has_sales ) {
