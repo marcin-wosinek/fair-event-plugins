@@ -17,7 +17,7 @@ class Schema {
 	/**
 	 * Database version
 	 */
-	const DB_VERSION = '3.18.0';
+	const DB_VERSION = '3.19.0';
 
 	/**
 	 * Get the SQL for creating the fair_event_dates table
@@ -49,6 +49,7 @@ class Schema {
 			capacity INT UNSIGNED DEFAULT NULL,
 			signup_price DECIMAL(10,2) DEFAULT NULL,
 			address TEXT DEFAULT NULL,
+			recurrence_anchor DATE DEFAULT NULL,
 			created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
 			updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
 			PRIMARY KEY (id),
@@ -59,7 +60,8 @@ class Schema {
 			KEY idx_occurrence_type (occurrence_type),
 			KEY idx_master_id (master_id),
 			KEY idx_rrule (rrule(100)),
-			KEY idx_link_type (link_type)
+			KEY idx_link_type (link_type),
+			KEY idx_recurrence_anchor (recurrence_anchor)
 		) ENGINE=InnoDB {$charset_collate};";
 	}
 

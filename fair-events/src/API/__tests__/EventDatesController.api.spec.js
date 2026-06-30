@@ -1,9 +1,11 @@
 /**
- * Playwright API tests for EventDatesController — standalone category copy on first link.
+ * Playwright API tests for EventDatesController.
  *
- * Covers the $newly_linked fix: when a standalone event date that has categories
- * in the junction table is linked to a post for the first time, those categories
- * must be copied to the post taxonomy and the junction rows must be cleared.
+ * Covers:
+ * - Standalone category copy on first link ($newly_linked fix).
+ * - Recurrence reconciliation: occurrence IDs are preserved on time/venue edits,
+ *   RRULE shortening only deletes removed rows, and master time edits propagate
+ *   to generated children.
  */
 
 import { test, expect, request } from '@playwright/test';
@@ -152,5 +154,153 @@ test.describe('EventDatesController — standalone category copy on first link',
 				}
 			);
 		}
+	});
+});
+
+test.describe('EventDatesController — recurrence reconciliation', () => {
+	let api;
+	let masterEventDateId;
+	let eventPostId;
+
+	test.beforeAll(async () => {
+		api = await request.newContext({ baseURL: BASE_URL });
+	});
+
+	test.afterEach(async () => {
+		if (masterEventDateId) {
+			await api.delete(
+				`/wp-json/fair-events/v1/event-dates/${masterEventDateId}`,
+				{ headers: adminHeaders }
+			);
+			masterEventDateId = null;
+		}
+		if (eventPostId) {
+			await api.delete(
+				`/wp-json/wp/v2/fair_event/${eventPostId}?force=true`,
+				{ headers: adminHeaders }
+			);
+			eventPostId = null;
+		}
+	});
+
+	async function createRecurringEvent(
+		api,
+		rrule,
+		start = '2035-03-01 10:00:00'
+	) {
+		const postRes = await api.post('/wp-json/wp/v2/fair_event', {
+			headers: adminHeaders,
+			data: { title: `Recurrence test ${Date.now()}`, status: 'publish' },
+		});
+		expect(postRes.ok()).toBeTruthy();
+		eventPostId = (await postRes.json()).id;
+
+		const edRes = await api.post('/wp-json/fair-events/v1/event-dates', {
+			headers: adminHeaders,
+			data: {
+				event_id: eventPostId,
+				start_datetime: start,
+				end_datetime: start.replace('10:00:00', '12:00:00'),
+				rrule,
+			},
+		});
+		expect(edRes.ok()).toBeTruthy();
+		const edBody = await edRes.json();
+		masterEventDateId = edBody.id;
+		return edBody;
+	}
+
+	async function getOccurrences(api, eventId) {
+		const res = await api.get(
+			`/wp-json/fair-events/v1/event-dates?event_id=${eventId}`,
+			{ headers: adminHeaders }
+		);
+		expect(res.ok()).toBeTruthy();
+		return await res.json();
+	}
+
+	test('time-of-day shift preserves occurrence IDs', async ({
+		request: req,
+	}) => {
+		const localApi = await req.newContext({ baseURL: BASE_URL });
+		await createRecurringEvent(localApi, 'FREQ=WEEKLY;COUNT=3');
+
+		const before = await getOccurrences(localApi, eventPostId);
+		expect(before.length).toBe(3);
+		const idsBefore = before.map((o) => o.id).sort();
+
+		const putRes = await localApi.put(
+			`/wp-json/fair-events/v1/event-dates/${masterEventDateId}`,
+			{
+				headers: adminHeaders,
+				data: {
+					start_datetime: '2035-03-01 11:00:00',
+					end_datetime: '2035-03-01 13:00:00',
+				},
+			}
+		);
+		expect(putRes.ok()).toBeTruthy();
+
+		const after = await getOccurrences(localApi, eventPostId);
+		expect(after.length).toBe(3);
+		const idsAfter = after.map((o) => o.id).sort();
+
+		expect(idsAfter).toEqual(idsBefore);
+
+		const starts = after.map((o) => o.start_datetime);
+		expect(starts.every((s) => s.includes('11:00:00'))).toBe(true);
+	});
+
+	test('shortening RRULE deletes only removed occurrences', async ({
+		request: req,
+	}) => {
+		const localApi = await req.newContext({ baseURL: BASE_URL });
+		await createRecurringEvent(localApi, 'FREQ=WEEKLY;COUNT=4');
+
+		const before = await getOccurrences(localApi, eventPostId);
+		expect(before.length).toBe(4);
+		const keptIds = before.slice(0, 2).map((o) => o.id);
+		const removedIds = before.slice(2).map((o) => o.id);
+
+		const putRes = await localApi.put(
+			`/wp-json/fair-events/v1/event-dates/${masterEventDateId}`,
+			{
+				headers: adminHeaders,
+				data: { rrule: 'FREQ=WEEKLY;COUNT=2' },
+			}
+		);
+		expect(putRes.ok()).toBeTruthy();
+
+		const after = await getOccurrences(localApi, eventPostId);
+		expect(after.length).toBe(2);
+		const idsAfter = after.map((o) => o.id);
+
+		keptIds.forEach((id) => expect(idsAfter).toContain(id));
+		removedIds.forEach((id) => expect(idsAfter).not.toContain(id));
+	});
+
+	test('master time-of-day edit propagates to generated children', async ({
+		request: req,
+	}) => {
+		const localApi = await req.newContext({ baseURL: BASE_URL });
+		await createRecurringEvent(localApi, 'FREQ=WEEKLY;COUNT=3');
+
+		const putRes = await localApi.put(
+			`/wp-json/fair-events/v1/event-dates/${masterEventDateId}`,
+			{
+				headers: adminHeaders,
+				data: {
+					start_datetime: '2035-03-01 14:00:00',
+					end_datetime: '2035-03-01 16:00:00',
+				},
+			}
+		);
+		expect(putRes.ok()).toBeTruthy();
+
+		const after = await getOccurrences(localApi, eventPostId);
+		expect(after.length).toBe(3);
+
+		const starts = after.map((o) => o.start_datetime);
+		expect(starts.every((s) => s.includes('14:00:00'))).toBe(true);
 	});
 });

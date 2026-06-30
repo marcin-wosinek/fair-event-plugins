@@ -194,30 +194,28 @@ class RecurrenceService {
 	/**
 	 * Regenerate all occurrences for an event
 	 *
+	 * Uses reconcile_occurrences() so existing row IDs are preserved when
+	 * dates shift, avoiding id-churn that breaks attached ticket types and signups.
+	 *
 	 * @param int         $event_id Event post ID.
 	 * @param string|null $rrule    Optional RRULE to use. Pass null to read from database,
 	 *                              pass empty string to explicitly clear recurrence.
 	 * @return int Number of occurrences generated.
 	 */
 	public static function regenerate_event_occurrences( $event_id, $rrule = null ) {
-		// Get the master/single occurrence.
 		$master = EventDates::get_by_event_id( $event_id );
 
 		if ( ! $master ) {
 			return 0;
 		}
 
-		// Get the recurrence rule from database only if not provided (null).
-		// Empty string means "explicitly no recurrence".
 		if ( null === $rrule ) {
 			$rrule = EventDates::get_rrule_by_event_id( $event_id );
 		}
 
-		// Delete existing generated occurrences.
-		EventDates::delete_generated_occurrences( $event_id );
-
-		// If no RRULE, ensure the existing record is marked as 'single'.
 		if ( empty( $rrule ) ) {
+			// No recurrence: delete generated children and mark master as 'single'.
+			EventDates::delete_generated_occurrences( $event_id );
 			EventDates::save_or_update_master(
 				$event_id,
 				$master->start_datetime,
@@ -229,10 +227,7 @@ class RecurrenceService {
 			return 1;
 		}
 
-		// Parse exdates from master.
-		$exdates = self::parse_exdates( $master->exdates );
-
-		// Generate occurrences.
+		$exdates     = self::parse_exdates( $master->exdates );
 		$occurrences = self::generate_occurrences(
 			$master->start_datetime,
 			$master->end_datetime,
@@ -245,8 +240,8 @@ class RecurrenceService {
 			return 0;
 		}
 
-		// Update master occurrence (first one).
-		$first     = array_shift( $occurrences );
+		// Ensure master row exists / is up to date with the new rrule and first occurrence time.
+		$first     = $occurrences[0];
 		$master_id = EventDates::save_or_update_master(
 			$event_id,
 			$first['start'],
@@ -260,29 +255,27 @@ class RecurrenceService {
 			return 0;
 		}
 
-		$count = 1;
-
-		// Create generated occurrences.
-		foreach ( $occurrences as $occurrence ) {
-			$result = EventDates::save_occurrence(
-				$event_id,
-				$occurrence['start'],
-				$occurrence['end'],
-				$master->all_day,
-				'generated',
-				$master_id
-			);
-
-			if ( $result ) {
-				++$count;
-			}
-		}
-
-		return $count;
+		// Reconcile generated children (occurrences[1..n]) against existing rows.
+		$generated = array_slice( $occurrences, 1 );
+		return 1 + self::reconcile_occurrences(
+			$master_id,
+			$generated,
+			$master->all_day,
+			array(
+				'event_id'     => $event_id,
+				'link_type'    => $master->link_type,
+				'external_url' => $master->external_url,
+				'venue_id'     => $master->venue_id,
+				'address'      => $master->address,
+				'title'        => $master->title,
+			)
+		);
 	}
 
 	/**
 	 * Regenerate occurrences for a standalone event date (no linked post)
+	 *
+	 * Uses reconcile_occurrences() to preserve existing row IDs.
 	 *
 	 * @param int         $event_date_id Event date row ID.
 	 * @param string|null $rrule         RRULE string. Pass null to read from DB,
@@ -296,16 +289,12 @@ class RecurrenceService {
 			return 0;
 		}
 
-		// Read rrule from DB if not provided.
 		if ( null === $rrule ) {
 			$rrule = $master->rrule;
 		}
 
-		// Delete existing generated occurrences.
-		EventDates::delete_generated_by_master_id( $event_date_id );
-
-		// If no RRULE, mark as single and return.
 		if ( empty( $rrule ) ) {
+			EventDates::delete_generated_by_master_id( $event_date_id );
 			EventDates::update_by_id(
 				$event_date_id,
 				array(
@@ -316,10 +305,7 @@ class RecurrenceService {
 			return 1;
 		}
 
-		// Parse exdates from master.
-		$exdates = self::parse_exdates( $master->exdates );
-
-		// Generate occurrences from the master's start/end.
+		$exdates     = self::parse_exdates( $master->exdates );
 		$occurrences = self::generate_occurrences(
 			$master->start_datetime,
 			$master->end_datetime,
@@ -332,40 +318,120 @@ class RecurrenceService {
 			return 0;
 		}
 
-		// Update master row: set as master with rrule.
+		// Update master row time and mark as master (first occurrence is the master itself).
+		$first = $occurrences[0];
 		EventDates::update_by_id(
 			$event_date_id,
 			array(
-				'occurrence_type' => 'master',
-				'rrule'           => $rrule,
+				'occurrence_type'   => 'master',
+				'rrule'             => $rrule,
+				'start_datetime'    => $first['start'],
+				'end_datetime'      => $first['end'],
+				'recurrence_anchor' => ( new \DateTime( $first['start'] ) )->format( 'Y-m-d' ),
 			)
 		);
 
-		// Skip first occurrence (that's the master itself).
-		array_shift( $occurrences );
+		$generated = array_slice( $occurrences, 1 );
+		return 1 + self::reconcile_occurrences(
+			$event_date_id,
+			$generated,
+			$master->all_day,
+			array(
+				'event_id'     => $master->event_id,
+				'link_type'    => $master->link_type,
+				'external_url' => $master->external_url,
+				'venue_id'     => $master->venue_id,
+				'address'      => $master->address,
+				'title'        => $master->title,
+			)
+		);
+	}
 
-		$count = 1;
+	/**
+	 * Reconcile generated occurrences for a series against the desired set.
+	 *
+	 * Matches desired occurrences to existing generated rows by anchor date, then:
+	 * - Updates rows whose anchor matches (preserves id).
+	 * - Inserts rows for new anchors.
+	 * - Deletes rows whose anchor is no longer in the desired set via
+	 *   EventDates::delete_by_id() so the fair_events_event_date_deleted hook fires.
+	 *
+	 * @param int   $master_id    Master event date row ID.
+	 * @param array $desired      Desired generated occurrences — each entry has 'start' and 'end' keys.
+	 * @param bool  $all_day      All-day flag to apply to inserted/updated rows.
+	 * @param array $master_props Inherited fields (event_id, link_type, external_url, venue_id, address, title).
+	 * @return int Number of surviving generated children (updated + inserted).
+	 */
+	public static function reconcile_occurrences( $master_id, $desired, $all_day, $master_props = array() ) {
+		// Build the desired set keyed by anchor date.
+		$desired_by_anchor = array();
+		foreach ( $desired as $occ ) {
+			$anchor                       = ( new \DateTime( $occ['start'] ) )->format( 'Y-m-d' );
+			$desired_by_anchor[ $anchor ] = $occ;
+		}
 
-		// Create generated occurrences copying master properties.
-		foreach ( $occurrences as $occurrence ) {
-			$result = EventDates::create_standalone_occurrence(
-				array(
-					'event_id'       => $master->event_id,
-					'start_datetime' => $occurrence['start'],
-					'end_datetime'   => $occurrence['end'],
-					'all_day'        => $master->all_day,
-					'master_id'      => $event_date_id,
-					'title'          => $master->title,
-					'link_type'      => $master->link_type,
-					'external_url'   => $master->external_url,
-					'venue_id'       => $master->venue_id,
-					'address'        => $master->address,
-				)
-			);
+		// Load existing generated rows keyed by anchor.
+		$existing_by_anchor = EventDates::get_all_by_master_id( $master_id );
+		// Remove the master row itself — reconcile only touches generated children.
+		unset(
+			$existing_by_anchor[ ( new \DateTime(
+				EventDates::get_by_id( $master_id )->start_datetime
+			) )->format( 'Y-m-d' ) ]
+		);
 
-			if ( $result ) {
+		$count = 0;
+
+		foreach ( $desired_by_anchor as $anchor => $occ ) {
+			if ( isset( $existing_by_anchor[ $anchor ] ) ) {
+				// Match — update in place, preserving id.
+				$row    = $existing_by_anchor[ $anchor ];
+				$update = array(
+					'start_datetime'    => $occ['start'],
+					'end_datetime'      => $occ['end'],
+					'all_day'           => $all_day ? 1 : 0,
+					'recurrence_anchor' => $anchor,
+				);
+				foreach ( array( 'event_id', 'link_type', 'external_url', 'venue_id', 'address', 'title' ) as $field ) {
+					if ( array_key_exists( $field, $master_props ) ) {
+						$update[ $field ] = $master_props[ $field ];
+					}
+				}
+				EventDates::update_by_id( $row->id, $update );
+				unset( $existing_by_anchor[ $anchor ] );
+				++$count;
+			} else {
+				// New anchor — insert.
+				if ( ! empty( $master_props['event_id'] ) ) {
+					EventDates::save_occurrence(
+						$master_props['event_id'],
+						$occ['start'],
+						$occ['end'],
+						$all_day,
+						'generated',
+						$master_id,
+						$anchor
+					);
+				} else {
+					EventDates::create_standalone_occurrence(
+						array_merge(
+							$master_props,
+							array(
+								'start_datetime'    => $occ['start'],
+								'end_datetime'      => $occ['end'],
+								'all_day'           => $all_day,
+								'master_id'         => $master_id,
+								'recurrence_anchor' => $anchor,
+							)
+						)
+					);
+				}
 				++$count;
 			}
+		}
+
+		// Delete rows whose anchor is no longer in the desired set.
+		foreach ( $existing_by_anchor as $stale_row ) {
+			EventDates::delete_by_id( $stale_row->id );
 		}
 
 		return $count;
