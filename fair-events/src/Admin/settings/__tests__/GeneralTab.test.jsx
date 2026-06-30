@@ -41,10 +41,6 @@ test('renders the branding toggle, off by default', async () => {
 
 	await waitFor(() => expect(branding()).toBeInTheDocument());
 	expect(branding()).not.toBeChecked();
-
-	// @wordpress/components TextControl emits a size deprecation notice on
-	// render; acknowledge it so jest-console doesn't fail the suite.
-	expect(console).toHaveWarned();
 });
 
 test('toggling the branding setting and saving sends the new value', async () => {
