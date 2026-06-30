@@ -31,6 +31,7 @@ import {
 	__experimentalHStack as HStack,
 } from '@wordpress/components';
 import { __ } from '@wordpress/i18n';
+import { applyFilters } from '@wordpress/hooks';
 import apiFetch from '@wordpress/api-fetch';
 import { DurationOptions, calculateDuration } from 'fair-events-shared';
 import EventFinance from './EventFinance.js';
@@ -537,100 +538,210 @@ export default function ManageEventApp() {
 
 	const isGeneratedOccurrence = eventDate?.occurrence_type === 'generated';
 
-	const tabs = useMemo(
-		() => [
-			{
-				name: 'event-details',
-				title: __('Event Details', 'fair-events'),
+	// Build the tab descriptor list fresh on every render so render functions
+	// always close over current state. Each descriptor: { name, title, order,
+	// isVisible, disabled?, render: (ctx) => ReactNode }.
+	const ctx = {
+		eventDate,
+		eventDateId,
+		eventTitle: title,
+		enabledFeatures,
+	};
+
+	const builtInTabs = [
+		{
+			name: 'event-details',
+			title: __('Event Details', 'fair-events'),
+			order: 10,
+			isVisible: true,
+			render: () => renderEventDetailsTab(),
+		},
+		{
+			name: 'tickets',
+			title: __('Tickets', 'fair-events'),
+			order: 20,
+			isVisible: ticketingEnabled,
+			disabled: isGeneratedOccurrence,
+			render: () => (
+				<EventTickets
+					eventDateId={eventDateId}
+					onSaveRef={ticketSaveRef}
+					startDatetime={eventDate.start_datetime}
+					endDatetime={eventDate.end_datetime}
+					isRecurring={recurrenceEnabled}
+				/>
+			),
+		},
+		{
+			name: 'groups',
+			title: __('Groups', 'fair-events'),
+			order: 30,
+			isVisible: !!(ticketingEnabled && audienceUrl),
+			disabled: isGeneratedOccurrence,
+			render: () => <GroupRules eventDateId={eventDateId} />,
+		},
+		{
+			name: 'signups',
+			title: __('Signups', 'fair-events'),
+			order: 25,
+			isVisible: !!(ticketingEnabled && !audienceUrl),
+			render: () => <EventSignups eventDateId={eventDateId} />,
+		},
+		{
+			name: 'photos',
+			title: __('Photos', 'fair-events'),
+			order: 40,
+			isVisible: galleriesEnabled,
+			render: () => <EventPhotos eventDateId={eventDateId} />,
+		},
+		{
+			name: 'audience',
+			title: __('Audience', 'fair-events'),
+			order: 50,
+			isVisible: !!audienceUrl,
+			render: () => (
+				<EventAudience
+					eventId={eventDate.event_id}
+					eventDateId={eventDateId}
+					audienceUrl={audienceUrl}
+					eventTitle={title}
+				/>
+			),
+		},
+		{
+			name: 'mailings',
+			title: __('Mailings', 'fair-events'),
+			order: 55,
+			isVisible: !!(audienceUrl && mailingsEnabled),
+			render: () => (
+				<EventMailings
+					eventDateId={eventDateId}
+					startDatetime={eventDate.start_datetime}
+					endDatetime={eventDate.end_datetime}
+					allDay={eventDate.all_day}
+				/>
+			),
+		},
+		{
+			name: 'statistics',
+			title: __('Statistics', 'fair-events'),
+			order: 60,
+			isVisible: !!statisticsUrl,
+			render: () => {
+				window.location.href = `${statisticsUrl}${eventDateId}`;
+				return null;
 			},
-			...(ticketingEnabled
-				? [
-						{
-							name: 'tickets',
-							title: __('Tickets', 'fair-events'),
-							disabled: isGeneratedOccurrence,
-						},
-				  ]
-				: []),
-			...(ticketingEnabled && audienceUrl
-				? [
-						{
-							name: 'groups',
-							title: __('Groups', 'fair-events'),
-							disabled: isGeneratedOccurrence,
-						},
-				  ]
-				: []),
-			...(!audienceUrl && ticketingEnabled
-				? [
-						{
-							name: 'signups',
-							title: __('Signups', 'fair-events'),
-						},
-				  ]
-				: []),
-			...(galleriesEnabled
-				? [
-						{
-							name: 'photos',
-							title: __('Photos', 'fair-events'),
-						},
-				  ]
-				: []),
-			...(audienceUrl
-				? [
-						{
-							name: 'audience',
-							title: __('Audience', 'fair-events'),
-						},
-						...(mailingsEnabled
-							? [
-									{
-										name: 'mailings',
-										title: __('Mailings', 'fair-events'),
-									},
-							  ]
-							: []),
-				  ]
-				: []),
-			...(statisticsUrl
-				? [
-						{
-							name: 'statistics',
-							title: __('Statistics', 'fair-events'),
-						},
-				  ]
-				: []),
-			...(paymentEntriesUrl
-				? [
-						{
-							name: 'finance',
-							title: __('Finance', 'fair-events'),
-						},
-				  ]
-				: []),
-			{
-				name: 'admin',
-				title: __('Admin', 'fair-events'),
-			},
-		],
-		[
-			audienceUrl,
-			statisticsUrl,
-			paymentEntriesUrl,
-			isGeneratedOccurrence,
-			galleriesEnabled,
-			mailingsEnabled,
-			ticketingEnabled,
-		]
-	);
+		},
+		{
+			name: 'finance',
+			title: __('Finance', 'fair-events'),
+			order: 70,
+			isVisible: !!paymentEntriesUrl,
+			render: () => (
+				<EventFinance
+					eventDateId={eventDateId}
+					entriesUrl={paymentEntriesUrl}
+				/>
+			),
+		},
+		{
+			name: 'admin',
+			title: __('Admin', 'fair-events'),
+			order: 100,
+			isVisible: true,
+			render: () => (
+				<Card style={{ marginTop: '16px' }}>
+					<CardHeader>
+						<h2>{__('Event Administration', 'fair-events')}</h2>
+					</CardHeader>
+					<CardBody>
+						<VStack spacing={6}>
+							{duplicateEventUrl && (
+								<VStack spacing={2}>
+									<p style={{ color: '#666' }}>
+										{__(
+											'Create a copy of this event with the same details, links, and settings.',
+											'fair-events'
+										)}
+									</p>
+									<div>
+										<Button
+											variant="secondary"
+											href={`${duplicateEventUrl}${eventDateId}`}
+										>
+											{__(
+												'Duplicate Event',
+												'fair-events'
+											)}
+										</Button>
+									</div>
+								</VStack>
+							)}
+
+							{mergeEventUrl && (
+								<VStack spacing={2}>
+									<p style={{ color: '#666' }}>
+										{__(
+											'Merge this event into another event date, moving or cleaning up all linked data.',
+											'fair-events'
+										)}
+									</p>
+									<div>
+										<Button
+											variant="secondary"
+											href={`${mergeEventUrl}${eventDateId}`}
+										>
+											{__('Merge Event', 'fair-events')}
+										</Button>
+									</div>
+								</VStack>
+							)}
+
+							<VStack spacing={2}>
+								<p style={{ color: '#666' }}>
+									{__(
+										'Permanently delete this event and all associated data. This action cannot be undone.',
+										'fair-events'
+									)}
+								</p>
+								<div>
+									<Button
+										variant="tertiary"
+										isDestructive
+										onClick={handleDelete}
+									>
+										{__('Delete Event', 'fair-events')}
+									</Button>
+								</div>
+							</VStack>
+						</VStack>
+					</CardBody>
+				</Card>
+			),
+		},
+	];
+
+	const tabDescriptors = applyFilters(
+		'fairEvents.manageEvent.tabs',
+		builtInTabs,
+		ctx
+	)
+		.filter((t) => t.isVisible)
+		.sort((a, b) => a.order - b.order);
+
+	// Shape TabPanel expects: { name, title, disabled? }.
+	const tabs = tabDescriptors.map(({ name, title: tabTitle, disabled }) => ({
+		name,
+		title: tabTitle,
+		...(disabled ? { disabled } : {}),
+	}));
 
 	const initialTab = useMemo(() => {
-		if (tabs.some((t) => t.name === urlTab)) {
+		if (tabDescriptors.some((t) => t.name === urlTab)) {
 			return urlTab;
 		}
 		return 'event-details';
-	}, [tabs, urlTab]);
+	}, [tabDescriptors, urlTab]);
 
 	if (loading) {
 		return (
@@ -1248,141 +1359,10 @@ export default function ManageEventApp() {
 				onSelect={handleTabSelect}
 			>
 				{(tab) => {
-					if (tab.name === 'tickets') {
-						return (
-							<EventTickets
-								eventDateId={eventDateId}
-								onSaveRef={ticketSaveRef}
-								startDatetime={eventDate.start_datetime}
-								endDatetime={eventDate.end_datetime}
-								isRecurring={recurrenceEnabled}
-							/>
-						);
-					}
-					if (tab.name === 'groups') {
-						return <GroupRules eventDateId={eventDateId} />;
-					}
-					if (tab.name === 'signups') {
-						return <EventSignups eventDateId={eventDateId} />;
-					}
-					if (tab.name === 'photos') {
-						return <EventPhotos eventDateId={eventDateId} />;
-					}
-					if (tab.name === 'audience') {
-						return (
-							<EventAudience
-								eventId={eventDate.event_id}
-								eventDateId={eventDateId}
-								audienceUrl={audienceUrl}
-								eventTitle={title}
-							/>
-						);
-					}
-					if (tab.name === 'mailings') {
-						return (
-							<EventMailings
-								eventDateId={eventDateId}
-								startDatetime={eventDate.start_datetime}
-								endDatetime={eventDate.end_datetime}
-								allDay={eventDate.all_day}
-							/>
-						);
-					}
-					if (tab.name === 'statistics') {
-						window.location.href = `${statisticsUrl}${eventDateId}`;
-						return null;
-					}
-					if (tab.name === 'finance') {
-						return (
-							<EventFinance
-								eventDateId={eventDateId}
-								entriesUrl={paymentEntriesUrl}
-							/>
-						);
-					}
-					if (tab.name === 'admin') {
-						return (
-							<Card style={{ marginTop: '16px' }}>
-								<CardHeader>
-									<h2>
-										{__(
-											'Event Administration',
-											'fair-events'
-										)}
-									</h2>
-								</CardHeader>
-								<CardBody>
-									<VStack spacing={6}>
-										{duplicateEventUrl && (
-											<VStack spacing={2}>
-												<p style={{ color: '#666' }}>
-													{__(
-														'Create a copy of this event with the same details, links, and settings.',
-														'fair-events'
-													)}
-												</p>
-												<div>
-													<Button
-														variant="secondary"
-														href={`${duplicateEventUrl}${eventDateId}`}
-													>
-														{__(
-															'Duplicate Event',
-															'fair-events'
-														)}
-													</Button>
-												</div>
-											</VStack>
-										)}
-
-										{mergeEventUrl && (
-											<VStack spacing={2}>
-												<p style={{ color: '#666' }}>
-													{__(
-														'Merge this event into another event date, moving or cleaning up all linked data.',
-														'fair-events'
-													)}
-												</p>
-												<div>
-													<Button
-														variant="secondary"
-														href={`${mergeEventUrl}${eventDateId}`}
-													>
-														{__(
-															'Merge Event',
-															'fair-events'
-														)}
-													</Button>
-												</div>
-											</VStack>
-										)}
-
-										<VStack spacing={2}>
-											<p style={{ color: '#666' }}>
-												{__(
-													'Permanently delete this event and all associated data. This action cannot be undone.',
-													'fair-events'
-												)}
-											</p>
-											<div>
-												<Button
-													variant="tertiary"
-													isDestructive
-													onClick={handleDelete}
-												>
-													{__(
-														'Delete Event',
-														'fair-events'
-													)}
-												</Button>
-											</div>
-										</VStack>
-									</VStack>
-								</CardBody>
-							</Card>
-						);
-					}
-					return renderEventDetailsTab();
+					const descriptor = tabDescriptors.find(
+						(d) => d.name === tab.name
+					);
+					return descriptor ? descriptor.render(ctx) : null;
 				}}
 			</TabPanel>
 
