@@ -41,6 +41,7 @@ import EventTickets from './EventTickets.js';
 import EventPhotos from './EventPhotos.js';
 import EventMailings from './EventMailings.js';
 import RecurrenceCalendar from './RecurrenceCalendar.js';
+import RecurrenceImpactSummary from './RecurrenceImpactSummary.js';
 import EventSignups from './EventSignups.js';
 
 export default function ManageEventApp() {
@@ -111,6 +112,7 @@ export default function ManageEventApp() {
 	);
 	const ticketSaveRef = useRef(null);
 	const [togglingExdate, setTogglingExdate] = useState(null);
+	const [recurrenceImpact, setRecurrenceImpact] = useState(null);
 
 	useEffect(() => {
 		if (!eventDateId) {
@@ -367,10 +369,20 @@ export default function ManageEventApp() {
 				},
 			});
 			setEventDate(updated);
+			setRecurrenceImpact(
+				updated.recurrence_impact
+					? { impact: updated.recurrence_impact, blocked: false }
+					: null
+			);
 			setSuccess(__('Event updated successfully.', 'fair-events'));
 		} catch (err) {
 			setError(
 				err.message || __('Failed to update event.', 'fair-events')
+			);
+			setRecurrenceImpact(
+				err.data?.impact
+					? { impact: err.data.impact, blocked: true }
+					: null
 			);
 		} finally {
 			setSaving(false);
@@ -503,9 +515,19 @@ export default function ManageEventApp() {
 				data: { date },
 			});
 			setEventDate(updated);
+			setRecurrenceImpact(
+				updated.recurrence_impact
+					? { impact: updated.recurrence_impact, blocked: false }
+					: null
+			);
 		} catch (err) {
 			setError(
 				err.message || __('Failed to toggle occurrence.', 'fair-events')
+			);
+			setRecurrenceImpact(
+				err.data?.impact
+					? { impact: err.data.impact, blocked: true }
+					: null
 			);
 		} finally {
 			setTogglingExdate(null);
@@ -1351,6 +1373,14 @@ export default function ManageEventApp() {
 				>
 					{success}
 				</Notice>
+			)}
+
+			{recurrenceImpact && (
+				<RecurrenceImpactSummary
+					impact={recurrenceImpact.impact}
+					blocked={recurrenceImpact.blocked}
+					onDismiss={() => setRecurrenceImpact(null)}
+				/>
 			)}
 
 			<TabPanel
