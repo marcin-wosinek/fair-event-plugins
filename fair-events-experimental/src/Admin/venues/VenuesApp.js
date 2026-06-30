@@ -21,7 +21,6 @@ import {
 const VENUE_FIELDS = [
 	'name',
 	'address',
-	'google_maps_link',
 	'latitude',
 	'longitude',
 	'facebook_page_link',
@@ -39,7 +38,6 @@ const VenuesApp = () => {
 	const [formData, setFormData] = useState({
 		name: '',
 		address: '',
-		google_maps_link: '',
 		latitude: '',
 		longitude: '',
 		facebook_page_link: '',
@@ -77,11 +75,11 @@ const VenuesApp = () => {
 		setFormData({
 			name: '',
 			address: '',
-			google_maps_link: '',
 			latitude: '',
 			longitude: '',
 			facebook_page_link: '',
 			instagram_handle: '',
+			website_url: '',
 		});
 		setIsFormOpen(true);
 	};
@@ -91,7 +89,6 @@ const VenuesApp = () => {
 		setFormData({
 			name: venue.name,
 			address: venue.address || '',
-			google_maps_link: venue.google_maps_link || '',
 			latitude: venue.latitude || '',
 			longitude: venue.longitude || '',
 			facebook_page_link: venue.facebook_page_link || '',
@@ -480,21 +477,16 @@ const VenuesApp = () => {
 									'fair-events'
 								)}
 							/>
-							<TextControl
-								label={__('Google Maps Link', 'fair-events')}
-								value={formData.google_maps_link}
-								onChange={(value) =>
-									setFormData({
-										...formData,
-										google_maps_link: value,
-									})
-								}
-								type="url"
-								help={__(
-									'URL to Google Maps location',
-									'fair-events'
+							{formData.address &&
+								!formData.latitude &&
+								!formData.longitude && (
+									<Notice status="info" isDismissible={false}>
+										{__(
+											'A map link will be generated from the address, but it may not point to an exact location. Add latitude and longitude coordinates for a precise pin.',
+											'fair-events'
+										)}
+									</Notice>
 								)}
-							/>
 							<TextControl
 								label={__('Latitude', 'fair-events')}
 								value={formData.latitude}

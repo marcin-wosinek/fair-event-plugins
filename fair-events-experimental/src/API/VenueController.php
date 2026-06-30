@@ -112,12 +112,6 @@ class VenueController extends WP_REST_Controller {
 				'required'          => false,
 				'sanitize_callback' => 'sanitize_textarea_field',
 			),
-			'google_maps_link'   => array(
-				'description'       => __( 'Google Maps URL.', 'fair-events-experimental' ),
-				'type'              => 'string',
-				'required'          => false,
-				'sanitize_callback' => 'esc_url_raw',
-			),
 			'latitude'           => array(
 				'description'       => __( 'Latitude coordinate.', 'fair-events-experimental' ),
 				'type'              => 'string',
@@ -200,7 +194,6 @@ class VenueController extends WP_REST_Controller {
 	public function create_item( $request ) {
 		$name               = $request->get_param( 'name' );
 		$address            = $request->get_param( 'address' );
-		$google_maps_link   = $request->get_param( 'google_maps_link' );
 		$latitude           = $request->get_param( 'latitude' );
 		$longitude          = $request->get_param( 'longitude' );
 		$facebook_page_link = $request->get_param( 'facebook_page_link' );
@@ -215,7 +208,7 @@ class VenueController extends WP_REST_Controller {
 			);
 		}
 
-		$venue_id = Venue::create( $name, $address, $google_maps_link, $latitude, $longitude, $facebook_page_link, $instagram_handle, $website_url );
+		$venue_id = Venue::create( $name, $address, $latitude, $longitude, $facebook_page_link, $instagram_handle, $website_url );
 
 		if ( ! $venue_id ) {
 			return new WP_Error(
@@ -240,7 +233,6 @@ class VenueController extends WP_REST_Controller {
 		$id                 = (int) $request->get_param( 'id' );
 		$name               = $request->get_param( 'name' );
 		$address            = $request->get_param( 'address' );
-		$google_maps_link   = $request->get_param( 'google_maps_link' );
 		$latitude           = $request->get_param( 'latitude' );
 		$longitude          = $request->get_param( 'longitude' );
 		$facebook_page_link = $request->get_param( 'facebook_page_link' );
@@ -265,7 +257,7 @@ class VenueController extends WP_REST_Controller {
 			);
 		}
 
-		$success = Venue::update( $id, $name, $address, $google_maps_link, $latitude, $longitude, $facebook_page_link, $instagram_handle, $website_url );
+		$success = Venue::update( $id, $name, $address, $latitude, $longitude, $facebook_page_link, $instagram_handle, $website_url );
 
 		if ( ! $success ) {
 			return new WP_Error(
