@@ -802,7 +802,13 @@ class EventDatesController extends WP_REST_Controller {
 			}
 
 			// Regenerate recurrence occurrences when rrule or dates change.
-			$rrule_changed              = isset( $update_data['rrule'] );
+			$rrule_changed = isset( $update_data['rrule'] );
+
+			$new_start     = $update_data['start_datetime'] ?? null;
+			$new_end       = $update_data['end_datetime'] ?? null;
+			$dates_changed = ( null !== $new_start && $new_start !== $existing->start_datetime )
+				|| ( null !== $new_end && $new_end !== $existing->end_datetime );
+
 			$dates_changed_on_recurring = $dates_changed && ( $existing->occurrence_type === 'master' || $rrule_changed );
 
 			if ( $rrule_changed || $dates_changed_on_recurring ) {

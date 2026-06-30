@@ -122,6 +122,14 @@ class EventDates {
 	public $address;
 
 	/**
+	 * Anchor date (Y-m-d) pinning this row to its originally-generated date.
+	 * Set on master and generated rows; null for single occurrences.
+	 *
+	 * @var string|null
+	 */
+	public $recurrence_anchor;
+
+	/**
 	 * Get event dates by event ID
 	 *
 	 * Checks the direct event_id column first (primary post), then falls back
@@ -174,22 +182,24 @@ class EventDates {
 	 * @return EventDates Hydrated EventDates object.
 	 */
 	private static function hydrate( $result ) {
-		$event_dates                  = new self();
-		$event_dates->id              = (int) $result->id;
-		$event_dates->event_id        = $result->event_id ? (int) $result->event_id : null;
-		$event_dates->start_datetime  = $result->start_datetime;
-		$event_dates->end_datetime    = $result->end_datetime;
-		$event_dates->all_day         = (bool) $result->all_day;
-		$event_dates->occurrence_type = $result->occurrence_type ?? 'single';
-		$event_dates->master_id       = $result->master_id ? (int) $result->master_id : null;
-		$event_dates->rrule           = $result->rrule ?? null;
-		$event_dates->exdates         = $result->exdates ?? null;
-		$event_dates->venue_id        = isset( $result->venue_id ) ? (int) $result->venue_id : null;
-		$event_dates->title           = $result->title ?? null;
-		$event_dates->external_url    = $result->external_url ?? null;
-		$event_dates->link_type       = $result->link_type ?? 'post';
-		$event_dates->capacity        = isset( $result->capacity ) && null !== $result->capacity ? (int) $result->capacity : null;
-		$event_dates->address         = isset( $result->address ) ? $result->address : null;
+		$event_dates                    = new self();
+		$event_dates->id                = (int) $result->id;
+		$event_dates->event_id          = $result->event_id ? (int) $result->event_id : null;
+		$event_dates->start_datetime    = $result->start_datetime;
+		$event_dates->end_datetime      = $result->end_datetime;
+		$event_dates->all_day           = (bool) $result->all_day;
+		$event_dates->occurrence_type   = $result->occurrence_type ?? 'single';
+		$event_dates->master_id         = $result->master_id ? (int) $result->master_id : null;
+		$event_dates->rrule             = $result->rrule ?? null;
+		$event_dates->exdates           = $result->exdates ?? null;
+		$event_dates->venue_id          = isset( $result->venue_id ) ? (int) $result->venue_id : null;
+		$event_dates->title             = $result->title ?? null;
+		$event_dates->external_url      = $result->external_url ?? null;
+		$event_dates->link_type         = $result->link_type ?? 'post';
+		$event_dates->capacity          = isset( $result->capacity ) && null !== $result->capacity ? (int) $result->capacity : null;
+		$event_dates->signup_price      = isset( $result->signup_price ) && null !== $result->signup_price ? (float) $result->signup_price : null;
+		$event_dates->address           = isset( $result->address ) ? $result->address : null;
+		$event_dates->recurrence_anchor = $result->recurrence_anchor ?? null;
 
 		return $event_dates;
 	}
@@ -251,29 +261,31 @@ class EventDates {
 	/**
 	 * Save a single occurrence
 	 *
-	 * @param int      $event_id        Event post ID.
-	 * @param string   $start           Start datetime.
-	 * @param string   $end             End datetime.
-	 * @param bool     $all_day         All day flag.
-	 * @param string   $occurrence_type Occurrence type (single, master, generated).
-	 * @param int|null $master_id       Master occurrence ID (for generated occurrences).
+	 * @param int         $event_id           Event post ID.
+	 * @param string      $start              Start datetime.
+	 * @param string      $end                End datetime.
+	 * @param bool        $all_day            All day flag.
+	 * @param string      $occurrence_type    Occurrence type (single, master, generated).
+	 * @param int|null    $master_id          Master occurrence ID (for generated occurrences).
+	 * @param string|null $recurrence_anchor  Anchor date (Y-m-d).
 	 * @return int|false The row ID on success, false on failure.
 	 */
-	public static function save_occurrence( $event_id, $start, $end, $all_day, $occurrence_type = 'single', $master_id = null ) {
+	public static function save_occurrence( $event_id, $start, $end, $all_day, $occurrence_type = 'single', $master_id = null, $recurrence_anchor = null ) {
 		global $wpdb;
 
 		$table_name = $wpdb->prefix . 'fair_event_dates';
 
 		$data = array(
-			'event_id'        => $event_id,
-			'start_datetime'  => $start,
-			'end_datetime'    => $end,
-			'all_day'         => $all_day ? 1 : 0,
-			'occurrence_type' => $occurrence_type,
-			'master_id'       => $master_id,
+			'event_id'          => $event_id,
+			'start_datetime'    => $start,
+			'end_datetime'      => $end,
+			'all_day'           => $all_day ? 1 : 0,
+			'occurrence_type'   => $occurrence_type,
+			'master_id'         => $master_id,
+			'recurrence_anchor' => $recurrence_anchor,
 		);
 
-		$format = array( '%d', '%s', '%s', '%d', '%s', '%d' );
+		$format = array( '%d', '%s', '%s', '%d', '%s', '%d', '%s' );
 
 		$result = $wpdb->insert( $table_name, $data, $format );
 
@@ -691,20 +703,22 @@ class EventDates {
 		$table_name = $wpdb->prefix . 'fair_event_dates';
 
 		$allowed_fields = array(
-			'event_id'        => '%d',
-			'start_datetime'  => '%s',
-			'end_datetime'    => '%s',
-			'all_day'         => '%d',
-			'occurrence_type' => '%s',
-			'master_id'       => '%d',
-			'rrule'           => '%s',
-			'exdates'         => '%s',
-			'venue_id'        => '%d',
-			'title'           => '%s',
-			'external_url'    => '%s',
-			'link_type'       => '%s',
-			'capacity'        => '%d',
-			'address'         => '%s',
+			'event_id'          => '%d',
+			'start_datetime'    => '%s',
+			'end_datetime'      => '%s',
+			'all_day'           => '%d',
+			'occurrence_type'   => '%s',
+			'master_id'         => '%d',
+			'rrule'             => '%s',
+			'exdates'           => '%s',
+			'venue_id'          => '%d',
+			'title'             => '%s',
+			'external_url'      => '%s',
+			'link_type'         => '%s',
+			'capacity'          => '%d',
+			'signup_price'      => '%f',
+			'address'           => '%s',
+			'recurrence_anchor' => '%s',
 		);
 
 		$update_data   = array();
@@ -853,6 +867,42 @@ class EventDates {
 	}
 
 	/**
+	 * Get all rows belonging to a recurring series (the master row itself plus
+	 * every generated child), keyed by recurrence_anchor (falling back to
+	 * DATE(start_datetime) for un-backfilled rows).
+	 *
+	 * Used by RecurrenceService::reconcile_occurrences() to match desired
+	 * occurrences against existing rows without churning IDs.
+	 *
+	 * @param int $master_id Master event date ID.
+	 * @return array<string, EventDates> Map of anchor-date string → EventDates.
+	 */
+	public static function get_all_by_master_id( $master_id ) {
+		global $wpdb;
+
+		$table_name = $wpdb->prefix . 'fair_event_dates';
+
+		$results = $wpdb->get_results(
+			$wpdb->prepare(
+				'SELECT * FROM %i WHERE id = %d OR master_id = %d ORDER BY start_datetime ASC',
+				$table_name,
+				$master_id,
+				$master_id
+			)
+		);
+
+		$map = array();
+		foreach ( $results as $result ) {
+			$row    = self::hydrate( $result );
+			$anchor = $row->recurrence_anchor ?? ( new \DateTime( $row->start_datetime ) )->format( 'Y-m-d' );
+
+			$map[ $anchor ] = $row;
+		}
+
+		return $map;
+	}
+
+	/**
 	 * Delete generated occurrences by master ID
 	 *
 	 * Used for standalone events that have no event_id.
@@ -891,21 +941,22 @@ class EventDates {
 		$table_name = $wpdb->prefix . 'fair_event_dates';
 
 		$insert_data = array(
-			'event_id'        => $data['event_id'] ?? null,
-			'start_datetime'  => $data['start_datetime'],
-			'end_datetime'    => $data['end_datetime'] ?? null,
-			'all_day'         => isset( $data['all_day'] ) && $data['all_day'] ? 1 : 0,
-			'occurrence_type' => 'generated',
-			'master_id'       => $data['master_id'],
-			'rrule'           => null,
-			'title'           => $data['title'] ?? null,
-			'external_url'    => $data['external_url'] ?? null,
-			'link_type'       => $data['link_type'] ?? 'none',
-			'venue_id'        => $data['venue_id'] ?? null,
-			'address'         => $data['address'] ?? null,
+			'event_id'          => $data['event_id'] ?? null,
+			'start_datetime'    => $data['start_datetime'],
+			'end_datetime'      => $data['end_datetime'] ?? null,
+			'all_day'           => isset( $data['all_day'] ) && $data['all_day'] ? 1 : 0,
+			'occurrence_type'   => 'generated',
+			'master_id'         => $data['master_id'],
+			'rrule'             => null,
+			'title'             => $data['title'] ?? null,
+			'external_url'      => $data['external_url'] ?? null,
+			'link_type'         => $data['link_type'] ?? 'none',
+			'venue_id'          => $data['venue_id'] ?? null,
+			'address'           => $data['address'] ?? null,
+			'recurrence_anchor' => $data['recurrence_anchor'] ?? null,
 		);
 
-		$format = array( '%d', '%s', '%s', '%d', '%s', '%d', '%s', '%s', '%s', '%s', '%d', '%s' );
+		$format = array( '%d', '%s', '%s', '%d', '%s', '%d', '%s', '%s', '%s', '%s', '%d', '%s', '%s' );
 
 		$result = $wpdb->insert( $table_name, $insert_data, $format );
 

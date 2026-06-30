@@ -255,6 +255,11 @@ class Installer {
 			self::migrate_to_3_18_0();
 		}
 
+		// Run migration if upgrading from pre-3.19.0 (add recurrence_anchor to event_dates).
+		if ( version_compare( $current_version, '3.19.0', '<' ) ) {
+			self::migrate_to_3_19_0();
+		}
+
 		// Update database version
 		Schema::update_db_version( Schema::DB_VERSION );
 	}
@@ -397,6 +402,10 @@ class Installer {
 
 			if ( version_compare( $current_version, '3.18.0', '<' ) ) {
 				self::migrate_to_3_18_0();
+			}
+
+			if ( version_compare( $current_version, '3.19.0', '<' ) ) {
+				self::migrate_to_3_19_0();
 			}
 
 			// Install/update tables
@@ -1599,6 +1608,53 @@ class Installer {
 				$table,
 				$table,
 				'generated'
+			)
+		);
+	}
+
+	/**
+	 * Migrate to version 3.19.0 - Add recurrence_anchor column to event_dates table.
+	 *
+	 * Stores the originally-generated date for each master/generated row so
+	 * a time-of-day or whole-series shift can match existing rows by anchor
+	 * date and update them in place rather than delete+recreate.
+	 *
+	 * @return void
+	 */
+	private static function migrate_to_3_19_0() {
+		global $wpdb;
+
+		$table_name = $wpdb->prefix . 'fair_event_dates';
+
+		$column_exists = $wpdb->get_results(
+			$wpdb->prepare(
+				'SHOW COLUMNS FROM %i LIKE %s',
+				$table_name,
+				$wpdb->esc_like( 'recurrence_anchor' )
+			)
+		);
+
+		if ( empty( $column_exists ) ) {
+			$wpdb->query(
+				$wpdb->prepare(
+					'ALTER TABLE %i ADD COLUMN recurrence_anchor DATE DEFAULT NULL AFTER address',
+					$table_name
+				)
+			);
+
+			$wpdb->query(
+				$wpdb->prepare(
+					'ALTER TABLE %i ADD KEY idx_recurrence_anchor (recurrence_anchor)',
+					$table_name
+				)
+			);
+		}
+
+		// Backfill anchor for existing master/generated rows from their stored start date.
+		$wpdb->query(
+			$wpdb->prepare(
+				"UPDATE %i SET recurrence_anchor = DATE(start_datetime) WHERE recurrence_anchor IS NULL AND occurrence_type IN ('master', 'generated')",
+				$table_name
 			)
 		);
 	}
