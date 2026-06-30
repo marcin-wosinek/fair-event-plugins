@@ -1,0 +1,15 @@
+{
+	"steps": [
+		{
+			"step": "installPlugin",
+			"pluginData": {
+				"resource": "wordpress.org/plugins",
+				"slug": "fair-payments-connector"
+			}
+		},
+		{
+			"step": "activatePlugin",
+			"pluginPath": "fair-payments-connector/fair-payments-connector.php"
+		}
+	]
+}
