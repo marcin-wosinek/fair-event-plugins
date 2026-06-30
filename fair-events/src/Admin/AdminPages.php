@@ -342,6 +342,8 @@ class AdminPages {
 				\FairEvents\Core\Features::script_translations_path()
 			);
 
+			do_action( 'fair_events_manage_event_enqueue_assets', $hook );
+
 			wp_enqueue_style( 'wp-components' );
 			return;
 		}
