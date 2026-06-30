@@ -24,6 +24,7 @@ import { DurationOptions, calculateDuration } from 'fair-events-shared';
  * Internal dependencies
  */
 import { STORE_NAME } from './store.js';
+import RecurrenceImpactSummary from '../manage-event/RecurrenceImpactSummary.js';
 
 /**
  * EventEditForm component
@@ -45,6 +46,7 @@ export default function EventEditForm({
 	const [error, setError] = useState(null);
 	const [success, setSuccess] = useState(null);
 	const [venues, setVenues] = useState([]);
+	const [recurrenceImpact, setRecurrenceImpact] = useState(null);
 
 	// Form state.
 	const [allDay, setAllDay] = useState(false);
@@ -306,9 +308,19 @@ export default function EventEditForm({
 				},
 			});
 			setEventData(updated);
+			setRecurrenceImpact(
+				updated.recurrence_impact
+					? { impact: updated.recurrence_impact, blocked: false }
+					: null
+			);
 			setSuccess(__('Event saved.', 'fair-events'));
 		} catch (err) {
 			setError(err.message || __('Failed to save event.', 'fair-events'));
+			setRecurrenceImpact(
+				err.data?.impact
+					? { impact: err.data.impact, blocked: true }
+					: null
+			);
 		} finally {
 			setSaving(false);
 		}
@@ -386,6 +398,14 @@ export default function EventEditForm({
 				>
 					{success}
 				</Notice>
+			)}
+
+			{recurrenceImpact && (
+				<RecurrenceImpactSummary
+					impact={recurrenceImpact.impact}
+					blocked={recurrenceImpact.blocked}
+					onDismiss={() => setRecurrenceImpact(null)}
+				/>
 			)}
 
 			<CheckboxControl
