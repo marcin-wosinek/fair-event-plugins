@@ -245,19 +245,42 @@ class TimelineRepository {
 	 * Returns paid transactions ordered by created_at descending, joined with
 	 * participants so the timeline can group them by day.
 	 *
-	 * @param int $limit Maximum number of rows.
+	 * @param int  $limit           Maximum number of rows.
+	 * @param bool $include_testmode Whether to include test-mode transactions.
 	 * @return array Raw rows.
 	 */
-	public function get_recent_ticket_sales( $limit ) {
+	public function get_recent_ticket_sales( $limit, $include_testmode = false ) {
 		global $wpdb;
 
 		$t_table   = $wpdb->prefix . 'fair_payment_transactions';
 		$p_table   = $wpdb->prefix . 'fair_audience_participants';
 		$fpt_table = $wpdb->prefix . 'fair_audience_fee_payment_transactions';
 
+		if ( $include_testmode ) {
+			return $wpdb->get_results(
+				$wpdb->prepare(
+					"SELECT t.id, t.participant_id, t.event_date_id, t.post_id, t.amount, t.currency, t.created_at, t.testmode,
+						p.name AS participant_name, p.surname AS participant_surname
+					FROM %i t
+					LEFT JOIN %i p ON t.participant_id = p.id
+					WHERE t.status = 'paid'
+					AND NOT EXISTS (
+						SELECT 1 FROM %i fpt WHERE fpt.transaction_id = t.id
+					)
+					ORDER BY t.created_at DESC
+					LIMIT %d",
+					$t_table,
+					$p_table,
+					$fpt_table,
+					$limit
+				),
+				ARRAY_A
+			);
+		}
+
 		return $wpdb->get_results(
 			$wpdb->prepare(
-				"SELECT t.id, t.participant_id, t.event_date_id, t.post_id, t.amount, t.currency, t.created_at,
+				"SELECT t.id, t.participant_id, t.event_date_id, t.post_id, t.amount, t.currency, t.created_at, t.testmode,
 					p.name AS participant_name, p.surname AS participant_surname
 				FROM %i t
 				LEFT JOIN %i p ON t.participant_id = p.id
