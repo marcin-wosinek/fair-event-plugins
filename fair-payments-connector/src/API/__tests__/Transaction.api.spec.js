@@ -87,6 +87,37 @@ test.describe('Transaction — fee cap enforcement', () => {
 		expect(dash.cap_remaining).toBeLessThanOrEqual(dash.fee_cap);
 	});
 
+	test('application_fee is 0 or null on new transactions during the waiver period', async () => {
+		const mollie_payment_id = 'tr_waiver_check_' + Date.now();
+		const importRes = await api.post(IMPORT_ENDPOINT, {
+			headers: adminAuth(),
+			data: {
+				transactions: [
+					{
+						mollie_payment_id,
+						amount: 100.0,
+						currency: 'EUR',
+						status: 'paid',
+					},
+				],
+			},
+		});
+		expect(importRes.status()).toBe(200);
+
+		// Retrieve the imported transaction and verify its fee is 0 or null.
+		const listRes = await api.get(TRANSACTIONS_ENDPOINT, {
+			headers: adminAuth(),
+		});
+		expect(listRes.status()).toBe(200);
+		const { transactions } = await listRes.json();
+		const txn = transactions.find(
+			(t) => t.mollie_payment_id === mollie_payment_id
+		);
+		expect(txn).toBeDefined();
+		const fee = txn?.application_fee ?? null;
+		expect(fee == null || fee === 0 || fee === '0.00').toBe(true);
+	});
+
 	test('cap_remaining is 0 when seeded fees exhaust the monthly cap', async () => {
 		const dashRes = await api.get(DASHBOARD_ENDPOINT, {
 			headers: adminAuth(),

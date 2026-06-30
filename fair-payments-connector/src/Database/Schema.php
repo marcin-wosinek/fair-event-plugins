@@ -388,7 +388,7 @@ class Schema {
 	/**
 	 * Migrate database from v3.0 to v4.0
 	 *
-	 * Adds application_fee column to track application fees (2%) for each transaction.
+	 * Adds application_fee column to track application fees (1%) for each transaction.
 	 *
 	 * @return void
 	 */
