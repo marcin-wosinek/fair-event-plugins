@@ -4,11 +4,9 @@
  * Controlled textarea for composing a scheduled-message body, with the same
  * placeholder-insertion affordances as fair-audience's custom-mail page (photo
  * upload link, manage-subscription link, tokenized page link) plus the
- * per-recipient/per-message tokens scheduled mailings support. Copied rather
- * than shared because the source lives in another plugin and pulls in page
- * search + @wordpress/components.
+ * per-recipient/per-message tokens scheduled mailings support.
  *
- * @package FairEvents
+ * @package FairAudience
  */
 
 import { useRef, useState } from '@wordpress/element';
@@ -21,10 +19,10 @@ import apiFetch from '@wordpress/api-fetch';
  * at send time).
  */
 const TOKEN_CHIPS = [
-	{ token: '{participant_name}', label: __('Name', 'fair-events') },
-	{ token: '{event_name}', label: __('Event name', 'fair-events') },
-	{ token: '{event_date}', label: __('Event date', 'fair-events') },
-	{ token: '{unsubscribe_link}', label: __('Unsubscribe', 'fair-events') },
+	{ token: '{participant_name}', label: __('Name', 'fair-audience') },
+	{ token: '{event_name}', label: __('Event name', 'fair-audience') },
+	{ token: '{event_date}', label: __('Event date', 'fair-audience') },
+	{ token: '{unsubscribe_link}', label: __('Unsubscribe', 'fair-audience') },
 ];
 
 /**
@@ -117,7 +115,7 @@ export default function MailBodyEditor({ value, onChange, disabled }) {
 					fontWeight: '600',
 				}}
 			>
-				{__('Body', 'fair-events')}
+				{__('Body', 'fair-audience')}
 			</label>
 			<textarea
 				id="fair-events-mail-body"
@@ -144,12 +142,12 @@ export default function MailBodyEditor({ value, onChange, disabled }) {
 					onClick={() =>
 						insertPlaceholderLink(
 							'{photo_upload_url}',
-							__('Upload photos', 'fair-events')
+							__('Upload photos', 'fair-audience')
 						)
 					}
 					disabled={disabled}
 				>
-					{__('Insert photo upload link', 'fair-events')}
+					{__('Insert photo upload link', 'fair-audience')}
 				</Button>
 				<Button
 					variant="secondary"
@@ -157,12 +155,12 @@ export default function MailBodyEditor({ value, onChange, disabled }) {
 					onClick={() =>
 						insertPlaceholderLink(
 							'{event_page_url}',
-							__('Open event page', 'fair-events')
+							__('Open event page', 'fair-audience')
 						)
 					}
 					disabled={disabled}
 				>
-					{__('Insert event page link', 'fair-events')}
+					{__('Insert event page link', 'fair-audience')}
 				</Button>
 
 				<span
@@ -174,7 +172,7 @@ export default function MailBodyEditor({ value, onChange, disabled }) {
 					}}
 				>
 					<TextControl
-						placeholder={__('Search page…', 'fair-events')}
+						placeholder={__('Search page…', 'fair-audience')}
 						value={
 							selectedPage
 								? selectedPage.title.rendered
@@ -236,7 +234,7 @@ export default function MailBodyEditor({ value, onChange, disabled }) {
 						}}
 						disabled={disabled || !selectedPage}
 					>
-						{__('Insert token link', 'fair-events')}
+						{__('Insert token link', 'fair-audience')}
 					</Button>
 				</span>
 			</div>
@@ -251,7 +249,7 @@ export default function MailBodyEditor({ value, onChange, disabled }) {
 				}}
 			>
 				<span style={{ color: '#666', fontSize: '12px' }}>
-					{__('Insert token:', 'fair-events')}
+					{__('Insert token:', 'fair-audience')}
 				</span>
 				{TOKEN_CHIPS.map((chip) => (
 					<Button

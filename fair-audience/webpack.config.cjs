@@ -98,6 +98,10 @@ const customConfig = {
 			process.cwd(),
 			'src/Admin/media-library-filter.js',
 		),
+		'admin/manage-event-ext/index': path.resolve(
+			process.cwd(),
+			'src/Admin/manage-event-ext/index.js',
+		),
 		// Public scripts
 		'public/poll-response/index': path.resolve(
 			process.cwd(),

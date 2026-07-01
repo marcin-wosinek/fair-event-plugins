@@ -39,7 +39,6 @@ import EventAudience from './EventAudience.js';
 import GroupRules from './GroupRules.js';
 import EventTickets from './EventTickets.js';
 import EventPhotos from './EventPhotos.js';
-import EventMailings from './EventMailings.js';
 import RecurrenceCalendar from './RecurrenceCalendar.js';
 import RecurrenceImpactSummary from './RecurrenceImpactSummary.js';
 import EventSignups from './EventSignups.js';
@@ -61,7 +60,6 @@ export default function ManageEventApp() {
 	const galleriesEnabled = !!enabledFeatures.galleries;
 	const ticketingEnabled = !!enabledFeatures.ticketing;
 	const venuesEnabled = !!enabledFeatures.venues;
-	const mailingsEnabled = !!enabledFeatures.mailings;
 
 	const [eventDate, setEventDate] = useState(null);
 	const [loading, setLoading] = useState(true);
@@ -623,20 +621,6 @@ export default function ManageEventApp() {
 					eventDateId={eventDateId}
 					audienceUrl={audienceUrl}
 					eventTitle={title}
-				/>
-			),
-		},
-		{
-			name: 'mailings',
-			title: __('Mailings', 'fair-events'),
-			order: 55,
-			isVisible: !!(audienceUrl && mailingsEnabled),
-			render: () => (
-				<EventMailings
-					eventDateId={eventDateId}
-					startDatetime={eventDate.start_datetime}
-					endDatetime={eventDate.end_datetime}
-					allDay={eventDate.all_day}
 				/>
 			),
 		},
