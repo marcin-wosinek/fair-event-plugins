@@ -260,6 +260,11 @@ class Installer {
 			self::migrate_to_3_19_0();
 		}
 
+		// Run migration if upgrading from pre-3.20.0 (add multiple_instances scope + minimum_instances to ticket_types).
+		if ( version_compare( $current_version, '3.20.0', '<' ) ) {
+			self::migrate_to_3_20_0();
+		}
+
 		// Update database version
 		Schema::update_db_version( Schema::DB_VERSION );
 	}
@@ -406,6 +411,10 @@ class Installer {
 
 			if ( version_compare( $current_version, '3.19.0', '<' ) ) {
 				self::migrate_to_3_19_0();
+			}
+
+			if ( version_compare( $current_version, '3.20.0', '<' ) ) {
+				self::migrate_to_3_20_0();
 			}
 
 			// Install/update tables
@@ -1654,6 +1663,45 @@ class Installer {
 		$wpdb->query(
 			$wpdb->prepare(
 				"UPDATE %i SET recurrence_anchor = DATE(start_datetime) WHERE recurrence_anchor IS NULL AND occurrence_type IN ('master', 'generated')",
+				$table_name
+			)
+		);
+	}
+
+	/**
+	 * Migrate to version 3.20.0 - Add multiple_instances recurrence scope + minimum_instances column.
+	 *
+	 * Widens the recurrence_scope ENUM to allow 'multiple_instances' and adds the
+	 * minimum_instances column that stores the required occurrence count for that scope.
+	 *
+	 * @return void
+	 */
+	private static function migrate_to_3_20_0() {
+		global $wpdb;
+
+		$table_name = $wpdb->prefix . 'fair_events_ticket_types';
+
+		$column_exists = $wpdb->get_results(
+			$wpdb->prepare(
+				'SHOW COLUMNS FROM %i LIKE %s',
+				$table_name,
+				$wpdb->esc_like( 'minimum_instances' )
+			)
+		);
+
+		if ( empty( $column_exists ) ) {
+			$wpdb->query(
+				$wpdb->prepare(
+					'ALTER TABLE %i ADD COLUMN minimum_instances INT UNSIGNED NOT NULL DEFAULT 0 AFTER recurrence_scope',
+					$table_name
+				)
+			);
+		}
+
+		// Widen the ENUM to include 'multiple_instances'; idempotent, safe to re-run.
+		$wpdb->query(
+			$wpdb->prepare(
+				"ALTER TABLE %i MODIFY COLUMN recurrence_scope ENUM('single_instance','whole_series','multiple_instances') NOT NULL DEFAULT 'single_instance'",
 				$table_name
 			)
 		);

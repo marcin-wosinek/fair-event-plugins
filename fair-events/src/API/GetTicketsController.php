@@ -99,6 +99,17 @@ class GetTicketsController extends WP_REST_Controller {
 							'default'           => false,
 							'sanitize_callback' => 'rest_sanitize_boolean',
 						),
+						// Chosen occurrence IDs for 'multiple_instances' ticket types.
+						// Capped so a crafted request can't force an unbounded number
+						// of line items / DB rows per submission.
+						'event_date_ids' => array(
+							'type'              => 'array',
+							'items'             => array( 'type' => 'integer' ),
+							'required'          => false,
+							'validate_callback' => function ( $value ) {
+								return ! is_array( $value ) || count( $value ) <= 50;
+							},
+						),
 						'_honeypot'      => array(
 							'type'     => 'string',
 							'required' => false,
@@ -190,6 +201,14 @@ class GetTicketsController extends WP_REST_Controller {
 					__( 'This ticket type is no longer available.', 'fair-events' ),
 					array( 'status' => 409 )
 				);
+			}
+
+			// 'multiple_instances' ticket types pick several specific occurrences
+			// instead of the single event_date_id above — handled by a dedicated
+			// path that creates one signup row per chosen occurrence.
+			if ( $ticket_type->is_multiple_instances() ) {
+				$this->increment_rate_limit();
+				return $this->create_multi_instance_signup( $request, $ticket_type, $event_date_id, $name, $email, $mailing_opt_in );
 			}
 
 			// Resolve price from the active sale period (server-side; client amount is ignored).
@@ -326,6 +345,253 @@ class GetTicketsController extends WP_REST_Controller {
 				'currency'       => $currency,
 			)
 		);
+	}
+
+	/**
+	 * Create a ticket signup for a 'multiple_instances' ticket type: the buyer
+	 * picks several specific occurrences of the series (instead of the single
+	 * event_date_id the rest of create_signup() operates on) at a per-instance
+	 * price, subject to the ticket type's configured minimum. Creates one
+	 * EventSignup row per chosen occurrence, sharing a single transaction on
+	 * the paid path so PaymentHooks confirms them together.
+	 *
+	 * @param WP_REST_Request               $request        Request object.
+	 * @param \FairEvents\Models\TicketType $ticket_type    The 'multiple_instances' ticket type.
+	 * @param int                           $series_page_id The event_date_id the request resolved to (the ticket type's own row).
+	 * @param string                        $name           Buyer name.
+	 * @param string                        $email          Buyer email.
+	 * @param bool                          $mailing_opt_in Whether the buyer opted into mailings.
+	 * @return WP_REST_Response|WP_Error
+	 */
+	private function create_multi_instance_signup( $request, $ticket_type, $series_page_id, $name, $email, $mailing_opt_in ) {
+		$raw_ids = $request->get_param( 'event_date_ids' ) ?? array();
+		$raw_ids = array_slice( array_values( array_unique( array_map( 'absint', (array) $raw_ids ) ) ), 0, 50 );
+		$raw_ids = array_filter( $raw_ids );
+
+		if ( empty( $raw_ids ) ) {
+			return new WP_Error(
+				'no_occurrences_selected',
+				__( 'Please select at least one occurrence.', 'fair-events' ),
+				array( 'status' => 400 )
+			);
+		}
+
+		// Resolve the series master from the page's own event date (the ticket
+		// type's row) and validate every submitted ID belongs to that same
+		// series — never trust the client list.
+		$series_master_id = $this->resolve_master_event_date_id( $series_page_id );
+		if ( ! $series_master_id ) {
+			return new WP_Error(
+				'invalid_ticket_type',
+				__( 'Invalid ticket type.', 'fair-events' ),
+				array( 'status' => 400 )
+			);
+		}
+
+		$occurrences = array();
+		foreach ( $raw_ids as $occ_id ) {
+			$occ = \FairEvents\Models\EventDates::get_by_id( $occ_id );
+			if ( ! $occ || $this->resolve_master_event_date_id( $occ_id ) !== $series_master_id ) {
+				return new WP_Error(
+					'invalid_occurrence',
+					__( 'One of the selected occurrences is not valid for this ticket.', 'fair-events' ),
+					array( 'status' => 400 )
+				);
+			}
+			$occurrences[] = $occ;
+		}
+
+		$minimum_instances = max( 1, (int) $ticket_type->minimum_instances );
+		if ( count( $occurrences ) < $minimum_instances ) {
+			return new WP_Error(
+				'minimum_instances_not_met',
+				sprintf(
+					/* translators: %d: minimum number of occurrences required */
+					_n(
+						'Please select at least %d occurrence.',
+						'Please select at least %d occurrences.',
+						$minimum_instances,
+						'fair-events'
+					),
+					$minimum_instances
+				),
+				array( 'status' => 400 )
+			);
+		}
+
+		// Resolve the per-instance price from the active sale period (server-side; client amount is ignored).
+		$unit_price = 0.0;
+		if ( class_exists( \FairEvents\Models\TicketSalePeriod::class ) && class_exists( \FairEvents\Models\TicketPrice::class ) ) {
+			$sale_periods = \FairEvents\Models\TicketSalePeriod::get_all_by_event_date_id( $series_page_id );
+			$now          = current_time( 'mysql' );
+			foreach ( $sale_periods as $period ) {
+				if ( $period->sale_start <= $now && $period->sale_end >= $now ) {
+					$prices = \FairEvents\Models\TicketPrice::get_all_by_event_date_id( $series_page_id );
+					foreach ( $prices as $price ) {
+						if ( (int) $price->ticket_type_id === (int) $ticket_type->id
+							&& (int) $price->sale_period_id === (int) $period->id ) {
+							$unit_price = (float) $price->price;
+							break 2;
+						}
+					}
+					break;
+				}
+			}
+		}
+
+		$count        = count( $occurrences );
+		$total_amount = $unit_price * $count;
+
+		// Persist one signup row per chosen occurrence (quantity fixed at 1;
+		// instance count is the only multiplier for this scope).
+		$signup_ids = array();
+		foreach ( $occurrences as $occ ) {
+			$signup_id = \FairEvents\Models\EventSignup::save(
+				array(
+					'event_date_id'  => (int) $occ->id,
+					'ticket_type_id' => $ticket_type->id,
+					'name'           => $name,
+					'email'          => $email,
+					'quantity'       => 1,
+					'mailing_opt_in' => $mailing_opt_in ? 1 : 0,
+					'amount'         => $unit_price,
+					'status'         => $total_amount > 0 ? 'pending_payment' : 'confirmed',
+				)
+			);
+			if ( ! $signup_id ) {
+				return new WP_Error(
+					'db_error',
+					__( 'Failed to save signup. Please try again.', 'fair-events' ),
+					array( 'status' => 500 )
+				);
+			}
+			$signup_ids[] = (int) $signup_id;
+		}
+
+		// Free path.
+		if ( $total_amount <= 0 ) {
+			return rest_ensure_response(
+				array(
+					'status'  => 'confirmed',
+					'message' => __( 'You have successfully registered!', 'fair-events' ),
+				)
+			);
+		}
+
+		// Paid path — fall back to confirmed if payment connector is absent.
+		if ( ! class_exists( \FairPaymentsConnector\API\TransactionAPI::class ) ) {
+			foreach ( $signup_ids as $signup_id ) {
+				\FairEvents\Models\EventSignup::update_status( $signup_id, 'confirmed' );
+			}
+			return rest_ensure_response(
+				array(
+					'status'  => 'confirmed',
+					'message' => __( 'You have successfully registered!', 'fair-events' ),
+				)
+			);
+		}
+
+		$currency    = get_option( 'fair_payment_currency', 'EUR' );
+		$description = sprintf(
+			/* translators: %d: event date ID */
+			__( 'Tickets for event #%d', 'fair-events' ),
+			$series_master_id
+		);
+
+		$line_items = array();
+		foreach ( $occurrences as $occ ) {
+			$occ_label    = class_exists( \FairEvents\Helpers\DateRangeFormatter::class )
+				? \FairEvents\Helpers\DateRangeFormatter::format( $occ->start_datetime, $occ->end_datetime, (bool) $occ->all_day )
+				: $occ->start_datetime;
+			$line_items[] = array(
+				'name'     => sprintf(
+					/* translators: %s: occurrence date/time label */
+					__( 'Ticket for %s', 'fair-events' ),
+					$occ_label
+				),
+				'quantity' => 1,
+				'amount'   => $unit_price,
+			);
+		}
+
+		$user_id        = get_current_user_id();
+		$transaction_id = \FairPaymentsConnector\API\TransactionAPI::create_transaction(
+			$line_items,
+			array(
+				'currency'      => $currency,
+				'description'   => $description,
+				'event_date_id' => $series_master_id,
+				'user_id'       => $user_id ?: null,
+				'metadata'      => array(
+					'source'        => 'fair-events-get-tickets',
+					'event_date_id' => $series_master_id,
+					'signup_ids'    => $signup_ids,
+				),
+			)
+		);
+
+		if ( is_wp_error( $transaction_id ) ) {
+			return $transaction_id;
+		}
+
+		foreach ( $signup_ids as $signup_id ) {
+			\FairEvents\Models\EventSignup::update_transaction( $signup_id, (int) $transaction_id );
+		}
+
+		$transaction = \FairPaymentsConnector\Models\Transaction::get_by_id( $transaction_id );
+
+		$redirect_url = add_query_arg(
+			array(
+				'fair_payment_callback' => 'true',
+				'transaction_id'        => $transaction_id,
+				'token'                 => $transaction ? $transaction->access_token : '',
+			),
+			get_permalink() ?: home_url( '/' )
+		);
+
+		$payment = \FairPaymentsConnector\API\TransactionAPI::initiate_payment(
+			$transaction_id,
+			array( 'redirect_url' => $redirect_url )
+		);
+
+		if ( is_wp_error( $payment ) ) {
+			return $payment;
+		}
+
+		return rest_ensure_response(
+			array(
+				'status'         => 'payment_required',
+				'checkout_url'   => esc_url_raw( $payment['checkout_url'] ),
+				'transaction_id' => $transaction_id,
+				'amount'         => $total_amount,
+				'currency'       => $currency,
+			)
+		);
+	}
+
+	/**
+	 * Resolve the recurring-series master event_date_id for a given event
+	 * date row: itself when it's already the master, or its master_id when
+	 * it's a generated occurrence. Null when the row isn't part of a series.
+	 *
+	 * @param int $event_date_id Event-date ID (master or generated occurrence).
+	 * @return int|null Master event_date_id, or null when not resolvable.
+	 */
+	private function resolve_master_event_date_id( $event_date_id ) {
+		if ( ! $event_date_id || ! class_exists( \FairEvents\Models\EventDates::class ) ) {
+			return null;
+		}
+		$ed = \FairEvents\Models\EventDates::get_by_id( $event_date_id );
+		if ( ! $ed ) {
+			return null;
+		}
+		if ( 'generated' === $ed->occurrence_type && $ed->master_id ) {
+			return (int) $ed->master_id;
+		}
+		if ( 'master' === $ed->occurrence_type ) {
+			return (int) $ed->id;
+		}
+		return null;
 	}
 
 	/**

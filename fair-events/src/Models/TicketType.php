@@ -76,11 +76,18 @@ class TicketType {
 	public $disable_at;
 
 	/**
-	 * Whether this ticket type covers a single occurrence or the whole recurring series
+	 * Whether this ticket type covers a single occurrence, the whole recurring series, or a buyer-chosen subset
 	 *
-	 * @var string 'single_instance'|'whole_series'
+	 * @var string 'single_instance'|'whole_series'|'multiple_instances'
 	 */
 	public $recurrence_scope = 'single_instance';
+
+	/**
+	 * Minimum number of occurrences a buyer must choose when recurrence_scope is 'multiple_instances'.
+	 *
+	 * @var int
+	 */
+	public $minimum_instances = 0;
 
 	/**
 	 * Whether this ticket type has been manually disabled by an admin
@@ -180,7 +187,7 @@ class TicketType {
 	/**
 	 * Valid values for the recurrence_scope column.
 	 */
-	const RECURRENCE_SCOPES = array( 'single_instance', 'whole_series' );
+	const RECURRENCE_SCOPES = array( 'single_instance', 'whole_series', 'multiple_instances' );
 
 	/**
 	 * Create a new ticket type
@@ -193,11 +200,12 @@ class TicketType {
 	 * @param bool        $invitation_only    Whether this ticket requires an invitation token.
 	 * @param int         $minimum_activities Minimum activities this type requires (0 = inherit global).
 	 * @param string|null $disable_at         Date/time after which this ticket type is unavailable (null = no end date).
-	 * @param string      $recurrence_scope   'single_instance' or 'whole_series'.
+	 * @param string      $recurrence_scope   'single_instance', 'whole_series', or 'multiple_instances'.
 	 * @param bool        $disabled           Whether this ticket type is manually disabled.
+	 * @param int         $minimum_instances  Minimum occurrences a buyer must choose when scope is 'multiple_instances'.
 	 * @return int|false The ticket type ID on success, false on failure.
 	 */
-	public static function create( $event_date_id, $name, $capacity, $sort_order, $seats_per_ticket = 1, $invitation_only = false, $minimum_activities = 0, $disable_at = null, $recurrence_scope = 'single_instance', $disabled = false ) {
+	public static function create( $event_date_id, $name, $capacity, $sort_order, $seats_per_ticket = 1, $invitation_only = false, $minimum_activities = 0, $disable_at = null, $recurrence_scope = 'single_instance', $disabled = false, $minimum_instances = 0 ) {
 		global $wpdb;
 
 		$table_name = self::get_table_name();
@@ -217,10 +225,11 @@ class TicketType {
 				'minimum_activities' => max( 0, (int) $minimum_activities ),
 				'disable_at'         => $disable_at,
 				'recurrence_scope'   => $recurrence_scope,
+				'minimum_instances'  => max( 0, (int) $minimum_instances ),
 				'disabled'           => $disabled ? 1 : 0,
 				'sort_order'         => $sort_order,
 			),
-			array( '%d', '%s', '%d', '%d', '%d', '%d', '%s', '%s', '%d', '%d' )
+			array( '%d', '%s', '%d', '%d', '%d', '%d', '%s', '%s', '%d', '%d', '%d' )
 		);
 
 		if ( $result ) {
@@ -281,6 +290,11 @@ class TicketType {
 				: 'single_instance';
 			$update_data['recurrence_scope'] = $scope;
 			$update_format[]                 = '%s';
+		}
+
+		if ( array_key_exists( 'minimum_instances', $data ) ) {
+			$update_data['minimum_instances'] = max( 0, (int) $data['minimum_instances'] );
+			$update_format[]                  = '%d';
 		}
 
 		if ( array_key_exists( 'disabled', $data ) ) {
@@ -366,6 +380,7 @@ class TicketType {
 		$item->disable_at         = $row->disable_at ?? null;
 		$raw_scope                = $row->recurrence_scope ?? 'single_instance';
 		$item->recurrence_scope   = in_array( $raw_scope, self::RECURRENCE_SCOPES, true ) ? $raw_scope : 'single_instance';
+		$item->minimum_instances  = isset( $row->minimum_instances ) ? (int) $row->minimum_instances : 0;
 		$item->disabled           = ! empty( $row->disabled );
 		$item->sort_order         = (int) $row->sort_order;
 		$item->created_at         = $row->created_at;
@@ -384,6 +399,15 @@ class TicketType {
 	}
 
 	/**
+	 * Whether this ticket type lets a buyer choose a subset of occurrences.
+	 *
+	 * @return bool
+	 */
+	public function is_multiple_instances() {
+		return 'multiple_instances' === $this->recurrence_scope;
+	}
+
+	/**
 	 * Convert to array
 	 *
 	 * @return array Data as array.
@@ -399,6 +423,7 @@ class TicketType {
 			'minimum_activities' => $this->minimum_activities,
 			'disable_at'         => $this->disable_at,
 			'recurrence_scope'   => $this->recurrence_scope,
+			'minimum_instances'  => $this->minimum_instances,
 			'disabled'           => (bool) $this->disabled,
 			'sort_order'         => $this->sort_order,
 			'created_at'         => $this->created_at,

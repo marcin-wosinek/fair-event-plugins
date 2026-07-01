@@ -151,6 +151,135 @@ const CSS_PREFIX = 'fair-audience-signup';
 	}
 
 	/**
+	 * The currently selected ticket type radio, if any.
+	 * @param {HTMLElement} block The block element
+	 * @return {HTMLInputElement|null} The checked ticket_type_id radio.
+	 */
+	function getSelectedTicketType(block) {
+		return block.querySelector('input[name="ticket_type_id"]:checked');
+	}
+
+	/**
+	 * Whether the selected ticket type is a 'multiple_instances' scope pass.
+	 * @param {HTMLElement} block The block element
+	 * @return {boolean} True when the multi-occurrence checkbox picker applies.
+	 */
+	function isMultipleInstancesSelected(block) {
+		const selected = getSelectedTicketType(block);
+		return (
+			!!selected &&
+			selected.dataset.recurrenceScope === 'multiple_instances'
+		);
+	}
+
+	/**
+	 * Number of checked occurrence checkboxes in the multi-instance picker.
+	 * @param {HTMLElement} block The block element
+	 * @return {number} Count of checked event_date_ids[] checkboxes.
+	 */
+	function getCheckedInstanceCount(block) {
+		return block.querySelectorAll('input[name="event_date_ids[]"]:checked')
+			.length;
+	}
+
+	/**
+	 * Minimum occurrence count required by the selected ticket type.
+	 * @param {HTMLElement} block The block element
+	 * @return {number} The configured minimum_instances (0 = none).
+	 */
+	function getInstanceMinimum(block) {
+		const selected = getSelectedTicketType(block);
+		return selected
+			? parseInt(selected.dataset.minInstances || '0', 10)
+			: 0;
+	}
+
+	/**
+	 * Show the multi-occurrence checkbox picker (hiding the single-occurrence
+	 * dropdown) when a 'multiple_instances' ticket type is selected, and vice
+	 * versa. Clears stale checkbox state when switching away so a leftover
+	 * selection can't leak into a later submission for a different scope.
+	 * @param {HTMLElement} block The block element
+	 */
+	function updateInstancePickerVisibility(block) {
+		const instancePicker = block.querySelector(
+			'.fair-audience-instance-picker'
+		);
+		if (!instancePicker) {
+			return;
+		}
+		const occurrencePicker = block.querySelector(
+			'.fair-audience-occurrence-picker'
+		);
+		const active = isMultipleInstancesSelected(block);
+		instancePicker.style.display = active ? '' : 'none';
+		if (occurrencePicker) {
+			occurrencePicker.style.display = active ? 'none' : '';
+		}
+		if (!active) {
+			instancePicker
+				.querySelectorAll('input[type="checkbox"]')
+				.forEach(function (cb) {
+					cb.checked = false;
+				});
+		}
+	}
+
+	/**
+	 * Keep the instance picker's minimum hint and live total in sync as the
+	 * buyer checks/unchecks occurrences or switches ticket type.
+	 * @param {HTMLElement} block The block element
+	 */
+	function updateInstancePickerHint(block) {
+		const instancePicker = block.querySelector(
+			'.fair-audience-instance-picker'
+		);
+		if (!instancePicker || !isMultipleInstancesSelected(block)) {
+			return;
+		}
+
+		const min = getInstanceMinimum(block);
+		const checked = getCheckedInstanceCount(block);
+
+		const hint = instancePicker.querySelector(
+			'.fair-audience-instance-picker-hint'
+		);
+		if (hint) {
+			hint.textContent =
+				min > 0
+					? sprintf(
+							/* translators: %d: minimum number of occurrences required */
+							_n(
+								'Please select at least %d occurrence.',
+								'Please select at least %d occurrences.',
+								min,
+								'fair-audience'
+							),
+							min
+					  )
+					: '';
+		}
+
+		const selected = getSelectedTicketType(block);
+		const price = selected
+			? parseFloat(selected.dataset.ticketPrice || 0)
+			: 0;
+		const totalEl = instancePicker.querySelector(
+			'.fair-audience-instance-picker-total'
+		);
+		if (totalEl) {
+			totalEl.textContent =
+				checked > 0
+					? sprintf(
+							/* translators: %s: formatted total price */
+							__('Total: €%s', 'fair-audience'),
+							(price * checked).toFixed(2)
+					  )
+					: '';
+		}
+	}
+
+	/**
 	 * Compute the effective minimum number of activities for the block: the
 	 * event-date global baseline, possibly raised by the selected ticket type
 	 * (issue #625), capped at the number of options available so the requirement
@@ -212,11 +341,21 @@ const CSS_PREFIX = 'fair-audience-signup';
 			'.fair-audience-signup-button, .fair-audience-signup-submit-button'
 		);
 
+		// A 'multiple_instances' ticket type gates on its own occurrence
+		// minimum (at least 1 chosen occurrence, or more if configured),
+		// independent of the activities-minimum gate above.
+		const multiInstanceActive = isMultipleInstancesSelected(block);
+		const instanceMin = multiInstanceActive
+			? Math.max(1, getInstanceMinimum(block))
+			: 0;
+		const meetsInstanceMin =
+			!multiInstanceActive ||
+			getCheckedInstanceCount(block) >= instanceMin;
+
 		if (!effectiveMin) {
-			// No minimum in effect: never leave a button disabled by this gate.
 			buttons.forEach(function (btn) {
-				btn.disabled = false;
-				btn.classList.remove('is-disabled');
+				btn.disabled = !meetsInstanceMin;
+				btn.classList.toggle('is-disabled', !meetsInstanceMin);
 			});
 			return;
 		}
@@ -224,7 +363,7 @@ const CSS_PREFIX = 'fair-audience-signup';
 		const checkedCount = block.querySelectorAll(
 			'input[name="ticket_option_ids[]"]:checked'
 		).length;
-		const meetsMin = checkedCount >= effectiveMin;
+		const meetsMin = checkedCount >= effectiveMin && meetsInstanceMin;
 
 		buttons.forEach(function (btn) {
 			btn.disabled = !meetsMin;
@@ -253,6 +392,36 @@ const CSS_PREFIX = 'fair-audience-signup';
 			selectedTicketType.dataset.ticketPrice !== ''
 		) {
 			basePrice = parseFloat(selectedTicketType.dataset.ticketPrice || 0);
+		}
+
+		if (isMultipleInstancesSelected(block)) {
+			const instanceMin = Math.max(1, getInstanceMinimum(block));
+			const instanceCount = getCheckedInstanceCount(block);
+			if (instanceCount < instanceMin) {
+				// Not enough occurrences chosen yet — show the bare action label
+				// until the selection is valid, same treatment as the
+				// below-minimum-activities case below.
+				const signupBaseText =
+					block.dataset.signupBaseText ||
+					__('Sign Up', 'fair-audience');
+				const registerBaseText =
+					block.dataset.registerBaseText ||
+					__('Register & Sign Up', 'fair-audience');
+				const signupBtnBare = block.querySelector(
+					'.fair-audience-signup-button'
+				);
+				if (signupBtnBare) {
+					signupBtnBare.textContent = signupBaseText;
+				}
+				const submitBtnBare = block.querySelector(
+					'.fair-audience-signup-submit-button'
+				);
+				if (submitBtnBare) {
+					submitBtnBare.textContent = registerBaseText;
+				}
+				return;
+			}
+			basePrice = basePrice * instanceCount;
 		}
 
 		const checkedOptions = block.querySelectorAll(
@@ -360,6 +529,8 @@ const CSS_PREFIX = 'fair-audience-signup';
 		);
 		ticketTypeRadios.forEach(function (radio) {
 			radio.addEventListener('change', function () {
+				updateInstancePickerVisibility(block);
+				updateInstancePickerHint(block);
 				updateButtonTotal(block);
 				updateMinActivitiesGate(block);
 				updateOptionAddons(block);
@@ -377,6 +548,19 @@ const CSS_PREFIX = 'fair-audience-signup';
 			});
 		});
 
+		const instanceCheckboxes = block.querySelectorAll(
+			'input[name="event_date_ids[]"]'
+		);
+		instanceCheckboxes.forEach(function (checkbox) {
+			checkbox.addEventListener('change', function () {
+				updateInstancePickerHint(block);
+				updateButtonTotal(block);
+				updateMinActivitiesGate(block);
+			});
+		});
+
+		updateInstancePickerVisibility(block);
+		updateInstancePickerHint(block);
 		updateButtonTotal(block);
 		updateMinActivitiesGate(block);
 		updateOptionAddons(block);
@@ -591,6 +775,18 @@ const CSS_PREFIX = 'fair-audience-signup';
 		);
 		if (ticketTypeInput) {
 			requestData.ticket_type_id = parseInt(ticketTypeInput.value, 10);
+		}
+
+		if (
+			ticketTypeInput &&
+			ticketTypeInput.dataset.recurrenceScope === 'multiple_instances'
+		) {
+			const instanceInputs = form.querySelectorAll(
+				'input[name="event_date_ids[]"]:checked'
+			);
+			requestData.event_date_ids = Array.from(instanceInputs).map((i) =>
+				parseInt(i.value, 10)
+			);
 		}
 
 		const optionInputs = form.querySelectorAll(
@@ -849,6 +1045,18 @@ const CSS_PREFIX = 'fair-audience-signup';
 		);
 		if (ticketTypeInput) {
 			requestData.ticket_type_id = parseInt(ticketTypeInput.value, 10);
+		}
+
+		if (
+			ticketTypeInput &&
+			ticketTypeInput.dataset.recurrenceScope === 'multiple_instances'
+		) {
+			const instanceInputs = block.querySelectorAll(
+				'input[name="event_date_ids[]"]:checked'
+			);
+			requestData.event_date_ids = Array.from(instanceInputs).map((i) =>
+				parseInt(i.value, 10)
+			);
 		}
 
 		const optionInputs = block.querySelectorAll(

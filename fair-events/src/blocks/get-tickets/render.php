@@ -71,6 +71,39 @@ if ( class_exists( \FairEvents\Models\TicketType::class ) ) {
 	$ticket_types = \FairEvents\Models\TicketType::get_all_by_event_date_id( $event_date_id );
 }
 
+// Resolve the series master (if any) so 'multiple_instances' ticket types can
+// offer a checkbox picker across the recurring series' upcoming occurrences.
+$series_master_id = null;
+if ( $event_date && class_exists( \FairEvents\Models\EventDates::class ) ) {
+	if ( 'master' === ( $event_date->occurrence_type ?? null ) ) {
+		$series_master_id = (int) $event_date->id;
+	} elseif ( 'generated' === ( $event_date->occurrence_type ?? null ) && ! empty( $event_date->master_id ) ) {
+		$series_master_id = (int) $event_date->master_id;
+	}
+}
+
+$has_multiple_instances_type = false;
+foreach ( $ticket_types as $ticket_type ) {
+	if ( $ticket_type->is_multiple_instances() ) {
+		$has_multiple_instances_type = true;
+		break;
+	}
+}
+
+$occurrences_for_picker = array();
+if ( $has_multiple_instances_type && $series_master_id && class_exists( \FairEvents\Models\EventDates::class ) ) {
+	$upcoming = \FairEvents\Models\EventDates::get_upcoming_by_master_id( $series_master_id );
+	foreach ( $upcoming as $occ ) {
+		$occurrences_for_picker[] = array(
+			'id'             => (int) $occ->id,
+			'start_datetime' => $occ->start_datetime,
+			'end_datetime'   => $occ->end_datetime,
+			'all_day'        => (bool) $occ->all_day,
+		);
+	}
+}
+$has_instance_picker = ! empty( $occurrences_for_picker );
+
 // Find active sale period and load prices.
 $price_by_type_id   = array();
 $active_sale_period = null;
@@ -172,7 +205,12 @@ $form_id = 'fair-events-get-tickets-' . wp_unique_id();
 							$label .= ' — ' . esc_html__( 'No active sale period', 'fair-events' );
 						}
 						?>
-						<option value="<?php echo esc_attr( $type_id ); ?>">
+						<option
+							value="<?php echo esc_attr( $type_id ); ?>"
+							data-ticket-price="<?php echo esc_attr( null !== $type_price ? number_format( $type_price, 2, '.', '' ) : '' ); ?>"
+							data-recurrence-scope="<?php echo esc_attr( $ticket_type->recurrence_scope ); ?>"
+							data-min-instances="<?php echo esc_attr( (string) $ticket_type->minimum_instances ); ?>"
+						>
 							<?php echo esc_html( $label ); ?>
 						</option>
 					<?php endforeach; ?>
@@ -180,7 +218,35 @@ $form_id = 'fair-events-get-tickets-' . wp_unique_id();
 			</div>
 		<?php endif; ?>
 
-		<div class="form-row">
+		<?php if ( $has_instance_picker ) : ?>
+			<div class="form-row fair-events-instance-picker" style="display: none;">
+				<span class="form-label"><?php esc_html_e( 'Choose occurrences', 'fair-events' ); ?></span>
+				<?php foreach ( $occurrences_for_picker as $occ_row ) : ?>
+					<?php
+					$occ_label   = \FairEvents\Helpers\DateRangeFormatter::format(
+						$occ_row['start_datetime'],
+						$occ_row['end_datetime'],
+						$occ_row['all_day']
+					);
+					$checkbox_id = esc_attr( $form_id ) . '-inst-' . (int) $occ_row['id'];
+					?>
+					<label class="fair-events-instance-option" for="<?php echo $checkbox_id; ?>">
+						<input
+							type="checkbox"
+							name="event_date_ids[]"
+							id="<?php echo $checkbox_id; ?>"
+							value="<?php echo (int) $occ_row['id']; ?>"
+							class="form-checkbox"
+						/>
+						<?php echo esc_html( $occ_label ); ?>
+					</label>
+				<?php endforeach; ?>
+				<p class="fair-events-instance-picker-hint"></p>
+				<p class="fair-events-instance-picker-total"></p>
+			</div>
+		<?php endif; ?>
+
+		<div class="form-row fair-events-quantity-row">
 			<label for="<?php echo esc_attr( $form_id ); ?>-quantity" class="form-label">
 				<?php esc_html_e( 'Quantity', 'fair-events' ); ?>
 			</label>

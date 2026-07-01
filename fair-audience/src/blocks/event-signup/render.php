@@ -449,6 +449,8 @@ if ( $pricing_event_date_id && class_exists( \FairEvents\Models\TicketType::clas
 			'seats_per_ticket'   => (int) $tt->seats_per_ticket,
 			'invitation_only'    => (bool) $tt->invitation_only,
 			'minimum_activities' => (int) $tt->minimum_activities,
+			'recurrence_scope'   => $tt->recurrence_scope,
+			'minimum_instances'  => (int) $tt->minimum_instances,
 			'is_full'            => $tt_is_full,
 		);
 	}
@@ -761,7 +763,7 @@ $render_ticket_types = static function () use ( $ticket_types_for_display, $has_
 			$classes .= ' fair-audience-ticket-type-full';
 		}
 		echo '<label class="' . esc_attr( $classes ) . '" for="' . $radio_id . '">';
-		echo '<input type="radio" name="ticket_type_id" id="' . $radio_id . '" value="' . (int) $tt['id'] . '" data-ticket-price="' . ( null !== $tt['price'] ? esc_attr( number_format( (float) $tt['price'], 2, '.', '' ) ) : '' ) . '" data-min-activities="' . esc_attr( (string) ( $tt['minimum_activities'] ?? 0 ) ) . '"';
+		echo '<input type="radio" name="ticket_type_id" id="' . $radio_id . '" value="' . (int) $tt['id'] . '" data-ticket-price="' . ( null !== $tt['price'] ? esc_attr( number_format( (float) $tt['price'], 2, '.', '' ) ) : '' ) . '" data-min-activities="' . esc_attr( (string) ( $tt['minimum_activities'] ?? 0 ) ) . '" data-recurrence-scope="' . esc_attr( $tt['recurrence_scope'] ?? 'single_instance' ) . '" data-min-instances="' . esc_attr( (string) ( $tt['minimum_instances'] ?? 0 ) ) . '"';
 		if ( $tt_is_full ) {
 			echo ' disabled';
 		} elseif ( ! $default_selected ) {
@@ -960,6 +962,61 @@ $render_occurrence_picker = static function () use ( $occurrences_for_picker, $h
 	echo '</div>';
 };
 
+/**
+ * Render the multi-occurrence checkbox picker for 'multiple_instances' ticket
+ * types. Hidden by default; frontend.js reveals it when the buyer selects a
+ * ticket type whose data-recurrence-scope is 'multiple_instances', and hides
+ * the single-occurrence <select> in that case since the two pickers are
+ * mutually exclusive. Sold-out / already-signed-up occurrences are rendered
+ * disabled rather than omitted, so the picker stays a stable/complete list.
+ */
+$render_instance_picker = static function () use ( $occurrences_for_picker, $has_occurrence_picker, $form_id, $ticket_types_for_display ) {
+	if ( ! $has_occurrence_picker ) {
+		return;
+	}
+
+	$has_multi_instance_type = false;
+	foreach ( $ticket_types_for_display as $tt ) {
+		if ( 'multiple_instances' === ( $tt['recurrence_scope'] ?? '' ) ) {
+			$has_multi_instance_type = true;
+			break;
+		}
+	}
+	if ( ! $has_multi_instance_type ) {
+		return;
+	}
+
+	echo '<fieldset class="fair-audience-instance-picker" style="display: none;">';
+	echo '<legend>' . esc_html__( 'Choose occurrences', 'fair-audience' ) . '</legend>';
+	foreach ( $occurrences_for_picker as $occ_row ) {
+		$label       = \FairEvents\Helpers\DateRangeFormatter::format(
+			$occ_row['start_datetime'],
+			$occ_row['end_datetime'],
+			$occ_row['all_day']
+		);
+		$is_disabled = ! empty( $occ_row['signed_up'] );
+		$checkbox_id = esc_attr( $form_id ) . '-inst-' . (int) $occ_row['id'];
+		$classes     = 'fair-audience-instance-option';
+		if ( $is_disabled ) {
+			$classes .= ' fair-audience-instance-option-disabled';
+		}
+		echo '<label class="' . esc_attr( $classes ) . '" for="' . $checkbox_id . '">';
+		echo '<input type="checkbox" name="event_date_ids[]" id="' . $checkbox_id . '" value="' . (int) $occ_row['id'] . '"';
+		if ( $is_disabled ) {
+			echo ' disabled';
+		}
+		echo ' /> ';
+		echo esc_html( $label );
+		if ( $is_disabled ) {
+			echo ' — ' . esc_html__( 'already signed up', 'fair-audience' );
+		}
+		echo '</label>';
+	}
+	echo '<p class="fair-audience-instance-picker-hint"></p>';
+	echo '<p class="fair-audience-instance-picker-total"></p>';
+	echo '</fieldset>';
+};
+
 // Base button labels (without price suffix) for dynamic JS price updates.
 $base_signup_button_text   = __( $attributes['signupButtonText'] ?? 'Sign Up', 'fair-audience' );
 $base_register_button_text = __( $attributes['registerButtonText'] ?? 'Register & Sign Up', 'fair-audience' );
@@ -1153,6 +1210,7 @@ if ( ! $is_valid_post_type ) :
 			<?php $render_occurrence_picker(); ?>
 			<div class="fair-audience-signup-action-signup"<?php echo $is_signed_up ? ' style="display: none;"' : ''; ?>>
 				<?php $render_ticket_types(); ?>
+				<?php $render_instance_picker(); ?>
 				<?php $render_ticket_options(); ?>
 				<?php if ( '' !== trim( $content ) ) : ?>
 					<div class="fair-audience-signup-questions">
@@ -1226,6 +1284,7 @@ if ( ! $is_valid_post_type ) :
 			<!-- Registration form (new participant) -->
 			<form class="fair-audience-signup-form fair-audience-signup-register" data-tab-content="register">
 				<?php $render_ticket_types(); ?>
+				<?php $render_instance_picker(); ?>
 				<?php $render_ticket_options(); ?>
 				<p>
 					<label for="<?php echo esc_attr( $form_id ); ?>-name">

@@ -415,17 +415,35 @@ class PaymentHooks {
 			return;
 		}
 
-		$repo              = new EventParticipantRepository();
-		$event_participant = $repo->get_by_transaction_id( (int) $transaction->id );
-		if ( ! $event_participant || 'pending_payment' !== $event_participant->label ) {
+		$repo = new EventParticipantRepository();
+
+		// A 'multiple_instances' ticket-type purchase creates one pending_payment
+		// row per chosen occurrence, all sharing this transaction; every other
+		// signup path creates exactly one row. Flip every matching row so all
+		// occurrences confirm together.
+		$event_participants = $repo->get_all_by_transaction_id( (int) $transaction->id );
+		if ( empty( $event_participants ) ) {
 			return;
 		}
 
-		$event_participant->label              = 'signed_up';
-		$event_participant->payment_expires_at = null;
-		$event_participant->save();
+		$confirmation_participant = null;
+		foreach ( $event_participants as $event_participant ) {
+			if ( 'pending_payment' !== $event_participant->label ) {
+				continue;
+			}
 
-		do_action( 'fair_audience_event_signup_paid', $event_participant, $transaction );
+			$event_participant->label              = 'signed_up';
+			$event_participant->payment_expires_at = null;
+			$event_participant->save();
+
+			if ( null === $confirmation_participant ) {
+				$confirmation_participant = $event_participant;
+			}
+		}
+
+		if ( null !== $confirmation_participant ) {
+			do_action( 'fair_audience_event_signup_paid', $confirmation_participant, $transaction );
+		}
 	}
 
 	/**
@@ -450,13 +468,21 @@ class PaymentHooks {
 			return;
 		}
 
-		$repo              = new EventParticipantRepository();
-		$event_participant = $repo->get_by_transaction_id( (int) $transaction->id );
-		if ( ! $event_participant || 'pending_payment' !== $event_participant->label ) {
+		$repo = new EventParticipantRepository();
+
+		// See handle_signup_paid(): a 'multiple_instances' purchase shares one
+		// transaction across several rows. Fire the action once, using the
+		// first still-pending row, so the resume-link email is sent a single
+		// time regardless of how many occurrences were selected.
+		$event_participants = $repo->get_all_by_transaction_id( (int) $transaction->id );
+		foreach ( $event_participants as $event_participant ) {
+			if ( 'pending_payment' !== $event_participant->label ) {
+				continue;
+			}
+
+			do_action( 'fair_audience_event_signup_failed', $event_participant, $transaction );
 			return;
 		}
-
-		do_action( 'fair_audience_event_signup_failed', $event_participant, $transaction );
 	}
 
 	/**

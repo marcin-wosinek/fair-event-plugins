@@ -355,6 +355,7 @@ export default function EventTickets({
 				minimum_activities: t.minimum_activities || 0,
 				disable_at: t.disable_at || null,
 				recurrence_scope: t.recurrence_scope || 'single_instance',
+				minimum_instances: t.minimum_instances || 0,
 				group_ids: t.group_ids || [],
 			})),
 			sale_periods: getEffectiveSalePeriods().map((p) => ({
@@ -490,6 +491,7 @@ export default function EventTickets({
 				minimum_activities: 0,
 				disable_at: null,
 				recurrence_scope: scope,
+				minimum_instances: 0,
 				group_ids: [],
 				sort_order: ticketTypes.length,
 			},
@@ -934,6 +936,12 @@ export default function EventTickets({
 														'whole_series'
 															? __(
 																	'Whole series',
+																	'fair-events'
+															  )
+															: type.recurrence_scope ===
+															  'multiple_instances'
+															? __(
+																	'Multiple instances',
 																	'fair-events'
 															  )
 															: __(
@@ -1679,44 +1687,96 @@ export default function EventTickets({
 																				'Whole series',
 																				'fair-events'
 																		  )
+																		: type.recurrence_scope ===
+																		  'multiple_instances'
+																		? __(
+																				'Multiple instances',
+																				'fair-events'
+																		  )
 																		: __(
 																				'This instance',
 																				'fair-events'
 																		  )}
 																</span>
 															) : (
-																<SelectControl
-																	value={
-																		type.recurrence_scope ||
-																		'single_instance'
-																	}
-																	options={[
-																		{
-																			value: 'single_instance',
-																			label: __(
-																				'This instance',
-																				'fair-events'
-																			),
-																		},
-																		{
-																			value: 'whole_series',
-																			label: __(
-																				'Whole series',
-																				'fair-events'
-																			),
-																		},
-																	]}
-																	onChange={(
-																		v
-																	) =>
-																		updateTicketType(
-																			tIndex,
-																			'recurrence_scope',
+																<>
+																	<SelectControl
+																		value={
+																			type.recurrence_scope ||
+																			'single_instance'
+																		}
+																		options={[
+																			{
+																				value: 'single_instance',
+																				label: __(
+																					'This instance',
+																					'fair-events'
+																				),
+																			},
+																			{
+																				value: 'whole_series',
+																				label: __(
+																					'Whole series',
+																					'fair-events'
+																				),
+																			},
+																			{
+																				value: 'multiple_instances',
+																				label: __(
+																					'Multiple instances',
+																					'fair-events'
+																				),
+																			},
+																		]}
+																		onChange={(
 																			v
-																		)
-																	}
-																	__nextHasNoMarginBottom
-																/>
+																		) =>
+																			updateTicketType(
+																				tIndex,
+																				'recurrence_scope',
+																				v
+																			)
+																		}
+																		__nextHasNoMarginBottom
+																	/>
+																	{type.recurrence_scope ===
+																		'multiple_instances' && (
+																		<TextControl
+																			type="number"
+																			min="0"
+																			placeholder="0"
+																			label={__(
+																				'Minimum instances',
+																				'fair-events'
+																			)}
+																			value={String(
+																				type.minimum_instances ||
+																					0
+																			)}
+																			onChange={(
+																				v
+																			) =>
+																				updateTicketType(
+																					tIndex,
+																					'minimum_instances',
+																					v !==
+																						''
+																						? Math.max(
+																								0,
+																								parseInt(
+																									v,
+																									10
+																								) ||
+																									0
+																						  )
+																						: 0
+																				)
+																			}
+																			__next40pxDefaultSize
+																			__nextHasNoMarginBottom
+																		/>
+																	)}
+																</>
 															)}
 														</td>
 													)}
@@ -2540,6 +2600,13 @@ export default function EventTickets({
 								value: 'whole_series',
 								label: __(
 									'Whole series — one purchase covers every occurrence',
+									'fair-events'
+								),
+							},
+							{
+								value: 'multiple_instances',
+								label: __(
+									'Multiple instances — buyer picks several occurrences',
 									'fair-events'
 								),
 							},
