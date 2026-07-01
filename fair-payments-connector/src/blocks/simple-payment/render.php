@@ -21,8 +21,24 @@ $current_post_id = get_the_ID();
 // phpcs:ignore WordPress.Security.NonceVerification.Recommended
 $is_callback = isset( $_GET['fair_payment_callback'] ) && 'true' === $_GET['fair_payment_callback'];
 
-// phpcs:ignore WordPress.Security.NonceVerification.Recommended
-$show_success = isset( $_GET['payment_redirect'] ) && '1' === $_GET['payment_redirect'];
+// Resolve the real transaction status via the canonical PaymentStatus mapper,
+// gated by the per-transaction access token exactly like the REST status
+// endpoint. Falls back to "processing" when the callback can't be verified
+// (e.g. missing/mismatched token) rather than guessing a specific outcome.
+$callback_status = 'processing';
+if ( $is_callback && class_exists( \FairPaymentsConnector\API\TransactionAPI::class ) ) {
+	// phpcs:ignore WordPress.Security.NonceVerification.Recommended
+	$callback_transaction_id = isset( $_GET['transaction_id'] ) ? absint( $_GET['transaction_id'] ) : 0;
+	// phpcs:ignore WordPress.Security.NonceVerification.Recommended
+	$callback_token = isset( $_GET['token'] ) ? sanitize_text_field( wp_unslash( $_GET['token'] ) ) : '';
+
+	$transaction    = $callback_transaction_id ? \FairPaymentsConnector\API\TransactionAPI::get_transaction( $callback_transaction_id ) : null;
+	$expected_token = $transaction ? (string) ( $transaction->access_token ?? '' ) : '';
+
+	if ( $transaction && '' !== $expected_token && '' !== $callback_token && hash_equals( $expected_token, $callback_token ) ) {
+		$callback_status = \FairPaymentsConnector\Payment\PaymentStatus::from_raw_status( (string) $transaction->status );
+	}
+}
 
 // Check if Mollie is configured.
 $is_configured = \FairPaymentsConnector\Payment\MolliePaymentHandler::is_configured();
@@ -30,29 +46,33 @@ $is_configured = \FairPaymentsConnector\Payment\MolliePaymentHandler::is_configu
 $block_id = 'fair-payments-connector-' . wp_unique_id();
 ?>
 
-<div 
+<div
 <?php
 	// phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- get_block_wrapper_attributes() returns pre-escaped HTML attributes.
 	echo get_block_wrapper_attributes( array( 'id' => $block_id ) );
 ?>
 >
 	<div class="fair-payments-connector-block">
-		<?php if ( $is_callback ) : ?>
-			<div class="fair-payments-connector-callback">
-				<div class="fair-payments-connector-success">
-					<p><?php esc_html_e( 'Thank you! Your payment has been received and is being processed.', 'fair-payments-connector' ); ?></p>
-				</div>
-				<button type="button" class="fair-payments-connector-callback-dismiss wp-element-button">
-					<?php esc_html_e( 'Continue', 'fair-payments-connector' ); ?>
-				</button>
+		<div class="fair-payments-connector-callback" style="<?php echo esc_attr( $is_callback ? '' : 'display: none;' ); ?>">
+			<div class="fair-payments-connector-success" data-status="confirmed" role="alert" style="<?php echo esc_attr( 'confirmed' === $callback_status ? '' : 'display: none;' ); ?>">
+				<p><?php esc_html_e( 'Thank you! Your payment has been received and confirmed.', 'fair-payments-connector' ); ?></p>
 			</div>
-		<?php else : ?>
-			<?php if ( $show_success ) : ?>
-				<div class="fair-payments-connector-success">
-					<p><?php esc_html_e( 'Thank you! Your payment is being processed.', 'fair-payments-connector' ); ?></p>
-				</div>
-			<?php endif; ?>
+			<div class="fair-payments-connector-processing" data-status="processing" role="alert" style="<?php echo esc_attr( 'processing' === $callback_status ? '' : 'display: none;' ); ?>">
+				<p><?php esc_html_e( 'Thank you! Your payment is being processed.', 'fair-payments-connector' ); ?></p>
+			</div>
+			<div class="fair-payments-connector-failed" data-status="failed" role="alert" style="<?php echo esc_attr( 'failed' === $callback_status ? '' : 'display: none;' ); ?>">
+				<p><?php esc_html_e( 'Your payment was not completed. Please try again.', 'fair-payments-connector' ); ?></p>
+			</div>
 
+			<button type="button" class="fair-payments-connector-callback-dismiss wp-element-button" style="<?php echo esc_attr( 'failed' === $callback_status ? 'display: none;' : '' ); ?>">
+				<?php esc_html_e( 'Continue', 'fair-payments-connector' ); ?>
+			</button>
+			<button type="button" class="fair-payments-connector-restart wp-element-button" style="<?php echo esc_attr( 'failed' === $callback_status ? '' : 'display: none;' ); ?>">
+				<?php esc_html_e( 'Try Again', 'fair-payments-connector' ); ?>
+			</button>
+		</div>
+
+		<div class="fair-payments-connector-payment-form" style="<?php echo esc_attr( $is_callback ? 'display: none;' : '' ); ?>">
 			<div class="fair-payments-connector-amount">
 				<strong><?php echo esc_html( $amount ); ?> <?php echo esc_html( $currency ); ?></strong>
 				<?php if ( ! empty( $description ) ) : ?>
@@ -80,6 +100,6 @@ $block_id = 'fair-payments-connector-' . wp_unique_id();
 					<em><?php esc_html_e( 'Payment gateway is not configured. Please configure your Mollie API keys.', 'fair-payments-connector' ); ?></em>
 				</p>
 			<?php endif; ?>
-		<?php endif; ?>
+		</div>
 	</div>
 </div>

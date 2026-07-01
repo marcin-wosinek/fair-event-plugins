@@ -8,6 +8,7 @@
 namespace FairPaymentsConnector\API;
 
 use FairPaymentsConnector\Payment\MolliePaymentHandler;
+use FairPaymentsConnector\Payment\PaymentStatus;
 use FairPaymentsConnector\Models\Transaction;
 use FairPaymentsConnector\Database\PaymentLogRepository;
 use WP_REST_Controller;
@@ -418,10 +419,13 @@ class PaymentEndpoint extends WP_REST_Controller {
 			);
 		}
 
-		// Prepare response data.
+		// Prepare response data. `status` is kept as the raw transaction status for
+		// backward compatibility; `lifecycle_status` is the canonical
+		// confirmed|processing|failed state the shared frontend poller reads.
 		$response_data = array(
 			'transaction_id'    => $transaction->id,
 			'status'            => $transaction->status,
+			'lifecycle_status'  => PaymentStatus::from_raw_status( (string) $transaction->status ),
 			'amount'            => $transaction->amount,
 			'currency'          => $transaction->currency,
 			'description'       => $transaction->description,

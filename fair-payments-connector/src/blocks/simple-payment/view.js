@@ -5,6 +5,14 @@
  */
 
 import apiFetch from '@wordpress/api-fetch';
+import { __ } from '@wordpress/i18n';
+import {
+	initiatePayment,
+	handlePaymentCallback,
+	wireRestartButton,
+} from 'fair-events-shared';
+
+const STATUS_PATH = '/fair-payments-connector/v1/payments';
 
 (function () {
 	'use strict';
@@ -19,6 +27,8 @@ import apiFetch from '@wordpress/api-fetch';
 	function init() {
 		initPaymentButtons();
 		initCallbackDismiss();
+		initRestart();
+		initCallbackPolling();
 	}
 
 	function initPaymentButtons() {
@@ -54,16 +64,77 @@ import apiFetch from '@wordpress/api-fetch';
 		const callback = button.closest('.fair-payments-connector-callback');
 
 		if (callback) {
-			callback.remove();
+			callback.style.display = 'none';
 		}
 
 		const url = new URL(window.location.href);
 		url.searchParams.delete('fair_payment_callback');
 		url.searchParams.delete('transaction_id');
+		url.searchParams.delete('token');
 		window.history.replaceState({}, '', url.toString());
 	}
 
-	async function handlePaymentClick(event, noncePromise) {
+	function initRestart() {
+		const callbackEl = document.querySelector(
+			'.fair-payments-connector-callback'
+		);
+		const restartButton = document.querySelector(
+			'.fair-payments-connector-restart'
+		);
+		const paymentForm = document.querySelector(
+			'.fair-payments-connector-payment-form'
+		);
+
+		wireRestartButton({
+			button: restartButton,
+			form: paymentForm,
+			onReset: () => {
+				if (callbackEl) {
+					callbackEl.style.display = 'none';
+				}
+			},
+		});
+	}
+
+	function initCallbackPolling() {
+		const callbackEl = document.querySelector(
+			'.fair-payments-connector-callback'
+		);
+		if (!callbackEl) {
+			return;
+		}
+
+		handlePaymentCallback({
+			statusPath: STATUS_PATH,
+			onConfirmed: () => updateCallbackState(callbackEl, 'confirmed'),
+			onFailed: () => updateCallbackState(callbackEl, 'failed'),
+		});
+	}
+
+	function updateCallbackState(callbackEl, status) {
+		callbackEl.querySelectorAll('[data-status]').forEach(function (el) {
+			el.style.display =
+				el.getAttribute('data-status') === status ? 'block' : 'none';
+		});
+
+		const restartButton = callbackEl.querySelector(
+			'.fair-payments-connector-restart'
+		);
+		const dismissButton = callbackEl.querySelector(
+			'.fair-payments-connector-callback-dismiss'
+		);
+
+		if (restartButton) {
+			restartButton.style.display =
+				status === 'failed' ? 'block' : 'none';
+		}
+		if (dismissButton) {
+			dismissButton.style.display =
+				status === 'failed' ? 'none' : 'block';
+		}
+	}
+
+	function handlePaymentClick(event, noncePromise) {
 		const button = event.target;
 		const paymentBlock = button.closest('.fair-payments-connector-block');
 		const loadingEl = paymentBlock.querySelector(
@@ -89,46 +160,36 @@ import apiFetch from '@wordpress/api-fetch';
 		}
 		button.disabled = true;
 
-		try {
-			const nonce = await noncePromise;
-
-			// Create payment via REST API using WordPress apiFetch
-			const data = await apiFetch({
-				path: '/fair-payments-connector/v1/payments',
-				method: 'POST',
-				data: {
-					amount: amount,
-					currency: currency,
-					description: description,
-					post_id: postId,
-					block_id: blockId,
-					nonce: nonce,
-				},
+		noncePromise
+			.then((nonce) =>
+				initiatePayment({
+					apiPath: '/fair-payments-connector/v1/payments',
+					data: {
+						amount,
+						currency,
+						description,
+						post_id: postId,
+						block_id: blockId,
+						nonce,
+					},
+					defaultErrorMessage: __(
+						'Failed to create payment',
+						'fair-payments-connector'
+					),
+					onError: (message) => {
+						if (errorEl) {
+							errorEl.textContent = message;
+							errorEl.style.display = 'block';
+						}
+						if (loadingEl) {
+							loadingEl.style.display = 'none';
+						}
+						button.disabled = false;
+					},
+				})
+			)
+			.catch(() => {
+				// Error already surfaced via onError.
 			});
-
-			// Redirect to Mollie checkout
-			if (data.checkout_url) {
-				window.location.href = data.checkout_url;
-			} else {
-				throw new Error('No checkout URL received');
-			}
-		} catch (error) {
-			// Show error message
-			if (errorEl) {
-				// apiFetch errors may have a message property directly or nested in data
-				const errorMessage =
-					error.message ||
-					(error.data && error.data.message) ||
-					'Failed to create payment';
-				errorEl.textContent = errorMessage;
-				errorEl.style.display = 'block';
-			}
-			if (loadingEl) {
-				loadingEl.style.display = 'none';
-			}
-			button.disabled = false;
-
-			console.error('Payment error:', error);
-		}
 	}
 })();
