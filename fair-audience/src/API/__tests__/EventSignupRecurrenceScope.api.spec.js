@@ -1,6 +1,6 @@
 /**
- * Playwright API tests for recurrence-scope ticket types (#663):
- * single_instance vs. whole_series signup semantics.
+ * Playwright API tests for recurrence-scope ticket types (#663, #930):
+ * single_instance vs. whole_series vs. multiple_instances signup semantics.
  *
  * Tests the core contract:
  *   - A whole_series signup is stored against the master event-date, not the
@@ -10,6 +10,10 @@
  *   - A single_instance signup is stored against the occurrence's event-date.
  *   - Capacity is enforced independently for both scopes (separate ticket types,
  *     each with capacity 1; second signup for the same scope is rejected).
+ *   - A multiple_instances signup below the configured minimum is rejected.
+ *   - A multiple_instances signup that names an occurrence outside the ticket
+ *     type's own series is rejected.
+ *   - A valid multiple_instances signup creates one row per chosen occurrence.
  */
 
 import { test, expect, request } from '@playwright/test';
@@ -319,6 +323,201 @@ test.describe('Recurrence-scope ticket types — signup semantics', () => {
 			});
 		} finally {
 			await deleteParticipant(api, secondParticipantId);
+		}
+	});
+});
+
+test.describe('multiple_instances ticket types — pick-N signup semantics (#930)', () => {
+	let api;
+	let adminUserId;
+	let participantId;
+	let event;
+	let occurrenceIds;
+	let ttId;
+
+	async function createRecurringEvent(title, rrule) {
+		const postRes = await api.post('/wp-json/wp/v2/fair_event', {
+			headers: authHeaders,
+			data: { title, status: 'publish' },
+		});
+		expect(postRes.ok()).toBeTruthy();
+		const eventId = (await postRes.json()).id;
+
+		const edRes = await api.post('/wp-json/fair-events/v1/event-dates', {
+			headers: authHeaders,
+			data: {
+				event_id: eventId,
+				start_datetime: '2035-04-02 10:00:00',
+				end_datetime: '2035-04-02 12:00:00',
+				rrule,
+			},
+		});
+		expect(edRes.ok()).toBeTruthy();
+		const masterEventDateId = (await edRes.json()).id;
+
+		const occRes = await api.get(
+			`/wp-json/fair-events/v1/event-dates?event_id=${eventId}`,
+			{ headers: authHeaders }
+		);
+		expect(occRes.ok()).toBeTruthy();
+		const occurrences = (await occRes.json()).map((o) => o.id).sort();
+
+		return { eventId, masterEventDateId, occurrences };
+	}
+
+	async function createMultiInstanceTicketType(
+		masterEventDateId,
+		minimumInstances
+	) {
+		const res = await api.post(
+			`/wp-json/fair-events/v1/event-dates/${masterEventDateId}/tickets`,
+			{
+				headers: authHeaders,
+				data: {
+					ticket_types: [
+						{
+							name: 'Pick your sessions',
+							capacity: null,
+							sort_order: 0,
+							recurrence_scope: 'multiple_instances',
+							minimum_instances: minimumInstances,
+						},
+					],
+					sale_periods: [],
+					prices: [],
+				},
+			}
+		);
+		expect(res.ok(), 'create multiple_instances ticket type').toBeTruthy();
+		const body = await res.json();
+		const tt = body.ticket_types?.[0];
+		expect(tt.recurrence_scope).toBe('multiple_instances');
+		expect(tt.minimum_instances).toBe(minimumInstances);
+		return tt.id;
+	}
+
+	test.beforeAll(async () => {
+		api = await request.newContext({ baseURL: BASE_URL });
+
+		const meRes = await api.get('/wp-json/wp/v2/users/me', {
+			headers: authHeaders,
+		});
+		expect(meRes.ok()).toBeTruthy();
+		adminUserId = (await meRes.json()).id;
+
+		event = await createRecurringEvent(
+			`Multiple Instances Test ${Date.now()}`,
+			'FREQ=WEEKLY;COUNT=4'
+		);
+		expect(event.occurrences.length).toBe(4);
+		occurrenceIds = event.occurrences;
+
+		ttId = await createMultiInstanceTicketType(event.masterEventDateId, 2);
+
+		participantId = await createParticipant(
+			api,
+			adminUserId,
+			'Multi Instance Tester'
+		);
+	});
+
+	test.afterAll(async () => {
+		await deleteParticipant(api, participantId);
+		if (event?.eventId) {
+			await api.delete(`/wp-json/wp/v2/fair_event/${event.eventId}`, {
+				headers: authHeaders,
+				params: { force: 'true' },
+			});
+		}
+		await api.dispose();
+	});
+
+	test('below the configured minimum is rejected', async () => {
+		const res = await api.post('/wp-json/fair-audience/v1/event-signup', {
+			headers: authHeaders,
+			data: {
+				event_id: event.eventId,
+				event_date_id: event.masterEventDateId,
+				ticket_type_id: ttId,
+				event_date_ids: [occurrenceIds[0]],
+			},
+		});
+		expect(res.status()).toBe(400);
+		const body = await res.json();
+		expect(body.code).toBe('minimum_instances_not_met');
+	});
+
+	test("an occurrence outside the ticket type's series is rejected", async () => {
+		const otherEvent = await createRecurringEvent(
+			`Multiple Instances Foreign ${Date.now()}`,
+			'FREQ=WEEKLY;COUNT=2'
+		);
+		try {
+			const res = await api.post(
+				'/wp-json/fair-audience/v1/event-signup',
+				{
+					headers: authHeaders,
+					data: {
+						event_id: event.eventId,
+						event_date_id: event.masterEventDateId,
+						ticket_type_id: ttId,
+						event_date_ids: [
+							occurrenceIds[0],
+							otherEvent.occurrences[0],
+						],
+					},
+				}
+			);
+			expect(res.status()).toBe(400);
+			const body = await res.json();
+			expect(body.code).toBe('invalid_occurrence');
+		} finally {
+			await api.delete(
+				`/wp-json/wp/v2/fair_event/${otherEvent.eventId}`,
+				{ headers: authHeaders, params: { force: 'true' } }
+			);
+		}
+	});
+
+	test('a valid selection creates one row per chosen occurrence', async () => {
+		const chosen = [occurrenceIds[0], occurrenceIds[1]];
+		const res = await api.post('/wp-json/fair-audience/v1/event-signup', {
+			headers: authHeaders,
+			data: {
+				event_id: event.eventId,
+				event_date_id: event.masterEventDateId,
+				ticket_type_id: ttId,
+				event_date_ids: chosen,
+			},
+		});
+		expect(res.ok()).toBeTruthy();
+		const body = await res.json();
+		expect(body.status).toMatch(/^(signed_up|already_signed_up)$/);
+
+		for (const occId of chosen) {
+			const participantsRes = await api.get(
+				`/wp-json/fair-audience/v1/event-dates/${occId}/participants`,
+				{ headers: authHeaders }
+			);
+			expect(participantsRes.ok()).toBeTruthy();
+			const rows = await participantsRes.json();
+			const row = rows.find((p) => p.participant_id === participantId);
+			expect(row, `signup row on occurrence ${occId}`).toBeTruthy();
+			expect(row.label).toBe('signed_up');
+		}
+
+		// The unselected occurrences should have no row for this participant.
+		const untouched = occurrenceIds.filter((id) => !chosen.includes(id));
+		for (const occId of untouched) {
+			const participantsRes = await api.get(
+				`/wp-json/fair-audience/v1/event-dates/${occId}/participants`,
+				{ headers: authHeaders }
+			);
+			expect(participantsRes.ok()).toBeTruthy();
+			const rows = await participantsRes.json();
+			expect(
+				rows.find((p) => p.participant_id === participantId)
+			).toBeFalsy();
 		}
 	});
 });

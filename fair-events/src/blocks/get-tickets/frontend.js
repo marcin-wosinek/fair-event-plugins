@@ -4,7 +4,7 @@
  * @package FairEvents
  */
 
-import { __ } from '@wordpress/i18n';
+import { __, _n, sprintf } from '@wordpress/i18n';
 import {
 	showMessage,
 	onDomReady,
@@ -70,6 +70,131 @@ const STATUS_PATH = '/fair-payments-connector/v1/payments';
 			const data = collectFormData(form);
 			submitForm(form, data);
 		});
+
+		const ticketTypeField = form.querySelector(
+			'select[name="ticket_type_id"]'
+		);
+		if (ticketTypeField) {
+			ticketTypeField.addEventListener('change', function () {
+				updateInstancePicker(form);
+			});
+		}
+
+		const instancePicker = form.querySelector(
+			'.fair-events-instance-picker'
+		);
+		if (instancePicker) {
+			instancePicker
+				.querySelectorAll('input[name="event_date_ids[]"]')
+				.forEach(function (checkbox) {
+					checkbox.addEventListener('change', function () {
+						updateInstancePicker(form);
+					});
+				});
+		}
+
+		updateInstancePicker(form);
+	}
+
+	/**
+	 * Selected <option> of the ticket type <select>, if any.
+	 * @param {HTMLFormElement} form The get-tickets form.
+	 * @return {HTMLOptionElement|null} The selected option element.
+	 */
+	function getSelectedTicketTypeOption(form) {
+		const select = form.querySelector('select[name="ticket_type_id"]');
+		if (!select || !select.value) {
+			return null;
+		}
+		return select.options[select.selectedIndex] || null;
+	}
+
+	/**
+	 * Whether the selected ticket type is a 'multiple_instances' scope pass.
+	 * @param {HTMLFormElement} form The get-tickets form.
+	 * @return {boolean} True when the multi-occurrence checkbox picker applies.
+	 */
+	function isMultipleInstancesSelected(form) {
+		const option = getSelectedTicketTypeOption(form);
+		return (
+			!!option && option.dataset.recurrenceScope === 'multiple_instances'
+		);
+	}
+
+	/**
+	 * Toggle the multi-occurrence checkbox picker (and hide the quantity field,
+	 * since v1 fixes quantity to 1 for this scope — instance count is the only
+	 * multiplier) based on the selected ticket type, and keep the minimum hint
+	 * and live total in sync.
+	 * @param {HTMLFormElement} form The get-tickets form.
+	 */
+	function updateInstancePicker(form) {
+		const instancePicker = form.querySelector(
+			'.fair-events-instance-picker'
+		);
+		const quantityRow = form.querySelector('.fair-events-quantity-row');
+		const quantityField = form.querySelector('input[name="quantity"]');
+		if (!instancePicker) {
+			return;
+		}
+
+		const active = isMultipleInstancesSelected(form);
+		instancePicker.style.display = active ? '' : 'none';
+		if (quantityRow) {
+			quantityRow.style.display = active ? 'none' : '';
+		}
+		if (active && quantityField) {
+			quantityField.value = '1';
+		}
+
+		if (!active) {
+			instancePicker
+				.querySelectorAll('input[type="checkbox"]')
+				.forEach(function (cb) {
+					cb.checked = false;
+				});
+			return;
+		}
+
+		const option = getSelectedTicketTypeOption(form);
+		const min = parseInt(option.dataset.minInstances || '0', 10);
+		const price = parseFloat(option.dataset.ticketPrice || 0);
+		const checked = instancePicker.querySelectorAll(
+			'input[name="event_date_ids[]"]:checked'
+		).length;
+
+		const hint = instancePicker.querySelector(
+			'.fair-events-instance-picker-hint'
+		);
+		if (hint) {
+			hint.textContent =
+				min > 0
+					? sprintf(
+							/* translators: %d: minimum number of occurrences required */
+							_n(
+								'Please select at least %d occurrence.',
+								'Please select at least %d occurrences.',
+								min,
+								'fair-events'
+							),
+							min
+					  )
+					: '';
+		}
+
+		const totalEl = instancePicker.querySelector(
+			'.fair-events-instance-picker-total'
+		);
+		if (totalEl) {
+			totalEl.textContent =
+				checked > 0
+					? sprintf(
+							/* translators: %s: formatted total price */
+							__('Total: €%s', 'fair-events'),
+							(price * checked).toFixed(2)
+					  )
+					: '';
+		}
 	}
 
 	function validateForm(form) {
@@ -113,17 +238,46 @@ const STATUS_PATH = '/fair-payments-connector/v1/payments';
 			}
 		}
 
-		const quantityField = form.querySelector('input[name="quantity"]');
-		if (quantityField) {
-			const qty = parseInt(quantityField.value, 10);
-			if (isNaN(qty) || qty < 1 || qty > 10) {
+		if (isMultipleInstancesSelected(form)) {
+			const option = getSelectedTicketTypeOption(form);
+			const min = Math.max(
+				1,
+				parseInt(option.dataset.minInstances || '0', 10)
+			);
+			const checked = form.querySelectorAll(
+				'input[name="event_date_ids[]"]:checked'
+			).length;
+			if (checked < min) {
 				showMessage(
 					messageContainer,
-					__('Quantity must be between 1 and 10.', 'fair-events'),
+					sprintf(
+						/* translators: %d: minimum number of occurrences required */
+						_n(
+							'Please select at least %d occurrence.',
+							'Please select at least %d occurrences.',
+							min,
+							'fair-events'
+						),
+						min
+					),
 					'error',
 					CSS_PREFIX
 				);
 				return false;
+			}
+		} else {
+			const quantityField = form.querySelector('input[name="quantity"]');
+			if (quantityField) {
+				const qty = parseInt(quantityField.value, 10);
+				if (isNaN(qty) || qty < 1 || qty > 10) {
+					showMessage(
+						messageContainer,
+						__('Quantity must be between 1 and 10.', 'fair-events'),
+						'error',
+						CSS_PREFIX
+					);
+					return false;
+				}
 			}
 		}
 
@@ -155,12 +309,22 @@ const STATUS_PATH = '/fair-payments-connector/v1/payments';
 			data.ticket_type_id = parseInt(ticketTypeField.value, 10);
 		}
 
-		const quantityField = form.querySelector('input[name="quantity"]');
-		if (quantityField) {
-			data.quantity = Math.max(
-				1,
-				Math.min(10, parseInt(quantityField.value, 10) || 1)
+		if (isMultipleInstancesSelected(form)) {
+			data.quantity = 1;
+			const instanceInputs = form.querySelectorAll(
+				'input[name="event_date_ids[]"]:checked'
 			);
+			data.event_date_ids = Array.from(instanceInputs).map((i) =>
+				parseInt(i.value, 10)
+			);
+		} else {
+			const quantityField = form.querySelector('input[name="quantity"]');
+			if (quantityField) {
+				data.quantity = Math.max(
+					1,
+					Math.min(10, parseInt(quantityField.value, 10) || 1)
+				);
+			}
 		}
 
 		const mailingField = form.querySelector('input[name="mailing_opt_in"]');

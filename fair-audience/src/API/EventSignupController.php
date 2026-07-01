@@ -152,6 +152,17 @@ class EventSignupController extends WP_REST_Controller {
 							'type'  => 'array',
 							'items' => array( 'type' => 'integer' ),
 						),
+						// Chosen occurrence IDs for 'multiple_instances' ticket types.
+						// Capped so a crafted request can't force an unbounded number
+						// of line items / DB rows per submission.
+						'event_date_ids'        => array(
+							'type'              => 'array',
+							'items'             => array( 'type' => 'integer' ),
+							'required'          => false,
+							'validate_callback' => function ( $value ) {
+								return ! is_array( $value ) || count( $value ) <= 50;
+							},
+						),
 						'participant_token'     => array(
 							'type'              => 'string',
 							'required'          => false,
@@ -562,6 +573,17 @@ class EventSignupController extends WP_REST_Controller {
 			);
 		}
 
+		// 'multiple_instances' ticket types pick several specific occurrences
+		// instead of retargeting to the master (whole_series) or staying on one
+		// occurrence (single_instance) — handled by a dedicated path that
+		// creates one signup row per chosen occurrence.
+		if ( $ticket_type_id && class_exists( \FairEvents\Models\TicketType::class ) ) {
+			$tt_for_multi = \FairEvents\Models\TicketType::get_by_id( $ticket_type_id );
+			if ( $tt_for_multi && $tt_for_multi->is_multiple_instances() ) {
+				return $this->create_multi_instance_signup( $request, $event, $event_id, $participant, $tt_for_multi, $invitation_token );
+			}
+		}
+
 		// For whole-series ticket types, retarget event_date_id to the master so one
 		// row covers every occurrence in the series. Single-instance path is unchanged.
 		if ( $ticket_type_id && $event_date_id && class_exists( \FairEvents\Models\TicketType::class ) ) {
@@ -670,6 +692,293 @@ class EventSignupController extends WP_REST_Controller {
 				'success' => true,
 				'message' => __( 'You have successfully signed up for the event!', 'fair-audience' ),
 				'status'  => 'signed_up',
+			)
+		);
+	}
+
+	/**
+	 * Sign up for one or more specific occurrences of a recurring series
+	 * ('multiple_instances' ticket types). Unlike single_instance (one
+	 * occurrence) and whole_series (retargeted to the master), this creates
+	 * one EventParticipant row per chosen occurrence — sharing a single
+	 * transaction on the paid path, so PaymentHooks::handle_signup_paid()
+	 * confirms them together.
+	 *
+	 * @param WP_REST_Request                  $request          Request object.
+	 * @param WP_Post                          $event            Event post.
+	 * @param int                              $event_id         Event post ID.
+	 * @param \FairAudience\Models\Participant $participant      Participant doing the signup.
+	 * @param \FairEvents\Models\TicketType    $ticket_type      The 'multiple_instances' ticket type.
+	 * @param string                           $invitation_token Optional invitation token presented by the buyer.
+	 * @return WP_REST_Response|WP_Error
+	 */
+	private function create_multi_instance_signup( $request, $event, $event_id, $participant, $ticket_type, $invitation_token ) {
+		$raw_ids = $request->get_param( 'event_date_ids' ) ?: array();
+		$raw_ids = array_slice( array_values( array_unique( array_map( 'absint', (array) $raw_ids ) ) ), 0, 50 );
+		$raw_ids = array_filter( $raw_ids );
+
+		if ( empty( $raw_ids ) ) {
+			return new WP_Error(
+				'no_occurrences_selected',
+				__( 'Please select at least one occurrence.', 'fair-audience' ),
+				array( 'status' => 400 )
+			);
+		}
+
+		if ( ! class_exists( \FairEvents\Models\EventDates::class ) ) {
+			return new WP_Error(
+				'invalid_ticket_type',
+				__( 'Invalid ticket type.', 'fair-audience' ),
+				array( 'status' => 400 )
+			);
+		}
+
+		// Validate every submitted ID is a real occurrence belonging to the
+		// same series as the ticket type — never trust the client list.
+		$series_master_id = $this->resolve_master_event_date_id( (int) $ticket_type->event_date_id );
+		if ( ! $series_master_id ) {
+			return new WP_Error(
+				'invalid_ticket_type',
+				__( 'Invalid ticket type.', 'fair-audience' ),
+				array( 'status' => 400 )
+			);
+		}
+
+		$occurrences = array();
+		foreach ( $raw_ids as $occ_id ) {
+			$occ = \FairEvents\Models\EventDates::get_by_id( $occ_id );
+			if ( ! $occ || $this->resolve_master_event_date_id( $occ_id ) !== $series_master_id ) {
+				return new WP_Error(
+					'invalid_occurrence',
+					__( 'One of the selected occurrences is not valid for this ticket.', 'fair-audience' ),
+					array( 'status' => 400 )
+				);
+			}
+			$occurrences[] = $occ;
+		}
+
+		$minimum_instances = max( 1, (int) $ticket_type->minimum_instances );
+		if ( count( $occurrences ) < $minimum_instances ) {
+			return new WP_Error(
+				'minimum_instances_not_met',
+				sprintf(
+					/* translators: %d: minimum number of occurrences required */
+					_n(
+						'Please select at least %d occurrence.',
+						'Please select at least %d occurrences.',
+						$minimum_instances,
+						'fair-audience'
+					),
+					$minimum_instances
+				),
+				array( 'status' => 400 )
+			);
+		}
+
+		// Drop occurrences the participant already holds a signed-up slot for.
+		$pending_occurrences = array();
+		foreach ( $occurrences as $occ ) {
+			$rel = $this->event_participant_repository->get_by_event_date_and_participant( (int) $occ->id, $participant->id );
+			if ( $rel && 'signed_up' === $rel->label ) {
+				continue;
+			}
+			$pending_occurrences[] = $occ;
+		}
+
+		if ( empty( $pending_occurrences ) ) {
+			AudienceSession::set( (int) $participant->id );
+			return rest_ensure_response(
+				array(
+					'success' => true,
+					'message' => __( 'You are already signed up for these occurrences.', 'fair-audience' ),
+					'status'  => 'already_signed_up',
+				)
+			);
+		}
+
+		$group_error = $this->validate_ticket_type_group_restriction( $ticket_type->id, $participant->id, $invitation_token );
+		if ( is_wp_error( $group_error ) ) {
+			return $group_error;
+		}
+
+		$capacity_error = $this->validate_ticket_type_capacity( $ticket_type->id );
+		if ( is_wp_error( $capacity_error ) ) {
+			return $capacity_error;
+		}
+
+		$disable_at_error = $this->validate_ticket_type_disable_at( $ticket_type->id );
+		if ( is_wp_error( $disable_at_error ) ) {
+			return $disable_at_error;
+		}
+
+		// Recompute the per-instance price server-side; never trust a client amount.
+		$unit_price = 0.0;
+		if ( class_exists( \FairEventsExperimental\Services\EventSignupPricing::class ) ) {
+			$resolved   = \FairEventsExperimental\Services\EventSignupPricing::resolve_price_for_ticket_type( $ticket_type->id, $participant->id );
+			$unit_price = null !== $resolved ? (float) $resolved : 0.0;
+		}
+		$count            = count( $pending_occurrences );
+		$total_amount     = $unit_price * $count;
+		$seats_per_ticket = max( 1, (int) $ticket_type->seats_per_ticket );
+
+		if ( $total_amount <= 0 ) {
+			foreach ( $pending_occurrences as $occ ) {
+				$existing_occ = $this->event_participant_repository->get_by_event_date_and_participant( (int) $occ->id, $participant->id );
+				if ( $existing_occ ) {
+					$this->event_participant_repository->update_label_by_event_date( (int) $occ->id, $participant->id, 'signed_up' );
+				} else {
+					$this->event_participant_repository->add_participant_to_event( $event_id, $participant->id, 'signed_up', (int) $occ->id );
+				}
+				$this->snapshot_ticket_type_on_signup( (int) $occ->id, $participant->id, $ticket_type->id );
+			}
+
+			AudienceSession::set( (int) $participant->id );
+
+			return rest_ensure_response(
+				array(
+					'success' => true,
+					'message' => __( 'You have successfully signed up for the event!', 'fair-audience' ),
+					'status'  => 'signed_up',
+				)
+			);
+		}
+
+		if ( ! class_exists( \FairPaymentsConnector\API\TransactionAPI::class )
+			|| ! \FairPaymentsConnector\API\TransactionAPI::is_configured() ) {
+			return new WP_Error(
+				'payment_unavailable',
+				__( 'Paid signup is not available because the payment plugin is not configured.', 'fair-audience' ),
+				array( 'status' => 503 )
+			);
+		}
+
+		// Per-occurrence capacity check.
+		foreach ( $pending_occurrences as $occ ) {
+			if ( null === $occ->capacity ) {
+				continue;
+			}
+			$active_count       = $this->event_participant_repository->count_active_for_event_date( (int) $occ->id );
+			$existing_occ       = $this->event_participant_repository->get_by_event_date_and_participant( (int) $occ->id, $participant->id );
+			$already_holds_slot = $existing_occ && in_array( $existing_occ->label, array( 'signed_up', 'pending_payment' ), true );
+			$held_seats         = $already_holds_slot ? max( 1, (int) $existing_occ->seats ) : 0;
+			$projected          = $active_count - $held_seats + $seats_per_ticket;
+			if ( $projected > (int) $occ->capacity ) {
+				return new WP_Error(
+					'event_full',
+					__( 'One of the selected occurrences is fully booked.', 'fair-audience' ),
+					array( 'status' => 409 )
+				);
+			}
+		}
+
+		$expires_at            = gmdate( 'Y-m-d H:i:s', time() + 15 * MINUTE_IN_SECONDS );
+		$event_participant_ids = array();
+		$line_items            = array();
+
+		foreach ( $pending_occurrences as $occ ) {
+			$existing_occ = $this->event_participant_repository->get_by_event_date_and_participant( (int) $occ->id, $participant->id );
+			if ( $existing_occ ) {
+				$existing_occ->label              = 'pending_payment';
+				$existing_occ->payment_expires_at = $expires_at;
+				$existing_occ->transaction_id     = null;
+				$existing_occ->ticket_type_id     = $ticket_type->id;
+				$existing_occ->seats              = $seats_per_ticket;
+				$existing_occ->save();
+				$ep = $existing_occ;
+			} else {
+				$ep = new \FairAudience\Models\EventParticipant(
+					array(
+						'event_id'           => $event_id,
+						'event_date_id'      => (int) $occ->id,
+						'participant_id'     => $participant->id,
+						'label'              => 'pending_payment',
+						'payment_expires_at' => $expires_at,
+						'ticket_type_id'     => $ticket_type->id,
+						'seats'              => $seats_per_ticket,
+					)
+				);
+				$ep->save();
+			}
+			$event_participant_ids[] = (int) $ep->id;
+
+			$occ_label    = class_exists( \FairEvents\Helpers\DateRangeFormatter::class )
+				? \FairEvents\Helpers\DateRangeFormatter::format( $occ->start_datetime, $occ->end_datetime, (bool) $occ->all_day )
+				: $occ->start_datetime;
+			$line_items[] = array(
+				'name'     => sprintf(
+					/* translators: %s: occurrence date/time label */
+					__( 'Signup for %s', 'fair-audience' ),
+					$occ_label
+				),
+				'quantity' => 1,
+				'amount'   => $unit_price,
+			);
+		}
+
+		$transaction_id = \FairPaymentsConnector\API\TransactionAPI::create_transaction(
+			$line_items,
+			array(
+				'currency'      => get_option( 'fair_payment_currency', 'EUR' ),
+				'description'   => sprintf(
+					/* translators: %s: event title */
+					__( 'Signup for %s', 'fair-audience' ),
+					get_the_title( $event_id )
+				),
+				'post_id'       => $event_id,
+				'event_date_id' => (int) $pending_occurrences[0]->id,
+				'user_id'       => get_current_user_id() ?: null,
+				'metadata'      => array(
+					'source'                => 'fair-audience-signup',
+					'event_date_id'         => (int) $pending_occurrences[0]->id,
+					'event_participant_ids' => $event_participant_ids,
+					'participant_id'        => $participant->id,
+					'ticket_type_id'        => (int) $ticket_type->id,
+				),
+			)
+		);
+
+		if ( is_wp_error( $transaction_id ) ) {
+			return $transaction_id;
+		}
+
+		foreach ( $event_participant_ids as $ep_id ) {
+			$ep = $this->event_participant_repository->get_by_id( $ep_id );
+			if ( $ep ) {
+				$ep->transaction_id = (int) $transaction_id;
+				$ep->save();
+			}
+		}
+
+		$redirect_url = add_query_arg(
+			array(
+				'fair_payment_callback' => 'true',
+				'fair_signup_tx'        => $transaction_id,
+				'fst_sig'               => \FairAudience\Services\TransactionAccessToken::generate(
+					(int) $transaction_id,
+					(int) $participant->id
+				),
+			),
+			get_permalink( $event_id )
+		);
+
+		$payment = \FairPaymentsConnector\API\TransactionAPI::initiate_payment(
+			$transaction_id,
+			array( 'redirect_url' => $redirect_url )
+		);
+
+		if ( is_wp_error( $payment ) ) {
+			return $payment;
+		}
+
+		AudienceSession::set( (int) $participant->id );
+
+		return rest_ensure_response(
+			array(
+				'status'         => 'payment_required',
+				'checkout_url'   => esc_url_raw( $payment['checkout_url'] ),
+				'transaction_id' => $transaction_id,
+				'amount'         => $total_amount,
+				'currency'       => get_option( 'fair_payment_currency', 'EUR' ),
 			)
 		);
 	}

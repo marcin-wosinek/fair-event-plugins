@@ -33,29 +33,32 @@ class PaymentHooks {
 	}
 
 	/**
-	 * On payment paid: flip matching get-tickets signup to confirmed.
+	 * On payment paid: flip matching get-tickets signup(s) to confirmed.
+	 *
+	 * A 'multiple_instances' ticket-type purchase creates one signup row per
+	 * chosen occurrence under a single transaction; every other purchase
+	 * creates exactly one row, so resolve_signup_ids() always returns at
+	 * least the single-row case.
 	 *
 	 * @param object $payment     Payment object from fair-payments-connector.
 	 * @param object $transaction Transaction object from fair-payments-connector.
 	 * @return void
 	 */
 	public static function handle_payment_paid( $payment, $transaction ) {
-		$signup_id = self::resolve_signup_id( $transaction );
-		if ( $signup_id ) {
+		foreach ( self::resolve_signup_ids( $transaction ) as $signup_id ) {
 			\FairEvents\Models\EventSignup::update_status( $signup_id, 'confirmed' );
 		}
 	}
 
 	/**
-	 * On payment failed/canceled: mark the signup as failed.
+	 * On payment failed/canceled: mark the signup(s) as failed.
 	 *
 	 * @param object $payment     Payment object from fair-payments-connector.
 	 * @param object $transaction Transaction object from fair-payments-connector.
 	 * @return void
 	 */
 	public static function handle_payment_failed( $payment, $transaction ) {
-		$signup_id = self::resolve_signup_id( $transaction );
-		if ( $signup_id ) {
+		foreach ( self::resolve_signup_ids( $transaction ) as $signup_id ) {
 			\FairEvents\Models\EventSignup::update_status( $signup_id, 'failed' );
 		}
 	}
@@ -70,14 +73,15 @@ class PaymentHooks {
 	}
 
 	/**
-	 * Resolve the signup ID from a transaction, returning 0 if not a get-tickets transaction.
+	 * Resolve the signup ID(s) from a transaction, returning an empty array
+	 * if not a get-tickets transaction.
 	 *
 	 * @param object $transaction Transaction object.
-	 * @return int Signup ID or 0.
+	 * @return int[] Signup IDs (empty when none apply).
 	 */
-	private static function resolve_signup_id( $transaction ) {
+	private static function resolve_signup_ids( $transaction ) {
 		if ( ! isset( $transaction->metadata ) ) {
-			return 0;
+			return array();
 		}
 
 		$metadata = is_string( $transaction->metadata )
@@ -85,15 +89,20 @@ class PaymentHooks {
 			: (array) $transaction->metadata;
 
 		if ( ( $metadata['source'] ?? '' ) !== 'fair-events-get-tickets' ) {
-			return 0;
+			return array();
+		}
+
+		// 'multiple_instances' purchases store one signup row ID per chosen occurrence.
+		if ( ! empty( $metadata['signup_ids'] ) && is_array( $metadata['signup_ids'] ) ) {
+			return array_map( 'intval', $metadata['signup_ids'] );
 		}
 
 		if ( ! empty( $metadata['signup_id'] ) ) {
-			return (int) $metadata['signup_id'];
+			return array( (int) $metadata['signup_id'] );
 		}
 
 		// Fall back to lookup by transaction_id.
 		$signup = \FairEvents\Models\EventSignup::get_by_transaction_id( (int) $transaction->id );
-		return $signup ? (int) $signup->id : 0;
+		return $signup ? array( (int) $signup->id ) : array();
 	}
 }

@@ -248,6 +248,100 @@ describe('EventTickets — recurrence scope selector', () => {
 	});
 });
 
+describe('EventTickets — multiple_instances scope (#930)', () => {
+	it('offers multiple_instances as a scope option', () => {
+		renderTickets({
+			isRecurring: true,
+			initialData: initialDataWithTicketType,
+		});
+		openEditTicketsPanel();
+
+		const selects = screen.getAllByRole('combobox');
+		const scopeSelect = selects.find(
+			(el) =>
+				el.value === 'single_instance' || el.value === 'whole_series'
+		);
+		const optionValues = Array.from(scopeSelect.options).map(
+			(o) => o.value
+		);
+		expect(optionValues).toContain('multiple_instances');
+		// Acknowledge the WordPress SelectControl size deprecation notice —
+		// only fires the first time it renders in the suite (deduped globally),
+		// so only assert when this test actually triggered it.
+		if (console.warn.mock.calls.length > 0) {
+			expect(console).toHaveWarned();
+		}
+	});
+
+	it('shows a "Minimum instances" input once multiple_instances is selected', () => {
+		renderTickets({
+			isRecurring: true,
+			initialData: initialDataWithTicketType,
+		});
+		openEditTicketsPanel();
+
+		const selects = screen.getAllByRole('combobox');
+		const scopeSelect = selects.find(
+			(el) =>
+				el.value === 'single_instance' || el.value === 'whole_series'
+		);
+
+		expect(
+			screen.queryByLabelText(/Minimum instances/i)
+		).not.toBeInTheDocument();
+
+		fireEvent.change(scopeSelect, {
+			target: { value: 'multiple_instances' },
+		});
+
+		expect(scopeSelect.value).toBe('multiple_instances');
+		expect(screen.getByLabelText(/Minimum instances/i)).toBeInTheDocument();
+	});
+
+	it('save payload includes the entered minimum_instances', async () => {
+		const { onSaveRef } = renderTickets({
+			isRecurring: true,
+			initialData: initialDataWithTicketType,
+		});
+		openEditTicketsPanel();
+
+		const selects = screen.getAllByRole('combobox');
+		const scopeSelect = selects.find(
+			(el) =>
+				el.value === 'single_instance' || el.value === 'whole_series'
+		);
+		fireEvent.change(scopeSelect, {
+			target: { value: 'multiple_instances' },
+		});
+
+		const minInstancesInput = screen.getByLabelText(/Minimum instances/i);
+		fireEvent.change(minInstancesInput, { target: { value: '3' } });
+
+		let savedPayload = null;
+		apiFetch.mockImplementation(({ method, data }) => {
+			if (method === 'PUT') {
+				savedPayload = data;
+				return Promise.resolve({
+					...initialDataWithTicketType,
+					ticket_types: [],
+				});
+			}
+			return new Promise(() => {});
+		});
+
+		expect(onSaveRef.current).not.toBeNull();
+		await act(async () => {
+			await onSaveRef.current();
+		});
+
+		expect(savedPayload).not.toBeNull();
+		const savedType = savedPayload.ticket_types?.[0];
+		expect(savedType).toBeTruthy();
+		expect(savedType.recurrence_scope).toBe('multiple_instances');
+		expect(savedType.minimum_instances).toBe(3);
+	});
+});
+
 describe('EventTickets — scope-choice modal', () => {
 	it('opens a modal when "+ Add Ticket Type" is clicked on a recurring event', () => {
 		renderTickets({
