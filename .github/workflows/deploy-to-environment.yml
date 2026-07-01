@@ -104,7 +104,7 @@ jobs:
                   fi
 
                   if [ "$PLUGINS_TO_DEPLOY" = "all" ]; then
-                    PLUGINS="fair-events fair-payments-connector fair-audience fair-timetable fair-finance fair-events-experimental fair-payments-connector-experimental"
+                    PLUGINS="fair-events fair-payments-connector fair-audience fair-timetable fair-finance fair-events-experimental fair-payments-connector-experimental fair-form"
                   else
                     # Convert comma-separated list to space-separated
                     PLUGINS=$(echo "$PLUGINS_TO_DEPLOY" | tr ',' ' ')
