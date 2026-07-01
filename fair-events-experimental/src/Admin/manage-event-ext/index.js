@@ -11,6 +11,7 @@
 import { Button, __experimentalVStack as VStack } from '@wordpress/components';
 import { __ } from '@wordpress/i18n';
 import { addFilter } from '@wordpress/hooks';
+import EventStatistics from '../event-statistics/EventStatistics.js';
 
 const {
 	statisticsUrl = '',
@@ -33,10 +34,9 @@ addFilter(
 				title: __('Statistics', 'fair-events-experimental'),
 				order: 60,
 				isVisible: true,
-				render: ({ eventDateId }) => {
-					window.location.href = `${statisticsUrl}${eventDateId}`;
-					return null;
-				},
+				render: ({ eventDateId }) => (
+					<EventStatistics eventDateId={eventDateId} />
+				),
 			},
 		];
 	}
