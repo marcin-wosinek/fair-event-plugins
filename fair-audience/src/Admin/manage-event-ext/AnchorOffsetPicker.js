@@ -6,7 +6,7 @@
  * before/after) into the `{ anchor_type, anchor_ref_id, offset_minutes }` the
  * scheduled-messages API expects. Shows the resulting send time as a preview.
  *
- * @package FairEvents
+ * @package FairAudience
  */
 
 import { SelectControl, RadioControl } from '@wordpress/components';
@@ -121,15 +121,15 @@ export default function AnchorOffsetPicker({
 	return (
 		<div style={{ marginBottom: '16px' }}>
 			<SelectControl
-				label={__('Anchor', 'fair-events')}
+				label={__('Anchor', 'fair-audience')}
 				value={anchorType}
 				options={[
 					{
-						label: __('Event date start', 'fair-events'),
+						label: __('Event date start', 'fair-audience'),
 						value: 'event_date_start',
 					},
 					{
-						label: __('Event date end', 'fair-events'),
+						label: __('Event date end', 'fair-audience'),
 						value: 'event_date_end',
 					},
 				]}
@@ -140,7 +140,7 @@ export default function AnchorOffsetPicker({
 
 			{eventDates.length > 1 && (
 				<SelectControl
-					label={__('Which date', 'fair-events')}
+					label={__('Which date', 'fair-audience')}
 					value={String(anchorRefId)}
 					options={eventDates.map((d) => ({
 						label: d.display_label || `#${d.id}`,
@@ -160,7 +160,7 @@ export default function AnchorOffsetPicker({
 				style={{ marginTop: '8px' }}
 			>
 				<NumberControl
-					label={__('Offset', 'fair-events')}
+					label={__('Offset', 'fair-audience')}
 					min={0}
 					value={offsetValue}
 					onChange={(value) =>
@@ -170,15 +170,15 @@ export default function AnchorOffsetPicker({
 					__nextHasNoMarginBottom
 				/>
 				<SelectControl
-					label={__('Unit', 'fair-events')}
+					label={__('Unit', 'fair-audience')}
 					value={offsetUnit}
 					options={[
 						{
-							label: __('minutes', 'fair-events'),
+							label: __('minutes', 'fair-audience'),
 							value: 'minutes',
 						},
-						{ label: __('hours', 'fair-events'), value: 'hours' },
-						{ label: __('days', 'fair-events'), value: 'days' },
+						{ label: __('hours', 'fair-audience'), value: 'hours' },
+						{ label: __('days', 'fair-audience'), value: 'days' },
 					]}
 					onChange={(value) => onChange({ offsetUnit: value })}
 					disabled={disabled}
@@ -187,8 +187,11 @@ export default function AnchorOffsetPicker({
 				<RadioControl
 					selected={direction}
 					options={[
-						{ label: __('before', 'fair-events'), value: 'before' },
-						{ label: __('after', 'fair-events'), value: 'after' },
+						{
+							label: __('before', 'fair-audience'),
+							value: 'before',
+						},
+						{ label: __('after', 'fair-audience'), value: 'after' },
 					]}
 					onChange={(value) => onChange({ direction: value })}
 				/>
@@ -198,12 +201,12 @@ export default function AnchorOffsetPicker({
 				{preview
 					? sprintf(
 							/* translators: %s: computed send date/time */
-							__('Will send around: %s', 'fair-events'),
+							__('Will send around: %s', 'fair-audience'),
 							preview
 					  )
 					: __(
 							'Send time will be computed from the chosen date.',
-							'fair-events'
+							'fair-audience'
 					  )}
 			</p>
 		</div>

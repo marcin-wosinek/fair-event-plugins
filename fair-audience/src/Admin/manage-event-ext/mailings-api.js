@@ -1,8 +1,7 @@
 /**
  * REST client for scheduled per-event mailings.
  *
- * All calls hit fair-audience's scheduled-messages endpoints (the Mailings tab
- * lives in fair-events but the data model is owned by fair-audience). Paths are
+ * All calls hit fair-audience's scheduled-messages endpoints. Paths are
  * hardcoded and start with '/' per the project's apiFetch conventions.
  */
 
