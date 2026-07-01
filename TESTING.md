@@ -159,6 +159,44 @@ fair-{plugin-name}/
 - Admin page workflows
 - Integration of multiple features
 
+### PHP Unit Tests (PHPUnit)
+
+**Purpose**: Test pure PHP logic in isolation — no WordPress bootstrap, no DB,
+no HTTP. Use for boundary-level regression locks (e.g. arguments reaching a
+third-party SDK) and logic that's awkward to reach through `.api.spec.js`.
+
+**Runner**: PHPUnit (plain — no Brain Monkey / WP_Mock / Mockery anywhere in
+the repo)
+**Location**: `phpunit.xml` at the plugin root, bootstrap at
+`__tests__/bootstrap.php`, tests at `__tests__/**/*Test.php`
+**Namespace**: `Fair…\Tests\…`, mirroring the `src/` namespace under test
+
+**Convention**:
+- `phpunit.xml` points `bootstrap` at `__tests__/bootstrap.php` and the
+  testsuite `<directory suffix="Test.php">./__tests__</directory>`.
+- `__tests__/bootstrap.php` loads the Composer autoloader, defines `WPINC`,
+  and hand-writes stubs for just the WordPress functions the code under test
+  calls (e.g. `get_option()` backed by `$GLOBALS['_fair_test_options']`). Add
+  stubs only as needed — don't pre-stub the whole API surface.
+- If the code under test touches `$wpdb`, stub a minimal fake in the bootstrap
+  (e.g. an `insert()` that returns success) rather than pulling in a DB
+  library.
+- Run via `npm run test:php` (→ `vendor/bin/phpunit`) or `composer test`.
+  `npm test` already chains `test:php` after `test:js`, so it runs in CI with
+  no dedicated workflow step.
+
+**When to use**:
+- Locking a regression at a boundary that's hard/unsafe to reach via `.api.spec.js`
+  (e.g. arguments passed to a third-party SDK client that has its own HTTP
+  transport, so `pre_http_request` can't intercept it — see
+  `fair-payments-connector/__tests__/Payment/MolliePaymentHandlerTest.php`).
+- Pure PHP logic (settings parsing, formatting, recurrence math) that doesn't
+  need a live WordPress instance — see `fair-events/__tests__/`.
+
+**Examples**: `fair-events`, `fair-payments-connector`,
+`fair-payments-connector-experimental`, `fair-events-experimental`,
+`fair-timetable`.
+
 ### WordPress.org Screenshot Tests
 
 **Purpose**: Generate screenshots for WordPress.org plugin directory
@@ -416,7 +454,10 @@ export default defineConfig({
 
 ### phpunit.xml
 
-Keep existing `phpunit.xml` files but don't implement PHP tests for now. They're preserved for potential future use.
+See [PHP Unit Tests (PHPUnit)](#php-unit-tests-phpunit) above for the
+convention. Not every plugin needs one — add `phpunit.xml` +
+`__tests__/bootstrap.php` only when there's boundary-level PHP logic worth
+locking down.
 
 ## Running Tests
 

@@ -14,7 +14,7 @@
 		"clean": "rm -rf build",
 		"start": "webpack --mode=development --watch --config webpack.config.cjs",
 		"format": "wp-scripts format",
-		"test": "npm-run-all test:js",
+		"test": "npm-run-all test:js test:php",
 		"test:js": "jest",
 		"test:api": "playwright test",
 		"test:php": "vendor/bin/phpunit",

@@ -26,8 +26,17 @@ class MolliePaymentHandler {
 
 	/**
 	 * Constructor
+	 *
+	 * @param MollieApiClient|null $client Optional pre-authenticated client (for tests).
+	 *                                     When omitted, the real client is built and
+	 *                                     authenticated exactly as in production.
 	 */
-	public function __construct() {
+	public function __construct( ?MollieApiClient $client = null ) {
+		if ( null !== $client ) {
+			$this->mollie = $client;
+			return;
+		}
+
 		$this->mollie = new MollieApiClient();
 
 		// Prefer OAuth if connected, otherwise fall back to API keys.
@@ -375,7 +384,10 @@ class MolliePaymentHandler {
 			$parameters = array( 'amount' => $amount );
 			if ( $profile_id ) {
 				$parameters['profileId'] = $profile_id;
-				$parameters['testmode']  = $testmode ? 'true' : 'false';
+				// Pass a real bool, not a string: Utility::extractBool() only trusts
+				// is_bool() checks, so a 'false' string is truthy and always coerces
+				// to testmode=true downstream.
+				$parameters['testmode'] = $testmode;
 			}
 
 			$methods = $this->mollie->methods->allEnabled( $parameters );
