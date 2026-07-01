@@ -43,21 +43,19 @@ if ( ! $event_date_id ) {
 
 // Handle fair_payment_callback return state.
 // phpcs:ignore WordPress.Security.NonceVerification.Recommended
-$is_payment_callback = ! empty( $_GET['fair_payment_callback'] ) && ! empty( $_GET['fair_get_tickets_tx'] );
+$is_payment_callback = ! empty( $_GET['fair_payment_callback'] ) && ! empty( $_GET['transaction_id'] );
 $callback_status     = '';
+$callback_tx_id      = 0;
+$callback_token      = '';
 if ( $is_payment_callback && class_exists( \FairPaymentsConnector\API\TransactionAPI::class ) ) {
 	// phpcs:ignore WordPress.Security.NonceVerification.Recommended
-	$tx_id       = absint( $_GET['fair_get_tickets_tx'] );
-	$transaction = \FairPaymentsConnector\API\TransactionAPI::get_transaction( $tx_id );
-	if ( $transaction ) {
-		$tx_status = (string) $transaction->status;
-		if ( 'paid' === $tx_status ) {
-			$callback_status = 'confirmed';
-		} elseif ( in_array( $tx_status, array( 'failed', 'canceled', 'expired' ), true ) ) {
-			$callback_status = 'failed';
-		} else {
-			$callback_status = 'processing';
-		}
+	$callback_tx_id = absint( $_GET['transaction_id'] );
+	// phpcs:ignore WordPress.Security.NonceVerification.Recommended
+	$callback_token = isset( $_GET['token'] ) ? sanitize_text_field( wp_unslash( $_GET['token'] ) ) : '';
+	$transaction    = \FairPaymentsConnector\API\TransactionAPI::get_transaction( $callback_tx_id );
+	$expected_token = $transaction ? (string) ( $transaction->access_token ?? '' ) : '';
+	if ( $transaction && '' !== $expected_token && '' !== $callback_token && hash_equals( $expected_token, $callback_token ) ) {
+		$callback_status = \FairPaymentsConnector\Payment\PaymentStatus::from_raw_status( (string) $transaction->status );
 	}
 }
 

@@ -4,17 +4,17 @@
  * @package FairEvents
  */
 
-import apiFetch from '@wordpress/api-fetch';
 import { __ } from '@wordpress/i18n';
 import {
-	extractErrorMessage,
 	showMessage,
-	setButtonLoading,
 	onDomReady,
+	initiatePayment,
+	handlePaymentCallback,
 } from 'fair-events-shared';
 import './frontend.css';
 
 const CSS_PREFIX = 'fair-events-get-tickets';
+const STATUS_PATH = '/fair-payments-connector/v1/payments';
 
 (function () {
 	'use strict';
@@ -22,7 +22,11 @@ const CSS_PREFIX = 'fair-events-get-tickets';
 	onDomReady(initialize);
 
 	function initialize() {
-		handleCallbackReturn();
+		const container = document.querySelector('.fair-events-get-tickets');
+		handlePaymentCallback({
+			statusPath: STATUS_PATH,
+			onConfirmed: () => handleConfirmed(container),
+		});
 
 		const forms = document.querySelectorAll(
 			'.fair-events-get-tickets-form'
@@ -30,45 +34,29 @@ const CSS_PREFIX = 'fair-events-get-tickets';
 		forms.forEach(setupForm);
 	}
 
-	function handleCallbackReturn() {
-		const params = new URLSearchParams(window.location.search);
-		if (params.get('fair_payment_callback') !== 'true') {
-			return;
-		}
-		const transactionId = params.get('fair_get_tickets_tx');
-		if (!transactionId) {
+	function handleConfirmed(container) {
+		if (!container) {
 			return;
 		}
 
-		pollTransactionStatus(parseInt(transactionId, 10));
-	}
+		const messageContainer = container.querySelector('.message-container');
+		const form = container.querySelector('.fair-events-get-tickets-form');
 
-	function pollTransactionStatus(transactionId, attempt) {
-		attempt = attempt || 0;
-		const MAX_ATTEMPTS = 10;
-		const POLL_INTERVAL_MS = 3000;
-
-		if (attempt >= MAX_ATTEMPTS) {
-			return;
+		if (messageContainer) {
+			showMessage(
+				messageContainer,
+				__(
+					'Your ticket purchase was successful! Thank you.',
+					'fair-events'
+				),
+				'success',
+				CSS_PREFIX
+			);
 		}
 
-		apiFetch({
-			path: `/fair-events/v1/get-tickets/status?transaction_id=${transactionId}`,
-		})
-			.then(function (response) {
-				if (
-					response.status === 'confirmed' ||
-					response.status === 'failed'
-				) {
-					return;
-				}
-				setTimeout(function () {
-					pollTransactionStatus(transactionId, attempt + 1);
-				}, POLL_INTERVAL_MS);
-			})
-			.catch(function () {
-				// Ignore polling errors.
-			});
+		if (form) {
+			form.style.display = 'none';
+		}
 	}
 
 	function setupForm(form) {
@@ -193,22 +181,21 @@ const CSS_PREFIX = 'fair-events-get-tickets';
 		messageContainer.textContent = '';
 		messageContainer.className = 'message-container';
 
-		const restoreButton = setButtonLoading(
-			submitButton,
-			__('Processing…', 'fair-events')
-		);
-
-		apiFetch({
-			path: '/fair-events/v1/get-tickets',
-			method: 'POST',
-			data: data,
+		initiatePayment({
+			apiPath: '/fair-events/v1/get-tickets',
+			data,
+			button: submitButton,
+			loadingText: __('Processing…', 'fair-events'),
+			defaultErrorMessage: __(
+				'Failed to submit. Please try again.',
+				'fair-events'
+			),
+			onError: (message) => {
+				showMessage(messageContainer, message, 'error', CSS_PREFIX);
+			},
 		})
 			.then(function (response) {
-				if (
-					response.status === 'payment_required' &&
-					response.checkout_url
-				) {
-					window.location = response.checkout_url;
+				if (response.checkout_url) {
 					return;
 				}
 
@@ -221,18 +208,8 @@ const CSS_PREFIX = 'fair-events-get-tickets';
 				);
 				form.style.display = 'none';
 			})
-			.catch(function (error) {
-				const errorMessage = extractErrorMessage(
-					error,
-					__('Failed to submit. Please try again.', 'fair-events')
-				);
-				showMessage(
-					messageContainer,
-					errorMessage,
-					'error',
-					CSS_PREFIX
-				);
-				restoreButton();
+			.catch(function () {
+				// Error already surfaced via onError.
 			});
 	}
 })();

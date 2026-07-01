@@ -88,3 +88,35 @@ test.describe('PaymentEndpoint — POST /payments security checks', () => {
 		expect(body.code).toBe('invalid_block');
 	});
 });
+
+test.describe('PaymentEndpoint — GET /payments/:id/status token gating', () => {
+	let api;
+
+	test.beforeAll(async () => {
+		api = await request.newContext({ baseURL: BASE_URL });
+	});
+
+	test.afterAll(async () => {
+		await api.dispose();
+	});
+
+	// Any caller can enumerate transaction IDs, so a missing transaction and a
+	// token mismatch on a real one must be indistinguishable (both 404) —
+	// see get_transaction_status_permissions_check().
+
+	test('returns 404 for a non-existent transaction id without a token', async () => {
+		const res = await api.get(`${PAYMENTS_ENDPOINT}/999999999/status`);
+		expect(res.status()).toBe(404);
+		const body = await res.json();
+		expect(body.code).toBe('transaction_not_found');
+	});
+
+	test('returns 404 for a non-existent transaction id with a token', async () => {
+		const res = await api.get(
+			`${PAYMENTS_ENDPOINT}/999999999/status?token=anything`
+		);
+		expect(res.status()).toBe(404);
+		const body = await res.json();
+		expect(body.code).toBe('transaction_not_found');
+	});
+});

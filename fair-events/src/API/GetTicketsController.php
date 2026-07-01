@@ -120,27 +120,6 @@ class GetTicketsController extends WP_REST_Controller {
 				),
 			)
 		);
-
-		// GET /fair-events/v1/get-tickets/status — public endpoint for callback polling.
-		// Only returns status of a known transaction; no sensitive data exposed.
-		register_rest_route(
-			$this->namespace,
-			'/' . $this->rest_base . '/status',
-			array(
-				array(
-					'methods'             => WP_REST_Server::READABLE,
-					'callback'            => array( $this, 'get_status' ),
-					'permission_callback' => '__return_true',
-					'args'                => array(
-						'transaction_id' => array(
-							'type'              => 'integer',
-							'required'          => true,
-							'sanitize_callback' => 'absint',
-						),
-					),
-				),
-			)
-		);
 	}
 
 	/**
@@ -315,10 +294,16 @@ class GetTicketsController extends WP_REST_Controller {
 
 		\FairEvents\Models\EventSignup::update_transaction( $signup_id, (int) $transaction_id );
 
+		// Load the freshly created transaction so its access token can be attached
+		// to the redirect URL, mirroring PaymentEndpoint::create_payment. The token
+		// gates the shared /payments/{id}/status endpoint this now polls.
+		$transaction = \FairPaymentsConnector\Models\Transaction::get_by_id( $transaction_id );
+
 		$redirect_url = add_query_arg(
 			array(
 				'fair_payment_callback' => 'true',
-				'fair_get_tickets_tx'   => $transaction_id,
+				'transaction_id'        => $transaction_id,
+				'token'                 => $transaction ? $transaction->access_token : '',
 			),
 			get_permalink() ?: home_url( '/' )
 		);
@@ -353,38 +338,6 @@ class GetTicketsController extends WP_REST_Controller {
 		$event_date_id = $request->get_param( 'event_date' );
 		$signups       = \FairEvents\Models\EventSignup::get_all_by_event_date_id( $event_date_id );
 		return rest_ensure_response( $signups );
-	}
-
-	/**
-	 * Get transaction status for callback polling.
-	 *
-	 * @param WP_REST_Request $request Request object.
-	 * @return WP_REST_Response|WP_Error
-	 */
-	public function get_status( $request ) {
-		$transaction_id = $request->get_param( 'transaction_id' );
-
-		if ( ! class_exists( \FairPaymentsConnector\API\TransactionAPI::class ) ) {
-			return rest_ensure_response( array( 'status' => 'unknown' ) );
-		}
-
-		$transaction = \FairPaymentsConnector\API\TransactionAPI::get_transaction( $transaction_id );
-		if ( ! $transaction ) {
-			return new WP_Error(
-				'not_found',
-				__( 'Transaction not found.', 'fair-events' ),
-				array( 'status' => 404 )
-			);
-		}
-
-		$tx_status = (string) $transaction->status;
-		if ( 'paid' === $tx_status ) {
-			return rest_ensure_response( array( 'status' => 'confirmed' ) );
-		}
-		if ( in_array( $tx_status, array( 'failed', 'canceled', 'expired' ), true ) ) {
-			return rest_ensure_response( array( 'status' => 'failed' ) );
-		}
-		return rest_ensure_response( array( 'status' => 'processing' ) );
 	}
 
 	/**
