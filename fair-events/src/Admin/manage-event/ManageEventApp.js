@@ -35,8 +35,6 @@ import { applyFilters } from '@wordpress/hooks';
 import apiFetch from '@wordpress/api-fetch';
 import { DurationOptions, calculateDuration } from 'fair-events-shared';
 import EventFinance from './EventFinance.js';
-import EventAudience from './EventAudience.js';
-import GroupRules from './GroupRules.js';
 import EventTickets from './EventTickets.js';
 import EventPhotos from './EventPhotos.js';
 import RecurrenceCalendar from './RecurrenceCalendar.js';
@@ -589,14 +587,6 @@ export default function ManageEventApp() {
 			),
 		},
 		{
-			name: 'groups',
-			title: __('Groups', 'fair-events'),
-			order: 30,
-			isVisible: !!(ticketingEnabled && audienceUrl),
-			disabled: isGeneratedOccurrence,
-			render: () => <GroupRules eventDateId={eventDateId} />,
-		},
-		{
 			name: 'signups',
 			title: __('Signups', 'fair-events'),
 			order: 25,
@@ -609,20 +599,6 @@ export default function ManageEventApp() {
 			order: 40,
 			isVisible: galleriesEnabled,
 			render: () => <EventPhotos eventDateId={eventDateId} />,
-		},
-		{
-			name: 'audience',
-			title: __('Audience', 'fair-events'),
-			order: 50,
-			isVisible: !!audienceUrl,
-			render: () => (
-				<EventAudience
-					eventId={eventDate.event_id}
-					eventDateId={eventDateId}
-					audienceUrl={audienceUrl}
-					eventTitle={title}
-				/>
-			),
 		},
 		{
 			name: 'finance',
