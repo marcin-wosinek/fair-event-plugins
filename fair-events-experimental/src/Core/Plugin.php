@@ -70,7 +70,35 @@ class Plugin {
 				\FairEventsExperimental\Admin\MediaLibraryHooks::init();
 				\FairEventsExperimental\Admin\MediaBatchActions::init();
 			}
+
+			if ( Features::is_enabled( 'audience-statistics' ) || Features::is_enabled( 'event-tools' ) ) {
+				add_action( 'fair_events_manage_event_enqueue_assets', array( $this, 'enqueue_manage_event_ext_assets' ) );
+			}
 		}
+	}
+
+	/**
+	 * Enqueue this plugin's manage-event tab extensions (Statistics,
+	 * Duplicate/Merge admin actions) on the fair-events manage-event page.
+	 *
+	 * Declares `fair-events-manage-event` as a script dependency so its
+	 * `addFilter()` calls run before the host bundle's `domReady()`
+	 * mount, avoiding a first-render flicker where these tabs pop in late.
+	 *
+	 * @return void
+	 */
+	public function enqueue_manage_event_ext_assets() {
+		$asset_file = include FAIR_EVENTS_EXPERIMENTAL_PLUGIN_DIR . 'build/admin/manage-event-ext/index.asset.php';
+
+		wp_enqueue_script(
+			'fair-events-experimental-manage-event-ext',
+			FAIR_EVENTS_EXPERIMENTAL_PLUGIN_URL . 'build/admin/manage-event-ext/index.js',
+			array_merge( $asset_file['dependencies'], array( 'fair-events-manage-event' ) ),
+			$asset_file['version'],
+			true
+		);
+
+		wp_set_script_translations( 'fair-events-experimental-manage-event-ext', 'fair-events-experimental' );
 	}
 
 	/**
