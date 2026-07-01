@@ -102,6 +102,22 @@ it('renders a tab registered via addFilter', async () => {
 	removeFilter('fairEvents.manageEvent.tabs', NAMESPACE);
 });
 
+it('renders extra admin actions registered via addFilter', async () => {
+	const NAMESPACE = 'test/admin-action-919';
+	addFilter('fairEvents.manageEvent.adminActions', NAMESPACE, (actions) => [
+		...actions,
+		<div key="custom-action">Custom action</div>,
+	]);
+
+	render(<ManageEventApp />);
+	await waitFor(() =>
+		expect(screen.getByRole('tab', { name: 'Admin' })).toBeInTheDocument()
+	);
+	expect(screen.getByText('Custom action')).toBeInTheDocument();
+
+	removeFilter('fairEvents.manageEvent.adminActions', NAMESPACE);
+});
+
 it('omits a descriptor with isVisible: false', async () => {
 	const NAMESPACE = 'test/hidden-tab-919';
 	addFilter('fairEvents.manageEvent.tabs', NAMESPACE, (descriptors) => [

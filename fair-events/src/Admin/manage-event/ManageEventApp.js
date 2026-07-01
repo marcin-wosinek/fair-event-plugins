@@ -52,10 +52,6 @@ export default function ManageEventApp() {
 	const enabledPostTypes =
 		window.fairEventsManageEventData?.enabledPostTypes || [];
 	const audienceUrl = window.fairEventsManageEventData?.audienceUrl || '';
-	const statisticsUrl = window.fairEventsManageEventData?.statisticsUrl || '';
-	const duplicateEventUrl =
-		window.fairEventsManageEventData?.duplicateEventUrl || '';
-	const mergeEventUrl = window.fairEventsManageEventData?.mergeEventUrl || '';
 	const paymentEntriesUrl =
 		window.fairEventsManageEventData?.paymentEntriesUrl || '';
 	// Per-bundle feature gates from the PHP registry. Empty object → treat
@@ -645,16 +641,6 @@ export default function ManageEventApp() {
 			),
 		},
 		{
-			name: 'statistics',
-			title: __('Statistics', 'fair-events'),
-			order: 60,
-			isVisible: !!statisticsUrl,
-			render: () => {
-				window.location.href = `${statisticsUrl}${eventDateId}`;
-				return null;
-			},
-		},
-		{
 			name: 'finance',
 			title: __('Finance', 'fair-events'),
 			order: 70,
@@ -671,52 +657,17 @@ export default function ManageEventApp() {
 			title: __('Admin', 'fair-events'),
 			order: 100,
 			isVisible: true,
-			render: () => (
+			render: (renderCtx) => (
 				<Card style={{ marginTop: '16px' }}>
 					<CardHeader>
 						<h2>{__('Event Administration', 'fair-events')}</h2>
 					</CardHeader>
 					<CardBody>
 						<VStack spacing={6}>
-							{duplicateEventUrl && (
-								<VStack spacing={2}>
-									<p style={{ color: '#666' }}>
-										{__(
-											'Create a copy of this event with the same details, links, and settings.',
-											'fair-events'
-										)}
-									</p>
-									<div>
-										<Button
-											variant="secondary"
-											href={`${duplicateEventUrl}${eventDateId}`}
-										>
-											{__(
-												'Duplicate Event',
-												'fair-events'
-											)}
-										</Button>
-									</div>
-								</VStack>
-							)}
-
-							{mergeEventUrl && (
-								<VStack spacing={2}>
-									<p style={{ color: '#666' }}>
-										{__(
-											'Merge this event into another event date, moving or cleaning up all linked data.',
-											'fair-events'
-										)}
-									</p>
-									<div>
-										<Button
-											variant="secondary"
-											href={`${mergeEventUrl}${eventDateId}`}
-										>
-											{__('Merge Event', 'fair-events')}
-										</Button>
-									</div>
-								</VStack>
+							{applyFilters(
+								'fairEvents.manageEvent.adminActions',
+								[],
+								renderCtx
 							)}
 
 							<VStack spacing={2}>
