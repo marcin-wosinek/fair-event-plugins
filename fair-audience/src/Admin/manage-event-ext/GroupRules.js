@@ -4,7 +4,7 @@
  * Unified per-group view showing both discounts and permissions.
  * Only rendered when fair-audience plugin is active.
  *
- * @package FairEvents
+ * @package FairAudience
  */
 
 import { useState, useEffect } from '@wordpress/element';
@@ -28,11 +28,11 @@ const PERMISSION_TYPES = ['invited', 'view_signups', 'manage_signups'];
 
 const discountTypeOptions = [
 	{
-		label: __('Percentage (%)', 'fair-events'),
+		label: __('Percentage (%)', 'fair-audience'),
 		value: 'percentage',
 	},
 	{
-		label: __('Fixed amount', 'fair-events'),
+		label: __('Fixed amount', 'fair-audience'),
 		value: 'amount',
 	},
 ];
@@ -52,11 +52,11 @@ const formatDiscount = (type, value) => {
 const permissionLabel = (type) => {
 	switch (type) {
 		case 'invited':
-			return __('Invited', 'fair-events');
+			return __('Invited', 'fair-audience');
 		case 'view_signups':
-			return __('View signups', 'fair-events');
+			return __('View signups', 'fair-audience');
 		case 'manage_signups':
-			return __('Manage signups', 'fair-events');
+			return __('Manage signups', 'fair-audience');
 		default:
 			return type;
 	}
@@ -118,7 +118,8 @@ export default function GroupRules({ eventDateId }) {
 			setGroups(groupsData);
 		} catch (err) {
 			setError(
-				err.message || __('Failed to load group rules.', 'fair-events')
+				err.message ||
+					__('Failed to load group rules.', 'fair-audience')
 			);
 		} finally {
 			setLoading(false);
@@ -199,10 +200,10 @@ export default function GroupRules({ eventDateId }) {
 			setDiscountValue('');
 			setDiscountType('percentage');
 			setAddPermissions({ view_signups: false, manage_signups: false });
-			setSuccess(__('Group rules added.', 'fair-events'));
+			setSuccess(__('Group rules added.', 'fair-audience'));
 		} catch (err) {
 			setError(
-				err.message || __('Failed to add group rules.', 'fair-events')
+				err.message || __('Failed to add group rules.', 'fair-audience')
 			);
 		} finally {
 			setAdding(false);
@@ -264,11 +265,11 @@ export default function GroupRules({ eventDateId }) {
 
 			await loadData();
 			setEditingGroupId(null);
-			setSuccess(__('Group rules updated.', 'fair-events'));
+			setSuccess(__('Group rules updated.', 'fair-audience'));
 		} catch (err) {
 			setError(
 				err.message ||
-					__('Failed to update group rules.', 'fair-events')
+					__('Failed to update group rules.', 'fair-audience')
 			);
 		} finally {
 			setSaving(false);
@@ -301,7 +302,8 @@ export default function GroupRules({ eventDateId }) {
 			await loadData();
 		} catch (err) {
 			setError(
-				err.message || __('Failed to update permission.', 'fair-events')
+				err.message ||
+					__('Failed to update permission.', 'fair-audience')
 			);
 		}
 	};
@@ -311,7 +313,7 @@ export default function GroupRules({ eventDateId }) {
 			!window.confirm(
 				__(
 					'Are you sure you want to remove all rules for this group?',
-					'fair-events'
+					'fair-audience'
 				)
 			)
 		) {
@@ -344,11 +346,11 @@ export default function GroupRules({ eventDateId }) {
 
 			await Promise.all(promises);
 			await loadData();
-			setSuccess(__('Group rules removed.', 'fair-events'));
+			setSuccess(__('Group rules removed.', 'fair-audience'));
 		} catch (err) {
 			setError(
 				err.message ||
-					__('Failed to remove group rules.', 'fair-events')
+					__('Failed to remove group rules.', 'fair-audience')
 			);
 		}
 	};
@@ -356,7 +358,7 @@ export default function GroupRules({ eventDateId }) {
 	return (
 		<Card style={{ marginTop: '16px' }}>
 			<CardHeader>
-				<h2>{__('Group Rules', 'fair-events')}</h2>
+				<h2>{__('Group Rules', 'fair-audience')}</h2>
 			</CardHeader>
 			<CardBody>
 				<VStack spacing={4}>
@@ -412,7 +414,7 @@ export default function GroupRules({ eventDateId }) {
 														<SelectControl
 															label={__(
 																'Discount Type',
-																'fair-events'
+																'fair-audience'
 															)}
 															value={
 																editDiscountType
@@ -428,7 +430,7 @@ export default function GroupRules({ eventDateId }) {
 														<TextControl
 															label={__(
 																'Discount Value',
-																'fair-events'
+																'fair-audience'
 															)}
 															type="number"
 															value={
@@ -441,7 +443,7 @@ export default function GroupRules({ eventDateId }) {
 															step="0.01"
 															placeholder={__(
 																'0 = no discount',
-																'fair-events'
+																'fair-audience'
 															)}
 															__nextHasNoMarginBottom
 														/>
@@ -460,7 +462,7 @@ export default function GroupRules({ eventDateId }) {
 														>
 															{__(
 																'Save',
-																'fair-events'
+																'fair-audience'
 															)}
 														</Button>
 														<Button
@@ -472,7 +474,7 @@ export default function GroupRules({ eventDateId }) {
 														>
 															{__(
 																'Cancel',
-																'fair-events'
+																'fair-audience'
 															)}
 														</Button>
 													</HStack>
@@ -499,7 +501,7 @@ export default function GroupRules({ eventDateId }) {
 															>
 																{__(
 																	'Edit',
-																	'fair-events'
+																	'fair-audience'
 																)}
 															</Button>
 															<Button
@@ -514,7 +516,7 @@ export default function GroupRules({ eventDateId }) {
 															>
 																{__(
 																	'Remove',
-																	'fair-events'
+																	'fair-audience'
 																)}
 															</Button>
 														</HStack>
@@ -527,7 +529,7 @@ export default function GroupRules({ eventDateId }) {
 														>
 															{__(
 																'Discount:',
-																'fair-events'
+																'fair-audience'
 															)}{' '}
 															{formatDiscount(
 																entry.pricing
@@ -585,7 +587,7 @@ export default function GroupRules({ eventDateId }) {
 								>
 									{__(
 										'No group rules yet. Add one below.',
-										'fair-events'
+										'fair-audience'
 									)}
 								</p>
 							)}
@@ -593,16 +595,16 @@ export default function GroupRules({ eventDateId }) {
 							{availableGroups.length > 0 && (
 								<VStack spacing={3}>
 									<h3 style={{ margin: 0 }}>
-										{__('Add Group', 'fair-events')}
+										{__('Add Group', 'fair-audience')}
 									</h3>
 									<SelectControl
-										label={__('Group', 'fair-events')}
+										label={__('Group', 'fair-audience')}
 										value={selectedGroupId}
 										options={[
 											{
 												label: __(
 													'Select a group...',
-													'fair-events'
+													'fair-audience'
 												),
 												value: '',
 											},
@@ -617,7 +619,7 @@ export default function GroupRules({ eventDateId }) {
 										<SelectControl
 											label={__(
 												'Discount Type',
-												'fair-events'
+												'fair-audience'
 											)}
 											value={discountType}
 											options={discountTypeOptions}
@@ -626,7 +628,7 @@ export default function GroupRules({ eventDateId }) {
 										<TextControl
 											label={__(
 												'Discount Value',
-												'fair-events'
+												'fair-audience'
 											)}
 											type="number"
 											value={discountValue}
@@ -637,11 +639,11 @@ export default function GroupRules({ eventDateId }) {
 												discountType === 'percentage'
 													? __(
 															'e.g. 10',
-															'fair-events'
+															'fair-audience'
 													  )
 													: __(
 															'e.g. 5.00',
-															'fair-events'
+															'fair-audience'
 													  )
 											}
 										/>
@@ -679,7 +681,7 @@ export default function GroupRules({ eventDateId }) {
 												))
 										}
 									>
-										{__('Add', 'fair-events')}
+										{__('Add', 'fair-audience')}
 									</Button>
 								</VStack>
 							)}
@@ -689,7 +691,7 @@ export default function GroupRules({ eventDateId }) {
 									<Notice status="info" isDismissible={false}>
 										{__(
 											'All groups already have rules for this event.',
-											'fair-events'
+											'fair-audience'
 										)}
 									</Notice>
 								)}
