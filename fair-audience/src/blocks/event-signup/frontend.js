@@ -519,6 +519,66 @@ const CSS_PREFIX = 'fair-audience-signup';
 	}
 
 	/**
+	 * Wire the pay-what-you-can slider (+ paired number input) when sliding
+	 * scale is configured. The two inputs stay in sync; every change writes
+	 * the chosen amount into block.dataset.basePrice, which
+	 * updateButtonTotal() already reads, so the live total picks it up for
+	 * free. No-op when the block has no sliding-scale picker.
+	 * @param {HTMLElement} block The block element
+	 */
+	function initializeSlidingScalePicker(block) {
+		const picker = block.querySelector(
+			'.fair-audience-sliding-scale-picker'
+		);
+		if (!picker) {
+			return;
+		}
+
+		const range = picker.querySelector(
+			'.fair-audience-sliding-scale-range'
+		);
+		const number = picker.querySelector(
+			'.fair-audience-sliding-scale-number'
+		);
+		if (!range || !number) {
+			return;
+		}
+
+		const syncFrom = function (source, target) {
+			target.value = source.value;
+			block.dataset.basePrice = source.value;
+			updateButtonTotal(block);
+		};
+
+		range.addEventListener('input', function () {
+			syncFrom(range, number);
+		});
+		number.addEventListener('input', function () {
+			syncFrom(number, range);
+		});
+		// Clamp only once the user finishes editing so intermediate keystrokes
+		// (e.g. typing "5" on the way to "50") aren't fought by the browser.
+		number.addEventListener('change', function () {
+			const min = parseFloat(number.min);
+			const max = parseFloat(number.max);
+			let value = parseFloat(number.value);
+			if (isNaN(value)) {
+				value = parseFloat(number.defaultValue) || min || 0;
+			}
+			if (!isNaN(min) && value < min) {
+				value = min;
+			}
+			if (!isNaN(max) && value > max) {
+				value = max;
+			}
+			number.value = value;
+			syncFrom(number, range);
+		});
+
+		block.dataset.basePrice = number.value;
+	}
+
+	/**
 	 * Attach change listeners to ticket option checkboxes so the button total
 	 * stays in sync as the user checks/unchecks options.
 	 * @param {HTMLElement} block The block element
@@ -559,6 +619,7 @@ const CSS_PREFIX = 'fair-audience-signup';
 			});
 		});
 
+		initializeSlidingScalePicker(block);
 		updateInstancePickerVisibility(block);
 		updateInstancePickerHint(block);
 		updateButtonTotal(block);
@@ -796,6 +857,13 @@ const CSS_PREFIX = 'fair-audience-signup';
 			requestData.ticket_option_ids = Array.from(optionInputs).map((i) =>
 				parseInt(i.value, 10)
 			);
+		}
+
+		const chosenAmountInput = form.querySelector(
+			'.fair-audience-sliding-scale-number'
+		);
+		if (chosenAmountInput) {
+			requestData.chosen_amount = parseFloat(chosenAmountInput.value);
 		}
 
 		// Collect custom question answers.
@@ -1066,6 +1134,13 @@ const CSS_PREFIX = 'fair-audience-signup';
 			requestData.ticket_option_ids = Array.from(optionInputs).map((i) =>
 				parseInt(i.value, 10)
 			);
+		}
+
+		const chosenAmountInput = block.querySelector(
+			'.fair-audience-sliding-scale-number'
+		);
+		if (chosenAmountInput) {
+			requestData.chosen_amount = parseFloat(chosenAmountInput.value);
 		}
 
 		// Custom questions live inside the signup action container.

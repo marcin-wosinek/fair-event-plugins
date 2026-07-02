@@ -48,6 +48,9 @@ export default function EventTickets({
 		show_ticket_type_minimum_activities: false,
 		activity_period_pricing: false,
 		show_ticket_type_end_date: false,
+		sliding_scale_enabled: false,
+		sliding_scale_min: 0,
+		sliding_scale_max: 0,
 	});
 	const [options, setOptions] = useState([]);
 	const [loading, setLoading] = useState(!initialData);
@@ -64,6 +67,13 @@ export default function EventTickets({
 		window.fairEventsManageEventData?.manageInvitationsUrl || '';
 
 	const hasAdvancedTickets = ticketTypes.length > 0 || salePeriods.length > 0;
+	const isSlidingScaleRangeValid =
+		!settings.sliding_scale_enabled ||
+		(parseFloat(settings.sliding_scale_min) >= 0 &&
+			parseFloat(settings.sliding_scale_min) <=
+				(parseFloat(signupPrice) || 0) &&
+			(parseFloat(signupPrice) || 0) <=
+				parseFloat(settings.sliding_scale_max));
 	const hasInvitationTickets = ticketTypes.some((t) => t.invitation_only);
 	const hasGroups = groups.length > 0;
 	const groupNameById = Object.fromEntries(groups.map((g) => [g.id, g.name]));
@@ -223,6 +233,16 @@ export default function EventTickets({
 	});
 
 	const handleSave = async () => {
+		if (!isSlidingScaleRangeValid) {
+			setError(
+				__(
+					'Fix the sliding-scale price range before saving: minimum ≤ suggested ≤ maximum.',
+					'fair-events-experimental'
+				)
+			);
+			return;
+		}
+
 		setSaving(true);
 		setError(null);
 		setSuccess(null);
@@ -1303,6 +1323,84 @@ export default function EventTickets({
 										onChange={setSignupPrice}
 										__nextHasNoMarginBottom
 									/>
+									<CheckboxControl
+										label={__(
+											'Pay what you can (sliding scale)',
+											'fair-events-experimental'
+										)}
+										help={__(
+											'Let attendees choose their own price within a min/max band instead of paying the fixed price above.',
+											'fair-events-experimental'
+										)}
+										checked={
+											!!settings.sliding_scale_enabled
+										}
+										onChange={(checked) =>
+											setSettings((prev) => ({
+												...prev,
+												sliding_scale_enabled: checked,
+											}))
+										}
+									/>
+									{settings.sliding_scale_enabled && (
+										<VStack spacing={3}>
+											<HStack spacing={3} alignment="top">
+												<TextControl
+													label={__(
+														'Minimum (EUR)',
+														'fair-events-experimental'
+													)}
+													type="number"
+													min="0"
+													step="0.01"
+													value={String(
+														settings.sliding_scale_min ??
+															0
+													)}
+													onChange={(value) =>
+														setSettings((prev) => ({
+															...prev,
+															sliding_scale_min:
+																value,
+														}))
+													}
+													__nextHasNoMarginBottom
+												/>
+												<TextControl
+													label={__(
+														'Maximum (EUR)',
+														'fair-events-experimental'
+													)}
+													type="number"
+													min="0"
+													step="0.01"
+													value={String(
+														settings.sliding_scale_max ??
+															0
+													)}
+													onChange={(value) =>
+														setSettings((prev) => ({
+															...prev,
+															sliding_scale_max:
+																value,
+														}))
+													}
+													__nextHasNoMarginBottom
+												/>
+											</HStack>
+											{!isSlidingScaleRangeValid && (
+												<Notice
+													status="error"
+													isDismissible={false}
+												>
+													{__(
+														'Minimum must be less than or equal to the suggested price above, and the suggested price must be less than or equal to the maximum.',
+														'fair-events-experimental'
+													)}
+												</Notice>
+											)}
+										</VStack>
+									)}
 									<p>
 										{__(
 											'Need multiple ticket types or time-based pricing? Switch to advanced ticketing below.',
@@ -1313,6 +1411,10 @@ export default function EventTickets({
 										<Button
 											variant="secondary"
 											onClick={() => {
+												setSettings((prev) => ({
+													...prev,
+													sliding_scale_enabled: false,
+												}));
 												addTicketType();
 												addSalePeriod();
 											}}
