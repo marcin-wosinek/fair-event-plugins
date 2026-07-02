@@ -390,8 +390,8 @@ if ( $pricing_event_date_id && class_exists( \FairEvents\Models\TicketType::clas
 	// Load group restrictions and participant's groups for filtering.
 	$tt_group_restrictions = array();
 	$participant_group_ids = array();
-	if ( class_exists( \FairEvents\Models\TicketTypeGroupRestriction::class ) ) {
-		$tt_group_restrictions = \FairEvents\Models\TicketTypeGroupRestriction::get_all_by_event_date_id( (int) $pricing_event_date_id );
+	if ( class_exists( \FairEventsExperimental\Models\TicketTypeGroupRestriction::class ) ) {
+		$tt_group_restrictions = \FairEventsExperimental\Models\TicketTypeGroupRestriction::get_all_by_event_date_id( (int) $pricing_event_date_id );
 	}
 	if ( $participant && ! empty( $tt_group_restrictions ) ) {
 		$group_participant_repo = new \FairAudience\Database\GroupParticipantRepository();
