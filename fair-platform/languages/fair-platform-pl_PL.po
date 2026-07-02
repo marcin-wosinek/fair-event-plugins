@@ -287,21 +287,21 @@ msgstr "Usunięto %d starych dzienników połączeń Instagram."
 msgid "You do not have permission to view Instagram connection logs."
 msgstr "Nie masz uprawnień do przeglądania dzienników połączeń Instagram."
 
-#: src/Core/Plugin.php:1439
-#: src/Core/Plugin.php:1460
-#: src/Core/Plugin.php:1481
+#: src/Core/Plugin.php:1442
+#: src/Core/Plugin.php:1463
+#: src/Core/Plugin.php:1484
 msgid "Fair Platform:"
 msgstr "Fair Platform:"
 
-#: src/Core/Plugin.php:1441
+#: src/Core/Plugin.php:1444
 msgid "Instagram OAuth credentials not configured. Please add INSTAGRAM_APP_ID and INSTAGRAM_APP_SECRET to wp-config.php for Instagram integration."
 msgstr "Poświadczenia OAuth Instagram nie są skonfigurowane. Dodaj INSTAGRAM_APP_ID i INSTAGRAM_APP_SECRET do wp-config.php, aby włączyć integrację z Instagramem."
 
-#: src/Core/Plugin.php:1462
+#: src/Core/Plugin.php:1465
 msgid "Mollie OAuth credentials not configured. Please add MOLLIE_CLIENT_ID and MOLLIE_CLIENT_SECRET to wp-config.php"
 msgstr "Poświadczenia OAuth Mollie nie są skonfigurowane. Dodaj MOLLIE_CLIENT_ID i MOLLIE_CLIENT_SECRET do wp-config.php"
 
-#: src/Core/Plugin.php:1483
+#: src/Core/Plugin.php:1486
 msgid "Mollie PHP library not installed. Please run: composer require mollie/mollie-api-php"
 msgstr "Biblioteka Mollie PHP nie jest zainstalowana. Uruchom: composer require mollie/mollie-api-php"
 
@@ -548,4 +548,3 @@ msgstr "Dołączone tłumaczenia"
 #: src/Core/Features.php:120
 msgid "Load .mo/.json files shipped with the plugin instead of relying on WordPress.org language packs. Useful while a locale is below the 90% threshold on translate.wordpress.org or for in-progress strings."
 msgstr "Załaduj pliki .mo/.json dostarczane z wtyczką zamiast polegać na pakietach języków WordPress.org. Przydatne, gdy ustawienia regionalne są poniżej progu 90% na translate.wordpress.org lub dla ciągów w trakcie opracowywania."
-

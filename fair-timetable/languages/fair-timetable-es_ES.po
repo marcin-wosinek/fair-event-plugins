@@ -194,4 +194,3 @@ msgstr "Horario"
 msgctxt "block description"
 msgid "A timetable block for displaying scheduled events"
 msgstr "Un bloque de horario para mostrar eventos programados"
-
