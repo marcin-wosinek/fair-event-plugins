@@ -152,6 +152,10 @@ class EventSignupController extends WP_REST_Controller {
 							'type'  => 'array',
 							'items' => array( 'type' => 'integer' ),
 						),
+						'chosen_amount'         => array(
+							'type'     => 'number',
+							'required' => false,
+						),
 						// Chosen occurrence IDs for 'multiple_instances' ticket types.
 						// Capped so a crafted request can't force an unbounded number
 						// of line items / DB rows per submission.
@@ -346,6 +350,10 @@ class EventSignupController extends WP_REST_Controller {
 							'type'  => 'array',
 							'items' => array( 'type' => 'integer' ),
 						),
+						'chosen_amount'         => array(
+							'type'     => 'number',
+							'required' => false,
+						),
 						'name'                  => array(
 							'type'              => 'string',
 							'required'          => true,
@@ -533,6 +541,7 @@ class EventSignupController extends WP_REST_Controller {
 		$invitation_token  = $request->get_param( 'invitation_token' ) ?: '';
 		$user_id           = get_current_user_id();
 		$raw_option_ids    = $request->get_param( 'ticket_option_ids' ) ?: array();
+		$chosen_amount     = $request->get_param( 'chosen_amount' );
 
 		// Validate event exists.
 		$event = get_post( $event_id );
@@ -660,7 +669,7 @@ class EventSignupController extends WP_REST_Controller {
 			return $save_error;
 		}
 
-		$paid_response = $this->maybe_start_paid_signup( $event_id, $event_date_id, $participant, $existing, $user_id, $ticket_type_id, $option_items, $invitation_token );
+		$paid_response = $this->maybe_start_paid_signup( $event_id, $event_date_id, $participant, $existing, $user_id, $ticket_type_id, $option_items, $invitation_token, $chosen_amount );
 		if ( null !== $paid_response ) {
 			if ( ! is_wp_error( $paid_response ) ) {
 				AudienceSession::set( (int) $participant->id );
@@ -1782,9 +1791,10 @@ class EventSignupController extends WP_REST_Controller {
 	 * @param int|null                                   $ticket_type_id Selected ticket type ID, or null when not using ticket types.
 	 * @param array                                      $option_items     Selected TicketOption objects.
 	 * @param string                                     $invitation_token Optional invitation token presented by the buyer.
+	 * @param float|null                                 $chosen_amount    Buyer-chosen amount for a sliding-scale price, or null.
 	 * @return \WP_REST_Response|\WP_Error|null WP_REST_Response/WP_Error on paid path, null on free path.
 	 */
-	private function maybe_start_paid_signup( $event_id, $event_date_id, $participant, $existing, $user_id, $ticket_type_id = null, $option_items = array(), $invitation_token = '' ) {
+	private function maybe_start_paid_signup( $event_id, $event_date_id, $participant, $existing, $user_id, $ticket_type_id = null, $option_items = array(), $invitation_token = '', $chosen_amount = null ) {
 		$final_price      = null;
 		$seats_per_ticket = 1;
 		if ( $event_date_id && class_exists( \FairEventsExperimental\Services\EventSignupPricing::class ) ) {
@@ -1796,6 +1806,11 @@ class EventSignupController extends WP_REST_Controller {
 						$seats_per_ticket = max( 1, (int) $ticket_type->seats_per_ticket );
 					}
 				}
+			} elseif ( \FairEventsExperimental\Services\EventSignupPricing::resolve_sliding_scale( $event_date_id ) ) {
+				// Sliding scale replaces the fixed base-price path; group discounts
+				// (resolve_price()) do not stack on a buyer-chosen amount. Never
+				// trust the client value — always re-clamp against stored [min, max].
+				$final_price = \FairEventsExperimental\Services\EventSignupPricing::clamp_chosen_amount( $event_date_id, $chosen_amount );
 			} else {
 				$final_price = \FairEventsExperimental\Services\EventSignupPricing::resolve_price( $event_date_id, $participant->id );
 			}
@@ -2543,6 +2558,7 @@ class EventSignupController extends WP_REST_Controller {
 		$ticket_type_id   = $request->get_param( 'ticket_type_id' ) ?: null;
 		$invitation_token = $request->get_param( 'invitation_token' ) ?: '';
 		$raw_option_ids   = $request->get_param( 'ticket_option_ids' ) ?: array();
+		$chosen_amount    = $request->get_param( 'chosen_amount' );
 
 		// Validate event exists.
 		$event = get_post( $event_id );
@@ -2742,7 +2758,7 @@ class EventSignupController extends WP_REST_Controller {
 			return $save_error;
 		}
 
-		$paid_response = $this->maybe_start_paid_signup( $event_id, $event_date_id, $participant, $existing, $wp_user_id, $ticket_type_id, $option_items, $invitation_token );
+		$paid_response = $this->maybe_start_paid_signup( $event_id, $event_date_id, $participant, $existing, $wp_user_id, $ticket_type_id, $option_items, $invitation_token, $chosen_amount );
 		if ( null !== $paid_response ) {
 			if ( $is_new_participant && ! is_wp_error( $paid_response ) ) {
 				AudienceSession::set( (int) $participant->id );

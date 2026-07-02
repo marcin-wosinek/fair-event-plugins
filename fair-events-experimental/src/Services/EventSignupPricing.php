@@ -90,6 +90,100 @@ class EventSignupPricing {
 	}
 
 	/**
+	 * Resolve the sliding-scale (pay-what-you-can) config for an event date.
+	 *
+	 * Mirrors resolve_price()'s generated-occurrence → master inheritance:
+	 * a generated occurrence with no signup_price of its own falls back to
+	 * its master's signup_price and settings.
+	 *
+	 * @param int $event_date_id Event date ID.
+	 * @return array{enabled:bool,min:float,max:float,suggested:float}|null
+	 *               Config array, or null when sliding scale is off or the
+	 *               event date doesn't exist.
+	 */
+	public static function resolve_sliding_scale( $event_date_id ) {
+		$event_date = EventDates::get_by_id( $event_date_id );
+
+		if ( ! $event_date ) {
+			return null;
+		}
+
+		$pricing_event_date_id = $event_date_id;
+		if ( null === $event_date->signup_price
+			&& 'generated' === $event_date->occurrence_type
+			&& $event_date->master_id ) {
+			$master = EventDates::get_by_id( $event_date->master_id );
+			if ( $master && null !== $master->signup_price ) {
+				$event_date            = $master;
+				$pricing_event_date_id = $master->id;
+			}
+		}
+
+		if ( '1' !== (string) EventDateSetting::get( $pricing_event_date_id, 'sliding_scale_enabled' ) ) {
+			return null;
+		}
+
+		if ( null === $event_date->signup_price ) {
+			return null;
+		}
+
+		return array(
+			'enabled'   => true,
+			'min'       => (float) EventDateSetting::get( $pricing_event_date_id, 'sliding_scale_min' ),
+			'max'       => (float) EventDateSetting::get( $pricing_event_date_id, 'sliding_scale_max' ),
+			'suggested' => (float) $event_date->signup_price,
+		);
+	}
+
+	/**
+	 * Clamp a buyer-chosen amount to the configured sliding-scale range.
+	 *
+	 * Never trust the client: this re-derives min/max/suggested from the
+	 * database rather than accepting them as arguments. Falls back to the
+	 * suggested price when sliding scale isn't configured or the chosen
+	 * amount isn't a finite number.
+	 *
+	 * @param int   $event_date_id Event date ID.
+	 * @param float $chosen        Buyer-chosen amount.
+	 * @return float Clamped amount.
+	 */
+	public static function clamp_chosen_amount( $event_date_id, $chosen ) {
+		$config = self::resolve_sliding_scale( $event_date_id );
+
+		if ( ! $config ) {
+			return 0.0;
+		}
+
+		return self::clamp_amount_to_range( $chosen, $config['min'], $config['max'], $config['suggested'] );
+	}
+
+	/**
+	 * Pure range-clamping math, split out from clamp_chosen_amount() for
+	 * unit testing without a database.
+	 *
+	 * @param mixed $chosen    Buyer-chosen amount (may be non-numeric).
+	 * @param float $min       Minimum allowed amount.
+	 * @param float $max       Maximum allowed amount.
+	 * @param float $suggested Fallback used when $chosen isn't a finite number.
+	 * @return float Clamped amount.
+	 */
+	public static function clamp_amount_to_range( $chosen, $min, $max, $suggested ) {
+		if ( ! is_numeric( $chosen ) || ! is_finite( (float) $chosen ) ) {
+			$chosen = $suggested;
+		}
+
+		$chosen = (float) $chosen;
+
+		if ( $chosen < $min ) {
+			return $min;
+		}
+		if ( $chosen > $max ) {
+			return $max;
+		}
+		return $chosen;
+	}
+
+	/**
 	 * Resolve the effective price for a specific ticket type.
 	 *
 	 * Looks up the currently-active sale period for the ticket type's

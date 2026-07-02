@@ -246,6 +246,22 @@
 	cursor: not-allowed;
 }
 
+/* Pay-what-you-can (sliding scale) slider */
+.fair-audience-sliding-scale-picker {
+	display: flex;
+	flex-direction: column;
+	gap: 6px;
+	margin-bottom: 20px;
+}
+
+.fair-audience-sliding-scale-range {
+	width: 100%;
+}
+
+.fair-audience-sliding-scale-number {
+	width: 100px;
+}
+
 .fair-audience-ticket-option-full input[type="checkbox"] {
 	cursor: not-allowed;
 }

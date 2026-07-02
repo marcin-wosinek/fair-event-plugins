@@ -32,4 +32,62 @@ class EventSignupPricingTest extends TestCase {
 		// resolver clamps to 0 separately; this asserts raw math.
 		$this->assertEqualsWithDelta( -2.0, EventSignupPricing::apply_discount( 3.0, 'amount', 5.0 ), 0.001 );
 	}
+
+	public function test_clamp_in_band_amount_is_unchanged() {
+		$this->assertEqualsWithDelta(
+			15.0,
+			EventSignupPricing::clamp_amount_to_range( 15.0, 5.0, 50.0, 20.0 ),
+			0.001
+		);
+	}
+
+	public function test_clamp_below_min_is_raised_to_min() {
+		$this->assertEqualsWithDelta(
+			5.0,
+			EventSignupPricing::clamp_amount_to_range( 1.0, 5.0, 50.0, 20.0 ),
+			0.001
+		);
+	}
+
+	public function test_clamp_above_max_is_lowered_to_max() {
+		$this->assertEqualsWithDelta(
+			50.0,
+			EventSignupPricing::clamp_amount_to_range( 999.0, 5.0, 50.0, 20.0 ),
+			0.001
+		);
+	}
+
+	public function test_clamp_non_finite_falls_back_to_suggested() {
+		$this->assertEqualsWithDelta(
+			20.0,
+			EventSignupPricing::clamp_amount_to_range( NAN, 5.0, 50.0, 20.0 ),
+			0.001
+		);
+		$this->assertEqualsWithDelta(
+			20.0,
+			EventSignupPricing::clamp_amount_to_range( INF, 5.0, 50.0, 20.0 ),
+			0.001
+		);
+	}
+
+	public function test_clamp_non_numeric_falls_back_to_suggested() {
+		$this->assertEqualsWithDelta(
+			20.0,
+			EventSignupPricing::clamp_amount_to_range( 'not-a-number', 5.0, 50.0, 20.0 ),
+			0.001
+		);
+		$this->assertEqualsWithDelta(
+			20.0,
+			EventSignupPricing::clamp_amount_to_range( null, 5.0, 50.0, 20.0 ),
+			0.001
+		);
+	}
+
+	public function test_clamp_min_equals_max_locks_the_amount() {
+		$this->assertEqualsWithDelta(
+			10.0,
+			EventSignupPricing::clamp_amount_to_range( 3.0, 10.0, 10.0, 10.0 ),
+			0.001
+		);
+	}
 }
