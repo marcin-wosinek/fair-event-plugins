@@ -3,7 +3,7 @@ Contributors: marcinwosinek
 Tags: events, participants, audience, management
 Requires at least: 6.7
 Tested up to: 7.0
-Stable tag: 1.7.0
+Stable tag: 1.8.0
 Requires PHP: 8.0
 License: GPLv3 or later
 License URI: https://www.gnu.org/licenses/gpl-3.0.html
@@ -39,6 +39,23 @@ Yes, it integrates with the fair_event post type from the Fair Events plugin.
 
 == Changelog ==
 
+## 1.8.0
+
+### Minor Changes
+
+-   551e827: Add three-level email consent (Yes / missing / No): new `declined` profile value records that a participant was asked and refused, a renamed `marketing-consent` endpoint handles both upgrade and decline in one request, and the event-floor consent modal lets organizers record Yes/No per row. All-participants table, edit modal, and participant detail now display the declined state.
+-   2cb0fb8: Move the Audience, Groups, and Mailings tabs out of fair-events and into fair-audience, which now owns audience-facing management for an event. fair-events registers the extension point and fair-audience renders these tabs, consolidating participant and mailing management in one plugin.
+-   2cb0fb8: Add sliding-scale (pay-what-you-can) event pricing: organizers can offer a ticket type where the buyer chooses the amount within a configured range. The manage-event admin UI exposes the new pricing mode, the event-signup block lets attendees enter their own price, and the server validates the chosen amount against the configured bounds.
+-   2cb0fb8: Show test-mode ticket sales in the participant timeline while the site is in test mode, so organizers verifying a checkout flow can see the resulting sale events. Test-mode sales are hidden again when test mode is off.
+
+### Patch Changes
+
+-   2cb0fb8: Bump @wordpress/components 35→36 and @wordpress/dataviews 16→17. The DataViews upgrade can change table rendering in the admin views that use it, so the shipped bundles for these plugins are regenerated.
+-   2cb0fb8: Add recurrence scope for ticket types on recurring events: a ticket type can apply to a single occurrence or to `multiple_instances`. A scope-choice modal prompts the organizer when editing ticket types on a recurring event, the Ticket Prices table shows the active scope in parentheses, and sold ticket types are locked against scope changes. The event-signup block respects the resolved scope when listing available tickets.
+-   7e594d7: Add manual disable/enable for sold ticket types: a new `disabled` boolean column on ticket types lets admins hide a type from the signup form without deleting it. The admin UI replaces the Remove button with an Enable/Disable toggle when the type has sales. The server guards against deleting sold types omitted from the payload (defense in depth). The event-signup block and the GetTickets gate both respect the flag.
+-   Updated dependencies [2cb0fb8]
+    -   fair-events-shared@0.2.0
+
 ## 1.7.0
 
 ### Minor Changes
@@ -53,7 +70,7 @@ Yes, it integrates with the fair_event post type from the Fair Events plugin.
 ### Patch Changes
 
 -   8570634: Fix signups-list block always showing count-only view for token-bearing participants with group view_signups permission (stale GroupPermissionRule namespace after move to fair-events-experimental).
--   5043462: Move fair-form blocks and questionnaire data layer from fair-audience into fair-form. Block names (fair-audience/fair-form*) and table names (fair*audience_questionnaire**) are unchanged for backward compatibility. fair-audience degrades gracefully when fair-form is absent via class_exists guards.
+-   5043462: Move fair-form blocks and questionnaire data layer from fair-audience into fair-form. Block names (fair-audience/fair-form*) and table names (fair*audience_questionnaire\*\*) are unchanged for backward compatibility. fair-audience degrades gracefully when fair-form is absent via class_exists guards.
 
 ## 1.6.0
 
