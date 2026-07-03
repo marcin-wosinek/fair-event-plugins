@@ -324,7 +324,7 @@ class GetTicketsController extends WP_REST_Controller {
 				'transaction_id'        => $transaction_id,
 				'token'                 => $transaction ? $transaction->access_token : '',
 			),
-			get_permalink() ?: home_url( '/' )
+			$this->resolve_return_url( $event_date_id )
 		);
 
 		$payment = \FairPaymentsConnector\API\TransactionAPI::initiate_payment(
@@ -345,6 +345,40 @@ class GetTicketsController extends WP_REST_Controller {
 				'currency'       => $currency,
 			)
 		);
+	}
+
+	/**
+	 * Resolve the page the buyer should return to after checkout.
+	 *
+	 * This runs inside a REST request, which carries no post context —
+	 * get_permalink() is always false here, so it must never be used for the
+	 * redirect. Prefer the page the purchase was made from (same-site referer,
+	 * which also preserves ?event_date= on standalone pages), then the event's
+	 * own page, then the homepage.
+	 *
+	 * @param int $event_date_id Event-date ID the purchase targets.
+	 * @return string Absolute same-site URL.
+	 */
+	private function resolve_return_url( $event_date_id ) {
+		$referer = wp_get_referer();
+		if ( $referer ) {
+			$validated = wp_validate_redirect( $referer, '' );
+			if ( $validated ) {
+				return $validated;
+			}
+		}
+
+		if ( class_exists( \FairEvents\Models\EventDates::class ) ) {
+			$event_date = \FairEvents\Models\EventDates::get_by_id( $event_date_id );
+			if ( $event_date && ! empty( $event_date->event_id ) ) {
+				$permalink = get_permalink( (int) $event_date->event_id );
+				if ( $permalink ) {
+					return $permalink;
+				}
+			}
+		}
+
+		return home_url( '/' );
 	}
 
 	/**

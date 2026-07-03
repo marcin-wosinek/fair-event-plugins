@@ -43,7 +43,15 @@ $ticket_type_id = 0;
 $option_ids     = array();
 $is_paid        = true;
 
-$event_id       = fair_e2e_create_event( 'E2E ' . $flavour . ' Event ' . gmdate( 'YmdHis' ) . ' ' . wp_rand( 1000, 9999 ) );
+// Which purchase block the event page carries. Default: fair-audience
+// event-signup. Override {"block":"get-tickets"} for specs that exercise the
+// fair-events standalone purchase path (with fair-audience deactivated).
+$block_content = '<!-- wp:fair-audience/event-signup /-->';
+if ( isset( $overrides['block'] ) && 'get-tickets' === $overrides['block'] ) {
+	$block_content = '<!-- wp:fair-events/get-tickets /-->';
+}
+
+$event_id       = fair_e2e_create_event( 'E2E ' . $flavour . ' Event ' . gmdate( 'YmdHis' ) . ' ' . wp_rand( 1000, 9999 ), $block_content );
 $event_date_id  = fair_e2e_add_date( $event_id );
 $sale_period_id = fair_e2e_add_sale_period( $event_date_id );
 
