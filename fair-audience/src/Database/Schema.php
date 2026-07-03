@@ -638,6 +638,38 @@ class Schema {
 	}
 
 	/**
+	 * Get SQL for creating the event-participant transactions ledger table.
+	 *
+	 * A registration (event_participant row) can accumulate more than one
+	 * fair-payments-connector transaction over its lifetime — e.g. an initial
+	 * single-instance charge followed by a series-pass upgrade charge, and, in
+	 * the future, refunds. The row's own transaction_id column only ever holds
+	 * the most recent transaction, so this ledger preserves the full history.
+	 * Amounts/currency are read by joining fair_payment_transactions (single
+	 * source of truth), mirroring FeePaymentTransactionRepository.
+	 *
+	 * @return string SQL statement.
+	 */
+	public static function get_event_participant_transactions_table_sql() {
+		global $wpdb;
+
+		$table_name      = $wpdb->prefix . 'fair_audience_event_participant_transactions';
+		$charset_collate = $wpdb->get_charset_collate();
+
+		return "CREATE TABLE $table_name (
+			id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
+			event_participant_id BIGINT UNSIGNED NOT NULL,
+			transaction_id BIGINT UNSIGNED NOT NULL,
+			kind ENUM('charge', 'refund') NOT NULL DEFAULT 'charge',
+			created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+			PRIMARY KEY  (id),
+			UNIQUE KEY idx_participant_tx_kind (event_participant_id, transaction_id, kind),
+			KEY idx_event_participant_id (event_participant_id),
+			KEY idx_transaction_id (transaction_id)
+		) ENGINE=InnoDB $charset_collate;";
+	}
+
+	/**
 	 * Get SQL for creating the Instagram posts table.
 	 *
 	 * @return string SQL statement.
