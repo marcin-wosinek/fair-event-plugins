@@ -13,6 +13,7 @@ use FairAudience\Database\FeePaymentRepository;
 use FairAudience\Database\FeeAuditLogRepository;
 use FairAudience\Database\ParticipantRepository;
 use FairAudience\Database\EventParticipantRepository;
+use FairAudience\Database\EventParticipantTransactionRepository;
 use FairAudience\Services\EmailService;
 
 defined( 'WPINC' ) || die;
@@ -31,6 +32,7 @@ class PaymentHooks {
 		add_action( 'fair_payment_paid', array( static::class, 'handle_signup_paid' ), 10, 2 );
 		add_action( 'fair_payment_failed', array( static::class, 'handle_signup_failed' ), 10, 2 );
 		add_action( 'fair_payment_paid', array( static::class, 'handle_activities_added_paid' ), 10, 2 );
+		add_action( 'fair_payment_paid', array( static::class, 'handle_series_upgrade_paid' ), 10, 2 );
 
 		add_action( 'fair_audience_event_signup_paid', array( static::class, 'send_signup_confirmation_email' ), 10, 2 );
 		add_action( 'fair_audience_event_signup_failed', array( static::class, 'send_signup_payment_failed_email' ), 10, 2 );
@@ -426,6 +428,8 @@ class PaymentHooks {
 			return;
 		}
 
+		$ledger = new EventParticipantTransactionRepository();
+
 		$confirmation_participant = null;
 		foreach ( $event_participants as $event_participant ) {
 			if ( 'pending_payment' !== $event_participant->label ) {
@@ -435,6 +439,12 @@ class PaymentHooks {
 			$event_participant->label              = 'signed_up';
 			$event_participant->payment_expires_at = null;
 			$event_participant->save();
+
+			// Preserve this charge in the ledger so a registration keeps its full
+			// payment history even when its transaction_id column is later
+			// overwritten (e.g. by a series-pass upgrade). Idempotent under
+			// webhook retries via the ledger's unique key.
+			$ledger->record( (int) $event_participant->id, (int) $transaction->id, 'charge' );
 
 			if ( null === $confirmation_participant ) {
 				$confirmation_participant = $event_participant;
@@ -533,6 +543,67 @@ class PaymentHooks {
 		$repo->add_options( $event_participant_id, $options );
 
 		do_action( 'fair_audience_event_activities_added', $event_participant, $transaction, $option_ids );
+	}
+
+	/**
+	 * Convert a single-instance signup into a whole-series pass once Mollie
+	 * confirms the upgrade payment. The registration row is upgraded in place
+	 * (the unique event_date/participant key means it must stay one row): its
+	 * ticket_type becomes the whole-series type, which is all the series-pass
+	 * projection (is_occurrence_covered_by_series_pass and the admin/frontend
+	 * lists) needs to start covering every occurrence.
+	 *
+	 * Idempotent — Mollie retries the webhook, so a per-transaction transient
+	 * guards against converting (and emailing) twice.
+	 *
+	 * @param object $payment     Mollie payment object.
+	 * @param object $transaction Transaction row from fair-payments-connector.
+	 */
+	public static function handle_series_upgrade_paid( $payment, $transaction ) {
+		$metadata = ! empty( $transaction->metadata ) ? json_decode( $transaction->metadata, true ) : array();
+		if ( empty( $metadata['source'] ) || 'fair-audience-series-upgrade' !== $metadata['source'] ) {
+			return;
+		}
+
+		$dedupe_key = 'fair_audience_series_upgrade_' . (int) $transaction->id;
+		if ( get_transient( $dedupe_key ) ) {
+			return;
+		}
+
+		$event_participant_id = isset( $metadata['event_participant_id'] ) ? (int) $metadata['event_participant_id'] : 0;
+		$ticket_type_id       = isset( $metadata['ticket_type_id'] ) ? (int) $metadata['ticket_type_id'] : 0;
+
+		if ( ! $event_participant_id || ! $ticket_type_id ) {
+			return;
+		}
+
+		$repo              = new EventParticipantRepository();
+		$event_participant = $repo->get_by_id( $event_participant_id );
+		if ( ! $event_participant || 'signed_up' !== $event_participant->label ) {
+			return;
+		}
+
+		set_transient( $dedupe_key, 1, DAY_IN_SECONDS );
+
+		// Upgrade the ticket type (and seat count) in place.
+		$seats = 1;
+		if ( class_exists( \FairEvents\Models\TicketType::class ) ) {
+			$ticket_type = \FairEvents\Models\TicketType::get_by_id( $ticket_type_id );
+			if ( $ticket_type ) {
+				$seats = max( 1, (int) $ticket_type->seats_per_ticket );
+			}
+		}
+		$event_participant->ticket_type_id = $ticket_type_id;
+		$event_participant->seats          = $seats;
+		$event_participant->transaction_id = (int) $transaction->id;
+		$event_participant->save();
+
+		// Preserve the upgrade charge alongside the original payment.
+		$ledger = new EventParticipantTransactionRepository();
+		$ledger->record( (int) $event_participant->id, (int) $transaction->id, 'charge' );
+
+		// Reuse the standard paid-signup confirmation email.
+		do_action( 'fair_audience_event_signup_paid', $event_participant, $transaction );
 	}
 
 	/**

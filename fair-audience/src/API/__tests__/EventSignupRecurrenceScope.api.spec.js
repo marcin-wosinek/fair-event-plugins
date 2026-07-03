@@ -521,3 +521,134 @@ test.describe('multiple_instances ticket types — pick-N signup semantics (#930
 		}
 	});
 });
+
+test.describe('Series-pass upgrade — single_instance → whole_series', () => {
+	let api;
+	let adminUserId;
+	let event;
+	let singleTtId;
+	let seriesTtId;
+	let participantId;
+
+	test.beforeAll(async () => {
+		api = await request.newContext({ baseURL: BASE_URL });
+
+		const meRes = await api.get('/wp-json/wp/v2/users/me', {
+			headers: authHeaders,
+		});
+		expect(meRes.ok()).toBeTruthy();
+		adminUserId = (await meRes.json()).id;
+
+		event = await createEventWithDates(
+			api,
+			`Series Upgrade Test ${Date.now()}`
+		);
+
+		// Both ticket types live on the same master date. The tickets endpoint
+		// saves the full set per event-date, so they must be created together.
+		const res = await api.post(
+			`/wp-json/fair-events/v1/event-dates/${event.masterEventDateId}/tickets`,
+			{
+				headers: authHeaders,
+				data: {
+					ticket_types: [
+						{
+							name: 'Drop-In',
+							sort_order: 0,
+							recurrence_scope: 'single_instance',
+						},
+						{
+							name: 'Series Pass',
+							sort_order: 1,
+							recurrence_scope: 'whole_series',
+						},
+					],
+					sale_periods: [],
+					prices: [],
+				},
+			}
+		);
+		expect(res.ok(), 'create both ticket types').toBeTruthy();
+		const tts = (await res.json()).ticket_types;
+		singleTtId = tts.find(
+			(t) => t.recurrence_scope === 'single_instance'
+		).id;
+		seriesTtId = tts.find((t) => t.recurrence_scope === 'whole_series').id;
+
+		participantId = await createParticipant(
+			api,
+			adminUserId,
+			'Upgrade Tester'
+		);
+	});
+
+	test.afterAll(async () => {
+		await deleteParticipant(api, participantId);
+		if (event?.eventId) {
+			await api.delete(`/wp-json/wp/v2/fair_event/${event.eventId}`, {
+				headers: authHeaders,
+				params: { force: 'true' },
+			});
+		}
+		await api.dispose();
+	});
+
+	test('whole_series purchase after a single_instance signup on the master upgrades in place instead of reporting already_signed_up', async () => {
+		// 1. Single-instance signup on the master (free).
+		const first = await api.post('/wp-json/fair-audience/v1/event-signup', {
+			headers: authHeaders,
+			data: {
+				event_id: event.eventId,
+				event_date_id: event.masterEventDateId,
+				ticket_type_id: singleTtId,
+			},
+		});
+		expect(first.ok()).toBeTruthy();
+		expect((await first.json()).status).toBe('signed_up');
+
+		// 2. Whole-series purchase over that signup must NOT short-circuit as a
+		// duplicate. Both tickets are free, so the delta is zero and the upgrade
+		// converts immediately — status signed_up, never already_signed_up.
+		const upgrade = await api.post(
+			'/wp-json/fair-audience/v1/event-signup',
+			{
+				headers: authHeaders,
+				data: {
+					event_id: event.eventId,
+					event_date_id: event.masterEventDateId,
+					ticket_type_id: seriesTtId,
+				},
+			}
+		);
+		expect(upgrade.ok()).toBeTruthy();
+		expect((await upgrade.json()).status).toBe('signed_up');
+
+		// 3. The master row now carries the whole_series ticket type.
+		const participantsRes = await api.get(
+			`/wp-json/fair-audience/v1/event-dates/${event.masterEventDateId}/participants`,
+			{ headers: authHeaders }
+		);
+		expect(participantsRes.ok()).toBeTruthy();
+		const row = (await participantsRes.json()).find(
+			(p) => p.participant_id === participantId
+		);
+		expect(row, 'upgraded row on master').toBeTruthy();
+		expect(row.label).toBe('signed_up');
+		expect(row.ticket_type_id).toBe(seriesTtId);
+
+		// 4. A further whole_series attempt is now a genuine duplicate.
+		const repeat = await api.post(
+			'/wp-json/fair-audience/v1/event-signup',
+			{
+				headers: authHeaders,
+				data: {
+					event_id: event.eventId,
+					event_date_id: event.masterEventDateId,
+					ticket_type_id: seriesTtId,
+				},
+			}
+		);
+		expect(repeat.ok()).toBeTruthy();
+		expect((await repeat.json()).status).toBe('already_signed_up');
+	});
+});

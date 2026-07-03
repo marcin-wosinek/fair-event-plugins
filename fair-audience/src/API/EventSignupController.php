@@ -9,6 +9,7 @@ namespace FairAudience\API;
 
 use FairAudience\Database\ParticipantRepository;
 use FairAudience\Database\EventParticipantRepository;
+use FairAudience\Database\EventParticipantTransactionRepository;
 use FairAudience\Database\EmailConfirmationTokenRepository;
 use FairAudience\Models\Participant;
 use FairAudience\Services\AudienceSession;
@@ -645,6 +646,18 @@ class EventSignupController extends WP_REST_Controller {
 		}
 
 		if ( $existing && 'signed_up' === $existing->label ) {
+			// A whole-series purchase over an existing single-instance signup is
+			// an upgrade, not a duplicate: proceed (charging only the difference)
+			// instead of short-circuiting. Returns null when this is not an
+			// upgrade case, so a genuine repeat still reports already_signed_up.
+			$upgrade_response = $this->maybe_start_series_upgrade_payment( $event_id, $event_date_id, $participant, $existing, $ticket_type_id );
+			if ( null !== $upgrade_response ) {
+				if ( ! is_wp_error( $upgrade_response ) ) {
+					AudienceSession::set( (int) $participant->id );
+				}
+				return $upgrade_response;
+			}
+
 			AudienceSession::set( (int) $participant->id );
 			return rest_ensure_response(
 				array(
@@ -2011,6 +2024,164 @@ class EventSignupController extends WP_REST_Controller {
 				'checkout_url'   => $payment['checkout_url'],
 				'transaction_id' => $transaction_id,
 				'amount'         => $total_amount,
+				'currency'       => get_option( 'fair_payment_currency', 'EUR' ),
+			)
+		);
+	}
+
+	/**
+	 * Upgrade an existing single-instance signup to a whole-series pass.
+	 *
+	 * Called from create_signup() when the buyer already holds a signed_up row
+	 * on the (retargeted) master date and the selected ticket type is
+	 * whole-series. The seat and prior payment stay put: like
+	 * maybe_start_addon_payment, this never mutates the existing row on the paid
+	 * path — an abandoned upgrade leaves the original single-instance signup
+	 * intact. On payment success PaymentHooks::handle_series_upgrade_paid()
+	 * flips the row's ticket_type to the series pass.
+	 *
+	 * The buyer is charged only the difference between the series price and what
+	 * they have already paid on this registration (per the transaction ledger).
+	 *
+	 * @param int                              $event_id       Event post ID.
+	 * @param int                              $event_date_id  Event date ID (already retargeted to the master).
+	 * @param \FairAudience\Models\Participant $participant    Participant doing the upgrade.
+	 * @param object                           $existing       Existing signed_up EventParticipant row.
+	 * @param int|null                         $ticket_type_id Selected whole-series ticket type ID.
+	 * @return \WP_REST_Response|\WP_Error|null Response/error for the upgrade path, null when not an upgrade.
+	 */
+	private function maybe_start_series_upgrade_payment( $event_id, $event_date_id, $participant, $existing, $ticket_type_id ) {
+		if ( ! $ticket_type_id || ! class_exists( \FairEvents\Models\TicketType::class ) ) {
+			return null;
+		}
+
+		$ticket_type = \FairEvents\Models\TicketType::get_by_id( $ticket_type_id );
+		if ( ! $ticket_type || ! $ticket_type->is_whole_series() ) {
+			return null;
+		}
+
+		// A row that already carries a whole-series ticket type is a genuine
+		// repeat purchase — fall back to the already_signed_up response.
+		if ( $existing->ticket_type_id ) {
+			$existing_tt = \FairEvents\Models\TicketType::get_by_id( (int) $existing->ticket_type_id );
+			if ( $existing_tt && $existing_tt->is_whole_series() ) {
+				return null;
+			}
+		}
+
+		$series_price = 0.0;
+		if ( class_exists( \FairEventsExperimental\Services\EventSignupPricing::class ) ) {
+			$resolved     = \FairEventsExperimental\Services\EventSignupPricing::resolve_price_for_ticket_type( $ticket_type->id, $participant->id );
+			$series_price = null !== $resolved ? (float) $resolved : 0.0;
+		}
+
+		$ledger = new EventParticipantTransactionRepository();
+
+		// Backfill: rows created before the ledger existed only record their
+		// original charge in the row's own transaction_id column. Seed it so the
+		// difference is computed against what was actually paid.
+		if ( $existing->transaction_id ) {
+			$ledger->record( (int) $existing->id, (int) $existing->transaction_id, 'charge' );
+		}
+
+		$net_paid         = $ledger->get_net_paid( (int) $existing->id );
+		$delta            = max( 0.0, $series_price - $net_paid );
+		$seats_per_ticket = max( 1, (int) $ticket_type->seats_per_ticket );
+
+		// Nothing left to pay (already covered, or a free series): convert in place now.
+		if ( $delta <= 0 ) {
+			$existing->ticket_type_id = (int) $ticket_type->id;
+			$existing->seats          = $seats_per_ticket;
+			$existing->save();
+
+			return rest_ensure_response(
+				array(
+					'success' => true,
+					'status'  => 'signed_up',
+					'message' => __( 'Your series pass is now active!', 'fair-audience' ),
+				)
+			);
+		}
+
+		if ( ! class_exists( \FairPaymentsConnector\API\TransactionAPI::class )
+			|| ! \FairPaymentsConnector\API\TransactionAPI::is_configured() ) {
+			return new WP_Error(
+				'payment_unavailable',
+				__( 'Paid signup is not available because the payment plugin is not configured.', 'fair-audience' ),
+				array( 'status' => 503 )
+			);
+		}
+
+		$line_items = array(
+			array(
+				'name'     => sprintf(
+					/* translators: %s: ticket type name */
+					__( 'Upgrade to series pass: %s', 'fair-audience' ),
+					$ticket_type->name
+				),
+				'quantity' => 1,
+				'amount'   => $delta,
+			),
+		);
+
+		$transaction_id = \FairPaymentsConnector\API\TransactionAPI::create_transaction(
+			$line_items,
+			array(
+				'currency'      => get_option( 'fair_payment_currency', 'EUR' ),
+				'description'   => sprintf(
+					/* translators: %s: event title */
+					__( 'Series pass upgrade for %s', 'fair-audience' ),
+					get_the_title( $event_id )
+				),
+				'post_id'       => $event_id,
+				'event_date_id' => $event_date_id,
+				'user_id'       => get_current_user_id() ?: null,
+				'metadata'      => array(
+					'source'               => 'fair-audience-series-upgrade',
+					'event_date_id'        => $event_date_id,
+					'event_participant_id' => (int) $existing->id,
+					'participant_id'       => (int) $participant->id,
+					'ticket_type_id'       => (int) $ticket_type->id,
+				),
+			)
+		);
+
+		if ( is_wp_error( $transaction_id ) ) {
+			return $transaction_id;
+		}
+
+		// Deliberately do NOT touch $existing here: the seat and original payment
+		// remain valid whether or not the upgrade payment completes.
+
+		$redirect_url = add_query_arg(
+			array(
+				'fair_payment_callback' => 'true',
+				'fair_signup_tx'        => $transaction_id,
+				'fst_sig'               => \FairAudience\Services\TransactionAccessToken::generate(
+					(int) $transaction_id,
+					(int) $participant->id
+				),
+			),
+			get_permalink( $event_id )
+		);
+
+		$payment = \FairPaymentsConnector\API\TransactionAPI::initiate_payment(
+			$transaction_id,
+			array( 'redirect_url' => $redirect_url )
+		);
+
+		if ( is_wp_error( $payment ) ) {
+			return $payment;
+		}
+
+		return rest_ensure_response(
+			array(
+				'success'        => true,
+				'status'         => 'payment_required',
+				'message'        => __( 'Redirecting to payment…', 'fair-audience' ),
+				'checkout_url'   => esc_url_raw( $payment['checkout_url'] ),
+				'transaction_id' => $transaction_id,
+				'amount'         => $delta,
 				'currency'       => get_option( 'fair_payment_currency', 'EUR' ),
 			)
 		);
