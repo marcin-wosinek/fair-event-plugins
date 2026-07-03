@@ -19,6 +19,7 @@ in that area — this file only carries the always-true rules.
 | REST API — frontend | [REST_API_USAGE.md](./REST_API_USAGE.md) |
 | REST API — backend / security ⚠️ | [REST_API_BACKEND.md](./REST_API_BACKEND.md) |
 | React admin pages | [REACT_ADMIN_PATTERN.md](./REACT_ADMIN_PATTERN.md) |
+| Admin UI / UX rules (labels, saves, dates, destructive actions) | [UI_GUIDELINES.md](./UI_GUIDELINES.md) |
 | Testing | [TESTING.md](./TESTING.md) |
 | i18n build setup (hash mapping) | [I18N_SETUP.md](./I18N_SETUP.md) |
 | Translation tooling (`npm run translation:*`) | [TRANSLATIONS.md](./TRANSLATIONS.md) |

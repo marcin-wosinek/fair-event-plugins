@@ -604,11 +604,9 @@ const ResourcesPage = () => {
         }
     };
 
+    // Destructive actions: confirm via ConfirmDialog naming the object —
+    // never window.confirm/alert. See UI_GUIDELINES.md.
     const handleDelete = async (id) => {
-        if (!confirm(__('Are you sure you want to delete this resource?', 'plugin-name'))) {
-            return;
-        }
-
         try {
             await apiFetch({
                 path: `/plugin-name/v1/resources/${id}`,
@@ -618,7 +616,7 @@ const ResourcesPage = () => {
             // Remove from local state
             setResources((prev) => prev.filter((resource) => resource.id !== id));
         } catch (err) {
-            alert(err.message || __('Failed to delete resource.', 'plugin-name'));
+            setError(err.message || __('Failed to delete resource.', 'plugin-name'));
         }
     };
 
@@ -973,13 +971,13 @@ const handleToggle = async (id, currentValue) => {
             data: { active: !currentValue },
         });
     } catch (err) {
-        // Revert on error
+        // Revert on error; report via a Notice, not alert() (UI_GUIDELINES.md)
         setItems((prev) =>
             prev.map((item) =>
                 item.id === id ? { ...item, active: currentValue } : item
             )
         );
-        alert(err.message);
+        setError(err.message);
     }
 };
 ```
@@ -1004,7 +1002,7 @@ const handleSubmit = async (e) => {
         // Reset form
         setFormData({ name: '', email: '' });
     } catch (err) {
-        alert(err.message);
+        setError(err.message);
     } finally {
         setIsSaving(false);
     }
@@ -1013,6 +1011,7 @@ const handleSubmit = async (e) => {
 
 ## See Also
 
+- [UI_GUIDELINES.md](./UI_GUIDELINES.md) - UX rules for admin pages (labels, save model, destructive actions, dates)
 - [REST_API_USAGE.md](./REST_API_USAGE.md) - Frontend REST API integration
 - [REST_API_BACKEND.md](./REST_API_BACKEND.md) - Backend REST API security standards
 - [TESTING.md](./TESTING.md) - Testing architecture
