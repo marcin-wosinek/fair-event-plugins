@@ -129,6 +129,21 @@ Each prints a single `MARKER:{json}` line (`E2E_SEED`, `E2E_STATE`,
 - **`signup-state.php <email> <event_date_id>`** — reports the participant's
   `email_profile`/`status`, the event-participant `label`, and the mail captured
   for that buyer.
+- **`get-tickets-state.php <event_date_id>`** — reports the fair-events
+  `fair_events_signups` rows (the standalone get-tickets purchase path) with
+  each row's status and, when paid, its transaction status + Mollie payment id.
+- **`seed-payment-page.php [amount] [description]`** / **`cleanup-payment-page.php <pageId>`**
+  — create/delete a published page carrying a simple-payment block (with the
+  editor-style UUID `blockId` attribute the payment endpoint matches on);
+  cleanup also removes the transactions the page created (matched by
+  `post_id`).
+- **`transaction-state.php <transaction_id>`** — reports one
+  `fair_payment_transactions` row (status, testmode, amount, Mollie id).
+
+The event seeded by `seed-event.php` carries the fair-audience event-signup
+block by default; pass `{"block":"get-tickets"}` in the JSON overrides to seed
+it with the fair-events get-tickets block instead (used by the spec that runs
+with fair-audience deactivated).
 
 ## Playwright fixture: `seedEvent`
 

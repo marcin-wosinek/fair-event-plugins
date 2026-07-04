@@ -23,18 +23,21 @@ use FairEventsExperimental\Models\TicketOption;
 
 if ( ! function_exists( 'fair_e2e_create_event' ) ) {
 	/**
-	 * Create a published fair_event post carrying the event-signup block.
+	 * Create a published fair_event post carrying a signup/purchase block.
 	 *
-	 * @param string $title Post title (callers pass a timestamped unique title).
+	 * @param string $title   Post title (callers pass a timestamped unique title).
+	 * @param string $content Post content; defaults to the fair-audience
+	 *                        event-signup block. Pass the fair-events get-tickets
+	 *                        block for specs that run without fair-audience.
 	 * @return int Event post ID.
 	 */
-	function fair_e2e_create_event( $title ) {
+	function fair_e2e_create_event( $title, $content = '<!-- wp:fair-audience/event-signup /-->' ) {
 		$event_id = wp_insert_post(
 			array(
 				'post_type'    => 'fair_event',
 				'post_status'  => 'publish',
 				'post_title'   => $title,
-				'post_content' => '<!-- wp:fair-audience/event-signup /-->',
+				'post_content' => $content,
 			),
 			true
 		);
