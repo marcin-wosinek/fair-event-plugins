@@ -43,13 +43,17 @@ if ( $is_callback && class_exists( \FairPaymentsConnector\API\TransactionAPI::cl
 // Check if Mollie is configured.
 $is_configured = \FairPaymentsConnector\Payment\MolliePaymentHandler::is_configured();
 
-$block_id = 'fair-payments-connector-' . wp_unique_id();
+// DOM id for the wrapper only. Must NOT reuse $block_id: the payment endpoint
+// derives the authoritative amount by matching the saved blockId attribute in
+// post content, so the button has to submit the attribute value, not a
+// per-render unique id.
+$wrapper_id = 'fair-payments-connector-' . wp_unique_id();
 ?>
 
 <div
 <?php
 	// phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- get_block_wrapper_attributes() returns pre-escaped HTML attributes.
-	echo get_block_wrapper_attributes( array( 'id' => $block_id ) );
+	echo get_block_wrapper_attributes( array( 'id' => $wrapper_id ) );
 ?>
 >
 	<div class="fair-payments-connector-block">

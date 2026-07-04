@@ -118,6 +118,11 @@ $deleted['sale_periods'] = (int) $wpdb->query(
 	$wpdb->prepare( 'DELETE FROM %i WHERE event_date_id = %d', $sale_periods_table, $event_date_id )
 );
 
+// Get-tickets signup rows (fair-events standalone purchase path).
+$deleted['get_tickets_signups'] = (int) $wpdb->query(
+	$wpdb->prepare( 'DELETE FROM %i WHERE event_date_id = %d', $wpdb->prefix . 'fair_events_signups', $event_date_id )
+);
+
 $deleted['event_dates'] = (int) $wpdb->query(
 	$wpdb->prepare( 'DELETE FROM %i WHERE event_id = %d', $dates_table, $event_id )
 );
