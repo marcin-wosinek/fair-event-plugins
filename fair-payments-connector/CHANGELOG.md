@@ -1,5 +1,18 @@
 # fair-payments-connector
 
+## 1.5.0
+
+### Minor Changes
+
+-   2cb0fb8: Add a shared payment-integration lifecycle layer in fair-events-shared that standardizes how plugins hook into payment start, completion, and failure. fair-payments-connector's simple-payment block and fair-events' get-tickets block consume the shared layer so payment side-effects are handled consistently across integrations.
+-   2cb0fb8: Waive the platform fee until 2027-01-01: transactions created before that date are charged no platform fee. The fee calculation and its persisted amount both account for the waiver window.
+
+### Patch Changes
+
+-   ce4566c: Fix the simple-payment block rejecting every purchase with "Block not found." Since the block-id/amount verification was added to the payment endpoint, render.php overwrote the saved blockId attribute with a per-render `wp_unique_id()` before printing the button's `data-block-id`, so the submitted id could never match the block in post content and the endpoint returned 403. The unique id is now used only for the wrapper's DOM id; the button submits the real blockId attribute. Caught by the new simple-payment e2e spec — the API specs only covered the rejection paths.
+-   Updated dependencies [2cb0fb8]
+    -   fair-events-shared@0.2.0
+
 ## 1.4.0
 
 ### Minor Changes
