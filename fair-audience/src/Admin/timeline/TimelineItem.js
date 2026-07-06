@@ -99,7 +99,7 @@ function FormSubmissionContent({ item }) {
 		post_url: postUrl,
 	} = item.details;
 
-	const submissionUrl = `admin.php?page=fair-audience-submission-detail&submission_id=${submissionId}`;
+	const submissionUrl = `admin.php?page=fair-form-submission-detail&submission_id=${submissionId}`;
 	const participantUrl = participantId
 		? `admin.php?page=fair-audience-participant-detail&participant_id=${participantId}`
 		: null;

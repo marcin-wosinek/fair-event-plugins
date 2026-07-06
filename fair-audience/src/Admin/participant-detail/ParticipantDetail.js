@@ -397,7 +397,7 @@ export default function ParticipantDetail() {
 							</thead>
 							<tbody>
 								{submissions.map((sub) => {
-									const detailUrl = `admin.php?page=fair-audience-submission-detail&submission_id=${sub.id}`;
+									const detailUrl = `admin.php?page=fair-form-submission-detail&submission_id=${sub.id}`;
 									return (
 										<tr key={sub.id}>
 											<td>
