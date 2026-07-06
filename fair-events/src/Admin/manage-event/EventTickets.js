@@ -26,7 +26,7 @@ import {
 	__experimentalVStack as VStack,
 	__experimentalHStack as HStack,
 } from '@wordpress/components';
-import { __, sprintf } from '@wordpress/i18n';
+import { __, _n, sprintf } from '@wordpress/i18n';
 import apiFetch from '@wordpress/api-fetch';
 
 export default function EventTickets({
@@ -1017,8 +1017,10 @@ export default function EventTickets({
 													? days !== null
 														? sprintf(
 																/* translators: 1: formatted date, 2: number of days */
-																__(
+																_n(
+																	'From %1$s (%2$d day before event)',
 																	'From %1$s (%2$d days before event)',
+																	days,
 																	'fair-events'
 																),
 																label,
