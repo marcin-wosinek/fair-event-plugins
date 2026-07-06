@@ -1,0 +1,33 @@
+{
+	"$schema": "https://schemas.wp.org/trunk/block.json",
+	"apiVersion": 3,
+	"name": "fair-audience/fair-form-consent",
+	"version": "1.0.0",
+	"title": "Consent Checkbox Question",
+	"category": "widgets",
+	"icon": "yes-alt",
+	"description": "A single consent checkbox question for Fair Form (e.g. terms and conditions)",
+	"keywords": ["question", "checkbox", "consent", "terms"],
+	"textdomain": "fair-audience",
+	"ancestor": ["fair-audience/fair-form", "fair-audience/event-signup"],
+	"supports": {
+		"html": false
+	},
+	"attributes": {
+		"questionText": {
+			"type": "string",
+			"default": ""
+		},
+		"questionKey": {
+			"type": "string",
+			"default": ""
+		},
+		"required": {
+			"type": "boolean",
+			"default": true
+		}
+	},
+	"editorScript": "file:./editor.js",
+	"render": "file:./render.php",
+	"style": "file:./style-editor.css"
+}

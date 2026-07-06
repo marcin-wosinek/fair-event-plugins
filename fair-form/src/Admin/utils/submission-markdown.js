@@ -23,6 +23,12 @@ function answerToMarkdownLines(answer) {
 			// Keep the raw value.
 		}
 		lines.push(value);
+	} else if (answer.question_type === 'checkbox') {
+		lines.push(
+			answer.answer_value === '1'
+				? __('Yes', 'fair-audience')
+				: __('No', 'fair-audience')
+		);
 	} else {
 		lines.push(answer.answer_value || '');
 	}
