@@ -17,12 +17,18 @@
 .fair-form-form input[type="tel"],
 .fair-form-form textarea,
 .fair-form-form select {
+	box-sizing: border-box;
 	width: 100%;
 	padding: 8px 12px;
 	border: 1px solid #8c8f94;
 	border-radius: 4px;
 	font-size: inherit;
 	line-height: 1.5;
+}
+
+.fair-form-form textarea {
+	resize: none;
+	overflow: hidden;
 }
 
 .fair-form-form input[type="text"]:focus,

@@ -9,7 +9,7 @@ import {
 } from '@wordpress/block-editor';
 import { PanelBody, TextControl, ToggleControl } from '@wordpress/components';
 import { __ } from '@wordpress/i18n';
-import { generateQuestionKey } from 'fair-events-shared';
+import { autosizeTextarea, generateQuestionKey } from 'fair-events-shared';
 
 const ALLOWED_BLOCKS = ['fair-audience/fair-form-option'];
 
@@ -96,10 +96,12 @@ registerBlockType('fair-audience/fair-form-multiselect', {
 						<span className="fair-form-question-header">
 							<textarea
 								rows={1}
+								ref={autosizeTextarea}
 								value={questionText}
-								onChange={(e) =>
-									onQuestionTextChange(e.target.value)
-								}
+								onChange={(e) => {
+									autosizeTextarea(e.target);
+									onQuestionTextChange(e.target.value);
+								}}
 								placeholder={__(
 									'Enter your question...',
 									'fair-audience'

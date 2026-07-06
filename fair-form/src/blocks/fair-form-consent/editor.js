@@ -4,7 +4,7 @@ import { registerBlockType } from '@wordpress/blocks';
 import { useBlockProps, InspectorControls } from '@wordpress/block-editor';
 import { PanelBody, TextControl, ToggleControl } from '@wordpress/components';
 import { __ } from '@wordpress/i18n';
-import { generateQuestionKey } from 'fair-events-shared';
+import { autosizeTextarea, generateQuestionKey } from 'fair-events-shared';
 
 registerBlockType('fair-audience/fair-form-consent', {
 	edit: ({ attributes, setAttributes }) => {
@@ -56,10 +56,12 @@ registerBlockType('fair-audience/fair-form-consent', {
 						<span className="fair-form-question-header">
 							<textarea
 								rows={1}
+								ref={autosizeTextarea}
 								value={questionText}
-								onChange={(e) =>
-									onQuestionTextChange(e.target.value)
-								}
+								onChange={(e) => {
+									autosizeTextarea(e.target);
+									onQuestionTextChange(e.target.value);
+								}}
 								placeholder={__(
 									'I have read and accept the terms and conditions',
 									'fair-audience'
