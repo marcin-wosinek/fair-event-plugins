@@ -219,6 +219,7 @@ if ( $events_query->have_posts() ) {
 		$processed_events[ $event_id ] = true;
 
 		$all_occurrences = EventDates::get_all_by_event_id( $event_id );
+		$has_multiple    = count( $all_occurrences ) > 1;
 		$event_post      = get_post( $event_id );
 		$is_draft        = $event_post && 'draft' === $event_post->post_status;
 
@@ -240,7 +241,7 @@ if ( $events_query->have_posts() ) {
 					$events_by_date[ $loop_date ] = array();
 				}
 
-				$permalink = ! empty( $occ->id )
+				$permalink = ( $has_multiple && ! empty( $occ->id ) )
 					? add_query_arg( 'event_date', (int) $occ->id, get_permalink( $event_id ) )
 					: get_permalink( $event_id );
 
