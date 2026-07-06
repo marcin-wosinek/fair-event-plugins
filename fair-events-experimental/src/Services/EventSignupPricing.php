@@ -11,8 +11,7 @@ use FairEvents\Models\EventDates;
 use FairEvents\Models\EventDateSetting;
 use FairEventsExperimental\Models\GroupPricingRule;
 use FairEvents\Models\TicketType;
-use FairEvents\Models\TicketSalePeriod;
-use FairEvents\Models\TicketPrice;
+use FairEvents\Services\TicketPricing;
 use FairEventsExperimental\Models\TicketOptionCollaborator;
 
 defined( 'WPINC' ) || die;
@@ -201,16 +200,10 @@ class EventSignupPricing {
 			return null;
 		}
 
-		$active_period = self::resolve_active_sale_period( $ticket_type->event_date_id );
-		if ( ! $active_period ) {
+		$base_price = TicketPricing::resolve_unit_price( $ticket_type_id );
+		if ( null === $base_price ) {
 			return null;
 		}
-
-		$price_row = TicketPrice::get_by_type_and_period( $ticket_type_id, $active_period->id );
-		if ( ! $price_row ) {
-			return null;
-		}
-		$base_price = (float) $price_row->price;
 
 		if ( empty( $participant_id ) ) {
 			return $base_price;
@@ -256,16 +249,8 @@ class EventSignupPricing {
 	 */
 	public static function has_paid_price_configured( int $event_date_id, ?int $ticket_type_id = null ): bool {
 		if ( $ticket_type_id ) {
-			$ticket_type = TicketType::get_by_id( $ticket_type_id );
-			if ( ! $ticket_type ) {
-				return false;
-			}
-			$active_period = self::resolve_active_sale_period( (int) $ticket_type->event_date_id );
-			if ( ! $active_period ) {
-				return false;
-			}
-			$price_row = TicketPrice::get_by_type_and_period( $ticket_type_id, $active_period->id );
-			return $price_row && (float) $price_row->price > 0;
+			$price = TicketPricing::resolve_unit_price( $ticket_type_id );
+			return null !== $price && $price > 0;
 		}
 
 		$event_date = EventDates::get_by_id( $event_date_id );
@@ -289,37 +274,15 @@ class EventSignupPricing {
 	/**
 	 * Resolve the currently active sale period for an event date.
 	 *
-	 * Periods use a half-open day range [sale_start, sale_end) in the site
-	 * timezone: sale_start is the first day on sale (00:00:00 site time) and
-	 * sale_end is the first day no longer on sale (00:00:00 site time).
-	 *
-	 * When no period matches and the per-event-date `continues_pricing_period`
-	 * setting is on, falls back to the last period whose start is already in
-	 * the past.
+	 * Delegates to the fair-events \FairEvents\Services\TicketPricing service,
+	 * the canonical home of sale-period resolution (fair-events owns the
+	 * pricing models).
 	 *
 	 * @param int $event_date_id Event date ID.
-	 * @return TicketSalePeriod|null Active period or null.
+	 * @return \FairEvents\Models\TicketSalePeriod|null Active period or null.
 	 */
 	public static function resolve_active_sale_period( $event_date_id ) {
-		$now           = current_time( 'mysql' );
-		$sale_periods  = TicketSalePeriod::get_all_by_event_date_id( $event_date_id );
-		$active_period = null;
-
-		$continues  = class_exists( EventDateSetting::class )
-			&& '1' === EventDateSetting::get( $event_date_id, 'continues_pricing_period' );
-		$last_index = count( $sale_periods ) - 1;
-
-		foreach ( $sale_periods as $index => $period ) {
-			// Half-open interval: sale_start <= now < sale_end.
-			if ( $period->sale_start <= $now && $period->sale_end > $now ) {
-				return $period;
-			}
-			if ( $continues && $index === $last_index && $period->sale_start <= $now ) {
-				$active_period = $period;
-			}
-		}
-
-		return $active_period;
+		return TicketPricing::resolve_active_sale_period( $event_date_id );
 	}
 
 	/**

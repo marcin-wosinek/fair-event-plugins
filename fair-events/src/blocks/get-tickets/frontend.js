@@ -10,6 +10,8 @@ import {
 	onDomReady,
 	initiatePayment,
 	handlePaymentCallback,
+	computeTicketTotal,
+	formatPrice,
 } from 'fair-events-shared';
 import './frontend.css';
 
@@ -191,7 +193,12 @@ const STATUS_PATH = '/fair-payments-connector/v1/payments';
 					? sprintf(
 							/* translators: %s: formatted total price */
 							__('Total: €%s', 'fair-events'),
-							(price * checked).toFixed(2)
+							formatPrice(
+								computeTicketTotal({
+									unitPrice: price,
+									count: checked,
+								})
+							)
 					  )
 					: '';
 		}
