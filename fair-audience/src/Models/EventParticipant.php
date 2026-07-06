@@ -71,13 +71,6 @@ class EventParticipant {
 	public $ticket_type_id;
 
 	/**
-	 * Seats consumed by this signup (snapshot of ticket type's seats_per_ticket).
-	 *
-	 * @var int
-	 */
-	public $seats = 1;
-
-	/**
 	 * Attendance timestamp — when the participant was marked as shown up (nullable DATETIME).
 	 *
 	 * @var string|null
@@ -130,7 +123,6 @@ class EventParticipant {
 		$this->payment_expires_at = isset( $data['payment_expires_at'] ) && $data['payment_expires_at'] ? $data['payment_expires_at'] : null;
 		$this->transaction_id     = isset( $data['transaction_id'] ) && $data['transaction_id'] ? (int) $data['transaction_id'] : null;
 		$this->ticket_type_id     = isset( $data['ticket_type_id'] ) && $data['ticket_type_id'] ? (int) $data['ticket_type_id'] : null;
-		$this->seats              = isset( $data['seats'] ) ? max( 1, (int) $data['seats'] ) : 1;
 		$this->attended_at        = isset( $data['attended_at'] ) && $data['attended_at'] ? $data['attended_at'] : null;
 		$this->admin_comment      = isset( $data['admin_comment'] ) && '' !== $data['admin_comment'] ? $data['admin_comment'] : null;
 		$this->created_at         = isset( $data['created_at'] ) ? $data['created_at'] : '';
@@ -164,12 +156,11 @@ class EventParticipant {
 			'payment_expires_at' => $this->payment_expires_at,
 			'transaction_id'     => $this->transaction_id,
 			'ticket_type_id'     => $this->ticket_type_id,
-			'seats'              => max( 1, (int) $this->seats ),
 			'attended_at'        => $this->attended_at,
 			'admin_comment'      => $this->admin_comment,
 		);
 
-		$format = array( '%d', '%d', '%d', '%s', '%s', '%d', '%d', '%d', '%s', '%s' );
+		$format = array( '%d', '%d', '%d', '%s', '%s', '%d', '%d', '%s', '%s' );
 
 		if ( $this->id ) {
 			// Update existing.

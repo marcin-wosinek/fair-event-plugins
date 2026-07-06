@@ -585,16 +585,8 @@ class PaymentHooks {
 
 		set_transient( $dedupe_key, 1, DAY_IN_SECONDS );
 
-		// Upgrade the ticket type (and seat count) in place.
-		$seats = 1;
-		if ( class_exists( \FairEvents\Models\TicketType::class ) ) {
-			$ticket_type = \FairEvents\Models\TicketType::get_by_id( $ticket_type_id );
-			if ( $ticket_type ) {
-				$seats = max( 1, (int) $ticket_type->seats_per_ticket );
-			}
-		}
+		// Upgrade the ticket type in place.
 		$event_participant->ticket_type_id = $ticket_type_id;
-		$event_participant->seats          = $seats;
 		$event_participant->transaction_id = (int) $transaction->id;
 		$event_participant->save();
 

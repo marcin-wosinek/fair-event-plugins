@@ -67,7 +67,6 @@ class Schema {
 			payment_expires_at DATETIME DEFAULT NULL,
 			transaction_id BIGINT UNSIGNED DEFAULT NULL,
 			ticket_type_id BIGINT UNSIGNED DEFAULT NULL,
-			seats INT UNSIGNED NOT NULL DEFAULT 1,
 			attended_at DATETIME DEFAULT NULL,
 			admin_comment TEXT DEFAULT NULL,
 			created_at DATETIME DEFAULT CURRENT_TIMESTAMP,

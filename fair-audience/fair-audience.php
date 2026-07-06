@@ -72,7 +72,7 @@ function fair_audience_activate() {
 	dbDelta( \FairAudience\Database\Schema::get_event_participant_transactions_table_sql() );
 
 	// Update database version.
-	update_option( 'fair_audience_db_version', '1.38.0' );
+	update_option( 'fair_audience_db_version', '1.39.0' );
 }
 register_activation_hook( __FILE__, __NAMESPACE__ . '\\fair_audience_activate' );
 
@@ -739,6 +739,28 @@ function fair_audience_maybe_upgrade_db() {
 		dbDelta( \FairAudience\Database\Schema::get_event_participant_transactions_table_sql() );
 
 		update_option( 'fair_audience_db_version', '1.38.0' );
+	}
+
+	if ( version_compare( $db_version, '1.39.0', '<' ) ) {
+		global $wpdb;
+		$table_name = $wpdb->prefix . 'fair_audience_event_participants';
+
+		// The seats-per-ticket feature has been removed; every signup now counts
+		// as one seat, so the per-row weight column is no longer needed.
+		$has_seats_column = $wpdb->get_var(
+			$wpdb->prepare(
+				'SELECT COUNT(*) FROM information_schema.COLUMNS
+				 WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = %s AND COLUMN_NAME = %s',
+				$table_name,
+				'seats'
+			)
+		);
+		if ( $has_seats_column ) {
+			// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.DirectDatabaseQuery.SchemaChange
+			$wpdb->query( "ALTER TABLE {$table_name} DROP COLUMN seats" );
+		}
+
+		update_option( 'fair_audience_db_version', '1.39.0' );
 	}
 }
 add_action( 'plugins_loaded', __NAMESPACE__ . '\\fair_audience_maybe_upgrade_db' );

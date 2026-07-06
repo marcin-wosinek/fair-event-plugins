@@ -92,7 +92,6 @@ test.describe('GetTicketsController — multiple_instances signup', () => {
 						{
 							name: 'Pick your sessions',
 							capacity: null,
-							seats_per_ticket: 1,
 							invitation_only: false,
 							minimum_activities: 0,
 							disable_at: null,
