@@ -144,6 +144,15 @@ Each prints a single `MARKER:{json}` line (`E2E_SEED`, `E2E_STATE`,
   `post_id`).
 - **`transaction-state.php <transaction_id>`** — reports one
   `fair_payment_transactions` row (status, testmode, amount, Mollie id).
+- **`seed-pending-signup.php <eventId> <eventDateId> <ticketTypeId> <price> [status]`**
+  — writes a stuck `pending_payment` event-signup directly (participant +
+  `fair_payment_transactions` row in the given status, default `failed`, +
+  `event_participants` row with an unexpired `payment_expires_at`), since the
+  Mollie double can't produce a failed/canceled payment by itself. Emits the
+  participant id, transaction id, and a real `ParticipantToken`. Pair with
+  **`cleanup-transaction.php <transactionId>`** to remove the transaction row
+  afterwards (the participant/event_participant rows are covered by
+  `cleanup-event.php`).
 
 The event seeded by `seed-event.php` carries the fair-audience event-signup
 block by default; pass `{"block":"get-tickets"}` in the JSON overrides to seed
