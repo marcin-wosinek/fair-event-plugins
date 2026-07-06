@@ -10,6 +10,7 @@
 
 import { __ } from '@wordpress/i18n';
 import { addFilter } from '@wordpress/hooks';
+import { isLinkOnlyEvent } from 'fair-events-shared';
 import EventAudience from './EventAudience.js';
 import GroupRules from './GroupRules.js';
 import EventMailings from './EventMailings.js';
@@ -31,6 +32,7 @@ addFilter(
 				title: __('Audience', 'fair-audience'),
 				order: 50,
 				isVisible: true,
+				disabled: isLinkOnlyEvent(eventDate),
 				render: () => (
 					<EventAudience
 						eventId={eventDate.event_id}
@@ -59,7 +61,9 @@ addFilter(
 				title: __('Groups', 'fair-audience'),
 				order: 30,
 				isVisible: true,
-				disabled: eventDate?.occurrence_type === 'generated',
+				disabled:
+					eventDate?.occurrence_type === 'generated' ||
+					isLinkOnlyEvent(eventDate),
 				render: () => <GroupRules eventDateId={eventDateId} />,
 			},
 		];
@@ -81,6 +85,7 @@ addFilter(
 				title: __('Mailings', 'fair-audience'),
 				order: 55,
 				isVisible: true,
+				disabled: isLinkOnlyEvent(eventDate),
 				render: () => (
 					<EventMailings
 						eventDateId={eventDateId}
