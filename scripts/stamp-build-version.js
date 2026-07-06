@@ -50,13 +50,39 @@ const plugins = [
 		phpFile: 'fair-finance/fair-finance.php',
 		readmeFile: 'fair-finance/readme.txt',
 	},
+	{
+		name: 'fair-events-experimental',
+		phpFile: 'fair-events-experimental/fair-events-experimental.php',
+		readmeFile: 'fair-events-experimental/readme.txt',
+	},
+	{
+		name: 'fair-payments-connector-experimental',
+		phpFile:
+			'fair-payments-connector-experimental/fair-payments-connector-experimental.php',
+		readmeFile: 'fair-payments-connector-experimental/readme.txt',
+	},
+	{
+		name: 'fair-form',
+		phpFile: 'fair-form/fair-form.php',
+		readmeFile: 'fair-form/readme.txt',
+	},
 ];
 
 function getBuildVersion(pluginName) {
-	const raw = execSync(`git describe --tags --match="${pluginName}@*"`, {
-		encoding: 'utf8',
-	}).trim();
-	return raw.replace(`${pluginName}@`, '');
+	try {
+		const raw = execSync(`git describe --tags --match="${pluginName}@*"`, {
+			encoding: 'utf8',
+			stdio: ['pipe', 'pipe', 'pipe'],
+		}).trim();
+		return raw.replace(`${pluginName}@`, '');
+	} catch {
+		// No release tag yet (plugin has never been released) — fall back
+		// to the plain package.json version instead of crashing the build.
+		const packageData = JSON.parse(
+			readFileSync(join(rootDir, `${pluginName}/package.json`), 'utf8')
+		);
+		return packageData.version;
+	}
 }
 
 function stampFile(filePath, regex, buildVersion) {
