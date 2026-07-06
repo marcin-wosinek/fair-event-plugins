@@ -32,6 +32,7 @@ const ALLOWED_BLOCKS = [
 	'fair-audience/fair-form-radio',
 	'fair-audience/fair-form-multiselect',
 	'fair-audience/fair-form-file-upload',
+	'fair-audience/fair-form-consent',
 	'fair-audience/fair-form-conditional',
 ];
 
