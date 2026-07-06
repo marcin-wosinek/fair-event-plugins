@@ -65,10 +65,20 @@ if ( class_exists( \FairEvents\Models\EventDates::class ) ) {
 	$event_date = \FairEvents\Models\EventDates::get_by_id( $event_date_id );
 }
 
+// Pivot config/pricing lookups to the series master for generated occurrences.
+// The form still links the signup to the specific occurrence via $event_date_id.
+$pricing_event_date_id = $event_date_id;
+if ( $event_date
+	&& 'generated' === ( $event_date->occurrence_type ?? null )
+	&& ! empty( $event_date->master_id )
+) {
+	$pricing_event_date_id = (int) $event_date->master_id;
+}
+
 // Load ticket types.
 $ticket_types = array();
 if ( class_exists( \FairEvents\Models\TicketType::class ) ) {
-	$ticket_types = \FairEvents\Models\TicketType::get_all_by_event_date_id( $event_date_id );
+	$ticket_types = \FairEvents\Models\TicketType::get_all_by_event_date_id( $pricing_event_date_id );
 }
 
 // Resolve the series master (if any) so 'multiple_instances' ticket types can
@@ -108,12 +118,12 @@ $has_instance_picker = ! empty( $occurrences_for_picker );
 $price_by_type_id   = array();
 $active_sale_period = null;
 if ( class_exists( \FairEvents\Models\TicketSalePeriod::class ) && class_exists( \FairEvents\Models\TicketPrice::class ) ) {
-	$sale_periods = \FairEvents\Models\TicketSalePeriod::get_all_by_event_date_id( $event_date_id );
+	$sale_periods = \FairEvents\Models\TicketSalePeriod::get_all_by_event_date_id( $pricing_event_date_id );
 	$now          = current_time( 'mysql' );
 	foreach ( $sale_periods as $period ) {
 		if ( $period->sale_start <= $now && $period->sale_end >= $now ) {
 			$active_sale_period = $period;
-			$prices             = \FairEvents\Models\TicketPrice::get_all_by_event_date_id( $event_date_id );
+			$prices             = \FairEvents\Models\TicketPrice::get_all_by_event_date_id( $pricing_event_date_id );
 			foreach ( $prices as $price ) {
 				if ( (int) $price->sale_period_id === (int) $period->id ) {
 					$price_by_type_id[ (int) $price->ticket_type_id ] = (float) $price->price;
