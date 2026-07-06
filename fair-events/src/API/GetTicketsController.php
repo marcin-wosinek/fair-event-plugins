@@ -184,11 +184,18 @@ class GetTicketsController extends WP_REST_Controller {
 			);
 		}
 
-		// Validate ticket type belongs to this event date and has not been disabled.
-		$amount = 0.00;
+		// Validate ticket type belongs to this event date (or its series master)
+		// and has not been disabled.
+		$amount               = 0.00;
+		$config_event_date_id = $this->resolve_master_event_date_id( $event_date_id );
+		if ( ! $config_event_date_id ) {
+			$config_event_date_id = $event_date_id;
+		}
 		if ( $ticket_type_id && class_exists( \FairEvents\Models\TicketType::class ) ) {
 			$ticket_type = \FairEvents\Models\TicketType::get_by_id( $ticket_type_id );
-			if ( ! $ticket_type || (int) $ticket_type->event_date_id !== (int) $event_date_id ) {
+			if ( ! $ticket_type
+				|| ( (int) $ticket_type->event_date_id !== (int) $event_date_id
+					&& (int) $ticket_type->event_date_id !== (int) $config_event_date_id ) ) {
 				return new WP_Error(
 					'invalid_ticket_type',
 					__( 'Invalid ticket type.', 'fair-events' ),
@@ -213,11 +220,11 @@ class GetTicketsController extends WP_REST_Controller {
 
 			// Resolve price from the active sale period (server-side; client amount is ignored).
 			if ( class_exists( \FairEvents\Models\TicketSalePeriod::class ) && class_exists( \FairEvents\Models\TicketPrice::class ) ) {
-				$sale_periods = \FairEvents\Models\TicketSalePeriod::get_all_by_event_date_id( $event_date_id );
+				$sale_periods = \FairEvents\Models\TicketSalePeriod::get_all_by_event_date_id( $config_event_date_id );
 				$now          = current_time( 'mysql' );
 				foreach ( $sale_periods as $period ) {
 					if ( $period->sale_start <= $now && $period->sale_end >= $now ) {
-						$prices = \FairEvents\Models\TicketPrice::get_all_by_event_date_id( $event_date_id );
+						$prices = \FairEvents\Models\TicketPrice::get_all_by_event_date_id( $config_event_date_id );
 						foreach ( $prices as $price ) {
 							if ( (int) $price->ticket_type_id === (int) $ticket_type_id
 								&& (int) $price->sale_period_id === (int) $period->id ) {
