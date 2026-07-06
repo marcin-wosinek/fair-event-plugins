@@ -1007,7 +1007,9 @@ class EventSignupController extends WP_REST_Controller {
 
 		return rest_ensure_response(
 			array(
+				'success'        => true,
 				'status'         => 'payment_required',
+				'message'        => __( 'Redirecting to payment…', 'fair-audience' ),
 				'checkout_url'   => esc_url_raw( $payment['checkout_url'] ),
 				'transaction_id' => $transaction_id,
 				'amount'         => $total_amount,
