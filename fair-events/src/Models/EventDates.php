@@ -536,7 +536,8 @@ class EventDates {
 	 *
 	 * Returns the external URL for external events,
 	 * the post permalink for post-linked events,
-	 * or null for unlinked events.
+	 * or the permalink of a post linked via the junction table
+	 * (recurring instances linked from the post editor), if any.
 	 *
 	 * @return string|null The display URL, or null if no link.
 	 */
@@ -548,8 +549,24 @@ class EventDates {
 				return $this->event_id ? get_permalink( $this->event_id ) : null;
 			case 'none':
 			default:
-				return null;
+				$linked_post_id = $this->get_primary_linked_post_id();
+				return $linked_post_id ? get_permalink( $linked_post_id ) : null;
 		}
+	}
+
+	/**
+	 * Get the first post linked to this event date via the junction table
+	 *
+	 * Links are stored on the master event date (see EventDatesController::link_post()),
+	 * so generated occurrences look up their master's linked posts.
+	 *
+	 * @return int|null Post ID, or null if no linked post.
+	 */
+	public function get_primary_linked_post_id() {
+		$lookup_id       = ( 'generated' === $this->occurrence_type && $this->master_id ) ? $this->master_id : $this->id;
+		$linked_post_ids = self::get_linked_post_ids( $lookup_id );
+
+		return ! empty( $linked_post_ids ) ? $linked_post_ids[0] : null;
 	}
 
 	/**

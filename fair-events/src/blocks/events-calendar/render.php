@@ -131,7 +131,7 @@ if ( ! function_exists( 'fair_events_render_calendar_event_item' ) ) {
 			</div>
 			<?php
 		} elseif ( $is_standalone ) {
-			// Standalone event rendering (external/unlinked)
+			// Standalone event rendering (external/linked-post/unlinked).
 			$event_title = $event_data['title'] ?? '';
 			$event_url   = $event_data['permalink'] ?? '';
 			$link_type   = $event_data['link_type'] ?? 'none';
@@ -140,6 +140,8 @@ if ( ! function_exists( 'fair_events_render_calendar_event_item' ) ) {
 			$item_classes = array( 'event-item', 'is-standalone' );
 			if ( $is_external ) {
 				$item_classes[] = 'is-external';
+			} elseif ( ! empty( $event_url ) ) {
+				$item_classes[] = 'is-linked-post';
 			} else {
 				$item_classes[] = 'is-unlinked';
 			}
@@ -152,6 +154,10 @@ if ( ! function_exists( 'fair_events_render_calendar_event_item' ) ) {
 						class="event-title"
 						target="_blank"
 						rel="noopener noreferrer">
+						<?php echo esc_html( $event_title ); ?>
+					</a>
+				<?php elseif ( ! empty( $event_url ) ) : ?>
+					<a href="<?php echo esc_url( $event_url ); ?>" class="event-title">
 						<?php echo esc_html( $event_title ); ?>
 					</a>
 				<?php else : ?>
