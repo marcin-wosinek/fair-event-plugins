@@ -8,6 +8,8 @@ import {
 	setButtonLoading,
 	onDomReady,
 	wireNotYouButton,
+	computeTicketTotal,
+	formatPrice,
 } from 'fair-events-shared';
 import {
 	collectQuestionAnswers,
@@ -285,7 +287,12 @@ const CSS_PREFIX = 'fair-audience-signup';
 					? sprintf(
 							/* translators: %s: formatted total price */
 							__('Total: €%s', 'fair-audience'),
-							(price * checked).toFixed(2)
+							formatPrice(
+								computeTicketTotal({
+									unitPrice: price,
+									count: checked,
+								})
+							)
 					  )
 					: '';
 		}
@@ -406,9 +413,10 @@ const CSS_PREFIX = 'fair-audience-signup';
 			basePrice = parseFloat(selectedTicketType.dataset.ticketPrice || 0);
 		}
 
+		let instanceCount = 1;
 		if (isMultipleInstancesSelected(block)) {
 			const instanceMin = Math.max(1, getInstanceMinimum(block));
-			const instanceCount = getCheckedInstanceCount(block);
+			instanceCount = getCheckedInstanceCount(block);
 			if (instanceCount < instanceMin) {
 				// Not enough occurrences chosen yet — show the bare action label
 				// until the selection is valid, same treatment as the
@@ -433,18 +441,21 @@ const CSS_PREFIX = 'fair-audience-signup';
 				}
 				return;
 			}
-			basePrice = basePrice * instanceCount;
 		}
 
 		const checkedOptions = block.querySelectorAll(
 			'input[name="ticket_option_ids[]"]:checked'
 		);
-		let optionsTotal = 0;
+		const optionPrices = [];
 		checkedOptions.forEach(function (input) {
-			optionsTotal += parseFloat(input.dataset.optionPrice || 0);
+			optionPrices.push(parseFloat(input.dataset.optionPrice || 0));
 		});
 
-		const total = basePrice + optionsTotal;
+		const total = computeTicketTotal({
+			unitPrice: basePrice,
+			count: instanceCount,
+			optionPrices,
+		});
 		const signupBaseText =
 			block.dataset.signupBaseText || __('Sign Up', 'fair-audience');
 		const registerBaseText =
@@ -473,7 +484,7 @@ const CSS_PREFIX = 'fair-audience-signup';
 
 		let signupText, registerText;
 		if (total > 0) {
-			const formatted = total.toFixed(2);
+			const formatted = formatPrice(total);
 			signupText = signupBaseText + ' \u2014 \u20ac' + formatted;
 			registerText = registerBaseText + ' \u2014 \u20ac' + formatted;
 		} else {
@@ -1299,17 +1310,18 @@ const CSS_PREFIX = 'fair-audience-signup';
 
 		const baseText = __('Add activities', 'fair-audience');
 		const updateButton = function () {
-			let total = 0;
+			const optionPrices = [];
 			let anyChecked = false;
 			checkboxes.forEach(function (cb) {
 				if (cb.checked) {
 					anyChecked = true;
-					total += parseFloat(cb.dataset.optionPrice || 0);
+					optionPrices.push(parseFloat(cb.dataset.optionPrice || 0));
 				}
 			});
+			const total = computeTicketTotal({ unitPrice: 0, optionPrices });
 			button.disabled = !anyChecked;
 			button.textContent =
-				total > 0 ? baseText + ' — €' + total.toFixed(2) : baseText;
+				total > 0 ? baseText + ' — €' + formatPrice(total) : baseText;
 		};
 
 		checkboxes.forEach(function (cb) {

@@ -219,22 +219,9 @@ class GetTicketsController extends WP_REST_Controller {
 			}
 
 			// Resolve price from the active sale period (server-side; client amount is ignored).
-			if ( class_exists( \FairEvents\Models\TicketSalePeriod::class ) && class_exists( \FairEvents\Models\TicketPrice::class ) ) {
-				$sale_periods = \FairEvents\Models\TicketSalePeriod::get_all_by_event_date_id( $config_event_date_id );
-				$now          = current_time( 'mysql' );
-				foreach ( $sale_periods as $period ) {
-					if ( $period->sale_start <= $now && $period->sale_end >= $now ) {
-						$prices = \FairEvents\Models\TicketPrice::get_all_by_event_date_id( $config_event_date_id );
-						foreach ( $prices as $price ) {
-							if ( (int) $price->ticket_type_id === (int) $ticket_type_id
-								&& (int) $price->sale_period_id === (int) $period->id ) {
-								$amount = (float) $price->price * $quantity;
-								break 2;
-							}
-						}
-						break;
-					}
-				}
+			$unit_price = \FairEvents\Services\TicketPricing::resolve_unit_price( $ticket_type_id );
+			if ( null !== $unit_price ) {
+				$amount = $unit_price * $quantity;
 			}
 		}
 
@@ -461,24 +448,8 @@ class GetTicketsController extends WP_REST_Controller {
 		}
 
 		// Resolve the per-instance price from the active sale period (server-side; client amount is ignored).
-		$unit_price = 0.0;
-		if ( class_exists( \FairEvents\Models\TicketSalePeriod::class ) && class_exists( \FairEvents\Models\TicketPrice::class ) ) {
-			$sale_periods = \FairEvents\Models\TicketSalePeriod::get_all_by_event_date_id( $series_page_id );
-			$now          = current_time( 'mysql' );
-			foreach ( $sale_periods as $period ) {
-				if ( $period->sale_start <= $now && $period->sale_end >= $now ) {
-					$prices = \FairEvents\Models\TicketPrice::get_all_by_event_date_id( $series_page_id );
-					foreach ( $prices as $price ) {
-						if ( (int) $price->ticket_type_id === (int) $ticket_type->id
-							&& (int) $price->sale_period_id === (int) $period->id ) {
-							$unit_price = (float) $price->price;
-							break 2;
-						}
-					}
-					break;
-				}
-			}
-		}
+		$unit_price = \FairEvents\Services\TicketPricing::resolve_unit_price( $ticket_type->id );
+		$unit_price = null !== $unit_price ? $unit_price : 0.0;
 
 		$count        = count( $occurrences );
 		$total_amount = $unit_price * $count;
