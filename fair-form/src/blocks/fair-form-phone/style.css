@@ -1,11 +1,21 @@
+.fair-form-question-header {
+	display: flex;
+	align-items: flex-start;
+	gap: 4px;
+}
+
 .fair-form-question-phone .fair-form-question-label-input {
+	display: block;
 	border: none;
 	border-bottom: 1px dashed #8c8f94;
 	background: transparent;
 	font-weight: 600;
+	font-family: inherit;
 	padding: 2px 0;
 	font-size: inherit;
-	width: auto;
+	flex: 1;
+	min-width: 0;
+	resize: vertical;
 }
 
 .fair-form-question-phone .fair-form-question-label-input:focus {
