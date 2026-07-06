@@ -9,7 +9,7 @@
  *   - A descriptor with isVisible:false is omitted from the tab bar.
  */
 import '@testing-library/jest-dom';
-import { render, screen, waitFor } from '@testing-library/react';
+import { render, screen, waitFor, fireEvent } from '@testing-library/react';
 import { addFilter, removeFilter } from '@wordpress/hooks';
 import apiFetch from '@wordpress/api-fetch';
 import { formatSiteLocalDatetime } from 'fair-events-shared';
@@ -292,5 +292,60 @@ describe('context header (#986)', () => {
 		expect(
 			screen.getByRole('link', { name: 'open the master event' })
 		).toHaveAttribute('href', 'http://example.com/manage&event_date_id=1');
+	});
+});
+
+describe('delete confirmation dialog (#991)', () => {
+	it('shows the title and date, and no occurrence count, for a one-off event', async () => {
+		render(<ManageEventApp />);
+		await waitFor(() =>
+			expect(
+				screen.getByRole('tab', { name: 'Admin' })
+			).toBeInTheDocument()
+		);
+
+		fireEvent.click(screen.getByRole('button', { name: 'Delete Event' }));
+
+		expect(
+			screen.getByText(
+				`Delete Test Event on ${formatSiteLocalDatetime(
+					mockEventDate.start_datetime
+				)}? This cannot be undone.`
+			)
+		).toBeInTheDocument();
+	});
+
+	it('shows the occurrence count for a recurring master', async () => {
+		apiFetch.mockImplementation((opts) => {
+			if (opts.path && opts.path.includes('/event-dates/')) {
+				return Promise.resolve({
+					...mockEventDate,
+					occurrence_type: 'master',
+					generated_occurrences: Array.from(
+						{ length: 9 },
+						(_, i) => ({
+							id: i + 2,
+							start_datetime: '2026-07-08 18:00:00',
+						})
+					),
+				});
+			}
+			return Promise.resolve([]);
+		});
+
+		render(<ManageEventApp />);
+		await waitFor(() =>
+			expect(
+				screen.getByRole('tab', { name: 'Admin' })
+			).toBeInTheDocument()
+		);
+
+		fireEvent.click(screen.getByRole('button', { name: 'Delete Event' }));
+
+		expect(
+			screen.getByText(
+				'Delete Test Event and its 9 occurrences? This cannot be undone.'
+			)
+		).toBeInTheDocument();
 	});
 });
