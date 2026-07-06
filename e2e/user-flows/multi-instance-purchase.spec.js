@@ -10,14 +10,13 @@
  * what's sent to Mollie) is only 10.00, the per-instance price for a single
  * occurrence.
  *
- * Root cause (not fixed here — this spec documents the bug; the fix is a
- * separate change): EventSignupController::create_signup() dispatches
+ * Root cause: EventSignupController::create_signup() dispatches
  * 'multiple_instances' ticket types to create_multi_instance_signup(), which
- * correctly sums the per-instance price across every chosen occurrence. But
+ * correctly sums the per-instance price across every chosen occurrence.
  * EventSignupController::register_and_signup() — the endpoint the public
- * "I'm new" form submits to, used by every first-time buyer — has no such
- * dispatch. It always falls through to maybe_start_paid_signup(), which
- * resolves a single per-instance price and ignores event_date_ids entirely.
+ * "I'm new" form submits to, used by every first-time buyer — now mirrors
+ * that dispatch instead of falling through to maybe_start_paid_signup(),
+ * which resolved a single per-instance price and ignored event_date_ids.
  */
 
 import { test, expect } from '../support/fixtures.js';
@@ -84,9 +83,9 @@ test.describe('multiple_instances ticket type purchase (new buyer)', () => {
 		);
 		expect(tx.found).toBe(true);
 
-		// This is the bug: today the transaction is created for a single
-		// instance's price (10.00) instead of the sum across all 3 chosen
-		// occurrences (30.00) that the buyer was shown and agreed to pay.
+		// The transaction must be created for the sum across all 3 chosen
+		// occurrences (30.00), matching what the buyer was shown and agreed
+		// to pay — not a single occurrence's price (10.00).
 		expect(tx.amount).toBe(Number(expectedTotal));
 	});
 });
