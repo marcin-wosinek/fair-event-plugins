@@ -29,6 +29,7 @@ import {
 	__experimentalNumberControl as NumberControl,
 	__experimentalVStack as VStack,
 	__experimentalHStack as HStack,
+	__experimentalConfirmDialog as ConfirmDialog,
 } from '@wordpress/components';
 import { __, _n, sprintf } from '@wordpress/i18n';
 import { applyFilters } from '@wordpress/hooks';
@@ -37,6 +38,7 @@ import {
 	DurationOptions,
 	calculateDuration,
 	isLinkOnlyEvent,
+	formatSiteLocalDatetime,
 } from 'fair-events-shared';
 import EventFinance from './EventFinance.js';
 import EventTickets from './EventTickets.js';
@@ -110,6 +112,7 @@ export default function ManageEventApp() {
 	const ticketSaveRef = useRef(null);
 	const [togglingExdate, setTogglingExdate] = useState(null);
 	const [recurrenceImpact, setRecurrenceImpact] = useState(null);
+	const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
 
 	useEffect(() => {
 		if (!eventDateId) {
@@ -386,15 +389,7 @@ export default function ManageEventApp() {
 		}
 	};
 
-	const handleDelete = async () => {
-		if (
-			!window.confirm(
-				__('Are you sure you want to delete this event?', 'fair-events')
-			)
-		) {
-			return;
-		}
-
+	const confirmDelete = async () => {
 		try {
 			await apiFetch({
 				path: `/fair-events/v1/event-dates/${eventDateId}`,
@@ -405,8 +400,38 @@ export default function ManageEventApp() {
 			setError(
 				err.message || __('Failed to delete event.', 'fair-events')
 			);
+		} finally {
+			setDeleteDialogOpen(false);
 		}
 	};
+
+	const deleteConfirmMessage = useMemo(() => {
+		const eventTitle = title || __('Untitled Event', 'fair-events');
+
+		if (eventDate?.occurrence_type === 'master') {
+			const count = eventDate.generated_occurrences?.length || 0;
+			return sprintf(
+				/* translators: 1: event title, 2: number of occurrences */
+				_n(
+					'Delete %1$s and its %2$d occurrence? This cannot be undone.',
+					'Delete %1$s and its %2$d occurrences? This cannot be undone.',
+					count,
+					'fair-events'
+				),
+				eventTitle,
+				count
+			);
+		}
+
+		return sprintf(
+			/* translators: 1: event title, 2: event date */
+			__('Delete %1$s on %2$s? This cannot be undone.', 'fair-events'),
+			eventTitle,
+			eventDate?.start_datetime
+				? formatSiteLocalDatetime(eventDate.start_datetime)
+				: ''
+		);
+	}, [title, eventDate]);
 
 	const handleCreatePost = async () => {
 		setCreatingPost(true);
@@ -648,7 +673,9 @@ export default function ManageEventApp() {
 									<Button
 										variant="tertiary"
 										isDestructive
-										onClick={handleDelete}
+										onClick={() =>
+											setDeleteDialogOpen(true)
+										}
 									>
 										{__('Delete Event', 'fair-events')}
 									</Button>
@@ -1318,6 +1345,16 @@ export default function ManageEventApp() {
 					{__('Back to Calendar', 'fair-events')}
 				</Button>
 			</HStack>
+
+			<ConfirmDialog
+				isOpen={deleteDialogOpen}
+				onConfirm={confirmDelete}
+				onCancel={() => setDeleteDialogOpen(false)}
+				confirmButtonText={__('Delete event', 'fair-events')}
+				cancelButtonText={__('Cancel', 'fair-events')}
+			>
+				{deleteConfirmMessage}
+			</ConfirmDialog>
 		</div>
 	);
 }
