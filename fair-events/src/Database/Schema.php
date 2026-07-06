@@ -17,7 +17,7 @@ class Schema {
 	/**
 	 * Database version
 	 */
-	const DB_VERSION = '3.20.0';
+	const DB_VERSION = '3.21.0';
 
 	/**
 	 * Get the SQL for creating the fair_event_dates table
@@ -252,7 +252,6 @@ class Schema {
 			event_date_id BIGINT UNSIGNED NOT NULL,
 			name VARCHAR(255) NOT NULL,
 			capacity INT UNSIGNED DEFAULT NULL,
-			seats_per_ticket INT UNSIGNED NOT NULL DEFAULT 1,
 			invitation_only TINYINT(1) NOT NULL DEFAULT 0,
 			minimum_activities INT UNSIGNED NOT NULL DEFAULT 0,
 			disable_at DATETIME DEFAULT NULL,

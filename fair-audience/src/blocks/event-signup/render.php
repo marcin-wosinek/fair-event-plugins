@@ -436,7 +436,7 @@ if ( $pricing_event_date_id && class_exists( \FairEvents\Models\TicketType::clas
 		// why prices changed compared to what they saw earlier.
 		$tt_is_full = false;
 		if ( null !== $tt->capacity ) {
-			$tt_reserved = $event_participant_repository->count_seats_for_ticket_type( (int) $tt->id );
+			$tt_reserved = $event_participant_repository->count_signups_for_ticket_type( (int) $tt->id );
 			if ( $tt_reserved >= (int) $tt->capacity ) {
 				$tt_is_full = true;
 			}
@@ -446,7 +446,6 @@ if ( $pricing_event_date_id && class_exists( \FairEvents\Models\TicketType::clas
 			'id'                 => (int) $tt->id,
 			'name'               => $tt->name,
 			'price'              => $tt_price,
-			'seats_per_ticket'   => (int) $tt->seats_per_ticket,
 			'invitation_only'    => (bool) $tt->invitation_only,
 			'minimum_activities' => (int) $tt->minimum_activities,
 			'recurrence_scope'   => $tt->recurrence_scope,
@@ -503,7 +502,7 @@ if ( $pricing_event_date_id && class_exists( \FairEventsExperimental\Models\Tick
 
 		$is_full = false;
 		if ( null !== $opt->capacity ) {
-			$reserved = $event_participant_repository->count_seats_for_ticket_option( (int) $opt->id );
+			$reserved = $event_participant_repository->count_signups_for_ticket_option( (int) $opt->id );
 			if ( $reserved >= (int) $opt->capacity ) {
 				$is_full = true;
 			}
@@ -754,13 +753,6 @@ $render_ticket_types = static function () use ( $ticket_types_for_display, $has_
 			} else {
 				$tt_label .= ' — ' . __( 'free', 'fair-audience' );
 			}
-		}
-		if ( $tt['seats_per_ticket'] > 1 ) {
-			$tt_label .= ' ' . sprintf(
-				/* translators: %d: number of seats this ticket consumes */
-				_n( '(%d seat)', '(%d seats)', $tt['seats_per_ticket'], 'fair-audience' ),
-				$tt['seats_per_ticket']
-			);
 		}
 		if ( $tt['invitation_only'] ) {
 			$tt_label .= ' — ' . __( 'invitation', 'fair-audience' );

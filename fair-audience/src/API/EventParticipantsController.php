@@ -715,7 +715,6 @@ class EventParticipantsController extends WP_REST_Controller {
 			$new_ticket_type_id = ( null === $ticket_type_id || '' === $ticket_type_id )
 				? null
 				: (int) $ticket_type_id;
-			$seats_per_ticket   = max( 1, (int) $ep_row->seats );
 
 			if ( $new_ticket_type_id && class_exists( \FairEvents\Models\TicketType::class ) ) {
 				$ticket_type = \FairEvents\Models\TicketType::get_by_id( $new_ticket_type_id );
@@ -726,7 +725,6 @@ class EventParticipantsController extends WP_REST_Controller {
 						array( 'status' => 400 )
 					);
 				}
-				$seats_per_ticket = max( 1, (int) $ticket_type->seats_per_ticket );
 			}
 
 			// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
@@ -734,10 +732,9 @@ class EventParticipantsController extends WP_REST_Controller {
 				$wpdb->prefix . 'fair_audience_event_participants',
 				array(
 					'ticket_type_id' => $new_ticket_type_id,
-					'seats'          => $seats_per_ticket,
 				),
 				array( 'id' => (int) $ep_row->id ),
-				array( '%d', '%d' ),
+				array( '%d' ),
 				array( '%d' )
 			);
 		}

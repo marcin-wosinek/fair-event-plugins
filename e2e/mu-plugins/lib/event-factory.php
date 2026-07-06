@@ -156,7 +156,6 @@ if ( ! function_exists( 'fair_e2e_create_event' ) ) {
 			$name,
 			null, // capacity.
 			0, // sort_order.
-			1, // seats_per_ticket.
 			false, // invitation_only.
 			0, // minimum_activities.
 			null, // disable_at.

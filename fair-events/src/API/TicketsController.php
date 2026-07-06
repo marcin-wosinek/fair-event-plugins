@@ -339,7 +339,6 @@ class TicketsController extends WP_REST_Controller {
 			$capacity           = isset( $item['capacity'] ) && '' !== $item['capacity'] && null !== $item['capacity']
 				? absint( $item['capacity'] )
 				: null;
-			$seats_per_ticket   = isset( $item['seats_per_ticket'] ) ? max( 1, absint( $item['seats_per_ticket'] ) ) : 1;
 			$invitation_only    = ! empty( $item['invitation_only'] );
 			$minimum_activities = isset( $item['minimum_activities'] ) ? absint( $item['minimum_activities'] ) : 0;
 			$disable_at         = isset( $item['disable_at'] ) && '' !== $item['disable_at'] && null !== $item['disable_at']
@@ -350,7 +349,7 @@ class TicketsController extends WP_REST_Controller {
 				: 'single_instance';
 			$minimum_instances  = isset( $item['minimum_instances'] ) ? absint( $item['minimum_instances'] ) : 0;
 
-			$new_id = TicketType::create( $event_date_id, $name, $capacity, $index, $seats_per_ticket, $invitation_only, $minimum_activities, $disable_at, $recurrence_scope, false, $minimum_instances );
+			$new_id = TicketType::create( $event_date_id, $name, $capacity, $index, $invitation_only, $minimum_activities, $disable_at, $recurrence_scope, false, $minimum_instances );
 			if ( $new_id ) {
 				$type_ids_by_index[ $index ] = (int) $new_id;
 
@@ -499,7 +498,7 @@ class TicketsController extends WP_REST_Controller {
 		foreach ( $existing_ids as $eid ) {
 			if ( ! in_array( $eid, $incoming_ids, true ) ) {
 				$has_sales = $participant_repo
-					? $participant_repo->count_seats_for_ticket_type( $eid ) > 0
+					? $participant_repo->count_signups_for_ticket_type( $eid ) > 0
 					: false;
 				if ( $has_sales ) {
 					continue;
@@ -519,7 +518,6 @@ class TicketsController extends WP_REST_Controller {
 			$capacity           = isset( $item['capacity'] ) && '' !== $item['capacity'] && null !== $item['capacity']
 				? absint( $item['capacity'] )
 				: null;
-			$seats_per_ticket   = isset( $item['seats_per_ticket'] ) ? max( 1, absint( $item['seats_per_ticket'] ) ) : 1;
 			$invitation_only    = ! empty( $item['invitation_only'] );
 			$minimum_activities = isset( $item['minimum_activities'] ) ? absint( $item['minimum_activities'] ) : 0;
 			$disable_at         = isset( $item['disable_at'] ) && '' !== $item['disable_at'] && null !== $item['disable_at']
@@ -535,12 +533,11 @@ class TicketsController extends WP_REST_Controller {
 			if ( ! empty( $item['id'] ) && in_array( (int) $item['id'], $existing_ids, true ) ) {
 				$id_map[ $index ] = (int) $item['id'];
 				$has_sales        = $participant_repo
-					? $participant_repo->count_seats_for_ticket_type( (int) $item['id'] ) > 0
+					? $participant_repo->count_signups_for_ticket_type( (int) $item['id'] ) > 0
 					: false;
 				$update           = array(
 					'name'               => $name,
 					'capacity'           => $capacity,
-					'seats_per_ticket'   => $seats_per_ticket,
 					'invitation_only'    => $invitation_only,
 					'minimum_activities' => $minimum_activities,
 					'minimum_instances'  => $minimum_instances,
@@ -556,7 +553,7 @@ class TicketsController extends WP_REST_Controller {
 					\FairEventsExperimental\Models\TicketTypeGroupRestriction::sync_for_ticket_type( (int) $item['id'], $group_ids );
 				}
 			} else {
-				$new_id           = TicketType::create( $event_date_id, $name, $capacity, $sort_order, $seats_per_ticket, $invitation_only, $minimum_activities, $disable_at, $recurrence_scope, false, $minimum_instances );
+				$new_id           = TicketType::create( $event_date_id, $name, $capacity, $sort_order, $invitation_only, $minimum_activities, $disable_at, $recurrence_scope, false, $minimum_instances );
 				$id_map[ $index ] = (int) $new_id;
 				if ( $new_id && ! empty( $group_ids ) && class_exists( \FairEventsExperimental\Models\TicketTypeGroupRestriction::class ) ) {
 					\FairEventsExperimental\Models\TicketTypeGroupRestriction::sync_for_ticket_type( (int) $new_id, $group_ids );
@@ -699,7 +696,7 @@ class TicketsController extends WP_REST_Controller {
 				function ( $t ) use ( $restrictions, $participant_repo ) {
 					$data              = $t->to_array();
 					$data['group_ids'] = $restrictions[ $t->id ] ?? array();
-					$data['has_sales'] = $participant_repo ? $participant_repo->count_seats_for_ticket_type( $t->id ) > 0 : false;
+					$data['has_sales'] = $participant_repo ? $participant_repo->count_signups_for_ticket_type( $t->id ) > 0 : false;
 					return $data;
 				},
 				$ticket_types

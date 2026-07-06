@@ -850,9 +850,8 @@ class EventSignupController extends WP_REST_Controller {
 			$resolved   = \FairEventsExperimental\Services\EventSignupPricing::resolve_price_for_ticket_type( $ticket_type->id, $participant->id );
 			$unit_price = null !== $resolved ? (float) $resolved : 0.0;
 		}
-		$count            = count( $pending_occurrences );
-		$total_amount     = $unit_price * $count;
-		$seats_per_ticket = max( 1, (int) $ticket_type->seats_per_ticket );
+		$count        = count( $pending_occurrences );
+		$total_amount = $unit_price * $count;
 
 		if ( $total_amount <= 0 ) {
 			foreach ( $pending_occurrences as $occ ) {
@@ -893,8 +892,7 @@ class EventSignupController extends WP_REST_Controller {
 			$active_count       = $this->event_participant_repository->count_active_for_event_date( (int) $occ->id );
 			$existing_occ       = $this->event_participant_repository->get_by_event_date_and_participant( (int) $occ->id, $participant->id );
 			$already_holds_slot = $existing_occ && in_array( $existing_occ->label, array( 'signed_up', 'pending_payment' ), true );
-			$held_seats         = $already_holds_slot ? max( 1, (int) $existing_occ->seats ) : 0;
-			$projected          = $active_count - $held_seats + $seats_per_ticket;
+			$projected          = $active_count - ( $already_holds_slot ? 1 : 0 ) + 1;
 			if ( $projected > (int) $occ->capacity ) {
 				return new WP_Error(
 					'event_full',
@@ -915,7 +913,6 @@ class EventSignupController extends WP_REST_Controller {
 				$existing_occ->payment_expires_at = $expires_at;
 				$existing_occ->transaction_id     = null;
 				$existing_occ->ticket_type_id     = $ticket_type->id;
-				$existing_occ->seats              = $seats_per_ticket;
 				$existing_occ->save();
 				$ep = $existing_occ;
 			} else {
@@ -927,7 +924,6 @@ class EventSignupController extends WP_REST_Controller {
 						'label'              => 'pending_payment',
 						'payment_expires_at' => $expires_at,
 						'ticket_type_id'     => $ticket_type->id,
-						'seats'              => $seats_per_ticket,
 					)
 				);
 				$ep->save();
@@ -1420,7 +1416,7 @@ class EventSignupController extends WP_REST_Controller {
 			return null;
 		}
 
-		$reserved = $this->event_participant_repository->count_seats_for_ticket_type( (int) $ticket_type_id );
+		$reserved = $this->event_participant_repository->count_signups_for_ticket_type( (int) $ticket_type_id );
 		if ( $reserved >= (int) $ticket_type->capacity ) {
 			return new WP_Error(
 				'ticket_type_sold_out',
@@ -1499,7 +1495,7 @@ class EventSignupController extends WP_REST_Controller {
 	}
 
 	/**
-	 * Snapshot ticket_type_id + seats onto the EventParticipant row after a
+	 * Snapshot ticket_type_id onto the EventParticipant row after a
 	 * free-path signup. No-op when no ticket type was selected or the row
 	 * cannot be found.
 	 *
@@ -1527,13 +1523,12 @@ class EventSignupController extends WP_REST_Controller {
 			$wpdb->prefix . 'fair_audience_event_participants',
 			array(
 				'ticket_type_id' => (int) $ticket_type_id,
-				'seats'          => max( 1, (int) $ticket_type->seats_per_ticket ),
 			),
 			array(
 				'event_date_id'  => (int) $event_date_id,
 				'participant_id' => (int) $participant_id,
 			),
-			array( '%d', '%d' ),
+			array( '%d' ),
 			array( '%d', '%d' )
 		);
 	}
@@ -1654,7 +1649,7 @@ class EventSignupController extends WP_REST_Controller {
 			}
 			$opt = $available_by_id[ $id ];
 			if ( null !== $opt->capacity ) {
-				$reserved = $this->event_participant_repository->count_seats_for_ticket_option( (int) $opt->id );
+				$reserved = $this->event_participant_repository->count_signups_for_ticket_option( (int) $opt->id );
 				if ( $reserved >= (int) $opt->capacity ) {
 					continue;
 				}
@@ -1821,17 +1816,10 @@ class EventSignupController extends WP_REST_Controller {
 	 * @return \WP_REST_Response|\WP_Error|null WP_REST_Response/WP_Error on paid path, null on free path.
 	 */
 	private function maybe_start_paid_signup( $event_id, $event_date_id, $participant, $existing, $user_id, $ticket_type_id = null, $option_items = array(), $invitation_token = '', $chosen_amount = null ) {
-		$final_price      = null;
-		$seats_per_ticket = 1;
+		$final_price = null;
 		if ( $event_date_id && class_exists( \FairEventsExperimental\Services\EventSignupPricing::class ) ) {
 			if ( $ticket_type_id ) {
 				$final_price = \FairEventsExperimental\Services\EventSignupPricing::resolve_price_for_ticket_type( $ticket_type_id, $participant->id );
-				if ( class_exists( \FairEvents\Models\TicketType::class ) ) {
-					$ticket_type = \FairEvents\Models\TicketType::get_by_id( $ticket_type_id );
-					if ( $ticket_type ) {
-						$seats_per_ticket = max( 1, (int) $ticket_type->seats_per_ticket );
-					}
-				}
 			} elseif ( \FairEventsExperimental\Services\EventSignupPricing::resolve_sliding_scale( $event_date_id ) ) {
 				// Sliding scale replaces the fixed base-price path; group discounts
 				// (resolve_price()) do not stack on a buyer-chosen amount. Never
@@ -1902,8 +1890,7 @@ class EventSignupController extends WP_REST_Controller {
 		if ( $event_date_row && null !== $event_date_row->capacity ) {
 			$active_count       = $this->event_participant_repository->count_active_for_event_date( $event_date_id );
 			$already_holds_slot = $existing && in_array( $existing->label, array( 'signed_up', 'pending_payment' ), true );
-			$held_seats         = $already_holds_slot ? max( 1, (int) $existing->seats ) : 0;
-			$projected          = $active_count - $held_seats + $seats_per_ticket;
+			$projected          = $active_count - ( $already_holds_slot ? 1 : 0 ) + 1;
 			if ( $projected > (int) $event_date_row->capacity ) {
 				return new WP_Error(
 					'event_full',
@@ -1920,7 +1907,6 @@ class EventSignupController extends WP_REST_Controller {
 			$existing->payment_expires_at = $expires_at;
 			$existing->transaction_id     = null;
 			$existing->ticket_type_id     = $ticket_type_id ?: null;
-			$existing->seats              = $seats_per_ticket;
 			$existing->save();
 			$event_participant = $existing;
 		} else {
@@ -1932,7 +1918,6 @@ class EventSignupController extends WP_REST_Controller {
 					'label'              => 'pending_payment',
 					'payment_expires_at' => $expires_at,
 					'ticket_type_id'     => $ticket_type_id ?: null,
-					'seats'              => $seats_per_ticket,
 				)
 			);
 			$event_participant->save();
@@ -2097,14 +2082,12 @@ class EventSignupController extends WP_REST_Controller {
 			$ledger->record( (int) $existing->id, (int) $existing->transaction_id, 'charge' );
 		}
 
-		$net_paid         = $ledger->get_net_paid( (int) $existing->id );
-		$delta            = max( 0.0, $series_price - $net_paid );
-		$seats_per_ticket = max( 1, (int) $ticket_type->seats_per_ticket );
+		$net_paid = $ledger->get_net_paid( (int) $existing->id );
+		$delta    = max( 0.0, $series_price - $net_paid );
 
 		// Nothing left to pay (already covered, or a free series): convert in place now.
 		if ( $delta <= 0 ) {
 			$existing->ticket_type_id = (int) $ticket_type->id;
-			$existing->seats          = $seats_per_ticket;
 			$existing->save();
 
 			return rest_ensure_response(
@@ -2482,14 +2465,6 @@ class EventSignupController extends WP_REST_Controller {
 			? array_map( 'intval', $metadata['ticket_option_ids'] )
 			: array();
 
-		$retry_seats = 1;
-		if ( $retry_ticket_type_id && class_exists( \FairEvents\Models\TicketType::class ) ) {
-			$retry_ticket_type = \FairEvents\Models\TicketType::get_by_id( $retry_ticket_type_id );
-			if ( $retry_ticket_type ) {
-				$retry_seats = max( 1, (int) $retry_ticket_type->seats_per_ticket );
-			}
-		}
-
 		// Refresh / acquire the 15-minute hold for this retry attempt.
 		$expires_at = gmdate( 'Y-m-d H:i:s', time() + 15 * MINUTE_IN_SECONDS );
 
@@ -2498,7 +2473,6 @@ class EventSignupController extends WP_REST_Controller {
 			$event_participant->payment_expires_at = $expires_at;
 			$event_participant->transaction_id     = null;
 			$event_participant->ticket_type_id     = $retry_ticket_type_id;
-			$event_participant->seats              = $retry_seats;
 			$event_participant->save();
 		} else {
 			$event_participant = new \FairAudience\Models\EventParticipant(
@@ -2509,7 +2483,6 @@ class EventSignupController extends WP_REST_Controller {
 					'label'              => 'pending_payment',
 					'payment_expires_at' => $expires_at,
 					'ticket_type_id'     => $retry_ticket_type_id,
-					'seats'              => $retry_seats,
 				)
 			);
 			$event_participant->save();

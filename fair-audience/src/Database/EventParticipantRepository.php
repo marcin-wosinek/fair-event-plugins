@@ -320,7 +320,7 @@ class EventParticipantRepository {
 
 		$count = $wpdb->get_var(
 			$wpdb->prepare(
-				"SELECT COALESCE(SUM(seats), 0) FROM %i
+				"SELECT COUNT(*) FROM %i
 				 WHERE event_date_id = %d
 				 AND (
 				     label = 'signed_up'
@@ -336,16 +336,16 @@ class EventParticipantRepository {
 	}
 
 	/**
-	 * Count active seats for a specific ticket type.
+	 * Count active signups for a specific ticket type.
 	 *
-	 * Sums seats on rows with label = 'signed_up' plus unexpired
+	 * Counts rows with label = 'signed_up' plus unexpired
 	 * 'pending_payment' rows filtered to one ticket type. Used for
 	 * per-ticket-type capacity enforcement.
 	 *
 	 * @param int $ticket_type_id Ticket type ID.
-	 * @return int Number of seats held against the ticket type.
+	 * @return int Number of signups held against the ticket type.
 	 */
-	public function count_seats_for_ticket_type( $ticket_type_id ) {
+	public function count_signups_for_ticket_type( $ticket_type_id ) {
 		global $wpdb;
 
 		$table_name = $this->get_table_name();
@@ -353,7 +353,7 @@ class EventParticipantRepository {
 
 		$count = $wpdb->get_var(
 			$wpdb->prepare(
-				"SELECT COALESCE(SUM(seats), 0) FROM %i
+				"SELECT COUNT(*) FROM %i
 				 WHERE ticket_type_id = %d
 				 AND (
 				     label = 'signed_up'
@@ -369,17 +369,17 @@ class EventParticipantRepository {
 	}
 
 	/**
-	 * Count active seats reserved for a specific ticket option (activity).
+	 * Count active signups reserved for a specific ticket option (activity).
 	 *
-	 * Sums seats on event_participant rows that have an entry in the
+	 * Counts event_participant rows that have an entry in the
 	 * fair_audience_event_participant_options junction table for the given
 	 * option, restricted to rows with label = 'signed_up' or unexpired
 	 * 'pending_payment'. Used for per-activity capacity enforcement.
 	 *
 	 * @param int $ticket_option_id Ticket option ID.
-	 * @return int Number of seats held against the option.
+	 * @return int Number of signups held against the option.
 	 */
-	public function count_seats_for_ticket_option( $ticket_option_id ) {
+	public function count_signups_for_ticket_option( $ticket_option_id ) {
 		global $wpdb;
 
 		$participants_table = $this->get_table_name();
@@ -388,7 +388,7 @@ class EventParticipantRepository {
 
 		$count = $wpdb->get_var(
 			$wpdb->prepare(
-				"SELECT COALESCE(SUM(ep.seats), 0)
+				"SELECT COUNT(*)
 				 FROM %i ep
 				 INNER JOIN %i epo ON epo.event_participant_id = ep.id
 				 WHERE epo.ticket_option_id = %d

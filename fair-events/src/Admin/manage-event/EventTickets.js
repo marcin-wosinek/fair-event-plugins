@@ -50,7 +50,6 @@ export default function EventTickets({
 		unlimited_tickets_in_price_period: true,
 		show_ticket_type_capacity: false,
 		multiple_pricing_periods: false,
-		show_seats_per_ticket: false,
 		activity_collaborator_discount: false,
 		minimum_activities: 0,
 		show_ticket_type_minimum_activities: false,
@@ -350,7 +349,6 @@ export default function EventTickets({
 					t.capacity !== null && t.capacity !== undefined
 						? t.capacity
 						: null,
-				seats_per_ticket: t.seats_per_ticket || 1,
 				invitation_only: t.invitation_only || false,
 				minimum_activities: t.minimum_activities || 0,
 				disable_at: t.disable_at || null,
@@ -486,7 +484,6 @@ export default function EventTickets({
 			{
 				name: '',
 				capacity: null,
-				seats_per_ticket: 1,
 				invitation_only: false,
 				minimum_activities: 0,
 				disable_at: null,
@@ -1333,14 +1330,6 @@ export default function EventTickets({
 														)}
 													</th>
 												)}
-												{settings.show_seats_per_ticket && (
-													<th>
-														{__(
-															'Seats',
-															'fair-events'
-														)}
-													</th>
-												)}
 												{hasGroups && (
 													<th>
 														{__(
@@ -1522,36 +1511,6 @@ export default function EventTickets({
 																			: null
 																	)
 																}
-															/>
-														</td>
-													)}
-													{settings.show_seats_per_ticket && (
-														<td>
-															<TextControl
-																type="number"
-																min="1"
-																value={String(
-																	type.seats_per_ticket ||
-																		1
-																)}
-																onChange={(v) =>
-																	updateTicketType(
-																		tIndex,
-																		'seats_per_ticket',
-																		Math.max(
-																			1,
-																			parseInt(
-																				v,
-																				10
-																			) ||
-																				1
-																		)
-																	)
-																}
-																help={__(
-																	'How many capacity slots this ticket consumes (1 = single, 2 = pair/+1).',
-																	'fair-events'
-																)}
 															/>
 														</td>
 													)}
@@ -1962,9 +1921,6 @@ export default function EventTickets({
 														salePeriods.length +
 														1 +
 														(settings.show_ticket_type_capacity
-															? 1
-															: 0) +
-														(settings.show_seats_per_ticket
 															? 1
 															: 0) +
 														(hasGroups ? 2 : 0) +
@@ -2496,20 +2452,6 @@ export default function EventTickets({
 									setSettings((prev) => ({
 										...prev,
 										multiple_pricing_periods: value,
-									}))
-								}
-							/>
-							<CheckboxControl
-								label={__('Seats per ticket', 'fair-events')}
-								help={__(
-									'Show a Seats input on each ticket type to let one ticket consume more than one capacity slot (e.g. couples or +1 tickets). When off, every ticket counts as 1 seat.',
-									'fair-events'
-								)}
-								checked={settings.show_seats_per_ticket}
-								onChange={(value) =>
-									setSettings((prev) => ({
-										...prev,
-										show_seats_per_ticket: value,
 									}))
 								}
 							/>

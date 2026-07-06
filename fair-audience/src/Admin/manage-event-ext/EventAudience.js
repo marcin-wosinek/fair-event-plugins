@@ -48,7 +48,7 @@ const isStalePendingPayment = (p) => {
 };
 
 // Whether a participant currently occupies a seat for capacity purposes.
-// Mirrors EventParticipantRepository::count_seats_for_ticket_option in PHP.
+// Mirrors EventParticipantRepository::count_signups_for_ticket_option in PHP.
 const occupiesSeat = (p) => {
 	if (!p) return false;
 	if (p.label === 'signed_up') return true;

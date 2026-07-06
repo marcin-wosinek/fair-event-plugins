@@ -265,6 +265,11 @@ class Installer {
 			self::migrate_to_3_20_0();
 		}
 
+		// Run migration if upgrading from pre-3.21.0 (drop seats_per_ticket from ticket_types).
+		if ( version_compare( $current_version, '3.21.0', '<' ) ) {
+			self::migrate_to_3_21_0();
+		}
+
 		// Update database version
 		Schema::update_db_version( Schema::DB_VERSION );
 	}
@@ -415,6 +420,10 @@ class Installer {
 
 			if ( version_compare( $current_version, '3.20.0', '<' ) ) {
 				self::migrate_to_3_20_0();
+			}
+
+			if ( version_compare( $current_version, '3.21.0', '<' ) ) {
+				self::migrate_to_3_21_0();
 			}
 
 			// Install/update tables
@@ -1705,6 +1714,36 @@ class Installer {
 				$table_name
 			)
 		);
+	}
+
+	/**
+	 * Migrate to version 3.21.0 - Drop seats_per_ticket column from ticket_types table.
+	 *
+	 * The seats-per-ticket feature has been removed; every ticket now counts as one seat.
+	 *
+	 * @return void
+	 */
+	private static function migrate_to_3_21_0() {
+		global $wpdb;
+
+		$table_name = $wpdb->prefix . 'fair_events_ticket_types';
+
+		$column_exists = $wpdb->get_results(
+			$wpdb->prepare(
+				'SHOW COLUMNS FROM %i LIKE %s',
+				$table_name,
+				$wpdb->esc_like( 'seats_per_ticket' )
+			)
+		);
+
+		if ( ! empty( $column_exists ) ) {
+			$wpdb->query(
+				$wpdb->prepare(
+					'ALTER TABLE %i DROP COLUMN seats_per_ticket',
+					$table_name
+				)
+			);
+		}
 	}
 
 	/**
