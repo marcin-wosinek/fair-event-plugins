@@ -194,7 +194,7 @@ class Event {
 				'postType'        => $screen->post_type,
 				'eventDateId'     => $event_date_id,
 				'manageEventUrl'  => $manage_event_url,
-				'enabledFeatures' => \FairEvents\Core\Features::public_map(),
+				'enabledFeatures' => apply_filters( 'fair_events_enabled_features_map', \FairEvents\Core\Features::public_map() ),
 			)
 		);
 
