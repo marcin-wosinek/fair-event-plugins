@@ -98,6 +98,44 @@ class EventParticipantTransactionRepository {
 	}
 
 	/**
+	 * Batched status lookup for a list of fair-payments-connector transaction
+	 * IDs, keyed by transaction_id. Used to enrich rows that already carry a
+	 * transaction_id (e.g. event_participant.transaction_id) without a
+	 * per-row query. Returns an empty array when fair-payments-connector's
+	 * table isn't present (plugin inactive).
+	 *
+	 * @param array $transaction_ids Transaction IDs to look up.
+	 * @return array Associative array: transaction_id => status.
+	 */
+	public function get_statuses_by_transaction_ids( $transaction_ids ) {
+		global $wpdb;
+
+		if ( empty( $transaction_ids ) ) {
+			return array();
+		}
+
+		$transactions_table = $wpdb->prefix . 'fair_payment_transactions';
+		$placeholders       = implode( ',', array_fill( 0, count( $transaction_ids ), '%d' ) );
+
+		// phpcs:disable WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.PreparedSQLPlaceholders.UnfinishedPrepare -- $placeholders is safely constructed.
+		$results = $wpdb->get_results(
+			$wpdb->prepare(
+				"SELECT id, status FROM %i WHERE id IN ($placeholders)",
+				array_merge( array( $transactions_table ), array_map( 'intval', $transaction_ids ) )
+			),
+			ARRAY_A
+		);
+		// phpcs:enable WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.PreparedSQLPlaceholders.UnfinishedPrepare
+
+		$statuses = array();
+		foreach ( $results as $row ) {
+			$statuses[ (int) $row['id'] ] = $row['status'];
+		}
+
+		return $statuses;
+	}
+
+	/**
 	 * Full transaction history for a registration, newest first. Joins
 	 * fair-payments-connector for status/amount/currency.
 	 *
