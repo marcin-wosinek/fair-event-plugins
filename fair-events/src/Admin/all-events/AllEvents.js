@@ -3,23 +3,9 @@ import { useState, useEffect, useCallback, useMemo } from '@wordpress/element';
 import apiFetch from '@wordpress/api-fetch';
 import { Card, CardBody } from '@wordpress/components';
 import { DataViews } from '@wordpress/dataviews';
-import { dateI18n, getSettings } from '@wordpress/date';
+import { formatSiteLocalDatetime } from 'fair-events-shared';
 
 const { manageEventUrl } = window.fairEventsAllEventsData || {};
-
-/**
- * Format a naive "Y-m-d H:i:s" site-local datetime for display without
- * re-applying the site timezone offset (it's already wall-clock local, the
- * same value Manage Event shows). Treating it as UTC and formatting with
- * gmdateI18n (timezone=true) skips that second conversion.
- *
- * @param {string} datetime Naive datetime string, e.g. "2026-09-01 10:00:00".
- * @return {string} Formatted date/time in the site's format.
- */
-export function formatSiteLocalDatetime(datetime) {
-	const { formats } = getSettings();
-	return dateI18n(formats.datetime, `${datetime.replace(' ', 'T')}Z`, true);
-}
 
 const LINK_TYPE_OPTIONS = [
 	{ value: 'post', label: __('Post', 'fair-events') },

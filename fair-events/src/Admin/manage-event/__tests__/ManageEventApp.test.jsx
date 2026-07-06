@@ -12,6 +12,7 @@ import '@testing-library/jest-dom';
 import { render, screen, waitFor } from '@testing-library/react';
 import { addFilter, removeFilter } from '@wordpress/hooks';
 import apiFetch from '@wordpress/api-fetch';
+import { formatSiteLocalDatetime } from 'fair-events-shared';
 import ManageEventApp from '../ManageEventApp.js';
 
 jest.mock('@wordpress/api-fetch');
@@ -22,7 +23,7 @@ const mockEventDate = {
 	start_datetime: '2026-07-01 18:00:00',
 	end_datetime: '2026-07-01 20:00:00',
 	all_day: false,
-	occurrence_type: 'standalone',
+	occurrence_type: 'single',
 	link_type: 'none',
 	external_url: '',
 	venue_id: null,
@@ -33,6 +34,8 @@ const mockEventDate = {
 	display_url: null,
 	event_id: null,
 	master: null,
+	generated_occurrences: [],
+	exdates: [],
 };
 
 beforeEach(() => {
@@ -205,4 +208,89 @@ it('omits a descriptor with isVisible: false', async () => {
 	).not.toBeInTheDocument();
 
 	removeFilter('fairEvents.manageEvent.tabs', NAMESPACE);
+});
+
+describe('context header (#986)', () => {
+	it('shows the date and no series/occurrence badge for a one-off event', async () => {
+		render(<ManageEventApp />);
+		await waitFor(() =>
+			expect(
+				screen.getByRole('tab', { name: 'Admin' })
+			).toBeInTheDocument()
+		);
+
+		expect(
+			screen.getByText(
+				formatSiteLocalDatetime(mockEventDate.start_datetime)
+			)
+		).toBeInTheDocument();
+		expect(screen.queryByText(/Recurring series/)).not.toBeInTheDocument();
+		expect(screen.queryByText(/Occurrence of/)).not.toBeInTheDocument();
+	});
+
+	it('shows a series badge with the occurrence count for a master', async () => {
+		apiFetch.mockImplementation((opts) => {
+			if (opts.path && opts.path.includes('/event-dates/')) {
+				return Promise.resolve({
+					...mockEventDate,
+					occurrence_type: 'master',
+					rrule: 'FREQ=WEEKLY',
+					generated_occurrences: [
+						{ id: 2, start_datetime: '2026-07-08 18:00:00' },
+						{ id: 3, start_datetime: '2026-07-15 18:00:00' },
+					],
+				});
+			}
+			return Promise.resolve([]);
+		});
+
+		render(<ManageEventApp />);
+		await waitFor(() =>
+			expect(
+				screen.getByRole('tab', { name: 'Admin' })
+			).toBeInTheDocument()
+		);
+
+		expect(
+			screen.getByText('Recurring series — 3 dates')
+		).toBeInTheDocument();
+	});
+
+	it('links a generated occurrence to its master and removes the bottom notice', async () => {
+		apiFetch.mockImplementation((opts) => {
+			if (opts.path && opts.path.includes('/event-dates/')) {
+				return Promise.resolve({
+					...mockEventDate,
+					occurrence_type: 'generated',
+					master: {
+						id: 1,
+						title: 'Master Event',
+						start_datetime: '2026-07-01 18:00:00',
+					},
+				});
+			}
+			return Promise.resolve([]);
+		});
+
+		render(<ManageEventApp />);
+		await waitFor(() =>
+			expect(
+				screen.getByRole('tab', { name: 'Admin' })
+			).toBeInTheDocument()
+		);
+
+		expect(screen.getByText(/Occurrence of/)).toBeInTheDocument();
+		expect(
+			screen.getByRole('link', { name: 'view series' })
+		).toHaveAttribute('href', 'http://example.com/manage&event_date_id=1');
+		expect(
+			screen.queryByText('This is a recurring occurrence of:')
+		).not.toBeInTheDocument();
+		expect(
+			screen.getByText(/Tickets are managed on the series/)
+		).toBeInTheDocument();
+		expect(
+			screen.getByRole('link', { name: 'open the master event' })
+		).toHaveAttribute('href', 'http://example.com/manage&event_date_id=1');
+	});
 });

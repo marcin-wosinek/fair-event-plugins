@@ -17,6 +17,7 @@
 	"license": "GPL-2.0-or-later",
 	"dependencies": {
 		"@wordpress/components": "^36.0.0",
+		"@wordpress/date": "^5.2.0",
 		"@wordpress/scripts": "^32.4.0",
 		"date-fns": "^4.0.0"
 	}
