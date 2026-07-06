@@ -119,9 +119,14 @@ Each prints a single `MARKER:{json}` line (`E2E_SEED`, `E2E_STATE`,
   - `paid-with-options` — `paid` plus `TicketOption` rows (override
     `{"options":["dinner","tshirt"]}`).
   - `capacity-1` — a paid ticket type with capacity 1 (sold-out/waitlist).
+  - `multiple-instances` — a 3-occurrence weekly series with a
+    `multiple_instances` ticket type priced per instance (default `10.00`;
+    override `{"price":N}`), `minimum_instances` default `2` (override
+    `{"minimumInstances":N}`).
 
   Emits the event permalink + ids: `flavour`, `eventId`, `eventDateId`,
-  `salePeriodId`, `ticketTypeId`, `optionIds`, `price`.
+  `salePeriodId`, `ticketTypeId`, `optionIds`, `occurrenceIds`,
+  `minimumInstances`, `price`.
 - **`cleanup-event.php <eventId> <eventDateId>`** — deletes a seeded event and
   everything off it (signed-up participants + their option rows, the
   event-participant rows, ticket types/prices/options/sale periods/dates, and

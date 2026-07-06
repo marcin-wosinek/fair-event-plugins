@@ -34,18 +34,38 @@ $options_table       = $wpdb->prefix . 'fair_events_ticket_options';
 $option_prices_table = $wpdb->prefix . 'fair_events_ticket_option_prices';
 $sale_periods_table  = $wpdb->prefix . 'fair_events_ticket_sale_periods';
 $dates_table         = $wpdb->prefix . 'fair_event_dates';
+$payments_table      = $wpdb->prefix . 'fair_payment_transactions';
 
 $deleted = array();
 
-// Event-participant rows for this event date, and the participants they
-// reference (the buyers — seeded events create no participants themselves).
+// All occurrences belonging to this event (a 'multiple_instances' purchase
+// creates one event-participant row per chosen occurrence, not just on the
+// master $event_date_id).
 // phpcs:disable WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- one-off teardown script, no cache to honour.
+$series_event_date_ids = $wpdb->get_col(
+	$wpdb->prepare( 'SELECT id FROM %i WHERE event_id = %d', $dates_table, $event_id )
+);
+if ( ! in_array( $event_date_id, array_map( 'intval', $series_event_date_ids ), true ) ) {
+	$series_event_date_ids[] = $event_date_id;
+}
+$series_placeholders = implode( ', ', array_fill( 0, count( $series_event_date_ids ), '%d' ) );
+
+// Event-participant rows for every occurrence, and the participants they
+// reference (the buyers — seeded events create no participants themselves).
+// phpcs:disable WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- $series_placeholders is a safe list of %d.
 $event_participant_ids = $wpdb->get_col(
-	$wpdb->prepare( 'SELECT id FROM %i WHERE event_date_id = %d', $event_parts_table, $event_date_id )
+	$wpdb->prepare(
+		"SELECT id FROM %i WHERE event_date_id IN ({$series_placeholders})",
+		array_merge( array( $event_parts_table ), $series_event_date_ids )
+	)
 );
 $participant_ids       = $wpdb->get_col(
-	$wpdb->prepare( 'SELECT participant_id FROM %i WHERE event_date_id = %d', $event_parts_table, $event_date_id )
+	$wpdb->prepare(
+		"SELECT participant_id FROM %i WHERE event_date_id IN ({$series_placeholders})",
+		array_merge( array( $event_parts_table ), $series_event_date_ids )
+	)
 );
+// phpcs:enable WordPress.DB.PreparedSQL.InterpolatedNotPrepared
 
 if ( $event_participant_ids ) {
 	$placeholders = implode( ', ', array_fill( 0, count( $event_participant_ids ), '%d' ) );
@@ -59,9 +79,14 @@ if ( $event_participant_ids ) {
 	// phpcs:enable WordPress.DB.PreparedSQL.InterpolatedNotPrepared
 }
 
+// phpcs:disable WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- $series_placeholders is a safe list of %d.
 $deleted['event_participants'] = (int) $wpdb->query(
-	$wpdb->prepare( 'DELETE FROM %i WHERE event_date_id = %d', $event_parts_table, $event_date_id )
+	$wpdb->prepare(
+		"DELETE FROM %i WHERE event_date_id IN ({$series_placeholders})",
+		array_merge( array( $event_parts_table ), $series_event_date_ids )
+	)
 );
+// phpcs:enable WordPress.DB.PreparedSQL.InterpolatedNotPrepared
 
 if ( $participant_ids ) {
 	$participant_ids = array_values( array_unique( array_map( 'intval', $participant_ids ) ) );
@@ -122,6 +147,15 @@ $deleted['sale_periods'] = (int) $wpdb->query(
 $deleted['get_tickets_signups'] = (int) $wpdb->query(
 	$wpdb->prepare( 'DELETE FROM %i WHERE event_date_id = %d', $wpdb->prefix . 'fair_events_signups', $event_date_id )
 );
+
+// phpcs:disable WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- $series_placeholders is a safe list of %d.
+$deleted['transactions'] = (int) $wpdb->query(
+	$wpdb->prepare(
+		"DELETE FROM %i WHERE event_date_id IN ({$series_placeholders})",
+		array_merge( array( $payments_table ), $series_event_date_ids )
+	)
+);
+// phpcs:enable WordPress.DB.PreparedSQL.InterpolatedNotPrepared
 
 $deleted['event_dates'] = (int) $wpdb->query(
 	$wpdb->prepare( 'DELETE FROM %i WHERE event_id = %d', $dates_table, $event_id )
