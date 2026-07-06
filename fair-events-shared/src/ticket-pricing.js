@@ -15,7 +15,11 @@
  * @param {number[]} [params.optionPrices] Selected add-on option prices to sum in.
  * @return {number} The computed total.
  */
-export function computeTicketTotal({ unitPrice, count = 1, optionPrices = [] }) {
+export function computeTicketTotal({
+	unitPrice,
+	count = 1,
+	optionPrices = [],
+}) {
 	const optionsTotal = optionPrices.reduce((sum, price) => sum + price, 0);
 	return unitPrice * count + optionsTotal;
 }
