@@ -83,19 +83,21 @@ registerBlockType('fair-audience/fair-form-short-text', {
 
 				<div {...blockProps}>
 					<p>
-						<input
-							type="text"
-							value={questionText}
-							onChange={(e) =>
-								onQuestionTextChange(e.target.value)
-							}
-							placeholder={__(
-								'Enter your question...',
-								'fair-audience'
-							)}
-							className="fair-form-question-label-input"
-						/>
-						{required && <span className="required"> *</span>}
+						<span className="fair-form-question-header">
+							<textarea
+								rows={1}
+								value={questionText}
+								onChange={(e) =>
+									onQuestionTextChange(e.target.value)
+								}
+								placeholder={__(
+									'Enter your question...',
+									'fair-audience'
+								)}
+								className="fair-form-question-label-input"
+							/>
+							{required && <span className="required"> *</span>}
+						</span>
 						<br />
 						<input
 							type="text"
