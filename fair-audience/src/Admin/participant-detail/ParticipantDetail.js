@@ -36,6 +36,12 @@ const LABEL_DISPLAY = {
 	interested: __('Interested', 'fair-audience'),
 };
 
+const TRANSACTION_STATUS_DISPLAY = {
+	success: { color: '#00a32a', label: __('Paid', 'fair-audience') },
+	pending: { color: '#dba617', label: __('Pending', 'fair-audience') },
+	failed: { color: '#d63638', label: __('Failed', 'fair-audience') },
+};
+
 const EMAIL_PROFILE_DISPLAY = {
 	minimal: __('Minimal', 'fair-audience'),
 	marketing: __('Marketing', 'fair-audience'),
@@ -318,9 +324,42 @@ export default function ParticipantDetail() {
 											</td>
 											<td>
 												{transactionUrl ? (
-													<a href={transactionUrl}>
-														{`#${ev.transaction_id}`}
-													</a>
+													<>
+														<a
+															href={
+																transactionUrl
+															}
+														>
+															{`#${ev.transaction_id}`}
+														</a>
+														{ev.transaction_status && (
+															<span
+																title={
+																	TRANSACTION_STATUS_DISPLAY[
+																		ev
+																			.transaction_status
+																	]?.label
+																}
+																style={{
+																	marginLeft:
+																		'6px',
+																	color: TRANSACTION_STATUS_DISPLAY[
+																		ev
+																			.transaction_status
+																	]?.color,
+																	fontWeight:
+																		'bold',
+																}}
+															>
+																{
+																	TRANSACTION_STATUS_DISPLAY[
+																		ev
+																			.transaction_status
+																	]?.label
+																}
+															</span>
+														)}
+													</>
 												) : (
 													'—'
 												)}

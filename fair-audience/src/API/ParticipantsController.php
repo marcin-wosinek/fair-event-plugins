@@ -9,6 +9,7 @@ namespace FairAudience\API;
 
 use FairAudience\Database\ParticipantRepository;
 use FairAudience\Database\EventParticipantRepository;
+use FairAudience\Database\EventParticipantTransactionRepository;
 use FairAudience\Database\GroupParticipantRepository;
 use FairAudience\Database\EmailConfirmationTokenRepository;
 use FairAudience\Models\Participant;
@@ -63,12 +64,20 @@ class ParticipantsController extends WP_REST_Controller {
 	private $group_participant_repository;
 
 	/**
+	 * Event participant transaction ledger repository instance.
+	 *
+	 * @var EventParticipantTransactionRepository
+	 */
+	private $event_participant_transaction_repository;
+
+	/**
 	 * Constructor.
 	 */
 	public function __construct() {
-		$this->repository                   = new ParticipantRepository();
-		$this->event_participant_repository = new EventParticipantRepository();
-		$this->group_participant_repository = new GroupParticipantRepository();
+		$this->repository                               = new ParticipantRepository();
+		$this->event_participant_repository             = new EventParticipantRepository();
+		$this->group_participant_repository             = new GroupParticipantRepository();
+		$this->event_participant_transaction_repository = new EventParticipantTransactionRepository();
 	}
 
 	/**
@@ -347,10 +356,17 @@ class ParticipantsController extends WP_REST_Controller {
 		}
 
 		$has_event_dates = class_exists( '\FairEvents\Models\EventDates' );
+		$has_payments    = class_exists( '\FairPaymentsConnector\Models\Transaction' );
 
 		// Build events list.
 		$events        = array();
 		$relationships = $this->event_participant_repository->get_by_participant( $id );
+
+		$transaction_ids = array_filter( array_map( fn( $rel ) => (int) $rel->transaction_id, $relationships ) );
+		$statuses        = $has_payments && $transaction_ids
+			? $this->event_participant_transaction_repository->get_statuses_by_transaction_ids( array_unique( $transaction_ids ) )
+			: array();
+
 		foreach ( $relationships as $rel ) {
 			$event_title    = $rel->event_id ? get_the_title( (int) $rel->event_id ) : '';
 			$start_datetime = '';
@@ -361,15 +377,20 @@ class ParticipantsController extends WP_REST_Controller {
 				}
 			}
 
+			$transaction_id = $rel->transaction_id ? (int) $rel->transaction_id : null;
+
 			$events[] = array(
-				'id'             => (int) $rel->id,
-				'event_id'       => (int) $rel->event_id,
-				'event_date_id'  => (int) $rel->event_date_id,
-				'event_title'    => $event_title,
-				'start_datetime' => $start_datetime,
-				'label'          => $rel->label,
-				'created_at'     => $rel->created_at,
-				'transaction_id' => $rel->transaction_id ? (int) $rel->transaction_id : null,
+				'id'                 => (int) $rel->id,
+				'event_id'           => (int) $rel->event_id,
+				'event_date_id'      => (int) $rel->event_date_id,
+				'event_title'        => $event_title,
+				'start_datetime'     => $start_datetime,
+				'label'              => $rel->label,
+				'created_at'         => $rel->created_at,
+				'transaction_id'     => $transaction_id,
+				'transaction_status' => $transaction_id
+					? $this->normalize_transaction_status( $statuses[ $transaction_id ] ?? null )
+					: null,
 			);
 		}
 
@@ -410,6 +431,31 @@ class ParticipantsController extends WP_REST_Controller {
 				'submissions' => $submissions,
 			)
 		);
+	}
+
+	/**
+	 * Normalize a fair-payments-connector transaction status into the three
+	 * display states used in the Events table. Unrecognized statuses map to
+	 * 'pending' rather than 'failed' so a new connector status doesn't get
+	 * mislabeled as a failure.
+	 *
+	 * @param string|null $status Raw transaction status.
+	 * @return string|null 'success', 'pending', 'failed', or null when there's no status to report.
+	 */
+	private function normalize_transaction_status( $status ) {
+		if ( null === $status ) {
+			return null;
+		}
+
+		if ( in_array( $status, array( 'paid', 'success' ), true ) ) {
+			return 'success';
+		}
+
+		if ( 'failed' === $status ) {
+			return 'failed';
+		}
+
+		return 'pending';
 	}
 
 	/**
