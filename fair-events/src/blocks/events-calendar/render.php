@@ -398,6 +398,7 @@ if ( $events_query->have_posts() ) {
 						? add_query_arg( 'event_date', (int) $event_dates->id, get_permalink( $event_id ) )
 						: get_permalink( $event_id ),
 					'link_type'       => 'post',
+					'start_datetime'  => $event_dates->start_datetime,
 				);
 
 				$loop_date = DateHelper::next_date( $loop_date );
@@ -422,14 +423,15 @@ foreach ( $standalone_events as $event_dates ) {
 		}
 
 		$events_by_date[ $loop_date ][] = array(
-			'id'            => 'standalone_' . $event_dates->id,
-			'is_first_day'  => $loop_date === $start_date,
-			'is_last_day'   => $loop_date === $end_date,
-			'is_ical'       => false,
-			'is_standalone' => true,
-			'link_type'     => $event_dates->link_type,
-			'title'         => $event_dates->get_display_title(),
-			'permalink'     => $event_dates->get_display_url(),
+			'id'             => 'standalone_' . $event_dates->id,
+			'is_first_day'   => $loop_date === $start_date,
+			'is_last_day'    => $loop_date === $end_date,
+			'is_ical'        => false,
+			'is_standalone'  => true,
+			'link_type'      => $event_dates->link_type,
+			'title'          => $event_dates->get_display_title(),
+			'permalink'      => $event_dates->get_display_url(),
+			'start_datetime' => $event_dates->start_datetime,
 		);
 
 		$loop_date = DateHelper::next_date( $loop_date );
@@ -449,14 +451,15 @@ foreach ( $all_ical_events as $ical_event ) {
 		}
 
 		$events_by_date[ $loop_date ][] = array(
-			'id'           => 'ical_' . md5( $ical_event['uid'] ),
-			'is_first_day' => $loop_date === $start_date,
-			'is_last_day'  => $loop_date === $end_date,
-			'is_ical'      => true,
-			'title'        => $ical_event['summary'],
-			'permalink'    => $ical_event['url'],
-			'description'  => $ical_event['description'],
-			'color'        => $ical_event['source_color'],
+			'id'             => 'ical_' . md5( $ical_event['uid'] ),
+			'is_first_day'   => $loop_date === $start_date,
+			'is_last_day'    => $loop_date === $end_date,
+			'is_ical'        => true,
+			'title'          => $ical_event['summary'],
+			'permalink'      => $ical_event['url'],
+			'description'    => $ical_event['description'],
+			'color'          => $ical_event['source_color'],
+			'start_datetime' => $ical_event['start'],
 		);
 
 		$loop_date = DateHelper::next_date( $loop_date );
@@ -464,6 +467,17 @@ foreach ( $all_ical_events as $ical_event ) {
 }
 
 wp_reset_postdata();
+
+// Sort events within each day by start time.
+foreach ( $events_by_date as &$day_event_list ) {
+	usort(
+		$day_event_list,
+		static function ( $a, $b ) {
+			return strcmp( $a['start_datetime'] ?? '', $b['start_datetime'] ?? '' );
+		}
+	);
+}
+unset( $day_event_list );
 
 // Calculate previous/next month URLs
 $prev_month_timestamp = strtotime( '-1 month', $first_day_of_month_ts );
