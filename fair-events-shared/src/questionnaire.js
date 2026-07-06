@@ -444,6 +444,36 @@ export function handleFilePreview(input) {
 }
 
 /**
+ * Grow a textarea's height to fit its content, removing the need for manual
+ * resizing.
+ *
+ * @param {HTMLTextAreaElement} textarea The textarea to resize.
+ */
+export function autosizeTextarea(textarea) {
+	if (!textarea) {
+		return;
+	}
+	textarea.style.height = 'auto';
+	textarea.style.height = textarea.scrollHeight + 'px';
+}
+
+/**
+ * Wire up auto-expanding behavior for long-text question textareas: they grow
+ * with their content instead of relying on the browser's manual resize handle.
+ *
+ * @param {HTMLElement} form The form (or container) element.
+ */
+function setupAutosizeTextareas(form) {
+	const textareas = form.querySelectorAll(
+		'[data-question-type="long_text"] textarea'
+	);
+	textareas.forEach((textarea) => {
+		autosizeTextarea(textarea);
+		textarea.addEventListener('input', () => autosizeTextarea(textarea));
+	});
+}
+
+/**
  * Wire up question behavior on a form: file previews and conditional logic.
  *
  * @param {HTMLElement} form The form (or container) element.
@@ -461,4 +491,6 @@ export function setupQuestionnaire(form) {
 	evaluateConditionals(form);
 	form.addEventListener('input', () => evaluateConditionals(form));
 	form.addEventListener('change', () => evaluateConditionals(form));
+
+	setupAutosizeTextareas(form);
 }

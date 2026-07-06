@@ -6,6 +6,7 @@
 
 .fair-form-question-long-text .fair-form-question-label-input {
 	display: block;
+	box-sizing: border-box;
 	border: none;
 	border-bottom: 1px dashed #8c8f94;
 	background: transparent;
@@ -24,6 +25,7 @@
 }
 
 .fair-form-question-long-text textarea:disabled {
+	box-sizing: border-box;
 	width: 100%;
 	padding: 8px 12px;
 	border: 1px solid #8c8f94;
