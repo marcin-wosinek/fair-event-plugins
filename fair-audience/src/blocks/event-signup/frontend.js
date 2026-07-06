@@ -64,6 +64,18 @@ const CSS_PREFIX = 'fair-audience-signup';
 					submitRetryPayment(retryContainer, this);
 				});
 			}
+			wireCancelPendingPayment(block, retryContainer);
+			return;
+		}
+
+		// Return-from-Mollie resume UI: a payment is still open. Let "Cancel
+		// and start over" actually clear the pending_payment hold instead of
+		// just hiding it behind stripped query params (issue #554).
+		const resumeContainer = block.querySelector(
+			'.fair-audience-signup-resume'
+		);
+		if (resumeContainer) {
+			wireCancelPendingPayment(block, resumeContainer);
 			return;
 		}
 
@@ -1877,5 +1889,54 @@ const CSS_PREFIX = 'fair-audience-signup';
 				showNotification(errorMessage, 'error');
 				restoreButton();
 			});
+	}
+
+	/**
+	 * Wire the "Cancel and start over" link so it clears the pending_payment
+	 * hold row server-side before navigating. Without this, render.php's
+	 * DB-fallback resurrects the same checkout on the next load because the
+	 * link previously only stripped URL query params, leaving the DB row
+	 * behind (issue #554).
+	 * @param {HTMLElement} block     The signup block element
+	 * @param {HTMLElement} container The resume/retry callback container
+	 */
+	function wireCancelPendingPayment(block, container) {
+		const cancelLink = container.querySelector(
+			'.fair-audience-signup-resume-cancel a, .fair-audience-signup-retry-cancel a'
+		);
+		if (!cancelLink) {
+			return;
+		}
+
+		cancelLink.addEventListener('click', function (event) {
+			event.preventDefault();
+
+			const eventId = parseInt(block.dataset.eventId, 10);
+			const eventDateId = block.dataset.eventDateId
+				? parseInt(block.dataset.eventDateId, 10)
+				: null;
+			const token = block.dataset.participantToken || '';
+			const destination = cancelLink.href;
+
+			const requestData = { event_id: eventId };
+			if (eventDateId) {
+				requestData.event_date_id = eventDateId;
+			}
+			if (token) {
+				requestData.participant_token = token;
+			}
+
+			apiFetch({
+				path: '/fair-audience/v1/event-signup',
+				method: 'DELETE',
+				data: requestData,
+			})
+				.catch(function (error) {
+					console.error('Cancel pending payment error:', error);
+				})
+				.finally(function () {
+					window.location = destination;
+				});
+		});
 	}
 })();

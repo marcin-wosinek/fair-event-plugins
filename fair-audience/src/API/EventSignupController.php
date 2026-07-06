@@ -3071,7 +3071,7 @@ class EventSignupController extends WP_REST_Controller {
 			);
 		}
 
-		if ( ! $existing || 'signed_up' !== $existing->label ) {
+		if ( ! $existing || ! in_array( $existing->label, array( 'signed_up', 'pending_payment' ), true ) ) {
 			return new WP_Error(
 				'not_signed_up',
 				__( 'You are not signed up for this event.', 'fair-audience' ),
@@ -3079,7 +3079,8 @@ class EventSignupController extends WP_REST_Controller {
 			);
 		}
 
-		// Remove signup.
+		// Remove signup (also clears a pending_payment hold row so the
+		// DB-fallback in render.php doesn't resurrect a stale checkout — issue #554).
 		if ( $event_date_id ) {
 			$this->event_participant_repository->remove_participant_from_event_date( $event_date_id, $participant->id );
 		} else {
