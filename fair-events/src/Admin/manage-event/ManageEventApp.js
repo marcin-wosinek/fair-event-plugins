@@ -44,6 +44,7 @@ import EventPhotos from './EventPhotos.js';
 import RecurrenceCalendar from './RecurrenceCalendar.js';
 import RecurrenceImpactSummary from './RecurrenceImpactSummary.js';
 import EventSignups from './EventSignups.js';
+import EventContextHeader from './EventContextHeader.js';
 
 export default function ManageEventApp() {
 	const eventDateId = window.fairEventsManageEventData?.eventDateId;
@@ -992,27 +993,6 @@ export default function ManageEventApp() {
 
 				{renderLinksTab()}
 			</div>
-
-			{eventDate.occurrence_type === 'generated' && eventDate.master && (
-				<Card style={{ marginTop: '16px' }}>
-					<CardBody>
-						<Notice status="info" isDismissible={false}>
-							{__(
-								'This is a recurring occurrence of:',
-								'fair-events'
-							)}{' '}
-							<a
-								href={`${manageEventUrl}&event_date_id=${eventDate.master.id}`}
-							>
-								<strong>
-									{eventDate.master.title ||
-										eventDate.master.start_datetime}
-								</strong>
-							</a>
-						</Notice>
-					</CardBody>
-				</Card>
-			)}
 		</>
 	);
 
@@ -1245,7 +1225,8 @@ export default function ManageEventApp() {
 .fair-events-manage-event .components-tab-panel__tabs { flex-wrap: wrap; row-gap: 4px; }
 /* The 1.5px height of the active-tab indicator anti-aliases to a thin
    darker top edge at 1x DPI. Round to 2px so the bar renders crisp. */
-.fair-events-manage-event .components-tab-panel__tabs-item.is-active::after { height: 2px; outline: none; }`}
+.fair-events-manage-event .components-tab-panel__tabs-item.is-active::after { height: 2px; outline: none; }
+.fair-events-manage-event .fair-events-context-badge { margin-left: 8px; padding: 2px 8px; border-radius: 12px; background: #f0f0f1; font-size: 12px; }`}
 			</style>
 			<h1>
 				{__('Manage Event', 'fair-events')}
@@ -1271,6 +1252,11 @@ export default function ManageEventApp() {
 					</>
 				)}
 			</h1>
+
+			<EventContextHeader
+				eventDate={eventDate}
+				manageEventUrl={manageEventUrl}
+			/>
 
 			{error && (
 				<Notice
