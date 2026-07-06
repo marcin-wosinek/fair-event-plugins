@@ -355,6 +355,17 @@ class EventSignupController extends WP_REST_Controller {
 							'type'     => 'number',
 							'required' => false,
 						),
+						// Chosen occurrence IDs for 'multiple_instances' ticket types.
+						// Capped so a crafted request can't force an unbounded number
+						// of line items / DB rows per submission.
+						'event_date_ids'        => array(
+							'type'              => 'array',
+							'items'             => array( 'type' => 'integer' ),
+							'required'          => false,
+							'validate_callback' => function ( $value ) {
+								return ! is_array( $value ) || count( $value ) <= 50;
+							},
+						),
 						'name'                  => array(
 							'type'              => 'string',
 							'required'          => true,
@@ -2891,6 +2902,21 @@ class EventSignupController extends WP_REST_Controller {
 				if ( $token ) {
 					$this->email_service->send_confirmation_email( $participant, $token->token );
 				}
+			}
+		}
+
+		// 'multiple_instances' ticket types pick several specific occurrences
+		// instead of resolving a single price — dispatch to the same
+		// per-occurrence signup path create_signup() uses (see lines 590-595
+		// above), now that we have a participant to attach the signup to.
+		if ( $ticket_type_id && class_exists( \FairEvents\Models\TicketType::class ) ) {
+			$tt_for_multi = \FairEvents\Models\TicketType::get_by_id( $ticket_type_id );
+			if ( $tt_for_multi && $tt_for_multi->is_multiple_instances() ) {
+				$multi_response = $this->create_multi_instance_signup( $request, $event, $event_id, $participant, $tt_for_multi, $invitation_token );
+				if ( $is_new_participant && ! is_wp_error( $multi_response ) ) {
+					AudienceSession::set( (int) $participant->id );
+				}
+				return $multi_response;
 			}
 		}
 
