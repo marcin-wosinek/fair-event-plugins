@@ -371,6 +371,7 @@ if ( $events_query->have_posts() ) {
 
 		// Get ALL occurrences for this event (supports recurring events).
 		$all_occurrences = EventDates::get_all_by_event_id( $event_id );
+		$has_multiple    = count( $all_occurrences ) > 1;
 
 		foreach ( $all_occurrences as $event_dates ) {
 			$start_date = DateHelper::local_date( $event_dates->start_datetime );
@@ -387,13 +388,15 @@ if ( $events_query->have_posts() ) {
 
 				$events_by_date[ $loop_date ][] = array(
 					'id'              => $event_id,
-					'event_date_id'   => (int) $event_dates->id,
+					'event_date_id'   => $has_multiple ? (int) $event_dates->id : 0,
 					'occurrence_type' => $event_dates->occurrence_type,
 					'is_first_day'    => $loop_date === $start_date,
 					'is_last_day'     => $loop_date === $end_date,
 					'is_ical'         => false,
 					'title'           => get_the_title( $event_id ),
-					'permalink'       => add_query_arg( 'event_date', (int) $event_dates->id, get_permalink( $event_id ) ),
+					'permalink'       => $has_multiple
+						? add_query_arg( 'event_date', (int) $event_dates->id, get_permalink( $event_id ) )
+						: get_permalink( $event_id ),
 					'link_type'       => 'post',
 				);
 
