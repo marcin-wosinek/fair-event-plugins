@@ -21,7 +21,20 @@ export default defineConfig({
 	forbidOnly: !!process.env.CI,
 	retries: process.env.CI ? 2 : 0,
 	workers: 1,
-	reporter: process.env.CI ? [['github'], ['html']] : 'html',
+	reporter: process.env.CI
+		? [
+				['github'],
+				['html'],
+				[
+					'@estruyf/github-actions-reporter',
+					{
+						useDetails: true,
+						showError: true,
+						showAnnotations: false,
+					},
+				],
+		  ]
+		: 'html',
 
 	timeout: 60 * 1000,
 	expect: { timeout: 10 * 1000 },
