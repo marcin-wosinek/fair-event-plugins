@@ -11,6 +11,7 @@
 import { Button, __experimentalVStack as VStack } from '@wordpress/components';
 import { __ } from '@wordpress/i18n';
 import { addFilter } from '@wordpress/hooks';
+import { isLinkOnlyEvent } from 'fair-events-shared';
 import EventStatistics from '../event-statistics/EventStatistics.js';
 
 const {
@@ -22,7 +23,7 @@ const {
 addFilter(
 	'fairEvents.manageEvent.tabs',
 	'fair-events-experimental/statistics-tab',
-	(tabs) => {
+	(tabs, { eventDate } = {}) => {
 		if (!statisticsUrl) {
 			return tabs;
 		}
@@ -34,6 +35,7 @@ addFilter(
 				title: __('Statistics', 'fair-events-experimental'),
 				order: 60,
 				isVisible: true,
+				disabled: isLinkOnlyEvent(eventDate),
 				render: ({ eventDateId }) => (
 					<EventStatistics eventDateId={eventDateId} />
 				),

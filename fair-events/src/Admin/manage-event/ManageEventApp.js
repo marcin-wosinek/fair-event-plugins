@@ -33,7 +33,11 @@ import {
 import { __ } from '@wordpress/i18n';
 import { applyFilters } from '@wordpress/hooks';
 import apiFetch from '@wordpress/api-fetch';
-import { DurationOptions, calculateDuration } from 'fair-events-shared';
+import {
+	DurationOptions,
+	calculateDuration,
+	isLinkOnlyEvent,
+} from 'fair-events-shared';
 import EventFinance from './EventFinance.js';
 import EventTickets from './EventTickets.js';
 import EventPhotos from './EventPhotos.js';
@@ -575,7 +579,7 @@ export default function ManageEventApp() {
 			title: __('Tickets', 'fair-events'),
 			order: 20,
 			isVisible: ticketingEnabled,
-			disabled: isGeneratedOccurrence,
+			disabled: isGeneratedOccurrence || isLinkOnlyEvent(eventDate),
 			render: () => (
 				<EventTickets
 					eventDateId={eventDateId}
@@ -591,6 +595,7 @@ export default function ManageEventApp() {
 			title: __('Signups', 'fair-events'),
 			order: 25,
 			isVisible: !!(ticketingEnabled && !audienceUrl),
+			disabled: isLinkOnlyEvent(eventDate),
 			render: () => <EventSignups eventDateId={eventDateId} />,
 		},
 		{
@@ -605,6 +610,7 @@ export default function ManageEventApp() {
 			title: __('Finance', 'fair-events'),
 			order: 70,
 			isVisible: !!paymentEntriesUrl,
+			disabled: isLinkOnlyEvent(eventDate),
 			render: () => (
 				<EventFinance
 					eventDateId={eventDateId}
@@ -670,7 +676,7 @@ export default function ManageEventApp() {
 	}));
 
 	const initialTab = useMemo(() => {
-		if (tabDescriptors.some((t) => t.name === urlTab)) {
+		if (tabDescriptors.some((t) => t.name === urlTab && !t.disabled)) {
 			return urlTab;
 		}
 		return 'event-details';

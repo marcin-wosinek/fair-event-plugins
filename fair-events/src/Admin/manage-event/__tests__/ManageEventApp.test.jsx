@@ -118,6 +118,71 @@ it('renders extra admin actions registered via addFilter', async () => {
 	removeFilter('fairEvents.manageEvent.adminActions', NAMESPACE);
 });
 
+it('disables Tickets and Finance tabs for external-URL events', async () => {
+	window.history.replaceState({}, '', '?tab=tickets');
+	window.fairEventsManageEventData = {
+		eventDateId: '1',
+		calendarUrl: 'http://example.com/calendar',
+		manageEventUrl: 'http://example.com/manage',
+		enabledPostTypes: [],
+		enabledFeatures: { ticketing: true },
+		paymentEntriesUrl: 'http://example.com/entries',
+	};
+	apiFetch.mockImplementation((opts) => {
+		if (opts.path && opts.path.includes('/event-dates/')) {
+			return Promise.resolve({ ...mockEventDate, link_type: 'external' });
+		}
+		return Promise.resolve([]);
+	});
+
+	render(<ManageEventApp />);
+	// Tickets tab is disabled, so the initial tab falls back to Event Details.
+	await waitFor(() =>
+		expect(
+			screen.getByRole('tab', { name: 'Event Details' })
+		).toBeInTheDocument()
+	);
+	expect(screen.getByRole('tab', { name: 'Tickets' })).toHaveAttribute(
+		'aria-disabled',
+		'true'
+	);
+	expect(screen.getByRole('tab', { name: 'Finance' })).toHaveAttribute(
+		'aria-disabled',
+		'true'
+	);
+});
+
+it('keeps Tickets and Finance tabs enabled for post-linked events', async () => {
+	window.history.replaceState({}, '', '?tab=admin');
+	window.fairEventsManageEventData = {
+		eventDateId: '1',
+		calendarUrl: 'http://example.com/calendar',
+		manageEventUrl: 'http://example.com/manage',
+		enabledPostTypes: [],
+		enabledFeatures: { ticketing: true },
+		paymentEntriesUrl: 'http://example.com/entries',
+	};
+	apiFetch.mockImplementation((opts) => {
+		if (opts.path && opts.path.includes('/event-dates/')) {
+			return Promise.resolve({ ...mockEventDate, link_type: 'post' });
+		}
+		return Promise.resolve([]);
+	});
+
+	render(<ManageEventApp />);
+	await waitFor(() =>
+		expect(screen.getByRole('tab', { name: 'Admin' })).toBeInTheDocument()
+	);
+	expect(screen.getByRole('tab', { name: 'Tickets' })).not.toHaveAttribute(
+		'aria-disabled',
+		'true'
+	);
+	expect(screen.getByRole('tab', { name: 'Finance' })).not.toHaveAttribute(
+		'aria-disabled',
+		'true'
+	);
+});
+
 it('omits a descriptor with isVisible: false', async () => {
 	const NAMESPACE = 'test/hidden-tab-919';
 	addFilter('fairEvents.manageEvent.tabs', NAMESPACE, (descriptors) => [
