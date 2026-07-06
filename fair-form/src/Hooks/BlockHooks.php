@@ -42,6 +42,7 @@ class BlockHooks {
 		register_block_type( FAIR_FORM_DIR . 'build/blocks/fair-form-radio' );
 		register_block_type( FAIR_FORM_DIR . 'build/blocks/fair-form-option' );
 		register_block_type( FAIR_FORM_DIR . 'build/blocks/fair-form-file-upload' );
+		register_block_type( FAIR_FORM_DIR . 'build/blocks/fair-form-consent' );
 		register_block_type( FAIR_FORM_DIR . 'build/blocks/fair-form-conditional' );
 		register_block_type( FAIR_FORM_DIR . 'build/blocks/fair-form-mailing-signup' );
 
@@ -59,6 +60,7 @@ class BlockHooks {
 		wp_set_script_translations( 'fair-form-fair-form-radio-editor-script', 'fair-audience', $translations_path );
 		wp_set_script_translations( 'fair-form-fair-form-option-editor-script', 'fair-audience', $translations_path );
 		wp_set_script_translations( 'fair-form-fair-form-file-upload-editor-script', 'fair-audience', $translations_path );
+		wp_set_script_translations( 'fair-form-fair-form-consent-editor-script', 'fair-audience', $translations_path );
 		wp_set_script_translations( 'fair-form-fair-form-conditional-editor-script', 'fair-audience', $translations_path );
 		wp_set_script_translations( 'fair-form-fair-form-mailing-signup-editor-script', 'fair-audience', $translations_path );
 	}

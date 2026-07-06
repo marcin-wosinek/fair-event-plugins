@@ -57,6 +57,16 @@ function AnswerDisplay({ answer }) {
 		}
 	}
 
+	if (question_type === 'checkbox') {
+		return (
+			<span>
+				{answer_value === '1'
+					? __('Yes', 'fair-form')
+					: __('No', 'fair-form')}
+			</span>
+		);
+	}
+
 	return <span>{answer_value || '—'}</span>;
 }
 

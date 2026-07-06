@@ -1,7 +1,12 @@
 /**
  * @jest-environment jsdom
  */
-import { evaluateConditionals } from '../questionnaire.js';
+import {
+	evaluateConditionals,
+	getQuestionValue,
+	collectQuestionAnswers,
+	validateQuestions,
+} from '../questionnaire.js';
 
 const VISIBLE = 'fair-form-conditional-visible';
 
@@ -209,5 +214,71 @@ describe('evaluateConditionals — question source (regression)', () => {
 		);
 		const section = form.querySelector('[data-fair-form-conditional]');
 		expect(section.classList.contains(VISIBLE)).toBe(false);
+	});
+});
+
+function consentQuestion({ checked = false, required = true } = {}) {
+	return (
+		`<div data-fair-form-question data-question-key="tos" data-question-text="I accept" data-question-type="checkbox" data-required="${
+			required ? '1' : '0'
+		}">` +
+		`<input type="checkbox" name="fair_form_q_tos" value="1"${
+			checked ? ' checked' : ''
+		} /></div>`
+	);
+}
+
+describe('checkbox question type', () => {
+	describe('getQuestionValue', () => {
+		it('returns "1" when the checkbox is checked', () => {
+			const form = buildForm(consentQuestion({ checked: true }));
+			const questionEl = form.querySelector('[data-fair-form-question]');
+			expect(getQuestionValue(questionEl)).toBe('1');
+		});
+
+		it('returns "0" when the checkbox is unchecked', () => {
+			const form = buildForm(consentQuestion({ checked: false }));
+			const questionEl = form.querySelector('[data-fair-form-question]');
+			expect(getQuestionValue(questionEl)).toBe('0');
+		});
+	});
+
+	describe('collectQuestionAnswers', () => {
+		it('stores "1" for a checked box', () => {
+			const form = buildForm(consentQuestion({ checked: true }));
+			const answers = collectQuestionAnswers(form);
+			expect(answers).toHaveLength(1);
+			expect(answers[0].answer_value).toBe('1');
+		});
+
+		it('stores "0" for an unchecked box, not the input value attribute', () => {
+			const form = buildForm(consentQuestion({ checked: false }));
+			const answers = collectQuestionAnswers(form);
+			expect(answers).toHaveLength(1);
+			expect(answers[0].answer_value).toBe('0');
+		});
+	});
+
+	describe('validateQuestions', () => {
+		it('blocks submission when a required consent box is unchecked', () => {
+			const form = buildForm(
+				consentQuestion({ checked: false, required: true })
+			);
+			expect(validateQuestions(form)).toMatch(/I accept/);
+		});
+
+		it('passes when a required consent box is checked', () => {
+			const form = buildForm(
+				consentQuestion({ checked: true, required: true })
+			);
+			expect(validateQuestions(form)).toBeNull();
+		});
+
+		it('does not require an unchecked box when required is false', () => {
+			const form = buildForm(
+				consentQuestion({ checked: false, required: false })
+			);
+			expect(validateQuestions(form)).toBeNull();
+		});
 	});
 });

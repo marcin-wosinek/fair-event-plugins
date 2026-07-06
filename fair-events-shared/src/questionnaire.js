@@ -28,6 +28,11 @@ export function getQuestionValue(questionEl) {
 		return JSON.stringify(Array.from(checked).map((cb) => cb.value));
 	}
 
+	if (questionType === 'checkbox') {
+		const checkbox = questionEl.querySelector('input[type="checkbox"]');
+		return checkbox && checkbox.checked ? '1' : '0';
+	}
+
 	const input = questionEl.querySelector(
 		'input:checked, select, input, textarea'
 	);
@@ -198,6 +203,9 @@ export function collectQuestionAnswers(form) {
 			);
 			const values = Array.from(checked).map((cb) => cb.value);
 			answerValue = JSON.stringify(values);
+		} else if (questionType === 'checkbox') {
+			const checkbox = el.querySelector('input[type="checkbox"]');
+			answerValue = checkbox && checkbox.checked ? '1' : '0';
 		} else {
 			// For select, radio, text, textarea - get value from first
 			// input/select/textarea.
@@ -252,6 +260,8 @@ export function validateQuestions(form) {
 			hasValue =
 				el.querySelectorAll('input[type="checkbox"]:checked').length >
 				0;
+		} else if (questionType === 'checkbox') {
+			hasValue = !!el.querySelector('input[type="checkbox"]:checked');
 		} else if (el.querySelector('input[type="radio"]')) {
 			hasValue = !!el.querySelector('input[type="radio"]:checked');
 		} else {
