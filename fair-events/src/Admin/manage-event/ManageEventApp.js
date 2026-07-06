@@ -30,7 +30,7 @@ import {
 	__experimentalVStack as VStack,
 	__experimentalHStack as HStack,
 } from '@wordpress/components';
-import { __ } from '@wordpress/i18n';
+import { __, _n, sprintf } from '@wordpress/i18n';
 import { applyFilters } from '@wordpress/hooks';
 import apiFetch from '@wordpress/api-fetch';
 import {
@@ -1006,18 +1006,16 @@ export default function ManageEventApp() {
 					{linkedPosts.length > 0 && (
 						<>
 							<Notice status="info" isDismissible={false}>
-								{linkedPosts.length === 1
-									? __(
-											'This event is linked to 1 post.',
-											'fair-events'
-									  )
-									: `${__(
-											'This event is linked to',
-											'fair-events'
-									  )} ${linkedPosts.length} ${__(
-											'posts.',
-											'fair-events'
-									  )}`}
+								{sprintf(
+									/* translators: %d: number of linked posts */
+									_n(
+										'This event is linked to %d post.',
+										'This event is linked to %d posts.',
+										linkedPosts.length,
+										'fair-events'
+									),
+									linkedPosts.length
+								)}
 							</Notice>
 							{linkedPosts.map((lp) => (
 								<HStack key={lp.id} spacing={3} wrap>

@@ -652,7 +652,11 @@ export default function EventTickets({
 							min="0"
 							label={
 								period.name ||
-								__('Period', 'fair-events') + ' ' + (pIdx + 1)
+								sprintf(
+									/* translators: %d: sale period number */
+									__('Period %d', 'fair-events'),
+									pIdx + 1
+								)
 							}
 							value={val}
 							onChange={(v) => {
