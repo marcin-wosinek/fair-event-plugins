@@ -106,15 +106,19 @@ export default function ManageEventApp() {
 	const [linkingPost, setLinkingPost] = useState(false);
 	const [linkPostId, setLinkPostId] = useState('');
 	const [searchResults, setSearchResults] = useState([]);
-	const [activeTab, setActiveTab] = useState(
-		() =>
-			new URLSearchParams(window.location.search).get('tab') ||
-			'event-details'
-	);
-	const ticketSaveRef = useRef(null);
 	const [togglingExdate, setTogglingExdate] = useState(null);
 	const [recurrenceImpact, setRecurrenceImpact] = useState(null);
 	const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+
+	// Dirty-state tracking (#987): snapshot the saved form/ticket state so we
+	// can warn before losing edits and mark which tab holds them.
+	const [detailsSnapshot, setDetailsSnapshot] = useState(null);
+	const detailsJustLoadedRef = useRef(false);
+	const [ticketsDirty, setTicketsDirty] = useState(false);
+	const handleTicketsDirtyChange = useCallback(
+		(isDirty) => setTicketsDirty(isDirty),
+		[]
+	);
 
 	useEffect(() => {
 		if (!eventDateId) {
@@ -187,6 +191,7 @@ export default function ManageEventApp() {
 	};
 
 	const populateForm = (data) => {
+		detailsJustLoadedRef.current = true;
 		setTitle(data.title || '');
 		setAllDay(data.all_day || false);
 		setLinkType(data.link_type || 'none');
@@ -214,6 +219,55 @@ export default function ManageEventApp() {
 			setRecurrenceEnabled(false);
 		}
 	};
+
+	// Plain-object snapshot of every Event Details field, used to detect
+	// unsaved edits (#987). Keep in sync with the fields populateForm() sets.
+	const buildDetailsSnapshot = () =>
+		JSON.stringify({
+			title,
+			allDay,
+			startDate,
+			startTime,
+			endDate,
+			endTime,
+			venueId,
+			address,
+			linkType,
+			externalUrl,
+			categories: [...categories].sort(),
+			recurrenceEnabled,
+			recurrenceFrequency,
+			recurrenceEndType,
+			recurrenceCount,
+			recurrenceUntil,
+		});
+
+	// Runs after every render; only commits a new snapshot right after
+	// populateForm() flagged one (initial load or a fresh save/link/unlink),
+	// once all its setState calls have been applied.
+	useEffect(() => {
+		if (detailsJustLoadedRef.current) {
+			setDetailsSnapshot(buildDetailsSnapshot());
+			detailsJustLoadedRef.current = false;
+		}
+	});
+
+	const detailsDirty =
+		detailsSnapshot !== null && detailsSnapshot !== buildDetailsSnapshot();
+
+	// Warn before losing unsaved edits on either tab that can be dirty.
+	useEffect(() => {
+		if (!detailsDirty && !ticketsDirty) {
+			return;
+		}
+		const handleBeforeUnload = (event) => {
+			event.preventDefault();
+			event.returnValue = '';
+		};
+		window.addEventListener('beforeunload', handleBeforeUnload);
+		return () =>
+			window.removeEventListener('beforeunload', handleBeforeUnload);
+	}, [detailsDirty, ticketsDirty]);
 
 	// Duration options
 	const timedDurationOptions = useMemo(
@@ -397,6 +451,7 @@ export default function ManageEventApp() {
 					: null
 			);
 			setSuccess(__('Event updated successfully.', 'fair-events'));
+			setDetailsSnapshot(buildDetailsSnapshot());
 		} catch (err) {
 			setError(
 				err.message || __('Failed to update event.', 'fair-events')
@@ -592,7 +647,6 @@ export default function ManageEventApp() {
 	}, []);
 
 	const handleTabSelect = useCallback((tabName) => {
-		setActiveTab(tabName);
 		const url = new URL(window.location.href);
 		if (tabName === 'event-details') {
 			url.searchParams.delete('tab');
@@ -631,10 +685,10 @@ export default function ManageEventApp() {
 			render: () => (
 				<EventTickets
 					eventDateId={eventDateId}
-					onSaveRef={ticketSaveRef}
 					startDatetime={eventDate.start_datetime}
 					endDatetime={eventDate.end_datetime}
 					isRecurring={recurrenceEnabled}
+					onDirtyChange={handleTicketsDirtyChange}
 				/>
 			),
 		},
@@ -718,10 +772,16 @@ export default function ManageEventApp() {
 		.filter((t) => t.isVisible)
 		.sort((a, b) => a.order - b.order);
 
+	// Tabs whose section currently holds unsaved edits get a " •" marker.
+	const dirtyTabNames = {
+		'event-details': detailsDirty,
+		tickets: ticketsDirty,
+	};
+
 	// Shape TabPanel expects: { name, title, disabled? }.
 	const tabs = tabDescriptors.map(({ name, title: tabTitle, disabled }) => ({
 		name,
-		title: tabTitle,
+		title: dirtyTabNames[name] ? `${tabTitle} •` : tabTitle,
 		...(disabled ? { disabled } : {}),
 	}));
 
@@ -1066,6 +1126,26 @@ export default function ManageEventApp() {
 
 				{renderLinksTab()}
 			</div>
+
+			<HStack
+				spacing={2}
+				style={{ marginTop: '16px' }}
+				justify="flex-start"
+			>
+				<Button
+					variant="primary"
+					onClick={handleSave}
+					isBusy={saving}
+					disabled={saving || !title.trim()}
+				>
+					{__('Save event details', 'fair-events')}
+				</Button>
+				{!title.trim() && (
+					<span style={{ color: '#d63638' }}>
+						{__('Title is required', 'fair-events')}
+					</span>
+				)}
+			</HStack>
 		</>
 	);
 
@@ -1367,22 +1447,6 @@ export default function ManageEventApp() {
 			</TabPanel>
 
 			<HStack spacing={2} style={{ marginTop: '16px' }}>
-				<Button
-					variant="primary"
-					onClick={
-						activeTab === 'tickets'
-							? () => ticketSaveRef.current?.()
-							: handleSave
-					}
-					isBusy={saving}
-					disabled={
-						activeTab === 'event-details'
-							? saving || !title.trim()
-							: saving
-					}
-				>
-					{__('Save Changes', 'fair-events')}
-				</Button>
 				<Button variant="secondary" href={calendarUrl}>
 					{__('Back to Calendar', 'fair-events')}
 				</Button>

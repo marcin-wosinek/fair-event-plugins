@@ -37,6 +37,7 @@ export default function EventTickets({
 	startDatetime,
 	endDatetime: endDatetimeProp,
 	isRecurring,
+	onDirtyChange,
 }) {
 	const [capacity, setCapacity] = useState('');
 	const [endDatetime, setEndDatetime] = useState(
@@ -68,6 +69,12 @@ export default function EventTickets({
 	const [participants, setParticipants] = useState([]);
 	const fileInputRef = useRef(null);
 
+	// Dirty-state tracking (#987): snapshot the save payload right after it's
+	// loaded/saved so we can detect unsaved edits by re-serializing and
+	// comparing.
+	const [snapshot, setSnapshot] = useState(null);
+	const [loadGen, setLoadGen] = useState(0);
+
 	const manageInvitationsUrl =
 		window.fairEventsManageEventData?.manageInvitationsUrl || '';
 
@@ -91,6 +98,7 @@ export default function EventTickets({
 	const participantSuggestions = participants.map(formatParticipantLabel);
 
 	const populateFromData = useCallback((data) => {
+		setLoadGen((g) => g + 1);
 		setCapacity(
 			data.capacity !== null && data.capacity !== undefined
 				? String(data.capacity)
@@ -182,142 +190,6 @@ export default function EventTickets({
 			onSaveRef.current = handleSave;
 		}
 	});
-
-	useEffect(() => {
-		if (onDataRef) {
-			onDataRef.current = () => {
-				const pricesArray = [];
-				ticketTypes.forEach((type, tIndex) => {
-					salePeriods.forEach((period, pIndex) => {
-						const val = getPrice(type, period);
-						if (!val.enabled) return;
-						if (val.price === '' && val.capacity === '') return;
-						pricesArray.push({
-							ticket_type_index: tIndex,
-							sale_period_index: pIndex,
-							price: parseFloat(val.price) || 0,
-							capacity:
-								val.capacity !== ''
-									? parseInt(val.capacity, 10)
-									: null,
-						});
-					});
-				});
-				return {
-					capacity: capacity !== '' ? parseInt(capacity, 10) : null,
-					ticket_types: ticketTypes.map((t, i) => ({
-						...t,
-						sort_order: i,
-					})),
-					sale_periods: getEffectiveSalePeriods().map((p, i) => ({
-						...p,
-						sort_order: i,
-					})),
-					prices: pricesArray,
-					settings,
-				};
-			};
-		}
-	});
-
-	const handleSave = async () => {
-		setSaving(true);
-		setError(null);
-		setSuccess(null);
-
-		const pricesArray = [];
-		ticketTypes.forEach((type, tIndex) => {
-			salePeriods.forEach((period, pIndex) => {
-				const val = getPrice(type, period);
-				if (!val.enabled) return;
-				if (val.price === '' && val.capacity === '') return;
-				pricesArray.push({
-					ticket_type_index: tIndex,
-					sale_period_index: pIndex,
-					price: parseFloat(val.price) || 0,
-					capacity:
-						val.capacity !== '' ? parseInt(val.capacity, 10) : null,
-				});
-			});
-		});
-
-		try {
-			const data = await apiFetch({
-				path: `/fair-events/v1/event-dates/${eventDateId}/tickets`,
-				method: 'PUT',
-				data: {
-					capacity: capacity !== '' ? parseInt(capacity, 10) : null,
-					ticket_types: ticketTypes.map((t, i) => ({
-						...t,
-						sort_order: i,
-					})),
-					sale_periods: getEffectiveSalePeriods().map((p, i) => ({
-						...p,
-						sort_order: i,
-					})),
-					prices: pricesArray,
-					settings,
-					options: options.map((o, i) =>
-						serializeOptionForSave(o, i)
-					),
-				},
-			});
-
-			setCapacity(
-				data.capacity !== null && data.capacity !== undefined
-					? String(data.capacity)
-					: ''
-			);
-			setTicketTypes(data.ticket_types || []);
-			setSalePeriods(
-				(data.sale_periods || []).map((p) => ({
-					...p,
-					sale_start: p.sale_start
-						? p.sale_start.split(' ')[0].split('T')[0]
-						: '',
-					sale_end: p.sale_end
-						? p.sale_end.split(' ')[0].split('T')[0]
-						: '',
-				}))
-			);
-
-			const priceMap = {};
-			(data.ticket_types || []).forEach((type) => {
-				(data.sale_periods || []).forEach((period) => {
-					priceMap[`${type.id}-${period.id}`] = {
-						price: '',
-						capacity: '',
-						enabled: false,
-					};
-				});
-			});
-			(data.prices || []).forEach((p) => {
-				const key = `${p.ticket_type_id}-${p.sale_period_id}`;
-				priceMap[key] = {
-					price: String(p.price),
-					capacity:
-						p.capacity !== null && p.capacity !== undefined
-							? String(p.capacity)
-							: '',
-					enabled: true,
-				};
-			});
-			setPrices(priceMap);
-
-			if (data.settings) {
-				setSettings((prev) => ({ ...prev, ...data.settings }));
-			}
-			setOptions((data.options || []).map(normalizeOption));
-
-			setSuccess(__('Tickets saved successfully.', 'fair-events'));
-		} catch (err) {
-			setError(
-				err.message || __('Failed to save tickets.', 'fair-events')
-			);
-		} finally {
-			setSaving(false);
-		}
-	};
 
 	const buildExportPayload = () => {
 		const exportPrices = [];
@@ -776,6 +648,90 @@ export default function EventTickets({
 		return prices[key] || { price: '', capacity: '', enabled: true };
 	};
 
+	// Full save payload — shared by handleSave, the onDataRef consumer, and
+	// the dirty-state snapshot comparison.
+	const buildSavePayload = () => {
+		const pricesArray = [];
+		ticketTypes.forEach((type, tIndex) => {
+			salePeriods.forEach((period, pIndex) => {
+				const val = getPrice(type, period);
+				if (!val.enabled) return;
+				if (val.price === '' && val.capacity === '') return;
+				pricesArray.push({
+					ticket_type_index: tIndex,
+					sale_period_index: pIndex,
+					price: parseFloat(val.price) || 0,
+					capacity:
+						val.capacity !== '' ? parseInt(val.capacity, 10) : null,
+				});
+			});
+		});
+
+		return {
+			capacity: capacity !== '' ? parseInt(capacity, 10) : null,
+			ticket_types: ticketTypes.map((t, i) => ({
+				...t,
+				sort_order: i,
+			})),
+			sale_periods: getEffectiveSalePeriods().map((p, i) => ({
+				...p,
+				sort_order: i,
+			})),
+			prices: pricesArray,
+			settings,
+			options: options.map((o, i) => serializeOptionForSave(o, i)),
+		};
+	};
+
+	useEffect(() => {
+		if (onDataRef) {
+			onDataRef.current = buildSavePayload;
+		}
+	});
+
+	// Re-baseline the snapshot whenever populateFromData() runs (initial load
+	// or a fresh save). Gated on loadGen — a state value set in the same
+	// batch as the loaded ticketTypes/salePeriods/etc. — rather than a ref,
+	// so this effect's closure only reads those fields once React has
+	// actually committed the loaded values (a ref flip is visible to effects
+	// in the same commit, before the batched setState calls have flushed).
+	useEffect(() => {
+		setSnapshot(JSON.stringify(buildSavePayload()));
+		// eslint-disable-next-line react-hooks/exhaustive-deps
+	}, [loadGen]);
+
+	const dirty =
+		snapshot !== null && snapshot !== JSON.stringify(buildSavePayload());
+
+	useEffect(() => {
+		if (onDirtyChange) {
+			onDirtyChange(dirty);
+		}
+	}, [dirty, onDirtyChange]);
+
+	const handleSave = async () => {
+		setSaving(true);
+		setError(null);
+		setSuccess(null);
+
+		try {
+			const data = await apiFetch({
+				path: `/fair-events/v1/event-dates/${eventDateId}/tickets`,
+				method: 'PUT',
+				data: buildSavePayload(),
+			});
+
+			populateFromData(data);
+			setSuccess(__('Tickets saved successfully.', 'fair-events'));
+		} catch (err) {
+			setError(
+				err.message || __('Failed to save tickets.', 'fair-events')
+			);
+		} finally {
+			setSaving(false);
+		}
+	};
+
 	const siteCurrency = window.fairPaymentsConnector?.currency || 'EUR';
 
 	const formatCurrency = (value) => {
@@ -821,39 +777,49 @@ export default function EventTickets({
 				</Notice>
 			)}
 
-			<HStack spacing={2} justify="flex-end">
-				{(hasInvitationTickets ||
-					settings.activity_collaborator_discount) &&
-					manageInvitationsUrl && (
-						<Button
-							variant="secondary"
-							href={`${manageInvitationsUrl}${eventDateId}`}
-						>
-							{__('Manage Invitations', 'fair-events')}
-						</Button>
-					)}
+			<HStack spacing={2} justify="space-between">
 				<Button
-					variant="secondary"
-					onClick={handleExport}
-					disabled={importing || saving}
+					variant="primary"
+					onClick={handleSave}
+					isBusy={saving}
+					disabled={saving}
 				>
-					{__('Export ticket settings', 'fair-events')}
+					{__('Save tickets', 'fair-events')}
 				</Button>
-				<Button
-					variant="secondary"
-					onClick={() => fileInputRef.current?.click()}
-					disabled={importing || saving}
-					isBusy={importing}
-				>
-					{__('Import ticket settings', 'fair-events')}
-				</Button>
-				<input
-					ref={fileInputRef}
-					type="file"
-					accept="application/json,.json"
-					style={{ display: 'none' }}
-					onChange={handleImportFile}
-				/>
+				<HStack spacing={2} justify="flex-end">
+					{(hasInvitationTickets ||
+						settings.activity_collaborator_discount) &&
+						manageInvitationsUrl && (
+							<Button
+								variant="secondary"
+								href={`${manageInvitationsUrl}${eventDateId}`}
+							>
+								{__('Manage Invitations', 'fair-events')}
+							</Button>
+						)}
+					<Button
+						variant="secondary"
+						onClick={handleExport}
+						disabled={importing || saving}
+					>
+						{__('Export ticket settings', 'fair-events')}
+					</Button>
+					<Button
+						variant="secondary"
+						onClick={() => fileInputRef.current?.click()}
+						disabled={importing || saving}
+						isBusy={importing}
+					>
+						{__('Import ticket settings', 'fair-events')}
+					</Button>
+					<input
+						ref={fileInputRef}
+						type="file"
+						accept="application/json,.json"
+						style={{ display: 'none' }}
+						onChange={handleImportFile}
+					/>
+				</HStack>
 			</HStack>
 
 			{!hasAdvancedTickets && (
