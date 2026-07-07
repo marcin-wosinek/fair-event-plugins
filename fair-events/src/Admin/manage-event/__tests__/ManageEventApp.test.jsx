@@ -295,6 +295,56 @@ describe('context header (#986)', () => {
 	});
 });
 
+describe('create-on-the-fly categories (#992)', () => {
+	beforeEach(() => {
+		window.history.replaceState({}, '', '?tab=event-details');
+	});
+
+	it('creates and links a category typed as an unknown token', async () => {
+		apiFetch.mockImplementation((opts) => {
+			if (opts.path && opts.path.includes('/event-dates/')) {
+				return Promise.resolve(mockEventDate);
+			}
+			if (opts.path === '/fair-events/v1/sources/categories') {
+				if (opts.method === 'POST') {
+					return Promise.resolve({
+						id: 5,
+						name: 'Workshops',
+						slug: 'workshops',
+					});
+				}
+				return Promise.resolve([
+					{ id: 1, name: 'Music', slug: 'music' },
+				]);
+			}
+			return Promise.resolve([]);
+		});
+
+		render(<ManageEventApp />);
+		await waitFor(() =>
+			expect(
+				screen.getByRole('tab', { name: 'Event Details' })
+			).toBeInTheDocument()
+		);
+
+		const input = await screen.findByLabelText('Categories');
+		fireEvent.change(input, { target: { value: 'Workshops' } });
+		fireEvent.keyDown(input, { key: 'Enter', code: 'Enter' });
+
+		await waitFor(() =>
+			expect(apiFetch).toHaveBeenCalledWith(
+				expect.objectContaining({
+					path: '/fair-events/v1/sources/categories',
+					method: 'POST',
+					data: { name: 'Workshops' },
+				})
+			)
+		);
+
+		expect(await screen.findByText('Workshops')).toBeInTheDocument();
+	});
+});
+
 describe('delete confirmation dialog (#991)', () => {
 	it('shows the title and date, and no occurrence count, for a one-off event', async () => {
 		render(<ManageEventApp />);
