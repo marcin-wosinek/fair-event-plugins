@@ -13,7 +13,10 @@ import {
 	CardBody,
 	Button,
 	CheckboxControl,
+	DropdownMenu,
 	FormTokenField,
+	MenuGroup,
+	MenuItem,
 	Modal,
 	Panel,
 	PanelBody,
@@ -27,6 +30,7 @@ import {
 	__experimentalHStack as HStack,
 } from '@wordpress/components';
 import { __, _n, sprintf } from '@wordpress/i18n';
+import { moreVertical } from '@wordpress/icons';
 import apiFetch from '@wordpress/api-fetch';
 
 export default function EventTickets({
@@ -79,6 +83,8 @@ export default function EventTickets({
 		window.fairEventsManageEventData?.manageInvitationsUrl || '';
 
 	const hasAdvancedTickets = ticketTypes.length > 0 || salePeriods.length > 0;
+	const paymentNotConfigured =
+		window.fairPaymentsConnector?.paymentConfigured === false;
 	const hasInvitationTickets = ticketTypes.some((t) => t.invitation_only);
 	const hasGroups = groups.length > 0;
 	const groupNameById = Object.fromEntries(groups.map((g) => [g.id, g.name]));
@@ -734,13 +740,6 @@ export default function EventTickets({
 
 	const siteCurrency = window.fairPaymentsConnector?.currency || 'EUR';
 
-	const formatCurrency = (value) => {
-		return new Intl.NumberFormat('en-US', {
-			style: 'currency',
-			currency: siteCurrency,
-		}).format(value);
-	};
-
 	if (loading) {
 		return (
 			<Card style={{ marginTop: '16px' }}>
@@ -777,6 +776,24 @@ export default function EventTickets({
 				</Notice>
 			)}
 
+			{paymentNotConfigured && hasAdvancedTickets && (
+				<Notice
+					status="warning"
+					isDismissible={false}
+					actions={[
+						{
+							label: __('Set up Mollie', 'fair-events'),
+							url: window.fairPaymentsConnector.settingsUrl,
+						},
+					]}
+				>
+					{__(
+						"Prices are set, but payments aren't configured.",
+						'fair-events'
+					)}
+				</Notice>
+			)}
+
 			<HStack spacing={2} justify="space-between">
 				<Button
 					variant="primary"
@@ -786,41 +803,24 @@ export default function EventTickets({
 				>
 					{__('Save tickets', 'fair-events')}
 				</Button>
-				<HStack spacing={2} justify="flex-end">
-					{(hasInvitationTickets ||
-						settings.activity_collaborator_discount) &&
-						manageInvitationsUrl && (
-							<Button
-								variant="secondary"
-								href={`${manageInvitationsUrl}${eventDateId}`}
-							>
-								{__('Manage Invitations', 'fair-events')}
-							</Button>
-						)}
-					<Button
-						variant="secondary"
-						onClick={handleExport}
-						disabled={importing || saving}
-					>
-						{__('Export ticket settings', 'fair-events')}
-					</Button>
-					<Button
-						variant="secondary"
-						onClick={() => fileInputRef.current?.click()}
-						disabled={importing || saving}
-						isBusy={importing}
-					>
-						{__('Import ticket settings', 'fair-events')}
-					</Button>
-					<input
-						ref={fileInputRef}
-						type="file"
-						accept="application/json,.json"
-						style={{ display: 'none' }}
-						onChange={handleImportFile}
-					/>
-				</HStack>
+				{(hasInvitationTickets ||
+					settings.activity_collaborator_discount) &&
+					manageInvitationsUrl && (
+						<Button
+							variant="secondary"
+							href={`${manageInvitationsUrl}${eventDateId}`}
+						>
+							{__('Manage Invitations', 'fair-events')}
+						</Button>
+					)}
 			</HStack>
+			<input
+				ref={fileInputRef}
+				type="file"
+				accept="application/json,.json"
+				style={{ display: 'none' }}
+				onChange={handleImportFile}
+			/>
 
 			{!hasAdvancedTickets && (
 				<Card>
@@ -845,113 +845,6 @@ export default function EventTickets({
 								{__('+ Add Ticket Type', 'fair-events')}
 							</Button>
 						</VStack>
-					</CardBody>
-				</Card>
-			)}
-
-			{ticketTypes.length > 0 && salePeriods.length > 0 && (
-				<Card>
-					<CardHeader>
-						<strong>{__('Ticket Prices', 'fair-events')}</strong>
-					</CardHeader>
-					<CardBody>
-						<div style={{ overflowX: 'auto' }}>
-							<table className="wp-list-table widefat striped">
-								<thead>
-									<tr>
-										<th>
-											{__('Ticket Type', 'fair-events')}
-										</th>
-										{salePeriods.map((period, pIndex) => (
-											<th
-												key={
-													period.id || `new-${pIndex}`
-												}
-											>
-												{settings.multiple_pricing_periods
-													? period.name ||
-													  __(
-															'(unnamed)',
-															'fair-events'
-													  )
-													: pIndex === 0
-													? __(
-															'Advance ticket',
-															'fair-events'
-													  )
-													: __(
-															'Day of event',
-															'fair-events'
-													  )}
-											</th>
-										))}
-									</tr>
-								</thead>
-								<tbody>
-									{ticketTypes.map((type, tIndex) => (
-										<tr key={type.id || `new-${tIndex}`}>
-											<td>
-												{type.name ||
-													__(
-														'(unnamed)',
-														'fair-events'
-													)}
-												{isRecurring && (
-													<>
-														{'  ('}
-														{type.recurrence_scope ===
-														'whole_series'
-															? __(
-																	'Whole series',
-																	'fair-events'
-															  )
-															: type.recurrence_scope ===
-															  'multiple_instances'
-															? __(
-																	'Multiple instances',
-																	'fair-events'
-															  )
-															: __(
-																	'This instance',
-																	'fair-events'
-															  )}
-														{')'}
-													</>
-												)}
-											</td>
-											{salePeriods.map(
-												(period, pIndex) => {
-													const cell = getPrice(
-														type,
-														period
-													);
-													const hasPrice =
-														cell.price !== '';
-													return (
-														<td
-															key={
-																period.id ||
-																`new-${pIndex}`
-															}
-														>
-															{hasPrice
-																? formatCurrency(
-																		cell.price
-																  )
-																: '—'}
-															{!settings.unlimited_tickets_in_price_period &&
-																cell.capacity !==
-																	'' &&
-																` (${cell.capacity})`}
-														</td>
-													);
-												}
-											)}
-										</tr>
-									))}
-								</tbody>
-							</table>
-						</div>
 					</CardBody>
 				</Card>
 			)}
@@ -1259,12 +1152,45 @@ export default function EventTickets({
 				</Card>
 			)}
 
-			<Card>
-				<Panel>
-					<PanelBody
-						title={__('Edit tickets', 'fair-events')}
-						initialOpen={false}
-					>
+			{hasAdvancedTickets && (
+				<Card>
+					<CardHeader>
+						<strong>{__('Tickets', 'fair-events')}</strong>
+						<DropdownMenu
+							icon={moreVertical}
+							label={__('More actions', 'fair-events')}
+						>
+							{({ onClose }) => (
+								<MenuGroup>
+									<MenuItem
+										onClick={() => {
+											handleExport();
+											onClose();
+										}}
+										disabled={importing || saving}
+									>
+										{__(
+											'Export ticket settings',
+											'fair-events'
+										)}
+									</MenuItem>
+									<MenuItem
+										onClick={() => {
+											fileInputRef.current?.click();
+											onClose();
+										}}
+										disabled={importing || saving}
+									>
+										{__(
+											'Import ticket settings',
+											'fair-events'
+										)}
+									</MenuItem>
+								</MenuGroup>
+							)}
+						</DropdownMenu>
+					</CardHeader>
+					<CardBody>
 						<VStack spacing={4}>
 							<TextControl
 								label={__('Total capacity', 'fair-events')}
@@ -1918,9 +1844,9 @@ export default function EventTickets({
 								</div>
 							</VStack>
 						</VStack>
-					</PanelBody>
-				</Panel>
-			</Card>
+					</CardBody>
+				</Card>
+			)}
 
 			<Card>
 				<Panel>
@@ -2354,7 +2280,7 @@ export default function EventTickets({
 			<Card>
 				<Panel>
 					<PanelBody
-						title={__('Settings', 'fair-events')}
+						title={__('More options', 'fair-events')}
 						initialOpen={false}
 					>
 						<VStack spacing={4}>

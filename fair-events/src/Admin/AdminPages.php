@@ -328,12 +328,22 @@ class AdminPages {
 				$localized_data
 			);
 
+			$payments_connector_data = array(
+				'currency' => get_option( 'fair_payment_currency', 'EUR' ),
+			);
+
+			// Reuse the connector's own "configured" definition rather than
+			// re-reading its options here, so the notice matches the
+			// top-of-page admin notice in fair-payments-connector.
+			if ( class_exists( '\FairPaymentsConnector\Payment\MolliePaymentHandler' ) ) {
+				$payments_connector_data['paymentConfigured'] = \FairPaymentsConnector\Payment\MolliePaymentHandler::is_configured();
+				$payments_connector_data['settingsUrl']       = admin_url( 'admin.php?page=fair-payments-connector-settings' );
+			}
+
 			wp_localize_script(
 				'fair-events-manage-event',
 				'fairPaymentsConnector',
-				array(
-					'currency' => get_option( 'fair_payment_currency', 'EUR' ),
-				)
+				$payments_connector_data
 			);
 
 			wp_set_script_translations(
