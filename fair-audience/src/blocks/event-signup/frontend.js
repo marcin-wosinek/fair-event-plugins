@@ -17,6 +17,7 @@ import {
 	hasFileUploads,
 	appendQuestionFiles,
 	setupQuestionnaire,
+	applyQuestionAnswers,
 } from 'fair-events-shared';
 
 /**
@@ -729,6 +730,124 @@ const CSS_PREFIX = 'fair-audience-signup';
 				submitSignup(block, this);
 			});
 		}
+
+		// Resume link (issue #1004): a previous anonymous submit with this
+		// email got stashed because the browser held no session for the
+		// matching participant. Restore it so the visitor doesn't retype
+		// everything, then let them hit the (already-wired) sign up button.
+		const resumeToken = block.dataset.resumeToken || '';
+		if (resumeToken) {
+			resumeStashedSignup(block, resumeToken);
+		}
+	}
+
+	/**
+	 * Fetch a stashed signup submission and restore it into the (already
+	 * rendered, participant-token-authenticated) form: ticket type, ticket
+	 * options, chosen occurrences, sliding-scale amount, and questionnaire
+	 * answers. Single-use — a second load of the same URL will simply find
+	 * nothing left to restore.
+	 * @param {HTMLElement} block       The block element
+	 * @param {string}      resumeToken The resume token from the URL
+	 */
+	function resumeStashedSignup(block, resumeToken) {
+		const token = block.dataset.participantToken || '';
+		const messageContainer = block.querySelector(
+			'.fair-audience-signup-message'
+		);
+
+		apiFetch({
+			path:
+				'/fair-audience/v1/event-signup/resume' +
+				'?participant_token=' +
+				encodeURIComponent(token) +
+				'&resume=' +
+				encodeURIComponent(resumeToken),
+			method: 'GET',
+		})
+			.then(function (response) {
+				if (!response.success || !response.payload) {
+					return;
+				}
+				applyResumePayload(block, response.payload);
+				showMessage(
+					messageContainer,
+					__(
+						"Welcome back — we've restored your answers. Review and continue below.",
+						'fair-audience'
+					),
+					'info',
+					CSS_PREFIX
+				);
+			})
+			.catch(function () {
+				// Expired/already-used resume link: fall back silently to the
+				// plain (already rendered) signup form.
+			});
+	}
+
+	/**
+	 * Apply a stashed signup payload to the form fields.
+	 * @param {HTMLElement} block   The block element
+	 * @param {Object}      payload Stashed submission data
+	 */
+	function applyResumePayload(block, payload) {
+		if (payload.ticket_type_id) {
+			const ticketTypeInput = block.querySelector(
+				'input[name="ticket_type_id"][value="' +
+					payload.ticket_type_id +
+					'"]'
+			);
+			if (ticketTypeInput) {
+				ticketTypeInput.checked = true;
+				ticketTypeInput.dispatchEvent(
+					new Event('change', { bubbles: true })
+				);
+			}
+		}
+
+		(payload.ticket_option_ids || []).forEach(function (optionId) {
+			const optionInput = block.querySelector(
+				'input[name="ticket_option_ids[]"][value="' + optionId + '"]'
+			);
+			if (optionInput) {
+				optionInput.checked = true;
+				optionInput.dispatchEvent(
+					new Event('change', { bubbles: true })
+				);
+			}
+		});
+
+		(payload.event_date_ids || []).forEach(function (eventDateId) {
+			const instanceInput = block.querySelector(
+				'input[name="event_date_ids[]"][value="' + eventDateId + '"]'
+			);
+			if (instanceInput) {
+				instanceInput.checked = true;
+				instanceInput.dispatchEvent(
+					new Event('change', { bubbles: true })
+				);
+			}
+		});
+
+		if (
+			payload.chosen_amount !== null &&
+			payload.chosen_amount !== undefined
+		) {
+			const chosenAmountInput = block.querySelector(
+				'.fair-audience-sliding-scale-number'
+			);
+			if (chosenAmountInput) {
+				chosenAmountInput.value = payload.chosen_amount;
+				chosenAmountInput.dispatchEvent(
+					new Event('input', { bubbles: true })
+				);
+			}
+		}
+
+		const questionScope =
+			block.querySelector('.fair-audience-signup-action-signup') || block;
+		applyQuestionAnswers(questionScope, payload.questionnaire_answers);
 	}
 
 	/**
