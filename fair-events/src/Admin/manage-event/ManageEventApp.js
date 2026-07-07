@@ -87,6 +87,7 @@ export default function ManageEventApp() {
 	const [externalUrl, setExternalUrl] = useState('');
 	const [categories, setCategories] = useState([]);
 	const [availableCategories, setAvailableCategories] = useState([]);
+	const [creatingCategories, setCreatingCategories] = useState([]);
 
 	// Recurrence state
 	const [recurrenceEnabled, setRecurrenceEnabled] = useState(false);
@@ -162,6 +163,26 @@ export default function ManageEventApp() {
 			setAvailableCategories(data);
 		} catch {
 			// Categories are optional, ignore errors.
+		}
+	};
+
+	const createCategory = async (name) => {
+		try {
+			const newCategory = await apiFetch({
+				path: '/fair-events/v1/sources/categories',
+				method: 'POST',
+				data: { name },
+			});
+			setAvailableCategories((prev) => [...prev, newCategory]);
+			setCategories((prev) => [...prev, newCategory.id]);
+		} catch (err) {
+			setError(
+				err.message || __('Failed to create category.', 'fair-events')
+			);
+		} finally {
+			setCreatingCategories((prev) =>
+				prev.filter((pending) => pending !== name)
+			);
 		}
 	};
 
@@ -844,26 +865,50 @@ export default function ManageEventApp() {
 							<VStack spacing={4}>
 								<FormTokenField
 									label={__('Categories', 'fair-events')}
-									value={categories.map((id) => {
-										const cat = availableCategories.find(
-											(c) => c.id === id
-										);
-										return cat ? cat.name : '';
-									})}
+									value={[
+										...categories
+											.map((id) => {
+												const cat =
+													availableCategories.find(
+														(c) => c.id === id
+													);
+												return cat ? cat.name : '';
+											})
+											.filter(Boolean),
+										...creatingCategories,
+									]}
 									suggestions={availableCategories.map(
 										(c) => c.name
 									)}
 									onChange={(tokens) => {
-										const ids = tokens
-											.map((token) => {
-												const cat =
-													availableCategories.find(
-														(c) => c.name === token
-													);
-												return cat ? cat.id : null;
-											})
-											.filter(Boolean);
+										const ids = [];
+										const pending = [];
+
+										tokens.forEach((token) => {
+											const cat =
+												availableCategories.find(
+													(c) => c.name === token
+												);
+											if (cat) {
+												ids.push(cat.id);
+											} else {
+												pending.push(token);
+											}
+										});
+
 										setCategories(ids);
+										setCreatingCategories(pending);
+
+										pending
+											.filter(
+												(name) =>
+													!creatingCategories.includes(
+														name
+													)
+											)
+											.forEach((name) =>
+												createCategory(name)
+											);
 									}}
 									__experimentalExpandOnFocus
 								/>

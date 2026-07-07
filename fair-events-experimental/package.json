@@ -21,7 +21,8 @@
 		"makemo": "wp i18n make-mo languages/",
 		"updatepo": "wp i18n update-po languages/fair-events-experimental.pot languages/",
 		"test": "npm-run-all test:js",
-		"test:js": "jest --passWithNoTests"
+		"test:js": "jest --passWithNoTests",
+		"test:api": "playwright test src/API/__tests__/"
 	},
 	"dependencies": {
 		"fair-events-shared": "*",
@@ -35,6 +36,7 @@
 	"devDependencies": {
 		"@babel/core": "^7.28.3",
 		"@babel/preset-env": "^7.28.3",
+		"@playwright/test": "^1.40.0",
 		"@testing-library/jest-dom": "^6.9.1",
 		"@testing-library/react": "^16.3.2",
 		"@wordpress/scripts": "^32.4.0",
