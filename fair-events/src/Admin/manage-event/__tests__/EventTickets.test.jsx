@@ -18,6 +18,7 @@ import {
 	fireEvent,
 	act,
 	waitFor,
+	within,
 } from '@testing-library/react';
 import apiFetch from '@wordpress/api-fetch';
 import EventTickets from '../EventTickets.js';
@@ -67,7 +68,7 @@ const initialDataWithTicketType = {
 
 function renderTickets(extraProps = {}) {
 	const onSaveRef = { current: null };
-	render(
+	const { container } = render(
 		<EventTickets
 			eventDateId={99}
 			onSaveRef={onSaveRef}
@@ -76,14 +77,7 @@ function renderTickets(extraProps = {}) {
 			{...extraProps}
 		/>
 	);
-	return { onSaveRef };
-}
-
-function openEditTicketsPanel() {
-	const panelButton = screen.getByRole('button', {
-		name: /Edit tickets/i,
-	});
-	fireEvent.click(panelButton);
+	return { onSaveRef, container };
 }
 
 describe('EventTickets — empty state (no advanced tickets)', () => {
@@ -129,7 +123,7 @@ describe('EventTickets — empty state (no advanced tickets)', () => {
 		expect(
 			screen.queryByText(/No ticket types configured yet/i)
 		).not.toBeInTheDocument();
-		expect(screen.getByText('Ticket Prices')).toBeInTheDocument();
+		expect(screen.getByText('Ticket Type')).toBeInTheDocument();
 	});
 });
 
@@ -139,7 +133,6 @@ describe('EventTickets — recurrence scope selector', () => {
 			isRecurring: true,
 			initialData: initialDataWithTicketType,
 		});
-		openEditTicketsPanel();
 		expect(screen.getByText('Scope')).toBeInTheDocument();
 		// Acknowledge WordPress TextControl / SelectControl size deprecation
 		// notices emitted the first time those component types render in the suite.
@@ -151,13 +144,11 @@ describe('EventTickets — recurrence scope selector', () => {
 			isRecurring: false,
 			initialData: initialDataWithTicketType,
 		});
-		openEditTicketsPanel();
 		expect(screen.queryByText('Scope')).not.toBeInTheDocument();
 	});
 
 	it('does not show Scope column when isRecurring is omitted', () => {
 		renderTickets({ initialData: initialDataWithTicketType });
-		openEditTicketsPanel();
 		expect(screen.queryByText('Scope')).not.toBeInTheDocument();
 	});
 
@@ -168,7 +159,6 @@ describe('EventTickets — recurrence scope selector', () => {
 			// "+ Add Ticket Type" button is visible in the table footer.
 			initialData: initialDataWithTicketType,
 		});
-		openEditTicketsPanel();
 
 		const addButton = screen.getByRole('button', {
 			name: '+ Add Ticket Type',
@@ -199,7 +189,6 @@ describe('EventTickets — recurrence scope selector', () => {
 			isRecurring: true,
 			initialData: initialDataWithTicketType,
 		});
-		openEditTicketsPanel();
 
 		const selects = screen.getAllByRole('combobox');
 		const scopeSelect = selects.find(
@@ -218,7 +207,6 @@ describe('EventTickets — recurrence scope selector', () => {
 			isRecurring: true,
 			initialData: initialDataWithTicketType,
 		});
-		openEditTicketsPanel();
 
 		// Change scope to whole_series.
 		const selects = screen.getAllByRole('combobox');
@@ -259,7 +247,6 @@ describe('EventTickets — multiple_instances scope (#930)', () => {
 			isRecurring: true,
 			initialData: initialDataWithTicketType,
 		});
-		openEditTicketsPanel();
 
 		const selects = screen.getAllByRole('combobox');
 		const scopeSelect = selects.find(
@@ -283,7 +270,6 @@ describe('EventTickets — multiple_instances scope (#930)', () => {
 			isRecurring: true,
 			initialData: initialDataWithTicketType,
 		});
-		openEditTicketsPanel();
 
 		const selects = screen.getAllByRole('combobox');
 		const scopeSelect = selects.find(
@@ -308,7 +294,6 @@ describe('EventTickets — multiple_instances scope (#930)', () => {
 			isRecurring: true,
 			initialData: initialDataWithTicketType,
 		});
-		openEditTicketsPanel();
 
 		const selects = screen.getAllByRole('combobox');
 		const scopeSelect = selects.find(
@@ -353,7 +338,6 @@ describe('EventTickets — scope-choice modal', () => {
 			isRecurring: true,
 			initialData: initialDataWithTicketType,
 		});
-		openEditTicketsPanel();
 
 		fireEvent.click(
 			screen.getByRole('button', { name: '+ Add Ticket Type' })
@@ -369,7 +353,6 @@ describe('EventTickets — scope-choice modal', () => {
 			isRecurring: false,
 			initialData: initialDataWithTicketType,
 		});
-		openEditTicketsPanel();
 
 		fireEvent.click(
 			screen.getByRole('button', { name: '+ Add Ticket Type' })
@@ -385,7 +368,6 @@ describe('EventTickets — scope-choice modal', () => {
 			isRecurring: true,
 			initialData: initialDataWithTicketType,
 		});
-		openEditTicketsPanel();
 
 		fireEvent.click(
 			screen.getByRole('button', { name: '+ Add Ticket Type' })
@@ -431,7 +413,6 @@ describe('EventTickets — scope lock when has_sales', () => {
 			isRecurring: true,
 			initialData: initialDataWithSoldTicketType,
 		});
-		openEditTicketsPanel();
 
 		expect(screen.getByText('Whole series')).toBeInTheDocument();
 		const scopeSelects = screen
@@ -449,7 +430,6 @@ describe('EventTickets — scope lock when has_sales', () => {
 			isRecurring: true,
 			initialData: initialDataWithTicketType,
 		});
-		openEditTicketsPanel();
 
 		const scopeSelects = screen
 			.getAllByRole('combobox')
@@ -465,7 +445,6 @@ describe('EventTickets — scope lock when has_sales', () => {
 describe('EventTickets — disable/enable when has_sales', () => {
 	it('shows Remove button when has_sales is false', () => {
 		renderTickets({ initialData: initialDataWithTicketType });
-		openEditTicketsPanel();
 		expect(
 			screen.getByRole('button', { name: /Remove/i })
 		).toBeInTheDocument();
@@ -473,7 +452,6 @@ describe('EventTickets — disable/enable when has_sales', () => {
 
 	it('shows toggle instead of Remove when has_sales is true', () => {
 		renderTickets({ initialData: initialDataWithSoldTicketType });
-		openEditTicketsPanel();
 		expect(
 			screen.queryByRole('button', { name: /Remove/i })
 		).not.toBeInTheDocument();
@@ -491,7 +469,6 @@ describe('EventTickets — disable/enable when has_sales', () => {
 			],
 		};
 		renderTickets({ initialData: disabledData });
-		openEditTicketsPanel();
 		expect(
 			screen.getByText('Disabled — no longer on sale')
 		).toBeInTheDocument();
@@ -499,7 +476,6 @@ describe('EventTickets — disable/enable when has_sales', () => {
 
 	it('does not show disabled label when ticket type is enabled', () => {
 		renderTickets({ initialData: initialDataWithSoldTicketType });
-		openEditTicketsPanel();
 		expect(
 			screen.queryByText('Disabled — no longer on sale')
 		).not.toBeInTheDocument();
@@ -509,7 +485,6 @@ describe('EventTickets — disable/enable when has_sales', () => {
 		const { onSaveRef } = renderTickets({
 			initialData: initialDataWithSoldTicketType,
 		});
-		openEditTicketsPanel();
 		const toggle = screen.getByRole('checkbox');
 		fireEvent.click(toggle);
 
@@ -547,7 +522,6 @@ describe('EventTickets — save button and dirty tracking (#987)', () => {
 			initialData: initialDataWithTicketType,
 			onDirtyChange,
 		});
-		openEditTicketsPanel();
 
 		expect(onDirtyChange).toHaveBeenLastCalledWith(false);
 
@@ -576,5 +550,116 @@ describe('EventTickets — save button and dirty tracking (#987)', () => {
 		await waitFor(() =>
 			expect(onDirtyChange).toHaveBeenLastCalledWith(false)
 		);
+	});
+});
+
+describe('EventTickets — payment-not-configured notice (#988)', () => {
+	const originalFairPaymentsConnector = window.fairPaymentsConnector;
+
+	afterEach(() => {
+		window.fairPaymentsConnector = originalFairPaymentsConnector;
+	});
+
+	it('shows the notice when payments are unconfigured and tickets exist', () => {
+		window.fairPaymentsConnector = {
+			paymentConfigured: false,
+			settingsUrl:
+				'http://example.test/wp-admin/admin.php?page=fair-payments-connector-settings',
+		};
+		const { container } = renderTickets({
+			initialData: initialDataWithTicketType,
+		});
+
+		expect(
+			within(container).getByText(
+				/Prices are set, but payments aren't configured/i
+			)
+		).toBeInTheDocument();
+		const link = within(container).getByRole('link', {
+			name: 'Set up Mollie',
+		});
+		expect(link).toHaveAttribute(
+			'href',
+			window.fairPaymentsConnector.settingsUrl
+		);
+	});
+
+	it('does not show the notice when there are no tickets yet', () => {
+		window.fairPaymentsConnector = {
+			paymentConfigured: false,
+			settingsUrl:
+				'http://example.test/wp-admin/admin.php?page=fair-payments-connector-settings',
+		};
+		const { container } = renderTickets({ initialData: emptyInitialData });
+
+		expect(
+			within(container).queryByText(
+				/Prices are set, but payments aren't configured/i
+			)
+		).not.toBeInTheDocument();
+	});
+
+	it('does not show the notice when payments are configured', () => {
+		window.fairPaymentsConnector = {
+			paymentConfigured: true,
+			settingsUrl:
+				'http://example.test/wp-admin/admin.php?page=fair-payments-connector-settings',
+		};
+		const { container } = renderTickets({
+			initialData: initialDataWithTicketType,
+		});
+
+		expect(
+			within(container).queryByText(
+				/Prices are set, but payments aren't configured/i
+			)
+		).not.toBeInTheDocument();
+	});
+
+	it('does not show the notice when paymentConfigured is absent (connector inactive)', () => {
+		window.fairPaymentsConnector = { currency: 'EUR' };
+		const { container } = renderTickets({
+			initialData: initialDataWithTicketType,
+		});
+
+		expect(
+			within(container).queryByText(
+				/Prices are set, but payments aren't configured/i
+			)
+		).not.toBeInTheDocument();
+	});
+});
+
+describe('EventTickets — Export/Import moved to the ⋯ menu (#988)', () => {
+	it('does not show Export/Import as primary buttons', () => {
+		renderTickets({ initialData: initialDataWithTicketType });
+
+		expect(
+			screen.queryByRole('button', { name: 'Export ticket settings' })
+		).not.toBeInTheDocument();
+		expect(
+			screen.queryByRole('button', { name: 'Import ticket settings' })
+		).not.toBeInTheDocument();
+	});
+
+	it('reaches Export/Import through the ⋯ menu', () => {
+		renderTickets({ initialData: initialDataWithTicketType });
+
+		fireEvent.click(screen.getByRole('button', { name: 'More actions' }));
+
+		expect(
+			screen.getByRole('menuitem', { name: 'Export ticket settings' })
+		).toBeInTheDocument();
+		expect(
+			screen.getByRole('menuitem', { name: 'Import ticket settings' })
+		).toBeInTheDocument();
+	});
+});
+
+describe('EventTickets — editable table renders without expanding a panel (#988)', () => {
+	it('shows the editable ticket type field directly', () => {
+		renderTickets({ initialData: initialDataWithTicketType });
+
+		expect(screen.getByDisplayValue('General')).toBeInTheDocument();
 	});
 });
