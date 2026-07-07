@@ -141,6 +141,16 @@ class Plugin {
 			}
 		);
 
+		// Categories controller — registers `/fair-events/v1/sources/categories`,
+		// used by the Manage Event admin page to create categories on the fly.
+		add_action(
+			'rest_api_init',
+			function () {
+				$controller = new \FairEvents\API\CategoriesController();
+				$controller->register_routes();
+			}
+		);
+
 		if ( Features::is_enabled( 'ticketing' ) ) {
 			add_action(
 				'rest_api_init',
