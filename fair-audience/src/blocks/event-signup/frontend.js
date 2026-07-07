@@ -26,11 +26,15 @@ import {
  */
 
 const CSS_PREFIX = 'fair-audience-signup';
+const SCROLL_RESTORE_KEY = 'fairAudienceOccurrenceScrollY';
 
 (function () {
 	'use strict';
 
-	onDomReady(initializeEventSignup);
+	onDomReady(function () {
+		restoreScrollPosition();
+		initializeEventSignup();
+	});
 
 	/**
 	 * Initialize all event signup blocks on the page
@@ -153,7 +157,10 @@ const CSS_PREFIX = 'fair-audience-signup';
 
 	/**
 	 * Navigate the current page to the same URL with ?event_date=<id> set,
-	 * preserving any other query params (e.g. fair_payment_callback).
+	 * preserving any other query params (e.g. fair_payment_callback). The
+	 * scroll position is stashed first and restored on the reloaded page
+	 * (see restoreScrollPosition()) so picking a date doesn't jump the
+	 * viewer back to the top of the page.
 	 * @param {string} eventDateId Selected occurrence id
 	 */
 	function navigateToOccurrence(eventDateId) {
@@ -161,7 +168,18 @@ const CSS_PREFIX = 'fair-audience-signup';
 		if (!id) return;
 		const url = new URL(window.location.href);
 		url.searchParams.set('event_date', String(id));
+		sessionStorage.setItem(SCROLL_RESTORE_KEY, String(window.scrollY));
 		window.location.assign(url.toString());
+	}
+
+	/**
+	 * Restore the scroll position stashed by navigateToOccurrence(), if any.
+	 */
+	function restoreScrollPosition() {
+		const saved = sessionStorage.getItem(SCROLL_RESTORE_KEY);
+		if (saved === null) return;
+		sessionStorage.removeItem(SCROLL_RESTORE_KEY);
+		window.scrollTo(0, parseInt(saved, 10) || 0);
 	}
 
 	/**
