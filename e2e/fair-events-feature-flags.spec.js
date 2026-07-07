@@ -93,7 +93,7 @@ const BUNDLE_PAGES = {
  * resource still count as "registered").
  */
 const BUNDLE_PROBE_ROUTES = {
-	sources: '/fair-events/v1/sources/categories',
+	sources: '/fair-events/v1/sources',
 	galleries: '/fair-events/v1/event-dates/1/gallery',
 	migration: '/fair-events/v1/migration/post-types',
 };

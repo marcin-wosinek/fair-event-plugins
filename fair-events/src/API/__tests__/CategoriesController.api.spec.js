@@ -1,5 +1,5 @@
 /**
- * Playwright API tests for EventSourceController's category endpoints.
+ * Playwright API tests for CategoriesController.
  *
  * Verifies POST /fair-events/v1/sources/categories creates a category term,
  * is idempotent for an existing name, and enforces the permission check.
@@ -17,7 +17,7 @@ const authHeader = {
 		Buffer.from(`${ADMIN_USER}:${ADMIN_PASSWORD}`).toString('base64'),
 };
 
-test.describe('EventSourceController categories', () => {
+test.describe('CategoriesController', () => {
 	let api;
 	const createdCategoryIds = [];
 
