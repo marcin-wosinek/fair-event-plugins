@@ -201,6 +201,25 @@ class EventDatesController extends WP_REST_Controller {
 			)
 		);
 
+		// GET /fair-events/v1/event-dates/{id}/siblings - List sibling occurrences.
+		register_rest_route(
+			$this->namespace,
+			'/event-dates/(?P<id>\d+)/siblings',
+			array(
+				array(
+					'methods'             => WP_REST_Server::READABLE,
+					'callback'            => array( $this, 'get_siblings' ),
+					'permission_callback' => array( $this, 'get_item_permissions_check' ),
+					'args'                => array(
+						'id' => array(
+							'description' => __( 'Unique identifier for the event date.', 'fair-events' ),
+							'type'        => 'integer',
+						),
+					),
+				),
+			)
+		);
+
 		// GET /fair-events/v1/event-dates/batch - Batch lookup by IDs.
 		register_rest_route(
 			$this->namespace,
@@ -665,6 +684,46 @@ class EventDatesController extends WP_REST_Controller {
 		}
 
 		return new WP_REST_Response( $this->prepare_event_date( $event_date ), 200 );
+	}
+
+	/**
+	 * Get sibling occurrences for a recurring event
+	 *
+	 * Resolves the master occurrence for the given event date, then returns
+	 * the master plus all of its generated occurrences (single/standalone
+	 * events return just themselves).
+	 *
+	 * @param WP_REST_Request $request Full data about the request.
+	 * @return WP_REST_Response|WP_Error Response object on success, or WP_Error on failure.
+	 */
+	public function get_siblings( $request ) {
+		$id         = (int) $request->get_param( 'id' );
+		$event_date = EventDates::get_by_id( $id );
+
+		if ( ! $event_date ) {
+			return new WP_Error(
+				'rest_event_date_not_found',
+				__( 'Event date not found.', 'fair-events' ),
+				array( 'status' => 404 )
+			);
+		}
+
+		$master_id = ( 'generated' === $event_date->occurrence_type && $event_date->master_id )
+			? $event_date->master_id
+			: $event_date->id;
+
+		$siblings = EventDates::get_all_by_master_id( $master_id );
+
+		$items = array();
+		foreach ( $siblings as $sibling ) {
+			$items[] = array(
+				'id'              => $sibling->id,
+				'start_datetime'  => $sibling->start_datetime,
+				'occurrence_type' => $sibling->occurrence_type,
+			);
+		}
+
+		return new WP_REST_Response( $items, 200 );
 	}
 
 	/**

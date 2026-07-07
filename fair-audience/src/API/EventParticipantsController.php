@@ -174,6 +174,34 @@ class EventParticipantsController extends WP_REST_Controller {
 			)
 		);
 
+		// POST /fair-audience/v1/event-dates/{event_date_id}/participants/{participant_id}/move.
+		register_rest_route(
+			$this->namespace,
+			'/' . $this->rest_base . '/(?P<participant_id>\d+)/move',
+			array(
+				array(
+					'methods'             => WP_REST_Server::CREATABLE,
+					'callback'            => array( $this, 'move_item' ),
+					'permission_callback' => array( $this, 'move_item_permissions_check' ),
+					'args'                => array(
+						'event_date_id'        => array(
+							'type'     => 'integer',
+							'required' => true,
+						),
+						'participant_id'       => array(
+							'type'     => 'integer',
+							'required' => true,
+						),
+						'target_event_date_id' => array(
+							'type'     => 'integer',
+							'required' => true,
+							'minimum'  => 1,
+						),
+					),
+				),
+			)
+		);
+
 		// DELETE /fair-audience/v1/event-dates/{event_date_id}/participants/batch.
 		// POST /fair-audience/v1/event-dates/{event_date_id}/participants/batch.
 		register_rest_route(
@@ -880,6 +908,75 @@ class EventParticipantsController extends WP_REST_Controller {
 	}
 
 	/**
+	 * Move a participant's signup to a sibling occurrence of the same
+	 * recurring event.
+	 *
+	 * @param WP_REST_Request $request Request object.
+	 * @return WP_REST_Response|WP_Error Response object or error.
+	 */
+	public function move_item( $request ) {
+		$event_date_id        = (int) $request->get_param( 'event_date_id' );
+		$participant_id       = (int) $request->get_param( 'participant_id' );
+		$target_event_date_id = (int) $request->get_param( 'target_event_date_id' );
+
+		if ( ! class_exists( \FairEvents\Models\EventDates::class ) ) {
+			return new WP_Error(
+				'fair_events_unavailable',
+				__( 'The fair-events plugin is required for this action.', 'fair-audience' ),
+				array( 'status' => 500 )
+			);
+		}
+
+		$event_date = \FairEvents\Models\EventDates::get_by_id( $event_date_id );
+		if ( ! $event_date ) {
+			return new WP_Error(
+				'invalid_event_date',
+				__( 'Event date not found.', 'fair-audience' ),
+				array( 'status' => 404 )
+			);
+		}
+
+		$master_id = ( 'generated' === $event_date->occurrence_type && $event_date->master_id )
+			? $event_date->master_id
+			: $event_date->id;
+
+		$sibling_ids = wp_list_pluck( \FairEvents\Models\EventDates::get_all_by_master_id( $master_id ), 'id' );
+
+		if ( ! in_array( $target_event_date_id, $sibling_ids, true ) ) {
+			return new WP_Error(
+				'invalid_target',
+				__( 'The target date is not another occurrence of this recurring event.', 'fair-audience' ),
+				array( 'status' => 400 )
+			);
+		}
+
+		$result = $this->event_participant_repo->move_to_event_date( $event_date_id, $participant_id, $target_event_date_id );
+
+		if ( 'not_found' === $result ) {
+			return new WP_Error(
+				'not_found',
+				__( 'Signup not found on this event date.', 'fair-audience' ),
+				array( 'status' => 404 )
+			);
+		}
+
+		if ( 'conflict' === $result ) {
+			return new WP_Error(
+				'already_signed_up',
+				__( 'This participant is already signed up on the target date.', 'fair-audience' ),
+				array( 'status' => 409 )
+			);
+		}
+
+		return rest_ensure_response(
+			array(
+				'message'              => __( 'Signup moved successfully.', 'fair-audience' ),
+				'target_event_date_id' => $target_event_date_id,
+			)
+		);
+	}
+
+	/**
 	 * Delete multiple participants from an event.
 	 *
 	 * @param WP_REST_Request $request Request object.
@@ -1445,6 +1542,16 @@ class EventParticipantsController extends WP_REST_Controller {
 	 * @return bool True if user has permission.
 	 */
 	public function delete_item_permissions_check( $request ) {
+		return current_user_can( 'manage_options' );
+	}
+
+	/**
+	 * Check permissions for moving a signup to another occurrence.
+	 *
+	 * @param WP_REST_Request $request Request object.
+	 * @return bool True if user has permission.
+	 */
+	public function move_item_permissions_check( $request ) {
 		return current_user_can( 'manage_options' );
 	}
 }

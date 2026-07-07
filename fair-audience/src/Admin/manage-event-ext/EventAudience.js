@@ -66,6 +66,7 @@ export default function EventAudience({
 	const [loadingParticipants, setLoadingParticipants] = useState(true);
 	const [ticketOptions, setTicketOptions] = useState([]);
 	const [ticketTypes, setTicketTypes] = useState([]);
+	const [siblings, setSiblings] = useState([]);
 	const [formsSummary, setFormsSummary] = useState([]);
 	const [loadingForms, setLoadingForms] = useState(true);
 
@@ -103,6 +104,11 @@ export default function EventAudience({
 	const [editStaleDecision, setEditStaleDecision] = useState(null);
 	const [editLabel, setEditLabel] = useState('signed_up');
 	const [isSavingOptions, setIsSavingOptions] = useState(false);
+
+	// Move-to-occurrence modal state
+	const [movingParticipant, setMovingParticipant] = useState(null);
+	const [moveTargetId, setMoveTargetId] = useState('');
+	const [isMoving, setIsMoving] = useState(false);
 
 	const [toast, setToast] = useState(null);
 	const toastTimerRef = useRef(null);
@@ -151,6 +157,19 @@ export default function EventAudience({
 			.catch(() => {
 				setTicketOptions([]);
 				setTicketTypes([]);
+			});
+	}, [eventDateId]);
+
+	useEffect(() => {
+		if (!eventDateId) return;
+		apiFetch({
+			path: `/fair-events/v1/event-dates/${eventDateId}/siblings`,
+		})
+			.then((data) => {
+				setSiblings(Array.isArray(data) ? data : []);
+			})
+			.catch(() => {
+				setSiblings([]);
 			});
 	}, [eventDateId]);
 
@@ -259,6 +278,11 @@ export default function EventAudience({
 	const stalePending = useMemo(
 		() => participants.filter(isStalePendingPayment),
 		[participants]
+	);
+
+	const otherOccurrences = useMemo(
+		() => siblings.filter((s) => Number(s.id) !== Number(eventDateId)),
+		[siblings, eventDateId]
 	);
 
 	const handleSort = (column) => {
@@ -695,6 +719,43 @@ export default function EventAudience({
 			);
 		} finally {
 			setIsSavingOptions(false);
+		}
+	};
+
+	const handleOpenMoveModal = (participant) => {
+		if (participant.is_series_pass) {
+			return;
+		}
+		setMovingParticipant(participant);
+		setMoveTargetId(
+			otherOccurrences.length > 0 ? String(otherOccurrences[0].id) : ''
+		);
+	};
+
+	const handleCloseMoveModal = () => {
+		setMovingParticipant(null);
+		setMoveTargetId('');
+	};
+
+	const handleMove = async () => {
+		if (!movingParticipant || !moveTargetId) return;
+		setIsMoving(true);
+		try {
+			await apiFetch({
+				path: `/fair-audience/v1/event-dates/${eventDateId}/participants/${movingParticipant.participant_id}/move`,
+				method: 'POST',
+				data: { target_event_date_id: Number(moveTargetId) },
+			});
+			handleCloseMoveModal();
+			loadParticipants();
+			showToast(__('Signup moved successfully.', 'fair-audience'));
+		} catch (err) {
+			showToast(
+				__('Error moving signup: ', 'fair-audience') + err.message,
+				'error'
+			);
+		} finally {
+			setIsMoving(false);
 		}
 	};
 
@@ -1220,6 +1281,7 @@ export default function EventAudience({
 									<SelectControl
 										label={__('Role', 'fair-audience')}
 										value={filterRole}
+										__next40pxDefaultSize
 										options={[
 											{
 												label: __(
@@ -1519,6 +1581,22 @@ export default function EventAudience({
 																				'fair-audience'
 																			)}
 																		</Button>
+																		{otherOccurrences.length >
+																			0 && (
+																			<Button
+																				variant="link"
+																				onClick={() =>
+																					handleOpenMoveModal(
+																						p
+																					)
+																				}
+																			>
+																				{__(
+																					'Move',
+																					'fair-audience'
+																				)}
+																			</Button>
+																		)}
 																	</HStack>
 																)}
 															</td>
@@ -2370,6 +2448,55 @@ export default function EventAudience({
 								{isSavingOptions
 									? __('Saving…', 'fair-audience')
 									: __('Save', 'fair-audience')}
+							</Button>
+						</HStack>
+					</VStack>
+				</Modal>
+			)}
+
+			{movingParticipant && (
+				<Modal
+					title={sprintf(
+						/* translators: %s: participant name */
+						__('Move signup — %s', 'fair-audience'),
+						movingParticipant.participant_name
+					)}
+					onRequestClose={handleCloseMoveModal}
+					style={{ maxWidth: '480px', width: '100%' }}
+				>
+					<VStack spacing={3}>
+						<SelectControl
+							label={__('Move to occurrence', 'fair-audience')}
+							value={moveTargetId}
+							options={otherOccurrences.map((s) => ({
+								label: new Date(
+									s.start_datetime.replace(' ', 'T')
+								).toLocaleString(),
+								value: String(s.id),
+							}))}
+							onChange={setMoveTargetId}
+							__nextHasNoMarginBottom
+							__next40pxDefaultSize
+						/>
+						<HStack
+							spacing={3}
+							style={{ justifyContent: 'flex-end' }}
+						>
+							<Button
+								variant="secondary"
+								onClick={handleCloseMoveModal}
+								disabled={isMoving}
+							>
+								{__('Cancel', 'fair-audience')}
+							</Button>
+							<Button
+								variant="primary"
+								onClick={handleMove}
+								disabled={!moveTargetId || isMoving}
+							>
+								{isMoving
+									? __('Moving…', 'fair-audience')
+									: __('Move', 'fair-audience')}
 							</Button>
 						</HStack>
 					</VStack>
