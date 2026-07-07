@@ -267,8 +267,11 @@ if ( $is_valid_post_type ) {
 	// progress for this event date and synthesise a callback state from it,
 	// so the same retry / resume / pending UI shows for someone who navigated
 	// directly back to the event page instead of returning via Mollie's
-	// redirect.
-	if ( null === $callback_tx && class_exists( \FairPaymentsConnector\API\TransactionAPI::class ) ) {
+	// redirect. Skipped when a resume_token is present: someone following the
+	// "continue where you left off" email link should always land on the
+	// friendly resume form, not a stale retry/failed-payment card from an
+	// earlier attempt.
+	if ( null === $callback_tx && empty( $resume_token ) && class_exists( \FairPaymentsConnector\API\TransactionAPI::class ) ) {
 		$owner_participant_id = 0;
 		if ( $participant ) {
 			$owner_participant_id = (int) $participant->id;
