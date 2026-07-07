@@ -3,7 +3,10 @@ import { useState, useEffect, useCallback, useMemo } from '@wordpress/element';
 import apiFetch from '@wordpress/api-fetch';
 import { Card, CardBody } from '@wordpress/components';
 import { DataViews } from '@wordpress/dataviews';
-import { formatSiteLocalDatetime } from 'fair-events-shared';
+import {
+	formatSiteLocalDatetime,
+	getEventDisplayTitle,
+} from 'fair-events-shared';
 
 const { manageEventUrl } = window.fairEventsAllEventsData || {};
 
@@ -67,7 +70,7 @@ export default function AllEvents() {
 				label: __('Name', 'fair-events'),
 				render: ({ item }) => (
 					<a href={`${manageEventUrl}&event_date_id=${item.id}`}>
-						{item.title || __('(no name)', 'fair-events')}
+						{getEventDisplayTitle(item.title)}
 					</a>
 				),
 				enableSorting: true,

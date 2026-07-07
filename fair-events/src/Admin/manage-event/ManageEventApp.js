@@ -39,6 +39,7 @@ import {
 	calculateDuration,
 	isLinkOnlyEvent,
 	formatSiteLocalDatetime,
+	getEventDisplayTitle,
 } from 'fair-events-shared';
 import EventFinance from './EventFinance.js';
 import EventTickets from './EventTickets.js';
@@ -406,7 +407,7 @@ export default function ManageEventApp() {
 	};
 
 	const deleteConfirmMessage = useMemo(() => {
-		const eventTitle = title || __('Untitled Event', 'fair-events');
+		const eventTitle = getEventDisplayTitle(title);
 
 		if (eventDate?.occurrence_type === 'master') {
 			const count = eventDate.generated_occurrences?.length || 0;
@@ -1255,26 +1256,22 @@ export default function ManageEventApp() {
 			</style>
 			<h1>
 				{__('Manage Event', 'fair-events')}
-				{title && (
-					<>
-						{': '}
-						{eventDate.display_url ? (
-							<a
-								href={eventDate.display_url}
-								target="_blank"
-								rel="noreferrer"
-								style={{
-									color: 'inherit',
-									textDecoration: 'none',
-									borderBottom: '1px dotted currentColor',
-								}}
-							>
-								{title}
-							</a>
-						) : (
-							title
-						)}
-					</>
+				{': '}
+				{eventDate.display_url ? (
+					<a
+						href={eventDate.display_url}
+						target="_blank"
+						rel="noreferrer"
+						style={{
+							color: 'inherit',
+							textDecoration: 'none',
+							borderBottom: '1px dotted currentColor',
+						}}
+					>
+						{getEventDisplayTitle(title)}
+					</a>
+				) : (
+					getEventDisplayTitle(title)
 				)}
 			</h1>
 
@@ -1335,7 +1332,7 @@ export default function ManageEventApp() {
 					isBusy={saving}
 					disabled={
 						activeTab === 'event-details'
-							? saving || !title
+							? saving || !title.trim()
 							: saving
 					}
 				>

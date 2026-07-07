@@ -383,7 +383,7 @@ class EventDatesController extends WP_REST_Controller {
 		$link_type      = $request->get_param( 'link_type' ) ?? 'none';
 		$external_url   = $request->get_param( 'external_url' );
 
-		if ( empty( $title ) ) {
+		if ( empty( $title ) || '' === trim( $title ) ) {
 			return new WP_Error(
 				'rest_invalid_title',
 				__( 'Event title is required.', 'fair-events' ),
@@ -721,6 +721,13 @@ class EventDatesController extends WP_REST_Controller {
 
 		$title = $request->get_param( 'title' );
 		if ( null !== $title ) {
+			if ( '' === trim( $title ) ) {
+				return new WP_Error(
+					'rest_invalid_title',
+					__( 'Event title is required.', 'fair-events' ),
+					array( 'status' => 400 )
+				);
+			}
 			$update_data['title'] = $title;
 		}
 
