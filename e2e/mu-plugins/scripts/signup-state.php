@@ -6,10 +6,11 @@
  *   wp eval-file wp-content/mu-plugins/scripts/signup-state.php <email> <event_date_id>
  *
  * Prints a single `E2E_STATE:{json}` line with the participant's marketing
- * profile, the event-participant label, and the mail captured for this buyer,
- * so the spec can assert that consent was recorded only when opted in, that
- * payment flipped the row to signed_up, and that the confirmation email was
- * delivered.
+ * profile, the event-participant label, and the mail captured for this buyer
+ * (including the HTML body, so a spec can pull a link out of it, e.g. a
+ * resume-registration URL), so the spec can assert that consent was recorded
+ * only when opted in, that payment flipped the row to signed_up, and that the
+ * confirmation email was delivered.
  *
  * @package FairEventsE2E
  */
@@ -48,6 +49,7 @@ foreach ( get_option( 'fair_e2e_captured_mail', array() ) as $entry ) {
 		$mail[] = array(
 			'to'      => $entry['to'] ?? '',
 			'subject' => $entry['subject'] ?? '',
+			'body'    => $entry['body'] ?? '',
 		);
 	}
 }
