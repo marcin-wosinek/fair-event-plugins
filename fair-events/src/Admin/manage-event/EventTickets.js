@@ -1316,7 +1316,7 @@ export default function EventTickets({
 													options.length > 0 && (
 														<th>
 															{__(
-																'Min. activities',
+																'Min. add-ons',
 																'fair-events'
 															)}
 														</th>
@@ -1575,7 +1575,7 @@ export default function EventTickets({
 																		)
 																	}
 																	help={__(
-																		'Only raises the event-wide minimum for this ticket type. Leave 0 to inherit.',
+																		'Only raises the event-wide minimum add-ons for this ticket type. Leave 0 to inherit.',
 																		'fair-events'
 																	)}
 																/>
@@ -1925,17 +1925,17 @@ export default function EventTickets({
 			<Card>
 				<Panel>
 					<PanelBody
-						title={__('Activity Options', 'fair-events')}
+						title={__('Add-ons', 'fair-events')}
 						initialOpen={false}
 					>
 						<VStack spacing={3}>
 							<TextControl
 								label={__(
-									'Minimum number of activities',
+									'Minimum number of add-ons',
 									'fair-events'
 								)}
 								help={__(
-									'Participants must select at least this many activities to sign up. Set to 0 to disable.',
+									'Participants must select at least this many add-ons to sign up. Set to 0 to disable.',
 									'fair-events'
 								)}
 								type="number"
@@ -1957,7 +1957,7 @@ export default function EventTickets({
 							/>
 							<p>
 								{__(
-									'Add selectable activity options (checkboxes) shown to participants at signup. Each option has its own price added on top of the base price.',
+									'Add selectable add-ons (checkboxes) shown to participants at signup. Each add-on has its own price added on top of the base price.',
 									'fair-events'
 								)}
 							</p>
@@ -2026,7 +2026,7 @@ export default function EventTickets({
 																	)}
 																	hideLabelFromVision
 																	placeholder={__(
-																		'Activity name',
+																		'Add-on name',
 																		'fair-events'
 																	)}
 																	value={
@@ -2360,7 +2360,11 @@ export default function EventTickets({
 						<VStack spacing={4}>
 							<CheckboxControl
 								label={__(
-									'Continues pricing period',
+									'Chain sale periods together',
+									'fair-events'
+								)}
+								help={__(
+									'Each period starts when the previous one ends, so there are no gaps.',
 									'fair-events'
 								)}
 								checked={settings.continues_pricing_period}
@@ -2373,7 +2377,11 @@ export default function EventTickets({
 							/>
 							<CheckboxControl
 								label={__(
-									'Unlimited tickets in pricing period',
+									'No ticket limit per sale period',
+									'fair-events'
+								)}
+								help={__(
+									'Allow selling tickets without a per-period cap during any sale period.',
 									'fair-events'
 								)}
 								checked={
@@ -2423,11 +2431,11 @@ export default function EventTickets({
 							/>
 							<CheckboxControl
 								label={__(
-									'Per-ticket-type minimum activities',
+									'Per-ticket-type minimum add-ons',
 									'fair-events'
 								)}
 								help={__(
-									'Show a Min. activities input on each ticket type to require more activities than the event-wide minimum (it only ever raises it). When off, every ticket type uses the event-wide minimum.',
+									'Show a Min. add-ons input on each ticket type to require more add-ons than the event-wide minimum (it only ever raises it). When off, every ticket type uses the event-wide minimum.',
 									'fair-events'
 								)}
 								checked={
@@ -2460,11 +2468,11 @@ export default function EventTickets({
 							/>
 							<CheckboxControl
 								label={__(
-									'Activity collaborator discount',
+									'Add-on collaborator discount',
 									'fair-events'
 								)}
 								help={__(
-									'Allow a discounted price on each activity option for participants invited by a collaborator linked to that activity. Adds a second price column to the activity options table and enables Manage Invitations.',
+									'Allow a discounted price on each add-on for participants invited by a collaborator linked to that add-on. Adds a second price column to the add-ons table and enables Manage Invitations.',
 									'fair-events'
 								)}
 								checked={
@@ -2478,9 +2486,12 @@ export default function EventTickets({
 								}
 							/>
 							<CheckboxControl
-								label={__('Per-period pricing', 'fair-events')}
+								label={__(
+									'Price add-ons per sale period',
+									'fair-events'
+								)}
 								help={__(
-									'Price every activity option per sale period instead of a single flat price. The Pricing column in the activity options table becomes one input per sale period. Requires sale periods to be defined.',
+									'Price every add-on per sale period instead of a single flat price. The Pricing column in the add-ons table becomes one input per sale period. Requires sale periods to be defined.',
 									'fair-events'
 								)}
 								checked={settings.activity_period_pricing}

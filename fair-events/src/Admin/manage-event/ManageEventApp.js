@@ -1152,7 +1152,7 @@ export default function ManageEventApp() {
 	const renderLinksTab = () => (
 		<Card className="fair-events-event-details-card">
 			<CardHeader>
-				<h2>{__('Link Options', 'fair-events')}</h2>
+				<h2>{__('Where does this event link to?', 'fair-events')}</h2>
 			</CardHeader>
 			<CardBody>
 				<VStack spacing={4}>
@@ -1223,25 +1223,26 @@ export default function ManageEventApp() {
 						<>
 							<RadioControl
 								label={__('Link type', 'fair-events')}
+								hideLabelFromVision
 								selected={linkType}
 								options={[
 									{
 										label: __(
-											'WordPress Post (entry)',
+											'A page on this site',
 											'fair-events'
 										),
 										value: 'post',
 									},
 									{
 										label: __(
-											'External URL',
+											'An external website',
 											'fair-events'
 										),
 										value: 'external',
 									},
 									{
 										label: __(
-											'Event placeholder',
+											'Nowhere — show details only',
 											'fair-events'
 										),
 										value: 'none',
