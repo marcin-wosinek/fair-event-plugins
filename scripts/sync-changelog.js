@@ -28,11 +28,8 @@ const plugins = [
 		changelogPath: 'fair-audience/CHANGELOG.md',
 		readmeFiles: ['fair-audience/readme.txt'],
 	},
-	{
-		name: 'fair-timetable',
-		changelogPath: 'fair-timetable/CHANGELOG.md',
-		readmeFiles: ['fair-timetable/readme.txt'],
-	},
+	// fair-timetable intentionally omitted: its readme.txt links to the
+	// CHANGELOG.md on GitHub instead of inlining the changelog.
 	{
 		name: 'fair-finance',
 		changelogPath: 'fair-finance/CHANGELOG.md',
