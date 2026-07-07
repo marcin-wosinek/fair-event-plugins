@@ -11,15 +11,15 @@ import {
 const { manageEventUrl } = window.fairEventsAllEventsData || {};
 
 const LINK_TYPE_OPTIONS = [
-	{ value: 'post', label: __('Post', 'fair-events') },
+	{ value: 'post', label: __('Page', 'fair-events') },
 	{ value: 'external', label: __('External', 'fair-events') },
 	{ value: 'none', label: __('None', 'fair-events') },
 ];
 
 const OCCURRENCE_TYPE_OPTIONS = [
-	{ value: 'single', label: __('Single', 'fair-events') },
-	{ value: 'master', label: __('Master', 'fair-events') },
-	{ value: 'generated', label: __('Generated', 'fair-events') },
+	{ value: 'single', label: __('Single date', 'fair-events') },
+	{ value: 'master', label: __('Series', 'fair-events') },
+	{ value: 'generated', label: __('Series date', 'fair-events') },
 ];
 
 const DEFAULT_VIEW = {
@@ -140,7 +140,7 @@ export default function AllEvents() {
 			},
 			{
 				id: 'occurrence_type',
-				label: __('Occurrence', 'fair-events'),
+				label: __('Type', 'fair-events'),
 				render: ({ item }) =>
 					getOccurrenceTypeLabel(item.occurrence_type),
 				enableSorting: true,

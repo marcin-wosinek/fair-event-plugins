@@ -120,7 +120,7 @@ msgstr "Pago de %1$s %2$s"
 #: src/API/TransactionsController.php:271
 #: src/API/TransactionsController.php:291
 #: src/API/TransactionsController.php:423
-#: src/Models/Transaction.php:495
+#: src/Models/Transaction.php:517
 msgid "Transaction not found."
 msgstr "Transacción no encontrada."
 
@@ -150,40 +150,40 @@ msgstr "Error al actualizar la transacción con los detalles del pago."
 msgid "This transaction has no Mollie payment ID to sync."
 msgstr "Esta transacción no tiene un ID de pago de Mollie para sincronizar."
 
-#: src/API/TransactionAPI.php:542
+#: src/API/TransactionAPI.php:547
 msgid "Line items must be an array."
 msgstr "Los elementos de línea deben ser una matriz."
 
-#: src/API/TransactionAPI.php:550
+#: src/API/TransactionAPI.php:555
 msgid "At least one line item is required."
 msgstr "Se requiere al menos un elemento de línea."
 
 #. translators: %d: line item index
-#: src/API/TransactionAPI.php:562
+#: src/API/TransactionAPI.php:567
 #, php-format
 msgid "Line item at index %d must be an array."
 msgstr "El elemento de línea en el índice %d debe ser un array."
 
 #. translators: %d: line item index
-#: src/API/TransactionAPI.php:574
+#: src/API/TransactionAPI.php:579
 #, php-format
 msgid "Line item at index %d is missing required \"name\" field."
 msgstr "El elemento de línea en el índice %d no tiene el campo requerido «name»."
 
 #. translators: %d: line item index
-#: src/API/TransactionAPI.php:586
+#: src/API/TransactionAPI.php:591
 #, php-format
 msgid "Line item at index %d has invalid \"amount\" field."
 msgstr "El elemento de línea en el índice %d tiene un campo «amount» inválido."
 
 #. translators: %d: line item index
-#: src/API/TransactionAPI.php:598
+#: src/API/TransactionAPI.php:603
 #, php-format
 msgid "Line item at index %d must have positive amount."
 msgstr "El elemento de línea en el índice %d debe tener una cantidad positiva."
 
 #. translators: %d: line item index
-#: src/API/TransactionAPI.php:612
+#: src/API/TransactionAPI.php:617
 #, php-format
 msgid "Line item at index %d must have positive quantity."
 msgstr "El elemento de línea en el índice %d debe tener una cantidad positiva."
@@ -214,28 +214,28 @@ msgstr "Falta el ID de pago en el webhook."
 msgid "Transaction not found in database."
 msgstr "Transacción no encontrada en la base de datos."
 
-#: src/API/WebhookEndpoint.php:169
+#: src/API/WebhookEndpoint.php:196
 msgid "Failed to update transaction status."
 msgstr "No se pudo actualizar el estado de la transacción."
 
-#: src/blocks/simple-payment/render.php:68
+#: src/blocks/simple-payment/render.php:72
 msgid "Continue"
 msgstr "Continuar"
 
-#: src/blocks/simple-payment/render.php:61
+#: src/blocks/simple-payment/render.php:65
 msgid "Thank you! Your payment is being processed."
 msgstr "¡Gracias! Tu pago se está procesando."
 
-#: src/blocks/simple-payment/render.php:92
+#: src/blocks/simple-payment/render.php:96
 #: src/blocks/simple-payment/index.js:89
 msgid "Pay Now"
 msgstr "Pagar ahora"
 
-#: src/blocks/simple-payment/render.php:95
+#: src/blocks/simple-payment/render.php:99
 msgid "Processing payment..."
 msgstr "Procesando pago..."
 
-#: src/blocks/simple-payment/render.php:100
+#: src/blocks/simple-payment/render.php:104
 msgid "Payment gateway is not configured. Please configure your Mollie API keys."
 msgstr "La pasarela de pago no está configurada. Por favor, configura tus claves de API de Mollie."
 
@@ -255,12 +255,12 @@ msgstr "Traducciones incluidas"
 msgid "Load .mo/.json files shipped with the plugin instead of relying on WordPress.org language packs. Useful while a locale is below the 90% threshold on translate.wordpress.org or for in-progress strings."
 msgstr "Carga archivos .mo/.json incluidos en el plugin en lugar de depender de los paquetes de idiomas de WordPress.org. Útil cuando una región está por debajo del umbral del 90% en translate.wordpress.org o para cadenas en progreso."
 
-#: src/Models/Transaction.php:503
+#: src/Models/Transaction.php:525
 msgid "Payment has already been initiated for this transaction. Create a new transaction to retry."
 msgstr "El pago ya ha sido iniciado para esta transacción. Crea una nueva transacción para reintentar."
 
 #. translators: %s: current transaction status
-#: src/Models/Transaction.php:513
+#: src/Models/Transaction.php:535
 #, php-format
 msgid "Transaction status must be \"draft\" to initiate payment. Current status: %s"
 msgstr "El estado de la transacción debe ser «borrador» para iniciar el pago. Estado actual: %s"
@@ -782,10 +782,6 @@ msgstr "Actualizado"
 msgid "Description"
 msgstr "Descripción"
 
-#: src/Admin/transaction/TransactionPage.js:793
-msgid "Metadata"
-msgstr "Metadatos"
-
 #: src/Admin/transaction/TransactionPage.js:821
 msgid "Line Items"
 msgstr "Artículos de línea"
@@ -1044,15 +1040,15 @@ msgstr "Bloque no encontrado."
 msgid "Amount does not match block configuration."
 msgstr "El importe no coincide con la configuración del bloque."
 
-#: src/blocks/simple-payment/render.php:58
+#: src/blocks/simple-payment/render.php:62
 msgid "Thank you! Your payment has been received and confirmed."
 msgstr "¡Gracias! Tu pago ha sido recibido y confirmado."
 
-#: src/blocks/simple-payment/render.php:64
+#: src/blocks/simple-payment/render.php:68
 msgid "Your payment was not completed. Please try again."
 msgstr "Tu pago no se completó. Intenta de nuevo."
 
-#: src/blocks/simple-payment/render.php:71
+#: src/blocks/simple-payment/render.php:75
 msgid "Try Again"
 msgstr "Intentar de nuevo"
 
@@ -1099,4 +1095,8 @@ msgstr "¿Necesitas ayuda?"
 #: src/blocks/simple-payment/view.js:175
 msgid "Failed to create payment"
 msgstr "Error al crear el pago"
+
+#: src/Admin/transaction/TransactionPage.js:793
+msgid "Details"
+msgstr "Detalles"
 

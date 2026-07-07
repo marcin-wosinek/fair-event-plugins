@@ -69,7 +69,7 @@ msgstr "Échec du test de connexion : %s"
 #: src/API/TransactionsController.php:271
 #: src/API/TransactionsController.php:291
 #: src/API/TransactionsController.php:423
-#: src/Models/Transaction.php:495
+#: src/Models/Transaction.php:517
 msgid "Transaction not found."
 msgstr "Transaction non trouvée."
 
@@ -109,40 +109,40 @@ msgstr "Paiement n°%d"
 msgid "Failed to update transaction with payment details."
 msgstr "Échec de la mise à jour de la transaction avec les détails de paiement."
 
-#: src/API/TransactionAPI.php:542
+#: src/API/TransactionAPI.php:547
 msgid "Line items must be an array."
 msgstr "Les articles de ligne doivent être un tableau."
 
-#: src/API/TransactionAPI.php:550
+#: src/API/TransactionAPI.php:555
 msgid "At least one line item is required."
 msgstr "Au moins un article de ligne est requis."
 
 #. translators: %d: line item index
-#: src/API/TransactionAPI.php:562
+#: src/API/TransactionAPI.php:567
 #, php-format
 msgid "Line item at index %d must be an array."
 msgstr "L'article de ligne à l'index %d doit être un tableau."
 
 #. translators: %d: line item index
-#: src/API/TransactionAPI.php:574
+#: src/API/TransactionAPI.php:579
 #, php-format
 msgid "Line item at index %d is missing required \"name\" field."
 msgstr "L'article de ligne à l'index %d est manquant du champ obligatoire « name »."
 
 #. translators: %d: line item index
-#: src/API/TransactionAPI.php:586
+#: src/API/TransactionAPI.php:591
 #, php-format
 msgid "Line item at index %d has invalid \"amount\" field."
 msgstr "L'élément de ligne à l'index %d a un champ « montant » invalide."
 
 #. translators: %d: line item index
-#: src/API/TransactionAPI.php:598
+#: src/API/TransactionAPI.php:603
 #, php-format
 msgid "Line item at index %d must have positive amount."
 msgstr "L'élément de ligne à l'index %d doit avoir un montant positif."
 
 #. translators: %d: line item index
-#: src/API/TransactionAPI.php:612
+#: src/API/TransactionAPI.php:617
 #, php-format
 msgid "Line item at index %d must have positive quantity."
 msgstr "L'élément de ligne à l'index %d doit avoir une quantité positive."
@@ -155,37 +155,37 @@ msgstr "L'ID de paiement est manquant du webhook."
 msgid "Transaction not found in database."
 msgstr "Transaction introuvable dans la base de données."
 
-#: src/API/WebhookEndpoint.php:169
+#: src/API/WebhookEndpoint.php:196
 msgid "Failed to update transaction status."
 msgstr "Échec de la mise à jour du statut de la transaction."
 
-#: src/blocks/simple-payment/render.php:68
+#: src/blocks/simple-payment/render.php:72
 msgid "Continue"
 msgstr "Continuer"
 
-#: src/blocks/simple-payment/render.php:61
+#: src/blocks/simple-payment/render.php:65
 msgid "Thank you! Your payment is being processed."
 msgstr "Merci ! Votre paiement est en cours de traitement."
 
-#: src/blocks/simple-payment/render.php:92
+#: src/blocks/simple-payment/render.php:96
 #: src/blocks/simple-payment/index.js:89
 msgid "Pay Now"
 msgstr "Payer maintenant"
 
-#: src/blocks/simple-payment/render.php:95
+#: src/blocks/simple-payment/render.php:99
 msgid "Processing payment..."
 msgstr "Traitement du paiement en cours..."
 
-#: src/blocks/simple-payment/render.php:100
+#: src/blocks/simple-payment/render.php:104
 msgid "Payment gateway is not configured. Please configure your Mollie API keys."
 msgstr "La passerelle de paiement n'est pas configurée. Veuillez configurer vos clés API Mollie."
 
-#: src/Models/Transaction.php:503
+#: src/Models/Transaction.php:525
 msgid "Payment has already been initiated for this transaction. Create a new transaction to retry."
 msgstr "Un paiement a déjà été initié pour cette transaction. Créez une nouvelle transaction pour réessayer."
 
 #. translators: %s: current transaction status
-#: src/Models/Transaction.php:513
+#: src/Models/Transaction.php:535
 #, php-format
 msgid "Transaction status must be \"draft\" to initiate payment. Current status: %s"
 msgstr "Le statut de la transaction doit être « brouillon » pour initier le paiement. Statut actuel : %s"
@@ -530,10 +530,6 @@ msgstr "Paiement Initié"
 #: src/Admin/transaction/TransactionPage.js:764
 msgid "Updated"
 msgstr "Mis à jour"
-
-#: src/Admin/transaction/TransactionPage.js:793
-msgid "Metadata"
-msgstr "Métadonnées"
 
 #: src/Admin/transaction/TransactionPage.js:821
 msgid "Line Items"
@@ -1045,15 +1041,15 @@ msgstr "Bloc non trouvé."
 msgid "Amount does not match block configuration."
 msgstr "Le montant ne correspond pas à la configuration du bloc."
 
-#: src/blocks/simple-payment/render.php:58
+#: src/blocks/simple-payment/render.php:62
 msgid "Thank you! Your payment has been received and confirmed."
 msgstr "Merci ! Votre paiement a été reçu et confirmé."
 
-#: src/blocks/simple-payment/render.php:64
+#: src/blocks/simple-payment/render.php:68
 msgid "Your payment was not completed. Please try again."
 msgstr "Votre paiement n'a pas été complété. Veuillez réessayer."
 
-#: src/blocks/simple-payment/render.php:71
+#: src/blocks/simple-payment/render.php:75
 msgid "Try Again"
 msgstr "Réessayer"
 
@@ -1100,4 +1096,8 @@ msgstr "Besoin d'aide ?"
 #: src/blocks/simple-payment/view.js:175
 msgid "Failed to create payment"
 msgstr "Impossible de créer le paiement"
+
+#: src/Admin/transaction/TransactionPage.js:793
+msgid "Details"
+msgstr "Détails"
 

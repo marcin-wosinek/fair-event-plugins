@@ -790,7 +790,7 @@ const TransactionPage = () => {
 						<Card>
 							<CardHeader>
 								<Heading level={4}>
-									{__('Metadata', 'fair-payments-connector')}
+									{__('Details', 'fair-payments-connector')}
 								</Heading>
 							</CardHeader>
 							<CardBody>
