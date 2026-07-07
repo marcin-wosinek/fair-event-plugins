@@ -8,6 +8,7 @@
 
 import { Button } from '@wordpress/components';
 import { __, sprintf } from '@wordpress/i18n';
+import { getEventDisplayTitle } from 'fair-events-shared';
 
 const MAX_VISIBLE_EVENTS = 3;
 
@@ -153,9 +154,10 @@ export default function DayCell({
 								: 'dashicons-editor-unlink';
 						const categoryNames =
 							event.categories?.map((c) => c.name) || [];
+						const displayTitle = getEventDisplayTitle(event.title);
 						const tooltip = categoryNames.length
-							? `${event.title}\n${categoryNames.join(', ')}`
-							: event.title;
+							? `${displayTitle}\n${categoryNames.join(', ')}`
+							: displayTitle;
 						const eventUrl = getEventEditUrl(event, manageEventUrl);
 						return (
 							<div
@@ -171,7 +173,7 @@ export default function DayCell({
 										<span
 											className={`dashicons ${linkTypeIcon} fair-events-calendar-event-icon`}
 										/>
-										{event.title}
+										{displayTitle}
 										{categoryNames.length > 0 && (
 											<span className="fair-events-calendar-event-categories">
 												{categoryNames.join(', ')}
@@ -186,7 +188,7 @@ export default function DayCell({
 										<span
 											className={`dashicons ${linkTypeIcon} fair-events-calendar-event-icon`}
 										/>
-										{event.title}
+										{displayTitle}
 										{categoryNames.length > 0 && (
 											<span className="fair-events-calendar-event-categories">
 												{categoryNames.join(', ')}

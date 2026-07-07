@@ -44,6 +44,12 @@ export default function QuickEventModal({ date, onClose, onSuccess }) {
 
 	const handleSubmit = async (e) => {
 		e.preventDefault();
+
+		if (!title.trim()) {
+			setError(__('Title is required.', 'fair-events'));
+			return;
+		}
+
 		setIsSaving(true);
 		setError(null);
 
@@ -185,7 +191,7 @@ export default function QuickEventModal({ date, onClose, onSuccess }) {
 							variant="primary"
 							type="submit"
 							isBusy={isSaving}
-							disabled={isSaving || !title}
+							disabled={isSaving || !title.trim()}
 						>
 							{__('Create Event', 'fair-events')}
 						</Button>

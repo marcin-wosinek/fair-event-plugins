@@ -525,3 +525,71 @@ test.describe('EventDatesController — impact classification (PR 2)', () => {
 		expect(remaining).toHaveLength(2);
 	});
 });
+
+test.describe('EventDatesController — title validation', () => {
+	let api;
+	let eventDateId;
+
+	test.beforeAll(async () => {
+		api = await request.newContext({ baseURL: BASE_URL });
+	});
+
+	test.afterEach(async () => {
+		if (eventDateId) {
+			await api.delete(
+				`/wp-json/fair-events/v1/event-dates/${eventDateId}`,
+				{ headers: adminHeaders }
+			);
+			eventDateId = null;
+		}
+	});
+
+	test('rejects create with an empty title', async () => {
+		const res = await api.post('/wp-json/fair-events/v1/event-dates', {
+			headers: adminHeaders,
+			data: {
+				title: '',
+				start_datetime: '2030-01-01 10:00:00',
+				end_datetime: '2030-01-01 12:00:00',
+			},
+		});
+		expect(res.status()).toBe(400);
+	});
+
+	test('rejects create with a whitespace-only title', async () => {
+		const res = await api.post('/wp-json/fair-events/v1/event-dates', {
+			headers: adminHeaders,
+			data: {
+				title: '   ',
+				start_datetime: '2030-01-01 10:00:00',
+				end_datetime: '2030-01-01 12:00:00',
+			},
+		});
+		expect(res.status()).toBe(400);
+	});
+
+	test('rejects update that clears the title', async () => {
+		const createRes = await api.post(
+			'/wp-json/fair-events/v1/event-dates',
+			{
+				headers: adminHeaders,
+				data: {
+					title: `Title Validation ${Date.now()}`,
+					start_datetime: '2030-01-01 10:00:00',
+					end_datetime: '2030-01-01 12:00:00',
+				},
+			}
+		);
+		expect(createRes.ok()).toBeTruthy();
+		eventDateId = (await createRes.json()).id;
+
+		const updateRes = await api.put(
+			`/wp-json/fair-events/v1/event-dates/${eventDateId}`,
+			{
+				headers: adminHeaders,
+				data: { title: '   ' },
+			}
+		);
+		expect(updateRes.status()).toBe(400);
+	});
+});
