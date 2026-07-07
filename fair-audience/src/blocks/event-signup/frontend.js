@@ -755,6 +755,7 @@ const SCROLL_RESTORE_KEY = 'fairAudienceOccurrenceScrollY';
 		// everything, then let them hit the (already-wired) sign up button.
 		const resumeToken = block.dataset.resumeToken || '';
 		if (resumeToken) {
+			block.scrollIntoView({ behavior: 'smooth', block: 'start' });
 			resumeStashedSignup(block, resumeToken);
 		}
 	}
