@@ -148,10 +148,37 @@ class WebhookEndpoint extends WP_REST_Controller {
 			);
 			$payment = $handler->get_payment( $mollie_payment_id, $options );
 
-			// Update transaction status.
-			$updated = Transaction::update_status( $mollie_payment_id, $payment->status );
+			// Update transaction status. Compare-and-swap against the status we just
+			// read, so a concurrent sync (e.g. triggered by the customer's browser
+			// reloading the payment page) can't both win and re-fire status hooks.
+			$updated = Transaction::update_status( $mollie_payment_id, $payment->status, $transaction->status );
 
 			if ( ! $updated ) {
+				$current = Transaction::get_by_mollie_id( $mollie_payment_id );
+
+				if ( $current && $current->status === $payment->status ) {
+					// Another process already made this exact transition — nothing left to do.
+					$logger->log(
+						'webhook_skipped',
+						array(
+							'level'          => 'info',
+							'transaction_id' => (int) $transaction->id,
+							'message'        => 'Webhook skipped — status already updated by a concurrent request',
+							'context'        => array(
+								'mollie_payment_id' => $mollie_payment_id,
+								'status'            => $payment->status,
+							),
+						)
+					);
+					return new WP_REST_Response(
+						array(
+							'success' => true,
+							'status'  => $payment->status,
+						),
+						200
+					);
+				}
+
 				$logger->log(
 					'webhook_failed',
 					array(
