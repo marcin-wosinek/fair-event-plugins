@@ -599,6 +599,41 @@ class EventParticipantRepository {
 	}
 
 	/**
+	 * Move a participant's signup from one event date to another.
+	 *
+	 * Re-points the link row's event_date_id in place, preserving label,
+	 * attended_at, ticket options, admin comment, and payment fields (they
+	 * reference the row id, not the event_date_id).
+	 *
+	 * @param int $event_date_id        Source event date ID.
+	 * @param int $participant_id       Participant ID.
+	 * @param int $target_event_date_id Target event date ID.
+	 * @return string 'success', 'not_found' (no source link), or 'conflict' (target already has this participant).
+	 */
+	public function move_to_event_date( $event_date_id, $participant_id, $target_event_date_id ) {
+		global $wpdb;
+
+		$relationship = $this->get_by_event_date_and_participant( $event_date_id, $participant_id );
+		if ( ! $relationship ) {
+			return 'not_found';
+		}
+
+		if ( $this->get_by_event_date_and_participant( $target_event_date_id, $participant_id ) ) {
+			return 'conflict';
+		}
+
+		$result = $wpdb->update(
+			$this->get_table_name(),
+			array( 'event_date_id' => $target_event_date_id ),
+			array( 'id' => $relationship->id ),
+			array( '%d' ),
+			array( '%d' )
+		);
+
+		return false !== $result ? 'success' : 'not_found';
+	}
+
+	/**
 	 * Get counts by label for an event date.
 	 *
 	 * @param int $event_date_id Event date ID.
