@@ -2,43 +2,9 @@
 
 This document defines security standards and best practices for implementing WordPress REST API endpoints in Fair Event Plugins.
 
-## Security Audit Summary
-
-**Status**: ✅ **EXCELLENT** - See [NONCE_AUDIT.md](./NONCE_AUDIT.md) for comprehensive analysis
-
-### Nonce and Authentication Audit
-
-✅ **NO manual nonce verification** found (correct - WordPress handles this automatically)
-✅ **All endpoints have proper permission callbacks**
-✅ **Consistent security patterns** across all plugins
-✅ **Well-documented security decisions**
-
-**Full audit report**: [NONCE_AUDIT.md](./NONCE_AUDIT.md)
-
-### Enhancement TODOs
-
-| Plugin | Endpoint | Enhancement | Priority |
-|--------|----------|-------------|----------|
-| fair-payments-connector | `/payments` | Differentiate logged-in vs anonymous user behavior | 🟡 **TODO** |
-| fair-payments-connector | `/webhook` | Add Mollie webhook signature verification | 🟡 **MEDIUM** |
-| **ALL plugins** | All endpoints | **Nonce verification handled automatically by WordPress when using `apiFetch()`** | ✅ **OK** |
-
-### WP_REST_Controller Compliance
-
-✅ **ALL plugins**: All REST API controllers now extend `WP_REST_Controller`
-✅ **ALL plugins**: Use `WP_REST_Server` constants (READABLE, CREATABLE, EDITABLE, DELETABLE)
-✅ **ALL plugins**: Use protected `$namespace` property instead of constants
-✅ **ALL plugins**: Follow WordPress REST API best practices
-
-### Good Patterns Found
-
-✅ **fair-rsvp**: Uses `WP_REST_Controller` base class with custom permission callbacks
-✅ **fair-membership**: Consistent `check_permission()` method checking `manage_options`
-✅ **fair-rsvp**: Checks `is_user_logged_in()` for user-specific endpoints
-✅ **fair-registration**: Full implementation of collection and resource patterns
-✅ **fair-payments-connector**: Proper separation of Payment and Webhook endpoints
-
----
+**Canonical live examples**: `fair-events/src/API/` and `fair-audience/src/API/`
+— when this doc and real code disagree on style details, follow the code and
+fix the doc.
 
 ## File Organization and Project Structure
 
@@ -129,18 +95,6 @@ class PluginNameController extends WP_REST_Controller {
 1. **Case sensitivity**: Linux (production) is case-sensitive, macOS (development) is not. Uppercase "API" is a common acronym convention that avoids confusion
 2. **Consistency**: Matches other namespace patterns in WordPress ecosystem
 3. **PSR-4 Autoloading**: Clear mapping between namespace `PluginName\API` and directory `src/API/`
-4. **Existing adoption**: Already used by fair-payments-connector, fair-membership, fair-user-import
-
-### Current Plugin Status
-
-| Plugin | Directory | Status |
-|--------|-----------|--------|
-| fair-payments-connector | `src/API/` | ✅ Compliant |
-| fair-membership | `src/API/` | ✅ Compliant |
-| fair-user-import | `src/API/` | ✅ Compliant |
-| fair-registration | `src/API/` | ✅ Compliant |
-| fair-rsvp | `src/API/` | ✅ Compliant |
-| fair-events | `src/API/` | ✅ Compliant |
 
 ---
 
@@ -153,6 +107,7 @@ WordPress REST API uses cookie authentication with nonce verification automatica
 **How WordPress REST API Nonce Works:**
 
 When using `apiFetch()` from `@wordpress/api-fetch`:
+
 ```javascript
 // Frontend automatically includes nonce in headers
 await apiFetch({
@@ -163,13 +118,12 @@ await apiFetch({
 ```
 
 WordPress automatically:
+
 1. Checks the `X-WP-Nonce` header
 2. Validates the nonce matches the current user session
 3. Rejects requests with invalid/missing nonces (returns 401)
 
 **Your responsibility:** Set appropriate `permission_callback` to enforce authentication.
-
-**For a comprehensive explanation of how WordPress REST API automatic nonce verification works, see [WORDPRESS_REST_NONCE_EXPLAINED.md](./WORDPRESS_REST_NONCE_EXPLAINED.md).**
 
 ### 2. MUST Use Appropriate Permission Callbacks
 
@@ -194,6 +148,7 @@ WordPress automatically:
 ### 3. Permission Callback Patterns
 
 #### Pattern 1: Public Endpoint (Use Sparingly)
+
 ```php
 // Only for truly public endpoints (webhooks from external services, public data)
 'permission_callback' => '__return_true'
@@ -209,6 +164,7 @@ public function handle_webhook( $request ) {
 ```
 
 #### Pattern 2: Logged-In Users Only
+
 ```php
 'permission_callback' => function() {
     return is_user_logged_in();
@@ -230,6 +186,7 @@ public function require_logged_in( $request ) {
 ```
 
 #### Pattern 3: Admin/Editor Only
+
 ```php
 'permission_callback' => function() {
     return current_user_can( 'manage_options' );
@@ -242,6 +199,7 @@ public function require_logged_in( $request ) {
 ```
 
 #### Pattern 4: Resource Owner Only
+
 ```php
 'permission_callback' => array( $this, 'check_resource_owner' )
 
@@ -268,55 +226,11 @@ public function check_resource_owner( $request ) {
 
 ### 4. MUST Extend WP_REST_Controller
 
-All REST API controllers SHOULD extend `WP_REST_Controller`:
-
-```php
-<?php
-namespace PluginName\API;
-
-use WP_REST_Controller;
-use WP_REST_Server;
-use WP_REST_Request;
-use WP_REST_Response;
-use WP_Error;
-
-class MyController extends WP_REST_Controller {
-
-    protected $namespace = 'plugin-name/v1';
-    protected $rest_base = 'items';
-
-    public function register_routes() {
-        register_rest_route(
-            $this->namespace,
-            '/' . $this->rest_base,
-            array(
-                array(
-                    'methods'             => WP_REST_Server::READABLE,
-                    'callback'            => array( $this, 'get_items' ),
-                    'permission_callback' => array( $this, 'get_items_permissions_check' ),
-                    'args'                => $this->get_collection_params(),
-                ),
-                array(
-                    'methods'             => WP_REST_Server::CREATABLE,
-                    'callback'            => array( $this, 'create_item' ),
-                    'permission_callback' => array( $this, 'create_item_permissions_check' ),
-                    'args'                => $this->get_endpoint_args_for_item_schema( WP_REST_Server::CREATABLE ),
-                ),
-            )
-        );
-    }
-
-    public function get_items_permissions_check( $request ) {
-        return is_user_logged_in();
-    }
-
-    public function create_item_permissions_check( $request ) {
-        return current_user_can( 'edit_posts' );
-    }
-
-    // ... implement methods
-}
-```
+All REST API controllers extend `WP_REST_Controller`, declare protected
+`$namespace` (`plugin-name/v1`) and `$rest_base` properties, and use
+`WP_REST_Server` method constants (READABLE, CREATABLE, EDITABLE, DELETABLE).
+See the [Standard Endpoint Implementation Template](#standard-endpoint-implementation-template)
+below — that template is the single canonical one for this repo.
 
 ### 5. MUST Validate and Sanitize Inputs
 
@@ -613,72 +527,6 @@ class ResourceController extends WP_REST_Controller {
 
 ---
 
-## Action Items: Enhancement TODOs
-
-### HIGH Priority
-
-1. **fair-payments-connector/PaymentEndpoint.php:69** - Differentiate logged-in vs anonymous users
-   ```php
-   // Current: Treats all users the same
-   public function create_payment( WP_REST_Request $request ) {
-       // ...
-       $user_id = get_current_user_id(); // Could be 0 for anonymous
-   }
-
-   // TODO: Add different behavior for logged-in vs anonymous users
-   // - Logged-in users: Associate payment with user account, apply member benefits
-   // - Anonymous users: Allow payment but require email, no member benefits
-   // Example:
-   public function create_payment( WP_REST_Request $request ) {
-       $user_id = get_current_user_id();
-
-       if ( $user_id ) {
-           // Logged-in user: Apply member discounts, track in user profile
-           $amount = $this->apply_member_discount( $amount, $user_id );
-           // Store user-specific metadata
-       } else {
-           // Anonymous user: Require email, no discounts
-           $email = $request->get_param( 'email' );
-           if ( empty( $email ) || ! is_email( $email ) ) {
-               return new WP_Error( 'email_required', 'Email required for anonymous payments' );
-           }
-       }
-   }
-   ```
-
-2. **fair-registration/RegistrationsController.php:204-208** - Document nonce handling
-   ```php
-   // Current:
-   public function create_registration_permissions_check( $request ) {
-       // Allow anyone to create registrations (public endpoint)
-       // In production, you might want to add nonce verification or other security measures
-       return true;
-   }
-
-   // Update comment to:
-   public function create_registration_permissions_check( $request ) {
-       // Public endpoint - allows anonymous registrations
-       // Nonce verification is automatically handled by WordPress REST API when using apiFetch()
-       // Frontend MUST use apiFetch() from @wordpress/api-fetch for nonce to be sent
-       return true;
-   }
-   ```
-
-### MEDIUM Priority
-
-3. **fair-payments-connector/WebhookEndpoint.php** - Add webhook signature verification
-   - Research Mollie webhook signature verification
-   - Implement signature validation in `handle_webhook()`
-   - See: https://docs.mollie.com/overview/webhooks
-
-### Documentation Tasks
-
-4. Update CLAUDE.md to reference this document
-5. Add security checklist to REST API integration section
-6. Create code review checklist for pull requests
-
----
-
 ## Testing REST API Security
 
 ### Manual Testing
@@ -700,21 +548,22 @@ curl -X POST http://localhost:8080/wp-json/fair-payments-connector/v1/payments \
 
 ### Automated Testing
 
-See [REST_API_USAGE.md#testing-strategy](./REST_API_USAGE.md#testing-strategy-for-rest-api-calls) for PHP integration tests that can verify:
-- Permission callbacks work correctly
-- Unauthorized requests return 401/403
-- Valid requests succeed
-- Nonce verification functions
+Every REST controller gets a Playwright API spec in `src/API/__tests__/`
+(see [TESTING.md](./TESTING.md)) that verifies:
+
+-   Permission callbacks work correctly
+-   Unauthorized requests return 401/403
+-   Valid requests succeed
 
 ---
 
 ## Related Documentation
 
-- [REST_API_USAGE.md](./REST_API_USAGE.md) - Frontend implementation guide
+-   [REST_API_USAGE.md](./REST_API_USAGE.md) - Frontend implementation guide
 
 ## External Resources
 
-- [WordPress REST API Handbook](https://developer.wordpress.org/rest-api/)
-- [WP_REST_Controller Reference](https://developer.wordpress.org/reference/classes/wp_rest_controller/)
-- [REST API Authentication](https://developer.wordpress.org/rest-api/using-the-rest-api/authentication/)
-- [Security Best Practices](https://developer.wordpress.org/plugins/security/)
+-   [WordPress REST API Handbook](https://developer.wordpress.org/rest-api/)
+-   [WP_REST_Controller Reference](https://developer.wordpress.org/reference/classes/wp_rest_controller/)
+-   [REST API Authentication](https://developer.wordpress.org/rest-api/using-the-rest-api/authentication/)
+-   [Security Best Practices](https://developer.wordpress.org/plugins/security/)

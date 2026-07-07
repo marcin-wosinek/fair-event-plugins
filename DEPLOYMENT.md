@@ -1,24 +1,27 @@
 # Deployment Setup Instructions
 
 The deployment workflow uses a reusable workflow architecture:
-- **`.github/workflows/deploy-to-environment.yml`** - Reusable workflow containing all deployment logic
-- **`.github/workflows/php-ci.yml`** - Main workflow with two separate jobs (`deploy-acroyoga` and `deploy-fair-event-plugins`) that call the reusable workflow with hardcoded environment values
 
-This approach eliminates matrix complexity while maintaining code reusability. It uses GitHub Environments to configure deployment targets.
+-   **`.github/workflows/continuous-integration.yml`** - Builds all plugin ZIPs, runs tests, and creates the Changesets release PR / GitHub release
+-   **`.github/workflows/deploy-from-release.yml`** - Triggered when a `build-X.Y.Z` release is published (or manually via workflow_dispatch); has one job per target site that calls the reusable workflow
+-   **`.github/workflows/deploy-to-environment.yml`** - Reusable workflow containing all deployment logic
+
+It uses GitHub Environments to configure deployment targets.
 
 ## GitHub Environment Configuration
 
 You need to configure environments in GitHub:
-- **Settings** → **Environments** → **New environment**
+
+-   **Settings** → **Environments** → **New environment**
 
 ### Required variables (all environments)
 
-- `PLUGINS_TO_DEPLOY` — `all` or a comma-separated list (e.g. `fair-events,fair-payments-connector`)
-- `SSH_HOST` — SSH hostname
-- `SSH_PORT` — SSH port (e.g. `22`)
-- `SSH_KNOWN_HOSTS` — SSH known hosts entry for the server
-- `SSH_USER` — SSH username
-- `WORDPRESS_PLUGINS_PATH` — absolute path to the WordPress plugins directory
+-   `PLUGINS_TO_DEPLOY` — `all` or a comma-separated list (e.g. `fair-events,fair-payments-connector`)
+-   `SSH_HOST` — SSH hostname
+-   `SSH_PORT` — SSH port (e.g. `22`)
+-   `SSH_KNOWN_HOSTS` — SSH known hosts entry for the server
+-   `SSH_USER` — SSH username
+-   `WORDPRESS_PLUGINS_PATH` — absolute path to the WordPress plugins directory
 
 ### Optional variable: `AUTO_DEPLOY_ON_RELEASE`
 
@@ -30,7 +33,7 @@ Leave this variable unset (or set it to any value other than `true`) on client s
 
 ### Secrets (all environments)
 
-- `SSH_PRIVATE_KEY` — SSH private key for deployment
+-   `SSH_PRIVATE_KEY` — SSH private key for deployment
 
 ### Per-environment notes
 
@@ -42,71 +45,36 @@ Leave this variable unset (or set it to any value other than `true`) on client s
 
 ## How It Works
 
-### 1. Automatic Deployment (on main branch push)
-   - CI runs and builds all plugins
-   - After successful build, deploys to both environments in parallel
-   - Each environment deploys only the plugins specified in `PLUGINS_TO_DEPLOY`
+### 1. Automatic Deployment (on release publish)
+
+-   Merging the Changesets release PR publishes a `build-X.Y.Z` GitHub release
+    (see [RELEASES.md](./RELEASES.md))
+-   `deploy-from-release.yml` runs; environments with
+    `AUTO_DEPLOY_ON_RELEASE=true` deploy automatically, in parallel
+-   Each environment deploys only the plugins specified in `PLUGINS_TO_DEPLOY`
 
 ### 2. Manual Deployment (workflow_dispatch)
-   - Go to **Actions** → **Continuous integration** → **Run workflow**
-   - Select the branch you want to deploy from
-   - Choose which environment to deploy to:
-     - `acroyoga-club.es` - Deploy only to acroyoga-club.es
-     - `fair-event-plugins.com` - Deploy only to fair-event-plugins.com
-     - `both` - Deploy to both environments in parallel
-   - The workflow will build the plugins from the selected branch and deploy them
-   - Uses the same `PLUGINS_TO_DEPLOY` configuration from the environment
+
+-   Go to **Actions** → **Deploy from release** → **Run workflow**
+-   Enter the release tag to deploy (e.g. `build-1.0.0`) and tick the checkbox
+    for each target site
+-   Uses the same `PLUGINS_TO_DEPLOY` configuration from each environment
 
 ### 3. Plugin Selection
-   - Set `PLUGINS_TO_DEPLOY` variable in each environment
-   - Use `all` to deploy all plugins
-   - Or provide comma-separated list: `fair-rsvp,fair-events,fair-payments-connector`
-   - Spaces are automatically trimmed
 
-### 4. Available Plugins
-   - fair-rsvp
-   - fair-events
-   - fair-payments-connector
-   - fair-calendar-button
-   - fair-schedule
-   - fair-timetable
-   - fair-registration
-   - fair-membership
-   - fair-user-import
-   - fair-team
-   - fair-platform
+-   Set `PLUGINS_TO_DEPLOY` variable in each environment
+-   Use `all` to deploy every deployable plugin, or a comma-separated list
+    (e.g. `fair-events,fair-payments-connector`); spaces are trimmed
+-   The authoritative `all` list lives in
+    `.github/workflows/deploy-to-environment.yml` (the `PLUGINS=` default)
 
 ## Workflow Architecture
 
-### Reusable Workflow Pattern
-The deployment logic is extracted into a reusable workflow that accepts an `environment` input parameter. This provides:
-- **Code reusability** - Single source of truth for deployment steps
-- **Clear separation** - Two explicit jobs with hardcoded environment names
-- **No matrix complexity** - Each environment has its own dedicated job
-- **Easy debugging** - Direct mapping between job name and environment
-
-### Job Flow
-1. **Main workflow** (`php-ci.yml`) triggers on push or manual dispatch
-2. **Build job** runs first, creating plugin artifacts
-3. **Deploy jobs** run in parallel (if both environments should deploy):
-   - `deploy-acroyoga` → calls reusable workflow with `environment: acroyoga-club.es`
-   - `deploy-fair-event-plugins` → calls reusable workflow with `environment: fair-event-plugins.com`
-4. Each deploy job checks conditions (push to main OR manual trigger with matching environment)
-
-## Benefits of This Approach
-
-✅ **Reusable code** - All deployment logic in one maintainable workflow file
-✅ **Environment-based** - Easy to add new deployment targets (add new job + call reusable workflow)
-✅ **Explicit jobs** - Hardcoded environment values make the workflow easier to read
-✅ **Flexible** - Each environment can deploy different plugins via environment variables
-✅ **Parallel deployment** - Both environments deploy simultaneously when triggered
-✅ **No matrix complexity** - Clear, straightforward job definitions
-✅ **Manual deployment** - Deploy any branch to any environment on demand
-✅ **Branch flexibility** - Test changes from feature branches before merging
-
-## Migration from Old Workflows
-
-The old workflows (`deploy-acroyoga.yml` and `deploy-fair-platform.yml`) have been removed. The new consolidated approach provides the same functionality with better maintainability.
+`deploy-from-release.yml` has one explicit job per target site
+(`deploy-acroyoga`, `deploy-fair-event-plugins`, `deploy-lamutable`, …), each
+calling the reusable `deploy-to-environment.yml` with its `environment` input.
+Adding a new target = add a GitHub Environment + one job that calls the
+reusable workflow.
 
 ## Local Deploy (skips CI)
 
@@ -115,11 +83,13 @@ For fast iteration or hotfixes you can build and deploy from your machine, bypas
 ### Setup
 
 1. Copy the template and fill in real values:
-   ```bash
-   cp .deploy/example.env .deploy/staging.env
-   $EDITOR .deploy/staging.env
-   ```
-   Required keys: `SSH_HOST`, `SSH_PORT`, `SSH_USER`, `WORDPRESS_PLUGINS_PATH`, `PLUGINS_TO_DEPLOY`. Optional: `SSH_KEY_PATH` (defaults to ssh-agent identity).
+
+    ```bash
+    cp .deploy/example.env .deploy/staging.env
+    $EDITOR .deploy/staging.env
+    ```
+
+    Required keys: `SSH_HOST`, `SSH_PORT`, `SSH_USER`, `WORDPRESS_PLUGINS_PATH`, `PLUGINS_TO_DEPLOY`. Optional: `SSH_KEY_PATH` (defaults to ssh-agent identity).
 
 2. Ensure your SSH key is loaded (`ssh-add -l`) and the host is in `~/.ssh/known_hosts`.
 
@@ -165,9 +135,9 @@ The `.github/workflows/publish-to-svn.yml` workflow publishes a tagged release o
 
 Manual only — **Actions → Publish to WordPress.org SVN → Run workflow**. Inputs:
 
-- `plugin` — one of `fair-events`, `fair-audience`, `fair-timetable`.
-- `version` — semver string (e.g. `1.2.3`). Validated against `^[0-9]+\.[0-9]+\.[0-9]+$`; the workflow fails fast on anything else.
-- `dry_run` — defaults to `true`. When `true`, the workflow performs every step except the final `svn ci` and prints `svn status` so you can confirm the staged changes.
+-   `plugin` — one of `fair-events`, `fair-audience`, `fair-timetable`.
+-   `version` — semver string (e.g. `1.2.3`). Validated against `^[0-9]+\.[0-9]+\.[0-9]+$`; the workflow fails fast on anything else.
+-   `dry_run` — defaults to `true`. When `true`, the workflow performs every step except the final `svn ci` and prints `svn status` so you can confirm the staged changes.
 
 The workflow checks out the matching git tag (`<plugin>@<version>`) so the build matches the released commit, not whatever is on `main`.
 
@@ -175,8 +145,8 @@ The workflow checks out the matching git tag (`<plugin>@<version>`) so the build
 
 Configure these as **repository secrets** (Settings → Secrets and variables → Actions):
 
-- `WPORG_SVN_USERNAME` — WordPress.org committer username.
-- `WPORG_SVN_PASSWORD` — committer password (or app password, if configured on wordpress.org).
+-   `WPORG_SVN_USERNAME` — WordPress.org committer username.
+-   `WPORG_SVN_PASSWORD` — committer password (or app password, if configured on wordpress.org).
 
 The password is only exposed as an env var on the `svn ci` step; it is never passed through workflow `with:` inputs.
 
@@ -190,4 +160,3 @@ The password is only exposed as an env var on the `svn ci` step; it is never pas
 ### Optional hardening
 
 The commit step can be gated behind a dedicated GitHub Environment (e.g. `wordpress.org`) with required reviewers. Add `environment: wordpress.org` to the `publish` job and move the two secrets onto that environment if you want a second-pair-of-eyes prompt before the live commit.
-

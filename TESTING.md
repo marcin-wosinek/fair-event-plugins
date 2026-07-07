@@ -6,10 +6,10 @@ This document defines the unified testing architecture for the Fair Event Plugin
 
 ### Philosophy
 
-- **Co-location**: Tests live next to the source code they test in `__tests__/` directories
-- **Separation of concerns**: Different test types use different file extensions and runners
-- **Pragmatic tooling**: Playwright for API testing to avoid WordPress PHP test suite complexity
-- **Consistency**: Same structure across all 10+ plugins in the monorepo
+-   **Co-location**: Tests live next to the source code they test in `__tests__/` directories
+-   **Separation of concerns**: Different test types use different file extensions and runners
+-   **Pragmatic tooling**: Playwright for API testing to avoid WordPress PHP test suite complexity
+-   **Consistency**: Same structure across all 10+ plugins in the monorepo
 
 ## Architecture Overview
 
@@ -23,10 +23,11 @@ The testing architecture supports four main test types:
 ### Why Playwright for API Testing?
 
 We use Playwright instead of PHPUnit for REST API testing because:
-- Avoids complex WordPress test suite setup (wp-phpunit, test database configuration)
-- Tests real HTTP requests against a running WordPress instance
-- Same tool and patterns for both API and E2E tests
-- Tests exactly what the frontend JavaScript calls
+
+-   Avoids complex WordPress test suite setup (wp-phpunit, test database configuration)
+-   Tests real HTTP requests against a running WordPress instance
+-   Same tool and patterns for both API and E2E tests
+-   Tests exactly what the frontend JavaScript calls
 
 ## Directory Structure
 
@@ -81,20 +82,20 @@ fair-{plugin-name}/
 
 ## File Naming Conventions
 
-| Test Type | Extension | Test Runner | Location Pattern | Example |
-|-----------|-----------|-------------|------------------|---------|
-| **JavaScript Unit Test** | `.test.js` | Jest | `src/**/__tests__/*.test.js` | `timeUtils.test.js` |
-| **React Component Test** | `.test.jsx` | Jest | `src/**/components/__tests__/*.test.jsx` | `StatusBadge.test.jsx` |
-| **REST API Test** | `.api.spec.js` | Playwright | `src/API/__tests__/*.api.spec.js` | `RsvpController.api.spec.js` |
-| **E2E Test** | `.spec.js` | Playwright | `e2e/**/*.spec.js` | `complete-rsvp-flow.spec.js` |
-| **Screenshot Test** | `.spec.js` | Playwright | `e2e/screenshots/*.spec.js` | `wordpress-org.spec.js` |
+| Test Type                | Extension      | Test Runner | Location Pattern                         | Example                      |
+| ------------------------ | -------------- | ----------- | ---------------------------------------- | ---------------------------- |
+| **JavaScript Unit Test** | `.test.js`     | Jest        | `src/**/__tests__/*.test.js`             | `timeUtils.test.js`          |
+| **React Component Test** | `.test.jsx`    | Jest        | `src/**/components/__tests__/*.test.jsx` | `StatusBadge.test.jsx`       |
+| **REST API Test**        | `.api.spec.js` | Playwright  | `src/API/__tests__/*.api.spec.js`        | `RsvpController.api.spec.js` |
+| **E2E Test**             | `.spec.js`     | Playwright  | `e2e/**/*.spec.js`                       | `complete-rsvp-flow.spec.js` |
+| **Screenshot Test**      | `.spec.js`     | Playwright  | `e2e/screenshots/*.spec.js`              | `wordpress-org.spec.js`      |
 
 ### Naming Rules
 
-- **Unit tests**: Match the source file name (e.g., `dateTime.js` → `dateTime.test.js`)
-- **Component tests**: Match component name (e.g., `Button.jsx` → `Button.test.jsx`)
-- **API tests**: Match controller name (e.g., `RsvpController.php` → `RsvpController.api.spec.js`)
-- **E2E tests**: Describe the user flow (e.g., `complete-rsvp-flow.spec.js`)
+-   **Unit tests**: Match the source file name (e.g., `dateTime.js` → `dateTime.test.js`)
+-   **Component tests**: Match component name (e.g., `Button.jsx` → `Button.test.jsx`)
+-   **API tests**: Match controller name (e.g., `RsvpController.php` → `RsvpController.api.spec.js`)
+-   **E2E tests**: Describe the user flow (e.g., `complete-rsvp-flow.spec.js`)
 
 ## Test Types
 
@@ -107,9 +108,10 @@ fair-{plugin-name}/
 **Location**: `src/**/__tests__/*.test.js`
 
 **When to use**:
-- Utility functions (date formatting, validation, calculations)
-- Data transformation logic
-- Business logic that doesn't require DOM
+
+-   Utility functions (date formatting, validation, calculations)
+-   Data transformation logic
+-   Business logic that doesn't require DOM
 
 ### React Component Tests
 
@@ -120,10 +122,11 @@ fair-{plugin-name}/
 **Location**: `src/**/components/__tests__/*.test.jsx`
 
 **When to use**:
-- Block editor components
-- Admin page React components
-- Interactive UI elements
-- Component rendering and user interactions
+
+-   Block editor components
+-   Admin page React components
+-   Interactive UI elements
+-   Component rendering and user interactions
 
 ### REST API Tests
 
@@ -134,16 +137,18 @@ fair-{plugin-name}/
 **Location**: `src/API/__tests__/*.api.spec.js`
 
 **When to use**:
-- Testing REST endpoint responses
-- Validating authentication and permissions
-- Testing request/response formats
-- Error handling for API calls
+
+-   Testing REST endpoint responses
+-   Validating authentication and permissions
+-   Testing request/response formats
+-   Error handling for API calls
 
 **Key features**:
-- Tests real HTTP requests
-- Includes WordPress nonce authentication
-- Tests against running WordPress (localhost:8080)
-- No PHP test suite setup required
+
+-   Tests real HTTP requests
+-   Includes WordPress nonce authentication
+-   Tests against running WordPress (localhost:8080)
+-   No PHP test suite setup required
 
 ### E2E Tests
 
@@ -154,10 +159,11 @@ fair-{plugin-name}/
 **Location**: `e2e/**/*.spec.js`
 
 **When to use**:
-- Complete user journeys (registration, RSVP, payment)
-- Block insertion and interaction in editor
-- Admin page workflows
-- Integration of multiple features
+
+-   Complete user journeys (registration, RSVP, payment)
+-   Block insertion and interaction in editor
+-   Admin page workflows
+-   Integration of multiple features
 
 ### PHP Unit Tests (PHPUnit)
 
@@ -172,26 +178,28 @@ the repo)
 **Namespace**: `Fair…\Tests\…`, mirroring the `src/` namespace under test
 
 **Convention**:
-- `phpunit.xml` points `bootstrap` at `__tests__/bootstrap.php` and the
-  testsuite `<directory suffix="Test.php">./__tests__</directory>`.
-- `__tests__/bootstrap.php` loads the Composer autoloader, defines `WPINC`,
-  and hand-writes stubs for just the WordPress functions the code under test
-  calls (e.g. `get_option()` backed by `$GLOBALS['_fair_test_options']`). Add
-  stubs only as needed — don't pre-stub the whole API surface.
-- If the code under test touches `$wpdb`, stub a minimal fake in the bootstrap
-  (e.g. an `insert()` that returns success) rather than pulling in a DB
-  library.
-- Run via `npm run test:php` (→ `vendor/bin/phpunit`) or `composer test`.
-  `npm test` already chains `test:php` after `test:js`, so it runs in CI with
-  no dedicated workflow step.
+
+-   `phpunit.xml` points `bootstrap` at `__tests__/bootstrap.php` and the
+    testsuite `<directory suffix="Test.php">./__tests__</directory>`.
+-   `__tests__/bootstrap.php` loads the Composer autoloader, defines `WPINC`,
+    and hand-writes stubs for just the WordPress functions the code under test
+    calls (e.g. `get_option()` backed by `$GLOBALS['_fair_test_options']`). Add
+    stubs only as needed — don't pre-stub the whole API surface.
+-   If the code under test touches `$wpdb`, stub a minimal fake in the bootstrap
+    (e.g. an `insert()` that returns success) rather than pulling in a DB
+    library.
+-   Run via `npm run test:php` (→ `vendor/bin/phpunit`) or `composer test`.
+    `npm test` already chains `test:php` after `test:js`, so it runs in CI with
+    no dedicated workflow step.
 
 **When to use**:
-- Locking a regression at a boundary that's hard/unsafe to reach via `.api.spec.js`
-  (e.g. arguments passed to a third-party SDK client that has its own HTTP
-  transport, so `pre_http_request` can't intercept it — see
-  `fair-payments-connector/__tests__/Payment/MolliePaymentHandlerTest.php`).
-- Pure PHP logic (settings parsing, formatting, recurrence math) that doesn't
-  need a live WordPress instance — see `fair-events/__tests__/`.
+
+-   Locking a regression at a boundary that's hard/unsafe to reach via `.api.spec.js`
+    (e.g. arguments passed to a third-party SDK client that has its own HTTP
+    transport, so `pre_http_request` can't intercept it — see
+    `fair-payments-connector/__tests__/Payment/MolliePaymentHandlerTest.php`).
+-   Pure PHP logic (settings parsing, formatting, recurrence math) that doesn't
+    need a live WordPress instance — see `fair-events/__tests__/`.
 
 **Examples**: `fair-events`, `fair-payments-connector`,
 `fair-payments-connector-experimental`, `fair-events-experimental`,
@@ -205,9 +213,10 @@ the repo)
 **Location**: `e2e/screenshots/wordpress-org.spec.js`
 
 **Special considerations**:
-- Use consistent viewport (1200x900)
-- Capture specific states for documentation
-- Save to `assets/` directory
+
+-   Use consistent viewport (1200x900)
+-   Capture specific states for documentation
+-   Save to `assets/` directory
 
 ### Ad-hoc page screenshots (`npm run screenshot`)
 
@@ -273,15 +282,16 @@ them.
 `npx wp-env run tests-cli wp plugin check …`; it does not drive a browser.
 
 **Special considerations**:
-- It's a **reporting** suite — it does not fail on findings, only if Plugin
-  Check can't run or its output can't be parsed. Flip the per-plugin assertion
-  to `expect(result.errors)` to make it a CI gate.
-- Needs the `tests` instance running (`npm run test:e2e:setup`) and **network
-  access** (Plugin Check is fetched from wordpress.org on first run).
-- Slow (full scan of every plugin); the spec sets generous per-test timeouts.
-- `node_modules` / `vendor` are excluded by Plugin Check's defaults; `build/`
-  is included, since that is what ships.
-- Counts print per-plugin and as a combined summary table in the test output.
+
+-   It's a **reporting** suite — it does not fail on findings, only if Plugin
+    Check can't run or its output can't be parsed. Flip the per-plugin assertion
+    to `expect(result.errors)` to make it a CI gate.
+-   Needs the `tests` instance running (`npm run test:e2e:setup`) and **network
+    access** (Plugin Check is fetched from wordpress.org on first run).
+-   Slow (full scan of every plugin); the spec sets generous per-test timeouts.
+-   `node_modules` / `vendor` are excluded by Plugin Check's defaults; `build/`
+    is included, since that is what ships.
+-   Counts print per-plugin and as a combined summary table in the test output.
 
 ### Manual Integration Checks (WP-CLI `eval-file`)
 
@@ -296,7 +306,7 @@ committed.
 
 **How it works**: `compose.yml` mounts each plugin dir into the container at
 `wp-content/plugins/<plugin>/`. A loose file at the repo root is **not**
-mounted, so a scratch script must be copied *into a mounted plugin dir* to be
+mounted, so a scratch script must be copied _into a mounted plugin dir_ to be
 visible to `wp eval-file`, then removed afterward.
 
 **Recipe** (assumes the repo root is
@@ -322,14 +332,15 @@ rm -f /Users/marcinwosinek/workspace/fair-event-plugins/fair-audience/.tmp-check
 
 > **Always use absolute paths, never `cd … && cp/rm`.** Chaining `cd` into a
 > write (`cp`/`rm`) makes the working directory unverifiable, so Claude Code
-> forces a manual approval prompt on *every* run. Absolute paths run the exact
+> forces a manual approval prompt on _every_ run. Absolute paths run the exact
 > same thing with no prompt.
 
 **Guidelines**:
-- The script must clean up any rows/posts/users it creates.
-- Prefix scratch files with `.tmp-` so they're obvious and easy to sweep.
-- If you find yourself reaching for this repeatedly for the same scenario,
-  promote it to a real Playwright API or E2E test instead.
+
+-   The script must clean up any rows/posts/users it creates.
+-   Prefix scratch files with `.tmp-` so they're obvious and easy to sweep.
+-   If you find yourself reaching for this repeatedly for the same scenario,
+    promote it to a real Playwright API or E2E test instead.
 
 ## Test Discovery Rules
 
@@ -338,28 +349,23 @@ rm -f /Users/marcinwosinek/workspace/fair-event-plugins/fair-audience/.tmp-check
 Jest automatically finds tests matching these patterns:
 
 ```javascript
-testMatch: [
-  '**/__tests__/**/*.test.js',
-  '**/__tests__/**/*.test.jsx',
-]
+testMatch: ['**/__tests__/**/*.test.js', '**/__tests__/**/*.test.jsx'];
 ```
 
 Jest **excludes**:
-- `node_modules/`
-- `vendor/`
-- `build/`
-- `e2e/` directory
-- Files ending with `.api.spec.js`
+
+-   `node_modules/`
+-   `vendor/`
+-   `build/`
+-   `e2e/` directory
+-   Files ending with `.api.spec.js`
 
 ### Playwright Discovery
 
 Playwright finds tests matching these patterns:
 
 ```javascript
-testMatch: [
-  'e2e/**/*.spec.js',
-  'src/API/__tests__/**/*.api.spec.js',
-]
+testMatch: ['e2e/**/*.spec.js', 'src/API/__tests__/**/*.api.spec.js'];
 ```
 
 This allows both E2E and API tests to use Playwright while keeping them separated.
@@ -375,10 +381,7 @@ export default {
 	preset: '@wordpress/jest-preset-default',
 	testEnvironment: 'jsdom',
 
-	testMatch: [
-		'**/__tests__/**/*.test.js',
-		'**/__tests__/**/*.test.jsx',
-	],
+	testMatch: ['**/__tests__/**/*.test.js', '**/__tests__/**/*.test.jsx'],
 
 	testPathIgnorePatterns: [
 		'/node_modules/',
@@ -418,10 +421,7 @@ dotenv.config();
 
 export default defineConfig({
 	testDir: './',
-	testMatch: [
-		'e2e/**/*.spec.js',
-		'src/API/__tests__/**/*.api.spec.js',
-	],
+	testMatch: ['e2e/**/*.spec.js', 'src/API/__tests__/**/*.api.spec.js'],
 
 	fullyParallel: false,
 	forbidOnly: !!process.env.CI,
@@ -443,12 +443,14 @@ export default defineConfig({
 		},
 	],
 
-	webServer: process.env.CI ? undefined : {
-		command: 'docker compose up',
-		url: 'http://localhost:8080',
-		reuseExistingServer: true,
-		timeout: 120 * 1000,
-	},
+	webServer: process.env.CI
+		? undefined
+		: {
+				command: 'docker compose up',
+				url: 'http://localhost:8080',
+				reuseExistingServer: true,
+				timeout: 120 * 1000,
+		  },
 });
 ```
 
@@ -463,7 +465,7 @@ locking down.
 
 ### Plugin-Level Commands
 
-From within a plugin directory (e.g., `cd fair-rsvp`):
+From within a plugin directory (e.g., `cd fair-events`):
 
 ```bash
 # Run all tests
@@ -501,7 +503,7 @@ npm run test:e2e            # All E2E tests
 npm run test:api            # All API tests
 
 # Run tests for specific plugin
-npm run test --workspace=fair-rsvp
+npm run test --workspace=fair-events
 npm run test:js --workspace=fair-payments-connector
 ```
 
@@ -511,175 +513,57 @@ Each plugin should define these scripts:
 
 ```json
 {
-  "scripts": {
-    "test": "npm-run-all test:*",
-    "test:js": "jest",
-    "test:e2e": "playwright test e2e/",
-    "test:api": "playwright test src/API/__tests__/"
-  }
+	"scripts": {
+		"test": "npm-run-all test:*",
+		"test:js": "jest",
+		"test:e2e": "playwright test e2e/",
+		"test:api": "playwright test src/API/__tests__/"
+	}
 }
 ```
-
-## Migration Guide
-
-### Prerequisites
-
-Before migrating a plugin to the new testing architecture:
-
-1. Ensure Docker environment is running (`docker compose up`)
-2. Install Playwright if not already installed: `npm install --save-dev @playwright/test`
-3. Review current test files and their locations
-
-### Migration Checklist
-
-For each plugin, follow these steps:
-
-#### Phase 1: Standardize REST API Directory (if applicable)
-
-- [ ] Check if plugin uses `src/REST/` directory
-- [ ] If yes, rename to `src/API/` (uppercase)
-- [ ] Update PHP namespace in controller files
-- [ ] Update import statements in PHP files
-- [ ] Update class registration in `src/Core/Plugin.php`
-
-**Affected plugins**: fair-rsvp (currently uses `src/REST/`)
-
-#### Phase 2: Consolidate E2E Tests
-
-- [ ] Create `e2e/` directory at plugin root
-- [ ] Create `e2e/user-flows/` subdirectory
-- [ ] Create `e2e/screenshots/` subdirectory
-- [ ] Move `tests/screenshots/*.spec.js` → `e2e/screenshots/` (if exists)
-- [ ] Delete empty `tests/` directory
-- [ ] Update `playwright.config.js` if needed
-
-**Affected plugins**: fair-calendar-button, fair-schedule-blocks
-
-#### Phase 3: Migrate Unit Tests to Co-located Structure
-
-- [ ] For each test file in root `__tests__/`:
-  - [ ] Identify the source file it tests
-  - [ ] Create `__tests__/` directory next to source file
-  - [ ] Move test file to new location
-  - [ ] Update import paths in test file (adjust `../` depth)
-- [ ] Verify Jest still finds all tests: `npm run test:js`
-- [ ] Delete root `__tests__/` directory once empty
-
-**Example migration**:
-- From: `/__tests__/timeUtils.test.js`
-- To: `/src/utils/__tests__/timeUtils.test.js`
-
-#### Phase 4: Add API Test Infrastructure (if plugin has REST API)
-
-- [ ] Create `src/API/__tests__/` directory
-- [ ] Add `.api.spec.js` test file for each controller
-- [ ] Implement WordPress authentication in tests
-- [ ] Update `playwright.config.js` to include API test pattern
-- [ ] Add `test:api` script to `package.json`
-
-**Affected plugins**: All plugins with REST endpoints
-
-#### Phase 5: Update Configuration Files
-
-- [ ] Create or update `jest.config.js` using template
-- [ ] Create or update `playwright.config.js` using template
-- [ ] Keep `phpunit.xml` as-is (for future use)
-- [ ] Update `package.json` with standardized test scripts
-
-#### Phase 6: Verify
-
-- [ ] Run `npm test` - all tests should pass
-- [ ] Run `npm run test:js` - Jest finds all unit/component tests
-- [ ] Run `npm run test:e2e` - Playwright finds E2E tests (if exist)
-- [ ] Run `npm run test:api` - Playwright finds API tests (if exist)
-- [ ] Check test output for missing files or broken imports
-
-#### Phase 7: Document
-
-- [ ] Update plugin README.md with testing instructions
-- [ ] Add any plugin-specific testing notes
-
-## Rollout Strategy
-
-### Pilot: fair-rsvp
-
-Start with **fair-rsvp** as the reference implementation because:
-- Complex plugin with multiple blocks
-- Has REST API endpoints (currently in `src/REST/`)
-- Has admin pages
-- Demonstrates full architecture
-
-**Current state**:
-- Uses `src/REST/` (needs rename to `src/API/`)
-- Has placeholder test in `__tests__/example.test.js`
-- No E2E or API tests yet
-
-### Rollout Order
-
-1. **fair-rsvp** - Pilot implementation, validate architecture
-2. **fair-timetable** - Already has comprehensive tests, easier migration
-3. **fair-payments-connector** - REST API critical for business logic
-4. **fair-membership** - REST API + admin pages
-5. **fair-calendar-button** - E2E tests to consolidate
-6. **fair-schedule-blocks** - E2E tests to consolidate
-7. **fair-events** - Core plugin
-8. **fair-registration** - Simpler plugin
-9. **fair-user-import** - Utility plugin
-10. **fair-events-shared** - Shared utilities package (unit tests only)
-
-### Success Criteria
-
-A plugin migration is complete when:
-- ✅ Tests are co-located in `__tests__/` directories
-- ✅ E2E tests are in `e2e/` directory (if applicable)
-- ✅ API tests exist for REST endpoints (if applicable)
-- ✅ Configuration files follow templates
-- ✅ All tests pass: `npm test`
-- ✅ Test discovery works correctly for all test types
-- ✅ Documentation is updated
 
 ## Notes and Best Practices
 
 ### Directory Naming
 
-- **Always use uppercase** `API/` for REST controllers (not `REST/` or `rest/`)
-- **Always use** `e2e/` for end-to-end tests (not `tests/` or `e2e-tests/`)
-- **Always use** `__tests__/` for co-located tests (double underscore)
+-   **Always use uppercase** `API/` for REST controllers (not `REST/` or `rest/`)
+-   **Always use** `e2e/` for end-to-end tests (not `tests/` or `e2e-tests/`)
+-   **Always use** `__tests__/` for co-located tests (double underscore)
 
 ### File Naming
 
-- Use `.test.js` and `.test.jsx` for Jest tests
-- Use `.api.spec.js` for Playwright API tests
-- Use `.spec.js` for Playwright E2E tests
-- This naming prevents test runner conflicts
+-   Use `.test.js` and `.test.jsx` for Jest tests
+-   Use `.api.spec.js` for Playwright API tests
+-   Use `.spec.js` for Playwright E2E tests
+-   This naming prevents test runner conflicts
 
 ### Test Organization
 
-- Keep tests close to the code they test
-- E2E tests are the exception - centralize in `e2e/`
-- API tests go with controllers in `src/API/__tests__/`
-- Shared test helpers can go in `__tests__/helpers/` directories
+-   Keep tests close to the code they test
+-   E2E tests are the exception - centralize in `e2e/`
+-   API tests go with controllers in `src/API/__tests__/`
+-   Shared test helpers can go in `__tests__/helpers/` directories
 
 ### WordPress Testing
 
-- Use Playwright for API testing (not PHPUnit)
-- Docker WordPress instance at `localhost:8080`
-- Set `WP_BASE_URL` environment variable for CI
-- Use `WP_ADMIN_USER` and `WP_ADMIN_PASS` for authentication
+-   Use Playwright for API testing (not PHPUnit)
+-   Docker WordPress instance at `localhost:8080`
+-   Set `WP_BASE_URL` environment variable for CI
+-   Use `WP_ADMIN_USER` and `WP_ADMIN_PASS` for authentication
 
 ### Coverage
 
-- Collect coverage from `src/**/*.{js,jsx}`
-- Exclude `__tests__`, `build/`, `node_modules/`, `vendor/`
-- Target 70%+ coverage for new code
-- Use coverage reports to identify untested code
+-   Collect coverage from `src/**/*.{js,jsx}`
+-   Exclude `__tests__`, `build/`, `node_modules/`, `vendor/`
+-   Target 70%+ coverage for new code
+-   Use coverage reports to identify untested code
 
 ### CI/CD
 
-- Run tests in GitHub Actions
-- Use `npm run test:js` for fast unit/component tests
-- Use `npm run test:e2e` and `npm run test:api` for integration tests
-- Consider running E2E/API tests only on main branch or PRs
+-   Run tests in GitHub Actions
+-   Use `npm run test:js` for fast unit/component tests
+-   Use `npm run test:e2e` and `npm run test:api` for integration tests
+-   Consider running E2E/API tests only on main branch or PRs
 
 ## Isolated E2E Harness (`@wordpress/env`)
 
@@ -687,10 +571,10 @@ E2E specs in the repo-root `e2e/` directory run against a clean, throwaway
 WordPress instance provisioned by [`@wordpress/env`](https://www.npmjs.com/package/@wordpress/env)
 — **not** the dev `docker compose` stack. The two never collide:
 
-| Stack | Tool | Port |
-| --- | --- | --- |
-| Dev environment | `docker compose up` | 8080 |
-| E2E `tests` instance | `@wordpress/env` | **8889** |
+| Stack                | Tool                | Port     |
+| -------------------- | ------------------- | -------- |
+| Dev environment      | `docker compose up` | 8080     |
+| E2E `tests` instance | `@wordpress/env`    | **8889** |
 
 wp-env auto-installs WordPress, creates an `admin` / `password` user, and mounts +
 activates the four plugins listed in `.wp-env.json`. The root
@@ -753,10 +637,7 @@ artifacts on failure.
 ## Questions?
 
 For questions or suggestions about the testing architecture:
-- Review this document and `CLAUDE.md`
-- Check existing test files in `fair-timetable` or `fair-membership` for examples
-- Propose changes via pull request
 
----
-
-*Last updated: 2025-12-12*
+-   Review this document and `CLAUDE.md`
+-   Check existing test files in `fair-events` or `fair-audience` for examples
+-   Propose changes via pull request

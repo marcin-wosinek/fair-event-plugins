@@ -4,7 +4,9 @@
 !.vscode/launch.json
 !.vscode/settings.json
 .vscode
-.claude
+# .claude is tracked (hooks, commands, settings.json) — only local state is ignored
+.claude/settings.local.json
+.claude/scheduled_tasks.lock
 vendor/
 
 # Plugin dependencies and build artifacts
@@ -31,13 +33,8 @@ test-results/
 *.log
 *.cache
 
-# Release scripts
-fair-calendar-button/svn
-fair-timetable/svn
-fair-schedule-blocks/svn
-fair-events/svn
-fair-rsvp/svn
-fair-payments-connector/svn
+# Release scripts (local SVN checkouts)
+*/svn/
 .vim/coc-settings.json
 deployment-config.txt
 fair-platform-deployment-config.txt

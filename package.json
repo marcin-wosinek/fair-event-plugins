@@ -23,6 +23,7 @@
 		"test:e2e:setup": "npm run build && npm run composer:install:prod && wp-env start && wp-env run tests-cli wp rewrite structure '/%postname%/' --hard",
 		"test:e2e:teardown": "wp-env stop",
 		"screenshot": "node scripts/screenshot.js",
+		"lint:docs": "node scripts/lint-docs.js",
 		"build": "npm run build --workspaces --if-present",
 		"clean": "npm run clean --workspaces --if-present",
 		"makepot": "npm run makepot --workspaces --if-present",

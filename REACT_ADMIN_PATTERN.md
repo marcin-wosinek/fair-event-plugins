@@ -5,10 +5,11 @@ This document defines the standard pattern for building WordPress admin pages us
 ## Overview
 
 Admin pages in Fair Event Plugins follow a consistent architecture:
-- **Frontend**: React components using WordPress components (`@wordpress/components`)
-- **Backend**: REST API controllers extending `WP_REST_Controller`
-- **Communication**: `apiFetch` from `@wordpress/api-fetch` for all API calls
-- **Authentication**: WordPress nonce-based authentication (handled automatically by `apiFetch`)
+
+-   **Frontend**: React components using WordPress components (`@wordpress/components`)
+-   **Backend**: REST API controllers extending `WP_REST_Controller`
+-   **Communication**: `apiFetch` from `@wordpress/api-fetch` for all API calls
+-   **Authentication**: WordPress nonce-based authentication (handled automatically by `apiFetch`)
 
 ## Architecture Diagram
 
@@ -57,201 +58,17 @@ plugin-name/
 
 **Location**: `src/API/ResourceController.php`
 
-**Template**:
+Use the canonical controller template in
+[REST_API_BACKEND.md](./REST_API_BACKEND.md#standard-endpoint-implementation-template)
+— do not duplicate it here. For admin pages the key specifics are:
 
-```php
-<?php
-namespace PluginName\API;
-
-use WP_REST_Controller;
-use WP_REST_Server;
-use WP_REST_Request;
-use WP_REST_Response;
-use WP_Error;
-
-class ResourceController extends WP_REST_Controller {
-
-    protected $namespace = 'plugin-name/v1';
-    protected $rest_base = 'resources';
-
-    /**
-     * Register REST API routes
-     */
-    public function register_routes() {
-        // GET /plugin-name/v1/resources - List all resources
-        register_rest_route(
-            $this->namespace,
-            '/' . $this->rest_base,
-            array(
-                array(
-                    'methods'             => WP_REST_Server::READABLE,
-                    'callback'            => array( $this, 'get_items' ),
-                    'permission_callback' => array( $this, 'get_items_permissions_check' ),
-                    'args'                => array(
-                        'page'     => array(
-                            'description' => __( 'Page number.', 'plugin-name' ),
-                            'type'        => 'integer',
-                            'default'     => 1,
-                        ),
-                        'per_page' => array(
-                            'description' => __( 'Items per page.', 'plugin-name' ),
-                            'type'        => 'integer',
-                            'default'     => 50,
-                        ),
-                    ),
-                ),
-            )
-        );
-
-        // POST /plugin-name/v1/resources - Create resource
-        register_rest_route(
-            $this->namespace,
-            '/' . $this->rest_base,
-            array(
-                array(
-                    'methods'             => WP_REST_Server::CREATABLE,
-                    'callback'            => array( $this, 'create_item' ),
-                    'permission_callback' => array( $this, 'create_item_permissions_check' ),
-                    'args'                => $this->get_endpoint_args_for_item_schema( WP_REST_Server::CREATABLE ),
-                ),
-            )
-        );
-
-        // PUT /plugin-name/v1/resources/{id} - Update resource
-        register_rest_route(
-            $this->namespace,
-            '/' . $this->rest_base . '/(?P<id>\d+)',
-            array(
-                array(
-                    'methods'             => WP_REST_Server::EDITABLE,
-                    'callback'            => array( $this, 'update_item' ),
-                    'permission_callback' => array( $this, 'update_item_permissions_check' ),
-                    'args'                => $this->get_endpoint_args_for_item_schema( WP_REST_Server::EDITABLE ),
-                ),
-            )
-        );
-
-        // DELETE /plugin-name/v1/resources/{id} - Delete resource
-        register_rest_route(
-            $this->namespace,
-            '/' . $this->rest_base . '/(?P<id>\d+)',
-            array(
-                array(
-                    'methods'             => WP_REST_Server::DELETABLE,
-                    'callback'            => array( $this, 'delete_item' ),
-                    'permission_callback' => array( $this, 'delete_item_permissions_check' ),
-                ),
-            )
-        );
-    }
-
-    /**
-     * Get items
-     */
-    public function get_items( $request ) {
-        $page     = (int) $request->get_param( 'page' );
-        $per_page = (int) $request->get_param( 'per_page' );
-        $offset   = ( $page - 1 ) * $per_page;
-
-        // Fetch from repository/database
-        $items = array(); // TODO: Implement data fetching
-        $total = 0;       // TODO: Implement count
-
-        return new WP_REST_Response(
-            array(
-                'items'       => $items,
-                'total'       => $total,
-                'page'        => $page,
-                'per_page'    => $per_page,
-                'total_pages' => ceil( $total / $per_page ),
-            ),
-            200
-        );
-    }
-
-    /**
-     * Create item
-     */
-    public function create_item( $request ) {
-        $params = $request->get_params();
-
-        // Validate and sanitize
-        // Create in database
-        // Return created item
-
-        return new WP_REST_Response(
-            array(
-                'id'      => 123,
-                'message' => __( 'Resource created successfully.', 'plugin-name' ),
-            ),
-            201
-        );
-    }
-
-    /**
-     * Update item
-     */
-    public function update_item( $request ) {
-        $id     = (int) $request->get_param( 'id' );
-        $params = $request->get_params();
-
-        // Validate and sanitize
-        // Update in database
-        // Return updated item
-
-        return new WP_REST_Response(
-            array(
-                'id'      => $id,
-                'message' => __( 'Resource updated successfully.', 'plugin-name' ),
-            ),
-            200
-        );
-    }
-
-    /**
-     * Delete item
-     */
-    public function delete_item( $request ) {
-        $id = (int) $request->get_param( 'id' );
-
-        // Delete from database
-
-        return new WP_REST_Response(
-            array(
-                'deleted' => true,
-                'message' => __( 'Resource deleted successfully.', 'plugin-name' ),
-            ),
-            200
-        );
-    }
-
-    /**
-     * Permission checks
-     */
-    public function get_items_permissions_check( $request ) {
-        return current_user_can( 'manage_options' );
-    }
-
-    public function create_item_permissions_check( $request ) {
-        return current_user_can( 'manage_options' );
-    }
-
-    public function update_item_permissions_check( $request ) {
-        return current_user_can( 'manage_options' );
-    }
-
-    public function delete_item_permissions_check( $request ) {
-        return current_user_can( 'manage_options' );
-    }
-}
-```
-
-**Key Points**:
-- Extend `WP_REST_Controller` base class
-- Use namespace format: `plugin-slug/v1`
-- Always implement proper `permission_callback` (NEVER use `__return_true` for admin endpoints)
-- Return `WP_REST_Response` with appropriate HTTP status codes
-- Use `WP_Error` for error responses
+-   Extend `WP_REST_Controller`; namespace format `plugin-slug/v1`
+-   Admin endpoints use `current_user_can( 'manage_options' )` in every
+    `*_permissions_check` (NEVER `__return_true`)
+-   Return `WP_REST_Response` with appropriate HTTP status codes; `WP_Error` for
+    error responses
+-   List endpoints take `page` / `per_page` args and return
+    `{ items, total, page, per_page, total_pages }`
 
 ### 2. REST API Registration (PHP)
 
@@ -421,11 +238,12 @@ class AdminHooks {
 ```
 
 **Key Points**:
-- Use `admin_menu` hook for menu registration
-- Use `admin_enqueue_scripts` hook with `$hook` parameter to enqueue conditionally
-- Always load asset metadata from `build/admin/*/index.asset.php`
-- Set translations using `wp_set_script_translations()` pointing to `build/languages/`
-- Always enqueue `wp-components` stylesheet
+
+-   Use `admin_menu` hook for menu registration
+-   Use `admin_enqueue_scripts` hook with `$hook` parameter to enqueue conditionally
+-   Always load asset metadata from `build/admin/*/index.asset.php`
+-   Set translations using `wp_set_script_translations()` pointing to `build/languages/`
+-   Always enqueue `wp-components` stylesheet
 
 ### 4. PHP Page Wrapper
 
@@ -449,9 +267,10 @@ class ResourcesPage {
 ```
 
 **Key Points**:
-- Minimal PHP wrapper that outputs a single root div
-- Use consistent naming: `plugin-slug-page-name-root`
-- React will mount to this element
+
+-   Minimal PHP wrapper that outputs a single root div
+-   Use consistent naming: `plugin-slug-page-name-root`
+-   React will mount to this element
 
 ### 5. React Entry Point
 
@@ -466,10 +285,10 @@ import ResourcesPage from './ResourcesPage.js';
 
 // Render the app when DOM is ready
 domReady(() => {
-    const rootElement = document.getElementById('plugin-name-resources-root');
-    if (rootElement) {
-        render(<ResourcesPage />, rootElement);
-    }
+	const rootElement = document.getElementById('plugin-name-resources-root');
+	if (rootElement) {
+		render(<ResourcesPage />, rootElement);
+	}
 });
 ```
 
@@ -481,33 +300,34 @@ import ResourcesPage from './ResourcesPage.js';
 
 // Defensive: handle both scenarios (DOM loading or already loaded)
 if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', initializeApp);
+	document.addEventListener('DOMContentLoaded', initializeApp);
 } else {
-    initializeApp();
+	initializeApp();
 }
 
 function initializeApp() {
-    const rootElement = document.getElementById('plugin-name-resources-root');
-    if (!rootElement) {
-        return;
-    }
+	const rootElement = document.getElementById('plugin-name-resources-root');
+	if (!rootElement) {
+		return;
+	}
 
-    // Pass data from PHP via dataset attributes
-    const initialData = {
-        userId: parseInt(rootElement.dataset.userId, 10),
-        // ... other data from PHP
-    };
+	// Pass data from PHP via dataset attributes
+	const initialData = {
+		userId: parseInt(rootElement.dataset.userId, 10),
+		// ... other data from PHP
+	};
 
-    const root = createRoot(rootElement);
-    root.render(<ResourcesPage {...initialData} />);
+	const root = createRoot(rootElement);
+	root.render(<ResourcesPage {...initialData} />);
 }
 ```
 
 **Key Points**:
-- Always check if root element exists before rendering
-- Use defensive DOM ready pattern (see CLAUDE.md)
-- Pass initial data from PHP via `dataset` attributes
-- Import from `@wordpress/element`, not `react` directly
+
+-   Always check if root element exists before rendering
+-   Use defensive DOM ready pattern (see CLAUDE.md)
+-   Pass initial data from PHP via `dataset` attributes
+-   Import from `@wordpress/element`, not `react` directly
 
 ### 6. React Admin Component
 
@@ -518,209 +338,233 @@ import { useState, useEffect } from '@wordpress/element';
 import { __ } from '@wordpress/i18n';
 import apiFetch from '@wordpress/api-fetch';
 import {
-    Card,
-    CardHeader,
-    CardBody,
-    Button,
-    Spinner,
-    Notice,
-    __experimentalVStack as VStack,
-    __experimentalHStack as HStack,
+	Card,
+	CardHeader,
+	CardBody,
+	Button,
+	Spinner,
+	Notice,
+	__experimentalVStack as VStack,
+	__experimentalHStack as HStack,
 } from '@wordpress/components';
 
 const ResourcesPage = () => {
-    const [resources, setResources] = useState([]);
-    const [loading, setLoading] = useState(true);
-    const [error, setError] = useState(null);
-    const [page, setPage] = useState(1);
-    const [totalPages, setTotalPages] = useState(1);
+	const [resources, setResources] = useState([]);
+	const [loading, setLoading] = useState(true);
+	const [error, setError] = useState(null);
+	const [page, setPage] = useState(1);
+	const [totalPages, setTotalPages] = useState(1);
 
-    // Load resources on mount and when page changes
-    useEffect(() => {
-        loadResources();
-    }, [page]);
+	// Load resources on mount and when page changes
+	useEffect(() => {
+		loadResources();
+	}, [page]);
 
-    const loadResources = async () => {
-        setLoading(true);
-        setError(null);
+	const loadResources = async () => {
+		setLoading(true);
+		setError(null);
 
-        try {
-            const params = new URLSearchParams({
-                page: page.toString(),
-                per_page: '50',
-            });
+		try {
+			const params = new URLSearchParams({
+				page: page.toString(),
+				per_page: '50',
+			});
 
-            // Use apiFetch with hardcoded path
-            const response = await apiFetch({
-                path: `/plugin-name/v1/resources?${params.toString()}`,
-            });
+			// Use apiFetch with hardcoded path
+			const response = await apiFetch({
+				path: `/plugin-name/v1/resources?${params.toString()}`,
+			});
 
-            setResources(response.items || []);
-            setTotalPages(response.total_pages || 1);
-        } catch (err) {
-            // Extract error message
-            const errorMessage = err.message || __('Failed to load resources.', 'plugin-name');
-            setError(errorMessage);
-        } finally {
-            setLoading(false);
-        }
-    };
+			setResources(response.items || []);
+			setTotalPages(response.total_pages || 1);
+		} catch (err) {
+			// Extract error message
+			const errorMessage =
+				err.message || __('Failed to load resources.', 'plugin-name');
+			setError(errorMessage);
+		} finally {
+			setLoading(false);
+		}
+	};
 
-    const handleCreate = async (resourceData) => {
-        try {
-            const response = await apiFetch({
-                path: '/plugin-name/v1/resources',
-                method: 'POST',
-                data: resourceData,
-            });
+	const handleCreate = async (resourceData) => {
+		try {
+			const response = await apiFetch({
+				path: '/plugin-name/v1/resources',
+				method: 'POST',
+				data: resourceData,
+			});
 
-            // Reload data after successful creation
-            loadResources();
+			// Reload data after successful creation
+			loadResources();
 
-            return response;
-        } catch (err) {
-            throw new Error(err.message || __('Failed to create resource.', 'plugin-name'));
-        }
-    };
+			return response;
+		} catch (err) {
+			throw new Error(
+				err.message || __('Failed to create resource.', 'plugin-name')
+			);
+		}
+	};
 
-    const handleUpdate = async (id, resourceData) => {
-        try {
-            const response = await apiFetch({
-                path: `/plugin-name/v1/resources/${id}`,
-                method: 'PUT',
-                data: resourceData,
-            });
+	const handleUpdate = async (id, resourceData) => {
+		try {
+			const response = await apiFetch({
+				path: `/plugin-name/v1/resources/${id}`,
+				method: 'PUT',
+				data: resourceData,
+			});
 
-            // Update local state
-            setResources((prev) =>
-                prev.map((resource) =>
-                    resource.id === id ? { ...resource, ...resourceData } : resource
-                )
-            );
+			// Update local state
+			setResources((prev) =>
+				prev.map((resource) =>
+					resource.id === id
+						? { ...resource, ...resourceData }
+						: resource
+				)
+			);
 
-            return response;
-        } catch (err) {
-            throw new Error(err.message || __('Failed to update resource.', 'plugin-name'));
-        }
-    };
+			return response;
+		} catch (err) {
+			throw new Error(
+				err.message || __('Failed to update resource.', 'plugin-name')
+			);
+		}
+	};
 
-    // Destructive actions: confirm via ConfirmDialog naming the object —
-    // never window.confirm/alert. See UI_GUIDELINES.md.
-    const handleDelete = async (id) => {
-        try {
-            await apiFetch({
-                path: `/plugin-name/v1/resources/${id}`,
-                method: 'DELETE',
-            });
+	// Destructive actions: confirm via ConfirmDialog naming the object —
+	// never window.confirm/alert. See UI_GUIDELINES.md.
+	const handleDelete = async (id) => {
+		try {
+			await apiFetch({
+				path: `/plugin-name/v1/resources/${id}`,
+				method: 'DELETE',
+			});
 
-            // Remove from local state
-            setResources((prev) => prev.filter((resource) => resource.id !== id));
-        } catch (err) {
-            setError(err.message || __('Failed to delete resource.', 'plugin-name'));
-        }
-    };
+			// Remove from local state
+			setResources((prev) =>
+				prev.filter((resource) => resource.id !== id)
+			);
+		} catch (err) {
+			setError(
+				err.message || __('Failed to delete resource.', 'plugin-name')
+			);
+		}
+	};
 
-    if (loading) {
-        return (
-            <div className="wrap">
-                <h1>{__('Resources', 'plugin-name')}</h1>
-                <Spinner />
-            </div>
-        );
-    }
+	if (loading) {
+		return (
+			<div className="wrap">
+				<h1>{__('Resources', 'plugin-name')}</h1>
+				<Spinner />
+			</div>
+		);
+	}
 
-    return (
-        <div className="wrap">
-            <h1>{__('Resources', 'plugin-name')}</h1>
+	return (
+		<div className="wrap">
+			<h1>{__('Resources', 'plugin-name')}</h1>
 
-            {error && (
-                <Notice status="error" isDismissible={false}>
-                    {error}
-                </Notice>
-            )}
+			{error && (
+				<Notice status="error" isDismissible={false}>
+					{error}
+				</Notice>
+			)}
 
-            <Card>
-                <CardHeader>
-                    <h2>{__('All Resources', 'plugin-name')}</h2>
-                    <Button variant="primary" onClick={() => handleCreate({ name: 'New Resource' })}>
-                        {__('Add New', 'plugin-name')}
-                    </Button>
-                </CardHeader>
+			<Card>
+				<CardHeader>
+					<h2>{__('All Resources', 'plugin-name')}</h2>
+					<Button
+						variant="primary"
+						onClick={() => handleCreate({ name: 'New Resource' })}
+					>
+						{__('Add New', 'plugin-name')}
+					</Button>
+				</CardHeader>
 
-                <CardBody>
-                    {resources.length === 0 ? (
-                        <p>{__('No resources found.', 'plugin-name')}</p>
-                    ) : (
-                        <table className="wp-list-table widefat fixed striped">
-                            <thead>
-                                <tr>
-                                    <th>{__('ID', 'plugin-name')}</th>
-                                    <th>{__('Name', 'plugin-name')}</th>
-                                    <th>{__('Actions', 'plugin-name')}</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {resources.map((resource) => (
-                                    <tr key={resource.id}>
-                                        <td>{resource.id}</td>
-                                        <td>{resource.name}</td>
-                                        <td>
-                                            <Button
-                                                variant="secondary"
-                                                onClick={() => handleUpdate(resource.id, { name: 'Updated' })}
-                                            >
-                                                {__('Edit', 'plugin-name')}
-                                            </Button>
-                                            <Button
-                                                variant="tertiary"
-                                                isDestructive
-                                                onClick={() => handleDelete(resource.id)}
-                                            >
-                                                {__('Delete', 'plugin-name')}
-                                            </Button>
-                                        </td>
-                                    </tr>
-                                ))}
-                            </tbody>
-                        </table>
-                    )}
+				<CardBody>
+					{resources.length === 0 ? (
+						<p>{__('No resources found.', 'plugin-name')}</p>
+					) : (
+						<table className="wp-list-table widefat fixed striped">
+							<thead>
+								<tr>
+									<th>{__('ID', 'plugin-name')}</th>
+									<th>{__('Name', 'plugin-name')}</th>
+									<th>{__('Actions', 'plugin-name')}</th>
+								</tr>
+							</thead>
+							<tbody>
+								{resources.map((resource) => (
+									<tr key={resource.id}>
+										<td>{resource.id}</td>
+										<td>{resource.name}</td>
+										<td>
+											<Button
+												variant="secondary"
+												onClick={() =>
+													handleUpdate(resource.id, {
+														name: 'Updated',
+													})
+												}
+											>
+												{__('Edit', 'plugin-name')}
+											</Button>
+											<Button
+												variant="tertiary"
+												isDestructive
+												onClick={() =>
+													handleDelete(resource.id)
+												}
+											>
+												{__('Delete', 'plugin-name')}
+											</Button>
+										</td>
+									</tr>
+								))}
+							</tbody>
+						</table>
+					)}
 
-                    {totalPages > 1 && (
-                        <HStack>
-                            <Button
-                                variant="secondary"
-                                disabled={page === 1}
-                                onClick={() => setPage(page - 1)}
-                            >
-                                {__('Previous', 'plugin-name')}
-                            </Button>
-                            <span>{__('Page', 'plugin-name')} {page} / {totalPages}</span>
-                            <Button
-                                variant="secondary"
-                                disabled={page === totalPages}
-                                onClick={() => setPage(page + 1)}
-                            >
-                                {__('Next', 'plugin-name')}
-                            </Button>
-                        </HStack>
-                    )}
-                </CardBody>
-            </Card>
-        </div>
-    );
+					{totalPages > 1 && (
+						<HStack>
+							<Button
+								variant="secondary"
+								disabled={page === 1}
+								onClick={() => setPage(page - 1)}
+							>
+								{__('Previous', 'plugin-name')}
+							</Button>
+							<span>
+								{__('Page', 'plugin-name')} {page} /{' '}
+								{totalPages}
+							</span>
+							<Button
+								variant="secondary"
+								disabled={page === totalPages}
+								onClick={() => setPage(page + 1)}
+							>
+								{__('Next', 'plugin-name')}
+							</Button>
+						</HStack>
+					)}
+				</CardBody>
+			</Card>
+		</div>
+	);
 };
 
 export default ResourcesPage;
 ```
 
 **Key Points**:
-- Import from `@wordpress/element`, not `react`
-- Use `@wordpress/components` for UI elements
-- Use `@wordpress/i18n` for translations
-- Use `apiFetch` with hardcoded paths (always start with `/`)
-- Implement proper loading states and error handling
-- Use optimistic UI updates where appropriate
-- Follow WordPress admin UI conventions (`.wrap`, `.wp-list-table`, etc.)
+
+-   Import from `@wordpress/element`, not `react`
+-   Use `@wordpress/components` for UI elements
+-   Use `@wordpress/i18n` for translations
+-   Use `apiFetch` with hardcoded paths (always start with `/`)
+-   Implement proper loading states and error handling
+-   Use optimistic UI updates where appropriate
+-   Follow WordPress admin UI conventions (`.wrap`, `.wp-list-table`, etc.)
 
 ### 7. Webpack Configuration
 
@@ -731,48 +575,57 @@ const defaultConfig = require('@wordpress/scripts/config/webpack.config');
 const path = require('path');
 
 module.exports = {
-    ...defaultConfig,
-    entry: {
-        ...defaultConfig.entry,
-        // Admin pages
-        'admin/resources/index': path.resolve(__dirname, 'src/Admin/resources/index.js'),
-        'admin/settings/index': path.resolve(__dirname, 'src/Admin/settings/index.js'),
-    },
+	...defaultConfig,
+	entry: {
+		...defaultConfig.entry,
+		// Admin pages
+		'admin/resources/index': path.resolve(
+			__dirname,
+			'src/Admin/resources/index.js'
+		),
+		'admin/settings/index': path.resolve(
+			__dirname,
+			'src/Admin/settings/index.js'
+		),
+	},
 };
 ```
 
 **Key Points**:
-- Extend WordPress Scripts webpack config
-- Use descriptive entry point paths: `admin/page-name/index`
-- Webpack generates `.asset.php` files automatically
-- Built files go to `build/admin/page-name/index.js`
+
+-   Extend WordPress Scripts webpack config
+-   Use descriptive entry point paths: `admin/page-name/index`
+-   Webpack generates `.asset.php` files automatically
+-   Built files go to `build/admin/page-name/index.js`
 
 ## Best Practices
 
 ### apiFetch Usage
 
 ✅ **DO**:
+
 ```javascript
 // Use hardcoded paths starting with /
 const data = await apiFetch({
-    path: '/plugin-name/v1/resources',
+	path: '/plugin-name/v1/resources',
 });
 
 // Include query parameters
 const params = new URLSearchParams({ page: '1', per_page: '50' });
 const data = await apiFetch({
-    path: `/plugin-name/v1/resources?${params.toString()}`,
+	path: `/plugin-name/v1/resources?${params.toString()}`,
 });
 
 // Specify HTTP method for mutations
 await apiFetch({
-    path: '/plugin-name/v1/resources',
-    method: 'POST',
-    data: { name: 'New Resource' },
+	path: '/plugin-name/v1/resources',
+	method: 'POST',
+	data: { name: 'New Resource' },
 });
 ```
 
 ❌ **DON'T**:
+
 ```javascript
 // Never use fetch() directly for WordPress REST API
 fetch('/wp-json/plugin-name/v1/resources'); // ❌
@@ -788,18 +641,20 @@ apiFetch({ path: 'plugin-name/v1/resources' }); // ❌
 
 ```javascript
 try {
-    const response = await apiFetch({ path: '/plugin-name/v1/resources' });
-    setData(response);
+	const response = await apiFetch({ path: '/plugin-name/v1/resources' });
+	setData(response);
 } catch (err) {
-    // Extract message from error object
-    const errorMessage = err.message || __('Failed to load data.', 'plugin-name');
-    setError(errorMessage);
+	// Extract message from error object
+	const errorMessage =
+		err.message || __('Failed to load data.', 'plugin-name');
+	setError(errorMessage);
 }
 ```
 
 ### Permission Callbacks
 
 ✅ **DO**:
+
 ```php
 // Admin endpoints require manage_options capability
 'permission_callback' => function() {
@@ -811,6 +666,7 @@ try {
 ```
 
 ❌ **DON'T**:
+
 ```php
 // NEVER use __return_true for admin endpoints
 'permission_callback' => '__return_true'  // ❌ Security vulnerability!
@@ -822,11 +678,11 @@ Always show loading states and handle errors:
 
 ```javascript
 if (loading) {
-    return <Spinner />;
+	return <Spinner />;
 }
 
 if (error) {
-    return <Notice status="error">{error}</Notice>;
+	return <Notice status="error">{error}</Notice>;
 }
 
 // Render data
@@ -834,10 +690,10 @@ if (error) {
 
 ### State Management
 
-- Use `useState` for local component state
-- Use `useEffect` for data fetching
-- Update local state optimistically after mutations
-- Reload data after create/delete operations
+-   Use `useState` for local component state
+-   Use `useEffect` for data fetching
+-   Update local state optimistically after mutations
+-   Reload data after create/delete operations
 
 ### WordPress Components
 
@@ -845,42 +701,44 @@ Use WordPress components for consistent UI:
 
 ```javascript
 import {
-    Card,
-    CardHeader,
-    CardBody,
-    Button,
-    Spinner,
-    Notice,
-    TextControl,
-    SelectControl,
-    CheckboxControl,
-    __experimentalVStack as VStack,
-    __experimentalHStack as HStack,
+	Card,
+	CardHeader,
+	CardBody,
+	Button,
+	Spinner,
+	Notice,
+	TextControl,
+	SelectControl,
+	CheckboxControl,
+	__experimentalVStack as VStack,
+	__experimentalHStack as HStack,
 } from '@wordpress/components';
 ```
 
 ## Example Implementations
 
-### fair-rsvp (Most Complete)
-- **Location**: `fair-rsvp/src/Admin/`
-- **Pages**: Events List, Invitations List, Invitation Stats, Attendance Confirmation, Attendance Check
-- **REST API**: `fair-rsvp/src/API/` (RsvpController, InvitationController)
-- **Features**: Pagination, filtering, sorting, bulk actions, inline editing
+### fair-audience (Most Complete — canonical)
 
-### fair-membership
-- **Location**: `fair-membership/src/Admin/users/`
-- **Page**: Membership Matrix (user-group membership management)
-- **REST API**: `fair-membership/src/API/RestAPI.php`
-- **Features**: Grid UI with checkboxes, optimistic updates
+-   **Location**: `fair-audience/src/Admin/` (events-list, event-participants,
+    all-participants, fees-list, collaborators, custom-mail, and more)
+-   **REST API**: `fair-audience/src/API/` (EventParticipantsController,
+    FeesController, …)
+-   **Features**: Pagination, filtering, inline editing, shared components in
+    `fair-audience/src/Admin/components/`
+
+### fair-events
+
+-   **Location**: `fair-events/src/Admin/`
+-   **REST API**: `fair-events/src/API/` (EventDatesController,
+    TicketsController, …)
 
 ### fair-payments-connector
-- **Location**: `fair-payments-connector/src/Admin/settings/`
-- **Page**: Settings (Mollie API configuration)
-- **Features**: Form with validation, uses WordPress settings endpoint
 
-## Migration Guide
+-   **Location**: `fair-payments-connector/src/Admin/settings/`
+-   **Page**: Settings (Mollie API configuration)
+-   **Features**: Form with validation
 
-To migrate an existing admin page to this pattern:
+## Adding a New Admin Page
 
 1. **Create REST API Controller** in `src/API/ResourceController.php`
 2. **Register REST API** in `src/API/RestHooks.php`
@@ -896,18 +754,18 @@ To migrate an existing admin page to this pattern:
 
 See [TESTING.md](./TESTING.md) for comprehensive testing guidelines:
 
-- **Component Tests**: Jest + React Testing Library
-- **API Tests**: Playwright for REST endpoints
-- **E2E Tests**: Playwright for complete user flows
+-   **Component Tests**: Jest + React Testing Library
+-   **API Tests**: Playwright for REST endpoints
+-   **E2E Tests**: Playwright for complete user flows
 
 ## Security Checklist
 
-- [ ] REST API uses `WP_REST_Controller` base class
-- [ ] All endpoints have proper `permission_callback`
-- [ ] Admin endpoints use `current_user_can( 'manage_options' )`
-- [ ] Input validation and sanitization in PHP
-- [ ] WordPress nonce handled automatically by `apiFetch`
-- [ ] Never use `__return_true` for authenticated endpoints
+-   [ ] REST API uses `WP_REST_Controller` base class
+-   [ ] All endpoints have proper `permission_callback`
+-   [ ] Admin endpoints use `current_user_can( 'manage_options' )`
+-   [ ] Input validation and sanitization in PHP
+-   [ ] WordPress nonce handled automatically by `apiFetch`
+-   [ ] Never use `__return_true` for authenticated endpoints
 
 ## Common Patterns
 
@@ -918,17 +776,17 @@ const [page, setPage] = useState(1);
 const [totalPages, setTotalPages] = useState(1);
 
 useEffect(() => {
-    const params = new URLSearchParams({
-        page: page.toString(),
-        per_page: '50',
-    });
+	const params = new URLSearchParams({
+		page: page.toString(),
+		per_page: '50',
+	});
 
-    apiFetch({
-        path: `/plugin-name/v1/resources?${params.toString()}`,
-    }).then((response) => {
-        setItems(response.items);
-        setTotalPages(response.total_pages);
-    });
+	apiFetch({
+		path: `/plugin-name/v1/resources?${params.toString()}`,
+	}).then((response) => {
+		setItems(response.items);
+		setTotalPages(response.total_pages);
+	});
 }, [page]);
 ```
 
@@ -938,18 +796,18 @@ useEffect(() => {
 const [statusFilter, setStatusFilter] = useState('');
 
 useEffect(() => {
-    const params = new URLSearchParams({
-        page: page.toString(),
-        per_page: '50',
-    });
+	const params = new URLSearchParams({
+		page: page.toString(),
+		per_page: '50',
+	});
 
-    if (statusFilter) {
-        params.append('status', statusFilter);
-    }
+	if (statusFilter) {
+		params.append('status', statusFilter);
+	}
 
-    apiFetch({
-        path: `/plugin-name/v1/resources?${params.toString()}`,
-    }).then(setItems);
+	apiFetch({
+		path: `/plugin-name/v1/resources?${params.toString()}`,
+	}).then(setItems);
 }, [statusFilter, page]);
 ```
 
@@ -957,28 +815,28 @@ useEffect(() => {
 
 ```javascript
 const handleToggle = async (id, currentValue) => {
-    // Optimistic update
-    setItems((prev) =>
-        prev.map((item) =>
-            item.id === id ? { ...item, active: !currentValue } : item
-        )
-    );
+	// Optimistic update
+	setItems((prev) =>
+		prev.map((item) =>
+			item.id === id ? { ...item, active: !currentValue } : item
+		)
+	);
 
-    try {
-        await apiFetch({
-            path: `/plugin-name/v1/resources/${id}`,
-            method: 'PUT',
-            data: { active: !currentValue },
-        });
-    } catch (err) {
-        // Revert on error; report via a Notice, not alert() (UI_GUIDELINES.md)
-        setItems((prev) =>
-            prev.map((item) =>
-                item.id === id ? { ...item, active: currentValue } : item
-            )
-        );
-        setError(err.message);
-    }
+	try {
+		await apiFetch({
+			path: `/plugin-name/v1/resources/${id}`,
+			method: 'PUT',
+			data: { active: !currentValue },
+		});
+	} catch (err) {
+		// Revert on error; report via a Notice, not alert() (UI_GUIDELINES.md)
+		setItems((prev) =>
+			prev.map((item) =>
+				item.id === id ? { ...item, active: currentValue } : item
+			)
+		);
+		setError(err.message);
+	}
 };
 ```
 
@@ -989,30 +847,30 @@ const [formData, setFormData] = useState({ name: '', email: '' });
 const [isSaving, setIsSaving] = useState(false);
 
 const handleSubmit = async (e) => {
-    e.preventDefault();
-    setIsSaving(true);
+	e.preventDefault();
+	setIsSaving(true);
 
-    try {
-        await apiFetch({
-            path: '/plugin-name/v1/resources',
-            method: 'POST',
-            data: formData,
-        });
+	try {
+		await apiFetch({
+			path: '/plugin-name/v1/resources',
+			method: 'POST',
+			data: formData,
+		});
 
-        // Reset form
-        setFormData({ name: '', email: '' });
-    } catch (err) {
-        setError(err.message);
-    } finally {
-        setIsSaving(false);
-    }
+		// Reset form
+		setFormData({ name: '', email: '' });
+	} catch (err) {
+		setError(err.message);
+	} finally {
+		setIsSaving(false);
+	}
 };
 ```
 
 ## See Also
 
-- [UI_GUIDELINES.md](./UI_GUIDELINES.md) - UX rules for admin pages (labels, save model, destructive actions, dates)
-- [REST_API_USAGE.md](./REST_API_USAGE.md) - Frontend REST API integration
-- [REST_API_BACKEND.md](./REST_API_BACKEND.md) - Backend REST API security standards
-- [TESTING.md](./TESTING.md) - Testing architecture
-- [CLAUDE.md](./CLAUDE.md) - General project guidelines
+-   [UI_GUIDELINES.md](./UI_GUIDELINES.md) - UX rules for admin pages (labels, save model, destructive actions, dates)
+-   [REST_API_USAGE.md](./REST_API_USAGE.md) - Frontend REST API integration
+-   [REST_API_BACKEND.md](./REST_API_BACKEND.md) - Backend REST API security standards
+-   [TESTING.md](./TESTING.md) - Testing architecture
+-   [CLAUDE.md](./CLAUDE.md) - General project guidelines

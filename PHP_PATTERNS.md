@@ -28,13 +28,13 @@ $results = $wpdb->get_results(
 
 #### Available Placeholders
 
-| Placeholder | Type | Use For | Example |
-|-------------|------|---------|---------|
-| `%i` | Identifier | Table names, column names | `%i`, `WHERE %i = %s` |
-| `%s` | String | Text values | `'active'`, `'John Doe'` |
-| `%d` | Integer | Whole numbers | `42`, `123` |
-| `%f` | Float | Decimal numbers | `3.14`, `99.99` |
-| `%%` | Literal | Escape percentage sign | `LIKE '%%example%%'` |
+| Placeholder | Type       | Use For                   | Example                  |
+| ----------- | ---------- | ------------------------- | ------------------------ |
+| `%i`        | Identifier | Table names, column names | `%i`, `WHERE %i = %s`    |
+| `%s`        | String     | Text values               | `'active'`, `'John Doe'` |
+| `%d`        | Integer    | Whole numbers             | `42`, `123`              |
+| `%f`        | Float      | Decimal numbers           | `3.14`, `99.99`          |
+| `%%`        | Literal    | Escape percentage sign    | `LIKE '%%example%%'`     |
 
 #### Multiple Identifiers and Values
 
@@ -285,9 +285,9 @@ The `%i` identifier placeholder was introduced in **WordPress 6.2**. This projec
 
 ### References
 
-- [wpdb::prepare() Official Documentation](https://developer.wordpress.org/reference/classes/wpdb/prepare/)
-- [esc_sql() Limitations](https://developer.wordpress.org/reference/functions/esc_sql/)
-- [WordPress Plugin Security: Common Issues](https://developer.wordpress.org/plugins/wordpress-org/common-issues/)
+-   [wpdb::prepare() Official Documentation](https://developer.wordpress.org/reference/classes/wpdb/prepare/)
+-   [esc_sql() Limitations](https://developer.wordpress.org/reference/functions/esc_sql/)
+-   [WordPress Plugin Security: Common Issues](https://developer.wordpress.org/plugins/wordpress-org/common-issues/)
 
 ## Additional PHP Patterns
 
@@ -311,13 +311,15 @@ defined( 'WPINC' ) || die;
 ### PSR-4 Autoloading
 
 **Namespace to Directory Mapping**:
-- Namespace: `FairMembership\API\MembershipController`
-- File path: `fair-membership/src/API/MembershipController.php`
+
+-   Namespace: `FairAudience\API\EventParticipantsController`
+-   File path: `fair-audience/src/API/EventParticipantsController.php`
 
 **Rules**:
-- Use uppercase for acronyms in directories: `src/API/` (not `src/Api/`)
-- Match namespace casing exactly to directory names
-- Case-sensitive on Linux (production) even though macOS (development) is case-insensitive
+
+-   Use uppercase for acronyms in directories: `src/API/` (not `src/Api/`)
+-   Match namespace casing exactly to directory names
+-   Case-sensitive on Linux (production) even though macOS (development) is case-insensitive
 
 ### Nonce Verification
 
@@ -414,48 +416,6 @@ my_plugin_debug_log( 'User action performed' );
 my_plugin_debug_log( $user_data );
 ```
 
-**Option 3: Recommended - Use DebugLogger utility class**
-
-For cleaner code and centralized phpcs suppression, use a dedicated utility class:
-
-```php
-<?php
-use FairMembership\Utils\DebugLogger;
-
-// Simple message
-DebugLogger::log( 'User action performed' );
-
-// Array or object (automatically formatted)
-DebugLogger::log( $user_data );
-
-// With custom prefix
-DebugLogger::log( 'Processing payment', 'PAYMENT' );
-
-// Using convenience methods
-DebugLogger::error( 'Payment failed: Invalid card' );
-DebugLogger::warning( 'Rate limit approaching' );
-DebugLogger::info( 'Cache cleared successfully' );
-
-// With context
-DebugLogger::log_with_context(
-    'Database migration failed',
-    array(
-        'table'   => 'fair_groups',
-        'version' => '1.2.0',
-        'error'   => $wpdb->last_error,
-    )
-);
-```
-
-**Benefits of DebugLogger utility:**
-- Single phpcs suppression in one place
-- Automatic WP_DEBUG check (no manual wrapping needed)
-- Consistent formatting for arrays/objects
-- Semantic methods (error, warning, info)
-- Zero production impact
-
-See `fair-membership/src/Utils/DebugLogger.php` for the implementation.
-
 #### What NOT to Use
 
 ```php
@@ -470,13 +430,14 @@ ini_set( 'display_errors', 1 );
 
 **Why?**
 
-- Unconditional `error_log()` calls run in production and can fill logs with debug messages
-- Modifying `error_reporting()` or `ini_set()` in plugins interferes with site-wide debugging configuration
-- Debug logs can contain sensitive information and should only be used in development
+-   Unconditional `error_log()` calls run in production and can fill logs with debug messages
+-   Modifying `error_reporting()` or `ini_set()` in plugins interferes with site-wide debugging configuration
+-   Debug logs can contain sensitive information and should only be used in development
 
 #### Recommended wp-config.php Setup
 
 **Development/Staging:**
+
 ```php
 define( 'WP_DEBUG', true );
 define( 'WP_DEBUG_LOG', true );      // Logs to wp-content/debug.log
@@ -485,26 +446,20 @@ define( 'SCRIPT_DEBUG', true );      // Use unminified JS/CSS
 ```
 
 **Production:**
+
 ```php
 define( 'WP_DEBUG', false );
 ```
 
 #### References
 
-- [Debugging in WordPress – Advanced Administration Handbook](https://developer.wordpress.org/advanced-administration/debug/debug-wordpress/)
-- [WordPress Plugin Security: Common Issues](https://developer.wordpress.org/plugins/wordpress-org/common-issues/)
+-   [Debugging in WordPress – Advanced Administration Handbook](https://developer.wordpress.org/advanced-administration/debug/debug-wordpress/)
+-   [WordPress Plugin Security: Common Issues](https://developer.wordpress.org/plugins/wordpress-org/common-issues/)
 
 ## Code Quality Standards
 
-### User Should Run After Changes
-
-**IMPORTANT**: After making code changes, users should run:
-
-```bash
-npm run format    # Format all code (JavaScript, CSS, PHP)
-```
-
-**For Claude Code**: Do NOT automatically run formatting tools. Prompt the user to run `npm run format` after completing code changes.
+Formatting is automatic — see [CLAUDE.md § Formatting & Build](./CLAUDE.md#formatting--build)
+for the hook setup and the pre-commit `npm run format` rule.
 
 ### PHP Coding Standards
 
@@ -515,8 +470,8 @@ vendor/bin/phpcs  # Check PHP code style
 
 ## See Also
 
-- [CLAUDE.md](./CLAUDE.md) - Main project documentation
-- [REST_API_BACKEND.md](./REST_API_BACKEND.md) - REST API security patterns
-- [REST_API_USAGE.md](./REST_API_USAGE.md) - Frontend API usage patterns
-- [REACT_ADMIN_PATTERN.md](./REACT_ADMIN_PATTERN.md) - React admin page patterns
-- [TESTING.md](./TESTING.md) - Testing architecture and patterns
+-   [CLAUDE.md](./CLAUDE.md) - Main project documentation
+-   [REST_API_BACKEND.md](./REST_API_BACKEND.md) - REST API security patterns
+-   [REST_API_USAGE.md](./REST_API_USAGE.md) - Frontend API usage patterns
+-   [REACT_ADMIN_PATTERN.md](./REACT_ADMIN_PATTERN.md) - React admin page patterns
+-   [TESTING.md](./TESTING.md) - Testing architecture and patterns

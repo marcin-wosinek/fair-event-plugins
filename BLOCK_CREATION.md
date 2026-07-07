@@ -17,16 +17,16 @@ src/blocks/block-name/
 
 ```json
 {
-  "name": "plugin-name/block-name",
-  "editorScript": "file:./editor.js",
-  "render": "file:./render.php",
-  "viewScript": "file:./frontend.js"
+	"name": "plugin-name/block-name",
+	"editorScript": "file:./editor.js",
+	"render": "file:./render.php",
+	"viewScript": "file:./frontend.js"
 }
 ```
 
-- `editorScript` - Loads editor component (REQUIRED)
-- `render` - Server-side PHP rendering (REQUIRED)
-- `viewScript` - Frontend JavaScript for interactivity
+-   `editorScript` - Loads editor component (REQUIRED)
+-   `render` - Server-side PHP rendering (REQUIRED)
+-   `viewScript` - Frontend JavaScript for interactivity
 
 ## Block Registration
 
@@ -38,5 +38,6 @@ register_block_type(PLUGIN_DIR . 'build/blocks/block-name');
 
 ## Examples
 
-- `fair-membership/src/blocks/my-fees/`
-- `fair-events/src/blocks/events-calendar`
+-   `fair-events/src/blocks/events-calendar/`
+-   `fair-events/src/blocks/calendar-button/` (canonical `viewScript` DOM-ready pattern)
+-   `fair-audience/src/blocks/event-signup/`

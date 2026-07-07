@@ -132,6 +132,9 @@ jobs:
             - name: Install dev PHP dependencies in all plugins
               run: npm run composer:install
 
+            - name: Lint guideline docs
+              run: npm run lint:docs
+
             - name: Run unit tests
               run: |
                   npm test

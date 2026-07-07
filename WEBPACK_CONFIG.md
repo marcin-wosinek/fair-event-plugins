@@ -11,8 +11,10 @@ const defaultConfig = require('@wordpress/scripts/config/webpack.config');
 const path = require('path');
 
 module.exports = {
-    ...defaultConfig,
-    entry: { /* custom entries */ },
+	...defaultConfig,
+	entry: {
+		/* custom entries */
+	},
 };
 ```
 
@@ -20,10 +22,10 @@ module.exports = {
 
 ```json
 {
-  "scripts": {
-    "build": "wp-scripts build --config webpack.config.cjs",
-    "start": "wp-scripts start --config webpack.config.cjs"
-  }
+	"scripts": {
+		"build": "wp-scripts build --config webpack.config.cjs",
+		"start": "wp-scripts start --config webpack.config.cjs"
+	}
 }
 ```
 
@@ -33,38 +35,40 @@ Without `--config`, wp-scripts will use its default entry discovery (looking for
 
 ### Pattern 1: Static Entries (RECOMMENDED)
 
-**Used in**: All plugins (`fair-payments-connector`, `fair-events`, `fair-membership`, `fair-rsvp`, `fair-user-import`, `fair-platform`)
+**Used in**: All plugins with a build (e.g. `fair-events`, `fair-audience`, `fair-payments-connector`)
 
 ```javascript
 module.exports = {
-    ...defaultConfig,
-    entry: {
-        'admin/groups/index': path.resolve(
-            process.cwd(),
-            'src/Admin/groups/index.js'
-        ),
-        'blocks/my-block/editor': path.resolve(
-            process.cwd(),
-            'src/blocks/my-block/editor.js'
-        ),
-    },
+	...defaultConfig,
+	entry: {
+		'admin/groups/index': path.resolve(
+			process.cwd(),
+			'src/Admin/groups/index.js'
+		),
+		'blocks/my-block/editor': path.resolve(
+			process.cwd(),
+			'src/blocks/my-block/editor.js'
+		),
+	},
 };
 ```
 
 **Pros**:
-- Clear and explicit
-- Easy to understand and maintain
-- Fails fast with clear error messages if files are missing
-- No extra dependencies
+
+-   Clear and explicit
+-   Easy to understand and maintain
+-   Fails fast with clear error messages if files are missing
+-   No extra dependencies
 
 **Cons**:
-- Manual update when adding/removing files (but this is actually a good thing - forces intentional changes)
+
+-   Manual update when adding/removing files (but this is actually a good thing - forces intentional changes)
 
 **Use this pattern for all new plugins.**
 
 ### Pattern 2: Dynamic Entries with File Existence Check (NOT RECOMMENDED)
 
-**Previously used in**: `fair-payments-connector`, `fair-events` *(refactored to Pattern 1)*
+**Previously used in**: `fair-payments-connector`, `fair-events` _(refactored to Pattern 1)_
 
 ```javascript
 const fs = require('fs');
@@ -72,64 +76,65 @@ const fs = require('fs');
 const entries = {};
 
 const blockEntries = {
-    'blocks/simple-payment/index': 'src/blocks/simple-payment/index.js',
-    'blocks/simple-payment/view': 'src/blocks/simple-payment/view.js',
+	'blocks/simple-payment/index': 'src/blocks/simple-payment/index.js',
+	'blocks/simple-payment/view': 'src/blocks/simple-payment/view.js',
 };
 
 const adminEntries = {
-    'admin/settings/index': 'src/Admin/settings/index.js',
+	'admin/settings/index': 'src/Admin/settings/index.js',
 };
 
 const allEntries = { ...blockEntries, ...adminEntries };
 
 // Only add entries for files that exist
 Object.entries(allEntries).forEach(([key, filePath]) => {
-    const fullPath = path.resolve(process.cwd(), filePath);
-    if (fs.existsSync(fullPath)) {
-        entries[key] = fullPath;
-    }
+	const fullPath = path.resolve(process.cwd(), filePath);
+	if (fs.existsSync(fullPath)) {
+		entries[key] = fullPath;
+	}
 });
 
 module.exports = {
-    ...defaultConfig,
-    entry: entries,
+	...defaultConfig,
+	entry: entries,
 };
 ```
 
 **Why NOT to use this**:
-- ❌ Silent failures: Typos in paths won't cause build errors
-- ❌ Harder to debug: "Why isn't my file being built?"
-- ❌ More complexity: Extra code and `fs` dependency
-- ❌ False sense of safety: Missing files should fail the build, not be silently skipped
-- ❌ No real benefit: If you're listing a file in webpack config, you want it to build
+
+-   ❌ Silent failures: Typos in paths won't cause build errors
+-   ❌ Harder to debug: "Why isn't my file being built?"
+-   ❌ More complexity: Extra code and `fs` dependency
+-   ❌ False sense of safety: Missing files should fail the build, not be silently skipped
+-   ❌ No real benefit: If you're listing a file in webpack config, you want it to build
 
 **Only use if**: You have truly optional modules that may or may not exist (e.g., environment-specific features, premium modules). None of the current Fair Event Plugins have this requirement.
 
 ### Pattern 3: Entry as Function (Preserves Default Entries)
 
-**Used in**: `fair-rsvp`
+**Used in**: no current plugin — documented for completeness
 
 ```javascript
 module.exports = {
-    ...defaultConfig,
-    entry: () => {
-        const defaultEntries =
-            typeof defaultConfig.entry === 'function'
-                ? defaultConfig.entry()
-                : defaultConfig.entry;
+	...defaultConfig,
+	entry: () => {
+		const defaultEntries =
+			typeof defaultConfig.entry === 'function'
+				? defaultConfig.entry()
+				: defaultConfig.entry;
 
-        return {
-            ...defaultEntries,
-            'admin/events/index': path.resolve(
-                process.cwd(),
-                'src/Admin/events/index.js'
-            ),
-        };
-    },
+		return {
+			...defaultEntries,
+			'admin/events/index': path.resolve(
+				process.cwd(),
+				'src/Admin/events/index.js'
+			),
+		};
+	},
 };
 ```
 
-**Pros**: Preserves @wordpress/scripts default block detection (src/index.js, src/*/index.js)
+**Pros**: Preserves @wordpress/scripts default block detection (src/index.js, src/\*/index.js)
 **Cons**: More complex, usually not needed since we define all entries explicitly
 
 ## Translation Support (BundleOutputPlugin)
@@ -140,33 +145,36 @@ module.exports = {
 const BundleOutputPlugin = require('webpack-bundle-output');
 
 module.exports = {
-    ...defaultConfig,
-    entry: { /* ... */ },
-    plugins: [
-        ...defaultConfig.plugins,
-        new BundleOutputPlugin({
-            cwd: process.cwd(),
-            output: 'map.json',
-        }),
-    ],
+	...defaultConfig,
+	entry: {
+		/* ... */
+	},
+	plugins: [
+		...defaultConfig.plugins,
+		new BundleOutputPlugin({
+			cwd: process.cwd(),
+			output: 'map.json',
+		}),
+	],
 };
 ```
 
 **Purpose**: Generates `build/map.json` that maps source files to built files. This is required for `wp i18n make-json --use-map` to generate correct translation JSON hashes.
 
 **When to use**:
-- ✅ Plugin has translatable strings in JavaScript (uses `__()`, `_x()`, etc.)
-- ✅ Plugin runs `npm run makejson` script
-- ❌ Server-side only plugin (no JavaScript)
 
-**Plugins using it**: `fair-events`, `fair-membership`, `fair-rsvp`, `fair-user-import`
-**Plugins NOT using it**: `fair-payments-connector` (should probably add it), `fair-platform` (server-side only, doesn't need it yet)
+-   ✅ Plugin has translatable strings in JavaScript (uses `__()`, `_x()`, etc.)
+-   ✅ Plugin runs `npm run makejson` script
+-   ❌ Server-side only plugin (no JavaScript)
+
+**Plugins using it**: every plugin with a `webpack.config.cjs`
 
 ## Path Resolution
 
 ### Use `process.cwd()` for Entry Paths
 
 **Correct**:
+
 ```javascript
 entry: {
     'admin/settings/index': path.resolve(
@@ -201,9 +209,9 @@ src/
 
 ### Common Entry Suffixes
 
-- `index` - Main entry point (editor + view combined, or admin page)
-- `editor` - Block editor script (for blocks with separate frontend)
-- `view` / `frontend` - Frontend-only script (loaded via viewScript in block.json)
+-   `index` - Main entry point (editor + view combined, or admin page)
+-   `editor` - Block editor script (for blocks with separate frontend)
+-   `view` / `frontend` - Frontend-only script (loaded via viewScript in block.json)
 
 ## Output Structure
 
@@ -242,40 +250,42 @@ No `webpack.config.cjs` needed.
 ### Simple Plugin with One Admin Page
 
 **webpack.config.cjs**:
+
 ```javascript
 const defaultConfig = require('@wordpress/scripts/config/webpack.config');
 const path = require('path');
 const BundleOutputPlugin = require('webpack-bundle-output');
 
 module.exports = {
-    ...defaultConfig,
-    entry: {
-        'admin/settings/index': path.resolve(
-            process.cwd(),
-            'src/Admin/settings/index.js'
-        ),
-    },
-    plugins: [
-        ...defaultConfig.plugins,
-        new BundleOutputPlugin({
-            cwd: process.cwd(),
-            output: 'map.json',
-        }),
-    ],
+	...defaultConfig,
+	entry: {
+		'admin/settings/index': path.resolve(
+			process.cwd(),
+			'src/Admin/settings/index.js'
+		),
+	},
+	plugins: [
+		...defaultConfig.plugins,
+		new BundleOutputPlugin({
+			cwd: process.cwd(),
+			output: 'map.json',
+		}),
+	],
 };
 ```
 
 **package.json**:
+
 ```json
 {
-  "scripts": {
-    "build": "wp-scripts build --config webpack.config.cjs",
-    "start": "wp-scripts start --config webpack.config.cjs"
-  },
-  "devDependencies": {
-    "@wordpress/scripts": "^30.20.0",
-    "webpack-bundle-output": "^1.1.0"
-  }
+	"scripts": {
+		"build": "wp-scripts build --config webpack.config.cjs",
+		"start": "wp-scripts start --config webpack.config.cjs"
+	},
+	"devDependencies": {
+		"@wordpress/scripts": "^30.20.0",
+		"webpack-bundle-output": "^1.1.0"
+	}
 }
 ```
 
@@ -287,32 +297,32 @@ const path = require('path');
 const BundleOutputPlugin = require('webpack-bundle-output');
 
 module.exports = {
-    ...defaultConfig,
-    entry: {
-        'blocks/event-dates/editor': path.resolve(
-            process.cwd(),
-            'src/blocks/event-dates/editor.js'
-        ),
-        'blocks/events-list/editor': path.resolve(
-            process.cwd(),
-            'src/blocks/events-list/editor.js'
-        ),
-        'admin/settings/index': path.resolve(
-            process.cwd(),
-            'src/Admin/settings/index.js'
-        ),
-        'admin/event-meta/index': path.resolve(
-            process.cwd(),
-            'src/Admin/event-meta/index.js'
-        ),
-    },
-    plugins: [
-        ...defaultConfig.plugins,
-        new BundleOutputPlugin({
-            cwd: process.cwd(),
-            output: 'map.json',
-        }),
-    ],
+	...defaultConfig,
+	entry: {
+		'blocks/event-dates/editor': path.resolve(
+			process.cwd(),
+			'src/blocks/event-dates/editor.js'
+		),
+		'blocks/events-list/editor': path.resolve(
+			process.cwd(),
+			'src/blocks/events-list/editor.js'
+		),
+		'admin/settings/index': path.resolve(
+			process.cwd(),
+			'src/Admin/settings/index.js'
+		),
+		'admin/event-meta/index': path.resolve(
+			process.cwd(),
+			'src/Admin/event-meta/index.js'
+		),
+	},
+	plugins: [
+		...defaultConfig.plugins,
+		new BundleOutputPlugin({
+			cwd: process.cwd(),
+			output: 'map.json',
+		}),
+	],
 };
 ```
 
@@ -352,6 +362,7 @@ When creating webpack.config.cjs for a new plugin:
 **Cause**: Missing `BundleOutputPlugin` or not using `--use-map` flag
 
 **Solution**:
+
 1. Add BundleOutputPlugin to webpack config
 2. Update `makejson` script: `wp i18n make-json languages ./build/languages --domain=plugin-name --use-map=build/map.json`
 
@@ -363,6 +374,6 @@ When creating webpack.config.cjs for a new plugin:
 
 ## See Also
 
-- [Translation Setup Guide](./CLAUDE.md#translation-i18n-setup)
-- [React Admin Pattern](./REACT_ADMIN_PATTERN.md)
-- [WordPress Scripts Documentation](https://developer.wordpress.org/block-editor/reference-guides/packages/packages-scripts/)
+-   [I18N_SETUP.md](./I18N_SETUP.md) and [TRANSLATIONS.md](./TRANSLATIONS.md) - translation setup and tooling
+-   [React Admin Pattern](./REACT_ADMIN_PATTERN.md)
+-   [WordPress Scripts Documentation](https://developer.wordpress.org/block-editor/reference-guides/packages/packages-scripts/)

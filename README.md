@@ -2,20 +2,25 @@
 
 A collection of WordPress plugins for running event websites with fair, transparent pricing. Built as a monorepo with shared development tools and standardized patterns.
 
-## Published Plugins
+## Plugins
 
-All plugins are available on WordPress.org:
+Published on WordPress.org:
 
-- **[Fair Events](https://wordpress.org/plugins/fair-events/)** - Core event management with custom post types and blocks
-- **[Fair Calendar Button](https://wordpress.org/plugins/fair-calendar-button/)** - Add events to Google Calendar, Apple Calendar, etc.
-- **[Fair Timetable](https://wordpress.org/plugins/fair-timetable/)** - Display event schedules in an organized timetable format
-- **[Fair Schedule Blocks](https://wordpress.org/plugins/fair-schedule-blocks/)** - Gutenberg blocks for event schedules
-- **[Fair RSVP](https://wordpress.org/plugins/fair-rsvp/)** - Event registration and attendance management
-- **[Fair Membership](https://wordpress.org/plugins/fair-membership/)** - Membership management with fees and groups
+-   **[Fair Events](https://wordpress.org/plugins/fair-events/)** - Core event management with custom post types and blocks
+-   **[Fair Audience](https://wordpress.org/plugins/fair-audience/)** - Event participants, signups, and mailing management
+-   **[Fair Timetable](https://wordpress.org/plugins/fair-timetable/)** - Timetable management for events & weekly activities
+
+In the monorepo, not (yet) published:
+
+-   **fair-payments-connector** - Payment blocks and Mollie integration
+-   **fair-finance** - Budgeting, financial entries, and reconciliation
+-   **fair-form** - Form blocks and answer data layer
+-   **fair-events-experimental** / **fair-payments-connector-experimental** - Feature-flag companions for advanced features
+-   **fair-events-shared** - Shared JS utilities (private workspace package)
 
 ### Platform Plugin (Private)
 
-- **fair-platform** - OAuth proxy for Mollie Connect (deployed to fair-event-plugins.com only)
+-   **fair-platform** - OAuth proxy for Mollie Connect (deployed to fair-event-plugins.com only)
 
 ## Development
 
@@ -28,8 +33,9 @@ docker compose up
 ```
 
 This provides:
-- **WordPress**: http://localhost:8080
-- **phpMyAdmin**: http://localhost:8081
+
+-   **WordPress**: http://localhost:8080
+-   **phpMyAdmin**: http://localhost:8081
 
 ### Build Commands
 
@@ -62,18 +68,18 @@ npm run build    # Build this plugin only
 
 ### For Developers
 
-- **[CLAUDE.md](./CLAUDE.md)** - Project overview, coding standards, and AI assistant instructions
-- **[ADDING_NEW_PLUGIN.md](./ADDING_NEW_PLUGIN.md)** - How to add new plugins to the monorepo
-- **[PHP_PATTERNS.md](./PHP_PATTERNS.md)** - PHP best practices and security patterns
-- **[REST_API_BACKEND.md](./REST_API_BACKEND.md)** - REST API security and implementation standards
-- **[REST_API_USAGE.md](./REST_API_USAGE.md)** - Frontend REST API patterns with apiFetch
-- **[REACT_ADMIN_PATTERN.md](./REACT_ADMIN_PATTERN.md)** - React admin pages architecture
-- **[TESTING.md](./TESTING.md)** - Testing strategy (Jest, Playwright)
+-   **[CLAUDE.md](./CLAUDE.md)** - Project overview, coding standards, and AI assistant instructions
+-   **[ADDING_NEW_PLUGIN.md](./ADDING_NEW_PLUGIN.md)** - How to add new plugins to the monorepo
+-   **[PHP_PATTERNS.md](./PHP_PATTERNS.md)** - PHP best practices and security patterns
+-   **[REST_API_BACKEND.md](./REST_API_BACKEND.md)** - REST API security and implementation standards
+-   **[REST_API_USAGE.md](./REST_API_USAGE.md)** - Frontend REST API patterns with apiFetch
+-   **[REACT_ADMIN_PATTERN.md](./REACT_ADMIN_PATTERN.md)** - React admin pages architecture
+-   **[TESTING.md](./TESTING.md)** - Testing strategy (Jest, Playwright)
 
 ### Operations
 
-- **[DEPLOYMENT.md](./DEPLOYMENT.md)** - Automated deployment setup
-- **[RELEASES.md](./RELEASES.md)** - Release process and versioning
+-   **[DEPLOYMENT.md](./DEPLOYMENT.md)** - Automated deployment setup
+-   **[RELEASES.md](./RELEASES.md)** - Release process and versioning
 
 ## Translation
 
@@ -88,15 +94,16 @@ npm run build        # Build with translations
 ```
 
 Translation files:
-- PHP translations: `languages/*.po`, `languages/*.mo`
-- JavaScript translations: `build/languages/*.json` (auto-generated)
+
+-   PHP translations: `languages/*.po`, `languages/*.mo`
+-   JavaScript translations: `build/languages/*.json` (auto-generated)
 
 ## Requirements
 
-- **WordPress**: 6.7+
-- **PHP**: 8.0+
-- **Node.js**: 18+
-- **Composer**: 2.0+
+-   **WordPress**: 6.7+
+-   **PHP**: 8.0+
+-   **Node.js**: 18+
+-   **Composer**: 2.0+
 
 ## License
 
