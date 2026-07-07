@@ -124,6 +124,31 @@ class EventSignupController extends WP_REST_Controller {
 			)
 		);
 
+		// GET /fair-audience/v1/event-signup/resume.
+		register_rest_route(
+			$this->namespace,
+			'/' . $this->rest_base . '/resume',
+			array(
+				array(
+					'methods'             => WP_REST_Server::READABLE,
+					'callback'            => array( $this, 'get_resume_payload' ),
+					'permission_callback' => '__return_true',
+					'args'                => array(
+						'participant_token' => array(
+							'type'              => 'string',
+							'required'          => true,
+							'sanitize_callback' => 'sanitize_text_field',
+						),
+						'resume'            => array(
+							'type'              => 'string',
+							'required'          => true,
+							'sanitize_callback' => 'sanitize_text_field',
+						),
+					),
+				),
+			)
+		);
+
 		// POST /fair-audience/v1/event-signup
 		register_rest_route(
 			$this->namespace,
@@ -538,6 +563,49 @@ class EventSignupController extends WP_REST_Controller {
 		}
 
 		return rest_ensure_response( $response_data );
+	}
+
+	/**
+	 * Fetch a stashed signup submission for a resume link.
+	 *
+	 * Only unlocked by presenting both a valid participant_token (HMAC-signed,
+	 * proves the caller received the emailed link) and the resume token it
+	 * was paired with. Single-use: the transient is deleted as soon as it is
+	 * successfully read, matching the "resume link works once" guarantee.
+	 *
+	 * @param WP_REST_Request $request Request object.
+	 * @return WP_REST_Response|WP_Error Response object or error.
+	 */
+	public function get_resume_payload( $request ) {
+		$participant_token = $request->get_param( 'participant_token' );
+		$resume_token      = $request->get_param( 'resume' );
+
+		$token_data = ParticipantToken::verify( $participant_token );
+		if ( ! $token_data ) {
+			return new WP_Error(
+				'invalid_token',
+				__( 'This link is invalid or has expired.', 'fair-audience' ),
+				array( 'status' => 403 )
+			);
+		}
+
+		$payload = \FairAudience\Services\PendingSignupStash::consume( $resume_token, (int) $token_data['participant_id'] );
+		if ( ! $payload ) {
+			return new WP_Error(
+				'resume_not_found',
+				__( 'This registration link has expired. Please fill in the form again.', 'fair-audience' ),
+				array( 'status' => 404 )
+			);
+		}
+
+		unset( $payload['participant_id'] );
+
+		return rest_ensure_response(
+			array(
+				'success' => true,
+				'payload' => $payload,
+			)
+		);
 	}
 
 	/**
@@ -2795,12 +2863,38 @@ class EventSignupController extends WP_REST_Controller {
 			if ( $participant ) {
 				$session_pid = (int) AudienceSession::get_participant_id();
 				if ( $session_pid !== (int) $participant->id ) {
-					$token_url = ParticipantToken::get_url(
+					// Stash the already-validated submission so the resume link
+					// restores it instead of landing on a blank form. Only the
+					// parsed/sanitized answers are stored — never raw request input.
+					$resume_token = \FairAudience\Services\PendingSignupStash::stash(
+						array(
+							'participant_id'        => (int) $participant->id,
+							'event_id'              => (int) $event_id,
+							'event_date_id'         => (int) $event_date_id,
+							'ticket_type_id'        => $ticket_type_id ? (int) $ticket_type_id : null,
+							'ticket_option_ids'     => array_map( 'absint', (array) $raw_option_ids ),
+							'event_date_ids'        => array_map( 'absint', (array) ( $request->get_param( 'event_date_ids' ) ? $request->get_param( 'event_date_ids' ) : array() ) ),
+							'chosen_amount'         => null !== $chosen_amount ? (float) $chosen_amount : null,
+							'keep_informed'         => (bool) $keep_informed,
+							'questionnaire_answers' => $questionnaire_answers,
+						)
+					);
+
+					$token_url  = ParticipantToken::get_url(
 						$participant->id,
 						(int) $event_date_id,
 						(int) $event->ID
 					);
-					$this->email_service->send_signup_link_email( $event, $participant, $token_url );
+					$resume_url = add_query_arg( 'resume', $resume_token, $token_url );
+
+					$is_paid = $event_date_id
+						&& class_exists( \FairEventsExperimental\Services\EventSignupPricing::class )
+						&& \FairEventsExperimental\Services\EventSignupPricing::has_paid_price_configured(
+							(int) $event_date_id,
+							$ticket_type_id ? (int) $ticket_type_id : null
+						);
+
+					$this->email_service->send_resume_registration_email( $event, $participant, $resume_url, $is_paid );
 
 					return rest_ensure_response(
 						array(

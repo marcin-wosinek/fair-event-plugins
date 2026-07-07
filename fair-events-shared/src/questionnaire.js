@@ -231,6 +231,80 @@ export function collectQuestionAnswers(form) {
 }
 
 /**
+ * Restore previously collected answers (as returned by collectQuestionAnswers)
+ * into their matching question inputs. Used to resume a stashed submission
+ * without asking the visitor to retype anything. File uploads can't be
+ * restored (the browser never exposes a previously chosen file back to a
+ * script) and are skipped.
+ *
+ * @param {HTMLElement}  form    The form (or container) element.
+ * @param {Array<Object>} answers Answers as produced by collectQuestionAnswers.
+ */
+export function applyQuestionAnswers(form, answers) {
+	if (!Array.isArray(answers)) {
+		return;
+	}
+
+	answers.forEach((answer) => {
+		const key = answer.question_key;
+		if (!key) {
+			return;
+		}
+		const escaped =
+			typeof CSS !== 'undefined' && CSS.escape ? CSS.escape(key) : key;
+		const el = form.querySelector(
+			`[data-fair-form-question][data-question-key="${escaped}"]`
+		);
+		if (!el) {
+			return;
+		}
+
+		const questionType = answer.question_type;
+
+		if (questionType === 'file_upload') {
+			return;
+		}
+
+		if (questionType === 'multiselect') {
+			let values = [];
+			try {
+				values = JSON.parse(answer.answer_value);
+			} catch (e) {
+				values = [];
+			}
+			el.querySelectorAll('input[type="checkbox"]').forEach((cb) => {
+				cb.checked = values.includes(cb.value);
+			});
+			return;
+		}
+
+		if (questionType === 'checkbox') {
+			const checkbox = el.querySelector('input[type="checkbox"]');
+			if (checkbox) {
+				checkbox.checked = answer.answer_value === '1';
+			}
+			return;
+		}
+
+		const radios = el.querySelectorAll('input[type="radio"]');
+		if (radios.length > 0) {
+			radios.forEach((radio) => {
+				radio.checked = radio.value === answer.answer_value;
+			});
+			return;
+		}
+
+		const input = el.querySelector('select, input, textarea');
+		if (input) {
+			input.value = answer.answer_value;
+			if (questionType === 'long_text') {
+				autosizeTextarea(input);
+			}
+		}
+	});
+}
+
+/**
  * Validate the nested question blocks within a form.
  *
  * Checks required questions (respecting conditional visibility), phone format

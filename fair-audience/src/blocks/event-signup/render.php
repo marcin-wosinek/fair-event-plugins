@@ -128,6 +128,7 @@ $form_id = 'fair-audience-signup-' . wp_unique_id();
 
 // Determine user state.
 $participant_token = get_query_var( 'participant_token', '' );
+$resume_token      = get_query_var( 'resume', '' );
 $invitation_token  = get_query_var( 'invitation', '' );
 $user_id           = get_current_user_id();
 
@@ -1075,6 +1076,7 @@ $wrapper_attributes = get_block_wrapper_attributes(
 		'data-state'                 => esc_attr( $state ),
 		'data-is-signed-up'          => $is_signed_up ? 'true' : 'false',
 		'data-participant-token'     => esc_attr( $participant_token ),
+		'data-resume-token'          => esc_attr( 'with_token' === $state ? $resume_token : '' ),
 		'data-success-message'       => esc_attr( $success_message ),
 		'data-invitation-token'      => esc_attr( $valid_invitation_token ? $invitation_token : '' ),
 		'data-base-price'            => null !== $signup_price ? esc_attr( (string) $signup_price ) : ( $has_priced_options ? '0' : '' ),

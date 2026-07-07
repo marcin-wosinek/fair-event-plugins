@@ -297,6 +297,7 @@ class Plugin {
 		$vars[] = 'gallery_key';
 		$vars[] = 'confirm_email_key';
 		$vars[] = 'participant_token';
+		$vars[] = 'resume';
 		$vars[] = 'manage_subscription';
 		$vars[] = 'collaborator_profile';
 		$vars[] = 'fee_payment';
