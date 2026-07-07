@@ -222,21 +222,43 @@ class Transaction {
 	/**
 	 * Update transaction status
 	 *
-	 * @param string $mollie_payment_id Mollie payment ID.
-	 * @param string $status New status.
-	 * @return bool True on success, false on failure.
+	 * When $expected_status is given, the update is a compare-and-swap: it only
+	 * writes (and returns true) if the row's current status still matches
+	 * $expected_status. This lets concurrent callers (e.g. a webhook and a
+	 * page-load sync racing on the same transaction) detect that another
+	 * process already made the transition, so only one of them proceeds to
+	 * fire status-change hooks/notifications.
+	 *
+	 * @param string      $mollie_payment_id Mollie payment ID.
+	 * @param string      $status New status.
+	 * @param string|null $expected_status If given, only update when the current status matches this value.
+	 * @return bool True if this call performed the update, false on failure or if the status no longer matched.
 	 */
-	public static function update_status( $mollie_payment_id, $status ) {
+	public static function update_status( $mollie_payment_id, $status, $expected_status = null ) {
 		global $wpdb;
 		$table_name = \FairPaymentsConnector\Database\Schema::get_payments_table_name();
 
-		return (bool) $wpdb->update(
-			$table_name,
-			array( 'status' => $status ),
-			array( 'mollie_payment_id' => $mollie_payment_id ),
-			array( '%s' ),
-			array( '%s' )
+		if ( null === $expected_status ) {
+			return (bool) $wpdb->update(
+				$table_name,
+				array( 'status' => $status ),
+				array( 'mollie_payment_id' => $mollie_payment_id ),
+				array( '%s' ),
+				array( '%s' )
+			);
+		}
+
+		$result = $wpdb->query(
+			$wpdb->prepare(
+				'UPDATE %i SET status = %s WHERE mollie_payment_id = %s AND status = %s',
+				$table_name,
+				$status,
+				$mollie_payment_id,
+				$expected_status
+			)
 		);
+
+		return false !== $result && $result > 0;
 	}
 
 	/**

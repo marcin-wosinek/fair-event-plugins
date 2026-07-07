@@ -376,10 +376,15 @@ class TransactionAPI {
 
 			// If Mollie status differs from our stored status, update.
 			if ( $payment->status !== $transaction->status ) {
-				Transaction::update_status( $transaction->mollie_payment_id, $payment->status );
-				self::handle_payment_status_change( $payment, $transaction );
+				// Compare-and-swap against the status we just read, so a concurrent
+				// webhook can't both win and re-fire status hooks/notifications.
+				$won_race = Transaction::update_status( $transaction->mollie_payment_id, $payment->status, $transaction->status );
 
-				// Return fresh transaction from DB.
+				if ( $won_race ) {
+					self::handle_payment_status_change( $payment, $transaction );
+				}
+
+				// Return fresh transaction from DB regardless of who won the race.
 				$updated             = Transaction::get_by_id( $transaction_id );
 				$updated->sync_debug = self::build_mollie_debug( $payment );
 				return $updated;
