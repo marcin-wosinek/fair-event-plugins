@@ -12,7 +12,13 @@
  *   - Changing the selector updates the save payload's recurrence_scope.
  */
 import '@testing-library/jest-dom';
-import { render, screen, fireEvent, act } from '@testing-library/react';
+import {
+	render,
+	screen,
+	fireEvent,
+	act,
+	waitFor,
+} from '@testing-library/react';
 import apiFetch from '@wordpress/api-fetch';
 import EventTickets from '../EventTickets.js';
 
@@ -524,5 +530,51 @@ describe('EventTickets — disable/enable when has_sales', () => {
 		});
 
 		expect(savedPayload?.ticket_types?.[0]?.disabled).toBe(true);
+	});
+});
+
+describe('EventTickets — save button and dirty tracking (#987)', () => {
+	it('renders its own "Save tickets" button', () => {
+		renderTickets({ initialData: emptyInitialData });
+		expect(
+			screen.getByRole('button', { name: 'Save tickets' })
+		).toBeInTheDocument();
+	});
+
+	it('reports dirty once a field changes, and clean again after save', async () => {
+		const onDirtyChange = jest.fn();
+		renderTickets({
+			initialData: initialDataWithTicketType,
+			onDirtyChange,
+		});
+		openEditTicketsPanel();
+
+		expect(onDirtyChange).toHaveBeenLastCalledWith(false);
+
+		const nameInput = screen.getByDisplayValue('General');
+		fireEvent.change(nameInput, { target: { value: 'General (edited)' } });
+
+		expect(onDirtyChange).toHaveBeenLastCalledWith(true);
+
+		apiFetch.mockImplementation(({ method }) => {
+			if (method === 'PUT') {
+				return Promise.resolve({
+					...initialDataWithTicketType,
+					ticket_types: [
+						{
+							...initialDataWithTicketType.ticket_types[0],
+							name: 'General (edited)',
+						},
+					],
+				});
+			}
+			return new Promise(() => {});
+		});
+
+		fireEvent.click(screen.getByRole('button', { name: 'Save tickets' }));
+
+		await waitFor(() =>
+			expect(onDirtyChange).toHaveBeenLastCalledWith(false)
+		);
 	});
 });

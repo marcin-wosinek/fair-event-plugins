@@ -399,3 +399,126 @@ describe('delete confirmation dialog (#991)', () => {
 		).toBeInTheDocument();
 	});
 });
+
+describe('per-tab save model (#987)', () => {
+	it('renders no save button on the read-only Admin tab', async () => {
+		render(<ManageEventApp />);
+		await waitFor(() =>
+			expect(
+				screen.getByRole('tab', { name: 'Admin' })
+			).toBeInTheDocument()
+		);
+
+		expect(
+			screen.queryByRole('button', { name: 'Save event details' })
+		).not.toBeInTheDocument();
+		expect(
+			screen.queryByRole('button', { name: 'Save tickets' })
+		).not.toBeInTheDocument();
+	});
+
+	it('renders "Save event details" only on the Event Details tab', async () => {
+		window.history.replaceState({}, '', '?tab=event-details');
+		render(<ManageEventApp />);
+
+		expect(
+			await screen.findByRole('button', { name: 'Save event details' })
+		).toBeInTheDocument();
+		expect(
+			screen.queryByRole('button', { name: 'Save tickets' })
+		).not.toBeInTheDocument();
+		// The old tab-dependent global button is gone.
+		expect(
+			screen.queryByRole('button', { name: 'Save Changes' })
+		).not.toBeInTheDocument();
+	});
+
+	it('disables the save button and shows an inline message when the title is empty', async () => {
+		window.history.replaceState({}, '', '?tab=event-details');
+		render(<ManageEventApp />);
+
+		const titleInput = await screen.findByLabelText('Title');
+		fireEvent.change(titleInput, { target: { value: '' } });
+
+		expect(
+			screen.getByRole('button', { name: 'Save event details' })
+		).toBeDisabled();
+		expect(screen.getByText('Title is required')).toBeInTheDocument();
+	});
+
+	it('enables the save button once a title is entered', async () => {
+		window.history.replaceState({}, '', '?tab=event-details');
+		render(<ManageEventApp />);
+
+		const titleInput = await screen.findByLabelText('Title');
+		fireEvent.change(titleInput, { target: { value: '' } });
+		fireEvent.change(titleInput, { target: { value: 'New title' } });
+
+		expect(
+			screen.getByRole('button', { name: 'Save event details' })
+		).not.toBeDisabled();
+		expect(screen.queryByText('Title is required')).not.toBeInTheDocument();
+	});
+
+	it('marks the Event Details tab dirty and guards navigation while editing', async () => {
+		window.history.replaceState({}, '', '?tab=event-details');
+		const addListenerSpy = jest.spyOn(window, 'addEventListener');
+		render(<ManageEventApp />);
+
+		const titleInput = await screen.findByLabelText('Title');
+		expect(
+			screen.getByRole('tab', { name: 'Event Details' })
+		).toBeInTheDocument();
+
+		fireEvent.change(titleInput, { target: { value: 'Edited title' } });
+
+		await waitFor(() =>
+			expect(
+				screen.getByRole('tab', { name: 'Event Details •' })
+			).toBeInTheDocument()
+		);
+		expect(addListenerSpy).toHaveBeenCalledWith(
+			'beforeunload',
+			expect.any(Function)
+		);
+
+		addListenerSpy.mockRestore();
+	});
+
+	it('clears the dirty marker after a successful save', async () => {
+		window.history.replaceState({}, '', '?tab=event-details');
+		apiFetch.mockImplementation((opts) => {
+			if (opts.method === 'PUT') {
+				return Promise.resolve({
+					...mockEventDate,
+					title: 'Edited title',
+				});
+			}
+			if (opts.path && opts.path.includes('/event-dates/')) {
+				return Promise.resolve(mockEventDate);
+			}
+			return Promise.resolve([]);
+		});
+
+		render(<ManageEventApp />);
+
+		const titleInput = await screen.findByLabelText('Title');
+		fireEvent.change(titleInput, { target: { value: 'Edited title' } });
+
+		await waitFor(() =>
+			expect(
+				screen.getByRole('tab', { name: 'Event Details •' })
+			).toBeInTheDocument()
+		);
+
+		fireEvent.click(
+			screen.getByRole('button', { name: 'Save event details' })
+		);
+
+		await waitFor(() =>
+			expect(
+				screen.getByRole('tab', { name: 'Event Details' })
+			).toBeInTheDocument()
+		);
+	});
+});
