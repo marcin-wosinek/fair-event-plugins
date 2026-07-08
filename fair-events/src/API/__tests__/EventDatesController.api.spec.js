@@ -210,9 +210,9 @@ test.describe('EventDatesController — recurrence reconciliation', () => {
 		return edBody;
 	}
 
-	async function getOccurrences(api, eventId) {
+	async function getMaster(api, masterId) {
 		const res = await api.get(
-			`/wp-json/fair-events/v1/event-dates?event_id=${eventId}`,
+			`/wp-json/fair-events/v1/event-dates/${masterId}`,
 			{ headers: adminHeaders }
 		);
 		expect(res.ok()).toBeTruthy();
@@ -225,9 +225,12 @@ test.describe('EventDatesController — recurrence reconciliation', () => {
 		const localApi = await req.newContext({ baseURL: BASE_URL });
 		await createRecurringEvent(localApi, 'FREQ=WEEKLY;COUNT=3');
 
-		const before = await getOccurrences(localApi, eventPostId);
-		expect(before.length).toBe(3);
-		const idsBefore = before.map((o) => o.id).sort();
+		const before = await getMaster(localApi, masterEventDateId);
+		expect(before.generated_occurrences.length).toBe(2);
+		const idsBefore = [
+			before.id,
+			...before.generated_occurrences.map((o) => o.id),
+		].sort();
 
 		const putRes = await localApi.put(
 			`/wp-json/fair-events/v1/event-dates/${masterEventDateId}`,
@@ -241,26 +244,32 @@ test.describe('EventDatesController — recurrence reconciliation', () => {
 		);
 		expect(putRes.ok()).toBeTruthy();
 
-		const after = await getOccurrences(localApi, eventPostId);
-		expect(after.length).toBe(3);
-		const idsAfter = after.map((o) => o.id).sort();
+		const after = await getMaster(localApi, masterEventDateId);
+		const idsAfter = [
+			after.id,
+			...after.generated_occurrences.map((o) => o.id),
+		].sort();
 
 		expect(idsAfter).toEqual(idsBefore);
 
-		const starts = after.map((o) => o.start_datetime);
+		const starts = after.generated_occurrences.map((o) => o.start_datetime);
 		expect(starts.every((s) => s.includes('11:00:00'))).toBe(true);
 	});
 
-	test('shortening RRULE deletes only removed occurrences', async ({
+	test('shortening RRULE soft-cancels removed occurrences instead of deleting them', async ({
 		request: req,
 	}) => {
 		const localApi = await req.newContext({ baseURL: BASE_URL });
 		await createRecurringEvent(localApi, 'FREQ=WEEKLY;COUNT=4');
 
-		const before = await getOccurrences(localApi, eventPostId);
-		expect(before.length).toBe(4);
-		const keptIds = before.slice(0, 2).map((o) => o.id);
-		const removedIds = before.slice(2).map((o) => o.id);
+		const before = await getMaster(localApi, masterEventDateId);
+		expect(before.generated_occurrences.length).toBe(3);
+		const keptIds = before.generated_occurrences
+			.slice(0, 1)
+			.map((o) => o.id);
+		const cancelledIds = before.generated_occurrences
+			.slice(1)
+			.map((o) => o.id);
 
 		const putRes = await localApi.put(
 			`/wp-json/fair-events/v1/event-dates/${masterEventDateId}`,
@@ -271,12 +280,20 @@ test.describe('EventDatesController — recurrence reconciliation', () => {
 		);
 		expect(putRes.ok()).toBeTruthy();
 
-		const after = await getOccurrences(localApi, eventPostId);
-		expect(after.length).toBe(2);
-		const idsAfter = after.map((o) => o.id);
-
+		const after = await getMaster(localApi, masterEventDateId);
+		// Ids survive — soft-cancelled, not deleted.
+		const idsAfter = after.generated_occurrences.map((o) => o.id);
 		keptIds.forEach((id) => expect(idsAfter).toContain(id));
-		removedIds.forEach((id) => expect(idsAfter).not.toContain(id));
+		cancelledIds.forEach((id) => expect(idsAfter).toContain(id));
+
+		const byId = Object.fromEntries(
+			after.generated_occurrences.map((o) => [o.id, o])
+		);
+		keptIds.forEach((id) => expect(byId[id].status).toBe('active'));
+		cancelledIds.forEach((id) => expect(byId[id].status).toBe('cancelled'));
+		cancelledIds.forEach((id) =>
+			expect(after.cancelled_dates.length).toBeGreaterThan(0)
+		);
 	});
 
 	test('master time-of-day edit propagates to generated children', async ({
@@ -297,11 +314,119 @@ test.describe('EventDatesController — recurrence reconciliation', () => {
 		);
 		expect(putRes.ok()).toBeTruthy();
 
-		const after = await getOccurrences(localApi, eventPostId);
-		expect(after.length).toBe(3);
+		const after = await getMaster(localApi, masterEventDateId);
+		expect(after.generated_occurrences.length).toBe(2);
 
-		const starts = after.map((o) => o.start_datetime);
+		const starts = after.generated_occurrences.map((o) => o.start_datetime);
 		expect(starts.every((s) => s.includes('14:00:00'))).toBe(true);
+	});
+});
+
+test.describe('EventDatesController — cancel/restore via toggle-exdate', () => {
+	let api;
+	let masterEventDateId;
+	let eventPostId;
+
+	test.beforeAll(async () => {
+		api = await request.newContext({ baseURL: BASE_URL });
+	});
+
+	test.afterEach(async () => {
+		if (masterEventDateId) {
+			await api.delete(
+				`/wp-json/fair-events/v1/event-dates/${masterEventDateId}`,
+				{ headers: adminHeaders }
+			);
+			masterEventDateId = null;
+		}
+		if (eventPostId) {
+			await api.delete(
+				`/wp-json/wp/v2/fair_event/${eventPostId}?force=true`,
+				{ headers: adminHeaders }
+			);
+			eventPostId = null;
+		}
+	});
+
+	test('cancelling a date is a reversible status flip that keeps a dependent ticket type', async ({
+		request: req,
+	}) => {
+		const localApi = await req.newContext({ baseURL: BASE_URL });
+
+		const postRes = await localApi.post('/wp-json/wp/v2/fair_event', {
+			headers: adminHeaders,
+			data: { title: `Toggle test ${Date.now()}`, status: 'publish' },
+		});
+		expect(postRes.ok()).toBeTruthy();
+		eventPostId = (await postRes.json()).id;
+
+		const edRes = await localApi.post(
+			'/wp-json/fair-events/v1/event-dates',
+			{
+				headers: adminHeaders,
+				data: {
+					event_id: eventPostId,
+					start_datetime: '2035-09-03 10:00:00',
+					end_datetime: '2035-09-03 12:00:00',
+					rrule: 'FREQ=WEEKLY;COUNT=3',
+				},
+			}
+		);
+		expect(edRes.ok()).toBeTruthy();
+		const master = await edRes.json();
+		masterEventDateId = master.id;
+
+		const targetOccurrence = master.generated_occurrences[0];
+
+		// Attach a ticket type to the target occurrence to prove it survives cancellation.
+		const ttRes = await localApi.post(
+			`/wp-json/fair-events/v1/event-dates/${targetOccurrence.id}/ticket-types`,
+			{
+				headers: adminHeaders,
+				data: { name: 'General', capacity: 10, sort_order: 0 },
+			}
+		);
+		const ticketCreated = ttRes.ok();
+		if (!ticketCreated) {
+			test.skip();
+			return;
+		}
+
+		const targetDate = targetOccurrence.start_datetime.split(' ')[0];
+
+		// Cancel.
+		const cancelRes = await localApi.post(
+			`/wp-json/fair-events/v1/event-dates/${masterEventDateId}/toggle-exdate`,
+			{ headers: adminHeaders, data: { date: targetDate } }
+		);
+		expect(cancelRes.ok()).toBeTruthy();
+		const afterCancel = await cancelRes.json();
+		const cancelledOcc = afterCancel.generated_occurrences.find(
+			(o) => o.id === targetOccurrence.id
+		);
+		expect(cancelledOcc.status).toBe('cancelled');
+		expect(afterCancel.cancelled_dates).toContain(targetDate);
+
+		// The dependent ticket type must still exist — cancellation is non-destructive.
+		const ttGetRes = await localApi.get(
+			`/wp-json/fair-events/v1/event-dates/${targetOccurrence.id}/ticket-types`,
+			{ headers: adminHeaders }
+		);
+		expect(ttGetRes.ok()).toBeTruthy();
+		expect((await ttGetRes.json()).length).toBeGreaterThan(0);
+
+		// Restore.
+		const restoreRes = await localApi.post(
+			`/wp-json/fair-events/v1/event-dates/${masterEventDateId}/toggle-exdate`,
+			{ headers: adminHeaders, data: { date: targetDate } }
+		);
+		expect(restoreRes.ok()).toBeTruthy();
+		const afterRestore = await restoreRes.json();
+		const restoredOcc = afterRestore.generated_occurrences.find(
+			(o) => o.id === targetOccurrence.id
+		);
+		expect(restoredOcc.status).toBe('active');
+		expect(afterRestore.cancelled_dates).not.toContain(targetDate);
 	});
 });
 
@@ -437,11 +562,11 @@ test.describe('EventDatesController — impact classification (PR 2)', () => {
 		);
 	});
 
-	test('shortening RRULE to remove an occurrence with a ticket type returns 409', async ({
+	test('shortening RRULE to remove an occurrence with a ticket type soft-cancels it (non-destructive)', async ({
 		request: req,
 	}) => {
 		const localApi = await req.newContext({ baseURL: BASE_URL });
-		const { occurrences, lastOccurrence, ticketCreated } =
+		const { lastOccurrence, ticketCreated } =
 			await createRecurringEventWithTicket(
 				localApi,
 				'FREQ=WEEKLY;COUNT=3'
@@ -453,7 +578,8 @@ test.describe('EventDatesController — impact classification (PR 2)', () => {
 			return;
 		}
 
-		// Try to shorten to COUNT=2 — this would remove the last occurrence that has a ticket type.
+		// Shorten to COUNT=2 — this removes the last occurrence from the rule,
+		// which now soft-cancels it instead of blocking the change.
 		const putRes = await localApi.put(
 			`/wp-json/fair-events/v1/event-dates/${masterEventDateId}`,
 			{
@@ -462,15 +588,28 @@ test.describe('EventDatesController — impact classification (PR 2)', () => {
 			}
 		);
 
-		expect(putRes.status()).toBe(409);
+		expect(putRes.ok()).toBeTruthy();
 		const body = await putRes.json();
-		expect(body.data.status).toBe(409);
-		expect(body.data).toHaveProperty('impact');
-		const impact = body.data.impact;
-		expect(impact.removed.length).toBeGreaterThan(0);
-		expect(impact.removed[0].dependents).toBeGreaterThan(0);
-		expect(impact.removed[0]).toHaveProperty('id');
-		expect(impact.removed[0].id).toBe(lastOccurrence.id);
+		expect(body.recurrence_impact.removed.length).toBeGreaterThan(0);
+
+		// The removed occurrence still exists, cancelled — its ticket type survives.
+		const masterRes = await localApi.get(
+			`/wp-json/fair-events/v1/event-dates/${masterEventDateId}`,
+			{ headers: adminHeaders }
+		);
+		const masterBody = await masterRes.json();
+		const removedOcc = masterBody.generated_occurrences.find(
+			(o) => o.id === lastOccurrence.id
+		);
+		expect(removedOcc).toBeDefined();
+		expect(removedOcc.status).toBe('cancelled');
+
+		const ttRes = await localApi.get(
+			`/wp-json/fair-events/v1/event-dates/${lastOccurrence.id}/ticket-types`,
+			{ headers: adminHeaders }
+		);
+		expect(ttRes.ok()).toBeTruthy();
+		expect((await ttRes.json()).length).toBeGreaterThan(0);
 	});
 
 	test('shortening RRULE to remove an occurrence without dependents returns 200', async ({
@@ -516,13 +655,16 @@ test.describe('EventDatesController — impact classification (PR 2)', () => {
 		expect(impact.removed).toHaveLength(1);
 		expect(impact.removed[0].dependents).toBe(0);
 
-		// Confirm only 2 occurrences remain.
-		const occRes = await localApi.get(
-			`/wp-json/fair-events/v1/event-dates?event_id=${eventPostId}`,
+		// Confirm only 1 occurrence is still active (2 total including the master).
+		const masterRes = await localApi.get(
+			`/wp-json/fair-events/v1/event-dates/${masterEventDateId}`,
 			{ headers: adminHeaders }
 		);
-		const remaining = await occRes.json();
-		expect(remaining).toHaveLength(2);
+		const masterBody = await masterRes.json();
+		const active = masterBody.generated_occurrences.filter(
+			(o) => o.status === 'active'
+		);
+		expect(active).toHaveLength(1);
 	});
 });
 

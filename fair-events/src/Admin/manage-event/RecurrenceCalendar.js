@@ -25,7 +25,7 @@ import {
 
 export default function RecurrenceCalendar({
 	generatedOccurrences,
-	exdates,
+	cancelledDates,
 	masterDate,
 	manageEventUrl,
 	onToggleExdate,
@@ -33,12 +33,15 @@ export default function RecurrenceCalendar({
 	embedded = false,
 }) {
 	const occurrences = generatedOccurrences || [];
-	const cancelledDates = exdates || [];
+	const cancelledDatesList = cancelledDates || [];
 
-	// Build lookup maps
+	// Build lookup maps. generatedOccurrences includes cancelled rows (so the
+	// API can report their id/status too) — only active ones count as
+	// "occurrences" here, cancelled ones are tracked via cancelledSet below.
 	const occurrenceByDate = useMemo(() => {
 		const map = {};
 		occurrences.forEach((occ) => {
+			if (occ.status === 'cancelled') return;
 			const date = occ.start_datetime.split(' ')[0];
 			map[date] = occ;
 		});
@@ -46,8 +49,8 @@ export default function RecurrenceCalendar({
 	}, [occurrences]);
 
 	const cancelledSet = useMemo(
-		() => new Set(cancelledDates),
-		[cancelledDates]
+		() => new Set(cancelledDatesList),
+		[cancelledDatesList]
 	);
 
 	// Determine the date range to show
@@ -56,12 +59,12 @@ export default function RecurrenceCalendar({
 		occurrences.forEach((occ) => {
 			dates.push(occ.start_datetime.split(' ')[0]);
 		});
-		cancelledDates.forEach((d) => dates.push(d));
+		cancelledDatesList.forEach((d) => dates.push(d));
 		if (masterDate) {
 			dates.push(masterDate);
 		}
 		return dates.sort();
-	}, [occurrences, cancelledDates, masterDate]);
+	}, [occurrences, cancelledDatesList, masterDate]);
 
 	// Calculate which months to show
 	const months = useMemo(() => {

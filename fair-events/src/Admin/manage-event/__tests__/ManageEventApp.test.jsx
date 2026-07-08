@@ -35,7 +35,9 @@ const mockEventDate = {
 	event_id: null,
 	master: null,
 	generated_occurrences: [],
-	exdates: [],
+	cancelled_dates: [],
+	status: 'active',
+	recurrence_mode: 'none',
 };
 
 beforeEach(() => {

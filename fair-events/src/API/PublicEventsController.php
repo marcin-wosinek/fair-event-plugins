@@ -382,14 +382,15 @@ class PublicEventsController extends WP_REST_Controller {
 				{$dates_table}.end_datetime,
 				{$dates_table}.all_day,
 				{$dates_table}.occurrence_type,
-				{$dates_table}.title as standalone_title,
-				{$dates_table}.link_type,
-				{$dates_table}.external_url,
+				COALESCE( {$dates_table}.title, master_dates.title ) as standalone_title,
+				COALESCE( {$dates_table}.link_type, master_dates.link_type ) as link_type,
+				COALESCE( {$dates_table}.external_url, master_dates.external_url ) as external_url,
 				NULL as post_title,
 				NULL as post_content,
 				NULL as post_excerpt,
 				NULL as post_status
 			FROM {$dates_table}
+			LEFT JOIN {$dates_table} master_dates ON {$dates_table}.master_id = master_dates.id
 			WHERE {$standalone_where_clause})
 			ORDER BY start_datetime ASC
 			LIMIT %d OFFSET %d",

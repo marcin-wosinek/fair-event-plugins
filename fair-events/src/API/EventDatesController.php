@@ -456,7 +456,7 @@ class EventDatesController extends WP_REST_Controller {
 
 			// Propagate categories to generated occurrences.
 			if ( ! empty( $rrule ) ) {
-				$generated = EventDates::get_generated_by_master_id( $id );
+				$generated = EventDates::get_generated_by_master_id( $id, true );
 				foreach ( $generated as $occ ) {
 					$this->set_standalone_categories( $occ->id, $categories );
 				}
@@ -881,14 +881,15 @@ class EventDatesController extends WP_REST_Controller {
 			if ( $rrule_changed || $dates_changed_on_recurring ) {
 				$effective_rrule = $update_data['rrule'] ?? $existing->rrule;
 
-				// Classify the impact before applying, so we can reject destructive
-				// changes (removing occurrences that have dependents or are in the past).
+				// Classify the impact before applying, for informational purposes —
+				// removed occurrences are soft-cancelled (their id and any
+				// dependents survive), so this is no longer a destructive change
+				// to guard against.
 				$recurrence_impact = null;
 				if ( ! empty( $effective_rrule ) ) {
 					$proposed_start = $update_data['start_datetime'] ?? $existing->start_datetime;
 					$proposed_end   = $update_data['end_datetime'] ?? $existing->end_datetime;
-					$exdates        = RecurrenceService::parse_exdates( $existing->exdates );
-					$all_proposed   = RecurrenceService::generate_occurrences( $proposed_start, $proposed_end, $effective_rrule, null, $exdates );
+					$all_proposed   = RecurrenceService::generate_occurrences( $proposed_start, $proposed_end, $effective_rrule );
 					$proposed_gen   = array_slice( $all_proposed, 1 );
 
 					$classify_master_id = ( 'generated' === $existing->occurrence_type && $existing->master_id )
@@ -896,20 +897,6 @@ class EventDatesController extends WP_REST_Controller {
 						: $id;
 
 					$recurrence_impact = RecurrenceService::classify_change( $classify_master_id, $proposed_gen );
-
-					// A removal is destructive when the row has dependents or is in the past.
-					foreach ( $recurrence_impact['removed'] as $removed_row ) {
-						if ( $removed_row['dependents'] > 0 || $removed_row['is_past'] ) {
-							return new WP_Error(
-								'rest_destructive_recurrence_change',
-								__( 'Cannot remove occurrences that have dependents or are in the past.', 'fair-events' ),
-								array(
-									'status' => 409,
-									'impact' => $recurrence_impact,
-								)
-							);
-						}
-					}
 				}
 
 				if ( $effective_event_id ) {
@@ -919,27 +906,15 @@ class EventDatesController extends WP_REST_Controller {
 				}
 			}
 
-			// Propagate inherited fields (event_id, venue_id, address) from a
-			// master to its existing generated children. Without this, edits to
-			// these fields would only reach children when the series is fully
-			// regenerated (rrule or dates change). event_id propagation matters
+			// Propagate event_id from a master to its existing generated children.
+			// event_id is not inherited (NULL-means-inherit only applies to
+			// title/venue_id/address/link_type/external_url/capacity/signup_price,
+			// which children resolve against the master at read time) — it matters
 			// when a standalone recurring series is linked to a post after its
 			// children were already generated.
-			if ( 'master' === $existing->occurrence_type ) {
-				$propagate = array();
-				if ( array_key_exists( 'event_id', $update_data ) ) {
-					$propagate['event_id'] = $update_data['event_id'];
-				}
-				if ( array_key_exists( 'venue_id', $update_data ) ) {
-					$propagate['venue_id'] = $update_data['venue_id'];
-				}
-				if ( array_key_exists( 'address', $update_data ) ) {
-					$propagate['address'] = $update_data['address'];
-				}
-				if ( ! empty( $propagate ) ) {
-					foreach ( EventDates::get_generated_by_master_id( $id ) as $child ) {
-						EventDates::update_by_id( $child->id, $propagate );
-					}
+			if ( 'master' === $existing->occurrence_type && array_key_exists( 'event_id', $update_data ) ) {
+				foreach ( EventDates::get_generated_by_master_id( $id, true ) as $child ) {
+					EventDates::update_by_id( $child->id, array( 'event_id' => $update_data['event_id'] ) );
 				}
 			}
 
@@ -982,7 +957,7 @@ class EventDatesController extends WP_REST_Controller {
 		$current_for_propagation = EventDates::get_by_id( $id );
 		if ( 'master' === $current_for_propagation->occurrence_type && ! $current_for_propagation->event_id ) {
 			$master_cat_ids = $this->get_standalone_category_ids( $id );
-			$generated      = EventDates::get_generated_by_master_id( $id );
+			$generated      = EventDates::get_generated_by_master_id( $id, true );
 			foreach ( $generated as $occ ) {
 				$this->set_standalone_categories( $occ->id, $master_cat_ids );
 			}
@@ -1240,7 +1215,12 @@ class EventDatesController extends WP_REST_Controller {
 	}
 
 	/**
-	 * Toggle an excluded date on a master event
+	 * Toggle the cancelled status of a date within a recurring series
+	 *
+	 * A single-row status flip: cancel sets status='cancelled' on the instance
+	 * row for that date (inserting one first if the rule never materialized a
+	 * row for it), restore sets it back to 'active'. Cancelled rows keep their
+	 * id, so ticket types/signups attached to them survive.
 	 *
 	 * @param WP_REST_Request $request Full data about the request.
 	 * @return WP_REST_Response|WP_Error Response object on success, or WP_Error on failure.
@@ -1249,9 +1229,9 @@ class EventDatesController extends WP_REST_Controller {
 		$id   = (int) $request->get_param( 'id' );
 		$date = $request->get_param( 'date' );
 
-		$event_date = EventDates::get_by_id( $id );
+		$master = EventDates::get_by_id( $id );
 
-		if ( ! $event_date ) {
+		if ( ! $master ) {
 			return new WP_Error(
 				'rest_event_date_not_found',
 				__( 'Event date not found.', 'fair-events' ),
@@ -1259,91 +1239,75 @@ class EventDatesController extends WP_REST_Controller {
 			);
 		}
 
-		if ( 'master' !== $event_date->occurrence_type ) {
+		if ( 'master' !== $master->occurrence_type ) {
 			return new WP_Error(
 				'rest_not_master_event',
-				__( 'Exdates can only be set on master events.', 'fair-events' ),
+				__( 'Dates can only be cancelled on master events.', 'fair-events' ),
 				array( 'status' => 400 )
 			);
 		}
 
-		// Don't allow excluding the master's own date.
-		$master_date = ( new \DateTime( $event_date->start_datetime ) )->format( 'Y-m-d' );
+		// Don't allow cancelling the master's own date.
+		$master_date = ( new \DateTime( $master->start_datetime ) )->format( 'Y-m-d' );
 		if ( $date === $master_date ) {
 			return new WP_Error(
 				'rest_cannot_exclude_master',
-				__( 'Cannot exclude the master event date.', 'fair-events' ),
+				__( 'Cannot cancel the master event date.', 'fair-events' ),
 				array( 'status' => 400 )
 			);
 		}
 
-		// Parse current exdates.
-		$exdates = RecurrenceService::parse_exdates( $event_date->exdates );
+		$siblings = EventDates::get_all_by_master_id( $id );
 
-		// Toggle: add if not present, remove if present.
-		$key = array_search( $date, $exdates, true );
-		if ( false !== $key ) {
-			unset( $exdates[ $key ] );
-			$exdates = array_values( $exdates );
+		if ( isset( $siblings[ $date ] ) ) {
+			$row        = $siblings[ $date ];
+			$new_status = 'cancelled' === $row->status ? 'active' : 'cancelled';
+			EventDates::update_by_id( $row->id, array( 'status' => $new_status ) );
 		} else {
-			$exdates[] = $date;
-		}
+			// No row exists for this date yet (a rule occurrence that was never
+			// materialized) — insert one directly as cancelled.
+			$master_start = new \DateTime( $master->start_datetime );
+			$master_end   = $master->end_datetime ? new \DateTime( $master->end_datetime ) : clone $master_start;
+			$duration     = $master_start->diff( $master_end );
 
-		// Clean stale exdates.
-		$exdates = RecurrenceService::clean_stale_exdates(
-			$event_date->start_datetime,
-			$event_date->end_datetime,
-			$event_date->rrule,
-			$exdates
-		);
+			$occ_start = \DateTime::createFromFormat( 'Y-m-d H:i:s', $date . ' ' . $master_start->format( 'H:i:s' ) );
+			if ( ! $occ_start ) {
+				return new WP_Error(
+					'rest_invalid_date',
+					__( 'Invalid date.', 'fair-events' ),
+					array( 'status' => 400 )
+				);
+			}
+			$occ_end = ( clone $occ_start )->add( $duration );
 
-		// Classify the impact of this exdate change before applying it.
-		// An exdate addition removes one occurrence; check for dependents/past rows.
-		$recurrence_impact = null;
-		if ( ! empty( $event_date->rrule ) ) {
-			$new_proposed      = RecurrenceService::generate_occurrences(
-				$event_date->start_datetime,
-				$event_date->end_datetime,
-				$event_date->rrule,
-				null,
-				$exdates
-			);
-			$proposed_gen      = array_slice( $new_proposed, 1 );
-			$recurrence_impact = RecurrenceService::classify_change( $id, $proposed_gen );
-
-			foreach ( $recurrence_impact['removed'] as $removed_row ) {
-				if ( $removed_row['dependents'] > 0 || $removed_row['is_past'] ) {
-					return new WP_Error(
-						'rest_destructive_recurrence_change',
-						__( 'Cannot remove occurrences that have dependents or are in the past.', 'fair-events' ),
-						array(
-							'status' => 409,
-							'impact' => $recurrence_impact,
-						)
-					);
-				}
+			if ( $master->event_id ) {
+				EventDates::save_occurrence(
+					$master->event_id,
+					$occ_start->format( 'Y-m-d H:i:s' ),
+					$occ_end->format( 'Y-m-d H:i:s' ),
+					$master->all_day,
+					'generated',
+					$id,
+					$date,
+					'cancelled'
+				);
+			} else {
+				EventDates::create_standalone_occurrence(
+					array(
+						'start_datetime'    => $occ_start->format( 'Y-m-d H:i:s' ),
+						'end_datetime'      => $occ_end->format( 'Y-m-d H:i:s' ),
+						'all_day'           => $master->all_day,
+						'master_id'         => $id,
+						'recurrence_anchor' => $date,
+						'status'            => 'cancelled',
+					)
+				);
 			}
 		}
 
-		// Save exdates.
-		$exdates_string = ! empty( $exdates ) ? implode( ',', $exdates ) : null;
-		EventDates::update_by_id( $id, array( 'exdates' => $exdates_string ) );
+		$updated = EventDates::get_by_id( $id );
 
-		// Regenerate occurrences.
-		if ( $event_date->event_id ) {
-			RecurrenceService::regenerate_event_occurrences( $event_date->event_id );
-		} else {
-			RecurrenceService::regenerate_standalone_occurrences( $id );
-		}
-
-		// Return updated event date.
-		$updated       = EventDates::get_by_id( $id );
-		$response_data = $this->prepare_event_date( $updated );
-		if ( null !== $recurrence_impact ) {
-			$response_data['recurrence_impact'] = $recurrence_impact;
-		}
-
-		return new WP_REST_Response( $response_data, 200 );
+		return new WP_REST_Response( $this->prepare_event_date( $updated ), 200 );
 	}
 
 	/**
@@ -1501,14 +1465,9 @@ class EventDatesController extends WP_REST_Controller {
 			'external_url'    => $event_date->external_url,
 			'display_url'     => $event_date->get_display_url(),
 			'rrule'           => $event_date->rrule,
+			'status'          => $event_date->status,
+			'recurrence_mode' => $event_date->recurrence_mode,
 		);
-
-		// Add exdates for master events.
-		if ( 'master' === $event_date->occurrence_type ) {
-			$data['exdates'] = $event_date->exdates
-				? array_values( array_filter( array_map( 'trim', explode( ',', $event_date->exdates ) ) ) )
-				: array();
-		}
 
 		// Add master event info for generated occurrences.
 		if ( 'generated' === $event_date->occurrence_type && $event_date->master_id ) {
@@ -1522,18 +1481,34 @@ class EventDatesController extends WP_REST_Controller {
 			}
 		}
 
-		// Add generated occurrences for master events.
+		// Add generated occurrences (including cancelled, so the calendar can
+		// render cancelled cells) plus a cancelled_dates convenience list for
+		// master events.
 		if ( 'master' === $event_date->occurrence_type ) {
-			$generated                     = EventDates::get_generated_by_master_id( $event_date->id );
+			$generated                     = EventDates::get_generated_by_master_id( $event_date->id, true );
 			$data['generated_occurrences'] = array_map(
 				function ( $occ ) {
 					return array(
 						'id'             => $occ->id,
 						'start_datetime' => $occ->start_datetime,
 						'title'          => $occ->title,
+						'status'         => $occ->status,
 					);
 				},
 				$generated
+			);
+			$data['cancelled_dates']       = array_values(
+				array_map(
+					function ( $occ ) {
+						return $occ->recurrence_anchor ?? ( new \DateTime( $occ->start_datetime ) )->format( 'Y-m-d' );
+					},
+					array_filter(
+						$generated,
+						function ( $occ ) {
+							return 'cancelled' === $occ->status;
+						}
+					)
+				)
 			);
 		}
 
