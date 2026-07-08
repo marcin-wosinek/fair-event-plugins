@@ -26,7 +26,6 @@ import {
 	RadioControl,
 	FormTokenField,
 	TabPanel,
-	__experimentalNumberControl as NumberControl,
 	__experimentalVStack as VStack,
 	__experimentalHStack as HStack,
 	__experimentalConfirmDialog as ConfirmDialog,
@@ -40,6 +39,9 @@ import {
 	isLinkOnlyEvent,
 	formatSiteLocalDatetime,
 	getEventDisplayTitle,
+	parseRRule,
+	buildRRule,
+	RecurrenceControl,
 } from 'fair-events-shared';
 import EventFinance from './EventFinance.js';
 import EventTickets from './EventTickets.js';
@@ -90,11 +92,13 @@ export default function ManageEventApp() {
 	const [creatingCategories, setCreatingCategories] = useState([]);
 
 	// Recurrence state
-	const [recurrenceEnabled, setRecurrenceEnabled] = useState(false);
-	const [recurrenceFrequency, setRecurrenceFrequency] = useState('weekly');
-	const [recurrenceEndType, setRecurrenceEndType] = useState('count');
-	const [recurrenceCount, setRecurrenceCount] = useState(10);
-	const [recurrenceUntil, setRecurrenceUntil] = useState('');
+	const [recurrence, setRecurrence] = useState({
+		enabled: false,
+		frequency: 'weekly',
+		endType: 'count',
+		count: 10,
+		until: '',
+	});
 
 	// Post creation state
 	const [creatingPost, setCreatingPost] = useState(false);
@@ -213,10 +217,9 @@ export default function ManageEventApp() {
 
 		// Populate recurrence from rrule
 		if (data.rrule) {
-			setRecurrenceEnabled(true);
-			parseRRule(data.rrule);
+			setRecurrence({ enabled: true, ...parseRRule(data.rrule) });
 		} else {
-			setRecurrenceEnabled(false);
+			setRecurrence((prev) => ({ ...prev, enabled: false }));
 		}
 	};
 
@@ -235,11 +238,7 @@ export default function ManageEventApp() {
 			linkType,
 			externalUrl,
 			categories: [...categories].sort(),
-			recurrenceEnabled,
-			recurrenceFrequency,
-			recurrenceEndType,
-			recurrenceCount,
-			recurrenceUntil,
+			recurrence,
 		});
 
 	// Runs after every render; only commits a new snapshot right after
@@ -339,77 +338,6 @@ export default function ManageEventApp() {
 		}
 	};
 
-	// Recurrence helpers
-	const parseRRule = (rrule) => {
-		const parts = {};
-		rrule.split(';').forEach((part) => {
-			const [key, val] = part.split('=');
-			parts[key] = val;
-		});
-
-		const freq = parts.FREQ || 'WEEKLY';
-		const interval = parseInt(parts.INTERVAL || '1', 10);
-
-		if (freq === 'DAILY') {
-			setRecurrenceFrequency('daily');
-		} else if (freq === 'WEEKLY' && interval === 2) {
-			setRecurrenceFrequency('biweekly');
-		} else if (freq === 'WEEKLY') {
-			setRecurrenceFrequency('weekly');
-		} else if (freq === 'MONTHLY') {
-			setRecurrenceFrequency('monthly');
-		}
-
-		if (parts.COUNT) {
-			setRecurrenceEndType('count');
-			setRecurrenceCount(parseInt(parts.COUNT, 10));
-		} else if (parts.UNTIL) {
-			setRecurrenceEndType('until');
-			const u = parts.UNTIL;
-			setRecurrenceUntil(
-				`${u.substring(0, 4)}-${u.substring(4, 6)}-${u.substring(6, 8)}`
-			);
-		} else {
-			setRecurrenceEndType('count');
-			setRecurrenceCount(10);
-		}
-	};
-
-	const buildRRule = () => {
-		if (!recurrenceEnabled) return null;
-
-		let freq = 'WEEKLY';
-		let interval = 1;
-
-		switch (recurrenceFrequency) {
-			case 'daily':
-				freq = 'DAILY';
-				break;
-			case 'weekly':
-				freq = 'WEEKLY';
-				break;
-			case 'biweekly':
-				freq = 'WEEKLY';
-				interval = 2;
-				break;
-			case 'monthly':
-				freq = 'MONTHLY';
-				break;
-		}
-
-		const ruleParts = [`FREQ=${freq}`];
-		if (interval > 1) {
-			ruleParts.push(`INTERVAL=${interval}`);
-		}
-		if (recurrenceEndType === 'count' && recurrenceCount) {
-			ruleParts.push(`COUNT=${recurrenceCount}`);
-		} else if (recurrenceEndType === 'until' && recurrenceUntil) {
-			ruleParts.push(`UNTIL=${recurrenceUntil.replace(/-/g, '')}`);
-		}
-
-		return ruleParts.join(';');
-	};
-
 	const handleSave = async () => {
 		setSaving(true);
 		setError(null);
@@ -440,7 +368,7 @@ export default function ManageEventApp() {
 					address: venuesEnabled ? undefined : address,
 					link_type: linkType,
 					external_url: linkType === 'external' ? externalUrl : null,
-					rrule: buildRRule(),
+					rrule: buildRRule(recurrence),
 					categories,
 				},
 			});
@@ -687,7 +615,7 @@ export default function ManageEventApp() {
 					eventDateId={eventDateId}
 					startDatetime={eventDate.start_datetime}
 					endDatetime={eventDate.end_datetime}
-					isRecurring={recurrenceEnabled}
+					isRecurring={recurrence.enabled}
 					onDirtyChange={handleTicketsDirtyChange}
 				/>
 			),
@@ -999,105 +927,10 @@ export default function ManageEventApp() {
 						</CardHeader>
 						<CardBody>
 							<VStack spacing={4}>
-								<CheckboxControl
-									label={__(
-										'Repeat this event',
-										'fair-events'
-									)}
-									checked={recurrenceEnabled}
-									onChange={setRecurrenceEnabled}
+								<RecurrenceControl
+									value={recurrence}
+									onChange={setRecurrence}
 								/>
-
-								{recurrenceEnabled && (
-									<VStack spacing={3}>
-										<SelectControl
-											label={__(
-												'Frequency',
-												'fair-events'
-											)}
-											value={recurrenceFrequency}
-											options={[
-												{
-													label: __(
-														'Daily',
-														'fair-events'
-													),
-													value: 'daily',
-												},
-												{
-													label: __(
-														'Weekly',
-														'fair-events'
-													),
-													value: 'weekly',
-												},
-												{
-													label: __(
-														'Biweekly',
-														'fair-events'
-													),
-													value: 'biweekly',
-												},
-												{
-													label: __(
-														'Monthly',
-														'fair-events'
-													),
-													value: 'monthly',
-												},
-											]}
-											onChange={setRecurrenceFrequency}
-										/>
-										<SelectControl
-											label={__('Ends', 'fair-events')}
-											value={recurrenceEndType}
-											options={[
-												{
-													label: __(
-														'After number of occurrences',
-														'fair-events'
-													),
-													value: 'count',
-												},
-												{
-													label: __(
-														'On a specific date',
-														'fair-events'
-													),
-													value: 'until',
-												},
-											]}
-											onChange={setRecurrenceEndType}
-										/>
-										{recurrenceEndType === 'count' && (
-											<NumberControl
-												label={__(
-													'Number of occurrences',
-													'fair-events'
-												)}
-												value={recurrenceCount}
-												onChange={(val) =>
-													setRecurrenceCount(
-														parseInt(val, 10) || 1
-													)
-												}
-												min={1}
-												max={365}
-											/>
-										)}
-										{recurrenceEndType === 'until' && (
-											<TextControl
-												label={__(
-													'End date',
-													'fair-events'
-												)}
-												type="date"
-												value={recurrenceUntil}
-												onChange={setRecurrenceUntil}
-											/>
-										)}
-									</VStack>
-								)}
 
 								{eventDate.occurrence_type === 'master' &&
 									(eventDate.generated_occurrences?.length >
