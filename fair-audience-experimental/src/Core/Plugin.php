@@ -54,7 +54,40 @@ class Plugin {
 		if ( is_admin() ) {
 			$admin = new \FairAudienceExperimental\Admin\AdminPages();
 			$admin->init();
+
+			if ( Features::is_enabled( 'manage-event-ext' ) ) {
+				// Register the Audience/Groups/Mailings tabs on fair-events'
+				// manage-event page via its tab-registry filter, rather than
+				// fair-events importing this bundle directly. See
+				// enqueue_manage_event_ext_assets() for the dependency
+				// ordering that avoids a first-render flicker.
+				add_action( 'fair_events_manage_event_enqueue_assets', array( $this, 'enqueue_manage_event_ext_assets' ) );
+			}
 		}
+	}
+
+	/**
+	 * Enqueue this plugin's manage-event tab extensions (Audience, Groups,
+	 * Mailings) on the fair-events manage-event page.
+	 *
+	 * Declares `fair-events-manage-event` as a script dependency so its
+	 * `addFilter()` calls run before the host bundle's `domReady()` mount,
+	 * avoiding a first-render flicker where these tabs pop in late.
+	 *
+	 * @return void
+	 */
+	public function enqueue_manage_event_ext_assets() {
+		$asset_file = include FAIR_AUDIENCE_EXPERIMENTAL_PLUGIN_DIR . 'build/admin/manage-event-ext/index.asset.php';
+
+		wp_enqueue_script(
+			'fair-audience-experimental-manage-event-ext',
+			FAIR_AUDIENCE_EXPERIMENTAL_PLUGIN_URL . 'build/admin/manage-event-ext/index.js',
+			array_merge( $asset_file['dependencies'], array( 'fair-events-manage-event' ) ),
+			$asset_file['version'],
+			true
+		);
+
+		wp_set_script_translations( 'fair-audience-experimental-manage-event-ext', 'fair-audience-experimental' );
 	}
 
 	/**

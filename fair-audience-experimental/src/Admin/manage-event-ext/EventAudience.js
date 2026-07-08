@@ -19,9 +19,9 @@ import apiFetch from '@wordpress/api-fetch';
 const LABEL_ORDER = { collaborator: 0, signed_up: 1, interested: 2 };
 
 const LABEL_DISPLAY = {
-	collaborator: __('Collaborator', 'fair-audience'),
-	signed_up: __('Signed up', 'fair-audience'),
-	interested: __('Interested', 'fair-audience'),
+	collaborator: __('Collaborator', 'fair-audience-experimental'),
+	signed_up: __('Signed up', 'fair-audience-experimental'),
+	interested: __('Interested', 'fair-audience-experimental'),
 };
 
 // payment_expires_at is stored as UTC via PHP gmdate() in the form
@@ -375,8 +375,10 @@ export default function EventAudience({
 			loadParticipants();
 		} catch (err) {
 			showToast(
-				__('Error adding participants: ', 'fair-audience') +
-					err.message,
+				__(
+					'Error adding participants: ',
+					'fair-audience-experimental'
+				) + err.message,
 				'error'
 			);
 		} finally {
@@ -451,7 +453,7 @@ export default function EventAudience({
 					/* translators: 1: number upgraded, 2: number declined, 3: number skipped, 4: number of failed emails */
 					__(
 						'Added %1$d to the mailing list, recorded %2$d as declined. Skipped %3$d, %4$d email(s) failed.',
-						'fair-audience'
+						'fair-audience-experimental'
 					),
 					upgraded,
 					declined,
@@ -462,7 +464,8 @@ export default function EventAudience({
 			);
 		} catch (err) {
 			showToast(
-				__('Error recording consent: ', 'fair-audience') + err.message,
+				__('Error recording consent: ', 'fair-audience-experimental') +
+					err.message,
 				'error'
 			);
 		} finally {
@@ -495,7 +498,7 @@ export default function EventAudience({
 					/* translators: 1: number of sent invitations, 2: number of skipped recipients, 3: number of failures */
 					__(
 						'Sent %1$d invitation(s). Skipped %2$d, failed %3$d.',
-						'fair-audience'
+						'fair-audience-experimental'
 					),
 					sent,
 					skipped,
@@ -505,8 +508,10 @@ export default function EventAudience({
 			);
 		} catch (err) {
 			showToast(
-				__('Error sending invitations: ', 'fair-audience') +
-					err.message,
+				__(
+					'Error sending invitations: ',
+					'fair-audience-experimental'
+				) + err.message,
 				'error'
 			);
 		} finally {
@@ -566,7 +571,7 @@ export default function EventAudience({
 		}
 		const baseName =
 			participant.participant_name ||
-			__('this participant', 'fair-audience');
+			__('this participant', 'fair-audience-experimental');
 		const nameWithEmail = participant.participant_email
 			? `${baseName} (${participant.participant_email})`
 			: baseName;
@@ -574,7 +579,7 @@ export default function EventAudience({
 			/* translators: %s: participant name or "name (email)" */
 			__(
 				'Delete %s’s registration for this event date? This cannot be undone.',
-				'fair-audience'
+				'fair-audience-experimental'
 			),
 			nameWithEmail
 		);
@@ -591,8 +596,10 @@ export default function EventAudience({
 		}).catch((err) => {
 			setParticipants(previous);
 			showToast(
-				__('Error deleting registration: ', 'fair-audience') +
-					(err.message || ''),
+				__(
+					'Error deleting registration: ',
+					'fair-audience-experimental'
+				) + (err.message || ''),
 				'error'
 			);
 		});
@@ -705,16 +712,17 @@ export default function EventAudience({
 			if (stalenessResolved) {
 				showToast(
 					editStaleDecision === 'confirm'
-						? __('Signup confirmed.', 'fair-audience')
+						? __('Signup confirmed.', 'fair-audience-experimental')
 						: __(
 								'Expired signup moved to Interested.',
-								'fair-audience'
+								'fair-audience-experimental'
 						  )
 				);
 			}
 		} catch (err) {
 			showToast(
-				__('Error saving options: ', 'fair-audience') + err.message,
+				__('Error saving options: ', 'fair-audience-experimental') +
+					err.message,
 				'error'
 			);
 		} finally {
@@ -748,10 +756,13 @@ export default function EventAudience({
 			});
 			handleCloseMoveModal();
 			loadParticipants();
-			showToast(__('Signup moved successfully.', 'fair-audience'));
+			showToast(
+				__('Signup moved successfully.', 'fair-audience-experimental')
+			);
 		} catch (err) {
 			showToast(
-				__('Error moving signup: ', 'fair-audience') + err.message,
+				__('Error moving signup: ', 'fair-audience-experimental') +
+					err.message,
 				'error'
 			);
 		} finally {
@@ -775,7 +786,7 @@ export default function EventAudience({
 
 		const headerTitle = eventTitle
 			? `${eventTitle}`
-			: __('Event', 'fair-audience');
+			: __('Event', 'fair-audience-experimental');
 		const dateLabel = new Date().toLocaleDateString();
 
 		const optionLabelById = new Map(
@@ -834,7 +845,7 @@ export default function EventAudience({
 <head>
 	<meta charset="utf-8" />
 	<title>${escape(headerTitle)} — ${escape(
-			__('Participant list', 'fair-audience')
+			__('Participant list', 'fair-audience-experimental')
 		)}</title>
 	<style>
 		* { box-sizing: border-box; }
@@ -876,27 +887,27 @@ export default function EventAudience({
 <body>
 	<div class="toolbar">
 		<button type="button" onclick="window.print()">${escape(
-			__('Print', 'fair-audience')
+			__('Print', 'fair-audience-experimental')
 		)}</button>
 	</div>
 	<header>
 		<h1>${escape(headerTitle)}</h1>
-		<div class="meta">${escape(__('Participant list', 'fair-audience'))} — ${escape(
-			dateLabel
-		)} (${printParticipants.length})</div>
+		<div class="meta">${escape(
+			__('Participant list', 'fair-audience-experimental')
+		)} — ${escape(dateLabel)} (${printParticipants.length})</div>
 	</header>
 	<table>
 		<thead>
 			<tr>
 				<th class="num">#</th>
-				<th>${escape(__('Name', 'fair-audience'))}</th>
-				<th>${escape(__('Role', 'fair-audience'))}</th>
-				<th>${escape(__('Ticket type', 'fair-audience'))}</th>
-				<th>${escape(__('Activities', 'fair-audience'))}</th>
-				<th>${escape(__('Admin comment', 'fair-audience'))}</th>
-				<th>${escape(__('Present', 'fair-audience'))}</th>
-				<th>${escape(__('Mailing list', 'fair-audience'))}</th>
-				<th>${escape(__('Notes', 'fair-audience'))}</th>
+				<th>${escape(__('Name', 'fair-audience-experimental'))}</th>
+				<th>${escape(__('Role', 'fair-audience-experimental'))}</th>
+				<th>${escape(__('Ticket type', 'fair-audience-experimental'))}</th>
+				<th>${escape(__('Activities', 'fair-audience-experimental'))}</th>
+				<th>${escape(__('Admin comment', 'fair-audience-experimental'))}</th>
+				<th>${escape(__('Present', 'fair-audience-experimental'))}</th>
+				<th>${escape(__('Mailing list', 'fair-audience-experimental'))}</th>
+				<th>${escape(__('Notes', 'fair-audience-experimental'))}</th>
 			</tr>
 		</thead>
 		<tbody>${rows}</tbody>
@@ -909,7 +920,7 @@ export default function EventAudience({
 			showToast(
 				__(
 					'Could not open print window. Please allow pop-ups.',
-					'fair-audience'
+					'fair-audience-experimental'
 				),
 				'error'
 			);
@@ -926,8 +937,10 @@ export default function EventAudience({
 			showToast(successMessage, 'success');
 		} catch (err) {
 			showToast(
-				__('Error copying to clipboard: ', 'fair-audience') +
-					err.message,
+				__(
+					'Error copying to clipboard: ',
+					'fair-audience-experimental'
+				) + err.message,
 				'error'
 			);
 		}
@@ -943,7 +956,8 @@ export default function EventAudience({
 		const groups = new Map();
 		filteredParticipants.forEach((p) => {
 			const key =
-				p.ticket_type_name || __('No ticket type', 'fair-audience');
+				p.ticket_type_name ||
+				__('No ticket type', 'fair-audience-experimental');
 			if (!groups.has(key)) groups.set(key, []);
 			groups.get(key).push(p.participant_name || '—');
 		});
@@ -978,7 +992,7 @@ export default function EventAudience({
 				return `*${opt.name}* (${names.length})\n${
 					names.length > 0
 						? names.map((n) => `- ${n}`).join('\n')
-						: `- ${__('(none)', 'fair-audience')}`
+						: `- ${__('(none)', 'fair-audience-experimental')}`
 				}`;
 			})
 			.join('\n\n');
@@ -1014,7 +1028,7 @@ export default function EventAudience({
 	};
 
 	const formatExpiredAgo = (iso) => {
-		if (!iso) return __('no expiry set', 'fair-audience');
+		if (!iso) return __('no expiry set', 'fair-audience-experimental');
 		const ts = parsePaymentExpiresAt(iso);
 		if (Number.isNaN(ts)) return iso;
 		const diffMs = Date.now() - ts;
@@ -1022,16 +1036,25 @@ export default function EventAudience({
 		const minutes = Math.floor(diffMs / 60000);
 		if (minutes < 60) {
 			/* translators: %d: number of minutes */
-			return sprintf(__('expired %d min ago', 'fair-audience'), minutes);
+			return sprintf(
+				__('expired %d min ago', 'fair-audience-experimental'),
+				minutes
+			);
 		}
 		const hours = Math.floor(minutes / 60);
 		if (hours < 24) {
 			/* translators: %d: number of hours */
-			return sprintf(__('expired %d h ago', 'fair-audience'), hours);
+			return sprintf(
+				__('expired %d h ago', 'fair-audience-experimental'),
+				hours
+			);
 		}
 		const days = Math.floor(hours / 24);
 		/* translators: %d: number of days */
-		return sprintf(__('expired %d d ago', 'fair-audience'), days);
+		return sprintf(
+			__('expired %d d ago', 'fair-audience-experimental'),
+			days
+		);
 	};
 
 	const renderActivitiesForParticipant = (p) => {
@@ -1040,7 +1063,9 @@ export default function EventAudience({
 		const labels = ticketOptions
 			.filter((opt) => ids.includes(opt.id) || names.includes(opt.name))
 			.map((opt) => opt.short_name || opt.name);
-		return labels.length > 0 ? labels.join(', ') : __('—', 'fair-audience');
+		return labels.length > 0
+			? labels.join(', ')
+			: __('—', 'fair-audience-experimental');
 	};
 
 	return (
@@ -1049,7 +1074,7 @@ export default function EventAudience({
 				<Card style={{ marginTop: '16px' }}>
 					<CardHeader>
 						<h2>
-							{__('Pending review', 'fair-audience')}{' '}
+							{__('Pending review', 'fair-audience-experimental')}{' '}
 							<span
 								style={{
 									display: 'inline-block',
@@ -1071,7 +1096,7 @@ export default function EventAudience({
 						<p style={{ marginTop: 0 }}>
 							{__(
 								'These signups had a payment hold that expired. They are not counted toward activity capacity until reviewed. Open a row to confirm (e.g. cash payment promised) or cancel.',
-								'fair-audience'
+								'fair-audience-experimental'
 							)}
 						</p>
 						<div style={{ overflowX: 'auto' }}>
@@ -1079,15 +1104,29 @@ export default function EventAudience({
 								<thead>
 									<tr>
 										<th>
-											{__('Participant', 'fair-audience')}
+											{__(
+												'Participant',
+												'fair-audience-experimental'
+											)}
 										</th>
 										<th>
-											{__('Ticket type', 'fair-audience')}
+											{__(
+												'Ticket type',
+												'fair-audience-experimental'
+											)}
 										</th>
 										<th>
-											{__('Activities', 'fair-audience')}
+											{__(
+												'Activities',
+												'fair-audience-experimental'
+											)}
 										</th>
-										<th>{__('Status', 'fair-audience')}</th>
+										<th>
+											{__(
+												'Status',
+												'fair-audience-experimental'
+											)}
+										</th>
 										<th />
 									</tr>
 								</thead>
@@ -1097,7 +1136,10 @@ export default function EventAudience({
 											<td>{p.participant_name || '—'}</td>
 											<td>
 												{p.ticket_type_name ||
-													__('—', 'fair-audience')}
+													__(
+														'—',
+														'fair-audience-experimental'
+													)}
 											</td>
 											<td>
 												{renderActivitiesForParticipant(
@@ -1118,7 +1160,7 @@ export default function EventAudience({
 												>
 													{__(
 														'Review',
-														'fair-audience'
+														'fair-audience-experimental'
 													)}
 												</Button>
 											</td>
@@ -1134,7 +1176,9 @@ export default function EventAudience({
 			{eventId && (
 				<Card style={{ marginTop: '16px' }}>
 					<CardHeader>
-						<h2>{__('Participants', 'fair-audience')}</h2>
+						<h2>
+							{__('Participants', 'fair-audience-experimental')}
+						</h2>
 					</CardHeader>
 					<CardBody>
 						<HStack
@@ -1150,7 +1194,10 @@ export default function EventAudience({
 									fontWeight: 500,
 								}}
 							>
-								{__('Copy lists:', 'fair-audience')}
+								{__(
+									'Copy lists:',
+									'fair-audience-experimental'
+								)}
 							</span>
 							<Button
 								variant="secondary"
@@ -1159,13 +1206,16 @@ export default function EventAudience({
 										buildCopyByTicketType(),
 										__(
 											'Copied list by ticket type',
-											'fair-audience'
+											'fair-audience-experimental'
 										)
 									)
 								}
 								disabled={filteredParticipants.length === 0}
 							>
-								{__('Ticket type', 'fair-audience')}
+								{__(
+									'Ticket type',
+									'fair-audience-experimental'
+								)}
 							</Button>
 							<Button
 								variant="secondary"
@@ -1174,7 +1224,7 @@ export default function EventAudience({
 										buildCopyByActivity(),
 										__(
 											'Copied list by activity',
-											'fair-audience'
+											'fair-audience-experimental'
 										)
 									)
 								}
@@ -1183,7 +1233,7 @@ export default function EventAudience({
 									ticketOptions.length === 0
 								}
 							>
-								{__('Activity', 'fair-audience')}
+								{__('Activity', 'fair-audience-experimental')}
 							</Button>
 							<Button
 								variant="secondary"
@@ -1192,7 +1242,7 @@ export default function EventAudience({
 										buildActivitySummary(),
 										__(
 											'Copied activity summary',
-											'fair-audience'
+											'fair-audience-experimental'
 										)
 									)
 								}
@@ -1201,7 +1251,10 @@ export default function EventAudience({
 									ticketOptions.length === 0
 								}
 							>
-								{__('Activity summary', 'fair-audience')}
+								{__(
+									'Activity summary',
+									'fair-audience-experimental'
+								)}
 							</Button>
 							<Button
 								variant="secondary"
@@ -1210,13 +1263,16 @@ export default function EventAudience({
 										buildCopyByParticipant(),
 										__(
 											'Copied list by participant',
-											'fair-audience'
+											'fair-audience-experimental'
 										)
 									)
 								}
 								disabled={filteredParticipants.length === 0}
 							>
-								{__('Participant', 'fair-audience')}
+								{__(
+									'Participant',
+									'fair-audience-experimental'
+								)}
 							</Button>
 						</HStack>
 						{loadingParticipants ? (
@@ -1225,19 +1281,31 @@ export default function EventAudience({
 							<VStack spacing={4} style={{ maxWidth: '100%' }}>
 								<HStack spacing={4} wrap>
 									<span>
-										{__('Collaborators:', 'fair-audience')}{' '}
+										{__(
+											'Collaborators:',
+											'fair-audience-experimental'
+										)}{' '}
 										<strong>{counts.collaborator}</strong>
 									</span>
 									<span>
-										{__('Signed up:', 'fair-audience')}{' '}
+										{__(
+											'Signed up:',
+											'fair-audience-experimental'
+										)}{' '}
 										<strong>{counts.signed_up}</strong>
 									</span>
 									<span>
-										{__('Interested:', 'fair-audience')}{' '}
+										{__(
+											'Interested:',
+											'fair-audience-experimental'
+										)}{' '}
 										<strong>{counts.interested}</strong>
 									</span>
 									<span>
-										{__('Total:', 'fair-audience')}{' '}
+										{__(
+											'Total:',
+											'fair-audience-experimental'
+										)}{' '}
 										<strong>{participants.length}</strong>
 									</span>
 									{stalePending.length > 0 && (
@@ -1252,14 +1320,14 @@ export default function EventAudience({
 											}}
 											title={__(
 												'Pending_payment signups whose hold expired. They do not count toward activity capacity until reviewed.',
-												'fair-audience'
+												'fair-audience-experimental'
 											)}
 										>
 											{sprintf(
 												/* translators: %d: number of stale pending_payment signups */
 												__(
 													'%d stale held',
-													'fair-audience'
+													'fair-audience-experimental'
 												),
 												stalePending.length
 											)}
@@ -1269,45 +1337,51 @@ export default function EventAudience({
 
 								<HStack spacing={4} wrap alignment="bottom">
 									<TextControl
-										label={__('Search', 'fair-audience')}
+										label={__(
+											'Search',
+											'fair-audience-experimental'
+										)}
 										value={searchText}
 										onChange={setSearchText}
 										placeholder={__(
 											'Filter by name…',
-											'fair-audience'
+											'fair-audience-experimental'
 										)}
 										__nextHasNoMarginBottom
 									/>
 									<SelectControl
-										label={__('Role', 'fair-audience')}
+										label={__(
+											'Role',
+											'fair-audience-experimental'
+										)}
 										value={filterRole}
 										__next40pxDefaultSize
 										options={[
 											{
 												label: __(
 													'All roles',
-													'fair-audience'
+													'fair-audience-experimental'
 												),
 												value: 'all',
 											},
 											{
 												label: __(
 													'Collaborator',
-													'fair-audience'
+													'fair-audience-experimental'
 												),
 												value: 'collaborator',
 											},
 											{
 												label: __(
 													'Signed up',
-													'fair-audience'
+													'fair-audience-experimental'
 												),
 												value: 'signed_up',
 											},
 											{
 												label: __(
 													'Interested',
-													'fair-audience'
+													'fair-audience-experimental'
 												),
 												value: 'interested',
 											},
@@ -1347,7 +1421,7 @@ export default function EventAudience({
 													>
 														{__(
 															'Name',
-															'fair-audience'
+															'fair-audience-experimental'
 														)}
 														{sortIndicator('name')}
 													</th>
@@ -1361,7 +1435,7 @@ export default function EventAudience({
 													>
 														{__(
 															'Role',
-															'fair-audience'
+															'fair-audience-experimental'
 														)}
 														{sortIndicator('role')}
 													</th>
@@ -1377,7 +1451,7 @@ export default function EventAudience({
 													>
 														{__(
 															'Ticket type',
-															'fair-audience'
+															'fair-audience-experimental'
 														)}
 														{sortIndicator(
 															'ticket_type'
@@ -1394,13 +1468,13 @@ export default function EventAudience({
 													<th>
 														{__(
 															'Shown up',
-															'fair-audience'
+															'fair-audience-experimental'
 														)}
 													</th>
 													<th>
 														{__(
 															'Actions',
-															'fair-audience'
+															'fair-audience-experimental'
 														)}
 													</th>
 												</tr>
@@ -1434,7 +1508,7 @@ export default function EventAudience({
 																	<span
 																		title={__(
 																			'Holds a whole-series pass. Attendance and edits are managed on the series’ master date.',
-																			'fair-audience'
+																			'fair-audience-experimental'
 																		)}
 																		style={{
 																			marginLeft: 6,
@@ -1451,7 +1525,7 @@ export default function EventAudience({
 																	>
 																		{__(
 																			'Series pass',
-																			'fair-audience'
+																			'fair-audience-experimental'
 																		)}
 																	</span>
 																)}
@@ -1502,7 +1576,7 @@ export default function EventAudience({
 																	type="checkbox"
 																	aria-label={__(
 																		'Shown up',
-																		'fair-audience'
+																		'fair-audience-experimental'
 																	)}
 																	checked={
 																		!!p.attended_at
@@ -1514,7 +1588,7 @@ export default function EventAudience({
 																		p.is_series_pass
 																			? __(
 																					'Attendance for series-pass holders is managed on the series’ master date.',
-																					'fair-audience'
+																					'fair-audience-experimental'
 																			  )
 																			: undefined
 																	}
@@ -1541,7 +1615,7 @@ export default function EventAudience({
 																	>
 																		{__(
 																			'Managed on series date',
-																			'fair-audience'
+																			'fair-audience-experimental'
 																		)}
 																	</span>
 																) : (
@@ -1563,7 +1637,7 @@ export default function EventAudience({
 																			>
 																				{__(
 																					'Edit',
-																					'fair-audience'
+																					'fair-audience-experimental'
 																				)}
 																			</Button>
 																		)}
@@ -1578,7 +1652,7 @@ export default function EventAudience({
 																		>
 																			{__(
 																				'Delete',
-																				'fair-audience'
+																				'fair-audience-experimental'
 																			)}
 																		</Button>
 																		{otherOccurrences.length >
@@ -1593,7 +1667,7 @@ export default function EventAudience({
 																			>
 																				{__(
 																					'Move',
-																					'fair-audience'
+																					'fair-audience-experimental'
 																				)}
 																			</Button>
 																		)}
@@ -1617,7 +1691,7 @@ export default function EventAudience({
 														>
 															{__(
 																'Total',
-																'fair-audience'
+																'fair-audience-experimental'
 															)}
 														</th>
 														{ticketOptions.map(
@@ -1685,11 +1759,11 @@ export default function EventAudience({
 										{participants.length === 0
 											? __(
 													'No participants yet.',
-													'fair-audience'
+													'fair-audience-experimental'
 											  )
 											: __(
 													'No participants match the current filters.',
-													'fair-audience'
+													'fair-audience-experimental'
 											  )}
 									</p>
 								)}
@@ -1701,7 +1775,7 @@ export default function EventAudience({
 									>
 										{__(
 											'Add Participants',
-											'fair-audience'
+											'fair-audience-experimental'
 										)}
 									</Button>
 									<Button
@@ -1710,7 +1784,7 @@ export default function EventAudience({
 									>
 										{__(
 											'Manage Participants',
-											'fair-audience'
+											'fair-audience-experimental'
 										)}
 									</Button>
 									<Button
@@ -1720,7 +1794,10 @@ export default function EventAudience({
 											filteredParticipants.length === 0
 										}
 									>
-										{__('Print list', 'fair-audience')}
+										{__(
+											'Print list',
+											'fair-audience-experimental'
+										)}
 									</Button>
 									{invitedGroups.length > 0 && (
 										<Button
@@ -1731,7 +1808,7 @@ export default function EventAudience({
 										>
 											{__(
 												'Send Invitations',
-												'fair-audience'
+												'fair-audience-experimental'
 											)}
 										</Button>
 									)}
@@ -1742,7 +1819,7 @@ export default function EventAudience({
 									>
 										{__(
 											'Record email consent',
-											'fair-audience'
+											'fair-audience-experimental'
 										)}
 									</Button>
 								</HStack>
@@ -1754,7 +1831,7 @@ export default function EventAudience({
 
 			<Card style={{ marginTop: '16px' }}>
 				<CardHeader>
-					<h2>{__('Forms', 'fair-audience')}</h2>
+					<h2>{__('Forms', 'fair-audience-experimental')}</h2>
 				</CardHeader>
 				<CardBody>
 					{loadingForms ? (
@@ -1764,12 +1841,23 @@ export default function EventAudience({
 							<table className="wp-list-table widefat striped">
 								<thead>
 									<tr>
-										<th>{__('Form', 'fair-audience')}</th>
 										<th>
-											{__('Responses', 'fair-audience')}
+											{__(
+												'Form',
+												'fair-audience-experimental'
+											)}
 										</th>
 										<th>
-											{__('Actions', 'fair-audience')}
+											{__(
+												'Responses',
+												'fair-audience-experimental'
+											)}
+										</th>
+										<th>
+											{__(
+												'Actions',
+												'fair-audience-experimental'
+											)}
 										</th>
 									</tr>
 								</thead>
@@ -1795,7 +1883,7 @@ export default function EventAudience({
 												>
 													{__(
 														'View Responses',
-														'fair-audience'
+														'fair-audience-experimental'
 													)}
 												</Button>
 											</td>
@@ -1805,14 +1893,19 @@ export default function EventAudience({
 							</table>
 						</div>
 					) : (
-						<p>{__('No form submissions yet.', 'fair-audience')}</p>
+						<p>
+							{__(
+								'No form submissions yet.',
+								'fair-audience-experimental'
+							)}
+						</p>
 					)}
 				</CardBody>
 			</Card>
 
 			{inviteModalOpen && (
 				<Modal
-					title={__('Send Invitations', 'fair-audience')}
+					title={__('Send Invitations', 'fair-audience-experimental')}
 					onRequestClose={() => setInviteModalOpen(false)}
 					style={{ maxWidth: '480px', width: '100%' }}
 				>
@@ -1820,7 +1913,7 @@ export default function EventAudience({
 						<p style={{ margin: 0 }}>
 							{__(
 								'Send event invitation emails to members of the following groups? Participants who are already signed up will be skipped.',
-								'fair-audience'
+								'fair-audience-experimental'
 							)}
 						</p>
 						<ul style={{ margin: 0, paddingLeft: '20px' }}>
@@ -1834,7 +1927,7 @@ export default function EventAudience({
 											'%d member',
 											'%d members',
 											g.member_count || 0,
-											'fair-audience'
+											'fair-audience-experimental'
 										),
 										g.member_count || 0
 									)}
@@ -1847,7 +1940,7 @@ export default function EventAudience({
 									/* translators: %d: total number of potential invitees */
 									__(
 										'Total: up to %d invitations',
-										'fair-audience'
+										'fair-audience-experimental'
 									),
 									totalInvitees
 								)}
@@ -1862,7 +1955,7 @@ export default function EventAudience({
 								onClick={() => setInviteModalOpen(false)}
 								disabled={isSendingInvitations}
 							>
-								{__('Cancel', 'fair-audience')}
+								{__('Cancel', 'fair-audience-experimental')}
 							</Button>
 							<Button
 								variant="primary"
@@ -1873,8 +1966,14 @@ export default function EventAudience({
 								}
 							>
 								{isSendingInvitations
-									? __('Sending…', 'fair-audience')
-									: __('Send Invitations', 'fair-audience')}
+									? __(
+											'Sending…',
+											'fair-audience-experimental'
+									  )
+									: __(
+											'Send Invitations',
+											'fair-audience-experimental'
+									  )}
 							</Button>
 						</HStack>
 					</VStack>
@@ -1883,7 +1982,7 @@ export default function EventAudience({
 
 			{addModalOpen && (
 				<Modal
-					title={__('Add Participants', 'fair-audience')}
+					title={__('Add Participants', 'fair-audience-experimental')}
 					onRequestClose={handleCloseAddModal}
 					style={{ maxWidth: '640px', width: '100%' }}
 				>
@@ -1893,7 +1992,7 @@ export default function EventAudience({
 						<p>
 							{__(
 								'All participants are already added to this event.',
-								'fair-audience'
+								'fair-audience-experimental'
 							)}
 						</p>
 					) : (
@@ -1909,7 +2008,7 @@ export default function EventAudience({
 									type="text"
 									placeholder={__(
 										'Search by name or email…',
-										'fair-audience'
+										'fair-audience-experimental'
 									)}
 									value={addSearch}
 									onChange={(e) =>
@@ -1928,21 +2027,21 @@ export default function EventAudience({
 										{
 											label: __(
 												'Signed up',
-												'fair-audience'
+												'fair-audience-experimental'
 											),
 											value: 'signed_up',
 										},
 										{
 											label: __(
 												'Collaborator',
-												'fair-audience'
+												'fair-audience-experimental'
 											),
 											value: 'collaborator',
 										},
 										{
 											label: __(
 												'Interested',
-												'fair-audience'
+												'fair-audience-experimental'
 											),
 											value: 'interested',
 										},
@@ -1964,7 +2063,7 @@ export default function EventAudience({
 											/* translators: 1: selected count, 2: shown count */
 											__(
 												'%1$d selected, %2$d shown',
-												'fair-audience'
+												'fair-audience-experimental'
 											),
 											selectedToAdd.size,
 											filteredAvailableParticipants.length
@@ -1973,7 +2072,7 @@ export default function EventAudience({
 											/* translators: %d: number of available participants */
 											__(
 												'%d participant(s) available',
-												'fair-audience'
+												'fair-audience-experimental'
 											),
 											filteredAvailableParticipants.length
 									  )}
@@ -2032,7 +2131,7 @@ export default function EventAudience({
 									>
 										{__(
 											'No participants match your search.',
-											'fair-audience'
+											'fair-audience-experimental'
 										)}
 									</p>
 								)}
@@ -2050,7 +2149,7 @@ export default function EventAudience({
 									variant="secondary"
 									onClick={handleCloseAddModal}
 								>
-									{__('Cancel', 'fair-audience')}
+									{__('Cancel', 'fair-audience-experimental')}
 								</Button>
 								<Button
 									variant="primary"
@@ -2060,12 +2159,15 @@ export default function EventAudience({
 									}
 								>
 									{isAdding
-										? __('Adding…', 'fair-audience')
+										? __(
+												'Adding…',
+												'fair-audience-experimental'
+										  )
 										: sprintf(
 												/* translators: %d: number of selected participants */
 												__(
 													'Add %d Selected',
-													'fair-audience'
+													'fair-audience-experimental'
 												),
 												selectedToAdd.size
 										  )}
@@ -2078,7 +2180,10 @@ export default function EventAudience({
 
 			{mailingModalOpen && (
 				<Modal
-					title={__('Record email consent', 'fair-audience')}
+					title={__(
+						'Record email consent',
+						'fair-audience-experimental'
+					)}
 					onRequestClose={handleCloseMailingModal}
 					style={{ maxWidth: '640px', width: '100%' }}
 				>
@@ -2086,7 +2191,7 @@ export default function EventAudience({
 						<p>
 							{__(
 								'No participants are eligible. People are listed here when they are on the minimal email profile.',
-								'fair-audience'
+								'fair-audience-experimental'
 							)}
 						</p>
 					) : (
@@ -2094,7 +2199,7 @@ export default function EventAudience({
 							<p style={{ marginTop: 0, color: '#666' }}>
 								{__(
 									'Record each person\'s answer. "Yes" adds them to the mailing list and sends a welcome email. "No" records that they declined — they will not be asked again.',
-									'fair-audience'
+									'fair-audience-experimental'
 								)}
 							</p>
 
@@ -2110,7 +2215,7 @@ export default function EventAudience({
 									type="text"
 									placeholder={__(
 										'Search by name or email…',
-										'fair-audience'
+										'fair-audience-experimental'
 									)}
 									value={mailingSearch}
 									onChange={(e) =>
@@ -2196,12 +2301,15 @@ export default function EventAudience({
 														!hasEmail
 															? __(
 																	'No email — cannot add to mailing list',
-																	'fair-audience'
+																	'fair-audience-experimental'
 															  )
 															: undefined
 													}
 												>
-													{__('Yes', 'fair-audience')}
+													{__(
+														'Yes',
+														'fair-audience-experimental'
+													)}
 												</Button>
 												<Button
 													variant={
@@ -2217,7 +2325,10 @@ export default function EventAudience({
 														)
 													}
 												>
-													{__('No', 'fair-audience')}
+													{__(
+														'No',
+														'fair-audience-experimental'
+													)}
 												</Button>
 											</div>
 										</div>
@@ -2232,7 +2343,7 @@ export default function EventAudience({
 									>
 										{__(
 											'No participants match your search.',
-											'fair-audience'
+											'fair-audience-experimental'
 										)}
 									</p>
 								)}
@@ -2250,7 +2361,7 @@ export default function EventAudience({
 									variant="secondary"
 									onClick={handleCloseMailingModal}
 								>
-									{__('Cancel', 'fair-audience')}
+									{__('Cancel', 'fair-audience-experimental')}
 								</Button>
 								<Button
 									variant="primary"
@@ -2262,8 +2373,14 @@ export default function EventAudience({
 									}
 								>
 									{isRecordingConsent
-										? __('Saving…', 'fair-audience')
-										: __('Save consent', 'fair-audience')}
+										? __(
+												'Saving…',
+												'fair-audience-experimental'
+										  )
+										: __(
+												'Save consent',
+												'fair-audience-experimental'
+										  )}
 								</Button>
 							</div>
 						</>
@@ -2275,7 +2392,7 @@ export default function EventAudience({
 				<Modal
 					title={sprintf(
 						/* translators: %s: participant name */
-						__('Edit options — %s', 'fair-audience'),
+						__('Edit options — %s', 'fair-audience-experimental'),
 						editingParticipant.participant_name
 					)}
 					onRequestClose={() => setEditingParticipant(null)}
@@ -2299,7 +2416,7 @@ export default function EventAudience({
 								>
 									{__(
 										'Pending payment hold expired',
-										'fair-audience'
+										'fair-audience-experimental'
 									)}
 								</p>
 								<p
@@ -2311,16 +2428,16 @@ export default function EventAudience({
 									{editStaleDecision === 'confirm'
 										? __(
 												'Will mark as Signed up and count toward activity capacity. Click Save to apply.',
-												'fair-audience'
+												'fair-audience-experimental'
 										  )
 										: editStaleDecision === 'cancel'
 										? __(
 												'Will mark as Interested and free the seat (record kept for history). Click Save to apply.',
-												'fair-audience'
+												'fair-audience-experimental'
 										  )
 										: __(
 												'Pick how to resolve this expired hold, edit any other fields below, then Save to apply everything in one go.',
-												'fair-audience'
+												'fair-audience-experimental'
 										  )}
 								</p>
 								<HStack spacing={2}>
@@ -2338,7 +2455,10 @@ export default function EventAudience({
 											)
 										}
 									>
-										{__('Confirm signup', 'fair-audience')}
+										{__(
+											'Confirm signup',
+											'fair-audience-experimental'
+										)}
 									</Button>
 									<Button
 										variant={
@@ -2357,14 +2477,17 @@ export default function EventAudience({
 											)
 										}
 									>
-										{__('Cancel signup', 'fair-audience')}
+										{__(
+											'Cancel signup',
+											'fair-audience-experimental'
+										)}
 									</Button>
 								</HStack>
 							</div>
 						)}
 						{!isStalePendingPayment(editingParticipant) && (
 							<SelectControl
-								label={__('Role', 'fair-audience')}
+								label={__('Role', 'fair-audience-experimental')}
 								value={editLabel}
 								options={[
 									{
@@ -2386,7 +2509,10 @@ export default function EventAudience({
 						)}
 						{ticketTypes.length > 0 && (
 							<SelectControl
-								label={__('Ticket type', 'fair-audience')}
+								label={__(
+									'Ticket type',
+									'fair-audience-experimental'
+								)}
 								value={
 									editTicketTypeId === null
 										? ''
@@ -2394,7 +2520,10 @@ export default function EventAudience({
 								}
 								options={[
 									{
-										label: __('— None —', 'fair-audience'),
+										label: __(
+											'— None —',
+											'fair-audience-experimental'
+										),
 										value: '',
 									},
 									...ticketTypes.map((tt) => ({
@@ -2420,10 +2549,13 @@ export default function EventAudience({
 							/>
 						))}
 						<TextareaControl
-							label={__('Admin comment', 'fair-audience')}
+							label={__(
+								'Admin comment',
+								'fair-audience-experimental'
+							)}
 							help={__(
 								'Internal note about this signup (e.g. "pending 10€ payment"). Only visible to admins.',
-								'fair-audience'
+								'fair-audience-experimental'
 							)}
 							value={editAdminComment}
 							onChange={setEditAdminComment}
@@ -2438,7 +2570,7 @@ export default function EventAudience({
 								variant="secondary"
 								onClick={() => setEditingParticipant(null)}
 							>
-								{__('Cancel', 'fair-audience')}
+								{__('Cancel', 'fair-audience-experimental')}
 							</Button>
 							<Button
 								variant="primary"
@@ -2446,8 +2578,11 @@ export default function EventAudience({
 								disabled={isSavingOptions}
 							>
 								{isSavingOptions
-									? __('Saving…', 'fair-audience')
-									: __('Save', 'fair-audience')}
+									? __(
+											'Saving…',
+											'fair-audience-experimental'
+									  )
+									: __('Save', 'fair-audience-experimental')}
 							</Button>
 						</HStack>
 					</VStack>
@@ -2458,7 +2593,7 @@ export default function EventAudience({
 				<Modal
 					title={sprintf(
 						/* translators: %s: participant name */
-						__('Move signup — %s', 'fair-audience'),
+						__('Move signup — %s', 'fair-audience-experimental'),
 						movingParticipant.participant_name
 					)}
 					onRequestClose={handleCloseMoveModal}
@@ -2466,7 +2601,10 @@ export default function EventAudience({
 				>
 					<VStack spacing={3}>
 						<SelectControl
-							label={__('Move to occurrence', 'fair-audience')}
+							label={__(
+								'Move to occurrence',
+								'fair-audience-experimental'
+							)}
 							value={moveTargetId}
 							options={otherOccurrences.map((s) => ({
 								label: new Date(
@@ -2487,7 +2625,7 @@ export default function EventAudience({
 								onClick={handleCloseMoveModal}
 								disabled={isMoving}
 							>
-								{__('Cancel', 'fair-audience')}
+								{__('Cancel', 'fair-audience-experimental')}
 							</Button>
 							<Button
 								variant="primary"
@@ -2495,8 +2633,11 @@ export default function EventAudience({
 								disabled={!moveTargetId || isMoving}
 							>
 								{isMoving
-									? __('Moving…', 'fair-audience')
-									: __('Move', 'fair-audience')}
+									? __(
+											'Moving…',
+											'fair-audience-experimental'
+									  )
+									: __('Move', 'fair-audience-experimental')}
 							</Button>
 						</HStack>
 					</VStack>

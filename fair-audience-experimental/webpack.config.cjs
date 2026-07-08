@@ -73,6 +73,10 @@ module.exports = {
       process.cwd(),
       "src/Admin/media-library-filter.js",
     ),
+    "admin/manage-event-ext/index": path.resolve(
+      process.cwd(),
+      "src/Admin/manage-event-ext/index.js",
+    ),
     "public/poll-response/index": path.resolve(
       process.cwd(),
       "src/public/poll-response/index.js",

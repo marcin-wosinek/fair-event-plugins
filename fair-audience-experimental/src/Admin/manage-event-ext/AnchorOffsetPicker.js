@@ -121,15 +121,21 @@ export default function AnchorOffsetPicker({
 	return (
 		<div style={{ marginBottom: '16px' }}>
 			<SelectControl
-				label={__('Anchor', 'fair-audience')}
+				label={__('Anchor', 'fair-audience-experimental')}
 				value={anchorType}
 				options={[
 					{
-						label: __('Event date start', 'fair-audience'),
+						label: __(
+							'Event date start',
+							'fair-audience-experimental'
+						),
 						value: 'event_date_start',
 					},
 					{
-						label: __('Event date end', 'fair-audience'),
+						label: __(
+							'Event date end',
+							'fair-audience-experimental'
+						),
 						value: 'event_date_end',
 					},
 				]}
@@ -140,7 +146,7 @@ export default function AnchorOffsetPicker({
 
 			{eventDates.length > 1 && (
 				<SelectControl
-					label={__('Which date', 'fair-audience')}
+					label={__('Which date', 'fair-audience-experimental')}
 					value={String(anchorRefId)}
 					options={eventDates.map((d) => ({
 						label: d.display_label || `#${d.id}`,
@@ -160,7 +166,7 @@ export default function AnchorOffsetPicker({
 				style={{ marginTop: '8px' }}
 			>
 				<NumberControl
-					label={__('Offset', 'fair-audience')}
+					label={__('Offset', 'fair-audience-experimental')}
 					min={0}
 					value={offsetValue}
 					onChange={(value) =>
@@ -170,15 +176,21 @@ export default function AnchorOffsetPicker({
 					__nextHasNoMarginBottom
 				/>
 				<SelectControl
-					label={__('Unit', 'fair-audience')}
+					label={__('Unit', 'fair-audience-experimental')}
 					value={offsetUnit}
 					options={[
 						{
-							label: __('minutes', 'fair-audience'),
+							label: __('minutes', 'fair-audience-experimental'),
 							value: 'minutes',
 						},
-						{ label: __('hours', 'fair-audience'), value: 'hours' },
-						{ label: __('days', 'fair-audience'), value: 'days' },
+						{
+							label: __('hours', 'fair-audience-experimental'),
+							value: 'hours',
+						},
+						{
+							label: __('days', 'fair-audience-experimental'),
+							value: 'days',
+						},
 					]}
 					onChange={(value) => onChange({ offsetUnit: value })}
 					disabled={disabled}
@@ -188,10 +200,13 @@ export default function AnchorOffsetPicker({
 					selected={direction}
 					options={[
 						{
-							label: __('before', 'fair-audience'),
+							label: __('before', 'fair-audience-experimental'),
 							value: 'before',
 						},
-						{ label: __('after', 'fair-audience'), value: 'after' },
+						{
+							label: __('after', 'fair-audience-experimental'),
+							value: 'after',
+						},
 					]}
 					onChange={(value) => onChange({ direction: value })}
 				/>
@@ -201,12 +216,15 @@ export default function AnchorOffsetPicker({
 				{preview
 					? sprintf(
 							/* translators: %s: computed send date/time */
-							__('Will send around: %s', 'fair-audience'),
+							__(
+								'Will send around: %s',
+								'fair-audience-experimental'
+							),
 							preview
 					  )
 					: __(
 							'Send time will be computed from the chosen date.',
-							'fair-audience'
+							'fair-audience-experimental'
 					  )}
 			</p>
 		</div>

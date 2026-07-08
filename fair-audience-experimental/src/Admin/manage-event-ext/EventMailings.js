@@ -41,9 +41,15 @@ import {
 } from './mailings-api.js';
 
 const LABEL_OPTIONS = [
-	{ key: 'signed_up', label: __('Registered', 'fair-audience') },
-	{ key: 'interested', label: __('Interested', 'fair-audience') },
-	{ key: 'collaborator', label: __('Collaborators', 'fair-audience') },
+	{ key: 'signed_up', label: __('Registered', 'fair-audience-experimental') },
+	{
+		key: 'interested',
+		label: __('Interested', 'fair-audience-experimental'),
+	},
+	{
+		key: 'collaborator',
+		label: __('Collaborators', 'fair-audience-experimental'),
+	},
 ];
 
 const STATUS_COLORS = {
@@ -145,7 +151,7 @@ export default function EventMailings({
 						status: 'error',
 						message: __(
 							'Could not load mailings.',
-							'fair-audience'
+							'fair-audience-experimental'
 						),
 					});
 				}
@@ -229,14 +235,20 @@ export default function EventMailings({
 		if (!form.subject.trim()) {
 			setNotice({
 				status: 'error',
-				message: __('Please enter a subject.', 'fair-audience'),
+				message: __(
+					'Please enter a subject.',
+					'fair-audience-experimental'
+				),
 			});
 			return;
 		}
 		if (!form.body.trim()) {
 			setNotice({
 				status: 'error',
-				message: __('Please enter a body.', 'fair-audience'),
+				message: __(
+					'Please enter a body.',
+					'fair-audience-experimental'
+				),
 			});
 			return;
 		}
@@ -245,7 +257,7 @@ export default function EventMailings({
 				status: 'error',
 				message: __(
 					'Please select at least one recipient type.',
-					'fair-audience'
+					'fair-audience-experimental'
 				),
 			});
 			return;
@@ -276,8 +288,11 @@ export default function EventMailings({
 				setNotice({
 					status: 'success',
 					message: form.editingId
-						? __('Mailing updated.', 'fair-audience')
-						: __('Mailing scheduled.', 'fair-audience'),
+						? __('Mailing updated.', 'fair-audience-experimental')
+						: __(
+								'Mailing scheduled.',
+								'fair-audience-experimental'
+						  ),
 				});
 				resetForm();
 			})
@@ -286,7 +301,10 @@ export default function EventMailings({
 					status: 'error',
 					message:
 						err?.message ||
-						__('Could not save the mailing.', 'fair-audience'),
+						__(
+							'Could not save the mailing.',
+							'fair-audience-experimental'
+						),
 				});
 			})
 			.finally(() => setIsSaving(false));
@@ -300,7 +318,10 @@ export default function EventMailings({
 			.then(() =>
 				setNotice({
 					status: 'success',
-					message: __('Mailing canceled.', 'fair-audience'),
+					message: __(
+						'Mailing canceled.',
+						'fair-audience-experimental'
+					),
 				})
 			)
 			.catch(() =>
@@ -308,7 +329,7 @@ export default function EventMailings({
 					status: 'error',
 					message: __(
 						'Could not cancel the mailing.',
-						'fair-audience'
+						'fair-audience-experimental'
 					),
 				})
 			);
@@ -350,14 +371,20 @@ export default function EventMailings({
 				<CardHeader>
 					<h2 style={{ margin: 0 }}>
 						{form.editingId
-							? __('Edit scheduled mailing', 'fair-audience')
-							: __('Schedule new mailing', 'fair-audience')}
+							? __(
+									'Edit scheduled mailing',
+									'fair-audience-experimental'
+							  )
+							: __(
+									'Schedule new mailing',
+									'fair-audience-experimental'
+							  )}
 					</h2>
 				</CardHeader>
 				<CardBody>
 					<form onSubmit={handleSubmit}>
 						<TextControl
-							label={__('Subject', 'fair-audience')}
+							label={__('Subject', 'fair-audience-experimental')}
 							value={form.subject}
 							onChange={(value) => updateForm({ subject: value })}
 							disabled={isSaving}
@@ -383,7 +410,7 @@ export default function EventMailings({
 
 						<fieldset style={{ marginBottom: '16px' }}>
 							<legend style={{ fontWeight: 600 }}>
-								{__('Recipients', 'fair-audience')}
+								{__('Recipients', 'fair-audience-experimental')}
 							</legend>
 							{LABEL_OPTIONS.map((opt) => (
 								<CheckboxControl
@@ -408,7 +435,7 @@ export default function EventMailings({
 									<FormTokenField
 										label={__(
 											'Limit to groups (optional)',
-											'fair-audience'
+											'fair-audience-experimental'
 										)}
 										value={form.groupIds.map(groupNameById)}
 										suggestions={groups.map((g) => g.name)}
@@ -427,7 +454,7 @@ export default function EventMailings({
 							<ToggleControl
 								label={__(
 									'Marketing email (respect opt-out)',
-									'fair-audience'
+									'fair-audience-experimental'
 								)}
 								checked={form.isMarketing}
 								onChange={(checked) =>
@@ -441,13 +468,13 @@ export default function EventMailings({
 								{recipientCount === null
 									? __(
 											'Recipient count unavailable.',
-											'fair-audience'
+											'fair-audience-experimental'
 									  )
 									: sprintf(
 											/* translators: %d: recipient count */
 											__(
 												'%d recipient(s) match right now.',
-												'fair-audience'
+												'fair-audience-experimental'
 											),
 											recipientCount
 									  )}{' '}
@@ -459,8 +486,14 @@ export default function EventMailings({
 										}
 									>
 										{showRecipients
-											? __('Hide list', 'fair-audience')
-											: __('View list', 'fair-audience')}
+											? __(
+													'Hide list',
+													'fair-audience-experimental'
+											  )
+											: __(
+													'View list',
+													'fair-audience-experimental'
+											  )}
 									</Button>
 								)}
 							</p>
@@ -479,12 +512,15 @@ export default function EventMailings({
 										<li key={r.participant_id}>
 											{r.name} {r.surname} &lt;
 											{r.email ||
-												__('no email', 'fair-audience')}
+												__(
+													'no email',
+													'fair-audience-experimental'
+												)}
 											&gt;
 											{r.would_skip_marketing &&
 												` — ${__(
 													'will skip (opted out)',
-													'fair-audience'
+													'fair-audience-experimental'
 												)}`}
 										</li>
 									))}
@@ -495,7 +531,7 @@ export default function EventMailings({
 						<p style={{ color: '#757575', fontStyle: 'italic' }}>
 							{__(
 								'Scheduled mailings send automatically at the computed time. There is no per-send skip list or immediate send here — use the Custom Mail page for ad-hoc sends.',
-								'fair-audience'
+								'fair-audience-experimental'
 							)}
 						</p>
 
@@ -507,8 +543,14 @@ export default function EventMailings({
 								disabled={isSaving}
 							>
 								{form.editingId
-									? __('Update mailing', 'fair-audience')
-									: __('Schedule mailing', 'fair-audience')}
+									? __(
+											'Update mailing',
+											'fair-audience-experimental'
+									  )
+									: __(
+											'Schedule mailing',
+											'fair-audience-experimental'
+									  )}
 							</Button>
 							{form.editingId && (
 								<Button
@@ -516,7 +558,10 @@ export default function EventMailings({
 									onClick={resetForm}
 									disabled={isSaving}
 								>
-									{__('Cancel edit', 'fair-audience')}
+									{__(
+										'Cancel edit',
+										'fair-audience-experimental'
+									)}
 								</Button>
 							)}
 						</HStack>
@@ -528,12 +573,20 @@ export default function EventMailings({
 			<Card>
 				<CardHeader>
 					<h2 style={{ margin: 0 }}>
-						{__('Scheduled & past mailings', 'fair-audience')}
+						{__(
+							'Scheduled & past mailings',
+							'fair-audience-experimental'
+						)}
 					</h2>
 				</CardHeader>
 				<CardBody>
 					{messages.length === 0 ? (
-						<p>{__('No mailings yet.', 'fair-audience')}</p>
+						<p>
+							{__(
+								'No mailings yet.',
+								'fair-audience-experimental'
+							)}
+						</p>
 					) : (
 						<VStack spacing={3}>
 							{messages.map((m) => (
@@ -569,20 +622,20 @@ export default function EventMailings({
 													/* translators: %s: send date/time */
 													__(
 														'Sends: %s',
-														'fair-audience'
+														'fair-audience-experimental'
 													),
 													m.scheduled_for
 											  )
 											: __(
 													'Send time pending',
-													'fair-audience'
+													'fair-audience-experimental'
 											  )}
 										{m.status === 'sent' &&
 											sprintf(
 												/* translators: 1: sent, 2: failed, 3: skipped */
 												__(
 													' · sent %1$d, failed %2$d, skipped %3$d',
-													'fair-audience'
+													'fair-audience-experimental'
 												),
 												m.sent_count,
 												m.failed_count,
@@ -604,7 +657,7 @@ export default function EventMailings({
 												>
 													{__(
 														'Edit',
-														'fair-audience'
+														'fair-audience-experimental'
 													)}
 												</Button>
 												<Button
@@ -617,7 +670,7 @@ export default function EventMailings({
 												>
 													{__(
 														'Cancel',
-														'fair-audience'
+														'fair-audience-experimental'
 													)}
 												</Button>
 											</>
@@ -632,7 +685,10 @@ export default function EventMailings({
 													setDetailMessage(m)
 												}
 											>
-												{__('View', 'fair-audience')}
+												{__(
+													'View',
+													'fair-audience-experimental'
+												)}
 											</Button>
 										)}
 										{m.status === 'failed' && (
@@ -643,7 +699,7 @@ export default function EventMailings({
 											>
 												{__(
 													'Duplicate',
-													'fair-audience'
+													'fair-audience-experimental'
 												)}
 											</Button>
 										)}
@@ -657,7 +713,7 @@ export default function EventMailings({
 
 			{cancelTarget && (
 				<Modal
-					title={__('Cancel mailing?', 'fair-audience')}
+					title={__('Cancel mailing?', 'fair-audience-experimental')}
 					onRequestClose={() => setCancelTarget(null)}
 				>
 					<p>
@@ -665,7 +721,7 @@ export default function EventMailings({
 							/* translators: %s: mailing subject */
 							__(
 								'Cancel the scheduled mailing "%s"? It will not be sent.',
-								'fair-audience'
+								'fair-audience-experimental'
 							),
 							cancelTarget.subject
 						)}
@@ -675,14 +731,14 @@ export default function EventMailings({
 							variant="tertiary"
 							onClick={() => setCancelTarget(null)}
 						>
-							{__('Keep it', 'fair-audience')}
+							{__('Keep it', 'fair-audience-experimental')}
 						</Button>
 						<Button
 							variant="primary"
 							isDestructive
 							onClick={confirmCancel}
 						>
-							{__('Cancel mailing', 'fair-audience')}
+							{__('Cancel mailing', 'fair-audience-experimental')}
 						</Button>
 					</HStack>
 				</Modal>
@@ -696,7 +752,10 @@ export default function EventMailings({
 					<p style={{ color: '#666' }}>
 						{sprintf(
 							/* translators: 1: status, 2: send time */
-							__('Status: %1$s · %2$s', 'fair-audience'),
+							__(
+								'Status: %1$s · %2$s',
+								'fair-audience-experimental'
+							),
 							detailMessage.status,
 							detailMessage.sent_at ||
 								detailMessage.scheduled_for ||
@@ -709,7 +768,7 @@ export default function EventMailings({
 								/* translators: 1: sent, 2: failed, 3: skipped */
 								__(
 									'Sent %1$d · failed %2$d · skipped %3$d',
-									'fair-audience'
+									'fair-audience-experimental'
 								),
 								detailMessage.sent_count,
 								detailMessage.failed_count,
