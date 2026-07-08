@@ -82,6 +82,13 @@ const plugins = [
 		readmeFiles: ['fair-form/readme.txt'],
 		versionConstant: 'FAIR_FORM_VERSION',
 	},
+	{
+		name: 'fair-audience-experimental',
+		packagePath: 'fair-audience-experimental/package.json',
+		phpFiles: ['fair-audience-experimental/fair-audience-experimental.php'],
+		readmeFiles: ['fair-audience-experimental/readme.txt'],
+		versionConstant: 'FAIR_AUDIENCE_EXPERIMENTAL_VERSION',
+	},
 ];
 
 /**

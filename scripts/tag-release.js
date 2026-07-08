@@ -25,6 +25,7 @@ const ALL_PLUGINS = [
 	'fair-timetable',
 	'fair-finance',
 	'fair-events-experimental',
+	'fair-audience-experimental',
 ];
 
 function getVersion(pluginName) {

@@ -11,6 +11,7 @@ on:
             - 'fair-events/**'
             - 'fair-events-experimental/**'
             - 'fair-audience/**'
+            - 'fair-audience-experimental/**'
             - 'fair-form/**'
             - 'fair-platform/**'
             - 'fair-events-shared/**'
@@ -25,6 +26,7 @@ on:
             - 'fair-events/**'
             - 'fair-events-experimental/**'
             - 'fair-audience/**'
+            - 'fair-audience-experimental/**'
             - 'fair-form/**'
             - 'fair-platform/**'
             - 'fair-events-shared/**'
@@ -56,6 +58,7 @@ jobs:
                       ./fair-events-experimental/vendor
                       ./fair-platform/vendor
                       ./fair-audience/vendor
+                      ./fair-audience-experimental/vendor
                       ./fair-form/vendor
                       ./vendor
                   key: ${{ runner.os }}-php-${{ hashFiles('**/composer.lock') }}
@@ -78,6 +81,7 @@ jobs:
                       ./fair-payments-connector/node_modules
                       ./fair-platform/node_modules
                       ./fair-audience/node_modules
+                      ./fair-audience-experimental/node_modules
                       ./fair-form/node_modules
                       ./fair-events-shared/node_modules
                       ./fair-timetable/node_modules
