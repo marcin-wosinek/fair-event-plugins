@@ -500,7 +500,7 @@ class ImportController extends WP_REST_Controller {
 		$group_id = $request->get_param( 'group_id' );
 		if ( ! empty( $group_id ) ) {
 			$group_id   = absint( $group_id );
-			$group_repo = new \FairAudience\Database\GroupRepository();
+			$group_repo = new \FairAudienceExperimental\Database\GroupRepository();
 			$group      = $group_repo->get_by_id( $group_id );
 			if ( ! $group ) {
 				return new WP_Error(
@@ -513,7 +513,7 @@ class ImportController extends WP_REST_Controller {
 			$group_id = null;
 		}
 
-		$group_participant_repo = $group_id ? new \FairAudience\Database\GroupParticipantRepository() : null;
+		$group_participant_repo = $group_id ? new \FairAudienceExperimental\Database\GroupParticipantRepository() : null;
 
 		try {
 			$handle = fopen( $file['tmp_name'], 'r' );

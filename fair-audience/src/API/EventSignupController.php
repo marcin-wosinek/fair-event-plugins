@@ -1369,7 +1369,8 @@ class EventSignupController extends WP_REST_Controller {
 			}
 		}
 
-		if ( ! class_exists( \FairEventsExperimental\Models\TicketTypeGroupRestriction::class ) ) {
+		if ( ! class_exists( \FairEventsExperimental\Models\TicketTypeGroupRestriction::class ) ||
+		! class_exists( \FairAudienceExperimental\Database\GroupParticipantRepository::class ) ) {
 			return null;
 		}
 
@@ -1378,7 +1379,7 @@ class EventSignupController extends WP_REST_Controller {
 			return null;
 		}
 
-		$group_participant_repo = new \FairAudience\Database\GroupParticipantRepository();
+		$group_participant_repo = new \FairAudienceExperimental\Database\GroupParticipantRepository();
 		$memberships            = $group_participant_repo->get_by_participant( $participant_id );
 		$participant_group_ids  = array_map( fn( $m ) => (int) $m->group_id, $memberships );
 

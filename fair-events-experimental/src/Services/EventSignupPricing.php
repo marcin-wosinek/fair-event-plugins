@@ -66,11 +66,11 @@ class EventSignupPricing {
 			return $base_price;
 		}
 
-		if ( ! class_exists( \FairAudience\Database\GroupParticipantRepository::class ) ) {
+		if ( ! class_exists( \FairAudienceExperimental\Database\GroupParticipantRepository::class ) ) {
 			return $base_price;
 		}
 
-		$group_repo = new \FairAudience\Database\GroupParticipantRepository();
+		$group_repo = new \FairAudienceExperimental\Database\GroupParticipantRepository();
 		$best_price = $base_price;
 
 		foreach ( $rules as $rule ) {
@@ -210,11 +210,11 @@ class EventSignupPricing {
 		}
 
 		$rules = GroupPricingRule::get_all_by_event_date_id( $ticket_type->event_date_id );
-		if ( empty( $rules ) || ! class_exists( \FairAudience\Database\GroupParticipantRepository::class ) ) {
+		if ( empty( $rules ) || ! class_exists( \FairAudienceExperimental\Database\GroupParticipantRepository::class ) ) {
 			return $base_price;
 		}
 
-		$group_repo = new \FairAudience\Database\GroupParticipantRepository();
+		$group_repo = new \FairAudienceExperimental\Database\GroupParticipantRepository();
 		$best_price = $base_price;
 
 		foreach ( $rules as $rule ) {
@@ -301,11 +301,11 @@ class EventSignupPricing {
 		}
 
 		$rules = GroupPricingRule::get_all_by_event_date_id( $event_date_id );
-		if ( empty( $rules ) || ! class_exists( \FairAudience\Database\GroupParticipantRepository::class ) ) {
+		if ( empty( $rules ) || ! class_exists( \FairAudienceExperimental\Database\GroupParticipantRepository::class ) ) {
 			return null;
 		}
 
-		$group_repo = new \FairAudience\Database\GroupParticipantRepository();
+		$group_repo = new \FairAudienceExperimental\Database\GroupParticipantRepository();
 		$best_rule  = null;
 		$best_price = PHP_FLOAT_MAX;
 

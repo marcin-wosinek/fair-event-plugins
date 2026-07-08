@@ -2,10 +2,10 @@
 /**
  * Event Invitations REST API Controller
  *
- * @package FairAudience
+ * @package FairAudienceExperimental
  */
 
-namespace FairAudience\API;
+namespace FairAudienceExperimental\API;
 
 use FairAudience\Services\EmailService;
 use WP_REST_Controller;
@@ -104,7 +104,7 @@ class EventInvitationsController extends WP_REST_Controller {
 		if ( ! current_user_can( 'manage_options' ) ) {
 			return new WP_Error(
 				'rest_forbidden',
-				__( 'You do not have permission to send event invitations.', 'fair-audience' ),
+				__( 'You do not have permission to send event invitations.', 'fair-audience-experimental' ),
 				array( 'status' => 403 )
 			);
 		}
@@ -129,7 +129,7 @@ class EventInvitationsController extends WP_REST_Controller {
 		if ( ! $event_date_obj ) {
 			return new WP_Error(
 				'invalid_event_date',
-				__( 'Event date not found.', 'fair-audience' ),
+				__( 'Event date not found.', 'fair-audience-experimental' ),
 				array( 'status' => 404 )
 			);
 		}
@@ -140,7 +140,7 @@ class EventInvitationsController extends WP_REST_Controller {
 		if ( ! $event || ! \FairEvents\Database\EventRepository::is_event( $event ) ) {
 			return new WP_Error(
 				'invalid_event',
-				__( 'Event not found.', 'fair-audience' ),
+				__( 'Event not found.', 'fair-audience-experimental' ),
 				array( 'status' => 404 )
 			);
 		}
@@ -149,7 +149,7 @@ class EventInvitationsController extends WP_REST_Controller {
 		if ( empty( $participant_ids ) && empty( $group_ids ) ) {
 			return new WP_Error(
 				'no_recipients',
-				__( 'Please specify participant IDs or group IDs.', 'fair-audience' ),
+				__( 'Please specify participant IDs or group IDs.', 'fair-audience-experimental' ),
 				array( 'status' => 400 )
 			);
 		}

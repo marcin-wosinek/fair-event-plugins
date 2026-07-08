@@ -17,10 +17,10 @@
 
 use FairEvents\Models\EventDates;
 use FairEventsExperimental\Models\GroupPermissionRule;
-use FairAudience\Models\Group;
+use FairAudienceExperimental\Models\Group;
 use FairAudience\Models\Participant;
 use FairAudience\Database\EventParticipantRepository;
-use FairAudience\Database\GroupParticipantRepository;
+use FairAudienceExperimental\Database\GroupParticipantRepository;
 use FairAudience\Services\ParticipantToken;
 
 $event_id = wp_insert_post(

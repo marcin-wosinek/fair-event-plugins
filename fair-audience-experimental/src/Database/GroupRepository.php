@@ -2,12 +2,12 @@
 /**
  * Group Repository
  *
- * @package FairAudience
+ * @package FairAudienceExperimental
  */
 
-namespace FairAudience\Database;
+namespace FairAudienceExperimental\Database;
 
-use FairAudience\Models\Group;
+use FairAudienceExperimental\Models\Group;
 
 defined( 'WPINC' ) || die;
 

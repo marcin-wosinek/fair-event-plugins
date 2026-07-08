@@ -226,8 +226,8 @@ class InvitationTokensController extends WP_REST_Controller {
 		}
 
 		$group_repo = null;
-		if ( class_exists( \FairAudience\Database\GroupRepository::class ) ) {
-			$group_repo = new \FairAudience\Database\GroupRepository();
+		if ( class_exists( \FairAudienceExperimental\Database\GroupRepository::class ) ) {
+			$group_repo = new \FairAudienceExperimental\Database\GroupRepository();
 		}
 
 		$items = array();
@@ -293,7 +293,15 @@ class InvitationTokensController extends WP_REST_Controller {
 		}
 
 		// Check participant's group memberships against invitation-only ticket type groups.
-		$group_participant_repo = new \FairAudience\Database\GroupParticipantRepository();
+		if ( ! class_exists( \FairAudienceExperimental\Database\GroupParticipantRepository::class ) ) {
+			return new WP_Error(
+				'missing_dependency',
+				__( 'Fair Audience plugin is required.', 'fair-events' ),
+				array( 'status' => 500 )
+			);
+		}
+
+		$group_participant_repo = new \FairAudienceExperimental\Database\GroupParticipantRepository();
 		$memberships            = $group_participant_repo->get_by_participant( $participant->id );
 		$participant_group_ids  = array_map( fn( $m ) => (int) $m->group_id, $memberships );
 
@@ -397,7 +405,7 @@ class InvitationTokensController extends WP_REST_Controller {
 		$created = array();
 
 		if ( 'per_member' === $mode ) {
-			if ( ! class_exists( \FairAudience\Database\GroupParticipantRepository::class ) ) {
+			if ( ! class_exists( \FairAudienceExperimental\Database\GroupParticipantRepository::class ) ) {
 				return new WP_Error(
 					'missing_dependency',
 					__( 'Fair Audience plugin is required.', 'fair-events' ),
@@ -405,7 +413,7 @@ class InvitationTokensController extends WP_REST_Controller {
 				);
 			}
 
-			$group_participant_repo = new \FairAudience\Database\GroupParticipantRepository();
+			$group_participant_repo = new \FairAudienceExperimental\Database\GroupParticipantRepository();
 			$memberships            = $group_participant_repo->get_by_group( $group_id );
 
 			foreach ( $memberships as $membership ) {

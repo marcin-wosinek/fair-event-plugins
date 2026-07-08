@@ -10,7 +10,6 @@ namespace FairAudience\API;
 use FairAudience\Database\ParticipantRepository;
 use FairAudience\Database\EventParticipantRepository;
 use FairAudience\Database\EventParticipantTransactionRepository;
-use FairAudience\Database\GroupParticipantRepository;
 use FairAudience\Database\EmailConfirmationTokenRepository;
 use FairAudience\Models\Participant;
 use FairAudience\Services\EmailService;
@@ -57,9 +56,10 @@ class ParticipantsController extends WP_REST_Controller {
 	private $event_participant_repository;
 
 	/**
-	 * Group participant repository instance.
+	 * Group participant repository instance, or null when the `groups`
+	 * bundle (fair-audience-experimental) is not active.
 	 *
-	 * @var GroupParticipantRepository
+	 * @var \FairAudienceExperimental\Database\GroupParticipantRepository|null
 	 */
 	private $group_participant_repository;
 
@@ -76,7 +76,9 @@ class ParticipantsController extends WP_REST_Controller {
 	public function __construct() {
 		$this->repository                               = new ParticipantRepository();
 		$this->event_participant_repository             = new EventParticipantRepository();
-		$this->group_participant_repository             = new GroupParticipantRepository();
+		$this->group_participant_repository             = class_exists( \FairAudienceExperimental\Database\GroupParticipantRepository::class )
+			? new \FairAudienceExperimental\Database\GroupParticipantRepository()
+			: null;
 		$this->event_participant_transaction_repository = new EventParticipantTransactionRepository();
 	}
 
@@ -254,7 +256,9 @@ class ParticipantsController extends WP_REST_Controller {
 		$event_counts    = $this->event_participant_repository->get_event_counts_for_participants( $participant_ids );
 
 		// Get groups for all participants in one query.
-		$participant_groups = $this->group_participant_repository->get_groups_for_participants( $participant_ids );
+		$participant_groups = $this->group_participant_repository
+			? $this->group_participant_repository->get_groups_for_participants( $participant_ids )
+			: array();
 
 		$items = array_map(
 			function ( $participant ) use ( $request, $event_counts, $participant_groups ) {
@@ -477,7 +481,9 @@ class ParticipantsController extends WP_REST_Controller {
 		}
 
 		$item           = $this->prepare_item_for_response( $participant, $request );
-		$groups_by_pid  = $this->group_participant_repository->get_groups_for_participants( array( $participant->id ) );
+		$groups_by_pid  = $this->group_participant_repository
+			? $this->group_participant_repository->get_groups_for_participants( array( $participant->id ) )
+			: array();
 		$item['groups'] = $groups_by_pid[ $participant->id ] ?? array();
 
 		return rest_ensure_response( $item );
