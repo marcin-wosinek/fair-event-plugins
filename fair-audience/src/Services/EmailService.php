@@ -7,22 +7,22 @@
 
 namespace FairAudience\Services;
 
-use FairAudience\Database\PollRepository;
-use FairAudience\Database\PollAccessKeyRepository;
+use FairAudienceExperimental\Database\PollRepository;
+use FairAudienceExperimental\Database\PollAccessKeyRepository;
 use FairAudience\Database\GalleryAccessKeyRepository;
 use FairAudience\Database\EventParticipantRepository;
 use FairAudience\Database\ParticipantRepository;
 use FairAudience\Database\GroupParticipantRepository;
 use FairAudience\Database\ExtraMessageRepository;
-use FairAudience\Database\FeeRepository;
-use FairAudience\Database\FeePaymentRepository;
-use FairAudience\Database\FeeAuditLogRepository;
+use FairAudienceExperimental\Database\FeeRepository;
+use FairAudienceExperimental\Database\FeePaymentRepository;
+use FairAudienceExperimental\Database\FeeAuditLogRepository;
 use FairAudience\Models\Participant;
 use FairAudience\Services\EmailType;
 use FairAudience\Services\AudienceSignupToken;
 use FairAudience\Services\ManageSubscriptionToken;
 use FairAudience\Services\ParticipantToken;
-use FairAudience\Services\FeePaymentToken;
+use FairAudienceExperimental\Services\FeePaymentToken;
 use FairAudience\Services\RecipientResolver;
 
 defined( 'WPINC' ) || die;
@@ -35,14 +35,14 @@ class EmailService {
 	/**
 	 * Poll repository instance.
 	 *
-	 * @var PollRepository
+	 * @var PollRepository|null Null when fair-audience-experimental's `polls` bundle is inactive.
 	 */
 	private $poll_repository;
 
 	/**
 	 * Poll access key repository instance.
 	 *
-	 * @var PollAccessKeyRepository
+	 * @var PollAccessKeyRepository|null Null when fair-audience-experimental's `polls` bundle is inactive.
 	 */
 	private $access_key_repository;
 
@@ -92,8 +92,12 @@ class EmailService {
 	 * Constructor.
 	 */
 	public function __construct() {
-		$this->poll_repository               = new PollRepository();
-		$this->access_key_repository         = new PollAccessKeyRepository();
+		// Polls live in fair-audience-experimental; only instantiate their
+		// repositories when the companion (and its `polls` bundle) is active.
+		if ( class_exists( PollRepository::class ) ) {
+			$this->poll_repository       = new PollRepository();
+			$this->access_key_repository = new PollAccessKeyRepository();
+		}
 		$this->gallery_access_key_repository = new GalleryAccessKeyRepository();
 		$this->event_participant_repository  = new EventParticipantRepository();
 		$this->participant_repository        = new ParticipantRepository();

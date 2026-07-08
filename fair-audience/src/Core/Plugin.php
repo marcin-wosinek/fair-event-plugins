@@ -59,11 +59,8 @@ class Plugin {
 		add_filter( 'rest_post_dispatch', array( $this, 'slide_audience_session_cookie' ), 10, 3 );
 		add_action( 'init', array( $this, 'sync_audience_session_with_logged_in_user' ), 20 );
 		add_filter( 'query_vars', array( $this, 'add_query_vars' ) );
-		add_action( 'template_redirect', array( $this, 'handle_poll_response' ) );
 		add_action( 'template_redirect', array( $this, 'handle_email_confirmation' ) );
 		add_action( 'template_redirect', array( $this, 'handle_manage_subscription' ) );
-		add_action( 'template_redirect', array( $this, 'handle_collaborator_profile' ) );
-		add_action( 'template_redirect', array( $this, 'handle_fee_payment' ) );
 		add_action( 'template_redirect', array( $this, 'handle_photo_upload' ) );
 		add_action( 'template_redirect', array( $this, 'handle_unsubscribe_event_interest' ) );
 
@@ -72,9 +69,6 @@ class Plugin {
 		// directly. See enqueue_manage_event_ext_assets() for the dependency
 		// ordering that avoids a first-render flicker.
 		add_action( 'fair_events_manage_event_enqueue_assets', array( $this, 'enqueue_manage_event_ext_assets' ) );
-
-		// Instagram token refresh cron.
-		add_action( 'fair_audience_refresh_instagram_token', array( $this, 'refresh_instagram_token' ) );
 
 		// Deferred email dispatch: confirmation emails are scheduled rather than
 		// sent inline so a slow/unreachable mail transport can't make signup
@@ -145,23 +139,11 @@ class Plugin {
 		$event_participants_controller = new \FairAudience\API\EventParticipantsController();
 		$event_participants_controller->register_routes();
 
-		$import_controller = new \FairAudience\API\ImportController();
-		$import_controller->register_routes();
-
-		$polls_controller = new \FairAudience\API\PollsController();
-		$polls_controller->register_routes();
-
-		$poll_response_controller = new \FairAudience\API\PollResponseController();
-		$poll_response_controller->register_routes();
-
 		$gallery_access_controller = new \FairAudience\API\GalleryAccessController();
 		$gallery_access_controller->register_routes();
 
 		$mailing_signup_controller = new \FairAudience\API\MailingSignupController();
 		$mailing_signup_controller->register_routes();
-
-		$collaborators_controller = new \FairAudience\API\CollaboratorsController();
-		$collaborators_controller->register_routes();
 
 		$groups_controller = new \FairAudience\API\GroupsController();
 		$groups_controller->register_routes();
@@ -174,15 +156,6 @@ class Plugin {
 
 		$event_invitations_controller = new \FairAudience\API\EventInvitationsController();
 		$event_invitations_controller->register_routes();
-
-		$instagram_controller = new \FairAudience\API\InstagramController();
-		$instagram_controller->register_routes();
-
-		$instagram_posts_controller = new \FairAudience\API\InstagramPostsController();
-		$instagram_posts_controller->register_routes();
-
-		$image_templates_controller = new \FairAudience\API\ImageTemplatesController();
-		$image_templates_controller->register_routes();
 
 		$extra_messages_controller = new \FairAudience\API\ExtraMessagesController();
 		$extra_messages_controller->register_routes();
@@ -199,20 +172,11 @@ class Plugin {
 		$photo_upload_controller = new \FairAudience\API\PhotoUploadController();
 		$photo_upload_controller->register_routes();
 
-		$timeline_controller = new \FairAudience\API\TimelineController();
-		$timeline_controller->register_routes();
-
 		$session_controller = new \FairAudience\API\SessionController();
 		$session_controller->register_routes();
 
 		$event_interest_controller = new \FairAudience\API\EventInterestController();
 		$event_interest_controller->register_routes();
-
-		// Membership fees (only when fair-payments-connector plugin is active).
-		if ( class_exists( 'FairPaymentsConnector\Core\Plugin' ) ) {
-			$fees_controller = new \FairAudience\API\FeesController();
-			$fees_controller->register_routes();
-		}
 	}
 
 	/**
@@ -293,14 +257,11 @@ class Plugin {
 	 * @return array Modified array of query variables.
 	 */
 	public function add_query_vars( $vars ) {
-		$vars[] = 'poll_key';
 		$vars[] = 'gallery_key';
 		$vars[] = 'confirm_email_key';
 		$vars[] = 'participant_token';
 		$vars[] = 'resume';
 		$vars[] = 'manage_subscription';
-		$vars[] = 'collaborator_profile';
-		$vars[] = 'fee_payment';
 		$vars[] = 'edit_audience_signup';
 		$vars[] = 'photo_upload';
 		$vars[] = 'invitation';
@@ -363,21 +324,6 @@ class Plugin {
 	}
 
 	/**
-	 * Handle poll response page requests.
-	 */
-	public function handle_poll_response() {
-		$poll_key = get_query_var( 'poll_key' );
-
-		if ( empty( $poll_key ) ) {
-			return;
-		}
-
-		// Load poll template.
-		include FAIR_AUDIENCE_PLUGIN_DIR . 'templates/poll-response.php';
-		exit;
-	}
-
-	/**
 	 * Handle email confirmation page requests.
 	 */
 	public function handle_email_confirmation() {
@@ -408,72 +354,6 @@ class Plugin {
 	}
 
 	/**
-	 * Refresh Instagram access token via fair-platform OAuth endpoint.
-	 */
-	public function refresh_instagram_token() {
-		$access_token = get_option( 'fair_audience_instagram_access_token', '' );
-		$expires      = (int) get_option( 'fair_audience_instagram_token_expires', 0 );
-
-		// Skip if no token configured.
-		if ( empty( $access_token ) ) {
-			return;
-		}
-
-		// Skip if token expiry is more than 7 days away.
-		if ( $expires > 0 && ( $expires - time() ) > 7 * DAY_IN_SECONDS ) {
-			return;
-		}
-
-		$response = wp_remote_post(
-			'https://fair-event-plugins.com/oauth/instagram/refresh',
-			array(
-				'timeout' => 30,
-				'body'    => array(
-					'access_token' => $access_token,
-				),
-			)
-		);
-
-		if ( is_wp_error( $response ) ) {
-			error_log( 'Fair Audience: Instagram token refresh failed: ' . $response->get_error_message() );
-			return;
-		}
-
-		$status_code = wp_remote_retrieve_response_code( $response );
-		$body        = json_decode( wp_remote_retrieve_body( $response ), true );
-
-		if ( 200 !== $status_code || empty( $body['success'] ) ) {
-			$error_message = $body['data']['message'] ?? 'Unknown error';
-			error_log( "Fair Audience: Instagram token refresh failed with status {$status_code}: {$error_message}" );
-			return;
-		}
-
-		$new_token  = $body['data']['access_token'] ?? '';
-		$expires_in = $body['data']['expires_in'] ?? 5184000;
-
-		if ( ! empty( $new_token ) ) {
-			update_option( 'fair_audience_instagram_access_token', $new_token );
-			update_option( 'fair_audience_instagram_token_expires', time() + $expires_in );
-			error_log( 'Fair Audience: Instagram token refreshed successfully.' );
-		}
-	}
-
-	/**
-	 * Handle fee payment page requests.
-	 */
-	public function handle_fee_payment() {
-		$token = get_query_var( 'fee_payment' );
-
-		if ( empty( $token ) ) {
-			return;
-		}
-
-		// Load fee payment template.
-		include FAIR_AUDIENCE_PLUGIN_DIR . 'templates/fee-payment.php';
-		exit;
-	}
-
-	/**
 	 * Handle photo upload page requests.
 	 */
 	public function handle_photo_upload() {
@@ -485,21 +365,6 @@ class Plugin {
 
 		// Load photo upload template.
 		include FAIR_AUDIENCE_PLUGIN_DIR . 'templates/photo-upload.php';
-		exit;
-	}
-
-	/**
-	 * Handle collaborator profile registration page requests.
-	 */
-	public function handle_collaborator_profile() {
-		$value = get_query_var( 'collaborator_profile' );
-
-		if ( empty( $value ) ) {
-			return;
-		}
-
-		// Load collaborator profile template.
-		include FAIR_AUDIENCE_PLUGIN_DIR . 'templates/collaborator-profile.php';
 		exit;
 	}
 }

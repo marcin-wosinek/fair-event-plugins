@@ -58,3 +58,25 @@ add_action(
 	},
 	5
 );
+
+/**
+ * Activation hook.
+ *
+ * @return void
+ */
+function fair_audience_experimental_activate() {
+	if ( \FairAudienceExperimental\Core\Features::is_enabled( 'instagram' ) && ! wp_next_scheduled( 'fair_audience_refresh_instagram_token' ) ) {
+		wp_schedule_event( time(), 'daily', 'fair_audience_refresh_instagram_token' );
+	}
+}
+register_activation_hook( __FILE__, __NAMESPACE__ . '\\fair_audience_experimental_activate' );
+
+/**
+ * Deactivation hook.
+ *
+ * @return void
+ */
+function fair_audience_experimental_deactivate() {
+	wp_clear_scheduled_hook( 'fair_audience_refresh_instagram_token' );
+}
+register_deactivation_hook( __FILE__, __NAMESPACE__ . '\\fair_audience_experimental_deactivate' );

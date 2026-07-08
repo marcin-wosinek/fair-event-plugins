@@ -9,8 +9,8 @@
 
 namespace FairAudience\Hooks;
 
-use FairAudience\Database\FeePaymentRepository;
-use FairAudience\Database\FeeAuditLogRepository;
+use FairAudienceExperimental\Database\FeePaymentRepository;
+use FairAudienceExperimental\Database\FeeAuditLogRepository;
 use FairAudience\Database\ParticipantRepository;
 use FairAudience\Database\EventParticipantRepository;
 use FairAudience\Database\EventParticipantTransactionRepository;
@@ -757,6 +757,10 @@ class PaymentHooks {
 			return;
 		}
 
+		if ( ! class_exists( FeePaymentRepository::class ) ) {
+			return;
+		}
+
 		$fee_payment_id = (int) $metadata['fee_payment_id'];
 
 		$payment_repository   = new FeePaymentRepository();
@@ -800,6 +804,10 @@ class PaymentHooks {
 		$metadata = ! empty( $transaction->metadata ) ? json_decode( $transaction->metadata, true ) : array();
 
 		if ( empty( $metadata['fee_payment_id'] ) ) {
+			return;
+		}
+
+		if ( ! class_exists( FeePaymentRepository::class ) ) {
 			return;
 		}
 

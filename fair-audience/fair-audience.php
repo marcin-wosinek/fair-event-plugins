@@ -59,11 +59,6 @@ function fair_audience_activate() {
 	// Flush rewrite rules for poll_key, gallery_key, and confirm_email_key query vars.
 	flush_rewrite_rules();
 
-	// Schedule daily Instagram token refresh.
-	if ( ! wp_next_scheduled( 'fair_audience_refresh_instagram_token' ) ) {
-		wp_schedule_event( time(), 'daily', 'fair_audience_refresh_instagram_token' );
-	}
-
 	dbDelta( \FairAudience\Database\Schema::get_fee_payment_transactions_table_sql() );
 	dbDelta( \FairAudience\Database\Schema::get_participant_categories_table_sql() );
 	dbDelta( \FairAudience\Database\Schema::get_event_participant_options_table_sql() );
@@ -769,8 +764,6 @@ add_action( 'plugins_loaded', __NAMESPACE__ . '\\fair_audience_maybe_upgrade_db'
  * Deactivation hook.
  */
 function fair_audience_deactivate() {
-	// Clear scheduled Instagram token refresh.
-	wp_clear_scheduled_hook( 'fair_audience_refresh_instagram_token' );
 	wp_clear_scheduled_hook( 'fair_audience_cleanup_expired_signups' );
 	wp_clear_scheduled_hook( 'fair_audience_send_scheduled_messages' );
 }

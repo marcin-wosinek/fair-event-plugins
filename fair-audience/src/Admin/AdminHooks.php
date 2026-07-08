@@ -30,17 +30,9 @@ class AdminHooks {
 			'title'    => 'Event Participants',
 			'callback' => 'render_event_participants_page',
 		),
-		'fair-audience-edit-poll'          => array(
-			'title'    => 'Edit Poll',
-			'callback' => 'render_edit_poll_page',
-		),
 		'fair-audience-edit-extra-message' => array(
 			'title'    => 'Edit Extra Message',
 			'callback' => 'render_edit_extra_message_page',
-		),
-		'fair-audience-fee-detail'         => array(
-			'title'    => 'Fee Detail',
-			'callback' => 'render_fee_detail_page',
 		),
 		'fair-audience-participant-detail' => array(
 			'title'    => 'Participant Detail',
@@ -140,13 +132,14 @@ class AdminHooks {
 	 * Register admin menu pages.
 	 */
 	public function register_admin_menu() {
-		// Main menu page - Activity Timeline.
+		// Main menu page - All Participants.
+		// Activity Timeline moved to the fair-audience-experimental companion.
 		add_menu_page(
 			__( 'Fair Audience', 'fair-audience' ),
 			__( 'Fair Audience', 'fair-audience' ),
 			'manage_options',
 			'fair-audience',
-			array( $this, 'render_timeline_page' ),
+			array( $this, 'render_all_participants_page' ),
 			'dashicons-groups',
 			'20.3'
 		);
@@ -154,31 +147,11 @@ class AdminHooks {
 		// Override first submenu item label (same slug as parent).
 		add_submenu_page(
 			'fair-audience',
-			__( 'Activity', 'fair-audience' ),
-			__( 'Activity', 'fair-audience' ),
-			'manage_options',
-			'fair-audience',
-			array( $this, 'render_timeline_page' )
-		);
-
-		// Submenu page - All Participants.
-		add_submenu_page(
-			'fair-audience',
 			__( 'All Participants', 'fair-audience' ),
 			__( 'All Participants', 'fair-audience' ),
 			'manage_options',
-			'fair-audience-all-participants',
+			'fair-audience',
 			array( $this, 'render_all_participants_page' )
-		);
-
-		// Submenu page - Collaborators.
-		add_submenu_page(
-			'fair-audience',
-			__( 'Collaborators', 'fair-audience' ),
-			__( 'Collaborators', 'fair-audience' ),
-			'manage_options',
-			'fair-audience-collaborators',
-			array( $this, 'render_collaborators_page' )
 		);
 
 		// Submenu page - Groups.
@@ -193,21 +166,6 @@ class AdminHooks {
 
 		// Hidden submenu page - Group Detail.
 		$this->register_hidden_page( 'fair-audience-group-detail' );
-
-		// Submenu page - Membership Fees (only when fair-payments-connector is active).
-		if ( class_exists( 'FairPaymentsConnector\Core\Plugin' ) ) {
-			add_submenu_page(
-				'fair-audience',
-				__( 'Membership Fees', 'fair-audience' ),
-				__( 'Membership Fees', 'fair-audience' ),
-				'manage_options',
-				'fair-audience-fees',
-				array( $this, 'render_fees_list_page' )
-			);
-
-			// Hidden submenu page - Fee Detail.
-			$this->register_hidden_page( 'fair-audience-fee-detail' );
-		}
 
 		// Submenu page - By Event.
 		add_submenu_page(
@@ -224,61 +182,6 @@ class AdminHooks {
 
 		// Hidden submenu page - Participant Detail.
 		$this->register_hidden_page( 'fair-audience-participant-detail' );
-
-		// Submenu page - Import.
-		add_submenu_page(
-			'fair-audience',
-			__( 'Import', 'fair-audience' ),
-			__( 'Import', 'fair-audience' ),
-			'manage_options',
-			'fair-audience-import',
-			array( $this, 'render_import_page' )
-		);
-
-		// Submenu page - Polls.
-		add_submenu_page(
-			'fair-audience',
-			__( 'Polls', 'fair-audience' ),
-			__( 'Polls', 'fair-audience' ),
-			'manage_options',
-			'fair-audience-polls',
-			array( $this, 'render_polls_list_page' )
-		);
-
-		// Hidden submenu page - Edit Poll.
-		$this->register_hidden_page( 'fair-audience-edit-poll' );
-
-		// Submenu page - Instagram Posts.
-		add_submenu_page(
-			'fair-audience',
-			__( 'Instagram Posts', 'fair-audience' ),
-			__( 'Instagram Posts', 'fair-audience' ),
-			'manage_options',
-			'fair-audience-instagram-posts',
-			array( $this, 'render_instagram_posts_page' )
-		);
-
-		// Submenu page - Image Templates.
-		add_submenu_page(
-			'fair-audience',
-			__( 'Image Templates', 'fair-audience' ),
-			__( 'Image Templates', 'fair-audience' ),
-			'manage_options',
-			'fair-audience-image-templates',
-			array( $this, 'render_image_templates_page' )
-		);
-
-		// Submenu page - Weekly Schedule (only when fair-events is active).
-		if ( class_exists( 'FairEvents\Core\Plugin' ) ) {
-			add_submenu_page(
-				'fair-audience',
-				__( 'Weekly Schedule', 'fair-audience' ),
-				__( 'Weekly Schedule', 'fair-audience' ),
-				'manage_options',
-				'fair-audience-weekly-schedule',
-				array( $this, 'render_weekly_schedule_page' )
-			);
-		}
 
 		// Submenu page - Custom Mail.
 		add_submenu_page(
@@ -315,26 +218,10 @@ class AdminHooks {
 	}
 
 	/**
-	 * Render Timeline page.
-	 */
-	public function render_timeline_page() {
-		$page = new TimelinePage();
-		$page->render();
-	}
-
-	/**
 	 * Render All Participants page.
 	 */
 	public function render_all_participants_page() {
 		$page = new AllParticipantsPage();
-		$page->render();
-	}
-
-	/**
-	 * Render Collaborators page.
-	 */
-	public function render_collaborators_page() {
-		$page = new CollaboratorsPage();
 		$page->render();
 	}
 
@@ -355,30 +242,6 @@ class AdminHooks {
 	}
 
 	/**
-	 * Render Import page.
-	 */
-	public function render_import_page() {
-		$page = new ImportPage();
-		$page->render();
-	}
-
-	/**
-	 * Render Polls List page.
-	 */
-	public function render_polls_list_page() {
-		$page = new PollsListPage();
-		$page->render();
-	}
-
-	/**
-	 * Render Edit Poll page.
-	 */
-	public function render_edit_poll_page() {
-		$page = new EditPollPage();
-		$page->render();
-	}
-
-	/**
 	 * Render Groups page.
 	 */
 	public function render_groups_page() {
@@ -391,46 +254,6 @@ class AdminHooks {
 	 */
 	public function render_group_detail_page() {
 		$page = new GroupDetailPage();
-		$page->render();
-	}
-
-	/**
-	 * Render Fees List page.
-	 */
-	public function render_fees_list_page() {
-		$page = new FeesListPage();
-		$page->render();
-	}
-
-	/**
-	 * Render Fee Detail page.
-	 */
-	public function render_fee_detail_page() {
-		$page = new FeeDetailPage();
-		$page->render();
-	}
-
-	/**
-	 * Render Instagram Posts page.
-	 */
-	public function render_instagram_posts_page() {
-		$page = new InstagramPostsPage();
-		$page->render();
-	}
-
-	/**
-	 * Render Image Templates page.
-	 */
-	public function render_image_templates_page() {
-		$page = new ImageTemplatesPage();
-		$page->render();
-	}
-
-	/**
-	 * Render Weekly Schedule page.
-	 */
-	public function render_weekly_schedule_page() {
-		$page = new WeeklySchedulePage();
 		$page->render();
 	}
 
@@ -482,13 +305,8 @@ class AdminHooks {
 	public function enqueue_admin_scripts( $hook ) {
 		$plugin_dir = plugin_dir_path( dirname( __DIR__ ) );
 
-		// Activity Timeline page.
-		if ( 'toplevel_page_fair-audience' === $hook ) {
-			$this->enqueue_page_script( 'timeline', $plugin_dir );
-		}
-
-		// All Participants page.
-		if ( 'fair-audience_page_fair-audience-all-participants' === $hook ) {
+		// All Participants page (also the toplevel Fair Audience menu page).
+		if ( 'toplevel_page_fair-audience' === $hook || 'fair-audience_page_fair-audience-all-participants' === $hook ) {
 			$this->enqueue_page_script( 'all-participants', $plugin_dir );
 
 			wp_localize_script(
@@ -496,20 +314,6 @@ class AdminHooks {
 				'fairAudienceAllParticipantsData',
 				array(
 					'participantsUrl' => admin_url( 'admin.php?page=fair-audience-event-participants&event_date_id=' ),
-				)
-			);
-		}
-
-		// Collaborators page.
-		if ( 'fair-audience_page_fair-audience-collaborators' === $hook ) {
-			$this->enqueue_page_script( 'collaborators', $plugin_dir );
-
-			wp_localize_script(
-				'fair-audience-collaborators',
-				'fairAudienceCollaboratorsData',
-				array(
-					'participantsUrl'        => admin_url( 'admin.php?page=fair-audience-event-participants&event_date_id=' ),
-					'collaboratorProfileUrl' => home_url( '?collaborator_profile=1' ),
 				)
 			);
 		}
@@ -522,21 +326,6 @@ class AdminHooks {
 		// Event Participants page.
 		if ( 'admin_page_fair-audience-event-participants' === $hook ) {
 			$this->enqueue_page_script( 'event-participants', $plugin_dir );
-		}
-
-		// Import page.
-		if ( 'fair-audience_page_fair-audience-import' === $hook ) {
-			$this->enqueue_page_script( 'import', $plugin_dir );
-		}
-
-		// Polls List page.
-		if ( 'fair-audience_page_fair-audience-polls' === $hook ) {
-			$this->enqueue_page_script( 'polls-list', $plugin_dir );
-		}
-
-		// Edit Poll page.
-		if ( 'admin_page_fair-audience-edit-poll' === $hook ) {
-			$this->enqueue_page_script( 'edit-poll', $plugin_dir );
 		}
 
 		// Groups page.
@@ -565,51 +354,9 @@ class AdminHooks {
 			);
 		}
 
-		// Fees List page.
-		if ( 'fair-audience_page_fair-audience-fees' === $hook ) {
-			$this->enqueue_page_script( 'fees-list', $plugin_dir );
-		}
-
-		// Fee Detail page.
-		if ( 'admin_page_fair-audience-fee-detail' === $hook ) {
-			$this->enqueue_page_script( 'fee-detail', $plugin_dir );
-			wp_localize_script(
-				'fair-audience-fee-detail',
-				'fairPaymentsConnector',
-				array(
-					'currency' => get_option( 'fair_payment_currency', 'EUR' ),
-				)
-			);
-		}
-
 		// Participant Detail page.
 		if ( 'admin_page_fair-audience-participant-detail' === $hook ) {
 			$this->enqueue_page_script( 'participant-detail', $plugin_dir );
-		}
-
-		// Instagram Posts page.
-		if ( 'fair-audience_page_fair-audience-instagram-posts' === $hook ) {
-			wp_enqueue_media();
-			$this->enqueue_page_script( 'instagram-posts', $plugin_dir );
-		}
-
-		// Image Templates page.
-		if ( 'fair-audience_page_fair-audience-image-templates' === $hook ) {
-			wp_enqueue_media();
-			$this->enqueue_page_script( 'image-templates', $plugin_dir );
-		}
-
-		// Weekly Schedule page.
-		if ( 'fair-audience_page_fair-audience-weekly-schedule' === $hook ) {
-			$this->enqueue_page_script( 'weekly-schedule', $plugin_dir );
-
-			wp_localize_script(
-				'fair-audience-weekly-schedule',
-				'fairAudienceWeeklyScheduleData',
-				array(
-					'participantsUrl' => admin_url( 'admin.php?page=fair-audience-event-participants&event_date_id=' ),
-				)
-			);
 		}
 
 		// Custom Mail page.

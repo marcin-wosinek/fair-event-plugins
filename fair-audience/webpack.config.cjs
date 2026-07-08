@@ -14,10 +14,6 @@ const customConfig = {
 	entry: () => ({
 		...defaultEntries,
 		// Admin scripts
-		'admin/timeline/index': path.resolve(
-			process.cwd(),
-			'src/Admin/timeline/index.js',
-		),
 		'admin/all-participants/index': path.resolve(
 			process.cwd(),
 			'src/Admin/all-participants/index.js',
@@ -29,22 +25,6 @@ const customConfig = {
 		'admin/event-participants/index': path.resolve(
 			process.cwd(),
 			'src/Admin/event-participants/index.js',
-		),
-		'admin/import/index': path.resolve(
-			process.cwd(),
-			'src/Admin/import/index.js',
-		),
-		'admin/polls-list/index': path.resolve(
-			process.cwd(),
-			'src/Admin/polls-list/index.js',
-		),
-		'admin/edit-poll/index': path.resolve(
-			process.cwd(),
-			'src/Admin/edit-poll/index.js',
-		),
-		'admin/collaborators/index': path.resolve(
-			process.cwd(),
-			'src/Admin/collaborators/index.js',
 		),
 		'admin/groups/index': path.resolve(
 			process.cwd(),
@@ -58,18 +38,6 @@ const customConfig = {
 			process.cwd(),
 			'src/Admin/settings/index.js',
 		),
-		'admin/instagram-posts/index': path.resolve(
-			process.cwd(),
-			'src/Admin/instagram-posts/index.js',
-		),
-		'admin/image-templates/index': path.resolve(
-			process.cwd(),
-			'src/Admin/image-templates/index.js',
-		),
-		'admin/weekly-schedule/index': path.resolve(
-			process.cwd(),
-			'src/Admin/weekly-schedule/index.js',
-		),
 		'admin/extra-messages-list/index': path.resolve(
 			process.cwd(),
 			'src/Admin/extra-messages-list/index.js',
@@ -82,14 +50,6 @@ const customConfig = {
 			process.cwd(),
 			'src/Admin/custom-mail/index.js',
 		),
-		'admin/fees-list/index': path.resolve(
-			process.cwd(),
-			'src/Admin/fees-list/index.js',
-		),
-		'admin/fee-detail/index': path.resolve(
-			process.cwd(),
-			'src/Admin/fee-detail/index.js',
-		),
 		'admin/participant-detail/index': path.resolve(
 			process.cwd(),
 			'src/Admin/participant-detail/index.js',
@@ -101,11 +61,6 @@ const customConfig = {
 		'admin/manage-event-ext/index': path.resolve(
 			process.cwd(),
 			'src/Admin/manage-event-ext/index.js',
-		),
-		// Public scripts
-		'public/poll-response/index': path.resolve(
-			process.cwd(),
-			'src/public/poll-response/index.js',
 		),
 	}),
 	plugins: [
