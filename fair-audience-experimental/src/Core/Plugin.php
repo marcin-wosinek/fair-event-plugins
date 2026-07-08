@@ -157,6 +157,28 @@ class Plugin {
 				}
 			);
 		}
+
+		if ( Features::is_enabled( 'groups' ) ) {
+			add_action(
+				'rest_api_init',
+				function () {
+					$controller = new \FairAudienceExperimental\API\GroupsController();
+					$controller->register_routes();
+				}
+			);
+		}
+
+		// Invitations depend on groups (invitations can target group members)
+		// and on the core EmailService for delivery.
+		if ( Features::is_enabled( 'invitations' ) && Features::is_enabled( 'groups' ) ) {
+			add_action(
+				'rest_api_init',
+				function () {
+					$controller = new \FairAudienceExperimental\API\EventInvitationsController();
+					$controller->register_routes();
+				}
+			);
+		}
 	}
 
 	/**

@@ -46,7 +46,7 @@ export default function GroupDetail() {
 
 	const loadGroup = useCallback(() => {
 		if (!groupId) {
-			setError(__('No group ID provided.', 'fair-audience'));
+			setError(__('No group ID provided.', 'fair-audience-experimental'));
 			setIsLoading(false);
 			return;
 		}
@@ -56,7 +56,7 @@ export default function GroupDetail() {
 				setGroup(data);
 			})
 			.catch(() => {
-				setError(__('Group not found.', 'fair-audience'));
+				setError(__('Group not found.', 'fair-audience-experimental'));
 			})
 			.finally(() => {
 				setIsLoading(false);
@@ -151,7 +151,9 @@ export default function GroupDetail() {
 			})
 			.catch((err) => {
 				// eslint-disable-next-line no-undef
-				alert(__('Error: ', 'fair-audience') + err.message);
+				alert(
+					__('Error: ', 'fair-audience-experimental') + err.message
+				);
 			})
 			.finally(() => {
 				setIsAddingMembers(false);
@@ -186,9 +188,12 @@ export default function GroupDetail() {
 			.catch((err) => {
 				// eslint-disable-next-line no-undef
 				alert(
-					__('Error: ', 'fair-audience') +
+					__('Error: ', 'fair-audience-experimental') +
 						(err.message ||
-							__('Failed to save group.', 'fair-audience'))
+							__(
+								'Failed to save group.',
+								'fair-audience-experimental'
+							))
 				);
 			})
 			.finally(() => {
@@ -204,7 +209,10 @@ export default function GroupDetail() {
 		// eslint-disable-next-line no-undef
 		if (
 			!confirm(
-				__('Remove this participant from the group?', 'fair-audience')
+				__(
+					'Remove this participant from the group?',
+					'fair-audience-experimental'
+				)
 			)
 		) {
 			return;
@@ -219,7 +227,9 @@ export default function GroupDetail() {
 			})
 			.catch((err) => {
 				// eslint-disable-next-line no-undef
-				alert(__('Error: ', 'fair-audience') + err.message);
+				alert(
+					__('Error: ', 'fair-audience-experimental') + err.message
+				);
 			});
 	};
 
@@ -236,7 +246,7 @@ export default function GroupDetail() {
 			<div className="wrap">
 				<p>
 					<a href={groupsListUrl}>
-						{__('← Back to Groups', 'fair-audience')}
+						{__('← Back to Groups', 'fair-audience-experimental')}
 					</a>
 				</p>
 				<Notice status="error" isDismissible={false}>
@@ -259,7 +269,7 @@ export default function GroupDetail() {
 		<div className="wrap">
 			<p>
 				<a href={groupsListUrl}>
-					{__('← Back to Groups', 'fair-audience')}
+					{__('← Back to Groups', 'fair-audience-experimental')}
 				</a>
 			</p>
 
@@ -272,7 +282,7 @@ export default function GroupDetail() {
 			>
 				<h1 style={{ margin: 0 }}>{group.name}</h1>
 				<Button variant="secondary" icon="edit" onClick={openEditModal}>
-					{__('Edit', 'fair-audience')}
+					{__('Edit', 'fair-audience-experimental')}
 				</Button>
 			</div>
 			{group.description && (
@@ -282,7 +292,8 @@ export default function GroupDetail() {
 			<Card style={{ marginBottom: '16px' }}>
 				<CardHeader>
 					<h2 style={{ margin: 0 }}>
-						{__('Members', 'fair-audience')} ({members.length})
+						{__('Members', 'fair-audience-experimental')} (
+						{members.length})
 					</h2>
 				</CardHeader>
 				<CardBody>
@@ -290,16 +301,32 @@ export default function GroupDetail() {
 						<Spinner />
 					) : members.length === 0 ? (
 						<p>
-							{__('No members in this group.', 'fair-audience')}
+							{__(
+								'No members in this group.',
+								'fair-audience-experimental'
+							)}
 						</p>
 					) : (
 						<table className="wp-list-table widefat striped">
 							<thead>
 								<tr>
-									<th>{__('Name', 'fair-audience')}</th>
-									<th>{__('Email', 'fair-audience')}</th>
+									<th>
+										{__(
+											'Name',
+											'fair-audience-experimental'
+										)}
+									</th>
+									<th>
+										{__(
+											'Email',
+											'fair-audience-experimental'
+										)}
+									</th>
 									<th style={{ width: '120px' }}>
-										{__('Actions', 'fair-audience')}
+										{__(
+											'Actions',
+											'fair-audience-experimental'
+										)}
 									</th>
 								</tr>
 							</thead>
@@ -316,7 +343,7 @@ export default function GroupDetail() {
 													{fullName ||
 														__(
 															'(unnamed)',
-															'fair-audience'
+															'fair-audience-experimental'
 														)}
 												</a>
 											</td>
@@ -333,7 +360,7 @@ export default function GroupDetail() {
 												>
 													{__(
 														'Remove',
-														'fair-audience'
+														'fair-audience-experimental'
 													)}
 												</Button>
 											</td>
@@ -349,7 +376,7 @@ export default function GroupDetail() {
 			<Card>
 				<CardHeader>
 					<h2 style={{ margin: 0 }}>
-						{__('Add Members', 'fair-audience')}
+						{__('Add Members', 'fair-audience-experimental')}
 					</h2>
 				</CardHeader>
 				<CardBody>
@@ -358,7 +385,7 @@ export default function GroupDetail() {
 						onChange={handleParticipantSearch}
 						placeholder={__(
 							'Search participants...',
-							'fair-audience'
+							'fair-audience-experimental'
 						)}
 					/>
 
@@ -377,7 +404,7 @@ export default function GroupDetail() {
 							<p>
 								{__(
 									'No participants available to add.',
-									'fair-audience'
+									'fair-audience-experimental'
 								)}
 							</p>
 						) : (
@@ -412,31 +439,34 @@ export default function GroupDetail() {
 						}
 						isBusy={isAddingMembers}
 					>
-						{__('Add Selected', 'fair-audience')}
+						{__('Add Selected', 'fair-audience-experimental')}
 					</Button>
 				</CardBody>
 			</Card>
 
 			{isEditModalOpen && (
 				<Modal
-					title={__('Edit Group', 'fair-audience')}
+					title={__('Edit Group', 'fair-audience-experimental')}
 					onRequestClose={() => setIsEditModalOpen(false)}
 					style={{ maxWidth: '500px', width: '100%' }}
 				>
 					<TextControl
-						label={__('Name', 'fair-audience')}
+						label={__('Name', 'fair-audience-experimental')}
 						value={editName}
 						onChange={setEditName}
-						placeholder={__('Enter group name...', 'fair-audience')}
+						placeholder={__(
+							'Enter group name...',
+							'fair-audience-experimental'
+						)}
 					/>
 
 					<TextareaControl
-						label={__('Description', 'fair-audience')}
+						label={__('Description', 'fair-audience-experimental')}
 						value={editDescription}
 						onChange={setEditDescription}
 						placeholder={__(
 							'Enter group description (optional)...',
-							'fair-audience'
+							'fair-audience-experimental'
 						)}
 					/>
 
@@ -452,7 +482,7 @@ export default function GroupDetail() {
 							variant="secondary"
 							onClick={() => setIsEditModalOpen(false)}
 						>
-							{__('Cancel', 'fair-audience')}
+							{__('Cancel', 'fair-audience-experimental')}
 						</Button>
 						<Button
 							variant="primary"
@@ -460,7 +490,7 @@ export default function GroupDetail() {
 							disabled={!editName.trim() || isSaving}
 							isBusy={isSaving}
 						>
-							{__('Update', 'fair-audience')}
+							{__('Update', 'fair-audience-experimental')}
 						</Button>
 					</div>
 				</Modal>

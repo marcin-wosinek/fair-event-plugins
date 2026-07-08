@@ -8,7 +8,6 @@
 namespace FairAudience\API;
 
 use FairAudience\Database\CustomMailMessageRepository;
-use FairAudience\Database\GroupRepository;
 use FairAudience\Services\EmailService;
 use WP_REST_Controller;
 use WP_REST_Server;
@@ -45,9 +44,10 @@ class CustomMailController extends WP_REST_Controller {
 	private $email_service;
 
 	/**
-	 * Group repository instance.
+	 * Group repository instance, or null when the `groups` bundle
+	 * (fair-audience-experimental) is not active.
 	 *
-	 * @var GroupRepository
+	 * @var \FairAudienceExperimental\Database\GroupRepository|null
 	 */
 	private $group_repository;
 
@@ -57,7 +57,9 @@ class CustomMailController extends WP_REST_Controller {
 	public function __construct() {
 		$this->repository       = new CustomMailMessageRepository();
 		$this->email_service    = new EmailService();
-		$this->group_repository = new GroupRepository();
+		$this->group_repository = class_exists( \FairAudienceExperimental\Database\GroupRepository::class )
+			? new \FairAudienceExperimental\Database\GroupRepository()
+			: null;
 	}
 
 	/**
@@ -494,7 +496,7 @@ class CustomMailController extends WP_REST_Controller {
 	 * @return WP_REST_Response Response object.
 	 */
 	public function get_groups( $request ) {
-		$groups = $this->group_repository->get_all_with_member_counts();
+		$groups = $this->group_repository ? $this->group_repository->get_all_with_member_counts() : array();
 
 		$data = array_map(
 			function ( $group ) {

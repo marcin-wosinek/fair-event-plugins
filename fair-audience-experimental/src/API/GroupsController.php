@@ -2,15 +2,15 @@
 /**
  * Groups REST API Controller
  *
- * @package FairAudience
+ * @package FairAudienceExperimental
  */
 
-namespace FairAudience\API;
+namespace FairAudienceExperimental\API;
 
-use FairAudience\Database\GroupRepository;
-use FairAudience\Database\GroupParticipantRepository;
+use FairAudienceExperimental\Database\GroupRepository;
+use FairAudienceExperimental\Database\GroupParticipantRepository;
 use FairAudience\Database\ParticipantRepository;
-use FairAudience\Models\Group;
+use FairAudienceExperimental\Models\Group;
 use WP_REST_Controller;
 use WP_REST_Server;
 use WP_REST_Request;
@@ -209,7 +209,7 @@ class GroupsController extends WP_REST_Controller {
 		if ( ! $group ) {
 			return new WP_Error(
 				'group_not_found',
-				__( 'Group not found.', 'fair-audience' ),
+				__( 'Group not found.', 'fair-audience-experimental' ),
 				array( 'status' => 404 )
 			);
 		}
@@ -232,7 +232,7 @@ class GroupsController extends WP_REST_Controller {
 		if ( empty( $name ) ) {
 			return new WP_Error(
 				'missing_name',
-				__( 'Group name is required.', 'fair-audience' ),
+				__( 'Group name is required.', 'fair-audience-experimental' ),
 				array( 'status' => 400 )
 			);
 		}
@@ -242,7 +242,7 @@ class GroupsController extends WP_REST_Controller {
 		if ( $existing ) {
 			return new WP_Error(
 				'name_exists',
-				__( 'A group with this name already exists.', 'fair-audience' ),
+				__( 'A group with this name already exists.', 'fair-audience-experimental' ),
 				array( 'status' => 400 )
 			);
 		}
@@ -258,7 +258,7 @@ class GroupsController extends WP_REST_Controller {
 		if ( ! $group->save() ) {
 			return new WP_Error(
 				'creation_failed',
-				__( 'Failed to create group.', 'fair-audience' ),
+				__( 'Failed to create group.', 'fair-audience-experimental' ),
 				array( 'status' => 500 )
 			);
 		}
@@ -266,7 +266,7 @@ class GroupsController extends WP_REST_Controller {
 		return rest_ensure_response(
 			array(
 				'id'      => $group->id,
-				'message' => __( 'Group created successfully.', 'fair-audience' ),
+				'message' => __( 'Group created successfully.', 'fair-audience-experimental' ),
 			)
 		);
 	}
@@ -284,7 +284,7 @@ class GroupsController extends WP_REST_Controller {
 		if ( ! $group ) {
 			return new WP_Error(
 				'group_not_found',
-				__( 'Group not found.', 'fair-audience' ),
+				__( 'Group not found.', 'fair-audience-experimental' ),
 				array( 'status' => 404 )
 			);
 		}
@@ -297,7 +297,7 @@ class GroupsController extends WP_REST_Controller {
 			if ( $existing && $existing->id !== $group->id ) {
 				return new WP_Error(
 					'name_exists',
-					__( 'A group with this name already exists.', 'fair-audience' ),
+					__( 'A group with this name already exists.', 'fair-audience-experimental' ),
 					array( 'status' => 400 )
 				);
 			}
@@ -314,7 +314,7 @@ class GroupsController extends WP_REST_Controller {
 		if ( ! $group->save() ) {
 			return new WP_Error(
 				'update_failed',
-				__( 'Failed to update group.', 'fair-audience' ),
+				__( 'Failed to update group.', 'fair-audience-experimental' ),
 				array( 'status' => 500 )
 			);
 		}
@@ -322,7 +322,7 @@ class GroupsController extends WP_REST_Controller {
 		return rest_ensure_response(
 			array(
 				'id'      => $group->id,
-				'message' => __( 'Group updated successfully.', 'fair-audience' ),
+				'message' => __( 'Group updated successfully.', 'fair-audience-experimental' ),
 			)
 		);
 	}
@@ -340,7 +340,7 @@ class GroupsController extends WP_REST_Controller {
 		if ( ! $group ) {
 			return new WP_Error(
 				'group_not_found',
-				__( 'Group not found.', 'fair-audience' ),
+				__( 'Group not found.', 'fair-audience-experimental' ),
 				array( 'status' => 404 )
 			);
 		}
@@ -348,14 +348,14 @@ class GroupsController extends WP_REST_Controller {
 		if ( ! $group->delete() ) {
 			return new WP_Error(
 				'deletion_failed',
-				__( 'Failed to delete group.', 'fair-audience' ),
+				__( 'Failed to delete group.', 'fair-audience-experimental' ),
 				array( 'status' => 500 )
 			);
 		}
 
 		return rest_ensure_response(
 			array(
-				'message' => __( 'Group deleted successfully.', 'fair-audience' ),
+				'message' => __( 'Group deleted successfully.', 'fair-audience-experimental' ),
 			)
 		);
 	}
@@ -373,7 +373,7 @@ class GroupsController extends WP_REST_Controller {
 		if ( ! $group ) {
 			return new WP_Error(
 				'group_not_found',
-				__( 'Group not found.', 'fair-audience' ),
+				__( 'Group not found.', 'fair-audience-experimental' ),
 				array( 'status' => 404 )
 			);
 		}
@@ -382,7 +382,7 @@ class GroupsController extends WP_REST_Controller {
 		if ( empty( $copy_name ) ) {
 			$copy_name = sprintf(
 				/* translators: %s: original group name */
-				__( '%s (copy)', 'fair-audience' ),
+				__( '%s (copy)', 'fair-audience-experimental' ),
 				$group->name
 			);
 		}
@@ -391,7 +391,7 @@ class GroupsController extends WP_REST_Controller {
 		if ( $existing ) {
 			return new WP_Error(
 				'name_exists',
-				__( 'A group with this name already exists.', 'fair-audience' ),
+				__( 'A group with this name already exists.', 'fair-audience-experimental' ),
 				array( 'status' => 400 )
 			);
 		}
@@ -407,7 +407,7 @@ class GroupsController extends WP_REST_Controller {
 		if ( ! $new_group->save() ) {
 			return new WP_Error(
 				'duplication_failed',
-				__( 'Failed to duplicate group.', 'fair-audience' ),
+				__( 'Failed to duplicate group.', 'fair-audience-experimental' ),
 				array( 'status' => 500 )
 			);
 		}
@@ -420,7 +420,7 @@ class GroupsController extends WP_REST_Controller {
 		return rest_ensure_response(
 			array(
 				'id'      => $new_group->id,
-				'message' => __( 'Group duplicated successfully.', 'fair-audience' ),
+				'message' => __( 'Group duplicated successfully.', 'fair-audience-experimental' ),
 			)
 		);
 	}
@@ -438,7 +438,7 @@ class GroupsController extends WP_REST_Controller {
 		if ( ! $group ) {
 			return new WP_Error(
 				'group_not_found',
-				__( 'Group not found.', 'fair-audience' ),
+				__( 'Group not found.', 'fair-audience-experimental' ),
 				array( 'status' => 404 )
 			);
 		}
@@ -462,7 +462,7 @@ class GroupsController extends WP_REST_Controller {
 		if ( ! $group ) {
 			return new WP_Error(
 				'group_not_found',
-				__( 'Group not found.', 'fair-audience' ),
+				__( 'Group not found.', 'fair-audience-experimental' ),
 				array( 'status' => 404 )
 			);
 		}
@@ -471,7 +471,7 @@ class GroupsController extends WP_REST_Controller {
 		if ( ! $participant ) {
 			return new WP_Error(
 				'participant_not_found',
-				__( 'Participant not found.', 'fair-audience' ),
+				__( 'Participant not found.', 'fair-audience-experimental' ),
 				array( 'status' => 404 )
 			);
 		}
@@ -481,7 +481,7 @@ class GroupsController extends WP_REST_Controller {
 		if ( $existing ) {
 			return new WP_Error(
 				'already_member',
-				__( 'Participant is already a member of this group.', 'fair-audience' ),
+				__( 'Participant is already a member of this group.', 'fair-audience-experimental' ),
 				array( 'status' => 400 )
 			);
 		}
@@ -490,7 +490,7 @@ class GroupsController extends WP_REST_Controller {
 		if ( ! $result ) {
 			return new WP_Error(
 				'add_failed',
-				__( 'Failed to add participant to group.', 'fair-audience' ),
+				__( 'Failed to add participant to group.', 'fair-audience-experimental' ),
 				array( 'status' => 500 )
 			);
 		}
@@ -498,7 +498,7 @@ class GroupsController extends WP_REST_Controller {
 		return rest_ensure_response(
 			array(
 				'id'      => $result,
-				'message' => __( 'Participant added to group successfully.', 'fair-audience' ),
+				'message' => __( 'Participant added to group successfully.', 'fair-audience-experimental' ),
 			)
 		);
 	}
@@ -517,7 +517,7 @@ class GroupsController extends WP_REST_Controller {
 		if ( ! $group ) {
 			return new WP_Error(
 				'group_not_found',
-				__( 'Group not found.', 'fair-audience' ),
+				__( 'Group not found.', 'fair-audience-experimental' ),
 				array( 'status' => 404 )
 			);
 		}
@@ -526,14 +526,14 @@ class GroupsController extends WP_REST_Controller {
 		if ( ! $result ) {
 			return new WP_Error(
 				'remove_failed',
-				__( 'Participant is not a member of this group.', 'fair-audience' ),
+				__( 'Participant is not a member of this group.', 'fair-audience-experimental' ),
 				array( 'status' => 404 )
 			);
 		}
 
 		return rest_ensure_response(
 			array(
-				'message' => __( 'Participant removed from group successfully.', 'fair-audience' ),
+				'message' => __( 'Participant removed from group successfully.', 'fair-audience-experimental' ),
 			)
 		);
 	}

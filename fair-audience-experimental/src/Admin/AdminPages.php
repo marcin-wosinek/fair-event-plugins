@@ -179,6 +179,29 @@ class AdminPages {
 				array( $this, 'render_weekly_schedule_page' )
 			);
 		}
+
+		// Groups — `groups` bundle.
+		if ( \FairAudienceExperimental\Core\Features::is_enabled( 'groups' ) ) {
+			$this->page_hooks['fair-audience-groups'] = add_submenu_page(
+				$parent,
+				__( 'Groups', 'fair-audience-experimental' ),
+				__( 'Groups', 'fair-audience-experimental' ),
+				'manage_options',
+				'fair-audience-groups',
+				array( $this, 'render_groups_page' )
+			);
+
+			$this->page_hooks['fair-audience-group-detail'] = add_submenu_page(
+				'',
+				__( 'Group Detail', 'fair-audience-experimental' ),
+				__( 'Group Detail', 'fair-audience-experimental' ),
+				'manage_options',
+				'fair-audience-group-detail',
+				array( $this, 'render_group_detail_page' )
+			);
+
+			$this->set_hidden_page_title( $this->page_hooks['fair-audience-group-detail'], __( 'Group Detail', 'fair-audience-experimental' ) );
+		}
 	}
 
 	/**
@@ -299,6 +322,28 @@ class AdminPages {
 					'fairAudienceWeeklyScheduleData',
 					array(
 						'participantsUrl' => admin_url( 'admin.php?page=fair-audience-event-participants&event_date_id=' ),
+					)
+				);
+				break;
+
+			case 'fair-audience-groups':
+				$this->enqueue_page_script( 'groups', $exp_url, $exp_dir );
+				wp_localize_script(
+					'fair-audience-experimental-groups',
+					'fairAudienceGroupsData',
+					array(
+						'groupDetailUrl' => admin_url( 'admin.php?page=fair-audience-group-detail&group_id=' ),
+					)
+				);
+				break;
+
+			case 'fair-audience-group-detail':
+				$this->enqueue_page_script( 'group-detail', $exp_url, $exp_dir );
+				wp_localize_script(
+					'fair-audience-experimental-group-detail',
+					'fairAudienceGroupDetailData',
+					array(
+						'groupsListUrl' => admin_url( 'admin.php?page=fair-audience-groups' ),
 					)
 				);
 				break;
@@ -438,6 +483,26 @@ class AdminPages {
 	 */
 	public function render_weekly_schedule_page() {
 		$page = new \FairAudienceExperimental\Admin\WeeklySchedulePage();
+		$page->render();
+	}
+
+	/**
+	 * Render Groups page.
+	 *
+	 * @return void
+	 */
+	public function render_groups_page() {
+		$page = new \FairAudienceExperimental\Admin\GroupsPage();
+		$page->render();
+	}
+
+	/**
+	 * Render Group Detail page.
+	 *
+	 * @return void
+	 */
+	public function render_group_detail_page() {
+		$page = new \FairAudienceExperimental\Admin\GroupDetailPage();
 		$page->render();
 	}
 }

@@ -49,6 +49,14 @@ module.exports = {
       process.cwd(),
       "src/Admin/fee-detail/index.js",
     ),
+    "admin/groups/index": path.resolve(
+      process.cwd(),
+      "src/Admin/groups/index.js",
+    ),
+    "admin/group-detail/index": path.resolve(
+      process.cwd(),
+      "src/Admin/group-detail/index.js",
+    ),
     "public/poll-response/index": path.resolve(
       process.cwd(),
       "src/public/poll-response/index.js",

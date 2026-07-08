@@ -12,7 +12,7 @@ use FairAudienceExperimental\Database\PollAccessKeyRepository;
 use FairAudience\Database\GalleryAccessKeyRepository;
 use FairAudience\Database\EventParticipantRepository;
 use FairAudience\Database\ParticipantRepository;
-use FairAudience\Database\GroupParticipantRepository;
+use FairAudienceExperimental\Database\GroupParticipantRepository;
 use FairAudience\Database\ExtraMessageRepository;
 use FairAudienceExperimental\Database\FeeRepository;
 use FairAudienceExperimental\Database\FeePaymentRepository;
@@ -70,7 +70,7 @@ class EmailService {
 	/**
 	 * Group participant repository instance.
 	 *
-	 * @var GroupParticipantRepository
+	 * @var GroupParticipantRepository|null Null when fair-audience-experimental's `groups` bundle is inactive.
 	 */
 	private $group_participant_repository;
 
@@ -101,8 +101,12 @@ class EmailService {
 		$this->gallery_access_key_repository = new GalleryAccessKeyRepository();
 		$this->event_participant_repository  = new EventParticipantRepository();
 		$this->participant_repository        = new ParticipantRepository();
-		$this->group_participant_repository  = new GroupParticipantRepository();
-		$this->recipient_resolver            = new RecipientResolver();
+		// Groups live in fair-audience-experimental; only instantiate their
+		// repository when the companion (and its `groups` bundle) is active.
+		$this->group_participant_repository = class_exists( GroupParticipantRepository::class )
+			? new GroupParticipantRepository()
+			: null;
+		$this->recipient_resolver           = new RecipientResolver();
 	}
 
 	/**
@@ -2951,10 +2955,12 @@ class EmailService {
 		$all_participant_ids = $participant_ids;
 
 		// Expand group IDs to participant IDs.
-		foreach ( $group_ids as $group_id ) {
-			$members = $this->group_participant_repository->get_by_group( $group_id );
-			foreach ( $members as $member ) {
-				$all_participant_ids[] = $member->participant_id;
+		if ( $this->group_participant_repository ) {
+			foreach ( $group_ids as $group_id ) {
+				$members = $this->group_participant_repository->get_by_group( $group_id );
+				foreach ( $members as $member ) {
+					$all_participant_ids[] = $member->participant_id;
+				}
 			}
 		}
 

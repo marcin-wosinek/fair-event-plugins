@@ -2,10 +2,10 @@
 /**
  * Group Detail Page
  *
- * @package FairAudience
+ * @package FairAudienceExperimental
  */
 
-namespace FairAudience\Admin;
+namespace FairAudienceExperimental\Admin;
 
 defined( 'WPINC' ) || die;
 

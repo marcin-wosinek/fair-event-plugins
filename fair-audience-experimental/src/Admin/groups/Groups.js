@@ -59,7 +59,7 @@ export default function Groups() {
 		() => [
 			{
 				id: 'name',
-				label: __('Name', 'fair-audience'),
+				label: __('Name', 'fair-audience-experimental'),
 				render: ({ item }) => (
 					<a href={`${GROUP_DETAIL_URL}${item.id}`}>{item.name}</a>
 				),
@@ -68,13 +68,13 @@ export default function Groups() {
 			},
 			{
 				id: 'description',
-				label: __('Description', 'fair-audience'),
+				label: __('Description', 'fair-audience-experimental'),
 				render: ({ item }) => item.description || '—',
 				enableSorting: false,
 			},
 			{
 				id: 'member_count',
-				label: __('Members', 'fair-audience'),
+				label: __('Members', 'fair-audience-experimental'),
 				render: ({ item }) => (
 					<div style={{ textAlign: 'right' }}>
 						{item.member_count}
@@ -180,9 +180,12 @@ export default function Groups() {
 			.catch((err) => {
 				// eslint-disable-next-line no-undef
 				alert(
-					__('Error: ', 'fair-audience') +
+					__('Error: ', 'fair-audience-experimental') +
 						(err.message ||
-							__('Failed to save group.', 'fair-audience'))
+							__(
+								'Failed to save group.',
+								'fair-audience-experimental'
+							))
 				);
 			})
 			.finally(() => {
@@ -196,7 +199,7 @@ export default function Groups() {
 		setDuplicateName(
 			sprintf(
 				/* translators: %s: original group name */
-				__('%s (copy)', 'fair-audience'),
+				__('%s (copy)', 'fair-audience-experimental'),
 				group.name
 			)
 		);
@@ -223,9 +226,12 @@ export default function Groups() {
 			.catch((err) => {
 				// eslint-disable-next-line no-undef
 				alert(
-					__('Error: ', 'fair-audience') +
+					__('Error: ', 'fair-audience-experimental') +
 						(err.message ||
-							__('Failed to duplicate group.', 'fair-audience'))
+							__(
+								'Failed to duplicate group.',
+								'fair-audience-experimental'
+							))
 				);
 			})
 			.finally(() => {
@@ -240,7 +246,7 @@ export default function Groups() {
 			!confirm(
 				__(
 					'Are you sure you want to delete this group?',
-					'fair-audience'
+					'fair-audience-experimental'
 				)
 			)
 		) {
@@ -257,9 +263,12 @@ export default function Groups() {
 			.catch((err) => {
 				// eslint-disable-next-line no-undef
 				alert(
-					__('Error: ', 'fair-audience') +
+					__('Error: ', 'fair-audience-experimental') +
 						(err.message ||
-							__('Failed to delete group.', 'fair-audience'))
+							__(
+								'Failed to delete group.',
+								'fair-audience-experimental'
+							))
 				);
 			});
 	};
@@ -269,7 +278,7 @@ export default function Groups() {
 		() => [
 			{
 				id: 'view',
-				label: __('View', 'fair-audience'),
+				label: __('View', 'fair-audience-experimental'),
 				icon: 'visibility',
 				callback: ([item]) => {
 					window.location.href = `${GROUP_DETAIL_URL}${item.id}`;
@@ -278,21 +287,21 @@ export default function Groups() {
 			},
 			{
 				id: 'edit',
-				label: __('Edit', 'fair-audience'),
+				label: __('Edit', 'fair-audience-experimental'),
 				icon: 'edit',
 				callback: ([item]) => openEditModal(item),
 				supportsBulk: false,
 			},
 			{
 				id: 'duplicate',
-				label: __('Duplicate', 'fair-audience'),
+				label: __('Duplicate', 'fair-audience-experimental'),
 				icon: 'admin-page',
 				callback: ([item]) => openDuplicateModal(item),
 				supportsBulk: false,
 			},
 			{
 				id: 'delete',
-				label: __('Delete', 'fair-audience'),
+				label: __('Delete', 'fair-audience-experimental'),
 				icon: 'trash',
 				callback: ([item]) => handleDeleteGroup(item),
 				supportsBulk: false,
@@ -311,13 +320,13 @@ export default function Groups() {
 
 	return (
 		<div className="wrap">
-			<h1>{__('Groups', 'fair-audience')}</h1>
+			<h1>{__('Groups', 'fair-audience-experimental')}</h1>
 
 			<Card>
 				<CardBody>
 					<div style={{ marginBottom: '16px' }}>
 						<Button variant="primary" onClick={openCreateModal}>
-							{__('Create Group', 'fair-audience')}
+							{__('Create Group', 'fair-audience-experimental')}
 						</Button>
 					</div>
 
@@ -340,26 +349,29 @@ export default function Groups() {
 				<Modal
 					title={
 						editingGroup
-							? __('Edit Group', 'fair-audience')
-							: __('Create Group', 'fair-audience')
+							? __('Edit Group', 'fair-audience-experimental')
+							: __('Create Group', 'fair-audience-experimental')
 					}
 					onRequestClose={() => setIsEditModalOpen(false)}
 					style={{ maxWidth: '500px', width: '100%' }}
 				>
 					<TextControl
-						label={__('Name', 'fair-audience')}
+						label={__('Name', 'fair-audience-experimental')}
 						value={groupName}
 						onChange={setGroupName}
-						placeholder={__('Enter group name...', 'fair-audience')}
+						placeholder={__(
+							'Enter group name...',
+							'fair-audience-experimental'
+						)}
 					/>
 
 					<TextareaControl
-						label={__('Description', 'fair-audience')}
+						label={__('Description', 'fair-audience-experimental')}
 						value={groupDescription}
 						onChange={setGroupDescription}
 						placeholder={__(
 							'Enter group description (optional)...',
-							'fair-audience'
+							'fair-audience-experimental'
 						)}
 					/>
 
@@ -375,7 +387,7 @@ export default function Groups() {
 							variant="secondary"
 							onClick={() => setIsEditModalOpen(false)}
 						>
-							{__('Cancel', 'fair-audience')}
+							{__('Cancel', 'fair-audience-experimental')}
 						</Button>
 						<Button
 							variant="primary"
@@ -384,8 +396,8 @@ export default function Groups() {
 							isBusy={isSaving}
 						>
 							{editingGroup
-								? __('Update', 'fair-audience')
-								: __('Create', 'fair-audience')}
+								? __('Update', 'fair-audience-experimental')
+								: __('Create', 'fair-audience-experimental')}
 						</Button>
 					</div>
 				</Modal>
@@ -394,15 +406,21 @@ export default function Groups() {
 			{/* Duplicate Group Modal */}
 			{isDuplicateModalOpen && (
 				<Modal
-					title={__('Duplicate Group', 'fair-audience')}
+					title={__('Duplicate Group', 'fair-audience-experimental')}
 					onRequestClose={() => setIsDuplicateModalOpen(false)}
 					style={{ maxWidth: '500px', width: '100%' }}
 				>
 					<TextControl
-						label={__('New group name', 'fair-audience')}
+						label={__(
+							'New group name',
+							'fair-audience-experimental'
+						)}
 						value={duplicateName}
 						onChange={setDuplicateName}
-						placeholder={__('Enter group name...', 'fair-audience')}
+						placeholder={__(
+							'Enter group name...',
+							'fair-audience-experimental'
+						)}
 					/>
 
 					<div
@@ -417,7 +435,7 @@ export default function Groups() {
 							variant="secondary"
 							onClick={() => setIsDuplicateModalOpen(false)}
 						>
-							{__('Cancel', 'fair-audience')}
+							{__('Cancel', 'fair-audience-experimental')}
 						</Button>
 						<Button
 							variant="primary"
@@ -425,7 +443,7 @@ export default function Groups() {
 							disabled={!duplicateName.trim() || isDuplicating}
 							isBusy={isDuplicating}
 						>
-							{__('Duplicate', 'fair-audience')}
+							{__('Duplicate', 'fair-audience-experimental')}
 						</Button>
 					</div>
 				</Modal>

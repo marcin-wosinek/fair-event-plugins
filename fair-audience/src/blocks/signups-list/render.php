@@ -25,9 +25,11 @@ use FairAudience\Services\ParticipantToken;
  */
 if ( ! function_exists( 'fair_audience_check_signup_permission' ) ) {
 	function fair_audience_check_signup_permission( $event_id, $participant_repo ) {
-		// Need fair-events for event_date lookup and group permission rules.
+		// Need fair-events for event_date lookup, group permission rules, and
+		// fair-audience-experimental for group membership.
 		if ( ! class_exists( \FairEvents\Models\EventDates::class ) ||
-		! class_exists( \FairEventsExperimental\Models\GroupPermissionRule::class ) ) {
+		! class_exists( \FairEventsExperimental\Models\GroupPermissionRule::class ) ||
+		! class_exists( \FairAudienceExperimental\Database\GroupParticipantRepository::class ) ) {
 			return false;
 		}
 
@@ -82,7 +84,7 @@ if ( ! function_exists( 'fair_audience_check_signup_permission' ) ) {
 		}
 
 		// Check if participant belongs to any of the allowed groups.
-		$group_participant_repo = new \FairAudience\Database\GroupParticipantRepository();
+		$group_participant_repo = new \FairAudienceExperimental\Database\GroupParticipantRepository();
 		$participant_groups     = $group_participant_repo->get_by_participant( $participant->id );
 
 		foreach ( $participant_groups as $group_participant ) {

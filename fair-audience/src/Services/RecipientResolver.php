@@ -14,7 +14,6 @@ namespace FairAudience\Services;
 
 use FairAudience\Database\EventParticipantRepository;
 use FairAudience\Database\ParticipantRepository;
-use FairAudience\Database\GroupParticipantRepository;
 use FairAudience\Models\Participant;
 
 defined( 'WPINC' ) || die;
@@ -39,9 +38,10 @@ class RecipientResolver {
 	private $participant_repository;
 
 	/**
-	 * Group participant repository instance.
+	 * Group participant repository instance, or null when the `groups`
+	 * bundle (fair-audience-experimental) is not active.
 	 *
-	 * @var GroupParticipantRepository
+	 * @var \FairAudienceExperimental\Database\GroupParticipantRepository|null
 	 */
 	private $group_participant_repository;
 
@@ -58,7 +58,9 @@ class RecipientResolver {
 	public function __construct() {
 		$this->event_participant_repository = new EventParticipantRepository();
 		$this->participant_repository       = new ParticipantRepository();
-		$this->group_participant_repository = new GroupParticipantRepository();
+		$this->group_participant_repository = class_exists( \FairAudienceExperimental\Database\GroupParticipantRepository::class )
+			? new \FairAudienceExperimental\Database\GroupParticipantRepository()
+			: null;
 	}
 
 	/**
@@ -266,7 +268,7 @@ class RecipientResolver {
 	 * @return int[] Array of unique participant IDs.
 	 */
 	public function get_participant_ids_for_groups( $group_ids ) {
-		if ( empty( $group_ids ) ) {
+		if ( empty( $group_ids ) || ! $this->group_participant_repository ) {
 			return array();
 		}
 

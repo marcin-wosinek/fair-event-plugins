@@ -245,10 +245,12 @@ class PaymentHooks {
 		}
 
 		$group_name = '';
-		$group_repo = new \FairAudience\Database\GroupRepository();
-		$group      = $group_repo->get_by_id( (int) $rule->group_id );
-		if ( $group && ! empty( $group->name ) ) {
-			$group_name = (string) $group->name;
+		if ( class_exists( \FairAudienceExperimental\Database\GroupRepository::class ) ) {
+			$group_repo = new \FairAudienceExperimental\Database\GroupRepository();
+			$group      = $group_repo->get_by_id( (int) $rule->group_id );
+			if ( $group && ! empty( $group->name ) ) {
+				$group_name = (string) $group->name;
+			}
 		}
 
 		if ( 'percentage' === $rule->discount_type ) {

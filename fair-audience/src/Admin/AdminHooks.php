@@ -38,10 +38,6 @@ class AdminHooks {
 			'title'    => 'Participant Detail',
 			'callback' => 'render_participant_detail_page',
 		),
-		'fair-audience-group-detail'       => array(
-			'title'    => 'Group Detail',
-			'callback' => 'render_group_detail_page',
-		),
 	);
 
 	/**
@@ -154,19 +150,6 @@ class AdminHooks {
 			array( $this, 'render_all_participants_page' )
 		);
 
-		// Submenu page - Groups.
-		add_submenu_page(
-			'fair-audience',
-			__( 'Groups', 'fair-audience' ),
-			__( 'Groups', 'fair-audience' ),
-			'manage_options',
-			'fair-audience-groups',
-			array( $this, 'render_groups_page' )
-		);
-
-		// Hidden submenu page - Group Detail.
-		$this->register_hidden_page( 'fair-audience-group-detail' );
-
 		// Submenu page - By Event.
 		add_submenu_page(
 			'fair-audience',
@@ -242,22 +225,6 @@ class AdminHooks {
 	}
 
 	/**
-	 * Render Groups page.
-	 */
-	public function render_groups_page() {
-		$page = new GroupsPage();
-		$page->render();
-	}
-
-	/**
-	 * Render Group Detail page.
-	 */
-	public function render_group_detail_page() {
-		$page = new GroupDetailPage();
-		$page->render();
-	}
-
-	/**
 	 * Render Custom Mail page.
 	 */
 	public function render_custom_mail_page() {
@@ -326,32 +293,6 @@ class AdminHooks {
 		// Event Participants page.
 		if ( 'admin_page_fair-audience-event-participants' === $hook ) {
 			$this->enqueue_page_script( 'event-participants', $plugin_dir );
-		}
-
-		// Groups page.
-		if ( 'fair-audience_page_fair-audience-groups' === $hook ) {
-			$this->enqueue_page_script( 'groups', $plugin_dir );
-
-			wp_localize_script(
-				'fair-audience-groups',
-				'fairAudienceGroupsData',
-				array(
-					'groupDetailUrl' => admin_url( 'admin.php?page=fair-audience-group-detail&group_id=' ),
-				)
-			);
-		}
-
-		// Group Detail page.
-		if ( 'admin_page_fair-audience-group-detail' === $hook ) {
-			$this->enqueue_page_script( 'group-detail', $plugin_dir );
-
-			wp_localize_script(
-				'fair-audience-group-detail',
-				'fairAudienceGroupDetailData',
-				array(
-					'groupsListUrl' => admin_url( 'admin.php?page=fair-audience-groups' ),
-				)
-			);
 		}
 
 		// Participant Detail page.

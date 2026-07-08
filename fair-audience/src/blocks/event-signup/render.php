@@ -397,8 +397,8 @@ if ( $pricing_event_date_id && class_exists( \FairEvents\Models\TicketType::clas
 	if ( class_exists( \FairEventsExperimental\Models\TicketTypeGroupRestriction::class ) ) {
 		$tt_group_restrictions = \FairEventsExperimental\Models\TicketTypeGroupRestriction::get_all_by_event_date_id( (int) $pricing_event_date_id );
 	}
-	if ( $participant && ! empty( $tt_group_restrictions ) ) {
-		$group_participant_repo = new \FairAudience\Database\GroupParticipantRepository();
+	if ( $participant && ! empty( $tt_group_restrictions ) && class_exists( \FairAudienceExperimental\Database\GroupParticipantRepository::class ) ) {
+		$group_participant_repo = new \FairAudienceExperimental\Database\GroupParticipantRepository();
 		$memberships            = $group_participant_repo->get_by_participant( $participant->id );
 		$participant_group_ids  = array_map( fn( $m ) => (int) $m->group_id, $memberships );
 	}
@@ -686,10 +686,12 @@ if ( null !== $signup_price ) {
 $discount_note_html = '';
 if ( $best_discount_rule ) {
 	$group_name = '';
-	$group_repo = new \FairAudience\Database\GroupRepository();
-	$group      = $group_repo->get_by_id( (int) $best_discount_rule->group_id );
-	if ( $group ) {
-		$group_name = $group->name;
+	if ( class_exists( \FairAudienceExperimental\Database\GroupRepository::class ) ) {
+		$group_repo = new \FairAudienceExperimental\Database\GroupRepository();
+		$group      = $group_repo->get_by_id( (int) $best_discount_rule->group_id );
+		if ( $group ) {
+			$group_name = $group->name;
+		}
 	}
 
 	if ( 'percentage' === $best_discount_rule->discount_type ) {

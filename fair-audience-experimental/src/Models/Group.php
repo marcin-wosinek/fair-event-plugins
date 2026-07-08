@@ -1,39 +1,39 @@
 <?php
 /**
- * GroupParticipant Model
+ * Group Model
  *
- * @package FairAudience
+ * @package FairAudienceExperimental
  */
 
-namespace FairAudience\Models;
+namespace FairAudienceExperimental\Models;
 
 defined( 'WPINC' ) || die;
 
 /**
- * GroupParticipant model for junction table.
+ * Group model.
  */
-class GroupParticipant {
+class Group {
 
 	/**
-	 * Junction record ID.
+	 * Group ID.
 	 *
 	 * @var int|null
 	 */
 	public $id;
 
 	/**
-	 * Group ID.
+	 * Group name.
 	 *
-	 * @var int
+	 * @var string
 	 */
-	public $group_id;
+	public $name;
 
 	/**
-	 * Participant ID.
+	 * Group description.
 	 *
-	 * @var int
+	 * @var string
 	 */
-	public $participant_id;
+	public $description;
 
 	/**
 	 * Created timestamp.
@@ -41,6 +41,13 @@ class GroupParticipant {
 	 * @var string
 	 */
 	public $created_at;
+
+	/**
+	 * Updated timestamp.
+	 *
+	 * @var string
+	 */
+	public $updated_at;
 
 	/**
 	 * Constructor.
@@ -59,10 +66,11 @@ class GroupParticipant {
 	 * @param array $data Data array.
 	 */
 	public function populate( $data ) {
-		$this->id             = isset( $data['id'] ) ? (int) $data['id'] : null;
-		$this->group_id       = isset( $data['group_id'] ) ? (int) $data['group_id'] : 0;
-		$this->participant_id = isset( $data['participant_id'] ) ? (int) $data['participant_id'] : 0;
-		$this->created_at     = isset( $data['created_at'] ) ? $data['created_at'] : '';
+		$this->id          = isset( $data['id'] ) ? (int) $data['id'] : null;
+		$this->name        = isset( $data['name'] ) ? sanitize_text_field( $data['name'] ) : '';
+		$this->description = isset( $data['description'] ) ? sanitize_textarea_field( $data['description'] ) : '';
+		$this->created_at  = isset( $data['created_at'] ) ? $data['created_at'] : '';
+		$this->updated_at  = isset( $data['updated_at'] ) ? $data['updated_at'] : '';
 	}
 
 	/**
@@ -73,18 +81,19 @@ class GroupParticipant {
 	public function save() {
 		global $wpdb;
 
-		$table_name = $wpdb->prefix . 'fair_audience_group_participants';
+		$table_name = $wpdb->prefix . 'fair_audience_groups';
 
-		if ( empty( $this->group_id ) || empty( $this->participant_id ) ) {
+		// Validate required fields.
+		if ( empty( $this->name ) ) {
 			return false;
 		}
 
 		$data = array(
-			'group_id'       => $this->group_id,
-			'participant_id' => $this->participant_id,
+			'name'        => $this->name,
+			'description' => $this->description,
 		);
 
-		$format = array( '%d', '%d' );
+		$format = array( '%s', '%s' );
 
 		if ( $this->id ) {
 			// Update existing.
@@ -118,8 +127,17 @@ class GroupParticipant {
 			return false;
 		}
 
-		$table_name = $wpdb->prefix . 'fair_audience_group_participants';
+		$table_name = $wpdb->prefix . 'fair_audience_groups';
 
+		// First delete all group participants.
+		$junction_table = $wpdb->prefix . 'fair_audience_group_participants';
+		$wpdb->delete(
+			$junction_table,
+			array( 'group_id' => $this->id ),
+			array( '%d' )
+		);
+
+		// Then delete the group.
 		return $wpdb->delete(
 			$table_name,
 			array( 'id' => $this->id ),

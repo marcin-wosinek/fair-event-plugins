@@ -13,7 +13,7 @@ use FairAudience\Database\ParticipantCategoryRepository;
 use FairAudience\Database\GalleryAccessKeyRepository;
 use FairAudienceExperimental\Database\PollAccessKeyRepository;
 use FairAudienceExperimental\Database\PollResponseRepository;
-use FairAudience\Database\GroupParticipantRepository;
+use FairAudienceExperimental\Database\GroupParticipantRepository;
 
 defined( 'WPINC' ) || die;
 
@@ -51,7 +51,9 @@ class ParticipantAnonymizationService {
 			( new PollAccessKeyRepository() )->delete_by_participant( $id );
 			( new PollResponseRepository() )->delete_all_by_participant( $id );
 		}
-		( new GroupParticipantRepository() )->delete_by_participant( $id );
+		if ( class_exists( GroupParticipantRepository::class ) ) {
+			( new GroupParticipantRepository() )->delete_by_participant( $id );
+		}
 
 		return true;
 	}
