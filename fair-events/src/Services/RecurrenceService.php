@@ -586,6 +586,10 @@ class RecurrenceService {
 	/**
 	 * Build an RRULE string from components
 	 *
+	 * The daily/weekly/biweekly/monthly ↔ FREQ/INTERVAL vocabulary is mirrored
+	 * in JS by `fair-events-shared/src/recurrence.js` (`buildRRule`/`parseRRule`).
+	 * Keep both in sync when adding or changing frequencies.
+	 *
 	 * @param string      $frequency Frequency (DAILY, WEEKLY, MONTHLY).
 	 * @param int         $interval  Interval (1 for weekly, 2 for biweekly, etc.).
 	 * @param string      $end_type  End type ('count' or 'until').

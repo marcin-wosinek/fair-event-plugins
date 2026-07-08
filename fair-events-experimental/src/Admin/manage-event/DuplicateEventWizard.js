@@ -25,13 +25,18 @@ import {
 	SelectControl,
 	RadioControl,
 	FormTokenField,
-	__experimentalNumberControl as NumberControl,
 	__experimentalVStack as VStack,
 	__experimentalHStack as HStack,
 } from '@wordpress/components';
 import { __ } from '@wordpress/i18n';
 import apiFetch from '@wordpress/api-fetch';
-import { DurationOptions, calculateDuration } from 'fair-events-shared';
+import {
+	DurationOptions,
+	calculateDuration,
+	parseRRule,
+	buildRRule,
+	RecurrenceControl,
+} from 'fair-events-shared';
 import { adjustTicketDates } from './adjustTicketDates.js';
 import EventTickets from './EventTickets.js';
 
@@ -57,11 +62,13 @@ export default function DuplicateEventWizard({
 	const [categories, setCategories] = useState(
 		sourceEventDate.categories?.map((c) => c.id) || []
 	);
-	const [recurrenceEnabled, setRecurrenceEnabled] = useState(false);
-	const [recurrenceFrequency, setRecurrenceFrequency] = useState('weekly');
-	const [recurrenceEndType, setRecurrenceEndType] = useState('count');
-	const [recurrenceCount, setRecurrenceCount] = useState(10);
-	const [recurrenceUntil, setRecurrenceUntil] = useState('');
+	const [recurrence, setRecurrence] = useState({
+		enabled: false,
+		frequency: 'weekly',
+		endType: 'count',
+		count: 10,
+		until: '',
+	});
 
 	// Links state
 	const [linksOption, setLinksOption] = useState('clone');
@@ -112,8 +119,10 @@ export default function DuplicateEventWizard({
 
 		// Parse recurrence from source
 		if (sourceEventDate.rrule) {
-			setRecurrenceEnabled(true);
-			parseRRule(sourceEventDate.rrule);
+			setRecurrence({
+				enabled: true,
+				...parseRRule(sourceEventDate.rrule),
+			});
 		}
 	}, [sourceEventDate]);
 
@@ -312,70 +321,6 @@ export default function DuplicateEventWizard({
 		...venues.map((v) => ({ label: v.name, value: String(v.id) })),
 	];
 
-	// Recurrence helpers
-	const parseRRule = (rrule) => {
-		const parts = {};
-		rrule.split(';').forEach((part) => {
-			const [key, val] = part.split('=');
-			parts[key] = val;
-		});
-
-		const freq = parts.FREQ || 'WEEKLY';
-		const interval = parseInt(parts.INTERVAL || '1', 10);
-
-		if (freq === 'DAILY') setRecurrenceFrequency('daily');
-		else if (freq === 'WEEKLY' && interval === 2)
-			setRecurrenceFrequency('biweekly');
-		else if (freq === 'WEEKLY') setRecurrenceFrequency('weekly');
-		else if (freq === 'MONTHLY') setRecurrenceFrequency('monthly');
-
-		if (parts.COUNT) {
-			setRecurrenceEndType('count');
-			setRecurrenceCount(parseInt(parts.COUNT, 10));
-		} else if (parts.UNTIL) {
-			setRecurrenceEndType('until');
-			const u = parts.UNTIL;
-			setRecurrenceUntil(
-				`${u.substring(0, 4)}-${u.substring(4, 6)}-${u.substring(6, 8)}`
-			);
-		} else {
-			setRecurrenceEndType('count');
-			setRecurrenceCount(10);
-		}
-	};
-
-	const buildRRule = () => {
-		if (!recurrenceEnabled) return null;
-
-		let freq = 'WEEKLY';
-		let interval = 1;
-
-		switch (recurrenceFrequency) {
-			case 'daily':
-				freq = 'DAILY';
-				break;
-			case 'weekly':
-				freq = 'WEEKLY';
-				break;
-			case 'biweekly':
-				freq = 'WEEKLY';
-				interval = 2;
-				break;
-			case 'monthly':
-				freq = 'MONTHLY';
-				break;
-		}
-
-		const ruleParts = [`FREQ=${freq}`];
-		if (interval > 1) ruleParts.push(`INTERVAL=${interval}`);
-		if (recurrenceEndType === 'count' && recurrenceCount)
-			ruleParts.push(`COUNT=${recurrenceCount}`);
-		else if (recurrenceEndType === 'until' && recurrenceUntil)
-			ruleParts.push(`UNTIL=${recurrenceUntil.replace(/-/g, '')}`);
-
-		return ruleParts.join(';');
-	};
-
 	// Build new start datetime string
 	const getNewStartDatetime = () => {
 		if (allDay) return `${startDate} 00:00:00`;
@@ -409,7 +354,7 @@ export default function DuplicateEventWizard({
 					end_datetime: getNewEndDatetime(),
 					all_day: allDay,
 					venue_id: venueId ? parseInt(venueId, 10) : null,
-					rrule: buildRRule(),
+					rrule: buildRRule(recurrence),
 					categories,
 				},
 			});
@@ -830,108 +775,10 @@ export default function DuplicateEventWizard({
 							__experimentalExpandOnFocus
 						/>
 
-						<CheckboxControl
-							label={__(
-								'Repeat this event',
-								'fair-events-experimental'
-							)}
-							checked={recurrenceEnabled}
-							onChange={setRecurrenceEnabled}
+						<RecurrenceControl
+							value={recurrence}
+							onChange={setRecurrence}
 						/>
-
-						{recurrenceEnabled && (
-							<VStack spacing={3}>
-								<SelectControl
-									label={__(
-										'Frequency',
-										'fair-events-experimental'
-									)}
-									value={recurrenceFrequency}
-									options={[
-										{
-											label: __(
-												'Daily',
-												'fair-events-experimental'
-											),
-											value: 'daily',
-										},
-										{
-											label: __(
-												'Weekly',
-												'fair-events-experimental'
-											),
-											value: 'weekly',
-										},
-										{
-											label: __(
-												'Biweekly',
-												'fair-events-experimental'
-											),
-											value: 'biweekly',
-										},
-										{
-											label: __(
-												'Monthly',
-												'fair-events-experimental'
-											),
-											value: 'monthly',
-										},
-									]}
-									onChange={setRecurrenceFrequency}
-								/>
-								<SelectControl
-									label={__(
-										'Ends',
-										'fair-events-experimental'
-									)}
-									value={recurrenceEndType}
-									options={[
-										{
-											label: __(
-												'After number of occurrences',
-												'fair-events-experimental'
-											),
-											value: 'count',
-										},
-										{
-											label: __(
-												'On a specific date',
-												'fair-events-experimental'
-											),
-											value: 'until',
-										},
-									]}
-									onChange={setRecurrenceEndType}
-								/>
-								{recurrenceEndType === 'count' && (
-									<NumberControl
-										label={__(
-											'Number of occurrences',
-											'fair-events-experimental'
-										)}
-										value={recurrenceCount}
-										onChange={(val) =>
-											setRecurrenceCount(
-												parseInt(val, 10) || 1
-											)
-										}
-										min={1}
-										max={365}
-									/>
-								)}
-								{recurrenceEndType === 'until' && (
-									<TextControl
-										label={__(
-											'End date',
-											'fair-events-experimental'
-										)}
-										type="date"
-										value={recurrenceUntil}
-										onChange={setRecurrenceUntil}
-									/>
-								)}
-							</VStack>
-						)}
 					</VStack>
 				</CardBody>
 			</Card>

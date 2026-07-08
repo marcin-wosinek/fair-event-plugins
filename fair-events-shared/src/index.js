@@ -13,6 +13,8 @@ export * from './dynamicDateRegistry.js';
 export { default as DateTimeControl } from './DateTimeControl.js';
 export { DurationOptions } from './DurationOptions.js';
 export { default as EventSourceSelector } from './EventSourceSelector.js';
+export { default as RecurrenceControl } from './RecurrenceControl.js';
+export * from './recurrence.js';
 export * from './questionnaire.js';
 export * from './form-utils.js';
 export * from './question-utils.js';
