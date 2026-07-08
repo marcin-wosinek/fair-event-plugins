@@ -43,6 +43,7 @@ jobs:
                       ./fair-events-experimental/vendor
                       ./fair-payments-connector-experimental/vendor
                       ./fair-form/vendor
+                      ./fair-audience-experimental/vendor
                       ./vendor
                   key: ${{ runner.os }}-php-${{ hashFiles('**/composer.lock') }}
                   restore-keys: |
@@ -68,6 +69,7 @@ jobs:
                       ./fair-events-experimental/node_modules
                       ./fair-payments-connector-experimental/node_modules
                       ./fair-form/node_modules
+                      ./fair-audience-experimental/node_modules
                       ./fair-events-shared/node_modules
                   key: ${{ runner.os }}-node-${{ hashFiles('package-lock.json') }}
 

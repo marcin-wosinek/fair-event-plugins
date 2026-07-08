@@ -1,0 +1,47 @@
+{
+	"name": "fair-audience-experimental",
+	"version": "1.0.0",
+	"description": "Fair Audience Experimental WordPress plugin",
+	"license": "GPL-3.0-or-later",
+	"author": "Marcin Wosinek",
+	"type": "module",
+	"main": "build/index.js",
+	"scripts": {
+		"build": "wp-scripts build --config webpack.config.cjs; npm run makejson || true",
+		"clean": "rm -rf build",
+		"prebuild": "npm run clean",
+		"start": "wp-scripts start",
+		"format": "wp-scripts format",
+		"composer:install": "composer install",
+		"composer:install:prod": "composer install --no-dev",
+		"composer:update": "composer update",
+		"composer:validate": "composer validate --strict",
+		"makepot": "wp i18n make-pot . languages/fair-audience-experimental.pot --exclude=node_modules,vendor,tests,build,svn",
+		"makejson": "wp i18n make-json languages ./build/languages --domain=fair-audience-experimental --pretty-print --no-purge --use-map=build/map.json",
+		"makemo": "wp i18n make-mo languages/",
+		"updatepo": "wp i18n update-po languages/fair-audience-experimental.pot languages/",
+		"test": "npm-run-all test:js",
+		"test:js": "jest --passWithNoTests",
+		"test:api": "playwright test src/API/__tests__/"
+	},
+	"dependencies": {
+		"fair-events-shared": "*",
+		"@wordpress/api-fetch": "^7.2.0",
+		"@wordpress/components": "^36.0.0",
+		"@wordpress/dom-ready": "^4.2.0",
+		"@wordpress/element": "^8.0.0",
+		"@wordpress/i18n": "^6.21.0"
+	},
+	"devDependencies": {
+		"@babel/core": "^7.28.3",
+		"@babel/preset-env": "^7.28.3",
+		"@playwright/test": "^1.40.0",
+		"@testing-library/jest-dom": "^6.9.1",
+		"@testing-library/react": "^16.3.2",
+		"@wordpress/scripts": "^32.4.0",
+		"babel-jest": "^30.0.5",
+		"jest": "^30.0.0",
+		"npm-run-all2": "^9.0.2",
+		"webpack-bundle-output": "^1.1.0"
+	}
+}
