@@ -34,10 +34,6 @@ const customConfig = {
 			process.cwd(),
 			'src/Admin/participant-detail/index.js',
 		),
-		'admin/manage-event-ext/index': path.resolve(
-			process.cwd(),
-			'src/Admin/manage-event-ext/index.js',
-		),
 	}),
 	plugins: [
 		...defaultConfig.plugins,

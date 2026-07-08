@@ -63,12 +63,6 @@ class Plugin {
 		add_action( 'template_redirect', array( $this, 'handle_manage_subscription' ) );
 		add_action( 'template_redirect', array( $this, 'handle_unsubscribe_event_interest' ) );
 
-		// Register the Mailings tab on fair-events' manage-event page via its
-		// tab-registry filter, rather than fair-events importing this bundle
-		// directly. See enqueue_manage_event_ext_assets() for the dependency
-		// ordering that avoids a first-render flicker.
-		add_action( 'fair_events_manage_event_enqueue_assets', array( $this, 'enqueue_manage_event_ext_assets' ) );
-
 		// Deferred email dispatch: confirmation emails are scheduled rather than
 		// sent inline so a slow/unreachable mail transport can't make signup
 		// requests time out. See EmailService::defer().
@@ -97,30 +91,6 @@ class Plugin {
 
 		// Initialize blocks.
 		$block_hooks = new \FairAudience\Hooks\BlockHooks();
-	}
-
-	/**
-	 * Enqueue this plugin's manage-event tab extension (Mailings) on the
-	 * fair-events manage-event page.
-	 *
-	 * Declares `fair-events-manage-event` as a script dependency so its
-	 * `addFilter()` call runs before the host bundle's `domReady()` mount,
-	 * avoiding a first-render flicker where the tab pops in late.
-	 *
-	 * @return void
-	 */
-	public function enqueue_manage_event_ext_assets() {
-		$asset_file = include FAIR_AUDIENCE_PLUGIN_DIR . 'build/admin/manage-event-ext/index.asset.php';
-
-		wp_enqueue_script(
-			'fair-audience-manage-event-ext',
-			FAIR_AUDIENCE_PLUGIN_URL . 'build/admin/manage-event-ext/index.js',
-			array_merge( $asset_file['dependencies'], array( 'fair-events-manage-event' ) ),
-			$asset_file['version'],
-			true
-		);
-
-		wp_set_script_translations( 'fair-audience-manage-event-ext', 'fair-audience' );
 	}
 
 	/**

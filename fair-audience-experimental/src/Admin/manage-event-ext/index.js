@@ -19,7 +19,7 @@ const { audienceUrl = '' } = window.fairEventsManageEventData || {};
 
 addFilter(
 	'fairEvents.manageEvent.tabs',
-	'fair-audience/audience-tab',
+	'fair-audience-experimental/audience-tab',
 	(tabs, { eventDate, eventDateId, eventTitle }) => {
 		if (!audienceUrl) {
 			return tabs;
@@ -29,7 +29,7 @@ addFilter(
 			...tabs,
 			{
 				name: 'audience',
-				title: __('Audience', 'fair-audience'),
+				title: __('Audience', 'fair-audience-experimental'),
 				order: 50,
 				isVisible: true,
 				disabled: isLinkOnlyEvent(eventDate),
@@ -48,7 +48,7 @@ addFilter(
 
 addFilter(
 	'fairEvents.manageEvent.tabs',
-	'fair-audience/groups-tab',
+	'fair-audience-experimental/groups-tab',
 	(tabs, { eventDate, eventDateId, enabledFeatures = {} }) => {
 		if (!audienceUrl || !enabledFeatures.ticketing) {
 			return tabs;
@@ -58,7 +58,7 @@ addFilter(
 			...tabs,
 			{
 				name: 'groups',
-				title: __('Groups', 'fair-audience'),
+				title: __('Groups', 'fair-audience-experimental'),
 				order: 30,
 				isVisible: true,
 				disabled:
@@ -72,7 +72,7 @@ addFilter(
 
 addFilter(
 	'fairEvents.manageEvent.tabs',
-	'fair-audience/mailings-tab',
+	'fair-audience-experimental/mailings-tab',
 	(tabs, { eventDate, eventDateId, enabledFeatures = {} }) => {
 		if (!audienceUrl || !enabledFeatures.mailings) {
 			return tabs;
@@ -82,7 +82,7 @@ addFilter(
 			...tabs,
 			{
 				name: 'mailings',
-				title: __('Mailings', 'fair-audience'),
+				title: __('Mailings', 'fair-audience-experimental'),
 				order: 55,
 				isVisible: true,
 				disabled: isLinkOnlyEvent(eventDate),
