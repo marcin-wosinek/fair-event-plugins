@@ -17,7 +17,7 @@ class Schema {
 	/**
 	 * Database version
 	 */
-	const DB_VERSION = '3.21.0';
+	const DB_VERSION = '3.22.0';
 
 	/**
 	 * Get the SQL for creating the fair_event_dates table
@@ -42,14 +42,16 @@ class Schema {
 			occurrence_type VARCHAR(20) NOT NULL DEFAULT 'single',
 			master_id BIGINT UNSIGNED DEFAULT NULL,
 			rrule VARCHAR(255) DEFAULT NULL,
-			exdates TEXT DEFAULT NULL,
+			venue_id BIGINT UNSIGNED DEFAULT NULL,
 			title VARCHAR(255) DEFAULT NULL,
 			external_url TEXT DEFAULT NULL,
-			link_type VARCHAR(20) NOT NULL DEFAULT 'post',
+			link_type VARCHAR(20) DEFAULT NULL,
 			capacity INT UNSIGNED DEFAULT NULL,
 			signup_price DECIMAL(10,2) DEFAULT NULL,
 			address TEXT DEFAULT NULL,
 			recurrence_anchor DATE DEFAULT NULL,
+			status ENUM('active','cancelled') NOT NULL DEFAULT 'active',
+			recurrence_mode ENUM('none','rule','manual') NOT NULL DEFAULT 'none',
 			created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
 			updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
 			PRIMARY KEY (id),
@@ -61,7 +63,9 @@ class Schema {
 			KEY idx_master_id (master_id),
 			KEY idx_rrule (rrule(100)),
 			KEY idx_link_type (link_type),
-			KEY idx_recurrence_anchor (recurrence_anchor)
+			KEY idx_recurrence_anchor (recurrence_anchor),
+			KEY idx_venue_id (venue_id),
+			KEY idx_status (status)
 		) ENGINE=InnoDB {$charset_collate};";
 	}
 

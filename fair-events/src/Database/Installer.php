@@ -270,6 +270,11 @@ class Installer {
 			self::migrate_to_3_21_0();
 		}
 
+		// Run migration if upgrading from pre-3.22.0 (status + recurrence_mode, materialize exdates, NULL-inherit).
+		if ( version_compare( $current_version, '3.22.0', '<' ) ) {
+			self::migrate_to_3_22_0();
+		}
+
 		// Update database version
 		Schema::update_db_version( Schema::DB_VERSION );
 	}
@@ -424,6 +429,10 @@ class Installer {
 
 			if ( version_compare( $current_version, '3.21.0', '<' ) ) {
 				self::migrate_to_3_21_0();
+			}
+
+			if ( version_compare( $current_version, '3.22.0', '<' ) ) {
+				self::migrate_to_3_22_0();
 			}
 
 			// Install/update tables
@@ -1740,6 +1749,174 @@ class Installer {
 			$wpdb->query(
 				$wpdb->prepare(
 					'ALTER TABLE %i DROP COLUMN seats_per_ticket',
+					$table_name
+				)
+			);
+		}
+	}
+
+	/**
+	 * Check whether a column exists on a table.
+	 *
+	 * @param string $table_name  Fully-prefixed table name.
+	 * @param string $column_name Column name.
+	 * @return bool True if the column exists.
+	 */
+	private static function column_exists( $table_name, $column_name ) {
+		global $wpdb;
+
+		$result = $wpdb->get_results(
+			$wpdb->prepare(
+				'SHOW COLUMNS FROM %i LIKE %s',
+				$table_name,
+				$wpdb->esc_like( $column_name )
+			)
+		);
+
+		return ! empty( $result );
+	}
+
+	/**
+	 * Migrate to version 3.22.0 - Materialize cancellations, NULL-inherit instance
+	 * fields, explicit recurrence_mode.
+	 *
+	 * Replaces the `exdates` CSV blob on masters with real `status='cancelled'`
+	 * child rows (so cancelled occurrences get an id, can be queried, and cancel/
+	 * restore is a status flip instead of a destructive delete), switches
+	 * inheritable instance fields (title, venue_id, address, link_type,
+	 * external_url, capacity, signup_price) to NULL-means-inherit instead of
+	 * copy-propagated values, and adds an explicit `recurrence_mode` column so
+	 * series shape is stored rather than inferred from an empty `rrule`.
+	 *
+	 * @return void
+	 */
+	private static function migrate_to_3_22_0() {
+		global $wpdb;
+
+		$table_name = $wpdb->prefix . 'fair_event_dates';
+
+		if ( ! self::column_exists( $table_name, 'status' ) ) {
+			$wpdb->query(
+				$wpdb->prepare(
+					"ALTER TABLE %i ADD COLUMN status ENUM('active','cancelled') NOT NULL DEFAULT 'active' AFTER recurrence_anchor",
+					$table_name
+				)
+			);
+			$wpdb->query(
+				$wpdb->prepare(
+					'ALTER TABLE %i ADD KEY idx_status (status)',
+					$table_name
+				)
+			);
+		}
+
+		if ( ! self::column_exists( $table_name, 'recurrence_mode' ) ) {
+			$wpdb->query(
+				$wpdb->prepare(
+					"ALTER TABLE %i ADD COLUMN recurrence_mode ENUM('none','rule','manual') NOT NULL DEFAULT 'none' AFTER status",
+					$table_name
+				)
+			);
+		}
+
+		// Backfill recurrence_mode on masters/singles from rrule presence; instances take their master's mode.
+		$wpdb->query(
+			$wpdb->prepare(
+				"UPDATE %i SET recurrence_mode = 'rule' WHERE occurrence_type IN ('single', 'master') AND rrule IS NOT NULL AND rrule != ''",
+				$table_name
+			)
+		);
+		$wpdb->query(
+			$wpdb->prepare(
+				"UPDATE %i child JOIN %i master ON child.master_id = master.id SET child.recurrence_mode = master.recurrence_mode WHERE child.occurrence_type = 'generated'",
+				$table_name,
+				$table_name
+			)
+		);
+
+		// Materialize exdates into real cancelled child rows before dropping the column.
+		if ( self::column_exists( $table_name, 'exdates' ) ) {
+			$masters = $wpdb->get_results(
+				$wpdb->prepare(
+					"SELECT * FROM %i WHERE occurrence_type = 'master' AND exdates IS NOT NULL AND exdates != ''",
+					$table_name
+				)
+			);
+
+			foreach ( $masters as $master ) {
+				$exdates = array_filter( array_map( 'trim', explode( ',', $master->exdates ) ) );
+				if ( empty( $exdates ) ) {
+					continue;
+				}
+
+				$start    = new \DateTime( $master->start_datetime );
+				$end      = $master->end_datetime ? new \DateTime( $master->end_datetime ) : clone $start;
+				$duration = $start->diff( $end );
+
+				foreach ( $exdates as $exdate ) {
+					$existing = $wpdb->get_var(
+						$wpdb->prepare(
+							'SELECT id FROM %i WHERE master_id = %d AND recurrence_anchor = %s LIMIT 1',
+							$table_name,
+							$master->id,
+							$exdate
+						)
+					);
+					if ( $existing ) {
+						continue;
+					}
+
+					$occ_start = \DateTime::createFromFormat( 'Y-m-d H:i:s', $exdate . ' ' . $start->format( 'H:i:s' ) );
+					if ( ! $occ_start ) {
+						continue;
+					}
+					$occ_end = ( clone $occ_start )->add( $duration );
+
+					$wpdb->insert(
+						$table_name,
+						array(
+							'event_id'          => $master->event_id,
+							'start_datetime'    => $occ_start->format( 'Y-m-d H:i:s' ),
+							'end_datetime'      => $occ_end->format( 'Y-m-d H:i:s' ),
+							'all_day'           => $master->all_day,
+							'occurrence_type'   => 'generated',
+							'master_id'         => $master->id,
+							'recurrence_anchor' => $exdate,
+							'status'            => 'cancelled',
+							'recurrence_mode'   => $master->recurrence_mode,
+						),
+						array( '%d', '%s', '%s', '%d', '%s', '%d', '%s', '%s', '%s' )
+					);
+				}
+			}
+		}
+
+		// NULL-out instance fields that still hold a copy of their master's value;
+		// genuinely different (overridden) values are left in place.
+		$inheritable_fields = array( 'title', 'venue_id', 'address', 'link_type', 'external_url', 'capacity', 'signup_price' );
+		foreach ( $inheritable_fields as $field ) {
+			$wpdb->query(
+				$wpdb->prepare(
+					// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- $field is from a fixed internal allowlist, not request input.
+					"UPDATE %i child JOIN %i master ON child.master_id = master.id SET child.{$field} = NULL WHERE child.occurrence_type = 'generated' AND child.{$field} <=> master.{$field}",
+					$table_name,
+					$table_name
+				)
+			);
+		}
+
+		// Widen link_type to allow NULL now that instances can inherit it.
+		$wpdb->query(
+			$wpdb->prepare(
+				'ALTER TABLE %i MODIFY COLUMN link_type VARCHAR(20) DEFAULT NULL',
+				$table_name
+			)
+		);
+
+		if ( self::column_exists( $table_name, 'exdates' ) ) {
+			$wpdb->query(
+				$wpdb->prepare(
+					'ALTER TABLE %i DROP COLUMN exdates',
 					$table_name
 				)
 			);

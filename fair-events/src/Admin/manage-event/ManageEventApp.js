@@ -1102,12 +1102,15 @@ export default function ManageEventApp() {
 								{eventDate.occurrence_type === 'master' &&
 									(eventDate.generated_occurrences?.length >
 										0 ||
-										eventDate.exdates?.length > 0) && (
+										eventDate.cancelled_dates?.length >
+											0) && (
 										<RecurrenceCalendar
 											generatedOccurrences={
 												eventDate.generated_occurrences
 											}
-											exdates={eventDate.exdates}
+											cancelledDates={
+												eventDate.cancelled_dates
+											}
 											masterDate={
 												eventDate.start_datetime?.split(
 													' '

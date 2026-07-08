@@ -73,11 +73,18 @@ class EventDates {
 	public $rrule;
 
 	/**
-	 * Excluded dates (comma-separated Y-m-d, only on master rows)
+	 * Status ('active' or 'cancelled')
 	 *
-	 * @var string|null
+	 * @var string
 	 */
-	public $exdates;
+	public $status = 'active';
+
+	/**
+	 * Recurrence mode ('none', 'rule', 'manual') — explicit series shape.
+	 *
+	 * @var string
+	 */
+	public $recurrence_mode = 'none';
 
 	/**
 	 * Venue ID
@@ -191,17 +198,58 @@ class EventDates {
 		$event_dates->occurrence_type   = $result->occurrence_type ?? 'single';
 		$event_dates->master_id         = $result->master_id ? (int) $result->master_id : null;
 		$event_dates->rrule             = $result->rrule ?? null;
-		$event_dates->exdates           = $result->exdates ?? null;
+		$event_dates->status            = $result->status ?? 'active';
+		$event_dates->recurrence_mode   = $result->recurrence_mode ?? 'none';
 		$event_dates->venue_id          = isset( $result->venue_id ) ? (int) $result->venue_id : null;
 		$event_dates->title             = $result->title ?? null;
 		$event_dates->external_url      = $result->external_url ?? null;
-		$event_dates->link_type         = $result->link_type ?? 'post';
+		$event_dates->link_type         = $result->link_type ?? null;
 		$event_dates->capacity          = isset( $result->capacity ) && null !== $result->capacity ? (int) $result->capacity : null;
 		$event_dates->signup_price      = isset( $result->signup_price ) && null !== $result->signup_price ? (float) $result->signup_price : null;
 		$event_dates->address           = isset( $result->address ) ? $result->address : null;
 		$event_dates->recurrence_anchor = $result->recurrence_anchor ?? null;
 
+		self::resolve_instance( $event_dates );
+
 		return $event_dates;
+	}
+
+	/**
+	 * Cache of master rows already fetched during this request, keyed by ID.
+	 * Keeps NULL-inherit resolution from re-querying the same master for
+	 * every sibling instance in a list.
+	 *
+	 * @var array<int, EventDates>
+	 */
+	private static $master_cache = array();
+
+	/**
+	 * Resolve NULL inheritable fields on an instance ('generated') row from
+	 * its master. Single/master rows and already-overridden fields are left
+	 * untouched.
+	 *
+	 * @param EventDates $event_dates Hydrated event date to resolve in place.
+	 * @return void
+	 */
+	private static function resolve_instance( $event_dates ) {
+		if ( 'generated' !== $event_dates->occurrence_type || ! $event_dates->master_id ) {
+			return;
+		}
+
+		if ( ! isset( self::$master_cache[ $event_dates->master_id ] ) ) {
+			self::$master_cache[ $event_dates->master_id ] = self::get_by_id( $event_dates->master_id );
+		}
+
+		$master = self::$master_cache[ $event_dates->master_id ];
+		if ( ! $master ) {
+			return;
+		}
+
+		foreach ( array( 'title', 'venue_id', 'address', 'link_type', 'external_url', 'capacity', 'signup_price' ) as $field ) {
+			if ( null === $event_dates->$field ) {
+				$event_dates->$field = $master->$field;
+			}
+		}
 	}
 
 	/**
@@ -268,9 +316,10 @@ class EventDates {
 	 * @param string      $occurrence_type    Occurrence type (single, master, generated).
 	 * @param int|null    $master_id          Master occurrence ID (for generated occurrences).
 	 * @param string|null $recurrence_anchor  Anchor date (Y-m-d).
+	 * @param string      $status             Row status ('active' or 'cancelled').
 	 * @return int|false The row ID on success, false on failure.
 	 */
-	public static function save_occurrence( $event_id, $start, $end, $all_day, $occurrence_type = 'single', $master_id = null, $recurrence_anchor = null ) {
+	public static function save_occurrence( $event_id, $start, $end, $all_day, $occurrence_type = 'single', $master_id = null, $recurrence_anchor = null, $status = 'active' ) {
 		global $wpdb;
 
 		$table_name = $wpdb->prefix . 'fair_event_dates';
@@ -283,9 +332,10 @@ class EventDates {
 			'occurrence_type'   => $occurrence_type,
 			'master_id'         => $master_id,
 			'recurrence_anchor' => $recurrence_anchor,
+			'status'            => $status,
 		);
 
-		$format = array( '%d', '%s', '%s', '%d', '%s', '%d', '%s' );
+		$format = array( '%d', '%s', '%s', '%d', '%s', '%d', '%s', '%s' );
 
 		$result = $wpdb->insert( $table_name, $data, $format );
 
@@ -305,9 +355,10 @@ class EventDates {
 	 * @param bool        $all_day         All day flag.
 	 * @param string      $occurrence_type Occurrence type (single or master).
 	 * @param string|null $rrule           Recurrence rule (RRULE format).
+	 * @param string|null $recurrence_mode Explicit series shape ('none', 'rule', 'manual'). Inferred from $rrule when null.
 	 * @return int|false The row ID on success, false on failure.
 	 */
-	public static function save_or_update_master( $event_id, $start, $end, $all_day, $occurrence_type = 'single', $rrule = null ) {
+	public static function save_or_update_master( $event_id, $start, $end, $all_day, $occurrence_type = 'single', $rrule = null, $recurrence_mode = null ) {
 		global $wpdb;
 
 		$table_name = $wpdb->prefix . 'fair_event_dates';
@@ -321,6 +372,10 @@ class EventDates {
 			)
 		);
 
+		if ( null === $recurrence_mode ) {
+			$recurrence_mode = empty( $rrule ) ? 'none' : 'rule';
+		}
+
 		$data = array(
 			'event_id'        => $event_id,
 			'start_datetime'  => $start,
@@ -329,9 +384,11 @@ class EventDates {
 			'occurrence_type' => $occurrence_type,
 			'master_id'       => null,
 			'rrule'           => $rrule,
+			'recurrence_mode' => $recurrence_mode,
+			'link_type'       => 'post',
 		);
 
-		$format = array( '%d', '%s', '%s', '%d', '%s', '%d', '%s' );
+		$format = array( '%d', '%s', '%s', '%d', '%s', '%d', '%s', '%s', '%s' );
 
 		if ( $existing ) {
 			$result = $wpdb->update(
@@ -594,8 +651,11 @@ class EventDates {
 		$table_name = $wpdb->prefix . 'fair_event_dates';
 
 		$results = $wpdb->get_results(
+			// phpcs:ignore WordPress.DB.PreparedSQLPlaceholders.ReplacementsWrongNumber -- inherited_select_sql() adds 2 more %i placeholders than visible here.
 			$wpdb->prepare(
-				'SELECT * FROM %i WHERE start_datetime <= %s AND (end_datetime >= %s OR (end_datetime IS NULL AND start_datetime >= %s)) ORDER BY start_datetime ASC',
+				// phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared -- inherited_select_sql() is a static internal template, not user input.
+				self::inherited_select_sql() . " WHERE ed.status = 'active' AND ed.start_datetime <= %s AND (ed.end_datetime >= %s OR (ed.end_datetime IS NULL AND ed.start_datetime >= %s)) ORDER BY ed.start_datetime ASC",
+				$table_name,
 				$table_name,
 				$end_date,
 				$start_date,
@@ -613,6 +673,28 @@ class EventDates {
 		}
 
 		return $dates;
+	}
+
+	/**
+	 * SELECT clause resolving inheritable instance fields from their master
+	 * via a self-join, so instance rows that hold NULL (inherit) come back
+	 * with the master's value already applied. Used by list queries that can
+	 * return many rows, where a per-row lookup (see resolve_instance()) would
+	 * mean N+1 queries.
+	 *
+	 * @return string SELECT ... FROM %i ed LEFT JOIN %i m ... clause (two %i placeholders).
+	 */
+	private static function inherited_select_sql() {
+		return 'SELECT ed.id, ed.event_id, ed.start_datetime, ed.end_datetime, ed.all_day, ed.occurrence_type,
+			ed.master_id, ed.rrule, ed.recurrence_anchor, ed.status, ed.recurrence_mode, ed.created_at, ed.updated_at,
+			COALESCE( ed.title, m.title ) AS title,
+			COALESCE( ed.venue_id, m.venue_id ) AS venue_id,
+			COALESCE( ed.address, m.address ) AS address,
+			COALESCE( ed.link_type, m.link_type ) AS link_type,
+			COALESCE( ed.external_url, m.external_url ) AS external_url,
+			COALESCE( ed.capacity, m.capacity ) AS capacity,
+			COALESCE( ed.signup_price, m.signup_price ) AS signup_price
+			FROM %i ed LEFT JOIN %i m ON ed.master_id = m.id';
 	}
 
 	/**
@@ -637,12 +719,12 @@ class EventDates {
 			$id_placeholders = implode( ',', array_fill( 0, count( $category_ids ), '%d' ) );
 
 			$results = $wpdb->get_results(
-				// phpcs:ignore WordPress.DB.PreparedSQLPlaceholders.ReplacementsWrongNumber
+				// phpcs:ignore WordPress.DB.PreparedSQLPlaceholders.ReplacementsWrongNumber -- inherited_select_sql() adds 2 more %i placeholders than visible here.
 				$wpdb->prepare(
-					// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
-					"SELECT ed.* FROM %i ed INNER JOIN %i edc ON ed.id = edc.event_date_id WHERE edc.term_id IN ($id_placeholders) AND ed.link_type != 'post' AND ed.event_id IS NULL AND ed.start_datetime <= %s AND (ed.end_datetime >= %s OR (ed.end_datetime IS NULL AND ed.start_datetime >= %s)) GROUP BY ed.id ORDER BY ed.start_datetime ASC",
+					// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.PreparedSQL.NotPrepared -- inherited_select_sql() is a static internal template, not user input.
+					self::inherited_select_sql() . " INNER JOIN %i edc ON ed.id = edc.event_date_id WHERE edc.term_id IN ($id_placeholders) AND COALESCE( ed.link_type, m.link_type ) != 'post' AND ed.event_id IS NULL AND ed.status = 'active' AND ed.start_datetime <= %s AND (ed.end_datetime >= %s OR (ed.end_datetime IS NULL AND ed.start_datetime >= %s)) GROUP BY ed.id ORDER BY ed.start_datetime ASC",
 					array_merge(
-						array( $table_name, $cat_table ),
+						array( $table_name, $table_name, $cat_table ),
 						array_map( 'intval', $category_ids ),
 						array( $end_date, $start_date, $start_date )
 					)
@@ -650,8 +732,11 @@ class EventDates {
 			);
 		} else {
 			$results = $wpdb->get_results(
+				// phpcs:ignore WordPress.DB.PreparedSQLPlaceholders.ReplacementsWrongNumber -- inherited_select_sql() adds 2 more %i placeholders than visible here.
 				$wpdb->prepare(
-					"SELECT * FROM %i WHERE link_type != 'post' AND event_id IS NULL AND start_datetime <= %s AND (end_datetime >= %s OR (end_datetime IS NULL AND start_datetime >= %s)) ORDER BY start_datetime ASC",
+					// phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared -- inherited_select_sql() is a static internal template, not user input.
+					self::inherited_select_sql() . " WHERE COALESCE( ed.link_type, m.link_type ) != 'post' AND ed.event_id IS NULL AND ed.status = 'active' AND ed.start_datetime <= %s AND (ed.end_datetime >= %s OR (ed.end_datetime IS NULL AND ed.start_datetime >= %s)) ORDER BY ed.start_datetime ASC",
+					$table_name,
 					$table_name,
 					$end_date,
 					$start_date,
@@ -727,7 +812,6 @@ class EventDates {
 			'occurrence_type'   => '%s',
 			'master_id'         => '%d',
 			'rrule'             => '%s',
-			'exdates'           => '%s',
 			'venue_id'          => '%d',
 			'title'             => '%s',
 			'external_url'      => '%s',
@@ -736,6 +820,8 @@ class EventDates {
 			'signup_price'      => '%f',
 			'address'           => '%s',
 			'recurrence_anchor' => '%s',
+			'status'            => '%s',
+			'recurrence_mode'   => '%s',
 		);
 
 		$update_data   = array();
@@ -857,18 +943,25 @@ class EventDates {
 	/**
 	 * Get generated occurrences by master ID
 	 *
-	 * @param int $master_id Master event date ID.
+	 * Active occurrences only by default; admin surfaces that also need
+	 * cancelled rows (e.g. rendering red calendar cells) pass true.
+	 *
+	 * @param int  $master_id        Master event date ID.
+	 * @param bool $include_cancelled Whether to include cancelled rows.
 	 * @return EventDates[] Array of generated EventDates objects.
 	 */
-	public static function get_generated_by_master_id( $master_id ) {
+	public static function get_generated_by_master_id( $master_id, $include_cancelled = false ) {
 		global $wpdb;
 
 		$table_name = $wpdb->prefix . 'fair_event_dates';
 
+		$status_sql = $include_cancelled ? '' : "AND status = 'active'";
+
 		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
 		$results = $wpdb->get_results(
 			$wpdb->prepare(
-				'SELECT * FROM %i WHERE master_id = %d AND occurrence_type = %s ORDER BY start_datetime ASC',
+				// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- $status_sql is a fixed internal string, not request input.
+				"SELECT * FROM %i WHERE master_id = %d AND occurrence_type = %s {$status_sql} ORDER BY start_datetime ASC",
 				$table_name,
 				$master_id,
 				'generated'
@@ -967,13 +1060,14 @@ class EventDates {
 			'rrule'             => null,
 			'title'             => $data['title'] ?? null,
 			'external_url'      => $data['external_url'] ?? null,
-			'link_type'         => $data['link_type'] ?? 'none',
+			'link_type'         => $data['link_type'] ?? null,
 			'venue_id'          => $data['venue_id'] ?? null,
 			'address'           => $data['address'] ?? null,
 			'recurrence_anchor' => $data['recurrence_anchor'] ?? null,
+			'status'            => $data['status'] ?? 'active',
 		);
 
-		$format = array( '%d', '%s', '%s', '%d', '%s', '%d', '%s', '%s', '%s', '%s', '%d', '%s', '%s' );
+		$format = array( '%d', '%s', '%s', '%d', '%s', '%d', '%s', '%s', '%s', '%s', '%d', '%s', '%s', '%s' );
 
 		$result = $wpdb->insert( $table_name, $insert_data, $format );
 
@@ -1095,7 +1189,7 @@ class EventDates {
 
 		$results = $wpdb->get_results(
 			$wpdb->prepare(
-				'SELECT * FROM %i WHERE (id = %d OR master_id = %d) AND start_datetime >= %s ORDER BY start_datetime ASC',
+				"SELECT * FROM %i WHERE (id = %d OR master_id = %d) AND status = 'active' AND start_datetime >= %s ORDER BY start_datetime ASC",
 				$table_name,
 				$master_id,
 				$master_id,
@@ -1131,7 +1225,7 @@ class EventDates {
 
 		$result = $wpdb->get_row(
 			$wpdb->prepare(
-				'SELECT * FROM %i WHERE master_id = %d AND occurrence_type = %s AND start_datetime >= %s ORDER BY start_datetime ASC LIMIT 1',
+				"SELECT * FROM %i WHERE master_id = %d AND occurrence_type = %s AND status = 'active' AND start_datetime >= %s ORDER BY start_datetime ASC LIMIT 1",
 				$table_name,
 				$master_id,
 				'generated',
