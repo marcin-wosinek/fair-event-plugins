@@ -106,8 +106,8 @@ class EventGalleryEndpoint extends WP_REST_Controller {
 		// Load tagged participants and photo authors if fair-audience plugin is active.
 		$tags_by_attachment    = array();
 		$authors_by_attachment = array();
-		if ( class_exists( 'FairAudience\Database\PhotoParticipantRepository' ) ) {
-			$photo_repo         = new \FairAudience\Database\PhotoParticipantRepository();
+		if ( class_exists( 'FairAudienceExperimental\Database\PhotoParticipantRepository' ) ) {
+			$photo_repo         = new \FairAudienceExperimental\Database\PhotoParticipantRepository();
 			$participant_repo   = new \FairAudience\Database\ParticipantRepository();
 			$tags_by_attachment = $photo_repo->get_tagged_for_attachments( $attachment_ids );
 

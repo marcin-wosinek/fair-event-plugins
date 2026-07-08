@@ -81,7 +81,10 @@ export default function CustomMail() {
 					status: 'error',
 					message:
 						error.message ||
-						__('Failed to load data.', 'fair-audience'),
+						__(
+							'Failed to load data.',
+							'fair-audience-experimental'
+						),
 				});
 				setIsLoading(false);
 			});
@@ -354,7 +357,10 @@ export default function CustomMail() {
 		if (!subject.trim()) {
 			setNotice({
 				status: 'error',
-				message: __('Please enter a subject.', 'fair-audience'),
+				message: __(
+					'Please enter a subject.',
+					'fair-audience-experimental'
+				),
 			});
 			return;
 		}
@@ -363,7 +369,10 @@ export default function CustomMail() {
 		if (!content || content === '<p></p>' || content === '<br>') {
 			setNotice({
 				status: 'error',
-				message: __('Please enter content.', 'fair-audience'),
+				message: __(
+					'Please enter content.',
+					'fair-audience-experimental'
+				),
 			});
 			return;
 		}
@@ -379,7 +388,7 @@ export default function CustomMail() {
 					status: 'error',
 					message: __(
 						'Please select at least one audience type.',
-						'fair-audience'
+						'fair-audience-experimental'
 					),
 				});
 				return;
@@ -414,13 +423,16 @@ export default function CustomMail() {
 			.then((result) => {
 				const message = [];
 				message.push(
-					`${result.sent_count} ${__('sent', 'fair-audience')}`
+					`${result.sent_count} ${__(
+						'sent',
+						'fair-audience-experimental'
+					)}`
 				);
 				if (result.failed_count > 0) {
 					message.push(
 						`${result.failed_count} ${__(
 							'failed',
-							'fair-audience'
+							'fair-audience-experimental'
 						)}`
 					);
 				}
@@ -428,7 +440,7 @@ export default function CustomMail() {
 					message.push(
 						`${result.skipped_count} ${__(
 							'skipped',
-							'fair-audience'
+							'fair-audience-experimental'
 						)}`
 					);
 				}
@@ -449,7 +461,10 @@ export default function CustomMail() {
 					status: 'error',
 					message:
 						error.message ||
-						__('Failed to send mail.', 'fair-audience'),
+						__(
+							'Failed to send mail.',
+							'fair-audience-experimental'
+						),
 				});
 				setIsSending(false);
 			});
@@ -465,7 +480,7 @@ export default function CustomMail() {
 			!confirm(
 				__(
 					'Are you sure you want to delete this record?',
-					'fair-audience'
+					'fair-audience-experimental'
 				)
 			)
 		) {
@@ -476,7 +491,10 @@ export default function CustomMail() {
 			.then(() => {
 				setNotice({
 					status: 'success',
-					message: __('Record deleted.', 'fair-audience'),
+					message: __(
+						'Record deleted.',
+						'fair-audience-experimental'
+					),
 				});
 				loadCustomMails().then(setMails);
 			})
@@ -489,7 +507,10 @@ export default function CustomMail() {
 					status: 'error',
 					message:
 						error.message ||
-						__('Failed to delete record.', 'fair-audience'),
+						__(
+							'Failed to delete record.',
+							'fair-audience-experimental'
+						),
 				});
 			});
 	};
@@ -510,7 +531,7 @@ export default function CustomMail() {
 	if (isLoading) {
 		return (
 			<div className="wrap">
-				<h1>{__('Custom Mail', 'fair-audience')}</h1>
+				<h1>{__('Custom Mail', 'fair-audience-experimental')}</h1>
 				<div
 					style={{
 						display: 'flex',
@@ -526,7 +547,7 @@ export default function CustomMail() {
 
 	return (
 		<div className="wrap">
-			<h1>{__('Custom Mail', 'fair-audience')}</h1>
+			<h1>{__('Custom Mail', 'fair-audience-experimental')}</h1>
 
 			{notice && (
 				<Notice
@@ -543,13 +564,13 @@ export default function CustomMail() {
 			<Card style={{ marginBottom: '2rem' }}>
 				<CardHeader>
 					<h2 style={{ margin: 0 }}>
-						{__('Send Custom Mail', 'fair-audience')}
+						{__('Send Custom Mail', 'fair-audience-experimental')}
 					</h2>
 				</CardHeader>
 				<CardBody>
 					<form onSubmit={handleSubmit}>
 						<TextControl
-							label={__('Subject', 'fair-audience')}
+							label={__('Subject', 'fair-audience-experimental')}
 							value={subject}
 							onChange={setSubject}
 							disabled={isSending}
@@ -564,7 +585,7 @@ export default function CustomMail() {
 									fontWeight: '600',
 								}}
 							>
-								{__('Content', 'fair-audience')}
+								{__('Content', 'fair-audience-experimental')}
 							</label>
 							<textarea
 								id="custom-mail-content"
@@ -579,14 +600,17 @@ export default function CustomMail() {
 									onClick={() =>
 										insertPlaceholderLink(
 											'{photo_upload_url}',
-											__('Upload photos', 'fair-audience')
+											__(
+												'Upload photos',
+												'fair-audience-experimental'
+											)
 										)
 									}
 									disabled={isSending}
 								>
 									{__(
 										'Insert photo upload link',
-										'fair-audience'
+										'fair-audience-experimental'
 									)}
 								</Button>
 								<Button
@@ -597,7 +621,7 @@ export default function CustomMail() {
 											'{event_page_url}',
 											__(
 												'Open event page',
-												'fair-audience'
+												'fair-audience-experimental'
 											)
 										)
 									}
@@ -607,14 +631,14 @@ export default function CustomMail() {
 										!eventDateId
 											? __(
 													'Select an event below to enable this link.',
-													'fair-audience'
+													'fair-audience-experimental'
 											  )
 											: undefined
 									}
 								>
 									{__(
 										'Insert event page link',
-										'fair-audience'
+										'fair-audience-experimental'
 									)}
 								</Button>
 								<span
@@ -629,7 +653,7 @@ export default function CustomMail() {
 									<TextControl
 										placeholder={__(
 											'Search page…',
-											'fair-audience'
+											'fair-audience-experimental'
 										)}
 										value={
 											selectedPage
@@ -704,7 +728,7 @@ export default function CustomMail() {
 									>
 										{__(
 											'Insert token link',
-											'fair-audience'
+											'fair-audience-experimental'
 										)}
 									</Button>
 								</span>
@@ -712,13 +736,13 @@ export default function CustomMail() {
 						</div>
 
 						<SelectControl
-							label={__('Event', 'fair-audience')}
+							label={__('Event', 'fair-audience-experimental')}
 							value={eventDateId}
 							options={[
 								{
 									label: __(
 										'-- All audience --',
-										'fair-audience'
+										'fair-audience-experimental'
 									),
 									value: '',
 								},
@@ -739,22 +763,34 @@ export default function CustomMail() {
 										marginBottom: '8px',
 									}}
 								>
-									{__('Audience', 'fair-audience')}
+									{__(
+										'Audience',
+										'fair-audience-experimental'
+									)}
 								</legend>
 								<CheckboxControl
-									label={__('Participants', 'fair-audience')}
+									label={__(
+										'Participants',
+										'fair-audience-experimental'
+									)}
 									checked={includeSignedUp}
 									onChange={setIncludeSignedUp}
 									disabled={isSending}
 								/>
 								<CheckboxControl
-									label={__('Collaborators', 'fair-audience')}
+									label={__(
+										'Collaborators',
+										'fair-audience-experimental'
+									)}
 									checked={includeCollaborators}
 									onChange={setIncludeCollaborators}
 									disabled={isSending}
 								/>
 								<CheckboxControl
-									label={__('Interested', 'fair-audience')}
+									label={__(
+										'Interested',
+										'fair-audience-experimental'
+									)}
 									checked={includeInterested}
 									onChange={setIncludeInterested}
 									disabled={isSending}
@@ -763,12 +799,15 @@ export default function CustomMail() {
 						)}
 
 						<CheckboxControl
-							label={__('Marketing', 'fair-audience')}
+							label={__(
+								'Marketing',
+								'fair-audience-experimental'
+							)}
 							checked={isMarketing}
 							onChange={setIsMarketing}
 							help={__(
 								'If checked, only sends to participants who consented to marketing communications.',
-								'fair-audience'
+								'fair-audience-experimental'
 							)}
 							disabled={isSending}
 						/>
@@ -781,7 +820,7 @@ export default function CustomMail() {
 										marginBottom: '8px',
 									}}
 								>
-									{__('Groups', 'fair-audience')}
+									{__('Groups', 'fair-audience-experimental')}
 								</legend>
 								<p
 									style={{
@@ -792,7 +831,7 @@ export default function CustomMail() {
 								>
 									{__(
 										'If selected, only sends to members of these groups.',
-										'fair-audience'
+										'fair-audience-experimental'
 									)}
 								</p>
 								{groups.map((group) => (
@@ -823,7 +862,7 @@ export default function CustomMail() {
 								<span>
 									{__(
 										'Loading recipients...',
-										'fair-audience'
+										'fair-audience-experimental'
 									)}
 								</span>
 							</div>
@@ -837,7 +876,7 @@ export default function CustomMail() {
 											/* translators: %1$d: active recipients count, %2$d: total count, %3$d: skipped count */
 											__(
 												'%1$d recipients (%2$d skipped)',
-												'fair-audience'
+												'fair-audience-experimental'
 											),
 											recipients.filter(
 												(r) =>
@@ -865,19 +904,34 @@ export default function CustomMail() {
 									<thead>
 										<tr>
 											<th style={{ width: '60px' }}>
-												{__('Skip', 'fair-audience')}
+												{__(
+													'Skip',
+													'fair-audience-experimental'
+												)}
 											</th>
 											<th>
-												{__('Name', 'fair-audience')}
+												{__(
+													'Name',
+													'fair-audience-experimental'
+												)}
 											</th>
 											<th>
-												{__('Email', 'fair-audience')}
+												{__(
+													'Email',
+													'fair-audience-experimental'
+												)}
 											</th>
 											<th style={{ width: '120px' }}>
-												{__('Label', 'fair-audience')}
+												{__(
+													'Label',
+													'fair-audience-experimental'
+												)}
 											</th>
 											<th style={{ width: '100px' }}>
-												{__('Status', 'fair-audience')}
+												{__(
+													'Status',
+													'fair-audience-experimental'
+												)}
 											</th>
 										</tr>
 									</thead>
@@ -921,21 +975,21 @@ export default function CustomMail() {
 														{!r.has_valid_email
 															? __(
 																	'No email',
-																	'fair-audience'
+																	'fair-audience-experimental'
 															  )
 															: r.would_skip_marketing
 															? __(
 																	'No marketing',
-																	'fair-audience'
+																	'fair-audience-experimental'
 															  )
 															: isSkipped
 															? __(
 																	'Skipped',
-																	'fair-audience'
+																	'fair-audience-experimental'
 															  )
 															: __(
 																	'Will send',
-																	'fair-audience'
+																	'fair-audience-experimental'
 															  )}
 													</td>
 												</tr>
@@ -953,7 +1007,10 @@ export default function CustomMail() {
 									marginBottom: '16px',
 								}}
 							>
-								{__('No matching recipients.', 'fair-audience')}
+								{__(
+									'No matching recipients.',
+									'fair-audience-experimental'
+								)}
 							</p>
 						)}
 
@@ -964,8 +1021,8 @@ export default function CustomMail() {
 							isBusy={isSending}
 						>
 							{isSending
-								? __('Sending...', 'fair-audience')
-								: __('Send Mail', 'fair-audience')}
+								? __('Sending...', 'fair-audience-experimental')
+								: __('Send Mail', 'fair-audience-experimental')}
 						</Button>
 					</form>
 				</CardBody>
@@ -975,13 +1032,16 @@ export default function CustomMail() {
 			<Card>
 				<CardHeader>
 					<h2 style={{ margin: 0 }}>
-						{__('Mail History', 'fair-audience')}
+						{__('Mail History', 'fair-audience-experimental')}
 					</h2>
 				</CardHeader>
 				<CardBody>
 					{mails.length === 0 ? (
 						<p style={{ color: '#666' }}>
-							{__('No messages sent yet.', 'fair-audience')}
+							{__(
+								'No messages sent yet.',
+								'fair-audience-experimental'
+							)}
 						</p>
 					) : (
 						<table
@@ -991,25 +1051,46 @@ export default function CustomMail() {
 							<thead>
 								<tr>
 									<th style={{ width: '25%' }}>
-										{__('Subject', 'fair-audience')}
+										{__(
+											'Subject',
+											'fair-audience-experimental'
+										)}
 									</th>
 									<th style={{ width: '20%' }}>
-										{__('Event', 'fair-audience')}
+										{__(
+											'Event',
+											'fair-audience-experimental'
+										)}
 									</th>
 									<th style={{ width: '8%' }}>
-										{__('Sent', 'fair-audience')}
+										{__(
+											'Sent',
+											'fair-audience-experimental'
+										)}
 									</th>
 									<th style={{ width: '8%' }}>
-										{__('Failed', 'fair-audience')}
+										{__(
+											'Failed',
+											'fair-audience-experimental'
+										)}
 									</th>
 									<th style={{ width: '9%' }}>
-										{__('Skipped', 'fair-audience')}
+										{__(
+											'Skipped',
+											'fair-audience-experimental'
+										)}
 									</th>
 									<th style={{ width: '18%' }}>
-										{__('Date', 'fair-audience')}
+										{__(
+											'Date',
+											'fair-audience-experimental'
+										)}
 									</th>
 									<th style={{ width: '12%' }}>
-										{__('Actions', 'fair-audience')}
+										{__(
+											'Actions',
+											'fair-audience-experimental'
+										)}
 									</th>
 								</tr>
 							</thead>
@@ -1034,7 +1115,7 @@ export default function CustomMail() {
 											>
 												{__(
 													'Duplicate',
-													'fair-audience'
+													'fair-audience-experimental'
 												)}
 											</Button>
 											<Button
@@ -1044,7 +1125,10 @@ export default function CustomMail() {
 													handleDelete(mail.id)
 												}
 											>
-												{__('Delete', 'fair-audience')}
+												{__(
+													'Delete',
+													'fair-audience-experimental'
+												)}
 											</Button>
 										</td>
 									</tr>

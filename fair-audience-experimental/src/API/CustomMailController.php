@@ -2,12 +2,12 @@
 /**
  * Custom Mail REST API Controller
  *
- * @package FairAudience
+ * @package FairAudienceExperimental
  */
 
-namespace FairAudience\API;
+namespace FairAudienceExperimental\API;
 
-use FairAudience\Database\CustomMailMessageRepository;
+use FairAudienceExperimental\Database\CustomMailMessageRepository;
 use FairAudience\Services\EmailService;
 use WP_REST_Controller;
 use WP_REST_Server;
@@ -254,7 +254,7 @@ class CustomMailController extends WP_REST_Controller {
 		if ( ! current_user_can( 'manage_options' ) ) {
 			return new WP_Error(
 				'rest_forbidden',
-				__( 'You do not have permission to manage custom mail.', 'fair-audience' ),
+				__( 'You do not have permission to manage custom mail.', 'fair-audience-experimental' ),
 				array( 'status' => 403 )
 			);
 		}
@@ -316,7 +316,7 @@ class CustomMailController extends WP_REST_Controller {
 			if ( ! $event_date ) {
 				return new WP_Error(
 					'invalid_event_date',
-					__( 'Event date not found.', 'fair-audience' ),
+					__( 'Event date not found.', 'fair-audience-experimental' ),
 					array( 'status' => 404 )
 				);
 			}
@@ -346,7 +346,7 @@ class CustomMailController extends WP_REST_Controller {
 		}
 
 		// Save the record.
-		$message                = new \FairAudience\Models\CustomMailMessage();
+		$message                = new \FairAudienceExperimental\Models\CustomMailMessage();
 		$message->subject       = $subject;
 		$message->content       = $content;
 		$message->event_date_id = $event_date_id ?: null;
@@ -399,7 +399,7 @@ class CustomMailController extends WP_REST_Controller {
 			if ( ! $event_date ) {
 				return new WP_Error(
 					'invalid_event_date',
-					__( 'Event date not found.', 'fair-audience' ),
+					__( 'Event date not found.', 'fair-audience-experimental' ),
 					array( 'status' => 404 )
 				);
 			}
@@ -431,7 +431,7 @@ class CustomMailController extends WP_REST_Controller {
 		if ( ! $message ) {
 			return new WP_Error(
 				'not_found',
-				__( 'Custom mail message not found.', 'fair-audience' ),
+				__( 'Custom mail message not found.', 'fair-audience-experimental' ),
 				array( 'status' => 404 )
 			);
 		}
@@ -515,7 +515,7 @@ class CustomMailController extends WP_REST_Controller {
 	/**
 	 * Prepare message for response.
 	 *
-	 * @param \FairAudience\Models\CustomMailMessage $message Message object.
+	 * @param \FairAudienceExperimental\Models\CustomMailMessage $message Message object.
 	 * @return array Prepared data.
 	 */
 	private function prepare_message( $message ) {

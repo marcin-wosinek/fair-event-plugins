@@ -6,12 +6,12 @@
  * (an event date's start/end) plus a signed minute offset. Shared by the REST
  * controller (on create/edit) and the reschedule hooks (when an anchor moves).
  *
- * @package FairAudience
+ * @package FairAudienceExperimental
  */
 
-namespace FairAudience\Services;
+namespace FairAudienceExperimental\Services;
 
-use FairAudience\Models\ScheduledMessage;
+use FairAudienceExperimental\Models\ScheduledMessage;
 
 defined( 'WPINC' ) || die;
 

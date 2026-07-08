@@ -57,6 +57,22 @@ module.exports = {
       process.cwd(),
       "src/Admin/group-detail/index.js",
     ),
+    "admin/custom-mail/index": path.resolve(
+      process.cwd(),
+      "src/Admin/custom-mail/index.js",
+    ),
+    "admin/extra-messages-list/index": path.resolve(
+      process.cwd(),
+      "src/Admin/extra-messages-list/index.js",
+    ),
+    "admin/edit-extra-message/index": path.resolve(
+      process.cwd(),
+      "src/Admin/edit-extra-message/index.js",
+    ),
+    "admin/media-library-filter": path.resolve(
+      process.cwd(),
+      "src/Admin/media-library-filter.js",
+    ),
     "public/poll-response/index": path.resolve(
       process.cwd(),
       "src/public/poll-response/index.js",

@@ -30,7 +30,7 @@ export default function ExtraMessagesList() {
 			!confirm(
 				__(
 					'Are you sure you want to delete this extra message?',
-					'fair-audience'
+					'fair-audience-experimental'
 				)
 			)
 		) {
@@ -45,7 +45,9 @@ export default function ExtraMessagesList() {
 				loadMessages();
 			})
 			.catch((err) => {
-				alert(__('Error: ', 'fair-audience') + err.message);
+				alert(
+					__('Error: ', 'fair-audience-experimental') + err.message
+				);
 			});
 	};
 
@@ -63,7 +65,9 @@ export default function ExtraMessagesList() {
 				loadMessages();
 			})
 			.catch((err) => {
-				alert(__('Error: ', 'fair-audience') + err.message);
+				alert(
+					__('Error: ', 'fair-audience-experimental') + err.message
+				);
 			});
 	};
 
@@ -77,7 +81,7 @@ export default function ExtraMessagesList() {
 	if (isLoading) {
 		return (
 			<div className="wrap">
-				<h1>{__('Extra Messages', 'fair-audience')}</h1>
+				<h1>{__('Extra Messages', 'fair-audience-experimental')}</h1>
 				<Spinner />
 			</div>
 		);
@@ -86,7 +90,7 @@ export default function ExtraMessagesList() {
 	if (error) {
 		return (
 			<div className="wrap">
-				<h1>{__('Extra Messages', 'fair-audience')}</h1>
+				<h1>{__('Extra Messages', 'fair-audience-experimental')}</h1>
 				<div className="notice notice-error">
 					<p>{error}</p>
 				</div>
@@ -97,13 +101,13 @@ export default function ExtraMessagesList() {
 	return (
 		<div className="wrap">
 			<h1 className="wp-heading-inline">
-				{__('Extra Messages', 'fair-audience')}
+				{__('Extra Messages', 'fair-audience-experimental')}
 			</h1>
 			<a
 				href="admin.php?page=fair-audience-edit-extra-message"
 				className="page-title-action"
 			>
-				{__('Add New', 'fair-audience')}
+				{__('Add New', 'fair-audience-experimental')}
 			</a>
 
 			<Card style={{ marginTop: '20px' }}>
@@ -112,17 +116,37 @@ export default function ExtraMessagesList() {
 						<p>
 							{__(
 								'No extra messages found. Create your first extra message to get started.',
-								'fair-audience'
+								'fair-audience-experimental'
 							)}
 						</p>
 					) : (
 						<table className="wp-list-table widefat fixed striped">
 							<thead>
 								<tr>
-									<th>{__('Content', 'fair-audience')}</th>
-									<th>{__('Category', 'fair-audience')}</th>
-									<th>{__('Status', 'fair-audience')}</th>
-									<th>{__('Actions', 'fair-audience')}</th>
+									<th>
+										{__(
+											'Content',
+											'fair-audience-experimental'
+										)}
+									</th>
+									<th>
+										{__(
+											'Category',
+											'fair-audience-experimental'
+										)}
+									</th>
+									<th>
+										{__(
+											'Status',
+											'fair-audience-experimental'
+										)}
+									</th>
+									<th>
+										{__(
+											'Actions',
+											'fair-audience-experimental'
+										)}
+									</th>
 								</tr>
 							</thead>
 							<tbody>
@@ -131,7 +155,10 @@ export default function ExtraMessagesList() {
 										<td>{truncateContent(msg.content)}</td>
 										<td>
 											{msg.category_name ||
-												__('All', 'fair-audience')}
+												__(
+													'All',
+													'fair-audience-experimental'
+												)}
 										</td>
 										<td>
 											<Button
@@ -148,11 +175,11 @@ export default function ExtraMessagesList() {
 												{msg.is_active
 													? __(
 															'Active',
-															'fair-audience'
+															'fair-audience-experimental'
 													  )
 													: __(
 															'Inactive',
-															'fair-audience'
+															'fair-audience-experimental'
 													  )}
 											</Button>
 										</td>
@@ -161,7 +188,10 @@ export default function ExtraMessagesList() {
 												isLink
 												href={`admin.php?page=fair-audience-edit-extra-message&message_id=${msg.id}`}
 											>
-												{__('Edit', 'fair-audience')}
+												{__(
+													'Edit',
+													'fair-audience-experimental'
+												)}
 											</Button>
 											{' | '}
 											<Button
@@ -173,7 +203,10 @@ export default function ExtraMessagesList() {
 													color: '#b32d2e',
 												}}
 											>
-												{__('Delete', 'fair-audience')}
+												{__(
+													'Delete',
+													'fair-audience-experimental'
+												)}
 											</Button>
 										</td>
 									</tr>

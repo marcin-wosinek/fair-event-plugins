@@ -42,6 +42,7 @@ class Plugin {
 		$this->load_settings();
 		$this->load_rest_api();
 		$this->load_frontend();
+		$this->load_hooks();
 	}
 
 	/**
@@ -64,6 +65,24 @@ class Plugin {
 	private function load_settings() {
 		$settings = new \FairAudienceExperimental\Settings\Settings();
 		$settings->init();
+	}
+
+	/**
+	 * Initialize hook-only bundles that don't register admin pages or REST
+	 * routes of their own: the media library integration (`galleries`) and
+	 * the scheduled-message cron/reschedule hooks (`messaging`).
+	 *
+	 * @return void
+	 */
+	private function load_hooks() {
+		if ( Features::is_enabled( 'galleries' ) ) {
+			\FairAudienceExperimental\Admin\MediaLibraryHooks::init();
+			\FairAudienceExperimental\Admin\MediaBatchActions::init();
+		}
+
+		if ( Features::is_enabled( 'messaging' ) ) {
+			\FairAudienceExperimental\Hooks\ScheduledMessageHooks::init();
+		}
 	}
 
 	/**
@@ -179,6 +198,58 @@ class Plugin {
 				}
 			);
 		}
+
+		if ( Features::is_enabled( 'galleries' ) ) {
+			add_action(
+				'rest_api_init',
+				function () {
+					$controller = new \FairAudienceExperimental\API\GalleryAccessController();
+					$controller->register_routes();
+				}
+			);
+
+			add_action(
+				'rest_api_init',
+				function () {
+					$controller = new \FairAudienceExperimental\API\PhotoUploadController();
+					$controller->register_routes();
+				}
+			);
+
+			add_action(
+				'rest_api_init',
+				function () {
+					$controller = new \FairAudienceExperimental\API\PhotoTagsController();
+					$controller->register_routes();
+				}
+			);
+		}
+
+		if ( Features::is_enabled( 'messaging' ) ) {
+			add_action(
+				'rest_api_init',
+				function () {
+					$controller = new \FairAudienceExperimental\API\CustomMailController();
+					$controller->register_routes();
+				}
+			);
+
+			add_action(
+				'rest_api_init',
+				function () {
+					$controller = new \FairAudienceExperimental\API\ExtraMessagesController();
+					$controller->register_routes();
+				}
+			);
+
+			add_action(
+				'rest_api_init',
+				function () {
+					$controller = new \FairAudienceExperimental\API\ScheduledMessagesController();
+					$controller->register_routes();
+				}
+			);
+		}
 	}
 
 	/**
@@ -201,6 +272,9 @@ class Plugin {
 				if ( Features::is_enabled( 'collaborators' ) ) {
 					$vars[] = 'collaborator_profile';
 				}
+				if ( Features::is_enabled( 'galleries' ) ) {
+					$vars[] = 'photo_upload';
+				}
 				return $vars;
 			}
 		);
@@ -215,6 +289,10 @@ class Plugin {
 
 		if ( Features::is_enabled( 'collaborators' ) ) {
 			add_action( 'template_redirect', array( $this, 'handle_collaborator_profile' ) );
+		}
+
+		if ( Features::is_enabled( 'galleries' ) ) {
+			add_action( 'template_redirect', array( $this, 'handle_photo_upload' ) );
 		}
 
 		if ( Features::is_enabled( 'instagram' ) ) {
@@ -251,6 +329,22 @@ class Plugin {
 		}
 
 		include FAIR_AUDIENCE_EXPERIMENTAL_PLUGIN_DIR . 'templates/fee-payment.php';
+		exit;
+	}
+
+	/**
+	 * Handle photo upload page requests.
+	 *
+	 * @return void
+	 */
+	public function handle_photo_upload() {
+		$photo_upload = get_query_var( 'photo_upload' );
+
+		if ( empty( $photo_upload ) ) {
+			return;
+		}
+
+		include FAIR_AUDIENCE_EXPERIMENTAL_PLUGIN_DIR . 'templates/photo-upload.php';
 		exit;
 	}
 

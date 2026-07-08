@@ -2,13 +2,13 @@
 /**
  * Media Library Batch Actions
  *
- * @package FairAudience
+ * @package FairAudienceExperimental
  */
 
-namespace FairAudience\Admin;
+namespace FairAudienceExperimental\Admin;
 
 use FairAudience\Database\ParticipantRepository;
-use FairAudience\Database\PhotoParticipantRepository;
+use FairAudienceExperimental\Database\PhotoParticipantRepository;
 
 defined( 'WPINC' ) || die;
 
@@ -35,7 +35,7 @@ class MediaBatchActions {
 	 * @return array Modified bulk actions.
 	 */
 	public static function register_bulk_actions( $actions ) {
-		$actions['fair_audience_set_author'] = __( 'Set Photo Author', 'fair-audience' );
+		$actions['fair_audience_set_author'] = __( 'Set Photo Author', 'fair-audience-experimental' );
 		return $actions;
 	}
 
@@ -81,8 +81,8 @@ class MediaBatchActions {
 	public static function register_batch_page() {
 		add_submenu_page(
 			'', // Hidden page.
-			__( 'Set Photo Author', 'fair-audience' ),
-			__( 'Set Photo Author', 'fair-audience' ),
+			__( 'Set Photo Author', 'fair-audience-experimental' ),
+			__( 'Set Photo Author', 'fair-audience-experimental' ),
 			'upload_files',
 			'fair-audience-batch-assign',
 			array( __CLASS__, 'render_batch_page' )
@@ -105,26 +105,26 @@ class MediaBatchActions {
 		// Verify nonce.
 		if ( ! isset( $_POST['fair_audience_batch_nonce'] ) ||
 			! wp_verify_nonce( $_POST['fair_audience_batch_nonce'], 'fair_audience_batch_assign_submit' ) ) {
-			wp_die( esc_html__( 'Security check failed.', 'fair-audience' ) );
+			wp_die( esc_html__( 'Security check failed.', 'fair-audience-experimental' ) );
 		}
 
 		// Check capability.
 		if ( ! current_user_can( 'upload_files' ) ) {
-			wp_die( esc_html__( 'You do not have permission to access this page.', 'fair-audience' ) );
+			wp_die( esc_html__( 'You do not have permission to access this page.', 'fair-audience-experimental' ) );
 		}
 
 		// Get participant ID.
 		$participant_id = isset( $_POST['participant_id'] ) ? absint( $_POST['participant_id'] ) : 0;
 
 		if ( ! $participant_id ) {
-			wp_die( esc_html__( 'Please select an author.', 'fair-audience' ) );
+			wp_die( esc_html__( 'Please select an author.', 'fair-audience-experimental' ) );
 		}
 
 		// Verify participant exists.
 		$participant_repo = new ParticipantRepository();
 		$participant      = $participant_repo->get_by_id( $participant_id );
 		if ( ! $participant ) {
-			wp_die( esc_html__( 'Invalid author selected.', 'fair-audience' ) );
+			wp_die( esc_html__( 'Invalid author selected.', 'fair-audience-experimental' ) );
 		}
 
 		// Get attachment IDs from form.
@@ -132,7 +132,7 @@ class MediaBatchActions {
 		$attachment_ids    = array_filter( array_map( 'absint', explode( ',', $attachments_param ) ) );
 
 		if ( empty( $attachment_ids ) ) {
-			wp_die( esc_html__( 'No photos to assign.', 'fair-audience' ) );
+			wp_die( esc_html__( 'No photos to assign.', 'fair-audience-experimental' ) );
 		}
 
 		// Assign photos to author.
@@ -168,12 +168,12 @@ class MediaBatchActions {
 	public static function render_batch_page() {
 		// Verify nonce.
 		if ( ! isset( $_GET['_wpnonce'] ) || ! wp_verify_nonce( $_GET['_wpnonce'], 'fair_audience_batch_assign' ) ) {
-			wp_die( esc_html__( 'Security check failed.', 'fair-audience' ) );
+			wp_die( esc_html__( 'Security check failed.', 'fair-audience-experimental' ) );
 		}
 
 		// Check capability.
 		if ( ! current_user_can( 'upload_files' ) ) {
-			wp_die( esc_html__( 'You do not have permission to access this page.', 'fair-audience' ) );
+			wp_die( esc_html__( 'You do not have permission to access this page.', 'fair-audience-experimental' ) );
 		}
 
 		// Get attachment IDs.
@@ -181,7 +181,7 @@ class MediaBatchActions {
 		$attachment_ids    = array_filter( array_map( 'absint', explode( ',', $attachments_param ) ) );
 
 		if ( empty( $attachment_ids ) ) {
-			wp_die( esc_html__( 'No photos selected.', 'fair-audience' ) );
+			wp_die( esc_html__( 'No photos selected.', 'fair-audience-experimental' ) );
 		}
 
 		// Get participants for dropdown.
@@ -190,7 +190,7 @@ class MediaBatchActions {
 
 		?>
 		<div class="wrap">
-			<h1><?php esc_html_e( 'Set Photo Author', 'fair-audience' ); ?></h1>
+			<h1><?php esc_html_e( 'Set Photo Author', 'fair-audience-experimental' ); ?></h1>
 
 			<form method="post">
 				<?php wp_nonce_field( 'fair_audience_batch_assign_submit', 'fair_audience_batch_nonce' ); ?>
@@ -205,7 +205,7 @@ class MediaBatchActions {
 								'%d photo selected:',
 								'%d photos selected:',
 								count( $attachment_ids ),
-								'fair-audience'
+								'fair-audience-experimental'
 							),
 							count( $attachment_ids )
 						)
@@ -234,11 +234,11 @@ class MediaBatchActions {
 				<table class="form-table">
 					<tr>
 						<th scope="row">
-							<label for="fair_audience_participant_id"><?php esc_html_e( 'Author', 'fair-audience' ); ?></label>
+							<label for="fair_audience_participant_id"><?php esc_html_e( 'Author', 'fair-audience-experimental' ); ?></label>
 						</th>
 						<td>
 							<select name="participant_id" id="fair_audience_participant_id" required>
-								<option value=""><?php esc_html_e( '— Select Author —', 'fair-audience' ); ?></option>
+								<option value=""><?php esc_html_e( '— Select Author —', 'fair-audience-experimental' ); ?></option>
 								<?php foreach ( $participants as $participant ) : ?>
 									<option value="<?php echo esc_attr( $participant->id ); ?>">
 										<?php echo esc_html( $participant->surname . ', ' . $participant->name ); ?>
@@ -246,7 +246,7 @@ class MediaBatchActions {
 								<?php endforeach; ?>
 							</select>
 							<p class="description">
-								<?php esc_html_e( 'All selected photos will be attributed to this author.', 'fair-audience' ); ?>
+								<?php esc_html_e( 'All selected photos will be attributed to this author.', 'fair-audience-experimental' ); ?>
 							</p>
 						</td>
 					</tr>
@@ -254,10 +254,10 @@ class MediaBatchActions {
 
 				<p class="submit">
 					<a href="<?php echo esc_url( admin_url( 'upload.php' ) ); ?>" class="button">
-						<?php esc_html_e( 'Cancel', 'fair-audience' ); ?>
+						<?php esc_html_e( 'Cancel', 'fair-audience-experimental' ); ?>
 					</a>
 					<button type="submit" name="fair_audience_batch_submit" class="button button-primary">
-						<?php esc_html_e( 'Set Author', 'fair-audience' ); ?>
+						<?php esc_html_e( 'Set Author', 'fair-audience-experimental' ); ?>
 					</button>
 				</p>
 			</form>
@@ -288,7 +288,7 @@ class MediaBatchActions {
 						'%1$d photo assigned to "%2$s".',
 						'%1$d photos assigned to "%2$s".',
 						$assigned,
-						'fair-audience'
+						'fair-audience-experimental'
 					),
 					$assigned,
 					$author_name

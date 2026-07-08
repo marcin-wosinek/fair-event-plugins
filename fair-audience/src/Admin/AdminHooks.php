@@ -30,10 +30,6 @@ class AdminHooks {
 			'title'    => 'Event Participants',
 			'callback' => 'render_event_participants_page',
 		),
-		'fair-audience-edit-extra-message' => array(
-			'title'    => 'Edit Extra Message',
-			'callback' => 'render_edit_extra_message_page',
-		),
 		'fair-audience-participant-detail' => array(
 			'title'    => 'Participant Detail',
 			'callback' => 'render_participant_detail_page',
@@ -166,29 +162,6 @@ class AdminHooks {
 		// Hidden submenu page - Participant Detail.
 		$this->register_hidden_page( 'fair-audience-participant-detail' );
 
-		// Submenu page - Custom Mail.
-		add_submenu_page(
-			'fair-audience',
-			__( 'Custom Mail', 'fair-audience' ),
-			__( 'Custom Mail', 'fair-audience' ),
-			'manage_options',
-			'fair-audience-custom-mail',
-			array( $this, 'render_custom_mail_page' )
-		);
-
-		// Submenu page - Extra Messages.
-		add_submenu_page(
-			'fair-audience',
-			__( 'Extra Messages', 'fair-audience' ),
-			__( 'Extra Messages', 'fair-audience' ),
-			'manage_options',
-			'fair-audience-extra-messages',
-			array( $this, 'render_extra_messages_list_page' )
-		);
-
-		// Hidden submenu page - Edit Extra Message.
-		$this->register_hidden_page( 'fair-audience-edit-extra-message' );
-
 		// Submenu page - Settings.
 		add_submenu_page(
 			'fair-audience',
@@ -221,30 +194,6 @@ class AdminHooks {
 	 */
 	public function render_event_participants_page() {
 		$page = new EventParticipantsPage();
-		$page->render();
-	}
-
-	/**
-	 * Render Custom Mail page.
-	 */
-	public function render_custom_mail_page() {
-		$page = new CustomMailPage();
-		$page->render();
-	}
-
-	/**
-	 * Render Extra Messages List page.
-	 */
-	public function render_extra_messages_list_page() {
-		$page = new ExtraMessagesListPage();
-		$page->render();
-	}
-
-	/**
-	 * Render Edit Extra Message page.
-	 */
-	public function render_edit_extra_message_page() {
-		$page = new EditExtraMessagePage();
 		$page->render();
 	}
 
@@ -298,23 +247,6 @@ class AdminHooks {
 		// Participant Detail page.
 		if ( 'admin_page_fair-audience-participant-detail' === $hook ) {
 			$this->enqueue_page_script( 'participant-detail', $plugin_dir );
-		}
-
-		// Custom Mail page.
-		if ( 'fair-audience_page_fair-audience-custom-mail' === $hook ) {
-			wp_enqueue_editor();
-			$this->enqueue_page_script( 'custom-mail', $plugin_dir );
-		}
-
-		// Extra Messages List page.
-		if ( 'fair-audience_page_fair-audience-extra-messages' === $hook ) {
-			$this->enqueue_page_script( 'extra-messages-list', $plugin_dir );
-		}
-
-		// Edit Extra Message page.
-		if ( 'admin_page_fair-audience-edit-extra-message' === $hook ) {
-			wp_enqueue_editor();
-			$this->enqueue_page_script( 'edit-extra-message', $plugin_dir );
 		}
 
 		// Settings page.

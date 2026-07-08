@@ -106,7 +106,12 @@ export default function EditExtraMessage() {
 		const content = getEditorContent();
 
 		if (!content || content === '<p></p>' || content === '<br>') {
-			alert(__('Please enter message content.', 'fair-audience'));
+			alert(
+				__(
+					'Please enter message content.',
+					'fair-audience-experimental'
+				)
+			);
 			return;
 		}
 
@@ -144,8 +149,11 @@ export default function EditExtraMessage() {
 			<div className="wrap">
 				<h1>
 					{messageId
-						? __('Edit Extra Message', 'fair-audience')
-						: __('Add New Extra Message', 'fair-audience')}
+						? __('Edit Extra Message', 'fair-audience-experimental')
+						: __(
+								'Add New Extra Message',
+								'fair-audience-experimental'
+						  )}
 				</h1>
 				<Spinner />
 			</div>
@@ -156,8 +164,8 @@ export default function EditExtraMessage() {
 		<div className="wrap">
 			<h1>
 				{messageId
-					? __('Edit Extra Message', 'fair-audience')
-					: __('Add New Extra Message', 'fair-audience')}
+					? __('Edit Extra Message', 'fair-audience-experimental')
+					: __('Add New Extra Message', 'fair-audience-experimental')}
 			</h1>
 
 			{error && (
@@ -184,7 +192,7 @@ export default function EditExtraMessage() {
 						fontWeight: '600',
 					}}
 				>
-					{__('Content', 'fair-audience')}
+					{__('Content', 'fair-audience-experimental')}
 				</label>
 				<textarea
 					id="extra-message-content"
@@ -195,11 +203,14 @@ export default function EditExtraMessage() {
 
 				<div style={{ marginTop: '16px' }}>
 					<SelectControl
-						label={__('Category', 'fair-audience')}
+						label={__('Category', 'fair-audience-experimental')}
 						value={formData.category_id}
 						options={[
 							{
-								label: __('All categories', 'fair-audience'),
+								label: __(
+									'All categories',
+									'fair-audience-experimental'
+								),
 								value: '',
 							},
 							...categories.map((cat) => ({
@@ -215,21 +226,21 @@ export default function EditExtraMessage() {
 						}
 						help={__(
 							'Limit this message to events in a specific category, or leave as "All categories" for all events.',
-							'fair-audience'
+							'fair-audience-experimental'
 						)}
 					/>
 				</div>
 
 				<div style={{ marginTop: '16px' }}>
 					<ToggleControl
-						label={__('Active', 'fair-audience')}
+						label={__('Active', 'fair-audience-experimental')}
 						checked={formData.is_active}
 						onChange={(value) =>
 							setFormData({ ...formData, is_active: value })
 						}
 						help={__(
 							'Active messages are appended to system emails.',
-							'fair-audience'
+							'fair-audience-experimental'
 						)}
 					/>
 				</div>
@@ -238,17 +249,17 @@ export default function EditExtraMessage() {
 			<div style={{ marginTop: '20px' }}>
 				<Button isPrimary onClick={handleSubmit} disabled={isSaving}>
 					{isSaving
-						? __('Saving...', 'fair-audience')
+						? __('Saving...', 'fair-audience-experimental')
 						: messageId
-						? __('Update Message', 'fair-audience')
-						: __('Create Message', 'fair-audience')}
+						? __('Update Message', 'fair-audience-experimental')
+						: __('Create Message', 'fair-audience-experimental')}
 				</Button>{' '}
 				<Button
 					isSecondary
 					href="admin.php?page=fair-audience-extra-messages"
 					disabled={isSaving}
 				>
-					{__('Cancel', 'fair-audience')}
+					{__('Cancel', 'fair-audience-experimental')}
 				</Button>
 			</div>
 		</div>

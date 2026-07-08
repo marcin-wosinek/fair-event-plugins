@@ -2,12 +2,12 @@
 /**
  * Extra Message Repository
  *
- * @package FairAudience
+ * @package FairAudienceExperimental
  */
 
-namespace FairAudience\Database;
+namespace FairAudienceExperimental\Database;
 
-use FairAudience\Models\ExtraMessage;
+use FairAudienceExperimental\Models\ExtraMessage;
 
 defined( 'WPINC' ) || die;
 

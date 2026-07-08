@@ -10,7 +10,7 @@ namespace FairAudience\Services;
 use FairAudience\Models\Participant;
 use FairAudience\Database\EmailConfirmationTokenRepository;
 use FairAudience\Database\ParticipantCategoryRepository;
-use FairAudience\Database\GalleryAccessKeyRepository;
+use FairAudienceExperimental\Database\GalleryAccessKeyRepository;
 use FairAudienceExperimental\Database\PollAccessKeyRepository;
 use FairAudienceExperimental\Database\PollResponseRepository;
 use FairAudienceExperimental\Database\GroupParticipantRepository;
@@ -46,7 +46,9 @@ class ParticipantAnonymizationService {
 		if ( class_exists( '\FairForm\Database\QuestionnaireSubmissionRepository' ) ) {
 			( new \FairForm\Database\QuestionnaireSubmissionRepository() )->delete_by_participant( $id );
 		}
-		( new GalleryAccessKeyRepository() )->delete_by_participant( $id );
+		if ( class_exists( GalleryAccessKeyRepository::class ) ) {
+			( new GalleryAccessKeyRepository() )->delete_by_participant( $id );
+		}
 		if ( class_exists( PollAccessKeyRepository::class ) ) {
 			( new PollAccessKeyRepository() )->delete_by_participant( $id );
 			( new PollResponseRepository() )->delete_all_by_participant( $id );

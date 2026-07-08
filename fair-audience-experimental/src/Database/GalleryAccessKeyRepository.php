@@ -2,12 +2,13 @@
 /**
  * Gallery Access Key Repository
  *
- * @package FairAudience
+ * @package FairAudienceExperimental
  */
 
-namespace FairAudience\Database;
+namespace FairAudienceExperimental\Database;
 
-use FairAudience\Models\GalleryAccessKey;
+use FairAudienceExperimental\Models\GalleryAccessKey;
+use FairAudience\Database\EventParticipantRepository;
 
 defined( 'WPINC' ) || die;
 
