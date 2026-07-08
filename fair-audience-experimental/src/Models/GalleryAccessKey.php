@@ -2,10 +2,10 @@
 /**
  * Gallery Access Key Model
  *
- * @package FairAudience
+ * @package FairAudienceExperimental
  */
 
-namespace FairAudience\Models;
+namespace FairAudienceExperimental\Models;
 
 defined( 'WPINC' ) || die;
 

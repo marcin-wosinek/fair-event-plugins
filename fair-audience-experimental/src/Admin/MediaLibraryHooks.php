@@ -2,12 +2,12 @@
 /**
  * Media Library Hooks
  *
- * @package FairAudience
+ * @package FairAudienceExperimental
  */
 
-namespace FairAudience\Admin;
+namespace FairAudienceExperimental\Admin;
 
-use FairAudience\Database\PhotoParticipantRepository;
+use FairAudienceExperimental\Database\PhotoParticipantRepository;
 use FairAudience\Database\ParticipantRepository;
 
 defined( 'WPINC' ) || die;
@@ -91,7 +91,7 @@ class MediaLibraryHooks {
 
 		$participants = self::get_participants_for_dropdown();
 
-		$options = '<option value="">' . __( '— Select Author —', 'fair-audience' ) . '</option>';
+		$options = '<option value="">' . __( '— Select Author —', 'fair-audience-experimental' ) . '</option>';
 		foreach ( $participants as $participant ) {
 			$selected = selected( $current_author_id, $participant['id'], false );
 			$options .= sprintf(
@@ -103,7 +103,7 @@ class MediaLibraryHooks {
 		}
 
 		$form_fields['fair_photo_author'] = array(
-			'label' => __( 'Photo Author', 'fair-audience' ),
+			'label' => __( 'Photo Author', 'fair-audience-experimental' ),
 			'input' => 'html',
 			'html'  => sprintf(
 				'<select name="attachments[%d][fair_photo_author]" id="attachments-%d-fair_photo_author">%s</select>',
@@ -111,7 +111,7 @@ class MediaLibraryHooks {
 				$post->ID,
 				$options
 			),
-			'helps' => __( 'Who took this photo', 'fair-audience' ),
+			'helps' => __( 'Who took this photo', 'fair-audience-experimental' ),
 		);
 
 		return $form_fields;
@@ -174,7 +174,7 @@ class MediaLibraryHooks {
 		}
 
 		// Build dropdown options.
-		$options = '<option value="">' . __( '— Add Person —', 'fair-audience' ) . '</option>';
+		$options = '<option value="">' . __( '— Add Person —', 'fair-audience-experimental' ) . '</option>';
 		foreach ( $participants as $participant ) {
 			$options .= sprintf(
 				'<option value="%d">%s</option>',
@@ -195,10 +195,10 @@ class MediaLibraryHooks {
 		);
 
 		$form_fields['fair_photo_tags'] = array(
-			'label' => __( 'Tagged People', 'fair-audience' ),
+			'label' => __( 'Tagged People', 'fair-audience-experimental' ),
 			'input' => 'html',
 			'html'  => $html,
-			'helps' => __( 'People in this photo', 'fair-audience' ),
+			'helps' => __( 'People in this photo', 'fair-audience-experimental' ),
 		);
 
 		return $form_fields;
@@ -230,7 +230,7 @@ class MediaLibraryHooks {
 		$participants = self::get_participants_for_dropdown();
 
 		echo '<select name="fair_photo_author_filter">';
-		echo '<option value="">' . esc_html__( 'All Authors', 'fair-audience' ) . '</option>';
+		echo '<option value="">' . esc_html__( 'All Authors', 'fair-audience-experimental' ) . '</option>';
 		foreach ( $participants as $participant ) {
 			printf(
 				'<option value="%d"%s>%s</option>',
@@ -277,8 +277,8 @@ class MediaLibraryHooks {
 	 * @return array Modified columns.
 	 */
 	public static function add_author_column( $columns ) {
-		$columns['fair_photo_author'] = __( 'Photo Author', 'fair-audience' );
-		$columns['fair_photo_likes']  = __( 'Likes', 'fair-audience' );
+		$columns['fair_photo_author'] = __( 'Photo Author', 'fair-audience-experimental' );
+		$columns['fair_photo_likes']  = __( 'Likes', 'fair-audience-experimental' );
 		return $columns;
 	}
 
@@ -394,10 +394,10 @@ class MediaLibraryHooks {
 		<div id="fair-audience-bulk-upload" class="fair-bulk-upload-section" style="margin-top: 10px;">
 			<p>
 				<label for="fair-audience-bulk-upload-selector">
-					<strong><?php esc_html_e( 'Photo Author:', 'fair-audience' ); ?></strong>
+					<strong><?php esc_html_e( 'Photo Author:', 'fair-audience-experimental' ); ?></strong>
 				</label>
 				<select id="fair-audience-bulk-upload-selector" style="margin-left: 10px; min-width: 250px;">
-					<option value=""><?php esc_html_e( '— Select Author —', 'fair-audience' ); ?></option>
+					<option value=""><?php esc_html_e( '— Select Author —', 'fair-audience-experimental' ); ?></option>
 					<?php foreach ( $participants as $participant ) : ?>
 						<option value="<?php echo esc_attr( $participant['id'] ); ?>" <?php selected( $selected, $participant['id'] ); ?>>
 							<?php echo esc_html( $participant['name'] ); ?>
@@ -424,10 +424,10 @@ class MediaLibraryHooks {
 		<div id="fair-audience-bulk-tag" class="fair-bulk-upload-section" style="margin-top: 10px;">
 			<p>
 				<label for="fair-audience-bulk-tag-selector">
-					<strong><?php esc_html_e( 'Tag People:', 'fair-audience' ); ?></strong>
+					<strong><?php esc_html_e( 'Tag People:', 'fair-audience-experimental' ); ?></strong>
 				</label>
 				<select id="fair-audience-bulk-tag-selector" style="margin-left: 10px; min-width: 250px;">
-					<option value=""><?php esc_html_e( '— Add Person —', 'fair-audience' ); ?></option>
+					<option value=""><?php esc_html_e( '— Add Person —', 'fair-audience-experimental' ); ?></option>
 					<?php foreach ( $participants as $participant ) : ?>
 						<option value="<?php echo esc_attr( $participant['id'] ); ?>">
 							<?php echo esc_html( $participant['name'] ); ?>
@@ -479,7 +479,7 @@ class MediaLibraryHooks {
 					var authorId = $(this).val();
 					var statusEl = $('#fair-audience-bulk-upload-status');
 
-					statusEl.text('" . esc_js( __( 'Saving...', 'fair-audience' ) ) . "').css('color', '#666');
+					statusEl.text('" . esc_js( __( 'Saving...', 'fair-audience-experimental' ) ) . "').css('color', '#666');
 
 					$.post(ajaxurl, {
 						action: 'fair_audience_set_bulk_upload_author',
@@ -488,15 +488,15 @@ class MediaLibraryHooks {
 					}, function(response) {
 						if (response.success) {
 							if (authorId) {
-								statusEl.text('" . esc_js( __( 'Saved.', 'fair-audience' ) ) . "').css('color', '#00a32a');
+								statusEl.text('" . esc_js( __( 'Saved.', 'fair-audience-experimental' ) ) . "').css('color', '#00a32a');
 							} else {
 								statusEl.text('').css('color', '#666');
 							}
 						} else {
-							statusEl.text('" . esc_js( __( 'Error saving selection', 'fair-audience' ) ) . "').css('color', '#d63638');
+							statusEl.text('" . esc_js( __( 'Error saving selection', 'fair-audience-experimental' ) ) . "').css('color', '#d63638');
 						}
 					}).fail(function(xhr, status, error) {
-						statusEl.text('" . esc_js( __( 'Error:', 'fair-audience' ) ) . " ' + error).css('color', '#d63638');
+						statusEl.text('" . esc_js( __( 'Error:', 'fair-audience-experimental' ) ) . " ' + error).css('color', '#d63638');
 					});
 				});
 
@@ -517,7 +517,7 @@ class MediaLibraryHooks {
 						return;
 					}
 
-					statusEl.text('" . esc_js( __( 'Saving...', 'fair-audience' ) ) . "').css('color', '#666');
+					statusEl.text('" . esc_js( __( 'Saving...', 'fair-audience-experimental' ) ) . "').css('color', '#666');
 
 					$.post(ajaxurl, {
 						action: 'fair_audience_set_bulk_upload_tag',
@@ -531,13 +531,13 @@ class MediaLibraryHooks {
 							var removeBtn = $('<button type=\"button\" class=\"fair-audience-tag-remove\" data-id=\"' + participantId + '\" style=\"background: none; border: none; cursor: pointer; margin-left: 4px; padding: 0; font-size: 16px; line-height: 1; color: #666;\">&times;</button>');
 							chip.append(removeBtn);
 							$('#fair-audience-bulk-tag-list').append(chip);
-							statusEl.text('" . esc_js( __( 'Saved.', 'fair-audience' ) ) . "').css('color', '#00a32a');
+							statusEl.text('" . esc_js( __( 'Saved.', 'fair-audience-experimental' ) ) . "').css('color', '#00a32a');
 						} else {
-							statusEl.text('" . esc_js( __( 'Error saving selection', 'fair-audience' ) ) . "').css('color', '#d63638');
+							statusEl.text('" . esc_js( __( 'Error saving selection', 'fair-audience-experimental' ) ) . "').css('color', '#d63638');
 						}
 						sel.val('');
 					}).fail(function(xhr, status, error) {
-						statusEl.text('" . esc_js( __( 'Error:', 'fair-audience' ) ) . " ' + error).css('color', '#d63638');
+						statusEl.text('" . esc_js( __( 'Error:', 'fair-audience-experimental' ) ) . " ' + error).css('color', '#d63638');
 						sel.val('');
 					});
 				});
@@ -558,7 +558,7 @@ class MediaLibraryHooks {
 							chip.remove();
 							statusEl.text('').css('color', '#666');
 						} else {
-							statusEl.text('" . esc_js( __( 'Error removing tag', 'fair-audience' ) ) . "').css('color', '#d63638');
+							statusEl.text('" . esc_js( __( 'Error removing tag', 'fair-audience-experimental' ) ) . "').css('color', '#d63638');
 						}
 					});
 				});
@@ -752,7 +752,7 @@ class MediaLibraryHooks {
 						return;
 					}
 
-					statusEl.text('" . esc_js( __( 'Saving...', 'fair-audience' ) ) . "').css('color', '#666');
+					statusEl.text('" . esc_js( __( 'Saving...', 'fair-audience-experimental' ) ) . "').css('color', '#666');
 
 					$.post(ajaxurl, {
 						action: 'fair_audience_edit_tag',
@@ -767,14 +767,14 @@ class MediaLibraryHooks {
 							var removeBtn = $('<button type=\"button\" class=\"fair-audience-edit-tag-remove\" data-id=\"' + participantId + '\" data-attachment=\"' + attachmentId + '\" style=\"background: none; border: none; cursor: pointer; margin-left: 4px; padding: 0; font-size: 16px; line-height: 1; color: #666;\">&times;</button>');
 							chip.append(removeBtn);
 							list.append(chip);
-							statusEl.text('" . esc_js( __( 'Saved.', 'fair-audience' ) ) . "').css('color', '#00a32a');
+							statusEl.text('" . esc_js( __( 'Saved.', 'fair-audience-experimental' ) ) . "').css('color', '#00a32a');
 							setTimeout(function() { statusEl.text(''); }, 2000);
 						} else {
-							statusEl.text('" . esc_js( __( 'Error', 'fair-audience' ) ) . "').css('color', '#d63638');
+							statusEl.text('" . esc_js( __( 'Error', 'fair-audience-experimental' ) ) . "').css('color', '#d63638');
 						}
 						sel.val('');
 					}).fail(function() {
-						statusEl.text('" . esc_js( __( 'Error', 'fair-audience' ) ) . "').css('color', '#d63638');
+						statusEl.text('" . esc_js( __( 'Error', 'fair-audience-experimental' ) ) . "').css('color', '#d63638');
 						sel.val('');
 					});
 				});
@@ -798,7 +798,7 @@ class MediaLibraryHooks {
 						if (response.success) {
 							chip.remove();
 						} else {
-							statusEl.text('" . esc_js( __( 'Error', 'fair-audience' ) ) . "').css('color', '#d63638');
+							statusEl.text('" . esc_js( __( 'Error', 'fair-audience-experimental' ) ) . "').css('color', '#d63638');
 						}
 					});
 				});
@@ -822,7 +822,7 @@ class MediaLibraryHooks {
 		// Ensure media scripts are loaded.
 		wp_enqueue_media();
 
-		$asset_file = FAIR_AUDIENCE_PLUGIN_DIR . 'build/admin/media-library-filter.asset.php';
+		$asset_file = FAIR_AUDIENCE_EXPERIMENTAL_PLUGIN_DIR . 'build/admin/media-library-filter.asset.php';
 		if ( ! file_exists( $asset_file ) ) {
 			return;
 		}
@@ -831,7 +831,7 @@ class MediaLibraryHooks {
 
 		wp_enqueue_script(
 			'fair-audience-media-library-filter',
-			FAIR_AUDIENCE_PLUGIN_URL . 'build/admin/media-library-filter.js',
+			FAIR_AUDIENCE_EXPERIMENTAL_PLUGIN_URL . 'build/admin/media-library-filter.js',
 			array_merge( $asset['dependencies'], array( 'media-views' ) ),
 			$asset['version'],
 			true
@@ -842,7 +842,7 @@ class MediaLibraryHooks {
 			'fair-audience-media-library-filter',
 			'fairAudienceMedia',
 			array(
-				'allAuthors'   => __( 'All Authors', 'fair-audience' ),
+				'allAuthors'   => __( 'All Authors', 'fair-audience-experimental' ),
 				'participants' => self::get_participants_for_dropdown(),
 			)
 		);

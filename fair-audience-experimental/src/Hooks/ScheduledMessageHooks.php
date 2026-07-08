@@ -6,17 +6,17 @@
  * messages and sends them, a reaper reclaims rows stuck mid-send, and anchor
  * change / deletion hooks keep send times correct.
  *
- * @package FairAudience
+ * @package FairAudienceExperimental
  */
 
-namespace FairAudience\Hooks;
+namespace FairAudienceExperimental\Hooks;
 
-use FairAudience\Database\ScheduledMessageRepository;
+use FairAudienceExperimental\Database\ScheduledMessageRepository;
 use FairAudience\Database\ParticipantRepository;
 use FairAudience\Services\RecipientResolver;
-use FairAudience\Services\ScheduledMessageScheduler;
+use FairAudienceExperimental\Services\ScheduledMessageScheduler;
 use FairAudience\Services\EmailService;
-use FairAudience\Models\ScheduledMessage;
+use FairAudienceExperimental\Models\ScheduledMessage;
 
 defined( 'WPINC' ) || die;
 
@@ -72,7 +72,7 @@ class ScheduledMessageHooks {
 		if ( ! isset( $schedules['fair_audience_every_five_minutes'] ) ) {
 			$schedules['fair_audience_every_five_minutes'] = array(
 				'interval' => 5 * MINUTE_IN_SECONDS,
-				'display'  => __( 'Every 5 minutes (fair-audience)', 'fair-audience' ),
+				'display'  => __( 'Every 5 minutes (fair-audience)', 'fair-audience-experimental' ),
 			);
 		}
 		return $schedules;

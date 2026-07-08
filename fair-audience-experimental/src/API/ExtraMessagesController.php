@@ -2,13 +2,13 @@
 /**
  * Extra Messages REST API Controller
  *
- * @package FairAudience
+ * @package FairAudienceExperimental
  */
 
-namespace FairAudience\API;
+namespace FairAudienceExperimental\API;
 
-use FairAudience\Database\ExtraMessageRepository;
-use FairAudience\Models\ExtraMessage;
+use FairAudienceExperimental\Database\ExtraMessageRepository;
+use FairAudienceExperimental\Models\ExtraMessage;
 use WP_REST_Controller;
 use WP_REST_Server;
 use WP_REST_Request;
@@ -140,7 +140,7 @@ class ExtraMessagesController extends WP_REST_Controller {
 		if ( ! $message ) {
 			return new WP_Error(
 				'extra_message_not_found',
-				__( 'Extra message not found.', 'fair-audience' ),
+				__( 'Extra message not found.', 'fair-audience-experimental' ),
 				array( 'status' => 404 )
 			);
 		}
@@ -175,7 +175,7 @@ class ExtraMessagesController extends WP_REST_Controller {
 		if ( ! $message->save() ) {
 			return new WP_Error(
 				'creation_failed',
-				__( 'Failed to create extra message.', 'fair-audience' ),
+				__( 'Failed to create extra message.', 'fair-audience-experimental' ),
 				array( 'status' => 500 )
 			);
 		}
@@ -183,7 +183,7 @@ class ExtraMessagesController extends WP_REST_Controller {
 		return rest_ensure_response(
 			array(
 				'id'      => $message->id,
-				'message' => __( 'Extra message created successfully.', 'fair-audience' ),
+				'message' => __( 'Extra message created successfully.', 'fair-audience-experimental' ),
 			)
 		);
 	}
@@ -201,7 +201,7 @@ class ExtraMessagesController extends WP_REST_Controller {
 		if ( ! $message ) {
 			return new WP_Error(
 				'extra_message_not_found',
-				__( 'Extra message not found.', 'fair-audience' ),
+				__( 'Extra message not found.', 'fair-audience-experimental' ),
 				array( 'status' => 404 )
 			);
 		}
@@ -229,7 +229,7 @@ class ExtraMessagesController extends WP_REST_Controller {
 		if ( ! $message->save() ) {
 			return new WP_Error(
 				'update_failed',
-				__( 'Failed to update extra message.', 'fair-audience' ),
+				__( 'Failed to update extra message.', 'fair-audience-experimental' ),
 				array( 'status' => 500 )
 			);
 		}
@@ -237,7 +237,7 @@ class ExtraMessagesController extends WP_REST_Controller {
 		return rest_ensure_response(
 			array(
 				'id'      => $message->id,
-				'message' => __( 'Extra message updated successfully.', 'fair-audience' ),
+				'message' => __( 'Extra message updated successfully.', 'fair-audience-experimental' ),
 			)
 		);
 	}
@@ -255,7 +255,7 @@ class ExtraMessagesController extends WP_REST_Controller {
 		if ( ! $message ) {
 			return new WP_Error(
 				'extra_message_not_found',
-				__( 'Extra message not found.', 'fair-audience' ),
+				__( 'Extra message not found.', 'fair-audience-experimental' ),
 				array( 'status' => 404 )
 			);
 		}
@@ -263,14 +263,14 @@ class ExtraMessagesController extends WP_REST_Controller {
 		if ( ! $message->delete() ) {
 			return new WP_Error(
 				'deletion_failed',
-				__( 'Failed to delete extra message.', 'fair-audience' ),
+				__( 'Failed to delete extra message.', 'fair-audience-experimental' ),
 				array( 'status' => 500 )
 			);
 		}
 
 		return rest_ensure_response(
 			array(
-				'message' => __( 'Extra message deleted successfully.', 'fair-audience' ),
+				'message' => __( 'Extra message deleted successfully.', 'fair-audience-experimental' ),
 			)
 		);
 	}
@@ -287,7 +287,7 @@ class ExtraMessagesController extends WP_REST_Controller {
 		if ( empty( $content ) ) {
 			return new WP_Error(
 				'missing_content',
-				__( 'Content is required.', 'fair-audience' ),
+				__( 'Content is required.', 'fair-audience-experimental' ),
 				array( 'status' => 400 )
 			);
 		}
@@ -298,7 +298,7 @@ class ExtraMessagesController extends WP_REST_Controller {
 			if ( ! $term || is_wp_error( $term ) ) {
 				return new WP_Error(
 					'invalid_category',
-					__( 'The specified category does not exist.', 'fair-audience' ),
+					__( 'The specified category does not exist.', 'fair-audience-experimental' ),
 					array( 'status' => 400 )
 				);
 			}

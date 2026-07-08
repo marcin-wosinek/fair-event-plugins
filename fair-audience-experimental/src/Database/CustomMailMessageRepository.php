@@ -2,12 +2,12 @@
 /**
  * Custom Mail Message Repository
  *
- * @package FairAudience
+ * @package FairAudienceExperimental
  */
 
-namespace FairAudience\Database;
+namespace FairAudienceExperimental\Database;
 
-use FairAudience\Models\CustomMailMessage;
+use FairAudienceExperimental\Models\CustomMailMessage;
 
 defined( 'WPINC' ) || die;
 

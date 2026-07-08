@@ -2,12 +2,12 @@
 /**
  * Scheduled Message Repository
  *
- * @package FairAudience
+ * @package FairAudienceExperimental
  */
 
-namespace FairAudience\Database;
+namespace FairAudienceExperimental\Database;
 
-use FairAudience\Models\ScheduledMessage;
+use FairAudienceExperimental\Models\ScheduledMessage;
 
 defined( 'WPINC' ) || die;
 

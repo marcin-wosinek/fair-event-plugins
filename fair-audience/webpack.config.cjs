@@ -30,25 +30,9 @@ const customConfig = {
 			process.cwd(),
 			'src/Admin/settings/index.js',
 		),
-		'admin/extra-messages-list/index': path.resolve(
-			process.cwd(),
-			'src/Admin/extra-messages-list/index.js',
-		),
-		'admin/edit-extra-message/index': path.resolve(
-			process.cwd(),
-			'src/Admin/edit-extra-message/index.js',
-		),
-		'admin/custom-mail/index': path.resolve(
-			process.cwd(),
-			'src/Admin/custom-mail/index.js',
-		),
 		'admin/participant-detail/index': path.resolve(
 			process.cwd(),
 			'src/Admin/participant-detail/index.js',
-		),
-		'admin/media-library-filter': path.resolve(
-			process.cwd(),
-			'src/Admin/media-library-filter.js',
 		),
 		'admin/manage-event-ext/index': path.resolve(
 			process.cwd(),

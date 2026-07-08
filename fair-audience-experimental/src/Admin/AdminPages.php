@@ -202,6 +202,38 @@ class AdminPages {
 
 			$this->set_hidden_page_title( $this->page_hooks['fair-audience-group-detail'], __( 'Group Detail', 'fair-audience-experimental' ) );
 		}
+
+		// Messaging — `messaging` bundle.
+		if ( \FairAudienceExperimental\Core\Features::is_enabled( 'messaging' ) ) {
+			$this->page_hooks['fair-audience-custom-mail'] = add_submenu_page(
+				$parent,
+				__( 'Custom Mail', 'fair-audience-experimental' ),
+				__( 'Custom Mail', 'fair-audience-experimental' ),
+				'manage_options',
+				'fair-audience-custom-mail',
+				array( $this, 'render_custom_mail_page' )
+			);
+
+			$this->page_hooks['fair-audience-extra-messages'] = add_submenu_page(
+				$parent,
+				__( 'Extra Messages', 'fair-audience-experimental' ),
+				__( 'Extra Messages', 'fair-audience-experimental' ),
+				'manage_options',
+				'fair-audience-extra-messages',
+				array( $this, 'render_extra_messages_list_page' )
+			);
+
+			$this->page_hooks['fair-audience-edit-extra-message'] = add_submenu_page(
+				'',
+				__( 'Edit Extra Message', 'fair-audience-experimental' ),
+				__( 'Edit Extra Message', 'fair-audience-experimental' ),
+				'manage_options',
+				'fair-audience-edit-extra-message',
+				array( $this, 'render_edit_extra_message_page' )
+			);
+
+			$this->set_hidden_page_title( $this->page_hooks['fair-audience-edit-extra-message'], __( 'Edit Extra Message', 'fair-audience-experimental' ) );
+		}
 	}
 
 	/**
@@ -346,6 +378,20 @@ class AdminPages {
 						'groupsListUrl' => admin_url( 'admin.php?page=fair-audience-groups' ),
 					)
 				);
+				break;
+
+			case 'fair-audience-custom-mail':
+				wp_enqueue_editor();
+				$this->enqueue_page_script( 'custom-mail', $exp_url, $exp_dir );
+				break;
+
+			case 'fair-audience-extra-messages':
+				$this->enqueue_page_script( 'extra-messages-list', $exp_url, $exp_dir );
+				break;
+
+			case 'fair-audience-edit-extra-message':
+				wp_enqueue_editor();
+				$this->enqueue_page_script( 'edit-extra-message', $exp_url, $exp_dir );
 				break;
 		}
 	}
@@ -503,6 +549,36 @@ class AdminPages {
 	 */
 	public function render_group_detail_page() {
 		$page = new \FairAudienceExperimental\Admin\GroupDetailPage();
+		$page->render();
+	}
+
+	/**
+	 * Render Custom Mail page.
+	 *
+	 * @return void
+	 */
+	public function render_custom_mail_page() {
+		$page = new \FairAudienceExperimental\Admin\CustomMailPage();
+		$page->render();
+	}
+
+	/**
+	 * Render Extra Messages List page.
+	 *
+	 * @return void
+	 */
+	public function render_extra_messages_list_page() {
+		$page = new \FairAudienceExperimental\Admin\ExtraMessagesListPage();
+		$page->render();
+	}
+
+	/**
+	 * Render Edit Extra Message page.
+	 *
+	 * @return void
+	 */
+	public function render_edit_extra_message_page() {
+		$page = new \FairAudienceExperimental\Admin\EditExtraMessagePage();
 		$page->render();
 	}
 }

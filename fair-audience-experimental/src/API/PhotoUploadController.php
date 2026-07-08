@@ -4,12 +4,12 @@
  *
  * Handles photo uploads from participants via token authentication.
  *
- * @package FairAudience
+ * @package FairAudienceExperimental
  */
 
-namespace FairAudience\API;
+namespace FairAudienceExperimental\API;
 
-use FairAudience\Database\PhotoParticipantRepository;
+use FairAudienceExperimental\Database\PhotoParticipantRepository;
 use FairAudience\Database\ParticipantRepository;
 use FairAudience\Services\ParticipantToken;
 use WP_REST_Controller;
@@ -106,7 +106,7 @@ class PhotoUploadController extends WP_REST_Controller {
 		if ( false === $token_data ) {
 			return new WP_Error(
 				'invalid_token',
-				__( 'Invalid or expired link.', 'fair-audience' ),
+				__( 'Invalid or expired link.', 'fair-audience-experimental' ),
 				array( 'status' => 403 )
 			);
 		}
@@ -121,7 +121,7 @@ class PhotoUploadController extends WP_REST_Controller {
 		if ( ! $participant ) {
 			return new WP_Error(
 				'participant_not_found',
-				__( 'Participant not found.', 'fair-audience' ),
+				__( 'Participant not found.', 'fair-audience-experimental' ),
 				array( 'status' => 404 )
 			);
 		}
@@ -136,7 +136,7 @@ class PhotoUploadController extends WP_REST_Controller {
 		if ( empty( $photos ) || empty( $photos['name'] ) ) {
 			return new WP_Error(
 				'no_files',
-				__( 'No files uploaded.', 'fair-audience' ),
+				__( 'No files uploaded.', 'fair-audience-experimental' ),
 				array( 'status' => 400 )
 			);
 		}
@@ -205,7 +205,7 @@ class PhotoUploadController extends WP_REST_Controller {
 		if ( UPLOAD_ERR_OK !== $file['error'] ) {
 			return new WP_Error(
 				'upload_error',
-				__( 'File upload failed.', 'fair-audience' )
+				__( 'File upload failed.', 'fair-audience-experimental' )
 			);
 		}
 
@@ -213,7 +213,7 @@ class PhotoUploadController extends WP_REST_Controller {
 		if ( $file['size'] > self::MAX_FILE_SIZE ) {
 			return new WP_Error(
 				'file_too_large',
-				__( 'File is too large.', 'fair-audience' )
+				__( 'File is too large.', 'fair-audience-experimental' )
 			);
 		}
 
@@ -222,7 +222,7 @@ class PhotoUploadController extends WP_REST_Controller {
 		if ( empty( $file_type['type'] ) || ! in_array( $file_type['type'], self::ALLOWED_FILE_TYPES, true ) ) {
 			return new WP_Error(
 				'invalid_file_type',
-				__( 'Only image files are allowed (JPEG, PNG, GIF, WebP).', 'fair-audience' )
+				__( 'Only image files are allowed (JPEG, PNG, GIF, WebP).', 'fair-audience-experimental' )
 			);
 		}
 
@@ -254,7 +254,7 @@ class PhotoUploadController extends WP_REST_Controller {
 		if ( is_wp_error( $attachment_id ) ) {
 			return new WP_Error(
 				'attachment_failed',
-				__( 'Failed to save uploaded file.', 'fair-audience' )
+				__( 'Failed to save uploaded file.', 'fair-audience-experimental' )
 			);
 		}
 

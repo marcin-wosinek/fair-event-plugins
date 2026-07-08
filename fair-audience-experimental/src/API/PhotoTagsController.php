@@ -2,12 +2,12 @@
 /**
  * Photo Tags REST API Controller
  *
- * @package FairAudience
+ * @package FairAudienceExperimental
  */
 
-namespace FairAudience\API;
+namespace FairAudienceExperimental\API;
 
-use FairAudience\Database\PhotoParticipantRepository;
+use FairAudienceExperimental\Database\PhotoParticipantRepository;
 use FairAudience\Database\ParticipantRepository;
 use WP_REST_Controller;
 use WP_REST_Server;
@@ -193,7 +193,7 @@ class PhotoTagsController extends WP_REST_Controller {
 		if ( false === $result ) {
 			return new WP_Error(
 				'tag_failed',
-				__( 'Failed to tag participant.', 'fair-audience' ),
+				__( 'Failed to tag participant.', 'fair-audience-experimental' ),
 				array( 'status' => 500 )
 			);
 		}

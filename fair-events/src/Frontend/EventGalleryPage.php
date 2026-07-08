@@ -125,18 +125,18 @@ class EventGalleryPage {
 	}
 
 	/**
-	 * Validate gallery token using fair-audience repository.
+	 * Validate gallery token using the fair-audience-experimental repository.
 	 *
 	 * @param string $token The gallery access token.
 	 * @return array|null Array with event_id and participant_id if valid, null otherwise.
 	 */
 	private static function validate_gallery_token( $token ) {
-		// Check if fair-audience plugin is active.
-		if ( ! class_exists( '\FairAudience\Database\GalleryAccessKeyRepository' ) ) {
+		// Check if fair-audience-experimental's `galleries` bundle is active.
+		if ( ! class_exists( '\FairAudienceExperimental\Database\GalleryAccessKeyRepository' ) ) {
 			return null;
 		}
 
-		$repository = new \FairAudience\Database\GalleryAccessKeyRepository();
+		$repository = new \FairAudienceExperimental\Database\GalleryAccessKeyRepository();
 		$access_key = $repository->get_by_token( $token );
 
 		if ( ! $access_key ) {

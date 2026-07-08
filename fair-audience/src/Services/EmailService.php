@@ -9,11 +9,11 @@ namespace FairAudience\Services;
 
 use FairAudienceExperimental\Database\PollRepository;
 use FairAudienceExperimental\Database\PollAccessKeyRepository;
-use FairAudience\Database\GalleryAccessKeyRepository;
+use FairAudienceExperimental\Database\GalleryAccessKeyRepository;
 use FairAudience\Database\EventParticipantRepository;
 use FairAudience\Database\ParticipantRepository;
 use FairAudienceExperimental\Database\GroupParticipantRepository;
-use FairAudience\Database\ExtraMessageRepository;
+use FairAudienceExperimental\Database\ExtraMessageRepository;
 use FairAudienceExperimental\Database\FeeRepository;
 use FairAudienceExperimental\Database\FeePaymentRepository;
 use FairAudienceExperimental\Database\FeeAuditLogRepository;
@@ -49,7 +49,7 @@ class EmailService {
 	/**
 	 * Gallery access key repository instance.
 	 *
-	 * @var GalleryAccessKeyRepository
+	 * @var GalleryAccessKeyRepository|null Null when fair-audience-experimental's `galleries` bundle is inactive.
 	 */
 	private $gallery_access_key_repository;
 
@@ -98,7 +98,11 @@ class EmailService {
 			$this->poll_repository       = new PollRepository();
 			$this->access_key_repository = new PollAccessKeyRepository();
 		}
-		$this->gallery_access_key_repository = new GalleryAccessKeyRepository();
+		// Galleries live in fair-audience-experimental; only instantiate their
+		// repository when the companion (and its `galleries` bundle) is active.
+		$this->gallery_access_key_repository = class_exists( GalleryAccessKeyRepository::class )
+			? new GalleryAccessKeyRepository()
+			: null;
 		$this->event_participant_repository  = new EventParticipantRepository();
 		$this->participant_repository        = new ParticipantRepository();
 		// Groups live in fair-audience-experimental; only instantiate their
@@ -113,12 +117,14 @@ class EmailService {
 	 * Get active extra messages for an event (lazy-loaded, cached per event).
 	 *
 	 * @param int $event_id Event post ID.
-	 * @return \FairAudience\Models\ExtraMessage[] Array of active extra messages.
+	 * @return \FairAudienceExperimental\Models\ExtraMessage[] Array of active extra messages, empty when
+	 *         fair-audience-experimental's `messaging` bundle is inactive.
 	 */
 	private function get_active_extra_messages( $event_id ) {
 		if ( ! isset( $this->active_extra_messages_cache[ $event_id ] ) ) {
-			$repository                                     = new ExtraMessageRepository();
-			$this->active_extra_messages_cache[ $event_id ] = $repository->get_active_for_event( $event_id );
+			$this->active_extra_messages_cache[ $event_id ] = class_exists( ExtraMessageRepository::class )
+				? ( new ExtraMessageRepository() )->get_active_for_event( $event_id )
+				: array();
 		}
 		return $this->active_extra_messages_cache[ $event_id ];
 	}

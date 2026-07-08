@@ -2,12 +2,12 @@
 /**
  * PhotoParticipant Repository
  *
- * @package FairAudience
+ * @package FairAudienceExperimental
  */
 
-namespace FairAudience\Database;
+namespace FairAudienceExperimental\Database;
 
-use FairAudience\Models\PhotoParticipant;
+use FairAudienceExperimental\Models\PhotoParticipant;
 
 defined( 'WPINC' ) || die;
 

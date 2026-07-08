@@ -2,10 +2,10 @@
 /**
  * Edit Extra Message Admin Page
  *
- * @package FairAudience
+ * @package FairAudienceExperimental
  */
 
-namespace FairAudience\Admin;
+namespace FairAudienceExperimental\Admin;
 
 defined( 'WPINC' ) || die;
 

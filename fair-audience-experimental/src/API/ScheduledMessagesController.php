@@ -2,15 +2,15 @@
 /**
  * Scheduled Messages REST API Controller
  *
- * @package FairAudience
+ * @package FairAudienceExperimental
  */
 
-namespace FairAudience\API;
+namespace FairAudienceExperimental\API;
 
-use FairAudience\Database\ScheduledMessageRepository;
-use FairAudience\Models\ScheduledMessage;
+use FairAudienceExperimental\Database\ScheduledMessageRepository;
+use FairAudienceExperimental\Models\ScheduledMessage;
 use FairAudience\Services\RecipientResolver;
-use FairAudience\Services\ScheduledMessageScheduler;
+use FairAudienceExperimental\Services\ScheduledMessageScheduler;
 use WP_REST_Controller;
 use WP_REST_Server;
 use WP_REST_Request;
@@ -177,7 +177,7 @@ class ScheduledMessagesController extends WP_REST_Controller {
 		if ( ! current_user_can( 'manage_options' ) ) {
 			return new WP_Error(
 				'rest_forbidden',
-				__( 'You do not have permission to manage scheduled messages.', 'fair-audience' ),
+				__( 'You do not have permission to manage scheduled messages.', 'fair-audience-experimental' ),
 				array( 'status' => 403 )
 			);
 		}
@@ -236,7 +236,7 @@ class ScheduledMessagesController extends WP_REST_Controller {
 		);
 
 		if ( ! $message->save() ) {
-			return new WP_Error( 'save_failed', __( 'Could not save the scheduled message.', 'fair-audience' ), array( 'status' => 500 ) );
+			return new WP_Error( 'save_failed', __( 'Could not save the scheduled message.', 'fair-audience-experimental' ), array( 'status' => 500 ) );
 		}
 
 		return rest_ensure_response( $this->prepare_message( $this->repository->get_by_id( $message->id ) ) );
@@ -251,13 +251,13 @@ class ScheduledMessagesController extends WP_REST_Controller {
 	public function update_item( $request ) {
 		$message = $this->repository->get_by_id( (int) $request->get_param( 'id' ) );
 		if ( ! $message ) {
-			return new WP_Error( 'not_found', __( 'Scheduled message not found.', 'fair-audience' ), array( 'status' => 404 ) );
+			return new WP_Error( 'not_found', __( 'Scheduled message not found.', 'fair-audience-experimental' ), array( 'status' => 404 ) );
 		}
 
 		if ( 'scheduled' !== $message->status ) {
 			return new WP_Error(
 				'not_editable',
-				__( 'Only scheduled messages can be edited.', 'fair-audience' ),
+				__( 'Only scheduled messages can be edited.', 'fair-audience-experimental' ),
 				array( 'status' => 409 )
 			);
 		}
@@ -280,7 +280,7 @@ class ScheduledMessagesController extends WP_REST_Controller {
 		);
 
 		if ( ! $message->save() ) {
-			return new WP_Error( 'save_failed', __( 'Could not update the scheduled message.', 'fair-audience' ), array( 'status' => 500 ) );
+			return new WP_Error( 'save_failed', __( 'Could not update the scheduled message.', 'fair-audience-experimental' ), array( 'status' => 500 ) );
 		}
 
 		return rest_ensure_response( $this->prepare_message( $this->repository->get_by_id( $message->id ) ) );
@@ -295,13 +295,13 @@ class ScheduledMessagesController extends WP_REST_Controller {
 	public function delete_item( $request ) {
 		$message = $this->repository->get_by_id( (int) $request->get_param( 'id' ) );
 		if ( ! $message ) {
-			return new WP_Error( 'not_found', __( 'Scheduled message not found.', 'fair-audience' ), array( 'status' => 404 ) );
+			return new WP_Error( 'not_found', __( 'Scheduled message not found.', 'fair-audience-experimental' ), array( 'status' => 404 ) );
 		}
 
 		if ( 'scheduled' !== $message->status ) {
 			return new WP_Error(
 				'not_cancelable',
-				__( 'Only scheduled messages can be canceled.', 'fair-audience' ),
+				__( 'Only scheduled messages can be canceled.', 'fair-audience-experimental' ),
 				array( 'status' => 409 )
 			);
 		}
@@ -321,7 +321,7 @@ class ScheduledMessagesController extends WP_REST_Controller {
 	public function preview_recipients( $request ) {
 		$message = $this->repository->get_by_id( (int) $request->get_param( 'id' ) );
 		if ( ! $message ) {
-			return new WP_Error( 'not_found', __( 'Scheduled message not found.', 'fair-audience' ), array( 'status' => 404 ) );
+			return new WP_Error( 'not_found', __( 'Scheduled message not found.', 'fair-audience-experimental' ), array( 'status' => 404 ) );
 		}
 
 		$recipients = $this->resolver->resolve_by_event_date( $message->recipients_filter, $message->event_date_id );
@@ -361,7 +361,7 @@ class ScheduledMessagesController extends WP_REST_Controller {
 		if ( ! ScheduledMessageScheduler::is_supported_anchor( $anchor_type ) ) {
 			return new WP_Error(
 				'unsupported_anchor',
-				__( 'Sale-period anchors are not supported yet.', 'fair-audience' ),
+				__( 'Sale-period anchors are not supported yet.', 'fair-audience-experimental' ),
 				array( 'status' => 400 )
 			);
 		}
@@ -377,7 +377,7 @@ class ScheduledMessagesController extends WP_REST_Controller {
 		if ( ! $exists ) {
 			return new WP_Error(
 				'invalid_event_date',
-				__( 'Event date not found.', 'fair-audience' ),
+				__( 'Event date not found.', 'fair-audience-experimental' ),
 				array( 'status' => 404 )
 			);
 		}

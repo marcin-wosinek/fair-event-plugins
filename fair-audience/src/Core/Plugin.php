@@ -61,7 +61,6 @@ class Plugin {
 		add_filter( 'query_vars', array( $this, 'add_query_vars' ) );
 		add_action( 'template_redirect', array( $this, 'handle_email_confirmation' ) );
 		add_action( 'template_redirect', array( $this, 'handle_manage_subscription' ) );
-		add_action( 'template_redirect', array( $this, 'handle_photo_upload' ) );
 		add_action( 'template_redirect', array( $this, 'handle_unsubscribe_event_interest' ) );
 
 		// Register the Mailings tab on fair-events' manage-event page via its
@@ -90,16 +89,11 @@ class Plugin {
 		// Initialize admin.
 		$admin_hooks = new \FairAudience\Admin\AdminHooks();
 
-		// Initialize media library integration.
-		\FairAudience\Admin\MediaLibraryHooks::init();
-		\FairAudience\Admin\MediaBatchActions::init();
-
 		// Initialize SVG upload support.
 		\FairAudience\Hooks\SvgUploadHooks::init();
 
 		// Initialize payment hooks (for fair-payments-connector webhook integration).
 		\FairAudience\Hooks\PaymentHooks::init();
-		\FairAudience\Hooks\ScheduledMessageHooks::init();
 
 		// Initialize blocks.
 		$block_hooks = new \FairAudience\Hooks\BlockHooks();
@@ -139,9 +133,6 @@ class Plugin {
 		$event_participants_controller = new \FairAudience\API\EventParticipantsController();
 		$event_participants_controller->register_routes();
 
-		$gallery_access_controller = new \FairAudience\API\GalleryAccessController();
-		$gallery_access_controller->register_routes();
-
 		$mailing_signup_controller = new \FairAudience\API\MailingSignupController();
 		$mailing_signup_controller->register_routes();
 
@@ -150,21 +141,6 @@ class Plugin {
 
 		$audience_signup_controller = new \FairAudience\API\AudienceSignupController();
 		$audience_signup_controller->register_routes();
-
-		$extra_messages_controller = new \FairAudience\API\ExtraMessagesController();
-		$extra_messages_controller->register_routes();
-
-		$custom_mail_controller = new \FairAudience\API\CustomMailController();
-		$custom_mail_controller->register_routes();
-
-		$scheduled_messages_controller = new \FairAudience\API\ScheduledMessagesController();
-		$scheduled_messages_controller->register_routes();
-
-		$photo_tags_controller = new \FairAudience\API\PhotoTagsController();
-		$photo_tags_controller->register_routes();
-
-		$photo_upload_controller = new \FairAudience\API\PhotoUploadController();
-		$photo_upload_controller->register_routes();
 
 		$session_controller = new \FairAudience\API\SessionController();
 		$session_controller->register_routes();
@@ -257,7 +233,6 @@ class Plugin {
 		$vars[] = 'resume';
 		$vars[] = 'manage_subscription';
 		$vars[] = 'edit_audience_signup';
-		$vars[] = 'photo_upload';
 		$vars[] = 'invitation';
 		$vars[] = 'unsubscribe_event_interest';
 		return $vars;
@@ -344,21 +319,6 @@ class Plugin {
 
 		// Load manage subscription template.
 		include FAIR_AUDIENCE_PLUGIN_DIR . 'templates/manage-subscription.php';
-		exit;
-	}
-
-	/**
-	 * Handle photo upload page requests.
-	 */
-	public function handle_photo_upload() {
-		$photo_upload = get_query_var( 'photo_upload' );
-
-		if ( empty( $photo_upload ) ) {
-			return;
-		}
-
-		// Load photo upload template.
-		include FAIR_AUDIENCE_PLUGIN_DIR . 'templates/photo-upload.php';
 		exit;
 	}
 }

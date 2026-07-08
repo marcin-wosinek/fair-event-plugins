@@ -259,9 +259,10 @@ class QuestionnaireService {
 				$photo_repo->set_event_date( $attachment_id, $event_date_id );
 			}
 
-			// Set participant as photo author (guarded: fair-audience may be inactive).
-			if ( $participant_id > 0 && class_exists( '\FairAudience\Database\PhotoParticipantRepository' ) ) {
-				$photo_participant_repo = new \FairAudience\Database\PhotoParticipantRepository();
+			// Set participant as photo author (guarded: fair-audience-experimental's
+			// `galleries` bundle may be inactive).
+			if ( $participant_id > 0 && class_exists( '\FairAudienceExperimental\Database\PhotoParticipantRepository' ) ) {
+				$photo_participant_repo = new \FairAudienceExperimental\Database\PhotoParticipantRepository();
 				$photo_participant_repo->set_author( $attachment_id, $participant_id );
 			}
 

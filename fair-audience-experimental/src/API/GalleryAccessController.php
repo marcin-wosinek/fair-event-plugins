@@ -2,12 +2,12 @@
 /**
  * Gallery Access REST API Controller
  *
- * @package FairAudience
+ * @package FairAudienceExperimental
  */
 
-namespace FairAudience\API;
+namespace FairAudienceExperimental\API;
 
-use FairAudience\Database\GalleryAccessKeyRepository;
+use FairAudienceExperimental\Database\GalleryAccessKeyRepository;
 use FairAudience\Database\ParticipantRepository;
 use FairAudience\Services\EmailService;
 use WP_REST_Controller;
@@ -168,7 +168,7 @@ class GalleryAccessController extends WP_REST_Controller {
 		if ( ! current_user_can( 'edit_posts' ) ) {
 			return new WP_Error(
 				'rest_forbidden',
-				__( 'You do not have permission to send gallery invitations.', 'fair-audience' ),
+				__( 'You do not have permission to send gallery invitations.', 'fair-audience-experimental' ),
 				array( 'status' => 403 )
 			);
 		}
@@ -186,7 +186,7 @@ class GalleryAccessController extends WP_REST_Controller {
 		if ( ! current_user_can( 'edit_posts' ) ) {
 			return new WP_Error(
 				'rest_forbidden',
-				__( 'You do not have permission to view gallery invitation stats.', 'fair-audience' ),
+				__( 'You do not have permission to view gallery invitation stats.', 'fair-audience-experimental' ),
 				array( 'status' => 403 )
 			);
 		}
@@ -256,7 +256,7 @@ class GalleryAccessController extends WP_REST_Controller {
 		if ( ! $event_date_obj ) {
 			return new WP_Error(
 				'invalid_event_date',
-				__( 'Event date not found.', 'fair-audience' ),
+				__( 'Event date not found.', 'fair-audience-experimental' ),
 				array( 'status' => 404 )
 			);
 		}
@@ -267,7 +267,7 @@ class GalleryAccessController extends WP_REST_Controller {
 		if ( ! $event || ! \FairEvents\Database\EventRepository::is_event( $event ) ) {
 			return new WP_Error(
 				'invalid_event',
-				__( 'Event not found.', 'fair-audience' ),
+				__( 'Event not found.', 'fair-audience-experimental' ),
 				array( 'status' => 404 )
 			);
 		}
@@ -299,7 +299,7 @@ class GalleryAccessController extends WP_REST_Controller {
 		if ( ! $event_date_obj ) {
 			return new WP_Error(
 				'invalid_event_date',
-				__( 'Event date not found.', 'fair-audience' ),
+				__( 'Event date not found.', 'fair-audience-experimental' ),
 				array( 'status' => 404 )
 			);
 		}
@@ -310,7 +310,7 @@ class GalleryAccessController extends WP_REST_Controller {
 		if ( ! $event || ! \FairEvents\Database\EventRepository::is_event( $event ) ) {
 			return new WP_Error(
 				'invalid_event',
-				__( 'Event not found.', 'fair-audience' ),
+				__( 'Event not found.', 'fair-audience-experimental' ),
 				array( 'status' => 404 )
 			);
 		}
