@@ -1,24 +1,23 @@
 import { __, sprintf } from '@wordpress/i18n';
 import { Notice } from '@wordpress/components';
 
-export default function EmailSendResultNotice({ result, onDismiss }) {
+export default function EmailSendResultNotice({ result, onDismiss, title }) {
 	if (!result) {
 		return null;
 	}
 
+	const heading =
+		title ||
+		sprintf(
+			/* translators: %d: number of emails sent */
+			__('Invitations sent to %d participants', 'fair-audience'),
+			result.sent_count
+		);
+
 	return (
 		<Notice status="success" isDismissible={true} onRemove={onDismiss}>
 			<p>
-				<strong>
-					{sprintf(
-						/* translators: %d: number of emails sent */
-						__(
-							'Invitations sent to %d participants',
-							'fair-audience'
-						),
-						result.sent_count
-					)}
-				</strong>
+				<strong>{heading}</strong>
 			</p>
 			{result.skipped_count > 0 && (
 				<p>

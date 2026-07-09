@@ -1,4 +1,4 @@
-import { __ } from '@wordpress/i18n';
+import { __, _n, sprintf } from '@wordpress/i18n';
 import { useState, useEffect, useCallback, useMemo } from '@wordpress/element';
 import apiFetch from '@wordpress/api-fetch';
 import {
@@ -7,10 +7,14 @@ import {
 	CardBody,
 	Spinner,
 	Popover,
+	Notice,
+	Snackbar,
+	__experimentalConfirmDialog as ConfirmDialog,
 } from '@wordpress/components';
 import { DataViews, filterSortAndPaginate } from '@wordpress/dataviews';
 import { Icon, caution, link, send } from '@wordpress/icons';
 import ParticipantEditModal from '../components/ParticipantEditModal.js';
+import EmailSendResultNotice from '../components/EmailSendResultNotice.js';
 
 const DEFAULT_VIEW = {
 	type: 'table',
@@ -49,6 +53,12 @@ export default function AllParticipants() {
 	const [view, setView] = useState(DEFAULT_VIEW);
 	const [isModalOpen, setIsModalOpen] = useState(false);
 	const [editingParticipant, setEditingParticipant] = useState(null);
+
+	// Feedback state.
+	const [deleteItems, setDeleteItems] = useState(null);
+	const [resendResult, setResendResult] = useState(null);
+	const [snackbar, setSnackbar] = useState(null);
+	const [errorMessage, setErrorMessage] = useState(null);
 
 	// Events popover state.
 	const [eventsPopover, setEventsPopover] = useState(null);
@@ -360,23 +370,12 @@ export default function AllParticipants() {
 	};
 
 	const handleDelete = (items) => {
-		const count = items.length;
-		const message =
-			count === 1
-				? __(
-						'Are you sure you want to delete this participant?',
-						'fair-audience'
-				  )
-				: __(
-						'Are you sure you want to delete these participants?',
-						'fair-audience'
-				  );
+		setDeleteItems(items);
+	};
 
-		if (!confirm(message)) {
-			return;
-		}
+	const confirmDelete = () => {
+		const items = deleteItems;
 
-		// Delete all selected items.
 		Promise.all(
 			items.map((item) =>
 				apiFetch({
@@ -389,9 +388,37 @@ export default function AllParticipants() {
 				loadParticipants();
 			})
 			.catch((err) => {
-				alert(__('Error: ', 'fair-audience') + err.message);
+				setErrorMessage(__('Error: ', 'fair-audience') + err.message);
+			})
+			.finally(() => {
+				setDeleteItems(null);
 			});
 	};
+
+	const deleteConfirmMessage = useMemo(() => {
+		if (!deleteItems) {
+			return '';
+		}
+
+		if (deleteItems.length === 1) {
+			return sprintf(
+				/* translators: %s: participant name and surname */
+				__('Delete %s? This cannot be undone.', 'fair-audience'),
+				`${deleteItems[0].name} ${deleteItems[0].surname}`
+			);
+		}
+
+		return sprintf(
+			/* translators: %d: number of participants */
+			_n(
+				'Delete %d participant? This cannot be undone.',
+				'Delete %d participants? This cannot be undone.',
+				deleteItems.length,
+				'fair-audience'
+			),
+			deleteItems.length
+		);
+	}, [deleteItems]);
 
 	// Define actions for DataViews.
 	const actions = useMemo(
@@ -413,8 +440,11 @@ export default function AllParticipants() {
 							path: `/fair-audience/v1/participants/${item.id}/subscription-url`,
 						});
 						await navigator.clipboard.writeText(response.url);
+						setSnackbar(__('Link copied.', 'fair-audience'));
 					} catch (err) {
-						alert(__('Error: ', 'fair-audience') + err.message);
+						setErrorMessage(
+							__('Error: ', 'fair-audience') + err.message
+						);
 					}
 				},
 				supportsBulk: false,
@@ -437,33 +467,13 @@ export default function AllParticipants() {
 					);
 
 					const failures = results.filter((r) => !r.ok);
-					if (failures.length === 0) {
-						alert(
-							/* translators: %d: number of confirmation emails sent. */
-							__(
-								'Sent %d confirmation email(s).',
-								'fair-audience'
-							).replace('%d', results.length)
-						);
-						return;
-					}
-
-					const summary = failures
-						.map(
-							(r) =>
-								`${r.item.name} ${r.item.surname}: ${
-									r.err?.message || 'error'
-								}`
-						)
-						.join('\n');
-					alert(
-						__(
-							'Some confirmation emails failed:',
-							'fair-audience'
-						) +
-							'\n' +
-							summary
-					);
+					setResendResult({
+						sent_count: results.length - failures.length,
+						failed: failures.map((r) => ({
+							name: `${r.item.name} ${r.item.surname}`,
+							reason: r.err?.message,
+						})),
+					});
 				},
 				supportsBulk: true,
 			},
@@ -486,9 +496,42 @@ export default function AllParticipants() {
 		[totalItems, totalPages]
 	);
 
+	const resendResultTitle = useMemo(() => {
+		if (!resendResult) {
+			return '';
+		}
+
+		return sprintf(
+			/* translators: %d: number of confirmation emails sent */
+			_n(
+				'Sent %d confirmation email',
+				'Sent %d confirmation emails',
+				resendResult.sent_count,
+				'fair-audience'
+			),
+			resendResult.sent_count
+		);
+	}, [resendResult]);
+
 	return (
 		<div className="wrap">
 			<h1>{__('All Participants', 'fair-audience')}</h1>
+
+			{errorMessage && (
+				<Notice
+					status="error"
+					isDismissible={true}
+					onRemove={() => setErrorMessage(null)}
+				>
+					{errorMessage}
+				</Notice>
+			)}
+
+			<EmailSendResultNotice
+				result={resendResult}
+				title={resendResultTitle}
+				onDismiss={() => setResendResult(null)}
+			/>
 
 			<Card>
 				<CardBody style={{ overflowX: 'auto' }}>
@@ -565,6 +608,36 @@ export default function AllParticipants() {
 				onClose={() => setIsModalOpen(false)}
 				onSaved={loadParticipants}
 			/>
+
+			<ConfirmDialog
+				isOpen={deleteItems !== null}
+				onConfirm={confirmDelete}
+				onCancel={() => setDeleteItems(null)}
+				confirmButtonText={_n(
+					'Delete participant',
+					'Delete participants',
+					deleteItems?.length || 0,
+					'fair-audience'
+				)}
+				cancelButtonText={__('Cancel', 'fair-audience')}
+			>
+				{deleteConfirmMessage}
+			</ConfirmDialog>
+
+			{snackbar && (
+				<div
+					style={{
+						position: 'fixed',
+						bottom: '16px',
+						left: '16px',
+						zIndex: 100000,
+					}}
+				>
+					<Snackbar onRemove={() => setSnackbar(null)}>
+						{snackbar}
+					</Snackbar>
+				</div>
+			)}
 		</div>
 	);
 }

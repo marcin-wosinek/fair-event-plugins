@@ -46,6 +46,8 @@
 		"@babel/preset-env": "^7.28.3",
 		"@babel/preset-react": "^7.28.3",
 		"@playwright/test": "^1.40.0",
+		"@testing-library/jest-dom": "^6.9.1",
+		"@testing-library/react": "^16.3.2",
 		"@wordpress/scripts": "^32.4.0",
 		"babel-jest": "^30.0.5",
 		"dotenv": "^16.3.1",
