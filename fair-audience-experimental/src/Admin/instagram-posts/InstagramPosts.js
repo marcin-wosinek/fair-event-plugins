@@ -20,7 +20,7 @@ import {
 	loadInstagramPosts,
 	createInstagramPost,
 	deleteInstagramPost,
-	uploadImageToTmpFiles,
+	getAttachmentUrl,
 } from './instagram-posts-api.js';
 
 /**
@@ -187,9 +187,9 @@ export default function InstagramPosts() {
 		setIsPosting(true);
 		setNotice(null);
 
-		// If we have an attachment ID, upload to tmpfiles.org first.
+		// If we have an attachment ID, resolve its media-library URL first.
 		const getPublicUrl = attachmentId
-			? uploadImageToTmpFiles(attachmentId).then((result) => result.url)
+			? getAttachmentUrl(attachmentId).then((result) => result.url)
 			: Promise.resolve(imageUrl.trim());
 
 		getPublicUrl

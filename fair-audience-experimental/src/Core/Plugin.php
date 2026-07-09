@@ -101,9 +101,10 @@ class Plugin {
 	}
 
 	/**
-	 * Initialize hook-only bundles that don't register admin pages or REST
-	 * routes of their own: the media library integration (`galleries`) and
-	 * the scheduled-message cron/reschedule hooks (`messaging`).
+	 * Initialize hook-only bundles that ride alongside admin pages or REST
+	 * routes registered elsewhere: the media library integration
+	 * (`galleries`), the scheduled-message cron/reschedule hooks
+	 * (`messaging`), and the stale-attachment cleanup sweep (`instagram`).
 	 *
 	 * @return void
 	 */
@@ -115,6 +116,10 @@ class Plugin {
 
 		if ( Features::is_enabled( 'messaging' ) ) {
 			\FairAudienceExperimental\Hooks\ScheduledMessageHooks::init();
+		}
+
+		if ( Features::is_enabled( 'instagram' ) ) {
+			\FairAudienceExperimental\Hooks\InstagramCleanupHooks::init();
 		}
 	}
 
