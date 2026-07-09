@@ -34,6 +34,10 @@ const customConfig = {
 			process.cwd(),
 			'src/Admin/participant-detail/index.js',
 		),
+		'admin/weekly-digest/index': path.resolve(
+			process.cwd(),
+			'src/Admin/weekly-digest/index.js',
+		),
 	}),
 	plugins: [
 		...defaultConfig.plugins,

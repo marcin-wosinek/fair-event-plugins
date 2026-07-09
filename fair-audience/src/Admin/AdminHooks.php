@@ -162,6 +162,18 @@ class AdminHooks {
 		// Hidden submenu page - Participant Detail.
 		$this->register_hidden_page( 'fair-audience-participant-detail' );
 
+		// Submenu page - Weekly Digest (requires stable fair-events).
+		if ( class_exists( 'FairEvents\Core\Plugin' ) ) {
+			add_submenu_page(
+				'fair-audience',
+				__( 'Weekly Digest', 'fair-audience' ),
+				__( 'Weekly Digest', 'fair-audience' ),
+				'manage_options',
+				'fair-audience-weekly-digest',
+				array( $this, 'render_weekly_digest_page' )
+			);
+		}
+
 		// Submenu page - Settings.
 		add_submenu_page(
 			'fair-audience',
@@ -214,6 +226,14 @@ class AdminHooks {
 	}
 
 	/**
+	 * Render Weekly Digest page.
+	 */
+	public function render_weekly_digest_page() {
+		$page = new WeeklyDigestPage();
+		$page->render();
+	}
+
+	/**
 	 * Enqueue admin scripts.
 	 *
 	 * @param string $hook Page hook.
@@ -259,6 +279,11 @@ class AdminHooks {
 					'features' => \FairAudience\Core\Features::all(),
 				)
 			);
+		}
+
+		// Weekly Digest page.
+		if ( 'fair-audience_page_fair-audience-weekly-digest' === $hook ) {
+			$this->enqueue_page_script( 'weekly-digest', $plugin_dir );
 		}
 	}
 
