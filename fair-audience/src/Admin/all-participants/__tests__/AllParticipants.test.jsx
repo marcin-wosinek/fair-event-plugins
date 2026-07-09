@@ -84,6 +84,8 @@ const PARTICIPANTS = [
 	},
 ];
 
+const STATS = { total: 4, mailing: 1, pending: 1, declined: 1 };
+
 function mockApiFetch() {
 	apiFetch.mockImplementation(({ path, parse }) => {
 		if (
@@ -97,6 +99,9 @@ function mockApiFetch() {
 				]),
 				json: () => Promise.resolve(PARTICIPANTS),
 			});
+		}
+		if (path === '/fair-audience/v1/participants/stats') {
+			return Promise.resolve(STATS);
 		}
 		if (path === '/fair-audience/v1/groups') {
 			return Promise.resolve([]);
@@ -220,6 +225,42 @@ describe('AllParticipants — filters preserved', () => {
 		expect(
 			screen.getByRole('menuitem', { name: 'Status' })
 		).toBeInTheDocument();
+	});
+});
+
+describe('AllParticipants — stat tiles (#1054)', () => {
+	it('renders the tile counts from the stats endpoint', async () => {
+		render(<AllParticipants />);
+
+		await screen.findByText('Jane Doe');
+
+		expect(screen.getByText('Audience total')).toBeInTheDocument();
+		expect(screen.getByText('In the mailing')).toBeInTheDocument();
+		expect(screen.getByText('Pending confirmation')).toBeInTheDocument();
+		expect(screen.getByText('Declined')).toBeInTheDocument();
+
+		expect(screen.getAllByText('4').length).toBeGreaterThan(0);
+		expect(screen.getAllByText('1').length).toBe(3);
+	});
+
+	it('clicking the Pending tile filters the participants list by status=pending', async () => {
+		render(<AllParticipants />);
+
+		await screen.findByText('Jane Doe');
+		apiFetch.mockClear();
+
+		fireEvent.click(
+			screen.getByText('Pending confirmation').closest('button')
+		);
+
+		await waitFor(() =>
+			expect(apiFetch).toHaveBeenCalledWith(
+				expect.objectContaining({
+					path: expect.stringContaining('status=pending'),
+					parse: false,
+				})
+			)
+		);
 	});
 });
 

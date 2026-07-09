@@ -5,10 +5,13 @@ import {
 	Button,
 	Card,
 	CardBody,
+	Flex,
+	FlexItem,
 	Spinner,
 	Popover,
 	Notice,
 	Snackbar,
+	__experimentalText as Text,
 	__experimentalConfirmDialog as ConfirmDialog,
 } from '@wordpress/components';
 import { DataViews, filterSortAndPaginate } from '@wordpress/dataviews';
@@ -47,6 +50,7 @@ export default function AllParticipants() {
 	const [totalItems, setTotalItems] = useState(0);
 	const [totalPages, setTotalPages] = useState(0);
 	const [isLoading, setIsLoading] = useState(true);
+	const [stats, setStats] = useState(null);
 	const [view, setView] = useState(DEFAULT_VIEW);
 	const [isModalOpen, setIsModalOpen] = useState(false);
 	const [editingParticipant, setEditingParticipant] = useState(null);
@@ -374,9 +378,23 @@ export default function AllParticipants() {
 			});
 	}, [queryArgs]);
 
-	useEffect(() => {
+	const loadStats = useCallback(() => {
+		apiFetch({ path: '/fair-audience/v1/participants/stats' })
+			.then(setStats)
+			.catch((err) => {
+				// eslint-disable-next-line no-console
+				console.error('Error loading participant stats:', err);
+			});
+	}, []);
+
+	const refresh = useCallback(() => {
 		loadParticipants();
-	}, [loadParticipants]);
+		loadStats();
+	}, [loadParticipants, loadStats]);
+
+	useEffect(() => {
+		refresh();
+	}, [refresh]);
 
 	const openAddModal = () => {
 		setEditingParticipant(null);
@@ -404,7 +422,7 @@ export default function AllParticipants() {
 			)
 		)
 			.then(() => {
-				loadParticipants();
+				refresh();
 			})
 			.catch((err) => {
 				setErrorMessage(__('Error: ', 'fair-audience') + err.message);
@@ -515,6 +533,55 @@ export default function AllParticipants() {
 		[totalItems, totalPages]
 	);
 
+	const statTiles = useMemo(
+		() => [
+			{
+				id: 'total',
+				label: __('Audience total', 'fair-audience'),
+				value: stats?.total,
+				filters: [],
+			},
+			{
+				id: 'mailing',
+				label: __('In the mailing', 'fair-audience'),
+				value: stats?.mailing,
+				filters: [
+					{
+						field: 'email_profile',
+						operator: 'is',
+						value: 'marketing',
+					},
+					{ field: 'status', operator: 'is', value: 'confirmed' },
+				],
+			},
+			{
+				id: 'pending',
+				label: __('Pending confirmation', 'fair-audience'),
+				value: stats?.pending,
+				filters: [
+					{ field: 'status', operator: 'is', value: 'pending' },
+				],
+			},
+			{
+				id: 'declined',
+				label: __('Declined', 'fair-audience'),
+				value: stats?.declined,
+				filters: [
+					{
+						field: 'email_profile',
+						operator: 'is',
+						value: 'declined',
+					},
+				],
+			},
+		],
+		[stats]
+	);
+
+	const filterByTile = useCallback((filters) => {
+		setView((v) => ({ ...v, filters, page: 1 }));
+	}, []);
+
 	const resendResultTitle = useMemo(() => {
 		if (!resendResult) {
 			return '';
@@ -545,6 +612,32 @@ export default function AllParticipants() {
 				{__('Add Participant', 'fair-audience')}
 			</button>
 			<hr className="wp-header-end" />
+
+			<Flex wrap>
+				{statTiles.map((tile) => (
+					<FlexItem key={tile.id} style={{ minWidth: '160px' }}>
+						<Card>
+							<CardBody
+								as="button"
+								type="button"
+								onClick={() => filterByTile(tile.filters)}
+								style={{
+									cursor: 'pointer',
+									textAlign: 'left',
+									width: '100%',
+									border: 'none',
+									background: 'none',
+								}}
+							>
+								<Text size={24} weight={600} as="div">
+									{stats ? tile.value : '—'}
+								</Text>
+								<Text as="div">{tile.label}</Text>
+							</CardBody>
+						</Card>
+					</FlexItem>
+				))}
+			</Flex>
 
 			{errorMessage && (
 				<Notice
@@ -629,7 +722,7 @@ export default function AllParticipants() {
 				isOpen={isModalOpen}
 				participant={editingParticipant}
 				onClose={() => setIsModalOpen(false)}
-				onSaved={loadParticipants}
+				onSaved={refresh}
 			/>
 
 			<ConfirmDialog

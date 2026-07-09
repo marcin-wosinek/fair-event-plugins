@@ -403,4 +403,55 @@ class ParticipantRepository {
 			$wpdb->prepare( 'SELECT COUNT(*) FROM %i', $table_name )
 		);
 	}
+
+	/**
+	 * Get audience stats: total participants, and how many are in the
+	 * mailing (marketing + confirmed), pending confirmation, or declined.
+	 *
+	 * @return array {
+	 *     @type int $total    Total participant count.
+	 *     @type int $mailing  Confirmed marketing subscribers.
+	 *     @type int $pending  Participants pending confirmation.
+	 *     @type int $declined Participants who declined email.
+	 * }
+	 */
+	public function get_stats() {
+		global $wpdb;
+
+		$table_name = $this->get_table_name();
+		$rows       = $wpdb->get_results(
+			$wpdb->prepare(
+				'SELECT email_profile, status, COUNT(*) AS cnt FROM %i GROUP BY email_profile, status',
+				$table_name
+			),
+			ARRAY_A
+		);
+
+		$stats = array(
+			'total'    => 0,
+			'mailing'  => 0,
+			'pending'  => 0,
+			'declined' => 0,
+		);
+
+		foreach ( $rows as $row ) {
+			$cnt = (int) $row['cnt'];
+
+			$stats['total'] += $cnt;
+
+			if ( 'marketing' === $row['email_profile'] && 'confirmed' === $row['status'] ) {
+				$stats['mailing'] += $cnt;
+			}
+
+			if ( 'pending' === $row['status'] ) {
+				$stats['pending'] += $cnt;
+			}
+
+			if ( 'declined' === $row['email_profile'] ) {
+				$stats['declined'] += $cnt;
+			}
+		}
+
+		return $stats;
+	}
 }
