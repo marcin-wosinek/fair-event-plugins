@@ -29,10 +29,7 @@ const DEFAULT_VIEW = {
 	fields: [
 		'name',
 		'email',
-		'phone',
-		'instagram',
-		'email_profile',
-		'status',
+		'mailing',
 		'groups',
 		'wp_user',
 		'events_signed_up',
@@ -105,6 +102,28 @@ export default function AllParticipants() {
 				label: __('Email', 'fair-audience'),
 				render: ({ item }) => item.email || '—',
 				enableSorting: true,
+			},
+			{
+				id: 'mailing',
+				label: __('Mailing', 'fair-audience'),
+				render: ({ item }) => {
+					if ('marketing' === item.email_profile) {
+						return 'pending' === item.status
+							? __(
+									'Marketing — pending confirmation',
+									'fair-audience'
+							  )
+							: __('Marketing', 'fair-audience');
+					}
+					if ('minimal' === item.email_profile) {
+						return __('Minimal', 'fair-audience');
+					}
+					if ('declined' === item.email_profile) {
+						return __('No', 'fair-audience');
+					}
+					return item.email_profile || '—';
+				},
+				enableSorting: false,
 			},
 			{
 				id: 'phone',
@@ -515,7 +534,17 @@ export default function AllParticipants() {
 
 	return (
 		<div className="wrap">
-			<h1>{__('All Participants', 'fair-audience')}</h1>
+			<h1 className="wp-heading-inline">
+				{__('All Participants', 'fair-audience')}
+			</h1>
+			<button
+				type="button"
+				className="page-title-action"
+				onClick={openAddModal}
+			>
+				{__('Add Participant', 'fair-audience')}
+			</button>
+			<hr className="wp-header-end" />
 
 			{errorMessage && (
 				<Notice
@@ -535,12 +564,6 @@ export default function AllParticipants() {
 
 			<Card>
 				<CardBody style={{ overflowX: 'auto' }}>
-					<div style={{ marginBottom: '16px' }}>
-						<Button variant="primary" onClick={openAddModal}>
-							{__('Add Participant', 'fair-audience')}
-						</Button>
-					</div>
-
 					<DataViews
 						data={participants}
 						fields={fields}
