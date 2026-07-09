@@ -89,6 +89,9 @@ class Plugin {
 		// Initialize payment hooks (for fair-payments-connector webhook integration).
 		\FairAudience\Hooks\PaymentHooks::init();
 
+		// Initialize the weekly events digest cron.
+		\FairAudience\Hooks\WeeklyDigestHooks::init();
+
 		// Initialize blocks.
 		$block_hooks = new \FairAudience\Hooks\BlockHooks();
 	}
@@ -117,6 +120,9 @@ class Plugin {
 
 		$event_interest_controller = new \FairAudience\API\EventInterestController();
 		$event_interest_controller->register_routes();
+
+		$weekly_digest_controller = new \FairAudience\API\WeeklyDigestController();
+		$weekly_digest_controller->register_routes();
 	}
 
 	/**

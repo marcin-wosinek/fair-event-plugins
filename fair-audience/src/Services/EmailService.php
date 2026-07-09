@@ -2110,6 +2110,86 @@ class EmailService {
 	}
 
 	/**
+	 * Send pre-rendered HTML content to a raw email address.
+	 *
+	 * Unlike `send_custom_mail*()`, this has no Participant to resolve
+	 * placeholders or an unsubscribe link for — used for admin-facing sends
+	 * (e.g. the weekly digest "send test to me").
+	 *
+	 * @param string $to_email Recipient email address.
+	 * @param string $subject  Email subject.
+	 * @param string $content  Email content (HTML).
+	 * @return bool Whether wp_mail() accepted the message.
+	 */
+	public function send_html_mail_to_address( $to_email, $subject, $content ) {
+		if ( empty( $to_email ) || ! is_email( $to_email ) ) {
+			return false;
+		}
+
+		$site_name = wp_specialchars_decode( get_option( 'blogname' ), ENT_QUOTES );
+
+		$message = '<!DOCTYPE html>
+<html>
+<head>
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+</head>
+<body style="margin: 0; padding: 0; font-family: Arial, sans-serif; font-size: 16px; line-height: 1.6; color: #333333; background-color: #f4f4f4;">
+	<table width="100%" cellpadding="0" cellspacing="0" style="background-color: #f4f4f4;">
+		<tr>
+			<td align="center" style="padding: 20px 0;">
+				<table width="600" cellpadding="0" cellspacing="0" style="background-color: #ffffff; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
+					<!-- Header -->
+					<tr>
+						<td style="background-color: #0073aa; color: #ffffff; padding: 30px; border-radius: 8px 8px 0 0; text-align: center;">
+							<h1 style="margin: 0; font-size: 24px; font-weight: bold;">' . esc_html( $site_name ) . '</h1>
+						</td>
+					</tr>
+
+					<!-- Content -->
+					<tr>
+						<td style="padding: 40px 30px;">
+							<div style="margin: 0; font-size: 16px;">
+								' . wp_kses_post( $content ) . '
+							</div>
+						</td>
+					</tr>
+
+					<!-- Footer -->
+					<tr>
+						<td style="background-color: #f8f8f8; padding: 20px 30px; border-radius: 0 0 8px 8px; text-align: center; font-size: 12px; color: #666666;">
+							<p style="margin: 0;">
+								' . esc_html( $site_name ) . '
+							</p>
+						</td>
+					</tr>
+				</table>
+			</td>
+		</tr>
+	</table>
+</body>
+</html>';
+
+		add_filter(
+			'wp_mail_content_type',
+			function () {
+				return 'text/html';
+			}
+		);
+
+		$result = wp_mail( $to_email, $subject, $this->append_branding_footer( $message ) );
+
+		remove_filter(
+			'wp_mail_content_type',
+			function () {
+				return 'text/html';
+			}
+		);
+
+		return $result;
+	}
+
+	/**
 	 * Render questionnaire answers as `<tr>` rows for the email tables.
 	 *
 	 * Shared by signup-answers, form-confirmation, form-notification and signup

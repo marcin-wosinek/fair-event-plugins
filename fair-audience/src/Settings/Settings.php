@@ -138,6 +138,70 @@ class Settings {
 			)
 		);
 
+		// Weekly digest configuration — single option object.
+		register_setting(
+			'fair_audience_settings',
+			'fair_audience_weekly_digest',
+			array(
+				'type'              => 'object',
+				'description'       => __( 'Weekly events digest configuration', 'fair-audience' ),
+				'sanitize_callback' => array( \FairAudience\Services\WeeklyDigestRenderer::class, 'sanitize_config' ),
+				'show_in_rest'      => array(
+					'schema' => array(
+						'type'       => 'object',
+						'properties' => array(
+							'enabled'     => array( 'type' => 'boolean' ),
+							'source_slug' => array( 'type' => 'string' ),
+							'day_of_week' => array( 'type' => 'integer' ),
+							'time_of_day' => array( 'type' => 'string' ),
+							'week_scope'  => array( 'type' => 'string' ),
+							'skip_empty'  => array( 'type' => 'boolean' ),
+							'subject'     => array( 'type' => 'string' ),
+							'intro'       => array( 'type' => 'string' ),
+						),
+					),
+				),
+				'default'           => \FairAudience\Services\WeeklyDigestRenderer::default_config(),
+			)
+		);
+
+		// Runtime-written: last ISO week ('YYYY-Www') a digest was sent for.
+		register_setting(
+			'fair_audience_settings',
+			'fair_audience_weekly_digest_last_sent_week',
+			array(
+				'type'              => 'string',
+				'description'       => __( 'ISO week of the last sent weekly digest', 'fair-audience' ),
+				'sanitize_callback' => 'sanitize_text_field',
+				'show_in_rest'      => false,
+				'default'           => '',
+			)
+		);
+
+		// Runtime-written: outcome of the last digest cron run.
+		register_setting(
+			'fair_audience_settings',
+			'fair_audience_weekly_digest_last_run_result',
+			array(
+				'type'              => 'object',
+				'description'       => __( 'Outcome of the last weekly digest cron run', 'fair-audience' ),
+				'sanitize_callback' => function ( $value ) {
+					return is_array( $value ) ? $value : array();
+				},
+				'show_in_rest'      => array(
+					'schema' => array(
+						'type'       => 'object',
+						'properties' => array(
+							'status'    => array( 'type' => 'string' ),
+							'timestamp' => array( 'type' => 'string' ),
+							'message'   => array( 'type' => 'string' ),
+						),
+					),
+				),
+				'default'           => array(),
+			)
+		);
+
 		// Feature flag bundle toggles — UI state only, never overrides a
 		// wp-config constant (see Features::sanitize_option()).
 		register_setting(
