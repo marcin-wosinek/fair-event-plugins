@@ -241,10 +241,13 @@ export default function WeeklySchedule() {
 		try {
 			const svg = generateScheduleSvg(data);
 			const base64 = await svgToBase64Png(svg);
-			const { url } = await uploadImageBlob(base64);
+			const { url, attachment_id: attachmentId } = await uploadImageBlob(
+				base64
+			);
 			const result = await createInstagramPost({
 				image_url: url,
 				caption: message,
+				attachment_id: attachmentId,
 			});
 			setPostSuccess(result.post?.permalink || true);
 		} catch (err) {

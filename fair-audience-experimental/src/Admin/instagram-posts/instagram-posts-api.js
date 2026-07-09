@@ -23,6 +23,7 @@ export function loadInstagramPosts(status = null) {
  * @param {Object} data Post data
  * @param {string} data.image_url Publicly accessible image URL
  * @param {string} data.caption Post caption
+ * @param {number} [data.attachment_id] Temporary attachment to delete after a successful publish
  * @return {Promise<Object>} Promise resolving to created post
  */
 export function createInstagramPost(data) {
@@ -34,12 +35,12 @@ export function createInstagramPost(data) {
 }
 
 /**
- * Upload a WordPress attachment to tmpfiles.org for public access
+ * Resolve a WordPress attachment's public media-library URL
  *
  * @param {number} attachmentId WordPress attachment ID
  * @return {Promise<Object>} Promise resolving to { url: string }
  */
-export function uploadImageToTmpFiles(attachmentId) {
+export function getAttachmentUrl(attachmentId) {
 	return apiFetch({
 		path: '/fair-audience/v1/instagram/upload-image',
 		method: 'POST',
@@ -48,10 +49,10 @@ export function uploadImageToTmpFiles(attachmentId) {
 }
 
 /**
- * Upload a base64-encoded image blob to tmpfiles.org via the REST API
+ * Store a base64-encoded image blob as a media-library attachment
  *
- * @param {string} base64Data Base64-encoded image data (with or without data URI prefix)
- * @return {Promise<Object>} Promise resolving to { url: string }
+ * @param {string} base64Data Base64-encoded PNG image data (with or without data URI prefix)
+ * @return {Promise<Object>} Promise resolving to { url: string, attachment_id: number }
  */
 export function uploadImageBlob(base64Data) {
 	return apiFetch({
