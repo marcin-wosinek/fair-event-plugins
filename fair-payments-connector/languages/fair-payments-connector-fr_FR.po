@@ -1100,4 +1100,3 @@ msgstr "Impossible de créer le paiement"
 #: src/Admin/transaction/TransactionPage.js:793
 msgid "Details"
 msgstr "Détails"
-

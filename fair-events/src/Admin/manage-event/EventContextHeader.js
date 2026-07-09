@@ -27,13 +27,13 @@ export default function EventContextHeader({ eventDate, manageEventUrl }) {
 	let linkStatus;
 	if (eventDate.link_type === 'post' && linkedPosts.length > 0) {
 		linkStatus = sprintf(
-			/* translators: %s: title of the linked post */
+			/* translators: %s: title or URL of the linked post/page */
 			__('Links to: %s', 'fair-events'),
 			linkedPosts[0].title
 		);
 	} else if (eventDate.link_type === 'external' && eventDate.external_url) {
 		linkStatus = sprintf(
-			/* translators: %s: external URL the event links to */
+			/* translators: %s: title or URL of the linked post/page */
 			__('Links to: %s', 'fair-events'),
 			eventDate.external_url
 		);

@@ -1100,4 +1100,3 @@ msgstr "Fehler beim Erstellen der Zahlung"
 #: src/Admin/transaction/TransactionPage.js:793
 msgid "Details"
 msgstr "Details"
-

@@ -18,7 +18,7 @@ msgstr ""
 #: src/Admin/AdminHooks.php:129
 #: src/Admin/AdminHooks.php:130
 #: src/API/FairFormController.php:238
-#: src/Services/QuestionnaireService.php:292
+#: src/Services/QuestionnaireService.php:293
 msgid "Fair Form"
 msgstr ""
 
@@ -90,7 +90,7 @@ msgstr "Legacy (keine Formular-ID)"
 
 #: src/API/QuestionnaireResponsesController.php:446
 #: src/API/QuestionnaireResponsesController.php:526
-#: src/Admin/submission-detail/SubmissionDetail.js:219
+#: src/Admin/submission-detail/SubmissionDetail.js:229
 msgid "Submission not found."
 msgstr "Einreichung nicht gefunden."
 
@@ -174,7 +174,7 @@ msgstr "Seite"
 #: src/Admin/answers-overview/AnswersOverview.js:112
 #: src/Admin/form-answers/FormAnswers.js:152
 #: src/Admin/form-answers/FormAnswers.js:272
-#: src/Admin/submission-detail/SubmissionDetail.js:313
+#: src/Admin/submission-detail/SubmissionDetail.js:323
 msgid "Event"
 msgstr "Ereignis"
 
@@ -186,21 +186,21 @@ msgstr "Formular"
 #: src/Admin/form-answers/FormAnswers.js:112
 #: src/Admin/form-answers/FormAnswers.js:197
 #: src/Admin/questionnaire-responses/QuestionnaireResponses.js:266
-#: src/Admin/submission-detail/SubmissionDetail.js:110
+#: src/Admin/submission-detail/SubmissionDetail.js:120
 msgid "Error: "
 msgstr "Fehler: "
 
 #: src/Admin/form-answers/FormAnswers.js:140
 #: src/Admin/questionnaire-responses/QuestionnaireResponses.js:132
 #: src/Admin/questionnaire-responses/QuestionnaireResponses.js:458
-#: src/Admin/submission-detail/SubmissionDetail.js:305
+#: src/Admin/submission-detail/SubmissionDetail.js:315
 msgid "Email"
 msgstr "E-Mail"
 
 #: src/Admin/form-answers/FormAnswers.js:158
 #: src/Admin/questionnaire-responses/QuestionnaireResponses.js:204
 #: src/Admin/questionnaire-responses/QuestionnaireResponses.js:462
-#: src/Admin/submission-detail/SubmissionDetail.js:309
+#: src/Admin/submission-detail/SubmissionDetail.js:319
 msgid "Date"
 msgstr "Datum"
 
@@ -213,7 +213,7 @@ msgid "Failed to delete submission."
 msgstr "Einreichung konnte nicht gelöscht werden."
 
 #: src/Admin/form-answers/FormAnswers.js:208
-#: src/Admin/submission-detail/SubmissionDetail.js:138
+#: src/Admin/submission-detail/SubmissionDetail.js:148
 msgid "Edit"
 msgstr "Bearbeiten"
 
@@ -227,7 +227,7 @@ msgid "Delete"
 msgstr "Löschen"
 
 #: src/Admin/form-answers/FormAnswers.js:235
-#: src/Admin/submission-detail/SubmissionDetail.js:120
+#: src/Admin/submission-detail/SubmissionDetail.js:130
 msgid "— None —"
 msgstr "— Keine —"
 
@@ -240,12 +240,12 @@ msgid "Edit Submission"
 msgstr "Einreichung bearbeiten"
 
 #: src/Admin/form-answers/FormAnswers.js:289
-#: src/Admin/submission-detail/SubmissionDetail.js:162
+#: src/Admin/submission-detail/SubmissionDetail.js:172
 msgid "Cancel"
 msgstr "Abbrechen"
 
 #: src/Admin/form-answers/FormAnswers.js:297
-#: src/Admin/submission-detail/SubmissionDetail.js:159
+#: src/Admin/submission-detail/SubmissionDetail.js:169
 msgid "Save"
 msgstr "Speichern"
 
@@ -320,17 +320,17 @@ msgid "Admin link"
 msgstr "Admin-Link"
 
 #: src/Admin/questionnaire-responses/QuestionnaireResponses.js:428
-#: src/Admin/submission-detail/SubmissionDetail.js:182
+#: src/Admin/submission-detail/SubmissionDetail.js:192
 msgid "Clipboard not available."
 msgstr "Zwischenablage nicht verfügbar."
 
 #: src/Admin/questionnaire-responses/QuestionnaireResponses.js:437
-#: src/Admin/submission-detail/SubmissionDetail.js:191
+#: src/Admin/submission-detail/SubmissionDetail.js:201
 msgid "Markdown copied to clipboard. Paste into Google Docs."
 msgstr "Markdown in die Zwischenablage kopiert. In Google Docs einfügen."
 
 #: src/Admin/questionnaire-responses/QuestionnaireResponses.js:446
-#: src/Admin/submission-detail/SubmissionDetail.js:200
+#: src/Admin/submission-detail/SubmissionDetail.js:210
 msgid "Failed to copy."
 msgstr "Kopieren fehlgeschlagen."
 
@@ -417,42 +417,51 @@ msgstr "Zur Gruppe hinzufügen"
 msgid "View file"
 msgstr "Datei anzeigen"
 
-#: src/Admin/submission-detail/SubmissionDetail.js:111
+#: src/Admin/submission-detail/SubmissionDetail.js:121
 msgid "Failed to update."
 msgstr "Aktualisierung fehlgeschlagen."
 
-#: src/Admin/submission-detail/SubmissionDetail.js:208
+#: src/Admin/submission-detail/SubmissionDetail.js:218
 msgid "No submission ID provided."
 msgstr "Keine Einreichungs-ID angegeben."
 
-#: src/Admin/submission-detail/SubmissionDetail.js:259
+#: src/Admin/submission-detail/SubmissionDetail.js:269
 msgid "Form Submission"
 msgstr "Formulareinreichung"
 
-#: src/Admin/submission-detail/SubmissionDetail.js:262
+#: src/Admin/submission-detail/SubmissionDetail.js:272
 msgid "Copy markdown"
 msgstr "Markdown kopieren"
 
-#: src/Admin/submission-detail/SubmissionDetail.js:278
+#: src/Admin/submission-detail/SubmissionDetail.js:288
 msgid "Submission Info"
 msgstr "Einreichungsinformationen"
 
-#: src/Admin/submission-detail/SubmissionDetail.js:289
+#: src/Admin/submission-detail/SubmissionDetail.js:299
 msgid "Submitted by"
 msgstr "Eingereicht von"
 
-#: src/Admin/submission-detail/SubmissionDetail.js:326
+#: src/Admin/submission-detail/SubmissionDetail.js:336
 msgid "Answers"
 msgstr "Antworten"
 
-#: src/Admin/submission-detail/SubmissionDetail.js:330
+#: src/Admin/submission-detail/SubmissionDetail.js:340
 msgid "No answers recorded."
 msgstr "Keine Antworten aufgezeichnet."
 
-#: src/Admin/submission-detail/SubmissionDetail.js:339
+#: src/Admin/submission-detail/SubmissionDetail.js:349
 msgid "Question"
 msgstr "Frage"
 
-#: src/Admin/submission-detail/SubmissionDetail.js:341
+#: src/Admin/submission-detail/SubmissionDetail.js:351
 msgid "Answer"
 msgstr "Antwort"
+
+#: src/Admin/submission-detail/SubmissionDetail.js:64
+msgid "Yes"
+msgstr "Ja"
+
+#: src/Admin/submission-detail/SubmissionDetail.js:65
+msgid "No"
+msgstr "Nein"
+

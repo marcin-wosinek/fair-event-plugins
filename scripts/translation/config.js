@@ -25,6 +25,10 @@ export const config = {
 			name: 'fair-payments-connector-experimental',
 			textDomain: 'fair-payments-connector-experimental',
 		},
+		{
+			name: 'fair-audience-experimental',
+			textDomain: 'fair-audience-experimental',
+		},
 	],
 
 	// Supported locales

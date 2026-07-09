@@ -1003,7 +1003,7 @@ class EventSignupController extends WP_REST_Controller {
 				: $occ->start_datetime;
 			$line_items[] = array(
 				'name'     => sprintf(
-					/* translators: %s: occurrence date/time label */
+					/* translators: %s: event title or occurrence date/time label */
 					__( 'Signup for %s', 'fair-audience' ),
 					$occ_label
 				),
@@ -1017,7 +1017,7 @@ class EventSignupController extends WP_REST_Controller {
 			array(
 				'currency'      => get_option( 'fair_payment_currency', 'EUR' ),
 				'description'   => sprintf(
-					/* translators: %s: event title */
+					/* translators: %s: event title or occurrence date/time label */
 					__( 'Signup for %s', 'fair-audience' ),
 					get_the_title( $event_id )
 				),
@@ -1995,7 +1995,7 @@ class EventSignupController extends WP_REST_Controller {
 		$this->save_participant_options( (int) $event_participant->id, $option_items );
 
 		$line_item_description = sprintf(
-			/* translators: %s: event title */
+			/* translators: %s: event title or occurrence date/time label */
 			__( 'Signup for %s', 'fair-audience' ),
 			get_the_title( $event_id )
 		);

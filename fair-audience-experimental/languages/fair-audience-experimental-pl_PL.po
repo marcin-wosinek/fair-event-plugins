@@ -1,0 +1,2562 @@
+msgid ""
+msgstr ""
+"Project-Id-Version: Fair Audience Experimental 1.0.0\n"
+"Report-Msgid-Bugs-To: https://wordpress.org/support/plugin/fair-audience-experimental\n"
+"Last-Translator: Marcin Wosinek <marcin.wosinek@gmail.com>\n"
+"Language-Team: Polish\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"POT-Creation-Date: 2026-07-09T11:21:45+00:00\n"
+"PO-Revision-Date: 2026-07-09 00:00+0000\n"
+"Language: pl_PL\n"
+"X-Generator: WP-CLI 2.12.0\n"
+"X-Domain: fair-audience-experimental\n"
+
+#. Plugin Name of the plugin
+#: fair-audience-experimental.php
+msgid "Fair Audience Experimental"
+msgstr "Fair Audience Experimental"
+
+#. Plugin URI of the plugin
+#: fair-audience-experimental.php
+msgid "https://github.com/marcin-wosinek/fair-event-plugins"
+msgstr ""
+
+#. Description of the plugin
+#: fair-audience-experimental.php
+msgid "Activates advanced feature bundles for Fair Audience (fees, polls, galleries, Instagram, groups, collaborators, messaging, image templates, timeline, import, weekly schedule, invitations, manage-event-ext). Requires fair-audience."
+msgstr "Aktywuje zaawansowane pakiety funkcji dla Fair Audience (opłaty, ankiety, galerie, Instagram, grupy, współpracownicy, wiadomości, szablony obrazów, oś czasu, import, harmonogram tygodniowy, zaproszenia, manage-event-ext). Wymaga fair-audience."
+
+#. Author of the plugin
+#: fair-audience-experimental.php
+msgid "Marcin Wosinek"
+msgstr ""
+
+#. Author URI of the plugin
+#: fair-audience-experimental.php
+msgid "https://github.com/marcin-wosinek"
+msgstr ""
+
+#: fair-audience-experimental.php:37
+msgid "Fair Audience Experimental requires the Fair Audience plugin to be active."
+msgstr "Fair Audience Experimental wymaga aktywnego wtyczki Fair Audience."
+
+#: src/Admin/AdminPages.php:58
+msgid "Experimental Settings"
+msgstr "Ustawienia eksperymentalne"
+
+#: src/Admin/AdminPages.php:59
+msgid "Experimental"
+msgstr "Eksperymentalne"
+
+#: src/Admin/AdminPages.php:69
+#: src/Admin/AdminPages.php:70
+#: src/Admin/manage-event-ext/EventAudience.js:1236
+msgid "Activity"
+msgstr "Aktywność"
+
+#: src/Admin/AdminPages.php:81
+#: src/Admin/AdminPages.php:82
+#: src/Core/Features.php:198
+#: src/Admin/custom-mail/CustomMail.js:781
+#: src/Admin/manage-event-ext/EventMailings.js:51
+msgid "Collaborators"
+msgstr "Współpracownicy"
+
+#: src/Admin/AdminPages.php:93
+#: src/Admin/AdminPages.php:94
+msgid "Membership Fees"
+msgstr "Opłaty członkowskie"
+
+#: src/Admin/AdminPages.php:102
+#: src/Admin/AdminPages.php:103
+#: src/Admin/AdminPages.php:109
+msgid "Fee Detail"
+msgstr "Szczegóły opłaty"
+
+#: src/Admin/AdminPages.php:116
+#: src/Admin/AdminPages.php:117
+#: src/Core/Features.php:214
+msgid "Import"
+msgstr "Import"
+
+#: src/Admin/AdminPages.php:128
+#: src/Admin/AdminPages.php:129
+#: src/Core/Features.php:182
+msgid "Polls"
+msgstr "Ankiety"
+
+#: src/Admin/AdminPages.php:137
+#: src/Admin/AdminPages.php:138
+#: src/Admin/AdminPages.php:144
+msgid "Edit Poll"
+msgstr "Edytuj ankietę"
+
+#: src/Admin/AdminPages.php:151
+#: src/Admin/AdminPages.php:152
+msgid "Instagram Posts"
+msgstr "Posty Instagram"
+
+#: src/Admin/AdminPages.php:163
+#: src/Admin/AdminPages.php:164
+msgid "Image Templates"
+msgstr "Szablony obrazów"
+
+#: src/Admin/AdminPages.php:175
+#: src/Admin/AdminPages.php:176
+msgid "Weekly Schedule"
+msgstr "Harmonogram tygodniowy"
+
+#: src/Admin/AdminPages.php:187
+#: src/Admin/AdminPages.php:188
+#: src/Core/Features.php:194
+#: src/Admin/custom-mail/CustomMail.js:823
+#: src/Admin/groups/Groups.js:323
+#: src/Admin/manage-event-ext/index.js:61
+msgid "Groups"
+msgstr "Grupy"
+
+#: src/Admin/AdminPages.php:196
+#: src/Admin/AdminPages.php:197
+#: src/Admin/AdminPages.php:203
+msgid "Group Detail"
+msgstr "Szczegóły grupy"
+
+#: src/Admin/AdminPages.php:210
+#: src/Admin/AdminPages.php:211
+#: src/Admin/custom-mail/CustomMail.js:534
+#: src/Admin/custom-mail/CustomMail.js:550
+msgid "Custom Mail"
+msgstr "Niestandardowa poczta"
+
+#: src/Admin/AdminPages.php:219
+#: src/Admin/AdminPages.php:220
+#: src/Admin/extra-messages-list/ExtraMessagesList.js:84
+#: src/Admin/extra-messages-list/ExtraMessagesList.js:93
+#: src/Admin/extra-messages-list/ExtraMessagesList.js:104
+msgid "Extra Messages"
+msgstr "Dodatkowe wiadomości"
+
+#: src/Admin/AdminPages.php:228
+#: src/Admin/AdminPages.php:229
+#: src/Admin/AdminPages.php:235
+#: src/Admin/edit-extra-message/EditExtraMessage.js:152
+#: src/Admin/edit-extra-message/EditExtraMessage.js:167
+msgid "Edit Extra Message"
+msgstr "Edytuj dodatkową wiadomość"
+
+#: src/Admin/MediaBatchActions.php:38
+#: src/Admin/MediaBatchActions.php:84
+#: src/Admin/MediaBatchActions.php:85
+#: src/Admin/MediaBatchActions.php:193
+msgid "Set Photo Author"
+msgstr "Ustaw autora zdjęcia"
+
+#: src/Admin/MediaBatchActions.php:108
+#: src/Admin/MediaBatchActions.php:171
+msgid "Security check failed."
+msgstr "Sprawdzenie bezpieczeństwa nie powiodło się."
+
+#: src/Admin/MediaBatchActions.php:113
+#: src/Admin/MediaBatchActions.php:176
+msgid "You do not have permission to access this page."
+msgstr "Nie masz uprawnień dostępu do tej strony."
+
+#: src/Admin/MediaBatchActions.php:120
+msgid "Please select an author."
+msgstr "Proszę wybrać autora."
+
+#: src/Admin/MediaBatchActions.php:127
+msgid "Invalid author selected."
+msgstr "Wybrany autor jest nieprawidłowy."
+
+#: src/Admin/MediaBatchActions.php:135
+msgid "No photos to assign."
+msgstr "Brak zdjęć do przypisania."
+
+#: src/Admin/MediaBatchActions.php:184
+msgid "No photos selected."
+msgstr "Nie wybrano żadnych zdjęć."
+
+#. translators: %d: number of photos
+#: src/Admin/MediaBatchActions.php:204
+#, php-format
+msgid "%d photo selected:"
+msgid_plural "%d photos selected:"
+msgstr[0] "%d zdjęcie wybrane:"
+msgstr[1] "%d zdjęcia wybrane:"
+msgstr[2] "%d zdjęć wybranych:"
+
+#: src/Admin/MediaBatchActions.php:237
+msgid "Author"
+msgstr "Autor"
+
+#: src/Admin/MediaBatchActions.php:241
+#: src/Admin/MediaLibraryHooks.php:94
+#: src/Admin/MediaLibraryHooks.php:400
+msgid "— Select Author —"
+msgstr "— Wybierz autora —"
+
+#: src/Admin/MediaBatchActions.php:249
+msgid "All selected photos will be attributed to this author."
+msgstr "Wszystkie wybrane zdjęcia będą przypisane temu autorowi."
+
+#: src/Admin/MediaBatchActions.php:257
+#: src/Admin/edit-extra-message/EditExtraMessage.js:262
+#: src/Admin/group-detail/GroupDetail.js:485
+#: src/Admin/groups/Groups.js:390
+#: src/Admin/groups/Groups.js:438
+#: src/Admin/manage-event-ext/EventAudience.js:1958
+#: src/Admin/manage-event-ext/EventAudience.js:2152
+#: src/Admin/manage-event-ext/EventAudience.js:2364
+#: src/Admin/manage-event-ext/EventAudience.js:2573
+#: src/Admin/manage-event-ext/EventAudience.js:2628
+#: src/Admin/manage-event-ext/EventMailings.js:671
+#: src/Admin/manage-event-ext/GroupRules.js:495
+msgid "Cancel"
+msgstr "Anuluj"
+
+#: src/Admin/MediaBatchActions.php:260
+msgid "Set Author"
+msgstr "Ustaw autora"
+
+#. translators: 1: number of photos, 2: author name
+#: src/Admin/MediaBatchActions.php:287
+#, php-format
+msgid "%1$d photo assigned to \"%2$s\"."
+msgid_plural "%1$d photos assigned to \"%2$s\"."
+msgstr[0] "%1$d zdjęcie przypisane do \"%2$s\"."
+msgstr[1] "%1$d zdjęcia przypisane do \"%2$s\"."
+msgstr[2] "%1$d zdjęć przypisanych do \"%2$s\"."
+
+#: src/Admin/MediaLibraryHooks.php:106
+#: src/Admin/MediaLibraryHooks.php:280
+msgid "Photo Author"
+msgstr "Autor zdjęcia"
+
+#: src/Admin/MediaLibraryHooks.php:114
+msgid "Who took this photo"
+msgstr "Kto zrobił to zdjęcie"
+
+#: src/Admin/MediaLibraryHooks.php:177
+#: src/Admin/MediaLibraryHooks.php:430
+msgid "— Add Person —"
+msgstr "— Dodaj osobę —"
+
+#: src/Admin/MediaLibraryHooks.php:198
+msgid "Tagged People"
+msgstr "Oznaczeni ludzie"
+
+#: src/Admin/MediaLibraryHooks.php:201
+msgid "People in this photo"
+msgstr "Osoby na tym zdjęciu"
+
+#: src/Admin/MediaLibraryHooks.php:233
+#: src/Admin/MediaLibraryHooks.php:845
+msgid "All Authors"
+msgstr "Wszyscy autorzy"
+
+#: src/Admin/MediaLibraryHooks.php:281
+msgid "Likes"
+msgstr "Polubienia"
+
+#: src/Admin/MediaLibraryHooks.php:397
+msgid "Photo Author:"
+msgstr "Autor zdjęcia:"
+
+#: src/Admin/MediaLibraryHooks.php:427
+msgid "Tag People:"
+msgstr "Oznacz osoby:"
+
+#: src/Admin/MediaLibraryHooks.php:482
+#: src/Admin/MediaLibraryHooks.php:520
+#: src/Admin/MediaLibraryHooks.php:755
+#: src/Admin/edit-extra-message/EditExtraMessage.js:252
+#: src/Admin/settings/FeaturesTab.js:174
+msgid "Saving..."
+msgstr "Zapisywanie..."
+
+#: src/Admin/MediaLibraryHooks.php:491
+#: src/Admin/MediaLibraryHooks.php:534
+#: src/Admin/MediaLibraryHooks.php:770
+msgid "Saved."
+msgstr "Zapisano."
+
+#: src/Admin/MediaLibraryHooks.php:496
+#: src/Admin/MediaLibraryHooks.php:536
+msgid "Error saving selection"
+msgstr "Błąd podczas zapisywania wyboru"
+
+#: src/Admin/MediaLibraryHooks.php:499
+#: src/Admin/MediaLibraryHooks.php:540
+msgid "Error:"
+msgstr "Błąd:"
+
+#: src/Admin/MediaLibraryHooks.php:561
+msgid "Error removing tag"
+msgstr "Błąd podczas usuwania tagu"
+
+#: src/Admin/MediaLibraryHooks.php:773
+#: src/Admin/MediaLibraryHooks.php:777
+#: src/Admin/MediaLibraryHooks.php:801
+msgid "Error"
+msgstr "Błąd"
+
+#: src/API/CustomMailController.php:257
+msgid "You do not have permission to manage custom mail."
+msgstr "Nie masz uprawnień do zarządzania niestandardową pocztą."
+
+#: src/API/CustomMailController.php:319
+#: src/API/CustomMailController.php:402
+#: src/API/EventInvitationsController.php:132
+#: src/API/GalleryAccessController.php:259
+#: src/API/GalleryAccessController.php:302
+#: src/API/ScheduledMessagesController.php:380
+msgid "Event date not found."
+msgstr "Data wydarzenia nie znaleziona."
+
+#: src/API/CustomMailController.php:434
+msgid "Custom mail message not found."
+msgstr "Niestandardowa wiadomość e-mail nie znaleziona."
+
+#: src/API/EventInvitationsController.php:107
+msgid "You do not have permission to send event invitations."
+msgstr "Nie masz uprawnień do wysyłania zaproszeń na wydarzenia."
+
+#: src/API/EventInvitationsController.php:143
+#: src/API/GalleryAccessController.php:270
+#: src/API/GalleryAccessController.php:313
+msgid "Event not found."
+msgstr "Wydarzenie nie znalezione."
+
+#: src/API/EventInvitationsController.php:152
+msgid "Please specify participant IDs or group IDs."
+msgstr "Proszę określić identyfikatory uczestników lub identyfikatory grup."
+
+#: src/API/ExtraMessagesController.php:143
+#: src/API/ExtraMessagesController.php:204
+#: src/API/ExtraMessagesController.php:258
+msgid "Extra message not found."
+msgstr "Dodatkowa wiadomość nie znaleziona."
+
+#: src/API/ExtraMessagesController.php:178
+msgid "Failed to create extra message."
+msgstr "Nie udało się utworzyć dodatkowej wiadomości."
+
+#: src/API/ExtraMessagesController.php:186
+msgid "Extra message created successfully."
+msgstr "Dodatkowa wiadomość została pomyślnie utworzona."
+
+#: src/API/ExtraMessagesController.php:232
+msgid "Failed to update extra message."
+msgstr "Nie udało się zaktualizować dodatkowej wiadomości."
+
+#: src/API/ExtraMessagesController.php:240
+msgid "Extra message updated successfully."
+msgstr "Dodatkowa wiadomość została pomyślnie zaktualizowana."
+
+#: src/API/ExtraMessagesController.php:266
+msgid "Failed to delete extra message."
+msgstr "Nie udało się usunąć dodatkowej wiadomości."
+
+#: src/API/ExtraMessagesController.php:273
+msgid "Extra message deleted successfully."
+msgstr "Dodatkowa wiadomość została pomyślnie usunięta."
+
+#: src/API/ExtraMessagesController.php:290
+msgid "Content is required."
+msgstr "Zawartość jest wymagana."
+
+#: src/API/ExtraMessagesController.php:301
+msgid "The specified category does not exist."
+msgstr "Określona kategoria nie istnieje."
+
+#: src/API/FeesController.php:282
+#: src/API/FeesController.php:375
+#: src/API/FeesController.php:426
+#: src/API/FeesController.php:459
+#: src/API/FeesController.php:482
+#: src/API/FeesController.php:736
+#: src/API/FeesController.php:759
+#: src/API/FeesController.php:822
+msgid "Fee not found."
+msgstr "Opłata nie znaleziona."
+
+#: src/API/FeesController.php:304
+msgid "Fee name is required."
+msgstr "Nazwa opłaty jest wymagana."
+
+#: src/API/FeesController.php:312
+msgid "Group is required."
+msgstr "Grupa jest wymagana."
+
+#: src/API/FeesController.php:320
+msgid "Amount must be a positive number."
+msgstr "Kwota musi być liczbą dodatnią."
+
+#: src/API/FeesController.php:345
+msgid "Failed to create fee."
+msgstr "Nie udało się utworzyć opłaty."
+
+#: src/API/FeesController.php:357
+msgid "Fee created successfully."
+msgstr "Opłata utworzona pomyślnie."
+
+#: src/API/FeesController.php:400
+msgid "Failed to update fee."
+msgstr "Nie udało się zaktualizować opłaty."
+
+#: src/API/FeesController.php:408
+msgid "Fee updated successfully."
+msgstr "Opłata zaktualizowana pomyślnie."
+
+#: src/API/FeesController.php:434
+msgid "Failed to delete fee."
+msgstr "Nie udało się usunąć opłaty."
+
+#: src/API/FeesController.php:441
+msgid "Fee deleted successfully."
+msgstr "Opłata usunięta pomyślnie."
+
+#: src/API/FeesController.php:491
+msgid "Participant is required."
+msgstr "Uczestnik jest wymagany."
+
+#: src/API/FeesController.php:502
+#: src/API/FeesController.php:589
+msgid "Amount must be a non-negative number."
+msgstr "Kwota musi być liczbą nieujemną."
+
+#: src/API/FeesController.php:522
+msgid "Participant is not a member of this fee's group."
+msgstr "Uczestnik nie jest członkiem grupy tej opłaty."
+
+#: src/API/FeesController.php:532
+msgid "This participant already has a payment for this fee."
+msgstr "Ten uczestnik ma już płatność za tę opłatę."
+
+#: src/API/FeesController.php:550
+msgid "Failed to add participant to fee."
+msgstr "Nie udało się dodać uczestnika do opłaty."
+
+#: src/API/FeesController.php:560
+msgid "Participant added manually."
+msgstr "Uczestnik dodany ręcznie."
+
+#: src/API/FeesController.php:566
+msgid "Participant added to fee."
+msgstr "Uczestnik dodany do opłaty."
+
+#: src/API/FeesController.php:597
+msgid "A reason for the adjustment is required."
+msgstr "Wymagana jest przyczyna korekty."
+
+#: src/API/FeesController.php:608
+msgid "Failed to update payment amount."
+msgstr "Nie udało się zaktualizować kwoty płatności."
+
+#: src/API/FeesController.php:624
+msgid "Payment amount adjusted successfully."
+msgstr "Kwota płatności została pomyślnie dostosowana."
+
+#: src/API/FeesController.php:648
+msgid "Failed to mark payment as paid."
+msgstr "Nie udało się oznaczyć płatności jako opłaconej."
+
+#: src/API/FeesController.php:663
+msgid "Payment marked as paid."
+msgstr "Płatność oznaczona jako opłacona."
+
+#: src/API/FeesController.php:686
+msgid "Failed to cancel payment."
+msgstr "Nie udało się anulować płatności."
+
+#: src/API/FeesController.php:701
+msgid "Payment canceled."
+msgstr "Płatność anulowana."
+
+#: src/API/FeesController.php:831
+#: templates/fee-payment.php:51
+msgid "Payment not found."
+msgstr "Płatność nie znaleziona."
+
+#: src/API/GalleryAccessController.php:171
+msgid "You do not have permission to send gallery invitations."
+msgstr "Nie masz uprawnień do wysyłania zaproszeń do galerii."
+
+#: src/API/GalleryAccessController.php:189
+msgid "You do not have permission to view gallery invitation stats."
+msgstr "Nie masz uprawnień do przeglądania statystyk zaproszeń do galerii."
+
+#: src/API/GroupsController.php:212
+#: src/API/GroupsController.php:287
+#: src/API/GroupsController.php:343
+#: src/API/GroupsController.php:376
+#: src/API/GroupsController.php:441
+#: src/API/GroupsController.php:465
+#: src/API/GroupsController.php:520
+#: src/Admin/group-detail/GroupDetail.js:59
+msgid "Group not found."
+msgstr "Grupa nie znaleziona."
+
+#: src/API/GroupsController.php:235
+msgid "Group name is required."
+msgstr "Nazwa grupy jest wymagana."
+
+#: src/API/GroupsController.php:245
+#: src/API/GroupsController.php:300
+#: src/API/GroupsController.php:394
+msgid "A group with this name already exists."
+msgstr "Grupa o tej nazwie już istnieje."
+
+#: src/API/GroupsController.php:261
+msgid "Failed to create group."
+msgstr "Nie udało się utworzyć grupy."
+
+#: src/API/GroupsController.php:269
+msgid "Group created successfully."
+msgstr "Grupa została pomyślnie utworzona."
+
+#: src/API/GroupsController.php:317
+msgid "Failed to update group."
+msgstr "Nie udało się zaktualizować grupy."
+
+#: src/API/GroupsController.php:325
+msgid "Group updated successfully."
+msgstr "Grupa została pomyślnie zaktualizowana."
+
+#: src/API/GroupsController.php:351
+#: src/Admin/groups/Groups.js:268
+msgid "Failed to delete group."
+msgstr "Nie udało się usunąć grupy."
+
+#: src/API/GroupsController.php:358
+msgid "Group deleted successfully."
+msgstr "Grupa została pomyślnie usunięta."
+
+#. translators: %s: original group name
+#: src/API/GroupsController.php:385
+#: src/Admin/groups/Groups.js:202
+#, php-format, js-format
+msgid "%s (copy)"
+msgstr "%s (kopia)"
+
+#: src/API/GroupsController.php:410
+#: src/Admin/groups/Groups.js:231
+msgid "Failed to duplicate group."
+msgstr "Nie udało się zduplikować grupę."
+
+#: src/API/GroupsController.php:423
+msgid "Group duplicated successfully."
+msgstr "Grupa zduplikowana pomyślnie."
+
+#: src/API/GroupsController.php:474
+#: src/API/PhotoUploadController.php:124
+msgid "Participant not found."
+msgstr "Uczestnik nie znaleziony."
+
+#: src/API/GroupsController.php:484
+msgid "Participant is already a member of this group."
+msgstr "Uczestnik jest już członkiem tej grupy."
+
+#: src/API/GroupsController.php:493
+msgid "Failed to add participant to group."
+msgstr "Nie udało się dodać uczestnika do grupy."
+
+#: src/API/GroupsController.php:501
+msgid "Participant added to group successfully."
+msgstr "Uczestnik dodany do grupy pomyślnie."
+
+#: src/API/GroupsController.php:529
+msgid "Participant is not a member of this group."
+msgstr "Uczestnik nie jest członkiem tej grupy."
+
+#: src/API/GroupsController.php:536
+msgid "Participant removed from group successfully."
+msgstr "Uczestnik usunięty z grupy pomyślnie."
+
+#: src/API/ImageTemplatesController.php:189
+msgid "Invalid attachment ID."
+msgstr "Nieprawidłowy identyfikator załącznika."
+
+#: src/API/ImageTemplatesController.php:198
+msgid "Only SVG files can be used as image templates."
+msgstr "Tylko pliki SVG mogą być używane jako szablony obrazów."
+
+#: src/API/ImageTemplatesController.php:208
+#: src/API/ImageTemplatesController.php:286
+msgid "Could not read SVG file."
+msgstr "Nie można odczytać pliku SVG."
+
+#: src/API/ImageTemplatesController.php:240
+#: src/API/ImageTemplatesController.php:267
+msgid "Template not found."
+msgstr "Szablon nie znaleziony."
+
+#: src/API/ImageTemplatesController.php:276
+msgid "Attachment is not registered as a template."
+msgstr "Załącznik nie jest zarejestrowany jako szablon."
+
+#: src/API/ImportController.php:138
+#: src/API/ImportController.php:480
+msgid "No file uploaded."
+msgstr "Nie przesłano żadnego pliku."
+
+#: src/API/ImportController.php:154
+#: src/API/ImportController.php:682
+msgid "Invalid event ID provided."
+msgstr "Podano nieprawidłowy identyfikator zdarzenia."
+
+#: src/API/ImportController.php:166
+#: src/API/ImportController.php:490
+#: src/API/PhotoUploadController.php:208
+msgid "File upload failed."
+msgstr "Przesyłanie pliku nie powiodło się."
+
+#: src/API/ImportController.php:180
+msgid "Invalid file type. Please upload an Excel file (.xlsx)."
+msgstr "Nieprawidłowy typ pliku. Proszę przesłać plik Excel (.xlsx)."
+
+#: src/API/ImportController.php:196
+#: src/API/ImportController.php:533
+msgid "The uploaded file is empty."
+msgstr "Przesłany plik jest pusty."
+
+#. translators: 1: found headers list
+#: src/API/ImportController.php:217
+#, php-format
+msgid "Invalid file format. Required columns: Nombre, Apellidos, Email. Found columns: %s"
+msgstr "Nieprawidłowy format pliku. Wymagane kolumny: Nombre, Apellidos, Email. Znalezione kolumny: %s"
+
+#. translators: %d: row number
+#: src/API/ImportController.php:371
+#, php-format
+msgid "Row %d: Missing required fields (name or surname)"
+msgstr "Wiersz %d: Brakuje wymaganych pól (imię lub nazwisko)"
+
+#. translators: 1: row number, 2: email address
+#: src/API/ImportController.php:381
+#: src/API/ImportController.php:577
+#, php-format
+msgid "Row %1$d: Invalid email format: %2$s"
+msgstr "Wiersz %1$d: Nieprawidłowy format e-maila: %2$s"
+
+#. translators: 1: row number, 2: email address
+#: src/API/ImportController.php:437
+#, php-format
+msgid "Row %1$d: Failed to link participant to event: %2$s"
+msgstr "Wiersz %1$d: Nie udało się powiązać uczestnika z wydarzeniem: %2$s"
+
+#. translators: 1: row number, 2: email address
+#: src/API/ImportController.php:446
+#: src/API/ImportController.php:626
+#, php-format
+msgid "Row %1$d: Failed to save participant: %2$s"
+msgstr "Wiersz %1$d: Nie udało się zapisać uczestnika: %2$s"
+
+#. translators: %s: error message
+#: src/API/ImportController.php:460
+#: src/API/ImportController.php:642
+#, php-format
+msgid "Import failed: %s"
+msgstr "Import nie powiódł się: %s"
+
+#: src/API/ImportController.php:508
+msgid "Invalid group ID provided."
+msgstr "Podano nieprawidłowy identyfikator grupy."
+
+#: src/API/ImportController.php:523
+msgid "Could not read the uploaded file."
+msgstr "Nie można odczytać przesłanego pliku."
+
+#. translators: %s: found headers list
+#: src/API/ImportController.php:549
+#, php-format
+msgid "Invalid file format. Required column: email. Found columns: %s"
+msgstr "Nieprawidłowy format pliku. Wymagana kolumna: email. Znalezione kolumny: %s"
+
+#: src/API/ImportController.php:662
+msgid "No participants provided."
+msgstr "Nie podano żadnych uczestników."
+
+#. translators: %d: participant index
+#: src/API/ImportController.php:704
+#, php-format
+msgid "Participant %d: Missing required fields (name or surname)"
+msgstr "Uczestnik %d: Brakuje wymaganych pól (imię lub nazwisko)"
+
+#. translators: 1: participant index, 2: email address
+#: src/API/ImportController.php:723
+#, php-format
+msgid "Participant %1$d: Invalid email format: %2$s"
+msgstr "Uczestnik %1$d: Nieprawidłowy format adresu e-mail: %2$s"
+
+#. translators: 1: participant index, 2: name and surname
+#: src/API/ImportController.php:791
+#, php-format
+msgid "Participant %1$d: Failed to link to event: %2$s"
+msgstr "Uczestnik %1$d: Nie udało się powiązać z wydarzeniem: %2$s"
+
+#. translators: 1: participant index, 2: name and surname
+#: src/API/ImportController.php:814
+#, php-format
+msgid "Participant %1$d: Failed to save participant: %2$s"
+msgstr "Uczestnik %1$d: Nie udało się zapisać uczestnika: %2$s"
+
+#: src/API/InstagramController.php:67
+msgid "No Instagram access token configured."
+msgstr "Nie skonfigurowano tokenu dostępu Instagram."
+
+#: src/API/InstagramController.php:103
+msgid "Failed to connect to Instagram API."
+msgstr "Nie udało się połączyć z API Instagram."
+
+#: src/API/InstagramController.php:117
+msgid "The access token is invalid or expired."
+msgstr "Token dostępu jest nieprawidłowy lub wygasł."
+
+#: src/API/InstagramController.php:140
+msgid "Token is valid!"
+msgstr "Token jest ważny!"
+
+#: src/API/InstagramController.php:149
+msgid "Instagram Account"
+msgstr "Konto Instagram"
+
+#: src/API/InstagramPostsController.php:105
+msgid "Publicly accessible image URL."
+msgstr "Publicznie dostępny adres URL obrazu."
+
+#: src/API/InstagramPostsController.php:111
+msgid "Post caption."
+msgstr "Podpis postu."
+
+#: src/API/InstagramPostsController.php:117
+msgid "Temporary attachment to delete after a successful publish."
+msgstr "Tymczasowe załączenie do usunięcia po pomyślnym opublikowaniu."
+
+#: src/API/InstagramPostsController.php:138
+msgid "WordPress attachment ID."
+msgstr "Identyfikator załącznika WordPress."
+
+#: src/API/InstagramPostsController.php:158
+msgid "Base64-encoded PNG image data."
+msgstr "Dane obrazu PNG zakodowane w Base64."
+
+#: src/API/InstagramPostsController.php:231
+msgid "Image URL is required."
+msgstr "Wymagany jest adres URL obrazu."
+
+#: src/API/InstagramPostsController.php:240
+msgid "Caption is required."
+msgstr "Wymagany jest opis."
+
+#: src/API/InstagramPostsController.php:268
+msgid "Failed to create post record."
+msgstr "Nie udało się utworzyć rekordu postu."
+
+#: src/API/InstagramPostsController.php:301
+msgid "Post published successfully!"
+msgstr "Post opublikowany pomyślnie!"
+
+#: src/API/InstagramPostsController.php:329
+msgid "Post not found."
+msgstr "Post nie znaleziony."
+
+#: src/API/InstagramPostsController.php:337
+msgid "Failed to delete post."
+msgstr "Nie udało się usunąć postu."
+
+#: src/API/InstagramPostsController.php:345
+msgid "Post deleted successfully."
+msgstr "Post usunięty pomyślnie."
+
+#: src/API/InstagramPostsController.php:363
+msgid "Attachment is not a valid image."
+msgstr "Załącznik nie jest prawidłowym obrazem."
+
+#: src/API/InstagramPostsController.php:372
+msgid "Attachment file not found."
+msgstr "Plik załącznika nie znaleziony."
+
+#: src/API/InstagramPostsController.php:408
+msgid "Invalid base64 image data."
+msgstr "Nieprawidłowe dane obrazu w formacie Base64."
+
+#: src/API/InstagramPostsController.php:416
+msgid "Image is too large."
+msgstr "Obraz jest zbyt duży."
+
+#: src/API/InstagramPostsController.php:427
+msgid "Uploaded data is not a valid PNG image."
+msgstr "Przesłane dane nie są prawidłowym obrazem PNG."
+
+#. translators: %s: error message
+#: src/API/InstagramPostsController.php:444
+#, php-format
+msgid "Failed to store image: %s"
+msgstr "Nie udało się zapisać obrazu: %s"
+
+#: src/API/InstagramPostsController.php:464
+msgid "Failed to save uploaded image."
+msgstr "Nie udało się zapisać przesłanego obrazu."
+
+#: src/API/PhotoTagsController.php:196
+msgid "Failed to tag participant."
+msgstr "Nie udało się oznaczyć uczestnika."
+
+#: src/API/PhotoUploadController.php:109
+msgid "Invalid or expired link."
+msgstr "Nieprawidłowy lub wygasły link."
+
+#: src/API/PhotoUploadController.php:139
+msgid "No files uploaded."
+msgstr "Nie przesłano żadnych plików."
+
+#: src/API/PhotoUploadController.php:216
+msgid "File is too large."
+msgstr "Plik jest zbyt duży."
+
+#: src/API/PhotoUploadController.php:225
+msgid "Only image files are allowed (JPEG, PNG, GIF, WebP)."
+msgstr "Dozwolone są tylko pliki obrazów (JPEG, PNG, GIF, WebP)."
+
+#: src/API/PhotoUploadController.php:257
+msgid "Failed to save uploaded file."
+msgstr "Nie udało się zapisać przesłanego pliku."
+
+#: src/API/PollResponseController.php:227
+msgid "Too many submission attempts. Please try again later."
+msgstr "Zbyt wiele prób przesłania. Spróbuj ponownie później."
+
+#: src/API/PollResponseController.php:242
+msgid "Invalid or expired access key."
+msgstr "Nieprawidłowy lub wygasły klucz dostępu."
+
+#: src/API/PollResponseController.php:251
+msgid "You have already responded to this poll."
+msgstr "Już odpowiedziałeś na tę ankietę."
+
+#: src/API/PollResponseController.php:262
+#: src/API/PollsController.php:314
+#: src/API/PollsController.php:430
+#: src/API/PollsController.php:496
+#: src/API/PollsController.php:530
+#: src/API/PollsController.php:563
+msgid "Poll not found."
+msgstr "Ankieta nie znaleziona."
+
+#: src/API/PollResponseController.php:271
+msgid "This poll is no longer accepting responses."
+msgstr "Ta ankieta nie przyjmuje już odpowiedzi."
+
+#: src/API/PollResponseController.php:280
+msgid "Please select at least one option."
+msgstr "Wybierz co najmniej jedną opcję."
+
+#: src/API/PollResponseController.php:298
+msgid "Invalid option selected."
+msgstr "Wybrana nieprawidłowa opcja."
+
+#: src/API/PollResponseController.php:308
+msgid "Failed to save your response. Please try again."
+msgstr "Nie udało się zapisać Twojej odpowiedzi. Spróbuj ponownie."
+
+#: src/API/PollResponseController.php:322
+msgid "Thank you for your response!"
+msgstr "Dziękujemy za Twoją odpowiedź!"
+
+#: src/API/PollsController.php:364
+msgid "Invalid event ID."
+msgstr "Nieprawidłowy identyfikator zdarzenia."
+
+#: src/API/PollsController.php:393
+msgid "Failed to create poll."
+msgstr "Nie udało się utworzyć ankiety."
+
+#: src/API/PollsController.php:403
+msgid "Failed to create poll options."
+msgstr "Nie udało się utworzyć opcji ankiety."
+
+#: src/API/PollsController.php:412
+msgid "Poll created successfully."
+msgstr "Ankieta została utworzona pomyślnie."
+
+#: src/API/PollsController.php:453
+msgid "Failed to update poll."
+msgstr "Nie udało się zaktualizować ankiety."
+
+#: src/API/PollsController.php:469
+msgid "Failed to update poll options."
+msgstr "Nie udało się zaktualizować opcji ankiety."
+
+#: src/API/PollsController.php:478
+msgid "Poll updated successfully."
+msgstr "Ankieta została zaktualizowana pomyślnie."
+
+#: src/API/PollsController.php:504
+msgid "Failed to delete poll."
+msgstr "Nie udało się usunąć ankiety."
+
+#: src/API/PollsController.php:512
+msgid "Poll deleted successfully."
+msgstr "Ankieta została usunięta pomyślnie."
+
+#: src/API/ScheduledMessagesController.php:180
+msgid "You do not have permission to manage scheduled messages."
+msgstr "Nie masz uprawnień do zarządzania zaplanowanymi wiadomościami."
+
+#: src/API/ScheduledMessagesController.php:239
+msgid "Could not save the scheduled message."
+msgstr "Nie można było zapisać zaplanowanej wiadomości."
+
+#: src/API/ScheduledMessagesController.php:254
+#: src/API/ScheduledMessagesController.php:298
+#: src/API/ScheduledMessagesController.php:324
+msgid "Scheduled message not found."
+msgstr "Zaplanowana wiadomość nie została znaleziona."
+
+#: src/API/ScheduledMessagesController.php:260
+msgid "Only scheduled messages can be edited."
+msgstr "Tylko zaplanowane wiadomości mogą być edytowane."
+
+#: src/API/ScheduledMessagesController.php:283
+msgid "Could not update the scheduled message."
+msgstr "Nie można było zaktualizować zaplanowanej wiadomości."
+
+#: src/API/ScheduledMessagesController.php:304
+msgid "Only scheduled messages can be canceled."
+msgstr "Tylko zaplanowane wiadomości mogą być anulowane."
+
+#: src/API/ScheduledMessagesController.php:364
+msgid "Sale-period anchors are not supported yet."
+msgstr "Kotwice okresu sprzedaży nie są jeszcze obsługiwane."
+
+#. translators: 1: number of people, 2: event title
+#: src/API/TimelineController.php:121
+#, php-format
+msgid "%1$d person signed up %2$s"
+msgid_plural "%1$d people signed up %2$s"
+msgstr[0] "%1$d osoba zarejestrowała się %2$s"
+msgstr[1] "%1$d osoby zarejestrowały się %2$s"
+msgstr[2] "%1$d osób zarejestrowało się %2$s"
+
+#: src/API/TimelineController.php:164
+msgid "Fair Form"
+msgstr ""
+
+#. translators: 1: participant name, 2: form name, 3: page title
+#: src/API/TimelineController.php:172
+#, php-format
+msgid "%1$s submitted \"%2$s\" on \"%3$s\""
+msgstr "%1$s przesłał(a) \"%2$s\" w dniu \"%3$s\""
+
+#. translators: 1: participant name, 2: form name
+#: src/API/TimelineController.php:180
+#, php-format
+msgid "%1$s submitted \"%2$s\""
+msgstr "%1$s przesłał(a) \"%2$s\""
+
+#: src/API/TimelineController.php:230
+#: src/API/TimelineController.php:334
+msgid "Unknown"
+msgstr "Nieznany"
+
+#. translators: 1: number of payments, 2: day
+#: src/API/TimelineController.php:250
+#, php-format
+msgid "%1$d fee payment on %2$s"
+msgid_plural "%1$d fee payments on %2$s"
+msgstr[0] "%1$d opłata na %2$s"
+msgstr[1] "%1$d opłaty na %2$s"
+msgstr[2] "%1$d opłat na %2$s"
+
+#. translators: 1: number of sales, 2: day
+#: src/API/TimelineController.php:360
+#, php-format
+msgid "%1$d ticket sale on %2$s"
+msgid_plural "%1$d ticket sales on %2$s"
+msgstr[0] "%1$d sprzedaż biletów na %2$s"
+msgstr[1] "%1$d sprzedaże biletów na %2$s"
+msgstr[2] "%1$d sprzedaży biletów na %2$s"
+
+#: src/Core/Features.php:178
+msgid "Fees"
+msgstr "Opłaty"
+
+#: src/Core/Features.php:179
+msgid "Event fees, fee payments, fee audit log."
+msgstr "Opłaty za imprezy, płatności opłat, dziennik audytu opłat."
+
+#: src/Core/Features.php:183
+msgid "Attendee polls and responses."
+msgstr "Ankiety uczestników i odpowiedzi."
+
+#: src/Core/Features.php:186
+msgid "Galleries"
+msgstr "Galerie"
+
+#: src/Core/Features.php:187
+msgid "Photo participation, gallery access keys, media library hooks."
+msgstr "Udział w zdjęciach, klucze dostępu do galerii, haki biblioteki mediów."
+
+#: src/Core/Features.php:190
+#: templates/collaborator-profile.php:331
+msgid "Instagram"
+msgstr "Instagram"
+
+#: src/Core/Features.php:191
+msgid "Instagram post import and scheduled posting."
+msgstr "Import postów Instagram i zaplanowane publikowanie."
+
+#: src/Core/Features.php:195
+msgid "Participant groups."
+msgstr "Grupy uczestników."
+
+#: src/Core/Features.php:199
+msgid "Event collaborators."
+msgstr "Współpracownicy imprezy."
+
+#: src/Core/Features.php:202
+msgid "Messaging"
+msgstr "Wiadomości"
+
+#: src/Core/Features.php:203
+msgid "Custom mail, extra messages, scheduled messages."
+msgstr "Niestandardowa poczta, dodatkowe wiadomości, zaplanowane wiadomości."
+
+#: src/Core/Features.php:206
+msgid "Image templates"
+msgstr "Szablony obrazów"
+
+#: src/Core/Features.php:207
+msgid "Generated image templates."
+msgstr "Wygenerowane szablony obrazów."
+
+#: src/Core/Features.php:210
+msgid "Timeline"
+msgstr "Oś czasu"
+
+#: src/Core/Features.php:211
+msgid "Participant activity timeline."
+msgstr "Oś czasu aktywności uczestników."
+
+#: src/Core/Features.php:215
+msgid "Bulk participant import."
+msgstr "Zbiorcze importowanie uczestników."
+
+#: src/Core/Features.php:218
+msgid "Weekly schedule"
+msgstr "Harmonogram tygodniowy"
+
+#: src/Core/Features.php:219
+msgid "Weekly schedule admin page."
+msgstr "Strona administracyjna harmonogramu tygodniowego."
+
+#: src/Core/Features.php:222
+msgid "Invitations"
+msgstr "Zaproszenia"
+
+#: src/Core/Features.php:223
+msgid "Event invitations, consumed by fair-events-experimental ticketing."
+msgstr "Zaproszenia na imprezy, wykorzystywane przez fair-events-experimental ticketing."
+
+#: src/Core/Features.php:226
+msgid "Manage-event extensions"
+msgstr "Rozszerzenia Manage-event"
+
+#: src/Core/Features.php:227
+msgid "The Mailings tab in the manage-event admin UI."
+msgstr "Karta Mailings w interfejsie administracyjnym manage-event."
+
+#: src/Hooks/ScheduledMessageHooks.php:75
+msgid "Every 5 minutes (fair-audience)"
+msgstr "Co 5 minut (fair-audience)"
+
+#: src/Services/InstagramPostingService.php:59
+msgid "Instagram user ID is not configured. Please connect your Instagram account in Settings."
+msgstr "Identyfikator użytkownika Instagram nie jest skonfigurowany. Proszę połączyć swoje konto Instagram w Ustawieniach."
+
+#: src/Services/InstagramPostingService.php:66
+msgid "Instagram access token is not configured. Please connect your Instagram account in Settings."
+msgstr "Token dostępu Instagram nie jest skonfigurowany. Proszę połączyć swoje konto Instagram w Ustawieniach."
+
+#. translators: %s: error message
+#: src/Services/InstagramPostingService.php:180
+#, php-format
+msgid "Failed to connect to Instagram API: %s"
+msgstr "Nie udało się połączyć z API Instagram: %s"
+
+#: src/Services/InstagramPostingService.php:194
+#: src/Services/InstagramPostingService.php:348
+msgid "Unknown error"
+msgstr "Nieznany błąd"
+
+#. translators: %s: error message
+#: src/Services/InstagramPostingService.php:199
+#, php-format
+msgid "Instagram API error: %s"
+msgstr "Błąd API Instagram: %s"
+
+#: src/Services/InstagramPostingService.php:209
+msgid "Invalid response from Instagram API: no container ID returned."
+msgstr "Nieprawidłowa odpowiedź z API Instagram: nie zwrócono identyfikatora kontenera."
+
+#: src/Services/InstagramPostingService.php:257
+msgid "Instagram failed to process the image."
+msgstr "Instagram nie powiódł się w przetwarzaniu obrazu."
+
+#: src/Services/InstagramPostingService.php:266
+msgid "Instagram took too long to process the image. Please try again."
+msgstr "Instagram zbyt długo przetwarzał obraz. Proszę spróbować ponownie."
+
+#. translators: %s: error message
+#: src/Services/InstagramPostingService.php:336
+#, php-format
+msgid "Failed to publish to Instagram: %s"
+msgstr "Nie udało się opublikować na Instagramie: %s"
+
+#. translators: %s: error message
+#: src/Services/InstagramPostingService.php:353
+#, php-format
+msgid "Failed to publish: %s"
+msgstr "Nie udało się opublikować: %s"
+
+#: src/Services/InstagramPostingService.php:363
+msgid "Invalid response from Instagram API: no media ID returned."
+msgstr "Nieprawidłowa odpowiedź z API Instagrama: nie zwrócono identyfikatora mediów."
+
+#: src/Settings/Settings.php:36
+msgid "Per-bundle feature toggles for experimental features"
+msgstr "Przełączniki funkcji dla pakietu dla funkcji eksperymentalnych"
+
+#: templates/collaborator-profile.php:56
+msgid "Name is required."
+msgstr "Nazwa jest wymagana."
+
+#: templates/collaborator-profile.php:59
+msgid "Please enter a valid email address."
+msgstr "Proszę wpisać prawidłowy adres e-mail."
+
+#: templates/collaborator-profile.php:62
+msgid "A profile with this email already exists."
+msgstr "Profil z tym adresem e-mail już istnieje."
+
+#: templates/collaborator-profile.php:81
+msgid "Failed to register profile. Please try again."
+msgstr "Nie udało się zarejestrować profilu. Proszę spróbować ponownie."
+
+#: templates/collaborator-profile.php:255
+msgid "Profile Registered"
+msgstr "Profil zarejestrowany"
+
+#: templates/collaborator-profile.php:259
+msgid "Please check your email to confirm your subscription."
+msgstr "Proszę sprawdzić swoją pocztę e-mail, aby potwierdzić subskrypcję."
+
+#: templates/collaborator-profile.php:263
+msgid "Thank you for registering your profile."
+msgstr "Dziękujemy za rejestrację profilu."
+
+#: templates/collaborator-profile.php:268
+#: templates/fee-payment.php:371
+#: templates/fee-payment.php:400
+#: templates/fee-payment.php:412
+#: templates/fee-payment.php:433
+#: templates/fee-payment.php:479
+msgid "Return to Homepage"
+msgstr "Powrót na stronę główną"
+
+#: templates/collaborator-profile.php:273
+msgid "Collaborator Profile"
+msgstr "Profil współpracownika"
+
+#: templates/collaborator-profile.php:276
+msgid "Register your profile information."
+msgstr "Zarejestruj informacje o swoim profilu."
+
+#: templates/collaborator-profile.php:290
+#: src/Admin/custom-mail/CustomMail.js:913
+#: src/Admin/group-detail/GroupDetail.js:314
+#: src/Admin/group-detail/GroupDetail.js:454
+#: src/Admin/groups/Groups.js:62
+#: src/Admin/groups/Groups.js:359
+#: src/Admin/manage-event-ext/EventAudience.js:903
+#: src/Admin/manage-event-ext/EventAudience.js:1422
+#: src/Admin/manage-event-ext/MailBodyEditor.js:24
+msgid "Name"
+msgstr "Imię"
+
+#: templates/collaborator-profile.php:305
+msgid "Surname"
+msgstr "Nazwisko"
+
+#: templates/collaborator-profile.php:318
+#: src/Admin/custom-mail/CustomMail.js:919
+#: src/Admin/group-detail/GroupDetail.js:320
+msgid "Email"
+msgstr "E-mail"
+
+#: templates/collaborator-profile.php:352
+msgid "Receive marketing emails"
+msgstr "Otrzymuj e-maile marketingowe"
+
+#: templates/collaborator-profile.php:357
+msgid "Register Profile"
+msgstr "Zarejestruj profil"
+
+#: templates/fee-payment.php:45
+msgid "Invalid or expired link. Please use the link from your email."
+msgstr "Nieprawidłowy lub wygasły link. Proszę użyć linku z wiadomości e-mail."
+
+#: templates/fee-payment.php:57
+msgid "Payment details not found."
+msgstr "Szczegóły płatności nie znalezione."
+
+#: templates/fee-payment.php:73
+msgid "Your payment was not completed. You can try again."
+msgstr "Twoja płatność nie została ukończona. Możesz spróbować ponownie."
+
+#: templates/fee-payment.php:81
+msgid "Your previous payment attempt has timed out. You can try again."
+msgstr "Twoja poprzednia próba płatności wygasła. Możesz spróbować ponownie."
+
+#. translators: %s: fee name
+#: templates/fee-payment.php:107
+#, php-format
+msgid "Membership fee: %s"
+msgstr "Opłata członkowska: %s"
+
+#: templates/fee-payment.php:120
+msgid "Could not create payment. Please try again later."
+msgstr "Nie można było utworzyć płatności. Spróbuj ponownie później."
+
+#: templates/fee-payment.php:141
+msgid "Could not initiate payment. Please try again later."
+msgstr "Nie można było zainicjować płatności. Spróbuj ponownie później."
+
+#: templates/fee-payment.php:365
+msgid "Invalid Link"
+msgstr "Nieprawidłowy link"
+
+#: templates/fee-payment.php:377
+msgid "Payment Complete"
+msgstr "Płatność ukończona"
+
+#: templates/fee-payment.php:380
+msgid "This fee has already been paid. Thank you!"
+msgstr "Ta opłata została już zapłacona. Dziękuję!"
+
+#: templates/fee-payment.php:385
+#: templates/fee-payment.php:459
+msgid "Fee:"
+msgstr "Opłata:"
+
+#: templates/fee-payment.php:389
+msgid "Amount:"
+msgstr "Kwota:"
+
+#: templates/fee-payment.php:393
+msgid "Paid:"
+msgstr "Zapłacone:"
+
+#: templates/fee-payment.php:405
+msgid "Payment Canceled"
+msgstr "Płatność anulowana"
+
+#: templates/fee-payment.php:408
+msgid "This fee payment has been canceled."
+msgstr "Ta płatność opłaty została anulowana."
+
+#: templates/fee-payment.php:427
+msgid "Your payment is being processed..."
+msgstr "Twoja płatność jest przetwarzana..."
+
+#: templates/fee-payment.php:464
+msgid "Due Date:"
+msgstr "Data wymagalności:"
+
+#: templates/fee-payment.php:473
+msgid "Pay Now"
+msgstr "Zapłać teraz"
+
+#: templates/fee-payment.php:497
+msgid "Payment is taking longer than expected. Please reload this page to check the status."
+msgstr "Płatność trwa dłużej niż oczekiwano. Odśwież tę stronę, aby sprawdzić status."
+
+#. translators: %d: number of emails sent
+#: src/Admin/components/EmailSendResultNotice.js:15
+#, js-format
+msgid "Invitations sent to %d participants"
+msgstr "Zaproszenia wysłane do %d uczestników"
+
+#. translators: %d: number of skipped participants
+#: src/Admin/components/EmailSendResultNotice.js:27
+#, js-format
+msgid "%d skipped (already signed up or opted out of marketing)."
+msgstr "%d pominięto (już się zarejestrowali lub zrezygnowali z marketingu)."
+
+#: src/Admin/components/EmailSendResultNotice.js:38
+msgid "Failed to send to:"
+msgstr "Nie udało się wysłać do:"
+
+#: src/Admin/custom-mail/CustomMail.js:84
+msgid "Failed to load data."
+msgstr "Nie udało się załadować danych."
+
+#: src/Admin/custom-mail/CustomMail.js:360
+#: src/Admin/manage-event-ext/EventMailings.js:238
+msgid "Please enter a subject."
+msgstr "Proszę wpisać temat."
+
+#: src/Admin/custom-mail/CustomMail.js:372
+msgid "Please enter content."
+msgstr "Proszę wpisać treść."
+
+#: src/Admin/custom-mail/CustomMail.js:389
+msgid "Please select at least one audience type."
+msgstr "Proszę wybrać co najmniej jeden typ odbiorcy."
+
+#: src/Admin/custom-mail/CustomMail.js:426
+msgid "sent"
+msgstr "wysłane"
+
+#: src/Admin/custom-mail/CustomMail.js:433
+msgid "failed"
+msgstr "nie powiodło się"
+
+#: src/Admin/custom-mail/CustomMail.js:441
+msgid "skipped"
+msgstr "pominięte"
+
+#: src/Admin/custom-mail/CustomMail.js:464
+msgid "Failed to send mail."
+msgstr "Nie udało się wysłać wiadomości."
+
+#: src/Admin/custom-mail/CustomMail.js:481
+msgid "Are you sure you want to delete this record?"
+msgstr "Czy na pewno chcesz usunąć ten rekord?"
+
+#: src/Admin/custom-mail/CustomMail.js:494
+msgid "Record deleted."
+msgstr "Rekord usunięty."
+
+#: src/Admin/custom-mail/CustomMail.js:510
+msgid "Failed to delete record."
+msgstr "Nie udało się usunąć rekordu."
+
+#: src/Admin/custom-mail/CustomMail.js:567
+msgid "Send Custom Mail"
+msgstr "Wyślij niestandardową wiadomość"
+
+#: src/Admin/custom-mail/CustomMail.js:573
+#: src/Admin/custom-mail/CustomMail.js:1054
+#: src/Admin/manage-event-ext/EventMailings.js:387
+msgid "Subject"
+msgstr "Temat"
+
+#: src/Admin/custom-mail/CustomMail.js:588
+#: src/Admin/edit-extra-message/EditExtraMessage.js:195
+#: src/Admin/extra-messages-list/ExtraMessagesList.js:127
+msgid "Content"
+msgstr "Treść"
+
+#: src/Admin/custom-mail/CustomMail.js:603
+#: src/Admin/manage-event-ext/MailBodyEditor.js:157
+msgid "Upload photos"
+msgstr "Prześlij zdjęcia"
+
+#: src/Admin/custom-mail/CustomMail.js:611
+#: src/Admin/manage-event-ext/MailBodyEditor.js:162
+msgid "Insert photo upload link"
+msgstr "Wstaw link do przesyłania zdjęć"
+
+#: src/Admin/custom-mail/CustomMail.js:622
+#: src/Admin/manage-event-ext/MailBodyEditor.js:173
+msgid "Open event page"
+msgstr "Otwórz stronę wydarzenia"
+
+#: src/Admin/custom-mail/CustomMail.js:632
+msgid "Select an event below to enable this link."
+msgstr "Wybierz poniżej wydarzenie, aby włączyć ten link."
+
+#: src/Admin/custom-mail/CustomMail.js:639
+#: src/Admin/manage-event-ext/MailBodyEditor.js:178
+msgid "Insert event page link"
+msgstr "Wstaw link do strony wydarzenia"
+
+#: src/Admin/custom-mail/CustomMail.js:654
+#: src/Admin/manage-event-ext/MailBodyEditor.js:190
+msgid "Search page…"
+msgstr "Szukaj strony…"
+
+#: src/Admin/custom-mail/CustomMail.js:729
+#: src/Admin/manage-event-ext/MailBodyEditor.js:255
+msgid "Insert token link"
+msgstr "Wstaw link tokenu"
+
+#: src/Admin/custom-mail/CustomMail.js:739
+#: src/Admin/custom-mail/CustomMail.js:1060
+#: src/Admin/manage-event-ext/EventAudience.js:789
+msgid "Event"
+msgstr "Wydarzenie"
+
+#: src/Admin/custom-mail/CustomMail.js:743
+msgid "-- All audience --"
+msgstr "-- Wszyscy odbiorcy --"
+
+#: src/Admin/custom-mail/CustomMail.js:766
+#: src/Admin/manage-event-ext/index.js:32
+msgid "Audience"
+msgstr "Odbiorcy"
+
+#: src/Admin/custom-mail/CustomMail.js:772
+#: src/Admin/manage-event-ext/EventAudience.js:1180
+msgid "Participants"
+msgstr "Uczestnicy"
+
+#: src/Admin/custom-mail/CustomMail.js:790
+#: src/Admin/manage-event-ext/EventAudience.js:24
+#: src/Admin/manage-event-ext/EventAudience.js:1382
+#: src/Admin/manage-event-ext/EventAudience.js:2042
+#: src/Admin/manage-event-ext/EventMailings.js:47
+msgid "Interested"
+msgstr "Zainteresowani"
+
+#: src/Admin/custom-mail/CustomMail.js:802
+msgid "Marketing"
+msgstr "Marketing"
+
+#: src/Admin/custom-mail/CustomMail.js:808
+msgid "If checked, only sends to participants who consented to marketing communications."
+msgstr "Jeśli zaznaczone, wysyła tylko do uczestników, którzy wyrazili zgodę na komunikację marketingową."
+
+#: src/Admin/custom-mail/CustomMail.js:832
+msgid "If selected, only sends to members of these groups."
+msgstr "Jeśli wybrane, wysyła tylko do członków tych grup."
+
+#: src/Admin/custom-mail/CustomMail.js:863
+msgid "Loading recipients..."
+msgstr "Ładowanie odbiorców..."
+
+#. translators: %1$d: active recipients count, %2$d: total count, %3$d: skipped count
+#: src/Admin/custom-mail/CustomMail.js:877
+#, js-format
+msgid "%1$d recipients (%2$d skipped)"
+msgstr "%1$d odbiorców (%2$d pominięto)"
+
+#: src/Admin/custom-mail/CustomMail.js:907
+msgid "Skip"
+msgstr "Pomiń"
+
+#: src/Admin/custom-mail/CustomMail.js:925
+msgid "Label"
+msgstr "Etykieta"
+
+#: src/Admin/custom-mail/CustomMail.js:931
+#: src/Admin/extra-messages-list/ExtraMessagesList.js:139
+#: src/Admin/manage-event-ext/EventAudience.js:1125
+msgid "Status"
+msgstr "Status"
+
+#: src/Admin/custom-mail/CustomMail.js:976
+msgid "No email"
+msgstr "Brak e-maila"
+
+#: src/Admin/custom-mail/CustomMail.js:981
+msgid "No marketing"
+msgstr "Brak marketingu"
+
+#: src/Admin/custom-mail/CustomMail.js:986
+#: src/Admin/custom-mail/CustomMail.js:1078
+msgid "Skipped"
+msgstr "Pominięte"
+
+#: src/Admin/custom-mail/CustomMail.js:990
+msgid "Will send"
+msgstr "Będzie wysłane"
+
+#: src/Admin/custom-mail/CustomMail.js:1010
+msgid "No matching recipients."
+msgstr "Brak pasujących odbiorców."
+
+#: src/Admin/custom-mail/CustomMail.js:1024
+msgid "Sending..."
+msgstr "Wysyłanie..."
+
+#: src/Admin/custom-mail/CustomMail.js:1025
+msgid "Send Mail"
+msgstr "Wyślij wiadomość"
+
+#: src/Admin/custom-mail/CustomMail.js:1035
+msgid "Mail History"
+msgstr "Historia wiadomości"
+
+#: src/Admin/custom-mail/CustomMail.js:1041
+msgid "No messages sent yet."
+msgstr "Nie wysłano jeszcze żadnych wiadomości."
+
+#: src/Admin/custom-mail/CustomMail.js:1066
+msgid "Sent"
+msgstr "Wysłane"
+
+#: src/Admin/custom-mail/CustomMail.js:1072
+msgid "Failed"
+msgstr "Nieudane"
+
+#: src/Admin/custom-mail/CustomMail.js:1084
+msgid "Date"
+msgstr "Data"
+
+#: src/Admin/custom-mail/CustomMail.js:1090
+#: src/Admin/extra-messages-list/ExtraMessagesList.js:145
+#: src/Admin/group-detail/GroupDetail.js:326
+#: src/Admin/manage-event-ext/EventAudience.js:1475
+#: src/Admin/manage-event-ext/EventAudience.js:1857
+msgid "Actions"
+msgstr "Akcje"
+
+#: src/Admin/custom-mail/CustomMail.js:1116
+#: src/Admin/groups/Groups.js:297
+#: src/Admin/groups/Groups.js:446
+#: src/Admin/manage-event-ext/EventMailings.js:700
+msgid "Duplicate"
+msgstr "Duplikuj"
+
+#: src/Admin/custom-mail/CustomMail.js:1128
+#: src/Admin/extra-messages-list/ExtraMessagesList.js:206
+#: src/Admin/groups/Groups.js:304
+#: src/Admin/manage-event-ext/EventAudience.js:1653
+msgid "Delete"
+msgstr "Usuń"
+
+#: src/Admin/edit-extra-message/EditExtraMessage.js:110
+msgid "Please enter message content."
+msgstr "Proszę wprowadzić treść wiadomości."
+
+#: src/Admin/edit-extra-message/EditExtraMessage.js:153
+#: src/Admin/edit-extra-message/EditExtraMessage.js:168
+msgid "Add New Extra Message"
+msgstr "Dodaj nową dodatkową wiadomość"
+
+#: src/Admin/edit-extra-message/EditExtraMessage.js:206
+#: src/Admin/extra-messages-list/ExtraMessagesList.js:133
+msgid "Category"
+msgstr "Kategoria"
+
+#: src/Admin/edit-extra-message/EditExtraMessage.js:210
+msgid "All categories"
+msgstr "Wszystkie kategorie"
+
+#: src/Admin/edit-extra-message/EditExtraMessage.js:227
+msgid "Limit this message to events in a specific category, or leave as \"All categories\" for all events."
+msgstr "Ogranicz tę wiadomość do wydarzeń w określonej kategorii lub pozostaw \"Wszystkie kategorie\" dla wszystkich wydarzeń."
+
+#: src/Admin/edit-extra-message/EditExtraMessage.js:236
+#: src/Admin/extra-messages-list/ExtraMessagesList.js:176
+msgid "Active"
+msgstr "Aktywne"
+
+#: src/Admin/edit-extra-message/EditExtraMessage.js:241
+msgid "Active messages are appended to system emails."
+msgstr "Aktywne wiadomości są dołączane do systemowych wiadomości e-mail."
+
+#: src/Admin/edit-extra-message/EditExtraMessage.js:254
+msgid "Update Message"
+msgstr "Aktualizuj wiadomość"
+
+#: src/Admin/edit-extra-message/EditExtraMessage.js:255
+msgid "Create Message"
+msgstr "Utwórz wiadomość"
+
+#: src/Admin/extra-messages-list/ExtraMessagesList.js:31
+msgid "Are you sure you want to delete this extra message?"
+msgstr "Czy na pewno chcesz usunąć tę dodatkową wiadomość?"
+
+#: src/Admin/extra-messages-list/ExtraMessagesList.js:49
+#: src/Admin/extra-messages-list/ExtraMessagesList.js:69
+#: src/Admin/group-detail/GroupDetail.js:155
+#: src/Admin/group-detail/GroupDetail.js:191
+#: src/Admin/group-detail/GroupDetail.js:231
+#: src/Admin/groups/Groups.js:183
+#: src/Admin/groups/Groups.js:229
+#: src/Admin/groups/Groups.js:266
+msgid "Error: "
+msgstr "Błąd: "
+
+#: src/Admin/extra-messages-list/ExtraMessagesList.js:110
+msgid "Add New"
+msgstr "Dodaj nowy"
+
+#: src/Admin/extra-messages-list/ExtraMessagesList.js:117
+msgid "No extra messages found. Create your first extra message to get started."
+msgstr "Nie znaleziono dodatkowych wiadomości. Utwórz swoją pierwszą dodatkową wiadomość, aby zacząć."
+
+#: src/Admin/extra-messages-list/ExtraMessagesList.js:158
+msgid "All"
+msgstr "Wszystko"
+
+#: src/Admin/extra-messages-list/ExtraMessagesList.js:180
+msgid "Inactive"
+msgstr "Nieaktywne"
+
+#: src/Admin/extra-messages-list/ExtraMessagesList.js:191
+#: src/Admin/group-detail/GroupDetail.js:285
+#: src/Admin/groups/Groups.js:290
+#: src/Admin/manage-event-ext/EventAudience.js:1638
+#: src/Admin/manage-event-ext/EventMailings.js:658
+#: src/Admin/manage-event-ext/GroupRules.js:522
+msgid "Edit"
+msgstr "Edytuj"
+
+#: src/Admin/group-detail/GroupDetail.js:49
+msgid "No group ID provided."
+msgstr "Nie podano identyfikatora grupy."
+
+#: src/Admin/group-detail/GroupDetail.js:193
+#: src/Admin/groups/Groups.js:185
+msgid "Failed to save group."
+msgstr "Nie udało się zapisać grupy."
+
+#: src/Admin/group-detail/GroupDetail.js:212
+msgid "Remove this participant from the group?"
+msgstr "Usunąć tego uczestnika z grupy?"
+
+#: src/Admin/group-detail/GroupDetail.js:249
+#: src/Admin/group-detail/GroupDetail.js:272
+msgid "← Back to Groups"
+msgstr "← Powrót do grup"
+
+#: src/Admin/group-detail/GroupDetail.js:295
+#: src/Admin/groups/Groups.js:77
+msgid "Members"
+msgstr "Członkowie"
+
+#: src/Admin/group-detail/GroupDetail.js:304
+msgid "No members in this group."
+msgstr "Brak członków w tej grupie."
+
+#: src/Admin/group-detail/GroupDetail.js:344
+msgid "(unnamed)"
+msgstr "(bez nazwy)"
+
+#: src/Admin/group-detail/GroupDetail.js:361
+#: src/Admin/manage-event-ext/GroupRules.js:537
+msgid "Remove"
+msgstr "Usuń"
+
+#: src/Admin/group-detail/GroupDetail.js:379
+msgid "Add Members"
+msgstr "Dodaj członków"
+
+#: src/Admin/group-detail/GroupDetail.js:386
+msgid "Search participants..."
+msgstr "Szukaj uczestników..."
+
+#: src/Admin/group-detail/GroupDetail.js:405
+msgid "No participants available to add."
+msgstr "Brak dostępnych uczestników do dodania."
+
+#: src/Admin/group-detail/GroupDetail.js:442
+msgid "Add Selected"
+msgstr "Dodaj wybrane"
+
+#: src/Admin/group-detail/GroupDetail.js:449
+#: src/Admin/groups/Groups.js:352
+msgid "Edit Group"
+msgstr "Edytuj grupę"
+
+#: src/Admin/group-detail/GroupDetail.js:457
+#: src/Admin/groups/Groups.js:362
+#: src/Admin/groups/Groups.js:420
+msgid "Enter group name..."
+msgstr "Wpisz nazwę grupy..."
+
+#: src/Admin/group-detail/GroupDetail.js:464
+#: src/Admin/groups/Groups.js:71
+#: src/Admin/groups/Groups.js:369
+msgid "Description"
+msgstr "Opis"
+
+#: src/Admin/group-detail/GroupDetail.js:467
+#: src/Admin/groups/Groups.js:372
+msgid "Enter group description (optional)..."
+msgstr "Wpisz opis grupy (opcjonalnie)..."
+
+#: src/Admin/group-detail/GroupDetail.js:493
+#: src/Admin/groups/Groups.js:399
+msgid "Update"
+msgstr "Aktualizuj"
+
+#: src/Admin/groups/Groups.js:247
+msgid "Are you sure you want to delete this group?"
+msgstr "Czy na pewno chcesz usunąć tę grupę?"
+
+#: src/Admin/groups/Groups.js:281
+#: src/Admin/manage-event-ext/EventMailings.js:688
+msgid "View"
+msgstr "Wyświetl"
+
+#: src/Admin/groups/Groups.js:329
+#: src/Admin/groups/Groups.js:353
+msgid "Create Group"
+msgstr "Utwórz grupę"
+
+#: src/Admin/groups/Groups.js:400
+msgid "Create"
+msgstr "Utwórz"
+
+#: src/Admin/groups/Groups.js:409
+msgid "Duplicate Group"
+msgstr "Duplikuj grupę"
+
+#: src/Admin/groups/Groups.js:414
+msgid "New group name"
+msgstr "Nowa nazwa grupy"
+
+#: src/Admin/manage-event-ext/AnchorOffsetPicker.js:124
+msgid "Anchor"
+msgstr "Kotwica"
+
+#: src/Admin/manage-event-ext/AnchorOffsetPicker.js:128
+msgid "Event date start"
+msgstr "Data rozpoczęcia wydarzenia"
+
+#: src/Admin/manage-event-ext/AnchorOffsetPicker.js:135
+msgid "Event date end"
+msgstr "Data zakończenia wydarzenia"
+
+#: src/Admin/manage-event-ext/AnchorOffsetPicker.js:149
+msgid "Which date"
+msgstr "Która data"
+
+#: src/Admin/manage-event-ext/AnchorOffsetPicker.js:169
+msgid "Offset"
+msgstr "Przesunięcie"
+
+#: src/Admin/manage-event-ext/AnchorOffsetPicker.js:179
+msgid "Unit"
+msgstr "Jednostka"
+
+#: src/Admin/manage-event-ext/AnchorOffsetPicker.js:183
+msgid "minutes"
+msgstr "minuty"
+
+#: src/Admin/manage-event-ext/AnchorOffsetPicker.js:187
+msgid "hours"
+msgstr "godziny"
+
+#: src/Admin/manage-event-ext/AnchorOffsetPicker.js:191
+msgid "days"
+msgstr "dni"
+
+#: src/Admin/manage-event-ext/AnchorOffsetPicker.js:203
+msgid "before"
+msgstr "przed"
+
+#: src/Admin/manage-event-ext/AnchorOffsetPicker.js:207
+msgid "after"
+msgstr "po"
+
+#. translators: %s: computed send date/time
+#: src/Admin/manage-event-ext/AnchorOffsetPicker.js:219
+#, js-format
+msgid "Will send around: %s"
+msgstr "Będzie wysłane około: %s"
+
+#: src/Admin/manage-event-ext/AnchorOffsetPicker.js:225
+msgid "Send time will be computed from the chosen date."
+msgstr "Czas wysłania będzie obliczony na podstawie wybranej daty."
+
+#: src/Admin/manage-event-ext/EventAudience.js:22
+#: src/Admin/manage-event-ext/EventAudience.js:1368
+#: src/Admin/manage-event-ext/EventAudience.js:2035
+msgid "Collaborator"
+msgstr "Współpracownik"
+
+#: src/Admin/manage-event-ext/EventAudience.js:23
+#: src/Admin/manage-event-ext/EventAudience.js:1375
+#: src/Admin/manage-event-ext/EventAudience.js:2028
+msgid "Signed up"
+msgstr "Zarejestrowany"
+
+#: src/Admin/manage-event-ext/EventAudience.js:378
+msgid "Error adding participants: "
+msgstr "Błąd podczas dodawania uczestników: "
+
+#. translators: 1: number upgraded, 2: number declined, 3: number skipped, 4: number of failed emails
+#: src/Admin/manage-event-ext/EventAudience.js:454
+#, js-format
+msgid "Added %1$d to the mailing list, recorded %2$d as declined. Skipped %3$d, %4$d email(s) failed."
+msgstr "Dodano %1$d do listy mailingowej, zanotowano %2$d jako odrzucone. Pominięto %3$d, %4$d wiadomości e-mail nie powiodło się."
+
+#: src/Admin/manage-event-ext/EventAudience.js:467
+msgid "Error recording consent: "
+msgstr "Błąd podczas rejestrowania zgody: "
+
+#. translators: 1: number of sent invitations, 2: number of skipped recipients, 3: number of failures
+#: src/Admin/manage-event-ext/EventAudience.js:499
+#, js-format
+msgid "Sent %1$d invitation(s). Skipped %2$d, failed %3$d."
+msgstr "Wysłano %1$d zaproszenie(nia). Pominięto %2$d, nie powiodło się %3$d."
+
+#: src/Admin/manage-event-ext/EventAudience.js:511
+msgid "Error sending invitations: "
+msgstr "Błąd podczas wysyłania zaproszeń: "
+
+#: src/Admin/manage-event-ext/EventAudience.js:574
+msgid "this participant"
+msgstr "ten uczestnik"
+
+#. translators: %s: participant name or "name (email)"
+#: src/Admin/manage-event-ext/EventAudience.js:580
+#, js-format
+msgid "Delete %s’s registration for this event date? This cannot be undone."
+msgstr "Usunąć rejestrację %s na to wydarzenie? Tej czynności nie można cofnąć."
+
+#: src/Admin/manage-event-ext/EventAudience.js:599
+msgid "Error deleting registration: "
+msgstr "Błąd podczas usuwania rejestracji: "
+
+#: src/Admin/manage-event-ext/EventAudience.js:715
+msgid "Signup confirmed."
+msgstr "Rejestracja potwierdzona."
+
+#: src/Admin/manage-event-ext/EventAudience.js:716
+msgid "Expired signup moved to Interested."
+msgstr "Wygasła rejestracja przeniesiona do Zainteresowanych."
+
+#: src/Admin/manage-event-ext/EventAudience.js:724
+msgid "Error saving options: "
+msgstr "Błąd podczas zapisywania opcji: "
+
+#: src/Admin/manage-event-ext/EventAudience.js:760
+msgid "Signup moved successfully."
+msgstr "Rejestracja przeniesiona pomyślnie."
+
+#: src/Admin/manage-event-ext/EventAudience.js:764
+msgid "Error moving signup: "
+msgstr "Błąd podczas przenoszenia rejestracji: "
+
+#: src/Admin/manage-event-ext/EventAudience.js:848
+#: src/Admin/manage-event-ext/EventAudience.js:896
+msgid "Participant list"
+msgstr "Lista uczestników"
+
+#: src/Admin/manage-event-ext/EventAudience.js:890
+msgid "Print"
+msgstr "Drukuj"
+
+#: src/Admin/manage-event-ext/EventAudience.js:904
+#: src/Admin/manage-event-ext/EventAudience.js:1353
+#: src/Admin/manage-event-ext/EventAudience.js:1436
+#: src/Admin/manage-event-ext/EventAudience.js:2490
+msgid "Role"
+msgstr "Rola"
+
+#: src/Admin/manage-event-ext/EventAudience.js:905
+#: src/Admin/manage-event-ext/EventAudience.js:1113
+#: src/Admin/manage-event-ext/EventAudience.js:1215
+#: src/Admin/manage-event-ext/EventAudience.js:1452
+#: src/Admin/manage-event-ext/EventAudience.js:2512
+msgid "Ticket type"
+msgstr "Typ biletu"
+
+#: src/Admin/manage-event-ext/EventAudience.js:906
+#: src/Admin/manage-event-ext/EventAudience.js:1119
+msgid "Activities"
+msgstr "Aktywności"
+
+#: src/Admin/manage-event-ext/EventAudience.js:907
+#: src/Admin/manage-event-ext/EventAudience.js:2552
+msgid "Admin comment"
+msgstr "Komentarz administratora"
+
+#: src/Admin/manage-event-ext/EventAudience.js:908
+msgid "Present"
+msgstr "Obecny"
+
+#: src/Admin/manage-event-ext/EventAudience.js:909
+msgid "Mailing list"
+msgstr "Lista mailingowa"
+
+#: src/Admin/manage-event-ext/EventAudience.js:910
+msgid "Notes"
+msgstr "Notatki"
+
+#: src/Admin/manage-event-ext/EventAudience.js:921
+msgid "Could not open print window. Please allow pop-ups."
+msgstr "Nie można otworzyć okna drukowania. Proszę zezwolić na wyskakujące okienka."
+
+#: src/Admin/manage-event-ext/EventAudience.js:940
+msgid "Error copying to clipboard: "
+msgstr "Błąd kopiowania do schowka: "
+
+#: src/Admin/manage-event-ext/EventAudience.js:960
+msgid "No ticket type"
+msgstr "Brak typu biletu"
+
+#: src/Admin/manage-event-ext/EventAudience.js:995
+msgid "(none)"
+msgstr "(brak)"
+
+#: src/Admin/manage-event-ext/EventAudience.js:1031
+msgid "no expiry set"
+msgstr "brak ustawionej daty wygaśnięcia"
+
+#. translators: %d: number of minutes
+#: src/Admin/manage-event-ext/EventAudience.js:1040
+#, js-format
+msgid "expired %d min ago"
+msgstr "wygasł %d min temu"
+
+#. translators: %d: number of hours
+#: src/Admin/manage-event-ext/EventAudience.js:1048
+#, js-format
+msgid "expired %d h ago"
+msgstr "wygasł %d h temu"
+
+#. translators: %d: number of days
+#: src/Admin/manage-event-ext/EventAudience.js:1055
+#, js-format
+msgid "expired %d d ago"
+msgstr "wygasł %d d temu"
+
+#: src/Admin/manage-event-ext/EventAudience.js:1068
+#: src/Admin/manage-event-ext/EventAudience.js:1139
+msgid "—"
+msgstr "—"
+
+#: src/Admin/manage-event-ext/EventAudience.js:1077
+msgid "Pending review"
+msgstr "Oczekuje na przegląd"
+
+#: src/Admin/manage-event-ext/EventAudience.js:1097
+msgid "These signups had a payment hold that expired. They are not counted toward activity capacity until reviewed. Open a row to confirm (e.g. cash payment promised) or cancel."
+msgstr "Te rejestracje miały wstrzymanie płatności, które wygasło. Nie są one liczone do pojemności aktywności do czasu przeglądu. Otwórz wiersz, aby potwierdzić (np. obiecana płatność gotówką) lub anuluj."
+
+#: src/Admin/manage-event-ext/EventAudience.js:1107
+#: src/Admin/manage-event-ext/EventAudience.js:1272
+msgid "Participant"
+msgstr "Uczestnik"
+
+#: src/Admin/manage-event-ext/EventAudience.js:1161
+msgid "Review"
+msgstr "Przegląd"
+
+#: src/Admin/manage-event-ext/EventAudience.js:1197
+msgid "Copy lists:"
+msgstr "Kopiuj listy:"
+
+#: src/Admin/manage-event-ext/EventAudience.js:1207
+msgid "Copied list by ticket type"
+msgstr "Skopiowana lista według typu biletu"
+
+#: src/Admin/manage-event-ext/EventAudience.js:1225
+msgid "Copied list by activity"
+msgstr "Skopiowana lista według aktywności"
+
+#: src/Admin/manage-event-ext/EventAudience.js:1243
+msgid "Copied activity summary"
+msgstr "Skopiowane podsumowanie aktywności"
+
+#: src/Admin/manage-event-ext/EventAudience.js:1254
+msgid "Activity summary"
+msgstr "Podsumowanie aktywności"
+
+#: src/Admin/manage-event-ext/EventAudience.js:1264
+msgid "Copied list by participant"
+msgstr "Skopiowana lista według uczestnika"
+
+#: src/Admin/manage-event-ext/EventAudience.js:1284
+msgid "Collaborators:"
+msgstr "Współpracownicy:"
+
+#: src/Admin/manage-event-ext/EventAudience.js:1291
+msgid "Signed up:"
+msgstr "Zarejestrowani:"
+
+#: src/Admin/manage-event-ext/EventAudience.js:1298
+msgid "Interested:"
+msgstr "Zainteresowani:"
+
+#: src/Admin/manage-event-ext/EventAudience.js:1305
+msgid "Total:"
+msgstr "Razem:"
+
+#: src/Admin/manage-event-ext/EventAudience.js:1321
+msgid "Pending_payment signups whose hold expired. They do not count toward activity capacity until reviewed."
+msgstr "Rejestracje z oczekującą płatnością, których wstrzymanie wygasło. Nie liczą się do pojemności aktywności do czasu przeglądu."
+
+#. translators: %d: number of stale pending_payment signups
+#: src/Admin/manage-event-ext/EventAudience.js:1328
+#, js-format
+msgid "%d stale held"
+msgstr "%d wstrzymane"
+
+#: src/Admin/manage-event-ext/EventAudience.js:1340
+msgid "Search"
+msgstr "Szukaj"
+
+#: src/Admin/manage-event-ext/EventAudience.js:1346
+msgid "Filter by name…"
+msgstr "Filtruj po nazwie…"
+
+#: src/Admin/manage-event-ext/EventAudience.js:1361
+msgid "All roles"
+msgstr "Wszystkie role"
+
+#: src/Admin/manage-event-ext/EventAudience.js:1469
+#: src/Admin/manage-event-ext/EventAudience.js:1577
+msgid "Shown up"
+msgstr "Pojawił się"
+
+#: src/Admin/manage-event-ext/EventAudience.js:1509
+msgid "Holds a whole-series pass. Attendance and edits are managed on the series’ master date."
+msgstr "Posiada przepustkę na całą serię. Obecność i edycje są zarządzane na głównym terminie serii."
+
+#: src/Admin/manage-event-ext/EventAudience.js:1526
+msgid "Series pass"
+msgstr "Przepustka na serię"
+
+#: src/Admin/manage-event-ext/EventAudience.js:1589
+msgid "Attendance for series-pass holders is managed on the series’ master date."
+msgstr "Obecność dla posiadaczy przepustek na serię jest zarządzana na głównym terminie serii."
+
+#: src/Admin/manage-event-ext/EventAudience.js:1616
+msgid "Managed on series date"
+msgstr "Zarządzane w dniu serii"
+
+#: src/Admin/manage-event-ext/EventAudience.js:1668
+#: src/Admin/manage-event-ext/EventAudience.js:2640
+msgid "Move"
+msgstr "Przenieś"
+
+#: src/Admin/manage-event-ext/EventAudience.js:1692
+msgid "Total"
+msgstr "Razem"
+
+#: src/Admin/manage-event-ext/EventAudience.js:1760
+msgid "No participants yet."
+msgstr "Brak uczestników."
+
+#: src/Admin/manage-event-ext/EventAudience.js:1764
+msgid "No participants match the current filters."
+msgstr "Żaden uczestnik nie pasuje do bieżących filtrów."
+
+#: src/Admin/manage-event-ext/EventAudience.js:1776
+#: src/Admin/manage-event-ext/EventAudience.js:1985
+msgid "Add Participants"
+msgstr "Dodaj uczestników"
+
+#: src/Admin/manage-event-ext/EventAudience.js:1785
+msgid "Manage Participants"
+msgstr "Zarządzaj uczestnikami"
+
+#: src/Admin/manage-event-ext/EventAudience.js:1797
+msgid "Print list"
+msgstr "Drukuj listę"
+
+#: src/Admin/manage-event-ext/EventAudience.js:1809
+#: src/Admin/manage-event-ext/EventAudience.js:1908
+#: src/Admin/manage-event-ext/EventAudience.js:1973
+msgid "Send Invitations"
+msgstr "Wyślij zaproszenia"
+
+#: src/Admin/manage-event-ext/EventAudience.js:1820
+#: src/Admin/manage-event-ext/EventAudience.js:2183
+msgid "Record email consent"
+msgstr "Rejestruj zgodę na e-mail"
+
+#: src/Admin/manage-event-ext/EventAudience.js:1834
+msgid "Forms"
+msgstr "Formularze"
+
+#: src/Admin/manage-event-ext/EventAudience.js:1845
+msgid "Form"
+msgstr "Formularz"
+
+#: src/Admin/manage-event-ext/EventAudience.js:1851
+msgid "Responses"
+msgstr "Odpowiedzi"
+
+#: src/Admin/manage-event-ext/EventAudience.js:1884
+msgid "View Responses"
+msgstr "Wyświetl odpowiedzi"
+
+#: src/Admin/manage-event-ext/EventAudience.js:1897
+msgid "No form submissions yet."
+msgstr "Brak przesłanych formularzy."
+
+#: src/Admin/manage-event-ext/EventAudience.js:1914
+msgid "Send event invitation emails to members of the following groups? Participants who are already signed up will be skipped."
+msgstr "Wysłać zaproszenia na imprezy do członków następujących grup? Uczestnicy, którzy już się zarejestrowali, zostaną pominięci."
+
+#. translators: %d: number of group members
+#: src/Admin/manage-event-ext/EventAudience.js:1926
+#, js-format
+msgid "%d member"
+msgid_plural "%d members"
+msgstr[0] "%d członek"
+msgstr[1] "%d członkowie"
+msgstr[2] "%d członków"
+
+#. translators: %d: total number of potential invitees
+#: src/Admin/manage-event-ext/EventAudience.js:1941
+#, js-format
+msgid "Total: up to %d invitations"
+msgstr "Razem: do %d zaproszeń"
+
+#: src/Admin/manage-event-ext/EventAudience.js:1969
+msgid "Sending…"
+msgstr "Wysyłanie…"
+
+#: src/Admin/manage-event-ext/EventAudience.js:1993
+msgid "All participants are already added to this event."
+msgstr "Wszyscy uczestnicy są już dodani do tej imprezy."
+
+#: src/Admin/manage-event-ext/EventAudience.js:2009
+#: src/Admin/manage-event-ext/EventAudience.js:2216
+msgid "Search by name or email…"
+msgstr "Szukaj po nazwie lub e-mailu…"
+
+#. translators: 1: selected count, 2: shown count
+#: src/Admin/manage-event-ext/EventAudience.js:2064
+#, js-format
+msgid "%1$d selected, %2$d shown"
+msgstr "%1$d wybranych, %2$d wyświetlonych"
+
+#. translators: %d: number of available participants
+#: src/Admin/manage-event-ext/EventAudience.js:2073
+#, js-format
+msgid "%d participant(s) available"
+msgstr "%d uczestnik(ów) dostępny(ch)"
+
+#: src/Admin/manage-event-ext/EventAudience.js:2132
+#: src/Admin/manage-event-ext/EventAudience.js:2344
+msgid "No participants match your search."
+msgstr "Żaden uczestnik nie pasuje do Twojego wyszukiwania."
+
+#: src/Admin/manage-event-ext/EventAudience.js:2162
+msgid "Adding…"
+msgstr "Dodawanie…"
+
+#. translators: %d: number of selected participants
+#: src/Admin/manage-event-ext/EventAudience.js:2168
+#, js-format
+msgid "Add %d Selected"
+msgstr "Dodaj %d wybranych"
+
+#: src/Admin/manage-event-ext/EventAudience.js:2192
+msgid "No participants are eligible. People are listed here when they are on the minimal email profile."
+msgstr "Brak uprawnionych uczestników. Osoby są tutaj wyświetlane, gdy znajdują się na minimalnym profilu e-mail."
+
+#: src/Admin/manage-event-ext/EventAudience.js:2200
+msgid "Record each person's answer. \"Yes\" adds them to the mailing list and sends a welcome email. \"No\" records that they declined — they will not be asked again."
+msgstr "Zapisz odpowiedź każdej osoby. \"Tak\" dodaje ją do listy mailingowej i wysyła e-mail powitalny. \"Nie\" rejestruje, że odrzuciła — nie będą pytani ponownie."
+
+#: src/Admin/manage-event-ext/EventAudience.js:2302
+msgid "No email — cannot add to mailing list"
+msgstr "Brak e-maila — nie można dodać do listy mailingowej"
+
+#: src/Admin/manage-event-ext/EventAudience.js:2309
+msgid "Yes"
+msgstr "Tak"
+
+#: src/Admin/manage-event-ext/EventAudience.js:2328
+msgid "No"
+msgstr "Nie"
+
+#: src/Admin/manage-event-ext/EventAudience.js:2376
+#: src/Admin/manage-event-ext/EventAudience.js:2581
+msgid "Saving…"
+msgstr "Zapisywanie…"
+
+#: src/Admin/manage-event-ext/EventAudience.js:2380
+msgid "Save consent"
+msgstr "Zapisz zgodę"
+
+#. translators: %s: participant name
+#: src/Admin/manage-event-ext/EventAudience.js:2395
+#, js-format
+msgid "Edit options — %s"
+msgstr "Edytuj opcje — %s"
+
+#: src/Admin/manage-event-ext/EventAudience.js:2417
+msgid "Pending payment hold expired"
+msgstr "Wygasła oczekująca blokada płatności"
+
+#: src/Admin/manage-event-ext/EventAudience.js:2429
+msgid "Will mark as Signed up and count toward activity capacity. Click Save to apply."
+msgstr "Oznaczy jako Zapisany i będzie liczony do pojemności aktywności. Kliknij Zapisz, aby zastosować."
+
+#: src/Admin/manage-event-ext/EventAudience.js:2434
+msgid "Will mark as Interested and free the seat (record kept for history). Click Save to apply."
+msgstr "Oznaczy jako Zainteresowany i zwolni miejsce (zapis zachowany dla historii). Kliknij Zapisz, aby zastosować."
+
+#: src/Admin/manage-event-ext/EventAudience.js:2438
+msgid "Pick how to resolve this expired hold, edit any other fields below, then Save to apply everything in one go."
+msgstr "Wybierz sposób rozwiązania tej wygasłej blokady, edytuj dowolne inne pola poniżej, a następnie Zapisz, aby zastosować wszystko jednocześnie."
+
+#: src/Admin/manage-event-ext/EventAudience.js:2458
+msgid "Confirm signup"
+msgstr "Potwierdź rejestrację"
+
+#: src/Admin/manage-event-ext/EventAudience.js:2480
+msgid "Cancel signup"
+msgstr "Anuluj rejestrację"
+
+#: src/Admin/manage-event-ext/EventAudience.js:2523
+msgid "— None —"
+msgstr "— Brak —"
+
+#: src/Admin/manage-event-ext/EventAudience.js:2556
+msgid "Internal note about this signup (e.g. \"pending 10€ payment\"). Only visible to admins."
+msgstr "Wewnętrzna notatka dotycząca tej rejestracji (np. \"oczekiwanie na płatność 10€\"). Widoczna tylko dla administratorów."
+
+#: src/Admin/manage-event-ext/EventAudience.js:2585
+#: src/Admin/manage-event-ext/GroupRules.js:483
+msgid "Save"
+msgstr "Zapisz"
+
+#. translators: %s: participant name
+#: src/Admin/manage-event-ext/EventAudience.js:2596
+#, js-format
+msgid "Move signup — %s"
+msgstr "Przenieś rejestrację — %s"
+
+#: src/Admin/manage-event-ext/EventAudience.js:2604
+msgid "Move to occurrence"
+msgstr "Przenieś do wystąpienia"
+
+#: src/Admin/manage-event-ext/EventAudience.js:2636
+msgid "Moving…"
+msgstr "Przenoszenie…"
+
+#: src/Admin/manage-event-ext/EventMailings.js:44
+msgid "Registered"
+msgstr "Zarejestrowany"
+
+#: src/Admin/manage-event-ext/EventMailings.js:152
+msgid "Could not load mailings."
+msgstr "Nie można załadować wysyłek."
+
+#: src/Admin/manage-event-ext/EventMailings.js:248
+msgid "Please enter a body."
+msgstr "Proszę wpisać treść."
+
+#: src/Admin/manage-event-ext/EventMailings.js:258
+msgid "Please select at least one recipient type."
+msgstr "Proszę wybrać co najmniej jeden typ odbiorcy."
+
+#: src/Admin/manage-event-ext/EventMailings.js:291
+msgid "Mailing updated."
+msgstr "Wysyłka zaktualizowana."
+
+#: src/Admin/manage-event-ext/EventMailings.js:292
+msgid "Mailing scheduled."
+msgstr "Wysyłka zaplanowana."
+
+#: src/Admin/manage-event-ext/EventMailings.js:304
+msgid "Could not save the mailing."
+msgstr "Nie można zapisać wysyłki."
+
+#: src/Admin/manage-event-ext/EventMailings.js:321
+msgid "Mailing canceled."
+msgstr "Wysyłka anulowana."
+
+#: src/Admin/manage-event-ext/EventMailings.js:330
+msgid "Could not cancel the mailing."
+msgstr "Nie można anulować wysyłki."
+
+#: src/Admin/manage-event-ext/EventMailings.js:374
+msgid "Edit scheduled mailing"
+msgstr "Edytuj zaplanowaną wysyłkę"
+
+#: src/Admin/manage-event-ext/EventMailings.js:378
+msgid "Schedule new mailing"
+msgstr "Zaplanuj nową wysyłkę"
+
+#: src/Admin/manage-event-ext/EventMailings.js:413
+msgid "Recipients"
+msgstr "Odbiorcy"
+
+#: src/Admin/manage-event-ext/EventMailings.js:436
+msgid "Limit to groups (optional)"
+msgstr "Ogranicz do grup (opcjonalnie)"
+
+#: src/Admin/manage-event-ext/EventMailings.js:455
+msgid "Marketing email (respect opt-out)"
+msgstr "Wiadomość marketingowa (respektuj rezygnację)"
+
+#: src/Admin/manage-event-ext/EventMailings.js:469
+msgid "Recipient count unavailable."
+msgstr "Liczba odbiorców niedostępna."
+
+#. translators: %d: recipient count
+#: src/Admin/manage-event-ext/EventMailings.js:475
+#, js-format
+msgid "%d recipient(s) match right now."
+msgstr "%d odbiorcy(-ów) pasuje teraz."
+
+#: src/Admin/manage-event-ext/EventMailings.js:489
+msgid "Hide list"
+msgstr "Ukryj listę"
+
+#: src/Admin/manage-event-ext/EventMailings.js:493
+msgid "View list"
+msgstr "Wyświetl listę"
+
+#: src/Admin/manage-event-ext/EventMailings.js:515
+msgid "no email"
+msgstr "brak e-maila"
+
+#: src/Admin/manage-event-ext/EventMailings.js:521
+msgid "will skip (opted out)"
+msgstr "zostanie pominięty (rezygnacja)"
+
+#: src/Admin/manage-event-ext/EventMailings.js:532
+msgid "Scheduled mailings send automatically at the computed time. There is no per-send skip list or immediate send here — use the Custom Mail page for ad-hoc sends."
+msgstr "Zaplanowane wysyłki są wysyłane automatycznie o obliczonym czasie. Nie ma tutaj listy pomijania dla każdej wysyłki ani opcji natychmiastowego wysłania — użyj strony Niestandardowa poczta do wysyłek ad-hoc."
+
+#: src/Admin/manage-event-ext/EventMailings.js:546
+msgid "Update mailing"
+msgstr "Aktualizuj wysyłkę"
+
+#: src/Admin/manage-event-ext/EventMailings.js:550
+msgid "Schedule mailing"
+msgstr "Zaplanuj wysyłkę"
+
+#: src/Admin/manage-event-ext/EventMailings.js:561
+msgid "Cancel edit"
+msgstr "Anuluj edycję"
+
+#: src/Admin/manage-event-ext/EventMailings.js:576
+msgid "Scheduled & past mailings"
+msgstr "Zaplanowane i przeszłe wysyłki"
+
+#: src/Admin/manage-event-ext/EventMailings.js:585
+msgid "No mailings yet."
+msgstr "Brak wysyłek."
+
+#. translators: %s: send date/time
+#: src/Admin/manage-event-ext/EventMailings.js:623
+#, js-format
+msgid "Sends: %s"
+msgstr "Wysyłki: %s"
+
+#: src/Admin/manage-event-ext/EventMailings.js:629
+msgid "Send time pending"
+msgstr "Czas wysyłki oczekujący"
+
+#. translators: 1: sent, 2: failed, 3: skipped
+#: src/Admin/manage-event-ext/EventMailings.js:636
+#, js-format
+msgid " · sent %1$d, failed %2$d, skipped %3$d"
+msgstr " · wysłano %1$d, nie powiodło się %2$d, pominięto %3$d"
+
+#: src/Admin/manage-event-ext/EventMailings.js:716
+msgid "Cancel mailing?"
+msgstr "Anulować wysyłkę?"
+
+#. translators: %s: mailing subject
+#: src/Admin/manage-event-ext/EventMailings.js:722
+#, js-format
+msgid "Cancel the scheduled mailing \"%s\"? It will not be sent."
+msgstr "Anulować zaplanowaną wysyłkę \"%s\"? Nie będzie wysłana."
+
+#: src/Admin/manage-event-ext/EventMailings.js:734
+msgid "Keep it"
+msgstr "Zachowaj"
+
+#: src/Admin/manage-event-ext/EventMailings.js:741
+msgid "Cancel mailing"
+msgstr "Anuluj wysyłkę"
+
+#. translators: 1: status, 2: send time
+#: src/Admin/manage-event-ext/EventMailings.js:755
+#, js-format
+msgid "Status: %1$s · %2$s"
+msgstr "Status: %1$s · %2$s"
+
+#. translators: 1: sent, 2: failed, 3: skipped
+#: src/Admin/manage-event-ext/EventMailings.js:769
+#, js-format
+msgid "Sent %1$d · failed %2$d · skipped %3$d"
+msgstr "Wysłano %1$d · nie powiodło się %2$d · pominięto %3$d"
+
+#: src/Admin/manage-event-ext/GroupRules.js:31
+msgid "Percentage (%)"
+msgstr "Procent (%)"
+
+#: src/Admin/manage-event-ext/GroupRules.js:35
+msgid "Fixed amount"
+msgstr "Stała kwota"
+
+#: src/Admin/manage-event-ext/GroupRules.js:55
+msgid "Invited"
+msgstr "Zaproszeni"
+
+#: src/Admin/manage-event-ext/GroupRules.js:57
+msgid "View signups"
+msgstr "Wyświetl rejestracje"
+
+#: src/Admin/manage-event-ext/GroupRules.js:59
+msgid "Manage signups"
+msgstr "Zarządzaj rejestracjami"
+
+#: src/Admin/manage-event-ext/GroupRules.js:122
+msgid "Failed to load group rules."
+msgstr "Nie udało się załadować reguł grupy."
+
+#: src/Admin/manage-event-ext/GroupRules.js:206
+msgid "Group rules added."
+msgstr "Reguły grupy dodane."
+
+#: src/Admin/manage-event-ext/GroupRules.js:210
+msgid "Failed to add group rules."
+msgstr "Nie udało się dodać reguł grupy."
+
+#: src/Admin/manage-event-ext/GroupRules.js:276
+msgid "Group rules updated."
+msgstr "Reguły grupy zaktualizowane."
+
+#: src/Admin/manage-event-ext/GroupRules.js:281
+msgid "Failed to update group rules."
+msgstr "Nie udało się zaktualizować reguł grupy."
+
+#: src/Admin/manage-event-ext/GroupRules.js:318
+msgid "Failed to update permission."
+msgstr "Nie udało się zaktualizować uprawnień."
+
+#: src/Admin/manage-event-ext/GroupRules.js:329
+msgid "Are you sure you want to remove all rules for this group?"
+msgstr "Czy na pewno chcesz usunąć wszystkie reguły dla tej grupy?"
+
+#: src/Admin/manage-event-ext/GroupRules.js:365
+msgid "Group rules removed."
+msgstr "Reguły grupy usunięte."
+
+#: src/Admin/manage-event-ext/GroupRules.js:370
+msgid "Failed to remove group rules."
+msgstr "Nie udało się usunąć reguł grupy."
+
+#: src/Admin/manage-event-ext/GroupRules.js:381
+msgid "Group Rules"
+msgstr "Reguły grupy"
+
+#: src/Admin/manage-event-ext/GroupRules.js:435
+#: src/Admin/manage-event-ext/GroupRules.js:646
+msgid "Discount Type"
+msgstr "Typ rabatu"
+
+#: src/Admin/manage-event-ext/GroupRules.js:451
+#: src/Admin/manage-event-ext/GroupRules.js:655
+msgid "Discount Value"
+msgstr "Wartość rabatu"
+
+#: src/Admin/manage-event-ext/GroupRules.js:464
+msgid "0 = no discount"
+msgstr "0 = brak rabatu"
+
+#: src/Admin/manage-event-ext/GroupRules.js:550
+msgid "Discount:"
+msgstr "Rabat:"
+
+#: src/Admin/manage-event-ext/GroupRules.js:608
+msgid "No group rules yet. Add one below."
+msgstr "Brak reguł grupy. Dodaj jedną poniżej."
+
+#: src/Admin/manage-event-ext/GroupRules.js:618
+msgid "Add Group"
+msgstr "Dodaj grupę"
+
+#: src/Admin/manage-event-ext/GroupRules.js:624
+msgid "Group"
+msgstr "Grupa"
+
+#: src/Admin/manage-event-ext/GroupRules.js:631
+msgid "Select a group..."
+msgstr "Wybierz grupę..."
+
+#: src/Admin/manage-event-ext/GroupRules.js:666
+msgid "e.g. 10"
+msgstr "np. 10"
+
+#: src/Admin/manage-event-ext/GroupRules.js:670
+msgid "e.g. 5.00"
+msgstr "np. 5,00"
+
+#: src/Admin/manage-event-ext/GroupRules.js:710
+msgid "Add"
+msgstr "Dodaj"
+
+#: src/Admin/manage-event-ext/GroupRules.js:721
+msgid "All groups already have rules for this event."
+msgstr "Wszystkie grupy mają już reguły dla tego wydarzenia."
+
+#: src/Admin/manage-event-ext/index.js:85
+msgid "Mailings"
+msgstr "Wysyłki"
+
+#: src/Admin/manage-event-ext/MailBodyEditor.js:28
+msgid "Event name"
+msgstr "Nazwa wydarzenia"
+
+#: src/Admin/manage-event-ext/MailBodyEditor.js:32
+msgid "Event date"
+msgstr "Data wydarzenia"
+
+#: src/Admin/manage-event-ext/MailBodyEditor.js:36
+msgid "Unsubscribe"
+msgstr "Anuluj subskrypcję"
+
+#: src/Admin/manage-event-ext/MailBodyEditor.js:130
+msgid "Body"
+msgstr "Treść"
+
+#: src/Admin/manage-event-ext/MailBodyEditor.js:270
+msgid "Insert token:"
+msgstr "Wstaw token:"
+
+#: src/Admin/settings/FeaturesTab.js:54
+msgid "Failed to load features."
+msgstr "Nie udało się załadować funkcji."
+
+#: src/Admin/settings/FeaturesTab.js:86
+msgid "Features saved. Reload the page to see admin-menu changes."
+msgstr "Funkcje zapisane. Przeładuj stronę, aby zobaczyć zmiany w menu administracyjnym."
+
+#: src/Admin/settings/FeaturesTab.js:96
+msgid "Failed to save features."
+msgstr "Nie udało się zapisać funkcji."
+
+#: src/Admin/settings/FeaturesTab.js:110
+msgid "Loading features..."
+msgstr "Ładowanie funkcji..."
+
+#: src/Admin/settings/FeaturesTab.js:125
+msgid "Feature Bundles"
+msgstr "Pakiety funkcji"
+
+#: src/Admin/settings/FeaturesTab.js:129
+msgid "Toggle optional experimental feature bundles. Bundles fixed in wp-config (FAIR_AUDIENCE_EXPERIMENTAL_INTERNAL or FAIR_AUDIENCE_EXPERIMENTAL_FEATURE_*) are read-only here."
+msgstr "Przełączaj opcjonalne eksperymentalne pakiety funkcji. Pakiety ustalone w wp-config (FAIR_AUDIENCE_EXPERIMENTAL_INTERNAL lub FAIR_AUDIENCE_EXPERIMENTAL_FEATURE_*) są tutaj tylko do odczytu."
+
+#: src/Admin/settings/FeaturesTab.js:137
+msgid "Forced by a wp-config constant — change it there."
+msgstr "Wymuszone przez stałą wp-config — zmień to tam."
+
+#: src/Admin/settings/FeaturesTab.js:160
+msgid "One or more bundles are forced by wp-config and cannot be toggled here."
+msgstr "Jeden lub więcej pakietów jest wymuszonych przez wp-config i nie można ich tutaj przełączać."
+
+#: src/Admin/settings/FeaturesTab.js:175
+msgid "Save Features"
+msgstr "Zapisz funkcje"
+
+#: src/Admin/settings/SettingsApp.js:26
+msgid "Fair Audience Experimental Settings"
+msgstr "Ustawienia eksperymentalne Fair Audience"
+

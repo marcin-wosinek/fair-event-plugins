@@ -1035,23 +1035,23 @@ export default function EventAudience({
 		if (diffMs < 0) return new Date(ts).toLocaleString();
 		const minutes = Math.floor(diffMs / 60000);
 		if (minutes < 60) {
-			/* translators: %d: number of minutes */
 			return sprintf(
+				/* translators: %d: number of minutes */
 				__('expired %d min ago', 'fair-audience-experimental'),
 				minutes
 			);
 		}
 		const hours = Math.floor(minutes / 60);
 		if (hours < 24) {
-			/* translators: %d: number of hours */
 			return sprintf(
+				/* translators: %d: number of hours */
 				__('expired %d h ago', 'fair-audience-experimental'),
 				hours
 			);
 		}
 		const days = Math.floor(hours / 24);
-		/* translators: %d: number of days */
 		return sprintf(
+			/* translators: %d: number of days */
 			__('expired %d d ago', 'fair-audience-experimental'),
 			days
 		);

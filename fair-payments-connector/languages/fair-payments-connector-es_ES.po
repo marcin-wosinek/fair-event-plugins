@@ -1099,4 +1099,3 @@ msgstr "Error al crear el pago"
 #: src/Admin/transaction/TransactionPage.js:793
 msgid "Details"
 msgstr "Detalles"
-

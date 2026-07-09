@@ -245,7 +245,7 @@ class EmailService {
 
 							<p style="margin: 0 0 10px 0; font-size: 14px; color: #666666;">
 								' . sprintf(
-									/* translators: %s: site name */
+									/* translators: 1: line break, 2: site name */
 										esc_html__( 'Thanks,%1$sThe %2$s Team', 'fair-audience' ),
 										'<br>',
 										esc_html( $site_name )
@@ -489,7 +489,7 @@ class EmailService {
 		$message .= '
 							<p style="margin: 0 0 10px 0; font-size: 14px; color: #666666;">
 								' . sprintf(
-									/* translators: %s: site name */
+									/* translators: 1: line break, 2: site name */
 			esc_html__( 'Thanks,%1$sThe %2$s Team', 'fair-audience' ),
 			'<br>',
 			esc_html( $site_name )
@@ -702,7 +702,7 @@ class EmailService {
 
 							<p style="margin: 20px 0 0 0; font-size: 14px; color: #666666;">
 								' . sprintf(
-									/* translators: %s: site name */
+									/* translators: 1: line break, 2: site name */
 									esc_html__( 'Thanks,%1$sThe %2$s Team', 'fair-audience' ),
 									'<br>',
 									esc_html( $site_name )
@@ -825,7 +825,7 @@ class EmailService {
 
 							<p style="margin: 20px 0 0 0; font-size: 14px; color: #666666;">
 								' . sprintf(
-									/* translators: %s: site name */
+									/* translators: 1: line break, 2: site name */
 										esc_html__( 'Thanks,%1$sThe %2$s Team', 'fair-audience' ),
 										'<br>',
 										esc_html( $site_name )
@@ -953,7 +953,7 @@ class EmailService {
 
 							<p style="margin: 20px 0 0 0; font-size: 14px; color: #666666;">
 								' . sprintf(
-									/* translators: %s: site name */
+									/* translators: 1: line break, 2: site name */
 									esc_html__( 'Thanks,%1$sThe %2$s Team', 'fair-audience' ),
 									'<br>',
 									esc_html( $site_name )
@@ -1094,7 +1094,7 @@ class EmailService {
 
 							<p style="margin: 20px 0 0 0; font-size: 14px; color: #666666;">
 								' . sprintf(
-									/* translators: %s: site name */
+									/* translators: 1: line break, 2: site name */
 									esc_html__( 'Thanks,%1$sThe %2$s Team', 'fair-audience' ),
 									'<br>',
 									esc_html( $site_name )
@@ -1408,7 +1408,7 @@ class EmailService {
 
 							<p style="margin: 20px 0 0 0; font-size: 14px; color: #666666;">
 								' . sprintf(
-									/* translators: %s: site name */
+									/* translators: 1: line break, 2: site name */
 									esc_html__( 'Thanks,%1$sThe %2$s Team', 'fair-audience' ),
 									'<br>',
 									esc_html( $site_name )
@@ -1692,7 +1692,7 @@ class EmailService {
 
 							<p style="margin: 20px 0 0 0; font-size: 14px; color: #666666;">
 								' . sprintf(
-									/* translators: %s: site name */
+									/* translators: 1: line break, 2: site name */
 									esc_html__( 'Thanks,%1$sThe %2$s Team', 'fair-audience' ),
 									'<br>',
 									esc_html( $site_name )
@@ -1849,7 +1849,7 @@ class EmailService {
 		$message .= '
 							<p style="margin: 0 0 10px 0; font-size: 14px; color: #666666;">
 								' . sprintf(
-									/* translators: %s: site name */
+									/* translators: 1: line break, 2: site name */
 			esc_html__( 'Thanks,%1$sThe %2$s Team', 'fair-audience' ),
 			'<br>',
 			esc_html( $site_name )
@@ -2342,7 +2342,7 @@ class EmailService {
 
 							<p style="margin: 20px 0 0 0; font-size: 14px; color: #666666;">
 								' . sprintf(
-									/* translators: %s: site name */
+									/* translators: 1: line break, 2: site name */
 								esc_html__( 'Thanks,%1$sThe %2$s Team', 'fair-audience' ),
 								'<br>',
 								esc_html( $site_name )
@@ -2492,9 +2492,10 @@ class EmailService {
 
 							<p style="margin: 0 0 20px 0; font-size: 16px;">
 								' . sprintf(
-									/* translators: %s: event title */
 								$transaction
+									/* translators: %s: event title */
 									? esc_html__( 'Your signup for %s has been confirmed and your payment has been received.', 'fair-audience' )
+									/* translators: %s: event title */
 									: esc_html__( 'Your signup for %s has been confirmed.', 'fair-audience' ),
 								'<strong>' . esc_html( $event_title ) . '</strong>'
 							) . '
@@ -2508,7 +2509,7 @@ class EmailService {
 
 							<p style="margin: 20px 0 0 0; font-size: 14px; color: #666666;">
 								' . sprintf(
-									/* translators: %s: site name */
+									/* translators: 1: line break, 2: site name */
 								esc_html__( 'See you there!%1$sThe %2$s Team', 'fair-audience' ),
 								'<br>',
 								esc_html( $site_name )
@@ -2939,7 +2940,7 @@ class EmailService {
 
 							<p style="margin: 20px 0 0 0; font-size: 14px; color: #666666;">
 								' . sprintf(
-									/* translators: %s: site name */
+									/* translators: 1: line break, 2: site name */
 										esc_html__( 'See you there!%1$sThe %2$s Team', 'fair-audience' ),
 										'<br>',
 										esc_html( $site_name )
@@ -3213,7 +3214,7 @@ class EmailService {
 					<tr>
 						<td style="padding: 40px 30px;">
 							<p style="margin: 0 0 20px 0;">' . sprintf(
-								/* translators: %s: participant name */
+								/* translators: %s: participant first name */
 								esc_html__( 'Hi %s,', 'fair-audience' ),
 								'<strong>' . esc_html( $greeting_name ) . '</strong>'
 							) . '</p>
@@ -3313,7 +3314,7 @@ class EmailService {
 					<tr>
 						<td style="padding: 40px 30px;">
 							<p style="margin: 0 0 20px 0;">' . sprintf(
-								/* translators: %s: participant name */
+								/* translators: %s: participant first name */
 								esc_html__( 'Hi %s,', 'fair-audience' ),
 								'<strong>' . esc_html( $greeting_name ) . '</strong>'
 							) . '</p>

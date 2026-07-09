@@ -1896,8 +1896,8 @@ export default function EventTickets({
 													{__('Name', 'fair-events')}
 												</th>
 												<th>
-													{/* translators: %s: currency code */}
 													{sprintf(
+														/* translators: %s: currency code */
 														__(
 															'Price (%s)',
 															'fair-events'
@@ -1907,8 +1907,8 @@ export default function EventTickets({
 												</th>
 												{settings.activity_collaborator_discount && (
 													<th>
-														{/* translators: %s: currency code */}
 														{sprintf(
+															/* translators: %s: currency code */
 															__(
 																'Discounted price (%s)',
 																'fair-events'
