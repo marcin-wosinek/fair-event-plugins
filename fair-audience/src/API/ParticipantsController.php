@@ -106,6 +106,19 @@ class ParticipantsController extends WP_REST_Controller {
 			)
 		);
 
+		// GET /fair-audience/v1/participants/stats.
+		register_rest_route(
+			$this->namespace,
+			'/' . $this->rest_base . '/stats',
+			array(
+				'methods'             => WP_REST_Server::READABLE,
+				'callback'            => array( $this, 'get_stats' ),
+				'permission_callback' => function () {
+					return current_user_can( 'manage_options' );
+				},
+			)
+		);
+
 		// GET /fair-audience/v1/participants/{id}.
 		// PUT /fair-audience/v1/participants/{id}.
 		// DELETE /fair-audience/v1/participants/{id}.
@@ -292,6 +305,16 @@ class ParticipantsController extends WP_REST_Controller {
 		}
 
 		return $response;
+	}
+
+	/**
+	 * Get audience stats for the stat tiles above the participants table.
+	 *
+	 * @param WP_REST_Request $request Request object.
+	 * @return WP_REST_Response Response object.
+	 */
+	public function get_stats( $request ) {
+		return rest_ensure_response( $this->repository->get_stats() );
 	}
 
 	/**
