@@ -1,0 +1,65 @@
+/* All Participants admin page. */
+
+.fair-audience-all-participants__content {
+	margin-top: 16px;
+}
+
+/* Clickable stat tiles above the participants table. */
+.fair-audience-stat-tile__button {
+	display: block;
+	width: 100%;
+	margin: 0;
+	border: none;
+	border-radius: 2px;
+	background: none;
+	text-align: left;
+	cursor: pointer;
+}
+
+.fair-audience-stat-tile__button:hover,
+.fair-audience-stat-tile__button:focus-visible {
+	background: #f6f7f7;
+}
+
+.fair-audience-stat-tile.is-active {
+	box-shadow: inset 0 0 0 1.5px var(--wp-admin-theme-color);
+}
+
+.fair-audience-stat-tile.is-active .fair-audience-stat-tile__value {
+	color: var(--wp-admin-theme-color);
+}
+
+.fair-audience-all-participants__table {
+	overflow-x: auto;
+}
+
+.fair-audience-events-popover {
+	min-width: 220px;
+	max-width: 320px;
+	padding: 8px;
+}
+
+.fair-audience-events-popover p {
+	margin: 4px 8px;
+}
+
+.fair-audience-wp-user {
+	display: flex;
+	align-items: center;
+	gap: 4px;
+}
+
+.fair-audience-wp-user__mismatch {
+	color: #d63638;
+}
+
+.fair-audience-count-cell {
+	text-align: right;
+}
+
+.fair-audience-all-participants__snackbar {
+	position: fixed;
+	bottom: 16px;
+	left: 16px;
+	z-index: 100000;
+}

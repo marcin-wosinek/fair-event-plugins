@@ -1,5 +1,6 @@
 import { createRoot } from '@wordpress/element';
 import AllParticipants from './AllParticipants.js';
+import './style.css';
 
 const rootElement = document.getElementById(
 	'fair-audience-all-participants-root'

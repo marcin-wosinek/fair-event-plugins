@@ -5,12 +5,14 @@ import {
 	Button,
 	Card,
 	CardBody,
-	Flex,
-	FlexItem,
 	Spinner,
 	Popover,
 	Notice,
 	Snackbar,
+	__experimentalGrid as Grid,
+	__experimentalVStack as VStack,
+	__experimentalItemGroup as ItemGroup,
+	__experimentalItem as Item,
 	__experimentalText as Text,
 	__experimentalConfirmDialog as ConfirmDialog,
 } from '@wordpress/components';
@@ -232,21 +234,15 @@ export default function AllParticipants() {
 						item.email.toLowerCase() !==
 							item.wp_user.email.toLowerCase();
 					return (
-						<span
-							style={{
-								display: 'flex',
-								alignItems: 'center',
-								gap: '4px',
-							}}
-						>
+						<span className="fair-audience-wp-user">
 							{item.wp_user.display_name}
 							{hasEmailMismatch && (
 								<span
+									className="fair-audience-wp-user__mismatch"
 									title={__(
 										'Email addresses do not match',
 										'fair-audience'
 									)}
-									style={{ color: '#d63638' }}
 								>
 									<Icon icon={caution} size={16} />
 								</span>
@@ -260,7 +256,7 @@ export default function AllParticipants() {
 				id: 'events_signed_up',
 				label: __('Events Signed Up', 'fair-audience'),
 				render: ({ item }) => (
-					<div style={{ textAlign: 'right' }}>
+					<div className="fair-audience-count-cell">
 						{item.events_signed_up > 0 ? (
 							<Button
 								variant="link"
@@ -286,7 +282,7 @@ export default function AllParticipants() {
 				id: 'events_collaborated',
 				label: __('Events Collaborated', 'fair-audience'),
 				render: ({ item }) => (
-					<div style={{ textAlign: 'right' }}>
+					<div className="fair-audience-count-cell">
 						{item.events_collaborated > 0 ? (
 							<Button
 								variant="link"
@@ -582,6 +578,26 @@ export default function AllParticipants() {
 		setView((v) => ({ ...v, filters, page: 1 }));
 	}, []);
 
+	// The tile whose filters exactly match the current view filters, so the
+	// active scope is visible in the tile row ("Audience total" when
+	// unfiltered).
+	const activeTileId = useMemo(() => {
+		const current = view.filters || [];
+		const active = statTiles.find(
+			(tile) =>
+				tile.filters.length === current.length &&
+				tile.filters.every((tileFilter) =>
+					current.some(
+						(viewFilter) =>
+							viewFilter.field === tileFilter.field &&
+							viewFilter.operator === tileFilter.operator &&
+							viewFilter.value === tileFilter.value
+					)
+				)
+		);
+		return active ? active.id : null;
+	}, [statTiles, view.filters]);
+
 	const resendResultTitle = useMemo(() => {
 		if (!resendResult) {
 			return '';
@@ -613,63 +629,82 @@ export default function AllParticipants() {
 			</button>
 			<hr className="wp-header-end" />
 
-			<Flex wrap>
-				{statTiles.map((tile) => (
-					<FlexItem key={tile.id} style={{ minWidth: '160px' }}>
-						<Card>
-							<CardBody
-								as="button"
-								type="button"
-								onClick={() => filterByTile(tile.filters)}
-								style={{
-									cursor: 'pointer',
-									textAlign: 'left',
-									width: '100%',
-									border: 'none',
-									background: 'none',
-								}}
-							>
-								<Text size={24} weight={600} as="div">
-									{stats ? tile.value : '—'}
-								</Text>
-								<Text as="div">{tile.label}</Text>
-							</CardBody>
-						</Card>
-					</FlexItem>
-				))}
-			</Flex>
-
-			{errorMessage && (
-				<Notice
-					status="error"
-					isDismissible={true}
-					onRemove={() => setErrorMessage(null)}
+			<VStack
+				spacing={4}
+				className="fair-audience-all-participants__content"
+			>
+				<Grid
+					templateColumns="repeat(auto-fit, minmax(180px, 1fr))"
+					gap={3}
 				>
-					{errorMessage}
-				</Notice>
-			)}
+					{statTiles.map((tile) => {
+						const isActive = activeTileId === tile.id;
+						return (
+							<Card
+								key={tile.id}
+								size="small"
+								className={
+									isActive
+										? 'fair-audience-stat-tile is-active'
+										: 'fair-audience-stat-tile'
+								}
+							>
+								<CardBody
+									as="button"
+									type="button"
+									className="fair-audience-stat-tile__button"
+									aria-pressed={isActive}
+									onClick={() => filterByTile(tile.filters)}
+								>
+									<Text
+										size={24}
+										weight={600}
+										as="div"
+										className="fair-audience-stat-tile__value"
+									>
+										{stats ? tile.value : '—'}
+									</Text>
+									<Text as="div" variant="muted">
+										{tile.label}
+									</Text>
+								</CardBody>
+							</Card>
+						);
+					})}
+				</Grid>
 
-			<EmailSendResultNotice
-				result={resendResult}
-				title={resendResultTitle}
-				onDismiss={() => setResendResult(null)}
-			/>
+				{errorMessage && (
+					<Notice
+						status="error"
+						isDismissible={true}
+						onRemove={() => setErrorMessage(null)}
+					>
+						{errorMessage}
+					</Notice>
+				)}
 
-			<Card>
-				<CardBody style={{ overflowX: 'auto' }}>
-					<DataViews
-						data={participants}
-						fields={fields}
-						view={view}
-						onChangeView={setView}
-						actions={actions}
-						paginationInfo={paginationInfo}
-						defaultLayouts={DEFAULT_LAYOUTS}
-						isLoading={isLoading}
-						getItemId={(item) => item.id}
-					/>
-				</CardBody>
-			</Card>
+				<EmailSendResultNotice
+					result={resendResult}
+					title={resendResultTitle}
+					onDismiss={() => setResendResult(null)}
+				/>
+
+				<Card>
+					<CardBody className="fair-audience-all-participants__table">
+						<DataViews
+							data={participants}
+							fields={fields}
+							view={view}
+							onChangeView={setView}
+							actions={actions}
+							paginationInfo={paginationInfo}
+							defaultLayouts={DEFAULT_LAYOUTS}
+							isLoading={isLoading}
+							getItemId={(item) => item.id}
+						/>
+					</CardBody>
+				</Card>
+			</VStack>
 
 			{eventsPopover && (
 				<Popover
@@ -677,42 +712,25 @@ export default function AllParticipants() {
 					onClose={() => setEventsPopover(null)}
 					placement="bottom-start"
 				>
-					<div
-						style={{
-							padding: '12px',
-							minWidth: '200px',
-							maxWidth: '300px',
-						}}
-					>
+					<div className="fair-audience-events-popover">
 						{popoverLoading ? (
 							<Spinner />
 						) : popoverEvents.length === 0 ? (
-							<p style={{ margin: 0 }}>
+							<Text as="p">
 								{__('No events found.', 'fair-audience')}
-							</p>
+							</Text>
 						) : (
-							<ul
-								style={{
-									margin: 0,
-									padding: 0,
-									listStyle: 'none',
-								}}
-							>
+							<ItemGroup size="small">
 								{popoverEvents.map((event) => (
-									<li
+									<Item
 										key={event.event_id}
-										style={{
-											padding: '4px 0',
-										}}
+										as="a"
+										href={`${window.fairAudienceAllParticipantsData?.participantsUrl}${event.event_date_id}`}
 									>
-										<a
-											href={`${window.fairAudienceAllParticipantsData?.participantsUrl}${event.event_date_id}`}
-										>
-											{event.title}
-										</a>
-									</li>
+										{event.title}
+									</Item>
 								))}
-							</ul>
+							</ItemGroup>
 						)}
 					</div>
 				</Popover>
@@ -741,14 +759,7 @@ export default function AllParticipants() {
 			</ConfirmDialog>
 
 			{snackbar && (
-				<div
-					style={{
-						position: 'fixed',
-						bottom: '16px',
-						left: '16px',
-						zIndex: 100000,
-					}}
-				>
+				<div className="fair-audience-all-participants__snackbar">
 					<Snackbar onRemove={() => setSnackbar(null)}>
 						{snackbar}
 					</Snackbar>

@@ -314,6 +314,16 @@ class AdminHooks {
 			);
 
 			wp_enqueue_style( 'wp-components' );
+
+			$style_file = $plugin_dir . "build/admin/{$page_name}/style-index.css";
+			if ( file_exists( $style_file ) ) {
+				wp_enqueue_style(
+					"fair-audience-{$page_name}",
+					plugin_dir_url( dirname( __DIR__ ) ) . "build/admin/{$page_name}/style-index.css",
+					array( 'wp-components' ),
+					$asset_data['version']
+				);
+			}
 		}
 	}
 }
