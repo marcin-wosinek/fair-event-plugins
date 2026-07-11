@@ -1,5 +1,11 @@
 # fair-timetable
 
+## 0.6.6
+
+### Patch Changes
+
+-   3232aba: Rewrite the readme description to clearly convey what the plugin does, and replace the inlined changelog with a link to CHANGELOG.md on GitHub. The release tooling no longer syncs the changelog into `readme.txt`.
+
 ## 0.6.5
 
 ### Patch Changes

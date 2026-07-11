@@ -4,7 +4,7 @@ Tags: events, calendar, custom post type, gutenberg
 Requires at least: 6.7
 Tested up to: 7.0
 Requires PHP: 7.4
-Stable tag: 1.8.0
+Stable tag: 1.9.0
 License: GPLv3 or later
 License URI: https://www.gnu.org/licenses/gpl-3.0.html
 Text Domain: fair-events
@@ -119,6 +119,40 @@ In the Events Calendar block settings, use the "Event Display Pattern" dropdown 
 6. Add to Calendar block on a single event post
 
 == Changelog ==
+
+## 1.9.0
+
+### Minor Changes
+
+-   612b9b0: Creating an unrecognized category in the Manage Event Categories field no longer silently drops it: unknown tokens now POST to a create-category endpoint and get linked once the term exists (issue #992). The endpoint moves from `fair-events-experimental` (behind the sources feature flag) to stable `fair-events`, since the base Manage Event page needs it regardless of which extensions are active.
+-   612b9b0: Materialize cancelled recurring occurrences into real rows (new `status` and `recurrence_mode` columns) instead of a serialized exdates blob on the master, and switch inheritable instance fields (title, venue, address, link type, capacity, price) to NULL-means-inherit so an override is distinguishable from an inherited copy. Cancelling now soft-cancels instead of deleting, and a previously-cancelled occurrence restores to active if it reappears in the recurrence rule (issue #996).
+-   612b9b0: Restructure the Manage Event Tickets tab so the editable price table is the primary content instead of a duplicate read-only summary, demote Export/Import into a header dropdown, and surface a direct link when payments aren't configured for a priced event (issue #988).
+
+### Patch Changes
+
+-   e84e6b3: Move the galleries and messaging bundles out of `fair-audience` into the `fair-audience-experimental` companion, gated behind their `Features::is_enabled()` flags (issue #1041). `PhotoParticipant`/`GalleryAccessKey` and `CustomMailMessage`/`ExtraMessage`/`ScheduledMessage` (plus their repositories, controllers, admin pages, media-library hooks, and the scheduled-message cron) are renamed to `FairAudienceExperimental\…` and now travel with the companion; every cross-plugin call site (`fair-events-experimental`'s gallery endpoint, stable `fair-events`' gallery page, `fair-form`'s questionnaire photo tagging, and core `fair-audience`'s email service and anonymization service) degrades gracefully via `class_exists()` guards when the companion is inactive.
+-   a7f7373: Fix recurring standalone occurrences linked to a post via "Link Existing Event" rendering as a plain unstyled span instead of a button link in the calendar block. `get_display_url()` now falls back to the junction-linked post's permalink, and the calendar renders a link whenever a URL is available, not just for external link type.
+-   b007d8a: Centralize ticket price resolution in a new `FairEvents\Services\TicketPricing` service and a shared `ticket-pricing.js` module, so the fair-events get-tickets purchase paths and the fair-audience event-signup pricing agree on price. Previously get-tickets used a closed `[sale_start, sale_end]` sale-period interval while fair-audience used a half-open `[sale_start, sale_end)` interval with a `continues_pricing_period` fallback — the two could charge different prices for the same ticket type on a sale period's end day. get-tickets now uses the half-open convention too.
+-   a7f7373: Replace the generic `window.confirm()` on event delete with a `ConfirmDialog` that names the event and, for recurring masters, states the occurrence count that will be removed.
+-   f92bab0: Disable the Tickets, Signups, Finance, Groups, Audience, Mailings, and Statistics tabs on the Manage Event page when the event's link type is External URL, since there is no registration behind those tabs for link-only events.
+-   a7f7373: Apply the `fair_events_enabled_features_map` filter in the Gutenberg sidebar metabox localization, matching the Manage Event admin page. This was preventing extensions (e.g. fair-events-experimental) from enabling the venue-selection feature in the sidebar, which always rendered a plain address field instead of the venue dropdown.
+-   612b9b0: Reject empty/whitespace-only event titles in the quick-create button and the create/update REST endpoints (update never validated title at all), and show a shared "(untitled event)" fallback label everywhere a title is rendered so legacy untitled rows stay legible (issue #990).
+-   a7f7373: Only append the `event_date` query arg on calendar and week block links for events with more than one occurrence, avoiding unnecessarily long URLs for single-occurrence events.
+-   0603413: Extract the weekly event aggregation logic into a stable `FairEvents\Services\WeeklyEventsProvider`, so it can be reused by the upcoming fair-audience weekly digest without depending on the experimental plugin (issue #916).
+-   a7f7373: Fix All Events showing the wrong time compared to Manage Event/DB. `start_datetime` is a naive site-local string that was being formatted with `dateI18n`'s default timezone handling, shifting the displayed time whenever the browser and site timezones differ. It's now tagged as UTC and rendered with `gmdateI18n` so the wall-clock value passes through unchanged.
+-   a7f7373: Fix the Sale Periods summary always rendering "1 days before event" — the days-before label now uses `_n()` so the count picks the correct plural form.
+-   a7f7373: Fix untranslatable string concatenation on the Manage Event page. The linked-posts notice and the sale period label built sentences by concatenating separate `__()` fragments, which translators can't reorder for languages with different word order; both now use `_n()` and `sprintf()` for proper pluralization and ordering.
+-   a7f7373: Add a context header to the Manage Event page showing the date/time, a series/occurrence badge, and link status directly under the H1, and move the recurring-occurrence notice there so it's visible without scrolling.
+-   612b9b0: Move Manage Event's single global "Save Changes" button into the Event Details and Tickets tabs it actually applies to, labeled by what each saves, with per-section dirty-state tracking, a beforeunload guard, and an inline "Title is required" message instead of a silently disabled button (issue #987).
+-   612b9b0: Add a Move action on the Manage Event Audience tab to re-point a participant's signup to a sibling occurrence of a recurring event in one step, instead of deleting and re-adding and losing attendance state, admin comments, ticket options, and payment status (issue #954). Adds `GET /event-dates/{id}/siblings` to fair-events and `POST .../participants/{id}/move` to fair-audience.
+-   a7f7373: Fix the standalone get-tickets block (used when fair-audience is inactive) rendering an empty form for a specific occurrence of a recurring event. Ticket types, sale periods, and prices now resolve against the series master's configuration while the signup itself stays linked to the specific occurrence, mirroring the pivot fair-audience's event-signup block already does.
+-   a7f7373: Remove the seats-per-ticket capacity weighting feature. It let a ticket type consume more than one capacity slot, forcing every capacity query, signup projection, and participant snapshot to carry a per-row seat weight. Capacity math now collapses back to a plain row count; the Seats column/checkbox, the `seats_per_ticket` column, and the `seats` column on `event_participant` are dropped, with a forward migration for existing installs.
+-   612b9b0: Reword the Link Options card, ticket settings, add-on panel, All Events list, and transaction "Metadata" card (now "Details") to use organizer task language instead of internal data-model vocabulary (Master/Generated, "Event placeholder", "activity"), per UI_GUIDELINES.md. Display strings only — no REST field or DB value changes (issue #989).
+-   a7f7373: Fix calendar events grouped by day rendering in fetch order (WordPress query, standalone query, iCal feed) instead of start time, causing mixed-source events on the same day to appear out of chronological order.
+-   Updated dependencies [b007d8a]
+-   Updated dependencies [612b9b0]
+-   Updated dependencies [612b9b0]
+    -   fair-events-shared@0.3.0
 
 ## 1.8.0
 

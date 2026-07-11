@@ -1,5 +1,15 @@
 # fair-payments-connector
 
+## 1.5.1
+
+### Patch Changes
+
+-   612b9b0: Fix duplicate Telegram payment notifications when a Mollie webhook and the page-load status sync raced to mark the same transaction paid. `Transaction::update_status()` now performs a compare-and-swap update against an expected prior status, so only the caller that wins the race fires the `fair_payment_paid` hook.
+-   Updated dependencies [b007d8a]
+-   Updated dependencies [612b9b0]
+-   Updated dependencies [612b9b0]
+    -   fair-events-shared@0.3.0
+
 ## 1.5.0
 
 ### Minor Changes
