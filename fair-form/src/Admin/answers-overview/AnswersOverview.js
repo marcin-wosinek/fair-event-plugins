@@ -4,8 +4,8 @@ import apiFetch from '@wordpress/api-fetch';
 import {
 	Card,
 	CardBody,
-	ToggleGroupControl,
-	ToggleGroupControlOption,
+	__experimentalToggleGroupControl as ToggleGroupControl,
+	__experimentalToggleGroupControlOption as ToggleGroupControlOption,
 } from '@wordpress/components';
 import { DataViews } from '@wordpress/dataviews';
 
@@ -19,6 +19,7 @@ const DEFAULT_VIEW = {
 	},
 	search: '',
 	filters: [],
+	fields: ['label', 'count'],
 };
 
 const DEFAULT_LAYOUTS = {
