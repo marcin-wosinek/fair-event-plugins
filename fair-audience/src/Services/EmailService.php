@@ -2161,6 +2161,9 @@ class EmailService {
 							<p style="margin: 0;">
 								' . esc_html( $site_name ) . '
 							</p>
+							<p style="margin: 10px 0 0 0; font-style: italic;">
+								' . esc_html__( '[Test email — real sends to subscribers include a "Manage your preferences" unsubscribe link here.]', 'fair-audience' ) . '
+							</p>
 						</td>
 					</tr>
 				</table>
