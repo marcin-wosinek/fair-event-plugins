@@ -185,7 +185,7 @@ class WeeklyDigestController extends WP_REST_Controller {
 		return rest_ensure_response(
 			array(
 				'subject' => WeeklyDigestRenderer::render_subject( $config['subject'], $week ),
-				'html'    => WeeklyDigestRenderer::render( $week, $config['intro'] ),
+				'html'    => WeeklyDigestRenderer::render( $week, $config['intro'], $config['outro'] ),
 				'week'    => $week['week'],
 				'empty'   => WeeklyDigestRenderer::is_week_empty( $week ),
 			)
@@ -206,7 +206,7 @@ class WeeklyDigestController extends WP_REST_Controller {
 
 		$config  = get_option( 'fair_audience_weekly_digest', WeeklyDigestRenderer::default_config() );
 		$subject = WeeklyDigestRenderer::render_subject( $config['subject'], $week );
-		$html    = WeeklyDigestRenderer::render( $week, $config['intro'] );
+		$html    = WeeklyDigestRenderer::render( $week, $config['intro'], $config['outro'] );
 
 		$current_user = wp_get_current_user();
 
@@ -278,6 +278,7 @@ class WeeklyDigestController extends WP_REST_Controller {
 			'skip_empty'  => array( 'type' => 'boolean' ),
 			'subject'     => array( 'type' => 'string' ),
 			'intro'       => array( 'type' => 'string' ),
+			'outro'       => array( 'type' => 'string' ),
 		);
 	}
 }

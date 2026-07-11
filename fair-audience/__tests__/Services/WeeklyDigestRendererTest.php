@@ -236,4 +236,17 @@ class WeeklyDigestRendererTest extends TestCase {
 		$html = WeeklyDigestRenderer::render( $week, '<p>Hello!</p>' );
 		$this->assertStringContainsString( '<p>Hello!</p>', $html );
 	}
+
+	/**
+	 * Outro HTML is appended below the day listing.
+	 */
+	public function test_render_appends_outro_html() {
+		$week = $this->week( array() );
+		$html = WeeklyDigestRenderer::render( $week, '', '<p>See you there!</p>' );
+		$this->assertStringContainsString( '<p>See you there!</p>', $html );
+		$this->assertGreaterThan(
+			strpos( $html, 'No events scheduled this week.' ),
+			strpos( $html, 'See you there!' )
+		);
+	}
 }

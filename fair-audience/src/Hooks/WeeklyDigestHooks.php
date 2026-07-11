@@ -131,7 +131,7 @@ class WeeklyDigestHooks {
 			}
 
 			$subject = WeeklyDigestRenderer::render_subject( $config['subject'], $week );
-			$html    = WeeklyDigestRenderer::render( $week, $config['intro'] );
+			$html    = WeeklyDigestRenderer::render( $week, $config['intro'], $config['outro'] );
 
 			$email_service = new EmailService();
 			$results       = $email_service->send_bulk_custom_mail_to_all( $subject, $html, true );

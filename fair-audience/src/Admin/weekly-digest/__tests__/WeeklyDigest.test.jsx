@@ -20,6 +20,7 @@ const CONFIG = {
 	skip_empty: true,
 	subject: 'This week’s events: {week_start} – {week_end}',
 	intro: '',
+	outro: '',
 };
 
 const SOURCES = [

@@ -268,6 +268,16 @@ export default function WeeklyDigest() {
 						onChange={(value) => updateField('intro', value)}
 					/>
 
+					<TextareaControl
+						label={__('Outro text', 'fair-audience')}
+						help={__(
+							'Optional text shown below the list of events.',
+							'fair-audience'
+						)}
+						value={config.outro}
+						onChange={(value) => updateField('outro', value)}
+					/>
+
 					<Button
 						variant="primary"
 						onClick={handleSave}

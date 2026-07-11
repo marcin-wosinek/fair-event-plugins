@@ -34,6 +34,7 @@ class WeeklyDigestRenderer {
 			'skip_empty'  => true,
 			'subject'     => __( 'This week’s events: {week_start} – {week_end}', 'fair-audience' ),
 			'intro'       => '',
+			'outro'       => '',
 		);
 	}
 
@@ -74,6 +75,7 @@ class WeeklyDigestRenderer {
 			'skip_empty'  => isset( $value['skip_empty'] ) ? ! empty( $value['skip_empty'] ) : $defaults['skip_empty'],
 			'subject'     => isset( $value['subject'] ) ? sanitize_text_field( $value['subject'] ) : $defaults['subject'],
 			'intro'       => isset( $value['intro'] ) ? wp_kses_post( $value['intro'] ) : $defaults['intro'],
+			'outro'       => isset( $value['outro'] ) ? wp_kses_post( $value['outro'] ) : $defaults['outro'],
 		);
 	}
 
@@ -131,9 +133,10 @@ class WeeklyDigestRenderer {
 	 *
 	 * @param array  $week  Week data from WeeklyEventsProvider::get_week().
 	 * @param string $intro Optional intro HTML (already sanitized).
+	 * @param string $outro Optional outro HTML (already sanitized).
 	 * @return string Inner HTML content.
 	 */
-	public static function render( array $week, $intro = '' ) {
+	public static function render( array $week, $intro = '', $outro = '' ) {
 		$html = '';
 
 		if ( ! empty( $intro ) ) {
@@ -175,6 +178,10 @@ class WeeklyDigestRenderer {
 
 		if ( '' === $html ) {
 			$html = '<p>' . esc_html__( 'No events scheduled this week.', 'fair-audience' ) . '</p>';
+		}
+
+		if ( ! empty( $outro ) ) {
+			$html .= '<div style="margin: 20px 0 0 0;">' . wp_kses_post( $outro ) . '</div>';
 		}
 
 		return $html;
