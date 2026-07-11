@@ -179,7 +179,7 @@ export default function EventAudience({
 			return;
 		}
 		apiFetch({
-			path: `/fair-audience/v1/questionnaire-responses/forms-summary?event_date_id=${eventDateId}`,
+			path: `/fair-form/v1/questionnaire-responses/forms-summary?event_date_id=${eventDateId}`,
 		})
 			.then((data) => {
 				setFormsSummary(Array.isArray(data) ? data : []);
@@ -1794,7 +1794,7 @@ export default function EventAudience({
 											<td>
 												<Button
 													variant="link"
-													href={`admin.php?page=fair-audience-questionnaire-responses&event_date_id=${eventDateId}${
+													href={`admin.php?page=fair-form-questionnaire-responses&event_date_id=${eventDateId}${
 														form.post_id
 															? `&post_id=${form.post_id}`
 															: `&title=${encodeURIComponent(
