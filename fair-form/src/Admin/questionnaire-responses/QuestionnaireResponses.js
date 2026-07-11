@@ -11,6 +11,7 @@ import {
 	TextControl,
 	TextareaControl,
 	Notice,
+	__experimentalConfirmDialog as ConfirmDialog,
 } from '@wordpress/components';
 import { DataViews } from '@wordpress/dataviews';
 import { submissionToMarkdown } from '../utils/submission-markdown.js';
@@ -38,6 +39,10 @@ export default function QuestionnaireResponses() {
 
 	// Markdown export feedback state.
 	const [copyFeedback, setCopyFeedback] = useState(null);
+
+	// Delete confirmation state.
+	const [deleteItem, setDeleteItem] = useState(null);
+	const [errorMessage, setErrorMessage] = useState(null);
 
 	// Add-to-group modal state.
 	const [isGroupModalOpen, setIsGroupModalOpen] = useState(false);
@@ -241,17 +246,11 @@ export default function QuestionnaireResponses() {
 	);
 
 	const handleDelete = (item) => {
-		// eslint-disable-next-line no-undef
-		if (
-			!confirm(
-				__(
-					'Are you sure you want to delete this response?',
-					'fair-form'
-				)
-			)
-		) {
-			return;
-		}
+		setDeleteItem(item);
+	};
+
+	const confirmDelete = () => {
+		const item = deleteItem;
 
 		apiFetch({
 			path: `/fair-form/v1/questionnaire-responses/${item.id}`,
@@ -261,14 +260,31 @@ export default function QuestionnaireResponses() {
 				setResponses((prev) => prev.filter((r) => r.id !== item.id));
 			})
 			.catch((err) => {
-				// eslint-disable-next-line no-undef
-				alert(
+				setErrorMessage(
 					__('Error: ', 'fair-form') +
 						(err.message ||
 							__('Failed to delete response.', 'fair-form'))
 				);
+			})
+			.finally(() => {
+				setDeleteItem(null);
 			});
 	};
+
+	const deleteConfirmMessage = useMemo(() => {
+		if (!deleteItem) {
+			return '';
+		}
+
+		return sprintf(
+			/* translators: %s: participant name */
+			__(
+				'Delete the response from %s? This cannot be undone.',
+				'fair-form'
+			),
+			deleteItem.participant_name || __('this participant', 'fair-form')
+		);
+	}, [deleteItem]);
 
 	const actions = useMemo(
 		() => [
@@ -576,6 +592,26 @@ export default function QuestionnaireResponses() {
 					{copyFeedback.message}
 				</Notice>
 			)}
+
+			{errorMessage && (
+				<Notice
+					status="error"
+					isDismissible={true}
+					onRemove={() => setErrorMessage(null)}
+				>
+					{errorMessage}
+				</Notice>
+			)}
+
+			<ConfirmDialog
+				isOpen={deleteItem !== null}
+				onConfirm={confirmDelete}
+				onCancel={() => setDeleteItem(null)}
+				confirmButtonText={__('Delete response', 'fair-form')}
+				cancelButtonText={__('Cancel', 'fair-form')}
+			>
+				{deleteConfirmMessage}
+			</ConfirmDialog>
 
 			{isGroupModalOpen && (
 				<Modal
