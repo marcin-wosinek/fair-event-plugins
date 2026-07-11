@@ -80,17 +80,17 @@ class WeeklyEventsProvider {
 			} elseif ( 'categories' === $type ) {
 				$category_ids = $data_source['config']['category_ids'] ?? array();
 				if ( ! empty( $category_ids ) ) {
-					$this->collect_category_events( $category_ids, $start_datetime, $end_datetime, $all_events );
 					$all_category_ids = array_merge( $all_category_ids, $category_ids );
 				}
 			}
 		}
 
-		// Fetch standalone events filtered by collected category IDs.
-		if ( ! empty( $all_category_ids ) ) {
-			$all_category_ids = array_unique( array_map( 'intval', $all_category_ids ) );
-			$this->collect_standalone_events( $start_datetime, $end_datetime, $all_events, $all_category_ids );
-		}
+		$all_category_ids = array_unique( array_map( 'intval', $all_category_ids ) );
+
+		// Local events are always part of a source; categories, when configured,
+		// act only as a filter — mirrors PublicEventsController::get_source_events().
+		$this->collect_local_events( $all_category_ids, $start_datetime, $end_datetime, $all_events );
+		$this->collect_standalone_events( $start_datetime, $end_datetime, $all_events, $all_category_ids );
 
 		// Build 7-day response.
 		$days         = array();
@@ -241,14 +241,14 @@ class WeeklyEventsProvider {
 	}
 
 	/**
-	 * Collect WordPress post events filtered by categories.
+	 * Collect WordPress post events, optionally filtered by categories.
 	 *
-	 * @param array  $category_ids   Category term IDs.
+	 * @param array  $category_ids   Category term IDs to filter by. Empty means no filter.
 	 * @param string $start_datetime Week start datetime.
 	 * @param string $end_datetime   Week end datetime.
 	 * @param array  $all_events     Events grouped by date (modified by reference).
 	 */
-	private function collect_category_events( $category_ids, $start_datetime, $end_datetime, &$all_events ) {
+	private function collect_local_events( $category_ids, $start_datetime, $end_datetime, &$all_events ) {
 		$query_args = array(
 			'post_type'              => Settings::get_enabled_post_types(),
 			'posts_per_page'         => -1,
@@ -258,16 +258,19 @@ class WeeklyEventsProvider {
 				'end_after'    => $start_datetime,
 			),
 			'fair_events_order'      => 'ASC',
+		);
+
+		if ( ! empty( $category_ids ) ) {
 			// phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_tax_query
-			'tax_query'              => array(
+			$query_args['tax_query'] = array(
 				array(
 					'taxonomy'         => 'category',
 					'field'            => 'term_id',
 					'terms'            => $category_ids,
 					'include_children' => false,
 				),
-			),
-		);
+			);
+		}
 
 		add_filter( 'posts_join', array( QueryHelper::class, 'join_dates_table' ), 10, 2 );
 		add_filter( 'posts_where', array( QueryHelper::class, 'filter_by_dates' ), 10, 2 );
