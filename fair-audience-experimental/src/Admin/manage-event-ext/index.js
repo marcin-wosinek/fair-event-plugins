@@ -1,9 +1,10 @@
 /**
  * Manage Event tab extensions - Entry Point
  *
- * Registers fair-audience's Audience, Groups, and Mailings tabs with the
- * fair-events manage-event tab registry via a filter, instead of fair-events
- * hardcoding them.
+ * Registers fair-audience's Groups and Mailings tabs with the fair-events
+ * manage-event tab registry via a filter, instead of fair-events hardcoding
+ * them. The Audience tab lives in core fair-audience
+ * (`fair-audience/src/Admin/manage-event-audience-tab/`).
  *
  * @package FairAudience
  */
@@ -11,40 +12,10 @@
 import { __ } from '@wordpress/i18n';
 import { addFilter } from '@wordpress/hooks';
 import { isLinkOnlyEvent } from 'fair-events-shared';
-import EventAudience from './EventAudience.js';
 import GroupRules from './GroupRules.js';
 import EventMailings from './EventMailings.js';
 
 const { audienceUrl = '' } = window.fairEventsManageEventData || {};
-
-addFilter(
-	'fairEvents.manageEvent.tabs',
-	'fair-audience-experimental/audience-tab',
-	(tabs, { eventDate, eventDateId, eventTitle }) => {
-		if (!audienceUrl) {
-			return tabs;
-		}
-
-		return [
-			...tabs,
-			{
-				name: 'audience',
-				title: __('Audience', 'fair-audience-experimental'),
-				order: 50,
-				isVisible: true,
-				disabled: isLinkOnlyEvent(eventDate),
-				render: () => (
-					<EventAudience
-						eventId={eventDate.event_id}
-						eventDateId={eventDateId}
-						audienceUrl={audienceUrl}
-						eventTitle={eventTitle}
-					/>
-				),
-			},
-		];
-	}
-);
 
 addFilter(
 	'fairEvents.manageEvent.tabs',

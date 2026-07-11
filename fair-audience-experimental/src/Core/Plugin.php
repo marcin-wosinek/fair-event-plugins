@@ -56,19 +56,19 @@ class Plugin {
 			$admin->init();
 
 			if ( Features::is_enabled( 'manage-event-ext' ) ) {
-				// Register the Audience/Groups/Mailings tabs on fair-events'
-				// manage-event page via its tab-registry filter, rather than
-				// fair-events importing this bundle directly. See
-				// enqueue_manage_event_ext_assets() for the dependency
-				// ordering that avoids a first-render flicker.
+				// Register the Groups/Mailings tabs on fair-events' manage-event
+				// page via its tab-registry filter, rather than fair-events
+				// importing this bundle directly. The Audience tab lives in
+				// core fair-audience. See enqueue_manage_event_ext_assets() for
+				// the dependency ordering that avoids a first-render flicker.
 				add_action( 'fair_events_manage_event_enqueue_assets', array( $this, 'enqueue_manage_event_ext_assets' ) );
 			}
 		}
 	}
 
 	/**
-	 * Enqueue this plugin's manage-event tab extensions (Audience, Groups,
-	 * Mailings) on the fair-events manage-event page.
+	 * Enqueue this plugin's manage-event tab extensions (Groups, Mailings)
+	 * on the fair-events manage-event page.
 	 *
 	 * Declares `fair-events-manage-event` as a script dependency so its
 	 * `addFilter()` calls run before the host bundle's `domReady()` mount,

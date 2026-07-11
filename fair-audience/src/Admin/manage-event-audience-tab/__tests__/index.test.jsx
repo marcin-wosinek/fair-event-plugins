@@ -4,12 +4,11 @@
 import '@testing-library/jest-dom';
 
 // `render` is never invoked in these tests (they only assert on the tab
-// descriptor's `disabled` flag), so the mocked components are unused stubs.
-jest.mock('../GroupRules.js', () => () => null);
-jest.mock('../EventMailings.js', () => () => null);
+// descriptor's `disabled` flag), so the mocked component is an unused stub.
+jest.mock('../EventAudience.js', () => () => null);
 
-// The tabs are registered as module side effects reading module-level
-// closures (audienceUrl). Use a fresh module registry per scenario
+// The tab is registered as a module side effect reading a module-level
+// closure (audienceUrl). Use a fresh module registry per scenario
 // (including `@wordpress/hooks`) so each import sees its own
 // `window.fairEventsManageEventData` and its own filter store.
 function loadModuleWithData(data) {
@@ -22,14 +21,14 @@ function loadModuleWithData(data) {
 	return hooks;
 }
 
-describe('groups/mailings tab registration', () => {
+describe('audience tab registration', () => {
 	afterEach(() => {
 		delete window.fairEventsManageEventData;
 	});
 
 	const eventDate = { event_id: 1, start_datetime: '', end_datetime: '' };
 
-	it('disables Groups and Mailings tabs for external-URL events', () => {
+	it('disables the Audience tab for external-URL events', () => {
 		const { applyFilters } = loadModuleWithData({
 			audienceUrl: 'http://example.com/audience/',
 		});
@@ -38,16 +37,14 @@ describe('groups/mailings tab registration', () => {
 			eventDate: { ...eventDate, link_type: 'external' },
 			eventDateId: 1,
 			eventTitle: 'Test Event',
-			enabledFeatures: { ticketing: true, mailings: true },
 		};
 
 		const tabs = applyFilters('fairEvents.manageEvent.tabs', [], ctx);
 
-		expect(tabs.find((t) => t.name === 'groups').disabled).toBe(true);
-		expect(tabs.find((t) => t.name === 'mailings').disabled).toBe(true);
+		expect(tabs.find((t) => t.name === 'audience').disabled).toBe(true);
 	});
 
-	it('keeps Groups and Mailings tabs enabled for post-linked events', () => {
+	it('keeps the Audience tab enabled for post-linked events', () => {
 		const { applyFilters } = loadModuleWithData({
 			audienceUrl: 'http://example.com/audience/',
 		});
@@ -56,33 +53,24 @@ describe('groups/mailings tab registration', () => {
 			eventDate: { ...eventDate, link_type: 'post' },
 			eventDateId: 1,
 			eventTitle: 'Test Event',
-			enabledFeatures: { ticketing: true, mailings: true },
 		};
 
 		const tabs = applyFilters('fairEvents.manageEvent.tabs', [], ctx);
 
-		expect(tabs.find((t) => t.name === 'groups').disabled).toBeFalsy();
-		expect(tabs.find((t) => t.name === 'mailings').disabled).toBeFalsy();
+		expect(tabs.find((t) => t.name === 'audience').disabled).toBeFalsy();
 	});
 
-	it('still disables Groups for generated occurrences regardless of link type', () => {
-		const { applyFilters } = loadModuleWithData({
-			audienceUrl: 'http://example.com/audience/',
-		});
+	it('does not register the tab when audienceUrl is absent', () => {
+		const { applyFilters } = loadModuleWithData({});
 
 		const ctx = {
-			eventDate: {
-				...eventDate,
-				link_type: 'post',
-				occurrence_type: 'generated',
-			},
+			eventDate,
 			eventDateId: 1,
 			eventTitle: 'Test Event',
-			enabledFeatures: { ticketing: true, mailings: true },
 		};
 
 		const tabs = applyFilters('fairEvents.manageEvent.tabs', [], ctx);
 
-		expect(tabs.find((t) => t.name === 'groups').disabled).toBe(true);
+		expect(tabs.find((t) => t.name === 'audience')).toBeUndefined();
 	});
 });
