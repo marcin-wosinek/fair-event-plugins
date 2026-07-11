@@ -5,6 +5,7 @@ import {
 	Button,
 	Card,
 	CardBody,
+	CheckboxControl,
 	Modal,
 	RadioControl,
 	SelectControl,
@@ -14,7 +15,6 @@ import {
 	__experimentalConfirmDialog as ConfirmDialog,
 } from '@wordpress/components';
 import { DataViews } from '@wordpress/dataviews';
-import { submissionToMarkdown } from '../utils/submission-markdown.js';
 
 const DEFAULT_VIEW = {
 	type: 'table',
@@ -37,8 +37,12 @@ export default function QuestionnaireResponses() {
 	const [isLoading, setIsLoading] = useState(true);
 	const [view, setView] = useState(DEFAULT_VIEW);
 
-	// Markdown export feedback state.
-	const [copyFeedback, setCopyFeedback] = useState(null);
+	// WhatsApp message modal state.
+	const [isWaModalOpen, setIsWaModalOpen] = useState(false);
+	const [waColumnMode, setWaColumnMode] = useState('all');
+	const [waSelectedColumns, setWaSelectedColumns] = useState([]);
+	const [waFormat, setWaFormat] = useState('markdown');
+	const [waFeedback, setWaFeedback] = useState(null);
 
 	// Delete confirmation state.
 	const [deleteItem, setDeleteItem] = useState(null);
@@ -411,106 +415,101 @@ export default function QuestionnaireResponses() {
 		((groupMode === 'existing' && selectedGroupId) ||
 			(groupMode === 'new' && newGroupName.trim()));
 
-	const buildMarkdown = () => {
-		const lines = [];
-		const heading = title || __('Questionnaire Responses', 'fair-form');
-		const exportedLabel = __('Exported', 'fair-form');
-		const responsesLabel = __('Responses', 'fair-form');
-		const adminLinkLabel = __('Admin link', 'fair-form');
-
-		const today = new Date().toISOString().split('T')[0];
-
-		lines.push(`# ${heading}`);
-		lines.push('');
-		lines.push(`_${exportedLabel} ${today}_`);
-		lines.push('');
-		lines.push(`- ${responsesLabel}: ${responses.length}`);
-		lines.push(`- ${adminLinkLabel}: ${window.location.href}`);
-		lines.push('');
-
-		responses.forEach((response) => {
-			lines.push('---');
-			lines.push('');
-			lines.push(submissionToMarkdown(response));
-		});
-
-		return lines.join('\n');
+	const openWaModal = () => {
+		setWaColumnMode('all');
+		setWaSelectedColumns(fields.map((f) => f.id));
+		setWaFormat('markdown');
+		setWaFeedback(null);
+		setIsWaModalOpen(true);
 	};
 
-	const copyMarkdown = () => {
+	const toggleWaColumn = (id) => {
+		setWaSelectedColumns((prev) =>
+			prev.includes(id) ? prev.filter((c) => c !== id) : [...prev, id]
+		);
+	};
+
+	const activeWaColumns = useMemo(() => {
+		if (waColumnMode === 'all') {
+			return fields;
+		}
+		return fields.filter((f) => waSelectedColumns.includes(f.id));
+	}, [waColumnMode, waSelectedColumns, fields]);
+
+	const buildWaMessage = () => {
+		const columns = activeWaColumns;
+
+		if (waFormat === 'csv') {
+			const escapeCsvField = (field) => {
+				const str = String(field ?? '');
+				if (
+					str.includes(',') ||
+					str.includes('"') ||
+					str.includes('\n')
+				) {
+					return '"' + str.replace(/"/g, '""') + '"';
+				}
+				return str;
+			};
+			const headers = columns.map((c) => c.label);
+			const rows = responses.map((item) =>
+				columns.map((c) => c.getValue({ item }))
+			);
+			return [
+				headers.map(escapeCsvField).join(','),
+				...rows.map((row) => row.map(escapeCsvField).join(',')),
+			].join('\n');
+		}
+
+		if (waFormat === 'oneline') {
+			return responses
+				.map((item) =>
+					columns
+						.map((c) => c.getValue({ item }))
+						.filter(
+							(v) => v !== '' && v !== null && v !== undefined
+						)
+						.join(' ')
+				)
+				.join('\n');
+		}
+
+		// Markdown.
+		return responses
+			.map((item) =>
+				columns
+					.map((c) => `**${c.label}:** ${c.getValue({ item }) || ''}`)
+					.join('\n')
+			)
+			.join('\n\n---\n\n');
+	};
+
+	const copyWaMessage = () => {
 		if (!navigator.clipboard) {
-			setCopyFeedback({
+			setWaFeedback({
 				status: 'error',
 				message: __('Clipboard not available.', 'fair-form'),
 			});
 			return;
 		}
 		navigator.clipboard
-			.writeText(buildMarkdown())
+			.writeText(buildWaMessage())
 			.then(() => {
-				setCopyFeedback({
+				setWaFeedback({
 					status: 'success',
-					message: __(
-						'Markdown copied to clipboard. Paste into Google Docs.',
-						'fair-form'
-					),
+					message: __('Message copied to clipboard.', 'fair-form'),
 				});
 			})
 			.catch(() => {
-				setCopyFeedback({
+				setWaFeedback({
 					status: 'error',
 					message: __('Failed to copy.', 'fair-form'),
 				});
 			});
 	};
 
-	const exportCsv = () => {
-		if (responses.length === 0) {
-			return;
-		}
-
-		const headers = [
-			__('Name', 'fair-form'),
-			__('Email', 'fair-form'),
-			__('Status', 'fair-form'),
-			__('Mailing', 'fair-form'),
-			__('Subscribed Categories', 'fair-form'),
-			__('Date', 'fair-form'),
-			...questionColumns.map((col) => col.text),
-		];
-
-		const rows = responses.map((response) => {
-			const base = [
-				response.participant_name,
-				response.participant_email,
-				response.participant_status,
-				response.participant_mailing,
-				(response.participant_categories || [])
-					.map((c) => c.name)
-					.join(', '),
-				response.created_at,
-			];
-			const answers = questionColumns.map((col) => {
-				const answer = (response.answers || []).find(
-					(a) => a.question_key === col.key
-				);
-				return answer ? answer.answer_value : '';
-			});
-			return [...base, ...answers];
-		});
-
-		const escapeCsvField = (field) => {
-			const str = String(field ?? '');
-			if (str.includes(',') || str.includes('"') || str.includes('\n')) {
-				return '"' + str.replace(/"/g, '""') + '"';
-			}
-			return str;
-		};
-
-		const csvContent = [
-			headers.map(escapeCsvField).join(','),
-			...rows.map((row) => row.map(escapeCsvField).join(',')),
-		].join('\n');
+	const downloadWaCsv = () => {
+		const csvContent = buildWaMessage();
 
 		// BOM for UTF-8 Excel compatibility.
 		const bom = '﻿';
@@ -570,28 +569,12 @@ export default function QuestionnaireResponses() {
 				</Button>
 				<Button
 					variant="secondary"
-					onClick={exportCsv}
+					onClick={openWaModal}
 					disabled={responses.length === 0}
 				>
-					{__('Export CSV', 'fair-form')}
-				</Button>
-				<Button
-					variant="secondary"
-					onClick={copyMarkdown}
-					disabled={responses.length === 0}
-				>
-					{__('Copy Markdown', 'fair-form')}
+					{__('Export', 'fair-form')}
 				</Button>
 			</div>
-
-			{copyFeedback && (
-				<Notice
-					status={copyFeedback.status}
-					onRemove={() => setCopyFeedback(null)}
-				>
-					{copyFeedback.message}
-				</Notice>
-			)}
 
 			{errorMessage && (
 				<Notice
@@ -722,6 +705,103 @@ export default function QuestionnaireResponses() {
 							{groupMode === 'new'
 								? __('Create group and add', 'fair-form')
 								: __('Add to group', 'fair-form')}
+						</Button>
+					</div>
+				</Modal>
+			)}
+
+			{isWaModalOpen && (
+				<Modal
+					title={__('Export', 'fair-form')}
+					onRequestClose={() => setIsWaModalOpen(false)}
+					style={{ maxWidth: '500px', width: '100%' }}
+				>
+					<RadioControl
+						label={__('Columns', 'fair-form')}
+						selected={waColumnMode}
+						options={[
+							{
+								label: __('All columns', 'fair-form'),
+								value: 'all',
+							},
+							{
+								label: __('Handpicked columns', 'fair-form'),
+								value: 'pick',
+							},
+						]}
+						onChange={setWaColumnMode}
+					/>
+
+					{waColumnMode === 'pick' && (
+						<div style={{ marginBottom: '16px' }}>
+							{fields.map((field) => (
+								<CheckboxControl
+									key={field.id}
+									label={field.label}
+									checked={waSelectedColumns.includes(
+										field.id
+									)}
+									onChange={() => toggleWaColumn(field.id)}
+								/>
+							))}
+						</div>
+					)}
+
+					<RadioControl
+						label={__('Format', 'fair-form')}
+						selected={waFormat}
+						options={[
+							{
+								label: __('Markdown', 'fair-form'),
+								value: 'markdown',
+							},
+							{ label: __('CSV', 'fair-form'), value: 'csv' },
+							{
+								label: __('One line per person', 'fair-form'),
+								value: 'oneline',
+							},
+						]}
+						onChange={setWaFormat}
+					/>
+
+					{waFeedback && (
+						<Notice
+							status={waFeedback.status}
+							isDismissible={false}
+						>
+							{waFeedback.message}
+						</Notice>
+					)}
+
+					<div
+						style={{
+							display: 'flex',
+							justifyContent: 'flex-end',
+							gap: '8px',
+							marginTop: '16px',
+						}}
+					>
+						<Button
+							variant="secondary"
+							onClick={() => setIsWaModalOpen(false)}
+						>
+							{__('Close', 'fair-form')}
+						</Button>
+						{waFormat === 'csv' && (
+							<Button
+								variant="secondary"
+								onClick={downloadWaCsv}
+								disabled={activeWaColumns.length === 0}
+							>
+								{__('Download CSV', 'fair-form')}
+							</Button>
+						)}
+						<Button
+							variant="primary"
+							onClick={copyWaMessage}
+							disabled={activeWaColumns.length === 0}
+						>
+							{__('Copy to clipboard', 'fair-form')}
 						</Button>
 					</div>
 				</Modal>
