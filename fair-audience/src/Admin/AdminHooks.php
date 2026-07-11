@@ -45,6 +45,12 @@ class AdminHooks {
 		add_action( 'current_screen', array( $this, 'set_title_for_hidden_pages' ) );
 		add_filter( 'parent_file', array( $this, 'fix_parent_file_for_hidden_pages' ) );
 		add_filter( 'submenu_file', array( $this, 'fix_submenu_file_for_hidden_pages' ), 10, 2 );
+
+		// Register the Audience tab on fair-events' manage-event page via
+		// its tab-registry filter, rather than fair-events importing this
+		// bundle directly. See enqueue_manage_event_audience_tab_assets()
+		// for the dependency ordering that avoids a first-render flicker.
+		add_action( 'fair_events_manage_event_enqueue_assets', array( $this, 'enqueue_manage_event_audience_tab_assets' ) );
 	}
 
 	/**
@@ -325,5 +331,33 @@ class AdminHooks {
 				);
 			}
 		}
+	}
+
+	/**
+	 * Enqueue the Audience tab bundle on the fair-events manage-event page.
+	 *
+	 * Declares `fair-events-manage-event` as a script dependency so its
+	 * `addFilter()` call runs before the host bundle's `domReady()` mount,
+	 * avoiding a first-render flicker where the tab pops in late.
+	 *
+	 * @return void
+	 */
+	public function enqueue_manage_event_audience_tab_assets() {
+		$plugin_dir = plugin_dir_path( dirname( __DIR__ ) );
+		$asset_file = include $plugin_dir . 'build/admin/manage-event-audience-tab/index.asset.php';
+
+		wp_enqueue_script(
+			'fair-audience-manage-event-audience-tab',
+			plugin_dir_url( dirname( __DIR__ ) ) . 'build/admin/manage-event-audience-tab/index.js',
+			array_merge( $asset_file['dependencies'], array( 'fair-events-manage-event' ) ),
+			$asset_file['version'],
+			true
+		);
+
+		wp_set_script_translations(
+			'fair-audience-manage-event-audience-tab',
+			'fair-audience',
+			\FairAudience\Core\Features::script_translations_path()
+		);
 	}
 }

@@ -38,6 +38,10 @@ const customConfig = {
 			process.cwd(),
 			'src/Admin/weekly-digest/index.js',
 		),
+		'admin/manage-event-audience-tab/index': path.resolve(
+			process.cwd(),
+			'src/Admin/manage-event-audience-tab/index.js',
+		),
 	}),
 	plugins: [
 		...defaultConfig.plugins,
