@@ -111,3 +111,110 @@ export function buildRRule({ enabled, frequency, endType, count, until }) {
 
 	return ruleParts.join(';');
 }
+
+const MAX_PREVIEW_OCCURRENCES = 100;
+
+function pad2(n) {
+	return String(n).padStart(2, '0');
+}
+
+function toDateStr(date) {
+	return `${date.getFullYear()}-${pad2(date.getMonth() + 1)}-${pad2(
+		date.getDate()
+	)}`;
+}
+
+function parseRawRRule(rrule) {
+	const result = { freq: null, interval: 1, count: null, until: null };
+	if (!rrule) return result;
+
+	rrule.split(';').forEach((part) => {
+		const [key, value] = part.split('=');
+		if (!key || value === undefined) return;
+
+		switch (key.toUpperCase()) {
+			case 'FREQ':
+				result.freq = value.toUpperCase();
+				break;
+			case 'INTERVAL':
+				result.interval = parseInt(value, 10) || 1;
+				break;
+			case 'COUNT':
+				result.count = parseInt(value, 10);
+				break;
+			case 'UNTIL': {
+				const y = value.substring(0, 4);
+				const m = value.substring(4, 6);
+				const d = value.substring(6, 8);
+				// Mirror RecurrenceService::parse_ical_date(): a bare Ymd
+				// UNTIL means end-of-day, else a same-day occurrence with a
+				// later time-of-day would be excluded.
+				result.until = new Date(`${y}-${m}-${d}T23:59:59`);
+				break;
+			}
+		}
+	});
+
+	return result;
+}
+
+function addInterval(date, freq, interval) {
+	const next = new Date(date);
+	switch (freq) {
+		case 'DAILY':
+			next.setDate(next.getDate() + interval);
+			break;
+		case 'WEEKLY':
+			next.setDate(next.getDate() + interval * 7);
+			break;
+		case 'MONTHLY':
+			next.setMonth(next.getMonth() + interval);
+			break;
+	}
+	return next;
+}
+
+/**
+ * Expand an RRULE into a preview of its occurrence dates, for display before
+ * saving. Mirrors `RecurrenceService::generate_occurrences()` in PHP
+ * (daily/weekly/monthly + INTERVAL + COUNT/UNTIL — the only rule vocabulary
+ * this editor supports) but only needs start dates, not full occurrence
+ * objects, and is capped the same way the server caps generation.
+ *
+ * @param {string} rrule         RRULE string.
+ * @param {string} startDatetime Naive "Y-m-d H:i:s" (or "Y-m-d") start of the first occurrence.
+ * @param {number} limit         Number of leading dates to return in full.
+ * @return {{dates: string[], totalCount: number, remainingCount: number, lastDate: string|null}} Preview summary.
+ */
+export function expandRRulePreview(rrule, startDatetime, limit = 4) {
+	const parsed = parseRawRRule(rrule);
+
+	if (!parsed.freq || !startDatetime) {
+		return { dates: [], totalCount: 0, remainingCount: 0, lastDate: null };
+	}
+
+	const start = new Date(startDatetime.replace(' ', 'T'));
+	const maxCount = parsed.count
+		? Math.min(parsed.count, MAX_PREVIEW_OCCURRENCES)
+		: MAX_PREVIEW_OCCURRENCES;
+
+	const allDates = [];
+	let current = start;
+	let count = 0;
+
+	while (count < maxCount) {
+		if (parsed.until && current > parsed.until) {
+			break;
+		}
+		count++;
+		allDates.push(toDateStr(current));
+		current = addInterval(current, parsed.freq, parsed.interval);
+	}
+
+	return {
+		dates: allDates.slice(0, limit),
+		totalCount: allDates.length,
+		remainingCount: Math.max(0, allDates.length - limit),
+		lastDate: allDates.length ? allDates[allDates.length - 1] : null,
+	};
+}

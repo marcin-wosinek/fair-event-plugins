@@ -40,16 +40,25 @@ import {
 	formatSiteLocalDatetime,
 	getEventDisplayTitle,
 	parseRRule,
-	buildRRule,
-	RecurrenceControl,
+	RECURRENCE_FREQUENCIES,
 } from 'fair-events-shared';
 import EventFinance from './EventFinance.js';
 import EventTickets from './EventTickets.js';
 import EventPhotos from './EventPhotos.js';
 import RecurrenceCalendar from './RecurrenceCalendar.js';
 import RecurrenceImpactSummary from './RecurrenceImpactSummary.js';
+import SeriesModal from './SeriesModal.js';
 import EventSignups from './EventSignups.js';
 import EventContextHeader from './EventContextHeader.js';
+
+// Naive site-local date (no timezone re-conversion — see UI_GUIDELINES.md
+// "Dates and times"). `dateStr` may be a plain date or a full datetime.
+function formatDateOnly(dateStr) {
+	return new Date(`${dateStr.split(' ')[0]}T00:00:00`).toLocaleDateString(
+		undefined,
+		{ year: 'numeric', month: 'short', day: 'numeric' }
+	);
+}
 
 export default function ManageEventApp() {
 	const eventDateId = window.fairEventsManageEventData?.eventDateId;
@@ -91,15 +100,6 @@ export default function ManageEventApp() {
 	const [availableCategories, setAvailableCategories] = useState([]);
 	const [creatingCategories, setCreatingCategories] = useState([]);
 
-	// Recurrence state
-	const [recurrence, setRecurrence] = useState({
-		enabled: false,
-		frequency: 'weekly',
-		endType: 'count',
-		count: 10,
-		until: '',
-	});
-
 	// Post creation state
 	const [creatingPost, setCreatingPost] = useState(false);
 	const [selectedPostType, setSelectedPostType] = useState(
@@ -113,6 +113,8 @@ export default function ManageEventApp() {
 	const [togglingExdate, setTogglingExdate] = useState(null);
 	const [recurrenceImpact, setRecurrenceImpact] = useState(null);
 	const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+	const [seriesModalOpen, setSeriesModalOpen] = useState(false);
+	const [endSeriesDialogOpen, setEndSeriesDialogOpen] = useState(false);
 
 	// Dirty-state tracking (#987): snapshot the saved form/ticket state so we
 	// can warn before losing edits and mark which tab holds them.
@@ -214,13 +216,6 @@ export default function ManageEventApp() {
 			setEndDate(eDate || '');
 			setEndTime(eTime ? eTime.substring(0, 5) : '');
 		}
-
-		// Populate recurrence from rrule
-		if (data.rrule) {
-			setRecurrence({ enabled: true, ...parseRRule(data.rrule) });
-		} else {
-			setRecurrence((prev) => ({ ...prev, enabled: false }));
-		}
 	};
 
 	// Plain-object snapshot of every Event Details field, used to detect
@@ -238,7 +233,6 @@ export default function ManageEventApp() {
 			linkType,
 			externalUrl,
 			categories: [...categories].sort(),
-			recurrence,
 		});
 
 	// Runs after every render; only commits a new snapshot right after
@@ -368,7 +362,6 @@ export default function ManageEventApp() {
 					address: venuesEnabled ? undefined : address,
 					link_type: linkType,
 					external_url: linkType === 'external' ? externalUrl : null,
-					rrule: buildRRule(recurrence),
 					categories,
 				},
 			});
@@ -437,6 +430,86 @@ export default function ManageEventApp() {
 				: ''
 		);
 	}, [title, eventDate]);
+
+	const handleSeriesSaved = (updated) => {
+		setEventDate(updated);
+		setSeriesModalOpen(false);
+	};
+
+	const handleSeriesImpact = (impact) => setRecurrenceImpact(impact);
+
+	const confirmEndSeries = async () => {
+		try {
+			const updated = await apiFetch({
+				path: `/fair-events/v1/event-dates/${eventDateId}`,
+				method: 'PUT',
+				data: { rrule: '' },
+			});
+			setEventDate(updated);
+			setRecurrenceImpact(
+				updated.recurrence_impact
+					? { impact: updated.recurrence_impact, blocked: false }
+					: null
+			);
+			setSuccess(__('Series ended.', 'fair-events'));
+		} catch (err) {
+			setError(
+				err.message || __('Failed to end the series.', 'fair-events')
+			);
+		} finally {
+			setEndSeriesDialogOpen(false);
+		}
+	};
+
+	const endSeriesConfirmMessage = useMemo(() => {
+		const count = eventDate?.generated_occurrences?.length || 0;
+		return sprintf(
+			/* translators: %d: number of generated dates that will be removed */
+			_n(
+				'End this series? %d generated date will be removed. This cannot be undone.',
+				'End this series? %d generated dates will be removed. This cannot be undone.',
+				count,
+				'fair-events'
+			),
+			count
+		);
+	}, [eventDate]);
+
+	const seriesSummary = useMemo(() => {
+		if (!eventDate?.rrule) return null;
+
+		const parsed = parseRRule(eventDate.rrule);
+		const freqLabel =
+			RECURRENCE_FREQUENCIES.find((f) => f.value === parsed.frequency)
+				?.label || parsed.frequency;
+		const dateCount = (eventDate.generated_occurrences?.length || 0) + 1;
+
+		let endLabel = '';
+		if (parsed.endType === 'until' && parsed.until) {
+			endLabel = formatDateOnly(parsed.until);
+		} else {
+			const occurrences = eventDate.generated_occurrences || [];
+			const last = occurrences[occurrences.length - 1];
+			if (last) {
+				endLabel = formatDateOnly(last.start_datetime);
+			}
+		}
+
+		return endLabel
+			? sprintf(
+					/* translators: 1: frequency label (e.g. Weekly), 2: number of dates, 3: end date */
+					__('Repeats %1$s · %2$d dates · ends %3$s', 'fair-events'),
+					freqLabel,
+					dateCount,
+					endLabel
+			  )
+			: sprintf(
+					/* translators: 1: frequency label (e.g. Weekly), 2: number of dates */
+					__('Repeats %1$s · %2$d dates', 'fair-events'),
+					freqLabel,
+					dateCount
+			  );
+	}, [eventDate]);
 
 	const handleCreatePost = async () => {
 		setCreatingPost(true);
@@ -615,7 +688,7 @@ export default function ManageEventApp() {
 					eventDateId={eventDateId}
 					startDatetime={eventDate.start_datetime}
 					endDatetime={eventDate.end_datetime}
-					isRecurring={recurrence.enabled}
+					isRecurring={!!eventDate?.rrule}
 					onDirtyChange={handleTicketsDirtyChange}
 				/>
 			),
@@ -927,10 +1000,55 @@ export default function ManageEventApp() {
 						</CardHeader>
 						<CardBody>
 							<VStack spacing={4}>
-								<RecurrenceControl
-									value={recurrence}
-									onChange={setRecurrence}
-								/>
+								<HStack alignment="center" wrap>
+									<span>
+										{eventDate.rrule
+											? seriesSummary
+											: __(
+													'This event happens once.',
+													'fair-events'
+											  )}
+									</span>
+									{eventDate.rrule ? (
+										<>
+											<Button
+												variant="secondary"
+												onClick={() =>
+													setSeriesModalOpen(true)
+												}
+											>
+												{__(
+													'Edit series',
+													'fair-events'
+												)}
+											</Button>
+											<Button
+												variant="tertiary"
+												isDestructive
+												onClick={() =>
+													setEndSeriesDialogOpen(true)
+												}
+											>
+												{__(
+													'End series',
+													'fair-events'
+												)}
+											</Button>
+										</>
+									) : (
+										<Button
+											variant="primary"
+											onClick={() =>
+												setSeriesModalOpen(true)
+											}
+										>
+											{__(
+												'Turn into a series',
+												'fair-events'
+											)}
+										</Button>
+									)}
+								</HStack>
 
 								{eventDate.occurrence_type === 'master' &&
 									(eventDate.generated_occurrences?.length >
@@ -1279,6 +1397,27 @@ export default function ManageEventApp() {
 			>
 				{deleteConfirmMessage}
 			</ConfirmDialog>
+
+			<ConfirmDialog
+				isOpen={endSeriesDialogOpen}
+				onConfirm={confirmEndSeries}
+				onCancel={() => setEndSeriesDialogOpen(false)}
+				confirmButtonText={__('End series', 'fair-events')}
+				cancelButtonText={__('Cancel', 'fair-events')}
+			>
+				{endSeriesConfirmMessage}
+			</ConfirmDialog>
+
+			{seriesModalOpen && (
+				<SeriesModal
+					eventDateId={eventDateId}
+					initialRrule={eventDate.rrule}
+					startDatetime={eventDate.start_datetime}
+					onClose={() => setSeriesModalOpen(false)}
+					onSaved={handleSeriesSaved}
+					onImpact={handleSeriesImpact}
+				/>
+			)}
 		</div>
 	);
 }

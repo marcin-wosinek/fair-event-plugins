@@ -869,7 +869,11 @@ class EventDatesController extends WP_REST_Controller {
 			}
 
 			// Regenerate recurrence occurrences when rrule or dates change.
-			$rrule_changed = isset( $update_data['rrule'] );
+			// array_key_exists (not isset): clearing a series sends rrule: ''
+			// which normalizes to a null $update_data['rrule'] above, and
+			// isset() would treat that null as "unchanged" and skip the
+			// regenerate branch, orphaning the generated occurrences.
+			$rrule_changed = array_key_exists( 'rrule', $update_data );
 
 			$new_start     = $update_data['start_datetime'] ?? null;
 			$new_end       = $update_data['end_datetime'] ?? null;
