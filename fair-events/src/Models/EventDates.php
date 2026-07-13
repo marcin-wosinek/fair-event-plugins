@@ -1145,6 +1145,28 @@ class EventDates {
 	}
 
 	/**
+	 * Get category term IDs for a standalone event date from the junction table
+	 *
+	 * @param int $event_date_id Event date ID.
+	 * @return int[] Array of term IDs.
+	 */
+	public static function get_category_ids( $event_date_id ) {
+		global $wpdb;
+
+		$table_name = $wpdb->prefix . 'fair_event_date_categories';
+
+		$term_ids = $wpdb->get_col(
+			$wpdb->prepare(
+				'SELECT term_id FROM %i WHERE event_date_id = %d',
+				$table_name,
+				$event_date_id
+			)
+		);
+
+		return array_map( 'intval', $term_ids );
+	}
+
+	/**
 	 * Get all linked post IDs for an event date from the junction table
 	 *
 	 * @param int $event_date_id Event date ID.
