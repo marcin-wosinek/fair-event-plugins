@@ -56,6 +56,11 @@ async function getJsonLd(page, url) {
 	return JSON.parse(raw);
 }
 
+async function getMetaContent(page, url, property) {
+	await page.goto(url);
+	return page.locator(`meta[property="${property}"]`).getAttribute('content');
+}
+
 test.describe('Fair Events JSON-LD structured data', () => {
 	test('emits location and offers for an event with a venue and ticket types', async ({
 		page,
@@ -197,6 +202,54 @@ test.describe('Fair Events JSON-LD structured data', () => {
 		expect(data.location).toBeTruthy();
 		expect(data.location['@type']).toBe('Place');
 		expect(data.offers).toBeUndefined();
+
+		// Cleanup.
+		await apiFetch(page, {
+			path: `/wp/v2/fair_event/${postId}?force=true`,
+			method: 'DELETE',
+		}).catch(() => {});
+		await apiFetch(page, {
+			path: `/fair-events/v1/event-dates/${eventDate.id}`,
+			method: 'DELETE',
+		}).catch(() => {});
+	});
+
+	test('emits og:type "event" for an event page', async ({ page }) => {
+		test.setTimeout(120_000);
+
+		await page.setViewportSize({ width: 1200, height: 900 });
+		await login(page);
+		await page.goto('/wp-admin/admin.php?page=fair-events-all-events');
+		await page.waitForFunction(() => window.wp && window.wp.apiFetch);
+
+		const now = new Date();
+		const start = new Date(now.getTime() + 24 * 60 * 60 * 1000);
+		const iso = (d) => d.toISOString().slice(0, 19).replace('T', ' ');
+
+		const eventDate = await apiFetch(page, {
+			path: '/fair-events/v1/event-dates',
+			method: 'POST',
+			data: {
+				title: 'OG Type Test Event',
+				start_datetime: iso(start),
+				end_datetime: iso(
+					new Date(start.getTime() + 2 * 60 * 60 * 1000)
+				),
+				all_day: false,
+			},
+		});
+
+		const post = await apiFetch(page, {
+			path: `/fair-events/v1/event-dates/${eventDate.id}/create-post`,
+			method: 'POST',
+			data: { post_status: 'publish' },
+		});
+		const postId = post.event_id || post.post_id;
+
+		const permalink = post.link || `/?p=${postId}`;
+		const ogType = await getMetaContent(page, permalink, 'og:type');
+
+		expect(ogType).toBe('event');
 
 		// Cleanup.
 		await apiFetch(page, {

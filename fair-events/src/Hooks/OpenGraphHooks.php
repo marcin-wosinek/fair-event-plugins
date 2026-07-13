@@ -49,7 +49,7 @@ class OpenGraphHooks {
 		$this->output_meta_tag( 'og:title', $this->get_title( $post, $event_date ) );
 		$this->output_meta_tag( 'og:description', $this->get_description( $post ) );
 		$this->output_meta_tag( 'og:url', get_permalink( $post_id ) );
-		$this->output_meta_tag( 'og:type', 'website' );
+		$this->output_meta_tag( 'og:type', 'event' );
 		$this->output_meta_tag( 'og:site_name', get_bloginfo( 'name' ) );
 
 		$image_url = $this->get_image_url( $post_id );
