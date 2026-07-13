@@ -9,6 +9,7 @@
 import { Button } from '@wordpress/components';
 import { __, sprintf } from '@wordpress/i18n';
 import { getEventDisplayTitle } from 'fair-events-shared';
+import { getLinkTypeIcon } from './linkTypes.js';
 
 const MAX_VISIBLE_EVENTS = 3;
 
@@ -144,14 +145,7 @@ export default function DayCell({
 					{visibleEvents.map((event, index) => {
 						const eventPostId = getEventPostId(event.uid);
 						const linkType = getEventLinkType(event);
-						const linkTypeIcon =
-							linkType === 'post'
-								? 'dashicons-admin-post'
-								: linkType === 'instance'
-								? 'dashicons-update'
-								: linkType === 'external'
-								? 'dashicons-admin-links'
-								: 'dashicons-editor-unlink';
+						const linkTypeIcon = getLinkTypeIcon(linkType);
 						const categoryNames =
 							event.categories?.map((c) => c.name) || [];
 						const displayTitle = getEventDisplayTitle(event.title);
