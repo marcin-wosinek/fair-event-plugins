@@ -17,9 +17,7 @@
 defined( 'WPINC' ) || die;
 
 use FairEvents\Helpers\DateHelper;
-use FairEvents\Models\EventDates;
-use FairEvents\Helpers\ICalParser;
-use FairEvents\Helpers\FairEventsApiParser;
+use FairEvents\Services\EventFeedProvider;
 use FairEvents\Settings\Settings;
 
 // Helper functions — guarded so they compose safely with weekly-schedule on the same page.
@@ -120,230 +118,40 @@ $boundaries = fair_events_get_week_boundaries( $year, $week, $start_of_week );
 $week_start = $boundaries['start'] . ' 00:00:00';
 $week_end   = $boundaries['end'] . ' 23:59:59';
 
-// Build WP_Query arguments.
-$query_args = array(
-	'post_type'              => Settings::get_enabled_post_types(),
-	'posts_per_page'         => -1,
-	'post_status'            => $show_drafts ? array( 'publish', 'draft' ) : 'publish',
-	'fair_events_date_query' => array(
-		'start_before' => $week_end,
-		'end_after'    => $week_start,
-	),
-	'fair_events_order'      => 'ASC',
+// Fetch occurrences for the week from the shared provider and bucket by day.
+$provider    = new EventFeedProvider();
+$occurrences = $provider->get_occurrences(
+	$week_start,
+	$week_end,
+	array(
+		'categories'         => $categories,
+		'event_source_slugs' => $event_sources,
+		'include_drafts'     => $show_drafts,
+	)
 );
 
-if ( ! empty( $categories ) ) {
-	// phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_tax_query
-	$query_args['tax_query'] = array(
-		array(
-			'taxonomy'         => 'category',
-			'field'            => 'term_id',
-			'terms'            => $categories,
-			'include_children' => false,
-		),
+$occurrences_by_date = EventFeedProvider::group_by_day( $occurrences, $week_start, $week_end );
+
+// Map each day's occurrence DTOs to the shape the template renders.
+$events_by_date = array();
+foreach ( $occurrences_by_date as $date => $day_occurrences ) {
+	$events_by_date[ $date ] = array_map(
+		static function ( $occ ) {
+			$is_external = 'external' === $occ['occurrence_type'];
+
+			return array(
+				'title'      => $occ['title'],
+				'permalink'  => $occ['url'],
+				'all_day'    => $occ['all_day'],
+				'start_time' => $occ['all_day'] ? '' : DateHelper::local_time( $occ['start'] ),
+				'is_ical'    => $is_external,
+				'is_draft'   => $occ['is_draft'],
+				'color'      => $occ['source_color'],
+			);
+		},
+		$day_occurrences
 	);
 }
-
-add_filter( 'posts_join', array( 'FairEvents\\Helpers\\QueryHelper', 'join_dates_table' ), 10, 2 );
-add_filter( 'posts_where', array( 'FairEvents\\Helpers\\QueryHelper', 'filter_by_dates' ), 10, 2 );
-add_filter( 'posts_orderby', array( 'FairEvents\\Helpers\\QueryHelper', 'order_by_dates' ), 10, 2 );
-
-$events_query = new WP_Query( $query_args );
-
-remove_filter( 'posts_join', array( 'FairEvents\\Helpers\\QueryHelper', 'join_dates_table' ), 10 );
-remove_filter( 'posts_where', array( 'FairEvents\\Helpers\\QueryHelper', 'filter_by_dates' ), 10 );
-remove_filter( 'posts_orderby', array( 'FairEvents\\Helpers\\QueryHelper', 'order_by_dates' ), 10 );
-
-// Fetch iCal / Fair Events API sources.
-$all_ical_events = array();
-
-if ( ! empty( $event_sources ) && is_array( $event_sources ) ) {
-	$repository = new \FairEvents\Database\EventSourceRepository();
-
-	foreach ( $event_sources as $slug ) {
-		if ( ! is_string( $slug ) ) {
-			continue;
-		}
-		$source = $repository->get_by_slug( $slug );
-		if ( ! $source || ! $source['enabled'] ) {
-			continue;
-		}
-
-		foreach ( $source['data_sources'] as $data_source ) {
-			if ( 'ical_url' === $data_source['source_type'] ) {
-				$ical_url   = $data_source['config']['url'] ?? '';
-				$ical_color = $data_source['config']['color'] ?? '#4caf50';
-
-				if ( ! empty( $ical_url ) ) {
-					$fetched  = ICalParser::fetch_and_parse( $ical_url );
-					$filtered = ICalParser::filter_events_for_month( $fetched, $week_start, $week_end );
-					foreach ( $filtered as $ev ) {
-						$ev['source_color'] = $ical_color;
-						$all_ical_events[]  = $ev;
-					}
-				}
-			}
-
-			if ( 'fair_events_api' === $data_source['source_type'] ) {
-				$api_url   = $data_source['config']['url'] ?? '';
-				$api_color = $data_source['config']['color'] ?? '#4caf50';
-
-				if ( ! empty( $api_url ) ) {
-					$api_start = DateHelper::local_date( $week_start );
-					$api_end   = DateHelper::local_date( $week_end );
-					$fetched   = FairEventsApiParser::fetch_and_parse( $api_url, $api_start, $api_end );
-					$filtered  = FairEventsApiParser::filter_events_for_month( $fetched, $week_start, $week_end );
-					foreach ( $filtered as $ev ) {
-						$ev['source_color'] = $api_color;
-						$ev['is_fair_api']  = true;
-						$all_ical_events[]  = $ev;
-					}
-				}
-			}
-		}
-	}
-}
-
-// Group events by date, carrying start/end time so we can display inline.
-$events_by_date   = array();
-$processed_events = array();
-
-if ( $events_query->have_posts() ) {
-	while ( $events_query->have_posts() ) {
-		$events_query->the_post();
-		$event_id = get_the_ID();
-
-		if ( isset( $processed_events[ $event_id ] ) ) {
-			continue;
-		}
-		$processed_events[ $event_id ] = true;
-
-		$all_occurrences = EventDates::get_all_by_event_id( $event_id );
-		$has_multiple    = count( $all_occurrences ) > 1;
-		$event_post      = get_post( $event_id );
-		$is_draft        = $event_post && 'draft' === $event_post->post_status;
-
-		foreach ( $all_occurrences as $occ ) {
-			$start_date = DateHelper::local_date( $occ->start_datetime );
-			$end_date   = $occ->end_datetime
-				? DateHelper::local_date( $occ->end_datetime )
-				: $start_date;
-
-			// Only include days within the displayed week.
-			$loop_date = $start_date;
-			while ( $loop_date <= $end_date && $loop_date <= $boundaries['end'] ) {
-				if ( $loop_date < $boundaries['start'] ) {
-					$loop_date = DateHelper::next_date( $loop_date );
-					continue;
-				}
-
-				if ( ! isset( $events_by_date[ $loop_date ] ) ) {
-					$events_by_date[ $loop_date ] = array();
-				}
-
-				$permalink = ( $has_multiple && ! empty( $occ->id ) )
-					? add_query_arg( 'event_date', (int) $occ->id, get_permalink( $event_id ) )
-					: get_permalink( $event_id );
-
-				$events_by_date[ $loop_date ][] = array(
-					'id'         => $event_id,
-					'title'      => get_the_title( $event_id ),
-					'permalink'  => $permalink,
-					'all_day'    => (bool) $occ->all_day,
-					'start_time' => $occ->all_day ? '' : DateHelper::local_time( $occ->start_datetime ),
-					'sort_key'   => $occ->all_day ? '00:00' : DateHelper::local_time( $occ->start_datetime ),
-					'is_ical'    => false,
-					'is_draft'   => $is_draft,
-					'color'      => null,
-				);
-
-				$loop_date = DateHelper::next_date( $loop_date );
-			}
-		}
-	}
-}
-
-// Standalone events.
-$standalone_events = EventDates::get_standalone_for_date_range( $week_start, $week_end, $categories );
-foreach ( $standalone_events as $occ ) {
-	$start_date = DateHelper::local_date( $occ->start_datetime );
-	$end_date   = $occ->end_datetime
-		? DateHelper::local_date( $occ->end_datetime )
-		: $start_date;
-
-	$loop_date = $start_date;
-	while ( $loop_date <= $end_date && $loop_date <= $boundaries['end'] ) {
-		if ( $loop_date < $boundaries['start'] ) {
-			$loop_date = DateHelper::next_date( $loop_date );
-			continue;
-		}
-
-		if ( ! isset( $events_by_date[ $loop_date ] ) ) {
-			$events_by_date[ $loop_date ] = array();
-		}
-
-		$events_by_date[ $loop_date ][] = array(
-			'id'         => 'standalone_' . $occ->id,
-			'title'      => $occ->get_display_title(),
-			'permalink'  => $occ->get_display_url(),
-			'all_day'    => (bool) $occ->all_day,
-			'start_time' => $occ->all_day ? '' : DateHelper::local_time( $occ->start_datetime ),
-			'sort_key'   => $occ->all_day ? '00:00' : DateHelper::local_time( $occ->start_datetime ),
-			'is_ical'    => false,
-			'is_draft'   => false,
-			'color'      => null,
-		);
-
-		$loop_date = DateHelper::next_date( $loop_date );
-	}
-}
-
-// iCal events.
-foreach ( $all_ical_events as $ical_event ) {
-	$start_date = DateHelper::local_date( $ical_event['start'] );
-	$end_date   = DateHelper::local_date( $ical_event['end'] );
-
-	$loop_date = $start_date;
-	while ( $loop_date <= $end_date && $loop_date <= $boundaries['end'] ) {
-		if ( $loop_date < $boundaries['start'] ) {
-			$loop_date = DateHelper::next_date( $loop_date );
-			continue;
-		}
-
-		if ( ! isset( $events_by_date[ $loop_date ] ) ) {
-			$events_by_date[ $loop_date ] = array();
-		}
-
-		$start_time = DateHelper::local_time( $ical_event['start'] );
-
-		$events_by_date[ $loop_date ][] = array(
-			'id'         => 'ical_' . md5( $ical_event['uid'] ),
-			'title'      => $ical_event['summary'],
-			'permalink'  => $ical_event['url'] ?? '',
-			'all_day'    => false,
-			'start_time' => $start_time,
-			'sort_key'   => $start_time,
-			'is_ical'    => true,
-			'is_draft'   => false,
-			'color'      => $ical_event['source_color'],
-		);
-
-		$loop_date = DateHelper::next_date( $loop_date );
-	}
-}
-
-wp_reset_postdata();
-
-// Sort events within each day by start time.
-foreach ( $events_by_date as &$day_events ) {
-	usort(
-		$day_events,
-		static function ( $a, $b ) {
-			return strcmp( $a['sort_key'], $b['sort_key'] );
-		}
-	);
-}
-unset( $day_events );
 
 // Build the 7-day array.
 $days        = array();
