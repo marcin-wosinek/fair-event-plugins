@@ -2,7 +2,7 @@
  * WordPress dependencies
  */
 import { __, sprintf } from '@wordpress/i18n';
-import { useState, useEffect } from '@wordpress/element';
+import { useState, useEffect, useRef } from '@wordpress/element';
 import {
 	Button,
 	Card,
@@ -13,7 +13,6 @@ import {
 	ToggleControl,
 	SelectControl,
 	TextControl,
-	TextareaControl,
 } from '@wordpress/components';
 
 /**
@@ -26,6 +25,7 @@ import {
 	previewDigest,
 	sendTestDigest,
 } from './weekly-digest-api.js';
+import QuicktagsTextarea from './QuicktagsTextarea.js';
 
 const WEEKDAY_LABELS = [
 	__('Monday', 'fair-audience'),
@@ -55,6 +55,8 @@ export default function WeeklyDigest() {
 	const [lastRunResult, setLastRunResult] = useState(null);
 	const [sources, setSources] = useState([]);
 	const [preview, setPreview] = useState(null);
+	const introRef = useRef(null);
+	const outroRef = useRef(null);
 
 	useEffect(() => {
 		Promise.all([getDigestConfig(), getDigestSources()])
@@ -83,7 +85,16 @@ export default function WeeklyDigest() {
 
 	const handleSave = () => {
 		setSaving(true);
-		saveDigestConfig(config)
+		const updatedConfig = {
+			...config,
+			intro: introRef.current
+				? introRef.current.getValue()
+				: config.intro,
+			outro: outroRef.current
+				? outroRef.current.getValue()
+				: config.outro,
+		};
+		saveDigestConfig(updatedConfig)
 			.then((response) => {
 				setConfig(response.config);
 				setNotice({
@@ -258,24 +269,26 @@ export default function WeeklyDigest() {
 						onChange={(value) => updateField('subject', value)}
 					/>
 
-					<TextareaControl
+					<QuicktagsTextarea
+						ref={introRef}
+						id="fair-audience-digest-intro"
 						label={__('Intro text', 'fair-audience')}
 						help={__(
-							'Optional text shown above the list of events.',
+							'Optional HTML shown above the list of events.',
 							'fair-audience'
 						)}
-						value={config.intro}
-						onChange={(value) => updateField('intro', value)}
+						defaultValue={config.intro}
 					/>
 
-					<TextareaControl
+					<QuicktagsTextarea
+						ref={outroRef}
+						id="fair-audience-digest-outro"
 						label={__('Outro text', 'fair-audience')}
 						help={__(
-							'Optional text shown below the list of events.',
+							'Optional HTML shown below the list of events.',
 							'fair-audience'
 						)}
-						value={config.outro}
-						onChange={(value) => updateField('outro', value)}
+						defaultValue={config.outro}
 					/>
 
 					<Button
