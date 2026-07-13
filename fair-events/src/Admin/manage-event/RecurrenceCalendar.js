@@ -1,8 +1,9 @@
 /**
  * Recurrence Calendar Component
  *
- * Simple mini-calendar showing recurring event occurrences
- * with cancel/restore toggle for individual dates.
+ * Simple mini-calendar showing recurring event occurrences. Every occurrence
+ * and the master cell navigate to their manage-event page; cancelling and
+ * restoring occurrences happens in the "Edit instances" modal instead.
  *
  * @package FairEvents
  */
@@ -28,20 +29,17 @@ export default function RecurrenceCalendar({
 	cancelledDates,
 	masterDate,
 	manageEventUrl,
-	onToggleExdate,
-	togglingExdate,
+	masterEventDateId,
 	embedded = false,
 }) {
 	const occurrences = generatedOccurrences || [];
 	const cancelledDatesList = cancelledDates || [];
 
-	// Build lookup maps. generatedOccurrences includes cancelled rows (so the
-	// API can report their id/status too) — only active ones count as
-	// "occurrences" here, cancelled ones are tracked via cancelledSet below.
+	// generatedOccurrences includes cancelled rows too (with id/status), so a
+	// single map covers both active and cancelled cells.
 	const occurrenceByDate = useMemo(() => {
 		const map = {};
 		occurrences.forEach((occ) => {
-			if (occ.status === 'cancelled') return;
 			const date = occ.start_datetime.split(' ')[0];
 			map[date] = occ;
 		});
@@ -158,8 +156,7 @@ export default function RecurrenceCalendar({
 						masterDate={masterDate}
 						todayStr={todayStr}
 						manageEventUrl={manageEventUrl}
-						onToggleExdate={onToggleExdate}
-						togglingExdate={togglingExdate}
+						masterEventDateId={masterEventDateId}
 					/>
 				))}
 			</div>
@@ -243,8 +240,7 @@ function MiniMonth({
 	masterDate,
 	todayStr,
 	manageEventUrl,
-	onToggleExdate,
-	togglingExdate,
+	masterEventDateId,
 }) {
 	const year = monthDate.getFullYear();
 	const month = monthDate.getMonth();
@@ -267,11 +263,18 @@ function MiniMonth({
 	for (let day = 1; day <= daysInMonth; day++) {
 		const date = new Date(year, month, day);
 		const dateStr = formatLocalDate(date);
-		const isOccurrence = dateStr in occurrenceByDate;
-		const isCancelled = cancelledSet.has(dateStr);
+		const occ = occurrenceByDate[dateStr];
+		const isCancelled =
+			occ?.status === 'cancelled' || cancelledSet.has(dateStr);
+		const isOccurrence = !!occ && !isCancelled;
 		const isMaster = dateStr === masterDate;
 		const isToday = dateStr === todayStr;
-		const occ = occurrenceByDate[dateStr];
+		const fullDateLabel = date.toLocaleDateString(undefined, {
+			weekday: 'long',
+			year: 'numeric',
+			month: 'long',
+			day: 'numeric',
+		});
 
 		let bg = 'transparent';
 		let color = '#1e1e1e';
@@ -315,32 +318,11 @@ function MiniMonth({
 			position: 'relative',
 		};
 
-		const isToggleable = (isOccurrence || isCancelled) && !isMaster;
-		const isToggling = togglingExdate === dateStr;
+		const isNavigable = (isOccurrence || isCancelled) && !isMaster;
 
 		const cellContent = (
-			<div
-				key={dateStr}
-				style={cellStyle}
-				onClick={
-					isToggleable && !isToggling
-						? () => onToggleExdate(dateStr)
-						: undefined
-				}
-				role={isToggleable ? 'button' : undefined}
-				tabIndex={isToggleable ? 0 : undefined}
-				onKeyDown={
-					isToggleable && !isToggling
-						? (e) => {
-								if (e.key === 'Enter' || e.key === ' ') {
-									e.preventDefault();
-									onToggleExdate(dateStr);
-								}
-						  }
-						: undefined
-				}
-			>
-				{isToggling ? '…' : day}
+			<div key={dateStr} style={cellStyle}>
+				{day}
 			</div>
 		);
 
@@ -348,29 +330,27 @@ function MiniMonth({
 			cells.push(
 				<Tooltip key={dateStr} text={__('Master event', 'fair-events')}>
 					<a
-						href={`${manageEventUrl}`}
+						href={`${manageEventUrl}&event_date_id=${masterEventDateId}`}
+						aria-label={fullDateLabel}
 						style={{ textDecoration: 'none' }}
 					>
 						{cellContent}
 					</a>
 				</Tooltip>
 			);
-		} else if (isOccurrence) {
+		} else if (isNavigable) {
 			cells.push(
 				<Tooltip
 					key={dateStr}
-					text={__('Click to cancel this occurrence', 'fair-events')}
+					text={__('Open this occurrence', 'fair-events')}
 				>
-					{cellContent}
-				</Tooltip>
-			);
-		} else if (isCancelled) {
-			cells.push(
-				<Tooltip
-					key={dateStr}
-					text={__('Click to restore this occurrence', 'fair-events')}
-				>
-					{cellContent}
+					<a
+						href={`${manageEventUrl}&event_date_id=${occ.id}`}
+						aria-label={fullDateLabel}
+						style={{ textDecoration: 'none' }}
+					>
+						{cellContent}
+					</a>
 				</Tooltip>
 			);
 		} else {

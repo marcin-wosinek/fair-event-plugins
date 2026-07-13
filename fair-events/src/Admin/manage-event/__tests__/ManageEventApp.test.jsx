@@ -301,6 +301,50 @@ describe('context header (#986)', () => {
 	});
 });
 
+describe('edit instances modal (#981 Part 3)', () => {
+	it('opens the Edit instances modal from the Recurrence card', async () => {
+		window.history.replaceState({}, '', '?tab=event-details');
+		apiFetch.mockImplementation((opts) => {
+			if (opts.path && opts.path.includes('/event-dates/')) {
+				return Promise.resolve({
+					...mockEventDate,
+					occurrence_type: 'master',
+					rrule: 'FREQ=WEEKLY',
+					generated_occurrences: [
+						{
+							id: 2,
+							start_datetime: '2026-07-08 18:00:00',
+							status: 'active',
+						},
+						{
+							id: 3,
+							start_datetime: '2026-07-15 18:00:00',
+							status: 'cancelled',
+						},
+					],
+				});
+			}
+			return Promise.resolve([]);
+		});
+
+		render(<ManageEventApp />);
+		await waitFor(() =>
+			expect(
+				screen.getByRole('tab', { name: 'Event Details' })
+			).toBeInTheDocument()
+		);
+
+		fireEvent.click(screen.getByRole('button', { name: 'Edit instances' }));
+
+		expect(
+			screen.getByRole('heading', { name: 'Edit instances' })
+		).toBeInTheDocument();
+		expect(
+			screen.getByRole('button', { name: 'Restore' })
+		).toBeInTheDocument();
+	});
+});
+
 describe('create-on-the-fly categories (#992)', () => {
 	beforeEach(() => {
 		window.history.replaceState({}, '', '?tab=event-details');
