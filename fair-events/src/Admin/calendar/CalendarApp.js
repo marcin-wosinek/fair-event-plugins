@@ -17,6 +17,7 @@ import apiFetch from '@wordpress/api-fetch';
 import { formatLocalDate, calculateLeadingDays } from 'fair-events-shared';
 import CalendarHeader from './components/CalendarHeader.js';
 import CalendarGrid from './components/CalendarGrid.js';
+import CalendarLegend from './components/CalendarLegend.js';
 import QuickEventModal from './components/QuickEventModal.js';
 
 function getInitialDate() {
@@ -140,6 +141,18 @@ export default function CalendarApp() {
 		setModalDate(date);
 	};
 
+	const handleHeaderAddEvent = () => {
+		const today = new Date();
+		const sameMonth =
+			today.getFullYear() === currentDate.getFullYear() &&
+			today.getMonth() === currentDate.getMonth();
+		handleAddEvent(
+			sameMonth
+				? today
+				: new Date(currentDate.getFullYear(), currentDate.getMonth(), 1)
+		);
+	};
+
 	const handleModalClose = () => {
 		setModalDate(null);
 	};
@@ -194,6 +207,7 @@ export default function CalendarApp() {
 						onPrevMonth={handlePrevMonth}
 						onNextMonth={handleNextMonth}
 						onToday={handleToday}
+						onAddEvent={handleHeaderAddEvent}
 					/>
 				</CardHeader>
 				<CardBody className="fair-events-calendar-card-body">
@@ -202,14 +216,18 @@ export default function CalendarApp() {
 							<Spinner />
 						</div>
 					) : (
-						<CalendarGrid
-							currentDate={currentDate}
-							events={events}
-							onAddEvent={handleAddEvent}
-							manageEventUrl={
-								window.fairEventsCalendarData?.manageEventUrl
-							}
-						/>
+						<>
+							<CalendarGrid
+								currentDate={currentDate}
+								events={events}
+								onAddEvent={handleAddEvent}
+								manageEventUrl={
+									window.fairEventsCalendarData
+										?.manageEventUrl
+								}
+							/>
+							<CalendarLegend />
+						</>
 					)}
 				</CardBody>
 			</Card>

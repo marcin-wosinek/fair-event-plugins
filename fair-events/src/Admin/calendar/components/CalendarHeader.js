@@ -14,6 +14,7 @@ export default function CalendarHeader({
 	onPrevMonth,
 	onNextMonth,
 	onToday,
+	onAddEvent,
 }) {
 	const monthYear = currentDate.toLocaleDateString(undefined, {
 		month: 'long',
@@ -32,6 +33,9 @@ export default function CalendarHeader({
 				</Button>
 				<Button variant="secondary" onClick={onNextMonth}>
 					{__('Next', 'fair-events')}
+				</Button>
+				<Button variant="primary" onClick={onAddEvent}>
+					{__('Add event', 'fair-events')}
 				</Button>
 			</div>
 		</>
