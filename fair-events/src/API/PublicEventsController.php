@@ -13,10 +13,7 @@ defined( 'WPINC' ) || die;
 
 use FairEvents\Database\EventSourceRepository;
 use FairEvents\Helpers\DateHelper;
-use FairEvents\Helpers\FairEventsApiParser;
-use FairEvents\Helpers\ICalParser;
-use FairEvents\Models\EventDates;
-use FairEvents\Settings\Settings;
+use FairEvents\Services\EventFeedProvider;
 use WP_REST_Controller;
 use WP_REST_Server;
 use WP_REST_Request;
@@ -150,21 +147,17 @@ class PublicEventsController extends WP_REST_Controller {
 		// Only allow edit context for users with edit_posts capability.
 		$include_all_statuses = ( 'edit' === $context && current_user_can( 'edit_posts' ) );
 
-		// Parse categories if provided
-		$category_ids = array();
-		if ( ! empty( $categories ) ) {
-			$category_slugs = array_map( 'trim', explode( ',', $categories ) );
-			foreach ( $category_slugs as $slug ) {
-				$term = get_term_by( 'slug', $slug, 'category' );
-				if ( $term ) {
-					$category_ids[] = $term->term_id;
-				}
-			}
-		}
+		$provider    = new EventFeedProvider();
+		$occurrences = $provider->get_occurrences(
+			$this->range_start( $start_date ),
+			$this->range_end( $end_date ),
+			array(
+				'categories'           => $this->resolve_category_ids( $categories ),
+				'include_all_statuses' => $include_all_statuses,
+			)
+		);
 
-		$events = $this->query_events( $start_date, $end_date, $category_ids, $per_page, $page, $include_all_statuses );
-
-		return $this->build_response( $events, $per_page, $page );
+		return $this->build_response( $this->paginate( $occurrences, $per_page, $page ), $per_page, $page );
 	}
 
 	/**
@@ -199,414 +192,97 @@ class PublicEventsController extends WP_REST_Controller {
 			);
 		}
 
-		// Collect external events from source data sources.
-		$external_events  = array();
-		$all_category_ids = array();
-
-		// Build date range strings for external source filtering.
-		$range_start = $start_date ? $start_date . ' 00:00:00' : null;
-		$range_end   = $end_date ? $end_date . ' 23:59:59' : null;
-
-		foreach ( $source['data_sources'] as $data_source ) {
-			if ( 'ical_url' === $data_source['source_type'] ) {
-				$ical_url = $data_source['config']['url'] ?? '';
-				if ( ! empty( $ical_url ) ) {
-					$fetched = ICalParser::fetch_and_parse( $ical_url );
-					if ( $range_start && $range_end ) {
-						$fetched = ICalParser::filter_events_for_month( $fetched, $range_start, $range_end );
-					}
-					foreach ( $fetched as $event ) {
-						$external_events[] = $this->format_external_event( $event );
-					}
-				}
-			}
-
-			if ( 'fair_events_api' === $data_source['source_type'] ) {
-				$api_url = $data_source['config']['url'] ?? '';
-				if ( ! empty( $api_url ) ) {
-					$fetched = FairEventsApiParser::fetch_and_parse( $api_url, $start_date, $end_date );
-					if ( $range_start && $range_end ) {
-						$fetched = FairEventsApiParser::filter_events_for_month( $fetched, $range_start, $range_end );
-					}
-					foreach ( $fetched as $event ) {
-						$external_events[] = $this->format_external_event( $event );
-					}
-				}
-			}
-
-			if ( 'categories' === $data_source['source_type'] ) {
-				$category_ids = $data_source['config']['category_ids'] ?? array();
-				if ( ! empty( $category_ids ) ) {
-					$all_category_ids = array_merge( $all_category_ids, $category_ids );
-				}
-			}
-		}
-
-		if ( ! empty( $all_category_ids ) ) {
-			$all_category_ids = array_unique( array_map( 'intval', $all_category_ids ) );
-		}
-
-		// Query local events filtered by source categories.
-		$events = $this->query_events( $start_date, $end_date, $all_category_ids, $per_page, $page );
-
-		// Merge external events with local events and sort by start date.
-		$events = array_merge( $events, $external_events );
-		usort(
-			$events,
-			function ( $a, $b ) {
-				return strcmp( $a['start'], $b['start'] );
-			}
+		$provider    = new EventFeedProvider();
+		$occurrences = $provider->get_occurrences(
+			$this->range_start( $start_date ),
+			$this->range_end( $end_date ),
+			array( 'event_source_slugs' => array( $slug ) )
 		);
 
-		return $this->build_response( $events, $per_page, $page );
+		return $this->build_response( $this->paginate( $occurrences, $per_page, $page ), $per_page, $page );
 	}
 
 	/**
-	 * Query events from database
+	 * Convert an optional Y-m-d start_date param into a naive site-local
+	 * range-start datetime, defaulting to an open lower bound.
 	 *
-	 * Queries the fair_event_dates table directly to get each occurrence
-	 * with its specific dates, then joins with posts for event details.
-	 * Also includes standalone events (no linked post).
-	 *
-	 * @param string|null $start_date           Start date filter (Y-m-d).
-	 * @param string|null $end_date             End date filter (Y-m-d).
-	 * @param array       $category_ids         Category IDs to filter by.
-	 * @param int         $per_page             Number of events per page.
-	 * @param int         $page                 Page number.
-	 * @param bool        $include_all_statuses Whether to include non-published posts.
-	 * @return array Array of event data.
+	 * @param string|null $start_date Y-m-d date, or null/empty for no lower bound.
+	 * @return string Naive 'Y-m-d H:i:s' site-local datetime.
 	 */
-	private function query_events( $start_date, $end_date, $category_ids, $per_page, $page, $include_all_statuses = false ) {
-		global $wpdb;
-
-		$dates_table = $wpdb->prefix . 'fair_event_dates';
-		$offset      = ( $page - 1 ) * $per_page;
-
-		// Get enabled post types for filtering.
-		$enabled_post_types     = Settings::get_enabled_post_types();
-		$post_type_placeholders = implode( ', ', array_fill( 0, count( $enabled_post_types ), '%s' ) );
-
-		// Build WHERE conditions for post-linked events.
-		$post_where_conditions = array();
-		if ( ! $include_all_statuses ) {
-			$post_where_conditions[] = "{$wpdb->posts}.post_status = 'publish'";
-		}
-		$post_where_values = array();
-
-		// Post type filter.
-		$post_where_conditions[] = "{$wpdb->posts}.post_type IN ({$post_type_placeholders})";
-		$post_where_values       = array_merge( $post_where_values, $enabled_post_types );
-
-		// Date range filters for post-linked events.
-		if ( $start_date ) {
-			$post_where_conditions[] = "{$dates_table}.end_datetime >= %s";
-			$post_where_values[]     = $start_date . ' 00:00:00';
-		}
-
-		if ( $end_date ) {
-			$post_where_conditions[] = "{$dates_table}.start_datetime <= %s";
-			$post_where_values[]     = $end_date . ' 23:59:59';
-		}
-
-		// Category filter via subquery.
-		if ( ! empty( $category_ids ) ) {
-			$category_placeholders   = implode( ', ', array_fill( 0, count( $category_ids ), '%d' ) );
-			$post_where_conditions[] = "{$wpdb->posts}.ID IN (
-				SELECT object_id FROM {$wpdb->term_relationships}
-				WHERE term_taxonomy_id IN (
-					SELECT term_taxonomy_id FROM {$wpdb->term_taxonomy}
-					WHERE term_id IN ({$category_placeholders})
-				)
-			)";
-			$post_where_values       = array_merge( $post_where_values, $category_ids );
-		}
-
-		$post_where_clause = implode( ' AND ', $post_where_conditions );
-
-		// Build WHERE conditions for standalone events.
-		$standalone_where_conditions = array(
-			"{$dates_table}.event_id IS NULL",
-		);
-		$standalone_where_values     = array();
-
-		if ( $start_date ) {
-			$standalone_where_conditions[] = "{$dates_table}.end_datetime >= %s";
-			$standalone_where_values[]     = $start_date . ' 00:00:00';
-		}
-
-		if ( $end_date ) {
-			$standalone_where_conditions[] = "{$dates_table}.start_datetime <= %s";
-			$standalone_where_values[]     = $end_date . ' 23:59:59';
-		}
-
-		$standalone_where_clause = implode( ' AND ', $standalone_where_conditions );
-
-		$categories_table = $wpdb->prefix . 'fair_event_date_categories';
-
-		// When filtering by categories, include standalone events that have matching categories via junction table.
-		if ( ! empty( $category_ids ) ) {
-			$category_placeholders_standalone = implode( ', ', array_fill( 0, count( $category_ids ), '%d' ) );
-			$standalone_where_conditions[]    = "{$dates_table}.id IN (
-				SELECT event_date_id FROM {$categories_table}
-				WHERE term_id IN ({$category_placeholders_standalone})
-			)";
-			$standalone_where_values          = array_merge( $standalone_where_values, $category_ids );
-			$standalone_where_clause          = implode( ' AND ', $standalone_where_conditions );
-		}
-
-		// UNION query: post-linked events + standalone events.
-		// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
-		$query = $wpdb->prepare(
-			"(SELECT
-				{$dates_table}.id as occurrence_id,
-				{$dates_table}.event_id,
-				{$dates_table}.start_datetime,
-				{$dates_table}.end_datetime,
-				{$dates_table}.all_day,
-				{$dates_table}.occurrence_type,
-				{$dates_table}.title as standalone_title,
-				{$dates_table}.link_type,
-				{$dates_table}.external_url,
-				{$wpdb->posts}.post_title,
-				{$wpdb->posts}.post_content,
-				{$wpdb->posts}.post_excerpt,
-				{$wpdb->posts}.post_status,
-				NULL as master_event_id
-			FROM {$dates_table}
-			INNER JOIN {$wpdb->posts} ON {$dates_table}.event_id = {$wpdb->posts}.ID
-			WHERE {$post_where_clause})
-			UNION ALL
-			(SELECT
-				{$dates_table}.id as occurrence_id,
-				{$dates_table}.event_id,
-				{$dates_table}.start_datetime,
-				{$dates_table}.end_datetime,
-				{$dates_table}.all_day,
-				{$dates_table}.occurrence_type,
-				COALESCE( {$dates_table}.title, master_dates.title ) as standalone_title,
-				COALESCE( {$dates_table}.link_type, master_dates.link_type ) as link_type,
-				COALESCE( {$dates_table}.external_url, master_dates.external_url ) as external_url,
-				NULL as post_title,
-				NULL as post_content,
-				NULL as post_excerpt,
-				NULL as post_status,
-				master_dates.event_id as master_event_id
-			FROM {$dates_table}
-			LEFT JOIN {$dates_table} master_dates ON {$dates_table}.master_id = master_dates.id
-			WHERE {$standalone_where_clause})
-			ORDER BY start_datetime ASC
-			LIMIT %d OFFSET %d",
-			array_merge( $post_where_values, $standalone_where_values, array( $per_page, $offset ) )
-		);
-
-		// phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared
-		$results = $wpdb->get_results( $query );
-
-		$events = array();
-		if ( $results ) {
-			foreach ( $results as $row ) {
-				$events[] = $this->format_occurrence( $row );
-			}
-		}
-
-		return $events;
+	private function range_start( $start_date ) {
+		return $start_date ? $start_date . ' 00:00:00' : '0000-01-01 00:00:00';
 	}
 
 	/**
-	 * Format an occurrence row for JSON response
+	 * Convert an optional Y-m-d end_date param into a naive site-local
+	 * range-end datetime, defaulting to an open upper bound.
 	 *
-	 * @param object $row Database row with occurrence and post data.
+	 * @param string|null $end_date Y-m-d date, or null/empty for no upper bound.
+	 * @return string Naive 'Y-m-d H:i:s' site-local datetime.
+	 */
+	private function range_end( $end_date ) {
+		return $end_date ? $end_date . ' 23:59:59' : '9999-12-31 23:59:59';
+	}
+
+	/**
+	 * Resolve a comma-separated list of category slugs into term IDs.
+	 *
+	 * @param string|null $categories Comma-separated category slugs.
+	 * @return int[] Category term IDs.
+	 */
+	private function resolve_category_ids( $categories ) {
+		$category_ids = array();
+
+		if ( empty( $categories ) ) {
+			return $category_ids;
+		}
+
+		$category_slugs = array_map( 'trim', explode( ',', $categories ) );
+		foreach ( $category_slugs as $slug ) {
+			$term = get_term_by( 'slug', $slug, 'category' );
+			if ( $term ) {
+				$category_ids[] = $term->term_id;
+			}
+		}
+
+		return $category_ids;
+	}
+
+	/**
+	 * Slice a sorted occurrence list to the requested page and format each
+	 * DTO for the public JSON response.
+	 *
+	 * @param array[] $occurrences Flat, sorted occurrence DTOs from the provider.
+	 * @param int     $per_page    Number of events per page.
+	 * @param int     $page        Page number.
+	 * @return array[] Formatted events for this page.
+	 */
+	private function paginate( array $occurrences, $per_page, $page ) {
+		$offset     = ( $page - 1 ) * $per_page;
+		$page_slice = array_slice( $occurrences, $offset, $per_page );
+
+		return array_map( array( $this, 'format_for_response' ), $page_slice );
+	}
+
+	/**
+	 * Format a provider occurrence DTO for the public JSON response.
+	 *
+	 * @param array $occurrence Occurrence DTO from EventFeedProvider.
 	 * @return array Formatted event data.
 	 */
-	private function format_occurrence( $row ) {
-		$start_datetime = $row->start_datetime;
-		$end_datetime   = $row->end_datetime ?: $start_datetime;
-
-		// Generated occurrences of a post-linked recurring event don't carry
-		// their own event_id (see EventDates::resolve_instance()); resolve
-		// through the master's event_id so they behave like post-linked rows.
-		$resolved_event_id   = $row->event_id;
-		$resolved_via_master = false;
-		$master_post         = null;
-		if ( empty( $resolved_event_id ) && isset( $row->link_type ) && 'post' === $row->link_type && ! empty( $row->master_event_id ) ) {
-			$resolved_event_id   = $row->master_event_id;
-			$resolved_via_master = true;
-			$master_post         = get_post( $resolved_event_id );
-		}
-
-		$post_status   = $resolved_via_master ? ( $master_post ? $master_post->post_status : null ) : $row->post_status;
-		$is_standalone = empty( $resolved_event_id ) || ( isset( $post_status ) && 'publish' !== $post_status );
-
-		// Determine if all-day event.
-		$all_day = (bool) $row->all_day;
-		if ( ! $all_day && $start_datetime ) {
-			// Also check for midnight-to-midnight pattern.
-			$start_time = DateHelper::local_time_full( $start_datetime );
-			$end_time   = $end_datetime ? DateHelper::local_time_full( $end_datetime ) : '00:00:00';
-			$all_day    = ( '00:00:00' === $start_time && '00:00:00' === $end_time );
-		}
-
-		// Get excerpt or truncated content.
-		$description = '';
-		if ( ! $is_standalone ) {
-			if ( $resolved_via_master ) {
-				if ( has_excerpt( $resolved_event_id ) ) {
-					$description = get_the_excerpt( $resolved_event_id );
-				} elseif ( $master_post && $master_post->post_content ) {
-					$description = wp_trim_words( wp_strip_all_tags( $master_post->post_content ), 30 );
-				}
-			} elseif ( ! empty( $row->post_excerpt ) ) {
-				$description = $row->post_excerpt;
-			} elseif ( ! empty( $row->post_content ) ) {
-				$description = wp_trim_words( wp_strip_all_tags( $row->post_content ), 30 );
-			}
-		}
-
-		// Generate unique ID for cross-site reference.
-		$site_host = wp_parse_url( get_site_url(), PHP_URL_HOST );
-
-		if ( $is_standalone ) {
-			$uid   = 'standalone_' . $row->occurrence_id . '@' . $site_host;
-			$title = $row->standalone_title ?? '';
-			$url   = '';
-
-			if ( isset( $row->link_type ) && 'external' === $row->link_type && ! empty( $row->external_url ) ) {
-				$url = $row->external_url;
-			}
-		} else {
-			$uid   = 'fair_event_' . $resolved_event_id . '_' . $row->occurrence_id . '@' . $site_host;
-			$title = $resolved_via_master ? get_the_title( $resolved_event_id ) : $row->post_title;
-			$url   = add_query_arg( 'event_date', (int) $row->occurrence_id, get_permalink( $resolved_event_id ) );
-		}
-
-		// Get categories.
-		$categories = array();
-		if ( ! $is_standalone && $resolved_event_id ) {
-			$terms = wp_get_post_terms( $resolved_event_id, 'category' );
-			if ( ! is_wp_error( $terms ) ) {
-				foreach ( $terms as $term ) {
-					$categories[] = array(
-						'id'   => $term->term_id,
-						'name' => $term->name,
-						'slug' => $term->slug,
-					);
-				}
-			}
-		} elseif ( $is_standalone ) {
-			$categories = $this->get_standalone_event_categories( $row->occurrence_id );
-		}
-
+	private function format_for_response( array $occurrence ) {
 		return array(
-			'uid'             => $uid,
-			'event_date_id'   => (int) $row->occurrence_id,
-			'occurrence_type' => $row->occurrence_type ?? 'single',
-			'title'           => $title,
-			'description'     => $description,
-			'start'           => $start_datetime ? DateHelper::local_to_iso8601( $start_datetime ) : '',
-			'end'             => $end_datetime ? DateHelper::local_to_iso8601( $end_datetime ) : '',
-			'all_day'         => $all_day,
-			'url'             => $url,
-			'categories'      => $categories,
+			'uid'             => $occurrence['uid'],
+			'event_date_id'   => $occurrence['event_date_id'],
+			'occurrence_type' => $occurrence['occurrence_type'],
+			'title'           => $occurrence['title'],
+			'description'     => $occurrence['description'],
+			'start'           => ! empty( $occurrence['start'] ) ? DateHelper::local_to_iso8601( $occurrence['start'] ) : '',
+			'end'             => ! empty( $occurrence['end'] ) ? DateHelper::local_to_iso8601( $occurrence['end'] ) : '',
+			'all_day'         => $occurrence['all_day'],
+			'url'             => $occurrence['url'] ?? '',
+			'categories'      => $occurrence['categories'],
 		);
-	}
-
-	/**
-	 * Format an external event (from iCal or Fair Events API) for JSON response.
-	 *
-	 * External parsers return events with 'summary' and 'Y-m-d H:i:s' dates.
-	 * This converts them to the same format as format_occurrence().
-	 *
-	 * @param array $event Event data from ICalParser or FairEventsApiParser.
-	 * @return array Formatted event data matching the JSON API output.
-	 */
-	private function format_external_event( $event ) {
-		return array(
-			'uid'         => $event['uid'] ?? '',
-			'title'       => $event['summary'] ?? '',
-			'description' => $event['description'] ?? '',
-			'start'       => ! empty( $event['start'] ) ? DateHelper::local_to_iso8601( $event['start'] ) : '',
-			'end'         => ! empty( $event['end'] ) ? DateHelper::local_to_iso8601( $event['end'] ) : '',
-			'all_day'     => $event['all_day'] ?? false,
-			'url'         => $event['url'] ?? '',
-		);
-	}
-
-	/**
-	 * Format a single event for JSON response (legacy method)
-	 *
-	 * @param int $event_id Event post ID.
-	 * @return array Formatted event data.
-	 */
-	private function format_event( $event_id ) {
-		$event_dates = EventDates::get_by_event_id( $event_id );
-		$event_post  = get_post( $event_id );
-
-		$start_datetime = $event_dates ? $event_dates->start_datetime : '';
-		$end_datetime   = $event_dates ? $event_dates->end_datetime : $start_datetime;
-
-		// Determine if all-day event (no time component or midnight-to-midnight)
-		$all_day = false;
-		if ( $start_datetime ) {
-			$start_time = DateHelper::local_time_full( $start_datetime );
-			$end_time   = $end_datetime ? DateHelper::local_time_full( $end_datetime ) : '00:00:00';
-			$all_day    = ( '00:00:00' === $start_time && '00:00:00' === $end_time );
-		}
-
-		// Get excerpt or truncated content
-		$description = '';
-		if ( has_excerpt( $event_id ) ) {
-			$description = get_the_excerpt( $event_id );
-		} elseif ( $event_post->post_content ) {
-			$description = wp_trim_words( wp_strip_all_tags( $event_post->post_content ), 30 );
-		}
-
-		// Generate unique ID for cross-site reference
-		$site_host = wp_parse_url( get_site_url(), PHP_URL_HOST );
-		$uid       = 'fair_event_' . $event_id . '@' . $site_host;
-
-		return array(
-			'uid'         => $uid,
-			'title'       => get_the_title( $event_id ),
-			'description' => $description,
-			'start'       => $start_datetime ? DateHelper::local_to_iso8601( $start_datetime ) : '',
-			'end'         => $end_datetime ? DateHelper::local_to_iso8601( $end_datetime ) : '',
-			'all_day'     => $all_day,
-			'url'         => get_permalink( $event_id ),
-		);
-	}
-
-	/**
-	 * Get categories for a standalone event date from junction table
-	 *
-	 * @param int $event_date_id Event date ID.
-	 * @return array Array of category objects with id, name, slug.
-	 */
-	private function get_standalone_event_categories( $event_date_id ) {
-		global $wpdb;
-
-		$table_name = $wpdb->prefix . 'fair_event_date_categories';
-
-		// phpcs:ignore WordPress.DB.DirectDatabaseQuery
-		$term_ids = $wpdb->get_col(
-			$wpdb->prepare(
-				'SELECT term_id FROM %i WHERE event_date_id = %d',
-				$table_name,
-				$event_date_id
-			)
-		);
-
-		$categories = array();
-		foreach ( $term_ids as $term_id ) {
-			$term = get_term( (int) $term_id, 'category' );
-			if ( $term && ! is_wp_error( $term ) ) {
-				$categories[] = array(
-					'id'   => $term->term_id,
-					'name' => $term->name,
-					'slug' => $term->slug,
-				);
-			}
-		}
-		return $categories;
 	}
 
 	/**
