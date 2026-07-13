@@ -48,6 +48,7 @@ import EventPhotos from './EventPhotos.js';
 import RecurrenceCalendar from './RecurrenceCalendar.js';
 import RecurrenceImpactSummary from './RecurrenceImpactSummary.js';
 import SeriesModal from './SeriesModal.js';
+import EditInstancesModal from './EditInstancesModal.js';
 import EventSignups from './EventSignups.js';
 import EventContextHeader from './EventContextHeader.js';
 
@@ -114,6 +115,7 @@ export default function ManageEventApp() {
 	const [recurrenceImpact, setRecurrenceImpact] = useState(null);
 	const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
 	const [seriesModalOpen, setSeriesModalOpen] = useState(false);
+	const [editInstancesModalOpen, setEditInstancesModalOpen] = useState(false);
 	const [endSeriesDialogOpen, setEndSeriesDialogOpen] = useState(false);
 
 	// Dirty-state tracking (#987): snapshot the saved form/ticket state so we
@@ -1067,11 +1069,28 @@ export default function ManageEventApp() {
 													' '
 												)[0]
 											}
-											manageEventUrl={`${manageEventUrl}&event_date_id=${eventDateId}`}
-											onToggleExdate={handleToggleExdate}
-											togglingExdate={togglingExdate}
+											manageEventUrl={manageEventUrl}
+											masterEventDateId={eventDateId}
 											embedded
 										/>
+									)}
+
+								{eventDate.occurrence_type === 'master' &&
+									(eventDate.generated_occurrences?.length >
+										0 ||
+										eventDate.cancelled_dates?.length >
+											0) && (
+										<Button
+											variant="secondary"
+											onClick={() =>
+												setEditInstancesModalOpen(true)
+											}
+										>
+											{__(
+												'Edit instances',
+												'fair-events'
+											)}
+										</Button>
 									)}
 							</VStack>
 						</CardBody>
@@ -1416,6 +1435,15 @@ export default function ManageEventApp() {
 					onClose={() => setSeriesModalOpen(false)}
 					onSaved={handleSeriesSaved}
 					onImpact={handleSeriesImpact}
+				/>
+			)}
+
+			{editInstancesModalOpen && (
+				<EditInstancesModal
+					generatedOccurrences={eventDate.generated_occurrences}
+					togglingExdate={togglingExdate}
+					onToggleExdate={handleToggleExdate}
+					onClose={() => setEditInstancesModalOpen(false)}
 				/>
 			)}
 		</div>
