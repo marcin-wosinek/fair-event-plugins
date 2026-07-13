@@ -570,7 +570,9 @@ class EventDates {
 	 * Get display title for an event date
 	 *
 	 * Returns the stored title for external/unlinked events,
-	 * or the post title for post-linked events.
+	 * or the post title for post-linked events, falling back to the master's
+	 * linked post for generated occurrences with no event_id of their own
+	 * (see get_master_event_id()).
 	 *
 	 * @return string|null The display title, or null if no title available.
 	 */
@@ -581,20 +583,41 @@ class EventDates {
 		}
 
 		// For post-linked events, get the post title.
+		$event_id = $this->get_resolved_event_id();
+
+		return $event_id ? get_the_title( $event_id ) : null;
+	}
+
+	/**
+	 * Get the resolved linked post ID for this occurrence
+	 *
+	 * Generated occurrences don't inherit `event_id` from the master (see
+	 * resolve_instance()), so consumers that need the linked post (uid
+	 * construction, categories, description, draft detection) should call
+	 * this instead of reading `event_id` directly.
+	 *
+	 * @return int|null Own event_id, the master's event_id for generated
+	 *                   post-linked occurrences, or null if unlinked.
+	 */
+	public function get_resolved_event_id() {
 		if ( $this->event_id ) {
-			return get_the_title( $this->event_id );
+			return $this->event_id;
 		}
 
-		return null;
+		return $this->get_master_event_id();
 	}
 
 	/**
 	 * Get display URL for an event date
 	 *
-	 * Returns the external URL for external events,
-	 * the post permalink for post-linked events,
-	 * or the permalink of a post linked via the junction table
-	 * (recurring instances linked from the post editor), if any.
+	 * Returns the external URL for external events, or the post permalink
+	 * for post-linked events (falling back to the master's linked post for
+	 * generated occurrences), or the permalink of a post linked via the
+	 * junction table (recurring instances linked from the post editor), if
+	 * any. Generated occurrences additionally get `?event_date={id}`
+	 * appended so the page can resolve which sibling occurrence to show
+	 * (see SelectedOccurrence); master/single rows link straight to the
+	 * plain permalink since it already resolves unambiguously.
 	 *
 	 * @return string|null The display URL, or null if no link.
 	 */
@@ -603,16 +626,31 @@ class EventDates {
 			case 'external':
 				return $this->external_url;
 			case 'post':
-				if ( $this->event_id ) {
-					return get_permalink( $this->event_id );
-				}
-				$master_event_id = $this->get_master_event_id();
-				return $master_event_id ? get_permalink( $master_event_id ) : null;
+				$event_id = $this->get_resolved_event_id();
+				return $event_id ? $this->with_occurrence_arg( get_permalink( $event_id ) ) : null;
 			case 'none':
 			default:
 				$linked_post_id = $this->get_primary_linked_post_id();
-				return $linked_post_id ? get_permalink( $linked_post_id ) : null;
+				return $linked_post_id ? $this->with_occurrence_arg( get_permalink( $linked_post_id ) ) : null;
 		}
+	}
+
+	/**
+	 * Append `?event_date={id}` to a URL for generated occurrences only.
+	 *
+	 * @param string|false $url Permalink to decorate.
+	 * @return string|null Decorated URL, or null if $url was falsy.
+	 */
+	private function with_occurrence_arg( $url ) {
+		if ( ! $url ) {
+			return null;
+		}
+
+		if ( 'generated' !== $this->occurrence_type ) {
+			return $url;
+		}
+
+		return add_query_arg( 'event_date', (int) $this->id, $url );
 	}
 
 	/**
