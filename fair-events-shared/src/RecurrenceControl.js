@@ -20,22 +20,29 @@ import { RECURRENCE_FREQUENCIES, RECURRENCE_END_TYPES } from './recurrence.js';
  * @param {Object}   props
  * @param {Object}   props.value                Recurrence state: { enabled, frequency, endType, count, until }.
  * @param {Function} props.onChange             Callback receiving the merged recurrence object.
+ * @param {boolean}  [props.hideToggle]         When true, omit the "Repeat this event" checkbox and always show the fields (for hosts like SeriesModal where recurrence is implicitly on).
  * @return {JSX.Element} The RecurrenceControl component.
  */
-export default function RecurrenceControl({ value, onChange }) {
+export default function RecurrenceControl({
+	value,
+	onChange,
+	hideToggle = false,
+}) {
 	const { enabled, frequency, endType, count, until } = value;
 
 	const update = (changes) => onChange({ ...value, ...changes });
 
 	return (
 		<VStack spacing={2}>
-			<CheckboxControl
-				label={__('Repeat this event', 'fair-events')}
-				checked={enabled}
-				onChange={(checked) => update({ enabled: checked })}
-			/>
+			{!hideToggle && (
+				<CheckboxControl
+					label={__('Repeat this event', 'fair-events')}
+					checked={enabled}
+					onChange={(checked) => update({ enabled: checked })}
+				/>
+			)}
 
-			{enabled && (
+			{(hideToggle || enabled) && (
 				<VStack spacing={2}>
 					<SelectControl
 						label={__('Frequency', 'fair-events')}

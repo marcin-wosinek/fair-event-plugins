@@ -1,4 +1,4 @@
-import { parseRRule, buildRRule } from '../recurrence.js';
+import { parseRRule, buildRRule, expandRRulePreview } from '../recurrence.js';
 
 describe('buildRRule', () => {
 	test('returns null when disabled', () => {
@@ -104,5 +104,90 @@ describe('parseRRule', () => {
 		const rrule = 'FREQ=WEEKLY;INTERVAL=2;UNTIL=20270115';
 		const parsed = parseRRule(rrule);
 		expect(buildRRule({ enabled: true, ...parsed })).toBe(rrule);
+	});
+});
+
+describe('expandRRulePreview', () => {
+	test('expands a daily count rule', () => {
+		const result = expandRRulePreview(
+			'FREQ=DAILY;COUNT=3',
+			'2026-09-01 10:00:00',
+			4
+		);
+		expect(result).toEqual({
+			dates: ['2026-09-01', '2026-09-02', '2026-09-03'],
+			totalCount: 3,
+			remainingCount: 0,
+			lastDate: '2026-09-03',
+		});
+	});
+
+	test('expands a weekly count rule and truncates to the limit', () => {
+		const result = expandRRulePreview(
+			'FREQ=WEEKLY;COUNT=6',
+			'2026-09-01 10:00:00',
+			4
+		);
+		expect(result.dates).toEqual([
+			'2026-09-01',
+			'2026-09-08',
+			'2026-09-15',
+			'2026-09-22',
+		]);
+		expect(result.totalCount).toBe(6);
+		expect(result.remainingCount).toBe(2);
+		expect(result.lastDate).toBe('2026-10-06');
+	});
+
+	test('expands a biweekly (INTERVAL=2) rule', () => {
+		const result = expandRRulePreview(
+			'FREQ=WEEKLY;INTERVAL=2;COUNT=3',
+			'2026-09-01 10:00:00',
+			4
+		);
+		expect(result.dates).toEqual([
+			'2026-09-01',
+			'2026-09-15',
+			'2026-09-29',
+		]);
+	});
+
+	test('expands a monthly rule', () => {
+		const result = expandRRulePreview(
+			'FREQ=MONTHLY;COUNT=3',
+			'2026-01-31 10:00:00',
+			4
+		);
+		expect(result.dates).toEqual([
+			'2026-01-31',
+			'2026-03-03',
+			'2026-04-03',
+		]);
+	});
+
+	test('expands a rule ending on UNTIL', () => {
+		const result = expandRRulePreview(
+			'FREQ=WEEKLY;UNTIL=20260922',
+			'2026-09-01 10:00:00',
+			4
+		);
+		expect(result.dates).toEqual([
+			'2026-09-01',
+			'2026-09-08',
+			'2026-09-15',
+			'2026-09-22',
+		]);
+		expect(result.totalCount).toBe(4);
+		expect(result.remainingCount).toBe(0);
+		expect(result.lastDate).toBe('2026-09-22');
+	});
+
+	test('returns an empty preview for a falsy rrule', () => {
+		expect(expandRRulePreview(null, '2026-09-01 10:00:00')).toEqual({
+			dates: [],
+			totalCount: 0,
+			remainingCount: 0,
+			lastDate: null,
+		});
 	});
 });
