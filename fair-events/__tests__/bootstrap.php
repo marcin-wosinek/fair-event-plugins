@@ -53,3 +53,30 @@ if ( ! function_exists( 'get_permalink' ) ) {
 		return 'https://example.com/?p=' . (int) $post_id;
 	}
 }
+
+if ( ! function_exists( 'get_the_title' ) ) {
+	/**
+	 * Stub of WordPress get_the_title() — deterministic title from a post ID.
+	 *
+	 * @param int $post_id Post ID.
+	 * @return string Fake title.
+	 */
+	function get_the_title( $post_id ) {
+		return 'Post ' . (int) $post_id;
+	}
+}
+
+if ( ! function_exists( 'add_query_arg' ) ) {
+	/**
+	 * Minimal stub of WordPress add_query_arg() for a single key/value pair.
+	 *
+	 * @param string $key   Query arg name.
+	 * @param mixed  $value Query arg value.
+	 * @param string $url   URL to append to.
+	 * @return string Decorated URL.
+	 */
+	function add_query_arg( $key, $value, $url ) {
+		$separator = ( false === strpos( $url, '?' ) ) ? '?' : '&';
+		return $url . $separator . rawurlencode( $key ) . '=' . rawurlencode( $value );
+	}
+}
