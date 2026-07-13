@@ -140,7 +140,7 @@ class WeeklyDigestRenderer {
 		$html = '';
 
 		if ( ! empty( $intro ) ) {
-			$html .= '<div style="margin: 0 0 20px 0;">' . wp_kses_post( $intro ) . '</div>';
+			$html .= '<div style="margin: 0 0 20px 0;">' . wp_kses_post( wpautop( $intro ) ) . '</div>';
 		}
 
 		foreach ( $week['days'] as $day ) {
@@ -181,7 +181,7 @@ class WeeklyDigestRenderer {
 		}
 
 		if ( ! empty( $outro ) ) {
-			$html .= '<div style="margin: 20px 0 0 0;">' . wp_kses_post( $outro ) . '</div>';
+			$html .= '<div style="margin: 20px 0 0 0;">' . wp_kses_post( wpautop( $outro ) ) . '</div>';
 		}
 
 		return $html;

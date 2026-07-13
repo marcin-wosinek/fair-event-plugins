@@ -289,6 +289,7 @@ class AdminHooks {
 
 		// Weekly Digest page.
 		if ( 'fair-audience_page_fair-audience-weekly-digest' === $hook ) {
+			wp_enqueue_editor();
 			$this->enqueue_page_script( 'weekly-digest', $plugin_dir );
 		}
 	}

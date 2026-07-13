@@ -154,6 +154,37 @@ test.describe('WeeklyDigestController — /weekly-digest', () => {
 		expect(body.config.week_scope).toBe('current');
 	});
 
+	test('PUT sanitizes intro/outro: keeps simple HTML, strips <script>', async () => {
+		const putRes = await api.put(
+			'/wp-json/fair-audience/v1/weekly-digest',
+			{
+				headers: authHeaders,
+				data: {
+					intro: '<p>Hello <strong>there</strong> <a href="https://example.com">link</a></p><script>alert(1)</script>',
+					outro: '<script>alert(2)</script><p>Bye</p>',
+				},
+			}
+		);
+		expect(putRes.ok()).toBeTruthy();
+		const putBody = await putRes.json();
+		expect(putBody.config.intro).toContain('<strong>there</strong>');
+		expect(putBody.config.intro).toContain(
+			'<a href="https://example.com">link</a>'
+		);
+		expect(putBody.config.intro).not.toContain('<script>');
+		expect(putBody.config.outro).not.toContain('<script>');
+		expect(putBody.config.outro).toContain('<p>Bye</p>');
+
+		const getRes = await api.get(
+			'/wp-json/fair-audience/v1/weekly-digest',
+			{ headers: authHeaders }
+		);
+		expect(getRes.ok()).toBeTruthy();
+		const getBody = await getRes.json();
+		expect(getBody.config.intro).toContain('<strong>there</strong>');
+		expect(getBody.config.outro).toContain('<p>Bye</p>');
+	});
+
 	test('GET /weekly-digest/sources returns a list of { slug, name }', async () => {
 		const res = await api.get(
 			'/wp-json/fair-audience/v1/weekly-digest/sources',

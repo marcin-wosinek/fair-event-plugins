@@ -66,9 +66,19 @@ function mockApiFetch({
 	});
 }
 
+beforeEach(() => {
+	window.wp = {
+		editor: {
+			initialize: jest.fn(),
+			remove: jest.fn(),
+		},
+	};
+});
+
 afterEach(() => {
 	jest.restoreAllMocks();
 	jest.clearAllMocks();
+	delete window.wp;
 });
 
 describe('WeeklyDigest — loading', () => {
@@ -167,5 +177,63 @@ describe('WeeklyDigest — last run summary', () => {
 		expect(
 			await screen.findByText('Last sent for week 2026-W27 — sent')
 		).toBeInTheDocument();
+	});
+});
+
+describe('WeeklyDigest — quicktags editors', () => {
+	it('initializes and removes the quicktags editor for intro and outro', async () => {
+		mockApiFetch();
+		const { unmount } = render(<WeeklyDigest />);
+
+		await screen.findByRole('button', { name: 'Save settings' });
+
+		expect(window.wp.editor.initialize).toHaveBeenCalledWith(
+			'fair-audience-digest-intro',
+			expect.objectContaining({ quicktags: true, tinymce: false })
+		);
+		expect(window.wp.editor.initialize).toHaveBeenCalledWith(
+			'fair-audience-digest-outro',
+			expect.objectContaining({ quicktags: true, tinymce: false })
+		);
+
+		unmount();
+
+		expect(window.wp.editor.remove).toHaveBeenCalledWith(
+			'fair-audience-digest-intro'
+		);
+		expect(window.wp.editor.remove).toHaveBeenCalledWith(
+			'fair-audience-digest-outro'
+		);
+	});
+
+	it('sends the current intro/outro textarea HTML when saving', async () => {
+		mockApiFetch();
+		render(<WeeklyDigest />);
+
+		await screen.findByRole('button', { name: 'Save settings' });
+
+		fireEvent.change(
+			document.getElementById('fair-audience-digest-intro'),
+			{ target: { value: '<p>Hello <strong>there</strong></p>' } }
+		);
+		fireEvent.change(
+			document.getElementById('fair-audience-digest-outro'),
+			{ target: { value: '<p>Bye</p>' } }
+		);
+
+		fireEvent.click(screen.getByRole('button', { name: 'Save settings' }));
+
+		await waitFor(() =>
+			expect(apiFetch).toHaveBeenCalledWith(
+				expect.objectContaining({
+					path: '/fair-audience/v1/weekly-digest',
+					method: 'PUT',
+					data: expect.objectContaining({
+						intro: '<p>Hello <strong>there</strong></p>',
+						outro: '<p>Bye</p>',
+					}),
+				})
+			)
+		);
 	});
 });
