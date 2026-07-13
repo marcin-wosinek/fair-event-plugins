@@ -36,24 +36,14 @@ class OpenGraphHooks {
 	 * @return void
 	 */
 	public function output_og_tags() {
-		if ( ! is_singular() ) {
+		$context = $this->get_event_context();
+		if ( ! $context ) {
 			return;
 		}
 
-		$post_id       = get_the_ID();
-		$post_type     = get_post_type( $post_id );
-		$enabled_types = Settings::get_enabled_post_types();
-
-		if ( ! in_array( $post_type, $enabled_types, true ) ) {
-			return;
-		}
-
-		$event_date = EventDates::get_by_event_id( $post_id );
-		if ( ! $event_date ) {
-			return;
-		}
-
-		$post = get_post( $post_id );
+		$post_id    = $context['post_id'];
+		$event_date = $context['event_date'];
+		$post       = get_post( $post_id );
 
 		// Standard OG tags.
 		$this->output_meta_tag( 'og:title', $this->get_title( $post, $event_date ) );
@@ -67,18 +57,20 @@ class OpenGraphHooks {
 			$this->output_meta_tag( 'og:image', $image_url );
 		}
 
-		// Event-specific tags.
+		// Event-specific tags — only emitted together, and only when there is a
+		// start date, so we never print half-valid event markup (matches the
+		// JSON-LD guard below).
 		if ( ! empty( $event_date->start_datetime ) ) {
 			$this->output_meta_tag( 'event:start_time', $this->format_iso8601( $event_date->start_datetime ) );
-		}
 
-		if ( ! empty( $event_date->end_datetime ) ) {
-			$this->output_meta_tag( 'event:end_time', $this->format_iso8601( $event_date->end_datetime ) );
-		}
+			if ( ! empty( $event_date->end_datetime ) ) {
+				$this->output_meta_tag( 'event:end_time', $this->format_iso8601( $event_date->end_datetime ) );
+			}
 
-		$location = $this->get_location( $event_date, $post_id );
-		if ( $location ) {
-			$this->output_meta_tag( 'event:location', $location );
+			$location = $this->get_location( $event_date, $post_id );
+			if ( $location ) {
+				$this->output_meta_tag( 'event:location', $location );
+			}
 		}
 	}
 
@@ -88,25 +80,15 @@ class OpenGraphHooks {
 	 * @return void
 	 */
 	public function output_twitter_tags() {
-		if ( ! is_singular() ) {
+		$context = $this->get_event_context();
+		if ( ! $context ) {
 			return;
 		}
 
-		$post_id       = get_the_ID();
-		$post_type     = get_post_type( $post_id );
-		$enabled_types = Settings::get_enabled_post_types();
-
-		if ( ! in_array( $post_type, $enabled_types, true ) ) {
-			return;
-		}
-
-		$event_date = EventDates::get_by_event_id( $post_id );
-		if ( ! $event_date ) {
-			return;
-		}
-
-		$post      = get_post( $post_id );
-		$image_url = $this->get_image_url( $post_id );
+		$post_id    = $context['post_id'];
+		$event_date = $context['event_date'];
+		$post       = get_post( $post_id );
+		$image_url  = $this->get_image_url( $post_id );
 
 		$this->output_name_meta_tag( 'twitter:card', $image_url ? 'summary_large_image' : 'summary' );
 		$this->output_name_meta_tag( 'twitter:title', $this->get_title( $post, $event_date ) );
@@ -123,23 +105,16 @@ class OpenGraphHooks {
 	 * @return void
 	 */
 	public function output_jsonld() {
-		if ( ! is_singular() ) {
+		$context = $this->get_event_context();
+		if ( ! $context ) {
 			return;
 		}
 
-		$post_id       = get_the_ID();
-		$post_type     = get_post_type( $post_id );
-		$enabled_types = Settings::get_enabled_post_types();
+		$post_id    = $context['post_id'];
+		$event_date = $context['event_date'];
 
-		if ( ! in_array( $post_type, $enabled_types, true ) ) {
-			return;
-		}
-
-		$event_date = EventDates::get_by_event_id( $post_id );
-		if ( ! $event_date ) {
-			return;
-		}
-
+		// Never emit half-valid event markup: without a start date there is no
+		// event to describe (matches the OG event:* guard above).
 		if ( empty( $event_date->start_datetime ) ) {
 			return;
 		}
@@ -152,7 +127,9 @@ class OpenGraphHooks {
 			'name'        => $this->get_title( $post, $event_date ),
 			'startDate'   => $this->format_iso8601( $event_date->start_datetime ),
 			'url'         => get_permalink( $post_id ),
-			'eventStatus' => 'https://schema.org/EventScheduled',
+			'eventStatus' => 'cancelled' === $event_date->status
+				? 'https://schema.org/EventCancelled'
+				: 'https://schema.org/EventScheduled',
 		);
 
 		if ( ! empty( $event_date->end_datetime ) ) {
@@ -169,9 +146,13 @@ class OpenGraphHooks {
 			$data['image'] = $image_url;
 		}
 
-		$location = $this->get_jsonld_location( $event_date, $post_id );
-		if ( $location ) {
-			$data['location'] = $location;
+		$location_data               = $this->get_jsonld_location( $event_date, $post_id );
+		$data['location']            = $location_data['location'];
+		$data['eventAttendanceMode'] = $location_data['attendance_mode'];
+
+		$offers = $this->get_jsonld_offers( $event_date, $post_id );
+		if ( ! empty( $offers ) ) {
+			$data['offers'] = $offers;
 		}
 
 		$data['organizer'] = array(
@@ -186,13 +167,49 @@ class OpenGraphHooks {
 	}
 
 	/**
-	 * Build Schema.org location object for JSON-LD
+	 * Build the shared preamble used by all three wp_head hooks: confirms the
+	 * current request is a singular, enabled-post-type page linked to an
+	 * event date, so OG, Twitter, and JSON-LD all make the same decision.
+	 *
+	 * @return array{post_id: int, event_date: EventDates}|null Context array, or null if this page has no event.
+	 */
+	private function get_event_context() {
+		if ( ! is_singular() ) {
+			return null;
+		}
+
+		$post_id       = get_the_ID();
+		$post_type     = get_post_type( $post_id );
+		$enabled_types = Settings::get_enabled_post_types();
+
+		if ( ! in_array( $post_type, $enabled_types, true ) ) {
+			return null;
+		}
+
+		$event_date = EventDates::get_by_event_id( $post_id );
+		if ( ! $event_date ) {
+			return null;
+		}
+
+		return array(
+			'post_id'    => $post_id,
+			'event_date' => $event_date,
+		);
+	}
+
+	/**
+	 * Build Schema.org location object for JSON-LD, guaranteeing a valid
+	 * `location` node (never null) and reporting the attendance mode.
 	 *
 	 * @param EventDates $event_date Event date object.
 	 * @param int        $post_id    Post ID.
-	 * @return array|null Location data array or null.
+	 * @return array{location: array, attendance_mode: string} Location data and eventAttendanceMode value.
 	 */
 	private function get_jsonld_location( $event_date, $post_id ) {
+		$offline = 'https://schema.org/OfflineEventAttendanceMode';
+		$online  = 'https://schema.org/OnlineEventAttendanceMode';
+
+		// 1. Venue.
 		if ( ! empty( $event_date->venue_id )
 			&& class_exists( \FairEventsExperimental\Models\Venue::class ) ) {
 			$venue = \FairEventsExperimental\Models\Venue::get_by_id( $event_date->venue_id );
@@ -203,7 +220,10 @@ class OpenGraphHooks {
 				);
 
 				if ( ! empty( $venue->address ) ) {
-					$location['address'] = $venue->address;
+					$location['address'] = array(
+						'@type' => 'PostalAddress',
+						'name'  => $venue->address,
+					);
 				}
 
 				if ( ! empty( $venue->latitude ) && ! empty( $venue->longitude ) ) {
@@ -214,21 +234,154 @@ class OpenGraphHooks {
 					);
 				}
 
-				return $location;
+				return array(
+					'location'        => $location,
+					'attendance_mode' => $offline,
+				);
 			}
 		}
 
-		// Fall back to event_location meta.
-		$meta_location = get_post_meta( $post_id, 'event_location', true );
-		if ( ! empty( $meta_location ) ) {
+		// 2. Event date's own free-text address.
+		if ( ! empty( $event_date->address ) ) {
 			return array(
-				'@type'   => 'Place',
-				'name'    => $meta_location,
-				'address' => $meta_location,
+				'location'        => array(
+					'@type'   => 'Place',
+					'name'    => $event_date->address,
+					'address' => array(
+						'@type' => 'PostalAddress',
+						'name'  => $event_date->address,
+					),
+				),
+				'attendance_mode' => $offline,
 			);
 		}
 
-		return null;
+		// 3. Fall back to event_location meta.
+		$meta_location = get_post_meta( $post_id, 'event_location', true );
+		if ( ! empty( $meta_location ) ) {
+			return array(
+				'location'        => array(
+					'@type'   => 'Place',
+					'name'    => $meta_location,
+					'address' => array(
+						'@type' => 'PostalAddress',
+						'name'  => $meta_location,
+					),
+				),
+				'attendance_mode' => $offline,
+			);
+		}
+
+		// 4. Online event: no physical location, but an external link.
+		if ( 'external' === $event_date->link_type && ! empty( $event_date->external_url ) ) {
+			return array(
+				'location'        => array(
+					'@type' => 'VirtualLocation',
+					'url'   => $event_date->external_url,
+				),
+				'attendance_mode' => $online,
+			);
+		}
+
+		// 5. Final fallback so `location` is never absent.
+		return array(
+			'location'        => array(
+				'@type' => 'Place',
+				'name'  => get_bloginfo( 'name' ),
+			),
+			'attendance_mode' => $offline,
+		);
+	}
+
+	/**
+	 * Build Schema.org Offer objects for JSON-LD from the ticketing models.
+	 *
+	 * Everything is behind class_exists() guards since a fair-events-only
+	 * site (without ticketing) must not fatal.
+	 *
+	 * @param EventDates $event_date Event date object.
+	 * @param int        $post_id    Post ID.
+	 * @return array Offer objects (empty when ticketing is unavailable or unpriced).
+	 */
+	private function get_jsonld_offers( $event_date, $post_id ) {
+		if ( ! class_exists( \FairEvents\Models\TicketType::class )
+			|| ! class_exists( \FairEvents\Models\TicketPrice::class )
+			|| ! class_exists( \FairEvents\Models\TicketSalePeriod::class ) ) {
+			return array();
+		}
+
+		// Pivot to the series master for generated occurrences — pricing lives
+		// there, same as get-tickets/render.php.
+		$pricing_event_date_id = $event_date->id;
+		if ( 'generated' === $event_date->occurrence_type && ! empty( $event_date->master_id ) ) {
+			$pricing_event_date_id = (int) $event_date->master_id;
+		}
+
+		$ticket_types = \FairEvents\Models\TicketType::get_all_by_event_date_id( $pricing_event_date_id );
+		if ( empty( $ticket_types ) ) {
+			return array();
+		}
+
+		$sale_periods = \FairEvents\Models\TicketSalePeriod::get_all_by_event_date_id( $pricing_event_date_id );
+
+		$now             = current_time( 'mysql' );
+		$active_period   = null;
+		$upcoming_period = null;
+		foreach ( $sale_periods as $period ) {
+			if ( $period->sale_start <= $now && $period->sale_end >= $now ) {
+				$active_period = $period;
+				break;
+			}
+			if ( $period->sale_start > $now && ( ! $upcoming_period || $period->sale_start < $upcoming_period->sale_start ) ) {
+				$upcoming_period = $period;
+			}
+		}
+
+		// Search crawls happen outside the sale window: fall back to the
+		// nearest upcoming period's price so `offers` isn't empty just
+		// because sales haven't opened yet.
+		$selected_period = $active_period ? $active_period : $upcoming_period;
+		if ( ! $selected_period ) {
+			return array();
+		}
+
+		$price_by_type_id = array();
+		foreach ( \FairEvents\Models\TicketPrice::get_all_by_event_date_id( $pricing_event_date_id ) as $price ) {
+			if ( (int) $price->sale_period_id === (int) $selected_period->id ) {
+				$price_by_type_id[ (int) $price->ticket_type_id ] = (float) $price->price;
+			}
+		}
+
+		$currency   = get_option( 'fair_payment_currency', 'EUR' );
+		$permalink  = get_permalink( $post_id );
+		$valid_from = $active_period ? null : $this->format_iso8601( $selected_period->sale_start );
+
+		$offers = array();
+		foreach ( $ticket_types as $ticket_type ) {
+			if ( $ticket_type->disabled || $ticket_type->invitation_only ) {
+				continue;
+			}
+
+			if ( ! isset( $price_by_type_id[ $ticket_type->id ] ) ) {
+				continue;
+			}
+
+			$offer = array(
+				'@type'         => 'Offer',
+				'price'         => (string) $price_by_type_id[ $ticket_type->id ],
+				'priceCurrency' => $currency,
+				'availability'  => 'https://schema.org/InStock',
+				'url'           => $permalink,
+			);
+
+			if ( $valid_from ) {
+				$offer['validFrom'] = $valid_from;
+			}
+
+			$offers[] = $offer;
+		}
+
+		return $offers;
 	}
 
 	/**
