@@ -12,7 +12,7 @@
 defined( 'WPINC' ) || die;
 
 use FairEvents\Settings\Settings;
-use FairEvents\Models\EventDates;
+use FairEvents\Services\EventFeedProvider;
 
 // Get block attributes
 $time_filter        = $attributes['timeFilter'] ?? 'upcoming';
@@ -151,95 +151,6 @@ if ( strpos( $display_pattern, 'wp_block:' ) === 0 ) {
 
 $is_query_loop_pattern = ( strpos( $pattern_content, '<!-- wp:query' ) !== false ||
 							strpos( $pattern_content, '<!-- wp:post-template' ) !== false );
-
-// Fetch iCal events from selected event sources
-$all_ical_events = array();
-
-if ( ! empty( $event_source_slugs ) && is_array( $event_source_slugs ) ) {
-	$repository = new \FairEvents\Database\EventSourceRepository();
-
-	foreach ( $event_source_slugs as $slug ) {
-		// Skip if not a string
-		if ( ! is_string( $slug ) ) {
-			continue;
-		}
-
-		$source = $repository->get_by_slug( $slug );
-
-		// Skip disabled or non-existent sources
-		if ( ! $source || ! $source['enabled'] ) {
-			continue;
-		}
-
-		// Process each data source within the event source
-		foreach ( $source['data_sources'] as $data_source ) {
-			if ( 'ical_url' === $data_source['source_type'] ) {
-				$ical_feed_url   = $data_source['config']['url'] ?? '';
-				$ical_feed_color = $data_source['config']['color'] ?? '#4caf50';
-
-				if ( ! empty( $ical_feed_url ) ) {
-					$fetched_events = \FairEvents\ICalParser::fetch_and_parse( $ical_feed_url );
-
-					// Filter based on timeFilter attribute
-					switch ( $time_filter ) {
-						case 'upcoming':
-							$filtered_events = array_filter(
-								$fetched_events,
-								function ( $event ) {
-									return strtotime( $event['start'] ) >= time();
-								}
-							);
-							break;
-						case 'past':
-							$filtered_events = array_filter(
-								$fetched_events,
-								function ( $event ) {
-									return strtotime( $event['end'] ) < time();
-								}
-							);
-							break;
-						case 'ongoing':
-							$filtered_events = array_filter(
-								$fetched_events,
-								function ( $event ) {
-									$now = time();
-									return strtotime( $event['start'] ) <= $now && strtotime( $event['end'] ) >= $now;
-								}
-							);
-							break;
-						case 'all':
-						default:
-							$filtered_events = $fetched_events;
-							break;
-					}
-
-					// Add color to each event
-					foreach ( $filtered_events as $event ) {
-						$event['source_color'] = $ical_feed_color;
-						$all_ical_events[]     = $event;
-					}
-				}
-			}
-		}
-	}
-
-	// Sort iCal events by start date
-	usort(
-		$all_ical_events,
-		function ( $a, $b ) use ( $time_filter ) {
-			$time_a = strtotime( $a['start'] );
-			$time_b = strtotime( $b['start'] );
-
-			// For 'past' filter, sort descending
-			if ( 'past' === $time_filter ) {
-				return $time_b - $time_a;
-			}
-
-			// Default: sort ascending
-			return $time_a - $time_b;
-		}
-	);
-}
 ?>
 
 <div <?php echo wp_kses_post( get_block_wrapper_attributes() ); ?>>
@@ -259,105 +170,55 @@ if ( ! empty( $event_source_slugs ) && is_array( $event_source_slugs ) ) {
 		?>
 	<?php elseif ( $pattern_content ) : ?>
 		<?php
-		// For non-Query Loop patterns, render WordPress events + iCal events + standalone events
-		// Get WordPress events from the query
-		$wp_events = array();
-		if ( $events_query->have_posts() ) {
-			while ( $events_query->have_posts() ) {
-				$events_query->the_post();
-				$wp_events[] = array(
-					'type'  => 'wordpress',
-					'post'  => get_post(),
-					'start' => get_post_meta( get_the_ID(), 'start_date', true ),
-				);
-			}
-		}
-
-		// Fetch standalone events based on time filter
-		$standalone_events_raw = array();
+		// For non-Query Loop patterns, render post-linked, standalone, and
+		// external (iCal/API) occurrences from the shared feed provider.
 		switch ( $time_filter ) {
 			case 'upcoming':
-				// Get standalone events starting after now
-				$standalone_events_raw = EventDates::get_standalone_for_date_range(
-					$current_time,
-					'2099-12-31 23:59:59',
-					$categories
-				);
+				$range_start = $current_time;
+				$range_end   = '2099-12-31 23:59:59';
 				break;
 			case 'past':
-				// Get standalone events ending before now
-				$standalone_events_raw = EventDates::get_standalone_for_date_range(
-					'1970-01-01 00:00:00',
-					$current_time,
-					$categories
-				);
+				$range_start = '1970-01-01 00:00:00';
+				$range_end   = $current_time;
 				break;
 			case 'ongoing':
-				// Get standalone events spanning now
-				$standalone_events_raw = EventDates::get_standalone_for_date_range(
-					$current_time,
-					$current_time,
-					$categories
-				);
+				$range_start = $current_time;
+				$range_end   = $current_time;
 				break;
 			case 'all':
 			default:
-				$standalone_events_raw = EventDates::get_standalone_for_date_range(
-					'1970-01-01 00:00:00',
-					'2099-12-31 23:59:59',
-					$categories
-				);
+				$range_start = '1970-01-01 00:00:00';
+				$range_end   = '2099-12-31 23:59:59';
 				break;
 		}
 
-		// Merge WordPress events with iCal events
-		$all_events = $wp_events;
-		foreach ( $all_ical_events as $ical_event ) {
-			$all_events[] = array(
-				'type'  => 'ical',
-				'event' => $ical_event,
-				'start' => $ical_event['start'],
-			);
-		}
+		$provider = new EventFeedProvider();
 
-		// Add standalone events
-		foreach ( $standalone_events_raw as $standalone_event ) {
-			$all_events[] = array(
-				'type'       => 'standalone',
-				'event_date' => $standalone_event,
-				'start'      => $standalone_event->start_datetime,
-			);
-		}
-
-		// Sort combined events by start date
-		usort(
-			$all_events,
-			function ( $a, $b ) use ( $time_filter ) {
-				$time_a = strtotime( $a['start'] );
-				$time_b = strtotime( $b['start'] );
-
-				// For 'past' filter, sort descending
-				if ( 'past' === $time_filter ) {
-					return $time_b - $time_a;
-				}
-
-				// Default: sort ascending
-				return $time_a - $time_b;
-			}
+		$occurrences = $provider->get_occurrences(
+			$range_start,
+			$range_end,
+			array(
+				'categories'         => $categories,
+				'event_source_slugs' => is_array( $event_source_slugs ) ? $event_source_slugs : array(),
+			)
 		);
 
-		// Render each event using the pattern
-		foreach ( $all_events as $event_data ) {
-			// Determine event type and color
-			$event_type    = $event_data['type'];
+		// The provider sorts ascending; 'past' displays most recent first.
+		if ( 'past' === $time_filter ) {
+			$occurrences = array_reverse( $occurrences );
+		}
+
+		// Render each occurrence using the pattern
+		foreach ( $occurrences as $occurrence ) {
+			$is_external_source = in_array( $occurrence['source'], array( 'ical', 'api' ), true );
+
 			$event_classes = array( 'event-list-item' );
 			$event_style   = '';
 
-			if ( 'ical' === $event_type ) {
-				// iCal event - get color from source
+			if ( $is_external_source ) {
+				// External event - get color from source
 				$event_classes[] = 'is-ical';
-				$ical_event      = $event_data['event'];
-				$event_color     = $ical_event['source_color'] ?? '#4caf50';
+				$event_color     = ! empty( $occurrence['source_color'] ) ? $occurrence['source_color'] : '#4caf50';
 
 				// Convert color to CSS value
 				if ( preg_match( '/^#[0-9A-Fa-f]{3,6}$/', $event_color ) ) {
@@ -367,35 +228,29 @@ if ( ! empty( $event_source_slugs ) && is_array( $event_source_slugs ) ) {
 				}
 
 				$event_style = '--event-bg-color: ' . $bg_color_value . '; --event-text-color: #ffffff;';
-			} elseif ( 'standalone' === $event_type ) {
-				// Standalone event (external/unlinked)
+			} elseif ( 'standalone' === $occurrence['source'] ) {
 				$event_classes[] = 'is-standalone';
-				$standalone      = $event_data['event_date'];
-				if ( 'external' === $standalone->link_type ) {
-					$event_classes[] = 'is-external';
-				} elseif ( $standalone->get_display_url() ) {
-					$event_classes[] = 'is-linked-post';
-				} else {
-					$event_classes[] = 'is-unlinked';
-				}
 			} else {
-				// WordPress event
 				$event_classes[] = 'is-wordpress';
+			}
+
+			if ( ! empty( $occurrence['is_draft'] ) ) {
+				$event_classes[] = 'is-draft';
 			}
 
 			// Open event wrapper
 			echo '<div class="' . esc_attr( implode( ' ', $event_classes ) ) . '"' . ( '' !== $event_style ? ' style="' . esc_attr( $event_style ) . '"' : '' ) . '>';
 
-			if ( 'ical' === $event_type ) {
+			if ( $is_external_source ) {
 				// Create a temporary context for pattern rendering
 				$pattern_with_data = str_replace(
 					array( '{{title}}', '{{start}}', '{{end}}', '{{location}}', '{{description}}' ),
 					array(
-						esc_html( $ical_event['summary'] ?? '' ),
-						esc_html( $ical_event['start'] ?? '' ),
-						esc_html( $ical_event['end'] ?? '' ),
-						esc_html( $ical_event['location'] ?? '' ),
-						esc_html( $ical_event['description'] ?? '' ),
+						esc_html( $occurrence['title'] ),
+						esc_html( $occurrence['start'] ),
+						esc_html( $occurrence['end'] ),
+						'',
+						esc_html( $occurrence['description'] ),
 					),
 					$pattern_content
 				);
@@ -405,31 +260,24 @@ if ( ! empty( $event_source_slugs ) && is_array( $event_source_slugs ) ) {
 				foreach ( $parsed_blocks as $parsed_block ) {
 					echo wp_kses_post( render_block( $parsed_block ) );
 				}
-			} elseif ( 'standalone' === $event_type ) {
+			} elseif ( 'standalone' === $occurrence['source'] ) {
 				// Render standalone event with simple display
-				$standalone  = $event_data['event_date'];
-				$event_title = $standalone->get_display_title();
-				$event_url   = $standalone->get_display_url();
-				$is_external = 'external' === $standalone->link_type;
 				?>
 				<div class="standalone-event-content">
-					<?php if ( $is_external && ! empty( $event_url ) ) : ?>
-						<a href="<?php echo esc_url( $event_url ); ?>"
-							class="event-title"
-							target="_blank"
-							rel="noopener noreferrer">
-							<?php echo esc_html( $event_title ); ?>
+					<?php if ( ! empty( $occurrence['url'] ) ) : ?>
+						<a href="<?php echo esc_url( $occurrence['url'] ); ?>" class="event-title">
+							<?php echo esc_html( $occurrence['title'] ); ?>
 						</a>
 					<?php else : ?>
-						<span class="event-title"><?php echo esc_html( $event_title ); ?></span>
+						<span class="event-title"><?php echo esc_html( $occurrence['title'] ); ?></span>
 					<?php endif; ?>
 				</div>
 				<?php
 			} else {
-				// Set up post data for WordPress events
+				// Set up post data for post-linked events
 				// phpcs:ignore WordPress.WP.GlobalVariablesOverride.Prohibited
-				$GLOBALS['post'] = $event_data['post'];
-				setup_postdata( $event_data['post'] );
+				$GLOBALS['post'] = get_post( $occurrence['event_id'] );
+				setup_postdata( $GLOBALS['post'] );
 
 				// Parse and render the pattern
 				$parsed_blocks = parse_blocks( $pattern_content );
