@@ -11,10 +11,7 @@
 
 defined( 'WPINC' ) || die;
 
-use FairEvents\Helpers\DateHelper;
-use FairEvents\Models\EventDates;
-use FairEvents\Helpers\ICalParser;
-use FairEvents\Helpers\FairEventsApiParser;
+use FairEvents\Services\EventFeedProvider;
 use FairEvents\Settings\Settings;
 
 /**
@@ -35,86 +32,29 @@ if ( ! function_exists( 'fair_events_convert_color_to_css' ) ) {
 }
 
 /**
- * Render event using block pattern
- *
- * Takes a pattern name and event ID, sets up WordPress post data context,
- * retrieves the pattern from the WordPress pattern registry, parses it,
- * and renders the resulting blocks within the event's post context.
- *
- * This allows calendar events to be displayed using customizable block patterns
- * while maintaining proper WordPress post template tags (like the_title, get_permalink).
- *
- * @param string $pattern_name Pattern name to render (e.g., 'fair-events/calendar-event-simple').
- * @param int    $event_id     Event post ID to render.
- * @return string Rendered pattern HTML output.
- */
-if ( ! function_exists( 'fair_events_render_calendar_pattern' ) ) {
-	function fair_events_render_calendar_pattern( $pattern_name, $event_id ) {
-		$event_post = get_post( $event_id );
-		if ( ! $event_post ) {
-			return '';
-		}
-
-		// Set up post data for template tags to work
-		// This makes WordPress template tags (the_title, the_permalink, etc.) work in the pattern
-		// phpcs:ignore WordPress.WP.GlobalVariablesOverride.Prohibited
-		$GLOBALS['post'] = $event_post;
-		setup_postdata( $event_post );
-
-		// Get pattern content from registry
-		$all_patterns    = WP_Block_Patterns_Registry::get_instance()->get_all_registered();
-		$pattern_content = '';
-		foreach ( $all_patterns as $pattern ) {
-			if ( $pattern['name'] === $pattern_name ) {
-				$pattern_content = $pattern['content'];
-				break;
-			}
-		}
-
-		// Fallback to simple title link if pattern not found
-		if ( empty( $pattern_content ) ) {
-			$pattern_content = '<!-- wp:post-title {"level":5,"isLink":true,"fontSize":"small"} /-->';
-		}
-
-		// Parse and render blocks
-		// Block parser converts pattern's block markup into block arrays
-		$parsed_blocks = parse_blocks( $pattern_content );
-		$output        = '';
-		foreach ( $parsed_blocks as $block ) {
-			$output .= render_block( $block );
-		}
-
-		wp_reset_postdata();
-		return $output;
-	}
-}
-
-/**
  * Render calendar event item HTML
  *
- * Handles rendering for all event types: WordPress posts, iCal, and standalone events.
+ * Handles rendering for all occurrence sources: post-linked, standalone, and
+ * external (iCal/API) events.
  *
- * @param array  $event_data     Event data array.
- * @param string $bg_color_value Background color CSS value.
- * @param string $text_color_value Text color CSS value.
+ * @param array  $occurrence       Occurrence DTO from EventFeedProvider.
+ * @param string $bg_color_value   Background color CSS value (post-linked/standalone events).
+ * @param string $text_color_value Text color CSS value (post-linked/standalone events).
  * @return void Outputs HTML directly.
  */
 if ( ! function_exists( 'fair_events_render_calendar_event_item' ) ) {
-	function fair_events_render_calendar_event_item( $event_data, $bg_color_value, $text_color_value ) {
-		$is_ical       = $event_data['is_ical'] ?? false;
-		$is_standalone = $event_data['is_standalone'] ?? false;
+	function fair_events_render_calendar_event_item( $occurrence, $bg_color_value, $text_color_value ) {
+		$is_external_source = in_array( $occurrence['source'], array( 'ical', 'api' ), true );
 
-		if ( $is_ical ) {
-			// iCal event rendering
-			$event_title = $event_data['title'];
-			$event_url   = $event_data['permalink'] ?? '';
-			$event_desc  = $event_data['description'] ?? '';
-
-			$item_classes = array( 'event-item', 'is-ical' );
+		if ( $is_external_source ) {
+			$event_title = $occurrence['title'];
+			$event_url   = $occurrence['url'];
+			$event_desc  = $occurrence['description'];
+			$color_value = fair_events_convert_color_to_css( $occurrence['source_color'] ?: '#4caf50' );
 			?>
-			<div class="<?php echo esc_attr( implode( ' ', $item_classes ) ); ?>"
-				data-event-id="<?php echo esc_attr( $event_data['id'] ); ?>"
-				style="--event-bg-color: <?php echo esc_attr( $bg_color_value ); ?>; --event-text-color: <?php echo esc_attr( $text_color_value ); ?>">
+			<div class="event-item is-ical"
+				data-event-id="<?php echo esc_attr( $occurrence['uid'] ); ?>"
+				style="--event-bg-color: <?php echo esc_attr( $color_value ); ?>; --event-text-color: #fff">
 				<?php if ( ! empty( $event_url ) ) : ?>
 					<a href="<?php echo esc_url( $event_url ); ?>"
 						class="ical-event-title"
@@ -130,67 +70,35 @@ if ( ! function_exists( 'fair_events_render_calendar_event_item' ) ) {
 				<?php endif; ?>
 			</div>
 			<?php
-		} elseif ( $is_standalone ) {
-			// Standalone event rendering (external/linked-post/unlinked).
-			$event_title = $event_data['title'] ?? '';
-			$event_url   = $event_data['permalink'] ?? '';
-			$link_type   = $event_data['link_type'] ?? 'none';
-			$is_external = 'external' === $link_type;
+			return;
+		}
 
-			$item_classes = array( 'event-item', 'is-standalone' );
-			if ( $is_external ) {
-				$item_classes[] = 'is-external';
-			} elseif ( ! empty( $event_url ) ) {
-				$item_classes[] = 'is-linked-post';
-			} else {
-				$item_classes[] = 'is-unlinked';
-			}
-			?>
-			<div class="<?php echo esc_attr( implode( ' ', $item_classes ) ); ?>"
-				data-event-id="<?php echo esc_attr( $event_data['id'] ); ?>"
-				style="--event-bg-color: <?php echo esc_attr( $bg_color_value ); ?>; --event-text-color: <?php echo esc_attr( $text_color_value ); ?>">
-				<?php if ( $is_external && ! empty( $event_url ) ) : ?>
-					<a href="<?php echo esc_url( $event_url ); ?>"
-						class="event-title"
-						target="_blank"
-						rel="noopener noreferrer">
-						<?php echo esc_html( $event_title ); ?>
-					</a>
-				<?php elseif ( ! empty( $event_url ) ) : ?>
-					<a href="<?php echo esc_url( $event_url ); ?>" class="event-title">
-						<?php echo esc_html( $event_title ); ?>
-					</a>
-				<?php else : ?>
-					<span class="event-title"><?php echo esc_html( $event_title ); ?></span>
-				<?php endif; ?>
-			</div>
-			<?php
-		} else {
-			// Local WordPress event rendering
-			$event_post  = get_post( $event_data['id'] );
-			$is_draft    = $event_post && 'draft' === $event_post->post_status;
-			$event_title = get_the_title( $event_data['id'] );
-			$event_url   = ! empty( $event_data['event_date_id'] )
-				? add_query_arg( 'event_date', (int) $event_data['event_date_id'], get_permalink( $event_data['id'] ) )
-				: get_permalink( $event_data['id'] );
+		$event_title = $occurrence['title'];
+		$event_url   = $occurrence['url'];
 
-			$item_classes = array( 'event-item' );
-			if ( $is_draft ) {
-				$item_classes[] = 'is-draft';
-			}
-			if ( ! empty( $event_data['occurrence_type'] ) && 'generated' === $event_data['occurrence_type'] ) {
-				$item_classes[] = 'is-instance';
-			}
-			?>
-			<div class="<?php echo esc_attr( implode( ' ', $item_classes ) ); ?>"
-				data-event-id="<?php echo esc_attr( $event_data['id'] ); ?>"
-				style="--event-bg-color: <?php echo esc_attr( $bg_color_value ); ?>; --event-text-color: <?php echo esc_attr( $text_color_value ); ?>">
+		$item_classes = array( 'event-item' );
+		if ( 'standalone' === $occurrence['source'] ) {
+			$item_classes[] = 'is-standalone';
+		}
+		if ( ! empty( $occurrence['is_draft'] ) ) {
+			$item_classes[] = 'is-draft';
+		}
+		if ( 'generated' === $occurrence['occurrence_type'] ) {
+			$item_classes[] = 'is-instance';
+		}
+		?>
+		<div class="<?php echo esc_attr( implode( ' ', $item_classes ) ); ?>"
+			data-event-id="<?php echo esc_attr( $occurrence['uid'] ); ?>"
+			style="--event-bg-color: <?php echo esc_attr( $bg_color_value ); ?>; --event-text-color: <?php echo esc_attr( $text_color_value ); ?>">
+			<?php if ( ! empty( $event_url ) ) : ?>
 				<a href="<?php echo esc_url( $event_url ); ?>" class="event-title">
 					<?php echo esc_html( $event_title ); ?>
 				</a>
-			</div>
-			<?php
-		}
+			<?php else : ?>
+				<span class="event-title"><?php echo esc_html( $event_title ); ?></span>
+			<?php endif; ?>
+		</div>
+		<?php
 	}
 }
 
@@ -200,10 +108,10 @@ if ( ! function_exists( 'fair_events_render_calendar_event_item' ) ) {
  * This block uses a hybrid server-side rendering approach:
  * 1. Reads month/year from URL parameters (for navigation) or block attributes
  * 2. Validates and sanitizes date inputs
- * 3. Queries events for the month using QueryHelper (efficient single query)
- * 4. Groups events by date (handling multi-day events)
+ * 3. Fetches occurrences for the month via EventFeedProvider (local + external streams)
+ * 4. Groups occurrences by date via EventFeedProvider::group_by_day() (handling multi-day events)
  * 5. Calculates calendar grid structure (leading/trailing blank cells)
- * 6. Renders events using customizable block patterns
+ * 6. Renders events
  * 7. Highlights current day, marks past days
  * 8. Responsive: Desktop shows full grid, mobile shows only event days
  */
@@ -212,13 +120,12 @@ if ( ! function_exists( 'fair_events_render_calendar_event_item' ) ) {
 $start_of_week   = Settings::get_start_of_week();
 $show_navigation = $attributes['showNavigation'] ?? true;
 $categories      = $attributes['categories'] ?? array();
-$display_pattern = $attributes['displayPattern'] ?? 'fair-events/calendar-event-simple';
 $show_drafts     = $attributes['showDrafts'] ?? false;
 $bg_color        = $attributes['backgroundColor'] ?? 'primary';
 $text_color      = $attributes['textColor'] ?? '#ffffff';
 $event_sources   = $attributes['eventSources'] ?? array();
 
-// Convert WordPress event colors to CSS values (used for all WordPress events)
+// Convert WordPress event colors to CSS values (used for post-linked/standalone events)
 $bg_color_value   = fair_events_convert_color_to_css( $bg_color );
 $text_color_value = fair_events_convert_color_to_css( $text_color );
 
@@ -258,232 +165,20 @@ $query_start          = gmdate( 'Y-m-d 00:00:00', strtotime( "-{$leading_blanks}
 $last_day_of_month_ts = strtotime( "{$current_year}-{$current_month}-{$days_in_month}" );
 $query_end            = gmdate( 'Y-m-d 23:59:59', strtotime( "+{$trailing_blanks} days", $last_day_of_month_ts ) );
 
-// Keep original month boundaries for display logic
-$month_start = "{$current_year}-{$current_month}-01";
-$month_end   = "{$current_year}-{$current_month}-{$days_in_month}";
+// Fetch occurrences for the extended range and bucket them by day.
+$provider = new EventFeedProvider();
 
-// Build query arguments using QueryHelper (use extended range to include adjacent month days)
-$query_args = array(
-	'post_type'              => Settings::get_enabled_post_types(),
-	'posts_per_page'         => -1,
-	'post_status'            => $show_drafts ? array( 'publish', 'draft' ) : 'publish',
-	'fair_events_date_query' => array(
-		'start_before' => $query_end,
-		'end_after'    => $query_start,
-	),
-	'fair_events_order'      => 'ASC',
+$occurrences = $provider->get_occurrences(
+	$query_start,
+	$query_end,
+	array(
+		'categories'         => $categories,
+		'event_source_slugs' => is_array( $event_sources ) ? $event_sources : array(),
+		'include_drafts'     => $show_drafts,
+	)
 );
 
-// Add category filter if categories are selected
-if ( ! empty( $categories ) ) {
-	// phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_tax_query
-	$query_args['tax_query'] = array(
-		array(
-			'taxonomy'         => 'category',
-			'field'            => 'term_id',
-			'terms'            => $categories,
-			'include_children' => false,
-		),
-	);
-}
-
-// Hook in the QueryHelper filters
-add_filter( 'posts_join', array( 'FairEvents\\Helpers\\QueryHelper', 'join_dates_table' ), 10, 2 );
-add_filter( 'posts_where', array( 'FairEvents\\Helpers\\QueryHelper', 'filter_by_dates' ), 10, 2 );
-add_filter( 'posts_orderby', array( 'FairEvents\\Helpers\\QueryHelper', 'order_by_dates' ), 10, 2 );
-
-// Execute the query
-$events_query = new WP_Query( $query_args );
-
-// Remove the filters after the query is complete
-remove_filter( 'posts_join', array( 'FairEvents\\Helpers\\QueryHelper', 'join_dates_table' ), 10 );
-remove_filter( 'posts_where', array( 'FairEvents\\Helpers\\QueryHelper', 'filter_by_dates' ), 10 );
-remove_filter( 'posts_orderby', array( 'FairEvents\\Helpers\\QueryHelper', 'order_by_dates' ), 10 );
-
-// Fetch iCal events from selected event sources
-$all_ical_events    = array();
-$event_source_slugs = $event_sources; // Now contains array of slugs
-
-if ( ! empty( $event_source_slugs ) && is_array( $event_source_slugs ) ) {
-	$repository = new \FairEvents\Database\EventSourceRepository();
-
-	foreach ( $event_source_slugs as $slug ) {
-		// Skip if not a string (handles old format gracefully)
-		if ( ! is_string( $slug ) ) {
-			continue;
-		}
-
-		$source = $repository->get_by_slug( $slug );
-
-		// Skip disabled or non-existent sources
-		if ( ! $source || ! $source['enabled'] ) {
-			continue;
-		}
-
-		// Process each data source within the event source
-		foreach ( $source['data_sources'] as $data_source ) {
-			if ( 'ical_url' === $data_source['source_type'] ) {
-				$ical_feed_url   = $data_source['config']['url'] ?? '';
-				$ical_feed_color = $data_source['config']['color'] ?? '#4caf50';
-
-				if ( ! empty( $ical_feed_url ) ) {
-					$fetched_events  = ICalParser::fetch_and_parse( $ical_feed_url );
-					$filtered_events = ICalParser::filter_events_for_month( $fetched_events, $query_start, $query_end );
-
-					// Add color to each event
-					foreach ( $filtered_events as $event ) {
-						$event['source_color'] = $ical_feed_color;
-						$all_ical_events[]     = $event;
-					}
-				}
-			}
-
-			if ( 'fair_events_api' === $data_source['source_type'] ) {
-				$api_url   = $data_source['config']['url'] ?? '';
-				$api_color = $data_source['config']['color'] ?? '#4caf50';
-
-				if ( ! empty( $api_url ) ) {
-					// Extract date parts for API query
-					$api_start_date  = DateHelper::local_date( $query_start );
-					$api_end_date    = DateHelper::local_date( $query_end );
-					$fetched_events  = FairEventsApiParser::fetch_and_parse( $api_url, $api_start_date, $api_end_date );
-					$filtered_events = FairEventsApiParser::filter_events_for_month( $fetched_events, $query_start, $query_end );
-
-					// Add color and mark as external API event
-					foreach ( $filtered_events as $event ) {
-						$event['source_color'] = $api_color;
-						$event['is_fair_api']  = true;
-						$all_ical_events[]     = $event;
-					}
-				}
-			}
-		}
-	}
-}
-
-// Group events by date (handle multi-day events and recurring events for both local and iCal)
-$events_by_date   = array();
-$processed_events = array(); // Track processed event IDs to avoid duplicates from JOIN.
-if ( $events_query->have_posts() ) {
-	while ( $events_query->have_posts() ) {
-		$events_query->the_post();
-		$event_id = get_the_ID();
-
-		// Skip if we've already processed this event (JOIN returns duplicates).
-		if ( isset( $processed_events[ $event_id ] ) ) {
-			continue;
-		}
-		$processed_events[ $event_id ] = true;
-
-		// Get ALL occurrences for this event (supports recurring events).
-		$all_occurrences = EventDates::get_all_by_event_id( $event_id );
-		$has_multiple    = count( $all_occurrences ) > 1;
-
-		foreach ( $all_occurrences as $event_dates ) {
-			$start_date = DateHelper::local_date( $event_dates->start_datetime );
-			$end_date   = $event_dates->end_datetime
-				? DateHelper::local_date( $event_dates->end_datetime )
-				: $start_date;
-
-			// Add event to all days it spans.
-			$loop_date = $start_date;
-			while ( $loop_date <= $end_date ) {
-				if ( ! isset( $events_by_date[ $loop_date ] ) ) {
-					$events_by_date[ $loop_date ] = array();
-				}
-
-				$events_by_date[ $loop_date ][] = array(
-					'id'              => $event_id,
-					'event_date_id'   => $has_multiple ? (int) $event_dates->id : 0,
-					'occurrence_type' => $event_dates->occurrence_type,
-					'is_first_day'    => $loop_date === $start_date,
-					'is_last_day'     => $loop_date === $end_date,
-					'is_ical'         => false,
-					'title'           => get_the_title( $event_id ),
-					'permalink'       => $has_multiple
-						? add_query_arg( 'event_date', (int) $event_dates->id, get_permalink( $event_id ) )
-						: get_permalink( $event_id ),
-					'link_type'       => 'post',
-					'start_datetime'  => $event_dates->start_datetime,
-				);
-
-				$loop_date = DateHelper::next_date( $loop_date );
-			}
-		}
-	}
-}
-
-// Fetch standalone events (external/unlinked) for the calendar range.
-$standalone_events = EventDates::get_standalone_for_date_range( $query_start, $query_end, $categories );
-foreach ( $standalone_events as $event_dates ) {
-	$start_date = DateHelper::local_date( $event_dates->start_datetime );
-	$end_date   = $event_dates->end_datetime
-		? DateHelper::local_date( $event_dates->end_datetime )
-		: $start_date;
-
-	// Add event to all days it spans.
-	$loop_date = $start_date;
-	while ( $loop_date <= $end_date ) {
-		if ( ! isset( $events_by_date[ $loop_date ] ) ) {
-			$events_by_date[ $loop_date ] = array();
-		}
-
-		$events_by_date[ $loop_date ][] = array(
-			'id'             => 'standalone_' . $event_dates->id,
-			'is_first_day'   => $loop_date === $start_date,
-			'is_last_day'    => $loop_date === $end_date,
-			'is_ical'        => false,
-			'is_standalone'  => true,
-			'link_type'      => $event_dates->link_type,
-			'title'          => $event_dates->get_display_title(),
-			'permalink'      => $event_dates->get_display_url(),
-			'start_datetime' => $event_dates->start_datetime,
-		);
-
-		$loop_date = DateHelper::next_date( $loop_date );
-	}
-}
-
-// Process iCal events
-foreach ( $all_ical_events as $ical_event ) {
-	$start_date = DateHelper::local_date( $ical_event['start'] );
-	$end_date   = DateHelper::local_date( $ical_event['end'] );
-
-	// Add event to all days it spans
-	$loop_date = $start_date;
-	while ( $loop_date <= $end_date ) {
-		if ( ! isset( $events_by_date[ $loop_date ] ) ) {
-			$events_by_date[ $loop_date ] = array();
-		}
-
-		$events_by_date[ $loop_date ][] = array(
-			'id'             => 'ical_' . md5( $ical_event['uid'] ),
-			'is_first_day'   => $loop_date === $start_date,
-			'is_last_day'    => $loop_date === $end_date,
-			'is_ical'        => true,
-			'title'          => $ical_event['summary'],
-			'permalink'      => $ical_event['url'],
-			'description'    => $ical_event['description'],
-			'color'          => $ical_event['source_color'],
-			'start_datetime' => $ical_event['start'],
-		);
-
-		$loop_date = DateHelper::next_date( $loop_date );
-	}
-}
-
-wp_reset_postdata();
-
-// Sort events within each day by start time.
-foreach ( $events_by_date as &$day_event_list ) {
-	usort(
-		$day_event_list,
-		static function ( $a, $b ) {
-			return strcmp( $a['start_datetime'] ?? '', $b['start_datetime'] ?? '' );
-		}
-	);
-}
-unset( $day_event_list );
+$events_by_date = EventFeedProvider::group_by_day( $occurrences, $query_start, $query_end );
 
 // Calculate previous/next month URLs
 $prev_month_timestamp = strtotime( '-1 month', $first_day_of_month_ts );
@@ -575,8 +270,8 @@ $today = current_time( 'Y-m-d' );
 
 				<?php if ( ! empty( $day_events ) ) : ?>
 				<div class="day-events">
-					<?php foreach ( $day_events as $event_data ) : ?>
-						<?php fair_events_render_calendar_event_item( $event_data, $bg_color_value, $text_color_value ); ?>
+					<?php foreach ( $day_events as $occurrence ) : ?>
+						<?php fair_events_render_calendar_event_item( $occurrence, $bg_color_value, $text_color_value ); ?>
 					<?php endforeach; ?>
 				</div>
 				<?php endif; ?>
@@ -612,8 +307,8 @@ $today = current_time( 'Y-m-d' );
 
 				<?php if ( ! empty( $day_events ) ) : ?>
 				<div class="day-events">
-					<?php foreach ( $day_events as $event_data ) : ?>
-						<?php fair_events_render_calendar_event_item( $event_data, $bg_color_value, $text_color_value ); ?>
+					<?php foreach ( $day_events as $occurrence ) : ?>
+						<?php fair_events_render_calendar_event_item( $occurrence, $bg_color_value, $text_color_value ); ?>
 					<?php endforeach; ?>
 				</div>
 				<?php endif; ?>
@@ -648,8 +343,8 @@ $today = current_time( 'Y-m-d' );
 
 				<?php if ( ! empty( $day_events ) ) : ?>
 				<div class="day-events">
-					<?php foreach ( $day_events as $event_data ) : ?>
-						<?php fair_events_render_calendar_event_item( $event_data, $bg_color_value, $text_color_value ); ?>
+					<?php foreach ( $day_events as $occurrence ) : ?>
+						<?php fair_events_render_calendar_event_item( $occurrence, $bg_color_value, $text_color_value ); ?>
 					<?php endforeach; ?>
 				</div>
 				<?php endif; ?>
