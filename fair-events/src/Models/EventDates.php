@@ -435,9 +435,10 @@ class EventDates {
 			'start_datetime' => $start,
 			'end_datetime'   => $end,
 			'all_day'        => $all_day ? 1 : 0,
+			'link_type'      => 'post',
 		);
 
-		$format = array( '%d', '%s', '%s', '%d' );
+		$format = array( '%d', '%s', '%s', '%d', '%s' );
 
 		if ( $existing ) {
 			// Update existing record.
