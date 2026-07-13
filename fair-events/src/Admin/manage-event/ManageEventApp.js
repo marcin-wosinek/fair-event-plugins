@@ -1219,27 +1219,14 @@ export default function ManageEventApp() {
 			<h1>
 				{__('Manage Event', 'fair-events')}
 				{': '}
-				{eventDate.display_url ? (
-					<a
-						href={eventDate.display_url}
-						target="_blank"
-						rel="noreferrer"
-						style={{
-							color: 'inherit',
-							textDecoration: 'none',
-							borderBottom: '1px dotted currentColor',
-						}}
-					>
-						{getEventDisplayTitle(title)}
-					</a>
-				) : (
-					getEventDisplayTitle(title)
-				)}
+				{getEventDisplayTitle(title)}
 			</h1>
 
 			<EventContextHeader
 				eventDate={eventDate}
 				manageEventUrl={manageEventUrl}
+				calendarUrl={calendarUrl}
+				venues={venues}
 			/>
 
 			{error && (
@@ -1282,12 +1269,6 @@ export default function ManageEventApp() {
 					return descriptor ? descriptor.render(ctx) : null;
 				}}
 			</TabPanel>
-
-			<HStack spacing={2} style={{ marginTop: '16px' }}>
-				<Button variant="secondary" href={calendarUrl}>
-					{__('Back to Calendar', 'fair-events')}
-				</Button>
-			</HStack>
 
 			<ConfirmDialog
 				isOpen={deleteDialogOpen}

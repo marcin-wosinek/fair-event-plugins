@@ -58,3 +58,16 @@ export function formatSiteLocalDatetime(datetime) {
 	const { formats } = getSettings();
 	return dateI18n(formats.datetime, `${datetime.replace(' ', 'T')}Z`, true);
 }
+
+/**
+ * Same naive-local convention as formatSiteLocalDatetime, but formats only
+ * the time portion (e.g. for showing an end time next to an already-printed
+ * start date).
+ *
+ * @param {string} datetime Naive datetime string, e.g. "2026-09-01 10:00:00".
+ * @return {string} Formatted time in the site's format.
+ */
+export function formatSiteLocalTime(datetime) {
+	const { formats } = getSettings();
+	return dateI18n(formats.time, `${datetime.replace(' ', 'T')}Z`, true);
+}

@@ -223,7 +223,11 @@ describe('context header (#986)', () => {
 
 		expect(
 			screen.getByText(
-				formatSiteLocalDatetime(mockEventDate.start_datetime)
+				new RegExp(
+					formatSiteLocalDatetime(
+						mockEventDate.start_datetime
+					).replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
+				)
 			)
 		).toBeInTheDocument();
 		expect(screen.queryByText(/Recurring series/)).not.toBeInTheDocument();
