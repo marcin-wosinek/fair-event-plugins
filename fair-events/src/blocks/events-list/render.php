@@ -373,6 +373,8 @@ if ( ! empty( $event_source_slugs ) && is_array( $event_source_slugs ) ) {
 				$standalone      = $event_data['event_date'];
 				if ( 'external' === $standalone->link_type ) {
 					$event_classes[] = 'is-external';
+				} elseif ( $standalone->get_display_url() ) {
+					$event_classes[] = 'is-linked-post';
 				} else {
 					$event_classes[] = 'is-unlinked';
 				}

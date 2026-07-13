@@ -370,7 +370,8 @@ class PublicEventsController extends WP_REST_Controller {
 				{$wpdb->posts}.post_title,
 				{$wpdb->posts}.post_content,
 				{$wpdb->posts}.post_excerpt,
-				{$wpdb->posts}.post_status
+				{$wpdb->posts}.post_status,
+				NULL as master_event_id
 			FROM {$dates_table}
 			INNER JOIN {$wpdb->posts} ON {$dates_table}.event_id = {$wpdb->posts}.ID
 			WHERE {$post_where_clause})
@@ -388,7 +389,8 @@ class PublicEventsController extends WP_REST_Controller {
 				NULL as post_title,
 				NULL as post_content,
 				NULL as post_excerpt,
-				NULL as post_status
+				NULL as post_status,
+				master_dates.event_id as master_event_id
 			FROM {$dates_table}
 			LEFT JOIN {$dates_table} master_dates ON {$dates_table}.master_id = master_dates.id
 			WHERE {$standalone_where_clause})
@@ -419,7 +421,21 @@ class PublicEventsController extends WP_REST_Controller {
 	private function format_occurrence( $row ) {
 		$start_datetime = $row->start_datetime;
 		$end_datetime   = $row->end_datetime ?: $start_datetime;
-		$is_standalone  = empty( $row->event_id ) || ( isset( $row->post_status ) && 'publish' !== $row->post_status );
+
+		// Generated occurrences of a post-linked recurring event don't carry
+		// their own event_id (see EventDates::resolve_instance()); resolve
+		// through the master's event_id so they behave like post-linked rows.
+		$resolved_event_id   = $row->event_id;
+		$resolved_via_master = false;
+		$master_post         = null;
+		if ( empty( $resolved_event_id ) && isset( $row->link_type ) && 'post' === $row->link_type && ! empty( $row->master_event_id ) ) {
+			$resolved_event_id   = $row->master_event_id;
+			$resolved_via_master = true;
+			$master_post         = get_post( $resolved_event_id );
+		}
+
+		$post_status   = $resolved_via_master ? ( $master_post ? $master_post->post_status : null ) : $row->post_status;
+		$is_standalone = empty( $resolved_event_id ) || ( isset( $post_status ) && 'publish' !== $post_status );
 
 		// Determine if all-day event.
 		$all_day = (bool) $row->all_day;
@@ -433,7 +449,13 @@ class PublicEventsController extends WP_REST_Controller {
 		// Get excerpt or truncated content.
 		$description = '';
 		if ( ! $is_standalone ) {
-			if ( ! empty( $row->post_excerpt ) ) {
+			if ( $resolved_via_master ) {
+				if ( has_excerpt( $resolved_event_id ) ) {
+					$description = get_the_excerpt( $resolved_event_id );
+				} elseif ( $master_post && $master_post->post_content ) {
+					$description = wp_trim_words( wp_strip_all_tags( $master_post->post_content ), 30 );
+				}
+			} elseif ( ! empty( $row->post_excerpt ) ) {
 				$description = $row->post_excerpt;
 			} elseif ( ! empty( $row->post_content ) ) {
 				$description = wp_trim_words( wp_strip_all_tags( $row->post_content ), 30 );
@@ -452,15 +474,15 @@ class PublicEventsController extends WP_REST_Controller {
 				$url = $row->external_url;
 			}
 		} else {
-			$uid   = 'fair_event_' . $row->event_id . '_' . $row->occurrence_id . '@' . $site_host;
-			$title = $row->post_title;
-			$url   = add_query_arg( 'event_date', (int) $row->occurrence_id, get_permalink( $row->event_id ) );
+			$uid   = 'fair_event_' . $resolved_event_id . '_' . $row->occurrence_id . '@' . $site_host;
+			$title = $resolved_via_master ? get_the_title( $resolved_event_id ) : $row->post_title;
+			$url   = add_query_arg( 'event_date', (int) $row->occurrence_id, get_permalink( $resolved_event_id ) );
 		}
 
 		// Get categories.
 		$categories = array();
-		if ( ! $is_standalone && $row->event_id ) {
-			$terms = wp_get_post_terms( $row->event_id, 'category' );
+		if ( ! $is_standalone && $resolved_event_id ) {
+			$terms = wp_get_post_terms( $resolved_event_id, 'category' );
 			if ( ! is_wp_error( $terms ) ) {
 				foreach ( $terms as $term ) {
 					$categories[] = array(

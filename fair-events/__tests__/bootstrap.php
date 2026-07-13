@@ -41,3 +41,15 @@ if ( ! function_exists( 'get_option' ) ) {
 		return array_key_exists( $name, $options ) ? $options[ $name ] : $default_value;
 	}
 }
+
+if ( ! function_exists( 'get_permalink' ) ) {
+	/**
+	 * Stub of WordPress get_permalink() — deterministic URL from a post ID.
+	 *
+	 * @param int $post_id Post ID.
+	 * @return string Fake permalink.
+	 */
+	function get_permalink( $post_id ) {
+		return 'https://example.com/?p=' . (int) $post_id;
+	}
+}

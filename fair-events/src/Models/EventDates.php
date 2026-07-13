@@ -603,12 +603,40 @@ class EventDates {
 			case 'external':
 				return $this->external_url;
 			case 'post':
-				return $this->event_id ? get_permalink( $this->event_id ) : null;
+				if ( $this->event_id ) {
+					return get_permalink( $this->event_id );
+				}
+				$master_event_id = $this->get_master_event_id();
+				return $master_event_id ? get_permalink( $master_event_id ) : null;
 			case 'none':
 			default:
 				$linked_post_id = $this->get_primary_linked_post_id();
 				return $linked_post_id ? get_permalink( $linked_post_id ) : null;
 		}
+	}
+
+	/**
+	 * Get the linked post ID for a generated occurrence's master row
+	 *
+	 * Generated occurrences don't inherit `event_id` from the master (see
+	 * resolve_instance()), so a `link_type = 'post'` occurrence with no
+	 * `event_id` of its own needs to look up the master's `event_id` directly.
+	 *
+	 * @return int|null Master's event_id, or null if not a generated occurrence
+	 *                   or the master has no linked post.
+	 */
+	private function get_master_event_id() {
+		if ( 'generated' !== $this->occurrence_type || ! $this->master_id ) {
+			return null;
+		}
+
+		if ( ! isset( self::$master_cache[ $this->master_id ] ) ) {
+			self::$master_cache[ $this->master_id ] = self::get_by_id( $this->master_id );
+		}
+
+		$master = self::$master_cache[ $this->master_id ];
+
+		return $master ? $master->event_id : null;
 	}
 
 	/**
