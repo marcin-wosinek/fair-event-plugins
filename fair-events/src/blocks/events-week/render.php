@@ -301,14 +301,25 @@ if ( $show_copy_summary ) {
 	</div>
 
 	<?php if ( $show_copy_summary && '' !== $summary_text ) : ?>
-	<div class="fair-events-copy-summary">
+	<div class="fair-events-copy-summary"
+		data-wp-interactive="fair-events/copy-summary"
+		<?php
+		echo wp_interactivity_data_wp_context( // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- self-escaping (JSON-encodes and esc_attr()'s internally).
+			array(
+				'copied'      => false,
+				'summary'     => $summary_text,
+				'copyLabel'   => __( 'Copy summary', 'fair-events' ),
+				'copiedLabel' => '✓',
+			)
+		);
+		?>
+	>
 		<button
 			class="fair-events-copy-summary-btn"
-			data-summary="<?php echo esc_attr( $summary_text ); ?>"
 			type="button"
-		>
-			<?php esc_html_e( 'Copy summary', 'fair-events' ); ?>
-		</button>
+			data-wp-on--click="actions.copy"
+			data-wp-text="state.label"
+		></button>
 	</div>
 	<?php endif; ?>
 

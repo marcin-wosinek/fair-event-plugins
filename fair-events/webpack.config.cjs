@@ -1,8 +1,21 @@
-const defaultConfig = require("@wordpress/scripts/config/webpack.config");
+// viewScriptModule (events-week's Interactivity API store) only builds when
+// this experimental flag is on — wp-scripts otherwise silently ignores it
+// and returns a single scriptConfig instead of [scriptConfig, moduleConfig].
+process.env.WP_EXPERIMENTAL_MODULES =
+  process.env.WP_EXPERIMENTAL_MODULES || "true";
+
+const raw = require("@wordpress/scripts/config/webpack.config");
 const path = require("path");
 const BundleOutputPlugin = require("webpack-bundle-output");
 
-module.exports = {
+// A block.json with a "module" field (e.g. viewScriptModule) flips
+// wp-scripts into a dual [scriptConfig, moduleConfig] export — moduleConfig
+// auto-discovers module entries (like events-week's view.js) from block.json,
+// so it's passed through as-is. Only the classic scriptConfig gets our
+// explicit entry map and BundleOutputPlugin.
+const [defaultConfig, moduleConfig] = Array.isArray(raw) ? raw : [raw, null];
+
+const scriptConfig = {
   ...defaultConfig,
   entry: {
     "blocks/event-dates/editor": path.resolve(
@@ -20,10 +33,6 @@ module.exports = {
     "blocks/events-week/editor": path.resolve(
       process.cwd(),
       "src/blocks/events-week/editor.js",
-    ),
-    "blocks/events-week/frontend": path.resolve(
-      process.cwd(),
-      "src/blocks/events-week/frontend.js",
     ),
 "blocks/event-proposal/editor": path.resolve(
       process.cwd(),
@@ -82,3 +91,5 @@ module.exports = {
     }),
   ],
 };
+
+module.exports = moduleConfig ? [scriptConfig, moduleConfig] : scriptConfig;
