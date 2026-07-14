@@ -66,6 +66,17 @@ if ( ! function_exists( 'get_the_title' ) ) {
 	}
 }
 
+if ( ! function_exists( 'wp_timezone' ) ) {
+	/**
+	 * Stub of WordPress wp_timezone() — always UTC for deterministic tests.
+	 *
+	 * @return \DateTimeZone UTC timezone.
+	 */
+	function wp_timezone() {
+		return new \DateTimeZone( 'UTC' );
+	}
+}
+
 if ( ! function_exists( 'add_query_arg' ) ) {
 	/**
 	 * Minimal stub of WordPress add_query_arg() for a single key/value pair.

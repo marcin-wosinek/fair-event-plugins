@@ -17,6 +17,7 @@
 defined( 'WPINC' ) || die;
 
 use FairEvents\Helpers\DateHelper;
+use FairEvents\Helpers\EventSchema;
 use FairEvents\Services\EventFeedProvider;
 use FairEvents\Settings\Settings;
 
@@ -131,6 +132,8 @@ $occurrences = $provider->get_occurrences(
 );
 
 $occurrences_by_date = EventFeedProvider::group_by_day( $occurrences, $week_start, $week_end );
+
+$item_list = EventSchema::item_list_from_occurrences( $occurrences );
 
 // Map each day's occurrence DTOs to the shape the template renders.
 $events_by_date = array();
@@ -311,3 +314,9 @@ if ( $show_copy_summary ) {
 	<?php endif; ?>
 
 </div>
+<?php if ( null !== $item_list ) : ?>
+	<script type="application/ld+json">
+	<?php echo wp_json_encode( $item_list, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT ); ?>
+
+	</script>
+<?php endif; ?>
