@@ -157,6 +157,74 @@ test.describe('EventDatesController — standalone category copy on first link',
 	});
 });
 
+test.describe('EventDatesController — create_item with categories + rrule (quick add)', () => {
+	let api;
+	let categoryId;
+	let masterEventDateId;
+
+	test.beforeAll(async () => {
+		api = await request.newContext({ baseURL: BASE_URL });
+
+		const catRes = await api.post('/wp-json/wp/v2/categories', {
+			headers: adminHeaders,
+			data: { name: `Quick Add Cat ${Date.now()}` },
+		});
+		expect(catRes.ok()).toBeTruthy();
+		categoryId = (await catRes.json()).id;
+	});
+
+	test.afterEach(async () => {
+		if (masterEventDateId) {
+			await api.delete(
+				`/wp-json/fair-events/v1/event-dates/${masterEventDateId}`,
+				{ headers: adminHeaders }
+			);
+			masterEventDateId = null;
+		}
+	});
+
+	test.afterAll(async () => {
+		if (categoryId) {
+			await api.delete(
+				`/wp-json/wp/v2/categories/${categoryId}?force=true`,
+				{ headers: adminHeaders }
+			);
+		}
+	});
+
+	test('a standalone create with categories + rrule generates occurrences that all carry the categories', async () => {
+		const res = await api.post('/wp-json/fair-events/v1/event-dates', {
+			headers: adminHeaders,
+			data: {
+				title: `Quick add ${Date.now()}`,
+				start_datetime: '2036-01-01 10:00:00',
+				end_datetime: '2036-01-01 12:00:00',
+				link_type: 'none',
+				categories: [categoryId],
+				rrule: 'FREQ=WEEKLY;COUNT=3',
+			},
+		});
+		expect(res.ok()).toBeTruthy();
+		const body = await res.json();
+		masterEventDateId = body.id;
+
+		expect(body.occurrence_type).toBe('master');
+		expect(body.rrule).toBe('FREQ=WEEKLY;COUNT=3');
+		expect(body.generated_occurrences.length).toBe(2);
+		expect(body.categories.map((c) => c.id)).toContain(categoryId);
+
+		for (const occ of body.generated_occurrences) {
+			const occRes = await api.get(
+				`/wp-json/fair-events/v1/event-dates/${occ.id}`,
+				{ headers: adminHeaders }
+			);
+			expect(occRes.ok()).toBeTruthy();
+			const occBody = await occRes.json();
+			expect(occBody.categories.map((c) => c.id)).toContain(categoryId);
+		}
+	});
+});
+
 test.describe('EventDatesController — recurrence reconciliation', () => {
 	let api;
 	let masterEventDateId;
