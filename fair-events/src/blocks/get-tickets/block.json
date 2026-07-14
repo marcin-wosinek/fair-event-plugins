@@ -1,11 +1,14 @@
 {
 	"apiVersion": 3,
 	"name": "fair-events/get-tickets",
-	"title": "Get Tickets",
+	"title": "Get Tickets (legacy)",
 	"category": "widgets",
 	"icon": "tickets-alt",
-	"description": "Allow users to purchase tickets for an event date",
+	"description": "Legacy signup block. Superseded by Event Signup — transform existing instances to fair-events/event-signup.",
 	"textdomain": "fair-events",
+	"supports": {
+		"inserter": false
+	},
 	"attributes": {
 		"eventDateId": {
 			"type": "integer",
@@ -18,7 +21,5 @@
 	},
 	"editorScript": "file:./editor.js",
 	"editorStyle": "file:./editor.css",
-	"viewScript": "file:./frontend.js",
-	"style": ["wp-block-button", "file:./frontend.css"],
 	"render": "file:./render.php"
 }

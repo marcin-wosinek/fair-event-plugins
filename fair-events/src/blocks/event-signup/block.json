@@ -1,0 +1,60 @@
+{
+	"apiVersion": 3,
+	"name": "fair-events/event-signup",
+	"title": "Event Signup",
+	"category": "widgets",
+	"icon": "tickets-alt",
+	"description": "Let visitors sign up or get tickets for an event date. Extends to a participant-aware flow when fair-audience is active.",
+	"textdomain": "fair-events",
+	"supports": {
+		"html": false,
+		"align": ["wide", "full"],
+		"spacing": {
+			"padding": true,
+			"margin": ["top", "bottom"]
+		}
+	},
+	"attributes": {
+		"eventDateId": {
+			"type": "integer",
+			"default": 0
+		},
+		"submitButtonText": {
+			"type": "string",
+			"default": "Get Tickets"
+		},
+		"signupButtonText": {
+			"type": "string",
+			"default": "Sign Up"
+		},
+		"registerButtonText": {
+			"type": "string",
+			"default": "Register & Sign Up"
+		},
+		"requestLinkButtonText": {
+			"type": "string",
+			"default": "Send Signup Link"
+		},
+		"successMessage": {
+			"type": "string",
+			"default": "You have successfully signed up for the event!"
+		},
+		"showOptionPrices": {
+			"type": "boolean",
+			"default": true
+		},
+		"showTicketTypePrices": {
+			"type": "boolean",
+			"default": true
+		},
+		"showInviterName": {
+			"type": "boolean",
+			"default": false
+		}
+	},
+	"editorScript": "file:./editor.js",
+	"editorStyle": "file:./editor.css",
+	"viewScript": "file:./frontend.js",
+	"style": ["wp-block-button", "file:./frontend.css"],
+	"render": "file:./render.php"
+}
