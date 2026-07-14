@@ -477,7 +477,25 @@ export default function ManageEventApp() {
 		);
 	}, [eventDate]);
 
+	const isSeries =
+		!!eventDate?.rrule || eventDate?.recurrence_mode === 'manual';
+
 	const seriesSummary = useMemo(() => {
+		if (eventDate?.recurrence_mode === 'manual') {
+			const dateCount =
+				(eventDate.generated_occurrences?.length || 0) + 1;
+			return sprintf(
+				/* translators: %d: number of dates in the series */
+				_n(
+					'Irregular series · %d date',
+					'Irregular series · %d dates',
+					dateCount,
+					'fair-events'
+				),
+				dateCount
+			);
+		}
+
 		if (!eventDate?.rrule) return null;
 
 		const parsed = parseRRule(eventDate.rrule);
@@ -1004,14 +1022,14 @@ export default function ManageEventApp() {
 							<VStack spacing={4}>
 								<HStack alignment="center" wrap>
 									<span>
-										{eventDate.rrule
+										{isSeries
 											? seriesSummary
 											: __(
 													'This event happens once.',
 													'fair-events'
 											  )}
 									</span>
-									{eventDate.rrule ? (
+									{isSeries ? (
 										<>
 											<Button
 												variant="secondary"
@@ -1431,7 +1449,9 @@ export default function ManageEventApp() {
 				<SeriesModal
 					eventDateId={eventDateId}
 					initialRrule={eventDate.rrule}
+					initialRecurrenceMode={eventDate.recurrence_mode}
 					startDatetime={eventDate.start_datetime}
+					generatedOccurrences={eventDate.generated_occurrences}
 					onClose={() => setSeriesModalOpen(false)}
 					onSaved={handleSeriesSaved}
 					onImpact={handleSeriesImpact}

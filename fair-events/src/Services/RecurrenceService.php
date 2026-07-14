@@ -346,6 +346,96 @@ class RecurrenceService {
 	}
 
 	/**
+	 * Build the {start,end} occurrence set for a hand-picked list of dates.
+	 *
+	 * Pure — no DB access. Each date takes the reference row's time-of-day
+	 * and duration (mirrors the RRULE path's duration handling in
+	 * generate_occurrences()). Dates are deduplicated and sorted ascending
+	 * so the first is always the earliest.
+	 *
+	 * @param string   $reference_start Reference start datetime (Y-m-d H:i:s) —
+	 *                                  supplies time-of-day and duration.
+	 * @param string   $reference_end   Reference end datetime (Y-m-d H:i:s).
+	 * @param string[] $dates           Occurrence dates (Y-m-d), any order, may contain duplicates.
+	 * @return array Array of occurrences with 'start' and 'end' keys, sorted ascending.
+	 */
+	public static function build_manual_occurrences( $reference_start, $reference_end, array $dates ) {
+		$dates = array_values( array_unique( $dates ) );
+		sort( $dates );
+
+		if ( empty( $dates ) ) {
+			return array();
+		}
+
+		$start    = new \DateTime( $reference_start );
+		$end      = new \DateTime( $reference_end );
+		$duration = $start->diff( $end );
+		$time     = $start->format( 'H:i:s' );
+
+		$occurrences = array();
+		foreach ( $dates as $date ) {
+			$occ_start     = new \DateTime( $date . ' ' . $time );
+			$occ_end       = ( clone $occ_start )->add( $duration );
+			$occurrences[] = array(
+				'start' => $occ_start->format( 'Y-m-d\TH:i:s' ),
+				'end'   => $occ_end->format( 'Y-m-d\TH:i:s' ),
+			);
+		}
+
+		return $occurrences;
+	}
+
+	/**
+	 * Set a series to a hand-picked (manual) list of occurrence dates.
+	 *
+	 * Uses reconcile_occurrences() so existing row IDs are preserved when
+	 * dates shift, same as the RRULE paths above. The earliest date becomes
+	 * the master; when only one date remains, the series collapses to a
+	 * plain 'none' single occurrence rather than a one-item manual series.
+	 *
+	 * @param int      $master_id Master (or single) event date row ID.
+	 * @param string[] $dates     Occurrence dates (Y-m-d).
+	 * @return int Number of occurrences set (master + surviving children).
+	 */
+	public static function set_manual_occurrences( $master_id, array $dates ) {
+		$master = EventDates::get_by_id( $master_id );
+
+		if ( ! $master ) {
+			return 0;
+		}
+
+		$occurrences = self::build_manual_occurrences( $master->start_datetime, $master->end_datetime, $dates );
+
+		if ( empty( $occurrences ) ) {
+			return 0;
+		}
+
+		$is_single = 1 === count( $occurrences );
+		$first     = $occurrences[0];
+
+		EventDates::update_by_id(
+			$master_id,
+			array(
+				'occurrence_type'   => $is_single ? 'single' : 'master',
+				'rrule'             => null,
+				'recurrence_mode'   => $is_single ? 'none' : 'manual',
+				'start_datetime'    => $first['start'],
+				'end_datetime'      => $first['end'],
+				'recurrence_anchor' => ( new \DateTime( $first['start'] ) )->format( 'Y-m-d' ),
+			)
+		);
+
+		// Inheritable fields are NOT propagated here — see regenerate_event_occurrences().
+		$generated = array_slice( $occurrences, 1 );
+		return 1 + self::reconcile_occurrences(
+			$master_id,
+			$generated,
+			$master->all_day,
+			array( 'event_id' => $master->event_id )
+		);
+	}
+
+	/**
 	 * Reconcile generated occurrences for a series against the desired set.
 	 *
 	 * Matches desired occurrences to existing generated rows (active or

@@ -118,4 +118,52 @@ class RecurrenceServiceTest extends TestCase {
 		$this->assertContains( '2035-03-01', $starts );
 		$this->assertContains( '2035-03-15', $starts );
 	}
+
+	// -----------------------------------------------------------------------
+	// build_manual_occurrences — pure, no DB
+	// -----------------------------------------------------------------------
+
+	/**
+	 * Dates are sorted ascending regardless of input order, each taking the
+	 * reference row's time-of-day and duration.
+	 */
+	public function test_build_manual_occurrences_sorts_and_applies_time_and_duration() {
+		$occurrences = RecurrenceService::build_manual_occurrences(
+			'2035-03-01 10:00:00',
+			'2035-03-01 12:00:00',
+			array( '2035-03-15', '2035-03-01', '2035-03-08' )
+		);
+
+		$this->assertCount( 3, $occurrences );
+		$this->assertSame( '2035-03-01T10:00:00', $occurrences[0]['start'] );
+		$this->assertSame( '2035-03-01T12:00:00', $occurrences[0]['end'] );
+		$this->assertSame( '2035-03-08T10:00:00', $occurrences[1]['start'] );
+		$this->assertSame( '2035-03-15T10:00:00', $occurrences[2]['start'] );
+	}
+
+	/**
+	 * Duplicate dates are collapsed to a single occurrence.
+	 */
+	public function test_build_manual_occurrences_deduplicates() {
+		$occurrences = RecurrenceService::build_manual_occurrences(
+			'2035-03-01 10:00:00',
+			'2035-03-01 12:00:00',
+			array( '2035-03-01', '2035-03-01' )
+		);
+
+		$this->assertCount( 1, $occurrences );
+	}
+
+	/**
+	 * An empty date list produces no occurrences (caller falls back / no-ops).
+	 */
+	public function test_build_manual_occurrences_empty_list() {
+		$occurrences = RecurrenceService::build_manual_occurrences(
+			'2035-03-01 10:00:00',
+			'2035-03-01 12:00:00',
+			array()
+		);
+
+		$this->assertSame( array(), $occurrences );
+	}
 }
