@@ -407,6 +407,34 @@ class PaymentHooks {
 	}
 
 	/**
+	 * Resolve the event_participant row(s) a transaction was charged
+	 * against, via the ledger (source of truth) — falling back to the
+	 * mutable event_participants.transaction_id column only for rows
+	 * created before the ledger was populated at creation time (#1112).
+	 *
+	 * @param EventParticipantRepository            $repo           Event participant repository.
+	 * @param EventParticipantTransactionRepository $ledger         Ledger repository.
+	 * @param int                                   $transaction_id fair-payments-connector transaction ID.
+	 * @return object[] EventParticipant rows.
+	 */
+	private static function resolve_event_participants_for_transaction( $repo, $ledger, $transaction_id ) {
+		$event_participant_ids = $ledger->get_event_participant_ids_by_transaction_id( $transaction_id );
+
+		if ( ! empty( $event_participant_ids ) ) {
+			$event_participants = array();
+			foreach ( $event_participant_ids as $event_participant_id ) {
+				$event_participant = $repo->get_by_id( $event_participant_id );
+				if ( $event_participant ) {
+					$event_participants[] = $event_participant;
+				}
+			}
+			return $event_participants;
+		}
+
+		return $repo->get_all_by_transaction_id( $transaction_id );
+	}
+
+	/**
 	 * Flip a pending_payment event_participant row to signed_up when Mollie
 	 * confirms the payment.
 	 *
@@ -419,18 +447,18 @@ class PaymentHooks {
 			return;
 		}
 
-		$repo = new EventParticipantRepository();
+		$repo   = new EventParticipantRepository();
+		$ledger = new EventParticipantTransactionRepository();
 
-		// A 'multiple_instances' ticket-type purchase creates one pending_payment
-		// row per chosen occurrence, all sharing this transaction; every other
-		// signup path creates exactly one row. Flip every matching row so all
-		// occurrences confirm together.
-		$event_participants = $repo->get_all_by_transaction_id( (int) $transaction->id );
+		// Resolve via the ledger (source of truth): a later attempt may have
+		// re-pointed the row's transaction_id column away from this paid
+		// transaction (see #1112). A 'multiple_instances' purchase links
+		// several rows to the same transaction; every other signup path
+		// links exactly one.
+		$event_participants = self::resolve_event_participants_for_transaction( $repo, $ledger, (int) $transaction->id );
 		if ( empty( $event_participants ) ) {
 			return;
 		}
-
-		$ledger = new EventParticipantTransactionRepository();
 
 		$confirmation_participant = null;
 		foreach ( $event_participants as $event_participant ) {
@@ -480,13 +508,14 @@ class PaymentHooks {
 			return;
 		}
 
-		$repo = new EventParticipantRepository();
+		$repo   = new EventParticipantRepository();
+		$ledger = new EventParticipantTransactionRepository();
 
 		// See handle_signup_paid(): a 'multiple_instances' purchase shares one
 		// transaction across several rows. Fire the action once, using the
 		// first still-pending row, so the resume-link email is sent a single
 		// time regardless of how many occurrences were selected.
-		$event_participants = $repo->get_all_by_transaction_id( (int) $transaction->id );
+		$event_participants = self::resolve_event_participants_for_transaction( $repo, $ledger, (int) $transaction->id );
 		foreach ( $event_participants as $event_participant ) {
 			if ( 'pending_payment' !== $event_participant->label ) {
 				continue;

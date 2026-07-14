@@ -1038,11 +1038,15 @@ class EventSignupController extends WP_REST_Controller {
 			return $transaction_id;
 		}
 
+		$ledger = new EventParticipantTransactionRepository();
 		foreach ( $event_participant_ids as $ep_id ) {
 			$ep = $this->event_participant_repository->get_by_id( $ep_id );
 			if ( $ep ) {
 				$ep->transaction_id = (int) $transaction_id;
 				$ep->save();
+
+				// One ledger row per occurrence row, all sharing this transaction.
+				$ledger->record( (int) $ep->id, (int) $transaction_id, 'charge' );
 			}
 		}
 
@@ -1311,6 +1315,10 @@ class EventSignupController extends WP_REST_Controller {
 		if ( is_wp_error( $transaction_id ) ) {
 			return $transaction_id;
 		}
+
+		// Also closes a secondary gap: add-on charges never recorded to the
+		// ledger, so payment history for the registration was missing them.
+		( new EventParticipantTransactionRepository() )->record( (int) $event_participant->id, (int) $transaction_id, 'charge' );
 
 		$redirect_url = add_query_arg(
 			array(
@@ -2060,6 +2068,11 @@ class EventSignupController extends WP_REST_Controller {
 		$event_participant->transaction_id = (int) $transaction_id;
 		$event_participant->save();
 
+		// Record the ledger link at creation time, not just on webhook
+		// confirmation — a later attempt re-pointing this row's transaction_id
+		// column must not orphan this charge (see #1112).
+		( new EventParticipantTransactionRepository() )->record( (int) $event_participant->id, (int) $transaction_id, 'charge' );
+
 		$redirect_url = add_query_arg(
 			array(
 				'fair_payment_callback' => 'true',
@@ -2147,6 +2160,9 @@ class EventSignupController extends WP_REST_Controller {
 		// Backfill: rows created before the ledger existed only record their
 		// original charge in the row's own transaction_id column. Seed it so the
 		// difference is computed against what was actually paid.
+		// TODO (W30): now that every creation site records the ledger link
+		// up front (#1112), this seed is redundant for new rows — remove once
+		// #1113 drops event_participants.transaction_id.
 		if ( $existing->transaction_id ) {
 			$ledger->record( (int) $existing->id, (int) $existing->transaction_id, 'charge' );
 		}
@@ -2214,6 +2230,8 @@ class EventSignupController extends WP_REST_Controller {
 		if ( is_wp_error( $transaction_id ) ) {
 			return $transaction_id;
 		}
+
+		$ledger->record( (int) $existing->id, (int) $transaction_id, 'charge' );
 
 		// Deliberately do NOT touch $existing here: the seat and original payment
 		// remain valid whether or not the upgrade payment completes.
@@ -2591,6 +2609,11 @@ class EventSignupController extends WP_REST_Controller {
 
 		$event_participant->transaction_id = (int) $new_transaction_id;
 		$event_participant->save();
+
+		// Record the ledger link at creation time: this retry re-points the
+		// row's transaction_id column, so the ledger is the only place that
+		// still remembers the prior attempt's charge (see #1112).
+		( new EventParticipantTransactionRepository() )->record( (int) $event_participant->id, (int) $new_transaction_id, 'charge' );
 
 		$redirect_url = add_query_arg(
 			array(
