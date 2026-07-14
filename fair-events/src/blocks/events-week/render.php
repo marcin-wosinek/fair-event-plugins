@@ -53,8 +53,11 @@ if ( ! function_exists( 'fair_events_get_week_boundaries' ) ) {
 	function fair_events_get_week_boundaries( $year, $week, $start_of_week ) {
 		$date = new DateTime();
 		$date->setISODate( $year, $week );
-		if ( 0 === $start_of_week ) {
-			$date->modify( '-1 day' );
+		// setISODate() lands on the Monday (weekday 1). Step back to whichever
+		// weekday start_of_week configures (0 = Sunday .. 6 = Saturday).
+		$days_back = ( 1 - $start_of_week + 7 ) % 7;
+		if ( $days_back > 0 ) {
+			$date->modify( "-{$days_back} days" );
 		}
 		$week_start = $date->format( 'Y-m-d' );
 		$date->modify( '+6 days' );

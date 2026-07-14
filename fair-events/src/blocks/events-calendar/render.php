@@ -152,10 +152,8 @@ $first_day_of_month_ts = strtotime( "{$current_year}-{$current_month}-01" );
 $days_in_month         = (int) gmdate( 't', $first_day_of_month_ts );
 $first_weekday         = (int) gmdate( 'w', $first_day_of_month_ts ); // 0=Sunday, 6=Saturday
 
-// Adjust for Monday start (startOfWeek attribute)
-if ( 1 === $start_of_week ) {
-	$first_weekday = ( 0 === $first_weekday ) ? 6 : $first_weekday - 1;
-}
+// Adjust so day 0 in the grid matches the configured start_of_week (0-6).
+$first_weekday = ( $first_weekday - $start_of_week + 7 ) % 7;
 
 $leading_blanks  = $first_weekday;
 $total_cells     = $leading_blanks + $days_in_month;
