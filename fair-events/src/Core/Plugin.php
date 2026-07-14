@@ -151,6 +151,17 @@ class Plugin {
 			}
 		);
 
+		// Calendar feed controller — registers `/fair-events/v1/calendar.ics`,
+		// a public read-only ICS mirror of the /events feed for subscribing
+		// in calendar clients.
+		add_action(
+			'rest_api_init',
+			function () {
+				$controller = new \FairEvents\API\CalendarFeedController();
+				$controller->register_routes();
+			}
+		);
+
 		if ( Features::is_enabled( 'ticketing' ) ) {
 			add_action(
 				'rest_api_init',
