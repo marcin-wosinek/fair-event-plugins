@@ -100,6 +100,7 @@ if ( $event_dates_obj
 	foreach ( $upcoming as $occ ) {
 		$occurrences_for_picker[] = array(
 			'id'             => (int) $occ->id,
+			'date'           => \FairEvents\Helpers\OccurrenceDateParam::format( $occ ),
 			'start_datetime' => $occ->start_datetime,
 			'end_datetime'   => $occ->end_datetime,
 			'all_day'        => (bool) $occ->all_day,
@@ -330,20 +331,34 @@ $callback_is_open = $has_callback_state
 
 // When the picker is shown, re-pivot the wrapper-level event_date_id and
 // is_signed_up to the occurrence the user is most likely to act on next:
-// the URL-selected occurrence (?event_date=<id>) when it matches one of
-// the upcoming rows, otherwise the first not-yet-signed-up upcoming
-// occurrence, or the first one if they're already signed up for everything.
+// the URL-selected occurrence (?event_date=<Y-m-d>, with a legacy numeric
+// id still resolving for old links) when it matches one of the upcoming
+// rows, otherwise the first not-yet-signed-up upcoming occurrence, or the
+// first one if they're already signed up for everything.
 $has_occurrence_picker = count( $occurrences_for_picker ) > 1;
 if ( $has_occurrence_picker ) {
 	// phpcs:ignore WordPress.Security.NonceVerification.Recommended
-	$url_selected_id = isset( $_GET['event_date'] ) ? absint( wp_unslash( $_GET['event_date'] ) ) : 0;
+	$raw_event_date_param = isset( $_GET['event_date'] ) ? sanitize_text_field( wp_unslash( $_GET['event_date'] ) ) : '';
 
 	$default_idx = null;
-	if ( $url_selected_id > 0 ) {
-		foreach ( $occurrences_for_picker as $idx => $occ_row ) {
-			if ( (int) $occ_row['id'] === $url_selected_id ) {
-				$default_idx = $idx;
-				break;
+	if ( '' !== $raw_event_date_param ) {
+		if ( \FairEvents\Helpers\OccurrenceDateParam::is_legacy_id( $raw_event_date_param ) ) {
+			$url_selected_id = absint( $raw_event_date_param );
+			foreach ( $occurrences_for_picker as $idx => $occ_row ) {
+				if ( (int) $occ_row['id'] === $url_selected_id ) {
+					$default_idx = $idx;
+					break;
+				}
+			}
+		} else {
+			$url_selected_date = \FairEvents\Helpers\OccurrenceDateParam::parse( $raw_event_date_param );
+			if ( null !== $url_selected_date ) {
+				foreach ( $occurrences_for_picker as $idx => $occ_row ) {
+					if ( $occ_row['date'] === $url_selected_date ) {
+						$default_idx = $idx;
+						break;
+					}
+				}
 			}
 		}
 	}
@@ -936,10 +951,11 @@ $render_add_activities = static function () use ( $addable_options, $has_addable
  * Render the upcoming-occurrence picker for recurring events.
  *
  * The picker is a no-op when fewer than two upcoming occurrences exist.
- * Renders a <select> dropdown. Each option carries data-event-date-id and
- * data-signed-up so the frontend JS can re-target the submit and toggle
- * between "Sign up" / "Cancel signup" as the user changes the selection,
- * and so the dropdown can sync the selection into the page URL.
+ * Renders a <select> dropdown. Each option carries data-event-date-id,
+ * data-event-date (the public Y-m-d param) and data-signed-up so the
+ * frontend JS can re-target the submit, toggle between "Sign up" /
+ * "Cancel signup" as the user changes the selection, and sync the
+ * selection into the page URL as a readable date.
  */
 $render_occurrence_picker = static function () use ( $occurrences_for_picker, $has_occurrence_picker, $form_id, $state ) {
 	if ( ! $has_occurrence_picker ) {
@@ -964,7 +980,7 @@ $render_occurrence_picker = static function () use ( $occurrences_for_picker, $h
 				$label .= ' — ' . __( 'signed up', 'fair-audience' );
 			}
 		}
-		echo '<option value="' . (int) $occ_row['id'] . '" data-event-date-id="' . (int) $occ_row['id'] . '" data-signed-up="' . ( $occ_row['signed_up'] ? 'true' : 'false' ) . '"';
+		echo '<option value="' . (int) $occ_row['id'] . '" data-event-date-id="' . (int) $occ_row['id'] . '" data-event-date="' . esc_attr( $occ_row['date'] ) . '" data-signed-up="' . ( $occ_row['signed_up'] ? 'true' : 'false' ) . '"';
 		if ( ! empty( $occ_row['is_default'] ) ) {
 			echo ' selected';
 		}
