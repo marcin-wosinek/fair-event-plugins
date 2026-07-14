@@ -60,27 +60,28 @@ defined( 'WPINC' ) || die;
 				</tbody>
 			</table>
 
-			<?php if ( ! $mollie_configured ) : ?>
-				<div class="notice notice-error inline">
-					<p>
-						<strong><?php esc_html_e( 'Mollie OAuth is not configured.', 'fair-platform' ); ?></strong>
-					</p>
-					<p><?php esc_html_e( 'Add the following to your wp-config.php:', 'fair-platform' ); ?></p>
-					<pre>define('MOLLIE_CLIENT_ID', 'app_xxxxxxxxxxxxx');
-define('MOLLIE_CLIENT_SECRET', 'xxxxxxxxxxxxx');</pre>
-					<p>
-						<?php
-						echo wp_kses_post(
-							sprintf(
-								/* translators: %s: README.md URL */
-								__( 'See <a href="%s" target="_blank">README.md</a> for setup instructions.', 'fair-platform' ),
-								'https://github.com/marcinwosinek/fair-event-plugins/blob/main/fair-platform/README.md'
-							)
-						);
-						?>
-					</p>
-				</div>
-			<?php endif; ?>
+			<?php
+			if ( ! $mollie_configured ) :
+				$notice_message  = '<p><strong>' . esc_html__( 'Mollie OAuth is not configured.', 'fair-platform' ) . '</strong></p>';
+				$notice_message .= '<p>' . esc_html__( 'Add the following to your wp-config.php:', 'fair-platform' ) . '</p>';
+				$notice_message .= "<pre>define('MOLLIE_CLIENT_ID', 'app_xxxxxxxxxxxxx');\ndefine('MOLLIE_CLIENT_SECRET', 'xxxxxxxxxxxxx');</pre>";
+				$notice_message .= '<p>' . sprintf(
+					/* translators: %s: README.md URL */
+					__( 'See <a href="%s" target="_blank">README.md</a> for setup instructions.', 'fair-platform' ),
+					'https://github.com/marcinwosinek/fair-event-plugins/blob/main/fair-platform/README.md'
+				) . '</p>';
+
+				wp_admin_notice(
+					$notice_message,
+					array(
+						'type'               => 'error',
+						'dismissible'        => false,
+						'additional_classes' => array( 'inline' ),
+						'paragraph_wrap'     => false,
+					)
+				);
+			endif;
+			?>
 		</div>
 
 		<!-- Test Connection -->
@@ -104,7 +105,13 @@ define('MOLLIE_CLIENT_SECRET', 'xxxxxxxxxxxxx');</pre>
 				// Handle test OAuth request.
 				if ( isset( $_POST['action'] ) && 'test_oauth' === $_POST['action'] ) {
 					if ( ! isset( $_POST['fair_platform_nonce'] ) || ! wp_verify_nonce( $_POST['fair_platform_nonce'], 'fair_platform_test_oauth' ) ) {
-						echo '<div class="notice notice-error"><p>' . esc_html__( 'Invalid nonce.', 'fair-platform' ) . '</p></div>';
+						wp_admin_notice(
+							esc_html__( 'Invalid nonce.', 'fair-platform' ),
+							array(
+								'type'        => 'error',
+								'dismissible' => false,
+							)
+						);
 					} else {
 						$test_url = add_query_arg(
 							array(
@@ -116,9 +123,13 @@ define('MOLLIE_CLIENT_SECRET', 'xxxxxxxxxxxxx');</pre>
 							home_url( '/oauth/authorize' )
 						);
 
-						echo '<div class="notice notice-info"><p>';
-						echo esc_html__( 'Redirecting to Mollie OAuth...', 'fair-platform' );
-						echo '</p></div>';
+						wp_admin_notice(
+							esc_html__( 'Redirecting to Mollie OAuth...', 'fair-platform' ),
+							array(
+								'type'        => 'info',
+								'dismissible' => false,
+							)
+						);
 						echo '<script>window.location.href = ' . wp_json_encode( $test_url ) . ';</script>';
 					}
 				}
@@ -126,28 +137,47 @@ define('MOLLIE_CLIENT_SECRET', 'xxxxxxxxxxxxx');</pre>
 				// Show test result.
 				if ( isset( $_GET['test'] ) && 'complete' === $_GET['test'] ) {
 					if ( isset( $_GET['mollie_access_token'] ) ) {
-						echo '<div class="notice notice-success"><p>';
-						echo '<strong>' . esc_html__( 'OAuth test successful!', 'fair-platform' ) . '</strong><br>';
-						echo esc_html__( 'Access token received:', 'fair-platform' ) . ' ';
-						echo '<code>' . esc_html( substr( sanitize_text_field( $_GET['mollie_access_token'] ), 0, 20 ) . '...' ) . '</code>';
-						echo '</p></div>';
+						$notice_message  = '<strong>' . esc_html__( 'OAuth test successful!', 'fair-platform' ) . '</strong><br>';
+						$notice_message .= esc_html__( 'Access token received:', 'fair-platform' ) . ' ';
+						$notice_message .= '<code>' . esc_html( substr( sanitize_text_field( $_GET['mollie_access_token'] ), 0, 20 ) . '...' ) . '</code>';
+
+						wp_admin_notice(
+							$notice_message,
+							array(
+								'type'        => 'success',
+								'dismissible' => false,
+							)
+						);
 					} elseif ( isset( $_GET['error'] ) ) {
-						echo '<div class="notice notice-error"><p>';
-						echo '<strong>' . esc_html__( 'OAuth test failed:', 'fair-platform' ) . '</strong><br>';
-						echo esc_html( sanitize_text_field( $_GET['error'] ) );
+						$notice_message  = '<strong>' . esc_html__( 'OAuth test failed:', 'fair-platform' ) . '</strong><br>';
+						$notice_message .= esc_html( sanitize_text_field( $_GET['error'] ) );
 						if ( isset( $_GET['error_description'] ) ) {
-							echo '<br>' . esc_html( sanitize_text_field( $_GET['error_description'] ) );
+							$notice_message .= '<br>' . esc_html( sanitize_text_field( $_GET['error_description'] ) );
 						}
-						echo '</p></div>';
+
+						wp_admin_notice(
+							$notice_message,
+							array(
+								'type'        => 'error',
+								'dismissible' => false,
+							)
+						);
 					}
 				}
 				?>
 
-			<?php else : ?>
-				<div class="notice notice-warning inline">
-					<p><?php esc_html_e( 'Configure Mollie credentials first to test the connection.', 'fair-platform' ); ?></p>
-				</div>
-			<?php endif; ?>
+				<?php
+			else :
+				wp_admin_notice(
+					esc_html__( 'Configure Mollie credentials first to test the connection.', 'fair-platform' ),
+					array(
+						'type'               => 'warning',
+						'dismissible'        => false,
+						'additional_classes' => array( 'inline' ),
+					)
+				);
+			endif;
+			?>
 		</div>
 
 		<!-- Recent OAuth Activity -->

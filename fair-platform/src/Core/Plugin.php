@@ -1436,19 +1436,22 @@ class Plugin {
 	 * @return void
 	 */
 	public function missing_instagram_credentials_notice() {
-		?>
-		<div class="notice notice-warning">
-			<p>
-				<strong><?php esc_html_e( 'Fair Platform:', 'fair-platform' ); ?></strong>
-				<?php
-				esc_html_e(
-					'Instagram OAuth credentials not configured. Please add INSTAGRAM_APP_ID and INSTAGRAM_APP_SECRET to wp-config.php for Instagram integration.',
-					'fair-platform'
-				);
-				?>
-			</p>
-		</div>
-		<?php
+		$message = sprintf(
+			'<strong>%1$s</strong> %2$s',
+			esc_html__( 'Fair Platform:', 'fair-platform' ),
+			esc_html__(
+				'Instagram OAuth credentials not configured. Please add INSTAGRAM_APP_ID and INSTAGRAM_APP_SECRET to wp-config.php for Instagram integration.',
+				'fair-platform'
+			)
+		);
+
+		wp_admin_notice(
+			$message,
+			array(
+				'type'        => 'warning',
+				'dismissible' => false,
+			)
+		);
 	}
 
 	/**
@@ -1457,19 +1460,22 @@ class Plugin {
 	 * @return void
 	 */
 	public function missing_credentials_notice() {
-		?>
-		<div class="notice notice-error">
-			<p>
-				<strong><?php esc_html_e( 'Fair Platform:', 'fair-platform' ); ?></strong>
-				<?php
-				esc_html_e(
-					'Mollie OAuth credentials not configured. Please add MOLLIE_CLIENT_ID and MOLLIE_CLIENT_SECRET to wp-config.php',
-					'fair-platform'
-				);
-				?>
-			</p>
-		</div>
-		<?php
+		$message = sprintf(
+			'<strong>%1$s</strong> %2$s',
+			esc_html__( 'Fair Platform:', 'fair-platform' ),
+			esc_html__(
+				'Mollie OAuth credentials not configured. Please add MOLLIE_CLIENT_ID and MOLLIE_CLIENT_SECRET to wp-config.php',
+				'fair-platform'
+			)
+		);
+
+		wp_admin_notice(
+			$message,
+			array(
+				'type'        => 'error',
+				'dismissible' => false,
+			)
+		);
 	}
 
 	/**
@@ -1478,19 +1484,22 @@ class Plugin {
 	 * @return void
 	 */
 	public function missing_library_notice() {
-		?>
-		<div class="notice notice-error">
-			<p>
-				<strong><?php esc_html_e( 'Fair Platform:', 'fair-platform' ); ?></strong>
-				<?php
-				esc_html_e(
-					'Mollie PHP library not installed. Please run: composer require mollie/mollie-api-php',
-					'fair-platform'
-				);
-				?>
-			</p>
-		</div>
-		<?php
+		$message = sprintf(
+			'<strong>%1$s</strong> %2$s',
+			esc_html__( 'Fair Platform:', 'fair-platform' ),
+			esc_html__(
+				'Mollie PHP library not installed. Please run: composer require mollie/mollie-api-php',
+				'fair-platform'
+			)
+		);
+
+		wp_admin_notice(
+			$message,
+			array(
+				'type'        => 'error',
+				'dismissible' => false,
+			)
+		);
 	}
 
 	/**
