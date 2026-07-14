@@ -6,10 +6,11 @@
  *
  * Covers:
  *   - Seeding the date list from existing generated occurrences.
- *   - Add / remove date rows.
+ *   - The master's own date row is fixed (disabled, no Remove button) —
+ *     only the extra occurrence rows are editable/removable.
  *   - Duplicate-day rejection (visible Notice, confirm disabled).
- *   - Confirm sends { recurrence_mode: 'manual', manual_dates } on the
- *     Irregular tab instead of { rrule }.
+ *   - Confirm sends { recurrence_mode: 'manual', manual_dates } (master date
+ *     + extras) on the Irregular tab instead of { rrule }.
  */
 import '@testing-library/jest-dom';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
@@ -72,7 +73,7 @@ it('seeds the date list from existing generated occurrences when editing a manua
 	]);
 });
 
-it('adds and removes date rows', async () => {
+it('adds and removes date rows, and keeps the master date fixed', async () => {
 	await renderModal({
 		eventDateId: 1,
 		initialRrule: null,
@@ -86,13 +87,20 @@ it('adds and removes date rows', async () => {
 
 	openIrregularTab();
 
-	expect(screen.getAllByDisplayValue('2026-07-01')).toHaveLength(1);
+	// The master's own date row is disabled and has no Remove button.
+	const masterInput = screen.getByDisplayValue('2026-07-01');
+	expect(masterInput).toBeDisabled();
+	expect(
+		screen.queryByRole('button', { name: 'Remove' })
+	).not.toBeInTheDocument();
 
 	fireEvent.click(screen.getByRole('button', { name: 'Add date' }));
-	expect(screen.getAllByRole('button', { name: 'Remove' })).toHaveLength(2);
-
-	fireEvent.click(screen.getAllByRole('button', { name: 'Remove' })[1]);
 	expect(screen.getAllByRole('button', { name: 'Remove' })).toHaveLength(1);
+
+	fireEvent.click(screen.getAllByRole('button', { name: 'Remove' })[0]);
+	expect(
+		screen.queryByRole('button', { name: 'Remove' })
+	).not.toBeInTheDocument();
 });
 
 it('shows a Notice and disables confirm when two rows share the same date', async () => {
