@@ -8,12 +8,13 @@ Propose an implementation plan for GitHub issue #$ARGUMENTS.
 1. **Read the ticket.** `gh issue view $ARGUMENTS --comments` to get the body and
    any existing discussion. Note any Open Questions the ticket already lists.
 
-2. **Ground the plan in the codebase.** Before writing anything, explore the real
-   files, patterns, and constraints the work will touch — the same discipline as
-   [TICKETS.md](../../TICKETS.md): name the existing block / model / REST
-   controller / service this mirrors or extends, and cite concrete paths. Load
-   the relevant CLAUDE.md reference doc for the area (REST, React admin, blocks,
-   i18n, testing).
+2. **Ground the plan in the codebase.** Tickets deliberately avoid code
+   references ([TICKETS.md](../../TICKETS.md)) — this step is where the code
+   grounding happens, against the codebase **as it exists now**. Explore the
+   real files, patterns, and constraints the work will touch: name the existing
+   block / model / REST controller / service this mirrors or extends, and cite
+   concrete paths. Load the relevant CLAUDE.md reference doc for the area
+   (REST, React admin, blocks, i18n, testing).
 
 3. **Draft the implementation plan.** Structure it as the layers an implementer
    works through (access/URL, frontend, backend, data, tests), referencing real
