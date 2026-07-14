@@ -11,6 +11,7 @@
 
 defined( 'WPINC' ) || die;
 
+use FairEvents\Helpers\EventSchema;
 use FairEvents\Services\EventFeedProvider;
 use FairEvents\Settings\Settings;
 
@@ -179,6 +180,8 @@ $occurrences = $provider->get_occurrences(
 );
 
 $events_by_date = EventFeedProvider::group_by_day( $occurrences, $query_start, $query_end );
+
+$item_list = EventSchema::item_list_from_occurrences( $occurrences );
 
 // Calculate previous/next month URLs
 $prev_month_timestamp = strtotime( '-1 month', $first_day_of_month_ts );
@@ -358,3 +361,9 @@ $today = current_time( 'Y-m-d' );
 		<?php echo wp_kses_post( \FairAudience\Services\Branding::block_html() ); ?>
 	<?php endif; ?>
 </div>
+<?php if ( null !== $item_list ) : ?>
+	<script type="application/ld+json">
+	<?php echo wp_json_encode( $item_list, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT ); ?>
+
+	</script>
+<?php endif; ?>
