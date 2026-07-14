@@ -140,7 +140,7 @@ const SCROLL_RESTORE_KEY = 'fairAudienceOccurrenceScrollY';
 
 	/**
 	 * Wire the recurrence occurrence picker. Changing the select navigates
-	 * the page to the same URL with ?event_date=<id>, so sibling event
+	 * the page to the same URL with ?event_date=<Y-m-d>, so sibling event
 	 * blocks (event-info, event-dates, calendar-button) re-render for the
 	 * picked occurrence and the dropdown's own state is preserved via the
 	 * server-rendered default selection.
@@ -152,23 +152,23 @@ const SCROLL_RESTORE_KEY = 'fairAudienceOccurrenceScrollY';
 		);
 		if (!select) return;
 		select.addEventListener('change', function () {
-			navigateToOccurrence(this.value);
+			const option = this.options[this.selectedIndex];
+			navigateToOccurrence(option ? option.dataset.eventDate : '');
 		});
 	}
 
 	/**
-	 * Navigate the current page to the same URL with ?event_date=<id> set,
+	 * Navigate the current page to the same URL with ?event_date=<Y-m-d> set,
 	 * preserving any other query params (e.g. fair_payment_callback). The
 	 * scroll position is stashed first and restored on the reloaded page
 	 * (see restoreScrollPosition()) so picking a date doesn't jump the
 	 * viewer back to the top of the page.
-	 * @param {string} eventDateId Selected occurrence id
+	 * @param {string} eventDate Selected occurrence date (Y-m-d)
 	 */
-	function navigateToOccurrence(eventDateId) {
-		const id = parseInt(eventDateId, 10);
-		if (!id) return;
+	function navigateToOccurrence(eventDate) {
+		if (!eventDate) return;
 		const url = new URL(window.location.href);
-		url.searchParams.set('event_date', String(id));
+		url.searchParams.set('event_date', eventDate);
 		sessionStorage.setItem(SCROLL_RESTORE_KEY, String(window.scrollY));
 		window.location.assign(url.toString());
 	}
