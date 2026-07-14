@@ -304,66 +304,82 @@ class EventDatesController extends WP_REST_Controller {
 	 */
 	private function get_create_update_args() {
 		return array(
-			'title'          => array(
+			'title'           => array(
 				'description'       => __( 'Event title.', 'fair-events' ),
 				'type'              => 'string',
 				'required'          => true,
 				'sanitize_callback' => 'sanitize_text_field',
 			),
-			'start_datetime' => array(
+			'start_datetime'  => array(
 				'description'       => __( 'Start date/time (Y-m-d H:i:s format).', 'fair-events' ),
 				'type'              => 'string',
 				'required'          => true,
 				'sanitize_callback' => 'sanitize_text_field',
 			),
-			'end_datetime'   => array(
+			'end_datetime'    => array(
 				'description'       => __( 'End date/time (Y-m-d H:i:s format).', 'fair-events' ),
 				'type'              => 'string',
 				'required'          => false,
 				'sanitize_callback' => 'sanitize_text_field',
 			),
-			'all_day'        => array(
+			'all_day'         => array(
 				'description' => __( 'Whether this is an all-day event.', 'fair-events' ),
 				'type'        => 'boolean',
 				'required'    => false,
 				'default'     => false,
 			),
-			'venue_id'       => array(
+			'venue_id'        => array(
 				'description' => __( 'Venue ID.', 'fair-events' ),
 				'type'        => array( 'integer', 'null' ),
 				'required'    => false,
 			),
-			'address'        => array(
+			'address'         => array(
 				'description'       => __( 'Free-text address (used when Venues feature is disabled).', 'fair-events' ),
 				'type'              => array( 'string', 'null' ),
 				'required'          => false,
 				'sanitize_callback' => 'sanitize_textarea_field',
 			),
-			'link_type'      => array(
+			'link_type'       => array(
 				'description' => __( 'Link type (post, external, none).', 'fair-events' ),
 				'type'        => 'string',
 				'required'    => false,
 				'default'     => 'none',
 				'enum'        => array( 'post', 'external', 'none' ),
 			),
-			'external_url'   => array(
+			'external_url'    => array(
 				'description'       => __( 'External URL for the event.', 'fair-events' ),
 				'type'              => 'string',
 				'required'          => false,
 				'sanitize_callback' => 'esc_url_raw',
 			),
-			'event_id'       => array(
+			'event_id'        => array(
 				'description' => __( 'Linked post ID.', 'fair-events' ),
 				'type'        => array( 'integer', 'null' ),
 				'required'    => false,
 			),
-			'rrule'          => array(
+			'rrule'           => array(
 				'description'       => __( 'Recurrence rule in RRULE format.', 'fair-events' ),
 				'type'              => array( 'string', 'null' ),
 				'required'          => false,
 				'sanitize_callback' => 'sanitize_text_field',
 			),
-			'categories'     => array(
+			'recurrence_mode' => array(
+				'description' => __( 'Recurrence shape: none (single date), rule (RRULE-based), or manual (hand-picked dates).', 'fair-events' ),
+				'type'        => 'string',
+				'required'    => false,
+				'enum'        => array( 'none', 'rule', 'manual' ),
+			),
+			'manual_dates'    => array(
+				'description'       => __( 'Hand-picked occurrence dates (Y-m-d) for a manual-mode series. The earliest date becomes the master.', 'fair-events' ),
+				'type'              => 'array',
+				'required'          => false,
+				'items'             => array(
+					'type'   => 'string',
+					'format' => 'date',
+				),
+				'validate_callback' => array( $this, 'validate_manual_dates' ),
+			),
+			'categories'      => array(
 				'description' => __( 'Category term IDs.', 'fair-events' ),
 				'type'        => 'array',
 				'required'    => false,
@@ -385,6 +401,71 @@ class EventDatesController extends WP_REST_Controller {
 		$args['start_datetime']['required'] = false;
 
 		return $args;
+	}
+
+	/**
+	 * Validate the `manual_dates` param for a manual-mode series.
+	 *
+	 * Rejects malformed/non-calendar dates, duplicate days (a manual series
+	 * supports one occurrence per day, same as reconcile_occurrences()'
+	 * anchor keying), and lists longer than RecurrenceService::MAX_OCCURRENCES.
+	 *
+	 * @param mixed           $value   Raw param value.
+	 * @param WP_REST_Request $request Full request object.
+	 * @param string          $param   Param name.
+	 * @return true|WP_Error True if valid, WP_Error otherwise.
+	 */
+	public function validate_manual_dates( $value, $request, $param ) {
+		if ( ! is_array( $value ) ) {
+			return new WP_Error(
+				'rest_invalid_param',
+				__( 'manual_dates must be an array of Y-m-d dates.', 'fair-events' ),
+				array( 'status' => 400 )
+			);
+		}
+
+		if ( count( $value ) > RecurrenceService::MAX_OCCURRENCES ) {
+			return new WP_Error(
+				'rest_too_many_manual_dates',
+				sprintf(
+					/* translators: %d: maximum allowed occurrence count. */
+					__( 'A series can have at most %d dates.', 'fair-events' ),
+					RecurrenceService::MAX_OCCURRENCES
+				),
+				array( 'status' => 400 )
+			);
+		}
+
+		$seen = array();
+		foreach ( $value as $date ) {
+			if ( ! is_string( $date ) || ! preg_match( '/^\d{4}-\d{2}-\d{2}$/', $date ) ) {
+				return new WP_Error(
+					'rest_invalid_manual_date',
+					__( 'Each manual date must be in Y-m-d format.', 'fair-events' ),
+					array( 'status' => 400 )
+				);
+			}
+
+			$parsed = \DateTime::createFromFormat( 'Y-m-d', $date );
+			if ( ! $parsed || $parsed->format( 'Y-m-d' ) !== $date ) {
+				return new WP_Error(
+					'rest_invalid_manual_date',
+					__( 'Each manual date must be a valid calendar date.', 'fair-events' ),
+					array( 'status' => 400 )
+				);
+			}
+
+			if ( isset( $seen[ $date ] ) ) {
+				return new WP_Error(
+					'rest_duplicate_manual_date',
+					__( 'Manual dates must not contain duplicates — only one occurrence per day is supported.', 'fair-events' ),
+					array( 'status' => 400 )
+				);
+			}
+			$seen[ $date ] = true;
+		}
+
+		return true;
 	}
 
 	/**
@@ -449,13 +530,21 @@ class EventDatesController extends WP_REST_Controller {
 			RecurrenceService::regenerate_standalone_occurrences( $id, $rrule );
 		}
 
+		// Set a hand-picked (manual) occurrence list, if provided.
+		$recurrence_mode = $request->get_param( 'recurrence_mode' );
+		$manual_dates    = $request->get_param( 'manual_dates' );
+		$is_manual       = 'manual' === $recurrence_mode && ! empty( $manual_dates );
+		if ( $is_manual ) {
+			RecurrenceService::set_manual_occurrences( $id, $manual_dates );
+		}
+
 		// Set categories for standalone event date.
 		$categories = $request->get_param( 'categories' );
 		if ( is_array( $categories ) ) {
 			$this->set_standalone_categories( $id, $categories );
 
 			// Propagate categories to generated occurrences.
-			if ( ! empty( $rrule ) ) {
+			if ( ! empty( $rrule ) || $is_manual ) {
 				$generated = EventDates::get_generated_by_master_id( $id, true );
 				foreach ( $generated as $occ ) {
 					$this->set_standalone_categories( $occ->id, $categories );
@@ -943,6 +1032,35 @@ class EventDatesController extends WP_REST_Controller {
 					$this->set_standalone_categories( $id, $cat_ids );
 				}
 			}
+		}
+
+		// Set a hand-picked (manual) occurrence list. Not folded into the
+		// $update_data block above since recurrence_mode/manual_dates can be
+		// sent without any other field changing, and the manual path reads
+		// the master's (already-updated) start_datetime/end_datetime itself
+		// rather than needing them threaded through here.
+		$recurrence_mode = $request->get_param( 'recurrence_mode' );
+		$manual_dates    = $request->get_param( 'manual_dates' );
+		if ( 'manual' === $recurrence_mode && is_array( $manual_dates ) ) {
+			$manual_master_id = ( 'generated' === $existing->occurrence_type && $existing->master_id )
+				? $existing->master_id
+				: $id;
+			$manual_master    = EventDates::get_by_id( $manual_master_id );
+
+			// Classify the impact before applying, for informational purposes
+			// only — reconcile_occurrences() soft-cancels stale rows, so
+			// there's no destructive-change guard to gate this on.
+			$manual_occurrences = RecurrenceService::build_manual_occurrences(
+				$manual_master->start_datetime,
+				$manual_master->end_datetime,
+				$manual_dates
+			);
+			$recurrence_impact  = RecurrenceService::classify_change(
+				$manual_master_id,
+				array_slice( $manual_occurrences, 1 )
+			);
+
+			RecurrenceService::set_manual_occurrences( $manual_master_id, $manual_dates );
 		}
 
 		// Handle categories parameter.

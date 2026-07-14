@@ -3,7 +3,8 @@
  *
  * Owns the frequency/ends fields and a live schedule preview, and saves
  * immediately on confirm (recurrence no longer rides along with the details
- * form's dirty-snapshot / Save flow).
+ * form's dirty-snapshot / Save flow). Also owns the "Irregular series"
+ * hand-picked-dates editor.
  *
  * @package FairEvents
  */
@@ -14,6 +15,7 @@ import {
 	Modal,
 	Notice,
 	TabPanel,
+	TextControl,
 	__experimentalHStack as HStack,
 	__experimentalVStack as VStack,
 } from '@wordpress/components';
@@ -44,29 +46,68 @@ function formatPreviewDate(dateStr) {
 	});
 }
 
+// Naive site-local Y-m-d slice — mirrors formatPreviewDate's no-reconversion
+// rule (UI_GUIDELINES.md "Dates and times").
+function dateOnly(datetime) {
+	return datetime ? datetime.slice(0, 10) : '';
+}
+
+/**
+ * Seed the manual-dates list from whatever the modal already knows about the
+ * series: an existing manual series' own occurrences, or (lossless rule →
+ * manual seeding) an existing rule series' generated occurrences, or just the
+ * event's own start date for a brand-new series.
+ *
+ * @param {string}      startDatetime       Master row's start_datetime.
+ * @param {Array|undefined} generatedOccurrences Existing generated children, if any.
+ * @return {string[]} Sorted, deduplicated Y-m-d dates.
+ */
+function seedManualDates(startDatetime, generatedOccurrences) {
+	const dates = [
+		dateOnly(startDatetime),
+		...(generatedOccurrences || []).map((occ) =>
+			dateOnly(occ.start_datetime)
+		),
+	].filter(Boolean);
+
+	return [...new Set(dates)].sort();
+}
+
 /**
  * @param {Object}        props
- * @param {number}        props.eventDateId   The event date being edited.
- * @param {string|null}   props.initialRrule  Stored rrule, or null when creating a new series.
- * @param {string}        props.startDatetime Naive "Y-m-d H:i:s" start of the first occurrence, for the preview.
- * @param {Function}      props.onClose       Called to dismiss the modal without saving.
- * @param {Function}      props.onSaved       Called with the updated event date after a successful save.
- * @param {Function}      props.onImpact      Called with `{ impact, blocked }` (or null) after save succeeds or fails.
+ * @param {number}        props.eventDateId            The event date being edited.
+ * @param {string|null}   props.initialRrule           Stored rrule, or null when creating a new series.
+ * @param {string|null}   props.initialRecurrenceMode  Stored recurrence_mode ('none'|'rule'|'manual'), or null.
+ * @param {string}        props.startDatetime          Naive "Y-m-d H:i:s" start of the first occurrence, for the preview.
+ * @param {Array}         [props.generatedOccurrences] Existing generated children, used to seed the manual-dates editor.
+ * @param {Function}      props.onClose                Called to dismiss the modal without saving.
+ * @param {Function}      props.onSaved                Called with the updated event date after a successful save.
+ * @param {Function}      props.onImpact               Called with `{ impact, blocked }` (or null) after save succeeds or fails.
  */
 export default function SeriesModal({
 	eventDateId,
 	initialRrule,
+	initialRecurrenceMode,
 	startDatetime,
+	generatedOccurrences,
 	onClose,
 	onSaved,
 	onImpact,
 }) {
-	const isEditing = !!initialRrule;
+	const isEditing = !!initialRrule || 'manual' === initialRecurrenceMode;
+	const isInitiallyManual = 'manual' === initialRecurrenceMode;
+
+	const [activeTab, setActiveTab] = useState(
+		isInitiallyManual ? 'irregular' : 'regular'
+	);
 
 	const [recurrence, setRecurrence] = useState(() =>
 		initialRrule
 			? { enabled: true, ...parseRRule(initialRrule) }
 			: { ...DEFAULT_RECURRENCE }
+	);
+	const [manualDates, setManualDates] = useState(() =>
+		seedManualDates(startDatetime, generatedOccurrences)
 	);
 	const [saving, setSaving] = useState(false);
 	const [error, setError] = useState(null);
@@ -78,15 +119,41 @@ export default function SeriesModal({
 		[rrule, startDatetime]
 	);
 
+	const filledManualDates = manualDates.filter(Boolean);
+	const uniqueManualDates = new Set(filledManualDates);
+	const hasDuplicateManualDates =
+		uniqueManualDates.size !== filledManualDates.length;
+
+	const updateManualDate = (index, value) => {
+		setManualDates((prev) => prev.map((d, i) => (i === index ? value : d)));
+	};
+
+	const addManualDateRow = () => {
+		setManualDates((prev) => [...prev, '']);
+	};
+
+	const removeManualDateRow = (index) => {
+		setManualDates((prev) => prev.filter((_, i) => i !== index));
+	};
+
+	const isManualTab = 'irregular' === activeTab;
+
 	const handleConfirm = async () => {
 		setSaving(true);
 		setError(null);
 
 		try {
+			const data = isManualTab
+				? {
+						recurrence_mode: 'manual',
+						manual_dates: filledManualDates,
+				  }
+				: { rrule };
+
 			const updated = await apiFetch({
 				path: `/fair-events/v1/event-dates/${eventDateId}`,
 				method: 'PUT',
-				data: { rrule },
+				data,
 			});
 			onImpact(
 				updated.recurrence_impact
@@ -108,7 +175,21 @@ export default function SeriesModal({
 		}
 	};
 
-	const confirmLabel = isEditing
+	const manualDateCount = uniqueManualDates.size;
+
+	const confirmLabel = isManualTab
+		? isEditing
+			? sprintf(
+					/* translators: %d: number of dates in the series */
+					__('Update series — %d dates', 'fair-events'),
+					manualDateCount
+			  )
+			: sprintf(
+					/* translators: %d: number of dates in the series */
+					__('Create series — %d dates', 'fair-events'),
+					manualDateCount
+			  )
+		: isEditing
 		? sprintf(
 				/* translators: %d: number of dates in the series */
 				__('Update series — %d dates', 'fair-events'),
@@ -120,6 +201,12 @@ export default function SeriesModal({
 				preview.totalCount
 		  );
 
+	const confirmDisabled = saving
+		? true
+		: isManualTab
+		? filledManualDates.length === 0 || hasDuplicateManualDates
+		: preview.totalCount === 0;
+
 	const tabs = [
 		{
 			name: 'regular',
@@ -128,7 +215,6 @@ export default function SeriesModal({
 		{
 			name: 'irregular',
 			title: __('Irregular series', 'fair-events'),
-			disabled: true,
 		},
 	];
 
@@ -148,7 +234,11 @@ export default function SeriesModal({
 				</Notice>
 			)}
 
-			<TabPanel tabs={tabs}>
+			<TabPanel
+				tabs={tabs}
+				initialTabName={activeTab}
+				onSelect={setActiveTab}
+			>
 				{(tab) =>
 					tab.name === 'regular' ? (
 						<HStack
@@ -200,12 +290,67 @@ export default function SeriesModal({
 							</VStack>
 						</HStack>
 					) : (
-						<p style={{ marginTop: '16px' }}>
-							{__(
-								'Irregular series (picking arbitrary dates) is coming in a future update.',
-								'fair-events'
+						<VStack spacing={3} style={{ marginTop: '16px' }}>
+							<p>
+								{__(
+									'Pick the exact dates this event happens on.',
+									'fair-events'
+								)}
+							</p>
+							<p style={{ color: '#757575' }}>
+								{__(
+									'One session per day. All dates share the event’s start time and length.',
+									'fair-events'
+								)}
+							</p>
+
+							{hasDuplicateManualDates && (
+								<Notice status="error" isDismissible={false}>
+									{__(
+										'Each date can only be used once — remove the duplicate before saving.',
+										'fair-events'
+									)}
+								</Notice>
 							)}
-						</p>
+
+							<VStack spacing={2}>
+								{manualDates.map((date, index) => (
+									// eslint-disable-next-line react/no-array-index-key
+									<HStack key={index} alignment="center">
+										<TextControl
+											type="date"
+											label={sprintf(
+												/* translators: %d: 1-based row number in the manual date list */
+												__('Date %d', 'fair-events'),
+												index + 1
+											)}
+											hideLabelFromVision
+											value={date}
+											onChange={(value) =>
+												updateManualDate(index, value)
+											}
+										/>
+										<Button
+											variant="tertiary"
+											isDestructive
+											onClick={() =>
+												removeManualDateRow(index)
+											}
+											disabled={manualDates.length === 1}
+										>
+											{__('Remove', 'fair-events')}
+										</Button>
+									</HStack>
+								))}
+							</VStack>
+
+							<Button
+								variant="secondary"
+								onClick={addManualDateRow}
+							>
+								{__('Add date', 'fair-events')}
+							</Button>
+						</VStack>
 					)
 				}
 			</TabPanel>
@@ -222,7 +367,7 @@ export default function SeriesModal({
 					variant="primary"
 					onClick={handleConfirm}
 					isBusy={saving}
-					disabled={saving || preview.totalCount === 0}
+					disabled={confirmDisabled}
 				>
 					{confirmLabel}
 				</Button>
