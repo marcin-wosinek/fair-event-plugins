@@ -21,9 +21,35 @@ if ( class_exists( \FairAudience\API\EventSignupController::class ) ) {
 
 $submit_button_text = $attributes['submitButtonText'] ?? __( 'Get Tickets', 'fair-events' );
 
-// Resolve event_date_id: query string → block attribute → current post's event date.
+// Resolve event_date_id: query string (date, scoped to this post's series;
+// legacy numeric id kept for old links) → block attribute → current post's
+// event date.
 // phpcs:ignore WordPress.Security.NonceVerification.Recommended
-$event_date_id = isset( $_GET['event_date'] ) ? absint( $_GET['event_date'] ) : (int) ( $attributes['eventDateId'] ?? 0 );
+$raw_event_date_param = isset( $_GET['event_date'] ) ? sanitize_text_field( wp_unslash( $_GET['event_date'] ) ) : '';
+$event_date_id        = 0;
+
+if ( '' !== $raw_event_date_param && class_exists( \FairEvents\Models\EventDates::class ) ) {
+	if ( \FairEvents\Helpers\OccurrenceDateParam::is_legacy_id( $raw_event_date_param ) ) {
+		$event_date_id = absint( $raw_event_date_param );
+	} else {
+		$date = \FairEvents\Helpers\OccurrenceDateParam::parse( $raw_event_date_param );
+		if ( null !== $date ) {
+			// get_by_event_id() only matches rows with their own event_id set
+			// (master/single occurrences), so this is always the series master.
+			$post_event_date = \FairEvents\Models\EventDates::get_by_event_id( get_the_ID() );
+			if ( $post_event_date ) {
+				$matched = \FairEvents\Models\EventDates::get_by_master_id_and_date( (int) $post_event_date->id, $date );
+				if ( $matched ) {
+					$event_date_id = (int) $matched->id;
+				}
+			}
+		}
+	}
+}
+
+if ( ! $event_date_id ) {
+	$event_date_id = (int) ( $attributes['eventDateId'] ?? 0 );
+}
 
 if ( ! $event_date_id && class_exists( \FairEvents\Models\EventDates::class ) ) {
 	$post_event_date = \FairEvents\Models\EventDates::get_by_event_id( get_the_ID() );

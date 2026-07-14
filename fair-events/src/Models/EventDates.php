@@ -615,7 +615,7 @@ class EventDates {
 	 * for post-linked events (falling back to the master's linked post for
 	 * generated occurrences), or the permalink of a post linked via the
 	 * junction table (recurring instances linked from the post editor), if
-	 * any. Generated occurrences additionally get `?event_date={id}`
+	 * any. Generated occurrences additionally get `?event_date={Y-m-d}`
 	 * appended so the page can resolve which sibling occurrence to show
 	 * (see SelectedOccurrence); master/single rows link straight to the
 	 * plain permalink since it already resolves unambiguously.
@@ -637,7 +637,7 @@ class EventDates {
 	}
 
 	/**
-	 * Append `?event_date={id}` to a URL for generated occurrences only.
+	 * Append `?event_date={Y-m-d}` to a URL for generated occurrences only.
 	 *
 	 * @param string|false $url Permalink to decorate.
 	 * @return string|null Decorated URL, or null if $url was falsy.
@@ -651,7 +651,7 @@ class EventDates {
 			return $url;
 		}
 
-		return add_query_arg( 'event_date', (int) $this->id, $url );
+		return add_query_arg( 'event_date', \FairEvents\Helpers\OccurrenceDateParam::format( $this ), $url );
 	}
 
 	/**
@@ -1296,6 +1296,39 @@ class EventDates {
 		}
 
 		return $dates;
+	}
+
+	/**
+	 * Get the occurrence in a series that falls on a given calendar date
+	 *
+	 * Looks up the master row itself plus every generated child, taking the
+	 * earliest start_datetime on that date if more than one occurrence
+	 * shares it (rare).
+	 *
+	 * @param int    $master_id Master event date ID.
+	 * @param string $date      Date in `Y-m-d` format.
+	 * @return EventDates|null Matching occurrence, or null if none.
+	 */
+	public static function get_by_master_id_and_date( $master_id, $date ) {
+		global $wpdb;
+
+		$table_name = $wpdb->prefix . 'fair_event_dates';
+
+		$result = $wpdb->get_row(
+			$wpdb->prepare(
+				"SELECT * FROM %i WHERE (id = %d OR master_id = %d) AND status = 'active' AND DATE(start_datetime) = %s ORDER BY start_datetime ASC LIMIT 1",
+				$table_name,
+				$master_id,
+				$master_id,
+				$date
+			)
+		);
+
+		if ( ! $result ) {
+			return null;
+		}
+
+		return self::hydrate( $result );
 	}
 
 	/**

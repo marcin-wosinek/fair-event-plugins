@@ -77,6 +77,60 @@ if ( ! function_exists( 'wp_timezone' ) ) {
 	}
 }
 
+if ( ! function_exists( 'absint' ) ) {
+	/**
+	 * Stub of WordPress absint().
+	 *
+	 * @param mixed $value Value to cast.
+	 * @return int Non-negative integer.
+	 */
+	function absint( $value ) {
+		return abs( (int) $value );
+	}
+}
+
+if ( ! function_exists( 'wp_unslash' ) ) {
+	/**
+	 * Stub of WordPress wp_unslash() — a no-op for test input (no magic quotes).
+	 *
+	 * @param mixed $value Value to unslash.
+	 * @return mixed Unmodified value.
+	 */
+	function wp_unslash( $value ) {
+		return $value;
+	}
+}
+
+if ( ! function_exists( 'sanitize_text_field' ) ) {
+	/**
+	 * Stub of WordPress sanitize_text_field() — trims whitespace only.
+	 *
+	 * @param string $value Value to sanitize.
+	 * @return string Trimmed value.
+	 */
+	function sanitize_text_field( $value ) {
+		return trim( (string) $value );
+	}
+}
+
+if ( ! function_exists( 'current_time' ) ) {
+	/**
+	 * Stub of WordPress current_time() — tests override via $GLOBALS['_fair_test_now'].
+	 *
+	 * @param string $type Format type, e.g. 'mysql' or a date() format string.
+	 * @return string Formatted current (or overridden) time.
+	 */
+	function current_time( $type ) {
+		$now = isset( $GLOBALS['_fair_test_now'] ) ? $GLOBALS['_fair_test_now'] : time();
+
+		if ( 'mysql' === $type ) {
+			return gmdate( 'Y-m-d H:i:s', $now );
+		}
+
+		return gmdate( $type, $now );
+	}
+}
+
 if ( ! function_exists( 'add_query_arg' ) ) {
 	/**
 	 * Minimal stub of WordPress add_query_arg() for a single key/value pair.
