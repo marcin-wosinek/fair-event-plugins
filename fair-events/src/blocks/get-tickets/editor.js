@@ -1,55 +1,52 @@
 /**
- * Get Tickets Block - Editor Component
+ * Get Tickets Block - Editor Component (legacy alias)
+ *
+ * Hidden from the inserter (block.json supports.inserter: false). Existing
+ * instances still render — via the unified fair-events/event-signup block — and
+ * can be transformed to it. Shows a one-line notice pointing editors at the
+ * replacement.
  *
  * @package FairEvents
  */
 
-import { registerBlockType } from '@wordpress/blocks';
-import { useBlockProps, InspectorControls } from '@wordpress/block-editor';
-import { PanelBody, TextControl, Notice } from '@wordpress/components';
+import { registerBlockType, createBlock } from '@wordpress/blocks';
+import { useBlockProps } from '@wordpress/block-editor';
+import { Notice } from '@wordpress/components';
 import { __ } from '@wordpress/i18n';
 import ServerSideRender from '@wordpress/server-side-render';
 import metadata from './block.json';
 import './editor.css';
 
+const UNIFIED_NAME = 'fair-events/event-signup';
+
 registerBlockType(metadata.name, {
 	...metadata,
-	edit: function Edit({ attributes, setAttributes }) {
-		const fairAudienceActive =
-			window.fairEventsGetTicketsEditorData?.fairAudienceActive;
-
+	transforms: {
+		to: [
+			{
+				type: 'block',
+				blocks: [UNIFIED_NAME],
+				transform: (attributes) =>
+					createBlock(UNIFIED_NAME, { ...attributes }),
+			},
+		],
+	},
+	edit: function Edit({ attributes }) {
 		const blockProps = useBlockProps();
 
 		return (
-			<>
-				<InspectorControls>
-					<PanelBody title={__('Form Settings', 'fair-events')}>
-						<TextControl
-							label={__('Submit Button Text', 'fair-events')}
-							value={attributes.submitButtonText}
-							onChange={(value) =>
-								setAttributes({ submitButtonText: value })
-							}
-						/>
-					</PanelBody>
-				</InspectorControls>
-
-				{fairAudienceActive ? (
-					<Notice status="warning" isDismissible={false}>
-						{__(
-							'fair-audience is active. Use the Event Signup block instead.',
-							'fair-events'
-						)}
-					</Notice>
-				) : (
-					<div {...blockProps}>
-						<ServerSideRender
-							block="fair-events/get-tickets"
-							attributes={attributes}
-						/>
-					</div>
-				)}
-			</>
+			<div {...blockProps}>
+				<Notice status="info" isDismissible={false}>
+					{__(
+						'This block has moved to Event Signup. Transform it to the new block.',
+						'fair-events'
+					)}
+				</Notice>
+				<ServerSideRender
+					block={metadata.name}
+					attributes={attributes}
+				/>
+			</div>
 		);
 	},
 });

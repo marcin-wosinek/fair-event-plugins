@@ -40,10 +40,27 @@ class BlockHooks {
 			register_block_type( __DIR__ . '/../../build/blocks/event-proposal' );
 		}
 
-		// `get-tickets` block — step aside when fair-audience is active (it has the full Event Signup flow).
-		if ( ! class_exists( \FairAudience\API\EventSignupController::class ) ) {
-			register_block_type( __DIR__ . '/../../build/blocks/get-tickets' );
-		}
+		// Unified signup block (fair-events owned). Base behaviour is the
+		// anonymous get-tickets form; when fair-audience is active the render
+		// delegates to its participant-aware Event Signup flow.
+		register_block_type( __DIR__ . '/../../build/blocks/event-signup' );
+
+		// Legacy get-tickets block — kept registered (hidden from the inserter)
+		// so existing posts keep working; its render delegates to the unified
+		// block above.
+		register_block_type( __DIR__ . '/../../build/blocks/get-tickets' );
+
+		// Advertise fair-audience presence to the unified block editor so it can
+		// surface the participant-aware display controls.
+		wp_add_inline_script(
+			'fair-events-event-signup-editor-script',
+			'window.fairEventsEventSignupEditorData = ' . wp_json_encode(
+				array(
+					'fairAudienceActive' => class_exists( \FairAudience\API\EventSignupController::class ),
+				)
+			) . ';',
+			'before'
+		);
 	}
 
 	/**
@@ -52,69 +69,76 @@ class BlockHooks {
 	 * @return void
 	 */
 	public function set_script_translations() {
-		// WordPress auto-generates script handles based on block name and file
-		// Format: {namespace}-{block-name}-editor-script
+		// WordPress auto-generates script handles based on block name and file.
+		// Format: {namespace}-{block-name}-editor-script.
 		$plugin_dir = plugin_dir_path( __DIR__ . '/../../fair-events.php' );
 
-		// Events list block editor script
+		// Events list block editor script.
 		wp_set_script_translations(
 			'fair-events-events-list-editor-script',
 			'fair-events',
 			\FairEvents\Core\Features::script_translations_path()
 		);
 
-		// Event dates block editor script
+		// Event dates block editor script.
 		wp_set_script_translations(
 			'fair-events-event-dates-editor-script',
 			'fair-events',
 			\FairEvents\Core\Features::script_translations_path()
 		);
 
-		// Events calendar block editor script
+		// Events calendar block editor script.
 		wp_set_script_translations(
 			'fair-events-events-calendar-editor-script',
 			'fair-events',
 			\FairEvents\Core\Features::script_translations_path()
 		);
 
-		// Events week view block editor script
+		// Events week view block editor script.
 		wp_set_script_translations(
 			'fair-events-events-week-editor-script',
 			'fair-events',
 			\FairEvents\Core\Features::script_translations_path()
 		);
 
-		// Event proposal block editor script
+		// Event proposal block editor script.
 		wp_set_script_translations(
 			'fair-events-event-proposal-editor-script',
 			'fair-events',
 			\FairEvents\Core\Features::script_translations_path()
 		);
 
-		// Event proposal block view script (frontend)
+		// Event proposal block view script (frontend).
 		wp_set_script_translations(
 			'fair-events-event-proposal-view-script',
 			'fair-events',
 			\FairEvents\Core\Features::script_translations_path()
 		);
 
-		// Event info block editor script
+		// Event info block editor script.
 		wp_set_script_translations(
 			'fair-events-event-info-editor-script',
 			'fair-events',
 			\FairEvents\Core\Features::script_translations_path()
 		);
 
-		// Get tickets block editor script
+		// Event signup block editor script (unified block).
 		wp_set_script_translations(
-			'fair-events-get-tickets-editor-script',
+			'fair-events-event-signup-editor-script',
 			'fair-events',
 			\FairEvents\Core\Features::script_translations_path()
 		);
 
-		// Get tickets block view script (frontend)
+		// Event signup block view script (frontend).
 		wp_set_script_translations(
-			'fair-events-get-tickets-view-script',
+			'fair-events-event-signup-view-script',
+			'fair-events',
+			\FairEvents\Core\Features::script_translations_path()
+		);
+
+		// Get tickets block editor script (legacy alias).
+		wp_set_script_translations(
+			'fair-events-get-tickets-editor-script',
 			'fair-events',
 			\FairEvents\Core\Features::script_translations_path()
 		);
