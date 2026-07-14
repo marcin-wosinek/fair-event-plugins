@@ -275,6 +275,11 @@ class Installer {
 			self::migrate_to_3_22_0();
 		}
 
+		// Run migration if upgrading from pre-3.23.0 (drop orphaned start-of-week option).
+		if ( version_compare( $current_version, '3.23.0', '<' ) ) {
+			self::migrate_to_3_23_0();
+		}
+
 		// Update database version
 		Schema::update_db_version( Schema::DB_VERSION );
 	}
@@ -433,6 +438,10 @@ class Installer {
 
 			if ( version_compare( $current_version, '3.22.0', '<' ) ) {
 				self::migrate_to_3_22_0();
+			}
+
+			if ( version_compare( $current_version, '3.23.0', '<' ) ) {
+				self::migrate_to_3_23_0();
 			}
 
 			// Install/update tables
@@ -1921,6 +1930,18 @@ class Installer {
 				)
 			);
 		}
+	}
+
+	/**
+	 * Migrate to version 3.23.0 - Drop the orphaned start-of-week option.
+	 *
+	 * Calendar/week-view blocks now read WordPress core's `start_of_week`
+	 * option directly instead of the plugin's own copy.
+	 *
+	 * @return void
+	 */
+	private static function migrate_to_3_23_0() {
+		delete_option( 'fair_events_start_of_week' );
 	}
 
 	/**
