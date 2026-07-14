@@ -7,7 +7,7 @@
 
 namespace FairEvents\Hooks;
 
-use FairEvents\Models\EventDates;
+use FairEvents\Helpers\SelectedOccurrence;
 use FairEvents\Settings\Settings;
 
 defined( 'WPINC' ) || die;
@@ -48,7 +48,7 @@ class AdminBarHooks {
 			return;
 		}
 
-		$event_date = EventDates::get_by_event_id( $post_id );
+		$event_date = SelectedOccurrence::resolve( $post_id );
 		if ( ! $event_date ) {
 			return;
 		}
