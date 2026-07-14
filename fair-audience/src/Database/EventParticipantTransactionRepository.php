@@ -136,6 +136,32 @@ class EventParticipantTransactionRepository {
 	}
 
 	/**
+	 * Reverse lookup: which registration(s) a transaction was charged against.
+	 * Single indexed query on idx_transaction_id. Mirrors the batched
+	 * get_statuses_by_transaction_ids() above.
+	 *
+	 * @param int $transaction_id fair-payments-connector transaction ID.
+	 * @return int[] event_participant_id values (empty array when none match).
+	 */
+	public function get_event_participant_ids_by_transaction_id( $transaction_id ) {
+		global $wpdb;
+
+		if ( ! $transaction_id ) {
+			return array();
+		}
+
+		$results = $wpdb->get_col(
+			$wpdb->prepare(
+				"SELECT event_participant_id FROM %i WHERE transaction_id = %d AND kind = 'charge'",
+				$this->get_table_name(),
+				(int) $transaction_id
+			)
+		);
+
+		return array_map( 'intval', $results );
+	}
+
+	/**
 	 * Full transaction history for a registration, newest first. Joins
 	 * fair-payments-connector for status/amount/currency.
 	 *
