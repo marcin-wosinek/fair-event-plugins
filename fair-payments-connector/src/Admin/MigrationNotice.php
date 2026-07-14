@@ -60,16 +60,21 @@ class MigrationNotice {
 	 */
 	private function render_migration_notice() {
 		$settings_url = admin_url( 'admin.php?page=fair-payments-connector-settings' );
-		?>
-		<div class="notice notice-warning is-dismissible">
-			<p>
-				<strong><?php esc_html_e( 'Fair Payments Connector:', 'fair-payments-connector' ); ?></strong>
-				<?php esc_html_e( 'Please migrate to OAuth authentication.', 'fair-payments-connector' ); ?>
-				<a href="<?php echo esc_url( $settings_url ); ?>" class="button button-small" style="margin-left: 10px;">
-					<?php esc_html_e( 'Connect with Mollie', 'fair-payments-connector' ); ?>
-				</a>
-			</p>
-		</div>
-		<?php
+
+		$message = sprintf(
+			'<strong>%1$s</strong> %2$s <a href="%3$s" class="button button-small" style="margin-left: 10px;">%4$s</a>',
+			esc_html__( 'Fair Payments Connector:', 'fair-payments-connector' ),
+			esc_html__( 'Please migrate to OAuth authentication.', 'fair-payments-connector' ),
+			esc_url( $settings_url ),
+			esc_html__( 'Connect with Mollie', 'fair-payments-connector' )
+		);
+
+		wp_admin_notice(
+			$message,
+			array(
+				'type'        => 'warning',
+				'dismissible' => true,
+			)
+		);
 	}
 }

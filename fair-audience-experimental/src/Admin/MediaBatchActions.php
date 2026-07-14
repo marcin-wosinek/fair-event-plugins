@@ -294,9 +294,12 @@ class MediaBatchActions {
 					$author_name
 				);
 
-				printf(
-					'<div class="notice notice-success is-dismissible"><p>%s</p></div>',
-					esc_html( $message )
+				wp_admin_notice(
+					esc_html( $message ),
+					array(
+						'type'        => 'success',
+						'dismissible' => true,
+					)
 				);
 			}
 		}

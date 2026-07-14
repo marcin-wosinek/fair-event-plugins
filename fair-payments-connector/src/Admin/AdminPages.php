@@ -172,24 +172,24 @@ class AdminPages {
 			/* translators: %s: link to settings page */
 			$message = __( 'Fair Payment is <strong>not set up</strong> — no payments can be processed yet. <a href="%s">Set up Mollie</a>.', 'fair-payments-connector' );
 		}
-		?>
-		<div class="notice notice-warning">
-			<p>
-				<?php
-				printf(
-					wp_kses(
-						$message,
-						array(
-							'strong' => array(),
-							'a'      => array( 'href' => array() ),
-						)
-					),
-					esc_url( $settings_url )
-				);
-				?>
-			</p>
-		</div>
-		<?php
+		$notice_message = sprintf(
+			wp_kses(
+				$message,
+				array(
+					'strong' => array(),
+					'a'      => array( 'href' => array() ),
+				)
+			),
+			esc_url( $settings_url )
+		);
+
+		wp_admin_notice(
+			$notice_message,
+			array(
+				'type'        => 'warning',
+				'dismissible' => false,
+			)
+		);
 	}
 
 	/**

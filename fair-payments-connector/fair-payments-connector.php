@@ -4,7 +4,7 @@
  * Plugin URI: https://github.com/marcin-wosinek/fair-event-plugins
  * Description: Simple payment block for WordPress
  * Version: 1.5.1
- * Requires at least: 6.2
+ * Requires at least: 6.7
  * Author: Marcin Wosinek
  * Author URI: https://github.com/marcin-wosinek
  * License: GPL-2.0-or-later
