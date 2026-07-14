@@ -53,22 +53,20 @@ function dateOnly(datetime) {
 }
 
 /**
- * Seed the manual-dates list from whatever the modal already knows about the
- * series: an existing manual series' own occurrences, or (lossless rule →
- * manual seeding) an existing rule series' generated occurrences, or just the
- * event's own start date for a brand-new series.
+ * Seed the extra (non-master) manual dates from whatever the modal already
+ * knows about the series: an existing manual series' generated occurrences,
+ * or (lossless rule → manual seeding) an existing rule series' generated
+ * occurrences. The master's own date is tracked separately and never appears
+ * in this list — see the `masterDate` prop of the "Irregular series" tab.
  *
- * @param {string}      startDatetime       Master row's start_datetime.
+ * @param {string}           masterDateStr        Master row's own date (Y-m-d).
  * @param {Array|undefined} generatedOccurrences Existing generated children, if any.
- * @return {string[]} Sorted, deduplicated Y-m-d dates.
+ * @return {string[]} Sorted, deduplicated Y-m-d dates, excluding the master's own date.
  */
-function seedManualDates(startDatetime, generatedOccurrences) {
-	const dates = [
-		dateOnly(startDatetime),
-		...(generatedOccurrences || []).map((occ) =>
-			dateOnly(occ.start_datetime)
-		),
-	].filter(Boolean);
+function seedManualDates(masterDateStr, generatedOccurrences) {
+	const dates = (generatedOccurrences || [])
+		.map((occ) => dateOnly(occ.start_datetime))
+		.filter((d) => Boolean(d) && d !== masterDateStr);
 
 	return [...new Set(dates)].sort();
 }
@@ -106,8 +104,12 @@ export default function SeriesModal({
 			? { enabled: true, ...parseRRule(initialRrule) }
 			: { ...DEFAULT_RECURRENCE }
 	);
+	// The master's own date is fixed — it's edited from the Event Details
+	// form, not from this modal. Only the extra occurrence dates are
+	// editable here.
+	const masterDateStr = dateOnly(startDatetime);
 	const [manualDates, setManualDates] = useState(() =>
-		seedManualDates(startDatetime, generatedOccurrences)
+		seedManualDates(masterDateStr, generatedOccurrences)
 	);
 	const [saving, setSaving] = useState(false);
 	const [error, setError] = useState(null);
@@ -120,9 +122,10 @@ export default function SeriesModal({
 	);
 
 	const filledManualDates = manualDates.filter(Boolean);
-	const uniqueManualDates = new Set(filledManualDates);
+	const allManualDates = [masterDateStr, ...filledManualDates];
+	const uniqueManualDates = new Set(allManualDates);
 	const hasDuplicateManualDates =
-		uniqueManualDates.size !== filledManualDates.length;
+		uniqueManualDates.size !== allManualDates.length;
 
 	const updateManualDate = (index, value) => {
 		setManualDates((prev) => prev.map((d, i) => (i === index ? value : d)));
@@ -146,7 +149,7 @@ export default function SeriesModal({
 			const data = isManualTab
 				? {
 						recurrence_mode: 'manual',
-						manual_dates: filledManualDates,
+						manual_dates: allManualDates,
 				  }
 				: { rrule };
 
@@ -204,7 +207,7 @@ export default function SeriesModal({
 	const confirmDisabled = saving
 		? true
 		: isManualTab
-		? filledManualDates.length === 0 || hasDuplicateManualDates
+		? hasDuplicateManualDates
 		: preview.totalCount === 0;
 
 	const tabs = [
@@ -314,13 +317,28 @@ export default function SeriesModal({
 							)}
 
 							<VStack spacing={2}>
+								<HStack alignment="center">
+									<TextControl
+										type="date"
+										label={__('Master date', 'fair-events')}
+										hideLabelFromVision
+										value={masterDateStr}
+										disabled
+									/>
+									<span style={{ color: '#757575' }}>
+										{__(
+											'Master date — edit it from Event Details',
+											'fair-events'
+										)}
+									</span>
+								</HStack>
 								{manualDates.map((date, index) => (
 									// eslint-disable-next-line react/no-array-index-key
 									<HStack key={index} alignment="center">
 										<TextControl
 											type="date"
 											label={sprintf(
-												/* translators: %d: 1-based row number in the manual date list */
+												/* translators: %d: 1-based row number in the extra-dates list */
 												__('Date %d', 'fair-events'),
 												index + 1
 											)}
@@ -336,7 +354,6 @@ export default function SeriesModal({
 											onClick={() =>
 												removeManualDateRow(index)
 											}
-											disabled={manualDates.length === 1}
 										>
 											{__('Remove', 'fair-events')}
 										</Button>
