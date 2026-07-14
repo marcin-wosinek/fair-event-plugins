@@ -20,7 +20,7 @@
 	],
 	"require": {
 		"php": ">=8.0 <9.0",
-		"phpoffice/phpspreadsheet": "^1.29",
+		"phpoffice/phpspreadsheet": "^5.8",
 		"maennchen/zipstream-php": "^2.1 || ^3.0",
 		"fair-events/shared": "^0.1"
 	},
