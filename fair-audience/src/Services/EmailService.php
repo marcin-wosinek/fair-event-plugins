@@ -141,6 +141,19 @@ class EmailService {
 	}
 
 	/**
+	 * Human-readable reason a participant was skipped for a marketing send.
+	 *
+	 * @param Participant $participant The skipped participant.
+	 * @return string Skip reason.
+	 */
+	private function marketing_skip_reason( Participant $participant ): string {
+		if ( 'marketing' === $participant->email_profile && 'pending' === $participant->status ) {
+			return __( 'Participant has not yet confirmed their marketing subscription.', 'fair-audience' );
+		}
+		return __( 'Participant opted out of marketing emails.', 'fair-audience' );
+	}
+
+	/**
 	 * Check if a participant has a valid email address.
 	 *
 	 * @param Participant $participant The participant to check.
@@ -1539,7 +1552,7 @@ class EmailService {
 				$results['skipped'][] = array(
 					'name'   => $participant->name,
 					'email'  => $participant->email,
-					'reason' => __( 'Participant opted out of marketing emails.', 'fair-audience' ),
+					'reason' => $this->marketing_skip_reason( $participant ),
 				);
 				continue;
 			}
@@ -1613,7 +1626,7 @@ class EmailService {
 				$results['skipped'][] = array(
 					'name'   => $participant->name,
 					'email'  => $participant->email,
-					'reason' => __( 'Participant opted out of marketing emails.', 'fair-audience' ),
+					'reason' => $this->marketing_skip_reason( $participant ),
 				);
 				continue;
 			}
@@ -3130,7 +3143,7 @@ class EmailService {
 				$results['skipped'][] = array(
 					'name'   => $participant->name,
 					'email'  => $participant->email,
-					'reason' => __( 'Participant opted out of marketing emails.', 'fair-audience' ),
+					'reason' => $this->marketing_skip_reason( $participant ),
 				);
 				continue;
 			}

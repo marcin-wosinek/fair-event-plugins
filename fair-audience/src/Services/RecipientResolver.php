@@ -248,7 +248,8 @@ class RecipientResolver {
 			return true;
 		}
 
-		return 'marketing' === $participant->email_profile;
+		return 'marketing' === $participant->email_profile
+			&& 'confirmed' === $participant->status;
 	}
 
 	/**
