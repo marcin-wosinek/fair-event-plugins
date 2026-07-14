@@ -971,7 +971,25 @@ class EventDatesController extends WP_REST_Controller {
 
 			$dates_changed_on_recurring = $dates_changed && ( $existing->occurrence_type === 'master' || $rrule_changed );
 
-			if ( $rrule_changed || $dates_changed_on_recurring ) {
+			if ( 'manual' === $existing->recurrence_mode && ! $rrule_changed && $dates_changed_on_recurring ) {
+				// A manual (hand-picked-dates) master's own start/end changed via a
+				// plain field edit (e.g. the Event Details start-date field), not via
+				// the recurrence_mode/manual_dates params handled below. Reflow the
+				// shared time-of-day + duration across the existing hand-picked dates
+				// instead of falling into the rrule-regenerate branch below, which
+				// would treat the manual master's null rrule as "series ended" and
+				// wipe the whole series (#979).
+				$existing_dates = array_merge(
+					array( ( new \DateTime( $update_data['start_datetime'] ?? $existing->start_datetime ) )->format( 'Y-m-d' ) ),
+					array_map(
+						static function ( $child ) {
+							return ( new \DateTime( $child->start_datetime ) )->format( 'Y-m-d' );
+						},
+						EventDates::get_generated_by_master_id( $id, true )
+					)
+				);
+				RecurrenceService::set_manual_occurrences( $id, $existing_dates );
+			} elseif ( $rrule_changed || $dates_changed_on_recurring ) {
 				$effective_rrule = $update_data['rrule'] ?? $existing->rrule;
 
 				// Classify the impact before applying, for informational purposes —
