@@ -16,7 +16,6 @@ export function loadGeneralSettings() {
 			registerPostType: settings.fair_events_register_post_type ?? true,
 			poweredByBranding:
 				settings.fair_events_powered_by_branding ?? false,
-			startOfWeek: settings.fair_events_start_of_week ?? 1,
 		};
 	});
 }

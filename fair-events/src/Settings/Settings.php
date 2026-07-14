@@ -118,19 +118,6 @@ class Settings {
 				'default'           => false,
 			)
 		);
-
-		// Global start-of-week for calendar/week-view blocks. 1 = Monday (default), 0 = Sunday.
-		register_setting(
-			'fair_events_settings',
-			'fair_events_start_of_week',
-			array(
-				'type'              => 'integer',
-				'description'       => __( 'First day of the week shown in calendar and week-view blocks', 'fair-events' ),
-				'sanitize_callback' => array( $this, 'sanitize_start_of_week' ),
-				'show_in_rest'      => true,
-				'default'           => 1,
-			)
-		);
 	}
 
 	/**
@@ -145,21 +132,12 @@ class Settings {
 	/**
 	 * Get the global start-of-week setting for calendar/week-view blocks.
 	 *
-	 * @return int 1 for Monday, 0 for Sunday.
+	 * Reads WordPress core's Settings → General → "Week Starts On" option.
+	 *
+	 * @return int 0-6 (0 = Sunday).
 	 */
 	public static function get_start_of_week() {
-		return (int) get_option( 'fair_events_start_of_week', 1 );
-	}
-
-	/**
-	 * Sanitize start_of_week value (must be 0 or 1).
-	 *
-	 * @param mixed $value Incoming value.
-	 * @return int 0 or 1.
-	 */
-	public function sanitize_start_of_week( $value ) {
-		$int = (int) $value;
-		return ( 0 === $int ) ? 0 : 1;
+		return (int) get_option( 'start_of_week', 1 );
 	}
 
 	/**
