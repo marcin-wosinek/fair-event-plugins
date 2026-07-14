@@ -30,7 +30,7 @@ class EventDatesTest extends TestCase {
 	/**
 	 * Generated occurrence with event_id = NULL and link_type = 'post'
 	 * resolves the link via the master's event_id (issue #1090), with
-	 * `?event_date={id}` appended since it's a generated occurrence.
+	 * `?event_date={Y-m-d}` appended since it's a generated occurrence.
 	 */
 	public function test_post_link_resolves_via_master_for_generated_occurrence() {
 		$master            = new EventDates();
@@ -46,8 +46,9 @@ class EventDatesTest extends TestCase {
 		$occurrence->master_id       = 1;
 		$occurrence->occurrence_type = 'generated';
 		$occurrence->link_type       = 'post';
+		$occurrence->start_datetime  = '2026-06-29 18:30:00';
 
-		$this->assertSame( 'https://example.com/?p=42&event_date=2', $occurrence->get_display_url() );
+		$this->assertSame( 'https://example.com/?p=42&event_date=2026-06-29', $occurrence->get_display_url() );
 	}
 
 	/**

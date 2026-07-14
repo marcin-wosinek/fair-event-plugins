@@ -173,6 +173,61 @@ class SelectedOccurrenceTest extends TestCase {
 	}
 
 	/**
+	 * When an occurrence exists today, pick_default_pivot() prefers it over
+	 * any upcoming occurrence.
+	 *
+	 * @return void
+	 */
+	public function test_pick_default_pivot_prefers_today_over_upcoming() {
+		$today    = $this->make_row( array( 'id' => 7 ) );
+		$upcoming = $this->make_row( array( 'id' => 8 ) );
+
+		$result = $this->invoke_pick_default_pivot( $today, array( $upcoming ) );
+
+		$this->assertSame( 7, $result->id );
+	}
+
+	/**
+	 * With no occurrence today, pick_default_pivot() falls back to the
+	 * closest upcoming occurrence.
+	 *
+	 * @return void
+	 */
+	public function test_pick_default_pivot_falls_back_to_upcoming() {
+		$upcoming = $this->make_row( array( 'id' => 8 ) );
+
+		$result = $this->invoke_pick_default_pivot( null, array( $upcoming ) );
+
+		$this->assertSame( 8, $result->id );
+	}
+
+	/**
+	 * With neither today nor an upcoming occurrence, pick_default_pivot()
+	 * returns null so the caller falls back to the master row.
+	 *
+	 * @return void
+	 */
+	public function test_pick_default_pivot_returns_null_when_none_available() {
+		$result = $this->invoke_pick_default_pivot( null, array() );
+
+		$this->assertNull( $result );
+	}
+
+	/**
+	 * Invoke the private pick_default_pivot() via reflection.
+	 *
+	 * @param EventDates|null $today    Today's occurrence, if any.
+	 * @param EventDates[]    $upcoming Upcoming occurrences.
+	 * @return EventDates|null
+	 */
+	private function invoke_pick_default_pivot( ?EventDates $today, array $upcoming ) {
+		$reflection = new \ReflectionClass( SelectedOccurrence::class );
+		$method     = $reflection->getMethod( 'pick_default_pivot' );
+
+		return $method->invoke( null, $today, $upcoming );
+	}
+
+	/**
 	 * Invoke SelectedOccurrence::resolve() with a pre-built master row and a
 	 * list of upcoming occurrences injected via the static override mechanism.
 	 *
