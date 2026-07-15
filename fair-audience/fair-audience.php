@@ -67,7 +67,12 @@ function fair_audience_activate() {
 	dbDelta( \FairAudience\Database\Schema::get_event_participant_transactions_table_sql() );
 
 	// Update database version.
-	update_option( 'fair_audience_db_version', '1.39.0' );
+	update_option( 'fair_audience_db_version', '1.40.0' );
+
+	// Link any existing fair_events_signups rows to participants by email —
+	// the fair-events migration that adds participant_id may already have
+	// run while fair-audience was inactive.
+	\FairAudience\Hooks\SignupHookBridge::backfill_signup_participant_ids();
 }
 register_activation_hook( __FILE__, __NAMESPACE__ . '\\fair_audience_activate' );
 
@@ -756,6 +761,15 @@ function fair_audience_maybe_upgrade_db() {
 		}
 
 		update_option( 'fair_audience_db_version', '1.39.0' );
+	}
+
+	if ( version_compare( $db_version, '1.40.0', '<' ) ) {
+		// Link any existing fair_events_signups rows to participants by
+		// email, in case the fair-events migration that adds
+		// participant_id ran while fair-audience was inactive.
+		\FairAudience\Hooks\SignupHookBridge::backfill_signup_participant_ids();
+
+		update_option( 'fair_audience_db_version', '1.40.0' );
 	}
 }
 add_action( 'plugins_loaded', __NAMESPACE__ . '\\fair_audience_maybe_upgrade_db' );
