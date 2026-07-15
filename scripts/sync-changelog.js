@@ -18,11 +18,8 @@ const rootDir = join(__dirname, '..');
 
 // Plugin configurations
 const plugins = [
-	{
-		name: 'fair-events',
-		changelogPath: 'fair-events/CHANGELOG.md',
-		readmeFiles: ['fair-events/readme.txt'],
-	},
+	// fair-events intentionally omitted: its readme.txt links to the
+	// CHANGELOG.md on GitHub instead of inlining the changelog.
 	{
 		name: 'fair-audience',
 		changelogPath: 'fair-audience/CHANGELOG.md',

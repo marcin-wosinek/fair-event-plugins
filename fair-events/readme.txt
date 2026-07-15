@@ -1,6 +1,6 @@
 === Fair Events ===
 Contributors: marcinwosinek
-Tags: events, calendar, custom post type, gutenberg
+Tags: events, calendar, recurring events, tickets, gutenberg
 Requires at least: 6.7
 Tested up to: 7.0
 Requires PHP: 7.4
@@ -10,52 +10,45 @@ License URI: https://www.gnu.org/licenses/gpl-3.0.html
 Text Domain: fair-events
 Domain Path: /languages
 
-Event management plugin with custom post type for events.
+Events with recurring dates, a responsive calendar, and built-in ticket signup. A complete event system for the block editor — all features free.
 
 == Description ==
 
-A comprehensive event management plugin that adds a custom "Event" post type to WordPress. Create, manage, and display events with start times, end times, and all-day event options.
+Fair Events turns WordPress into a complete event system. Create events with real start and end dates, repeat them weekly or on hand-picked dates, show them in a responsive monthly calendar, and let visitors sign up or buy tickets — all with native Gutenberg blocks that inherit your theme's styling.
+
+**Fair pricing, no subscription:** The plugin is free to install and every feature is included — there is no premium version. Publishing events and taking free signups costs nothing, ever. When you sell paid tickets through [Fair Payments Connector](https://wordpress.org/plugins/fair-payments-connector/), a 1% integration fee is collected automatically in the payment flow, capped at €12/month for the whole suite: sell nothing in a month, pay €0; sell for €200, pay €2. See [fair-event-plugins.com](https://fair-event-plugins.com/) for details.
 
 **Key Features:**
 
-* **Custom Event Post Type:** Dedicated content type for events with all standard post features
-* **Event Metadata:** Track event start time, end time, and all-day events
-* **Gutenberg Blocks:** Display events using calendar grid, event list, and event dates blocks
-* **Calendar View:** Month grid calendar with category filtering and mobile-responsive design
-* **Author Support:** Full author attribution and author archives
-* **Category & Tag Support:** Organize events using standard WordPress taxonomies
-* **REST API Enabled:** Full support for Gutenberg block editor and headless WordPress
-* **Admin Meta Box:** Easy-to-use datetime inputs in the WordPress admin
-* **Automatic Formatting:** Event times displayed in your site's configured date/time format
-* **Theme Integration:** Events automatically use your theme's single post template
+* **Real Event Dates:** Start, end, and all-day events, always displayed in your site's date and time format
+* **Recurring Events:** Weekly rules or manually picked dates, with per-occurrence edits and cancellations that don't break the series
+* **Ticket Signup Built In:** Ticket types, early-bird sale periods, capacity limits, and pay-what-you-can pricing
+* **Responsive Calendar:** Monthly grid with category filtering that collapses gracefully on mobile
+* **Add to Calendar & iCal:** Visitors save events to Google, Apple, or Outlook; your site exposes an iCal feed
+* **Organizer Dashboard:** An admin calendar, a filterable list of all events, and a Manage Event page that gathers details, dates, and tickets in one place
+* **Theme-Friendly:** Events use your theme's templates; blocks are server-rendered and SEO-friendly
 * **Fair Pricing Model:** No premium tiers or hidden features - everything is included
 
 **Available Blocks:**
 
-* **Events Calendar** - Monthly calendar grid showing events with category filtering
-* **Events List** - Flexible list view with customizable patterns and time filtering
-* **Event Dates** - Display event start/end times with customizable formatting
-
-**Event Features:**
-
-* 📅 Start Date & Time - When your event begins
-* 🏁 End Date & Time - When your event concludes
-* ⏰ All-Day Events - Flag for events that span entire days
-* 👤 Author Attribution - Track who created each event
-* 🏷️ Categories & Tags - Organize events your way
-* 🖼️ Featured Images - Add visual appeal to your events
-* ✍️ Full Content Editor - Use Gutenberg blocks for rich event descriptions
+* 📅 **Events Calendar** - Monthly grid with category filtering
+* 📋 **Events List** - Filterable list of upcoming or past events
+* 🗓 **Events Week** - Seven-day overview of the current week
+* ℹ️ **Event Info** - Date, time, and venue of a single event
+* ⏰ **Event Dates** - Start and end times in your site's format
+* ➕ **Add to Calendar** - One-click save to the visitor's own calendar
+* 🎟 **Event Signup** - Signup and ticket purchase for an event date
+* 📨 **Event Proposal Form** - Let visitors submit events for review
 
 **Perfect For:**
 
-* Event venues and organizers
-* Community calendars
-* Conference and workshop organizers
-* Businesses hosting events
-* Educational institutions
-* Any organization that needs event management
+* Community groups publishing a shared calendar
+* Venues and clubs with weekly recurring events
+* Conference and workshop organizers selling tickets
+* Nonprofits and associations running free signups
+* Any site builder who needs events without a subscription
 
-The plugin integrates seamlessly with WordPress's native features, using the block editor, REST API, and standard template hierarchy.
+Fair Events works on its own and grows with the rest of the suite: add [Fair Payments Connector](https://wordpress.org/plugins/fair-payments-connector/) for online payments through Mollie, Fair Audience for attendee management and mailings, and [Fair Timetable](https://wordpress.org/plugins/fair-timetable/) for multi-track schedules.
 
 == Installation ==
 
@@ -63,13 +56,13 @@ The plugin integrates seamlessly with WordPress's native features, using the blo
 2. Activate the plugin through the 'Plugins' screen in WordPress.
 3. Navigate to "Events" in the WordPress admin menu to create your first event.
 4. Fill in the event details including start time, end time, and content.
-5. Publish your event and it will appear on your site.
+5. Publish your event and add the Events Calendar or Events List block to any page to display it.
 
 == Development ==
 
-* GitHub Repository: https://github.com/marcin-wosinek/fair-event-plugins
-* Report Issues: https://github.com/marcin-wosinek/fair-event-plugins/issues
-* Contribute: https://github.com/marcin-wosinek/fair-event-plugins/pulls
+* GitHub Repository: [marcin-wosinek/fair-event-plugins](https://github.com/marcin-wosinek/fair-event-plugins)
+* Report Issues: [Issues](https://github.com/marcin-wosinek/fair-event-plugins/issues)
+* Contribute: [Pull Requests](https://github.com/marcin-wosinek/fair-event-plugins/pulls)
 
 == Frequently Asked Questions ==
 
@@ -77,13 +70,17 @@ The plugin integrates seamlessly with WordPress's native features, using the blo
 
 After activating the plugin, you'll see "Events" in your WordPress admin menu. Click "Add New" to create an event just like you would create a post.
 
-= Where do I set the event times? =
+= Can I create recurring events? =
 
-Event times are set in the "Event Details" meta box in the sidebar when editing an event. You can set start time, end time, and mark it as an all-day event.
+Yes. Set a weekly rule or pick dates by hand. Each occurrence can be edited or cancelled individually without affecting the rest of the series.
 
-= Can I use categories and tags with events? =
+= Can I sell tickets? =
 
-Yes! Events support standard WordPress categories and tags. You can organize your events using these taxonomies just like regular posts.
+Yes. Define ticket types with sale periods, capacity limits, and optional pay-what-you-can pricing, then place the Event Signup block. Free signups work out of the box; for paid tickets, install Fair Payments Connector to check out through Mollie.
+
+= How do I display a calendar of events? =
+
+Use the "Events Calendar" block in the block editor. You can filter by categories, choose the start day of the week (Monday/Sunday), and select how events are displayed. The calendar is responsive and shows only event days on mobile devices.
 
 = Will events work with my theme? =
 
@@ -93,21 +90,9 @@ Yes! Events use WordPress's template hierarchy and will automatically use your t
 
 Event times are automatically formatted using your site's date and time format settings from Settings → General in WordPress admin.
 
-= Does this support the block editor? =
+= Can I use categories and tags with events? =
 
-Yes! Events are fully compatible with the Gutenberg block editor and the REST API.
-
-= How do I display a calendar of events? =
-
-Use the "Events Calendar" block in the block editor. You can filter by categories, choose the start day of the week (Monday/Sunday), and select how events are displayed (simple title or with time). The calendar is responsive and shows only event days on mobile devices.
-
-= Can I filter events by category in the calendar? =
-
-Yes! The Events Calendar block allows you to select which categories to display. This filtering is configured in the block settings (editor sidebar) and applies to all visitors viewing the calendar.
-
-= How do I change how events appear in the calendar? =
-
-In the Events Calendar block settings, use the "Event Display Pattern" dropdown to choose between different display styles (simple title, or title with time). You can also create custom patterns for more advanced layouts.
+Yes! Events support standard WordPress categories and tags. You can organize your events using these taxonomies just like regular posts.
 
 == Screenshots ==
 
@@ -120,326 +105,9 @@ In the Events Calendar block settings, use the "Event Display Pattern" dropdown 
 
 == Changelog ==
 
-## 1.9.0
-
-### Minor Changes
-
--   612b9b0: Creating an unrecognized category in the Manage Event Categories field no longer silently drops it: unknown tokens now POST to a create-category endpoint and get linked once the term exists (issue #992). The endpoint moves from `fair-events-experimental` (behind the sources feature flag) to stable `fair-events`, since the base Manage Event page needs it regardless of which extensions are active.
--   612b9b0: Materialize cancelled recurring occurrences into real rows (new `status` and `recurrence_mode` columns) instead of a serialized exdates blob on the master, and switch inheritable instance fields (title, venue, address, link type, capacity, price) to NULL-means-inherit so an override is distinguishable from an inherited copy. Cancelling now soft-cancels instead of deleting, and a previously-cancelled occurrence restores to active if it reappears in the recurrence rule (issue #996).
--   612b9b0: Restructure the Manage Event Tickets tab so the editable price table is the primary content instead of a duplicate read-only summary, demote Export/Import into a header dropdown, and surface a direct link when payments aren't configured for a priced event (issue #988).
-
-### Patch Changes
-
--   e84e6b3: Move the galleries and messaging bundles out of `fair-audience` into the `fair-audience-experimental` companion, gated behind their `Features::is_enabled()` flags (issue #1041). `PhotoParticipant`/`GalleryAccessKey` and `CustomMailMessage`/`ExtraMessage`/`ScheduledMessage` (plus their repositories, controllers, admin pages, media-library hooks, and the scheduled-message cron) are renamed to `FairAudienceExperimental\…` and now travel with the companion; every cross-plugin call site (`fair-events-experimental`'s gallery endpoint, stable `fair-events`' gallery page, `fair-form`'s questionnaire photo tagging, and core `fair-audience`'s email service and anonymization service) degrades gracefully via `class_exists()` guards when the companion is inactive.
--   a7f7373: Fix recurring standalone occurrences linked to a post via "Link Existing Event" rendering as a plain unstyled span instead of a button link in the calendar block. `get_display_url()` now falls back to the junction-linked post's permalink, and the calendar renders a link whenever a URL is available, not just for external link type.
--   b007d8a: Centralize ticket price resolution in a new `FairEvents\Services\TicketPricing` service and a shared `ticket-pricing.js` module, so the fair-events get-tickets purchase paths and the fair-audience event-signup pricing agree on price. Previously get-tickets used a closed `[sale_start, sale_end]` sale-period interval while fair-audience used a half-open `[sale_start, sale_end)` interval with a `continues_pricing_period` fallback — the two could charge different prices for the same ticket type on a sale period's end day. get-tickets now uses the half-open convention too.
--   a7f7373: Replace the generic `window.confirm()` on event delete with a `ConfirmDialog` that names the event and, for recurring masters, states the occurrence count that will be removed.
--   f92bab0: Disable the Tickets, Signups, Finance, Groups, Audience, Mailings, and Statistics tabs on the Manage Event page when the event's link type is External URL, since there is no registration behind those tabs for link-only events.
--   a7f7373: Apply the `fair_events_enabled_features_map` filter in the Gutenberg sidebar metabox localization, matching the Manage Event admin page. This was preventing extensions (e.g. fair-events-experimental) from enabling the venue-selection feature in the sidebar, which always rendered a plain address field instead of the venue dropdown.
--   612b9b0: Reject empty/whitespace-only event titles in the quick-create button and the create/update REST endpoints (update never validated title at all), and show a shared "(untitled event)" fallback label everywhere a title is rendered so legacy untitled rows stay legible (issue #990).
--   a7f7373: Only append the `event_date` query arg on calendar and week block links for events with more than one occurrence, avoiding unnecessarily long URLs for single-occurrence events.
--   0603413: Extract the weekly event aggregation logic into a stable `FairEvents\Services\WeeklyEventsProvider`, so it can be reused by the upcoming fair-audience weekly digest without depending on the experimental plugin (issue #916).
--   a7f7373: Fix All Events showing the wrong time compared to Manage Event/DB. `start_datetime` is a naive site-local string that was being formatted with `dateI18n`'s default timezone handling, shifting the displayed time whenever the browser and site timezones differ. It's now tagged as UTC and rendered with `gmdateI18n` so the wall-clock value passes through unchanged.
--   a7f7373: Fix the Sale Periods summary always rendering "1 days before event" — the days-before label now uses `_n()` so the count picks the correct plural form.
--   a7f7373: Fix untranslatable string concatenation on the Manage Event page. The linked-posts notice and the sale period label built sentences by concatenating separate `__()` fragments, which translators can't reorder for languages with different word order; both now use `_n()` and `sprintf()` for proper pluralization and ordering.
--   a7f7373: Add a context header to the Manage Event page showing the date/time, a series/occurrence badge, and link status directly under the H1, and move the recurring-occurrence notice there so it's visible without scrolling.
--   612b9b0: Move Manage Event's single global "Save Changes" button into the Event Details and Tickets tabs it actually applies to, labeled by what each saves, with per-section dirty-state tracking, a beforeunload guard, and an inline "Title is required" message instead of a silently disabled button (issue #987).
--   612b9b0: Add a Move action on the Manage Event Audience tab to re-point a participant's signup to a sibling occurrence of a recurring event in one step, instead of deleting and re-adding and losing attendance state, admin comments, ticket options, and payment status (issue #954). Adds `GET /event-dates/{id}/siblings` to fair-events and `POST .../participants/{id}/move` to fair-audience.
--   a7f7373: Fix the standalone get-tickets block (used when fair-audience is inactive) rendering an empty form for a specific occurrence of a recurring event. Ticket types, sale periods, and prices now resolve against the series master's configuration while the signup itself stays linked to the specific occurrence, mirroring the pivot fair-audience's event-signup block already does.
--   a7f7373: Remove the seats-per-ticket capacity weighting feature. It let a ticket type consume more than one capacity slot, forcing every capacity query, signup projection, and participant snapshot to carry a per-row seat weight. Capacity math now collapses back to a plain row count; the Seats column/checkbox, the `seats_per_ticket` column, and the `seats` column on `event_participant` are dropped, with a forward migration for existing installs.
--   612b9b0: Reword the Link Options card, ticket settings, add-on panel, All Events list, and transaction "Metadata" card (now "Details") to use organizer task language instead of internal data-model vocabulary (Master/Generated, "Event placeholder", "activity"), per UI_GUIDELINES.md. Display strings only — no REST field or DB value changes (issue #989).
--   a7f7373: Fix calendar events grouped by day rendering in fetch order (WordPress query, standalone query, iCal feed) instead of start time, causing mixed-source events on the same day to appear out of chronological order.
--   Updated dependencies [b007d8a]
--   Updated dependencies [612b9b0]
--   Updated dependencies [612b9b0]
-    -   fair-events-shared@0.3.0
-
-## 1.8.0
-
-### Minor Changes
-
--   551e827: Add three-level email consent (Yes / missing / No): new `declined` profile value records that a participant was asked and refused, a renamed `marketing-consent` endpoint handles both upgrade and decline in one request, and the event-floor consent modal lets organizers record Yes/No per row. All-participants table, edit modal, and participant detail now display the declined state.
--   2cb0fb8: Move the Audience, Groups, and Mailings tabs out of fair-events and into fair-audience, which now owns audience-facing management for an event. fair-events registers the extension point and fair-audience renders these tabs, consolidating participant and mailing management in one plugin.
--   2cb0fb8: Add a shared payment-integration lifecycle layer in fair-events-shared that standardizes how plugins hook into payment start, completion, and failure. fair-payments-connector's simple-payment block and fair-events' get-tickets block consume the shared layer so payment side-effects are handled consistently across integrations.
--   2cb0fb8: Classify the impact of edits to recurring events and guard against destructive changes: the server categorizes how a change affects existing occurrences and surfaces that impact in the UI before saving. Occurrence reconciliation now preserves existing row IDs instead of regenerating them, and generated occurrences fall back to the master venue when they have none of their own.
--   2cb0fb8: Add recurrence scope for ticket types on recurring events: a ticket type can apply to a single occurrence or to `multiple_instances`. A scope-choice modal prompts the organizer when editing ticket types on a recurring event, the Ticket Prices table shows the active scope in parentheses, and sold ticket types are locked against scope changes. The event-signup block respects the resolved scope when listing available tickets.
--   2cb0fb8: Remove the simple ticket pricing mode; advanced ticketing is now the only pricing model. Events that used simple pricing are handled through the advanced ticket-type flow, simplifying the manage-event UI, the REST payload, and the underlying models. Organizers who relied on simple pricing will now manage prices as ticket types.
--   2cb0fb8: Add sliding-scale (pay-what-you-can) event pricing: organizers can offer a ticket type where the buyer chooses the amount within a configured range. The manage-event admin UI exposes the new pricing mode, the event-signup block lets attendees enter their own price, and the server validates the chosen amount against the configured bounds.
--   7e594d7: Add manual disable/enable for sold ticket types: a new `disabled` boolean column on ticket types lets admins hide a type from the signup form without deleting it. The admin UI replaces the Remove button with an Enable/Disable toggle when the type has sales. The server guards against deleting sold types omitted from the payload (defense in depth). The event-signup block and the GetTickets gate both respect the flag.
--   9dd9cc4: Replace the manual `google_maps_link` venue field with a computed `maps_url`: the server now generates the Google Maps URL from latitude/longitude (exact pin) or falls back to the address (approximate). The `google_maps_link` DB column is dropped via migration 3.16.0 and removed from the admin form, REST API, and frontend block.
-
-### Patch Changes
-
--   2cb0fb8: Bump @wordpress/components 35→36 and @wordpress/dataviews 16→17. The DataViews upgrade can change table rendering in the admin views that use it, so the shipped bundles for these plugins are regenerated.
--   2cb0fb8: Move the Statistics, Duplicate, and Merge actions into the manage-event tab descriptor registry, and render the Statistics tab inline instead of redirecting to a separate page. fair-events exposes the tab registry extension point that fair-events-experimental registers against.
--   ce4566c: Fix paid get-tickets purchases dumping the buyer on the homepage after checkout. The redirect URL was built with `get_permalink()` inside the REST request, where there is no post context, so it always fell back to `home_url()` — a page without the block, so the buyer never saw a confirmation. The controller now resolves the return URL from the same-site referer (preserving `?event_date=` on standalone pages), falling back to the event's own page, then the homepage.
--   Updated dependencies [2cb0fb8]
-    -   fair-events-shared@0.2.0
-
-## 1.7.0
-
-### Minor Changes
-
--   c60efeb: Add a `get-tickets` block for standalone ticket purchase: a server-rendered block that lets visitors buy tickets from any WordPress page without requiring fair-audience. The block resolves the target event date from the query string, a block attribute, or the post's own event date.
-
-    Add `recurrence_scope` to ticket types, allowing each type to be scoped to a single occurrence or to the whole recurring series.
-
--   efb62fa: Move TicketSalePeriod, TicketType, and TicketPrice models from fair-events-experimental into fair-events (namespace FairEvents\Models), and refactor sale periods to half-open day ranges [sale_start, sale_end) in the site timezone with two seeded defaults (before / during the event).
-
-### Patch Changes
-
--   c60efeb: Fix three visual/functional regressions in the events-week block: use block palette colors for external events (not just internal ones); constrain event chips to their column width so they don't overflow; add a clipboard API fallback so the copy button works in browsers that block `navigator.clipboard` without HTTPS.
--   c60efeb: Several manage-event UI improvements: link the event title in the manage-event header to the frontend page; hide the Groups tab and group-discount fields when fair-audience is not active; use descriptive labels ("Before event" / "During event") for the two seeded default sale-period columns; remove the capacity line from the get-tickets block render.
-
-## 1.6.0
-
-### Minor Changes
-
--   f46e6ec: Add events-week block with a copy-summary button (includes page URL in the header) and a global start-of-week plugin setting. The weekly-schedule block it replaces has been removed.
--   4363b40: Add an opt-in "Powered by Fair Event Plugins" attribution. A single toggle in the fair-events General settings (off by default) renders a subtle, translatable line under the fair-audience signup blocks and at the bottom of participant emails.
--   fb3165c: Add a site-wide default currency setting. Admins can now choose the currency (EUR, USD, GBP, CHF, DKK, NOK, SEK, PLN, CZK, HUF) in Fair Payments Connector → Settings → Currency; all new transactions, fees, and price displays across the plugins inherit this setting instead of being hard-coded to EUR.
-
-### Patch Changes
-
--   f46e6ec: Fix calendar overflow, disable pointer events on links and buttons inside calendar/events blocks in the editor (prevents accidental navigation), and guard Venue lookup in event-info block render. Include participant email in the delete-participant confirmation dialog.
-
-## 1.5.0
-
-### Minor Changes
-
--   82e6f21: Move Venue model and VenueController from fair-events to fair-events-experimental. The venues REST API (`/fair-events/v1/venues`) is now registered by the experimental plugin under its `venues` feature flag.
--   76c23f7: Upgrade @wordpress/dataviews from v4 to v16 for admin list views.
-
-### Patch Changes
-
--   ead4d69: Move Duplicate Event, Merge Event, and Mailings tab to fair-events-experimental; rename linking option "No link (standalone event)" to "Event placeholder"; fix Finance tab gating behind fair-finance plugin
-
-## 1.4.1
-
-### Patch Changes
-
--   3d0e399: Fix npm dependencies
-
-## 1.4.0
-
-### Minor Changes
-
--   d0daed8: Add optional per-ticket-type end date (disable_at) and fix undefined variable in event update
-
-## 1.3.4
-
-### Patch Changes
-
--   02cf7b6: Default to WordPress.org language packs; gate `load_plugin_textdomain()` and the
-    `wp_set_script_translations()` path behind a new per-plugin `bundled-translations`
-    feature flag (resolved through the same constant / master / filter / option /
-    default chain as the existing Fair Events features). The flag is exposed in
-    each plugin's Settings → Features tab (or Features submenu) and defaults to off.
-
-## 1.3.3
-
-### Patch Changes
-
--   9ffc5a8: Calendar: link each recurring instance to its own date
-
-    Per-occurrence URLs now include `?event_date={id}` in the events-calendar block,
-    the weekly-schedule block, and the public events REST API, so visitors land on
-    the specific instance rather than the bare event permalink. The admin calendar
-    distinguishes generated recurring instances visually (own icon and color) instead
-    of styling them like unlinked events.
-
--   0ebaea4: Group admin menus with string positions to avoid overwriting core menus
-
-    Each plugin's top-level admin menu now registers with a unique string decimal
-    position (`20.1`–`20.4`) so the four menus cluster together in order without
-    colliding with each other or with core WordPress menu items.
-
-## 1.3.2
-
-## 1.3.1
-
-### Patch Changes
-
--   518b6eb: Fix release tooling: sync plugin header Version with package.json so SVN tag publishing finds the dist archive
-
-## 1.3.0
-
-### Minor Changes
-
--   7f6ab85: Show net amounts in the event finance tab: net received per payment, plus a "Total Net" summary tile.
--   6b8f010: Add scheduled per-event mailings: queue an email anchored to an event date's start/end with a signed offset, sent automatically by a recurring cron, managed from a new "Mailings" tab in the event admin.
--   2ed7435: Introduce a feature-flag registry (`FairEvents\Core\Features`) that splits the
-    plugin into bundles — `venues`, `sources`, `galleries`, `ticketing`,
-    `event-tools`, `migration` — defaulting **off** for a clean public install.
-    Define `FAIR_EVENTS_INTERNAL` (or a per-bundle `FAIR_EVENTS_FEATURE_*`
-    constant) in `wp-config.php` to opt back into the full build; otherwise toggle
-    bundles from the new **Settings → Features** tab. REST controllers, admin
-    pages, blocks, frontend rewrites, and manage-event tabs all consult the
-    registry, so disabled bundles register no routes and surface no UI.
--   7f6ab85: Enhance the participant list printout with row numbers, role and ticket-type columns, and a mailing-list column pre-checked for consented participants.
--   7f6ab85: Make per-period activity pricing a global setting; activity option prices are derived from the active sale period.
--   3f8fdb4: Add an optional per-ticket-type minimum activities requirement that can raise the event-date-wide minimum (e.g. an "Early bird" ticket requiring at least 2 activities). The per-type value only ever increases the requirement; a value below the global minimum is ignored. Enforced both in the signup form (the gate updates live as the buyer switches ticket type) and server-side.
--   7f6ab85: Export questionnaire responses to Markdown, sharing one submission-markdown template between the submission detail and responses pages. Phone answers now persist in questionnaire submissions.
--   7682a28: Recurring events and sign-up management. Sign up for recurring events with synced date pickers, master-group inheritance, and orphan cleanup. New printable sign-up lists with comments, capacity limits, and in-popup role editing. Ticket settings reorganized with sales periods moved out of the ticket table. Finance tab filters failed/live transactions and deep-links to transactions and participants. Group invitations added.
-
-### Patch Changes
-
--   461b792: Stack the activity option Name and Short name inputs in a single column (one above the other) instead of two side-by-side columns, narrowing the activity options table.
--   0a4fe6c: Fit the Event meta box action buttons into the available sidebar width: "Edit Full Details" and "Unlink from event" now share one row beneath the full-width "Save Event" button, so longer translated labels no longer wrap awkwardly.
--   6f50483: Fix `payment_expires_at` being parsed as local time in the Manage Event audience tab, which falsely flagged in-progress payment holds as expired on non-UTC browsers (e.g. CEST).
--   be4ad94: Hide the per-ticket-type "Min. activities" field behind a new "Per-ticket-type minimum activities" setting in the ticket Configuración panel (off by default). When the setting is off, every ticket type uses the event-wide minimum; turning it on reveals the per-type input, which still only ever raises the global.
--   fa588db: Reorganize the Manage Event "Event details" tab into stacked full-width cards (Basics, Categorization, Recurrence) so it uses the available desktop width like the Audience tab.
--   7f6ab85: Miscellaneous fixes: link to the event page from the admin calendar, close the payment callback popup without a page reload, integrate the confirm & save buttons in the edit popup, keep a cancelled signup registered as "interested", remove the email from the purchase message, and stop nulling transactions.
--   7f6ab85: Update the local Docker environment and "Tested up to" headers to WordPress 7.
-
-## 1.2.0
-
-### Minor Changes
-
--   41a295c: Improve event audience management. Edit ticket type and options on existing sign-ups via a popup, delete sign-ups, and store the chosen option name on the sign-up record. Audience table gains copy buttons, activity totals, side counter, ticket shortname, and a wider layout that shows the activity options purchased by each participant.
--   41a295c: Link tickets to event activities. Tickets can now be assigned to specific activities by ID, with per-activity discounts (including facilitator-based discounts) applied at sign-up and at the option level. Ticket option table extended to support this.
-
-### Patch Changes
-
--   41a295c: Fix free ticket error, ticket break in the editor, and price setting error.
-
-## 1.1.1
-
-### Patch Changes
-
--   e22779c: Add email notification to form sign up & registrations
-
-## 1.1.0
-
-### Minor Changes
-
--   51b63e5: Add photo taxonomy by events.
--   e09b50a: Add option to link the event images.
-
-### Patch Changes
-
--   04c4196: Add migration workflow for events.
-
-## 0.7.0
-
-### Minor Changes
-
--   cf7f5de: Add weekly schedule block.
--   27ff8bd: Add event sources & iCal feed.
-
-### Patch Changes
-
--   c806c7c: Add iCal for calendar display.
-
-## 0.6.1
-
-### Patch Changes
-
--   eeaccd0: Add option to show draft events on a calendar.
-
-## 0.6.0
-
-### Minor Changes
-
--   96a150c: Add calendar display block.
-
-## 0.5.2
-
-### Patch Changes
-
--   fa15b85: Improve copy screen for events.
-
-## 0.5.1
-
-### Patch Changes
-
--   7e7ea9c: Update version tested up to version to 6.9.
-
-## 0.5.0
-
-### Minor Changes
-
--   83743d6: Add a workflow to copy the event
-
-### Patch Changes
-
--   3a60309: Add lenght dropdown to the event content type.
--   97fd67d: Add support for user groups.
-
-## 0.4.3
-
-### Patch Changes
-
--   9b83592: Link to RSVP confirmation if plugin is available
-
-## 0.4.2
-
-### Patch Changes
-
--   ccb5d6a: Add list of upcomming events
-
-## 0.4.1
-
-### Patch Changes
-
--   2ee1396: Integrate event & schedule blocks—reference event dates in block
--   1bfddd0: Fix data formating in translated date
-
-## 0.4.0
-
-### Minor Changes
-
--   8f0db61: Move start & end dates to separate table
-
-## 0.3.3
-
-### Patch Changes
-
--   4ed3721: Add location to fair-events
--   ee8bef8: Simplify showing the dates in event-dates block
--   2e270f0: Add translations for PL, DE & ES
-
-## 0.3.2
-
-### Patch Changes
-
--   8c3c2fe: Fix the category search in event-list block
--   46fbaaf: Fix the filtering in event-list block
-
-## 0.3.1
-
-### Patch Changes
-
--   c8f06d5: Fix slug setting page
-
-## 0.3.0
-
-### Minor Changes
-
--   Add slug setting
--   Improve edit UX
-
-## 0.2.0
-
-### Minor Changes
-
--   f39c6fb: Add list view block with patterns support
-
-== Upgrade Notice ==
-
-= 0.1.0 =
-Initial release of Fair Events. Install to start managing events on your WordPress site.
+The full changelog is maintained on GitHub:
+[CHANGELOG.md](https://github.com/marcin-wosinek/fair-event-plugins/blob/main/fair-events/CHANGELOG.md)
 
 == Developer Notes ==
 
-This plugin is built with modern WordPress development practices:
-
-* PSR-4 autoloading with namespaces
-* Singleton pattern for plugin initialization
-* WordPress coding standards (WPCS)
-* Proper sanitization and security measures
-* REST API integration
-* Uses WordPress's template hierarchy
-* Supports both classic and block themes
-
-The plugin is open source and contributions are welcome on GitHub: https://github.com/marcin-wosinek/fair-event-plugins
+The plugin is open source and contributions are welcome on [GitHub](https://github.com/marcin-wosinek/fair-event-plugins).

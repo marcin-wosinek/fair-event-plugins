@@ -2,7 +2,7 @@
 /**
  * Plugin Name: Fair Payments Connector
  * Plugin URI: https://github.com/marcin-wosinek/fair-event-plugins
- * Description: Simple payment block for WordPress
+ * Description: Mollie payments and bookkeeping for WordPress: payment block, itemized transactions, budgets, and bank reconciliation.
  * Version: 1.5.1
  * Requires at least: 6.7
  * Author: Marcin Wosinek

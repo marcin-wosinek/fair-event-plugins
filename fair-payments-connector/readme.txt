@@ -1,6 +1,6 @@
 === Fair Payments Connector ===
 Contributors: marcinwosinek
-Tags: payment, mollie, events, bookkeeping, block
+Tags: payments, mollie, events, tickets, bookkeeping
 Requires at least: 6.7
 Tested up to: 7.0
 Stable tag: 1.5.1
@@ -8,42 +8,67 @@ Requires PHP: 7.4
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
-Mollie-based payments and bookkeeping for WordPress events.
+Accept Mollie payments and keep the books in WordPress — payment block, itemized transactions, budgets, and bank reconciliation.
 
 == Description ==
 
-Fair Payments Connector is the money layer of the Fair Event plugin suite. It handles Mollie payment processing, stores transactions with line items, and provides a ledger for budgets and bank-import reconciliation.
+Fair Payments Connector is the money layer for your WordPress site: it takes payments through Mollie and keeps the records that follow. Drop the Simple Payment block on any page to charge a one-off amount, or pair it with Fair Events to sell tickets — either way, every payment lands as a clean, itemized transaction you can trace from checkout to your bank statement.
 
-Features:
+**Fair pricing, no subscription:** Install for free — every feature is included, with no premium tier. Instead of charging upfront, a 1% integration fee on ticket sales is collected automatically in the payment flow, capped at €12/month for the whole plugin suite: sell nothing in a month, pay €0; sell for €200, pay €2. If your sales never reach €1,200 in a month, you pay less than the €12 sticker price. See [fair-event-plugins.com](https://fair-event-plugins.com/) for details.
 
-* Mollie payment gateway with test/live modes, application fees, and webhook handling
-* Transactions with itemized line items, linked to posts, event dates (fair-events), and participants (fair-audience)
-* Status lifecycle (`draft` → `pending_payment` → `paid`/`failed`) with action hooks (`fair_payment_paid`, etc.)
-* Proactive status sync to recover stuck pending payments
-* Budgets and financial entries ledger with split entries, event linkage, and import deduplication
-* Many-to-many reconciliation between bank-import entries and transactions
-* Token-authenticated data sharing API so satellite sites can pull their own transaction data from a hub site
-* Telegram notifications on payment events
-* Gutenberg "Simple Payment" block (amount, currency, description) for standalone use
-* Admin pages for transactions, budgets, entries, reconciliation, API tokens, connected sites, and settings
+**Key Features:**
 
-Public PHP API for integration from other plugins:
+* **Mollie Checkout in Minutes:** Connect your Mollie account with a guided flow (or paste an API key) and switch between test and live modes
+* **Your Payment Methods:** Whatever you enable in your Mollie account — iDEAL, credit cards, Bancontact, PayPal, bank transfer, and more
+* **Simple Payment Block:** Take a payment from any page; set amount, currency, and description right in the editor
+* **Ticket Checkout for Fair Events:** Powers the paid signup flow of [Fair Events](https://wordpress.org/plugins/fair-events/) automatically when both plugins are active
+* **Reliable Status Tracking:** Webhooks plus proactive status sync, so a payment stuck in "pending" recovers on its own
+* **Bookkeeping Included:** Budgets and a financial-entries ledger; import bank statements and reconcile them against your transactions
+* **Instant Notifications:** Optional Telegram message the moment a payment succeeds or fails
+* **Multi-Site Ready:** Satellite sites can pull their own transaction data from a central hub over a token-secured API
+* **Fair Pricing Model:** No premium tiers or hidden features - everything is included
 
-* `fair_payment_create_transaction( $line_items, $args )`
-* `fair_payment_initiate_payment( $transaction_id, $args )`
-* `fair_payment_get_transaction( $transaction_id )`
-* `fair_payment_sync_transaction_status( $transaction_id )`
+**Perfect For:**
+
+* Event organizers selling tickets with Fair Events
+* Community groups and nonprofits collecting fees or donations
+* Associations that want payments and simple bookkeeping in one place
+* Anyone who needs a payment button on a WordPress page without setting up a webshop
 
 == Installation ==
 
 1. Upload the plugin files to the `/wp-content/plugins/fair-payments-connector` directory, or install the plugin through the WordPress plugins screen directly.
-2. Activate the plugin through the 'Plugins' screen in WordPress
+2. Activate the plugin through the 'Plugins' screen in WordPress.
+3. Open the plugin's Settings page and connect your Mollie account (guided flow or API key). Start in test mode to try it out.
+4. Add the Simple Payment block to a page, or configure ticket prices in Fair Events.
 
 == Development ==
 
-* GitHub Repository: https://github.com/marcin-wosinek/fair-event-plugins
-* Report Issues: https://github.com/marcin-wosinek/fair-event-plugins/issues
-* Contribute: https://github.com/marcin-wosinek/fair-event-plugins/pulls
+* GitHub Repository: [marcin-wosinek/fair-event-plugins](https://github.com/marcin-wosinek/fair-event-plugins)
+* Report Issues: [Issues](https://github.com/marcin-wosinek/fair-event-plugins/issues)
+* Contribute: [Pull Requests](https://github.com/marcin-wosinek/fair-event-plugins/pulls)
+
+== Frequently Asked Questions ==
+
+= Do I need the other Fair Event plugins? =
+
+No. The Simple Payment block works on its own. When Fair Events is active, the plugin automatically handles its paid ticket checkout as well.
+
+= What does the plugin cost? =
+
+There is no subscription and no premium tier. A 1% integration fee on ticket sales is collected automatically through the payment flow, capped at €12 per month for the whole plugin suite — in a month without sales you pay nothing. Mollie's own transaction fees apply separately. See [fair-event-plugins.com](https://fair-event-plugins.com/) for details.
+
+= Do I need a Mollie account? =
+
+Yes — Mollie processes the payments. Creating an account at mollie.com is free, and you can run the plugin in test mode before going live.
+
+= Which payment methods are supported? =
+
+Every method enabled in your Mollie account, such as iDEAL, credit and debit cards, Bancontact, PayPal, and bank transfer.
+
+= Can other plugins integrate with it? =
+
+Yes. A small public PHP API creates and tracks transactions, and action hooks such as `fair_payment_paid` fire on status changes. See the Developer Notes below.
 
 == External services ==
 
@@ -76,5 +101,18 @@ If you use the connected-sites / data-sharing feature, the plugin will send auth
 
 == Changelog ==
 
-= 0.1.0 =
-* Initial release
+The full changelog is maintained on GitHub:
+[CHANGELOG.md](https://github.com/marcin-wosinek/fair-event-plugins/blob/main/fair-payments-connector/CHANGELOG.md)
+
+== Developer Notes ==
+
+Public PHP API for integration from other plugins:
+
+* `fair_payment_create_transaction( $line_items, $args )`
+* `fair_payment_initiate_payment( $transaction_id, $args )`
+* `fair_payment_get_transaction( $transaction_id )`
+* `fair_payment_sync_transaction_status( $transaction_id )`
+
+Transactions move through a status lifecycle (`draft` → `pending_payment` → `paid`/`failed`) with action hooks such as `fair_payment_paid` fired on each change.
+
+The plugin is open source and contributions are welcome on [GitHub](https://github.com/marcin-wosinek/fair-event-plugins).

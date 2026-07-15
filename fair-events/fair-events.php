@@ -2,7 +2,7 @@
 /**
  * Plugin Name: Fair Events
  * Plugin URI: https://github.com/marcin-wosinek/fair-event-plugins
- * Description: Event management plugin.
+ * Description: Complete event system for the block editor: recurring events, responsive calendar blocks, and built-in ticket signup.
  * Version: 1.9.0
  * Requires at least: 6.7
  * Requires PHP: 7.4
