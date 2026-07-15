@@ -280,6 +280,11 @@ class Installer {
 			self::migrate_to_3_23_0();
 		}
 
+		// Run migration if upgrading from pre-3.24.0 (add participant_id to signups).
+		if ( version_compare( $current_version, '3.24.0', '<' ) ) {
+			self::migrate_to_3_24_0();
+		}
+
 		// Update database version
 		Schema::update_db_version( Schema::DB_VERSION );
 	}
@@ -442,6 +447,10 @@ class Installer {
 
 			if ( version_compare( $current_version, '3.23.0', '<' ) ) {
 				self::migrate_to_3_23_0();
+			}
+
+			if ( version_compare( $current_version, '3.24.0', '<' ) ) {
+				self::migrate_to_3_24_0();
 			}
 
 			// Install/update tables
@@ -1942,6 +1951,44 @@ class Installer {
 	 */
 	private static function migrate_to_3_23_0() {
 		delete_option( 'fair_events_start_of_week' );
+	}
+
+	/**
+	 * Migrate to version 3.24.0 - Add participant_id column to signups table.
+	 *
+	 * Links each purchase record to a fair-audience Participant. Fires an
+	 * action so fair-audience can backfill existing rows by matching email
+	 * addresses, since the plugin owning the participant table may be
+	 * inactive when this migration runs.
+	 *
+	 * @return void
+	 */
+	private static function migrate_to_3_24_0() {
+		global $wpdb;
+
+		$table_name = $wpdb->prefix . 'fair_events_signups';
+
+		if ( ! self::column_exists( $table_name, 'participant_id' ) ) {
+			$wpdb->query(
+				$wpdb->prepare(
+					'ALTER TABLE %i ADD COLUMN participant_id BIGINT UNSIGNED DEFAULT NULL AFTER payment_expires_at',
+					$table_name
+				)
+			);
+
+			$wpdb->query(
+				$wpdb->prepare(
+					'ALTER TABLE %i ADD KEY idx_participant_id (participant_id)',
+					$table_name
+				)
+			);
+		}
+
+		/**
+		 * Fires after the signups table gains a participant_id column, so
+		 * fair-audience can link existing signup rows to participants.
+		 */
+		do_action( 'fair_events_backfill_signup_participant_ids' );
 	}
 
 	/**

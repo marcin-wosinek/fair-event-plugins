@@ -47,6 +47,17 @@ class PaymentHooks {
 	public static function handle_payment_paid( $payment, $transaction ) {
 		foreach ( self::resolve_signup_ids( $transaction ) as $signup_id ) {
 			\FairEvents\Models\EventSignup::update_status( $signup_id, 'confirmed' );
+
+			$signup = \FairEvents\Models\EventSignup::get_by_id( $signup_id );
+			if ( $signup ) {
+				/**
+				 * Fires when a base-route signup's payment is confirmed.
+				 *
+				 * @param object $signup      The fair_events_signups row (status already 'confirmed').
+				 * @param object $transaction Transaction object from fair-payments-connector.
+				 */
+				do_action( 'fair_events_signup_confirmed', $signup, $transaction );
+			}
 		}
 	}
 
@@ -60,6 +71,17 @@ class PaymentHooks {
 	public static function handle_payment_failed( $payment, $transaction ) {
 		foreach ( self::resolve_signup_ids( $transaction ) as $signup_id ) {
 			\FairEvents\Models\EventSignup::update_status( $signup_id, 'failed' );
+
+			$signup = \FairEvents\Models\EventSignup::get_by_id( $signup_id );
+			if ( $signup ) {
+				/**
+				 * Fires when a base-route signup's payment fails/cancels/expires.
+				 *
+				 * @param object $signup      The fair_events_signups row (status already 'failed').
+				 * @param object $transaction Transaction object from fair-payments-connector.
+				 */
+				do_action( 'fair_events_signup_payment_failed', $signup, $transaction );
+			}
 		}
 	}
 

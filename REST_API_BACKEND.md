@@ -592,13 +592,47 @@ create route) expose:
     path). A companion plugin hooks this to create/link its own participant
     record, set a session cookie, or send its own confirmation email —
     instead of owning a competing create route.
+-   **`fair_events_signup_confirmed` / `fair_events_signup_payment_failed`
+    actions** — `fair-events/src/Hooks/PaymentHooks.php` fires one of these
+    per resolved signup row (`$signup, $transaction`) after a
+    `fair-payments-connector` webhook flips a base-route signup's `status` to
+    `confirmed`/`failed`. `$signup` is the full `fair_events_signups` row
+    (status already updated). A companion plugin hooks these to mirror the
+    confirmation/failure onto its own operational record (e.g. flipping a
+    `pending_payment` relationship to a confirmed label and recording the
+    charge) instead of relying solely on its own webhook listener, which
+    never sees transactions created through the base route.
 
 `fair-audience/src/Hooks/SignupHookBridge.php` is the reference consumer:
-it hooks both to link a `Participant`/`EventParticipant` for the
-anonymous/linked signup case. Richer identity flows (invitation-gated
-signup, resume/retry payment, group-restricted ticket types) still go
-through `fair-audience/v1`'s own routes — this contract only covers the
-simple path; see issue #1083 for the phased migration.
+it hooks `fair_events_signup_created` to link a `Participant`/`EventParticipant`
+for the anonymous/linked signup case, and `fair_events_signup_confirmed` /
+`fair_events_signup_payment_failed` to flip that `EventParticipant`'s label
+and (on confirmation) record the charge in its transaction ledger. Richer
+identity flows (invitation-gated signup, resume/retry payment,
+group-restricted ticket types) still go through `fair-audience/v1`'s own
+routes — this contract only covers the simple path; see issue #1083 for the
+phased migration.
+
+### Canonical signup store — participant write-back and multiplicity
+
+`fair_events_signups.participant_id` links each purchase record back to the
+companion plugin's participant, written by the `fair_events_signup_created`
+hook consumer (see `SignupHookBridge::link_participant()`). It is backfilled
+on existing rows by the `fair_events_backfill_signup_participant_ids` action,
+fired once by the fair-events migration that adds the column and available
+for a companion plugin to re-run from its own activation/upgrade path (the
+migration may run while that plugin is inactive).
+
+**Signups are many-per-participant-per-event, never one-to-one.** Because
+recurring series save "all series" tickets on the master event date, one
+participant can legitimately hold multiple signup rows for the same
+`event_date_id` (a series pass bought twice, a companion ticket under the
+same email, ...). No code may treat "a relationship row already exists" as
+"duplicate signup" — always write a fresh `fair_events_signups` row and let
+the companion plugin's own operational record (kept unique per
+event-date/participant) union the labels instead. `EventSignup::has_confirmed_signup()`
+exists specifically to guard capacity-release cleanups (e.g. an expiry cron)
+against dropping a still-valid relationship because of this multiplicity.
 
 ## Related Documentation
 

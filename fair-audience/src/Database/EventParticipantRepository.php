@@ -576,6 +576,11 @@ class EventParticipantRepository {
 	/**
 	 * Delete pending_payment rows whose payment_expires_at has passed.
 	 *
+	 * Skips rows whose participant already holds a confirmed signup on the
+	 * same event date (e.g. a series pass bought after this hold), so the
+	 * cleanup never drops a still-relevant relationship — see
+	 * EventSignup::has_confirmed_signup().
+	 *
 	 * @return int Number of rows deleted.
 	 */
 	public function delete_expired_pending_payments() {
@@ -584,9 +589,9 @@ class EventParticipantRepository {
 		$table_name = $this->get_table_name();
 		$now        = current_time( 'mysql' );
 
-		$deleted = $wpdb->query(
+		$candidates = $wpdb->get_results(
 			$wpdb->prepare(
-				"DELETE FROM %i
+				"SELECT id, event_date_id, participant_id FROM %i
 				 WHERE label = 'pending_payment'
 				 AND payment_expires_at IS NOT NULL
 				 AND payment_expires_at <= %s",
@@ -594,6 +599,36 @@ class EventParticipantRepository {
 				$now
 			)
 		);
+
+		if ( empty( $candidates ) ) {
+			return 0;
+		}
+
+		$has_signup_guard = class_exists( \FairEvents\Models\EventSignup::class );
+		$deletable_ids    = array();
+
+		foreach ( $candidates as $row ) {
+			if ( $has_signup_guard
+				&& \FairEvents\Models\EventSignup::has_confirmed_signup( (int) $row->event_date_id, (int) $row->participant_id )
+			) {
+				continue;
+			}
+			$deletable_ids[] = (int) $row->id;
+		}
+
+		if ( empty( $deletable_ids ) ) {
+			return 0;
+		}
+
+		$placeholders = implode( ',', array_fill( 0, count( $deletable_ids ), '%d' ) );
+		// phpcs:disable WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.PreparedSQLPlaceholders.UnfinishedPrepare
+		$deleted = $wpdb->query(
+			$wpdb->prepare(
+				"DELETE FROM %i WHERE id IN ($placeholders)",
+				array_merge( array( $table_name ), $deletable_ids )
+			)
+		);
+		// phpcs:enable WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.PreparedSQLPlaceholders.UnfinishedPrepare
 
 		return (int) $deleted;
 	}
