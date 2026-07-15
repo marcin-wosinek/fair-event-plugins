@@ -6,7 +6,7 @@ import apiFetch from '@wordpress/api-fetch';
 /**
  * Load the weekly digest config plus last-run info.
  *
- * @return {Promise<Object>} Promise resolving to `{ config, last_sent_week, last_run_result }`.
+ * @return {Promise<Object>} Promise resolving to `{ config, last_sent_week, last_run_result, next_send }`.
  */
 export function getDigestConfig() {
 	return apiFetch({ path: '/fair-audience/v1/weekly-digest' });

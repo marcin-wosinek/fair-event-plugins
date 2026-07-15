@@ -172,4 +172,23 @@ class WeeklyDigestHooksTest extends TestCase {
 		WeeklyDigestHooks::run_due();
 		$this->assertArrayNotHasKey( 'fair_audience_weekly_digest_last_run_result', $GLOBALS['_fair_test_options'] );
 	}
+
+	/**
+	 * Due_moment() resolves to the configured day/time within now's ISO week.
+	 */
+	public function test_due_moment_resolves_configured_slot_in_current_week() {
+		// 2026-07-06 is the Monday of ISO week 2026-W28.
+		$now = new DateTime( '2026-07-08 12:00:00', new DateTimeZone( 'UTC' ) );
+		$due = WeeklyDigestHooks::due_moment( $now, 1, '08:00' );
+
+		$this->assertSame( '2026-07-06 08:00:00', $due->format( 'Y-m-d H:i:s' ) );
+	}
+
+	/**
+	 * Iso_week() formats as "<ISO year>-W<ISO week>", zero-padded.
+	 */
+	public function test_iso_week_formats_year_and_week() {
+		$now = new DateTime( '2026-07-08 12:00:00', new DateTimeZone( 'UTC' ) );
+		$this->assertSame( '2026-W28', WeeklyDigestHooks::iso_week( $now ) );
+	}
 }
