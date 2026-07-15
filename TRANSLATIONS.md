@@ -48,6 +48,47 @@ node scripts/translation/get-untranslated.js --plugin=fair-events --locale=fr_FR
 }
 ```
 
+### Pull Community Translations from WordPress.org
+
+Approved translations at [translate.wordpress.org](https://translate.wordpress.org/)
+are the source of truth. This script downloads them and **overrides the matching
+`msgstr` values in the local `.po` files**, so community-managed values always
+win over anything translated automatically (AI) or by hand in the repo.
+
+```bash
+# All plugins, all locales — preview first
+npm run translation:pull -- --dry-run
+
+# Apply
+npm run translation:pull
+
+# Single plugin / locale
+npm run translation:pull -- --plugin=fair-events --locale=es_ES
+```
+
+**How the merge works:**
+
+- A local string is overwritten **only when WordPress.org has a non-empty
+  translation** for it. Strings the community has not translated keep their
+  existing local value, so this never wipes AI/manual translations for locales
+  the community has not touched yet.
+- By default both the `stable` (latest release) and `dev` (trunk) GlotPress sets
+  are pulled and merged, with **`dev` winning** — dev tracks the current source
+  strings and usually holds the freshest community work. Restrict with
+  `--set=stable` or `--set=dev`.
+- Because `translation:ai` only fills *empty* strings, running AI translation
+  afterwards never clobbers the community values this pull applied.
+
+**Options:** `--plugin=`, `--locale=`, `--set=stable|dev|both` (default `both`),
+`--dry-run`, `--yes`.
+
+After pulling, recompile and rebuild the affected plugin:
+
+```bash
+npm run makemo --workspace=fair-events
+npm run build --workspace=fair-events
+```
+
 ### AI-Assisted Translation
 
 Automatically translate untranslated strings using OpenAI or Claude:
@@ -183,22 +224,25 @@ npm run makepot --workspace=fair-events
 # 2. Update .po files with new strings from .pot
 npm run updatepo --workspace=fair-events
 
-# 3. Check what needs translation
+# 3. Pull approved community translations from WordPress.org (these win)
+npm run translation:pull -- --plugin=fair-events
+
+# 4. Check what still needs translation
 npm run translation:untranslated -- --plugin=fair-events --locale=fr_FR
 
-# 4. Translate strings (AI-assisted or manual)
+# 5. Translate the remaining gaps (AI-assisted or manual)
 # Option A: AI translation (updates .po file automatically)
 npm run translation:ai -- --plugin=fair-events --locale=fr_FR --provider=openai
 # Option B: Manual editing
 # Edit fair-events/languages/fair-events-fr_FR.po
 
-# 5. Validate translations (optional)
+# 6. Validate translations (optional)
 npm run translation:validate -- --plugin=fair-events --locale=fr_FR
 
-# 6. Compile .mo files for PHP translations
+# 7. Compile .mo files for PHP translations
 npm run makemo --workspace=fair-events
 
-# 6. Build JavaScript and generate JSON translations
+# 8. Build JavaScript and generate JSON translations
 npm run build --workspace=fair-events
 ```
 
@@ -215,6 +259,7 @@ scripts/translation/
 │   ├── validators.js           # Validation functions
 │   └── ai-providers.js         # AI API integrations (OpenAI, Claude)
 ├── get-untranslated.js         # Extract untranslated strings
+├── sync-from-wporg.js          # Pull community translations (WordPress.org wins)
 ├── coverage-report.js          # Coverage statistics
 ├── validate-translations.js    # Validate integrity
 └── ai-translate.js             # AI-assisted translation

@@ -14,6 +14,16 @@ import { readFile } from 'fs/promises';
  */
 export async function parsePOFile(filePath) {
 	const content = await readFile(filePath, 'utf8');
+	return parsePOContent(content);
+}
+
+/**
+ * Parse PO content (already-read string) into structured data
+ *
+ * @param {string} content - Raw .po file contents
+ * @returns {Object} Parsed translation data with metadata and translations array
+ */
+export function parsePOContent(content) {
 	const lines = content.split('\n');
 
 	const result = {

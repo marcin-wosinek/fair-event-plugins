@@ -42,6 +42,15 @@ export const config = {
 		pl_PL: 'Polish',
 	},
 
+	// Map our gettext locales to translate.wordpress.org locale slugs.
+	// Used by sync-from-wporg.js to build GlotPress export URLs.
+	wpOrgLocales: {
+		de_DE: 'de',
+		es_ES: 'es',
+		fr_FR: 'fr',
+		pl_PL: 'pl',
+	},
+
 	// Path patterns
 	paths: {
 		languagesDir: (plugin) => `${plugin}/languages`,
