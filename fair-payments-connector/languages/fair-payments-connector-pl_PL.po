@@ -14,11 +14,6 @@ msgstr ""
 "Plural-Forms: nplurals=3; plural=(n==1 ? 0 : n%10>=2 && n%10<=4 && (n%100<12 || n%100>14) ? 1 : 2);\n"
 "X-Domain: fair-payments-connector\n"
 
-#. Description of the plugin
-#: fair-payments-connector.php
-msgid "Simple payment block for WordPress"
-msgstr "Prosty blok płatności dla WordPress"
-
 #: src/Admin/AdminPages.php:48
 #: src/Admin/AdminPages.php:49
 msgid "Transactions"
@@ -1100,3 +1095,9 @@ msgstr "Nie udało się utworzyć płatności"
 #: src/Admin/transaction/TransactionPage.js:793
 msgid "Details"
 msgstr "Szczegóły"
+
+#. Description of the plugin
+#: fair-payments-connector.php
+msgid "Mollie payments and bookkeeping for WordPress: payment block, itemized transactions, budgets, and bank reconciliation."
+msgstr "Płatności Mollie i księgowość dla WordPress: blok płatności, transakcje szczegółowe, budżety i reconciliacja bankowa."
+

@@ -95,145 +95,145 @@ msgstr "Skonfigurowano"
 msgid "OAuth Endpoints"
 msgstr "Punkty końcowe OAuth"
 
-#: src/Admin/settings-page.php:66
+#: src/Admin/settings-page.php:65
 msgid "Mollie OAuth is not configured."
 msgstr "Mollie OAuth nie jest skonfigurowany."
 
-#: src/Admin/settings-page.php:68
+#: src/Admin/settings-page.php:66
 msgid "Add the following to your wp-config.php:"
 msgstr "Dodaj następujące do pliku wp-config.php:"
 
 #. translators: %s: README.md URL
-#: src/Admin/settings-page.php:76
+#: src/Admin/settings-page.php:70
 #, php-format
 msgid "See <a href=\"%s\" target=\"_blank\">README.md</a> for setup instructions."
 msgstr "Zapoznaj się z <a href=\"%s\" target=\"_blank\">README.md</a>, aby uzyskać instrukcje konfiguracji."
 
-#: src/Admin/settings-page.php:88
+#: src/Admin/settings-page.php:89
 msgid "Test OAuth Connection"
 msgstr "Testuj połączenie OAuth"
 
-#: src/Admin/settings-page.php:91
+#: src/Admin/settings-page.php:92
 msgid "Test the OAuth flow by initiating a connection."
 msgstr "Przetestuj przepływ OAuth, inicjując połączenie."
 
-#: src/Admin/settings-page.php:98
+#: src/Admin/settings-page.php:99
 msgid "Test OAuth Flow"
 msgstr "Testuj przepływ OAuth"
 
-#: src/Admin/settings-page.php:107
+#: src/Admin/settings-page.php:109
 msgid "Invalid nonce."
 msgstr "Nieprawidłowy nonce."
 
-#: src/Admin/settings-page.php:120
+#: src/Admin/settings-page.php:127
 msgid "Redirecting to Mollie OAuth..."
 msgstr "Przekierowanie do OAuth Mollie..."
 
-#: src/Admin/settings-page.php:130
+#: src/Admin/settings-page.php:140
 msgid "OAuth test successful!"
 msgstr "Test OAuth zakończył się pomyślnie!"
 
-#: src/Admin/settings-page.php:131
+#: src/Admin/settings-page.php:141
 msgid "Access token received:"
 msgstr "Otrzymany token dostępu:"
 
-#: src/Admin/settings-page.php:136
+#: src/Admin/settings-page.php:152
 msgid "OAuth test failed:"
 msgstr "Test OAuth nie powiódł się:"
 
-#: src/Admin/settings-page.php:148
+#: src/Admin/settings-page.php:172
 msgid "Configure Mollie credentials first to test the connection."
 msgstr "Skonfiguruj najpierw dane uwierzytelniające Mollie, aby przetestować połączenie."
 
-#: src/Admin/settings-page.php:155
+#: src/Admin/settings-page.php:185
 msgid "Recent OAuth Activity"
 msgstr "Ostatnia aktywność OAuth"
 
-#: src/Admin/settings-page.php:161
+#: src/Admin/settings-page.php:191
 msgid "State Token"
 msgstr "Token stanu"
 
-#: src/Admin/settings-page.php:162
+#: src/Admin/settings-page.php:192
 msgid "Site Info"
 msgstr "Informacje o witrynie"
 
-#: src/Admin/settings-page.php:163
+#: src/Admin/settings-page.php:193
 msgid "Created"
 msgstr "Utworzono"
 
-#: src/Admin/settings-page.php:179
+#: src/Admin/settings-page.php:209
 msgid "Invalid data"
 msgstr "Nieprawidłowe dane"
 
-#: src/Admin/settings-page.php:196
+#: src/Admin/settings-page.php:226
 msgid "No recent OAuth activity."
 msgstr "Brak ostatniej aktywności OAuth."
 
-#: src/Admin/settings-page.php:202
+#: src/Admin/settings-page.php:232
 msgid "Documentation"
 msgstr "Dokumentacja"
 
-#: src/Admin/settings-page.php:204
+#: src/Admin/settings-page.php:234
 msgid "Setup Instructions"
 msgstr "Instrukcje konfiguracji"
 
-#: src/Admin/settings-page.php:207
+#: src/Admin/settings-page.php:237
 msgid "Create Mollie Partner Account"
 msgstr "Utwórz konto partnera Mollie"
 
-#: src/Admin/settings-page.php:211
+#: src/Admin/settings-page.php:241
 msgid "Create OAuth Application"
 msgstr "Utwórz aplikację OAuth"
 
-#: src/Admin/settings-page.php:212
+#: src/Admin/settings-page.php:242
 msgid "In Mollie Dashboard → Developers → Your Apps"
 msgstr "W panelu Mollie → Deweloperzy → Twoje aplikacje"
 
-#: src/Admin/settings-page.php:213
+#: src/Admin/settings-page.php:243
 msgid "Redirect URI:"
 msgstr "Identyfikator URI przekierowania:"
 
-#: src/Admin/settings-page.php:214
+#: src/Admin/settings-page.php:244
 msgid "Scopes:"
 msgstr "Zakresy:"
 
-#: src/Admin/settings-page.php:217
+#: src/Admin/settings-page.php:247
 msgid "Add Credentials to wp-config.php"
 msgstr "Dodaj poświadczenia do wp-config.php"
 
-#: src/Admin/settings-page.php:223
+#: src/Admin/settings-page.php:253
 msgid "How It Works"
 msgstr "Jak to działa"
 
-#: src/Admin/settings-page.php:224
+#: src/Admin/settings-page.php:254
 msgid "This plugin acts as an OAuth proxy between WordPress sites and Mollie:"
 msgstr "Ta wtyczka działa jako proxy OAuth między witrynami WordPress a Mollie:"
 
-#: src/Admin/settings-page.php:226
+#: src/Admin/settings-page.php:256
 msgid "User clicks \"Connect Mollie\" on their WordPress site"
 msgstr "Użytkownik klika \"Połącz Mollie\" na swojej witrynie WordPress"
 
-#: src/Admin/settings-page.php:227
+#: src/Admin/settings-page.php:257
 msgid "Site redirects to fair-event-plugins.com/oauth/authorize"
 msgstr "Witryna przekierowuje do fair-event-plugins.com/oauth/authorize"
 
-#: src/Admin/settings-page.php:228
+#: src/Admin/settings-page.php:258
 msgid "This plugin redirects to Mollie for authorization"
 msgstr "Ta wtyczka przekierowuje do Mollie w celu autoryzacji"
 
-#: src/Admin/settings-page.php:229
+#: src/Admin/settings-page.php:259
 msgid "User authorizes the connection on Mollie"
 msgstr "Użytkownik autoryzuje połączenie w Mollie"
 
-#: src/Admin/settings-page.php:230
+#: src/Admin/settings-page.php:260
 msgid "Mollie redirects back to fair-event-plugins.com/oauth/callback"
 msgstr "Mollie przekierowuje z powrotem do fair-event-plugins.com/oauth/callback"
 
-#: src/Admin/settings-page.php:231
+#: src/Admin/settings-page.php:261
 msgid "Plugin exchanges authorization code for access tokens"
 msgstr "Wtyczka wymienia kod autoryzacji na tokeny dostępu"
 
-#: src/Admin/settings-page.php:232
+#: src/Admin/settings-page.php:262
 msgid "Tokens are sent back to the WordPress site"
 msgstr "Tokeny są wysyłane z powrotem do witryny WordPress"
 
@@ -287,21 +287,21 @@ msgstr "Usunięto %d starych dzienników połączeń Instagram."
 msgid "You do not have permission to view Instagram connection logs."
 msgstr "Nie masz uprawnień do przeglądania dzienników połączeń Instagram."
 
-#: src/Core/Plugin.php:1442
-#: src/Core/Plugin.php:1463
-#: src/Core/Plugin.php:1484
+#: src/Core/Plugin.php:1441
+#: src/Core/Plugin.php:1465
+#: src/Core/Plugin.php:1489
 msgid "Fair Platform:"
 msgstr "Fair Platform:"
 
-#: src/Core/Plugin.php:1444
+#: src/Core/Plugin.php:1442
 msgid "Instagram OAuth credentials not configured. Please add INSTAGRAM_APP_ID and INSTAGRAM_APP_SECRET to wp-config.php for Instagram integration."
 msgstr "Poświadczenia OAuth Instagram nie są skonfigurowane. Dodaj INSTAGRAM_APP_ID i INSTAGRAM_APP_SECRET do wp-config.php, aby włączyć integrację z Instagramem."
 
-#: src/Core/Plugin.php:1465
+#: src/Core/Plugin.php:1466
 msgid "Mollie OAuth credentials not configured. Please add MOLLIE_CLIENT_ID and MOLLIE_CLIENT_SECRET to wp-config.php"
 msgstr "Poświadczenia OAuth Mollie nie są skonfigurowane. Dodaj MOLLIE_CLIENT_ID i MOLLIE_CLIENT_SECRET do wp-config.php"
 
-#: src/Core/Plugin.php:1486
+#: src/Core/Plugin.php:1490
 msgid "Mollie PHP library not installed. Please run: composer require mollie/mollie-api-php"
 msgstr "Biblioteka Mollie PHP nie jest zainstalowana. Uruchom: composer require mollie/mollie-api-php"
 
