@@ -557,6 +557,49 @@ Every REST controller gets a Playwright API spec in `src/API/__tests__/`
 
 ---
 
+## Cross-Plugin Extension Hooks
+
+When a companion plugin (e.g. `fair-audience`) needs to enrich or react to a
+base plugin's REST create path — instead of registering a competing route
+that duplicates validation, pricing, and payment logic — expose the seam as a
+filter (for shaping data before it's used) and/or an action (for reacting
+after a write completes). This keeps the base route the single source of
+truth and lets experimental features stay additive.
+
+### Example: `fair-events` unified signup
+
+`fair-events/src/blocks/event-signup/render.php` (base render, used when no
+companion plugin renders a richer flow) and
+`fair-events/src/API/GetTicketsController.php` (the `fair-events/v1/get-tickets`
+create route) expose:
+
+-   **`fair_events_signup_render_context` filter** — the base render builds a
+    context array (`event_date_id`, `ticket_types`, `price_by_type_id`,
+    `active_sale_period`, `occurrences_for_picker`, `currency_symbol`,
+    `callback_status`/`callback_tx_id`/`callback_token`, `prefill_name`,
+    `prefill_email`, `submit_button_text`) and runs it through this filter
+    before rendering, so a companion plugin can inject viewer identity,
+    session pre-fill, or participant-filtered ticket types/prices without a
+    parallel template. Two render-slot actions,
+    `fair_events_signup_render_before_form` and
+    `fair_events_signup_render_after_form` (both passed the same context),
+    let a companion plugin contribute UI fragments (e.g. a resume/retry card)
+    directly inside the `<form>`.
+-   **`fair_events_signup_created` action** — fires
+    `( $signup_id, $event_date_id, $name, $email, $ticket_selection, $transaction_id )`
+    after a signup row is persisted through the base create path (once per
+    row for multi-occurrence signups; `$transaction_id` is `null` on the free
+    path). A companion plugin hooks this to create/link its own participant
+    record, set a session cookie, or send its own confirmation email —
+    instead of owning a competing create route.
+
+`fair-audience/src/Hooks/SignupHookBridge.php` is the reference consumer:
+it hooks both to link a `Participant`/`EventParticipant` for the
+anonymous/linked signup case. Richer identity flows (invitation-gated
+signup, resume/retry payment, group-restricted ticket types) still go
+through `fair-audience/v1`'s own routes — this contract only covers the
+simple path; see issue #1083 for the phased migration.
+
 ## Related Documentation
 
 -   [REST_API_USAGE.md](./REST_API_USAGE.md) - Frontend implementation guide
