@@ -180,6 +180,61 @@ if ( class_exists( \FairEvents\Models\TicketSalePeriod::class ) && class_exists(
 $currency_symbol = 'EUR' === get_option( 'fair_payment_currency', 'EUR' ) ? '€' : get_option( 'fair_payment_currency', 'EUR' );
 $powered_by      = (bool) get_option( 'fair_events_powered_by_branding', false );
 
+/**
+ * Extension point for plugins (e.g. fair-audience) that want to enrich the
+ * base signup form without owning a competing render — resolved viewer
+ * identity, session pre-fill, or group/participant-filtered ticket types and
+ * prices can all be layered on by filtering this context array. See
+ * REST_API_BACKEND.md for the documented shape and consumers.
+ *
+ * @param array    $context    Render context (event_date_id, ticket_types, price_by_type_id,
+ *                              active_sale_period, occurrences_for_picker, currency_symbol,
+ *                              callback_status, callback_tx_id, callback_token, prefill_name,
+ *                              prefill_email, submit_button_text).
+ * @param array    $attributes Block attributes.
+ * @param WP_Block $block      Block instance.
+ */
+$context = apply_filters(
+	'fair_events_signup_render_context',
+	array(
+		'event_date_id'          => $event_date_id,
+		'ticket_types'           => $ticket_types,
+		'price_by_type_id'       => $price_by_type_id,
+		'active_sale_period'     => $active_sale_period,
+		'occurrences_for_picker' => $occurrences_for_picker,
+		'currency_symbol'        => $currency_symbol,
+		'callback_status'        => $callback_status,
+		'callback_tx_id'         => $callback_tx_id,
+		'callback_token'         => $callback_token,
+		'prefill_name'           => '',
+		'prefill_email'          => '',
+		'submit_button_text'     => $submit_button_text,
+	),
+	$attributes,
+	$block
+);
+
+$event_date_id          = (int) $context['event_date_id'];
+$ticket_types           = $context['ticket_types'];
+$price_by_type_id       = $context['price_by_type_id'];
+$active_sale_period     = $context['active_sale_period'];
+$occurrences_for_picker = $context['occurrences_for_picker'];
+$has_instance_picker    = ! empty( $occurrences_for_picker );
+$currency_symbol        = $context['currency_symbol'];
+$callback_status        = $context['callback_status'];
+$prefill_name           = $context['prefill_name'];
+$prefill_email          = $context['prefill_email'];
+$submit_button_text     = $context['submit_button_text'];
+
+// Recompute the multiple_instances flag from the (possibly filtered) ticket types.
+$has_multiple_instances_type = false;
+foreach ( $ticket_types as $ticket_type ) {
+	if ( $ticket_type->is_multiple_instances() ) {
+		$has_multiple_instances_type = true;
+		break;
+	}
+}
+
 // Generate unique form ID.
 $form_id = 'fair-events-get-tickets-' . wp_unique_id();
 ?>
@@ -204,7 +259,19 @@ $form_id = 'fair-events-get-tickets-' . wp_unique_id();
 		id="<?php echo esc_attr( $form_id ); ?>"
 		class="fair-events-get-tickets-form"
 		data-event-date-id="<?php echo esc_attr( $event_date_id ); ?>"
+		data-fair-audience-active="<?php echo esc_attr( class_exists( \FairAudience\API\EventSignupController::class ) ? '1' : '0' ); ?>"
 	>
+		<?php
+		/**
+		 * Fires just inside the signup <form>, before the name/email fields.
+		 * fair-audience uses this to contribute identity fragments (resume
+		 * card, register-with-token prompt) without a parallel template.
+		 *
+		 * @param array $context Render context, see fair_events_signup_render_context.
+		 */
+		do_action( 'fair_events_signup_render_before_form', $context );
+		?>
+
 		<div class="form-row">
 			<label for="<?php echo esc_attr( $form_id ); ?>-name" class="form-label">
 				<?php esc_html_e( 'Your Name', 'fair-events' ); ?>
@@ -215,6 +282,7 @@ $form_id = 'fair-events-get-tickets-' . wp_unique_id();
 				id="<?php echo esc_attr( $form_id ); ?>-name"
 				name="name"
 				class="form-input"
+				value="<?php echo esc_attr( $prefill_name ); ?>"
 				required
 				maxlength="255"
 				autocomplete="name"
@@ -231,6 +299,7 @@ $form_id = 'fair-events-get-tickets-' . wp_unique_id();
 				id="<?php echo esc_attr( $form_id ); ?>-email"
 				name="email"
 				class="form-input"
+				value="<?php echo esc_attr( $prefill_email ); ?>"
 				required
 				autocomplete="email"
 			/>
@@ -341,6 +410,18 @@ $form_id = 'fair-events-get-tickets-' . wp_unique_id();
 				<?php echo esc_html( $submit_button_text ); ?>
 			</button>
 		</div>
+
+		<?php
+		/**
+		 * Fires just inside the signup <form>, after the submit button.
+		 * fair-audience uses this to contribute identity fragments
+		 * (request-link prompt, retry-payment card) without a parallel
+		 * template.
+		 *
+		 * @param array $context Render context, see fair_events_signup_render_context.
+		 */
+		do_action( 'fair_events_signup_render_after_form', $context );
+		?>
 	</form>
 
 	<div class="message-container" role="alert" aria-live="polite"></div>

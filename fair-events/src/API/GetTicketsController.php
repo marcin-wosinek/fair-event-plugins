@@ -249,8 +249,14 @@ class GetTicketsController extends WP_REST_Controller {
 			);
 		}
 
+		$ticket_selection = array(
+			'ticket_type_id' => $ticket_type_id ? $ticket_type_id : null,
+			'quantity'       => $quantity,
+		);
+
 		// Free path.
 		if ( $amount <= 0 ) {
+			$this->fire_signup_created( $signup_id, $event_date_id, $name, $email, $ticket_selection, null );
 			return rest_ensure_response(
 				array(
 					'status'  => 'confirmed',
@@ -262,6 +268,7 @@ class GetTicketsController extends WP_REST_Controller {
 		// Paid path — fall back to confirmed if payment connector is absent.
 		if ( ! class_exists( \FairPaymentsConnector\API\TransactionAPI::class ) ) {
 			\FairEvents\Models\EventSignup::update_status( $signup_id, 'confirmed' );
+			$this->fire_signup_created( $signup_id, $event_date_id, $name, $email, $ticket_selection, null );
 			return rest_ensure_response(
 				array(
 					'status'  => 'confirmed',
@@ -307,6 +314,8 @@ class GetTicketsController extends WP_REST_Controller {
 
 		\FairEvents\Models\EventSignup::update_transaction( $signup_id, (int) $transaction_id );
 
+		$this->fire_signup_created( $signup_id, $event_date_id, $name, $email, $ticket_selection, (int) $transaction_id );
+
 		// Load the freshly created transaction so its access token can be attached
 		// to the redirect URL, mirroring PaymentEndpoint::create_payment. The token
 		// gates the shared /payments/{id}/status endpoint this now polls.
@@ -339,6 +348,35 @@ class GetTicketsController extends WP_REST_Controller {
 				'currency'       => $currency,
 			)
 		);
+	}
+
+	/**
+	 * Fire the sanctioned extension point for plugins (e.g. fair-audience)
+	 * that want to attach viewer identity / participant records to a signup
+	 * created through the base route, instead of owning a competing create
+	 * route. See REST_API_BACKEND.md for the documented contract.
+	 *
+	 * @param int      $signup_id        The fair_events_signups row just created.
+	 * @param int      $event_date_id    Event-date ID the signup targets.
+	 * @param string   $name             Buyer name.
+	 * @param string   $email            Buyer email.
+	 * @param array    $ticket_selection Ticket selection: 'ticket_type_id', 'quantity',
+	 *                                   and — for 'multiple_instances' types — 'event_date_ids'.
+	 * @param int|null $transaction_id   fair-payments-connector transaction ID, or null on the free path.
+	 * @return void
+	 */
+	private function fire_signup_created( $signup_id, $event_date_id, $name, $email, $ticket_selection, $transaction_id ) {
+		/**
+		 * Fires after a signup row is persisted through the base create path.
+		 *
+		 * @param int      $signup_id        The fair_events_signups row just created.
+		 * @param int      $event_date_id    Event-date ID the signup targets.
+		 * @param string   $name             Buyer name.
+		 * @param string   $email            Buyer email.
+		 * @param array    $ticket_selection Ticket selection details.
+		 * @param int|null $transaction_id   fair-payments-connector transaction ID, or null on the free path.
+		 */
+		do_action( 'fair_events_signup_created', $signup_id, $event_date_id, $name, $email, $ticket_selection, $transaction_id );
 	}
 
 	/**
@@ -480,8 +518,23 @@ class GetTicketsController extends WP_REST_Controller {
 			$signup_ids[] = (int) $signup_id;
 		}
 
+		$occurrence_ids   = array_map(
+			function ( $occ ) {
+				return (int) $occ->id;
+			},
+			$occurrences
+		);
+		$ticket_selection = array(
+			'ticket_type_id' => (int) $ticket_type->id,
+			'quantity'       => 1,
+			'event_date_ids' => $occurrence_ids,
+		);
+
 		// Free path.
 		if ( $total_amount <= 0 ) {
+			foreach ( $signup_ids as $index => $signup_id ) {
+				$this->fire_signup_created( $signup_id, $occurrence_ids[ $index ], $name, $email, $ticket_selection, null );
+			}
 			return rest_ensure_response(
 				array(
 					'status'  => 'confirmed',
@@ -492,8 +545,9 @@ class GetTicketsController extends WP_REST_Controller {
 
 		// Paid path — fall back to confirmed if payment connector is absent.
 		if ( ! class_exists( \FairPaymentsConnector\API\TransactionAPI::class ) ) {
-			foreach ( $signup_ids as $signup_id ) {
+			foreach ( $signup_ids as $index => $signup_id ) {
 				\FairEvents\Models\EventSignup::update_status( $signup_id, 'confirmed' );
+				$this->fire_signup_created( $signup_id, $occurrence_ids[ $index ], $name, $email, $ticket_selection, null );
 			}
 			return rest_ensure_response(
 				array(
@@ -546,8 +600,9 @@ class GetTicketsController extends WP_REST_Controller {
 			return $transaction_id;
 		}
 
-		foreach ( $signup_ids as $signup_id ) {
+		foreach ( $signup_ids as $index => $signup_id ) {
 			\FairEvents\Models\EventSignup::update_transaction( $signup_id, (int) $transaction_id );
+			$this->fire_signup_created( $signup_id, $occurrence_ids[ $index ], $name, $email, $ticket_selection, (int) $transaction_id );
 		}
 
 		$transaction = \FairPaymentsConnector\Models\Transaction::get_by_id( $transaction_id );

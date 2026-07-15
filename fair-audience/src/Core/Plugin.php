@@ -92,6 +92,10 @@ class Plugin {
 		// Initialize the weekly events digest cron.
 		\FairAudience\Hooks\WeeklyDigestHooks::init();
 
+		// Extend fair-events' unified signup block/route for the simple
+		// anonymous/linked case via the fair_events_signup_* hook contract.
+		\FairAudience\Hooks\SignupHookBridge::init();
+
 		// Initialize blocks.
 		$block_hooks = new \FairAudience\Hooks\BlockHooks();
 	}
