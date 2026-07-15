@@ -3,15 +3,16 @@
 	"apiVersion": 3,
 	"name": "fair-audience/event-signup",
 	"version": "1.0.0",
-	"title": "Event Signup",
+	"title": "Event Signup (legacy)",
 	"category": "widgets",
 	"icon": "groups",
-	"description": "Allow audience members to sign up for events",
+	"description": "Legacy signup block. Superseded by Event Signup (fair-events) — transform instances without custom questions to fair-events/event-signup.",
 	"keywords": ["event", "signup", "register", "rsvp", "audience"],
 	"textdomain": "fair-audience",
 	"supports": {
 		"html": false,
 		"align": ["wide", "full"],
+		"inserter": false,
 		"spacing": {
 			"padding": true,
 			"margin": ["top", "bottom"]

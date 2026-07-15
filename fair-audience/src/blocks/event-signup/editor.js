@@ -1,7 +1,7 @@
 import './style.css';
 import './editor.css';
 
-import { registerBlockType } from '@wordpress/blocks';
+import { registerBlockType, createBlock } from '@wordpress/blocks';
 import {
 	useBlockProps,
 	useInnerBlocksProps,
@@ -13,8 +13,11 @@ import {
 	TextControl,
 	TextareaControl,
 	ToggleControl,
+	Notice,
 } from '@wordpress/components';
 import { __ } from '@wordpress/i18n';
+
+const UNIFIED_NAME = 'fair-events/event-signup';
 
 // Custom question blocks that can be nested inside the signup form. Mirrors the
 // Fair Form block's set (see fair-form/editor.js) so organizers collect the same
@@ -37,6 +40,22 @@ const ALLOWED_BLOCKS = [
 ];
 
 registerBlockType('fair-audience/event-signup', {
+	transforms: {
+		to: [
+			{
+				type: 'block',
+				blocks: [UNIFIED_NAME],
+				// Instances with custom questions would silently lose them —
+				// only offer the transform when there's nothing to drop.
+				isMatch: (attributes, block) =>
+					!block.innerBlocks || block.innerBlocks.length === 0,
+				transform: (attributes) =>
+					createBlock(UNIFIED_NAME, {
+						submitButtonText: attributes.signupButtonText,
+					}),
+			},
+		],
+	},
 	edit: ({ attributes, setAttributes }) => {
 		const {
 			signupButtonText,
@@ -171,6 +190,12 @@ registerBlockType('fair-audience/event-signup', {
 				</InspectorControls>
 
 				<div {...blockProps}>
+					<Notice status="info" isDismissible={false}>
+						{__(
+							'This block has moved to Event Signup (fair-events). Transform it to the new block.',
+							'fair-audience'
+						)}
+					</Notice>
 					<div className="fair-audience-event-signup-editor-header">
 						<span className="fair-audience-event-signup-editor-label">
 							{__('Event Signup', 'fair-audience')}
