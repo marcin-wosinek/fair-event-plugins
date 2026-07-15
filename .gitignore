@@ -35,6 +35,9 @@ test-results/
 
 # Release scripts (local SVN checkouts)
 */svn/
+
+# Generated GlotPress-import files (scripts/translation/export-for-wporg.js)
+*/languages/wporg-import/
 .vim/coc-settings.json
 deployment-config.txt
 fair-platform-deployment-config.txt

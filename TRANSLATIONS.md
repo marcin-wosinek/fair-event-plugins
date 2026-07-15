@@ -89,6 +89,46 @@ npm run makemo --workspace=fair-events
 npm run build --workspace=fair-events
 ```
 
+### Export Local Translations for Import to WordPress.org
+
+The reverse direction: hand your local (AI-assisted or manual) translations
+to the WordPress.org community **without risking an override of anything
+they've already approved**. This does not upload anything itself — GlotPress
+has no public API for that — it generates a `.po` file per plugin/locale
+containing only the strings WordPress.org does not already have a non-empty
+translation for (checked against both the `stable` and `dev` sets, same as
+`translation:pull`). Anything the community has already translated —
+correct or not — is left out, so importing the output can only fill gaps,
+never clobber community work.
+
+```bash
+# Preview first
+npm run translation:export-for-wporg -- --dry-run
+
+# Write the files
+npm run translation:export-for-wporg
+
+# Single plugin / locale
+npm run translation:export-for-wporg -- --plugin=fair-events --locale=es_ES
+```
+
+Output lands in `<plugin>/languages/wporg-import/<plugin>-<locale>.po`
+(git-ignored — it's a throwaway artifact, regenerate anytime).
+
+**Options:** `--plugin=`, `--locale=`, `--set=stable|dev|both` (default `both`),
+`--output-dir=`, `--dry-run`.
+
+To actually get the strings onto translate.wordpress.org, import the
+generated `.po` file through GlotPress's importer (requires Project
+Translation Editor or admin rights on that locale/project):
+
+```
+https://translate.wordpress.org/projects/wp-plugins/<slug>/<stable|dev>/<locale>/default/import-translations/
+```
+
+Without those rights, use the file as a reference and paste individual
+strings into the GlotPress suggestion UI for a PTE to review instead.
+
 ### AI-Assisted Translation
 
 Automatically translate untranslated strings using OpenAI or Claude:

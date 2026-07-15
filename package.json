@@ -71,6 +71,7 @@
 		"translation:update": "node scripts/translation/update-translations.js",
 		"translation:untranslated": "node scripts/translation/get-untranslated.js",
 		"translation:pull": "node scripts/translation/sync-from-wporg.js",
+		"translation:export-for-wporg": "node scripts/translation/export-for-wporg.js",
 		"translation:coverage": "node scripts/translation/coverage-report.js",
 		"translation:validate": "node scripts/translation/validate-translations.js",
 		"translation:ai": "node scripts/translation/ai-translate.js"
