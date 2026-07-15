@@ -663,3 +663,137 @@ describe('EventTickets — editable table renders without expanding a panel (#98
 		expect(screen.getByDisplayValue('General')).toBeInTheDocument();
 	});
 });
+
+describe('EventTickets — single pricing period by default (#1138)', () => {
+	const originalManageEventData = window.fairEventsManageEventData;
+
+	afterEach(() => {
+		window.fairEventsManageEventData = originalManageEventData;
+	});
+
+	const initialDataWithOnePeriod = {
+		...initialDataWithTicketType,
+		sale_periods: [
+			{
+				id: 501,
+				name: '',
+				sale_start: '2026-01-01',
+				sale_end: '2026-02-01',
+			},
+		],
+		prices: [
+			{
+				ticket_type_id: 1,
+				sale_period_id: 501,
+				price: '12',
+			},
+		],
+	};
+
+	const initialDataWithTwoPeriods = {
+		...initialDataWithTicketType,
+		sale_periods: [
+			{
+				id: 601,
+				name: 'Advance ticket',
+				sale_start: '2026-01-01',
+				sale_end: '2026-01-15',
+			},
+			{
+				id: 602,
+				name: 'Day of event',
+				sale_start: '2026-01-15',
+				sale_end: '2026-02-01',
+			},
+		],
+		prices: [
+			{ ticket_type_id: 1, sale_period_id: 601, price: '20' },
+			{ ticket_type_id: 1, sale_period_id: 602, price: '5' },
+		],
+		settings: { multiple_pricing_periods: false },
+	};
+
+	it('adding the first ticket type seeds exactly one sale period and shows a single Price column with no Available checkbox', () => {
+		window.fairEventsManageEventData = { siteToday: '2026-07-15' };
+		renderTickets({
+			initialData: emptyInitialData,
+			startDatetime: '2026-08-01 10:00:00',
+			endDatetime: '2026-08-01 12:00:00',
+		});
+
+		fireEvent.click(
+			screen.getByRole('button', { name: '+ Add Ticket Type' })
+		);
+
+		expect(
+			screen.getAllByRole('columnheader', { name: 'Price' })
+		).toHaveLength(1);
+		expect(screen.queryByText('Available')).not.toBeInTheDocument();
+	});
+
+	it('a seeded sale window for a past-dated event is never inverted', () => {
+		window.fairEventsManageEventData = { siteToday: '2026-07-15' };
+		renderTickets({
+			initialData: emptyInitialData,
+			startDatetime: '2020-01-01 10:00:00',
+			endDatetime: '2020-01-01 12:00:00',
+		});
+
+		fireEvent.click(
+			screen.getByRole('button', { name: '+ Add Ticket Type' })
+		);
+		fireEvent.click(screen.getByRole('button', { name: /Sale Periods/i }));
+
+		const fromInput = screen.getByLabelText('From');
+		const untilInput = screen.getByLabelText('Until');
+		expect(fromInput.value <= untilInput.value).toBe(true);
+		expect(fromInput.value).toBe('2020-01-01');
+	});
+
+	it('turning on "Multiple pricing periods" splits the window into Advance ticket / Day of event and migrates the price', () => {
+		renderTickets({
+			initialData: initialDataWithOnePeriod,
+			startDatetime: '2026-01-10 10:00:00',
+			endDatetime: '2026-02-01 12:00:00',
+		});
+
+		fireEvent.click(screen.getByRole('button', { name: /More options/i }));
+		fireEvent.click(
+			screen.getByRole('checkbox', {
+				name: /Multiple pricing periods/i,
+			})
+		);
+
+		expect(screen.getByText('Advance ticket')).toBeInTheDocument();
+		expect(screen.getByText('Day of event')).toBeInTheDocument();
+		expect(screen.getByDisplayValue('12')).toBeInTheDocument();
+	});
+
+	it('turning off "Multiple pricing periods" with several periods asks for confirmation before merging', () => {
+		renderTickets({ initialData: initialDataWithTwoPeriods });
+
+		fireEvent.click(screen.getByRole('button', { name: /More options/i }));
+		fireEvent.click(
+			screen.getByRole('checkbox', {
+				name: /Multiple pricing periods/i,
+			})
+		);
+
+		expect(
+			screen.getByText(/Merge to one sale window/i)
+		).toBeInTheDocument();
+
+		fireEvent.click(screen.getByRole('button', { name: 'Merge periods' }));
+
+		expect(screen.queryByText('Advance ticket')).not.toBeInTheDocument();
+		expect(screen.queryByText('Day of event')).not.toBeInTheDocument();
+		expect(screen.getByDisplayValue('20')).toBeInTheDocument();
+	});
+
+	it('an event loaded with two stored periods renders in multi-period mode regardless of the stored toggle', () => {
+		renderTickets({ initialData: initialDataWithTwoPeriods });
+
+		expect(screen.getByText('Advance ticket')).toBeInTheDocument();
+		expect(screen.getByText('Day of event')).toBeInTheDocument();
+	});
+});

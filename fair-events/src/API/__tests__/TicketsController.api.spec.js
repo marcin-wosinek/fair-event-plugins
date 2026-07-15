@@ -279,3 +279,119 @@ test.describe('TicketsController — disabled flag and delete guard', () => {
 		);
 	});
 });
+
+test.describe('TicketsController — retired pricing-period settings (#1138)', () => {
+	let api;
+	let eventDateId;
+
+	test.beforeAll(async () => {
+		api = await request.newContext({ baseURL: BASE_URL });
+
+		const edRes = await api.post('/wp-json/fair-events/v1/event-dates', {
+			headers: adminHeaders,
+			data: {
+				title: `Retired-settings test ${Date.now()}`,
+				start_datetime: '2030-08-01 10:00:00',
+				end_datetime: '2030-08-01 12:00:00',
+			},
+		});
+		expect(edRes.ok()).toBeTruthy();
+		eventDateId = (await edRes.json()).id;
+	});
+
+	test.afterAll(async () => {
+		if (eventDateId) {
+			await api.delete(
+				`/wp-json/fair-events/v1/event-dates/${eventDateId}`,
+				{ headers: adminHeaders }
+			);
+		}
+	});
+
+	test('saving settings that include the retired keys drops them on load', async () => {
+		const putRes = await api.put(
+			`/wp-json/fair-events/v1/event-dates/${eventDateId}/tickets`,
+			{
+				headers: adminHeaders,
+				data: {
+					ticket_types: [],
+					sale_periods: [],
+					prices: [],
+					settings: {
+						continues_pricing_period: false,
+						unlimited_tickets_in_price_period: false,
+						show_ticket_type_capacity: true,
+					},
+				},
+			}
+		);
+		expect(putRes.ok()).toBeTruthy();
+
+		const getRes = await api.get(
+			`/wp-json/fair-events/v1/event-dates/${eventDateId}/tickets`,
+			{ headers: adminHeaders }
+		);
+		expect(getRes.ok()).toBeTruthy();
+		const body = await getRes.json();
+		expect(body.settings).not.toHaveProperty('continues_pricing_period');
+		expect(body.settings).not.toHaveProperty(
+			'unlimited_tickets_in_price_period'
+		);
+		// A setting that is still current is unaffected.
+		expect(body.settings.show_ticket_type_capacity).toBe(true);
+	});
+
+	test('importing an export that includes the retired fields succeeds and drops them', async () => {
+		const importRes = await api.post(
+			`/wp-json/fair-events/v1/event-dates/${eventDateId}/tickets/import`,
+			{
+				headers: adminHeaders,
+				data: {
+					version: 1,
+					type: 'fair-events-tickets',
+					capacity: null,
+					settings: {
+						continues_pricing_period: true,
+						unlimited_tickets_in_price_period: false,
+						multiple_pricing_periods: false,
+					},
+					ticket_types: [
+						{
+							name: 'General',
+							capacity: null,
+							invitation_only: false,
+							minimum_activities: 0,
+							disable_at: null,
+							recurrence_scope: 'single_instance',
+							minimum_instances: 0,
+							group_ids: [],
+						},
+					],
+					sale_periods: [
+						{
+							name: '',
+							sale_start: '2030-01-01 00:00:00',
+							sale_end: '2030-08-02 00:00:00',
+						},
+					],
+					prices: [
+						{
+							ticket_type_index: 0,
+							sale_period_index: 0,
+							price: 10,
+							capacity: 5,
+						},
+					],
+					options: [],
+				},
+			}
+		);
+		expect(importRes.ok()).toBeTruthy();
+		const body = await importRes.json();
+		expect(body.settings).not.toHaveProperty('continues_pricing_period');
+		expect(body.settings).not.toHaveProperty(
+			'unlimited_tickets_in_price_period'
+		);
+		expect(body.ticket_types?.[0]?.name).toBe('General');
+	});
+});

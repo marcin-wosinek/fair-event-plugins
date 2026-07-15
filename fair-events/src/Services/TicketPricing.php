@@ -7,7 +7,6 @@
 
 namespace FairEvents\Services;
 
-use FairEvents\Models\EventDateSetting;
 use FairEvents\Models\TicketPrice;
 use FairEvents\Models\TicketSalePeriod;
 use FairEvents\Models\TicketType;
@@ -28,9 +27,8 @@ class TicketPricing {
 	 * timezone: sale_start is the first day on sale (00:00:00 site time) and
 	 * sale_end is the first day no longer on sale (00:00:00 site time).
 	 *
-	 * When no period matches and the per-event-date `continues_pricing_period`
-	 * setting is on, falls back to the last period whose start is already in
-	 * the past.
+	 * Sale periods always chain: when no period matches, falls back to the
+	 * last period whose start is already in the past.
 	 *
 	 * @param int $event_date_id Event date ID.
 	 * @return TicketSalePeriod|null Active period or null.
@@ -39,10 +37,7 @@ class TicketPricing {
 		$now          = current_time( 'mysql' );
 		$sale_periods = TicketSalePeriod::get_all_by_event_date_id( $event_date_id );
 
-		$continues = class_exists( EventDateSetting::class )
-			&& '1' === EventDateSetting::get( $event_date_id, 'continues_pricing_period' );
-
-		return self::pick_active_period( $sale_periods, $now, $continues );
+		return self::pick_active_period( $sale_periods, $now, true );
 	}
 
 	/**
