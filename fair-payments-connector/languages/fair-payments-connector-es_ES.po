@@ -18,12 +18,12 @@ msgstr ""
 #: src/Admin/AdminPages.php:36
 #: src/Admin/AdminPages.php:37
 msgid "Fair Payments Connector"
-msgstr ""
+msgstr "Fair Payments Connector"
 
 #. Plugin URI of the plugin
 #: fair-payments-connector.php
 msgid "https://github.com/marcin-wosinek/fair-event-plugins"
-msgstr ""
+msgstr "https://github.com/marcin-wosinek/fair-event-plugins"
 
 #. Description of the plugin
 #: fair-payments-connector.php
@@ -33,12 +33,12 @@ msgstr "Bloque de pago sencillo para WordPress"
 #. Author of the plugin
 #: fair-payments-connector.php
 msgid "Marcin Wosinek"
-msgstr ""
+msgstr "Marcin Wosinek"
 
 #. Author URI of the plugin
 #: fair-payments-connector.php
 msgid "https://github.com/marcin-wosinek"
-msgstr ""
+msgstr "https://github.com/marcin-wosinek"
 
 #: src/Admin/AdminPages.php:48
 #: src/Admin/AdminPages.php:49
@@ -253,7 +253,7 @@ msgstr "Traducciones incluidas"
 
 #: src/Core/Features.php:127
 msgid "Load .mo/.json files shipped with the plugin instead of relying on WordPress.org language packs. Useful while a locale is below the 90% threshold on translate.wordpress.org or for in-progress strings."
-msgstr "Carga archivos .mo/.json incluidos en el plugin en lugar de depender de los paquetes de idiomas de WordPress.org. Útil cuando una región está por debajo del umbral del 90% en translate.wordpress.org o para cadenas en progreso."
+msgstr "Carga archivos .mo/.json incluidos en el plugin en lugar de depender de los paquetes de idioma de WordPress.org. Útil cuando una configuración regional está por debajo del umbral del 90 % en translate.wordpress.org o para cadenas en progreso."
 
 #: src/Models/Transaction.php:525
 msgid "Payment has already been initiated for this transaction. Create a new transaction to retry."
@@ -924,7 +924,7 @@ msgstr "No se pudieron cargar las transacciones."
 #: src/Admin/transactions/TransactionsApp.js:195
 #, js-format
 msgid "%d transaction(s) exported."
-msgstr "%d transacción(es) exportada(s)."
+msgstr "Se han exportado %d transacciones."
 
 #: src/Admin/transactions/TransactionsApp.js:233
 msgid "No paid transactions are missing Mollie fee data."
@@ -934,7 +934,7 @@ msgstr "No hay transacciones pagadas sin datos de comisión de Mollie."
 #: src/Admin/transactions/TransactionsApp.js:272
 #, js-format
 msgid "Mollie fee sync complete: %1$d updated, %2$d failed (out of %3$d)."
-msgstr "Sincronización de comisión de Mollie completada: %1$d actualizada(s), %2$d fallida(s) (de %3$d)."
+msgstr "Sincronización de comisión de Mollie completada: %1$d actualizada/s, %2$d fallida/s (de %3$d)."
 
 #: src/Admin/transactions/TransactionsApp.js:285
 msgid "Failed to load missing Mollie fees."
@@ -1099,3 +1099,4 @@ msgstr "Error al crear el pago"
 #: src/Admin/transaction/TransactionPage.js:793
 msgid "Details"
 msgstr "Detalles"
+

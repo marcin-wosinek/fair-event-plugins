@@ -17,7 +17,7 @@ msgstr ""
 #: fair-events.php
 #: src/Patterns/Patterns.php:35
 msgid "Fair Events"
-msgstr ""
+msgstr "Fair Events"
 
 #. Description of the plugin
 #: fair-events.php
@@ -130,7 +130,7 @@ msgstr "Archivos de eventos"
 #: src/PostTypes/Event.php:70
 msgctxt "Overrides the \"Insert into post\" phrase"
 msgid "Insert into event"
-msgstr "Insertar en el evento"
+msgstr "Insertar en evento"
 
 #: src/PostTypes/Event.php:71
 msgctxt "Overrides the \"Uploaded to this post\" phrase"
@@ -145,7 +145,7 @@ msgstr "Filtrar lista de eventos"
 #: src/PostTypes/Event.php:73
 msgctxt "Screen reader text for the pagination"
 msgid "Events list navigation"
-msgstr "Navegación de la lista de eventos"
+msgstr "Navegación de lista de eventos"
 
 #: src/PostTypes/Event.php:74
 msgctxt "Screen reader text for the items list"
@@ -171,7 +171,7 @@ msgstr "Ubicación"
 
 #: src/Settings/Settings.php:47
 msgid "URL slug for events"
-msgstr "Slug de URL para eventos"
+msgstr "Slug de la URL para los eventos"
 
 #: src/Admin/settings/GeneralTab.js:78
 msgid "Failed to load settings."
@@ -193,11 +193,11 @@ msgstr "Cargando..."
 #: src/Admin/settings/GeneralTab.js:166
 #: src/Admin/settings/GeneralTab.js:170
 msgid "Event URL Slug"
-msgstr "Slug de URL del evento"
+msgstr "Slug de la URL del evento"
 
 #: src/Admin/settings/GeneralTab.js:172
 msgid "The URL slug used for event permalinks (e.g., /fair-events/event-name)"
-msgstr "El slug de URL utilizado para los enlaces permanentes de eventos (p. ej., /fair-events/nombre-del-evento)"
+msgstr "El slug de la URL usada para los enlaces permanentes de eventos (p. ej. /fair-events/nombre-evento)"
 
 #: src/Admin/settings/FeaturesTab.js:169
 #: src/Admin/settings/GeneralTab.js:338
@@ -210,11 +210,11 @@ msgstr "Guardar configuración"
 
 #: src/blocks/event-dates/components/EditComponent.js:205
 msgid "No event dates set. Add dates in the Event Details panel."
-msgstr "Sin fechas de evento establecidas. Añade fechas en el panel «Detalles del evento»."
+msgstr "No se han establecido fechas de evento. Añade fechas en el panel «Detalles del evento»."
 
 #: src/blocks/event-dates/components/EditComponent.js:214
 msgid "Event Dates block: Only displays in event post context."
-msgstr "Bloque de fechas de eventos: solo se muestra en el contexto de entrada de evento."
+msgstr "Bloque «Fechas» del evento: Sólo se muestra en el contexto de la publicación del evento."
 
 #: src/blocks/events-list/components/EditComponent.js:62
 msgid "Untitled Pattern"
@@ -230,7 +230,7 @@ msgstr "Patrón de visualización"
 
 #: src/blocks/events-list/components/EditComponent.js:90
 msgid "Choose a pattern for displaying events"
-msgstr "Elige un patrón para mostrar eventos"
+msgstr "Elija un patrón para mostrar eventos"
 
 #: src/blocks/events-list/components/EditComponent.js:96
 msgid "Time Filter"
@@ -250,7 +250,7 @@ msgstr "Eventos en curso"
 
 #: src/blocks/events-list/components/EditComponent.js:119
 msgid "Filter events by time relative to now"
-msgstr "Filtra eventos por tiempo relativo a ahora"
+msgstr "Filtrar eventos por tiempo relativo al presente"
 
 #: src/blocks/event-proposal/render.php:156
 #: src/Admin/all-events/AllEvents.js:94
@@ -275,7 +275,7 @@ msgstr "Fechas del evento"
 #: src/blocks/event-dates/block.json
 msgctxt "block description"
 msgid "Display event start and end dates using WordPress date/time formats."
-msgstr "Muestra las fechas de inicio y fin del evento usando los formatos de fecha/hora de WordPress."
+msgstr "Mostrar fechas de inicio y finalización del evento usando formatos de fecha/hora de WordPress."
 
 #: src/blocks/event-dates/block.json
 #: src/blocks/event-info/block.json
@@ -299,7 +299,7 @@ msgstr "hora"
 #: src/blocks/events-week/block.json
 msgctxt "block keyword"
 msgid "schedule"
-msgstr "calendario"
+msgstr "horario"
 
 #: src/blocks/events-calendar/block.json
 #: src/blocks/events-list/block.json
@@ -1957,7 +1957,7 @@ msgstr "Precio (%s)"
 #: src/Admin/manage-event/EventTickets.js:1912
 #, js-format
 msgid "Discounted price (%s)"
-msgstr "Precio con descuento (%s)"
+msgstr "Precio con descuento (EUR)"
 
 #: src/Admin/settings/GeneralTab.js:281
 msgid "Branding"
@@ -2423,7 +2423,7 @@ msgstr "Mín. complementos"
 
 #: src/Admin/manage-event/EventTickets.js:1503
 msgid "Only raises the event-wide minimum add-ons for this ticket type. Leave 0 to inherit."
-msgstr "Solo aumenta el mínimo de complementos a nivel de evento para este tipo de ticket. Deja 0 para heredar."
+msgstr "Solo aumenta el mínimo de evento para este tipo de entrada. Deja 0 para heredar."
 
 #: src/Admin/manage-event/EventTickets.js:1854
 msgid "Add-ons"
@@ -2435,7 +2435,7 @@ msgstr "Número mínimo de complementos"
 
 #: src/Admin/manage-event/EventTickets.js:1863
 msgid "Participants must select at least this many add-ons to sign up. Set to 0 to disable."
-msgstr "Los participantes deben seleccionar al menos este número de complementos para inscribirse. Establece 0 para desactivar."
+msgstr "Los participantes deben seleccionar al menos esta cantidad de actividades para registrarse. Establece en 0 para desactivar."
 
 #: src/Admin/manage-event/EventTickets.js:1885
 msgid "Add selectable add-ons (checkboxes) shown to participants at signup. Each add-on has its own price added on top of the base price."
@@ -2467,7 +2467,7 @@ msgstr "Mínimo de complementos por tipo de entrada"
 
 #: src/Admin/manage-event/EventTickets.js:2363
 msgid "Show a Min. add-ons input on each ticket type to require more add-ons than the event-wide minimum (it only ever raises it). When off, every ticket type uses the event-wide minimum."
-msgstr "Muestra una entrada de mín. complementos en cada tipo de entrada para requerir más complementos que el mínimo de todo el evento (solo lo aumenta). Cuando está desactivado, todos los tipos de entrada utilizan el mínimo de todo el evento."
+msgstr "Mostrar una entrada de Mín. actividades en cada tipo de entrada para requerir más actividades que el mínimo de evento (solo lo aumenta). Cuando está desactivado, cada tipo de entrada utiliza el mínimo de evento."
 
 #: src/Admin/manage-event/EventTickets.js:2396
 msgid "Add-on collaborator discount"
@@ -2475,7 +2475,7 @@ msgstr "Descuento de complemento para colaboradores"
 
 #: src/Admin/manage-event/EventTickets.js:2400
 msgid "Allow a discounted price on each add-on for participants invited by a collaborator linked to that add-on. Adds a second price column to the add-ons table and enables Manage Invitations."
-msgstr "Permite un precio reducido en cada complemento para participantes invitados por un colaborador vinculado a ese complemento. Añade una segunda columna de precio a la tabla de complementos y habilita Gestionar invitaciones."
+msgstr "Permite un precio con descuento en cada opción de actividad para participantes invitados por un colaborador vinculado a esa actividad. Añade una segunda columna de precio a la tabla de opciones de actividad y habilita Gestionar invitaciones."
 
 #: src/Admin/manage-event/EventTickets.js:2415
 msgid "Price add-ons per sale period"
@@ -2483,7 +2483,7 @@ msgstr "Precio de complementos por período de venta"
 
 #: src/Admin/manage-event/EventTickets.js:2419
 msgid "Price every add-on per sale period instead of a single flat price. The Pricing column in the add-ons table becomes one input per sale period. Requires sale periods to be defined."
-msgstr "Establece el precio de cada complemento por período de venta en lugar de un precio único fijo. La columna Precio en la tabla de complementos se convierte en una entrada por período de venta. Requiere que se definan períodos de venta."
+msgstr "Precio de cada opción de actividad por período de venta en lugar de un precio único. La columna Precio en la tabla de opciones de actividad se convierte en una entrada por período de venta. Requiere que se definan períodos de venta."
 
 #: src/Admin/manage-event/ManageEventApp.js:188
 msgid "Failed to create category."
@@ -2537,7 +2537,7 @@ msgstr "Las fechas solo se pueden cancelar en eventos maestros."
 
 #: src/API/EventDatesController.php:1255
 msgid "Cannot cancel the master event date."
-msgstr "No se puede cancelar la fecha del evento maestro."
+msgstr "No se puede excluir la fecha del evento maestro."
 
 #: src/API/EventDatesController.php:1277
 msgid "Invalid date."
