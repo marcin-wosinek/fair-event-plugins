@@ -55,9 +55,9 @@ The plugin uses advanced CSS container queries for responsive design and WordPre
 
 == Development ==
 
-* GitHub Repository: https://github.com/marcin-wosinek/fair-event-plugins
-* Report Issues: https://github.com/marcin-wosinek/fair-event-plugins/issues
-* Contribute: https://github.com/marcin-wosinek/fair-event-plugins/pulls
+* GitHub Repository: [marcin-wosinek/fair-event-plugins](https://github.com/marcin-wosinek/fair-event-plugins)
+* Report Issues: [Issues](https://github.com/marcin-wosinek/fair-event-plugins/issues)
+* Contribute: [Pull Requests](https://github.com/marcin-wosinek/fair-event-plugins/pulls)
 
 == Frequently Asked Questions ==
 
@@ -89,8 +89,8 @@ Time slots calculate their position automatically based on the timetable's start
 == Changelog ==
 
 The full changelog is maintained on GitHub:
-https://github.com/marcin-wosinek/fair-event-plugins/blob/main/fair-timetable/CHANGELOG.md
+[CHANGELOG.md](https://github.com/marcin-wosinek/fair-event-plugins/blob/main/fair-timetable/CHANGELOG.md)
 
 == Developer Notes ==
 
-The plugin is open source and contributions are welcome on GitHub: https://github.com/marcin-wosinek/fair-event-plugins
+The plugin is open source and contributions are welcome on [GitHub](https://github.com/marcin-wosinek/fair-event-plugins).
