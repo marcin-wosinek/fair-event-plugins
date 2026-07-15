@@ -13,6 +13,7 @@ import {
 	CardBody,
 	Button,
 	CheckboxControl,
+	__experimentalConfirmDialog as ConfirmDialog,
 	DropdownMenu,
 	FormTokenField,
 	MenuGroup,
@@ -51,8 +52,6 @@ export default function EventTickets({
 	const [salePeriods, setSalePeriods] = useState([]);
 	const [prices, setPrices] = useState({});
 	const [settings, setSettings] = useState({
-		continues_pricing_period: true,
-		unlimited_tickets_in_price_period: true,
 		show_ticket_type_capacity: false,
 		multiple_pricing_periods: false,
 		activity_collaborator_discount: false,
@@ -71,6 +70,7 @@ export default function EventTickets({
 	const [showScopeModal, setShowScopeModal] = useState(false);
 	const [pendingScope, setPendingScope] = useState('single_instance');
 	const [participants, setParticipants] = useState([]);
+	const [mergePeriodsDialogOpen, setMergePeriodsDialogOpen] = useState(false);
 	const fileInputRef = useRef(null);
 
 	// Dirty-state tracking (#987): snapshot the save payload right after it's
@@ -83,6 +83,11 @@ export default function EventTickets({
 		window.fairEventsManageEventData?.manageInvitationsUrl || '';
 
 	const hasAdvancedTickets = ticketTypes.length > 0 || salePeriods.length > 0;
+	// An event loaded with more than one stored sale period always renders in
+	// multiple-periods mode, regardless of the stored toggle, so no configured
+	// period is ever hidden.
+	const effectiveMultiple =
+		salePeriods.length > 1 || settings.multiple_pricing_periods;
 	const paymentNotConfigured =
 		window.fairPaymentsConnector?.paymentConfigured === false;
 	const hasInvitationTickets = ticketTypes.some((t) => t.invitation_only);
@@ -441,18 +446,17 @@ export default function EventTickets({
 		const afterEventEnd = endDatetime
 			? dayAfterDate(endDatetime)
 			: dayAfterDate(eventFirstDay);
+		// A single sale window covering today through the day after the event
+		// ends. For an event already in the past (today would be after the
+		// window's own end), default to the event's own dates instead of an
+		// inverted range.
+		const saleStart = today > afterEventEnd ? eventFirstDay : today;
 		setSalePeriods([
 			{
 				name: '',
-				sale_start: today,
-				sale_end: eventFirstDay,
-				sort_order: 0,
-			},
-			{
-				name: '',
-				sale_start: eventFirstDay,
+				sale_start: saleStart,
 				sale_end: afterEventEnd,
-				sort_order: 1,
+				sort_order: 0,
 			},
 		]);
 	};
@@ -589,21 +593,107 @@ export default function EventTickets({
 		const updated = [...salePeriods];
 		updated[index] = { ...updated[index], [field]: value };
 
-		if (settings.continues_pricing_period) {
-			if (field === 'sale_end') {
-				const next = index + 1;
-				if (next < updated.length) {
-					updated[next] = { ...updated[next], sale_start: value };
-				}
-			} else if (field === 'sale_start') {
-				const prev = index - 1;
-				if (prev >= 0) {
-					updated[prev] = { ...updated[prev], sale_end: value };
-				}
+		// Sale periods always chain: each period's start is implied by the
+		// previous period's end, so gaps/overlaps are impossible by construction.
+		if (field === 'sale_end') {
+			const next = index + 1;
+			if (next < updated.length) {
+				updated[next] = { ...updated[next], sale_start: value };
+			}
+		} else if (field === 'sale_start') {
+			const prev = index - 1;
+			if (prev >= 0) {
+				updated[prev] = { ...updated[prev], sale_end: value };
 			}
 		}
 
 		setSalePeriods(updated);
+	};
+
+	// "Multiple pricing periods" toggled on: split the single sale window at
+	// the event's first day into two named, prefilled, editable periods,
+	// migrating the existing single-period prices to the first one.
+	// Toggled off with several periods defined: ask for confirmation before
+	// merging back into one window (mergeToSinglePeriod does the merge).
+	const handleToggleMultiplePeriods = (value) => {
+		if (value) {
+			if (salePeriods.length <= 1) {
+				const base = salePeriods[0];
+				const eventFirstDay = startDatetime
+					? startDatetime.split(' ')[0].split('T')[0]
+					: getSiteToday();
+				const windowStart = base?.sale_start || getSiteToday();
+				const windowEnd =
+					base?.sale_end ||
+					(endDatetime ? dayAfterDate(endDatetime) : '');
+				if (base) {
+					const newPrices = { ...prices };
+					ticketTypes.forEach((type) => {
+						const oldKey = getPriceKey(type, base);
+						if (prices[oldKey] !== undefined) {
+							const typeKey =
+								type.id || `new-${ticketTypes.indexOf(type)}`;
+							newPrices[`${typeKey}-new-0`] = prices[oldKey];
+						}
+					});
+					setPrices(newPrices);
+				}
+				setSalePeriods([
+					{
+						name: __('Advance ticket', 'fair-events'),
+						sale_start: windowStart,
+						sale_end: eventFirstDay,
+						sort_order: 0,
+					},
+					{
+						name: __('Day of event', 'fair-events'),
+						sale_start: eventFirstDay,
+						sale_end: windowEnd,
+						sort_order: 1,
+					},
+				]);
+			}
+			setSettings((prev) => ({
+				...prev,
+				multiple_pricing_periods: true,
+			}));
+		} else if (salePeriods.length > 1) {
+			setMergePeriodsDialogOpen(true);
+		} else {
+			setSettings((prev) => ({
+				...prev,
+				multiple_pricing_periods: false,
+			}));
+		}
+	};
+
+	const mergeToSinglePeriod = () => {
+		const first = salePeriods[0];
+		const last = salePeriods[salePeriods.length - 1];
+		if (first) {
+			const newPrices = {};
+			ticketTypes.forEach((type) => {
+				const oldKey = getPriceKey(type, first);
+				if (prices[oldKey] !== undefined) {
+					const typeKey =
+						type.id || `new-${ticketTypes.indexOf(type)}`;
+					newPrices[`${typeKey}-new-0`] = prices[oldKey];
+				}
+			});
+			setPrices(newPrices);
+			setSalePeriods([
+				{
+					name: '',
+					sale_start: first.sale_start,
+					sale_end:
+						last.sale_end ||
+						(endDatetime ? dayAfterDate(endDatetime) : ''),
+					sort_order: 0,
+				},
+			]);
+		}
+		setSettings((prev) => ({ ...prev, multiple_pricing_periods: false }));
+		setMergePeriodsDialogOpen(false);
 	};
 
 	const getPriceKey = (type, period) => {
@@ -631,15 +721,10 @@ export default function EventTickets({
 	const getEffectiveSalePeriods = () => {
 		const periods = salePeriods.map((p, i) => {
 			const updated = { ...p };
-			if (settings.continues_pricing_period && i > 0) {
+			if (i > 0) {
 				updated.sale_start = salePeriods[i - 1].sale_end || '';
 			}
-			if (
-				settings.continues_pricing_period &&
-				i === salePeriods.length - 1 &&
-				endDatetime &&
-				!p.sale_end
-			) {
+			if (i === salePeriods.length - 1 && endDatetime && !p.sale_end) {
 				updated.sale_end = dayAfterDate(endDatetime);
 			}
 			updated.sale_start = appendTime(updated.sale_start);
@@ -932,7 +1017,7 @@ export default function EventTickets({
 										</div>
 									</HStack>
 								)}
-								{settings.multiple_pricing_periods ? (
+								{effectiveMultiple ? (
 									<VStack spacing={3}>
 										<div style={{ overflowX: 'auto' }}>
 											<table className="wp-list-table widefat striped">
@@ -962,8 +1047,6 @@ export default function EventTickets({
 												<tbody>
 													{salePeriods.map(
 														(period, pIndex) => {
-															const isContinuous =
-																settings.continues_pricing_period;
 															const isFirst =
 																pIndex === 0;
 															const isLast =
@@ -971,7 +1054,6 @@ export default function EventTickets({
 																salePeriods.length -
 																	1;
 															const fromValue =
-																isContinuous &&
 																!isFirst
 																	? salePeriods[
 																			pIndex -
@@ -982,7 +1064,6 @@ export default function EventTickets({
 																	: period.sale_start ||
 																	  '';
 															const untilValue =
-																isContinuous &&
 																isLast
 																	? period.sale_end ||
 																	  endDatetime
@@ -1265,8 +1346,6 @@ export default function EventTickets({
 												)}
 												{salePeriods.map(
 													(period, pIndex) => {
-														const isContinuous =
-															settings.continues_pricing_period;
 														const isFirst =
 															pIndex === 0;
 														const isLast =
@@ -1274,7 +1353,6 @@ export default function EventTickets({
 															salePeriods.length -
 																1;
 														const fromValue =
-															isContinuous &&
 															!isFirst
 																? salePeriods[
 																		pIndex -
@@ -1284,7 +1362,6 @@ export default function EventTickets({
 																: period.sale_start ||
 																  '';
 														const untilValue =
-															isContinuous &&
 															isLast
 																? period.sale_end ||
 																  (endDatetime
@@ -1310,20 +1387,14 @@ export default function EventTickets({
 																	dateTooltip
 																}
 															>
-																{settings.multiple_pricing_periods
+																{effectiveMultiple
 																	? period.name ||
 																	  __(
 																			'(unnamed)',
 																			'fair-events'
 																	  )
-																	: pIndex ===
-																	  0
-																	? __(
-																			'Advance ticket',
-																			'fair-events'
-																	  )
 																	: __(
-																			'Day of event',
+																			'Price',
 																			'fair-events'
 																	  )}
 															</th>
@@ -1656,104 +1727,68 @@ export default function EventTickets({
 																			1
 																		}
 																	>
-																		<CheckboxControl
-																			__nextHasNoMarginBottom
-																			label={__(
-																				'Available',
-																				'fair-events'
-																			)}
-																			checked={
-																				cell.enabled !==
-																				false
-																			}
-																			onChange={(
-																				v
-																			) =>
-																				updatePrice(
-																					type,
-																					period,
-																					'enabled',
-																					v
-																				)
-																			}
-																		/>
-																		{cell.enabled !==
-																			false && (
-																			<>
-																				<HStack
-																					alignment="center"
-																					spacing={
-																						2
-																					}
-																				>
-																					<span
-																						style={{
-																							whiteSpace:
-																								'nowrap',
-																						}}
-																					>
-																						{__(
-																							'Price',
-																							'fair-events'
-																						)}
-																					</span>
-																					<TextControl
-																						type="number"
-																						step="0.01"
-																						min="0"
-																						value={
-																							cell.price
-																						}
-																						onChange={(
-																							v
-																						) =>
-																							updatePrice(
-																								type,
-																								period,
-																								'price',
-																								v
-																							)
-																						}
-																					/>
-																				</HStack>
-																				{!settings.unlimited_tickets_in_price_period && (
-																					<HStack
-																						alignment="center"
-																						spacing={
-																							2
-																						}
-																					>
-																						<span
-																							style={{
-																								whiteSpace:
-																									'nowrap',
-																							}}
-																						>
-																							{__(
-																								'Cap',
-																								'fair-events'
-																							)}
-																						</span>
-																						<TextControl
-																							type="number"
-																							min="0"
-																							value={
-																								cell.capacity
-																							}
-																							onChange={(
-																								v
-																							) =>
-																								updatePrice(
-																									type,
-																									period,
-																									'capacity',
-																									v
-																								)
-																							}
-																						/>
-																					</HStack>
+																		{effectiveMultiple && (
+																			<CheckboxControl
+																				__nextHasNoMarginBottom
+																				label={__(
+																					'Available',
+																					'fair-events'
 																				)}
-																			</>
+																				checked={
+																					cell.enabled !==
+																					false
+																				}
+																				onChange={(
+																					v
+																				) =>
+																					updatePrice(
+																						type,
+																						period,
+																						'enabled',
+																						v
+																					)
+																				}
+																			/>
+																		)}
+																		{(!effectiveMultiple ||
+																			cell.enabled !==
+																				false) && (
+																			<HStack
+																				alignment="center"
+																				spacing={
+																					2
+																				}
+																			>
+																				<span
+																					style={{
+																						whiteSpace:
+																							'nowrap',
+																					}}
+																				>
+																					{__(
+																						'Price',
+																						'fair-events'
+																					)}
+																				</span>
+																				<TextControl
+																					type="number"
+																					step="0.01"
+																					min="0"
+																					value={
+																						cell.price
+																					}
+																					onChange={(
+																						v
+																					) =>
+																						updatePrice(
+																							type,
+																							period,
+																							'price',
+																							v
+																						)
+																					}
+																				/>
+																			</HStack>
 																		)}
 																	</VStack>
 																</td>
@@ -2286,43 +2321,6 @@ export default function EventTickets({
 						<VStack spacing={4}>
 							<CheckboxControl
 								label={__(
-									'Chain sale periods together',
-									'fair-events'
-								)}
-								help={__(
-									'Each period starts when the previous one ends, so there are no gaps.',
-									'fair-events'
-								)}
-								checked={settings.continues_pricing_period}
-								onChange={(value) =>
-									setSettings((prev) => ({
-										...prev,
-										continues_pricing_period: value,
-									}))
-								}
-							/>
-							<CheckboxControl
-								label={__(
-									'No ticket limit per sale period',
-									'fair-events'
-								)}
-								help={__(
-									'Allow selling tickets without a per-period cap during any sale period.',
-									'fair-events'
-								)}
-								checked={
-									settings.unlimited_tickets_in_price_period
-								}
-								onChange={(value) =>
-									setSettings((prev) => ({
-										...prev,
-										unlimited_tickets_in_price_period:
-											value,
-									}))
-								}
-							/>
-							<CheckboxControl
-								label={__(
 									'Per-ticket-type capacity',
 									'fair-events'
 								)}
@@ -2347,13 +2345,8 @@ export default function EventTickets({
 									'Enable time-based pricing with multiple sale periods (e.g. early bird, regular, late). When off, a single flat price applies for the whole sale window.',
 									'fair-events'
 								)}
-								checked={settings.multiple_pricing_periods}
-								onChange={(value) =>
-									setSettings((prev) => ({
-										...prev,
-										multiple_pricing_periods: value,
-									}))
-								}
+								checked={effectiveMultiple}
+								onChange={handleToggleMultiplePeriods}
 							/>
 							<CheckboxControl
 								label={__(
@@ -2432,6 +2425,22 @@ export default function EventTickets({
 					</PanelBody>
 				</Panel>
 			</Card>
+			<ConfirmDialog
+				isOpen={mergePeriodsDialogOpen}
+				onConfirm={mergeToSinglePeriod}
+				onCancel={() => setMergePeriodsDialogOpen(false)}
+				confirmButtonText={__('Merge periods', 'fair-events')}
+				cancelButtonText={__('Cancel', 'fair-events')}
+			>
+				{sprintf(
+					/* translators: %d: number of sale periods being merged */
+					__(
+						'Merge to one sale window? Prices for the other %d periods will be discarded.',
+						'fair-events'
+					),
+					Math.max(salePeriods.length - 1, 0)
+				)}
+			</ConfirmDialog>
 			{showScopeModal && (
 				<Modal
 					title={__('Choose ticket scope', 'fair-events')}

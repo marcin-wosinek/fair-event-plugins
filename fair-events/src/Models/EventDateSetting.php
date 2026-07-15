@@ -66,8 +66,6 @@ class EventDateSetting {
 	 * Settings at their default value do not need a DB row.
 	 */
 	const DEFAULTS = array(
-		'continues_pricing_period'            => '1',
-		'unlimited_tickets_in_price_period'   => '1',
 		'show_ticket_type_capacity'           => '0',
 		'multiple_pricing_periods'            => '0',
 		'activity_collaborator_discount'      => '0',

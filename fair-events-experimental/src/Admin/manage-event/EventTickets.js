@@ -38,8 +38,6 @@ export default function EventTickets({
 	const [salePeriods, setSalePeriods] = useState([]);
 	const [prices, setPrices] = useState({});
 	const [settings, setSettings] = useState({
-		continues_pricing_period: true,
-		unlimited_tickets_in_price_period: true,
 		show_ticket_type_capacity: false,
 		multiple_pricing_periods: false,
 		show_seats_per_ticket: false,
@@ -685,17 +683,15 @@ export default function EventTickets({
 		const updated = [...salePeriods];
 		updated[index] = { ...updated[index], [field]: value };
 
-		if (settings.continues_pricing_period) {
-			if (field === 'sale_end') {
-				const next = index + 1;
-				if (next < updated.length) {
-					updated[next] = { ...updated[next], sale_start: value };
-				}
-			} else if (field === 'sale_start') {
-				const prev = index - 1;
-				if (prev >= 0) {
-					updated[prev] = { ...updated[prev], sale_end: value };
-				}
+		if (field === 'sale_end') {
+			const next = index + 1;
+			if (next < updated.length) {
+				updated[next] = { ...updated[next], sale_start: value };
+			}
+		} else if (field === 'sale_start') {
+			const prev = index - 1;
+			if (prev >= 0) {
+				updated[prev] = { ...updated[prev], sale_end: value };
 			}
 		}
 
@@ -720,9 +716,6 @@ export default function EventTickets({
 	};
 
 	const getEffectiveSalePeriods = () => {
-		if (!settings.continues_pricing_period) {
-			return salePeriods;
-		}
 		return salePeriods.map((p, i) => {
 			const updated = { ...p };
 			if (i > 0) {
@@ -972,10 +965,6 @@ export default function EventTickets({
 																		cell.price
 																  )
 																: '—'}
-															{!settings.unlimited_tickets_in_price_period &&
-																cell.capacity !==
-																	'' &&
-																` (${cell.capacity})`}
 														</td>
 													);
 												}
@@ -1074,8 +1063,6 @@ export default function EventTickets({
 												<tbody>
 													{salePeriods.map(
 														(period, pIndex) => {
-															const isContinuous =
-																settings.continues_pricing_period;
 															const isFirst =
 																pIndex === 0;
 															const isLast =
@@ -1083,7 +1070,6 @@ export default function EventTickets({
 																salePeriods.length -
 																	1;
 															const fromValue =
-																isContinuous &&
 																!isFirst
 																	? salePeriods[
 																			pIndex -
@@ -1094,7 +1080,6 @@ export default function EventTickets({
 																	: period.sale_start ||
 																	  '';
 															const untilValue =
-																isContinuous &&
 																isLast
 																	? period.sale_end ||
 																	  endDatetime
@@ -1489,8 +1474,6 @@ export default function EventTickets({
 													)}
 													{salePeriods.map(
 														(period, pIndex) => {
-															const isContinuous =
-																settings.continues_pricing_period;
 															const isFirst =
 																pIndex === 0;
 															const isLast =
@@ -1498,7 +1481,6 @@ export default function EventTickets({
 																salePeriods.length -
 																	1;
 															const fromValue =
-																isContinuous &&
 																!isFirst
 																	? salePeriods[
 																			pIndex -
@@ -1509,7 +1491,6 @@ export default function EventTickets({
 																	: period.sale_start ||
 																	  '';
 															const untilValue =
-																isContinuous &&
 																isLast
 																	? period.sale_end ||
 																	  endDatetime
@@ -1873,43 +1854,6 @@ export default function EventTickets({
 																								}
 																							/>
 																						</HStack>
-																						{!settings.unlimited_tickets_in_price_period && (
-																							<HStack
-																								alignment="center"
-																								spacing={
-																									2
-																								}
-																							>
-																								<span
-																									style={{
-																										whiteSpace:
-																											'nowrap',
-																									}}
-																								>
-																									{__(
-																										'Cap',
-																										'fair-events-experimental'
-																									)}
-																								</span>
-																								<TextControl
-																									type="number"
-																									min="0"
-																									value={
-																										cell.capacity
-																									}
-																									onChange={(
-																										v
-																									) =>
-																										updatePrice(
-																											type,
-																											period,
-																											'capacity',
-																											v
-																										)
-																									}
-																								/>
-																							</HStack>
-																						)}
 																					</>
 																				)}
 																			</VStack>
@@ -2419,35 +2363,6 @@ export default function EventTickets({
 						initialOpen={false}
 					>
 						<VStack spacing={4}>
-							<CheckboxControl
-								label={__(
-									'Continues pricing period',
-									'fair-events-experimental'
-								)}
-								checked={settings.continues_pricing_period}
-								onChange={(value) =>
-									setSettings((prev) => ({
-										...prev,
-										continues_pricing_period: value,
-									}))
-								}
-							/>
-							<CheckboxControl
-								label={__(
-									'Unlimited tickets in pricing period',
-									'fair-events-experimental'
-								)}
-								checked={
-									settings.unlimited_tickets_in_price_period
-								}
-								onChange={(value) =>
-									setSettings((prev) => ({
-										...prev,
-										unlimited_tickets_in_price_period:
-											value,
-									}))
-								}
-							/>
 							<CheckboxControl
 								label={__(
 									'Per-ticket-type capacity',
