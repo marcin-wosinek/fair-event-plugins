@@ -30,6 +30,7 @@ const EditComponent = ({ attributes, setAttributes }) => {
 		backgroundColor,
 		textColor,
 		eventSources,
+		showSubscribe,
 	} = attributes;
 
 	const blockProps = useBlockProps();
@@ -112,6 +113,18 @@ const EditComponent = ({ attributes, setAttributes }) => {
 						}
 						help={__(
 							'Display draft events in the calendar',
+							'fair-events'
+						)}
+					/>
+
+					<ToggleControl
+						label={__('Show Subscribe Link', 'fair-events')}
+						checked={showSubscribe}
+						onChange={(value) =>
+							setAttributes({ showSubscribe: value })
+						}
+						help={__(
+							'Displays a link to subscribe to this calendar in an external calendar app',
 							'fair-events'
 						)}
 					/>

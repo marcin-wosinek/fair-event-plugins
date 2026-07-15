@@ -16,6 +16,43 @@ use FairEvents\Services\EventFeedProvider;
 use FairEvents\Settings\Settings;
 
 /**
+ * Build the subscription feed URLs (webcal:// and plain https://) for the
+ * configured category filter.
+ *
+ * Deliberately reflects only the category filter, not the current
+ * month/year — a subscription is an ongoing feed, so freezing it to one
+ * month is wrong; the feed's own bounded window (-1mo / +12mo) is what a
+ * subscriber wants. The block's eventSources and showDrafts filters have no
+ * feed equivalent (the feed is public and source-agnostic), so a
+ * source-filtered calendar still links the all-sources feed.
+ *
+ * @param int[] $categories Category term IDs.
+ * @return array{webcal: string, https: string} Feed URLs.
+ */
+if ( ! function_exists( 'fair_events_build_subscribe_urls' ) ) {
+	function fair_events_build_subscribe_urls( array $categories ) {
+		$feed_url = rest_url( 'fair-events/v1/calendar.ics' );
+
+		$slugs = array();
+		foreach ( $categories as $category_id ) {
+			$term = get_term( $category_id, 'category' );
+			if ( $term && ! is_wp_error( $term ) ) {
+				$slugs[] = $term->slug;
+			}
+		}
+
+		if ( ! empty( $slugs ) ) {
+			$feed_url = add_query_arg( 'categories', implode( ',', $slugs ), $feed_url );
+		}
+
+		return array(
+			'webcal' => preg_replace( '#^https?://#', 'webcal://', $feed_url ),
+			'https'  => $feed_url,
+		);
+	}
+}
+
+/**
  * Convert color value to CSS value
  *
  * Converts either a hex color or a WordPress color preset name to a CSS value.
@@ -125,6 +162,7 @@ $show_drafts     = $attributes['showDrafts'] ?? false;
 $bg_color        = $attributes['backgroundColor'] ?? 'primary';
 $text_color      = $attributes['textColor'] ?? '#ffffff';
 $event_sources   = $attributes['eventSources'] ?? array();
+$show_subscribe  = $attributes['showSubscribe'] ?? true;
 
 // Convert WordPress event colors to CSS values (used for post-linked/standalone events)
 $bg_color_value   = fair_events_convert_color_to_css( $bg_color );
@@ -214,6 +252,9 @@ for ( $i = 0; $i < 7; $i++ ) {
 
 // Get current date for today highlighting
 $today = current_time( 'Y-m-d' );
+
+// Subscription feed links (webcal:// + copyable https:// fallback).
+$subscribe_urls = fair_events_build_subscribe_urls( is_array( $categories ) ? $categories : array() );
 
 ?>
 <div <?php echo wp_kses_post( get_block_wrapper_attributes( array( 'class' => 'wp-block-fair-events-events-calendar' ) ) ); ?>>
@@ -355,6 +396,38 @@ $today = current_time( 'Y-m-d' );
 			?>
 		</div>
 	</div>
+
+	<?php if ( $show_subscribe ) : ?>
+	<div class="fair-events-subscribe">
+		<a href="<?php echo esc_url( $subscribe_urls['webcal'] ); ?>" class="fair-events-subscribe-link">
+			<?php esc_html_e( 'Subscribe to calendar', 'fair-events' ); ?>
+		</a>
+		<p class="fair-events-subscribe-note">
+			<?php esc_html_e( 'Subscribed calendars refresh on your calendar app\'s own schedule (often hours, not instant).', 'fair-events' ); ?>
+		</p>
+		<div class="fair-events-subscribe-copy"
+			data-wp-interactive="fair-events/calendar-subscribe"
+			<?php
+			echo wp_interactivity_data_wp_context( // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- self-escaping (JSON-encodes and esc_attr()'s internally).
+				array(
+					'copied'      => false,
+					'feedUrl'     => $subscribe_urls['https'],
+					'copyLabel'   => __( 'Copy feed URL', 'fair-events' ),
+					'copiedLabel' => '✓',
+				)
+			);
+			?>
+		>
+			<button
+				class="fair-events-subscribe-copy-btn"
+				type="button"
+				data-wp-on--click="actions.copy"
+				data-wp-text="state.label"
+			></button>
+		</div>
+	</div>
+	<?php endif; ?>
+
 	<?php if ( class_exists( \FairAudience\Services\Branding::class ) ) : ?>
 		<?php echo wp_kses_post( \FairAudience\Services\Branding::block_html() ); ?>
 	<?php endif; ?>
