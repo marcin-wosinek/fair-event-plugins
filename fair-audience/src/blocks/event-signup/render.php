@@ -53,11 +53,12 @@ if ( isset( $_GET['fair_payment_callback'] ) && 'true' === $_GET['fair_payment_c
 // that when there's no URL-borne callback we can still surface a payment
 // already in progress for this visitor based on their session / login.
 
-// Get block attributes — translate defaults so stored English values get localized.
-$signup_button_text       = __( $attributes['signupButtonText'] ?? 'Sign Up', 'fair-audience' );
-$register_button_text     = __( $attributes['registerButtonText'] ?? 'Register & Sign Up', 'fair-audience' );
-$request_link_button_text = __( $attributes['requestLinkButtonText'] ?? 'Send Signup Link', 'fair-audience' );
-$success_message          = __( $attributes['successMessage'] ?? 'You have successfully signed up for the event!', 'fair-audience' );
+// Get block attributes — the defaults are the only literals that need
+// translating; a saved attribute value must never be run through __().
+$signup_button_text       = $attributes['signupButtonText'] ?? __( 'Sign Up', 'fair-audience' );
+$register_button_text     = $attributes['registerButtonText'] ?? __( 'Register & Sign Up', 'fair-audience' );
+$request_link_button_text = $attributes['requestLinkButtonText'] ?? __( 'Send Signup Link', 'fair-audience' );
+$success_message          = $attributes['successMessage'] ?? __( 'You have successfully signed up for the event!', 'fair-audience' );
 
 // Get the current post ID (may be a direct event post or a linked page).
 $post_id = get_the_ID();
@@ -1085,8 +1086,8 @@ $render_instance_picker = static function () use ( $occurrences_for_picker, $has
 };
 
 // Base button labels (without price suffix) for dynamic JS price updates.
-$base_signup_button_text   = __( $attributes['signupButtonText'] ?? 'Sign Up', 'fair-audience' );
-$base_register_button_text = __( $attributes['registerButtonText'] ?? 'Register & Sign Up', 'fair-audience' );
+$base_signup_button_text   = $attributes['signupButtonText'] ?? __( 'Sign Up', 'fair-audience' );
+$base_register_button_text = $attributes['registerButtonText'] ?? __( 'Register & Sign Up', 'fair-audience' );
 
 // Get wrapper attributes.
 $wrapper_attributes = get_block_wrapper_attributes(

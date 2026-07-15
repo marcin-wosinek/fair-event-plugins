@@ -22,34 +22,6 @@
 		"submitButtonText": {
 			"type": "string",
 			"default": "Get Tickets"
-		},
-		"signupButtonText": {
-			"type": "string",
-			"default": "Sign Up"
-		},
-		"registerButtonText": {
-			"type": "string",
-			"default": "Register & Sign Up"
-		},
-		"requestLinkButtonText": {
-			"type": "string",
-			"default": "Send Signup Link"
-		},
-		"successMessage": {
-			"type": "string",
-			"default": "You have successfully signed up for the event!"
-		},
-		"showOptionPrices": {
-			"type": "boolean",
-			"default": true
-		},
-		"showTicketTypePrices": {
-			"type": "boolean",
-			"default": true
-		},
-		"showInviterName": {
-			"type": "boolean",
-			"default": false
 		}
 	},
 	"editorScript": "file:./editor.js",

@@ -23,13 +23,7 @@ if ( class_exists( \FairAudience\API\EventSignupController::class ) ) {
 		array(
 			'blockName' => 'fair-audience/event-signup',
 			'attrs'     => array(
-				'signupButtonText'      => $attributes['signupButtonText'] ?? $attributes['submitButtonText'] ?? '',
-				'registerButtonText'    => $attributes['registerButtonText'] ?? '',
-				'requestLinkButtonText' => $attributes['requestLinkButtonText'] ?? '',
-				'successMessage'        => $attributes['successMessage'] ?? '',
-				'showOptionPrices'      => $attributes['showOptionPrices'] ?? true,
-				'showTicketTypePrices'  => $attributes['showTicketTypePrices'] ?? true,
-				'showInviterName'       => $attributes['showInviterName'] ?? false,
+				'signupButtonText' => $attributes['submitButtonText'] ?? '',
 			),
 		)
 	);

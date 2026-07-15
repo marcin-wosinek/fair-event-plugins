@@ -3,7 +3,7 @@
  *
  * Canonical fair-events signup block. Base behaviour is the anonymous
  * get-tickets form; when fair-audience is active the render delegates to its
- * participant-aware flow, and the extra display controls become meaningful.
+ * participant-aware flow.
  *
  * This bundle also re-registers the legacy fair-audience/event-signup block to
  * hide it from the inserter and add a transform to this block (the sibling
@@ -19,7 +19,7 @@ import {
 	createBlock,
 } from '@wordpress/blocks';
 import { useBlockProps, InspectorControls } from '@wordpress/block-editor';
-import { PanelBody, TextControl, ToggleControl } from '@wordpress/components';
+import { PanelBody, TextControl } from '@wordpress/components';
 import { __ } from '@wordpress/i18n';
 import domReady from '@wordpress/dom-ready';
 import ServerSideRender from '@wordpress/server-side-render';
@@ -31,106 +31,19 @@ const UNIFIED_NAME = 'fair-events/event-signup';
 registerBlockType(metadata.name, {
 	...metadata,
 	edit: function Edit({ attributes, setAttributes }) {
-		const fairAudienceActive =
-			window.fairEventsEventSignupEditorData?.fairAudienceActive;
-
 		const blockProps = useBlockProps();
 
 		return (
 			<>
 				<InspectorControls>
 					<PanelBody title={__('Form Settings', 'fair-events')}>
-						{fairAudienceActive ? (
-							<>
-								<TextControl
-									label={__(
-										'Sign Up Button Text',
-										'fair-events'
-									)}
-									value={attributes.signupButtonText}
-									onChange={(value) =>
-										setAttributes({
-											signupButtonText: value,
-										})
-									}
-								/>
-								<TextControl
-									label={__(
-										'Register Button Text',
-										'fair-events'
-									)}
-									value={attributes.registerButtonText}
-									onChange={(value) =>
-										setAttributes({
-											registerButtonText: value,
-										})
-									}
-								/>
-								<TextControl
-									label={__(
-										'Request Link Button Text',
-										'fair-events'
-									)}
-									value={attributes.requestLinkButtonText}
-									onChange={(value) =>
-										setAttributes({
-											requestLinkButtonText: value,
-										})
-									}
-								/>
-								<TextControl
-									label={__('Success Message', 'fair-events')}
-									value={attributes.successMessage}
-									onChange={(value) =>
-										setAttributes({ successMessage: value })
-									}
-								/>
-								<ToggleControl
-									label={__(
-										'Show ticket type prices',
-										'fair-events'
-									)}
-									checked={attributes.showTicketTypePrices}
-									onChange={(value) =>
-										setAttributes({
-											showTicketTypePrices: value,
-										})
-									}
-								/>
-								<ToggleControl
-									label={__(
-										'Show option prices',
-										'fair-events'
-									)}
-									checked={attributes.showOptionPrices}
-									onChange={(value) =>
-										setAttributes({
-											showOptionPrices: value,
-										})
-									}
-								/>
-								<ToggleControl
-									label={__(
-										'Show inviter name',
-										'fair-events'
-									)}
-									checked={attributes.showInviterName}
-									onChange={(value) =>
-										setAttributes({
-											showInviterName: value,
-										})
-									}
-								/>
-							</>
-						) : (
-							<TextControl
-								label={__('Submit Button Text', 'fair-events')}
-								value={attributes.submitButtonText}
-								onChange={(value) =>
-									setAttributes({ submitButtonText: value })
-								}
-							/>
-						)}
+						<TextControl
+							label={__('Submit Button Text', 'fair-events')}
+							value={attributes.submitButtonText}
+							onChange={(value) =>
+								setAttributes({ submitButtonText: value })
+							}
+						/>
 					</PanelBody>
 				</InspectorControls>
 
@@ -176,7 +89,10 @@ function migrateLegacyEventSignup() {
 		type: 'block',
 		blocks: [UNIFIED_NAME],
 		__fairEventsUnifiedTransform: true,
-		transform: (attrs) => createBlock(UNIFIED_NAME, { ...attrs }),
+		transform: (attrs) =>
+			createBlock(UNIFIED_NAME, {
+				submitButtonText: attrs.signupButtonText,
+			}),
 	};
 
 	unregisterBlockType(legacyName);

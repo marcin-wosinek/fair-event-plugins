@@ -49,18 +49,6 @@ class BlockHooks {
 		// so existing posts keep working; its render delegates to the unified
 		// block above.
 		register_block_type( __DIR__ . '/../../build/blocks/get-tickets' );
-
-		// Advertise fair-audience presence to the unified block editor so it can
-		// surface the participant-aware display controls.
-		wp_add_inline_script(
-			'fair-events-event-signup-editor-script',
-			'window.fairEventsEventSignupEditorData = ' . wp_json_encode(
-				array(
-					'fairAudienceActive' => class_exists( \FairAudience\API\EventSignupController::class ),
-				)
-			) . ';',
-			'before'
-		);
 	}
 
 	/**

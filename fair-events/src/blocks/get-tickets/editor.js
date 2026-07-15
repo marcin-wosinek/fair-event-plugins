@@ -27,7 +27,10 @@ registerBlockType(metadata.name, {
 				type: 'block',
 				blocks: [UNIFIED_NAME],
 				transform: (attributes) =>
-					createBlock(UNIFIED_NAME, { ...attributes }),
+					createBlock(UNIFIED_NAME, {
+						eventDateId: attributes.eventDateId,
+						submitButtonText: attributes.submitButtonText,
+					}),
 			},
 		],
 	},
