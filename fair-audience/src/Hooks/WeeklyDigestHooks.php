@@ -73,7 +73,7 @@ class WeeklyDigestHooks {
 		}
 
 		$now              = new \DateTime( 'now', wp_timezone() );
-		$current_iso_week = $now->format( 'o' ) . '-W' . $now->format( 'W' );
+		$current_iso_week = self::iso_week( $now );
 
 		if ( get_option( 'fair_audience_weekly_digest_last_sent_week', '' ) === $current_iso_week ) {
 			return;
@@ -99,13 +99,35 @@ class WeeklyDigestHooks {
 	 * @return bool
 	 */
 	private static function is_due( \DateTime $now, $day_of_week, $time_of_day ) {
+		return $now >= self::due_moment( $now, $day_of_week, $time_of_day );
+	}
+
+	/**
+	 * The exact moment this week's configured day/time falls on.
+	 *
+	 * @param \DateTime $now         Current time in site timezone.
+	 * @param int       $day_of_week ISO day of week (1=Monday..7=Sunday).
+	 * @param string    $time_of_day 'HH:MM'.
+	 * @return \DateTime
+	 */
+	public static function due_moment( \DateTime $now, $day_of_week, $time_of_day ) {
 		list( $hour, $minute ) = array_map( 'intval', explode( ':', $time_of_day ) );
 
 		$due = clone $now;
 		$due->setISODate( (int) $now->format( 'o' ), (int) $now->format( 'W' ), $day_of_week );
 		$due->setTime( $hour, $minute, 0 );
 
-		return $now >= $due;
+		return $due;
+	}
+
+	/**
+	 * ISO year-week identifier for the given moment, e.g. "2026-W29".
+	 *
+	 * @param \DateTime $now A moment in time.
+	 * @return string
+	 */
+	public static function iso_week( \DateTime $now ) {
+		return $now->format( 'o' ) . '-W' . $now->format( 'W' );
 	}
 
 	/**

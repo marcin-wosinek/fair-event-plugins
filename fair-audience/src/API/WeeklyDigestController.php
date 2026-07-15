@@ -7,6 +7,7 @@
 
 namespace FairAudience\API;
 
+use FairAudience\Hooks\WeeklyDigestHooks;
 use FairAudience\Services\EmailService;
 use FairAudience\Services\WeeklyDigestRenderer;
 use WP_REST_Controller;
@@ -124,8 +125,32 @@ class WeeklyDigestController extends WP_REST_Controller {
 				'config'          => $config,
 				'last_sent_week'  => get_option( 'fair_audience_weekly_digest_last_sent_week', '' ),
 				'last_run_result' => get_option( 'fair_audience_weekly_digest_last_run_result', array() ),
+				'next_send'       => $this->next_send( $config ),
 			)
 		);
+	}
+
+	/**
+	 * The next moment the digest is scheduled to go out, honoring the
+	 * at-most-once-per-ISO-week guard the same way the cron tick does.
+	 *
+	 * @param array $config Current digest config.
+	 * @return string ISO 8601 datetime, or '' when the digest is disabled.
+	 */
+	private function next_send( array $config ) {
+		if ( empty( $config['enabled'] ) ) {
+			return '';
+		}
+
+		$now  = new \DateTime( 'now', wp_timezone() );
+		$due  = WeeklyDigestHooks::due_moment( $now, (int) $config['day_of_week'], $config['time_of_day'] );
+		$sent = get_option( 'fair_audience_weekly_digest_last_sent_week', '' );
+
+		if ( WeeklyDigestHooks::iso_week( $now ) === $sent ) {
+			$due->modify( '+1 week' );
+		}
+
+		return $due->format( DATE_ATOM );
 	}
 
 	/**
@@ -138,6 +163,12 @@ class WeeklyDigestController extends WP_REST_Controller {
 		$config = WeeklyDigestRenderer::sanitize_config( $request->get_params() );
 
 		update_option( 'fair_audience_weekly_digest', $config );
+
+		$now = new \DateTime( 'now', wp_timezone() );
+		$due = WeeklyDigestHooks::due_moment( $now, (int) $config['day_of_week'], $config['time_of_day'] );
+		if ( $now >= $due ) {
+			update_option( 'fair_audience_weekly_digest_last_sent_week', WeeklyDigestHooks::iso_week( $now ) );
+		}
 
 		return rest_ensure_response( array( 'config' => $config ) );
 	}

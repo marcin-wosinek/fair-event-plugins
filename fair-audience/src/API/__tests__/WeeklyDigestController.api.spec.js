@@ -20,6 +20,16 @@ const authHeaders = {
 		Buffer.from(`${ADMIN_USER}:${ADMIN_PASSWORD}`).toString('base64'),
 };
 
+/**
+ * ISO day of week (1=Monday..7=Sunday) for a JS Date.
+ *
+ * @param {Date} date A date.
+ * @return {number} ISO day of week.
+ */
+function isoDayOfWeek(date) {
+	return ((date.getDay() + 6) % 7) + 1;
+}
+
 test.describe('WeeklyDigestController — /weekly-digest', () => {
 	let api;
 	let originalConfig;
@@ -201,6 +211,59 @@ test.describe('WeeklyDigestController — /weekly-digest', () => {
 				})
 			);
 		}
+	});
+
+	test('PUT with a slot later this week leaves last_sent_week unchanged', async () => {
+		const now = new Date();
+		const beforeRes = await api.get(
+			'/wp-json/fair-audience/v1/weekly-digest',
+			{ headers: authHeaders }
+		);
+		const { last_sent_week: beforeWeek } = await beforeRes.json();
+
+		const putRes = await api.put(
+			'/wp-json/fair-audience/v1/weekly-digest',
+			{
+				headers: authHeaders,
+				data: {
+					enabled: true,
+					day_of_week: isoDayOfWeek(now),
+					time_of_day: '23:59',
+				},
+			}
+		);
+		expect(putRes.ok()).toBeTruthy();
+
+		const getRes = await api.get(
+			'/wp-json/fair-audience/v1/weekly-digest',
+			{ headers: authHeaders }
+		);
+		const getBody = await getRes.json();
+		expect(getBody.last_sent_week).toBe(beforeWeek);
+	});
+
+	test('PUT with a slot earlier this week stamps last_sent_week for the current ISO week', async () => {
+		const now = new Date();
+
+		const putRes = await api.put(
+			'/wp-json/fair-audience/v1/weekly-digest',
+			{
+				headers: authHeaders,
+				data: {
+					enabled: true,
+					day_of_week: isoDayOfWeek(now),
+					time_of_day: '00:00',
+				},
+			}
+		);
+		expect(putRes.ok()).toBeTruthy();
+
+		const getRes = await api.get(
+			'/wp-json/fair-audience/v1/weekly-digest',
+			{ headers: authHeaders }
+		);
+		const getBody = await getRes.json();
+		expect(getBody.last_sent_week).toMatch(/^\d{4}-W\d{2}$/);
 	});
 
 	test('preview without a configured source returns 400', async () => {

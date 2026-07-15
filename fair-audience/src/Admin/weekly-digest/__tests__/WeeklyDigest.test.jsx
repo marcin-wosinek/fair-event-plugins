@@ -32,6 +32,7 @@ function mockApiFetch({
 	config = CONFIG,
 	lastSentWeek = '',
 	lastRunResult = {},
+	nextSend = '',
 	sources = SOURCES,
 } = {}) {
 	apiFetch.mockImplementation(({ path, method }) => {
@@ -43,6 +44,7 @@ function mockApiFetch({
 				config,
 				last_sent_week: lastSentWeek,
 				last_run_result: lastRunResult,
+				next_send: nextSend,
 			});
 		}
 		if (path === '/fair-audience/v1/weekly-digest' && method === 'PUT') {
@@ -177,6 +179,28 @@ describe('WeeklyDigest — last run summary', () => {
 		expect(
 			await screen.findByText('Last sent for week 2026-W27 — sent')
 		).toBeInTheDocument();
+	});
+
+	it('shows the next scheduled send when the digest is enabled', async () => {
+		mockApiFetch({
+			config: { ...CONFIG, enabled: true },
+			nextSend: '2026-07-20T08:00:00+02:00',
+		});
+		render(<WeeklyDigest />);
+
+		expect(await screen.findByText(/^Next digest:/)).toBeInTheDocument();
+	});
+
+	it('hides the next-send line when the digest is disabled', async () => {
+		mockApiFetch({
+			config: { ...CONFIG, enabled: false },
+			nextSend: '2026-07-20T08:00:00+02:00',
+		});
+		render(<WeeklyDigest />);
+
+		await screen.findByRole('button', { name: 'Save settings' });
+
+		expect(screen.queryByText(/^Next digest:/)).not.toBeInTheDocument();
 	});
 });
 

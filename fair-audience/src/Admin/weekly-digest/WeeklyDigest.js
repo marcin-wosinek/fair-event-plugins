@@ -2,6 +2,7 @@
  * WordPress dependencies
  */
 import { __, sprintf } from '@wordpress/i18n';
+import { dateI18n } from '@wordpress/date';
 import { useState, useEffect, useRef } from '@wordpress/element';
 import {
 	Button,
@@ -53,6 +54,7 @@ export default function WeeklyDigest() {
 	const [config, setConfig] = useState(null);
 	const [lastSentWeek, setLastSentWeek] = useState('');
 	const [lastRunResult, setLastRunResult] = useState(null);
+	const [nextSend, setNextSend] = useState('');
 	const [sources, setSources] = useState([]);
 	const [preview, setPreview] = useState(null);
 	const introRef = useRef(null);
@@ -64,6 +66,7 @@ export default function WeeklyDigest() {
 				setConfig(digest.config);
 				setLastSentWeek(digest.last_sent_week);
 				setLastRunResult(digest.last_run_result);
+				setNextSend(digest.next_send);
 				setSources(sourceList);
 			})
 			.catch((err) => {
@@ -97,6 +100,11 @@ export default function WeeklyDigest() {
 		saveDigestConfig(updatedConfig)
 			.then((response) => {
 				setConfig(response.config);
+				return getDigestConfig();
+			})
+			.then((digest) => {
+				setLastSentWeek(digest.last_sent_week);
+				setNextSend(digest.next_send);
 				setNotice({
 					status: 'success',
 					message: __(
@@ -324,6 +332,15 @@ export default function WeeklyDigest() {
 								lastSentWeek || __('n/a', 'fair-audience'),
 								lastRunResult?.status ||
 									__('unknown', 'fair-audience')
+							)}
+						</p>
+					)}
+					{config.enabled && nextSend && (
+						<p>
+							{sprintf(
+								/* translators: %s: date and time the next digest is scheduled to send */
+								__('Next digest: %s', 'fair-audience'),
+								dateI18n('l, F j H:i', nextSend)
 							)}
 						</p>
 					)}
