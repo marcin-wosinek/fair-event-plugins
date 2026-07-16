@@ -708,7 +708,7 @@ export default function ManageEventApp() {
 					eventDateId={eventDateId}
 					startDatetime={eventDate.start_datetime}
 					endDatetime={eventDate.end_datetime}
-					isRecurring={!!eventDate?.rrule}
+					isSeries={isSeries}
 					onDirtyChange={handleTicketsDirtyChange}
 				/>
 			),

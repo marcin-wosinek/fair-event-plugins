@@ -41,7 +41,7 @@ export default function EventTickets({
 	onDataRef,
 	startDatetime,
 	endDatetime: endDatetimeProp,
-	isRecurring,
+	isSeries,
 	onDirtyChange,
 }) {
 	const [capacity, setCapacity] = useState('');
@@ -379,7 +379,7 @@ export default function EventTickets({
 	};
 
 	const openAddTicketModal = () => {
-		if (isRecurring) {
+		if (isSeries) {
 			setPendingScope('single_instance');
 			setShowScopeModal(true);
 		} else {
@@ -1336,7 +1336,7 @@ export default function EventTickets({
 														)}
 													</th>
 												)}
-												{isRecurring && (
+												{isSeries && (
 													<th>
 														{__(
 															'Scope',
@@ -1605,7 +1605,7 @@ export default function EventTickets({
 															/>
 														</td>
 													)}
-													{isRecurring && (
+													{isSeries && (
 														<td>
 															{type.has_sales ? (
 																<span>

@@ -4,7 +4,7 @@
  * Component tests for the recurrence-scope selector in EventTickets (#663, #935).
  *
  * Exercises:
- *   - Scope column is visible only when isRecurring={true}.
+ *   - Scope column is visible only when isSeries={true}.
  *   - "+ Add Ticket Type" on a recurring event opens a scope-choice modal.
  *   - A new ticket type is seeded with the scope chosen in the modal.
  *   - Scope cell is read-only text when has_sales is true.
@@ -128,9 +128,9 @@ describe('EventTickets — empty state (no advanced tickets)', () => {
 });
 
 describe('EventTickets — recurrence scope selector', () => {
-	it('shows Scope column when isRecurring is true', () => {
+	it('shows Scope column when isSeries is true', () => {
 		renderTickets({
-			isRecurring: true,
+			isSeries: true,
 			initialData: initialDataWithTicketType,
 		});
 		expect(screen.getByText('Scope')).toBeInTheDocument();
@@ -139,22 +139,22 @@ describe('EventTickets — recurrence scope selector', () => {
 		expect(console).toHaveWarned();
 	});
 
-	it('does not show Scope column when isRecurring is false', () => {
+	it('does not show Scope column when isSeries is false', () => {
 		renderTickets({
-			isRecurring: false,
+			isSeries: false,
 			initialData: initialDataWithTicketType,
 		});
 		expect(screen.queryByText('Scope')).not.toBeInTheDocument();
 	});
 
-	it('does not show Scope column when isRecurring is omitted', () => {
+	it('does not show Scope column when isSeries is omitted', () => {
 		renderTickets({ initialData: initialDataWithTicketType });
 		expect(screen.queryByText('Scope')).not.toBeInTheDocument();
 	});
 
 	it('new ticket type is seeded with recurrence_scope single_instance', () => {
 		renderTickets({
-			isRecurring: true,
+			isSeries: true,
 			// Start with a ticket type so hasAdvancedTickets = true and the
 			// "+ Add Ticket Type" button is visible in the table footer.
 			initialData: initialDataWithTicketType,
@@ -186,7 +186,7 @@ describe('EventTickets — recurrence scope selector', () => {
 
 	it('changing scope selector to whole_series updates the combobox value', () => {
 		renderTickets({
-			isRecurring: true,
+			isSeries: true,
 			initialData: initialDataWithTicketType,
 		});
 
@@ -204,7 +204,7 @@ describe('EventTickets — recurrence scope selector', () => {
 
 	it('save payload includes updated recurrence_scope', async () => {
 		const { onSaveRef } = renderTickets({
-			isRecurring: true,
+			isSeries: true,
 			initialData: initialDataWithTicketType,
 		});
 
@@ -244,7 +244,7 @@ describe('EventTickets — recurrence scope selector', () => {
 describe('EventTickets — multiple_instances scope (#930)', () => {
 	it('offers multiple_instances as a scope option', () => {
 		renderTickets({
-			isRecurring: true,
+			isSeries: true,
 			initialData: initialDataWithTicketType,
 		});
 
@@ -267,7 +267,7 @@ describe('EventTickets — multiple_instances scope (#930)', () => {
 
 	it('shows a "Minimum instances" input once multiple_instances is selected', () => {
 		renderTickets({
-			isRecurring: true,
+			isSeries: true,
 			initialData: initialDataWithTicketType,
 		});
 
@@ -291,7 +291,7 @@ describe('EventTickets — multiple_instances scope (#930)', () => {
 
 	it('save payload includes the entered minimum_instances', async () => {
 		const { onSaveRef } = renderTickets({
-			isRecurring: true,
+			isSeries: true,
 			initialData: initialDataWithTicketType,
 		});
 
@@ -335,7 +335,7 @@ describe('EventTickets — multiple_instances scope (#930)', () => {
 describe('EventTickets — scope-choice modal', () => {
 	it('opens a modal when "+ Add Ticket Type" is clicked on a recurring event', () => {
 		renderTickets({
-			isRecurring: true,
+			isSeries: true,
 			initialData: initialDataWithTicketType,
 		});
 
@@ -350,7 +350,7 @@ describe('EventTickets — scope-choice modal', () => {
 
 	it('does not open a modal on a non-recurring event', () => {
 		renderTickets({
-			isRecurring: false,
+			isSeries: false,
 			initialData: initialDataWithTicketType,
 		});
 
@@ -365,7 +365,7 @@ describe('EventTickets — scope-choice modal', () => {
 
 	it('adds a whole_series ticket when that option is chosen in the modal', () => {
 		renderTickets({
-			isRecurring: true,
+			isSeries: true,
 			initialData: initialDataWithTicketType,
 		});
 
@@ -410,7 +410,7 @@ const initialDataWithSoldTicketType = {
 describe('EventTickets — scope lock when has_sales', () => {
 	it('renders scope as read-only text when has_sales is true', () => {
 		renderTickets({
-			isRecurring: true,
+			isSeries: true,
 			initialData: initialDataWithSoldTicketType,
 		});
 
@@ -427,7 +427,7 @@ describe('EventTickets — scope lock when has_sales', () => {
 
 	it('renders scope as SelectControl when has_sales is false', () => {
 		renderTickets({
-			isRecurring: true,
+			isSeries: true,
 			initialData: initialDataWithTicketType,
 		});
 
