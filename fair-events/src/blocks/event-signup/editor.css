@@ -7,3 +7,19 @@
 		cursor: default;
 	}
 }
+
+.fair-events-event-signup-questions-label {
+	font-weight: 600;
+	font-size: 13px;
+	color: #1e1e1e;
+	margin-top: 12px;
+	margin-bottom: 4px;
+}
+
+.fair-events-event-signup-questions {
+	min-height: 40px;
+	margin: 4px 0 16px;
+	padding: 8px;
+	border: 1px dashed #ccc;
+	border-radius: 4px;
+}
