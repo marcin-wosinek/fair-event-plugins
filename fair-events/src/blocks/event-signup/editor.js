@@ -13,8 +13,14 @@
  */
 
 import { registerBlockType } from '@wordpress/blocks';
-import { useBlockProps, InspectorControls } from '@wordpress/block-editor';
+import {
+	useBlockProps,
+	useInnerBlocksProps,
+	InspectorControls,
+	InnerBlocks,
+} from '@wordpress/block-editor';
 import { PanelBody, TextControl } from '@wordpress/components';
+import { useSelect } from '@wordpress/data';
 import { __ } from '@wordpress/i18n';
 import ServerSideRender from '@wordpress/server-side-render';
 import metadata from './block.json';
@@ -22,10 +28,47 @@ import './editor.css';
 
 const UNIFIED_NAME = 'fair-events/event-signup';
 
+// Custom question blocks that can be nested inside the signup form. Mirrors
+// the legacy fair-audience/event-signup block's set, minus the file-upload
+// question: the unified form is submittable by anonymous visitors and
+// uploads stay out until there is a vetted path.
+const ALLOWED_BLOCKS = [
+	'core/heading',
+	'core/paragraph',
+	'core/list',
+	'fair-audience/fair-form-short-text',
+	'fair-audience/fair-form-long-text',
+	'fair-audience/fair-form-phone',
+	'fair-audience/fair-form-select-one',
+	'fair-audience/fair-form-radio',
+	'fair-audience/fair-form-multiselect',
+	'fair-audience/fair-form-consent',
+	'fair-audience/fair-form-conditional',
+];
+
 registerBlockType(metadata.name, {
 	...metadata,
 	edit: function Edit({ attributes, setAttributes }) {
 		const blockProps = useBlockProps();
+
+		// The fair-form question set is only registered when fair-form is
+		// active. Without it, offer no question blocks — there is no
+		// fair-events-owned default question set.
+		const isFairFormActive = useSelect(
+			(select) =>
+				!!select('core/blocks').getBlockType(
+					'fair-audience/fair-form-short-text'
+				),
+			[]
+		);
+
+		const innerBlocksProps = useInnerBlocksProps(
+			{ className: 'fair-events-event-signup-questions' },
+			{
+				allowedBlocks: ALLOWED_BLOCKS,
+				renderAppender: InnerBlocks.ButtonBlockAppender,
+			}
+		);
 
 		return (
 			<>
@@ -46,8 +89,29 @@ registerBlockType(metadata.name, {
 						block={UNIFIED_NAME}
 						attributes={attributes}
 					/>
+					{isFairFormActive && (
+						<>
+							<div className="fair-events-event-signup-questions-label">
+								{__('Custom questions', 'fair-events')}
+							</div>
+							<div {...innerBlocksProps} />
+						</>
+					)}
 				</div>
 			</>
 		);
 	},
+	save: () => {
+		// Dynamic block (rendered via render.php), but the nested question
+		// blocks must be serialized so render.php receives them as $content.
+		return <InnerBlocks.Content />;
+	},
+	deprecated: [
+		{
+			// Previously a pure dynamic block with no saved markup. Existing
+			// instances have no inner blocks, so migrating them to the
+			// InnerBlocks.Content save is a no-op that avoids block recovery.
+			save: () => null,
+		},
+	],
 });

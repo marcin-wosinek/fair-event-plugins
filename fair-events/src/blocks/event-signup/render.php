@@ -17,16 +17,16 @@ defined( 'WPINC' ) || die;
 
 // When fair-audience is active it owns the participant-aware signup flow.
 // Delegate to its block via render_block() so its richer render runs unchanged
-// and its view script/styles enqueue, then stop.
+// and its view script/styles enqueue, then stop. Nested question blocks are
+// forwarded so the delegated render receives them as $content, exactly as on
+// the legacy fair-audience block.
 if ( class_exists( \FairAudience\API\EventSignupController::class ) ) {
-	echo render_block( // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- render_block() returns trusted, already-escaped block markup.
-		array(
-			'blockName' => 'fair-audience/event-signup',
-			'attrs'     => array(
-				'signupButtonText' => $attributes['submitButtonText'] ?? '',
-			),
-		)
+	$delegated_block              = $block->parsed_block;
+	$delegated_block['blockName'] = 'fair-audience/event-signup';
+	$delegated_block['attrs']     = array(
+		'signupButtonText' => $attributes['submitButtonText'] ?? '',
 	);
+	echo render_block( $delegated_block ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- render_block() returns trusted, already-escaped block markup.
 	return;
 }
 

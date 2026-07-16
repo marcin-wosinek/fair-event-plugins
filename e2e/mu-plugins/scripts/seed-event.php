@@ -53,9 +53,21 @@ $is_paid           = true;
 // Which purchase block the event page carries. Default: fair-audience
 // event-signup. Override {"block":"get-tickets"} for specs that exercise the
 // fair-events standalone purchase path (with fair-audience deactivated).
+// Override {"block":"unified-with-question"} for specs that exercise the
+// unified fair-events/event-signup block with a nested fair-form question,
+// delegated through fair-audience's participant-aware flow (#1160).
 $block_content = '<!-- wp:fair-audience/event-signup /-->';
 if ( isset( $overrides['block'] ) && 'get-tickets' === $overrides['block'] ) {
 	$block_content = '<!-- wp:fair-events/get-tickets /-->';
+} elseif ( isset( $overrides['block'] ) && 'unified-with-question' === $overrides['block'] ) {
+	$block_content = implode(
+		"\n",
+		array(
+			'<!-- wp:fair-events/event-signup -->',
+			'<!-- wp:fair-audience/fair-form-short-text {"questionKey":"dietary","questionText":"Dietary needs"} /-->',
+			'<!-- /wp:fair-events/event-signup -->',
+		)
+	);
 }
 
 $event_id       = fair_e2e_create_event( 'E2E ' . $flavour . ' Event ' . gmdate( 'YmdHis' ) . ' ' . wp_rand( 1000, 9999 ), $block_content );

@@ -39,20 +39,34 @@ const ALLOWED_BLOCKS = [
 	'fair-audience/fair-form-conditional',
 ];
 
+// The file-upload question can nest inside a conditional block, so this
+// scans the whole inner-block tree rather than just the top level.
+function hasFileUploadQuestion(blocks) {
+	return (blocks || []).some(
+		(block) =>
+			block.name === 'fair-audience/fair-form-file-upload' ||
+			hasFileUploadQuestion(block.innerBlocks)
+	);
+}
+
 registerBlockType('fair-audience/event-signup', {
 	transforms: {
 		to: [
 			{
 				type: 'block',
 				blocks: [UNIFIED_NAME],
-				// Instances with custom questions would silently lose them —
-				// only offer the transform when there's nothing to drop.
+				// A nested file-upload question would silently lose upload
+				// handling on the unified block (no vetted anonymous-upload
+				// path yet) — withhold the transform in that case. Other
+				// questions survive the transform via innerBlocks below.
 				isMatch: (attributes, block) =>
-					!block.innerBlocks || block.innerBlocks.length === 0,
-				transform: (attributes) =>
-					createBlock(UNIFIED_NAME, {
-						submitButtonText: attributes.signupButtonText,
-					}),
+					!hasFileUploadQuestion(block.innerBlocks),
+				transform: (attributes, innerBlocks) =>
+					createBlock(
+						UNIFIED_NAME,
+						{ submitButtonText: attributes.signupButtonText },
+						innerBlocks
+					),
 			},
 		],
 	},
