@@ -68,12 +68,15 @@ if ( ! function_exists( 'get_the_title' ) ) {
 
 if ( ! function_exists( 'wp_timezone' ) ) {
 	/**
-	 * Stub of WordPress wp_timezone() — always UTC for deterministic tests.
+	 * Stub of WordPress wp_timezone() — UTC by default, overridable via
+	 * $GLOBALS['_fair_test_timezone'] for timezone-sensitive tests.
 	 *
-	 * @return \DateTimeZone UTC timezone.
+	 * @return \DateTimeZone Site timezone.
 	 */
 	function wp_timezone() {
-		return new \DateTimeZone( 'UTC' );
+		$timezone = isset( $GLOBALS['_fair_test_timezone'] ) ? $GLOBALS['_fair_test_timezone'] : 'UTC';
+
+		return new \DateTimeZone( $timezone );
 	}
 }
 

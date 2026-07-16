@@ -113,6 +113,23 @@ class EventSchemaTest extends TestCase {
 	}
 
 	/**
+	 * StartDate/endDate carry the site's local offset, not a hardcoded UTC one.
+	 *
+	 * @return void
+	 */
+	public function test_dates_use_site_local_offset() {
+		$GLOBALS['_fair_test_timezone'] = 'Europe/Madrid';
+
+		$item_list = EventSchema::item_list_from_occurrences( array( $this->make_dto() ) );
+		$event     = $item_list['itemListElement'][0]['item'];
+
+		unset( $GLOBALS['_fair_test_timezone'] );
+
+		$this->assertStringEndsWith( '+02:00', $event['startDate'] );
+		$this->assertStringEndsWith( '+02:00', $event['endDate'] );
+	}
+
+	/**
 	 * A DTO with no start is dropped rather than producing a half-valid Event.
 	 *
 	 * @return void

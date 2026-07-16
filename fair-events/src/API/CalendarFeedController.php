@@ -117,25 +117,136 @@ class CalendarFeedController extends WP_REST_Controller {
 		$vcalendar->{'X-WR-CALNAME'}  = get_bloginfo( 'name' );
 		$vcalendar->{'X-WR-TIMEZONE'} = wp_timezone_string();
 
+		$tz = wp_timezone();
+
+		if ( $this->is_named_timezone( $tz ) ) {
+			$this->add_vtimezone( $vcalendar, $tz, $occurrences );
+		}
+
 		foreach ( $occurrences as $occurrence ) {
 			if ( empty( $occurrence['start'] ) ) {
 				continue;
 			}
 
-			$this->add_vevent( $vcalendar, $occurrence );
+			$this->add_vevent( $vcalendar, $occurrence, $tz );
 		}
 
 		return $vcalendar;
 	}
 
 	/**
-	 * Add a single VEVENT to the calendar for an occurrence DTO.
+	 * Whether a site timezone is a named IANA zone (e.g. 'Europe/Madrid')
+	 * rather than a fixed UTC offset (e.g. '+05:00').
 	 *
-	 * @param VCalendar $vcalendar  Calendar to add the event to.
-	 * @param array     $occurrence Occurrence DTO.
+	 * @param \DateTimeZone $tz Site timezone.
+	 * @return bool
+	 */
+	private function is_named_timezone( \DateTimeZone $tz ) {
+		return (bool) preg_match( '/^[A-Za-z]/', $tz->getName() );
+	}
+
+	/**
+	 * Add a VTIMEZONE component describing the site's named zone across the
+	 * feed's date range, so DTSTART/DTEND TZID references resolve for
+	 * clients that don't already know the IANA zone.
+	 *
+	 * @param VCalendar     $vcalendar   Calendar to add the component to.
+	 * @param \DateTimeZone $tz          Site timezone.
+	 * @param array[]       $occurrences Occurrence DTOs from EventFeedProvider.
 	 * @return void
 	 */
-	private function add_vevent( VCalendar $vcalendar, array $occurrence ) {
+	private function add_vtimezone( VCalendar $vcalendar, \DateTimeZone $tz, array $occurrences ) {
+		$timestamps = array();
+
+		foreach ( $occurrences as $occurrence ) {
+			foreach ( array( 'start', 'end' ) as $key ) {
+				if ( empty( $occurrence[ $key ] ) ) {
+					continue;
+				}
+
+				$ts = DateHelper::local_to_timestamp( $occurrence[ $key ] );
+
+				if ( false !== $ts ) {
+					$timestamps[] = $ts;
+				}
+			}
+		}
+
+		if ( empty( $timestamps ) ) {
+			return;
+		}
+
+		// Look a year further back than the range start to reliably capture
+		// the offset already active at that point.
+		$range_start = min( $timestamps ) - YEAR_IN_SECONDS;
+		$range_end   = max( $timestamps );
+
+		$transitions = $tz->getTransitions( $range_start, $range_end );
+
+		if ( empty( $transitions ) ) {
+			return;
+		}
+
+		$vtimezone = $vcalendar->add( 'VTIMEZONE', array( 'TZID' => $tz->getName() ) );
+
+		$previous_offset = $transitions[0]['offset'];
+
+		foreach ( $transitions as $index => $transition ) {
+			if ( 0 === $index ) {
+				// The first entry is the state already active at range start, not a transition.
+				continue;
+			}
+
+			$sub = $vtimezone->add( $transition['isdst'] ? 'DAYLIGHT' : 'STANDARD' );
+			$sub->add( 'DTSTART', gmdate( 'Ymd\THis', $transition['ts'] + $transition['offset'] ) );
+			$sub->add( 'TZOFFSETFROM', $this->format_utc_offset( $previous_offset ) );
+			$sub->add( 'TZOFFSETTO', $this->format_utc_offset( $transition['offset'] ) );
+
+			if ( ! empty( $transition['abbr'] ) ) {
+				$sub->add( 'TZNAME', $transition['abbr'] );
+			}
+
+			$previous_offset = $transition['offset'];
+		}
+
+		// A zone without DST transitions in range yields no STANDARD/DAYLIGHT
+		// sub-component above, but RFC 5545 requires at least one.
+		if ( 0 === count( $vtimezone->select( 'STANDARD' ) ) + count( $vtimezone->select( 'DAYLIGHT' ) ) ) {
+			$sub = $vtimezone->add( $transitions[0]['isdst'] ? 'DAYLIGHT' : 'STANDARD' );
+			$sub->add( 'DTSTART', '19700101T000000' );
+			$sub->add( 'TZOFFSETFROM', $this->format_utc_offset( $transitions[0]['offset'] ) );
+			$sub->add( 'TZOFFSETTO', $this->format_utc_offset( $transitions[0]['offset'] ) );
+
+			if ( ! empty( $transitions[0]['abbr'] ) ) {
+				$sub->add( 'TZNAME', $transitions[0]['abbr'] );
+			}
+		}
+	}
+
+	/**
+	 * Format a UTC offset in seconds as an iCal TZOFFSETFROM/TO value.
+	 *
+	 * @param int $seconds Offset in seconds (can be negative).
+	 * @return string Offset formatted as '+HHMM' or '-HHMM'.
+	 */
+	private function format_utc_offset( $seconds ) {
+		$sign    = $seconds < 0 ? '-' : '+';
+		$seconds = abs( $seconds );
+		$hours   = floor( $seconds / HOUR_IN_SECONDS );
+		$minutes = floor( ( $seconds % HOUR_IN_SECONDS ) / MINUTE_IN_SECONDS );
+
+		return sprintf( '%s%02d%02d', $sign, $hours, $minutes );
+	}
+
+	/**
+	 * Add a single VEVENT to the calendar for an occurrence DTO.
+	 *
+	 * @param VCalendar     $vcalendar  Calendar to add the event to.
+	 * @param array         $occurrence Occurrence DTO.
+	 * @param \DateTimeZone $tz         Site timezone.
+	 * @return void
+	 */
+	private function add_vevent( VCalendar $vcalendar, array $occurrence, \DateTimeZone $tz ) {
 		$now = new \DateTime( 'now', new \DateTimeZone( 'UTC' ) );
 
 		$vevent = $vcalendar->add(
@@ -159,6 +270,9 @@ class CalendarFeedController extends WP_REST_Controller {
 
 			$vevent->add( 'DTSTART', $start_date, array( 'VALUE' => 'DATE' ) );
 			$vevent->add( 'DTEND', $end_date, array( 'VALUE' => 'DATE' ) );
+		} elseif ( $this->is_named_timezone( $tz ) ) {
+			$vevent->add( 'DTSTART', DateHelper::local_to_datetime( $occurrence['start'] ) );
+			$vevent->add( 'DTEND', DateHelper::local_to_datetime( $occurrence['end'] ) );
 		} else {
 			$vevent->add( 'DTSTART', DateHelper::local_to_ical_utc( $occurrence['start'] ) );
 			$vevent->add( 'DTEND', DateHelper::local_to_ical_utc( $occurrence['end'] ) );
