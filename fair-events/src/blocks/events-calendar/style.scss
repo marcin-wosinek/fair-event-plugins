@@ -240,48 +240,85 @@
 	}
 
 	.fair-events-subscribe {
+		position: relative;
 		margin-top: 0.75rem;
 		text-align: right;
 	}
 
-	.fair-events-subscribe-link {
+	.fair-events-subscribe-trigger {
 		display: inline-block;
-		padding: 0.375rem 0.875rem;
-		background: transparent;
-		border: 1px solid currentColor;
-		border-radius: 4px;
-		text-decoration: none;
-		font-size: 0.8125rem;
-		color: #1e1e1e;
-		opacity: 0.7;
-
-		&:hover {
-			opacity: 1;
-		}
-	}
-
-	.fair-events-subscribe-note {
-		margin: 0.375rem 0 0;
-		font-size: 0.75rem;
-		color: #757575;
-	}
-
-	.fair-events-subscribe-copy {
-		margin-top: 0.375rem;
-	}
-
-	.fair-events-subscribe-copy-btn {
 		padding: 0.375rem 0.875rem;
 		background: transparent;
 		border: 1px solid currentColor;
 		border-radius: 4px;
 		cursor: pointer;
 		font-size: 0.8125rem;
+		color: #1e1e1e;
 		opacity: 0.7;
 
-		&:hover {
+		&:hover,
+		&[aria-expanded="true"] {
 			opacity: 1;
 		}
+	}
+
+	.fair-events-subscribe-panel {
+		position: absolute;
+		right: 0;
+		top: 100%;
+		z-index: 20;
+		margin-top: 0.375rem;
+		min-width: 220px;
+		background: #fff;
+		border: 1px solid #e1e5e9;
+		border-radius: 8px;
+		box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
+		text-align: left;
+		opacity: 0;
+		visibility: hidden;
+		transform: translateY(-4px);
+		transition: opacity 0.15s ease, transform 0.15s ease;
+
+		&.is-open {
+			opacity: 1;
+			visibility: visible;
+			transform: translateY(0);
+		}
+	}
+
+	.fair-events-subscribe-entry {
+		display: flex;
+		align-items: center;
+		gap: 0.625rem;
+		width: 100%;
+		padding: 0.625rem 0.875rem;
+		background: none;
+		border: none;
+		text-align: left;
+		text-decoration: none;
+		cursor: pointer;
+		font-size: 0.8125rem;
+		color: #1e1e1e;
+
+		&:hover,
+		&:focus {
+			background-color: #f5f5f5;
+		}
+	}
+
+	.fair-events-subscribe-icon {
+		flex-shrink: 0;
+		width: 14px;
+		height: 14px;
+		opacity: 0.8;
+	}
+
+	.fair-events-subscribe-note {
+		margin: 0;
+		padding: 0.5rem 0.875rem 0.75rem;
+		font-size: 0.6875rem;
+		color: #757575;
+		border-top: 1px solid #f0f0f0;
 	}
 
 	// Tablet: Smaller grid

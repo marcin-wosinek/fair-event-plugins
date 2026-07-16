@@ -4,9 +4,10 @@ const WP_ADMIN_USER = process.env.WP_ADMIN_USER || 'admin';
 const WP_ADMIN_PASS = process.env.WP_ADMIN_PASS || 'password';
 
 /**
- * Verifies the events-calendar "Subscribe to calendar" link (#1124):
- * a webcal:// link pointing at the public ICS feed, reflecting the block's
- * category filter, plus a copyable plain-URL fallback.
+ * Verifies the events-calendar "Subscribe to calendar" dropdown (#1154):
+ * a single outline trigger button that opens a dropdown with Google
+ * Calendar, Outlook, Apple Calendar (webcal), and Copy feed URL entries,
+ * all reflecting the block's category filter.
  */
 
 async function apiFetch(page, options) {
@@ -47,8 +48,26 @@ async function login(page) {
 	await page.waitForSelector('#wpadminbar');
 }
 
-test.describe('Events Calendar — Subscribe link', () => {
-	test('shows a webcal:// link to the ICS feed and a copyable fallback', async ({
+async function createCalendarPage(page, title, content) {
+	const priorPages = await apiFetch(page, {
+		path: `/wp/v2/pages?search=${encodeURIComponent(title)}&per_page=20`,
+	});
+	for (const p of priorPages) {
+		await apiFetch(page, {
+			path: `/wp/v2/pages/${p.id}?force=true`,
+			method: 'DELETE',
+		}).catch(() => {});
+	}
+
+	return apiFetch(page, {
+		path: '/wp/v2/pages',
+		method: 'POST',
+		data: { title, status: 'publish', content },
+	});
+}
+
+test.describe('Events Calendar — Subscribe dropdown', () => {
+	test('shows a single trigger that opens a dropdown with all subscription options', async ({
 		page,
 		context,
 	}) => {
@@ -61,48 +80,98 @@ test.describe('Events Calendar — Subscribe link', () => {
 		await page.goto('/wp-admin/admin.php?page=fair-events-all-events');
 		await page.waitForFunction(() => window.wp && window.wp.apiFetch);
 
-		const priorPages = await apiFetch(page, {
-			path: '/wp/v2/pages?search=Subscribe%20Calendar&per_page=20',
-		});
-		for (const p of priorPages) {
-			await apiFetch(page, {
-				path: `/wp/v2/pages/${p.id}?force=true`,
-				method: 'DELETE',
-			}).catch(() => {});
-		}
-
-		const calendarPage = await apiFetch(page, {
-			path: '/wp/v2/pages',
-			method: 'POST',
-			data: {
-				title: 'Subscribe Calendar',
-				status: 'publish',
-				content: '<!-- wp:fair-events/events-calendar /-->',
-			},
-		});
+		const calendarPage = await createCalendarPage(
+			page,
+			'Subscribe Calendar',
+			'<!-- wp:fair-events/events-calendar /-->'
+		);
 
 		await page.goto(calendarPage.link || `/?page_id=${calendarPage.id}`);
 
-		const link = page.locator('.fair-events-subscribe-link');
-		await expect(link).toBeVisible();
+		const trigger = page.locator('.fair-events-subscribe-trigger');
+		await expect(trigger).toBeVisible();
+		await expect(trigger).toHaveText('Subscribe to calendar');
+		await expect(trigger).toHaveAttribute('aria-expanded', 'false');
 
-		const href = await link.getAttribute('href');
-		expect(href).toMatch(/^webcal:\/\//);
-		expect(href).toContain('/fair-events/v1/calendar.ics');
+		// No leftover elements from the old three-element stack: the old
+		// always-visible link is gone, and the note is only inside the
+		// (closed) dropdown panel, not visible on the page.
+		await expect(page.locator('.fair-events-subscribe-link')).toHaveCount(
+			0
+		);
 
-		const button = page.locator('.fair-events-subscribe-copy-btn');
-		await expect(button).toHaveText('Copy feed URL');
+		const panel = page.locator('.fair-events-subscribe-panel');
+		await expect(panel).toBeHidden();
+		await expect(panel.locator('.fair-events-subscribe-note')).toBeHidden();
 
-		await button.click();
-		await expect(button).toHaveText('✓');
+		await trigger.click();
+		await expect(trigger).toHaveAttribute('aria-expanded', 'true');
+		await expect(panel).toBeVisible();
+
+		const entries = panel.locator('.fair-events-subscribe-entry');
+		await expect(entries).toHaveCount(4);
+
+		const googleEntry = panel.getByRole('menuitem', {
+			name: 'Google Calendar',
+		});
+		await expect(googleEntry).toHaveAttribute('target', '_blank');
+		const googleHref = await googleEntry.getAttribute('href');
+		expect(googleHref).toContain('calendar.google.com/calendar/r?cid=');
+		expect(decodeURIComponent(googleHref)).toContain(
+			'/fair-events/v1/calendar.ics'
+		);
+
+		const outlookEntry = panel.getByRole('menuitem', { name: 'Outlook' });
+		await expect(outlookEntry).toHaveAttribute('target', '_blank');
+		const outlookHref = await outlookEntry.getAttribute('href');
+		expect(outlookHref).toContain('outlook.live.com/calendar/0/addfromweb');
+		expect(decodeURIComponent(outlookHref)).toContain(
+			'/fair-events/v1/calendar.ics'
+		);
+
+		const appleEntry = panel.getByRole('menuitem', {
+			name: 'Apple Calendar',
+		});
+		const appleHref = await appleEntry.getAttribute('href');
+		expect(appleHref).toMatch(/^webcal:\/\//);
+		expect(appleHref).toContain('/fair-events/v1/calendar.ics');
+
+		await expect(panel.locator('.fair-events-subscribe-note')).toHaveText(
+			"Subscribed calendars refresh on your calendar app's own schedule (often hours, not instant)."
+		);
+
+		// Copy entry copies the feed URL and shows the confirmation.
+		const copyButton = panel.locator('.fair-events-subscribe-entry-copy');
+		await copyButton.click();
+		await expect(copyButton).toHaveText('✓');
 
 		const clipboardText = await page.evaluate(() =>
 			navigator.clipboard.readText()
 		);
-		expect(clipboardText).toMatch(/^https:\/\//);
+		expect(clipboardText).toMatch(/^https?:\/\//);
 		expect(clipboardText).toContain('/fair-events/v1/calendar.ics');
 
-		await expect(button).toHaveText('Copy feed URL', { timeout: 3000 });
+		await expect(copyButton).toHaveText('Copy feed URL', {
+			timeout: 3000,
+		});
+
+		// Escape closes the dropdown.
+		await page.keyboard.press('Escape');
+		await expect(panel).toBeHidden();
+		await expect(trigger).toHaveAttribute('aria-expanded', 'false');
+
+		// Outside click closes the dropdown (click the calendar navigation
+		// title — on-page but outside the admin bar and the dropdown).
+		await trigger.click();
+		await expect(panel).toBeVisible();
+		await page.locator('.navigation-title').click();
+		await expect(panel).toBeHidden();
+
+		// Selecting the Apple Calendar entry closes the dropdown.
+		await trigger.click();
+		await expect(panel).toBeVisible();
+		await appleEntry.click();
+		await expect(panel).toBeHidden();
 
 		// Cleanup.
 		await apiFetch(page, {
@@ -111,7 +180,7 @@ test.describe('Events Calendar — Subscribe link', () => {
 		}).catch(() => {});
 	});
 
-	test('reflects the category filter in the feed URL', async ({ page }) => {
+	test('reflects the category filter in the feed URLs', async ({ page }) => {
 		test.setTimeout(60_000);
 
 		await page.setViewportSize({ width: 1200, height: 900 });
@@ -128,31 +197,28 @@ test.describe('Events Calendar — Subscribe link', () => {
 		);
 		const category = categories[0];
 
-		const priorPages = await apiFetch(page, {
-			path: '/wp/v2/pages?search=Subscribe%20Calendar%20Filtered&per_page=20',
-		});
-		for (const p of priorPages) {
-			await apiFetch(page, {
-				path: `/wp/v2/pages/${p.id}?force=true`,
-				method: 'DELETE',
-			}).catch(() => {});
-		}
-
-		const calendarPage = await apiFetch(page, {
-			path: '/wp/v2/pages',
-			method: 'POST',
-			data: {
-				title: 'Subscribe Calendar Filtered',
-				status: 'publish',
-				content: `<!-- wp:fair-events/events-calendar {"categories":[${category.id}]} /-->`,
-			},
-		});
+		const calendarPage = await createCalendarPage(
+			page,
+			'Subscribe Calendar Filtered',
+			`<!-- wp:fair-events/events-calendar {"categories":[${category.id}]} /-->`
+		);
 
 		await page.goto(calendarPage.link || `/?page_id=${calendarPage.id}`);
 
-		const link = page.locator('.fair-events-subscribe-link');
-		const href = await link.getAttribute('href');
-		expect(href).toContain(`categories=${category.slug}`);
+		await page.locator('.fair-events-subscribe-trigger').click();
+		const panel = page.locator('.fair-events-subscribe-panel');
+
+		const googleHref = await panel
+			.getByRole('menuitem', { name: 'Google Calendar' })
+			.getAttribute('href');
+		expect(decodeURIComponent(googleHref)).toContain(
+			`categories=${category.slug}`
+		);
+
+		const appleHref = await panel
+			.getByRole('menuitem', { name: 'Apple Calendar' })
+			.getAttribute('href');
+		expect(appleHref).toContain(`categories=${category.slug}`);
 
 		// Cleanup.
 		await apiFetch(page, {

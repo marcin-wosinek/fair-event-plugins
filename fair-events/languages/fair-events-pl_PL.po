@@ -389,13 +389,13 @@ msgstr "Czas trwania wydarzenia"
 msgid "Copy"
 msgstr "Kopiuj"
 
-#: src/blocks/events-calendar/render.php:264
+#: src/blocks/events-calendar/render.php:317
 #: src/blocks/events-week/render.php:234
 #: src/Admin/calendar/components/CalendarHeader.js:29
 msgid "Previous"
 msgstr "Poprzedni"
 
-#: src/blocks/events-calendar/render.php:270
+#: src/blocks/events-calendar/render.php:323
 #: src/blocks/events-week/render.php:240
 #: src/Admin/calendar/components/CalendarHeader.js:35
 msgid "Next"
@@ -1365,37 +1365,37 @@ msgstr "Filtruj według typu wystąpienia."
 
 #. translators: %d: number of days
 #: src/blocks/event-info/render.php:68
-#, php-format, js-format
+#, php-format,js-format
 msgid "Every %d days"
 msgstr "Co %d dni"
 
 #. translators: %s: day of week
 #: src/blocks/event-info/render.php:75
-#, php-format, js-format
+#, php-format,js-format
 msgid "Every 2 weeks on %s"
 msgstr "Co 2 tygodnie w %s"
 
 #. translators: 1: number of weeks, 2: day of week
 #: src/blocks/event-info/render.php:79
-#, php-format, js-format
+#, php-format,js-format
 msgid "Every %1$d weeks on %2$s"
 msgstr "Co %1$d tygodni w %2$s"
 
 #. translators: %s: day of week
 #: src/blocks/event-info/render.php:82
-#, php-format, js-format
+#, php-format,js-format
 msgid "Every %s"
 msgstr "Co %s"
 
 #. translators: %d: number of months
 #: src/blocks/event-info/render.php:87
-#, php-format, js-format
+#, php-format,js-format
 msgid "Every %d months"
 msgstr "Co %d miesięcy"
 
 #. translators: %d: number of years
 #: src/blocks/event-info/render.php:94
-#, php-format, js-format
+#, php-format,js-format
 msgid "Every %d years"
 msgstr "Co %d lat"
 
@@ -1405,7 +1405,7 @@ msgstr "Rocznie"
 
 #. translators: %s: date of next occurrence
 #: src/blocks/event-info/render.php:169
-#, php-format, js-format
+#, php-format,js-format
 msgid "Next: %s"
 msgstr "Następnie: %s"
 
@@ -2034,7 +2034,7 @@ msgstr "Jedno z wybranych zdarzeń nie jest ważne dla tego biletu."
 #: src/API/GetTicketsController.php:476
 #: src/blocks/event-signup/frontend.js:176
 #: src/blocks/event-signup/frontend.js:262
-#, php-format, js-format
+#, php-format,js-format
 msgid "Please select at least %d occurrence."
 msgid_plural "Please select at least %d occurrences."
 msgstr[0] "Proszę wybrać co najmniej %d wystąpienie."
@@ -2547,15 +2547,15 @@ msgstr "Daty ręczne nie mogą zawierać duplikatów — obsługiwane jest tylko
 msgid "Event Signup: could not resolve an event date for this page."
 msgstr "Rejestracja zdarzenia: nie można rozpoznać daty zdarzenia dla tej strony."
 
-#: src/blocks/events-calendar/render.php:403
+#: src/blocks/events-calendar/render.php:477
 msgid "Subscribe to calendar"
 msgstr "Subskrybuj kalendarz"
 
-#: src/blocks/events-calendar/render.php:406
+#: src/blocks/events-calendar/render.php:527
 msgid "Subscribed calendars refresh on your calendar app's own schedule (often hours, not instant)."
 msgstr "Subskrybowane kalendarze odświeżają się zgodnie z harmonogramem Twojej aplikacji kalendarza (często godziny, nie natychmiast)."
 
-#: src/blocks/events-calendar/render.php:415
+#: src/blocks/events-calendar/render.php:462
 msgid "Copy feed URL"
 msgstr "Skopiuj adres URL kanału"
 
@@ -2805,3 +2805,14 @@ msgctxt "block description"
 msgid "Legacy signup block. Superseded by Event Signup — transform existing instances to fair-events/event-signup."
 msgstr "Starszy blok rejestracji. Zastąpiony przez Event Signup — przekształć istniejące instancje na fair-events/event-signup."
 
+#: src/blocks/events-calendar/render.php:494
+msgid "Google Calendar"
+msgstr ""
+
+#: src/blocks/events-calendar/render.php:505
+msgid "Outlook"
+msgstr ""
+
+#: src/blocks/events-calendar/render.php:514
+msgid "Apple Calendar"
+msgstr ""

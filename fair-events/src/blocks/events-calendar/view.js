@@ -1,10 +1,11 @@
 /**
  * Events Calendar View - Interactivity API store
  *
- * Handles the "Copy link" button click for the subscribe fallback URL.
+ * Handles the subscribe dropdown: opening/closing, the "Copy link" button
+ * for the subscribe fallback URL, and dismissal via outside click/Escape.
  */
 
-import { store, getContext } from '@wordpress/interactivity';
+import { store, getContext, getElement } from '@wordpress/interactivity';
 
 /**
  * Copy text to the clipboard via the throwaway-textarea + execCommand
@@ -39,8 +40,41 @@ store('fair-events/calendar-subscribe', {
 			const context = getContext();
 			return context.copied ? context.copiedLabel : context.copyLabel;
 		},
+		get isOpen() {
+			const context = getContext();
+			return !!context.isOpen;
+		},
 	},
 	actions: {
+		toggle() {
+			const context = getContext();
+			context.isOpen = !context.isOpen;
+		},
+		close() {
+			const context = getContext();
+			context.isOpen = false;
+		},
+		handleOutsideClick(event) {
+			const context = getContext();
+			if (!context.isOpen) {
+				return;
+			}
+
+			const { ref } = getElement();
+			if (ref.contains(event.target)) {
+				return;
+			}
+
+			context.isOpen = false;
+		},
+		handleKeydown(event) {
+			if (event.key !== 'Escape') {
+				return;
+			}
+
+			const context = getContext();
+			context.isOpen = false;
+		},
 		*copy() {
 			const context = getContext();
 			const feedUrl = context.feedUrl;
