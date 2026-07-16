@@ -178,8 +178,24 @@ test.describe('CalendarFeedController — ICS calendar feed', () => {
 			`UID:fair_event_${eventPostId}_${timedEventDateId}@`
 		);
 		expect(body).toContain(`URL;VALUE=URI:${timedEventDate.display_url}`);
-		// Timed event: UTC Z time.
-		expect(body).toMatch(/DTSTART:\d{8}T\d{6}Z/);
+
+		// Timed event: local site timezone. A named IANA zone emits
+		// DTSTART;TZID=<zone>:<local time> plus a VTIMEZONE block; a
+		// fixed-offset zone (e.g. the default UTC test env) keeps the
+		// UTC `Z` form, since iCal has no inline-offset form.
+		const settingsRes = await api.get('/wp-json/wp/v2/settings', {
+			headers: adminHeaders,
+		});
+		const { timezone } = await settingsRes.json();
+		const isNamedZone = /^[A-Za-z]/.test(timezone);
+
+		if (isNamedZone) {
+			expect(body).toMatch(/DTSTART;TZID=[^:]+:\d{8}T\d{6}/);
+			expect(body).toContain('BEGIN:VTIMEZONE');
+			expect(body).toContain(`TZID:${timezone}`);
+		} else {
+			expect(body).toMatch(/DTSTART:\d{8}T\d{6}Z/);
+		}
 
 		expect(body).toContain(`UID:standalone_${standaloneEventDateId}@`);
 		expect(body).toContain(

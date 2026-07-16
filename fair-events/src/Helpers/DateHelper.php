@@ -36,19 +36,29 @@ class DateHelper {
 	}
 
 	/**
-	 * Convert a site-local naive datetime to an ISO 8601 UTC string.
+	 * Convert a site-local naive datetime to an ISO 8601 string in the site's timezone.
 	 *
 	 * @param string $datetime Naive 'Y-m-d H:i:s' in site-local time.
-	 * @return string ISO 8601 UTC string (e.g. '2025-06-15T17:30:00+00:00'), or empty string on failure.
+	 * @return string ISO 8601 string with the site's offset (e.g. '2025-06-15T18:15:00+02:00'), or empty string on failure.
 	 */
 	public static function local_to_iso8601( $datetime ) {
-		$ts = self::local_to_timestamp( $datetime );
+		$dt = self::local_to_datetime( $datetime );
 
-		if ( false === $ts ) {
+		if ( false === $dt ) {
 			return '';
 		}
 
-		return gmdate( 'c', $ts );
+		return $dt->format( 'c' );
+	}
+
+	/**
+	 * Convert a site-local naive datetime to a timezone-aware DateTime in the site's timezone.
+	 *
+	 * @param string $datetime Naive 'Y-m-d H:i:s' in site-local time.
+	 * @return \DateTime|false Site-timezone-aware DateTime, or false on failure.
+	 */
+	public static function local_to_datetime( $datetime ) {
+		return date_create( $datetime, wp_timezone() );
 	}
 
 	/**
