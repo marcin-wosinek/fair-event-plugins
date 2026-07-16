@@ -17,6 +17,12 @@ import ManageEventApp from '../ManageEventApp.js';
 
 jest.mock('@wordpress/api-fetch');
 
+jest.mock('../EventTickets.js', () => {
+	return function MockEventTickets({ isSeries }) {
+		return <div>isSeries: {String(isSeries)}</div>;
+	};
+});
+
 const mockEventDate = {
 	id: 1,
 	title: 'Test Event',
@@ -185,6 +191,33 @@ it('keeps Tickets and Finance tabs enabled for post-linked events', async () => 
 	expect(screen.getByRole('tab', { name: 'Finance' })).not.toHaveAttribute(
 		'aria-disabled',
 		'true'
+	);
+});
+
+it('passes isSeries=true to EventTickets for an irregular (manual) series (#1158)', async () => {
+	window.history.replaceState({}, '', '?tab=tickets');
+	window.fairEventsManageEventData = {
+		eventDateId: '1',
+		calendarUrl: 'http://example.com/calendar',
+		manageEventUrl: 'http://example.com/manage',
+		enabledPostTypes: [],
+		enabledFeatures: { ticketing: true },
+		paymentEntriesUrl: 'http://example.com/entries',
+	};
+	apiFetch.mockImplementation((opts) => {
+		if (opts.path && opts.path.includes('/event-dates/')) {
+			return Promise.resolve({
+				...mockEventDate,
+				rrule: null,
+				recurrence_mode: 'manual',
+			});
+		}
+		return Promise.resolve([]);
+	});
+
+	render(<ManageEventApp />);
+	await waitFor(() =>
+		expect(screen.getByText('isSeries: true')).toBeInTheDocument()
 	);
 });
 
