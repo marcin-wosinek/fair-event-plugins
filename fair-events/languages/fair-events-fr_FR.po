@@ -389,13 +389,13 @@ msgstr "Durée de l'événement"
 msgid "Copy"
 msgstr "Copier"
 
-#: src/blocks/events-calendar/render.php:264
+#: src/blocks/events-calendar/render.php:317
 #: src/blocks/events-week/render.php:234
 #: src/Admin/calendar/components/CalendarHeader.js:29
 msgid "Previous"
 msgstr "Précédent"
 
-#: src/blocks/events-calendar/render.php:270
+#: src/blocks/events-calendar/render.php:323
 #: src/blocks/events-week/render.php:240
 #: src/Admin/calendar/components/CalendarHeader.js:35
 msgid "Next"
@@ -1364,37 +1364,37 @@ msgstr "Filtrer par type d'occurrence."
 
 #. translators: %d: number of days
 #: src/blocks/event-info/render.php:68
-#, php-format, js-format
+#, php-format,js-format
 msgid "Every %d days"
 msgstr "Tous les %d jours"
 
 #. translators: %s: day of week
 #: src/blocks/event-info/render.php:75
-#, php-format, js-format
+#, php-format,js-format
 msgid "Every 2 weeks on %s"
 msgstr "Tous les 2 semaines le %s"
 
 #. translators: 1: number of weeks, 2: day of week
 #: src/blocks/event-info/render.php:79
-#, php-format, js-format
+#, php-format,js-format
 msgid "Every %1$d weeks on %2$s"
 msgstr "Tous les %1$d semaines le %2$s"
 
 #. translators: %s: day of week
 #: src/blocks/event-info/render.php:82
-#, php-format, js-format
+#, php-format,js-format
 msgid "Every %s"
 msgstr "Tous les %s"
 
 #. translators: %d: number of months
 #: src/blocks/event-info/render.php:87
-#, php-format, js-format
+#, php-format,js-format
 msgid "Every %d months"
 msgstr "Tous les %d mois"
 
 #. translators: %d: number of years
 #: src/blocks/event-info/render.php:94
-#, php-format, js-format
+#, php-format,js-format
 msgid "Every %d years"
 msgstr "Tous les %d ans"
 
@@ -1404,7 +1404,7 @@ msgstr "Annuellement"
 
 #. translators: %s: date of next occurrence
 #: src/blocks/event-info/render.php:169
-#, php-format, js-format
+#, php-format,js-format
 msgid "Next: %s"
 msgstr "Suivant : %s"
 
@@ -2033,7 +2033,7 @@ msgstr "L'une des occurrences sélectionnées n'est pas valide pour ce billet."
 #: src/API/GetTicketsController.php:476
 #: src/blocks/event-signup/frontend.js:176
 #: src/blocks/event-signup/frontend.js:262
-#, php-format, js-format
+#, php-format,js-format
 msgid "Please select at least %d occurrence."
 msgid_plural "Please select at least %d occurrences."
 msgstr[0] "Veuillez sélectionner au moins %d occurrence."
@@ -2541,15 +2541,15 @@ msgstr "Les dates manuelles ne doivent pas contenir de doublons — une seule oc
 msgid "Event Signup: could not resolve an event date for this page."
 msgstr "Inscription à l'événement : impossible de résoudre une date d'événement pour cette page."
 
-#: src/blocks/events-calendar/render.php:403
+#: src/blocks/events-calendar/render.php:477
 msgid "Subscribe to calendar"
 msgstr "S'abonner au calendrier"
 
-#: src/blocks/events-calendar/render.php:406
+#: src/blocks/events-calendar/render.php:527
 msgid "Subscribed calendars refresh on your calendar app's own schedule (often hours, not instant)."
 msgstr "Les calendriers abonnés se rafraîchissent selon le calendrier de votre application de calendrier (souvent des heures, pas instantané)."
 
-#: src/blocks/events-calendar/render.php:415
+#: src/blocks/events-calendar/render.php:462
 msgid "Copy feed URL"
 msgstr "Copier l'URL du flux"
 
@@ -2797,3 +2797,14 @@ msgctxt "block description"
 msgid "Legacy signup block. Superseded by Event Signup — transform existing instances to fair-events/event-signup."
 msgstr "Bloc d'inscription hérité. Remplacé par Event Signup — transformez les instances existantes en fair-events/event-signup."
 
+#: src/blocks/events-calendar/render.php:494
+msgid "Google Calendar"
+msgstr ""
+
+#: src/blocks/events-calendar/render.php:505
+msgid "Outlook"
+msgstr ""
+
+#: src/blocks/events-calendar/render.php:514
+msgid "Apple Calendar"
+msgstr ""

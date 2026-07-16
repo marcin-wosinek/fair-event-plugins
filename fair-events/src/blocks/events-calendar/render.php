@@ -16,8 +16,9 @@ use FairEvents\Services\EventFeedProvider;
 use FairEvents\Settings\Settings;
 
 /**
- * Build the subscription feed URLs (webcal:// and plain https://) for the
- * configured category filter.
+ * Build the subscription feed URLs (webcal://, plain https://, and the
+ * Google/Outlook subscribe-by-URL deep links) for the configured category
+ * filter.
  *
  * Deliberately reflects only the category filter, not the current
  * month/year — a subscription is an ongoing feed, so freezing it to one
@@ -27,7 +28,7 @@ use FairEvents\Settings\Settings;
  * source-filtered calendar still links the all-sources feed.
  *
  * @param int[] $categories Category term IDs.
- * @return array{webcal: string, https: string} Feed URLs.
+ * @return array{webcal: string, https: string, google: string, outlook: string} Feed URLs.
  */
 if ( ! function_exists( 'fair_events_build_subscribe_urls' ) ) {
 	function fair_events_build_subscribe_urls( array $categories ) {
@@ -45,9 +46,61 @@ if ( ! function_exists( 'fair_events_build_subscribe_urls' ) ) {
 			$feed_url = add_query_arg( 'categories', implode( ',', $slugs ), $feed_url );
 		}
 
+		$webcal_url = preg_replace( '#^https?://#', 'webcal://', $feed_url );
+
 		return array(
-			'webcal' => preg_replace( '#^https?://#', 'webcal://', $feed_url ),
-			'https'  => $feed_url,
+			'webcal'  => $webcal_url,
+			'https'   => $feed_url,
+			'google'  => 'https://calendar.google.com/calendar/r?cid=' . rawurlencode( $webcal_url ),
+			'outlook' => add_query_arg(
+				array(
+					'url'  => rawurlencode( $feed_url ),
+					'name' => rawurlencode( get_bloginfo( 'name' ) ),
+				),
+				'https://outlook.live.com/calendar/0/addfromweb'
+			),
+		);
+	}
+}
+
+/**
+ * Render an inline brand SVG icon for a subscribe dropdown entry.
+ *
+ * Uses the same path data as the Font Awesome icons in the add-to-calendar
+ * button block's dropdown, so the two menus read as one family.
+ *
+ * @param string $provider One of 'google', 'outlook', 'apple', 'copy'.
+ * @return void Outputs HTML directly.
+ */
+if ( ! function_exists( 'fair_events_render_subscribe_icon' ) ) {
+	function fair_events_render_subscribe_icon( $provider ) {
+		$icons = array(
+			'google'  => array(
+				'viewBox' => '0 0 512 512',
+				'path'    => 'M500 261.8C500 403.3 403.1 504 260 504 122.8 504 12 393.2 12 256S122.8 8 260 8c66.8 0 123 24.5 166.3 64.9l-67.5 64.9c-88.3-85.2-252.5-21.2-252.5 118.2 0 86.5 69.1 156.6 153.7 156.6 98.2 0 135-70.4 140.8-106.9l-140.8 0 0-85.3 236.1 0c2.3 12.7 3.9 24.9 3.9 41.4z',
+			),
+			'outlook' => array(
+				'viewBox' => '0 0 448 512',
+				'path'    => 'M0 32l214.6 0 0 214.6-214.6 0 0-214.6zm233.4 0l214.6 0 0 214.6-214.6 0 0-214.6zM0 265.4l214.6 0 0 214.6-214.6 0 0-214.6zm233.4 0l214.6 0 0 214.6-214.6 0 0-214.6z',
+			),
+			'apple'   => array(
+				'viewBox' => '0 0 384 512',
+				'path'    => 'M319.1 268.7c-.2-36.7 16.4-64.4 50-84.8-18.8-26.9-47.2-41.7-84.7-44.6-35.5-2.8-74.3 20.7-88.5 20.7-15 0-49.4-19.7-76.4-19.7-55.8 .9-115.1 44.5-115.1 133.2 0 26.2 4.8 53.3 14.4 81.2 12.8 36.7 59 126.7 107.2 125.2 25.2-.6 43-17.9 75.8-17.9 31.8 0 48.3 17.9 76.4 17.9 48.6-.7 90.4-82.5 102.6-119.3-65.2-30.7-61.7-90-61.7-91.9zM262.5 104.5c27.3-32.4 24.8-61.9 24-72.5-24.1 1.4-52 16.4-67.9 34.9-17.5 19.8-27.8 44.3-25.6 71.9 26.1 2 49.9-11.4 69.5-34.3z',
+			),
+			'copy'    => array(
+				'viewBox' => '0 0 576 512',
+				'path'    => 'M419.5 96c-16.6 0-32.7 4.5-46.8 12.7-15.8-16-34.2-29.4-54.5-39.5 28.2-24 64.1-37.2 101.3-37.2 86.4 0 156.5 70 156.5 156.5 0 41.5-16.5 81.3-45.8 110.6l-71.1 71.1c-29.3 29.3-69.1 45.8-110.6 45.8-86.4 0-156.5-70-156.5-156.5 0-1.5 0-3 .1-4.5 .5-17.7 15.2-31.6 32.9-31.1s31.6 15.2 31.1 32.9c0 .9 0 1.8 0 2.6 0 51.1 41.4 92.5 92.5 92.5 24.5 0 48-9.7 65.4-27.1l71.1-71.1c17.3-17.3 27.1-40.9 27.1-65.4 0-51.1-41.4-92.5-92.5-92.5zM275.2 173.3c-1.9-.8-3.8-1.9-5.5-3.1-12.6-6.5-27-10.2-42.1-10.2-24.5 0-48 9.7-65.4 27.1L91.1 258.2c-17.3 17.3-27.1 40.9-27.1 65.4 0 51.1 41.4 92.5 92.5 92.5 16.5 0 32.6-4.4 46.7-12.6 15.8 16 34.2 29.4 54.6 39.5-28.2 23.9-64 37.2-101.3 37.2-86.4 0-156.5-70-156.5-156.5 0-41.5 16.5-81.3 45.8-110.6l71.1-71.1c29.3-29.3 69.1-45.8 110.6-45.8 86.6 0 156.5 70.6 156.5 156.9 0 1.3 0 2.6 0 3.9-.4 17.7-15.1 31.6-32.8 31.2s-31.6-15.1-31.2-32.8c0-.8 0-1.5 0-2.3 0-33.7-18-63.3-44.8-79.6z',
+			),
+		);
+
+		if ( ! isset( $icons[ $provider ] ) ) {
+			return;
+		}
+
+		printf(
+			'<svg class="fair-events-subscribe-icon" viewBox="%1$s" aria-hidden="true" focusable="false"><path fill="currentColor" d="%2$s"></path></svg>',
+			esc_attr( $icons[ $provider ]['viewBox'] ),
+			esc_attr( $icons[ $provider ]['path'] )
 		);
 	}
 }
@@ -398,32 +451,81 @@ $subscribe_urls = fair_events_build_subscribe_urls( is_array( $categories ) ? $c
 	</div>
 
 	<?php if ( $show_subscribe ) : ?>
-	<div class="fair-events-subscribe">
-		<a href="<?php echo esc_url( $subscribe_urls['webcal'] ); ?>" class="fair-events-subscribe-link">
-			<?php esc_html_e( 'Subscribe to calendar', 'fair-events' ); ?>
-		</a>
-		<p class="fair-events-subscribe-note">
-			<?php esc_html_e( 'Subscribed calendars refresh on your calendar app\'s own schedule (often hours, not instant).', 'fair-events' ); ?>
-		</p>
-		<div class="fair-events-subscribe-copy"
-			data-wp-interactive="fair-events/calendar-subscribe"
-			<?php
-			echo wp_interactivity_data_wp_context( // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- self-escaping (JSON-encodes and esc_attr()'s internally).
-				array(
-					'copied'      => false,
-					'feedUrl'     => $subscribe_urls['https'],
-					'copyLabel'   => __( 'Copy feed URL', 'fair-events' ),
-					'copiedLabel' => '✓',
-				)
-			);
-			?>
+	<div class="fair-events-subscribe"
+		data-wp-interactive="fair-events/calendar-subscribe"
+		<?php
+		echo wp_interactivity_data_wp_context( // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- self-escaping (JSON-encodes and esc_attr()'s internally).
+			array(
+				'isOpen'      => false,
+				'copied'      => false,
+				'feedUrl'     => $subscribe_urls['https'],
+				'copyLabel'   => __( 'Copy feed URL', 'fair-events' ),
+				'copiedLabel' => '✓',
+			)
+		);
+		?>
+		data-wp-on-document--click="actions.handleOutsideClick"
+		data-wp-on-document--keydown="actions.handleKeydown"
+	>
+		<button
+			type="button"
+			class="fair-events-subscribe-trigger wp-block-button__link wp-element-button is-style-outline"
+			aria-haspopup="true"
+			data-wp-on--click="actions.toggle"
+			data-wp-bind--aria-expanded="state.isOpen"
 		>
+			<?php esc_html_e( 'Subscribe to calendar', 'fair-events' ); ?>
+		</button>
+
+		<div class="fair-events-subscribe-panel"
+			role="menu"
+			data-wp-class--is-open="state.isOpen"
+			data-wp-bind--hidden="!state.isOpen"
+		>
+			<a
+				href="<?php echo esc_url( $subscribe_urls['google'] ); ?>"
+				class="fair-events-subscribe-entry"
+				role="menuitem"
+				target="_blank"
+				rel="noopener"
+				data-wp-on--click="actions.close"
+			>
+				<?php fair_events_render_subscribe_icon( 'google' ); ?>
+				<?php esc_html_e( 'Google Calendar', 'fair-events' ); ?>
+			</a>
+			<a
+				href="<?php echo esc_url( $subscribe_urls['outlook'] ); ?>"
+				class="fair-events-subscribe-entry"
+				role="menuitem"
+				target="_blank"
+				rel="noopener"
+				data-wp-on--click="actions.close"
+			>
+				<?php fair_events_render_subscribe_icon( 'outlook' ); ?>
+				<?php esc_html_e( 'Outlook', 'fair-events' ); ?>
+			</a>
+			<a
+				href="<?php echo esc_url( $subscribe_urls['webcal'] ); ?>"
+				class="fair-events-subscribe-entry"
+				role="menuitem"
+				data-wp-on--click="actions.close"
+			>
+				<?php fair_events_render_subscribe_icon( 'apple' ); ?>
+				<?php esc_html_e( 'Apple Calendar', 'fair-events' ); ?>
+			</a>
 			<button
-				class="fair-events-subscribe-copy-btn"
 				type="button"
+				class="fair-events-subscribe-entry fair-events-subscribe-entry-copy"
+				role="menuitem"
 				data-wp-on--click="actions.copy"
-				data-wp-text="state.label"
-			></button>
+			>
+				<?php fair_events_render_subscribe_icon( 'copy' ); ?>
+				<span data-wp-text="state.label"></span>
+			</button>
+
+			<p class="fair-events-subscribe-note">
+				<?php esc_html_e( 'Subscribed calendars refresh on your calendar app\'s own schedule (often hours, not instant).', 'fair-events' ); ?>
+			</p>
 		</div>
 	</div>
 	<?php endif; ?>
