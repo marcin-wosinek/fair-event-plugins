@@ -425,6 +425,12 @@ $form_id = 'fair-events-get-tickets-' . wp_unique_id();
 			</label>
 		</div>
 
+		<?php if ( '' !== trim( $content ) ) : ?>
+			<div class="fair-events-event-signup-questions">
+				<?php echo $content; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Inner blocks content is already escaped by WordPress. ?>
+			</div>
+		<?php endif; ?>
+
 		<!-- Honeypot field (hidden from users, should remain empty) -->
 		<input
 			type="text"

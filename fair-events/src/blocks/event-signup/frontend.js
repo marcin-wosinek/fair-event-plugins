@@ -12,6 +12,8 @@ import {
 	handlePaymentCallback,
 	computeTicketTotal,
 	formatPrice,
+	collectQuestionAnswers,
+	validateQuestions,
 } from 'fair-events-shared';
 import './frontend.css';
 
@@ -288,6 +290,12 @@ const STATUS_PATH = '/fair-payments-connector/v1/payments';
 			}
 		}
 
+		const questionError = validateQuestions(form);
+		if (questionError) {
+			showMessage(messageContainer, questionError, 'error', CSS_PREFIX);
+			return false;
+		}
+
 		return true;
 	}
 
@@ -339,6 +347,8 @@ const STATUS_PATH = '/fair-payments-connector/v1/payments';
 
 		const honeypotField = form.querySelector('input[name="_honeypot"]');
 		data._honeypot = honeypotField ? honeypotField.value : '';
+
+		data.questionnaire_answers = collectQuestionAnswers(form);
 
 		return data;
 	}
