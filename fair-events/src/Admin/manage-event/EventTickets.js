@@ -746,7 +746,12 @@ export default function EventTickets({
 		ticketTypes.forEach((type, tIndex) => {
 			salePeriods.forEach((period, pIndex) => {
 				const val = getPrice(type, period);
-				if (!val.enabled) return;
+				// The `enabled` flag is only user-controllable via the
+				// "Available" checkbox, which renders only in multiple-periods
+				// mode. In single-period mode there is no way to flip it, so a
+				// typed price/capacity must always save — otherwise price-less
+				// cells (seeded enabled: false) silently drop their input.
+				if (effectiveMultiple && !val.enabled) return;
 				if (val.price === '' && val.capacity === '') return;
 				pricesArray.push({
 					ticket_type_index: tIndex,
