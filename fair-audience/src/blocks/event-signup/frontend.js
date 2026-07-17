@@ -206,6 +206,18 @@ const SCROLL_RESTORE_KEY = 'fairAudienceOccurrenceScrollY';
 	}
 
 	/**
+	 * Whether the selected ticket type is a 'whole_series' scope pass.
+	 * @param {HTMLElement} block The block element
+	 * @return {boolean} True when the pass covers every occurrence in the series.
+	 */
+	function isWholeSeriesSelected(block) {
+		const selected = getSelectedTicketType(block);
+		return (
+			!!selected && selected.dataset.recurrenceScope === 'whole_series'
+		);
+	}
+
+	/**
 	 * Number of checked occurrence checkboxes in the multi-instance picker.
 	 * @param {HTMLElement} block The block element
 	 * @return {number} Count of checked event_date_ids[] checkboxes.
@@ -228,33 +240,45 @@ const SCROLL_RESTORE_KEY = 'fairAudienceOccurrenceScrollY';
 	}
 
 	/**
-	 * Show the multi-occurrence checkbox picker (hiding the single-occurrence
-	 * dropdown) when a 'multiple_instances' ticket type is selected, and vice
-	 * versa. Clears stale checkbox state when switching away so a leftover
-	 * selection can't leak into a later submission for a different scope.
+	 * Sync the two occurrence pickers to the selected ticket type's scope:
+	 * - 'multiple_instances' shows the checkbox picker and hides the single
+	 *   date dropdown;
+	 * - 'whole_series' hides both, since the pass covers every occurrence and
+	 *   the date choice is irrelevant;
+	 * - 'single_instance' (the default) shows the date dropdown only.
+	 *
+	 * Clears stale checkbox state when switching away from multiple_instances
+	 * so a leftover selection can't leak into a later submission for a
+	 * different scope. The date dropdown is handled independently of the
+	 * instance picker so it still gets hidden for a whole_series pass on
+	 * events that have no multiple_instances type (and thus no instance
+	 * picker rendered).
 	 * @param {HTMLElement} block The block element
 	 */
 	function updateInstancePickerVisibility(block) {
+		const multipleInstances = isMultipleInstancesSelected(block);
+		const wholeSeries = isWholeSeriesSelected(block);
+
 		const instancePicker = block.querySelector(
 			'.fair-audience-instance-picker'
 		);
-		if (!instancePicker) {
-			return;
+		if (instancePicker) {
+			instancePicker.style.display = multipleInstances ? '' : 'none';
+			if (!multipleInstances) {
+				instancePicker
+					.querySelectorAll('input[type="checkbox"]')
+					.forEach(function (cb) {
+						cb.checked = false;
+					});
+			}
 		}
+
 		const occurrencePicker = block.querySelector(
 			'.fair-audience-occurrence-picker'
 		);
-		const active = isMultipleInstancesSelected(block);
-		instancePicker.style.display = active ? '' : 'none';
 		if (occurrencePicker) {
-			occurrencePicker.style.display = active ? 'none' : '';
-		}
-		if (!active) {
-			instancePicker
-				.querySelectorAll('input[type="checkbox"]')
-				.forEach(function (cb) {
-					cb.checked = false;
-				});
+			occurrencePicker.style.display =
+				multipleInstances || wholeSeries ? 'none' : '';
 		}
 	}
 
