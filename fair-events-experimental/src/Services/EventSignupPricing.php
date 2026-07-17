@@ -11,6 +11,7 @@ use FairEvents\Models\EventDates;
 use FairEvents\Models\EventDateSetting;
 use FairEventsExperimental\Models\GroupPricingRule;
 use FairEvents\Models\TicketType;
+use FairEvents\Services\SignupPricing;
 use FairEvents\Services\TicketPricing;
 use FairEventsExperimental\Models\TicketOptionCollaborator;
 
@@ -33,35 +34,20 @@ class EventSignupPricing {
 	 * @return float|null Final price, or null when no price is configured.
 	 */
 	public static function resolve_price( $event_date_id, $participant_id = null ) {
-		$event_date = EventDates::get_by_id( $event_date_id );
+		// Base price (including generated-occurrence → master inheritance,
+		// already resolved by EventDates::hydrate()) lives in fair-events so
+		// the base plugin combo doesn't need this experimental service.
+		$base_price = SignupPricing::resolve_base_signup_price( $event_date_id );
 
-		if ( ! $event_date ) {
+		if ( null === $base_price ) {
 			return null;
 		}
-
-		// Generated occurrences do not store signup_price — inherit from master.
-		$pricing_event_date_id = $event_date_id;
-		if ( null === $event_date->signup_price
-			&& 'generated' === $event_date->occurrence_type
-			&& $event_date->master_id ) {
-			$master = EventDates::get_by_id( $event_date->master_id );
-			if ( $master && null !== $master->signup_price ) {
-				$event_date            = $master;
-				$pricing_event_date_id = $master->id;
-			}
-		}
-
-		if ( null === $event_date->signup_price ) {
-			return null;
-		}
-
-		$base_price = (float) $event_date->signup_price;
 
 		if ( empty( $participant_id ) ) {
 			return $base_price;
 		}
 
-		$rules = GroupPricingRule::get_all_by_event_date_id( $pricing_event_date_id );
+		$rules = GroupPricingRule::get_all_by_event_date_id( $event_date_id );
 		if ( empty( $rules ) ) {
 			return $base_price;
 		}
@@ -248,27 +234,7 @@ class EventSignupPricing {
 	 * @return bool True when a price > 0 is configured.
 	 */
 	public static function has_paid_price_configured( int $event_date_id, ?int $ticket_type_id = null ): bool {
-		if ( $ticket_type_id ) {
-			$price = TicketPricing::resolve_unit_price( $ticket_type_id );
-			return null !== $price && $price > 0;
-		}
-
-		$event_date = EventDates::get_by_id( $event_date_id );
-		if ( ! $event_date ) {
-			return false;
-		}
-
-		// Generated occurrences inherit signup_price from master.
-		if ( null === $event_date->signup_price
-			&& 'generated' === $event_date->occurrence_type
-			&& $event_date->master_id ) {
-			$master = EventDates::get_by_id( $event_date->master_id );
-			if ( $master ) {
-				$event_date = $master;
-			}
-		}
-
-		return null !== $event_date->signup_price && (float) $event_date->signup_price > 0;
+		return SignupPricing::has_paid_price_configured( $event_date_id, $ticket_type_id );
 	}
 
 	/**
